@@ -125,12 +125,14 @@ if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
         echo
         echo "TMPFS_STAGING=${TMPFS_STAGING} -- Staging in ${DIR}"
         mkdir -p ${DIR}
+        RETRY=7
         flamethrower_client
 
         # Move from staging in tmpfs to disk
         rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${DIR}/ /a/
     else
         DIR=/a
+        RETRY=7
         flamethrower_client
     fi
 else 
@@ -174,6 +176,7 @@ do
         # Use multicast
         MODULE_NAME="override_${OVERRIDE}"
         DIR=/a
+        RETRY=7
         flamethrower_client
     else
         # Use rsync
