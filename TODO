@@ -10,31 +10,31 @@
 
 In Progress
 -----------
+- <wessmith@engr.sgi.com> - GUI for SystemImager called SGI SystemImager GUI (not open sourced)
 - <brian@thefinleys.com> - support for software RAID
 - <brian@thefinleys.com> - support for reiserfs
 - <brian@thefinleys.com> - support for use without DHCP
+- <brian@valinux.com> - have autoinstallclient check floppy for file and assign IP and hostname based on file, not on DHCP.
 - <gpratt@valinux.com> - Docbookization of the FAQ-HOWTO
 
-Assigned and/or waiting to be done
--------------------------------
-- <wessmith@engr.sgi.com> - GUI for SystemImager called SGI SystemImager GUI (not open sourced)
-- <ian@valinux.com> - have autoinstallclient check floppy for file and assign IP and hostname based on file, not on DHCP.
+Assigned and waiting to be done
+----------------------------------
 - <ian@valinux.com> - multicast install -- Ian McLeod <ian@valinux.com> will have mftp (multicast ftp) 
   working as a drop in replacement for rsync by 5/15/2000 and we will begin testing
   in the lab.
 - <brian@valinux.com> - consider inodes/block in getimage
 - Chris Black <cblack@mokey.com> - hack dhclient to allow for imageserver specification via dhcp
-- modify systemimager.exclude to deal with debian network info
-- /etc/systemimager.conf file to hold things like domain name, nis domain, etc.
 - <brian@thefinleys.com> - getimage -- eject floppy/cd option
 - <brian@thefinleys.com> - getimage -- beep option
 - <brian@thefinleys.com> - getimage -- blink option
+- <brian@thefinleys.com> - getimage -- incorporate the Phil Champon <pchampon@valueweb.net> updateimageserver hack
 
-Top Requests
+Other Requests
 ------------
-- replicate mke2fs parameters on clients to match the "master client"
 - commandline-ize the rest of the commands
 - support for imageserver specification in DHCP client (hack dhcpcd)
+- modify systemimager.exclude to deal with debian network info
+- /etc/systemimager.conf file to hold things like domain name, nis domain, etc.
 
 Bug list
 --------
