@@ -116,18 +116,24 @@ o source for the kernel and initrd.gz and everything will be provided in
 o Modify binaries to use /var/lib/systemimager/ instead of /tftpboot/
 o Jose_AP_Celestino.ida.prepareclient.patch to make systemimager work
   properly with Smart Array cards.  (must get a Smart Array card first)
+
 o getimage -- exclude option
-o getimage - put exclude/include stuff on imageserver by image
-  /tftpboot/systemimager/$image.updateclient.include
-  /tftpboot/systemimager/$image.updateclient.exclude
+  o put exclude/include stuff on imageserver by image
+    /tftpboot/systemimager/$image.updateclient.include
+    /tftpboot/systemimager/$image.updateclient.exclude
+o David Weenink <david.weenink@hum.uva.nl> suggests:
+  o rename systemimager.exclude -> updateclient.local.exclude
+  o include comments inside to indicate how the includes/excludes work
 o updateclient - local /etc/systemimager/updateclient.exclude or include
   take precedence over include and exclude on imageserver.
 o updateclient - include/exclude pulled to temporary files.
 o prepareclient - no longer puts /etc/systemimager/systemimager.exclude on
   client.
+o have getimage question what should be excluded in future when updateimage 
+  is run.  /tmp/* and /home/* should be recommended as a starting place.
+
 o deal with LABEL=UUID as well as LABEL=mount_point
 o if local.cfg and dhcp fails, have client ask for manual input
-o add -exclude option to getimage
 o incorporate ssh
 o incorporate multicaster
 o getimage -- blink option
@@ -142,11 +148,6 @@ o store certain parameters in /etc/systemimager/systemimager.conf as
 o section of HOWTO that helps Kickstart users transition to SystemImager.
 o redirect syslog messages from autoinstall clients to $imagserver
 o addclients -- re-cycle through each question if answer is ""
-o have getimage question what should be excluded in future when updateimage 
-  is run.  /tmp/* and /home/* should be recommended as a starting place.
-o David Weenink <david.weenink@hum.uva.nl> suggests:
-  o rename systemimager.exclude -> updateclient.local.exclude
-  o include comments inside to indicate how the includes/excludes work
 o change option-100 -> option-207
 o Notes regarding differences between v2 and v3 of dhcpd:
   <<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
