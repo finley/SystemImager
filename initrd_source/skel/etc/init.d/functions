@@ -385,12 +385,22 @@ get_boel_binaries_tarball() {
 #   Switch root to tmpfs
 #
 switch_root_to_tmpfs() {
+    local tmpfs_size
+    local tmpfs_opts
+
+    mount_proc
+    tmpfs_size=$(tr ' ' '\n' < /proc/cmdline | grep tmpfs_size\= | sed 's/.*=//')
+    umount /proc
+    if [ "$tmpfs_size" != "" ]; then
+        tmpfs_opts="-o size=$tmpfs_size"
+    fi
+
     echo
     echo "switch_root_to_tmpfs"
     # Switch root over to tmpfs so we don't have to worry about the size of
     # the tarball and binaries that users may decide to copy over. -BEF-
     mkdir -p /new_root || shellout
-    mount tmpfs /new_root -t tmpfs || shellout
+    mount tmpfs /new_root -t tmpfs $tmpfs_opts || shellout
     cd / || shellout
     rsync -a bin etc lib my_modules root sbin tmp usr var /new_root/ || shellout
     cd /new_root || shellout
