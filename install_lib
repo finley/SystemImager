@@ -57,6 +57,7 @@ upgrade_config_files() {
         echo "         from the one I am going to install.  I'm going to move this file"
         echo "         to $old.beforesystemimager$VERSION."
         echo "Press <Enter> to continue..."
+        echo
         read
         mv $old $old.beforesystemimager$VERSION
       fi
@@ -87,10 +88,12 @@ remove_old_files() {
   echo "Checking for files which are no longer pertinent..."
   for file in $OLD_FILES; do
     if [ -f "$file" ]; then
-      echo "Warning:  $file was found on this system."
-      echo "This file has either been moved, renamed, or is no longer used in this release."
-      echo "You should probably remove this older version, to make sure it is not executed"
-      echo "by mistake."
+      echo
+      echo "WARNING:  $file was found on this system."
+      echo "          This file has either been moved, renamed, or is no longer used"
+      echo "          by SystemImager.  You should probably remove this old version,"
+      echo "          to make sure it is not used by mistake."
+      echo
       echo -n "Shall I remove $file for you? ([y]/n) "
       read REPLY
       case $REPLY in

@@ -93,9 +93,11 @@ echo "Looking for existing rsyncd.conf files..."
 for file in /etc/rsyncd.conf /etc/systemimager/rsyncd.conf.beforesystemimager$VERSION; do
   if [ -f $file ]; then
     echo "SystemImager now uses /etc/systemimager/rsyncd.conf instead of /etc/rsyncd.conf"
+    echo
     delim
-    echo "Warning:  $file was found on your system."
+    echo "WARNING:  $file was found on your system."
     delim
+    echo
     echo "Shall I copy any image entries from $file to "
     echo -n "/etc/systemimager/rsyncd.conf? ([y]/n) "
     read REPLY
@@ -137,7 +139,7 @@ for file in /etc/rsyncd.conf /etc/systemimager/rsyncd.conf.beforesystemimager$VE
 		     done < $file
 		     if [ $start_copying == "false" ]; then
 		       delim
-		       echo "Warning:  $file doesn't look like it was created by SystemImager."
+		       echo "WARNING:  $file doesn't look like it was created by SystemImager."
 		       delim
 		       echo "No image entries were copied over."
 		       echo "Press <Enter> to continue..."
@@ -180,8 +182,8 @@ if [ -d /tftpboot/systemimager ]; then
   case $REPLY in
     n|N|No|NO ) echo "Ok, not copying over master scripts." ;;
             * ) echo "Copying scripts..."
-	        cp -a /tftpboot/systemimager/*.master /var/lib/systemimager/scripts
-	        cp -a /tftpboot/systemimager/*.sh /var/lib/systemimager/scripts
+	        cp -af /tftpboot/systemimager/*.master /var/lib/systemimager/scripts
+	        cp -af /tftpboot/systemimager/*.sh /var/lib/systemimager/scripts
 		;;
   esac
 fi
@@ -197,7 +199,7 @@ fi
 
 if [ -f $INITDIR_PREFIX/init.d/rsync ]; then
   delim
-  echo "Warning:  $INITDIR_PREFIX/init.d/rsync exists."
+  echo "WARNING:  $INITDIR_PREFIX/init.d/rsync exists."
   delim
   echo "SystemImager now uses $INITDIR_PREFIX/init.d/systemimager instead."
   echo "I can go ahead and remove the symlinks to $INITDIR_PREFIX/init.d/rsync from the various"
