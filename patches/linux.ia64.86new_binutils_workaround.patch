@@ -1,7 +1,7 @@
 diff -urN linux.orig/arch/ia64/vmlinux.lds.S linux/arch/ia64/vmlinux.lds.S
---- linux.orig/arch/ia64/vmlinux.lds.S	Tue Jul 31 17:30:09 2001
-+++ linux/arch/ia64/vmlinux.lds.S	Wed Dec 19 17:47:27 2001
-@@ -8,13 +8,6 @@
+--- linux.orig/arch/ia64/vmlinux.lds.S	Thu Apr  4 15:32:35 2002
++++ linux/arch/ia64/vmlinux.lds.S	Thu Apr  4 15:33:20 2002
+@@ -8,15 +8,6 @@
  ENTRY(phys_start)
  SECTIONS
  {
@@ -9,6 +9,8 @@ diff -urN linux.orig/arch/ia64/vmlinux.lds.S linux/arch/ia64/vmlinux.lds.S
 -  /DISCARD/ : {
 -	*(.text.exit)
 -	*(.data.exit)
+-	*(*.text.exit)
+-	*(*.data.exit)
 -	*(.exitcall.exit)
 -	}
 -

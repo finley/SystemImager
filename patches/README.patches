@@ -1,26 +1,6 @@
 This directory contains patches against other packages used by SystemImager.
-
-autoinstall.kernel.config
-  the .config file for the autoinstall kernel
-
-linux.patch
-  a combination of multiple patches against the linux kernel.  these patches
-  are merged into a single file to prevent otherwise necessary manual conflict
-  resolution.  The following patches are included in this release:
-
-  Hans' reiserfs
-    ftp://ftp.namesys.com/pub/reiserfs-for-2.2/linux-2.2.18-reiserfs-3.5.31-patch.gz
-
-  Ingo's RAID patches
-    http://www.kernel.org/pub/linux/kernel/people/mingo/raid-patches/raid-2.2.18-B0
-
-  Justin Gibbs' Adapted aic7xxx patch -- necessary for Tupelo systemboards
-    http://people.freebsd.org/~gibbs/linux/linux-aic7xxx-6.2.1-2.2.18.patch.gz
-
-  Andrea's VM patch
-    http://www.kernel.org/pub/linux/kernel/people/andrea/patches/v2.2/2.2.18/VM-global-2.2.18pre25-7
-
-  and a patch that forces mkreiserfs to be statically linked
-
-raidtools.patch
-  builds statically linked raidtools
+The naming convention for kernel patches is:
+  linux.<arch>.nn<description>.patch
+patches are applied in the order in which the filenames sort.
+for example, linux.i386.10reiserfs.patch would be applied before 
+linux.i386.20raid.patch.
