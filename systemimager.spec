@@ -1,12 +1,12 @@
 %define name     systemimager
-%define ver	2.9.2
+%define ver	2.9.3
 %define rel      1
 %define prefix   /usr
 %define _build_all 1
 %define _boot_flavor standard
 # Set this to 1 to build only the boot rpm
 # it can also be done in the .rpmmacros file
-#%define _build_only_boot 1
+#define _build_only_boot 1
 %{?_build_only_boot:%{expand: %%define _build_all 0}}
 
 
@@ -163,6 +163,9 @@ to boot and install %{_build_arch} Linux machines during the SystemImager autoin
 process.
 
 %changelog
+* Thu Oct 02 2002 dann frazier <dannf@dannf.org> 2.9.3-1
+- new upstream release
+
 * Thu Sep 19 2002 Sean Dague <sean@dague.net> 2.9.1-1
 - Added \%if \%{_build_all} stanzas to make building easier.
 
