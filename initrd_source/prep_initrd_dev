@@ -1,0 +1,22 @@
+#!/bin/sh
+
+#
+# "VA SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@systemimager.org>
+#
+# This file is: prep_initrd_dev
+#
+# I use this script to mount the initrd.gz from the source in initrd_dev
+#
+
+# if not run as root, will surely fail
+if [ `whoami` != "root" ]
+then
+    echo "Must be run as root!"
+    exit 1
+fi
+
+umount ./initrd_dev/ > /dev/null 2>&1
+
+zcat ../tftpstuff/initrd.gz > initrd.orig \
+  && mkdir -p initrd_dev \
+  && mount initrd.orig initrd_dev/ -o loop
