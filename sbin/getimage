@@ -227,6 +227,13 @@ unless ($imagedir_prefix =~ /^\//) {
   die "\n$program_name: -directory must be an absolute path starting with \"/\".\n$get_help\n\n";
 }
 
+# be sure $update_script was passed a proper option
+unless(
+       ($update_script eq ""   )
+    or ($update_script eq "yes")
+    or ($update_script eq "no" )
+) { die "\n$program_name: -update-script must be yes or no.\n$get_help\n\n"; }
+
 # be sure $ip_assignment_method was passed a proper option
 unless(
     ($ip_assignment_method eq "")
@@ -410,10 +417,14 @@ if( (!$quiet) and (!$update_script) and (-e "/tftpboot/systemimager/$image.maste
     print "Would you like to update the autoinstall script for this image? ([y]/n): ";
 
     $update_script = get_response('yes');
+    $update_script = lc $update_script;
+
+    # if user actually hits "y", deal with it
+    if($update_script eq "y") { $update_script = "yes"; }
 }
 
 # If it just ain't there yet, make it and don't even ask about it.
-elsif(!-e "/tftpboot/systemimager/$image.master") {
+elsif(! -e "/tftpboot/systemimager/$image.master") {
     $update_script="yes";
 }
 
