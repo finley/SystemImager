@@ -376,7 +376,7 @@ print MASTER_SCRIPT << 'EOF';
 # "VA SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com>
 #
 
-PATH=/sbin:/bin:/usr/bin:/usr/sbin:/tmp1
+PATH=/sbin:/bin:/usr/bin:/usr/sbin:/tmp
 
 ### BEGIN Check to be sure this not run from a working machine ###
 # test for mounted SCSI or IDE disks
@@ -389,9 +389,9 @@ mount | egrep -q c[0-9]+d[0-9]+p
 ### END Check to be sure this not run from a working machine ###
 
 # Pull in variables left behind by the linuxrc script.
-# This information is passed from the linuxrc script on the autoinstall media via /tmp1/variables.txt
+# This information is passed from the linuxrc script on the autoinstall media via /tmp/variables.txt
 # Apparently the shell on the autoinstall media is not intelligent enough to take a "set -a" parameter
-. /tmp1/variables.txt
+. /tmp/variables.txt
 
 # Partition the disk (see the sfdisk man page for customization details)
 #
@@ -530,7 +530,7 @@ while (<FSTAB>) {
     # reiserfs
     if ($filesystem_type eq "reiserfs") {
       if ($got_mkreiserfs eq "no") {
-        print MASTER_SCRIPT "rsync -av \$DHCPSIADDR::tftpboot/systemimager/mkreiserfs /tmp1/\n";
+        print MASTER_SCRIPT "rsync -av \$DHCPSIADDR::tftpboot/systemimager/mkreiserfs /tmp/\n";
         $got_mkreiserfs = "yes";
       }
       print MASTER_SCRIPT "mkdir -p /a$mount_point/\n";
