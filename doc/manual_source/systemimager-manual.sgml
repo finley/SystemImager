@@ -819,7 +819,11 @@ Press <command>Enter</command> to continue...
       client system.  It *should* automatically find and boot off the
       imageserver and begin to autoinstall itself.  Currently, there is no 
       known single configuration that will work with every system.  The next 
-      sections describe some configurations that are known to work.
+      sections describe some configurations that are known to work.  If you
+      are successful in repeatably configuring a system for PXE autoinstalls,
+      and it is in any way different from those already mentioned below (i.e.
+      different package versions, latest distribution, etc.), please let us
+      know so that it can be included in this document.
      </para>
        <sect4 id=RedHat6.2BootAgent3.x>
        <title>RedHat 6.2 and Intel BootAgent 3.x</title>
@@ -827,7 +831,193 @@ Press <command>Enter</command> to continue...
         This testing was done on HP Netservers with Intel Ether Express Pro 
         cards.  The Netservers ran a typical RedHat 6.2 installation, while 
         the NIC's were running a 3.x version of the Intel BootAgent firmware.
+	The relevant software was:
+        <itemizedlist>
+         <listitem>
+          <para>
+           va-systemimager-1.1-1.i386.rpm
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           pxe-0.1-14.i386.rpm
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   dhcp-2.0-5.i386.rpm
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           tftp-hpa-0.13-1.i386.rpm
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           inetd-0.16-4.i386.rpm
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           syslinux-1.48-2.i386.rpm
+          </para>
+         </listitem>
+        </itemizedlist>
+	Taking the following steps should result in a working configuration:
+        <orderedlist>
+         <listitem>
+          <para>
+           Install the above packages onto the image server.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <command>
+            # mv /tftpboot/X86PC/UNDI/linux-install/linux.0 \
+                 /tftpboot/X86PC/UNDI/linux-install/linux.0.bak
+           </command>
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <command>
+            # cp /tftpboot/pxelinux.bin \
+              /tftpboot/X86PC/UNDI/linux-install/linux.0
+           </command>
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <command>
+            # cp -r /tftpboot/kernel /tftpboot/initrd.gz \
+              /tftpboot/pxelinux.cfg /tftpboot/X86PC/UNDI/linux-install/
+           </command>
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <command>
+            # cp /tftpboot/pxelinux.cfg/message.txt \
+              /tftpboot/X86PC/UNDI/linux-install
+           </command>
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <command>
+            # /etc/rc.d/init.d/pxe start
+           </command>
+          </para>
+         </listitem>
+        </orderedlist>
        </para>
+       </sect4>
+       <sect4 id=RedHat7.0BootAgent3.x>
+       <title>RedHat 7.0 and Intel BootAgent 3.x</title>
+       <para>
+        This testing was done on HP Netservers with Intel Ether Express Pro 
+        cards.  The Netservers ran a typical RedHat 7.0 installation, while 
+        the NIC's were running a 3.x version of the Intel BootAgent firmware.
+	The relevant software was:
+        <itemizedlist>
+         <listitem>
+          <para>
+           va-systemimager-1.3.0-1.i386.rpm
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           pxe-0.1-20.i386.rpm
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   dhcp-2.0-12.i386.rpm
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           tftp-server-0.17-5.i386.rpm
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           xinetd-2.1.8.9pre11-1.i386.rpm - this version has a race condition
+           which can prevent the tftp server from responding.  this has
+           supposedly been fixed in version 2.1.8.9pre13
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           syslinux-1.48-2.i386.rpm
+          </para>
+         </listitem>
+        </itemizedlist>
+	Taking the following steps should result in a working configuration:
+        <orderedlist>
+         <listitem>
+          <para>
+           Install the above packages onto the image server.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <command>
+            # mv /tftpboot/X86PC/UNDI/linux-install/linux.0 \
+                 /tftpboot/X86PC/UNDI/linux-install/linux.0.bak
+           </command>
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <command>
+            # cp /tftpboot/pxelinux.bin \
+              /tftpboot/X86PC/UNDI/linux-install/linux.0
+           </command>
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <command>
+            # cp -r /tftpboot/kernel /tftpboot/initrd.gz \
+              /tftpboot/pxelinux.cfg /tftpboot/X86PC/UNDI/linux-install/
+           </command>
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <command>
+            # cp /tftpboot/pxelinux.cfg/message.txt \
+              /tftpboot/X86PC/UNDI/linux-install
+           </command>
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <command>
+            # touch /var/lib/dhcp/dhcpd.leases
+           </command>
+           </para>
+          </listitem>
+         <listitem>
+          <para>
+           <command>
+            # /etc/init.d/pxe start
+           </command>
+          </para>
+         </listitem>
+        </orderedlist>
+       </para>
+       </sect4>
+       <sect4 id=RedHat7.0BootAgent4.x>
+       <title>RedHat 7.0 and Intel BootAgent 4.x</title>
+	<para>
+         This configuration is very similar to the section "RedHat 7.0 and 
+         Intel BootAgent 3.x".  The only noticable difference is that
+	 the pxe package is no longer required.  The entries created in
+         /etc/dhcpd.conf by <command>makedhcpserver</command> are sufficient.
+        </para>
        </sect4>
      </sect3>
    </sect2>
