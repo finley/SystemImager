@@ -13,8 +13,8 @@
 # do a quiet afterburn? or an interactive afterburn?
 QUIET="false"
 INTERACTIVE="true"
-for cl_option ; do
-  case $cl_option in
+for command_line_option ; do
+  case $command_line_option in
     -q|-quiet|--quiet                     ) QUIET="true" && INTERACTIVE="false" ;;
     -n|-non-interactive|--non-interactive ) INTERACTIVE="false" ;;
   esac
@@ -146,10 +146,10 @@ if [ $? != "0" ]; then
     [ $QUIET = "false" ] && echo "Backing up /etc/inetd.conf to /etc/inetd.conf.beforesystemimager..."
     cp -af /etc/inetd.conf /etc/inetd.conf.beforesystemimager
   fi
-  egrep -qw ^#tftp /etc/inetd.conf
+  egrep -qw ^#tftp /etc/inetd.conf | egrep -q "\-s \-r blksize \/tftpboot"
   if [ $? != "0" ]; then
     [ $QUIET = "false" ] && echo "Adding tftp entry to /etc/inetd.conf..."
-    echo "tftp   dgram   udp     wait    root    /usr/sbin/tcpd  in.tftpd" >> /etc/inetd.conf
+    echo "tftp    dgram   udp     wait    root    /usr/sbin/tcpd  in.tftpd -s -r blksize /tftpboot" >> /etc/inetd.conf
   else
     [ $QUIET = "false" ] && echo "Uncommenting (enabling) tftp entry in /etc/inetd.conf..."
     sed 's/^#tftp/tftp/' /etc/inetd.conf > /tmp/.systemimager
@@ -158,7 +158,22 @@ if [ $? != "0" ]; then
   fi
   RESTART_INETD=yes
 else
-  [ $QUIET = "false" ] && echo "tftp entry already enabled in /etc/inetd.conf..."
+  egrep -q "\-s \-r blksize \/tftpboot" /etc/inetd.conf
+  if [ $? != "0" ]; then
+    # tftp entry may exist, however, tftp-hpa special options are not enabled
+    # so comment out existing entry
+    [ $QUIET = "false" ] && echo "Commenting out existing tftp entry in /etc/inetd.conf..."
+    sed 's/^tftp/#tftp/' /etc/inetd.conf > /tmp/.systemimager
+    cp -af /tmp/.systemimager /etc/inetd.conf
+    rm -f /tmp/.systemimager
+    # and add proper entry (If someone can show me how to get sed to append this line just below the
+    #                       original "#tftp" entry, I'd love to do that instead.) <bef>
+    [ $QUIET = "false" ] && echo "Adding SystemImager brand tftp entry in /etc/inetd.conf..."
+    echo "tftp    dgram   udp     wait    root    /usr/sbin/tcpd  in.tftpd -s -r blksize /tftpboot" >> /etc/inetd.conf
+    RESTART_INETD=yes
+  else
+    [ $QUIET = "false" ] && echo "tftp entry already enabled in /etc/inetd.conf..."
+  fi
 fi 
 
 # signal inetd to re-read /etc/inetd.conf
