@@ -11,6 +11,16 @@
 3.0 PRE-RELEASE
 --------------------------------------------------------------------------------
 Pending:
+* I'm concerned that rsync is being compiled in such a way that it believes
+  that it has access to libraries that will let it do 64-Bit file access, but
+  when run on the client against uclibc, it can't (i386 only).  Is there some
+  way to compile rsync (in i386) so that it doesn't even try 64-bit file access?
+  Or should we include a second copy of rsync in boel_binaries that has the proper
+  libraries for 64bit file access, and just use the one in the initrd to get the 
+  boel_binaries, and no more?  Or something else...  
+  
+  This is a question for dannf and sdague primarily.  -BEF-
+
 * ask Dann about how to build complete docs on Debian
   dannf> cd doc/manual_source ; make html pdf ?
 * add bit to to troubleshooting that describes the case where ETHER_SLEEP 
