@@ -173,7 +173,9 @@ fi
 
 ### BEGIN dhcp stuff ###
 # Hey! Want dhcp?
-echo
+echo "Note:  SystemImager now uses the AppConfig perl module.  This module is"
+echo "available via CPAN and must be installed before using the SystemImager"
+echo "utilities."
 echo -n "Press <Enter> to continue..."
 read REPLY
 clear
