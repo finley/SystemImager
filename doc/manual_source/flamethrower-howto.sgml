@@ -110,6 +110,101 @@ or
 	</para>
   </section>
 
+  <section>
+    <title>
+      A Detailed Walk Through the Process
+    </title>
+   
+	<orderedlist>
+      <listitem>
+        <para>
+          When the imageserver is started, the
+          <filename>/etc/init.d/systemimager-server-flamethrowerd</filename>
+          init script is run, which starts the Flamethrower daemon
+          (flamethrowerd).  flamethrowerd, in turn, starts up udp-sender
+          processes according to
+          <filename>/etc/systemimager/flamethrower.conf</filename>.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          A new image is pulled using getimage, and the information in
+          <filename>flamethrower.conf</filename> is updated.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Prior to starting each cast, flamethrowerd will check to see if
+          <filename>flamethrower.conf</filename> has been updated.  If it has, it will be re-read.
+          This allows new images to be made available dynamically, without
+          having to restart <filename>flamethrowerd</filename>.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          When an autoinstall client comes up, it checks to see if
+          FLAMETHROWER_DIRECTORY_PORTBASE is set.  This can be set via 
+          "option-143" in <filename>dhcpd.conf</filename>, or via the
+          FLAMETHROWER_DIRECTORY_PORTBASE variable in a local.cfg file.
+          The default value for FLAMETHROWER_DIRECTORY_PORTBASE is 9000.
+        </para>
+        <para>
+          If FLAMETHROWER_DIRECTORY_PORTBASE is set, then the autoinstall client
+          requests directory information from the flamethrower daemon running on
+          port FLAMETHROWER_DIRECTORY_PORTBASE.  The imageserver waits a few 
+          seconds for other clients to join the directory information multicast,
+          then casts out the directory information.  The directory information
+          is a directory of files, one per module, each containing the multicast 
+          details needed to access that particular module.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          When the client receives the Flamethrower directory information, it 
+          will look up the multicast information for each of the following
+          modules, then sequentially join the multicast for each:
+          <orderedlist>
+            <listitem>
+              <para>
+                boel binaries (additional binaries that the autoinstall client
+                needs to continue the install)
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                The entire autoinstall scripts directory
+              </para>
+            </listitem>
+          </orderedlist>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          After receiving the scripts cast, it will find it's autoinstall
+          script, and execute it.  The autoinstall script will proceed with the
+          install by sequentially joining the multicasts for the appropriate
+          image, then for any and all override directories.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          When all casts are received, the client completes the install
+          according to the autoinstall script by configuring the boot loader,
+          and performing it's post install action.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          When the flamethrowerd daemon completes the cast session for a module,
+          it checks for changes in the <filename>flamethrower.conf</filename> 
+          file, re-reads it if necessary, then listens for new clients asking to
+          join the cast for that module.  Casts of seperate modules can happen
+          in parallel.
+        </para>
+      </listitem>
+	</orderedlist>
+  </section>
+
 </chapter>
 
 <!-- Keep this comment at the end of the file
