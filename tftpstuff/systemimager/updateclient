@@ -33,7 +33,9 @@ Usage: updateclient [OPTION]... -imageserver HOSTNAME -image IMAGENAME
 Options: (options can be presented in any order)
  -help                    Display this output.
  -version                 Display version and copyright information.
- -imageserver HOSTNAME    Hostname or IP address of the imageserver.
+ -server HOSTNAME         Hostname or IP address of the imageserver.
+                           (-imageserver is a depricated option and 
+                            will go away soon.)
  -image IMAGENAME         Image from which the client should be updated.
  -directory DIRECTORY     Absolute path of directory to be updated.
                            (defaults to "/")
@@ -58,6 +60,7 @@ GetOptions( "listing" => \$listing,
             "nolilo" => \$nolilo,
             "autoinstall" => \$autoinstall,
             "imageserver=s" => \$imageserver,
+            "server=s" => \$imageserver,
             "image=s" => \$image,
             "directory=s" => \$directory,
 ) or die qq($help_info);
