@@ -36,6 +36,7 @@ use Getopt::Long;
 use SystemImager::Server;
 use SystemImager::Common;
 use SystemImager::Config;
+use SystemImager::Options;
 use vars qw($config $VERSION);
 
 my $config_dir = "/etc/systemimager";
@@ -66,116 +67,18 @@ $program_name = $2;
 $version_info = <<"EOF";
 $program_name (part of SystemImager) v$version_number
 
-Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley\@baldguysoftware.com>
-This is free software; see the source for copying conditions.  There is NO
-warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 EOF
+
+$version_info .= SystemImager::Options->copyright();
 
 $get_help = "          Try \"$program_name -help\" for more options.";
-$help_info = $version_info . <<"EOF";
 
-Usage: $program_name [OPTION]...  -golden-client HOSTNAME -image IMAGENAME
+# set help information
+$help_info = $version_info .  SystemImager::Options->getimage_options_header();
+$help_info = $help_info .  SystemImager::Options->generic_options_help_version();
+$help_info = $help_info .  SystemImager::Options->getimage_options_body();
+$help_info = $help_info .  SystemImager::Options->generic_footer();
 
-Options: (options can be presented in any order and may be abbreviated)
-
- -help                    Display this output.
-
- -version                 Display version and copyright information.
-
- -golden-client HOSTNAME  Hostname or IP address of the \"golden\" client.
-
- -image IMAGENAME         Where IMAGENAME is the name to assign to the 
-                          image you are retrieving.  This can be either
-                          the name of a new image if you want to create
-                          a new image, or the name of an existing image
-                          if you want to update an image.  
-
- -ssh-user USERNAME       Username for ssh connection to the client.
-                          Only needed if a secure connection is required.
-
- -log "STRING"		  Quoted string for log file format.  See the
-			  rsyncd.conf man page for options.
-
- -quiet                   Don\'t ask any questions or print any output
-                          (other than errors). In this mode, no warning
-                          will be given if the image already exists on
-                          the server.
-
- -directory PATH          The full path and directory name where you want
-                          this image to be stored.  The directory bearing
-                          the image name itself will be placed inside the
-                          directory specified here.
-
- -exclude PATH            Don\'t pull the contents of PATH from the 
-                          golden client.  PATH must be absolute (starting 
-			  with a "/").  
-			  
-			  To exclude a single file use:
-			   -exclude /directoryname/filename
-
-                          To exclude a directory and it's contents use:
-                           -exclude /directoryname/
-
-			  To exclude the contents of a directory, but
-			  pull the directory itself use:
-			   -exclude "/directoryname/*"
-
- -exclude-file FILE       Don\'t pull the PATHs specified in FILE from the
-                          golden client.
-
- -update-script [YES|NO]  Update the \$image.master script?  Defaults to 
-                          NO if -quiet.  If not specified you will be
-                          prompted to confirm an update.
-
- -no-listing              Don't show each filename as it is copied over during
-                          install.  This is useful for times when your console
-                          device is slow (e.g. serial console), and is the 
-                          bottleneck of your installation.
-
-The following options affect the autoinstall client after autoinstalling:
-
- -ip-assignment METHOD    Where METHOD can be DHCP, STATIC, or REPLICANT.
-
-                DHCP
-                ----------------------------------------------------------------
-                A DHCP server will assign IP addresses to clients installed with
-                this image.  They may be assigned a different address each time.
-                If you want to use DHCP, but must ensure that your clients
-                receive the same IP address each time, see "man mkdhcpstatic".
-
-                STATIC
-                ----------------------------------------------------------------
-                The IP address the client uses during autoinstall will be
-                permanently assigned to that client.
-
-                REPLICANT
-                ----------------------------------------------------------------
-                Don't mess with the network settings in this image.  I'm using
-                it as a backup and quick restore mechanism for a single machine.
-
-
- -post-install ACTION     Where ACTION can be BEEP, REBOOT, or SHUTDOWN.
-
-                BEEP 
-                ----------------------------------------------------------------
-                Clients will beep incessantly after succussful completion of an
-                autoinstall.  (default)
-
-                REBOOT 
-                ----------------------------------------------------------------
-                Clients will reboot themselves after successful completion of 
-                an autoinstall.
-
-                SHUTDOWN 
-                ----------------------------------------------------------------
-                Clients will halt themselves after successful completion of an 
-                autoinstall.
-
-
-Download, report bugs, and make suggestions at:
-http://systemimager.org/
-EOF
-    
 
 my $golden_client;
 my $imageserver;

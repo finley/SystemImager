@@ -14,9 +14,36 @@ use strict;
 #
 # Subroutines in this module include:
 #
-#   XXX grep me for ^sub
+#   copyright
+#   generic_footer
+#   generic_options_help_version
+#   getimage_options_body
+#   getimage_options_header
+#   pushupdate_options_body
+#   pushupdate_options_header
+#   updateclient_options_body
+#   updateclient_options_header
+#
 #
 ################################################################################
+
+
+#
+# Usage:
+#
+#   $version_info .= SystemImager::Options->copyright();
+#
+sub copyright {
+
+return << "EOF";
+Copyright (C) 1999-2003 Brian Elliott Finley <brian\@bgsw.net>
+Please see CREDITS for a full list of contributors.
+
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+EOF
+}
 
 
 #
@@ -29,6 +56,20 @@ sub pushupdate_options_header {
 return << "EOF";
 Usage: pushupdate [OPTION]... --client HOSTNAME   --server HOSTNAME --image IMAGENAME --updateclient-options "[OPTION]..."
   or   pushupdate [OPTION]... --clients-file FILE --server HOSTNAME --updateclient-options "[OPTION]..."
+
+EOF
+}
+
+
+#
+# Usage:
+#
+#   $help = $help . SystemImager::Options->getimage_options_header();
+#
+sub getimage_options_header {
+
+return << "EOF";
+Usage: getimage [OPTION]...  --golden-client HOSTNAME --image IMAGENAME
 
 EOF
 }
@@ -51,9 +92,9 @@ EOF
 #
 # Usage:
 #
-#   $help = $help . SystemImager::Options->generic_options_help_version_header();
+#   $help = $help . SystemImager::Options->generic_options_help_version();
 #
-sub generic_options_help_version_header {
+sub generic_options_help_version {
 
 return << "EOF";
 Options:
@@ -84,6 +125,7 @@ return << "EOF";
  --clients-file FILE
     Read host names and images to process from FILE.  Image names in this file
     will override an imagename specified as part of --updateclient-options. 
+
     File format is:
 
         client1     imagename
@@ -101,9 +143,9 @@ return << "EOF";
     specified with --clients-file.
     
  --range N-N
-    Number range used to create a series of host names based on the -client
-    option.  For example, "-client www -range 1-3" will cause pushupdate to use
-    www1, www2, and www3 as host names.  If no -range is given with -client, 
+    Number range used to create a series of host names based on the --client
+    option.  For example, "--client www --range 1-3" will cause pushupdate to use
+    www1, www2, and www3 as host names.  If no --range is given with --client, 
     then pushupdate assumes that only one client is to be updated.
 
  --domain DOMAINNAME
@@ -119,7 +161,7 @@ return << "EOF";
     instruction.
 
  --ssh-user USERNAME
-    Username for ssh connection _to_ the client.  Seperate from updateclient\'s
+    Username for ssh connection _to_ the client.  Seperate from updateclient's
     --ssh-user option.
 
  --log "STRING"
@@ -196,6 +238,101 @@ EOF
 #
 # Usage:
 #
+#   $help = $help . SystemImager::Options->getimage_options_body();
+#
+sub getimage_options_body {
+
+return << "EOF";
+ --golden-client HOSTNAME
+    Hostname or IP address of the \"golden\" client.
+
+ --image IMAGENAME
+    Where IMAGENAME is the name to assign to the image you are retrieving.
+    This can be either the name of a new image if you want to create a new
+    image, or the name of an existing image if you want to update an image.
+
+ --ssh-user USERNAME
+    Username for ssh connection to the client.  Only needed if a secure
+    connection is required.
+
+ --log "STRING"
+    Quoted string for log file format.  See \"man rsyncd.conf\" for options.
+
+ --quiet
+    Don\'t ask any questions or print any output (other than errors). In this
+    mode, no warning will be given if the image already exists on the server.
+
+ --directory PATH
+    The full path and directory name where you want this image to be stored.
+    The directory bearing the image name itself will be placed inside the
+    directory specified here.
+
+ --exclude PATH
+    Don\'t pull the contents of PATH from the golden client.  PATH must be
+    absolute (starting with a "/").  
+			  
+    To exclude a single file use:
+        --exclude /directoryname/filename
+
+    To exclude a directory and it's contents use:
+        --exclude /directoryname/
+
+    To exclude the contents of a directory, but pull the directory itself use:
+        --exclude "/directoryname/*"
+
+ --exclude-file FILE
+    Don\'t pull the PATHs specified in FILE from the golden client.
+
+ --update-script [YES|NO]
+    Update the \$image.master script?  Defaults to NO if --quiet.  If not
+    specified you will be prompted to confirm an update.
+
+ --no-listing
+    Don't show each filename as it is copied over during install.  This is
+    useful for times when your console device is slow (e.g. serial console),
+    and is the bottleneck of your installation.
+
+The following options affect the autoinstall client after autoinstalling:
+
+ --ip-assignment METHOD
+    Where METHOD can be DHCP, STATIC, or REPLICANT.
+
+    DHCP
+        A DHCP server will assign IP addresses to clients installed with this
+        image.  They may be assigned a different address each time.  If you
+        want to use DHCP, but must ensure that your clients receive the same
+        IP address each time, see "man mkdhcpstatic".
+
+    STATIC
+        The IP address the client uses during autoinstall will be permanently
+        assigned to that client.
+
+    REPLICANT
+        Don't mess with the network settings in this image.  I'm using it as a
+        backup and quick restore mechanism for a single machine.
+
+ --post-install ACTION
+    Where ACTION can be BEEP, REBOOT, or SHUTDOWN.
+
+    BEEP 
+        Clients will beep incessantly after succussful completion of an
+        autoinstall.  (default)
+
+    REBOOT 
+        Clients will reboot themselves after successful completion of an
+        autoinstall.
+
+    SHUTDOWN 
+        Clients will halt themselves after successful completion of an
+        autoinstall.
+
+EOF
+}
+
+
+#
+# Usage:
+#
 #   $help = $help . SystemImager::Options->generic_footer();
 #
 sub generic_footer {
@@ -206,6 +343,8 @@ http://systemimager.org/
 
 EOF
 }
+
+
 
 return 1;
 
