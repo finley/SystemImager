@@ -3,9 +3,9 @@
 # "SystemImager" 
 #
 #  Copyright (C) 1999-2001 Brian Elliott Finley 
-#                          <brian.finley@baldguysoftware.com>
-#  Copyright (C) 2002 Bald Guy Software 
-#                     <brian.finley@baldguysoftware.com>
+#                          <brian@bgsw.net>
+#  Copyright (C) 2002-2003 Bald Guy Software 
+#                          <brian@bgsw.net>
 #
 #  $Id$
 #
@@ -60,13 +60,13 @@ write_variables() {
     # pass all variables set here on to the hostname.sh script
     rm -f /tmp/variables.txt
   
-    echo "HOSTNAME=$HOSTNAME" 	        	>> /tmp/variables.txt
-    echo "DOMAINNAME=$DOMAINNAME"         	>> /tmp/variables.txt
+    echo "HOSTNAME=$HOSTNAME"               >> /tmp/variables.txt
+    echo "DOMAINNAME=$DOMAINNAME"           >> /tmp/variables.txt
   
-    echo "DEVICE=$DEVICE" 	            	>> /tmp/variables.txt
-    echo "IPADDR=$IPADDR" 	            	>> /tmp/variables.txt
-    echo "NETMASK=$NETMASK" 	            	>> /tmp/variables.txt
-    echo "NETWORK=$NETWORK" 	            	>> /tmp/variables.txt
+    echo "DEVICE=$DEVICE"                   >> /tmp/variables.txt
+    echo "IPADDR=$IPADDR"                   >> /tmp/variables.txt
+    echo "NETMASK=$NETMASK"                 >> /tmp/variables.txt
+    echo "NETWORK=$NETWORK"                 >> /tmp/variables.txt
     echo "BROADCAST=$BROADCAST"       		>> /tmp/variables.txt
   
     echo "GATEWAY=$GATEWAY"                   >> /tmp/variables.txt
@@ -75,11 +75,13 @@ write_variables() {
     echo "IMAGESERVER=$IMAGESERVER"       	>> /tmp/variables.txt
     echo "IMAGENAME=$IMAGENAME"               >> /tmp/variables.txt
   
-    echo "LOG_SERVER=$LOG_SERVER"         	>> /tmp/variables.txt
+    echo "LOG_SERVER=$LOG_SERVER"               >> /tmp/variables.txt
     echo "LOG_SERVER_PORT=$LOG_SERVER_PORT" 	>> /tmp/variables.txt
-  
+ 
     echo "SSH_USER=$SSH_USER"	            	>> /tmp/variables.txt
     echo "SSH_DOWNLOAD_URL=$SSH_DOWNLOAD_URL"	>> /tmp/variables.txt
+
+    echo "MCAST_GROUP=$MCAST_GROUP"	           	>> /tmp/variables.txt
 }
 #
 ################################################################################
@@ -130,6 +132,10 @@ get_boel_binaries_tarball() {
         # If we're using SSH, get the boel_binaries from a web server.
         echo "SSH_DOWNLOAD_URL variable is set, so we will install over SSH!"
 
+        if [ ! -z $MCAST_GROUP ]; then
+            echo "MCAST_GROUP is also set, but being conservative and proceeding with SSH."
+        fi
+
         # Remove possible trailing / from URL
         SSH_DOWNLOAD_URL=`echo $SSH_DOWNLOAD_URL | sed 's/\/$//'`
 
@@ -137,6 +143,15 @@ get_boel_binaries_tarball() {
         CMD="wget ${SSH_DOWNLOAD_URL}/${ARCH}/${FLAVOR}/boel_binaries.tar.gz"
         echo "$CMD"
         $CMD || shellout
+
+    elif [ ! -z $MCAST_GROUP ]; then
+        # If we're using MCAST, get the boel_binaries using the specified group number
+        echo "MCAST_GROUP variable is set, so we will use NetCast!"
+
+        CMD="netcast-client ${IMAGESERVER} ${MCAST_GROUP} > /tmp/boel_binaries.tar.gz"
+        echo "$CMD"
+        $CMD || shellout
+
     else
         # Unless we're using SSH, use rsync
         CMD="rsync -av ${IMAGESERVER}::boot/${ARCH}/${FLAVOR}/boel_binaries.tar.gz /tmp/"
