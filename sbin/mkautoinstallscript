@@ -135,7 +135,9 @@ GetOptions(
     "force"             => \my $force,
     "update=s"          => \my $update,
     "post-install=s"    => \$post_install,
-    "no-listing"        => \$no_listing
+    "no-listing"        => \$no_listing,
+    "raidtab=s"         => \$raidtab  # XXX remove when raidtab 
+                                      # is in aiscript.conf
 ) || die "$help_info";
 
 
@@ -175,6 +177,11 @@ my $imagedir = SystemImager::Server->get_image_path( $rsync_stub_dir, $image );
 unless ($imagedir) { 
     print qq(\nFATAL: Image "$image" doesn't appear to exist!\n\n);
     exit 1;
+}
+
+## XXX remove when raidtab is included in autoinstallscript.conf
+if (!$raidtab and -f "$imagedir/etc/raidtab") {
+    $raidtab = "$imagedir/etc/raidtab";
 }
 
 # If an autoinstallscript was specified, make sure it exists.
@@ -225,7 +232,8 @@ SystemImager::Server->create_autoinstall_script(
 	$ip_assignment_method,
 	$post_install,
     $no_listing,
-    $auto_install_script_conf
+    $auto_install_script_conf,
+    $raidtab  ## XXX removed when raidtab is included in autoinstallscript.conf
 );
 ### END create a fresh master autoinstall script ###
 

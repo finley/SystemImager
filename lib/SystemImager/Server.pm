@@ -704,11 +704,12 @@ sub dev_to_devfs {
 # and write filesystem creation commands to the autoinstall script. -BEF-
 #
 # Usage:
-# _write_out_mkfs_commands( $image_dir, $auto_install_script_conf );
+# _write_out_mkfs_commands( $out, $image_dir, 
+#                           $auto_install_script_conf, $raid);
 #
 sub _write_out_mkfs_commands {
-
-    my ($out, $image_dir, $file) = @_;
+    ## XXX remove $raidtab when it is specified in autoinstallscript.conf
+    my ($out, $image_dir, $file, $raidtab) = @_;
 
     my $xml_config = XMLin($file, keyattr => { fsinfo => "+line" }, forcearray => 1 );
 
@@ -729,14 +730,19 @@ sub _write_out_mkfs_commands {
         }
     }
 
-    if ($software_raid) {
+    if ($software_raid or $raidtab) {
 
 	# XXX at some point, we want to include this in the autoinstallscript.conf
 	# file.  We should also look at the format and write functions for that 
 	# same file. -BEF-
         print $out qq(# /etc/raidtab that will be used for creating software RAID devices on client(s).\n);
         print $out qq(cat <<'EOF' > /etc/raidtab\n);
-        my $raidtab = $image_dir . "/etc/raidtab";
+        if (!$raidtab) {
+            $raidtab = $image_dir . "/etc/raidtab";
+        }
+        if (! -f $raidtab) {
+            croak("$file contains raid devices but the raidtab file $raidtab is not a regular file.\n");
+        }
         open(FILE,"<$raidtab") or croak("Couldn't open $raidtab for reading.");
             while (<FILE>) {
                 print $out $_;
@@ -1220,7 +1226,7 @@ sub create_autoinstall_script{
         $post_install,
         $no_listing,
         $auto_install_script_conf,
-        $ssh_user
+        $raidtab
     ) = @_;
 
     my $cmd;
@@ -1269,7 +1275,8 @@ sub create_autoinstall_script{
 	  if (/^\s*${delim}CREATE_FILESYSTEMS${delim}\s*$/) {
 	      _write_out_mkfs_commands( $MASTER_SCRIPT, 
 					$image_dir, 
-					$auto_install_script_conf );
+					$auto_install_script_conf,
+					$raidtab );
 	      last SWITCH;
 	  }
 	  if (/^\s*${delim}GENERATE_FSTAB${delim}\s*$/) {
