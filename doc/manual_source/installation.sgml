@@ -9,7 +9,7 @@
       system you have customized to work exactly the way you want.  You can 
       re-compile the kernel, install custom software, and do any 
       configuration file tweaking you like.
-      The <command>getimage</command> command pulls the golden image to the
+      The <command>si_getimage</command> command pulls the golden image to the
       image server for deployment to other systems.
     </para>
     <para>
@@ -291,14 +291,14 @@
     <section>
       <title>Regenerating autoinstallscripts</title>
       <para>
-        With each release of SystemImager, use the <command>mkautoinstallscript</command> 
+        With each release of SystemImager, use the <command>si_mkautoinstallscript</command> 
 	  command to update the autoinstall scripts stored in 
 	  <filename>/var/lib/systemimager/scripts</filename>.  Installations using 
 	  older scripts may fail.
       </para>
       <warning>
         <para>
-          <command>mkautoinstallscript</command> overwrites the 
+          <command>si_mkautoinstallscript</command> overwrites the 
           pre-existing script for an image.  If you make any changes to 
           your autoinstall scripts (also known as .master scripts),
           backup those scripts to forward port your changes to the new
@@ -324,15 +324,15 @@
         <filename>/etc/systemimager/rsyncd.conf</filename> could
         be made within the file, but were susceptible to upgrade issues.  With version
         3.0.0, you can make these changes in a separate file that is maintained
-        across upgrades.  See the mkrsyncd_conf(8) man page for details.
+        across upgrades.  See the si_mkrsyncd_conf(8) man page for details.
       </para>
     </section>
     <section>
       <title>Regenerating boot media</title>
       <para>
         Each time you upgrade Systemimager, you must also upgrade the boot
-	media you use to boot the autoinstall system.  Use <command>mkautoinstallcd</command> 
-	or <command>mkautoinstalldiskette</command> to regenerate removable media.  
+	media you use to boot the autoinstall system.  Use <command>si_mkautoinstallcd</command> 
+	or <command>si_mkautoinstalldiskette</command> to regenerate removable media.  
 	If you network boot, update the files in your /tftpboot directory and pass
 	all necessary options to the kernel. These options occasionally change - check 
 	/etc/systemimager/pxelinux.cfg/syslinux.cfg for examples.

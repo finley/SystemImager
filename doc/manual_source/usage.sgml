@@ -29,29 +29,29 @@
 
 	<listitem>
 	<para>
-	Run the <command>prepareclient</command> command on your golden client.
+	Run the <command>si_prepareclient</command> command on your golden client.
 	</para>
       </listitem>
 
 	<listitem>
 	<para>
 	Choose and configure the method for assigning IP addresses to your autoinstall
-	clients.  This information is required for the <command>getimage</command> command
+	clients.  This information is required for the <command>si_getimage</command> command
 	in the next step; however, you can change these settings later by running
-	the <command>mkautoinstallscript</command> command.
+	the <command>si_mkautoinstallscript</command> command.
 	</para>
 
 	</listitem>
 	<listitem>
 	<para>
-	Run <command>getimage</command> on the image server to pull the golden
+	Run <command>si_getimage</command> on the image server to pull the golden
 	client to the image server.
 	</para>
 	</listitem>
 
 	<listitem>
 	<para>
-	Run <command>addclients</command> on the image server to tell it which clients will
+	Run <command>si_addclients</command> on the image server to tell it which clients will
 	receive what image and to populate the image server's <filename>/etc/hosts</filename>
 	and <filename>/var/lib/systemimager/scripts/hosts</filename> file.
 	</para>
@@ -109,10 +109,10 @@
 	<listitem>
 	    <para>
 	      On the golden client, run the command
-	      <command>prepareclient</command> as root.  This will create
+	      <command>si_prepareclient</command> as root.  This will create
 	      various files in your /etc/systemimager directory that contain
 	      information on your disk partition scheme, filesystem types, etc.
-	      <command>prepareclient</command> will also start an rsync daemon
+	      <command>si_prepareclient</command> will also start an rsync daemon
 	      to allow its files to be transferred to a server.  Your golden client 
 		is now ready to have its image pulled by an image server.
 	    </para>
@@ -139,14 +139,14 @@
 	  The most common way to assign IP addresses to autoinstall clients is
 	  DHCP.  To simplify the configuration of the DHCP configuration file
 	  (<filename>/etc/dhcpd.conf</filename>), SystemImager includes a
-	  utility called <command>mkdhcpserver</command>.  
+	  utility called <command>si_mkdhcpserver</command>.  
 	  This utility asks you for all the information it needs 
 	  to create a DHCP configuration file that 
 	  is appropriate for your installation of SystemImager.  After installation, you can 
 	  use DHCP to assign static IP addresses to your clients on
 	  an ongoing basis by running the 
-	  <command>mkdhcpstatic</command> command after your
-	  clients have booted and received an IP address.  <command>mkdhcpstatic</command>
+	  <command>si_mkdhcpstatic</command> command after your
+	  clients have booted and received an IP address.  <command>si_mkdhcpstatic</command>
 	  will modify your <filename>/etc/dhcpd.conf</filename>
 	  file on the imageserver to include static entries for each of your
 	  hosts.
@@ -185,7 +185,7 @@
 
 	<para>
 	  Alternatively, if you are using a running system's hard drive as the boot media, you can run 
-	  <command>updateclient -autoinstall -server &lt;imageserver&gt; -configure-from eth0
+	  <command>si_updateclient -autoinstall -server &lt;imageserver&gt; -configure-from eth0
 	  </command>, which will create a <filename>local.cfg</filename> file at the root of the client's hard
 	  drive containing the existing live network settings. When the autoinstall client 
 	  boots, it will look for this file and use the provided values instead of getting 
@@ -206,9 +206,9 @@
 	  </para>
 
 	<example>
-	  <title>Running mkdhcpserver</title>
+	  <title>Running si_mkdhcpserver</title>
 	  <programlisting>
-[root@imageserver]# mkdhcpserver
+[root@imageserver]# si_mkdhcpserver
 	  </programlisting>
 	</example>
 
@@ -230,7 +230,7 @@
 	    Minimum uniqueness means that if two options for a single 
 	    command are similar, such as the <parameter>-image</parameter>
 	    and <parameter>-ip-assignment</parameter> options to
-	    <command>getimage,</command> you can abbreviate them to
+	    <command>si_getimage,</command> you can abbreviate them to
 	    <parameter>-im</parameter> and <parameter>-ip</parameter>.
 	  </para>
 	  <programlisting>
@@ -273,7 +273,7 @@ IMAGESERVER=192.168.1.203
 
       <listitem>
 	<para>
-	  Run <command>getimage</command> on the image server to pull the image
+	  Run <command>si_getimage</command> on the image server to pull the image
 	  from the golden client to the image server.
 	</para>
 	
@@ -295,26 +295,26 @@ IMAGESERVER=192.168.1.203
 	</example>
 	
 	<para>
-	  The basic syntax is: "<command>getimage</command> <command>-golden-client</command> [client_hostname] <command>-image</command> [image_name]"
+	  The basic syntax is: "<command>si_getimage</command> <command>-golden-client</command> [client_hostname] <command>-image</command> [image_name]"
 	</para>
 	<para>
 	  Where [client_hostname] is the hostname or IP address of the
 	  "golden client" and [image_name] is the name you want to give
 	  to this image.  You can see many other options with
-	  "<command>man getimage</command>."
+	  "<command>man si_getimage</command>."
 	</para>
 	
 	<example>
-	  <title>Running getimage</title>
+	  <title>Running si_getimage</title>
 	  <programlisting>
-	    [root@imageserver]# getimage -golden-client my-golden-client -image web_server_image_v1
+	    [root@imageserver]# si_getimage -golden-client my-golden-client -image web_server_image_v1
 	  </programlisting>
 	</example>
 
-	<para><command>getimage</command> contacts the golden client and
+	<para><command>si_getimage</command> contacts the golden client and
 	  requests its <filename>/etc/systemimager/mounted_filesystems</filename> file,
 	  which contains the list of mounted filesystems and their mount
-	  points.  <command>getimage</command> pulls out the mount points for the filesystems that
+	  points.  <command>si_getimage</command> pulls out the mount points for the filesystems that
 	  are unsupported and creates an exclusion list.  The filesystems
 	  SystemImager currently supports are ext2, ext3 and reiserfs.
 	  All other filesytems will be ignored, including proc, nfs,
@@ -324,22 +324,22 @@ IMAGESERVER=192.168.1.203
       
       <listitem>
         <para>
-          <command>addclients</command> creates a symbolic link to the master 
+          <command>si_addclients</command> creates a symbolic link to the master 
           script for the image to which each specified autoinstall client is 
-          assigned.  <command>addclients</command> also
+          assigned.  <command>si_addclients</command> also
 	  populates the image server's <filename>/etc/hosts</filename> and 
 	  <filename>/var/lib/systemimager/scripts/hosts</filename> files.  The
 	  hosts file provides the default mechanism used by autoinstall clients
 	  to look up their hostnames.
 	</para>
 	<para>
-	  When <command>addclients</command> is run without arguments, it 
+	  When <command>si_addclients</command> is run without arguments, it 
 	  takes you through three configuration screens interactively.
 	</para>
 	<orderedlist>
 	  <listitem>
 	    <para>
-	      In the first configuration screen <command>addclients</command>,
+	      In the first configuration screen <command>si_addclients</command>,
 		asks you to specify the hostname pattern of your autoinstall clients.  
 		Autoinstall client hostnames are comprised
 		of [basename][number].
@@ -364,18 +364,18 @@ IMAGESERVER=192.168.1.203
 	    </para>
 	    <note>
 	      <para>
-		Each invocation of <command>addclients</command> allows you
+		Each invocation of <command>si_addclients</command> allows you
 		to map a single range of clients to an image.
 		If you want to map non-consecutive ranges of clients to an
 		image, or want to map different client ranges to different
 		images, you must execute the
-		<command>addclients</command> command multiple times.
+		<command>si_addclients</command> command multiple times.
 	      </para>
 	    </note>
 	  </listitem>
 	  <listitem>
 	    <para>
-	      In the third configuration screen, the <command>addclients</command> command asks
+	      In the third configuration screen, the <command>si_addclients</command> command asks
 	      you for a range of IP addresses from which it populates your
 	      <filename>/etc/hosts</filename> and
 	      <filename>/var/lib/systemimager/scripts/hosts</filename> files.
@@ -387,9 +387,9 @@ IMAGESERVER=192.168.1.203
 		step; however, it is recommended to complete it because it is more robust.
 	    </para>
 	<example>
-	  <title>Entries in /etc/hosts created by addclients</title>
+	  <title>Entries in /etc/hosts created by si_addclients</title>
         <para>
-          If you give <command>addclients</command>
+          If you give <command>si_addclients</command>
           a range of IPs from 192.168.1.1-192.168.1.99, a base
           hostname server, and a hostname extension range of 1-99,
           then it would generate the following <filename>/etc/hosts</filename>
@@ -436,7 +436,7 @@ IMAGESERVER=192.168.1.203
 	    </para>
 	    
 	    <para>
-	      Run <command>mkautoinstalldiskette</command> to create an
+	      Run <command>si_mkautoinstalldiskette</command> to create an
 	      autoinstall diskette that you can use with any
 	      machine unless you add a customized
 	      <filename>/local.cfg</filename> file to the diskette.
@@ -448,7 +448,7 @@ IMAGESERVER=192.168.1.203
 	    </para>
 	    
 	    <para>
-	      Run <command>mkautoinstallcd</command> to create an ISO image
+	      Run <command>si_mkautoinstallcd</command> to create an ISO image
 	      that can be burned to CDROM.  You can use the CDROM to boot
 	      your autoinstall clients and use it with any machine.
 	    </para>
@@ -462,7 +462,7 @@ IMAGESERVER=192.168.1.203
 	    <para>
 	      If your client is already running Linux and uses LILO as its
 	      boot loader, you can simply copy the
-	      <command>updateclient</command> command and run it with the
+	      <command>si_updateclient</command> command and run it with the
 	      <parameter>-autoinstall</parameter> option.
 	    </para>
 	    <example>
@@ -488,20 +488,20 @@ IMAGESERVER=192.168.1.203
 	      consistent.  If you must boot without physically touching
 	      your machines, try the
 	      <parameter>-autoinstall</parameter> option to
-	      <command>updateclient</command> first.
+	      <command>si_updateclient</command> first.
 	    </para>
 	    
 	    <para>
               <application>SystemImager</application> comes with the
-	      <command>mkbootserver</command> utility to help configure a
-              PXE server.  Running <command>mkbootserver</command> is an
+	      <command>si_mkbootserver</command> utility to help configure a
+              PXE server.  Running <command>si_mkbootserver</command> is an
 	      iterative process.  It will attempt to generate an appropriate
 	      tftproot directory, configure your tftp server, and run various
 	      tests to see if things are functioning properly.  Once
-	      <command>mkbootserver</command> detects an error, it will fail
+	      <command>si_mkbootserver</command> detects an error, it will fail
 	      out and generate an error message.  When you have corrected the error, you can
-	      re-execute <command>mkbootserver</command>, and repeat until it exits successfully.
-	      <command>mkbootserver</command> will probably not work with all PXE
+	      re-execute <command>si_mkbootserver</command>, and repeat until it exits successfully.
+	      <command>si_mkbootserver</command> will probably not work with all PXE
 	      clients.  If it fails to work with your configuration, please
 	      submit a bug report to http://sourceforge.net/tracker/?group_id=259&amp;atid=100259.
 	    </para>
@@ -516,11 +516,11 @@ IMAGESERVER=192.168.1.203
     <section>
       <title>SystemImager Tools</title>
       <section>
-	<title>the <command>prepareclient</command> command</title>
+	<title>the <command>si_prepareclient</command> command</title>
 	<itemizedlist>
 	  <listitem>
 	    <para>
-	    After configuring the golden client, run the <command>prepareclient</command> command 
+	    After configuring the golden client, run the <command>si_prepareclient</command> command 
 	    to create a file with the partition information from your disks and put it in the 
 	    <filename>/etc/systemimager/partitionschemes</filename> directory. 
 	    </para>
@@ -528,7 +528,7 @@ IMAGESERVER=192.168.1.203
 	  
 	  <listitem>
 	    <para>
-	      <command>prepareclient</command> will also create an rsync(1) configuration file (/tmp/rsyncd.conf) and start 
+	      <command>si_prepareclient</command> will also create an rsync(1) configuration file (/tmp/rsyncd.conf) and start 
 	      rsync in server mode (rsync--daemon).  This step allows the image server to pull the image 
 	      from the client but will not cause the rsync daemon to be restarted after the golden 
 	      client is rebooted, helping avoid security concerns from sharing a golden client's root 
@@ -539,18 +539,18 @@ IMAGESERVER=192.168.1.203
 	</section>
 
 	<section>
-	<title>The <command>getimage</command> command</title>
+	<title>The <command>si_getimage</command> command</title>
 	<itemizedlist>
 	  <listitem>
 	    <para>
-	      After running <command>prepareclient</command>, run the the <command>getimage</command>
+	      After running <command>si_prepareclient</command>, run the the <command>si_getimage</command>
 	      command on the image server. For example :
-	      <command>getimage -golden-client 192.168.1.1 -image my_webserver_image_v1</command>
+	      <command>si_getimage -golden-client 192.168.1.1 -image my_webserver_image_v1</command>
 	    </para>
 	  </listitem>
 	  <listitem>
 	    <para>
-	      <command>getimage</command> contacts the golden client and requests its 
+	      <command>si_getimage</command> contacts the golden client and requests its 
 	      <filename>/etc/systemimager/mounted_filesystems</filename> 
 	      file, which contains the list of mounted filesystems and the devices on which they are 
 	      mounted.  It pulls out the mount points for the filesystems that are unsupported and 
@@ -562,7 +562,7 @@ IMAGESERVER=192.168.1.203
 	  </listitem>
 	  <listitem>
 	    <para>
-	      <command>getimage</command> then pulls the golden client's entire system image, excluding the filesystems 
+	      <command>si_getimage</command> then pulls the golden client's entire system image, excluding the filesystems 
 	      in the exclusion list, by connecting to the rsync daemon running on the golden client.  
 	      All the files from the client will be copied over, recreating the file and directory 
 	      hierarchy in the image directory.
@@ -570,17 +570,17 @@ IMAGESERVER=192.168.1.203
 	  </listitem>
 	  <listitem>
 	    <para>
-	      You can also use <command>getimage</command> to update an existing image by simply specifying an 
+	      You can also use <command>si_getimage</command> to update an existing image by simply specifying an 
 	      existing image name, for example,
-	      <command>getimage -golden-client 192.168.1.1. -image &lt;imagename&gt;.</command>
-	      <command> getimage</command> then updates the image to match the files on your golden client. 
+	      <command>si_getimage -golden-client 192.168.1.1. -image &lt;imagename&gt;.</command>
+	      <command> si_getimage</command> then updates the image to match the files on your golden client. 
 	      When you do this, only the parts of files that are different will be copied over.  Files that exist 
 	      in the old image but not on the golden client will be deleted, and files that exist in both places but have 
-	      changed will be updated.  <command>getimage</command> is one way to update an image when new 
+	      changed will be updated.  <command>si_getimage</command> is one way to update an image when new 
 	      security patches or other system updates come out. However, this method is revision control on an 
 	      image-by-image basis, and not true revision control where individual file revisions are 
 	      tracked on a line-by-line basis. The recommended method is never to overwrite a known 
-	      working image. Revision control on an image-by-image basis also ties in to the <command>updateclient</command>
+	      working image. Revision control on an image-by-image basis also ties in to the <command>si_updateclient</command>
 	      command.  By default, all images are stored in the parent directory of 
 	      <filename>/var/lib/systemimager/images/</filename> in a directory that bears the 
 	      image name. For example: <filename>/var/lib/systemimager/images/my_webserver_image_v1/</filename>
@@ -594,7 +594,7 @@ IMAGESERVER=192.168.1.203
 	<itemizedlist>
 	  <listitem>
 	    <para>
-	      After <command>getimage</command> has pulled the files to the image directory on the imageserver, it creates 
+	      After <command>si_getimage</command> has pulled the files to the image directory on the imageserver, it creates 
 	      a customized autoinstall script.  The autoinstall script in this example is named 
 	      "my_webserver_image_v1.master".  All autoinstall scripts are placed in the 
 	      <filename>/var/lib/systemimager/scripts</filename> directory.
@@ -602,7 +602,7 @@ IMAGESERVER=192.168.1.203
 	  </listitem>
 	  <listitem>
 	    <para>
-	      The disk partitioning information left behind by the <command>prepareclient</command> command adds 
+	      The disk partitioning information left behind by the <command>si_prepareclient</command> command adds 
 	      the necessary commands to re-partition the disk(s) on the autoinstall clients.
 	      </para>
 	  </listitem>
@@ -612,7 +612,7 @@ IMAGESERVER=192.168.1.203
 	    <filename>/var/lib/systemimager/images/my_webserver_image_v1/etc/fstab)</filename> 
 	      and used to determine the appropriate file system creation commands and to determine 
 	      mount points for the autoinstall process. Networking information is added to the 
-	      autoinstall script based on command line options passed to <command>getimage</command> or information it 
+	      autoinstall script based on command line options passed to <command>si_getimage</command> or information it 
 	      prompts you for.  This information is added in variable form as the autoinstall client will 
 	      determine the values for things such as its hostname and IP address during the autoinstall 
 	      process.
@@ -622,14 +622,14 @@ IMAGESERVER=192.168.1.203
       </section>
       
       <section>
-	<title>The <command>addclients</command> Command</title>
+	<title>The <command>si_addclients</command> Command</title>
 	<itemizedlist>
 	  <listitem>
 	    <para>
-	      After running <command>getimage</command>, run the <command>addclients</command> command, 
+	      After running <command>si_getimage</command>, run the <command>si_addclients</command> command, 
 	      which asks you for the series of hostnames you will be installing by combining a base host name and a number 
 	      range.  For example, if your base host name is "www", and your number range is from "1" 
-	      to "3," then the resultant host names would be "www1, www2, www3". <command>addclients</command> 
+	      to "3," then the resultant host names would be "www1, www2, www3". <command>si_addclients</command> 
 	      then prompts you to choose the image that will be installed to these hosts and creates soft 
 	      links for each hostname that point to the master autoinstall script for that image. For 
 	      example: "www3.sh -> web_server_image_v1.master".
@@ -637,7 +637,7 @@ IMAGESERVER=192.168.1.203
 	  </listitem>
 	  <listitem>
 	    <para>
-	      If the image is updated and you allow <command>getimage</command> to update the master autoinstall script 
+	      If the image is updated and you allow <command>si_getimage</command> to update the master autoinstall script 
 	      also, then each of the associated soft links will point to the updated autoinstall script.  If 
 	      individual host configuration is necessary, the soft link for that host can be removed and 
 	      replaced with a copy of the master autoinstall script that can then be customized for that 
@@ -661,7 +661,7 @@ IMAGESERVER=192.168.1.203
 	      system's local hard drive.
 	    </para>
 	    <para>
-	      The <command>mkautoinstalldiskette</command> and <command>mkautoinstallcd</command> commands 
+	      The <command>si_mkautoinstalldiskette</command> and <command>si_mkautoinstallcd</command> commands 
 	      use the <command>syslinux(2)</command> utility to create floppies and CDROMs that will boot the 
 	      SystemImager kernel and initial ram disk. <command>pxelinux(2)</command>, 
 	      which is a sister tool to <command>syslinux</command>, allows the same kernel and initial ram disk to 
@@ -718,11 +718,11 @@ IMAGESERVER=192.168.1.203
 	      </listitem>
 	      <listitem>
 		<para>
-		  Run the <command>getimage</command> command again, specifying a golden client that has been modified 
+		  Run the <command>si_getimage</command> command again, specifying a golden client that has been modified 
 		  in the desired way.  Again, only the parts of the files that have changed will be pulled across.  
 		  Files that have been deleted on the golden client will also be deleted in the image. You have the 
 		  option to update the master autoinstall script for the image or leave it alone.  The advantages of running the 
-		  <command>getimage</command> command are that you can verify that your new configuration works on the golden client 
+		  <command>si_getimage</command> command are that you can verify that your new configuration works on the golden client 
 		  and that the master autoinstall script is updated.
 		</para>
               </listitem>
@@ -730,23 +730,23 @@ IMAGESERVER=192.168.1.203
 	  </listitem>
 	    <listitem>
 	      <para>
-		Once a system has been autoinstalled, you can use the <command>updateclient</command> 
+		Once a system has been autoinstalled, you can use the <command>si_updateclient</command> 
 		  command to update a client system to match a new or updated image on the image server. So, for 
 		  example, if you've installed your company's 300 web servers and a security patch comes 
 		  out the next day, you can simply update the image on the image server and run 
-		  <command>updateclient</command> on each of your web servers.  Only the modified files are pulled over, 
+		  <command>si_updateclient</command> on each of your web servers.  Only the modified files are pulled over, 
 		  so your site is patched very quickly. You should create an entirely new image with a new 
 		  version number so that you have some form of revision control.  This way, if you find out 
 		  that the patch you applied corrupted your entire web farm, you can simply do an 
-		  <command>updateclient</command> back to the last known working image.
+		  <command>si_updateclient</command> back to the last known working image.
 	      </para>
 	    </listitem>
 	    <listitem>
 	      <para>
 		  By incorporating some modifications submitted by A. L. Lambert of epicRealm, you can 
-		  use the <command>updateclient</command> command with the <option>-autoinstall</option> option to copy the 
+		  use the <command>si_updateclient</command> command with the <option>-autoinstall</option> option to copy the 
 		  autoinstall kernel and initial ram disk to the local hard drive of an autoinstall client that is 
-		  currently running but needs to be re-deployed. <command>updateclient</command> then modifies the 
+		  currently running but needs to be re-deployed. <command>si_updateclient</command> then modifies the 
 		  <filename>/etc/lilo.conf</filename> file to include an appropriate entry for the new kernel and initial 
 		  ram disk and makes this new kernel the default.  The next time the client system boots, it 
 		  loads the SystemImager kernel and initial ram disk, which begins the autoinstall process. 

@@ -28,7 +28,7 @@
 
   <section>
     <title>
-      Run getimage, mvimage, or cpimage
+      Run si_getimage, si_mvimage, or si_cpimage
     </title>
    
 	<para>
@@ -36,7 +36,7 @@
       a SystemImager seperate copy (/etc/systemimager/flamethrower.conf)
       of the Flamethrower configuration file 
       (/etc/flamethrower/flamethrower.conf).  Each of these three
-      commands (getimage, mvimage, cpimage) will create an appropriate
+      commands (si_getimage, si_mvimage, si_cpimage) will create an appropriate
       entry in /etc/systemimager/flamethrower.conf for the image you
       specify.
 	</para>
@@ -47,7 +47,7 @@
       go at the very bottom of the file).  However, it's much easier to
       just do a:
       <programlisting>
-    "mvimage my_image-v1 tmp_name && mvimage tmp_name my_image-v1"
+    "si_mvimage my_image-v1 tmp_name && si_mvimage tmp_name my_image-v1"
       </programlisting>
 	</para>
   </section>
@@ -129,7 +129,7 @@ or
       </listitem>
       <listitem>
         <para>
-          A new image is pulled using getimage, and the information in
+          A new image is pulled using si_getimage, and the information in
           <filename>flamethrower.conf</filename> is updated.
         </para>
       </listitem>

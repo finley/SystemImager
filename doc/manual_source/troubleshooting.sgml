@@ -47,7 +47,7 @@
 
   <section>
     <title>
-      <command>getimage</command> fails with a "Failed to retrieve
+      <command>si_getimage</command> fails with a "Failed to retrieve
       <filename>/etc/systemimager/mounted_filesystems</filename> from
       &lt;golden client&gt;" message.
     </title>
@@ -72,7 +72,7 @@
 	  cluster to the <filename>/etc/hosts</filename> file on each
 	  machine.  (Adding an entry for your image server in your golden
 	  client's <filename>/etc/hosts</filename> file should be sufficient
-	  for using <command>getimage</command>.
+	  for using <command>si_getimage</command>.
 	</para>
       </listitem>
     </orderedlist>
@@ -110,12 +110,12 @@ etc.
       slow.
     </title>
     <Para>Goran Pocian reported an instance of unacceptable
-      <command>updateclient</command> performance that went away when he
+      <command>si_updateclient</command> performance that went away when he
       upgraded from kernel 2.2.17 to 2.2.18.
     </Para>
     <Para>
       He also noted that if you mount an NFS filesystem after 
-      executing <command>prepareclient</command>, <command>getimage</command>
+      executing <command>si_prepareclient</command>, <command>si_getimage</command>
       will retrieve its contents.  As this can heavily increase network load,
       it can also cause bad performance.
     </Para>

@@ -129,7 +129,7 @@
 	    Advanced users can modify the 
 	    <filename>/etc/systemimager/autoinstallscript.conf</filename> file
 	    within an image to make adjustments, then run the 
-   	    <command>mkautoinstallscript</command> command to install
+   	    <command>si_mkautoinstallscript</command> command to install
 	    an image on clients with varying disk configurations.
 	  </para>
 	</listitem>
@@ -159,13 +159,13 @@
     <title>Glossary of Terms</title>
     <glosslist>
       <glossentry>
-	<glossterm>addclients</glossterm>
+	<glossterm>si_addclients</glossterm>
 	<glossdef>
 	  <para>
 	    a command that tells your image server which image to install on the
 	    autoinstall clients by creating soft links to the master autoinstall
 	    script with the name of each host that will receive that image. 
-	    <command>addclients</command> also allows you to populate
+	    <command>si_addclients</command> also allows you to populate
 	    the <filename>etc/hosts</filename> file with sequential host names and IP 
 	    addresses.  The information in this file is necessary for some SystemImager
 	    operations.
@@ -190,10 +190,10 @@
 	    One or more scripts associated with an image, each unique
 	    to a specific hardware/partitioning/filesystem/network 
 	    configuration.  
-	    The <command>getimage</command> command creates an initial
+	    The <command>si_getimage</command> command creates an initial
 	    autoinstallscript, which can be regenerated later, possibly
 	    with different options, using the 
-	    <command>mkautoinstallscript</command> command.
+	    <command>si_mkautoinstallscript</command> command.
 	    The autoinstall script (also called the ".master script") is 
 	    downloaded and executed by the autoinstall client, and performs
 	    most of the autoinstall process.
@@ -217,7 +217,7 @@
 	</glossdef>
       </glossentry>
       <glossentry>
-	<glossterm>getimage</glossterm>
+	<glossterm>si_getimage</glossterm>
 	<glossdef>
 	  <para>
 	    a command run from the image server to pull a system
@@ -252,7 +252,7 @@
 	</glossdef>
       </glossentry>
       <glossentry>
-	<glossterm>mkdhcpserver</glossterm>
+	<glossterm>si_mkdhcpserver</glossterm>
 	<glossdef>
 	  <para>
 	    a command that creates a <application>SystemImager</application>
@@ -262,7 +262,7 @@
 	</glossdef>
       </glossentry>
       <glossentry>
-	<glossterm>mkdhcpstatic</glossterm>
+	<glossterm>si_mkdhcpstatic</glossterm>
 	<glossdef>
 	  <para>
 	    a command to modify the <filename>/etc/dhcpd.conf</filename> file,
@@ -272,7 +272,7 @@
 	</glossdef>
       </glossentry>
       <glossentry>
-	<glossterm>mkbootserver</glossterm>
+	<glossterm>si_mkbootserver</glossterm>
 	<glossdef>
 	  <para>
 	    A utility for configuring a network boot server.  Currently just
@@ -281,12 +281,12 @@
 	</glossdef>
       </glossentry>
       <glossentry>
-	<glossterm>prepareclient</glossterm>
+	<glossterm>si_prepareclient</glossterm>
 	<glossdef>
 	  <para>
 	    a command you must run on the golden client immediately 
-	    prior to running <command>getimage</command> on the image server. 
-	    <command>prepareclient</command>
+	    prior to running <command>si_getimage</command> on the image server. 
+	    <command>si_prepareclient</command>
 	    prepares the golden client to have its image retrieved and creates
 	    an <filename>etc/systemimager</filename> directory with information
 	    about the golden client, such as the disk partitioning scheme(s).
@@ -294,7 +294,7 @@
 	</glossdef>
       </glossentry>
       <glossentry>
-	<glossterm>updateclient</glossterm>
+	<glossterm>si_updateclient</glossterm>
 	<glossdef>
 	  <para>
 	    a command that updates or synchronizes client systems to a new or updated image 

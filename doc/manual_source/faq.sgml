@@ -40,7 +40,7 @@
    </question>
    <answer>
     <para>
-     Run the <command>mkautoinstalldiskette</command> command on the 
+     Run the <command>si_mkautoinstalldiskette</command> command on the 
      image server.
     </para>
    </answer>
@@ -50,7 +50,7 @@
    <question><para>How do I make an autoinstall CD?</para></question>
    <answer>
     <para>
-     Run the <command>mkautoinstallcd</command> command on the image server.
+     Run the <command>si_mkautoinstallcd</command> command on the image server.
     </para>
    </answer>
   </qandaentry>
@@ -61,7 +61,7 @@
    </question>
    <answer>
     <para>
-     Run the <command>mkautoinstallpunchcard</command> command on the
+     Run the <command>si_mkautoinstallpunchcard</command> command on the
      image server - deprecated :)
     </para>
    </answer>
@@ -170,12 +170,12 @@
   <qandaentry>
    <question>
     <para>
-     I've got netbootmond running, but it isn't working.  Why?
+     I've got si_netbootmond running, but it isn't working.  Why?
     </para>
    </question>
    <answer>
     <para>
-     In order for netbootmond to do it's thang, you must have the rsync
+     In order for si_netbootmond to do it's thang, you must have the rsync
      daemon running: "/etc/init.d/systemimager-server-rsyncd start".
     </para>
    </answer>
@@ -379,10 +379,10 @@ image=ia64/standard/kernel
    </question>
    <answer>
     <para>
-    	<command>In SystemImager 2.1 and later, mkautoinstallcd</command> and <command>mkautoinstalldiskette</command>
+    	<command>In SystemImager 2.1 and later, si_mkautoinstallcd</command> and <command>si_mkautoinstalldiskette</command>
     	support an -append option, allowing you to specify additional options for the autoinstall kernel,
     	including serial console options.  For example:  
-    	<command>mkautoinstallcd -out-file autoinstall.iso -append "console=ttyS0"</command>
+    	<command>si_mkautoinstallcd -out-file autoinstall.iso -append "console=ttyS0"</command>
     </para>
     <para>
     	Early versions of SystemImager require additional changes, as cited below:
@@ -497,8 +497,8 @@ image=ia64/standard/kernel
 	  server.  Because serial consoles typically have very low bandwidth,
 	  installations may be delayed while the system waits for the names to
 	  be printed to the console.  You can use the -no-listing option to
-	  <command>getimage</command> and 
-	  <command>mkautoinstallscript</command> to turn off verbosity.
+	  <command>si_getimage</command> and 
+	  <command>si_mkautoinstallscript</command> to turn off verbosity.
         </para>
       </answer>
   </qandaentry>
@@ -521,8 +521,8 @@ image=ia64/standard/kernel
 	  "man mount" for details on these options.
         </para>
         <para>
-	  Append parameters can be added with the mkautoinstallcd and 
-	  mkautoinstalldiskette --append option.  For network boot loaders, or
+	  Append parameters can be added with the si_mkautoinstallcd and 
+	  si_mkautoinstalldiskette --append option.  For network boot loaders, or
 	  local disk boot loaders, you will need to edit the boot configuration
 	  file to add the appropriate append parameter(s).
         </para>
@@ -563,7 +563,7 @@ image=ia64/standard/kernel
       <para>
         No.  If you are using DHCP, you can use "option-140" and set its
         value to the IP address of the image server.  If you use
-        <command>mkdhcpstatic</command> to configure your
+        <command>si_mkdhcpstatic</command> to configure your
         <filename>dhcpd.conf</filename>
         file, it will ask you for the IP address of your image server and
         add the appropriate entry for you.
@@ -732,8 +732,8 @@ image=ia64/standard/kernel
       <para>
         Yes, you should install the systemimager-client package.  If this
         package is already installed, simply run the
-        <command>prepareclient</command> command prior to running
-        <command>getimage</command> from the image server.
+        <command>si_prepareclient</command> command prior to running
+        <command>si_getimage</command> from the image server.
       </para>
       <para>
         You should also add any software, configure any files, and do
@@ -761,8 +761,8 @@ image=ia64/standard/kernel
     <answer>
       <para>
         Starting with version 1.5, you can use the
-        <command>pushupdate</command> command, which essentially logs into
-        each client and executes the <command>updateclient</command>
+        <command>si_pushupdate</command> command, which essentially logs into
+        each client and executes the <command>si_updateclient</command>
         command.
       </para
     </answer>
@@ -774,9 +774,9 @@ image=ia64/standard/kernel
     </question>
     <answer>
       <para>
-        If you ran <command>mkdhcpserver</command> to configure your dhcp 
+        If you ran <command>si_mkdhcpserver</command> to configure your dhcp 
         information, and if you answered all the questions you were asked
-        when you did ran <command>getimage</command>, including the
+        when you did ran <command>si_getimage</command>, including the
         hostnames and IP addresses, then all you have to do is boot your
         client with any one of the following three forms of autoinstall
         media:  
@@ -804,8 +804,8 @@ image=ia64/standard/kernel
         </listitem>
       </orderedlist>
       <para>
-        See the entries for <command>mkautoinstallcd</command> and 
-        <command>mkautoinstalldiskette</command> in the command
+        See the entries for <command>si_mkautoinstallcd</command> and 
+        <command>si_mkautoinstalldiskette</command> in the command
 	  reference chapter in this manual for more information.
       </para>
     </answer>
@@ -863,7 +863,7 @@ image=ia64/standard/kernel
       <para>
         The script in question is typically a soft link pointing at the 
         <filename>$image.master</filename> script that was dynamically
-        created when you ran <command>getimage</command>.  This script
+        created when you ran <command>si_getimage</command>.  This script
         explicitly states which image to pull from the image server.  Open
         it and take a look.
       </para>
@@ -911,7 +911,7 @@ image=ia64/standard/kernel
     </question>
     <answer>
       <para>
-        You can. <command>getimage</command> will ask you if you want to
+        You can. <command>si_getimage</command> will ask you if you want to
         assign static IPs.
       </para>
     </answer>
@@ -927,14 +927,14 @@ image=ia64/standard/kernel
     </question>
     <answer>
       <para>
-        SystemImager comes with the <command>mkdhcpstatic</command>
+        SystemImager comes with the <command>si_mkdhcpstatic</command>
         utility.  As you boot your client systems, the DHCP server will
         assign addresses sequentially.  By initially booting your systems
         in the order you want them to receive their IP addresses, you can
         ensure that they get the IP address you want them to have.  
       </para>
       <para>
-        After booting your systems, run <command>mkdhcpstatic</command>.
+        After booting your systems, run <command>si_mkdhcpstatic</command>.
         It will re-write your <filename>/etc/dhcpd.conf</filename> file,
         associating each client's MAC address with its host name.  You
         should then restart your dhcpd daemon.  Subsequently, each time
@@ -993,7 +993,7 @@ image=ia64/standard/kernel
         <listitem>
           <para>
     	Make the changes to one of your clients and run the 
-    	<command>getimage</command> again.  
+    	<command>si_getimage</command> again.  
           </para>
           <para>
     	- You can specify the same image name, in which case the
@@ -1004,11 +1004,11 @@ image=ia64/standard/kernel
     	revision control.  (This method is highly recommended)
           </para>
           <para>
-    	Note:  Every time <command>getimage</command> is run, it 
+    	Note:  Every time <command>si_getimage</command> is run, it 
     	recreates the <filename>$image.master</filename> script.  If
             you
     	have customized your <filename>$image.master</filename> script,
-    	be sure to save it before running <command>getimage</command>
+    	be sure to save it before running <command>si_getimage</command>
     	again.
           </para>
         </listitem>
@@ -1040,24 +1040,24 @@ image=ia64/standard/kernel
         Once you have updated an image on the image server, you can then
         update your clients to reflect it.  (You do not need
         to do a complete re-autoinstall.)  You will find the
-        command, <command>updateclient</command>, on your clients, which
+        command, <command>si_updateclient</command>, on your clients, which
         takes as its parameters the name of the image server and
         the name of the image you want to update the client to.  Run
-        <command>updateclient -help</command> to get more information about
+        <command>si_updateclient -help</command> to get more information about
         this command.
       </para>
       <para>
         Use the revision control method recommended in the "How do I
         update an image on the image server?" FAQ to
         bring your production environment back to a known state after
-        doing an <command>updateclient</command> to a test image (i.e. do
-        an <command>updateclient</command> to the last working image).
+        doing an <command>si_updateclient</command> to a test image (i.e. do
+        an <command>si_updateclient</command> to the last working image).
       </para>
       <para>
         The file
         <filename>/etc/systemimager/updateclient.local.exclude</filename>
         on your clients is used to exclude files and directories from
-        being updated by the <command>updateclient</command> command.
+        being updated by the <command>si_updateclient</command> command.
         You can modify it to suit your own environment.
       </para>
     </answer>
@@ -1072,7 +1072,7 @@ image=ia64/standard/kernel
     </question>
     <answer>
       <para>
-        It is used by the <command>updateclient</command> command.  See the
+        It is used by the <command>si_updateclient</command> command.  See the
         "How do I update a client to match an image?," FAQ for more 
         information.
       </para>
@@ -1110,7 +1110,7 @@ image=ia64/standard/kernel
         No.  But you will need to customize a bit.
       </para>
       <para>
-        Once you have run <command>getimage</command>, you will need
+        Once you have run <command>si_getimage</command>, you will need
         to edit the <filename>conf.modules</filename> in the image on the
         image server to load the appropriate module for your ethernet card.
       </para>
@@ -1157,7 +1157,7 @@ image=ia64/standard/kernel
      </question>
      <answer>
        <para>
-         Use the <command>updateclient</command>
+         Use the <command>si_updateclient</command>
          command on the client.
        </para>
        <para>
@@ -1175,14 +1175,14 @@ image=ia64/standard/kernel
      	    <listitem>
      	      <para>
      		apply the patch to a client and then do another
-     		<command>getimage</command> specifying the same imagename (won't take long
+     		<command>si_getimage</command> specifying the same imagename (won't take long
      		and will update the image)
      	      </para>
      	    </listitem>
      	    <listitem>
      	      <para>
      		apply the patch to a client and then do another
-     		<command>getimage</command> specifying a different imagename.  This is
+     		<command>si_getimage</command> specifying a different imagename.  This is
      		preferred as it allows for revision control.
      	      </para>
      	    </listitem>
@@ -1192,9 +1192,9 @@ image=ia64/standard/kernel
            
            <listitem>
      	<para>
-     	  Run <command>updateclient</command> on the clients that you
+     	  Run <command>si_updateclient</command> on the clients that you
      	  want to update.  Execute
-     	  <command>updateclient -help</command> to get the syntax.
+     	  <command>si_updateclient -help</command> to get the syntax.
      	</para>
            </listitem>
          </orderedlist>
@@ -1339,7 +1339,7 @@ image=ia64/standard/kernel
        </ListItem>
       </ItemizedList>
       <para>
-       You can now run <command>mkautoinstallscript</command> to create a new,
+       You can now run <command>si_mkautoinstallscript</command> to create a new,
        software RAID-enabled autoinstallscript for your image.
       </para>
      </answer>
@@ -1420,7 +1420,7 @@ image=ia64/standard/kernel
 	      <note>
 		<para>
 		  The default autoinstallscript.conf file created by
-		  <command>prepareclient</command> lives in the 
+		  <command>si_prepareclient</command> lives in the 
 		  <filename>/etc/systemimager</filename> directory in your 
 		  image.
 		</para>
@@ -1453,13 +1453,13 @@ image=ia64/standard/kernel
       </listitem>
       <listitem>
        <para>
-        Run <command>mkautoinstallscript</command> to create a new 
+        Run <command>si_mkautoinstallscript</command> to create a new 
         autoinstall script using the new parameters.
        </para>
        <para>
-        NOTE: By default, <command>mkautoinstallscript</command> uses the
+        NOTE: By default, <command>si_mkautoinstallscript</command> uses the
         autoinstallscript.conf file located in your image's ./etc/systemimager directory.  
-        See <command>man mkautoinstallscript</command> and 
+        See <command>man si_mkautoinstallscript</command> and 
         <command>man autoinstallscript.conf</command> for more information.
        </para>
       </listitem>
@@ -1489,7 +1489,7 @@ image=ia64/standard/kernel
        </para>
        <para>
         NOTE: The default autoinstallscript.conf file created by
-        <command>prepareclient</command> lives in the ./etc/systemimager
+        <command>si_prepareclient</command> lives in the ./etc/systemimager
         directory in your image.
        </para>
       </listitem>
@@ -1524,11 +1524,11 @@ image=ia64/standard/kernel
       </listitem>
       <listitem>
        <para>
-        Run <command>mkautoinstallscript</command> to create a new 
+        Run <command>si_mkautoinstallscript</command> to create a new 
         autoinstall script using the new parameters. By default, 
-	  <command>mkautoinstallscript</command> uses the autoinstallscript.conf 
+	  <command>si_mkautoinstallscript</command> uses the autoinstallscript.conf 
 	  file located in the ./etc/systemimager directory in
-        your image.  See <command>man mkautoinstallscript</command> and 
+        your image.  See <command>man si_mkautoinstallscript</command> and 
         <command>man autoinstallscript.conf</command> for more information.
        </para>
       </listitem>
@@ -1559,7 +1559,7 @@ image=ia64/standard/kernel
 	      <note>
 		<para>
 		  The default autoinstallscript.conf file created by
-		  <command>prepareclient</command> lives in the 
+		  <command>si_prepareclient</command> lives in the 
 		  <filename>/etc/systemimager</filename>
 		  directory in your image.
 		</para>
@@ -1587,15 +1587,15 @@ image=ia64/standard/kernel
       </listitem>
       <listitem>
        <para>
-        Run <command>mkautoinstallscript</command> to create a new 
+        Run <command>si_mkautoinstallscript</command> to create a new 
         autoinstall script using the new parameters.
        </para>
 	      <note>
 		<para>
-		  By default, <command>mkautoinstallscript</command> uses the
+		  By default, <command>si_mkautoinstallscript</command> uses the
 		  <filename>autoinstallscript.conf</filename> file located in 
 		  the <filename>/etc/systemimager</filename> directory in your
-		  image.  See <command>man mkautoinstallscript</command> and 
+		  image.  See <command>man si_mkautoinstallscript</command> and 
 		  <command>man autoinstallscript.conf</command> for more
 		  information.
 		</para>
@@ -1622,7 +1622,7 @@ image=ia64/standard/kernel
    <answer>
     <para>
      Yes.  Customize a separate autoinstallscript.conf file for each
-     configuration type, and use <command>mkautoinstallscript</command> to
+     configuration type, and use <command>si_mkautoinstallscript</command> to
      create a seperate master autoinstallscript for each configuration.
     </para>
     <para>
