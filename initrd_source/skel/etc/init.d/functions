@@ -153,7 +153,7 @@ get_flamethrower_directory() {
     mkdir -p ${FLAMETHROWER_DIRECTORY_DIR}
     echo udp-receiver --interface ${DEVICE} --portbase ${FLAMETHROWER_DIRECTORY_PORTBASE} --pipe \"tar -C ${FLAMETHROWER_DIRECTORY_DIR} -x\"
          udp-receiver --interface ${DEVICE} --portbase ${FLAMETHROWER_DIRECTORY_PORTBASE} --pipe "tar -C ${FLAMETHROWER_DIRECTORY_DIR} -x"
-    sleep 2
+    sleep 1
 
     if [ $? != 0 ]; then
         shellout
@@ -195,7 +195,7 @@ flamethrower_client() {
     mkdir -p ${DIR}
     echo udp-receiver $UDP_RECEIVER_OPTIONS --pipe \"tar -C ${DIR} -x\"
     sleep 1
-         udp-receiver $UDP_RECEIVER_OPTIONS --pipe "tar -C ${DIR} -x" || flamethrower_client
+         udp-receiver $UDP_RECEIVER_OPTIONS --pipe "tar -C ${DIR} -x" || echo "EXIT CODE: $?"
 
 }
 #
@@ -357,7 +357,7 @@ read_local_cfg() {
 
     ### BEGIN try floppy ###
     echo "Checking for floppy diskette."
-    echo "YOU MAY SEE SOME I/O AND CRAMFS ERRORS HERE, BUT THAT IS NORMAL."
+    echo 'YOU MAY SEE SOME "wrong magic" ERRORS HERE, AND THAT IS NORMAL.'
     mkdir -p /floppy
     mount /dev/fd0 /floppy -o ro > /dev/null 2>&1
     if [ $? = 0 ]; then
