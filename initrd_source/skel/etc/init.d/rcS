@@ -512,12 +512,13 @@ get_hostname_by_dns() {
 #
 run_autoinstall_script() {
     # Run the autoinstall script.
-    if [ -f /tmp/$SCRIPTNAME ]; then
-        chmod 755 /tmp/$SCRIPTNAME || shellout
+    FILE="/tmp/scripts/$SCRIPTNAME"
+    if [ -f $FILE ]; then
+        chmod 755 $FILE || shellout
         echo
-        echo "I will now run the autoinstall script: $SCRIPTNAME"
+        echo "I will now run the autoinstall script: $FILE"
         echo
-        /tmp/$SCRIPTNAME || shellout
+        $FILE || shellout
     fi
 }
 #
@@ -679,7 +680,8 @@ start_ssh() {
 get_script() {
     echo
     echo "I will now try to get the autoinstall script:  $SCRIPTNAME"
-    CMD="rsync -aL ${IMAGESERVER}::${SCRIPTS}/${SCRIPTNAME} /tmp/"
+    mkdir -p /tmp/scripts
+    CMD="rsync -aL ${IMAGESERVER}::${SCRIPTS}/${SCRIPTNAME} /tmp/scripts"
     echo "$CMD"
     $CMD
 }
