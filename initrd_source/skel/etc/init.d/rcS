@@ -44,13 +44,42 @@ fi
 #
 ################################################################################
 #
+write_variables() {
+    # pass all variables set here on to the hostname.sh script
+    rm -f /tmp/variables.txt
+  
+    echo "HOSTNAME=$HOSTNAME" 	        	>> /tmp/variables.txt
+    echo "DOMAINNAME=$DOMAINNAME"         	>> /tmp/variables.txt
+  
+    echo "DEVICE=$DEVICE" 	            	>> /tmp/variables.txt
+    echo "IPADDR=$IPADDR" 	            	>> /tmp/variables.txt
+    echo "NETMASK=$NETMASK" 	            	>> /tmp/variables.txt
+    echo "NETWORK=$NETWORK" 	            	>> /tmp/variables.txt
+    echo "BROADCAST=$BROADCAST"       		>> /tmp/variables.txt
+  
+    echo "GATEWAY=$GATEWAY"                   >> /tmp/variables.txt
+    echo "GATEWAYDEV=$GATEWAYDEV"             >> /tmp/variables.txt
+  
+    echo "IMAGESERVER=$IMAGESERVER"       	>> /tmp/variables.txt
+    echo "IMAGENAME=$IMAGENAME"               >> /tmp/variables.txt
+  
+    echo "LOG_SERVER=$LOG_SERVER"         	>> /tmp/variables.txt
+    echo "LOG_SERVER_PORT=$LOG_SERVER_PORT" 	>> /tmp/variables.txt
+  
+    echo "SSH_USER=$SSH_USER"	            	>> /tmp/variables.txt
+    echo "SSH_DOWNLOAD_URL=$SSH_DOWNLOAD_URL"	>> /tmp/variables.txt
+}
+#
+################################################################################
+#
 #   Description:
 #   Exit with the message stored in /etc/issue.
 #
 #   Usage: $COMMAND || shellout
 #
 shellout() {
-  exec cat /etc/issue ; exit 1
+    write_variables
+    exec cat /etc/issue ; exit 1
 }
 #
 ################################################################################
@@ -81,61 +110,31 @@ count_loop() {
 #
 ################################################################################
 #
-write_variables() {
-  # pass all variables set here on to the hostname.sh script
-  rm -f /tmp/variables.txt
-
-  echo "HOSTNAME=$HOSTNAME" 	        	>> /tmp/variables.txt
-  echo "DOMAINNAME=$DOMAINNAME"         	>> /tmp/variables.txt
-
-  echo "DEVICE=$DEVICE" 	            	>> /tmp/variables.txt
-  echo "IPADDR=$IPADDR" 	            	>> /tmp/variables.txt
-  echo "NETMASK=$NETMASK" 	            	>> /tmp/variables.txt
-  echo "NETWORK=$NETWORK" 	            	>> /tmp/variables.txt
-  echo "BROADCAST=$BROADCAST"       		>> /tmp/variables.txt
-
-  echo "GATEWAY=$GATEWAY"                   >> /tmp/variables.txt
-  echo "GATEWAYDEV=$GATEWAYDEV"             >> /tmp/variables.txt
-
-  echo "IMAGESERVER=$IMAGESERVER"       	>> /tmp/variables.txt
-  echo "IMAGENAME=$IMAGENAME"               >> /tmp/variables.txt
-
-  echo "LOG_SERVER=$LOG_SERVER"         	>> /tmp/variables.txt
-  echo "LOG_SERVER_PORT=$LOG_SERVER_PORT" 	>> /tmp/variables.txt
-
-  echo "SSH_USER=$SSH_USER"	            	>> /tmp/variables.txt
-  echo "SSH_DOWNLOAD_URL=$SSH_DOWNLOAD_URL"	>> /tmp/variables.txt
-
-}
-#
-################################################################################
-#
 #   Get other binaries, kernel module tree, and miscellaneous other stuff that
 #   got put in the binaries tarball. -BEF-
 #
 get_boel_binaries_tarball() {
     if [ ! -z $SSH_DOWNLOAD_URL ]; then
         # If we're using SSH, get the boel_binaries from a web server.
-        echo
         echo "SSH_DOWNLOAD_URL variable is set, so we will install over SSH!"
 
         # Remove possible trailing / from URL
         SSH_DOWNLOAD_URL=`echo $SSH_DOWNLOAD_URL | sed 's/\/$//'`
 
-        CMD="cd /tmp/ && snarf ${SSH_DOWNLOAD_URL}/systemimager/boot/${ARCH}/${FLAVOR}/boel_binaries.tar.gz"
+        cd /tmp
+        CMD="wget ${SSH_DOWNLOAD_URL}/systemimager/boot/${ARCH}/${FLAVOR}/boel_binaries.tar.gz"
         echo "$CMD"
         $CMD || shellout
-
+        cd -
     else
         # Unless we're using SSH, use rsync
         CMD="rsync -av ${IMAGESERVER}::boot/${ARCH}/${FLAVOR}/boel_binaries.tar.gz /tmp/"
         echo "$CMD"
         $CMD || shellout
-
     fi
 
     # Untar the tarball
-    ( cd / && tar -xvzf /tmp/boel_binaries.tar.gz ) || shellout
+    tar -C / -xvzf /tmp/boel_binaries.tar.gz || shellout
 }
 #
 #################################################################################
@@ -186,7 +185,9 @@ ifconfig_loopback() {
 # Load any modules that were placed in the my_modules directory prior to
 # running "make initrd.gz".  -BEF-
 load_my_modules() {
-    ( cd /my_modules && sh ./INSMOD_COMMANDS )
+    cd /my_modules || shellout
+    sh ./INSMOD_COMMANDS
+    cd -
 }
 #
 ################################################################################
@@ -391,7 +392,6 @@ ping_test() {
     if [ $PING_EXIT_STATUS = 0 ]; then
         echo
         echo "  We have connectivity to the Image Server!"
-        echo
     fi
 }
 #
@@ -424,8 +424,9 @@ autodetect_hardware_and_load_modules() {
 
     for MODULE in $MODULES
     do
-        echo "Loading $MODULE:"
-        modprobe $MODULE 2>/dev/null || echo "  Assuming $MODULE is compiled into the kernel or is not needed."
+        echo
+        echo "Loading $MODULE..."
+        modprobe $MODULE 2>/dev/null || echo "Assuming $MODULE is compiled into the kernel or is not needed."
     done
 }
 #
@@ -533,14 +534,10 @@ start_ssh() {
             # key is blank - go interactive
             REDIRECTION_OPTIONS=""
         fi
-        ssh -l $SSH_USER -n -f -L873:127.0.0.1:873 $IMAGESERVER sleep 14400 $REDIRECTION_OPTIONS
-        if [ $? != 0 ]; then
-            echo
-            echo "ssh tunnel command to $IMAGESERVER failed!!!"
-            echo "The command was: ssh -l $SSH_USER -n -f -L873:127.0.0.1:873 $IMAGESERVER sleep 14400"
-            echo
-            shellout
-        fi
+
+        CMD="ssh -l $SSH_USER -n -f -L873:127.0.0.1:873 $IMAGESERVER sleep 14400 $REDIRECTION_OPTIONS"
+        echo $CMD
+        $CMD || shellout
         
         # Since we're using SSH, change the $IMAGESERVER variable to reflect
         # the forwarded connection.
@@ -554,19 +551,13 @@ start_ssh() {
         
         # download authorized_keys  #XXX re-consider this bit
         # (public keys of users allowed to ssh *in* to this machine)
-        files="authorized_keys"
-        for file in $files
-        do
-          echo
-          echo "snarf $SSH_DOWNLOAD_URL/$file..."
-          ( cd /root/.ssh/ && snarf $SSH_DOWNLOAD_URL/$file )
-          if [ $? != 0 ]; then
-            echo
-            echo "snarf of $SSH_DOWNLOAD_URL/$file failed!!!"
-            echo
-            shellout
-          fi
-        done
+
+        cd /root/.ssh/ || shellout
+        CMD="wget ${SSH_DOWNLOAD_URL}/systemimager/boot/${ARCH}/${FLAVOR}/authorized_keys"
+        echo
+        echo $CMD
+        $CMD || shellout
+        cd -
         
         # set permissions to 600 -- otherwise, sshd will refuse to use it
         chmod 600 /root/.ssh/authorized_keys || shellout
@@ -582,7 +573,7 @@ start_ssh() {
         echo
         echo "Using ssh-keygen to create this hosts private key"
         echo
-        ssh-keygen -N "" -f /etc/ssh/ssh_host_key || shellout
+        ssh-keygen -t dsa -N "" -f /etc/ssh/ssh_host_key || shellout
         
         ## create necessary ptys, etc. for sshd   #XXX remove if unnecessary -BEF-
         #mknod /dev/ptmx c 5 2                    || shellout
@@ -624,7 +615,6 @@ start_ssh() {
         # remove rug
         exit 1
     fi
-fi
 }
 #
 ################################################################################
@@ -707,19 +697,15 @@ if [ ! -z $HOSTNAME ]; then
     echo "This hosts name is: $HOSTNAME"
 fi
 
-echo HERE
-
+# If neither HOSTNAME or IMAGENAME is set, then we cannot proceed.  
+# (IMAGENAME may have been set by local.cfg).  -BEF-
 if [ -z $IMAGENAME ] && [ -z $HOSTNAME ]; then
-
-    # If neither HOSTNAME or IMAGENAME is set, then we cannot proceed.  (IMAGENAME 
-    # may have been set by local.cfg).  -BEF-
     echo
     echo "HOSTNAME was not specified in a local.cfg file, and I couldn't find"
     echo "it via the hosts file or DNS.  Additionally, IMAGENAME was not"
     echo "specified.  I must have one or the other in order to proceed!!!"
     echo
     shellout
-
 fi
     
 if [ ! -z $IMAGENAME ]; then
@@ -747,7 +733,6 @@ else
 
         SCRIPTNAME="${BASE_HOSTNAME}.master"
         get_script || shellout
-
     fi
 fi
 
@@ -760,6 +745,5 @@ echo run_autoinstall_script
 run_autoinstall_script
 
 exit 0
-
 
 

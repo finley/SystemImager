@@ -27,7 +27,13 @@ Pending:
     o install will recommend adding the following line to Apache's httpd.conf
         (or manually do something similar for other web server)
 
-        Alias /systemimager /usr/share/systemimager
+        Alias /systemimager/boot/ /usr/share/systemimager/boot/
+        <Directory /usr/share/systemimager/boot>
+            Options Indexes MultiViews
+            AllowOverride None
+            Order allow,deny
+            Allow from all
+        </Directory>
     
     Behavioral Notes
     ----------------------------------------------------------------------------
@@ -142,6 +148,7 @@ PRE-RELEASE
 * manual in pdf and html formats online
 * grep -r XXX .
 * updateclient -a bug: http://sourceforge.net/tracker/index.php?func=detail&aid=610755&group_id=259&atid=100259
+* test using hosts only
 
 
 
