@@ -39,9 +39,15 @@ get_hostname_by_dns() {
   | mawk '/nameserver/ {print $2}'`
 
   # get base hostname.  For example, b2b99.domain.com will become b2b99
-  HOSTNAME=`echo $IPADDR \
-  | massdns $NAMESERVER \
-  | mawk -F "." '{print $1}'`
+  HOSTNAME=`host $IPADDR \
+  | grep "^Name:.*" \
+  | cut -d " " -f 2 \
+  | cut -d "." -f 1`
+  
+  ### got rid of massdns to save some space
+  # HOSTNAME=`echo $IPADDR \
+  # | massdns $NAMESERVER \
+  # | mawk -F "." '{print $1}'`
 }
     
 # Mount file systems in /etc/fstab.

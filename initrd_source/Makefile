@@ -13,7 +13,7 @@ SRC_DIR = ./src
 
 TEMP_DIR = ./systemimager.initrd.temp.dir
 INITRD_SIZE = 2600       # number of 1KB blocks in ramdisk.
-INITRD_INODE_COUNT = 640 # number of inodes available on ramdisk
+INITRD_INODE_COUNT = 700 # number of inodes available on ramdisk
 
 ########## BEGIN definitions for binaries built from source ##########
 
@@ -30,13 +30,6 @@ BUSYBOX_BINARY = $(BUSYBOX_ROOT)/busybox
 BUSYBOX_TARBALL = busybox-$(BUSYBOX_VERSION).tar.gz
 BUSYBOX_URL = ftp://opensource.lineo.com/busybox/$(BUSYBOX_TARBALL)
 
-MASSDNS_VERSION = 1.0
-MASSDNS_ROOT = $(SRC_DIR)/massdns-$(MASSDNS_VERSION)
-MASSDNS_BINARY = $(MASSDNS_ROOT)/massdns
-MASSDNS_TARBALL = massdns-$(MASSDNS_VERSION).tgz
-MASSDNS_URL = http://www.mgix.com/massdns/$(MASSDNS_TARBALL)
-MASSDNS_PATCH = $(PATCH_DIR)/massdns.patch
-
 ########## END definitions for binaries built from source ##########
 
 # tools provided by busybox (i.e. hard links to create)
@@ -46,7 +39,7 @@ BUSY_USR_BIN := clear cut expr find free killall reset telnet tr
 BUSY_USR_SBIN := chroot
 
 # these binaries will be copied over from the local system
-LOCAL_BINARIES := /sbin/sfdisk /usr/bin/mawk /sbin/mke2fs /bin/ash /usr/bin/rsync /usr/bin/snarf /sbin/dhclient-2.2.x
+LOCAL_BINARIES := /sbin/sfdisk /usr/bin/mawk /sbin/mke2fs /bin/ash /usr/bin/rsync /usr/bin/snarf /sbin/dhclient-2.2.x /usr/bin/host
 
 initrd.gz:	initrd
 	gzip -9 < initrd > initrd.gz
@@ -81,8 +74,7 @@ initrd:	binary-build-stamp $(LOCAL_BINARIES)
 		ln ./bin/busybox ./usr/sbin/$(tool); )
 
 	# copy over other binaries
-	cp -a $(BEEP_BINARY) $(MASSDNS_BINARY) $(LOCAL_BINARIES) \
-		$(TEMP_DIR)/bin
+	cp -a $(BEEP_BINARY) $(LOCAL_BINARIES) $(TEMP_DIR)/bin
 	mv $(TEMP_DIR)/bin/dhclient-2.2.x $(TEMP_DIR)/bin/dhclient
 
 	cd $(TEMP_DIR) && ln ./bin/ash ./bin/sh
@@ -93,8 +85,11 @@ initrd:	binary-build-stamp $(LOCAL_BINARIES)
 	# clear out CVS cruft
 	find $(TEMP_DIR) -type d -name CVS -depth | xargs rm -rf
 
+	# copy over libs that massdns won't build
+	cp -a /lib/libnss_dns* $(TEMP_DIR)/lib
+
 	# create small dynamic libraries
-	./mklibs.sh -v -d $(TEMP_DIR)/lib $(TEMP_DIR)/bin/*
+	./mklibs.sh -v -d $(TEMP_DIR)/lib $(TEMP_DIR)/bin/* $(TEMP_DIR)/lib/*
 
 	$(SUDO) chown 0 -R $(TEMP_DIR)/*
 	$(SUDO) chgrp 0 -R $(TEMP_DIR)/*
@@ -109,7 +104,7 @@ install:	initrd.gz
 binaries:	binary-build-stamp
 
 binary-build-stamp:
-	$(MAKE) beep busybox massdns
+	$(MAKE) beep busybox
 	touch binary-build-stamp
 
 ########## BEGIN beep rules ##########
@@ -145,24 +140,7 @@ $(SRC_DIR)/$(BUSYBOX_TARBALL):
 
 ########## END busybox rules ##########
 
-########## BEGIN massdns rules ##########
-
-massdns:
-	$(MAKE) $(SRC_DIR)/$(MASSDNS_TARBALL)
-	[ -d $(MASSDNS_ROOT) ] || \
-		( cd $(SRC_DIR) && tar xvfz $(MASSDNS_TARBALL) && \
-		  [ ! -f ../$(MASSDNS_PATCH) ] || \
-		  patch -p0 < ../$(MASSDNS_PATCH) )
-	$(MAKE) -C $(MASSDNS_ROOT)
-	strip $(MASSDNS_BINARY)
-
-$(SRC_DIR)/$(MASSDNS_TARBALL):
-	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
-	cd $(SRC_DIR) && wget $(MASSDNS_URL)
-
-########## END massdns rules ##########
-
-get_source:	$(SRC_DIR)/$(BEEP_TARBALL) $(SRC_DIR)/$(BUSYBOX_TARBALL) $(SRC_DIR)/$(MASSDNS_TARBALL)
+get_source:	$(SRC_DIR)/$(BEEP_TARBALL) $(SRC_DIR)/$(BUSYBOX_TARBALL)
 
 help:
 	@echo ' This Makefile provides rules to create a ramdisk (initrd.gz) for'
@@ -229,7 +207,6 @@ helpless:
 clean:
 	-$(MAKE) -C $(BUSYBOX_ROOT) clean
 	-$(MAKE) -C $(BEEP_ROOT) clean
-	-$(MAKE) -C $(MASSDNS_ROOT) clean
 	-find . -name "*~" -exec rm -f {} \;
 	-$(SUDO) umount $(TEMP_DIR)
 	-rm -rf $(TEMP_DIR) initrd initrd.gz
