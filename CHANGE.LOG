@@ -5,10 +5,12 @@
 #
 
 VA SystemImager-1.4.0 2000.xx.xx
-- prepareclient -- Now defaults to using megabytes to store partition 
-                   information.  Can be told to leave explicit 
-                   partitioning information for getimage with the 
-                   -explicit-geometry option.
+- autoinstallclient - Enforce that the client sleeps 35s before trying
+                      to use the network.  Even if using local.cfg.
+- getimage -- Improper usage statements no longer include the entire
+              output from the --help option.  In earlier versions this
+              would often run the usage correction statement off the 
+              screen.  Still provides a reminder to "-help".
 - getimage -- Now autodetects whether prepareclient left the partition
               data behind as "-explicit-geometry" or as megabytes.  If
               using megabytes, getimage creates the autoinstall script
@@ -24,6 +26,10 @@ VA SystemImager-1.4.0 2000.xx.xx
               /etc/fstab file.  
 - autoinstall scripts -- Now use the --numeric-ids rsync option.
 - updateclient -- Now uses the --numeric-ids rsync option.
+- prepareclient -- Now defaults to using megabytes to store partition 
+                   information.  Can be told to leave explicit 
+                   partitioning information for getimage with the 
+                   -explicit-geometry option.
 - prepareclient -- What was I thinking in v1.3.0 with the -no-rsyncd option?!?
                    Don't try this, folks.  It would record your imageserver's 
                    partition information as if it were the client's.

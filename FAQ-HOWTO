@@ -4,7 +4,7 @@
 # This file is: FAQ-HOWTO
 #
 # Current version as of the writing of this document: 1.3.0
-#                                           revision: 1
+#                                           revision: 2
 #
 # See http://systemimager.org/ for the most recent version of this document.
 # It may be updated between releases.
@@ -442,6 +442,19 @@ If you last installed a pre-1.0 version then the comments below still apply.
 
 
 --------------------------------------------------------------------------------
+Question:  What's up with the three part version number?
+--------------------------------------------------------------------------------
+
+Answer:
+
+For version X.Y.Z:
+
+ X = major architectural change
+ Y = autoinstall media has changed (requires new autoinstall CD)
+ Z = new feature or bug-fix release
+
+
+--------------------------------------------------------------------------------
 Question:  When making the autoinstalldiskette, my system gives me an error 
            involving "dd" or "mount".
 --------------------------------------------------------------------------------
@@ -792,18 +805,6 @@ Here is a summary of the actions taken with different autoinstall media:
 
 
 --------------------------------------------------------------------------------
-Question:  What's up with the three part version number?
---------------------------------------------------------------------------------
-
-Answer:
-
-Basically the same as the Linux kernel.  So for version X.Y.Z:
-
- X = major architectural change
- Y = new feature release
- Z = bug fix release
-
---------------------------------------------------------------------------------
 Question:  Would it be wise to attempt more than one image-pull at the same
            time?
 --------------------------------------------------------------------------------
@@ -935,4 +936,33 @@ the developement I would like to find out more information on helping get this h
 developed. 
 
 At minimum you should alert users to the security holes that running these tools opens up. And perhaps suggest some solutions. 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+> I'm ok now except for the networking config,
+> I was trial and erroring so much that i forgot the correct config.
+> Just out of curiosity... what should I use for NETWORK in the
+> local.cfg?  Is that the equivalent of subnet?
+
+Your network number is the part of your IP address that identifies the
+network that your host is on.  The other part of the IP address
+identifies the host on that network.  If you are using a standard class
+"C" style netmask (misnomer) of 255.255.255.0, and you have an IP
+address of 201.94.3.45, then 201.94.3.0 is your network number and .45
+is the number that identifies your host on the network.  If your subnet
+includes numbers other than 255 and 0, then your network number may not
+end in 0 either.
+
+You can issue the command "route -n" from a running machine to get this
+information:
+216.62.20.227   0.0.0.0         255.255.255.255 UH    0      0        0 eth0
+216.62.20.224   0.0.0.0         255.255.255.248 U     0      0        0 eth0
+127.0.0.0       0.0.0.0         255.0.0.0       U     0      0        0 lo
+0.0.0.0         216.62.20.230   0.0.0.0         UG    0      0        0 eth0
+
+By finding my netmask (255.255.255.248) I can see that my network number
+is: 216.62.20.224.
+
+> Also, what is a safe value
+> for GATEWAY and GATEWAYDEV if I'm not using a gateway?
+
+You can just leave them blank.
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
