@@ -6,22 +6,71 @@
 # This file is: makeautoinstalldiskette
 #
 
+use Getopt::Long;
+
 # set shell PATH for system() calls 
 $ENV{PATH} = "/usr/sbin:/sbin:/usr/bin:/bin";
+
+$version_number = "0.24";
+$program_name = "makeautoinstalldiskette";
+$version_info = <<"EOF";
+$program_name (part of SystemImager) version $version_number
+    
+Copyright (C) 1999-2000 Brian Elliott Finley <brian\@valinux.com>
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+EOF
+
+$help_info = $version_info . <<"EOF";
+
+Usage: $program_name [OPTION]...
+
+Options: (options can be presented in any order)
+ --help                    this information
+ --version                 display version and copyright information
+ --floppy-device=DEVICE    The  1.44MB floppy drive device containing the disk
+                           to format.  If not specified, /dev/fd0 is assumed.
+                           This command understands \"/dev/fd0\" through
+                            \"/dev/fd7\"
+ --non-interactive         Don\'t ask any questions.  The default is to be
+                           interactive.
+ --quiet                   Don\'t print any output (other than errors). 
+
+Download from http://systemimager.org/
+Report bugs or suggestions to <systemimager-bugs\@systemimager.org>
+EOF
+
+$floppy_device_prefix = "/dev/fd0";
+
+GetOptions( "help" => \$help,
+            "version" => \$version,
+            "floppy-device=s" => \$floppy_device_prefix,
+            "quiet" => \$quiet,
+            "non-interactive" => \$non_interactive) ||
+    die "$help_info";
+
+#if requested, print help information
+if($help) { die "$help_info"; }
+
+# if requested, print version and copyright information
+if($version) { die "$version_info"; }
+
+if (! ($floppy_device_prefix =~ /^\/dev\/fd[0-7]$/)) {
+    die "ERROR: Invalid --floppy-device argument.\n $help_info";
+}
 
 # if not run as root, this script will surely fail
 unless($< == 0) { die "Must be run as root!\n"; }
 
-###FIX### be real quiet now
-#if -q then no warning
+if (!$non_interactive) {
+    system('clear');
+    print << "EOF";
 
-system('clear');
-print << "EOF";
+This program assumes that you have a 1.44MB floppy drive and that it is 
+$floppy_device_prefix.  You can use the --floppy-device command line option
+to change this value.
 
-This program assumes that you have a 1.44MB floppy drive and that it is the
-first floppy drive on your system (/dev/fd0).
-
-It will create the device file /dev/fd0u1722 and use it to format your floppy
+This program will create the device file ${floppy_device_prefix}u1722 and use it to format your floppy
 to handle 1.722MB of capacity.
 
 Virtually all 1.44MB drives support 1.722MB just fine, but it is possible for an
@@ -31,60 +80,90 @@ Insert your floppy now.  This will overwrite all information on the floppy.
 
 EOF
 
-print "Continue? (y/[n]): ";
-$continue=<STDIN>;
-chomp $continue;
-$continue = lc $continue;
-($continue eq "y") or die "\nOk Mr. Sensitive, I\'ll leave your silly diskette alone!\n";
+    print "Continue? (y/[n]): ";
+    $continue=<STDIN>;
+    chomp $continue;
+    $continue = lc $continue;
+    ($continue eq "y") or die "\nOk Mr. Sensitive, I\'ll leave your silly diskette alone!\n";
+}
 
 # create floppy device if necessary
-$floppy_device="/dev/fd0u1722";
+$floppy_device="${floppy_device_prefix}u1722";
 unless (-b $floppy_device) {
-    print "Creating device file $floppy_device...\n";
-    system('mknod /dev/fd0u1722 b 2 60');
+    if (!$quiet) {
+	print "Creating device file $floppy_device...\n";
+    }
+
+    # figure out what minor number to use.  (See mknod(1) for details)
+    %lookup= ("0" => "60",
+	      "1" => "61",
+	      "2" => "62",
+	      "3" => "63",
+	      "4" => "188",
+	      "5" => "189",
+	      "6" => "190",
+	      "7" => "191");
+    $floppy_device_prefix =~ /^\/dev\/fd([0-7])$/;
+    $minor = $lookup{$1};
+    system("mknod $floppy_device b 2 $minor");
     if($? != 0) { die "Couldn't make device file $floppy_device.\n"; }
 }
 
 # format floppy
-print "Formatting floppy as 1.7MB ...\n";
-system('fdformat', $floppy_device);
-    if($? != 0) { die "Couldn't format $floppy_device.\n"; }
+if (!$quiet) {
+    print "Formatting floppy as 1.7MB ...\n";
+}
+if ($quiet) {
+    system ("fdformat $floppy_device > /dev/null");
+} else {
+    system ("fdformat $floppy_device");
+}
+if($? != 0) { die "Couldn't format $floppy_device.\n"; }
+
 
 # create dos filesystem on floppy
-print "Creating DOS filesystem on floppy...\n";
-system('mkdosfs', $floppy_device);
-    if($? != 0) { die "Couldn't create dos filesystem on $floppy_device.\n"; }
+if (!$quiet) {
+    print "Creating DOS filesystem on floppy...\n";
+}
+if ($quiet) {
+    system("mkdosfs $floppy_device > /dev/null");
+} else {
+    system("mkdosfs $floppy_device");
+}
+if($? != 0) { die "Couldn't create dos filesystem on $floppy_device.\n"; }
+
 
 # create temporary mount point
-print "Creating temporary mount point...\n";
+if (!$quiet) { print "Creating temporary mount point...\n"; }
 $mount_dir="/tmp/.autoinstalldiskette.$$";
 mkdir $mount_dir, 0770 or die "Couldn't create temporary mount point $mount_dir.\n";
 
 # mount the freshly created filesystem
-print "Mounting floppy...\n";
+if (!$quiet) { print "Mounting floppy...\n"; }
 system('mount', '-t', 'msdos', $floppy_device, $mount_dir);
     if($? != 0) { die "Couldn't mount $floppy_device on $mount_dir.\n"; }
 
 # copy stuff to floppy
 foreach $file ("/tftpboot/initrd.gz", "/tftpboot/kernel", "/tftpboot/pxelinux.cfg/syslinux.cfg", "/tftpboot/pxelinux.cfg/message.txt") {
-    print "Copying $file to floppy.\n";
+    if (!$quiet) {print "Copying $file to floppy.\n";}
     system('cp', '-f', $file, $mount_dir);
         if($? != 0) { die "Couldn't copy $file to $mount_dir.\n"; }
 }
 
 # unmount floppy
-print "Un-mounting floppy...\n";
+if (!$quiet) {print "Un-mounting floppy...\n";}
 system('umount', $floppy_device);
     if($? != 0) { die "Couldn't un-mount $floppy_device from $mount_dir.\n"; }
 
 # get rid of temporary directory
-print "Removing temporary mount point...\n";
+if (!$quiet) { print "Removing temporary mount point...\n";}
 rmdir $mount_dir or die "Couldn't remove temporary mount point $mount_dir\n";
 
 # run syslinux
-print "Using \"syslinux\" to make floppy bootable...\n";
+if (!$quiet) {print "Using \"syslinux\" to make floppy bootable...\n";}
 system('syslinux', '-s', $floppy_device);
     if($? != 0) { die "\"syslinux -s $floppy_device\" failed.\n"; }
 
 # print done!
-print "Done!\n";
+if (!$quiet) { print "Done!\n";}
+
