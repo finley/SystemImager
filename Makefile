@@ -369,6 +369,7 @@ $(BOEL_BINARIES_TARBALL):	$(DISCOVER_BINARY) $(DISCOVER_DATA_FILES) \
 	install -m 755 $(MKE2FS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 $(TUNE2FS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 $(PARTED_BINARY) $(BOEL_BINARIES_DIR)/sbin/
+	install -m 755 $(SFDISK_BINARY) $(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 $(RAIDTOOLS_BINARIES) $(BOEL_BINARIES_DIR)/sbin/
 	cd $(BOEL_BINARIES_DIR)/sbin/ && ln -f raidstart raidstop
 	install -m 755 $(MKREISERFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
