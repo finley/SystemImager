@@ -28,6 +28,16 @@
 
 INITRD_PATCH_DIR = $(INITRD_DIR)/patches
 INITRD_SRC_DIR = $(INITRD_DIR)/src
+
+## Should initrd.img be gzipped?
+INITRD_COMPRESS = yes
+ifdef IS_PPC64
+INITRD_COMPRESS = no
+endif
+ifeq ($(ARCH),alpha)
+INITRD_COMPRESS = no
+endif
+
 STAMP_DIR = $(INITRD_SRC_DIR)
 
 INITRD_BUILD_DIR = $(INITRD_DIR)/build_dir
@@ -146,12 +156,12 @@ endif
 	find $(INITRD_BUILD_DIR) -depth -exec touch -t 196912311900 {} \;
 	touch $(INITRD_DIR)/build_dir-stamp
 
-ifdef IS_PPC64
-$(INITRD_DIR)/initrd.img:       $(INITRD_DIR)/initrd
-	cp -a $(INITRD_DIR)/initrd $(INITRD_DIR)/initrd.img
-else
+ifeq ($(INITRD_COMPRESS),yes)
 $(INITRD_DIR)/initrd.img:	$(INITRD_DIR)/initrd
 	gzip -9 < $(INITRD_DIR)/initrd > $(INITRD_DIR)/initrd.img
+else
+$(INITRD_DIR)/initrd.img:       $(INITRD_DIR)/initrd
+	cp -a $(INITRD_DIR)/initrd $(INITRD_DIR)/initrd.img
 endif
 
 $(INITRD_DIR)/initrd:	$(INITRD_DIR)/build_dir-stamp
