@@ -24,6 +24,10 @@
 # 2004.05.12 Brian Elliott Finley
 # - added OVERRIDES to post-install script support
 # - changed up the way pre and post-scripts are found
+# 2004.05.26 Brian Elliott Finley
+# - look for "<number>all.<description>" pre and post-install scripts
+# - source file at end of pre-install scripts (/tmp/pre-install_variables.txt)
+# - make seperate function for variablizing kernel append parameters
 #
 
 
@@ -536,21 +540,28 @@ load_my_modules() {
 #
 ################################################################################
 #
+# Variable-ize /proc/cmdline arguments
+#
+variableize_kernel_append_parameters() {
+    echo
+    echo variableize_kernel_append_parameters
+    cat /proc/cmdline | tr ' ' '\n' | grep '=' > /tmp/kernel_append_parameter_variables.txt
+
+    . /tmp/kernel_append_parameter_variables.txt
+}
+#
+################################################################################
+#
 # Look for local.cfg file
 #   This code inspired by Ian McLeod <ian@valinux.com>
 #
 read_local_cfg() {
     echo
     echo read_local_cfg
+
+    #
     # BEGIN try hard drive
     #
-    # this must be on two lines in order to substitute the newline
-    cat /proc/cmdline | sed "s/ /\\
-/g" | sed -n "s/=/=/p" > /tmp/last_root.$$
-
-    # suck in variable
-    . /tmp/last_root.$$
-
     if [ ! -z "$LAST_ROOT" ]; then
 
         echo
@@ -940,6 +951,7 @@ run_pre_install_scripts() {
         PRE_INSTALL_SCRIPTS="$PRE_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]${IMAGENAME}\..*"`"
         PRE_INSTALL_SCRIPTS="$PRE_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]${BASE_HOSTNAME}\..*"`"
         PRE_INSTALL_SCRIPTS="$PRE_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]${HOSTNAME}\..*"`"
+        PRE_INSTALL_SCRIPTS="$PRE_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]all\..*"`"
 
         # Now, to get rid of those pesky newlines. -BEF-
         PRE_INSTALL_SCRIPTS=`echo $PRE_INSTALL_SCRIPTS | tr '\n' ' '`
@@ -955,6 +967,11 @@ run_pre_install_scripts() {
         else
             echo "No pre-install scripts found."
         fi
+
+        if [ -e "/tmp/pre-install_variables.txt" ]; then
+            . /tmp/pre-install_variables.txt
+        fi
+
     fi
 }
 #
@@ -974,6 +991,7 @@ run_post_install_scripts() {
         POST_INSTALL_SCRIPTS="$POST_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]${IMAGENAME}\..*"`"
         POST_INSTALL_SCRIPTS="$POST_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]${BASE_HOSTNAME}\..*"`"
         POST_INSTALL_SCRIPTS="$POST_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]${HOSTNAME}\..*"`"
+        POST_INSTALL_SCRIPTS="$POST_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]all\..*"`"
 
         for OVERRIDE in $OVERRIDES
         do
