@@ -201,7 +201,7 @@ The initial setup of VA SystemImager is a five step process:
         either install the latest systemimager client software, or just
         copy the command over from the imageserver:
 
-        "rsync -av <imageserver>:/tftpboot/systemimager/updateclient ."
+         "rsync -av <imageserver>::tftpboot/systemimager/updateclient ."
 
    2) CDROM
       - On the imageserver, use the "makeautoinstallcd" command to create
