@@ -117,7 +117,7 @@ endif
 MANUAL_DIR = $(TOPDIR)/doc/manual_source
 MANPAGE_DIR = $(TOPDIR)/doc/man
 PATCH_DIR = $(TOPDIR)/patches
-LIB_SRC = $(TOPDIR)/lib/SystemImager
+LIB_SRC = $(TOPDIR)/lib
 SRC_DIR = $(TOPDIR)/src
 BINARY_SRC = $(TOPDIR)/sbin
 
@@ -130,7 +130,7 @@ DOC  = $(USR)/share/doc/systemimager-doc
 BIN = $(USR)/bin
 SBIN = $(USR)/sbin
 MAN8 = $(USR)/share/man/man8
-LIB_DEST = $(USR)/lib/systemimager/perl/SystemImager
+LIB_DEST = $(USR)/lib/systemimager/perl
 LOG_DIR = $(DESTDIR)/var/log/systemimager
 
 INITRD_DIR = $(TOPDIR)/initrd_source
@@ -245,22 +245,24 @@ install_common:	install_common_man install_common_libs
 # install server-only libraries
 PHONY += install_server_libs
 install_server_libs:
-	mkdir -p $(LIB_DEST)
-	$(SI_INSTALL) -m 644 $(LIB_SRC)/Server.pm $(LIB_DEST)
-	$(SI_INSTALL) -m 644 $(LIB_SRC)/Flamethrower.pm $(LIB_DEST)
+	mkdir -p $(LIB_DEST)/SystemImager
+	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/Server.pm $(LIB_DEST)/SystemImager
+	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/Flamethrower.pm $(LIB_DEST)/SystemImager
 
 # install client-only libraries
 PHONY += install_client_libs
 install_client_libs:
-	mkdir -p $(LIB_DEST)
-	$(SI_INSTALL) -m 644 $(LIB_SRC)/Client.pm $(LIB_DEST)
+	mkdir -p $(LIB_DEST)/SystemImager
+	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/Client.pm $(LIB_DEST)/SystemImager
 
 # install common libraries
 PHONY += install_common_libs
 install_common_libs:
-	mkdir -p $(LIB_DEST)
-	$(SI_INSTALL) -m 644 $(LIB_SRC)/Common.pm $(LIB_DEST)
-	$(SI_INSTALL) -m 644 $(LIB_SRC)/Config.pm $(LIB_DEST)
+	mkdir -p $(LIB_DEST)/SystemImager
+	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/Common.pm $(LIB_DEST)/SystemImager
+	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/Config.pm $(LIB_DEST)/SystemImager
+	mkdir -p $(LIB_DEST)/XML
+	$(SI_INSTALL) -m 644 $(LIB_SRC)/XML/Simple.pm $(LIB_DEST)/XML
 
 # checks the sized of the i386 kernel and initrd to make sure they'll fit 
 # on an autoinstall diskette

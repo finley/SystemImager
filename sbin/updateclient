@@ -6,8 +6,8 @@
 #  Copyright (C) 1999-2001 Brian Elliott Finley <bef@bgsw.net>
 #  Copyright (C) 2002 International Business Machines
 #                     Sean Dague <sean@dague.net>
-#  Copyright (C) 2002 Bald Guy Software 
-#                     Brian Elliott Finley <bef@bgsw.net>
+#  Copyright (C) 2002-2003 Bald Guy Software 
+#                          Brian Elliott Finley <bef@bgsw.net>
 #
 #  $Id$
 #
@@ -72,6 +72,9 @@ Options: (options can be presented in any order)
  -server HOSTNAME         Hostname or IP address of the imageserver.
 
  -image IMAGENAME         Image from which the client should be updated.
+
+ -override OVERRIDE       Override directory to use.  Multiple overrides can
+                          be specified.  (Ie: -override THIS -override THAT)
 
  -directory "DIRECTORY"   Absolute path of directory to be updated.
                           (defaults to "/")
@@ -163,6 +166,7 @@ GetOptions(
     "flavor=s"          => \my $flavor,
     "server=s"          => \my $server,
     "image=s"           => \my $image,
+    "override=s"        => \my @overrides,
     "directory=s"       => \$directory,
     "log=s"             => \my $log,
 ) or die qq($help_info);
@@ -489,19 +493,20 @@ SC_EOF
     $directory =~ s(/+)(/)g;
 
     # start with base command
-    my $cmd = "rsync -av --numeric-ids --delete";
+    my $cmdopts  = "";
+
     if ($dry_run) {
-        $cmd .= ' --dry-run';
+        $cmdopts .= ' --dry-run';
     }
     if ($log) {
-        $cmd .= ' --log-format="' . $log . '"';
+        $cmdopts .= ' --log-format="' . $log . '"';
     }
 
     # Exclude lost+found directories.  With dynamic partitioning, the same 
     # image may be used on clients with different partition schemes, and 
     # therefore mount points. -BEF-
     #
-    $cmd .= " --exclude=lost+found/";
+    $cmdopts .= " --exclude=lost+found/";
 
     # Get exclusions from client side exclusion file.  Only use exclusions that start with the 
     # directory specified with -directory.  
@@ -514,7 +519,7 @@ SC_EOF
       if (m|^\s*$directory|) {  # match non commented explicit path
         chomp;
         s|^$directory||;
-        $cmd .= " --exclude=$_";
+        $cmdopts .= " --exclude=$_";
       }
     }
     close(SYSTEMIMAGER_EXCLUDE);
@@ -529,24 +534,36 @@ SC_EOF
     while (<ETC_MTAB>) {
         my ($device, $mount, $fstype, $garbage) = split(/\s+/,$_);
         if($fstype !~ /$fsregex/o) { # The /o makes the regex compile once. This is for performance
-            $cmd .= " --exclude=$mount";
+            $cmdopts .= " --exclude=$mount";
         }
     }
     close(ETC_MTAB);
 
-    # finalize command
-    $cmd .= " rsync://${server}:${port}/${image}${directory} ${directory}";
+    my $delete;
+    my $cmd = "";
+    foreach my $module ($image, @overrides) {
+        # finalize command
+        $delete = "";
+        if ($image eq $module) {
+            $delete = "--delete";
+        }
+        else {
+            $module = "overrides/$module";
+        }
+        $cmd = "rsync -av --numeric-ids $delete $cmdopts rsync://${server}:${port}/${module}${directory} ${directory}";
 
-    # execute command
-    if ($dry_run) {
-        print "Performing a dry run -- no files will be modified...\n";
-    } else {
-        print "Updating image...\n";
+        # execute command
+        if ($dry_run) {
+            print "Performing a dry run -- no files will be modified...\n";
+        }
+        print "Updating image from module ${module}...\n";
+
+        # Run the command. -BEF-
+        if (system($cmd)) {
+            if ($image eq $module) { die "$cmd failed!"; }
+            else { warn "$cmd failed, continuing..."; }
+        }
     }
-
-    # Run the command. -BEF-
-    !system($cmd) or die "$cmd failed!";
-
     # Now we install the bootloader if requested
     unless($no_bootloader) {
         print "Running bootloader...\n";
@@ -660,7 +677,7 @@ sub create_local_cfg {
 
     ### BEGIN get interface and gateway from the route command ###
     my $routecmd = "route -n";
-    open(COMMAND, "$command|");
+    open(COMMAND, "$routecmd|");
     while (<COMMAND>) {
         if ((/$netvars{DEVICE}/) and (/UG/)) {
             my ($destination, $gateway, $garbage) = split(/\s+/,$_);

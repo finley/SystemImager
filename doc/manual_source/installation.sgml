@@ -243,4 +243,84 @@
       created using the SystemImager tools.
     </para>
   </section>
+  <section>
+    <title>Upgrading SystemImager</title>
+    <para>
+      SystemImager upgrades are automated in most ways.  However, some parts
+      of the upgrade process must be done manually, to prevent losing user
+      customizations.
+    </para>
+    <section>
+      <title>Regenerating autoinstallscripts</title>
+      <para>
+        The autoinstall scripts, stored in /var/lib/systemimager/scripts, must
+        be updated with each release of SystemImager.  Otherwise, installations
+        using older scripts may fail.  This can easily be accomplished using
+        the <command>mkautoinstallscript</command> command.
+      </para>
+      <warning>
+        <para>
+          <command>mkautoinstallscript</command> will overwrite the 
+          pre-existing script for an image.  If you have made any changes to 
+          your autoinstall scripts (also known as .master scripts), you should 
+          backup those scripts in order to forward port your changes to the new
+          release.
+        </para>
+      </warning>
+      <example>
+        <title>Generating new autoinstallscripts</title>
+        <para>
+          # /usr/sbin/mkautoinstallscript -image myimage -post-install reboot -ip-assignment dhcp
+        </para>
+        <para>
+          If you require customizations to your autoinstallscript, edit the 
+          appropriate .master file in /var/lib/systemimager/scripts/
+        </para>
+      </example>
+    </section>
+    <section>
+      <title>Customizations to /etc/systemimager/rsyncd.conf</title>
+      <para>
+        Prior to the 3.0.0 release, your changes to 
+        <filename>/etc/systemimager/rsyncd.conf</filename> could
+        be made in place, but were susceptible to upgrade issues.  As of
+        3.0.0, these changes can be made in a separate file, that is maintained
+        across upgrades.  For details, see the mkrsyncd_conf(8) man page.
+        The rpm/deb package upgrades should take care of this process for you,
+        but you may want to look through the /etc/systemimager/rsync_stubs
+        directory to make sure you get the desired results.
+      </para>
+    </section>
+    <section>
+      <title>Regenerating boot media</title>
+      <para>
+        Each time you upgrade systemimager, you should also upgrade the boot
+	media you use to boot the autoinstall system.  Use mkautoinstallcd or
+	mkautoinstalldiskette to regenerate removable media.  If you network
+	boot, make sure you update the files in your /tftpboot directory, and
+	also be sure that you are passing all necessary options to the kernel.
+	These options occasionally change - check 
+	/etc/systemimager/pxelinux.cfg/syslinux.cfg for examples.
+      </para>
+    </section>
+    <section>
+      <title>What happened to the binary tarballs?</title>
+      <para>
+        With the 3.0.0 release, we deprecated the binary tarball releases.
+        3.0.0 introduced the boot packages feature, which requires that various
+        components of the SystemImager system have some sort of version 
+        control.  As this would've required a significant effort without 
+        relying on a package management system, it was decided that not 
+        supporting unpackaged bits was the better solution.
+      </para>
+      <para>
+        However, now that we have a build system based on make, you can do
+        things like 'make install_server_all', etc.  This is now the preferred
+        method for installing w/o using a package manager.  You will need to
+        track down all build dependencies and runtime dependencies by hand, but
+        considering you don't use a package manager, you're used to that 
+        anyway, right?
+      </para>
+    </section>
+  </section>
 </chapter>

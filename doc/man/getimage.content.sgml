@@ -188,7 +188,7 @@
 		  name.  It is possible therefore, when using static dhcp, to
 		  change a machine's hostname and IP address by simply changing
 		  one value in the dhcpd.conf file.  Some may find this
-		  desirable.  Also see the <command>makedhcpstatic</command>
+		  desirable.  Also see the <command>mkdhcpstatic</command>
 		  command.
 		</para>
 	      </listitem>
@@ -252,8 +252,8 @@
 
     <para>
       <command>addclients</command>(8),
-      <command>makedhcpserver</command>(8),
-      <command>makedhcpstatic</command>(8),
+      <command>mkdhcpserver</command>(8),
+      <command>mkdhcpstatic</command>(8),
     </para>
 
     <para>More details can be found in the <citetitle>SystemImager

@@ -33,6 +33,7 @@
       <arg><option>-version</option></arg>
       <arg><option>-server <replaceable>HOSTNAME</replaceable></option></arg>
       <arg><option>-image <replaceable>IMAGENAME</replaceable></option></arg>
+      <arg rep="repeat"><option>-override <replaceable>OVERRIDE</replaceable></option></arg>
       <arg><option>-directory <replaceable>DIRECTORY</replaceable></option></arg>
       <arg><option>-no-bootloader</option></arg>
       <arg><option>-autoinstall</option></arg>
@@ -91,6 +92,23 @@
         <term><option>-image <replaceable>IMAGENAME</replaceable></option></term>
         <listitem>
           <para>Image from which the client should be updated</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-override <replaceable>OVERRIDE</replaceable></option></term>
+        <listitem>
+          <para>Override module(s) from which to copy additional files.  
+            Override directories are useful when you have multiple types of
+            clients that share a subset of files.  The image can contain this
+            subset, and you can have an override module for each client type
+            which contains the additional files required for that client type.
+            If the same file exists in an override module and the image, the
+            files in the override module will overwrite those in the image.
+          </para>
+          <para>
+	    You can specify multiple override modules.  They will be copied 
+            over in the same order the are specified on the command line.
+          </para>
         </listitem>
       </varlistentry>
       <varlistentry>

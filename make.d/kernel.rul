@@ -19,6 +19,7 @@ ifeq ($(ARCH),hppa)
 	LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.4/$(LINUX_TARBALL)
 	LINUX_IMAGE = $(LINUX_SRC)/vmlinux
 	LINUX_TARGET = vmlinux
+	LINUX_DIR = linux
 endif
 
 # currently ppc only supports rs6k machines.  Help is welcome to

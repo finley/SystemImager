@@ -445,6 +445,11 @@ image=vmlinux-rh.img
 	  a new kernel binary.  However, also unlike earlier releases, you can
 	  have multiple boot packages installed simultaneously on your system.
 	</para>
+	<para>
+	  The following instructions describe how to create a new boot package.
+	  These steps should be used for adding a driver, whether it be a
+          network driver, block device driver, a module, or statically linked.
+        </para>
 	<warning>
 	  <para>
 	    Boot packages are tightly linked to the version of SystemImager
@@ -463,7 +468,7 @@ image=vmlinux-rh.img
 	    and the driver is only available as a module.  This is also
 	    the suggested method for adding a module for a device
 	    when it failed to be discovered at install time.  Alternatively, 
-	    you can add a patch to be added to the kernel build tree, or
+	    you can drop in a patch to be added to the kernel build tree, or
 	    make modifications to the .config file used to build the kernel.
 	  </para>
 	</formalpara>

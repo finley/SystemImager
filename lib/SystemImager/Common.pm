@@ -618,6 +618,8 @@ sub _turn_sfdisk_output_into_generic_partitionschemes_file {
         } elsif ($id eq "8e") {  # 8e  Linux LVM
           $flags = "lvm";
      
+        } elsif ($id eq "de") {  # de  Dell Utility
+
         } elsif ($id eq "ef") {  # ef  EFI (FAT-12/16/32)
      
         } elsif ($id eq "fd") {  # fd  Linux raid autodetect

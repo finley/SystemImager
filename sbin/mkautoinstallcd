@@ -223,7 +223,7 @@ my $mkisofscmd = "";
 my $olddir = getcwd();
 chdir("$temp_dir");
 
-$mkisofscmd = "mkisofs -A \"SystemImager $arch Autoinstallcd v$VERSION\" -V \"SystemImager $arch Boot CD\" -p \"Created by mkautoinstallcd -- part of SystemImager.  http://systemimager.org/\" -J -r -T -v -pad -no-emul-boot -b boot/siboot.img -c boot/boot.catalog -o $out_file .";
+$mkisofscmd = "mkisofs -A \"SystemImager $arch Autoinstallcd v$VERSION\" -V \"SystemImager $arch Boot CD\" -p \"Created by mkautoinstallcd -- part of SystemImager.  http://systemimager.org/\" -J -r -T -v -pad -b boot/siboot.img -c boot/boot.catalog -o $out_file .";
 
 mysystem($mkisofscmd,"Making the ISO image now") or
   croak("Couldn't build the ISO image!");

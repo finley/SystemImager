@@ -879,11 +879,15 @@ pxelinux_cfg() {
     ### END CREATE PXELINUX.BIN LINK IN TFTPDIR
 
     ### BEGIN PROMPT USER FOR KERNEL
+    KERNEL_DEFAULT="/usr/share/systemimager/boot/i386/standard/kernel"
     if [ "$KERNEL" != "" ]; then
 	REPLY=$KERNEL
     else
-	echo -n "What is the full pathname of the kernel you want to use? "
+	echo -n "What is the full pathname of the kernel you want to use? [(${KERNEL_DEFAULT})] "
 	read REPLY
+    fi
+    if [ -z $REPLY ]; then
+        REPLY=$KERNEL_DEFAULT
     fi
     if [ ! -f "$REPLY" ]; then
 	echo "$REPLY doesn't exist, or isn't a regular file."
@@ -937,12 +941,16 @@ pxelinux_cfg() {
     ### END CREATE KERNEL LINK IN TFTPDIR
     
     ### BEGIN PROMPT USER FOR RAMDISK
+    INITRD_DEFAULT="/usr/share/systemimager/boot/i386/standard/initrd.img"
     if [ "$INITRD" != "" ]; then
 	REPLY=$INITRD
     else
-	echo -n "What is the full pathname of the compressed ramdisk (initrd.img) you want to use? "
+	echo -n "What is the full pathname of the compressed ramdisk (initrd.img) you want to use? [(${INITRD_DEFAULT})]"
 	read REPLY
     fi
+    if [ -z $REPLY ]; then
+        REPLY=$INITRD_DEFAULT
+    fi        
     if [ ! -f $REPLY ]; then
 	echo "$REPLY doesn't exist, or isn't a regular file."
 	return 1

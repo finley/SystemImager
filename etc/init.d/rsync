@@ -31,7 +31,7 @@
 ### END INIT INFO
 
 
-PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+export PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 NAME=rsync
 OPTIONS="--daemon --config=/etc/systemimager/rsyncd.conf"
 DAEMON=`which $NAME` || exit 0

@@ -1,5 +1,5 @@
 %define name     systemimager
-%define ver      2.9.4
+%define ver      XXX_SET_BEFORE_USING_XXX
 %define rel      1
 %define prefix   /usr
 %define _build_all 1
@@ -42,7 +42,7 @@ Packager: dann frazier <dannf@dannf.org>
 Docdir: %{prefix}/share/doc
 URL: http://systemimager.org/
 Distribution: System Installation Suite
-Requires: rsync >= 2.4.6, systemimager-common = %{version}, perl-AppConfig, dosfstools, /sbin/chkconfig, perl, perl-XML-Simple
+Requires: rsync >= 2.4.6, systemimager-common = %{version}, perl-AppConfig, dosfstools, /sbin/chkconfig, perl
 AutoReqProv: no
 
 %description server
@@ -164,6 +164,16 @@ to boot and install %{_build_arch} Linux machines during the SystemImager autoin
 process.
 
 %changelog
+* Sun Jan 08 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.0.0-2
+- various ia64 fixes
+- stop attempting to build ps manual
+
+* Sun Dec 08 2002 sis devel <sisuite-devel@lists.sourceforge.net> 3.0.0-1
+- new upstream release
+
+* Sun Nov 18 2002 dann frazier <dannf@dannf.org> 2.9.5-1
+- new upstream release
+
 * Sun Oct 27 2002 dann frazier <dannf@dannf.org> 2.9.4-1
 - new upstream release
 
