@@ -1,0 +1,55 @@
+#
+# $Id$
+#
+
+Quick Start
+------------------------------------------------------------------------------
+A script named like this one (99all.harmless_example_script) -- that 
+is, two digits followed by "all", then a period ".", then a 
+description "harmless_example_script" -- will run for _all_ of your 
+clients and images. 
+
+
+How post-install scripts are processed
+------------------------------------------------------------------------------
+- They are run from the auto-install script, after all post-imaging 
+  configuration is performed, and right before the client's filesystems 
+  are unmounted.
+
+- The entire "post-install" directory is copied to /tmp/post-install/ on 
+  the client's new filesystem.
+
+- Each script is tested for non-zero exit status, and the install will
+  "shellout" if any of the scripts exits with non-zero status.
+
+- Each script is executed individually inside a chroot of the new root 
+  filesystem on the client.  The newly installed client filesystem is 
+  mounted on /a/, so the actual script execution looks something like:
+  
+      "chmod +x /a/tmp/post-install/$SCRIPT"
+      "chroot /a/ /tmp/post-install/$POST_INSTALL_SCRIPT"
+
+  This means that you can write your scripts as if they were executing on a
+  normally operating machine (with few exceptions).
+
+- Scripts should be named in this way:
+  
+  Two digit number to indicate order within a class.
+  | Class name.
+  | |  Period, followed by your description of the script.
+  | |  |
+  | |  |
+  v v  v
+  99all.harmless_example_script
+
+  Classes include: 
+  - $IMAGENAME      (Ie: my_compute_image)
+  - $BASE_HOSTNAME  (Ie: compute)
+  - $HOSTNAME       (Ie: compute07)
+  - all
+  - $OVERRIDE
+  
+  Scripts are ordered and executed first by class, then by number within 
+  a class.  If you have multiple $OVERRIDE directories, they will be 
+  executed in the order specified in your auto-install script.
+
