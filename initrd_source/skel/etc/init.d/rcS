@@ -493,9 +493,30 @@ run_autoinstall_script() {
 #
 ################################################################################
 #
+#	Get ssh_tarball
+#
+get_ssh_tarball() {
+
+    # Remove possible trailing / from URL
+    SSH_DOWNLOAD_URL=`echo $SSH_DOWNLOAD_URL | sed 's/\/$//'`
+
+    cd /tmp
+    CMD="wget ${SSH_DOWNLOAD_URL}/systemimager/boot/${ARCH}/ssh/systemimager_ssh.tar.gz"
+    echo "$CMD"
+    $CMD || shellout
+    cd -
+
+    # Untar the tarball
+    tar -C / -xvzf /tmp/systemimager_ssh.tar.gz || shellout
+}
+#
+################################################################################
+#
 #   Stuff for SSH installs
 #
 start_ssh() {
+
+	get_ssh_tarball
 
     # create root's ssh dir
     mkdir /root/.ssh

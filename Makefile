@@ -150,7 +150,7 @@ CHECK_FLOPPY_SIZE = expr \`du -b $(INITRD_DIR)/initrd.img | cut -f 1\` + \`du -b
 BOEL_BINARIES_DIR = $(TOPDIR)/tmp/boel_binaries
 BOEL_BINARIES_TARBALL = $(BOEL_BINARIES_DIR).tar.gz
 
-SYSTEMIMAGER_SSH_DIR = $(TOPDIR)/tmp/systemimager-ssh-$(VERSION)
+SYSTEMIMAGER_SSH_DIR = $(TOPDIR)/tmp/systemimager_ssh
 SYSTEMIMAGER_SSH_TARBALL = $(SYSTEMIMAGER_SSH_DIR).tar.gz
 
 SI_INSTALL = $(TOPDIR)/tools/si_install --si-prefix=$(PREFIX)
@@ -396,6 +396,23 @@ install_ssh_tarball:	$(SYSTEMIMAGER_SSH_TARBALL)
 	$(SI_INSTALL) -d -m 755 $(SSH_BIN_DEST)
 	$(SI_INSTALL) -m 644 $(SYSTEMIMAGER_SSH_TARBALL) $(SSH_BIN_DEST)
 
+PHONY += ssh_source_tarball
+ssh_source_tarball:	$(TOPDIR)/tmp/systemimager-ssh-$(VERSION).tar.bz2
+
+$(TOPDIR)/tmp/systemimager-ssh-$(VERSION).tar.bz2:
+	mkdir -p tmp/systemimager-ssh-$(VERSION)
+	find . -maxdepth 1 -not -name . -not -name tmp -not -name src \
+	  -exec cp -a {} tmp/systemimager-ssh-$(VERSION) \;
+	rm -rf `find tmp/systemimager-ssh-$(VERSION) -name CVS \
+	         -type d -printf "%p "`
+	$(MAKE) -C $(TOPDIR)/tmp/systemimager-ssh-$(VERSION) distclean
+	$(MAKE) -C $(TOPDIR)/tmp/systemimager-ssh-$(VERSION) WITH_SSH=1 get_ssh_source
+	cd $(TOPDIR)/tmp && tar -ch systemimager-ssh-$(VERSION) | bzip2 > \
+	  systemimager-ssh-$(VERSION).tar.bz2
+	@echo
+	@echo "ssh source tarball has been created in $(TOPDIR)/tmp"
+	@echo
+
 #
 ################################################################################
 
@@ -506,7 +523,7 @@ source_tarball:	$(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
 
 $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2:
 	mkdir -p tmp/systemimager-$(VERSION)
-	find . -maxdepth 1 -not -name . -not -name tmp \
+	find . -maxdepth 1 -not -name . -not -name tmp -not -name src \
 	  -exec cp -a {} tmp/systemimager-$(VERSION) \;
 	rm -rf `find tmp/systemimager-$(VERSION) -name CVS \
 	         -type d -printf "%p "`
