@@ -261,8 +261,6 @@ install_common_libs:
 	mkdir -p $(LIB_DEST)/SystemImager
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/Common.pm $(LIB_DEST)/SystemImager
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/Config.pm $(LIB_DEST)/SystemImager
-	mkdir -p $(LIB_DEST)/XML
-	$(SI_INSTALL) -m 644 $(LIB_SRC)/XML/Simple.pm $(LIB_DEST)/XML
 
 # checks the sized of the i386 kernel and initrd to make sure they'll fit 
 # on an autoinstall diskette
