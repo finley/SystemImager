@@ -1,209 +1,419 @@
 #!/usr/bin/perl -w
+
 #
-# "SystemImager" 
+# "SystemImager"
 #
-#  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
+#  Copyright (C) 1999-2002 Bald Guy Software 
+#                     Brian E. Finley <brian.finley@baldguysoftware.com>
 #
-#  $Id$
-#
-#  Others who have contributed to this code (in alphabetical order):
-#    Austin Gonyou <austin@coremetrics.com>
+#    $Id$
 #
 
-####################
- ### BEGIN Program ###
-  #####################
-# if not run as root this script will surely fail
-unless($< == 0) { die "Must be run as root!\n"; }
-
-use Getopt::Long;
+use lib "USR_PREFIX/lib/systemimager/perl";
+use strict;
 use AppConfig;
+use Getopt::Long;
+use SystemImager::Config;
+use vars qw($config $VERSION);
 
-### BEGIN parse the config file ###
 
-my $config = AppConfig->new(
-			    'autoinstall_script_dir' => { ARGCOUNT => 1 },
-			    'autoinstall_boot_dir' => { ARGCOUNT => 1 },
-			    'default_image_dir' => { ARGCOUNT => 1 },
-			    'rsyncd_conf' => { ARGCOUNT => 1 },
-			    'rsync_stub_dir' => { ARGCOUNT => 1 },
-                            'help' => {ARGCOUNT => 0, DEFAULT => 0, ALIAS => 'h'},
-                            'version' => {ARGCOUNT => 0, DEFAULT => 0},
-                            'client' => {ARGCOUNT => 1, DEFAULT => ""},
-                            'domainname' => {ARGCOUNT => 1, DEFAULT => ""},
-                            'host-range' => {ARGCOUNT => 1, 
-                                             VALIDATE => '-',
-                                             DEFAULT => ""},
-                            'ip-range' => {ARGCOUNT => 1, 
-                                           DEFAULT => "",
-                                           VALIDATE => '^([0-9]+\.){3}[0-9]+-([0-9]+\.){3}[0-9]+$', # This won't let bumm ip addrs through
-                                          },
-                            'image' => {ARGCOUNT => 1, DEFAULT => ""},
-                            'file' => {ARGCOUNT => 1, DEFAULT => ""},
-                            'quiet' => {ARGCOUNT => 0, DEFAULT => 0},
-			    );
 
-$config->file('/etc/systemimager/systemimager.conf');
+### BEGIN Program ###
+# if not run as root this script will surely fail
 
-my $autoinstall_script_dir = $config->autoinstall_script_dir();
+# set version information
+my $VERSION = "SYSTEMIMAGER_VERSION_STRING";
+my $program_name = "addclients";
+my $version_info = <<"EOF";
+$program_name (part of SystemImager) version $VERSION
 
-if (!$autoinstall_script_dir) {
-    die "AUTOINSTALL_SCRIPT_DIR not defined in the config file.";
-}
+Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley\@baldguysoftware.com>
+Copyright (C) 2002 Bald Guy Software <brian.finley\@baldguysoftware.com>
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+EOF
 
-### END parse the config file ###
+# set help information
+my $help_info = $version_info . <<"EOF";
 
-$config->args();
+Usage: $program_name [OPTION]... REQUIRED_ARGUMENTS
+   or: $program_name
 
-my $clientname = $config->client;
-my $host_range = $config->get('host-range');
-my $domainname = $config->domainname;
-my $ip_range = $config->get('ip-range');
-my $clientfile = $config->get('file');
-my $base_hostname;
-my $imagename = $config->image;
+Options: (options can be presented in any order)
 
-#GetOptions(
-#    "help" => \$help,
-#    "version" => \$version,
-#    "client=s" => \$clientname,
-#    "domainname=s" => \$domainname,
-#    "host-range=s" =>\$host_range,
-#    "ip-range=s" => \$ip_range,
-#    "image=s" => \$imagename,
-#    "file=s" => \$clientfile
-#) || die "$0 <arguments>, use -h for help\n";
+ -help              Display this output.
 
-#if -help was passed print usage
-if ($config->help) {
-    &help_info(0);
-    exit 0;
-}
+ -version           Display version and copyright information.
 
-#if -version was passed print version
-if ($config->version) {
-    &version_info;
-    exit 0;
-}
-#if any options were called perform non-interactive install
-#otherwise go interactive
-if ($clientname && $host_range  && $domainname && $imagename && $ip_range || $clientfile) {
-    @passvar=($base_hostname,
-    		  $domainname,
-    		  $host_range,
-    		  $imagename,
-    		  $ip_range);
-    &Scripts(@passvar);
-#print "Non-interactive mode not yet enabled\n";
-} else {
-    if($config->quiet()) {
-        print "Not enough arguments. Exiting!\n";
-        exit(1);
-    }
-    print "Not enough arguments. Falling back to interactive setup\n";
-    sleep 2;
-    &Interactive;
-}
-#####################  
- ##BEGIN Subroutines##
-  #####################
-sub help_info{
-    system("clear");
-    if($_[0] == 1){
-	print "Not enough arguments! Printing help...\n";
-	&help
-    } else {
-	&help;
-    }
-}
+ -domainname NAME   Domain name.
 
-sub help {
-    printf "Usage: $0 <argument(s)>\n";
-print << 'EOF';
- -help                      Display this output.
+ -host NAME         Base host name.
 
- -version                   Display version and copyright information.
+ -host-range N-N    Range of hosts involved.  Examples: 1-99 or 01-99.
 
- -quiet                     Do not ask any questions or print any output
-                            (other than errors). In this mode, no 
-			    warning will be given if the image already 
-			    exists on the server.  
+ -script NAME       Master autoinstall script name.  Don't include
+                    the .master extention.
 
-			    NOTE: -quiet implies -yes
+ -ip-range IP-IP    Range of IP addresses for clients.  Used to create an
+                    optional hosts file that clients can use for IP address
+                    to hostname resolution during install.  Not necessary if
+                    DNS reverse resolution is configured for the IP addresses
+                    in question.  If both DNS and a hosts file are used, 
+                    information in the hosts file will supercede the 
+                    information in DNS.  Example: 10.0.0.1-10.0.0.99.
 
- -yes                       Assume an answer of "yes" to all questions.
-                            Allows this command to be run 
-			    non-interactively.
-
- -client HOSTNAME           Base host name of the client(s) to be
-                            autoinstalled.  Will be combined with
-			    "-host-range" to derive actual host names.
-
- -host-range N-N            Number range used to create a series of host
-                            names based on the -client option.  For
-                            example, "-client www -range 1-3" will cause
-                            addclients to use www1, www2, and www3 as 
-			    host names.  If leading zeros are used, then
-			    host
-			    names will be padded with zeros.  For 
-			    example, "-client www -range 01-03" produces
-			    host names www01, www02, and www03.  Padding
-			    hostnames with zeros is not recommended.
-
- -domain DOMAINNAME         If this option is used, DOMAINNAME will be
-                            appended to the client host name(s).
-
- -ip-range X.X.X.X-Y.Y.Y.Y  The range of IP addresses to assign to your
-                            autoinstall clients.  Where X.X.X.X is the 
-			    first IP address in the range and Y.Y.Y.Y is
-			    the last ip address in the range.
-
-		**NOTE** Not Yet Functional. **NOTE** 
- -file FILE                 Read host names and images to process from 
-                            FILE.  This option can be used instead of
-			    the "-client" and "-host-range" options.  
-			    The file format is: "hostname imagename".  
-			    Here are some example file contents:
-
-                              www1 web_image_v1
-                              www2 web_image_v1
-                              www-test web_image_v2
-                              db1  database_image_v1
-                              db2  database_image_v1
-
-addclients usage example:
-[root@UberKinder ~]# addclients -client www -host-range 1-3 -image <image>\
-		-domain systemimager.org  -ip-range 1.1.1.101-1.1.1.103
+ -interactive       If domainname, host, host-range, and script are all 
+                    specified, then this program will go non-interactive
+                    automatically.  If you want to ensure that it remains
+                    interactive, even if all of these settings are specified,
+                    use this switch.
 
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
 EOF
 
-    exit 0;
+# defaults
+my $script;
+my $domain_name = "";
+my $base_host_name = "";
+my $starting_number = "";
+my $ending_number = "";
+my $starting_ip = "";
+my $ending_ip = "";
+my $interactive = "";
+
+
+# interpret command line options
+GetOptions( 
+  "help" => \my $help,
+  "version" => \my $version,
+  "domainname=s" => \$domain_name,
+  "host=s" => \$base_host_name,
+  "host-range=s" => \my $host_range,
+  "script=s" => \$script,
+  "ip-range=s" => \my $ip_range,
+  "interactive" => \$interactive,
+) or die qq($help_info);
+
+# if requested, print help information
+if($help) {
+  print qq($help_info);
+  exit 0;
 }
 
-sub version_info{
+# if requested, print version and copyright information
+if($version) {
+  print qq($version_info);
+  exit 0;
+}
+
+unless($< == 0) { die "Must be run as root!\n"; }
+
+if ($host_range) {
+    ($starting_number, $ending_number) = split(/-/, $host_range);
+}
+
+if ($ip_range) {
+    ($starting_ip, $ending_ip) = split(/-/, $ip_range);
+}
+
+$domain_name = lc $domain_name;
+$base_host_name = lc $base_host_name;
+
+
+################################################################################
+#
+# Go non-interactive if enough of the right arguments are passed. -BEF-
+#
+if (
+    ($base_host_name) and 
+    ($script) and 
+    ($starting_number) and 
+    ($ending_number)
+) {
+
+    # Go non-interactive, unless we're told not to. -BEF-
+    unless ($interactive) { $interactive = ""; }
+
+} else {
+
+    # Go interactive. -BEF-
+    $interactive = 1;
+}
+################################################################################
+
+
+my $autoinstall_script_dir = $config->autoinstall_script_dir();
+
+if($interactive) {
     system("clear");
-    printf "This is a beta version of the addclients from\n";
-    printf "SystemImager. \[HTTP\:\/\/WWW.SYSTEMIMAGER.ORG\/\]\n";
-    printf "Type .\/$0 -help for usage\n\n";
-    sleep 2;
-    print "This program is free software; you can redistribute it and/or modify\n"
- 		 ."it under the terms of the GNU General Public License as published by\n"
-	 	 ."the Free Software Foundation; either version 2 of the License, or\n"
- 		 ."(at your option) any later version.\n\n";
+    print << "EOF";
+Welcome to the SystemImager "addclients" utility  
+--------------------------------------------------------------------------------
 
-	print "This program is distributed in the hope that it will be useful,\n"
-		  ."but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
-		  ."MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
- 		 ."GNU Library General Public License for more details.\n\n";
+This utility has 3 sections.  
 
-	print "You should have received a copy of the GNU General Public License\n"
-		  ."along with this program; if not, write to the Free Software\n"
-		  ."Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.\n"
+
+"Section 1" will ask you for your hostname information.
+
+
+"Section 2" will allow you to create softlinks from each
+client hostname to your "master" script in the
+"$autoinstall_script_dir" directory.  
+
+Example: www297.sh -> web_server_image_v1.master
+
+
+"Section 3" will ask you for IP address information that will
+be combined with the hostname information provided in Section 1
+to create entries in "/etc/hosts" for each of these same clients.
+New entries will be appended to the end of "/etc/hosts".  If you 
+specify new hostnames for existing IP addresses, those entries 
+will be re-written in place to reflect the new host names.
+
+
+EOF
 }
 
+if ($interactive) {
+    print "Continue? ([y]/n): ";
+    my $continue=<STDIN>;
+    chomp $continue;
+    $continue = lc $continue;
+    ($continue ne "n") or die "\naddclients: No files were modified.\n";
+}
 
+my $satisfied;
+
+if ($interactive) {
+    ### BEGIN main questionnaire ###
+    $satisfied = "n";
+    while ($satisfied ne "y") {
+        system("clear");
+        print <<EOF;
+addclients -- Section 1 (hostname information)
+----------------------------------------------
+
+The next series of questions will be used to create a range
+of hostnames.  You will be asked for your domain name, the 
+base host name, a beginning number, and an ending number.
+
+For example, if you answer:
+  domain name     = systemimager.org
+  base host name  = www
+  starting number = 7
+  ending number   = 11
+
+Then the result will be a series of hostnames that looks like this:
+  www7.systemimager.org
+  www8.systemimager.org
+  www9.systemimager.org
+  www10.systemimager.org
+  www11.systemimager.org
+
+
+EOF
+
+        print "What is your domain name? [$domain_name]: ";
+        $domain_name = get_response($domain_name);
+       
+        print "What is the base host name that you want me to use? [$base_host_name]: ";
+        $base_host_name = get_response($base_host_name);
+       
+        print "What number should I begin with? [$starting_number]: ";
+        $starting_number = get_response($starting_number); 
+       
+        print "What number should I end with? [$ending_number]: ";
+        $ending_number=get_response($ending_number);
+       
+        $domain_name = lc $domain_name;
+        $base_host_name = lc $base_host_name;
+
+        print "\n\n";
+        print "I will work with hostnames:  $base_host_name$starting_number through $base_host_name$ending_number\n"; 
+        print "             in the domain:  $domain_name\n";
+        print "\nAre you satisfied? (y/[n]): ";
+        chomp($satisfied=<STDIN>);
+    } # while ($satisfied ne "y")
+    ### END main questionnaire ###
+
+
+    ### BEGIN links questionaire ###
+    system("clear");
+    print <<"EOF";
+addclients -- Section 2 (soft links to master script)
+--------------------------------------------------------------------------------
+
+Would you like me to create soft links to a "master" script so
+that hosts:
+
+  $base_host_name$starting_number through $base_host_name$ending_number
+
+EOF
+
+    print "can be autoinstalled with that image? ([y]/n): ";
+    my $createlinks=<STDIN>;
+    chomp $createlinks;
+    $createlinks = lc $createlinks;
+
+    unless($createlinks eq "n") {
+        $satisfied="n";
+        while ($satisfied eq "n") {
+        
+            # gather a list of available images
+            my (@files, $newest_script);
+            # ------------------------------------> sort by timestamp -- oldest to newest
+            my $cmd = "cd $autoinstall_script_dir && ls -1tr *.master 2>&1";
+            open(LS, "$cmd |");
+            while (<LS>) {
+                chomp;
+                s/\.master//;
+                push(@files, $_);
+                # make the newest image the default
+                $newest_script = $_;
+            }
+            close(LS);
+          
+            unless($script) { $script = $newest_script; }
+          
+            # display the list of available images
+            unless(@files) { die "There are no available autoinstall scripts.  Please use getimage to retrieve an\nimage first.   -The Mgmt\n"; }
+            print qq(\nHere is a list of available autoinstall scripts:\n);
+            print "\n";
+            foreach(@files) {
+                print "$_ \n";
+            }
+            print "\n";
+          
+            print "Which script would you like these hosts to be installed with? [$script]: ";
+            $script=get_response($script);
+            if ( -f "$autoinstall_script_dir/$script.master" ) {
+          
+                create_links($starting_number, $ending_number, $base_host_name, $script, $autoinstall_script_dir);
+          
+                print "\nYour soft links have been created.\n";
+                print "\nPress <Enter> to continue...";
+                $satisfied="y";
+                <STDIN>;
+                system("clear");
+          
+            } else {
+          
+                print qq(\nMaster script \"$script\" does not exist...\n);
+                print qq(Let's try again, shall we?\n);
+                print qq(\nPress <Enter> to continue...);
+                $satisfied="n";
+                <STDIN>;
+                system("clear");
+            }
+        }
+
+    } else {
+        print "\nNo links will be created.\n";
+        print "\nPress <Enter> to continue...";
+        <STDIN>;
+    }
+    ### END links questionaire ###
+
+
+    ### BEGIN hosts questionaire ###
+    system("clear");
+    print <<EOF;
+addclients -- Section 3 (adding or modifying /etc/hosts entries)
+--------------------------------------------------------------------------------
+
+Your target machines need to be able to determine their host names from their
+IP addresses, unless their host name is specified in a local.cfg file.  
+
+The preferred method for doing this is with DNS.  If you have a working DNS 
+that has IP address to hostname resolution properly configured for your target
+machines, then answer "n" here.
+
+If you don't have a working DNS, or you want to override the information in
+DNS, then answer "y" here to add entries to the "/etc/hosts" file on your
+image server.  After adding these entries, the /etc/hosts file will be copied
+to "$autoinstall_script_dir" where it can be retrieved by your 
+target machines.
+
+I will ask you for your clients' IP addresses one subnet at a time.
+
+
+EOF
+
+    print "Would you like me to continue? (y/[n]): ";
+
+    my $etc_hosts=<STDIN>;
+    chomp $etc_hosts;
+    $etc_hosts = lc $etc_hosts;
+    if($etc_hosts ne "y") {$etc_hosts = "n";}
+
+    my $node_number = $starting_number;
+
+    if($etc_hosts eq "y") {
+
+    my $subnet_count = "0";
+
+    ### BEGIN One Subnet at a time ###
+    #
+    my $satisfied;
+
+    while ( $node_number <= $ending_number ) {
+        $subnet_count = $subnet_count + 1;
+
+        ### get IP information ###
+        # ne "y" is used instead of eq "n" because the dissatisfied response may be something other than "n".
+        $satisfied="n";
+        while ($satisfied ne "y") {
+            system("clear");
+            print "addclients -- Section 3 (adding or modifying /etc/hosts entries -- continued...)\n";
+            print "--------------------------------------------------------------------------------\n";
+            print "subnet $subnet_count\n\n";
+            print "The first host in subnet $subnet_count will be: $base_host_name$node_number\n";
+            print "What is the starting IP address for subnet $subnet_count? [$starting_ip]: ";
+            $starting_ip = get_response($starting_ip);
+            
+            print "What is the ending IP address? [$ending_ip]: ";
+            $ending_ip = get_response($ending_ip);
+            
+            print "I will work with IP addresses:  $starting_ip through $ending_ip\n";
+            print "\nAre you satisfied? (y/[n]): ";
+            chomp($satisfied=<STDIN>);
+        }
+        ### get IP information ###
+
+        ($starting_ip, $ending_ip, $node_number) = add_hosts_entries($starting_ip, $ending_ip, $starting_number, $ending_number, $base_host_name, $domain_name);
+
+    }
+    ### END One Subnet at a time ###
+
+  
+    if ( $etc_hosts eq "y" ) { print "\nThese entries have been added to /etc/hosts.\n"; }
+    print "\nPress <Enter> to continue...";
+    <STDIN>;
+
+    } else {
+        print "\nNo entries will be added.\n";
+    }
+    ### END hosts questionaire ###
+
+} else {
+
+    create_links($starting_number, $ending_number, $base_host_name, $script, $autoinstall_script_dir);
+    if (
+        ($base_host_name) and
+        ($domain_name) and
+        ($starting_ip) and
+        ($ending_ip) and
+        ($starting_number)
+    ) { add_hosts_entries($starting_ip, $ending_ip, $starting_number,  $ending_number, $base_host_name, $domain_name); }
+    
+} #if ($interactive)
+
+
+
+
+
+### BEGIN Subroutines ###
 sub get_response {
  my $garbage_out=$_[0];
  my $garbage_in=<STDIN>;
@@ -227,8 +437,6 @@ sub bin2dec {
   return unpack("N", pack("B32", substr("0" x 32 . shift, -32))); # get all 32bits
 }
 
-#This sub takes an IP of decimal value, and changes gives it to 
-#dec2bin8bit for translation into binary. 
 sub ip_quad2ip_dec {
     (my $a, my $b, my $c, my $d) = split(/\./, $_[0]);
     my $a_bin=dec2bin8bit($a);
@@ -238,6 +446,7 @@ sub ip_quad2ip_dec {
     return bin2dec(join('', $a_bin, $b_bin, $c_bin, $d_bin));
 }
 
+# Usage: my $ip_quad = ip_dec2ip_quad($ip_dec);
 sub ip_dec2ip_quad {
     my $ip_bin = dec2bin($_[0]);
     my $a_dec = bin2dec(substr($ip_bin, 0, 8));
@@ -247,334 +456,100 @@ sub ip_dec2ip_quad {
     return join('.', $a_dec, $b_dec, $c_dec, $d_dec);
 }
 
-#Sub returns -1, 0, or 1 for < = or > respectively
 sub numerically { 
     $a <=> $b;
 }
-################### 
- ##END Subroutines##
-  ###################
-  
-# The sub which allows interactive sessions
-sub Interactive {
-    &Begin_add;
-    &Main_questions;
-    &Links_questions;
-    &SubNet;
-}
-sub Scripts {
-	if (! @_ eq ''){
-	&Begin_add(1);
-	&Main_questions(1);
-    &Links_questions(1);
-    &SubNet(1);
-    } else { &Interactive;}
- }
-    #This begins the addclients user interaction
-####################
- ##BEGIN &Begin_add##
-  ####################
-sub Begin_add {
-	if ( @_ == 1) { print "Entering Non-Interactive mode\n";
-} else {
-system("clear");
-print << "EOF";
-Welcome to the SystemImager \"addclients\" utility  
-------------------------------------------------
-
-This utility has 3 sections.  
 
 
-\"Section 1\" will ask you for your hostname information.
+# Usage: create_links($starting_number, $ending_number, $base_host_name, $script, $autoinstall_script_dir);
+sub create_links {
 
+    my ($starting_number, $ending_number, $base_host_name, $script, $autoinstall_script_dir) = @_;
 
-\"Section 2\" will allow you to create softlinks from each
-client hostname to your "master" script in the
-\"$autoinstall_script_dir\" directory.  
+    $base_host_name = lc $base_host_name;
 
-Example: www297.sh -> web_server_image_v1.master
-
-
-\"Section 3\" will ask you for IP address information that will
-be combined with the hostname information provided in Section 1
-to create entries in \"/etc/hosts\" for each of these same clients.
-New entries will be appended to the end of \"/etc/hosts\".  If you 
-specify new hostnames for existing IP addresses, those entries 
-will be re-written in place to reflect the new host names.
-
-
-EOF
-#changed logic to bomb unless a y or enter is pressed. 
-#All else kills script
-print "Continue? ([y]/n): ";
-$continue=<STDIN>;
-chop $continue;
-if ($continue eq ''){$continue = "y";}
-$continue = lc $continue;
-unless ($continue eq "y"){ die "\naddclients: No files were modified.\n";}
-	}
-}
-##################
- ##END &BEGIN_ADD##
-  ##################
-#This begins the value population for parsing data interactively
-#Can be adapted to do interactive + non-interactive
-#########################
- ##BEGIN &MAIN_QUESTIONS##
-  #########################
-sub Main_questions {
-	if( @_ == 1) {
-$image=$imagename;
-$domain_name=$domainname;
-$base_host_name=$clientname;
-($starting_number,$ending_number)=(split(/-/, $host_range));
-} else {
-$image="";
-$domain_name="";
-$base_host_name="";
-$starting_number="";
-$ending_number="";
-$satisfied = "n";
-while ($satisfied ne "y") {
- system("clear");
-print <<EOF;
-addclients -- Section 1 (hostname information)
-----------------------------------------------
-
-The next series of questions will be used to create a range
-of hostnames.  You will be asked for your domain name, the 
-base host name, a beginning number, and an ending number.
-
-For example, if you answer:
-  domain name     = systemimager.org
-  base host name  = www
-  starting number = 7
-  ending number   = 11
-
-Then the result will be a series of hostnames that looks like this:
-  www7.systemimager.org
-  www8.systemimager.org
-  www9.systemimager.org
-  www10.systemimager.org
-  www11.systemimager.org
-
-
-EOF
- print "What is your domain name? [$domain_name]: ";
- $domain_name=get_response($domain_name);
- $domain_name = lc $domain_name;
- print "What is the base host name that you want me to use? [$base_host_name]: ";
- $base_host_name = get_response($base_host_name);
- $base_host_name = lc $base_host_name;
- print "What number should I begin with? [$starting_number]: ";
- # "+ 0" is to ensure we have a flat number and not "001" or something
- $starting_number = get_response($starting_number) + 0; 
- print "What number should I end with? [$ending_number]: ";
- # "+ 0" is to ensure we have a flat number and not "001" or something
- $ending_number=get_response($ending_number) + 0;
- print "\n\n";
- print "I will work with hostnames:  $base_host_name$starting_number through $base_host_name$ending_number\n"; 
- print "             in the domain:  $domain_name\n";
- print "\nAre you satisfied? (y/[n]): ";
- chomp($satisfied=<STDIN>);
-		}
-#######################
- ##END &MAIN_QUESTIONS##
-  #######################
-	}
-}
-
-#Questions user about making softlinks to the <imagename>.master scripts
-##########################
- ##BEGIN &LINKS_QUESTIONS##
-  ##########################
-sub Links_questions {
-    if ( @_ == 1 ) {
-	if ($base_host_name && $starting_number && $ending_number ne '') {  
-	    unless($imagename ne '') { 
-		die "There are no available images.  Please use getimage to retrieve an image first.\n   -The Mgmt\n"; 
-	    }
-	    print "Setting Up parameters for symbolic links.\n";		 
-	    $image=$imagename;
-	    print "All hosts will recieve image \[".uc($imagename)."\]\n";
-	    print "All hosts will have name \[".uc($base_host_name)."\]";
-	    print " and will have a number between \[$starting_number - $ending_number\]\n";
-	    if ( -f "$autoinstall_script_dir/$image.master" ) {
-		foreach $node_number ($starting_number .. $ending_number) {
-		    system("cd $autoinstall_script_dir; ln -sf $image.master $base_host_name$node_number.sh");
-		}
-	    }
-	}
-    } else {
-	system("clear");
-	print <<EOF;
-addclients -- Section 2 (soft links to master script)
------------------------------------------------------
-
-Would you like me to create soft links to a "master" script so
-that hosts:
-
-  $base_host_name$starting_number through $base_host_name$ending_number
-      
-EOF
-    print "can be autoinstalled with that image? ([y]/n): ";
-	$createlinks=<STDIN>;
-	chomp $createlinks;
-	$createlinks = lc $createlinks;
-	
-	unless($createlinks eq "n") {
-	    $satisfied="n";
-	    while ($satisfied eq "n") {
-		
-		# gather a list of available images
-		@files = ();
-		# sort by timestamp -- oldest to newest
-		$command = "cd $autoinstall_script_dir; ls -1tr *.master";
-		open(LS, "$command |");
-		while (<LS>) {
-		    chomp;
-		    s/\.master//;
-		    push(@files, $_);
-		    # make the newest image the default
-		    $image = $_;
-		}
-		close(LS);
-		# display the list of available images
-		unless(@files) { 
-		    die "There are no available images.  Please use getimage to retrieve an image first.\n   -The Mgmt\n"; }
-		print qq(\nHere is a list of available images:\n);
-		print "\n";
-		foreach(@files) {
-		    print "$_ \n";
-		}
-		print "\n";
-		print "Which image would you like these hosts to receive? [$image]: ";
-		$image=get_response($image);
-		if ( -f "$autoinstall_script_dir/$image.master" ) {
-		    foreach $node_number ($starting_number .. $ending_number) {
-			system("cd $autoinstall_script_dir; ln -sf $image.master $base_host_name$node_number.sh");
-		    }
-		    print "\nYour soft links have been created.\n";
-		    print "\nPress <Enter> to continue...";
-		    $satisfied="y";
-		    <STDIN>;
-		    system("clear");
-		} else {
-		    print qq(\nImage \"$image\" does not exist...\n);
-		    print qq("Let's try again, shall we?\n");
-		    print qq(\nPress <Enter> to continue...);
-		    $satisfied="n";
-		    <STDIN>;
-		    system("clear");
-		}
-	    }
-	} else {
-	    print "\nNo links will be created.\n";
-	    print "\nPress <Enter> to continue...";
-	    <STDIN>;
-	} #End of first else{}
-    } #End of first if{}
-}###END &LINKS_QUESTIONS###
-    
-###BEGIN &SUBNET###
-sub SubNet {
-   if(@_ != 1) {
-system("clear");
-print <<EOF;
-addclients -- Section 3 (adding or modifying /etc/hosts entries)
-----------------------------------------------------------------
-
-It is necessary to have an entry for each client in "/etc/hosts".
-
-I will ask you for your clients' IP addresses one subnet at a time.
-
-
-EOF
-print "Would you like me to make these entries for you? ([y]/n): ";
-$etc_hosts=<STDIN>;
-chomp $etc_hosts;
-$etc_hosts = lc $etc_hosts;
-if($etc_hosts ne "n") {$etc_hosts = "y";}
-$node_number = $starting_number;
-if($etc_hosts eq "y") {
-$subnet_count="0";
-  ### BEGIN One Subnet at a time ###
-  while ( $node_number <= $ending_number ) {
-  $subnet_count = $subnet_count + 1;
-    $starting_ip="";
-    $ending_ip="";
-    ### get IP information ###
-    # ne "y" is used instead of eq "n" because the dissatisfied response may be something other than "n".
-    $satisfied="n";
-    while ($satisfied ne "y") {
-    system("clear");
-print <<EOF;
-addclients -- Section 3 (adding or modifying /etc/hosts entries -- continued...)
---------------------------------------------------------------------------------
-EOF
-      print "subnet $subnet_count\n\n";
-      print "The first host in subnet $subnet_count will be: $base_host_name$node_number\n";
-      print "What is the starting IP address for subnet $subnet_count? [$starting_ip]: ";
-      $starting_ip = get_response($starting_ip);
-      $starting_ip_dec = ip_quad2ip_dec($starting_ip);
-      print "What is the ending IP address? [$ending_ip]: ";
-      $ending_ip = get_response($ending_ip);
-      $ending_ip_dec = ip_quad2ip_dec($ending_ip);
-      print "I will work with IP addresses:  $starting_ip through $ending_ip\n";
-      print "\nAre you satisfied? (y/[n]): ";
-      chomp($satisfied=<STDIN>);
+    foreach my $node_number ($starting_number .. $ending_number) {
+        my $cmd = "cd $autoinstall_script_dir && ln -sf $script.master $base_host_name$node_number.sh";
+        !system($cmd) or die "Can't $cmd!";
     }
-    ### get IP information ###
+}
+
+
+# Usage: add_hosts_entries($starting_ip, $ending_ip, $node_number, $ending_number, $base_host_name, $domain_name);
+# Usage: ($starting_ip, $ending_ip, $node_number) = add_hosts_entries($starting_ip, $ending_ip, $starting_number, $ending_number, $base_host_name, $domain_name);
+sub add_hosts_entries { 
+
+    my ($starting_ip, $ending_ip, $node_number, $ending_number, $base_host_name, $domain_name) = @_;
+
+    $base_host_name = lc $base_host_name;
+    $domain_name = lc $domain_name;
+
+    my $starting_ip_dec = ip_quad2ip_dec($starting_ip);
+    my $ending_ip_dec = ip_quad2ip_dec($ending_ip);
+
     ### BEGIN test to be sure /etc/hosts exists and create if it doesn't ###
     my $file = "/etc/hosts";
     if ( ! -f "$file" ) {
-      open(ETC_HOSTS, ">> $file") or die "Couldn't open $file for writing: $!\n";
-      print ETC_HOSTS "127.0.0.1  localhost\n";
-      close(ETC_HOSTS);
-      system('chmod 644 /etc/hosts');
+        open(ETC_HOSTS, ">> $file") or die "Couldn't open $file for writing: $!\n";
+        print ETC_HOSTS "127.0.0.1  localhost\n";
+        close(ETC_HOSTS);
+        system('chmod 644 /etc/hosts');
     }
     ### END test to be sure /etc/hosts exists and create if it doesn't ###
+
     ### BEGIN read in /etc/hosts and create a hash of lines by ip address and a hash of lines by number
-    %etc_hosts_lines_by_ip = ();
-    %etc_hosts_lines_by_number = ();
+    my %etc_hosts_lines_by_ip = ();
+    my %etc_hosts_lines_by_number = ();
     my $line_number = "1";
+
     open(ETC_HOSTS, "< /etc/hosts") or die "Couldn't open /etc/hosts for reading: $!\n";
     while (<ETC_HOSTS>) {
-      chomp;
-      my @fields = split;
-      my $ip_quad = $fields[0];
-      my $line = $_;
-      if ($ip_quad) {
-        $etc_hosts_lines_by_ip{$ip_quad} = $line;
-      }
-      $etc_hosts_lines_by_number{$line_number} = $line;
-      $line_number = $line_number + 1;
+        chomp;
+        my @fields = split;
+        my $ip_quad = $fields[0];
+        my $line = $_;
+        if ($ip_quad) {
+            $etc_hosts_lines_by_ip{$ip_quad} = $line;
+        }
+        $etc_hosts_lines_by_number{$line_number} = $line;
+        $line_number = $line_number + 1;
     }
     close(ETC_HOSTS);
     ### END read in /etc/hosts and create a hash of lines by ip address and a hash of lines by number
+    
     ### create a hash of new hostnames by ip address 
-    %new_hostnames_by_ip = ();
-    $ip_dec = $starting_ip_dec;
+    my $desired_length;
+    unless (length($starting_number) == length($starting_number + 0)) {
+        $desired_length = length($ending_number);
+    }
+
+    my %new_hostnames_by_ip;
+    my $ip_dec = $starting_ip_dec;
     until ( $ip_dec > $ending_ip_dec ) {
-      my $bitwise = $ip_dec & 255;
-      if ( $bitwise == "255" ) { $ip_dec = $ip_dec + 2; }
-      my $ip_quad = ip_dec2ip_quad($ip_dec);
-      $new_hostnames_by_ip{$ip_quad} = "$base_host_name$node_number";
-      $ip_dec = $ip_dec + 1;
-      $node_number = $node_number + 1;
-      if ( $node_number > $ending_number ) { last; }
+        my $bitwise = $ip_dec & 255;
+        if ( $bitwise == "255" ) { $ip_dec = $ip_dec + 2; }
+        my $ip_quad = ip_dec2ip_quad($ip_dec);
+        $new_hostnames_by_ip{$ip_quad} = "$base_host_name$node_number";
+        $ip_dec = $ip_dec + 1;
+        $node_number = $node_number + 1;
+
+        if ($desired_length) { $node_number = pad_with_zeros($node_number, $desired_length); }
+        if ( $node_number > $ending_number ) { last; }
     }
     ### create a hash of new hostnames by ip address 
+
     ### munge new ips and hostname info into %etc_hosts_lines_by_ip
-    my @new_ip_addresses = keys %new_hostnames_by_ip;
+    my @new_ip_addresses = sort (keys %new_hostnames_by_ip);
     foreach my $new_ip_address (@new_ip_addresses) {
         $etc_hosts_lines_by_ip{$new_ip_address} = "$new_ip_address    $new_hostnames_by_ip{$new_ip_address}.$domain_name  $new_hostnames_by_ip{$new_ip_address}";
     }
     ### munge new ips and hostname info into %etc_hosts_lines_by_ip
+
     ### BEGIN open temporary /etc/hosts for writing
-    $temp_file = "/tmp/.hosts.systemimager";
+    my $temp_file = "/tmp/.hosts.systemimager";
     open(NEW_ETC_HOSTS, "> $temp_file") or die "Couldn't open $temp_file for writing: $!\n";
     ### END open temporary /etc/hosts for writing
+
     ### BEGIN replace entries as necessary in numbered /etc/hosts lines and print numbered lines
     foreach my $line_number ( sort numerically ( keys %etc_hosts_lines_by_number )) {
         $_ = $etc_hosts_lines_by_number{$line_number};
@@ -588,145 +563,50 @@ EOF
         print NEW_ETC_HOSTS "$etc_hosts_lines_by_number{$line_number}\n";
     }
     ### END replace entries as necessary in numbered /etc/hosts lines and print numbered lines
+
     ### create hash of entries by decimal ip (for sorting purposes)
-    %etc_hosts_lines_by_ip_decimal = ();
+    my %etc_hosts_lines_by_ip_decimal;
+    my $ip_decimal;
     foreach my $ip_quad ( keys %etc_hosts_lines_by_ip ) {
         $ip_decimal = ip_quad2ip_dec($ip_quad);
         $etc_hosts_lines_by_ip_decimal{$ip_decimal} = $etc_hosts_lines_by_ip{$ip_quad};
     }
     ### create hash of entries by decimal ip (for sorting purposes)
+
     ### print remaining entries
     print NEW_ETC_HOSTS "\n";
     foreach my $ip_decimal ( sort( keys %etc_hosts_lines_by_ip_decimal )) {
         print NEW_ETC_HOSTS "$etc_hosts_lines_by_ip_decimal{$ip_decimal}\n";
     }
     ### print remaining entries
+    
     ### close temporary /etc/hosts after writing
     close(NEW_ETC_HOSTS);
     ### close temporary /etc/hosts after writing
+    
     ### move new hosts file in to place
     system('mv', '-f', $temp_file, '/etc/hosts');
     if($? != 0) { die "Couldn't move $temp_file to /etc/hosts!\n", "Is the filesystem that contains /etc/ full?"; }
     ### move new hosts file in to place
-  }
-  ### END One Subnet at a time ###
-  if ( $etc_hosts eq "y" ) { print "\nThese entries have been added to /etc/hosts.\n"; }
-  print "\nPress <Enter> to continue...";
-  <STDIN>;
-} else {
-  print "\nNo entries will be added.\n";
+    
+    my $cmd = "cp -f /etc/hosts $autoinstall_script_dir";
+    !system($cmd) or die "Couldn't $cmd!";
+
+    $starting_ip = ip_dec2ip_quad($ip_dec);
+    $ending_ip = "";
+    return ($starting_ip, $ending_ip, $node_number);
+
 }
-# do this even if we didn't modify /etc/hosts -- it will prevent much user frusteration
-system('cp', '-f', '/etc/hosts', "$autoinstall_script_dir/hosts");
-if($? != 0) { die "Couldn't copy /etc/hosts to $autoinstall_script_dir/hosts!\n", "Does $autoinstall_script_dir/ exist?"; }
-### copy /etc/hosts to $autoinstall_script_dir/hosts to be sure it stays up to date
-} else { 
-###########################
-##Beginning IP Conversions##
- ############################
-print "Writing /etc/hosts entries\n";
-$node_number = $starting_number;
-$subnet_count="0";
-  ### BEGIN One Subnet at a time ###
-  while ( $node_number <= $ending_number ) {
-  $subnet_count = $subnet_count + 1;
-    ($starting_ip,$ending_ip)=(split(/-/,$ip_range));
-  $starting_ip_dec = ip_quad2ip_dec($starting_ip);
-  $ending_ip_dec = ip_quad2ip_dec($ending_ip);
-    my $file = "/etc/hosts";
-    if ( ! -f "$file" ) {
-      open(ETC_HOSTS, ">> $file") or die "Couldn't open $file for writing: $!\n";
-      print ETC_HOSTS "127.0.0.1  localhost\n";
-      close(ETC_HOSTS);
-      system('chmod 644 /etc/hosts');
-    }
-    %etc_hosts_lines_by_ip = ();
-    %etc_hosts_lines_by_number = ();
-    my $line_number = "1";
-    open(ETC_HOSTS, "< /etc/hosts") or die "Couldn't open /etc/hosts for reading: $!\n";
-    while (<ETC_HOSTS>) {
-      chomp;
-      my @fields = split;
-      my $ip_quad = $fields[0];
-      my $line = $_;
-      if ($ip_quad) {
-        $etc_hosts_lines_by_ip{$ip_quad} = $line;
-      }
-      $etc_hosts_lines_by_number{$line_number} = $line;
-      $line_number = $line_number + 1;
-    }
-    close(ETC_HOSTS);
-    %new_hostnames_by_ip = ();
-    $ip_dec = $starting_ip_dec;
-    until ( $ip_dec > $ending_ip_dec ) {
-      my $bitwise = $ip_dec & 255;
-      if ( $bitwise == "255" ) { $ip_dec = $ip_dec + 2; }
-      my $ip_quad = ip_dec2ip_quad($ip_dec);
-      $new_hostnames_by_ip{$ip_quad} = "$base_host_name$node_number";
-      $ip_dec = $ip_dec + 1;
-      $node_number = $node_number + 1;
-      if ( $node_number > $ending_number ) { last; }
-    }
-    my @new_ip_addresses = keys %new_hostnames_by_ip;
-    foreach my $new_ip_address (@new_ip_addresses) {
-        $etc_hosts_lines_by_ip{$new_ip_address} = "$new_ip_address    $new_hostnames_by_ip{$new_ip_address}.$domain_name  $new_hostnames_by_ip{$new_ip_address}";
-    }
-    $temp_file = "/tmp/.hosts.systemimager";
-    open(NEW_ETC_HOSTS, "> $temp_file") or die "Couldn't open $temp_file for writing: $!\n";
-    foreach my $line_number ( sort numerically ( keys %etc_hosts_lines_by_number )) {
-        $_ = $etc_hosts_lines_by_number{$line_number};
-        my @words = split;
-        my $ip_quad = $words[0];
-        if ($ip_quad) {
-            $etc_hosts_lines_by_number{$line_number} = $etc_hosts_lines_by_ip{$ip_quad};
-            delete $etc_hosts_lines_by_ip{$ip_quad};
-        }
-        # print numbered hosts entries
-        print NEW_ETC_HOSTS "$etc_hosts_lines_by_number{$line_number}\n";
-    }
-    %etc_hosts_lines_by_ip_decimal = ();
-    foreach my $ip_quad ( keys %etc_hosts_lines_by_ip ) {
-        $ip_decimal = ip_quad2ip_dec($ip_quad);
-        $etc_hosts_lines_by_ip_decimal{$ip_decimal} = $etc_hosts_lines_by_ip{$ip_quad};
-    }
-    print NEW_ETC_HOSTS "\n";
-    foreach my $ip_decimal ( sort( keys %etc_hosts_lines_by_ip_decimal )) {
-        print NEW_ETC_HOSTS "$etc_hosts_lines_by_ip_decimal{$ip_decimal}\n";
-    }
-    close(NEW_ETC_HOSTS);
-    system('mv', '-f', $temp_file, '/etc/hosts');
-    if($? != 0) { 
-    	die "Couldn't move $temp_file to /etc/hosts!\n"
-    	."Is the filesystem that contains /etc/ full?"; }
-  }
-system('cp', '-f', '/etc/hosts', "$autoinstall_script_dir/hosts");
-if($? != 0) { 
-	die "Couldn't copy /etc/hosts to $autoinstall_script_dir/hosts!\n"
-	."Does $autoinstall_script_dir/ exist?"; }
-		}
-		print "Done!\n";
-	} 
-###############
- ##END &SUBNET##
-  ###############
-  
-#################
- ## END PROGRAM ## 
-  ################# 
 
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU Library General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# Usage: my $result = pad_with_zeros($number, $desired_length);
+sub pad_with_zeros {
 
+    my ($number, $desired_length) = @_;
 
-#$Id$
+    until (length($number) == $desired_length) {
+        $number = "0" . "$number";
+    }
+    
+    return $number;
+}
+### END Subroutines ###
