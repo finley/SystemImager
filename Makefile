@@ -78,7 +78,7 @@
 #
 # XXX include pcmcia utilities in boel-binaries tarball
 #
-# To do a 'standard-ssh' flavor, do a 'make SSH_SUPPORT=1 all'
+# To do a 'standard-ssh' flavor, do a 'make WITH_SSH=1 all'
 #
 
 DESTDIR =
@@ -376,7 +376,7 @@ $(BOEL_BINARIES_TARBALL):	$(DISCOVER_BINARY) $(DISCOVER_DATA_FILES) \
 	install -m 755 $(MKREISERFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 $(MKJFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 $(MKXFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
-ifdef SSH_SUPPORT
+ifdef WITH_SSH
 	install -m 755 $(OPENSSH_BINARIES) $(BOEL_BINARIES_DIR)/sbin/
 endif
 	#

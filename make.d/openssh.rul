@@ -2,7 +2,7 @@ OPENSSH_VERSION := 3.4p1
 OPENSSH_DIR := openssh-$(OPENSSH_VERSION)
 OPENSSH_TARBALL := openssh-$(OPENSSH_VERSION).tar.gz
 OPENSSH_URL := ftp://ftp.src.uchicago.edu/pub/OpenBSD/OpenSSH/portable/$(OPENSSH_TARBALL)
-ifdef SSH_SUPPORT
+ifdef WITH_SSH
 	OPENSSH_BINARIES := $(SRC_DIR)/$(OPENSSH_DIR)/ssh \
 					$(SRC_DIR)/$(OPENSSH_DIR)/sshd \
 					$(SRC_DIR)/$(OPENSSH_DIR)/scp \
