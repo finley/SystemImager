@@ -66,7 +66,6 @@ rm -rf $RPM_BUILD_ROOT
 cd /usr/doc/va-systemimager-%{ver}/ && ./afterburner -q -n
 
 %post client
-cd /usr/sbin && ./prepareclient --rpm-install
 
 %postun
 
