@@ -667,11 +667,10 @@ sub _turn_sfdisk_output_into_generic_partitionschemes_file {
         } elsif ($id eq "ef") {  # ef  EFI (FAT-12/16/32)
 
         } elsif ($id eq "fd") {  # fd  Linux raid autodetect
-
-        } elsif ($id eq "fe") {  # fe  LANstep
-
           $flags = "raid";
      
+        } elsif ($id eq "fe") {  # fe  LANstep
+
         } else {
             print qq(\n\n);
             print qq(WARNING:  I don't quite know how to interpret the Id tag of "$id" on partition\n);
