@@ -32,6 +32,9 @@ INITD = $(ETC)/init.d
 SBIN = $(DESTDIR)/usr/sbin
 MAN8 = $(DESTDIR)/usr/share/man/man8
 
+PATCH_DIR = ./patches
+SRC_DIR = ./src
+
 LOG_DIR = $(DESTDIR)/var/log/systemimager
 
 INITSCRIPT_NAME = systemimager
@@ -59,11 +62,13 @@ IMAGESRC    = ./var/lib/systemimager/images
 IMAGEDEST   = $(DESTDIR)/var/lib/systemimager/images
 WARNING_FILES = $(IMAGEDEST)/README $(IMAGEDEST)/DO_NOT_TOUCH_THESE_DIRECTORIES $(IMAGEDEST)/CUIDADO $(IMAGEDEST)/ACHTUNG
 
-LINUX_SRC = ./linux
-LINUX_TARBALL = linux-2.2.18.tar.gz
-LINUX_URL = ftp://ftp.kernel.org/pub/linux/kernel/v2.2/$(LINUX_TARBALL)
+LINUX_SRC = $(SRC_DIR)/linux
+LINUX_VERSION = 2.2.18
+LINUX_TARBALL = linux-$(LINUX_VERSION).tar.gz
+LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.2/$(LINUX_TARBALL)
 LINUX_MD5SUM = 2be6aacc7001b061de2eec51a4c89b3b
 LINUX_IMAGE = $(LINUX_SRC)/arch/i386/boot/bzImage
+LINUX_PATCH = $(PATCH_DIR)/linux.patch
 
 INITRD_DIR = initrd_source
 INITRD = $(INITRD_DIR)/initrd.gz
@@ -71,6 +76,7 @@ INITRD = $(INITRD_DIR)/initrd.gz
 RAIDTOOLS_DIR = raidtools-0.90
 RAIDTOOLS_TARBALL = raidtools-19990824-0.90.tar.bz2
 RAIDTOOLS_URL = http://www.kernel.org/pub/linux/daemons/raid/alpha/$(RAIDTOOLS_TARBALL)
+RAIDTOOLS_PATCH = $(PATCH_DIR)/raidtools-19990824-0.90.patch
 
 REISERFSPROGS_DIR = $(LINUX_SRC)/fs/reiserfs/utils
 
@@ -107,7 +113,8 @@ installserver:	installmanpages installrsyncconfigs
 # client-only files
 installclient: installclientmanpages
 	mkdir -p $(ETC)/systemimager
-	install -m 644 tftpstuff/systemimager/systemimager.exclude $(ETC)/systemimager
+	install -m 644 tftpstuff/systemimager/systemimager.exclude \
+		$(ETC)/systemimager
 	mkdir -p $(SBIN)
 
 	$(foreach binary, $(CLIENT_BINARIES), \
@@ -123,24 +130,30 @@ installcommon:	installcommonmanpages
 installbinaries:	installraidtools installreiserfsprogs installkernel installinitrd
 
 
-########## START raidtools ##########
+########## BEGIN raidtools ##########
+
 installraidtools:	raidtools
 	mkdir -p $(TFTP_BIN_DEST)
 	install -m 555 $(RAIDTOOLS_DIR)/mkraid $(TFTP_BIN_DEST)
 	install -m 555 $(RAIDTOOLS_DIR)/raidstart $(TFTP_BIN_DEST)
 	cp -a $(TFTP_BIN_DEST)/raidstart $(TFTP_BIN_DEST)/raidstop
 
-raidtools:	raidtools-stamp
-raidtools-stamp:	$(RAIDTOOLS_TARBALL)
-	bzcat $(RAIDTOOLS_TARBALL) | tar xv
-	patch -p0 < raidtools.patch
+raidtools:
+	$(MAKE) $(SRC_DIR)/$(RAIDTOOLS_TARBALL)
+	[ -d $(RAIDTOOLS_DIR) ] || \
+		( cd $(SRC_DIR) && bzcat $(RAIDTOOLS_TARBALL) | tar xv && \
+		  [ ! -f ../$(RAIDTOOLS_PATCH) ] || \
+		  patch -p0 < $(RAIDTOOLS_PATCH) )
 	cd $(RAIDTOOLS_DIR) && ./configure
-	make -C $(RAIDTOOLS_DIR)
-	touch raidtools-stamp
+	$(MAKE) -C $(RAIDTOOLS_DIR)
 
-$(RAIDTOOLS_TARBALL):
-	wget $(RAIDTOOLS_URL)
+$(SRC_DIR)/$(RAIDTOOLS_TARBALL):
+	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
+	cd $(SRC_DIR) && wget $(RAIDTOOLS_URL)
+
 ########## END raidtools ##########
+
+######### BEGIN reiserfsprogs ##########
 
 installreiserfsprogs:	reiserfsprogs
 	mkdir -p $(TFTP_BIN_DEST)
@@ -149,31 +162,30 @@ installreiserfsprogs:	reiserfsprogs
 reiserfsprogs:	patchedkernel
 	make -C $(REISERFSPROGS_DIR)
 
+######### END reiserfsprogs ##########
+
 ########## BEGIN kernel ##########
+
 installkernel:	kernel
 	mkdir -p $(TFTP_ROOT)
 	cp -a $(LINUX_IMAGE) $(TFTP_ROOT)/kernel
 
-kernel:	$(LINUX_IMAGE)
-
-$(LINUX_IMAGE):	patchedkernel-stamp
-	cp ./doc/autoinstall.kernel.config $(LINUX_SRC)/.config
+kernel:	
+	$(MAKE) $(SRC_DIR)/$(LINUX_TARBALL)
+	[ -d $(LINUX_SRC) ] || \
+		( cd $(SRC_DIR) && tar xvfz $(LINUX_TARBALL) && \
+		  [ ! -f ../$(LINUX_PATCH) ] || \
+		  patch -p0 < ../$(LINUX_PATCH) )
+	cp -a ./doc/autoinstall.kernel.config $(LINUX_SRC)/.config
 	$(MAKE) -C $(LINUX_SRC) oldconfig dep bzImage
 
-patchedkernel:	patchedkernel-stamp
+$(SRC_DIR)/$(LINUX_TARBALL):
+	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
+	cd $(SRC_DIR) && wget $(LINUX_URL)
+	[ "$(LINUX_MD5SUM)" == \
+		`md5sum $(SRC_DIR)/$(LINUX_TARBALL) | cut -d " " -f 1` ] || \
+		exit 1
 
-patchedkernel-stamp:	$(LINUX_TARBALL)
-	# remove linux tree and restore to pristine state before patching
-	-rm -rf $(LINUX_SRC)
-	tar xvfz $(LINUX_TARBALL)
-
-	# attempt to patch the kernel - this patch is not currently in CVS!
-	patch -p0 < systemimager-1.5.0.patch
-	touch patchedkernel-stamp
-
-$(LINUX_TARBALL):
-	wget $(LINUX_URL)
-	[ "$(LINUX_MD5SUM)" == `md5sum $(LINUX_TARBALL) | cut -d " " -f 1` ] || exit 1
 ########## END kernel ##########
 
 ########## install initrd built from source ##########
@@ -247,89 +259,77 @@ $(AUTOINSTALL_TARBALL):	kernel
 get_source:	$(LINUX_TARBALL) $(RAIDTOOLS_TARBALL)
 
 help:
-	# This Makefiles provides targets to build and install the
-	# SystemImager packages.  Here are descriptions of the various targets
-	#
-	# make all:			builds everything, but installs nothing
-	#
-	# make installclientserverall	installs all files necessary for an
-	#				image server
-	#
-	# make installclientclientall	installs all files necessary for a
-	#				golden client
-	#
-	# make installserver		install architecture independent
-	#				server-only files - this is an
-	#				incomplete server installation used
-	#				for packaging
-	#
-	# make installclient		install architecture independent
-	#				golden client-only files - this is an
-	#				incomplete client installation used
-	#				for packaging
-	#
-	# make installcommon		install files common to both the server
-	#				and the golden client
-	#
-	# make installbinaries		install architecture-dependent files
-	#				required by the image server (kernel,
-	#				ramdisk, and utilities that autoinstall
-	#				clients may need to retrieve during
-	#				autoinstallation
-	#
-	# make installraidtools		install static raid utilities that
-	#				autoinstall clients may need to
-	#				retrieve during autoinstallation
-	#
-	# make raidtools		install static raid utilities that
-	#				autoinstall clients may need to
-	#				retrieve during autoinstallation
-	#
-	# make installreiserfsprogs	install static reiserfs utilities that
-	#				autoinstall clients may need to
-	#				retrieve during autoinstallation
-	#
-	# make reiserfsprogs		install static reiserfs utilities that
-	#				autoinstall clients may need to
-	#				retrieve during autoinstallation
-	#
-	# make installkernel		install kernel used to boot autoinstall
-	#				clients
-	#
-	# make kernel			build kernel used to boot autoinstall
-	#				clients
-	#
-	# make patchedkernel		apply the systemimager kernel patch
-	#				to the kernel source tree
-	#
-	# make installinitrd		install ramdisk used to boot
-	#				autoinstall clients
-	#
-	# make installrsyncconfigs	install initscript and config file
-	#				for rsync, needed on image servers
-	#
-	# make installmanpages		install image server man pages
-	#
-	# make installclientmanpages	install golden client man pages
-	#
-	# make installcommonmanpages	install manpages common to both 
-	#				image servers and golden clients
-	#
-	# make manpages			build manpages from sgml source
-	#
-	# make installdocs		install docs into $(DOC)
-	#
-	# make get_source		download all source that could be
-	#				needed during the build
-	#
-	# make help			prints this message
-	#
-	# make clean			removes built binaries, cleans
-	#				downloaded source trees and tarballs,
-	#				editor backup files, etc.
-	#
-	# make distclean		make clean + rm downloaded source trees
-	#				and tarballs
+	@echo 'This Makefiles provides targets to build and install the'
+	@echo 'SystemImager packages.  Here are descriptions of the various'
+	@echo 'targets'
+	@echo ''
+	@echo 'o make all:'
+	@echo '  builds everything, but installs nothing'	       
+	@echo 'o make installserverall'
+	@echo '  installs all files necessary for an image server'
+	@echo 'o make installclientall'
+	@echo '  installs all files necessary for a golden client'
+	@echo 'o make installserver'
+	@echo '  install architecture independent server-only files - this is'
+	@echo '  an incomplete server installation used for packaging'
+	@echo 'o make installclient'
+	@echo '  install architecture independent golden client-only files -'
+	@echo '  this is an incomplete client installation used for packaging'
+	@echo 'o make installcommon'
+	@echo '  install files common to both the server and the golden client'
+	@echo 'o make installbinaries'
+	@echo '  install architecture-dependent files required by the image'
+	@echo '  server (i.e. kernel, ramdisk, and utilities that autoinstall'
+	@echo '  clients may need to retrieve during autoinstallation'
+	@echo 'o make installraidtools'
+	@echo '  install static raid utilities that autoinstall clients may'
+	@echo '  need to retrieve during autoinstallation'
+	@echo 'o make raidtools'
+	@echo '  build static raid utilities that autoinstall clients may need'
+	@echo '  to retrieve during autoinstallation'
+	@echo 'o make installreiserfsprogs'
+	@echo '  install static reiserfs utlities that autoinstall clients may'
+	@echo '  need to retrieve during autoinstallation'
+	@echo 'o make installreiserfsprogs'
+	@echo '  build static reiserfs utlities that autoinstall clients may'
+	@echo '  need to retrieve during autoinstallation'
+	@echo 'o make installkernel'
+	@echo '  install kernel used to boot autoinstall clients'
+	@echo 'o make kernel'
+	@echo '  build kernel used to boot autoinstall clients'
+	@echo 'o make patchedkernel'
+	@echo '  apply the systemimager kernel patch to the kernel source'
+	@echo 'o make installinitrd'
+	@echo '  install ramdisk used to boot autoinstall clients'
+	@echo 'o make installinitrd'
+	@echo '  install ramdisk used to boot autoinstall clients'
+	@echo 'o make installrsyncconfigs'
+	@echo '  install initscripts and config file for rsync'
+	@echo 'o make installmanpages'
+	@echo '  install image server man pages'
+	@echo 'o make installclientmanpages'
+	@echo '  install golden client man pages'
+	@echo 'o make installcommonmanpages'
+	@echo '  install manpages common to both image servers and golden'
+	@echo '  clients'
+	@echo 'o make manpages'
+	@echo '  build manpages from sgml source'
+	@echo 'o make installdocs'
+	@echo "  install docs into $(DOC)"
+	@echo 'o make get_source'
+	@echo '  download all source that could be needed during the build'
+	@echo 'o make help'
+	@echo '  prints this message'
+	@echo 'o make helpless'
+	@echo '  pipes this message through less'
+	@echo 'o make clean'
+	@echo '  removes built binaries, cleans downloaded source trees and'
+	@echo '  tarballs, editor backup files, etc.'
+	@echo 'o make distclean'
+	@echo '  make clean + rm downloaded source tarballs'
+
+helpless:
+	$(MAKE) help | less
 
 clean:
 	-$(MAKE) -C $(RAIDTOOLS_DIR) clean
@@ -347,8 +347,5 @@ clean:
 	-rm $(AUTOINSTALL_TARBALL)
 
 distclean:	clean
-	-rm -rf $(LINUX_SRC) $(RAIDTOOLS_DIR)
-	-rm -rf $(LINUX_TARBALL) $(RAIDTOOLS_TARBALL)
+	-rm -rf $(SRC_DIR)
 	-$(MAKE) -C $(INITRD_DIR) distclean
-
-
