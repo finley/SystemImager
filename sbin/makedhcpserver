@@ -186,5 +186,15 @@ Also, be sure to start or restart your dhcpd daemon.
 
 EOF
 
+if( -e "/etc/rc.d/init.d/dhcpd" ){
+  print "Would you like me to restart your DHCP server software now? (y/N): ";
+  $continue=get_response();
+  $continue=lc($continue);
+  if( $continue eq "y" ){
+    $command="/etc/rc.d/init.d/dhcpd restart";
+    system($command);
+  }
+}
+
 print "Press <Enter> to continue...";
 <STDIN>;
