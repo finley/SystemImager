@@ -911,12 +911,18 @@ if (@ext2_devices) {
 
 ### BEGIN Write out ext3 creation commands ###
 if (@ext3_devices) {
+  print MASTER_SCRIPT "# get mke2fs with journal creation support\n";
+  print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::tftpboot/systemimager/mke2fs-v1.20.WIP /tmp/\n";
+  print MASTER_SCRIPT "\n";
   print MASTER_SCRIPT "# format ext3 devices\n";
+  print MASTER_SCRIPT "#   For now, all ext3 devices get an arbitrary journal of size 15MB.\n";
+  print MASTER_SCRIPT "#   In the future, I hope to detect and re-create the size of existing hidden journals.\n";
+  print MASTER_SCRIPT "#   If you require a different journal size, simply make the change here in the.\n";
+  print MASTER_SCRIPT "#   master autoinstall script.\n";
   foreach my $device_file (sort @ext3_devices) {
-    print MASTER_SCRIPT "mke2fs $device_file\n";
+    print MASTER_SCRIPT "/tmp/mke2fs-v1.20.WIP -jsize=15 $device_file\n";
   }
   print MASTER_SCRIPT "\n";
-  $got_ext3="yes";
 }
 ### END Write out ext3 creation commands ###
 
@@ -961,6 +967,9 @@ foreach $mount_point (sort (@mount_points)) {
   my $mount_options   = $mount_options_by_mount_point{$mount_point};
 
   my $filesystem_type = $filesystem_type_by_mount_point{$mount_point};
+
+  # ext3 filesystems are mounted as ext2 for autoinstall purposes
+  if($filesystem_type eq "ext3") { $filesystem_type = "ext2" }
 
   if ($mount_options) {
     # Deal with filesystems to be mounted read only (ro) after install.  We 
@@ -1110,8 +1119,9 @@ EOF
 ### END debian_linux_2.2 ###
 
 ### BEGIN debian_linux_2.1 ###
-if ($distro eq "debian_linux_2.1") { 
-   if ($ip_assignment_method eq "static") { 
+if ($distro eq "debian_linux_2.1"){ 
+   if ($ip_assignment_method eq "static")
+   { 
    print MASTER_SCRIPT << 'EOF';
 # Stuff for static IP addressing
 #
@@ -1161,15 +1171,6 @@ EOF
 ### END distribution specific networking stuff ###
 
 ### BEGIN end of autoinstall options ###
-# add ext3 stuff
-if ($got_ext3 && $got_ext3 eq "yes") {
-  print MASTER_SCRIPT << 'EOF';
-# execute script to find new inodes for ext3 journal files on the fresh filesystem
-chroot /a/ /bin/sh /etc/systemimager/put_new_ext3_journal_file_inodes_in_fstab.sh
-
-EOF
-}
-
 print MASTER_SCRIPT << 'EOF';
 # run lilo
 # (no, we can not just do a lilo -r "/a/".
@@ -1250,7 +1251,7 @@ EOF
 
 # prompt to run "addclients"
 if (!$quiet) {
-    print "Would you like to add your client information now? ([y]/n): ";
+    print "Would you like to run the \"addclents\" utility now? ([y]/n): ";
     $continue = get_response('y');
     ($continue ne "n") or exit 0;
     exec("addclients");
