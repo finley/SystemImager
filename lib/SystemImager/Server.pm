@@ -1208,6 +1208,7 @@ sub _write_out_umount_commands {
                    or ($fs eq "msdos")
                    or ($fs eq "vfat")
                    or ($fs eq "jfs")
+                   or ($fs eq "xfs")
                    or ($fs eq "proc")
             ) { next; }
 
