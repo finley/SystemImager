@@ -1315,7 +1315,7 @@ sub _write_out_mkfs_commands {
         } elsif ( $xml_config->{fsinfo}->{$line}->{fs} eq "reiserfs" ) {
 
             # create fs
-            $cmd = "echo y | mkreiserfs $real_dev || shellout";
+            $cmd = "mkreiserfs -q $real_dev || shellout";
             print $out qq(echo "$cmd"\n);
             print $out "$cmd\n";
 
