@@ -357,7 +357,7 @@ image=vmlinux-rh.img
     	<command>In SystemImager 2.1 and later, mkautoinstallcd</command> and <command>mkautoinstalldiskette</command>
     	support an -append option, allowing you to specify additional options for the autoinstall kernel,
     	including serial console options.  For example:  
-    	<command>mkautoinstallcd -out-file aicd.iso -append "console=ttyS0"</command>
+    	<command>mkautoinstallcd -out-file autoinstall.iso -append "console=ttyS0"</command>
     </para>
     <para>
     	Early versions of SystemImager require additional changes, as cited below:
@@ -505,7 +505,7 @@ image=vmlinux-rh.img
   </qandaentry>
  
   <qandaentry>
-        <question>
+    <question>
       <para>How do I configure my DHCP v3 server?</para>
     </question>
     <answer>
@@ -730,6 +730,7 @@ image=vmlinux-rh.img
       </para>
     </answer>
   </qandaentry>
+
   <qandaentry>
     <question><para>How do I push an image to a client?</para></question>
     <answer>
@@ -741,6 +742,7 @@ image=vmlinux-rh.img
       </para
     </answer>
   </qandaentry>
+
   <qandaentry>
     <question>
     <para>How do I pull an image to a client?</para>
@@ -783,6 +785,7 @@ image=vmlinux-rh.img
       </para>
     </answer>
   </qandaentry>
+
   <qandaentry>
     <question>
       <para>
@@ -845,10 +848,11 @@ image=vmlinux-rh.img
       </para>
     </answer>
   </qandaentry>
+
   <qandaentry>
     <question>
       <para>How do I upgrade to a new version of SystemImager?</para>
-        </question>
+    </question>
     <answer>
       <para>
         If you have SystemImager 1.0 or later, you can simply 
@@ -875,6 +879,7 @@ image=vmlinux-rh.img
       </para>
     </answer>
   </qandaentry>
+
   <qandaentry>
     <question>
       <para>What if I want to assign static IPs to my clients?</para>
@@ -886,6 +891,7 @@ image=vmlinux-rh.img
       </para>
     </answer>
   </qandaentry>
+
   <qandaentry>
     <question>
       <para>
@@ -1031,6 +1037,7 @@ image=vmlinux-rh.img
       </para>
     </answer>
   </qandaentry>
+
   <qandaentry>
     <question>
       <para>
@@ -1046,6 +1053,7 @@ image=vmlinux-rh.img
       </para>
     </answer>
   </qandaentry>
+
   <qandaentry>
     <question>
       <para>How do I build a new "front-end" server?</para>
@@ -1113,31 +1121,6 @@ image=vmlinux-rh.img
       </para>
     </answer>
   </qandaentry>
- 
-  <qandaentry>
-     <question>
-       <para>
-         How do I edit the scripts so only the first disk is partitioned? I
-         must leave the other disks alone.
-       </para>
-     </question>
-     <answer>
-       <para>
-         After you run <command>prepareclient</command>, look in the
-         <filename>/etc/partitionschemes</filename> directory on that
-         client.  You will find a file that has the partition
-         information for each of that client's disks.  Simply delete the files
-         for each of the disks that you don't want partitioned.  Run <command>getimage</command>
-       and proceed as normal.
-       </para>
-       <para>
-         After running <command>getimage</command>, run 
-         <command>vi /var/lib/systemimager/images/$imagename/etc/fstab</command> to verify the
-         <filename>fstab</filename> file in the image has no entries for the
-         other disks.
-       </para>
-     </answer>
-  </qandaentry>      
  
   <qandaentry>
      <question>
@@ -1592,6 +1575,12 @@ image=vmlinux-rh.img
 		  information.
 		</para>
 	      </note>
+      </listitem>
+      <listitem>
+       <para>
+        Modify the boot loader configuration in your image to work with your
+        target disk configuration.
+       </para>
       </listitem>
      </orderedlist>
     </para>
