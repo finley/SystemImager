@@ -622,7 +622,7 @@ fi
 if [ -z $HOSTNAME ]; then
   SCRIPTNAME="hosts"
   echo "Using rsync to copy $IMAGESERVER::$SCRIPTS/$SCRIPTNAME..."
-  rsync -aL $IMAGESERVER::$SCRIPTS/$SCRIPTNAME /tmp/
+  rsync -aL $IMAGESERVER::$SCRIPTS/$SCRIPTNAME /tmp/ >/dev/null 2>&1
 
   if [ -e /tmp/hosts ]; then
     # add escape characters to IPADDR so that it can be used to find HOSTNAME below
