@@ -140,6 +140,7 @@ Packager: dann frazier <dannf@dannf.org>
 Docdir: %{prefix}/share/doc
 URL: http://systemimager.org/
 Distribution: System Installation Suite
+Obsoletes: systemimager-%{_build_arch}boot
 Requires: systemimager-server >= %{version}
 AutoReqProv: no
 
