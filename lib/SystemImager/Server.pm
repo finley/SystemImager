@@ -1,9 +1,36 @@
-package SystemImager::Server;
+#
+# "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>
+#
+#   $Id$
+#
 
-# put copyright here
+package SystemImager::Server;
 
 $version_number="1.5.0";
 $VERSION = $version_number;
+
+sub validate_post_install_option {
+  my $post_install=$_[1];
+
+  unless(($post_install eq "beep") or ($post_install eq "reboot") or ($post_install eq "shutdown")) { 
+    die qq(\nERROR: -post-install must be beep, reboot, or shutdown.\n\n       Try "-help" for more options.\n);
+  }
+  return 0;
+}
+
+sub validate_ip_assignment_option {
+  my $ip_assignment_method=$_[1];
+
+  $ip_assignment_method = lc $ip_assignment_method;
+  unless(
+    ($ip_assignment_method eq "")
+    or ($ip_assignment_method eq "static_dhcp")
+    or ($ip_assignment_method eq "dynamic_dhcp")
+    or ($ip_assignment_method eq "static")
+    or ($ip_assignment_method eq "replicant")
+  ) { die qq(\nERROR: -ip-assignment must be static, static_dhcp, dynamic_dhcp, or replicant.\n\n       Try "-help" for more options.\n); }
+  return 0;
+}
 
 sub get_full_path_to_image_from_rsyncd_conf {
         my $rsyncd_conf=$_[1];

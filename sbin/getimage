@@ -3,6 +3,8 @@
 #
 # "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>
 #
+#   $Id$
+#
 #   Others who have contributed to this code (in alphabetical order):
 #     Phil Champon <pchampon@valueweb.net>
 #     Sean Dague <sean@dague.net>
@@ -11,8 +13,6 @@
 #     Laurence Sherzer <lsherzer@gate.net>
 #     Wesley Smith <wessmith@engr.sgi.com>
 #     Curtis Zinzilieta <czinzilieta@valinux.com>
-#
-# This file is: getimage 
 #
 
 # set system path for system() calls
@@ -195,7 +195,6 @@ GetOptions(
     "quiet" => \$quiet
 ) || die "$help_info";
 
-$ip_assignment_method = lc $ip_assignment_method;
 $update_script = lc $update_script;
 
 #if requested, print help information
@@ -254,21 +253,8 @@ unless(
     or ($update_script eq "no" )
 ) { die "\n$program_name: -update-script must be yes or no.\n$get_help\n\n"; }
 
-# be sure $ip_assignment_method was passed a proper option
-unless(
-    ($ip_assignment_method eq "")
-    or ($ip_assignment_method eq "static_dhcp")
-    or ($ip_assignment_method eq "dynamic_dhcp")
-    or ($ip_assignment_method eq "static")
-    or ($ip_assignment_method eq "replicant")
-) { die "\n$program_name: -ip-assignment must be static, static_dhcp, or dynamic_dhcp.\n$get_help\n\n"; }
-
-# be sure $post_install was passed a proper option
-unless(
-       ($post_install eq "beep")
-    or ($post_install eq "reboot")
-    or ($post_install eq "shutdown")
-) { die "\n$program_name: -post-install must be beep, reboot, or shutdown.\n$get_help\n\n"; }
+SystemImager::Server->validate_ip_assignment_option($ip_assignment_method);
+SystemImager::Server->validate_post_install_option($post_install);
 
 # only golden client or server may be set
 if ($exclude and $exclude_file) {
