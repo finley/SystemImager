@@ -52,6 +52,14 @@ CVS Checkout Steps for Developers for the Stable Branch (bug fixes only)
 2) Rename the checked out source tree (suggested):
    "mv systemimager systemimager.stable"
 
+--------------------------------------------------------------
+Brian's Priorities 
+  These tasks are in the order that I intend to complete them.
+--------------------------------------------------------------
+o Integrate Dann's Makefile for initrd.gz changes
+o Have first go at integrating SystemConfigurator
+o Verify Don's serial console changes
+
 
 -------------------------------
 Development Branch Sub Projects
@@ -71,35 +79,6 @@ o X Windows GUI
     buttons, filling in boxes, etc.
   o See the "GUI Layout" section in this document for details on the 
     proposed logical arrangement of screens, etc.
-o mvimage
-  o usage: mvimage [OPTIONS] <image> <newimage>
-  o renames /var/spool/systemimager/images/<image>
-  o renames /tftpboot/systemimager/<image>.master
-    (and re-creates any softlinks that point to it)
-  o renames entries for <image> in /etc/rsyncd.conf
-  o OPTIONS:
-    -help
-    -verbose
-    -quiet
-    -force  Don't prompt before renaming each of the following:
-                  o image directory
-                  o <image>.master autoinstall script and softlinks
-                  o image entry in /etc/rsyncd.conf
-o rmimage
-  o usage: rmimage [OPTIONS] <image>
-  o removes /var/spool/systemimager/images/<image>
-  o removes /tftpboot/systemimager/<image>.master
-    (and any softlinks that point to it)
-  o removes entry for <image> in /etc/rsyncd.conf
-  o OPTIONS:
-    -help
-    -verbose
-    -quiet
-    -force  Don't prompt before removing each of the following:
-                  o image directory
-                  o <image>.master autoinstall script and it's softlinks
-                  o image entry in /etc/rsyncd.conf
-
 
 Curtis Zinzilieta <czinzilieta@valinux.com>
 -------------------------------------------
