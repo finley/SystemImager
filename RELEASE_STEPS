@@ -12,15 +12,6 @@
 3.0 PRE-FEATURE FREEZE
 --------------------------------------------------------------------------------
 Pending:
-* mkdhcpserver -- commandlineize and require -dhcp-version 2 or -dhcp-version 3
-
-* Verify DHCP option numbers.
-
-* Variables in dhcpd.conf and local.cfg -> make sure that all
-  variables that can be used in either dhcpd.conf or local.cfg
-  can be used in both.  (unless it's impossible as Sean noted
-  with ETHER_SLEEP ;-)  Add ETHER_SLEEP=35 to local.cfg.
-
 * Get SSH working again (BEF)  Legality issues?
 
 
@@ -74,10 +65,8 @@ Completed:
   http://rpmfind.net/linux/rpm2html/search.php?query=perl-XML-Simple
    and
   http://rpm.pbone.net/index.php3/idpl/294219/idpa/294219/stat/4
-
 * remove install_siboot (df)
 * Add CCB's ctrl+c catching code to rcS (bef)
-
 * We should tell the user when they run addclients that if they have 
   backwards and forwards dns resolution setup for their clients, that they need
   not add the local hosts entries.  
@@ -86,6 +75,13 @@ Completed:
 * XFS (df)
 * LAST_ROOT code (added back -- we'll see if it passes during release 
   candidate testing) (bef)
+* mkdhcpserver -- commandlineize and require -dhcp-version 2 or -dhcp-version 3
+* Verify DHCP option numbers.
+* Variables in dhcpd.conf and local.cfg -> make sure that all
+  variables that can be used in either dhcpd.conf or local.cfg
+  can be used in both.  (unless it's impossible as Sean noted
+  with ETHER_SLEEP ;-)  Add ETHER_SLEEP=35 to local.cfg.
+
 
 
 
