@@ -28,6 +28,8 @@
 #   - add PHONY += install_initrd
 #   2004.10.18  Brian Elliott Finley
 #   - add "build_dir_clean" target
+#   - add "initrd.img" target
+#   - add "initrd" target
 
 INITRD_PATCH_DIR = $(INITRD_DIR)/patches
 INITRD_SRC_DIR = $(INITRD_DIR)/src
@@ -171,6 +173,9 @@ endif
 
 	touch $(INITRD_DIR)/build_dir-stamp
 
+PHONY += initrd.img
+initrd.img:	$(INITRD_DIR)/initrd.img
+
 ifeq ($(INITRD_COMPRESS),yes)
 $(INITRD_DIR)/initrd.img:	$(INITRD_DIR)/initrd
 	gzip -9 < $(INITRD_DIR)/initrd > $(INITRD_DIR)/initrd.img
@@ -179,8 +184,13 @@ $(INITRD_DIR)/initrd.img:       $(INITRD_DIR)/initrd
 	cp -a $(INITRD_DIR)/initrd $(INITRD_DIR)/initrd.img
 endif
 
+
+PHONY += initrd
+initrd:	$(INITRD_DIR)/initrd
+
 $(INITRD_DIR)/initrd:	$(INITRD_DIR)/build_dir-stamp
 	$(MKCRAMFS) $(INITRD_BUILD_DIR) $(INITRD_DIR)/initrd
+
 
 ########## BEGIN initrd ##########
 # install the autoinstall ramdisk - the initial ramdisk used by autoinstall
