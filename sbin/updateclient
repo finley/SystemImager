@@ -489,16 +489,13 @@ SC_EOF
     }
 
     # Run the command. -BEF-
- print "\$cmd: $cmd\n"; 
- exit 1; #XXX
-    my $rc = system($cmd);
-    if ($rc != 0) { exit $rc >> 8; }
+    !system($cmd) or die "$cmd failed!";
 
     # Now we install the bootloader if requested
     unless($no_bootloader) {
         print "Running bootloader...\n";
-        my $rc = system("systemconfigurator --runboot");
-        if ($rc != 0) { exit $rc >> 8; }  
+	my $cmd = "systemconfigurator --runboot";
+    	!system($cmd) or die "$cmd failed!";
     }
 } ### END update image section ###
 
@@ -509,17 +506,17 @@ if($DEVICE) {
     $hostname =~ s/\..*//g;
 
     my %netvars = (
-      GATEWAYDEV => $DEVICE,
-      GATEWAY => '',
-      IPADDR => '',
-      BROADCAST => '',
-      NETMASK => '',
-      NETWORK => '',
-      HOSTNAME => $hostname,
-      DOMAINNAME => '',
-      DEVICE => $DEVICE,
-      IMAGESERVER => $server,
-      SSH_USER => $ssh_user
+        GATEWAYDEV => $DEVICE,
+        GATEWAY => '',
+        IPADDR => '',
+        BROADCAST => '',
+        NETMASK => '',
+        NETWORK => '',
+        HOSTNAME => $hostname,
+        DOMAINNAME => '',
+        DEVICE => $DEVICE,
+        IMAGESERVER => $server,
+        SSH_USER => $ssh_user
     );
 
     ### BEGIN get ip address, netmask, and broadcast from the ifconfig command ###
