@@ -1,10 +1,7 @@
 #
 # "SystemImager" 
 #
-#  Copyright (C) 1999-2001 Brian Elliott Finley 
-#                          <brian@bgsw.net>
-#  Copyright (C) 2002-2003 Bald Guy Software 
-#                          <brian@bgsw.net>
+#  Copyright (C) 1999-2003 Brian Elliott Finley <brian@bgsw.net>
 #
 #  $Id$
 #
@@ -48,8 +45,6 @@ get_arch() {
     ARCH=`uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/`
 }
 #
-################################################################################
-
 #################################################################################
 #
 #  adjust_arch
@@ -69,9 +64,11 @@ adjust_arch() {
     fi
 }
 #
-################################################################################
-
-
+#################################################################################
+#
+#  write_variables
+#
+# Usage: write_variables
 write_variables() {
 
     echo
@@ -109,11 +106,70 @@ write_variables() {
 ################################################################################
 #
 #   Description:
+#   Dann's spinner
+#
+#   Usage: start_spinner
+#   Also see: stop_spinner
+#
+start_spinner() {
+    { while :; do
+            echo -ne "\b/";  sleep 1;
+            echo -ne "\b-";  sleep 1;
+            echo -ne "\b\\"; sleep 1;
+            echo -ne "\b|";  sleep 1;
+      done
+    }&
+    SPINNER_PID=$!
+}
+#
+################################################################################
+#
+#   Usage: stop_spinner
+#   Also see: start_spinner
+#
+stop_spinner() {
+    echo
+    echo "stop_spinner"
+    kill -9 $SPINNER_PID
+}
+#
+################################################################################
+#
+#   Description:
+#   watches the tmpfs filesystem (/) and gives warnings and/or does a shellout
+#
+#   Usage: tmpfs_watcher
+#
+tmpfs_watcher() {
+
+    echo
+    echo tmpfs_watcher
+
+    # Note: Transfer to staging area can fail if tmpfs runs out of inodes.
+    { 
+        while :; do
+            DF=`df -k / | grep -v 'Filesystem' | sed -e 's/  */ /g' -e 's/.*[0-9] //' -e 's/%.*//'`
+            [ $DF -ge 95 ] && echo "WARNING: Your tmpfs filesystem is ${DF}% full!"
+            [ $DF -ge 99 ] && echo "         Search the FAQ for tmpfs to learn about sizing options."
+            [ $DF -ge 99 ] && shellout
+            sleep 1
+        done
+        unset DF
+    }&
+    TMPFS_WATCHER_PID=$!
+}
+#
+################################################################################
+#
+#   Description:
 #   Exit with the message stored in /etc/issue.
 #
 #   Usage: $COMMAND || shellout
 #
 shellout() {
+    COUNT="$RETRY"
+    echo "Killing off running processes."
+    kill -9 $TMPFS_WATCHER_PID
     killall -9 udp-receiver rsync
     write_variables
     cat /etc/issue
@@ -186,173 +242,17 @@ get_flamethrower_directory() {
 #
 #   MODULE_NAME=my_module   # Required
 #   DIR=/my/destination/dir # Required
-#  [RETRY=7]                # Optional
-#  [PORTBASE=9000]          # Required if a sourceable file called $MODULE_NAME
-#                           # doesn't exist
+#   [RETRY=7]               # Optional
+#   [PORTBASE=9000]         # Required if a sourceable file called $MODULE_NAME
+#                           #   doesn't exist
 #
 #   flamethrower_client
 #
-flamethrower_client_old() {
-
-    # validate
-    if [ -z $PORTBASE ]; then
-        . ${FLAMETHROWER_DIRECTORY_DIR}/${MODULE_NAME}
-        if [ $? != 0 ]; then
-            echo You must either set PORTBASE, or have a sourceable file called
-            echo ${FLAMETHROWER_DIRECTORY_DIR}/MODULE_NAME
-            shellout
-        fi
-    fi
-    if [ -z $DIR ]; then
-        echo Must set DIR
-    else
-        mkdir -p $DIR
-    fi
-    
-
-    # build command
-    UDP_RECEIVER_OPTIONS="--interface ${DEVICE} --portbase $PORTBASE"
-    if [ ! -z $TTL ]; then
-        UDP_RECEIVER_OPTIONS="$UDP_RECEIVER_OPTIONS --ttl $TTL"
-    fi
-    if [ "$NOSYNC" = "on" ]; then
-        UDP_RECEIVER_OPTIONS="$UDP_RECEIVER_OPTIONS --nosync"
-    fi
-    if [ "$ASYNC" = "on" ]; then
-        UDP_RECEIVER_OPTIONS="$UDP_RECEIVER_OPTIONS --async"
-    fi
-    if [ ! -z $MCAST_ALL_ADDR ]; then
-        UDP_RECEIVER_OPTIONS="$UDP_RECEIVER_OPTIONS --mcast-all-addr $MCAST_ALL_ADDR"
-    fi
-
-    # Which tar opts should we use?  If our tar has --overwrite capability, use it.
-    #   Summary: busybox tar doesn't (boel_binaries and prior).
-    #            Debian patched gnu tar does (image and on).
-    #            We want this option enabled for the image to ensure proper directory
-    #            permissions. -BEF-
-    tar --help 2>&1 | grep -q overwrite && TAR_OPTS='--overwrite -xp' || TAR_OPTS='-x'
-
-
-    # set vars
-    [ -z $RETRY ] && RETRY=0
-    COUNT=0
-    FLAMETHROWER_CLIENT_SLEEP=3
-    unset TAR_EXIT_STATUS
-    TAR_EXIT_FILE=/tmp/tar_exit
-    UDP_RECEIVER_STDERR_LOG="/tmp/udp-receiver.${MODULE_NAME}"
-    TAR_STDERR_LOG=/tmp/tar.stderr.log
-
-
-
-    # loop
-    until [ "$TAR_EXIT_STATUS" = "0" ]
-    do
-        # launch udp-receiver
-        if [ -z $UDP_RECEIVER_RUNNING ]; then
-
-            UDP_RECEIVER_RUNNING=1
-
-            rm -f $UDP_RECEIVER_STDERR_LOG $TAR_STDERR_LOG
-            echo TAR_EXIT_STATUS= > $TAR_EXIT_FILE
-
-            echo
-            echo "flamethrower_client(${MODULE_NAME})"
-            echo '--------------------------------------------------------------------------------'
-            echo "udp-receiver $UDP_RECEIVER_OPTIONS 2>${UDP_RECEIVER_STDERR_LOG} | tar ${TAR_OPTS} -C ${DIR} 2>$TAR_STDERR_LOG"
-            ( 
-                udp-receiver $UDP_RECEIVER_OPTIONS 2>${UDP_RECEIVER_STDERR_LOG} | tar ${TAR_OPTS} -C ${DIR} 2>$TAR_STDERR_LOG
-                echo "TAR_EXIT_STATUS=$?" > $TAR_EXIT_FILE
-             ) &
-            echo -n "Waiting for cast to begin"
-        fi    
-        
-
-        # test udp-receiver log file
-        if [ -e $UDP_RECEIVER_STDERR_LOG ]; then
-            grep -q '^Transfer complete' $UDP_RECEIVER_STDERR_LOG && COMPLETED=yes || COMPLETED=no
-            grep -q ^bytes $UDP_RECEIVER_STDERR_LOG && STARTED=yes || STARTED=no
-
-            if [ "$COMPLETED" = "yes" ]; then
-                # Cool!  Let's proceed
-                [ ! -z $DEBUG ] && echo COMPLETED=yes
-            elif [ "$STARTED" = "yes" ]; then
-                THIS_STAMP=`ls -l $UDP_RECEIVER_STDERR_LOG`
-                [ ! -z $DEBUG ] && echo
-                [ ! -z $DEBUG ] && echo LAST $LAST_STAMP
-                [ ! -z $DEBUG ] && echo THIS $THIS_STAMP
-                if [ "$THIS_STAMP" = "$LAST_STAMP" ]; then
-                    echo "WARNING: No progress since last check.  Killing udp-receiver."
-                    while killall -9 udp-receiver; do sleep 1; done
-                    unset UDP_RECEIVER_RUNNING
-                    sleep 7
-                fi
-                LAST_STAMP=$THIS_STAMP
-            fi
-
-        fi
-
-
-        # test exit status from tar command
-        . $TAR_EXIT_FILE
-
-        if [ "$TAR_EXIT_STATUS" = "" ]; then
-            # just proceed, no worries
-        elif [ "$TAR_EXIT_STATUS" = "0" ]; then
-            # success -- break loop, and proceed with install
-            break
-        else
-            # failure
-            if [ $COUNT -lt $RETRY ]; then
-                COUNT=$(( $COUNT + 1 ))
-                echo "flamethrower_client: Proceeding with retry $COUNT of $RETRY"
-            else
-                echo "flamethrower_client: FATAL: Initial attempt and $RETRY retries failed!"
-                shellout
-            fi
-        fi
-
-
-        # sleep apnea
-        sleep_loop $FLAMETHROWER_CLIENT_SLEEP
-
-    done
-
-    # done
-    echo "done!"
-    echo 'flamethrower_client: Success!'
-
-
-    # Unset vars, so next module (which may not have them set) won't use then unintentially
-    unset TTL
-    unset NOSYNC
-    unset ASYNC
-    unset MCAST_ALL_ADDR
-    unset RETRY
-    unset COUNT
-    unset DIR
-    unset UDP_RECEIVER_RUNNING
-    unset PORTBASE
-    unset COMPLETED
-    unset STARTED
-    unset THIS_STAMP
-    unset LAST_STAMP
-    unset TAR_STDERR_LOG
-    unset TAR_OPTS
-}
-#
-################################################################################
-#
-# Usage: 
-#
-#   MODULE_NAME=my_module   # Required
-#   DIR=/my/destination/dir # Required
-#  [RETRY=7]                # Optional
-#  [PORTBASE=9000]          # Required if a sourceable file called $MODULE_NAME
-#                           # doesn't exist
-#
-#   flamethrower_client_new2  /* we can implement this once udp-receiver can exit properly, and timeout on it's own -BEF- */
-#
 flamethrower_client() {
+
+    echo
+    echo "flamethrower_client(${MODULE_NAME})"
+    echo ---------------------------------------------------------------------
 
     # validate
     if [ -z $PORTBASE ]; then
@@ -409,7 +309,7 @@ flamethrower_client() {
         UDP_RECEIVER_EXIT_STATUS=$?
 
         # untar it
-        if [ $UDP_RECEIVER_EXIT_STATUS -eq 0 ]; then
+        if [ "$UDP_RECEIVER_EXIT_STATUS" = "0" ]; then
             echo tar ${TAR_OPTS} -f /tmp/multicast.tar -C ${DIR}
             tar ${TAR_OPTS} -f /tmp/multicast.tar -C ${DIR}
             TAR_EXIT_STATUS=$?
@@ -434,9 +334,8 @@ flamethrower_client() {
     done
 
     # done
-    echo "done!"
-    echo 'flamethrower_client: Success!'
-    echo '--------------------------------------------------------------------------------'
+    echo 'finished!'
+    echo 
 
 
     # Unset vars, so next module (which may not have them set) won't use then unintentially
@@ -453,137 +352,6 @@ flamethrower_client() {
     unset TAR_EXIT_STATUS
     unset TAR_OPTS
     unset SUCCESS
-
-}
-
-
-################################################################################
-#
-# Usage: 
-#
-#   MODULE_NAME=my_module   # Required
-#   DIR=/my/destination/dir # Required
-#  [RETRY=7]                # Optional
-#  [PORTBASE=9000]          # Required if a sourceable file called $MODULE_NAME
-#                           # doesn't exist
-#
-#   flamethrower_client_new  /* we can implement this once udp-receiver can exit properly, and timeout on it's own -BEF- */
-#
-flamethrower_client_new() {
-
-    # validate
-    if [ -z $PORTBASE ]; then
-        . ${FLAMETHROWER_DIRECTORY_DIR}/${MODULE_NAME}
-        if [ $? != 0 ]; then
-            echo You must either set PORTBASE, or have a sourceable file called
-            echo ${FLAMETHROWER_DIRECTORY_DIR}/MODULE_NAME
-            shellout
-        fi
-    fi
-    if [ -z $DIR ]; then
-        echo Must set DIR
-    else
-        mkdir -p $DIR
-    fi
-    
-
-    # build command
-    UDP_RECEIVER_OPTIONS="--interface ${DEVICE} --portbase $PORTBASE"
-    if [ ! -z $TTL ]; then
-        UDP_RECEIVER_OPTIONS="$UDP_RECEIVER_OPTIONS --ttl $TTL"
-    fi
-    if [ "$NOSYNC" = "on" ]; then
-        UDP_RECEIVER_OPTIONS="$UDP_RECEIVER_OPTIONS --nosync"
-    fi
-    if [ "$ASYNC" = "on" ]; then
-        UDP_RECEIVER_OPTIONS="$UDP_RECEIVER_OPTIONS --async"
-    fi
-    if [ ! -z $MCAST_ALL_ADDR ]; then
-        UDP_RECEIVER_OPTIONS="$UDP_RECEIVER_OPTIONS --mcast-all-addr $MCAST_ALL_ADDR"
-    fi
-
-    # Which tar opts should we use?  If our tar has --overwrite capability, use it.
-    #   Summary: busybox tar doesn't (boel_binaries and prior).
-    #            Debian patched gnu tar does (image and on).
-    #            We want this option enabled for the image to ensure proper directory
-    #            permissions. -BEF-
-    tar --help 2>&1 | grep -q overwrite && TAR_OPTS='--overwrite -xp' || TAR_OPTS='-x'
-    #tar --help 2>&1 | grep -q overwrite && TAR_OPTS='--overwrite -xzp' || TAR_OPTS='-xz'
-
-    # set vars
-    [ -z $RETRY ] && RETRY=0
-    COUNT=0
-    FLAMETHROWER_CLIENT_SLEEP=3
-    UDP_RECEIVER_EXIT_STATUS=
-
-    # example udp-receiver command:
-    #   udp-receiver --interface lo --portbase 9002 --nosync --nokbd --pipe 'tar --overwrite -xp -C  /tmp/.flamethrower.12298'
-
-    # the new style (loop)
-    until [ "$UDP_RECEIVER_EXIT_STATUS" = "0" ]
-    do
-        #
-        # launch udp-receiver
-        #
-        echo
-        echo "flamethrower_client(${MODULE_NAME})"
-        echo '--------------------------------------------------------------------------------'
-
-        # Create script to do tar stuff.  Can't seem to get the tar command escaped properly for direct use 
-        # with --pipe.  For example, --pipe 'tar --overwrite -xp -C  /tmp/.flamethrower.12298' fails. -BEF-
-        echo '#!/bin/sh'                       >  /tmp/tar_cmd.${MODULE_NAME}.sh
-        echo "tar ${TAR_OPTS} -C ${DIR}"       >> /tmp/tar_cmd.${MODULE_NAME}.sh
-        chmod 755                                 /tmp/tar_cmd.${MODULE_NAME}.sh
-
-        echo "udp-receiver $UDP_RECEIVER_OPTIONS --pipe /tmp/tar_cmd.${MODULE_NAME}.sh"
-        udp-receiver $UDP_RECEIVER_OPTIONS --pipe /tmp/tar_cmd.${MODULE_NAME}.sh
-        UDP_RECEIVER_EXIT_STATUS=$?
-        echo
-        echo
-        echo "exit status: $UDP_RECEIVER_EXIT_STATUS"
-        echo
-
-        # proceed or retry based on exit status
-        if [ "$UDP_RECEIVER_EXIT_STATUS" != "0" ]; then
-            if [ $COUNT -lt $RETRY ]; then
-                COUNT=$(( $COUNT + 1 ))
-                echo "flamethrower_client: WARNING: attempting retry $COUNT of $RETRY"
-            else
-                echo "flamethrower_client: FATAL: giving up after $RETRY attempts failed!"
-                shellout
-            fi
-        fi
-
-
-        # sleep apnea
-        sleep_loop $FLAMETHROWER_CLIENT_SLEEP
-
-    done
-
-    # done
-    echo "done!"
-    echo 'flamethrower_client: Success!'
-    echo '--------------------------------------------------------------------------------'
-
-
-    # Unset vars, so next module (which may not have them set) won't use then unintentially
-    unset TTL
-    unset NOSYNC
-    unset ASYNC
-    unset MCAST_ALL_ADDR
-    unset RETRY
-    unset COUNT
-    unset DIR
-    unset PORTBASE
-    unset UDP_RECEIVER_EXIT_STATUS
-    unset UDP_RECEIVER_OPTIONS
-    unset TAR_OPTS
-    unset COMPLETED
-    unset STARTED
-    unset THIS_STAMP
-    unset LAST_STAMP
-    unset TAR_STDERR_LOG
-
 }
 
 #
