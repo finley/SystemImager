@@ -4,22 +4,31 @@
 # This file: CHANGE.LOG
 #
 
+getimage
+--------
+o removed depricated -master-client option (use -golden-client instead)
+
+lsimage
+-------
+o no longer shows tftpboot as an image
+
+
+
 -----------------------------------------------------------------------
-VA SystemImager-1.5.0 2001.xx.xx
+SystemImager-1.5.0 2001.05.08
 -----------------------------------------------------------------------
 
-addclients
-----------
-o Copy /etc/hosts -> /tftpboot/systemimager/hosts even if we don't 
-  modify it.
+The whole thing
+---------------
+o Added support for secure operation over SSH.
 
 autoinstall initrd.gz
 ---------------------
+o Fix bug [ #419185 ] rcS script matches multiple IPs.
 o don't pull hosts file from imageserver if HOSTNAME is known.
 o Fixed bug #407316.  Autoinstall was only working on eth0, even if 
   another interface got an IP address.  Thanks to James Oakley for 
   submitting this bug and a patch.
-o Fix bug [ #419185 ] rcS script matches multiple IPs.
 
 getimage
 --------
@@ -29,13 +38,14 @@ o Fixed bug where the "Would you like to update the autoinstall script
   for this image? ([y]/n): " question would fail if the user actually 
   typed a "y".  Thanks to John Chabalko <john.chabalko@nbci.com> for 
   finding this bug.
-o Added some syntax checking for the -update-script option.  
 o Fixed IP assignment question out of order bug.  Thanks to
   Cath Burrowes <cath@starbiz.com.au> for this patch.
-o Added section to autoinstall.master scripts to deal with testing                                                                            for and doing raidstop if necessary -- even if we're not 
+o Added section to autoinstall.master scripts to deal with testing
+  for and doing raidstop if necessary -- even if we're not 
   autoinstalling a raid image.
 o Add " || shellout" to the end of almost everything in <image>.master
   for better error testing.
+o Added some syntax checking for the -update-script option.  
 o Fixed bug: changed stringwise operators to numeric operators where 
   appropriate.  This bug caused dynamic partitioning to fail when
   the golden client had 10 or more partitions.  Thanks to
@@ -43,8 +53,15 @@ o Fixed bug: changed stringwise operators to numeric operators where
 
 lsimage
 -------
-o Created it!  Get a list of images on the local or a remote 
-  imageserver.
+o New with this release!
+
+pushupdate
+----------
+o New with this release!
+
+updateclient
+------------
+o -imageserver is now depricated.  use -server.
 
 makeautoinstallcd
 -----------------
@@ -56,10 +73,6 @@ makeautoinstalldiskette
 o Verify that the kernel and initrd.gz actually exist.  Suggested by 
   Greg Pratt <gpratt@valinux.com>.
 
-updateclient
-------------
-o Removed support for the depricated -imageserver option.  This means
-  you can now abbreviate to -i for the -image option.
 
 
 -----------------------------------------------------------------------

@@ -10,10 +10,10 @@ Developer Guidelines
 --------------------
 o Current development branch is tagged "HEAD".  This is the default.
   Most developers will use this.  To check out the development branch:
-  "cvs -z3 -d:ext:username@cvs.systemimager.sourceforge.net:/cvsroot/systemimager co systemimager"
+   "cvs -z3 -d:ext:developer_name@cvs.systemimager.sourceforge.net:/cvsroot/systemimager co systemimager"
 o The stable branch is only to be used for fixing bugs.  To check out
   the stable branch:
-  "cvs -z3 -d:ext:username@cvs.systemimager.sourceforge.net:/cvsroot/systemimager co -r v1_5_0 systemimager"
+   "cvs -z3 -d:ext:developer_name@cvs.systemimager.sourceforge.net:/cvsroot/systemimager co -r stable-1_5_x systemimager"
 o Only Brian Finley will modify CVS tags of any kind, such as for versioning 
   releases or creating development branches.
 o Always get approval from Brian Finley prior to adding any new files or 
@@ -48,7 +48,7 @@ CVS Checkout Steps for Developers for the Development Branch
 CVS Checkout Steps for Developers for the Stable Branch (bug fixes only)
 ------------------------------------------------------------------------
 1) Checkout the code:
-   "cvs -z3 -d:ext:developer_name@cvs.systemimager.sourceforge.net:/cvsroot/systemimager co -r v1_5_0-beta systemimager"
+   "cvs -z3 -d:ext:developer_name@cvs.systemimager.sourceforge.net:/cvsroot/systemimager co -r stable-1_5_x systemimager"
 2) Rename the checked out source tree (suggested):
    "mv systemimager systemimager.stable"
 
@@ -65,17 +65,12 @@ Curtis Zinzilieta <czinzilieta@valinux.com>
 -------------------------------------------
 o updateclient:  Add a -no-update "Don't actually *do* the update, just 
   show me what would have been done." option.
-o add the pushupdate script.
 
 Brian Finley <brian@thefinleys.com>
 -----------------------------------
 o Break out functions from all scripts and put into SystemImager 
   libraries.
-o Create stable branch after release called 1.6.x-stable, or similar.
-o Add Curtis Zinzilieta to CVS.
-o prepareclient: make Y default at beginning
 o updateclient:  Change -nolilo to -no-lilo, and hide nolilo in the background.
-o remove depricated -master-client option in getimage
 o deal with LABEL= and UUID= for any filesystem or device type
 o chroot=yes in /etc/rsyncd.conf and test...
 Change paths:
