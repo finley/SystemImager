@@ -405,9 +405,9 @@ install_ssh_tarball:	$(SYSTEMIMAGER_SSH_TARBALL)
 	$(SI_INSTALL) -m 644 $(SYSTEMIMAGER_SSH_TARBALL) $(SSH_BIN_DEST)
 
 PHONY += ssh_source_tarball
-ssh_source_tarball:	$(TOPDIR)/tmp/systemimager-ssh-$(VERSION).tar.bz2
+ssh_source_tarball:	$(TOPDIR)/tmp/systemimager-ssh-$(VERSION).tar.bz2.md5sum
 
-$(TOPDIR)/tmp/systemimager-ssh-$(VERSION).tar.bz2:
+$(TOPDIR)/tmp/systemimager-ssh-$(VERSION).tar.bz2.md5sum:
 	mkdir -p tmp/systemimager-ssh-$(VERSION)
 	find . -maxdepth 1 -not -name . -not -name tmp -not -name src \
 	  -exec cp -a {} tmp/systemimager-ssh-$(VERSION) \;
@@ -415,8 +415,8 @@ $(TOPDIR)/tmp/systemimager-ssh-$(VERSION).tar.bz2:
 	         -type d -printf "%p "`
 	$(MAKE) -C $(TOPDIR)/tmp/systemimager-ssh-$(VERSION) distclean
 	$(MAKE) -C $(TOPDIR)/tmp/systemimager-ssh-$(VERSION) WITH_SSH=1 get_ssh_source
-	cd $(TOPDIR)/tmp && tar -ch systemimager-ssh-$(VERSION) | bzip2 > \
-	  systemimager-ssh-$(VERSION).tar.bz2
+	cd $(TOPDIR)/tmp && tar -ch systemimager-ssh-$(VERSION) | bzip2 > systemimager-ssh-$(VERSION).tar.bz2
+	cd $(TOPDIR)/tmp && md5sum systemimager-ssh-$(VERSION).tar.bz2 > systemimager-ssh-$(VERSION).tar.bz2.md5sum
 	@echo
 	@echo "ssh source tarball has been created in $(TOPDIR)/tmp"
 	@echo
@@ -530,9 +530,9 @@ endif
 
 
 PHONY += source_tarball
-source_tarball:	$(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
+source_tarball:	$(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2.md5sum
 
-$(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2:
+$(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2.md5sum:
 	mkdir -p tmp/systemimager-$(VERSION)
 	find . -maxdepth 1 -not -name . -not -name tmp -not -name src \
 	  -exec cp -a {} tmp/systemimager-$(VERSION) \;
@@ -540,8 +540,8 @@ $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2:
 	         -type d -printf "%p "`
 	$(MAKE) -C $(TOPDIR)/tmp/systemimager-$(VERSION) distclean
 	$(MAKE) -C $(TOPDIR)/tmp/systemimager-$(VERSION) get_source
-	cd $(TOPDIR)/tmp && tar -ch systemimager-$(VERSION) | bzip2 > \
-	  systemimager-$(VERSION).tar.bz2
+	cd $(TOPDIR)/tmp && tar -ch systemimager-$(VERSION) | bzip2 > systemimager-$(VERSION).tar.bz2
+	cd $(TOPDIR)/tmp && md5sum systemimager-$(VERSION).tar.bz2 > systemimager-$(VERSION).tar.bz2.md5sum
 	@echo
 	@echo "source tarball has been created in $(TOPDIR)/tmp"
 	@echo
