@@ -221,7 +221,7 @@ patched_kernel-stamp:
 	[ -d $(LINUX_SRC) ] || \
 		( cd $(SRC_DIR) && tar xvfz $(LINUX_TARBALL) && \
 		  [ ! -f ../$(LINUX_PATCH) ] || \
-		  patch --force -p0 < ../$(LINUX_PATCH) || /bin/true )
+		  patch -p0 < ../$(LINUX_PATCH) || /bin/true )
 	cp -a $(LINUX_CONFIG) $(LINUX_SRC)/.config
 	touch patched_kernel-stamp
 
