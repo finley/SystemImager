@@ -83,28 +83,31 @@ CLIENT_BINARY_SRC = tftpstuff/systemimager
 COMMON_BINARY_SRC = $(BINARY_SRC)
 
 # destination directories
-DOC  = $(DESTDIR)/usr/local/share/doc/systemimager-doc
 ETC  = $(DESTDIR)/etc
 INITD = $(ETC)/init.d
-SBIN = $(DESTDIR)/usr/local/sbin
-MAN8 = $(DESTDIR)/usr/local/share/man/man8
+USR = $(DESTDIR)/usr/local
+DOC  = $(USR)/share/doc/systemimager-doc
+BIN = $(USR)/bin
+SBIN = $(USR)/sbin
+MAN8 = $(USR)/share/man/man8
+LIB_DEST = $(USR)/lib/systemimager/perl/SystemImager
 LOG_DIR = $(DESTDIR)/var/log/systemimager
-LIB_DEST = $(DESTDIR)/usr/lib/systemimager/perl/SystemImager
 
 INITSCRIPT_NAME = systemimager
 
 TFTP_BIN_SRC      = tftpstuff/systemimager
 TFTP_BIN         := raidstart mkraid mkreiserfs prepareclient updateclient
-TFTP_ROOT	  = $(DESTDIR)/usr/lib/systemimager
+TFTP_ROOT	  = $(USR)/share/systemimager
 TFTP_BIN_DEST     = $(TFTP_ROOT)/$(ARCH)-boot
 
 PXE_CONF_SRC      = tftpstuff/pxelinux.cfg
-PXE_CONF_DEST     = $(TFTP_ROOT)/pxelinux.cfg
+PXE_CONF_DEST     = $(TFTP_BIN_DEST)/pxelinux.cfg
 
 AUTOINSTALL_TARBALL = autoinstallbin.tar.gz
 
-BINARIES := addclients cpimage getimage makeautoinstallcd makeautoinstalldiskette makedhcpserver makedhcpstatic mkautoinstallscript mkbootserver mvimage rmimage # what happened to pushupdate?
-CLIENT_BINARIES  := updateclient prepareclient
+BINARIES := lsimage makeautoinstallcd makeautoinstalldiskette
+SBINARIES := addclients cpimage getimage makedhcpserver makedhcpstatic mkautoinstallscript mkbootserver mvimage pushupdate rmimage
+CLIENT_SBINARIES  := updateclient prepareclient
 COMMON_BINARIES   = lsimage
 
 IMAGESRC    = ./var/spool/systemimager/images
@@ -150,25 +153,28 @@ install_client_all:	install_client install_common
 #@@  install server-only architecture independent files
 #@@ 
 install_server:	install_manpages install_configs install_server_libs
+	mkdir -p $(BIN)
 	mkdir -p $(SBIN)
 	$(foreach binary, $(BINARIES), \
-		install -m 555 $(BINARY_SRC)/$(binary) $(SBIN);)
-	install -d -m 750 $(LOG_DIR)
+		install -m 755 $(BINARY_SRC)/$(binary) $(BIN);)
+	$(foreach binary, $(SBINARIES), \
+		install -m 755 $(BINARY_SRC)/$(binary) $(SBIN);)
+	install -d -m 755 $(LOG_DIR)
 	install -d -m 755 $(TFTP_BIN_DEST)
 	install -d -m 755 $(AUTOINSTALL_SCRIPT_DIR)
 	install -d -m 755 $(PXE_CONF_DEST)
-	install -m 444 --backup $(PXE_CONF_SRC)/message.txt \
+	install -m 644 --backup $(PXE_CONF_SRC)/message.txt \
 		$(PXE_CONF_DEST)/message.txt
-	install -m 444 --backup $(PXE_CONF_SRC)/syslinux.cfg \
+	install -m 644 --backup $(PXE_CONF_SRC)/syslinux.cfg \
 		$(PXE_CONF_DEST)/syslinux.cfg
-	install -m 444 --backup $(PXE_CONF_SRC)/syslinux.cfg \
+	install -m 644 --backup $(PXE_CONF_SRC)/syslinux.cfg \
 		$(PXE_CONF_DEST)/default
 	install -d -m 755 $(TFTP_ROOT)/systemimager
 	install -m 644 tftpstuff/systemimager/systemimager.exclude \
 		$(TFTP_ROOT)/systemimager
-	install -m 555 $(TFTP_BIN_SRC)/prepareclient $(TFTP_BIN_DEST)
-	install -m 555 $(TFTP_BIN_SRC)/updateclient $(TFTP_BIN_DEST)
-	install -d -m 750 $(IMAGEDEST)
+	install -m 755 $(TFTP_BIN_SRC)/prepareclient $(TFTP_BIN_DEST)
+	install -m 755 $(TFTP_BIN_SRC)/updateclient $(TFTP_BIN_DEST)
+	install -d -m 755 $(IMAGEDEST)
 	$(foreach file, $(WARNING_FILES), \
 		install -m 644 $(IMAGESRC)/README $(file);)
 
@@ -181,7 +187,7 @@ install_client: install_client_manpages
 		$(ETC)/systemimager
 	mkdir -p $(SBIN)
 
-	$(foreach binary, $(CLIENT_BINARIES), \
+	$(foreach binary, $(CLIENT_SBINARIES), \
 		install -m 755 $(CLIENT_BINARY_SRC)/$(binary) $(SBIN);)
 
 #@@install_common:
@@ -190,7 +196,7 @@ install_client: install_client_manpages
 install_common:	install_common_manpages
 	mkdir -p $(SBIN)
 	$(foreach binary, $(COMMON_BINARIES), \
-		install -m 755 $(COMMON_BINARY_SRC)/$(binary) $(SBIN);)
+		install -m 755 $(COMMON_BINARY_SRC)/$(binary) $(BIN);)
 
 #@@install_server_libs:
 #@@  install server-only libraries
@@ -212,8 +218,8 @@ install_binaries:	install_raidtools install_reiserfsprogs install_kernel install
 #@@ 
 install_raidtools:	raidtools
 	mkdir -p $(TFTP_BIN_DEST)
-	install -m 555 $(RAIDTOOLS_DIR)/mkraid $(TFTP_BIN_DEST)
-	install -m 555 $(RAIDTOOLS_DIR)/raidstart $(TFTP_BIN_DEST)
+	install -m 755 $(RAIDTOOLS_DIR)/mkraid $(TFTP_BIN_DEST)
+	install -m 755 $(RAIDTOOLS_DIR)/raidstart $(TFTP_BIN_DEST)
 	cp -a $(TFTP_BIN_DEST)/raidstart $(TFTP_BIN_DEST)/raidstop
 
 #@@raidtools:
@@ -245,7 +251,7 @@ $(SRC_DIR)/$(RAIDTOOLS_TARBALL):
 #@@ 
 install_reiserfsprogs:	reiserfsprogs
 	mkdir -p $(TFTP_BIN_DEST)
-	install -m 555 $(REISERFSPROGS_DIR)/bin/mkreiserfs $(TFTP_BIN_DEST)
+	install -m 755 $(REISERFSPROGS_DIR)/bin/mkreiserfs $(TFTP_BIN_DEST)
 
 #@@reiserfsprogs:
 #@@  build statically-linked reiserfsprogs	
@@ -331,7 +337,7 @@ install_configs:
 #@@ 
 install_manpages:	manpages
 	mkdir -p $(MAN8)
-	$(foreach binary, $(BINARIES), \
+	$(foreach binary, $(BINARIES) $(SBINARIES), \
 		cp -a $(MANPAGE_DIR)/$(binary).8.gz $(MAN8); )
 
 #@@install_client_manpages
@@ -339,7 +345,7 @@ install_manpages:	manpages
 #@@ 
 install_client_manpages:	manpages
 	mkdir -p $(MAN8)
-	$(foreach binary, $(CLIENT_BINARIES), \
+	$(foreach binary, $(CLIENT_SBINARIES), \
 		cp -a $(MANPAGE_DIR)/$(binary).8.gz $(MAN8); )
 
 #@@install_common_manpages:
@@ -362,6 +368,7 @@ manpages:
 install_docs: docs
 	mkdir -p $(DOC)
 	cp -a $(MANUAL_DIR)/html $(DOC)
+	cd $(MANUAL_DIR) && cp *.ps *.pdf $(DOC)
 	mkdir -p $(DOC)/examples
 	install -m 644 etc/rsyncd.conf $(DOC)/examples
 	install -m 644 etc/init.d/rsync $(DOC)/examples
@@ -370,8 +377,7 @@ install_docs: docs
 #@  builds the manual from SGML source
 #@ 
 docs:
-	-cd doc/manual_source && ln -sf ../manual/html/images
-	$(MAKE) -C $(MANUAL_DIR) html ps
+	$(MAKE) -C $(MANUAL_DIR) html ps pdf
 
 # this target creates a tarball containing modules, binaries, and libraries
 # for the autoinstall client to copy over.  before this can be used,
