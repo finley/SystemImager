@@ -148,7 +148,8 @@ my $imageserver = "192.168.1.254";
 my $boot_server = "";
 my $ssh_download_url = "";
 my $flamethrower_directory_portbase = "";
-my $tmpfs_staging = "no";
+my $tmpfs_staging = "n";
+my $mcast_install = "n";
 my $swallow = "";
 
 # Oh where oh where could my dhcpd.conf file be?
@@ -168,7 +169,6 @@ if("$dhcpd_conf" eq "/etc/dhcp3/dhcpd.conf") { $dhcpd_version = "3"; }
 
 
 ### Begin questionnaire ###
-my $mcast_install = "n";
 my $satisfied = "n";
 while ($satisfied ne "y") {
  system("clear");
@@ -236,15 +236,14 @@ EOF
         $log_server_port = get_response($log_server_port);
     }
    
-    print qq/Use tmpfs staging on client?  (If unsure, choose "no") [$tmpfs_staging]: /;
+    print qq/Use tmpfs staging on client?  (If unsure, choose "n") [$tmpfs_staging]: /;
     $tmpfs_staging = get_response($tmpfs_staging);
     $tmpfs_staging = lc $tmpfs_staging;
     if("$tmpfs_staging" eq "y") {
         $tmpfs_staging = "yes";
     }
    
-    print "Do you want to use Flamethrower (multicast) to install your clients?";
-    print "\n (Flamethrower uses udpcast to provide it's multicast transport): [no]: ";
+    print "Do you want to use Flamethrower (multicast) to install your clients? [$mcast_install]: ";
     $mcast_install = get_response($mcast_install);
     if ($mcast_install eq "y") {
         if ($flamethrower_directory_portbase eq "") { $flamethrower_directory_portbase="9000"; }
