@@ -6,6 +6,9 @@ UCLIBC_PATCHES = $(shell ls $(INITRD_PATCH_DIR)/uclibc.*.patch 2>/dev/null | sor
 
 UCLIBC_RUNTIME = $(INITRD_SRC_DIR)/uclibc-runtime
 UCLIBC_DEV = $(INITRD_SRC_DIR)/uclibc-dev
+
+UCLIBC_LINUX_DIR = $(TOPDIR)/src/$(LINUX_DIR)
+
 STAGING_DIR = $(UCLIBC_RUNTIME)
 
 ALL_SOURCE += $(INITRD_SRC_DIR)/$(UCLIBC_TARBALL)
@@ -29,7 +32,7 @@ $(INITRD_SRC_DIR)/$(UCLIBC_DIR)/Config: $(INITRD_SRC_DIR)/$(UCLIBC_TARBALL) $(UC
 		$(CROSSARG) --c99_math=true \
 		--devel_prefix=$(UCLIBC_DEV) \
 		--float=true \
-		--kernel_dir=$(LINUX_DIR) \
+		--kernel_dir=$(UCLIBC_LINUX_DIR) \
 		--large_file=true \
 		--ldso_path="/usr/$(UCLIBC_ARCH_NAME)-linux-uclibc/lib/" \
 		--long_long=true \
