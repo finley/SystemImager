@@ -446,6 +446,7 @@ if($source_host) {
     @mounted_filesystems = grep (!/\s+ext3\s+/, @mounted_filesystems);
     @mounted_filesystems = grep (!/\s+reiserfs\s+/, @mounted_filesystems);
     @mounted_filesystems = grep (!/\s+jfs\s+/, @mounted_filesystems);
+    @mounted_filesystems = grep (!/\s+xfs\s+/, @mounted_filesystems);
     @mounted_filesystems = grep (!/\s+vfat\s+/, @mounted_filesystems);
     @mounted_filesystems = grep (!/\s+fat\s+/, @mounted_filesystems);
     print FINAL_EXCLUDE_FILE "\n# Automatic exclusions made by SystemImager.\n";
