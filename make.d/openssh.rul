@@ -16,14 +16,27 @@ ifdef WITH_SSH
 					/lib/libnss_files.so.2
 
 	OPENSSH_SOURCE := $(SRC_DIR)/$(OPENSSH_TARBALL)
+
+ifeq ($(ARCH),i386)
+	SSH_HOST_TYPE=i586-pc-linux-gnu
 endif
+ifeq ($(ARCH),ia64)
+	echo Fix Me XXX
+	SSH_HOST_TYPE=ia64-pc-linux-gnu ?
+endif
+
+endif
+
+
 
 PHONY += openssh
 openssh:	$(OPENSSH_BINARIES)
 
 $(OPENSSH_BINARIES):	$(SRC_DIR)/openssh_verify.stamp
 	[ -d $(SRC_DIR)/$(OPENSSH_DIR) ] || ( cd $(SRC_DIR) && tar -xvzf $(OPENSSH_TARBALL) )
-	cd $(SRC_DIR)/$(OPENSSH_DIR) && ./configure
+	cd $(SRC_DIR)/$(OPENSSH_DIR) && ./configure --prefix=/usr \
+												--sysconfdir=/etc/ssh \
+												--host=i586-pc-linux-gnu
 	$(MAKE) -C $(SRC_DIR)/$(OPENSSH_DIR)
 
 $(SRC_DIR)/openssh_verify.stamp:	$(SRC_DIR)/$(OPENSSH_TARBALL)

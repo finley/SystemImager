@@ -1,8 +1,31 @@
-# This is ssh client systemwide configuration file.  This file provides 
-# defaults for users, and the values can be changed in per-user configuration
-# files or on the command line.
+#
+# "SystemImager"
+#
+#  Copyright (C) 2002 Bald Guy Software 
+#                     Brian E. Finley <brian.finley@baldguysoftware.com>
+#
+#   $Id$
+#
 
+################################################################################
+#
+# Specifically configured for SystemImager autoinstall clients.
+#
 Host *
-   ForwardAgent yes 
-   ForwardX11 no
-   StrictHostKeyChecking no
+    ForwardAgent yes
+#   ForwardX11 no
+#   RhostsAuthentication no
+#   RhostsRSAAuthentication no
+#   RSAAuthentication yes
+#   PasswordAuthentication yes
+#   BatchMode no
+#   CheckHostIP yes
+    StrictHostKeyChecking no
+#   IdentityFile ~/.ssh/identity
+#   IdentityFile ~/.ssh/id_rsa
+#   IdentityFile ~/.ssh/id_dsa
+#   Port 22
+#   Protocol 2,1
+#   Cipher 3des
+#   Ciphers aes128-cbc,3des-cbc,blowfish-cbc,cast128-cbc,arcfour,aes192-cbc,aes256-cbc
+#   EscapeChar ~

@@ -125,7 +125,6 @@ get_boel_binaries_tarball() {
         CMD="wget ${SSH_DOWNLOAD_URL}/${ARCH}/${FLAVOR}/boel_binaries.tar.gz"
         echo "$CMD"
         $CMD || shellout
-        cd -
     else
         # Unless we're using SSH, use rsync
         CMD="rsync -av ${IMAGESERVER}::boot/${ARCH}/${FLAVOR}/boel_binaries.tar.gz /tmp/"
@@ -187,7 +186,6 @@ ifconfig_loopback() {
 load_my_modules() {
     cd /my_modules || shellout
     sh ./INSMOD_COMMANDS
-    cd -
 }
 #
 ################################################################################
@@ -504,7 +502,6 @@ get_ssh_tarball() {
     CMD="wget ${SSH_DOWNLOAD_URL}/${ARCH}/ssh/systemimager_ssh.tar.gz"
     echo "$CMD"
     $CMD || shellout
-    cd -
 
     # Untar the tarball
     tar -C / -xvzf /tmp/systemimager_ssh.tar.gz || shellout
@@ -578,10 +575,12 @@ start_ssh() {
         echo
         echo $CMD
         $CMD || shellout
-        cd -
         
         # set permissions to 600 -- otherwise, sshd will refuse to use it
         chmod 600 /root/.ssh/authorized_keys || shellout
+
+        # must be owned by root
+        chown -R 0.0 /root/
         
         # Since we're using SSH, change the $IMAGESERVER variable to reflect
         # the forwarded connection.
@@ -596,6 +595,7 @@ start_ssh() {
         echo
         mkdir -p /var/empty || shellout
         ssh-keygen -t dsa -N "" -f /etc/ssh/ssh_host_dsa_key || shellout
+        ssh-keygen -t rsa -N "" -f /etc/ssh/ssh_host_rsa_key || shellout
         
         ## create necessary ptys, etc. for sshd   #XXX remove if unnecessary -BEF-
         #mknod /dev/ptmx c 5 2                    || shellout
@@ -628,7 +628,9 @@ start_ssh() {
         echo
         
         # fire up sshd and wait
-        sshd -f /etc/ssh/sshd_config -h /etc/ssh/ssh_host_key || shellout
+        mkdir -p /var/run/sshd; chmod 0755 /var/run/sshd
+        #sshd -f /etc/ssh/sshd_config -h /etc/ssh/ssh_host_key || shellout
+        sshd
         
         # Give sshd time to initialize before we yank the parent process
         # rug out from underneath it.
