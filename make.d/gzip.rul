@@ -1,0 +1,28 @@
+#http://alpaca.mcs.anl.gov/gnu/gzip/gzip-1.2.4.tar
+GZIP_VERSION := 1.2.4
+GZIP_DIR := gzip-$(GZIP_VERSION)
+GZIP_TARBALL := gzip-$(GZIP_VERSION).tar
+GZIP_URL := http://alpaca.mcs.anl.gov/gnu/gzip/$(GZIP_TARBALL)
+GZIP_BINARY := $(SRC_DIR)/$(GZIP_DIR)/gzip
+GZIP_PATCHES = $(shell ls $(PATCH_DIR)/gzip.*.patch 2>/dev/null | sort)
+
+ALL_SOURCE += $(SRC_DIR)/$(GZIP_TARBALL)
+
+PHONY += gzip
+gzip:	$(GZIP_BINARY)
+$(GZIP_BINARY):	$(SRC_DIR)/$(GZIP_TARBALL)
+	rm -fr $(SRC_DIR)/$(GZIP_DIR)
+	cd $(SRC_DIR) && tar -xvf $(GZIP_TARBALL)
+	cd $(SRC_DIR)/$(GZIP_DIR) && cat $(GZIP_PATCHES) < /dev/null | patch -p1
+	cd $(SRC_DIR)/$(GZIP_DIR) && ./configure
+	$(MAKE) -C $(SRC_DIR)/$(GZIP_DIR)
+
+$(SRC_DIR)/$(GZIP_TARBALL):
+	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
+	$(GETSOURCE) $(GZIP_URL) $(SRC_DIR)
+
+PHONY += gzip_clean
+gzip_clean:
+	rm -rf $(SRC_DIR)/$(GZIP_DIR)
+
+
