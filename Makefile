@@ -182,16 +182,16 @@ GETSOURCE = $(TOPDIR)/tools/getsource
 PYTHON = $(shell which python2 || which python)
 
 # build everything, install nothing
-PHONY += all
+.PHONY:	all
 all:	$(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.img manpages
 
-PHONY += help
+.PHONY:	help
 help:  show_targets
 
 #
 #
 # Show me a list of all targets in this entire build heirarchy
-PHONY += show_targets
+.PHONY:	show_targets
 SHOW_TARGETS_ALL_MAKEFILES = $(shell find . -name 'Makefile' -or -name '*.rul')
 show_targets:
 	@echo
@@ -220,15 +220,15 @@ binaries: $(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.img
 include $(TOPDIR)/make.d/*.rul $(INITRD_DIR)/initrd.rul
 
 # a complete server install
-PHONY += install_server_all
+.PHONY:	install_server_all
 install_server_all:	install_server install_common install_binaries
 
 # a complete client install
-PHONY += install_client_all
+.PHONY:	install_client_all
 install_client_all:	install_client install_common
 
 # install server-only architecture independent files
-PHONY += install_server
+.PHONY:	install_server
 install_server:	install_server_man install_configs install_server_libs
 	$(SI_INSTALL) -d $(BIN)
 	$(SI_INSTALL) -d $(SBIN)
@@ -274,7 +274,7 @@ install_server:	install_server_man install_configs install_server_libs
 	$(SI_INSTALL) -d -m 755 $(FLAMETHROWER_STATE_DIR)
 
 # install client-only files
-PHONY += install_client
+.PHONY:	install_client
 install_client: install_client_man install_client_libs
 	mkdir -p $(ETC)/systemimager
 	$(SI_INSTALL) -b -m 644 etc/updateclient.local.exclude \
@@ -287,14 +287,14 @@ install_client: install_client_man install_client_libs
 		$(SI_INSTALL) -m 755 $(BINARY_SRC)/$(binary) $(SBIN);)
 
 # install files common to both the server and client
-PHONY += install_common
+.PHONY:	install_common
 install_common:	install_common_man install_common_libs
 	mkdir -p $(BIN)
 	$(foreach binary, $(COMMON_BINARIES), \
 		$(SI_INSTALL) -m 755 $(BINARY_SRC)/$(binary) $(BIN);)
 
 # install server-only libraries
-PHONY += install_server_libs
+.PHONY:	install_server_libs
 install_server_libs:
 	mkdir -p $(LIB_DEST)/SystemImager
 	mkdir -p $(LIB_DEST)/BootMedia
@@ -305,13 +305,13 @@ install_server_libs:
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/BootMedia/i386.pm 	$(LIB_DEST)/BootMedia
 
 # install client-only libraries
-PHONY += install_client_libs
+.PHONY:	install_client_libs
 install_client_libs:
 	mkdir -p $(LIB_DEST)/SystemImager
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/Client.pm $(LIB_DEST)/SystemImager
 
 # install common libraries
-PHONY += install_common_libs
+.PHONY:	install_common_libs
 install_common_libs:
 	mkdir -p $(LIB_DEST)/SystemImager
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/Common.pm $(LIB_DEST)/SystemImager
@@ -321,7 +321,7 @@ install_common_libs:
 
 # checks the sized of the i386 kernel and initrd to make sure they'll fit 
 # on an autoinstall diskette
-PHONY += check_floppy_size
+.PHONY:	check_floppy_size
 check_floppy_size:	$(LINUX_IMAGE) $(INITRD_DIR)/initrd.img
 ifeq ($(ARCH), i386)
 	@### see if the kernel and ramdisk are larger than the size of a 1.44MB
@@ -339,7 +339,7 @@ ifeq ($(ARCH), i386)
 endif
 
 # install the initscript & config files for the server
-PHONY += install_configs
+.PHONY:	install_configs
 install_configs:
 	$(SI_INSTALL) -d $(ETC)/systemimager
 	$(SI_INSTALL) -m 644 etc/systemimager.conf $(ETC)/systemimager/
@@ -366,29 +366,29 @@ install_configs:
 
 ########## BEGIN man pages ##########
 # build all of the manpages
-PHONY += manpages
+.PHONY:	manpages
 manpages:
 	$(MAKE) -C $(MANPAGE_DIR) TOPDIR=$(TOPDIR)
 
 # install the manpages for the server
-PHONY += install_server_man
+.PHONY:	install_server_man
 install_server_man: manpages
 	cd $(MANPAGE_DIR) && $(MAKE) install_server_man TOPDIR=$(TOPDIR) PREFIX=$(PREFIX) $@
 
 # install the manpages for the client
-PHONY += install_client_man
+.PHONY:	install_client_man
 install_client_man: manpages
 	cd $(MANPAGE_DIR) && $(MAKE) install_client_man TOPDIR=$(TOPDIR) PREFIX=$(PREFIX) $@
 
 # install manpages common to the server and client
-PHONY += install_common_man
+.PHONY:	install_common_man
 install_common_man: manpages
 	cd $(MANPAGE_DIR) && $(MAKE) install_common_man TOPDIR=$(TOPDIR) PREFIX=$(PREFIX) $@
 
 ########## END man pages ##########
 
 # installs the manual and some examples
-PHONY += install_docs
+.PHONY:	install_docs
 install_docs: docs
 	mkdir -p $(DOC)
 	cp -a $(MANUAL_DIR)/html $(DOC)
@@ -397,22 +397,22 @@ install_docs: docs
 	#XXX $(SI_INSTALL) -m 644 doc/media-api.txt $(DOC)/
 
 # builds the manual from SGML source
-PHONY += docs
+.PHONY:	docs
 docs:
 	$(MAKE) -C $(MANUAL_DIR) html ps pdf
 
 # pre-download the source to other packages that are needed by 
 # the build system
-PHONY += get_source
+.PHONY:	get_source
 get_source:	$(ALL_SOURCE)
 
-PHONY += install
+.PHONY:	install
 install: 
 	@echo ''
 	@echo 'Read README for installation details.'
 	@echo ''
 
-PHONY += install_binaries
+.PHONY:	install_binaries
 install_binaries:	install_kernel install_initrd \
 			install_boel_binaries_tarball
 
@@ -425,12 +425,12 @@ install_binaries:	install_kernel install_initrd \
 # 	a single source directory, but we'll deal with that later...  Perhaps use
 # 	$(TOPDIR)/tmp/$(ARCH)/ instead of just $(TOPDIR)/tmp/. -BEF-
 #
-PHONY += install_boel_binaries_tarball
+.PHONY:	install_boel_binaries_tarball
 install_boel_binaries_tarball:	$(BOEL_BINARIES_TARBALL)
 	$(SI_INSTALL) -m 644 $(BOEL_BINARIES_TARBALL) $(BOOT_BIN_DEST)
 	# boel_binaries.tar.gz installed.
 
-PHONY += boel_binaries_tarball
+.PHONY:	boel_binaries_tarball
 boel_binaries_tarball:	$(BOEL_BINARIES_TARBALL)
 
 $(BOEL_BINARIES_TARBALL):	\
@@ -569,7 +569,7 @@ endif
 ################################################################################
 
 
-PHONY += source_tarball
+.PHONY:	source_tarball
 source_tarball:	$(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2.sign
 
 $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2.sign:	$(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
@@ -599,22 +599,22 @@ endif
 	@echo
 
 # create user-distributable tarballs for the server and the client
-PHONY += tarballs
+.PHONY:	tarballs
 tarballs:	
 	@ echo -e "\nbinary tarballs are no longer supported\n"
 
 # make the srpms for systemimager
-PHONY += srpm
+.PHONY:	srpm
 srpm: $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
 	rpm -ts $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
 
 # make the rpms for systemimager
-PHONY += rpm
+.PHONY:	rpm
 rpm: $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
 	rpm -tb $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
 
 # removes object files, docs, editor backup files, etc.
-PHONY += clean
+.PHONY:	clean
 clean:	$(subst .rul,_clean,$(shell cd $(TOPDIR)/make.d && ls *.rul)) initrd_clean
 	-$(MAKE) -C $(MANPAGE_DIR) clean
 	-$(MAKE) -C $(MANUAL_DIR) clean
@@ -628,8 +628,6 @@ clean:	$(subst .rul,_clean,$(shell cd $(TOPDIR)/make.d && ls *.rul)) initrd_clea
 	-find . -name ".#*" -exec rm -f {} \;
 
 # same as clean, but also removes downloaded source, stamp files, etc.
-PHONY += distclean
+.PHONY:	distclean
 distclean:	clean initrd_distclean
 	-rm -rf $(SRC_DIR) $(INITRD_SRC_DIR)
-
-.PHONY:	$(PHONY)
