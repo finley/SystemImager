@@ -21,6 +21,8 @@ use strict;
 #   generic_options_help_version
 #   getimage_options_body
 #   getimage_options_header
+#   mkclientnetboot_options_body
+#   mkclientnetboot_options_header
 #   pushupdate_options_body
 #   pushupdate_options_header
 #   updateclient_options_body
@@ -390,6 +392,46 @@ http://systemimager.org/
 EOF
 }
 
+
+#
+# Usage:
+#
+#   $help = $help . SystemImager::Options->mkclientnetboot_options_header();
+#
+sub mkclientnetboot_options_header {
+
+return << "EOF";
+Usage: mkclientnetboot --netboot   --clients "HOST1 HOST2 ..."
+  or   mkclientnetboot --localboot --clients "HOST1 HOST2 ..."
+
+EOF
+}
+
+
+#
+# Usage:
+#
+#   $help = $help . SystemImager::Options->mkclientnetboot_options_body();
+#
+sub mkclientnetboot_options_body {
+
+return << "EOF";
+ --netboot
+    Configure the network bootloader for the specified clients, so that it boots
+    them from the network.
+
+ --localboot
+    Configure the network bootloader for the specified clients, so that they
+    boot from their local disk.
+
+ --clients "HOST1 HOST2 ..."
+    A space seperated list of host names and/or dotted quad IP addresses.  This
+    server (assuming it is a boot server) will be told to let these clients net
+    boot from this server, at least until they've completed a successful
+    SystemImager autoinstall.
+
+EOF
+}
 
 
 return 1;

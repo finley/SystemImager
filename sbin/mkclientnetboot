@@ -12,7 +12,7 @@
 # set some variables
 $VERSION="SYSTEMIMAGER_VERSION_STRING";
 my $program_name="mkclientnetboot";
-my $get_help = "  Try \"$program_name -help\" for more options.";
+my $get_help = "  Try \"$program_name --help\" for more options.";
 
 # declare modules
 use lib "USR_PREFIX/lib/systemimager/perl";
@@ -25,6 +25,7 @@ use Getopt::Long;
 use SystemImager::Config;
 use SystemImager::Common;
 use SystemImager::Server;
+use SystemImager::Options;
 
 use vars qw($config $VERSION);
 
@@ -33,6 +34,9 @@ use vars qw($config $VERSION);
 my $tftp_dir = $config->tftp_dir();
 if (!$tftp_dir) { die "TFTP_DIR not defined in the config file."; }
 
+my $localboot_file = "/etc/systemimager/pxelinux.cfg/syslinux.cfg.localboot";
+my $netboot_file = "/etc/systemimager/pxelinux.cfg/syslinux.cfg";
+
 #
 ### END parse the config file ###
 
@@ -40,45 +44,23 @@ if (!$tftp_dir) { die "TFTP_DIR not defined in the config file."; }
 my $version_info = <<"EOF";
 $program_name (part of SystemImager) version $VERSION
 
-Copyright (C) 2002 Bald Guy Software <brian.finley\@baldguysoftware.com>
-This is free software; see the source for copying conditions.  There is NO
-warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 EOF
 
-# set help information
-my $help_info = $version_info . <<"EOF";
+$version_info .= SystemImager::Options->copyright();
 
-Usage: $program_name [OPTION]...
+# Help stuff
+my $help_info = $version_info . SystemImager::Options->mkclientnetboot_options_header();
+$help_info = $help_info . SystemImager::Options->generic_options_help_version();
+$help_info = $help_info . SystemImager::Options->mkclientnetboot_options_body();
+$help_info = $help_info . SystemImager::Options->generic_footer();
 
-Options: (options can be presented in any order)
-
- -help                   Display this output.
-                         
- -version                Display version and copyright information.
-                         
- -verbose                Show filenames that are being removed.
-                         
- -clients "HOST1 HOST2"  A space seperated list of host names and/or dotted
-                         quad IP addresses.  This server (assuming it is a 
-                         boot server) will be told to let these clients net
-                         boot from this server, at least until they've 
-                         completed a successful SystemImager autoinstall.
-
- -all-clients            Tell this server to let any and all clients net
-                         boot from this server, at least until they've 
-                         completed a successful SystemImager autoinstall.
-
-Download, report bugs, and make suggestions at:
-http://systemimager.org/
-EOF
-
-# interpret command line options
 GetOptions( 
     "help"              => \my $help,
     "version"           => \my $version,
     "verbose"           => \my $verbose,
+    "localboot"         => \my $localboot,
+    "netboot"           => \my $netboot,
     "clients=s"         => \my $clients,
-    "all-clients"     => \my $all_clients,
 ) or die qq($help_info);
 
 # if requested, print help information
@@ -93,42 +75,42 @@ if($version) {
     exit 0;
 }
 
-unless( ($clients) or ($all_clients) ) {
-    print qq(FATAL: Please specify one or more clients with -clients or -all-clients.\n);
+unless($clients) {
+    print qq(FATAL: Please specify one or more clients with --clients.\n);
+    print qq($get_help\n);
+    exit 1;
+}
+
+unless( ($localboot) or ($netboot) ) {
+    print qq(FATAL: Please specify --localboot or --netboot.\n);
     print qq($get_help\n);
     exit 1;
 }
 
 SystemImager::Common->check_if_root();
 
-if($clients) {
-    # Make array from -clients "hostnames and ip addresses" -BEF-
-    $_ = $clients;
-    my @array = split;
+# Make array from --clients "hostnames and ip addresses" -BEF-
+$_ = $clients;
+my @array = split;
 
-    foreach my $client (@array) {
+my $source_file;
+if($localboot) {
+    $source_file = $localboot_file;
+} elsif($netboot) {
+    $source_file = $netboot_file;
+}
 
-        # IP or Hostname?
-        if(SystemImager::Common->valid_ip_quad($client)) {
-            my $ip = $client;
-            remove_boot_file($ip);
-        } else {
-            my @ips = get_ips($client);
-            foreach my $ip ( @ips ) {
-                remove_boot_file($ip);
-            }
+foreach my $client (@array) {
+    # IP or Hostname?
+    if(SystemImager::Common->valid_ip_quad($client)) {
+        my $ip = $client;
+        cp_boot_file($ip, $source_file);
+    } else {
+        my @ips = get_ips($client);
+        foreach my $ip ( @ips ) {
+            cp_boot_file($ip, $source_file);
         }
     }
-} elsif($all_clients) {
-    # Remove all HEXBASED IP ADDRESS NAMED FILES in tftp_dir
-    local *DIR;
-    my @files;
-    my $dir = "$tftp_dir/pxelinux.cfg";
-    opendir(DIR, $dir) or die "Couldn't open $dir! $!";
-        while( defined(my $file = readdir(DIR)) ) {
-            remove_boot_file($file, "literal_file") if($file =~ m/^[[0-9A-F]{8}$/o);
-        }
-    close(DIR);
 }
 
 
@@ -137,6 +119,31 @@ if($clients) {
 #   Subroutines
 #
 ################################################################################
+
+
+################################################################################
+#
+# Description:
+# Creates a boot file for a node.
+#
+# Usage:
+# cp_boot_file($ip_dec, $source_file);
+sub cp_boot_file {
+
+    my ($ip_dec, $source_file) = @_;
+    my $ip_hex;
+
+    $ip_hex = SystemImager::Server->ip_quad_2_ip_hex($ip_dec);
+
+    my $file = $tftp_dir . "/pxelinux.cfg/" . $ip_hex;
+    if ($verbose) { print "Creating $file.\n"; }
+
+    # copy file over
+    #if(-e $file) { unlink($file) or die ("FATAL: Couldn't remove $file!\n"); }
+    copy("$source_file","$file") or die "Copy failed: $!";
+
+    return 1;
+}
 
 
 ################################################################################
@@ -167,36 +174,5 @@ sub remove_boot_file {
     return 1;
 
 }
-
-
-################################################################################
-#
-# Description:
-# Produce a list of IP addresses from a host name, and call remove_boot_file
-# for each IP address.
-#
-# Usage:
-# my @ips = get_ips($hostname);
-sub get_ips {
-
-    my $host = $_[0];
-
-    my ($hinfo, @ips);
-    if ( $hinfo = gethost($host) ) { 
-        foreach my $addr ( @{$hinfo->addr_list} ) {
-            push @ips, inet_ntoa($addr);
-        }
-    } else {
-        die "Can't find an IP address for $host!\n";
-    }
-
-    return @ips;
-
-}
-
-
-
-
-
 
 
