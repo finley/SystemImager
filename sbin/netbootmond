@@ -20,7 +20,8 @@ $0 = "netbootmond";
 
 my $net_boot_default = lc $config->net_boot_default();
 if("$net_boot_default" eq "net") {
-    print STDERR qq(\nNET_BOOT_DEFAULT = "$net_boot_default".  No need for me here, so I'm exiting.\n);
+    print STDERR qq(\nNET_BOOT_DEFAULT set to "$net_boot_default" in systemimager.conf.\n);
+    print STDERR qq(No need for me here, so I'm exiting.\n);
     exit 0;
 }
 
