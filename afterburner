@@ -13,15 +13,12 @@
 # do a quiet afterburn? or an interactive afterburn?
 QUIET="false"
 INTERACTIVE="true"
-case $1 in
-  -q|-quiet|--quiet                     ) QUIET="true" && INTERACTIVE="false" ;;
-  -n|-non-interactive|--non-interactive ) INTERACTIVE="false" ;;
-esac
-case $2 in
-  -q|-quiet|--quiet                     ) QUIET="true" && INTERACTIVE="false" ;;
-  -n|-non-interactive|--non-interactive ) INTERACTIVE="false" ;;
-esac
-
+for cl_option ; do
+  case $cl_option in
+    -q|-quiet|--quiet                     ) QUIET="true" && INTERACTIVE="false" ;;
+    -n|-non-interactive|--non-interactive ) INTERACTIVE="false" ;;
+  esac
+done
 
 # set some variables
 PATH=/bin:/usr/bin:/sbin:/usr/sbin

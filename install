@@ -7,27 +7,31 @@
 # do we want a quiet install? and do we want to run afterburner?
 QUIET="false"
 AFTERBURNER="yes"
-case $1 in
-  -q|-quiet|--quiet ) QUIET="true" ;;
-  -no-afterburner|--no-afterburner ) AFTERBURNER="no" ;;
-esac
-case $2 in
-  -q|-quiet|--quiet ) QUIET="true" ;;
-  -no-afterburner|--no-afterburner ) AFTERBURNER="no" ;;
-esac
+for cl_option ; do
+  case $cl_option in
+    -q|-quiet|--quiet ) QUIET="true" ;;
+    -n|-no-afterburner|--no-afterburner ) AFTERBURNER="no" ;;
+  esac
+done
 
 # set some variables
 PATH=/bin:/usr/bin:/sbin:/usr/sbin
 COMMAND_PATH=`dirname $0`
-cd $COMMAND_PATH
+test "x$COMMAND_PATH" != "x" && cd $COMMAND_PATH
 INSTALL_DIR=`pwd`
 VERSION=`cat $INSTALL_DIR/VERSION`
+test "x$prefix" = "x" && prefix=/usr
 
 # don't restart inetd unless necessary
 RESTART_INETD=no
 
 # if not run as root, install will surely fail
-[ `whoami` != "root" ] && echo "Must be run as root!" && exit 1
+if [ "x$DESTDIR" = "x" ]; then
+  [ `whoami` != "root" ] && echo "Must be run as root!" && exit 1
+else
+  mkdir -p $DESTDIR
+  [ -d $DESTDIR -a -w $DESTDIR ] || exit 2
+fi
 
 # source needed functions
 . $INSTALL_DIR/functions
@@ -67,65 +71,65 @@ fi
 ### BEGIN binaries ###
 for BINARY in `ls $INSTALL_DIR/sbin/ | grep -wv CVS`
 do
-  cp -af $INSTALL_DIR/sbin/$BINARY /usr/sbin/
-  chown root:root /usr/sbin/$BINARY
+  cp -af $INSTALL_DIR/sbin/$BINARY ${DESTDIR}${prefix}/sbin/
+  [ "x$DESTDIR" = "x" ] && chown root:root ${prefix}/sbin/$BINARY
 done
 ### END binaries ###
 
 
 ### BEGIN tftpboot stuff ###
-# Create /tftpboot/systemimager/ directory if necessary and copy/link files
-if [ ! -d /tftpboot/systemimager/ ]; then
-  [ $QUIET = "false" ] && echo "Creating /tftpboot/systemimager/..."
-  mkdir -p /tftpboot/systemimager/
+# Create ${DESTDIR}/tftpboot/systemimager/ directory if necessary and copy/link files
+if [ ! -d ${DESTDIR}/tftpboot/systemimager/ ]; then
+  [ $QUIET = "false" ] && echo "Creating ${DESTDIR}/tftpboot/systemimager/..."
+  mkdir -p ${DESTDIR}/tftpboot/systemimager/
 else
-  [ $QUIET = "false" ] && echo "/tftpboot/systemimager/ already exists..."
+  [ $QUIET = "false" ] && echo "${DESTDIR}/tftpboot/systemimager/ already exists..."
 fi
-[ $QUIET = "false" ] && echo "copying /etc/hosts to /tftpboot/systemimager/hosts..."
-cd /tftpboot/systemimager/
-cp -f /etc/hosts hosts
-# and for the benefit of RPM land...
-touch hosts
+[ $QUIET = "false" ] && echo "copying ${DESTDIR}/etc/hosts to ${DESTDIR}/tftpboot/systemimager/hosts..."
+cd ${DESTDIR}/tftpboot/systemimager/
+cp -p ${DESTDIR}/etc/hosts . || true > hosts
 
 # gotta make sure the masses can read it...
-chmod +r hosts
+chmod a+r hosts
 
 # copy tftpstuff into tftp area
 for TFTP_ITEM in `ls $INSTALL_DIR/tftpstuff/ | grep -wv CVS`
 do
-  cp -af $INSTALL_DIR/tftpstuff/$TFTP_ITEM /tftpboot/
-  chown -R root:root /tftpboot/$TFTP_ITEM
+  cp -af $INSTALL_DIR/tftpstuff/$TFTP_ITEM ${DESTDIR}/tftpboot/
+  [ "x$DESTDIR" = "x" ] && chown -R root:root ${DESTDIR}/tftpboot/$TFTP_ITEM
 done
 
 # turns out we *can* actually use the exact same config file -- Thanks, H.P. Anvin ;)
-cd /tftpboot/pxelinux.cfg/
+cd ${DESTDIR}/tftpboot/pxelinux.cfg/
 ln -f syslinux.cfg default
 ### END tftpboot stuff ###
 
 
 ### BEGIN images stuff ###
 
-# create /var/spool/systemimager
-mkdir -p /var/spool/systemimager/images
-chmod 750 /var/spool/systemimager/images
+# create ${DESTDIR}/var/spool/systemimager
+mkdir -p ${DESTDIR}/var/spool/systemimager/images
+chmod 750 ${DESTDIR}/var/spool/systemimager/images
 
 # Create Warning file
-echo '#' > /var/spool/systemimager/images/README
-echo '# "SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com>' >> /var/spool/systemimager/images/README
-echo '#' >> /var/spool/systemimager/images/README
-echo '' >> /var/spool/systemimager/images/README
-echo '***GOTCHA!***' >> /var/spool/systemimager/images/README
-echo '' >> /var/spool/systemimager/images/README
-echo 'DO NOT TOUCH THESE DIRECTORIES UNLESS YOU KNOW EXACTLY WHAT YOU ARE DOING!!!' >> /var/spool/systemimager/images/README
-echo '' >> /var/spool/systemimager/images/README
-echo 'You have the ability to totally hose an entire network of computers if you put' >> /var/spool/systemimager/images/README
-echo 'the wrong file in the right place.  OR EVEN MESS UP THE PERMISSIONS ON A FILE.' >> /var/spool/systemimager/images/README
-echo '' >> /var/spool/systemimager/images/README
-echo 'Permissions, ownership, modes, sticky-bits, etc. are all very important as they' >> /var/spool/systemimager/images/README
-echo 'will be replicated *exactly* on the clients!!!' >> /var/spool/systemimager/images/README
+cat > ${DESTDIR}/var/spool/systemimager/images/README <<EOF
+#
+# "SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com>
+#
+
+***GOTCHA!***
+
+DO NOT TOUCH THESE DIRECTORIES UNLESS YOU KNOW EXACTLY WHAT YOU ARE DOING!!!
+
+You have the ability to totally hose an entire network of computers if you put
+the wrong file in the right place.  OR EVEN MESS UP THE PERMISSIONS ON A FILE.
+
+Permissions, ownership, modes, sticky-bits, etc. are all very important as they
+will be replicated *exactly* on the clients!!!
+EOF
 
 # Create extra scary link to warning file
-cd /var/spool/systemimager/images
+cd ${DESTDIR}/var/spool/systemimager/images
 ln -sf README DO_NOT_TOUCH_THESE_DIRECTORIES
 
 ### END images stuff ###
@@ -134,16 +138,20 @@ ln -sf README DO_NOT_TOUCH_THESE_DIRECTORIES
 ### BEGIN documentation and what not stuff ###
 
 # Documentation -- copy BIG CASE files
-rm -fr /usr/doc/systemimager-*
-mkdir -p /usr/doc/systemimager-$VERSION/
-cp -af $INSTALL_DIR/[A-Z]* /usr/doc/systemimager-$VERSION/
-chown -R root:root /usr/doc/systemimager-$VERSION/
+# (RPM will take care of docs for us)
+if [ "x$DESTDIR" = "x" ]; then
+  rm -fr ${prefix}/doc/systemimager-*
+  mkdir -p ${prefix}/doc/systemimager-$VERSION/
+  cp -af $INSTALL_DIR/[A-Z]* ${prefix}/doc/systemimager-$VERSION/
+  chown -R root:root ${prefix}/doc/systemimager-$VERSION/
+fi
 
 ### END documentation and what not stuff ###
 
 
 # run afterburner unless told otherwise...
-[ $QUIET = "false" ] && [ $AFTERBURNER = "yes" ] && $INSTALL_DIR/afterburner --non-interactive
-[ $QUIET = "true" ] && [ $AFTERBURNER = "yes" ] && $INSTALL_DIR/afterburner --non-interactive --quiet
+if [ "$AFTERBURNER" = "yes" ]; then
+  [ $QUIET = "false" ] && $INSTALL_DIR/afterburner --non-interactive || $INSTALL_DIR/afterburner --non-interactive --quiet
+fi
 
 exit 0
