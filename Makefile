@@ -579,7 +579,7 @@ clean:	$(subst .rul,_clean,$(shell cd $(TOPDIR)/make.d && ls *.rul)) initrd_clea
 	-rm $(MANUAL_DIR)/images
 
 	## where the tarballs are built
-	-$(SUDO) rm -rf tmp
+	-rm -rf tmp
 
 	## editor backups
 	-find . -name "*~" -exec rm -f {} \;
