@@ -69,6 +69,8 @@ EOF
 # Set some defaults. -BEF-
 my $mcast_group = 9000;
 my $mcast_opts = "";
+my $sleep_count_1 = 35; # maybe turn into option.  may not need w/Gary's patch.
+my $sleep_count_2 = 5; # maybe turn into option.  may not need w/Gary's patch.
 
 # take options
 GetOptions( 
@@ -144,7 +146,11 @@ if ($verbose) {
 }
 $cmd = "tar -cv -C /usr/share/systemimager/boot/i386/standard/ boel_binaries.tar.gz -C /var/lib/systemimager/ scripts | udp-sender $mcast_opts --portbase $mcast_group";
 !system($cmd) or die ("$cmd failed!");
-sleep 35;  # Wait for autoinstallclient to partition disks, etc. before proceeding.
+if ($verbose) {
+    print "Sleep for $sleep_count_1 seconds to allow the autoinstall clients time to\n";
+    print "partition their disks and format their filesystems.\n";
+}
+sleep $sleep_count_1;
 
 ### IMAGE
 $mcast_group = $mcast_group + 2;
@@ -154,7 +160,10 @@ if ($verbose) {
     print "mcast_group:  $mcast_group\n";
 }
 !system($cmd) or die ("$cmd failed!");
-sleep 10; # Give autoinstallclient time to rest before proceeding.
+if ($verbose) {
+    print "Sleep for $sleep_count_2 seconds before sending overrides.\n";
+}
+sleep $sleep_count_2;
 
 ### OVERRIDES
 $mcast_group = $mcast_group + 2;
@@ -173,5 +182,4 @@ if ($verbose) {
 !system($cmd) or die ("$cmd failed!");
 
 exit 0;
-
 
