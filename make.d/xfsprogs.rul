@@ -33,8 +33,12 @@ $(SRC_DIR)/$(XFSPROGS_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
 	$(GETSOURCE) $(XFSPROGS_URL) $(SRC_DIR)
 
-endif
-
 PHONY += xfsprogs_clean
 xfsprogs_clean:
 	rm -rf $(SRC_DIR)/$(XFSPROGS_DIR)
+
+else
+
+xfsprogs_clean:
+
+endif
