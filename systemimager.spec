@@ -1,6 +1,6 @@
 %define name     systemimager
 %define ver      3.2.0
-%define rel      2
+%define rel      3
 %define prefix   /usr
 %define _build_all 1
 %define _boot_flavor standard
@@ -20,7 +20,6 @@ Source0: http://download.sourceforge.net/systemimager/%{name}-%{ver}.tar.bz2
 BuildRoot: /tmp/%{name}-%{ver}-root
 BuildArchitectures: noarch
 Packager: dann frazier <dannf@dannf.org>
-Docdir: %{prefix}/share/doc
 URL: http://systemimager.org/
 Distribution: System Installation Suite
 Requires: rsync >= 2.4.6, syslinux >= 1.48, libappconfig-perl, dosfstools, /usr/bin/perl
@@ -39,7 +38,6 @@ Copyright: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: dann frazier <dannf@dannf.org>
-docdir: %{prefix}/share/doc
 URL: http://systemimager.org/
 Distribution: System Installation Suite
 Requires: rsync >= 2.4.6, systemimager-common = %{version}, perl-AppConfig, dosfstools, /sbin/chkconfig, perl, perl-XML-Simple
@@ -71,7 +69,6 @@ Copyright: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: dann frazier <dannf@dannf.org>
-Docdir: %{prefix}/share/doc
 URL: http://systemimager.org/
 Distribution: System Installation Suite
 Requires: systemimager-server = %{version}, /sbin/chkconfig, perl, flamethrower >= 0.1.6
@@ -103,7 +100,6 @@ Copyright: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: dann frazier <dannf@dannf.org>
-Docdir: %{prefix}/share/doc
 URL: http://systemimager.org/
 Distribution: System Installation Suite
 Requires: perl, systemconfigurator
@@ -135,7 +131,6 @@ Copyright: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: dann frazier <dannf@dannf.org>
-Docdir: %{prefix}/share/doc
 URL: http://systemimager.org/
 Distribution: System Installation Suite
 Requires: systemimager-common = %{version}, systemconfigurator, perl-AppConfig, rsync >= 2.4.6, perl
@@ -169,7 +164,6 @@ Copyright: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: dann frazier <dannf@dannf.org>
-Docdir: %{prefix}/share/doc
 URL: http://systemimager.org/
 Distribution: System Installation Suite
 Obsoletes: systemimager-%{_build_arch}boot
@@ -196,6 +190,9 @@ to boot and install %{_build_arch} Linux machines during the SystemImager autoin
 process.
 
 %changelog
+* Fri Mar 12 2004 sis devel <sisuite-devel@lists.sourceforge.net> 3.2.0-3
+- html documentation returned to systemimager-server package
+
 * Wed Mar 10 2004 sis devel <sisuite-devel@lists.sourceforge.net> 3.2.0-2
 - remove more files created by multiple calls to install phases
 
@@ -315,6 +312,7 @@ make binaries
 cd $RPM_BUILD_DIR/%{name}-%{version}/
 make install_server_all DESTDIR=/tmp/%{name}-%{ver}-root PREFIX=%prefix
 make install_client_all DESTDIR=/tmp/%{name}-%{ver}-root PREFIX=%prefix
+(cd doc/manual_source;make html)
 
 %else
 
@@ -335,7 +333,10 @@ rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/pxelinux.cfg/message.txt~
 rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/pxelinux.cfg/syslinux.cfg~
 rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/pxelinux.cfg/syslinux.cfg.localboot~
 rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/rsync_stubs/10header~
+# Should I do this?
 rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/rsync_stubs/99local.dist~
+rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/rsync_stubs/99local.dist~~
+#
 rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/rsync_stubs/README~
 rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/updateclient.local.exclude~
 
@@ -468,6 +469,7 @@ fi
 %files server
 %defattr(-, root, root)
 %doc CHANGE.LOG COPYING CREDITS README VERSION
+%doc doc/manual_source/html
 # These should move to a files doc section, because they are missing if you don't do doc
 # %doc doc/manual/systemimager* doc/manual/html doc/manual/examples
 %doc doc/autoinstall* doc/local.cfg
