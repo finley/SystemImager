@@ -248,6 +248,10 @@ o I am going to be playing with this.  The more input the better.  I agree
   and just concentrate on console redirection.
 <<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
+o take generation of autoinstall scripts out of getimage.  This should
+  be done in a seperate program whose job is solely to create the
+  autoinstall script for the image.  This second program could then
+  be called by System Installer.
 
 Austin Gonyou <austin@coremetrics.com> 
 Wed Mar 21 12:19:10 CST 2001  
@@ -303,6 +307,13 @@ initrd.gz, and will boot from the harddrive.
 a tool similar to addclients might be useful for this.
         -dann
 
+Sean Dague <japh@us.ibm.com>
+------------------------------------
+o editimage/sish - create a tool which provides an easy interface for
+  running a command in the chrooted environment of an image.
+  This would add the ability to run commands withing an image, or even
+  accross images.  One could potentially use this to install packages,
+  copy in files, or query the state of the image.
 
 Austin Gonyou <austin@coremetrics.com>
 Wed Mar 21 12:19:10 CST 2001  
