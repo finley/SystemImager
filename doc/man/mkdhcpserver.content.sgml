@@ -42,8 +42,14 @@
       option-100 is passed to autoinstall clients in order to direct them to
       the image server they should use.
     </para>
-
+    <para>
+     The PXE configuration that mkdhcpserver creates will work for most
+     i386 clients, but will not work for machines of other architectures.
+     Please see the SystemImager manual for instructions on configuring
+     network boot for other supported architectures.
+    </para>
   </refsect1>
+
   <refsect1>
     <title>OPTIONS</title>
 
@@ -51,25 +57,6 @@
       <command>mkdhcpserver</command> currently accepts no options.
     </para>
 
-  </refsect1>
-
-  <refsect1>
-    <title>BUGS</title>
- 
-    <para>
-      <command>mkdhcpserver</command> is not compatible with DHCP v3 from
-      ISC.  If you are using DHCP v3, you will need to use the following
-      configuration directives to make use of option 100:
-    </para>
-    
-    <simplelist>
-      <member>option systemimager-server code 100 = text;</member>
-      <member>option systemimager-server "&lt;IMAGESERVER IP&gt;";</member>
-    </simplelist>
-
-    <para>
-      Where &lt;IMAGESERVER IP&gt; is the IP address of your image server
-    </para>
   </refsect1>
 
   <refsect1>
