@@ -1,0 +1,97 @@
+#! /bin/sh
+#
+#   Written 
+#       by Ghe Rivero <ghe@upsa.es>.
+#
+#   $Id$
+#
+# description: Updates the client with the last SystemImager image available
+#
+# Support for LSB compliant init system:
+### BEGIN INIT INFO
+# Provides: systemimager
+# Required-Start: $network $syslog
+# Required-Stop:
+# Default-Start:  3 5
+# Default-Stop:   0 1 2 6
+# Short-Description: Updates the client with the last SystemImager image
+# Description: connects to the SystemImager server and look for
+#						a new image to retrive it.
+#
+### END INIT INFO
+
+export PATH=/sbin:/bin:/usr/sbin:/usr/bin
+DESC="SystemImager update client system"
+
+TMPDIR=`mktemp -d /tmp/si-client.XXXXXX` || exit 1
+
+SI_PATH=/etc/systemimager/
+
+RETRIEVAL_TIME=$SI_PATH/IMAGE_RETRIEVAL_TIME
+LAST_SYNCED_TO=$SI_PATH/IMAGE_LAST_SYNCED_TO
+RETRIEVED_FROM=$SI_PATH/IMAGE_RETRIEVED_FROM
+
+
+## Only necesary for Debian... if you want
+#test -f /etc/default/si-client && . /etc/default/si-client
+#test "$ENABLED" != "0" || exit 0
+
+set -e
+
+case "$1" in
+  start)
+	echo  -n "Starting $DESC: "
+	
+	test -f $RETRIEVAL_TIME && LAST_RETRIEVAL_TIME=`cat $RETRIEVAL_TIME`
+	
+	if [ -f $LAST_SYNCED_TO ]
+	then
+	        IMAGE=`cat $LAST_SYNCED_TO`
+	else
+	        echo  "$LAST_SYNCED_TO not found"
+		exit 1;
+	fi
+	
+	if [ -f $RETRIEVED_FROM ]
+	then
+		SERVER=`cat $RETRIEVED_FROM`
+	else
+		echo  "$RETRIEVED_FROM not found"
+		exit 1;
+	fi
+										  
+	rsync $SERVER:$IMAGE//$RETRIEVAL_TIME $TMPDIR/IMAGE_RETRIEVAL_TIME --timeout=5 -c
+	
+	test -f $TMPDIR/IMAGE_RETRIEVAL_TIME && NEW_RETRIEVAL_TIME=`cat $TMPDIR/IMAGE_RETRIEVAL_TIME`
+
+	if [ -z "$NEW_RETRIEVAL_TIME" ]
+	then 
+		echo "No update available"
+	fi
+	
+	if [  "$LAST_RETRIEVAL_TIME" -ne "$NEW_RETRIEVAL_TIME" ]
+	then
+		updateclient -server $SERVER -image $IMAGE
+	else
+		echo "Already updated"
+	fi
+	;;
+
+  stop)
+	echo "Stopping $DESC: "
+	;;
+
+  restart|force-reload|reload)
+	$0 stop
+	sleep 1
+	$0 start
+	
+	;;
+
+  *)
+	echo "Usage: $0 {start|stop|restart|reload|force-reload}" >&2
+	exit 1
+	;;
+esac
+
+exit 0
