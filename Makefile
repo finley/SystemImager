@@ -7,15 +7,7 @@
 #
 
 # HEY!
-# this Makefile isn't yet fully functional - here's a list of things that
-# need to happen or be resolved first
-#
-# - should we commit a systemimager patch which includes all the kernel
-#   patches, or figure out some way to download & apply patches at build time,
-#   resolving any conflicts that occur
-#
-# - to where should we commit the raidtools patch (to create static binaries)?
-#   top level?  patches/ directory?
+# this Makefile isn't yet fully functional
 
 DESTDIR = 
 
@@ -83,13 +75,13 @@ REISERFSPROGS_DIR = $(LINUX_SRC)/fs/reiserfs/utils
 all:	raidtools reiserfsprogs $(LINUX_IMAGE) $(INITRD) docs manpages
 
 # a complete server install
-installserverall:	installserver installcommon installbinaries
+install_server_all:	install_server install_common install_binaries
 
 # a complete client install
-installclientall:	installclient installcommon
+install_client_all:	install_client install_common
 
 # server-only architecture independent files
-installserver:	installmanpages installrsyncconfigs
+install_server:	install_manpages install_rsync_configs
 	mkdir -p $(SBIN)
 	$(foreach binary, $(BINARIES), \
 		install -m 555 $(BINARY_SRC)/$(binary) $(SBIN);)
@@ -111,7 +103,7 @@ installserver:	installmanpages installrsyncconfigs
 		install -m 644 $(IMAGESRC)/README $(file);)
 
 # client-only files
-installclient: installclientmanpages
+install_client: install_client_manpages
 	mkdir -p $(ETC)/systemimager
 	install -m 644 tftpstuff/systemimager/systemimager.exclude \
 		$(ETC)/systemimager
@@ -121,18 +113,18 @@ installclient: installclientmanpages
 		install -m 755 $(CLIENT_BINARY_SRC)/$(binary) $(SBIN);)
 
 # files common to both the client and server
-installcommon:	installcommonmanpages
+install_common:	install_common_manpages
 	mkdir -p $(SBIN)
 	$(foreach binary, $(COMMON_BINARIES), \
 		install -m 755 $(COMMON_BINARY_SRC)/$(binary) $(SBIN);)
 
 ## architecture dependent files
-installbinaries:	installraidtools installreiserfsprogs installkernel installinitrd
+install_binaries:	install_raidtools install_reiserfsprogs install_kernel install_initrd
 
 
 ########## BEGIN raidtools ##########
 
-installraidtools:	raidtools
+install_raidtools:	raidtools
 	mkdir -p $(TFTP_BIN_DEST)
 	install -m 555 $(RAIDTOOLS_DIR)/mkraid $(TFTP_BIN_DEST)
 	install -m 555 $(RAIDTOOLS_DIR)/raidstart $(TFTP_BIN_DEST)
@@ -155,7 +147,7 @@ $(SRC_DIR)/$(RAIDTOOLS_TARBALL):
 
 ######### BEGIN reiserfsprogs ##########
 
-installreiserfsprogs:	reiserfsprogs
+install_reiserfsprogs:	reiserfsprogs
 	mkdir -p $(TFTP_BIN_DEST)
 	install -m 555 $(REISERFSPROGS_DIR)/bin/mkreiserfs $(TFTP_BIN_DEST)
 
@@ -166,7 +158,7 @@ reiserfsprogs:	patchedkernel
 
 ########## BEGIN kernel ##########
 
-installkernel:	kernel
+install_kernel:	kernel
 	mkdir -p $(TFTP_ROOT)
 	cp -a $(LINUX_IMAGE) $(TFTP_ROOT)/kernel
 
@@ -189,7 +181,7 @@ $(SRC_DIR)/$(LINUX_TARBALL):
 ########## END kernel ##########
 
 ########## install initrd built from source ##########
-installinitrd:	$(INITRD_DIR)/initrd.gz
+install_initrd:	$(INITRD_DIR)/initrd.gz
 	mkdir -p $(TFTP_ROOT)
 	install -m 644 $(INITRD_DIR)/initrd.gz $(TFTP_ROOT)
 
@@ -197,24 +189,24 @@ installinitrd:	$(INITRD_DIR)/initrd.gz
 $(INITRD_DIR)/initrd.gz:
 	make -C $(INITRD_DIR)
 
-installrsyncconfigs:
+install_rsync_configs:
 	mkdir -p $(ETC)/systemimager
 	install -m 644 etc/rsyncd.conf $(ETC)/systemimager
 	mkdir -p $(INITD)
 	install -m 755 etc/init.d/rsync $(INITD)/$(INITSCRIPT_NAME)
 
 ########## BEGIN man pages ##########
-installmanpages:	manpages
+install_manpages:	manpages
 	mkdir -p $(MAN8)
 	$(foreach binary, $(BINARIES), \
 		cp -a $(MANPAGE_DIR)/$(binary).8.gz $(MAN8); )
 
-installclientmanpages:	manpages
+install_client_manpages:	manpages
 	mkdir -p $(MAN8)
 	$(foreach binary, $(CLIENT_BINARIES), \
 		cp -a $(MANPAGE_DIR)/$(binary).8.gz $(MAN8); )
 
-installcommonmanpages:	manpages
+install_common_manpages:	manpages
 	mkdir -p $(MAN8)
 	$(foreach binary, $(COMMON_BINARIES), \
 		cp -a $(MANPAGE_DIR)/$(binary).8.gz $(MAN8); )
@@ -223,7 +215,7 @@ manpages:
 	$(MAKE) -C $(MANPAGE_DIR)
 ########## END man pages ##########
 
-installdocs: docs
+install_docs: docs
 	mkdir -p $(DOC)
 	cp -a $(MANUAL_DIR)/html $(DOC)
 	mkdir -p $(DOC)/examples
@@ -265,56 +257,54 @@ help:
 	@echo ''
 	@echo 'o make all:'
 	@echo '  builds everything, but installs nothing'	       
-	@echo 'o make installserverall'
+	@echo 'o make install_server_all'
 	@echo '  installs all files necessary for an image server'
-	@echo 'o make installclientall'
+	@echo 'o make install_client_all'
 	@echo '  installs all files necessary for a golden client'
-	@echo 'o make installserver'
+	@echo 'o make install_server'
 	@echo '  install architecture independent server-only files - this is'
 	@echo '  an incomplete server installation used for packaging'
-	@echo 'o make installclient'
+	@echo 'o make install_client'
 	@echo '  install architecture independent golden client-only files -'
 	@echo '  this is an incomplete client installation used for packaging'
-	@echo 'o make installcommon'
+	@echo 'o make install_common'
 	@echo '  install files common to both the server and the golden client'
-	@echo 'o make installbinaries'
+	@echo 'o make install_binaries'
 	@echo '  install architecture-dependent files required by the image'
 	@echo '  server (i.e. kernel, ramdisk, and utilities that autoinstall'
 	@echo '  clients may need to retrieve during autoinstallation'
-	@echo 'o make installraidtools'
+	@echo 'o make install_raidtools'
 	@echo '  install static raid utilities that autoinstall clients may'
 	@echo '  need to retrieve during autoinstallation'
 	@echo 'o make raidtools'
 	@echo '  build static raid utilities that autoinstall clients may need'
 	@echo '  to retrieve during autoinstallation'
-	@echo 'o make installreiserfsprogs'
+	@echo 'o make install_reiserfsprogs'
 	@echo '  install static reiserfs utlities that autoinstall clients may'
 	@echo '  need to retrieve during autoinstallation'
-	@echo 'o make installreiserfsprogs'
+	@echo 'o make install_reiserfsprogs'
 	@echo '  build static reiserfs utlities that autoinstall clients may'
 	@echo '  need to retrieve during autoinstallation'
-	@echo 'o make installkernel'
+	@echo 'o make install_kernel'
 	@echo '  install kernel used to boot autoinstall clients'
 	@echo 'o make kernel'
 	@echo '  build kernel used to boot autoinstall clients'
 	@echo 'o make patchedkernel'
 	@echo '  apply the systemimager kernel patch to the kernel source'
-	@echo 'o make installinitrd'
+	@echo 'o make install_initrd'
 	@echo '  install ramdisk used to boot autoinstall clients'
-	@echo 'o make installinitrd'
-	@echo '  install ramdisk used to boot autoinstall clients'
-	@echo 'o make installrsyncconfigs'
+	@echo 'o make install_rsync_configs'
 	@echo '  install initscripts and config file for rsync'
-	@echo 'o make installmanpages'
+	@echo 'o make install_manpages'
 	@echo '  install image server man pages'
-	@echo 'o make installclientmanpages'
+	@echo 'o make install_client_manpages'
 	@echo '  install golden client man pages'
-	@echo 'o make installcommonmanpages'
+	@echo 'o make install_common_manpages'
 	@echo '  install manpages common to both image servers and golden'
 	@echo '  clients'
 	@echo 'o make manpages'
 	@echo '  build manpages from sgml source'
-	@echo 'o make installdocs'
+	@echo 'o make install_docs'
 	@echo "  install docs into $(DOC)"
 	@echo 'o make get_source'
 	@echo '  download all source that could be needed during the build'
