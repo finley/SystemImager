@@ -15,7 +15,7 @@ BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: Michael Jennings <mej@valinux.com>
 Docdir: %{prefix}/doc
 URL: http://systemimager.org/
-Requires: rsync >= 2.4.6, syslinux >= 1.48, dhcp = 2.0, fileutils, grep, util-linux, sh-utils, gawk, sed, findutils, textutils, perl, dosfstools
+Requires: rsync >= 2.4.6, syslinux >= 1.48, fileutils, grep, util-linux, sh-utils, gawk, sed, findutils, textutils, perl, dosfstools
 
 %description
 VA SystemImager is software that automates Linux installs and software
