@@ -139,7 +139,6 @@ sub cp_boot_file {
     if ($verbose) { print "Creating $file.\n"; }
 
     # copy file over
-    #if(-e $file) { unlink($file) or die ("FATAL: Couldn't remove $file!\n"); }
     copy("$source_file","$file") or die "Copy failed: $!";
 
     return 1;
@@ -149,29 +148,24 @@ sub cp_boot_file {
 ################################################################################
 #
 # Description:
-# Removes a pxe boot config for the specified IP address.
+# Produce a list of IP addresses from a host name.
 #
 # Usage:
-# remove_boot_file($ip_address);
-# remove_boot_file($file, "literal_file");
-sub remove_boot_file {
+# my @ips = get_ips($hostname);
+sub get_ips {
 
-    my ($ip_address, $literal_file) = @_;
-    my $config_file;
+    my $host = $_[0];
 
-    unless($literal_file) {
-        $config_file = SystemImager::Server->ip_quad_2_ip_hex($ip_address);
+    my ($hinfo, @ips);
+    if ( $hinfo = gethost($host) ) { 
+        foreach my $addr ( @{$hinfo->addr_list} ) {
+            push @ips, inet_ntoa($addr);
+        }
     } else {
-        $config_file = $ip_address;
+        die "Can't find an IP address for $host!\n";
     }
 
-    my $file = $tftp_dir . "/pxelinux.cfg/" . $config_file;
-    if ($verbose) { print "Removing $file.\n"; }
-    if(-e $file) {
-        unlink($file) or die ("FATAL: Couldn't remove $file!\n");
-    }
-
-    return 1;
+    return @ips;
 
 }
 
