@@ -7,7 +7,7 @@
       &dhsurname;
     </author>
     <copyright>
-      <year>2001</year>
+      <year>2002</year>
       <holder>&dhusername;</holder>
     </copyright>
     &dhdate;
@@ -26,15 +26,9 @@
     <cmdsynopsis>
       <command>getimage</command>
 
-      <arg><option>OPTION</option>...</arg>
-      <arg choice=req>
-	<group choice=req>
-	  <arg><option>-golden-client</option></arg>
-	  <arg><option>-server</option></arg>
-	</group>
-	<replaceable>HOSTNAME</replaceable>
-      </arg>
-      <arg choice=req><option>-image <replaceable>IMAGENAME</replaceable></option></arg>
+    <arg rep=repeat><option>OPTION</option></arg>
+    <arg choice=req><option>-golden-client</option> <replaceable>HOSTNAME</replaceable></arg> 
+    <arg choice=req><option>-image <replaceable>IMAGENAME</replaceable></option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
   <refsect1>
@@ -72,16 +66,6 @@
         <term><option>-golden-client <replaceable>HOSTNAME</replaceable></option></term>
         <listitem>
           <para>Hostname or IP address of the "golden" client</para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-        <term><option>-server <replaceable>HOSTNAME</replaceable></option></term>
-        <listitem>
-          <para>
-	    Hostname or IP address of the imageserver holding the image you
-	    want to pull.  This allows you to copy an image from one
-	    imageserver to another.
-	  </para>
         </listitem>
       </varlistentry>
       <varlistentry>
@@ -126,17 +110,6 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-no-listing</option></term>
-        <listitem>
-          <para>
-	  Don't show each filename as it is copied over during
-	  install.  This is useful for times when your console
-	  device is slow (e.g. serial console), and is the 
-	  bottleneck of your installation.
-	  </para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
         <term><option>-directory <replaceable>PATH</replaceable></option></term>
         <listitem>
           <para>
@@ -145,15 +118,6 @@
 	    inside the directory specified here.
 	  </para>
         </listitem>
-      </varlistentry>
-      <varlistentry>
-        <term><option>-update-script <replaceable>YES|NO</replaceable></option></term>
-	<listitem>
-	  <para>
-	    Update the $image.master script? Defaults to NO if -quiet.  If
-	    not specified you will be prompted to confirm an update.
-	  </para>
-	</listitem>
       </varlistentry>
       <varlistentry>
         <term><option>-exclude <replaceable>PATH</replaceable></option></term>
@@ -175,6 +139,35 @@
 	  </para>
 	  <para>-exclude "<replaceable>/DIRECTORYNAME/*</replaceable>"</para>
 	</listitem>
+      </varlistentry>
+    <varlistentry>
+      <term><option>-exclude-file <replaceable>FILE</replaceable></option></term>
+      <listitem>
+	<para>
+	  Don't pull the <replaceable>PATH</replaceable>s specified i
+	  <replaceable>FILE</replaceable> from the golden client.
+	</para>
+      </listitem>
+    </varlistentry>
+      <varlistentry>
+        <term><option>-update-script <replaceable>YES|NO</replaceable></option></term>
+	<listitem>
+	  <para>
+	    Update the $image.master script? Defaults to NO if -quiet.  If
+	    not specified you will be prompted to confirm an update.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-no-listing</option></term>
+        <listitem>
+          <para>
+	  Don't show each filename as it is copied over during
+	  install.  This is useful for times when your console
+	  device is slow (e.g. serial console), and is the 
+	  bottleneck of your installation.
+	  </para>
+        </listitem>
       </varlistentry>
     </variablelist>
     <para>
