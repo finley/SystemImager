@@ -1892,6 +1892,31 @@ service tftp
   <sect1 id=Troubleshooting>
     <title>Troubleshooting</title>
     <para></para>
+    <sect2 id=TroubleAssignHostname>
+      <title>
+        My client fails to assign a hostname to itself, making the autoinstall
+        fail.
+      </title>
+      <Para>Ryan Braby reported the following problem:</Para>
+      <BlockQuote>
+        <Para>
+	  [The install] fails when you have addesses like the following:
+	</Para>
+	<literallayout>
+###.###.###.2
+###.###.###.21
+###.###.###.22 
+###.###.###.23
+###.###.###.24
+etc.
+	</literallayout>
+	<Para>
+	  For the node with the ###.###.###.2 address, the script tries to
+	  assign multiple hostnames, and then fails to get any install script.
+	</Para>
+      </BlockQuote>
+      <Para>This should be fixed in the next release (1.4.2).</Para>
+    </sect2>
     <sect2 id=Troubleslowrsync>
       <title>
 	My client autoinstallation/update hangs, crashes, or is ridiculously
@@ -2022,6 +2047,11 @@ service tftp
 	</ItemizedList>
 	<Para>I hope this information helps...</Para>
       </BlockQuote>
+      <Para>
+        A possible solution, suggested by Robert Berkowitz, is to add
+	<option>--bwlimit=10000</option> to the rsync options in the
+	rsync initscript.
+      </Para>
     </Sect2>
     <sect2 id=TroubleCDNoBoot>
       <title>
@@ -2136,7 +2166,104 @@ service tftp
 	server.
       </para>
     </sect2>
+    <sect2 id=FAQSerialConsole>
+      <title>
+        How do I set up my autoinstall clients so that the console is available
+	via the serial port?
+      </title>
+      <BlockQuote>
+        <LiteralLayout>
+	  Making SystemImager work with a serial console
+	  Michael S. Fischer, &lt;michael@auctionwatch.com&gt;
+	  Last modified: 01/04/26 19:20:27
 
+	  The current version of VA SystemImager as of this writing (1.4.1)
+	  does not support PXE booting of clients with serial console support.
+	  This document describes how to rebuild the kernel and initrd such
+	  that serial console support is possible.
+
+	  Step 1: Download the sources
+
+	  Fetch the source tarball from
+	  http://prdownloads.sourceforge.net/systemimager/va-systemimager-source-1.4.1.tar.bz2
+	  Save it and unpack it to /tmp on your boot server.
+
+	  # bzcat va-systemimager-source-1.4.1.tar.bz2 | tar -C /tmp -xf -
+
+
+	  Step 2: Prepare the kernel
+
+	  # cd /tmp/va-systemimager-source-1.4.1
+	  # bzcat other_source_and_patches_used_in_this_release.tar.bz2 | tar xf -
+	  # cd other_source_and_patches_used_in_this_release
+	  # cd linux-2.2.18+reiserfs+raid+aic7xxx+VM
+
+	  Now, edit the .config file in this directory.  Search for a line that
+	  reads
+
+	  # CONFIG_SERIAL is not set
+
+	  and change it to read
+
+	  CONFIG_SERIAL=y
+	  CONFIG_SERIAL_CONSOLE=y
+
+	  Then, build the kernel:
+
+	  # make clean && make bzImage
+
+
+	  Step 3: Install the kernel
+
+	  Next, you'll need to place the kernel in /tftpboot and
+	  /tftpboot/X86PC/UNDI/linux-install:
+
+	  # cp arch/i386/boot/bzImage /tftpboot/kernel
+	  # cp arch/i386/boot/bzImage /tftpboot/X86PC/UNDI/linux-install/kernel
+
+
+	  Step 4: Fix the initrd
+
+	  The initrd, or initial RAM disk containing the root filesystem, needs
+	  to be unpacked, mounted, and its contents edited.  Here's how:
+
+	  # cp /tftpboot/initrd.gz /tmp
+	  # cd /tmp && gunzip initrd.gz
+	  # mkdir /mnt2
+	  # mount /tmp/initrd /mnt2 -o loop
+	  # cd /mnt2/dev
+	  # rm -f console
+	  # mknod -m 622 console c 5 1
+	  # mknod -m 600 ttyS0 c 4 64
+
+	  Once you've finished this, you should unmount the initrd, recompress
+	  it, and return it to /tftpboot:
+
+	  # cd /tmp
+	  # umount /mnt2
+	  # gzip -9 initrd
+	  # cp initrd.gz /tftpboot
+	  # cp initrd.gz /tftpboot/X86PC/UNDI/linux-install
+
+	  
+	  Step 5: Edit syslinux.cfg
+
+	  The final step is to configure pxelinux to pass the "console="
+	  arguments to the kernel.  Here is a suitable syslinux.cfg file:
+
+	  DEFAULT kernel
+	  APPEND console=tty0 console=ttyS0,9600n8 vga=extended load_ramdisk=1
+	  prompt_ramdisk=0 initrd=initrd.gz root=/dev/ram rw
+	  DISPLAY message.txt
+	  PROMPT 1
+	  TIMEOUT 50
+
+	  Edit the contents of /tftpboot/pxelinux.cfg/syslinux.cfg to reflect
+	  the changes above.  Then, copy this file to
+	  /tftpboot/X86PC/UNDI/linux-install/pxelinux.cfg/syslinux.cfg.
+	</LiteralLayout>
+      </BlockQuote>
+    </sect2>
     <sect2 id=FAQDHCPServerLocation>
       <title>Does the DHCP server have to be on the image server?</title>
       <para>
