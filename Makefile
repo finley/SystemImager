@@ -36,9 +36,9 @@ CLIENT_BINARIES  := updateclient prepareclient
 IMAGESRC    = var/spool/systemimager/images
 IMAGEDEST   = $(DESTDIR)/var/spool/systemimager/images
 
-install:	installserver installkernel installinitrd installrsyncconfigs installraidutils installreiserfsutils
+install:	install_server install_kernel install_initrd install_rsyncconfigs install_raidutils install_reiserfsutils
 
-install_server:	installdocs install_manpages
+install_server:	install_docs install_manpages
 	mkdir -p $(SBIN)
 	$(foreach binary, $(BINARIES), \
 		install -m 555 $(BINARY_SRC)/$(binary) $(SBIN);)
@@ -61,7 +61,7 @@ install_server:	installdocs install_manpages
 	install -m 444 $(IMAGESRC)/README $(IMAGEDEST)/CUIDADO
 	install -m 444 $(IMAGESRC)/README $(IMAGEDEST)/ACHTUNG
 
-install_client: installdocs install_client_manpages
+install_client: install_docs install_client_manpages
 	mkdir -p $(ETC)/systemimager
 	install -m 644 tftpstuff/systemimager/systemimager.exclude $(ETC)/systemimager
 	mkdir -p $(SBIN)
