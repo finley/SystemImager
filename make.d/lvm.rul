@@ -12,7 +12,7 @@
 DEVMAPPER_VERSION	:= 1.00.21
 DEVMAPPER_DIR		:= device-mapper.$(DEVMAPPER_VERSION)
 DEVMAPPER_TARBALL	:= device-mapper.$(DEVMAPPER_VERSION).tgz
-DEVMAPPER_URL		:= ftp://sources.redhat.com/pub/dm/device-mapper.1.00.21.tgz
+DEVMAPPER_URL		:= ftp://sources.redhat.com/pub/dm/old/device-mapper.1.00.21.tgz
 DEVMAPPER_BINARY	:= $(SRC_DIR)/$(DEVMAPPER_DIR)/lib/ioctl/libdevmapper.so
 MKLIBS += $(SRC_DIR)/$(DEVMAPPER_DIR)/lib/ioctl
 PHONY += devmapper
