@@ -421,6 +421,19 @@ if ($autoinstall) {
     my $last_root;
     if ( -f "/local.cfg" ) {
         $last_root = $rootdev;
+
+        print "I found a local.cfg file in your hard drive's root filesystem (/local.cfg),\n";
+        print "so I will tell the autoinstall client to mount $last_root, and read the\n";
+        print "local.cfg file during autoinstall.\n";
+        print "\n";
+        print "Your kernel must have all necessary block and filesystem drivers compiled in\n";
+        print "statically \(not modules\) in order to use a local.cfg on your hard drive.  The\n";
+        print "standard SystemImager kernel is modular, so you will need to compile your own\n";
+        print "kernel.  See the SystemImager documentation for details.\n";
+        print "\n";
+        print "If you don't want to compile your own kernel, but need to use a local.cfg file,\n";
+        print "you can use one on a floppy with the standard SystemImager kernel.\n";
+
     }
 
     # Create append arguments
