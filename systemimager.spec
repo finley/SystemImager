@@ -193,16 +193,7 @@ process.
 - Based on work by Ken Segura <ksegura@5o7.org>
 
 %prep
-%setup
-
-%if %{_skip_build_all}
-echo test 1
-%else
-echo test 2
-%endif
-echo test 3
-
-exit 1
+%setup -q
 
 make -j11 get_source
 
