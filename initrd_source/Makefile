@@ -28,13 +28,13 @@ MASSDNS_URL = http://www.mgix.com/massdns/$(MASSDNS_TARBALL)
 ########## END definitions for binaries built from source ##########
 
 # tools provided by busybox (i.e. hard links to create)
-BUSY_BIN := cat chgrp chmod chown cp df dmesg grep hostname kill ln ls mkdir mknod more mount mv ping ps pwd rm rmdir sleep sync touch umount uname ifconfig route
+BUSY_BIN := cat chgrp chmod chown cp df dmesg grep hostname kill ln ls mkdir mknod more mount mv ping ps pwd rm rmdir sed sleep sync touch umount uname ifconfig route
 BUSY_SBIN := halt init insmod loadkmap makedevs mkswap reboot swapoff swapon update
 BUSY_USR_BIN := clear cut expr find free killall reset telnet tr
 BUSY_USR_SBIN := chroot
 
 # these binaries will be copied over from the local system
-LOCAL_BINARIES := /sbin/sfdisk /usr/bin/mawk /sbin/mke2fs /bin/ash /usr/bin/rsync /bin/sed /usr/bin/snarf /sbin/dhclient-2.2.x
+LOCAL_BINARIES := /sbin/sfdisk /usr/bin/mawk /sbin/mke2fs /bin/ash /usr/bin/rsync /usr/bin/snarf /sbin/dhclient-2.2.x
 
 initrd.gz:	initrd
 	gzip -9 < initrd > initrd.gz
