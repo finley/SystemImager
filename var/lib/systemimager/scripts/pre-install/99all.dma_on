@@ -1,0 +1,10 @@
+#!/bin/sh
+#
+# $Id$
+#
+for i in `ls /proc/ide/ide*/hd*/settings`
+do
+    echo "io_32bit:1" > $i
+    echo "using_dma:1" > $i
+done
+
