@@ -59,14 +59,14 @@
 #   o <arch>-boot (Ie., i386-boot -- dynamically determine in rcS)
 #
 # SystemImager package names and contents (all forms of packaging will use the
-# same base names):
+#  same base names):
 #
 #  o systemimager-server            all of the arch-independent components
-#                                   neededonly  by an image server
+#                                   needed only  by an image server
 #
 #  o systemimager-client            all of the arch-independent components
 #                                   needed only by a golden client (there are
-#                                   no arch-dependent components atm)
+#                                   no arch-dependent components at the moment)
 #
 #  o systemimager-common            all of the arch-independent components
 #                                   shared by both the image server and the
