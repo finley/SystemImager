@@ -39,8 +39,6 @@ Pending:
         ( cd / && tar -xvzf /tmp/boel_binaries.tar.gz ) || shellout
 
 
-* updateclient -a bug: http://sourceforge.net/tracker/index.php?func=detail&aid=610755&group_id=259&atid=100259
-
 * Get rid of static_dhcp and dynamic_dhcp in favor of simply "dhcp" (and
   don't mess with the hostname at all).
 
@@ -144,6 +142,8 @@ PRE-RELEASE
 * verify CHANGE.LOG additions
 * manual in pdf and html formats online
 * grep -r XXX .
+* updateclient -a bug: http://sourceforge.net/tracker/index.php?func=detail&aid=610755&group_id=259&atid=100259
+
 
 
 
