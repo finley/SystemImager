@@ -51,7 +51,7 @@ Options: (options can be presented in any order)
  -host-range N-N    Range of hosts involved.  Examples: 1-99 or 01-99.
 
  -script NAME       Master autoinstall script name.  Don't include
-                    the .master extention.
+                    the path or the .master extension.  Example: my_image
 
  -ip-range IP-IP    Range of IP addresses for clients.  Used to create an
                     optional hosts file that clients can use for IP address
@@ -108,11 +108,21 @@ if($version) {
 
 unless($< == 0) { die "Must be run as root!\n"; }
 
-if ($host_range) {
+if($script =~ m|/|) {
+    print qq(FATAL: -script must not be a path or a file.\n);
+    print qq(See "$program_name -help" for more information.\n);
+    exit 1;
+} elsif($script =~ m|\.master$|) {
+    print qq(FATAL: -script must not include the .master extension.\n);
+    print qq(See "$program_name -help" for more information.\n);
+    exit 1;
+}
+
+if($host_range) {
     ($starting_number, $ending_number) = split(/-/, $host_range);
 }
 
-if ($ip_range) {
+if($ip_range) {
     ($starting_ip, $ending_ip) = split(/-/, $ip_range);
 }
 
@@ -127,8 +137,8 @@ $base_host_name = lc $base_host_name;
 if (
     ($base_host_name) and 
     ($script) and 
-    ($starting_number) and 
-    ($ending_number)
+    ($starting_number ne "") and 
+    ($ending_number ne "")
 ) {
 
     # Go non-interactive, unless we're told not to. -BEF-
