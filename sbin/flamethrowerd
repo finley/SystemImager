@@ -54,7 +54,8 @@ unlink <$dir/*>;
 
 while(1) {
     &main;
-    sleep 5;
+    sleep 2;    #XXX change to something like 5 for production
+                # 2 gives more interesting output for testing.
 }
 
 exit 0;
@@ -184,7 +185,6 @@ sub update_directory {
 
 # Usage: main();
 sub main {
-wait;
     print STDOUT "main()\n" if($debug); 
     if(conf_file_updated($conf_file)) {
         read_config_file($conf_file);
@@ -194,7 +194,11 @@ wait;
     foreach my $module ( @$modules ) {
         my $file = $state_dir . "/" . $module;
         unless(-e "$file") {
+            print "    touch($file)\n" if($debug);
             touch($file);
+                        # In case this happens to get started *immediately* 
+            sleep 1;    # after the cast() function does it's unlink, give 
+                        # the child time to die.
             cast($module, $file);
         }
     }
@@ -203,7 +207,6 @@ wait;
 # Usage: touch($file);
 sub touch {
     my $file = shift;
-    print "touch($file)\n" if($debug);
     open(FILE, ">$file") or die("Couldn't touch $file!");
     close(FILE);
 }
@@ -226,11 +229,11 @@ sub cast {
         $0 = "flamethrowerd-$module";
 
         #fork cast of module
-        print STDOUT "   casting $module\n" if($debug);
+        print STDOUT "    casting $module\n" if($debug);
         sleep length($module);  # Install actual casting stuff here -- sleep just for testing
-        print STDOUT "   unlinking $file\n" if($debug);
+        print STDOUT "    unlinking $file\n" if($debug);
         unlink($file) or die("Couldn't remove $file!\n");
-        sleep 5;    #XXX remove for production
+        #sleep 5;    #XXX remove for production
         exit 0;
 
     } else {
@@ -266,7 +269,7 @@ sub conf_file_updated {
 sub REAPER {
     $SIG{CHLD} = \&REAPER;
     my $waitedpid = wait;
-    print STDERR "Dead child: $waitedpid\n" if($debug);
+    print STDERR "    Dead child: $waitedpid\n" if($debug);
 }
 
 # Usage: &daemonize;
