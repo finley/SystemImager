@@ -144,8 +144,8 @@ raidtools:
 		( cd $(SRC_DIR) && bzcat $(RAIDTOOLS_TARBALL) | tar xv && \
 		  [ ! -f ../$(RAIDTOOLS_PATCH) ] || \
 		  patch -p0 < $(RAIDTOOLS_PATCH) )
-	cd $(RAIDTOOLS_DIR) && ./configure
-	$(MAKE) -C $(RAIDTOOLS_DIR)
+	( cd $(SRC_DIR)/$(RAIDTOOLS_DIR) && ./configure )
+	$(MAKE) -C $(SRC_DIR)/$(RAIDTOOLS_DIR)
 
 $(SRC_DIR)/$(RAIDTOOLS_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
