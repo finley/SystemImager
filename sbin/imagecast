@@ -56,11 +56,11 @@ Options: (options can be presented in any order and may be abbreviated)
 
  --mcast-opts "OPTIONS" Quoted set of options to be passed directly to
                         udp-sender.  Two useful examples are "--interface eth1"
-			and "--max-bitrate 25M".  Multiple options should be 
-			quoted together: "--interface eth1 --max-bitrate 25M".
-			See "man udp-sender" for details and many other options.  
-			NOTE: Do not specify udp-sender's --portbase option, as
-			      this is set by the --mcast-group option.
+                        and "--max-bitrate 25M".  Multiple options should be 
+                        quoted together: "--interface eth1 --max-bitrate 25M".
+                        See "man udp-sender" for details and many other options.  
+                        NOTE: Do not specify udp-sender's --portbase option, as
+                        this is set by the --mcast-group option.
 
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
