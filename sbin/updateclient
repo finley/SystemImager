@@ -356,6 +356,7 @@ if ($autoinstall) {
     my $boot_loader = SystemImager::Common->detect_bootloader() 
         or die "FATAL: Couldn't determine which bootloader is in use.";
 
+    # Elilo
     if ($boot_loader eq "Elilo") {
         # Let's just get what's currently specified. -BEF-
         @eliloconf_locations = ("$bootdir/elilo.conf", "/etc/elilo.conf");
@@ -372,10 +373,20 @@ if ($autoinstall) {
         }
         unless ($lastboot) { die "FATAL: Couldn't determine the boot device."; }
 
-    } elsif ($boot_loader eq "lilo") {
-        print "Fix me $!";
-        exit 1; #XXX
+    # Lilo
+    } elsif ($boot_loader eq "Lilo") {
+        my $file = "/etc/lilo.conf";
+        if (-f $file) {
+            open(FILE, "<$file") or croak("Couldn't open $file for reading!");
+                while (<FILE>) {
+                    if (/^\s*boot\s*=(.*)$/) {
+            	    $lastboot = $1;
+                    }
+                }
+            close(FILE);
+        }
 
+    # Other boot loaders
     } else {
         # Most other boot loaders just use the device that root is on, minus the device number.
         $lastboot = $lastroot;
