@@ -97,4 +97,127 @@ END
 
 42;
 
+__END__
+
+=head1 NAME
+
+Autoinstall Script Process
+
+=head1 EXECUTION TIME
+
+In SystemImager 2.3 and beyond the autoinstall process will go
+something like follows.
+
+=over 4
+
+=item 1)
+
+Boot the kernel and initrd.gz
+
+This may happen via floppy, cd, local hd, or network boot
+
+=item 2)
+
+Bring up network.
+
+This is done either via local.cfg (if it exists and has enough info)
+or via dhclient in the initrd.gz
+
+=item 3)
+
+Contact Image Server.
+
+The Image Server network address is either provided via dhcp option
+XXXXX or via IMAGESERVER variable in local.cfg.
+
+=item 4)
+
+rsync over autoinstallscript, and execute that script
+
+=back
+
+The rest of this documents the proposed logical steps of the 
+autoinstall script.
+
+=head1 STAGES OF INSTALL SCRIPT
+
+=over 4
+
+=item 1)
+
+Make a second ramdisk at /dev/ram1 and mount as /stage2
+
+This needs to be as big as stage2 plus some breathing room.
+
+=item 2)
+
+Fetch the appropriate stage2 tarball from the server
+
+Possible options for stage2 tarballs:
+
+  * normal
+  * secure - ssh enabled
+  * multicast - mrsync enabled
+
+=item 3)
+
+Untar stage2 at /stage2
+
+=item 4)
+
+Copy any required files from / to /stage2
+
+Known files we need to carry with us:
+
+  * /etc/resolv.conf
+
+=item 5)
+
+pivot_root to /stage2
+
+=item 6)
+
+partition drives
+
+(Note: we need to think about ways to make this more flexible)
+
+=item 7)
+
+format partitions
+
+All of the fs utilities should be included in the stage2 tarball
+
+=item 8)
+
+mount partitions
+
+=item 9)
+
+the big rsync
+
+This is where the whole image comes down. 
+
+If we are doing multicast or ssh this might have to be different commands 
+here.
+
+=item 10)
+
+run systemconfigurator
+
+This sets up networking and bootstrapping
+
+=item 11)
+
+unmount drives
+
+=item 12)
+
+run postinstall(s)
+
+I think we need to think of a generalized way to do
+postinstalls.  We may also want to have a phase 10.5 postinstall
+that the user could specify incase they wanted to run
+some code on the client after install.
+
+=back
 
