@@ -9,10 +9,13 @@
 # This file is: getimage 
 #
 
+don't overwrite master --switch
+
 # set system path for system() calls
 $ENV{PATH} = "/usr/sbin:/sbin:/usr/bin:/bin";
 
 # miscellaneous variables and what not
+# NIS domain name will be figured out automatically (if it exists)
 $nisdomainname="";
 
 # use the long options module to allow us to use, well, long options ;)
@@ -53,17 +56,21 @@ $help_info = $version_info . <<"EOF";
 
 Usage: $program_name [OPTION]...  --master-client HOSTNAME --image IMAGENAME
 
-Options: (options can be presented in any order)
+Options: (options can be presented in any order and may be abbreviated)
  --help                    Display this output.
  --version                 Display version and copyright information.
  --master-client HOSTNAME  Hostname or IP address of the \"master\" client.
- --image IMAGENAME         The name of the image to retrieve.  This can be 
-                           either the name of a new image if you want to create 
-                           a new image, or the name of an exisiting image if
-                           you want to update an image.
- --quiet                   Don\'t ask any questions or print any output (other
-			   than errors). In this mode, no warning will be given
-                           if the image already exists on the server.
+ --image IMAGENAME         Where IMAGENAME is the name to assign to the 
+                           image you are retrieving.  This can be either
+                           the name of a new image if you want to create
+                           a new image, or the name of an exisiting image
+                           if you want to update an image.
+ --quiet                   Don\'t ask any questions or print any output
+                           (other than errors). In this mode, no warning
+                           will be given if the image already exists on
+                           the server.
+ --ip-assignment METHOD    Where METHOD can be static_dhcp, dynamic_dhcp, 
+                           or static. (default is static_dhcp)
 
 Download from http://systemimager.org/
 Report bugs or suggestions to <systemimager-bugs\@systemimager.org>
@@ -71,14 +78,17 @@ EOF
     
 
 $master_client = "";
+$ip_assignment_method = "";
 $image = "";
 
-GetOptions( "help" => \$help,
-            "version" => \$version,
-            "master-client=s" => \$master_client,
-            "image=s" => \$image,
-            "quiet" => \$quiet) || 
-    die "$help_info";
+GetOptions( 
+    "help" => \$help,
+    "version" => \$version,
+    "master-client=s" => \$master_client,
+    "ip-assignment=s" => \$ip_assignment_method,
+    "image=s" => \$image,
+    "quiet" => \$quiet
+) || die "$help_info";
 
 #if requested, print help information
 if($help) { die "$help_info"; }
@@ -98,6 +108,14 @@ if(/^-/) { die qq(Master client name can't start with a hyphen.\n\n$help_info); 
 # be sure $image doesn't start with a hyphen
 $_ = $image;
 if(/^-/) { die qq(Image name can't start with a hyphen.\n\n$help_info); }
+
+# be sure $ip_assignment_method was passed a proper option
+unless(
+    ($ip_assignment_method eq "")
+    or ($ip_assignment_method eq "static_dhcp")
+    or ($ip_assignment_method eq "static")
+    or ($ip_assignment_method eq "dynamic_dhcp")
+) { die "$help_info"; }
 
 # be sure program is run by root
 check_if_root();
@@ -149,16 +167,19 @@ if (-d "$imagedir") {
 }
 
 # get /etc/mtab from $master_client
-print "\n\nRetrieving /etc/mtab from $master_client to check for mounted filesystems...\n";
-open(RSYNC, "rsync -av ${master_client}::root/etc/mtab $imagedir|");
 if (!$quiet) {
+    print "\n\nRetrieving /etc/mtab from $master_client to check for mounted filesystems...\n";
+    open(RSYNC, "rsync -av ${master_client}::root/etc/mtab $imagedir|");
     print "--------------------------- mtab RETRIEVAL PROGRESS ---------------------------------\n";
     while (<RSYNC>) {
-        print $_;
+        print;
     }
     print "--------------------------- mtab RETRIEVAL FINISHED ---------------------------------\n";
+    close(RSYNC);
+} else {
+    $command = qq(rsync -a ${master_client}::root/etc/mtab $imagedir);
+    system($command);
 }
-close(RSYNC);
 
 # $? is the return value from rsync
 if ($?) {
@@ -180,24 +201,30 @@ foreach (@mtab) {
 close EXCLUDE;
 
 # Get the image from the $master_client
-print "\n\nRetrieving system image from $master_client\n";
-open (RSYNC,
-      "rsync -av --delete --exclude-from=$exclude_file " .
-      "${master_client}::root/ $imagedir |");
 if (!$quiet) {
+    print "\n\nRetrieving system image from $master_client\n";
+    open (RSYNC, "rsync -av --delete --exclude-from=$exclude_file " . "${master_client}::root/ $imagedir |");
     print "--------------------------- $image RETRIEVAL PROGRESS ---------------------------------\n";
     while (<RSYNC>) {
         print $_;
     }
     print "--------------------------- $image RETRIEVAL FINISHED ---------------------------------\n";
+    close (RSYNC);
+} else {
+    $command = qq(rsync -a --delete --exclude-from=$exclude_file ${master_client}::root/ $imagedir);
+    system($command);
 }
-close (RSYNC);
+
 # $? is the return value from rsync
 if ($?) {
     die "Failed to retrieve system image from $master_client.\n";
 }
-print "\nPress <Enter> to continue...";
-<STDIN>;
+
+
+if(!$quiet) {
+    print "\nPress <Enter> to continue...";
+    <STDIN>;
+}
 
 unlink $exclude_file || die "Removal of file $exclude_file failed\n";
 
@@ -215,7 +242,7 @@ close(RSYNCD_CONF);
 
 
 ### BEGIN Overwrite $image.master? ###
-if( -e "/tftpboot/systemimager/$image.master" ) {
+if( (!$quiet) and (-e "/tftpboot/systemimager/$image.master") ) {
     system("clear");
     print "Update Autoinstall Script?\n";
     print "--------------------------\n\n";
@@ -246,8 +273,8 @@ close(NETWORK);
 ### END Got NIS? ###
 
 
-### BEGIN Want static? ###
-if (!$quiet) {
+### BEGIN IP Assignment Method ###
+if((!$quiet) and (!$ip_assignment_method)) {
     $satisfied="n";
     $ip_assignment_method="1";
     until($satisfied eq "y") {
@@ -273,16 +300,14 @@ EOF
         print "Which method do you prefer? [$ip_assignment_method]: ";
         $ip_assignment_method = get_response('1');
         print "You have chosen method $ip_assignment_method for assigning IP addresses.\n";
-        print "\nAre you satisfied? (y/[n]): ";
-        $satisfied=get_response('n');
+        print "\nAre you satisfied? ([y]/n): ";
+        $satisfied=get_response('y');
     }
-    if($ip_assignment_method eq "2") { 
-        $ip_assignment_method = "static"; 
-    } else {
-        $ip_assignment_method = "dhcp";
-    }
+    if($ip_assignment_method eq "1") { $ip_assignment_method = "static_dhcp" ; }
+    if($ip_assignment_method eq "2") { $ip_assignment_method = "static"      ; }
+    if($ip_assignment_method eq "3") { $ip_assignment_method = "dynamic_dhcp"; }
 }
-### END Want static? ###
+### END IP Assignment Method ###
 
 # create a fresh /tftpboot/systemimager/$image.master
 open (MASTER_SCRIPT, ">$master_script") || die "Can't open $master_script for writing\n";
@@ -303,60 +328,112 @@ mount | grep [hs]d[a-z][1-9] > /dev/null
 
 # Partition the disk (see the sfdisk man page for customization details)
 #
-# Here's an example of how to customize a disk:
-# start at the beginning 0, give 20M /dev/sda1 for /boot, assume
-#   partition type 83
-# start where left off, 512M /dev/sda2 for swap, partition type 82
-# start where left off, give the rest of the disk to /dev/sda3
-#   for /, assume partition type 83
+# Below is an example of how to customize a disk.  This can be useful if your clients
+# have disks of differing sizes or geometries.  Here is a description of the sfdisk
+# command presented in the example below:
+#
+# line 1 -- the sfdisk command and arguments (-uM means "units are MB)
+# line 2 -- this is a comment
+# line 3 -- start at the beginning of the disk 0, give 22M /dev/sda1 (/boot)
+# line 4 -- start where the last partition left off, and add 512M /dev/sda2 for swap, partition type 82
+# line 5 -- start where the last partition left off, and add 6000M /dev/sda3 (/)
+# line 6 -- start where the last partition left off, and give the remaining space to /dev/sda4 (/var)
+# line 7 -- the EOF statement indicating to sfdisk that we are finished giving it commands
+#
+# <<<< BEGIN EXAMPLE >>>>
 #sfdisk -uM /dev/sda <<EOF
-#0,20
-#,512,82
-#,
-#;
+## partition    start_of_partition      size_in_megabytes       partition_type
+#  /dev/sda1 :  start= 0,          	size= 22,               Id=83
+#  /dev/sda2 :  start= ,                size= 512,              Id=82
+#  /dev/sda3 :  start= ,                size= 6000,             Id=83
+#  /dev/sda4 :  start= ,                size= ,                 Id=83
 #EOF
+# <<<< END EXAMPLE >>>>
 #
 EOF
 
+
+# get the list of disks to partition
 opendir(PARTITIONSCHEMES, "$imagedir/etc/partitionschemes/") || die "Can't read the $imagedir/etc/partitionschemes/ directory";
-
-#Skip the . and .. entries
-@disks = grep(!/^\.\.?$/, readdir(PARTITIONSCHEMES));
-
+    # Skip anything that begins with a "."
+    @disks = grep(!/^\..*/, readdir(PARTITIONSCHEMES));
 close(PARTITIONSCHEMES);
 
+# Foreach disk, gather up the partition info for that disk and prepare an sfdisk command
 foreach $disk (@disks)  {
 
-    # Foreach disk, look through the partition info for that disk and
-    # note any swap and ext2 partions for later use.
+    ### BEGIN partitioning output ###
+    $sfdisk_command_part_one = "sfdisk -uS /dev/$disk <<EOF\n";
+    $sfdisk_command_part_two = "";
 
+    # gather up partition information
     open (PARTITIONS, "<$imagedir/etc/partitionschemes/${disk}") || die "Cannot open $imagedir/etc/partitionschemes/$disk for reading\n";
-    @partitions = <PARTITIONS>;
+        @partitions = <PARTITIONS>;
     close(PARTITIONS);
-    $partitions = join('',@partitions);
+
+    for (@partitions) {
+        if(/^\/dev/) {
+            chomp;
+
+            # split on space(s) and assign values to variables
+            (my $dev, my $start, my $end, my $sectors, my $id)  = split(/ +/);
+
+            ### BEGIN SAVE for future implimentation ###
+            #
+            # remove plus and minus signs from start
+            #$start =~ s/\+//g;
+            #$start =~ s/\-//g;
+            #
+            # work with the rounding up
+            #$_ = $mb;
+            #if(/\+/) {
+            #    $mb =~ s/\+//g;
+            #    $mb = $mb + 1;
+            #}
+            #
+            # work with the rounding down
+            #$_ = $mb;
+            #if(/-/) {
+            #    $mb =~ s/\-//g;
+            #    $mb = $mb - 1;
+            #}
+            #
+            ### END SAVE for future implimentation ###
+
+            # gather up swap partitions
+            if($id eq "82") { push(@swaps, $dev); }
+
+            # gather up ext2 partitions
+            if($id eq "83") { push(@ext2s, $dev); }
+
+            # continue compiling sfdisk command
+            $sfdisk_command_part_one = $sfdisk_command_part_one . "$dev : start= $start, size= $sectors, Id=$id\n";
+        }
+    }
+
+    $sfdisk_command = $sfdisk_command_part_one . $sfdisk_command_part_two . "EOF\n";
+    ### END partitioning output ###
 
     # output disk partition section
     print MASTER_SCRIPT "\n# partition $disk\n";
-    print MASTER_SCRIPT "sfdisk /dev/$disk <<EOF\n";
-    print MASTER_SCRIPT $partitions;
-    print MASTER_SCRIPT "EOF\n";
+    print MASTER_SCRIPT $sfdisk_command;
 
-    # gather up swap partition information and output swap creation section (sort order doesn't matter here)
-    my @swaps = grep (/Id=82/, @partitions);
+    # output swap creation section (sort order doesn't matter here)
     (@swaps) && print MASTER_SCRIPT "\n# create swap space(s) on $disk -- do a \"man mkswap\" for more info\n";
-    foreach (@swaps) {
-	my $swapdev = (split(':',$_))[0];
+    foreach $swapdev (@swaps) {
         print MASTER_SCRIPT "mkswap -v1 $swapdev\n";
     }
 
-    # gather up ext2 partition information and output ext2 creation section (sort order doesn't matter here)
-    my @ext2s = grep (/Id=83/, @partitions);
+    # output ext2 creation section (sort order doesn't matter here)
     (@ext2s) && print MASTER_SCRIPT "\n# create ext2 filesystem(s) on $disk -- do a \"man mke2fs\" for more info\n";
-    foreach (@ext2s) {
-	my $ext2dev = (split(':',$_))[0];
-        print MASTER_SCRIPT "mke2fs -b 4096 -i 16384 -m 1 $ext2dev\n";
+    foreach $ext2dev (@ext2s) {
+        my $block_size = "4096";
+        my $inodes_per_block = "16384";
+        my $min_free = "1";
+        print MASTER_SCRIPT "mke2fs -b $block_size -i $inodes_per_block -m $min_free $ext2dev\n";
     }
 }
+
 
 # initialize and void %fstab hash
 %fstab = ();
@@ -379,8 +456,16 @@ close FSTAB;
 # these must be in proper order, so we'll employ sort()
 print MASTER_SCRIPT "\n# mount the freshly formatted partitions\n";
 foreach $dir (sort keys %fstab) {
-    print MASTER_SCRIPT "mkdir -p /a$dir/\n";
-    print MASTER_SCRIPT "mount $fstab{$dir} /a$dir\n";
+    # pre-pend /a to the target directory and
+    # in case directory doesn't already have one, add a trailing slash
+    # (We could easily test to see if it does, but we've got to normalize multiple
+    #  slashes into one down below anyway...  Same number of functions to execute.)
+    my $target_dir = qq(/a$dir/);
+
+    # turn multiple slashes "///" into a single slash "/"
+    $target_dir =~ s/\/+/\//g;
+    print MASTER_SCRIPT qq(mkdir -p $target_dir\n);
+    print MASTER_SCRIPT qq(mount $fstab{$dir} $target_dir\n);
 }
 
 print MASTER_SCRIPT "\n# get imageserver, hostname, and other info by sourcing dhcp info file\n";
@@ -458,6 +543,29 @@ shutdown -h now
 EOF
 
 close(MASTER_SCRIPT);
+
+# prompt to run makedhcpstatic after autoinstalling clients if using static_dhcp
+if((!$quiet) and ($ip_assignment_method eq "static_dhcp")) {
+    system("clear");
+    print << 'EOF';
+Static DHCP Instructions
+------------------------
+
+You have chosen to use "Static DHCP" for your IP addressing.  Be sure to
+run "makedhcpstatic" after autoinstalling your client systems.  You will
+need to autoinstall your client systems in the order that you want them
+to be assigned their IP addresses.  When you run "makedhcpstatic", it 
+will re-write the DHCP server configuration file to permanently assign
+to each client the same IP address that client received during it's 
+autoinstall process.
+
+EOF
+
+    # and then give 'em a chance to read the message
+    print "\nPress <Enter> to continue...";
+    <STDIN>;
+    system("clear");
+}
 
 # prompt to run "addclients"
 if (!$quiet) {
