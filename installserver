@@ -89,6 +89,7 @@ fi
 
 ### BEGIN copy over existing rsyncd.conf entries ###
 echo "Looking for existing rsyncd.conf files..."
+
 for file in /etc/rsyncd.conf /etc/systemimager/rsyncd.conf.beforesystemimager$VERSION; do
   if [ -f $file ]; then
     echo "SystemImager now uses /etc/systemimager/rsyncd.conf instead of /etc/rsyncd.conf"
@@ -101,13 +102,31 @@ for file in /etc/rsyncd.conf /etc/systemimager/rsyncd.conf.beforesystemimager$VE
     case $REPLY in
       n|N|no|NO|No ) echo "Not adding old entries, as requested." ;;
                  * ) start_copying="false"
+		     skip_next_line="false"
 	             while /bin/true; do
 		       read line
 		       if [ $? -ne 0 ]; then
 		         break
 		       fi
-		       if [ $start_copying == "true" ]; then
-		         echo "$line" >> /etc/systemimager/rsyncd.conf
+		       ## if we find a duplicate heading, we need to skip it and the
+		       ## next line (the next line being the path entry)
+		       if [ "skip_next_line" == "true" ]; then
+		         skip_next_line="false"
+			 continue
+		       fi
+		       if [ "$start_copying" == "true" ]; then
+		         ## check to see if this is a module section header
+		         echo "$line" | grep "^\[.*\]$" > /dev/null
+			 if [ $? -eq 0 ]; then
+			   ## check to see if this module section header already exists
+			   grep "$line" /etc/systemimager/rscynd.conf > /dev/null
+			   if [ $? -eq 0 ]; then
+			     echo "An entry for the image $line already exists, skipping..."
+			     skip_next_line="true"
+			     continue
+			   fi
+		         fi
+	                 echo "$line" >> /etc/systemimager/rsyncd.conf
 		         continue
 		       fi
 		       echo "$line" | \
@@ -126,8 +145,25 @@ for file in /etc/rsyncd.conf /etc/systemimager/rsyncd.conf.beforesystemimager$VE
 		     fi
     esac
   fi
-done  
+done
 ### END copy over existing rsyncd.conf entries ###
+
+if [ -f /etc/rsyncd.conf ]; then
+  ## if it's not our rsyncd.conf, leave it alone.
+  grep "^# only image entries below this line" > /dev/null
+  if [ $? -ne 0 ]; then
+    break
+  fi
+  delim
+  echo "Warning:  /etc/rsyncd.conf is no longer used by SystemImager
+  delim
+  echo "Moving /etc/rsyncd.conf to /etc/rsyncd.conf-no-longer-used-by-systemimager..."
+  mv /etc/rsyncd.conf /etc/rsyncd.conf-no-longer-used-by-systemimager
+  if [ $? -ne 0 ]; then
+    echo "Move failed."
+    exit 1
+  fi
+fi
 
 if [ -d /tftpboot/systemimager ]; then
   # warn about the relocation of the tftpboot stuff

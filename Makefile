@@ -178,8 +178,6 @@ install_server:	install_manpages install_configs install_server_libs
 		$(PXE_CONF_DEST)/syslinux.cfg
 	install -m 644 --backup $(PXE_CONF_SRC)/syslinux.cfg \
 		$(PXE_CONF_DEST)/default
-	install -b -m 644 tftpstuff/systemimager/updateclient.local.exclude \
-		$(ETC)/systemimager
 	install -m 755 $(TFTP_BIN_SRC)/prepareclient $(TFTP_BIN_DEST)
 	install -m 755 $(TFTP_BIN_SRC)/updateclient $(TFTP_BIN_DEST)
 	install -d -m 755 $(IMAGEDEST)
@@ -500,6 +498,9 @@ client_tarball:
 	cp $(RELEASE_DOCS) installclient install_lib ./tmp/systemimager-client-$(VERSION)
 	cd tmp && tar -c systemimager-client-$(VERSION) | bzip2 > \
 		systemimager-client-$(VERSION).tar.bz2
+	@echo
+	@echo "client tarball has been created in ./tmp"
+	@echo
 
 #@server_tarball:
 #@  create a user-distributable tarball for the server
@@ -511,6 +512,9 @@ server_tarball:
 	cp $(RELEASE_DOCS) installserver install_lib ./tmp/systemimager-server-$(VERSION)
 	cd tmp && tar -c systemimager-server-$(VERSION) | bzip2 > \
 		systemimager-server-$(VERSION).tar.bz2
+	@echo
+	@echo "server tarball has been created in ./tmp"
+	@echo
 
 #@tarballs:
 #@  create user-distributable tarballs for the server and the client
