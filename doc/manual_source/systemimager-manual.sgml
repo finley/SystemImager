@@ -2380,8 +2380,9 @@ To:     "rsync --bwlimit=10000 -av --numeric-ids $IMAGESERVER::web_server_image_
     <sect2 id=FAQPushImage>
       <title>How do I push an image to a client?</title>
       <para>
-	You don't.  Everything in VA SystemImager is actually based on a pull 
-	mechanism which allows for more control over error conditions.
+	Starting with version 1.5, you can use the
+	<command>pushupdate</command> command.  It essentially logs into
+	each client and executes the <command>updateclient</command> command.
       </para>
     </sect2>
     
