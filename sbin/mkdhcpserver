@@ -7,7 +7,7 @@
 #     John Goebel <jgoebel@valinux.com>
 #     Curtis Zinzilieta <czinzilieta@valinux.com>
 #
-# This file is: makedhcpserver
+# This file is: mkdhcpserver
 #
  
 
@@ -84,7 +84,7 @@ system("clear");
 # give warning
 print <<"EOF";
 
-Welcome to the SystemImager "makedhcpserver" command.  This command
+Welcome to the SystemImager "mkdhcpserver" command.  This command
 will prepare this computer to be a DHCP server by creating the 
 following file:
 
@@ -310,7 +310,7 @@ The dhcp server configuration file (/etc/dhcpd.conf) file has been
 created for you.  Please verify it for accuracy.
 
 If this file does not look satisfactory, you can run this command again
-to re-create it: "makedhcpserver"
+to re-create it: "mkdhcpserver"
 
 WARNING!:  If you have multiple physical network interfaces, be sure to 
 edit the init script that starts dhcpd to specify the interface that 

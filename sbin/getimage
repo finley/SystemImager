@@ -137,7 +137,7 @@ The following options affect the autoinstall client after autoinstalling:
                           static_dhcp -- A DHCP server will assign the
 			    same static address each time to clients 
 			    installed with this image.  Also see the
-			    \"makedhcpstatic\" command.
+			    \"mkdhcpstatic\" command.
 
 			  dynamic_dhcp -- A DHCP server will assign IP
 			    addresses dynamically to clients installed
@@ -557,7 +557,7 @@ ongoing basis:
 1) static_dhcp -- A DHCP server will assign the
      same static address each time to clients 
      installed with this image.  Also see the
-     "makedhcpstatic" command.
+     "mkdhcpstatic" command.
 
 2) dynamic_dhcp -- A DHCP server will assign IP
      addresses dynamically to clients installed
@@ -613,7 +613,7 @@ SystemImager::Server->create_autoinstall_script(
 );
 ### END create a fresh $autoinstall_script_dir/$image.master ###
 
-# prompt to run makedhcpstatic after autoinstalling clients if using static_dhcp
+# prompt to run mkdhcpstatic after autoinstalling clients if using static_dhcp
 if((!$quiet) and ($ip_assignment_method eq "static_dhcp")) {
     system("clear");
     print << 'EOF';
@@ -621,9 +621,9 @@ Static DHCP Instructions
 ------------------------
 
 You have chosen to use "Static DHCP" for your IP addressing.  Be sure to
-run "makedhcpstatic" after autoinstalling your client systems.  You will
+run "mkdhcpstatic" after autoinstalling your client systems.  You will
 need to autoinstall your client systems in the order that you want them
-to be assigned their IP addresses.  When you run "makedhcpstatic", it 
+to be assigned their IP addresses.  When you run "mkdhcpstatic", it 
 will re-write the DHCP server configuration file to permanently assign
 to each client the same IP address that client received during it's 
 autoinstall process.
