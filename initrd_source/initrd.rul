@@ -115,6 +115,14 @@ $(INITRD_DIR)/build_dir-stamp:	$(SKEL_FILES) $(BUSYBOX_BINARY) \
 
 	# Copy over text files from the skel directory.
 	cp -a $(INITRD_DIR)/skel/* $(INITRD_BUILD_DIR)
+
+	# The following rule gets rid of virtual consoles on 
+	# platforms that don't have them.
+ifeq ($(ARCH),ppc64-iSeries)
+	cat $(INITRD_DIR)/skel/etc/inittab | grep -v vc > \
+		$(INITRD_BUILD_DIR)/etc/inittab
+endif
+
 	$(SI_INSTALL) -m 755 $(INITRD_DIR)/skel/etc/init.d/rcS \
 	  $(INITRD_BUILD_DIR)/etc/init.d/rcS
 
