@@ -42,20 +42,6 @@ if ( $ft_config->start_flamethrower_daemon() ne "yes" ) {
     exit 0;
 }
 
-# Create our directory directory, if necessary.
-my $dir = $ft_config->get("flamethrower_directory_dir");
-if ( ! -e $dir ) {
-    mkdir("$dir", 0755) or die("Couddn't mkdir $dir!");
-}
-unlink <$dir/*>;
-
-# Create our state directory, if necessary, and clean it up.
-$dir = $ft_config->get("flamethrower_state_dir");
-if ( ! -e $dir ) {
-    mkdir("$dir", 0755) or die("Couddn't mkdir $dir!");
-}
-unlink <$dir/*>;
-
 &daemonize;
 
 while(1) {
@@ -271,8 +257,20 @@ sub update_directory {
 
     print STDOUT "update_directory()\n" if ($debug);
 
-    my $flamethrower_directory_dir = $ft_config->get("flamethrower_directory_dir");
-    unlink <$flamethrower_directory_dir/*>;
+    # Create our directory directory, if necessary.
+    my $dir = $ft_config->get("flamethrower_directory_dir");
+    if ( ! -e $dir ) {
+        mkdir("$dir", 0755) or die("Couddn't mkdir $dir!");
+    }
+    unlink <$dir/*>;
+
+    # Create our state directory, if necessary, and clean it up.
+    $dir = $ft_config->get("flamethrower_state_dir");
+    if ( ! -e $dir ) {
+        mkdir("$dir", 0755) or die("Couddn't mkdir $dir!");
+    }
+    unlink <$dir/*>;
+
 
     ############################################################################
     #
@@ -309,6 +307,7 @@ sub update_directory {
     #
     # Create the Flamethrower "directory" (sourceable files) for each module.
     #
+    my $flamethrower_directory_dir = $ft_config->get("flamethrower_directory_dir");
     my $modules = $ft_config->modules();
     foreach my $module ( @$modules ) {
 

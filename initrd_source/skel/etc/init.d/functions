@@ -171,25 +171,16 @@ get_scripts_directory() {
     echo get_scripts_directory
 
     MODULE_NAME="autoinstall_scripts"
-    get_udp_receiver_options
+    DIR="${SCRIPTS_DIR}"
+    flamethrower_client
 
-    mkdir -p ${SCRIPTS_DIR}
-    echo udp-receiver $UDP_RECEIVER_OPTIONS --pipe \"tar -C ${SCRIPTS_DIR} -x\"
-         udp-receiver $UDP_RECEIVER_OPTIONS --pipe "tar -C ${SCRIPTS_DIR} -x"
-    sleep 2
-
-    if [ $? != 0 ]; then
-        shellout
-    fi
-
-    echo
 }
 #
 ################################################################################
 #
-# Usage: get_udp_receiver_options ; echo $UDP_RECEIVER_OPTIONS
+# Usage: MODULE_NAME="my_module" ; DIR="/dest_dir" ; flamethrower_client
 #
-get_udp_receiver_options() {
+flamethrower_client() {
 
     . ${FLAMETHROWER_DIRECTORY_DIR}/${MODULE_NAME}
 
@@ -197,6 +188,17 @@ get_udp_receiver_options() {
     if [ "$ASYNC" = "on" ]; then
         UDP_RECEIVER_OPTIONS="$UDP_RECEIVER_OPTIONS --async"
     fi
+
+    mkdir -p ${DIR}
+    echo udp-receiver $UDP_RECEIVER_OPTIONS --pipe \"tar -C ${DIR} -x\"
+         udp-receiver $UDP_RECEIVER_OPTIONS --pipe "tar -C ${DIR} -x"
+    #sleep 2
+
+    #if [ $? != 0 ]; then
+    #    shellout
+    #fi
+
+    echo
 
 }
 #
@@ -230,17 +232,8 @@ get_boel_binaries_tarball() {
     elif [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
 
         MODULE_NAME="boot-${ARCH}-${FLAVOR}"
-        get_udp_receiver_options
-
-        echo udp-receiver ${UDP_RECEIVER_OPTIONS} --pipe \"tar -C ${BOEL_BINARIES_DIR} -x\"
-             udp-receiver ${UDP_RECEIVER_OPTIONS} --pipe "tar -C ${BOEL_BINARIES_DIR} -x"
-        sleep 2
-
-        if [ $? != 0 ]; then
-            shellout
-        fi
-
-        echo
+        DIR="${BOEL_BINARIES_DIR}"
+        flamethrower_client
 
     else
         # Use rsync
