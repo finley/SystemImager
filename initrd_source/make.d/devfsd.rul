@@ -11,7 +11,7 @@ PHONY += devfsd
 devfsd:	$(DEVFSD_BINARY)
 
 $(DEVFSD_BINARY):	$(INITRD_SRC_DIR)/$(DEVFSD_TARBALL) $(DEVFSD_PATCHES) \
-			$(UCLIBC_TARGET)
+			$(UCLIBC_TARGET) patched_kernel-stamp
 	rm -rf $(INITRD_SRC_DIR)/$(DEVFSD_DIR)
 	cd $(INITRD_SRC_DIR) && tar -xvjf $(DEVFSD_TARBALL)
 
