@@ -27,7 +27,7 @@ $(DISCOVER_BINARY):	$(SRC_DIR)/$(DISCOVER_TARBALL) $(DISCOVER_PATCHES)
 	rm -fr $(SRC_DIR)/$(DISCOVER_DIR)
 	cd $(SRC_DIR) && tar -xvzf $(DISCOVER_TARBALL)
 	cd $(SRC_DIR)/$(DISCOVER_DIR) && cat $(DISCOVER_PATCHES) < /dev/null | patch -p1
-	cd $(SRC_DIR)/$(DISCOVER_DIR) && ./configure --prefix=/usr
+	cd $(SRC_DIR)/$(DISCOVER_DIR) && ./configure --disable-nls --prefix=/usr
 	$(MAKE) -C $(SRC_DIR)/$(DISCOVER_DIR)
 
 $(SRC_DIR)/$(DISCOVER_TARBALL):
