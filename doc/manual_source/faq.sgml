@@ -433,10 +433,10 @@ image=vmlinux-rh.img
       <answer>
         <para>
 	  tmpfs filesystem mount options can be passed to the BOEL kernel as 
-	  append parameters by adding tmpfs_ to the beginning of the mount
+	  append parameters by pre-pending "tmpfs_" to the mount
 	  option.  For example, adding "tmpfs_size=2G tmpfs_nr_inodes=2000" is
 	  translated by BOEL to the tmpfs mount options 
-	  "size=3000,tmpfs_nr_inodes=2000".  The following tmpfs mount
+	  "size=2G,nr_inodes=2000".  The following tmpfs mount
 	  options are supported: size, nr_inodes, nr_blocks, and mode.  See 
 	  "man mount" for details on these options.
         </para>
