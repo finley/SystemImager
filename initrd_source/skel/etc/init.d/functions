@@ -1142,9 +1142,6 @@ start_ssh() {
     if [ ! -z $PRIVATE_KEY ]; then
 
         # With the prep ready, start the ssh tunnel connection.
-        # the sleep command executes remotely.  Just need something long here
-        # as the connection will be severed when the newly imaged client reboots
-        # 14400 = 4 hours...if we're not imaged by then....oh boy!
         #
         # Determine if we should run interactive and set redirection options appropriately.
         # So if the key is blank, go interactive. (Suggested by Don Stocks <don_stocks@leaseloan.com>)
@@ -1156,7 +1153,7 @@ start_ssh() {
             REDIRECTION_OPTIONS=""
         fi
 
-        CMD="ssh -l $SSH_USER -n -f -L873:127.0.0.1:873 $IMAGESERVER sleep 14400 $REDIRECTION_OPTIONS"
+        CMD="ssh -N -l $SSH_USER -n -f -L873:127.0.0.1:873 $IMAGESERVER $REDIRECTION_OPTIONS"
         echo $CMD
         $CMD || shellout
         
