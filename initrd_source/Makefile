@@ -76,7 +76,7 @@ else
 endif
 ### END uclibc decisions ###
 
-PATH = $(INITRD_BUILD_PATH)
+PATH := $(INITRD_BUILD_PATH)
 
 ### BEGIN build insmod on ia64 only ###
 ifeq ($(ARCH),ia64)
