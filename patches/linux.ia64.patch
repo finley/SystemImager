@@ -1,3 +1,11 @@
+*******************************************************************************
+* this patch is a superset of patches, combined to eliminate the possibility  *
+* of conflicts.  patches in this version include:                             *
+* - all patches included in the kernel-image-2.4.9-ia64-010820.4 package      *
+* - a patch for building with newer binutils                                  *
+* - a patch to tell gcc to optimize for size                                  *
+*******************************************************************************
+
 diff -urN linux.orig/Documentation/Configure.help linux/Documentation/Configure.help
 --- linux.orig/Documentation/Configure.help	Sun Aug 12 11:51:41 2001
 +++ linux/Documentation/Configure.help	Mon Dec 17 20:27:40 2001
