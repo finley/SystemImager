@@ -64,11 +64,14 @@ AC_CHECK_LIB([ncurses],[keyok],[LIBS="-lncurses"],
 AC_CHECK_LIB([readline],[rl_initialize],[have_readline=yes], [
 	     SI_CHECK_FAIL(readline,readline-devel)])
 
-
 # where is python
 AC_PATH_PROG(python_exec,python2)
 AC_PATH_PROG(python_exec,python)
 AC_SUBST(PYTHON_PATH,$python_exec)
+
+# do we have devmapper
+AC_CHECK_LIB([libdevmapper],[dm_task_run],[have_libdevmapper=yes],
+	     [SI_CHECK_FAIL(libdevmapper,libdevmapper-devel)])
 
 # do we have docbook, if not say know
 AC_CHECK_PROG(found_docbook2man,[docbook2man],[yes])
