@@ -1,5 +1,5 @@
 #  
-#   Copyright (C) 2004 Brian Elliott Finley
+#   Copyright (C) 2004-2005 Brian Elliott Finley
 #
 #   $Id$
 # 
@@ -17,10 +17,113 @@
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
+#
+#       2005.02.15  Brian Elliott Finley
+#       - added create_uyok_initrd
+#
 
 package SystemImager::UseYourOwnKernel;
 
 use strict;
+
+
+#
+# Usage: 
+#       SystemImager::UseYourOwnKernel->create_uyok_initrd($arch);
+#
+sub create_uyok_initrd($) {
+
+        my $module      = shift;
+        my $arch        = shift;
+
+        use File::Copy;
+        use File::Basename;
+
+        my $cmd;
+
+        #
+        # Create temp dir
+        #
+        my $initrd_dir = _mk_tmp_dir();
+
+        #
+        # Copy template over
+        #
+        $cmd = qq(rsync -a /usr/share/systemimager/boot/$arch/standard/initrd_template/ $initrd_dir/);
+        !system( $cmd ) or die( "Couldn't $cmd." );
+
+        #
+        # add modules and insmod commands
+        #
+        my $my_modules_dir = "${initrd_dir}/my_modules";
+        my $file = "$my_modules_dir" . "/INSMOD_COMMANDS";
+        open( FILE,">>$file" ) or die( "Couldn't open $file for appending" );
+
+        my $uname_r = get_uname_r();
+        my $module_paths = `find /lib/modules/$uname_r`;
+
+        my @modules = get_load_ordered_list_of_running_modules();
+        foreach( @modules ) {
+
+                $_ =~ s/[-_]/(-|_)/g;      # match against either underscores or hyphens -BEF-
+
+                if( $module_paths =~ m#(.*/$_\.(ko|o))# ) {
+
+                        copy( $1, $my_modules_dir )
+                                or die( "Couldn't copy $1 $my_modules_dir" );
+
+                        print "Adding: $1\n";
+
+                        my $module = basename( $1 );
+                        print FILE "insmod $module\n";
+
+                } else {
+
+                        print qq(\nWARNING: Couldn't find module "$_"!\n);
+                        print qq(  Hit <Ctrl>+<C> to cancel, or press <Enter> to ignore and continue...\n);
+                        <STDIN>;
+                }
+        }
+        close(FILE);
+
+        #
+        # Copy over /dev
+        #
+        $cmd = qq(rsync -a /dev/ $initrd_dir/dev/);
+        !system( $cmd ) or die( "Couldn't $cmd." );
+
+        # 
+        # See TODO for next step. -BEF-
+        #
+      exit 3; #XXX
+
+        #
+        # Remove temp dir
+        #
+        $cmd = "rm -fr $initrd_dir";
+        !system( $cmd ) or die( "Couldn't $cmd." );
+
+        return 1;
+}
+
+
+#
+#       Usage: my $dir = _mk_tmp_dir();
+#
+sub _mk_tmp_dir() {
+
+        my $count = 0;
+        my $dir = "/tmp/.systemimager.";
+
+        until( ! -e "${dir}${count}" ) {
+                $count++;
+        }
+        mkdir("${dir}${count}", 0750) or die "$!";
+
+        return "${dir}${count}";
+}
+
+
 sub capture_uyok_info_to_autoinstallscript {
 
         my $module      = shift;
@@ -40,7 +143,7 @@ sub capture_uyok_info_to_autoinstallscript {
                 # initrd modules
                 my @modules = get_load_ordered_list_of_running_modules();
                 my $line = 1;
-                foreach(@modules) {
+                foreach( @modules ) {
                         print FILE qq(  <initrd load_order="$line"\tmodule="$_"/>\n) or die($!);
                         $line++;
                 }
@@ -144,7 +247,7 @@ sub get_uname_r {
         return $kernel_version;
 }
 
-sub get_load_ordered_list_of_running_modules {
+sub get_load_ordered_list_of_running_modules() {
 
         my $file = "/proc/modules";
         my @modules;
@@ -176,4 +279,4 @@ sub capture_dev {
 
 1;
 
-# /* vi: set et ts=8: */
+# /* vi: set ai et ts=8: */
