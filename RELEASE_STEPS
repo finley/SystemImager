@@ -12,9 +12,7 @@
 3.0 PRE-FEATURE FREEZE
 --------------------------------------------------------------------------------
 Pending:
-* -ssh-key option in mkautoinstalldiskette must be re-added.
-* ssh documentation touch ups (major ssh doc overhaul will happen later).
-
+* Nothing!
 
 Completed:
 * remove stuff from lsimage listings
@@ -97,7 +95,6 @@ Completed:
   #
   #HOSTNAME=""
 
-
 * Get SSH working again (BEF)  Legality issues?
     
     Misc. Notes
@@ -129,6 +126,8 @@ Completed:
         fi
         ( cd / && tar -xvzf /tmp/boel_binaries.tar.gz ) || shellout
 
+* -ssh-key option in mkautoinstalldiskette must be re-added.
+* ssh documentation touch ups (major ssh doc overhaul will happen later).
 
 
 
