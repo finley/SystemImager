@@ -4,22 +4,24 @@
 #
 
 DB2HTML = /usr/bin/db2html
-SRC     = manual.sgml
+NAME	= manual
+SRC	= $(NAME).sgml
 DEST	= ..
 
-all:    manual
+all:    html
 
-manual:    $(DB2HTML) $(SRC) rm_old
+html:	$(DB2HTML) $(SRC) rm_old
 	$(DB2HTML) $(SRC)
-	mv -f manual $(DEST)
-	cp -a images/ $(DEST)/manual/images
+	mkdir -p $(DEST)
+	mv -f $(NAME) $(DEST)
+	cp -a images/ $(DEST)/$(NAME)/images
 	@echo
-	@echo "You can now find the manual in `cd $(DEST); pwd`/manual/"
-	@echo "  (also known as $(DEST)/manual)"
+	@echo "You can now find the manual in `cd $(DEST); pwd`/$(NAME)/"
+	@echo "  (also known as $(DEST)/$(NAME))"
 	@echo
 
 rm_old:
-	rm -rf manual $(DEST)/manual
+	rm -rf $(NAME) $(DEST)/$(NAME)
 
 clean:	rm_old
 	find . -name "*~" -exec rm {} \;
