@@ -1,0 +1,61 @@
+#
+# "SystemImager" - Copyright (C) 1999-2002 Brian Elliott Finley <brian@baldguysoftware.com>
+#
+#   $Id$
+#
+
+This is a list of people who have volunteered to be "official" testers
+of pre-release software.
+
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+           Testers Name: Don Moore
+          Email address: donmoore@utdallas.edu
+         NIC chipset(s): 82550PM
+         Number of NICs: 2
+           Interconnect: Myrinet-2000
+            Master-Node: Intel PRO/1000S 
+           Disk type(s): Ultra160  
+        SCSI chipset(s): AIC-7899W 
+ Software RAID level(s): RAID1 (SRCMR backordered part)
+          Filesystem(s): ext3
+            Boot loader: lilo
+           Architecture: i386
+           Distribution: RedHat
+   Preferred boot media: PXE
+                         autoinstall
+                         floppy
+     Pertinent comments: I'm setting up a cluster of 22-nodes Intel SDS2
+                         with myrinet . 
+
+                         I already have a stable 16-node cluster
+                         with 1.5.0 - supermicro370DER . In addition,
+                         I've setup 48 PCs with v2.01 -three different
+                         types of machines, ASUS-K7V,ASUS-A7M266,Dell-GX1,
+                         server Tyan ThunderK7. Another 9PC MS6119,MS6163
+                         on a ASUS-A7V server. Major problems w/ the way
+                         partitions reordered - in upgradeclient, ie
+                         lilo doesn't complain when the root is mismatched
+                         Worse- rsync corruptions while debugging other
+                         messes..
+                         
+                         concerns: kernel,module problems matching my
+                         hardware
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+           Testers Name: Jose Celestino
+          Email address: japc@co.sapo.pt
+         NIC chipset(s): eepro100,3c59x
+         Number of NICs: 3
+           Disk type(s): 1 ide, 1 SCSI
+        SCSI chipset(s): sym53c8xx,aic7xxx,cpqarray
+ Software RAID level(s): Level 5 (root filesystem), and Level 5 (data)
+          Filesystem(s): ext3, ext2, reiserfs
+            Boot loader: LILO
+           Architecture: i386
+           Distribution: Debian (of course!) :)), RedHat
+   Preferred boot media: Floppy
+     Pertinent comments: I have the ability to test on some machines with
+                         this configuration, as they keep coming for
+                         install
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
