@@ -168,7 +168,7 @@ all:	$(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.img manpages
 
 arch:
 	echo $(ARCH)
-	echo $(TEST_ARCH)
+	echo $(IS_PPC64)
 
 binaries: $(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.img
 

@@ -6,7 +6,7 @@ PARTED_BINARY := $(SRC_DIR)/$(PARTED_DIR)/parted/.libs/parted
 
 ALL_SOURCE += $(SRC_DIR)/$(PARTED_TARBALL)
 
-ifeq ($(ARCH),ppc64-iSeries)
+ifdef IS_PPC64
 	PARTED_CONFIGURE = --build=powerpc-unknown-linux
 endif
 

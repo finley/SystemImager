@@ -8,7 +8,7 @@ TUNE2FS_BINARY := $(SRC_DIR)/$(E2FSPROGS_DIR)/misc/tune2fs
 
 ALL_SOURCE += $(SRC_DIR)/$(E2FSPROGS_TARBALL)
 
-ifeq ($(ARCH),ppc64-iSeries) 
+ifdef IS_PPC64
 	E2FSPROGS_CONFIGURE = --host=ppc-unknown-linux
 endif
 
