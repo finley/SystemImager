@@ -17,9 +17,6 @@ Steps for the Chronically Impatient
 
 Notes on customizing and building your initrd.gz
 ------------------------------------------------
-o The build requires superuser privileges as it mounts a file via the loopback
-  device.  If you are not root, it will attempt to use sudo for commands
-  requiring root access.
 o Files in the ./skel/ directory are copied directly to the ramdisk
   you can edit the files there, or drop in your own.
 o Source tarballs for a few binaries are needed during the build.  An attempt
