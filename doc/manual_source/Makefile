@@ -2,7 +2,7 @@
 # "SystemImager" 
 #
 #  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
-#  Copyright (C) 2001 Dann Frazier <dannf@ldl.fc.hp.com>
+#  Copyright (C) 2001-2003 Dann Frazier <dannf@hp.com>
 #
 #  $Id$
 #
@@ -41,12 +41,6 @@ $(NAME).dvi:	$(MANUAL_DEPS)
 	docbook2dvi $(BOOK)
 
 $(NAME).pdf:	$(MANUAL_DEPS)
-	# workaround for broken something or other (tetex-bin, i think)
-	# see http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=130504
-	#cp --parents \
-	#  /usr/share/sgml/docbook/stylesheet/dsssl/modular/images/note.pdf .
-	#cp --parents \
-	#  /usr/share/sgml/docbook/stylesheet/dsssl/modular/images/warning.pdf .
 	docbook2pdf $(BOOK)
 
 $(NAME).ps:	$(MANUAL_DEPS)
@@ -74,4 +68,3 @@ clean:
 	rm -rf $(HTMLDIR)
 	rm -rf DBTOHTML_OUTPUT_DIR*
 	rm -rf ./usr/
-
