@@ -116,7 +116,7 @@ LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.2/$(LINUX_TARBALL)
 LINUX_MD5SUM = 9a8f4b1003ff6b096678d193fd438467
 LINUX_IMAGE = $(LINUX_SRC)/arch/i386/boot/bzImage
 LINUX_PATCH = $(PATCH_DIR)/linux.patch
-LINUX_CONFIG = $(PATCH_DIR)/autoinstall.kernel.config
+LINUX_CONFIG = $(PATCH_DIR)/linux.config
 
 INITRD_DIR = initrd_source
 INITRD = $(INITRD_DIR)/initrd.gz
