@@ -5,6 +5,174 @@ package SystemImager::Server;
 $version_number="1.5.0";
 $VERSION = $version_number;
 
+sub _create_arrays_of_device_files_by_device_type {
+    my $device = $_[0];
+    my $mount_point = $_[1];
+    my $filesystem_type = $_[2];
+
+    # get software RAID devices that are not using LABEL= or UUID=
+    if ($device =~ /\/dev\/md/) { push (@software_raid_devices, $device); }
+
+    # swap
+    if ($filesystem_type eq "swap") { push (@swap_devices, $device); }
+
+    # ext2
+    if ($filesystem_type eq "ext2") { 
+      push (@ext2_devices, $device);
+      push (@mount_points, $mount_point);
+    }
+
+    # ext3
+    if ($filesystem_type eq "ext3") { 
+      push (@ext3_devices, $device);
+      push (@mount_points, $mount_point);
+    }
+
+    # reiserfs
+    if ($filesystem_type eq "reiserfs") { 
+      push (@reiserfs_devices, $device);
+      push (@mount_points, $mount_point);
+    }
+}
+
+sub _in_autoinstall_script_stop_RAID_devices_before_partitioning {
+  if (@software_raid_devices) {
+    print MASTER_SCRIPT "# Pull /etc/raidtab over to autoinstall client\n";
+    print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::\$IMAGENAME/etc/raidtab /etc/raidtab || shellout\n";
+    print MASTER_SCRIPT "\n";
+    print MASTER_SCRIPT "# get software RAID utilities\n";
+    print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::tftpboot/systemimager/mkraid /tmp/ || shellout\n";
+    print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::tftpboot/systemimager/raidstart /tmp/ || shellout\n";
+    print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::tftpboot/systemimager/raidstop /tmp/ || shellout\n";
+    print MASTER_SCRIPT "\n";
+
+    print MASTER_SCRIPT << 'EOF';
+# Stop RAID devices before partitioning begins
+# Why did they get started in the first place?  So we can pull a local.cfg
+# file off a root mounted RAID system.
+RAID_DEVICES=`cat /proc/mdstat | grep ^md | mawk '{print "/dev/" $1}'`
+for RAID_DEVICE in ${RAID_DEVICES}
+do
+  echo "raidstop ${RAID_DEVICE}" && raidstop ${RAID_DEVICE}
+done
+
+EOF
+
+  }
+}
+
+
+sub _add_proc_to_list_of_filesystems_to_mount_on_autoinstall_client {
+  #  The following allows a proc filesystem to be mounted in the fakeroot.
+  #  This provides /proc to programs which are called by SystemImager
+  #  (eg. System Configurator).
+
+  push (@mount_points, '/proc');
+  $device_by_mount_point{'/proc'} = 'proc';
+  $filesystem_type_by_mount_point{'proc'} = 'proc';
+}
+
+sub _get_list_of_IDE_and_SCSI_devices {
+  my $imagedir = $_[0];
+  my $systemimagerdir = $_[1];
+
+  $partition_dir="$systemimagerdir/partitionschemes";
+  if(-d "$imagedir$partition_dir") {
+    opendir(PARTITIONSCHEMES, "$imagedir$partition_dir") || die "$program_name: Can't read the $imagedir$partition_dir directory";
+        # Skip anything that begins with a "." or an "rd"
+        push(@disks, grep( !/^rd$/, grep( !/^\..*/, readdir(PARTITIONSCHEMES) ) ) );
+    close(PARTITIONSCHEMES);
+  }
+}
+
+
+sub _get_list_of_hardware_RAID_devices {
+  my $imagedir = $_[0];
+  my $systemimagerdir = $_[1];
+
+  $partition_dir="$systemimagerdir/partitionschemes/rd";
+  if(-d "$imagedir$partition_dir") {
+    opendir(PARTITIONSCHEMES, "$imagedir$partition_dir") || die "$program_name: Can't read the $imagedir$partition_dir directory";
+        # Skip anything that begins with a "."
+        push(my @hardware_raid_disks, grep( !/^\..*/, readdir(PARTITIONSCHEMES) ) );
+
+        # add the rd/ bit to each device
+        for (@hardware_raid_disks) {
+          $_ =~ s/^/rd\//;
+          push(@disks, $_);
+        }
+    close(PARTITIONSCHEMES);
+  }
+}
+
+sub _compile_hash_of_ext2_partitions_to_label {
+  my $imagedir = $_[0];
+
+  %devices_by_label = ();
+  $file="$imagedir/etc/systemimager/devices_by_label.txt";
+  if (-e $file) {
+    open (LABELS, "<$file") || die "program_name: Failed to open $file for reading\n";
+    while (<LABELS>) {
+      # remove carriage returns
+      chomp;
+
+      # Skip the line if it starts with a '#'
+      if (m@(^\s*\#)@) { next; }
+
+      # turn all tabs into single spaces -- Note: <ctrl-v><tab>
+      s/	/ /g;
+
+      # Remove spaces from the beginning of the line
+      s/^ +//;
+
+      # Skip blank lines
+      if (m@(^$)@) { next; }
+
+      # split on space(s) and assign values to variables
+      (my $label, my $device) = split(/ +/);
+
+      # Create hash to be used in labelling
+      $devices_by_label{$label} = $device;
+
+      # get software RAID devices that are using LABEL=
+      if ($device =~ /\/dev\/md/) { push (@software_raid_devices, $device); }
+    }
+    close (LABELS);
+  }
+}
+
+sub _get_info_on_devices_for_software_RAID_swap_and_filesystems {
+  my $imagedir = $_[0];
+
+  %device_by_mount_point          = ();
+  %filesystem_type_by_mount_point = ();
+  %mount_options_by_mount_point   = ();
+  open (FSTAB, "<$imagedir/etc/fstab") || die "Failed to open $imagedir/etc/fstab for reading!\n";
+  while (<FSTAB>) {
+    # Skip the line if it starts with a '#' or if it is for a floppy device
+    if (m@(^\s*\#)|(/dev/fd)@) { next; }
+
+    # turn all tabs into single spaces -- Note: <ctrl-v><tab>
+    s/	/ /g;
+
+    # Remove spaces from the beginning of the line
+    s/^ +//;
+
+    # Skip blank lines
+    if (m@(^$)@) { next; }
+
+    # split on space(s) and assign values to variables
+    (my $device, my $mount_point, my $filesystem_type, my $mount_options) = split(/ +/);
+
+    # Create hashes to be used in mounting and unmounting
+    $device_by_mount_point{$mount_point}     = $device;
+    $filesystem_type_by_mount_point{$mount_point} = $filesystem_type;
+    $mount_options_by_mount_point{$mount_point}   = $mount_options;
+
+    _create_arrays_of_device_files_by_device_type( $device, $mount_point, $filesystem_type);
+  }
+  close FSTAB;
+}
 
 sub create_autoinstall_script{
   my $master_script=$_[1];
@@ -90,159 +258,17 @@ done
 EOF
 
 
-  ### BEGIN get list of disks to partition ###
-  # get list of hardware RAID devices
-  $partition_dir="$systemimagerdir/partitionschemes/rd";
-  if(-d "$imagedir$partition_dir") {
-    opendir(PARTITIONSCHEMES, "$imagedir$partition_dir") || die "$program_name: Can't read the $imagedir$partition_dir directory";
-        # Skip anything that begins with a "."
-        push(my @hardware_raid_disks, grep( !/^\..*/, readdir(PARTITIONSCHEMES) ) );
+  _get_list_of_hardware_RAID_devices( $imagedir, $systemimagerdir );
 
-        # add the rd/ bit to each device
-        for (@hardware_raid_disks) {
-          $_ =~ s/^/rd\//;
-          push(@disks, $_);
-        }
-    close(PARTITIONSCHEMES);
-  }
+  _get_list_of_IDE_and_SCSI_devices( $imagedir, $systemimagerdir );
 
-  # get list of IDE and SCSI devices
-  $partition_dir="$systemimagerdir/partitionschemes";
-  if(-d "$imagedir$partition_dir") {
-    opendir(PARTITIONSCHEMES, "$imagedir$partition_dir") || die "$program_name: Can't read the $imagedir$partition_dir directory";
-        # Skip anything that begins with a "." or an "rd"
-        push(@disks, grep( !/^rd$/, grep( !/^\..*/, readdir(PARTITIONSCHEMES) ) ) );
-    close(PARTITIONSCHEMES);
-  }
-  ### END get list of disks to partition ###
+  _get_info_on_devices_for_software_RAID_swap_and_filesystems($imagedir);
 
+  _add_proc_to_list_of_filesystems_to_mount_on_autoinstall_client();
 
-  ### BEGIN get info on devices for software RAID, swap, and filesystems ###
-  %device_by_mount_point          = ();
-  %filesystem_type_by_mount_point = ();
-  %mount_options_by_mount_point   = ();
-  open (FSTAB, "<$imagedir/etc/fstab") || die "$program_name: Failed to open $imagedir/etc/fstab for reading\n";
-  while (<FSTAB>) {
-    # Skip the line if it starts with a '#' or if it is for a floppy device
-    if (m@(^\s*\#)|(/dev/fd)@) { next; }
+  _compile_hash_of_ext2_partitions_to_label( $imagedir ); 
 
-    # turn all tabs into single spaces -- Note: <ctrl-v><tab>
-    s/	/ /g;
-
-    # Remove spaces from the beginning of the line
-    s/^ +//;
-
-    # Skip blank lines
-    if (m@(^$)@) { next; }
-
-    # split on space(s) and assign values to variables
-    (my $device, my $mount_point, my $filesystem_type, my $mount_options) = split(/ +/);
-
-    # Create hashes to be used in mounting and unmounting
-    $device_by_mount_point{$mount_point}     = $device;
-    $filesystem_type_by_mount_point{$mount_point} = $filesystem_type;
-    $mount_options_by_mount_point{$mount_point}   = $mount_options;
-
-    ### BEGIN create arrays of device files by device type ###
-    # get software RAID devices that are not using LABEL= or UUID=
-    if ($device =~ /\/dev\/md/) { push (@software_raid_devices, $device); }
-
-    # swap
-    if ($filesystem_type eq "swap") { push (@swap_devices, $device); }
-
-    # ext2
-    if ($filesystem_type eq "ext2") { 
-      push (@ext2_devices, $device);
-      push (@mount_points, $mount_point);
-    }
-
-    # ext3
-    if ($filesystem_type eq "ext3") { 
-      push (@ext3_devices, $device);
-      push (@mount_points, $mount_point);
-    }
-
-    # reiserfs
-    if ($filesystem_type eq "reiserfs") { 
-      push (@reiserfs_devices, $device);
-      push (@mount_points, $mount_point);
-    }
-    ### END create arrays of device files by device type ###
-  }
-  close FSTAB;
-  ### END get info on devices for software RAID, swap, and filesystems ###
-
-  ### BEGIN add proc to list of filesystems
-  #  The following allows a proc filesystem to be mounted in the fakeroot.
-  #  This provides /proc to programs which are called by SystemImager
-  #  (eg. System Configurator).
-
-  push (@mount_points, '/proc');
-  $device_by_mount_point{'/proc'} = 'proc';
-  $filesystem_type_by_mount_point{'proc'} = 'proc';
-  ### END add proc to list of filesystems
-
-  ### BEGIN compile hash of ext2 partitions to label ###
-  %devices_by_label = ();
-
-  $file="$imagedir/etc/systemimager/devices_by_label.txt";
-  if (-e $file) {
-    open (LABELS, "<$file") || die "program_name: Failed to open $file for reading\n";
-    while (<LABELS>) {
-      # remove carriage returns
-      chomp;
-
-      # Skip the line if it starts with a '#'
-      if (m@(^\s*\#)@) { next; }
-
-      # turn all tabs into single spaces -- Note: <ctrl-v><tab>
-      s/	/ /g;
-
-      # Remove spaces from the beginning of the line
-      s/^ +//;
-
-      # Skip blank lines
-      if (m@(^$)@) { next; }
-
-      # split on space(s) and assign values to variables
-      (my $label, my $device) = split(/ +/);
-
-      # Create hash to be used in labelling
-      $devices_by_label{$label} = $device;
-
-      # get software RAID devices that are using LABEL=
-      if ($device =~ /\/dev\/md/) { push (@software_raid_devices, $device); }
-    }
-    close (LABELS);
-  }
-  ### END compile hash of ext2 partitions to label ###
-
-
-  ### BEGIN stop RAID devices before partitioning ###
-  if (@software_raid_devices) {
-    print MASTER_SCRIPT "# Pull /etc/raidtab over to autoinstall client\n";
-    print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::\$IMAGENAME/etc/raidtab /etc/raidtab || shellout\n";
-    print MASTER_SCRIPT "\n";
-    print MASTER_SCRIPT "# get software RAID utilities\n";
-    print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::tftpboot/systemimager/mkraid /tmp/ || shellout\n";
-    print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::tftpboot/systemimager/raidstart /tmp/ || shellout\n";
-    print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::tftpboot/systemimager/raidstop /tmp/ || shellout\n";
-    print MASTER_SCRIPT "\n";
-
-    print MASTER_SCRIPT << 'EOF';
-# Stop RAID devices before partitioning begins
-# Why did they get started in the first place?  So we can pull a local.cfg
-# file off a root mounted RAID system.
-RAID_DEVICES=`cat /proc/mdstat | grep ^md | mawk '{print "/dev/" $1}'`
-for RAID_DEVICE in ${RAID_DEVICES}
-do
-  echo "raidstop ${RAID_DEVICE}" && raidstop ${RAID_DEVICE}
-done
-
-EOF
-
-  }
-  ### END stop RAID devices before partitioning ###
+  _in_autoinstall_script_stop_RAID_devices_before_partitioning();
 
 
   ### BEGIN give a custom partitioning example ###
@@ -639,6 +665,7 @@ TYPE = static
 IPADDR = $IPADDR
 NETMASK = $NETMASK
 EOL
+
 EOF
 
 } elsif ($ip_assignment_method eq "static_dhcp") {
@@ -648,11 +675,13 @@ chroot /a/ systemconfigurator --configsi --stdin <<EOL || shellout
 DEVICE = eth0
 TYPE = dhcp
 EOL
+
 EOF
 
 } elsif ($ip_assignment_method eq "replicant") {
   print MASTER_SCRIPT << 'EOF';
 chroot /a/ systemconfigurator --runboot || shellout
+
 EOF
 
 } else { # aka elsif ($ip_assignment_method eq "dynamic_dhcp")
@@ -665,6 +694,7 @@ DOMAINNAME = $DOMAINNAME
 DEVICE = eth0
 TYPE = dhcp
 EOL
+
 EOF
 
 }  ### END System Configurator setup ###
@@ -714,3 +744,4 @@ EOF
 
 close(MASTER_SCRIPT);
 }
+
