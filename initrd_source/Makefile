@@ -49,6 +49,10 @@ LOCAL_BINARIES_STAGE1 := /sbin/dhclient-2.2.x /sbin/mke2fs /bin/ash /usr/bin/maw
 
 LOCAL_BINARIES_STAGE2 := $(LOCAL_BINARIES_STAGE1) /sbin/devfsd /sbin/discover /sbin/mkfs.jfs /sbin/mkfs.xfs /sbin/insmod /sbin/mkreiserfs /sbin/mkraid /sbin/modprobe /sbin/raidstart /sbin/raidstop /sbin/rmmod /sbin/sfdisk /usr/bin/host
 
+ifeq ($(ARCH),s390)
+	LOCAL_BINARIES_STAGE2 := $(LOCAL_BINARIES_STAGE1) /sbin/devfsd /sbin/discover /sbin/mkfs.jfs /sbin/insmod /sbin/mkreiserfs /sbin/modprobe /sbin/rmmod /usr/bin/host /sbin/fdasd /sbin/dasdfmt
+endif
+
 LOCAL_BINARIES_STAGE2_SSH := $(LOCAL_BINARIES_STAGE2) /usr/bin/ssh /usr/sbin/sshd /usr/bin/scp /usr/bin/ssh-keygen
 
 ###### END binaries that will be copied over from the local system #####
