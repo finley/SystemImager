@@ -52,7 +52,27 @@ sub client_info {
 
 sub listclients {
     my ($image) = @_;
-    
+    my @clients;
+    my $config = get_config();
+    my $scriptdir = $config->autoinstall_script_dir;
+    opendir(IN,$scriptdir) or (carp($!), return undef);
+    while(my $file = <IN>) {
+        if($image and (-d $config->default_image_dir . "/$image")) {
+            if(readlink("$scriptdir/$file") eq "$image.master") {
+                my $clientname = $file;
+                $clientname =~ s/\.sh//g;
+                push @clients, $clientname;
+            }
+        } else {
+            if(readlink("$scriptdir/$file") =~ /\.master$/) {
+                my $clientname = $file;
+                $clientname =~ s/\.sh//g;
+                push @clients, $clientname;
+            }
+        }
+    }
+    closedir(IN);
+    return @clients;
 }
 
 sub _client_exists_hosts {
@@ -171,6 +191,13 @@ sub removeclient {
     my ($name) = @_;
     return _removeclient_link($name) and _removeclient_hosts($name);
 }
+
+#########################################
+#
+#  TODO:
+#  _removeclients_host should have locking eventually
+#
+#########################################
 
 sub _removeclient_hosts {
     my ($name) = @_;
