@@ -14,6 +14,9 @@ AC_PROG_YACC
 AC_PROG_CC
 AC_PROG_CPP
 AC_PROG_LEX
+case $LEX in
+    :) SI_CHECK_FAIL(lex,flex,,You can't build many components without the flex parser);;
+esac
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
