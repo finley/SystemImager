@@ -74,7 +74,7 @@ Packager: dann frazier <dannf@dannf.org>
 Docdir: %{prefix}/share/doc
 URL: http://systemimager.org/
 Distribution: System Installation Suite
-Requires: perl
+Requires: perl, systemconfigurator
 AutoReqProv: no
 
 %description common
