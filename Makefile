@@ -80,6 +80,7 @@
 #
 # To do a 'standard-ssh' flavor, do a 'make WITH_SSH=1 all'
 # To include the ctcs test suite, and associated files, do a 'make WITH_CTCS=1 all'
+# To include the Intel e1000 module only Gig-E driver, 'make WITH_E1000=1 all'
 #
 
 DESTDIR =
@@ -353,13 +354,21 @@ install_boel_binaries_tarball:	$(BOEL_BINARIES_TARBALL)
 PHONY += boel_binaries_tarball
 boel_binaries_tarball:	$(BOEL_BINARIES_TARBALL)
 
-$(BOEL_BINARIES_TARBALL):	$(DISCOVER_BINARY) $(DISCOVER_DATA_FILES) \
-				$(MKDOSFS_BINARY) $(MKE2FS_BINARY) \
-				$(TUNE2FS_BINARY) $(PARTED_BINARY) \
-				$(MKJFS_BINARY) $(RAIDTOOLS_BINARIES) \
-				$(MKREISERFS_BINARY) $(BC_BINARY) \
-				$(SFDISK_BINARY) $(MKXFS_BINARY) \
-				$(OPENSSH_BINARIES) $(SRC_DIR)/modules_build-stamp
+$(BOEL_BINARIES_TARBALL):	$(DISCOVER_BINARY) \
+							$(DISCOVER_DATA_FILES) \
+							$(MKDOSFS_BINARY) \
+							$(MKE2FS_BINARY) \
+							$(TUNE2FS_BINARY) \
+							$(PARTED_BINARY) \
+							$(MKJFS_BINARY) \
+							$(RAIDTOOLS_BINARIES) \
+							$(MKREISERFS_BINARY) \
+							$(BC_BINARY) \
+							$(SFDISK_BINARY) \
+							$(MKXFS_BINARY) \
+							$(OPENSSH_BINARIES) \
+							$(CTCS_BINARY) \
+							$(SRC_DIR)/modules_build-stamp
 	#
 	# Put binaries in the boel_binaries_tarball...
 	#
@@ -402,8 +411,9 @@ endif
 	#
 ifdef WITH_CTCS
 	mkdir -p $(BOEL_BINARIES_DIR)/usr/src
-	tar -C $(BOEL_BINARIES_DIR)/usr/src -xvjf $(SRC_DIR)/$(LINUX_TARBALL)
-	tar -C $(BOEL_BINARIES_DIR)/usr/src -xvzf $(SRC_DIR)/$(CTCS_TARBALL)
+	cp -a $(LINUX_SRC)/ $(BOEL_BINARIES_DIR)/usr/src/linux/
+	$(MAKE) -sw -C $(BOEL_BINARIES_DIR)/usr/src/linux/ clean
+	cp -a $(SRC_DIR)/$(CTCS_DIR)/ $(BOEL_BINARIES_DIR)/usr/src/ctcs/
 	tar -cv $(CTCS_OTHER_FILES) | tar -C $(BOEL_BINARIES_DIR) -xv
 	cd /usr/include && h2ph -d $(BOEL_BINARIES_DIR)/usr/lib/perl/5.6.1 asm/*
 endif
