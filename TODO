@@ -147,8 +147,6 @@ o contemplate using khttpd or tux or similar to show autoinstall client status
 o command to put mac addresses/host names into 
   /etc/dhcpd.conf by using broadcast pings, the arp 
   table, and /etc/hosts or dns.
-o store certain parameters in /etc/systemimager/systemimager.conf as 
-  IMAGESDIRECTORY="/var/spool/systemimager/images"
 o section of HOWTO that helps Kickstart users transition to SystemImager.
 o redirect syslog messages from autoinstall clients to $imagserver
 o addclients -- re-cycle through each question if answer is ""
@@ -489,7 +487,6 @@ o ability to adapt to the hardware
 
 Miscellaneous and Possibilities
 -------------------------------
-o /etc/systemimager/systemimager.conf file to hold things like domain name, nis domain, etc.
 o support for imaging dual boot systems (Linux/Windows with FAT/HPFS/NTFS)
   o see mondo (available on freshmeat)
 o makedhcpserver -- autodiscover and calculate more information 

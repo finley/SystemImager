@@ -22,7 +22,7 @@ my $config = AppConfig->new(
 			    'autoinstall_kernel' => { ARGCOUNT => 1 },
 			    'autoinstall_initrd' => { ARGCOUNT => 1 }
 			    );
-$config->file('/etc/systemimager/config');
+$config->file('/etc/systemimager/systemimager.conf');
 
 my $autoinstalldir = $config->autoinstalldir();
 my $autoinstall_kernel = $config->autoinstall_kernel();
