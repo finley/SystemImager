@@ -4,6 +4,24 @@
 # This file: CHANGE.LOG
 #
 
+VA SystemImager-1.3 2000.10.04
+- prepareclient -- Added the -n or -no-rsyncd option.  This allows
+                   you to run prepareclient from a chrooted image
+                   and then run getimage with the -s option to
+                   update your master autoinstall script.
+- autoinstall media -- Added support for software RAID.
+- getimage -- Added support for software RAID.
+- getimage -- Fixed a bug where filesystem creation and mounting was 
+              done based on the order of entries in the fstab file.
+              If /boot came before /, for example, then the resultant
+              autoinstall script would unsuccessfully try to mount 
+              /boot first.  Mount points are now sorted.  Thanks to
+              Dale Harris <rodmur@valinux.com> for finding this one.
+- getimage -- Fixed a bug where fstab files containing tabs or with
+              spaces at the beginning of a line might not be parsed
+              properly.  This could potentially result in an 
+              improperly created autoinstall script.
+
 VA SystemImager-1.2 2000.09.25
 - makedist -- Only used by me really (Brian).  Now automatically sets the
               version number in each of the appropriate files.

@@ -3,8 +3,11 @@
 #
 # This file is: FAQ-HOWTO
 #
-# Current version as of the writing of this document: 1.2
+# Current version as of the writing of this document: 1.3.0
 #                                           revision: 0
+#
+# See http://systemimager.org/ for the most recent version of this document.
+# It may be updated between releases.
 #
 # Please also see the current abstract.  You can find a link to it
 # from http://systemimager.org/.
@@ -12,6 +15,7 @@
 #   Others who have contributed to this document (in alphabetical order):
 #     Paonia Ezrine <paonia@home.welcomehome.org>
 #     Ari Jort <ajort@valinux.com>
+#     Jason R. Mastaler <jasonrm@lanl.gov>
 #
 
 
@@ -784,6 +788,33 @@ Here is a summary of the actions taken with different autoinstall media:
 
 
 --------------------------------------------------------------------------------
+Question:  What's up with the three part version number?
+--------------------------------------------------------------------------------
+
+Answer:
+
+Basically the same as the Linux kernel.  So for version X.Y.Z:
+
+ X = major architectural change
+ Y = new feature release
+ Z = bug fix release
+
+--------------------------------------------------------------------------------
+Question:  Would it be wise to attempt more than one image-pull at the same
+           time?
+--------------------------------------------------------------------------------
+
+Answer:
+
+Sure, if your network has the capacity, and your imageserver has
+enough memory and CPU to handle the multiple rsync's.  I've done
+40+ simultaneous auto-installs on a number of occasions from the
+same server and haven't had any problems.
+
+ -Jason R. Mastaler <jasonrm@lanl.gov>
+
+
+--------------------------------------------------------------------------------
 References
 --------------------------------------------------------------------------------
 
@@ -830,6 +861,17 @@ References
   Questions yet to be answered -- please send more!
 --------------------------------------------------------------------------------
 
+- My master autoinstall scripts from an older version of SystemImager don't 
+  work with the newer version of SystemImager.  (Version information is included
+  in the headers of master autoinstall scripts as of v1.3.)  How do I update my 
+  master autoinstall scripts without a master client?
+
+  cd $image_dir       #(usually /var/spool/systemimager/images/$image)
+  chroot .
+  prepareclient -n    #(-n for no rsync daemon)
+  exit
+  getimage -s localhost -image imagename
+
 
 -  How does the -autoinstall option to updateclient work?
 
@@ -863,6 +905,15 @@ assume names and locations can all be altered.
 
 But, overall point, I needed to run the pxe daemon to get things working.
 
--jeremy
+Jeremy Hansen <jeremy@xxedgexx.com>
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Here's another for the FAQ:
+With our Intel L440GX+ systems, a BIOS update to the latest version
+(v. 13.0) was necessary before pxe netbooting would work.  The symptom
+was that the DHCP negotiation would work, but TFTP wouldn't.  The
+client would make a TFTP connection to the imageserver and then fail
+with "TFTP open timeout".  Flashing the BIOS fixed this.
 
+--
+Jason R. Mastaler <jasonrm@lanl.gov>
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>

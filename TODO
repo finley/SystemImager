@@ -10,12 +10,14 @@
 
 In Progress
 -----------
-- <brian@thefinleys.com> - Wes Smith's patches
+
+Version 1.4.0 specific:
+- <brian@thefinleys.com> - Wes Smith's distribution specific patches
 - <brian@thefinleys.com> - support for LABEL= format in /etc/fstab
 - <brian@thefinleys.com> - fix network booting
 
+Other stuff:
 - <brian@thefinleys.com> - update the FAQ-HOWTO (maybe after release? yes.)
-
 - <brian@thefinleys.com> - put exclude/include stuff on imageserver by image
 - <brian@thefinleys.com> - autoinstall client to cycle through eth interfaces
                            for N in 0 1 2 3 4 5 6 7 8 9; do
@@ -24,9 +26,6 @@ In Progress
                            fi
 - <brian@thefinleys.com> - add -exclude option to getimage
 - <brian@thefinleys.com> - incorporate ssh
-- <brian@thefinleys.com> - mount floppy or hard drive -o ro during autoinstall init
-
-- <wessmith@engr.sgi.com> - Modify getimage to allow for alternate image directory prefix.
 
 - <gpratt@valinux.com> - Docbookization of the FAQ-HOWTO
 
@@ -36,8 +35,6 @@ In Progress
 
 - Chris Black <cblack@mokey.com> - hack dhclient to allow for imageserver specification via dhcp
 
-Assigned and waiting to be done
-----------------------------------
 - Ian McLeod <ian@valinux.com> - multicast install -- working on mftp (multicast ftp) 
   as a drop in alternative for rsync.
 - Roland Dreier <roland@valinux.com> -- working on the multicast library that Ian's utility will be based on.
@@ -46,6 +43,12 @@ Assigned and waiting to be done
 - <brian@thefinleys.com> - getimage -- eject option
 - <brian@thefinleys.com> - makeautoinstalldiskette -- consider adding config file options?
 - <brian@thefinleys.com> - updateclient -autoinstall -- consider adding config file options?
+- <brian@thefinleys.com> - consider running rsync as a daemon from an init script:
+  ``nowait'' specifies the maximum number of server instances that may
+  be spawned from inetd within an interval of 60 seconds.  The default
+  is 40.
+
+
 
 Other Requests
 ------------
@@ -57,8 +60,6 @@ Other Requests
 Bug list
 --------
 - Bugs? ;)
-- There is, however, a bug in the tftp-hpa tftp daemon.
-- Bug in rsync 2.4.4 (and prior I presume) where it does not return the expected exit status when it fails to write a file. 
 
 Other stuff
 -----------

@@ -1,5 +1,5 @@
 %define name     va-systemimager
-%define ver      1.2
+%define ver      1.3.0
 %define rel      1
 %define prefix   /usr
 
@@ -83,6 +83,8 @@ cd /usr/doc/va-systemimager-%{ver}/ && ./afterburner -q -n
 
 /tftpboot/systemimager/grep
 /tftpboot/systemimager/mkraid
+/tftpboot/systemimager/raidstart
+/tftpboot/systemimager/raidstop
 /tftpboot/systemimager/mkreiserfs
 /tftpboot/systemimager/prepareclient
 /tftpboot/systemimager/sfdisk
