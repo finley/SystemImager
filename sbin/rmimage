@@ -17,6 +17,26 @@ $get_help = "         Try \"$program_name -help\" for more options.";
 use Getopt::Long;
 use File::Copy;
 use File::Path;
+use AppConfig;
+
+### BEGIN parse the config file ###
+
+my $config = AppConfig->new(
+			    'autoinstalldir' => { ARGCOUNT => 1 },
+			    'default_imagedir' => { ARGCOUNT => 1 },
+			    'rsyncd_conf' => { ARGCOUNT => 1 },
+			    'autoinstall_kernel' => { ARGCOUNT => 1 },
+			    'autoinstall_initrd' => { ARGCOUNT => 1 }
+			    );
+$config->file('/etc/systemimager/config');
+
+my $autoinstalldir = $config->autoinstalldir();
+my $rsyncd_conf = $config->rsyncd_conf();
+
+if (!$autoinstalldir) { die "AUTOINSTALLDIR not defined in the config file."; }
+if (!$rsyncd_conf) { die "RSYNCD_CONF not defined in the config file."; }
+
+### END parse the config file ###
 
 ### BEGIN functions ###
 sub trim {
@@ -91,8 +111,8 @@ unless($image) { die "\n$program_name: Must specify IMAGE.\n$get_help\n\n"; }
 # be sure program is run by root
 check_if_root();
 
-# get full path to image from /etc/rsyncd.conf
-$file="/etc/rsyncd.conf";
+# get full path to image from $rsyncd_conf
+$file=$rsyncd_conf;
 open (FILE, "<$file") or die "FATAL: Couldn't open $file for reading!\n";
   while (<FILE>) {
     if (/^\s*path\s*=.*$image/) { 
@@ -104,7 +124,7 @@ open (FILE, "<$file") or die "FATAL: Couldn't open $file for reading!\n";
 close FILE;
 
 unless(($imagedir) or ($force)) { 
-  print "FATAL: Can't get path to image $image from /etc/rsyncd.conf!\n";
+  print "FATAL: Can't get path to image $image from $rsyncd_conf!\n";
   die   "       Nothing has been done.\n";
 }
 
@@ -119,7 +139,7 @@ if($force) {
 
 # remove master autoinstall script
 if($verbose) {print "  Removing master autoinstall script $image.master.\n";}
-$file="/tftpboot/systemimager/$image.master";
+$file="$autoinstalldir/systemimager/$image.master";
 if($force) {
   if($file) { unlink($file); }
 } else {
@@ -128,12 +148,12 @@ if($force) {
 
 # remove soft links
 if($verbose) {print "  Removing softlinks that point to $image.master.\n";}
-$cmd="cd /tftpboot/systemimager; find . -lname $image.master -exec rm -f \\{\\} \\;";
+$cmd="cd $autoinstalldir/systemimager; find . -lname $image.master -exec rm -f \\{\\} \\;";
 system($cmd);
 if($? != 0) { die "FATAL: couldn't remove softlinks that point to $image.master!"; }
 
-### BEGIN Remove entries in /etc/rsyncd.conf ###
-$file="/etc/rsyncd.conf";
+### BEGIN Remove entries in $rsyncd_conf ###
+$file=$rsyncd_conf;
 if($verbose) {print "  Removing entries from $file.\n";}
 open (FILE, "<$file") or die "FATAL: Couldn't open $file for reading!\n";
 
@@ -155,6 +175,6 @@ close FILE or die "FATAL: Can't close $file: $!";
 
 move($file, "$file.orig") or die "FATAL: Can't move $file to $file.orig: $!";
 move($tmp_file, $file) or die "FATAL: Can't move $tmp_file to $file: $!";
-### END Remove entries in /etc/rsyncd.conf ###
+### END Remove entries in $rsyncd_conf ###
 
 exit 0;

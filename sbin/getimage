@@ -33,6 +33,28 @@ use lib "/var/lib/systemimager/perl";
 use SystemImager::Server;
 use SystemImager::Common;
 use Getopt::Long;
+use AppConfig;
+
+### BEGIN parse the config file ###
+
+my $config = AppConfig->new(
+			    'autoinstalldir' => { ARGCOUNT => 1 },
+			    'default_imagedir' => { ARGCOUNT => 1 },
+			    'rsyncd_conf' => { ARGCOUNT => 1 },
+			    'autoinstall_kernel' => { ARGCOUNT => 1 },
+			    'autoinstall_initrd' => { ARGCOUNT => 1 }
+			    );
+$config->file('/etc/systemimager/config');
+
+my $autoinstalldir = $config->autoinstalldir();
+my $rsyncd_conf = $config->rsyncd_conf();
+my $default_imagedir = $config->default_imagedir();
+
+if (!$autoinstalldir) { die "AUTOINSTALLDIR not defined in the config file."; }
+if (!$rsyncd_conf) { die "RSYNCD_CONF not defined in the config file."; }
+if (!$default_imagedir) { die "DEFAULT_IMAGEDIR not defined in the config file."; }
+
+### END parse the config file
 
 ### BEGIN Subroutines ###
 
@@ -171,15 +193,13 @@ $exclude = "";
 $exclude_file = "";
 $update_script = "";
 $post_install = "beep"; # the default
-$rsyncd_conf = "/etc/rsyncd.conf";
-$imagedir_prefix =  "/var/spool/systemimager/images";
 
 ### BEGIN evaluate options ###
 GetOptions( 
     "golden-client=s" => \$golden_client,
     "server=s" => \$imageserver,
     "image=s" => \$image,
-    "directory=s" => \$imagedir_prefix,
+    "directory=s" => \$default_imagedir,
     "ip-assignment=s" => \$ip_assignment_method,
     "exclude=s" => \$exclude,
     "exclude-file=s" => \$exclude_file,
@@ -232,8 +252,8 @@ if($image){
   }
 }
 
-# be sure $imagedir_prefix is an absolute path starting with /
-unless ($imagedir_prefix =~ /^\//) { 
+# be sure $default_imagedir is an absolute path starting with /
+unless ($default_imagedir =~ /^\//) { 
   die "\n$program_name: -directory must be an absolute path starting with \"/\".\n$get_help\n\n";
 }
 
@@ -284,9 +304,9 @@ if ($exclude_file) {
 check_if_root();
 
 # fill in variables based on options passed
-$master_script = "/tftpboot/systemimager/$image.master";
+$master_script = $autoinstalldir . "/systemimager/$image.master";
 $final_exclude_file = "/tmp/.exclude.$image";
-$imagedir = "$imagedir_prefix/$image";
+$imagedir = "$default_imagedir/$image";
 
 $warning =  <<"EOF";
 This program will get the \"$image\" system image from \"$source_host\"
@@ -310,8 +330,8 @@ if (!$quiet) {
     print "\n";
 }
 
-if (! -d "$imagedir_prefix")  {
-  mkdir("$imagedir_prefix", 0750) or die "$program_name: Can't make directory $imagedir_prefix\n";
+if (! -d "$default_imagedir")  {
+  mkdir("$default_imagedir", 0750) or die "$program_name: Can't make directory $default_imagedir\n";
 }
 
 if (-d "$imagedir") {
@@ -511,7 +531,7 @@ close(RSYNCD_CONF);
 
 
 ### BEGIN Overwrite $image.master? ###
-if( (!$quiet) and (!$update_script) and (-e "/tftpboot/systemimager/$image.master") ) {
+if( (!$quiet) and (!$update_script) and (-e $autoinstalldir . "/systemimager/$image.master") ) {
     system("clear");
     print "Update Autoinstall Script?\n";
     print "--------------------------\n\n";
@@ -528,7 +548,7 @@ if( (!$quiet) and (!$update_script) and (-e "/tftpboot/systemimager/$image.maste
 }
 
 # If it just ain't there yet, make it and don't even ask about it.
-elsif(! -e "/tftpboot/systemimager/$image.master") {
+elsif(! -e $autoinstalldir . "/systemimager/$image.master") {
     $update_script="yes";
 }
 
@@ -614,7 +634,7 @@ elsif($ip_assignment_method == "4") { $ip_assignment_method = "replicant"   ; }
 }
 ### END IP Assignment Method ###
 
-### BEGIN create a fresh /tftpboot/systemimager/$image.master ###
+### BEGIN create a fresh $autoinstalldir/systemimager/$image.master ###
 open (MASTER_SCRIPT, ">$master_script") || die "$program_name: Can't open $master_script for writing\n";
 
 # add standard header stuff
@@ -1313,7 +1333,7 @@ EOF
 ### END end of autoinstall options ###
 
 close(MASTER_SCRIPT);
-### END create a fresh /tftpboot/systemimager/$image.master ###
+### END create a fresh $autoinstalldir/systemimager/$image.master ###
 
 # prompt to run makedhcpstatic after autoinstalling clients if using static_dhcp
 if((!$quiet) and ($ip_assignment_method eq "static_dhcp")) {

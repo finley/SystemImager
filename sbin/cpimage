@@ -17,6 +17,30 @@ $get_help = "         Try \"$program_name -help\" for more options.";
 use Getopt::Long;
 use File::Copy;
 use File::Path;
+use AppConfig;
+
+### BEGIN parse the config file ###
+
+my $config = AppConfig->new(
+			    'autoinstalldir' => { ARGCOUNT => 1 },
+			    'default_imagedir' => { ARGCOUNT => 1 },
+			    'rsyncd_conf' => { ARGCOUNT => 1 },
+			    'autoinstall_kernel' => { ARGCOUNT => 1 },
+			    'autoinstall_initrd' => { ARGCOUNT => 1 }
+			    );
+$config->file('/etc/systemimager/config');
+
+my $autoinstalldir = $config->autoinstalldir();
+my $rsyncd_conf = $config->rsyncd_conf();
+my $default_imagedir = $config->default_imagedir();
+
+if (!$autoinstalldir) { die "AUTOINSTALLDIR not defined in the config file."; }
+if (!$rsyncd_conf) { die "RSYNCD_CONF not defined in the config file."; }
+if (!$default_imagedir) {
+    die "DEFAULT_IMAGEDIR not defined in the config file.";
+}
+
+### END parse the config file ###
 
 ### BEGIN functions ###
 sub trim {
@@ -116,7 +140,7 @@ check_if_root();
 
 unless($server) { $server="127.0.0.1"; }
 
-unless($destination_path) { $destination_path = "/var/spool/systemimager/images"; }
+unless($destination_path) { $destination_path = $default_imagedir; }
 
 # remove any trailing slash
 $destination_path =~ s/\/$//;
@@ -141,7 +165,7 @@ if(-e $file) {
 }
 
 # check for existence of destination master autoinstall script
-$file="/tftpboot/systemimager/$destination_image.master";
+$file=$autoinstalldir . "/systemimager/$destination_image.master";
 if(-e $file) {
   if($force) {
     unlink($file) or die "FATAL: Can't remove $file!\n";
@@ -156,8 +180,8 @@ $cmd="rsync -a --delete $source $destination";
 system($cmd);
   if($? != 0) { die "FATAL: Failed to copy $source to $destination.\n"; }
 
-### BEGIN Change entries in /etc/rsyncd.conf ###
-$file="/etc/rsyncd.conf";
+### BEGIN Change entries in $rsyncd_conf ###
+$file=$rsyncd_conf;
 if($verbose) {print "  Updating entries in $file.\n";}
 open (FILE, "<$file") or die "FATAL: Couldn't open $file for reading!\n";
 
@@ -181,13 +205,13 @@ close FILE or die "FATAL: Can't close $file: $!";
 
 move($file, "$file.orig") or die "FATAL: Can't move $file to $file.orig: $!";
 move($tmp_file, $file) or die "FATAL: Can't move $tmp_file to $file: $!";
-### END Change entries in /etc/rsyncd.conf ###
+### END Change entries in $rsyncd_conf ###
 
 ### BEGIN Change entries in master autoinstall script ###
 # copy master autoinstall script
 if($verbose) {print "  Copying $source_image.master to $destination_image.master.\n";}
 $source_script="rsync://$server/tftpboot/systemimager/$source_image.master";
-$destination_script="/tftpboot/systemimager/$destination_image.master";
+$destination_script=$autoinstalldir . "/systemimager/$destination_image.master";
 $cmd="rsync -a $source_script $destination_script";
 system($cmd);
   if($? != 0) { die "FATAL: Failed to copy $source_script to $destination_script.\n"; }
@@ -207,6 +231,6 @@ close TMP_FILE or die "FATAL: Can't close $tmp_file: $!";
 close FILE or die "FATAL: Can't close $file: $!";
 
 move($tmp_file, $file) or die "FATAL: Can't move $tmp_file to $file: $!";
-### END Change entries in /etc/rsyncd.conf ###
+### END Change entries in $rsyncd_conf ###
 
 exit 0;

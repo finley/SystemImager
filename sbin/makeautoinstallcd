@@ -11,6 +11,32 @@
 #
 
 use Getopt::Long;
+use AppConfig;
+
+### BEGIN parse the config file ###
+
+my $config = AppConfig->new(
+			    'autoinstalldir' => { ARGCOUNT => 1 },
+			    'default_imagedir' => { ARGCOUNT => 1 },
+			    'rsyncd_conf' => { ARGCOUNT => 1 },
+			    'autoinstall_kernel' => { ARGCOUNT => 1 },
+			    'autoinstall_initrd' => { ARGCOUNT => 1 }
+			    );
+$config->file('/etc/systemimager/config');
+
+my $autoinstalldir = $config->autoinstalldir();
+my $autoinstall_kernel = $config->autoinstall_kernel();
+my $autoinstall_initrd = $config->autoinstall_initrd();
+
+if (!$autoinstalldir) { die "AUTOINSTALLDIR not defined in the config file."; }
+if (!$autoinstall_kernel) {
+    die "AUTOINSTALL_KERNEL not defined in the config file.";
+}
+if (!$autoinstall_initrd) {
+    die "AUTOINSTALL_INITRD not defined in the config file.";
+}
+
+### END parse the config file ###
 
 # set shell PATH for system() calls 
 $ENV{PATH} = "/usr/sbin:/sbin:/usr/bin:/bin";
@@ -96,7 +122,7 @@ if($? != 0) {
 
 # Verify that the kernel and initrd.gz actually exist.
 # Suggested by Greg Pratt <gpratt@valinux.com>.
-@files = ( "/tftpboot/kernel", "/tftpboot/initrd.gz");
+@files = ( $autoinstall_kernel, $autoinstall_initrd );
 foreach my $file ( @files ) {
   unless ( -e "$file" ) {
     die "FATAL: I can't find $file!";
@@ -164,7 +190,7 @@ system("$command");
 if($? != 0) { die "FATAL: Couldn't mount temporary image in loopback mode!\n"; }
 
 # copy stuff to image
-foreach $file ("/tftpboot/initrd.gz", "/tftpboot/kernel", "/tftpboot/pxelinux.cfg/syslinux.cfg", "/tftpboot/pxelinux.cfg/message.txt") {
+foreach $file ( $autoinstall_initrd, $autoinstall_kernel, "$autoinstalldir/pxelinux.cfg/syslinux.cfg", "$autoinstalldir/pxelinux.cfg/message.txt") {
     unless ($quiet) {print "Copying $file to temporary image...\n";}
     $command = "cp -f $file $mount_dir";
     system("$command");

@@ -11,6 +11,32 @@
 #
 
 use Getopt::Long;
+use AppConfig;
+
+### BEGIN parse the config file ###
+
+my $config = AppConfig->new(
+			    'autoinstalldir' => { ARGCOUNT => 1 },
+			    'default_imagedir' => { ARGCOUNT => 1 },
+			    'rsyncd_conf' => { ARGCOUNT => 1 },
+			    'autoinstall_kernel' => { ARGCOUNT => 1 },
+			    'autoinstall_initrd' => { ARGCOUNT => 1 }
+			    );
+$config->file('/etc/systemimager/config');
+
+my $autoinstalldir = $config->autoinstalldir();
+my $autoinstall_kernel = $config->autoinstall_kernel();
+my $autoinstall_initrd = $config->autoinstall_initrd();
+
+if (!$autoinstalldir) { die "AUTOINSTALLDIR not defined in the config file."; }
+if (!$autoinstall_kernel) {
+    die "AUTOINSTALL_KERNEL not defined in the config file.";
+}
+if (!$autoinstall_initrd) {
+    die "AUTOINSTALL_INITRD not defined in the config file.";
+}
+
+### END parse the config file ###
 
 # set shell PATH for system() calls 
 $ENV{PATH} = "/usr/sbin:/sbin:/usr/bin:/bin";
@@ -124,7 +150,7 @@ GetOptions(
             "help" => \$help,
             "version" => \$version,
             "floppy=s" => \$floppy_device_prefix,
-            "config=s" => \$config,
+            "config=s" => \$local_config,
             "ssh-key=s" => \$ssh_key,
             "quiet" => \$quiet,
 	    "out-file=s" => \$file
@@ -170,15 +196,15 @@ if (! $file) {
 #
 # array of standard files
 @files = ( 
-  "/tftpboot/initrd.gz",
-  "/tftpboot/kernel", 
-  "/tftpboot/pxelinux.cfg/message.txt",
-  "/tftpboot/pxelinux.cfg/syslinux.cfg"
+  $autoinstall_initrd,
+  $autoinstall_kernel, 
+  "$autoinstalldir/pxelinux.cfg/message.txt",
+  "$autoinstalldir/pxelinux.cfg/syslinux.cfg"
 );
 
 # Verify that the config file, if specified, exists
-if($config){
-  push @files, $config;
+if($local_config){
+  push @files, $local_config;
 }
 
 # Verify that the config file, if specified, exists
