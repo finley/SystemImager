@@ -27,15 +27,15 @@
   <refsynopsisdiv>
     <cmdsynopsis>
       <command>mkautoinstallscript</command>
-      <arg><option>-help</option></arg>
-      <arg><option>-version</option></arg>
-      <arg><option>-quiet</option></arg>
-      <arg><option>-no-listing</option></arg>
-      <arg><option>-image <replaceable>IMAGENAME</replaceable></option></arg>
-      <arg><option>-force <replaceable>[YES|NO]</replaceable></option></arg>
-      <arg><option>-config-file <replaceable>FILE</replaceable></option></arg>
-      <arg><option>-ip-assignment <replaceable>METHOD</replaceable></option></arg>
-      <arg><option>-post-install <replaceable>ACTION</replaceable></option></arg>
+      <arg><option>--help</option></arg>
+      <arg><option>--version</option></arg>
+      <arg><option>--quiet</option></arg>
+      <arg><option>--no-listing</option></arg>
+      <arg><option>--image <replaceable>IMAGENAME</replaceable></option></arg>
+      <arg><option>--force <replaceable>[YES|NO]</replaceable></option></arg>
+      <arg><option>--config-file <replaceable>FILE</replaceable></option></arg>
+      <arg><option>--ip-assignment <replaceable>METHOD</replaceable></option></arg>
+      <arg><option>--post-install <replaceable>ACTION</replaceable></option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
   <refsect1>
@@ -56,17 +56,17 @@
 
     <variablelist>
       <varlistentry>
-	<term><option>-help</option></term>
+	<term><option>--help</option></term>
 	<listitem><para>Show summary of options</para></listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-version</option></term>
+	<term><option>--version</option></term>
 	<listitem>
 	  <para>Display version and copyright information.</para>
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-quiet</option></term>
+	<term><option>--quiet</option></term>
 	<listitem>
 	  <para>
 	    Don't print any output, just provide an appropriate exit code.
@@ -74,7 +74,7 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-no-listing</option></term>
+        <term><option>--no-listing</option></term>
         <listitem>
           <para>
 	  Don't show each filename as it is copied over during
@@ -85,7 +85,7 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-image <replaceable>IMAGENAME</replaceable></option></term>
+	<term><option>--image <replaceable>IMAGENAME</replaceable></option></term>
 	<listitem>
 	  <para>
 	    Where IMAGENAME is the name of the image for which you want to
@@ -94,7 +94,7 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-force <replaceable>[YES|NO]</replaceable></option></term>
+	<term><option>--force <replaceable>[YES|NO]</replaceable></option></term>
 	<listitem>
 	  <para>
 	    Update the $image.master script?  Defaults to NO if -quiet.  If
@@ -103,7 +103,7 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-config-file <replaceable>FILE</replaceable></option></term>
+	<term><option>--config-file <replaceable>FILE</replaceable></option></term>
 	<listitem>
 	  <para>
             Use FILE to get autoinstallscript configuration information.
@@ -119,7 +119,7 @@
     </para>
     <variablelist>
       <varlistentry>
-        <term><option>-ip-assignment <replaceable>METHOD</replaceable></option></term>
+        <term><option>--ip-assignment <replaceable>METHOD</replaceable></option></term>
         <listitem>
           <para>
 	    Where METHOD can be:
@@ -164,7 +164,7 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-post-install <replaceable>ACTION</replaceable></option></term>
+        <term><option>--post-install <replaceable>ACTION</replaceable></option></term>
         <listitem>
           <para>ACTION can be:</para>
 	  <itemizedlist>
