@@ -1,8 +1,7 @@
 #http://alpaca.mcs.anl.gov/debian/pool/main/t/tar/tar_1.13.25.orig.tar.gz
-TAR_VERSION := 1.13
-TAR_PATCH_LEVEL := 25
+TAR_VERSION := 1.13.25
 TAR_DIR := tar-$(TAR_VERSION)
-TAR_TARBALL := tar_$(TAR_VERSION).$(TAR_PATCH_LEVEL).orig.tar.gz
+TAR_TARBALL := tar_$(TAR_VERSION).orig.tar.gz
 TAR_URL := http://alpaca.mcs.anl.gov/debian/pool/main/t/tar/$(TAR_TARBALL)
 TAR_BINARY := $(SRC_DIR)/$(TAR_DIR)/src/tar
 TAR_PATCHES = $(shell ls $(PATCH_DIR)/tar.*.patch 2>/dev/null | sort)
@@ -12,7 +11,7 @@ ALL_SOURCE += $(SRC_DIR)/$(TAR_TARBALL)
 PHONY += tar
 tar:	$(TAR_BINARY)
 $(TAR_BINARY):	$(SRC_DIR)/$(TAR_TARBALL)
-	[ -d $(SRC_DIR)/$(TAR_DIR) ] && rm -fr $(SRC_DIR)/$(TAR_DIR)
+	rm -fr $(SRC_DIR)/$(TAR_DIR)
 	( cd $(SRC_DIR) && tar -xvzf $(TAR_TARBALL) )
 	cd $(SRC_DIR)/$(TAR_DIR) && cat $(TAR_PATCHES) < /dev/null | patch -p1
 	( cd $(SRC_DIR)/$(TAR_DIR) && ./configure )
