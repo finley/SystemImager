@@ -27,12 +27,16 @@
 #
 #   o web gui pages:            /usr/share/systemimager/web-gui/
 #
-#   o autoinstall kernels:      /usr/share/systemimager/`arch`/boot/
-#   o initial ram disks:        /usr/share/systemimager/`arch`/boot/
-#   o autoinstall binaries:     /usr/share/systemimager/`arch`/boot/
+#   o autoinstall kernels:      /usr/share/systemimager/`arch`-boot/
+#   o initial ram disks:        /usr/share/systemimager/`arch`-boot/
+#   o autoinstall binaries:     /usr/share/systemimager/`arch`-boot/
 #
-#   o docs:                     /usr/share/doc/systemimager-<version>
-#   o perl libraries:           /usr/share/systemimager/perl/
+#   o perl libraries:           /usr/lib/systemimager/perl/
+#
+#   o docs:                     Use distribution appropriate location.
+#                               Defaults to /usr/share/doc/systemimager/ 
+#                               for installs from tarball or source.
+#
 #   o man pages:                /usr/share/man/man8/
 #
 #   o log files:                /var/log/systemimager/
@@ -40,15 +44,21 @@
 #   o configuration files:      /etc/systemimager/
 #   o rsyncd.conf:              /etc/systemimager/rsyncd.conf
 #   o rsyncd init script:       /etc/init.d/systemimager
-#
+#   
 #   o tftp files will be copied to the appropriate destination (as determined
 #     by the local SysAdmin when running "mkbootserver".
 #
-#   o user visible commands:    /usr/bin
+#   o user visible binaries:    /usr/local/bin (default)
 #     (lsimage, mkautoinstalldiskette, mkautoinstallcd)
-#   o sysadmin commands:        /usr/sbin
-#     (all other commands)
+#   o sysadmin binaries:        /usr/local/sbin (default)
+#     (all other binaries)
 #
+# Standards for pre-defined rsync modules:
+#   o scripts
+#   o <arch>-boot (Ie., i386-boot -- dynamically determine in rcS)
+#     (do an 
+#       ARCH=`uname -m | sed 's/i[3-6]86/i386/'`
+#     in the rcS script)
 
 
 DESTDIR = 
