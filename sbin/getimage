@@ -508,12 +508,13 @@ if($nisdomainname ne "") {
 
 if($ip_assignment_method eq "static") { print MASTER_SCRIPT << 'EOF';
 # Stuff for static IP addressing
+#
 # /etc/sysconfig/network
 echo HOSTNAME=$HOSTNAME >> /a/etc/sysconfig/network
 echo DOMAINNAME=$DOMAIN >> /a/etc/sysconfig/network
 echo GATEWAY=$GATEWAY >> /a/etc/sysconfig/network
 echo GATEWAYDEV=eth0 >> /a/etc/sysconfig/network
-
+#
 # /etc/sysconfig/network-scripts/ifcfg-eth0
 echo DEVICE=eth0 > /a/etc/sysconfig/network-scripts/ifcfg-eth0
 echo IPADDR=$IPADDR >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
@@ -525,8 +526,23 @@ echo BOOTPROTO=none >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
 
 EOF
 
+} elsif($ip_assignment_method eq "static_dhcp") { print MASTER_SCRIPT << 'EOF';
+# Stuff for IP addressing with static DHCP.  Once makedhcpstatic is run,
+# hostnames will be assigned by the dhcp server.  Until then, you will
+# see "(none)" as the hostname.
+#
+# /etc/sysconfig/network
+echo DEVICE=eth0 > /a/etc/sysconfig/network-scripts/ifcfg-eth0
+echo ONBOOT=yes >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
+echo BOOTPROTO=dhcp >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
+
+EOF
+
 } else { print MASTER_SCRIPT << 'EOF';
 # Stuff for IP addressing via DHCP
+#
+# /etc/sysconfig/network
+echo HOSTNAME=$HOSTNAME >> /a/etc/sysconfig/network
 echo DEVICE=eth0 > /a/etc/sysconfig/network-scripts/ifcfg-eth0
 echo ONBOOT=yes >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
 echo BOOTPROTO=dhcp >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
