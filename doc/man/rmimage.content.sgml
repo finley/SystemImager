@@ -40,7 +40,8 @@
       <command>rmimage</command> command.</para>
 
     <para>
-      <command>rmimage</command> makes a copy of a SystemImager image.
+      <command>rmimage</command> removes a SystemImager image from an
+      image server.
     </para>
 
   </refsect1>
@@ -70,8 +71,7 @@
 	<term><option>-force</option></term>
 	<listitem>
 	  <para>
-	    Don't ask for confirmation before overwriting the destination
-	    image or master autoinstall script (if they exist).
+	    Continue on error (default is to exit on error).
 	  </para>
 	</listitem>
       </varlistentry>
@@ -92,7 +92,7 @@
   <refsect1>
     <title>AUTHOR</title>
 
-    <para>This manual page was written by &dhusername; <&dhemail;> for
+    <para>This manual page was compiled by &dhusername; <&dhemail;> for
       the &debian; system (but may be used by others).</para>
 
     <!-- <para>Permission is granted to copy, distribute and/or modify

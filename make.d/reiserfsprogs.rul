@@ -1,0 +1,38 @@
+REISERFSPROGS_VERSION := 3.x.1b
+REISERFSPROGS_DIR := reiserfsprogs-$(REISERFSPROGS_VERSION)
+REISERFSPROGS_TARBALL := $(REISERFSPROGS_DIR).tar.gz
+REISERFSPROGS_URL := http://ftp.namesys.com/pub/reiserfsprogs/$(REISERFSPROGS_TARBALL)
+REISERFSPROGS_PATCH := $(PATCH_DIR)/reiserfsprogs.patch
+MKREISERFS_BINARY := $(SRC_DIR)/$(REISERFSPROGS_DIR)/mkreiserfs/mkreiserfs
+
+install_reiserfsprogs:	reiserfsprogs
+	mkdir -p $(TFTP_BIN_DEST)
+	$(SI_INSTALL) -m 755 \
+	  $(SRC_DIR)/$(REISERFSPROGS_DIR)/mkreiserfs/mkreiserfs $(TFTP_BIN_DEST)
+
+install_standard_reiserfsprogs:	reiserfsprogs
+	$(SI_INSTALL) -m 755 \
+	  $(SRC_DIR)/$(REISERFSPROGS_DIR)/mkreiserfs/mkreiserfs $(DESTDIR)
+
+reiserfsprogs:	$(MKREISERFS_BINARY)
+
+$(MKREISERFS_BINARY):	$(SRC_DIR)/$(REISERFSPROGS_TARBALL)
+	[ -d $(SRC_DIR)/$(REISERFSPROGS_DIR) ] || \
+	  ( cd $(SRC_DIR) && zcat $(REISERFSPROGS_TARBALL) | tar xv && \
+	    [ ! -f $(REISERFSPROGS_PATCH) ] || \
+	    ( cd $(REISERFSPROGS_DIR) && \
+	      patch -p1 < $(REISERFSPROGS_PATCH) ) )
+	( cd $(SRC_DIR)/$(REISERFSPROGS_DIR) && chmod +x ./configure && \
+	  CFLAGS="-O2 -Wall" ./configure )
+	$(MAKE) -C $(SRC_DIR)/$(REISERFSPROGS_DIR)
+
+$(SRC_DIR)/$(REISERFSPROGS_TARBALL):
+	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
+	( [  -a /usr/src/$(REISERFSPROGS_TARBALL) ] && \
+	  ln -s /usr/src/$(REISERFSPROGS_TARBALL) $(SRC_DIR) ) || \
+	( [ -d $(REISERFSPROGS_DIR) ] && tar -c $(REISERFSPROGS_DIR) | \
+	  gzip -9 > $(SRC_DIR)/$(REISERFSPROGS_TARBALL) ) || \
+	( cd $(SRC_DIR) && $(WGET) $(REISERFSPROGS_URL) )
+
+reiserfsprogs_clean:
+	rm -rf $(SRC_DIR)/$(REISERFSPROGS_DIR)

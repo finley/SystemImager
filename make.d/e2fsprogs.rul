@@ -1,0 +1,27 @@
+E2FSPROGS_VERSION := 1.23
+E2FSPROGS_DIR := e2fsprogs-$(E2FSPROGS_VERSION)
+E2FSPROGS_TARBALL := e2fsprogs-$(E2FSPROGS_VERSION).tar.gz
+E2FSPROGS_URL := http://download.sourceforge.net/e2fsprogs/$(E2FSPROGS_TARBALL)
+E2FSPROGS_PATCH := $(PATCH_DIR)/e2fsprogs.patch
+MKE2FS_BINARY := $(SRC_DIR)/$(E2FSPROGS_DIR)/misc/mke2fs 
+TUNE2FS_BINARY := $(SRC_DIR)/$(E2FSPROGS_DIR)/misc/tune2fs 
+
+# build  e2fsprogs binaries
+e2fsprogs:	$(MKE2FS_BINARY)
+
+$(MKE2FS_BINARY):	$(SRC_DIR)/$(E2FSPROGS_TARBALL)
+	[ -d $(SRC_DIR)/$(E2FSPROGS_DIR) ] || ( cd $(SRC_DIR) && tar -xvzf $(E2FSPROGS_TARBALL) )
+	( cd $(SRC_DIR)/$(E2FSPROGS_DIR) && chmod +x ./configure && ./configure )
+	$(MAKE) -C $(SRC_DIR)/$(E2FSPROGS_DIR)
+
+# download the e2fsprogs tarball
+$(SRC_DIR)/$(E2FSPROGS_TARBALL):
+	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
+	( [  -a /usr/src/$(E2FSPROGS_TARBALL) ] && \
+	  ln -s /usr/src/$(E2FSPROGS_TARBALL) $(SRC_DIR) ) || \
+	( [ -d $(E2FSPROGS_DIR) ] && tar -c $(E2FSPROGS_DIR) | \
+	  gzip -9 > $(SRC_DIR)/$(E2FSPROGS_TARBALL) ) || \
+	( cd $(SRC_DIR) && $(WGET) $(E2FSPROGS_URL) )
+
+e2fsprogs_clean:
+	rm -rf $(SRC_DIR)/$(E2FSPROGS_DIR)

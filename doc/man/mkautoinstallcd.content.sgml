@@ -29,7 +29,12 @@
       <command>mkautoinstallcd</command>
       <arg><option>-help</option></arg>
       <arg><option>-version</option></arg>
-      <arg><option>-out-file <replaceable>FILE</replaceable></option></arg>
+      <arg><option>-arch <replaceable>ARCH</replaceable></option></arg>
+      <arg><option>-out-file <replaceable>PATH</replaceable></option></arg>
+      <arg><option>-flavor <replaceable>FLAVOR</replaceable></option></arg>
+      <arg><option>-kernel <replaceable>PATH</replaceable></option></arg>
+      <arg><option>-initrd <replaceable>PATH</replaceable></option></arg>
+      <arg><option>-append <replaceable>STRING</replaceable></option></arg>
       <arg><option>-quiet</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -61,7 +66,17 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-out-file <replaceable>FILE</replaceable></option></term>
+        <term><option>-arch <replaceable>ARCH</replaceable></option></term>
+	<listitem>
+	  <para>
+	    Create a CD image for autoinstallclients of this architecture.
+	    Defaults to the architecture of the host on which
+	    <command>mkautoinstallcd</command> is being run.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-out-file <replaceable>PATH</replaceable></option></term>
 	<listitem>
 	  <para>
 	    Name of the file that will hold the resulting ISO image.  (Not to
@@ -70,10 +85,42 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
+	<term><option>-flavor <replaceable>FLAVOR</replaceable></option></term>
+	<listitem>
+	  <para>
+            The flavor of the boot package to use.  If this option is not
+            specified, you will be asked to choose a flavor from the available
+            list interactively.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-initrd <replaceable>PATH</replaceable></option></term>
+	<listitem>
+	  <para>
+	    Specify an alternate initial ramdisk to use.  This is rarely
+	    useful, but may be necessary in some cases (e.g. needing to add
+	    more special files in /dev).  See the SystemImager manual for
+	    instructions on creating a custom initial ramdisk.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-append <replaceable>STRING</replaceable></option></term>
+	<listitem>
+	  <para>
+	    This option allows you to pass options to the autoinstall kernel.
+	    For example, to tell the kernel to use ttyS3 as the serial
+	    console:
+	  </para>
+	  <para>-append "console=ttyS3"</para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
 	<term><option>-quiet</option></term>
 	<listitem>
 	  <para>
-	    Don't pring any output, just provide an appropriate exit code.
+	    Don't print any output, just provide an appropriate exit code.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -91,7 +138,7 @@
   <refsect1>
     <title>AUTHOR</title>
 
-    <para>This manual page was written by &dhusername; <&dhemail;> for
+    <para>This manual page was compiled by &dhusername; <&dhemail;> for
       the &debian; system (but may be used by others).</para>
 
     <!-- <para>Permission is granted to copy, distribute and/or modify

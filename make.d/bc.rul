@@ -1,0 +1,22 @@
+BC_VERSION := 1.06
+BC_DIR := bc-$(BC_VERSION)
+BC_TARBALL := bc-$(BC_VERSION).tar.gz
+BC_URL := http://systemimager.org/pub/bc/$(BC_TARBALL)
+BC_BINARY := $(SRC_DIR)/$(BC_DIR)/bc/bc
+
+bc:	$(BC_BINARY)
+$(BC_BINARY):	$(SRC_DIR)/$(BC_TARBALL)
+	[ -d $(SRC_DIR)/$(BC_DIR) ] || ( cd $(SRC_DIR) && tar -xvzf $(BC_TARBALL) )
+	( cd $(SRC_DIR)/$(BC_DIR) && ./configure )
+	$(MAKE) -C $(SRC_DIR)/$(BC_DIR)
+
+$(SRC_DIR)/$(BC_TARBALL):
+	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
+	( [  -a /usr/src/$(BC_TARBALL) ] && \
+	  ln -s /usr/src/$(BC_TARBALL) $(SRC_DIR) ) || \
+	( [ -d $(BC_DIR) ] && tar -c $(BC_DIR) | \
+	  gzip -9 > $(SRC_DIR)/$(BC_TARBALL) ) || \
+	( cd $(SRC_DIR) && $(WGET) $(BC_URL) )
+
+bc_clean:
+	rm -rf $(SRC_DIR)/$(BC_DIR)

@@ -1,241 +1,213 @@
-  <chapter id=Intro>
-    <title>Introduction to SystemImager</title>
-    <section>
-      <title>SystemImager Overview</title>
-      <para>
-	<application>SystemImager</application> is software that allows you to
-	install Linux to large numbers of similar machines relatively easy.
-	You can also use it for software distribution, configuration, and
-	operating system updates, in addition to using it to update from one
-	Linux release or version to another.
-	<application>SystemImager</application> can also be used for content
-	management on web servers.  
-      </para>
-      
-      <para>
-	You will find SystemImager most useful in environments where you have
-	large numbers of identical machines, including Internet server farms,
-	high performance clusters, computer labs, or corporate desktop
-	environments where all workstations have the same basic hardware
-	configuration.  For more background information on design goals and
-	product development, see "History of SystemImager".
-      </para>
-      
-      <example>
-	<title>A typical Cluster or Server Farm</title>
-	<mediaobject>
-	  <imageobject>
-	    <imagedata format="jpg" fileref="images/cluster.jpg">
-	  </imageobject>
-	  <imageobject>
-	    <imagedata format="eps" fileref="images/cluster.eps">
-	  </imageobject>
-	  <textobject>
-	    <phrase>
-	      A typical Cluster or Server Farm 
-	    </phrase>
-	  </textobject>
-	</mediaobject>
-      </example>
-    </section>
+<chapter id=Intro>
+  <title>Introduction to <Trademark>SystemImager</Trademark></title>
+  <section>
+    <title>SystemImager Overview</title>
+    <para>
+      <application>SystemImager</application>, a component of the
+      <application>System Installation Suite</application>, is software that allows you to
+      install Linux to large numbers of similar machines relatively easily.
+      You can also use it for software distribution, configuration, and
+      operating system updates, in addition to using it to update from one
+      Linux release or version to another.
+      <application>SystemImager</application> can also be used for content
+      management on web servers.  
+    </para>
     
+    <para>
+      You will find SystemImager most useful in environments where you have
+      large numbers of identical machines, including Internet server farms,
+      high performance clusters, computer labs, or corporate desktop
+      environments where all workstations have the same basic hardware
+      configuration.  For more background information on design goals and
+      product development, see "SystemImager Background."
+    </para>
+    
+    <example>
+      <title>A typical Cluster or Server Farm</title>
+      <mediaobject>
+	<imageobject>
+	  <imagedata format="jpg" fileref="images/cluster.jpg">
+	</imageobject>
+	<imageobject>
+	  <imagedata format="eps" fileref="images/cluster.eps">
+	</imageobject>
+	<textobject>
+	  <phrase>
+	    A typical Cluster or Server Farm 
+	    </phrase>
+	</textobject>
+      </mediaobject>
+    </example>
+  </section>
+  
+  <section>
+    <title>Who Should Use This Guide</title>
+    <para>
+      This guide is for system administrators who install and configure
+      systems	in a network environment.  Those who would benefit from using
+      SystemImager include:
+    </para>
+    <itemizedlist>
+      <listitem>
+	<para>
+	  Organizations that have Internet server farms
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Organizations that manage many workstations or servers
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Organizations doing super-computing/clustering with Linux
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Anyone who needs to maintain identical configurations on a large 
+	  number of machines
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Manufacturing organizations that must automate the software preload
+	  process for Linux based machines.
+	</para>
+    </itemizedlist>
+  </section>
+  <section>
+    <title>How SystemImager Works</title>
+    <para>
+      SystemImager allows you to retrieve an entire system image from a
+      golden client, which is a manually installed, customized machine, to
+      an image server, which is the machine that will hold and distribute
+      system images.  You can deploy the images to any number of client
+      systems from the image server.
+    </para>
+    <para>
+      After initial image deployment, you can update the client systems by
+      syncing them to an updated image on the image server.  Updates are fast
+      and efficient because only the modified parts of files are pulled to
+      the client.
+    </para>
     <section>
-      <title>Who Should Use This Guide</title>
+      <title>Supported Distributions</title>
       <para>
-	This guide is for system administrators who install and configure
-	systems	in a network environment.  Those who would benefit from using
-	SystemImager include:
+	<application>SystemImager</application> uses 
+	<ulink url="http://sourceforge.net/projects/systemconfig">
+	  <application>System Configurator</application> 
+	</ulink> to custom configure autoinstall clients for specific distributions.  
+	Through System Configurator, SystemImager supports all major Linux distributions 
+	and most others, including custom or in-house distributions.
+	Using "footprints," System Configurator works
+	with distributions based on their system configuration style rather than
+	needing to know the name of the distribution. To determine a system's footprint, System Configurator 
+	identifies the configuration files in use and associates that footprint with a configuration style.
+	It then correctly makes settings, such as hostname or IP address, without needing to know the 
+	name of the distribution.
       </para>
+      
+      <para>
+	Following is an incomplete list of distributions known to work with 
+	<application>SystemImager</application>.  If you are successfully 
+	using <application>SystemImager</application> with a distribution or 
+	version not listed here, please submit a
+	<ulink url="http://sourceforge.net/bugs/?group_id=259">
+	  bug report
+	</ulink>, 
+	so the distribution can be added to the list.  Though not a bug,
+	reporting the success here is the best way to communicate the
+	information.
+      </para>
+      
+      <table frame="all">
+	<title>Author Tested and Supported Distributions</title>
+	<tgroup cols="2">
+	  <colspec colname="column1">
+	    <colspec colname="column2">
+	      <spanspec namest="column2" nameend="column2" spanname="span-horiz" align="center">
+		<thead>
+		  <row>
+		    <entry>Distribution</entry>
+		    <entry spanname="span-horiz">Versions</entry>
+		  </row>
+		</thead>
+		<tbody>
+		  <row>
+		    <entry>Debian</entry>
+		    <entry>2.2 ('potato'), ('woody')</entry>
+		  </row>
+		  <row>
+		    <entry>RedHat</entry>
+		    <entry>7.2</entry>
+		  </row>
+		</tbody>
+	</tgroup>
+      </table>
+      
+      <para>
+	Linux-2.0.x based distributions are not supported at this time, nor
+	are there plans to add support for Linux 2.0.x based 
+	distributions.
+      </para>
+    </section>
+    <section>
+      <title>System Requirements</title>
       <itemizedlist>
 	<listitem>
 	  <para>
-	    Organizations that have Internet server farms
+	    Your image server must have enough disk space to hold the images
+	    to be installed on your client systems.
 	  </para>
 	</listitem>
 	<listitem>
 	  <para>
-	    Organizations that manage many workstations or servers
+	    All clients that will use the same image should have hardware
+	    that is as similar as possible.  Most importantly they should use
+	    the same chipset on the network device(s) and the same number and
+	    kind of hard drive(s) (e.g. IDE, SCSI, Mylex Hardware RAID, etc.)  The
+	    hard drives may be of different capacities, and disks may be
+	    larger with no problem and smaller within reason.
 	  </para>
 	</listitem>
 	<listitem>
 	  <para>
-	    Organizations that are doing super-computing/clustering with Linux
+	    For PXE installations, you need a compatible TFTP server
+	    running on the boot server, which is usually the same machine as
+	    the image/DHCP server. Debian provides this server in the
+	    tftpd-hpa package, and Red Hat 7.0 and later include this server
+	    in the tftp-server package.  H. Peter Anvin maintains the
+	    <application>tftp-hpa</application> package that provides the
+	    required functionality.  The atftpd server is also reported
+	    to work.  
 	  </para>
 	</listitem>
 	<listitem>
 	  <para>
-	    Anyone who needs to maintain identical configurations on a large 
-	    number of machines
+	    In addition to a compatible TFTP server, PXE network-based
+	    installations may also require a PXE daemon to run on your
+	    image server.  This requirement depends on the firmware used on
+	    the client side and the capabilities of your DHCP server.
 	  </para>
 	</listitem>
-	<listitem>
-	  <para>
-	    Manufacturing organizations who must automate the software preload
-	    process for Linux based machines
-	  </para>
       </itemizedlist>
     </section>
-    <section>
-      <title>How SystemImager Works</title>
-      <para>
-	SystemImager allows you to retrieve an entire system image from a
-	golden client, which is a manually installed, customized machine, to
-	an image server, which is the machine that will hold and distribute
-	the system image.  You can deploy the image to any number of client
-	systems from the image server.
-      </para>
-      <para>
-	After initial image deployment, you can update the client systems by
-	syncing them to an updated image on the image server.  Updates are fast
-	and efficient because only the modified parts of files are pulled to
-	the client.
-      </para>
-      <section>
-	<title>Supported Distributions</title>
-	<para>
-	  <application>SystemImager</application> uses the
-	  <ulink url="http://sourceforge.net/projects/systemconfig">
-	    <application>SystemConfigurator</application>
-	  </ulink> utility, which provides all distribution and architecture
-	  dependent functionality.  Therefore,
-	  <application>SystemImager</application> should work with any
-	  distribution that is supported by
-	  <application>SystemConfigurator</application>.  If you are using an
-	  untested distribution, you may find that the networking and hostname
-	  information are not configured properly after doing an autoinstall.
-	  If you try <application>SystemImager</application> with your favorite
-	  distribution and it doesn't work properly, please submit a
-	  <ulink url="http://sourceforge.net/bugs/?group_id=259">
-	    bug report
-	  </ulink>, preferably with patches you've created to fix the problem.
-	  Appropriate credit is given to all who find and submit valid bugs or
-	  contribute code or documentation that is used.
-	</para>
-	
-	<para>
-	  Here is an incomplete list of distributions known to work with 
-	  <application>SystemImager</application>.  If you are successfully 
-	  using <application>SystemImager</application> with a distribution or 
-	  version not listed here, please submit a
-	  <ulink url="http://sourceforge.net/bugs/?group_id=259">
-	    bug report
-	  </ulink>, 
-	  so we can add them to the list.  (Not a bug I know, but this is the
-	  best way to report success!)
-	</para>
-    
-	<table frame="all">
-	  <title>Author Tested and Supported Distributions</title>
-	  <tgroup cols="2">
-	    <colspec colname="column1">
-	    <colspec colname="column2">
-	    <spanspec namest="column2" nameend="column2" spanname="span-horiz" align="center">
-	    <thead>
-	      <row>
-		<entry>Distribution</entry>
-		<entry spanname="span-horiz">Versions</entry>
-	      </row>
-	    </thead>
-	    <tbody>
-	      <row>
-		<entry>Debian</entry>
-		<entry>2.2 ('potato'), ('woody')</entry>
-	      </row>
-	      <row>
-		<entry>RedHat</entry>
-		<entry>7.2</entry>
-	      </row>
-	    </tbody>
-	  </tgroup>
-	</table>
-	
-	<table frame="all">
-	  <title>Other Distributions Reported to Work</title>
-	  <tgroup cols="3">
-	    <colspec colname="column1">
-	    <colspec colname="column2">
-	    <colspec colname="column3">
-	    <thead>
-	      <row>
-		<entry>Distribution</entry>
-		<entry>Versions</entry>
-		<entry>Reported by</entry>
-	      </row>
-	    </thead>
-	    <tbody>
-	      <row>
-		<entry>Debian</entry>
-		<entry>2.2 ('potato'), ('woody')</entry>
-	      </row>
-	      <row>
-		<entry>RedHat</entry>
-		<entry>7.2</entry>
-	      </row>
-	    </tbody>
-	  </tgroup>
-	</table>
-	<para>
-	  Linux-2.0.x based distributions are not supported at this time.  
-	  Currently there are no plans to add support for Linux 2.0.x based 
-	  distributions.
-	</para>
-      </section>
-      <section>
-	<title>System Requirements</title>
-	<itemizedlist>
-	  <listitem>
-	    <para>
-	      Your image server must have enough disk space to hold the images
-	      to be installed on your client systems.
-	    </para>
-	  </listitem>
-	  <listitem>
-	    <para>
-	      All clients that will use the same image should have hardware
-	      that is as similar as possible.  Most importantly they should use
-	      the same chipset on the network device(s) and the same number and
-	      kind of hard drive(s) (IDE, SCSI, Mylex Hardware RAID, etc.)  The
-	      hard drives may be of different capacities.  Devices may be
-	      larger with no problem and can be smaller within reason.
-	    </para>
-	  </listitem>
-	  <listitem>
-	    <para>
-	      For PXE installations, you will need a compatible TFTP server
-	      running on the boot server, which is usually the same machine as
-	      the image/DHCP server.  H. Peter Anvin maintains the
-	      <application>tftp-hpa</application> package, which provides the
-	      required functionality.  Debian provides this server in the
-	      tftpd-hpa package, and RedHat 7.0 and later include this server
-	      in the tftp-server package.  The atftpd server is also reported
-	      to work.
-	    </para>
-	  </listitem>
-	  <listitem>
-	    <para>
-	      In addition to a compatible TFTP server, PXE network-based
-	      installations may also require a PXE daemon to run on your
-	      image server.  This requirement depends on the firmware used on
-	      the client side and the capabilities of your DHCP server.
-	    </para>
-	  </listitem>
-	</itemizedlist>
-      </section>
-    </section>
-    <section>
+  </section>
+  <section>
     <title>Glossary of Terms</title>
     <glosslist>
       <glossentry>
 	<glossterm>addclients</glossterm>
 	<glossdef>
 	  <para>
-	    Tells your image server which image to install on your
-	    autoinstall clients.  It does so by creating soft links to the 
-	    master autoinstall script with the name of each host that will 
-	    receive that image.  It also allows you to populate the /etc/hosts 
-	    file with sequential host names and IP addresses.  This information
-	    in <filename>/etc/hosts</filename> is necessary for certain
-	    SystemImager operations.
+	    a command that tells your image server which image to install on the
+	    autoinstall clients by creating soft links to the master autoinstall
+	    script with the name of each host that will receive that image. 
+	    <command>addclients</command> also allows you to populate
+	    the <filename>etc/hosts</filename> file with sequential host names and IP 
+	    addresses.  The information in this file is necessary for some SystemImager
+	    operations.
 	  </para>
 	</glossdef>
       </glossentry>
@@ -243,8 +215,8 @@
 	<glossterm>autoinstall media</glossterm>
 	<glossdef>
 	  <para>
-	    The media that is used to boot an autoinstall client in order to
-	    begin the autoinstall process.  This media can be a floppy, a
+	    media that is used to boot an autoinstall client to
+	    begin the autoinstall process.  Autoinstall media can be a floppy, a
 	    CDROM, the network, or the local hard drive of the autoinstall
 	    client.
 	  </para>
@@ -254,8 +226,9 @@
 	<glossterm>autoinstall script</glossterm>
 	<glossdef>
 	  <para>
-	    A unique autoinstall script is created for each image and is used
-	    by the autoinstall client as part of the autoinstall process.  The
+	    a unique script <command>getimage</command>
+	    creates for each image used
+	    by the autoinstall client in the autoinstall process.  The
 	    names of autoinstall scripts begin with the image name 
 	    and end in .master.  For example:
 	    <filename>my_webserver_image_v1.master</filename>
@@ -264,19 +237,14 @@
       </glossentry>
       <glossentry>
 	<glossterm>
-	  <ulink url="http://www.dictionary.com/cgi-bin/dict.pl?term=daemon">
+	  <ulink url="http://www.tuxedo.org/~esr/jargon/html/entry/daemon.html">
 	    daemon
 	  </ulink>
 	</glossterm>
 	<glossdef>
 	  <para>
-	    This is not specifically a SystemImager term, but it really bugs me
-	    when people pronounce this word as "daymen".  It is just another,
-	    more interesting, less evil appearing way of spelling demon.  And
-	    just to be clear, in computer terms, a daemon is a program that
-	    lies in wait for something to trigger it into action.  An example
-	    of this is a web server daemon waiting for someone to request a web
-	    page.
+	    a program that lies in wait for something to trigger it to action, for example,
+	    a web server daemon waiting for a Web page request to begin its retrieval function.
 	  </para>
 	</glossdef>
       </glossentry>
@@ -284,7 +252,7 @@
 	<glossterm>getimage</glossterm>
 	<glossdef>
 	  <para>
-	    This command is run from the image server to pull a system
+	    a command run from the image server to pull a system
 	    image from a golden client.
 	  </para>
 	</glossdef>
@@ -293,23 +261,24 @@
 	<glossterm>golden client</glossterm>
 	<glossdef>
 	  <para>
-	    A machine from which an image is taken.  Golden clients
-	    are manually installed and customized to taste.
+	    a manually-installed, customized machine from which an image is taken for
+	    deployment to client systems.  
 	  </para>
 	</glossdef>
       </glossentry>
       <glossentry>
 	<glossterm>image server</glossterm>
 	<glossdef>
-	  <para>The machine that will hold and distribute the images.</para>
+	  <para>the machine that holds and distributes the system images.</para>
 	</glossdef>
       </glossentry>
       <glossentry>
 	<glossterm>local.cfg</glossterm>
 	<glossdef>
 	  <para>
-	    A configuration file that can be used for autoinstall clients
-	    in lieu of DHCP and the /var/lib/systemimager/scripts/hosts file on
+	    a configuration file that can be used for autoinstall clients
+	    in lieu of DHCP and the
+	    <filename>/var/lib/systemimager/scripts/hosts</filename> file on
 	    the image server.
 	  </para>
 	</glossdef>
@@ -318,8 +287,8 @@
 	<glossterm>mkdhcpserver</glossterm>
 	<glossdef>
 	  <para>
-	    An easy way to create a <application>SystemImager</application>
-	    appropriate <filename>/etc/dhcpd.conf</filename> file.  DHCP can be
+	    a command that creates a <application>SystemImager</application>
+	    -appropriate <filename>/etc/dhcpd.conf</filename> file.  DHCP can be
 	    used to assign IP addresses to autoinstall clients.
 	  </para>
 	</glossdef>
@@ -328,7 +297,7 @@
 	<glossterm>mkdhcpstatic</glossterm>
 	<glossdef>
 	  <para>
-	    Used to modify the <filename>/etc/dhcpd.conf</filename> file,
+	    a command to modify the <filename>/etc/dhcpd.conf</filename> file,
 	    adding static entries for autoinstall clients based on the IP
 	    addresses handed out to these clients by the DHCP server.
 	  </para>
@@ -347,8 +316,12 @@
 	<glossterm>prepareclient</glossterm>
 	<glossdef>
 	  <para>
-	    This command is run on the golden client immediately 
-	    prior to running getimage on the image server.
+	    a command you must run on the golden client immediately 
+	    prior to running <command>getimage</command> on the image server. 
+	    <command>prepareclient</command>
+	    prepares the golden client to have its image retrieved and creates
+	    an <filename>etc/systemimager</filename> directory with information
+	    about the golden client, such as the disk partitioning scheme(s).
 	  </para>
 	</glossdef>
       </glossentry>
@@ -356,14 +329,13 @@
 	<glossterm>updateclient</glossterm>
 	<glossdef>
 	  <para>
-	    A command that is executed on client systems allowing them 
-	    to be updated or synchronized to a new or updated image after the
-	    initial autoinstall.  updateclient enables software and content
+	    a command that updates or synchronizes client systems to a new or updated image 
+	    after the initial autoinstall, enabling software and content
 	    distribution.
 	  </para>
 	</glossdef>
       </glossentry>
     </glosslist>
-    </section>
-  </chapter>
+  </section>
+</chapter>
   

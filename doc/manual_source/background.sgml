@@ -2,6 +2,12 @@
   <title>SystemImager Background</title>
   <section>
     <title>Design Goals</title>
+    <para>
+      The design goal for SystemImager was to create a tool that was both easy
+      and fast to use, allowing system administrators to perform incremental
+      upgrades that minimized system disruptions and provided software
+      independent of any packaging system.  The specific requirements follow:
+    </para>
     <itemizedlist>
       <listitem>
 	<para>
@@ -11,383 +17,98 @@
       
       <listitem>
 	<para>
-	  Completely unattended installs were a must.
+	  Unattended installs are a must.
 	</para>
       </listitem>
       
       <listitem>
 	<para>
-	  The unattended install system had to be able to repartition the 
+	  The unattended install system has to be able to repartition the 
 	  destination drive(s).
 	</para>
       </listitem>
       
       <listitem>
 	<para>
-	  One of the main design goals was ease of use.  This had to be a 
-	  tool that could be used by a system administrator that didn't 
-	  necessarily understand how it worked.
+	  System administrators who don't completely understand the tool should
+	  be able to use it.
 	</para>
       </listitem>
       
       <listitem>
 	<para>
-	  It was also necessary for it to install easily and quickly so 
-	  that it could be useful right away without alot of site specific
-	  customization.
+	  The install should be easy and quick so that it can be useful
+	  immediately without a lot of site-specific customization.  
 	</para>
       </listitem>
       
 	<listitem>
 	<para>
 	  Images should be stored as normal files to allow for incremental
-	  upgrades as opposed to "dd" style block level images of physical 
+	  upgrades, as opposed to "dd" style block level images of physical 
 	  disks.
 	</para>
       </listitem>
       
       <listitem>
 	<para>
-	  It had to be independent of any and all packaging systems (such 
-	  as RPM) in order to easily accomodate different distributions.
+	  The SystemImager software should be independent of any and all
+	  packaging systems (such as RPM) in order to easily accommodate
+	  different distributions.
 	</para>
       </listitem>
       
       <listitem>
 	<para>
-	  It should be able to store multiple images, for different types 
-	  of systems and for revision control.
+	  SystemImager should be able to store multiple images for different
+	  types of systems and for revision control.
 	</para>
       </listitem>
       
       <listitem>
 	<para>
-	  It must provide a mechanism for unattended install clients to
-	  know which image to install.
+	  A mechanism should be available to let unattended install clients
+	  know which image to install. 
 	</para>
       </listitem>
       
       <listitem>
 	<para>
-	  Once a client was installed, it should be able to update itself
-	  to a new or updated image.
+	  An installed client  should be able to update itself to a new or
+	  modified image.
 	</para>
       </listitem>
       
       <listitem>
 	<para>
-	  It should have a command line interface that lent itself well to
-	  being wrapped with a GUI.
+	  SystemImager should have a command line interface that can easily be
+	  wrapped with a GUI.
 	</para>
       </listitem>
       
     </itemizedlist>
   </section>
-  
-    <section>
-    <title>The SystemImager Architecture</title>
+  <section>
+    <title>Development of SystemImager Architecture</title>
     <para>
-      SystemImager began as a series of utilities written as shell scripts.
-      Minimal system requirements were considered a top priority.  As
-      SystemImager matured, and the utilities became internally more complex,
-      it became clear that shell scripts were falling short of the need.
-      Perl was chosen to pick up the yoke and has allowed for cleaner, more
-      advanced code.  It was determined that Perl is installed as part of
-      most "base" Linux installs and therefore was a reasonable choice from a
-      minimal requirements perspective.
+      Minimal system requirements were a top priority for SystemImager, which
+      began as a series of utilities written as shell scripts.  However, shell
+      scripts were inadequate as SystemImager matured and its utilities became
+      more complex.  Perl, part of most Linux installs and possessing minimal system
+      requirements, then replaced shell scripts.  Using Perl, developers have
+      been able to generate cleaner, more advanced code.
     </para>
     
     <para>
-      The architecture was designed to be open to future modification at
-      every level.  The protocol used for transferring files during installs
-      and updates is currently rsync(1).  But the modular code will easily
-      allow for drop-in replacements as is appropriate.  All unicast file
-      transfer mechanisms are implemented in a "pull" fashion, which is
-      generally considered to be superior to a "push".  Using a "pull"
-      mechanism, it is much easier to monitor the state of the receiving
-      system prior to and during the file transfers.  In the future,
-      multicast may be an option and may need to be implemented as a push.
-    </para>
-    
-      <para>
-      There are other methods available for doing automatic installs, such as
-      RedHat's KickStart, which installs systems based on a list of
-      pre-defined packages.  But package based installs can be very limiting
-      in that they generally don't have an automated way for dealing with
-      non-packaged files.  If you re-compile your kernel, add a piece of
-      non-packaged software, or modify certain configuration files, you are
-      usually required to do some sort of scripting or programming to deal
-      with these "special cases".
-    </para>
-
-    <para>
-      In order keep imaging simple, SystemImager uses images that are based
-      on a working installed system.  We call this system a "golden client".
-      Just get one of your machines working exactly the way you want and pull
-      it's image to the imageserver with the "getimage" command.  You can
-      re-compile your kernel, install custom software, and do any
-      configuration file tweaking you like.  SystemImager will get it all.
-    </para>
-    
-    <para>
-      Now that you have your golden client configured, we need to run the 
-      <command>prepareclient</command> command.  prepareclient will collect
-      the partition information from your disks and put it in the
-      <filename>/etc/systemimager/partitionschemes</filename> directory.  A
-      file will be created in this directory for each of your disks and will
-      contain that disk's partition information.  prepareclient will also
-      create an rsync(1) configuration file
-      (<filename>/tmp/rsyncd.conf</filename>) and start rsync in server mode
-      (<command>rsync --daemon</command>).  This allows the image server to
-      pull the image from the client, but will not cause the rsync daemon to
-      be restarted after the golden client is rebooted.  This helps avoid
-      security concerns of sharing a golden client's root filesystem via
-      rsync.
-    </para>
-    
-    <para>
-      On the imageserver we now run the getimage command.  Here's an example:
-    </para>
-    
-    <para>
-      "getimage -golden-client 192.168.1.1 -image my_webserver_image_v1"
-    </para>
-    
-    <para>
-      getimage contacts the golden client and requests it's 
-      <filename>/etc/systemimager/mounted_filesystems</filename> file.  This
-      file contains the list of mounted filesystems and the devices on which
-      they are mounted.  It pulls out the mount points for the filesystems
-      that are unsupported and creates an exclusion list.  Currently
-      supported filesystems are ext2, ext3, and reiserfs.  Unsupported
-      filesystems are everything else including things like proc, devpts,
-      iso9660, etc.  getimage then pulls the golden client's entire system 
-      image, excluding the filesystems in the exclusion list.  The files are
-      pulled by connecting to the rsync daemon running on the golden client.
-      All the files from the client will be copied over, recreating the file
-      and directory hierarchy in the image directory.
-    </para>
-    
-    <para>
-      getimage can also be used to update an existing image.  By simply
-      specifying an existing image name, you are asking getimage to update
-      that image to match the files on your golden client.  In this case,
-      only the parts of files that are different will be copied over.  Files
-      that exist in the old image but not on the golden client will be
-      deleted, and files that exist in both places but have changed will be
-      updated.  This is one way to keep an image updated when new security
-      patches or other system updates come out.  However, the recommended
-      method is to never overwrite a known working image, so that you have a
-      form a revision control.  This is not true revision control, where 
-      individual file revisions are tracked on a line by line basis.  It is 
-      revision control on an image by image basis.  This form of revision
-      control also ties in to the updateclient command which will be
-      discussed later.  By default, all images are stored in the parent
-      directory of <filename>/var/lib/systemimager/images/</filename> in a
-      directory that bears the image name.  For example:
-      "<filename>/var/lib/systemimager/images/my_webserver_image_v1/</filename>".
-    </para>
-    
-    <para>
-      After getimage has pulled the files to the image directory on the
-      imageserver it creates a customized autoinstall script.  The
-      autoinstall script in our example would be named
-      <filename>my_webserver_image_v1.master</filename>.  All autoinstall
-      scripts are placed in the
-      <filename>/var/lib/systemimager/scripts</filename> directory.  The disk
-      partitioning information left behind by the prepareclient command is
-      used to add the	necessary commands to re-partition the disk(s) on the
-      autoinstall clients.  File system information is taken from the
-      <filename>/etc/fstab</filename> file in	the image (Ie.:
-      <filename>/var/spool/systemimager/images/my_webserver_image_v1/etc/fstab</filename>)
-      and is used to determine the appropriate file system creation commands
-      and to determine mount points for the autoinstall process.  Based on
-      command line options passed to getimage or questions it has asked,
-      certain networking information is added to the autoinstall script.
-      This information is added in variable form as the autoinstall client
-      will determine the values for things such as it's hostname and IP
-      address during the autoinstall process.
-    </para>
-    
-    <para>
-      After running <command>getimage</command>, you will run the
-      <command>addclients</command> command.  addclients will ask you for the
-      series of hostnames that you will be installing by combining a base
-      host name and a number range.  For example, if your base host name is
-      "www", and your number range is from "1" to "3", then the resultant
-      host names would be "www1, www2, www3".  It will then prompt you to
-      choose the image that will be installed to these hosts and will create
-      soft links for each hostname that point to the master autoinstall
-      script for that image.  For example:
-      "www3.sh -> web_server_image_v1.master".  If the image is updated and
-      you choose to allow getimage to also update the master autoinstall 
-      script, then each of the associated soft links therefore point to the
-      updated autoinstall script.  If individual host configuration is
-      necessary, the soft link for that host can be removed and replaced with
-      a copy of the master autoinstall script that can then be customized for
-      that host.  This customization is a manual process and is up to the
-      system administrator.  
-    </para>
-    
-    <para>
-      <command>addclients</command> will then prompt you for the IP address
-      information for these hosts and will re-write the imageserver's
-      <filename>/etc/hosts</filename> file accordingly, then copy this file
-      to <filename>/var/lib/systemimager/scripts/hosts</filename>.  The
-      latter file is used during the autoinstall process for clients using
-      DHCP to determine their host names.
-    </para>
-    
-    <para>
-      The unattended install portion is flexible and can work with most any
-      hardware available.  It is also easily modified to work with new or
-      special hardware.  A miniature Linux distribution (Brian's Own Embedded
-      Linux) is used for autoinstalls.  It consists of a customized kernel
-      and an initial ram disk which contains only the specific commands and
-      utilities necessary to perform autoinstalls. The same kernel and
-      initial ram disk (<filename>initrd.gz</filename>) can be used to boot
-      from floppy disks, CDROMs, the network, or any running Linux system's 
-      local hard drive.  The commands
-      <command>mkautoinstalldiskette</command> and
-      <command>mkautoinstallcd</command> make use of the
-      <command>syslinux(2)</command> utility to create floppies and CDROMs
-      that will boot the SystemImager kernel and initial ram disk.
-      pxelinux(2), which is a sister tool to syslinux, allows the same kernel
-      and initial ram disk to boot PXE capable machines from the network.  A 
-      configuration file is needed by syslinux and by pxelinux, but the two
-      tools are able to use the same configuration file and SystemImager
-      handles this for you.
-    </para>
-    
-    <para>
-      The autoinstall kernel is compiled to contain all the necessary drivers
-      for the majority of systems.  Custom kernels can be compiled to meet
-      special disk and network driver requirements.  To use a custom kernel,
-      simply copy it to
-      <filename>/usr/share/systemimager/i386-boot/kernel</filename>.  All of
-      the autoinstall media is created from
-      <filename>/usr/share/systemimager/i386-boot/kernel</filename> and
-      <filename>/usr/share/systemimager/i386-boot/initrd.gz</filename> on the
-      image server.
-    </para>
-    
-    <para>
-      Once the kernel has booted, it mounts the initial ram disk as it's root
-      filesystem.  It then executes an initialization script on the ram disk
-      that has been written to do SystemImager specific things.  This script
-      will use either a configuration file (<filename>/local.cfg</filename>),
-      DNS, or a combination of DHCP and the
-      <filename>/var/lib/systemimager/scripts/hosts</filename> file pulled
-      from the image server to determine the autoinstall client's IP address
-      and hostname information.  If DHCP is used, the client parses the hosts
-      file retrieved from the image server to find it's IP address and can
-      therefore determine it's hostname.  Finally it retrieves an autoinstall
-      script from the image server based on it's hostname and executes it.
-      The autoinstall script is image specific.  This is how a client
-      determines which image it will receive.  Here is a summary:  IP address
-      -> hostname -> image specific autoinstall script named with hostname.
-    </para>
-    
-    <para>
-      The most common way to assign IP addresses to autoinstall clients is
-      DHCP.  To easify the configuration of the DHCP configuration file
-      (<filename>/etc/dhcpd.conf</filename>), SystemImager includes a utility
-      called <command>mkdhcpserver</command>.  This utility asks you for all
-      the information it needs to create a DHCP configuration file that is
-      appropriate for your installation of SystemImager.  It is also possible
-      to use DHCP to assign static IP addresses to your clients on an ongoing
-      basis after installation.  If you choose to do so, simply run the
-      <command>mkdhcpstatic</command> command after all of your clients have
-      had a chance to boot and be assigned an IP address.  It will modify
-      your <filename>/etc/dhcpd.conf</filename> file on the imageserver
-      to include static entries for each of your hosts.
-    </para>
-    
-    <para>
-      Alternately, hostname, imageserver, and networking information can be
-      put in a configuration file on a floppy diskette.  Or if you are using
-      a running system's hard drive as the boot media, you can run 
-      "<command>updateclient -autoinstall -server &lt;imageserver> -config eth0</command>"
-      which will create a local.cfg file at the root of the client's hard
-      drive containing the existing live network settings.
-    </para>
-    
-    <para>
-      When the autoinstall client boots, it will look for this file and use
-      the provided values instead of getting them from DHCP and the
-      <filename>/var/lib/systemimager/scripts/hosts</filename> file on the
-      image server.  A <filename>local.cfg</filename> file on a floppy will
-      work with any of the autoinstall media.  The configuration file can
-      even be put on the autoinstall floppy itself!  If you use a
-      <filename>local.cfg</filename> file on a hard drive and on a floppy,
-      the settings on the floppy will override the settings on the hard
-      drive.
-    </para>
-    
-    <para>
-      The format of this configuration file is simply VARIABLE=value for all
-      the appropriate settings.  The name of this file must be local.cfg and
-      it must exist on the root of the floppy or hard drive.  The floppy can
-      be formatted with either ext2 or fat.  An example
-      <filename>local.cfg</filename> file can be found with the documentation
-      files which are usually installed in
-      <filename>/usr/share/doc</filename>.
-    </para>
-    
-    <para>
-      Sometimes you will want to update an image on your image server.  There
-      are a couple of ways to do this.  The first way is to directly edit the
-      files in the image directory.  The best way to do this is to chroot
-      into the image directory.  Once you have done the chroot, you can work
-      with the image as if it were a running machine.  You can even install
-      packages with apt-get or RPM, for example.  The second way is to run
-      the getimage command again, specifying a golden client that has been
-      modified in the desired way.  Again, only the parts of the files that
-      have changed will be pulled across.  Files that have been deleted on
-      the golden client will also be deleted in the image.  You are also
-      given the option to update the master autoinstall script for the image
-      or to leave it alone.  The advantages of this method are that you can
-      verify that your new configuration works on the golden client, and that
-      the master autoinstall script is updated.
-    </para>
-    
-    <para>
-      Once a system has been autoinstalled, the updateclient command can be
-      used to update a client system to match a new or updated image on the
-      image server.  Let's say that you've installed your company's 300 web
-      servers and a security patch comes out the next day.  You simply update
-      the image on the image server and run updateclient on each of your web
-      servers.  Only the modified files are pulled over, so it takes very
-      little time, and your entire site is patched!  
-      It is recommended that you create an entirely new image with a new
-      version number so that you have some form of revision control.  This
-      way, if you
-      find out that the patch you applied hosed up your entire web farm, you
-      simply do an updateclient back to the last known working image!
-    </para>
-    
-    <para>
-      By incorporating some modifications sent in by A.L. Lambert of 
-      epicRealm, using the <command>updateclient</command>
-      command with the -autoinstall option will copy the autoinstall kernel
-      and 
-      initial ram disk to the local hard drive of an autoinstall client that
-      is currently running, but needs to be re-deployed.  It will then modify
-      the 
-      <filename>/etc/lilo.conf</filename> file to include an appropriate
-      entry for the new kernel and 
-      initial ram disk and will make this new kernel the default.  The next
-      time the client system is booted, it will load the SystemImager kernel
-      and
-      initial ram disk, which will begin the autoinstall process!  This means
-      that you can remotely re-deploy any running Linux machine without
-      having to
-      have someone feed the machine a floppy or CD and without having to
-      reconfigure the BIOS to boot off the network (which can be quite 
-      <ulink url="http://www.dictionary.com/cgi-bin/dict.pl?term=squirrelly">
-	squirrelly
-      </ulink>
-      with some BIOSes).  
+      SystemImager architecture was designed to be open to modification at
+      every level.  The protocol for transferring files during installs
+      and updates is currently <filename>rsync(1)</filename>, but the modular
+      code easily allows drop-in replacements as is appropriate.  All unicast
+      file transer mechanisms, including <filename>rsync(1)</filename> are implemented 
+	in a "pull" fashion, which is generally considered to be superior to a "push," 
+	because it is much easier to monitor the state of the receiving system prior to and during the
+      file transfers.  However, multicast may be an option in the future and
+      may need to be implemented as a "push."
     </para>
   </section>
 </chapter>

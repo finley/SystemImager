@@ -107,7 +107,7 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-log <replaceable>"STRING"</replaceable></option></term>
+	<term><option>-log <replaceable>STRING</replaceable></option></term>
 	<listitem>
 	  <para>
 	    Quoted string for log file format.  See the
@@ -142,6 +142,27 @@
 	    Update the $image.master script? Defaults to NO if -quiet.  If
 	    not specified you will be prompted to confirm an update.
 	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-exclude <replaceable>PATH</replaceable></option></term>
+        <listitem>
+	  <para>
+	    Don't pull the contents of <replaceable>PATH</replaceable> from
+	    the golden client.  <replaceable>PATH</replaceable> must be
+	    absolute (starting with a "/").
+	  </para>
+	  <para>To exclude a single file use:</para>
+	  <para>
+	    -exclude <replaceable>/DIRECTORYNAME/FILENAME</replaceable>
+	  </para>
+	  <para>To exclude a directory and it's contents use:</para>
+	  <para>-exclude <replaceable>/DIRECTORYNAME/</replaceable></para>
+	  <para>
+	    To exclude the contents of a directory, but pull the directory
+	    itself use:
+	  </para>
+	  <para>-exclude "<replaceable>/DIRECTORYNAME/*</replaceable>"</para>
 	</listitem>
       </varlistentry>
     </variablelist>
@@ -238,7 +259,7 @@
   <refsect1>
     <title>AUTHOR</title>
 
-    <para>This manual page was written by &dhusername; <&dhemail;> for
+    <para>This manual page was compiled by &dhusername; <&dhemail;> for
       the &debian; system (but may be used by others).</para>
 
     <!-- <para>Permission is granted to copy, distribute and/or modify

@@ -69,7 +69,8 @@
 
     <para>
       <command>pushupdate</command> is a tool for updating the image on one or
-      more client nodes.
+      more client nodes.  It relies on the availability of ssh as a transport
+      layer for communicating with client nodes.
     </para>
 
   </refsect1>
@@ -228,7 +229,7 @@
   <refsect1>
     <title>AUTHOR</title>
 
-    <para>This manual page was written by &dhusername; <&dhemail;> for
+    <para>This manual page was compiled by &dhusername; <&dhemail;> for
       the &debian; system (but may be used by others).</para>
 
     <!-- <para>Permission is granted to copy, distribute and/or modify

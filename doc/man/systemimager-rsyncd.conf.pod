@@ -1,0 +1,88 @@
+=head1 NAME
+
+systemimager-rsyncd.conf - the rsyncd.conf file associated with SystemImager
+
+=head1 DESCRIPTION
+
+SystemImager uses rsync running as a daemon on the Image Server in
+order to function.  The I<rsyncd.conf> file is very similar to a
+vanilla rsyncd.conf file, however certain modules are required for
+SystemImager to properly function.
+
+=head1 REQUIRED STANZAS
+
+The following stanzas are required in this file for it to function
+properly.
+
+  list = yes
+  timeout = 600
+  dont compress = *.gz *.tgz *.zip *.Z *.ZIP *.bz2 *.deb *.rpm *.dbf
+  uid = root
+  gid = root
+  use chroot = yes
+  log file = /var/log/systemimager/rsyncd
+
+The 'dont compress' stanza may include other types of files as well.
+If you have a list of file extensions that you believe should be
+included please send them to
+I<systemimager-devel@lists.sourceforge.net>.
+
+=head1 REQUIRED MODULES
+
+SystemImager uses the concept of B<rsync modules> very heavily for
+image propagation.  The following modules are required for
+SystemImager to function properly.
+
+=over 4
+
+=item B<[scripts]>
+
+The scripts module must be defined so that the autoinstall clients can
+fetch their autoinstall scripts during install.  The I<path> for
+I<scripts> should be set to the same value as I<AUTOINSTALL_SCRIPT_DIR>
+is set to in I<server.conf>.
+
+=item B<[i386-boot]>
+
+The I<i386-boot> module, or more generically the I<$arch-boot> module
+must setup for the autoinstall process to work properly.  The I<path>
+for I<scripts> should be I<AUTOINSTALL_BOOT_DIR> followed by the
+specific $arch-boot directory needed.  For example:
+
+  [i386-boot]
+  path = /usr/local/share/systemimager/i386-boot
+
+  [ia64-boot]
+  path = /usr/local/share/systemimager/ia64-boot
+
+=item B<[$IMAGENAME]>
+
+In addition to the two required modules specified about, there also
+needs to be a module for every I<image> that you want available for
+installation from your Image Server.  The I<path> entry for the image
+should be I<DEFAULT_IMAGE_DIR> from the server.conf file, with
+the image's directory appended to the end.  For example:
+
+  [rh71image]
+  path = /var/lib/systemimager/images/rh71image
+
+  [deb22image]
+  path = /var/lib/systemimager/images/deb22image
+  
+  [mdk81image]
+  path = /var/lib/systemimager/images/mdk81image
+
+=back
+
+=head1 BUGS
+
+This file should be kept in sync from server.conf, and the
+autoinstallscripts, as there is no unique information in this file.
+
+=head1 SEE ALSO
+
+The SystemImager Manual, B<rsyncd.conf(5)>, B<server.conf(5)>
+
+=head1 AUTHORS
+
+This man page created by Sean Dague (sean@dague.net)

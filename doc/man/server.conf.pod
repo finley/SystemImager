@@ -1,0 +1,69 @@
+=head1 NAME
+
+server.conf - configuration file for SystemImager server
+
+=head1 DESCRIPTION
+
+The server.conf file residing in the /etc/systemimager directory
+controls the default behavior of commands run on the SystemImager
+server.  It is parsed by the AppConfig Perl module, and uses simple
+name/value pairs.
+
+=head1 FILE FORMAT
+
+The follow stanzas exist in the server.conf file
+
+=over 4
+
+=item B<DEFAULT_IMAGE_DIR>
+
+The directory where images are stored.  The default set in the
+file is I</var/lib/systemimager/images>.  If your image repository
+exists else where you can set this variable to change that.  This
+variable is used by I<getimage> and I<mksimachine> to determine where
+to put the created image.
+
+=item B<AUTOINSTALL_SCRIPT_DIR>
+
+The directory where autoinstall scripts are stored.  The default set
+in the file is I</var/lib/systemimager/scripts>.  This is use by
+I<mkautoinstallscript> to determine where the autoinstall script for
+an image should be created.  It is also used by I<addclients>, and
+I<mksimachine>, and I<mksirange> to determine where the client scripts
+should be created.
+
+=item B<AUTOINSTALL_BOOT_DIR>
+
+The top level directory where the boot kernel, ramdisk, and other
+architecture specific utilities exist.  The installed default for this
+is I<$PREFIX/share/systemimager>, where $PREFIX is the installed
+prefix for all the SystemImager tools.  In this directory will exist a
+number of architecture specific directories of the format $ARCH-boot
+(e.g. i386-boot, ia64-boot, etc.).  The variable is used by
+I<mkautoinstallcd>, I<mkautoinstalldiskette> and I<mkbootserver>.
+
+=item B<RSYNCD_CONF>
+
+The local of the I<rsyncd.conf> file associated with SystemImager.
+The installed default is I</etc/systemimager/rsyncd.conf>.
+
+=item B<CONFIG_DIR>
+
+The directory this file resides in.
+
+=back
+
+=head1 BUGS
+
+B<CONFIG_DIR> seems redundant, as you can't parse the file unless you
+know where it is.
+
+=head1 SEE ALSO
+
+The SystemImager Manual.
+
+=head1 AUTHORS
+
+SystemImager is maintained by Brian Finley (brian@baldguysoftware.com)
+
+This man page created by Sean Dague (sean@dague.net)

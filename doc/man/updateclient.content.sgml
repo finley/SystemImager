@@ -33,14 +33,11 @@
       <arg><option>-version</option></arg>
       <arg><option>-server <replaceable>HOSTNAME</replaceable></option></arg>
       <arg><option>-image <replaceable>IMAGENAME</replaceable></option></arg>
-      <arg><option>-directory <replaceable>DIRECTORY</replaceable>
-	</option></arg>
-      <arg><option>-nolilo</option></arg>
+      <arg><option>-directory <replaceable>DIRECTORY</replaceable></option></arg>
+      <arg><option>-nobootloader</option></arg>
       <arg><option>-autoinstall</option></arg>
-      <arg><option>-configure-from <replaceable>DEVICE</replaceable>
-	</option></arg>
+      <arg><option>-configure-from <replaceable>DEVICE</replaceable></option></arg>
       <arg><option>-ssh-user <replaceable>USERNAME</replaceable></option></arg>
-      <arg><option>-listing</option></arg>
       <arg><option>-reboot</option></arg>
       <arg><option>-dry-run</option></arg>
       <arg><option>-log <replaceable>"STRING"</replaceable></option></arg>
@@ -83,8 +80,10 @@
       <varlistentry>
         <term><option>-server <replaceable>HOSTNAME</replaceable></option></term>
         <listitem>
-          <para>Hostname or IP address of the imageserver. (-imageserver is
-	    a deprecated option and will go away soon.)</para>
+          <para>
+	    Hostname or IP address of the imageserver.  Replaces deprecated
+	    <option>-imageserver</option> option.
+	  </para>
         </listitem>
       </varlistentry>
       <varlistentry>
@@ -96,16 +95,19 @@
       <varlistentry>
         <term><option>-directory <replaceable>DIRECTORY</replaceable></option></term>
         <listitem>
-          <para>Absolute path of the directory to be updated (defaults to "/")
+          <para>
+	    Absolute path of the directory to be updated (defaults to "/")
 	  </para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-nolilo</option>
-        </term>
+        <term><option>-nobootloader</option></term>
         <listitem>
-          <para>Don't run lilo after update completes.  (lilo is always run
-	    unless specified)</para>
+          <para>
+	    Don't run the bootloader (lilo, elilo, grub, etc) after update
+	    completes.  (<command>updateclient</command> always runs the
+	    bootloader unless specified).
+	  </para>
         </listitem>
       </varlistentry>
       <varlistentry>
@@ -152,8 +154,10 @@
         <term><option>-listing</option>
         </term>
         <listitem>
-          <para>List available images on imageserver.  (supercedes and ignores
-	    all options other than -imageserver)</para>
+          <para>
+	    List available images on imageserver.  This option is now
+	    deprecated in favor of <command>lsimage</command>.
+	  </para>
         </listitem>
       </varlistentry>
       <varlistentry>
@@ -167,11 +171,13 @@
         <term><option>-dry-run</option>
         </term>
         <listitem>
-          <para>Don't actually modify anything, just show what would be done.</para>
+          <para>
+	    Don't actually modify anything, just show what would be done.
+	  </para>
         </listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-log <replaceable>"STRING"</replaceable></option></term>
+	<term><option>-log <replaceable>STRING</replaceable></option></term>
 	<listitem>
 	  <para>
 	    Quoted string for log file format.  See the
@@ -184,7 +190,10 @@
   <refsect1>
     <title>SEE ALSO</title>
 
-    <para><command>pushupdate</command>(8)</para>
+    <para>
+      <command>pushupdate</command>(8),
+      <command>lsimage</command>(8)
+    </para>
 
     <para>More details can be found in the <citetitle>SystemImager
 	manual.</citetitle>
@@ -193,7 +202,7 @@
   <refsect1>
     <title>AUTHOR</title>
 
-    <para>This manual page was written by &dhusername; <&dhemail;> for
+    <para>This manual page was compiled by &dhusername; <&dhemail;> for
       the &debian; system (but may be used by others).</para>
 
     <!-- <para>Permission is granted to copy, distribute and/or modify

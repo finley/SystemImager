@@ -1,25 +1,41 @@
 <chapter>
   <title>Troubleshooting</title>
   <para></para>
-  <section id=TftpFailure>
+  <section>
     <title>
-      PXE installations work fine for a while, but eventually clients no
-      longer boot the autoinstall kernel.
+      <command>getimage</command> fails with a "Failed to retrieve
+      <filename>/etc/systemimager/mounted_filesystems</filename> from
+      &lt;golden client&gt;" message.
     </title>
-    <Para>
-      Are you using <application>xinetd</application>?
-      <application>xinetd</application> 2.1.8.9pre11 (and assumably earlier
-      versions) had a race condition which causes the tftp server to suddenly
-      stop responding.  this has supposedly been fixed in version
-      2.1.8.9pre13.  Also, <application>xinetd</application> and
-      <application>inetd</application> have default limits on how many
-      connections can be spawned in a 60 second period.  See the inetd or
-      xinetd manpage for details on increasing this limit.
-    </Para>
-  </section>  
+    <para>
+      Two known issues cause this error:
+    </para>
+    <orderedlist>
+      <listitem>
+        <para>
+	  Your firewall may be blocking the rsync port.  Some Red Hat releases
+	  (and possibly other distributions) provide firewall rules as part
+	  of a default installation.  The <command>ipchains</command> and
+	  <command>iptables</command> utilities have a <option>-L</option>
+	  that will print a list of active rules.
+	</para>
+      </listitem>
+      <listitem>
+        <para>
+	  <command>rsync</command> relies on the ability to do a reverse
+	  lookup of the remote machine.  If you don't have reverse DNS setup
+	  in your cluster, you can add entries for each machine in your 
+	  cluster to the <filename>/etc/hosts</filename> file on each
+	  machine.  (Adding an entry for your image server in your golden
+	  client's <filename>/etc/hosts</filename> file should be sufficient
+	  for using <command>getimage</command>.
+	</para>
+      </listitem>
+    </orderedlist>
+  </section>
   <section id=TroubleAssignHostname>
     <title>
-      My client fails to assign a hostname to itself, making the autoinstall
+      My client fails to assign a hostname to itself, causing the autoinstall to
       fail.
     </title>
     <Para>Ryan Braby reported the following problem:</Para>
@@ -36,8 +52,8 @@
 etc.
       </literallayout>
       <Para>
-	For the node with the ###.###.###.2 address, the script tries to
-	assign multiple hostnames, and then fails to get any install script.
+	The script tries to assign multiple hostnames for the node with the ###.###.###.2 address,
+	then fails to get any install script.
       </Para>
     </BlockQuote>
     <Para>This should be fixed in the next release (1.4.2).</Para>
@@ -47,12 +63,12 @@ etc.
       My client autoinstallation/update hangs, crashes, or is ridiculously
       slow.
     </title>
-    <Para>Goran Pocian reported an instance of horrible
-      <command>updateclient</command> performance which went away when he
+    <Para>Goran Pocian reported an instance of unacceptable
+      <command>updateclient</command> performance that went away when he
       upgraded from kernel 2.2.17 to 2.2.18.
     </Para>
     <Para>
-      Also, he noted that if you mount an NFS filesystem after 
+      He also noted that if you mount an NFS filesystem after 
       executing <command>prepareclient</command>, <command>getimage</command>
       will retrieve its contents.  As this can heavily increase network load,
       it can also cause bad performance.
@@ -126,14 +142,13 @@ etc.
 	  <Para>The symptoms are:</Para>
 	  <ItemizedList>
 	    <ListItem>
-	      <para>machine A has data in it's Send-Q</para>
+	      <para>Machine A has data in its Send-Q</para>
 	      </ListItem>
 	    <ListItem>
-	      <para>machine B has no data in it's Recv-Q</para>
+	      <para>Machine B has no data in its Recv-Q</para>
 	    </ListItem>
 	    <ListItem>
-	      <para>
-		the data in machine A's Send-Q is not being reduced
+	      <para>The data in machine A's Send-Q is not being reduced
 	      </para>
 	    </ListItem>
 	  </ItemizedList>
@@ -142,14 +157,14 @@ etc.
 	  <OrderedList>
 	    <ListItem>
 	      <Para>
-		one or both kernels aren't honoring the other's
+		One or both kernels aren't honoring the other's
 		send/receive window settings (these are dynamically
 		calculated)
 	      </Para>
 	    </ListItem>
 	    <ListItem>
 	      <Para>
-		the result is the kernel(s) aren't getting data from
+		The result is the kernel(s) aren't getting data from
 		machine A to machine B
 	      </Para>
 	    </ListItem>
@@ -158,7 +173,7 @@ etc.
 		rsync, therefore, isn't getting data on the receive side
 	      </Para>
 	    </ListItem>
-	    <ListItem><Para>the process appears to hang</Para></ListItem>
+	    <ListItem><Para>The process appears to hang.</Para></ListItem>
 	  </OrderedList>
 	</ListItem>
 	<ListItem>
@@ -167,13 +182,13 @@ etc.
 	  <OrderedList>
 	    <ListItem>
 	      <Para>
-		a large numbers of errors clogs the error pipe between
+		A large number of errors clogs the error pipe between
 		the receiver and generator
 	      </Para>
 	      </ListItem>
-	    <ListItem><Para>all progress stops</Para></ListItem>
+	    <ListItem><Para>All progress stops.</Para></ListItem>
 	    <ListItem>
-	      <Para>again, the process appears to hang</Para>
+	      <Para>Again, the process appears to hang.</Para>
 	    </ListItem>
 	  </OrderedList>
 	</ListItem>
@@ -192,7 +207,7 @@ etc.
     </title>
     <para>
       There was a problem with the following RPM:   
-      <filename>syslinux-1.48-1.i386.rpm</filename>
+      <filename>syslinux-1.48-1.i386.rpm</filename>.
       Download and install a newer syslinux RPM from 
       <ulink url="http://systemimager.org/"></ulink>
     </para>
@@ -206,18 +221,16 @@ etc.
     </para>
     <para>
       If you must use a pre v0.19 version for some reason, be sure that your 
-      kernel has "ramdisk" support.  Or that you have ramdisk support with a 
+      kernel has "ramdisk" support or that you have ramdisk support with a 
       module.  If you are using a module, be sure that it is loaded with the 
-      <command>modprobe</command> command.
+      <command>modprobe</command> command; however it's probably easier to get the latest version.
     </para>
-    <para>
-      But it's probably easier to just get the latest version...
-    </para>
+      
   </section>
   <section id=TroubleAutoinstallFail>
     <title>
       My client failed to autoinstall, and when I run an
-      <command>rsync</command> command on it manually it takes forever for
+      <command>rsync</command> command on it manually, it takes forever for
       the image server to respond.</title>
     <para>
       Be sure that the image server can look up the client's hostname based
@@ -228,7 +241,7 @@ etc.
   </section>
   <section id=TroubleDHCPFailed>
     <title>
-      My autoinstall client booted up and said "dhcp didn't work", but 
+      My autoinstall client booted up and said "dhcp didn't work," but 
       when I do an ifconfig eth0 it has an IP address.
     </title>
     <para>
@@ -236,23 +249,157 @@ etc.
       upgrade.
     </para>
     <para>
-      If for some reason you can't upgrade, then:
+      If for some reason you can't upgrade, then check the following:
     </para>
-    <para>
-      Are you connected to a switch?  Most switches will wait a period of
-      time (usually 30 seconds) after a connected system's interface has
-      come up before transmitting on that port. Newer versions of the
-      autoinstalldiskette bring the ethernet interface up and wait 45 seconds
-      or so before making a DHCP request.  It will then wait 35 seconds or
-      so to give the system time to receive an address.  You could be using
-      an autoinstalldiskette that does not wait the proper time for your
-      switch and is giving up before it should.
-    </para>
-    <para>
-      Be sure that you are using the latest version of SystemImager and
-      that you are using the autoinstalldiskette image that comes with that
-      version.  Note that the version numbers may not match.  See the 
-      <filename>VERSION</filename> file.
-    </para>
+    <itemizedlist>
+      <listitem>
+	<para>
+        Are you connected to a switch?  Most switches will wait a period of
+        time (usually 30 seconds) after a connected system's interface has
+        come up before transmitting on that port. Newer versions of the
+        autoinstalldiskette bring the ethernet interface up and wait 45 seconds
+        or so before making a DHCP request.  It will then wait 35 seconds or
+        so to give the system time to receive an address.  You could be using
+        an autoinstalldiskette that does not wait the proper time for your
+        switch and is giving up before it should.
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Be sure that you are using the latest version of SystemImager and
+	  that you are using the autoinstalldiskette image that comes with that
+	  version.  Note that the version numbers may not match.  See the 
+	  <filename>VERSION</filename> file.
+	</para>
+      </listitem>
+    </itemizedlist>
   </section>
+  <section>
+    <title>
+      My client fails with the error:
+      <computeroutput>
+        "chroot: cannot execute systemconfigurator: No such file or directory"
+      </computeroutput>
+      My autoinstall client booted up and said "dhcp didn't work," but 
+      when I do an ifconfig eth0 it has an IP address.
+    </title>
+    <para>
+      This failure is most commonly associated with a mismatch between the
+      version of SystemImager you used to create your image and the version
+      of SystemImager you used to create the corresponding .master script.
+    </para>
+    <para>
+      As of SystemImager 2.0, SystemConfigurator is used to make final
+      configuration changes to an image.  SystemConfigurator is executed from
+      within the image, so it must be installed within the image on the image
+      server.  To insure this, SystemConfigurator must be installed on any 
+      golden client before an image is pulled from it.  If you have images 
+      that were pulled from golden clients that did not have 
+      SystemConfigurator installed, you can install SystemConfigurator 
+      directly into the image on the imagserver.
+      Are you using a pre 1.0 version of SystemImager?  If so, please
+      upgrade.
+    </para>
+    <example>
+      <title>
+        Installing SystemConfigurator into an Image on an Image Serer
+      </title>
+      <orderedlist>
+        <listitem>
+          <para>
+            Download the latest SystemConfigurator package for your system 
+            from 
+            <ulink url="http://sourceforge.net/projects/systemconfig"></ulink>.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Copy the SystemConfigurator package into your image directory.
+            For example:
+          </para>
+          <para>
+            <command>
+              # cp systemconfigurator-1.10-1.noarch.rpm 
+	      /var/lib/systemimager/images/my_image/tmp
+            </command>
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Chroot into the image directory and install the package.
+          </para>
+          <para>
+            <command>
+              # chroot /var/lib/systemimager/images/my_image bash
+            </command>
+          </para>
+          <para>
+            <command>
+              # rpm -Uvh /tmp/systemconfigurator-1.10-1.noarch.rpm
+            </command>
+          </para>
+          <para>
+            <command>
+              # exit
+            </command>
+          </para>
+        </listitem>
+      </orderedlist>
+    </example>
+  </section>
+  <section>
+    <title>
+      My client completes the autoinstall process successfully, but I get an
+      "Invalid Partition Table" error upon reboot, and Linux never boots.
+    </title>
+    <para>
+      SystemImager 2.0.x and earlier didn't maintain the bootable flag in
+      the partition table.  This worked fine in most cases, but in some cases
+      this leads to an unbootable system.  To confirm that this is the problem,
+      boot your system from rescue media, and set the bootable flag on your
+      boot partition using cfdisk or another partitioning tool.  If this
+      allows your system to boot, then you must upgrade SystemImager and
+      regenerate your autoinstallscript(s).
+      If for some reason you can't upgrade, then check the following:
+    </para>
+    <itemizedlist>
+      <listitem>
+	<para>
+	  Are you connected to a switch?  Most switches will wait a period of
+	  time (usually 30 seconds) after a connected system's interface has
+	  come up before transmitting on that port. Newer versions of the
+	  autoinstalldiskette bring the ethernet interface up and wait 45 seconds
+	  or so before making a DHCP request.  It will then wait 35 seconds or
+	  so to give the system time to receive an address.  You could be using
+	  an autoinstalldiskette that does not wait the proper time for your
+	  switch and is giving up before it should.
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Be sure that you are using the latest version of SystemImager and
+	  that you are using the autoinstalldiskette image that comes with that
+	  version.  Note that the version numbers may not match.  See the 
+	  <filename>VERSION</filename> file.
+	</para>
+      </listitem>
+    </itemizedlist>
+  </section>
+  <section id=TftpFailure>
+    <title>
+      PXE installations work fine for a while, but eventually clients no
+      longer boot the autoinstall kernel.
+    </title>
+    <para>
+      Are you using <application>xinetd</application>?
+      <application>xinetd</application> 2.1.8.9pre11 (and assumably earlier
+      versions) had a race condition which causes the tftp server to suddenly
+      stop responding.  this has supposedly been fixed in version
+      2.1.8.9pre13.  Also, <application>xinetd</application> and
+      <application>inetd</application> have default limits on how many
+      connections can be spawned in a 60 second period.  See the inetd or
+      xinetd manpage for details on increasing this limit.
+    </para>
+  </section>  
+
 </chapter>

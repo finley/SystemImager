@@ -1,0 +1,34 @@
+JFSUTILS_VERSION := 1.0.20
+JFSUTILS_DIR := jfsutils-$(JFSUTILS_VERSION)
+JFSUTILS_TARBALL := $(JFSUTILS_DIR).tar.gz
+JFSUTILS_URL := http://www10.software.ibm.com/developer/opensource/jfs/project/pub/$(JFSUTILS_TARBALL)
+MKJFS_BINARY := $(SRC_DIR)/$(JFSUTILS_DIR)/mkfs/mkfs.jfs
+
+install_jfsutils:	jfsutils
+	mkdir -p $(TFTP_BIN_DEST)
+	$(SI_INSTALL) -m 755 \
+	  $(MKJFS_BINARY) $(TFTP_BIN_DEST)
+
+install_standard_jfsutils:	jfsutils
+	$(SI_INSTALL) -m 755 \
+	  $(MKJFS_BINARY) $(DESTDIR)
+
+jfsutils:	$(MKJFS_BINARY)
+
+$(MKJFS_BINARY):	$(SRC_DIR)/$(JFSUTILS_TARBALL)
+	[ -d $(SRC_DIR)/$(JFSUTILS_DIR) ] || \
+	  ( cd $(SRC_DIR) && zcat $(JFSUTILS_TARBALL) | tar xv && \
+	    	( cd $(SRC_DIR)/$(JFSUTILS_DIR) && chmod +x ./configure && \
+	  	CFLAGS="-O2 -Wall" ./configure ) )
+	$(MAKE) -C $(SRC_DIR)/$(JFSUTILS_DIR)
+
+$(SRC_DIR)/$(JFSUTILS_TARBALL):
+	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
+	( [  -a /usr/src/$(JFSUTILS_TARBALL) ] && \
+	  ln -s /usr/src/$(JFSUTILS_TARBALL) $(SRC_DIR) ) || \
+	( [ -d $(JFSUTILS_DIR) ] && tar -c $(JFSUTILS_DIR) | \
+	  gzip -9 > $(SRC_DIR)/$(JFSUTILS_TARBALL) ) || \
+	( cd $(SRC_DIR) && $(WGET) $(JFSUTILS_URL) )
+
+jfsutils_clean:
+	rm -rf $(SRC_DIR)/$(JFSUTILS_DIR)

@@ -1,39 +1,112 @@
 <chapter>
-  <title>SystemImager Installation</title>
+  <title>Installing SystemImager</title>
+  <section>
+    <title>How Does it Work?</title>
+    <para>
+      The concept behind <application>SystemImager</application> is 
+      for an image server to retrieve a golden client's entire system image 
+      and deploy it to any number of client systems. A golden client is a 
+      system you have customized to work exactly the way you want.  You can 
+      re-compile the kernel, install custom software, and do any 
+      configuration file tweaking you like.
+      The <command>getimage</command> command pulls the golden image to the
+      image server for deployment to other systems.
+    </para>
+    <para>
+      Once you have deployed the initial image to your client systems,
+      you can update/upgrade the client systems by syncing them to an updated
+      image on the image server.  Only the modified parts of files are 
+      pulled to the client for a fast, efficient, and accurate
+      mass update/upgrade.
+    </para>
+    <note>
+      <para>
+	Tools other than SystemImager are available for doing automatic
+	installations, such as Red Hat's <application>Kickstart</application>, 
+	which installs systems based on a list of pre-defined
+	packages.  However, such
+	package-based installs can be very limiting because they don't
+	have an automated way to deal with non-packaged files.  If you
+	re-compile your kernel, add a piece of non-packaged software, or
+	modify certain configuration files, package-based installation
+	methods usually require you to do some sort of scripting or
+	programming to deal with these "special cases."
+      </para>
+    </note>
+  </section>
   <section>
     <title>Obtaining SystemImager</title>
     <para>
-      SystemImager is packaged in tarball, deb, and RPM formats.  Use of the
-      RPMs or debs is recommended over the tarball packages, if supported by
+      SystemImager is packaged in tarball, .deb, and RPM formats.  Use of the
+      RPMs or .debs is recommended over the tarball packages if supported by
       your distribution.  SystemImager is a part of the Debian GNU/Linux 3.0
-      distribution starting with 3.0 (woody).  For earlier releases, and
-      other distributions, packages can be downloaded from
+      distribution, starting with 3.0 (woody).  For earlier releases and
+      other distributions, download packages from
       <ulink url="http://systemimager.org">http://systemimager.org/</ulink>.
     </para>
   </section>
   <section>
     <title>Selecting A Machine To Use As An Image Server</title>
     <para>
-      SystemImager makes use of other network services, such as DHCP.  An
-      existing server that provides these services often makes a good
-      choice for an image server.  Your image server needs to have enough
-      disk space to hold the images you want to deploy.  SystemImager stores
-      images as an uncompressed directory structure, so a quick analysis
-      of the disk usage on your golden client will give you a good estimate
-      of the space required on the image server.  If you plan to do multiple
-      simulataneous image updates, the processor performance on your image
-      server can become a bottleneck - keep this in mind when selecting the
+      Because SystemImager uses other network services such as DHCP, an existing
+      server that provides these services often makes a good
+      choice for an image server.  In addition, the image server you choose 
+      needs to have enough disk space to hold the images you want to deploy.  
+      SystemImager stores images as an uncompressed directory structure, so a 
+      quick analysis of the disk usage on your golden client will give you a 
+      good estimate of the space required on the image server.  If you plan to do 
+      multiple simultaneous image updates, poor processor performance on your image
+      server can cause a bottleneck.  Keep this in mind when selecting the
       number and speed of processors for your image server.
     </para>
   </section>
   <section>
     <title>Installing an Image Server</title>
     <para>
-      To create a SystemImager image server, you must install the
-      systemimager-server package.
-      </para>
+      To create a SystemImager image server, you must install a systemimager-boot 
+	package(s)and then a systemimager-server package that supports your clients.
+    </para>
+	
+    <para>
+	The boot packages support multiple configurations.  Because different client 
+	configurations require different drivers, kernel
+	versions, etc., SystemImager allows you to install different boot packages, which
+	are known as "boot flavors."
+    </para>
+
+    <para>Each SystemImager release provides the "standard" flavors for each supported
+	architecture.  For example, the 2.2.0 release should have the following
+	tarballs (and corresponding debs and RPMs) for i386 and ia64, respectively:
+  	systemimager-boot-standard-i386-2.2.0.tar.bz2
+  	systemimager-boot-standard-ia64-2.2.0.tar.bz2
+     </para>
+
+    <para>
+	SystemImager and its standard boot flavors support most common hardware configurations.
+	The <filename>.config</filename> files list the options for this kernel.
+    </para>
+
+    <para>You can use other flavors at any time to support alternate
+	client configurations, and mulitple boot flavors can be installed simultaneously.
+      However, boot packages are strongly coupled to the
+	version of SystemImager for which they were created.  The SystemImager tools
+	will only recognize flavors that have the same version string as the installed
+	version of SystemImager.
+    </para>
+
+    <para>
+	To install a boot package(s) check to see if the boot flavor package you want is packaged
+	for your distribution.  Use the packaged version (.rpm or .deb) if available.  
+	If only the tarball is available, 
+	use the install_siboot utility to install a boot tarball onto your system.
+	For example:
+   	# <command>install_siboot ./systemimager-boot-standard-ia64-2.2.0.tar.bz2</command>
+
+See the install_siboot manpage (included in the Command Reference section)
+of this manual) for details on creating your own boot packages.
+
     <procedure>
-      <title>Debian GNU/Linux 3.0 (woody) and later</title>
+      <title>To install an image server for Debian GNU/Linux 3.0 (woody) and later, run:</title>
       <step>
 	<para><command><prompt>#</prompt> apt-get update</command></para>
       </step>
@@ -47,8 +120,8 @@
     </procedure>
     <note>
       <para>
-	For Debian 2.2 (potato), you must add the following line to the file
-	<filename>/etc/apt/sources.list</filename>:
+	For Debian 2.2 (potato), you must add the following line to the 
+	<filename>/etc/apt/sources.list</filename> file:
       </para>
       <para>
 	<computeroutput>
@@ -57,7 +130,7 @@
       </para>
     </note>
     <procedure>
-      <title>RPM based distributions</title>
+      <title>For RPM based distributions:</title>
       <step>
 	<para>
 	  Download and install the systemimager-server RPM and required
@@ -74,17 +147,17 @@
 	<para>
 	  <command><prompt>#</prompt> rpm -Uvh *.rpm</command>
 	</para>
-	</step>
+      </step>
     </procedure>
     <procedure>
-      <title>Other Distributions</title>
+      <title>For other distributions:</title>
       <para>
-	If your distribution does not support RPMs or debs, you must use
+	If your distribution does not support RPMs or .debs, you must use
 	the tarball packages.
       </para>
       <step>
 	<para>
-	  Download the systemimager-server tarball and it's dependencies from
+	  Download the systemimager-server tarball and its dependencies from
 	  <ulink url="http://systemimager.org/download/">
 	    http://systemimager.org/download/
 	  </ulink>.
@@ -133,26 +206,24 @@
   <section>
     <title>Selecting A Machine To Use As A Golden Client</title>
     <para>
-      A golden client is a machine from which a software image is pulled, so
-      that this image can be later deployed to other machines in the network.
-      It is important that a golden client have similar hardware to the
-      machines that will later use this image, i.e. the same network adapter
-      chipset, and the same storage adapters. Currently, deploying a
-      SCSI-based image to an IDE based-system (or vice-versa) will not work
-      without some manual editing of the master script, and various files
+      A golden client must have similar hardware to the
+      machines that will later use its image (i.e. the same network adapter
+      chipset and the same storage adapters). You cannot currently deploy a
+      SCSI-based image to an IDE based-system (or vice-versa)
+      without manually editing the master script and various files
       within the image. The disk size(s) of the golden client can be smaller
-      than that of the other machines that will use this image, and larger
+      than the other machines that will use its image and larger
       within reason.
     </para>
-    </section>
+  </section>
   <section>
-    <title>Installing a Golden Client</title>
+    <title>Installing SystemImager Client Software on a Golden Client</title>
     <para>
       To create a golden client, you must install the	systemimager-client
       package.
     </para>
     <procedure>
-      <title>Debian GNU/Linux 3.0 (woody) and later</title>
+      <title>For Debian GNU/Linux 3.0 (woody) and later, run:</title>
       <step>
 	<para><command><prompt>#</prompt> apt-get update</command></para>
       </step>
@@ -164,7 +235,7 @@
 	</para>
       </step>
     </procedure>
-      <note>
+    <note>
       <para>
 	For Debian 2.2 (potato), you must add the following line to the file
 	<filename>/etc/apt/sources.list</filename>:
@@ -174,9 +245,9 @@
 	  deb http://systemimager.org/debian / 
 	</computeroutput>
       </para>
-      </note>
+    </note>
     <procedure>
-      <title>RPM based distributions</title>
+      <title>For RPM based distributions:</title>
       <step>
 	<para>
 	  Download and install the systemimager-client RPM and required
@@ -185,7 +256,7 @@
 	    http://systemimager.org/download/
 	  </ulink>.
 	</para>
-	</step>
+      </step>
       <step>
 	<para>
 	  Install each package with the <command>rpm</command> command.
@@ -193,17 +264,17 @@
 	<para>
 	  <command><prompt>#</prompt> rpm -Uvh *.rpm</command>
 	</para>
-	</step>
+      </step>
     </procedure>
     <procedure>
-      <title>Other Distributions</title>
+      <title>For other distributions:</title>
       <para>
-	If your distribution does not support RPMs or debs, you must use
+	If your distribution does not support RPMs or .debs, you must use
 	the tarball packages.
-	</para>
+      </para>
       <step>
 	<para>
-	  Download the systemimager-client tarball and it's dependencies from
+	  Download the systemimager-client tarball and its dependencies from
 	  <ulink url="http://systemimager.org/download/">
 	    http://systemimager.org/download/
 	  </ulink>.
@@ -232,7 +303,7 @@
 	    tar xv
 	  </command>
 	</para>
-	</step>
+      </step>
       <step>
 	<para>
 	  cd into the newly decompressed directory and run the
@@ -248,5 +319,26 @@
 	</para>
       </step>
     </procedure>
+  </section>
+  <section>
+    <title>Creating an Image on the Golden Client</title>
+    <para>
+      To create an image for deployment with the SystemImager tool, install
+      and configure a Linux distribution and any additional software that you
+      want the image to contain on a system you will use as your golden
+      client. You will deploy the image of that system (or golden client)
+      onto other machines.
+    </para>
+    <para>
+      <application>System Installer</application>, a component of the System 
+	Installation Suite to which SystemImager belongs, allows you to install 
+	Linux directly to an image, bypassing the golden client step.  <application>System Installer</application> 
+	packages and documentation can be found at
+      <ulink url="http://systeminstaller.sourceforge.net">
+	http://systeminstaller.sourceforge.net
+      </ulink>
+      Images created with SystemInstaller are interchangeable with those
+      created using the SystemImager tools.
+    </para>
   </section>
 </chapter>

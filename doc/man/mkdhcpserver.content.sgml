@@ -37,22 +37,46 @@
 
     <para>
       <command>mkdhcpserver</command> is an interactive utility for creating
-      a dhcpd configuration file for use with SystemImager</para>
+      a dhcpd configuration file for use with SystemImager.  It generates
+      entries commonly needed in PXE configurations, and defines option-100.
+      option-100 is passed to autoinstall clients in order to direct them to
+      the image server they should use.
+    </para>
 
   </refsect1>
   <refsect1>
     <title>OPTIONS</title>
 
     <para>
-      <command>mkdhcpserver</command> currently accepts to options.
+      <command>mkdhcpserver</command> currently accepts no options.
     </para>
 
   </refsect1>
+
+  <refsect1>
+    <title>BUGS</title>
+ 
+    <para>
+      <command>mkdhcpserver</command> is not compatible with DHCP v3 from
+      ISC.  If you are using DHCP v3, you will need to use the following
+      configuration directives to make use of option 100:
+    </para>
+    
+    <simplelist>
+      <member>option systemimager-server code 100 = text;</member>
+      <member>option systemimager-server "&lt;IMAGESERVER IP&gt;";</member>
+    </simplelist>
+
+    <para>
+      Where &lt;IMAGESERVER IP&gt; is the IP address of your image server
+    </para>
+  </refsect1>
+
   <refsect1>
     <title>SEE ALSO</title>
 
     <para><command>mkdhcpstatic(8)</command></para>
-
+    
     <para>More details can be found in the <citetitle>SystemImager
 	manual.</citetitle>
     </para>
@@ -60,7 +84,7 @@
   <refsect1>
     <title>AUTHOR</title>
 
-    <para>This manual page was written by &dhusername; <&dhemail;> for
+    <para>This manual page was compiled by &dhusername; <&dhemail;> for
       the &debian; system (but may be used by others).</para>
 
     <!-- <para>Permission is granted to copy, distribute and/or modify

@@ -1,18 +1,17 @@
 <!doctype refentry PUBLIC "-//OASIS//DTD DocBook V4.1//EN" [
-  <!ENTITY content SYSTEM "mkautoinstallscript.content.sgml">
-  <!-- Fill in your name for FIRSTNAME and SURNAME. -->
-  <!ENTITY dhfirstname "<firstname>dann</firstname>">
-  <!ENTITY dhsurname   "<surname>frazier</surname>">
+  <!-- Fill in the various UPPER CASE things here. -->
+  <!ENTITY manfirstname "<firstname>dann</firstname>">
+  <!ENTITY mansurname   "<surname>frazier</surname>">
   <!-- Please adjust the date whenever revising the manpage. -->
-  <!ENTITY dhdate      "<date>March  4, 2001</date>">
-  <!-- SECTION should be 1-8, maybe w/ subsection other parameters are
+  <!ENTITY mandate      "<date>2002-03-01</date>">
+  <!-- SECTION should be 1-8, maybe with subsection. Other parameters are
        allowed: see man(7), man(1). -->
-  <!ENTITY dhsection   "<manvolnum>8</manvolnum>">
-  <!ENTITY dhemail     "<email>dannf@debian.org</email>">
-  <!ENTITY dhusername  "dann">
+  <!ENTITY mansection   "<manvolnum>8</manvolnum>">
+  <!ENTITY manemail     "<email>dannf@debian.org</email>">
+  <!ENTITY manusername  "dannf">
 
+  <!ENTITY content SYSTEM "install_siboot.content.sgml">
   <!ENTITY debian      "<productname>Debian GNU/Linux</productname>">
-  <!ENTITY gnu         "<acronym>GNU</acronym>">
 ]>
 
 <refentry>

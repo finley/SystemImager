@@ -1,0 +1,91 @@
+  <refentryinfo>
+    <address>
+      &manemail;
+    </address>
+    <author>
+      &manfirstname;
+      &mansurname;
+    </author>
+    <copyright>
+      <year>2002</year>
+      <holder>&manusername;</holder>
+    </copyright>
+    &mandate;
+  </refentryinfo>
+  <refmeta>
+    <refentrytitle>MKRSYNCD_CONF</refentrytitle>
+
+    &mansection;
+  </refmeta>
+  <refnamediv>
+    <refname>mkrsyncd_conf</refname>
+
+    <refpurpose>generates rsyncd.conf from a rsync stub directory</refpurpose>
+  </refnamediv>
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>mkrsyncd_conf </command>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+  <refsect1>
+    <title>DESCRIPTION</title>
+
+    <para><command>mkrsyncd_conf</command> is a utility for generating a
+      rsyncd.conf file for SystemImager from an rsync stub directory.  The
+      location of the rsync stub directory and the rsyncd.conf file are
+      specified in <filename>/etc/systemimager/server.conf</filename>
+    </para>
+
+    <para>
+      Stub files in the rsync stub directory can fit into any of the following
+      categories, specified by the leading numbers in the filename:
+    </para>
+    <itemizedlist>
+      <listitem>
+        <para>10<replaceable>description</replaceable> - comments and global
+          definitions
+        </para>
+      </listitem>
+      <listitem>
+        <para>20<replaceable>ARCH</replaceable> - architecture specific
+          entries
+        </para>
+      </listitem>
+      <listitem>
+        <para>30<replaceable>DESCRIPTION</replaceable> - comments and
+          definitions for the image section
+        </para>
+      </listitem>
+      <listitem>
+        <para>40<replaceable>IMAGENAME</replaceable> - entry for
+          <replaceable>IMAGENAME</replaceable>
+        </para>
+       </listitem>
+      <listitem>
+        <para>70<replaceable>DESCRIPTION</replaceable> - reserved for local
+          use
+        </para>
+      </listitem>
+    </itemizedlist>
+    <para>All other numeric ranges are reserved for future use.</para>
+  </refsect1>
+  <refsect1>
+    <title>OPTIONS</title>
+
+    <para>No options are currently accepted.</para>
+
+  </refsect1>
+  <refsect1>
+    <title>AUTHOR</title>
+
+    <para>This manual page was written by &manusername; <&manemail;> for the
+      &debian; system (but may be used by others).</para>
+  </refsect1>
+
+  <refsect1>
+    <title>SEE ALSO</title>
+
+    <para>
+    server.conf(5)
+    </para>
+  </refsect1>
