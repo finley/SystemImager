@@ -14,7 +14,7 @@ BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: Michael Jennings <mej@valinux.com>
 Docdir: %{prefix}/doc
 URL: http://systemimager.org/
-Requires: rsync >= 2.3.1, syslinux >= 1.48, tftp-hpa >= 0.13, dhcp = 2.0
+Requires: rsync >= 2.3.1, syslinux >= 1.48, dhcp = 2.0
 
 %description
 VA SystemImager is software that makes the installation of Linux to
