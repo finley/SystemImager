@@ -1,23 +1,23 @@
 #
 #	$Id$
-# 	/* vi: set noet ts=5: */
+# 	/* vi: set noet ts=8: */
 #
-
-# http://www.mars.org/home/rob/proj/hfs/
+# 	http://www.mars.org/home/rob/proj/hfs/
+#
 
 HFSUTILS_VERSION	:= 3.2.6
 HFSUTILS_DIR 		:= hfsutils-$(HFSUTILS_VERSION)
 HFSUTILS_TARBALL 	:= $(HFSUTILS_DIR).tar.gz
 HFSUTILS_URL 		:= ftp://ftp.mars.org/pub/hfs/$(HFSUTILS_TARBALL)
 HFSUTILS_PATCHES 	:= $(shell ls $(PATCH_DIR)/hfsutils.*.patch 2>/dev/null | sort)
-HFSPROGS_BINARY 	:= $(SRC_DIR)/$(HFSUTILS_DIR)/hformat
+HFSUTILS_BINARY 	:= $(SRC_DIR)/$(HFSUTILS_DIR)/hformat
 
 ALL_SOURCE += $(SRC_DIR)/$(HFSUTILS_TARBALL)
 
 PHONY += hfsutils
-hfsutils:	$(HFSPROGS_BINARY)
+hfsutils:	$(HFSUTILS_BINARY)
 
-$(HFSPROGS_BINARY):	$(SRC_DIR)/$(HFSUTILS_TARBALL)
+$(HFSUTILS_BINARY):	$(SRC_DIR)/$(HFSUTILS_TARBALL)
 	[ -d $(SRC_DIR)/$(HFSUTILS_DIR) ] || ( cd $(SRC_DIR) && tar xvfz $(HFSUTILS_TARBALL) && \
 		(cd $(HFSUTILS_DIR) && (cat $(HFSUTILS_PATCHES) < /dev/null | patch -p1)))
 	( cd $(SRC_DIR)/$(HFSUTILS_DIR) && chmod +x ./configure && CFLAGS="-O2 -Wall" ./configure )
