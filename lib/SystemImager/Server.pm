@@ -595,17 +595,11 @@ EOF
 
   print MASTER_SCRIPT << 'EOF';
 
-PATH=/sbin:/bin:/usr/bin:/usr/sbin:/tmp
-ARCH=`uname -m \
-| sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/`
+# Load functions and other variables
+. /etc/init.d/functions
 
-shellout() {
-    exec cat /etc/issue ; exit 1
-}
+get_arch
 
-mcast_group+2() {
-    PORTBASE=$(echo "scale=3; ($PORTBASE + 2)" | bc)
-}
 
 # Pull in variables left behind by the linuxrc script.
 # This information is passed from the linuxrc script on the autoinstall media 
@@ -1383,13 +1377,11 @@ sub create_autoinstall_script{
 
     ### BEGIN pull the image down ###
     print MASTER_SCRIPT qq(# Filler up!\n);
-    print MASTER_SCRIPT qq(if [ ! -z \$PORTBASE ]; then \n);
-    print MASTER_SCRIPT qq(# Use multicast \n);
-    print MASTER_SCRIPT qq(    mcast_group+2 \n);
-    $cmd = qq(udp-receiver --pipe 'tar -x -C /a' --portbase \${PORTBASE});
-    print MASTER_SCRIPT qq(    echo "$cmd" \n);
-    print MASTER_SCRIPT qq(    $cmd || shellout \n);
-    print MASTER_SCRIPT qq( \n);
+    print MASTER_SCRIPT qq(if [ ! -z \$FLAMETHROWER_DIRECTORY_PORTBASE ]; then \n);
+    print MASTER_SCRIPT qq(    # Use multicast \n);
+    print MASTER_SCRIPT qq(    MODULE_NAME="\${IMAGENAME}" \n);
+    print MASTER_SCRIPT qq(    DIR=/a \n);
+    print MASTER_SCRIPT qq(    flamethrower_client \n);
     print MASTER_SCRIPT qq(else \n);
     print MASTER_SCRIPT qq(    # Use rsync \n);
     print MASTER_SCRIPT qq(    echo "rsync $rsync_opts \${IMAGESERVER}::\${IMAGENAME}/ /a/" \n);
@@ -1421,24 +1413,18 @@ sub create_autoinstall_script{
     
     ### BEGIN overrides ###
     print MASTER_SCRIPT  q(### BEGIN overrides ###) . qq(\n);
-    print MASTER_SCRIPT  q(if [ ! -z $PORTBASE ]; then) . qq(\n);
-    print MASTER_SCRIPT  q(    # Use multicast) . qq(\n);
-    print MASTER_SCRIPT  q(    #) . qq(\n);
-    print MASTER_SCRIPT  q(    # A single cast will catch any and all override directories at once.) . qq(\n);
-    print MASTER_SCRIPT  q(    #) . qq(\n);
-    print MASTER_SCRIPT  q(    mcast_group+2) . qq(\n);
-    $cmd = qq(udp-receiver --pipe 'tar -x -C /a' --portbase \${PORTBASE});
-    print MASTER_SCRIPT  qq(    echo "$cmd") . qq(\n);
-    print MASTER_SCRIPT  qq(    $cmd || shellout) . qq(\n);
-    print MASTER_SCRIPT  q(    ) . qq(\n);
-    print MASTER_SCRIPT  q(else) . qq(\n);
-    print MASTER_SCRIPT  q(    # Use rsync) . qq(\n);
-    print MASTER_SCRIPT  q(    for OVERRIDE in $OVERRIDES) . qq(\n);
-    print MASTER_SCRIPT  q(    do) . qq(\n);
+    print MASTER_SCRIPT  q(for OVERRIDE in $OVERRIDES) . qq(\n);
+    print MASTER_SCRIPT  q(do) . qq(\n);
+    print MASTER_SCRIPT  q(    if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then) . qq(\n);
+    print MASTER_SCRIPT  q(        # Use multicast) . qq(\n);
+    print MASTER_SCRIPT  q(        MODULE_NAME="override_${OVERRIDE}") . qq(\n);
+    print MASTER_SCRIPT  q(        DIR=/a) . qq(\n);
+    print MASTER_SCRIPT  q(        flamethrower_client) . qq(\n);
+    print MASTER_SCRIPT  q(    else) . qq(\n);
     print MASTER_SCRIPT  q(        echo "rsync -av --numeric-ids $IMAGESERVER::overrides/$OVERRIDE/ /a/") . qq(\n);
     print MASTER_SCRIPT  q(        rsync -av --numeric-ids $IMAGESERVER::overrides/$OVERRIDE/ /a/ || echo "Override directory $OVERRIDE doesn't seem to exist, but that may be OK.") . qq(\n);
-    print MASTER_SCRIPT  q(    done) . qq(\n);
-    print MASTER_SCRIPT  q(fi) . qq(\n);
+    print MASTER_SCRIPT  q(    fi) . qq(\n);
+    print MASTER_SCRIPT  q(done) . qq(\n);
     print MASTER_SCRIPT  q(### END overrides ###) . qq(\n);
     ### END overrides ###
     
