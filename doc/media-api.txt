@@ -1,0 +1,28 @@
+Various functions expect a hash that specifies the different components
+of the boot media.  Here is the format:
+%spec = { kernel        => $path,
+         initrd        => $path,
+	 append_string => $string,
+	 message       => $path }
+
+# External API
+BootMedia::BootMedia::build_floppy_image(%spec, $arch, $outfile)
+BootMedia::BootMedia::build_iso_image(%spec, $arch, $outfile)
+
+# Internal API
+BootMedia::MediaLib::init_disk_image($size, $outfile)
+BootMedia::MediaLib::populate_disk_image(\%files, $outfile)
+  whose keys are source file paths on the host system which map to
+  target file paths relative to the disk image root.
+BootMedia::MediaLib::populate_iso_dir($dir, @files)
+BootMedia::MediaLib::run_mkisofs($dir, $arch, $extra_opts, $outfile)
+BootMedia::MediaLib::mkfs_disk_image($outfile);
+
+BootMedia::<arch>::build_floppy_image(%spec, $outfile) [optional]
+BootMedia::<arch>::build_iso_image(%spec, $outfile)    [optional]
+
+BootMedia::ia64::write_elilo_conf($append, $out_fh)
+BootMedia::i386::write_syslinux_conf($append, $out_fh)
+BootMedia::alpha::write_aboot_conf($append, $out_fh)
+BootMedia::alpha::run_isomarkboot($iso)
+...
