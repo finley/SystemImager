@@ -6,6 +6,17 @@
 # This file is: makedhcpstatic
 #
 
+### BEGIN Subroutines ###
+sub get_response {
+ my $garbage_out=$_[0];
+ my $garbage_in=<STDIN>;
+ chomp $garbage_in;
+ unless($garbage_in eq "") { $garbage_out = $garbage_in; }
+ return $garbage_out;
+}
+### END Subroutines ###
+
+
 # if not run as root, this script will surely fail
 unless($< == 0) { die "Must be run as root!\n"; }
 
@@ -117,3 +128,13 @@ foreach $mac (@macs) {
   }
 }
 close(DHCPDCONF);
+
+if( -e "/etc/rc.d/init.d/dhcpd" ){
+  print "\nWould you like me to restart your DHCP server software now? (y/N): ";
+  $continue=get_response();
+  $continue=lc($continue);
+  if( $continue eq "y" ){
+    $command="/etc/rc.d/init.d/dhcpd restart";
+    system($command);
+  }
+}
