@@ -492,18 +492,13 @@ ifdef MKXFS_BINARY
 	install -m 755 --strip $(MKXFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
 endif
 	#
-	# 2005-01-12 Andrea Righi
+	# 2005-01-18 Andrea Righi
 	# 
 	install -m 755 --strip $(LVM_BINARY)			$(BOEL_BINARIES_DIR)/sbin/
 	#
 	# Create LVM symlinks to lvm binary
 	#
-	@( \
-		for v in `cat $(SRC_DIR)/$(LVM_DIR)/tools/.commands`; do \
-			cd $(BOEL_BINARIES_DIR)/sbin; \
-			ln -s -f lvm $$v; \
-		done; \
-        )
+	cd $(BOEL_BINARIES_DIR)/sbin && $(foreach binary,$(shell cat $(SRC_DIR)/$(LVM_DIR)/tools/.commands),ln -s -f lvm $(binary) && ) /bin/true
 
 	mkdir -m 755 -p $(BOEL_BINARIES_DIR)/lib
 	test ! -d /lib64 || mkdir -m 755 -p $(BOEL_BINARIES_DIR)/lib64
