@@ -1,4 +1,210 @@
-default, this
+#!/bin/sh
+
+#
+#   $Id$
+#
+#   Written by Dann Frazier <daniel_frazier@hp.com>
+#
+
+#########################################################################
+# The intent of this script is to automate the configuration of a
+# linux PXE server, and is written with SystemImager in mind.
+# it uses pxelinux and configures it for a kernel/single ramdisk scenario.
+#
+# it is written as a set of independent tasks so that it can hopefully
+# be expanded for other architectures, and other non-SystemImager purposes
+#
+#########################################################################
+
+INTERACTIVE="yes"
+INTERFACE=""
+LOCAL_DHCP=""
+KERNEL=""
+INITRD=""
+TFTPDIR=""
+PXELINUX=""
+
+program_name=$(basename $0)
+
+usage="\
+Usage:  $program_name [-f] [--interface=interface] [--localdhcp=y|n] 
+	[--kernel=path] [--initrd=path] [--tftpdir=dir] [--pxelinux=path]"
+       
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+TFTPD_PATH=""
+TFTP_TEST_FILE_TEXT="all your tftp test file are belong to us"
+TFTP_DAEMON=""
+
+CONFIG_DIR="/etc/systemimager"
+
+#SYSLINUX_DEFAULT="\
+#DEFAULT kernel
+#APPEND vga=extended load_ramdisk=1 prompt_ramdisk=0 initrd=initrd.img root=/dev/ram rw
+#DISPLAY message.txt
+#PROMPT 1
+#TIMEOUT 50"
+
+PXE_CONF="\
+#  *******  PXE CONFIGURATION FILE *******
+# Any Line starting with a '#\" is treated as a comment line
+# and ignored. However, '#' must be the first character on
+# a line and no spaces before that are allowed.
+
+
+# The following entry is the name of the interface on which pxe is going
+# to operate. We use this interface to get the ip address automatically.
+
+[Network_Interface_Name]
+eth0
+
+
+# The following entry will be queried if PXE fails to get 
+# the IP address automatically through 'ifconfig' like code built-in. This
+# is only needed if the above interface name is not present in the system
+
+
+[OurIpAddress]
+#192.215.100.202
+
+
+# This entry shows the base directory of the mtftpd. All file names/paths
+# will be relative to this directory. This is the same name that should 
+# be used as the start up argument to the mtftpd daemon.
+
+[Mtftpd_Root_Directory]
+/tftpboot
+
+
+# Set the following entry to 0 if you have a DHCP server running on this 
+# system.
+
+[UseDHCPPort]
+1
+
+
+# Set the entry below to zero if you don't want this system to act 
+# as a PXE proxyDHCP
+
+[StartProxy]
+1
+
+
+# Set the entry below to zero if you don't want this system to act as a 
+# PXE boot server
+
+[startBootService]
+1
+
+
+[MasterProxy]
+1
+
+
+# 0 - broadcast discovery is enabled; 1 - broadcast discovery is disabled
+
+[Discovery_BCast_Disabled]
+0
+
+
+# 0 - multicast discovery is enabled; 1 - multicast discovery is disabled
+
+[Discovery_MCast_Disabled]
+0
+
+
+# Multicast Discovery address. The boot server would listen on this address 
+# for multicast boot server packets.
+
+[Discovery_MCast_Addr]
+224.0.1.2
+
+
+# Prompt to display on the user screen
+# format of this entry: timeout,<string>
+
+[Prompt]
+10,Press F8 to view menu ...
+
+
+# This entry is set to 1 if the client should accept only responses
+# from servers in this list
+
+[Discovery_Server_List_Only]
+0
+
+
+# the format of the discovery_list entry is as follows
+# type of the server, # of entries, Ip address of each entry 
+# separated by commas
+
+[Discovery_List]
+#3,2,192.215.100.49,192.215.100.99
+#65535,1,192.215.100.45
+
+
+# In some systems, the all '1' broadcast address 255.255.255.255 
+# won't work as the system will fail with a network unreachable message.
+# In those cases, you can use the 'route add -host 255.255.255.255 eth0' 
+# command to add a route. Or else, you can define the host portion of the 
+# address alone as '1' in the following entry. This entry is not 
+# required if your system is set up to transmit
+# broadcast packets on 255.255.255.255
+
+[Broadcast_ip_address]
+#192.215.100.255
+
+
+# Architectures supported
+# format : <arch-type>,<arch-string>
+
+[PROC_ARCH]
+0,X86PC
+
+
+# Boot server types supported
+
+[Service_Types]
+0,BStrap
+13,linux-install
+# 14,linux-boot
+
+
+# Menu string that will be displayed on the client screen
+# after F8 is pressed.
+[X86PC/UNDI/MENU]
+0,Local Boot
+13,Remote Install Linux
+# 14,Remote Boot Linux
+
+
+# Image file name for Linux install boot server type
+# format : <min layer #> <max layer #> <base file name>
+[X86PC/UNDI/linux-install/ImageFile_Name]
+0
+2
+linux
+
+
+# Image file name for Linux boot server type
+# format : <min layer #> <max layer #> <base file name>
+# [X86PC/UNDI/linux-boot/ImageFile_Name]
+# 0
+# 2
+# linux
+
+
+# Image file name for BStrap boot server
+# format : <min layer #> <max layer #> <base file name>
+
+[X86PC/UNDI/BStrap/ImageFile_Name]
+0
+0
+bstrap
+
+
+# List of plug-ins. The PXEClientTester is the plug-in that
+# validates received packets for PXE compliance. By default, this
 # plug-in is DISBALED. Remove the '#\" in front of it, if you want
 # packet validation to happen
 
