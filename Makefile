@@ -125,6 +125,9 @@ TOPDIR  := $(CURDIR)
 # tarballs, but aren't installed onto the destination machine by default
 RELEASE_DOCS = CHANGE.LOG COPYING CREDITS ERRATA README VERSION
 
+# This includes the file which is autoconf generated
+include config.inc
+
 # should we be messing with the user's PATH? -dannf
 # no i don't think so. -bef-
 #PATH = /sbin:/bin:/usr/sbin:/usr/bin:/usr/bin/X11:/usr/local/sbin:/usr/local/bin
@@ -192,11 +195,9 @@ BOEL_BINARIES_TARBALL = $(BOEL_BINARIES_DIR).tar.gz
 SI_INSTALL = $(TOPDIR)/tools/si_install --si-prefix=$(PREFIX)
 GETSOURCE = $(TOPDIR)/tools/getsource
 
-PYTHON = $(shell which python2 || which python)
-
 # build everything, install nothing
 .PHONY:	all
-all:	$(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.img manpages
+all:	config.inc $(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.img manpages
 
 .PHONY:	help
 help:  show_targets
@@ -380,29 +381,26 @@ install_configs:
 
 ########## BEGIN man pages ##########
 # build all of the manpages
-.PHONY:	manpages
+.PHONY:	manpages install_server_man install_client_man install_common_man install_docs docs
+ifeq ($(BUILD_DOCS),1)
 manpages:
 	$(MAKE) -C $(MANPAGE_DIR) TOPDIR=$(TOPDIR)
 
 # install the manpages for the server
-.PHONY:	install_server_man
 install_server_man: manpages
 	cd $(MANPAGE_DIR) && $(MAKE) install_server_man TOPDIR=$(TOPDIR) PREFIX=$(PREFIX) $@
 
 # install the manpages for the client
-.PHONY:	install_client_man
 install_client_man: manpages
 	cd $(MANPAGE_DIR) && $(MAKE) install_client_man TOPDIR=$(TOPDIR) PREFIX=$(PREFIX) $@
 
 # install manpages common to the server and client
-.PHONY:	install_common_man
 install_common_man: manpages
 	cd $(MANPAGE_DIR) && $(MAKE) install_common_man TOPDIR=$(TOPDIR) PREFIX=$(PREFIX) $@
 
 ########## END man pages ##########
 
 # installs the manual and some examples
-.PHONY:	install_docs
 install_docs: docs
 	mkdir -p $(DOC)
 	cp -a $(MANUAL_DIR)/html $(DOC)
@@ -411,9 +409,9 @@ install_docs: docs
 	#XXX $(SI_INSTALL) -m 644 doc/media-api.txt $(DOC)/
 
 # builds the manual from SGML source
-.PHONY:	docs
 docs:
 	$(MAKE) -C $(MANUAL_DIR) html ps pdf
+endif
 
 # pre-download the source to other packages that are needed by 
 # the build system
