@@ -1,6 +1,6 @@
-UDPCAST_VERSION = 20030611
-UDPCAST_TARBALL = udpcast-$(UDPCAST_VERSION).tar.bz2
-UDPCAST_URL = http://udpcast.linux.lu/current/$(UDPCAST_TARBALL)
+UDPCAST_VERSION = 20030706
+UDPCAST_TARBALL = udpcast_$(UDPCAST_VERSION).orig.tar.gz
+UDPCAST_URL = http://http.us.debian.org/debian/pool/main/u/udpcast/$(UDPCAST_TARBALL)
 UDPCAST_DIR = udpcast
 UDPCAST_BINARY = $(INITRD_SRC_DIR)/$(UDPCAST_DIR)/udp-receiver
 UDPCAST_PATCHES = $(shell ls $(INITRD_PATCH_DIR)/udpcast.*.patch 2>/dev/null | sort)
@@ -13,7 +13,7 @@ udpcast:	$(UDPCAST_BINARY)
 $(UDPCAST_BINARY):	$(INITRD_SRC_DIR)/$(UDPCAST_TARBALL) $(UDPCAST_PATCHES) \
 			$(UCLIBC_TARGET)
 	rm -rf $(INITRD_SRC_DIR)/$(UDPCAST_DIR)
-	cd $(INITRD_SRC_DIR) && tar -xvjf $(UDPCAST_TARBALL)
+	cd $(INITRD_SRC_DIR) && tar -xvzf $(UDPCAST_TARBALL)
 
 	cd $(INITRD_SRC_DIR)/$(UDPCAST_DIR) && \
 	  cat $(UDPCAST_PATCHES) < /dev/null | patch -p1
