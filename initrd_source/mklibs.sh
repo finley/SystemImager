@@ -21,6 +21,7 @@
 # STATIC DATA SECTION
 #
 
+
 usage="Usage: $0 [OPTION]... -d DEST FILE ..."
 try="Try "\`"$0 --help' for more information"
 version="$0 0.1, Copyright 1999 Marcus Brinkmann"
@@ -648,7 +649,8 @@ install-libs () {
     else
       lib=`find-file $src_path $cur_lib`
       if [ -L "$lib" ] ; then
-        lib=`basename \`readlink $lib\``
+	mylink=`perl -e 'print readlink shift' $lib`
+        lib=`basename $mylink`
         create-link $lib $dest/$cur_lib
       else
         install-small-lib $cur_lib
@@ -769,7 +771,8 @@ do
   lib=`find-file $src_path $cur_lib`
   if [ -L "$lib" ] ; then
     $verbose -n 2>&1 L
-    lib=`basename \`readlink $lib\``
+    mylink=`perl -e 'print readlink shift' $lib`
+    lib=`basename $mylink`
     add-to-queue-if-not-there $fl_dir/library-depends "$lib" 
     add-arrow $fl_dir/dependency-graph "$cur_lib" "$lib"
   else
