@@ -197,8 +197,8 @@ sub _read_partition_info_and_prepare_parted_commands {
 
         my $label_type = $config->{disk}->{$dev}->{label_type};
         my (
-            $highest_partition_number, 
-            $highest_partition_number_that_could_be_skipped, 
+            $highest_part_num, 
+            $highest_p_or_e_part_num, 
             $m, 
             $cmd, 
             $empty_partition_count, 
@@ -398,16 +398,26 @@ sub _read_partition_info_and_prepare_parted_commands {
 
         # Figure out what the highest partition number is. -BEF-
         foreach (sort { $a <=> $b } (keys ( %{$config->{disk}->{$dev}->{part}} ))) {
-            $highest_partition_number = $_;
+            $highest_part_num = $_;
         }
+
+
+        # Find out what the highest primary or extended partition number is. 
+        # This will help us prevent from creating unnecessary bogus partitions.
+        # -BEF-
+        #
+        foreach my $m (sort (keys ( %{$config->{disk}->{$dev}->{part}} ))) {
+            unless (($p_type{$m} eq "primary") or ($p_type{$m} eq "extended")) { next; }
+            $highest_p_or_e_part_num = $m;
+        }
+
 
         ### BEGIN For empty partitions, change $endMB appropriately. -BEF- ###
         #
-        $m = $highest_partition_number;
+        $m = $highest_p_or_e_part_num;
         $empty_partition_count = 0;
         $MB_from_end_of_disk = 0;
         my %minors_to_remove;
-
         until ($m == 0) {
           unless ($endMB{$m}) {
             $empty_partition_count++;
@@ -423,7 +433,7 @@ sub _read_partition_info_and_prepare_parted_commands {
             $p_name{$m} = "-";
             $flags{$m}  = "-";
 
-            $minors_to_remove{$m} = "remove";  # This could be any value.  I just chose remove. -BEF-
+            $minors_to_remove{$m} = 1;  # This could be any value.  -BEF-
           }
 
           $m--;
@@ -439,11 +449,19 @@ sub _read_partition_info_and_prepare_parted_commands {
 
 
         # Start out with a minor of 1.  We iterate through all minors from one 
-        # to $highest_partition_number, and fool parted by creating bogus partitions
+        # to $highest_part_num, and fool parted by creating bogus partitions
         # where there are gaps in the partition numbers, then later removing them. -BEF-
         #
-        $m = "1";
-        until ($m > $highest_partition_number) {
+        $m = "0";
+        until ($m > $highest_part_num) {
+
+          $m++;
+
+          # Skip over partitions we don't have data for.  This is most likely to
+          # occur in the case of an msdos disk label, with empty partitions
+          # after an extended partition, but before logical partitions. -BEF-
+          #
+          unless ($endMB{$m}) { next; }
 
           if ($fstype{$m} eq "-") { $fstype{$m} = ""; }
 
@@ -500,8 +518,6 @@ sub _read_partition_info_and_prepare_parted_commands {
               print MASTER_SCRIPT "$cmd";
             }
           }
-
-          $m++;
         }
 
         # Kick the minors out.  (remove temporary partitions) -BEF-
