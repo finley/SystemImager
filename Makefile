@@ -179,6 +179,7 @@ ifeq ($(ARCH),i386)
 	 LINUX_IMAGE = $(LINUX_SRC)/arch/i386/boot/bzImage
 	 LINUX_PATCH = $(PATCH_DIR)/linux.i386.patch.bz2
 	 LINUX_CONFIG = $(PATCH_DIR)/linux.config
+	 LINUX_TARGET = bzImage
 endif
 ifeq ($(ARCH),ia64)
 	 LINUX_VERSION = 2.4.9
@@ -186,6 +187,7 @@ ifeq ($(ARCH),ia64)
 	 LINUX_IMAGE = $(LINUX_SRC)/arch/ia64/boot/vmlinux
 	 LINUX_PATCH = $(PATCH_DIR)/linux.ia64.patch.bz2
 	 LINUX_CONFIG = $(PATCH_DIR)/linux.ia64.config
+	 LINUX_TARGET = vmlinux
 endif
 
 LINUX_TARBALL = linux-$(LINUX_VERSION).tar.bz2
@@ -316,7 +318,7 @@ kernel:	kernel-build-stamp
 
 kernel-build-stamp:
 	$(MAKE) patched_kernel
-	$(MAKE) -C $(LINUX_SRC) bzImage
+	$(MAKE) -C $(LINUX_SRC) $(LINUX_TARGET)
 	touch kernel-build-stamp
 
 patched_kernel:	patched_kernel-stamp
