@@ -279,21 +279,16 @@
 
  <sect1 id=Sect3>
   <title>System Requirements</title>
-   <para>
-    To set up a <application>VA SystemImager</application> server 
-    installation, you will require the following configuration:
-   </para>
-
    <itemizedlist>
     <listitem>
      <para>
-      Your imageserver will must have enough disk space to hold the images
+      Your image server will must have enough disk space to hold the images
       to be installed on your client systems.
      </para>
     </listitem>
     <listitem>
      <para>
-      All of the clients for a particular image should have hardware that is
+      All of the clients that will use the same image should have hardware that is
       as similar as possible.  Most importantly they should use the same chipset
       on the network device(s) and the same number and kind of hard drive(s) 
       (IDE, SCSI, Mylex Hardware RAID, etc.)  The hard drives may be of different
@@ -310,66 +305,21 @@
       in their tftp-server package, but the tftp package included with earlier 
       RedHat releases doesn't provide the required functionality.  PXE 
       network-based installations may also require a pxe daemon to be running 
-      on your imageserver.  This requirement depends on the firmware used on 
+      on your image server.  This requirement depends on the firmware used on 
      the client side, and the capabilities of your DHCP server.
      </para>
     </listitem>
    </itemizedlist>
  </sect1>
 
- <sect1 id=Overview>
-  <title>Overview of SystemImager Operations</title>
-  <para>
-   <itemizedlist>
-    <listitem>
-     <para>
-      Install the <application>VA SystemImager</application> Software on the 
-      node you have chosen as your Image Server 
-     </para>
-    </listitem>
-    <listitem>
-     <para>
-      Configure the <application>VA SystemImager</application> Software
-     </para>
-    </listitem>
-    <listitem>
-     <para>
-      Install and customize the "golden" client with Linux
-     </para>
-    </listitem>
-    <listitem>
-     <para>
-      Install the VA SystemImager client software on the "golden" client
-     </para>
-    </listitem>
-    <listitem>
-     <para>
-      Retrieve the image from the "golden" client
-     </para>
-    </listitem>
-    <listitem>
-     <para>
-      Customize the image
-     </para>
-    </listitem>
-    <listitem>
-     <para>
-      Install the "golden" image on other nodes
-     </para>
-    </listitem>
-   </itemizedlist>
-  </para>
- </sect1>
 
-
- <sect1 id=How>
-  <title>How <application>VA SystemImager</application> Works</title>
+ <sect1 id=HowDoesItWork>
+  <title>How Does it Work? (summary)</title>
    <para>
     The basic idea behind <application>VA SystemImager</application> is 
     to retrieve the entire system image from a "golden" client to an 
-    "imageserver" (the imageserver is the machine where you install this 
-    software).  This image can then be replicated to any number of client 
-    systems you want configured in the same way.
+    "image server".  This image can then be replicated to any number of 
+    client systems.
    </para>
 
    <para>
@@ -381,18 +331,243 @@
    </para>
  </sect1>
 
+ <sect1 id=Terminology>
+  <title>SystemImager Terminology</title>
+   <itemizedlist>
+    <listitem>
+     <para>
+      autoinstall media - The media that is used to boot an autoinstall client 
+      in order to begin the autoinstall process.  This media can be a floppy, 
+      a CDROM, the network, or the local hard drive of the autoinstall client.
+     </para>
+    </listitem>
+    
+    <listitem>
+     <para>
+      updateclient - A command that is executed on client systems allowing them 
+      to be updated or synchronized to a new or updated image after the initial
+      autoinstall.  updateclient enables software and content distribution.
+     </para>
+    </listitem>
+      
+    <listitem>
+     <para>
+      image server - The machine that will hold and distribute the images. 
+     </para>
+    </listitem>
+      
+    <listitem>
+     <para>
+      golden client - A machine from which an image is taken.  Golden clients
+      are manually installed and customized to taste.
+     </para>
+    </listitem>
+      
+    <listitem>
+     <para>
+      getimage - This command is run from the image server to pull a system 
+      image from a golden client. 
+     </para>
+    </listitem>
+      
+    <listitem>
+     <para>
+      prepareclient - This command is run on the golden client immediately 
+      prior to running getimage on the image server.
+     </para>
+    </listitem>
+      
+    <listitem>
+     <para>
+      makedhcpserver - An easy way to create a SystemImager appropriate 
+      /etc/dhcpd.conf file.  DHCP can be used to assign IP addresses to 
+      autoinstall clients. 
+     </para>
+    </listitem>
+      
+    <listitem>
+     <para>
+      makedhcpstatic - Used to modify the /etc/dhcpd.conf file, adding 
+      static entries for autoinstall clients based on the IP addresses 
+      handed out to these clients by the DHCP server.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      autoinstall script - A unique autoinstall script is created for each 
+      image and is used by the autoinstall client as part of the autoinstall 
+      process.  The names of autoinstall scripts begin with the image name 
+      and end in .master.  For example:"my_webserver_image_v1.master"
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      addclients - Tells your image server which image to install on your
+      autoinstall clients.  It does so by creating soft links to the 
+      master autoinstall script with the name of each host that will 
+      receive that image.  It also allows you to populate the /etc/hosts 
+      file with sequential host names and IP addresses.  This information
+      in /etc/hosts is necessary for certain SystemImager operations.
+     </para>
+    </listitem>
+   </itemizedlist>
+ </sect1>
+
+ <sect1 id=Overview>
+  <title>Overview of SystemImager Operations</title>
+  <para>
+   <itemizedlist>
+    <listitem>
+     <para>
+      Install the <application>VA SystemImager</application> server package on the 
+      machine you have chosen as your image server. 
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Configure <application>VA SystemImager</application> on your image server.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Install Linux on your "golden" client, and customize as you desire.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Install the VA SystemImager client software on your "golden" client.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Pull the image from the "golden" client to the image server.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Install the "golden" image on other machines.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
+ </sect1>
+ 
+ <sect1 id=TheActualHOWTO>
+  <title>The Actual Step-by-Step HOWTO</title>
+   <para>
+   </para>
+   <para>
+   </para>
+ </sect1>
+
+ <sect1 id=DesignGoals>
+  <title>I Want More Details!  What were the Design Goals?</title>
+  <itemizedlist>
+
+   <listitem>
+    <para>
+     Images should be pulled from a working system.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Completely unattended installs were a must.
+    </para>
+   </listitem>
+     
+   <listitem>
+    <para>
+     The unattended install system had to be able to repartition the 
+     destination drive(s).
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     One of the main design goals was ease of use.  This had to be a 
+     tool that could be used by a system administrator that didn't 
+     necessarily understand how it worked.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     It was also necessary for it to install easily and quickly so 
+     that it could be useful right away without alot of site specific
+     customization.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Images should be stored as normal files to allow for incremental
+     upgrades as opposed to "dd" style block level images of physical 
+     disks.
+    </para>
+   </listitem>
+     
+   <listitem>
+    <para>
+     It had to be independent of any and all packaging systems (such 
+     as RPM) in order to easily accomodate different distributions.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     It should be able to store multiple images, for different types 
+     of systems and for revision control.
+    </para>
+   </listitem>
+     
+   <listitem>
+    <para>
+     It must provide a mechanism for unattended install clients to
+     know which image to install.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Once a client was installed, it should be able to update itself
+     to a new or updated image.
+    </para>
+   </listitem>
+     
+   <listitem>
+    <para>
+     It should have a command line interface that lent itself well to
+     being wrapped with a GUI.
+    </para>
+   </listitem>
+
+  </itemizedlist>
+ </sect1>
+
+ <sect1 id=Architecture>
+  <title>I Want More Details!  Please Describe the Architecture.</title>
+   <para>
+   </para>
+ </sect1>
+
  <sect1 id=InstallConfigure>
-  <title>Installing and Configuring the ImageServer</title>
+  <title>Installing and Configuring the Image Server</title>
    <para>
     This section describes the installation and configuration of the 
-    ImageServer. The ImageServer is usually the node in a cluster or farm 
+    image server. The image server is usually the node in a cluster or farm 
     which is used to manage other nodes in the cluster or farm or provides 
     necessary resources to other nodes. Examples of these resources include
     NFS, DNS, DHCP, YP, LDAP, VACM (VA Cluster Manager), Scheduling Services, 
     etc.
    </para>
-  <example><title>Install the ImageServer software on the node designated as 
-   the Cluster/Farm Management Server</title>
+  <example>
+   <title>Install the VA SystemImager server package on the machine
+    you have chosen as your image server.  Often times, a machine that is
+    already performing some kind of management function is a good choice.
+   </title>
    <mediaobject>
     <imageobject>
      <imagedata format="jpg" fileref="images/si_image1.jpg">
@@ -402,7 +577,7 @@
     </imageobject>
     <textobject>
      <phrase>
-      Install the ImageServer 
+      Install the Image Server 
      </phrase>
     </textobject>
    </mediaobject>
@@ -411,91 +586,10 @@
     <title>Install <application>VA SystemImager</application></title>
      <para>
       Download and install the latest <application>VA SystemImager
-      </application>systemimager RPM or tarball.
+      </application>package, and any dependent packages that may be
+      required.  You can find links to the key packages at 
+      <ulink url="http://systemimager.org/"></ulink>.
      </para>
-     <para>
-      <command>rpm -Uvh va-systemimager*.rpm rsync* syslinux* nasm*</command>
-     </para>
-   </sect2>
-   <sect2 id=Configure>
-    <title>Configure <application>VA SystemImager</application></title>
-     <para>
-      Run the command, <command>makedhcpserver</command>, to configure 
-      your ImageServer to be a DHCP server.  Be sure to follow the 
-      instructions it gives you at the end.
-     </para>
-
-     <example><title>Running the makedhcpserver command</title>
-      <programlisting format="linespecific">
-[bash@imageserver]$  <command>makedhcpserver</command>
-
-Welcome to the VA SystemImager "makedhcpserver" command.  This
-command will prepare this computer to be a DHCP server by creating
-the following file:
- 
- /etc/dhcpd.conf
- 
-If there is an existing file, it will be backed up with the
-.beforesystemimager extension.
- 
-Continue? (y/[n]): y
-
-Type your response or hit <command>Enter</command> to accept [defaults].
-If you don't have a response, such as no first or second DNS server,
-just hit <command>Enter</command> and none will be used.
- 
-Type your response or hit <command>Enter</command> to accept [defaults].
-If you don't have a response, such as no first or second DNS server,
-just hit <command>Enter</command> and none will be used.
- 
-What is your domain name? [localdomain.domain]: pratt.pvt
-What is your network number? [192.168.1.0]: 10.10.10.0
-What is your netmask? [255.255.255.0]:
-What is the starting IP address for your dhcp range? [192.168.1.1]: 10.10.10.3
-What is the ending IP address for your dhcp range? [192.168.1.100]: 10.10.10.12
-What is the IP address of your first DNS server? []: 10.10.10.1
-What is the IP address of your second DNS server? []:
-What is the IP address of your default gateway? [192.168.1.254]: 10.10.10.1
-What is the air speed velocity of the common swallow? []:
-
-Ahh, but seriosly folks...
-Here are the values you have chosen:
- 
-################################################################
-DNS Domain Name: pratt.pvt
-network number:  10.10.10.0
-netmask:         255.255.255.0
-starting IP address for your dhcp range: 10.10.10.3
-ending IP address for your dhcp range:   10.10.10.12
-first DNS server:  10.10.10.1
-second DNS server:
-third DNS server:
-default gateway: 10.10.10.1
-################################################################
- 
-Are you satisfied? (y/[n]): y
-
-The dhcp server configuration file (/etc/dhcpd.conf) file has been created
-for you.  Please verify it for accuracy.
- 
-If this file does not look satisfactory, you can run this command again to
-re-create it: "makedhcpserver"
- 
-WARNING!:  If you have multiple physical network interfaces, be sure to
-edit the init script that starts dhcpd so that it looks like:
-"dhcpd $interfacename" ( ie. /sbin/dhcpd eth0 )
- 
-Also, be sure to start or restart your dhcpd daemon.
-( ie. /etc/rc.d/init.d/dhcpd restart )
- 
-Would you like me to restart your DHCP server software now? (y/N): y
-
-Shutting down dhcpd:                                       [FAILED]
-Starting dhcpd:                                            [  OK  ]
-Press <command>Enter</command> to continue...  
-      </programlisting>
-     </example>
-
    </sect2>
    <sect2 id=BuildMasterClient>
     <title>Create the Golden Image</title>
@@ -548,9 +642,9 @@ Press <command>Enter</command> to continue...
 
 Welcome to the VA SystemImager prepareclient command.  This command
 may modify the following files to prepare your client for having it's
-image retrieved by the imageserver.  It will also create the 
+image retrieved by the image server.  It will also create the 
 /etc/systemimager directory and fill it with information about your 
-master client, such as the disk partitioning scheme(s). 
+golden client, such as the disk partitioning scheme(s). 
  
  /etc/services    -- add rsync line if necessary
  /etc/inetd.conf  -- comment out rsync line if necessary
@@ -569,7 +663,7 @@ Creating /tmp/rsyncd.conf ...
 Starting or re-starting rsync as a daemon.....done!
 
 This client is ready to have it's image retrieved.
-You must now run the "getimage" command on the imageserver.
+You must now run the "getimage" command on the image server.
       </programlisting>
      </example>
       </listitem>
@@ -579,7 +673,7 @@ You must now run the "getimage" command on the imageserver.
     <title>Pull the Golden Image from the "golden" client</title>
      <para>
       You are then ready to pull the image from the "golden" client onto
-      the "imageserver" with the <command>getimage</command> command.
+      the "image server" with the <command>getimage</command> command.
      </para>
 
     <example><title>Pull the "golden" client's image back to the image server</title>
@@ -608,7 +702,7 @@ You must now run the "getimage" command on the imageserver.
 
      <example><title>The getimage command syntax</title>
       <programlisting>
-[bash@imageserver]$  <command>getimage</command> <command>-master-client</command> computenode1 <command>-image</command> valinux6.2.1
+[bash@imageserver]$  <command>getimage</command> <command>-golden-client</command> computenode1 <command>-image</command> valinux6.2.1
       </programlisting>
      </example>
      <para>
@@ -620,7 +714,7 @@ You must now run the "getimage" command on the imageserver.
 
      <example><title>Running the getimage command</title>
       <programlisting>
-[bash@imageserver]$  <command>getimage</command> <command>-master-client</command> vadaltst05 <command>-image</command> vadaltst6.2.3
+[bash@imageserver]$  <command>getimage</command> <command>-golden-client</command> vadaltst05 <command>-image</command> vadaltst6.2.3
 
 This program will get the "vadaltst6.2.3" system image from "vadaltst05"
 making the assumption that all filesystems considered part
@@ -785,6 +879,94 @@ Press <command>Enter</command> to continue...
      </example>
    </sect2>
 
+   <sect2 id=Configure>
+    <title>Configuring the Image Server</title>
+     <para>
+      The autoinstall clients will need IP addresses in order to install
+      themselves.  There are two ways to give your autoinstall clients
+      their IP address information:
+      <itemizedlist>
+       <listitem><para>with a DHCP server</para></listitem>
+       <listitem><para>with a configuration file called "local.cfg"</para></listitem>
+      </itemizedlist>
+
+      Run the command, <command>makedhcpserver</command>, to configure 
+      your image server to be a DHCP server.  Be sure to follow the 
+      instructions it gives you at the end.
+     </para>
+
+     <example><title>Running the makedhcpserver command</title>
+      <programlisting format="linespecific">
+[bash@imageserver]$  <command>makedhcpserver</command>
+
+Welcome to the VA SystemImager "makedhcpserver" command.  This
+command will prepare this computer to be a DHCP server by creating
+the following file:
+ 
+ /etc/dhcpd.conf
+ 
+If there is an existing file, it will be backed up with the
+.beforesystemimager extension.
+ 
+Continue? (y/[n]): y
+
+Type your response or hit <command>Enter</command> to accept [defaults].
+If you don't have a response, such as no first or second DNS server,
+just hit <command>Enter</command> and none will be used.
+ 
+Type your response or hit <command>Enter</command> to accept [defaults].
+If you don't have a response, such as no first or second DNS server,
+just hit <command>Enter</command> and none will be used.
+ 
+What is your domain name? [localdomain.domain]: pratt.pvt
+What is your network number? [192.168.1.0]: 10.10.10.0
+What is your netmask? [255.255.255.0]:
+What is the starting IP address for your dhcp range? [192.168.1.1]: 10.10.10.3
+What is the ending IP address for your dhcp range? [192.168.1.100]: 10.10.10.12
+What is the IP address of your first DNS server? []: 10.10.10.1
+What is the IP address of your second DNS server? []:
+What is the IP address of your default gateway? [192.168.1.254]: 10.10.10.1
+What is the air speed velocity of the common swallow? []:
+
+Ahh, but seriosly folks...
+Here are the values you have chosen:
+ 
+################################################################
+DNS Domain Name: pratt.pvt
+network number:  10.10.10.0
+netmask:         255.255.255.0
+starting IP address for your dhcp range: 10.10.10.3
+ending IP address for your dhcp range:   10.10.10.12
+first DNS server:  10.10.10.1
+second DNS server:
+third DNS server:
+default gateway: 10.10.10.1
+################################################################
+ 
+Are you satisfied? (y/[n]): y
+
+The dhcp server configuration file (/etc/dhcpd.conf) file has been created
+for you.  Please verify it for accuracy.
+ 
+If this file does not look satisfactory, you can run this command again to
+re-create it: "makedhcpserver"
+ 
+WARNING!:  If you have multiple physical network interfaces, be sure to
+edit the init script that starts dhcpd so that it looks like:
+"dhcpd $interfacename" ( ie. /sbin/dhcpd eth0 )
+ 
+Also, be sure to start or restart your dhcpd daemon.
+( ie. /etc/rc.d/init.d/dhcpd restart )
+ 
+Would you like me to restart your DHCP server software now? (y/N): y
+
+Shutting down dhcpd:                                       [FAILED]
+Starting dhcpd:                                            [  OK  ]
+Press <command>Enter</command> to continue...  
+      </programlisting>
+     </example>
+   </sect2>
+
    <sect2 id=AutoInstall>
     <title>Auto-install the clients</title>
      <para>
@@ -827,7 +1009,7 @@ Press <command>Enter</command> to continue...
       If you prefer to boot off the network, change the settings in your
       BIOS to boot off your PXE enabled network card, and reboot your
       client system.  It *should* automatically find and boot off the
-      imageserver and begin to autoinstall itself.  Currently, there is no 
+      image server and begin to autoinstall itself.  Currently, there is no 
       known single configuration that will work with every system.  The next 
       sections describe some configurations that are known to work.  If you
       are successful in repeatably configuring a system for PXE autoinstalls,
@@ -1078,13 +1260,13 @@ Press <command>Enter</command> to continue...
    <title>Q: How do I make an autoinstalldiskette?</title>
    <para>
     Run the <command>makeautoinstalldiskette</command> command on the 
-    imageserver.
+    image server.
    </para>
   </sect2>
   <sect2 id=FAQInstallCD>
    <title>Q: How do I make an autoinstallcd?</title>
    <para>
-    Run the <command>makeautoinstallcd</command> command on the imageserver.
+    Run the <command>makeautoinstallcd</command> command on the image server.
    </para>
   </sect2>
   <sect2 id=FAQCDNoBoot>
@@ -1097,10 +1279,10 @@ Press <command>Enter</command> to continue...
    </para>
   </sect2>
   <sect2 id=FAQDHCPServerLocation>
-   <title>Q: Does the DHCP server have be on the imageserver?</title>
+   <title>Q: Does the DHCP server have be on the image server?</title>
    <para>
     Yes.  At this point in time it does.  After the client gets it's address
-    via DHCP, it determines the DHCP server to be the imageserver and tries
+    via DHCP, it determines the DHCP server to be the image server and tries
     to connect to the DHCP server with tftp to get it's utilities and it's 
     autoinstall script.
    </para>
@@ -1165,7 +1347,7 @@ Press <command>Enter</command> to continue...
    <para>
     Yes.  Install the va-systemimager-client RPM.  If this RPM is already 
     installed, all you have to do is run the "prepareclient" command prior to 
-    running "getimage" from the imageserver.
+    running "getimage" from the image server.
    </para>
    <para>
     You will also want to add any software, configure any files, and do any 
@@ -1249,12 +1431,12 @@ Press <command>Enter</command> to continue...
     </listitem>
     <listitem>
      <para>
-      Determines the IP address of the imageserver via dhcp
+      Determines the IP address of the image server via dhcp
      </para>
     </listitem>
     <listitem>
      <para>
-      Requests a hosts file from the imageserver
+      Requests a hosts file from the image server
      </para>
     </listitem>
     <listitem>
@@ -1264,7 +1446,7 @@ Press <command>Enter</command> to continue...
     </listitem>
     <listitem>
      <para>
-      Requests a script from the imageserver based on its hostname
+      Requests a script from the image server based on its hostname
       (for example: <command>www237.sh</command>)
      </para>
     </listitem>
@@ -1278,7 +1460,7 @@ Press <command>Enter</command> to continue...
     The script in question is typically a soft link pointing at the 
     <filename>$image.master</filename> script that was dynamically created when 
     you ran getimage.  This script explicitly states which image to pull 
-    from the imageserver.  Open it up and take a look!
+    from the image server.  Open it up and take a look!
    </para>
    <para>
     These scripts and the <filename>$image.master</filename> script can be 
@@ -1359,12 +1541,12 @@ Press <command>Enter</command> to continue...
 
   <sect2 id=FAQAutoinstallFail>
    <title>My client failed to autoinstall, and when I run an <command>rsync 
-    </command>command on it manually it takes forever for the imageserver to 
+    </command>command on it manually it takes forever for the image server to 
     respond.</title>
    <para>
-    Be sure that the imageserver can look up the client's hostname based on its
+    Be sure that the image server can look up the client's hostname based on its
     IP address.  The easiest way to do this is to have entry in the 
-    imageserver's <filename>/etc/hosts</filename> file for the client system.
+    image server's <filename>/etc/hosts</filename> file for the client system.
    </para>
   </sect2>
 
@@ -1411,7 +1593,7 @@ Press <command>Enter</command> to continue...
    <para>
     Here are some unofficial numbers that I came up with.  Your experience may
     be quite different based on the speed of your network, the performance of
-    your imageserver and clients, and the size of the image.
+    your image server and clients, and the size of the image.
    </para>
    <para>
     If you can send me statistics from your experience, I'll add them below.
@@ -1443,9 +1625,9 @@ Press <command>Enter</command> to continue...
   </sect2>
 
   <sect2 id=FAQUpdateImage>
-   <title>How do I update an image on the imageserver?</title>
+   <title>How do I update an image on the image server?</title>
    <para>
-    There are two ways to update an image on the imageserver:
+    There are two ways to update an image on the image server:
    </para>
    <orderedlist>
     <listitem>
@@ -1477,7 +1659,7 @@ Press <command>Enter</command> to continue...
       This will change your working root directory to the root of the image you 
       want to manipulate.  You can then run <command>rpm</command>command and 
       other commands on the image and not have to worry about getting 
-      confused and damaging the imageserver.  When you are done, simply type 
+      confused and damaging the image server.  When you are done, simply type 
       <command>exit</command> and you will be returned to your normal shell.
      </para>
     </listitem>
@@ -1487,17 +1669,17 @@ Press <command>Enter</command> to continue...
   <sect2 id=FAQUpdate2Match>
    <title>How do I update a client to match an image?</title>
    <para>
-    Once you have updated an image on the imageserver, you can then update 
+    Once you have updated an image on the image server, you can then update 
     your clients to reflect this new or modified image.  (It is not necessary 
     to do a complete re-autoinstall.)  You will find the command,
     <command>updateclient</command>, on your clients.  This command takes as 
-    its parameters, the name of the imageserver and the name of the image that 
+    its parameters, the name of the image server and the name of the image that 
     you want to update the client to.  Run <command>updateclient -help</command>
     to get more information about this command.
    </para>
    <para>
     If you use the revision control method recommended in "How do I update an
-    image on the imageserver?" FAQ, then you will be able to bring your 
+    image on the image server?" FAQ, then you will be able to bring your 
     production environment back to a known state (by doing an 
     <command>updateclient</command> to the last working image) after having 
     done an <command>updateclient</command> to a not quite so thoroughly 
@@ -1551,7 +1733,7 @@ Press <command>Enter</command> to continue...
    </para>
    <para>
     Once you have done your <command>getimage</command> you will need to 
-    edit the <filename>conf.modules</filename> in the image on the imageserver 
+    edit the <filename>conf.modules</filename> in the image on the image server 
     to load the appropriate module for your ethernet card.
    </para>
    <para>
