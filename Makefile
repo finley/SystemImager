@@ -169,7 +169,7 @@ raidtools:
 	[ -d $(RAIDTOOLS_DIR) ] || \
 		( cd $(SRC_DIR) && bzcat $(RAIDTOOLS_TARBALL) | tar xv && \
 		  [ ! -f ../$(RAIDTOOLS_PATCH) ] || \
-		  patch -p0 < $(RAIDTOOLS_PATCH) )
+		  patch -p0 < ../$(RAIDTOOLS_PATCH) )
 	( cd $(SRC_DIR)/$(RAIDTOOLS_DIR) && ./configure )
 	$(MAKE) -C $(SRC_DIR)/$(RAIDTOOLS_DIR)
 
