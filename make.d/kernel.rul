@@ -12,12 +12,25 @@ ifeq ($(ARCH),ia64)
 	LINUX_TARGET = compressed
 endif
 # currently ppc only supports rs6k machines.  Help is welcome to
-# make this support other machines
+# make this support other machines.  This is 32bit kernel only.
 ifeq ($(ARCH),ppc)
 	LINUX_VERSION = 2.4.17
 	LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.4/$(LINUX_TARBALL)
 	LINUX_IMAGE = $(LINUX_SRC)/arch/ppc/boot/images/zImage.chrp-rs6k
 	LINUX_TARGET = zImage
+endif
+
+# This is for iSeries (AS/400) machines
+ifeq ($(ARCH),ppc64-iSeries)
+	LINUX_VERSION = 2.4.13
+	LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.4/$(LINUX_TARBALL)
+	LINUX_IMAGE = $(LINUX_SRC)/arch/ppc64/boot/vmlinux.sminitrd
+	LINUX_TARGET = vmlinux.sminitrd
+endif
+
+# This will be for pSeries (ppc64 IBM machines)
+ifeq ($(ARCH),ppc64)
+	 # Don't know all the right values yet
 endif
 
 LINUX_DIR := linux
@@ -42,17 +55,22 @@ install_standard_kernel:	kernel
 # autoinstallation
 kernel:	$(TOPDIR)/tmp/kernel
 
-$(TOPDIR)/tmp/kernel: 
-	$(MAKE) patched_kernel
+ifeq ($(ARCH),ppc64-iSeries)
+$(TOPDIR)/tmp/kernel: get_kernel_source patched_kernel initrd.gz
+	cp $(TOPDIR)/initrd_source/initrd.gz ${LINUX_SRC}/arch/ppc64/boot/ramdisk.image.gz
 	$(MAKE) -C $(LINUX_SRC) oldconfig dep $(LINUX_TARGET)
 	mkdir -p $(TOPDIR)/tmp
 	cp $(LINUX_IMAGE) $(TOPDIR)/tmp/kernel
+else 
+$(TOPDIR)/tmp/kernel: patched_kernel
+	$(MAKE) -C $(LINUX_SRC) oldconfig dep $(LINUX_TARGET)
+	mkdir -p $(TOPDIR)/tmp
+	cp $(LINUX_IMAGE) $(TOPDIR)/tmp/kernel
+endif
 
 patched_kernel:	$(LINUX_SRC)/.config
 
-$(LINUX_SRC)/.config:
-	rm -fr $(SRC_DIR)/linux
-	$(MAKE) $(SRC_DIR)/$(LINUX_TARBALL)
+$(LINUX_SRC)/.config: $(SRC_DIR)/$(LINUX_TARBALL)
 	( cd $(SRC_DIR) && bzcat $(LINUX_TARBALL) | tar -xv )
 	( cd $(SRC_DIR)/$(LINUX_DIR) && cat `find $(PATCH_DIR) -name "linux.$(ARCH).*.patch" | sort` | patch -p1 )
 	cp -a $(LINUX_CONFIG) $(LINUX_SRC)/.config
