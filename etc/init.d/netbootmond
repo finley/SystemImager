@@ -20,7 +20,7 @@ case "$1" in
     echo "."
     ;;
   stop)
-    echo -n "Starting SystemImager's net boot client monitor: netbootmond"
+    echo -n "Stopping SystemImager's net boot client monitor: netbootmond"
     [ -f $PIDFILE ] && kill `cat $PIDFILE` || exit 1
     echo "."
     ;;
