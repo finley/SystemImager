@@ -134,6 +134,8 @@ RAIDTOOLS_PATCH = $(PATCH_DIR)/raidtools.patch
 RAIDTOOLS_MD5SUM = 8a8460ae6731fa4debd912297c2402ca
 REISERFSPROGS_DIR = $(LINUX_SRC)/fs/reiserfs/utils
 
+WGET = wget --passive-ftp
+
 #@all:
 #@  build everything, install nothing
 #@ 
@@ -240,7 +242,7 @@ raidtools-build-stamp:
 # download the raidtools tarball
 $(SRC_DIR)/$(RAIDTOOLS_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
-	cd $(SRC_DIR) && wget $(RAIDTOOLS_URL)
+	cd $(SRC_DIR) && $(WGET) $(RAIDTOOLS_URL)
 	[ "$(RAIDTOOLS_MD5SUM)" == \
 		`md5sum $(SRC_DIR)/$(RAIDTOOLS_TARBALL) | cut -d " " -f 1` ] \
 		|| exit 1
@@ -301,7 +303,7 @@ patched_kernel-stamp:
 
 $(SRC_DIR)/$(LINUX_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
-	cd $(SRC_DIR) && wget $(LINUX_URL)
+	cd $(SRC_DIR) && $(WGET) $(LINUX_URL)
 	[ "$(LINUX_MD5SUM)" == \
 		`md5sum $(SRC_DIR)/$(LINUX_TARBALL) | cut -d " " -f 1` ] || \
 		exit 1

@@ -3,6 +3,7 @@ DESTDIR =
 PATH = /sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
 SUDO = $(shell if [ `id -u` != 0 ]; then echo -n "sudo"; fi)
+WGET = wget --passive-ftp
 
 # where utilities that may need to be retrieved
 # by autoinstall clients are stored
@@ -120,7 +121,7 @@ beep:
 
 $(SRC_DIR)/$(BEEP_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
-	cd $(SRC_DIR) && wget $(BEEP_URL)
+	cd $(SRC_DIR) && $(WGET) $(BEEP_URL)
 
 ########## END beep rules ##########
 
@@ -136,7 +137,7 @@ busybox:
 
 $(SRC_DIR)/$(BUSYBOX_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
-	cd $(SRC_DIR) && wget $(BUSYBOX_URL)
+	cd $(SRC_DIR) && $(WGET) $(BUSYBOX_URL)
 
 ########## END busybox rules ##########
 
