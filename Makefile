@@ -38,7 +38,7 @@ IMAGEDEST   = $(DESTDIR)/var/spool/systemimager/images
 
 install:	installserver installkernel installinitrd installrsyncconfigs installraidutils installreiserfsutils
 
-installserver:	installdocs install_manpages
+install_server:	installdocs install_manpages
 	mkdir -p $(SBIN)
 	$(foreach binary, $(BINARIES), \
 		install -m 555 $(BINARY_SRC)/$(binary) $(SBIN);)
@@ -61,32 +61,32 @@ installserver:	installdocs install_manpages
 	install -m 444 $(IMAGESRC)/README $(IMAGEDEST)/CUIDADO
 	install -m 444 $(IMAGESRC)/README $(IMAGEDEST)/ACHTUNG
 
-installclient: installdocs install_client_manpages
+install_client: installdocs install_client_manpages
 	mkdir -p $(ETC)/systemimager
 	install -m 644 tftpstuff/systemimager/systemimager.exclude $(ETC)/systemimager
 	mkdir -p $(SBIN)
 	$(foreach binary, $(CLIENT_BINARIES), \
 		install -m 755 $(CLIENT_BINARY_SRC)/$(binary) $(SBIN);)
 
-installraidutils:
+install_raidutils:
 	mkdir -p $(TFTP_BIN_DEST)
 	install -m 555 $(TFTP_BIN_SRC)/mkraid $(TFTP_BIN_DEST)
 	install -m 555 $(TFTP_BIN_SRC)/raidstart $(TFTP_BIN_DEST)
 	cp -a $(TFTP_BIN_DEST)/raidstart $(TFTP_BIN_DEST)/raidstop
 
-installreiserfsutils:
+install_reiserfsutils:
 	mkdir -p $(TFTP_BIN_DEST)
 	install -m 555 $(TFTP_BIN_SRC)/mkreiserfs $(TFTP_BIN_DEST)
 
-installkernel:
+install_kernel:
 	mkdir -p $(TFTP_ROOT)
 	install -m 644 tftpstuff/kernel $(TFTP_ROOT)
 
-installinitrd:
+install_initrd:
 	mkdir -p $(TFTP_ROOT)
 	install -m 644 tftpstuff/initrd.gz $(TFTP_ROOT)
 
-installrsyncconfigs:
+install_rsyncconfigs:
 	mkdir -p $(ETC)
 	install -m 644 etc/rsyncd.conf $(ETC)
 	mkdir -p $(INITD)
@@ -102,7 +102,7 @@ install_client_manpages:	manpages
 	$(foreach binary, $(CLIENT_BINARIES), \
 		cp -a $(MANPAGE_DIR)/$(binary).8.gz $(MAN8); )
 
-installdocs: docs
+install_docs: docs
 	mkdir -p $(DOC)
 	cp -a $(MANUAL_DIR)/html $(DOC)
 	mkdir -p $(DOC)/examples
