@@ -128,47 +128,61 @@ $(MASSDNS_TARBALL):
 get_source:	$(BEEP_TARBALL) $(BUSYBOX_TARBALL) $(MASSDNS_TARBALL)
 
 help:
-	# This Makefile provides rules to create a ramdisk (initrd.gz) for
-	# SystemImager autoinstall clients.  Here are descriptions
-	# of the various rules:
-	#
-	# make initrd.gz		makes a complete compressed ramdisk
-	#
-	# make initrd			makes a complete uncompressed ramdisk
-	#
-	# make install			installs a complete compressed ramdisk
-	#				to $(TFTPROOT)
-	#
-	# make binaries			downloads the source for and builds
-	#			        all required binaries that aren't
-	#				a part of the Debian/unstable distro
-	#				(binaries that are in Debian/unstable
-	#				are just copied over from the local
-	#				system)
-	#
-	# make <binary>			downloads the source for and builds
-	#				a single required binary that isn't
-	#				a part of the Debian/unstable distro
-	#				(binaries that are in Debian/unstable
-	#				are just copied over from the local
-	#				system)
-	#
-	# make get_source		download the source for all binaries
-	#				that are required, but not a part
-	#				of Debian/unstable.
-	#
-	# make help			print this message
-	#
-	# make clean			execute the clean rule for each
-	#				utility's source tree, remove editor
-	#				backup files and files that have
-	#				already been built.
-	#
-	# make distclean		make clean + remove all downloaded
-	#				tarballs & their build trees.
-	#
-	# Please read the README.initrd for more build and customization
-	# details
+	@echo ' This Makefile provides rules to create a ramdisk (initrd.gz) for'
+	@echo ' SystemImager autoinstall clients.  '
+	@echo ''
+	@echo ' Steps for the Chronically Impatient'
+	@echo ' -----------------------------------'
+	@echo ' 1) Do a "make get_source".'
+	@echo ' 2) Modify the source code as desired.'
+	@echo ' 3) Modify the init script as desired "vi skel/etc/init.d/rcS".'
+	@echo ' 4) Modify any other configuration files as desired.  Most of these'
+	@echo '    are in the "skel" directory. (skel is short for skeleton files)'
+	@echo ' 5) Modify "dev_ls-lR" to add or remove device entries.'
+	@echo ' 5) Run "make install"'
+	@echo ''
+	@echo ''
+	@echo ' Details so that the Impatient can know what broke'
+	@echo ' -------------------------------------------------'
+	@echo ' Here are descriptions of the various rules:'
+	@echo ''
+	@echo ' make initrd.gz          makes a complete compressed ramdisk'
+	@echo ''
+	@echo ' make initrd             makes a complete uncompressed ramdisk'
+	@echo ''
+	@echo ' make install            installs a complete compressed ramdisk'
+	@echo '                         to $(TFTPROOT)'
+	@echo ''
+	@echo ' make binaries           downloads the source for and builds'
+	@echo '                         all required binaries that are not'
+	@echo '                         a part of the Debian/unstable distro'
+	@echo '                         (binaries that are in Debian/unstable'
+	@echo '                         are just copied over from the local'
+	@echo '                         system)'
+	@echo ''
+	@echo ' make <binary>           downloads the source for and builds'
+	@echo '                         a single required binary that is not'
+	@echo '                         a part of the Debian/unstable distro'
+	@echo '                         (binaries that are in Debian/unstable'
+	@echo '                         are just copied over from the local'
+	@echo '                         system)'
+	@echo ''
+	@echo ' make get_source         download the source for all binaries'
+	@echo '                         that are required, but not a part'
+	@echo '                         of Debian/unstable.'
+	@echo ''
+	@echo ' make help               print this message'
+	@echo ''
+	@echo ' make clean              execute the clean rule in the source'
+	@echo '                         tree for each utility, remove editor'
+	@echo '                         backup files and files that have'
+	@echo '                         already been built.'
+	@echo ''
+	@echo ' make distclean          make clean + remove all downloaded'
+	@echo '                         tarballs & their build trees.'
+	@echo ''
+	@echo ' Please read the README.initrd for more build and customization'
+	@echo ' details.'
 
 clean:
 	-$(MAKE) -C $(BUSYBOX_ROOT) clean
