@@ -44,7 +44,7 @@ done
 
 # set version number on other files
 file="tftpstuff/pxelinux.cfg/message.txt"
-sed "s/v[0-9]*\.[0-9]*\./v$VERSION./" $file  > $file.$$
+sed "s/v[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\./v${VERSION}./" $file  > $file.$$
 cat $file.$$ > $file
 rm -f $file.$$
 
