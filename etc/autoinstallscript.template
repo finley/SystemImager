@@ -48,15 +48,15 @@ fi
 ### BEGIN Check to be sure this not run from a working machine ###
 # Test for mounted SCSI or IDE disks
 mount | grep [hs]d[a-z][1-9] > /dev/null 2>&1
-[ $? -eq 0 ] &&  echo Sorry.  Must not run on a working machine... && shellout
+[ $? -eq 0 ] &&  logmsg Sorry.  Must not run on a working machine... && shellout
 
 # Test for mounted software RAID devices
 mount | grep md[0-9] > /dev/null 2>&1
-[ $? -eq 0 ] &&  echo Sorry.  Must not run on a working machine... && shellout
+[ $? -eq 0 ] &&  logmsg Sorry.  Must not run on a working machine... && shellout
 
 # Test for mounted hardware RAID disks
 mount | grep c[0-9]+d[0-9]+p > /dev/null 2>&1
-[ $? -eq 0 ] &&  echo Sorry.  Must not run on a working machine... && shellout
+[ $? -eq 0 ] &&  logmsg Sorry.  Must not run on a working machine... && shellout
 ### END Check to be sure this not run from a working machine ###
 
 
@@ -94,7 +94,7 @@ if [ -f /proc/mdstat ]; then
   do
     DEV="/dev/${RAID_DEVICE}"
     # we don't do a shellout here because, well I forgot why, but we don't.
-    echo "raidstop ${DEV}" && raidstop ${DEV}
+    logmsg "raidstop ${DEV}" && raidstop ${DEV}
   done
 fi
 #
@@ -102,14 +102,14 @@ fi
 
 ##PARTITION_DISKS##
 
-echo "Load additional filesystem drivers."
+logmsg "Load additional filesystem drivers."
 modprobe reiserfs
 modprobe ext2
 modprobe ext3
 modprobe jfs
 modprobe xfs
 
-echo "Load device mapper driver (for LVM)."
+logmsg "Load device mapper driver (for LVM)."
 modprobe dm-mod
 
 ### BEGIN LVM initialization commands -AR- ###
@@ -129,16 +129,16 @@ modprobe dm-mod
 ### END swap and filesystem creation commands ###
 
 ### BEGIN mount proc in image for tools like System Configurator ###
-echo "mkdir -p /a/proc || shellout"
+logmsg "mkdir -p /a/proc || shellout"
 mkdir -p /a/proc || shellout
-echo "mount proc /a/proc -t proc -o defaults || shellout"
+logmsg "mount proc /a/proc -t proc -o defaults || shellout"
 mount proc /a/proc -t proc -o defaults || shellout
 ### END mount proc in image for tools like System Configurator ###
 
 ### BEGIN mount sysfs in image for tools that might be run during chroot ###
-echo "mkdir -p /a/sys || shellout"
+logmsg "mkdir -p /a/sys || shellout"
 mkdir -p /a/sys || shellout
-echo "mount sysfs /a/sys -t sysfs -o defaults || shellout"
+logmsg "mount sysfs /a/sys -t sysfs -o defaults || shellout"
 mount sysfs /a/sys -t sysfs -o defaults || shellout
 ### END mount sysfs in image for tools that might be run during chroot ###
 
@@ -156,7 +156,7 @@ if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
 else 
     # Use rsync 
     if [ $NO_LISTING ]; then
-        echo "Quietly installing image... "
+        logmsg "Quietly installing image... "
         start_spinner
     fi
     if [ ! -z $MONITOR_SERVER ]; then
@@ -166,17 +166,17 @@ else
 
         # Deposit image into tmpfs
         DIR=/tmp/tmpfs_staging
-        echo
-        echo "TMPFS_STAGING=${TMPFS_STAGING} -- Staging in ${DIR}"
+        logmsg
+        logmsg "TMPFS_STAGING=${TMPFS_STAGING} -- Staging in ${DIR}"
         mkdir -p ${DIR}
 
-        echo "rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ ${DIR}/" 
+        logmsg "rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ ${DIR}/" 
         rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ ${DIR}/ || shellout 
 
         # Move from staging in tmpfs to disk
         rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${DIR}/ /a/
     else
-        echo "rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ /a/" 
+        logmsg "rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ /a/" 
         rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ /a/ || shellout 
     fi
 fi 
@@ -216,8 +216,8 @@ do
         flamethrower_client
     else
         # Use rsync
-        echo "rsync -av --numeric-ids $IMAGESERVER::overrides/$OVERRIDE/ /a/"
-        rsync -av --numeric-ids $IMAGESERVER::overrides/$OVERRIDE/ /a/ || echo "Override directory $OVERRIDE doesn't seem to exist, but that may be OK."
+        logmsg "rsync -av --numeric-ids $IMAGESERVER::overrides/$OVERRIDE/ /a/"
+        rsync -av --numeric-ids $IMAGESERVER::overrides/$OVERRIDE/ /a/ || logmsg "Override directory $OVERRIDE doesn't seem to exist, but that may be OK."
     fi
 done
 
