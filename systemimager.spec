@@ -443,6 +443,7 @@ fi
 %dir %prefix/lib/systemimager
 %prefix/lib/systemimager/perl/SystemImager/Common.pm
 %prefix/lib/systemimager/perl/SystemImager/Config.pm
+%prefix/lib/systemimager/perl/SystemImager/Options.pm
 
 %files server
 %defattr(-, root, root)
@@ -472,7 +473,6 @@ fi
 %prefix/sbin/rmimage
 %prefix/bin/mkautoinstall*
 %prefix/lib/systemimager/perl/SystemImager/Server.pm
-%prefix/lib/systemimager/perl/SystemImager/Options.pm
 %prefix/lib/systemimager/perl/SystemImager/Config.pm
 %prefix/lib/systemimager/perl/confedit
 %prefix/share/man/man5/systemimager*
