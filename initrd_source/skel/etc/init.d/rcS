@@ -197,7 +197,6 @@ else
   #
   # XXX Add CCB's ctrl+c catching code here. -BEF-
   #
-  #[ -z $ETHER_SLEEP ] && ETHER_SLEEP=35
   [ -z $ETHER_SLEEP ] && ETHER_SLEEP=0
   echo
   echo "sleep $ETHER_SLEEP:  This is to give your switch (if you're using one) time to"
