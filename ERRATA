@@ -5,6 +5,17 @@
 #
 #    $Id$
 #
-# version 2.1.2
+# version 3.0.0
 
-No known ERRATA for this release.
+Software RAID on Software RAID arrays are not currently supported.
+    To be specific, what we mean is something like RAID level 10, for example,
+    where you have two striped RAID 0 arrays, (/dev/md0 and /dev/md1), and you
+    mirror them (RAID 1) for fault tolerance, and access the whole setup with 
+    a third software RAID device (such as /dev/md2).  This particular setup
+    could also be called RAID 0+1.
+
+Filesystem specific settings are picked up from the golden client for FAT file 
+    systems only.  For example, 12, 16, or 32 bit FAT is detected and properly
+    re-created.  Look for this feature with other file systems in a future
+    release.
+
