@@ -28,6 +28,7 @@ $VERSION = $version_number;
 #   get_disk_label_type
 #   get_mounted_devs_by_mount_point_array
 #   get_response
+#   is_devfs_client
 #   numerically
 #   save_filesystem_information
 #   save_partition_information
@@ -295,12 +296,12 @@ sub save_partition_information {
     # Open up the file that we'll be putting our generic partition info in. -BEF-
     open (DISK_FILE, ">>$file") or die ("FATAL: Couldn't open $file for appending!"); 
 
-    print DISK_FILE qq(  <!--\n);
-    print DISK_FILE qq(   This disk's output was brought to you by the partition tool "$partition_tool".\n);
-    print DISK_FILE qq(   And by the numbers 4 and 5 and the letter Q.\n);
-    print DISK_FILE qq(  -->\n);
-
     print DISK_FILE qq(  <disk dev=\"$dev\" label_type=\"$label_type\" unit_of_measurement=\"MB\">\n);
+
+      print DISK_FILE qq(    <!--\n);
+      print DISK_FILE qq(      This disk's output was brought to you by the partition tool "$partition_tool",\n);
+      print DISK_FILE qq(      and by the numbers 4 and 5 and the letter Q.\n);
+      print DISK_FILE qq(    -->\n);
 
       # Output is very different with these different tools, so we need seperate
       # chunks of code here. -BEF-
@@ -1092,6 +1093,24 @@ sub add_or_delete_conf_file_entry {
     close(FILE);
 
     return 1;   # success
+}
+
+
+#
+# Usage:
+#
+#   if(SystemImager::Common->is_devfs_client()) { do stuff; }
+#
+sub is_devfs_client {
+    open(FILE, "</proc/mounts");
+        while(<FILE>) {
+            if(m/^devfs\s/) {
+                return 1;
+            }
+        }
+    close(FILE);
+
+    return undef;
 }
 
 
