@@ -283,7 +283,17 @@ EOF
     }
     ### get IP information ###
 
-    ### read in /etc/hosts and create a hash of lines by ip address and a hash of lines by number
+    ### BEGIN test to be sure /etc/hosts exists and create if it doesn't ###
+    my $file = "/etc/hosts";
+    if ( ! -f "$file" ) {
+      open(ETC_HOSTS, ">> $file") or die "Couldn't open $file for writing: $!\n";
+      print ETC_HOSTS "127.0.0.1  localhost\n";
+      close(ETC_HOSTS);
+      system('chmod 644 /etc/hosts');
+    }
+    ### END test to be sure /etc/hosts exists and create if it doesn't ###
+
+    ### BEGIN read in /etc/hosts and create a hash of lines by ip address and a hash of lines by number
     %etc_hosts_lines_by_ip = ();
     %etc_hosts_lines_by_number = ();
     my $line_number = "1";
@@ -301,7 +311,7 @@ EOF
       $line_number = $line_number + 1;
     }
     close(ETC_HOSTS);
-    ### read in /etc/hosts and create a hash of lines by ip address and a hash of lines by number
+    ### END read in /etc/hosts and create a hash of lines by ip address and a hash of lines by number
     
     ### create a hash of new hostnames by ip address 
     %new_hostnames_by_ip = ();
@@ -324,12 +334,12 @@ EOF
     }
     ### munge new ips and hostname info into %etc_hosts_lines_by_ip
 
-    ### open temporary /etc/hosts for writing
+    ### BEGIN open temporary /etc/hosts for writing
     $temp_file = "/tmp/.hosts.systemimager";
     open(NEW_ETC_HOSTS, "> $temp_file") or die "Couldn't open $temp_file for writing: $!\n";
-    ### open temporary /etc/hosts for writing
+    ### END open temporary /etc/hosts for writing
 
-    ### replace entries as necessary in numbered /etc/hosts lines and print numbered lines
+    ### BEGIN replace entries as necessary in numbered /etc/hosts lines and print numbered lines
     foreach my $line_number ( sort numerically ( keys %etc_hosts_lines_by_number )) {
         $_ = $etc_hosts_lines_by_number{$line_number};
         my @words = split;
@@ -341,7 +351,7 @@ EOF
         # print numbered hosts entries
         print NEW_ETC_HOSTS "$etc_hosts_lines_by_number{$line_number}\n";
     }
-    ### replace entries as necessary in numbered /etc/hosts lines and print numbered lines
+    ### END replace entries as necessary in numbered /etc/hosts lines and print numbered lines
 
     ### create hash of entries by decimal ip (for sorting purposes)
     %etc_hosts_lines_by_ip_decimal = ();
