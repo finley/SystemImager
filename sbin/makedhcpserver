@@ -107,7 +107,7 @@ while ($satisfied ne "y") {
   print "Wrong!!! (with a Monty Python(TM) accent...)\n";
  }
  print "\nPress <Enter> to continue...";
- $pause=<STDIN>;
+ <STDIN>;
 
  system("clear");
  print "Ahh, but seriosly folks...\n";
@@ -132,6 +132,22 @@ while ($satisfied ne "y") {
 
 # open /etc/dhcpd.conf for writing
 open(DHCPDCONF, "> /etc/dhcpd.conf") or die "Couldn't open /etc/dhcpd.conf for writing: $!\n";
+
+print DHCPDCONF << 'EOF';
+# make network booting the SystemImager autoinstallclient possible
+allow booting;
+allow bootp;
+
+# set lease time to 3 days
+default-lease-time 259200;
+max-lease-time 259200;
+
+# what to get to boot the autoinstallclient
+filename "/pxelinux.bin";
+option dhcp-class-identifier "PXEClient";
+option vendor-encapsulated-options 09:0f:80:00:0c:4e:65:74:77:6f:72:6b:20:62:6f:6f:74:0a:07:00:50:72:6f:6d:70:74:06:01:02:08:03:80:00:00:47:04:80:00:00:00:ff;
+
+EOF
 
 print DHCPDCONF qq(subnet $netnumber netmask $netmask { \n);
 print DHCPDCONF qq(  range  $rangebegin $rangeend; \n);
@@ -158,8 +174,8 @@ print <<"EOF";
 The dhcp server configuration file (/etc/dhcpd.conf) file has been created 
 for you.  Please verify it for accuracy.
 
-If this file does not look satisfactory, you can run this script again to 
-re-create it: "/systemimager/bin/makedhcpserver"
+If this file does not look satisfactory, you can run this command again to 
+re-create it: "makedhcpserver"
 
 WARNING!:  If you have multiple physical network interfaces, be sure to 
 edit the init script that starts dhcpd so that it looks like: 
@@ -171,4 +187,4 @@ Also, be sure to start or restart your dhcpd daemon.
 EOF
 
 print "Press <Enter> to continue...";
-$pause=<STDIN>;
+<STDIN>;

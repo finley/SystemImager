@@ -148,21 +148,21 @@ unless($createlinks eq "n") {
       print "\nYour soft links have been created.\n";
       print "\nPress <Enter> to continue...";
       $satisfied="y";
-      $pause=<STDIN>;
+      <STDIN>;
       system("clear");
     } else {
       print qq(\nImage \"$image\" does not exist...\n);
       print qq(Let's try again, shall we?\n);
       print qq(\nPress <Enter> to continue...);
       $satisfied="n";
-      $pause=<STDIN>;
+      <STDIN>;
       system("clear");
     }
   }
 } else {
   print "\nNo links will be created.\n";
   print "\nPress <Enter> to continue...";
-  $pause=<STDIN>;
+  <STDIN>;
 }
 ### END links questionaire ###
 
@@ -188,7 +188,7 @@ if($etc_hosts eq "y") {
   print "We should do one subnet at a time.  When we finish with the first subnet,\n";
   print "I will prompt you for the next one.\n";
   print "\nPress <Enter> to continue...";
-  $pause=<STDIN>;
+  <STDIN>;
 
   ### BEGIN One Subnet at a time ###
   while ( $node_number <= $ending_number ) {
@@ -248,12 +248,12 @@ if($etc_hosts eq "y") {
                       "Does /etc/tftpboot/systemimager/ exist?"; }
 
     print "\nPress <Enter> to continue...";
-    $pause=<STDIN>;
+    <STDIN>;
   }
   ### END One Subnet at a time ###
 } else {
   print "\nNo entries will be added.";
   print "\nPress <Enter> to continue...";
-  $pause=<STDIN>;
+  <STDIN>;
 }
 ### END hosts questionaire ###

@@ -12,6 +12,10 @@
 # set system path for system() calls
 $ENV{PATH} = "/usr/sbin:/sbin:/usr/bin:/bin";
 
+# miscellaneous variables and what not
+$nisdomainname="";
+
+# use the long options module to allow us to use, well, long options ;)
 use Getopt::Long;
 
 ### BEGIN Subroutines ###
@@ -88,6 +92,15 @@ if ($master_client eq "" || $image eq "") {
     die "$help_info";
 }
 
+# be sure $master_client name doesn't start with a hyphen
+$_ = $master_client;
+if(/^-/) { die qq(Master client name can't start with a hyphen.\n\n$help_info); }
+
+# be sure $image doesn't start with a hyphen
+$_ = $image;
+if(/^-/) { die qq(Image name can't start with a hyphen.\n\n$help_info); }
+
+# be sure program is run by root
 check_if_root();
 
 # set up some variables for use elsewhere
@@ -100,11 +113,11 @@ $master_script = "/tftpboot/systemimager/$image.master";
 
 $warning =  <<"EOF";
 
-This script will get the entire system image from \"$master_client\"
+This program will get the entire system image from \"$master_client\"
 making the assumption that all filesystems considered part
 of the system image are using the ext2 format.
 
-This script will not get /proc or network mounted filesystems.
+This program will not get /proc or network mounted filesystems.
 It will only get ext2 formated file systems.
 
 EOF
@@ -125,8 +138,8 @@ if (! -d "$imagedir_prefix")  {
 
 if (-d "$imagedir") {
     if (!$quiet) {
-	print "An image with named \"$image\" already exists...\n" .
-	    "Update exisiting image?  ([y]/n)";
+	print "An image with named \"$image\" already exists...\n\n" .
+	    "Update exisiting image? ([y]/n): ";
 	
 	$continue = get_response('y');
 	($continue ne "n") or die "$program_name: No files were modified.\n";
@@ -138,13 +151,13 @@ if (-d "$imagedir") {
 
 # get /etc/mtab from $master_client
 print "\nRetrieving /etc/mtab from $master_client to check for mounted filesystems...\n";
-open(RSYNC, "rsync -azv ${master_client}::root/etc/mtab $imagedir|");
+open(RSYNC, "rsync -av ${master_client}::root/etc/mtab $imagedir|");
 if (!$quiet) {
-    print "--------------------------------- rsync output ---------------------------------\n";
+    print "--------------------------- mtab RETRIEVAL PROGRESS ---------------------------------\n";
     while (<RSYNC>) {
         print $_;
     }
-    print "--------------------------------------------------------------------------------\n";
+    print "--------------------------- mtab RETRIEVAL FINISHED ---------------------------------\n";
 }
 close(RSYNC);
 
@@ -173,17 +186,19 @@ open (RSYNC,
       "rsync -av --delete --exclude-from=$exclude_file " .
       "${master_client}::root/ $imagedir |");
 if (!$quiet) {
-    print "--------------------------------- rsync output ---------------------------------\n";
+    print "--------------------------- $image RETRIEVAL PROGRESS ---------------------------------\n";
     while (<RSYNC>) {
         print $_;
     }
-    print "--------------------------------------------------------------------------------\n";
+    print "--------------------------- $image RETRIEVAL FINISHED ---------------------------------\n";
 }
 close (RSYNC);
 # $? is the return value from rsync
 if ($?) {
     die "Failed to retrieve system image from $master_client.\n";
 }
+print "\nPress <Enter> to continue...";
+<STDIN>;
 
 unlink $exclude_file || die "Removal of file $exclude_file failed\n";
 
@@ -198,6 +213,39 @@ if (!grep(/\[$image\]/, <RSYNCD_CONF>)) {
 EOF
 };
 close(RSYNCD_CONF);
+
+### BEGIN Got NIS? ###
+if (!$quiet) {
+    system("clear");
+    print "Will these clients use NIS? (y/[n]): ";
+    $continue = get_response('n');
+    if($continue eq "y") {
+        $satisfied="n";
+        until($satisfied eq "y") {
+            print "What is your NIS domain name? [$nisdomainname]: ";
+            $nisdomainname=get_response($nisdomainname);
+            if($nisdomainname eq "") {
+                print "\nYou have not chosen an NIS domain name.  Will your clients use NIS? ([y]/n): ";
+                $nis = get_response('y');
+                # Sometimes there is an easier or shorter way of writing things such as:
+                #  unless($nis eq "y") { $satisfied = "y"; }
+                # but it is often better to make sense quickly... <bef>
+                if($nis eq "y") { 
+                  $satisfied="n";
+                } else {
+                  $satisfied="y";
+                } 
+            } else {
+                print "\nYou have chosen \"$nisdomainname\" as your NIS domain name.\n";
+                print "\nAre you satisfied? (y/[n]): ";
+                $satisfied = get_response('n');
+            }
+            if($satisfied ne "y") { system("clear"); }
+        }
+    }
+}
+### END Got NIS? ###
+
 
 # create a fresh /tftpboot/systemimager/$image.master
 open (MASTER_SCRIPT, ">$master_script") || die "Can't open $master_script for writing\n";
@@ -306,16 +354,16 @@ print MASTER_SCRIPT "rsync -av \$DHCPSIADDR::$image /a/\n";
 
 
 print MASTER_SCRIPT << 'EOF';
-
 # set host specific information
-
 echo NETWORKING=yes > /a/etc/sysconfig/network
 echo FORWARD_IPV4=false >> /a/etc/sysconfig/network
+EOF
 
-# XXX must ask for this information during the "getimage"
-# XXX and set this value statically in the $imagename.master file
-# XXX echo NISDOMAIN=$NISDOMAIN >> /a/etc/sysconfig/network
 
+if($nisdomainname ne "") { print MASTER_SCRIPT "echo NISDOMAIN=$nisdomainname >> /a/etc/sysconfig/network\n\n"; }
+
+
+print MASTER_SCRIPT << 'EOF';
 # Stuff for DHCP client
 echo DEVICE=eth0 > /a/etc/sysconfig/network-scripts/ifcfg-eth0
 echo ONBOOT=yes >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
@@ -343,6 +391,7 @@ echo BOOTPROTO=dhcp >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
 # it has special modifications such as support for hardware or software RAID)
 chroot /a/ /sbin/lilo
 EOF
+
 
 print MASTER_SCRIPT "\n# unmount the freshly filled filesystems\n";
 foreach $dir (reverse sort keys %fstab) {
