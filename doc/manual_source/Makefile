@@ -29,7 +29,8 @@ html:	$(SGMLTOOLS) $(SRC)
 $(NAME).dvi:	$(SGMLTOOLS) $(SRC)
 	$(SGMLTOOLS) -b dvi $(SRC)
 $(NAME).pdf:	$(SGMLTOOLS) $(SRC)
-	# workaround for broken something or other
+	# workaround for broken something or other (tetex-bin, i think)
+	# see http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=130504
 	cp --parents \
 	  /usr/share/sgml/docbook/stylesheet/dsssl/modular/images/note.pdf .
 	cp --parents \
