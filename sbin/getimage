@@ -42,7 +42,7 @@ sub check_if_root{
 # figure out the program name
 $0  =~ /(.*)\/+([^\/]*)$/;
 $program_name = $2;
-$version_number = "0.24";
+$version_number = "0.24beta3";
 
 $version_info = <<"EOF";
 $program_name (part of SystemImager) version $version_number
@@ -363,7 +363,7 @@ opendir(PARTITIONSCHEMES, "$imagedir$partition_dir") || die "Can't read the $ima
     # add the rd/ bit to each device
     for (@hardware_raid_disks) {
       $_ =~ s/^/rd\//;
-      push(@disks, $_);
+      push(@disks);
     }
 close(PARTITIONSCHEMES);
 
@@ -390,32 +390,14 @@ foreach $disk (@disks)  {
 
     for (@partitions) {
         if(/^\/dev/) {
+            # get rid of newline
             chomp;
+
+            # get rid of an asterisk that may be indicating a boot partition (Linux doesn't need this)
+            $_ =~ s/\*//g;
 
             # split on space(s) and assign values to variables
             (my $dev, my $start, my $end, my $sectors, my $id) = split(/ +/);
-
-            ### BEGIN SAVE for future implimentation ###
-            #
-            # remove plus and minus signs from start
-            #$start =~ s/\+//g;
-            #$start =~ s/\-//g;
-            #
-            # work with the rounding up
-            #$_ = $mb;
-            #if(/\+/) {
-            #    $mb =~ s/\+//g;
-            #    $mb = $mb + 1;
-            #}
-            #
-            # work with the rounding down
-            #$_ = $mb;
-            #if(/-/) {
-            #    $mb =~ s/\-//g;
-            #    $mb = $mb - 1;
-            #}
-            #
-            ### END SAVE for future implimentation ###
 
             # gather up swap partitions
             if($id eq "82") { push(@swaps, $dev); }
