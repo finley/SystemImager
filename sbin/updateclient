@@ -407,7 +407,7 @@ DEFAULTBOOT = systemimager
 LABEL = systemimager
 PATH = ${bootdir}/kernel.systemimager
 INITRD = ${bootdir}/initrd.img.systemimager
-APPEND = LAST_ROOT=$lastroot root=/dev/ram0 load_ramdisk=1 prompt_ramdisk=0 vga=extended
+APPEND = LAST_ROOT=$lastroot root=/dev/ram0 load_ramdisk=1 prompt_ramdisk=0 vga=extended ramdisk_blocksize=4096
 EOF
 
 SC_EOF
