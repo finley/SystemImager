@@ -21,10 +21,10 @@
 #   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-BUSYBOX_SBIN="halt ifconfig init klogd mkswap poweroff reboot route swapoff swapon syslogd"
+BUSYBOX_SBIN="halt ifconfig init klogd mkswap modprobe poweroff reboot route swapoff swapon syslogd update"
 BUSYBOX_USR_SBIN="chroot"
-BUSYBOX_BIN="cat chgrp chmod chown cp dd df dmesg echo false grep gunzip gzip kill ln ls mkdir mknod more mount mv ping ps pwd rm rmdir sed sleep sync tar touch true umount uname zcat"
-BUSYBOX_USR_BIN="[ ar clear cut dirname expr find free head id killall logger md5sum reset sort tail test tr tty uniq uptime wc wget which whoami"
+BUSYBOX_BIN="cat chgrp chmod chown cp dd df dmesg echo false grep gunzip gzip hostname kill ln ls mkdir mknod more mount mv ping ps pwd rm rmdir sed sleep sync tar touch true umount uname zcat"
+BUSYBOX_USR_BIN="[ ar clear cut dirname expr find free head id killall logger md5sum reset sort tail telnet test tr tty uniq uptime wc wget which whoami"
 
 extra_blocks="0"
 extra_inodes="0"
@@ -37,8 +37,8 @@ outfile_specified="false"
 usage() {
   echo "mkboel.sh -busybox <busybox> -d <dev_ls-lR> [ -s <skeleton_dir> ]"
   echo "   [ -eb <extra_blocks> ] [ -ei <extra_inodes> ] [ -fs <ext2|cramfs> ]"
-  echo "   [ -fs <ext2|cramfs> ] -o <outfile>"
-  echo "   [ -c<dir> <file1>,<file2>,...,<fileN> ]"
+  echo "   [ -c<dir> <file1>,<file2>,...,<fileN> ] -o <outfile>"
+  echo ""
 }
 
 cleanup_and_die() {

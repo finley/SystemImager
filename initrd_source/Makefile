@@ -3,18 +3,20 @@ DESTDIR =
 PATH = /sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
 SUDO = $(shell if [ `id -u` != 0 ]; then echo -n "sudo"; fi)
+ARCH = $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/)
+
 WGET = wget --passive-ftp
 
 # where utilities that may need to be retrieved
 # by autoinstall clients are stored
-TFTPROOT = $(DESTDIR)/usr/lib/systemimager
+USR = $(DESTDIR)/usr/local
+INSTALL_DIR = $(USR)/share/systemimager/$(ARCH)-boot
 
 PATCH_DIR = ./patches
 SRC_DIR = ./src
 
-TEMP_DIR = ./systemimager.initrd.temp.dir
-INITRD_SIZE = 2600       # number of 1KB blocks in ramdisk.
-INITRD_INODE_COUNT = 700 # number of inodes available on ramdisk
+EXTRA_BLOCKS = 100       # number of 1KB blocks in ramdisk.
+EXTRA_INODES = 50 # number of inodes available on ramdisk
 
 ########## BEGIN definitions for binaries built from source ##########
 
@@ -46,60 +48,34 @@ initrd.gz:	initrd
 	gzip -9 < initrd > initrd.gz
 
 initrd:	binary-build-stamp $(LOCAL_BINARIES)
-	# create ramdisk file & mount it as a filesystem
-	dd if=/dev/zero of=initrd bs=1k count=$(INITRD_SIZE)
-	mke2fs -N $(INITRD_INODE_COUNT) -m 0 -q -F initrd
-	mkdir -p $(TEMP_DIR)
-
-	# umount the ramdisk if it is already mounted due to a previous failure
-	-$(SUDO) umount $(TEMP_DIR)
-	$(SUDO) mount initrd $(TEMP_DIR) -o loop
-
-	# create directory structure
-	cd $(TEMP_DIR) && mkdir -m 755 bin dev etc lib proc root sbin usr var
-	cd $(TEMP_DIR) && mkdir -m 1777 tmp
-	cd $(TEMP_DIR) && mkdir -m 755 usr/bin usr/sbin etc/init.d var/run
-
-	# make /dev/entries
-	$(SUDO) ./dupdevs.sh $(TEMP_DIR)/dev < dev_ls-lR
-
-	# create hardlinks to busybox
-	cp -a $(BUSYBOX_BINARY) $(TEMP_DIR)/bin
-	cd $(TEMP_DIR) && $(foreach tool, $(BUSY_BIN), \
-		ln ./bin/busybox ./bin/$(tool); )
-	cd $(TEMP_DIR) && $(foreach tool, $(BUSY_SBIN), \
-		ln ./bin/busybox ./sbin/$(tool); )
-	cd $(TEMP_DIR) && $(foreach tool, $(BUSY_USR_BIN), \
-		ln ./bin/busybox ./usr/bin/$(tool); )
-	cd $(TEMP_DIR) && $(foreach tool, $(BUSY_USR_SBIN), \
-		ln ./bin/busybox ./usr/sbin/$(tool); )
-
-	# copy over other binaries
-	cp -a $(BEEP_BINARY) $(LOCAL_BINARIES) $(TEMP_DIR)/bin
-	mv $(TEMP_DIR)/bin/dhclient-2.2.x $(TEMP_DIR)/bin/dhclient
-
-	cd $(TEMP_DIR) && ln ./bin/ash ./bin/sh
-
-	# copy over text files from the skel directory
-	cp -a ./skel/* $(TEMP_DIR)
+	# create a temporary skeleton directory
+	cp -a skel skel.tmp
 
 	# clear out CVS cruft
-	find $(TEMP_DIR) -type d -name CVS -depth | xargs rm -rf
+	find skel.tmp -type d -name CVS -depth | xargs rm -rf
 
-	# copy over libs that massdns won't build
-	cp -a /lib/libnss_dns* $(TEMP_DIR)/lib
+	# copy over files from local system
+	cp -a $(BEEP_BINARY) $(LOCAL_BINARIES) skel.tmp/bin
+	cd skel.tmp && ln ./bin/ash ./bin/sh
+	mv skel.tmp/bin/dhclient-2.2.x skel.tmp/bin/dhclient
 
-	# create small dynamic libraries
-	./mklibs.sh -v -d $(TEMP_DIR)/lib $(TEMP_DIR)/bin/* $(TEMP_DIR)/lib/*
+	# copy over needed libs that aren't automatically
+	# pulled in by mklibs.sh
+	mkdir skel.tmp/lib
+	cp -a /lib/libnss_dns* skel.tmp/lib
 
-	$(SUDO) chown 0 -R $(TEMP_DIR)/*
-	$(SUDO) chgrp 0 -R $(TEMP_DIR)/*
+	$(SUDO) chown 0 -R skel.tmp/*
+	$(SUDO) chgrp 0 -R skel.tmp/*
 
-	$(SUDO) umount $(TEMP_DIR) && rmdir $(TEMP_DIR)
+	$(SUDO) ./mkboel.sh -busybox $(BUSYBOX_BINARY) -d dev_ls-lR \
+	  -s skel.tmp -eb $(EXTRA_BLOCKS) -ei $(EXTRA_INODES) -fs ext2 \
+	  -o initrd
+
+	$(SUDO) rm -rf skel.tmp
 
 install:	initrd.gz
-	mkdir $(TFTPROOT)
-	cp -a initrd.gz $(TFTPROOT)
+	mkdir $(INSTALL_DIR)
+	cp -a initrd.gz $(INSTALL_DIR)
 
 # binaries that we build from source
 binaries:	binary-build-stamp
@@ -167,7 +143,7 @@ help:
 	@echo ' make initrd             makes a complete uncompressed ramdisk'
 	@echo ''
 	@echo ' make install            installs a complete compressed ramdisk'
-	@echo '                         to $(TFTPROOT)'
+	@echo '                         to $(INSTALL_DIR)'
 	@echo ''
 	@echo ' make binaries           downloads the source for and builds'
 	@echo '                         all required binaries that are not'
@@ -209,8 +185,7 @@ clean:
 	-$(MAKE) -C $(BUSYBOX_ROOT) clean
 	-$(MAKE) -C $(BEEP_ROOT) clean
 	-find . -name "*~" -exec rm -f {} \;
-	-$(SUDO) umount $(TEMP_DIR)
-	-rm -rf $(TEMP_DIR) initrd initrd.gz
+	-$(SUDO) rm -rf initrd initrd.gz skel.tmp
 	-rm -rf binary-build-stamp
 distclean:	clean
 	-rm -rf $(SRC_DIR)
