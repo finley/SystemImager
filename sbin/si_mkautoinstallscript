@@ -33,7 +33,7 @@ if (!$rsync_stub_dir) { die "RSYNC_STUB_DIR not defined in the config file."; }
 ### END parse the config file ###
 
 $VERSION="SYSTEMIMAGER_VERSION_STRING";
-$program_name = "mkautoinstallscript";
+$program_name = "si_mkautoinstallscript";
 $version_info = <<"EOF";
 $program_name (part of SystemImager) v$VERSION
     
@@ -87,7 +87,7 @@ The following options affect the autoinstall client after autoinstalling:
                 A DHCP server will assign IP addresses to clients installed with
                 this image.  They may be assigned a different address each time.
                 If you want to use DHCP, but must ensure that your clients 
-                receive the same IP address each time, see \"man mkdhcpstatic\".
+                receive the same IP address each time, see \"man si_mkdhcpstatic\".
 
                 STATIC
                 ----------------------------------------------------------------

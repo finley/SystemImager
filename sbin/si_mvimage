@@ -10,7 +10,7 @@
 
 # set some variables
 my $VERSION = "SYSTEMIMAGER_VERSION_STRING";
-my $program_name="mvimage";
+my $program_name="si_mvimage";
 my $get_help = "         Try \"$program_name -help\" for more options.";
 
 # declare modules
@@ -76,7 +76,7 @@ Options: (options can be presented in any order)
     stored.  The directory bearing the image name itself will be 
     placed inside the directory specified here.
 
-Tip: Use \"lsimage\" to get a list of available images.
+Tip: Use \"si_lsimage\" to get a list of available images.
 
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
@@ -139,7 +139,7 @@ $destination =~ s,//,/,g; # Remove double slashes (if any). -BEF-
 #
 if($source eq $destination) {
   print "\n";
-  print "mvimage: SOURCE_IMAGE and DESTINATION_IMAGE must be different or you must\n";
+  print "si_mvimage: SOURCE_IMAGE and DESTINATION_IMAGE must be different or you must\n";
   print "         specify an alternate destination with -directory.\n";
   die ("$get_help\n");
 }

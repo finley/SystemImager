@@ -226,7 +226,7 @@ chdir("$temp_dir");
 $mkisofscmd  = "mkisofs -J -r -T -v -pad";
 $mkisofscmd .= " -A \"SystemImager $arch Autoinstallcd v$VERSION\"";
 $mkisofscmd .= " -V \"SystemImager $arch Boot CD\"";
-$mkisofscmd .= " -p \"Created by mkautoinstallcd -- part of SystemImager.  http://systemimager.org/\"";
+$mkisofscmd .= " -p \"Created by si_mkautoinstallcd -- part of SystemImager.  http://systemimager.org/\"";
 $mkisofscmd .= " -b boot/siboot.img -c boot/boot.catalog";
 if ("$arch" eq "ia64") {
   $mkisofscmd .= " -no-emul-boot -boot-load-size 1";

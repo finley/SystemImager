@@ -54,7 +54,7 @@ $ENV{PATH} = "/usr/local/sbin:/usr/sbin:/sbin:/usr/local/bin:/usr/bin:/bin";
 
 # Version details
 my $version_info = <<"EOF";
-updateclient (part of SystemImager) v$VERSION
+si_updateclient (part of SystemImager) v$VERSION
 
 EOF
 
@@ -138,9 +138,9 @@ if($help) {
     exit 0;
 }
 
-# listing is deprecated.  lsimage should now be used.
+# listing is deprecated.  si_lsimage should now be used.
 if($listing) {
-    print qq('-listing' is depricated.  Use 'lsimage' instead.\n);
+    print qq('--listing' is depricated.  Use 'si_lsimage' instead.\n);
     exit(1);
 }
 
@@ -201,7 +201,7 @@ if($dry_run and $autoinstall) {
 # -dry-run implies -no-bootloader
 if($dry_run) { $no_bootloader="true"; }
 
-# if not run as root, updateclient will surely fail
+# if not run as root, si_updateclient will surely fail
 unless($< == 0) {
     print "FATAL: Must be run as root!\n";
     exit 1;
@@ -564,7 +564,7 @@ sub version {
 }
 
 sub get_help {
-    print qq(  Try "updateclient -help" for more information.\n);
+    print qq(  Try "si_updateclient --help" for more information.\n);
 }
 
 sub usage {

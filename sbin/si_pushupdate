@@ -25,7 +25,7 @@ $si_logdir = "/var/log/systemimager";
 $si_log_format = "%t %o %f";
 ### END Parameters ###
 
-$program_name="pushupdate";
+$program_name="si_pushupdate";
 
 
 
@@ -33,7 +33,7 @@ $program_name="pushupdate";
 # set version information
 $version_number = "SYSTEMIMAGER_VERSION_STRING";
 $version_info = <<"EOF";
-pushupdate (part of SystemImager) version $version_number
+si_pushupdate (part of SystemImager) version $version_number
 
 EOF
 
@@ -41,7 +41,7 @@ $version_info .= SystemImager::Options->copyright();
 
 
 # set help information
-$get_help = "   Try \"pushupdate -help\" for more options.";
+$get_help = "   Try \"si_pushupdate --help\" for more options.";
 $help_info = $version_info .  SystemImager::Options->pushupdate_options_header();
 $help_info = $help_info .  SystemImager::Options->generic_options_help_version();
 $help_info = $help_info .  SystemImager::Options->pushupdate_options_body();
@@ -51,9 +51,9 @@ $help_info = $help_info .  SystemImager::Options->generic_footer();
 # setup generic logging info message for detail client logs if needed
 $logging_blurb = <<"EOF";
 
-Check out the -log option with the command pushupdate -help
+Check out the --log option with the command si_pushupdate --help
 to get information for capturing detailed file transfer logging
-from each client pushupdate targets.
+from each client si_pushupdate targets.
 EOF
 
 #
@@ -296,11 +296,11 @@ sub trim {
 }
 
 
-# write a record to pushupdate command log
+# write a record to si_pushupdate command log
 sub updatelogfile {
   my ($logmessage) = @_;
   my $fh=0;
-  open ($fh,">> $si_logdir/pushupdate");
+  open ($fh,">> $si_logdir/si_pushupdate");
   my $datetime = strftime("%Y/%m/%d %H:%M:%S", localtime(time()));
   print $fh "$datetime  $logmessage\n";
   close ($fh);
@@ -326,7 +326,7 @@ sub processautoinstall {
     my $param_image  = trim($fields[1]);
     
     # output the command to the log
-    updatelogfile("pushupdate autoinstall started for $param_target");
+    updatelogfile("si_pushupdate autoinstall started for $param_target");
     
     # extract ip address and lookup client hostname
     # if ip address given, just returns same value back
@@ -334,7 +334,7 @@ sub processautoinstall {
         or die "Cant resolve $param_target: $!\n";
     
     # set the machine specific logfile name
-    $logfile = "$si_logdir/pushupdate.$param_target";
+    $logfile = "$si_logdir/si_pushupdate.$param_target";
     if (defined($log_format)) {
         if ($log_format) {
             $local_log_format = $log_format;
@@ -371,7 +371,7 @@ sub processautoinstall {
         updatelogfile($message);
         die $message;
     } else {
-        my $message="Completed pushupdate autoinstall for $client from $imageserver.\n";
+        my $message="Completed si_pushupdate autoinstall for $client from $imageserver.\n";
         updatelogfile($message);
     }
     
@@ -385,7 +385,7 @@ sub processautoinstall {
 }
 
 
-# run updateclient from within each fork
+# run si_updateclient from within each fork
 sub processupdate {
     my ($param_input) = @_;
     my ($logfile, $local_log_format, $status, $rc, $command);
@@ -406,7 +406,7 @@ sub processupdate {
     my $param_image  = trim($fields[1]);
     
     # output the command to the log
-    updatelogfile("pushupdate started for $param_target");
+    updatelogfile("si_pushupdate started for $param_target");
     
     # extract ip address and lookup client hostname
     # if ip address given, just returns same value back
@@ -414,7 +414,7 @@ sub processupdate {
         or die "Cant resolve $param_target: $!\n";
     
     # set the machine specific logfile name
-    $logfile = "$si_logdir/pushupdate.$param_target";
+    $logfile = "$si_logdir/si_pushupdate.$param_target";
     if (defined($log_format)) {
         if ($log_format) {
             $local_log_format = $log_format;
@@ -434,14 +434,14 @@ sub processupdate {
     #
     # build command line
     #
-    $command = "ssh -l $ssh_user $client sudo updateclient $updateclient_options --image $param_image";
+    $command = "ssh -l $ssh_user $client sudo si_updateclient $updateclient_options --image $param_image";
     
-    # run command to start updateclient on the remote workstation
+    # run command to start si_updateclient on the remote workstation
     $rc = 0xffff & system($command);
     if (!$rc) {
-        updatelogfile("completed pushupdate for $client from $imageserver");
+        updatelogfile("completed si_pushupdate for $client from $imageserver");
     } else {
-        updatelogfile("unsuccessful pushupdate for $client from $imageserver");
+        updatelogfile("unsuccessful si_pushupdate for $client from $imageserver");
     }
     
     # if -post is specified, run it here, burying all results

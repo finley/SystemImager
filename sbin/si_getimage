@@ -98,7 +98,7 @@ my $update_script;
 my $post_install = "beep"; # the default
 
 # It is not intended that auto_install_script_conf be passable as an option on
-# the getimage command line.  See mkautoinstallscript if you want to specify 
+# the getimage command line.  See si_mkautoinstallscript if you want to specify 
 # an alternate config file. -BEF-
 #
 my $auto_install_script_conf;   
@@ -140,7 +140,7 @@ if ($version) {
 SystemImager::Common->check_if_root();
 
 if($imageserver){
-  die "\n$program_name: -server is now depricated.  Try cpimage command instead.\n$get_help\n\n";
+  die "\n$program_name: --server is now depricated.  Try the si_cpimage command instead.\n$get_help\n\n";
 }
 
 # be sure $golden_client name doesn't start with a hyphen
@@ -222,7 +222,7 @@ systemimager-ssh package for a more secure (but less effecient) method of
 making images available to clients.
 *********************************** WARNING *********************************** 
 
-See \"getimage --help\" for command line options.
+See \"si_getimage --help\" for command line options.
 
 EOF
 
@@ -347,7 +347,7 @@ if($source_host) {
   # $? is the return value from rsync
   if ($?) {
     print "Failed to retrieve /etc/systemimager/mounted_filesystems from $source_host.\n";
-    print "$program_name: Have you run \"prepareclient\" on $source_host?\n";
+    print "$program_name: Have you run \"si_prepareclient\" on $source_host?\n";
     print "          If you see the message \"unrecognised option\" above, check\n";
     print "          http://systemimager.org/download/ to be sure that you are running\n";
     die   "          the recommended version of rsync.\n";
@@ -511,7 +511,7 @@ ongoing basis:
    A DHCP server will assign IP addresses to clients installed with
    this image.  They may be assigned a different address each time.
    If you want to use DHCP, but must ensure that your clients
-   receive the same IP address each time, see "man mkdhcpstatic".
+   receive the same IP address each time, see "man si_mkdhcpstatic".
 
 2) STATIC
    ----------------------------------------------------------------

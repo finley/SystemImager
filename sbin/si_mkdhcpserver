@@ -25,7 +25,7 @@ use vars qw($VERSION);
 
 # set some variables
 $VERSION="SYSTEMIMAGER_VERSION_STRING";
-my $program_name="mkdhcpserver";
+my $program_name="si_mkdhcpserver";
 my $get_help = "  Try \"$program_name -help\" for more options.";
 
 
@@ -60,7 +60,7 @@ my $header = <<'EOF';
 #  Copyright (C) 2002 Bald Guy Software 
 #                     <brian.finley@baldguysoftware.com>
 #
-#  This file was created with "mkdhcpserver", which is part of SystemImager.
+#  This file was created with "si_mkdhcpserver", which is part of SystemImager.
 #  See http://systemimager.org/ for more information.
 #
 EOF
@@ -115,7 +115,7 @@ system("clear");
 
 # give warning
 print <<"EOF";
-Welcome to the SystemImager "mkdhcpserver" command.  This command will
+Welcome to the SystemImager "si_mkdhcpserver" command.  This command will
 prepare this computer to be a DHCP server by creating a dhcpd.conf file
 for use with your ISC DHCP server (v2 or v3).
 
@@ -528,7 +528,7 @@ The dhcp server configuration file ($dhcpd_conf) file has been
 created for you.  Please verify it for accuracy.
 
 If this file does not look satisfactory, you can run this command again
-to re-create it: "mkdhcpserver"
+to re-create it: "si_mkdhcpserver"
 
 WARNING!:  If you have multiple physical network interfaces, be sure to 
 edit the init script that starts dhcpd to specify the interface that 

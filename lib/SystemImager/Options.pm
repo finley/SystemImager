@@ -57,8 +57,8 @@ EOF
 sub pushupdate_options_header {
 
 return << "EOF";
-Usage: pushupdate [OPTION]... --client HOSTNAME   --server HOSTNAME --image IMAGENAME --updateclient-options "[OPTION]..."
-  or   pushupdate [OPTION]... --clients-file FILE --server HOSTNAME --updateclient-options "[OPTION]..."
+Usage: si_pushupdate [OPTION]... --client HOSTNAME   --server HOSTNAME --image IMAGENAME --updateclient-options "[OPTION]..."
+  or   si_pushupdate [OPTION]... --clients-file FILE --server HOSTNAME --updateclient-options "[OPTION]..."
 
 EOF
 }
@@ -86,7 +86,7 @@ EOF
 sub getimage_options_header {
 
 return << "EOF";
-Usage: getimage [OPTION]...  --golden-client HOSTNAME --image IMAGENAME
+Usage: si_getimage [OPTION]...  --golden-client HOSTNAME --image IMAGENAME
 
 EOF
 }
@@ -100,7 +100,7 @@ EOF
 sub updateclient_options_header {
 
 return << "EOF";
-Usage: updateclient [OPTION]... --server HOSTNAME --image IMAGENAME
+Usage: si_updateclient [OPTION]... --server HOSTNAME --image IMAGENAME
 
 EOF
 }
@@ -154,16 +154,16 @@ return << "EOF";
     an imagename specified as part of --updateclient-options.
 
  --updateclient-options "[OPTION]..."
-    Pass all options within \"quotes\" to updateclient directly.  Note that
-    updateclient\'s --image option need not be specified as it will be
-    overridden by pushupdate\'s --image option, or by settings in the file
+    Pass all options within \"quotes\" to si_updateclient directly.  Note that
+    si_updateclient\'s --image option need not be specified as it will be
+    overridden by si_pushupdate\'s --image option, or by settings in the file
     specified with --clients-file.
     
  --range N-N
     Number range used to create a series of host names based on the --client
-    option.  For example, "--client www --range 1-3" will cause pushupdate to use
-    www1, www2, and www3 as host names.  If no --range is given with --client, 
-    then pushupdate assumes that only one client is to be updated.
+    option.  For example, "--client www --range 1-3" will cause si_pushupdate
+    to use www1, www2, and www3 as host names.  If no --range is given with 
+    --client, then si_pushupdate assumes that only one client is to be updated.
 
  --domain DOMAINNAME
     If this option is used, DOMAINNAME will be appended to the client host
@@ -178,17 +178,17 @@ return << "EOF";
     instruction.
 
  --ssh-user USERNAME
-    Username for ssh connection _to_ the client.  Seperate from updateclient's
-    --ssh-user option.
+    Username for ssh connection _to_ the client.  Seperate from 
+    si_updateclient\'s --ssh-user option.
 
  --log "STRING"
     Quoted string for log file format.  See the rsyncd.conf man page for
     options.  Note that this is for logging that happens on the imageserver and
-    is in addition to the --log option that gets passed to updateclient.
+    is in addition to the --log option that gets passed to si_updateclient.
 
 
 Options for --updateclient-options:
-    (The following options will be passed on to the updateclient command.)
+    (The following options will be passed on to the si_updateclient command.)
 
 EOF
 }
@@ -277,7 +277,7 @@ return << "EOF";
     Quoted string for log file format.  See the rsyncd.conf man page for 
     options.
 
-Tip: Use \"lsimage --server HOSTNAME\" to get a list of available images.
+Tip: Use \"si_lsimage --server HOSTNAME\" to get a list of available images.
 
 EOF
 }
@@ -349,7 +349,7 @@ The following options affect the autoinstall client after autoinstalling:
         A DHCP server will assign IP addresses to clients installed with this
         image.  They may be assigned a different address each time.  If you
         want to use DHCP, but must ensure that your clients receive the same
-        IP address each time, see "man mkdhcpstatic".
+        IP address each time, see "man si_mkdhcpstatic".
 
     STATIC
         The IP address the client uses during autoinstall will be permanently
@@ -401,8 +401,8 @@ EOF
 sub mkclientnetboot_options_header {
 
 return << "EOF";
-Usage: mkclientnetboot --netboot   --clients "HOST1 HOST2 ..."
-  or   mkclientnetboot --localboot --clients "HOST1 HOST2 ..."
+Usage: si_mkclientnetboot --netboot   --clients "HOST1 HOST2 ..."
+  or   si_mkclientnetboot --localboot --clients "HOST1 HOST2 ..."
 
 EOF
 }

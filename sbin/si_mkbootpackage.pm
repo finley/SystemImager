@@ -33,7 +33,7 @@
 
 # XXX use lib "USR_PREFIX/lib/systemimager/perl";
 use lib "/usr/lib/systemimager/perl";
-print "WARNING: mkbootpackage is currently considered an experimental tool.\n";
+print "WARNING: si_mkbootpackage is currently considered an experimental tool.\n";
 print "         \"Your Mileage May Vary\"\n";
 
 use strict;
@@ -540,7 +540,7 @@ sub usage
 {
         print <<EOF;
 
-Usage: mkbootpackage --kernel FILE --flavor NAME [OPTION]...
+Usage: si_mkbootpackage --kernel FILE --flavor NAME [OPTION]...
 
 Description: 
         Takes the kernel specified, and necessary modules from it, and creates

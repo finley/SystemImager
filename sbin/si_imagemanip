@@ -11,7 +11,7 @@
 
 # set version number
 my $VERSION = "SYSTEMIMAGER_VERSION_STRING";
-my $program_name ="imagemanip";
+my $program_name ="si_imagemanip";
 
 use lib "USR_PREFIX/lib/systemimager/perl";
 use strict;
@@ -44,11 +44,11 @@ $version_info .= SystemImager::Options->copyright();
 
 =head1 NAME
 
-imagemanip - systemimager image manipulation tool
+si_imagemanip - systemimager image manipulation tool
 
 =head1 SYNOPSIS
 
-imagemanip [OPTIONS] [COMMAND] [IMAGE] [ARGS]
+si_imagemanip [OPTIONS] [COMMAND] [IMAGE] [ARGS]
 
  Commands (default is "help"):
   list
@@ -146,13 +146,13 @@ Most SystemImager system images are maintained by the root user.  In the
 situation where multiple images are being booted in testing conditions by
 many different people or projects, there may come a need for non-root users
 to make changes to images.  This requires a certain level of auditing,
-access control, etc.  "imagemanip" helps provide that structure, but requires
-"sudo" to gain "root" permissions.
+access control, etc.  "si_imagemanip" helps provide that structure, but 
+requires "sudo" to gain "root" permissions.
 
 An example /etc/sudoers file section could look like this:
 
         User_Alias IMAGEMANIP_USERS=kees,cliff
-        IMAGEMANIP_USERS ALL=(root) /usr/sbin/imagemanip
+        IMAGEMANIP_USERS ALL=(root) /usr/sbin/si_imagemanip
 
 In order to manage systemimager images in a reliable fashion, a change-control
 method must exist. A set of directories and logs are enforced by this tool.
@@ -160,7 +160,7 @@ In order to enforce forward-change, a single roll-back image is available,
 with the only way to "remove" a package is to build a "new" image from a
 "virgin" copy without the package you're interested in.
 
-SystemImager images under "imagemanip" control have suffixes to distinguish
+SystemImager images under "si_imagemanip" control have suffixes to distinguish
 what state the image is in.  The default suffxes are:
 
  NAME - The production image being downloaded/installed from right now
@@ -171,7 +171,7 @@ what state the image is in.  The default suffxes are:
 
 To help promote only "updates" to images, files should not be removed from
 images.  Therefore, the simplified method of operation to add files and 
-packages to an image follows these imagemanip commands:
+packages to an image follows these si_imagemanip commands:
 
  - Create NAME-new image area ("new")
  - Copy files into NAME-new/usr/src/updates/ ("install")
@@ -197,7 +197,7 @@ B<update_dir> = "/usr/src/updates"
    where to put newly installed packages
 
 B<log_file> = "update.log"
-   where to log imagemanip activities
+   where to log si_imagemanip activities
 
 B<perm_file> = "/etc/imagemanip.perm"
    where to load image permissions

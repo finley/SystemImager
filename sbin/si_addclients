@@ -313,7 +313,7 @@ EOF
             unless($script) { $script = $newest_script; }
           
             # display the list of available images
-            unless(@files) { die "There are no available autoinstall scripts.  Please use getimage to retrieve an\nimage first.   -The Mgmt\n"; }
+            unless(@files) { die "There are no available autoinstall scripts.  Please use si_getimage to retrieve an\nimage first.   -The Mgmt\n"; }
             print qq(\nHere is a list of available autoinstall scripts:\n);
             print "\n";
             foreach(@files) {

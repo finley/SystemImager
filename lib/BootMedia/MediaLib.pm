@@ -132,7 +132,7 @@ sub run_mkisofs {
     my $mkisofs_cmd = "mkisofs";
     $mkisofs_cmd .= " -A \"SystemImager $arch autoinstallcd v$version\"";
     $mkisofs_cmd .= " -V \"SystemImager $arch Boot CD\"";
-    $mkisofs_cmd .= ' -p "Created by mkbootmedia -- part of SystemImager.';
+    $mkisofs_cmd .= ' -p "Created by si_mkbootmedia -- part of SystemImager.';
     $mkisofs_cmd .= ' http://systemimager.org/"';
     $mkisofs_cmd .= " -J -r -T -v -pad";
     $mkisofs_cmd .= " $extra_opts";

@@ -17,7 +17,7 @@ use SystemImager::Config;
 use SystemImager::Server;
 use vars qw($config $VERSION);
 
-$0 = "netbootmond";
+$0 = "si_netbootmond";
 
 my $net_boot_default = lc $config->net_boot_default();
 if("$net_boot_default" eq "net") {
@@ -36,7 +36,7 @@ unless($tftp_dir) {
 }
 
 my $syslinux_cfg_localboot = "/etc/systemimager/pxelinux.cfg/syslinux.cfg.localboot";
-my $pid_file = "/var/run/netbootmond.pid";
+my $pid_file = "/var/run/si_netbootmond.pid";
 my $log_file = "/var/log/systemimager/rsyncd";
 
 

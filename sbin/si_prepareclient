@@ -14,7 +14,7 @@
 #   - set rsyncd.conf's host_allow to _not_ include localhost
 #
 #
-#   Function: prepareclient is used to, well, prepare a client to have 
+#   Function: si_prepareclient is used to, well, prepare a client to have 
 #   it's image retrieved by an imageserver
 # 
 #   This is a port to Perl of the original bash script written by 
@@ -91,7 +91,7 @@ my $rsyncd_conf_file = "/tmp/rsyncd.conf.$$";
 $ENV{PATH} = "/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin";
 
 my $version_info = <<"EOF";
-prepareclient (part of SystemImager) v$VERSION
+si_prepareclient (part of SystemImager) v$VERSION
 
 Copyright (C) 1999-2003 Brian Elliott Finley <brian\@bgsw.net>
 
@@ -101,7 +101,7 @@ EOF
 
 my $help_info = $version_info . <<"EOF";
 
-Usage: prepareclient --server IMAGESERVER [OPTION]...
+Usage: si_prepareclient --server IMAGESERVER [OPTION]...
 
 Options:
  --version             
@@ -173,13 +173,13 @@ if($explicit) {
     print "        for you without the -explicit option, please file a bug report at\n";
     print "        http://systemimager.org/support/.  Thanks!\n";
     print "\n";
-    print qq(Try "prepareclient --help" for more options.\n);
+    print qq(Try "si_prepareclient --help" for more options.\n);
     exit 1;
 }
 
 # Make sure we have certain tools that we need.
-which('rsync') or croak("'rsync' is required for prepareclient to function properly.  Please see http://systemimager.org for more details.");
-which('systemconfigurator') or croak("'systemconfigurator' is required for prepareclient to function properly.  Please see http://systemimager.org for more details.");
+which('rsync') or croak("'rsync' is required for si_prepareclient to function properly.  Please see http://systemimager.org for more details.");
+which('systemconfigurator') or croak("'systemconfigurator' is required for si_prepareclient to function properly.  Please see http://systemimager.org for more details.");
 
 # -rpm-install does the same thing as -no-rsyncd.  -BEF-
 if($rpm) {
@@ -208,11 +208,11 @@ unless(($quiet) or ($yes)) {
     # do the interactive part
     system("clear");
     print <<EOF;
-Welcome to the SystemImager prepareclient command.  This command may modify the
-following files to prepare your golden client for having its image retrieved by
-the imageserver.  It will also create the /etc/systemimager directory and fill
-it with information about your golden client.  All modified files will be
-backed up with the $backup_extension extension.
+Welcome to the SystemImager si_prepareclient command.  This command may modify
+the following files to prepare your golden client for having its image 
+retrieved by the imageserver.  It will also create the /etc/systemimager 
+directory and fill it with information about your golden client.  All modified
+files will be backed up with the $backup_extension extension.
 
  /etc/services:
    This file defines the port numbers used by certain software on your system.
@@ -230,7 +230,7 @@ backed up with the $backup_extension extension.
    an rsync daemon will be started using the temporary configuration file
    mentioned above.
    
-See "prepareclient --help" for command line options.
+See "si_prepareclient --help" for command line options.
 
 EOF
 
@@ -247,7 +247,7 @@ EOF
 This utility starts an rsync daemon that makes all of your files accessible
 by anyone who can connect to the rsync port of this machine.  This is the 
 case until you reboot, or kill the 'rsync --daemon' process by hand.  By 
-default, once you use getimage to retrieve this image on your imageserver, 
+default, once you use si_getimage to retrieve this image on your imageserver, 
 these contents will become accessible to anyone who can connect to the rsync 
 port on your imageserver.  See rsyncd.conf(5) for details on restricting 
 access to these files on the imageserver.  See the systemimager-ssh package
@@ -287,8 +287,8 @@ they are unmounted.
 
 Devices managed by supermount are typically CDROM and floppy devices, which
 won't be retrieved by SystemImager anyway, so unmounting these devices should
-cause no harm.  You can safely re-mount them after running the getimage command
-from your SystemImager server.
+cause no harm.  You can safely re-mount them after running the si_getimage 
+command from your SystemImager server.
 
 Here are the mount points on this system that are managed by supermount:
 EOF
@@ -366,7 +366,7 @@ unless($norsyncd) {
     
     # Make a copy of the original /etc/hosts file.
     my $source      = $file;
-    my $destination = "$file.before-prepareclient";
+    my $destination = "$file.before-si_prepareclient";
     copy($source, $destination) or die "FATAL: Failed to copy $source to $destination.\n";
     
     # Append our temporary entry.
@@ -407,7 +407,7 @@ unless($norsyncd) {
     }
     
     # Put the original /etc/hosts file back (sans our temporary entry).
-    $source      = "$file.before-prepareclient";
+    $source      = "$file.before-si_prepareclient";
     $destination = $file;
     move($source, $destination) or die "FATAL: Failed to copy $source to $destination.\n";
 }
@@ -423,13 +423,13 @@ if(!$quiet and !$norsyncd) {
     print <<EOF;
 
 This client is ready to have its image retrieved.  You must now run 
-the "getimage" command on your imageserver.
+the "si_getimage" command on your imageserver.
 EOF
 
 } elsif(!$quiet) {
     print <<EOF;
 
-WARNING:  The rsync daemon was not started.  You must run prepareclient again,
+WARNING:  The rsync daemon was not started.  You must run si_prepareclient again,
           without the -n option, before you can pull it's image to an
           imageserver.
 EOF

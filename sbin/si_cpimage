@@ -11,7 +11,7 @@
 
 # set some variables
 $VERSION = "SYSTEMIMAGER_VERSION_STRING";
-my $program_name = "cpimage";
+my $program_name = "si_cpimage";
 my $get_help = "  Try \"$program_name -help\" for more options.";
 
 # declare modules
@@ -103,7 +103,7 @@ Options: (options can be presented in any order)
     Username for ssh connection to the imageserver.  Only needed if a
     secure connection is required.
 
-Tip: Use \"lsimage\" to get a list of available images.
+Tip: Use \"si_lsimage\" to get a list of available images.
 
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
