@@ -84,7 +84,7 @@ write_variables() {
     echo "SSH_USER=$SSH_USER"	            	>> /tmp/variables.txt
     echo "SSH_DOWNLOAD_URL=$SSH_DOWNLOAD_URL"	>> /tmp/variables.txt
 
-    echo "FLAMETHROWER_PORT=$FLAMETHROWER_PORT"	    >> /tmp/variables.txt
+    echo "FLAMETHROWER_PORT=$FLAMETHROWER_PORT"	>> /tmp/variables.txt
 }
 #
 ################################################################################
@@ -154,7 +154,9 @@ get_boel_binaries_tarball() {
         # Use multicast
         echo "FLAMETHROWER_PORT variable is set, so we will use multicast!"
         echo "FLAMETHROWER_PORT: $FLAMETHROWER_PORT"
-        udp-receiver --pipe "tar -x -C /" --portbase ${FLAMETHROWER_PORT} || shellout
+        # XXX change command below to receive directory information
+        # Create function "get_port_number_for_flamethrower_module(${MODULE_NAME})"
+        #udp-receiver --pipe "tar -x -C /" --portbase ${FLAMETHROWER_PORT} || shellout
 
     else
         # Use rsync
