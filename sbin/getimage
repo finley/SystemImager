@@ -153,12 +153,12 @@ if [ "$client" != "" ] && [ "$image" != "" ]; then
   echo "### uncomment this block to use static IP addresses ###" >> /tftpboot/systemimager/$image.master
   echo "" >> /tftpboot/systemimager/$image.master
 
-  echo "# run lilo " >> /systemimager/installstuff/$image.master
-  echo "# (no, we can not just do a lilo -r \"/a/\"." >> /systemimager/installstuff/$image.master
-  echo "# we need to use the lilo that came with the distribution in case" >> /systemimager/installstuff/$image.master
-  echo "# it has special modifications such as support for hardware or software RAID)" >> /systemimager/installstuff/$image.master
-  echo chroot /a/ /sbin/lilo  >> /systemimager/installstuff/$image.master
-  echo >> /systemimager/installstuff/$image.master
+  echo "# run lilo " >> /tftpboot/systemimager/$image.master
+  echo "# (no, we can not just do a lilo -r \"/a/\"." >> /tftpboot/systemimager/$image.master
+  echo "# we need to use the lilo that came with the distribution in case" >> /tftpboot/systemimager/$image.master
+  echo "# it has special modifications such as support for hardware or software RAID)" >> /tftpboot/systemimager/$image.master
+  echo chroot /a/ /sbin/lilo  >> /tftpboot/systemimager/$image.master
+  echo >> /tftpboot/systemimager/$image.master
 
   echo "# just to be anal"     >> /tftpboot/systemimager/$image.master
   echo sync\;sync\;sync >> /tftpboot/systemimager/$image.master
