@@ -1,4 +1,3 @@
-# This is a template for a single-package spec file
 %define name     systemimager
 %define ver      0.24beta3
 %define rel      1
