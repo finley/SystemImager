@@ -249,9 +249,9 @@ flamethrower_client() {
             echo
             echo "flamethrower_client(${MODULE_NAME})"
             echo '--------------------------------------------------------------------------------'
-            echo "udp-receiver $UDP_RECEIVER_OPTIONS 2>${UDP_RECEIVER_STDERR_LOG} | tar -x -C ${DIR} 2>$TAR_STDERR_LOG"
+            echo "udp-receiver $UDP_RECEIVER_OPTIONS 2>${UDP_RECEIVER_STDERR_LOG} | tar --overwrite -xp -C ${DIR} 2>$TAR_STDERR_LOG"
             ( 
-                udp-receiver $UDP_RECEIVER_OPTIONS 2>${UDP_RECEIVER_STDERR_LOG} | tar -x -C ${DIR} 2>$TAR_STDERR_LOG
+                udp-receiver $UDP_RECEIVER_OPTIONS 2>${UDP_RECEIVER_STDERR_LOG} | tar --overwrite -xp -C ${DIR} 2>$TAR_STDERR_LOG
                 echo "TAR_EXIT_STATUS=$?" > $TAR_EXIT_FILE
              ) &
         fi    
