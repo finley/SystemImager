@@ -145,22 +145,6 @@ count_loop() {
 #
 ################################################################################
 #
-# Usage: get_flamethrower_directory
-#
-get_flamethrower_directory() {
-    echo
-    echo Using multicast...
-    echo get_flamethrower_directory
-
-    mkdir -p ${FLAMETHROWER_DIRECTORY_DIR}
-    echo udp-receiver --interface ${DEVICE} --portbase ${FLAMETHROWER_DIRECTORY_PORTBASE} | tar -x -C ${FLAMETHROWER_DIRECTORY_DIR}
-         udp-receiver --interface ${DEVICE} --portbase ${FLAMETHROWER_DIRECTORY_PORTBASE} | tar -x -C ${FLAMETHROWER_DIRECTORY_DIR} || echo "EXIT CODE: $?"
-    sleep 1
-    echo
-}
-#
-################################################################################
-#
 # Usage: get_scripts_directory
 #
 get_scripts_directory() {
@@ -169,20 +153,56 @@ get_scripts_directory() {
 
     MODULE_NAME="autoinstall_scripts"
     DIR="${SCRIPTS_DIR}"
+    RETRY=7
     flamethrower_client
 
 }
 #
 ################################################################################
 #
-# Usage: MODULE_NAME="my_module" ; DIR="/dest_dir" ; flamethrower_client
+# Usage: get_flamethrower_directory
+#
+get_flamethrower_directory() {
+    echo
+    echo Using multicast...
+    echo get_flamethrower_directory
+
+    MODULE_NAME=flamethrower_directory
+    DIR=${FLAMETHROWER_DIRECTORY_DIR}
+    RETRY=7
+    PORTBASE=9000
+    flamethrower_client
+}
+#
+################################################################################
+#
+# Usage: 
+#
+#   MODULE_NAME=my_module   # Required
+#   DIR=/my/destination/dir # Required
+#   RETRY=7                 # Optional
+#   PORTBASE=9000           # Required if a sourceable file called $MODULE_NAME
+#                           # doesn't exist
+#
+#   flamethrower_client
 #
 flamethrower_client() {
 
+    [ -z $RETRY ] && RETRY=0
+    COUNT=0
+
     echo
     echo "flamethrower_client(${MODULE_NAME})"
+    echo '--------------------------------------------------------------------------------'
 
-    . ${FLAMETHROWER_DIRECTORY_DIR}/${MODULE_NAME}
+    if [ -z $PORTBASE ]; then
+        . ${FLAMETHROWER_DIRECTORY_DIR}/${MODULE_NAME}
+        if [ $? != 0 ]; then
+            echo You must either set PORTBASE, or have a sourceable file called
+            echo ${FLAMETHROWER_DIRECTORY_DIR}/MODULE_NAME
+            shellout
+        fi
+    fi
 
     UDP_RECEIVER_OPTIONS="--interface ${DEVICE} --portbase $PORTBASE"
     if [ ! -z $TTL ]; then
@@ -193,14 +213,36 @@ flamethrower_client() {
     fi
 
     mkdir -p ${DIR}
-    echo udp-receiver $UDP_RECEIVER_OPTIONS | tar -x -C ${DIR}
-         udp-receiver $UDP_RECEIVER_OPTIONS | tar -x -C ${DIR} || echo "EXIT CODE: $?"
-    sleep 1
+    
+    { while :;
+        do
+            echo "udp-receiver $UDP_RECEIVER_OPTIONS | tar -x -C ${DIR}"
+            udp-receiver $UDP_RECEIVER_OPTIONS | tar -x -C ${DIR}
+
+            if [ $? = 0 ]; then
+                echo 'flamethrower_client: Success!'
+                echo '--------------------------------------------------------------------------------'
+                break
+            elif [ $COUNT -lt $RETRY ]; then
+                COUNT=$(( $COUNT + 1 ))
+                echo "flamethrower_client: Proceeding with retry $COUNT of $RETRY"
+            else
+                echo "flamethrower_client: FATAL: Initial attempt and $RETRY retries failed!"
+                shellout
+            fi
+            sleep 1
+        done
+    }
 
     # Unset vars, so next module (which may not have them set) won't use then unintentially
-    PORTBASE=""
-    TTL=""
-    ASYNC=""
+    unset PORTBASE
+    unset TTL
+    unset ASYNC
+    unset RETRY
+    unset COUNT
+    unset UDP_RECEIVER_OPTIONS
+    unset DIR
+    unset PORTBASE
 }
 #
 ################################################################################
@@ -234,7 +276,8 @@ get_boel_binaries_tarball() {
 
         MODULE_NAME="boot-${ARCH}-${FLAVOR}"
         DIR="${BOEL_BINARIES_DIR}"
-        flamethrower_client
+        RETRY=7
+        flamethrower_client $MODULE_NAME $DIR
 
     else
         # Use rsync
