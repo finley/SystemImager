@@ -1,12 +1,12 @@
-UCLIBC_VERSION := 0.9.12
+UCLIBC_VERSION := 0.9.26
 UCLIBC_DIR := uClibc-$(UCLIBC_VERSION)
 UCLIBC_TARBALL := uClibc-$(UCLIBC_VERSION).tar.bz2
-UCLIBC_URL := http://download.systemimager.org/pub/uclibc/$(UCLIBC_TARBALL)
+UCLIBC_URL := http://uclibc.org/downloads/$(UCLIBC_TARBALL)
 # SOURCE_URL -> http://uclibc.org/downloads/
 UCLIBC_PATCHES = $(shell ls $(INITRD_PATCH_DIR)/uclibc.*.patch 2>/dev/null | sort)
 
-UCLIBC_RUNTIME = $(INITRD_SRC_DIR)/uclibc-runtime
-UCLIBC_DEV = $(INITRD_SRC_DIR)/uclibc-dev
+UCLIBC_RUNTIME = $(INITRD_SRC_DIR)/uclibc-runtime/
+UCLIBC_DEV = $(INITRD_SRC_DIR)/uclibc-dev/
 
 UCLIBC_LINUX_DIR = $(TOPDIR)/src/$(LINUX_DIR)
 
@@ -22,43 +22,43 @@ $(INITRD_SRC_DIR)/$(UCLIBC_TARBALL):
 	[ -d $(INITRD_SRC_DIR) ] || mkdir -p $(INITRD_SRC_DIR)
 	$(GETSOURCE) $(UCLIBC_URL) $(INITRD_SRC_DIR)
 
-$(INITRD_SRC_DIR)/$(UCLIBC_DIR)/Config: $(INITRD_SRC_DIR)/$(UCLIBC_TARBALL) $(UCLIBC_PATCHES)
+$(INITRD_SRC_DIR)/$(UCLIBC_DIR)/.config: $(INITRD_SRC_DIR)/$(UCLIBC_TARBALL) $(UCLIBC_PATCHES)
 	rm -rf $(INITRD_SRC_DIR)/$(UCLIBC_DIR)
 	cd $(INITRD_SRC_DIR) && tar xvjf $(UCLIBC_TARBALL)
 	cd $(INITRD_SRC_DIR)/$(UCLIBC_DIR) &&\
 	  cat $(UCLIBC_PATCHES) < /dev/null | patch -p1
 
-	$(INITRD_SRC_DIR)/$(UCLIBC_DIR)/extra/Configs/uClibc_config_fix.pl \
-		--arch=$(UCLIBC_ARCH_NAME) \
-		$(CROSSARG) --c99_math=true \
-		--devel_prefix=$(UCLIBC_DEV) \
-		--float=true \
-		--kernel_dir=$(UCLIBC_LINUX_DIR) \
-		--large_file=true \
-		--ldso_path="/usr/$(UCLIBC_ARCH_NAME)-linux-uclibc/lib/" \
-		--long_long=true \
-		--rpc_support=true \
-		--shadow=true \
-		--shared_support=true \
-		--threads=true \
-		--file=$(INITRD_SRC_DIR)/$(UCLIBC_DIR)/extra/Configs/Config.$(UCLIBC_ARCH_NAME) \
-		> $(INITRD_SRC_DIR)/$(UCLIBC_DIR)/Config;
-	perl -i -p -e 's,SYSTEM_DEVEL_PREFIX.*,SYSTEM_DEVEL_PREFIX=$(UCLIBC_DEV)/usr,g' $(INITRD_SRC_DIR)/$(UCLIBC_DIR)/Config
+	## these settings stolen from the debian package
+	echo TARGET_$(ARCH)=y    >> $(INITRD_SRC_DIR)/$(UCLIBC_DIR)/.config
+	echo CONFIG_ARCH=$(ARCH) >> $(INITRD_SRC_DIR)/$(UCLIBC_DIR)/.config
+	echo CONFIG_386=y        >> $(INITRD_SRC_DIR)/$(UCLIBC_DIR)/.config
+	echo UCLIBC_PROFILING=n  >> $(INITRD_SRC_DIR)/$(UCLIBC_DIR)/.config
+	echo SHARED_LIB_LOADER_PATH=\"/lib\" \
+                                 >> $(INITRD_SRC_DIR)/$(UCLIBC_DIR)/.config
+	echo KERNEL_SOURCE=\"$(UCLIBC_LINUX_DIR)\" \
+                                 >> $(INITRD_SRC_DIR)/$(UCLIBC_DIR)/.config
+	echo RUNTIME_PREFIX=\"$(UCLIBC_RUNTIME)\" \
+                                 >> $(INITRD_SRC_DIR)/$(UCLIBC_DIR)/.config
+	echo DEVEL_PREFIX=\"$(UCLIBC_DEV)\" \
+                                 >> $(INITRD_SRC_DIR)/$(UCLIBC_DIR)/.config
+	echo SYSTEM_DEVEL_PREFIX=\"/usr\" \
+                                 >> $(INITRD_SRC_DIR)/$(UCLIBC_DIR)/.config
+	cd $(INITRD_SRC_DIR)/$(UCLIBC_DIR) && yes '' | make oldconfig
 
 $(INITRD_SRC_DIR)/uclibc_dev-stamp:	$(INITRD_SRC_DIR)/uclibc_build-stamp
-	$(MAKE) -C $(INITRD_SRC_DIR)/$(UCLIBC_DIR) \
-	    install_toolchain install_dev DEVEL_PREFIX=$(UCLIBC_DEV)
-	$(MAKE) -C $(INITRD_SRC_DIR)/$(UCLIBC_DIR) install_runtime \
-	    PREFIX=$(UCLIBC_DEV)/ DEVEL_PREFIX=/
+	mkdir -p $(UCLIBC_DEV)
+	$(MAKE) -C $(INITRD_SRC_DIR)/$(UCLIBC_DIR) install_dev
+	$(MAKE) -C $(INITRD_SRC_DIR)/$(UCLIBC_DIR)/debian/gcc-uClibc
+	$(MAKE) -C $(INITRD_SRC_DIR)/$(UCLIBC_DIR)/debian/gcc-uClibc install
+		DEVEL_PREFIX=$(UCLIBC_DEV) TARGET_ARCH=$(ARCH)
 	touch $(INITRD_SRC_DIR)/uclibc_dev-stamp
 
 $(INITRD_SRC_DIR)/uclibc_runtime-stamp:	$(INITRD_SRC_DIR)/uclibc_build-stamp \
 	                                $(INITRD_SRC_DIR)/uclibc_dev-stamp
-	$(MAKE) -C $(INITRD_SRC_DIR)/$(UCLIBC_DIR) install_runtime \
-	    PREFIX=$(UCLIBC_RUNTIME)/ DEVEL_PREFIX=/ 
+	$(MAKE) -C $(INITRD_SRC_DIR)/$(UCLIBC_DIR) install_runtime
 	touch $(INITRD_SRC_DIR)/uclibc_runtime-stamp
 
-$(INITRD_SRC_DIR)/uclibc_build-stamp:	$(INITRD_SRC_DIR)/$(UCLIBC_DIR)/Config\
+$(INITRD_SRC_DIR)/uclibc_build-stamp:	$(INITRD_SRC_DIR)/$(UCLIBC_DIR)/.config \
 					$(SRC_DIR)/patched_kernel-stamp
 	$(MAKE) -C $(INITRD_SRC_DIR)/$(UCLIBC_DIR)
 	touch $(INITRD_SRC_DIR)/uclibc_build-stamp
@@ -70,3 +70,4 @@ uclibc_clean:
 	rm -rf $(UCLIBC_DEV)
 	rm -f $(INITRD_SRC_DIR)/uclibc_dev-stamp
 	rm -f $(INITRD_SRC_DIR)/uclibc_runtime-stamp
+	rm -f $(INITRD_SRC_DIR)/uclibc_build-stamp

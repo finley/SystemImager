@@ -71,10 +71,9 @@ endif
 
 
 ifdef UCLIBC_ARCH_NAME
-	UCLIBC_PATH = $(UCLIBC_DEV)/bin
+	UCLIBC_PATH = $(UCLIBC_DEV)/usr/bin
 	INITRD_BUILD_PATH = $(UCLIBC_PATH):$(PATH)
-    UCLIBC_TARGET := $(INITRD_SRC_DIR)/uclibc_dev-stamp \
-        $(INITRD_SRC_DIR)/uclibc_runtime-stamp
+	UCLIBC_TARGET := $(INITRD_SRC_DIR)/uclibc_runtime-stamp
 else
 	INITRD_BUILD_PATH = $(PATH)
 endif
