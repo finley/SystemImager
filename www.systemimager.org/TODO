@@ -1,0 +1,94 @@
+#
+# "VA SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com>
+#
+# This file: TODO
+# (not in any specific order)
+#
+
+Short list (in progress by)
+------------------------
+- <wessmith@engr.sgi.com> - GUI for SystemImager called "Rhino".
+- <ian@valinux.com> - multicast install -- Ian McLeod <ian@valinux.com> will have mftp (multicast ftp) 
+  working as a drop in replacement for rsync by 5/15/2000 and we will begin testing
+  in the lab.
+- <ian@valinux.com> - script that checks floppy for file and assigns IP and hostname based on file, not on DHCP.
+- <brian@valinux.com> - update FAQ-HOWTO
+- <brian@valinux.com> - add more error checking to makedhcpstatic
+- <wessmith@engr.sgi.com> - /etc/systemimager.conf file to hold things like domain name, nis domain, etc.
+
+
+Other stuff
+-----------
+- (part of the making of the tftp-hpa RPM) need to add proper tftp entry in /etc/inetd.conf 
+   for tftp-hpa rpm.  If systemimager is installed with tftp-hpa, then systemimager's 
+   afterburner will make the proper changes to /etc/inetd.conf.
+- message during network booting (if possible)
+- make the <Backspace> key work ;)
+- create man pages
+
+getimage
+--------
+- $image.exclude on imageserver
+- identify mke2fs parameters -b, -i, and -m on the master client and replicate this on autoinstall clients
+- use something other than mtab for getting active ext2 filesystems?
+- offer user the ability to change this, and store the changes in 
+  /etc/systemimager.conf as IMAGESDIRECTORY="/var/spool/systemimager/images"
+- add an --exclude option
+- add "Do you want me open up the imageserver as a syslogd server?"
+- pass variables, such as $imagename to "addclients"
+- create disk partition sections of $image.master using MB instead of cylinders
+  in order to support disks of different sizes. (not feasable at this point.)
+  (there may be additional things to do on the prepareclient side as well)
+  (perhaps use a virtual disk presented to a "real" fdisk to allow user partitioning? --
+   or maybe just calculate partition information with the script and ask the user to specify sizes)
+
+addclients
+----------
+- accept command line input such as --image $imagename
+- re-cycle through each question if answer is ""
+
+systemimager.exclude
+--------------------
+- Have getimage question what should be excluded in future when updateimage 
+  is run.  /tmp/* and /home/* should be recommended as a starting place.
+- Add support for a systemimager.include file
+- make systemimager.exclude and systemimager.include image specific.
+  (systemimager.exclude.$image)
+
+updateclient
+-----------
+- have client pull systemimager.exclude and systemimager.include from
+  imageserver before pulling image
+
+Miscellaneous and Possibilities
+-------------------------------
+- add more error checking (always) :)
+- Dan of Argonne says there may be a better way of identifying the
+  imageserver via DHCP.  This has been verified -- you can make a
+  statement such as:
+   option option-100 "10.0.0.8";
+  in the /etc/dhcpd.conf file to make up your own option that specifies
+  the address of the imageserver.  However, only the ISC's own dhclient
+  seems to be able to take made up options, and it is not the dhcp client
+  of choice (for several reasons).  Maybe the other clients, dhcpcd and
+  pump, will find their way along soon...
+- curses wrapper around the whole thing
+- updateclient - log what was updated and or deleted?
+- makedhcpstatic -- allow for -f "filename" option to specify dhcpd.leases file.
+
+makedhcpserver 
+--------------
+- autodiscover and calculate more information 
+  (including if system has more than one network interface).
+
+systemimager.conf
+-----------------
+- SYSTEMIMAGER_ROOT=$path
+- SYSTEMIMAGER_FQHN=$boolean
+- EXCLUDE=$path $path $path
+
+autoinstalldiskette 
+-------------------
+- no screen-blanking
+- redirect syslog messages to $imagserver
+

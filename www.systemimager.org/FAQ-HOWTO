@@ -1,0 +1,730 @@
+#
+# "VA SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com>
+#
+# This file is: FAQ-HOWTO
+#
+# Current version as of the writing of this document: 1.0
+#                                           revision: 6
+#
+#   Others who have contributed to this document (in alphabetical order):
+#     Paonia Ezrine <paonia@home.welcomehome.org>
+#     Ari Jort <ajort@valinux.com>
+#
+
+
+                              VA SystemImager
+                        Frequently Asked Questions
+                                and HOWTO
+
+This document contains the answers to some Frequently Asked Questions about 
+VA SystemImager.  If you don't find what you're looking for here, try the 
+mailing list <systemimager@systemimager.org>.  You can also contract VA Linux
+Professional Services to assist you.
+
+
+
+--------------------------------------------------------------------------------
+Question:  What is VA SystemImager?
+--------------------------------------------------------------------------------
+
+Answer:
+
+VA SystemImager is software that makes the installation of Linux to masses of 
+similar machines relatively easy.  It also makes software distribution, 
+configuration, and operating system updates easy.  You can even update from one 
+Linux release version to another!  VA SystemImager can also be used for content 
+management on web servers.  
+
+It is most useful in environments where you have large numbers of 
+identical machines.  Some typical environments include: Internet 
+server farms, high performance clusters, computer labs, or corporate 
+desktop environments where all workstations have the same basic 
+hardware configuration.
+
+VA SystemImager is designed to be distribution independent.  Currently
+it is only tested with RedHat based systems such as RedHat and 
+VA Enhanced RedHat.  If you have difficulty using it with your particular 
+distribution, please mail me so that I can make appropriate changes.  
+Or better yet, make them yourself and mail me the changes! :)
+
+
+--------------------------------------------------------------------------------
+Question:  What kind of organizations use VA SystemImager?
+--------------------------------------------------------------------------------
+
+Answer:
+
+Typical organizations that see benefit from using VA SystemImager:
+- have Internet server farms
+- manage many workstations or servers for a department or an entire company
+- are doing super-computing/clustering with Linux
+- anyone who needs to maintain identical configurations on a a large number
+  of machines
+
+
+--------------------------------------------------------------------------------
+Question:  What are the requirements for running a VA SystemImager imageserver?
+--------------------------------------------------------------------------------
+
+Answer:
+
+To set up a VA SystemImager server installation, you will require two services:  
+
+- You will need to have rsync installed on your "imageserver" and on your 
+  "master" client.
+
+- You will need to run a DHCP server on your network.  The "makedhcpserver" 
+  command, run on your chosen "imageserver", will give you the opportunity to 
+  have it ask you the questions necessary to properly configure it as a DHCP 
+  server.
+
+- All of the clients for a particular image should have an identical hardware
+  configuration.  They should at least have the same hard drive(s) and the
+  same ethernet card(s).
+
+
+--------------------------------------------------------------------------------
+Question:  How does it work?
+--------------------------------------------------------------------------------
+
+Answer:
+
+The basic idea behind VA SystemImager is to suck the entire system image from
+a "master" client to an "imageserver" (the imageserver is the machine where 
+you install this software).  This image can then be replicated to any number 
+of client systems you want configured in the same way.
+
+Once your client systems have had the initial image replicated to them,
+they can be updated/upgraded by syncing them to an updated image on the
+image server.  During an update, only modified files are pulled to the client.
+This makes for a fast, efficient, and accurate mass update.
+
+  
+--------------------------------------------------------------------------------
+Question:  How do I set up VA SystemImager?
+--------------------------------------------------------------------------------
+
+Answer:
+
+The initial setup of VA SystemImager is a three step process:
+
+1) Install VA SystemImager on the machine you designate as your "imageserver".
+   - Download and install the latest va-systemimager RPM.
+     (rpm -Uvh va-systemimager)
+   - Run the command "makedhcpserver" to configure your "imageserver" to be a
+     DHCP server.  Be sure to follow the instructions it gives you at the end.
+
+2) Then you will select a machine that we call the "master" client.  This 
+   will be the machine whose image you are replicating across numerous other 
+   machines.  
+   - Configure this "master" client as you normally would any machine.  
+     Don't worry too much about getting it exactly right the first time, 
+     since you can use VA SystemImager to make incremental changes to your image
+     rather easily.
+   - Download and install the latest va-systemimager-client RPM on the "master" 
+     client.
+
+3)   You are then ready to pull the image from the "master" client onto
+     the "imageserver" with the command "getimage".
+     Run this command as follows:
+
+     [arijort@imageserver]$ \
+     > getimage -master-client <client_hostname> -image <image_name>
+
+     where <client_hostname> is the hostname or IP address of the "master"
+     client and <image_name> is the name that you want to give to this image.
+
+     Example:
+     [arijort@imageserver]$ \
+     > getimage -master-client computenode1 -image valinux6.2.1
+
+     Answer all the questions that the "getimage" command asks you, and you
+     should be ready to autoinstall your first client by simply booting it
+     off the network, the "autoinstallcd", or the "autoinstalldiskette".
+
+
+4)   Autoinstall your clients!  
+
+     - Run the command "makeautoinstalldiskette" or "makeautoinstallcd" to 
+       create your boot media.  Simply boot your client off the diskette or
+       CD and it will autoinstall itself.
+
+     - If you prefer to boot off the network, change the settings in your
+       BIOS to boot off your PXE enabled network card, and reboot your
+       client system.  It should automatically find and boot off the
+       imageserver and begin to autoinstall itself.
+
+
+--------------------------------------------------------------------------------
+Question:  Where are the images stored?
+--------------------------------------------------------------------------------
+
+Answer:
+
+The images are stored in "/var/spool/systemimager/images".  
+
+NOTE: If you are short on disk space in this location, move the directory in 
+      another location:
+        "mv /var/spool/systemimager/images /home/systemimager_images"
+
+      And create a soft link to the new directory.
+        "ln -s /home/systemimager_images /var/spool/systemimager/images"
+
+
+--------------------------------------------------------------------------------
+Question:  How do I make an autoinstalldiskette?
+--------------------------------------------------------------------------------
+
+Answer:
+
+Run the command "makeautoinstalldiskette" on the imageserver.
+
+
+--------------------------------------------------------------------------------
+Question:  How do I make an autoinstallcd?
+--------------------------------------------------------------------------------
+
+Answer:
+
+Run the command "makeautoinstallcd" on the imageserver.
+
+
+--------------------------------------------------------------------------------
+Question:  I made an autoinstallcd, but it didn't boot.  What's wrong?
+--------------------------------------------------------------------------------
+
+Answer:
+
+There was a problem with the following RPM:  syslinux-1.48-1.i386.rpm 
+Download and install a newer syslinux RPM from http://systemimager.org/.
+
+
+--------------------------------------------------------------------------------
+Question:  Does the DHCP server have be on the imageserver?
+--------------------------------------------------------------------------------
+
+Answer:
+
+Yes.  At this point in time it does.  After the client gets it's address
+via DHCP, it determines the DHCP server to be the imageserver and tries
+to connect to the DHCP server with tftp to get it's utilities and it's 
+autoinstall script.
+
+
+--------------------------------------------------------------------------------
+Question:  How do I add a driver for a special card to the autoinstall client?
+--------------------------------------------------------------------------------
+
+Answer:
+
+All you have to do is start with the .config file that you can find
+in the CVS repository on SourceForge:
+http://cvs.sourceforge.net/cgi-bin/cvsweb.cgi/~checkout~/systemimager/autoinstall.kernel.config?rev=1.1&cvsroot=systemimager
+(note: the revision number in the URL above may change in future iterations)
+
+Put this in your /usr/src/linux directory as .config and run
+"make menuconfig" or your favourite kernel config utility.  Choose the
+driver for the card you need.
+
+However!  This will probably make the kernel too large for the floppy.
+So you will want to de-select drivers for many of the cards that will
+not be used.  I would recommend de-selecting all of the Ethernet cards
+except for the ones you need.
+
+Do the standard:
+make dep
+make clean
+make bzImage
+
+(Please refer to the Kernel-HOWTO for more information on recompiling a kernel:
+ http://www.caldera.com/LDP/HOWTO/Kernel-HOWTO.html)
+
+Then copy the resultant kernel over the kernel installed in /tftpboot by
+SystemImager: /tftboot/kernel
+
+You should now be able to do a "makeautoinstalldiskette",
+"makeautoinstallcd", or boot off the network.
+
+
+--------------------------------------------------------------------------------
+Question:  How do I exclude files or directories during a getimage?
+--------------------------------------------------------------------------------
+
+Answer:
+
+Currently there is not support for this.  Look for this feature soon.
+
+
+--------------------------------------------------------------------------------
+Question:  Do I have to do anything to prepare a client from which I will get 
+           an image? 
+--------------------------------------------------------------------------------
+
+Answer:
+
+Yes.  Install the va-systemimager-client RPM.  If this RPM is already 
+installed, all you have to do is run the "prepareclient" command prior to 
+running "getimage" from the imageserver.
+
+You will also want to add any software, configure any files, and do any 
+tweaking to make the system just how you like it!
+
+
+--------------------------------------------------------------------------------
+Question:  Can I use the autoinstalldiskette or autoinstallcd on more than one 
+           machine?
+--------------------------------------------------------------------------------
+
+Answer:
+
+Yes.  The autoinstall media is generic, and can be on any machine that you 
+want to autoinstall.
+
+
+--------------------------------------------------------------------------------
+Question:  How do I push an image to a client?
+--------------------------------------------------------------------------------
+
+Answer:
+
+You don't.  Everything in VA SystemImager is actually based on a pull mechanism 
+which allows for more control over error conditions.
+
+
+--------------------------------------------------------------------------------
+Question:  Ok, so how do I pull an image to a client?
+--------------------------------------------------------------------------------
+
+Answer:
+
+If you ran "makedhcpserver" to configure your dhcp information, and if you 
+answered all the questions you were asked when you did your "getimage",
+including the hostnames and IP addresses, then all you have to do is boot your
+client with any one of the three forms of autoinstall media.  
+
+They are:
+- autoinstalldiskette (takes longer to boot and formats the diskette as 1.7M,
+                       which pushes this media's limit and causes many 
+                       diskettes to fail)
+- autoinstallcd       (takes slightly less time to boot and is more durable, 
+                       but you have to have a CD burner)
+- network             (dramatically faster boot time, but requires PXE capable
+                       network card on the client, and requires mucking about 
+                       with the BIOS to tell it to boot off the network)
+
+Search this document for "makeautoinstallcd" and "makeautoinstalldiskette" for
+more information.
+
+
+--------------------------------------------------------------------------------
+Question:  How does an autoinstall client know which image to install?
+--------------------------------------------------------------------------------
+
+Answer:
+
+In order to better understand the answer, let me lead up to it with the steps
+the autoinstall client goes through:
+
+1) Boots off the autoinstallmedia
+2) Gets an IP address from dhcp
+3) Determines the IP address of the imageserver via dhcp
+4) Requests a hosts file from the imageserver
+5) Finds its hostname in the hosts file based on its IP address
+6) Requests a script from the imageserver based on its hostname
+   ( for example: www237.sh )
+7) Executes this script
+
+The script in question is typically a soft link pointing at the $image.master
+script that was dynamically created when you ran getimage.  This script 
+explicitly states which image to pull from the imageserver.  Open it up and 
+take a look!
+
+These scripts and the $image.master script can be found in 
+/tftpboot/systemimager.
+
+
+--------------------------------------------------------------------------------
+Question:  How do I upgrade to a new version?
+--------------------------------------------------------------------------------
+
+Answer:
+
+If you installed VA SystemImager as of 1.0 or later, you can simply install
+the new version on top.
+
+If you last installed a pre-1.0 version then the comments below still apply.
+
+  VA SystemImager is still changing dynamically, so you can't simply install a
+  new version on top of an old one.  Depending on the version changes, this may
+  work for you, but it is not guaranteed.  If you want to try this method, 
+  please check with the CHANGE.LOG document to find out what has changed.
+
+  Currently the recommended method is to move your images directory out of the 
+  systemimager directory hierarchy, back up your /etc/rsyncd.conf file and any
+  other configuration files you may have changed.  Then install VA SystemImager
+  as if you were installing it for the first time, after which you can move 
+  your images directory and /etc/rsyncd.conf file back.
+
+
+--------------------------------------------------------------------------------
+Question:  When making the autoinstalldiskette, my system gives me an error 
+           involving "dd" or "mount".
+--------------------------------------------------------------------------------
+
+Answer:
+
+  You are using a pre v0.19 version of VA SystemImager.  Please download the latest
+  version from http://systemimager.org/.
+
+  If you must use a pre v0.19 version for some reason, be sure that your kernel 
+  has "ramdisk" support.  Or that you have ramdisk support with a module.  If 
+  you are using a module, be sure that it is loaded with the "modprobe" command.
+
+  But it's probably easier to just get the latest version...
+
+
+--------------------------------------------------------------------------------
+Question:  My autoinstall client booted up and said "dhcp didn't work", but 
+           when I do an ifconfig eth0 it has an IP address.  What happened?
+--------------------------------------------------------------------------------
+
+Answer:
+
+Are you using a pre 1.0 version of VA SystemImager?  If so, please upgrade.
+
+If for some reason you can't upgrade, then:
+
+  Are you connected to a switch?  Most switches will wait a period of time
+  (usually 30 seconds) after a connected system's interface has come up before 
+  transmitting on that port.  Newer versions of the autoinstalldiskette bring
+  the ethernet interface up and wait 45 seconds or so before making a dhcp
+  request.  It will then wait 35 seconds or so to give the system time to 
+  receive an address.  You could be using an autoinstalldiskette that does not
+  wait the proper time for your switch and is giving up before it should.
+
+  Be sure that you are using the latest version of VA SystemImager and that you
+  are using the autoinstalldiskette image that comes with that version.  Note 
+  that the version numbers may not match.  See the VERSION file.
+
+
+--------------------------------------------------------------------------------
+Question:  My client failed to autoinstall, and when I run an rsync command on 
+           it manually it takes forever for the imageserver to respond.
+--------------------------------------------------------------------------------
+
+Answer:
+
+  Be sure that the imageserver can look up the client's hostname based on its
+  IP address.  The easiest way to do this is to have entry in the imageserver's 
+  /etc/hosts file for the client system.
+
+
+--------------------------------------------------------------------------------
+Question:  But I want to assign static IPs to my clients!
+--------------------------------------------------------------------------------
+
+Answer:
+
+You can!  getimage will ask you if you want to assing static IPs.
+
+
+--------------------------------------------------------------------------------
+Question:  I want to use DHCP to assign static IPs to my clients, but I don't 
+           want to have to manually enter my 1000 mac addresses.  What can I do?
+--------------------------------------------------------------------------------
+
+Answer:
+
+  VA SystemImager comes with the "makedhcpstatic" utility.  As you boot your 
+  client systems, the DHCP server will assign addresses sequentially.  By
+  initially booting your systems in the order you want them to receive their
+  IP addresses, you can ensure that they get the IP address you want them to
+  have.  
+
+  After booting your systems, run makedhcpstatic.  It will re-write your 
+  /etc/dhcpd.conf file associating each clients MAC address with its host
+  name.  You should then restart your dhcpd daemon.  Subsequently, each time
+  your clients request an IP address via DHCP, the will always be assigned 
+  their appropriate static IP address.
+
+  Note:  The client's hostname is used, instead of an explicit IP address, so
+  that you simply have to change the hosts file on the DHCP server (or DNS, 
+  NIS, etc.) to change the IP address that that client recieves.
+  
+  Note:  Static IP addresses, assigned by DHCP, are the author's preferred 
+  method for administering IP on a large number of systems, if static IP 
+  addresses are actually required.
+
+
+--------------------------------------------------------------------------------
+Question:  What kind of performance can I expect?
+--------------------------------------------------------------------------------
+
+Answer:
+
+  Here are some unofficial numbers that I came up with.  Your experience may
+  be quite different based on the speed of your network, the performance of
+  your imageserver and clients, and the size of the image.
+
+  If you can send me statistics from your experience, I'll add them below.
+
+  Size of Image   Clients   Network Type   Switched   Elapsed Time
+  -------------   -------   ------------   --------   ------------
+   2.5 Gig         21        100BaseTx      yes        1.5 Hours
+   1.5 Gig         20        100BaseTx      yes        .5 Hours
+
+
+--------------------------------------------------------------------------------
+Question:  How do I update an image on the imageserver?
+--------------------------------------------------------------------------------
+
+Answer:
+
+  There are two ways to update an image on the imageserver:
+  1) Make the changes to one of your clients and run "getimage" again.  
+
+     - You can specify the same image name, in which case the current image
+       will be updated (only changes are pulled across).
+
+     - Or you can specify a new image name and have a form of revision control.
+       (This is by far the recommended method)
+
+     Note:  Everytime getimage is run, it will recreate the $image.master 
+     script.  If you have customized your $image.master script, be sure to 
+     save it before running getimage again.
+
+  2) Modify the files directly.  You can simply cd into the appropriate image
+     directory and edit the files there, or (recommended) you can cd into the
+     image directory and run "chroot . sh".  This will change your working root
+     directory to the root of the image you want to manipulate.  You can then 
+     run RPM command, etc. on the image and not have to worry about getting 
+     confused and hosing the imageserver.  When you are done, simply type 
+     "exit" and you will be returned to your normal shell.
+
+
+--------------------------------------------------------------------------------
+Question:  How do I update a client to match an image?
+--------------------------------------------------------------------------------
+
+Answer:
+
+Once you have updated an image on the imageserver, you can then update your
+clients to reflect this new or modified image.  (It is not necessary to do a
+complete re-autoinstall.)  You will find the command "updateclient" on your 
+clients.  This command takes as its parameters, the name of the imageserver
+and the name of the image that you want to update the client to.  Run
+"updateclient -help" to get more information about this command.
+
+If you use the revision control method recommended in "How do I update an
+image on the imageserver?" then you will be able to bring your production
+environment back to a known state (by doing an updateclient to the last 
+working image) after having done an updateclient to a not quite so 
+thoroughly tested image.
+
+Note:  The file /etc/systemimager.exclude on your clients is used to exclude
+       files and directories from being updated by the updateclient command.  
+       Please take a look at this file and modify it to suit your local 
+       environment.
+
+
+--------------------------------------------------------------------------------
+Question:  What is systemimager.exclude used for?
+--------------------------------------------------------------------------------
+
+Answer:
+
+It is used by the "updateclient" command.  See the section:
+"How do I update a client to match an image?"
+
+
+--------------------------------------------------------------------------------
+Question:  We are in the process of building a new "front-end" server for our
+           Linux cluster.  We'd like to try using VA SystemImager as our node 
+           cloning software if possible.
+ 
+           I've read through the VA SystemImager FAQ and found the following:
+ 
+           - All of the clients for a particular image should have an identical
+             hardware configuration.  They should at least have the same hard
+             drive(s) and the same ethernet card(s).
+ 
+           This is a problem since our front-end which the image will be 
+           captured from has a SCSI hard drive and a Gigabit ethernet card.  
+           Our 64 compute nodes on the other hand have IDE disk drives and fast 
+           ethernet cards.  
+
+           Are we out of luck?
+--------------------------------------------------------------------------------
+
+Answer:
+
+Nope.  Just a little customization ahead of you...
+
+1) Once you have done your "getimage" you will need to edit the
+   conf.modules in the image on the imageserver to load the appropriate
+   module for your ethernet card.
+
+   "vi /var/spool/systemimager/images/$imagename/etc/conf.modules"
+
+   I believe your entry will look like this:
+
+   "alias eth0 tulip"
+
+2) You will need to edit the fstab file in the image:
+
+   "vi /var/spool/systemimager/images/$imagename/etc/fstab"
+
+   Be sure it says /dev/hdaN instead of /dev/sdaN, etc.
+
+3) You will need to specify the partition information in the
+   $imagename.master script that was created when you did your
+   getimage.
+
+   "vi /var/spool/systemimager/installstuff/$imagename.master"
+
+   You will find a section that looks like this:
+
+   # Here's an example of how to customize a disk:
+   # start at the beginning 0, give 20M /dev/sda1 for /boot, assume partition type 83
+   # start where left off, 512M /dev/sda2 for swap, partition type 82
+   # start where left off, give the rest of the disk to /dev/sda3 for /, assume partition type 83
+   #sfdisk -uM /dev/sda <<EOF
+   #0,20
+   #,512,82
+   #,
+   #;
+   #EOF
+
+   Uncomment the lines from sfdisk down to EOF (EOF must be flush left)
+   and change the values to specify your partitions according to the
+   example.
+
+   If you don't want to have to think so much, then you can simply do
+   the following command on a client that is already partitioned correctly:
+
+   "sfdisk -d /dev/hda" (Assuming you only have one disk and that disk is /dev/hda.)
+
+   Then copy the output into the $install.master script and delete the
+   existing entries for the SCSI disk.
+
+4) Search the $imagename.master script for all entries of your old drive
+   "/dev/sda" and be sure that they are changed to the appropriate drive
+   "/dev/hda".  This will be for the "mke2fs" and "mkswap" sections.
+
+5) Proceed as normal.
+
+
+--------------------------------------------------------------------------------
+Question:  How do I edit the scripts so only the FIRST disk is sfdisk'ed? I MUST
+           leave the other disks alone.
+--------------------------------------------------------------------------------
+
+Answer:
+
+After you run "prepareclient", look in the /etc/partitionschemes
+directory on that client.  You will find a file that has the partition
+information for each of that clients disks.  Simply delete all except
+for the primary disk.
+
+Now you can do your "getimage" and everything else like normal.
+
+The only other thing to verify is that the fstab file in the image has
+no entries for the other disks:
+"vi /var/spool/systemimager/images/$imagename/etc/fstab"
+
+
+--------------------------------------------------------------------------------
+Question:  How can I use VA SystemImager to update a small set of files? For 
+           instance, I apply a security patch and I want all boxes to reflect 
+           that change.
+--------------------------------------------------------------------------------
+
+Answer:
+
+This is accomplished with the "updateclient" command on the client.
+
+1) Choose one of the following methods to update the image on the server:
+   A - apply the patch to the image directly
+   B - apply the patch to a client and then do another getimage
+       specifying the same imagename (won't take long and will
+       update the image).
+   C - apply the patch to a client and then do another getimage
+       specifying a _different_ imagename.  This is preferred as it
+       allows for revision control.
+
+2) run "updateclient" on the clients that you want to update.  Do an
+   "updateclient -help" to get the syntax.
+
+
+--------------------------------------------------------------------------------
+Question:  Is there a log file where autoinstall client status is kept?
+--------------------------------------------------------------------------------
+
+Answer:
+
+Yes.  "/var/log/systemimager"
+
+
+--------------------------------------------------------------------------------
+Question:  What other software is this based on?
+--------------------------------------------------------------------------------
+
+Answer:
+
+VA SystemImager is based on rsync(1) and also makes use of syslinux(2) and 
+pxelinux(3).  Versions 0.23 and earlier made use of tomsrtbt(4).
+
+
+--------------------------------------------------------------------------------
+References
+--------------------------------------------------------------------------------
+
+(1)  rsync -- remote sync/update protocol.  rsync is used to transfer files
+              from the imageserver to an autoinstall client or a client using
+              the "updateclient" command.
+
+              rsync was written by Andrew Tridgell <tridge@samba.org> and 
+              Paul Mackerras <Paul.Mackerras@cs.anu.edu.au>.  
+
+              http://rsync.samba.org/
+
+(2)  syslinux -- syslinux is a boot loader for the Linux operating system.  It
+                 is used with the autoinstall diskette. 
+
+                 syslinux was written by H. Peter Anvin. 
+
+                 ftp://ftp.us.kernel.org/pub/linux/utils/boot/syslinux/ 
+
+(3)  pxelinux -- pxelinux is a network boot loader for the Linux operating 
+                 system.  It is used for autoinstalling over the network.
+
+                 pxelinux was written by H. Peter Anvin and is part of the
+                 syslinux package listed above.
+
+(4)  tftp-hpa -- tftp-hpa is a tftp server that has been modified to accept
+                 certain options, or "non-options" required for the broken
+                 PXE protocol.  
+
+                 tftp-hpa was written by H. Peter Anvin.
+
+                 http://www.kernel.org/pub/software/network/tftp/
+
+(5)  tomsrtbt -- Tom's Root/Boot "The most Linux on one floppy disk".  
+                 tomsrtbt was used with VA SystemImager versions 0.23 and
+                 earlier.
+
+                 tomsrtbt was written by Thomas A. Oehser <tom@toms.net>.  
+
+                 http://www.toms.net/rb/
+
+
+--------------------------------------------------------------------------------
+  Questions yet to be answered -- please send more!
+--------------------------------------------------------------------------------
+
+-  My client failed to autoinstall, and when I run an rsync command on it 
+   manually it takes forever for the imageserver to respond.
+-  Some of my clients have disks from different manufacturers or with different
+   geometries.  Will an autoinstall work on them?
+-  How do I know when an autoinstall client is finished autoinstalling?
+-  How do I use multiple imageservers to serve a large number of clients?
