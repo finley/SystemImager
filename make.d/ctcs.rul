@@ -1,8 +1,10 @@
+# These must be set (even without WITH_CTCS) so that ctcs_clean works properly. -BEF-
+CTCS_VERSION := 1.3.0pre4
+CTCS_DIR := ctcs-$(CTCS_VERSION)
+
 ifdef WITH_CTCS
-	CTCS_VERSION := 1.3.0pre4
 	CTCS_TARBALL := ctcs-$(CTCS_VERSION).tar.gz
 	CTCS_TARBALL_TARGET := $(SRC_DIR)/$(CTCS_TARBALL)
-	CTCS_DIR := ctcs-$(CTCS_VERSION)
 	CTCS_BINARY := $(SRC_DIR)/$(CTCS_DIR)/newburn
 	CTCS_URL := http://unc.dl.sourceforge.net/sourceforge/va-ctcs/$(CTCS_TARBALL)
 	CTCS_PATCHES = $(shell ls $(PATCH_DIR)/ctcs.*.patch 2>/dev/null | sort)
