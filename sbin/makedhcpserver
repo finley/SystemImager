@@ -61,6 +61,7 @@ $dnsserver1 = "";
 $dnsserver2 = "";
 $dnsserver3 = "";
 $router = "192.168.1.254";
+$imageserver = "192.168.1.254";
 $advanced_services = "n";
 $ntp0 = "";
 $ntp1 = "";
@@ -110,6 +111,9 @@ while ($satisfied ne "y") {
 
  print "What is the IP address of your default gateway? [$router]: ";
  $router=get_response($router);
+
+ print "What is the IP address of imageserver? [$imageserver]: ";
+ $imageserver=get_response($imageserver);
 
  # Set some advanced DHCPD configurations if desired
 
@@ -165,26 +169,27 @@ while ($satisfied ne "y") {
  print "Ahh, but seriously folks...\n";
  print "Here are the values you have chosen:\n\n";
  print "################################################################\n";
- print "DNS Domain Name:\t\t $dnsdomainname\n";
- print "network number:\t\t $netnumber\n";
- print "netmask:\t\t $netmask\n";
- print "starting IP address for your dhcp range: $rangebegin\n";
- print "ending IP address for your dhcp range:   $rangeend\n";
- print "first DNS server:\t\t $dnsserver1\n";
- print "second DNS server:\t\t $dnsserver2\n";
- print "third DNS server:\t\t $dnsserver3\n";
- print "default gateway:\t\t $router\n";
+ print "DNS Domain Name:                          $dnsdomainname\n";
+ print "network number:                           $netnumber\n";
+ print "netmask:                                  $netmask\n";
+ print "starting IP address for your dhcp range:  $rangebegin\n";
+ print "ending IP address for your dhcp range:    $rangeend\n";
+ print "first DNS server:                         $dnsserver1\n";
+ print "second DNS server:                        $dnsserver2\n";
+ print "third DNS server:                         $dnsserver3\n";
+ print "default gateway:                          $router\n";
+ print "imageserver:                              $imageserver\n";
 
   if ( $advanced_services eq "y" ) {
  	print "\nAdvanced DHCPD features: \n";
 
- 	print " Syslog repository:\t $syslogd\n";
- 	print " First NTP server:\t $ntp0\n";
- 	print " Second NTP server:\t $ntp1\n";
- 	print " Third NTP server:\t $ntp2\n";
- 	print " NIS Domain Name:\t $nisdomain\n";
- 	print " First NIS server:\t $nisserver0\n";
- 	print " Second NIS server:\t $nisserver1\n";
+        print " Syslog repository:  $syslogd\n";
+ 	print " First NTP server:   $ntp0\n";
+ 	print " Second NTP server:  $ntp1\n";
+ 	print " Third NTP server:   $ntp2\n";
+ 	print " NIS Domain Name:    $nisdomain\n";
+ 	print " First NIS server:   $nisserver0\n";
+ 	print " Second NIS server:  $nisserver1\n";
  } else {
 	print "\nNo advanced setting choosen.\n";
  }
@@ -225,6 +230,7 @@ if($dnsserver2 ne "") { print DHCPDCONF qq(, $dnsserver2); }
 if($dnsserver3 ne "") { print DHCPDCONF qq(, $dnsserver3); }
 if($dnsserver1 ne "") { print DHCPDCONF qq(;\n); }
 print DHCPDCONF qq(  option routers $router; \n);
+print DHCPDCONF qq(  option option-100 "$imageserver"; \n);
 if( $syslogd ne "" ) { print DHCPDCONF qq(  option log-servers $syslogd; \n) ; }
 if( $ntp0 ne "" ) { print DHCPDCONF qq(  option time-servers $ntp0); }
 if( $ntp1 ne "" ) {  print DHCPDCONF qq(, $ntp1); }
