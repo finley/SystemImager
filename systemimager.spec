@@ -1,6 +1,6 @@
 %define name     systemimager
 %define ver      3.2.0
-%define rel      1
+%define rel      2
 %define prefix   /usr
 %define _build_all 1
 %define _boot_flavor standard
@@ -196,6 +196,9 @@ to boot and install %{_build_arch} Linux machines during the SystemImager autoin
 process.
 
 %changelog
+* Wed Mar 10 2004 sis devel <sisuite-devel@lists.sourceforge.net> 3.2.0-2
+- remove more files created by multiple calls to install phases
+
 * Wed Mar 03 2004 sis devel <sisuite-devel@lists.sourceforge.net> 3.2.0-1
 
 * Wed Nov 12 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.1.6-1
@@ -321,9 +324,19 @@ make install_binaries DESTDIR=/tmp/%{name}-%{ver}-root PREFIX=%prefix
 
 %endif
 
+# Some things that get duplicated because there are multiple calls to
+# the make install_* phases.
 rm -f /tmp/%{name}-%{ver}-root/etc/init.d/systemimager-server-flamethrowerd~
+rm -f /tmp/%{name}-%{ver}-root/etc/init.d/systemimager-server-netbootmond~
 rm -f /tmp/%{name}-%{ver}-root/etc/init.d/systemimager-server-rsyncd~
 rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/client.conf~
+rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/pxelinux.cfg/default~
+rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/pxelinux.cfg/message.txt~
+rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/pxelinux.cfg/syslinux.cfg~
+rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/pxelinux.cfg/syslinux.cfg.localboot~
+rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/rsync_stubs/10header~
+rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/rsync_stubs/99local.dist~
+rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/rsync_stubs/README~
 rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/updateclient.local.exclude~
 
 %clean
