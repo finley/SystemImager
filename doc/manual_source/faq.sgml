@@ -806,8 +806,7 @@ image=vmlinux-rh.img
     </question>
     <answer>
       <para>
-       According to Ole Holm Nielsen, Department of Physics, Technical 
-       University of Denmark:
+       Ole Holm Nielsen, Department of Physics, Technical University of Denmark reports:
       </para>
 
       <para>
@@ -816,6 +815,14 @@ image=vmlinux-rh.img
        <ulink url="http://www.fysik.dtu.dk/CAMP/Niflheim/systemimager.html">The NIFLHEIM SystemImager Page</ulink>.
        Our server has Gigabit network, 2 GB of RAM, dual Intel Xeon 2.4 GHz,
        whereas the clients have Intel P4 and 100 Mbit Ethernet.
+      </para>
+      <para>
+       James Braid reports:
+      </para>
+      <para>
+       From a Celeron 700/512Mb server over 100Mbit ethernet, we manage to do a ~1Gb
+       image in about 7 - 10 min.  The disks are 5x 120Gb Seagate Barracuda V in one 
+       LVM set (non striped), with a ReiserFS filesystem.
       </para>
     </answer>
   </qandaentry>
