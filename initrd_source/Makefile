@@ -125,6 +125,47 @@ $(MASSDNS_TARBALL):
 	wget $(MASSDNS_URL)
 ########## END massdns rules ##########
 
+get_source:	$(BEEP_TARBALL) $(BUSYBOX_TARBALL) $(MASSDNS_TARBALL)
+
+help:
+	# This Makefile provides rules to create a ramdisk (initrd.gz) for
+	# SystemImager autoinstall clients.  Here are descriptions
+	# of the various rules:
+	#
+	# make initrd.gz		makes a complete compressed ramdisk
+	#
+	# make initrd			makes a complete uncompressed ramdisk
+	#
+	# make install			installs a complete compressed ramdisk
+	#				to $(TFTPROOT)
+	#
+	# make binaries			downloads the source for and builds
+	#			        all required binaries that aren't
+	#				a part of the Debian/unstable distro
+	#				(binaries that are in Debian/unstable
+	#				are just copied over from the local
+	#				system)
+	#
+	# make <binary>			downloads the source for and builds
+	#				a single required binary that isn't
+	#				a part of the Debian/unstable distro
+	#				(binaries that are in Debian/unstable
+	#				are just copied over from the local
+	#				system)
+	#
+	# make help			print this message
+	#
+	# make clean			execute the clean rule for each
+	#				utility's source tree, remove editor
+	#				backup files and files that have
+	#				already been built.
+	#
+	# make distclean		make clean + remove all downloaded
+	#				tarballs & their build trees.
+	#
+	# Please read the README.initrd for more build and customization
+	# details
+
 clean:
 	-$(MAKE) -C $(BUSYBOX_ROOT) clean
 	-$(MAKE) -C $(BEEP_ROOT) clean
@@ -136,5 +177,3 @@ clean:
 distclean:	clean
 	-rm -rf $(BEEP_ROOT) $(BUSYBOX_ROOT) $(MASSDNS_ROOT)
 	-rm -rf $(BEEP_TARBALL) $(BUSYBOX_TARBALL) $(MASSDNS_TARBALL)
-
-get_source:	$(BEEP_TARBALL) $(BUSYBOX_TARBALL) $(MASSDNS_TARBALL)
