@@ -7,7 +7,7 @@
 #
 
 # set version_number
-$version_number="0.24beta";
+$version_number="0.24beta3";
 
 # declare modules
 use Getopt::Long;
@@ -62,12 +62,16 @@ if($help) { die qq($help_info); }
 if($version) { die qq($version_info); }
 
 # be sure $imageserver name doesn't start with a hyphen
-$_ = $imageserver;
-if(/^-/) { die qq(Imageserver name can't start with a hyphen.\n\n$help_info); }
+if($imageserver) {
+  $_ = $imageserver;
+  if(/^-/) { die qq(Imageserver name can't start with a hyphen.\n\n$help_info); }
+}
 
 # be sure $image doesn't start with a hyphen
-$_ = $image;
-if(/^-/) { die qq(Image name can't start with a hyphen.\n\n$help_info); }
+if($image) {
+  $_ = $image;
+  if(/^-/) { die qq(Image name can't start with a hyphen.\n\n$help_info); }
+}
 
 # if usage is bad, print help information
 #if($image /
@@ -80,18 +84,27 @@ if($listing) {
   print qq(Available image(s):\n);
   $command = qq(rsync -v $imageserver) . q(::);
   system($command);
+  exit 0;
+}
 
 # if not run as root, this script will surely fail
-} elsif($< != 0) { 
-  die "Must be run as root!\n";
+if($< != 0) { die "Must be run as root!\n"; }
 
 # go ahead and do that thing you do
+# set directory to default if not specified on command line
+if(!$directory) {
+  $directory = "/";
 } else {
-  # set directory to default if not specified on command line
-  unless($directory) { $directory = "/"; }
-
-  # pad directory with a trailing / in case user didn't supply one (extras don't hurt)
-  if($directory) { $directory = $directory . "/"; }
+  # in case directory doesn't already have one, add a trailing slash
+  # (We could easily test to see if it does, but we've got to normalize multiple
+  #  slashes into one down below anyway...  Same number of functions to execute.)
+  $directory = $directory . "/";
+  
+  # turn multiple slashes "///" into a single slash "/"
+  # (So maybe we don't really have to do this -- things will work with multiple
+  #  slashes.  This is actually done to avoid user consternation when reading
+  #  any output that might include the multiple slashes.)
+  $directory =~ s/\/+/\//g;
 
   # start with base command
   $command = "rsync -avz";
@@ -99,40 +112,41 @@ if($listing) {
   # get exclusions from /etc/systemimager.exclude
   open(SYSTEMIMAGER_EXCLUDE, "< /etc/systemimager.exclude") or die "Couldn't open /etc/systemimager.exclude for reading: $!\n";
   while (<SYSTEMIMAGER_EXCLUDE>) {
-    if (/^\s*\//) {  # match non commented explicit path
-      chomp;
-      $command = $command . qq( --exclude=$_);
-    }
+      if (/^\s*\//) {  # match non commented explicit path
+        chomp;
+        $command = $command . qq( --exclude=$_);
+      }
   }
   close(SYSTEMIMAGER_EXCLUDE);
 
   # append currently mounted non ext2 filesystems to exclusions list
   open(ETC_MTAB, "< /etc/mtab") or die "Couldn't open /etc/mtab for reading: $!\n";
   while (<ETC_MTAB>) {
-    chomp;
-    @fields = split(/ /, $_);
-    unless( ($fields[2] eq "ext2") or ($fields[1] eq '/proc') or ($fields[1] eq '/dev/pts') ) {
-      $command = $command . qq( --exclude=$fields[1]);
-    }
+      chomp;
+      @fields = split(/ /, $_);
+      unless( ($fields[2] eq "ext2") or ($fields[1] eq '/proc') or ($fields[1] eq '/dev/pts') ) {
+        $command = $command . qq( --exclude=$fields[1]);
+      }
   }
   close(ETC_MTAB);
-
+  
   # finalize command
   $command = $command . qq( --delete $imageserver) . q(::) . qq($image$directory $directory);
-
+  
   # execute command
   print qq(Updating image...\n);
   system($command);
-
+  
   # lilo
   unless($nolilo) { 
-    print qq(running lilo...\n);
-    system("/sbin/lilo");
+      print qq(running lilo...\n);
+      system("/sbin/lilo");
   }
-
+  
   # reboot
   if($reboot) { 
-    print qq(rebooting...\n);
-    system("/bin/sleep 10s; /sbin/init 6");
+      print qq(rebooting...\n);
+      system("/bin/sleep 10s; /sbin/init 6");
   }
 }
+exit 0;
