@@ -38,6 +38,8 @@
 #   - add 'show_targets' target.
 #   2004.10.13  Brian Elliott Finley
 #   - add hfsutils
+#   2004.10.24  Brian Elliott Finley
+#   - get rid of source, which may also exist as a link to the kernel source directory
 #
 #
 # ERRORS when running make:
@@ -557,8 +559,11 @@ ifdef DEPMOD_BINARY
 	#
 endif
 	#
-	# get rid of build, which is a link to the kernel source directory (won't exist in BOEL anyway). -BEF-
+	# get rid of build, which may exist as a link to the kernel source directory (won't exist in BOEL anyway). -BEF-
 	rm -f $(BOEL_BINARIES_DIR)/lib/modules/*/build
+	#
+	# get rid of source, which may also exist as a link to the kernel source directory (won't exist in BOEL anyway). -BEF-
+	rm -f $(BOEL_BINARIES_DIR)/lib/modules/*/source
 	#
 	# Tar it up, baby! -BEF-
 	cd $(BOEL_BINARIES_DIR) && tar -cv * | gzip -9 > $(BOEL_BINARIES_TARBALL)
