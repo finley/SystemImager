@@ -1,5 +1,5 @@
 %define name     systemimager
-%define ver      2.1.2
+%define ver      2.9.1
 %define rel      1
 %define prefix   /usr
 
@@ -244,7 +244,7 @@ fi
 
 %files server
 %defattr(-, root, root)
-%doc CHANGE.LOG COPYING CREDITS README TODO VERSION
+%doc CHANGE.LOG COPYING CREDITS README VERSION
 %doc doc/manual/systemimager* doc/manual/html doc/manual/examples
 %doc doc/autoinstall* doc/local.cfg
 %dir /var/log/systemimager
@@ -277,7 +277,7 @@ fi
 
 %files client
 %defattr(-, root, root)
-%doc CHANGE.LOG COPYING CREDITS README TODO VERSION
+%doc CHANGE.LOG COPYING CREDITS README VERSION
 %dir /etc/systemimager
 %config /etc/systemimager/updateclient.local.exclude
 %config /etc/systemimager/client.conf
