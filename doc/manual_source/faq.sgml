@@ -66,6 +66,170 @@
   <qandaentry>
    <question>
     <para>
+     How do I configure my server to net boot ia64 clients?
+    </para>
+   </question>
+   <answer>
+    <orderedlist>
+     <listitem>
+      <para>
+       Install tftp (tftp-hpa >= 0.28 is recommended) on your boot server.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+        Configure inetd or xinetd to enable tftp.
+      </para>
+       <itemizedlist>
+        <listitem>
+         <para>
+          To configure inetd, find the tftp entry in 
+          <filename>/etc/inetd.conf</filename> and change it to: 
+         </para>
+         <para>
+tftp            dgram   udp     wait    root    /usr/sbin/in.tftpd -v -v -v -s /tftpboot
+         </para>
+         <para>
+          Change "/usr/sbin/in.tftpd" to be the full path to your tftp server,
+          if you installed it in a different directory.
+         </para>
+         <para>
+          The -v's aren't strictly required, but will make the tftp server
+          more verbose, and makes it easier to diagnose problems.
+         </para>
+         <para>
+          Finally, send a HUP signal to inetd (this causes it to reload its
+          configuration file).  # killall -HUP inetd
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          To configure xinetd, change:
+         </para>
+         <programlisting>
+   service tftp
+{
+        socket_type             = dgram
+        protocol                = udp
+        wait                    = yes
+        user                    = root
+        server                  = /usr/sbin/in.tftpd
+        server_args             = -s /home/tftp
+        disable                 = no
+}
+         </programlisting>
+         <para>to:</para>
+         <programlisting>
+service tftp
+{
+        socket_type             = dgram
+        protocol                = udp
+        wait                    = yes
+        user                    = root
+        server                  = /path/to/tftp-hpa/sbin/in.tftpd
+        server_args             = -s /home/tftp -r blksize
+        disable                 = no
+}
+         </programlisting>
+         <para>
+          Finally, send a USR2 signal to xinetd (this causes it to reload its
+          configuration file).
+         </para>
+        </listitem>
+       </itemizedlist>
+      </listitem>
+      <listitem>
+       <para>
+        Next, you must configure your DHCP server so that it provides boot 
+        information to the client. Be careful when setting up your DHCP 
+        server - if it is set to hand out dynamic addresses, and is located on 
+        a public subnet, it may give bogus information to other machines on the
+        network - possibly destroying data on that machine. It is recommended 
+        that you use a private subnet for doing network installs. It is also 
+        recommended that you configure your DHCP server to only answer requests
+        from known hosts, based on the MAC address.
+       </para>
+       <para>
+        Add an entry for the boot client in /etc/dhcpd.conf
+       </para>
+       <programlisting>
+host mcmuffin {
+        hardware ethernet 00:30:6e:1e:0e:83;
+        fixed-address 10.0.0.21;
+        filename "elilo.efi";
+}
+       </programlisting>
+      </listitem>
+      <listitem>
+       <para>
+        Copy elilo.conf and elilo.efi from an IA-64 machine to your tftpboot
+        diretory and make them world readable.  These files can be found in 
+        /etc, /boot/efi, or /usr/lib/elilo, or in the elilo package.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        Editing /tftpboot/elilo.conf
+       </para> 
+       <programlisting>
+image=vmlinux-rh.img
+        label=redhatinst
+        initrd=rhinst.img
+        read-only
+        root=/dev/ram
+       </programlisting>
+       <para>
+        If ABCDEFGH is the client's IP address in hex, elilo.efi will use the 
+        first one of the following files that it finds as its configuration
+        file:
+       </para>
+       <itemizedlist>
+        <listitem><para>ABCDEFGH.conf</para></listitem>
+        <listitem><para>ABCDEFG.conf</para></listitem>
+        <listitem><para>ABCDEF.conf</para></listitem>
+        <listitem><para>...</para></listitem>
+        <listitem><para>A.conf</para></listitem>
+        <listitem><para>elilo.conf</para></listitem>
+       </itemizedlist>
+       <para>
+        You can use the ipcalc utility, which is available in the syslinux
+        package, to calculate the Hex representation of an IP address in
+        dotted quad form.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        Configure the client to support TFTP booting.
+       </para>
+       <orderedlist>
+        <listitem><para>Boot to EFI</para></listitem>
+        <listitem>
+         <para>Enter the Boot option maintenance menu</para>
+        </listitem>
+        <listitem><para>Add a boot option</para></listitem>
+        <listitem>
+         <para>
+          Press return on the line saying "Load file [Acpi/.../Mac()]"
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          Call the entry Netboot or something similar
+         </para>
+        </listitem>
+        <listitem> 
+         <para>
+          Save and exit, Netboot is now available in the boot menu.
+         </para>
+        </listitem>
+       </orderedlist>
+      </listitem>
+     </orderedlist>
+    </answer>
+  </qandaentry>
+  <qandaentry>
+   <question>
+    <para>
      How do I set up my autoinstall clients so that the console is
      available via the serial port?
     </para>
