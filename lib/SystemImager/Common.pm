@@ -967,11 +967,19 @@ sub save_filesystem_information {
                 if ($options) 
                     { print FH_OUT qq( options="$options"); }
 
-                if ($dump) 
-                    { print FH_OUT qq( dump="$dump"); }
+                if (defined $dump) { 
+                    print FH_OUT qq( dump="$dump");
 
-                if ($pass)
-                    { print FH_OUT qq( pass="$pass"); }
+                    # 
+                    # If dump don't exist, we certainly don't want to print pass
+                    # (it would be treated as if it were dump due to it's 
+                    # position), therefore we only print pass if dump is also 
+                    # defined.
+                    #
+                    if (defined $pass)  
+                        { print FH_OUT qq( pass="$pass"); }
+                }
+
 
                 if ($mkfs_opts) 
                     { print FH_OUT qq(  mkfs_opts="$mkfs_opts"); }
