@@ -359,11 +359,17 @@ show_version() {
 show_usage() {
   show_version
   echo ''
-  echo 'Usage: prepareclient [OPTION]'
+  echo 'Usage: prepareclient [OPTION]...'
   echo ''
   echo 'Options: (only one option is taken)'
   echo ' -version                 Display version and copyright information.'
   echo ' -h, -help                Display this output.'
+  echo ' -e, -explicit-geometry   Leave partition information for getimage'
+  echo '                          using explicit disk geometry.  The default'
+  echo '                          is to use megabytes which allows getimage'
+  echo '                          to create an autoinstall script that will'
+  echo '                          work with client disks of different geometries'
+  echo '                          and sizes (within reason).'
   echo ' -n, -no-rsyncd           Do not start the rsync daemon.'
   echo ' -q, -quiet               Run silently.  Return an exit status of 0 for'
   echo '                          success or a non-zero exit status for failure.'
@@ -382,24 +388,19 @@ QUIET="false"
 HELP="false"
 NO_RSYNCD="false"
 SHOW_VERSION="false"
-
-# if two or more options are given, die and show usage
-if [ "x$2" != "x" ]; then
-   show_usage
-   exit 1
-fi
+EXPLICIT="no"
 
 # if only one option is given, verify it as a proper one
-if [ "x$1" != "x" ]; then
-   case $1 in
-        -r | -rpm-install | --rpm-install          ) QUIET="true" ;;
-        -q | -quiet | --quiet                      ) QUIET="true" ;;
-        -h | -help | --help                        ) HELP="true" ;;
-        -n | -no-rsyncd | --no-rsyncd              ) NO_RSYNCD="true" ;;
-        -version | --version                       ) SHOW_VERSION="true" ;;
-        *                                          ) show_usage && exit 1 ;;
-   esac
-fi
+for cl_option ; do
+  case $cl_option in
+    -r | -rpm-install | --rpm-install          	) QUIET="true" ;;
+    -q | -quiet | --quiet                      	) QUIET="true" ;;
+    -e | -explicit-geometry | --explicit-geometry	) EXPLICIT="yes" ;;
+    -h | -help | --help                        	) HELP="true" ;;
+    -n | -no-rsyncd | --no-rsyncd              	) NO_RSYNCD="true" ;;
+    -version | --version                       	) SHOW_VERSION="true" ;;
+  esac
+done
 
 # show version if requested
 if [ "$SHOW_VERSION" = "true" ]; then
@@ -575,7 +576,11 @@ for disk in $ide_and_scsi_disks
 do
  # Specify sectors explicitly -- this format may be used in the future
  # for partitioning with MB.
- sfdisk -l -uM /dev/$disk > $systemimagerdir/partitionschemes/$disk
+ if [ "$EXPLICIT" = "yes" ]; then
+   sfdisk -l -uS /dev/$disk > $systemimagerdir/partitionschemes/$disk
+ else
+   sfdisk -l -uM /dev/$disk > $systemimagerdir/partitionschemes/$disk
+ fi
 done
 
 # get sfdisk to report Hardware RAID disk info
@@ -586,7 +591,11 @@ do
 
  # Specify sectors explicitly -- this format may be used in the future
  # for partitioning with MB.
- sfdisk -l -uM /dev/$disk"p" > $systemimagerdir/partitionschemes/$disk
+ if [ "$EXPLICIT" = "yes" ]; then
+   sfdisk -l -uS /dev/$disk"p" > $systemimagerdir/partitionschemes/$disk
+ else
+   sfdisk -l -uM /dev/$disk"p" > $systemimagerdir/partitionschemes/$disk
+ fi
 
  # get rid of the funkification
  rm -f /dev/$disk"p"
@@ -659,14 +668,9 @@ if [ "$QUIET" = "false" ] && [ "$NO_RSYNCD" = "false" ]; then
 fi
 
 if [ "$QUIET" = "false" ] && [ "$NO_RSYNCD" = "true" ]; then
- echo
- echo "The rsync daemon was not started.  If this is an image on an"
- echo "imageserver, you can now update your master autoinstall script"
- echo "by running getimage with the -s option."
- echo
- echo "If this is a master client, you must run prepareclient again,"
- echo "without the -n option, before you can pull it's image to an"
- echo "imageserver."
+ echo "Warning:  The rsync daemon was not started.  You must run"
+ echo "prepareclient again, without the -n option, before you can"
+ echo "pull it's image to an imageserver."
  echo
 fi
 exit 0
