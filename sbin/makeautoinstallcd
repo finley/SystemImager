@@ -1,0 +1,144 @@
+#!/usr/bin/perl -w
+
+#
+# "VA SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com>
+#
+#   Others who have contributed to this code:
+#     Wesley Smith <wessmith@engr.sgi.com>
+#
+# This file is: makeautoinstallcd
+#               (OK, so I already know this one is kludgy!)
+#
+
+use Getopt::Long;
+
+# set shell PATH for system() calls 
+$ENV{PATH} = "/usr/sbin:/sbin:/usr/bin:/bin";
+
+$version_number = "0.24beta4";
+$program_name = "makeautoinstallcd";
+$version_info = <<"EOF";
+$program_name (part of VA SystemImager) version $version_number
+    
+Copyright (C) 1999-2000 Brian Elliott Finley <brian\@valinux.com>
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+EOF
+
+$help_info = $version_info . <<"EOF";
+
+Usage: $program_name [OPTION]... -out-file FILE_NAME
+
+Options: (options can be presented in any order and may be abbreviated)
+ -help             Display this output.
+ -version          Display version and copyright information.
+ -out-file FILE    Name of the file that will hold the resulting iso image.
+                   (Not to worry, this will only be about 3 MB in size.)
+ -quiet            Don\'t print any output, just provide an appropriate 
+                   exit code.
+
+Download from http://systemimager.org/
+Report bugs or suggestions to <systemimager-bugs\@systemimager.org>
+EOF
+
+GetOptions( 
+            "out-file=s" => \$iso_file,
+            "help" => \$help,
+            "version" => \$version,
+            "quiet" => \$quiet 
+) || die "$help_info";
+
+# this will be our base working directory
+$temp_dir = "/tmp/systemimager.autoinstallcd.temp.dir";
+$temp_file = "/tmp/systemimager.autoinstallcd.temp.dir/boot/vasiboot.img";
+$mount_dir = "$temp_dir/mnt";
+$boot_dir = "$temp_dir/boot";
+
+# if requested, print help information
+if($help) { die "$help_info"; }
+
+# if requested, print version and copyright information
+if($version) { die "$version_info"; }
+
+# verify that a valid filename was specified
+unless ($iso_file) { die "$help_info"; }
+$command = "touch $iso_file";
+system("$command");
+if($? != 0) { die "Couldn't create $iso_file!\n"; }
+
+# if not run as root, this script will surely fail
+unless($< == 0) { die "Must be run as root!\n"; }
+
+# create temporary working directory
+unless ($quiet) { print "Creating temporary working directory...\n"; }
+$command = "rm -fr $temp_dir";
+system("$command");
+if($? != 0) { die \"$command\" failed!\n"; }
+mkdir $temp_dir, 0770 or die "Couldn't create temporary working directory $mount_dir!\n";
+mkdir $mount_dir, 0770 or die "Couldn't create temporary working directory $mount_dir/mnt!\n";
+mkdir $boot_dir, 0770 or die "Couldn't create temporary working directory $mount_dir/boot!\n";
+
+# create temporary image
+$command = "dd if=/dev/zero of=$temp_file bs=1k count=2880";
+unless ($quiet) {
+    system("$command");
+} else {
+    system("$command > /dev/null 2>&1");
+}
+if($? != 0) { die \"$command\" failed!\n"; }
+
+# create dos filesystem on temporary image
+$command = "mkdosfs $temp_file";
+unless ($quiet) {
+    print "Creating DOS filesystem on temporary image...\n";
+    system("$command");
+} else {
+    system("$command > /dev/null 2>&1");
+}
+if($? != 0) { die "Couldn't create DOS filesystem on $temp_file!\n"; }
+
+# mount the freshly created filesystem
+unless ($quiet) { print "Mounting temporary image in loopback mode...\n"; }
+$command = "mount -t msdos -o loop $temp_file $mount_dir";
+system("$command");
+if($? != 0) { die "Couldn't mount temporary image in loopback mode!\n"; }
+
+# copy stuff to image
+foreach $file ("/tftpboot/initrd.gz", "/tftpboot/kernel", "/tftpboot/pxelinux.cfg/syslinux.cfg", "/tftpboot/pxelinux.cfg/message.txt") {
+    unless ($quiet) {print "Copying $file to temporary image...\n";}
+    $command = "cp -f $file $mount_dir";
+    system("$command");
+    if($? != 0) { die "Couldn't copy $file to $mount_dir!\n"; }
+}
+
+# unmount temporary image
+unless ($quiet) {print "Un-mounting temporary image...\n";}
+$command = "umount $mount_dir && rm -fr $mount_dir";
+system("$command");
+if($? != 0) { die "Couldn't un-mount temporary from $mount_dir/tmp!\n"; }
+
+# run syslinux
+if (!$quiet) {print "Using \"syslinux\" to make CD image bootable...\n";}
+$command = "syslinux -s $temp_file";
+system("$command");
+if($? != 0) { die \"$command\" failed!\n"; }
+
+# do mkisofs
+$command = "cd $temp_dir && mkisofs -b boot/vasiboot.img -c boot/boot.catalog -o $iso_file .";
+unless ($quiet) {
+    system("$command");
+} else {
+    system("$command > /dev/null 2>&1");
+}
+if($? != 0) { die \"$command\" failed!\n"; }
+
+# get rid of temporary directory
+unless ($quiet) { print "Removing temporary mount point...\n";}
+$command = "rm -fr $temp_dir";
+system("$command");
+if($? != 0) { die "Couldn't remove temporary working directory!\n"; }
+
+# print done!
+unless ($quiet) { print "Done!\n";}
+exit 0;
+
