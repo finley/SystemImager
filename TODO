@@ -5,6 +5,10 @@
 # (not in any specific order)
 #
 
+Bug list
+--------
+- <brian@valinux.com> - makeautoinstallcd requires full path for -o.  Test to be sure full path is specified.
+
 Short list (in progress by)
 ------------------------
 - <wessmith@engr.sgi.com> - GUI for SystemImager called "Rhino".
@@ -12,9 +16,10 @@ Short list (in progress by)
   working as a drop in replacement for rsync by 5/15/2000 and we will begin testing
   in the lab.
 - <ian@valinux.com> - script that checks floppy for file and assigns IP and hostname based on file, not on DHCP.
-- <brian@valinux.com> - update FAQ-HOWTO
-- <brian@valinux.com> - add more error checking to makedhcpstatic
 - <wessmith@engr.sgi.com> - /etc/systemimager.conf file to hold things like domain name, nis domain, etc.
+- <brian@valinux.com> - add more error checking to makedhcpstatic
+- <brian@valinux.com> - consider inodes/block in getimage
+- <brian@valinux.com> - fix makeautoinstallcd?  Looks like it may be a syslinux compiling issue...
 
 
 Other stuff
@@ -60,6 +65,12 @@ updateclient
 - have client pull systemimager.exclude and systemimager.include from
   imageserver before pulling image
 
+makedhcpserver 
+--------------
+- autodiscover and calculate more information 
+  (including if system has more than one network interface).
+- automatically change line in /etc/rc.d/init.d/dhcpd for you
+
 Miscellaneous and Possibilities
 -------------------------------
 - add more error checking (always) :)
@@ -75,11 +86,6 @@ Miscellaneous and Possibilities
 - curses wrapper around the whole thing
 - updateclient - log what was updated and or deleted?
 - makedhcpstatic -- allow for -f "filename" option to specify dhcpd.leases file.
-
-makedhcpserver 
---------------
-- autodiscover and calculate more information 
-  (including if system has more than one network interface).
 
 systemimager.conf
 -----------------

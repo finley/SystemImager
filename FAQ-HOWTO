@@ -4,7 +4,7 @@
 # This file is: FAQ-HOWTO
 #
 # Current version as of the writing of this document: 1.0
-#                                           revision: 1
+#                                           revision: 3
 #
 # This document written by:  
 #  Brian Finley <brian@valinux.com>
@@ -109,8 +109,10 @@ Answer:
 The initial setup of VA SystemImager is a three step process:
 
 1) Install VA SystemImager on the machine you designate as your "imageserver".
-   - download and install the latest va-systemimager RPM.
+   - Download and install the latest va-systemimager RPM.
      (rpm -Uvh va-systemimager)
+   - Run the command "makedhcpserver" to configure your "imageserver" to be a
+     DHCP server.  Be sure to follow the instructions it gives you at the end.
 
 2) Then you will select a machine that we call the "master" client.  This 
    will be the machine whose image you are replicating across numerous other 
@@ -139,6 +141,18 @@ The initial setup of VA SystemImager is a three step process:
      Answer all the questions that the "getimage" command asks you, and you
      should be ready to autoinstall your first client by simply booting it
      off the network, the "autoinstallcd", or the "autoinstalldiskette".
+
+
+4)   Autoinstall your clients!  
+
+     - Run the command "makeautoinstalldiskette" or "makeautoinstallcd" to 
+       create your boot media.  Simply boot your client off the diskette or
+       CD and it will autoinstall itself.
+
+     - If you prefer to boot off the network, change the settings in your
+       BIOS to boot off your PXE enabled network card, and reboot your
+       client system.  It should automatically find and boot off the
+       imageserver and begin to autoinstall itself.
 
 
 --------------------------------------------------------------------------------
@@ -208,6 +222,41 @@ Answer:
 
 Yes.  The autoinstall media is generic, and can be on any machine that you 
 want to autoinstall.
+
+
+--------------------------------------------------------------------------------
+Question:  How do I push an image to a client?
+--------------------------------------------------------------------------------
+
+Answer:
+
+You don't.  Everything in VA SystemImager is actually based on a pull mechanism 
+which allows for more control over error conditions.
+
+
+--------------------------------------------------------------------------------
+Question:  Ok, so how do I pull an image to a client?
+--------------------------------------------------------------------------------
+
+Answer:
+
+If you ran "makedhcpserver" to configure your dhcp information, and if you 
+answered all the questions you were asked when you did your "getimage",
+including the hostnames and IP addresses, then all you have to do is boot your
+client with any one of the three forms of autoinstall media.  
+
+They are:
+- autoinstalldiskette (takes longer to boot and formats the diskette as 1.7M,
+                       which pushes this media's limit and causes many 
+                       diskettes to fail)
+- autoinstallcd       (takes slightly less time to boot and is more durable, 
+                       but you have to have a CD burner)
+- network             (dramatically faster boot time, but requires PXE capable
+                       network card on the client, and requires mucking about 
+                       with the BIOS to tell it to boot off the network)
+
+Search this document for "makeautoinstallcd" and "makeautoinstalldiskette" for
+more information.
 
 
 --------------------------------------------------------------------------------
