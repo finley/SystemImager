@@ -1,3 +1,8 @@
+###############################################################################
+the upstream source seems to be missing an include - this patch add it
+	-dann <dannf@ldl.fc.hp.com>
+###############################################################################
+
 diff -urN massdns-1.0.orig/massdns.cpp massdns-1.0/massdns.cpp
 --- massdns-1.0.orig/massdns.cpp	Tue Jun 13 01:05:57 2000
 +++ massdns-1.0/massdns.cpp	Sun Jul 15 14:21:50 2001
