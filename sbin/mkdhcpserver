@@ -14,17 +14,45 @@
 #    John Goebel <jgoebel@valinux.com>
 #    Curtis Zinzilieta <czinzilieta@valinux.com>
 #
+#   See http://www.iana.org/assignments/bootp-dhcp-parameters for info on
+#   custom option numbers.
+#
  
-# XXX add LOG_SERVER and LOG_SERVER_PORT options. -BEF-
+use lib "USR_PREFIX/lib/systemimager/perl";
+use strict;
+use SystemImager::Common;
+use vars qw($VERSION);
 
-# what do I call myself?
-$program=$0;
 
-# Not everyone may want to create a dhcpd.conf in /etc...
-$dhcpd_conf = "/etc/dhcpd.conf";
+# set some variables
+$VERSION="SYSTEMIMAGER_VERSION_STRING";
+my $program_name="mkdhcpserver";
+my $get_help = "  Try \"$program_name -help\" for more options.";
+
+
+my $version_info = <<"EOF";
+$program_name (part of SystemImager) version $VERSION
+
+Copyright (C) 2002 Bald Guy Software <brian.finley\@baldguysoftware.com>
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+EOF
+
+# set help information
+my $help_info = $version_info . <<"EOF";
+
+Usage: $program_name
+
+Download, report bugs, and make suggestions at:
+http://systemimager.org/
+EOF
+
+SystemImager::Common->check_if_root();
+
+
 
 ### BEGIN variable for parts of the dhcpd.conf file ###
-$header = <<'EOF';
+my $header = <<'EOF';
 #
 # "SystemImager" 
 #
@@ -40,17 +68,15 @@ EOF
 
 
 # associated configs for the dhcpd.conf file
-$dhcpd_conf_v3_part1 = <<"EOF";
-# This is a dhcp v3 configuration file.
+my $dhcpd_conf_v3_part1 = <<"EOF";
+# This is an ISC DHCP v3 configuration file.
 
 # general options
 ddns-update-style none;
-host-checking true;
-
 EOF
 
 
-$dhcpd_conf_v3_part2 = <<"EOF";
+my $dhcpd_conf_v3_part2 = <<"EOF";
 
 # make network booting the SystemImager autoinstall client possible
 allow booting;
@@ -68,8 +94,8 @@ option vendor-encapsulated-options 09:0f:80:00:0c:4e:65:74:77:6f:72:6b:20:62:6f:
 EOF
 
 
-$dhcpd_conf_v2_part1 = <<'EOF';
-# This is a dhcp v2 configuration file.
+my $dhcpd_conf_v2_part1 = <<'EOF';
+# This is an ISC DHCP v2 configuration file.
 
 # make network booting the SystemImager autoinstall client possible
 allow booting;
@@ -90,15 +116,6 @@ EOF
 
 
 
-# Subroutines
-sub get_response {
- my $garbage_out=$_[0];
- my $garbage_in=<STDIN>;
- chomp $garbage_in;
- unless($garbage_in eq "") { $garbage_out = $garbage_in; }
- return $garbage_out;
-}
-
 # if not run as root, this script will surely fail
 unless($< == 0) { die "Must be run as root!\n"; }
 
@@ -106,45 +123,58 @@ system("clear");
 
 # give warning
 print <<"EOF";
-Welcome to the SystemImager "mkdhcpserver" command.  This command
-will prepare this computer to be a DHCP server by creating the 
-following file:
+Welcome to the SystemImager "mkdhcpserver" command.  This command will
+prepare this computer to be a DHCP server by creating a dhcpd.conf file
+for use with your ISC DHCP server (v2 or v3).
 
- $dhcpd_conf
-
-If there is an existing file, it will be backed up as:
-
- ${dhcpd_conf}.beforesystemimager
+If there is an existing file, it will be backed up with the 
+.beforesystemimager extension.
 
 EOF
 
 print "Continue? (y/[n]): ";
-$continue=<STDIN>;
+my $continue=<STDIN>;
 chomp $continue;
-($continue eq "y") or die "\n$program: No files were modified.\n";
-
-# backup dhcpd.conf if necessary
-if( -e "$dhcpd_conf" && ! -e "${dhcpd_conf}.beforesystemimager") { 
- rename("$dhcpd_conf", "${dhcpd_conf}.beforesystemimager");
-}
+($continue eq "y") or die "\n$program_name No files were modified.\n";
 
 # set some default values
-$dnsdomainname="localdomain.domain";
-$netnumber = "192.168.1.0";
-$netmask = "255.255.255.0";
-$rangebegin = "192.168.1.1";
-$rangeend = "192.168.1.100";
-$dnsserver1 = "";
-$dnsserver2 = "";
-$dnsserver3 = "";
-$router = "192.168.1.254";
-$imageserver = "192.168.1.254";
-$boot_server = "";
-$ssh_download_url = "";
-$swallow = "";
+my $dhcpd_conf;
+my $dhcpd_version = "2";
+my $dhcpd_patch = "n";
+my $dnsdomainname = "localdomain.domain";
+my $netnumber = "192.168.1.0";
+my $netmask = "255.255.255.0";
+my $rangebegin = "192.168.1.1";
+my $rangeend = "192.168.1.100";
+my $dnsserver1 = "";
+my $dnsserver2 = "";
+my $dnsserver3 = "";
+my $log_server = "";
+my $log_server_port = "";
+my $router = "192.168.1.254";
+my $imageserver = "192.168.1.254";
+my $boot_server = "";
+my $ssh_download_url = "";
+my $swallow = "";
+
+# Oh where oh where could my dhcpd.conf file be?
+my @dhcpd_conf_file_locations_du_jour = ( 
+    "/etc/dhcp3/dhcpd.conf",
+    "/etc/dhcpd.conf"
+);
+foreach my $file (@dhcpd_conf_file_locations_du_jour) {
+    # does *this* one exist?
+    if( -e $file ) { 
+        $dhcpd_conf = $file;
+        last;
+    }
+}
+
+if("$dhcpd_conf" eq "/etc/dhcp3/dhcpd.conf") { $dhcpd_version = "3"; }
+
 
 ### Begin questionnaire ###
-$satisfied = "n";
+my $satisfied = "n";
 while ($satisfied ne "y") {
  system("clear");
  print << "EOF";
@@ -154,104 +184,126 @@ have a response, such as no first or second DNS server, just hit
 
 EOF
 
- print "\nWhat is your domain name? [$dnsdomainname]: ";
- $dnsdomainname=get_response($dnsdomainname);
+    print "\nWhat is your DHCP daemon major version number (2 or 3)? [$dhcpd_version]: ";
+    $dhcpd_version = get_response($dhcpd_version);
 
- print "What is your network number? [$netnumber]: ";
- $netnumber=get_response($netnumber);
-
- print "What is your netmask? [$netmask]: ";
- $netmask=get_response($netmask);
-
- print "What is the starting IP address for your dhcp range? [$rangebegin]: ";
- $rangebegin=get_response($rangebegin);
-
- print "What is the ending IP address for your dhcp range? [$rangeend]: ";
- $rangeend=get_response($rangeend);
-
- print "What is the IP address of your first DNS server? [$dnsserver1]: ";
- $dnsserver1=get_response($dnsserver1);
-
- if ($dnsserver1) {
-   print "What is the IP address of your second DNS server? [$dnsserver2]: ";
-   $dnsserver2=get_response($dnsserver2);
- }
-
- if ($dnsserver2) {
-   print "What is the IP address of your third DNS server? [$dnsserver3]: ";
-   $dnsserver3=get_response($dnsserver3);
- }
-
- print "What is the IP address of your default gateway? [$router]: ";
- $router=get_response($router);
-
- print "What is the IP address of your image server? [$imageserver]: ";
- $imageserver=get_response($imageserver);
-
- print "What is the IP address of your boot server? [$boot_server]: ";
- $boot_server = get_response($boot_server);
-
- print "\nWill your clients be installed over SSH? (y/[n]): ";
- my $ssh_install=<STDIN>;
- chomp $ssh_install;
- if ($ssh_install eq "y") {
-   if ($ssh_download_url eq "") { $ssh_download_url="http://$imageserver/ssh_files/"; }
-   print "What is the URL for your ssh_files directory? [$ssh_download_url]: ";
-   $ssh_download_url=get_response($ssh_download_url);
- }
-
- # see http://www.armory.com/swallowscenes.html for details
- print "\nWhat... is the air-speed velocity of an unladen swallow? [$swallow]: ";
- $swallow=<STDIN>;
- system("clear");
- chomp $swallow;
- $swallow = lc $swallow;
- if($swallow =~ /african/) {
-  print "Aaaaaaaaaaaaaaaaaaaaaaaaaaaah!\n";
- } else {
-  print "Wrong!!! (with a Monty Python(TM) accent...)\n";
- }
- print "\nPress <Enter> to continue...";
- <STDIN>;
-
- system("clear");
- print "Ahh, but seriously folks...\n";
- print "Here are the values you have chosen:\n\n";
- print "#######################################################################\n";
- print "DNS domain name:                          $dnsdomainname\n";
- print "Network number:                           $netnumber\n";
- print "Netmask:                                  $netmask\n";
- print "Starting IP address for your DHCP range:  $rangebegin\n";
- print "Ending IP address for your DHCP range:    $rangeend\n";
- print "First DNS server:                         $dnsserver1\n";
- print "Second DNS server:                        $dnsserver2\n";
- print "Third DNS server:                         $dnsserver3\n";
- print "Default gateway:                          $router\n";
- print "Image server:                             $imageserver\n";
- print "Boot server:                              $boot_server\n";
- print "SSH files download URL:                   $ssh_download_url\n";
- print "#######################################################################\n";
- 
- print "\nAre you satisfied? (y/[n]): ";
- $satisfied=<STDIN>;
- chomp $satisfied;
+    if ("$dhcpd_version" eq "3") {
+      print "Are you using the fixed-address patch (Y or N)? [$dhcpd_patch]: ";
+      $dhcpd_patch = get_response($dhcpd_patch);
+      $dhcpd_patch = uc $dhcpd_patch;
+    }
+   
+    print "\nWhat is the name of your DHCP daemon config file? [$dhcpd_conf]: ";
+    $dhcpd_conf = get_response($dhcpd_conf);
+   
+    print "\nWhat is your domain name? [$dnsdomainname]: ";
+    $dnsdomainname = get_response($dnsdomainname);
+   
+    print "What is your network number? [$netnumber]: ";
+    $netnumber = get_response($netnumber);
+   
+    print "What is your netmask? [$netmask]: ";
+    $netmask = get_response($netmask);
+   
+    print "What is the starting IP address for your dhcp range? [$rangebegin]: ";
+    $rangebegin = get_response($rangebegin);
+   
+    print "What is the ending IP address for your dhcp range? [$rangeend]: ";
+    $rangeend = get_response($rangeend);
+   
+    print "What is the IP address of your first DNS server? [$dnsserver1]: ";
+    $dnsserver1 = get_response($dnsserver1);
+   
+    if ($dnsserver1) {
+      print "What is the IP address of your second DNS server? [$dnsserver2]: ";
+      $dnsserver2 = get_response($dnsserver2);
+    }
+   
+    if ($dnsserver2) {
+      print "What is the IP address of your third DNS server? [$dnsserver3]: ";
+      $dnsserver3=get_response($dnsserver3);
+    }
+   
+    print "What is the IP address of your default gateway? [$router]: ";
+    $router=get_response($router);
+   
+    print "What is the IP address of your image server? [$imageserver]: ";
+    $imageserver=get_response($imageserver);
+   
+    print "What is the IP address of your boot server? [$boot_server]: ";
+    $boot_server = get_response($boot_server);
+   
+    print "What is the IP address of your log server? [$log_server]: ";
+    $log_server = get_response($log_server);
+   
+    if($log_server) {
+        print "If your log server uses a non-standard port, enter it here: [$log_server_port]: ";
+        $log_server_port = get_response($log_server_port);
+    }
+   
+    print "\nWill your clients be installed over SSH? (y/[n]): ";
+    my $ssh_install=<STDIN>;
+    chomp $ssh_install;
+    if ($ssh_install eq "y") {
+      if ($ssh_download_url eq "") { $ssh_download_url="http://$imageserver/ssh_files/"; }
+      print "What is the URL for your ssh_files directory? [$ssh_download_url]: ";
+      $ssh_download_url=get_response($ssh_download_url);
+    }
+   
+    # see http://www.armory.com/swallowscenes.html for details
+    print "\nWhat... is the air-speed velocity of an unladen swallow? [$swallow]: ";
+    $swallow=<STDIN>;
+    system("clear");
+    chomp $swallow;
+    $swallow = lc $swallow;
+    if($swallow =~ /african/) {
+     print "Aaaaaaaaaaaaaaaaaaaaaaaaaaaah!\n";
+    } else {
+     print "Wrong!!! (with a Monty Python(TM) accent...)\n";
+    }
+    print "\nPress <Enter> to continue...";
+    <STDIN>;
+   
+    system("clear");
+    print "Ahh, but seriously folks...\n";
+    print "Here are the values you have chosen:\n\n";
+    print "#######################################################################\n";
+    print "ISC DHCP daemon version:                  $dhcpd_version\n";
+    print "DHCP daemon using fixed-address patch:    $dhcpd_patch\n";
+    print "ISC DHCP daemon config file:              $dhcpd_conf\n";
+    print "DNS domain name:                          $dnsdomainname\n";
+    print "Network number:                           $netnumber\n";
+    print "Netmask:                                  $netmask\n";
+    print "Starting IP address for your DHCP range:  $rangebegin\n";
+    print "Ending IP address for your DHCP range:    $rangeend\n";
+    print "First DNS server:                         $dnsserver1\n";
+    print "Second DNS server:                        $dnsserver2\n";
+    print "Third DNS server:                         $dnsserver3\n";
+    print "Default gateway:                          $router\n";
+    print "Image server:                             $imageserver\n";
+    print "Boot server:                              $boot_server\n";
+    print "Log server:                               $log_server\n";
+    print "Log server port:                          $log_server_port\n";
+    print "SSH files download URL:                   $ssh_download_url\n";
+    print "#######################################################################\n";
+    
+    print "\nAre you satisfied? (y/[n]): ";
+    $satisfied=<STDIN>;
+    chomp $satisfied;
 }
 
 ### End questionnaire ###
 
 
-# discover which version of dhcpd we're using, if possible
-# assume that dhcpd is in the path
-$rc = `dhcpd --version 2>&1`;
-$rc =~ m/dhcpd-V3/;
-if ($&) { $dhcpd_version = 3; } else { $dhcpd_version = 2; }
+# backup dhcpd.conf if necessary
+if( -e "$dhcpd_conf" && ! -e "${dhcpd_conf}.beforesystemimager") { 
+ rename("$dhcpd_conf", "${dhcpd_conf}.beforesystemimager");
+}
 
-
-# open /etc/dhcpd.conf for writing
-open(DHCPDCONF, "> $dhcpd_conf") || die "Couldn't open /etc/dhcpd.conf for writing: $!\n";
+# open dhcpd.conf for writing
+open(DHCPDCONF, "> $dhcpd_conf") || die "Couldn't open $dhcpd_conf for writing: $!\n";
 print DHCPDCONF $header;
 
-$dhcp_version = 3;
 # create a configuration file, depending on which version of dhcpd we found
 if ($dhcpd_version eq "2") {
     # version 2, at least for now
@@ -276,14 +328,14 @@ if ($dhcpd_version eq "2") {
 
     print DHCPDCONF qq(  option routers $router; \n);
 
-    print DHCPDCONF qq(  # option-100 specifies the IP address of your SystemImager image server\n);
-    print DHCPDCONF qq(  option option-100 "$imageserver"; \n);
+    print DHCPDCONF qq(  # option-140 specifies the IP address of your SystemImager image server\n);
+    print DHCPDCONF qq(  option option-140 "$imageserver"; \n);
   
-    print DHCPDCONF qq(  # option-208 specifies the URL address of your ssh download\n);
+    print DHCPDCONF qq(  # option-142 specifies the URL address of your ssh download\n);
     if($ssh_download_url eq "") { 
-        print DHCPDCONF qq(  #option option-208 "$ssh_download_url"; \n);
+        print DHCPDCONF qq(  #option option-142 "$ssh_download_url"; \n);
     } else {
-        print DHCPDCONF qq(  option option-208 "$ssh_download_url"; \n);
+        print DHCPDCONF qq(  option option-142 "$ssh_download_url"; \n);
     }
 
     print DHCPDCONF qq(  # next-server is your network boot server\n);
@@ -293,29 +345,81 @@ if ($dhcpd_version eq "2") {
         print DHCPDCONF qq(  next-server $boot_server; \n);
     }
 
+    print DHCPDCONF qq(\n  # log-servers\n);
+    if($log_server eq "") { 
+        print DHCPDCONF qq(  #option log-servers $log_server; \n);
+    } else {
+        print DHCPDCONF qq(  option log-servers $log_server; \n);
+    }
+
+    print DHCPDCONF qq(  # option-141 is the port number your log server uses\n);
+    if($log_server_port eq "") { 
+        print DHCPDCONF qq(  #option-141 "$log_server_port"; \n);
+    } else {
+        print DHCPDCONF qq(  option-141 "$log_server_port"; \n);
+    }
+
     print DHCPDCONF qq(} \n);
   
 } else {
     # version 3, at least for now
     print DHCPDCONF $dhcpd_conf_v3_part1;
   
-    print DHCPDCONF qq(  # option-100 specifies the IP address of your SystemImager image server\n);
-    print DHCPDCONF qq(  option option-100 code 207 = ip-address; \n);
-    print DHCPDCONF qq(  option option-100 $imageserver; \n);
-    print DHCPDCONF qq(  # option-208 specifies the URL address of your ssh download\n);
-    if($ssh_download_url eq "") { print DHCPDCONF qq ( # ); }
-    print DHCPDCONF qq(  option option-208 code 208 = string; \n);
-    if($ssh_download_url eq "") { print DHCPDCONF qq ( # ); }
-    print DHCPDCONF qq(  option option-208 "$ssh_download_url"; \n);
+    print DHCPDCONF qq(\n# The "host-checking" option is only used by Curtis Zinzilieta's DHCP patch.\n);
+    print DHCPDCONF qq(# The patch adds functionality to the server for removing specified host\n);
+    print DHCPDCONF qq(# addresses from ranges of available ip addresses at startup.  This addresses\n);
+    print DHCPDCONF qq(# the issue where a fixed-address reserved for a specific machine gets\n);
+    print DHCPDCONF qq(# assigned to a different machine.\n);
+    print DHCPDCONF qq(#\n);
+    print DHCPDCONF qq(# If you are running a version of dhcpd with this patch, then you will want\n);
+    print DHCPDCONF qq(# the "host-checking" option below to be uncommented.  If you are not running\n);
+    print DHCPDCONF qq(# the patched dhcpd, you should leave it commented out.  You can find the patch\n);
+    print DHCPDCONF qq(# and the matched DHCP v3.0 source code here:  http://systemimager.org/download/\n);
 
-    print DHCPDCONF qq(  # next-server is your network boot server\n);
-    if($boot_server eq "") { 
-        print DHCPDCONF qq(  #next-server "$boot_server"; \n);
+    if("$dhcpd_patch" eq "Y") { 
+        print DHCPDCONF qq(host-checking true;\n);
     } else {
-        print DHCPDCONF qq(  next-server "$boot_server"; \n);
+        print DHCPDCONF qq(#host-checking true;\n);
     }
 
-   
+    print DHCPDCONF qq(\n);
+    print DHCPDCONF qq(option space systemimager;\n);
+    print DHCPDCONF qq(option systemimager.imageserver      code 140 = ip-address;\n);
+    print DHCPDCONF qq(option systemimager.log_server_port  code 141 = unsigned integer 32;\n);
+    print DHCPDCONF qq(option systemimager.ssh_download_url code 142 = string;\n);
+    print DHCPDCONF qq(\n);
+
+    print DHCPDCONF qq(# systemimager.imageserver is the IP address of your SystemImager image server\n);
+    print DHCPDCONF qq(option systemimager.imageserver $imageserver; \n);
+
+    print DHCPDCONF qq(\n# systemimager.ssh_download_url specifies the URL address of your ssh download\n);
+    if($ssh_download_url eq "") { 
+        print DHCPDCONF qq(#option systemimager.ssh_download_url "http://www.mycompany.mydomain/ssh_files"; \n);
+    } else {
+        print DHCPDCONF qq(option systemimager.ssh_download_url "$ssh_download_url"; \n);
+    }
+
+    print DHCPDCONF qq(\n# next-server is your network boot server\n);
+    if($boot_server eq "") { 
+        print DHCPDCONF qq(#next-server 1.2.3.4; \n);
+    } else {
+        print DHCPDCONF qq(next-server $boot_server; \n);
+    }
+
+    print DHCPDCONF qq(\n# log-servers\n);
+    if($log_server eq "") { 
+        print DHCPDCONF qq(#option log-servers 1.2.3.4; \n);
+    } else {
+        print DHCPDCONF qq(option log-servers $log_server; \n);
+    }
+
+    print DHCPDCONF qq(\n# systemimager.log_server_port is the port number your log server uses\n);
+    if($log_server_port eq "") { 
+        print DHCPDCONF qq(#option systemimager.log_server_port 514; \n);
+    } else {
+        print DHCPDCONF qq(option systemimager.log_server_port $log_server_port; \n);
+    }
+
     print DHCPDCONF $dhcpd_conf_v3_part2;
    
     print DHCPDCONF qq(subnet $netnumber netmask $netmask { \n);
@@ -337,12 +441,13 @@ system("chmod 600 $dhcpd_conf");
 
 
 # Oh where oh where could my leases file directory be?
-@lease_file_directories_du_jour = ( 
+my @lease_file_directories_du_jour = ( 
   "/var/dhcp",
   "/var/state/dhcp",
   "/etc"
 );
 
+my $dhcpd_lease_file_directory;
 foreach my $directory (@lease_file_directories_du_jour) {
     # does *this* one exist?
     if ( -d "$directory" ) { 
@@ -358,7 +463,7 @@ if( -d "$dhcpd_lease_file_directory" )
 {
      my $file="$dhcpd_lease_file_directory/dhcpd.leases";
      system("touch $file");
-     ($?) && die "\n$program: Couldn't touch $file.\n";
+     ($?) && die "\n$program_name Couldn't touch $file.\n";
 }
 
 # words of wisdom
@@ -386,14 +491,38 @@ be done with a command like "/etc/init.d/dhcpd restart" or similar.
 
 EOF
 
-if( -e "/etc/rc.d/init.d/dhcpd" ){
-  print "Would you like me to restart your DHCP server software now? (y/[n]): ";
-  $continue=get_response();
-  $continue=lc($continue);
-  if( $continue eq "y" ){
-    $command="/sbin/service dhcpd restart";
-    system($command);
-  }
+# Oh where oh where could my init script be?
+my @init_scripts_du_jour = ( 
+  "/etc/init.d/dhcp3-server",
+  "/etc/init.d/dhcp",
+  "/etc/init.d/dhcpd",
+  "/etc/rc.d/init.d/dhcpd"
+);
+
+foreach my $file (@init_scripts_du_jour) {
+    if( -e $file ){
+        print "Would you like me to restart your DHCP server software now? (y/[n]): ";
+        $continue=get_response();
+        $continue=lc($continue);
+
+        if( $continue eq "y" ){
+            my $cmd="$file restart";
+            system($cmd);
+            exit 0;
+        }
+    }
 }
 
 exit 0;
+
+
+
+# Subroutines
+sub get_response {
+ my $garbage_out=$_[0];
+ my $garbage_in=<STDIN>;
+ chomp $garbage_in;
+ unless($garbage_in eq "") { $garbage_out = $garbage_in; }
+ return $garbage_out;
+}
+
