@@ -820,7 +820,7 @@ sub _write_out_mkfs_commands {
         } elsif ( $config->{fsinfo}->{$line}->{fs} eq "jfs" ) {
 
             # create fs
-            $cmd = "mkfs.jfs $real_dev || shellout";
+            $cmd = "mkfs.jfs -q $real_dev || shellout";
             print MASTER_SCRIPT qq(echo "$cmd"\n);
             print MASTER_SCRIPT "$cmd\n";
 
