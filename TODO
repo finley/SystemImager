@@ -43,6 +43,12 @@ Version 1.4.0 specific:
 
 
 Other stuff:
+- <brian@thefinleys.com> - redirect to serial port:
+                           - manual change to syslinux.cfg
+			   - maybe an append parameter if necessary
+			   - detect if serial is wanted by looking for variable in
+			     - rcS
+			     - $image.master
 - <brian@thefinleys.com> - add a -quick-boot option to makeautoinstallfloppy
                            - disclaimer -- may not work on all systems
 - <brian@thefinleys.com> - contemplate using MAKEDEV instead of having 
@@ -177,3 +183,26 @@ systemimager.conf
 - SYSTEMIMAGER_ROOT=$path
 - SYSTEMIMAGER_FQHN=$boolean
 - EXCLUDE=$path $path $path
+
+
+
+
+Pre-Release Checklist
+---------------------
+- hardware RAID client
+- software RAID client
+- reiserfs client
+- ext3 client
+- ext2 client
+- prepareclient on debian
+- prepareclient on RH
+- hand made /etc/hosts /tftpboot/systemimager/hosts files
+- server RPM install on virgin RH system
+- client RPM install on virgin RH system
+- server deb install on virgin debian system
+- client deb install on virgin debian system
+- repeated prepareclient/installs to see if disk partition sizes remain the same
+- test netboot install with versions x, y, and z of PXE
+- test CD-ROM install
+- test floppy install
+- test hard drive install
