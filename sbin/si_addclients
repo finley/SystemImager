@@ -1,12 +1,14 @@
 #!/usr/bin/perl -w
 
 #
-# "SystemImager"
+#   "SystemImager"
 #
-#  Copyright (C) 1999-2002 Bald Guy Software 
-#                          Brian Elliott Finley <bef@bgsw.net>
+#   Copyright (C) 1999-2004  Brian Elliott Finley
 #
-#    $Id$
+#   $Id$
+#
+#   2004.09.28  Brian Elliott Finley
+#   - change addclients to si_addclients
 #
 
 # XXX Someday, we should add IP address, hostname, and domain name validation routines. -BEF-
@@ -22,7 +24,7 @@ use vars qw($config $VERSION);
 ### BEGIN Program ###
 # set version information
 my $VERSION = "SYSTEMIMAGER_VERSION_STRING";
-my $program_name = "addclients";
+my $program_name = "si_addclients";
 my $version_info = <<"EOF";
 $program_name (part of SystemImager) v$VERSION
 
@@ -184,7 +186,7 @@ my $autoinstall_script_dir = $config->autoinstall_script_dir();
 if($interactive eq "yes") {
     system("clear");
     print << "EOF";
-Welcome to the SystemImager "addclients" utility  
+Welcome to the SystemImager "si_addclients" utility  
 --------------------------------------------------------------------------------
 
 This utility has 3 sections.  
@@ -215,7 +217,7 @@ if($interactive eq "yes") {
     my $continue=<STDIN>;
     chomp $continue;
     $continue = lc $continue;
-    ($continue ne "n") or die "\naddclients: No files were modified.\n";
+    ($continue ne "n") or die "\nsi_addclients: No files were modified.\n";
 }
 
 my $satisfied;
@@ -226,7 +228,7 @@ if($interactive eq "yes") {
     while ($satisfied ne "y") {
         system("clear");
         print <<EOF;
-addclients -- Section 1 (hostname information)
+si_addclients -- Section 1 (hostname information)
 --------------------------------------------------------------------------------
 
 The next series of questions will be used to create a range of hostnames.  
@@ -276,7 +278,7 @@ EOF
     ### BEGIN links questionaire ###
     system("clear");
     print <<"EOF";
-addclients -- Section 2 (soft links to master script)
+si_addclients -- Section 2 (soft links to master script)
 --------------------------------------------------------------------------------
 
 Would you like me to create soft links to a "master" script so that hosts:
@@ -354,7 +356,7 @@ EOF
     ### BEGIN hosts questionaire ###
     system("clear");
     print <<EOF;
-addclients -- Section 3 (adding or modifying /etc/hosts entries)
+si_addclients -- Section 3 (adding or modifying /etc/hosts entries)
 --------------------------------------------------------------------------------
 
 Your target machines need to be able to determine their host names from their
@@ -400,7 +402,7 @@ EOF
             $satisfied="n";
             while ($satisfied ne "y") {
                 system("clear");
-                print "addclients -- Section 3 (adding or modifying /etc/hosts entries -- continued...)\n";
+                print "si_addclients -- Section 3 (adding or modifying /etc/hosts entries -- continued...)\n";
                 print "--------------------------------------------------------------------------------\n";
                 print "subnet $subnet_count\n\n";
                 print "The first host in subnet $subnet_count will be: $base_host_name$node_number\n";
