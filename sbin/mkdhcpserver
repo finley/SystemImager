@@ -161,7 +161,7 @@ my $router = "192.168.1.254";
 my $imageserver = "192.168.1.254";
 my $boot_server = "";
 my $ssh_download_url = "";
-my $flamethrower_port = "";
+my $flamethrower_directory_portbase = "";
 my $swallow = "";
 
 # Oh where oh where could my dhcpd.conf file be?
@@ -253,9 +253,9 @@ EOF
     my $mcast_install=<STDIN>;
     chomp $mcast_install;
     if ($mcast_install eq "y") {
-        if ($flamethrower_port eq "") { $flamethrower_port="9000"; }
-        print "On which port is your Flamethrower directory? [$flamethrower_port]: ";
-        $flamethrower_port = get_response($flamethrower_port);
+        if ($flamethrower_directory_portbase eq "") { $flamethrower_directory_portbase="9000"; }
+        print "On which port is your Flamethrower directory? [$flamethrower_directory_portbase]: ";
+        $flamethrower_directory_portbase = get_response($flamethrower_directory_portbase);
 
     } else {
         print "\nWill your clients be installed over SSH? (y/[n]): ";
@@ -302,7 +302,7 @@ EOF
     print "Boot server:                              $boot_server\n";
     print "Log server:                               $log_server\n";
     print "Log server port:                          $log_server_port\n";
-    print "Flamethrower directory port:              $flamethrower_port\n";
+    print "Flamethrower directory port:              $flamethrower_directory_portbase\n";
     print "SSH files download URL:                   $ssh_download_url\n";
     print "#######################################################################\n";
     
@@ -360,10 +360,10 @@ if ($dhcpd_version eq "2") {
 
     print DHCPDCONF qq(  # option-143 specifies the Flamethrower directory port.\n);
     print DHCPDCONF qq(  # The default is "9000".\n);
-    if($flamethrower_port eq "") { 
+    if($flamethrower_directory_portbase eq "") { 
         print DHCPDCONF qq(  #option option-143 "9000"; \n);
     } else {
-        print DHCPDCONF qq(  option option-143 "$flamethrower_port"; \n);
+        print DHCPDCONF qq(  option option-143 "$flamethrower_directory_portbase"; \n);
     }
 
     print DHCPDCONF qq(  # next-server is your network boot server\n);
@@ -415,7 +415,7 @@ if ($dhcpd_version eq "2") {
     print DHCPDCONF qq(option systemimager.imageserver          code 140 = ip-address;\n);
     print DHCPDCONF qq(option systemimager.log_server_port      code 141 = unsigned integer 32;\n);
     print DHCPDCONF qq(option systemimager.ssh_download_url     code 142 = string;\n);
-    print DHCPDCONF qq(option systemimager.flamethrower_port    code 143 = string;\n);
+    print DHCPDCONF qq(option systemimager.flamethrower_directory_portbase    code 143 = string;\n);
     print DHCPDCONF qq(\n);
 
     print DHCPDCONF qq(# systemimager.imageserver is the IP address of your SystemImager image server\n);
@@ -429,12 +429,12 @@ if ($dhcpd_version eq "2") {
         print DHCPDCONF qq(option systemimager.ssh_download_url "$ssh_download_url"; \n);
     }
 
-    print DHCPDCONF qq(\n# systemimager.flamethrower_port specifies the Flamethrower directory port.\n);
+    print DHCPDCONF qq(\n# systemimager.flamethrower_directory_portbase specifies the Flamethrower directory port.\n);
     print DHCPDCONF qq(  # The default is "9000".\n);
-    if($flamethrower_port eq "") { 
-        print DHCPDCONF qq(#option systemimager.flamethrower_port "9000"; \n);
+    if($flamethrower_directory_portbase eq "") { 
+        print DHCPDCONF qq(#option systemimager.flamethrower_directory_portbase "9000"; \n);
     } else {
-        print DHCPDCONF qq(option systemimager.flamethrower_port "$flamethrower_port"; \n);
+        print DHCPDCONF qq(option systemimager.flamethrower_directory_portbase "$flamethrower_directory_portbase"; \n);
     }
 
     print DHCPDCONF qq(\n# next-server is your network boot server\n);
