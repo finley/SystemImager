@@ -1,0 +1,364 @@
+#!/usr/bin/perl -w
+
+#
+# "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>
+#
+#   $Id$
+#
+#   Written by Brian Elliott Finley <brian@systemimager.org>
+#
+#   Others who have contributed to this code (alphabetically):
+#     Frazier, Dann <daniel_frazier@hp.com>
+#     Zinzilieta, Curtis <czinzilieta@valinux.com>
+#     Smith, Wesley <wessmith@engr.sgi.com>
+#
+
+use Getopt::Long;
+use AppConfig;
+
+### BEGIN parse the config file ###
+
+my $config = AppConfig->new(
+			    'autoinstalldir' => { ARGCOUNT => 1 },
+			    'default_imagedir' => { ARGCOUNT => 1 },
+			    'rsyncd_conf' => { ARGCOUNT => 1 },
+			    'autoinstall_kernel' => { ARGCOUNT => 1 },
+			    'autoinstall_initrd' => { ARGCOUNT => 1 }
+			    );
+$config->file('/etc/systemimager/systemimager.conf');
+
+my $autoinstalldir = $config->autoinstalldir();
+my $autoinstall_kernel = $config->autoinstall_kernel();
+my $autoinstall_initrd = $config->autoinstall_initrd();
+
+if (!$autoinstalldir) { die "AUTOINSTALLDIR not defined in the config file."; }
+if (!$autoinstall_kernel) {
+    die "AUTOINSTALL_KERNEL not defined in the config file.";
+}
+if (!$autoinstall_initrd) {
+    die "AUTOINSTALL_INITRD not defined in the config file.";
+}
+
+### END parse the config file ###
+
+# set shell PATH for system() calls 
+$ENV{PATH} = "/usr/sbin:/sbin:/usr/bin:/bin";
+
+$version_number="1.5.0";
+$program_name = "makeautoinstalldiskette";
+$version_info = <<"EOF";
+$program_name (part of SystemImager) v$version_number
+    
+Copyright (C) 1999-2001 Brian Elliott Finley <brian\@systemimager.org>
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+EOF
+
+$help_info = $version_info . <<"EOF";
+
+Usage: $program_name [OPTION]...
+
+Options: (options can be presented in any order and may be abbreviated)
+ -help             Display this output.
+
+ -version          Display version and copyright information.
+
+ -quiet            Don\'t print any output, just provide an appropriate 
+                   exit code.  (requires -floppy)
+
+ -floppy=DEVICE    The  1.44MB floppy drive device containing the disk
+                   to format.  If not specified, /dev/fd0 is assumed.
+                   This command understands \"/dev/fd0\" through \"/dev/fd7\".
+                   (if you specify -floppy, this command will run 
+                    non-interactively)
+
+ -out-file=FILE    Create a 1.44MB floppy image in FILE
+
+ -config=FILE      Where FILE contains all the settings necessary for
+                   the client to set it's hostname and configure it's
+                   networking information without DHCP.  This file is
+                   copied to /local.cfg on the autoinstalldiskette.
+
+ -ssh-key=FILE	   Where FILE is the SSH1 private key of the user 
+                   account that the autoinstall client will use to
+		   connect to the imageserver.  It is usually called
+		   ".ssh/identity".
+
+		   To use this private key, you must also add the
+		   corresponding public key to this user's 
+		   ".ssh/authorized_keys" file on the imageserver.
+		   The public key is usually called ".ssh/identity.pub".
+		   The ".ssh/authorized_keys" must be readable only by
+		   this user.  ("chmod 600 .ssh/authorized_keys")
+
+
+Contents of an example local.cfg file:
+
+ HOSTNAME=www1
+ DOMAINNAME=systemimager.org
+ DEVICE=eth0
+ IPADDR=10.0.0.99
+ NETMASK=255.255.255.0
+ NETWORK=10.0.0.0
+ BROADCAST=10.0.0.255
+ GATEWAY=10.0.0.1
+ GATEWAYDEV=eth0
+ IMAGESERVER=10.0.0.3
+
+
+If you will be using SSH, you have two options:
+
+ 1) You can have the autoinstall client boot up and wait for you
+    to run the "pushupdate -continue-install" command from the
+    imageserver.
+
+    If you choose this option, you must supply the following variable
+    via the local.cfg, or via dhcp (see makedhcpserver):
+
+      SSH_DOWNLOAD_URL=http://10.0.0.3/ssh_files/
+  
+ 2) You can have the autoinstall client do the whole install completely
+    non-interactively.  This option *only* works when using a floppy.
+    
+    If you choose this option, you must also supply the following two
+    variables:
+
+      SSH_DOWNLOAD_URL=http://10.0.0.3/ssh_files/
+      SSH_USER=username
+
+    And copy username's private key (.ssh/identity) to the root of the
+    floppy diskette.
+
+    username must be a valid user on your imageserver, and you will
+    need to put username's public ssh key (identity.pub) in the
+    .ssh/authorized_keys file in username's home directory on the
+    imageserver.
+    
+    Also be sure that the permissions for the authorized_keys file are
+    set to 600 (chmod 600 .ssh/authorized_keys).
+    
+    When you are done with this part of the setup, username should be
+    able to ssh in to the imageserver without a password.  You can test
+    this with "ssh localhost" as username on the imageserver.
+    
+
+You can cut and paste this into your own file, but change each of the
+values to the appropriate values for your specific client.
+
+Download, report bugs, and make suggestions at:
+http://systemimager.org/
+EOF
+
+GetOptions( 
+            "help" => \$help,
+            "version" => \$version,
+            "floppy=s" => \$floppy_device_prefix,
+            "config=s" => \$local_config,
+            "ssh-key=s" => \$ssh_key,
+            "quiet" => \$quiet,
+	    "out-file=s" => \$file
+) || die "$help_info";
+
+# if floppy device not specified, set value to run in interactive mode
+if ($floppy_device_prefix and $file) {
+    die "-floppy and -file are mutually exclusive";
+}
+
+if($floppy_device_prefix) { $user_specified_floppy=1; }
+elsif($file) { $user_specified_file=1; }
+
+# if requested, print help information
+if($help) {
+  print "$help_info";
+  exit 0;
+}
+
+# if requested, print version and copyright information
+if($version) {
+  print "$version_info";
+  exit 0;
+}
+
+# be sure the user includes -floppy when doing -quiet
+if($quiet and !$user_specified_floppy and !$user_specified_file) { die "Must use -floppy or -file with -quiet! (use -help for options)\n"; }
+
+# if user did not specify a floppy device, choose the default
+if(!$user_specified_floppy and !$user_specified_file) {
+    $floppy_device_prefix = "/dev/fd0";
+}
+
+# verify that a valid floppy device was specified
+if (! $file) {
+    if (! ($floppy_device_prefix =~ /^\/dev\/fd[0-7]$/)) {
+	die "ERROR: Invalid -floppy argument.\n $help_info";
+    }
+}
+
+### BEGIN Verify that all necessary files actually exist. ###
+# Suggested by Greg Pratt <gpratt@valinux.com>.
+#
+# array of standard files
+@files = ( 
+  $autoinstall_initrd,
+  $autoinstall_kernel, 
+  "$autoinstalldir/pxelinux.cfg/message.txt",
+  "$autoinstalldir/pxelinux.cfg/syslinux.cfg"
+);
+
+# Verify that the config file, if specified, exists
+if($local_config){
+  push @files, $local_config;
+}
+
+# Verify that the config file, if specified, exists
+if($ssh_key){
+  push @files, $ssh_key;
+}
+
+foreach my $file ( @files ) {
+  unless ( -e "$file" ) {
+    die "FATAL:  I can't find $file!";
+  }
+}
+### END Verify that all necessary files actually exist. ###
+
+# if not run as root, this script will surely fail
+unless($< == 0) { die "Must be run as root!\n"; }
+
+# if appropriate, run interactively
+if (!$user_specified_floppy and !$user_specified_file) {
+    system('clear');
+    print << 'EOF';
+
+This program assumes that you have a 1.44MB floppy drive and that
+it is /dev/fd0.  You can use the -floppy command line option to
+change this value.
+
+If you do use -floppy, this command will run non-interactively!!!
+Use the -help option to see all options.
+
+Insert your floppy diskette now.  This will overwrite all
+information on your diskette.
+
+EOF
+
+    print "Continue? (y/[n]): ";
+    $continue=<STDIN>;
+    chomp $continue;
+    $continue = lc $continue;
+    ($continue eq "y") or die "\nYour diskette has not been modified...\n";
+}
+
+# create floppy device if necessary
+
+if ($floppy_device_prefix and !$file) {
+    $floppy_device=$floppy_device_prefix;
+    unless (-b $floppy_device) {
+	die "Couldn't find device file $floppy_device.\n";
+    }
+
+    if (-x "/usr/bin/superformat") {
+	# format floppy
+	if (!$quiet) { print "Formatting floppy as 1.44MB ...\n"; }
+	if ($quiet) {
+	    system ("superformat $floppy_device hd > /dev/null 2>&1");
+	} else {
+	    system ("superformat $floppy_device hd");
+	}
+	unless ($? == 0) { die "Couldn't format $floppy_device.\n"; }
+
+    } elsif (-x "/usr/bin/fdformat") {
+	
+	# format floppy
+	if (!$quiet) { print "Formatting floppy as 1.44MB ...\n"; }
+	if ($quiet) {
+	    system ("fdformat $floppy_device > /dev/null 2>&1");
+	} else {
+	    system ("fdformat $floppy_device");
+	}
+	if($? != 0) { die "Couldn't format $floppy_device.\n"; }
+    }
+    if (!$quiet) {
+	print "Creating DOS filesystem on floppy...\n";
+    }
+    if ($quiet) {
+	system("mkdosfs $floppy_device > /dev/null");
+    } else {
+	system("mkdosfs $floppy_device");
+    }
+    unless ($? == 0) { die "Couldn't create dos filesystem on $floppy_device.\n"; }
+    $loop = "";
+}
+
+elsif ($file) {
+    if (-e "$file") {
+	if ($quiet) { die "$file already exists, exiting."; }
+	else {
+	    print "$file already exists, overwrite? (y/[n]): ";
+	    $continue=<STDIN>;
+	    chomp $continue;
+	    $continue = lc $continue;
+	    ($continue eq "y") or die "\nYour diskette has not been modified...\n";
+	}
+    }
+    system ("dd if=/dev/zero of=$file bs=512 count=2880");
+    if ($? != 0) { die "Couldn't create $file"; }
+    $floppy_device=$file;
+    $loop = "-o loop";
+    
+    # create dos filesystem on floppy
+    if (!$quiet) {
+	print "Creating DOS filesystem in $file...\n";
+    }
+    if ($quiet) {
+	system("mkdosfs $floppy_device > /dev/null");
+    } else {
+	system("mkdosfs $floppy_device");
+    }
+    unless ($? == 0) { die "Couldn't create dos filesystem on $floppy_device.\n"; }
+}
+
+# Run syslinux *before* copying files to prevent syslinux from partially 
+# overwriting the first large on the diskette.  Bad syslinux, bad!
+if (!$quiet) {print "Using \"syslinux\" to make floppy bootable...\n";}
+$command="syslinux -s $floppy_device";
+system($command);
+if($? != 0) { die "\"syslinux -s $floppy_device\" failed.\n"; }
+
+# create temporary mount point
+if (!$quiet) { print "Creating temporary mount point...\n"; }
+$mount_dir="/tmp/.autoinstalldiskette.$$";
+mkdir $mount_dir, 0770 or die "Couldn't create temporary mount point $mount_dir.\n";
+
+# mount the freshly created filesystem
+if (!$quiet) { print "Mounting floppy...\n"; }
+$command="mount -t msdos $floppy_device $mount_dir $loop";
+system($command);
+if($? != 0) { die "Couldn't execute: $command!\n"; }
+
+# copy stuff to floppy
+foreach my $file ( @files ) {
+    if (!$quiet) {print "Copying $file to floppy.\n";}
+    my $command="cp $file $mount_dir";
+    system($command);
+        if($? != 0) { 
+	    system('umount', $floppy_device);
+	    rmdir $mount_dir;
+	    die "Couldn't copy $file to $mount_dir.\n";
+	}
+}
+
+# unmount floppy
+if (!$quiet) {print "Un-mounting floppy...\n";}
+system('umount', $floppy_device);
+if($? != 0) { 
+  die "Couldn't un-mount $floppy_device from $mount_dir.\n";
+}
+
+# get rid of temporary directory
+if (!$quiet) { print "Removing temporary mount point...\n";}
+rmdir $mount_dir or die "Couldn't remove temporary mount point $mount_dir\n";
+
+# print done!
+if (!$quiet) { print "Done!\n";}
+exit 0;
