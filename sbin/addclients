@@ -1,29 +1,34 @@
 #!/usr/bin/perl -w
-
 #
 # "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>
 #   Others who have contributed to this code (in alphabetical order):
 #   Austin Gonyou <austin@coremetrics.com>
 #
 # This file is: addclients
-#
+####################
+ ### BEGIN Program ###
+  #####################
+# if not run as root this script will surely fail
+unless($< == 0) { die "Must be run as root!\n"; }
 
 use Getopt::Long;
-
 my $help;
 my $version;
-my $client;
+my $clientname;
 my $host_range;
 my $domainname;
 my $ip_range;
+my $base_hostname;
+my $imagename;
 
 GetOptions(
     "help" => \$help,
     "version" => \$version,
-    "client=s" => \$base_hostname,
+    "client=s" => \$clientname,
     "domainname=s" => \$domainname,
     "host-range=s" =>\$host_range,
     "ip-range=s" => \$ip_range,
+    "image=s" => \$imagename,
     "file=s" => \$clientfile
 ) || die "$0 <arguments>, use -h for help\n";
 
@@ -38,25 +43,26 @@ if ($version) {
   &version_info;
   exit 0;
 }
-
-
 #if any options were called perform non-interactive install
-#otherwise  go interactive
-if ($base_hostname || $host_range  || $domainname || $image || $ip_range || $clientfile) {
-    #@passvar=($base_hostname,$domainname,$host_range,$image,$ip_range);
-    #&Interactive(@passvar);
-    print "Non-interactive mode not yet enabled\n";
+#otherwise go interactive
+if ($clientname && $host_range  && $domainname && $imagename && $ip_range || $clientfile) {
+    @passvar=($base_hostname,
+    		  $domainname,
+    		  $host_range,
+    		  $imagename,
+    		  $ip_range);
+    &Scripts(@passvar);
+#print "Non-interactive mode not yet enabled\n";
 } else { 
+	print "Not enough arguments. Falling back to interactive setup\n";
+	system("sleep 2");
     &Interactive;
 }
-
-##                     ##  
-### BEGIN Subroutines ###
-##                     ##
-
+#####################  
+ ##BEGIN Subroutines##
+  #####################
 sub help_info{
     system("clear");
-
     if($_[0] == 1){
 	print "Not enough arguments! Printing help...\n";
 	&help
@@ -95,6 +101,7 @@ print << 'EOF';
 			    first IP address in the range and Y.Y.Y.Y is
 			    the last ip address in the range.
 
+		**NOTE** Not Yet Functional. **NOTE** 
  -file FILE                 Read host names and images to process from 
                             FILE.  This option can be used instead of
 			    the "-client" and "-host-range" options.  
@@ -107,16 +114,12 @@ print << 'EOF';
                               db1  database_image_v1
                               db2  database_image_v1
 
-
 addclients useage example:
-
-  addclients -client www -host-range 1-3 -domain systemimager.org \
-             -ip-range 1.1.1.101-1.1.1.103
-
+[root@UberKinder ~]# addclients -client www -host-range 1-3 -image <image>\
+		-domain systemimager.org  -ip-range 1.1.1.101-1.1.1.103
 
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
-
 EOF
 
     exit 0;
@@ -124,11 +127,23 @@ EOF
 
 sub version_info{
     system("clear");
-    printf "This is a pre-release version of addclient from\n";
-    printf "VA Linux SystemImager.\n";
-    printf "This release of addclient will have the ability to take\n";
-    printf "command line arguments to allow a more 'scriptable' interface.\n";
+    printf "This is a beta version of the addclients from\n";
+    printf "SystemImager. \[HTTP\:\/\/WWW.SYSTEMIMAGER.ORG\/\]\n";
+    printf "Type .\/$0 -help for usage\n\n";
     system("sleep 2");
+    print "This program is free software; you can redistribute it and/or modify\n"
+ 		 ."it under the terms of the GNU General Public License as published by\n"
+	 	 ."the Free Software Foundation; either version 2 of the License, or\n"
+ 		 ."(at your option) any later version.\n\n";
+
+	print "This program is distributed in the hope that it will be useful,\n"
+		  ."but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+		  ."MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+ 		 ."GNU Library General Public License for more details.\n\n";
+
+	print "You should have received a copy of the GNU General Public License\n"
+		  ."along with this program; if not, write to the Free Software\n"
+		  ."Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.\n"
 }
 
 
@@ -155,6 +170,8 @@ sub bin2dec {
   return unpack("N", pack("B32", substr("0" x 32 . shift, -32))); # get all 32bits
 }
 
+#This sub takes an IP of decimal value, and changes gives it to 
+#dec2bin8bit for translation into binary. 
 sub ip_quad2ip_dec {
     (my $a, my $b, my $c, my $d) = split(/\./, $_[0]);
     my $a_bin=dec2bin8bit($a);
@@ -173,26 +190,36 @@ sub ip_dec2ip_quad {
     return join('.', $a_dec, $b_dec, $c_dec, $d_dec);
 }
 
+#Sub returns -1, 0, or 1 for < = or > respectively
 sub numerically { 
     $a <=> $b;
 }
-### END Subroutines ###
-
-### BEGIN Program ###
-# if not run as root this script will surely fail
-unless($< == 0) { die "Must be run as root!\n"; }
-
-# give warning
+################### 
+ ##END Subroutines##
+  ###################
+  
+# The sub which allows interactive sessions
 sub Interactive {
-    local (*parms)=@_;
-    &Begin_add(*parms);
+    &Begin_add;
     &Main_questions;
     &Links_questions;
     &SubNet;
-
 }
-
+sub Scripts {
+	if (! @_ eq ''){
+	&Begin_add(1);
+	&Main_questions(1);
+    &Links_questions(1);
+    &SubNet(1);
+    } else { &Interactive;}
+ }
+    #This begins the addclients user interaction
+####################
+ ##BEGIN &Begin_add##
+  ####################
 sub Begin_add {
+	if ( @_ == 1) { print "Entering Non-Interactive mode\n";
+} else {
 system("clear");
 print << 'EOF';
 Welcome to the SystemImager "addclients" utility  
@@ -220,26 +247,39 @@ will be re-written in place to reflect the new host names.
 
 
 EOF
-
+#changed logic to bomb unless a y or enter is pressed. 
+#All else kills script
 print "Continue? ([y]/n): ";
 $continue=<STDIN>;
-chomp $continue;
+chop $continue;
+if ($continue eq ''){$continue = "y";}
 $continue = lc $continue;
-($continue ne "n") or die "\naddclients: No files were modified.\n";
-
+unless ($continue eq "y"){ die "\naddclients: No files were modified.\n";}
+	}
 }
-### BEGIN main questionnaire ###
+##################
+ ##END &BEGIN_ADD##
+  ##################
+#This begins the value population for parsing data interactively
+#Can be adapted to do interactive + non-interactive
+#########################
+ ##BEGIN &MAIN_QUESTIONS##
+  #########################
 sub Main_questions {
+	if( @_ == 1) {
+$image=$imagename;
+$domain_name=$domainname;
+$base_host_name=$clientname;
+($starting_number,$ending_number)=(split(/-/, $host_range));
+} else {
 $image="";
 $domain_name="";
 $base_host_name="";
 $starting_number="";
 $ending_number="";
-
 $satisfied = "n";
 while ($satisfied ne "y") {
  system("clear");
-
 print <<EOF;
 addclients -- Section 1 (hostname information)
 ----------------------------------------------
@@ -263,37 +303,53 @@ Then the result will be a series of hostnames that looks like this:
 
 
 EOF
-
  print "What is your domain name? [$domain_name]: ";
  $domain_name=get_response($domain_name);
  $domain_name = lc $domain_name;
-
  print "What is the base host name that you want me to use? [$base_host_name]: ";
  $base_host_name = get_response($base_host_name);
  $base_host_name = lc $base_host_name;
-
  print "What number should I begin with? [$starting_number]: ";
  # "+ 0" is to ensure we have a flat number and not "001" or something
  $starting_number = get_response($starting_number) + 0; 
-
  print "What number should I end with? [$ending_number]: ";
  # "+ 0" is to ensure we have a flat number and not "001" or something
  $ending_number=get_response($ending_number) + 0;
-
  print "\n\n";
  print "I will work with hostnames:  $base_host_name$starting_number through $base_host_name$ending_number\n"; 
  print "             in the domain:  $domain_name\n";
  print "\nAre you satisfied? (y/[n]): ";
  chomp($satisfied=<STDIN>);
-}
-### END main questionnaire ###
+		}
+#######################
+ ##END &MAIN_QUESTIONS##
+  #######################
+	}
 }
 
+#Questions user about making softlinks to the <imagename>.master scripts
+##########################
+ ##BEGIN &LINKS_QUESTIONS##
+  ##########################
 sub Links_questions {
-### BEGIN links questionaire ###
+	if ( $base_host_name && $starting_number && $ending_number ne '') {  
+	unless($imagename ne '') { 
+					   die "There are no available images."
+						  ."Please use getimage to retrieve an image first.\n"
+						  ."   -The Mgmt\n"; 
+				 }
+	print "Setting Up parameters for symbolic links.\n";			 
+$image=$imagename;
+ print "All hosts will recieve image \[".uc($imagename)."\]\n"
+ 	  ."All hosts will have name \[".uc($base_host_name)."\]"
+ 	  ." and will have a number between \[$starting_number - $ending_number\]\n";
+ if ( -f "/tftpboot/systemimager/$image.master" ) {
+  foreach $node_number ($starting_number .. $ending_number) {
+  system("cd /tftpboot/systemimager; ln -sf $image.master $base_host_name$node_number.sh");
+		}
+	} else {
 system("clear");
-
-print <<"EOF";
+print <<EOF;
 addclients -- Section 2 (soft links to master script)
 -----------------------------------------------------
 
@@ -303,7 +359,6 @@ that hosts:
   $base_host_name$starting_number through $base_host_name$ending_number
 
 EOF
-
 print "can be autoinstalled with that image? ([y]/n): ";
 $createlinks=<STDIN>;
 chomp $createlinks;
@@ -326,7 +381,6 @@ unless($createlinks eq "n") {
       $image = $_;
     }
     close(LS);
-
     # display the list of available images
     unless(@files) { die "There are no available images.  Please use getimage to retrieve an image first.\n   -The Mgmt\n"; }
     print qq(\nHere is a list of available images:\n);
@@ -335,7 +389,6 @@ unless($createlinks eq "n") {
       print "$_ \n";
     }
     print "\n";
-
     print "Which image would you like these hosts to receive? [$image]: ";
     $image=get_response($image);
     if ( -f "/tftpboot/systemimager/$image.master" ) {
@@ -356,14 +409,18 @@ unless($createlinks eq "n") {
       system("clear");
     }
   }
-} else {
-  print "\nNo links will be created.\n";
-  print "\nPress <Enter> to continue...";
-  <STDIN>;
-}
-### END links questionaire ###
+	} else {
+	  print "\nNo links will be created.\n";
+	  print "\nPress <Enter> to continue...";
+	  <STDIN>;
+			}
+		} #End of first else{}
+	} #End of first if{}
+}###END &LINKS_QUESTIONS###
 
-### BEGIN hosts questionaire ###
+###BEGIN &SUBNET###
+sub SubNet {
+   if(@_ != 1) {
 system("clear");
 print <<EOF;
 addclients -- Section 3 (adding or modifying /etc/hosts entries)
@@ -375,29 +432,19 @@ I will ask you for your clients' IP addresses one subnet at a time.
 
 
 EOF
-}
-
-sub SubNet {
 print "Would you like me to make these entries for you? ([y]/n): ";
-
 $etc_hosts=<STDIN>;
 chomp $etc_hosts;
 $etc_hosts = lc $etc_hosts;
 if($etc_hosts ne "n") {$etc_hosts = "y";}
-
 $node_number = $starting_number;
-
 if($etc_hosts eq "y") {
-
 $subnet_count="0";
-
   ### BEGIN One Subnet at a time ###
   while ( $node_number <= $ending_number ) {
   $subnet_count = $subnet_count + 1;
-
     $starting_ip="";
     $ending_ip="";
-
     ### get IP information ###
     # ne "y" is used instead of eq "n" because the dissatisfied response may be something other than "n".
     $satisfied="n";
@@ -412,17 +459,14 @@ EOF
       print "What is the starting IP address for subnet $subnet_count? [$starting_ip]: ";
       $starting_ip = get_response($starting_ip);
       $starting_ip_dec = ip_quad2ip_dec($starting_ip);
-    
       print "What is the ending IP address? [$ending_ip]: ";
       $ending_ip = get_response($ending_ip);
       $ending_ip_dec = ip_quad2ip_dec($ending_ip);
-    
       print "I will work with IP addresses:  $starting_ip through $ending_ip\n";
       print "\nAre you satisfied? (y/[n]): ";
       chomp($satisfied=<STDIN>);
     }
     ### get IP information ###
-
     ### BEGIN test to be sure /etc/hosts exists and create if it doesn't ###
     my $file = "/etc/hosts";
     if ( ! -f "$file" ) {
@@ -432,12 +476,10 @@ EOF
       system('chmod 644 /etc/hosts');
     }
     ### END test to be sure /etc/hosts exists and create if it doesn't ###
-
     ### BEGIN read in /etc/hosts and create a hash of lines by ip address and a hash of lines by number
     %etc_hosts_lines_by_ip = ();
     %etc_hosts_lines_by_number = ();
     my $line_number = "1";
-
     open(ETC_HOSTS, "< /etc/hosts") or die "Couldn't open /etc/hosts for reading: $!\n";
     while (<ETC_HOSTS>) {
       chomp;
@@ -452,7 +494,6 @@ EOF
     }
     close(ETC_HOSTS);
     ### END read in /etc/hosts and create a hash of lines by ip address and a hash of lines by number
-    
     ### create a hash of new hostnames by ip address 
     %new_hostnames_by_ip = ();
     $ip_dec = $starting_ip_dec;
@@ -466,19 +507,16 @@ EOF
       if ( $node_number > $ending_number ) { last; }
     }
     ### create a hash of new hostnames by ip address 
-
     ### munge new ips and hostname info into %etc_hosts_lines_by_ip
     my @new_ip_addresses = keys %new_hostnames_by_ip;
     foreach my $new_ip_address (@new_ip_addresses) {
         $etc_hosts_lines_by_ip{$new_ip_address} = "$new_ip_address    $new_hostnames_by_ip{$new_ip_address}.$domain_name  $new_hostnames_by_ip{$new_ip_address}";
     }
     ### munge new ips and hostname info into %etc_hosts_lines_by_ip
-
     ### BEGIN open temporary /etc/hosts for writing
     $temp_file = "/tmp/.hosts.systemimager";
     open(NEW_ETC_HOSTS, "> $temp_file") or die "Couldn't open $temp_file for writing: $!\n";
     ### END open temporary /etc/hosts for writing
-
     ### BEGIN replace entries as necessary in numbered /etc/hosts lines and print numbered lines
     foreach my $line_number ( sort numerically ( keys %etc_hosts_lines_by_number )) {
         $_ = $etc_hosts_lines_by_number{$line_number};
@@ -492,7 +530,6 @@ EOF
         print NEW_ETC_HOSTS "$etc_hosts_lines_by_number{$line_number}\n";
     }
     ### END replace entries as necessary in numbered /etc/hosts lines and print numbered lines
-
     ### create hash of entries by decimal ip (for sorting purposes)
     %etc_hosts_lines_by_ip_decimal = ();
     foreach my $ip_quad ( keys %etc_hosts_lines_by_ip ) {
@@ -500,40 +537,138 @@ EOF
         $etc_hosts_lines_by_ip_decimal{$ip_decimal} = $etc_hosts_lines_by_ip{$ip_quad};
     }
     ### create hash of entries by decimal ip (for sorting purposes)
-
     ### print remaining entries
     print NEW_ETC_HOSTS "\n";
     foreach my $ip_decimal ( sort( keys %etc_hosts_lines_by_ip_decimal )) {
         print NEW_ETC_HOSTS "$etc_hosts_lines_by_ip_decimal{$ip_decimal}\n";
     }
     ### print remaining entries
-
     ### close temporary /etc/hosts after writing
     close(NEW_ETC_HOSTS);
     ### close temporary /etc/hosts after writing
-
     ### move new hosts file in to place
     system('mv', '-f', $temp_file, '/etc/hosts');
     if($? != 0) { die "Couldn't move $temp_file to /etc/hosts!\n", "Is the filesystem that contains /etc/ full?"; }
     ### move new hosts file in to place
-
   }
   ### END One Subnet at a time ###
   if ( $etc_hosts eq "y" ) { print "\nThese entries have been added to /etc/hosts.\n"; }
   print "\nPress <Enter> to continue...";
   <STDIN>;
-
 } else {
   print "\nNo entries will be added.\n";
 }
-### END hosts questionaire ###
-
-### copy /etc/hosts to /tftpboot/systemimager/hosts to be sure it stays up to date
 # do this even if we didn't modify /etc/hosts -- it will prevent much user frusteration
 system('cp', '-f', '/etc/hosts', '/tftpboot/systemimager/hosts');
 if($? != 0) { die "Couldn't copy /etc/hosts to /tftpboot/systemimager/hosts!\n", "Does /etc/tftpboot/systemimager/ exist?"; }
-### copy /etc/hosts to /tftpboot/systemimager/hosts to be sure it stays up to date
-	   
-}
+### copy /etc/hosts to /tftpboot/systemimager/hosts to be sure it stays up to date	
+} else { 
+###########################
+##Beginning IP Conversions##
+ ############################
+print "Writing /etc/hosts entries\n";
+$node_number = $starting_number;
+$subnet_count="0";
+  ### BEGIN One Subnet at a time ###
+  while ( $node_number <= $ending_number ) {
+  $subnet_count = $subnet_count + 1;
+    ($starting_ip,$ending_ip)=(split(/-/,$ip_range));
+  $starting_ip_dec = ip_quad2ip_dec($starting_ip);
+  $ending_ip_dec = ip_quad2ip_dec($ending_ip);
+    my $file = "/etc/hosts";
+    if ( ! -f "$file" ) {
+      open(ETC_HOSTS, ">> $file") or die "Couldn't open $file for writing: $!\n";
+      print ETC_HOSTS "127.0.0.1  localhost\n";
+      close(ETC_HOSTS);
+      system('chmod 644 /etc/hosts');
+    }
+    %etc_hosts_lines_by_ip = ();
+    %etc_hosts_lines_by_number = ();
+    my $line_number = "1";
+    open(ETC_HOSTS, "< /etc/hosts") or die "Couldn't open /etc/hosts for reading: $!\n";
+    while (<ETC_HOSTS>) {
+      chomp;
+      my @fields = split;
+      my $ip_quad = $fields[0];
+      my $line = $_;
+      if ($ip_quad) {
+        $etc_hosts_lines_by_ip{$ip_quad} = $line;
+      }
+      $etc_hosts_lines_by_number{$line_number} = $line;
+      $line_number = $line_number + 1;
+    }
+    close(ETC_HOSTS);
+    %new_hostnames_by_ip = ();
+    $ip_dec = $starting_ip_dec;
+    until ( $ip_dec > $ending_ip_dec ) {
+      my $bitwise = $ip_dec & 255;
+      if ( $bitwise == "255" ) { $ip_dec = $ip_dec + 2; }
+      my $ip_quad = ip_dec2ip_quad($ip_dec);
+      $new_hostnames_by_ip{$ip_quad} = "$base_host_name$node_number";
+      $ip_dec = $ip_dec + 1;
+      $node_number = $node_number + 1;
+      if ( $node_number > $ending_number ) { last; }
+    }
+    my @new_ip_addresses = keys %new_hostnames_by_ip;
+    foreach my $new_ip_address (@new_ip_addresses) {
+        $etc_hosts_lines_by_ip{$new_ip_address} = "$new_ip_address    $new_hostnames_by_ip{$new_ip_address}.$domain_name  $new_hostnames_by_ip{$new_ip_address}";
+    }
+    $temp_file = "/tmp/.hosts.systemimager";
+    open(NEW_ETC_HOSTS, "> $temp_file") or die "Couldn't open $temp_file for writing: $!\n";
+    foreach my $line_number ( sort numerically ( keys %etc_hosts_lines_by_number )) {
+        $_ = $etc_hosts_lines_by_number{$line_number};
+        my @words = split;
+        my $ip_quad = $words[0];
+        if ($ip_quad) {
+            $etc_hosts_lines_by_number{$line_number} = $etc_hosts_lines_by_ip{$ip_quad};
+            delete $etc_hosts_lines_by_ip{$ip_quad};
+        }
+        # print numbered hosts entries
+        print NEW_ETC_HOSTS "$etc_hosts_lines_by_number{$line_number}\n";
+    }
+    %etc_hosts_lines_by_ip_decimal = ();
+    foreach my $ip_quad ( keys %etc_hosts_lines_by_ip ) {
+        $ip_decimal = ip_quad2ip_dec($ip_quad);
+        $etc_hosts_lines_by_ip_decimal{$ip_decimal} = $etc_hosts_lines_by_ip{$ip_quad};
+    }
+    print NEW_ETC_HOSTS "\n";
+    foreach my $ip_decimal ( sort( keys %etc_hosts_lines_by_ip_decimal )) {
+        print NEW_ETC_HOSTS "$etc_hosts_lines_by_ip_decimal{$ip_decimal}\n";
+    }
+    close(NEW_ETC_HOSTS);
+    system('mv', '-f', $temp_file, '/etc/hosts');
+    if($? != 0) { 
+    	die "Couldn't move $temp_file to /etc/hosts!\n"
+    	."Is the filesystem that contains /etc/ full?"; }
+  }
+system('cp', '-f', '/etc/hosts', '/tftpboot/systemimager/hosts');
+if($? != 0) { 
+	die "Couldn't copy /etc/hosts to /tftpboot/systemimager/hosts!\n"
+	."Does /etc/tftpboot/systemimager/ exist?"; }
+		}
+		print "Done!\n";
+	} 
+###############
+ ##END &SUBNET##
+  ###############
+  
+#################
+ ## END PROGRAM ## 
+  ################# 
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Library General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
 
 #$Id$
