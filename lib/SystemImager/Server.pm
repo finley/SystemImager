@@ -946,7 +946,9 @@ sub write_lvm_volumes_commands {
     foreach my $group_name (sort (keys ( %{$lvm->{lvm_group}} ))) {
         
         foreach my $lv (@{$lvm->{lvm_group}->{$group_name}->{lv}}) {
-            
+        
+            my $cmd;    
+        
             # Get logical volume name -AR-
             my $lv_name = $lv->{name};
             unless (defined($lv_name)) {
@@ -966,21 +968,16 @@ sub write_lvm_volumes_commands {
             }
 
             # Create the logical volume -AR-
-            my $cmd = "lvcreate $lv_options -L${lv_size} -n $lv_name $group_name || shellout";
+            $cmd = "lvcreate $lv_options -L${lv_size} -n $lv_name $group_name";
+            print $out qq(echo "$cmd"\n);
+            print $out "$cmd\n";
+            
+            # Enable the logical volume -AR-
+            $cmd = "lvchange -a y /dev/$group_name/$lv_name";
             print $out qq(echo "$cmd"\n);
             print $out "$cmd\n";
         }
     }
-
-    # Create LVM logical volume devices under /dev -AR-
-    print $out qq(\n# Create logical volumes devices under /dev -AR-\n) .
-               qq(for lvm_line in `lvdisplay -c 2>/dev/null`; do\n) .
-               qq(\tname=`echo \$lvm_line | cut -d: -f1`\n) .
-               qq(\tmaj=`echo \$lvm_line | cut -d: -f12`\n) .
-               qq(\tmin=`echo \$lvm_line | cut -d: -f13`\n) .
-               qq(\tmknod \$name b \$maj \$min || shellout\n) .
-               qq(done\n) .
-               qq(unset lvm_line name maj min\n);
 }
 
 # Usage:  
