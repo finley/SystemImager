@@ -178,15 +178,23 @@
 	      <listitem>
 		<para>
 		  static_dhcp -- A DHCP server will assign the same static
-		  address each time to clients installed with this image.  Also
-		  see the <command>makedhcpstatic</command> command.
+		  address each time to clients installed with this image.  The
+		  DHCP server in this case also assigns the corresponding host
+		  name.  It is possible therefore, when using static dhcp, to
+		  change a machine's hostname and IP address by simply changing
+		  one value in the dhcpd.conf file.  Some may find this
+		  desirable.  Also see the <command>makedhcpstatic</command>
+		  command.
 		</para>
 	      </listitem>
 	      <listitem>
 		<para>
 		  dynamic_dhcp -- A DHCP server will assign IP addresses
-		  dynamically to clients installed with this image.  They may
-		  be assigned a different address each time.
+		  dynamically to clients installed with this image.  In dynamic
+		  dhcp, the IP address of a machine may change, but you want it
+		  to retain the same host name.  Therefore the hostname is set
+		  by the machine itself.  They may be assigned a different
+		  address each time.
 		</para>
 	      </listitem>
 	      <listitem>
