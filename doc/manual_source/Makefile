@@ -1,5 +1,5 @@
 #
-# "VA SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@thefinleys.com>
+# "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>
 #
 # This file is: Makefile
 #               (Create documentation from SGML source)

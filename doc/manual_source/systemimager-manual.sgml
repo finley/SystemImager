@@ -2,7 +2,7 @@
 <article id=index>
 
  <artheader>
-    <title>VA SystemImager v1.5.0 Documentation</title>
+    <title>SystemImager v1.5.0 Documentation</title>
     <pubdate>$Date$</pubdate>
     <author>
       <firstname>Greg</firstname>
@@ -72,7 +72,7 @@
       <para>
 	This document has been prepared to aid in the installation,
 	configuration and on-going administration of the 
-	<application>VA SystemImager</application> product. 
+	<application>SystemImager</application> product. 
       </para>
       
       <para><ulink url="systemimager-manual.sgml">SGML source</ulink>
@@ -96,7 +96,7 @@
       </listitem>
       <listitem>
 	<para>
-	  Brian Finley <email>brian@thefinleys.com</email>
+	  Brian Finley <email>brian@systemimager.org</email>
 	</para>
       </listitem>
       <listitem>
@@ -156,11 +156,11 @@
   <sect1 id=Intro>
     <title>Introduction</title>
     <para>
-      <application>VA SystemImager</application> is software that makes the 
+      <application>SystemImager</application> is software that makes the 
       installation of Linux to masses of similar machines relatively easy.  
       It also makes software distribution, configuration, and operating 
       system updates easy.  You can even update from one Linux release or  
-      version to another!  <application>VA SystemImager</application> can  
+      version to another!  <application>SystemImager</application> can  
       also be used for content management on web servers.  
     </para>
     
@@ -198,7 +198,7 @@
     
     <para>
       Typical organizations that see a benefit from using 
-      <application>VA SystemImager</application> include:
+      <application>SystemImager</application> include:
     </para>
     <itemizedlist>
       <listitem>
@@ -229,13 +229,13 @@
   <sect1 id=Sect2>
     <title>Supported Distributions</title>
     <para>
-      <application>VA SystemImager</application> is designed to work with 
+      <application>SystemImager</application> is designed to work with 
       most any Linux distribution.  However, there are parts of 
-      <application>VA SystemImager</application> that may need to be
+      <application>SystemImager</application> that may need to be
       customized to deal with particular distributions.   If you are using an
       untested distribution, you may find that the networking and hostname
       information are not configured properly after doing an autoinstall.  If
-      you try <application>VA SystemImager</application> with your favourite
+      you try <application>SystemImager</application> with your favourite
       distribution and it doesn't work properly, please submit a
       <ulink url="http://sourceforge.net/bugs/?group_id=259">
 	bug report
@@ -246,8 +246,8 @@
     
     <para>
       Here is an incomplete list of distributions known to work with 
-      <application>VA SystemImager</application>.  If you are successfully 
-      using <application>VA SystemImager</application> with a distribution or 
+      <application>SystemImager</application>.  If you are successfully 
+      using <application>SystemImager</application> with a distribution or 
       version not listed here, please submit a
       <ulink url="http://sourceforge.net/bugs/?group_id=259">
 	bug report
@@ -368,7 +368,7 @@
   <sect1 id=HowDoesItWork>
     <title>How Does it Work? (summary)</title>
     <para>
-      The basic idea behind <application>VA SystemImager</application> is 
+      The basic idea behind <application>SystemImager</application> is 
       to retrieve the entire system image from a "golden client" to an 
       "image server".  This image can then be replicated to any number of 
       client systems.
@@ -503,7 +503,7 @@
 
       <listitem>
 	<para>
-	  Install the <application>VA SystemImager</application> server
+	  Install the <application>SystemImager</application> server
 	  package  on the machine you have chosen as your image server. 
 	</para>
       </listitem>
@@ -516,7 +516,7 @@
 
       <listitem>
 	<para>
-	  Install the VA SystemImager client software on your "golden client"
+	  Install the SystemImager client software on your "golden client"
 	  and run the <command>prepareclient</command> command.
 	</para>
       </listitem>
@@ -559,7 +559,7 @@
       
       <listitem>
 	<para>
-	  Install the <application>VA SystemImager</application> server package
+	  Install the <application>SystemImager</application> server package
 	  on the machine you have chosen as your image server.  
 	</para>
 	<example>
@@ -598,7 +598,7 @@
 [root@imageserver]# bzcat va-systemimager-server-x.x.x.tar.bz2 | tar -x
 [root@imageserver]# cd va-systemimager-server-x.x.x
 [root@imageserver]# ./install
-Welcome to VA SystemImager.
+Welcome to SystemImager.
 
 This install script may modify the following files and/or directories:
 
@@ -607,15 +607,15 @@ This install script may modify the following files and/or directories:
  /etc/services           -- add /sync and/or tftp entries if necessary
  /etc/inetd.conf         -- remove rsync entry if necessary and
                             add or modify tftp entry if necessary
- /etc/rsyncd.conf        -- it is assumed that VA SystemImager will manage this
+ /etc/rsyncd.conf        -- it is assumed that SystemImager will manage this
                             file and that it will not be used for anything else
 
  All modified files will be backed up with the .beforesystemimager extension.
 
  See "install -help" for command line options.
 
-Install VA SystemImager? (y/[n]) y
-Ok. Installing VA SystemImager...
+Install SystemImager? (y/[n]) y
+Ok. Installing SystemImager...
 
 Installing files in /usr/sbin/
 Installing files in /etc/init.d/
@@ -625,7 +625,7 @@ Installing files in /tftpboot/systemimager/
 Installing files in /var/spool/systemimager/images/
 rsync entries already enabled in /etc/services...
 tftp entry already enabled in /etc/inetd.conf...
-VA SystemImager brand /etc/rsyncd.conf file already exists...
+SystemImager brand /etc/rsyncd.conf file already exists...
 creating soft links to rsync init script...
 running rsync init script...
 Stopping rsync daemon: rsync.
@@ -650,9 +650,9 @@ See /usr/share/doc/va-systemimager-x.x.x/ for all documentation.
 	  Configure this "golden client" as you normally would any machine. 
 	  Install Linux on this node with the understanding that the software
 	  installed will eventually constitute the image for all other nodes
-	  installed with <application>VA SystemImager</application>.
+	  installed with <application>SystemImager</application>.
 	  Don't worry too much about getting it exactly right the first time, 
-	  since you can easily use <application>VA SystemImager</application> 
+	  since you can easily use <application>SystemImager</application> 
 	  to make incremental changes to your image and distribute those
 	  changes without doing a complete re-install.
 	</para>
@@ -676,7 +676,7 @@ See /usr/share/doc/va-systemimager-x.x.x/ for all documentation.
 
       <listitem>
 	<para>
-	  Install the VA SystemImager client software on your "golden client"
+	  Install the SystemImager client software on your "golden client"
 	  and run the <command>prepareclient</command> command.
 	</para>
 	
@@ -692,8 +692,8 @@ See /usr/share/doc/va-systemimager-x.x.x/ for all documentation.
 [root@imageserver]# bzcat va-systemimager-client-x.x.x.tar.bz2 | tar -x
 [root@imageserver]# cd va-systemimager-client-x.x.x
 [root@imageserver]# ./installclient 
-Install VA SystemImager client? (y/[n]) y
-Ok. Installing VA SystemImager client...
+Install SystemImager client? (y/[n]) y
+Ok. Installing SystemImager client...
 
 Installing files in /usr/share/doc/va-systemimager-x.x.x/
 
@@ -711,7 +711,7 @@ Be sure to run "prepareclient" before you run "getimage" on the imageserver.
       <programlisting>
 [root@imageserver]# <command>prepareclient</command>
 
-Welcome to the VA SystemImager prepareclient command.  This command
+Welcome to the SystemImager prepareclient command.  This command
 may modify the following files to prepare your client for having it's
 image retrieved by the imageserver.  It will also create the 
 /etc/systemimager directory and fill it with information about your 
@@ -728,8 +728,8 @@ extension.
 
 See "prepareclient -help" for command line options.
 
-Prepare client for VA SystemImager? (y/[n]): y
-Ok. Preparing client for VA SystemImager...
+Prepare client for SystemImager? (y/[n]): y
+Ok. Preparing client for SystemImager...
 
 Creating /tmp/rsyncd.conf ...
 Starting or re-starting rsync as a daemon.....done!
@@ -889,7 +889,7 @@ Would you like to run the "addclients" utility now? (y/[n]): n
 	  <programlisting>
 [root@imageserver]# addclients
 
-Welcome to the VA SystemImager "addclients" utility  
+Welcome to the SystemImager "addclients" utility  
 ---------------------------------------------------
 
 This utility has 3 sections.  
@@ -1072,7 +1072,7 @@ Press &lt;Enter> to continue...
 	  <programlisting>
 [root@imageserver]# makedhcpserver
 
-Welcome to the VA SystemImager "makedhcpserver" command.  This command
+Welcome to the SystemImager "makedhcpserver" command.  This command
 will prepare this computer to be a DHCP server by creating the 
 following file:
 
@@ -1178,7 +1178,7 @@ You may edit the file directly if you need to change any of the values.
 &lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 #
-# "VA SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley &lt;brian@valinux.com>
+# "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley &lt;brian@systemimager.org>
 #
 # This file is: /local.cfg
 #
@@ -1848,7 +1848,7 @@ To:     "rsync --bwlimit=10000 -av --numeric-ids $IMAGESERVER::web_server_image_
       <title>When making the autoinstalldiskette, my system gives me an error 
 	involving "dd" or "mount".</title>
       <para>
-	You are using a pre v0.19 version of VA SystemImager.  Please download
+	You are using a pre v0.19 version of SystemImager.  Please download
 	the latest version from <ulink url="http://systemimager.org/"></ulink>.
       </para>
       <para>
@@ -1879,7 +1879,7 @@ To:     "rsync --bwlimit=10000 -av --numeric-ids $IMAGESERVER::web_server_image_
 	when I do an ifconfig eth0 it has an IP address.
       </title>
       <para>
-	Are you using a pre 1.0 version of VA SystemImager?  If so, please
+	Are you using a pre 1.0 version of SystemImager?  If so, please
         upgrade.
       </para>
       <para>
@@ -1896,7 +1896,7 @@ To:     "rsync --bwlimit=10000 -av --numeric-ids $IMAGESERVER::web_server_image_
 	switch and is giving up before it should.
       </para>
       <para>
-	Be sure that you are using the latest version of VA SystemImager and
+	Be sure that you are using the latest version of SystemImager and
 	that you are using the autoinstalldiskette image that comes with that
 	version.  Note that the version numbers may not match.  See the 
 	<filename>VERSION</filename> file.
@@ -1957,7 +1957,7 @@ To:     "rsync --bwlimit=10000 -av --numeric-ids $IMAGESERVER::web_server_image_
 	  Michael S. Fischer, &lt;michael@auctionwatch.com&gt;
 	  Last modified: 01/04/26 19:20:27
 
-	  The current version of VA SystemImager as of this writing (1.4.1)
+	  The current version of SystemImager as of this writing (1.4.1)
 	  does not support PXE booting of clients with serial console support.
 	  This document describes how to rebuild the kernel and initrd such
 	  that serial console support is possible.
@@ -2071,7 +2071,7 @@ To:     "rsync --bwlimit=10000 -av --numeric-ids $IMAGESERVER::web_server_image_
       </para>
       <para>
 	<ulink url="http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/~checkout~/systemimager/systemimager/">
-	  VA SystemImager CVS Repository
+	  SystemImager CVS Repository
 	</ulink>
       </para>
       <para>
@@ -2252,7 +2252,7 @@ To:     "rsync --bwlimit=10000 -av --numeric-ids $IMAGESERVER::web_server_image_
     <sect2 id=FAQUpgrade>
       <title>How do I upgrade to a new version?</title>
       <para>
-	If you installed VA SystemImager as of 1.0 or later, you can simply 
+	If you installed SystemImager as of 1.0 or later, you can simply 
 	install the new version on top.
       </para>
       <para>
@@ -2266,7 +2266,7 @@ To:     "rsync --bwlimit=10000 -av --numeric-ids $IMAGESERVER::web_server_image_
 	Currently the recommended method is to move your images directory out
 	of the systemimager directory hierarchy, back up your 
 	<filename>/etc/rsyncd.conf</filename> file and any other configuration 
-	files you may have changed.  Then install VA SystemImager as if you
+	files you may have changed.  Then install SystemImager as if you
 	were installing it for the first time, after which you can move your
 	images directory and <filename>/etc/rsyncd.conf</filename> file back.
       </para>
@@ -2284,7 +2284,7 @@ To:     "rsync --bwlimit=10000 -av --numeric-ids $IMAGESERVER::web_server_image_
 	want to have to manually enter my 1000 mac addresses.  What can I do?
       </title>
       <para>
-	VA SystemImager comes with the <command>makedhcpstatic</command> utility.  
+	SystemImager comes with the <command>makedhcpstatic</command> utility.  
 	As you boot your client systems, the DHCP server will assign addresses 
 	sequentially.  By initially booting your systems in the order you want 
 	them to receive their IP addresses, you can ensure that they get the IP 
@@ -2322,7 +2322,7 @@ To:     "rsync --bwlimit=10000 -av --numeric-ids $IMAGESERVER::web_server_image_
    </para>
 
    <table frame="all">
-    <title>VA SystemImager Performance Statistics</title>
+    <title>SystemImager Performance Statistics</title>
         <tgroup cols="4">
           <colspec colname="column1">
           <colspec colname="column2">
@@ -2429,11 +2429,11 @@ To:     "rsync --bwlimit=10000 -av --numeric-ids $IMAGESERVER::web_server_image_
    <para>
     Another way of stating the question or a slight variation may be as 
     follows. We are in the process of building a new "front-end" server for 
-    our Linux cluster.  We'd like to try using VA SystemImager as our node 
+    our Linux cluster.  We'd like to try using SystemImager as our node 
     cloning software if possible.
    </para>
    <para>
-    I've read through the VA SystemImager FAQ and found the following:
+    I've read through the SystemImager FAQ and found the following:
     <blockquote> 
      <para>
      All of the clients for a particular image should have an identical
@@ -2553,7 +2553,7 @@ the following command on a client that is already partitioned correctly:
   </sect2>
 
   <sect2 id=FAQUpdateSmallSet>
-   <title>How can I use VA SystemImager to update a small set of files? For 
+   <title>How can I use SystemImager to update a small set of files? For 
    instance, I apply a security patch and I want all boxes to reflect 
    that change.</title>
    <para>
@@ -2610,7 +2610,7 @@ the following command on a client that is already partitioned correctly:
   <sect2 id=FAQBaseOn>
    <title>What other software is this based on?</title>
    <para>
-    VA SystemImager is based on <command>rsync(1)</command> and also makes
+    SystemImager is based on <command>rsync(1)</command> and also makes
     use of:
     <ItemizedList>
      <ListItem><para><command>busybox(1)</command></para></ListItem>

@@ -1,13 +1,14 @@
 #
-# "VA SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@valinux.com> 
+# "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org> 
 #
 #   $Id$
 #
 #   Written by Dann Frazier <dannf@ldl.fc.hp.com>
 #
+#   Others who have contributed to this code:
+#     Brian Finley <brian@systemimager.org>
 #
-# HEY!
-# this Makefile isn't yet fully functional
+#
 #
 # Editing this file:
 #   When adding a rule to this makefile, you should also add a properly
@@ -425,7 +426,16 @@ help_all:
 #@helpless:
 #@  pipes the output of 'make help' through less
 #@ 
-install: help
+install: 
+	@echo 'To install the server, type:'
+	@echo '  "make install_server_all"'
+	@echo ''
+	@echo 'To install the client, type:'
+	@echo '  "make install_client_all"'
+	@echo ''
+	@echo 'Try "make help" for more options.'
+	@echo ''
+
 helpless:
 	$(MAKE) help | less
 

@@ -9,8 +9,8 @@ Package: systemimager-server
 Architecture: all
 Depends: debianutils (>= 1.7), dhcp, dosfstools, perl5, rsync, syslinux, systemimager-kernel-i386 (>= 1.5.0), systemimager-initrd-i386 (>= 1.5.0) | systemimager-initrd-dkf-i386 (>= 1.5.0), systemimager-bin-i386 (>= 1.5.0), systemimager-common
 Recommends: mkisofs
-Description: VA SystemImager Image-Server
- VA SystemImager is a set of utilities for installing GNU/Linux images to
+Description: SystemImager Image-Server
+ SystemImager is a set of utilities for installing GNU/Linux images to
  clients machines over the network.  Images are stored in flat files on the
  server, making updates easy.  rsync is used for transfers, making updates
  efficient.
@@ -18,8 +18,8 @@ Description: VA SystemImager Image-Server
 Package: systemimager-client
 Architecture: all
 Depends: perl5, rsync, systemimager-common
-Description: VA SystemImager client side utilities
- VA SystemImager is a set of utilities for installing GNU/Linux images to
+Description: SystemImager client side utilities
+ SystemImager is a set of utilities for installing GNU/Linux images to
  clients machines over the network.  Images are stored in flat files on the
  server, making updates easy.  rsync is used for transfers, making updates
  efficient.
@@ -30,8 +30,8 @@ Description: VA SystemImager client side utilities
 Package: systemimager-common
 Architecture: all
 Depends: perl5, rsync
-Description: VA SystemImager client side utilities
- VA SystemImager is a set of utilities for installing GNU/Linux images to
+Description: SystemImager client side utilities
+ SystemImager is a set of utilities for installing GNU/Linux images to
  clients machines over the network.  Images are stored in flat files on the
  server, making updates easy.  rsync is used for transfers, making updates
  efficient.
@@ -41,8 +41,8 @@ Description: VA SystemImager client side utilities
 Package: systemimager-kernel-i386
 Architecture: all
 Suggests: systemimager-server
-Description: VA SystemImager kernel for client nodes
- VA SystemImager is a set of utilities for installing GNU/Linux images to
+Description: SystemImager kernel for client nodes
+ SystemImager is a set of utilities for installing GNU/Linux images to
  clients machines over the network.  Images are stored in flat files on the
  server, making updates easy.  rsync is used for transfers, making updates
  efficient.
@@ -54,8 +54,8 @@ Package: systemimager-initrd-dkf-i386
 Architecture: all
 Suggests: systemimager-server
 Conflicts: systemimager-initrd-i386
-Description: VA SystemImager unofficial ramdisk for client nodes
- VA SystemImager is a set of utilities for installing GNU/Linux images to
+Description: SystemImager unofficial ramdisk for client nodes
+ SystemImager is a set of utilities for installing GNU/Linux images to
  clients machines over the network.  Images are stored in flat files on the
  server, making updates easy.  rsync is used for transfers, making updates
  efficient.
@@ -70,8 +70,8 @@ Package: systemimager-initrd-i386
 Architecture: all
 Conflicts: systemimager-initrd-dkf-i386
 Suggests: systemimager-server
-Description: VA SystemImager official ramdisk for client nodes
- VA SystemImager is a set of utilities for installing GNU/Linux images to
+Description: SystemImager official ramdisk for client nodes
+ SystemImager is a set of utilities for installing GNU/Linux images to
  clients machines over the network.  Images are stored in flat files on the
  server, making updates easy.  rsync is used for transfers, making updates
  efficient.
@@ -84,8 +84,8 @@ Description: VA SystemImager official ramdisk for client nodes
 Package: systemimager-bin-i386
 Architecture: all
 Suggests: systemimager-server
-Description: VA SystemImager ramdisk for client nodes
- VA SystemImager is a set of utilities for installing GNU/Linux images to
+Description: SystemImager ramdisk for client nodes
+ SystemImager is a set of utilities for installing GNU/Linux images to
  clients machines over the network.  Images are stored in flat files on the
  server, making updates easy.  rsync is used for transfers, making updates
  efficient.
@@ -97,10 +97,10 @@ Description: VA SystemImager ramdisk for client nodes
 Package: systemimager-doc
 Architecture: all
 Suggests: systemimager-server
-Description: VA SystemImager ramdisk for client nodes
- VA SystemImager is a set of utilities for installing GNU/Linux images to
+Description: SystemImager ramdisk for client nodes
+ SystemImager is a set of utilities for installing GNU/Linux images to
  clients machines over the network.  Images are stored in flat files on the
  server, making updates easy.  rsync is used for transfers, making updates
  efficient.
  .
- This package contains documentation for VA SystemImager
+ This package contains documentation for SystemImager

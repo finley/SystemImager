@@ -1,5 +1,5 @@
 #
-# "VA SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>
+# "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>
 #
 #   $Id$
 #
@@ -142,7 +142,7 @@ o Verify that the kernel and initrd.gz actually exist.  Suggested by
 
 
 -----------------------------------------------------------------------
-VA SystemImager-1.4.1 2001.04.20
+SystemImager-1.4.1 2001.04.20
 -----------------------------------------------------------------------
 
 addclients
@@ -196,7 +196,7 @@ o Verify that the kernel and initrd.gz actually exist.  Suggested by
 
 
 -----------------------------------------------------------------------
-VA SystemImager-1.4.0 2001.03.04
+SystemImager-1.4.0 2001.03.04
 -----------------------------------------------------------------------
 
 install 
@@ -362,7 +362,7 @@ o Test for either superformat or fdformat.  Use superformat if both exist.
 
 
 -----------------------------------------------------------------------
-VA SystemImager-1.3.0 2000.10.04
+SystemImager-1.3.0 2000.10.04
 -----------------------------------------------------------------------
 - autoinstall kernel -- Patched with:
                         - http://people.redhat.com/mingo/raid-patches/raid-2.2.17-A0
@@ -388,7 +388,7 @@ VA SystemImager-1.3.0 2000.10.04
               properly.  This could potentially result in an 
               improperly created autoinstall script.
 
-VA SystemImager-1.2 2000.09.25
+SystemImager-1.2 2000.09.25
 - makedist -- Only used by me really (Brian).  Now automatically sets the
               version number in each of the appropriate files.
 - prepareclient -- No longer messes with /etc/rsyncd.conf.  Now uses a
@@ -456,7 +456,7 @@ VA SystemImager-1.2 2000.09.25
               Hopefully soon we will be able to detect existing settings and 
               re-create those by partition.
 
-VA SystemImager-1.1 2000.05.26
+SystemImager-1.1 2000.05.26
 - updateclient -- Fixed a bug.  root --> / was not becoming the default 
   if the -directory option was not used and updateclient was exiting 
   quietly.  Just an if/then/else issue.
@@ -483,7 +483,7 @@ VA SystemImager-1.1 2000.05.26
   an rsync daemon running sharing things you don't want shared.
 - added support for debian.  Let me know how it goes.
 
-VA SystemImager-1.0 2000.05.02
+SystemImager-1.0 2000.05.02
 - The name changed ever so slightly ;)
 - Lots of little things -- bug fixes and what not.  Ease of use stuff.
 - added the "makeautoinstallcd" command.  This allows you to create a 
