@@ -108,15 +108,42 @@ sub _client_image {
 
 sub addclient {
     my ($name, $ip, $image) = @_;
+    if(!_addclient_link($name, $image)) {
+        carp("Couldn't add link for client $name to image $image");
+        return undef;
+    }
+    if(!_addclient_hosts($name, $ip)) {
+        _removeclient_link($name);
+        carp("Couldn't add client $name to hosts file");
+        return undef;
+    }
+    return 1;
 }
 
 sub _addclient_hosts {
     my ($name, $ip) = @_;
+    my $currentip = _client_ip($name);
+    return 1 if($ip eq $currentip); 
+    
+    my ($shortname, @other) = split(/\./,$name);
+    open(OUT,">>/etc/hosts") or (carp($!), return undef);
+    print OUT "$ip $name";
+    if($shortname ne $name) {
+        print OUT " $shortname";
+    }
+    print OUT "\n";
+    close(OUT) or (carp($!), return undef);
+    return 1;
 }
 
 sub _addclient_link {
     my ($name, $image) = @_;
-    
+    my $currentimage = _client_image($name);
+    return 1 if ($image eq $currentimage);
+
+    my $config = get_config();
+    my $clientlink = $config->autoinstall_script_dir . "/$name.sh";
+    return symlink "$image.master", $clientlink;
 }
 
 sub removeclient {
@@ -129,6 +156,13 @@ sub _removeclient_hosts {
 
 sub _removeclient_link {
     my ($name) = @_;
+    my $config = get_config();
+    my $clientlink = $config->autoinstall_script_dir . "/$name.sh";
+    
+    if(-l $clientlink) {
+        return unlink $clientlink;
+    }
+    return 1;
 }
 
 1;
