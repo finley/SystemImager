@@ -789,7 +789,7 @@ pxelinux_cfg() {
 	fi
     fi
     
-    cp -f ${CONFIG_DIR}/pxelinux.cfg/syslinux.cfg $LINUX_INSTALL/pxelinux.cfg/default
+    cp -f ${CONFIG_DIR}/pxelinux.cfg/syslinux.cfg.localboot $LINUX_INSTALL/pxelinux.cfg/default
     if [ $? -ne 0 ]; then
 	echo "failed."
 	return 1

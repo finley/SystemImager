@@ -221,7 +221,7 @@ install_server:	install_server_man install_configs install_server_libs
 		$(PXE_CONF_DEST)/syslinux.cfg
 	$(SI_INSTALL) -m 644 --backup $(PXE_CONF_SRC)/syslinux.cfg.localboot \
 		$(PXE_CONF_DEST)/syslinux.cfg.localboot
-	$(SI_INSTALL) -m 644 --backup $(PXE_CONF_SRC)/syslinux.cfg \
+	$(SI_INSTALL) -m 644 --backup $(PXE_CONF_SRC)/syslinux.cfg.localboot \
 		$(PXE_CONF_DEST)/default
 
 	$(SI_INSTALL) -d -m 755 $(IMAGEDEST)
