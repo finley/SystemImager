@@ -3,11 +3,14 @@
 #
 # "VA SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com>
 #
+#   Others who have contributed to this code (in alphabetical order):
+#     A.L. Lambert <alambert@epicrealm.com> (credit for the -autoinstall option goes to A.L.)
+#
 # This file is: updateclient
 #
 
 # set version_number
-$version_number="1.1";
+$version_number="1.2";
 
 # declare modules
 use Getopt::Long;
@@ -34,11 +37,13 @@ Options: (options can be presented in any order)
  -image IMAGENAME         Image from which the client should be updated.
  -directory DIRECTORY     Absolute path of directory to be updated.
                            (defaults to "/")
+ -nolilo                  Don't run lilo after update completes.
+                           (lilo is always run unless specified)
+ -autoinstall             Autoinstall this client the next time it
+                           reboots.  (can't be run with -nolilo)
  -listing                 List avaliable images on imageserver.
                            (supercedes and ignores all options 
                             other than --imageserver)
- -nolilo                  Don't run lilo after update completes.
-                           (lilo is always run unless specified)
  -reboot                  Reboot client after update completes.
 
 Download from http://systemimager.org/
@@ -51,6 +56,7 @@ GetOptions( "listing" => \$listing,
             "version" => \$version,
             "reboot" => \$reboot,
             "nolilo" => \$nolilo,
+            "autoinstall" => \$autoinstall,
             "imageserver=s" => \$imageserver,
             "image=s" => \$image,
             "directory=s" => \$directory,
@@ -65,18 +71,22 @@ if($version) { die qq($version_info); }
 # be sure $imageserver name doesn't start with a hyphen
 if($imageserver) {
   $_ = $imageserver;
-  if(/^-/) { die qq(Imageserver name can't start with a hyphen.\n\n$help_info); }
+  if(/^-/) { die "Imageserver name can\'t start with a hyphen.\n\n$help_info"; }
 }
 
 # be sure $image doesn't start with a hyphen
 if($image) {
   $_ = $image;
-  if(/^-/) { die qq(Image name can't start with a hyphen.\n\n$help_info); }
+  if(/^-/) { die "Image name can\'t start with a hyphen.\n\n$help_info"; }
 }
 
-# if usage is bad, print help information
-#if($image /
-unless( ($imageserver and $image) or ($imageserver and $listing) ) { 
+# if name usage is bad, print help information
+unless( ($imageserver and $image) or ($imageserver and $listing) or ($imageserver and $autoinstall) ) { 
+  die qq($help_info);
+}
+
+# -autoinstall and -nolilo conflict
+if($autoinstall and $nolilo) { 
   die qq($help_info);
 }
 
@@ -88,75 +98,126 @@ if($listing) {
   exit $rc >> 8;
 }
 
-# if not run as root, this script will surely fail
+# if not run as root, updateclient will surely fail
 if($< != 0) { die "Must be run as root!\n"; }
 
-# go ahead and do that thing you do
-# set directory to default if not specified on command line
-if(!$directory) {
-  $directory = "/";
-} else {
-  # in case directory doesn't already have one, add a trailing slash
-  # (We could easily test to see if it does, but we've got to normalize multiple
-  #  slashes into one down below anyway...  Same number of functions to execute.)
-  $directory = $directory . "/";
-  
-  # turn multiple slashes "///" into a single slash "/"
-  # (So maybe we don't really have to do this -- things will work with multiple
-  #  slashes.  This is actually done to avoid user consternation when reading
-  #  any output that might include the multiple slashes.)
-  $directory =~ s/\/+/\//g;
-}
+### BEGIN update image section ###
+if ($autoinstall) {
+  # suck down kernel 
+  print qq(Retrieving SystemImager kernel...\n);
+  # if the write fails for some reason (read only filesystem, full filesystem, etc.) rsync will 
+  # not return a proper exit code -- a bug report has been submitted <brian@thefinleys.com>
+  $command = qq(rsync -a $imageserver) . q(::tftpboot/kernel /boot);
+  $rc = 0xffff & system($command);
+  if ($rc != 0) { die "Failed to copy SystemImager kernel to /boot on client!!!\n"; }  
 
-# start with base command
-$command = "rsync -avz";
+  # and initial ram disk image
+  print qq(Retrieving SystemImager initial ramdisk...\n);
+  # if the write fails for some reason (read only filesystem, full filesystem, etc.) rsync will 
+  # not return a proper exit code -- a bug report has been submitted <brian@thefinleys.com>
+  $command = qq(rsync -a $imageserver) . q(::tftpboot/initrd.gz /boot);
+  $rc = 0xffff & system($command);
+  if ($rc != 0) { die "Failed to copy SystemImager initrd.gz file to /boot on client!!!\n"; }  
 
-# get exclusions from /etc/systemimager.exclude
-open(SYSTEMIMAGER_EXCLUDE, "< /etc/systemimager.exclude") or die "Couldn't open /etc/systemimager.exclude for reading: $!\n";
-while (<SYSTEMIMAGER_EXCLUDE>) {
-    if (/^\s*\//) {  # match non commented explicit path
+  ### BEGIN lilo.conf file stuff ###
+  $file = "/etc/lilo.conf";
+
+  # test to see if an entry already exists
+  open (LILO_CONF, "< $file") or die "Couldn't open $file for reading: $!\n";
+    while(<LILO_CONF>) {
       chomp;
-      $command = $command . qq( --exclude=$_);
-    }
-}
-close(SYSTEMIMAGER_EXCLUDE);
+      if( /label=systemimager/ ) { 
+        print "SystemImager entry already exists.  Using existing entry...\n";
+        $lilo_entry_exists="true";
+      };
+    };
+  close (LILO_CONF);
 
-# append currently mounted non ext2 filesystems to exclusions list
-open(ETC_MTAB, "< /etc/mtab") or die "Couldn't open /etc/mtab for reading: $!\n";
-while (<ETC_MTAB>) {
-    chomp;
-    @fields = split(/ /, $_);
-    unless( ($fields[2] eq "ext2") or ($fields[1] eq '/proc') or ($fields[1] eq '/dev/pts') ) {
-      $command = $command . qq( --exclude=$fields[1]);
-    }
-}
-close(ETC_MTAB);
-  
-# finalize command
-$command = $command . qq( --delete $imageserver) . q(::) . qq($image$directory $directory);
-  
-# execute command
-print qq(Updating image...\n);
-$rc = 0xffff & system($command);
-if ($rc != 0) {
-    exit $rc >> 8;
-}  
-# lilo
-unless($nolilo) { 
-    print qq(running lilo...\n);
-    $rc = 0xffff & system("/sbin/lilo");
-    if ($rc != 0) {
-	exit $rc >> 8;
-    }  
-}
+  # if not, add one
+  unless ($lilo_entry_exists) {
+    print "Adding SystemImager entry in $file...\n";
+    open (LILO_CONF, ">> $file") or die "Couldn't open $file for writing: $!\n";
+    print LILO_CONF << 'EOF';
+
+image=/boot/kernel
+      label=systemimager
+      initrd=/boot/initrd.gz
+      read-write
+      append="load_ramdisk=1 prompt_ramdisk=0"
+EOF
+    close (LILO_CONF);
+  }
+ 
+  ### END lilo.conf file stuff ###
+
+  # and tell it to use the systemimager kernel on the next boot
+  print qq(running "lilo -D systemimager"...\n);
+  $rc = 0xffff & system("/sbin/lilo -D systemimager");
+  if ($rc != 0) {print "lilo -D systemimager failed!!!\n"; exit $rc >> 8;}  
+      
+} else {
+  # go ahead and do that update thing you do
+  # set directory to default if not specified on command line
+  if(!$directory) {
+    $directory = "/";
+  } else {
+    # in case directory doesn't already have one, add a trailing slash
+    # (We could easily test to see if it does, but we've got to normalize multiple
+    #  slashes into one down below anyway...  Same number of functions to execute.)
+    $directory = $directory . "/";
+
+    # turn multiple slashes "///" into a single slash "/"
+    # (So maybe we don't really have to do this -- things will work with multiple
+    #  slashes.  This is actually done to avoid user consternation when reading
+    #  any output that might include the multiple slashes.)
+    $directory =~ s/\/+/\//g;
+  }
+
+  # start with base command
+  $command = "rsync -av";
+
+  # get exclusions from /etc/systemimager.exclude
+  open(SYSTEMIMAGER_EXCLUDE, "< /etc/systemimager.exclude") or die "Couldn't open /etc/systemimager.exclude for reading: $!\n";
+  while (<SYSTEMIMAGER_EXCLUDE>) {
+      if (/^\s*\//) {  # match non commented explicit path
+	chomp;
+	$command = $command . qq( --exclude=$_);
+      }
+  }
+  close(SYSTEMIMAGER_EXCLUDE);
+
+  # append currently mounted non ext2 filesystems to exclusions list
+  open(ETC_MTAB, "< /etc/mtab") or die "Couldn't open /etc/mtab for reading: $!\n";
+  while (<ETC_MTAB>) {
+      chomp;
+      @fields = split(/ /, $_);
+      unless( ($fields[2] eq "ext2") or ($fields[1] eq '/proc') or ($fields[1] eq '/dev/pts') ) {
+	$command = $command . qq( --exclude=$fields[1]);
+      }
+  }
+  close(ETC_MTAB);
+
+  # finalize command
+  $command = $command . qq( --delete $imageserver) . q(::) . qq($image$directory $directory);
+
+  # execute command
+  print qq(Updating image...\n);
+  $rc = 0xffff & system($command);
+  if ($rc != 0) { exit $rc >> 8; }  
+
+  # lilo
+  unless($nolilo) { 
+      print qq(running lilo...\n);
+      $rc = 0xffff & system("/sbin/lilo");
+      if ($rc != 0) { exit $rc >> 8; }  
+  }
+} ### END update image section ###
   
 # reboot
 if($reboot) { 
     print qq(rebooting...\n);
     $rc = 0xffff & system("/bin/sleep 10s; /sbin/init 6");
-    if ($rc != 0) {
-	exit $rc >> 8;
-    }  
+    if ($rc != 0) { exit $rc >> 8; }  
 }
 
 exit 0;
