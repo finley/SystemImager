@@ -133,6 +133,7 @@ GetOptions(
     "config-file=s"     => \$auto_install_script_conf,
     "ip-assignment=s"   => \$ip_assignment_method,
     "force"             => \my $force,
+    "update=s"          => \my $update,
     "post-install=s"    => \$post_install,
     "no-listing"        => \$no_listing
 ) || die "$help_info";
@@ -155,6 +156,10 @@ if($version) {
 unless ($image) {
   die "\n$program_name: -image IMAGENAME must be specified.\n$get_help\n\n";
 }
+
+# -update is deprecated -BEF-
+if ($update) 
+    { die "\n$program_name: -update YES/NO is deprecated.  Please use -force.\n$get_help\n\n"; }
 
 # be sure $image doesn't start with a hyphen
 if ($image =~ /^-/) {
