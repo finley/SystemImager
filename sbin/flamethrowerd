@@ -36,6 +36,16 @@ if ( $ft_config->start_flamethrower_daemon() ne "yes" ) {
     exit 0;
 }
 
+# Warn if specified interface doesn't exist.
+my $interface = $ft_config->interface();
+if (( ! -d "/proc/sys/net/ipv4/conf/$interface" ) and ( ! -d "/proc/sys/net/ipv6/conf/$interface" )) {
+    print STDERR "\n\n";
+    print STDERR "FATAL:  Interface $interface, as specified in your flamethrowerd.conf file,\n";
+    print STDERR "        does not appear to be configured on this machine.\n";
+    print STDERR "\n";
+    exit 1;
+}
+
 my $file = "udp-sender";
 unless( SystemImager::Common->which($file,$ENV{PATH}) ){
     print ("Couldn't find $file in path: $ENV{PATH}\n");
