@@ -15,20 +15,44 @@
 #   o Brian Finley, Dann Frazier, Sean Dague, and Curtis Zinzilieta may
 #     modify this file as is appropriate.
 
-o update ERRATA
-o update VERSION
-o test with ext3
-o test with reiserfs
-o test with software RAID
-o test with DAC960 HW RAID
-o test install from floppy
-o test install from floppy with local.cfg
-o test install from hard drive
-o test install from hard drive with local.cfg
-o test ssh install
-o test getimage -ssh-user
-o test getimage -ssh-user with both machines firewalled except for ssh
+Files to Update:
+  _ ERRATA
+  _ VERSION
+  _ CHANGE.LOG
+  _ CREDITS
 
+----------------------------------------
+Tests (for each supported architecture)
+----------------------------------------
+Clients
+  o get and autoinstall an image containing the following filesystems:
+    _ ext3
+    _ reiserfs
+  _ get and autoinstall an image with software RAID
+  _ get and autoinstall an image with DAC960 HW RAID
+  _ autoinstall an image using DHCP, booting from a floppy
+  _ autoinstall an image using DHCP, booting from a harddisk
+  _ autoinstall an image using local.cfg, booting from a floppy
+  _ autoinstall an image using local.cfg, booting from a harddisk
+  _ autoinstall an image over ssh
+  _ get an image over ssh
+  _ get an image over ssh w/ both machines firewalled except for ssh
+
+Distros
+  _ get and autoinstall an image with the most recent stable RedHat release
+  _ get and autoinstall an image with the most recent stable Debian release
+
+Tools
+  o cpimage
+    _ copy an image from a remote image server to the local machine
+  o rmimage
+    _ remove an image
+  o mkbootserver
+    _ create a pxe server, and install a client via pxe
+  o mkautoinstalldiskette
+    _ create a floppy (i386 only)
+  o mkautoinstallcd
+    _ create a cd image
 
 ### Development Releases ###
 o step one
