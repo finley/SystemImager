@@ -3,7 +3,8 @@
 #
 # "VA SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com>
 #
-#   Others who have contributed to this code:
+#   Others who have contributed to this code (in alphabetical order):
+#     Ian McLeod <ian@valinux.com>
 #     Wesley Smith <wessmith@engr.sgi.com>
 #
 # This file is: getimage 
@@ -395,6 +396,8 @@ foreach $disk (@disks)  {
     ### BEGIN partitioning output ###
     $sfdisk_command_part_one = "sfdisk -uS /dev/$disk <<EOF\n";
     $sfdisk_command_part_two = "";
+    @swaps = ( );
+    @ext2s = ( );
 
     # gather up partition information
     open (PARTITIONS, "<$imagedir/etc/partitionschemes/${disk}") || die "Cannot open $imagedir/etc/partitionschemes/$disk for reading\n";
