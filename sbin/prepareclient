@@ -189,7 +189,6 @@ backed up with the $backup_extension extension.
    an rsync daemon will be started using the temporary configuration file
    mentioned above.
    
-XXX bu inetd.conf, change inetd.conf entry, HUP inetd, cp inetd.conf.bak inetd.conf
 See "prepareclient --help" for command line options.
 
 EOF
@@ -294,10 +293,10 @@ EOF
 add_rsync_services();
 
 # comment out rsync entry in inetd.conf if it exists
-remove_rsync_inetd();
+temporarily_disable_rsync_in_inetd();
 
 # get rid of xinetd configuration for rsync if it exits
-remove_rsync_xinetd();
+temporarily_disable_rsync_in_xinetd();
 
 # Collect all the disk information
 my $disks = collect_disks();
@@ -550,7 +549,7 @@ sub which_partition_tool {
 }
 
 
-sub remove_rsync_xinetd {
+sub temporarily_disable_rsync_in_xinetd {
     # this is the trouble file in an xinted environment
     my $file = "/etc/xinetd.d/rsync";
     if(-e $file) {
@@ -575,7 +574,7 @@ sub remove_rsync_xinetd {
     return 1;
 }
 
-sub remove_rsync_inetd {
+sub temporarily_disable_rsync_in_inetd {
     my $file = "/etc/inetd.conf";
     my $rsyncfound = 0;
     my $inetdcontents = "";
