@@ -406,17 +406,31 @@ unless($update_script eq "yes") { exit 0; }
 ### END Overwrite $image.master? ###
 
 ### BEGIN What kind of Linux are you? ###
-if ( -d "$imagedir/etc/sysconfig/" ) {
-   # then we are RedHat based
-   $distro = "RedHat"
-} else {
-   # you must be debian :)
-   $distro = "debian"
-}
+$file="$imagedir/etc/issue";
+open(FILE, "< $file") or die "$program_name: Couldn't open $file for reading: $!\n";
+    while (<FILE>)
+    {
+        if ((/Debian GNU/) and (/2\.1/))
+	{
+	    $distro = "debian_linux_2.1";
+	}
+	elsif ((/Debian GNU/) and (/2\.2/))
+	{
+	    $distro = "debian_linux_2.2";
+	}
+	elsif (/Red Hat Linux release 7\.0/)
+	{
+	    $distro = "red_hat_linux";
+	}
+        elsif ( -d "$imagedir/etc/sysconfig/" ) {
+            $distro = "red_hat_linux";
+        }
+    }
+close(FILE);
 ### END What kind of Linux are you? ###
 
 ### BEGIN Got NIS? ###
-if ( $distro eq "RedHat" ) {
+if ( $distro eq "red_hat_linux" ) {
    $file="$imagedir/etc/sysconfig/network";
    open (NETWORK, "< $file") or die "$program_name: Couldn't open $file for reading: $!\n";
    while (<NETWORK>) {
@@ -981,7 +995,7 @@ print MASTER_SCRIPT "echo \$image > /a/etc/systemimager/IMAGE_LAST_SYNCED_TO\n\n
 unless($ip_assignment_method eq "replicant") { 
 
 ### BEGIN RedHat ###
-if ($distro eq "RedHat") { 
+if ($distro eq "red_hat_linux") { 
    print MASTER_SCRIPT << 'EOF';
 # set host specific information
 echo NETWORKING=yes > /a/etc/sysconfig/network
@@ -1044,8 +1058,59 @@ EOF
 }
 ### END RedHat ###
 
-### BEGIN debian ###
-if ($distro eq "debian") { 
+### BEGIN debian_linux_2.2 ###
+if ($distro eq "debian_linux_2.2")
+{ 
+   if ($ip_assignment_method eq "static")
+   { 
+   print MASTER_SCRIPT << 'EOF';
+# Stuff for static IP addressing
+#
+# /etc/hostname
+echo $HOSTNAME > /a/etc/hostname
+
+# /etc/network/interfaces
+echo '# /etc/network/interfaces -- configuration file for ifup(8), ifdown(8)'            > /a/etc/network/interfaces
+echo ''                                                                                  >> /a/etc/network/interfaces
+echo '# The loopback interface'                                                          >> /a/etc/network/interfaces
+echo 'iface lo inet loopback'                                                            >> /a/etc/network/interfaces
+echo ''                                                                                  >> /a/etc/network/interfaces
+echo '# The first network card - this entry was created during the Debian installation'  >> /a/etc/network/interfaces
+echo '# (network, broadcast and gateway are optional)'                                   >> /a/etc/network/interfaces
+echo 'iface eth0 inet static'                                                            >> /a/etc/network/interfaces
+echo "        address $IPADDR"                                                           >> /a/etc/network/interfaces
+echo "        netmask $NETMASK"                                                          >> /a/etc/network/interfaces
+echo "        network $NETWORK"                                                          >> /a/etc/network/interfaces
+echo "        broadcast $BROADCAST"                                                      >> /a/etc/network/interfaces
+echo "        gateway $GATEWAY"                                                          >> /a/etc/network/interfaces
+
+EOF
+   }
+   elsif (($ip_assignment_method eq "dynamic_dhcp") or ($ip_assignment_method eq "static_dhcp"))
+   {
+   print MASTER_SCRIPT << 'EOF';
+# Stuff for IP addressing via DHCP
+#
+# /etc/hostname
+echo $HOSTNAME > /a/etc/hostname
+
+# /etc/network/interfaces
+echo '# /etc/network/interfaces -- configuration file for ifup(8), ifdown(8)'            > /a/etc/network/interfaces
+echo ''                                                                                  >> /a/etc/network/interfaces
+echo '# The loopback interface'                                                          >> /a/etc/network/interfaces
+echo 'iface lo inet loopback'                                                            >> /a/etc/network/interfaces
+echo ''                                                                                  >> /a/etc/network/interfaces
+echo '# The first network card - this entry was created during the Debian installation'  >> /a/etc/network/interfaces
+echo '# (network, broadcast and gateway are optional)'                                   >> /a/etc/network/interfaces
+echo 'iface eth0 inet dhcp'                                                              >> /a/etc/network/interfaces
+
+EOF
+   }
+}
+### END debian_linux_2.2 ###
+
+### BEGIN debian_linux_2.1 ###
+if ($distro eq "debian_linux_2.1") { 
    if ($ip_assignment_method eq "static") { 
    print MASTER_SCRIPT << 'EOF';
 # Stuff for static IP addressing
@@ -1072,7 +1137,9 @@ chmod 755 /a/etc/init.d/network
 
 EOF
 
-   } elsif ($ip_assignment_method eq "dynamic_dhcp") {
+   }
+   elsif (($ip_assignment_method eq "dynamic_dhcp") or ($ip_assignment_method eq "static_dhcp"))
+   {
    print MASTER_SCRIPT << 'EOF';
 # Stuff for IP addressing via DHCP
 #
@@ -1088,7 +1155,7 @@ EOF
 
    }
 }
-### END debian ###
+### END debian_linux_2.1 ###
 
 } ### close curly from: "unless($ip_assignment_method eq "replicant")" above ###
 ### END distribution specific networking stuff ###
