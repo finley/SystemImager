@@ -181,7 +181,6 @@ my $golden_client;
 my $imageserver;
 my $ip_assignment_method;
 my $image;
-my $exclude;
 my $exclude_file;
 my $update_script;
 my $post_install = "beep"; # the default
@@ -199,7 +198,7 @@ GetOptions(
     "image=s"           => \$image,
     "directory=s"       => \$default_image_dir,
     "ip-assignment=s"   => \$ip_assignment_method,
-    "exclude=s"         => \$exclude,
+    "exclude=s"         => \my @excludes,
     "exclude-file=s"    => \$exclude_file,
     "update-script=s"   => \$update_script,
     "post-install=s"    => \$post_install,
@@ -258,8 +257,8 @@ unless ($default_image_dir =~ /^\//) {
   die "\n$program_name: -directory must be an absolute path starting with \"/\".\n$get_help\n\n";
 }
 
-# be sure $exclude is an absolute path starting with /
-if($exclude){
+# be sure each $exclude is an absolute path starting with /
+foreach my $exclude (@excludes){
   unless($exclude =~ /^\//){ 
     die "\n$program_name: -exclude must be an absolute path starting with \"/\".\n$get_help\n\n";
   }
@@ -276,7 +275,7 @@ SystemImager::Server->validate_ip_assignment_option($ip_assignment_method);
 SystemImager::Server->validate_post_install_option($post_install);
 
 # only golden client or server may be set
-if ($exclude and $exclude_file) {
+if (@excludes and $exclude_file) {
   die "\n$program_name: Either use -exclude or -exclude-file but not both.\n$get_help\n\n";
 }
 
@@ -464,9 +463,11 @@ if($source_host) {
       my $mount_point=$1;
       print FINAL_EXCLUDE_FILE "$mount_point/*\n";
     }
-    if($exclude) { 
-      print FINAL_EXCLUDE_FILE "\n# Exclusions from -exclude on the command line.\n";
-      print FINAL_EXCLUDE_FILE "$exclude\n";
+    if(@excludes) { 
+     print FINAL_EXCLUDE_FILE "\n# Exclusions from -exclude on the command line.\n";
+      foreach $exclude (@excludes) {
+        print FINAL_EXCLUDE_FILE "$exclude\n";
+      }
     }
     if($exclude_file) { 
       print FINAL_EXCLUDE_FILE "\n# Exclusions from -exclude-file.\n";
