@@ -2,7 +2,7 @@
 <article id=index>
 
  <artheader>
-    <title>SystemImager v1.6.0 Documentation</title>
+    <title>SystemImager v2.0.0 Documentation</title>
     <pubdate>$Date$</pubdate>
     <author>
       <firstname>Greg</firstname>
@@ -1293,7 +1293,7 @@ Added systemimager *
               <application>SystemImager</application> comes with the
               <command>mkbootserver</command> utility to help configure a
               PXE server.  <command>mkbootserver</command>, is new with the
-	      1.6.0 release, and will likley not work with all PXE clients.  If
+	      2.0.0 release, and will likley not work with all PXE clients.  If
 	      it fails to work with your configuration, please submit a bug
 	      report.
 	    </para>
@@ -2143,7 +2143,7 @@ To:     "rsync --bwlimit=10000 -av --numeric-ids $IMAGESERVER::web_server_image_
     <sect2 id=FAQExcludingStuff>
       <title>How do I exclude files or directories during a getimage?</title>
       <para>
-	As of 1.6.0 there is not support for this.  Look for this feature soon.
+	As of 2.0.0 there is not support for this.  Look for this feature soon.
       </para>
     </sect2>
     <sect2 id=FAQPrepareClient>
