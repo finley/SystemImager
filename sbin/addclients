@@ -97,6 +97,17 @@ print << 'EOF';
 
  -version                   Display version and copyright information.
 
+ -quiet                     Don't ask any questions or print any output
+                            (other than errors). In this mode, no 
+			    warning will be given if the image already 
+			    exists on the server.  
+
+			    NOTE: -quiet implies -yes
+
+ -yes                       Assume an answer of "yes" to all questions.
+                            Allows this command to be run 
+			    non-interactively.
+
  -client HOSTNAME           Base host name of the client(s) to be
                             autoinstalled.  Will be combined with
 			    "-host-range" to derive actual host names.
