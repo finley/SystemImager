@@ -28,7 +28,7 @@ use strict;
 use File::Basename;
 use File::Copy;
 use Carp;
-use SystemImager::Config qw(get_config);
+use SystemImager::Config;
 use base qw(Exporter);
 use vars qw(@EXPORT @EXPORT_OK %EXPORT_TAGS $VERSION);
 
@@ -60,7 +60,6 @@ sub client_info {
 sub listclients {
     my ($image) = @_;
     my @clients;
-    my $config = get_config();
     my $scriptdir = $config->autoinstall_script_dir;
     opendir(IN,$scriptdir) or (carp($!), return undef);
     while(my $file = <IN>) {
@@ -140,7 +139,6 @@ sub _client_exists_link {
 
 sub _client_image {
     my ($name) = @_;
-    my $config = get_config();
     my $image = "";
     my $link = $config->autoinstall_script_dir . "/$name.sh";
     if(-l $link) {
@@ -189,7 +187,6 @@ sub _addclient_link {
     my $currentimage = _client_image($name);
     return 1 if ($image eq $currentimage);
 
-    my $config = get_config();
     my $clientlink = $config->autoinstall_script_dir . "/$name.sh";
     return symlink "$image.master", $clientlink;
 }
@@ -226,7 +223,6 @@ sub _removeclient_hosts {
 
 sub _removeclient_link {
     my ($name) = @_;
-    my $config = get_config();
     my $clientlink = $config->autoinstall_script_dir . "/$name.sh";
     
     if(-l $clientlink) {
@@ -242,7 +238,6 @@ sub _removeclient_link {
 ############################################################
 
 sub _sync_hosts {
-    my $config = get_config();
     my $rsynchosts = $config->autoinstall_script_dir . "/hosts";
     copy("/etc/hosts",$rsynchosts) or (carp($!), return undef);
     return 1;
