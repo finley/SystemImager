@@ -19,6 +19,7 @@ package SystemImager::Client;
 
 use strict;
 use File::Basename;
+use File::Copy;
 use Carp;
 use SystemImager::Config qw(get_config);
 use base qw(Exporter);
@@ -88,7 +89,7 @@ sub _client_ip {
 sub _in {
     my ($item, @array) = @_;
     foreach my $a (@array) {
-        return 1 if($item eq $a) 
+        return 1 if($item eq $a); 
     }
     return undef;
 }
@@ -100,8 +101,8 @@ sub _client_exists_link {
 
 #################################
 #
-#  Not actually sure if we need to look for $name.master here, or if
-#  it would be better somewhere else.
+#  _client_image - this returns the name of the image that the
+#                  client uses to install.
 #
 #################################
 
@@ -148,7 +149,7 @@ sub _addclient_hosts {
     }
     print OUT "\n";
     close(OUT) or (carp($!), return undef);
-    return 1;
+    return _sync_hosts();
 }
 
 sub _addclient_link {
@@ -168,10 +169,20 @@ sub removeclient {
 
 sub _removeclient_hosts {
     my ($name) = @_;
-    
-    carp("I need to be implemented... with locking");
+    open(IN,"</etc/hosts") or (carp($!), return 0);
+    my @lines = <IN>;
+    close(IN);
+    open(OUT,">/etc/hosts") or (carp($!), return 0);
+    foreach my $line (@lines) {
+        if($line =~ /\b$name\b/) {
+            next;
+        } else {
+            print OUT $line;
+        }
+    }
+    close(OUT);
 
-    return 1;
+    return _sync_hosts();
 }
 
 sub _removeclient_link {
@@ -184,5 +195,20 @@ sub _removeclient_link {
     }
     return 1;
 }
+
+############################################################
+#
+#  _sync_hosts - syncs the global hosts file with the rsyncable one
+#
+############################################################
+
+sub _sync_hosts {
+    my $config = get_config();
+    my $rsynchosts = $config->autoinstall_script_dir . "/hosts";
+    copy("/etc/hosts",$rsynchosts) or (carp($!), return undef);
+    return 1;
+}
+
+
 
 1;
