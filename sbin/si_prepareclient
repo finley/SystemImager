@@ -12,6 +12,8 @@
 #   - add '--server' option
 #   2004.06.01 Brian Elliott Finley
 #   - set rsyncd.conf's host_allow to _not_ include localhost
+#   2004.10.12  Brian Elliott Finley
+#   - prefer parted over sfdisk, unless i386.  was failing on ppc.
 #
 #
 #   Function: si_prepareclient is used to, well, prepare a client to have 
@@ -570,36 +572,54 @@ sub create_auto_install_script_conf {
     return 1;
 }
 
+#
+# Usage: my $arch = get_arch();
+#
+sub get_arch {
+	my $arch = (uname())[4];
+	$arch =~ s/i.86/i386/;
+	return $arch;
+}
+
 
 # Usage:
 # my $partition_tool = which_partition_tool();
 # my $partition_tool = which_partition_tool("preferred_tool");
 sub which_partition_tool {
 
-    my $preferred_tool = shift;
-    my $partition_tool;
-
-    # Check to see if preferred tool is available.
-    if ( ($preferred_tool) and (which("$preferred_tool")) ) {
-
-        $partition_tool = $preferred_tool;
-
-    } else {
-
-        # Determine which partition tool is available.  Preference is sfdisk. -BEF-
-        if (which('sfdisk')) {
-          $partition_tool="sfdisk";
-        } elsif (which('parted')) { 
-          $partition_tool="parted";
-        } else {
-          print "FATAL: I can't find an appropriate partition tool.  Please install \"parted\",\n";
-          print "       or better yet, \"sfdisk\", which is my favorite!\n";
-          exit 1;
+        my $preferred_tool = shift;
+        my $partition_tool;
+        
+        # 
+        # We prefer sfdisk on x86, for everything else we prefer parted. -BEF-
+        #
+        my $arch = get_arch();
+        if($arch eq "i386") {
+                $preferred_tool = 'sfdisk';
         }
+        
+        # Check to see if preferred tool is available.
+        if ( ($preferred_tool) and (which("$preferred_tool")) ) {
+                $partition_tool = $preferred_tool;
+        
+        } else {
+        
+                # Determine which partition tool is available.  Preference is sfdisk. -BEF-
+                if (which('parted')) { 
+                        $partition_tool="parted";
 
-    }
+                } elsif (which('sfdisk')) {
+                        $partition_tool="sfdisk";
 
-    return $partition_tool;
+                } else {
+                        print qq(FATAL: I can't find an appropriate partition tool.  Please install "parted"\n);
+                        print qq(       or "sfdisk", depending on what's appropriate for your architecture!\n);
+                        exit 1;
+                }
+        
+        }
+        
+        return $partition_tool;
 }
 
 
