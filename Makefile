@@ -349,23 +349,17 @@ install_binaries:	install_kernel initrd_install \
 
 ################################################################################
 #
-#	systemimager_ssh_tarball
+#	ssh_tarball
 #
 PHONY += ssh_tarball
-ssh_tarball:
-	@echo ''
-	@echo 'Please use "make WITH_SSH=1 systemimager_ssh_tarball".'
-	@echo ''
-
-PHONY += systemimager_ssh_tarball
-systemimager_ssh_tarball:	$(SYSTEMIMAGER_SSH_TARBALL)
+ssh_tarball:	$(SYSTEMIMAGER_SSH_TARBALL)
 
 $(SYSTEMIMAGER_SSH_TARBALL):	$(OPENSSH_BINARIES) \
 								$(OPENSSH_CONF_FILES)
 	
 ifndef WITH_SSH
 	@echo ''
-	@echo 'Please use "make WITH_SSH=1 systemimager_ssh_tarball".'
+	@echo 'Please use "make WITH_SSH=1 ssh_tarball".'
 	@echo ''
 	@exit 1
 endif
@@ -390,22 +384,16 @@ endif
 
 
 PHONY += get_ssh_source
-get_ssh_source:
-	@echo ''
-	@echo 'Please use "make WITH_SSH=1 get_openssh_source".'
-	@echo ''
-
-PHONY += get_openssh_source
-get_openssh_source:	$(OPENSSH_SOURCE)
+get_ssh_source:	$(OPENSSH_SOURCE)
 ifndef WITH_SSH
 	@echo ''
-	@echo 'Please use "make WITH_SSH=1 get_openssh_source".'
+	@echo 'Please use "make WITH_SSH=1 get_ssh_source".'
 	@echo ''
 	@exit 1
 endif
 
-PHONY += install_openssh_tarball
-install_openssh_tarball:	$(SYSTEMIMAGER_SSH_TARBALL)
+PHONY += install_ssh_tarball
+install_ssh_tarball:	$(SYSTEMIMAGER_SSH_TARBALL)
 	$(SI_INSTALL) -d -m 755 $(SSH_BIN_DEST)
 	$(SI_INSTALL) -m 644 $(SYSTEMIMAGER_SSH_TARBALL) $(SSH_BIN_DEST)
 
