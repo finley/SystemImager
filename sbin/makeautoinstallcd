@@ -48,20 +48,11 @@ GetOptions(
             "quiet" => \$quiet 
 ) || die "$help_info";
 
-# this will be our base working directory
-$temp_dir = "/tmp/systemimager.autoinstallcd.temp.dir";
-$temp_file = "/tmp/systemimager.autoinstallcd.temp.dir/boot/vasiboot.img";
-$mount_dir = "$temp_dir/mnt";
-$boot_dir = "$temp_dir/boot";
-
 # if requested, print help information
 if($help) { die "$help_info"; }
 
 # if requested, print version and copyright information
 if($version) { die "$version_info"; }
-
-# if not run as root, this script will surely fail
-unless($< == 0) { die "Must be run as root!\n"; }
 
 # verify that a valid filename was specified
 unless ($iso_file) { die "$help_info"; }
@@ -73,6 +64,25 @@ if($? != 0) {
     } else {
         exit 1;
     }
+}
+
+# if not run as root, this script will surely fail
+unless($< == 0) { die "Must be run as root!\n"; }
+
+# set some variables
+$temp_dir = "/tmp/systemimager.autoinstallcd.temp.dir";
+$temp_file = "$temp_dir/boot/vasiboot.img";
+$mount_dir = "$temp_dir/mnt";
+$boot_dir = "$temp_dir/boot";
+
+# if $iso_file is not an absolute path, get current working directory and pre-pend
+$_ = $iso_file;
+unless (/^\//) {
+	open(CWD, "pwd|");
+        	$working_directory = <CWD>;
+        	chomp $working_directory;
+	close(CWD);
+	$iso_file = "$working_directory/$iso_file";
 }
 
 # create temporary working directory
