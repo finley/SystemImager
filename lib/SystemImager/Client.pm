@@ -3,7 +3,10 @@ package SystemImager::Client;
 #
 # "SystemImager"
 #
-#    $Id$
+#  Copyright (C) 2001-2003 Brian E. Finley <finley@mcs.anl.gov>
+#  Copyright (C) 2001-2002 Sean Dague <sean@dague.net>
+#
+#   $Id$
 #
 #
 #   This program is free software; you can redistribute it and/or modify
@@ -20,9 +23,6 @@ package SystemImager::Client;
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
-#   Sean Dague <sean@dague.net>
-#   $Id$
-#
 
 use strict;
 use File::Basename;
@@ -36,6 +36,8 @@ $VERSION = sprintf("%d.%02d", q$Revision$ =~ /(\d+)\.(\d+)/);
 
 @EXPORT_OK = qw(client_exists client_info addclient removeclient);
 %EXPORT_TAGS = ('all' => [@EXPORT_OK]);
+
+our $config = $SystemImager::Config::config;
 
 ########################################
 #
