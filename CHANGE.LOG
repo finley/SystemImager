@@ -10,140 +10,151 @@ VA SystemImager-1.4.0 2000.xx.xx
 
 install 
 -------
-- Now works with /etc/rc.d/init.d/ or /etc/init.d.
-- The imageserver now runs rsync as a daemon from an init script.  This
+o Now works with /etc/rc.d/init.d/ or /etc/init.d.
+o The imageserver now runs rsync as a daemon from an init script.  This
   is configured automatically at install time.
 
 getimage
 --------
-- now leaves it's mark -> "/etc/systemimager/IMAGE_LAST_SYNCED_TO"
-- added the "replicant" option to the -ip-assignment option.
-- -help and -version now exit with a status of 0.
-- Added support for LABEL=/partition/label format in /etc/fstab.  This
+o now leaves it's mark -> "/etc/systemimager/IMAGE_LAST_SYNCED_TO"
+o added the "replicant" option to the -ip-assignment option.
+o -help and -version now exit with a status of 0.
+o Added support for LABEL=/partition/label format in /etc/fstab.  This
   format is used in new (not upgrades) RedHat 7 installations.
-- Improper usage statements no longer include the entire output from 
+o Improper usage statements no longer include the entire output from 
   the --help option.  In earlier versions this would often run the 
   usage correction statement off the screen.  Still provides a reminder
   to "-help".
-- Now autodetects whether prepareclient left the partition data behind
+o Now autodetects whether prepareclient left the partition data behind
   as "-explicit-geometry" or as megabytes.  If using megabytes, 
   getimage creates the autoinstall script in such a way that client 
   disks don't have to have the same geometry.  They can even be 
   significantly different sizes.  They can easily be much larger than 
   the original master client disks and can even be smaller...  (within 
   reason -- depends on specific partition scheme)
-- Now uses the --numeric-ids rsync option.
-- Fixed a harmless bug that made nasty output when blank lines were in
+o Now uses the --numeric-ids rsync option.
+o Fixed a harmless bug that made nasty output when blank lines were in
   the golden clients /etc/fstab file.  The fix was to tell getimage to
   skip blank lines in the /etc/fstab file.  
 
+systemimager.exclude 
+--------------------
+o added additional exclusions for Debian.  Thanks to Wichert Akkerman
+  for sending these in.
+
 local.cfg
 ---------
-- Now uses IMAGESERVER instead of DHCPSIADDR.  Of course, it is 
+o Now uses IMAGESERVER instead of DHCPSIADDR.  Of course, it is 
   backwards compatible so as not to completely confuse you. ;)
 
 rsyncd.conf
 -----------
-- Change back to using one log file: /var/log/systemimager
+o Change back to using one log file: /var/log/systemimager
 
 afterburner
 -----------
-- Test for inetd and SIGHUP as is appropriate.
-- Test for xinetd and SIGUSR1 as is appropriate.  Thanks to Dann 
+o Test for inetd and SIGHUP as is appropriate.
+o Test for xinetd and SIGUSR1 as is appropriate.  Thanks to Dann 
   Frazier <daniel_frazier@hp.com> for pointing out that xinetd only 
   does a state dump with a SIGHUP and requres a SIGUSR1 to do a soft 
   reconfigure.
-- Now works with /etc/rc.d/init.d/ or /etc/init.d.
+o Now works with /etc/rc.d/init.d/ or /etc/init.d.
 
 updateclient
 ------------
-- now leaves it's mark -> "/etc/systemimager/IMAGE_LAST_SYNCED_TO"
+o now leaves it's mark -> "/etc/systemimager/IMAGE_LAST_SYNCED_TO"
   noting the image the client was last synced to.
-- added the -configure-from DEVICE option.  Only used with -autoinstall.
+o added the -configure-from DEVICE option.  Only used with -autoinstall.
   Stores the network configuration for DEVICE in the /local.cfg file so
   that the same settings will be used during the autoinstall process.
-- -help and -version now exit with a status of 0.
-- Now uses the --numeric-ids rsync option.  Thanks to all who submitted
+o -help and -version now exit with a status of 0.
+o Now uses the --numeric-ids rsync option.  Thanks to all who submitted
   info on this one.  This closes bug #123339.
 
 goldenclient
 ------------
-- Changed phraseology from "master client" to "golden client"
+o Changed phraseology from "master client" to "golden client"
 
 installclient
 -------------
-- /etc/systemimager/ directory is now properly created.  This closes bug
+o /etc/systemimager/ directory is now properly created.  This closes bug
   #123337.  Thanks to James Oakley <joakley@solutioninc.com>.
 
 prepareclient
 -------------
-- -help and -version now exit with a status of 0.
-- Offers to add "127.0.0.1 $hostname" to /etc/hosts.
-- Now defaults to using megabytes to store partition information.  Can
+o -help and -version now exit with a status of 0.
+o Offers to add "127.0.0.1 $hostname" to /etc/hosts.
+o Now defaults to using megabytes to store partition information.  Can
   be told to leave explicit partitioning information for getimage with
   the -explicit-geometry option.
-- What was I thinking in v1.3.0 with the -no-rsyncd option?!?  Don't try
+o What was I thinking in v1.3.0 with the -no-rsyncd option?!?  Don't try
   this, folks.  It would record your imageserver's partition information
   as if it were the client's.
 
 makedhcpstatic
 --------------
-- Automatically send a HUP signal to dhcpd (if running) to make it
+o Automatically send a HUP signal to dhcpd (if running) to make it
   re-read the freshly modified config file.
 
 makedhcpserver
 --------------
-- Now supports specification of an imageserver that is a different
+o Now supports specification of an imageserver that is a different
   machine from the dhcp server.
-- Added patches from John Goebel <jgoebel@valinux.com> to allow for
+o Added patches from John Goebel <jgoebel@valinux.com> to allow for
   other non-systemimager specific advanced options!
 
 autoinstallclient
 -----------------
-- added support for 3c905 
-- added support for 3c59x
-- added support for pcnet32
-- Kernel and patches:
-  - http://www.kernel.org/pub/linux/kernel/v2.2/linux-2.2.17.tar.bz2
-  - ftp://ftp.lugoj.org/pub/reiserfs/devlinux.com/pub/namesys/linux-2.2.17-reiserfs-3.5.27-patch.gz
-  - http://people.redhat.com/mingo/raid-patches/raid-2.2.17-A0
-- Smallerized.  More stuff done by BusyBox.
-- Now using hardlinks for BusyBox.  Thanks for this suggestion go 
+o added support for 3c905 
+o added support for 3c59x
+o added support for pcnet32
+o added support for Alteon AceNIC/3Com 3C985/NetGear GA620 Gigabit
+o added support for 3ware Hardware ATA-RAID (EXPERIMENTAL)
+o Kernel and patches:
+  o http://www.kernel.org/pub/linux/kernel/v2.2/linux-2.2.17.tar.bz2
+  o ftp://ftp.lugoj.org/pub/reiserfs/devlinux.com/pub/namesys/linux-2.2.17-reiserfs-3.5.28-patch.gz
+  o http://www.kernel.org/pub/linux/kernel/people/mingo/raid-patches/raid-2.2.17-A0
+o Smallerized.  More stuff done by BusyBox.
+o Now using hardlinks for BusyBox.  Thanks for this suggestion go 
   to: Rob Latham <rlatham@plogic.com>.
-- Added mawk.  Funky and easily breakable sed stuff can now be done
+o Added mawk.  Funky and easily breakable sed stuff can now be done
   with mawk.
-- Changed to dhclient.  dhclient allows us to try all interfaces for
+o Changed to dhclient.  dhclient allows us to try all interfaces for
   DHCP.  This will solve some instances where a system would boot the 
   autoinstall media off the network, but then couldn't get an IP 
   address for the running OS.  dhclient also allows us to specify the 
   imageserver as seperate from the dhcp server.
-- Bug fix:  Was using POSIX [[:blank:]] in sed statement to find and 
+o Bug fix:  Was using POSIX [[:blank:]] in sed statement to find and 
   change spaces and tabs to single spaces.  Sed version changed and no 
   longer behaved properly.  Spaces work fine with the v1.3.0 client but
   tabs will give you errors.
-- Enforce that the client sleeps 35s before trying to use the network.  
+o Enforce that the client sleeps 35s before trying to use the network.  
   Even if using local.cfg.
 
 autoinstall scripts 
 -------------------
-- Added the -L option to sfdisk.  Recommended by Matthew Marlowe 
+o Added the -L option to sfdisk.  Recommended by Matthew Marlowe 
   <mmarlowe@jalan.com>.
-- Turn on swap space after initializing.  In the past we didn't use the
+o Fixed a bug where autoinstall of clients with reiserfs root partitions
+  fails.  The -notail option must be used, otherwise lilo will complain
+  about a hole in a mapfile and not make the disk bootable.  Thanks to 
+  Matthew Marlowe <mmarlowe@jalan.com> for submitting this bug.
+o Turn on swap space after initializing.  In the past we didn't use the
   swap space at all.  Go ahead and use it to help out in low memory 
   situations.
-- Now uses the --numeric-ids rsync option.
-- Fixed the bit where egrep is used to test for mounted filesystems 
+o Now uses the --numeric-ids rsync option.
+o Fixed the bit where egrep is used to test for mounted filesystems 
   (indicating a running machine that shouldn't be touched).  grep is now
   used and no error messages should be seen.
 
 makeautoinstallcd
 -----------------
-- -help and -version now exit with a status of 0.
+o -help and -version now exit with a status of 0.
 
 makeautoinstalldiskette
 -----------------------
-- -help and -version now exit with a status of 0.
-- Test for either superformat or fdformat.  Use superformat if both exist.
+o -help and -version now exit with a status of 0.
+o Test for either superformat or fdformat.  Use superformat if both exist.
 
 
 -----------------------------------------------------------------------
