@@ -9,6 +9,8 @@
 #   - add record_image_retrieval_time function
 #   2004.06.24 Brian Elliott Finley
 #   - add record_image_retrieved_from function
+#   2004.08.10 Brian Elliott Finley
+#   - change quoting on ia64 append line
 #
 
 package SystemImager::Server;
@@ -1690,24 +1692,24 @@ sub copy_boot_files_to_boot_media {
 # _write_elilo_conf($file, $append_string);
 sub _write_elilo_conf {
 
-    my ($file, $append_string) = @_;
-
-    open(ELILO_CONF,">$file") or croak("Couldn't open $file for writing.");
-
-      print ELILO_CONF "timeout=20\n";
-
-      if ($append_string) { 
-        print ELILO_CONF "append=$append_string\n";
-      }
-
-      print ELILO_CONF "image=kernel\n";
-      print ELILO_CONF "  label=linux\n";
-      print ELILO_CONF "  read-only\n";
-      print ELILO_CONF "  initrd=initrd.img\n";
-      print ELILO_CONF "  root=/dev/ram\n";
-
-    close(ELILO_CONF);
-    return 1;
+        my ($file, $append_string) = @_;
+        
+        open(ELILO_CONF,">$file") or croak("Couldn't open $file for writing.");
+        
+                print ELILO_CONF "timeout=20\n";
+                
+                if ($append_string) { 
+                        print ELILO_CONF qq(append="$append_string"\n);
+                }
+                
+                print ELILO_CONF "image=kernel\n";
+                print ELILO_CONF "  label=linux\n";
+                print ELILO_CONF "  read-only\n";
+                print ELILO_CONF "  initrd=initrd.img\n";
+                print ELILO_CONF "  root=/dev/ram\n";
+        
+        close(ELILO_CONF);
+        return 1;
 }
 
 
