@@ -18,15 +18,9 @@ use lib "USR_PREFIX/lib/systemimager/perl";
 use Getopt::Long;
 use File::Copy;
 use File::Path;
-use AppConfig;
+use SystemImager::Config;
 
 ### BEGIN parse the config file ###
-
-my $config = AppConfig->new(
-    {CREATE => 1}
-);
-
-$config->file('/etc/systemimager/systemimager.conf');
 
 my $tftp_dir = $config->tftp_dir();
 if (!$tftp_dir) { die "TFTP_DIR not defined in the config file."; }
