@@ -20,7 +20,7 @@
 #   directly shouldn't be commented with the '#@' notation - the assumption is
 #   that if you're messing with these rules, you've opened up this file anyway,
 #   so normal comments are fine.
-#  
+
 DESTDIR = 
 
 TEMP_DIR = ./systemimager.initrd.temp.dir
@@ -138,7 +138,7 @@ install_client: install_client_manpages
 
 #@@install_common:
 #@@  install files common to both the server and client
-#@@
+#@@ 
 install_common:	install_common_manpages
 	mkdir -p $(SBIN)
 	$(foreach binary, $(COMMON_BINARIES), \
@@ -146,7 +146,7 @@ install_common:	install_common_manpages
 
 #@@install_binaries:
 #@@  install architecture-dependent files
-#@@
+#@@ 
 install_binaries:	install_raidtools install_reiserfsprogs install_kernel install_initrd
 
 
@@ -154,7 +154,7 @@ install_binaries:	install_raidtools install_reiserfsprogs install_kernel install
 
 #@@install_raidtools:
 #@@  install the raidtools binaries (pulled by some autoinstall clients)
-#@@
+#@@ 
 install_raidtools:	raidtools
 	mkdir -p $(TFTP_BIN_DEST)
 	install -m 555 $(RAIDTOOLS_DIR)/mkraid $(TFTP_BIN_DEST)
@@ -163,7 +163,7 @@ install_raidtools:	raidtools
 
 #@@raidtools:
 #@@  build the raidtools binaries
-#@@
+#@@ 
 raidtools:
 	$(MAKE) $(SRC_DIR)/$(RAIDTOOLS_TARBALL)
 	[ -d $(RAIDTOOLS_DIR) ] || \
@@ -185,14 +185,14 @@ $(SRC_DIR)/$(RAIDTOOLS_TARBALL):
 #@@install_reiserfsprogs:
 #@@  install a statically linked mkreiserfs binary - this is retrieved by
 #@@  autoinstall clients that use the reiser filesystem
-#@@
+#@@ 
 install_reiserfsprogs:	reiserfsprogs
 	mkdir -p $(TFTP_BIN_DEST)
 	install -m 555 $(REISERFSPROGS_DIR)/bin/mkreiserfs $(TFTP_BIN_DEST)
 
 #@@reiserfsprogs:
 #@@  build statically-linked reiserfsprogs	
-#@@
+#@@ 
 reiserfsprogs:	patched_kernel
 	make -C $(REISERFSPROGS_DIR)
 
@@ -202,7 +202,7 @@ reiserfsprogs:	patched_kernel
 #@@install_kernel:
 #@@  install the kernel that autoinstall clients will boot from during
 #@@  autoinstallation
-#@@
+#@@ 
 install_kernel:	kernel
 	mkdir -p $(TFTP_ROOT)
 	cp -a $(LINUX_IMAGE) $(TFTP_ROOT)/kernel
@@ -210,6 +210,7 @@ install_kernel:	kernel
 #@@kernel:
 #@@  build the kernel that autoinstall clients will boot from during
 #@@  autoinstallation
+#@@ 
 kernel:	patched_kernel
 	$(MAKE) -C $(LINUX_SRC) oldconfig dep bzImage
 
@@ -238,17 +239,20 @@ $(SRC_DIR)/$(LINUX_TARBALL):
 #@@install_initrd:
 #@@  install the autoinstall ramdisk - the initial ramdisk used by autoinstall
 #@@  clients when beginning an autoinstall
+#@@ 
 install_initrd:	initrd
 	mkdir -p $(TFTP_ROOT)
 	install -m 644 $(INITRD_DIR)/initrd.gz $(TFTP_ROOT)
 
 #@@initrd:
 #@@  build the autoinstall ramdisk
+#@@ 
 initrd:
 	make -C $(INITRD_DIR)
 
 #@@install_rsync_configs:
 #@@  install the rsync config file and initscript
+#@@ 
 install_rsync_configs:
 	mkdir -p $(ETC)/systemimager
 	install -m 644 etc/rsyncd.conf $(ETC)/systemimager
@@ -261,6 +265,7 @@ install_rsync_configs:
 
 #@@install_manpages
 #@@  install the manpages for the server
+#@@ 
 install_manpages:	manpages
 	mkdir -p $(MAN8)
 	$(foreach binary, $(BINARIES), \
@@ -268,6 +273,7 @@ install_manpages:	manpages
 
 #@@install_client_manpages
 #@@  install the manpages for the client
+#@@ 
 install_client_manpages:	manpages
 	mkdir -p $(MAN8)
 	$(foreach binary, $(CLIENT_BINARIES), \
@@ -275,18 +281,21 @@ install_client_manpages:	manpages
 
 #@@install_common_manpages:
 #@@  installs the manpages that are common to both the server and client
+#@@ 
 install_common_manpages:	manpages
 	mkdir -p $(MAN8)
 	$(foreach binary, $(COMMON_BINARIES), \
 		cp -a $(MANPAGE_DIR)/$(binary).8.gz $(MAN8); )
 #@@manpages
 #@@  builds the man pages from SGML source
+#@@ 
 manpages:
 	$(MAKE) -C $(MANPAGE_DIR)
 ########## END man pages ##########
 
 #@install_docs:
 #@  installs the manual and some examples
+#@ 
 install_docs: docs
 	mkdir -p $(DOC)
 	cp -a $(MANUAL_DIR)/html $(DOC)
@@ -296,6 +305,7 @@ install_docs: docs
 
 #@docs:
 #@  builds the manual from SGML source
+#@ 
 docs:
 	-cd doc/manual_source && ln -sf ../manual/html/images
 	$(MAKE) -C $(MANUAL_DIR) html ps
@@ -325,11 +335,12 @@ $(AUTOINSTALL_TARBALL):	kernel
 #@get_source:
 #@  pre-download the source to other packages that may be needed by other
 #@  rules
-#@
+#@ 
 get_source:	$(SRC_DIR)/$(LINUX_TARBALL) $(SRC_DIR)/$(RAIDTOOLS_TARBALL)
 
 #@help:
 #@  prints a short description of the rules that are useful in most cases
+#@ 
 help:
 	@echo 'This Makefiles provides targets to build and install the'
 	@echo 'SystemImager packages.  Here are descriptions of the targets'
@@ -340,6 +351,7 @@ help:
 #@help_all:
 #@  prints a short description of all rules, except those that aren't meant
 #@  to be called directly
+#@ 
 help_all:
 	@echo 'This Makefiles provides targets to build and install the'
 	@echo 'SystemImager packages.  Here are descriptions of all the'
@@ -350,16 +362,19 @@ help_all:
 
 #@helpless:
 #@  pipes the output of 'make help' through less
+#@ 
 helpless:
 	$(MAKE) help | less
 
 #@helpless_all:
 #@  pipes the output of 'make help_all' through less
+#@ 
 helpless_all:
 	$(MAKE) help_all | less
 
 #@clean:
 #@  removes object files, docs, editor backup files, etc.
+#@ 
 clean:
 	-$(MAKE) -C $(RAIDTOOLS_DIR) clean
 	-$(MAKE) -C $(REISERFSPROGS_DIR) clean
@@ -376,6 +391,7 @@ clean:
 
 #@distclean:
 #@  same as clean, but also removes downloaded source, stamp files, etc.
+#@ 
 distclean:	clean
 	-rm patched_kernel-stamp
 	-rm -rf $(SRC_DIR)
