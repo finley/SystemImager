@@ -18,15 +18,11 @@ my $dhcpd_lease_file;
 # if not run as root, this script will surely fail
 unless($< == 0) { die "Must be run as root!\n"; }
 
-# read in /etc/dhcpd.conf
-open(FILE, "< /etc/dhcpd.conf") or die "Couldn't open /etc/dhcpd.conf for reading: $!\n";
-    my @dhcpdconf = <FILE>;
-close(FILE);
-
 #
 # Oh where oh where could my leases file be?
 #
 my @lease_files_du_jour = ( 
+    "/var/lib/dhcp3/dhcpd.leases",
     "/var/dhcp/dhcpd.leases",
     "/var/dhcpd/dhcpd.leases",
     "/var/state/dhcp/dhcpd.leases",
@@ -67,6 +63,14 @@ foreach my $file (@dhcpd_conf_file_locations_du_jour) {
         last;
     }
 }
+
+#
+# read in $dhcpd_conf
+#
+open(FILE, "< $dhcpd_conf") or die "Couldn't open $dhcpd_conf for reading: $!\n";
+    my @dhcpdconf = <FILE>;
+close(FILE);
+
 
 #
 # open dhcpd.conf for writing
