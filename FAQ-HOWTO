@@ -1138,3 +1138,63 @@ To start rsyncd in either of these cases, just run the following command
 as root: "rsync --daemon"
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+> This is how the SystemImager initrd libraries are created:
+> - develop and compile software on Debian
+> - copy binaries to a temporary directory
+> - run the mklibs.sh command
+>   - this command creates miniature libraries that contain *only* the
+>     functions needed by the binaries in question
+>   - I have attached the mklibs.sh command and it's readme
+
+This is wonderful information to have, and something i wish i knew a
+few days ago.  Could you add this to the FAQ-HOWTO in case anyone else
+in the future wants to cram another binary?  (how often does one
+suspect the c library when a program doesn't work :> )
+
+> SystemImager used to use 1.722M floppies.  They took a really long time
+> to format, a really long time to boot, and the broke quite often.  It is
+> possible to do what we want in the 1.4M format.  It just requires a
+> little more thinking. ;)
+
+Might i suggest hard links, too.  I found sometimes the initrd has
+enough space, but runs out of inodes.  hardlinking all of busybox's
+utilities back to itself fixed that.
+
+> > For the record, 2.2 and 2.4 work equally well.  2.4 makes bigger
+> > kernels, but 2.2 requires modules, so it's a wash in disk space.  
+
+So, for anyone who wants to repeat this process: (suggestions for
+improvement welcome )
+
+1: find a debian box (preferably one running 'stable': mklibs.sh didn't
+	work so hot under unstable) with libc6-pic installed 
+2: decompress and mount the systemimager initrd. suck all the programs
+   in bin to a working directory on the debian box (like in the message 
+   attached to the previous email). For pcmcia, build and add the
+   'cardmgr' binary.  For other odd situations, add the requisite
+   binary.
+3: run mklibs.sh.  copy the 2 libraries and 2 symlinks to the lib
+   directory on the mounted initrd.  copy any of those 'requisite
+   binaries' to the bin directory on the mounted initrd
+4: EITHER build pcmcia-cs for a 2.2.17 kernel OR build a 2.4 kernel
+   with PCMCIA support compiled in. (squeezing a 2.4 kernel and 
+   modules will be tough, so don't turn on modules )
+5: do a 'makeautoinstalldiskette' and mount the disk once created.
+  replace kernel and initrd.gz on the disk with the new bzImage (call
+  it kernel, for simplicity) and new compressed initrd.
+
+Phew.  
+
+If anyone wants to use systemimager over a PCMCIA device, i have
+posted my floppy image at
+ftp://ftp.plogic.com/pub/misc/systemimager-pcmcia.img 
+
+Thanks for the help, Brian.
+
+==rob
+
+-- 
+[                    Rob Latham <rlatham@plogic.com>                  ]
+[      Paralogic Inc. - www.plogic.com - www.xtreme-machines.com      ]
+

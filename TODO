@@ -11,10 +11,13 @@
 In Progress
 -----------
 Version 1.4.0 specific:
-- <brian@thefinleys.com> - run rsyncd from an init script on the imageserver with no maximum connections
+- <brian@thefinleys.com> - errata.txt on website
+- <brian@thefinleys.com> - run rsyncd from an init script on the imageserver with no maximum 
+                           connections
                            /etc/rc.d/init.d/rsyncd
                            /etc/init.d/rsyncd
 - <brian@thefinleys.com> - work with either /etc/rc.d/init.d/ or /etc/init.d/
+- <brian@thefinleys.com> - use dhclient
 - <brian@thefinleys.com> - Contemplate using "use chroot = yes" in /etc/rsyncd.conf
                            and how this affects --numeric-ids.
 - <brian@thefinleys.com> - fix egrep test thingy on client
@@ -67,6 +70,8 @@ Other stuff:
 - <brian@thefinleys.com> - updateclient -autoinstall -- consider adding config file options?
 - <brian@thefinleys.com> - contemplate using wget to pull stuff?
 - <brian@thefinleys.com> - contemplate using khttpd to show autoinstall client status
+- <brian@thefinleys.com> - command to put mac addresses/host names into /etc/dhcpd.conf
+                           by using broadcast pings, the arp table, and /etc/hosts or dns.
 
 
 
