@@ -1,0 +1,67 @@
+#
+# Spec file for bioswriter-0.1
+#
+Summary: Software to install and update mass numbers of Linux systems.
+Name: systemimager
+Version: 0.24beta3
+Release: 1
+Copyright: GPL
+Group: Administration/Console
+Source: http://download.sourceforge.net/systemimager/systemimager-0.24beta3.tar.gz
+URL: http://systemimager.org/
+Distribution: VA Cluster Toolkit
+Vendor: VA Linux Systems
+Packager: Brian Elliott Finley <brian@valinux.com>
+
+%description
+SystemImager is software that makes the installation of Linux to
+masses of similar machines relatively easy.  It also makes software,
+configuration, and operating system updates easy.  You can even update
+from one release version to another!  SystemImager can even be used for
+content management on web servers.  It is most useful in environments
+where you have large numbers of identical machines.  Some typical
+environments include: Internet server farms, high performance clusters,
+computer labs, or corporate desktop environments where all workstations
+have the same basic hardware configuration.
+
+%prep
+
+%setup
+
+%build
+
+%install
+./install --quiet
+
+%files
+%doc CHANGE.LOG
+%doc COPYING
+%doc CREDITS
+%doc FAQ-HOWTO
+%doc KERNEL.CONFIG
+%doc README
+%doc TODO
+%doc VERSION
+%doc RPM-SPEC-FILE
+/usr/sbin/addclients
+/usr/sbin/getimage
+/usr/sbin/makeautoinstalldiskette
+/usr/sbin/makedhcpserver
+/usr/sbin/makedhcpstatic
+/tftpboot/initrd.gz
+/tftpboot/kernel
+/tftpboot/pxelinux.bin
+/tftpboot/pxelinux.cfg/default
+/tftpboot/pxelinux.cfg/message.txt
+/tftpboot/pxelinux.cfg/syslinux.cfg
+/tftpboot/systemimager/grep
+/tftpboot/systemimager/hosts
+/tftpboot/systemimager/prepareclient
+/tftpboot/systemimager/rsync
+/tftpboot/systemimager/sed
+/tftpboot/systemimager/sfdisk
+/tftpboot/systemimager/systemimager.exclude
+/tftpboot/systemimager/updateclient
+/var/spool/systemimager/images/README
+/var/spool/systemimager/images/DO_NOT_TOUCH_THESE_DIRECTORIES
+/etc/rsyncd.conf
