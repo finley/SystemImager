@@ -1,0 +1,165 @@
+#!/bin/sh
+
+#
+# "VA SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@valinux.com>
+#
+# This file is: installdocs
+#   This script copies all of the documentation to the filesystem.  That is,
+#   everthing that resides in /usr/doc.  This script is run automatically by 
+#   "install" and "installclient" but can be run by itself to install the
+#   documentation only.
+#
+
+
+# do we want a quiet install? and do we want to run afterburner?
+QUIET="false"
+AFTERBURNER="yes"
+for cl_option ; do
+  case $cl_option in
+    -q|-quiet|--quiet ) QUIET="true" ;;
+    -h|-help|--help ) HELP="yes" ;;
+  esac
+done
+
+if [ "$HELP" = "yes" ]
+then
+cat << 'EOF'
+installdocs (part of VA SystemImager) version 1.4.0
+
+Copyright (C) 1999-2001 Brian Elliott Finley <brian@thefinleys.com>
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Usage: installdocs [OPTION]...
+
+Options: (only one option is taken)
+ -h, -help                Display this output.
+ -q, -quiet               Run silently.  Return an exit status of 0 for
+                          success or a non-zero exit status for failure.
+
+Download, report bugs, and make suggestions at:  http://systemimager.org/
+
+EOF
+
+fi
+
+# set some variables
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+PACKAGE_NAME=va-systemimager
+COMMAND_PATH=`dirname $0`
+test "x$COMMAND_PATH" != "x" && cd $COMMAND_PATH
+INSTALL_DIR=`pwd`
+VERSION=`cat $INSTALL_DIR/VERSION`
+test "x$prefix" = "x" && prefix=/usr
+
+# Set ownership properties for "install" based on whether we're doing a relocated install or not
+[ "x$DESTDIR" = "x" ] && OWNERSHIP="-o root -g root" || OWNERSHIP=""
+
+# if not run as root, install will surely fail (unless it's an RPM build)
+if [ "x$DESTDIR" = "x" -a `whoami` != "root" ];then
+    echo "Must be run as root!"
+    exit 1
+fi
+
+# create DESTDIR (DESTDIR is needed for the RPM creation process)
+if [ ! "x$DESTDIR" = "x" ]; then
+    install -d -m 755 $OWNERSHIP $DESTDIR
+    if [ "$?" != "0" ];then
+        echo "I can't create $DESTDIR"
+	exit 1
+    fi
+fi
+
+
+### BEGIN install documentation ###
+if [ "x$DESTDIR" = "x" ]; then
+  [ $QUIET = "false" ] && echo "Installing files in ${prefix}/doc/$PACKAGE_NAME-$VERSION/"
+
+  if [ ! -d $INSTALL_DIR/doc/manual/pdf ]; then
+    echo "Maybe you need to cd into <source>/doc/manual_source/"
+    echo "and run \"make pdf\" first..."
+    exit 1
+  fi
+
+  if [ ! -d $INSTALL_DIR/doc/manual/html ]; then
+    echo "Maybe you need to cd into <source>/doc/manual_source/"
+    echo "and run \"make html\" first..."
+    exit 1
+  fi
+
+  # get rid of old docs
+  rm -fr ${prefix}/doc/$PACKAGE_NAME-*
+
+
+  # doc/
+  install -d -m 755 $OWNERSHIP ${prefix}/doc/$PACKAGE_NAME-$VERSION  || exit 1
+
+  install -m 444 $OWNERSHIP $INSTALL_DIR/CHANGE.LOG	${prefix}/doc/$PACKAGE_NAME-$VERSION/CHANGE.LOG || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/COPYING	${prefix}/doc/$PACKAGE_NAME-$VERSION/COPYING || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/CREDITS	${prefix}/doc/$PACKAGE_NAME-$VERSION/CREDITS || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/ERRATA	${prefix}/doc/$PACKAGE_NAME-$VERSION/ERRATA || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/README	${prefix}/doc/$PACKAGE_NAME-$VERSION/README || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/TODO	${prefix}/doc/$PACKAGE_NAME-$VERSION/TODO || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/VERSION	${prefix}/doc/$PACKAGE_NAME-$VERSION/VERSION || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/afterburner	${prefix}/doc/$PACKAGE_NAME-$VERSION/afterburner || exit 1
+
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/local.cfg	${prefix}/doc/$PACKAGE_NAME-$VERSION/local.cfg || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/autoinstall.kernel.config	${prefix}/doc/$PACKAGE_NAME-$VERSION/autoinstall.kernel.config || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/autoinstall.kernel.support	${prefix}/doc/$PACKAGE_NAME-$VERSION/autoinstall.kernel.support || exit 1
+
+
+  # doc/manual/pdf
+  install -d -m 755 $OWNERSHIP ${prefix}/doc/$PACKAGE_NAME-$VERSION/manual/pdf  || exit 1
+
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/pdf/systemimager-manual.pdf	${prefix}/doc/$PACKAGE_NAME-$VERSION/manual/pdf/systemimager-manual.pdf || exit 1
+
+
+  # doc/manual/html
+  install -d -m 755 $OWNERSHIP ${prefix}/doc/$PACKAGE_NAME-$VERSION/manual/html || exit 1
+
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/index.html	${prefix}/doc/$PACKAGE_NAME-$VERSION/manual/html/index.html || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/intro.html	${prefix}/doc/$PACKAGE_NAME-$VERSION/manual/html/intro.html || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/who.html	${prefix}/doc/$PACKAGE_NAME-$VERSION/manual/html/who.html || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/sect2.html	${prefix}/doc/$PACKAGE_NAME-$VERSION/manual/html/sect2.html || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/sect3.html	${prefix}/doc/$PACKAGE_NAME-$VERSION/manual/html/sect3.html || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/overview.html	${prefix}/doc/$PACKAGE_NAME-$VERSION/manual/html/overview.html || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/how.html	${prefix}/doc/$PACKAGE_NAME-$VERSION/manual/html/how.html || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/installconfigure.html	${prefix}/doc/$PACKAGE_NAME-$VERSION/manual/html/installconfigure.html || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/faq.html	${prefix}/doc/$PACKAGE_NAME-$VERSION/manual/html/faq.html || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/docbook.css	${prefix}/doc/$PACKAGE_NAME-$VERSION/manual/html/docbook.css || exit 1
+
+
+  install -d -m 755 $OWNERSHIP ${prefix}/doc/$PACKAGE_NAME-$VERSION/manual/html/stylesheet-images || exit 1
+
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/stylesheet-images/caution.gif	${prefix}/doc/$PACKAGE_NAME-$VERSION/manual/html/stylesheet-images/caution.gif || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/stylesheet-images/home.gif	${prefix}/doc/$PACKAGE_NAME-$VERSION/manual/html/stylesheet-images/home.gif || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/stylesheet-images/important.gif	${prefix}/doc/$PACKAGE_NAME-$VERSION/manual/html/stylesheet-images/important.gif || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/stylesheet-images/next.gif	${prefix}/doc/$PACKAGE_NAME-$VERSION/manual/html/stylesheet-images/next.gif || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/stylesheet-images/note.gif	${prefix}/doc/$PACKAGE_NAME-$VERSION/manual/html/stylesheet-images/note.gif || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/stylesheet-images/prev.gif	${prefix}/doc/$PACKAGE_NAME-$VERSION/manual/html/stylesheet-images/prev.gif || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/stylesheet-images/tip.gif	${prefix}/doc/$PACKAGE_NAME-$VERSION/manual/html/stylesheet-images/tip.gif || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/stylesheet-images/toc-blank.gif	${prefix}/doc/$PACKAGE_NAME-$VERSION/manual/html/stylesheet-images/toc-blank.gif || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/stylesheet-images/toc-minus.gif	${prefix}/doc/$PACKAGE_NAME-$VERSION/manual/html/stylesheet-images/toc-minus.gif || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/stylesheet-images/toc-plus.gif	${prefix}/doc/$PACKAGE_NAME-$VERSION/manual/html/stylesheet-images/toc-plus.gif || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/stylesheet-images/up.gif	${prefix}/doc/$PACKAGE_NAME-$VERSION/manual/html/stylesheet-images/up.gif || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/stylesheet-images/warning.gif	${prefix}/doc/$PACKAGE_NAME-$VERSION/manual/html/stylesheet-images/warning.gif || exit 1
+
+
+  install -d -m 755 $OWNERSHIP ${prefix}/doc/$PACKAGE_NAME-$VERSION/manual/html/images || exit 1
+
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/images/cluster.eps	${prefix}/doc/$PACKAGE_NAME-$VERSION/manual/html/images/cluster.eps || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/images/si_image1.eps	${prefix}/doc/$PACKAGE_NAME-$VERSION/manual/html/images/si_image1.eps || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/images/si_image1.jpg	${prefix}/doc/$PACKAGE_NAME-$VERSION/manual/html/images/si_image1.jpg || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/images/cluster.jpg	${prefix}/doc/$PACKAGE_NAME-$VERSION/manual/html/images/cluster.jpg || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/images/si_image2.eps	${prefix}/doc/$PACKAGE_NAME-$VERSION/manual/html/images/si_image2.eps || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/images/si_image2.jpg	${prefix}/doc/$PACKAGE_NAME-$VERSION/manual/html/images/si_image2.jpg || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/images/si_image3.jpg	${prefix}/doc/$PACKAGE_NAME-$VERSION/manual/html/images/si_image3.jpg || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/images/si_image3.eps	${prefix}/doc/$PACKAGE_NAME-$VERSION/manual/html/images/si_image3.eps || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/images/si_image4.jpg	${prefix}/doc/$PACKAGE_NAME-$VERSION/manual/html/images/si_image4.jpg || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/images/si_image4.eps	${prefix}/doc/$PACKAGE_NAME-$VERSION/manual/html/images/si_image4.eps || exit 1
+
+
+fi
+### END install documentation ###
+
+exit 0

@@ -395,9 +395,8 @@ fi
 
 
 ### BEGIN binaries ###
-( cd $INSTALL_DIR/tftpstuff/systemimager/ && cp -f prepareclient updateclient $DESTDIR${prefix}/sbin )
-chown root:root $DESTDIR${prefix}/sbin/prepareclient $DESTDIR${prefix}/sbin/updateclient
-chmod 555 $DESTDIR${prefix}/sbin/prepareclient $DESTDIR${prefix}/sbin/updateclient
+install -m 555 $OWNERSHIP $INSTALL_DIR/tftpstuff/systemimager/updateclient        ${DESTDIR}${prefix}/sbin/ || exit 1
+install -m 555 $OWNERSHIP $INSTALL_DIR/tftpstuff/systemimager/prepareclient       ${DESTDIR}${prefix}/sbin/ || exit 1
 ### END binaries ###
 
 ### BEGIN conf files ###
@@ -408,16 +407,18 @@ chown root:root $DESTDIR/etc/systemimager/systemimager.exclude
 chmod 755 $DESTDIR/etc/systemimager/systemimager.exclude
 ### END conf files ###
 
-# Documentation -- copy BIG CASE files
-# (RPM will take care of docs for us)
-if [ "x$DESTDIR" = "x" ]; then
-  rm -fr ${prefix}/doc/$PACKAGE_NAME-*
-  mkdir -p ${prefix}/doc/$PACKAGE_NAME-$VERSION/
-  cp -af $INSTALL_DIR/[A-Z]* ${prefix}/doc/$PACKAGE_NAME-$VERSION/
-  cp -af $INSTALL_DIR/doc/local.cfg ${prefix}/doc/$PACKAGE_NAME-$VERSION/
-  chown -R root:root ${prefix}/doc/$PACKAGE_NAME-$VERSION/
-  chmod -R 444 ${prefix}/doc/$PACKAGE_NAME-$VERSION/
+### BEGIN documentation and what not stuff ###
+if [ "x$DESTDIR" = "x" ]
+then
+  if [ $QUIET = "true" ]
+  then
+    $INSTALL_DIR/installdocs -q || exit 1
+  else
+    $INSTALL_DIR/installdocs || exit 1
+  fi
 fi
+### END documentation and what not stuff ###
+
 
 ### END documentation and what not stuff ###
 
