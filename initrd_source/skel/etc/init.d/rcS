@@ -518,21 +518,26 @@ start_ssh() {
     # create root's ssh dir
     mkdir /root/.ssh
 
+    ############################################################################
+    #
     # If a private key exists, put it in the right place so this autoinstall
     # client can use it to authenticate itself to the imageserver.
-    # (ssh1 style user private key)
-    if [ -e /floppy/identity ]; then
-        PRIVATE_KEY=/root/.ssh/identity
-        cp /floppy/identity $PRIVATE_KEY || shellout
-        chmod 600 $PRIVATE_KEY           || shellout
-    fi
     #
-    # (ssh2 style user private key)
+    # (ssh2 dsa style user private key)
     if [ -e /floppy/id_dsa ]; then
         PRIVATE_KEY=/root/.ssh/id_dsa
         cp /floppy/id_dsa $PRIVATE_KEY || shellout
         chmod 600 $PRIVATE_KEY         || shellout
     fi
+    #
+    # (ssh2 rsa style user private key)
+    if [ -e /floppy/id_rsa ]; then
+        PRIVATE_KEY=/root/.ssh/id_rsa
+        cp /floppy/id_rsa $PRIVATE_KEY || shellout
+        chmod 600 $PRIVATE_KEY         || shellout
+    fi
+    #
+    ############################################################################
 
     # If we have a private key from the media above, go ahead and open secure tunnel
     # to the imageserver and continue with the autoinstall like normal.
@@ -597,13 +602,6 @@ start_ssh() {
         ssh-keygen -t dsa -N "" -f /etc/ssh/ssh_host_dsa_key || shellout
         ssh-keygen -t rsa -N "" -f /etc/ssh/ssh_host_rsa_key || shellout
         
-        ## create necessary ptys, etc. for sshd   #XXX remove if unnecessary -BEF-
-        #mknod /dev/ptmx c 5 2                    || shellout
-        #chmod 666 /dev/ptmx                      || shellout
-        #mkdir /dev/pts                           || shellout
-        #echo "none /dev/pts devpts" > /etc/fstab || shellout
-        #mount /dev/pts                           || shellout
-        
         # if hostname not set, try DNS
         if [ -z $HOSTNAME ]; then
             echo
@@ -628,9 +626,9 @@ start_ssh() {
         echo
         
         # fire up sshd and wait
-        mkdir -p /var/run/sshd; chmod 0755 /var/run/sshd
-        #sshd -f /etc/ssh/sshd_config -h /etc/ssh/ssh_host_key || shellout
-        sshd
+        mkdir -p /var/run/sshd || shellout
+        chmod 0755 /var/run/sshd || shellout
+        sshd || shellout
         
         # Give sshd time to initialize before we yank the parent process
         # rug out from underneath it.
