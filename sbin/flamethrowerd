@@ -10,37 +10,36 @@
 
 use lib "USR_PREFIX/lib/systemimager/perl";
 use strict;
+use File::stat;
 use POSIX qw(setsid);
 use SystemImager::Config;
 use SystemImager::Flamethrower;
 use vars qw($config $ft_config $VERSION);
 
+my $last_time = 0;
+my $conf_file = '/etc/systemimager/flamethrower.conf';
+
 $0 = "flamethrowerd";
 
-my $file = '/etc/systemimager/flamethrower.conf';
-SystemImager::Flamethrower->read_config($file) or die("Couldn't read $file!");
+# Uncomment for debug information
+my $debug = "";
+
+# Read the config file
+read_config_file($conf_file);
 
 # Should we start up?
 if ( $ft_config->start_flamethrower_daemon() ne "yes" ) {
     exit 0;
 }
 
-# Create our directory directory, if necessary.
-my $dir = $ft_config->get("flamethrower_directory_dir");
-if ( ! -e $dir ) {
-    mkdir("$dir", 0755) or die("Couddn't mkdir $dir!");
-}
+print STDOUT "\n" if($debug);
 
-print "\n";
-process_modules();
+#conf_file_updated($conf_file);
+update_directory();
 
-# Uncomment for debug info
-#use Data::Dumper; print Dumper($ft_config);
-
-exit 0; #XXX
+print STDOUT "\n" if($debug);
 
 my $pid_file = "/var/run/flamethrower.pid";
-
 
 ################################################################################
 #
@@ -49,7 +48,9 @@ my $pid_file = "/var/run/flamethrower.pid";
 ################################################################################
 chdir '/'                   or die "Can't chdir to /: $!";
 open STDIN, '/dev/null'     or die "Can't read /dev/null: $!";
-open STDOUT, '>>/dev/null'  or die "Can't write to /dev/null: $!";
+unless($debug) {
+    open STDOUT, '>>/dev/null'  or die "Can't write to /dev/null: $!";
+}
 open STDERR, '>>/dev/null'  or die "Can't write to /dev/null: $!";
 umask 0;
 sub REAPER {
@@ -62,7 +63,7 @@ $SIG{CHLD} = \&REAPER;
 
 ################################################################################
 #
-# Fork the watching process
+# Fork
 #
 ################################################################################
 my $pid;
@@ -77,21 +78,72 @@ if ($pid = fork) {
         print FILE "$$\n";
     close(FILE);
 
-    # Subroutine(s) here XXX
-    #tail_rsync_log_file();
+    # Subroutine(s) here
+    main();
 
 } else {
         die "Can't fork: $!\n";
 }
 
+exit 0; #XXX
 
 ################################################################################
 #
 # BEGIN subroutines 
 #
 
-# Usage: process_modules();
-sub process_modules {
+# Usage: main();
+sub main {
+    print STDOUT "main()" if($debug); 
+    my $quit;
+    until ($quit) {
+        if(conf_file_updated($conf_file)) {
+            #print STDOUT "  Re-read configuration file.\n";
+            read_config_file($conf_file);
+            update_directory();
+        }
+        sleep 2;
+    }
+}
+
+# Usage: read_config_file($file);
+sub read_config_file {
+    my $file = shift;
+    SystemImager::Flamethrower->read_config($file) or die("Couldn't read $file!");
+}
+
+# Usage: if(conf_file_updated($conf_file)) {};
+sub conf_file_updated {
+
+    my $file = shift;
+    #print STDOUT "conf_file_updated($file)\n" if ($debug);
+
+    my $st = stat($file);
+    my $this_time = $st->ctime;
+
+    if($this_time ne $last_time) {
+        print STDOUT "    $file updated\n" if($debug);
+        $last_time = $this_time;
+        return 1;
+    }
+    return undef;
+}
+
+# Usage: update_directory();
+sub update_directory {
+
+    print STDOUT "update_directory()\n" if ($debug);
+
+    ############################################################################
+    #
+    # Create our directory directory, if necessary.
+    #
+    my $dir = $ft_config->get("flamethrower_directory_dir");
+    if ( ! -e $dir ) {
+        mkdir("$dir", 0755) or die("Couddn't mkdir $dir!");
+    }
+    #
+    ############################################################################
 
     ############################################################################
     #
