@@ -424,11 +424,11 @@ fi
 
 if [ $QUIET = "false" ]; then 
    echo "You must run \"prepareclient\" before you can retrieve this clients image."
-   echo -n "Do you want to run \"prepareclient\" now? (y/[n]) "
+   echo -n "Do you want to run \"prepareclient\" now? ([y]/n) "
    read REPLY
    case $REPLY in
-        y|Y|Yes|yes|YES ) prepareclient ;;
-                      * ) echo \"prepareclient\" not run.
+                      * ) prepareclient ;;
+           n|N|No|no|NO ) echo \"prepareclient\" not run.
                           echo Be sure to run \"prepareclient\" before you run \"getimage\" on the imageserver.
                           exit 0
                           ;;
