@@ -119,7 +119,7 @@ $(INITRD_DIR)/build_dir-stamp:	$(SKEL_FILES) $(BUSYBOX_BINARY) \
 	# The following rule gets rid of virtual consoles on 
 	# platforms that don't have them.
 ifeq ($(ARCH),ppc64-iSeries)
-	cat $(INITRD_DIR)/skel/etc/inittab | grep -v vc > \
+	cat $(INITRD_DIR)/skel/etc/inittab | grep -v ^vc\/ > \
 		$(INITRD_BUILD_DIR)/etc/inittab
 endif
 
