@@ -2,12 +2,12 @@ Source: systemimager
 Section: admin
 Priority: optional
 Maintainer: dann frazier <dannf@dannf.org>
-Build-Depends: ash, bin86, bzip2, cygnus-stylesheets, debhelper (>> 2.0.0), dhcp-client, docbook-to-man, e2fsprogs, libc6-pic, mawk, mtools, rsync, snarf, util-linux, wget
+Build-Depends: ash, bin86, bzip2, cygnus-stylesheets, debhelper (>> 2.0.0), dhcp-client, docbook-to-man, e2fsprogs, host, libc6-pic, mawk, mtools, rsync, snarf, util-linux, wget
 Standards-Version: 3.2.1
 
 Package: systemimager-server
 Architecture: all
-Depends: debianutils (>= 1.7), dhcp, dosfstools, perl5, rsync, syslinux, systemimager-kernel-i386 (= ${Source-Version}), systemimager-initrd-i386 (= ${Source-Version}), systemimager-bin-i386 (= ${Source-Version}), systemimager-common
+Depends: debianutils (>= 1.7), dhcp, dosfstools, libappconfig-perl, perl5, rsync, syslinux, systemimager-kernel-i386 (= ${Source-Version}), systemimager-initrd-i386 (= ${Source-Version}), systemimager-bin-i386 (= ${Source-Version}), systemimager-common
 Recommends: mkisofs
 Description: SystemImager Image-Server
  SystemImager is a set of utilities for installing GNU/Linux images to
