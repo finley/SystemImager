@@ -25,51 +25,28 @@ $VERSION="SYSTEMIMAGER_VERSION_STRING";
 # Subroutines in this module include:
 #
 #   _mount_proc_in_image_on_client 
-#
 #   _get_array_of_disks 
-#
 #   _imageexists 
-#
 #   _in_script_add_standard_header_stuff 
-#
 #   _read_partition_info_and_prepare_parted_commands 
-#
 #   _write_elilo_conf
-#
 #   _write_out_mkfs_commands 
-#
 #   _write_out_new_fstab_file 
-#
 #   _write_out_umount_commands 
-#
 #   add2rsyncd 
-#
 #   copy_boot_files_to_boot_media
-#
 #   create_autoinstall_script
-#
 #   create_image_stub 
-#
 #   gen_rsyncd_conf 
-#
 #   get_full_path_to_image_from_rsyncd_conf 
-#
 #   get_image_path 
-#
 #   ip_quad_2_ip_hex
-#
 #   numerically 
-#
 #   remove_boot_file
-#
 #   remove_image_stub 
-#
 #   upgrade_partition_schemes_to_generic_style 
-#
 #   validate_auto_install_script_conf 
-#
 #   validate_ip_assignment_option 
-#
 #   validate_post_install_option 
 #
 ################################################################################
@@ -1151,10 +1128,20 @@ sub _write_out_new_fstab_file {
             print MASTER_SCRIPT qq($mount_dev\t$mp\t$fs);
             if ($options)
                 { print MASTER_SCRIPT qq(\t$options); }
-            if ($dump)
-                { print MASTER_SCRIPT qq(\t$dump); }
-            if ($pass)
-                { print MASTER_SCRIPT qq(\t$pass); }
+
+            if (defined $dump) { 
+                print MASTER_SCRIPT qq(\t$dump);
+
+                # 
+                # If dump don't exist, we certainly don't want to print pass
+                # (it would be treated as if it were dump due to it's 
+                # position), therefore we only print pass if dump is also 
+                # defined.
+                #
+                if (defined $pass)  
+                    { print MASTER_SCRIPT qq(\t$pass); }
+            }
+
             print MASTER_SCRIPT qq(\n);
         }
     }
