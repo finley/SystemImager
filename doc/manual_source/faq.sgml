@@ -111,7 +111,24 @@
     </orderedlist>
    </answer>
   </qandaentry>
-     
+
+  <qandaentry>
+   <question>
+    <para>
+     When I pass options from dhcp (option-100, etc), the client appears
+     to get and try to use a hexadecimal number instead.  How do I make it
+     pass a dotted-quad IP address instead?
+    </para>
+   </question>
+   <answer>
+    <para>
+     The hexadecimal address is actually the hexadecimal representation of
+     your IP address (you can verify this with the gethostip command).
+     This is normally a quoting issue.  Add quotes around the IP address
+     in the configuration file.
+    </para>
+   </answer>
+  </qandaentry>
   <qandaentry>
    <question>
     <para>
