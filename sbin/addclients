@@ -47,16 +47,18 @@ sub ip_dec2ip_quad {
     my $d_dec = bin2dec(substr($ip_bin, 24, 8));
     return join('.', $a_dec, $b_dec, $c_dec, $d_dec);
 }
-### END Subroutines ###
 
+sub numerically { 
+    $a <=> $b;
+}
+### END Subroutines ###
 
 ### BEGIN Program ###
 # if not run as root this script will surely fail
 unless($< == 0) { die "Must be run as root!\n"; }
 
-system("clear");
-
 # give warning
+system("clear");
 print << "EOF";
 
 Welcome to the SystemImager "addclients" utility.  This utility 
@@ -77,11 +79,13 @@ $continue = lc $continue;
 ($continue ne "n") or die "\naddclients: No files were modified.\n";
 
 ### BEGIN main questionnaire ###
+
 $image="";
 $domain_name="";
 $base_host_name="";
 $starting_number="";
 $ending_number="";
+
 $satisfied = "n";
 while ($satisfied ne "y") {
  system("clear");
@@ -192,10 +196,13 @@ if($etc_hosts eq "y") {
 
   ### BEGIN One Subnet at a time ###
   while ( $node_number <= $ending_number ) {
-    $satisfied="n";
+
     $starting_ip="";
     $ending_ip="";
+
+    ### get IP information ###
     # ne "y" is used instead of eq "n" because the dissatisfied response may be something other than "n".
+    $satisfied="n";
     while ($satisfied ne "y") {
       system("clear");
       print "What is the starting IP address for this subnet? [$starting_ip]: ";
@@ -210,42 +217,92 @@ if($etc_hosts eq "y") {
       print "\nAre you satisfied? (y/[n]): ";
       chomp($satisfied=<STDIN>);
     }
-    
-    # read in /etc/hosts and create an IP address/host name hash
-    %etc_hostsbyip = ();
+    ### get IP information ###
+
+    ### read in /etc/hosts and create a hash of lines by ip address and a hash of lines by number
+    %etc_hosts_lines_by_ip = ();
+    %etc_hosts_lines_by_number = ();
+    my $line_number = "1";
+
     open(ETC_HOSTS, "< /etc/hosts") or die "Couldn't open /etc/hosts for reading: $!\n";
     while (<ETC_HOSTS>) {
-      if (/^\s*\d+\.\d+\.\d+\.\d+\s+\w/) {  # match a non-commented IP/hostname entry
-        my @fields = split;
-        $etc_hostsbyip{$fields[0]} = $fields[1];
+      chomp;
+      my @fields = split;
+      my $ip_quad = $fields[0];
+      my $line = $_;
+      if ($ip_quad) {
+        $etc_hosts_lines_by_ip{$ip_quad} = $line;
       }
+      $etc_hosts_lines_by_number{$line_number} = $line;
+      $line_number = $line_number + 1;
     }
     close(ETC_HOSTS);
+    ### read in /etc/hosts and create a hash of lines by ip address and a hash of lines by number
     
-    # create new entries in /etc/hosts
-    open(ETC_HOSTS, ">> /etc/hosts") or die "Couldn't open /etc/hosts for appending: $!\n";
+    ### create a hash of new hostnames by ip address 
+    %new_hostnames_by_ip = ();
     $ip_dec = $starting_ip_dec;
     until ( $ip_dec > $ending_ip_dec ) {
       my $bitwise = $ip_dec & 255;
       if ( $bitwise == "255" ) { $ip_dec = $ip_dec + 2; }
       my $ip_quad = ip_dec2ip_quad($ip_dec);
-      if ( $etc_hosts eq "y" ) {
-        unless( $etc_hostsbyip{$ip_quad} ) { 
-          # add to /etc/hosts
-          print ETC_HOSTS qq($ip_quad    $base_host_name$node_number.$domain_name  $base_host_name$node_number\n);  
-        }
-      }
+      $new_hostnames_by_ip{$ip_quad} = "$base_host_name$node_number";
       $ip_dec = $ip_dec + 1;
       $node_number = $node_number + 1;
-        if ( $node_number > $ending_number ) { last; }
+      if ( $node_number > $ending_number ) { last; }
     }
+    ### create a hash of new hostnames by ip address 
+
+    ### munge new ips and hostname info into %etc_hosts_lines_by_ip
+    my @new_ip_addresses = keys %new_hostnames_by_ip;
+    foreach my $new_ip_address (@new_ip_addresses) {
+        $etc_hosts_lines_by_ip{$new_ip_address} = "$new_ip_address    $new_hostnames_by_ip{$new_ip_address}.$domain_name  $new_hostnames_by_ip{$new_ip_address}";
+    }
+    ### munge new ips and hostname info into %etc_hosts_lines_by_ip
+
+    ### open /etc/hosts for writing
+    open(ETC_HOSTS, "> /etc/hosts") or die "Couldn't open /etc/hosts for writing: $!\n";
+    ### open /etc/hosts for writing
+
+    ### replace entries as necessary in numbered /etc/hosts lines and print numbered lines
+    foreach my $line_number ( sort numerically ( keys %etc_hosts_lines_by_number )) {
+        $_ = $etc_hosts_lines_by_number{$line_number};
+        my @words = split;
+        my $ip_quad = $words[0];
+        if ($ip_quad) {
+            $etc_hosts_lines_by_number{$line_number} = $etc_hosts_lines_by_ip{$ip_quad};
+            delete $etc_hosts_lines_by_ip{$ip_quad};
+        }
+        # print numbered hosts entries
+        print ETC_HOSTS "$etc_hosts_lines_by_number{$line_number}\n";
+    }
+    ### replace entries as necessary in numbered /etc/hosts lines and print numbered lines
+
+    ### create hash of entries by decimal ip (for sorting purposes)
+    %etc_hosts_lines_by_ip_decimal = ();
+    foreach my $ip_quad ( keys %etc_hosts_lines_by_ip ) {
+        $ip_decimal = ip_quad2ip_dec($ip_quad);
+        $etc_hosts_lines_by_ip_decimal{$ip_decimal} = $etc_hosts_lines_by_ip{$ip_quad};
+    }
+    ### create hash of entries by decimal ip (for sorting purposes)
+
+    ### print remaining entries
+    print ETC_HOSTS "\n";
+    foreach my $ip_decimal ( sort( keys %etc_hosts_lines_by_ip_decimal )) {
+        print ETC_HOSTS "$etc_hosts_lines_by_ip_decimal{$ip_decimal}\n";
+    }
+    ### print remaining entries
+
+    ### close /etc/hosts after writing
     close(ETC_HOSTS);
+    ### close /etc/hosts after writing
+
     if ( $etc_hosts eq "y" ) { print "\nYour entries have been added to /etc/hosts.\n"; }
 
     # copy /etc/hosts to /tftpboot/systemimager/hosts to be sure it stays up to date
     system('cp', '-f', '/etc/hosts', '/tftpboot/systemimager/hosts');
-    if($? != 0) { die "Couldn't copy /etc/hosts to /tftpboot/systemimager/hosts!\n",
-                      "Does /etc/tftpboot/systemimager/ exist?"; }
+    if($? != 0) { die "Couldn't copy /etc/hosts to /tftpboot/systemimager/hosts!\n", "Does /etc/tftpboot/systemimager/ exist?"; }
+    # copy /etc/hosts to /tftpboot/systemimager/hosts to be sure it stays up to date
 
     print "\nPress <Enter> to continue...";
     <STDIN>;
