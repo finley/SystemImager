@@ -35,6 +35,11 @@ o Greg and Dann now own the documentation
 Version 1.4.1 specific:
 -----------------------
 
+Volunteer Y
+-----------
+o create man pages for all the commands
+  o base them on the output from <command> --help
+
 Volunteer X
 -----------
 o Redo the website
@@ -206,7 +211,7 @@ Pre-Release Checklist
 - install
 - installclient
 - hardware RAID client
-- prepareclient on RH 6
+- software RAID client, RH7, with LABEL=
 - server RPM install on virgin RH 6 system
 - server RPM install on virgin RH 7 system
 - client RPM install on virgin RH 6 system
@@ -214,6 +219,7 @@ Pre-Release Checklist
 - server deb install on virgin debian system
 - client deb install on virgin debian system
 - dependent packages install properly
+x- prepareclient on RH 6
 x- updateclient -a -s <server> -c eth0
 x- updateclient -a -s <server> -c eth0 on RAID
 x- pryzby's issue
