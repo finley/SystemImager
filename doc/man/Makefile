@@ -1,8 +1,8 @@
 SECTION = 8
 
-compress:	prepareclient.8.gz updateclient.8.gz addclients.8.gz getimage.8.gz makeautoinstallcd.8.gz makeautoinstalldiskette.8.gz makedhcpserver.8.gz makedhcpstatic.8.gz lsimage.8.gz pushupdate.8.gz cpimage.8.gz mvimage.8.gz rmimage.8.gz mkbootserver.8.gz
+compress:	prepareclient.8.gz updateclient.8.gz addclients.8.gz getimage.8.gz mkautoinstallcd.8.gz mkautoinstalldiskette.8.gz mkdhcpserver.8.gz mkdhcpstatic.8.gz lsimage.8.gz pushupdate.8.gz cpimage.8.gz mvimage.8.gz rmimage.8.gz mkbootserver.8.gz
 
-manpages:	prepareclient.8 updateclient.8 addclients.8 getimage.8 makeautoinstallcd.8 makeautoinstalldiskette.8 makedhcpserver.8 makedhcpstatic.8 lsimage.8 pushupdate.8 cpimage.8 mvimage.8 rmimage.8 mkbootserver.8
+manpages:	prepareclient.8 updateclient.8 addclients.8 getimage.8 mkautoinstallcd.8 mkautoinstalldiskette.8 mkdhcpserver.8 mkdhcpstatic.8 lsimage.8 pushupdate.8 cpimage.8 mvimage.8 rmimage.8 mkbootserver.8
 
 prepareclient.8.gz:	prepareclient.8
 	gzip -9 < prepareclient.8 > prepareclient.8.gz
@@ -40,29 +40,29 @@ getimage.8.gz:	getimage.8
 getimage.8:	getimage.sgml
 	docbook-to-man getimage.sgml > getimage.8
 
-makeautoinstallcd.8.gz:	makeautoinstallcd.8
-	gzip -9 < makeautoinstallcd.8 > makeautoinstallcd.8.gz
+mkautoinstallcd.8.gz:	mkautoinstallcd.8
+	gzip -9 < mkautoinstallcd.8 > mkautoinstallcd.8.gz
 
-makeautoinstallcd.8:	makeautoinstallcd.sgml
-	docbook-to-man makeautoinstallcd.sgml > makeautoinstallcd.8
+mkautoinstallcd.8:	mkautoinstallcd.sgml
+	docbook-to-man mkautoinstallcd.sgml > mkautoinstallcd.8
 
-makeautoinstalldiskette.8.gz:	makeautoinstalldiskette.8
-	gzip -9 < makeautoinstalldiskette.8 > makeautoinstalldiskette.8.gz
+mkautoinstalldiskette.8.gz:	mkautoinstalldiskette.8
+	gzip -9 < mkautoinstalldiskette.8 > mkautoinstalldiskette.8.gz
 
-makeautoinstalldiskette.8:	makeautoinstalldiskette.sgml
-	docbook-to-man makeautoinstalldiskette.sgml > makeautoinstalldiskette.8
+mkautoinstalldiskette.8:	mkautoinstalldiskette.sgml
+	docbook-to-man mkautoinstalldiskette.sgml > mkautoinstalldiskette.8
 
-makedhcpstatic.8.gz:	makedhcpstatic.8
-	gzip -9 < makedhcpstatic.8 > makedhcpstatic.8.gz
+mkdhcpstatic.8.gz:	mkdhcpstatic.8
+	gzip -9 < mkdhcpstatic.8 > mkdhcpstatic.8.gz
 
-makedhcpstatic.8:	makedhcpstatic.sgml
-	docbook-to-man makedhcpstatic.sgml > makedhcpstatic.8
+mkdhcpstatic.8:	mkdhcpstatic.sgml
+	docbook-to-man mkdhcpstatic.sgml > mkdhcpstatic.8
 
-makedhcpserver.8.gz:	makedhcpserver.8
-	gzip -9 < makedhcpserver.8 > makedhcpserver.8.gz
+mkdhcpserver.8.gz:	mkdhcpserver.8
+	gzip -9 < mkdhcpserver.8 > mkdhcpserver.8.gz
 
-makedhcpserver.8:	makedhcpserver.sgml
-	docbook-to-man makedhcpserver.sgml > makedhcpserver.8
+mkdhcpserver.8:	mkdhcpserver.sgml
+	docbook-to-man mkdhcpserver.sgml > mkdhcpserver.8
 
 cpimage.8.gz:	cpimage.8
 	gzip -9 < cpimage.8 > cpimage.8.gz
