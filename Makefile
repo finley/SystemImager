@@ -1,3 +1,11 @@
+#
+# "VA SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@valinux.com> 
+#
+# This file: Makefile
+#
+#   Written by Dann Frazier <daniel_frazier@hp.com>
+#
+
 DESTDIR = 
 
 MANUAL_DIR = doc/manual_source
