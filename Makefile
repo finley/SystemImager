@@ -446,18 +446,18 @@ endif
 ### END autoinstall binaries tarball ###
 
 PHONY += source_tarball
-source_tarball:	$(TOPDIR)/tmp/systemimager-source-$(VERSION).tar.bz2
+source_tarball:	$(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
 
-$(TOPDIR)/tmp/systemimager-source-$(VERSION).tar.bz2:
-	mkdir -p tmp/systemimager-source-$(VERSION)
+$(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2:
+	mkdir -p tmp/systemimager-$(VERSION)
 	find . -maxdepth 1 -not -name . -not -name tmp \
-	  -exec cp -a {} tmp/systemimager-source-$(VERSION) \;
-	rm -rf `find tmp/systemimager-source-$(VERSION) -name CVS \
+	  -exec cp -a {} tmp/systemimager-$(VERSION) \;
+	rm -rf `find tmp/systemimager-$(VERSION) -name CVS \
 	         -type d -printf "%p "`
-	$(MAKE) -C $(TOPDIR)/tmp/systemimager-source-$(VERSION) distclean
-	$(MAKE) -C $(TOPDIR)/tmp/systemimager-source-$(VERSION) get_source
-	cd $(TOPDIR)/tmp && tar -ch systemimager-source-$(VERSION) | bzip2 > \
-	  systemimager-source-$(VERSION).tar.bz2
+	$(MAKE) -C $(TOPDIR)/tmp/systemimager-$(VERSION) distclean
+	$(MAKE) -C $(TOPDIR)/tmp/systemimager-$(VERSION) get_source
+	cd $(TOPDIR)/tmp && tar -ch systemimager-$(VERSION) | bzip2 > \
+	  systemimager-$(VERSION).tar.bz2
 	@echo
 	@echo "source tarball has been created in $(TOPDIR)/tmp"
 	@echo

@@ -15,7 +15,7 @@ Version: %ver
 Release: %rel
 Copyright: GPL
 Group: Applications/System
-Source: http://download.sourceforge.net/systemimager/%{name}-%{ver}.tar.gz
+Source: http://download.sourceforge.net/systemimager/%{name}-%{ver}.tar.bz2
 BuildRoot: /tmp/%{name}-%{ver}-root
 BuildArchitectures: noarch
 Packager: dann frazier <dannf@dannf.org>
