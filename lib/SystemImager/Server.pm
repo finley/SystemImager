@@ -198,7 +198,7 @@ sub _read_partition_info_and_prepare_parted_commands {
             my $sum;
             foreach my $m (sort (keys ( %{$config->{disk}->{$dev}->{part}} ))) {
                 $_ = $config->{disk}->{$dev}->{part}{$m}->{size};
-                if ( $_ eq "*" ) { next; }
+                if ( $_ eq "end_of_disk" ) { next; }
                 if (/[[:alpha:]]/) {
                     print qq(FATAL:  autoinstallscript.conf cannot contain "$_" as a percentage.\n);
                     print qq(        Disk: $dev, partition: $m\n);
@@ -287,7 +287,7 @@ sub _read_partition_info_and_prepare_parted_commands {
 
         # For partitions that go to the end of the disk, tell $endMB to grow to end of disk. -BEF-
         foreach $m (keys %endMB) {
-            if ( $size{$m} eq "*" ) {
+            if ( $size{$m} eq "end_of_disk" ) {
                 $endMB{$m} = '$(( $DISK_SIZE - ' . "$MB_from_end_of_disk" . ' ))';
             }
         }
