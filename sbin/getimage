@@ -586,12 +586,12 @@ if (-e $file) {
 ### BEGIN stop RAID devices before partitioning ###
 if (@software_raid_devices) {
   print MASTER_SCRIPT "# Pull /etc/raidtab over to autoinstall client\n";
-  print MASTER_SCRIPT "rsync -av --numeric-ids \$DHCPSIADDR::$image/etc/raidtab /etc/raidtab\n";
+  print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::$image/etc/raidtab /etc/raidtab\n";
   print MASTER_SCRIPT "\n";
   print MASTER_SCRIPT "# get software RAID utilities\n";
-  print MASTER_SCRIPT "rsync -av --numeric-ids \$DHCPSIADDR::tftpboot/systemimager/mkraid /tmp/\n";
-  print MASTER_SCRIPT "rsync -av --numeric-ids \$DHCPSIADDR::tftpboot/systemimager/raidstart /tmp/\n";
-  print MASTER_SCRIPT "rsync -av --numeric-ids \$DHCPSIADDR::tftpboot/systemimager/raidstop /tmp/\n";
+  print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::tftpboot/systemimager/mkraid /tmp/\n";
+  print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::tftpboot/systemimager/raidstart /tmp/\n";
+  print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::tftpboot/systemimager/raidstop /tmp/\n";
   print MASTER_SCRIPT "\n";
 
   print MASTER_SCRIPT "# Stop RAID devices before partitioning begins\n";
@@ -848,7 +848,7 @@ if (@ext3_devices) {
 ### BEGIN Write out reiserfs creation commands ###
 if (@reiserfs_devices) {
   print MASTER_SCRIPT "# get mkreiserfs utility\n";
-  print MASTER_SCRIPT "rsync -av --numeric-ids \$DHCPSIADDR::tftpboot/systemimager/mkreiserfs /tmp/\n";
+  print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::tftpboot/systemimager/mkreiserfs /tmp/\n";
   print MASTER_SCRIPT "\n";
   print MASTER_SCRIPT "# format reiserfs devices\n";
   foreach my $device_file (sort @reiserfs_devices) {
@@ -867,9 +867,15 @@ foreach $mount_point (sort (@mount_points)) {
   my $device_file = $device_file_by_mount_point{$mount_point};
   print MASTER_SCRIPT "mkdir -p /a$mount_point/\n";
   if ($device_file =~ /LABEL=/) {
-    my $label = $device_file;
-    print MASTER_SCRIPT "mount -L $label /a$mount_point/\n";
-  } else {
+    ### BEGIN this do for labelled devices
+    foreach my $label (keys %ext2_devices_by_label) {
+      if ($device_file eq $label) {
+        # get device
+        $device_file = $ext2_devices_by_label{$label};
+        next;
+      }
+    }
+    ### END this do for labelled devices
     print MASTER_SCRIPT "mount $device_file /a$mount_point/\n";
   }
   print MASTER_SCRIPT "\n";
@@ -879,7 +885,7 @@ foreach $mount_point (sort (@mount_points)) {
 
 ### BEGIN pull the image down ###
 print MASTER_SCRIPT "# filler up!\n";
-print MASTER_SCRIPT "rsync -av --numeric-ids \$DHCPSIADDR::$image/ /a/\n\n";
+print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::$image/ /a/\n\n";
 ### END pull the image down ###
 
 
