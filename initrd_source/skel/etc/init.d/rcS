@@ -148,7 +148,8 @@ get_boel_binaries_tarball() {
     elif [ ! -z $MCAST_GROUP ]; then
         # Use multicast
         echo "MCAST_GROUP variable is set, so we will use multicast!"
-        netcast-client ${IMAGESERVER} ${MCAST_GROUP} > /tmp/boel_binaries.tar.gz || shellout
+        cd /tmp
+        echo y | udp-receiver --portbase ${MCAST_GROUP} | tar -xv || shellout
 
     else
         # Use rsync
