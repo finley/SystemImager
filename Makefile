@@ -78,7 +78,6 @@
 #
 # XXX include pcmcia utilities in boel-binaries tarball
 #
-# To do a 'standard-ssh' flavor, do a 'make WITH_SSH=1 all'
 # To include the ctcs test suite, and associated files, do a 'make WITH_CTCS=1 all'
 #
 
@@ -148,6 +147,9 @@ CHECK_FLOPPY_SIZE = expr \`du -b $(INITRD_DIR)/initrd.img | cut -f 1\` + \`du -b
 
 BOEL_BINARIES_DIR = $(TOPDIR)/tmp/boel_binaries
 BOEL_BINARIES_TARBALL = $(BOEL_BINARIES_DIR).tar.gz
+
+SYSTEMIMAGER_SSH_DIR = $(TOPDIR)/tmp/systemimager-ssh-$(VERSION)
+SYSTEMIMAGER_SSH_TARBALL = $(SYSTEMIMAGER_SSH_DIR).tar.gz
 
 SI_INSTALL = $(TOPDIR)/tools/si_install --si-prefix=$(PREFIX)
 GETSOURCE = $(TOPDIR)/tools/getsource
@@ -263,6 +265,7 @@ ifeq ($(ARCH), i386)
 	      echo "************************************************" && \
 	      exit 1)
 	@echo " - ok, that should fit on a floppy"
+	@echo "`expr 1474560 - 10240` is the max."
 endif
 
 # install the initscript & config files for the server
@@ -336,16 +339,82 @@ install:
 	@echo 'Read README for installation details.'
 	@echo ''
 
+install_binaries:	install_kernel initrd_install \
 PHONY += install_binaries
 install_binaries:	install_kernel initrd_install \
 			install_boel_binaries_tarball
 
-### BEGIN autoinstall binaries tarball ###
-# Perhaps there could be problems here in building multiple arch's from
-# a single source directory, but we'll deal with that later...  Perhaps use
-# $(TOPDIR)/tmp/$(ARCH)/ instead of just $(TOPDIR)/tmp/. -BEF-
-#
 
+################################################################################
+#
+#	systemimager_ssh_tarball
+#
+PHONY += ssh_tarball
+ssh_tarball:
+	@echo ''
+	@echo 'Please use "make WITH_SSH=1 systemimager_ssh_tarball".'
+	@echo ''
+
+PHONY += systemimager_ssh_tarball
+systemimager_ssh_tarball:	$(SYSTEMIMAGER_SSH_TARBALL)
+
+$(SYSTEMIMAGER_SSH_TARBALL):	$(OPENSSH_BINARIES) \
+								$(OPENSSH_CONF_FILES)
+	
+ifndef WITH_SSH
+	@echo ''
+	@echo 'Please use "make WITH_SSH=1 systemimager_ssh_tarball".'
+	@echo ''
+	@exit 1
+endif
+
+	mkdir -m 755 -p $(SYSTEMIMAGER_SSH_DIR)/etc/ssh
+	install -m 644 $(OPENSSH_CONF_FILES) $(SYSTEMIMAGER_SSH_DIR)/etc/ssh
+
+	mkdir -m 755 -p $(SYSTEMIMAGER_SSH_DIR)/sbin
+	install -m 755 --strip $(OPENSSH_BINARIES) $(SYSTEMIMAGER_SSH_DIR)/sbin/
+
+	# Use the mklibs.sh script from Debian to find and copy libraries and 
+	# any soft links.  Note: This does not require PIC libraries -- it will
+	# copy standard libraries if it can't find a PIC equivalent.  -BEF-
+	#
+	mkdir -m 755 -p $(SYSTEMIMAGER_SSH_DIR)/lib
+	cd $(SYSTEMIMAGER_SSH_DIR) && $(TOPDIR)/initrd_source/mklibs.sh -v -d lib sbin/*
+
+	tar -cv $(OPENSSH_OTHER_FILES) | tar -C $(SYSTEMIMAGER_SSH_DIR) -xv
+
+	# Tar it up, baby! -BEF-
+	cd $(SYSTEMIMAGER_SSH_DIR) && tar -cv * | gzip -9 > $(SYSTEMIMAGER_SSH_TARBALL)
+
+
+PHONY += get_ssh_source
+get_ssh_source:
+	@echo ''
+	@echo 'Please use "make WITH_SSH=1 get_openssh_source".'
+	@echo ''
+
+PHONY += get_openssh_source
+get_openssh_source:	$(OPENSSH_SOURCE)
+ifndef WITH_SSH
+	@echo ''
+	@echo 'Please use "make WITH_SSH=1 get_openssh_source".'
+	@echo ''
+	@exit 1
+endif
+
+
+#
+################################################################################
+
+
+################################################################################
+#
+#	boel_binaries_tarball
+#
+# 	Perhaps there could be problems here in building multiple arch's from
+# 	a single source directory, but we'll deal with that later...  Perhaps use
+# 	$(TOPDIR)/tmp/$(ARCH)/ instead of just $(TOPDIR)/tmp/. -BEF-
+#
 PHONY += install_boel_binaries_tarball
 install_boel_binaries_tarball:	$(BOEL_BINARIES_TARBALL)
 	$(SI_INSTALL) -m 644 $(BOEL_BINARIES_TARBALL) $(BOOT_BIN_DEST)
@@ -365,8 +434,6 @@ $(BOEL_BINARIES_TARBALL):	$(DISCOVER_BINARY) \
 							$(BC_BINARY) \
 							$(SFDISK_BINARY) \
 							$(MKXFS_BINARY) \
-							$(OPENSSH_BINARIES) \
-							$(OPENSSH_CONF_FILES) \
 							$(CTCS_BINARY) \
 							$(SRC_DIR)/modules_build-stamp
 	#
@@ -387,12 +454,6 @@ $(BOEL_BINARIES_TARBALL):	$(DISCOVER_BINARY) \
 	install -m 755 --strip $(MKREISERFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(MKJFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(MKXFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
-ifdef WITH_SSH
-	mkdir -m 755 -p $(BOEL_BINARIES_DIR)/etc/ssh
-	install -m 644 $(OPENSSH_CONF_FILES) $(BOEL_BINARIES_DIR)/etc/ssh
-	install -m 755 --strip $(OPENSSH_BINARIES) $(BOEL_BINARIES_DIR)/sbin/
-	tar -cv $(OPENSSH_OTHER_FILES) | tar -C $(BOEL_BINARIES_DIR) -xv
-endif
 	#
 	# Put libraries in the boel_binaries_tarball...
 	#
@@ -443,7 +504,9 @@ endif
 	#
 	# Note: This tarball should be installed to the "boot/$(ARCH)/$(FLAVOR)" directory.
 
-### END autoinstall binaries tarball ###
+#
+################################################################################
+
 
 PHONY += source_tarball
 source_tarball:	$(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2

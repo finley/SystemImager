@@ -15,7 +15,7 @@ ifdef WITH_SSH
 	OPENSSH_OTHER_FILES := /lib/libnss_files-2.2.5.so \
 					/lib/libnss_files.so.2
 
-    ALL_SOURCE += $(SRC_DIR)/$(OPENSSH_TARBALL)
+	OPENSSH_SOURCE := $(SRC_DIR)/$(OPENSSH_TARBALL)
 endif
 
 PHONY += openssh
@@ -41,6 +41,12 @@ $(SRC_DIR)/openssh_verify.stamp:	$(SRC_DIR)/$(OPENSSH_TARBALL)
 $(OPENSSH_TARBALL_TARGET):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
 	$(GETSOURCE) $(OPENSSH_URL) $(SRC_DIR)
+
+PHONY += ssh_clean
+ssh_clean:  openssh_clean
+	@echo ''
+	@echo 'Next time, use "make openssh_clean" as it is the proper target.'
+	@echo ''
 
 PHONY += openssh_clean
 openssh_clean:
