@@ -7,11 +7,8 @@
 
 Short list (in progress)
 ------------------------
-- getimage -- command line all the other stuff
-- getimage sfdisk changes
 - more diags on autoinstall client
-- $image.exclude on imageserver
-- identify mke2fs parameters -b, -i, and -m on the master client and replicate this on autoinstall clients
+- support for /dev/rd/* devices
 
 Other stuff
 -----------
@@ -22,6 +19,8 @@ Other stuff
 
 getimage
 --------
+- $image.exclude on imageserver
+- identify mke2fs parameters -b, -i, and -m on the master client and replicate this on autoinstall clients
 - use something other than mtab for getting active ext2 filesystems?
 - offer user the ability to change this, and store the changes in 
   /etc/systemimager.conf as IMAGESDIRECTORY="/var/spool/systemimager/images"
@@ -31,6 +30,7 @@ getimage
   dhcp _after_ install
 - pass variables, such as $imagename to "addclients"
 - create disk partition sections of $image.master using MB instead of cylinders
+  in order to support disks of different sizes. (not feasable at this point.)
   (there may be additional things to do on the prepareclient side as well)
 <<<<<<<< Example >>>>>>>>>>>>>>>>>>>>>>
 #use this command for output
