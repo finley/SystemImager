@@ -4,10 +4,14 @@
 # "SystemImager" - Copyright (C) 1999-2000 TheFinleys.com <brian@thefinleys.com> 
 #
 
+# do a quiet install?
+case $1 in
+  -q|-quiet|--quiet ) QUIET="true" ;;
+                  * ) QUIET="false" ;;
+esac
 
 # set some variables
 PATH=/bin:/usr/bin:/sbin:/usr/sbin
-
 COMMAND_PATH=`dirname $0`
 cd $COMMAND_PATH
 INSTALL_DIR=`pwd`
@@ -20,31 +24,35 @@ RESTART_INETD=no
 # source needed functions and 
 . $INSTALL_DIR/functions
 
-# do introduction
-clear
-echo "Welcome to SystemImager."
-echo
-echo "This install script may modify the following files:"
-echo
-echo " /tftpboot/systemimager -- create if necessary and add appropriate files/links"
-echo " /etc/services          -- add rsync and/or tftp entries if necessary"
-echo " /etc/inetd.conf        -- add/modify rsync and tftp entries if necessary"
-echo " /etc/rsyncd.conf       -- it is assumed that SystemImager will manage this"
-echo "                           file and that it will not be used for anything else"
-echo
-echo " All modified files will be backed up with the .beforesystemimager extension."
-echo
 
-# you sure you want to install?
-echo -n "Install SystemImager? (y/[n]) "
-read REPLY
-case $REPLY in
- y|Y|Yes|yes|YES ) clear; echo Ok.  Installing SystemImager... ;;
- * ) echo Install cancelled.  No files modified. && exit 1 ;;
-esac
+### BEGIN introduction ###
+if [ $QUIET = "false" ]; then
+  clear
+  echo "Welcome to SystemImager."
+  echo
+  echo "This install script may modify the following files:"
+  echo
+  echo " /tftpboot/systemimager -- create if necessary and add appropriate files/links"
+  echo " /etc/services          -- add rsync and/or tftp entries if necessary"
+  echo " /etc/inetd.conf        -- add/modify rsync and tftp entries if necessary"
+  echo " /etc/rsyncd.conf       -- it is assumed that SystemImager will manage this"
+  echo "                           file and that it will not be used for anything else"
+  echo
+  echo " All modified files will be backed up with the .beforesystemimager extension."
+  echo
 
-echo
-sleep 2
+  # you sure you want to install?
+  echo -n "Install SystemImager? (y/[n]) "
+  read REPLY
+  case $REPLY in
+    y|Y|Yes|yes|YES ) clear; echo Ok.  Installing SystemImager... ;;
+                  * ) echo Install cancelled.  No files modified. && exit 1 ;;
+  esac
+
+  echo
+  sleep 2
+fi
+### END introduction ###
 
 
 ### BEGIN binaries ###
@@ -60,12 +68,12 @@ done
 
 # Create /tftpboot/systemimager/ directory if necessary and copy/link files
 if [ ! -d /tftpboot/systemimager/ ]; then
-  echo "Creating /tftpboot/systemimager/ ..."
+  [ $QUIET = "false" ] && echo "Creating /tftpboot/systemimager/ ..."
   mkdir -p /tftpboot/systemimager/
 else
-  echo "/tftpboot/systemimager/ already exists ..."
+  [ $QUIET = "false" ] && echo "/tftpboot/systemimager/ already exists ..."
 fi
-echo "soft linking /tftpboot/systemimager/hosts to /etc/hosts ..."
+[ $QUIET = "false" ] && echo "soft linking /tftpboot/systemimager/hosts to /etc/hosts ..."
 cd /tftpboot/systemimager/
 ln -sf /etc/hosts hosts
 
@@ -120,66 +128,66 @@ ln -sf README DO_NOT_TOUCH_THESE_DIRECTORIES
 egrep -qw ^rsync /etc/services
 if [ $? != "0" ]; then
   if [ ! -f /etc/services.beforesystemimager ]; then
-    echo "Backing up /etc/services to /etc/services.beforesystemimager ..."
+    [ $QUIET = "false" ] && echo "Backing up /etc/services to /etc/services.beforesystemimager ..."
     cp -af /etc/services /etc/services.beforesystemimager
   fi
-  echo "Adding rsync entries to /etc/services ..."
+  [ $QUIET = "false" ] && echo "Adding rsync entries to /etc/services ..."
   echo "rsync           873/tcp                         # rsync" >> /etc/services
   echo "rsync           873/udp                         # rsync" >> /etc/services
 else
-  echo "rsync entries already exist in /etc/services ..."
+  [ $QUIET = "false" ] && echo "rsync entries already exist in /etc/services ..."
 fi 
 
 # verify that rsync entry is in /etc/inetd.conf
 egrep -qw ^rsync /etc/inetd.conf
 if [ $? != "0" ]; then
   if [ ! -f /etc/inetd.conf.beforesystemimager ]; then
-    echo "Backing up /etc/inetd.conf to /etc/inetd.conf.beforesystemimager ..."
+    [ $QUIET = "false" ] && echo "Backing up /etc/inetd.conf to /etc/inetd.conf.beforesystemimager ..."
 
     cp -af /etc/inetd.conf /etc/inetd.conf.beforesystemimager
   fi
   egrep -qw ^#rsync /etc/inetd.conf
   if [ $? != "0" ]; then
-    echo "Adding rsync entry to /etc/inetd.conf ..."
+    [ $QUIET = "false" ] && echo "Adding rsync entry to /etc/inetd.conf ..."
     echo "rsync stream tcp nowait root /usr/bin/rsync rsyncd --daemon" >> /etc/inetd.conf
   else
-    echo "Uncommenting (enabling) rsync entry in /etc/inetd.conf ..."
+    [ $QUIET = "false" ] && echo "Uncommenting (enabling) rsync entry in /etc/inetd.conf ..."
     sed 's/^#rsync/rsync/' /etc/inetd.conf > /tmp/.systemimager
     cp -af /tmp/.systemimager /etc/inetd.conf
     rm -f /tmp/.systemimager
   fi
   RESTART_INETD=yes
 else
-  echo "rsync entry already enabled in /etc/inetd.conf ..."
+  [ $QUIET = "false" ] && echo "rsync entry already enabled in /etc/inetd.conf ..."
 fi 
 
 # verify that a tftp entry is in /etc/inetd.conf
 egrep -qw ^tftp /etc/inetd.conf
 if [ $? != "0" ]; then
   if [ ! -f /etc/inetd.conf.beforesystemimager ]; then
-    echo "Backing up /etc/inetd.conf to /etc/inetd.conf.beforesystemimager ..."
+    [ $QUIET = "false" ] && echo "Backing up /etc/inetd.conf to /etc/inetd.conf.beforesystemimager ..."
     cp -af /etc/inetd.conf /etc/inetd.conf.beforesystemimager
   fi
   egrep -qw ^#tftp /etc/inetd.conf
   if [ $? != "0" ]; then
-    echo "Adding tftp entry to /etc/inetd.conf ..."
+    [ $QUIET = "false" ] && echo "Adding tftp entry to /etc/inetd.conf ..."
     echo "tftp   dgram   udp     wait    root    /usr/sbin/tcpd  in.tftpd" >> /etc/inetd.conf
   else
-    echo "Uncommenting (enabling) tftp entry in /etc/inetd.conf ..."
+    [ $QUIET = "false" ] && echo "Uncommenting (enabling) tftp entry in /etc/inetd.conf ..."
     sed 's/^#tftp/tftp/' /etc/inetd.conf > /tmp/.systemimager
     cp -af /tmp/.systemimager /etc/inetd.conf
     rm -f /tmp/.systemimager
   fi
   RESTART_INETD=yes
 else
-  echo "tftp entry already enabled in /etc/inetd.conf ..."
+  [ $QUIET = "false" ] && echo "tftp entry already enabled in /etc/inetd.conf ..."
 fi 
 
 # signal inetd to re-read /etc/inetd.conf
 if [ $RESTART_INETD = "yes" ]; then
-  echo -n "Signalling inetd to re-read /etc/inetd.conf: "
+  [ $QUIET = "false" ] && echo -n "Signalling inetd to re-read /etc/inetd.conf: "
   killproc inetd -HUP
-  echo ""
+  [ $QUIET = "false" ] && echo ""
 fi
 
 ### END inetd stuff ###
@@ -190,23 +198,23 @@ fi
 # install SystemImager brand rsyncd.conf file
 if [ ! -f /etc/rsyncd.conf ]; then
   # if it doesn't exist, create it
-  echo "Creating /etc/rsyncd.conf ..."
+  [ $QUIET = "false" ] && echo "Creating /etc/rsyncd.conf ..."
   create_rsyncd_conf
 elif [ ! -f /etc/rsyncd.conf.beforesystemimager ]; then
   # OK, it does exist -- if the backup file doesn't exist, 
   # back it up 
-  echo "Backing up /etc/rsyncd.conf to /etc/rsyncd.conf.beforesystemimager ..."
+  [ $QUIET = "false" ] && echo "Backing up /etc/rsyncd.conf to /etc/rsyncd.conf.beforesystemimager ..."
   cp -af /etc/rsyncd.conf /etc/rsyncd.conf.beforesystemimager
   # and create rsyncd.conf
-  echo "Creating /etc/rsyncd.conf ..."
+  [ $QUIET = "false" ] && echo "Creating /etc/rsyncd.conf ..."
   create_rsyncd_conf
 elif ! egrep -qw SystemImager /etc/rsyncd.conf; then
   # if the backup file exists, then check to see if current rsyncd.conf belongs
   # to SystemImager.  If not, back it up.
-  echo Backing up /etc/rsyncd.conf to /etc/rsyncd.conf.beforesystemimager ...
+  [ $QUIET = "false" ] && echo Backing up /etc/rsyncd.conf to /etc/rsyncd.conf.beforesystemimager ...
   cp -af /etc/rsyncd.conf /etc/rsyncd.conf.beforesystemimager
   # and create rsyncd.conf
-  echo Creating /etc/rsyncd.conf ...
+  [ $QUIET = "false" ] && echo Creating /etc/rsyncd.conf ...
   create_rsyncd_conf
 fi
 
@@ -225,24 +233,24 @@ chown -R root:root /usr/doc/systemimager-$VERSION/
 
 
 ### BEGIN dhcp stuff ###
-
 # Hey! Want dhcp?
-echo
-echo -n "Press <Enter> to continue..."
-read REPLY
-clear
-echo -n "Would you like me to configure this computer as a dhcp server now? (y/[n]) "
-read REPLY
-case $REPLY in
- y|Y|Yes|yes|YES ) makedhcpserver ;;
-esac
-
+if [ $QUIET = "false" ]; then
+  echo
+  echo -n "Press <Enter> to continue..."
+  read REPLY
+  clear
+  echo -n "Would you like me to configure this computer as a dhcp server now? (y/[n]) "
+  read REPLY
+  case $REPLY in
+    y|Y|Yes|yes|YES ) makedhcpserver ;;
+  esac
+fi
 ### END dhcp stuff ###
 
 
 # wrap up
-clear
-echo
+[ $QUIET = "false" ] && clear
+[ $QUIET = "false" ] && echo
 echo "All done!  Please read the FAQ-HOWTO before using SystemImager."
 echo "See /usr/doc/systemimager-$VERSION/ for all documentation."
-echo
+[ $QUIET = "false" ] && echo

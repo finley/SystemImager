@@ -247,7 +247,8 @@ success() {
   else
      echo "-n $0 -s \"$1\" -e 1" >&21
   fi
-  [ "$BOOTUP" != "verbose" ] && echo_success
+  #[ "$BOOTUP" != "verbose" ] && echo_success
+  [ "$BOOTUP" != "verbose" ] && [ $QUIET != "true" ] && echo_success
   return 0
 }
 
