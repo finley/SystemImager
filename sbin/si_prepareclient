@@ -16,6 +16,8 @@
 #   - prefer parted over sfdisk, unless i386.  was failing on ppc.
 #   2005.01.12  Brian Elliott Finley
 #   - add --exclude DISK option
+#   2005.01.29  Andrea Righi <a.righi@cineca.it>
+#   - add lvm information saving
 #
 #
 #   Function: si_prepareclient is used to, well, prepare a client to have 
@@ -601,6 +603,8 @@ sub create_auto_install_script_conf {
 
     }
 
+    SystemImager::Common::save_lvm_information($file);
+        
     SystemImager::Common->save_filesystem_information("/etc/fstab", $file);
 
     ############################################################################
