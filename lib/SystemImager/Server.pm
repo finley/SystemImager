@@ -196,12 +196,13 @@ sub _read_partition_info_and_prepare_parted_commands {
     my $xml_config = XMLin($file, keyattr => { disk => "+dev", part => "+num" }, forcearray => 1 );  
 
     foreach my $dev (sort (keys ( %{$xml_config->{disk}} ))) {
-	print "Found disk: $dev.\n";
+	    print "Found disk: $dev.\n";
     }
+
     #
     # Ok.  Now that we've read all of the partition scheme info into hashes, let's do stuff with it. -BEF-
     #
-    foreach $dev (sort (keys ( %{$xml_config->{disk}} ))) {
+    foreach my $dev (sort (keys ( %{$xml_config->{disk}} ))) {
 
         my $label_type = $xml_config->{disk}->{$dev}->{label_type};
         my (
