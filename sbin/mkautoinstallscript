@@ -179,18 +179,35 @@ SystemImager::Common->check_if_root();
 
 my $imagedir = SystemImager::Server->get_image_path( $rsync_stub_dir, $image );
 unless ($imagedir) { 
-  print qq(\nFATAL: Image "$image" doesn't appear to exist!\n\n);
-  exit 1;
+    print qq(\nFATAL: Image "$image" doesn't appear to exist!\n\n);
+    exit 1;
 }
 
-# If not specified, use default for autoinstallscript.conf. -BEF-
-unless ($auto_install_script_conf) {
+# If an autoinstallscript was specified, make sure it exists.
+if ($auto_install_script_conf) {
+    unless (-f $auto_install_script_conf) {
+        print "\n$program_name: I can't find\n";
+        die   "$auto_install_script_conf.\n$get_help\n\n";
+    }
+} else {
+
+    # If an autoinstallscript was not specified, use default for autoinstallscript.conf. -BEF-
     $auto_install_script_conf = "${imagedir}/etc/systemimager/autoinstallscript.conf";
-}
 
-# Make sure the file exists. -BEF-
-unless (-e $auto_install_script_conf) {
-    die "\n$program_name: I can't find $auto_install_script_conf.\n$get_help\n\n";
+    # If an autoinstallscript conf file already exists, use it.  This is to prevent us from
+    # perpetually updating from partitionschemes in an image.
+    unless (-f $auto_install_script_conf) {
+        # Test for a partitionschemes dir, and update if needed.
+        if (-d "${imagedir}/etc/systemimager/partitionschemes") {
+            SystemImager::Common->write_auto_install_script_conf_header($auto_install_script_conf);
+            SystemImager::Server->upgrade_partition_schemes_to_generic_style($imagedir, "etc/systemimager");
+            SystemImager::Common->save_filesystem_information("${imagedir}/etc/fstab", $auto_install_script_conf);
+            SystemImager::Common->write_auto_install_script_conf_footer($auto_install_script_conf);
+        } else {
+            die "I can't find an autoinstallscript.conf file, or a partitionschemes directory!\n";
+        }
+
+    }
 }
 
 unless ($script_name) { $script_name = "$image"; }
@@ -213,7 +230,7 @@ SystemImager::Server->create_autoinstall_script(
 	$imagedir,
 	$ip_assignment_method,
 	$post_install,
-        $no_listing,
+    $no_listing,
     $auto_install_script_conf
 );
 ### END create a fresh master autoinstall script ###

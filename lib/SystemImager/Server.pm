@@ -34,8 +34,6 @@ $VERSION="SYSTEMIMAGER_VERSION_STRING";
 #
 #   _read_partition_info_and_prepare_parted_commands 
 #
-#   _upgrade_partition_schemes_to_generic_style 
-#
 #   _write_elilo_conf
 #
 #   _write_out_mkfs_commands 
@@ -65,6 +63,8 @@ $VERSION="SYSTEMIMAGER_VERSION_STRING";
 #   remove_boot_file
 #
 #   remove_image_stub 
+#
+#   upgrade_partition_schemes_to_generic_style 
 #
 #   validate_auto_install_script_conf 
 #
@@ -695,47 +695,47 @@ sub _mount_proc_in_image_on_client {
 
 
 # Usage:  
-# _upgrade_partition_schemes_to_generic_style($image_dir, $config_dir);
-sub _upgrade_partition_schemes_to_generic_style {
+# upgrade_partition_schemes_to_generic_style($image_dir, $config_dir);
+sub upgrade_partition_schemes_to_generic_style {
 
-  my ($image_dir, $config_dir) = @_;
-
-  my $new_file = "$config_dir/autoinstallscript.conf";
-  my $partition_dir = "$config_dir/partitionschemes";
-
-  # Disk types ide and scsi are pretty self explanatory.  Here are 
-  # some others: -BEF-
-  # o rd is a dac960 device (mylex extremeraid is an example)
-  # o ida is a compaq smartscsi device
-  # o cciss is a compaq smartscsi device
-  #
-  my @disk_types = qw( . rd ida cciss );  # The . is for ide and scsi disks. -BEF-
-
-  foreach my $type (@disk_types) {
-    my $dir;
-    if ($type eq ".") {
-      $dir = $image_dir . $partition_dir;
-    } else {
-      $dir = $image_dir . $partition_dir . "/" . $type;
-    }
-
-    if(-d $dir) {
-      opendir(DIR, $dir) || die "Can't read the $dir directory.";
-        while(my $device = readdir(DIR)) {
-
-          # Skip over any "dot" files. -BEF-
-          #
-          if ($device =~ /^\./) { next; }
-
-          my $file = "$dir/$device";
-
-          if (-f $file) {
-            SystemImager::Common->save_partition_information($file, "old_sfdisk_file", $new_file);
-          }
+    my ($module, $image_dir, $config_dir) = @_;
+    
+    my $partition_dir = "$config_dir/partitionschemes";
+    
+    # Disk types ide and scsi are pretty self explanatory.  Here are 
+    # some others: -BEF-
+    # o rd is a dac960 device (mylex extremeraid is an example)
+    # o ida is a compaq smartscsi device
+    # o cciss is a compaq smartscsi device
+    #
+    my @disk_types = qw( . rd ida cciss );  # The . is for ide and scsi disks. -BEF-
+    
+    foreach my $type (@disk_types) {
+        my $dir;
+        if ($type eq ".") {
+            $dir = $image_dir . "/" . $partition_dir;
+        } else {
+            $dir = $image_dir . "/" . $partition_dir . "/" . $type;
         }
-      close(DIR);
+
+        if(-d $dir) {
+            opendir(DIR, $dir) || die "Can't read the $dir directory.";
+                while(my $device = readdir(DIR)) {
+                
+                    # Skip over any "dot" files. -BEF-
+                    #
+                    if ($device =~ /^\./) { next; }
+                    
+                    my $file = "$dir/$device";
+                    
+                    if (-f $file) {
+                        my $autoinstall_script_conf_file = $image_dir . "/" . $config_dir . "/autoinstallscript.conf";
+                        SystemImager::Common->save_partition_information($file, "old_sfdisk_file", $autoinstall_script_conf_file);
+                    }
+                }
+            close(DIR);
+        }
     }
-  }
 }
 
 
@@ -1266,7 +1266,7 @@ sub create_autoinstall_script{
         $image_dir, 
         $ip_assignment_method, 
         $post_install,
-	$no_listing,
+        $no_listing,
         $auto_install_script_conf,
         $ssh_user
     ) = @_;
@@ -1286,8 +1286,6 @@ sub create_autoinstall_script{
     open (MASTER_SCRIPT, ">$file") || die "Can't open $file for writing\n";
     
     _in_script_add_standard_header_stuff($image, $script_name);
-    
-    _upgrade_partition_schemes_to_generic_style($image_dir, $config_dir);
     
     _read_partition_info_and_prepare_parted_commands( $image_dir, $auto_install_script_conf );
     
@@ -1532,16 +1530,19 @@ sub copy_boot_files_to_boot_media {
         print "Couldn't copy $kernel to $mnt_dir!\n";
         exit 1;
     }
+
     unless( copy($initrd, "$mnt_dir/initrd.img") ) {
         system($cmd);
         print "Couldn't copy $initrd to $mnt_dir!\n";
         exit 1;
     }
+
     unless( copy($message_txt, "$mnt_dir/message.txt") ) {
         system($cmd);
         print "Couldn't copy $message_txt to $mnt_dir!\n";
         exit 1;
     }
+
     if($local_cfg) {
         unless( copy($local_cfg, "$mnt_dir/local.cfg") ) {
             system($cmd);
@@ -1549,6 +1550,7 @@ sub copy_boot_files_to_boot_media {
             exit 1;
         }
     }
+
     if($ssh_key) {
         unless( copy($ssh_key, $mnt_dir) ) {
             system($cmd);
@@ -1575,8 +1577,8 @@ sub copy_boot_files_to_boot_media {
                         chomp;
                         $_ = $_ . " $append_string\n";
                     }
-                print OUTFILE;
-            }
+                    print OUTFILE;
+                }
             close(OUTFILE);
         close(INFILE);
     }
@@ -1590,20 +1592,19 @@ sub copy_boot_files_to_boot_media {
     #
     if ($arch eq "ia64") {
 
-        use SystemImager::Common.pm;
+        use SystemImager::Common;
 
-        my $efi_dir = SystemImager::Common.pm->where_is_my_efi_dir();
+        my $efi_dir = SystemImager::Common->where_is_my_efi_dir();
 
         my $elilo_efi = "$efi_dir/elilo.efi";
 
         if (-f $elilo_efi) {
             copy($elilo_efi,  "$mnt_dir/elilo.efi") or croak("Couldn't copy $elilo_efi to $mnt_dir/elilo.efi $!");
         } else {
-            print "\nCouldn't find elilo.efi executable in any of the following locations:\n";
-            foreach my $possible (@elilo_locations) { print "    $possible\n"; }
+            print "\nCouldn't find elilo.efi executable. \n";
             print "You can download elilo from ftp://ftp.hpl.hp.com/pub/linux-ia64/.\n";
-            print "If elilo.efi was installed elsewhere on your system, please submit a bug report at\n";
-            print "http://systemimager.org/support/\n\n";
+            print "If elilo.efi is already installed on your system, please submit a bug report, including\n";
+            print "the location of your elilo.efi file, at: http://systemimager.org/support/\n\n";
             exit 1;
         }
 
