@@ -857,28 +857,25 @@ sub _write_out_mkfs_commands {
 
     if ($software_raid) {
 
-        print MASTER_SCRIPT qq(# Must remove the /etc/raidtab created for the raidstop commands above.\n);
-        print MASTER_SCRIPT qq(rm -f /etc/raidtab\n);
-        print MASTER_SCRIPT qq(echo\n);
-        print MASTER_SCRIPT qq(echo "Pull /etc/raidtab in image over to autoinstall client."\n);
-        print MASTER_SCRIPT qq(rsync -av --numeric-ids \$IMAGESERVER::\$IMAGENAME/etc/raidtab /etc/raidtab || echo "No /etc/raidtab in the image directory, hopefully there's one in an override directory."\n);
-      
-        print MASTER_SCRIPT qq(echo "Pull /etc/raidtab from each override to autoinstall client."\n);
-        print MASTER_SCRIPT  q(for OVERRIDE in $OVERRIDES) . qq(\n);
-        print MASTER_SCRIPT qq(do\n);
-        print MASTER_SCRIPT  q(    rsync -av --numeric-ids $IMAGESERVER::overrides/$OVERRIDE/etc/raidtab /etc/raidtab || echo "No /etc/raidtab in override $OVERRIDE, but that should be OK.") . qq(\n);
-        print MASTER_SCRIPT qq(    echo\n);
-        print MASTER_SCRIPT qq(done\n);
-
+        print MASTER_SCRIPT qq(# /etc/raidtab that will be used for creating software RAID devices on client(s).\n);
+        print MASTER_SCRIPT qq(cat <<'EOF' > /a/etc/raidtab\n);
+        my $raidtab = $image_dir . "/etc/raidtab";
+        open(FILE,"<$raidtab") or croak("Couldn't open $raidtab for reading.");
+            while (<FILE>) {
+                print MASTER_SCRIPT;
+            }
+        close(FILE);
+        print MASTER_SCRIPT qq(EOF\n);
+        print MASTER_SCRIPT qq(# /etc/raidtab that will be used for creating software RAID devices on client(s).\n);
+        print MASTER_SCRIPT qq(\n);
         print MASTER_SCRIPT qq(if [ -e /etc/raidtab ]; then\n);
 		print MASTER_SCRIPT qq(    echo "Ah, good.  Found an /etc/raidtab file.  Proceeding..."\n);
 		print MASTER_SCRIPT qq(else\n);
 		print MASTER_SCRIPT qq(    echo "No /etc/raidtab file.  Please verify that you have one in your image, or in an override directory."\n);
 		print MASTER_SCRIPT qq(    shellout\n);
 		print MASTER_SCRIPT qq(fi\n);
-
         print MASTER_SCRIPT "\n";
-        print MASTER_SCRIPT "# Load RAID modules, if necessary, and create software RAID devices.\n";
+
         print MASTER_SCRIPT "if [ ! -f /proc/mdstat ]; then\n";
         print MASTER_SCRIPT "  modprobe linear\n";
         print MASTER_SCRIPT "  modprobe raid0\n";
