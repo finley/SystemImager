@@ -32,9 +32,9 @@
 #   on a Debian system, you can issue the following command to ensure that
 #   all of the proper tools are installed.
 #
-#   On i386: "apt-get install  ash autoconf bzip2 docbook-utils gcc host jadetex less libpopt-dev libreadline4-dev libtool make mkcramfs patch rsync sgmltools-lite snarf uuid-dev wget  libc6-dev"
+#   On i386: "apt-get install build-essential autoconf bzip2 docbook-utils jadetex libreadline4-dev libtool mkcramfs rsync uuid-dev wget"
 #
-#   On ia64: "apt-get install  ash autoconf bzip2 docbook-utils gcc host jadetex less libpopt-dev libreadline4-dev libtool make mkcramfs patch rsync sgmltools-lite snarf uuid-dev wget  libc6.1-dev libc6.1-pic"
+#   On ia64: "apt-get install build-essential autoconf bzip2 docbook-utils jadetex libreadline4-dev libtool mkcramfs rsync uuid-dev wget"
 #
 #
 # SystemImager file location standards:
@@ -476,7 +476,7 @@ $(BOEL_BINARIES_TARBALL):	$(DISCOVER_BINARY) \
 	cd $(BOEL_BINARIES_DIR)/sbin/ && ln -f raidstart raidstop
 	install -m 755 --strip $(MKREISERFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(MKJFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
-	
+
 ifdef MKXFS_BINARY
 	install -m 755 --strip $(MKXFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
 endif
