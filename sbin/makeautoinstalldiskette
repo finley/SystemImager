@@ -32,21 +32,42 @@ Usage: $program_name [OPTION]...
 Options: (options can be presented in any order and may be abbreviated)
  -help             Display this output.
  -version          Display version and copyright information.
+ -quiet            Don\'t print any output, just provide an appropriate 
+                   exit code.  (requires -floppy)
  -floppy=DEVICE    The  1.44MB floppy drive device containing the disk
                    to format.  If not specified, /dev/fd0 is assumed.
                    This command understands \"/dev/fd0\" through \"/dev/fd7\".
                    (if you specify -floppy, this command will run 
                     non-interactively)
- -quiet            Don\'t print any output, just provide an appropriate 
-                   exit code.  (requires -floppy)
+ -config=FILE      Where FILE contains all the settings necessary for
+                   the client to set it's hostname and configure it's
+                   networking information without DHCP.  This file is
+                   copied to /local.cfg on the autoinstalldiskette.
+
+Contents of an example config file:
+ HOSTNAME=www1
+ DOMAINNAME=systemimager.org
+ DEVICE=eth0
+ IPADDR=10.0.0.99
+ NETMASK=255.255.255.0
+ NETWORK=10.0.0.0
+ BROADCAST=10.0.0.255
+ GATEWAY=10.0.0.1
+ GATEWAYDEV=eth0
+ IMAGESERVER=10.0.0.3
+
+You can cut and paste this into your own file, but change each of the
+values to the appropriate values for your specific client.
 
 Download from http://systemimager.org/
 Report bugs or suggestions to <systemimager-bugs\@systemimager.org>
 EOF
 
-GetOptions( "help" => \$help,
+GetOptions( 
+            "help" => \$help,
             "version" => \$version,
             "floppy=s" => \$floppy_device_prefix,
+            "config=s" => \$local_cfg_src,
             "quiet" => \$quiet 
 ) || die "$help_info";
 
@@ -78,12 +99,15 @@ if (!$user_specified_floppy) {
     system('clear');
     print << 'EOF';
 
-This program assumes that you have a 1.44MB floppy drive and that it is 
-/dev/fd0.  You can use the -floppy command line option to change this value.  
+This program assumes that you have a 1.44MB floppy drive and that
+it is /dev/fd0.  You can use the -floppy command line option to
+change this value.
 
 If you do use -floppy, this command will run non-interactively!!!
+Use the -help option to see all options.
 
-Insert your floppy now.  This will overwrite all information on the floppy.
+Insert your floppy diskette now.  This will overwrite all
+information on your diskette.
 
 EOF
 
@@ -159,6 +183,19 @@ foreach $file ("/tftpboot/initrd.gz", "/tftpboot/kernel", "/tftpboot/pxelinux.cf
 	    rmdir $mount_dir;
 	    die "Couldn't copy $file to $mount_dir.\n";
 	}
+}
+
+# copy local config stuff to floppy (if necessary)
+$local_cfg_dst="$mount_dir/local.cfg";
+if ($local_cfg_src) {
+  if (!$quiet) {print "Copying config file $local_cfg_src to local.cfg on floppy.\n";}
+  open(LOCAL_CFG_DST, "> $local_cfg_dst") or die "Couldn't open $local_cfg_dst for writing: $!\n";
+    open(LOCAL_CFG_SRC, "< $local_cfg_src") or die "Couldn't open $local_cfg_src for reading: $!\n";
+    while (<LOCAL_CFG_SRC>) { 
+      print LOCAL_CFG_DST; 
+    }
+    close(LOCAL_CFG_SRC);
+  close(LOCAL_CFG_DST);
 }
 
 # unmount floppy
