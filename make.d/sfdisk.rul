@@ -13,7 +13,7 @@ sfdisk:	$(SFDISK_BINARY)
 $(SFDISK_BINARY):	$(SRC_DIR)/$(UTIL_LINUX_TARBALL)
 	[ -d $(SRC_DIR)/$(UTIL_LINUX_DIR) ] || ( cd $(SRC_DIR) && tar -xvjf $(UTIL_LINUX_TARBALL) )
 	( cd $(SRC_DIR)/$(UTIL_LINUX_DIR) && ./configure )
-	$(MAKE) -C $(SRC_DIR)/$(UTIL_LINUX_DIR)
+	$(MAKE) -C $(SRC_DIR)/$(UTIL_LINUX_DIR) fdisk
 
 $(SRC_DIR)/$(UTIL_LINUX_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
