@@ -11,11 +11,12 @@
 
 package SystemImager::Server;
 
-use strict;
-use vars qw($VERSION @mount_points %device_by_mount_point %filesystem_type_by_mount_point);
+use lib "USR_PREFIX/lib/systemimager/perl";
 use Carp;
-use XML::Simple;
+use strict;
 use File::Path;
+use XML::Simple;
+use vars qw($VERSION @mount_points %device_by_mount_point %filesystem_type_by_mount_point);
 
 $VERSION="SYSTEMIMAGER_VERSION_STRING";
 
@@ -56,6 +57,8 @@ $VERSION="SYSTEMIMAGER_VERSION_STRING";
 #    ip_quad_2_ip_hex
 #
 #    numerically 
+#
+#    remove_boot_file
 #
 #    remove_image_stub 
 #
@@ -192,14 +195,14 @@ sub _read_partition_info_and_prepare_parted_commands {
 
     my ($image_dir, $file) = @_;
 
-    my $config = XMLin($file, keyattr => { disk => "+dev", part => "+num" }, forcearray => 1 );  
+    my $xml_config = XMLin($file, keyattr => { disk => "+dev", part => "+num" }, forcearray => 1 );  
 
     #
     # Ok.  Now that we've read all of the partition scheme info into hashes, let's do stuff with it. -BEF-
     #
-    foreach my $dev (sort (keys ( %{$config->{disk}} ))) {
+    foreach my $dev (sort (keys ( %{$xml_config->{disk}} ))) {
 
-        my $label_type = $config->{disk}->{$dev}->{label_type};
+        my $label_type = $xml_config->{disk}->{$dev}->{label_type};
         my (
             $highest_part_num, 
             $highest_p_or_e_part_num, 
@@ -238,7 +241,7 @@ sub _read_partition_info_and_prepare_parted_commands {
             %endMB
         );
 
-        my $unit_of_measurement = lc $config->{disk}->{$dev}->{unit_of_measurement};
+        my $unit_of_measurement = lc $xml_config->{disk}->{$dev}->{unit_of_measurement};
 
         ########################################################################
         #
@@ -255,18 +258,18 @@ sub _read_partition_info_and_prepare_parted_commands {
             # Primary partitions. -BEF-
             #
             my $p_sum = 0;
-            foreach my $m (sort (keys ( %{$config->{disk}->{$dev}->{part}} ))) {
+            foreach my $m (sort (keys ( %{$xml_config->{disk}->{$dev}->{part}} ))) {
 
                 #
                 # Skip over logical partitions. -BEF-
                 # 
-                $_ = $config->{disk}->{$dev}->{part}{$m}->{p_type};
+                $_ = $xml_config->{disk}->{$dev}->{part}{$m}->{p_type};
                 if ( $_ ne "primary" ) { next; }
 
                 #
                 # Skip over if size is end_of_disk (*) -- we can't measure that without the disk. -BEF-
                 #
-                $_ = $config->{disk}->{$dev}->{part}{$m}->{size};
+                $_ = $xml_config->{disk}->{$dev}->{part}{$m}->{size};
                 if ( $_ eq "*" ) { next; }
 
                 if (/[[:alpha:]]/) {
@@ -283,15 +286,15 @@ sub _read_partition_info_and_prepare_parted_commands {
             # Extended partition. -BEF-
             #
             my $e_sum = 0;
-            foreach my $m (sort (keys ( %{$config->{disk}->{$dev}->{part}} ))) {
+            foreach my $m (sort (keys ( %{$xml_config->{disk}->{$dev}->{part}} ))) {
 
-                $_ = $config->{disk}->{$dev}->{part}{$m}->{p_type};
+                $_ = $xml_config->{disk}->{$dev}->{part}{$m}->{p_type};
                 if ( $_ ne "extended" ) { next; }
 
                 #
                 # Skip over if size is end_of_disk (we can't measure that without the disk.) -BEF-
                 #
-                $_ = $config->{disk}->{$dev}->{part}{$m}->{size};
+                $_ = $xml_config->{disk}->{$dev}->{part}{$m}->{size};
                 if ( $_ eq "*" ) { next; }
 
                 if (/[[:alpha:]]/) {
@@ -310,18 +313,18 @@ sub _read_partition_info_and_prepare_parted_commands {
             #
             my $l_sum = 0;
             if ($e_sum > 0) {
-                foreach my $m (sort (keys ( %{$config->{disk}->{$dev}->{part}} ))) {
+                foreach my $m (sort (keys ( %{$xml_config->{disk}->{$dev}->{part}} ))) {
  
                     #
                     # Skip over primary and extended partitions. -BEF-
                     # 
-                    $_ = $config->{disk}->{$dev}->{part}{$m}->{p_type};
+                    $_ = $xml_config->{disk}->{$dev}->{part}{$m}->{p_type};
                     unless ( $_ eq "logical" ) { next; }
  
                     #
                     # Skip over if size is end_of_disk (we can't measure that without the disk.) -BEF-
                     #
-                    $_ = $config->{disk}->{$dev}->{part}{$m}->{size};
+                    $_ = $xml_config->{disk}->{$dev}->{part}{$m}->{size};
                     if ( $_ eq "*" ) { next; }
  
                     if (/[[:alpha:]]/) {
@@ -366,12 +369,12 @@ sub _read_partition_info_and_prepare_parted_commands {
         my $end_of_last_primary = 0;
         my $end_of_last_logical;
 
-        foreach my $m (sort (keys ( %{$config->{disk}->{$dev}->{part}} ))) {
-            $flags{$m}       = $config->{disk}->{$dev}->{part}{$m}->{flags};
-            $id{$m}          = $config->{disk}->{$dev}->{part}{$m}->{id};
-            $p_name{$m}      = $config->{disk}->{$dev}->{part}{$m}->{p_name};
-            $p_type{$m}      = $config->{disk}->{$dev}->{part}{$m}->{p_type};
-            $size{$m}        = $config->{disk}->{$dev}->{part}{$m}->{size};
+        foreach my $m (sort (keys ( %{$xml_config->{disk}->{$dev}->{part}} ))) {
+            $flags{$m}       = $xml_config->{disk}->{$dev}->{part}{$m}->{flags};
+            $id{$m}          = $xml_config->{disk}->{$dev}->{part}{$m}->{id};
+            $p_name{$m}      = $xml_config->{disk}->{$dev}->{part}{$m}->{p_name};
+            $p_type{$m}      = $xml_config->{disk}->{$dev}->{part}{$m}->{p_type};
+            $size{$m}        = $xml_config->{disk}->{$dev}->{part}{$m}->{size};
 
             # Calculate $startMB and $endMB. -BEF-
             if ("$p_type{$m}" eq "primary") {
@@ -401,7 +404,7 @@ sub _read_partition_info_and_prepare_parted_commands {
         ### END Populate the simple hashes. -BEF- ###
 
         # Figure out what the highest partition number is. -BEF-
-        foreach (sort { $a <=> $b } (keys ( %{$config->{disk}->{$dev}->{part}} ))) {
+        foreach (sort { $a <=> $b } (keys ( %{$xml_config->{disk}->{$dev}->{part}} ))) {
             $highest_part_num = $_;
         }
 
@@ -410,7 +413,7 @@ sub _read_partition_info_and_prepare_parted_commands {
         # This will help us prevent from creating unnecessary bogus partitions.
         # -BEF-
         #
-        foreach my $m (sort (keys ( %{$config->{disk}->{$dev}->{part}} ))) {
+        foreach my $m (sort (keys ( %{$xml_config->{disk}->{$dev}->{part}} ))) {
             unless (($p_type{$m} eq "primary") or ($p_type{$m} eq "extended")) { next; }
             $highest_p_or_e_part_num = $m;
         }
@@ -771,20 +774,20 @@ sub _write_out_mkfs_commands {
 
     my ($image_dir, $file) = @_;
 
-    my $config = XMLin($file, keyattr => { fsinfo => "+line" }, forcearray => 1 );
+    my $xml_config = XMLin($file, keyattr => { fsinfo => "+line" }, forcearray => 1 );
 
     # Figure out if software RAID is in use. -BEF-
     #
     my $software_raid;
-    foreach my $line (sort numerically (keys ( %{$config->{fsinfo}} ))) {
+    foreach my $line (sort numerically (keys ( %{$xml_config->{fsinfo}} ))) {
 
         # If this line is a comment, skip over. -BEF-
-        if ( $config->{fsinfo}->{$line}->{comment} ) { next; }
+        if ( $xml_config->{fsinfo}->{$line}->{comment} ) { next; }
 
         # If real_dev isn't set, move on. -BEF-
-        unless ($config->{fsinfo}->{$line}->{real_dev}) { next; }
+        unless ($xml_config->{fsinfo}->{$line}->{real_dev}) { next; }
 
-        my $real_dev = $config->{fsinfo}->{$line}->{real_dev};
+        my $real_dev = $xml_config->{fsinfo}->{$line}->{real_dev};
         if ($real_dev =~ /\/dev\/md/) {
             $software_raid = "true";
         }
@@ -834,27 +837,27 @@ sub _write_out_mkfs_commands {
     }
 
 
-    foreach my $line (sort numerically (keys ( %{$config->{fsinfo}} ))) {
+    foreach my $line (sort numerically (keys ( %{$xml_config->{fsinfo}} ))) {
         
         my $cmd = "";
         # If this line is a comment, skip over. -BEF-
-        if ( $config->{fsinfo}->{$line}->{comment} ) { next; }
+        if ( $xml_config->{fsinfo}->{$line}->{comment} ) { next; }
 
         # If real_dev isn't set, move on. -BEF-
-        unless ($config->{fsinfo}->{$line}->{real_dev}) { next; }
+        unless ($xml_config->{fsinfo}->{$line}->{real_dev}) { next; }
 
         # If format="no" is set, then skip over this one. -BEF-
-        my $format = $config->{fsinfo}->{$line}->{format};
+        my $format = $xml_config->{fsinfo}->{$line}->{format};
         if (($format) and ( "$format" eq "no")) { next; }
 
         # mount_dev should contain fs LABEL or UUID information. -BEF-
-        my $mount_dev = $config->{fsinfo}->{$line}->{mount_dev};
+        my $mount_dev = $xml_config->{fsinfo}->{$line}->{mount_dev};
 
-        my $real_dev = $config->{fsinfo}->{$line}->{real_dev};
-        my $mp = $config->{fsinfo}->{$line}->{mp};
-        my $fs = $config->{fsinfo}->{$line}->{fs};
-        my $options = $config->{fsinfo}->{$line}->{options};
-        my $mkfs_opts = $config->{fsinfo}->{$line}->{mkfs_opts};
+        my $real_dev = $xml_config->{fsinfo}->{$line}->{real_dev};
+        my $mp = $xml_config->{fsinfo}->{$line}->{mp};
+        my $fs = $xml_config->{fsinfo}->{$line}->{fs};
+        my $options = $xml_config->{fsinfo}->{$line}->{options};
+        my $mkfs_opts = $xml_config->{fsinfo}->{$line}->{mkfs_opts};
         unless ($mkfs_opts) { $mkfs_opts = ""; }
 
         # Deal with filesystems to be mounted read only (ro) after install.  We 
@@ -867,7 +870,7 @@ sub _write_out_mkfs_commands {
         }
 
         # swap
-        if ( $config->{fsinfo}->{$line}->{fs} eq "swap" ) {
+        if ( $xml_config->{fsinfo}->{$line}->{fs} eq "swap" ) {
 
             # create swap
             $cmd = "mkswap -v1 $real_dev || shellout";
@@ -882,7 +885,7 @@ sub _write_out_mkfs_commands {
             print MASTER_SCRIPT "\n";
 
         # msdos or vfat
-        } elsif (( $config->{fsinfo}->{$line}->{fs} eq "vfat" ) or ( $config->{fsinfo}->{$line}->{fs} eq "msdos" )){
+        } elsif (( $xml_config->{fsinfo}->{$line}->{fs} eq "vfat" ) or ( $xml_config->{fsinfo}->{$line}->{fs} eq "msdos" )){
 
             # create fs
             $cmd = "mkdosfs $mkfs_opts -v $real_dev || shellout";
@@ -903,7 +906,7 @@ sub _write_out_mkfs_commands {
 
 
         # ext2
-        } elsif ( $config->{fsinfo}->{$line}->{fs} eq "ext2" ) {
+        } elsif ( $xml_config->{fsinfo}->{$line}->{fs} eq "ext2" ) {
 
             # create fs
             $cmd = "mke2fs $real_dev || shellout";
@@ -946,7 +949,7 @@ sub _write_out_mkfs_commands {
 
 
         # ext3
-        } elsif ( $config->{fsinfo}->{$line}->{fs} eq "ext3" ) {
+        } elsif ( $xml_config->{fsinfo}->{$line}->{fs} eq "ext3" ) {
 
             # create fs
             $cmd = "mke2fs -j $real_dev || shellout";
@@ -989,7 +992,7 @@ sub _write_out_mkfs_commands {
 
 
         # reiserfs
-        } elsif ( $config->{fsinfo}->{$line}->{fs} eq "reiserfs" ) {
+        } elsif ( $xml_config->{fsinfo}->{$line}->{fs} eq "reiserfs" ) {
 
             # create fs
             $cmd = "echo y | mkreiserfs $real_dev || shellout";
@@ -1009,7 +1012,7 @@ sub _write_out_mkfs_commands {
             print MASTER_SCRIPT "\n";
 
         # jfs
-        } elsif ( $config->{fsinfo}->{$line}->{fs} eq "jfs" ) {
+        } elsif ( $xml_config->{fsinfo}->{$line}->{fs} eq "jfs" ) {
 
             # create fs
             $cmd = "mkfs.jfs -q $real_dev || shellout";
@@ -1057,8 +1060,8 @@ sub validate_auto_install_script_conf {
     #
     ############################################################################
     my %nodups;
-    my $config = XMLin($file, forcearray => 1 );
-    foreach my $hash ( @{$config->{fsinfo}} ) {
+    my $xml_config = XMLin($file, forcearray => 1 );
+    foreach my $hash ( @{$xml_config->{fsinfo}} ) {
 
         $_ = ${$hash}{'line'};
 
@@ -1085,23 +1088,23 @@ sub _write_out_new_fstab_file {
 
     my ($image_dir, $file) = @_;
 
-    my $config = XMLin($file, keyattr => { fsinfo => "+line" }, forcearray => 1 );
+    my $xml_config = XMLin($file, keyattr => { fsinfo => "+line" }, forcearray => 1 );
 
     print MASTER_SCRIPT qq(\n);
     print MASTER_SCRIPT qq(\n);
     print MASTER_SCRIPT qq(### BEGIN generate new fstab file from autoinstallscript.conf ###\n);
     print MASTER_SCRIPT qq(cat <<'EOF' > /a/etc/fstab\n);
 
-    foreach my $line (sort numerically (keys ( %{$config->{fsinfo}} ))) {
-        my $comment   = $config->{fsinfo}->{$line}->{comment};
-        my $mount_dev = $config->{fsinfo}->{$line}->{mount_dev};
+    foreach my $line (sort numerically (keys ( %{$xml_config->{fsinfo}} ))) {
+        my $comment   = $xml_config->{fsinfo}->{$line}->{comment};
+        my $mount_dev = $xml_config->{fsinfo}->{$line}->{mount_dev};
         unless ($mount_dev) 
-            { $mount_dev = $config->{fsinfo}->{$line}->{real_dev}; }
-        my $mp        = $config->{fsinfo}->{$line}->{mp};
-        my $options   = $config->{fsinfo}->{$line}->{options};
-        my $fs        = $config->{fsinfo}->{$line}->{fs};
-        my $dump      = $config->{fsinfo}->{$line}->{dump};
-        my $pass      = $config->{fsinfo}->{$line}->{pass};
+            { $mount_dev = $xml_config->{fsinfo}->{$line}->{real_dev}; }
+        my $mp        = $xml_config->{fsinfo}->{$line}->{mp};
+        my $options   = $xml_config->{fsinfo}->{$line}->{options};
+        my $fs        = $xml_config->{fsinfo}->{$line}->{fs};
+        my $dump      = $xml_config->{fsinfo}->{$line}->{dump};
+        my $pass      = $xml_config->{fsinfo}->{$line}->{pass};
 
         if ($comment) {
             print MASTER_SCRIPT qq($comment\n);
@@ -1143,7 +1146,7 @@ sub _write_out_umount_commands {
 
     my ($image_dir, $file) = @_;
 
-    my $config = XMLin($file, keyattr => { fsinfo => "+line" }, forcearray => 1 );
+    my $xml_config = XMLin($file, keyattr => { fsinfo => "+line" }, forcearray => 1 );
 
     print MASTER_SCRIPT "### BEGIN Unmount filesystems ###\n";
 
@@ -1152,19 +1155,19 @@ sub _write_out_umount_commands {
     # can reverse sort by mount point below to unmount them all. -BEF-
     #
     my %fs_by_mp;   
-    foreach my $line (reverse sort (keys ( %{$config->{fsinfo}} ))) {
+    foreach my $line (reverse sort (keys ( %{$xml_config->{fsinfo}} ))) {
 
-        if ( $config->{fsinfo}->{$line}->{fs} ) { 
+        if ( $xml_config->{fsinfo}->{$line}->{fs} ) { 
 
             #
             # We don't need to add filesystems that will not be formatted, and
             # therefore not mounted, to the list of filesystems to umount. -BEF-
             #
-            my $format = $config->{fsinfo}->{$line}->{format};
+            my $format = $xml_config->{fsinfo}->{$line}->{format};
             if (($format) and ( "$format" eq "no")) { next; }
 
-            my $mp = $config->{fsinfo}->{$line}->{mp};
-            my $fs = $config->{fsinfo}->{$line}->{fs};
+            my $mp = $xml_config->{fsinfo}->{$line}->{mp};
+            my $fs = $xml_config->{fsinfo}->{$line}->{fs};
 
             # 
             # Don't include in hash below unless it's a supported filesystem. -BEF-
@@ -1426,18 +1429,17 @@ EOF
 
 
 # Usage:
-# my $ip_hex = ip_quad_2_ip_hex($client_ip);
+# my $ip_hex = ip_quad_2_ip_hex($ip_address);
 sub ip_quad_2_ip_hex {
 
-    my ($client_ip) = $_[1];
+    my ($ip_address) = $_[1];
 
-    my ($a, $b, $c, $d) = split(/\./, $client_ip);
+    my ($a, $b, $c, $d) = split(/\./, $ip_address);
 
     # Figure out the hex equivalent of the IP address
     my $ip_hex = sprintf("%02X%02X%02X%02X", $a, $b, $c, $d);
 
     return $ip_hex;
 }
-
 
 

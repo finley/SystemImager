@@ -3,7 +3,8 @@
 #
 # "SystemImager" 
 #
-#  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
+#  Copyright (C) 2002 Bald Guy Software 
+#                     <brian.finley@baldguysoftware.com>
 #
 #  $Id$
 #
@@ -11,15 +12,20 @@
 # set some variables
 $VERSION="SYSTEMIMAGER_VERSION_STRING";
 my $program_name="mkclientnetboot";
-my $get_help = "   Try \"$program_name -help\" for more options.";
+my $get_help = "  Try \"$program_name -help\" for more options.";
 
 # declare modules
 use lib "USR_PREFIX/lib/systemimager/perl";
 use strict;
+use Socket;
 use File::Copy;
 use File::Path;
+use Net::hostent;
 use Getopt::Long;
 use SystemImager::Config;
+use SystemImager::Common;
+use SystemImager::Server;
+
 use vars qw($config $VERSION);
 
 ### BEGIN parse the config file ###
@@ -46,14 +52,17 @@ Usage: $program_name [OPTION]... SOURCE_IMAGE DESTINATION_IMAGE
 
 Options: (options can be presented in any order)
 
- -help                    Display this output.
-
- -version                 Display version and copyright information.
-
- -verbose                 Explain what is being done.
-
- -client HOSTNAME         Hostname or IP address of the imageserver
-                          from which you want to copy the image.  
+ -help                   Display this output.
+                         
+ -version                Display version and copyright information.
+                         
+ -verbose                Show filenames that are being removed.
+                         
+ -clients "HOST1 HOST2"  A space seperated list of host names and/or dotted
+                         quad IP addresses.  This server (assuming it is a 
+                         boot server) will be told to let these clients boot
+                         from the network, at least until they've completed 
+                         a successful SystemImager autoinstall.
 
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
@@ -61,32 +70,110 @@ EOF
 
 # interpret command line options
 GetOptions( 
-  "help" => \my $help,
-  "version" => \my $version,
-  "clients=s" => \my $clients,
-  "verbose" => \my $verbose
+    "help" => \my $help,
+    "version" => \my $version,
+    "verbose" => \my $verbose,
+    "clients=s" => \my $clients,
 ) or die qq($help_info);
 
 # if requested, print help information
 if($help) {
-  print qq($help_info);
-  exit 0;
+    print qq($help_info);
+    exit 0;
 }
 
 # if requested, print version and copyright information
 if($version) {
-  print qq($version_info);
-  exit 0;
+    print qq($version_info);
+    exit 0;
 }
 
-# Take the arguments left after Getopt::Long parses it's stuff out 
-# as the source and destination image names.
-#$source_image=$ARGV[0];
-#$destination_image=$ARGV[1];
+SystemImager::Common->check_if_root();
 
-if ($verbose) {;}
-if (!$clients) {
-    print qq(Must specify at least one client hostname or IP address!\n);
+unless($clients) {
+    print qq(FATAL: Please specify one or more clients with -clients.\n);
     print qq($get_help\n);
     exit 1;
 }
+
+# Make array from -clients "hostnames and ip addresses" -BEF-
+$_ = $clients;
+my @array = split;
+
+foreach my $client (@array) {
+
+    # IP or Hostname?
+    if(SystemImager::Common->valid_ip_quad($client)) {
+        my $ip = $client;
+        remove_boot_file($ip);
+    } else {
+        my @ips = get_ips($client);
+        foreach my $ip ( @ips ) {
+            remove_boot_file($ip);
+        }
+    }
+}
+
+
+################################################################################
+#
+#   Subroutines
+#
+################################################################################
+
+
+################################################################################
+#
+# Description:
+# Removes a pxe boot config for the specified IP address.
+#
+# Usage:
+# remove_boot_file($ip_address);
+sub remove_boot_file {
+
+    my $ip_address = $_[0];
+
+    my $ip_hex = SystemImager::Server->ip_quad_2_ip_hex($ip_address);
+
+    my $file = $tftp_dir . "/pxelinux.cfg/" . $ip_hex;
+    if ($verbose) { print "Removing $file.\n"; }
+    if(-e $file) {
+        unlink($file) or die ("FATAL: Couldn't remove $file!\n");
+    }
+
+    return 1;
+
+}
+
+
+################################################################################
+#
+# Description:
+# Produce a list of IP addresses from a host name, and call remove_boot_file
+# for each IP address.
+#
+# Usage:
+# my @ips = get_ips($hostname);
+sub get_ips {
+
+    my $host = $_[0];
+
+    my ($hinfo, @ips);
+    if ( $hinfo = gethost($host) ) { 
+        foreach my $addr ( @{$hinfo->addr_list} ) {
+            push @ips, inet_ntoa($addr);
+        }
+    } else {
+        die "Can't find an IP address for $host!\n";
+    }
+
+    return @ips;
+
+}
+
+
+
+
+
+
+
