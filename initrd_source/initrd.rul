@@ -116,8 +116,11 @@ else
 	# If we're not using uclibc, then copy over the 
 	# standard libs instead. -BEF-
 	( cd $(INITRD_BUILD_DIR) && \
-	  $(PYTHON) $(INITRD_DIR)/mklibs -v -d lib ./*bin/* )
+	  $(PYTHON) $(INITRD_DIR)/mklibs -L /lib64:/usr/lib64 \
+	  -v -d lib ./*bin/* )
 endif
+	## hack for x86_64
+	cd $(INITRD_BUILD_DIR) && ln -s lib lib64
 
 	# Strip 'em. -BEF-
 	strip $(INITRD_BUILD_DIR)/bin/*
@@ -174,6 +177,7 @@ initrd_get_source:	$(INITRD_SRC_DIR)/$(BUSYBOX_TARBALL) \
 			$(INITRD_SRC_DIR)/$(DEVFSD_TARBALL) \
 			$(INITRD_SRC_DIR)/$(DHCLIENT_TARBALL) \
 			$(INITRD_SRC_DIR)/$(MODUTILS_TARBALL) \
+			$(INITRD_SRC_DIR)/$(MODULE_INIT_TOOLS_TARBALL) \
 			$(INITRD_SRC_DIR)/$(RSYNC_TARBALL) \
 			$(INITRD_SRC_DIR)/$(UCLIBC_TARBALL) \
 			$(INITRD_SRC_DIR)/$(UDPCAST_TARBALL)
