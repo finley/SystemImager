@@ -29,9 +29,9 @@ $systemimagerdir="/etc/systemimager";
 $nisdomainname="";
 
 # use the long options module to allow us to use, well, long options ;)
-use lib "/var/lib/systemimager/perl";
-use SystemImager::Server;
-use SystemImager::Common;
+#use lib "/var/lib/systemimager/perl";
+#use SystemImager::Server;
+#use SystemImager::Common;
 use Getopt::Long;
 use AppConfig;
 
