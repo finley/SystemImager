@@ -5,6 +5,8 @@
 #
 
 SystemImager-0.24 2000.02.09
+- makedhcpstatic -- Modified to try /var/state/dhcp/dhcpd.leases, then
+  /etc/dhcpd.leases, and as a last resort /var/log/messages.
 - autoinstall system -- The autoinstalldiskette is no longer based on
   Tom's Root Boot.  It is now a miniature distribution of my own.  It
   boots using syslinux.  This also allows us to use the same kernel and
