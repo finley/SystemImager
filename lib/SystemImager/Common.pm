@@ -619,6 +619,8 @@ sub _turn_sfdisk_output_into_generic_partitionschemes_file {
         } elsif ($id eq "8e") {  # 8e  Linux LVM
           $flags = "lvm";
      
+        } elsif ($id eq "a0") {  # a0  IBM Thinkpad hibernation
+
         } elsif ($id eq "de") {  # de  Dell Utility
 
         } elsif ($id eq "ef") {  # ef  EFI (FAT-12/16/32)
@@ -627,11 +629,15 @@ sub _turn_sfdisk_output_into_generic_partitionschemes_file {
           $flags = "raid";
      
         } else {
-          print qq(\n\n);
-          print qq(FATAL:  I don't quite know how to interpret the Id tag of "$id" on partition\n);
-          print qq(        number "$minor" on disk "/dev/$disk".  Please submit a bug report, including\n);
-          print qq(        this output, at http://systemimager.org/support/.  Thanks!  -Brian\n);
-          exit 1;
+            print qq(\n\n);
+            print qq(WARNING:  I don't quite know how to interpret the Id tag of "$id" on partition\n);
+            print qq(          number "$minor" on disk "/dev/$disk".  Please submit a bug report,\n);
+            print qq(          including this output, at http://systemimager.org/support/.  If there\n);
+            print qq(          are any flags that should be associated with this partition type,\n);
+            print qq(          please include that information in the bug report.\n);
+            print qq(\n);
+            print "Please hit <Enter> to continue...\n";
+            my $answer = <>;
         }
      
         # Add boot flag to flags, if necessary.
