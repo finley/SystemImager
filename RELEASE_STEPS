@@ -17,7 +17,7 @@ Pending:
     
     Misc. Notes
     ----------------------------------------------------------------------------
-    o make SSH_SUPPORT=1 all
+    o make WITH_SSH=1 all
     o FLAVOR should be set to: standard-ssh
     o SSH_DOWNLOAD_URL should only be URL excluding /systemimager/
         Example: 
@@ -128,6 +128,7 @@ PRE-RELEASE
   should be increased
 * verify CHANGE.LOG additions
 * manual in pdf and html formats online
+* grep -r XXX .
 
 
 
