@@ -1,6 +1,6 @@
 %define name     systemimager
 %define ver      2.0.0
-%define rel      3
+%define rel      4
 %define prefix   /usr/local
 
 Summary: Software that automates Linux installs, software distribution, and production deployment.
@@ -11,7 +11,7 @@ Copyright: GPL
 Group: Applications/System
 Source: http://download.sourceforge.net/systemimager/%{name}-%{ver}.tar.gz
 BuildRoot: /tmp/%{name}-%{ver}-root
-Packager: Sean Dague <japh@us.ibm.com>
+Packager: Brian Finley <brian@baldguysoftware.com>
 Docdir: %{prefix}/doc
 URL: http://systemimager.org/
 Distribution: System Installation Suite
@@ -29,7 +29,7 @@ Copyright: GPL
 Group: Applications/System
 Source: http://download.sourceforge.net/systemimager/%{name}-%{ver}.tar.gz
 BuildRoot: /tmp/%{name}-%{ver}-root
-Packager: Sean Dague <japh@us.ibm.com>
+Packager: Brian Finley <brian@baldguysoftware.com>
 Docdir: %{prefix}/doc
 URL: http://systemimager.org/
 Distribution: System Installation Suite
@@ -59,7 +59,7 @@ Copyright: GPL
 Group: Applications/System
 Source: http://download.sourceforge.net/systemimager/%{name}-%{ver}.tar.gz
 BuildRoot: /tmp/%{name}-%{ver}-root
-Packager: Sean Dague <japh@us.ibm.com>
+Packager: Brian Finley <brian@baldguysoftware.com>
 Docdir: %{prefix}/doc
 URL: http://systemimager.org/
 Distribution: System Installation Suite
@@ -89,7 +89,7 @@ Copyright: GPL
 Group: Applications/System
 Source: http://download.sourceforge.net/systemimager/%{name}-%{ver}.tar.gz
 BuildRoot: /tmp/%{name}-%{ver}-root
-Packager: Sean Dague <japh@us.ibm.com>
+Packager: Brian Finley <brian@baldguysoftware.com>
 Docdir: %{prefix}/doc
 URL: http://systemimager.org/
 Distribution: System Installation Suite
@@ -112,6 +112,12 @@ farms, high performance clusters, computer labs, and corporate desktop
 environments.
 
 %changelog
+* Mon Nov  5 2001 Sean Dague <sean@dague.net> 2.0.0-4
+- Added build section for true SRPM ability
+
+* Mon Oct  28 2001 Sean Dague <sean@dague.net> 2.0.0-3
+- Added common package
+
 * Sat Oct 20 2001  Sean Dague <sean@dague.net> 2.0.0-2
 - Recombined client and server into one spec file
 
@@ -122,9 +128,9 @@ environments.
 %prep
 %setup
 
-%changelog
- 
 %build
+cd $RPM_BUILD_DIR/%{name}-%{version}/
+make all
 
 %install
 cd $RPM_BUILD_DIR/%{name}-%{version}/
@@ -132,6 +138,8 @@ make install_server_all DESTDIR=/tmp/%{name}-%{ver}-root
 make install_client_all DESTDIR=/tmp/%{name}-%{ver}-root
 
 %clean
+cd $RPM_BUILD_DIR/%{name}-%{version}/
+make distclean
 rm -rf $RPM_BUILD_ROOT
 
 %post server
@@ -145,6 +153,7 @@ chkconfig --del systemimager
 %defattr(-, root, root)
 %prefix/bin/lsimage
 %prefix/share/man/man8/lsimage*
+%dir /usr/local/lib/systemimager
 /usr/local/lib/systemimager/perl/SystemImager/Common.pm
 
 %files server
@@ -155,7 +164,6 @@ chkconfig --del systemimager
 %dir /var/log/systemimager
 %dir /var/lib/systemimager/images
 %dir /var/lib/systemimager/scripts
-%dir /usr/local/lib/systemimager
 %dir /usr/local/share/systemimager/i386-boot
 %dir /etc/systemimager
 %config /etc/systemimager/rsyncd.conf
@@ -187,7 +195,6 @@ chkconfig --del systemimager
 %defattr(-, root, root)
 %doc CHANGE.LOG COPYING CREDITS README TODO VERSION
 %dir /etc/systemimager
-%dir /usr/local/lib/systemimager
 %config /etc/systemimager/updateclient.local.exclude
 
 /usr/local/lib/systemimager/perl/SystemImager/Client.pm
