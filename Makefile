@@ -180,8 +180,7 @@ install_client_all:	install_client install_common
 
 # install server-only architecture independent files
 PHONY += install_server
-install_server:	install_server_man install_configs install_server_libs \
-		install_common_libs
+install_server:	install_server_man install_configs install_server_libs
 	$(SI_INSTALL) -d $(BIN)
 	$(SI_INSTALL) -d $(SBIN)
 	$(foreach binary, $(BINARIES), \
@@ -214,7 +213,7 @@ endif
 
 # install client-only files
 PHONY += install_client
-install_client: install_client_man install_client_libs install_common_libs
+install_client: install_client_man install_client_libs
 	mkdir -p $(ETC)/systemimager
 	$(SI_INSTALL) -b -m 644 etc/updateclient.local.exclude \
 	  $(ETC)/systemimager
@@ -355,7 +354,7 @@ ssh_tarball:	$(SYSTEMIMAGER_SSH_TARBALL)
 
 $(SYSTEMIMAGER_SSH_TARBALL):	$(OPENSSH_BINARIES) \
 								$(OPENSSH_CONF_FILES)
-	
+
 ifndef WITH_SSH
 	@echo ''
 	@echo 'Please use "make WITH_SSH=1 ssh_tarball".'
