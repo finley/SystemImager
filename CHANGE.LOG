@@ -8,10 +8,12 @@
 VA SystemImager-1.5.0 2001.xx.xx
 -----------------------------------------------------------------------
 
-updateclient
-------------
-o Removed support for the depricated -imageserver option.  This means
-  you can now abbreviate to -i for the -image option.
+autoinstall initrd.gz
+---------------------
+o don't pull hosts file from imageserver if HOSTNAME is known.
+o Fixed bug #407316.  Autoinstall was only working on eth0, even if 
+  another interface got an IP address.  Thanks to James Oakley for 
+  submitting this bug and a patch.
 
 getimage
 --------
@@ -42,6 +44,11 @@ makeautoinstalldiskette
 -----------------------
 o Verify that the kernel and initrd.gz actually exist.  Suggested by 
   Greg Pratt <gpratt@valinux.com>.
+
+updateclient
+------------
+o Removed support for the depricated -imageserver option.  This means
+  you can now abbreviate to -i for the -image option.
 
 
 
