@@ -122,6 +122,21 @@ if ($autoinstall) {
   $rc = 0xffff & system($command);
   if ($rc != 0) { die "Failed to copy SystemImager initrd.gz file to /boot on client!!!\n"; }  
 
+  # find out on which partition the current root file system resides
+  $file="/etc/fstab";
+  open(FSTAB, "< $file") or die "Couldn't open $file for reading: $!\n";
+  while (<FSTAB>) {
+    # turn tabs into spaces (not a normal space --> <ctrl>+<v> then <tab> )
+    $_ =~ s/	/ /g;
+    # turn multiple spaces into single spaces
+    $_ =~ s/ +/ /g;
+    if(/ \/ /){
+      my @fields = split(/ /, $_);
+      $last_root=$fields[0];
+    }
+  }
+  close(FSTAB);
+
   ### BEGIN lilo.conf file stuff ###
   $file = "/etc/lilo.conf";
 
@@ -130,7 +145,7 @@ if ($autoinstall) {
     while(<LILO_CONF>) {
       chomp;
       if( /label=systemimager/ ) { 
-        print "SystemImager entry already exists.  Using existing entry...\n";
+        print "Warning: SystemImager entry already exists.  Using existing entry...\n";
         $lilo_entry_exists="true";
       };
     };
@@ -140,7 +155,7 @@ if ($autoinstall) {
   unless ($lilo_entry_exists) {
     print "Adding SystemImager entry in $file...\n";
     open (LILO_CONF, ">> $file") or die "Couldn't open $file for writing: $!\n";
-    print LILO_CONF << 'EOF';
+    print LILO_CONF << "EOF";
 
 image=/boot/kernel
       label=systemimager
@@ -148,7 +163,7 @@ image=/boot/kernel
       read-write
       # appending root=/dev/ram0 ensures that the kernel will 
       # not try to run the non-existent /linuxrc script
-      append="root=/dev/ram0 load_ramdisk=1 prompt_ramdisk=0"
+      append="LAST_ROOT=$last_root root=/dev/ram0 load_ramdisk=1 prompt_ramdisk=0"
 EOF
     close (LILO_CONF);
   }
