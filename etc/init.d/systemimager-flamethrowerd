@@ -20,30 +20,47 @@
 # Required-Stop:
 # Default-Start:  3 5
 # Default-Stop:   0 1 2 6
-# Short-Description: SystemImager's daemon multicast installs
-# Description: SystemImager's daemon multicast installs
+# Short-Description: SystemImager's daemon for multicast installs
+# Description: SystemImager's daemon for multicast installs
 #
 ### END INIT INFO
 
+kill_em_all() {
+    if [ -f $PPID_FILE ]; then
+        kill `cat $PPID_FILE`
+        rm -f $PPID_FILE
+    fi
+    if [ "`ls $STATE_DIR`" != "" ]; then
+        for PID_FILE in `ls ${STATE_DIR}/*`
+        do
+            if [ -f $PID_FILE ]; then
+                kill `cat $PID_FILE`
+                rm -f $PID_FILE
+                echo -n "."
+            fi
+        done
+        kill_em_all
+    fi
+}
 
 PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin:
-PIDFILE=/var/run/flamethrowerd.pid
+PPID_FILE=/var/run/flamethrowerd.pid
+STATE_DIR=/var/state/systemimager/flamethrower
 
 case "$1" in
   start)
+    if [ -e $PPID_FILE ]; then
+        echo "PID file $PPID_FILE exists.  Must be already running."
+        exit 1
+    fi
     echo -n "Starting SystemImager's Flamethrower (multicast): flamethrowerd"
     flamethrowerd
     echo "."
     ;;
   stop)
     echo -n "Stopping SystemImager's Flamethrower (multicast): flamethrowerd"
-    if [ -f $PIDFILE ]; then
-        kill `cat $PIDFILE`
-        rm -f $PIDFILE
-    fi
-    pidof udp-sender > /dev/null
-    [ $? = 0 ] && kill `pidof udp-sender`
-    echo "."
+    kill_em_all
+    echo
     ;;
   reload)
     echo "Not implemented."
