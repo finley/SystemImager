@@ -1,11 +1,16 @@
 #!/bin/sh
 
 #########################################################################
-# The intent of this script is to automate the configuration of a typical
-# linux PXE server.
+# The intent of this script is to automate the configuration of a
+# linux PXE server, and is written with SystemImager in mind.
+# it uses pxelinux and configures it for a kernel/single ramdisk scenario.
+#
+# it is written as a set of independent tasks so that it can hopefully
+# be expanded for other architectures, and other non-SystemImager purposes
+#
 #########################################################################
 
-INTERACTIVE=""
+INTERACTIVE="yes"
 INTERFACE=""
 LOCAL_DHCP=""
 KERNEL=""
@@ -13,8 +18,8 @@ INITRD=""
 TFTPDIR=""
 
 usage="\
-Usage: netbootconf.sh [-i] [--interface=interface] [--localdhcp=y|n] [--kernel=path]
-       [--initrd=path] [--tftpdir=dir]"
+Usage:  netbootconf.sh [-f] [--interface=interface] [--localdhcp=y|n] 
+	[--kernel=path] [--initrd=path] [--tftpdir=dir]"
        
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
@@ -22,157 +27,77 @@ DISTRO="unknown"
 PKGDIR="./pkgs"
 CONFIG_DIR="./configs"
 
-# packages
-PXE_DEB_URL="http://www.dannf.org/netbootconf/pkgs/pxe_0.1-2_i386.deb"
-PXE_DEB=$PKGDIR/`basename $PXE_DEB_URL`
-
-PXE_POTATO_URL="http://www.dannf.org/netbootconf/pkgs/pxe_0.1-2potato0_i386.deb"
-PXE_POTATO_DEB=$PKGDIR/`basename $PXE_POTATO_URL`
-
-PXE_RPM_3_URL="http://www.dannf.org/netbootconf/pkgs/pxe-0.1-14.i386.rpm"
-PXE_RPM_3=$PKGDIR/`basename $PXE_RPM_3_URL`
-
-PXE_RPM_4_URL="http://www.dannf.org/netbootconf/pkgs/pxe-0.1-22.i386.rpm"
-PXE_RPM_4=$PKGDIR/`basename $PXE_RPM_4_URL`
-
-TFTP_DEB_URL="http://www.dannf.org/netbootconf/pkgs/tftp-hpa_0.14-2_i386.deb"
-TFTP_DEB=$PKGDIR/`basename $TFTP_DEB_URL`
-
-TFTPD_DEB_URL="http://www.dannf.org/netbootconf/pkgs/tftpd-hpa_0.14-2_i386.deb"
-TFTPD_DEB=$PKGDIR/`basename $TFTPD_DEB_URL`
-
-TFTP_POTATO_DEB_URL="http://www.dannf.org/netbootconf/pkgs/tftp-hpa_0.14-2potato0_i386.deb"
-TFTP_POTATO_DEB=$PKGDIR/`basename $TFTP_POTATO_DEB_URL`
-
-TFTPD_POTATO_DEB_URL="http://www.dannf.org/netbootconf/pkgs/tftpd-hpa_0.14-2potato0_i386.deb"
-TFTPD_POTATO_DEB=$PKGDIR/`basename $TFTPD_POTATO_DEB_URL`
-
-TFTP_RPM_3_URL="http://www.dannf.org/netbootconf/pkgs/tftp-hpa-0.13-1.i386.rpm"
-TFTP_RPM_3=$PKGDIR/`basename $TFTP_RPM_3_URL`
-
-TFTP_RPM_4_URL="http://www.dannf.org/netbootconf/pkgs/tftp-0.17-5.i386.rpm"
-TFTP_RPM_4=$PKGDIR/`basename $TFTP_RPM_4_URL`
-
-TFTPD_RPM_4_URL="http://www.dannf.org/netbootconf/pkgs/tftp-server-0.17-5.i386.rpm"
-TFTPD_RPM_4=$PKGDIR/`basename $TFTPD_RPM_4_URL`
-
 TFTPD_PATH=""
 
 TFTP_TEST_FILE_TEXT="all your tftp test file are belong to us"
 
 program_name=`basename $0`
 
-##############################################################################
-# attempts to determine the distribution from the contents of /etc/issue
-# sets $DISTRO to either the name of a supported distribution or "unknown" 
-##############################################################################
-
-### BEGIN WGET_FILE
-# wget the file pointed to by the url $URL_TO_WGET
-wget_file() {
-    if [ ! -f $URL_TO_WGET ]; then
-	echo -n "Couldn't find `basename $URL_TO_WGET`, shall I fetch it for you? (y/[n]): "
-	if [ "$INTERACTIVE" == "no" ]; then
-	    REPLY="y"
-	    echo "Non-interactive mode, answering yes."
-	else
-	    read REPLY
-	fi
-	case $REPLY in
-	 y|Y|Yes|yes|YES ) echo "Attempting to retrieve $URL_TO_WGET..." ;;
-	 * ) echo "Ok, not retrieving." && return 1 ;;
-	esac
-	wget $URL_TO_WGET -O $PKGDIR/`basename $URL_TO_WGET`
-	if [ $? -ne 0 ]; then
-	    echo "wget returned non-zero status."
-	    return 1
-	fi
+### BEGIN BACKUP_FILE()
+############################################################
+# takes the variable $FILE_TO_BACKUP, and renames the file #
+# to <$FILE_TO_BACKUP>.<name of this script>.bak.<N>       #
+# where <N> is the next number, starting at 0, that does   #
+# not conflict with a file that already exists             #
+############################################################
+backup_file() {
+    if [ "$FILE_TO_BACKUP" == "" ]; then
+	echo "BUG:  call to backup_file() with FILE_TO_BACKUP not set"
+	exit 1
     fi
+    
+    if [ ! -a "$FILE_TO_BACKUP" ]; then
+	echo "$FILE_TO_BACKUP does not already exist, so not backing it up."
+	return 0
+    fi
+    echo "Backing up $FILE_TO_BACKUP..."
+    backup_file_i=0
+    while /bin/true; do
+	if [ ! -a $FILE_TO_BACKUP.$program_name.bak$backup_file_i ]; then
+	    echo -n "Moving $FILE_TO_BACKUP to $FILE_TO_BACKUP.$program_name.bak$backup_file_i..."
+	    mv $FILE_TO_BACKUP $FILE_TO_BACKUP.$program_name.bak$backup_file_i
+	    if [ $? -ne 0 ]; then
+		echo "failed."
+		return 1
+	    fi
+	    break
+	fi
+	backup_file_i=`expr $backup_file_i + 1`
+    done
+    echo "done."
     return 0
 }
-
-### BEGIN CHECK_DISTRO
-check_distro() {
-    echo -n "Checking Distribution... "
-    grep -e "^Debian" /etc/issue 1> /dev/null 2> /dev/null
-    if [ $? -eq 0 ]; then
-	DISTRO="Debian"
-	DEBIAN_VERSION=`cut -d " " -f 3 /etc/issue | grep "..*"`
-    fi
-    grep -e "^Red Hat" /etc/issue 1> /dev/null 2> /dev/null
-    if [ $? -eq 0 ]; then
-	DISTRO="RedHat"
-	RPM_MAJOR_VERSION=`rpm --version | cut -d " " -f 3 | cut -d "." -f 1`
-    fi
-    if [ "$DISTRO" != "Debian" ] && [ "$DISTRO" != "RedHat" ]; then
-	DISTRO="unknown"
-    fi
-    echo "$DISTRO"
-}
-### END CHECK_DISTRO
-
-##############################################################################
-# checks for a tftp server and tries to install one if one isn't found
-##############################################################################
+### END BACKUP_FILE()
 
 ### BEGIN CHECK_TFTPD
+##############################
+# checks for any tftp server #
+##############################
 check_tftpd() {
     # check to see if a tftp server is installed
     echo -n "Checking for a tftp server... "
     TFTP_PATH=`which in.tftpd`
     if [ "$TFTP_PATH" == "" ]; then
 	echo "failed."
-	echo -n "Do you want me to install a tftp server for ya? (y/[n]): "
-	if [ "$INTERACTIVE" == "no" ]; then
-	    REPLY="y"
-	    echo "Non-interactive mode, answering yes."
-	else
-	    read REPLY
-	fi
-	case $REPLY in
-	 y|Y|Yes|yes|YES ) echo "Ok, installing... " ;;
-	 * ) echo "Ok, not installing." && return 1 ;;
-	esac
-	URL_TO_WGET=""
-	if [ "$DISTRO" == "Debian" ]; then
-	    if [ "$DEBIAN_VERSION" == "2.2" ]; then
-		if [ ! -f $TFTPD_POTATO_DEB ]; then
-		    URL_TO_WGET=$TFTPD_POTATO_DEB_URL
-		    wget_file
-		    if [ $? -ne 0 ]; then
-			return 1
-		    fi
-		    dpkg -i $TFTPD_POTATO_DEB
-		    if [ $? -ne 0 ]; then
-			echo "Error: dpkg returned a non-zero status."
-			return 1
-		    fi
-		fi
-	    else
-		if [ ! -f $TFTPD_DEB ]; then
-		    URL_TO_WGET=$TFTPD_DEB_URL
-		    wget_file
-		    if [ $? -ne 0 ]; then
-			return 1
-		    fi
-		    dpkg -i $TFTPD_DEB
-		    if [ $? -ne 0 ]; then
-			echo "Error: dpkg returned a non-zero status."
-			return 1
-		    fi
-		fi
-	    fi
-	elif [ "$DISTRO" == "RedHat" ]; then
-	    rpm -Uvh $TFTPD_RPM
-	    if [ $? -ne 0 ]; then
-		echo "Error: rpm returned a non-zero status."
-		return 1
-	    fi
-	else
-	    echo "I don't how to install a tftp server on this distribution."
-	    echo "Please install the a tftp server and rerun this script."
-	    return 1
-	fi
+	echo "****************************************************************"
+	echo "A tftp server is required, but I couldn't find one in:"
+	echo "$PATH."
+	echo "You will need to install one."
+	echo ""
+	echo "I suggest using a tftp server with H. Peter Anvin's patch, or"
+	echo "atftpd.  If you're using RedHat 7.0 or higher, the included"
+	echo "tftp-server package will do the trick.  For earlier versions"
+	echo "of RedHat, you can try using the tftp-hpa package which is"
+	echo "available at http://systemimager.org.  For Debian systems"
+	echo "more recent than Potato (2.2) you should just be able to"
+	echo "apt-get install either tftpd-hpa or atftpd.  For earlier"
+	echo "systems you can add a deb-src entry to point to a"
+	echo "Debian/unstable mirror, apt-get source one of these packages,"
+	echo "and run dpkg-buildpackage to build debs for your system."
+	echo "Once you've installed an appropriate tftp server, you can"
+	echo "then re-run this script to complete the configuration."
+	echo "****************************************************************"
+	return 1
     else
 	echo "found."
     fi
@@ -186,11 +111,11 @@ check_tftpd() {
 }    
 ### END CHECK_TFTPD
 
-##############################################################################
-# Check to see if the tftp server is hpa's tftp server
-##############################################################################
-
 ### BEGIN CHECK_TFTPD_HPA
+########################################################
+# Check to see if the tftp server is hpa's tftp server #
+# by looking for the string "hpa" in the binary        #
+########################################################
 check_tftpd_hpa() {
     echo -n "Checking if tftp server is H. Peter Anvin's tftp server... "
     TFTPD_PATH=`which in.tftpd`
@@ -211,109 +136,30 @@ check_tftpd_hpa() {
 }
 ### END CHECK_TFTPD_HPA
 
-##############################################################################
-# this installs hpa's tftp server, removing others if they exist
-##############################################################################
+### BEGIN CHECK_ATFTPD
+######################################################
+# check to see if in.tftpd is atftp by examining the #
+# output of in.tftpd -V                              #
+######################################################
+check_atftpd() {
+    echo -n "Checking if tftp server is atftpd... "
+    TFTPD_PATH=`which in.tftpd`
+    if [ "$TFTPD_PATH" == "" ]; then
+	echo "Couldn't find in.tftpd in your path."
+	return 1
+    fi
 
-### BEGIN INSTALL_TFTPD_HPA
-install_tftpd_hpa() {
-    ### BEGIN DEBIAN
-    if [ "$DISTRO" == "Debian" ]; then
-	### BEGIN DOES TFTPD ALREADY EXIST?
-	if [ -f /usr/sbin/in.tftpd ]; then
-	    INSTALLED_TFTPD_PKG=`dpkg -S $TFTPD_PATH | cut -d ":" -f 1`
-	    echo -n "/usr/sbin/in.tftpd exists, "
-	    if [ "$INSTALLED_TFTPD_PKG" == "" ]; then
-		echo "but isn't owned by any package."
-		echo "Please move it and run this script again."
-		return 1
-	    else
-		echo "and is owned by $INSTALLED_TFTPD_PKG."
-		echo -n "Do you want me to remove $INSTALLED_TFTPD_PKG? (y/[n])"
-		if [ "$INTERACTIVE" == "no" ]; then
-		    REPLY="y"
-		    echo "Non-interactive mode, answering yes."
-		else
-		    read REPLY
-		fi
-		case $REPLY in
-		    y|Y|Yes|yes|YES ) echo -n "Removing... " ;;
-		    * ) echo "Not removing." && return 1 ;;
-		esac
-		dpkg -r $INSTALLED_TFTPD_PKG
-		if [ $? -eq 0 ]; then
-		    echo "done."
-		else
-		    echo "failed."
-		    return 1
-		fi
-	    fi 
-	fi
-	### END DOES TFTPD ALREADY EXIST?
-	if [ "$DEBIAN_VERSION" == "2.2" ]; then
-	    dpkg -i $TFTPD_POTATO_DEB
-	else
-	    dpkg -i $TFTPD_DEB
-	fi
-	if [ $? -ne 0 ]; then
-	    echo "Install failed."
-	    return 1
-	fi
-    ### END DEBIAN
-    ### BEGIN REDHAT
-    elif [ "$DISTRO" == "RedHat" ]; then
-	### BEGIN DOES TFTPD ALREADY EXIST?
-	if [ -f /usr/sbin/in.tftpd ]; then
-	    echo -n "/usr/sbin/in.tftpd exists, "
-	    INSTALLED_TFTPD_PKG=`rpm -qf --queryformat "%{NAME}\n" /usr/sbin/in.tftpd`
-	    if [ "$INSTALLED_TFTPD_PKG" == "" ]; then
-		echo "but isn't owned by any package."
-		echo "Please move it and run this script again."
-		return 1
-	    else
-		echo "and is owned by $INSTALLED_TFTPD_PKG."
-		echo -n "Do you want me to remove $INSTALLED_TFTPD_PKG? (y/[n])"
-		if [ "$INTERACTIVE" == "no" ]; then
-		    REPLY="y"
-		    echo "Non-interactive mode, answering yes."
-		else
-		    read REPLY
-		fi
-		case $REPLY in
-		    y|Y|Yes|yes|YES ) echo -n "Removing... " ;;
-		    * ) echo "Not removing." && return 1 ;;
-		esac
-		rpm -e $INSTALLED_TFTPD_PKG
-		if [ $? -eq 0 ]; then
-		    echo "done."
-		else
-		    echo "failed."
-		    return 1
-		fi
-	    fi
-	fi
-	### END DOES TFTPD ALREADY EXIST?
-	if [ "$RPM_MAJOR_VERSION" == "3" ]; then
-	    rpm -Uvh $TFTPD_RPM_3
-	elif [ "$RPM_MAJOR_VERSION" == "4" ]; then
-	    rpm -Uvh $TFTPD_RPM_4
-	else
-	    echo "I don't have a version $RPM_MAJOR_VERSION RPM for tftpd."
-	    echo "Trying to install the most recent package..."
-	    rpm -Uvh $TFTPD_RPM_4
-	fi
-	if [ $? -ne 0 ]; then
-	    echo "Install failed."
-	    return 1
-	fi
-    ### END REDHAT
+    $TFTPD_PATH -V | grep "atftp" 1> /dev/null 2> /dev/null
+    if [ $? -eq 0 ]; then
+	echo "yup - right on!"
+	return 0
     else
-	echo "I don't know how to install tftpd on this distribution."
+	echo "doesn't look like it."
 	return 1
     fi
 }
-### END INSTALL_TFTPD_HPA
-	
+### END CHECK_ATFTPD
+
 ##############################################################################
 # configures inetd and xinetd for use with hpa's tftp server
 ##############################################################################
@@ -325,7 +171,7 @@ configure_inetd_for_tftpd_hpa() {
 	echo -n "Updating inetd.conf... "
 	update-inetd --remove "^tftp.*"
 	update-inetd --group BOOT --add \
-	    "tftp\tdgram\tudp\twait\troot\t/usr/sbin/tcpd\tin.tftpd -s -r blksize $TFTPDIR"
+	    "tftp\tdgram\tudp\twait.100\troot\t/usr/sbin/tcpd\tin.tftpd -s -r blksize $TFTPDIR"
 	echo "done."
     else
 	echo -n "Checking for a running inetd... "
@@ -348,7 +194,7 @@ configure_inetd_for_tftpd_hpa() {
 	    sed s/"^[[:space:]]*tftp"/"#tftp"/ < /etc/inetd.conf > /tmp/$program_name.inetd.conf
 	    mv /etc/inetd.conf /etc/inetd.conf.$program_name.bak
 	    mv /tmp/$program_name.inetd.conf /etc/inetd.conf
-	    echo -e "tftp\tdgram\tudp\twait\troot\t/usr/sbin/tcpd\tin.tftpd -s -r blksize $TFTPDIR" >> /etc/inetd.conf
+	    echo -e "tftp\tdgram\tudp\twait.100\troot\t/usr/sbin/tcpd\tin.tftpd -s -r blksize $TFTPDIR" >> /etc/inetd.conf
 	    echo -n "Sending a SIGHUP to inetd (pid $inetd_pid)... "
 	    kill -HUP $inetd_pid
 	    if [ $? -ne 0 ]; then
@@ -365,18 +211,12 @@ configure_inetd_for_tftpd_hpa() {
 		echo "you are running an unsupported configuration."
 		return 1
 	    fi
-	    if [ -f /etc/xinetd.d/tftp ]; then
-		i=0
-		while /bin/true; do
-		    if [ ! -f /etc/xinetd.d/.tftp.$program_name.bak$i ]; then
-			echo "Moving /etc/xinetd.d/tftp to /etc/xinetd.d/.tftp.$program_name.bak$i..."
-			mv /etc/xinetd.d/tftp \
-			    /etc/xinetd.d/.tftp.$program_name.bak$i
-			break
-		    fi
-		    i=`expr $i + 1`
-		done
+	    FILE_TO_BACKUP=/etc/xinetd.d/tftp
+	    backup_file
+	    if [ $? -ne 0 ]; then
+		return 1
 	    fi
+
 	    cp -a $CONFIG_DIR/tftp /etc/xinetd.d/tftp
 	    echo "Sending SIGUSR1 to xinetd... "
 	    kill -USR1 $xinetd_pid
@@ -402,54 +242,18 @@ test_tftpd() {
 
     ### BEGIN TFTP CLIENT NOT FOUND
     if [ "$TFTP_CLIENT" == "" ]; then
-	echo "not found."
-	echo -n "Shall I install a tftp client for ya? ([y]/n): "
-	if [ "$INTERACTIVE" == "no" ]; then
-	    REPLY="y"
-	    echo "Non-interactive mode, answering yes."
-	else
-	    read REPLY
-	fi
-	case $REPLY in
-	 n|N|NO|No ) echo "Fine.  Be that way." && return 1 ;;
-	 * ) echo "Ok, installing..." ;;
-	esac
+	echo "in.tftpd not found in your PATH."
+	echo ""
+	echo "A tftp client is required to test the functionality of your"
+	echo "tftp server.  Please install an appropriate tftp client package"
+	echo "for your distribution."
+	return 1
+    fi
 
-	if [ "$DISTRO" == "Debian" ]; then
-	    if [ "$DEBIAN_VERSION" == "2.2" ]; then
-		dpkg -i $TFTP_POTATO_DEB
-	    else
-		dpkg -i $TFTP_DEB
-	    fi
-	    if [ $? -ne 0 ]; then
-		echo "Error:  dpkg returned a non-zero status."
-		exit 1
-	    fi
-	elif [ "$DISTRO" == "RedHat" ]; then
-	    if [ "$RPM_MAJOR_VERSION" == "3" ]; then
-		rpm -Uvh $TFTP_RPM_3
-	    elif [ "$RPM_MAJOR_VERSION" == "4" ]; then
-		rpm -Uvh $TFTP_RPM_4
-	    else
-		echo "I don't have a version $RPM_MAJOR_VERSION tftp RPM."
-		echo "Trying to use the most recent version..."
-		rpm -Uvh $TFTP_RPM_4
-	    fi
-	    if [ $? -ne 0 ]; then
-		echo "Error:  rpm returned a non-zero status."
-		exit 1
-	    fi
-	else
-	    echo "I don't know how to install a tftp client on this distro."
-	    echo "You'll need to install one by hand."
-	    return 1
-	fi
-	TFTP_CLIENT=`which tftp`
-	if [ "$TFTP_CLIENT" == "" ]; then
-	    echo "I still couldn't find a tftp client in your path."
-	    echo "You probably need to modify your PATH variable."
-	    return 1
-	fi
+    TFTP_CLIENT=`which tftp`
+    if [ "$TFTP_CLIENT" == "" ]; then
+	echo "I still couldn't find a tftp client in your path."
+	return 1
     else
 	echo "found."
     fi
@@ -533,67 +337,29 @@ install_pxe_daemon() {
     if [ "$pxe_daemon" != "" ]; then
 	echo "found."
 	return 0
-    fi
-    echo "Couldn't find a pxe daemon."
-    echo -n "Shall I try to install one? (y/[n])"
-    if [ "$INTERACTIVE" == "no" ]; then
-	REPLY="y"
-	echo "Non-interactive mode, answering yes."
     else
-	read REPLY
-    fi
-    case $REPLY in
-	y|Y|Yes|yes|YES ) echo "Ok, installing..." ;;
-	* ) echo "Not installing." && return 1 ;;
-    esac
-
-    if [ "$DISTRO" == "Debian" ]; then
-	if [ "$DEBIAN_VERSION" == "2.2" ]; then
-	    dpkg -i $PXE_POTATO_DEB
-	else
-	    dpkg -i $PXE_DEB
-	fi
-	if [ $? -ne 0 ]; then
-	    echo "Error:  dpkg returned a non-zero status.  exiting."
-	    exit 1
-	fi
-    elif [ "$DISTRO" == "RedHat" ]; then
-	if [ "$RPM_MAJOR_VERSION" == "3" ]; then
-	    rpm -Uvh $PXE_RPM_3
-	elif [ "$RPM_MAJOR_VERSION" == "4" ]; then
-	    rpm -Uvh $PXE_RPM_4
-	else
-	    echo "I don't have a version $RPM_MAJOR_VERSION pxe RPM."
-	    echo "Trying to use the most recent version..."
-	    rpm -Uvh $PXE_RPM_4
-	fi
-	if [ $? -ne 0 ]; then
-	    echo "Error:  rpm returned a non-zero status.  exiting."
-	    exit 1
-	fi
-    else
-	echo "I don't know how to install a pxe daemon on this distro."
-	echo "You'll need to install one by hand."
+	echo "not found."
+	echo ""
+	echo "I couldn't find a pxe daemon on your system.  For RedHat"
+	echo "systems, you can install the pxe RPM for your release.  For"
+	echo "Debian systems, you can try one of the debs i've built from the"
+	echo "RedHat package source.  These packages should be available from"
+	echo "http://dannf.org/"
 	return 1
     fi
 }
 
-# the config file for pxe is pretty evil.
+# the config file for pxe is pretty awkward.
 # you can't go all crazy & start changing the order of things in the file.
 # and why can't the key & value be on the same line?
 configure_pxe_daemon() {
-    ### BEGIN BACK UP OLD CONFIG FILE
-    i=0
-    while /bin/true; do
-	if [ ! -f /etc/pxe.conf.$program_name.bak$i ]; then
-	    echo "Moving /etc/pxe.conf to /etc/pxe.conf.$program_name.bak$i"
-	    mv /etc/pxe.conf /etc/pxe.conf.$program_name.bak$i
-	    break
-	fi
-	i=`expr $i + 1`
-    done
+    FILE_TO_BACKUP=/etc/pxe.conf
+    backup_file
+    if [ $? -ne 0 ]; then
+	return 1
+    fi
+
     cp -a $CONFIG_DIR/pxe.conf /etc
-    ### END BACK UP OLD CONFIG FILE
 
     ### BEGIN edit /etc/pxe.conf
     if [ "$INTERFACE" != "" ]; then
@@ -676,6 +442,35 @@ configure_pxe_daemon() {
     ### END restart pxe daemon
 }
 
+########################################################
+# this function aims to put all the files required by  #
+# PXE clients in the right place(s) in TFTPDIR         #
+#                                                      #
+# i only have access to 2 different PXE clients, and   #
+# they do things differently.  The older one uses      #
+# Intel Boot Agent (TM) 3.x, the other uses 4.x.       #
+# I can't get the older one to work without running    #
+# the pxe daemon, and it looks for files in            #
+# the $LINUX_INSTALL directory, the other just looks   #
+# for files directly under $TFTPDIR.                   #
+# The way you can tell which type of client you have   #
+# (assuming it's one of these 2 types) is by watching  #
+# the console when the client boots.  if it give you   #
+# a small menu, offering a choice between a linux      #
+# install and a local boot, you have the former.       #
+# if you get no such menu, you are probably using      #
+# the newer type of client and do not need the pxe     #
+# daemon (one less thing.) - it can accept the boot    #
+# file option from your DHCP server.                   #
+#                                                      #
+# this is obviously a lot of hand-waving, because i    #
+# really don't know which is abiding to the spec, or   #
+# if both abide and a single general config exists     #
+# to satisfy both, i just link stuff in both places    #
+# (i still want my machine to boot, even if it         #
+# violates the spec :)                                 #
+#              -dann                                   #
+########################################################
 pxelinux_cfg() {
     LINUX_INSTALL=$TFTPDIR/X86PC/UNDI/linux-install
     if [ ! -d $LINUX_INSTALL/pxelinux.cfg ]; then
@@ -695,53 +490,65 @@ pxelinux_cfg() {
     fi
     echo "done."
     
+    if [ ! -f $PKGDIR/pxelinux.0 ]; then
+	echo "Couldn't find $PKGDIR/pxelinux.0"
+	return 1
+    fi
+
+    ### BEGIN BACKUP EXISTING PXELINUX.BIN
     if [ -a $LINUX_INSTALL/linux.0 ]; then
-	if [ `md5sum $LINUX_INSTALL/linux.0` != \
-			`md5sum $PKGDIR/pxelinux.0` ]; then
+	if [ "`md5sum $LINUX_INSTALL/linux.0` != \
+			`md5sum $PKGDIR/pxelinux.0`" ]; then
             echo "$LINUX_INSTALL/linux.0 already exists, but doesn't match the pxelinux.0 I want to install."
-	    i=0
-	    while /bin/true; do
-		if [ ! -a $LINUX_INSTALL/linux.0.bak$i ]; then
-		    echo "Backing up $LINUX_INSTALL/linux.0 to $LINUX_INSTALL/linux.0.bak$i"
-		    mv $LINUX_INSTALL/linux.0 $LINUX_INSTALL/linux.0.bak$i
-		    break
-		fi
-		i=`expr $i + 1`
-	    done
-	    echo -n "Copying $CONFIG_DIR/pxelinux.0 to $LINUX_INSTALL/linux.0 ... "
-	    cp -a $CONFIG_DIR/pxelinux.0 $LINUX_INSTALL/linux.0
+
+	    FILE_TO_BACKUP=$LINUX_INSTALL/linux.0
+	    backup_file
 	    if [ $? -ne 0 ]; then
-		echo "failed."
-	        return 1
+		return 1
 	    fi
-	    echo "done."
-	    
-	    # some pxe clients get their boot file from the dhcp response,
-	    # others look for a specific file and require the pxe daemon.
-	    # we'll have 2 links to make everyone happy.
-	    # makedhcpserver configures systemimager for the former, so
-	    # we'll use that filename.
-	    if [ `md5sum $LINUX_INSTALL/linux.0` != \
-			`md5sum $TFTPDIR/pxelinux.bin` ]; then
-                echo "$TFTPDIR/pxelinux.bin already exists, but doesn't match the pxelinux.0 I want to install."
-	    i=0
-	    while /bin/true; do
-		if [ ! -a $TFTPDIR/pxelinux.bin.bak$i ]; then
-		    echo "Backing up $TFTPDIR/pxelinux.bin to $TFTPDIR/pxelinux.bin.bak$i"
-		    mv $TFTPDIR/pxelinux.bin $TFTPDIR/pxelinux.bin.bak$i
-		    break
-		fi
-		i=`expr $i + 1`
-	    done
-	    echo -n "Linking $TFTPDIR/pxelinux.bin to $LINUX_INSTALL/linux.0 ..."
-	    ln $LINUX_INSTALL/linux.0 $TFTPDIR/pxelinux.bin
-	    if [ $? -ne 0 ]; then
-		echo "failed."
-	        return 1
-	    fi
-	    echo "done."
 	fi
     fi
+    ### END BACKUP EXISTING PXELINUX.BIN
+
+    ### BEGIN COPY OVER PXELINUX.BIN
+    if [ ! -a $LINUX_INSTALL/linux.0 ]; then
+	echo -n "Copying $PKGDIR/pxelinux.0 to $LINUX_INSTALL/linux.0 ... "
+	cp -a $PKGDIR/pxelinux.0 $LINUX_INSTALL/linux.0
+	if [ $? -ne 0 ]; then
+	    echo "failed."
+	    return 1
+	fi
+	echo "done."
+    fi
+    ### END COPY OVER PXELINUX.BIN
+	    
+    ### BEGIN BACKUP EXISTING PXELINUX.BIN IN TFTPDIR
+    if [ -a $TFTPDIR/pxelinux.bin ]; then
+	if [ `md5sum $LINUX_INSTALL/linux.0` != \
+		`md5sum $TFTPDIR/pxelinux.bin` ]; then
+	    echo "$TFTPDIR/pxelinux.bin already exists, but doesn't match the pxelinux.0 I want to install."
+	    FILE_TO_BACKUP=$TFTPDIR/pxelinux.bin
+	    backup_file
+	    if [ $? -ne 0 ]; then
+		return 1
+	    fi
+	fi
+    fi
+    ### END BACKUP EXISTING PXELINUX.BIN IN TFTPDIR
+
+    ### BEGIN CREATE PXELINUX.BIN LINK IN TFTPDIR
+    if [ ! -a $TFTPDIR/pxelinux.bin ]; then
+	echo -n "Linking $TFTPDIR/pxelinux.bin to $LINUX_INSTALL/linux.0 ..."
+	ln $LINUX_INSTALL/linux.0 $TFTPDIR/pxelinux.bin
+	if [ $? -ne 0 ]; then
+	    echo "failed."
+	    return 1
+	fi
+	echo "done."
+    fi
+    ### END CREATE PXELINUX.BIN LINK IN TFTPDIR
+
+    ### BEGIN PROMPT USER FOR KERNEL
     if [ "$KERNEL" != "" ]; then
 	REPLY=$KERNEL
     else
@@ -752,17 +559,19 @@ pxelinux_cfg() {
 	echo "$REPLY doesn't exist, or isn't a regular file."
 	return 1
     fi
+    ### END PROMPT USER FOR KERNEL
+
+    ### BEGIN BACKUP EXISTING KERNEL
     if [ -a $LINUX_INSTALL/kernel ]; then
-	i=0
-	while /bin/true; do
-	    if [ ! -a $LINUX_INSTALL/kernel.bak$i ]; then
-		echo "Backing up $LINUX_INSTALL/kernel to $LINUX_INSTALL/kernel.bak$i"
-		mv $LINUX_INSTALL/kernel $LINUX_INSTALL/kernel.bak$i
-		break
-	    fi
-	    i=`expr $i + 1`
-	done
+	FILE_TO_BACKUP=$LINUX_INSTALL/kernel
+	backup_file
+	if [ $? -ne 0 ]; then
+	    return 1
+	fi
     fi
+    ### END BACKUP EXISTING KERNEL
+    
+    ### BEGIN COPY OVER KERNEL
     echo -n "Copying $REPLY to $LINUX_INSTALL/kernel ... "
     cp -a $REPLY $LINUX_INSTALL/kernel
     if [ $? -ne 0 ]; then
@@ -770,7 +579,34 @@ pxelinux_cfg() {
 	return 1
     fi
     echo "done."
-
+    ### END COPY OVER KERNEL
+    
+    ### BEGIN BACKUP EXISTING KERNEL IN TFTPDIR
+    if [ -a $TFTPDIR/kernel ]; then
+	if [ "`md5sum $TFTPDIR/kernel`" != \
+		"`md5sum $LINUX_INSTALL/kernel`" ]; then
+	    FILE_TO_BACKUP=$TFTPDIR/kernel
+	    backup_file
+	    if [ $? -ne 0 ]; then
+		return 1
+	    fi
+	fi
+    fi
+    ### END BACKUP EXISTING KERNEL IN TFTPDIR
+    
+    ### BEGIN CREATE KERNEL LINK IN TFTPDIR
+    if [ ! -a $TFTPDIR/kernel ]; then
+	echo -n "Linking $TFTPDIR/kernel to $LINUX_INSTALL/kernel ..."
+	ln $LINUX_INSTALL/kernel $TFTPDIR/kernel
+	if [ $? -ne 0 ]; then
+	    echo "failed."
+	    return 1
+	fi
+	echo "done."
+    fi
+    ### END CREATE KERNEL LINK IN TFTPDIR
+    
+    ### BEGIN PROMPT USER FOR RAMDISK
     if [ "$INITRD" != "" ]; then
 	REPLY=$INITRD
     else
@@ -781,17 +617,19 @@ pxelinux_cfg() {
 	echo "$REPLY doesn't exist, or isn't a regular file."
 	return 1
     fi
+    ### END PROMPT USER FOR RAMDISK
+
+    ### BEGIN BACKUP EXISTING RAMDISK
     if [ -a $LINUX_INSTALL/initrd.gz ]; then
-	i=0
-	while /bin/true; do
-	    if [ ! -a $LINUX_INSTALL/initrd.gz.bak$i ]; then
-		echo "Backing up $LINUX_INSTALL/initrd.gz to $LINUX_INSTALL/initrd.gz.bak$i"
-		mv $LINUX_INSTALL/initrd.gz $LINUX_INSTALL/initrd.gz.bak$i
-		break
-	    fi
-	    i=`expr $i + 1`
-	done
+	FILE_TO_BACKUP=$LINUX_INSTALL/initrd.gz
+	backup_file
+	if [ $? -ne 0 ]; then
+	    return 1
+	fi
     fi
+    ### END BACKUP EXISTING RAMDISK
+    
+    ### BEGIN COPY OVER RAMDISK
     echo -n "Copying $REPLY to $LINUX_INSTALL/initrd.gz ... "
     cp -a $REPLY $LINUX_INSTALL/initrd.gz
     if [ $? -ne 0 ]; then
@@ -799,6 +637,46 @@ pxelinux_cfg() {
 	return 1
     fi
     echo "done."
+    ### END COPY OVER RAMDISK
+
+    ### BEGIN CHECK EXISTING RAMDISK IN TFTPDIR
+    if [ -a $TFTPDIR/initrd.gz ]; then
+	if [ `md5sum $LINUX_INSTALL/initrd.gz` != \
+		`md5sum $TFTPDIR/initrd.gz` ]; then
+	    echo "$TFTPDIR/initrd.gz already exists, but doesn't match the initrd.gz I want to install."
+	    FILE_TO_BACKUP=$TFTPDIR/initrd.gz
+	    backup_file
+	    if [ $? -ne 0 ]; then
+		return 1
+	    fi
+	fi
+    fi
+    ### END CHECK EXISTING RAMDISK IN TFTPDIR
+
+    ### BEGIN CREATE RAMDISK LINK IN TFTPDIR
+    if [ ! -a $TFTPDIR/initrd.gz ]; then
+	echo -n "Linking $TFTPDIR/initrd.gz to $LINUX_INSTALL/initrd.gz ..."
+	ln $LINUX_INSTALL/initrd.gz $TFTPDIR/initrd.gz
+	if [ $? -ne 0 ]; then
+	    echo "failed."
+	    return 1
+	fi
+	echo "done."
+    fi
+    ### END CREATE RAMDISK LINK IN TFTPDIR
+
+    ### BEGIN COPY PXELINUX.CFG
+    if [ -a $TFTPDIR/pxelinux.cfg ]; then
+	FILE_TO_BACKUP=$TFTPDIR/pxelinux.cfg
+	backup_file
+	if [ $? -ne 0 ]; then
+	    return 1
+	fi
+    fi
+    echo -n "Copying $LINUX_INSTALL/pxelinux.cfg to $TFTPDIR/pxelinux.cfg..."
+    cp -a $LINUX_INSTALL/pxelinux.cfg $TFTPDIR
+    ### END COPY PXELINUX.CFG
+
 }    
 
 ### BEGIN MAIN        
@@ -812,7 +690,7 @@ cd `dirname $0`
     
 while [ $# -gt 0 ]; do
     case "$1" in
-	-i )               INTERACTIVE="yes" ; shift ;;
+	-f )               INTERACTIVE="no" ; shift ;;
         --interface=* )    INTERFACE="`echo \"${1}\" | sed -e 's/^[^=]*=//'`" ; shift ;;
 	--localdhcp=* )    LOCAL_DHCP="`echo \"${1}\" | sed -e 's/^[^=]*=//'`" ; shift ;;
 	--kernel=* )       KERNEL="`echo \"${1}\" | sed -e 's/^[^=]*=//'`" ; shift ;;
@@ -841,7 +719,12 @@ esac
 
 if [ "$TFTPDIR" == "" ]; then
     echo -n "Where should tftpd serve files from ([/tftpboot]? "
-    read REPLY
+    if [ "$INTERACTIVE" == "no" ]; then
+	REPLY=""
+	echo "Non-interactive mode, taking the default"
+    else
+	read REPLY
+    fi
     if [ "$REPLY" == "" ]; then
 	TFTPDIR="/tftpboot"
     else
@@ -874,22 +757,22 @@ if [ ! -d $TFTPDIR ]; then
     fi
 fi
 
-check_distro
 check_tftpd
+if [ $? -ne 0 ]; then
+    exit 1
+fi
+
+# check to see if the installed tftpd is one
+# of the ones that is known to support options
+# necessary for PXE booting.
 check_tftpd_hpa
 if [ $? -ne 0 ]; then
-    echo "Didn't find tftpd-hpa, trying to install it..."
-    install_tftpd_hpa
+    check_atftpd
     if [ $? -ne 0 ]; then
-	echo "I was unable to install tftpd-hpa, exiting."
-	exit 1
-    fi
-    check_tftpd_hpa
-    if [ $? -ne 0 ]; then
-	echo "I still couldn't find tftpd-hpa, exiting."
 	exit 1
     fi
 fi
+
 configure_inetd_for_tftpd_hpa
 if [ $? -ne 0 ]; then
     echo "Attempt to configure inetd failed."
@@ -922,3 +805,18 @@ fi
 
 echo "Ok, configuration complete."
 echo "Once you're DHCP server is configured, you should be all set."
+if [ `which makedhcpserver` != "" ]; then
+    echo -n "Do you want to run makedhcpserver to configure your DHCP server ([y]/n)? "
+    if [ "$INTERACTIVE" == "no" ]; then
+	REPLY="n"
+	echo "Non-interactive mode, answering no."
+    else
+	read REPLY
+    fi
+    case $REPLY in
+	n|N|No|NO ) exit 0 ;;
+	    * ) makedhcpserver ;;
+    esac
+fi
+
+
