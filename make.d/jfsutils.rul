@@ -24,7 +24,7 @@ jfsutils:	$(MKJFS_BINARY)
 $(MKJFS_BINARY):	$(SRC_DIR)/$(JFSUTILS_TARBALL)
 	[ -d $(SRC_DIR)/$(JFSUTILS_DIR) ] || \
 	  ( cd $(SRC_DIR) && zcat $(JFSUTILS_TARBALL) | tar xv && \
-		( cd $(JFSUTILS_DIR) && cat $(JFSUTILS_PATCHES) < /dev/null | patch -p0 ) && \
+		( cd $(JFSUTILS_DIR) && cat $(JFSUTILS_PATCHES) < /dev/null | patch -p1 ) && \
 	    	( cd $(SRC_DIR)/$(JFSUTILS_DIR) && chmod +x ./configure && \
 	  	CFLAGS="-O2 -Wall" ./configure ) )
 	$(MAKE) -C $(SRC_DIR)/$(JFSUTILS_DIR)
