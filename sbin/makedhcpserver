@@ -1,12 +1,14 @@
 #!/usr/bin/perl -w
+
 #
-# "VA SystemImager" 
-# Copyright (C) 1999-2001 Brian Elliott Finley <brian@valinux.com>
+# "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>
 #
 #   Others who have contributed to this code (in alphabetical order):
 #     John Goebel <jgoebel@valinux.com>
+#     Curtis Zinzilieta <czinzilieta@valinux.com>
 #
 # This file is: makedhcpserver
+#
  
 
 # what do I call myself?
@@ -14,6 +16,55 @@ $program=$0;
 
 # Not everyone may want to create a dhcpd.conf in /etc...
 $dhcpd_conf = "/etc/dhcpd.conf";
+
+### BEGIN variable for parts of the dhcpd.conf file ###
+# associated configs for the dhcpd.conf file
+$dhcpd_conf_v3_part1 = <<"EOF";
+
+# general options
+ddns-update-style none;
+host-checking true;
+
+EOF
+
+
+$dhcpd_conf_v3_part2 = <<"EOF";
+
+# make network booting the SystemImager autoinstallclient possible
+allow booting;
+allow bootp;
+
+# set lease time to 3 days
+default-lease-time 259200;
+max-lease-time 259200;
+
+# what to get to boot the autoinstallclient
+filename "/pxelinux.bin";
+option vendor-class-identifier "PXEClient";
+option vendor-encapsulated-options 09:0f:80:00:0c:4e:65:74:77:6f:72:6b:20:62:6f:6f:74:0a:07:00:50:72:6f:6d:70:74:06:01:02:08:03:80:00:00:47:04:80:00:00:00:ff;
+
+EOF
+
+
+$dhcpd_conf_v2_part1 = <<"EOF";
+
+# make network booting the SystemImager autoinstallclient possible
+allow booting;
+allow bootp;
+
+# set lease time to 3 days
+default-lease-time 259200;
+max-lease-time 259200;
+
+# what to get to boot the autoinstallclient
+filename "/pxelinux.bin";
+option dhcp-class-identifier "PXEClient";
+option vendor-encapsulated-options 09:0f:80:00:0c:4e:65:74:77:6f:72:6b:20:62:6f:6f:74:0a:07:00:50:72:6f:6d:70:74:06:01:02:08:03:80:00:00:47:04:80:00:00:00:ff;
+
+EOF
+
+### END variables for parts of dhcpd.conf file ###
+
 
 
 # Subroutines
@@ -33,7 +84,7 @@ system("clear");
 # give warning
 print <<"EOF";
 
-Welcome to the VA SystemImager "makedhcpserver" command.  This command
+Welcome to the SystemImager "makedhcpserver" command.  This command
 will prepare this computer to be a DHCP server by creating the 
 following file:
 
@@ -66,6 +117,7 @@ $dnsserver2 = "";
 $dnsserver3 = "";
 $router = "192.168.1.254";
 $imageserver = "192.168.1.254";
+$ssh_download_url = "";
 $swallow = "";
 
 ### Begin questionnaire ###
@@ -113,7 +165,16 @@ EOF
  print "What is the IP address of imageserver? [$imageserver]: ";
  $imageserver=get_response($imageserver);
 
- print "What is the air speed velocity of the common swallow? [$swallow]: ";
+ print "\nWill your clients be installed over SSH? (y/[n]): ";
+ my $ssh_install=<STDIN>;
+ chomp $ssh_install;
+ if ($ssh_install eq "y") {
+   if ($ssh_download_url eq "") { $ssh_download_url="http://$imageserver/ssh_files/"; }
+   print "What is the URL for your ssh_files directory? [$ssh_download_url]: ";
+   $ssh_download_url=get_response($ssh_download_url);
+ }
+
+ print "\nWhat is the air speed velocity of the common swallow? [$swallow]: ";
  $swallow=<STDIN>;
  system("clear");
  chomp $swallow;
@@ -129,18 +190,19 @@ EOF
  system("clear");
  print "Ahh, but seriously folks...\n";
  print "Here are the values you have chosen:\n\n";
- print "################################################################\n";
- print "DNS Domain Name:                          $dnsdomainname\n";
- print "network number:                           $netnumber\n";
- print "netmask:                                  $netmask\n";
- print "starting IP address for your dhcp range:  $rangebegin\n";
- print "ending IP address for your dhcp range:    $rangeend\n";
- print "first DNS server:                         $dnsserver1\n";
- print "second DNS server:                        $dnsserver2\n";
- print "third DNS server:                         $dnsserver3\n";
- print "default gateway:                          $router\n";
- print "imageserver:                              $imageserver\n";
- print "################################################################\n";
+ print "#######################################################################\n";
+ print "DNS domain name:                          $dnsdomainname\n";
+ print "Network number:                           $netnumber\n";
+ print "Netmask:                                  $netmask\n";
+ print "Starting IP address for your DHCP range:  $rangebegin\n";
+ print "Ending IP address for your DHCP range:    $rangeend\n";
+ print "First DNS server:                         $dnsserver1\n";
+ print "Second DNS server:                        $dnsserver2\n";
+ print "Third DNS server:                         $dnsserver3\n";
+ print "Default gateway:                          $router\n";
+ print "ImageServer:                              $imageserver\n";
+ print "SSH files download URL:                   $ssh_download_url\n";
+ print "#######################################################################\n";
  
  print "\nAre you satisfied? (y/[n]): ";
  $satisfied=<STDIN>;
@@ -149,46 +211,77 @@ EOF
 
 ### End questionnaire ###
 
+
+# discover which version of dhcpd we're using, if possible
+# assume that dhcpd is in the path
+$rc = `dhcpd --version`;
+$rc =~ m/dhcpd-V3/;
+if ($&) { $dhcpd_version = 3; } else { $dhcpd_version = 2; }
+
+
 # open /etc/dhcpd.conf for writing
 open(DHCPDCONF, "> $dhcpd_conf") || die "Couldn't open /etc/dhcpd.conf for writing: $!\n";
 
-print DHCPDCONF << 'EOF';
-# make network booting the VA SystemImager autoinstallclient possible
-allow booting;
-allow bootp;
 
-# set lease time to 3 days
-default-lease-time 259200;
-max-lease-time 259200;
+# create a configuration file, depending on which version of dhcpd we found
+if ($dhcpd_version eq "2") {
+  # version 2, at least for now
+  print DHCPDCONF $dhcpd_conf_v2_part1;
 
-# what to get to boot the autoinstallclient
-filename "/pxelinux.bin";
-option dhcp-class-identifier "PXEClient";
-option vendor-encapsulated-options 09:0f:80:00:0c:4e:65:74:77:6f:72:6b:20:62:6f:6f:74:0a:07:00:50:72:6f:6d:70:74:06:01:02:08:03:80:00:00:47:04:80:00:00:00:ff;
+  print DHCPDCONF qq(subnet $netnumber netmask $netmask { \n);
+  print DHCPDCONF qq(  range  $rangebegin $rangeend; \n);
+  print DHCPDCONF qq(  option domain-name "$dnsdomainname"; \n);
+  if($dnsserver1 ne "") { print DHCPDCONF qq(  option domain-name-servers $dnsserver1); }
+  if($dnsserver2 ne "") { print DHCPDCONF qq(, $dnsserver2); }
+  if($dnsserver3 ne "") { print DHCPDCONF qq(, $dnsserver3); }
+  if($dnsserver1 ne "") { print DHCPDCONF qq(;\n); }
+  print DHCPDCONF qq(  option routers $router; \n);
+  print DHCPDCONF qq(  # option-100 specifies the IP address of your SystemImager image server\n);
+  print DHCPDCONF qq(  option option-100 "$imageserver"; \n);
+  print DHCPDCONF qq(  # option-208 specifies the URL address of your ssh download\n);
+  if($ssh_download_url eq "") { print DHCPDCONF qq ( # ); }
+  print DHCPDCONF qq(  option option-208 "$ssh_download_url"; \n);
+  print DHCPDCONF qq( } \n);
 
-EOF
+} else {
+  # version 3, at least for now
+  print DHCPDCONF $dhcpd_conf_v3_part1;
 
-print DHCPDCONF qq(subnet $netnumber netmask $netmask { \n);
-print DHCPDCONF qq(  range  $rangebegin $rangeend; \n);
-print DHCPDCONF qq(  option domain-name "$dnsdomainname"; \n);
-if($dnsserver1 ne "") { print DHCPDCONF qq(  option domain-name-servers $dnsserver1); }
-if($dnsserver2 ne "") { print DHCPDCONF qq(, $dnsserver2); }
-if($dnsserver3 ne "") { print DHCPDCONF qq(, $dnsserver3); }
-if($dnsserver1 ne "") { print DHCPDCONF qq(;\n); }
-print DHCPDCONF qq(  option routers $router; \n);
-print DHCPDCONF qq(  # option-100 specifies the IP address of your SystemImager image server\n);
-print DHCPDCONF qq(  option option-100 "$imageserver"; \n);
-print DHCPDCONF qq( } \n);
+  print DHCPDCONF qq(  # option-100 specifies the IP address of your SystemImager image server\n);
+  print DHCPDCONF qq(  option option-100 code 207 = ip-address; \n);
+  print DHCPDCONF qq(  option option-100 $imageserver; \n);
+  print DHCPDCONF qq(  # option-208 specifies the URL address of your ssh download\n);
+  if($ssh_download_url eq "") { print DHCPDCONF qq ( # ); }
+  print DHCPDCONF qq(  option option-208 code 208 = string; \n);
+  if($ssh_download_url eq "") { print DHCPDCONF qq ( # ); }
+  print DHCPDCONF qq(  option option-208 "$ssh_download_url"; \n);
+
+  print DHCPDCONF $dhcpd_conf_v3_part2;
+
+  print DHCPDCONF qq(subnet $netnumber netmask $netmask { \n);
+  print DHCPDCONF qq(  range  $rangebegin $rangeend; \n);
+  print DHCPDCONF qq(  option domain-name "$dnsdomainname"; \n);
+  if($dnsserver1 ne "") { print DHCPDCONF qq(  option domain-name-servers $dnsserver1); }
+  if($dnsserver2 ne "") { print DHCPDCONF qq(, $dnsserver2); }
+  if($dnsserver3 ne "") { print DHCPDCONF qq(, $dnsserver3); }
+  if($dnsserver1 ne "") { print DHCPDCONF qq(;\n); }
+  print DHCPDCONF qq(  option routers $router; \n);
+  print DHCPDCONF qq( } \n);
+
+}
+
+
+# close and chmod the new dhcpd.conf file
 close(DHCPDCONF);
-
 system("chmod 600 $dhcpd_conf");
+
 
 # Oh where oh where could my leases file directory be?
 @lease_file_directories_du_jour = ( 
-                        "/var/dhcp",
-                        "/var/state/dhcp",
-                        "/etc"
-                       );
+  "/var/dhcp",
+  "/var/state/dhcp",
+  "/etc"
+);
 
 foreach my $directory (@lease_file_directories_du_jour) {
     # does *this* one exist?

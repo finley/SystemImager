@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 #
-# "VA SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@valinux.com>
+# "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>
 #
 #   Others who have contributed to this code:
 #     Wesley Smith <wessmith@engr.sgi.com>
@@ -15,12 +15,12 @@ use Getopt::Long;
 # set shell PATH for system() calls 
 $ENV{PATH} = "/usr/sbin:/sbin:/usr/bin:/bin";
 
-$version_number="1.4.0";
+$version_number="1.5.0";
 $program_name = "makeautoinstallcd";
 $version_info = <<"EOF";
-$program_name (part of VA SystemImager) v$version_number
+$program_name (part of SystemImager) v$version_number
     
-Copyright (C) 1999-2001 Brian Elliott Finley <brian\@valinux.com>
+Copyright (C) 1999-2001 Brian Elliott Finley <brian\@systemimager.org>
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 EOF
@@ -60,13 +60,35 @@ if($version) {
   exit 0;
 }
 
+# search for CD creation tools
+$cd_creation_tools="";
+@files = ( "mkhybrid", "mkisofs");
+foreach my $file ( @files ) {
+  $command = "which $file > /dev/null 2>&1";
+  $rc = 0xffff & system($command);
+  if ($rc == 0) {
+    # Compile a list of available tools -- we can choose which of the 
+    # available ones we prefer later.
+    $cd_creation_tools="$cd_creation_tools $file";
+  }
+}   
+
+# if we didn't find any CD creation tools, error out
+unless($cd_creation_tools) {
+  my $unavailable_tools = "";
+  foreach my $file ( @files ) {
+    $unavailable_tools = "$unavailable_tools $file"
+  }
+  die   "FATAL: Coudn't find any of these CD creation tools: $unavailable_tools.\n";
+}
+
 # verify that a valid filename was specified
 unless ($iso_file) { die "$help_info"; }
 $command = "touch $iso_file > /dev/null 2>&1";
 system("$command");
 if($? != 0) { 
     unless ($quiet) {
-        die "Couldn't create $iso_file!\n";
+        die "FATAL: Couldn't create $iso_file!\n";
     } else {
         exit 1;
     }
@@ -77,12 +99,12 @@ if($? != 0) {
 @files = ( "/tftpboot/kernel", "/tftpboot/initrd.gz");
 foreach my $file ( @files ) {
   unless ( -e "$file" ) {
-    die "FATAL:  I can't find $file!";
+    die "FATAL: I can't find $file!";
   }
 }
 
 # if not run as root, this script will surely fail
-unless($< == 0) { die "Must be run as root!\n"; }
+unless($< == 0) { die "FATAL: Must be run as root!\n"; }
 
 # set some variables
 $temp_dir = "/tmp/systemimager.autoinstallcd.temp.dir";
@@ -104,10 +126,10 @@ unless (/^\//) {
 unless ($quiet) { print "Creating temporary working directory...\n"; }
 $command = "rm -fr $temp_dir";
 system("$command");
-if($? != 0) { die \"$command\" failed!\n"; }
-mkdir $temp_dir, 0770 or die "Couldn't create temporary working directory $mount_dir!\n";
-mkdir $mount_dir, 0770 or die "Couldn't create temporary working directory $mount_dir/mnt!\n";
-mkdir $boot_dir, 0770 or die "Couldn't create temporary working directory $mount_dir/boot!\n";
+if($? != 0) { die "FATAL: \"$command\" failed!\n"; }
+mkdir $temp_dir, 0770 or die "FATAL: Couldn't create temporary working directory $mount_dir!\n";
+mkdir $mount_dir, 0770 or die "FATAL: Couldn't create temporary working directory $mount_dir/mnt!\n";
+mkdir $boot_dir, 0770 or die "FATAL: Couldn't create temporary working directory $mount_dir/boot!\n";
 
 # create temporary image
 $command = "dd if=/dev/zero of=$temp_file bs=1k count=2880";
@@ -116,7 +138,7 @@ unless ($quiet) {
 } else {
     system("$command > /dev/null 2>&1");
 }
-if($? != 0) { die \"$command\" failed!\n"; }
+if($? != 0) { die "FATAL: \"$command\" failed!\n"; }
 
 # create dos filesystem on temporary image
 $command = "mkdosfs $temp_file";
@@ -126,48 +148,55 @@ unless ($quiet) {
 } else {
     system("$command > /dev/null 2>&1");
 }
-if($? != 0) { die "Couldn't create DOS filesystem on $temp_file!\n"; }
+if($? != 0) { die "FATAL: Couldn't create DOS filesystem on $temp_file!\n"; }
+
+# Run syslinux *before* copying files to prevent syslinux from partially 
+# overwriting the first large on the diskette image.  Bad syslinux, bad!
+if (!$quiet) {print "Using \"syslinux\" to make CD image bootable...\n";}
+$command = "syslinux -s $temp_file";
+system("$command");
+if($? != 0) { die "FATAL: \"$command\" failed!\n"; }
 
 # mount the freshly created filesystem
 unless ($quiet) { print "Mounting temporary image in loopback mode...\n"; }
 $command = "mount -t msdos -o loop $temp_file $mount_dir";
 system("$command");
-if($? != 0) { die "Couldn't mount temporary image in loopback mode!\n"; }
+if($? != 0) { die "FATAL: Couldn't mount temporary image in loopback mode!\n"; }
 
 # copy stuff to image
 foreach $file ("/tftpboot/initrd.gz", "/tftpboot/kernel", "/tftpboot/pxelinux.cfg/syslinux.cfg", "/tftpboot/pxelinux.cfg/message.txt") {
     unless ($quiet) {print "Copying $file to temporary image...\n";}
     $command = "cp -f $file $mount_dir";
     system("$command");
-    if($? != 0) { die "Couldn't copy $file to $mount_dir!\n"; }
+    if($? != 0) { die "FATAL: Couldn't copy $file to $mount_dir!\n"; }
 }
 
 # unmount temporary image
 unless ($quiet) {print "Un-mounting temporary image...\n";}
 $command = "umount $mount_dir && rm -fr $mount_dir";
 system("$command");
-if($? != 0) { die "Couldn't un-mount temporary from $mount_dir/tmp!\n"; }
+if($? != 0) { die "FATAL: Couldn't un-mount temporary from $mount_dir/tmp!\n"; }
 
-# run syslinux
-if (!$quiet) {print "Using \"syslinux\" to make CD image bootable...\n";}
-$command = "syslinux -s $temp_file";
-system("$command");
-if($? != 0) { die \"$command\" failed!\n"; }
+# compile iso image creation command
+if($cd_creation_tools =~ /mkhybrid/) {
+  $command = "cd $temp_dir && mkhybrid -b boot/vasiboot.img -c boot/boot.catalog -A systemimager-autoinstallcd-$version_number -p \"Created by makeautoinstallcd -- part of SystemImager\.  http://systemimager.org/\" -o $iso_file .";
+} elsif($cd_creation_tools =~ /mkisofs/) {
+  $command = "cd $temp_dir && mkisofs -b boot/vasiboot.img -c boot/boot.catalog -o $iso_file .";
+}
 
-# do mkisofs
-$command = "cd $temp_dir && mkisofs -b boot/vasiboot.img -c boot/boot.catalog -o $iso_file .";
+# execute iso image creation command
 unless ($quiet) {
     system("$command");
 } else {
     system("$command > /dev/null 2>&1");
 }
-if($? != 0) { die \"$command\" failed!\n"; }
+if($? != 0) { die "FATAL: \"$command\" failed!\n"; }
 
 # get rid of temporary directory
 unless ($quiet) { print "Removing temporary mount point...\n";}
 $command = "rm -fr $temp_dir";
 system("$command");
-if($? != 0) { die "Couldn't remove temporary working directory!\n"; }
+if($? != 0) { die "FATAL: Couldn't remove temporary working directory!\n"; }
 
 # print done!
 unless ($quiet) { print "Done!\n"; }

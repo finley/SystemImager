@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 #
-# "VA SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@valinux.com>
+# "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>
 #
 #   Others who have contributed to this code (in alphabetical order):
 #     Phil Champon <pchampon@valueweb.net>
@@ -9,6 +9,7 @@
 #     James Oakley <joakley@solutioninc.com>
 #     Laurence Sherzer <lsherzer@gate.net>
 #     Wesley Smith <wessmith@engr.sgi.com>
+#     Curtis Zinzilieta <czinzilieta@valinux.com>
 #
 # This file is: getimage 
 #
@@ -17,7 +18,7 @@
 $ENV{PATH} = "/usr/sbin:/sbin:/usr/bin:/bin";
 
 # version
-$version_number="1.4.0";
+$version_number="1.5.0";
 
 # systemimager configuration directory
 $systemimagerdir="/etc/systemimager";
@@ -52,9 +53,9 @@ $0  =~ /(.*)\/+([^\/]*)$/;
 $program_name = $2;
 
 $version_info = <<"EOF";
-$program_name (part of VA SystemImager) v$version_number
+$program_name (part of SystemImager) v$version_number
 
-Copyright (C) 1999-2001 Brian Elliott Finley <brian\@valinux.com>
+Copyright (C) 1999-2001 Brian Elliott Finley <brian\@systemimager.org>
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 EOF
@@ -65,7 +66,9 @@ $help_info = $version_info . <<"EOF";
 Usage: $program_name [OPTION]...  -golden-client HOSTNAME -image IMAGENAME
   or   $program_name [OPTION]...  -server HOSTNAME -image IMAGENAME
 
+
 Options: (options can be presented in any order and may be abbreviated)
+
  -help                    Display this output.
 
  -version                 Display version and copyright information.
@@ -82,8 +85,14 @@ Options: (options can be presented in any order and may be abbreviated)
                           the name of a new image if you want to create
                           a new image, or the name of an exisiting image
                           if you want to update an image.  If you are
-                          using the -server option, the same imagename is
-                          used for both the source and destination.
+                          using the -server option, the same imagename 
+			  is used for both the source and destination.
+
+ -ssh-user USERNAME       Username for ssh connection to the client.
+                          Only needed if a secure connection is required.
+
+ -log "STRING"		  Quoted string for log file format.  See the
+			  rsyncd.conf man page for options.
 
  -quiet                   Don\'t ask any questions or print any output
                           (other than errors). In this mode, no warning
@@ -99,7 +108,9 @@ Options: (options can be presented in any order and may be abbreviated)
                           NO if -quiet.  If not specified you will be
                           prompted to confirm an update.
 
-(The following options affect the autoinstall client after autoinstalling)
+
+The following options affect the autoinstall client after autoinstalling:
+
  -ip-assignment METHOD    Where METHOD can be:
 
                           static_dhcp -- A DHCP server will assign the
@@ -134,12 +145,14 @@ Options: (options can be presented in any order and may be abbreviated)
 			    after successful completion of an 
 			    autoinstall.
 
+
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
 EOF
     
 
 $golden_client = "";
+$master_client = "";
 $ip_assignment_method = "";
 $image = "";
 $update_script = "";
@@ -149,6 +162,7 @@ $imagedir_prefix =  "/var/spool/systemimager/images";
 
 ### BEGIN evaluate options ###
 GetOptions( 
+    "master-client=s" => \$master_client,
     "golden-client=s" => \$golden_client,
     "server=s" => \$imageserver,
     "image=s" => \$image,
@@ -156,6 +170,8 @@ GetOptions(
     "ip-assignment=s" => \$ip_assignment_method,
     "update-script=s" => \$update_script,
     "post-install=s" => \$post_install,
+    "ssh-user=s" => \$ssh_user,
+    "log=s" => \$log,
     "help" => \$help,
     "version" => \$version,
     "quiet" => \$quiet
@@ -175,6 +191,17 @@ if ($version) {
   print "$version_info";
   exit 0;
 }
+
+# only golden client or master client may be set
+if ($golden_client and $master_client) {
+  print "\n";
+  print "getimage: Either use -golden-client or -master-client but not both.\n";
+  print "          (-master-client is depricated and will be unavailable in\n"; 
+  die   "           a future release.)\n$get_help\n\n";
+}
+
+# if $master_client is used, pass the variable on
+if ($master_client) { $golden_client = $master_client; }
 
 # only golden client or server may be set
 if ($golden_client and $imageserver) {
@@ -285,11 +312,62 @@ if (-d "$imagedir") {
 	die "$program_name: Can't make directory $imagedir\n";
 }
 
+# Set default rsync port number
+$port="873";
+
+# If we're using SSH, go ahead and establish port forwarding
+if($ssh_user) {
+  # Get a random port number (normal rsync port won't work if rsync daemon is running)
+  my $port_in_use="yes";
+  until ( $port_in_use eq "no" )
+  {
+    $port_in_use="no";
+    $port = rand 60000;
+    $port =~ s/\..*//;
+
+    # Be sure port isn't reserved
+    $file="/etc/services";
+    open (FILE, "<$file") || die ("$0: Couldn't open $file for reading\n");
+      while (<FILE>) {
+        if (/$port/) { 
+          $port_in_use="yes";
+          next;
+        }
+      }
+    close FILE;
+  
+    # Be sure port isn't in use
+    open (NETSTAT, "netstat -tn |");
+    while (<NETSTAT>) {
+      (my $junk, my $port_and_junk) = split (/:/);
+      if ($port_and_junk) { 
+        (my $netstat_port, my $other_junk) = split (/ +/, $port_and_junk);
+        if ($netstat_port = /$port/) { 
+          $port_in_use="yes";
+          next;
+        }
+      }
+    }
+  }
+
+  # Setup the port forwarding
+  $command="ssh -f -l $ssh_user -L $port:$source_host:873 $source_host sleep 5";
+  $rc = 0xffff & system($command);
+  if ($rc != 0) { 
+    print "FATAL: Failed to establish secure port forwarding to $source_host!\n";
+    die   "       Be sure that you can run \"ssh -l $ssh_user $source_host\" successfully.\n";
+  }
+
+  # and change the source host to point to localhost so we can use the port forwarding
+  $source_host="127.0.0.1";
+}
+
+
 ### BEGIN golden client stuff ###
 if($golden_client) {
   # get /etc/systemimager/mounted_filesystems from $golden_client
   if (!$quiet) {
-    print "Retrieving /etc/systemimager/mounted_filesystems from $golden_client to check for mounted filesystems...\n";
+    print "Retrieving /etc/systemimager/mounted_filesystems from $source_host to check for mounted filesystems...\n";
 
     my $directory="${imagedir}/etc/";
     unless (-d "$directory") { mkdir("$directory", 0755) || die "$program_name: Can't make directory $directory\n"; }
@@ -297,13 +375,17 @@ if($golden_client) {
     $directory="${imagedir}/etc/systemimager/";
     unless (-d "$directory") { mkdir("$directory", 0755) || die "$program_name: Can't make directory $directory\n"; }
 
-    $command =  "rsync -av --numeric-ids ${golden_client}::root/etc/systemimager/mounted_filesystems ${imagedir}/etc/systemimager/mounted_filesystems";
+    $command = "rsync -av --numeric-ids";
+    if ($log) { $command = $command . qq( --log-format="$log"); }
+    if ($ssh_user) { $command = $command . " --bwlimit=10000"; }
+    $command =  $command . " rsync://${source_host}:${port}/root/etc/systemimager/mounted_filesystems ${imagedir}/etc/systemimager/mounted_filesystems";
+
     open(RSYNC, "$command|");
-    print "------------- $golden_client mounted_filesystems RETRIEVAL PROGRESS -------------\n";
+    print "------------- $source_host mounted_filesystems RETRIEVAL PROGRESS -------------\n";
     while (<RSYNC>) {
       print;
     }
-    print "------------- $golden_client mounted_filesystems RETRIEVAL FINISHED -------------\n";
+    print "------------- $source_host mounted_filesystems RETRIEVAL FINISHED -------------\n";
     close(RSYNC);
   } else {
 
@@ -313,14 +395,21 @@ if($golden_client) {
     $directory="${imagedir}/etc/systemimager/";
     unless (-d "$directory") { mkdir("$directory", 0755) || die "$program_name: Can't make directory $directory\n"; }
 
-    $command = "rsync -a --numeric-ids ${golden_client}::root/etc/systemimager/mounted_filesystems ${imagedir}/etc/systemimager/mounted_filesystems";
+    $command = "rsync -a --numeric-ids";
+    if ($log) { $command = $command . qq( --log-format="$log"); }
+    if ($ssh_user) { $command = $command . " --bwlimit=10000"; }
+    $command = " rsync://${source_host}:${port}/root/etc/systemimager/mounted_filesystems ${imagedir}/etc/systemimager/mounted_filesystems";
+
     system($command);
   }
   
   # $? is the return value from rsync
   if ($?) {
-    print "Failed to retrieve /etc/systemimager/mounted_filesystems from $golden_client.\n";
-    die "$program_name: Have you run \"prepareclient\" on $golden_client?\n";
+    print "Failed to retrieve /etc/systemimager/mounted_filesystems from $source_host.\n";
+    print "$program_name: Have you run \"prepareclient\" on $source_host?\n";
+    print "          If you see the message \"unrecognised option\" above, check\n";
+    print "          http://systemimager.org/download/ to be sure that you are running\n";
+    die   "          the recommended version of rsync.\n";
   }
   
   # create list of filesystems to *not* get
@@ -338,15 +427,22 @@ if($golden_client) {
       print EXCLUDE "$mount_point/*\n";
     }
   close EXCLUDE;
+
   # compile rsync options
-  $options="--delete --exclude-from=$exclude_file ${golden_client}::root/ $imagedir";
+  $options = "--delete --exclude-from=$exclude_file";
+  if ($log) { $options = $options . qq( --log-format="$log"); }
+  if ($ssh_user) { $options = $options . " --bwlimit=10000"; }
+  $options = $options . " rsync://${source_host}:${port}/root/ $imagedir";
 }
 ### END golden client stuff ###
 
 ### BEGIN pull from imageserver stuff ###
 if($imageserver) {
   # compile rsync options
-  $options="--delete ${imageserver}::$image/ $imagedir";
+  $options = "--delete";
+  if ($log) { $options = $options . qq( --log-format="$log"); }
+  if ($ssh_user) { $options = $options . " --bwlimit=10000"; }
+  $options = $options . " rsync://${source_host}:${port}/$image/ $imagedir";
 }
 ### END pull from imageserver stuff ###
 
@@ -533,7 +629,7 @@ print MASTER_SCRIPT << 'EOF';
 #!/bin/sh
 
 #
-# "VA SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@valinux.com>
+# "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>
 #
 #
 EOF
@@ -1091,8 +1187,31 @@ foreach $mount_point (sort (@mount_points)) {
 
 
 ### BEGIN pull the image down ###
-print MASTER_SCRIPT "# filler up!\n";
-print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::$image/ /a/ || shellout\n\n";
+print MASTER_SCRIPT << 'EOF';
+# Filler up!
+#
+# If we are installing over ssh, we must limit the bandwidth used by 
+# rsync with the --bwlimit option.  This is because of a bug in ssh that
+# causes a deadlock.  The only problem with --bwlimit is that it slows 
+# down your autoinstall significantly.  We try to guess which one you need:
+# o if you ran getimage with -ssh-user, we presume you need --bwlimit
+# o if you ran getimage without -ssh-user, we presume you don't need 
+#   --bwlimit and would rather have a faster autoinstall.
+#
+# Both options are here for your convenience.  We have done our best to 
+# choose the one you need and have commented out the other.
+#
+EOF
+
+if ($ssh_user) {
+  # using ssh
+  print MASTER_SCRIPT "rsync -av --bwlimit=10000 --numeric-ids \$IMAGESERVER::$image/ /a/ || shellout\n\n";
+  print MASTER_SCRIPT "#rsync -av --numeric-ids \$IMAGESERVER::$image/ /a/ || shellout\n\n";
+} else {
+  # not using ssh
+  print MASTER_SCRIPT "#rsync -av --bwlimit=10000 --numeric-ids \$IMAGESERVER::$image/ /a/ || shellout\n\n";
+  print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::$image/ /a/ || shellout\n\n";
+}
 ### END pull the image down ###
 
 ### BEGIN graffiti ###

@@ -1,14 +1,14 @@
 #!/bin/sh
 
 #
-# "VA SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@valinux.com>
+# "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>
 #
 # This file is: makedist
 #               (Build a SystemImager distribution tarball)
 #
 #   Written by Michael Jennings <mej@valinux.com>
 #     Others who have contributed to this code:
-#       Brian Finley <brian@valinux.com>
+#       Brian Finley <brian@systemimager.org>
 #
 
 if [ ! -f VERSION ]; then
@@ -19,7 +19,7 @@ if [ ! -f VERSION ]; then
 fi
 
 # what is the formal name for this package?
-BASE="va-systemimager"
+BASE="systemimager"
 
 # get version numbers
 VER_MAJOR=`cat VERSION | awk -F. '{print $1'}`
@@ -54,25 +54,30 @@ wrap_it_up() {
   rm -rf /tmp/${PACKAGE} || exit 1
 }
 
-# set version number on shell files
-#for file in $SHELL_FILES_TO_VERSION; do
-#  sed "s/^version_number=.*/version_number=\"$VERSION\"/" $file > $file.$$
-#  cat $file.$$ > $file
-#  rm -f $file.$$
-#done
+# set version number on perl files with $version_number
+FILES_TO_VERSION=`ls sbin/[a-z]*`
+FILES_TO_VERSION="${FILES_TO_VERSION} `ls tftpstuff/systemimager/updateclient`"
+for file in $FILES_TO_VERSION; do
+  sed "s/^\$version_number=.*/\$version_number=\"$VERSION\";/" $file > $file.$$
+  cat $file.$$ > $file
+  rm -f $file.$$
+done
 
-# set version number on perl files
-#for file in $PERL_FILES_TO_VERSION; do
-#  sed "s/^\$version_number=.*/\$version_number=\"$VERSION\";/" $file > $file.$$
-#  cat $file.$$ > $file
-#  rm -f $file.$$
-#done
+# set version number on shell files with ^version_number
+FILES_TO_VERSION=`ls tftpstuff/systemimager/prepareclient`
+for file in $FILES_TO_VERSION; do
+  sed "s/^version_number=.*/version_number=$VERSION/" $file > $file.$$
+  cat $file.$$ > $file
+  rm -f $file.$$
+done
 
-# set version number on other files
-#file="tftpstuff/pxelinux.cfg/message.txt"
-#sed "s/v[0-9][0-9]*\.[0-9][0-9]*\.x*\./v${VER_MAJOR}.${VER_CLIENT}.x./" $file  > $file.$$
-#cat $file.$$ > $file
-#rm -f $file.$$
+# set version number on special files with vN.N.N
+FILES_TO_VERSION=`ls tftpstuff/pxelinux.cfg/message.txt`
+for file in $FILES_TO_VERSION; do
+  sed "s/v[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\./v${VERSION}./g" $file  > $file.$$
+  cat $file.$$ > $file
+  rm -f $file.$$
+done
 
 #cp ${BASE}.spec ${BASE}.spec.in
 #sed 's/^%define ver \([ ]*\) [0-9].*$/%define ver \1 '$VERSION'/g' ${BASE}.spec.in > ${BASE}.spec
@@ -90,3 +95,6 @@ SUBSET="source"
 PACKAGE="${BASE}-${SUBSET}-${VERSION}"
 wrap_it_up
 
+SUBSET="ssh"
+PACKAGE="${BASE}-${SUBSET}-${VERSION}"
+wrap_it_up
