@@ -106,7 +106,7 @@ else
 	# If we're not using uclibc, then copy over the 
 	# standard libs instead. -BEF-
 	( cd $(INITRD_BUILD_DIR) && \
-	  $(INITRD_DIR)/mklibs.sh -v -d lib ./*bin/* ./lib/* )
+	  $(PYTHON) $(INITRD_DIR)/mklibs -v -d lib ./*bin/* ./lib/* )
 endif
 
 	# Strip 'em. -BEF-

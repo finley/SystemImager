@@ -169,6 +169,8 @@ SYSTEMIMAGER_SSH_TARBALL = $(SYSTEMIMAGER_SSH_DIR).tar.gz
 SI_INSTALL = $(TOPDIR)/tools/si_install --si-prefix=$(PREFIX)
 GETSOURCE = $(TOPDIR)/tools/getsource
 
+PYTHON = $(shell which python2 || which python)
+
 # build everything, install nothing
 PHONY += all
 all:	$(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.img manpages
@@ -393,7 +395,7 @@ endif
 	#
 	mkdir -m 755 -p $(SYSTEMIMAGER_SSH_DIR)/lib
 	cd $(SYSTEMIMAGER_SSH_DIR) && \
-	  $(TOPDIR)/initrd_source/mklibs -v -d lib sbin/*
+	  $(PYTHON) $(TOPDIR)/initrd_source/mklibs -v -d lib sbin/*
 
 	tar -cv $(OPENSSH_OTHER_FILES) | tar -C $(SYSTEMIMAGER_SSH_DIR) -xv
 
@@ -531,7 +533,7 @@ endif
 	# copy standard libraries if it can't find a PIC equivalent.  -BEF-
 	#
 	cd $(BOEL_BINARIES_DIR) && \
-	  $(TOPDIR)/initrd_source/mklibs -v -d lib bin/* sbin/* lib/*
+	  $(PYTHON) $(TOPDIR)/initrd_source/mklibs -v -d lib bin/* sbin/* lib/*
 	#
 	#
 	# install kernel modules. -BEF-
