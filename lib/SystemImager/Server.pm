@@ -1162,10 +1162,10 @@ sub _write_out_umount_commands {
     #
     # If client uses devfs, then unmount the bound /dev filesystem.
     #
-#XXX    
-#    if("$xml_config->{boel}->{devstyle}" eq "devfs") {
-#        $fs_by_mp{'/a/dev'} = "/dev";
-#    }
+    $xml_config = XMLin($file, keyattr => { boel => "+devstyle"} );
+    if("$xml_config->{boel}->{devstyle}" eq "devfs") {
+        $fs_by_mp{'/dev'} = "/dev";
+    }
 
     #
     # Cycle through the mount points in reverse and umount those filesystems.
@@ -1180,7 +1180,6 @@ sub _write_out_umount_commands {
         print $out qq(echo "$cmd"\n);
         print $out "$cmd\n";
         print $out "\n";
-
     }
 }
 
