@@ -141,6 +141,12 @@ ifneq ($(shell ls /proc/iSeries 2>/dev/null),)
 endif
 endif
 
+# is userspace 64bit
+USERSPACE64 := 0
+ifeq ($(ARCH,ia64) 
+	USERSPACE64 :=1
+endif
+
 ifneq ($(BUILD_ARCH),)
 	ARCH := $(BUILD_ARCH)
 endif
@@ -525,7 +531,7 @@ endif
 
 	# copy over libnss files for non-uclibc arches
 	# (mklibs doesn't automatically pull these in)
-ifneq ($(ARCH),i386)
+ifeq ($(USERSPACE64),1)
 	## there maybe older compat versions that we don't want, but
 	## they have names like libnss1_dns so this shouldn't copy them.
 	## we do the sort so that filse from /lib64 files will be copied over
@@ -556,8 +562,14 @@ ifneq ($(ARCH),i386)
 	cp -a /lib/ld*   $(BOEL_BINARIES_DIR)/lib
 	test ! -d /lib64 || cp -a /lib64/ld* $(BOEL_BINARIES_DIR)/lib64
 endif
+
+ifeq ($(USERSPACE64),1)
 	cd $(BOEL_BINARIES_DIR) \
 		&& $(PYTHON) $(TOPDIR)/initrd_source/mklibs -L /lib64:/usr/lib64:$(SRC_DIR)/$(PARTED_DIR)/libparted/.libs:/usr/kerberos/lib:$(SRC_DIR)/$(DISCOVER_DIR)/lib/.libs -v -d lib bin/* sbin/*
+else
+	cd $(BOEL_BINARIES_DIR) \
+		&& $(PYTHON) $(TOPDIR)/initrd_source/mklibs -L /lib:/usr/lib:$(SRC_DIR)/$(PARTED_DIR)/libparted/.libs:/usr/kerberos/lib:$(SRC_DIR)/$(DISCOVER_DIR)/lib/.libs -v -d lib bin/* sbin/*
+endif
 	#
 	# Include other files required by openssh that apparently aren't 
 	# picked up by mklibs for some reason. -BEF-
