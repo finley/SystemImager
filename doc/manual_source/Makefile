@@ -28,11 +28,12 @@ pdf:    $(NAME).pdf
 ps:	$(NAME).ps
 rtf:	$(NAME).rtf
 
-$(HTMLDIR):	$(DB2HTML) $(SRC)
+html:	$(DB2HTML) $(SRC)
 	$(DB2HTML) $(SRC)
 	rm -rf $(HTMLDIR)
 	mv -f $(NAME) $(HTMLDIR)
 	cp -a images/ $(HTMLDIR)/images
+	cp -a systemimager-manual.sgml $(HTMLDIR)
 
 $(NAME).dvi:	$(DB2DVI) $(SRC)
 	$(DB2DVI) $(SRC)
