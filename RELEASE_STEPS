@@ -1,10 +1,9 @@
 #
 # "SystemImager"
 #
-#  Copyright (C) 1999-2002 Brian Elliott Finley 
-#                <brian@baldguysoftware.com>
+#  Copyright (C) 1999-2002 Brian Elliott Finley <bef@bgsw.net>
 #  Copyright (C) 2002 Bald Guy Software 
-#                     Brian E. Finley <brian.finley@baldguysoftware.com>
+#                     Brian E. Finley <bef@bgsw.net>
 #
 #   $Id$
 #
@@ -12,26 +11,28 @@
 3.0 PRE-RELEASE
 --------------------------------------------------------------------------------
 Pending:
+* updateclient XXX (exit 1 bit)
+* updateclient -a bug: http://sourceforge.net/tracker/index.php?func=detail&aid=610755&group_id=259&atid=100259
+* update mkdhcpstatic (if needed)
+* add bit to to troubleshooting that describes the case where ETHER_SLEEP 
+  should be increased
 * warn users that we are no longer supporting tarball based installs.  
   Adventurous souls can check out the source from CVS and do a make, but 
   normal users should use a package.
-* update mkdhcpstatic (if needed)
-* change "Please send email to: -> systemimager-discuss@"
-* add bit to to troubleshooting that describes the case where ETHER_SLEEP 
-  should be increased
-* verify CHANGE.LOG additions
-* manual in pdf and html formats online
-* grep -r XXX .
-* updateclient -a bug: http://sourceforge.net/tracker/index.php?func=detail&aid=610755&group_id=259&atid=100259
 * test using hosts only
 * test updateclient -a
 * test updateclient -dir
 * test updateclient normal
+* manual in pdf and html formats online
+* verify CHANGE.LOG additions
 
 Completed:
 * bcm5700 driver.  Is it in there?  Can we include it as a module?
     Added -> tigon3 driver.
 * e1000 as module
+* change "Please send email to: -> systemimager-discuss@"
+* grep -r XXX .
+* fakeroot for building boel_binaries
 
 
 
@@ -165,6 +166,7 @@ Completed:
 
 3.2 stuff
 --------------------------------------------------------------------------------
+o pcmcia utils in boel_binaries_tarball
 o multiple small function related libraries
 o consider making mkautoinstalldiskette and mkautoinstallcd not require root 
     when using -out-file.
