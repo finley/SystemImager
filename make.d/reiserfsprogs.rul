@@ -2,7 +2,7 @@ REISERFSPROGS_VERSION := 3.6.7
 REISERFSPROGS_DIR := reiserfsprogs-$(REISERFSPROGS_VERSION)
 REISERFSPROGS_TARBALL := $(REISERFSPROGS_DIR).tar.gz
 REISERFSPROGS_URL := http://thebsh.namesys.com/pub/reiserfsprogs/$(REISERFSPROGS_TARBALL)
-REISERFSPROGS_PATCH := $(PATCH_DIR)/reiserfsprogs.patch
+REISERFSPROGS_PATCHES := $(shell ls $(PATCH_DIR)/reiserfsprogs.*.patch 2>/dev/null | sort)
 MKREISERFS_BINARY := $(SRC_DIR)/$(REISERFSPROGS_DIR)/mkreiserfs/mkreiserfs
 
 ALL_SOURCE += $(SRC_DIR)/$(REISERFSPROGS_TARBALL)
@@ -23,10 +23,9 @@ reiserfsprogs:	$(MKREISERFS_BINARY)
 
 $(MKREISERFS_BINARY):	$(SRC_DIR)/$(REISERFSPROGS_TARBALL)
 	[ -d $(SRC_DIR)/$(REISERFSPROGS_DIR) ] || \
-	  ( cd $(SRC_DIR) && zcat $(REISERFSPROGS_TARBALL) | tar xv && \
-	    [ ! -f $(REISERFSPROGS_PATCH) ] || \
-	    ( cd $(REISERFSPROGS_DIR) && \
-	      patch -p1 < $(REISERFSPROGS_PATCH) ) )
+	  ( cd $(SRC_DIR) && tar xvfz $(REISERFSPROGS_TARBALL) && \
+	    (cd $(REISERFSPROGS_DIR) && \
+	      (cat $(REISERFSPROGS_PATCHES) < /dev/null | patch -p1)))
 	( cd $(SRC_DIR)/$(REISERFSPROGS_DIR) && chmod +x ./configure && \
 	  CFLAGS="-O2 -Wall" ./configure )
 	$(MAKE) -C $(SRC_DIR)/$(REISERFSPROGS_DIR)

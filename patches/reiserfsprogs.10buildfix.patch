@@ -1,0 +1,12 @@
+--- reiserfsprogs-3.6.11/lib/misc.c.orig	2003-11-26 23:45:02.000000000 -0700
++++ reiserfsprogs-3.6.11/lib/misc.c	2003-11-26 23:45:37.000000000 -0700
+@@ -27,7 +27,8 @@
+ #include <unistd.h>
+ 
+ #if defined(__linux__) && defined(_IOR) && !defined(BLKGETSIZE64)
+-#   define BLKGETSIZE64 _IOR(0x12, 114, sizeof(__u64))
++//#   define BLKGETSIZE64 _IOR(0x12, 114, sizeof(__u64))
++#   define BLKGETSIZE64 _IOR(0x12, 114, __u64)
+ #endif
+ 
+ #include "swab.h"

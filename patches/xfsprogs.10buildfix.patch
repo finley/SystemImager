@@ -1,0 +1,21 @@
+rcsdiff: /oss/CVS/cvs/xfs-cmds/xfsprogs/libxfs/linux.c,v: warning: Unknown phrases like `namespace ...;' are present.
+===================================================================
+RCS file: /oss/CVS/cvs/xfs-cmds/xfsprogs/libxfs/linux.c,v
+retrieving revision 1.6
+retrieving revision 1.7
+diff -u -p -r1.6 -r1.7
+--- xfs-cmds/xfsprogs/libxfs/linux.c	2003/06/06 02:52:27	1.6
++++ xfsprogs/libxfs/linux.c	2003/10/09 23:39:38	1.7
+@@ -42,10 +42,10 @@
+ extern char *progname;
+ 
+ #ifndef BLKGETSIZE64
+-# define BLKGETSIZE64	_IOR(0x12,114,sizeof(__uint64_t))
++# define BLKGETSIZE64	_IOR(0x12,114,size_t)
+ #endif
+ #ifndef BLKBSZSET
+-# define BLKBSZSET	_IOW(0x12,113,sizeof(int))
++# define BLKBSZSET	_IOW(0x12,113,size_t)
+ #endif
+ #ifndef BLKSSZGET
+ # define BLKSSZGET	_IO(0x12,104)

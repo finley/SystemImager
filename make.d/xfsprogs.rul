@@ -6,6 +6,7 @@ XFSPROGS_TARBALL := $(XFSPROGS_DIR).src.tar.gz
 XFSPROGS_URL := http://download.systemimager.org/pub/xfsprogs/$(XFSPROGS_TARBALL)
 # SOURCE_URL -> ftp://oss.sgi.com/projects/xfs/download/cmd_tars/
 MKXFS_BINARY := $(SRC_DIR)/$(XFSPROGS_DIR)/mkfs/mkfs.xfs
+XFSPROGS_PATCHES := $(shell ls $(PATCH_DIR)/xfsprogs.*.patch 2>/dev/null | sort)
 
 ALL_SOURCE += $(SRC_DIR)/$(XFSPROGS_TARBALL)
 
@@ -26,6 +27,7 @@ xfsprogs:	$(MKXFS_BINARY)
 $(MKXFS_BINARY):	$(SRC_DIR)/$(XFSPROGS_TARBALL)
 	[ -d $(SRC_DIR)/$(XFSPROGS_DIR) ] || \
 	  ( cd $(SRC_DIR) && zcat $(XFSPROGS_TARBALL) | tar xv && \
+	    ( cd $(XFSPROGS_DIR) && cat $(XFSPROGS_PATCHES) < /dev/null | patch -p1 ) && \
 	    	( cd $(SRC_DIR)/$(XFSPROGS_DIR) && chmod +x ./configure && \
 	  	./configure ) )
 	$(MAKE) -C $(SRC_DIR)/$(XFSPROGS_DIR)
