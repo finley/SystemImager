@@ -12,7 +12,8 @@ o Current development branch is tagged "HEAD".
   This is the default.  Most developers will use this.  To switch to 
   this branch from another branch use the command "cvs update -r HEAD" 
   from the root of your development directory.
-o Current stable branch is tagged "v1_4_0-patches".
+o Current stable branch is tagged:
+   "v1_4_1-beta"
   Use "cvs update -r TAG_NAME" to switch to the stable CVS branch.
 o Only Brian Finley will modify CVS tags of any kind, such as for versioning 
   releases or creating development branches.
@@ -36,17 +37,8 @@ o http://www.loria.fr/~molli/cvs/doc/cvs.pdf
 
 
 -----------------------
-Version 1.4.0 specific:
+Version 1.4.1 specific:
 -----------------------
-
-Post release
-------------
-
-Dann Frazier <dannf@hazel.fc.hp.com>
-------------------------------------
-o create man pages
-o have deb package created
-
 
 Brian Chrisman <bchrisman@valinux.com>
 --------------------------------------
@@ -54,7 +46,6 @@ o modify RPM spec file to deal with
   o configuration files
   o additional files
   o changed files
-
 
 
 --------------------------
@@ -67,14 +58,9 @@ Committed to task: Tue, 06 Mar 2001
 o Add kernel bug/rsync bug info to Troubleshooting section in docs.
 
 
-Dann Frazier <dannf@hazel.fc.hp.com>
-------------------------------------
-o replace install scripts with Makefile(s)
-
-
 Brian Finley <brian@thefinleys.com>
 -----------------------------------
-o add IBM ServeRAID support to kernel
+o eepro100 bug
 o Reported bug: http://sourceforge.net/tracker/?func=detail&atid=100259&aid=407316&group_id=259
 o initrd.gz -- don't pull hosts file if HOSTNAME is already known
 o deal with LABEL= and UUID= for any filesystem or device type
@@ -177,6 +163,23 @@ o commandlineize addclients
   $ addclients -b www -d systemimager.org -f 7 -l 11 -image web_image_v1 -ip-range 192.168.1.7-192.168.1.11
 
 
+Dann Frazier <dannf@hazel.fc.hp.com>
+------------------------------------
+o replace install scripts with Makefile(s)
+o have deb package created
+o PXE booting ideas...
+with pxe, you can specify what files to serve to a specific hardware
+address.
+you could have symbolic links that point to the SystemImager kernel &
+initrd.gz for each node, with no default files.
+you can then remove these links when you decide not to allow that
+machine to PXE boot.
+the machine will try to pxe boot, won't be able to find its kernel and
+initrd.gz, and will boot from the harddrive.
+a tool similar to addclients might be useful for this.
+        -dann
+
+
 Austin Gonyou <austin@coremetrics.com>
 Wed Mar 21 12:19:10 CST 2001  
 ----------------------------------------------------------
@@ -251,6 +254,28 @@ o bootable recovery CD that self-installs from image stored on same CD
 
 Brian Finley <brian@thefinleys.com>
 -----------------------------------
+
+Change paths:
+o images:        /var/lib/systemimager/images/
+o all other SystemImager stuff (other than imageserver commands) will be
+  stored in:            /var/lib/systemimager/
+o web gui pages:        /var/lib/systemimager/web-gui/
+o autoinstall kernels:  /var/lib/systemimager/`arch`/kernels/
+o initial ram disks:    /var/lib/systemimager/`arch`/initial-ramdisks/
+o autoinstall scripts:  /var/lib/systemimager/`arch`/scripts/
+o autoinstall binaries: /var/lib/systemimager/`arch`/bin/
+   (instead of the binary.architecture idea)
+o PXE stuff will *not* be dealt with during install, but details will be
+   documented in the howto.  Later, this configuration will be handled by
+   the "pxeconfig" utility.  (I'm not sure I have your final buy in on
+   this one)
+o source for the kernel and initrd.gz and everything will be provided in
+   a single package that has a master Makefile that will compile source
+   provided, and copy over binaries that are just, well, copied over.
+   (this also helps deal with the fact that it is sometimes difficult to
+   get all the kernel patches to apply properly -- we can provide the
+   actual kernel source tree with the patches pre-applied.)
+
 o Modify binaries to use /var/lib/systemimager/ instead of /tftpboot/
 o Austin Gonyou patch: Dual NIC Installs
 o Jose_AP_Celestino.ida.prepareclient.patch to make systemimager work
@@ -324,20 +349,6 @@ o makedhcpserver -- autodiscover and calculate more information
 o makedhcpserver -- automatically change line in /etc/rc.d/init.d/dhcpd for you
 o updateclient - log what was updated and or deleted?
 o makedhcpstatic -- allow for -f "filename" option to specify dhcpd.leases file.
-
-Dann Frazier <dannf@hazel.fc.hp.com>
-------------------------------------
-o PXE booting ideas...
-with pxe, you can specify what files to serve to a specific hardware
-address.
-you could have symbolic links that point to the SystemImager kernel &
-initrd.gz for each node, with no default files.
-you can then remove these links when you decide not to allow that
-machine to PXE boot.
-the machine will try to pxe boot, won't be able to find its kernel and
-initrd.gz, and will boot from the harddrive.
-a tool similar to addclients might be useful for this.
-        -dann
 
 
 Bug list
