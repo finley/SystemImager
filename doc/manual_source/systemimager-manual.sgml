@@ -461,7 +461,7 @@
  </sect1>
 
  <sect1 id=Overview>
-  <title>Overview of SystemImager Operations</title>
+  <title>Overview of SystemImager Installation and Usage</title>
   <para>
    <orderedlist>
 
@@ -526,6 +526,17 @@
      <para>
       Install the <application>VA SystemImager</application> server package 
       on the machine you have chosen as your image server.  
+     </para>
+     <para>
+      You can find the SystemImager packages and links to some of the dependent 
+      packages that may not be a part of your Linux distribution at 
+      <ulink url="http://systemimager.org/"></ulink>.
+     </para>
+     <para>
+      The SystemImager server software is available in tar ball format and may be
+      available in other distribution specific packaged formats.  The example below
+      is for installing from a tar ball.  The software is the same regardless of 
+      the packaging format.
      </para>
      <example>
       <title>
@@ -852,6 +863,145 @@ Would you like to run the "addclients" utility now? (y/[n]): n
       Choose and configure the method for assigning IP addresses to your 
       autoinstall clients.
      </para>
+
+     <para>
+      The most common way to assign IP addresses to autoinstall clients is DHCP.  
+      To easify the configuration of the DHCP configuration file (/etc/dhcpd.conf), 
+      SystemImager includes a utility called <command>makedhcpserver</command>.  
+      This utility asks you for all the information it needs 
+      to create a DHCP configuration file that 
+      is appropriate for your installation of SystemImager.  It is also possible to 
+      use DHCP to assign static IP addresses to your clients on an ongoing basis 
+      after installation.  If you choose to do so, simply run the <command>makedhcpstatic</command>
+      command after all of your clients have had a chance to boot and be assigned
+      an IP address.  It will modify your /etc/dhcpd.conf file on the imageserver 
+      to include static entries for each of your hosts.
+     </para>
+
+     <para>
+      Alternately, hostname, imageserver, and networking information can be put in 
+      a configuration file on a floppy diskette.  Or if you are using a running 
+      system's hard drive as the boot media, you can run 
+      "<command>updateclient -autoinstall -server &lt;imageserver> -config eth0</command>"
+      which will create a local.cfg file at the root of the client's hard drive 
+      containing the existing live network settings.
+     </para>
+    
+     <para>
+      When the autoinstall client boots, it will look for this 
+      file and use the provided values instead of getting them from DHCP and the
+      /tftpboot/systemimager/hosts file on the image server.  A local.cfg file on
+      a floppy will work with any of the autoinstall media.  The configuration file 
+      can even be put on the autoinstall floppy itself!  If you use a local.cfg file
+      on a hard drive and on a floppy, the settings on the floppy will override the
+      settings on the hard drive.
+     </para>
+     <example><title>Running makedhcpserver</title>
+      <programlisting>
+[root@imageserver]# makedhcpserver
+
+Welcome to the VA SystemImager "makedhcpserver" command.  This command
+will prepare this computer to be a DHCP server by creating the 
+following file:
+
+ /etc/dhcpd.conf
+
+If there is an existing file, it will be backed up as:
+
+ /etc/dhcpd.conf.beforesystemimager
+
+Continue? (y/[n]): y
+
+
+Type your response or hit &lt;Enter> to accept [defaults].  If you don't
+have a response, such as no first or second DNS server, just hit 
+&lt;Enter> and none will be used.
+
+
+What is your domain name? [localdomain.domain]: mydomain.com
+What is your network number? [192.168.1.0]: 
+What is your netmask? [255.255.255.0]: 
+What is the starting IP address for your dhcp range? [192.168.1.1]: 
+What is the ending IP address for your dhcp range? [192.168.1.100]: 192.168.1.99
+What is the IP address of your first DNS server? []: 192.168.1.200
+What is the IP address of your second DNS server? []: 192.168.1.201
+What is the IP address of your third DNS server? []: 
+What is the IP address of your default gateway? [192.168.1.254]: 
+What is the IP address of imageserver? [192.168.1.254]: 192.168.1.203
+What is the air speed velocity of the common swallow? []: 
+
+
+Ahh, but seriously folks...
+Here are the values you have chosen:
+
+################################################################
+DNS Domain Name:                          mydomain.com
+network number:                           192.168.1.0
+netmask:                                  255.255.255.0
+starting IP address for your dhcp range:  192.168.1.1
+ending IP address for your dhcp range:    192.168.1.99
+first DNS server:                         192.168.1.200
+second DNS server:                        192.168.1.201
+third DNS server:                         
+default gateway:                          192.168.1.254
+imageserver:                              192.168.1.203
+################################################################
+
+Are you satisfied? (y/[n]): y
+
+
+The dhcp server configuration file (/etc/dhcpd.conf) file has been 
+created for you.  Please verify it for accuracy.
+
+If this file does not look satisfactory, you can run this command again
+to re-create it: "makedhcpserver"
+
+WARNING!:  If you have multiple physical network interfaces, be sure to 
+edit the init script that starts dhcpd to specify the interface that 
+is connected to your DHCP clients.  Here's an example:
+
+ Change "/usr/sbin/dhcpd" to "/usr/sbin/dhcpd eth1".
+
+Also, be sure to start or restart your dhcpd daemon.  This can usually
+be done with a command like "/etc/init.d/dhcpd restart" or similar.
+      </programlisting>
+     </example>
+
+     <example><title>Running updateclient with the "-autoinstall" and "-config" options</title>
+      <programlisting>
+[root@server7]# updateclient -a -s imageserver -c eth0
+Retrieving SystemImager kernel...
+Retrieving SystemImager initial ramdisk...
+Adding SystemImager entry in /etc/lilo.conf...
+running /sbin/lilo -d 50 -D systemimager ...
+Ignoring entry 'delay'
+Ignoring entry 'default'
+Added linux
+Added systemimager *
+
+&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Below are the contents of your /local.cfg file.  Make sure that all
+the variables are filled in and that they contain the proper values.
+You may edit the file directly if you need to change any of the values.
+&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+#
+# "VA SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley &lt;brian@valinux.com>
+#
+# This file is: /local.cfg
+#
+HOSTNAME=server7
+DOMAINNAME=mydomain.com
+DEVICE=eth0
+IPADDR=192.168.1.7
+NETMASK=255.255.255.0
+NETWORK=192.168.1.0
+BROADCAST=192.168.1.255
+GATEWAY=192.168.1.254
+GATEWAYDEV=eth0
+IMAGESERVER=192.168.1.203
+      </programlisting>
+     </example>
     </listitem>
 
     <listitem>
@@ -1530,7 +1680,7 @@ service tftp
    <para>
     The most common way to assign IP addresses to autoinstall clients is DHCP.  
     To easify the configuration of the DHCP configuration file (/etc/dhcpd.conf), 
-    SystemImager includes a utility called makedhcpserver.  makedhcpserver asks 
+    SystemImager includes a utility called makedhcpserver.  This utility asks 
     you for all the information it needs to create a DHCP configuration file that 
     is appropriate for your installation of SystemImager.  It is also possible to 
     use DHCP to assign static IP addresses to your clients on an ongoing basis 
@@ -1543,8 +1693,14 @@ service tftp
    <para>
     Alternately, hostname, imageserver, and networking information can be put in 
     a configuration file on a floppy diskette.  Or if you are using a running 
-    system's hard drive as the boot media, you can place local.cfg at the root of
-    the hard drive.  When the autoinstall client boots, it will look for this 
+    system's hard drive as the boot media, you can run 
+    "<command>updateclient -autoinstall -server &lt;imageserver> -config eth0</command>"
+    which will create a local.cfg file at the root of the client's hard drive 
+    containing the existing live network settings.
+   </para>
+    
+   <para>
+    When the autoinstall client boots, it will look for this 
     file and use the provided values instead of getting them from DHCP and the
     /tftpboot/systemimager/hosts file on the image server.  A local.cfg file on
     a floppy will work with any of the autoinstall media.  The configuration file 
