@@ -25,6 +25,12 @@ if ( $ft_config->start_flamethrower_daemon() ne "yes" ) {
     exit 0;
 }
 
+# Create our directory directory, if necessary.
+my $dir = $ft_config->get("flamethrower_directory_dir");
+if ( ! -e $dir ) {
+    mkdir("$dir", 0755) or die("Couddn't mkdir $dir!");
+}
+
 print "\n";
 process_modules();
 
@@ -87,53 +93,113 @@ if ($pid = fork) {
 # Usage: process_modules();
 sub process_modules {
 
-print "\n"; #XXX
+    ############################################################################
     #
     # Get list of explicitly specified portbase numbers so we don't 
     # dynamically use one that already exists.
     #
     my %portbases = $ft_config->varlist('_portbase$');
-
-    print "Portbases:\n";
     foreach (values %portbases) {
         #
         # Make the values the keys, so we can simply to an 
         # if (defined()) in the module loop below.
         #
-        $portbases{$_}=$_;
-        print "$_\n";
+        $portbases{$_} = $_;
     }
-print "\n"; #XXX
-    foreach (keys %portbases) {
-        print "$_\n";
-    }
-print "\n"; #XXX
+
+    # Be sure to include the flamethrower_directory port.
+    $_ = $ft_config->get("flamethrower_directory_port");
+    $portbases{$_} = $_;
 
     #
+    ############################################################################
+
+    ############################################################################
+    #
     # Create the Flamethrower "directory" (sourceable files) for each module.
+    #
     my $modules = $ft_config->modules();
     foreach my $module ( @$modules ) {
 
-        print STDOUT "MODULE=$module\n";
+        #
+        # Put directory information that is useful to clients in
+        # sourceable files.
+        #
+        my $file = $ft_config->get("flamethrower_directory_dir") . "/" . $module;
+        open(FILE, ">$file") or die("Couldn't open $file for writing!");
 
-        # DIR
-        if ( defined($ft_config->get("${module}_dir")) ) {
-            print STDOUT "DIR=" . $ft_config->get("${module}_dir") . "\n";
-        } else {
-            die("Please set DIR in flamethrower.conf for [$module]!");
-        }
+            print FILE "MODULE=$module\n";
+            
+            # DIR
+            if ( ! defined($ft_config->get("${module}_dir")) ) {
+                die("Please set DIR in flamethrower.conf for [$module]!");
+            }
+            
+            # PORTBASE
+            my $portbase;
+            if ($ft_config->varlist("${module}_portbase")) {
+                
+                # portbase is already set
+                $portbase = $ft_config->get("${module}_portbase");
 
-        # PORTBASE
-        my $portbase = $ft_config->get("${module}_portbase");
-        if ( ! defined($portbase) ) {
-            $portbase = ($ft_config->get("flamethrower_directory") + 2);
-        }
-        print STDOUT "PORTBASE=$portbase\n";
+            } else {
+            
+                # Start with flamethrower_directory_port + 2.
+                $portbase = $ft_config->get("flamethrower_directory_port") + 2;
+            
+                # If that port is already in use, increment by two until we
+                # get a free one.
+                while ( defined($portbases{$portbase}) ) {
+                    $portbase += 2;
+                }
+            
+                # Add our new portbase to the existing list.
+                $portbases{$portbase} = $portbase;
+            
+            }
+            print FILE "PORTBASE=$portbase\n";
+
+            # ASYNC
+            my $async;
+            if ($ft_config->varlist("${module}_async")) {
+                # async is already set
+                $async = $ft_config->get("${module}_async");
+            } else {
+                # get it from global setting
+                $async = $ft_config->get("async");
+            }
+            print FILE "ASYNC=$async\n";
+
+            # TTL
+            my $ttl;
+            if ($ft_config->varlist("${module}_ttl")) {
+                # ttl is already set
+                $ttl = $ft_config->get("${module}_ttl");
+            } else {
+                # get it from global setting
+                $ttl = $ft_config->get("ttl");
+            }
+            print FILE "TTL=$ttl\n";
+
+            # MCAST_ALL_ADDR
+            my $mcast_all_addr;
+            if ($ft_config->varlist("${module}_mcast_all_addr")) {
+                # mcast_all_addr is already set
+                $mcast_all_addr = $ft_config->get("${module}_mcast_all_addr");
+            } else {
+                # get it from global setting
+                if ($ft_config->varlist("^mcast_all_addr")) {
+                    $mcast_all_addr = $ft_config->get("mcast_all_addr");
+                }
+            }
+            print FILE "MCAST_ALL_ADDR=$mcast_all_addr\n" if ($mcast_all_addr);
 
 
+        close(FILE);
 
-        print "\n";
     }
+    #
+    ############################################################################
 }
 
 #
