@@ -134,7 +134,7 @@ get_boel_binaries_tarball() {
 
     # Untar the tarball
     tar -C / -xvzf /tmp/boel_binaries.tar.gz || shellout
-    chown -R 0.0 /lib/modules
+    chown -R 0.0 /lib/modules || shellout
 }
 #
 #################################################################################
@@ -451,19 +451,19 @@ get_hostname_by_hosts_file() {
         # 3: add a space at the beginning of every line
         # 4: get line with IP address (no more no less)
         # 5: strip out ip address
-        # 6: strip out space before first hostname on line
-        # 7: remove everything after first hostname on line
-        # 8: remove .domain.name so that we're left with just the hostname
+        # 6: strip out space(s) before first hostname on line
+        # 7: remove any aliases on line
+        # 8: remove domain name, leaving naught but the hostname, naked as the day it were born
         
         HOSTNAME=`
-            sed 's/	/ /g' /tmp/hosts | \
+            sed 's/[[:space:]]/ /g' /tmp/hosts | \
             grep -v '^ *#' | \
             sed 's/^/ /' | \
             grep " $IPADDR_ESCAPED " | \
             sed 's/ [0-9]*\.[0-9]*\.[0-9]*\.[0-9]*//' | \
             sed 's/ *//' | \
             sed 's/ .*//' | \
-            sed "s/\.$DOMAINNAME$//"
+            sed 's/\..*$//g'
         `
     fi
 }
@@ -709,10 +709,14 @@ fi
 
 # HOSTNAME may already be set via local.cfg -BEF-
 if [ -z $HOSTNAME ]; then
+    echo
+    echo get_hostname_by_hosts_file
     get_hostname_by_hosts_file
 fi
 
 if [ -z $HOSTNAME ]; then
+    echo
+    echo get_hostname_by_dns
     get_hostname_by_dns
 fi
 
