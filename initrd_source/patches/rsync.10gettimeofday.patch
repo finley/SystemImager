@@ -1,0 +1,13 @@
+diff -urN rsync-2.5.5.orig/lib/compat.c rsync-2.5.5/lib/compat.c
+--- rsync-2.5.5.orig/lib/compat.c	2002-01-15 04:32:30.000000000 -0700
++++ rsync-2.5.5/lib/compat.c	2002-08-25 22:04:36.000000000 -0600
+@@ -180,9 +180,5 @@
+ /* some systems don't take the 2nd argument */
+ int sys_gettimeofday(struct timeval *tv)
+ {
+-#if HAVE_GETTIMEOFDAY_TZ
+ 	return gettimeofday(tv, NULL);
+-#else
+-	return gettimeofday(tv);
+-#endif
+ }
