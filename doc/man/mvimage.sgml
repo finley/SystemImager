@@ -1,0 +1,156 @@
+<!doctype refentry PUBLIC "-//Davenport//DTD DocBook V3.0//EN" [
+
+  <!-- Fill in your name for FIRSTNAME and SURNAME. -->
+  <!ENTITY dhfirstname "<firstname>dann</firstname>">
+  <!ENTITY dhsurname   "<surname>frazier</surname>">
+  <!-- Please adjust the date whenever revising the manpage. -->
+  <!ENTITY dhdate      "<date>June  12, 2001</date>">
+  <!-- SECTION should be 1-8, maybe w/ subsection other parameters are
+       allowed: see man(7), man(1). -->
+  <!ENTITY dhsection   "<manvolnum>8</manvolnum>">
+  <!ENTITY dhemail     "<email>dannf@dannf.org</email>">
+  <!ENTITY dhusername  "dann">
+  <!ENTITY dhucpackage "<refentrytitle>MVIMAGE</refentrytitle>">
+  <!ENTITY dhpackage   "mvimage">
+
+  <!ENTITY debian      "<productname>Debian GNU/Linux</productname>">
+  <!ENTITY gnu         "<acronym>GNU</acronym>">
+]>
+
+<refentry>
+  <docinfo>
+    <address>
+      &dhemail;
+    </address>
+    <author>
+      &dhfirstname;
+      &dhsurname;
+    </author>
+    <copyright>
+      <year>2001</year>
+      <holder>&dhusername;</holder>
+    </copyright>
+    &dhdate;
+  </docinfo>
+  <refmeta>
+    &dhucpackage;
+
+    &dhsection;
+  </refmeta>
+  <refnamediv>
+    <refname>&dhpackage;</refname>
+
+    <refpurpose>Move a SystemImager image.</refpurpose>
+  </refnamediv>
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>&dhpackage;</command>
+
+      <arg><option>-help</option></arg>
+      <arg><option>-version</option></arg>
+      <arg><option>-verbose</option></arg>
+      <arg><option>-force</option></arg>
+      <arg><option>-directory <replaceable>PATH</replaceable></option></arg>
+      <arg><replaceable>SOURCE_IMAGE</replaceable></arg>
+      <arg><replaceable>DESTINATION_IMAGE</replaceable></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+  <refsect1>
+    <title>DESCRIPTION</title>
+
+    <para>This manual page documents briefly the
+      <command>&dhpackage;</command> command.</para>
+
+    <para>
+      <command>&dhpackage;</command> moves a SystemImager image.
+    </para>
+
+  </refsect1>
+  <refsect1>
+    <title>OPTIONS</title>
+
+    <para>A summary of options is included below.</para>
+
+    <variablelist>
+      <varlistentry>
+	<term><option>-help</option></term>
+	<listitem><para>Show summary of options</para></listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-version</option></term>
+	<listitem>
+	  <para>Display version and copyright information.</para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-verbose</option></term>
+	<listitem>
+	  <para>Explain what is being done.</para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-force</option></term>
+	<listitem>
+	  <para>
+	    Don't ask for confirmation before overwriting the destination
+	    image or master autoinstall script (if they exist).
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-directory <replaceable>PATH</replaceable></option></term>
+	<listitem>
+	  <para>
+	    The full path and directory name where you want this image to be
+	    stored.  The directory bearing the image name itself will be placed
+	    inside the directory specified here.
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+  <refsect1>
+    <title>SEE ALSO</title>
+
+    <para>
+      <command>lsimage</command>(8), <command>cpimage</command>(8),
+      <command>rmimage</command>(8)
+    </para>
+
+    <para>More details can be found in the <citetitle>VA SystemImager
+	manual.</citetitle>
+    </para>
+  </refsect1>
+  <refsect1>
+    <title>AUTHOR</title>
+
+    <para>This manual page was written by &dhusername; <&dhemail;> for
+      the &debian; system (but may be used by others).</para>
+
+    <!-- <para>Permission is granted to copy, distribute and/or modify
+      this document under the terms of the <acronym>GNU</acronym> Free
+      Documentation License, Version 1.1 or any later version
+      published by the Free Software Foundation; with no Invariant
+      Sections, no Front-Cover Texts and no Back-Cover Texts.  A copy
+      of the license can be found under
+      <filename>/usr/share/common-licenses/FDL</filename>.</para> -->
+
+  </refsect1>
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:2
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:nil
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+-->
