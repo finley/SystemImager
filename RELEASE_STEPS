@@ -11,8 +11,22 @@
 3.0 PRE-RELEASE
 --------------------------------------------------------------------------------
 Pending:
-* double test local.cfg install using vars for IMAGESERVER and IMAGE only.
-* e1000 module loading is broken - see #638731
+* warn users that we are no longer supporting tarball based installs.  
+  Adventurous souls can check out the source from CVS and do a make, but 
+  normal users should use a package.
+* manual in pdf and html formats online
+* SHIP IT!
+* Post updated website changes.
+
+
+Completed:
+* add bit to to troubleshooting that describes the case where ETHER_SLEEP 
+  should be increased
+* devfsd needs to know how to make appropriate symlinks for cciss devices
+* pxelinux seems to only work w/ gzipped initrd.imgs - can we move
+  to those unilaterally?  Anser: Yes.
+* ask Dann about how to build complete docs on Debian
+  dannf> cd doc/manual_source ; make html pdf ?
 * I'm concerned that rsync is being compiled in such a way that it believes
   that it has access to libraries that will let it do 64-Bit file access, but
   when run on the client against uclibc, it can't (i386 only).  Is there some
@@ -23,22 +37,10 @@ Pending:
   
   This is a question for dannf and sdague primarily.  -BEF-
 
-* ask Dann about how to build complete docs on Debian
-  dannf> cd doc/manual_source ; make html pdf ?
-* add bit to to troubleshooting that describes the case where ETHER_SLEEP 
-  should be increased
-* warn users that we are no longer supporting tarball based installs.  
-  Adventurous souls can check out the source from CVS and do a make, but 
-  normal users should use a package.
-* manual in pdf and html formats online
-* pxelinux seems to only work w/ gzipped initrd.imgs - can we move
-  to those unilaterally?
-* devfsd needs to know how to make appropriate symlinks for cciss devices
-* SHIP IT!
-* Post updated website changes.
+  Fixed w/Dann's patch.
 
-
-Completed:
+* double test local.cfg install using vars for IMAGESERVER and IMAGE only.
+* e1000 module loading is broken - see #638731
 * bcm5700 driver.  Is it in there?  Can we include it as a module?
     Added -> tigon3 & bcm5700 drivers
 * e1000 as module
@@ -60,6 +62,7 @@ Completed:
 * test updateclient -dir
 * test updateclient normal
 * verify CHANGE.LOG additions
+* added a test in addclients for -host-range.  test for numeric value, and for both values
 
 
 
