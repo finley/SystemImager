@@ -462,7 +462,6 @@
 
  <sect1 id=Overview>
   <title>Overview of SystemImager Installation and Usage</title>
-  <para>
    <orderedlist>
 
     <listitem>
@@ -515,7 +514,6 @@
     </listitem>
 
    </orderedlist>
-  </para>
  </sect1>
  
  <sect1 id=TheActualStep-by-StepHOWTO>
@@ -1155,8 +1153,94 @@ IMAGESERVER=192.168.1.203
      <para>
       Autoinstall the "golden" image on other machines.
      </para>
-    </listitem>
 
+     <para>
+      There are four methods to autoinstalling the clients:
+     </para>
+      <itemizedlist>
+
+       <listitem>
+        <para>
+         Boot the system from a floppy diskette.
+        </para>
+
+	<para>
+	 Run <command>makeautoinstalldiskette</command> to create an autoinstall
+	 diskette.  Autoinstall diskettes can be used with any machine unless you
+	 add a customized /local.cfg file to the diskette.
+	</para>
+
+       </listitem>
+
+       <listitem>
+        <para>
+         Boot the system from a CDROM.
+        </para>
+
+	<para>
+	 Run <command>makeautoinstallcd</command> to create an ISO image that can
+	 be burned to CDROM.  This CDROM can then be used to boot your autoinstall
+	 clients and can also be used with any machine.
+	</para>
+       </listitem>
+
+       <listitem>
+        <para>
+         Boot the system from it's own hard drive.
+        </para>
+
+	<para>
+	 If your client is already running Linux, and uses LILO as it's boot
+	 loader, then you can simply copy over the updateclient command and
+	 run it with the -autoinstall option.
+	</para>
+	<example><title>Copy over the updateclient command</title>
+         <programlisting>
+[root@server7]# rsync -av imageserver::tftpboot/systemimager/updateclient /usr/sbin
+receiving file list ... done
+updateclient
+wrote 115 bytes  read 14560 bytes  29350.00 bytes/sec
+total size is 14445  speedup is 0.98
+         </programlisting>
+	</example>
+	<example><title>Booting the autoinstall media from a system's hard drive</title>
+         <programlisting>
+[root@server7]# updateclient -a -s imageserver -c eth0
+Retrieving SystemImager kernel...
+Retrieving SystemImager initial ramdisk...
+Adding SystemImager entry in /etc/lilo.conf...
+running /sbin/lilo -d 50 -D systemimager ...
+Ignoring entry 'delay'
+Ignoring entry 'default'
+Added linux
+Added systemimager *
+         </programlisting>
+	</example>
+       </listitem>
+
+       <listitem>
+        <para>
+         Boot the system from the network using PXE if your system supports 
+         it.  This is usually enabled through a BIOS setting.
+        </para>
+
+	<para>
+	 PXE booting is flaky and tends to vary wildly in it's hardware 
+	 implementation.  If you must boot without physically touching your 
+	 machines, may I suggest that you try the -autoinstall option to 
+	 updateclient first and see if it meets your needs.
+	</para>
+
+	<para>
+	 That being said, Dann Frazier has put together a fairly comprehensive
+	 set of notes below if you want to attempt this most contemptuous method
+	 of doing an autoinstall.  
+	</para>
+       </listitem>
+
+      </itemizedlist>
+
+    </listitem>
    </orderedlist>
 
 
@@ -1167,140 +1251,7 @@ IMAGESERVER=192.168.1.203
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-     <para>
-      The autoinstall clients will need IP addresses in order to install
-      themselves.  There are two ways to give your autoinstall clients
-      their IP address information:
-      <itemizedlist>
-       <listitem><para>with a DHCP server</para></listitem>
-       <listitem><para>with a configuration file called 
-       "<filename>local.cfg</filename>"</para></listitem>
-      </itemizedlist>
-
-      Run the command, <command>makedhcpserver</command>, to configure 
-      your image server to be a DHCP server.  Be sure to follow the 
-      instructions it gives you at the end.
-     </para>
-
-     <example><title>Running the <command>makedhcpserver</command> command</title>
-      <programlisting format="linespecific">
-[root@imageserver]#  <command>makedhcpserver</command>
-
-Welcome to the VA SystemImager "makedhcpserver" command.  This
-command will prepare this computer to be a DHCP server by creating
-the following file:
- 
- /etc/dhcpd.conf
- 
-If there is an existing file, it will be backed up with the
-.beforesystemimager extension.
- 
-Continue? (y/[n]): y
-
-Type your response or hit <command>Enter</command> to accept [defaults].
-If you don't have a response, such as no first or second DNS server,
-just hit <command>Enter</command> and none will be used.
- 
-Type your response or hit <command>Enter</command> to accept [defaults].
-If you don't have a response, such as no first or second DNS server,
-just hit <command>Enter</command> and none will be used.
- 
-What is your domain name? [localdomain.domain]: pratt.pvt
-What is your network number? [192.168.1.0]: 10.10.10.0
-What is your netmask? [255.255.255.0]:
-What is the starting IP address for your dhcp range? [192.168.1.1]: 10.10.10.3
-What is the ending IP address for your dhcp range? [192.168.1.100]: 10.10.10.12
-What is the IP address of your first DNS server? []: 10.10.10.1
-What is the IP address of your second DNS server? []:
-What is the IP address of your default gateway? [192.168.1.254]: 10.10.10.1
-What is the air speed velocity of the common swallow? []:
-
-Ahh, but seriosly folks...
-Here are the values you have chosen:
- 
-################################################################
-DNS Domain Name: pratt.pvt
-network number:  10.10.10.0
-netmask:         255.255.255.0
-starting IP address for your dhcp range: 10.10.10.3
-ending IP address for your dhcp range:   10.10.10.12
-first DNS server:  10.10.10.1
-second DNS server:
-third DNS server:
-default gateway: 10.10.10.1
-################################################################
- 
-Are you satisfied? (y/[n]): y
-
-The dhcp server configuration file (/etc/dhcpd.conf) file has been created
-for you.  Please verify it for accuracy.
- 
-If this file does not look satisfactory, you can run this command again to
-re-create it: "makedhcpserver"
- 
-WARNING!:  If you have multiple physical network interfaces, be sure to
-edit the init script that starts dhcpd so that it looks like:
-"dhcpd $interfacename" ( ie. /sbin/dhcpd eth0 )
- 
-Also, be sure to start or restart your dhcpd daemon.
-( ie. /etc/rc.d/init.d/dhcpd restart )
- 
-Would you like me to restart your DHCP server software now? (y/N): y
-
-Shutting down dhcpd:                                       [FAILED]
-Starting dhcpd:                                            [  OK  ]
-Press <command>Enter</command> to continue...  
-      </programlisting>
-     </example>
-
-   <sect2 id=AutoInstall>
-    <title>Auto-install the clients</title>
-     <para>
-      There are three methods to Auto-installing the clients:
-      <itemizedlist>
-       <listitem>
-        <para>
-         Boot the system from bootable media such as a floppy diskette or 
-         bootable CD-ROM
-        </para>
-       </listitem>
-       <listitem>
-        <para>
-         Using a network boot function, such as PXE,  if your system supports 
-         it.  This is usually enabled through a BIOS setting.
-        </para>
-       </listitem>
-       <listitem>
-        <para>
-         A client node can be told to autoinstall when it is next rebooted.
-         For this method, the client must already have Linux, 
-         <application>LILO</application>, and the 
-         <application>VA Systemimager</application> client installed.
-        </para>
-       </listitem>
-      </itemizedlist>
-     </para>
-     <sect3 id=InstallMediaBoot>
-     <title>Create the AutoInstall Media</title>
-     <para>
-     Run the command <command>makeautoinstalldiskette</command> or 
-     <command>makeautoinstallcd</command> to create your boot media.  
-     Simply boot your client off the diskette or CD and it will autoinstall 
-     itself.
-     </para>
-     </sect3>
-     <sect3 id=NetworkBoot>
+     <sect2 id=NetworkBoot>
      <title>Network Booting the System</title>
      <para>
       If you prefer to boot off the network, change the settings in your
@@ -1314,7 +1265,7 @@ Press <command>Enter</command> to continue...
       different package versions, latest distribution, etc.), please let us
       know so that it can be included in this document.
      </para>
-       <sect4 id=RedHat6.2BootAgent3.x>
+       <sect3 id=RedHat6.2BootAgent3.x>
        <title>RedHat 6.2 and Intel BootAgent 3.x</title>
        <para>
         This testing was done on HP Netservers with Intel Ether Express Pro 
@@ -1400,8 +1351,8 @@ Press <command>Enter</command> to continue...
          </listitem>
         </orderedlist>
        </para>
-       </sect4>
-       <sect4 id=RedHat7.0BootAgent3.x>
+       </sect3>
+       <sect3 id=RedHat7.0BootAgent3.x>
        <title>RedHat 7.0 and Intel BootAgent 3.x</title>
        <para>
         This testing was done on HP Netservers with Intel Ether Express Pro 
@@ -1534,8 +1485,8 @@ service tftp
          </listitem>
         </orderedlist>
        </para>
-       </sect4>
-       <sect4 id=RedHat7.0BootAgent4.x>
+       </sect3>
+       <sect3 id=RedHat7.0BootAgent4.x>
        <title>RedHat 7.0 and Intel BootAgent 4.x</title>
 	<para>
          This configuration is very similar to the section "RedHat 7.0 and 
@@ -1544,21 +1495,8 @@ service tftp
          <filename>/etc/dhcpd.conf</filename> by
          <command>makedhcpserver</command> are sufficient.
         </para>
-       </sect4>
-     </sect3>
-     <sect3 id=NextReboot>
-     <title>Autoinstall Upon Reboot</title>
-      <para>
-      This autoinstall method allows you to tell a machine to autoinstall 
-      itself the next time it is rebooted.  This eliminates the need for
-      boot media (floppy, CD, and network).  To tell a client machine to
-      autoinstall on it's next boot, execute
-      <command>/usr/sbin/updateclient -autoinstall</command>.  This tells
-      <application>LILO</application> to boot a kernel and a ramdisk provided
-      by <application>VA SystemImager</application>.
-      </para>
-     </sect3>
-   </sect2>
+       </sect3>
+     </sect2>
  </sect1>
 
  <sect1 id=DesignGoals>
