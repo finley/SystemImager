@@ -105,7 +105,7 @@ PXE_CONF_DEST     = $(TFTP_BIN_DEST)/pxelinux.cfg
 
 AUTOINSTALL_TARBALL = autoinstallbin.tar.gz
 
-BINARIES := lsimage makeautoinstallcd makeautoinstalldiskette
+BINARIES := makeautoinstallcd makeautoinstalldiskette
 SBINARIES := addclients cpimage getimage makedhcpserver makedhcpstatic mkautoinstallscript mkbootserver mvimage pushupdate rmimage
 CLIENT_SBINARIES  := updateclient prepareclient
 COMMON_BINARIES   = lsimage
