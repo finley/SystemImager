@@ -12,9 +12,34 @@
 3.0 PRE-FEATURE FREEZE
 --------------------------------------------------------------------------------
 Pending:
+
 * Get SSH working again (BEF)  Legality issues?
+    
+    Misc. Notes
+    ----------------------------------------------------------------------------
+    o make SSH_SUPPORT=1 all
+    o FLAVOR should be set to: standard-ssh
+    o SSH_DOWNLOAD_URL should only be URL excluding /systemimager/
+        Example: 
+                    SITE: http://thefinleys.com/systemimager/boot/i386/standard-ssh/boel_binaries.tar.gz
+        SSH_DOWNLOAD_URL: http://thefinleys.com/
+
+    o install will recommend adding the following line to Apache's httpd.conf
+        (or manually do something similar for other web server)
+
+        Alias /systemimager /usr/share/systemimager
+    
+    Behavioral Notes
+    ----------------------------------------------------------------------------
+        if SSH_DOWNLOAD_URL is set
+            snarf $SSH_DOWNLOAD_URL/systemimager/boot/${ARCH}/${FLAVOR}/boel_binaries.tar.gz /tmp/boel_binaries.tar.gz
+        else
+            rsync -av ${IMAGESERVER}::boot/${ARCH}/${FLAVOR}/boel_binaries.tar.gz /tmp/ || shellout
+        fi
+        ( cd / && tar -xvzf /tmp/boel_binaries.tar.gz ) || shellout
+
+
 * updateclient -a bug: http://sourceforge.net/tracker/index.php?func=detail&aid=610755&group_id=259&atid=100259
-* modules issue
 
 
 Completed:
@@ -83,6 +108,7 @@ Completed:
   variables that can be used in either dhcpd.conf or local.cfg
   can be used in both.  (unless it's impossible as Sean noted
   with ETHER_SLEEP ;-)  Add ETHER_SLEEP=35 to local.cfg.
+* modules issue
 
 
 
@@ -101,6 +127,7 @@ PRE-RELEASE
 * add bit to to troubleshooting that describes the case where ETHER_SLEEP 
   should be increased
 * verify CHANGE.LOG additions
+* manual in pdf and html formats online
 
 
 
