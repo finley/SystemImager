@@ -7,7 +7,7 @@
     &dhsurname;
   </author>
   <copyright>
-    <year>2001</year>
+    <year>2002</year>
     <holder>&dhusername;</holder>
   </copyright>
   &dhdate;
@@ -27,14 +27,12 @@
     <command>addclients</command>
     <arg><option>-help</option></arg>
     <arg><option>-version</option></arg>
-    <arg><option>-quiet</option></arg>
-    <arg><option>-yes</option></arg>
-    <arg><option>-client <replaceable>HOSTNAME</replaceable></option></arg>
-    <arg><option>-host-range <replaceable>X-Y</replaceable></option></arg>
+    <arg><option>-host <replaceable>HOSTNAME</replaceable></option></arg>
     <arg><option>-domainname <replaceable>DOMAINNAME</replaceable></option></arg>
+    <arg><option>-host-range <replaceable>X-Y</replaceable></option></arg>
+    <arg><option>-script <replaceable>SCRIPT</replaceable></option></arg>
     <arg><option>-ip-range <replaceable>IP-IP</replaceable></option></arg>
-    <arg><option>-file <replaceable>FILE</replaceable></option></arg>
-    <arg><option>-image <replaceable>IMAGE</replaceable></option></arg>
+    <arg><option>-interactive <replaceable>YES|NO</replaceable></option></arg>
   </cmdsynopsis>
   </refsynopsisdiv>
   <refsect1>
@@ -113,9 +111,10 @@
   <title>OPTIONS</title>
 
   <para>
-    A summary of options is included below.  If an insufficient set of options
-    are specified, <command>addclients</command> will fall back to an
-    interactive mode.
+    A summary of options is included below.  By default, if an insufficient 
+    set of options is specified, <command>addclients</command> will fall back 
+    to an interactive mode.  See <option>-interactive</option> below if you
+    wish to alter this behavior.
   </para>
 
     <variablelist>
@@ -130,35 +129,20 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-quiet</option></term>
-	<listitem>
-	  <para>
-	    Don't ask any questions or print any output (other than errors).
-	    In this mode, no warning will be given if the image already exists
-	    on the server.
-	  </para>
-	<note>
-	  <para>
-	    <option>-quiet</option> implies <option>-yes</option>
-	  </para>
-	</note>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
-	<term><option>-yes</option></term>
-	<listitem>
-	  <para>
-	    Assume an answer of "yes" to all questions.  Allows this command to
-	    be run non-interactively
-	  </para>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
-	<term><option>-client <replaceable>HOSTNAME</replaceable></option></term>
+	<term><option>-host <replaceable>HOST</replaceable></option></term>
 	<listitem>
 	  <para>
 	    Base host name of the client(s) to be autoinstalled.  Will be
 	    combined with "-host-range" to derive actual host names.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-domainname <replaceable>DOMAINNAME</replaceable></option></term>
+	<listitem>
+	  <para>
+	    If this option is used, <replaceable>DOMAINNAME</replaceable> will
+	    be appended to the client host name(s).
 	  </para>
 	</listitem>
       </varlistentry>
@@ -177,16 +161,7 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-domainname <replaceable>DOMAINNAME</replaceable></option></term>
-	<listitem>
-	  <para>
-	    If this option is used, <replaceable>DOMAINNAME</replaceable> will
-	    be appended to the client host name(s).
-	  </para>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
-	<term><option>-i <replaceable>IP<subscript>0</subscript>-IP<subscript>1</subscript></replaceable></option></term>
+	<term><option>-ip-range <replaceable>IP<subscript>0</subscript>-IP<subscript>1</subscript></replaceable></option></term>
 	<listitem>
 	  <para>
 	    The range of IP addresses to assign to your autoinstall clients.
@@ -197,34 +172,29 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-file <replaceable>FILE</replaceable></option></term>
+	<term><option>-interactive <replaceable>YES|NO</replaceable></option></term>
 	<listitem>
-	  <note><para>Not Yet Functional</para></note>
-	  <para>
-	    Read host names and images to process from FILE.  This option can
-	    be used instead of the <option>-client</option> and
-	    <option>-host-range</option> options.  The file format is
-	    <literallayout>
-	      hostname imagename
-	    </literallayout>
-	    
-	    Here are some example file contents:
-	    <literallayout>
-	      www1 web_image_v1
-	      www2 web_image_v1
-	      www-test web_image_v2
-	      db1 database_image_v1
-	      db2 database_image_v1
-	    </literallayout>
-	  </para>
+	<para>
+	  This program will go interactive by default if domainname,
+	  host, host-range, and script are all specified.  
+	</para>
+	<para>
+	  If you specify YES here, then it will go interactive, even
+	  if all of these values are specified.  
+	</para>
+	<para>
+	  If you specify NO here, then it will not go interactive,
+	  even if it is missing some of the required values.
+	</para>
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-image <replaceable>IMAGE</replaceable></option></term>
+	<term><option>-script <replaceable>IMAGE</replaceable></option></term>
 	<listitem>
-	  <para>
-	    The image that these clients should autoinstall.
-	  </para>
+	<para>
+	  Master autoinstall script name (typically the imagename).  Don't 
+	  include the path or the .master extension.
+	</para>
 	</listitem>
       </varlistentry>
     </variablelist>
@@ -234,8 +204,8 @@
     <title>SEE ALSO</title>
 
     <para>
-      <command>getimage</command>(8), <command>makedhcpserver</command>(8),
-      <command>makedhcpstatic</command>(8)
+      <command>getimage</command>(8), <command>mkdhcpserver</command>(8),
+      <command>mkdhcpstatic</command>(8)
     </para>
 
     <para>More details can be found in the <citetitle>SystemImager
