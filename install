@@ -69,6 +69,7 @@ echo "soft linking /tftpboot/systemimager/hosts to /etc/hosts ..."
 cd /tftpboot/systemimager/
 ln -sf /etc/hosts hosts
 
+mkdir -p /tftpboot/pxelinux.cfg/
 cd /tftpboot/pxelinux.cfg/
 ln -f syslinux.cfg default
 

@@ -45,15 +45,15 @@ if( -e "/etc/dhcpd.conf" && ! -e "/etc/dhcpd.conf.beforesystemimager") {
 }
 
 # set some default values
-$dnsdomainname="";
+$dnsdomainname="localdomain.domain";
 $netnumber = "192.168.1.0";
 $netmask = "255.255.255.0";
-$rangebegin = "192.168.1.50";
+$rangebegin = "192.168.1.1";
 $rangeend = "192.168.1.100";
 $dnsserver1 = "";
 $dnsserver2 = "";
-$dnsserver3 = "192.168.1.1";
-$router = "192.168.1.1";
+$dnsserver3 = "";
+$router = "192.168.1.254";
 $swallow = "";
 
 ### Begin questionnaire ###
@@ -83,11 +83,15 @@ while ($satisfied ne "y") {
  print "What is the IP address of your first DNS server? [$dnsserver1]: ";
  $dnsserver1=get_response($dnsserver1);
 
- print "What is the IP address of your second DNS server? [$dnsserver2]: ";
- $dnsserver2=get_response($dnsserver2);
+ if ($dnsserver1) {
+   print "What is the IP address of your second DNS server? [$dnsserver2]: ";
+   $dnsserver2=get_response($dnsserver2);
+ }
 
- print "What is the IP address of your third DNS server? [$dnsserver3]: ";
- $dnsserver3=get_response($dnsserver3);
+ if ($dnsserver2) {
+   print "What is the IP address of your third DNS server? [$dnsserver3]: ";
+   $dnsserver3=get_response($dnsserver3);
+ }
 
  print "What is the IP address of your default gateway? [$router]: ";
  $router=get_response($router);
@@ -132,11 +136,10 @@ open(DHCPDCONF, "> /etc/dhcpd.conf") or die "Couldn't open /etc/dhcpd.conf for w
 print DHCPDCONF qq(subnet $netnumber netmask $netmask { \n);
 print DHCPDCONF qq(  range  $rangebegin $rangeend; \n);
 print DHCPDCONF qq(  option domain-name "$dnsdomainname"; \n);
-print DHCPDCONF qq(  option domain-name-servers );
-if($dnsserver1 ne "") { print DHCPDCONF qq($dnsserver1); }
+if($dnsserver1 ne "") { print DHCPDCONF qq(  option domain-name-servers $dnsserver1); }
 if($dnsserver2 ne "") { print DHCPDCONF qq(, $dnsserver2); }
 if($dnsserver3 ne "") { print DHCPDCONF qq(, $dnsserver3); }
-print DHCPDCONF qq(;\n);
+if($dnsserver1 ne "") { print DHCPDCONF qq(;\n); }
 print DHCPDCONF qq(  option routers $router; \n);
 print DHCPDCONF qq(} \n);
 
@@ -153,16 +156,14 @@ system("clear");
 print <<"EOF";
 
 The dhcp server configuration file (/etc/dhcpd.conf) file has been created 
-for you.  Please verify it for accuracy.  The imageserver's IP address 
-should be listed as the last domain-name-servers entry.
+for you.  Please verify it for accuracy.
 
 If this file does not look satisfactory, you can run this script again to 
 re-create it: "/systemimager/bin/makedhcpserver"
 
 WARNING!:  If you have multiple physical network interfaces, be sure to 
 edit the init script that starts dhcpd so that it looks like: 
-"dhcpd \$interfacename"
-( ie. /sbin/dhcpd eth0 )
+"dhcpd \$interfacename" ( ie. /sbin/dhcpd eth0 )
 
 Also, be sure to start or restart your dhcpd daemon. 
 ( ie. /etc/rc.d/init.d/dhcpd restart )
