@@ -285,10 +285,9 @@ endif
 PHONY += install_configs
 install_configs:
 	$(SI_INSTALL) -d $(ETC)/systemimager
-	$(SI_INSTALL) -m 644 etc/systemimager.conf \
-	  $(ETC)/systemimager/
-	$(SI_INSTALL) -m 644 etc/flamethrower.conf \
-	  $(ETC)/systemimager/
+	$(SI_INSTALL) -m 644 etc/systemimager.conf $(ETC)/systemimager/
+	$(SI_INSTALL) -m 644 etc/flamethrower.conf $(ETC)/systemimager/
+	$(SI_INSTALL) -m 644 etc/autoinstallscript.conf $(ETC)/systemimager/
 
 	mkdir -p $(RSYNC_STUB_DIR)
 	$(SI_INSTALL) -b -m 644 etc/rsync_stubs/10header $(RSYNC_STUB_DIR)
