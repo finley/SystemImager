@@ -17,25 +17,9 @@
 #
 
 #################################################################################
+#   Load functions and other variables
 #
-#   Variables
-#
-PATH=/sbin:/bin:/usr/bin:/usr/sbin:/tmp
-SCRIPTS=scripts
-SCRIPTS_DIR=/scripts
-FLAMETHROWER_DIR=/var/lib/systemimager/flamethrower
-BOEL_BINARIES_DIR=/tmp/boel_binaries
-VERSION="SYSTEMIMAGER_VERSION_STRING"
-FLAVOR="SYSTEMIMAGER_FLAVOR_STRING"
-FUNCTIONS=/etc/init.d/functions
-#
-################################################################################
-
-#################################################################################
-#
-#   Load subroutines
-#
-. ${FUNCTIONS}
+. /etc/init.d/functions
 #
 ################################################################################
 

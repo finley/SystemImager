@@ -15,12 +15,26 @@
 #   Curtis Zinzilieta <czinzilieta@valinux.com>
 #
 
+
+#################################################################################
+#
+#   Variables
+#
+PATH=/sbin:/bin:/usr/bin:/usr/sbin:/tmp
+SCRIPTS=scripts
+SCRIPTS_DIR=/scripts
+FLAMETHROWER_DIRECTORY_DIR=/var/lib/systemimager/flamethrower
+BOEL_BINARIES_DIR=/tmp/boel_binaries
+VERSION="SYSTEMIMAGER_VERSION_STRING"
+FLAVOR="SYSTEMIMAGER_FLAVOR_STRING"
+#
+################################################################################
+
+
 #################################################################################
 #
 #   Subroutines
 #
-################################################################################
-
 #################################################################################
 #
 #  get_arch
@@ -136,9 +150,9 @@ get_flamethrower_directory() {
     echo Using multicast...
     echo get_flamethrower_directory
 
-    mkdir -p ${FLAMETHROWER_DIR}
-    echo udp-receiver --portbase ${FLAMETHROWER_DIRECTORY_PORTBASE} --pipe \"tar -C ${FLAMETHROWER_DIR} -x\"
-         udp-receiver --portbase ${FLAMETHROWER_DIRECTORY_PORTBASE} --pipe "tar -C ${FLAMETHROWER_DIR} -x"
+    mkdir -p ${FLAMETHROWER_DIRECTORY_DIR}
+    echo udp-receiver --portbase ${FLAMETHROWER_DIRECTORY_PORTBASE} --pipe \"tar -C ${FLAMETHROWER_DIRECTORY_DIR} -x\"
+         udp-receiver --portbase ${FLAMETHROWER_DIRECTORY_PORTBASE} --pipe "tar -C ${FLAMETHROWER_DIRECTORY_DIR} -x"
     sleep 2
 
     if [ $? != 0 ]; then
@@ -177,7 +191,7 @@ get_scripts_directory() {
 #
 get_udp_receiver_options() {
 
-    . ${FLAMETHROWER_DIR}/${MODULE_NAME}
+    . ${FLAMETHROWER_DIRECTORY_DIR}/${MODULE_NAME}
 
     UDP_RECEIVER_OPTIONS="--portbase $PORTBASE --ttl $TTL"
     if [ "$ASYNC" = "on" ]; then
