@@ -1,9 +1,6 @@
 #
 # "SystemImager"
 #  
-#  Copyright (C) 1999-2002 Brian Elliott Finley <brian.finley@baldguysoftware.com>
-#  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
-#
 #  $Id$
 #
  
@@ -24,6 +21,11 @@ uid = root
 gid = root
 use chroot = yes
 log file = /var/log/systemimager/rsyncd
+#
+# For additional security, modify and uncomment this line.  See
+# "man rsyncd.conf" for details.
+#
+#hosts allow = 127.0.0.0/24 MY_NET/NETMASK MY_CLIENT/32
 
 [boot]
 path = USR_PREFIX/share/systemimager/boot
