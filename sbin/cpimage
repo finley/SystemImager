@@ -284,8 +284,10 @@ SystemImager::Server->gen_rsyncd_conf($rsync_stub_dir, $rsyncd_conf)
 my $entry_name = $destination_image;
 my $new_entry_data = "[$destination_image]\nDIR = $destination\n";
 my $flamethrower_conf = "/etc/systemimager/flamethrower.conf";
-SystemImager::Common->add_or_delete_conf_file_entry($flamethrower_conf, $entry_name, $new_entry_data) or 
-    die "$program_name: Cannot create entry in $flamethrower_conf";
+if(-e $flamethrower_conf ) {
+    SystemImager::Common->add_or_delete_conf_file_entry($flamethrower_conf, $entry_name, $new_entry_data) or 
+        die "$program_name: Cannot create entry in $flamethrower_conf";
+}
 
 # Add override entry to flamethrower.conf file
 $entry_name = "override_" . $destination_image;

@@ -433,8 +433,10 @@ SystemImager::Server->gen_rsyncd_conf($rsync_stub_dir, $rsyncd_conf) or
 my $flamethrower_conf = "/etc/systemimager/flamethrower.conf";
 my $entry_name = $image;
 my $new_entry_data = "[$image]\nDIR = $imagedir\n";
-SystemImager::Common->add_or_delete_conf_file_entry($flamethrower_conf, $entry_name, $new_entry_data) or 
-    die "$program_name: Cannot add entry to $flamethrower_conf";
+if(-e $flamethrower_conf) {
+    SystemImager::Common->add_or_delete_conf_file_entry($flamethrower_conf, $entry_name, $new_entry_data) or 
+        die "$program_name: Cannot add entry to $flamethrower_conf";
+}
 
 # Add override entry to flamethrower.conf file
 $entry_name = "override_" . $image;
