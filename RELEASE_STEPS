@@ -12,38 +12,7 @@
 3.0 PRE-FEATURE FREEZE
 --------------------------------------------------------------------------------
 Pending:
-
-* Get SSH working again (BEF)  Legality issues?
-    
-    Misc. Notes
-    ----------------------------------------------------------------------------
-    o make WITH_SSH=1 all
-    o FLAVOR should be set to: standard-ssh
-    o SSH_DOWNLOAD_URL should only be URL excluding /systemimager/
-        Example: 
-                    SITE: http://thefinleys.com/systemimager/boot/i386/standard-ssh/boel_binaries.tar.gz
-        SSH_DOWNLOAD_URL: http://thefinleys.com/
-
-    o install will recommend adding the following line to Apache's httpd.conf
-        (or manually do something similar for other web server)
-
-        Alias /systemimager/boot/ /usr/share/systemimager/boot/
-        <Directory /usr/share/systemimager/boot>
-            Options Indexes MultiViews
-            AllowOverride None
-            Order allow,deny
-            Allow from all
-        </Directory>
-    
-    Behavioral Notes
-    ----------------------------------------------------------------------------
-        if SSH_DOWNLOAD_URL is set
-            snarf $SSH_DOWNLOAD_URL/systemimager/boot/${ARCH}/${FLAVOR}/boel_binaries.tar.gz /tmp/boel_binaries.tar.gz
-        else
-            rsync -av ${IMAGESERVER}::boot/${ARCH}/${FLAVOR}/boel_binaries.tar.gz /tmp/ || shellout
-        fi
-        ( cd / && tar -xvzf /tmp/boel_binaries.tar.gz ) || shellout
-
+* Nothing!
 
 
 Completed:
@@ -126,6 +95,38 @@ Completed:
   # corresponds to the IP address the use during the install.
   #
   #HOSTNAME=""
+
+
+* Get SSH working again (BEF)  Legality issues?
+    
+    Misc. Notes
+    ----------------------------------------------------------------------------
+    o make WITH_SSH=1 all
+    o FLAVOR should be set to: standard-ssh
+    o SSH_DOWNLOAD_URL should only be URL excluding /systemimager/
+        Example: 
+                    SITE: http://thefinleys.com/systemimager/boot/i386/standard-ssh/boel_binaries.tar.gz
+        SSH_DOWNLOAD_URL: http://thefinleys.com/
+
+    o install will recommend adding the following line to Apache's httpd.conf
+        (or manually do something similar for other web server)
+
+        Alias /systemimager/boot/ /usr/share/systemimager/boot/
+        <Directory /usr/share/systemimager/boot>
+            Options Indexes MultiViews
+            AllowOverride None
+            Order allow,deny
+            Allow from all
+        </Directory>
+    
+    Behavioral Notes
+    ----------------------------------------------------------------------------
+        if SSH_DOWNLOAD_URL is set
+            snarf $SSH_DOWNLOAD_URL/systemimager/boot/${ARCH}/${FLAVOR}/boel_binaries.tar.gz /tmp/boel_binaries.tar.gz
+        else
+            rsync -av ${IMAGESERVER}::boot/${ARCH}/${FLAVOR}/boel_binaries.tar.gz /tmp/ || shellout
+        fi
+        ( cd / && tar -xvzf /tmp/boel_binaries.tar.gz ) || shellout
 
 
 
