@@ -60,7 +60,6 @@ unless($< == 0) { die "Must be run as root!\n"; }
 # give warning
 system("clear");
 print << 'EOF';
-
 Welcome to the VA SystemImager "addclients" utility  
 ---------------------------------------------------
 
@@ -175,21 +174,29 @@ $createlinks = lc $createlinks;
 unless($createlinks eq "n") {
   $satisfied="n";
   while ($satisfied eq "n") {
+
     # gather a list of available images
     @files = ();
-    opendir ( DIR, "/tftpboot/systemimager" );
-    @files = grep { /\.master$/ } readdir (DIR);
-    closedir (DIR);
+    # ------------------------------------> sort by timestamp -- oldest to newest
+    $command = "cd /tftpboot/systemimager/; ls -1tr *.master";
+    open(LS, "$command |");
+    while (<LS>) {
+      chomp;
+      s/\.master//;
+      push(@files, $_);
+      # make the newest image the default
+      $image = $_;
+    }
+    close(LS);
 
     # display the list of available images
     unless(@files) { die "There are no available images.  Please use getimage to retrieve an image first.\n   -The Mgmt\n"; }
     print qq(\nHere is a list of available images:\n);
-    while (<@files>) {
-      $_ =~ s/\.master//g;
-      print "$_\n";
-      $image = $_;
+    print "\n";
+    foreach(@files) {
+      print "$_ \n";
     }
-    print qq(\n);
+    print "\n";
 
     print "Which image would you like these hosts to receive? [$image]: ";
     $image=get_response($image);
