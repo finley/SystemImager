@@ -41,6 +41,8 @@
 #   - remove get_ssh_tarball() -- now handled as part of get_boel_binaries_tarball()
 #   2004.10.19  Brian Elliott Finley
 #   - apparently the busybox-1.00-rc3 can't do "df -k /".  changed to just df -k.
+#   2004.10.28  Brian Elliott Finley
+#   - make variables.txt available to post-install scripts.
 #
 
 
@@ -1053,6 +1055,9 @@ run_post_install_scripts() {
     get_base_hostname
 
     if [ -e "${SCRIPTS_DIR}/post-install/" ]; then
+
+        # make a copy of variables.txt available to post-install scripts -BEF-
+        cp -f /tmp/variables.txt ${SCRIPTS_DIR}/post-install/
 
         cd ${SCRIPTS_DIR}/post-install/
 

@@ -16,21 +16,35 @@ How post-install scripts are processed
   configuration is performed, and right before the client's filesystems 
   are unmounted.
 
+
 - The entire "post-install" directory is copied to /tmp/post-install/ on 
   the client's new filesystem.
 
+
 - Each script is tested for non-zero exit status, and the install will
   "shellout" if any of the scripts exits with non-zero status.
+
 
 - Each script is executed individually inside a chroot of the new root 
   filesystem on the client.  The newly installed client filesystem is 
   mounted on /a/, so the actual script execution looks something like:
   
-      "chmod +x /a/tmp/post-install/$POST_INSTALL_SCRIPT"
-      "chroot /a/ /tmp/post-install/$POST_INSTALL_SCRIPT"
+    "chmod +x /a/tmp/post-install/$POST_INSTALL_SCRIPT"
+    "chroot /a/ /tmp/post-install/$POST_INSTALL_SCRIPT"
 
   This means that you can write your scripts as if they were executing on a
   normally operating machine (with few exceptions).
+
+
+- A copy of all pertinent SystemImager variables is copied into the
+  post-install scripts directory prior to processing (variables.txt).
+
+  This means that you can give your scripts knowledge of these variables
+  for making decisions.  Example line from a bourne shell post-install
+  script for sourcing the variables:
+
+    ". /tmp/post-install/variables.txt"
+
 
 - Scripts should be named in this way:
   
@@ -53,3 +67,5 @@ How post-install scripts are processed
   a class.  If you have multiple $OVERRIDE directories, they will be 
   executed in the order specified in your auto-install script.
 
+
+# /* vi: set et ts=2 tw=72: */
