@@ -1,5 +1,4 @@
 #!/usr/bin/perl -w
-
 #
 # "SystemImager" - Copyright (C) 1999-2000 TheFinleys.com <brian@thefinleys.com> 
 #
@@ -9,7 +8,7 @@
 # if not run as root, this script will surely fail
 unless($< == 0) { die "Must be run as root!\n"; }
 
-# give warning
+#FIX# give warning
 #if -q then no warning
 
 # read in /etc/dhcpd.conf
@@ -18,23 +17,53 @@ while (<DHCPDCONF>) { push(@dhcpdconf, $_); }
 close(DHCPDCONF);
 
 # test for /var/state/dhcp/dhcpd.leases (newest and preferred location)
-if -e /var/state/dhcp/dhcpd.leases {
-  # read in /var/state/dhcp/dhcpd.leases and create an IP/mac address hash
+if(-e "/var/state/dhcp/dhcpd.leases") {
+  $dhcpd_leases = "/var/state/dhcp/dhcpd.leases";
+  # read in dhcpd.leases and create an IP/mac address hash
   %ipbymac = ();
-  open(LEASEINFO, "< /var/log/messages") or die "Couldn't open /var/log/messages for reading: $!\n";
-  while (<LEASEINFO>) {
-?    if (/DHCPACK/) {
-?      my @fields = split;
-?      $ipbymac{$fields[9]} = $fields[7];
+  open(LEASEINFO, "< $dhcpd_leases") or die "Couldn't open $dhcpd_leases for reading: $!\n";
+  $line = "";
+  while(<LEASEINFO>) {
+    chomp;
+    # get rid of tabs (not a normal space --> <ctrl>+<v> then <tab> )
+    $_ =~ s/    //;
+    $_ =~ s/;/ /;
+    if ( /^#/ )     { next; }
+    elsif( ! /}/ )  { $line = $line . $_; }
+    else            {
+      $line = $line . $_;
+      my @fields = split(/ /, $line);
+      $ipbymac{$fields[12]} = $fields[1];
+      $line = "";
     }
   }
   close(LEASEINFO);
 } 
 
 # test for /etc/dhcpd.leases
-elsif -e /etc/dhcpd.leases {
-  do other stuff
-} 
+elsif( -e "/etc/dhcpd.leases" ) {
+  $dhcpd_leases = "/etc/dhcpd.leases";
+  # read in dhcpd.leases and create an IP/mac address hash
+  %ipbymac = ();
+  open(LEASEINFO, "< $dhcpd_leases") or die "Couldn't open $dhcpd_leases for reading: $!\n";
+  $line = "";
+  while(<LEASEINFO>) {
+    chomp;
+    # get rid of tabs (not a normal space --> <ctrl>+<v> then <tab> )
+    $_ =~ s/    //;
+    $_ =~ s/;/ /;
+    if ( /^#/ )     { next; }
+    elsif( ! /}/ )  { $line = $line . $_; }
+    else            {
+      $line = $line . $_;
+      my @fields = split(/ /, $line);
+      $ipbymac{$fields[12]} = $fields[1];
+      $line = "";
+    }
+  }
+  close(LEASEINFO);
+}
+
 
 # default to using info in /var/log/messages
 else {
@@ -62,7 +91,9 @@ close(HOSTS);
 
 # open /etc/dhcpd.conf for writing
 open(DHCPDCONF, ">> /etc/dhcpd.conf") or die "Couldn't open /etc/dhcpd.conf for appending: $!\n";
-foreach $mac (keys %ipbymac) {
+#FIX# need to add section for testing to see if IP is already assigned (and sort there instead ;)...
+@macs = sort (keys %ipbymac);
+foreach $mac (@macs) {
   $exists="no";
   foreach(@dhcpdconf) { 
     if(/$mac/) { 
@@ -71,6 +102,10 @@ foreach $mac (keys %ipbymac) {
     } 
   }
   # update dhcpd.conf as necessary
+  #FIX# need to remove fixed addresses from range -- test to be sure, but I believe hosts that
+  # are already in dhcpd.leases, or hosts that have a MAC specified will continue to get the 
+  # appropriate address, but if a _new_ host boots, it may get an address from the range that
+  # is actually reserved for a specific MAC address.  -- must test -- <bef>
   unless($exists eq "yes") { 
     # autoinstall client gets it's hostname from hosts file pulled from $imageserver::etc/hosts
     #  that's how it knows which script file to pull
