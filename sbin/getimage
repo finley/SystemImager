@@ -67,7 +67,6 @@ Options: (options can be presented in any order)
 
 Download from http://systemimager.org/
 Report bugs or suggestions to <systemimager-bugs\@systemimager.org>
-
 EOF
     
 
@@ -138,7 +137,7 @@ if (! -d "$imagedir_prefix")  {
 
 if (-d "$imagedir") {
     if (!$quiet) {
-	print "An image with named \"$image\" already exists...\n\n" .
+	print "An image named \"$image\" already exists...\n\n" .
 	    "Update exisiting image? ([y]/n): ";
 	
 	$continue = get_response('y');
@@ -150,7 +149,7 @@ if (-d "$imagedir") {
 }
 
 # get /etc/mtab from $master_client
-print "\nRetrieving /etc/mtab from $master_client to check for mounted filesystems...\n";
+print "\n\nRetrieving /etc/mtab from $master_client to check for mounted filesystems...\n";
 open(RSYNC, "rsync -av ${master_client}::root/etc/mtab $imagedir|");
 if (!$quiet) {
     print "--------------------------- mtab RETRIEVAL PROGRESS ---------------------------------\n";
@@ -181,7 +180,7 @@ foreach (@mtab) {
 close EXCLUDE;
 
 # Get the image from the $master_client
-print "\nRetrieving system image from $master_client\n";
+print "\n\nRetrieving system image from $master_client\n";
 open (RSYNC,
       "rsync -av --delete --exclude-from=$exclude_file " .
       "${master_client}::root/ $imagedir |");
@@ -214,38 +213,109 @@ EOF
 };
 close(RSYNCD_CONF);
 
-### BEGIN Got NIS? ###
-if (!$quiet) {
+
+### BEGIN Overwrite $image.master? ###
+if( -e "/tftpboot/systemimager/$image.master" ) {
     system("clear");
-    print "Will these clients use NIS? (y/[n]): ";
-    $continue = get_response('n');
-    if($continue eq "y") {
-        $satisfied="n";
-        until($satisfied eq "y") {
-            print "What is your NIS domain name? [$nisdomainname]: ";
-            $nisdomainname=get_response($nisdomainname);
-            if($nisdomainname eq "") {
-                print "\nYou have not chosen an NIS domain name.  Will your clients use NIS? ([y]/n): ";
-                $nis = get_response('y');
-                # Sometimes there is an easier or shorter way of writing things such as:
-                #  unless($nis eq "y") { $satisfied = "y"; }
-                # but it is often better to make sense quickly... <bef>
-                if($nis eq "y") { 
-                  $satisfied="n";
-                } else {
-                  $satisfied="y";
-                } 
-            } else {
-                print "\nYou have chosen \"$nisdomainname\" as your NIS domain name.\n";
-                print "\nAre you satisfied? (y/[n]): ";
-                $satisfied = get_response('n');
-            }
-            if($satisfied ne "y") { system("clear"); }
-        }
-    }
+    print "Update Autoinstall Script?\n";
+    print "--------------------------\n\n";
+    print "An autoinstall script for this image already exists.  It is recommended\n";
+    print "that you update this autoinstall script, unless you have customized it.\n";
+    print "(You will know if you have customized it.)\n\n";
+    print "Would you like to update the autoinstall script for this image? ([y]/n): ";
+
+    #if not, then exit -- we're done
+    $continue = get_response('y');
+    if($continue eq "n") { exit 0; }
 }
+
+### END Overwrite $image.master? ###
+
+
+### BEGIN Got NIS? ###
+$file="$imagedir/etc/sysconfig/network";
+open(NETWORK, "< $file") or die "Couldn't open $file for reading: $!\n";
+while (<NETWORK>) {
+  if(/^NISDOMAIN/) {
+      chomp;
+      # set $nisdomainname but dump $placeholder (figure out a better way to do this later)
+      (my $placeholder, $nisdomainname) = split(/=/, $_);
+  }
+}
+close(NETWORK);
+
+
+
+#if (!$quiet) {
+#    system("clear");
+#    print "NIS\n";
+#    print "---\n\n";
+#    print "Will these clients use NIS? (y/[n]): ";
+#    $continue = get_response('n');
+#    if($continue eq "y") {
+#        $satisfied="n";
+#        until($satisfied eq "y") {
+#            print "What is your NIS domain name? [$nisdomainname]: ";
+#            $nisdomainname=get_response($nisdomainname);
+#            if($nisdomainname eq "") {
+#                print "\nYou have not chosen an NIS domain name.  Will your clients use NIS? ([y]/n): ";
+#                $nis = get_response('y');
+#                # Sometimes there is an easier or shorter way of writing things such as:
+#                #  unless($nis eq "y") { $satisfied = "y"; }
+#                # but it is often better to make sense quickly... <bef>
+#                if($nis eq "y") { 
+#                  $satisfied="n";
+#                } else {
+#                  $satisfied="y";
+#                } 
+#            } else {
+#                print "\nYou have chosen \"$nisdomainname\" as your NIS domain name.\n";
+#                print "\nAre you satisfied? (y/[n]): ";
+#                $satisfied = get_response('n');
+#            }
+#            if($satisfied ne "y") { system("clear"); }
+#        }
+#    }
+#}
 ### END Got NIS? ###
 
+### BEGIN Want static? ###
+if (!$quiet) {
+    $satisfied="n";
+    $ip_assignment_method="1";
+    until($satisfied eq "y") {
+        system("clear");
+        print << 'EOF';
+IP Address Assignment
+---------------------
+
+There are three ways to assign IP addresses to the client systems on an
+ongoing basis:
+
+1) Static IP addresses assigned by DHCP
+   (recommended if you can continue to run the DHCP server
+    on your imageserver -- use makedhcpstatic after autoinstalling
+    your clients to make the addresses permanent)
+2) Static IP addresses
+   (recommended if you can not continue to run the DHCP server
+    on your imageserver)
+3) Dynamic IP addresses assigned by DHCP
+
+EOF
+
+        print "Which method do you prefer? [$ip_assignment_method]: ";
+        $ip_assignment_method = get_response('1');
+        print "You have chosen method $ip_assignment_method for assigning IP addresses.\n";
+        print "\nAre you satisfied? (y/[n]): ";
+        $satisfied=get_response('n');
+    }
+    if($ip_assignment_method eq "2") { 
+        $ip_assignment_method = "static"; 
+    } else {
+        $ip_assignment_method = "dhcp";
+    }
+}
+### END Want static? ###
 
 # create a fresh /tftpboot/systemimager/$image.master
 open (MASTER_SCRIPT, ">$master_script") || die "Can't open $master_script for writing\n";
@@ -321,7 +391,7 @@ foreach $disk (@disks)  {
     }
 }
 
-# initialize %fstab hash and zero out
+# initialize and void %fstab hash
 %fstab = ();
 
 # gather up mount point creation information
@@ -350,50 +420,64 @@ print MASTER_SCRIPT "\n# get imageserver, hostname, and other info by sourcing d
 print MASTER_SCRIPT ". /etc/dhcpc/dhcpcd-eth0.info\n";
 
 print MASTER_SCRIPT "\n# filler up!\n";
-print MASTER_SCRIPT "rsync -av \$DHCPSIADDR::$image /a/\n";
+print MASTER_SCRIPT "rsync -av \$DHCPSIADDR::$image /a/\n\n";
 
 
 print MASTER_SCRIPT << 'EOF';
 # set host specific information
 echo NETWORKING=yes > /a/etc/sysconfig/network
 echo FORWARD_IPV4=false >> /a/etc/sysconfig/network
+
 EOF
 
 
-if($nisdomainname ne "") { print MASTER_SCRIPT "echo NISDOMAIN=$nisdomainname >> /a/etc/sysconfig/network\n\n"; }
+if($nisdomainname ne "") { 
+    print MASTER_SCRIPT "# set NIS domainname and imply that we want to be an NIS client\n";
+    print MASTER_SCRIPT "echo NISDOMAIN=$nisdomainname >> /a/etc/sysconfig/network\n\n";
+}
 
 
-print MASTER_SCRIPT << 'EOF';
-# Stuff for DHCP client
+if($ip_assignment_method eq "static") { print MASTER_SCRIPT << 'EOF';
+# Stuff for static IP addressing
+# /etc/sysconfig/network
+echo HOSTNAME=$HOSTNAME >> /a/etc/sysconfig/network
+echo DOMAINNAME=$DOMAIN >> /a/etc/sysconfig/network
+echo GATEWAY=$GATEWAY >> /a/etc/sysconfig/network
+echo GATEWAYDEV=eth0 >> /a/etc/sysconfig/network
+
+# /etc/sysconfig/network-scripts/ifcfg-eth0
+echo DEVICE=eth0 > /a/etc/sysconfig/network-scripts/ifcfg-eth0
+echo IPADDR=$IPADDR >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
+echo NETWORK=$NETWORK >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
+echo NETMASK=$NETMASK >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
+echo BROADCAST=$BROADCAST >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
+echo ONBOOT=yes >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
+echo BOOTPROTO=none >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
+
+EOF
+
+} else { print MASTER_SCRIPT << 'EOF';
+# Stuff for IP addressing via DHCP
 echo DEVICE=eth0 > /a/etc/sysconfig/network-scripts/ifcfg-eth0
 echo ONBOOT=yes >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
 echo BOOTPROTO=dhcp >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
 
-### uncomment this block to use static IP addresses ###
-### This will override the above DHCP settings ###
-#echo HOSTNAME=$HOSTNAME >> /a/etc/sysconfig/network
-#echo DOMAINNAME=$DOMAIN >> /a/etc/sysconfig/network
-#echo GATEWAY=$GATEWAY >> /a/etc/sysconfig/network
-#echo GATEWAYDEV=eth0 >> /a/etc/sysconfig/network
-#
-#echo DEVICE=eth0 > /a/etc/sysconfig/network-scripts/ifcfg-eth0
-#echo IPADDR=$IPADDR >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
-#echo NETWORK=$NETWORK >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
-#echo NETMASK=$NETMASK >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
-#echo BROADCAST=$BROADCAST >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
-#echo ONBOOT=yes >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
-#echo BOOTPROTO=none >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
-### uncomment this block to use static IP addresses ###
+EOF
 
+}
+
+
+print MASTER_SCRIPT << 'EOF';
 # run lilo
 # (no, we can not just do a lilo -r "/a/".
 # we need to use the lilo that came with the distribution in case
 # it has special modifications such as support for hardware or software RAID)
 chroot /a/ /sbin/lilo
+
 EOF
 
 
-print MASTER_SCRIPT "\n# unmount the freshly filled filesystems\n";
+print MASTER_SCRIPT "# unmount the freshly filled filesystems\n";
 foreach $dir (reverse sort keys %fstab) {
     print MASTER_SCRIPT "umount /a$dir\n";
 }
@@ -403,6 +487,7 @@ print MASTER_SCRIPT << 'EOF';
 # take the system down so it is safe to power off/reboot
 # and so it will not respond to pings
 shutdown -h now
+
 EOF
 
 close(MASTER_SCRIPT);
