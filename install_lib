@@ -52,8 +52,10 @@ upgrade_config_files() {
     if [ -f "$old" ]; then
       diff $old $new > /dev/null
       if [ $? -ne 0 ]; then
-        echo "Warning: $old already exists, but it differs from the one I am going to install."
-        echo "I'm going to move this file to $old.beforesystemimager$VERSION."
+        echo
+        echo "WARNING: $old already exists, but it differs"
+        echo "         from the one I am going to install.  I'm going to move this file"
+        echo "         to $old.beforesystemimager$VERSION."
         echo "Press <Enter> to continue..."
         read
         mv $old $old.beforesystemimager$VERSION
