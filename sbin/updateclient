@@ -290,31 +290,30 @@ if ($autoinstall) {
     }
     
     unless ($flavor) {
-	print "Here is a list of available flavors:\n\n";
-	foreach (sort (keys %available_flavors)) {
-	    print "  $_\n";
-	    $flavor = $_;
-	}
-	# If "standard" is one of the available flavours, default to it. -BEF-
-	if ($available_flavors{"standard"}) { $flavor = "standard"; }
-	
-	print "\nWhich flavor would you like to use? [$flavor]: ";
-	$flavor = SystemImager::Common->get_response($flavor);
+        print "Here is a list of available flavors:\n\n";
+        foreach (sort (keys %available_flavors)) {
+            print "  $_\n";
+            $flavor = $_;
+        }
+        # If "standard" is one of the available flavours, default to it. -BEF-
+        if ($available_flavors{"standard"}) { $flavor = "standard"; }
+        
+        print "\nWhich flavor would you like to use? [$flavor]: ";
+        $flavor = SystemImager::Common->get_response($flavor);
     }
     
     # make sure the specified flavor is available
     unless ($available_flavors{$flavor}) {
-	print "\nI can't find boot files of the flavor and architecture specified.\n";
-	print "The files you specified would come from a SystemImager package named:\n\n";
-	print qq( "systemimager-boot-${ARCH}-${flavor}-${VERSION}"\n\n); 
-	exit 1;
+        print "\nI can't find boot files of the flavor and architecture specified.\n";
+        print "The files you specified would come from a SystemImager package named:\n\n";
+        print qq( "systemimager-boot-${ARCH}-${flavor}-${VERSION}"\n\n); 
+        exit 1;
     }
 
     if ( -d "/boot/efi" ) {
-	$bootdir = "/boot/efi";
-    }
-    else {
-	$bootdir = "/boot";
+        $bootdir = "/boot/efi";
+    } else {
+        $bootdir = "/boot";
     }
     
     my $bootmodule = "boot/$ARCH/$flavor";
