@@ -144,8 +144,13 @@ endif
 	find $(INITRD_BUILD_DIR) -depth -exec touch -t 196912311900 {} \;
 	touch $(INITRD_DIR)/build_dir-stamp
 
+ifdef IS_PPC64
+$(INITRD_DIR)/initrd.img:       $(INITRD_DIR)/initrd
+	cp -a $(INITRD_DIR)/initrd $(INITRD_DIR)/initrd.img
+else
 $(INITRD_DIR)/initrd.img:	$(INITRD_DIR)/initrd
 	gzip -9 < $(INITRD_DIR)/initrd > $(INITRD_DIR)/initrd.img
+endif
 
 $(INITRD_DIR)/initrd:	$(INITRD_DIR)/build_dir-stamp
 	mkcramfs $(INITRD_BUILD_DIR) $(INITRD_DIR)/initrd
