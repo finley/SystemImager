@@ -415,6 +415,11 @@ sub save_partition_information {
                 $size = "*";
             }
 
+            if($flags =~ /type=/) {
+                $id = (split(/=/,$flags))[1];
+                $flags = "";
+            }
+
             unless($id) { $id=""; }
 
             _print_to_auto_install_conf_file( $minor, $size, $partition_type, $id, $name, $flags );
