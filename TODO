@@ -8,7 +8,7 @@
 Short list (in progress)
 ------------------------
 - update FAQ-HOWTO
-- add more error checking to makedhcpstatic and addclients
+- add more error checking to makedhcpstatic
 - create man pages
 
 Other stuff
@@ -41,8 +41,6 @@ getimage
 
 addclients
 ----------
-- test for valid numbers and IP addresses
-- test for both IP addresses and hostnames in /etc/hosts
 - accept command line input such as --image $imagename
 - re-cycle through each question if answer is ""
 - use FQHN in soft links?
