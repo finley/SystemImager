@@ -1,4 +1,10 @@
-BUSYBOX_VERSION = 0.60.5
+#
+#	$Id$
+#
+#	2004.10.06  Brian Elliott Finley
+#	- upgrade to bb 1.x
+#
+BUSYBOX_VERSION = 1.00-rc3
 BUSYBOX_DIR = busybox-$(BUSYBOX_VERSION)
 BUSYBOX_BINARY = $(INITRD_SRC_DIR)/$(BUSYBOX_DIR)/_install/bin/busybox
 BUSYBOX_TARBALL = busybox-$(BUSYBOX_VERSION).tar.bz2
@@ -7,10 +13,10 @@ BUSYBOX_PATCHES = $(shell ls $(INITRD_PATCH_DIR)/busybox.*.patch 2>/dev/null | s
 
 ALL_SOURCE += $(INITRD_SRC_DIR)/$(BUSYBOX_TARBALL)
 
-ifneq ($(ARCH),i386)
-	BUSYBOX_CONFIG = $(INITRD_PATCH_DIR)/busybox.Config.h.noinsmod
+ifeq ($(ARCH),ia64)
+BUSYBOX_CONFIG := $(INITRD_PATCH_DIR)/busybox.no_modutils.config
 else
-	BUSYBOX_CONFIG = $(INITRD_PATCH_DIR)/busybox.Config.h.standard
+BUSYBOX_CONFIG := $(INITRD_PATCH_DIR)/busybox.standard.config
 endif
 
 PHONY += busybox
@@ -21,10 +27,12 @@ $(BUSYBOX_BINARY):	$(INITRD_SRC_DIR)/$(BUSYBOX_TARBALL) $(BUSYBOX_CONFIG) \
 	rm -rf $(INITRD_SRC_DIR)/$(BUSYBOX_DIR)
 	cd $(INITRD_SRC_DIR) && tar -xvjf $(BUSYBOX_TARBALL)
 	cd $(INITRD_SRC_DIR)/$(BUSYBOX_DIR) && \
-	  cat $(BUSYBOX_PATCHES) < /dev/null | patch -p1
-	cp -a $(BUSYBOX_CONFIG) $(INITRD_SRC_DIR)/$(BUSYBOX_DIR)/Config.h
-	$(MAKE) -C $(INITRD_SRC_DIR)/$(BUSYBOX_DIR) install-hardlinks \
-	    PATH=$(INITRD_BUILD_PATH)
+        cat $(BUSYBOX_PATCHES) < /dev/null | patch -p1
+	cp -a $(BUSYBOX_CONFIG) $(INITRD_SRC_DIR)/$(BUSYBOX_DIR)/.config
+	$(MAKE) -C $(INITRD_SRC_DIR)/$(BUSYBOX_DIR) oldconfig
+	$(MAKE) -C $(INITRD_SRC_DIR)/$(BUSYBOX_DIR) dep
+	$(MAKE) -C $(INITRD_SRC_DIR)/$(BUSYBOX_DIR)
+	$(MAKE) -C $(INITRD_SRC_DIR)/$(BUSYBOX_DIR) install-hardlinks PATH=$(INITRD_BUILD_PATH)
 
 $(INITRD_SRC_DIR)/$(BUSYBOX_TARBALL):
 	[ -d $(INITRD_SRC_DIR) ] || mkdir -p $(INITRD_SRC_DIR)
