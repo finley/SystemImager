@@ -1,26 +1,29 @@
-  <refentryinfo>
-    <address>
-      &dhemail;
-    </address>
-    <author>
-      &dhfirstname;
-      &dhsurname;
-    </author>
-    <copyright>
-      <year>2001</year>
-      <holder>&dhusername;</holder>
-    </copyright>
+<refentryinfo>
+  <address>
+    &dhemail;
+  </address>
+  <author>
+    &dhfirstname;
+    &dhsurname;
+  </author>
+  <copyright>
+    <year>2002</year>
+    <holder>&dhusername;</holder>
+  </copyright>
     &dhdate;
-  </refentryinfo>
-  <refmeta>
-    <refentrytitle>UPDATECLIENT</refentrytitle>
+</refentryinfo>
 
+<refmeta>
+  <refentrytitle>UPDATECLIENT</refentrytitle>
     &dhsection;
   </refmeta>
   <refnamediv>
     <refname>updateclient</refname>
 
-    <refpurpose>update local machine's image</refpurpose>
+    <refpurpose>
+      update the image running on the local client machine to match that of an
+      image on an image server
+    </refpurpose>
   </refnamediv>
   <refsynopsisdiv>
     <cmdsynopsis>
@@ -46,11 +49,15 @@
   <refsect1>
     <title>DESCRIPTION</title>
 
-    <para>This manual page documents briefly the
-      <command>updateclient</command> command.</para>
+    <para>
+      This manual page documents briefly the <command>updateclient</command>
+      command.
+    </para>
 
-    <para><command>updateclient</command> is a program that brings the local
-      client's image up to date with an image on a image server.</para>
+    <para>
+      <command>updateclient</command> is a program that brings the local
+      client's image up to date with an image on a image server.
+    </para>
 
   </refsect1>
   <refsect1>
@@ -105,8 +112,21 @@
         <term><option>-autoinstall</option>
         </term>
         <listitem>
-          <para>Autoinstall this client the next time it reboots.
-	    (can't be run with -nolilo)</para>
+          <para>
+	  Autoinstall this client the next time it reboots.  This option must
+	  be used if you want your partition scheme to be updated to match
+	  the partition scheme of the image you are updating too.  This is
+	  required if the partition scheme of the image you are updating from
+	  differs from the partition scheme of the image you are currently
+	  running, as your system may be left unbootable otherwise.
+	  This option conflicts with <option>-nolilo</option>.
+	</para>
+	<para>
+	  Updates that use this option cannot take advantage of rsync's
+	  efficient updating mechanism.  This process also requires two
+	  reboots.  This makes <option>-autoinstall</option> updates more
+	  consuming.
+	</para>
         </listitem>
       </varlistentry>
       <varlistentry>
