@@ -44,7 +44,7 @@ kill_em_all() {
 }
 
 PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin:
-PPID_FILE=/var/run/flamethrowerd.pid
+PPID_FILE=/var/run/systemimager-server-flamethrowerd.pid
 STATE_DIR=/var/state/systemimager/flamethrower
 
 case "$1" in
@@ -54,7 +54,7 @@ case "$1" in
         exit 1
     fi
     echo -n "Starting SystemImager's Flamethrower (multicast): flamethrowerd"
-    flamethrowerd
+    flamethrowerd --config-file /etc/systemimager/flamethrower.conf
     echo "."
     ;;
   stop)
