@@ -1,0 +1,11 @@
+--- raidtools-1.00.3/mkraid.c~	2003-01-15 01:58:25.000000000 -0700
++++ raidtools-1.00.3/mkraid.c	2003-03-28 14:14:25.000000000 -0700
+@@ -244,7 +244,7 @@
+     while (*args) {
+ 	for (p = cfg_head; p; p = p->next) {
+ 	    if (strcmp(p->md_name, *args)) continue;
+-	    if (check_active(cfg)) 
++	    if (check_active(p)) 
+ 		goto abort;
+ 	    if (force_flag) {
+ 		fprintf(stderr, "DESTROYING the contents of %s in 5 seconds, Ctrl-C if unsure!\n", *args);
