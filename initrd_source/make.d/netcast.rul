@@ -1,6 +1,6 @@
 NETCAST_VERSION = 0.2
 NETCAST_TARBALL = netcast-$(NETCAST_VERSION).tgz
-NETCAST_URL = http://XXXfix_this_url/$(NETCAST_TARBALL)
+NETCAST_URL = http://unc.dl.sourceforge.net/sourceforge/netcast/$(NETCAST_TARBALL)
 NETCAST_DIR = netcast-$(NETCAST_VERSION)
 NETCAST_BINARY = $(INITRD_SRC_DIR)/$(NETCAST_DIR)/client
 NETCAST_PATCHES = $(shell ls $(INITRD_PATCH_DIR)/netcast.*.patch 2>/dev/null | sort)
