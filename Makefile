@@ -422,10 +422,14 @@ install_ssh_tarball:	$(SYSTEMIMAGER_SSH_TARBALL)
 	$(SI_INSTALL) -m 644 $(SYSTEMIMAGER_SSH_TARBALL) $(SSH_BIN_DEST)
 
 PHONY += ssh_source_tarball
-ssh_source_tarball:	$(TOPDIR)/tmp/systemimager-ssh-$(VERSION).tar.bz2.md5sum
+ssh_source_tarball:	$(TOPDIR)/tmp/systemimager-ssh-$(VERSION).tar.bz2.md5sum $(TOPDIR)/tmp/systemimager-ssh-$(VERSION).tar.bz2.sign
 
 $(TOPDIR)/tmp/systemimager-ssh-$(VERSION).tar.bz2.md5sum:	$(TOPDIR)/tmp/systemimager-ssh-$(VERSION).tar.bz2
 	cd $(TOPDIR)/tmp && md5sum systemimager-ssh-$(VERSION).tar.bz2 > systemimager-ssh-$(VERSION).tar.bz2.md5sum
+
+$(TOPDIR)/tmp/systemimager-ssh-$(VERSION).tar.bz2.sign:	$(TOPDIR)/tmp/systemimager-ssh-$(VERSION).tar.bz2
+	cd $(TOPDIR)/tmp && gpg --detach-sign -a --output systemimager-ssh-$(VERSION).tar.bz2.sign systemimager-ssh-$(VERSION).tar.bz2
+	cd $(TOPDIR)/tmp && gpg --verify systemimager-ssh-$(VERSION).tar.bz2.sign
 
 $(TOPDIR)/tmp/systemimager-ssh-$(VERSION).tar.bz2:
 	mkdir -p tmp/systemimager-ssh-$(VERSION)
@@ -549,10 +553,15 @@ endif
 
 
 PHONY += source_tarball
-source_tarball:	$(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2.md5sum
+source_tarball:	$(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2.md5sum $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2.sign
 
 $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2.md5sum:	$(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
 	cd $(TOPDIR)/tmp && md5sum systemimager-$(VERSION).tar.bz2 > systemimager-$(VERSION).tar.bz2.md5sum
+
+$(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2.sign:	$(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
+	cd $(TOPDIR)/tmp && gpg --detach-sign -a --output systemimager-$(VERSION).tar.bz2.sign systemimager-$(VERSION).tar.bz2
+	cd $(TOPDIR)/tmp && gpg --verify systemimager-$(VERSION).tar.bz2.sign 
+
 
 $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2: systemimager.spec
 	mkdir -p tmp/systemimager-$(VERSION)
