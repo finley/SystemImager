@@ -2138,10 +2138,10 @@ service tftp
     <sect2 id=FAQDHCPServerLocation>
       <title>Does the DHCP server have to be on the image server?</title>
       <para>
-	Yes.  At this point in time it does.  After the client gets it's
-	address via DHCP, it determines the DHCP server to be the image
-	server and tries to connect to the DHCP server with tftp to get it's
-	utilities and it's autoinstall script.
+       No.  If you are using DHCP, you can use "option-100" and set it's value to the
+       IP address of the image server.  If you use "makedhcpstatic" to configure your
+       dhcpd.conf file, it will ask you for the IP address of your image server and
+       add the appropriate entry for you.
       </para>
     </sect2>
     
