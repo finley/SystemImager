@@ -1,0 +1,34 @@
+Usage: mkbootpackage --kernel FILE --modules DIR --flavor NAME [OPTION]...
+
+Options: (options can be presented in any order)
+
+ --help         Display this output.
+ --version      Display version and copyright information.
+ --verbose      Show filenames that are being removed.
+                         
+ --kernel FILE  Path to the kernel you want to use.
+
+ --modules DIR  Path to your kernel's modules directory.  These modules must be
+                the ones that match your kernel.  
+                
+                For example, if the output from "uname -r" on a machine running
+                the kernel in question is "2.4.19-4GB", then your modules
+                directory would most likely be "/lib/modules/2.4.19-4GB".
+
+ --flavor NAME  What do you want to call this new new boot package.
+
+ --pre-net "MODULE1 MODULE2 etc..."
+ 
+                List of modules to load before attempting to use the network.
+                These modules will be placed in the initrd.img.  All other 
+                modules will be included in the boel_binaries tarball.  You
+                need not include any disk related drivers, unless they are
+                needed to read a local.cfg file from the local floppy or hard
+                disk drive(s).  
+                
+                A few non-network drivers are required at this stage, such as
+                devfs and tmpfs, and must be available either as modules or
+                compiled into your kernel.  You do not need to specify these
+                here -- these modules will be copied over automatically if they
+                exist.
+
