@@ -1006,16 +1006,16 @@ run_post_install_scripts() {
         
         if [ ! -z `echo ${POST_INSTALL_SCRIPTS}|sed 's/ //'` ]; then
 
-            mkdir -p /a/tmp/post-install.$$/ || shellout
+            mkdir -p /a/tmp/post-install/ || shellout
 
-            rsync -a ${SCRIPTS_DIR}/post-install/ /a/tmp/post-install.$$/ || shellout
+            rsync -a ${SCRIPTS_DIR}/post-install/ /a/tmp/post-install/ || shellout
 
             for POST_INSTALL_SCRIPT in $POST_INSTALL_SCRIPTS
             do
                 if [ -e "$POST_INSTALL_SCRIPT" ]; then
                     echo ">>> $POST_INSTALL_SCRIPT"
-                    chmod +x /a/tmp/post-install.$$/$POST_INSTALL_SCRIPT || shellout
-                    chroot /a/ /tmp/post-install.$$/$POST_INSTALL_SCRIPT || shellout
+                    chmod +x /a/tmp/post-install/$POST_INSTALL_SCRIPT || shellout
+                    chroot /a/ /tmp/post-install/$POST_INSTALL_SCRIPT || shellout
                 fi
             done
         else
