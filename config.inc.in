@@ -1,3 +1,7 @@
+# force CC to gcc incase the default compilers are different
+CC=@GCC@
+CXX=@GXX@
+
 # where is python?
 PYTHON=@PYTHON_PATH@
 
@@ -6,4 +10,5 @@ PYTHON=@PYTHON_PATH@
 # due to docbook incompatibilities
 
 SI_BUILD_DOCS=@BUILD_DOCS@
+
 

@@ -43,8 +43,13 @@ AC_PROG_MAKE_SET
 #  seem fine for now
 #
 
-# where is python
+AC_PATH_PROG(gcc_exec,gcc)
+AC_PATH_PROG(gxx_exec,g++)
+AC_SUBST(GCC,$gcc_exec)
+AC_SUBST(GXX,$gxx_exec)
 
+
+# where is python
 AC_PATH_PROG(python_exec,python2)
 AC_PATH_PROG(python_exec,python)
 AC_SUBST(PYTHON_PATH,$python_exec)
