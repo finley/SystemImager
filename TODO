@@ -7,9 +7,10 @@
 
 Short list (in progress)
 ------------------------
-- NIS Stuff
-- mods to dhcpd.conf
 - more diags on autoinstall client
+- $image.exclude on imageserver
+- getimage ask if want static
+- getimage ask if want overwrite $image.master script
 
 Other stuff
 -----------
@@ -91,9 +92,8 @@ Miscellaneous and Possibilities
 - Track state of nodes?
 - Script to do software inventory of nodes via RPM database? or deb database? 
   or track all files?
-- nis friendly
 - curses and/or gui wrapper around the whole thing -- Wesley Smith 
-  <wessmith@engr.sgi.com> is working on this.
+  <wessmith@engr.sgi.com> is working on this.  Rhino, I think they're calling it.
 - updateclient - log what was updated and or deleted?
 
 makedhcpserver 
