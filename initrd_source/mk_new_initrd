@@ -16,21 +16,50 @@ then
     exit 1
 fi
 
+### functions ###
+
+# Example usage
+#execute "ls one two three four five six seven eight"
+execute() {
+  COMMAND=$1
+  echo
+  echo $COMMAND
+  $COMMAND || {
+               echo
+	       echo FATAL: $COMMAND failed!!!
+               exit 1
+	      }
+}
 
 DATE=`date +%Y.%m.%d-%H:%M:%S`
 
-chown -R root.root initrd_dev
+execute "chown -R root.root initrd_dev"
 
-cd initrd_dev \
-  && /usr/src/boot-floppies/scripts/rootdisk/mklibs.sh -v -d lib bin/*
+execute "cd initrd_dev "
 
-cd .. \
-  && dd if=/dev/zero of=initrd2 bs=1k count=2000 && echo 'y' | mke2fs -N 584 -m 0 initrd2 \
-  && mkdir -p initrd2.dir \
-  && mount -o loop initrd2 initrd2.dir/ \
-  && ( cd initrd_dev/ ; tar -cvf - * ) | tar -C initrd2.dir/ -xv \
-  && umount initrd2 \
-  && rmdir initrd2.dir \
-  && gzip -9 initrd2 \
-  && mv initrd2.gz initrd-${DATE}.gz \
-  && ls -l initrd-${DATE}.gz /tftpboot/initrd.gz
+execute "/usr/src/boot-floppies/scripts/rootdisk/mklibs.sh -v -d lib bin/* "
+
+execute "cd .. "
+
+execute "umount initrd2"
+
+execute "dd if=/dev/zero of=initrd2 bs=1k count=2000"
+
+execute "echo 'y' | mke2fs -N 584 -m 0 initrd2 "
+
+execute "mkdir -p initrd2.dir "
+
+execute "mount -o loop -t ext2 initrd2 initrd2.dir/ "
+
+execute "( cd initrd_dev/ ; tar -cvf - * ) | tar -C initrd2.dir/ -xv "
+
+execute "[ -d ./initrd2.dir/lost+found/ ] && umount initrd2 "
+
+execute "rmdir initrd2.dir "
+
+execute "gzip -9 initrd2 "
+
+execute "mv initrd2.gz initrd-${DATE}.gz "
+
+execute "ls -l initrd-${DATE}.gz /tftpboot/initrd.gz "
+
