@@ -1,7 +1,7 @@
 #!/bin/sh
  
 #
-# "VA SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@valinux.com> 
+# "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org> 
 #
 # Others who have contributed to this code (in alphabetical order):
 #   Jose AP Celestino <japc@sl.pt>
@@ -13,7 +13,7 @@
 
 
 # set version
-version_number="1.4.0"
+version_number=1.5.0
 
 # configuration directory
 systemimagerdir="/etc/systemimager"
@@ -23,10 +23,10 @@ PATH=/bin:/usr/bin:/sbin:/usr/sbin
 
  
 ### BEGIN functions
-# VA SystemImager specific functions
+# SystemImager specific functions
 create_rsyncd_conf() {
   echo '#'                                                      > $rsyncd_conf_file
-  echo '# Copyright (C) 1999-2001 Brian Elliott Finley <brian@thefinleys.com>'    >> $rsyncd_conf_file
+  echo '# Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>'    >> $rsyncd_conf_file
   echo '#'                                                      >> $rsyncd_conf_file
   echo '# This file: /tmp/rsyncd.conf'                          >> $rsyncd_conf_file
   echo '#'                                                      >> $rsyncd_conf_file
@@ -43,9 +43,9 @@ create_rsyncd_conf() {
 }
 
 show_version() {
-  echo "prepareclient (part of VA SystemImager) version $version_number"
+  echo "prepareclient (part of SystemImager) version $version_number"
   echo ""
-  echo "Copyright (C) 1999-2001 Brian Elliott Finley <brian@thefinleys.com>"
+  echo "Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>"
   echo "This is free software; see the source for copying conditions.  There is NO"
   echo "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."
 }
@@ -147,7 +147,7 @@ fi
 if [ "$QUIET" = "false" ]; then
  clear
  cat << 'EOF'
-Welcome to the VA SystemImager prepareclient command.  This command
+Welcome to the SystemImager prepareclient command.  This command
 may modify the following files to prepare your client for having it's
 image retrieved by the imageserver.  It will also create the 
 /etc/systemimager directory and fill it with information about your 
@@ -167,10 +167,10 @@ See "prepareclient -help" for command line options.
 EOF
 
  # you sure you want to install?
- echo -n "Prepare client for VA SystemImager? (y/[n]): "
+ echo -n "Prepare client for SystemImager? (y/[n]): "
  read REPLY
  case $REPLY in
-  y|Y|Yes|yes|YES ) echo Ok.  Preparing client for VA SystemImager... ;;
+  y|Y|Yes|yes|YES ) echo Ok.  Preparing client for SystemImager... ;;
   * ) echo Client preparation cancelled.  No files modified. && exit 1 ;;
  esac
  echo

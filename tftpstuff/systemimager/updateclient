@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 #
-# "VA SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@valinux.com>
+# "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>
 #
 #   Others who have contributed to this code (in alphabetical order):
 #     Adam L. Lambert <alambert@epicrealm.com> (credit for the -autoinstall option goes to Adam)
@@ -10,7 +10,7 @@
 #
 
 # set version_number
-$version_number="1.4.0";
+$version_number="1.5.0";
 
 # declare modules
 use Getopt::Long;
@@ -56,9 +56,9 @@ sub ip_bin2ip_quad {
 
 # set version information
 $version_info = <<"EOF";
-updateclient (part of VA SystemImager) version $version_number
+updateclient (part of SystemImager) version $version_number
 
-Copyright (C) 1999-2001 Brian Elliott Finley <brian\@valinux.com>
+Copyright (C) 1999-2001 Brian Elliott Finley <brian\@systemimager.org>
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 EOF
@@ -71,23 +71,39 @@ Usage: updateclient [OPTION]... -server HOSTNAME -image IMAGENAME
 
 Options: (options can be presented in any order)
  -help                    Display this output.
+
  -version                 Display version and copyright information.
+
  -server HOSTNAME         Hostname or IP address of the imageserver.
+
  -image IMAGENAME         Image from which the client should be updated.
+
  -directory DIRECTORY     Absolute path of directory to be updated.
                           (defaults to "/")
+
  -nolilo                  Don't run lilo after update completes.
                           (lilo is always run unless specified)
+
  -autoinstall             Autoinstall this client the next time it
                           reboots.  (can't be run with -nolilo)
+
  -configure-from DEVICE   Only used with -autoinstall.  Stores the
                           network configuration for DEVICE in the
                           /local.cfg file so that the same settings
                           will be used during the autoinstall process.
- -listing                 List avaliable images on imageserver.
+
+ -ssh-user USERNAME	  Username for ssh connection from the client.
+                          Only needed if a secure connection is 
+			  required.
+
+ -listing                 List avaliable images on the imageserver.
                           (supercedes and ignores all options other
 			   than -server)
+
  -reboot                  Reboot client after update completes.
+
+ -log "STRING"	    	  Quoted string for log file format.  See the
+			  rsyncd.conf man page for options.
 
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
@@ -101,9 +117,11 @@ GetOptions( "listing" => \$listing,
             "reboot" => \$reboot,
             "nolilo" => \$nolilo,
             "autoinstall" => \$autoinstall,
+	    "ssh-user=s" => \$ssh_user,
             "server=s" => \$imageserver,
             "image=s" => \$image,
             "directory=s" => \$directory,
+	    "log=s" => \$log,
 ) or die qq($help_info);
 
 # if requested, print help information
@@ -147,10 +165,57 @@ if($DEVICE) {
   }
 }
 
+# Set default rsync port number
+$port="873";
+
+# If we're using SSH, go ahead and establish port forwarding
+if($ssh_user) {
+  # Get a random port number (normal rsync port won't work if rsync daemon is running)
+  my $port_in_use="yes";
+  until ( $port_in_use eq "no" )
+  {
+    $port_in_use="no";
+    $port = rand 60000;
+    $port =~ s/\..*//;
+
+    # Be sure port isn't reserved
+    $file="/etc/services";
+    open (FILE, "<$file") || die ("$0: Couldn't open $file for reading\n");
+      while (<FILE>) {
+        if (/$port/) { 
+          $port_in_use="yes";
+          next;
+        }
+      }
+    close FILE;
+  
+    # Be sure port isn't in use
+    open (NETSTAT, "netstat -tn |");
+    while (<NETSTAT>) {
+      (my $junk, my $port_and_junk) = split (/:/);
+      if ($port_and_junk) { 
+        (my $netstat_port, my $other_junk) = split (/ +/, $port_and_junk);
+        if ($netstat_port = /$port/) { 
+          $port_in_use="yes";
+          next;
+        }
+      }
+    }
+  }
+
+  # Setup the port forwarding
+  $command="ssh -f -l $ssh_user -L $port:$imageserver:873 $imageserver sleep 5";
+  $rc = 0xffff & system($command);
+  if ($rc != 0) { die "FATAL: Failed to establish secure port forwarding to $imageserver!\n"; }  
+
+  # and change imageserver to point to localhost
+  $imageserver="127.0.0.1";
+}
+
 # if listing, get listing
 if($listing) {
-  print qq(Available image(s):\n);
-  $command = qq(rsync $imageserver) . q(::);
+  print "Available image(s):\n";
+  $command = "rsync rsync://${imageserver}:${port}/";
   $rc = 0xffff & system($command);
   exit $rc >> 8;
 }
@@ -161,18 +226,19 @@ if($< != 0) { die "Must be run as root!\n"; }
 ### BEGIN update image section ###
 if ($autoinstall) {
   # suck down kernel 
-  print qq(Retrieving SystemImager kernel...\n);
+  print "Retrieving SystemImager kernel...\n";
   # if the write fails for some reason (read only filesystem, full filesystem, etc.) rsync will 
-  # not return a proper exit code -- a bug report has been submitted <brian@thefinleys.com>
-  $command = qq(rsync -a --numeric-ids $imageserver) . q(::tftpboot/kernel /boot);
+  # not return a proper exit code -- a bug report has been submitted <brian@systemimager.org>
+  $command = "rsync -a --numeric-ids rsync://${imageserver}:${port}/tftpboot/kernel /boot";
   $rc = 0xffff & system($command);
   if ($rc != 0) { die "Failed to copy SystemImager kernel to /boot on client!!!\n"; }  
 
   # and initial ram disk image
-  print qq(Retrieving SystemImager initial ramdisk...\n);
+  print "Retrieving SystemImager initial ramdisk...\n";
+
   # if the write fails for some reason (read only filesystem, full filesystem, etc.) rsync will 
-  # not return a proper exit code -- a bug report has been submitted <brian@thefinleys.com>
-  $command = qq(rsync -a --numeric-ids $imageserver) . q(::tftpboot/initrd.gz /boot);
+  # not return a proper exit code -- a bug report has been submitted <brian@systemimager.org>
+  $command = "rsync -a --numeric-ids rsync://${imageserver}:${port}/tftpboot/initrd.gz /boot";
   $rc = 0xffff & system($command);
   if ($rc != 0) { die "Failed to copy SystemImager initrd.gz file to /boot on client!!!\n"; }  
 
@@ -250,6 +316,7 @@ EOF
 
   # start with base command
   $command = "rsync -av --numeric-ids";
+  if ($log) { $command = $command . qq( --log-format="$log"); }
 
   # get exclusions from /etc/systemimager.exclude
   $systemimager_exclude="/etc/systemimager/systemimager.exclude";
@@ -274,7 +341,7 @@ EOF
   close(ETC_MTAB);
 
   # finalize command
-  $command = $command . qq( --delete $imageserver) . q(::) . qq($image$directory $directory);
+  $command = $command . " --delete rsync://${imageserver}:${port}/$image$directory $directory";
 
   # execute command
   print qq(Updating image...\n);
@@ -378,7 +445,7 @@ if($DEVICE){
   $file="/local.cfg";
   open(FILE, "> $file") or die "Couldn't open $file for writing: $!\n";
   print FILE "#\n";
-  print FILE "# \"VA SystemImager\" - Copyright (C) 1999-2001 Brian Elliott Finley <brian\@valinux.com>\n";
+  print FILE "# \"SystemImager\" - Copyright (C) 1999-2001 Brian Elliott Finley <brian\@systemimager.org>\n";
   print FILE "#\n";
   print FILE "# This file is: /local.cfg\n";
   print FILE "#\n";
@@ -412,6 +479,10 @@ if($DEVICE){
 
   print FILE "IMAGESERVER=";
   if ($IMAGESERVER) { print FILE "$IMAGESERVER\n"; } else { print FILE "\n"; }
+
+  if ($ssh_user) {
+    print FILE "SSH_USER=$ssh_user\n";
+  }
 
   close(FILE);
   ### END Create local.cfg ###
