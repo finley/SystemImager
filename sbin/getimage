@@ -1,18 +1,21 @@
 #!/usr/bin/perl -w
 
 #
-# "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>
+# "SystemImager" 
 #
-#   $Id$
+#  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
+#  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
 #
-#   Others who have contributed to this code (in alphabetical order):
-#     Phil Champon <pchampon@valueweb.net>
-#     Sean Dague <sean@dague.net>
-#     Ian McLeod <ian@valinux.com>
-#     James Oakley <joakley@solutioninc.com>
-#     Laurence Sherzer <lsherzer@gate.net>
-#     Wesley Smith <wessmith@engr.sgi.com>
-#     Curtis Zinzilieta <czinzilieta@valinux.com>
+#  $Id$
+#
+#  Others who have contributed to this code (in alphabetical order):
+#    Phil Champon <pchampon@valueweb.net>
+#    Sean Dague <sean@dague.net>
+#    Ian McLeod <ian@valinux.com>
+#    James Oakley <joakley@solutioninc.com>
+#    Laurence Sherzer <lsherzer@gate.net>
+#    Wesley Smith <wessmith@engr.sgi.com>
+#    Curtis Zinzilieta <czinzilieta@valinux.com>
 #
 
 # set system path for system() calls
@@ -32,28 +35,34 @@ use SystemImager::Common;
 use Getopt::Long;
 use AppConfig;
 
+my $config_dir = "/etc/systemimager";
+
 ### BEGIN parse the config file ###
+#
+# Try $config->getopts(); instead of $config->args(); as per Sean's suggestion.
+# Sean says, "you get all the same getopts expansions as you did before."
+#
 my $config = AppConfig->new(
 			    'autoinstall_script_dir' => { ARGCOUNT => 1 },
 			    'autoinstall_boot_dir' => { ARGCOUNT => 1 },
-			    'default_imagedir' => { ARGCOUNT => 1 },
+			    'default_image_dir' => { ARGCOUNT => 1 },
 			    'rsyncd_conf' => { ARGCOUNT => 1 },
-			    'config_dir' => { ARGCOUNT => 1 },
+			    'rsync_stub_dir' => { ARGCOUNT => 1 },
 			    );
 
-$config->file('/etc/systemimager/systemimager.conf');
+$config->file('/etc/systemimager/server.conf');
 
 my $autoinstall_script_dir = $config->autoinstall_script_dir();
-my $config_dir = $config->config_dir();
+my $rsync_stub_dir = $config->rsync_stub_dir();
 my $rsyncd_conf = $config->rsyncd_conf();
-my $default_imagedir = $config->default_imagedir();
+my $default_image_dir = $config->default_image_dir();
 
 if (!$autoinstall_script_dir) {
     die "AUTOINSTALL_SCRIPT_DIR not defined in the config file.";
 }
-if (!$config_dir) { die "CONFIG_DIR not defined in the config file."; }
+if (!$rsync_stub_dir) { die "RSYNC_STUB_DIR not defined in the config file."; }
 if (!$rsyncd_conf) { die "RSYNCD_CONF not defined in the config file."; }
-if (!$default_imagedir) {
+if (!$default_image_dir) {
     die "DEFAULT_IMAGEDIR not defined in the config file.";
 }
 ### END parse the config file
@@ -67,7 +76,7 @@ $program_name = $2;
 $version_info = <<"EOF";
 $program_name (part of SystemImager) v$version_number
 
-Copyright (C) 1999-2001 Brian Elliott Finley <brian\@systemimager.org>
+Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley\@baldguysoftware.com>
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 EOF
@@ -172,21 +181,27 @@ http://systemimager.org/
 EOF
     
 
-$golden_client = "";
-$imageserver = "";
-$ip_assignment_method = "";
-$image = "";
-$exclude = "";
-$exclude_file = "";
-$update_script = "";
-$post_install = "beep"; # the default
+my $golden_client;
+my $imageserver;
+my $ip_assignment_method;
+my $image;
+my $exclude;
+my $exclude_file;
+my $update_script;
+my $post_install = "beep"; # the default
+
+# It is not intended that auto_install_script_conf be passable as an option on
+# the getimage command line.  See mkautoinstallscript if you want to specify 
+# an alternate config file. -BEF-
+#
+my $auto_install_script_conf;   
 
 ### BEGIN evaluate options ###
 GetOptions( 
     "golden-client=s" => \$golden_client,
     "server=s" => \$imageserver,
     "image=s" => \$image,
-    "directory=s" => \$default_imagedir,
+    "directory=s" => \$default_image_dir,
     "ip-assignment=s" => \$ip_assignment_method,
     "exclude=s" => \$exclude,
     "exclude-file=s" => \$exclude_file,
@@ -213,6 +228,9 @@ if ($version) {
   exit 0;
 }
 
+# be sure program is run by root
+SystemImager::Common->check_if_root();
+
 if($imageserver){
   die "\n$program_name: -server is now depricated.  Try cpimage command instead.\n$get_help\n\n";
 }
@@ -238,8 +256,8 @@ if($image){
   }
 }
 
-# be sure $default_imagedir is an absolute path starting with /
-unless ($default_imagedir =~ /^\//) { 
+# be sure $default_image_dir is an absolute path starting with /
+unless ($default_image_dir =~ /^\//) { 
   die "\n$program_name: -directory must be an absolute path starting with \"/\".\n$get_help\n\n";
 }
 
@@ -273,13 +291,12 @@ if ($exclude_file) {
 }
 ### END evaluate options ###
 
-# be sure program is run by root
-SystemImager::Common->check_if_root();
+# Set script_name.
+my $script_name = $image;
 
 # fill in variables based on options passed
-$master_script = $autoinstall_script_dir . "/$image.master";
 $final_exclude_file = "/tmp/.exclude.$image";
-$imagedir = "$default_imagedir/$image";
+$imagedir = "$default_image_dir/$image";
 
 $warning =  <<"EOF";
 This program will get the \"$image\" system image from \"$source_host\"
@@ -303,8 +320,8 @@ if (!$quiet) {
     print "\n";
 }
 
-if (! -d "$default_imagedir")  {
-  mkdir("$default_imagedir", 0750) or die "$program_name: Can't make directory $default_imagedir\n";
+if (! -d "$default_image_dir")  {
+  mkdir("$default_image_dir", 0750) or die "$program_name: Can't make directory $default_image_dir\n";
 }
 
 if (-d "$imagedir") {
@@ -431,7 +448,11 @@ if($source_host) {
     @mounted_filesystems = grep (!/\s+ext2\s+/, @mounted_filesystems);
     @mounted_filesystems = grep (!/\s+ext3\s+/, @mounted_filesystems);
     @mounted_filesystems = grep (!/\s+reiserfs\s+/, @mounted_filesystems);
+    @mounted_filesystems = grep (!/\s+jfs\s+/, @mounted_filesystems);
+    @mounted_filesystems = grep (!/\s+vfat\s+/, @mounted_filesystems);
+    @mounted_filesystems = grep (!/\s+fat\s+/, @mounted_filesystems);
     print FINAL_EXCLUDE_FILE "\n# Automatic exclusions made by SystemImager.\n";
+    
     foreach (@mounted_filesystems) {
       /\S+\s+\S+\s+(\S+)\s+/;
       my $mount_point=$1;
@@ -490,15 +511,17 @@ if(!$quiet) {
 unlink $final_exclude_file || die "$program_name: Removal of file $final_exclude_file failed\n";
 
 # Add entry to image server's rsyncd.conf if necessary
+SystemImager::Server->create_image_stub($rsync_stub_dir, $image, $imagedir) or 
+    die "$program_name: Cannot create rsync stub entry in $rsync_stub_dir";
 
-SystemImager::Server->add2rsyncd($rsyncd_conf,$image,$imagedir) or 
-  die "$program_name: Cannot add $image entry to $rsyncd_conf";
+SystemImager::Server->gen_rsyncd_conf($rsync_stub_dir, $rsyncd_conf) or
+    die "$program_name:  Cannot generate $rsyncd_conf";
 
 ### END generic image retrieval stuff ###
 
 
-### BEGIN Overwrite $image.master? ###
-if( (!$quiet) and (!$update_script) and (-e $autoinstall_script_dir . "/$image.master") ) {
+### BEGIN Overwrite $script_name.master? ###
+if( (!$quiet) and (!$update_script) and (-e "$autoinstall_script_dir/$script_name.master") ) {
     system("clear");
     print "Update Autoinstall Script?\n";
     print "--------------------------\n\n";
@@ -515,14 +538,14 @@ if( (!$quiet) and (!$update_script) and (-e $autoinstall_script_dir . "/$image.m
 }
 
 # If it just ain't there yet, make it and don't even ask about it.
-elsif(! -e $autoinstall_script_dir . "/$image.master") {
+elsif(! -e "$autoinstall_script_dir/$script_name.master") {
     $update_script="yes";
 }
 
 # if we don't need to update the master script, then exit -- we're done
 unless($update_script eq "yes") { exit 0; }
 
-### END Overwrite $image.master? ###
+### END Overwrite $script_name.master? ###
 
 
 ### BEGIN Got NIS? ###
@@ -601,16 +624,24 @@ elsif($ip_assignment_method == "4") { $ip_assignment_method = "replicant"   ; }
 }
 ### END IP Assignment Method ###
 
-### BEGIN create a fresh $autoinstall_script_dir/$image.master ###
+
+### BEGIN create a fresh master autoinstall script ###
+# If not specified, use default for autoinstallscript.conf. -BEF-
+unless ($auto_install_script_conf) {
+    $auto_install_script_conf = "${imagedir}/etc/systemimager/autoinstallscript.conf";
+}
+
 SystemImager::Server->create_autoinstall_script(
-	$master_script,
+	$script_name,
+	$autoinstall_script_dir,
 	$config_dir,
 	$image,
 	$imagedir,
 	$ip_assignment_method,
-	$post_install
+	$post_install,
+    $auto_install_script_conf
 );
-### END create a fresh $autoinstall_script_dir/$image.master ###
+### END create a fresh master autoinstall script ###
 
 # prompt to run mkdhcpstatic after autoinstalling clients if using static_dhcp
 if((!$quiet) and ($ip_assignment_method eq "static_dhcp")) {

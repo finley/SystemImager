@@ -1,8 +1,138 @@
 #
-# "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>
+# "SystemImager" 
+#
+#  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
+#  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
 #
 #   $Id$
 #
+
+--------------------------------------------------------------------------------
+SystemImager-3.0.0 2002.09.??
+--------------------------------------------------------------------------------
+o systemimager.conf renamed to server.conf. -BEF-
+o FAT support: FAT filesystems are now properly supported on i386 and ia64 (this
+  includes vfat).  TODO #482984. -BEF-
+o mvimage: Was failing if source image and destination image had the same
+  name, even if a different location was specified (-directory). 
+  Fixed bug# 548279. -BEF-
+o mvimage: Now use rsync to copy the image over, then after a successful
+  copy, we remove the old image directory.  (only if source image dir and
+  destination image dir are different.)  If they're the same, we just use
+  move(). -BEF-
+o updateclient: Fixed bug number 426654.  We now strip the directory, 
+  specified with -directory,  from the beginning of each path to exclude. -BEF-
+o updateclient: The regex that was being created to exclude non-local 
+  filesystems was parsing as a reference, as opposed to actual values. 
+  Therefore, all filesystems ended up being excluded.  Including "/" (root). ;)
+
+  Now we get a reference to the fstypes array with: 
+  "my $fstypes = $config->fstype();"
+
+  Then use it as an array with: "@$fstypes"
+
+  This fixes bug #548156 -BEF-
+
+o updateclient: Stopped accepting varying length (least unique) options.  As
+  in, -verb to specify -verbose when -version is also an option.  Put
+  Getopt::Long module back in and went back to using this for gathering all
+  command line options.  Fixed Bug #547833 and #546599 -BEF-
+o updateclient -a issues bad karma if dnsdomainname doesn't succeed in
+  returning a domain name.  Simplified resolv.conf parsing code.
+  Fixed Bug #547835 -BEF-
+o updateclient: Go back to doing option validation in the body of updateclient,
+  rather than asking AppConfig to do it.  This allows us to present more
+  helpful output to the user. -BEF-
+o updateclient: Put defaults into client.conf, rather than having them in the
+  program itself. -BEF-
+o updateclient: Only use croak() when something we are expecting to work breaks.
+  For option validation and other expected user messages, do manually to provide
+  more useful output. -BEF-
+o updateclient: After gathering options from the config file, use simple
+  variables throughout the code, rather than the AppConfig variable structure.
+  This makes the code easier to read. -BEF-
+o updateclient: Don't include -listing in the options anynmore, but recommend
+  lsimage at the bottom. -BEF-
+o updateclient: Help now indicates that user should put -directory "DIRECTORY"
+  in quotes. -BEF-
+o prepareclient: Fixed the bit about rsync needing a hostname.  No 
+  longer need to prompt the user to allow us to add an entry, and we 
+  leave the /etc/hosts file the way we found it.  Fixes bug #546600 -BEF-
+o Autoinstall client would fail if a /local.cfg was used, but 
+  GATEWAY was not specified.  Autoinstall now only tries to run the
+  route command if GATEWAY is specified.  Fixed bug #547069. -BEF-
+o The configdir variable was misnamed in the
+  _get_list_of_IDE_and_SCSI_devices subroutine.  Changed to config_dir.
+  This fixes bug #546606. -BEF-
+o Re-Worked the devices_by_label.txt creation code.  Fixed bug #545335
+  "prepareclient errors while processing labels". -BEF-
+o Fixed bug #545328 "prepareclient -q doesn't wait for rsync". -BEF-
+o Improved prepareclient messages. -BEF-
+o Fixed bug #501650 "prepareclient needs better tmp files". -BEF-
+o Fixed a bug in Server.pm where partitions 5 and above were not dealt
+  with properly if using hardware RAID and non explicit partitioning. 
+  This fixes bug #453549 -BEF-
+o /etc/systemimager/rsyncd.conf is now a product of stub files.
+  packages provide only the stubs that are relevent to them, and then
+  regenerate /etc/systemimager/rsyncd.conf.
+o added -kernel and -initrd flags to mkautoinstall{cd,diskette},
+  allowing media generation using non-default files.  Closes #498741.
+o added notes on using a DHCP v3 to the manual and the mkdhcpserver
+  manpage.  Closes #502946.
+o updateclient no longer references tftpboot.  Closes #507543.
+o cpimage now has ssh support (thanks Thomas Schenk!)
+o new systemimager-boot flavors
+--------------------------------------------------------------------------------
+
+-----------------------------------------------------------------------
+SystemImager-2.1.1 2002.02.05
+-----------------------------------------------------------------------
+o IMAGENAME variable added to local.cfg
+o autoinstall will now use local.cfg variables even if
+  ip address is obtained from dhcp
+o addition of --append option to mkautoinstall* which allows
+  additional kernel parameters to be set during the creations of 
+  install media
+o new /etc/systemimager/client.conf file which defines parameters
+  on the SI client, including which filesystems to support on
+  updateclient
+o removal of beep executable in favor of 'echo -e "\a"'.  
+-----------------------------------------------------------------------
+
+-----------------------------------------------------------------------
+SystemImager-2.1.0 2002.01.16
+-----------------------------------------------------------------------
+o first development release
+o new arch - ia64
+o prepareclient now supports devfs
+o updateclient now supports Grub and Elilo through the use 
+   of System Configurator
+o fat and vfat filesystems are now imaged with getimage, though
+    the default SystemImager kernel for i386 will NOT propperly
+    install vfat partitions
+o bootable partitions on golden-clients are now retained
+o various bug fixes
+o i386 kernel upgraded to 2.2.20
+
+-----------------------------------------------------------------------
+SystemImager-2.0.1 2001.12.15
+-----------------------------------------------------------------------
+
+installserver
+-------------
+o fixed bugs/typos
+
+initrd.gz
+---------
+o replaced old mke2fs with one that supports journaling
+
+make*
+-----
+o inserted missing stubs for the deprecated make* scripts
+
+manpages
+--------
+o added mkautoinstallscript manpage
 
 -----------------------------------------------------------------------
 SystemImager-2.0.0 2001.10.16

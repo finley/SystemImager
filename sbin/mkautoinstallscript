@@ -1,39 +1,41 @@
 #!/usr/bin/perl -w
 
 #
-# "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>
+# "SystemImager" 
 #
-#   $Id$
+#  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
 #
-#   Written by Brian Elliott Finley <brian@systemimager.org>
+#  $Id$
 #
 
 use lib "USR_PREFIX/lib/systemimager/perl";
-use Getopt::Long;
 use AppConfig;
+use Getopt::Long;
 use SystemImager::Server;
 use SystemImager::Common;
+
+my $config_dir = "/etc/systemimager";
 
 ### BEGIN parse the config file ###
 my $config = AppConfig->new(
 			    'autoinstall_script_dir' => { ARGCOUNT => 1 },
 			    'autoinstall_boot_dir' => { ARGCOUNT => 1 },
-			    'default_imagedir' => { ARGCOUNT => 1 },
+			    'default_image_dir' => { ARGCOUNT => 1 },
 			    'rsyncd_conf' => { ARGCOUNT => 1 },
-			    'config_dir' => { ARGCOUNT => 1 },
+			    'rsync_stub_dir' => { ARGCOUNT => 1 },
 			    );
 
-$config->file('/etc/systemimager/systemimager.conf');
+$config->file('/etc/systemimager/server.conf');
 
 my $autoinstall_script_dir = $config->autoinstall_script_dir();
 my $rsyncd_conf = $config->rsyncd_conf();
-my $config_dir = $config->config_dir();
+my $rsync_stub_dir = $config->rsync_stub_dir();
 
 if (!$autoinstall_script_dir) {
     die "AUTOINSTALL_SCRIPT_DIR not defined in the config file.";
 }
 if (!$rsyncd_conf) { die "RSYNCD_CONF not defined in the config file."; }
-if (!$config_dir) { die "CONFIG_DIR not defined in the config file."; }
+if (!$rsync_stub_dir) { die "RSYNC_STUB_DIR not defined in the config file."; }
 ### END parse the config file ###
 
 $version_number="SYSTEMIMAGER_VERSION_STRING";
@@ -62,48 +64,58 @@ Options: (options can be presented in any order and may be abbreviated)
 
  -image IMAGENAME         Where IMAGENAME is the name of the image for 
                           which you want to create a new autoinstall 
-			  script.
+			              script.
+
+ -script SCRIPTNAME       Where SCRIPTNAME is the base name to use for the 
+                          resultant autoinstall script.  If not specified,
+                          SCRIPTNAME defaults to IMAGENAME.
 
  -update-script [YES|NO]  Update the \$image.master script?  Defaults to 
                           NO if -quiet.  If not specified you will be
                           prompted to confirm an update.
+
+ -config-file FILE        Use FILE to get autoinstall script configuration
+                          information.  Defaults to the 
+                          ./etc/systemimager/autoinstallscript.conf file
+                          in the image.
 
 
 The following options affect the autoinstall client after autoinstalling:
 
  -ip-assignment METHOD    Where METHOD can be:
 
-                          static_dhcp -- A DHCP server will assign the
+                static_dhcp -- A DHCP server will assign the
 			    same static address each time to clients 
 			    installed with this image.  Also see the
 			    \"makedhcpstatic\" command.  
 			    (This is the default)
 
-			  dynamic_dhcp -- A DHCP server will assign IP
+                dynamic_dhcp -- A DHCP server will assign IP
 			    addresses dynamically to clients installed
 			    with this image.  They may be assigned a
 			    different address each time.
 
-                          static -- The IP address the client uses
+                static -- The IP address the client uses
 			    during autoinstall will be permanently
 			    assigned to that client.
 
-			  replicant -- Don\'t mess with the network
+                replicant -- Don\'t mess with the network
 			    settings in this image.  I\'m using it as a
 			    backup and quick restore mechanism for a 
 			    single machine.
 
- -post-install ACTION     ACTION can be:
 
-                          beep -- Clients will beep incessantly after 
+ -post-install ACTION     Where ACTION can be:
+
+                beep -- Clients will beep incessantly after 
 			    succussful completion of an autoinstall.
 			    (This is the default)
 
-			  reboot -- Clients will reboot themselves
+                reboot -- Clients will reboot themselves
 			    after successful completion of an 
 			    autoinstall.
 
-			  shutdown -- Clients will halt themselves
+                shutdown -- Clients will halt themselves
 			    after successful completion of an 
 			    autoinstall.
 
@@ -112,15 +124,20 @@ Download, report bugs, and make suggestions at:
 http://systemimager.org/
 EOF
 
-$ip_assignment_method = "static_dhcp";
-$post_install = "beep";     # the default
-$update_script = "no";      # the default
+# Set some defaults. -BEF-
+my $ip_assignment_method = "static_dhcp";
+my $post_install = "beep";
+my $update_script = "no";
+my $auto_install_script_conf;
+my $script_name;
 
 GetOptions( 
     "help" => \$help,
     "version" => \$version,
     "quiet" => \$quiet,
     "image=s" => \$image,
+    "script=s" => \$script_name,
+    "config-file=s" => \$auto_install_script_conf,
     "ip-assignment=s" => \$ip_assignment_method,
     "update-script=s" => \$update_script,
     "post-install=s" => \$post_install
@@ -164,31 +181,47 @@ if($update_script) {
 # be sure program is run by root
 SystemImager::Common->check_if_root();
 
-my $base_imagedir=SystemImager::Server->get_full_path_to_image_from_rsyncd_conf( $rsyncd_conf, $image );
-unless ($base_imagedir) { die "\nFATAL: can't find image entry in $rsyncd_conf!\n"; }
+my $imagedir = SystemImager::Server->get_image_path( $rsync_stub_dir, $image );
+unless ($imagedir) { 
+  print qq(\nFATAL: Image "$image" doesn't appear to exist!\n\n);
+  exit 1;
+}
 
-$imagedir="$base_imagedir$image";
+# If not specified, use default for autoinstallscript.conf. -BEF-
+unless ($auto_install_script_conf) {
+    $auto_install_script_conf = "${imagedir}/etc/systemimager/autoinstallscript.conf";
+}
 
-$master_script="$autoinstall_script_dir/$image.master";
+# Make sure the file exists. -BEF-
+unless (-e $auto_install_script_conf) {
+    die "\n$program_name: I can't find $auto_install_script_conf.\n$get_help\n\n";
+}
 
-if(( -e "$master_script" ) && ( $update_script eq "no" )) {
-  die qq(\nWARNING: "$master_script" already exists.\n         Use "-update-script YES" to overwrite.\n$get_help\n\n);
+unless ($script_name) { $script_name = "$image"; }
+
+my $file = "$autoinstall_script_dir/$script_name.master";
+if (( -e "$file" ) && ( $update_script eq "no" )) {
+    die qq(\nWARNING: "$file" already exists.\n         Use "-update-script YES" to overwrite.\n$get_help\n\n);
 }
 
 SystemImager::Server->validate_ip_assignment_option( $ip_assignment_method );
 SystemImager::Server->validate_post_install_option( $post_install );
 
-### BEGIN create a fresh $autoinstall_script_dir/$image.master ###
+### BEGIN create a fresh master autoinstall script ###
 SystemImager::Server->create_autoinstall_script(
-	$master_script,
+	$script_name,
+	$autoinstall_script_dir,
 	$config_dir,
 	$image,
 	$imagedir,
 	$ip_assignment_method,
-	$post_install
+	$post_install,
+    $auto_install_script_conf
 );
-### END create a fresh $autoinstall_script_dir/$image.master ###
-unless ($quiet) { print qq(\nYour new autoinstallscript has been created:\n\n); }
-unless ($quiet) { print qq(  "$master_script"\n); }
+### END create a fresh master autoinstall script ###
+
+$file = "$autoinstall_script_dir/$script_name.master";
+unless ($quiet) { print qq(\nYour new autoinstall script has been created:\n\n); }
+unless ($quiet) { print qq("$file"\n\n); }
 
 exit 0;

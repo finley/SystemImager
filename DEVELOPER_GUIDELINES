@@ -1,12 +1,15 @@
 #
-# "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>
+# "SystemImager"
+#
+#  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
+#  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
 #
 #   $Id$
 #
 
---------------------
+--------------------------------------------------------------------------------
 Developer Guidelines
---------------------
+--------------------------------------------------------------------------------
 o Current development branch is tagged "HEAD".  This is the default.  
   Most developers will use this.  To check out the development branch,
   see "CVS Checkout Steps for Developers for the Development Branch"
@@ -18,20 +21,30 @@ o Only Brian Finley will modify CVS tags of any kind, such as for versioning
   releases or creating development branches.
 o Always get approval from Brian Finley prior to adding any new files or 
   directories to CVS.
-o You may modify sections in the TODO file bearing your name.
-o When you finish an item in your section of the TODO file:
-  o Add an appropriate line to the CHANGE.LOG file before removing the 
-    item from the TODO file (so we don't forget about keen changes 
-    we've made).
-  o Send an email to the <systemimager-devel> list announcing completion.
+o Try to mimick the style of the code that you are working in.  This will
+  significantly improve your chances of it being accepted.
+o Include a usage statement with every function/subroutine, no matter how
+  simple and self-explanatory that function is.  Example:
+
+    # Usage:
+    # my $partition_tool = which_partition_tool();
+    sub which_partition_tool {
+        [... code here ...]
+    }
+
+o When you close a bug or feature request, add an appropriate line to the 
+  CHANGE.LOG that includes the bug or feature number.  Be sure to include 
+  your initials. -BEF-
+o Documentation:  Developers may make changes to the documentation source, but
+  must contact Denise Walters for approval prior to making any structural 
+  changes.  Denise may be contacted at: <denise.walters@hp.com>
 o Always give people credit in the CREDITS file.
-o Do not modify anyone elses section.
 o Have fun!
 
 
-----------------------
+--------------------------------------------------------------------------------
 CVS Reference Material
-----------------------
+--------------------------------------------------------------------------------
 o http://www.loria.fr/~molli/cvs/doc/cvs_toc.html
  or
 o http://cvsbook.red-bean.com/cvsbook.html
@@ -39,42 +52,31 @@ o http://cvsbook.red-bean.com/cvsbook.html
 o http://www.cvshome.org/
 
 
-------------------------------------------------------------
-CVS Checkout Steps for Developers for the Development Branch
-------------------------------------------------------------
-1) Checkout the code:
-   "cvs -z3 -d:ext:developer_name@cvs.systemimager.sourceforge.net:/cvsroot/systemimager co systemimager"
-2) Rename the checked out source tree (suggested):
-   "mv systemimager systemimager.HEAD"
+--------------------------------------------------------------------------------
+CVS Checkout Steps for Developers
+(You should be able to just copy and paste commands 2-5)
+--------------------------------------------------------------------------------
+1) Set your username:
+   MY_CVS_USERNAME=your_cvs_user_name
+
+2) Tell cvs to operate over ssh:
+   CVS_RSH=ssh
+
+3) Choose your branch:
+   BRANCH=HEAD                  (current development branch)
+   BRANCH=unstable-2_1_x        (special: we will not normally have unstable)
+   BRANCH=stable-2_0_x          (current stable branch -- bug fixes only)
+
+4) Checkout the code:
+   cvs -z3 -d:ext:$MY_CVS_USERNAME@cvs.systemimager.sourceforge.net:/cvsroot/systemimager co -r $BRANCH systemimager
+
+5) Rename the checked out source tree:
+   mv systemimager systemimager.$BRANCH
 
 
------------------------------------------------------------------------
-CVS Checkout Steps for Developers for the ia64 specific Unstable Branch
-(This branch is a special case.  Normally, there will only be HEAD for 
- development)
------------------------------------------------------------------------
-1) Choose your branch:
-   "BRANCH=unstable-2_1_x"
-2) Checkout the code:
-   "cvs -z3 -d:ext:developer_name@cvs.systemimager.sourceforge.net:/cvsroot/systemimager co -r $BRANCH systemimager"
-3) Rename the checked out source tree (suggested):
-   "mv systemimager systemimager.$BRANCH"
-
-
-------------------------------------------------------------------------
-CVS Checkout Steps for Developers for the Stable Branch (bug fixes only)
-------------------------------------------------------------------------
-1) Choose your branch:
-   "BRANCH=stable-2_0_x"
-2) Checkout the code:
-   "cvs -z3 -d:ext:developer_name@cvs.systemimager.sourceforge.net:/cvsroot/systemimager co -r $BRANCH systemimager"
-3) Rename the checked out source tree (suggested):
-   "mv systemimager systemimager.$BRANCH"
-
-
-----------
+--------------------------------------------------------------------------------
 Versioning
-----------
+--------------------------------------------------------------------------------
 o SystemImager uses kernel style versioning (X.Y.Z):
   o X = major architectural change
   o Y = feature release

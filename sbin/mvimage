@@ -1,70 +1,68 @@
 #!/usr/bin/perl -w
 
 #
-# "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>
+# "SystemImager" 
 #
-#   Others who have contributed to this code (in alphabetical order):
+#  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
+#  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
 #
-# This file is: mvimage
+#  $Id$
 #
 
 # set some variables
-$version_number="SYSTEMIMAGER_VERSION_STRING";
-$program_name="mvimage";
-$get_help = "         Try \"$program_name -help\" for more options.";
+my $version_number="SYSTEMIMAGER_VERSION_STRING";
+my $program_name="mvimage";
+my $get_help = "         Try \"$program_name -help\" for more options.";
 
 # declare modules
 use lib "USR_PREFIX/lib/systemimager/perl";
 use SystemImager::Server;
 use SystemImager::Common;
 use Getopt::Long;
+use File::Basename;
 use File::Copy;
 use File::Path;
 use AppConfig;
+use strict;
+
 
 ### BEGIN parse the config file ###
 
 my $config = AppConfig->new(
 			    'autoinstall_script_dir' => { ARGCOUNT => 1 },
 			    'autoinstall_boot_dir' => { ARGCOUNT => 1 },
-			    'default_imagedir' => { ARGCOUNT => 1 },
+			    'default_image_dir' => { ARGCOUNT => 1 },
 			    'rsyncd_conf' => { ARGCOUNT => 1 },
-			    'config_dir' => { ARGCOUNT => 1 },
+			    'rsync_stub_dir' => { ARGCOUNT => 1 },
 			    );
-$config->file('/etc/systemimager/systemimager.conf');
+
+$config->file('/etc/systemimager/server.conf');
 
 my $autoinstall_script_dir = $config->autoinstall_script_dir();
 my $rsyncd_conf = $config->rsyncd_conf();
+my $rsync_stub_dir = $config->rsync_stub_dir();
+my $default_image_dir = $config->default_image_dir();
 
 if (!$autoinstall_script_dir) {
     die "AUTOINSTALL_SCRIPT_DIR not defined in the config file.";
 }
 if (!$rsyncd_conf) { die "RSYNCD_CONF not defined in the config file."; }
+if (!$rsync_stub_dir) { die "RSYNC_STUB_DIR not defined in the config file."; }
+
 ### END parse the config file ###
 
-### BEGIN functions ###
-sub trim {
-  my @out = @_;
-  for (@out) {
-    s/^\s+//;
-    s/\s+$//;
-  }
-  return wantarray ? @out : $out[0];
-}
-
-### END functions ###
-
 # set version information
-$version_info = <<"EOF";
+my $version_info = <<"EOF";
 $program_name (part of SystemImager) version $version_number
 
-Copyright (C) 1999-2001 Brian Elliott Finley <brian\@systemimager.org>
+Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley\@baldguysoftware.com>
+Copyright (C) 2002 Bald Guy Software <brian.finley\@baldguysoftware.com>
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 EOF
 
 # set help information
-$help_info = $version_info . <<"EOF";
+my $help_info = $version_info . <<"EOF";
 
 Usage: $program_name [OPTION]... SOURCE_IMAGE DESTINATION_IMAGE
 
@@ -85,6 +83,7 @@ Options: (options can be presented in any order)
                           the image name itself will be placed inside the
                           directory specified here.
 
+Tip: Use \"lsimage\" to get a list of available images.
 
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
@@ -92,11 +91,11 @@ EOF
 
 # interpret command line options
 GetOptions( 
-  "help" => \$help,
-  "version" => \$version,
-  "directory=s" => \$destination_path,
-  "force" => \$force,
-  "verbose" => \$verbose
+  "help" => \my $help,
+  "version" => \my $version,
+  "directory=s" => \my $destination_path,
+  "force" => \my $force,
+  "verbose" => \my $verbose
 ) or die qq($help_info);
 
 # if requested, print help information
@@ -111,125 +110,167 @@ if($version) {
   exit 0;
 }
 
+# be sure program is run by root
+SystemImager::Common->check_if_root();
+
 # Take the arguments left after Getopt::Long parses it's stuff out 
 # as the source and destination image names.
-$source_image=$ARGV[0];
-$destination_image=$ARGV[1];
+my $source_image=$ARGV[0];
+my $destination_image=$ARGV[1];
 
 unless(($source_image) and ($destination_image)) {
   die "\n$program_name: Must specify both SOURCE_IMAGE and DESTINATION_IMAGE.\n$get_help\n\n";
 }
 
-# be sure program is run by root
-SystemImager::Common->check_if_root();
+unless($destination_path) { $destination_path = $default_image_dir; }
 
-# get full path to image from $rsyncd_conf
-$source_path=SystemImager::Server->get_full_path_to_image_from_rsyncd_conf( $rsyncd_conf, $source_image );
-
-unless($source_path) { 
+# Get full path to image. -BEF-
+my $source = SystemImager::Server->get_image_path( $rsync_stub_dir, $source_image );
+unless($source) { 
   print "FATAL: Can't get path to image $source_image from $rsyncd_conf!\n";
   die   "       Nothing has been done.\n";
 }
 
-unless($destination_path) { $destination_path = $source_path; }
+# Set full destination path. -BEF-
+my $destination = "$destination_path/$destination_image";
 
-# remove any trailing slash
-$destination_path =~ s/\/$//;
+$source =~ s,/$,,; # Remove trailing slash (if any). -BEF-
+$source =~ s,//,/,g; # Remove double slashes (if any). -BEF-
 
-$source="$source_path/$source_image";
-$destination="$destination_path/$destination_image";
+$destination =~ s,/$,,; # Remove trailing slash (if any). -BEF-
+$destination =~ s,//,/,g; # Remove double slashes (if any). -BEF-
+
+# SOURCE_IMAGE and DESTINATION_IMAGE can be the same as long as $destination 
+# is different from $source.  Because $source and $destination include the 
+# image names, we're doing the full test here. -BEF-
+#
+if($source eq $destination) {
+  print "\n";
+  print "mvimage: SOURCE_IMAGE and DESTINATION_IMAGE must be different or you must\n";
+  print "         specify an alternate destination with -directory.\n";
+  die ("$get_help\n");
+}
 
 # check for existence of destination path
-$file=$destination_path;
-unless(-e $file) {
+my $dir = $destination_path;
+unless(-e $dir) {
   if($force) {
-    mkpath($file, 0, 0750) or die "FATAL: Can't create $file!\n";
+    mkpath($dir, 0, 0750) or die "FATAL: Can't create $dir!\n";
   } else {
-    die "FATAL: Destination path \"$file\" doesn't exist!\n";
+    print "FATAL: Destination path \"$dir\" doesn't exist!\n";
+    die ("$get_help\n");
   }
 }
 
 # check for existence of destination image
-$file=$destination;
-if(-e $file) {
+$dir = $destination;
+if(-e $dir) {
   if($force) {
-    rmtree($file, 0, 0) or die "FATAL: Can't remove $file!\n";
+    rmtree($dir, 0, 0) or die "FATAL: Can't remove $dir!\n";
   } else {
-    die "FATAL: Destination image \"$file\" already exists!\n";
+    die "FATAL: Destination image \"$dir\" already exists!\n";
   }
 }
 
-# check for existence of destination master autoinstall script
-$file="$autoinstall_script_dir/$destination_image.master";
-if(-e $file) {
-  if($force) {
-    unlink($file) or die "FATAL: Can't remove $file!\n";
-  } else {
-    die "FATAL: Destination master autoinstall script \"$file\" already exists!\n";
+# Check for existence of destination master autoinstall script.
+# (if source and destination images are named the same, we just won't touch it.)
+unless($source_image eq $destination_image) {
+  my $file="$autoinstall_script_dir/$destination_image.master";
+  if(-e $file) {
+    if($force) {
+      unlink($file) or die "FATAL: Can't remove $file!\n";
+    } else {
+      die "FATAL: Destination master autoinstall script \"$file\" already exists!\n";
+    }
   }
 }
 
 # move the actual image
-if($verbose) {print "  Moving image $source_image to $destination_image.\n";}
-move($source, $destination)
-  or die "FATAL: Failed to move $source to $destination.\n";
+if($verbose) {
+  if($source ne $destination) {
+    print "  Moving image $source to $destination.\n";
+  } else {
+    print "  Moving image $source_image to $destination_image.\n";
+  }
+}
+
+# If the source and destination image directories are different, use rsync to
+# copy the image, then rmtree the old one.  Safer in case the move fails.
+#
+my $cmd;
+my $source_path = dirname($source);
+if($source_path ne $destination_path) {
+  if($verbose) { 
+    $cmd = "rsync -av --delete $source/ $destination/";
+  } else {
+    $cmd = "rsync -a --delete $source/ $destination/";
+  }
+  my $rc = 0xffff & system($cmd);
+  if ($rc != 0) { die "FATAL: Failed to copy $source to $destination.\n"; }
+  rmtree($source) or die "FATAL: Can't remove $source!\n";
+} else {
+  # if source and destination directory are the same, just use move();
+  move($source, $destination) or die "FATAL: Failed to move $source to $destination $!";
+}  
 
 ### BEGIN Change entries in $rsyncd_conf ###
-$file=$rsyncd_conf;
-if($verbose) {print "  Updating entries in $file.\n";}
-open (FILE, "<$file") or die "FATAL: Couldn't open $file for reading!\n";
+if($verbose) {print "Updating rsyncd.conf entries.\n";}
+SystemImager::Server->remove_image_stub($rsync_stub_dir, $source_image);
+SystemImager::Server->create_image_stub($rsync_stub_dir, $destination_image, $destination)
+  or die "$program_name: Cannot create rsync stub entry in $rsync_stub_dir";
 
-$tmp_file="/tmp/tmp_file.$$";
-open (TMP_FILE, ">$tmp_file") or die "FATAL: Couldn't open $tmp_file for writing!\n";
-  while (<FILE>) {
-    if (/\[$source_image\]/) {
-      print TMP_FILE "[$destination_image]\n";
-    }
-    elsif (/^\s*path\s*=.*$source_image/) { 
-      print TMP_FILE "    path = $destination\n";
-    }
-    else {
-      print TMP_FILE;
-    }
-  }
-close TMP_FILE or die "FATAL: Can't close $tmp_file: $!";
-close FILE or die "FATAL: Can't close $file: $!";
+SystemImager::Server->gen_rsyncd_conf($rsync_stub_dir, $rsyncd_conf) 
+  or die "$program_name:  Cannot generate $rsyncd_conf";
 
-move($file, "$file.orig") or die "FATAL: Can't move $file to $file.orig: $!";
-move($tmp_file, $file) or die "FATAL: Can't move $tmp_file to $file: $!";
 ### END Change entries in $rsyncd_conf ###
 
 ### BEGIN Change entries in master autoinstall script ###
 # move master autoinstall script
-if($verbose) {print "  Moving $source_image.master to $destination_image.master.\n";}
-$old="$autoinstall_script_dir/$source_image.master";
-$new="$autoinstall_script_dir/$destination_image.master";
-move($old, $new) or die "FATAL: Can't move $old to $new: $!";
+# (if source and destination images are named the same, we just won't touch it.)
+unless($source_image eq $destination_image) {
+  if($verbose) {print "Moving $source_image.master to $destination_image.master.\n";}
+  my $old="$autoinstall_script_dir/$source_image.master";
+  my $new="$autoinstall_script_dir/$destination_image.master";
+  move($old, $new) or die "FATAL: Can't move $old to $new: $!";
 
+  # update new master autoinstall script
+  my $file=$new;
+  if($verbose) {print "Updating entries in $destination_image.master.\n";}
+  open (FILE, "<$file") or die "FATAL: couldn't open $file for reading!\n";
 
-# update new master autoinstall script
-$file=$new;
-if($verbose) {print "  Updating entries in $destination_image.master.\n";}
-open (FILE, "<$file") or die "FATAL: couldn't open $file for reading!\n";
+  my $tmp_file="/tmp/tmp_file.$$";
+  open (TMP_FILE, ">$tmp_file") or die "FATAL: couldn't open $tmp_file for writing!\n";
+    while (<FILE>) {
+      s/IMAGENAME=${source_image}/IMAGENAME=${destination_image}/;
+      print TMP_FILE;
+    }
+  close TMP_FILE or die "FATAL: Can't close $tmp_file: $!";
+  close FILE or die "FATAL: Can't close $file: $!";
 
-$tmp_file="/tmp/tmp_file.$$";
-open (TMP_FILE, ">$tmp_file") or die "FATAL: couldn't open $tmp_file for writing!\n";
-  while (<FILE>) {
-    s/^IMAGENAME=$source_image$/IMAGENAME=$destination_image/;
-    print TMP_FILE;
-  }
-close TMP_FILE or die "FATAL: Can't close $tmp_file: $!";
-close FILE or die "FATAL: Can't close $file: $!";
+  move($tmp_file, $file) or die "FATAL: Can't move $tmp_file to $file: $!";
+  
+  
+  # re-create soft links
+  if($verbose) {print "Re-creating softlinks to point to $destination_image.master.\n";}
+  $cmd="cd $autoinstall_script_dir; find . -lname $source_image.master -exec ln -sf $destination_image.master \\{\\} \\;";
+  system($cmd);
+  if($? != 0) { die "FATAL: couldn't re-create softlinks pointing to $destination_image.master!"; }
+}
+### END Change entries in master autoinstall script ###
 
-move($tmp_file, $file) or die "FATAL: Can't move $tmp_file to $file: $!";
-
-
-# re-create soft links
-if($verbose) {print "  Re-creating softlinks to point to $destination_image.master.\n";}
-$cmd="cd $autoinstall_script_dir; find . -lname $source_image.master -exec ln -sf $destination_image.master \\{\\} \\;";
-system($cmd);
-if($? != 0) { die "FATAL: couldn't re-create softlinks pointing to $destination_image.master!"; }
-
-### END Change entries in $rsyncd_conf ###
 
 exit 0;
+
+
+
+### BEGIN functions ###
+sub trim {
+  my @out = @_;
+  for (@out) {
+    s/^\s+//;
+    s/\s+$//;
+  }
+  return wantarray ? @out : $out[0];
+}
+### END functions ###
+

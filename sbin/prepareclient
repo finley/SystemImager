@@ -1,0 +1,713 @@
+#!/usr/bin/perl -w
+
+#
+# "SystemImager"
+# 
+#  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
+#  Copyright (C) 2001-2002 Bald Guy Software <brian.finley@baldguysoftware.com>
+#  Copyright (C) 2002 Internation Business Machines
+#                     Sean Dague <sean@dague.net>
+#
+#   $Id$
+# 
+#   Function: prepareclient is used to, well, prepare a client to have 
+#   it's image retrieved by an imageserver
+# 
+#   This is a port to Perl of the original bash script written by 
+#   Brian Elliott Finley.  Some of the bash code was contributed by 
+#   Jose AP Celestino <japc@sl.pt>.
+# 
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+# 
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+# 
+#   You should have received a copy of the GNU General Public License
+#   along with this program; if not, write to the Free Software
+#   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+#
+#   Brian's thoughts:
+#
+#   My wedding ring has Hebrew writing around it's circumference.  When people
+#   ask me what it says, I usually say "Live to ride.  Ride to live."  But it
+#   actually says: "I am my beloved's and she is mine" which is adapted from the
+#   Song of Solomon.  http://www.bible.org/netbible/sos7.htm
+#
+#   The Beloved:
+#
+#     7:10 I am my beloved's,
+#     and he desires me!
+#    
+#
+#   The Beloved to Solomon:
+#    
+#     7:11 Come, my beloved, let us go to the countryside;
+#     let us spend the night in the villages.
+#    
+#     7:12 Let us rise early to go to the vineyards,
+#     to see if the vines have budded,
+#     to see if their blossoms have opened,
+#     if the pomegranates are in bloom?
+#     there I will give you my love.
+#    
+#     7:13 The mandrakes send out their fragrance;
+#     over our door is every delicacy,
+#     both new and old, which I have stored up for you, my lover. 
+#
+
+use strict;
+use Carp;
+use POSIX;
+use File::Copy;
+use File::Path;
+use Getopt::Long;
+use vars qw($VERSION);
+use lib "USR_PREFIX/lib/systemimager/perl";
+use SystemImager::Common;
+
+# set version
+$VERSION = "SYSTEMIMAGER_VERSION_STRING";
+
+# set extension to use when backing up config files
+my $backup_extension = ".before_systemimager-$VERSION";
+
+# configuration directory
+my $systemimagerdir = "/etc/systemimager";
+
+# location of temporary rsyncd.conf file
+my $rsyncd_conf_file = "/tmp/rsyncd.conf.$$";
+
+# set path
+$ENV{PATH} = "/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin";
+
+my $version_info = <<"EOF";
+prepareclient (part of SystemImager) version $VERSION
+
+Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley\@baldguysoftware.com>
+Copyright (C) 2002 Bald Guy Software <brian.finley\@baldguysoftware.com>
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+EOF
+
+my $help_info = $version_info . <<"EOF";
+
+Usage: prepareclient [OPTION]...
+
+Options:
+ -version             Display version and copyright information.
+ -help                Display this output.
+ -no-rsyncd           Do not start the rsync daemon.
+ -yes                 Answer yes to all yes/no questions.
+ -quiet               Run silently.  Return an exit status of 0 for
+                      success or a non-zero exit status for failure.
+ -rpm-install         This is only used when building an RPM.
+
+Download, report bugs, and make suggestions at:
+http://systemimager.org/
+
+EOF
+
+
+GetOptions(
+    "explicit" => \my $explicit,
+    "help" => \my $help,
+    "norsyncd" => \my $norsyncd,
+    "quiet" => \my $quiet,
+    "rpm" => \my $rpm,
+    "version" => \my $version,
+    "yes" => \my $yes
+) || die "$help_info";
+
+### BEGIN option validation ###
+# show version if requested
+if($version) {
+    print $version_info;
+    exit 0;
+}
+
+# give help if requested
+if($help) {
+    print "$help_info";
+    exit 0;
+}
+
+# bail if not root
+if ($> != 0) {
+  print "Must be run as root!\n";
+  exit 1;
+}
+
+if($explicit) {
+  # Depricated.  Remove after v3.0.x.  Today's date: 2002.07.10 -BEF-  
+  print "FATAL:  -explicit is now depricated.  If SystemImager does not work properly\n";
+  print "        for you without the -explicit option, please file a bug report at\n";
+  print "        http://systemimager.org/support/.  Thanks!\n";
+  print "\n";
+  print qq(Try "prepareclient -help" for more options.\n);
+  exit 1;
+}
+
+# Make sure we have certain tools that we need.
+which('rsync') or croak("'rsync' is required for prepareclient to function properly.  Please see http://systemimager.org for more details.");
+which('systemconfigurator') or croak("'systemconfigurator' is required for prepareclient to function properly.  Please see http://systemimager.org for more details.");
+
+# -rpm-install does the same thing as -no-rsyncd.  -BEF-
+if($rpm) {
+    $norsyncd = "1";  # set it to true.
+}
+### END option validation ###
+
+
+unless(($quiet) or ($yes)) {
+    # do the interactive part
+    system("clear");
+    print <<EOF;
+Welcome to the SystemImager prepareclient command.  This command may modify the
+following files to prepare your client for having its image retrieved by the 
+imageserver.  It will also create the /etc/systemimager directory and fill it 
+with information about your golden client.  All modified files will be backed 
+up with the $backup_extension extension.
+ 
+ /etc/services:
+   This file defines the port numbers used by certain software on your system.
+   I will add appropriate entries for rsync if necessary.
+
+ /etc/inetd.conf:
+   This is the configuration file for the inet daemon, which starts up certain
+   server software when the associated client software connects to your 
+   machine.  SystemImager needs to run rsync as a standalone daemon on your 
+   golden client until it's image is retrieved by your image server.  I will 
+   comment out the rsync entry in this file if it exists.  The rsync daemon will
+   not be restarted when this machine is rebooted.
+
+ $rsyncd_conf_file:
+   This is a temporary configuration file that rsync needs on your golden client
+   in order to make your filesystem available to your image server.
+
+See "prepareclient -help" for command line options.
+
+EOF
+  
+  # you sure you want to install?
+    print "Continue? (y/[n]): ";
+    my $answer = <>;
+    unless($answer =~ /y/i) {
+        print "Client prepartion cancelled.  No files modified.\n";
+        exit 1;
+    }
+}
+ 
+# verify that rsync entry is in /etc/services
+add_rsync_services();
+
+# comment out rsync entry in inetd.conf if it exists
+remove_rsync_inetd();
+
+# get rid of xinetd configuration for rsync if it exits
+remove_rsync_xinetd();
+
+# Collect all the disk information
+my $disks = collect_disks();
+
+# Create /etc/systemimager/autoinstallscript.conf
+create_auto_install_script_conf($disks);
+
+# Run the rsync daemon for getimage?
+unless($norsyncd) {
+  # install SystemImager brand rsyncd.conf file ($rsyncd_conf_file)
+  create_rsyncd_conf($rsyncd_conf_file);
+
+  # rsync < v2.5.x requires that a host have an entry with it's hostname
+  # in it's /etc/hosts before rsync will start up in daemon mode.  I've 
+  # always wanted a better way of doing this than simply adding an entry
+  # and leaving it there.  It's usually harmless, but I prefer to not leave
+  # footprints.  I've determined that if you add an entry, start up rsync
+  # in daemon mode, then remove the entry, things work fine.  So now we do 
+  # just that. -BEF-
+  my $hostname = (uname)[1];
+  my $file = "/etc/hosts";
+
+  # kill off any running rsync daemons
+  killall("rsync",1);
+  killall("rsyncd",1);
+
+  # Make a copy of the original /etc/hosts file.
+  my $source      = $file;
+  my $destination = "$file.before-prepareclient";
+  copy($source, $destination) or die "FATAL: Failed to copy $source to $destination.\n";
+
+  # Append our temporary entry.
+  open(TMP,">>$file") or croak("Couldn't open $file for writing.");
+    print TMP "127.0.0.1  $hostname\n";
+  close(TMP);
+
+
+  # start up our fresh daemon
+  if(!$quiet) {
+
+      # Give a couple of seconds for the old daemon to die.
+      print "Starting or re-starting rsync as a daemon";
+      my $cmd="for i in 1 2; do echo -n .; sleep 1s; done";
+      system("$cmd");
+
+      # Start up the new one.
+      system("rsync --daemon --config=$rsyncd_conf_file");
+
+      # Give a few seconds for the new daemon to start.
+      $cmd="for i in 3 4 5; do echo -n .; sleep 1s; done";
+      system("$cmd");
+
+      # Wrap up
+      print "done!\n";
+  } else {
+    # still need to sleep
+    sleep 2;
+    system("rsync --daemon --config=$rsyncd_conf_file");
+    sleep 3;
+  }
+
+  # Put the original /etc/hosts file back (sans our temporary entry).
+  $source      = "$file.before-prepareclient";
+  $destination = $file;
+  move($source, $destination) or die "FATAL: Failed to copy $source to $destination.\n";
+}
+### END leave disk info behind for the getimage command ###
+
+# In the case that /etc/mtab is a symlink to /proc/mounts.  This 
+# method should still work.  This file we create here is also left 
+# behind for getimage. -BEF-
+system("mount > /etc/systemimager/mounted_filesystems");
+
+# wrap up
+if(!$quiet and !$norsyncd) {
+    print <<EOF;
+
+This client is ready to have its image retrieved.  You must now run 
+the "getimage" command on your imageserver.
+EOF
+
+} elsif(!$quiet) {
+    print <<EOF;
+
+WARNING:  The rsync daemon was not started.  You must run prepareclient 
+          again, without the -n option, before you can pull it's image 
+	  to an imageserver.
+EOF
+
+}
+
+exit(0);
+
+### BEGIN functions
+# SystemImager specific functions
+
+# a pure perl version of which
+sub which {
+    my $prog = shift;
+    foreach my $path (split(':',$ENV{PATH})) {
+        if(-x "$path/$prog") {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+# read /proc/partitions and figure out all the disks that need
+# to have their partitions captured
+#
+# XXX may no longer need to distinguish between different types of disks. -BEF-
+# XXX may no longer need to convert devfs device names. -BEF-
+sub collect_disks {
+    open(IN,"</proc/partitions") or croak("Couldn't open /proc/partitions for reading.");
+    my $disks;
+    my $devfsscsi = 0;
+    while(<IN>) {
+        if(/(\S*c[0-9]+d[0-9]+)p[0-9]+/) { # hardware raid devices (/dev/rd/c?d?, /dev/ida/c?d?, /dev/cciss/c?d?)
+            $disks->{HWRAID}->{$1}++;
+        } elsif (/(\S*[hs]d[a-z])[0-9]/) { # standard disk devices
+            $disks->{IDESCSI}->{$1}++;
+        } elsif (/\b(ide\/host\S+disc)\b/) { # devfs standard for ide disk devices
+            # now strip off the partition number
+            $disks->{IDESCSI}->{devfs_transform($1)}++;
+        } elsif (/\b(scsi\/host\S+disc)\b/) { # devfs standard for scsi disk devices
+            # if we have a devfs scsi disk and we want to get
+            # back to old school format, we just count up each disk
+            # and assign it to /dev/sdN in order
+            $disks->{IDESCSI}->{"sd" . chr(97 + $devfsscsi)}++;
+            $devfsscsi++;
+        }
+    }
+    close(IN);
+    return $disks;
+}
+
+
+# Usage:
+# %array = get_mounted_devs_by_mount_point_array();
+# my %mounted_devs_by_mount_point = get_mounted_devs_by_mount_point_array();
+sub get_mounted_devs_by_mount_point_array {
+
+    # Create an array that we can use to put appropriate LABEL and UUID info 
+    # into the fstab stanza of the autoinstallscript.conf file. -BEF-
+    #
+    my %mounted_devs_by_mount_point;
+    my $cmd = "mount";
+    open (FH, "$cmd|") or croak("Couldn't execute $cmd to read the output.");
+        while (<FH>) {
+            my ($dev, $on, $mp) = split;
+            $mounted_devs_by_mount_point{$mp}=$dev;
+    }
+    close(FH);
+    return %mounted_devs_by_mount_point;
+}
+
+
+# Description:
+# Reads in an fstab file and outputs an XML stanza with the atomic parts from 
+# the fstab file, and includes real device info for LABEL and UUID devices. -BEF-
+#
+# Usage:
+# save_filesystem_information("/etc/fstab",$output_file);
+# save_filesystem_information("/etc/fstab","/etc/systemimager/autoinstallscript.conf");
+#
+sub save_filesystem_information {
+
+    my ($file, $auto_install_script) = @_;
+
+    my %mounted_devs_by_mount_point = get_mounted_devs_by_mount_point_array();
+
+    # Read in fstab file and output fstab stanza. -BEF-
+    #
+    open(FH_OUT,">>$auto_install_script") or croak("Couldn't open $auto_install_script for appending.");
+
+        print FH_OUT "\n";
+
+        my $line = 0;
+        open(FH_IN,"<$file") or croak("Couldn't open $file for reading.");
+        while(<FH_IN>) {
+
+            # Keep track of line numbers, so that the fstab file can be re-created in the appropriate order. -BEF-
+            $line = $line + 10;
+
+            chomp;
+            
+            # Keep track of comments too. -BEF-
+            if ((/^[[:space:]]*#/) or (/^[[:space:]]*$/)) {
+
+                # Turn the characters below into their ascii octals to keep the
+                # parser from tripping on them.  Then we use "echo -e \octal" to
+                # re-create the characters in our output. -BEF-
+                #
+                s/</\\074/g;
+                s/>/\\076/g;
+                s/\042/\\042/g;     # " is \042
+
+                print FH_OUT qq(  <fsinfo  line="$line" comment="$_");
+
+            } else {
+
+                my ($mount_dev, $mp, $fs, $options, $dump, $pass) = split;
+                my ($mkfs_opts, $format, $mounted);
+                my $real_dev = $mounted_devs_by_mount_point{$mp};
+
+                # No need to specify a mount_dev if it's the same thing as the 
+                # real_dev. -BEF-
+                #
+                unless (($mount_dev =~ /LABEL/) or ($mount_dev =~ /UUID/)) {
+
+                    # Sometimes the fs isn't mounted, so we just take it's 
+                    # value from the fstab (mount_dev), as we should still
+                    # use real_dev instead of mount_dev in the conf file.
+                    # -BEF-
+                    #
+                    $real_dev = $mount_dev;
+                    $mount_dev = "";
+                }
+                
+                if ($mounted_devs_by_mount_point{$mp}) {
+                    $mounted = "true";
+                }
+
+                # Some of the info we gather can only be gathered for mounted
+                # filesystems.  We don't try to re-create filesystems that 
+                # aren't mounted on the client at the time the image is
+                # retrieved anyway. -BEF-
+                #
+                if ($mounted) {
+                
+                    # If we're using a FAT file system, figure out what *kind* of 
+                    # fat the fat is. -BEF-
+                    #
+                    if (($fs eq "vfat") or ($fs eq "msdos")) {
+                    
+                        # Create temporary config file for mtools. -BEF-
+                        my $file2 = "/tmp/mtools.conf.$$";
+                        open(FH_OUT2,">$file2") or croak("Couldn't open $file2 for writing!");
+                            # Config file will contain a single line that looks like this:
+                            #
+                            #   drive c: file="/dev/hda1"
+                            #
+                            print FH_OUT2 qq(drive c: file="$real_dev"\n);
+                    
+                        close(FH_OUT2);
+                    
+                        # Get the fat size (12, 16, or 32). -BEF-
+                        my $cmd = "export MTOOLSRC=$file2 && minfo c:";
+                        open (FH_IN2, "$cmd|") or croak("Couldn't execute $cmd to read the output.");
+                        while (<FH_IN2>) {
+                            if (/disk type=/) {
+                                my ($junk, $fat_size) = split(/\"/);
+
+                                # At this point, $fat_size should look something like this: "FAT16   ".  This 
+                                # strips out the alpha characters and the space. -BEF-
+                                #
+                                $fat_size =~ s/[[:alpha:]]//g;
+                                $fat_size =~ s/[[:space:]]//g;
+
+                                $mkfs_opts="-F $fat_size";
+                            }
+                        }
+                        close(FH_IN2);
+                    
+                        # Remove config file. -BEF-
+                        unlink("$file2") or print STDERR "WARNING: Couldn't remove $file2!  Proceeding...";
+                    }
+                
+                } else {
+                    # Tell SystemImager to not try to format or mount this device during the autoinstall
+                    # process. -BEF-
+                    #
+                    $format="no";
+                }
+
+                # Start line -BEF-
+                print FH_OUT qq(  <fsinfo  line="$line");
+
+                if ($real_dev) 
+                    { print FH_OUT qq( real_dev="$real_dev"); }
+
+                if ($mount_dev)
+                    { print FH_OUT qq( mount_dev="$mount_dev"); }
+
+                print FH_OUT qq( mp="$mp"  fs="$fs"  options="$options"  dump="$dump"  pass="$pass");
+
+                if ($mkfs_opts) 
+                    { print FH_OUT qq(  mkfs_opts="$mkfs_opts"); }
+
+                if ($format)
+                    { print FH_OUT qq(  format="$format"); }
+                
+            }
+
+            # End line -BEF-
+            print FH_OUT qq( />\n);
+        }
+        close(FH_IN);
+
+    close(FH_OUT);
+}
+
+
+# Usage:
+# create_auto_install_script_conf($disks);
+sub create_auto_install_script_conf {
+
+    my $disks = shift;
+
+    # Remove old-style partitionschemes directory if it exists. -BEF-
+    rmtree("$systemimagerdir/partitionschemes");
+
+    # Where the configuration information be stored. -BEF-
+    my $file = "$systemimagerdir/autoinstallscript.conf";
+
+    # Determine which partition tool is available.  Preference is parted.
+    my $partition_tool = which_partition_tool();
+
+    # BEGIN partition_tool friendly output
+    unless ($quiet) {
+      print qq/Using "$partition_tool" to gather information about your disk(s).../;
+    }
+
+    SystemImager::Common->write_auto_install_script_conf_header($partition_tool, $file);
+
+    # First we do Hardware RAID devices
+    foreach my $disk (sort keys %{$disks->{HWRAID}}) {
+      SystemImager::Common->save_partition_information($disk, $partition_tool, $file);
+    }
+
+    # Now we do /dev/ide and /dev/sda disks
+    foreach my $disk (sort keys %{$disks->{IDESCSI}}) {
+      SystemImager::Common->save_partition_information($disk, $partition_tool, $file);
+    }
+
+    save_filesystem_information("/etc/fstab", $file);
+
+    SystemImager::Common->write_auto_install_script_conf_footer($file);
+
+    # END partition_tool friendly output
+    unless ($quiet) {
+      print "done!\n";
+    }
+
+    return 1;
+}
+
+
+# Usage:
+# my $partition_tool = which_partition_tool();
+sub which_partition_tool {
+
+    my $partition_tool;
+
+    # Determine which partition tool is available.  Preference is parted.
+    if (which('parted')) { 
+      $partition_tool="parted";
+    } elsif (which('sfdisk')) {
+      $partition_tool="sfdisk";
+    } else {
+      print "FATAL: I can't find an appropriate partition tool.  Please install \"sfdisk\",\n";
+      print "       or better yet, \"parted\", which is my favorite!\n";
+      exit 1;
+    }
+
+    return $partition_tool;
+}
+
+
+sub devfs_transform {
+    my $devfsentry = shift;
+    my ($type, $host, $bus, $target, $lun, $part) = split(/\//,$devfsentry);
+    # get rid of the keywords in the sections
+    $bus =~ s/\D+//g;
+    $target =~ s/\D+//g;
+    $part =~ s/\D+//g;
+    my $realentry = "hd";
+    my $total = $bus * 2 + $target;
+
+    # now we add the real entry... remembering that chr(97) == 'a'
+    $realentry .= chr(97 + $total);
+    # add the partition number.  $part should always be blank, but
+    # it is here for completeness sake
+    $realentry .= $part;
+
+    return $realentry;
+}
+
+sub remove_rsync_xinetd {
+    # this is the trouble file in an xinted environment
+    my $file = "/etc/xinetd.d/rsync";
+    if(-e $file) {
+        # xinetd should ignore ~ files
+        move($file,$file . '~');
+        print "Signaling xinetd to restart...\n" unless($quiet);
+        killall('xinetd',1); # Send SIGHUP to all xinetd processes
+    }
+    return 1;
+}
+
+sub remove_rsync_inetd {
+    my $file = "/etc/inetd.conf";
+    my $rsyncfound = 0;
+    my $inetdcontents = "";
+    
+    # get out of here if inetd.conf doesn't exist
+    return 1 if(!-e $file);
+    
+    open(IN,"<$file") or croak("Couldn't open $file for reading.");
+    while(<IN>) {
+        if(s/^rsync/\#rsync/) {
+            $rsyncfound = 1;
+        }
+        $inetdcontents .= $_;
+    }
+    close(IN);
+    
+    return 1 unless($rsyncfound);
+    
+    backup_file($file) or croak("Couldn't back up $file.");
+    open(OUT,">$file") or croak("Couldn't open $file for writing.");
+    print OUT $inetdcontents;
+    close(OUT);
+
+    print "Signaling inetd to restart...\n" unless($quiet);
+    killall('inetd',1); # sends SIGHUP to all inetd processes
+    return 1;
+}
+
+sub add_rsync_services {
+    my $file = "/etc/services";
+    open(IN,"<$file") or croak("Couldn't open $file for reading");
+   
+    my @services = <IN>;
+    close(IN);
+    return 1 if(grep(/^rsync/,@services));
+
+    backup_file("$file") or croak("Couldn't back up file $file.");
+    
+    open(OUT,">>$file") or croak("Couldn't open $file for appending");
+    print OUT <<EOF;
+rsync           873/tcp                         # rsync
+rsync           873/udp                         # rsync
+EOF
+
+    close(OUT);
+    return 1;
+} 
+
+sub backup_file {
+    my $file = shift;
+    my $newfile = $file . $backup_extension;
+    if(-e $newfile) {
+      print "Not backup up $file to $newfile\n"; 
+      print "  because $newfile already exists.\n";
+      return 1;
+    }
+    
+    if(!$quiet) {
+        print "Backing up $file to $newfile....\n";
+    }
+    return copy($file,$newfile);
+}
+
+sub create_rsyncd_conf {
+    my $file = shift;
+    open(OUT,">$file") or croak("Couldn't open file $file");
+    print OUT <<EOF;
+#
+# "SystemImager"
+#
+#  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley\@baldguysoftware.com>
+#  Copyright (C) 2002 Bald Guy Software <brian.finley\@baldguysoftware.com>
+#
+#  This file: $rsyncd_conf_file
+#
+list = yes
+timeout = 600
+dont compress = *.gz *.tgz *.zip *.Z *.ZIP *.bz2 *.deb *.rpm *.dbf
+uid = root
+gid = root
+
+[root]
+    path = /
+
+EOF
+
+  close(OUT);
+}
+
+sub killall {
+    my ($pname,$signal) = @_;
+    my @list = split(/\s+/,`pidof $pname`);
+    if(scalar(@list)) {
+        kill $signal, @list;
+    }
+}
+
+
+### END functions

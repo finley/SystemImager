@@ -1,3 +1,81 @@
+systemimager (2.1.1-2) unstable; urgency=low
+
+  * fix for ia64 kernel build
+
+ -- dann frazier <dannf@debian.org>  Sat,  9 Feb 2002 22:33:35 -0700
+
+systemimager (2.1.1-1) unstable; urgency=low
+
+  * new upstream development release
+
+ -- dann frazier <dannf@debian.org>  Sat,  9 Feb 2002 20:23:04 -0700
+
+systemimager (2.1.0-1) unstable; urgency=low
+  
+  * new upstream development release
+
+ -- dann frazier <dannf@debian.org>  Sun, 20 Jan 2002 21:53:24 -0700
+
+systemimager (2.0.1-2) unstable; urgency=low
+  
+  * devfs support added to prepareclient (thanks sean@dague.net)
+  * explicitly tell mount which filesystem to mount the /tmp ramdisk
+    as during autoinstallation - works better w/ 2.4 kernels (thanks to
+    malf@tfz.net)
+  * updateclient tftpboot->i386-boot fix
+
+ -- dann frazier <dannf@debian.org>  Sun, 13 Jan 2002 19:18:53 -0700
+
+systemimager (2.0.1-1) unstable; urgency=low
+  
+  * new upstream release
+  * updated README.Debian w/ quick start info.  Closes: #123980
+  * de-contracted "autoinstallation" in the control file.  Closes: #125411
+
+ -- dann frazier <dannf@debian.org>  Sun, 16 Dec 2001 23:22:18 -0700
+
+systemimager (2.0.0-6) unstable; urgency=low
+  
+  * /usr -> /usr/local in systemimager.conf
+  * replaced a lost literal tab in rcS
+
+ -- dann frazier <dannf@debian.org>  Sun,  9 Dec 2001 13:32:28 -0700
+
+systemimager (2.0.0-5) unstable; urgency=low
+  
+  * updated package descriptions - recommended by taggart
+  * make kernel build fail nicely on non-i386 systems.  
+
+ -- dann frazier <dannf@dannf.org>  Thu, 15 Nov 2001 16:22:01 -0700
+
+systemimager (2.0.0-4) unstable; urgency=low
+  
+  * the 2.2.19 kernel was too large for a floppy - rebuilt it
+    with -Os and removed the Adapted RAID support
+  * -client and -server now depend on a matching version of -common
+
+ -- dann frazier <dannf@dannf.org>  Sun, 11 Nov 2001 22:58:52 -0700
+
+systemimager (2.0.0-3) unstable; urgency=low
+  
+  * use sgmtools-lite instead of cygnus-stylesheets
+  * removed wget build-dep
+  * added build-depend on busybox-source-0.60.0
+  * beep/reiserfsprogs/raidtools source is now included in the diff
+  * syslinux is now recommended instead of being a hard dependency
+  * corrected client/common package descriptions
+
+ -- dann frazier <dannf@dannf.org>  Sat, 10 Nov 2001 20:29:02 -0700
+
+systemimager (2.0.0-2) unstable; urgency=low
+  
+  * moved from linux-2.2.18 to linux-2.2.19
+  * added kernel-source-2.2.19 as a build dep - no longer wget kernel source
+  * put correct version in message.txt
+  * corrected AUTOINSTALL_BOOT_DIR default in /etc/systemimager.conf
+
+ -- dann <dannf@dannf.org>  Sun, 28 Oct 2001 19:25:21 -0700
+
 systemimager (2.0.0-1) unstable; urgency=low
   
   * new upstream release
@@ -96,6 +174,4 @@ va-systemimager (1.4.0-1) unstable; urgency=low
 
  -- dann <dannf@dannf.org>  Sun,  4 Mar 2001 17:42:48 -0700
 
-Local variables:
-mode: debian-changelog
-End:
+

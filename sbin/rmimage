@@ -1,11 +1,12 @@
 #!/usr/bin/perl -w
 
 #
-# "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>
+# "SystemImager" 
 #
-#   Others who have contributed to this code (in alphabetical order):
+#  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
+#  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
 #
-# This file is: rmimage
+#  $Id$
 #
 
 # set some variables
@@ -14,6 +15,9 @@ $program_name="rmimage";
 $get_help = "         Try \"$program_name -help\" for more options.";
 
 # declare modules
+use lib "USR_PREFIX/lib/systemimager/perl";
+use SystemImager::Server;
+use SystemImager::Common;
 use Getopt::Long;
 use File::Copy;
 use File::Path;
@@ -24,19 +28,25 @@ use AppConfig;
 my $config = AppConfig->new(
 			    'autoinstall_script_dir' => { ARGCOUNT => 1 },
 			    'autoinstall_boot_dir' => { ARGCOUNT => 1 },
-			    'default_imagedir' => { ARGCOUNT => 1 },
+			    'default_image_dir' => { ARGCOUNT => 1 },
 			    'rsyncd_conf' => { ARGCOUNT => 1 },
-			    'config_dir' => { ARGCOUNT => 1 },
+			    'rsync_stub_dir' => { ARGCOUNT => 1 },
 			    );
 
-$config->file('/etc/systemimager/systemimager.conf');
+$config->file('/etc/systemimager/server.conf');
 
 my $autoinstall_script_dir = $config->autoinstall_script_dir();
 my $rsyncd_conf = $config->rsyncd_conf();
+my $rsync_stub_dir = $config->rsync_stub_dir();
 
 if (!$autoinstall_script_dir) {
     die "AUTOINSTALL_SCRIPT_DIR not defined in the config file.";
 }
+
+if (!$rsync_stub_dir) {
+    die "RSYNC_STUB_DIR not defined in the config file.";
+}
+
 if (!$rsyncd_conf) { die "RSYNCD_CONF not defined in the config file."; }
 
 ### END parse the config file ###
@@ -59,7 +69,8 @@ sub check_if_root{
 $version_info = <<"EOF";
 $program_name (part of SystemImager) version $version_number
 
-Copyright (C) 1999-2001 Brian Elliott Finley <brian\@systemimager.org>
+Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley\@baldguysoftware.com>
+Copyright (C) 2002 Bald Guy Software <brian.finley\@baldguysoftware.com>
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 EOF
@@ -77,9 +88,9 @@ Options: (options can be presented in any order)
 
  -verbose                 Explain what is being done.
 
- -force                   Don\'t ask for confirmation before 
-                          overwriting the destination image or master
-			  autoinstall script (if they exist).
+ -force                   Continue on error (default is to exit on error).
+
+Tip: Use \"lsimage\" to get a list of available images.
 
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
@@ -114,21 +125,12 @@ unless($image) { die "\n$program_name: Must specify IMAGE.\n$get_help\n\n"; }
 # be sure program is run by root
 check_if_root();
 
-# get full path to image from $rsyncd_conf
-$file=$rsyncd_conf;
-open (FILE, "<$file") or die "FATAL: Couldn't open $file for reading!\n";
-  while (<FILE>) {
-    if (/^\s*path\s*=.*$image/) { 
-      (my $junk, $imagedir) = split (/=/);
-      $imagedir =~ s/^\s+//;
-      $imagedir =~ s/\s+$//;
-    }
-  }
-close FILE;
+$imagedir = SystemImager::Server->get_image_path($rsync_stub_dir, $image);
 
 unless(($imagedir) or ($force)) { 
-  print "FATAL: Can't get path to image $image from $rsyncd_conf!\n";
-  die   "       Nothing has been done.\n";
+  print "FATAL: Can't get path to image $image from image's stub file!\n";
+  print "       Nothing has been done.\n";
+  exit 1;
 }
 
 # remove image
@@ -156,28 +158,10 @@ system($cmd);
 if($? != 0) { die "FATAL: couldn't remove softlinks that point to $image.master!"; }
 
 ### BEGIN Remove entries in $rsyncd_conf ###
-$file=$rsyncd_conf;
-if($verbose) {print "  Removing entries from $file.\n";}
-open (FILE, "<$file") or die "FATAL: Couldn't open $file for reading!\n";
 
-$tmp_file="/tmp/tmp_file.$$";
-open (TMP_FILE, ">$tmp_file") or die "FATAL: Couldn't open $tmp_file for writing!\n";
-  while (<FILE>) {
-    if (/\[$image\]/) {
-      next;
-    }
-    elsif (/^\s*path\s*=.*$image/) { 
-      next;
-    }
-    else {
-      print TMP_FILE;
-    }
-  }
-close TMP_FILE or die "FATAL: Can't close $tmp_file: $!";
-close FILE or die "FATAL: Can't close $file: $!";
+SystemImager::Server->remove_image_stub($rsync_stub_dir, $image);
+SystemImager::Server->gen_rsyncd_conf($rsync_stub_dir, $rsyncd_conf);
 
-move($file, "$file.orig") or die "FATAL: Can't move $file to $file.orig: $!";
-move($tmp_file, $file) or die "FATAL: Can't move $tmp_file to $file: $!";
 ### END Remove entries in $rsyncd_conf ###
 
 exit 0;

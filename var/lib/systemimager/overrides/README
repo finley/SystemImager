@@ -1,0 +1,63 @@
+#
+# "SystemImager"
+#
+#  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
+#
+#    $Id$
+#
+
+Q)  What's this override directory for?
+A)  If you have used a modified autoinstallscript.conf file with the
+    mkautoinstallscript command, then you may need to also modify your boot
+    loader configuration file and/or your /etc/raidtab file (if you are using
+    software RAID).  
+
+    If you changed anything in the fsinfo section of the 
+    autoinstallscript.conf, then you will most certainly want to copy the
+    ./etc/systemimager/updateclient.local.exclude file from your image and add
+    an entry to exclude the fstab file.
+    
+    If you are using more than one master autoinstall script for a particular
+    image, it is recommended that you copy the original files into an override 
+    directory, rather than modifying the files directly in the image.
+
+Q)  Which override directory should I use?
+A)  Use the one that is specified by your master autoinstall script.  By
+    default, the override directory will have the same base name as it's
+    associated master autoinstall script.  If you're still not sure, or if
+    you're paranoid (good for you), then you can look for the OVERRIDES variable
+    in your master autoinstall script to know for sure.
+
+Q)  So I just drop the file in the directory?  How does SystemImager know where
+    to put them on the client?
+A)  SystemImager can't know where you want them to go on the client, so you must
+    keep them in the appropriate directory heirarchy.
+
+    For example, if you need to modify /etc/lilo.conf and /etc/raidtab, then
+    when you're finished, an "ls -lR" from inside your override directory should
+    look like this:
+
+    imageserver:/var/lib/systemimager/overrides/foo# find
+    .
+    ./etc
+    ./etc/lilo.conf
+    ./etc/raidtab
+
+
+Q)  Do permissions and ownership matter?
+A)  Yes.  The permissions and ownership of directories and files in your
+    override directory will be replicated on your autoinstall client.
+
+Q)  But I want to use two override directories with a single autoinstall
+    script!!!
+A)  Ok.  Use as many as you like.  Just edit the OVERRIDES variable in the
+    autoinstall script in question and include a space seperated list of the
+    override directories you want to use in the order you want them applied.
+
+    Example:  OVERRIDES="foo bar baz"
+
+Q)  When do the override files get pulled over?
+A)  They get pulled over:
+    o after the main image is pulled over
+    o prior to running System Configurator
+

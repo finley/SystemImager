@@ -1,241 +1,458 @@
 #!/usr/bin/perl -w
-
 #
-# "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>
+# "SystemImager"
+#  
+#  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
+#  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
+#  Copyright (C) 2001 Sean Dague <sean@dague.net>
 #
-#   $Id$
-#
-#   Written by Brian Elliott Finley <brian@systemimager.org>
+#  $Id$
+# 
+#   Based on the original mkautoinstallcd by Brian Elliott Finley <brian.finley@baldguysoftware.com>
+#   New version by Sean Dague <sean@dague.net>
+# 
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+# 
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+# 
+#   You should have received a copy of the GNU General Public License
+#   along with this program; if not, write to the Free Software
+#   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
 use lib "USR_PREFIX/lib/systemimager/perl";
-use SystemImager::Server;
-use SystemImager::Common;
-use Getopt::Long;
+
+#use strict;
+use Cwd;
+use Carp;
 use AppConfig;
+use Getopt::Long;
+use File::Path;
+use File::Copy;
+use File::Basename;
+use POSIX qw(uname);
+use SystemImager::Common;
 
-my $config = AppConfig->new(
-			    'autoinstall_script_dir' => { ARGCOUNT => 1 },
-			    'autoinstall_boot_dir' => { ARGCOUNT => 1 },
-			    'default_imagedir' => { ARGCOUNT => 1 },
-			    'rsyncd_conf' => { ARGCOUNT => 1 },
-			    'config_dir' => { ARGCOUNT => 1 },
-			    );
-$config->file('/etc/systemimager/systemimager.conf');
+use vars qw($VERSION $quiet);
 
-my $autoinstall_boot_dir = $config->autoinstall_boot_dir();
+$SIG{__DIE__} = \&bailing_umount;
 
-# this can be changed as more architectures are added
-$autoinstall_boot_dir = $autoinstall_boot_dir . "/i386-boot";
+$VERSION = "SYSTEMIMAGER_VERSION_STRING";
 
-if (!$autoinstall_boot_dir) {
-    die "AUTOINSTALL_BOOT_DIR not defined in the config file.";
-}
-
-### END parse the config file ###
-
-# set shell PATH for system() calls 
+# set path for system calls
 $ENV{PATH} = "/usr/local/sbin:/usr/sbin:/sbin:/usr/local/bin:/usr/bin:/bin";
 
-$version_number="SYSTEMIMAGER_VERSION_STRING";
-$program_name = "mkautoinstallcd";
-$version_info = <<"EOF";
-$program_name (part of SystemImager) v$version_number
+my $config = AppConfig->new(
+  'autoinstall_script_dir' => { ARGCOUNT => 1 },
+  'autoinstall_boot_dir' => { ARGCOUNT => 1 },
+  'default_image_dir' => { ARGCOUNT => 1 },
+  'rsyncd_conf' => { ARGCOUNT => 1 },
+  'rsync_stub_dir' => { ARGCOUNT => 1 },
+);
+
+my $config_file = "/etc/systemimager/server.conf";
+$config->file($config_file);
+
+my ($kernel, $initrd, $flavor, $arch, $autoinstall_boot_dir, $append_string);
+
+if ($config->autoinstall_boot_dir) {
+  $autoinstall_boot_dir = $config->autoinstall_boot_dir;
+} else { 
+  print "Fatal: AUTOINSTALL_BOOT_DIR not specified in $config_file.";
+  exit 1;
+}
+
+GetOptions( 
+"listing" => 
+            "help" => \$help,
+            "version" => \$version,
+            "arch=s" => \$arch,
+            "out-file=s" => \$out_file,
+            "quiet" => \$quiet,
+            "append=s" => \$append_string,
+            "kernel=s" => \$kernel,
+            "initrd=s" => \$initrd,
+            "flavor=s" => \$flavor,
+) or usage() and exit(1);
+
+if($help) { usage() and exit(0); }
+
+if($version) { version() and exit(0); }
+
+# if not run as root, this script will surely fail
+unless($< == 0) { 
+  print "FATAL: Must be run as root!\n";
+  exit 1;
+}
+
+# If -kernel specified, $kernel must exist. -BEF-
+if (($kernel) and (! -f $kernel)) {
+  message("\nI'm terribly sorry, but kernel \"$kernel\" doesn't seem to exist.\n");
+  exit 1;
+}
+
+# If -initrd specified, $initrd must exist. -BEF-
+if (($initrd) and (! -f $initrd)) {
+  message("\nI'm terribly sorry, but initrd \"$initrd\" doesn't seem to exist.\n");
+  exit 1;
+}
+
+# If -arch was not specified on the command line, get it from the system. -BEF-
+unless ($arch) {
+  $arch = (uname())[4];
+  $arch =~ s/i.86/i386/;
+}
+
+# Do we have a supported architecture? -BEF-
+if($arch !~ /^(i386|ia64)$/) {
+    message("\nI'm terribly sorry, but I don't yet know how to make an\nautoinstall CD for the \"$arch\" architecture.\n");
+    exit 1;
+}
+
+my $bin_dir = "$autoinstall_boot_dir/$arch";
+
+if(!$out_file) {
+    message("Output file not specified!");
+    usage() unless $quiet;
+    exit(1);
+}
+
+unless ($kernel and $initrd) {
+    my %available_flavors =
+	SystemImager::Common->get_boot_flavors($arch, $VERSION,
+					       $autoinstall_boot_dir);
+
+    unless (%available_flavors) {
+	print qq(\nI couldn't find any boot flavors for SystemImager $VERSION on $arch.\n);
+        print qq(Please use "install_siboot" to install the appropriate boot files.\n\n);
+        exit 1;
+    }
+
+    if (($quiet) and (!$flavor)) { $flavor = "standard"; }
+
+    unless ($flavor) {
+
+	print "Here is a list of available flavors:\n\n";
+	foreach (sort (keys %available_flavors)) {
+	    print "  $_\n";
+	    $flavor = $_;
+	}
+
+        # If "standard" is one of the available flavours, default to it. -BEF-
+        if ($available_flavors{"standard"}) { $flavor = "standard"; }
+	
+	print "\nWhich flavor would you like to use? [$flavor]: ";
+	$flavor = get_response($flavor);
+    }
     
-Copyright (C) 1999-2001 Brian Elliott Finley <brian\@systemimager.org>
+    
+    # make sure the specified flavor is available
+    unless ($available_flavors{$flavor}) {
+      print "\nI can't find boot files of the flavor, version, and architecture specified.\n";
+      print "The files you specified would come from a SystemImager boot tarball named:\n\n";
+      print qq( "systemimager-boot-${arch}-${flavor}-${VERSION}.tar.bz2"\n\n); 
+      exit 1;
+    }
+
+    if (! $kernel) { $kernel = "$bin_dir/kernel-$flavor-$VERSION"; }
+    if (! $initrd) { $initrd = "$bin_dir/initrd-$flavor-$VERSION.gz"; }
+}
+
+if(!-e "$kernel") {
+    message("$kernel does not exist.");
+    exit(1);
+}
+
+if(!-e "$initrd") {
+    message("$initrd does not exist.");
+    exit(1);
+}
+
+# check for mkisofs
+if(!which('mkisofs')) {
+    message("The required executable 'mkisofs' could not be found in your path.");
+    exit(1);
+}
+
+# set some variables
+my $temp_dir = "/tmp/systemimager.autoinstallcd.temp.dir";
+my $temp_file = "$temp_dir/boot/siboot.img";
+my $mount_dir = "$temp_dir/mnt";
+my $boot_dir = "$temp_dir/boot";
+
+# if $out_file is not an absolute path, get current working directory and pre-pend
+if($out_file !~ /^\//) {
+    $out_file = getcwd() . "/$out_file";
+}
+
+# create temporary working directory
+unless ($quiet) { print "\nCreating temporary working directory...\n"; }
+if(-e $temp_dir) {
+    bailing_umount(); # just in case it was still mounted
+    rmtree("$temp_dir") or croak("Couldn't remove $temp_dir");
+}
+
+mkdir $temp_dir, 0770 or croak("Couldn't create temporary working directory $mount_dir!");
+mkdir $mount_dir, 0770 or croak("Couldn't create temporary working directory $mount_dir/mnt!");
+mkdir $boot_dir, 0770 or croak("Couldn't create temporary working directory $mount_dir/boot!");
+
+# This does the dd, and is put in another seperate function because it is arch specific
+
+build_loopfile($temp_file) or croak("Couldn't dd the loopfile");
+
+# create dos filesystem on temporary image
+mysystem("mkdosfs $temp_file","Creating DOS filesystem on temporary image...") or
+  croak("Couldn't create DOS filesystem on $temp_file!");
+
+# If on i386, use syslinux to make the image bootable.  It is done first because with certain
+# versions of syslinux, if you do it last, it will overwrite parts of other files on the floppy
+# diskette or image.
+if($arch eq "i386") {
+    mysystem("syslinux -s $temp_file","Using \"syslinux\" to make CD image bootable...") or
+      croak("Command 'syslinux -s $temp_file' failed!");
+}
+
+# mount the loop device
+mount_loop_device($temp_file, $mount_dir,"Mounting temporary image in loopback mode...");
+
+# copy stuff to image
+copy_files_to_image($mount_dir, $bin_dir, $kernel, $initrd, $append_string) or 
+  croak("Couldn't copy required files into the image!");
+
+# Umount the loopback device
+mysystem("umount $mount_dir","Un-mounting temporary image...") or
+  croak("Couldn't un-mount temporary from $mount_dir/tmp!");
+
+# and clean it up
+rmtree("$mount_dir") or croak("Couldn't clean up $mount_dir");
+
+my $mkisofscmd = "";
+
+my $olddir = getcwd();
+chdir("$temp_dir");
+
+$mkisofscmd = "mkisofs -A \"SystemImager $arch Autoinstallcd v$VERSION\" -V \"SystemImager $arch Boot CD\" -p \"Created by mkautoinstallcd -- part of SystemImager.  http://systemimager.org/\" -J -r -T -v -pad -no-emul-boot -b boot/siboot.img -c boot/boot.catalog -o $out_file .";
+
+mysystem($mkisofscmd,"Making the ISO image now") or
+  croak("Couldn't build the ISO image!");
+chdir($olddir);
+
+print "Removing temporary mount point...\n" unless $quiet;
+rmtree("$temp_dir") or croak("Couldn't remove temporary working directory '$temp_dir'!");
+
+unless($quiet) {
+    print <<EOF;
+Done!
+
+You can now burn your ISO image to a CDROM with a command such as:
+   'cdrecord -v speed=2 dev=1,0,0 $out_file'
+
+See the cdrecord manual for more information. ("man cdrecord")
+
+EOF
+}
+
+# build_loopfile builds the right size file to mount as loop for each architecture
+sub build_loopfile {
+    my $outfile = shift;
+    if($arch eq "i386") {
+        return mysystem("dd if=/dev/zero of=$outfile bs=1k count=2880");
+    } elsif ($arch eq "ia64") {
+        return mysystem("dd if=/dev/zero of=$outfile bs=1024k count=10");
+    }
+    return 0;
+}
+
+#
+
+sub mount_loop_device {
+    my ($temp_file, $mount_dir, $msg) = @_;
+    if($arch eq "i386") {
+        mysystem("mount -t msdos -o loop $temp_file $mount_dir",$msg) or
+          croak("Couldn't mount temporary image in loopback mode!");
+    } elsif ($arch eq "ia64") {
+        mysystem("mount -t vfat -o loop $temp_file $mount_dir",$msg) or
+          croak("Couldn't mount temporary image in loopback mode!");
+    }
+}
+
+sub copy_files_to_image {
+    my ($mnt_dir, $boot_dir, $kernel, $initrd, $append_string) = @_;
+
+    if($arch eq "i386") {
+
+      # Just copy the files over.  It doesn't matter if they have a fancy name on
+      # the boot media -- we're not really offering options at boot time.  This 
+      # allows us to have a stock syslinux.cfg file that the user can easily edit.
+      copy($kernel, "$mnt_dir/kernel")    or croak("Couldn't copy $kernel to $mnt_dir/kernel: $!");
+      copy($initrd, "$mnt_dir/initrd.gz") or croak("Couldn't copy $initrd to $mnt_dir/initrd.gz: $!");
+      copy("/etc/systemimager/pxelinux.cfg/message.txt","$mnt_dir/message.txt");
+
+      # Unless an append string was given on the command line, just copy over.
+      unless ($append_string) {
+        copy("/etc/systemimager/pxelinux.cfg/syslinux.cfg","$mnt_dir/syslinux.cfg");
+      } else {
+        # Append to APPEND line in config file.
+        my $infile = "/etc/systemimager/pxelinux.cfg/syslinux.cfg";
+        my $outfile = "$mnt_dir/syslinux.cfg";
+        open(INFILE,"<$infile") or croak("Couldn't open $infile for reading.");
+          open(OUTFILE,">$outfile") or croak("Couldn't open $outfile for writing.");
+            while (<INFILE>) {
+              if (/APPEND/) { 
+                chomp;
+                $_ = $_ . " $append_string\n";
+              }
+              print OUTFILE;
+            }
+          close(OUTFILE);
+        close(INFILE);
+      }
+
+
+    } elsif ($arch eq "ia64") {
+
+      my $elilo = "";
+      @elilo_locations = qw(/usr/lib/elilo/elilo.efi /boot/efi/elilo.efi /tftpboot/elilo.efi);
+      foreach my $possible (@elilo_locations) {
+        if(-e $possible) {
+          $elilo = $possible;
+          last;
+        }
+      }
+      if(!$elilo) {
+        print "\nCouldn't find elilo.efi executable in any of the following locations:\n";
+	foreach my $possible (@elilo_locations) { print "    $possible\n"; }
+	print "You can download elilo from ftp://ftp.hpl.hp.com/pub/linux-ia64/.\n";
+        print "If elilo.efi was installed elsewhere on your system, please submit a bug report at\n";
+        print "http://systemimager.org/support/\n\n";
+        exit 1;
+      }
+
+      write_elilo_conf("$mnt_dir/elilo.conf", "kernel", "initrd.gz", $append_string);
+
+      # Because we must rename each of these files, we just copy them over one by one. -BEF-
+      copy($kernel, "$mnt_dir/kernel")    or croak("Couldn't copy $kernel to $mnt_dir/kernel: $!");
+      copy($initrd, "$mnt_dir/initrd.gz") or croak("Couldn't copy $initrd to $mnt_dir/initrd.gz: $!");
+      copy($elilo,  "$mnt_dir/elilo.efi") or croak("Couldn't copy $elilo to $mnt_dir/elilo.efi $!");
+    }
+    return 1;
+}
+
+sub write_elilo_conf {
+    my ($file, $kernel, $initrd, $append_string) = @_;
+
+    open(ELILO_CONF,">$file") or croak("Couldn't open $file for writing.");
+
+      print ELILO_CONF "timeout=20\n";
+
+      if ($append_string) { 
+        print ELILO_CONF "append=$append_string\n";
+      }
+
+      print ELILO_CONF "image=kernel\n";
+      print ELILO_CONF "  label=linux\n";
+      print ELILO_CONF "  read-only\n";
+      print ELILO_CONF "  initrd=initrd.gz\n";
+      print ELILO_CONF "  root=/dev/ram\n";
+
+    close(ELILO_CONF);
+    return 1;
+}
+
+sub get_response {
+    my $garbage_out=$_[0];
+    my $garbage_in=<STDIN>;
+    chomp $garbage_in;
+    unless($garbage_in eq "") { $garbage_out = $garbage_in; }
+    return $garbage_out;
+}
+
+# bailing_umount is here to be set to SIG{__DIE__} so we don't leave mounts all
+# over the place.
+
+sub bailing_umount {
+    system("umount /tmp/systemimager.autoinstallcd.temp.dir/mnt");
+} 
+
+# A convenience function to run a command, and print output if $quiet isn't set
+
+sub mysystem {
+    my ($cmd, $premessage) = @_;
+    if($quiet) {
+        return !system("$cmd 2>/dev/null 1>/dev/null");
+    } else {
+        print "$premessage\n" if $premessage;
+        return !system("$cmd");
+    }
+}
+
+# A convenience function to print the message only $quiet is not set.  This should
+# only be used for informational messages, as opposed to error messages.  -BEF-
+sub message {
+    my $msg = shift;
+    return 1 if $quiet;
+    print "$msg\n";
+}
+
+sub simple_arch {
+    my $arch = shift || (uname)[4];
+    $arch =~ s/i.86/i386/;
+    return $arch;
+}
+
+# A pure perl which command
+
+sub which {
+    my $file = shift;
+    foreach my $path (split(/:/,$ENV{PATH})) {
+        if(-x "$path/$file") {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+sub version {
+    my $progname = basename($0);
+    print <<EOF;
+$progname (part of SystemImager) v$VERSION
+    
+Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley\@baldguysoftware.com>
+Copyright (C) 2002 Brian Elliott Finley <brian.finley\@baldguysoftware.com>
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 EOF
+}
 
-$help_info = $version_info . <<"EOF";
+sub usage {
+    my $progname = basename($0);
+    version();
+    print <<EOF;
 
-Usage: $program_name [OPTION]... -out-file FILE_NAME
+Usage: $progname [OPTION]... -out-file FILE_NAME
 
 Options: (options can be presented in any order and may be abbreviated)
  -help             Display this output.
  -version          Display version and copyright information.
- -out-file=FILE    Name of the file that will hold the resulting ISO image.
-                   (Not to worry, this will only be about 3 MB in size.)
- -append=STRING    A string of options that will be passed to the autoinstall
+ -out-file FILE    Name of the the ISO image file that will be produced.
+                   (Not to worry, this will only be a few MB in size.)
+ -kernel FILE      Optionally specify an alternate autoinstall kernel.
+ -initrd FILE      Optionally specify an alternate autoinstall ramdisk.
+ -append "STRING"  A string of options that will be passed to the autoinstall
                    kernel
+ -arch ARCH        Create a CD image for an architecture other than that of
+                   this host.
  -quiet            Don\'t print any output, just provide an appropriate 
                    exit code.
 
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
+
 EOF
-
-GetOptions( 
-            "out-file=s" => \$iso_file,
-            "help" => \$help,
-            "version" => \$version,
-            "quiet" => \$quiet,
-	    "append=s" => \$append
-) || die "$help_info";
-
-# if requested, print help information
-if($help) { 
-  print "$help_info";
-  exit 0;
 }
-
-# if requested, print version and copyright information
-if($version) {
-  print "$version_info";
-  exit 0;
-}
-
-if (!$append) { $append = ""; }
-
-# search for CD creation tools
-$cd_creation_tools="";
-@files = ( "mkhybrid", "mkisofs");
-foreach my $file ( @files ) {
-  $command = "which $file > /dev/null 2>&1";
-  $rc = 0xffff & system($command);
-  if ($rc == 0) {
-    # Compile a list of available tools -- we can choose which of the 
-    # available ones we prefer later.
-    $cd_creation_tools="$cd_creation_tools $file";
-  }
-}   
-
-# if we didn't find any CD creation tools, error out
-unless($cd_creation_tools) {
-  my $unavailable_tools = "";
-  foreach my $file ( @files ) {
-    $unavailable_tools = "$unavailable_tools $file"
-  }
-  die   "FATAL: Coudn't find any of these CD creation tools: $unavailable_tools.\n";
-}
-
-# verify that a valid filename was specified
-unless ($iso_file) { die "$help_info"; }
-$command = "touch $iso_file > /dev/null 2>&1";
-system("$command");
-if($? != 0) { 
-    unless ($quiet) {
-        die "FATAL: Couldn't create $iso_file!\n";
-    } else {
-        exit 1;
-    }
-}
-
-# Verify that the kernel and initrd.gz actually exist.
-# Suggested by Greg Pratt <gpratt@valinux.com>.
-@files = ( "$autoinstall_boot_dir/kernel", "$autoinstall_boot_dir/initrd.gz");
-foreach my $file ( @files ) {
-  unless ( -e "$file" ) {
-    die "FATAL: I can't find $file!";
-  }
-}
-
-# if not run as root, this script will surely fail
-unless($< == 0) { die "FATAL: Must be run as root!\n"; }
-
-# set some variables
-$temp_dir = "/tmp/systemimager.autoinstallcd.temp.dir";
-$temp_file = "$temp_dir/boot/vasiboot.img";
-$mount_dir = "$temp_dir/mnt";
-$boot_dir = "$temp_dir/boot";
-
-# if $iso_file is not an absolute path, get current working directory and pre-pend
-$_ = $iso_file;
-unless (/^\//) {
-	open(CWD, "pwd|");
-        	$working_directory = <CWD>;
-        	chomp $working_directory;
-	close(CWD);
-	$iso_file = "$working_directory/$iso_file";
-}
-
-# create temporary working directory
-unless ($quiet) { print "Creating temporary working directory...\n"; }
-$command = "rm -fr $temp_dir";
-system("$command");
-if($? != 0) { die "FATAL: \"$command\" failed!\n"; }
-mkdir $temp_dir, 0770 or die "FATAL: Couldn't create temporary working directory $mount_dir!\n";
-mkdir $mount_dir, 0770 or die "FATAL: Couldn't create temporary working directory $mount_dir/mnt!\n";
-mkdir $boot_dir, 0770 or die "FATAL: Couldn't create temporary working directory $mount_dir/boot!\n";
-
-# create temporary image
-$command = "dd if=/dev/zero of=$temp_file bs=1k count=2880";
-unless ($quiet) {
-    system("$command");
-} else {
-    system("$command > /dev/null 2>&1");
-}
-if($? != 0) { die "FATAL: \"$command\" failed!\n"; }
-
-# create dos filesystem on temporary image
-$command = "mkdosfs $temp_file";
-unless ($quiet) {
-    print "Creating DOS filesystem on temporary image...\n";
-    system("$command");
-} else {
-    system("$command > /dev/null 2>&1");
-}
-if($? != 0) { die "FATAL: Couldn't create DOS filesystem on $temp_file!\n"; }
-
-# Run syslinux *before* copying files to prevent syslinux from partially 
-# overwriting the first large on the diskette image.  Bad syslinux, bad!
-if (!$quiet) {print "Using \"syslinux\" to make CD image bootable...\n";}
-$command = "syslinux -s $temp_file";
-system("$command");
-if($? != 0) { die "FATAL: \"$command\" failed!\n"; }
-
-# mount the freshly created filesystem
-unless ($quiet) { print "Mounting temporary image in loopback mode...\n"; }
-$command = "mount -t msdos -o loop $temp_file $mount_dir";
-system("$command");
-if($? != 0) { die "FATAL: Couldn't mount temporary image in loopback mode!\n"; }
-
-# copy stuff to image
-foreach $file ( "$autoinstall_boot_dir/initrd.gz",
-		"$autoinstall_boot_dir/kernel",
-		"$autoinstall_boot_dir/pxelinux.cfg/message.txt") {
-    unless ($quiet) {print "Copying $file to temporary image...\n";}
-    $command = "cp -f $file $mount_dir";
-    system("$command");
-    if($? != 0) { die "FATAL: Couldn't copy $file to $mount_dir!\n"; }
-}
-
-$append_string  = "vga=extended load_ramdisk=1 root=/dev/ram rw ";
-$append_string .= "prompt_ramdisk=0 initrd=initrd.gz " . $append;
-SystemImager::Server->build_syslinux_cfg("", "$append_string", "", "", "", 
- $mount_dir ."/syslinux.cfg") or die "Couldn't create $mount_dir/syslinux.cfg.\n";
-
-# unmount temporary image
-unless ($quiet) {print "Un-mounting temporary image...\n";}
-$command = "umount $mount_dir && rm -fr $mount_dir";
-system("$command");
-if($? != 0) { die "FATAL: Couldn't un-mount temporary from $mount_dir/tmp!\n"; }
-
-# compile iso image creation command
-if($cd_creation_tools =~ /mkhybrid/) {
-  $command = "cd $temp_dir && mkhybrid -b boot/vasiboot.img -c boot/boot.catalog -A systemimager-autoinstallcd-$version_number -p \"Created by makeautoinstallcd -- part of SystemImager\.  http://systemimager.org/\" -o $iso_file .";
-} elsif($cd_creation_tools =~ /mkisofs/) {
-  $command = "cd $temp_dir && mkisofs -b boot/vasiboot.img -c boot/boot.catalog -o $iso_file .";
-}
-
-# execute iso image creation command
-unless ($quiet) {
-    system("$command");
-} else {
-    system("$command > /dev/null 2>&1");
-}
-if($? != 0) { die "FATAL: \"$command\" failed!\n"; }
-
-# get rid of temporary directory
-unless ($quiet) { print "Removing temporary mount point...\n";}
-$command = "rm -fr $temp_dir";
-system("$command");
-if($? != 0) { die "FATAL: Couldn't remove temporary working directory!\n"; }
-
-# print done!
-unless ($quiet) { print "Done!\n"; }
-unless ($quiet) { print "\nYou can now burn your ISO image to a CDROM with a command such as:\n"; }
-unless ($quiet) { print qq("cdrecord -v speed=2 dev=1,0,0 $iso_file"\n); }
-unless ($quiet) { print "\nSee the cdrecord manual for more information. (\"man cdrecord\")\n"; }
-
-exit 0;

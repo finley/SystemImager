@@ -1,12 +1,14 @@
 #!/usr/bin/perl
 
 #
-# "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>
+# "SystemImager" 
 #
-#   $Id$
+#  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
 #
-#   Others who have contributed to this code (in alphabetical order):
-#     Curtis Zinzilieta <czinzilieta@valinux.com>
+#  $Id$
+#
+#  Others who have contributed to this code (in alphabetical order):
+#    Curtis Zinzilieta <czinzilieta@valinux.com>
 #
 
 use Getopt::Long;
@@ -16,7 +18,7 @@ use Time::Local;
 use POSIX qw(strftime);
 use Socket;
 
-### BEGIN Parameters to be read from /etc/systemimager/systemimager.conf
+### BEGIN Parameters to be read from /etc/systemimager/server.conf
 $si_logdir = "/var/log/systemimager";
 $si_log_format = "%t %o %f";
 ### END Parameters ###
@@ -146,7 +148,7 @@ sub processautoinstall {
   if ($rc != 0) { 
     # get username from /etc/passwd as derived from the real user id "$>"
     my $username = getpwuid $>;
-    my $message="FATAL: Could not copy /var/lib/systemimager/scripts/$param_image.master to $client!\n";
+    my $message="FATAL: Could not copy /var/lib/systemimager/scripts/systemimager/$param_image.master to $client!\n";
     $message = $message . "       Be sure that you have ${username}'s .ssh/identity.pub key in ssh_files/authorized_keys.\n";
     updatelogfile($message);
     die $message;
@@ -455,8 +457,8 @@ if (-e $clients_file) {
     }
 
     # if we are running as autoinstall, find and verify the autoinstall script exists
-    # assume that the entry lists only a filename...add the /var/lib/systemimager/scripts
-    # and ".master" in the path/filename.
+    # assume that the entry lists only a filename...add the
+    # /var/lib/systemimager/scripts and ".master" in the path/filename.
     if ($continue_install) {
       my $installscript = "/var/lib/systemimager/scripts/" . $fields[1] . ".master";
       if (! -e $installscript) {

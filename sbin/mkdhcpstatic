@@ -1,9 +1,11 @@
 #!/usr/bin/perl -w
 
 #
-# "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>
+# "SystemImager" 
 #
-# This file is: makedhcpstatic
+#  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
+#
+#  $Id$
 #
 
 ### BEGIN Subroutines ###
@@ -33,6 +35,7 @@ close(DHCPDCONF);
                         "/var/dhcp/dhcpd.leases",
                         "/var/dhcpd/dhcpd.leases",
                         "/var/state/dhcp/dhcpd.leases",
+                        "/var/lib/dhcp/dhcpd.leases",
                         "/etc/dhcpd.leases"
                        );
 

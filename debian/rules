@@ -8,9 +8,11 @@
 # This is the debhelper compatability version to use.
 export DH_COMPAT=2
 
+ARCH = $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/)
+
 TFTP_DIR = /usr/lib/systemimager
 
-#OVERRIDE_PKGS := systemimager-server systemimager-kernel-i386 systemimager-initrd-i386 systemimager-bin-i386
+#OVERRIDE_PKGS := systemimager-server systemimager-kernel-$(ARCH) systemimager-initrd-$(ARCH) systemimager-bin-$(ARCH)
 
 configure: configure-stamp
 configure-stamp:
@@ -24,6 +26,10 @@ build-stamp:
 	dh_testdir
 
 	# Add here commands to compile the package.
+	@[ "$(ARCH)" == "i386" ] || [ "$(ARCH)" == "ia64" ] || \
+	 (echo -e "\n\n********** Error **********" && \
+	  echo "Only i386 and ia64 clients are supported in this release." && \
+	  echo -e "You must build on one of these systems\n" && exit 1 )
 	$(MAKE) docs
 	cp CHANGE.LOG changelog
 
@@ -36,10 +42,9 @@ clean:
 
 	# Add here commands to clean up after the build process.
 	-$(MAKE) distclean
-#	-$(MAKE) clean
 	-rm -rf debian/systemimager-client debian/systemimager-server \
-	debian/systemimager-kernel-i386 debian/systemimager-initrd-i386 \
-	debian/systemimager-bin-i386
+	debian/systemimager-kernel-$(ARCH) debian/systemimager-initrd-$(ARCH) \
+	debian/systemimager-bin-$(ARCH)
 	-rm -f $(CURDIR)/changelog
 	dh_clean
 
@@ -55,9 +60,8 @@ install: build
 
 	mkdir -p debian/systemimager-server
 	$(MAKE) install_server DESTDIR=$(CURDIR)/debian/systemimager-server
+	$(MAKE) check_floppy_size
 	mkdir -p $(CURDIR)/debian/systemimager-server/etc/systemimager
-#	install -m 644 $(CURDIR)/debian/config \
-#		$(CURDIR)/debian/systemimager-server/etc/systemimager
 
 	mkdir -p debian/systemimager-common
 	$(MAKE) install_common DESTDIR=$(CURDIR)/debian/systemimager-common
@@ -65,16 +69,16 @@ install: build
 	mkdir -p debian/systemimager-doc
 	$(MAKE) install_docs DESTDIR=$(CURDIR)/debian/systemimager-doc
 
-	mkdir -p debian/systemimager-kernel-i386
-	$(MAKE) install_kernel DESTDIR=$(CURDIR)/debian/systemimager-kernel-i386
+	mkdir -p debian/systemimager-kernel-$(ARCH)
+	$(MAKE) install_kernel DESTDIR=$(CURDIR)/debian/systemimager-kernel-$(ARCH)
 
-	mkdir -p debian/systemimager-initrd-i386
-	$(MAKE) install_initrd DESTDIR=$(CURDIR)/debian/systemimager-initrd-i386
+	mkdir -p debian/systemimager-initrd-$(ARCH)
+	$(MAKE) install_initrd DESTDIR=$(CURDIR)/debian/systemimager-initrd-$(ARCH)
 
-	mkdir -p debian/systemimager-bin-i386
-	$(MAKE) install_raidtools DESTDIR=$(CURDIR)/debian/systemimager-bin-i386
-	$(MAKE) install_reiserfsprogs DESTDIR=$(CURDIR)/debian/systemimager-bin-i386
-
+	mkdir -p debian/systemimager-bin-$(ARCH)
+	$(MAKE) install_raidtools DESTDIR=$(CURDIR)/debian/systemimager-bin-$(ARCH)
+	$(MAKE) install_reiserfsprogs DESTDIR=$(CURDIR)/debian/systemimager-bin-$(ARCH)
+	$(MAKE) install_dosfstools DESTDIR=$(CURDIR)/debian/systemimager-bin-$(ARCH)
 
 	# install lintian overrides
 

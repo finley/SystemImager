@@ -1,0 +1,679 @@
+#!/usr/bin/perl -w
+
+#
+# "SystemImager"
+#
+#  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
+#  Copyright (C) 2002 International Business Machines
+#                     Sean Dague <sean@dague.net>
+#  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
+#
+#  $Id$
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program; if not, write to the Free Software
+#   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+#   Others who have contributed to this code (in alphabetical order):
+#     Adam L. Lambert <alambert@epicrealm.com> (credit for the -autoinstall option goes to Adam)
+#
+
+use lib "USR_PREFIX/lib/systemimager/perl";
+
+# declare modules
+use AppConfig;
+use Getopt::Long;
+use POSIX;
+use Carp;
+use Socket;
+use File::Copy;
+use Sys::Hostname;
+use vars qw($VERSION);
+use SystemImager::Common;
+
+# set version number
+$VERSION = "SYSTEMIMAGER_VERSION_STRING";
+
+# Version details
+$version_info = <<"EOF";
+updateclient (part of SystemImager) version $VERSION
+
+Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley\@baldguysoftware.com>
+Copyright (C) 2001-2002 Bald Guy Software <brian.finley\@baldguysoftware.com>
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+EOF
+
+# Help stuff
+$help_info = $version_info . <<"EOF";
+
+Usage: updateclient [OPTION]... --server HOSTNAME --image IMAGENAME
+
+Options: (options can be presented in any order)
+ -help                    Display this output.
+
+ -version                 Display version and copyright information.
+
+ -server HOSTNAME         Hostname or IP address of the imageserver.
+
+ -image IMAGENAME         Image from which the client should be updated.
+
+ -directory "DIRECTORY"   Absolute path of directory to be updated.
+                          (defaults to "/")
+
+ -no-bootloader           Don\'t run bootloader (lilo, grub, etc.) setup 
+                          after update completes.
+
+ -autoinstall             Autoinstall this client the next time it
+                          reboots.  (conflicts with -no-bootloader)
+
+ -flavor                  The boot flavor to used for doing an autoinstall.
+                          (Assumes -autoinstall).
+
+ -configure-from DEVICE   Only used with -autoinstall.  Stores the
+                          network configuration for DEVICE in the
+                          /local.cfg file so that the same settings
+                          will be used during the autoinstall process.
+
+ -ssh-user USERNAME	  Username for ssh connection from the client.
+                          Only needed if a secure connection is 
+                          required.
+
+ -reboot                  Reboot client after update completes.
+
+ -dry-run                 Only shows what would have been updated.
+
+ -log "STRING"	    	  Quoted string for log file format.  See the
+                          rsyncd.conf man page for options.
+
+Tip: Use \"lsimage -server HOSTNAME\" to get a list of available images.
+
+Download, report bugs, and make suggestions at:
+http://systemimager.org/
+EOF
+
+my $ARCH = (uname())[4];
+$ARCH =~ s/i.86/i386/;
+
+# Get settings using AppConfig.
+my $config = new AppConfig(
+  'directory' => {ARGCOUNT => 1,},
+  'ssh_user' => {ARGCOUNT => 1},
+
+  # These are the file system types that will be updated.
+  'fstype' => {ARGCOUNT => 2},
+
+  'rsync_port' => {ARGCOUNT => 1},
+  'exclude_file' => {ARGCOUNT => 1},
+  'image' => {ARGCOUNT => 1},
+  'server' => {ARGCOUNT => 1},
+  'log' => {ARGCOUNT => 1},
+
+  # We put bootmodule here so it can be overridden, but we aren't going to 
+  # advertize this yet.
+  'bootmodule' => {ARGCOUNT => 1, DEFAULT => "boot/$ARCH"},
+);
+
+# Read in settings from SystemImager client configuration file
+if(-e "/etc/systemimager/client.conf") {
+    $config->file("/etc/systemimager/client.conf");
+}
+
+# Pull some settings from the variables pulled from the config file
+my $exclude_file = $config->exclude_file;
+my $port = $config->rsync_port; 
+my $bootmodule = $config->bootmodule; 
+
+GetOptions( "listing" => \$listing,
+            "configure-from=s" => \$DEVICE,
+            "help" => \$help,
+            "version" => \$version,
+            "reboot" => \$reboot,
+            "no-lilo" => \$no_bootloader,     # XXX deprecated, but backwards
+                                              # compatible (remove in 3.2.x)
+            "no-bootloader" => \$no_bootloader,
+            "autoinstall" => \$autoinstall,
+            "dry-run" => \$dry_run,
+            "ssh-user=s" => \$ssh_user,
+	    "flavor=s" => \$flavor,
+            "server=s" => \$server,
+            "image=s" => \$image,
+            "directory=s" => \$directory,
+            "log=s" => \$log,
+) or die qq($help_info);
+
+# if requested, print version information
+if($version) {
+    version();
+    exit 0;
+}
+
+# if requested, print help
+if($help) {
+    usage();
+    exit 0;
+}
+
+# listing is deprecated.  lsimage should now be used.
+if($listing) {
+    print <<EOF;
+The --listing option is depricated.  Use 'lsimage' instead.
+EOF
+    exit(1);
+}
+
+# if not run as root, updateclient will surely fail
+unless($< == 0) {
+  print "FATAL: Must be run as root!\n";
+  exit 1;
+}
+
+
+### Now we do option validation testing ###
+# -flavor assumes -autoinstall
+if ($flavor) { $autoinstall = 1; }
+
+# -server and -image must be defined
+#  or -server and -autoinstall
+unless(($server and $image) or ($server and $autoinstall)) {
+  print "You must specify -server and either -image or -autoinstall.\n";
+  get_help();
+  exit(1);
+}
+
+if($image and $autoinstall) {
+  print "-image and -autoinstall are not compatible options.!\n\n";
+  get_help();
+  exit(1);
+}
+
+# IMAGENAME must not start with a hyphen
+if (($image) and ($image =~ /^-/)) {
+  print "IMAGENAME (specified with -image) can't start with a hyphen.\n";
+  get_help();
+  exit(1);
+}
+
+# IMAGENAME must not start with a hyphen
+if ($server =~ /^-/) {
+  print "HOSTNAME (specified with -server) can't start with a hyphen.\n";
+  get_help();
+  exit(1);
+}
+
+# -autoinstall and -no-bootloader conflict
+if($autoinstall and $no_bootloader) { 
+    print "-autoinstall and -no-bootloader are not compatible options!\n\n";
+    get_help();
+    exit(1);
+}
+
+# -autoinstall and -dry-run conflict
+if($dry_run and $autoinstall) { 
+    print "-autoinstall and -dry-run are not compatible options!\n\n";
+    get_help();
+    exit(1);
+}
+
+# -dry-run implies -no-bootloader
+if($dry_run) { $no_bootloader="true"; }
+
+# DANGER WILL ROBINSON -- I don't know quite how the ssh stuff works, so
+# this is untouched from SI 1.5.  It should still work.
+
+# If we're using SSH, go ahead and establish port forwarding
+if($ssh_user) {
+    # Get a random port number (normal rsync port won't work if rsync daemon is running)
+    my $port_in_use="yes";
+
+    until ( $port_in_use eq "no" ) {
+        $port_in_use="no";
+        $port = int(rand 60000);
+
+        # Be sure port isn't reserved
+        my $file = "/etc/services";
+        open (FILE, "<$file") or croak("$0: Couldn't open $file for reading");
+        while (<FILE>) {
+            if (/$port/) {
+                $port_in_use="yes";
+                next;
+            }
+        }
+        close FILE;
+
+        # Be sure port isn't in use
+        open (NETSTAT, "netstat -tn |");
+        while (<NETSTAT>) {
+            my ($junk, $port_and_junk) = split (/:/);
+            if ($port_and_junk) {
+                my ($netstat_port, $other_junk) = split (/ +/, $port_and_junk);
+                if ($netstat_port = /$port/) {
+                    $port_in_use="yes";
+                    next;
+                }
+            }
+        }
+        close(NETSTAT);
+    }
+
+    # Setup the port forwarding
+    my $command="ssh -f -l $ssh_user -L $port:$server:" . $port . " $server sleep 5";
+    my $rc = 0xffff & system($command);
+    if ($rc != 0) { croak "FATAL: Failed to establish secure port forwarding to $server!"; }  
+
+    # and change imageserver to point to localhost
+    $server = "127.0.0.1";
+}
+
+### BEGIN update image section ###
+if ($autoinstall) {
+    my %available_flavors =
+      SystemImager::Common->get_boot_flavors($ARCH, $VERSION, $server);
+
+    unless (%available_flavors) {
+	print "\nI couldn't find any boot flavors for SystemImager $VERSION on $ARCH.\n";
+        print "Please use \"install_siboot\" to install the appropriate boot files on $server.\n\n";
+	exit 1;
+    }
+    
+    unless ($flavor) {
+	print "Here is a list of available flavors:\n\n";
+	foreach (sort (keys %available_flavors)) {
+	    print "  $_\n";
+	    $flavor = $_;
+	}
+	# If "standard" is one of the available flavours, default to it. -BEF-
+	if ($available_flavors{"standard"}) { $flavor = "standard"; }
+	
+	print "\nWhich flavor would you like to use? [$flavor]: ";
+	$flavor = SystemImager::Common->get_response($flavor);
+    }
+    
+    # make sure the specified flavor is available
+    unless ($available_flavors{$flavor}) {
+	print "\nI can't find boot files of the flavor, version, and architecture specified.\n";
+	print "The files you specified would come from a SystemImager boot tarball named:\n\n";
+	print qq( "systemimager-boot-${ARCH}-${flavor}-${VERSION}.tar.bz2"\n\n); 
+	exit 1;
+    }
+
+    if (! $kernel) { $kernel = "$bin_dir/kernel-$flavor-$VERSION"; }
+    if (! $initrd) { $initrd = "$bin_dir/initrd-$flavor-$VERSION.gz"; }
+
+    if ( -d "/boot/efi" ) {
+	$bootdir = "/boot/efi";
+    }
+    else {
+	$bootdir = "/boot";
+    }
+    
+    # Suck down kernel.
+    print "Retrieving SystemImager kernel...\n";
+
+    my $cmd = "rsync -a --numeric-ids rsync://${server}:${port}/${bootmodule}/$kernel ${bootdir}/kernel.systemimager";
+    !system($cmd) or croak("Failed to rsync SystemImager $kernel to ${bootdir} on client!!!");
+
+    # And initial ram disk image.
+    print "Retrieving SystemImager initial ramdisk...\n";
+
+    $cmd = "rsync -a --numeric-ids rsync://${server}:${port}/${bootmodule}/$initrd ${bootdir}/initrd.gz.systemimager";
+    !system($cmd) or croak("Failed to rsync SystemImager initrd.gz to $bootdir on client!!!");
+
+    # find out on which partition the current root file system resides
+    my $file = "/etc/mtab";
+    open(MTAB, "< $file") or croak("Couldn't open $file for reading!");
+    my $lastroot = "";
+    while (<MTAB>) {
+        # turn tabs into spaces and gets rid of duplicates
+        s/\s+/ /g;
+        # find the last root device
+        if(/^(\S+) \/ /){
+            $lastroot = $1;
+        }
+    }
+    close(MTAB);
+
+    # Figure out what to specify as the boot device.
+    my $lastboot;
+    if ($ARCH eq "ia64") {
+	# If we're dealing with elilo on ia64, then let's just get
+	# what's currently specified. -BEF-
+	@eliloconf_locations = qw(/etc/elilo.conf /boot/efi/elilo.conf);
+	foreach my $possible (@eliloconf_locations) {
+	    if (-f $possible) {
+		open(FILE, "<$possible") or
+		    croak("Couldn't open $possible for reading!");
+		while (<FILE>) {
+		    if (/^\s*boot\s*=(.*)$/) {
+			$lastboot = $1;
+		    }
+		}
+		close(FILE);
+	    }
+	}
+
+	if (! $lastboot) {
+	    # If we can't read it from /etc/elilo.conf, just guess for now.
+	    # XXX figure out a better way to do this. -BEF-
+	    $lastboot = $lastroot;        # Get the root device.
+	    $lastboot =~ s/\d+$//;        # Strip of the root partition number.
+	    $lastboot = $lastboot . "1";  # Add the assumed boot partition 
+	                                  # number of 1.
+	}
+    } else {
+      # Most other boot loaders just use the device that root is on, minus the device number.
+      $lastboot = $lastroot;
+      $lastboot =~ s/\d+$//;
+    }
+
+    ### BEGIN autoinstall boot configuration ###
+    $cmd = <<SC_EOF;
+systemconfigurator --configboot --runboot --stdin <<EOF
+[BOOT]
+BOOTDEV = $lastboot
+ROOTDEV = $lastroot
+TIMEOUT = 50
+DEFAULTBOOT = systemimager
+
+[KERNEL0]
+LABEL = systemimager
+PATH = ${bootdir}/kernel.systemimager
+INITRD = ${bootdir}/initrd.gz.systemimager
+APPEND = LAST_ROOT=$lastroot root=/dev/ram0 load_ramdisk=1 prompt_ramdisk=0 vga=extended
+EOF
+
+SC_EOF
+
+    !system($cmd) or croak("systemconfigurator command to configure autoinstall boot failed!");
+    ### END autoinstall boot configuration ###
+
+} else {
+
+    # go ahead and do that update thing you do
+    
+    # In case directory doesn't already have one, add a trailing slash
+    # (We could easily test to see if it does, but we've got to normalize multiple
+    #  slashes into one down below anyway...  Same number of functions to execute.)
+    $directory = $directory . '/';
+
+    # turn multiple slashes "//" into a single slash "/"
+    # (So maybe we don't really have to do this -- things will work with multiple
+    #  slashes.  This is actually done to avoid user consternation when reading
+    #  any output that might include the multiple slashes.)
+    $directory =~ s(/+)(/)g;
+
+    # start with base command
+    my $cmd = "rsync -av --numeric-ids --delete";
+    if ($dry_run) {
+        $cmd .= ' --dry-run';
+    }
+    if ($log) {
+        $cmd .= ' --log-format="' . $log . '"';
+    }
+
+    # Exclude lost+found directories.  With dynamic partitioning, the same 
+    # image may be used on clients with different partition schemes, and 
+    # therefore mount points. -BEF-
+    #
+    $cmd .= " --exclude=lost+found/";
+
+    # Get exclusions from client side exclusion file.  Only use exclusions that start with the 
+    # directory specified with -directory.  
+    #
+    # Because rsync exclusions must be relative to the root of the directory being copied, strip 
+    # off the specified -directory from the beginning of each exclusion path. -BEF
+    #
+    open(SYSTEMIMAGER_EXCLUDE, "<$exclude_file") or croak("Couldn't open $exclude_file for reading!");
+    while (<SYSTEMIMAGER_EXCLUDE>) {
+      if (m|^\s*$directory|) {  # match non commented explicit path
+        chomp;
+        s|^$directory||;
+        $cmd .= " --exclude=$_";
+      }
+    }
+    close(SYSTEMIMAGER_EXCLUDE);
+
+    # Append currently mounted non ext2 filesystems to exclusions list.
+    # ( $config-fstype() returns a reference to an array.  We store that in
+    #   $fstypes, and get at the array by using @$fstypes. )
+    my $fstypes = $config->fstype();
+    my $fsregex = '^(' . (join '|', @$fstypes) . ')$'; # We are compiling a regex here
+
+    open(ETC_MTAB, "</etc/mtab") or croak("Couldn't open /etc/mtab for reading!");
+    while (<ETC_MTAB>) {
+        my ($device, $mount, $fstype, $garbage) = split(/\s+/,$_);
+        if($fstype !~ /$fsregex/o) { # The /o makes the regex compile once. This is for performance
+            $cmd .= " --exclude=$mount";
+        }
+    }
+    close(ETC_MTAB);
+
+    # finalize command
+    $cmd .= " rsync://${server}:${port}/${image}${directory} ${directory}";
+
+    # execute command
+    if ($dry_run) {
+        print "Performing a dry run -- no files will be modified...\n";
+    } else {
+  	print "Updating image...\n";
+    }
+
+    # Run the command. -BEF-
+ print "\$cmd: $cmd\n"; 
+ exit 1; #XXX
+    my $rc = system($cmd);
+    if ($rc != 0) { exit $rc >> 8; }
+
+    # Now we install the bootloader if requested
+    unless($no_bootloader) {
+        print "Running bootloader...\n";
+        my $rc = system("systemconfigurator --runboot");
+        if ($rc != 0) { exit $rc >> 8; }  
+    }
+} ### END update image section ###
+
+
+### BEGIN configure-from section ###
+if($DEVICE) {
+    my $hostname = hostname();
+    $hostname =~ s/\..*//g;
+
+    my %netvars = (
+      GATEWAYDEV => $DEVICE,
+      GATEWAY => '',
+      IPADDR => '',
+      BROADCAST => '',
+      NETMASK => '',
+      NETWORK => '',
+      HOSTNAME => $hostname,
+      DOMAINNAME => '',
+      DEVICE => $DEVICE,
+      IMAGESERVER => $server,
+      SSH_USER => $ssh_user
+    );
+
+    ### BEGIN get ip address, netmask, and broadcast from the ifconfig command ###
+    my $command = "ifconfig $netvars{DEVICE}";
+    open(COMMAND, "$command|");
+    while (<COMMAND>) {
+        if (/inet addr/) {
+            s/[A-Za-z:]//g;
+            s/^ +//g;
+            chomp;
+            ($netvars{IPADDR}, $netvars{BROADCAST}, $netvars{NETMASK}) = split(/ +/);
+        }
+    }
+    close(COMMAND);
+    ### END get ip address, netmask, and broadcast from the ifconfig command ###
+
+    ### BEGIN get interface and gateway from the route command ###
+    my $routecmd = "route -n";
+    open(COMMAND, "$command|");
+    while (<COMMAND>) {
+        if ((/$netvars{DEVICE}/) and (/UG/)) {
+            my ($destination, $gateway, $garbage) = split(/\s+/,$_);
+            $netvars{GATEWAY} = $gateway;
+        }
+    }
+    close(COMMAND);
+    ### END get interface and gateway from the route command ###
+
+    ### BEGIN get ip address of imageserver if necessary ###
+    if($netvars{IMAGESERVER} =~ /[A-Za-z]/) {
+        $netvars{IMAGESERVER} = inet_ntoa(scalar gethostbyname($netvars{IMAGESERVER}));
+    }
+    ### END get ip address of imageserver if necessary ###
+
+    ### BEGIN get domainname ###
+    # Make reasonable attempt to get domainname by looking in resolv.conf
+    my $file="/etc/resolv.conf";
+    if(-e $file) {
+      open(FILE, "<$file") or die ("Can't open $file for reading!");
+        while(<FILE>) {
+          if(/^search/) {
+            (my $junk, $netvars{DOMAINNAME}) = split;
+          }
+        }
+      close(FILE);
+    }
+
+    # if resolv.conf didn't work, try dnsdomainname
+    unless($netvars{DOMAINNAME}) {
+      $cmd = "dnsdomainname 2>&1";
+      $netvars{DOMAINNAME} = qx/$cmd/;
+      chomp $netvars{DOMAINNAME};
+      $_ = $netvars{DOMAINNAME};
+      if(/s+/) {
+        $netvars{DOMAINNAME}="";
+      }
+    }
+    ### END get domainname ###
+
+    ### BEGIN Calculate network number ###
+    my $IPADDR_BIN  = ip_quad2ip_bin($netvars{IPADDR});
+    my $NETMASK_BIN = ip_quad2ip_bin($netvars{NETMASK});
+    my $NETWORK_BIN = $IPADDR_BIN & $NETMASK_BIN;
+    $netvars{NETWORK} = ip_bin2ip_quad($NETWORK_BIN);
+    ### END Calculate network number ###
+
+
+    ### BEGIN Create local.cfg ###
+    my $localfile = "/local.cfg";
+    open(FILE, ">$localfile") or croak("Couldn't open $localfile for writing!");
+    print FILE <<EOF;
+#
+# "SystemImager" 
+#
+#  Copyright (C) 1999-2001 Brian Elliot Finley <brian.finley\@baldguysoftware.com>
+#  Copyright (C) 2001-2002 Bald Guy Software <brian.finley\@baldguysoftware.com>
+#
+# This file is: /local.cfg
+#
+EOF
+
+    # And now we loop through our hash and dump out the variables
+    foreach my $var (sort keys %netvars) {
+      if($netvars{$var}) {
+        print FILE "$var=$netvars{$var}\n";
+      } else {
+        print FILE "$var=\n";
+      }
+    }
+
+    close(FILE);
+    ### END Create local.cfg ###
+
+
+  ### BEGIN show file to user ###
+    print <<EOF;
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    Below are the contents of your /local.cfg file.  Make sure that all the 
+    variables are filled in and that they contain the proper values.  You 
+    may edit the file directly if you need to change any of the values.
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+EOF
+
+    $file = "/local.cfg";
+    open(FILE, "<$file") or croak("Couldn't open $file for reading.");
+    while (<FILE>) { print; }
+    close(FILE);
+    ### END show file to user ###
+}
+### END configure-from section ### 
+
+### BEGIN graffiti ###
+if($image) {
+    my $file = "/etc/systemimager/IMAGE_LAST_SYNCED_TO";
+    open (FILE, ">$file") or croak("Couldn't open $file for writing!");
+    print FILE $image, "\n";
+    close (FILE);
+}
+### END graffiti ###
+
+# -reboot
+if($reboot) {
+    print "\nRebooting...\n";
+    my $rc = 0xffff & system("/bin/sleep 10s; /sbin/init 6");
+    if ($rc != 0) { exit $rc >> 8; }  
+}
+
+### BEGIN Subroutines ###
+sub version {
+  print qq($version_info);
+}
+
+sub get_help {
+  print qq( Try "updateclient -help" for more information.\n);
+}
+
+sub usage {
+  print qq($help_info);
+}
+
+sub dec2bin {
+  my $str = unpack("B32", pack("N", shift));
+  return $str;
+}
+
+sub dec2bin8bit {
+  my $str = unpack("B32", pack("N", shift));
+  $str = substr($str, -8); # 32bit number -- get last 8 bits (the relevant ones)
+  return $str;
+}
+
+sub bin2dec {
+  return unpack("N", pack("B32", substr("0" x 32 . shift, -32))); # get all 32bits
+}
+
+sub ip_quad2ip_bin {
+    (my $a, my $b, my $c, my $d) = split(/\./, $_[0]);
+    my $a_bin=dec2bin8bit($a);
+    my $b_bin=dec2bin8bit($b);
+    my $c_bin=dec2bin8bit($c);
+    my $d_bin=dec2bin8bit($d);
+    return join('', $a_bin, $b_bin, $c_bin, $d_bin);
+}
+
+sub ip_bin2ip_quad {
+    my $ip_bin = $_[0];
+    my $a_dec = bin2dec(substr($ip_bin, 0, 8));
+    my $b_dec = bin2dec(substr($ip_bin, 8, 8));
+    my $c_dec = bin2dec(substr($ip_bin, 16, 8));
+    my $d_dec = bin2dec(substr($ip_bin, 24, 8));
+    return join('.', $a_dec, $b_dec, $c_dec, $d_dec);
+}
+### END Subroutines ###
+
+exit 0;

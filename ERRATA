@@ -1,27 +1,10 @@
 #
-# "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>
+# "SystemImager"
 #
-#   $Id$
+#  Copyright (C) 1999-2002 Brian Elliott Finley <brian.finley@baldguysoftware.com>
 #
-# version 1.4.0
+#    $Id$
+#
+# version 2.1.2
 
-o ext3 support
-  o Known to work well with drivers version ext3-0.0.5c and newer.  May not
-    work properly with earlier drivers.
-
-  o SystemImager will use the default parameters to create an appropriately sized
-    journal (given the size of the filesystem) stored internally in the filesystem.
-
-    In the future, I hope to detect and re-create journals of an appropriate size.
-    Currently we don't deal with non-hidden journals or journals on a device other
-    than the filesystem device itself.
-
-    If you different journal options, simply make the changes here in the.
-    master autoinstall script.
-
-o reiserfs support
-  o Stock support is for reiserfs v3.5.x in 2.2.x series kernels on clients.
-  o To use v3.6.x:
-    o custom compile your own kernel and place in /tftpboot/kernel
-    o custom compile your own mkreiserfs utility and place in /tftpboot/systemimager/
-      (you should compile this as a statically linked binary)
+No known ERRATA for this release.

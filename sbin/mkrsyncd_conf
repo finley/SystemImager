@@ -1,0 +1,47 @@
+#!/usr/bin/perl
+
+#
+# "SystemImager"  
+#
+#  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
+#  Copyright (C) 2002 Hewlett-Packard Company <dannf@fc.hp.com>
+#
+#  $Id$
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+
+use lib "USR_PREFIX/lib/systemimager/perl";
+
+use SystemImager::Server;
+use SystemImager::Common;
+
+use AppConfig;
+
+my $config = AppConfig->new(
+                            'autoinstall_script_dir' => { ARGCOUNT => 1 },
+                            'autoinstall_boot_dir' => { ARGCOUNT => 1 },
+                            'default_image_dir' => { ARGCOUNT => 1 },
+                            'rsyncd_conf' => { ARGCOUNT => 1 },
+                            'rsync_stub_dir' => { ARGCOUNT => 1 }
+                            );
+
+$config->file('/etc/systemimager/server.conf');
+
+my $rsyncd_conf = $config->rsyncd_conf();
+my $rsync_stub_dir = $config->rsync_stub_dir();
+
+SystemImager::Common->check_if_root();
+SystemImager::Server->gen_rsyncd_conf($rsync_stub_dir, $rsyncd_conf);

@@ -1,15 +1,19 @@
 #!/usr/bin/perl -w
 
 #
-# "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>
+# "SystemImager" 
 #
-#   Others who have contributed to this code (in alphabetical order):
-#     John Goebel <jgoebel@valinux.com>
-#     Curtis Zinzilieta <czinzilieta@valinux.com>
+#  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
+#  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
 #
-# This file is: mkdhcpserver
+#  $Id$
+#
+#  Others who have contributed to this code (in alphabetical order):
+#    John Goebel <jgoebel@valinux.com>
+#    Curtis Zinzilieta <czinzilieta@valinux.com>
 #
  
+# XXX add LOG_SERVER and LOG_SERVER_PORT options. -BEF-
 
 # what do I call myself?
 $program=$0;
@@ -317,6 +321,10 @@ edit the init script that starts dhcpd to specify the interface that
 is connected to your DHCP clients.  Here's an example:
 
  Change "/usr/sbin/dhcpd" to "/usr/sbin/dhcpd eth1".
+
+Depending on your distribution, you may be able to set this with the 
+"INTERFACES" variable in either "/etc/default/dhcp" or in your dhcpd
+initialization script (usually "/etc/init.d/dhcpd").
 
 Also, be sure to start or restart your dhcpd daemon.  This can usually
 be done with a command like "/etc/init.d/dhcpd restart" or similar.

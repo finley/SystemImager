@@ -1,54 +1,60 @@
 #!/usr/bin/perl -w
 
 #
-# "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>
+# "SystemImager"
 #
-#   $Id$
+#  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
+#  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
 #
-#   Written by Brian Elliott Finley <brian@systemimager.org>
+#  $Id$
 #
-#   Others who have contributed to this code (alphabetically):
-#     Frazier, Dann <daniel_frazier@hp.com>
-#     Zinzilieta, Curtis <czinzilieta@valinux.com>
-#     Smith, Wesley <wessmith@engr.sgi.com>
+#  Others who have contributed to this code (alphabetically):
+#    Frazier, Dann <daniel_frazier@hp.com>
+#    Smith, Wesley <wessmith@engr.sgi.com>
+#    Zinzilieta, Curtis <czinzilieta@valinux.com>
 #
 
 use lib "USR_PREFIX/lib/systemimager/perl";
-use SystemImager::Server;
+
 use SystemImager::Common;
+
 use Getopt::Long;
 use AppConfig;
+use File::Basename;
+use POSIX qw(uname);
 
 ### BEGIN parse the config file ###
 
 my $config = AppConfig->new(
 			    'autoinstall_script_dir' => { ARGCOUNT => 1 },
 			    'autoinstall_boot_dir' => { ARGCOUNT => 1 },
-			    'default_imagedir' => { ARGCOUNT => 1 },
+			    'default_image_dir' => { ARGCOUNT => 1 },
 			    'rsyncd_conf' => { ARGCOUNT => 1 },
-			    'config_dir' => { ARGCOUNT => 1 },
+			    'rsync_stub_dir' => { ARGCOUNT => 1 },
 			    );
-$config->file('/etc/systemimager/systemimager.conf');
+
+$config->file('/etc/systemimager/server.conf');
 
 my $autoinstall_boot_dir = $config->autoinstall_boot_dir();
-
-# this can be changed as more architectures are added
-$autoinstall_boot_dir = $autoinstall_boot_dir . "/i386-boot";
 
 if (!$autoinstall_boot_dir) {
     die "AUTOINSTALL_BOOT_DIR not defined in the config file.";
 }
 ### END parse the config file ###
 
+# only floppies for i386 are supported in this release
+$bin_dir = $autoinstall_boot_dir . "/i386";
+
 # set shell PATH for system() calls 
 $ENV{PATH} = "/usr/local/sbin:/usr/sbin:/sbin:/usr/local/bin:/usr/bin:/bin";
 
-$version_number="SYSTEMIMAGER_VERSION_STRING";
+$VERSION="SYSTEMIMAGER_VERSION_STRING";
 $program_name = "mkautoinstalldiskette";
 $version_info = <<"EOF";
-$program_name (part of SystemImager) v$version_number
+$program_name (part of SystemImager) v$VERSION
     
 Copyright (C) 1999-2001 Brian Elliott Finley <brian\@systemimager.org>
+Copyright (C) 2002 Bald Guy Software <brian.finley\@baldguysoftware.com>
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 EOF
@@ -59,29 +65,26 @@ Usage: $program_name [OPTION]...
 
 Options: (options can be presented in any order and may be abbreviated)
  -help             Display this output.
-
  -version          Display version and copyright information.
-
  -quiet            Don\'t print any output, just provide an appropriate 
                    exit code.  (requires -floppy)
-
- -floppy=DEVICE    The  1.44MB floppy drive device containing the disk
+ -floppy DEVICE    The  1.44MB floppy drive device containing the disk
                    to format.  If not specified, /dev/fd0 is assumed.
                    This command understands \"/dev/fd0\" through \"/dev/fd7\".
                    (if you specify -floppy, this command will run 
                     non-interactively)
-
- -out-file=FILE    Create a 1.44MB floppy image in FILE
-
- -append=STRING    A string of options that will be passed to the autoinstall
-                   kernel
-
- -config=FILE      Where FILE contains all the settings necessary for
+ -out-file FILE    Create a 1.44MB floppy image in FILE.
+ -flavor FLAVOR    Specify a flavor of boot media.  
+                   (defaults to "standard" if -quiet is used)
+ -kernel FILE      Specify an alternate autoinstall kernel.
+ -initrd FILE      Specify an alternate autoinstall ramdisk.
+ -append STRING    A string of options that will be passed to the autoinstall
+                   kernel.
+ -config FILE      Where FILE contains all the settings necessary for
                    the client to set it's hostname and configure it's
                    networking information without DHCP.  This file is
                    copied to /local.cfg on the autoinstalldiskette.
-
- -ssh-key=FILE	   Where FILE is the SSH1 private key of the user 
+ -ssh-key FILE	   Where FILE is the SSH1 private key of the user 
                    account that the autoinstall client will use to
 		   connect to the imageserver.  It is usually called
 		   ".ssh/identity".
@@ -106,6 +109,7 @@ Contents of an example local.cfg file:
  GATEWAY=10.0.0.1
  GATEWAYDEV=eth0
  IMAGESERVER=10.0.0.3
+ IMAGENAME=oracle_db_server-1.0
 
 
 If you will be using SSH, you have two options:
@@ -157,18 +161,13 @@ GetOptions(
             "floppy=s" => \$floppy_device_prefix,
             "config=s" => \$local_config,
             "ssh-key=s" => \$ssh_key,
+	    "flavor=s" => \$flavor,
+	    "kernel=s" => \$kernel,
+	    "initrd=s" => \$initrd,
 	    "append=s" => \$append,
             "quiet" => \$quiet,
 	    "out-file=s" => \$file
 ) || die "$help_info";
-
-# if floppy device not specified, set value to run in interactive mode
-if ($floppy_device_prefix and $file) {
-    die "-floppy and -file are mutually exclusive";
-}
-
-if($floppy_device_prefix) { $user_specified_floppy=1; }
-elsif($file) { $user_specified_file=1; }
 
 # if requested, print help information
 if($help) {
@@ -182,8 +181,68 @@ if($version) {
   exit 0;
 }
 
+# i386 is the only supported architecture for autoinstall floppies. -BEF-
+my $arch = (uname())[4];
+$arch =~ s/i.86/i386/;
+if ($arch ne "i386") {
+    die "Autoinstall floppy diskettes are only supported for the i386 architecture.";
+}
+
+# if not run as root, this script will surely fail
+unless($< == 0) { die "Must be run as root!\n"; }
+
+# if floppy device not specified, set value to run in interactive mode
+if ($floppy_device_prefix and $file) {
+    die "-floppy and -file are mutually exclusive";
+}
+
+if ($floppy_device_prefix) { $user_specified_floppy=1; }
+elsif($file) { $user_specified_file=1; }
+
+unless ($kernel and $initrd) {
+    my %available_flavors =
+	SystemImager::Common->get_boot_flavors("i386", $VERSION,
+					       $autoinstall_boot_dir);
+
+    unless (%available_flavors) {
+	print qq(\nI couldn't find any boot flavors for SystemImager $VERSION on $arch.\n);
+        print qq(Please use "install_siboot" to install the appropriate boot files.\n\n);
+        exit 1;
+    }
+
+    if (($quiet) and (!$flavor)) { $flavor = "standard"; }
+
+    unless ($flavor) {
+
+	print "Here is a list of available flavors:\n\n";
+	foreach (sort (keys %available_flavors)) {
+	    print "  $_\n";
+	    $flavor = $_;
+	}
+
+        # If "standard" is one of the available flavours, default to it. -BEF-
+        if ($available_flavors{"standard"}) { $flavor = "standard"; }
+	
+	print "\nWhich flavor would you like to use? [$flavor]: ";
+	$flavor = get_response($flavor);
+    }
+    
+    
+    # make sure the specified flavor is available
+    unless ($available_flavors{$flavor}) {
+      print "\nI can't find boot files of the flavor, version, and architecture specified.\n";
+      print "The files you specified would come from a SystemImager boot tarball named:\n\n";
+      print qq( "systemimager-boot-${arch}-${flavor}-${VERSION}.tar.bz2"\n\n); 
+      exit 1;
+    }
+
+    if (! $kernel) { $kernel = "$bin_dir/kernel-$flavor-$VERSION"; }
+    if (! $initrd) { $initrd = "$bin_dir/initrd-$flavor-$VERSION.gz"; }
+}
+    
 if (!$append) { $append = ""; }
-# be sure the user includes -floppy when doing -quiet
+
+# Be sure the user includes -floppy or -file when doing -quiet
 if($quiet and !$user_specified_floppy and !$user_specified_file) { die "Must use -floppy or -file with -quiet! (use -help for options)\n"; }
 
 # if user did not specify a floppy device, choose the default
@@ -203,9 +262,9 @@ if (! $file) {
 #
 # array of standard files
 @files = ( 
-  "$autoinstall_boot_dir/initrd.gz",
-  "$autoinstall_boot_dir/kernel", 
-  "$autoinstall_boot_dir/pxelinux.cfg/message.txt"
+  "$initrd",
+  "$kernel", 
+  "/etc/systemimager/pxelinux.cfg/message.txt"
 );
 
 # Verify that the config file, if specified, exists
@@ -224,9 +283,6 @@ foreach my $file ( @files ) {
   }
 }
 ### END Verify that all necessary files actually exist. ###
-
-# if not run as root, this script will surely fail
-unless($< == 0) { die "Must be run as root!\n"; }
 
 # if appropriate, run interactively
 if (!$user_specified_floppy and !$user_specified_file) {
@@ -342,7 +398,7 @@ if($? != 0) { die "Couldn't execute: $command!\n"; }
 # copy stuff to floppy
 foreach my $file ( @files ) {
     if (!$quiet) {print "Copying $file to floppy.\n";}
-    my $command="cp $file $mount_dir";
+    my $command="cp $file $mount_dir/" . substr(basename($file), 0, 8);
     system($command);
         if($? != 0) { 
 	    system('umount', $floppy_device);
@@ -352,8 +408,11 @@ foreach my $file ( @files ) {
 }
 
 $append_string  = "vga=extended load_ramdisk=1 root=/dev/ram rw ";
-$append_string .= "prompt_ramdisk=0 initrd=initrd.gz " . $append;
-SystemImager::Server->build_syslinux_cfg("", "$append_string", "", "", "",
+$append_string .= "prompt_ramdisk=0 initrd=" . substr(basename($initrd), 0, 8);
+$append_string .= " " . $append;
+# XXX change this to simply copy the syslinux.cfg file from /etc/systemimager/pxelinux.cfg and
+# add append string if necessary.  See mkautoinstallcd
+build_syslinux_cfg("$kernel", "$append_string", "", "", "",
   "$mount_dir/syslinux.cfg") or die "Couldn't create $mount_dir/syslinux.cfg.\n";
 
 # unmount floppy
@@ -370,3 +429,33 @@ rmdir $mount_dir or die "Couldn't remove temporary mount point $mount_dir\n";
 # print done!
 if (!$quiet) { print "Done!\n";}
 exit 0;
+
+sub get_response {
+    my $garbage_out=$_[0];
+    my $garbage_in=<STDIN>;
+    chomp $garbage_in;
+    unless($garbage_in eq "") { $garbage_out = $garbage_in; }
+    return $garbage_out;
+}
+
+sub build_syslinux_cfg {
+    my ($kernel, $append, $display, $prompt, $timeout, $outfile) = @_;
+    
+    if (!$kernel) { $kernel = "kernel"; }
+    if (!$append) {
+	$append = "vga=extended prompt_ramdisk=0 initrd=initrd.gz load_ramdisk=1 root=/dev/ram rw";
+    }
+    if (!$display) { $display = "message.txt"; }
+    if (!$prompt) { $prompt = "0"; }
+    if (!$timeout) { $timeout = "50"; }
+    if (!$outfile) { return undef; }
+
+    open(OUT, ">$outfile") or return undef;
+
+    print OUT "DEFAULT " . substr(basename($kernel), 0, 8) . "\n";
+    print OUT "APPEND $append\n";
+    print OUT "DISPLAY $display\n";
+    print OUT "PROMPT $prompt\n";
+    print OUT "TIMEOUT $timeout\n";
+    close(OUT);
+}

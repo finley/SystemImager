@@ -1,11 +1,12 @@
 #!/usr/bin/perl -w
 
 #
-# "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>
+# "SystemImager" 
 #
-#   Others who have contributed to this code (in alphabetical order):
+#  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
+#  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
 #
-# This file is: lsimage
+#  $Id$
 #
 
 # set some variables
@@ -142,10 +143,12 @@ print "Available image(s):\n";
 print "-------------------\n";
 $command = "rsync rsync://${imageserver}:$port/";
 open(FILE, "$command|");
-  while (<FILE>) {
+while (<FILE>) {
     my $line = trim ($_);
-    unless("$line" eq "scripts") { print "  $line\n"; }
-  }
+    unless (("$line" eq "scripts") or ("$line" eq "boot")) { 
+	print "  $line\n"; 
+    }
+}
 close(FILE);
 print "\n";
 

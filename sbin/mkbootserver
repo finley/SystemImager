@@ -3,9 +3,8 @@
 #
 #   $Id$
 #
-#  Copyright (C) dann frazier <dannf@dannf.org>
+#   Written by Dann Frazier <daniel_frazier@hp.com>
 #
-
 
 #########################################################################
 # The intent of this script is to automate the configuration of a
@@ -25,7 +24,7 @@ INITRD=""
 TFTPDIR=""
 PXELINUX=""
 
-program_name=`basename $0`
+program_name=$(basename $0)
 
 usage="\
 Usage:  $program_name [-f] [--interface=interface] [--localdhcp=y|n] 
@@ -37,12 +36,14 @@ TFTPD_PATH=""
 TFTP_TEST_FILE_TEXT="all your tftp test file are belong to us"
 TFTP_DAEMON=""
 
-SYSLINUX_DEFAULT="\
-DEFAULT kernel
-APPEND vga=extended load_ramdisk=1 prompt_ramdisk=0 initrd=initrd.gz root=/dev/ram rw
-DISPLAY message.txt
-PROMPT 1
-TIMEOUT 50"
+CONFIG_DIR="/etc/systemimager"
+
+#SYSLINUX_DEFAULT="\
+#DEFAULT kernel
+#APPEND vga=extended load_ramdisk=1 prompt_ramdisk=0 initrd=initrd.gz root=/dev/ram rw
+#DISPLAY message.txt
+#PROMPT 1
+#TIMEOUT 50"
 
 PXE_CONF="\
 #  *******  PXE CONFIGURATION FILE *******
@@ -524,8 +525,8 @@ configure_inetd_for_tftpd_hpa() {
 	fi
 	echo "done."
     elif [ "$xinetd_pid" != "" ]; then
-	echo "Sending SIGUSR1 to xinetd... "
-	kill -USR1 $xinetd_pid
+	echo "Sending SIGUSR2 to xinetd... "
+	kill -USR2 $xinetd_pid
 	if [ $? -eq 0 ]; then
 	    echo "done."
 	else
@@ -649,7 +650,7 @@ install_pxe_daemon() {
 	echo "systems, you can install the pxe RPM for your release.  For"
 	echo "Debian systems, you can try one of the debs i've built from the"
 	echo "RedHat package source.  These packages should be available from"
-	echo "http://dannf.org/"
+	echo "http://dannf.org/systemimager"
 	echo "****************************************************************"
 	return 1
     fi
@@ -690,7 +691,7 @@ configure_pxe_daemon() {
     fi
     
     echo -n "Checking to make sure $interface is up... "
-    ifconfig $interface | grep "inet addr" 1> /dev/null 2> /dev/null
+    ifconfig $interface | grep "inet" 1> /dev/null 2> /dev/null
     if [ $? -eq 0 ]; then
 	echo "yup."
     else
@@ -788,7 +789,13 @@ pxelinux_cfg() {
 	fi
     fi
     
-    echo "${SYSLINUX_DEFAULT}" > $LINUX_INSTALL/pxelinux.cfg/default
+    cp -f ${CONFIG_DIR}/pxelinux.cfg/syslinux.cfg $LINUX_INSTALL/pxelinux.cfg/default
+    if [ $? -ne 0 ]; then
+	echo "failed."
+	return 1
+    fi
+
+    cp -f ${CONFIG_DIR}/pxelinux.cfg/message.txt $LINUX_INSTALL/pxelinux.cfg/message.txt
     if [ $? -ne 0 ]; then
 	echo "failed."
 	return 1

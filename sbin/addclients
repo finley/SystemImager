@@ -1,10 +1,15 @@
 #!/usr/bin/perl -w
 #
-# "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>
-#   Others who have contributed to this code (in alphabetical order):
-#   Austin Gonyou <austin@coremetrics.com>
+# "SystemImager" 
 #
-# This file is: addclients
+#  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
+#
+#  $Id$
+#
+#  Others who have contributed to this code (in alphabetical order):
+#    Austin Gonyou <austin@coremetrics.com>
+#
+
 ####################
  ### BEGIN Program ###
   #####################
@@ -19,9 +24,9 @@ use AppConfig;
 my $config = AppConfig->new(
 			    'autoinstall_script_dir' => { ARGCOUNT => 1 },
 			    'autoinstall_boot_dir' => { ARGCOUNT => 1 },
-			    'default_imagedir' => { ARGCOUNT => 1 },
+			    'default_image_dir' => { ARGCOUNT => 1 },
 			    'rsyncd_conf' => { ARGCOUNT => 1 },
-			    'config_dir' => { ARGCOUNT => 1 },
+			    'rsync_stub_dir' => { ARGCOUNT => 1 },
                             'help' => {ARGCOUNT => 0, DEFAULT => 0, ALIAS => 'h'},
                             'version' => {ARGCOUNT => 0, DEFAULT => 0},
                             'client' => {ARGCOUNT => 1, DEFAULT => ""},
@@ -38,7 +43,7 @@ my $config = AppConfig->new(
                             'quiet' => {ARGCOUNT => 0, DEFAULT => 0},
 			    );
 
-$config->file('/etc/systemimager/systemimager.conf');
+$config->file('/etc/systemimager/server.conf');
 
 my $autoinstall_script_dir = $config->autoinstall_script_dir();
 
