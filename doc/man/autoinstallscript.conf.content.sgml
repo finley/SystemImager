@@ -109,21 +109,12 @@
 
     <listitem>
       <para>
-		fs - <command>parted(8)</command> is the tool used by SystemImager for
-		partitioning disks.  <command>parted(8)</command> requires you to tell
-		it what kind of filesystem you intend to put on a partition, but it
-    	doesn't really affect what kind of filesystem SystemImager creates.
-    	Valid values for this tag are: ext2, ext3, fat16, fat32, hfs, hp-ufs,
-        jfs, linux-swap, ntfs, reiserfs, sun-ufs, or xfs.
+		id - Partition id.  This is a hex number used to specify special 
+        information about a partition.  It is usually not needed and is 
+        optional.  In special circumstances where it is needed, 
+        <command>sfdisk</command> is used to change the partition id to the
+        specified type.
       </para>
-
-      <note>
-		<para>
-		  This tag does not determine the filesystem type that SystemImager
-		  will create on this partition.  See the "fs" tag in the filesystem 
-          section to specify the filesystem you need created.
-		</para>
-      </note>
     </listitem>
 
     <listitem>
