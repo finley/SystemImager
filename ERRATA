@@ -19,3 +19,9 @@ o ext3 support
     If you different journal options, simply make the changes here in the.
     master autoinstall script.
 
+o reiserfs support
+  o Stock support is for reiserfs v3.5.x in 2.2.x series kernels on clients.
+  o To use v3.6.x:
+    o custom compile your own kernel and place in /tftpboot/kernel
+    o custom compile your own mkreiserfs utility and place in /tftpboot/systemimager/
+      (you should compile this as a statically linked binary)
