@@ -360,24 +360,24 @@ confirm() {
 
 
 # VA SystemImager specific functions
-create_rsyncd_conf() {
-  echo '#'                                                      > /etc/rsyncd.conf
-  echo '# "VA SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com>'    >> /etc/rsyncd.conf
-  echo '#'                                                      >> /etc/rsyncd.conf
-  echo ''                                                       >> /etc/rsyncd.conf
-  echo 'list = yes'                                             >> /etc/rsyncd.conf
-  echo 'timeout = 600'                                          >> /etc/rsyncd.conf
-  echo 'dont compress = *.gz *.tgz *.zip *.Z *.ZIP *.bz2 *.deb *.rpm *.dbf'  >> /etc/rsyncd.conf
-  echo 'uid = root'                                             >> /etc/rsyncd.conf
-  echo 'gid = root'                                             >> /etc/rsyncd.conf
-  echo 'use chroot = no'                                        >> /etc/rsyncd.conf
-  echo ''                                                       >> /etc/rsyncd.conf
-  echo '[tftpboot]'						>> /etc/rsyncd.conf
-  echo '  path = /tftpboot'					>> /etc/rsyncd.conf
-  echo ''                                                       >> /etc/rsyncd.conf
-  echo '# only image entries below this line'                   >> /etc/rsyncd.conf
-  echo ''                                                       >> /etc/rsyncd.conf
-}
+#create_rsyncd_conf() {
+#  echo '#'                                                      > /etc/rsyncd.conf
+#  echo '# "VA SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com>'    >> /etc/rsyncd.conf
+#  echo '#'                                                      >> /etc/rsyncd.conf
+#  echo ''                                                       >> /etc/rsyncd.conf
+#  echo 'list = yes'                                             >> /etc/rsyncd.conf
+#  echo 'timeout = 600'                                          >> /etc/rsyncd.conf
+#  echo 'dont compress = *.gz *.tgz *.zip *.Z *.ZIP *.bz2 *.deb *.rpm *.dbf'  >> /etc/rsyncd.conf
+#  echo 'uid = root'                                             >> /etc/rsyncd.conf
+#  echo 'gid = root'                                             >> /etc/rsyncd.conf
+#  echo 'use chroot = no'                                        >> /etc/rsyncd.conf
+#  echo ''                                                       >> /etc/rsyncd.conf
+#  echo '[tftpboot]'						>> /etc/rsyncd.conf
+#  echo '  path = /tftpboot'					>> /etc/rsyncd.conf
+#  echo ''                                                       >> /etc/rsyncd.conf
+#  echo '# only image entries below this line'                   >> /etc/rsyncd.conf
+#  echo ''                                                       >> /etc/rsyncd.conf
+#}
 ##############################################################################################
 ### END functions
 ##############################################################################################
