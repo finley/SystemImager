@@ -291,41 +291,41 @@ if (-d "$imagedir") {
 
 ### BEGIN golden client stuff ###
 if($golden_client) {
-  # get /etc/mtab from $golden_client
+  # get /etc/systemimager/mounted_filesystems from $golden_client
   if (!$quiet) {
-    print "Retrieving /etc/mtab from $golden_client to check for mounted filesystems...\n";
-    $command =  "rsync -av --numeric-ids ${golden_client}::root/etc/mtab $imagedir";
+    print "Retrieving /etc/systemimager/mounted_filesystems from $golden_client to check for mounted filesystems...\n";
+    $command =  "rsync -av --numeric-ids ${golden_client}::root/etc/systemimager/mounted_filesystems ${imagedir}/etc/systemimager/mounted_filesystems";
     open(RSYNC, "$command|");
-    print "------------- $golden_client mtab RETRIEVAL PROGRESS -------------\n";
+    print "------------- $golden_client mounted_filesystems RETRIEVAL PROGRESS -------------\n";
     while (<RSYNC>) {
       print;
     }
-    print "------------- $golden_client mtab RETRIEVAL FINISHED -------------\n";
+    print "------------- $golden_client mounted_filesystems RETRIEVAL FINISHED -------------\n";
     close(RSYNC);
   } else {
-    $command = "rsync -a --numeric-ids ${golden_client}::root/etc/mtab $imagedir";
+    $command = "rsync -a --numeric-ids ${golden_client}::root/etc/systemimager/mounted_filesystems ${imagedir}/etc/systemimager/mounted_filesystems";
     system($command);
   }
   
   # $? is the return value from rsync
   if ($?) {
-    print "Failed to retrieve /etc/mtab from $golden_client.\n";
+    print "Failed to retrieve /etc/systemimager/mounted_filesystems from $golden_client.\n";
     die "$program_name: Have you run \"prepareclient\" on $golden_client?\n";
   }
   
   # create list of filesystems to *not* get
-  open (MTAB, "<$imagedir/mtab") || die ("$program_name: Couldn't open $imagedir/mtab for reading\n");
-  @mtab = <MTAB>;
-  close MTAB;
-  open (EXCLUDE, ">$exclude_file") ||
-    die "$program_name: Couldn't open $exclude_file for writing\n";
-  @mtab = grep (!/\s+ext2\s+/, @mtab);
-  @mtab = grep (!/\s+ext3\s+/, @mtab);
-  @mtab = grep (!/\s+reiserfs\s+/, @mtab);
-  foreach (@mtab) {
-    /\S+\s+(\S+)\s+/;
-    print EXCLUDE "$1/*\n";
-  }
+  $file="${imagedir}/etc/systemimager/mounted_filesystems";
+  open (FILE, "<$file") || die ("$program_name: Couldn't open $file for reading\n");
+    @mounted_filesystems = <FILE>;
+  close FILE;
+  open (EXCLUDE, ">$exclude_file") || die "$program_name: Couldn't open $exclude_file for writing\n";
+    @mounted_filesystems = grep (!/\s+ext2\s+/, @mounted_filesystems);
+    @mounted_filesystems = grep (!/\s+ext3\s+/, @mounted_filesystems);
+    @mounted_filesystems = grep (!/\s+reiserfs\s+/, @mounted_filesystems);
+    foreach (@mounted_filesystems) {
+      /\S+\s+(\S+)\s+/;
+      print EXCLUDE "$1/*\n";
+    }
   close EXCLUDE;
   # compile rsync options
   $options="--delete --exclude-from=$exclude_file ${golden_client}::root/ $imagedir";

@@ -79,6 +79,14 @@ create_devices_by_label_file() {
   rm -f /etc/systemimager/ext2_devices_by_label.txt
   rm -f /etc/systemimager/devices_by_label.txt
 
+  # Just in case /etc/mtab is a symlink to /proc/mounts.  This method
+  # should still work, unless LABEL= statements are used.  We'll have
+  # to deal with that later.  Sedding through /proc/mounts directly is 
+  # useless as it is a zero length file. :)  This file is also left
+  # behind for getimage.
+  cat /etc/mtab > /etc/systemimager/mounted_filesystems
+
+
   # sed command below uses a literal tab: <ctrl>+<v>, then <tab>
   LABELS=`
 	  sed 's/	/ /' /etc/fstab | \
@@ -94,10 +102,11 @@ create_devices_by_label_file() {
                  grep "$LABEL "                 | \
 		 awk '{print $2}'
 		`
+
     # sed command below uses a literal tab: <ctrl>+<v>, then <tab>
     DEVICE=`
-            sed 's/	/ /' /etc/mtab | \
-            grep "$MOUNT_POINT "       | \
+            sed 's/	/ /' /etc/systemimager/mounted_filesystems | \
+            grep "$MOUNT_POINT "                                   | \
 	    awk '{print $1}'
 	   `
     echo $LABEL $DEVICE >> /etc/systemimager/devices_by_label.txt
