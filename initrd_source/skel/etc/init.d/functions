@@ -170,6 +170,9 @@ write_variables() {
     echo "SSH_DOWNLOAD_URL=$SSH_DOWNLOAD_URL"	>> /tmp/variables.txt
 
     echo "FLAMETHROWER_DIRECTORY_PORTBASE=$FLAMETHROWER_DIRECTORY_PORTBASE"	>> /tmp/variables.txt
+
+    echo "MONITOR_SERVER=$MONITOR_SERVER"      	>> /tmp/variables.txt
+    echo "MONITOR_PORT=$MONITOR_PORT"          	>> /tmp/variables.txt
 }
 #
 ################################################################################
@@ -239,6 +242,9 @@ tmpfs_watcher() {
 #   Usage: $COMMAND || shellout
 #
 shellout() {
+    if [ ! -z $MONITOR_SERVER ]; then
+        stop_report_task -1
+    fi
     COUNT="$RETRY"
     logmsg "Killing off running processes."
     kill -9 $TMPFS_WATCHER_PID  >/dev/null 2>/dev/null
@@ -1262,6 +1268,70 @@ start_ssh() {
         # remove rug
         exit 1
     fi
+}
+#
+################################################################################
+#
+#   Report installation status to the monitor server
+#
+
+start_report_task() {
+    # Evaluate image size.
+    IMAGESIZE=`rsync -av $IMAGESERVER::$IMAGENAME | grep "total size" | sed -e "s/total size is \([0-9]*\).*/\1/"`
+    IMAGESIZE=`expr $IMAGESIZE / 1024`
+
+    if [ -z $MONITOR_PORT ]; then
+        MONITOR_PORT=8181
+    fi
+
+    # Evaluate disks size.
+    LIST=`df 2>/dev/null | sed -ne "/^\/dev/p" | sed "s/  */ /g" | sed "s/\(.*\) \(.*\) \(.*\) \(.*\) \(.*\) \(.*\)/\3+/"`0
+    DISKSIZE=`echo $LIST | bc`
+
+    # MAC address is the primary key to identify a client -AR-
+    mac=`ifconfig $DEVICE | sed -ne "s/.*HWaddr //p" | sed "s/ //g" | sed s/:/./g` 
+
+    # Spawn the report task -AR-
+    {
+    while :; do
+        LIST=`df 2>/dev/null | sed -ne "/^\/dev/p" | sed "s/  */ /g" | sed "s/\(.*\) \(.*\) \(.*\) \(.*\) \(.*\) \(.*\)/\3+/"`0
+        TOT=`echo $LIST | bc`
+        status=`echo "($TOT - $DISKSIZE) * 100 / $IMAGESIZE" | bc`
+        if [ $status -eq 0 ]; then 
+            status=1
+        fi
+
+        # Send status to the monitor server -AR-
+        time=`cat /proc/uptime | sed "s/\..*//"`
+        tmpfs=`df | grep tmpfs | sed "s/.* \([0-9]*%\) .*/\1/"`
+        msg=`echo mac=$mac:tmpfs=$tmpfs:time=$time:status=$status`
+        echo $msg | nc $MONITOR_SERVER $MONITOR_PORT
+        
+        # Wait 10 sec between each report -AR-
+        sleep 10
+    done
+    }&
+    REPORT_PID=$!
+}
+#
+################################################################################
+#
+#   Stop to report installation status to the monitor server
+#
+
+stop_report_task() {
+    status=$1
+    kill -9 $REPORT_PID
+
+    if [ -z $MONITOR_PORT ]; then
+        MONITOR_PORT=8181
+    fi
+
+    # Try to report the error to the monitor server.
+    mac=`ifconfig $DEVICE | sed -ne "s/.*HWaddr //p" | sed "s/ //g" | sed s/:/./g`  
+    time=`cat /proc/uptime | sed "s/\..*//"`
+    msg=`echo mac=$mac:time=$time:status=$status`
+    echo $msg | nc $MONITOR_SERVER $MONITOR_PORT
 }
 #
 ################################################################################
