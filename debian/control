@@ -1,0 +1,28 @@
+Source: va-systemimager-client
+Section: admin
+Priority: optional
+Maintainer: dann frazier <dannf@dannf.org>
+Build-Depends: debhelper (>> 2.0.0), docbook-to-man, cygnus-stylesheets
+Standards-Version: 3.2.1
+
+Package: va-systemimager-client
+Architecture: all
+Depends: rsync
+Description: VA SystemImager client side utilities
+ VA SystemImager is a set of utilities for installing GNU/Linux images to
+ clients machines over the network.  Images are stored in flat files on the
+ server, making updates easy.  rsync is used for transfers, making updates
+ efficient.
+ .
+ This package contains utilities for updating a client's image from the
+ server, and preparing a client for having it's image fetched by the server.
+
+Package: va-systemimager
+Architecture: all
+Depends: rsync, dhcp, syslinux
+Suggests: tftpd-hpa
+Description: VA SystemImager Image-Server
+ VA SystemImager is a set of utilities for installing GNU/Linux images to
+ clients machines over the network.  Images are stored in flat files on the
+ server, making updates easy.  rsync is used for transfers, making updates
+ efficient.
