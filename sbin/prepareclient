@@ -407,8 +407,8 @@ sub which {
 }
 
 #
-# Read /proc/partitions and figure out all the disks that need
-# to have their partitions captured.
+# Read /proc/partitions and figure out all the disks that need to have their 
+# partitions captured.
 #
 sub collect_disks {
     open(IN,"</proc/partitions") or croak("Couldn't open /proc/partitions for reading.");
