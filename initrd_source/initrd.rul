@@ -121,11 +121,7 @@ ifdef	MODPROBE_BINARY
 endif
 
 ifdef UCLIBC_TARGET
-	# If UCLIBC_TARGET is set, then copy over uclibc libraries. -BEF-
-	mkdir -m 755 -p \
-	      $(INITRD_BUILD_DIR)/usr/$(UCLIBC_ARCH_NAME)-linux-uclibc/lib/
-	cp -a $(UCLIBC_RUNTIME)/lib/* \
-	      $(INITRD_BUILD_DIR)/usr/$(UCLIBC_ARCH_NAME)-linux-uclibc/lib
+	cp -a $(UCLIBC_RUNTIME)/usr $(INITRD_BUILD_DIR)
 else
 	# If we're not using uclibc, then copy over the 
 	# standard libs instead. -BEF-

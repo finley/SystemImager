@@ -33,11 +33,11 @@ $(INITRD_SRC_DIR)/$(UCLIBC_DIR)/.config: $(INITRD_SRC_DIR)/$(UCLIBC_TARBALL) $(U
 	echo CONFIG_ARCH=$(ARCH) >> $(INITRD_SRC_DIR)/$(UCLIBC_DIR)/.config
 	echo CONFIG_386=y        >> $(INITRD_SRC_DIR)/$(UCLIBC_DIR)/.config
 	echo UCLIBC_PROFILING=n  >> $(INITRD_SRC_DIR)/$(UCLIBC_DIR)/.config
-	echo SHARED_LIB_LOADER_PATH=\"/lib\" \
+	echo SHARED_LIB_LOADER_PREFIX=\"/usr/$(UCLIBC_ARCH_NAME)-linux-uclibc/lib\" \
                                  >> $(INITRD_SRC_DIR)/$(UCLIBC_DIR)/.config
 	echo KERNEL_SOURCE=\"$(UCLIBC_LINUX_DIR)\" \
                                  >> $(INITRD_SRC_DIR)/$(UCLIBC_DIR)/.config
-	echo RUNTIME_PREFIX=\"$(UCLIBC_RUNTIME)\" \
+	echo RUNTIME_PREFIX=\"$(UCLIBC_RUNTIME)/usr/$(UCLIBC_ARCH_NAME)-linux-uclibc\" \
                                  >> $(INITRD_SRC_DIR)/$(UCLIBC_DIR)/.config
 	echo DEVEL_PREFIX=\"$(UCLIBC_DEV)\" \
                                  >> $(INITRD_SRC_DIR)/$(UCLIBC_DIR)/.config
