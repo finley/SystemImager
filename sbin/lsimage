@@ -1,5 +1,4 @@
 #!/usr/bin/perl -w
-
 #
 # "SystemImager" 
 #
@@ -7,6 +6,9 @@
 #  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
 #
 #  $Id$
+#
+#   2004.06.02 Brian Elliott Finley
+#   - add --verbose option, and show image retrieval date
 #
 
 # declare modules
@@ -32,7 +34,7 @@ sub trim {
 $version_info = <<"EOF";
 $program_name (part of SystemImager) version $version_number
 
-Copyright (C) 1999-2001 Brian Elliott Finley <brian\@systemimager.org>
+Copyright (C) 1999-2004 Brian Elliott Finley
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 EOF
@@ -44,27 +46,36 @@ Usage: $program_name [OPTION]... -server HOSTNAME -image IMAGENAME
 
 Options: (options can be presented in any order)
 
- -help                    Display this output.
+ --help
+    Display this output.
 
- -version                 Display version and copyright information.
+ --version
+    Display version and copyright information.
 
- -server HOSTNAME         Hostname or IP address of the imageserver.
-                          Defaults to localhost.
+ --verbose
+    Display more information, including image retrieval dates.
 
- -ssh-user USERNAME       Username for ssh connection to the client.
-                          Only needed if a secure connection is required.
+ --server HOSTNAME
+    Hostname or IP address of the imageserver.  Defaults to localhost.
+
+ --ssh-user USERNAME
+    Username for ssh connection to the client.  Only needed if an encrypted
+    connection is required.
 
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
 EOF
 
 
+my $verbose;
+
 # interpret command line options
 GetOptions( 
-  "help" => \$help,
-  "version" => \$version,
-  "ssh-user=s" => \$ssh_user,
-  "server=s" => \$imageserver
+  "help"        => \$help,
+  "version"     => \$version,
+  "verbose|v"   => \$verbose,
+  "ssh-user=s"  => \$ssh_user,
+  "server=s"    => \$imageserver
 ) or die qq($help_info);
 
 # if requested, print help information
@@ -138,19 +149,34 @@ if (($ssh_user) and ("$imageserver" ne "127.0.0.1") and ("$imageserver" ne "loca
 }
 
 # get listing
-print "-------------------\n";
+print "--------------------------------------------------------------------------------\n";
 print "Available image(s):\n";
-print "-------------------\n";
+print "--------------------------------------------------------------------------------\n";
 $command = "rsync rsync://${imageserver}:$port/";
 open(FILE, "$command|");
 while (<FILE>) {
     $_ = trim ($_);
-    unless (
-        ("$_" eq "scripts")
-        or ("$_" eq "boot")
-        or ("$_" eq "overrides")
-    ) { 
+    next if( m/(scripts|boot|overrides)/ );
+    if($verbose) {
+
+        my $file = "/tmp/tmp_file.$$";
+
+        my $cmd = "rsync -a rsync://${imageserver}:$port/$_/etc/systemimager/mounted_filesystems $file";
+        !system($cmd) or die("Couldn't run:  $cmd\n");
+
+        my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,$blksize,$blocks) = stat($file);
+        unlink($file);
+
+        my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($mtime);
+        $mon++;
+        $year += 1900;
+
+        printf("  %04d.%02d.%02d %02d:%02d -- %s\n", $year,$mon,$mday,$hour,$min,$_);
+
+    } else {
+
 	    print "  $_\n"; 
+
     }
 }
 close(FILE);
