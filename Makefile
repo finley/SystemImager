@@ -124,7 +124,9 @@ LOG_DIR = $(DESTDIR)/var/log/systemimager
 
 INITRD_DIR = $(TOPDIR)/initrd_source
 
-BOOT_BIN_DEST     = $(USR)/share/systemimager/boot/$(ARCH)/standard
+BOOT_BIN_DEST     = $(USR)/share/systemimager/boot/$(ARCH)/$(FLAVOR)
+
+SSH_BIN_DEST 	  = $(USR)/share/systemimager/boot/$(ARCH)/ssh
 
 PXE_CONF_SRC      = etc/pxelinux.cfg
 PXE_CONF_DEST     = $(ETC)/systemimager/pxelinux.cfg
@@ -402,6 +404,10 @@ ifndef WITH_SSH
 	@exit 1
 endif
 
+PHONY += install_openssh_tarball
+install_openssh_tarball:	$(SYSTEMIMAGER_SSH_TARBALL)
+	$(SI_INSTALL) -d -m 755 $(SSH_BIN_DEST)
+	$(SI_INSTALL) -m 644 $(SYSTEMIMAGER_SSH_TARBALL) $(SSH_BIN_DEST)
 
 #
 ################################################################################
