@@ -77,6 +77,9 @@
 #           boot files for clients)
 #
 # XXX include pcmcia utilities in boel-binaries tarball
+#
+# To do a 'standard-ssh' flavor, do a 'make SSH_SUPPORT=1 all'
+#
 
 DESTDIR =
 VERSION = $(shell cat VERSION)
@@ -354,7 +357,7 @@ $(BOEL_BINARIES_TARBALL):	$(DISCOVER_BINARY) $(DISCOVER_DATA_FILES) \
 				$(MKJFS_BINARY) $(RAIDTOOLS_BINARIES) \
 				$(MKREISERFS_BINARY) $(BC_BINARY) \
 				$(SFDISK_BINARY) $(MKXFS_BINARY) \
-				$(SRC_DIR)/modules_build-stamp
+				$(OPENSSH_BINARIES) $(SRC_DIR)/modules_build-stamp
 	#
 	# Put binaries in the boel_binaries_tarball...
 	#
@@ -373,6 +376,9 @@ $(BOEL_BINARIES_TARBALL):	$(DISCOVER_BINARY) $(DISCOVER_DATA_FILES) \
 	install -m 755 $(MKREISERFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 $(MKJFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 $(MKXFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
+ifdef SSH_SUPPORT
+	install -m 755 $(OPENSSH_BINARIES) $(BOEL_BINARIES_DIR)/sbin/
+endif
 	#
 	# Put libraries in the boel_binaries_tarball...
 	#
