@@ -10,7 +10,8 @@
 #
 #
 #
-# Editing this file:
+
+### Editing this file ###
 #   When adding a rule to this makefile, you should also add a properly
 #   formatted comment just above.  This is so that the 'help' rules can parse
 #   this file and print out a short description of the various rules.
@@ -22,7 +23,8 @@
 #   that if you're messing with these rules, you've opened up this file anyway,
 #   so normal comments are fine.
 #
-# SystemImager file location standards:
+
+### File Locations ###
 #   o images will be stored in: /var/lib/systemimager/images/
 #   o autoinstall scripts:      /var/lib/systemimager/scripts/
 #
@@ -54,15 +56,17 @@
 #   o sysadmin binaries:        /usr/local/sbin (default)
 #     (all other binaries)
 #
-# Standards for pre-defined rsync modules:
-#   o scripts
-#   o <arch>-boot (Ie., i386-boot -- dynamically determine in rcS)
+
+### Pre-defined rsync modules ###
+#   o scripts                       autoinstallscripts/symlinks
+#   o <arch>-boot (Ie., i386-boot -- dynamically determined in rcS)
 #
-# SystemImager package names and contents (all forms of packaging will use the
-#  same base names):
+
+### Packaging ###
+# SystemImager package names and contents (non-tarball forms of packaging will # use the same base names):
 #
 #  o systemimager-server            all of the arch-independent components
-#                                   needed only  by an image server
+#                                   needed only by an image server
 #
 #  o systemimager-client            all of the arch-independent components
 #                                   needed only by a golden client (there are
@@ -89,7 +93,28 @@
 #
 #  o systemimager-doc               documentation (manual, etc).
 #
-
+# There will be fewer SystemImager tarballs.  Currently, we have:
+#   o systemimager-server           all components that reside on the server
+#   o systemimager-client           all components that reside on the client
+#   o systemimager-source           the source - duh.
+#
+# Justification for the inconsistency between tarballs and RPM/deb packaging:
+#   o Package management allows us to enforce file dependencies.  We can
+#     specify that systemimager-server shouldn't be installed until
+#     systemimager-kernel-i386 is.  Including the kernel in the server package
+#     thus gets rid of the FAQs such as:
+#     "mkautoinstalldiskette fails - it claims it can't find
+#      /usr/local/share/systemimager/i386-boot/kernel, what's wrong?"
+#   o Package management allows us to enforce versioned dependencies in a
+#     straightforward way.  We can require that systemimager-server version X
+#     also has systemimager-initrd-i386 version X.  Tarballs don't have this
+#     feature.  Using a newer systemimager-server with an older, incompatible
+#     systemimager-initrd-i386 could cause installs to fail in mysterious ways.
+#     
+#   Sure, all of these issues could be fixed with smarter install scripts.
+#   But we would essentially be writing our own package manager, and I don't
+#   want to do that.  -dann
+#         
 
 DESTDIR =
 VERSION = $(shell cat VERSION)
