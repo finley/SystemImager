@@ -87,6 +87,14 @@ $(INITRD_DIR)/build_dir-stamp:	$(SKEL_FILES) $(BUSYBOX_BINARY) \
 	# Copy over busybox binary and all it's hard links. -BEF-
 	cp -a $(INITRD_SRC_DIR)/$(BUSYBOX_DIR)/_install/* $(INITRD_BUILD_DIR)/
 
+	# Copy over other binaries.
+	cp -a $(RSYNC_BINARY) $(INITRD_BUILD_DIR)/bin
+	cp -a $(DHCLIENT_BINARY) $(INITRD_BUILD_DIR)/sbin
+	cp -a $(DEVFSD_BINARY) $(INITRD_BUILD_DIR)/sbin
+	# If INSMOD_BINARY is set, then copy it on over. -BEF-
+	[ "x$(INSMOD_BINARY)" == "x" ] || \
+		cp -a $(INSMOD_BINARY) $(INITRD_BUILD_DIR)/sbin
+
 	# If UCLIBC_TARGET is set, then copy over uclibc libraries. -BEF-
 	[ "x$(UCLIBC_TARGET)" == "x" ] || mkdir -m 755 -p \
 	  $(INITRD_BUILD_DIR)/usr/$(UCLIBC_ARCH_NAME)-linux-uclibc/lib/
@@ -98,14 +106,6 @@ $(INITRD_DIR)/build_dir-stamp:	$(SKEL_FILES) $(BUSYBOX_BINARY) \
 	# standard libs instead. -BEF-
 	[ "x$(UCLIBC_TARGET)" != "x" ] || ( cd $(INITRD_BUILD_DIR) && \
 	  $(INITRD_DIR)/mklibs.sh -v -d lib ./*bin/* ./lib/* )
-
-	# Copy over other binaries.
-	cp -a $(RSYNC_BINARY) $(INITRD_BUILD_DIR)/bin
-	cp -a $(DHCLIENT_BINARY) $(INITRD_BUILD_DIR)/sbin
-	cp -a $(DEVFSD_BINARY) $(INITRD_BUILD_DIR)/sbin
-	# If INSMOD_BINARY is set, then copy it on over. -BEF-
-	[ "x$(INSMOD_BINARY)" == "x" ] || \
-		cp -a $(INSMOD_BINARY) $(INITRD_BUILD_DIR)/sbin
 
 	# Strip 'em. -BEF-
 	strip $(INITRD_BUILD_DIR)/bin/*
