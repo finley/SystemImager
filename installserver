@@ -143,13 +143,13 @@ fi
 echo "Creating soft links to systemimager init script..."
 
 if [ -f $INITDIR_PREFIX/init.d/systemimager ]; then
-  cd $INITDIR_PREFIX/rc0.d; ln -sf ../init.d/rsync K20rsync || exit 1
-  cd $INITDIR_PREFIX/rc1.d; ln -sf ../init.d/rsync K20rsync || exit 1
-  cd $INITDIR_PREFIX/rc2.d; ln -sf ../init.d/rsync S20rsync || exit 1
-  cd $INITDIR_PREFIX/rc3.d; ln -sf ../init.d/rsync S20rsync || exit 1
-  cd $INITDIR_PREFIX/rc4.d; ln -sf ../init.d/rsync S20rsync || exit 1
-  cd $INITDIR_PREFIX/rc5.d; ln -sf ../init.d/rsync S20rsync || exit 1
-  cd $INITDIR_PREFIX/rc6.d; ln -sf ../init.d/rsync K20rsync || exit 1
+  cd $INITDIR_PREFIX/rc0.d; ln -sf ../init.d/systemimager K20systemimager || exit 1
+  cd $INITDIR_PREFIX/rc1.d; ln -sf ../init.d/systemimager K20systemimager || exit 1
+  cd $INITDIR_PREFIX/rc2.d; ln -sf ../init.d/systemimager S20systemimager || exit 1
+  cd $INITDIR_PREFIX/rc3.d; ln -sf ../init.d/systemimager S20systemimager || exit 1
+  cd $INITDIR_PREFIX/rc4.d; ln -sf ../init.d/systemimager S20systemimager || exit 1
+  cd $INITDIR_PREFIX/rc5.d; ln -sf ../init.d/systemimager S20systemimager || exit 1
+  cd $INITDIR_PREFIX/rc6.d; ln -sf ../init.d/systemimager K20systemimager || exit 1
 else
   echo "$INITDIR_PREFIX/init.d/systemimager not found, symlinks not created."
 fi
