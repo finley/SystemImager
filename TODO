@@ -14,21 +14,19 @@ Version 1.4.0 specific:
 
 <brian@thefinleys.com>
 ----------------------
-o installclient -- install manual
 o modify/verify documentation
-o test client on VA hardware
+o installclient -- install manual
+
+o finish pre-release checklist
+
 o create and submit custom load
-o do pre-release checklist
+  o test client on VA hardware
 o label autoinstallcd.iso with v1.4.x (x is literal)
 o modify RPM spec file to deal with:
   o configuration files
   o additional files
   o changed files
 o have deb package created
-
-Greg Pratt <gpratt@valinux.com> and Dann Frazier <dannf@hazel.fc.hp.com>
-------------------------------------------------------------------------
-o Greg and Dann now own the documentation
 
 
 -----------------------
@@ -169,11 +167,6 @@ Ian McLeod <ian@valinux.com>
     (master script contains sections for hd, sd, and rd)
 
 
-Greg Pratt <gpratt@valinux.com>
--------------------------------
-- Docbookization of the FAQ-HOWTO
-
-
 Cameron Meadors <cmeadors@valinux.com>
 and Roland Dreier <roland@valinux.com>
 --------------------------------------
@@ -217,7 +210,6 @@ Pre-Release Checklist
 - server deb install on virgin debian system
 - client deb install on virgin debian system
 - dependent packages install properly
-
 x- also fix flaw in the way software raid devices are created.  LABEL=
    flubs this up...
 x- deal with ext3 clients using LABEL=
