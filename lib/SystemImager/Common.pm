@@ -2,7 +2,7 @@ package SystemImager::Common;
 
 # put copyright here
 
-$version_number="1.5.0";
+$version_number="SYSTEMIMAGER_VERSION_STRING";
 $VERSION = $version_number;
 
 sub check_if_root{

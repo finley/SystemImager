@@ -6,8 +6,30 @@
 
 package SystemImager::Server;
 
-$version_number="1.5.0";
+$version_number="SYSTEMIMAGER_VERSION_STRING";
 $VERSION = $version_number;
+
+sub build_syslinux_cfg {
+    my ($self, $kernel, $append, $display, $prompt, $timeout, $outfile) = @_;
+    
+    if (!$kernel) { $kernel = "kernel"; }
+    if (!$append) {
+	$append = "vga=extended prompt_ramdisk=0 initrd=initrd.gz load_ramdisk=1 root=/dev/ram rw";
+    }
+    if (!$display) { $display = "message.txt"; }
+    if (!$prompt) { $prompt = "0"; }
+    if (!$timeout) { $timeout = "50"; }
+    if (!$outfile) { return undef; }
+
+    open(OUT, ">$outfile") or return undef;
+
+    print OUT "DEFAULT $kernel\n";
+    print OUT "APPEND $append\n";
+    print OUT "DISPLAY $display\n";
+    print OUT "PROMPT $prompt\n";
+    print OUT "TIMEOUT $timeout\n";
+    close(OUT);
+}
 
 sub add2rsyncd {
     my ($class, $rsyncconf, $imagename, $imagedir) = @_;

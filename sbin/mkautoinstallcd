@@ -8,11 +8,10 @@
 #   Written by Brian Elliott Finley <brian@systemimager.org>
 #
 
-#print <<'EOF';
-
-#makeautoinstallcd has been renamed to 
-#  "mkautoinstallcd"
-
+use lib "/usr/lib/systemimager/perl";
+use lib "/usr/local/lib/systemimager/perl";
+use SystemImager::Server;
+use SystemImager::Common;
 use Getopt::Long;
 use AppConfig;
 
@@ -56,8 +55,10 @@ Usage: $program_name [OPTION]... -out-file FILE_NAME
 Options: (options can be presented in any order and may be abbreviated)
  -help             Display this output.
  -version          Display version and copyright information.
- -out-file FILE    Name of the file that will hold the resulting ISO image.
+ -out-file=FILE    Name of the file that will hold the resulting ISO image.
                    (Not to worry, this will only be about 3 MB in size.)
+ -append=STRING    A string of options that will be passed to the autoinstall
+                   kernel
  -quiet            Don\'t print any output, just provide an appropriate 
                    exit code.
 
@@ -69,7 +70,8 @@ GetOptions(
             "out-file=s" => \$iso_file,
             "help" => \$help,
             "version" => \$version,
-            "quiet" => \$quiet 
+            "quiet" => \$quiet,
+	    "append=s" => \$append
 ) || die "$help_info";
 
 # if requested, print help information
@@ -83,6 +85,8 @@ if($version) {
   print "$version_info";
   exit 0;
 }
+
+if (!$append) { $append = ""; }
 
 # search for CD creation tools
 $cd_creation_tools="";
@@ -190,13 +194,17 @@ if($? != 0) { die "FATAL: Couldn't mount temporary image in loopback mode!\n"; }
 # copy stuff to image
 foreach $file ( "$autoinstall_boot_dir/initrd.gz",
 		"$autoinstall_boot_dir/kernel",
-		"$autoinstall_boot_dir/pxelinux.cfg/syslinux.cfg",
 		"$autoinstall_boot_dir/pxelinux.cfg/message.txt") {
     unless ($quiet) {print "Copying $file to temporary image...\n";}
     $command = "cp -f $file $mount_dir";
     system("$command");
     if($? != 0) { die "FATAL: Couldn't copy $file to $mount_dir!\n"; }
 }
+
+$append_string  = "vga=extended load_ramdisk=1 root=/dev/ram rw ";
+$append_string .= "prompt_ramdisk=0 initrd=initrd.gz " . $append;
+SystemImager::Server->build_syslinux_cfg("", "$append_string", "", "", "", 
+ $mount_dir ."/syslinux.cfg") or die "Couldn't create $mount_dir/syslinux.cfg.\n";
 
 # unmount temporary image
 unless ($quiet) {print "Un-mounting temporary image...\n";}

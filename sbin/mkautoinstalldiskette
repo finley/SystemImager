@@ -13,6 +13,10 @@
 #     Smith, Wesley <wessmith@engr.sgi.com>
 #
 
+use lib "/usr/lib/systemimager/perl";
+use lib "/usr/local/lib/systemimager/perl";
+use SystemImager::Server;
+use SystemImager::Common;
 use Getopt::Long;
 use AppConfig;
 
@@ -69,6 +73,9 @@ Options: (options can be presented in any order and may be abbreviated)
                     non-interactively)
 
  -out-file=FILE    Create a 1.44MB floppy image in FILE
+
+ -append=STRING    A string of options that will be passed to the autoinstall
+                   kernel
 
  -config=FILE      Where FILE contains all the settings necessary for
                    the client to set it's hostname and configure it's
@@ -151,6 +158,7 @@ GetOptions(
             "floppy=s" => \$floppy_device_prefix,
             "config=s" => \$local_config,
             "ssh-key=s" => \$ssh_key,
+	    "append=s" => \$append,
             "quiet" => \$quiet,
 	    "out-file=s" => \$file
 ) || die "$help_info";
@@ -175,6 +183,7 @@ if($version) {
   exit 0;
 }
 
+if (!$append) { $append = ""; }
 # be sure the user includes -floppy when doing -quiet
 if($quiet and !$user_specified_floppy and !$user_specified_file) { die "Must use -floppy or -file with -quiet! (use -help for options)\n"; }
 
@@ -197,8 +206,7 @@ if (! $file) {
 @files = ( 
   "$autoinstall_boot_dir/initrd.gz",
   "$autoinstall_boot_dir/kernel", 
-  "$autoinstall_boot_dir/pxelinux.cfg/message.txt",
-  "$autoinstall_boot_dir/pxelinux.cfg/syslinux.cfg"
+  "$autoinstall_boot_dir/pxelinux.cfg/message.txt"
 );
 
 # Verify that the config file, if specified, exists
@@ -343,6 +351,11 @@ foreach my $file ( @files ) {
 	    die "Couldn't copy $file to $mount_dir.\n";
 	}
 }
+
+$append_string  = "vga=extended load_ramdisk=1 root=/dev/ram rw ";
+$append_string .= "prompt_ramdisk=0 initrd=initrd.gz " . $append;
+SystemImager::Server->build_syslinux_cfg("", "$append_string", "", "", "",
+  "$mount_dir/syslinux.cfg") or die "Couldn't create $mount_dir/syslinux.cfg.\n";
 
 # unmount floppy
 if (!$quiet) {print "Un-mounting floppy...\n";}

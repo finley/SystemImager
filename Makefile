@@ -249,7 +249,7 @@ install_server:	install_manpages install_configs install_server_libs
 #@@install_client:
 #@@  install client-only files
 #@@ 
-install_client: install_client_manpages
+install_client: install_client_manpages install_client_libs
 	mkdir -p $(ETC)/systemimager
 	install -b -m 644 tftpstuff/systemimager/updateclient.local.exclude \
 	  $(ETC)/systemimager
@@ -263,19 +263,34 @@ install_client: install_client_manpages
 #@@install_common:
 #@@  install files common to both the server and client
 #@@ 
-install_common:	install_common_manpages
+install_common:	install_common_manpages install_common_libs
 	mkdir -p $(BIN)
 	$(foreach binary, $(COMMON_BINARIES), \
 	  sed s/SYSTEMIMAGER_VERSION_STRING/"$(VERSION)"/ \
 	    < $(COMMON_BINARY_SRC)/$(binary) > $(BIN)/$(binary) && \
 	  chmod 755 $(BIN)/$(binary);)
 
+#@@install_common_libs:
+#@@  install libraries common to the server and client
+#@@ 
+install_common_libs:
+	mkdir -p $(LIB_DEST)
+	sed s/SYSTEMIMAGER_VERSION_STRING/"$(VERSION)"/ \
+	  < $(LIB_SRC)/Common.pm > $(LIB_DEST)/Common.pm
+
 #@@install_server_libs:
 #@@  install server-only libraries
 #@@ 
 install_server_libs:
 	mkdir -p $(LIB_DEST)
-	cp $(LIB_SRC)/*.pm $(LIB_DEST)
+	cp $(LIB_SRC)/Server.pm $(LIB_DEST)
+
+#@@install_client_libs:
+#@@  install client-only libraries
+#@@ 
+install_client_libs:
+	mkdir -p $(LIB_DEST)
+	cp $(LIB_SRC)/Client.pm $(LIB_DEST)
 
 #@@install_binaries:
 #@@  install architecture-dependent files
