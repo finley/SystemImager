@@ -1,7 +1,7 @@
 #
 # "SystemImager" 
 #
-#  Copyright (C) 1999-2003 Brian Elliott Finley <brian@bgsw.net>
+#  Copyright (C) 1999-2004 Brian Elliott Finley
 #
 #  $Id$
 #
@@ -10,6 +10,15 @@
 #   Sean Dague <japh@us.ibm.com>
 #   Dann Frazier <dannf@dannf.org>
 #   Curtis Zinzilieta <czinzilieta@valinux.com>
+#
+# 2004.03.24 Brian Elliott Finley
+# - get entire scripts directory at once, whether using rsync or multicast
+# - redirect output from kills in shellout() to /dev/null
+# - create choose_autoinstall_script() function to simplify script selection
+# - create run_postinstall_scripts() function
+# 2004.03.24 Brian Elliott Finley
+# - start spinner with 1 second delay, so we don't get a / at the start of
+#   command being run.
 #
 
 
@@ -24,8 +33,6 @@ FLAMETHROWER_DIRECTORY_DIR=/var/lib/systemimager/flamethrower
 BOEL_BINARIES_DIR=/tmp/boel_binaries
 VERSION="SYSTEMIMAGER_VERSION_STRING"
 FLAVOR="SYSTEMIMAGER_FLAVOR_STRING"
-#DEBUG=1     # XXX Make sure this is commented out for releases. -BEF-
-
 #
 ################################################################################
 
@@ -112,6 +119,7 @@ write_variables() {
 #   Also see: stop_spinner
 #
 start_spinner() {
+    sleep 1
     { while :; do
             echo -ne "\b/";  sleep 1;
             echo -ne "\b-";  sleep 1;
@@ -169,8 +177,8 @@ tmpfs_watcher() {
 shellout() {
     COUNT="$RETRY"
     echo "Killing off running processes."
-    kill -9 $TMPFS_WATCHER_PID
-    killall -9 udp-receiver rsync
+    kill -9 $TMPFS_WATCHER_PID  >/dev/null 2>/dev/null
+    killall -9 udp-receiver rsync  >/dev/null 2>/dev/null
     write_variables
     cat /etc/issue
     exec sh
@@ -213,11 +221,23 @@ get_scripts_directory() {
     echo
     echo get_scripts_directory
 
-    MODULE_NAME="autoinstall_scripts"
-    DIR="${SCRIPTS_DIR}"
-    RETRY=7
-    flamethrower_client
+    if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
+        #
+        # We're using Multicast, so we should already have a directory 
+        # full of scripts.  Break out here, so that we don't try to pull
+        # the scripts dir again (that would be redundant).
+        #
+        MODULE_NAME="autoinstall_scripts"
+        DIR="${SCRIPTS_DIR}"
+        RETRY=7
+        flamethrower_client
 
+    else
+        mkdir -p ${SCRIPTS_DIR}
+        CMD="rsync -a ${IMAGESERVER}::${SCRIPTS}/ ${SCRIPTS_DIR}/"
+        echo "$CMD"
+        $CMD
+    fi
 }
 #
 ################################################################################
@@ -474,6 +494,7 @@ mount_dev_on_devfs() {
     mount devfs /dev -t devfs || shellout
 
     # Crank up devfsd
+    echo -n '>>> '
     /sbin/devfsd /dev || shellout
 
 }
@@ -785,27 +806,22 @@ autodetect_hardware_and_load_modules() {
 #
 get_hostname_by_hosts_file() {
 
-    if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
-	    # FLAMETHROWER_DIRECTORY_PORTBASE is set, therfore we should have a hosts file in ${SCRIPTS_DIR}
-		echo "Using hosts file pulled over by multicast."
-    else
-        # Try pulling hosts file from imageserver -BEF-
-		mkdir -p ${SCRIPTS_DIR}
-        CMD="rsync -aL ${IMAGESERVER}::${SCRIPTS}/hosts ${SCRIPTS_DIR}/ >/dev/null 2>&1"
-        echo "$CMD"
-        $CMD
-    fi
+    echo
+    echo get_hostname_by_hosts_file
 
     #
     # Look in $FILE for that magic joy.
-	#
-	FILE=${SCRIPTS_DIR}/hosts
+    #
+    FILE=${SCRIPTS_DIR}/hosts
     if [ -e $FILE ]; then
+
+        echo "Hosts file exists..."
+
         # add escape characters to IPADDR so that it can be used to find HOSTNAME below
         IPADDR_ESCAPED=`echo "$IPADDR" | sed -e 's/\./\\\./g'`
         
         # get HOSTNAME by parsing hosts file
-        echo "Looking for hostname of this host in $FILE by IP: $IPADDR"
+        echo "Searching for this machine's hostname in $FILE by IP: $IPADDR"
         
         # Command summary by line:
         # 1: convert tabs to spaces -- contains a literal tab: <ctrl>+<v> then <tab>
@@ -828,7 +844,7 @@ get_hostname_by_hosts_file() {
             sed 's/\..*$//g'
         `
     else
-        echo "Couldn't find hosts file: $FILE"
+        echo "No hosts file."
     fi
 }
 #
@@ -836,9 +852,50 @@ get_hostname_by_hosts_file() {
 #
 get_hostname_by_dns() {
 
+    echo
+    echo get_hostname_by_dns
+
     # Get base hostname.  For example, www7.domain.com will become www7. -BEF-
-    echo "Trying to get hostname via DNS..."
     HOSTNAME=`nslookup $IPADDR | grep "^Name:" | sed -e 's/Name:[[:space:]]*//' -e 's/\..*$//g'`
+}
+#
+################################################################################
+#
+get_base_hostname() {
+    BASE_HOSTNAME=`echo $HOSTNAME | sed "s/[0-9]*$//"` 
+}
+#
+################################################################################
+#
+choose_autoinstall_script() {
+
+    echo
+    echo choose_autoinstall_script
+
+    #
+    # Get the base hostname for the last attempt at choosing an autoinstall
+    # script.  For example, if the hostname is compute99, then try to get 
+    # compute.master. -BEF-
+    #
+    get_base_hostname
+
+    # 
+    # Script names to choose from, in order of preference.  First hit wins.
+    #
+    if [ ! -z $IMAGENAME ]; then
+        SCRIPTNAMES="${SCRIPTS_DIR}/${IMAGENAME}.master ${SCRIPTS_DIR}/${HOSTNAME}.sh ${SCRIPTS_DIR}/${BASE_HOSTNAME}.master"
+    else
+        SCRIPTNAMES="${SCRIPTS_DIR}/${HOSTNAME}.sh ${SCRIPTS_DIR}/${BASE_HOSTNAME}.master"
+    fi
+    
+    #
+    # Choose a winner!
+    #
+    for SCRIPTNAME in $SCRIPTNAMES
+    do
+        [ -e $SCRIPTNAME ] && break
+    done
+    echo "Using autoinstall script: ${SCRIPTNAME}"
 }
 #
 ################################################################################
@@ -849,16 +906,13 @@ run_autoinstall_script() {
     echo run_autoinstall_script
 
     # Run the autoinstall script.
-    FILE="${SCRIPTS_DIR}/$SCRIPTNAME"
-    if [ -f $FILE ]; then
-        chmod 755 $FILE || shellout
-        echo
-        echo "I will now run the autoinstall script: $FILE"
-        echo
-        $FILE || shellout
+    if [ -f $SCRIPTNAME ]; then
+        chmod 755 $SCRIPTNAME || shellout
+        echo ">>> $SCRIPTNAME"
+        $SCRIPTNAME || shellout
     else
         echo
-        echo "FATAL: Your autoinstall script doesn't appear to exist: $FILE"
+        echo "FATAL: Your autoinstall script doesn't appear to exist: $SCRIPTNAME"
         echo "       Be sure this script exists in the autoinstall scripts directory"
         echo "       on your image server."
         shellout
@@ -867,9 +921,47 @@ run_autoinstall_script() {
 #
 ################################################################################
 #
+run_postinstall_scripts() {
+
+    echo
+    echo run_postinstall_scripts
+
+    get_base_hostname
+
+    cd ${SCRIPTS_DIR}/postinstall/
+
+    POST_INSTALL_SCRIPTS_A=`ls | grep "^[0-9][0-9]${IMAGENAME}\..*"`
+    POST_INSTALL_SCRIPTS_B=`ls | grep "^[0-9][0-9]${BASE_HOSTNAME}\..*"`
+    POST_INSTALL_SCRIPTS_C=`ls | grep "^[0-9][0-9]${HOSTNAME}\..*"`
+
+    POST_INSTALL_SCRIPTS="$POST_INSTALL_SCRIPTS_A $POST_INSTALL_SCRIPTS_B $POST_INSTALL_SCRIPTS_C"
+    
+    if [ ! -z `echo ${POST_INSTALL_SCRIPTS}|sed 's/ //'` ]; then
+
+        
+        mkdir -p /a/tmp/postinstall.$$/ || shellout
+
+        rsync -a ${SCRIPTS_DIR}/postinstall/ /a/tmp/postinstall.$$/ || shellout
+
+        for POST_INSTALL_SCRIPT in $POST_INSTALL_SCRIPTS
+        do
+            echo ">>> $POST_INSTALL_SCRIPT"
+            chmod +x /a/tmp/postinstall.$$/$POST_INSTALL_SCRIPT || shellout
+            chroot /a/ /tmp/postinstall.$$/$POST_INSTALL_SCRIPT || shellout
+        done
+    else
+        echo "No post install scripts found."
+    fi
+}
+#
+################################################################################
+#
 #	Get ssh_tarball
 #
 get_ssh_tarball() {
+
+    echo
+    echo get_ssh_tarball
 
     # Remove possible trailing / from URL
     SSH_DOWNLOAD_URL=`echo $SSH_DOWNLOAD_URL | sed 's/\/$//'`
@@ -890,7 +982,7 @@ get_ssh_tarball() {
 
 start_ssh() {
 
-	get_ssh_tarball
+    get_ssh_tarball
 
     # create root's ssh dir
     mkdir /root/.ssh
@@ -1014,33 +1106,6 @@ start_ssh() {
         
         # remove rug
         exit 1
-    fi
-}
-#
-################################################################################
-#
-#   Pull over the autoinstall script SCRIPTNAME
-#
-get_script() {
-    echo
-    echo "get_script"
-    echo "I will now try to get the autoinstall script:  $SCRIPTNAME"
-    if [ -e ${SCRIPTS_DIR}/${SCRIPTNAME} ]; then
-        echo "Excellent!  It's already here -- in the ${SCRIPTS_DIR} directory."
-
-    elif [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
-        #
-        # We're using Multicast, so we should already have a directory 
-        # full of scripts.  Break out here, so that we don't try to pull
-        # the scripts dir again (that would be redundant).
-        #
-        break
-
-    else
-        mkdir -p ${SCRIPTS_DIR}
-        CMD="rsync -aL ${IMAGESERVER}::${SCRIPTS}/${SCRIPTNAME} ${SCRIPTS_DIR}"
-        echo "$CMD"
-        $CMD
     fi
 }
 #

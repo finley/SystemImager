@@ -1,11 +1,12 @@
 #!/bin/sh
+#
+#   "SystemImager"
+#
+#   Copyright (C) 1999-2004 Brian Elliott Finley
+#
+#   $Id$
+#
 
-#
-# "SystemImager"
-#
-#  Copyright (C) 1999-2001 Brian Elliott Finley <brian@bgsw.net>
-#  Copyright (C) 2002-2003 Bald Guy Software <brian@bgsw.net>
-#
 ##VERSION_INFO##
 
 # Load functions and other variables
@@ -218,6 +219,15 @@ beep
 
 ################################################################################
 #
+#   Post Install Scripts
+#
+run_postinstall_scripts
+#
+################################################################################
+
+
+################################################################################
+#
 #   Unmount filesystems
 #
 ##UMOUNT_FILESYSTEMS##
@@ -230,7 +240,6 @@ beep
 #   Tell the image server we're done
 #   
 rsync $IMAGESERVER::scripts/imaging_complete > /dev/null 2>&1
-
 #
 ################################################################################
 

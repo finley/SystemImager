@@ -15,8 +15,13 @@
 #   Dann Frazier <dannf@dannf.org>
 #   Curtis Zinzilieta <czinzilieta@valinux.com>
 #
+# 2004.03.24 Brian Elliott Finley
+# - get entire scripts directory at once, whether using rsync or multicast
+# 2004.04.02 Brian Elliott Finley
+# - tmpfs_watcher must start after boel_binaries
+#
 
-#set -x  #XXX comment out before each release. -BEF-
+#set -x         # XXX comment out before each release. -BEF-
 
 #################################################################################
 #   Load functions and other variables
@@ -56,15 +61,12 @@ if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
     get_flamethrower_directory
 fi
 
-tmpfs_watcher
-
 get_boel_binaries_tarball
 beep
 
-if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
-    # Hosts file is included here
-    get_scripts_directory
-fi
+tmpfs_watcher
+
+get_scripts_directory
 
 autodetect_hardware_and_load_modules
 
@@ -76,14 +78,10 @@ fi
 
 # HOSTNAME may already be set via local.cfg -BEF-
 if [ -z $HOSTNAME ]; then
-    echo
-    echo get_hostname_by_hosts_file
     get_hostname_by_hosts_file
 fi
 
 if [ -z $HOSTNAME ]; then
-    echo
-    echo get_hostname_by_dns
     get_hostname_by_dns
 fi
 
@@ -103,41 +101,14 @@ if [ -z $IMAGENAME ] && [ -z $HOSTNAME ]; then
     shellout
 fi
     
-if [ ! -z $IMAGENAME ]; then
-    # If IMAGENAME is specified, then the IMAGENAME.master script takes
-    # precedence over the HOSTNAME.sh script. -BEF-
-    echo
-    echo "This host will be installed with image: ${IMAGENAME}"
-    SCRIPTNAME="${IMAGENAME}.master"
-    get_script || shellout
-
-else 
-
-    # Try to get an autoinstall script based on $HOSTNAME.
-    SCRIPTNAME="${HOSTNAME}.sh"
-    get_script
-
-    if [ $? != 0 ]; then
-
-        echo "$CMD failed!"
-
-        # Try to get a master file based on the "base hostname".  For example,
-        # if the hostname is compute99, then try to get compute.master. -BEF-
-        #
-        BASE_HOSTNAME=`echo $HOSTNAME | sed "s/[0-9]*$//"` 
-
-        SCRIPTNAME="${BASE_HOSTNAME}.master"
-        get_script || shellout
-    fi
-fi
+choose_autoinstall_script
 
 write_variables
-
 beep
+
 run_autoinstall_script
 #
 #################################################################################
 
 exit 0
-
 

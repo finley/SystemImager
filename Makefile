@@ -1,14 +1,11 @@
 #
 # "SystemImager"  
 #
-#	Copyright (C) 2003 Brian Elliott Finley <finley@mcs.anl.gov>
-#  	Copyright (C) 2002 Bald Guy Software
-#  					  Brian Elliott Finley <bef@bgsw.net>
-#  	Copyright (C) 2001-2002 Hewlett-Packard Company <dannf@fc.hp.com>
-#  	Copyright (C) 1999-2001 Brian Elliott Finley <bef@bgsw.net>
-#
-#  	Others who have contributed to this code:
-#    	Sean Dague <sean@dague.net>
+#   Copyright (C) 1999-2004 Brian Elliott Finley
+#   Copyright (C) 2001-2002 Hewlett-Packard Company <dannf@fc.hp.com>
+#   
+#   Others who have contributed to this code:
+#   Sean Dague <sean@dague.net>
 #
 #   $Id$
 #
@@ -211,6 +208,7 @@ install_server:	install_server_man install_configs install_server_libs
 	$(SI_INSTALL) -d -m 755 $(LOCK_DIR)
 	$(SI_INSTALL) -d -m 755 $(BOOT_BIN_DEST)
 	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_SCRIPT_DIR)
+	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_SCRIPT_DIR)/postinstall
 	$(SI_INSTALL) -d -m 755 $(OVERRIDES_DIR)
 	$(SI_INSTALL) -m 644 $(OVERRIDES_README) $(OVERRIDES_DIR)
 
