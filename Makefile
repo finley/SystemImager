@@ -539,7 +539,7 @@ source_tarball:	$(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2.md5sum
 $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2.md5sum:	$(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
 	cd $(TOPDIR)/tmp && md5sum systemimager-$(VERSION).tar.bz2 > systemimager-$(VERSION).tar.bz2.md5sum
 
-$(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2:
+$(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2: systemimager.spec
 	mkdir -p tmp/systemimager-$(VERSION)
 	find . -maxdepth 1 -not -name . -not -name tmp -not -name src \
 	  -exec cp -a {} tmp/systemimager-$(VERSION) \;
@@ -563,36 +563,15 @@ PHONY += tarballs
 tarballs:	
 	@ echo -e "\nbinary tarballs are no longer supported\n"
 
-# create a source tarball useable for SRPM and RPM creation
-PHONY += srpm_tarball
-srpm_tarball:  $(TOPDIR)/tmp/systemimager-$(VERSION).tar.gz
-
-$(TOPDIR)/tmp/systemimager-$(VERSION).tar.gz: systemimager.spec
-	perl -pi -e 's/define ver\b.*/define ver\t$(VERSION)/' $(TOPDIR)/systemimager.spec
-	perl -pi -e 's/define _boot_flavor\b.*/define _boot_flavor\t$(FLAVOR)/' $(TOPDIR)/systemimager.spec
-
-	mkdir -p tmp/systemimager-$(VERSION)
-	find . -maxdepth 1 -not -name . -not -name tmp \
-	  -exec cp -a {} tmp/systemimager-$(VERSION) \;
-	rm -rf `find tmp/systemimager-$(VERSION) -name CVS \
-	         -type d -printf "%p "`
-	cd tmp/systemimager-$(VERSION) && $(MAKE) distclean
-	cd tmp/systemimager-$(VERSION) && $(MAKE) get_source
-	cd tmp && tar -czf systemimager-$(VERSION).tar.gz systemimager-$(VERSION) 
-	@echo
-	@echo "srpm tarball has been created in $(TOPDIR)/tmp"
-	@echo
-
 # make the srpms for systemimager
 PHONY += srpm
-srpm: srpm_tarball
-	rpm -ts tmp/systemimager-$(VERSION).tar.gz
-
+srpm: $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
+	rpm -ts $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
 
 # make the rpms for systemimager
 PHONY += rpm
-rpm: srpm_tarball
-	rpm -tb tmp/systemimager-$(VERSION).tar.gz
+rpm: $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
+	rpm -tb $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
 
 # removes object files, docs, editor backup files, etc.
 PHONY += clean
