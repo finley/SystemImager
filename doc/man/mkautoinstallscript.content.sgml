@@ -32,6 +32,7 @@
       <arg><option>--quiet</option></arg>
       <arg><option>--no-listing</option></arg>
       <arg><option>--image <replaceable>IMAGENAME</replaceable></option></arg>
+      <arg><option>--script <replaceable>SCRIPTNAME</replaceable></option></arg>
       <arg><option>--force <replaceable>[YES|NO]</replaceable></option></arg>
       <arg><option>--config-file <replaceable>FILE</replaceable></option></arg>
       <arg><option>--ip-assignment <replaceable>METHOD</replaceable></option></arg>
@@ -91,6 +92,19 @@
 	    Where IMAGENAME is the name of the image for which you want to
 	    create a new autoinstall script.
 	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>--script <replaceable>SCRIPTNAME</replaceable></option></term>
+	<listitem>
+	  <para>
+            Where SCRIPTNAME is the base name to use for the resultant
+            autoinstall script.  If not specified, SCRIPTNAME defaults to
+            IMAGENAME.  This is most often used when you want to have multiple
+            autoinstallscripts for a single image; i.e. when you have clients
+            with different partitioning and/or filesystem schemes that use
+            the same image (same file set).
+          </para>
 	</listitem>
       </varlistentry>
       <varlistentry>
