@@ -1295,11 +1295,13 @@ Added systemimager *
 	client system.  It *should* automatically find and boot off the
 	image server and begin to autoinstall itself.  Currently, there is no 
 	known single configuration that will work with every system.  The next 
-	sections describe some configurations that are known to work.  If you
-	are successful in configuring a system for PXE autoinstalls,
-	and it is in any way different from those already mentioned below (i.e.
-	different package versions, latest distribution, etc.), please let us
-	know so that it can be included in this document.
+	sections describe some configurations that are known to work.
+	They assume you have one server which acts as your image server, PXE
+	server, and DHCP server.  However, they can reside on separate
+	machines.  If you are successful in configuring a system for PXE
+	autoinstalls, and it is in any way different from those already
+	mentioned below (i.e. different package versions, latest distribution,
+	etc.), please let us know so that it can be included in this document.
       </para>
       <sect3 id=RedHat6.2BootAgent3.x>
 	<title>RedHat 6.2 and Intel BootAgent 3.x</title>
