@@ -129,7 +129,7 @@ PXE_CONF_SRC      = etc/pxelinux.cfg
 PXE_CONF_DEST     = $(ETC)/systemimager/pxelinux.cfg
 
 BINARIES := mkautoinstallcd mkautoinstalldiskette
-SBINARIES := addclients cpimage getimage install_siboot mkdhcpserver mkdhcpstatic mkautoinstallscript mkbootserver mvimage pushupdate rmimage mkrsyncd_conf mkclientnetboot
+SBINARIES := addclients cpimage getimage mkdhcpserver mkdhcpstatic mkautoinstallscript mkbootserver mvimage pushupdate rmimage mkrsyncd_conf mkclientnetboot
 CLIENT_SBINARIES  := updateclient prepareclient
 COMMON_BINARIES   = lsimage
 
@@ -201,8 +201,6 @@ ifeq ($(ARCH),i386)
 		$(PXE_CONF_DEST)/default
 endif
 
-	$(SI_INSTALL) -m 755 $(BINARY_SRC)/prepareclient $(BOOT_BIN_DEST)
-	$(SI_INSTALL) -m 755 $(BINARY_SRC)/updateclient $(BOOT_BIN_DEST)
 	$(SI_INSTALL) -d -m 755 $(IMAGEDEST)
 	$(SI_INSTALL) -m 644 $(WARNING_FILES) $(IMAGEDEST)
 	cp -a $(IMAGEDEST)/README $(IMAGEDEST)/DO_NOT_TOUCH_THESE_DIRECTORIES
