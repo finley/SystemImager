@@ -16,24 +16,15 @@
 
 use lib "USR_PREFIX/lib/systemimager/perl";
 
-use SystemImager::Common;
-
-use Getopt::Long;
 use AppConfig;
+use Getopt::Long;
 use File::Basename;
 use POSIX qw(uname);
+use SystemImager::Config;
+use SystemImager::Common;
+use vars qw($config $VERSION);
 
 ### BEGIN parse the config file ###
-
-my $config = AppConfig->new(
-			    'autoinstall_script_dir' => { ARGCOUNT => 1 },
-			    'autoinstall_boot_dir' => { ARGCOUNT => 1 },
-			    'default_image_dir' => { ARGCOUNT => 1 },
-			    'rsyncd_conf' => { ARGCOUNT => 1 },
-			    'rsync_stub_dir' => { ARGCOUNT => 1 },
-			    );
-
-$config->file('/etc/systemimager/systemimager.conf');
 
 my $autoinstall_boot_dir = $config->autoinstall_boot_dir();
 
