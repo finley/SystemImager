@@ -1,12 +1,16 @@
 #
 #   "SystemImager"
 #
-#   Copyright (C) 2001-2003 Bald Guy Software
-#                           Brian Elliott Finley <brian@bgsw.net>
+#   Copyright (C) 2001-2004 Brian Elliott Finley
 #   Copyright (C) 2002 Dann Frazier <dannf@dannf.org>
 #
 #       $Id$
 #
+#   2004.08.10  Brian Elliott Finley
+#   - where_is_my_efi_dir: remove /boot/efi/*/ from find path, but still 
+#     include /boot/efi.  find would fail if no dir existed below /boot/efi/.
+#   - where_is_my_efi_dir: redirect stderr to /dev/null so users don't see 
+#     confusing "no such file or directory" messages.
 
 package SystemImager::Common;
 
@@ -111,7 +115,7 @@ sub where_is_my_efi_dir {
     #
     # find all elilo.efi locations
     #
-    my $cmd = "find /boot/efi/*/ /usr/lib/elilo /tftpboot /boot/efi -name elilo.efi";
+    my $cmd = "find /usr/lib/elilo /tftpboot /boot/efi -name elilo.efi 2>/dev/null";
     open(CMD, "$cmd |") or die qq(Couldn't $cmd. $!\n);
         while (<CMD>) {
             chomp;
