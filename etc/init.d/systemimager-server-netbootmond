@@ -1,21 +1,20 @@
 #!/bin/sh
 #
-# "SystemImager"
+#   "SystemImager"
 #
-#  Copyright (C) 2002 Bald Guy Software 
-#                     Brian E. Finley <bef@bgsw.net>
+#   Copyright (C) 2002-2004  Brian Elliott Finley
 #
-#    $Id$
+#   $Id$
 #
 #
 # Support for IRIX style chkconfig:
 # chkconfig:   2345 20 20
-# description: The SystemImager netbootmond daemon.
+# description: The SystemImager si_netbootmond daemon.
 #
 #
 # Support for LSB compliant init system:
 ### BEGIN INIT INFO
-# Provides: netbootmond
+# Provides: si_netbootmond
 # Required-Start: $network $syslog
 # Required-Stop:
 # Default-Start:  3 5
@@ -23,7 +22,7 @@
 # Short-Description: SystemImager's daemon for net boot control
 # Description: SystemImager's daemon for controlling netboot clients.
 #              If clients are configured to always boot from the network, 
-#              netbootmond can be configured to tell them to boot off their
+#              si_netbootmond can be configured to tell them to boot off their
 #              local disks each time they boot after having completed a 
 #              successful autoinstall.
 #
@@ -31,16 +30,16 @@
 
 
 PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin:
-PIDFILE=/var/run/netbootmond.pid
+PIDFILE=/var/run/si_netbootmond.pid
 
 case "$1" in
   start)
-    echo -n "Starting SystemImager's net boot client monitor: netbootmond"
-    netbootmond
+    echo -n "Starting SystemImager's net boot client monitor: si_netbootmond"
+    si_netbootmond
     echo "."
     ;;
   stop)
-    echo -n "Stopping SystemImager's net boot client monitor: netbootmond"
+    echo -n "Stopping SystemImager's net boot client monitor: si_netbootmond"
     [ -f $PIDFILE ] && kill `cat $PIDFILE`
     echo "."
     ;;
