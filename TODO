@@ -8,15 +8,16 @@
 Short list (in progress)
 ------------------------
 - need to add proper tftp entry in /etc/inetd.conf for tftp-hpa rpm
-- message during network booting (if possible)
-- make the <Backspace> key work ;)
+- create man pages
+- update FAQ-HOWTO
 
 Other stuff
 -----------
+- message during network booting (if possible)
+- make the <Backspace> key work ;)
 - multicast install -- Ian McLeod <ian@valinux.com> will have mftp (multicast ftp) 
   working as a drop in replacement for rsync by 5/15/2000 and we will begin testing
   in the lab.
-- create man pages
 
 getimage
 --------
@@ -33,29 +34,8 @@ getimage
 - create disk partition sections of $image.master using MB instead of cylinders
   in order to support disks of different sizes. (not feasable at this point.)
   (there may be additional things to do on the prepareclient side as well)
-<<<<<<<< Example >>>>>>>>>>>>>>>>>>>>>>
-#use this command for output
-[root]# sfdisk -l -uM
-
-Disk /dev/sda: 2233 cylinders, 255 heads, 63 sectors/track
-Units = megabytes of 1048576 bytes, blocks of 1024 bytes, counting from 0
-
-   Device Boot Start   End     MB   #blocks   Id  System
-/dev/sda1         0+    31-    32-    32129+  83  Linux
-/dev/sda2        31+   556-   526-   538177+  82  Linux swap
-/dev/sda3       556+  2619-  2064-  2112547+  83  Linux
-/dev/sda4      2619+ 17516- 14897- 15253717+  83  Linux
-
-#use this command for input
-[root]# cat /tmp/x
-sfdisk --force -uM /dev/sda <<EOF
-/dev/sda1 : start= 0, size= 24, Id=83
-/dev/sda2 : start= , size= 518, Id=82
-/dev/sda3 : start= , size= 2056, Id=83
-/dev/sda4 : start= , size= , Id=83
-EOF
-<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>
-
+  (perhaps use a virtual disk presented to a "real" fdisk to allow user partitioning? --
+   or maybe just calculate partition information with the script and ask the user to specify sizes)
 
 addclients
 ----------
