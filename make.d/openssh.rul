@@ -33,7 +33,8 @@ PHONY += openssh
 openssh:	$(OPENSSH_BINARIES)
 
 $(OPENSSH_BINARIES):	$(SRC_DIR)/openssh_verify.stamp
-	[ -d $(SRC_DIR)/$(OPENSSH_DIR) ] || ( cd $(SRC_DIR) && tar -xvzf $(OPENSSH_TARBALL) )
+	rm -rf $(SRC_DIR)/$(OPENSSH_DIR)
+	( cd $(SRC_DIR) && tar -xvzf $(OPENSSH_TARBALL) )
 	cd $(SRC_DIR)/$(OPENSSH_DIR) && ./configure --prefix=/usr \
 												--sysconfdir=/etc/ssh \
 												--host=i586-pc-linux-gnu
