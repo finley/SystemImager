@@ -135,6 +135,13 @@ echo "mount proc /a/proc -t proc -o defaults || shellout"
 mount proc /a/proc -t proc -o defaults || shellout
 ### END mount proc in image for tools like System Configurator ###
 
+### BEGIN mount sysfs in image for tools that might be run during chroot ###
+echo "mkdir -p /a/sys || shellout"
+mkdir -p /a/sys || shellout
+echo "mount sysfs /a/sys -t sysfs -o defaults || shellout"
+mount sysfs /a/sys -t sysfs -o defaults || shellout
+### END mount sysfs in image for tools that might be run during chroot ###
+
 ################################################################################
 #
 #   Lay the image down on the freshly formatted disk(s)
