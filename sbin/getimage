@@ -443,23 +443,21 @@ print MASTER_SCRIPT "\n";
 print MASTER_SCRIPT << 'EOF';
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/tmp
 
+
 ### BEGIN Check to be sure this not run from a working machine ###
-# egrep does not exist on the autoinstall media so these should *always* fail
-# unless run from a working machine.  But, keep it quiet -- otherwise it can
-# appear that something important is actually failing during the autoinstall
-# process.
 
 # test for mounted SCSI or IDE disks
-mount | egrep -q [hs]d[a-z][1-9] > /dev/null 2>&1
-[ $? -eq 0 ] &&  echo Sorry.  Must not run on a working machine... && exit 1
+mount | grep [hs]d[a-z][1-9] > /dev/null 2>&1
+[ $? -ne 0 ] &&  echo Sorry.  Must not run on a working machine... ; exit 1
 
 # test for mounted software RAID devices
-mount | egrep -q md[0-9] > /dev/null 2>&1
-[ $? -eq 0 ] &&  echo Sorry.  Must not run on a working machine... && exit 1
+mount | grep md[0-9] > /dev/null 2>&1
+[ $? -ne 0 ] &&  echo Sorry.  Must not run on a working machine... ; exit 1
 
 # test for mounted hardware RAID disks
-mount | egrep -q c[0-9]+d[0-9]+p > /dev/null 2>&1
-[ $? -eq 0 ] &&  echo Sorry.  Must not run on a working machine... && exit 1
+mount | grep c[0-9]+d[0-9]+p > /dev/null 2>&1
+[ $? -ne 0 ] &&  echo Sorry.  Must not run on a working machine... ; exit 1
+
 ### END Check to be sure this not run from a working machine ###
 
 
