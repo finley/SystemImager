@@ -414,7 +414,7 @@ fi
  
  # comment out rsync entry in inetd.conf if it exists
  RESTART_INETD="false"
- egrep -q ^rsync /etc/inetd.conf
+ egrep -q ^rsync /etc/inetd.conf > /dev/null 2>&1
  if [ $? = "0" ]; then
    if [ ! -f /etc/inetd.conf.beforesystemimager ]; then
      [ "$RPM_INSTALL" = "false" ] && echo "Backing up /etc/inetd.conf to /etc/inetd.conf.beforesystemimager ..."
@@ -461,6 +461,12 @@ fi
      fi
  fi
  # signal inetd to re-read /etc/inetd.conf
+
+
+ # restart rsync as a daemon
+ killall rsync rsyncd > /dev/null 2>&1
+ rsync --daemon
+ # restart rsync as a daemon
 
 
  ### BEGIN get list of IDE and SCSI disks ###
