@@ -1,7 +1,10 @@
 #
 # $Id$
+#   
+#   2004.07.26  Brian Elliott Finley
+#   - new version of openssh
 #
-OPENSSH_VERSION := 3.7.1p1
+OPENSSH_VERSION := 3.8.1p1
 OPENSSH_DIR := openssh-$(OPENSSH_VERSION)
 ifdef WITH_SSH
     OPENSSH_TARBALL := openssh-$(OPENSSH_VERSION).tar.gz
