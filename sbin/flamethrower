@@ -10,11 +10,9 @@
 
 use lib "USR_PREFIX/lib/systemimager/perl";
 use strict;
-#use File::Copy;
 use POSIX qw(setsid);
 use SystemImager::Config;
 use SystemImager::Flamethrower_Config;
-#use SystemImager::Server;
 use vars qw($config $ft_config $VERSION);
 
 $0 = "flamethrower";
@@ -24,7 +22,12 @@ if ( $ft_config->start_flamethrower_daemon() ne "yes" ) {
     exit 0;
 }
 
-&dump_config_info;
+# Uncomment for debug info
+#&dump_config_info;
+
+foreach ( @{$ft_config->modules()} ) {
+    print "$_\n";
+}
 
 print "HERE\n"; exit 0;
 
@@ -78,10 +81,6 @@ if ($pid = fork) {
 #
 # BEGIN subroutines 
 #
-
-# Usage: create_no_boot_symlink($client_ip);
-sub tail_rsync_log_file {
-}
 
 # Usage: dump_config_info();
 sub dump_config_info {
