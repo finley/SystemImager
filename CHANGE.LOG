@@ -52,9 +52,19 @@ lsimage
 -------
 o no longer shows tftpboot as an image (Brian)
 
+makeautoinstallcd, makeautoinstalldiskette, makedhcpserver, makedhcpstatic
+--------------------------------------------------------------------------
+o Renamed make* to mk*.  Left make* for this release, but they only say 
+  "Use the mk* versions". (Brian)
+
 mkautoinstallscript
 -------------------
 o created it. (Brian)
+
+mkbootserver
+------------
+o created it.  This tool will now be used to configure an image server 
+  to allow network booting of clients.  (Dann)
 
 mvimage
 -------
@@ -68,9 +78,15 @@ Server.pm
 ---------
 o created it. (Brian)
 
+systemimager.exclude
+--------------------
+o renamed to updateclient.local.exclude.  Hopefully this will be a
+  less confusing name. (Brian)
+
 systemimager.conf
 -----------------
-o created it (Dann)
+o created it.  This configuration file can take variables to specify
+  many defaults throughout SystemImager. (Dann)
 
 makeautoinstalldiskette
 -----------------------
@@ -79,6 +95,7 @@ o added -out-file option (Dann)
 man pages
 ---------
 o created (Dann)
+
 
 -----------------------------------------------------------------------
 SystemImager-1.5.0 2001.05.08
