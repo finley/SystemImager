@@ -26,12 +26,27 @@ use vars qw(@EXPORT @EXPORT_OK %EXPORT_TAGS $VERSION);
 
 $VERSION = sprintf("%d.%02d", q$Revision$ =~ /(\d+)\.(\d+)/);
 
-@EXPORT_OK = qw(client_exists addclient removeclient);
+@EXPORT_OK = qw(client_exists client_info addclient removeclient);
 %EXPORT_TAGS = ('all' => [@EXPORT_OK]);
+
+########################################
+#
+#  client_exists - return a 1 if client exists, 0 if it doesn't
+#
+########################################
 
 sub client_exists {
     my ($name) = @_;
     return _client_exists_link($name);
+}
+
+sub client_info {
+    my ($name) = @_;
+    my $hash = {
+                ip => _client_ip($name),
+                image => _client_image($name),
+               };
+    return $hash;
 }
 
 sub _client_exists_hosts {
@@ -148,10 +163,15 @@ sub _addclient_link {
 
 sub removeclient {
     my ($name) = @_;
+    return _removeclient_link($name) and _removeclient_hosts($name);
 }
 
 sub _removeclient_hosts {
     my ($name) = @_;
+    
+    carp("I need to be implemented... with locking");
+
+    return 1;
 }
 
 sub _removeclient_link {
