@@ -179,11 +179,11 @@ if (-d "$imagedir") {
 if (!$quiet) {
     print "\n\nRetrieving /etc/mtab from $master_client to check for mounted filesystems...\n";
     open(RSYNC, "rsync -av ${master_client}::root/etc/mtab $imagedir|");
-    print "--------------------------- mtab RETRIEVAL PROGRESS ---------------------------------\n";
+    print "------------- $image mtab RETRIEVAL PROGRESS -------------\n";
     while (<RSYNC>) {
         print;
     }
-    print "--------------------------- mtab RETRIEVAL FINISHED ---------------------------------\n";
+    print "------------- $image mtab RETRIEVAL FINISHED -------------\n";
     close(RSYNC);
 } else {
     $command = qq(rsync -a ${master_client}::root/etc/mtab $imagedir);
@@ -213,11 +213,11 @@ close EXCLUDE;
 if (!$quiet) {
     print "\n\nRetrieving system image from $master_client\n";
     open (RSYNC, "rsync -av --delete --exclude-from=$exclude_file " . "${master_client}::root/ $imagedir |");
-    print "--------------------------- $image RETRIEVAL PROGRESS ---------------------------------\n";
+    print "------------- $image IMAGE RETRIEVAL PROGRESS -------------\n";
     while (<RSYNC>) {
         print $_;
     }
-    print "--------------------------- $image RETRIEVAL FINISHED ---------------------------------\n";
+    print "------------- $image IMAGE RETRIEVAL FINISHED -------------\n";
     close (RSYNC);
 } else {
     $command = qq(rsync -a --delete --exclude-from=$exclude_file ${master_client}::root/ $imagedir);
@@ -273,18 +273,29 @@ unless($update_script eq "yes") { exit 0; }
 
 ### END Overwrite $image.master? ###
 
+### BEGIN What kind of Linux are you? ###
+if ( -d "$imagedir/etc/sysconfig/" ) {
+   # then we are RedHat based
+   $distro = "RedHat"
+} else {
+   # you must be debian :)
+   $distro = "debian"
+}
+### END What kind of Linux are you? ###
 
 ### BEGIN Got NIS? ###
-$file="$imagedir/etc/sysconfig/network";
-open(NETWORK, "< $file") or die "Couldn't open $file for reading: $!\n";
-while (<NETWORK>) {
-  if(/^NISDOMAIN/) {
-      chomp;
-      # set $nisdomainname but dump $placeholder (figure out a better way to do this later)
-      (my $placeholder, $nisdomainname) = split(/=/, $_);
-  }
+if ( $distro eq "RedHat" ) {
+   $file="$imagedir/etc/sysconfig/network";
+   open (NETWORK, "< $file") or die "Couldn't open $file for reading: $!\n";
+   while (<NETWORK>) {
+         if (/^NISDOMAIN/) {
+            chomp;
+            # set $nisdomainname but dump $placeholder (figure out a better way to do this later)
+            (my $placeholder, $nisdomainname) = split(/=/, $_);
+         }
+   }
+   close (NETWORK);
 }
-close(NETWORK);
 ### END Got NIS? ###
 
 
@@ -501,21 +512,24 @@ print MASTER_SCRIPT "\n# filler up!\n";
 print MASTER_SCRIPT "rsync -av \$DHCPSIADDR::$image /a/\n\n";
 
 
-print MASTER_SCRIPT << 'EOF';
+
+### BEGIN distribution specific networking stuff ###
+### BEGIN RedHat ###
+if ($distro eq "RedHat") { 
+   print MASTER_SCRIPT << 'EOF';
 # set host specific information
 echo NETWORKING=yes > /a/etc/sysconfig/network
 echo FORWARD_IPV4=false >> /a/etc/sysconfig/network
 
 EOF
 
+   if ($nisdomainname ne "") { 
+      print MASTER_SCRIPT "# set NIS domainname and imply that we want to be an NIS client\n";
+      print MASTER_SCRIPT "echo NISDOMAIN=$nisdomainname >> /a/etc/sysconfig/network\n\n";
+   }
 
-if($nisdomainname ne "") { 
-    print MASTER_SCRIPT "# set NIS domainname and imply that we want to be an NIS client\n";
-    print MASTER_SCRIPT "echo NISDOMAIN=$nisdomainname >> /a/etc/sysconfig/network\n\n";
-}
-
-
-if($ip_assignment_method eq "static") { print MASTER_SCRIPT << 'EOF';
+   if ($ip_assignment_method eq "static") { 
+   print MASTER_SCRIPT << 'EOF';
 # Stuff for static IP addressing
 #
 # /etc/sysconfig/network
@@ -535,7 +549,8 @@ echo BOOTPROTO=none >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
 
 EOF
 
-} elsif($ip_assignment_method eq "static_dhcp") { print MASTER_SCRIPT << 'EOF';
+   } elsif ($ip_assignment_method eq "static_dhcp") {
+   print MASTER_SCRIPT << 'EOF';
 # Stuff for IP addressing with static DHCP.  Once makedhcpstatic is run,
 # hostnames will be assigned by the dhcp server.  Until then, you will
 # see "(none)" as the hostname.
@@ -547,7 +562,8 @@ echo BOOTPROTO=dhcp >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
 
 EOF
 
-} else { print MASTER_SCRIPT << 'EOF';
+   } else { 
+   print MASTER_SCRIPT << 'EOF';
 # Stuff for IP addressing via DHCP
 #
 # /etc/sysconfig/network
@@ -558,7 +574,51 @@ echo BOOTPROTO=dhcp >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
 
 EOF
 
+   }
 }
+### END RedHat ###
+
+### BEGIN debian ###
+if ($distro eq "debian") { 
+   if ($ip_assignment_method eq "static") { 
+   print MASTER_SCRIPT << 'EOF';
+# Stuff for static IP addressing
+#
+# /etc/hostname
+echo $HOSTNAME > /a/etc/hostname
+
+# /etc/init.d/network
+echo '#! /bin/sh'                                     > /a/etc/init.d/network
+echo 'ifconfig lo 127.0.0.1'                          >> /a/etc/init.d/network
+echo 'route add -net 127.0.0.0 netmask 255.0.0.0 lo'  >> /a/etc/init.d/network
+
+echo IPADDR=$IPADDR        >> /a/etc/init.d/network
+echo NETMASK=$NETMASK      >> /a/etc/init.d/network
+echo NETWORK=$NETWORK      >> /a/etc/init.d/network
+echo BROADCAST=$BROADCAST  >> /a/etc/init.d/network
+echo GATEWAY=$GATEWAY      >> /a/etc/init.d/network
+
+echo 'ifconfig eth0 ${IPADDR} netmask ${NETMASK} broadcast ${BROADCAST}'  >> /a/etc/init.d/network
+echo 'route add -net ${NETWORK}'                                          >> /a/etc/init.d/network
+echo '[ "${GATEWAY}" ] && route add default gw ${GATEWAY} metric 1'       >> /a/etc/init.d/network
+
+chmod 755 /a/etc/init.d/network
+
+EOF
+
+   } elsif ($ip_assignment_method eq "dynamic_dhcp") {
+   print MASTER_SCRIPT << 'EOF';
+# Stuff for IP addressing via DHCP
+#
+# /etc/hostname
+echo $HOSTNAME > /a/etc/hostname
+
+EOF
+
+   }
+}
+### END debian ###
+### END distribution specific networking stuff ###
 
 
 print MASTER_SCRIPT << 'EOF';
