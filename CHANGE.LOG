@@ -19,6 +19,7 @@ o don't pull hosts file from imageserver if HOSTNAME is known.
 o Fixed bug #407316.  Autoinstall was only working on eth0, even if 
   another interface got an IP address.  Thanks to James Oakley for 
   submitting this bug and a patch.
+o Fix bug [ #419185 ] rcS script matches multiple IPs.
 
 getimage
 --------
