@@ -762,6 +762,12 @@ ping_test() {
     echo
     echo ping_test
 
+    # The reason we don't ping the IMAGESERVER if FLAMETHROWER_DIRECTORY_PORTBASE
+    # is set, is that the client may never be given, know, or need to know, the 
+    # IP address of the imageserver because the client is receiving _all_ of it's
+    # data via multicast, which is more like listening to a channel, as compared 
+    # with connecting directly to a server.  -BEF-
+    #
     if [ ! -z "$FLAMETHROWER_DIRECTORY_PORTBASE" ]; then
         PING_DESTINATION=$GATEWAY
         HOST_TYPE="default gateway"
