@@ -1,13 +1,14 @@
 #
 # "SystemImager"  
 #
-#  Copyright (C) 1999-2001 Brian Elliott Finley <bef@bgsw.net>
-#  Copyright (C) 2002 Bald Guy Software
+#	Copyright (C) 2003 Brian Elliott Finley <finley@mcs.anl.gov>
+#  	Copyright (C) 2002 Bald Guy Software
 #  					  Brian Elliott Finley <bef@bgsw.net>
-#  Copyright (C) 2001-2002 Hewlett-Packard Company <dannf@fc.hp.com>
+#  	Copyright (C) 2001-2002 Hewlett-Packard Company <dannf@fc.hp.com>
+#  	Copyright (C) 1999-2001 Brian Elliott Finley <bef@bgsw.net>
 #
-#  Others who have contributed to this code:
-#    Sean Dague <sean@dague.net>
+#  	Others who have contributed to this code:
+#    	Sean Dague <sean@dague.net>
 #
 #   $Id$
 #
@@ -262,6 +263,7 @@ PHONY += install_common_libs
 install_common_libs:
 	mkdir -p $(LIB_DEST)/SystemImager
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/Common.pm $(LIB_DEST)/SystemImager
+	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/Options.pm $(LIB_DEST)/SystemImager
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/Config.pm $(LIB_DEST)/SystemImager
 
 # checks the sized of the i386 kernel and initrd to make sure they'll fit 

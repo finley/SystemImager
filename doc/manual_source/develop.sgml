@@ -1,18 +1,132 @@
-<chapter id=Develop>
-  <title>Developing SystemImager<superscript>&#174;</superscript></title>
+<chapter>
+  <title>Developing SystemImager<superscript>&#174;</superscript>
+  <section>
+    <title>Design Goals</title>
+    <para>
+      The design goal for SystemImager was to create a tool that was both easy
+      and fast to use, allowing system administrators to perform incremental
+      upgrades that minimized system disruptions and provided software
+      independent of any packaging system.  The specific requirements follow:
+    </para>
+    <itemizedlist>
+      <listitem>
+	<para>
+	  Images should be pulled from a working system.
+	</para>
+      </listitem>
+      
+      <listitem>
+	<para>
+	  Unattended installs are a must.
+	</para>
+      </listitem>
+      
+      <listitem>
+	<para>
+	  The unattended install system has to be able to repartition the 
+	  destination drive(s).
+	</para>
+      </listitem>
+      
+      <listitem>
+	<para>
+	  System administrators who don't completely understand the tool should
+	  be able to use it.
+	</para>
+      </listitem>
+      
+      <listitem>
+	<para>
+	  The install should be easy and quick so that it can be useful
+	  immediately without a lot of site-specific customization.  
+	</para>
+      </listitem>
+      
+	<listitem>
+	<para>
+	  Images should be stored as normal files to allow for incremental
+	  upgrades, as opposed to "dd" style block level images of physical 
+	  disks.
+	</para>
+      </listitem>
+      
+      <listitem>
+	<para>
+	  The SystemImager software should be independent of any and all
+	  packaging systems (such as RPM) in order to easily accommodate
+	  different distributions.
+	</para>
+      </listitem>
+      
+      <listitem>
+	<para>
+	  SystemImager should be able to store multiple images for different
+	  types of systems and for revision control.
+	</para>
+      </listitem>
+      
+      <listitem>
+	<para>
+	  A mechanism should be available to let unattended install clients
+	  know which image to install. 
+	</para>
+      </listitem>
+      
+      <listitem>
+	<para>
+	  An installed client  should be able to update itself to a new or
+	  modified image.
+	</para>
+      </listitem>
+      
+      <listitem>
+	<para>
+	  SystemImager should have a command line interface that can easily be
+	  wrapped with a GUI.
+	</para>
+      </listitem>
+      
+    </itemizedlist>
+  </section>
+  <section>
+    <title>Development of SystemImager Architecture</title>
+    <para>
+      Minimal system requirements were a top priority for SystemImager, which
+      began as a series of utilities written as shell scripts.  However, shell
+      scripts were inadequate as SystemImager matured and its utilities became
+      more complex.  Perl, part of most Linux installs and possessing minimal system
+      requirements, then replaced shell scripts.  Using Perl, developers have
+      been able to generate cleaner, more advanced code.
+    </para>
+    
+    <para>
+      SystemImager architecture was designed to be open to modification at
+      every level.  The protocol for transferring files during installs
+      and updates is currently <filename>rsync(1)</filename>, but the modular
+      code easily allows drop-in replacements as is appropriate.  All unicast
+      file transfer mechanisms, including <filename>rsync(1)</filename> are 
+      implemented in a "pull" fashion, which is generally considered to be 
+      superior to a "push," because it is much easier to monitor the state of 
+      the receiving system prior to and during the
+      file transfers.  However, multicast may be an option in the future and
+      may need to be implemented as a "push."
+    </para>
+  </section>
+
+  
   <section>
     <title>Version Strings</title>
     <para>
-      SystemImager releases use a X.Y.Z numbering scheme.  X is a major
-      feature release revision , incremented to show significant architecture 
+      SystemImager releases use an X.Y.Z numbering scheme similar to that
+	used by the Linux kernel.  X is a major
+      feature release revision incremented to show significant architecture 
       changes.  Y is a minor release revision, incremented to show the
-      addition of new features.  Z is a bug-fix revision.  SystemImager uses a
-      versioning scheme similar to that used by the linux kernel.  If Y is an
+      addition of new features.  Z is a bug-fix revision.  If Y is an
       odd number, the release is a development release.  If Y is even, it is a
       stable release.
     </para>
     <para>
-      Using this scheme, you can easily see that 2.1.3 is a development release
+      Using this scheme, you can see that 2.1.3 is a development release
       because 1 is odd.  You can assume that the only changes between 2.0.3
       and 2.0.4 were bug fixes, because only the last digit was incremented.
     </para>
@@ -20,50 +134,48 @@
   <section>
     <title>Using CVS</title>
     <para>
-      SystemImager is maintained in CVS on SourceForge.  If you'd like to
-      submit patches for future releases, its best to generate them against
+      SystemImager is maintained in CVS on SourceForge.  To
+      submit patches for future releases, generate them against
       the code in CVS.  There are typically two active branches at any given
-      time - the current stable and the current development.  If you are fixing
-      a bug that exists in the current stable release, you'll want to generate
-      a patch against the stable branch.  If you are adding a new feature,
-      or fixing a bug that is only in the development branch, you'll want to
+      time - the current stable branch and the current development branch.  If you are fixing
+      a bug that exists in the current stable release, generate
+      a patch against the stable branch.  If you are adding a new feature
+      or fixing a bug that is only in the development branch,
       use the development branch.
     </para>
     <para>
       For example, the current stable release is 3.0.0, while the current
-      stable branch is v3_0_x.  At some point, we will tag the v3_0_x branch
-      with v3_0_1, and that will be the 3.0.1 release.
+      stable branch is v3_0_x.  At some point, the v3_0_x branch will be tagged as
+      v3_0_1, which will be the 3.0.1 release.
       Except for rare occasions, HEAD is the development branch.  Since the
-      current stable is 3.0.x, the next development releases will be 3.1.x.
+      current stable branch is 3.0.x, the next development releases will be 3.1.x.
       At some point, we will put a v3_1_0 tag on HEAD, and that will be 3.1.0.
     </para>
     <para>
       Instructions for accessing the CVS repository can be found at
       <ulink url="http://sourceforge.net/cvs/?group_id=259">
 	http://sourceforge.net/cvs/?group_id=259
-      </ulink>.  There's also a web interface there that lets you view
-      the files in the repository, and look at differences between different
+      </ulink>.  There's also a Web interface that allows you to view
+      the files in the repository and look at differences between 
       versions.
     </para>
   </section>
   <section>
     <title>Submitting Patches</title>
     <para>
-      If you have some changes you'd like to see added to a future release,
-      here are some guidelines for submitting patches.  Don't worry - we're
-      not very anal about people following these procedures, but they do make 
-      the patches easier for us to consume.
+      Following are suggested guidelines for submitting packages for a future
+	release that make it easier to incorporate the changes.
     </para>
     <itemizedlist>
       <listitem>
 	<para>
 	  Patches should be in unified diff form.  If your changes are 
-	  localized to one file, you can create a patch using a command like:
+	  localized to one file, you can create a patch using a command such as:
 	</para>
 	<para><command>diff -u getimage.orig getimage</command></para>
 	<para>
 	  If your changes are in multiple files, you can create a patch using
-	  a command like:
+	  a command such as:
 	</para>
 	<para>
 	  <command>diff -urN systemimager.orig/ systemimager/</command>
@@ -71,7 +183,7 @@
       </listitem>
       <listitem>
 	<para>
-	  Review your patches to make sure that you aren't changing other
+	  Review your patches to make sure you aren't changing other
 	  things.  Even if the additional changes are just whitespace changes,
 	  they can make the patch more difficult to review and reduce the
 	  chances it can cleanly apply against a slightly different tree.
@@ -79,22 +191,22 @@
       </listitem>
       <listitem>
 	<para>
-	  Its easiest if patches are against the code in an up-to-date tree of 
+	  It's easiest if patches are against the code in an up-to-date tree of 
 	  the code branch you're changing.  For example, if you've fixed a bug
 	  in 3.0.0, check out the v3_0_x branch and create your diff against
-	  that tree.  This will prevent you from fixing a bug that has already
-	  been fixed and committed, or creating a patch against a version that
+	  that tree to prevent you from fixing a bug that has already
+	  been fixed and committed or from creating a patch against a version that
 	  is different enough that it won't apply cleanly to the current code.
 	</para>
       </listitem>
       <listitem>
 	<para>
-	  For patches that are in SystemImager code, and do not affect other
-	  components of the System Installation Suite, please submit to
-	  systemimager-devel@lists.sourceforge.net.  For patches that you
-	  think mayb relevant to the rest of the System Installation
-	  Suite, use sisuite-devel@lists.sourceforge.net.  If you're not
-	  sure which one to use, use the latter.
+	  Please submit patches to SystemImager code that do not affect
+	  other components of the System Installation suite to
+	  systemimager-devel@lists.sourceforge.net.  For patches relevant 
+	  to the rest of the System Installation
+	  Suite, submit to sisuite-devel@lists.sourceforge.net.  Use the latter if unsure 
+	  which one to use.
 	</para>
       </listitem>
     </itemizedlist>
@@ -104,11 +216,11 @@
     <section>
       <title>Makefile Overview</title>
       <para>
-	Currently, the make system is setup as a single Makefile which
-	includes make snippets from other places in the tree.  This allows
-	you to easily depend on other make rules, but also means all rules
-	must exist in a flat namespace.  You'll notice that the rules and
-	variables in each .rul file will use a common prefix.  For example,
+	Currently, the make system is a single Makefile that
+	includes make snippets from other places in the tree.  This setup allows
+	you to easily depend on other make rules but also means all rules
+	must exist in a flat namespace.  Notice that the rules and
+	variables in each .rul file use a common prefix.  For example,
 	every rule in the parted.rul file begins with "parted_", and every
 	variable begins with "PARTED_".  Another thing to keep in mind when
 	working within this system is that all paths are relevant to the
@@ -119,43 +231,39 @@
     <section>
       <title>Third Party Software</title>
       <para>
-	The bulk of the SystemImager build system deals with building boel -
-	the mini-distribution that runs on clients during an autoinstall.
-	Most of the software in boel is built from third party source, and
-	is not included in the CVS tree (although it is packaged up with
-	released source tarballs).  The build system, therefore, must be
-	able to access these third party source tarballs in order to extract
+	The SystemImager build system builds a mini Linux distribution called boel
+	that runs on clients during an autoinstall  (See "Additional Installation
+	Information" in Chapter 3 for more information on boel). The <filename>initrd.img</filename> 
+	file contains a subset of boel that is small enough to fit on a 1.44MB floppy.  
+	After the client has booted and
+	brought up networking, it receives the 
+	<filename>boel_binaries.tar.gz</filename> file and extracts it over
+	the root of the filesystem,  providing an additional set of
+	commands, libraries, and kernel modules that may be needed during the
+	installation.
+	</para>
+	<para>Most of the software in boel is built from third party source and
+	is not included in the CVS tree, although it is packaged up with
+	released source tarballs.  The build system must therefore be
+	able to access these third party source tarballs to extract
 	them and build the necessary binaries.
       </para>
       <para>
-	To facilitate this, each .rul file for a third party package contains a
-	target for the source tarball.  This rule runs the 
+	Each .rul file for a third party package contains a
+	target for the source tarball.  The rules for these targets run the 
 	<command>getsource</command> script in the toplevel tools/ directory.  
 	<command>getsource</command> will look around your
 	system for a source tarball (/usr/src, and the toplevel of the build
-	tree), or will, as a last resort, use wget to download the source
-	tarball from the Internet.  It is highly suggested that you copy
+	tree), or will, as a last resort, use <command>wget</command> to download the source
+	tarball from the Internet.  It is highly recommended that you copy
 	any downloaded source to one of those locations so that you only
-	download it once.  Remember that, even though it may not be costing
-	you anything to download source repeatedly, it may be costing the
+	download it once.  Although it may not cost
+	you anything to download source repeatedly, there is an associated cost for the
 	people running the servers from which you're downloading.  Running
-	<command>make clean</command> attempts to remove everything *except*
-	these third party tarballs.  <command>make distclean</command> will
-	clean those out too.
-      </para>
-    </section>
-    <section>
-      <title>Boel</title>
-      <para>
-	Boel is what we call the mini-distribution that runs on the autoinstall
-	client.  A subset of boel is the contents of the 
-	<filename>initrd.img</filename> file.  After the client has booted and
-	brought up networking, it receives the 
-	<filename>boel_binaries.tar.gz</filename> file, and extracts it over
-	the root of the filesystem.  This provides an additional set of
-	commands, libraries, and kernel modules that maybe needed during the
-	installation.  The reason for the split-up is to keep
-	<filename>initrd.img</filename> small enough to fit on a 1.44MB floppy.
+	<command>make clean</command>  attempts to 
+	remove everything except these third party tarballs, while 
+	<command>make distclean</command> removes everything including the third party
+	tarballs.
       </para>
     </section>
     <section>
@@ -164,9 +272,9 @@
 	On i386, uClibc 
 	<ulink url="http://uclibc.org">http://uclibc.org</ulink>
 	is used within the initrd in order to keep it small enough to fit on a
-	floppy.  For the initrds for other architectures, and for the binaries
+	floppy.  For the initrds for other architectures and for the binaries
 	in <filename>boel_binaries.tar.gz</filename> on every architecture, the
-	mklibs script is used to copy over the required libraries
+	mklibs script copies over the required libraries
 	from the build system.  If appropriate pic libraries are found (e.g.,
 	the libc6-pic package in Debian), mklibs can take advantage of them
 	and reduce the libraries to only the functions needed by the binaries.

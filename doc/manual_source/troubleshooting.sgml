@@ -5,8 +5,8 @@
 
   <section>
     <title>
-     What's with the &quot;ETHER_SLEEP&quot; variable, and when should I mess
-     with it?
+     What is the &quot;ETHER_SLEEP&quot; variable, and when should I adjust
+     it?
     </title>
     <para>
      The ETHER_SLEEP variable specifies the number of seconds that your 
@@ -122,12 +122,12 @@ etc.
     <Para>Brian Finley reported other possible causes:</Para>
     <BlockQuote>
       <Para>
-	Every once in a while, someone reports some mysterious hanging, or
+	Every once in a while, someone reports some mysterious hanging or
 	transfer interruption issue related to rsync.  I had a chance to
-	speak with Andrew Tridgell in person today to discuss these issues.
+	speak with Andrew Tridgell in person to discuss these issues.
       </Para>
       <Para>
-	There are two know issues that could be the source of these symptoms.
+	We found two known issues that could be the source of these symptoms.
 	One is a known kernel issue, and one is an rsync issue.  The kernel
 	issue is supposedly resolved in 2.4.x series kernels, (SystemImager
 	has not yet been "officially" tested with 2.4.x kernels) and may not
@@ -444,9 +444,9 @@ etc.
     </title>
     <para>
       Are you using <application>xinetd</application>?
-      <application>xinetd</application> 2.1.8.9pre11 (and assumably earlier
-      versions) had a race condition which causes the tftp server to suddenly
-      stop responding.  this has supposedly been fixed in version
+      <application>xinetd</application> 2.1.8.9pre11 (and presumably earlier
+      versions) had a race condition that causes the tftp server to suddenly
+      stop responding.  This was supposedly fixed in version
       2.1.8.9pre13.  Also, <application>xinetd</application> and
       <application>inetd</application> have default limits on how many
       connections can be spawned in a 60 second period.  See the inetd or

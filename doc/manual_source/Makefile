@@ -22,7 +22,7 @@ BOOK            = $(NAME).sgml
 SRC	        = $(shell echo *.sgml)
 HTMLDIR         = html
 MANPAGE_CONTENT = $(shell ls ../man/*.sgml)
-MANUAL_DEPS     = $(SRC) $(MANPAGE_CONTENT)
+MANUAL_DEPS     = $(SRC) $(MANPAGE_CONTENT) dedosify
 
 all:    html ps pdf dvi rtf txt
 
@@ -41,7 +41,19 @@ $(NAME).dvi:	$(MANUAL_DEPS)
 	docbook2dvi $(BOOK)
 
 $(NAME).pdf:	$(MANUAL_DEPS)
+	# sgmltools makes better pdfs (e.g., page numbers, less cruft on
+	# the cover), but using docbook-utils is more portable across distros
+ifeq ($(USE_SGMLTOOLS),1)
+	# workaround for broken something or other (tetex-bin, i think)
+	# see http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=130504
+	cp --parents \
+	  /usr/share/sgml/docbook/stylesheet/dsssl/modular/images/note.pdf .
+	cp --parents \
+	  /usr/share/sgml/docbook/stylesheet/dsssl/modular/images/warning.pdf .
+	sgmltools -b pdf $(BOOK)
+else
 	docbook2pdf $(BOOK)
+endif
 
 $(NAME).ps:	$(MANUAL_DEPS)
 	docbook2ps $(BOOK)
@@ -68,3 +80,8 @@ clean:
 	rm -rf $(HTMLDIR)
 	rm -rf DBTOHTML_OUTPUT_DIR*
 	rm -rf ./usr/
+
+dedosify:
+	dos2unix *.sgml
+
+.PHONY:	dedosify

@@ -72,8 +72,7 @@
    <answer>
     <orderedlist>
      <listitem>
-      <para>
-       Install tftp (tftp-hpa >= 0.28 is recommended) on your boot server.
+      <para>Install tftp (tftp-hpa >= 0.28 is recommended) on your boot server.
       </para>
      </listitem>
      <listitem>
@@ -94,8 +93,8 @@ tftp            dgram   udp     wait    root    /usr/sbin/in.tftpd -v -v -v -s /
           if you installed it in a different directory.
          </para>
          <para>
-          The -v's aren't strictly required, but will make the tftp server
-          more verbose, and makes it easier to diagnose problems.
+          The -v's aren't strictly required but make the tftp server
+          more verbose, which makes it easier to diagnose problems.
          </para>
          <para>
           Finally, send a HUP signal to inetd (this causes it to reload its
@@ -140,14 +139,14 @@ service tftp
       </listitem>
       <listitem>
        <para>
-        Next, you must configure your DHCP server so that it provides boot 
+        Configure your DHCP server so that it provides boot 
         information to the client. Be careful when setting up your DHCP 
-        server - if it is set to hand out dynamic addresses, and is located on 
+        server - if it is set to hand out dynamic addresses and is located on 
         a public subnet, it may give bogus information to other machines on the
-        network - possibly destroying data on that machine. It is recommended 
-        that you use a private subnet for doing network installs. It is also 
-        recommended that you configure your DHCP server to only answer requests
-        from known hosts, based on the MAC address.
+        network, possibly destroying data on those machines. It is recommended 
+        that you use a private subnet for doing network installs. If possible, you should 
+	  also configure your DHCP server to only answer requests
+        from known hosts based on the MAC address.
        </para>
        <para>
         Add an entry for the boot client in /etc/dhcpd.conf
@@ -163,13 +162,13 @@ host mcmuffin {
       <listitem>
        <para>
         Copy elilo.conf and elilo.efi from an IA-64 machine to your tftpboot
-        diretory and make them world readable.  These files can be found in 
-        /etc, /boot/efi, or /usr/lib/elilo, or in the elilo package.
+        directory and make them world readable.  These files are in 
+        /etc, /boot/efi, /usr/lib/elilo, and in the elilo package.
        </para>
       </listitem>
       <listitem>
        <para>
-        Editing /tftpboot/elilo.conf
+        Edit /tftpboot/elilo.conf:
        </para> 
        <programlisting>
 image=vmlinux-rh.img
@@ -193,7 +192,7 @@ image=vmlinux-rh.img
        </itemizedlist>
        <para>
         You can use the ipcalc utility, which is available in the syslinux
-        package, to calculate the Hex representation of an IP address in
+        package, to calculate the hex representation of an IP address in
         dotted quad form.
        </para>
       </listitem>
@@ -236,8 +235,8 @@ image=vmlinux-rh.img
    </question>
    <answer>
     <para>
-    	<command>In SystemImager 2.1, mkautoinstallcd</command> and <command>mkautoinstalldiskette</command>
-    	support a -append option, allowing you to specify additional options for the autoinstall kernel,
+    	<command>In SystemImager 2.1 and later, mkautoinstallcd</command> and <command>mkautoinstalldiskette</command>
+    	support an -append option, allowing you to specify additional options for the autoinstall kernel,
     	including serial console options.  For example:  
     	<command>mkautoinstallcd -out-file aicd.iso -append "console=ttyS0"</command>
     </para>
@@ -349,44 +348,20 @@ image=vmlinux-rh.img
       </question>
       <answer>
         <para>
-    	The serial console itself often causes the bottleneck.
-   		By default, each filename is printed to the console as it is copied 
-   		from the server.  Because serial consoles typically have very low bandwidth,
-   		installations may be delayed while the system waits for the names to be
-   		printed to the console.  You can edit the <filename>.master script</filename> for your image
-  		to turn off verbosity.
+	  The serial console itself often causes the bottleneck.  By default, 
+	  each filename is printed to the console as it is copied from the 
+	  server.  Because serial consoles typically have very low bandwidth,
+	  installations may be delayed while the system waits for the names to
+	  be printed to the console.  You can use the -no-listing option to
+	  <command>getimage</command> and 
+	  <command>mkautoinstallscript</command> to turn off verbosity.
         </para>
-   	  <para>Change:
-     		  <command>rsync -av --numeric-ids $IMAGESERVER::$IMAGENAME/ /a/</command>
-   			to:
-     		  <command>rsync -av --numeric-ids $IMAGESERVER::$IMAGENAME/ /a/</command>
- 
-   		This change will cause a silent install to occur.  If you would like to
-   		see activity during this stage for assurance that something is executing, 
-   		you can add an ascii spinner.  Replace the above
-   		rsync command with this code:
-      </para>
- 
- 
-      <para>echo -n "Silently rsyncing over image...|"
-    	  { while :; do 
-    		  echo -n "\b/";  sleep 1;
-    		  echo -n "\b-";  sleep 1;
-    	        echo -n "\b\\"; sleep 1;
-    		  echo -n "\b|";  sleep 1; 
-  		done 
-    	}&
-          pid=$!
-            rsync -a --numeric-ids $IMAGESERVER::$IMAGENAME/ /a/ || (kill $pid && shellout)
-            kill $pid
-            echo "done."
-      </para>
-     </answer>
+      </answer>
   </qandaentry>
  
   <qandaentry>
         <question>
-      <para>How do I Configure my DHCP v3 server?</para>
+      <para>How do I configure my DHCP v3 server?</para>
     </question>
     <answer>
       <para>
@@ -447,14 +422,14 @@ image=vmlinux-rh.img
 	</para>
 	<para>
 	  The following instructions describe how to create a new boot package.
-	  These steps should be used for adding a driver, whether it be a
-          network driver, block device driver, a module, or statically linked.
+	  Use these steps to add a network driver or block device driver 
+	  that can either be a module or statically linked:
         </para>
 	<warning>
 	  <para>
 	    Boot packages are tightly linked to the version of SystemImager
 	    you are using.  If you make customizations to a boot package
-	    for SystemImager 3.0, you will need to forward port
+	    for SystemImager 3.0.0, you must forward port
 	    those changes when you move to SystemImager 3.2.0.
 	  </para>
 	</warning>
@@ -462,14 +437,13 @@ image=vmlinux-rh.img
 	  <title>Creating a custom boot package</title>
 	  <para>
 	    If the driver you need to add can be built as a module,
-	    you may choose to add it directly onto the autoinstall ramdisk.
-	    You should definitely choose this method if you need to add
-	    a driver for the network interface you plan to install over,
-	    and the driver is only available as a module.  This is also
-	    the suggested method for adding a module for a device
-	    when it failed to be discovered at install time.  Alternatively, 
-	    you can drop in a patch to be added to the kernel build tree, or
-	    make modifications to the .config file used to build the kernel.
+	    you can add it directly onto the autoinstall ramdisk.
+	    Use this method if you need to add a driver for the network interface 
+	    you plan to install over and the driver is only available as a module.  
+	    This is also the suggested method for adding a module for a device
+	    that failed to be discovered at install time.  In other cases, 
+	    you can drop in a patch to be added to the kernel build tree or
+	    make modifications to the <filename>.config</filename> file used to build the kernel.
 	  </para>
 	</formalpara>
 	<orderedlist>
@@ -493,46 +467,43 @@ image=vmlinux-rh.img
 	  </listitem>
 	  <listitem>
 	    <para>
-	      If you need to add a patch to the kernel, you can do so
-	      by dropping your patch file in the patches subdirectory of the
-	      toplevel build tree.  You will need to follow the naming
-	      convention, which is described in the README.patches file in
+	      To add a patch to the kernel, drop your patch file in the patches subdirectory of the
+	      top level build tree.  Follow the naming convention described in the README.patches file in
 	      the patches/ subdirectory.
 	    </para>
 	  </listitem>
 	  <listitem>
 	    <para>
-	      If you need to modify the .config file for your kernel, e.g.
-	      to turn on a driver, you can find these files in the patch
-	      directory, named linux.&lt;arch&gt;.config.  (If you added
+	      If you need to modify the .config file for your kernel (e.g.
+	      to turn on a driver), you can find it in the patch
+	      directory named linux.&lt;arch&gt;.config.  (If you added
 	      a patch that includes a new driver, you should be prompted
-	      to turn that on later, during the 'make binaries' step).
+	      to turn that on in Step 9 of these instructions - the 'make binaries' step).
 	    </para>
 	  </listitem>
 	  <listitem>
 	    <para>
-	      If you are building a module from external source to be 
-	      included in the autoinstall ramdisk, you will need a linux
-	      source tree to build against.  You can generate a tree by
-	      running 'make patched_kernel-stamp'.  This will create
-	      a source tree in the src/linux directory in the source
-	      tree.  Follow the instructions that came with your module
+	      If you are building a binary module from external source to be 
+	      included in the autoinstall ramdisk, you need the linux
+	      source tree to build against.  You can generate a source tree 
+	      in the src/linux directory by
+	      running <command>make patched_kernel-stamp</command>.  
+		Follow the instructions that came with your module
 	      source to compile your module against this tree.
 	    </para>
 	  </listitem>
 	  <listitem>
 	    <para>
-	      If you have a binary module (created in the last step), you 
-	      can now copy it into the initrd_source/my_modules directory.  
-	      You will then need to add instructions to the 
+	      If you created a binary module, you can copy it into the 
+	     	initrd_source/my_modules directory. Add instructions to the 
 	      <filename>INSMOD_COMMANDS</filename> file in order to have
-	      your module loaded at install time.  Take a look at the
-	      comments in that file for details.
+	      your module loaded at install time.  See comments in that file 
+		for details.
 	    </para>
 	  </listitem>
 	  <listitem>
 	    <para>
-	      Next, edit the <filename>FLAVOR</filename> file in the
+	      Edit the <filename>FLAVOR</filename> file in the
 	      top level of the source tree.  Choose an alphanumeric
 	      string that describes your modifications.
 	    </para>
@@ -544,17 +515,16 @@ image=vmlinux-rh.img
 	  </listitem>
 	  <listitem>
 	    <para>
-	      From the toplevel of the source tree, run 'make binaries'.
-	      See the README file for details on what your system needs
-	      to have installed for this to succeed.
+	      From the toplevel of the source tree, run <command>make binaries</command>.
+	      See the README file for details on building prerequisites.
 	    </para>
 	  </listitem>
 	  <listitem>
 	    <para>
-	      Run 'make binaries_install'.  This will copy the binaries
-	      built in the last step into the appropriate place in
-	      /usr/share/systemimager/boot directory.  You will now
-	      have an additional flavor to choose from when you create
+	      Run <command>make install_binaries</command> to copy the binaries
+	      built in the previous step into the appropriate place in
+	      /usr/share/systemimager/boot directory.  You now
+	      have an additional flavor to choose from when creating
 	      autoinstall media.
 	    </para>
 	  </listitem>
@@ -568,17 +538,6 @@ image=vmlinux-rh.img
       </answer>
     </qandaentry>
     	
-  <qandaentry>
-    <question>
-      <para>How do I exclude files or directories during a getimage?</para>
-    </question>
-    <answer>
-      <para>
-        As of 2.0.1 there is no support for this, though it should be added
-        soon. 
-      </para>
-    </answer>
-  </qandaentry>
   <qandaentry>
     <question>
       <para>
@@ -660,8 +619,9 @@ image=vmlinux-rh.img
         </listitem>
       </orderedlist>
       <para>
-        Search this document for <command>mkautoinstallcd</command> and 
-        <command>mkautoinstalldiskette</command> for more information.
+        See the entries for <command>mkautoinstallcd</command> and 
+        <command>mkautoinstalldiskette</command> in the command
+	  reference chapter in this manual for more information.
       </para>
     </answer>
   </qandaentry>
@@ -733,7 +693,7 @@ image=vmlinux-rh.img
         </question>
     <answer>
       <para>
-        If you already have SystemImager 1.0 or later, you can simply 
+        If you have SystemImager 1.0 or later, you can simply 
         install the new version over the older one.  Using a packaged
         version (.rpm,.deb) is recommended to prevent cruft build-up on
         your system.
@@ -1129,25 +1089,22 @@ image=vmlinux-rh.img
   <qandaentry>
      <question>
       <para>
-       I configured my non-software RAID image to install as a software RAID
-       image by modifying my autoinstallscript.conf file, but the install 
-       failed.  What in the world could possibly be wrong?
+       I modified my <filename>autoinstallscript.conf</filename> file to configure my
+	 non-software RAID image to install as a software RAID image,
+	 but the install failed.  Why?
       </para>
      </question>
      <answer>
       <para>
        When you convert a non-software RAID image to a software RAID image, 
-       you must manually configure the software RAID information for your 
-       image.  These modifications may be made directly to the image, or 
-       if you want to keep the image virgin, these changes may be made in 
-       an override directory.
+       you must manually configure the software RAID information.  Modify the 
+	 image directly or make the changes in an override directory
+	 if you want to maintain the original image. 
       </para>
       <para>
-       There are many things that you need to know in order to manually
-       configure a computer to use software RAID on Linux.  The following 
-       are key points, or tips, intended to remind or assist someone 
-       already familiar with this process.  If you need more information 
-       on software RAID than the pointers provided below, please refer to
+       Following are keypoints for manually
+       configuring a computer to use software RAID on Linux.  For more
+	 detailed information, please refer to
        <ulink url="http://unthought.net/Software-RAID.HOWTO/">The Software RAID HOWTO</ulink>
        at http://unthought.net/Software-RAID.HOWTO/.
       </para>
@@ -1161,12 +1118,12 @@ image=vmlinux-rh.img
        </ListItem>
        <ListItem>
         <para>
-         Device files: In order for software RAID to work, you must have the
+         Device files:  For software RAID to work, you must have the
          proper device files in your image.  These device files have names like
          /dev/md0, /dev/md1, etc.  If these device files do not exist, cd into 
-         the ./dev directory of your image, then copy and past the following 
+         the ./dev directory of your image, then copy and paste the following 
          command to create them.  If the software RAID devices are already
-         created, running this command won't hurt a thing.
+         created, running this command causes no problems.
         </para>
         <para>
          <LiteralLayout>
@@ -1182,27 +1139,27 @@ image=vmlinux-rh.img
        </ListItem>
        <ListItem>
         <para>
-         Other files: You will also need to modify the files used by your boot
-         loader (lilo, grub, etc.).  See your boot loaders documentation for
-         more information on it's configuration file format.  Here is one quick
+         Other files: You must also modify the files used by your boot
+         loader (lilo, grub, etc.).  See your boot loader's documentation for
+         more information on its configuration file format.  A quick
          tip: in lilo.conf, instead of using /dev/md as for the boot=
-         parameter, try using the software RAID device that will hold your
-         /boot/ directory (where the kernel lives).  For example, if /boot/
-         will be mounted on /dev/md1, then specify boot=/dev/md1.
+         parameter, use the software RAID device that holds your
+         /boot/ directory (where the kernel lives).  For example, if /dev/md1 
+         will be mounted on /boot/, then specify boot=/dev/md1.
         </para>
        </ListItem>
       </ItemizedList>
       <para>
-       After you have manually configured your image to use software RAID,
+       After manually configuring your image to use software RAID,
        then make your changes to the autoinstallscript.conf file.  Changes 
-       that you will need to make to this file may include the following.
+       that you need to make to this file may include the following.
        See "<command>man autoinstallscript.conf</command>" for more information.
       </para>
       <ItemizedList>
        <ListItem>
         <para>
          In the <command>&lt;disk&gt;</command> section, add 
-         <command>raid</command> to the comma seperated list of flags for
+         <command>raid</command> to the comma separated list of flags for
          each partition that will participate in a RAID array.
         </para>
        </ListItem>
@@ -1215,8 +1172,8 @@ image=vmlinux-rh.img
        </ListItem>
       </ItemizedList>
       <para>
-       Now you can run <command>mkautoinstallscript</command> to create a new,
-       software RAID enabled, autoinstallscript for your image!
+       You can now run <command>mkautoinstallscript</command> to create a new,
+       software RAID-enabled autoinstallscript for your image.
       </para>
      </answer>
   </qandaentry>
@@ -1229,40 +1186,39 @@ image=vmlinux-rh.img
    </question>
    <answer>
     <para>
-     An override directory is a directory that get's copied over to your target
+     An override directory is a directory that gets copied over to your target
      machines after the main image is transferred.  All contents in the override
      directory are copied over to the root of the target machine's new
-     filesystem.  All file attributes will be replicated including directories,
+     filesystem.  All file attributes are replicated, including directories,
      permissions, and ownership.  This allows you to "over-ride" files in the
      image.  Override directories live in
      <command>/var/lib/systemimager/overrides/</command>.
     </para>
     <para>
-     You don't have to use an override directory, but it can be useful in many
-     cases.  For example, you could have two different autoinstall scripts for
-     the same image: one for SCSI machines, and one for IDE machines.  You could
-     have your /etc/fstab and /etc/lilo.conf files in override directories.
-     Perhaps one override directory is called my_image-ide, and the other
-     my_image-scsi.
+     You don't have to use an override directory, but it can often be useful.  
+     For example, you could have two different autoinstall scripts for
+     the same image: one for SCSI machines, and one for IDE machines.  You can
+     have your /etc/fstab and /etc/lilo.conf files in override directories with
+     names such as my_image-ide and my_image-scsi.
     </para>
     <para>
-     Simply edit the master autoinstall script, and change the overrides
+     Simply edit the master autoinstall script and change the overrides
      variable to include the appropriate override directory.  For example, you
      could change <command>OVERRIDES="my_image"</command> to 
      <command>OVERRIDES="my_image-ide"</command>.
     </para>
     <para>
-     If you will be using the same overrides on all of your machines, you don't
-     have to change the autoinstall script at all.  Simply put the files that
+     If using the same overrides on all of your machines, you don't
+     have to change the autoinstall script.  Simply put the files that
      you want to override in the overrides directory that has the same name as
-     your image, and you're good to go!
+     your image, and proceed.
     </para>
     <para>
-     And if you want to get funky, you can use multiple override directories.
-     They will be used in the order that you specify them -- each directory 
-     over-riding the previous directories.  This methodology can be used in a
-     highly complex environment where there may be slight variations between
-     several classes of machines, but where they all start with the same base
+     You can also use multiple override directories, which are used in the order 
+     that you specify them -- each directory 
+     overriding the previous directories.  You can use this methodology in a
+     highly complex environment where  slight variations exist between
+     several classes of machines but where they all start with the same base
      image.  For example, <command>OVERRIDES="my_image-ide web_app"</command>.  
     </para>
    </answer>
@@ -1276,7 +1232,7 @@ image=vmlinux-rh.img
    </question>
    <answer>
     <para>
-     See "How do I change the size of a partition?".
+     See "How do I change the size of a partition?"
     </para>
    </answer>
   </qandaentry>
@@ -1289,19 +1245,19 @@ image=vmlinux-rh.img
    </question>
    <answer>
     <para>
-     Just follow the simple steps below:
-    </para>
-    <para>
      <orderedlist>
       <listitem>
        <para>
         Open your autoinstallscript.conf file in your favourite text editor.
        </para>
-       <para>
-        NOTE: The default autoinstallscript.conf file that is created by
-        <command>prepareclient</command>, lives in the ./etc/systemimager
-        directory in your image.
-       </para>
+	      <note>
+		<para>
+		  The default autoinstallscript.conf file created by
+		  <command>prepareclient</command> lives in the 
+		  <filename>/etc/systemimager</filename> directory in your 
+		  image.
+		</para>
+	      </note>
       </listitem>
       <listitem>
        <para>
@@ -1318,14 +1274,14 @@ image=vmlinux-rh.img
       </listitem>
       <listitem>
        <para>
-        Change <command>size</command> to the new partition size.  If the size
-        you specify is not sufficient to hold the files that will live there,
-        then your autoinstall will fail.
+        Change <command>size</command> to the new partition size, keeping in mind that if the size
+        you specify is not sufficient to hold the files stored there,
+        the autoinstall will fail.
        </para>
        <para>
         NOTE: Each <command>&lt;disk&gt;</command> section can use either MB
         (megabytes) or % (percentages) to specify partition sizes.  See  
-        "<command>man autoinstallscript.conf</command>" for more information.
+        <command>man autoinstallscript.conf</command> for more information.
        </para>
       </listitem>
       <listitem>
@@ -1334,10 +1290,10 @@ image=vmlinux-rh.img
         autoinstall script using the new parameters.
        </para>
        <para>
-        NOTE: By default, <command>mkautoinstallscript</command> will use the
-        autoinstallscript.conf file located in the ./etc/systemimager directory in
-        your image.  See "<command>man mkautoinstallscript</command>" and 
-        "<command>man autoinstallscript.conf</command>" for more information.
+        NOTE: By default, <command>mkautoinstallscript</command> uses the
+        autoinstallscript.conf file located in your image's ./etc/systemimager directory.  
+        See <command>man mkautoinstallscript</command> and 
+        <command>man autoinstallscript.conf</command> for more information.
        </para>
       </listitem>
      </orderedlist>
@@ -1353,23 +1309,20 @@ image=vmlinux-rh.img
    </question>
    <answer>
     <para>
-     Follow these simple steps:
-    </para>
-    <para>
      <orderedlist>
       <listitem>
        <para>
-        Make sure that the kernel in your image will support the filesystem(s) 
+        Make sure that the kernel in your image supports the filesystem(s) 
         you want to use.
        </para>
       </listitem>
       <listitem>
        <para>
-        Open your autoinstallscript.conf file in your favourite text editor.
+        Open your autoinstallscript.conf file in your favorite text editor.
        </para>
        <para>
-        NOTE: The default autoinstallscript.conf file that is created by
-        <command>prepareclient</command>, lives in the ./etc/systemimager
+        NOTE: The default autoinstallscript.conf file created by
+        <command>prepareclient</command> lives in the ./etc/systemimager
         directory in your image.
        </para>
       </listitem>
@@ -1383,37 +1336,33 @@ image=vmlinux-rh.img
       <listitem>
        <para>
         Change <command>fs</command> to the filesystem you want to use.
-        See "<command>man autoinstallscript.conf</command>" for a list of
+        See <command>man autoinstallscript.conf</command> for a list of
         supported filesystems.
        </para>
        <para>
-        NOTE: It is your responsibility to know the capabilities of the
-        filesystem you choose.  Depending on the filesystem, you may also need
-        to change the options used to mount the filesystem.  These are set by
-        the <command>options</command> entry.  If you choose these
-        options poorly, your autoinstall may fail.
+        You must understand the capabilities of your chosen filesystem.  Depending on which
+	  one you use, you may also need to change the options used to mount the filesystem, which
+	  are set by the <command>options</command> entry.  If you choose unsupported
+        options, your autoinstall may fail.
        </para>
        <para>
-        NOTE: In most cases (that is in all the cases we've seen so far), it is
-        not necessary to change the <command>fs</command> entries in the
-        <command>&lt;disk&gt;</command> section when changing filesystem types.
+        In all known cases to date, it has not been necessary to change the <command>fs</command> 
+	  entries in the <command>&lt;disk&gt;</command> section when changing filesystem types.
         The <command>fs</command> entries in the 
         <command>&lt;disk&gt;</command> section don't actually determine the
-        filesystem that will be created on those partitions, but for some reason
-        <command>parted</command>, the tool SystemImager uses for creating disk
-        partitions, requires that argument.
+        filesystem that will be created on those partitions, but the 
+        <command>parted</command> tool that SystemImager uses for creating disk
+        partitions requires that argument.
        </para>
       </listitem>
       <listitem>
        <para>
         Run <command>mkautoinstallscript</command> to create a new 
-        autoinstall script using the new parameters.
-       </para>
-       <para>
-        NOTE: By default, <command>mkautoinstallscript</command> will use the
-        autoinstallscript.conf file located in the ./etc/systemimager directory in
-        your image.  See "<command>man mkautoinstallscript</command>" and 
-        "<command>man autoinstallscript.conf</command>" for more information.
+        autoinstall script using the new parameters. By default, 
+	  <command>mkautoinstallscript</command> uses the autoinstallscript.conf 
+	  file located in the ./etc/systemimager directory in
+        your image.  See <command>man mkautoinstallscript</command> and 
+        <command>man autoinstallscript.conf</command> for more information.
        </para>
       </listitem>
      </orderedlist>
@@ -1429,9 +1378,6 @@ image=vmlinux-rh.img
    </question>
    <answer>
     <para>
-     Follow these simple steps:
-    </para>
-    <para>
      <orderedlist>
       <listitem>
        <para>
@@ -1441,13 +1387,16 @@ image=vmlinux-rh.img
       </listitem>
       <listitem>
        <para>
-        Open your autoinstallscript.conf file in your favourite text editor.
+        Open your autoinstallscript.conf file in your favorite text editor.
        </para>
-       <para>
-        NOTE: The default autoinstallscript.conf file that is created by
-        <command>prepareclient</command>, lives in the ./etc/systemimager
-        directory in your image.
-       </para>
+	      <note>
+		<para>
+		  The default autoinstallscript.conf file created by
+		  <command>prepareclient</command> lives in the 
+		  <filename>/etc/systemimager</filename>
+		  directory in your image.
+		</para>
+	      </note>
       </listitem>
       <listitem>
        <para>
@@ -1474,12 +1423,16 @@ image=vmlinux-rh.img
         Run <command>mkautoinstallscript</command> to create a new 
         autoinstall script using the new parameters.
        </para>
-       <para>
-        NOTE: By default, <command>mkautoinstallscript</command> will use the
-        autoinstallscript.conf file located in the ./etc/systemimager directory in
-        your image.  See "<command>man mkautoinstallscript</command>" and 
-        "<command>man autoinstallscript.conf</command>" for more information.
-       </para>
+	      <note>
+		<para>
+		  By default, <command>mkautoinstallscript</command> uses the
+		  <filename>autoinstallscript.conf</filename> file located in 
+		  the <filename>/etc/systemimager</filename> directory in your
+		  image.  See <command>man mkautoinstallscript</command> and 
+		  <command>man autoinstallscript.conf</command> for more
+		  information.
+		</para>
+	      </note>
       </listitem>
      </orderedlist>
     </para>
@@ -1495,17 +1448,17 @@ image=vmlinux-rh.img
    </question>
    <answer>
     <para>
-     Yes.  Customize a seperate autoinstallscript.conf file for each
+     Yes.  Customize a separate autoinstallscript.conf file for each
      configuration type, and use <command>mkautoinstallscript</command> to
      create a seperate master autoinstallscript for each configuration.
     </para>
     <para>
      If a particular configuration's boot device will be different from the boot
-     device in the image, you will also need to put a customized copy of your
+     device in the image, you also need to put a customized copy of your
      boot loader's configuration file(s) in an override directory.
     </para>
     <para>
-     See the following sections for more information:
+     See the following "Frequently Asked Questions" for more information:
     </para>
     <para>
      <itemizedlist>

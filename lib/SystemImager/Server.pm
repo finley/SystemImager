@@ -195,10 +195,13 @@ sub _read_partition_info_and_prepare_parted_commands {
 
     my $xml_config = XMLin($file, keyattr => { disk => "+dev", part => "+num" }, forcearray => 1 );  
 
+    foreach my $dev (sort (keys ( %{$xml_config->{disk}} ))) {
+	print "Found disk: $dev.\n";
+    }
     #
     # Ok.  Now that we've read all of the partition scheme info into hashes, let's do stuff with it. -BEF-
     #
-    foreach my $dev (sort (keys ( %{$xml_config->{disk}} ))) {
+    foreach $dev (sort (keys ( %{$xml_config->{disk}} ))) {
 
         my $label_type = $xml_config->{disk}->{$dev}->{label_type};
         my (
@@ -677,7 +680,7 @@ sub dev_to_devfs {
 
     ## disks
     if ($dev =~ m{^/dev/(.*)/c(\d+)d(\d+)$}) {
-        if ($1 eq "cciss") {
+        if ($1 eq "cciss" or $1 eq "rd") {
             return "/dev/" . $1 . "/disc" . $3 . "/disc";
         }
         else {
@@ -688,7 +691,7 @@ sub dev_to_devfs {
     elsif ($dev =~ m{^/dev/(.*)/c(\d+)d(\d+)p(\d+)$}) {
         ## the controller number is not taken into account here.
         ## its unknown how this should work w/ multiple controllers.
-        if ($1 eq "cciss") {
+        if ($1 eq "cciss" or $1 eq "rd") {
             return "/dev/" . $1 . "/disc" . $3 . "/part" . $4;
         }
         else {
@@ -697,7 +700,6 @@ sub dev_to_devfs {
     }
     return $dev;
 }
-
 
 # Description:
 # Read configuration information from /etc/systemimager/autoinstallscript.conf

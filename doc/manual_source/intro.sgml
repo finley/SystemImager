@@ -14,30 +14,14 @@
     </para>
     
     <para>
-      You will find SystemImager most useful in environments where you have
+      SystemImager is most useful in environments where you have
       large numbers of identical machines, including Internet server farms,
       high performance clusters, computer labs, or corporate desktop
       environments where all workstations have the same basic hardware
       configuration.  For more background information on design goals and
       product development, see "SystemImager Background."
     </para>
-    
-    <example>
-      <title>A typical Cluster or Server Farm</title>
-      <mediaobject>
-	<imageobject>
-	  <imagedata format="jpg" fileref="images/cluster.jpg">
-	</imageobject>
-	<imageobject>
-	  <imagedata format="eps" fileref="images/cluster.eps">
-	</imageobject>
-	<textobject>
-	  <phrase>
-	    A typical Cluster or Server Farm 
-	    </phrase>
-	</textobject>
-      </mediaobject>
-    </example>
+   
   </section>
   
   <section>
@@ -151,15 +135,15 @@
 		  </row>
 		  <row>
 		    <entry>RedHat</entry>
-		    <entry>7.2</entry>
+		    <entry>7.2, Advanced Server 2.1</entry>
 		  </row>
 		</tbody>
 	</tgroup>
       </table>
       
       <para>
-	Linux-2.0.x based distributions are not supported at this time, nor
-	are there plans to add support for Linux 2.0.x based 
+	Linux kernel 2.0.x-based distributions are not supported at this time, nor
+	are there plans to add support for Linux kernel 2.0.x-based 
 	distributions.
       </para>
     </section>
@@ -184,10 +168,9 @@
 	  <para>
 	    Advanced users can modify the 
 	    <filename>/etc/systemimager/autoinstallscript.conf</filename> file
-	    within an image to make adjustments, followed by 
-	    running the <command>mkautoinstallscript</command> command, to make
-	    an enable an image to be installed on clients with varying disk 
-	    configurations.
+	    within an image to make adjustments, then run the 
+   	    <command>mkautoinstallscript</command> command to install
+	    an image on clients with varying disk configurations.
 	  </para>
 	</listitem>
 	<listitem>
@@ -197,7 +180,7 @@
 	    the image/DHCP pserver. Debian provides such servers in the
 	    tftpd-hpa and atftpd packages, while Red Hat 7.0 and later include 
 	    such a server in the tftp-server package.  H. Peter Anvin maintains
-	    the <application>tftp-hpa</application> package which provides the
+	    the <application>tftp-hpa</application> package that provides the
 	    required functionality.
 	  </para>
 	</listitem>

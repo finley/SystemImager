@@ -654,14 +654,14 @@ IMAGESERVER=192.168.1.203
 	    <para>
 	      The unattended install procedure is flexible and works with almost any available hardware. 
 	      You can also easily modify it to work with new or special hardware. 
-	      A miniature Linux distribution (Brian's Own Embedded Linux) is used for autoinstalls.  
+	      A miniature Linux distribution called Brian's Own Embedded Linux (boel) is used for autoinstalls.  
 	      It consists of a customized kernel and an initial ram disk that contains only the specific 
 	      commands and utilities necessary to perform autoinstalls. The same kernel and initial ram disk 
 	      (<filename>initrd.gz</filename>) can be used to boot from floppy disks, CDROMs, the network, or any running Linux 
 	      system's local hard drive.
 	    </para>
 	    <para>
-	      The <command>makeautoinstalldiskette</command> and <command>makeautoinstallcd</command> commands 
+	      The <command>mkautoinstalldiskette</command> and <command>mkautoinstallcd</command> commands 
 	      use the <command>syslinux(2)</command> utility to create floppies and CDROMs that will boot the 
 	      SystemImager kernel and initial ram disk. <command>pxelinux(2)</command>, 
 	      which is a sister tool to <command>syslinux</command>, allows the same kernel and initial ram disk to 
