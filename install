@@ -157,7 +157,6 @@ if [ "x$DESTDIR" = "x" ]; then
   [ $QUIET = "false" ] && echo "Installing files in ${prefix}/doc/$PACKAGE_NAME-$VERSION/"
   rm -fr ${prefix}/doc/$PACKAGE_NAME-*
   install -d -m 755 $OWNERSHIP ${prefix}/doc/$PACKAGE_NAME-$VERSION/
-  install -m 444 $OWNERSHIP $INSTALL_DIR/ABSTRACT.pdf                ${prefix}/doc/$PACKAGE_NAME-$VERSION/
   install -m 444 $OWNERSHIP $INSTALL_DIR/CHANGE.LOG                  ${prefix}/doc/$PACKAGE_NAME-$VERSION/
   install -m 444 $OWNERSHIP $INSTALL_DIR/COPYING                     ${prefix}/doc/$PACKAGE_NAME-$VERSION/
   install -m 444 $OWNERSHIP $INSTALL_DIR/CREDITS                     ${prefix}/doc/$PACKAGE_NAME-$VERSION/
