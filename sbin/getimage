@@ -86,7 +86,6 @@ Options: (options can be presented in any order and may be abbreviated)
                           this image to be stored.  The directory bearing
                           the image name itself will be placed inside the
                           directory specified here.
- -explicit-geometry       blah, blah, ###
  -update-script [YES|NO]  Update the \$image.master script?  Defaults to 
                           NO if -quiet.  If not specified you will be
                           prompted to confirm an update.
@@ -489,6 +488,9 @@ while (<FSTAB>) {
 
     # Remove spaces from the beginning of the line
     s/^ +//;
+
+    # Skip blank lines
+    if (m@(^$)@) { next; }
 
     # split on space(s) and assign values to variables
     (my $device_file, my $mount_point, my $filesystem_type) = split(/ +/);
