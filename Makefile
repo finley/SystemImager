@@ -82,6 +82,14 @@
 
 DESTDIR =
 VERSION = $(shell cat VERSION)
+
+## is this an unstable release?
+MINOR = $(shell echo $(VERSION) | cut -d "." -f 2)
+UNSTABLE = 0
+ifeq ($(shell echo "$(MINOR) % 2" | bc),1)
+UNSTABLE = 1
+endif
+
 FLAVOR = $(shell cat FLAVOR)
 
 TOPDIR  := $(CURDIR)
@@ -105,8 +113,6 @@ endif
 ifneq ($(BUILD_ARCH),)
 	ARCH := $(BUILD_ARCH)
 endif
-
-SUDO = $(shell if [ `id -u` != 0 ]; then `which sudo`; fi)
 
 MANUAL_DIR = $(TOPDIR)/doc/manual_source
 MANPAGE_DIR = $(TOPDIR)/doc/man
@@ -407,7 +413,10 @@ install_ssh_tarball:	$(SYSTEMIMAGER_SSH_TARBALL)
 PHONY += ssh_source_tarball
 ssh_source_tarball:	$(TOPDIR)/tmp/systemimager-ssh-$(VERSION).tar.bz2.md5sum
 
-$(TOPDIR)/tmp/systemimager-ssh-$(VERSION).tar.bz2.md5sum:
+$(TOPDIR)/tmp/systemimager-ssh-$(VERSION).tar.bz2.md5sum:	$(TOPDIR)/tmp/systemimager-ssh-$(VERSION).tar.bz2
+	cd $(TOPDIR)/tmp && md5sum systemimager-ssh-$(VERSION).tar.bz2 > systemimager-ssh-$(VERSION).tar.bz2.md5sum
+
+$(TOPDIR)/tmp/systemimager-ssh-$(VERSION).tar.bz2:
 	mkdir -p tmp/systemimager-ssh-$(VERSION)
 	find . -maxdepth 1 -not -name . -not -name tmp -not -name src \
 	  -exec cp -a {} tmp/systemimager-ssh-$(VERSION) \;
@@ -416,7 +425,6 @@ $(TOPDIR)/tmp/systemimager-ssh-$(VERSION).tar.bz2.md5sum:
 	$(MAKE) -C $(TOPDIR)/tmp/systemimager-ssh-$(VERSION) distclean
 	$(MAKE) -C $(TOPDIR)/tmp/systemimager-ssh-$(VERSION) WITH_SSH=1 get_ssh_source
 	cd $(TOPDIR)/tmp && tar -ch systemimager-ssh-$(VERSION) | bzip2 > systemimager-ssh-$(VERSION).tar.bz2
-	cd $(TOPDIR)/tmp && md5sum systemimager-ssh-$(VERSION).tar.bz2 > systemimager-ssh-$(VERSION).tar.bz2.md5sum
 	@echo
 	@echo "ssh source tarball has been created in $(TOPDIR)/tmp"
 	@echo
@@ -532,7 +540,10 @@ endif
 PHONY += source_tarball
 source_tarball:	$(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2.md5sum
 
-$(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2.md5sum:
+$(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2.md5sum:	$(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
+	cd $(TOPDIR)/tmp && md5sum systemimager-$(VERSION).tar.bz2 > systemimager-$(VERSION).tar.bz2.md5sum
+
+$(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2:
 	mkdir -p tmp/systemimager-$(VERSION)
 	find . -maxdepth 1 -not -name . -not -name tmp -not -name src \
 	  -exec cp -a {} tmp/systemimager-$(VERSION) \;
@@ -540,8 +551,13 @@ $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2.md5sum:
 	         -type d -printf "%p "`
 	$(MAKE) -C $(TOPDIR)/tmp/systemimager-$(VERSION) distclean
 	$(MAKE) -C $(TOPDIR)/tmp/systemimager-$(VERSION) get_source
+ifeq ($(UNSTABLE), 1)
+	cd $(TOPDIR)/tmp/systemimager-$(VERSION) && cp README README.tmp
+	cd $(TOPDIR)/tmp/systemimager-$(VERSION) && cp README.unstable README
+	cd $(TOPDIR)/tmp/systemimager-$(VERSION) && cat README.tmp >> README
+endif
+	rm $(TOPDIR)/tmp/systemimager-$(VERSION)/README.unstable
 	cd $(TOPDIR)/tmp && tar -ch systemimager-$(VERSION) | bzip2 > systemimager-$(VERSION).tar.bz2
-	cd $(TOPDIR)/tmp && md5sum systemimager-$(VERSION).tar.bz2 > systemimager-$(VERSION).tar.bz2.md5sum
 	@echo
 	@echo "source tarball has been created in $(TOPDIR)/tmp"
 	@echo
