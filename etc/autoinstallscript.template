@@ -286,7 +286,8 @@ rsync $IMAGESERVER::scripts/imaging_complete > /dev/null 2>&1
 ################################################################################
 
 # Take network interface down
-ifconfig eth0 down || shellout
+[ -z $DEVICE ] && DEVICE=eth0
+ifconfig $DEVICE down || shellout
 
 # Announce completion (even for non beep-incessantly --post-install options)
 beep 3
