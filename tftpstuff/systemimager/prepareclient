@@ -420,17 +420,23 @@ fi
 # do introduction
 if [ "$QUIET" = "false" ]; then
  clear
- echo "Welcome to the VA SystemImager prepareclient script.  This install script"
- echo "may modify the following files to prepare your client for imaging."
- echo
- echo " /etc/services    -- add rsync line if necessary"
- echo " /etc/inetd.conf  -- comment out rsync line if necessary"
- echo "                     (rsync will run as a daemon until shutdown)"
- echo " /tmp/rsyncd.conf -- create a temporary rsyncd.conf file with a"
- echo "                     [root] entry in it."
- echo
- echo " All modified files will be backed up with the .beforesystemimager extension."
- echo
+ cat << "EOF"
+Welcome to the VA SystemImager prepareclient command.  This command
+may modify the following files to prepare your client for having it's
+image retrieved by the imageserver.  It will also create the 
+/etc/systemimager directory and fill it with information about your 
+master client, such as the disk partitioning scheme(s). 
+ 
+ /etc/services    -- add rsync line if necessary
+ /etc/inetd.conf  -- comment out rsync line if necessary
+                     (rsync will run as a daemon until shutdown)
+ /tmp/rsyncd.conf -- create a temporary rsyncd.conf file with a
+                     [root] entry in it.
+ 
+All modified files will be backed up with the .beforesystemimager 
+extension.
+
+EOF
 
  # you sure you want to install?
  echo -n "Prepare client for VA SystemImager? (y/[n]) "
