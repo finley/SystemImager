@@ -11,6 +11,7 @@
 3.0 PRE-RELEASE
 --------------------------------------------------------------------------------
 Pending:
+* addclients -domainname optional & related bug
 * incorporate Common.pm elilo.efi stuff into updateclient and mk*whatever in dannf's bug report.
 * updateclient XXX (exit 1 bit)
 * updateclient -a bug: http://sourceforge.net/tracker/index.php?func=detail&aid=610755&group_id=259&atid=100259
@@ -33,7 +34,7 @@ Completed:
 * e1000 as module
 * change "Please send email to: -> systemimager-discuss@"
 * grep -r XXX .
-* fakeroot for building boel_binaries
+* chown -R 0.0 /lib/modules after untarring boel_binaries.tar.gz
 * ia64 doesn't boot
 
 
