@@ -95,6 +95,8 @@ write_variables() {
   
     echo "LOG_SERVER=$LOG_SERVER"               >> /tmp/variables.txt
     echo "LOG_SERVER_PORT=$LOG_SERVER_PORT" 	>> /tmp/variables.txt
+
+    echo "TMPFS_STAGING=$TMPFS_STAGING"         >> /tmp/variables.txt
  
     echo "SSH_USER=$SSH_USER"	            	>> /tmp/variables.txt
     echo "SSH_DOWNLOAD_URL=$SSH_DOWNLOAD_URL"	>> /tmp/variables.txt
@@ -151,8 +153,8 @@ get_flamethrower_directory() {
     echo get_flamethrower_directory
 
     mkdir -p ${FLAMETHROWER_DIRECTORY_DIR}
-    echo udp-receiver --interface ${DEVICE} --portbase ${FLAMETHROWER_DIRECTORY_PORTBASE} --pipe \"tar -C ${FLAMETHROWER_DIRECTORY_DIR} -x\"
-         udp-receiver --interface ${DEVICE} --portbase ${FLAMETHROWER_DIRECTORY_PORTBASE} --pipe "tar -C ${FLAMETHROWER_DIRECTORY_DIR} -x" || echo "EXIT CODE: $?"
+    echo udp-receiver --interface ${DEVICE} --portbase ${FLAMETHROWER_DIRECTORY_PORTBASE} | tar -x -C ${FLAMETHROWER_DIRECTORY_DIR}
+         udp-receiver --interface ${DEVICE} --portbase ${FLAMETHROWER_DIRECTORY_PORTBASE} | tar -x -C ${FLAMETHROWER_DIRECTORY_DIR} || echo "EXIT CODE: $?"
     sleep 1
     echo
 }
@@ -191,8 +193,8 @@ flamethrower_client() {
     fi
 
     mkdir -p ${DIR}
-    echo udp-receiver $UDP_RECEIVER_OPTIONS --pipe \"tar -C ${DIR} -x\"
-         udp-receiver $UDP_RECEIVER_OPTIONS --pipe "tar -C ${DIR} -x" || echo "EXIT CODE: $?"
+    echo udp-receiver $UDP_RECEIVER_OPTIONS | tar -x -C ${DIR}
+         udp-receiver $UDP_RECEIVER_OPTIONS | tar -x -C ${DIR} || echo "EXIT CODE: $?"
     sleep 1
 
     # Unset vars, so next module (which may not have them set) won't use then unintentially
