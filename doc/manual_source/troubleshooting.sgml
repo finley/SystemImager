@@ -401,5 +401,45 @@ etc.
       xinetd manpage for details on increasing this limit.
     </para>
   </section>  
-
+  <section id=RootMountFailure>
+    <title>
+      My autoinstallclient fails with "Kernel panic: VFS: unable to mount root 
+      fs".
+    </title>
+    <para>
+      This can be caused by a variety of problems:
+    </para>
+    <itemizedlist>
+      <listitem>
+	<para>
+	  If you've built your own kernel, you may have left out some necessary
+	  patches - specifically the cramfs initrd patches.  When building a
+	  custom kernel, you should build it within the SystemImager source 
+	  tree.  If you're trying to build a newer kernel than was included
+	  in this SystemImager release, some patches may need modifications
+	  to get them to apply.  Read the comments at the top of the patch
+	  files to understand what they do, and be careful not to remove
+	  patches unless you know they do not affect you.
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  If you've built your own kernel, you may have left some stuff out
+	  of your kernel config file.  Look for things like initial ramdisk
+	  support, compressed rom filesystem support, etc.  It is usually best 
+	  to start with the .config in the patches/ directory, and modify it
+	  as necessary.
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  You may not be passing the appropriate options to your kernel.
+	  Take a look at the sample config file for your bootloader that
+	  was included with this release to get the list of options you 
+	  need to pass, e.g. 
+	  <filename>/etc/systemimager/pxelinux.cfg/syslinux.cfg</filename>.
+	</para>
+      </listitem>
+    </itemizedlist>
+  </section>
 </chapter>
