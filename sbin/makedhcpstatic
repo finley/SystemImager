@@ -1,0 +1,83 @@
+#!/usr/bin/perl -w
+
+#
+# "SystemImager" - Copyright (C) 1999-2000 TheFinleys.com <brian@thefinleys.com> 
+#
+# /systemimager/bin/makedhcpstatic
+#
+
+# if not run as root, this script will surely fail
+unless($< == 0) { die "Must be run as root!\n"; }
+
+# give warning
+#if -q then no warning
+
+# read in /etc/dhcpd.conf
+open(DHCPDCONF, "< /etc/dhcpd.conf") or die "Couldn't open /etc/dhcpd.conf for reading: $!\n";
+while (<DHCPDCONF>) { push(@dhcpdconf, $_); }
+close(DHCPDCONF);
+
+# test for /var/state/dhcp/dhcpd.leases (newest and preferred location)
+if -e /var/state/dhcp/dhcpd.leases {
+  # read in /var/state/dhcp/dhcpd.leases and create an IP/mac address hash
+  %ipbymac = ();
+  open(LEASEINFO, "< /var/log/messages") or die "Couldn't open /var/log/messages for reading: $!\n";
+  while (<LEASEINFO>) {
+?    if (/DHCPACK/) {
+?      my @fields = split;
+?      $ipbymac{$fields[9]} = $fields[7];
+    }
+  }
+  close(LEASEINFO);
+} 
+
+# test for /etc/dhcpd.leases
+elsif -e /etc/dhcpd.leases {
+  do other stuff
+} 
+
+# default to using info in /var/log/messages
+else {
+  # read in /var/log/messages and create an IP/mac address hash
+  %ipbymac = ();
+  open(LEASEINFO, "< /var/log/messages") or die "Couldn't open /var/log/messages for reading: $!\n";
+  while (<LEASEINFO>) {
+    if (/DHCPACK/) {
+      my @fields = split;
+      $ipbymac{$fields[9]} = $fields[7];
+    }
+  }
+  close(LEASEINFO);
+}
+
+# read in /etc/hosts and create an IP address/host name hash
+%hostsbyip = ();
+open(HOSTS, "< /etc/hosts") or die "Couldn't open /etc/hosts for reading: $!\n";
+while (<HOSTS>) {
+  if (/^\s*\d+\.\d+\.\d+\.\d+\s+\w/) {	# match a non-commented IP/hostname entry
+    my @fields = split;
+    $hostsbyip{$fields[0]} = $fields[1]; }
+}
+close(HOSTS);
+
+# open /etc/dhcpd.conf for writing
+open(DHCPDCONF, ">> /etc/dhcpd.conf") or die "Couldn't open /etc/dhcpd.conf for appending: $!\n";
+foreach $mac (keys %ipbymac) {
+  $exists="no";
+  foreach(@dhcpdconf) { 
+    if(/$mac/) { 
+      $exists="yes";
+      last;
+    } 
+  }
+  # update dhcpd.conf as necessary
+  unless($exists eq "yes") { 
+    # autoinstall client gets it's hostname from hosts file pulled from $imageserver::etc/hosts
+    #  that's how it knows which script file to pull
+    #
+    $hostname = $hostsbyip{$ipbymac{$mac}};
+    print "Adding entry for $hostname:\t$mac $ipbymac{$mac} to /etc/dhcpd.conf\n";
+    print DHCPDCONF qq(host $hostname { hardware ethernet $mac; fixed-address $hostname; }\n);
+  }
+}
+close(DHCPDCONF);

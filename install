@@ -1,0 +1,247 @@
+#!/bin/sh
+
+#
+# "SystemImager" - Copyright (C) 1999-2000 TheFinleys.com <brian@thefinleys.com> 
+#
+
+
+# set some variables
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+
+COMMAND_PATH=`dirname $0`
+cd $COMMAND_PATH
+INSTALL_DIR=`pwd`
+VERSION=`cat $INSTALL_DIR/VERSION`
+RESTART_INETD=no
+
+# if not run as root, install will surely fail
+[ `whoami` != "root" ] && echo "Must be run as root!" && exit 1
+
+# source needed functions and 
+. $INSTALL_DIR/functions
+
+# do introduction
+clear
+echo "Welcome to SystemImager."
+echo
+echo "This install script may modify the following files:"
+echo
+echo " /tftpboot/systemimager -- create if necessary and add appropriate files/links"
+echo " /etc/services          -- add rsync and/or tftp entries if necessary"
+echo " /etc/inetd.conf        -- add/modify rsync and tftp entries if necessary"
+echo " /etc/rsyncd.conf       -- it is assumed that SystemImager will manage this"
+echo "                           file and that it will not be used for anything else"
+echo
+echo " All modified files will be backed up with the .beforesystemimager extension."
+echo
+
+# you sure you want to install?
+echo -n "Install SystemImager? (y/[n]) "
+read REPLY
+case $REPLY in
+ y|Y|Yes|yes|YES ) clear; echo Ok.  Installing SystemImager... ;;
+ * ) echo Install cancelled.  No files modified. && exit 1 ;;
+esac
+
+echo
+sleep 2
+
+
+### BEGIN binaries ###
+for BINARY in `ls $INSTALL_DIR/sbin/`
+do
+  cp -af $INSTALL_DIR/sbin/$BINARY /usr/sbin/
+  chown root:root /usr/sbin/$BINARY
+done
+### END binaries ###
+
+
+### BEGIN tftpboot stuff ###
+
+# Create /tftpboot/systemimager/ directory if necessary and copy/link files
+if [ ! -d /tftpboot/systemimager/ ]; then
+  echo "Creating /tftpboot/systemimager/ ..."
+  mkdir -p /tftpboot/systemimager/
+else
+  echo "/tftpboot/systemimager/ already exists ..."
+fi
+echo "soft linking /tftpboot/systemimager/hosts to /etc/hosts ..."
+cd /tftpboot/systemimager/
+ln -sf /etc/hosts hosts
+
+cd /tftpboot/pxelinux.cfg/
+ln -f syslinux.cfg default
+
+# gotta make sure the masses can read it...
+chmod +r /etc/hosts
+
+# copy tftpstuff into tftp area
+for TFTP_ITEM in `ls $INSTALL_DIR/tftpstuff/`
+do
+  cp -af $INSTALL_DIR/tftpstuff/$TFTP_ITEM /tftpboot/
+  chown -R root:root /tftpboot/$TFTP_ITEM
+done
+
+### END tftpboot stuff ###
+
+
+### BEGIN images stuff ###
+
+# create /var/spool/systemimager
+mkdir -p /var/spool/systemimager/images
+chmod 750 /var/spool/systemimager/images
+
+# Create Warning file
+echo '#' > /var/spool/systemimager/images/README
+echo '# "SystemImager" - Copyright (C) 1999-2000 TheFinleys.com <brian@thefinleys.com>' >> /var/spool/systemimager/images/README
+echo '#' >> /var/spool/systemimager/images/README
+echo '' >> /var/spool/systemimager/images/README
+echo '***GOTCHA!***' >> /var/spool/systemimager/images/README
+echo '' >> /var/spool/systemimager/images/README
+echo 'DO NOT TOUCH THESE DIRECTORIES UNLESS YOU KNOW EXACTLY WHAT YOU ARE DOING!!!' >> /var/spool/systemimager/images/README
+echo '' >> /var/spool/systemimager/images/README
+echo 'You have the ability to totally hose an entire network of computers if you put' >> /var/spool/systemimager/images/README
+echo 'the wrong file in the right place.  OR EVEN MESS UP THE PERMISSIONS ON A FILE.' >> /var/spool/systemimager/images/README
+echo '' >> /var/spool/systemimager/images/README
+echo 'Permissions, ownership, modes, sticky-bits, etc. are all very important as they' >> /var/spool/systemimager/images/README
+echo 'will be replicated *exactly* on the clients!!!' >> /var/spool/systemimager/images/README
+
+# Create extra scary link to warning file
+cd /var/spool/systemimager/images
+ln -sf README DO_NOT_TOUCH_THESE_DIRECTORIES
+
+### END images stuff ###
+
+
+### BEGIN inetd stuff ###
+
+# verify that rsync entry is in /etc/services
+egrep -qw ^rsync /etc/services
+if [ $? != "0" ]; then
+  if [ ! -f /etc/services.beforesystemimager ]; then
+    echo "Backing up /etc/services to /etc/services.beforesystemimager ..."
+    cp -af /etc/services /etc/services.beforesystemimager
+  fi
+  echo "Adding rsync entries to /etc/services ..."
+  echo "rsync           873/tcp                         # rsync" >> /etc/services
+  echo "rsync           873/udp                         # rsync" >> /etc/services
+else
+  echo "rsync entries already exist in /etc/services ..."
+fi 
+
+# verify that rsync entry is in /etc/inetd.conf
+egrep -qw ^rsync /etc/inetd.conf
+if [ $? != "0" ]; then
+  if [ ! -f /etc/inetd.conf.beforesystemimager ]; then
+    echo "Backing up /etc/inetd.conf to /etc/inetd.conf.beforesystemimager ..."
+
+    cp -af /etc/inetd.conf /etc/inetd.conf.beforesystemimager
+  fi
+  egrep -qw ^#rsync /etc/inetd.conf
+  if [ $? != "0" ]; then
+    echo "Adding rsync entry to /etc/inetd.conf ..."
+    echo "rsync stream tcp nowait root /usr/bin/rsync rsyncd --daemon" >> /etc/inetd.conf
+  else
+    echo "Uncommenting (enabling) rsync entry in /etc/inetd.conf ..."
+    sed 's/^#rsync/rsync/' /etc/inetd.conf > /tmp/.systemimager
+    cp -af /tmp/.systemimager /etc/inetd.conf
+    rm -f /tmp/.systemimager
+  fi
+  RESTART_INETD=yes
+else
+  echo "rsync entry already enabled in /etc/inetd.conf ..."
+fi 
+
+# verify that a tftp entry is in /etc/inetd.conf
+egrep -qw ^tftp /etc/inetd.conf
+if [ $? != "0" ]; then
+  if [ ! -f /etc/inetd.conf.beforesystemimager ]; then
+    echo "Backing up /etc/inetd.conf to /etc/inetd.conf.beforesystemimager ..."
+    cp -af /etc/inetd.conf /etc/inetd.conf.beforesystemimager
+  fi
+  egrep -qw ^#tftp /etc/inetd.conf
+  if [ $? != "0" ]; then
+    echo "Adding tftp entry to /etc/inetd.conf ..."
+    echo "tftp   dgram   udp     wait    root    /usr/sbin/tcpd  in.tftpd" >> /etc/inetd.conf
+  else
+    echo "Uncommenting (enabling) tftp entry in /etc/inetd.conf ..."
+    sed 's/^#tftp/tftp/' /etc/inetd.conf > /tmp/.systemimager
+    cp -af /tmp/.systemimager /etc/inetd.conf
+    rm -f /tmp/.systemimager
+  fi
+  RESTART_INETD=yes
+else
+  echo "tftp entry already enabled in /etc/inetd.conf ..."
+fi 
+
+# signal inetd to re-read /etc/inetd.conf
+if [ $RESTART_INETD = "yes" ]; then
+  echo -n "Signalling inetd to re-read /etc/inetd.conf: "
+  killproc inetd -HUP
+  echo ""
+fi
+
+### END inetd stuff ###
+
+
+### BEGIN rsync stuff ###
+
+# install SystemImager brand rsyncd.conf file
+if [ ! -f /etc/rsyncd.conf ]; then
+  # if it doesn't exist, create it
+  echo "Creating /etc/rsyncd.conf ..."
+  create_rsyncd_conf
+elif [ ! -f /etc/rsyncd.conf.beforesystemimager ]; then
+  # OK, it does exist -- if the backup file doesn't exist, 
+  # back it up 
+  echo "Backing up /etc/rsyncd.conf to /etc/rsyncd.conf.beforesystemimager ..."
+  cp -af /etc/rsyncd.conf /etc/rsyncd.conf.beforesystemimager
+  # and create rsyncd.conf
+  echo "Creating /etc/rsyncd.conf ..."
+  create_rsyncd_conf
+elif ! egrep -qw SystemImager /etc/rsyncd.conf; then
+  # if the backup file exists, then check to see if current rsyncd.conf belongs
+  # to SystemImager.  If not, back it up.
+  echo Backing up /etc/rsyncd.conf to /etc/rsyncd.conf.beforesystemimager ...
+  cp -af /etc/rsyncd.conf /etc/rsyncd.conf.beforesystemimager
+  # and create rsyncd.conf
+  echo Creating /etc/rsyncd.conf ...
+  create_rsyncd_conf
+fi
+
+### END rsync stuff ###
+
+
+### BEGIN documentation and what not stuff ###
+
+# Documentation -- copy BIG CASE files
+rm -fr /usr/doc/systemimager-*
+mkdir -p /usr/doc/systemimager-$VERSION/
+cp -af $INSTALL_DIR/[A-Z]* /usr/doc/systemimager-$VERSION/
+chown -R root:root /usr/doc/systemimager-$VERSION/
+
+### END documentation and what not stuff ###
+
+
+### BEGIN dhcp stuff ###
+
+# Hey! Want dhcp?
+echo
+echo -n "Press <Enter> to continue..."
+read REPLY
+clear
+echo -n "Would you like me to configure this computer as a dhcp server now? (y/[n]) "
+read REPLY
+case $REPLY in
+ y|Y|Yes|yes|YES ) makedhcpserver ;;
+esac
+
+### END dhcp stuff ###
+
+
+# wrap up
+clear
+echo
+echo "All done!  Please read the FAQ-HOWTO before using SystemImager."
+echo "See /usr/doc/systemimager-$VERSION/ for all documentation."
+echo

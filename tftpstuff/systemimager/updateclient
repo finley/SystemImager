@@ -1,0 +1,134 @@
+#!/usr/bin/perl -w
+#
+# "SystemImager" - Copyright (C) 1999-2000 TheFinleys.com <brian@thefinleys.com>
+#
+# This file is: /usr/bin/updateimage
+#               (on clients)
+#
+# This file is: /systemimager/installstuff/updateimage
+#               (on the imageserver)
+#
+
+# set version_number
+$version_number="0.24";
+
+# declare modules
+use Getopt::Long;
+
+# if not run as root, this script will surely fail
+unless($< == 0) { die "Must be run as root!\n"; }
+
+# set version information
+$version_info = <<"EOF";
+
+updateimage (SystemImager) v$version_number
+
+Copyright (C) 1999-2000 TheFinleys.com <brian\@thefinleys.com>
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Written by Brian Finley <brian\@thefinleys.com>
+
+EOF
+
+# set help information
+$help_info = $version_info . <<"EOF";
+Usage: updateimage [OPTION]... --imageserver HOSTNAME --image IMAGENAME
+  or   updateimage --imageserver HOSTNAME --listing
+
+Options: (options can be presented in any order)
+ --help                    duh
+ --version                 display version and copyright information
+ --imageserver=HOSTNAME    hostname or IP address of the imageserver
+ --image=IMAGENAME         image from which the client should be updated
+ --directory=DIRECTORY     absolute path of directory to be updated
+ --listing                 list avaliable images on imageserver
+                           (supercedes and ignores all options 
+                            other than --imageserver)
+ --nolilo                  don't run lilo after update completes
+                           (lilo is always run unless specified)
+ --reboot                  reboot client after update completes
+
+Download from http://systemimager.org/
+Report bugs or suggestions to <systemimager-bugs\@systemimager.org>
+
+EOF
+
+# interpret command line options
+GetOptions( "listing" => \$listing,
+            "help" => \$help,
+            "version" => \$version,
+            "reboot" => \$reboot,
+            "nolilo" => \$nolilo,
+            "imageserver=s" => \$imageserver,
+            "image=s" => \$image,
+            "directory=s" => \$directory,
+) or die qq($help_info);
+
+# if requested, print help information
+if($help) { die qq($help_info); }
+
+# if requested, print version and copyright information
+if($version) { die qq($version_info); }
+
+# if usage is bad, print help information
+unless( ($imageserver and $image) or ($imageserver and $listing) ) { 
+  die qq($help_info);
+}
+
+# if listing, get listing
+if($listing) {
+  print qq(Available image(s):\n);
+  $command = qq(rsync -v $imageserver) . q(::) . q( |grep -vw etc|grep -vw installstuff);
+  system($command);
+} else {
+  # set directory to default if not specified on command line
+  unless($directory) { $directory = "/"; }
+
+  # pad directory with a trailing / in case user didn't supply one (extras don't hurt)
+  if($directory) { $directory = $directory . "/"; }
+  
+
+  # start with base command
+  $command = "rsync -avz";
+
+  # get exclusions from /etc/systemimager.exclude
+  open(SYSTEMIMAGER_EXCLUDE, "< /etc/systemimager.exclude") or die "Couldn't open /etc/systemimager.exclude for reading: $!\n";
+  while (<SYSTEMIMAGER_EXCLUDE>) {
+    if (/^\s*\//) {  # match non commented explicit path
+      chomp;
+      $command = $command . qq( --exclude=$_);
+    }
+  }
+  close(SYSTEMIMAGER_EXCLUDE);
+
+  # append currently mounted non ext2 filesystems to exclusions list
+  open(ETC_MTAB, "< /etc/mtab") or die "Couldn't open /etc/mtab for reading: $!\n";
+  while (<ETC_MTAB>) {
+    chomp;
+    @fields = split(/ /, $_);
+    unless( ($fields[2] eq "ext2") or ($fields[1] eq '/proc') or ($fields[1] eq '/dev/pts') ) {
+      $command = $command . qq( --exclude=$fields[1]);
+    }
+  }
+  close(ETC_MTAB);
+
+  # finalize command
+  $command = $command . qq( --delete $imageserver) . q(::) . qq($image$directory $directory);
+
+  # execute command
+  print qq(Updating image...\n);
+  system($command);
+
+  # lilo
+  unless($nolilo) { 
+    print qq(running lilo...\n);
+    system("/sbin/lilo; sync; sync; sync");
+  }
+
+  # reboot
+  if($reboot) { 
+    print qq(rebooting...\n);
+    system("/bin/sleep 10s; /sbin/init 6");
+  }
+}

@@ -1,0 +1,252 @@
+#!/usr/bin/perl -w
+
+#
+# "SystemImager" - Copyright (C) 1999-2000 TheFinleys.com <brian@thefinleys.com> 
+#
+# This file is: addclients
+#
+
+### BEGIN Subroutines ###
+sub get_response {
+ my $garbage_out=$_[0];
+ my $garbage_in=<STDIN>;
+ chomp $garbage_in;
+ unless($garbage_in eq "") { $garbage_out = $garbage_in; }
+ return $garbage_out;
+}
+
+sub dec2bin {
+  my $str = unpack("B32", pack("N", shift));
+  return $str;
+}
+
+sub dec2bin8bit {
+  my $str = unpack("B32", pack("N", shift));
+  $str = substr($str, -8); # 32bit number -- get last 8 bits (the relevant ones)
+  return $str;
+}
+
+sub bin2dec {
+  return unpack("N", pack("B32", substr("0" x 32 . shift, -32))); # get all 32bits
+}
+
+sub ip_quad2ip_dec {
+    (my $a, my $b, my $c, my $d) = split(/\./, $_[0]);
+    my $a_bin=dec2bin8bit($a);
+    my $b_bin=dec2bin8bit($b);
+    my $c_bin=dec2bin8bit($c);
+    my $d_bin=dec2bin8bit($d);
+    return bin2dec(join('', $a_bin, $b_bin, $c_bin, $d_bin));
+}
+
+sub ip_dec2ip_quad {
+    my $ip_bin = dec2bin($_[0]);
+    my $a_dec = bin2dec(substr($ip_bin, 0, 8));
+    my $b_dec = bin2dec(substr($ip_bin, 8, 8));
+    my $c_dec = bin2dec(substr($ip_bin, 16, 8));
+    my $d_dec = bin2dec(substr($ip_bin, 24, 8));
+    return join('.', $a_dec, $b_dec, $c_dec, $d_dec);
+}
+### END Subroutines ###
+
+
+### BEGIN Program ###
+# if not run as root this script will surely fail
+unless($< == 0) { die "Must be run as root!\n"; }
+
+system("clear");
+
+# give warning
+print <<"EOF";
+
+Welcome to the SystemImager "addclients" script.  This script 
+will create softlinks for each of your client names to your
+"\$image.master" script in the "/tftpboot/systemimager/"
+directory.  ( ie. computenode201.sh -> newlinuximage.master )
+
+It will also give you the opportunity to create entries in
+"/etc/hosts" for each of these same clients.  (entries will 
+only be made if they don't already exist.)
+
+EOF
+
+print "Continue? ([y]/n): ";
+$continue=<STDIN>;
+chomp $continue;
+$continue = lc $continue;
+($continue ne "n") or die "\naddclients: No files were modified.\n";
+
+### BEGIN main questionnaire ###
+$image="";
+$domain_name="";
+$base_host_name="";
+$starting_number="";
+$ending_number="";
+$satisfied = "n";
+while ($satisfied ne "y") {
+ system("clear");
+ print "Type your response and hit <Enter>.\n\n";
+
+ print "What your domain name? [$domain_name]: ";
+ $domain_name=get_response($domain_name);
+ $domain_name = lc $domain_name;
+
+ print "What is the base host name that you want me to use? [$base_host_name]: ";
+ $base_host_name = get_response($base_host_name);
+ $base_host_name = lc $base_host_name;
+
+ print "What number should I begin with? [$starting_number]: ";
+ # "+ 0" is to ensure we have a flat number and not "001" or something
+ $starting_number = get_response($starting_number) + 0; 
+
+ print "What number should I end with? [$ending_number]: ";
+ # "+ 0" is to ensure we have a flat number and not "001" or something
+ $ending_number=get_response($ending_number) + 0;
+
+ print "\nI will work with hostnames:\n";
+ print "$base_host_name$starting_number through $base_host_name$ending_number in the domain $domain_name.\n";
+ print "\nAre you satisfied? (y/[n]): ";
+ chomp($satisfied=<STDIN>);
+}
+### END main questionnaire ###
+
+### BEGIN links questionaire ###
+system("clear");
+print qq(\n);
+print q(Would you like me to create soft links to an "$image.master" script so);
+print qq(\n);
+print "that hosts $base_host_name$starting_number through $base_host_name$ending_number can receive that image? ([y]/n): ";
+$createlinks=<STDIN>;
+chomp $createlinks;
+$createlinks = lc $createlinks;
+
+unless($createlinks eq "n") {
+  $satisfied="n";
+  while ($satisfied eq "n") {
+    # gather a list of available images
+    @files = ();
+    opendir ( DIR, "/tftpboot/systemimager" );
+    @files = grep { /\.master$/ } readdir (DIR);
+    closedir (DIR);
+
+    # display the list of available images
+    print qq(\nHere is a list of available images:\n);
+    while (<@files>) {
+      $_ =~ s/\.master//g;
+      print "$_\n";
+      $image = $_;
+    }
+    print qq(\n);
+
+    print "Which image would you like these hosts to receive? [$image]: ";
+    $image=get_response($image);
+    if ( -f "/tftpboot/systemimager/$image.master" ) {
+      foreach $node_number ($starting_number .. $ending_number) {
+        system("cd /tftpboot/systemimager; ln -sf $image.master $base_host_name$node_number.sh");
+      }
+      print "\nYour soft links have been created.\n";
+      print "\nPress <Enter> to continue...";
+      $satisfied="y";
+      $pause=<STDIN>;
+      system("clear");
+    } else {
+      print qq(\nImage \"$image\" does not exist...\n);
+      print qq(Let's try again, shall we?\n);
+      print qq(\nPress <Enter> to continue...);
+      $satisfied="n";
+      $pause=<STDIN>;
+      system("clear");
+    }
+  }
+} else {
+  print "\nNo links will be created.\n";
+  print "\nPress <Enter> to continue...";
+  $pause=<STDIN>;
+}
+### END links questionaire ###
+
+### BEGIN hosts questionaire ###
+system("clear");
+print <<EOF;
+It is necessary to have an entry for each client in \"/etc/hosts\".
+
+Would you like me to make entries in \"/etc/hosts\" for these
+EOF
+
+print q<clients? ([y]/n): >; 
+
+$etc_hosts=<STDIN>;
+chomp $etc_hosts;
+$etc_hosts = lc $etc_hosts;
+if($etc_hosts ne "n") {$etc_hosts = "y";}
+
+$node_number = $starting_number;
+
+if($etc_hosts eq "y") {
+  system("clear");
+  print "We should do one subnet at a time.  When we finish with the first subnet,\n";
+  print "I will prompt you for the next one.\n";
+  print "\nPress <Enter> to continue...";
+  $pause=<STDIN>;
+
+  ### BEGIN One Subnet at a time ###
+  while ( $node_number <= $ending_number ) {
+    $satisfied="n";
+    $starting_ip="";
+    $ending_ip="";
+    # ne "y" is used instead of eq "n" because the dissatisfied response may be something other than "n".
+    while ($satisfied ne "y") {
+      system("clear");
+      print "What is the starting IP address for this subnet? [$starting_ip]: ";
+      $starting_ip = get_response($starting_ip);
+      $starting_ip_dec = ip_quad2ip_dec($starting_ip);
+    
+      print "What is the ending IP address? [$ending_ip]: ";
+      $ending_ip = get_response($ending_ip);
+      $ending_ip_dec = ip_quad2ip_dec($ending_ip);
+    
+      print "\nI will work with IP addresses \"$starting_ip\" through \"$ending_ip\".\n";
+      print "\nAre you satisfied? (y/[n]): ";
+      chomp($satisfied=<STDIN>);
+    }
+    
+    # read in /etc/hosts and create an IP address/host name hash
+    %etc_hostsbyip = ();
+    open(ETC_HOSTS, "< /etc/hosts") or die "Couldn't open /etc/hosts for reading: $!\n";
+    while (<ETC_HOSTS>) {
+      if (/^\s*\d+\.\d+\.\d+\.\d+\s+\w/) {  # match a non-commented IP/hostname entry
+        my @fields = split;
+        $etc_hostsbyip{$fields[0]} = $fields[1];
+      }
+    }
+    close(ETC_HOSTS);
+    
+    # create new entries in /etc/hosts
+    open(ETC_HOSTS, ">> /etc/hosts") or die "Couldn't open /etc/hosts for appending: $!\n";
+    $ip_dec = $starting_ip_dec;
+    until ( $ip_dec > $ending_ip_dec ) {
+      my $bitwise = $ip_dec & 255;
+      if ( $bitwise == "255" ) { $ip_dec = $ip_dec + 2; }
+      my $ip_quad = ip_dec2ip_quad($ip_dec);
+      if ( $etc_hosts eq "y" ) {
+        unless( $etc_hostsbyip{$ip_quad} ) { 
+          # add to /etc/hosts
+          print ETC_HOSTS qq($ip_quad    $base_host_name$node_number.$domain_name  $base_host_name$node_number\n);  
+        }
+      }
+      $ip_dec = $ip_dec + 1;
+      $node_number = $node_number + 1;
+        if ( $node_number > $ending_number ) { last; }
+    }
+    close(ETC_HOSTS);
+    if ( $etc_hosts eq "y" ) { print "\nYour entries have been added to /etc/hosts.\n"; }
+    print "\nPress <Enter> to continue...";
+    $pause=<STDIN>;
+  }
+  ### END One Subnet at a time ###
+} else {
+  print "\nNo entries will be added.";
+  print "\nPress <Enter> to continue...";
+  $pause=<STDIN>;
+}
+### END hosts questionaire ###

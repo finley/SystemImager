@@ -1,0 +1,313 @@
+#
+# "SystemImager" - Copyright (C) 1999-2000 TheFinleys.com <brian@thefinleys.com> 
+#
+# This file: CHANGE.LOG
+#
+
+SystemImager-0.24 2000.02.09
+- autoinstall system -- The autoinstalldiskette is no longer based on
+  Tom's Root Boot.  It is now a miniature distribution of my own.  It
+  boots using syslinux.  This also allows us to use the same kernel and
+  root filesystem for both diskette booting and network booting via
+  pxelinux (part of syslinux).
+- rsyncd.conf -- added "chroot = no".  
+  Brian Luethke <luethke@msr.epm.ornl.gov> pointed out that if a users
+  UID/GID is different on a client (from the imageserver) when doing an 
+  "updateimage", the client ends up with a file owned by a user that 
+  doesn't exist.  By using "chroot = no", rsync is able to translate UIDs
+  to the appropriate user on the client system.  If a user with the same
+  name does not exist on the client, then it still gets a UID that belongs
+  to no user.  Sigh...
+- systemimager.exclude -- added /etc/sysconfig/network-scripts/ifcfg-*
+- FAQ-HOWTO -- updated the FAQ and combined it and the HOWTO together.
+- INSTALL -- got rid of this document and added it's contents to the README.
+  Cleaning up clutter is always good.
+- install -- you can now run install from any fully qualified or relative path.
+- install -- relocated /systemimager/images to /var/spool/systemimager/images.
+  In the future, the installer will present you with a choice for the _real_
+  location.
+- install -- no longer using a tarball within a tarball.
+- install -- added more statements to tell you what it's doing.
+- install -- added some additional error checking.
+- install -- took out the bit that copied /etc/hosts to /systemimager/etc/.
+- install -- nothing gets installed to /systemimager.
+- install -- now puts documentation in /usr/doc/systemimager-$version.
+- install -- now puts binaries in /usr/sbin/.
+- install -- no longer asks if you want to create an autoinstalldiskette.
+  This was confusing and caused people to think they had to create a diskette
+  at that point, or they had missed their chance.
+- rsyncd.conf -- added *.deb, *.rpm, and *.dbf to the don't compress directive.
+- rsyncd.conf -- removed the [etc] and [installstuff] blocks.  These small 
+  files will now be transferred via tftp.  tftp is now necessary anyway in 
+  order to support network booting.
+- rsyncd.conf -- now logs transactions to /var/log/systemimager.  This can
+  be used to track the progress of clients autoinstalling or updateimage(ing).
+- addclients -- now asks you for the number of the first machine and the
+  number of the last machine (instead of "how many machines").
+- addclients -- now presents you with a list of avaliable images and tests
+  to be sure that specified image exists.  (suggestion courtesy of Stephen
+  Greene <sgreene@valinux.com>.
+- addclients -- changed to create host entries in /etc/hosts only.  No more
+  messing about with the non-intuitive (dual) location of
+  /systemimager/etc/hosts.
+#- getimage and therefore $image.master -- NISDOMAIN is now added to 
+  /etc/sysconfig/network (for both dhcp and static) and NETWORK and 
+  DOMAINNAME are added to static.  
+  (patch sent in by Michael P. McLeod <mmcleod@bcm.tmc.edu>).
+- getimage and therefore $image.master -- HOSTNAME is only added to 
+  /etc/sysconfig/network when using static IP addresses.  This way, the host 
+  gets it's hostname via DHCP along with it's IP address -- and they match!  
+  Even if they change!  This means you can change the hostname by simply 
+  changing the IP address assigned by dhcpd (based on MAC addres).
+- getimage and therefore $image.master -- pointed new images to 
+  /var/spool/systemimager/images/$image and reflected this in the
+  /etc/rsyncd.conf file.
+
+SystemImager-0.23 2000.02.14
+- getimage and therefore $image.master -- only $HOSTNAME is written to 
+  /etc/HOSTNAME and /etc/sysconfig/network instead of $HOSTNAME.$DOMAINNAME
+- getimage and therefore $image.master -- fixed a bug where filesystems were
+  not created and mounted in the appropriate order.  (bug submitted by 
+  Tanmoy Bhattacharya <tanmoy@lanl.gov>)
+- getimage and therefore $image.master -- took out the bit at the end that
+  tries to make noise and ends up writing "\a\a\a\a\a\a\a"
+- getimage and therefore $image.master -- Ian McLeod <ian@valinux.com> 
+  observed compression saturating CPU utilization on an imageserver when 
+  installing only 8 clients simultaneously.  Turned compression off during 
+  autoinstall, and observed moderate CPU utilization whilst installing 21 
+  clients simultaneously.  Now I need to go to Gigabit Ethernet on the 
+  imageserver to relieve the network bottleneck.
+- getimage and therefore $image.master -- added an example of how to customize 
+  the sfdisk statements.  If you are installing the same image to clients with
+  disks that are physically different in any way from the client you got the 
+  image from, you should customize your sfdisk statements according to the 
+  example you will find in your $image.master script after you do your getimage.
+
+SystemImager-0.22 1999.12.29 (I'm getting Altitude sickness -- no more
+                              declaring the elevation.  Well, I'm not really
+                              sick, not that way, anyway, but it's not really 
+                              accurate.  I didn't do all of the work on v0.21
+                              at 655 feet, for example.  Oh, well ;)
+- Ari, sorry I haven't incorporated your changes yet.  Haven't been able to 
+  review them thoroughly and test them.  But they look good and will get in 
+  soon.
+- added 5 more seconds to each of the two sleep statements on the 
+  autoinstalldiskette.
+- fixed a bug in the autoinstalldiskette (found by Susan Coghlan <smc@lanl.gov>
+  and separately found by Robert Saft <zardoz@valinux.com> and 
+  Ted Arden <ted@valinux.com>).  Both new and old mkswap commands were on the
+  diskette, but the new one was in /tmp/ ?  Moved the new (large swap capable)
+  mkswap command to /usr/bin on the diskette and got rid of the old one.
+- fixed a bug in the autoinstalldiskette (found by Susan Coghlan <smc@lanl.gov>)
+  that had to do with finding the nodes host name based on it's IP address.  If
+  the node had an IP address of 1.1.1.24, but 1.1.1.244 came earlier in the 
+  /systemimager/etc/hosts file, it would match the 1.1.1.244 address and assume
+  it was the corresponding host.
+- do chown afterwards, so that files in tarball don't have to be owned by root
+- autoinstalldiskette -- umount all non-floppy filesystems and make noise when 
+  done, in addition to dropping eth0, but don't halt (so that noise continues)
+
+SystemImager-0.21 1999.12.07 at 655 feet (Dallas, Tx)
+- install and prepareclient -- bux fix submitted by Susan Coghlan 
+  <smc@acl.lanl.gov>: dots (.) and dashes (-) in function names apparently 
+  break with bash2.  Also recommended a change in the way prepareclient 
+  deals with /etc/systemimager.exclude.
+- addclient -- changed some of the interactive defaults as indicated by [x],
+  and added some error checking.
+- install -- bug in the verbage -- fixed by Ari Jort.
+- FAQ -- updated by Ari Jort.
+
+SystemImager-0.20 1999.11.22 at 655 feet (final touches made in Dallas, Tx)
+                                 (but coded at several different altitudes)
+- overall theme for changes -- scripts for everything!!!  You should be
+  ready to autoinstall your first client in (basically) three steps:
+  - run install and answer all it's questions and follow it's instructions
+  - run prepareclient on the "master" client
+  - run getimage on the imageserver
+  Now you should be ready to boot your first autoinstall client off the
+  autoinstalldiskette.
+- updateimage -- Major overhaul.  Now written in perl.  Just try it.
+- makedhcpstatic -- decided to continue using /var/log/messages as
+  the dhcpd.leases file can be found in many different places and
+  for some reason, /var/log/messages is always in the same place ;).
+- renamed /systemimager/installscripts to /systemimager/installstuff
+- moved /systemimager/clientstuff into /systemimager/installstuff
+- changed all instances where "systemimager" was used to refer to the
+  image server with "imageserver".  It just makes more literary sense.
+- makedhcpserver -- created it!  This script will ask you appropriate 
+  questions and create a starter dhcpd.conf file for you *and* include 
+  the information necessary for autoinstalldiskette clients to find the 
+  imageserver.
+- prepareclient -- now pulls client scripts, client bin, and etc stuff
+  onto "master" client _before_ getting image.  Places updateimage in 
+  /usr/bin on client.
+- $imagename.master -- cleaned up the static IP section (this will be
+  automated later) and added an ifconfig eth0 down so that the client
+  will no longer respond to pings after it has halted (so you can tell
+  when a headless client is finished autoinstalling).
+- addclients -- created it!  This script will create the symbolic links
+  necessary for your autoinstall clients to autoinstall.
+- autoinstalldiskette -- added the aic7xxx module (an Adaptec SCSI module).
+  This means support for the VA Linux Systems FullOn servers.  I also 
+  discovered that with certain ethernet switches it takes about 30 seconds,
+  after the interface comes alive, before they will transmit data on that
+  port.  It seems that the dhcp request would go out during that time
+  period and that the dhcp client would give up.  The autoinstalldiskette
+  now brings up the ethernet interface with a bogus address of 127.0.0.2
+  which makes the interface live (as far as the switch is concerned).  
+  The autoinstalldiskette then sleeps until after the switch starts 
+  transmitting, and then issues it's dhcp request which is serviced 
+  almost immediately.
+- other stuff what I can't remember...
+
+SystemImager-0.19 1999.10.14 at 655 feet (Dallas, Tx)
+- autoinstalldiskette -- made it truely generic again.  no longer necessary 
+  to modify the diskette image during install.  this means that the server
+  system no longer requires ram disk capability!  And it makes the install
+  floppy more flexible -- you don't have to modify it if you change the IP
+  address of the server.  This is done by adding the IP address of the 
+  imageserver as the last name server entry in dhcpd.conf.  If it 
+  happens to be running a nameserver, great!  If not, the entry will be 
+  ignored.  The client then takes this last name server entry and assumes 
+  it to be the imageserver.
+- prepareclient -- no longer customized at install time.  this script is
+  also now generic.  it simply asks for the imageserver's ip address when
+  it is run.
+- install -- modified appropriately to deal with the above changes.
+- install -- added some error checking to the yes/no questions.
+- prepareclient -- added some error checking to the yes/no questions.
+- autoinstalldiskette -- added some error checking so that even if certain
+  network related errors occur, the system will not hang and you can still
+  login to the client to see what's up. 
+- VERSION -- started keeping separate versions for the autoinstall diskette
+  and SystemImager (so's that I don't have to modify the image of the 
+  "generic" diskette just to change the release number.
+- getimage -- take "# pounded out lines" in $image/etc/fstab into 
+  consideration.
+
+SystemImager-0.18 1999.10.05 at 34,000 feet (Albuquerque, NM to Dallas, TX)
+- getimage -- added lines to the /systemimager/installscripts/$image.master
+  script that can be uncommented if clients will use static IPs after the
+  install.
+- makedhcpstatic -- created it.  No more mucking about trying to punch in
+  gobs of mac addresses.  Simply populate /systemimager/etc/hosts with all
+  the relevant client and server IP addresses, specify a dynamic range in
+  your dhcpd.conf file, and image your clients with the autoinstall 
+  diskette in the order you want the IP addresses assigned.  After
+  booting your systems, you can run this script to make the static entries
+  for you!  This script reverse resolves IP addresses to hostnames via the 
+  /etc/hosts file on the server and uses hostnames instead of IP addresses 
+  in the dhcpd.conf file.  This way, you can change a hosts IP address by 
+  simply changing the entry in /etc/hosts on the image server.
+- Perl -- started writing server-side scripts in Perl.  Existing server 
+  side scripts will be converted to Perl in time.  It just got too messy 
+  in Bourne. ;)
+- modified the autoinstall diskette so that:
+  - it only has a 5 second delay during boot
+  - it uses extended VGA and doesn't ask your opinion
+  - it shows it's name as "SystemImager-autoinstalldiskette-$version"
+
+SystemImager-0.17 1999.10.05 at 655 feet (Dallas, Tx)
+- getimage -- changed rsync options so that it actually *gets* all
+  of the filesystems now that we're no longer assuming only one
+  filesystem.
+- getimage -- chmod +x prepareclient script after modifying
+- getimage -- no longer bother unmounting before halting in $image.master
+- VERSION -- started including this file
+
+SystemImager-0.16 1999.10.04 at 655 feet (Dallas, Tx)
+- getimage -- overwrite $image.master every time.   
+- getimage -- create $image.master script with the ability to 
+  partition *each disk* *exactly* like on the master client
+  by pulling data left behind by "prepareclient".
+- prepareclient -- rsync over a static sfdisk and get *exact*
+  partition scheme for *each* disk (as per /proc/partitions).
+  store this information in /etc/partitionschemes/$drivename
+  for retrieval by "getimage" once image is on the imageserver.
+
+SystemImager-0.15 1999.09.19 at 655 feet (Dallas, Tx)
+- getimage -- use rsync to get mount information via /etc/mtab
+  instead of asking if network filesystems are mounted
+  and exclude all non-ext2 filesystems from the get.  Perhaps
+  we'll become more flexible and pull other appropriate filesystems
+  in the future.
+  (This idea courtesy of "Ari Jort" <ajort@valinux.com>)
+
+SystemImager-0.14 1999.09.19 at 655 feet (Dallas, Tx)
+- modify getimage to assume only swap and root, and therefore to use 
+  the -x option in rsync to constrain to one filesystem.
+- modify getimage to ask questions and do some discovery
+- modify getimage to create $imagename.master in installscripts
+- get rid of SystemImager.default.sh
+- add warning about floppy drives to makemeadiskette/install.s
+
+SystemImager-0.13 1999.09.15 at 33,000 feet (Albuquerque, NM to Dallas, TX)
+- maybe I hadn't finished the install script...  added a kill -HUP for inetd
+- also added a kill -HUP for inetd to prepareclient
+- modified prepareclient to create rsyncd.conf if it didn't exist at all
+
+SystemImager-0.12 1999.09.15 at 655 feet (Dallas, TX)
+- finished install script -- for installing SystemImager on the image server
+- install script now prompts you to create your first autoinstall diskette
+- wrote prepareclient -- for preparing a client to have it's image taken
+- renamed /systemimager/installstuff to /systemimager/installscripts
+- added installscripts entry to 
+  /systemimager/serverstuff/etc/rsyncd.conf.starterfile 
+- updated /systemimager/clientstuff/bin/updateimage to not present 
+  "installscripts" when doing a listing.
+- finished modifications to autoinstall diskette to take advantage of using 
+  rsync to grab the initial install script
+
+SystemImager-0.11 1999.09.14 at 35,000 feet (Newark, NJ to Dallas, TX)
+- changed mode of initial image install so that no tftp is necessary.
+  now using rsync to get client specific install script.  
+  (Idea courtesy of "Ari Jort" <ajort@valinux.com>)
+- added install script -- for installing SystemImager on the image server
+
+SystemImager-0.10 1999.09.12 at 32,000 feet (Dallas, TX to New York, NY)
+- added comments to dhcpd.conf.systemimager.example file
+- added tftp to /usr/bin with man page in /usr/man
+- tftp is now used to pull down scripts using the more flexible scheme 
+  described below.
+- changed mode of initial image install so that no nfs is involved and also to 
+  allow greater flexibility/manageability geared towards client 
+  customization/different images.  
+  (This idea courtesy of "Bartosz Ilkowski" <barbi@danforthcenter.org>)
+
+SystemImager-0.9 1999.09.07 at swamp level (Princeton, NJ)
+- changed the name from TheLamp to SystemImager
+- changed script names/directories/variables, etc. as appropriate
+- expanded the exclude list in the getimage script
+
+TheLamp-0.8
+- who knows?
+
+TheLamp-0.7
+- who knows?
+
+TheLamp-0.6
+- get /etc/resolv.conf from dhcpcd -- no more static configuration on diskette
+- pump is not necessary -- can get what we need from dhcpcd
+- get get DNS domain name from /etc/resolv.conf
+- added sfdisk to /bin with man page in /usr/man
+- removed the static sfdisk from /thelamp/installstuff
+- added rsync to /bin with man page in /usr/man
+- removed the static rsync from /thelamp/installstuff
+- added mkswap with >128Meg support to /bin with man page in /usr/man
+- modified the /thelamp/installstuff/install-a-genie script
+
+TheLamp-0.5
+- who knows?
+
+TheLamp-0.4
+- who knows?
+
+TheLamp-0.3
+- who knows?
+
+TheLamp-0.2
+- who knows?
+
+TheLamp-0.1 -- sea level (St. Louis, MO)
+- The Beginning -- Danforth Plant Sciences Center.  The Aladdin Project.
+

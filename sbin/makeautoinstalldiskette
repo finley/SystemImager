@@ -1,0 +1,15 @@
+#!/bin/sh
+
+#
+# "SystemImager" - Copyright (C) 1999-2000 TheFinleys.com <brian@thefinleys.com> 
+#
+
+# set path
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+
+# if not run as root, diskette creation will surely fail
+[ `whoami` != "root" ] && echo "Must be run as root!" && exit 1
+
+clear
+cd /systemimager/autoinstalldiskette/
+./install.s

@@ -1,0 +1,192 @@
+#!/bin/sh
+
+#
+# "SystemImager" - Copyright (C) 1999-2000 TheFinleys.com <brian@thefinleys.com> 
+#
+# This file is: getimage
+#
+
+# set path
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+
+# if not run as root, getimage will surely fail
+[ `whoami` != "root" ] && echo "Must be run as root!" && exit 1
+
+client=$1
+image=$2
+
+if [ "$client" != "" ] && [ "$image" != "" ]; then
+  clear
+  echo This script will get the entire system image from \"$client\"
+  echo making the assumption that all filesystems considered part
+  echo of the system image are using ext2.
+  echo
+  echo This script will not get /proc or network mounted filesystems.
+  echo It will only get ext2 formated file systems.
+  echo
+  echo -n "Proceed with getimage? (y/[n]) "
+  read REPLY
+  [ $REPLY != "y" ] && exit 1 
+  echo "Ok, here goes nothing..."
+  mkdir -p /var/spool/systemimager/images/$image
+  cd /var/spool/systemimager/images/$image
+  
+  # get /etc/mtab from client
+  rsync -az $client::root/etc/mtab .
+
+  # create list of filesystems to *not* get
+  grep -v ext2 mtab | gawk '{print $2 "/*" }' > /tmp/.exclude.$image
+
+  # go get it
+  rsync -av --delete --exclude-from=/tmp/.exclude.$image $client::root/ .
+  rm -f /tmp/.exclude.$image
+
+  # Add entry to image server's rsyncd.conf if necessary
+  egrep -q $image /etc/rsyncd.conf
+  if [ "$?" != "0" ]; then
+    echo "[$image]" 				>> /etc/rsyncd.conf
+    echo "    path = /var/spool/systemimager/images/$image" 	>> /etc/rsyncd.conf
+    echo "" 						>> /etc/rsyncd.conf
+  fi
+
+  # create a fresh /tftpboot/systemimager/$image.master
+  echo "#!/bin/sh" > /tftpboot/systemimager/$image.master
+  echo >> /tftpboot/systemimager/$image.master
+  echo "#" >> /tftpboot/systemimager/$image.master
+  echo "# \"SystemImager\" - Copyright (C) 1999-2000 TheFinleys.com <brian@thefinleys.com> " >> /tftpboot/systemimager/$image.master
+  echo "#" >> /tftpboot/systemimager/$image.master
+  echo >> /tftpboot/systemimager/$image.master
+  echo "PATH=/sbin:/bin:/usr/bin:/usr/sbin:/tmp1" >> /tftpboot/systemimager/$image.master
+  echo >> /tftpboot/systemimager/$image.master
+  echo "# Check to be sure this not run from a working machine"       >> /tftpboot/systemimager/$image.master
+  echo "mount | grep [hs]d[a-z][1-9] > /dev/null"        >> /tftpboot/systemimager/$image.master
+  echo "[ \$? -eq 0 ] && echo "Sorry, Charlie!  Must not run on a working machine..." && exit 1"       >> /tftpboot/systemimager/$image.master
+  echo >> /tftpboot/systemimager/$image.master
+
+  ### Partition and format the disks ###
+  echo "# Partition the disk (see the sfdisk man page for customization details)" >> /tftpboot/systemimager/$image.master
+  echo "#" >> /tftpboot/systemimager/$image.master
+  echo "# Here's an example of how to customize a disk:" >> /tftpboot/systemimager/$image.master
+  echo "# start at the beginning 0, give 20M /dev/sda1 for /boot, assume partition type 83" >> /tftpboot/systemimager/$image.master
+  echo "# start where left off, 512M /dev/sda2 for swap, partition type 82" >> /tftpboot/systemimager/$image.master
+  echo "# start where left off, give the rest of the disk to /dev/sda3 for /, assume partition type 83" >> /tftpboot/systemimager/$image.master
+  echo "#sfdisk -uM /dev/sda <<EOF" >> /tftpboot/systemimager/$image.master
+  echo "#0,20" >> /tftpboot/systemimager/$image.master
+  echo "#,512,82" >> /tftpboot/systemimager/$image.master
+  echo "#," >> /tftpboot/systemimager/$image.master
+  echo "#;" >> /tftpboot/systemimager/$image.master
+  echo "#EOF" >> /tftpboot/systemimager/$image.master
+  echo "#" >> /tftpboot/systemimager/$image.master
+
+  cd ./etc/partitionschemes/
+  for disk in `ls *`
+  do
+    # partition subsection
+    echo "sfdisk /dev/$disk <<EOF"    >> /tftpboot/systemimager/$image.master
+    cat $disk	  >> /tftpboot/systemimager/$image.master
+    echo "EOF"  >> /tftpboot/systemimager/$image.master
+    echo  >> /tftpboot/systemimager/$image.master
+
+    # swap subsection
+    echo "# prepare swap partitions -- man mkswap for more info"        >> /tftpboot/systemimager/$image.master
+    echo "#mkswap /dev/hda1	# -v0 is the default"   >> /tftpboot/systemimager/$image.master
+    echo "#mkswap -v1 /dev/hda1	# -v1 allows for a single large swap space"   >> /tftpboot/systemimager/$image.master
+    for swap in `grep Id=82 $disk | gawk '{print $1}'`
+    do
+      echo "mkswap -v1 $swap" >> /tftpboot/systemimager/$image.master
+    done
+    echo "" >> /tftpboot/systemimager/$image.master
+
+    # ext2 subsection
+    echo "# prepare file systems" >> /tftpboot/systemimager/$image.master
+    echo "#mke2fs /dev/hda2   # conservative option "   >> /tftpboot/systemimager/$image.master
+    echo "#mke2fs -b 4096 -i 16384 -m 1 /dev/hda2   # performance oriented option" >> /tftpboot/systemimager/$image.master
+    for ext2 in `grep Id=83 $disk | gawk '{print $1}'`
+    do
+      echo "mke2fs -b 4096 -i 16384 -m 1 $ext2" >> /tftpboot/systemimager/$image.master
+    done
+    echo ""     >> /tftpboot/systemimager/$image.master
+
+  done
+  cd -
+
+  ### make directory hierarchies and mount partitions ###
+  echo "# mount the freshly formatted partitions" >> /tftpboot/systemimager/$image.master
+  grep -v '^.*#' ./etc/fstab | grep -v '/dev/fd' | grep -w ext2 | gawk '{ print "mkdir -p /a"$2"/"; print "mount "$1" /a"$2 }' >> /tftpboot/systemimager/$image.master
+  echo "" >> /tftpboot/systemimager/$image.master
+
+  ### pull the image down ###
+  echo "# get imageserver, hostname, and other info by sourcing dhcp info file" >> /tftpboot/systemimager/$image.master
+  echo ". /etc/dhcpc/dhcpcd-eth0.info" >> /tftpboot/systemimager/$image.master
+  echo >> /tftpboot/systemimager/$image.master
+  echo "# suck the OS image down to the client"       >> /tftpboot/systemimager/$image.master
+  echo "rsync -av \$DHCPSIADDR::$image /a/"     >> /tftpboot/systemimager/$image.master
+  echo >> /tftpboot/systemimager/$image.master
+  echo "# set host specific information"      >> /tftpboot/systemimager/$image.master
+ #echo "echo "\$HOSTNAME" > /a/etc/HOSTNAME"    >> /tftpboot/systemimager/$image.master
+  echo >> /tftpboot/systemimager/$image.master
+  echo "echo "NETWORKING=yes" > /a/etc/sysconfig/network"     >> /tftpboot/systemimager/$image.master
+  echo "echo "FORWARD_IPV4=false" >> /a/etc/sysconfig/network"        >> /tftpboot/systemimager/$image.master
+ # must ask for this information during the "getimage"
+ # and set this value statically in the $imagename.master file
+ #echo "echo NISDOMAIN=\$NISDOMAIN >> /a/etc/sysconfig/network" >> /tftpboot/systemimager/$image.master
+  echo >> /tftpboot/systemimager/$image.master
+  echo "# Stuff for DHCP client" >> /tftpboot/systemimager/$image.master
+  echo "echo DEVICE=eth0 > /a/etc/sysconfig/network-scripts/ifcfg-eth0" >> /tftpboot/systemimager/$image.master
+  echo "echo ONBOOT=yes >> /a/etc/sysconfig/network-scripts/ifcfg-eth0" >> /tftpboot/systemimager/$image.master
+  echo "echo BOOTPROTO=dhcp >> /a/etc/sysconfig/network-scripts/ifcfg-eth0" >> /tftpboot/systemimager/$image.master
+  echo >> /tftpboot/systemimager/$image.master
+  echo "### uncomment this block to use static IP addresses ###" >> /tftpboot/systemimager/$image.master
+  echo "### This will override the above DHCP settings ###" >> /tftpboot/systemimager/$image.master
+  echo "#echo HOSTNAME=\$HOSTNAME >> /a/etc/sysconfig/network" >> /tftpboot/systemimager/$image.master
+  echo "#echo DOMAINNAME=\$DOMAIN >> /a/etc/sysconfig/network" >> /tftpboot/systemimager/$image.master
+  echo "#echo GATEWAY=\$GATEWAY >> /a/etc/sysconfig/network" >> /tftpboot/systemimager/$image.master
+  echo "#echo GATEWAYDEV=eth0 >> /a/etc/sysconfig/network" >> /tftpboot/systemimager/$image.master
+  echo "#" >> /tftpboot/systemimager/$image.master
+  echo "#echo DEVICE=eth0 > /a/etc/sysconfig/network-scripts/ifcfg-eth0" >> /tftpboot/systemimager/$image.master
+  echo "#echo IPADDR=\$IPADDR >> /a/etc/sysconfig/network-scripts/ifcfg-eth0" >> /tftpboot/systemimager/$image.master
+  echo "#echo NETWORK=\$NETWORK >> /a/etc/sysconfig/network-scripts/ifcfg-eth0" >> /tftpboot/systemimager/$image.master
+  echo "#echo NETMASK=\$NETMASK >> /a/etc/sysconfig/network-scripts/ifcfg-eth0" >> /tftpboot/systemimager/$image.master
+  echo "#echo BROADCAST=\$BROADCAST >> /a/etc/sysconfig/network-scripts/ifcfg-eth0" >> /tftpboot/systemimager/$image.master
+  echo "#echo ONBOOT=yes >> /a/etc/sysconfig/network-scripts/ifcfg-eth0" >> /tftpboot/systemimager/$image.master
+  echo "#echo BOOTPROTO=none >> /a/etc/sysconfig/network-scripts/ifcfg-eth0" >> /tftpboot/systemimager/$image.master
+  echo "### uncomment this block to use static IP addresses ###" >> /tftpboot/systemimager/$image.master
+  echo "" >> /tftpboot/systemimager/$image.master
+
+  echo "# run lilo " >> /systemimager/installstuff/$image.master
+  echo "# (no, we can not just do a lilo -r \"/a/\"." >> /systemimager/installstuff/$image.master
+  echo "# we need to use the lilo that came with the distribution in case" >> /systemimager/installstuff/$image.master
+  echo "# it has special modifications such as support for hardware or software RAID)" >> /systemimager/installstuff/$image.master
+  echo chroot /a/ /sbin/lilo  >> /systemimager/installstuff/$image.master
+  echo >> /systemimager/installstuff/$image.master
+
+  echo "# just to be anal"     >> /tftpboot/systemimager/$image.master
+  echo sync\;sync\;sync >> /tftpboot/systemimager/$image.master
+  echo "" >> /tftpboot/systemimager/$image.master
+
+ # catch these in a variable from earlier
+  echo "# unmount newly created filesystems" >> /tftpboot/systemimager/$image.master
+  grep -v '^.*#' ./etc/fstab | grep -v '/dev/fd' | grep -w ext2 | gawk '{ print "umount /a"$2 }' | tac >> /tftpboot/systemimager/$image.master
+  echo "" >> /tftpboot/systemimager/$image.master
+
+  echo "# take the system down so it is safe to power off/reboot" >> /tftpboot/systemimager/$image.master
+  echo "# and so it will not respond to pings" >> /tftpboot/systemimager/$image.master
+  echo shutdown -h now >> /tftpboot/systemimager/$image.master
+  echo >> /tftpboot/systemimager/$image.master
+
+  # add clients?
+  echo
+  echo -n "Would you like to add your client information now? ([y]/n) "
+  read REPLY
+  case $REPLY in
+    n|N|No|no|NO ) exit 0 ;;
+    * ) addclients ;;
+  esac
+else
+  echo ""
+  echo "Usage: getimage client imagename"
+  echo ""
+  exit 1
+fi
+
+exit 0

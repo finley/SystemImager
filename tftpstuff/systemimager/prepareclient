@@ -1,0 +1,478 @@
+#!/bin/sh
+ 
+#
+# "SystemImager" - Copyright (C) 1999-2000 TheFinleys.com <brian@thefinleys.com> 
+#
+ 
+# set path
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+ 
+# if not run as root, install will surely fail
+[ `whoami` != "root" ] && echo "Must be run as root!" && exit 1
+ 
+# assign ip for imageserver
+IMAGESERVER=$1
+ 
+# be sure script was called properly
+if [ "$IMAGESERVER" != "" ]; then
+ 
+ # do introduction
+ clear
+ echo "Welcome to the SystemImager prepareclient script.  This install script"
+ echo "may modify the following files to prepare your client for imaging."
+ echo ""
+ echo " /etc/services    -- add rsync line if necessary"
+ echo " /etc/inetd.conf  -- add rsync line if necessary"
+ echo " /etc/rsyncd.conf -- create a new file with a [root] entry in it."
+ echo "                     this file may be used for other things once the system's"
+ echo "                     image has been retrieved by the image server."
+ echo
+ echo " All modified files will be backed up with the .beforesystemimager extension."
+ echo
+
+ # you sure you want to install?
+ echo -n "Prepare client for SystemImager? (y/[n]) "
+ read REPLY
+ case $REPLY in
+  y|Y|Yes|yes|YES ) echo Ok.  Preparing client for SystemImager... ;;
+  * ) echo Client preparation cancelled.  No files modified. && exit 1 ;;
+ esac
+ echo
+ sleep 2
+ 
+ # BEGIN functions
+ #!/bin/sh
+ #
+ # functions	This file contains functions to be used by most or all
+ #		shell scripts in the /etc/init.d directory.
+ #
+ # Version:	@(#) /etc/init.d/functions 1.01 26-Oct-1993
+ #
+ # Author:	Miquel van Smoorenburg, <miquels@drinkel.nl.mugnet.org>
+ # Hacked by:    Greg Galloway and Marc Ewing
+ #
+ # Mercilessly hacked by: "Brian Finley" <brian@thefinleys.com> 1999.09.18
+ #                 for: SystemImager
+ #
+ 
+ # First set up a default search path.
+ export PATH="/sbin:/usr/sbin:/bin:/usr/bin:/usr/X11R6/bin"
+ 
+ # Get a sane screen width
+ [ -z "$COLUMNS" ] && COLUMNS=80
+ 
+ # Read in our configuration
+ if [ -z "$BOOTUP" ]; then
+   if [ -f /etc/sysconfig/init ]; then
+       . /etc/sysconfig/init
+   else
+     # This all seem confusing? Look in /etc/sysconfig/init,
+     # or in /usr/doc/initscripts-*/sysconfig.txt
+     BOOTUP=color
+     RES_COL=60
+     MOVE_TO_COL="echo -en \\033[300C\\033[$[${COLUMNS}-${RES_COL}]D"
+     SETCOLOR_SUCCESS="echo -en \\033[0;39m"
+     SETCOLOR_FAILURE="echo -en \\033[0;39m"
+     SETCOLOR_WARNING="echo -en \\033[0;39m"
+     SETCOLOR_NORMAL="echo -en \\033[0;39m"
+     LOGLEVEL=1
+   fi
+ fi
+ 
+ if [ "$BOOTUP" != "verbose" ]; then
+    INITLOG_ARGS="-q"
+ else
+    INITLOG_ARGS=
+ fi
+ 
+ # A function to start a program.
+ daemon() {
+ 	# Test syntax.
+ 	gotbase=
+ 	case $1 in
+ 	    '')    echo '$0: Usage: daemon [+/-nicelevel] {program}'
+ 	           return 1;;
+ 	    --check)
+ 	           shift
+ 		   base=$1
+ 		   gotbase="yes"
+ 		   shift
+ 		   nicelevel=0
+ 		   ;;
+ 	          
+ 	    -*|+*) nicelevel=$1
+ 	           shift;;
+ 	     *)    nicelevel=0;;
+ 	esac
+ 
+         # Save basename.
+         [ -z $gotbase ] && base=`basename $1`
+ 
+         # See if it's already running.
+ 	pid=`pidofproc $base`
+ 	[ -n "$pid" ] && ps h $pid >/dev/null 2>&1 && return
+ 
+ 	# make sure it doesn't core dump anywhere; while this could mask
+ 	# problems with the daemon, it also closes some security problems
+ 	ulimit -c 0
+ 	
+ 	# Echo daemon
+         [ "$BOOTUP" = "verbose" ] && echo -n " $base"
+ 
+ 	# And start it up.
+ 	nice -n $nicelevel initlog $INITLOG_ARGS -c "$*" && success "$base startup" || failure "$base startup"
+ }
+ 
+ # A function to stop a program.
+ killproc() {
+ 	# Test syntax.
+ 	if [ $# = 0 ]; then
+ 		echo "Usage: killproc {program} [signal]"
+ 		return 1
+ 	fi
+ 
+ 	notset=0
+ 	# check for second arg to be kill level
+ 	if [ "$2" != "" ] ; then
+ 		killlevel=$2
+ 	else
+ 		notset=1
+ 		killlevel="-9"
+ 	fi
+ 
+         # Save basename.
+         base=`basename $1`
+ 
+         # Find pid.
+         pid=`pidofproc $base`
+ 
+         # Kill it.
+         if [ "$pid" != "" ] ; then
+                 [ $BOOTUP = "verbose" ] && echo -n "$base "
+ 		if [ "$notset" = "1" ] ; then
+ 		       if ps h $pid>/dev/null 2>&1; then
+ 			   # TERM first, then KILL if not dead
+ 			   kill -TERM $pid
+ 			   usleep 100000
+ 			   if ps h $pid >/dev/null 2>&1 ; then
+ 				sleep 1
+ 				if ps h $pid >/dev/null 2>&1 ; then
+ 				        sleep 3
+ 					if ps h $pid >/dev/null 2>&1 ; then
+ 					   kill -KILL $pid
+ 					fi
+ 				fi
+ 			   fi
+ 		        fi
+ 			ps h $pid >/dev/null 2>&1 && failure "$base shutdown" || success "$base shutdown"
+ 		# use specified level only
+ 		else
+ 		        if ps h $pid >/dev/null 2>&1; then
+ 	                	kill $killlevel $pid && success "$base $killlevel" || failure "$base $killlevel"
+ 			fi
+ 		fi
+ 	else
+ 	    failure "$base shutdown"
+ 	fi
+ 
+         # Remove pid file if any.
+ 	if [ "$notset" = "1" ]; then
+             rm -f /var/run/$base.pid
+ 	fi
+ }
+ 
+ # A function to find the pid of a program.
+ pidofproc() {
+ 	# Test syntax.
+ 	if [ $# = 0 ] ; then
+ 		echo "Usage: pidofproc {program}"
+ 		return 1
+ 	fi
+ 
+ 	# First try "/var/run/*.pid" files
+ 	if [ -f /var/run/$1.pid ] ; then
+ 	        pid=`head -1 /var/run/$1.pid`
+ 	        if [ "$pid" != "" ] ; then
+ 	                echo $pid
+ 	                return 0
+ 	        fi
+ 	fi
+ 
+ 	# Next try "pidof"
+ 	pid=`pidof $1`
+ 	if [ "$pid" != "" ] ; then
+ 	        echo $pid
+ 	        return 0
+ 	fi
+ 
+ 	# Finally try to extract it from ps
+ 	ps ax | awk 'BEGIN { prog=ARGV[1]; ARGC=1 } 
+ 			   { if ((prog == $5) || (("(" prog ")") == $5) ||
+ 			     (("[" prog "]") == $5) ||
+ 			   ((prog ":") == $5)) { print $1 ; exit 0 } }' $1
+ }
+ 
+ status() {
+ 	# Test syntax.
+ 	if [ $# = 0 ] ; then
+ 		echo "Usage: status {program}"
+ 		return 1
+ 	fi
+ 
+ 	# First try "pidof"
+ 	pid=`pidof $1`
+ 	if [ "$pid" != "" ] ; then
+ 	        echo "$1 (pid $pid) is running..."
+ 	        return 0
+         else
+                 pid=`ps ax | awk 'BEGIN { prog=ARGV[1]; ARGC=1 } 
+ 			   { if ((prog == $5) || (("(" prog ")") == $5) ||
+ 			     (("[" prog "]") == $5) ||
+ 			   ((prog ":") == $5)) { print $1 ; exit 0 } }' $1`
+                 if [ "$pid" != "" ] ; then
+                         echo "$1 (pid $pid) is running..."
+                         return 0
+                 fi
+ 	fi
+ 
+ 	# Next try "/var/run/*.pid" files
+ 	if [ -f /var/run/$1.pid ] ; then
+ 	        pid=`head -1 /var/run/$1.pid`
+ 	        if [ "$pid" != "" ] ; then
+ 	                echo "$1 dead but pid file exists"
+ 	                return 1
+ 	        fi
+ 	fi
+ 	# See if /var/lock/subsys/$1 exists
+ 	if [ -f /var/lock/subsys/$1 ]; then
+ 		echo "$1 dead but subsys locked"
+ 		return 2
+ 	fi
+ 	echo "$1 is stopped"
+ 	return 3
+ }
+ 
+ echo_success() {
+   [ "$BOOTUP" = "color" ] && $MOVE_TO_COL
+   echo -n "[  "
+   [ "$BOOTUP" = "color" ] && $SETCOLOR_SUCCESS
+   echo -n "OK"
+   [ "$BOOTUP" = "color" ] && $SETCOLOR_NORMAL
+   echo -n "  ]"
+   return 0
+ }
+ 
+ echo_failure() {
+   [ "$BOOTUP" = "color" ] && $MOVE_TO_COL
+   echo -n "["
+   [ "$BOOTUP" = "color" ] && $SETCOLOR_FAILURE
+   echo -n "FAILED"
+   [ "$BOOTUP" = "color" ] && $SETCOLOR_NORMAL
+   echo -n "]"
+   return 1
+ }
+ 
+ echo_passed() {
+   [ "$BOOTUP" = "color" ] && $MOVE_TO_COL
+   echo -n "["
+   [ "$BOOTUP" = "color" ] && $SETCOLOR_WARNING
+   echo -n "PASSED"
+   [ "$BOOTUP" = "color" ] && $SETCOLOR_NORMAL
+   echo -n "]"
+   return 1
+ }
+ 
+ # Log that something succeeded
+ success() {
+   if [ -z "$IN_INITLOG" ]; then
+      initlog -n $0 -s "$1" -e 1
+   else
+      echo "-n $0 -s \"$1\" -e 1" >&21
+   fi
+   [ "$BOOTUP" != "verbose" ] && echo_success
+   return 0
+ }
+ 
+ # Log that something failed
+ failure() {
+   rc=$?
+   if [ -z "$IN_INITLOG" ]; then
+      initlog -n $0 -s "$1" -e 2
+   else
+      echo "-n $0 -s \"$1\" -e 2" >&21
+   fi
+   [ "$BOOTUP" != "verbose" ] && echo_failure
+   return $rc
+ }
+ 
+ # Log that something passed, but may have had errors. Useful for fsck
+ passed() {
+   rc=$?
+   if [ -z "$IN_INITLOG" ]; then
+      initlog -n $0 -s "$1" -e 1
+   else
+      echo "-n $0 -s \"$1\" -e 1" >&21
+   fi
+   [ "$BOOTUP" != "verbose" ] && echo_passed
+   return $rc
+ }  
+ 
+ # Run some action. Log its output.
+ action() {
+   STRING=$1
+   echo -n "$STRING "
+   shift
+   initlog $INITLOG_ARGS -c "$*" && success "$STRING" || failure "$STRING"
+   rc=$?
+   echo
+   return $rc
+ }
+ 
+ # Confirm whether we really want to run this service
+ confirm() {
+   echo -n "Start service $1 (Y)es/(N)o/(C)ontinue? [Y] "
+   read answer
+   case $answer in
+     y|Y|"")
+       return 0
+     ;;
+     c|C)
+       return 2
+     ;;
+     n|N)
+       return 1
+     ;;
+     *)
+       confirm $1
+       return $?
+     ;;
+     esac
+ }
+ 
+ # SystemImager specific functions
+ create_rsyncd_conf() {
+   echo '#'                                                      > /etc/rsyncd.conf
+   echo '# "SystemImager" - Copyright (C) 1999-2000 TheFinleys.com <brian@thefinleys.com>'    >> /etc/rsyncd.conf
+   echo '#'                                                      >> /etc/rsyncd.conf
+   echo '# This file: /etc/rsyncd.conf'                          >> /etc/rsyncd.conf
+   echo '#'                                                      >> /etc/rsyncd.conf
+   echo ''                                                       >> /etc/rsyncd.conf
+   echo 'list = yes'                                             >> /etc/rsyncd.conf
+   echo 'timeout = 600'                                          >> /etc/rsyncd.conf
+   echo 'dont compress = *.gz *.tgz *.zip *.Z *.ZIP *.bz2 *.deb *.rpm *.dbf'  >> /etc/rsyncd.conf
+   echo 'uid = root'                                             >> /etc/rsyncd.conf
+   echo 'gid = root'                                             >> /etc/rsyncd.conf
+   echo ''                                                       >> /etc/rsyncd.conf
+   echo '[root]'                                                 >> /etc/rsyncd.conf
+   echo '    path = /'                                           >> /etc/rsyncd.conf
+   echo ''                                                       >> /etc/rsyncd.conf
+ }
+ # END functions
+ 
+
+
+
+
+ # copy over client scripts, and what not
+ # _and_ statically linked sfdisk utility
+ # EOF must not be indented!
+ cd /tmp
+ tftp  $IMAGESERVER <<EOF
+ get systemimager/updateclient
+ get systemimager/sfdisk
+ get systemimager/systemimager.exclude
+EOF
+ echo
+
+ # verify that rsync entry is in /etc/services
+ egrep -q ^rsync /etc/services
+ if [ $? != "0" ]; then
+   if [ ! -f /etc/services.beforesystemimager ]; then
+     echo "Backing up /etc/services to /etc/services.beforesystemimager ..."
+     cp /etc/services /etc/services.beforesystemimager
+   fi
+   echo "rsync           873/tcp                         # rsync" >> /etc/services
+   echo "rsync           873/udp                         # rsync" >> /etc/services
+ fi 
+ 
+ # verify that rsync entry is in /etc/inetd.conf
+ egrep -q ^rsync /etc/inetd.conf
+ if [ $? != "0" ]; then
+   if [ ! -f /etc/inetd.conf.beforesystemimager ]; then
+     echo "Backing up /etc/inetd.conf to /etc/inetd.conf.beforesystemimager ..."
+     cp /etc/inetd.conf /etc/inetd.conf.beforesystemimager
+   fi
+   egrep -q ^#rsync /etc/inetd.conf
+   if [ $? != "0" ]; then
+     echo "rsync stream tcp nowait root /usr/bin/rsync rsyncd --daemon" >> /etc/inetd.conf
+   else
+     sed 's/^#rsync/rsync/' /etc/inetd.conf > /tmp/.systemimager
+     cp /tmp/.systemimager /etc/inetd.conf
+     rm /tmp/.systemimager
+   fi
+ fi 
+ 
+ # install SystemImager brand rsyncd.conf file
+ if [ ! -f /etc/rsyncd.conf ]; then
+   # if it doesn't exist, create it
+   echo "Creating /etc/rsyncd.conf ..."
+   create_rsyncd_conf
+ elif [ ! -f /etc/rsyncd.conf.beforesystemimager ]; then
+   # OK, it does exist -- if the backup file doesn't exist,
+   # back it up
+   echo "Backing up /etc/rsyncd.conf to /etc/rsyncd.conf.beforesystemimager ..."
+   cp /etc/rsyncd.conf /etc/rsyncd.conf.beforesystemimager
+   # and create rsyncd.conf
+   echo "Creating /etc/rsyncd.conf ..."
+   create_rsyncd_conf
+ else
+   # if the backup file exists, then presume we've done due diligence
+   # and create rsyncd.conf
+   echo "Creating /etc/rsyncd.conf ..."
+   create_rsyncd_conf
+ fi
+
+ # signal inetd to re-read /etc/inetd.conf
+ echo -n "Signalling inetd to re-read /etc/inetd.conf: "
+ killproc inetd -HUP
+ echo
+ 
+ # get a list of all disks on system
+ disks=`grep [hs]d[a-z][1-9] /proc/partitions | gawk '{print $4}' | cut -c 1-3 | sort -u`
+ 
+ mv -f updateclient /usr/sbin
+ chmod 755 /usr/sbin/updateclient
+
+ if [ ! -f /etc/systemimager.exclude ]; then
+   # if it doesn't exist, create it
+   echo "Creating /etc/systemimager.exclude ..."
+   mv -f systemimager.exclude /etc
+ else
+   echo "Using existing /etc/systemimager.exclude ..."
+ fi
+ 
+ # leave disk info behind for "getimage" script
+ mkdir -p /etc/partitionschemes
+ rm -f /etc/partitionschemes/*
+ chmod +x /tmp/sfdisk
+ for disk in $disks
+ do
+  /tmp/sfdisk -d /dev/$disk > /etc/partitionschemes/$disk
+ done
+ rm -f /tmp/sfdisk
+ 
+ # wrap up
+ echo
+ echo "All done!  This client is ready to have it's image retrieved."
+
+else
+
+ echo ""
+ echo "Usage: prepareclient [IMAGESERVER_IPADDRESS|IMAGESERVER_HOSTNAME]"
+ echo ""
+ exit 1
+
+fi
+
+exit 0
+
