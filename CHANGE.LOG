@@ -41,6 +41,16 @@ VA SystemImager-1.4.0 2000.xx.xx
 - makedhcpstatic -- Automatically send a HUP signal to dhcpd (if running) to 
                     make it re-read the freshly modified config file.
 - autoinstallclient-- Smallerized.  More stuff done by BusyBox.
+- autoinstallclient-- Now using hardlinks for BusyBox.  Thanks for this suggestion
+                      go to: Rob Latham <rlatham@plogic.com>
+- autoinstallclient-- Added mawk.  Funky and easily breakable sed stuff can now
+                      be done with mawk.
+- autoinstallclient-- Changed to dhclient.  dhclient allows us to try all
+                      interfaces for DHCP.  This will solve some instances where
+		      a system would boot the autoinstall media off the network,
+		      but then couldn't get an IP address for the running OS.
+		      dhclient also allows us to specify the imageserver as
+		      seperate from the dhcp server.
 - autoinstallclient-- Bug fix:  Was using POSIX [[:blank:]] in sed statement
                       to find and change spaces and tabs to single spaces.
 		      Sed version changed and no longer behaved properly.
