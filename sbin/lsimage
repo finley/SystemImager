@@ -144,7 +144,7 @@ $command = "rsync rsync://${imageserver}:$port/";
 open(FILE, "$command|");
   while (<FILE>) {
     my $line = trim ($_);
-    unless("$line" eq "tftpboot") { print "  $line\n"; }
+    unless("$line" eq "scripts") { print "  $line\n"; }
   }
 close(FILE);
 print "\n";

@@ -1168,8 +1168,8 @@ fi
 
 echo "Ok, configuration complete."
 echo "Once you're DHCP server is configured, you should be all set."
-if [ `which makedhcpserver` != "" ]; then
-    echo -n "Do you want to run makedhcpserver to configure your DHCP server ([y]/n)? "
+if [ "$(which mkdhcpserver)" != "" ]; then
+    echo -n "Do you want to run mkdhcpserver to configure your DHCP server ([y]/n)? "
     if [ "$INTERACTIVE" == "no" ]; then
 	REPLY="n"
 	echo "Non-interactive mode, answering no."
@@ -1178,6 +1178,6 @@ if [ `which makedhcpserver` != "" ]; then
     fi
     case $REPLY in
 	n|N|No|NO ) exit 0 ;;
-	    * ) makedhcpserver ;;
+	    * ) mkdhcpserver ;;
     esac
 fi

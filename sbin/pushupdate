@@ -141,12 +141,12 @@ sub processautoinstall {
   }
 
   # copy install script out to the client
-  $command = "ssh -o \"StrictHostKeyChecking no\" -l root -R8730:127.0.0.1:873 $client \"rsync -avL rsync://127.0.0.1:8730/tftpboot/systemimager/$param_image.master /tmp/\"";
+  $command = "ssh -o \"StrictHostKeyChecking no\" -l root -R8730:127.0.0.1:873 $client \"rsync -avL rsync://127.0.0.1:8730/scripts/$param_image.master /tmp/\"";
   $rc = 0xffff & system($command);
   if ($rc != 0) { 
     # get username from /etc/passwd as derived from the real user id "$>"
     my $username = getpwuid $>;
-    my $message="FATAL: Could not copy /tftpboot/systemimager/$param_image.master to $client!\n";
+    my $message="FATAL: Could not copy /var/lib/systemimager/scripts/$param_image.master to $client!\n";
     $message = $message . "       Be sure that you have ${username}'s .ssh/identity.pub key in ssh_files/authorized_keys.\n";
     updatelogfile($message);
     die $message;
@@ -455,10 +455,10 @@ if (-e $clients_file) {
     }
 
     # if we are running as autoinstall, find and verify the autoinstall script exists
-    # assume that the entry lists only a filename...add the /tftpboot/systemimager
+    # assume that the entry lists only a filename...add the /var/lib/systemimager/scripts
     # and ".master" in the path/filename.
     if ($continue_install) {
-      my $installscript = "/tftpboot/systemimager/" . $fields[1] . ".master";
+      my $installscript = "/var/lib/systemimager/scripts/" . $fields[1] . ".master";
       if (! -e $installscript) {
 	die "Master install script not found for $fields[0] on line $i of file $clients_file\n";
       }
@@ -471,7 +471,7 @@ if (-e $clients_file) {
 
   # verify the script to install, if relevant
   if ($continue_install) {
-    my $installscript = "/tftpboot/systemimager/" . $image . ".master";
+    my $installscript = "/var/lib/systemimager/scripts/" . $image . ".master";
     if (! -e $installscript) {
       die "\n$program_name: $installscript not found!\n";
     }
