@@ -85,7 +85,7 @@ DESTDIR =
 VERSION = $(shell cat VERSION)
 FLAVOR = $(shell cat FLAVOR)
 
-TOPDIR  := $(PWD)
+TOPDIR  := $(CURDIR)
 
 # RELEASE_DOCS are toplevel files that should be included with all posted
 # tarballs, but aren't installed onto the destination machine by default
@@ -145,7 +145,6 @@ RSYNC_STUB_DIR = $(ETC)/systemimager/rsync_stubs
 
 CHECK_FLOPPY_SIZE = expr \`du -b $(INITRD_DIR)/initrd.img | cut -f 1\` + \`du -b $(LINUX_IMAGE) | cut -f 1\`
 
-BOOT_TARBALL_DIR = $(TOPDIR)/tmp/systemimager-boot-$(ARCH)-$(FLAVOR)-$(VERSION)
 BOEL_BINARIES_DIR = $(TOPDIR)/tmp/boel_binaries
 BOEL_BINARIES_TARBALL = $(BOEL_BINARIES_DIR).tar.gz
 
@@ -430,59 +429,6 @@ endif
 
 ### END autoinstall binaries tarball ###
 
-### BEGIN boot tarball ###
-PHONY += install_boot_tarball
-install_boot_tarball:	$(BOOT_TARBALL_DIR).tar.bz2
-	install_siboot $(BOOT_TARBALL_DIR).tar.bz2
-
-PHONY += boot_tarball
-boot_tarball:	$(BOOT_TARBALL_DIR).tar.bz2
-
-$(BOOT_TARBALL_DIR).tar.bz2:	$(LINUX_IMAGE) $(INITRD_DIR)/initrd.img \
-				$(BOEL_BINARIES_TARBALL)
-	mkdir -p $(BOOT_TARBALL_DIR)
-	$(MAKE) BOOT_BIN_DEST=$(BOOT_TARBALL_DIR) install_kernel  
-	$(MAKE) BOOT_BIN_DEST=$(BOOT_TARBALL_DIR) initrd_install
-	$(MAKE) BOOT_BIN_DEST=$(BOOT_TARBALL_DIR) install_boel_binaries_tarball
-	echo "$(shell basename $(BOOT_TARBALL_DIR))" > \
-	    $(BOOT_TARBALL_DIR)/README
-	cd $(shell dirname $(BOOT_TARBALL_DIR)) && \
-	    tar -c $(shell basename $(BOOT_TARBALL_DIR)) | \
-	    bzip2 > $(shell basename $(BOOT_TARBALL_DIR)).tar.bz2
-	@echo
-	@echo "$(BOOT_TARBALL_DIR).tar.bz2 build complete."
-	@echo
-
-### END boot tarball ###
-PHONY += client_tarball
-client_tarball:	$(TOPDIR)/tmp/systemimager-client-$(VERSION).tar.bz2
-
-$(TOPDIR)/tmp/systemimager-client-$(VERSION).tar.bz2:
-	mkdir -p $(TOPDIR)/tmp/systemimager-client-$(VERSION)
-	$(MAKE) install_client_all DESTDIR=$(TOPDIR)/tmp/systemimager-client-$(VERSION)
-	$(MAKE) install_docs DESTDIR=$(TOPDIR)/tmp/systemimager-client-$(VERSION)
-	$(SI_INSTALL) $(RELEASE_DOCS) installclient install_lib \
-	    $(TOPDIR)/tmp/systemimager-client-$(VERSION)
-	cd tmp && tar -c systemimager-client-$(VERSION) | bzip2 > \
-		systemimager-client-$(VERSION).tar.bz2
-	@echo
-	@echo "client tarball has been created in $(TOPDIR)/tmp"
-	@echo
-
-PHONY += server_tarball
-server_tarball:	$(TOPDIR)/tmp/systemimager-server-$(VERSION).tar.bz2
-
-$(TOPDIR)/tmp/systemimager-server-$(VERSION).tar.bz2:
-	mkdir -p $(TOPDIR)/tmp/systemimager-server-$(VERSION)
-	$(MAKE) install_server install_common DESTDIR=$(TOPDIR)/tmp/systemimager-server-$(VERSION)
-	$(MAKE) install_docs DESTDIR=$(TOPDIR)/tmp/systemimager-server-$(VERSION)
-	cp $(RELEASE_DOCS) installserver install_lib $(TOPDIR)/tmp/systemimager-server-$(VERSION)
-	cd tmp && tar -c systemimager-server-$(VERSION) | bzip2 > \
-		systemimager-server-$(VERSION).tar.bz2
-	@echo
-	@echo "server tarball has been created in $(TOPDIR)/tmp"
-	@echo
-
 PHONY += source_tarball
 source_tarball:	$(TOPDIR)/tmp/systemimager-source-$(VERSION).tar.bz2
 
@@ -493,7 +439,8 @@ $(TOPDIR)/tmp/systemimager-source-$(VERSION).tar.bz2:
 	rm -rf `find tmp/systemimager-source-$(VERSION) -name CVS \
 	         -type d -printf "%p "`
 	$(MAKE) -C $(TOPDIR)/tmp/systemimager-source-$(VERSION) distclean
-	cd $(TOPDIR)/tmp && tar -c systemimager-source-$(VERSION) | bzip2 > \
+	$(MAKE) -C $(TOPDIR)/tmp/systemimager-source-$(VERSION) get_source
+	cd $(TOPDIR)/tmp && tar -ch systemimager-source-$(VERSION) | bzip2 > \
 	  systemimager-source-$(VERSION).tar.bz2
 	@echo
 	@echo "server tarball has been created in $(TOPDIR)/tmp"
@@ -501,12 +448,8 @@ $(TOPDIR)/tmp/systemimager-source-$(VERSION).tar.bz2:
 
 # create user-distributable tarballs for the server and the client
 PHONY += tarballs
-tarballs:	source_tarball client_tarball server_tarball boot_tarball
-	@ echo -e "\ntarballs have been created in $(TOPDIR)/tmp\n"
-
-PHONY += debs
-debs:	all
-	dpkg-buildpackage -r$(SUDO)
+tarballs:	
+	@ echo -e "\nbinary tarballs are no longer supported\n"
 
 # create a source tarball useable for SRPM and RPM creation
 PHONY += srpm_tarball
