@@ -527,17 +527,6 @@
       Install the <application>VA SystemImager</application> server package 
       on the machine you have chosen as your image server.  
      </para>
-     <para>
-      You can find the SystemImager packages and links to some of the 
-      dependent packages that may not be a part of your Linux distribution at 
-      <ulink url="http://systemimager.org/"></ulink>.
-     </para>
-     <para>
-      The SystemImager server software is available in tar ball format and 
-      may be available in other distribution specific packaged formats.  The 
-      example below is for installing from a tar ball.  The software is the 
-      same regardless of the packaging format.
-     </para>
      <example>
       <title>
        Often times, a machine that is already performing some kind of 
@@ -557,6 +546,17 @@
        </textobject>
       </mediaobject>
      </example>
+     <para>
+      You can find the SystemImager packages and links to some of the 
+      dependent packages that may not be a part of your Linux distribution at 
+      <ulink url="http://systemimager.org/"></ulink>.
+     </para>
+     <para>
+      The SystemImager server software is available in tar ball format and 
+      may be available in other distribution specific packaged formats.  The 
+      example below is for installing from a tar ball.  The software is the 
+      same regardless of the packaging format.
+     </para>
      <example><title>Installing the SystemImager client software</title>
       <programlisting>
 [root@imageserver]# bzcat va-systemimager-server-x.x.x.tar.bz2 | tar -x
@@ -842,7 +842,8 @@ Would you like to run the "addclients" utility now? (y/[n]): n
      <para>
       Run <command>addclients</command> on the image server to tell it
       which clients will receive which image, and to populate the 
-      image server's /etc/hosts and /tftpboot/systemimager/hosts files.
+      image server's <filename>/etc/hosts</filename> and
+      <filename>/tftpboot/systemimager/hosts</filename> files.
      </para>
     </listitem>
 
@@ -886,7 +887,8 @@ Would you like to run the "addclients" utility now? (y/[n]): n
       their IP address information:
       <itemizedlist>
        <listitem><para>with a DHCP server</para></listitem>
-       <listitem><para>with a configuration file called "local.cfg"</para></listitem>
+       <listitem><para>with a configuration file called 
+       "<filename>local.cfg</filename>"</para></listitem>
       </itemizedlist>
 
       Run the command, <command>makedhcpserver</command>, to configure 
@@ -894,7 +896,7 @@ Would you like to run the "addclients" utility now? (y/[n]): n
       instructions it gives you at the end.
      </para>
 
-     <example><title>Running the makedhcpserver command</title>
+     <example><title>Running the <command>makedhcpserver</command> command</title>
       <programlisting format="linespecific">
 [root@imageserver]#  <command>makedhcpserver</command>
 
@@ -973,7 +975,7 @@ Press <command>Enter</command> to continue...
        <listitem>
         <para>
          Boot the system from bootable media such as a floppy diskette or 
-         bootable CD-ROM or
+         bootable CD-ROM
         </para>
        </listitem>
        <listitem>
@@ -1010,7 +1012,7 @@ Press <command>Enter</command> to continue...
       image server and begin to autoinstall itself.  Currently, there is no 
       known single configuration that will work with every system.  The next 
       sections describe some configurations that are known to work.  If you
-      are successful in repeatably configuring a system for PXE autoinstalls,
+      are successful in configuring a system for PXE autoinstalls,
       and it is in any way different from those already mentioned below (i.e.
       different package versions, latest distribution, etc.), please let us
       know so that it can be included in this document.
@@ -1075,41 +1077,28 @@ Press <command>Enter</command> to continue...
          </listitem>
          <listitem>
           <para>
-           <command>
-            # mv /tftpboot/X86PC/UNDI/linux-install/linux.0 \
-                 /tftpboot/X86PC/UNDI/linux-install/linux.0.bak
-           </command>
+           # <command>mv /tftpboot/X86PC/UNDI/linux-install/linux.0 /tftpboot/X86PC/UNDI/linux-install/linux.0.bak</command>
           </para>
          </listitem>
          <listitem>
           <para>
-           <command>
-            # cp /tftpboot/pxelinux.bin \
-              /tftpboot/X86PC/UNDI/linux-install/linux.0
-           </command>
+           # <command>cp /tftpboot/pxelinux.bin /tftpboot/X86PC/UNDI/linux-install/linux.0</command>
           </para>
          </listitem>
          <listitem>
           <para>
-           <command>
-            # cp -r /tftpboot/kernel /tftpboot/initrd.gz \
-              /tftpboot/pxelinux.cfg /tftpboot/X86PC/UNDI/linux-install/
-           </command>
+           # <command>cp -r /tftpboot/kernel /tftpboot/initrd.gz /tftpboot/pxelinux.cfg /tftpboot/X86PC/UNDI/linux-install/</command>
           </para>
          </listitem>
          <listitem>
           <para>
-           <command>
-            # cp /tftpboot/pxelinux.cfg/message.txt \
-              /tftpboot/X86PC/UNDI/linux-install
-           </command>
+           # <command>cp /tftpboot/pxelinux.cfg/message.txt \
+             /tftpboot/X86PC/UNDI/linux-install</command>
           </para>
          </listitem>
          <listitem>
           <para>
-           <command>
-            # /etc/rc.d/init.d/pxe start
-           </command>
+           # <command>/etc/rc.d/init.d/pxe start</command>
           </para>
          </listitem>
         </orderedlist>
@@ -1130,7 +1119,7 @@ Press <command>Enter</command> to continue...
 	   to parse the LABEL= entries in the golden client's
 	   <filename>/etc/fstab</filename> file, and it assumes the
            image server uses <application>inetd</application> instead of
-	   <application>xinetd</application>.  This issues have been
+	   <application>xinetd</application>.  These issues have been
            resolved in <application>VA SystemImager 1.4</application>.
           </para>
          </listitem>
@@ -1203,7 +1192,7 @@ service tftp
          <listitem>
           <para>
            <command>
-            # mv /tftpboot/X86PC/UNDI/linux-install/linux.0 \
+            # mv /tftpboot/X86PC/UNDI/linux-install/linux.0 
                  /tftpboot/X86PC/UNDI/linux-install/linux.0.bak
            </command>
           </para>
@@ -1211,7 +1200,7 @@ service tftp
          <listitem>
           <para>
            <command>
-            # cp /tftpboot/pxelinux.bin \
+            # cp /tftpboot/pxelinux.bin 
               /tftpboot/X86PC/UNDI/linux-install/linux.0
            </command>
           </para>
@@ -1219,7 +1208,7 @@ service tftp
          <listitem>
           <para>
            <command>
-            # cp -r /tftpboot/kernel /tftpboot/initrd.gz \
+            # cp -r /tftpboot/kernel /tftpboot/initrd.gz 
               /tftpboot/pxelinux.cfg /tftpboot/X86PC/UNDI/linux-install/
            </command>
           </para>
@@ -1227,7 +1216,7 @@ service tftp
          <listitem>
           <para>
            <command>
-            # cp /tftpboot/pxelinux.cfg/message.txt \
+            # cp /tftpboot/pxelinux.cfg/message.txt 
               /tftpboot/X86PC/UNDI/linux-install
            </command>
           </para>
@@ -1238,7 +1227,7 @@ service tftp
             # touch /var/lib/dhcp/dhcpd.leases
            </command>
            </para>
-          </listitem>
+          </listitem>		
          <listitem>
           <para>
            <command>
@@ -1255,7 +1244,8 @@ service tftp
          This configuration is very similar to the section "RedHat 7.0 and 
          Intel BootAgent 3.x".  The only noticable difference is that
 	 the pxe package is no longer required.  The entries created in
-         /etc/dhcpd.conf by <command>makedhcpserver</command> are sufficient.
+         <filename>/etc/dhcpd.conf</filename> by
+         <command>makedhcpserver</command> are sufficient.
         </para>
        </sect4>
      </sect3>
@@ -1404,11 +1394,11 @@ service tftp
    <para>
     Now that you have your golden client configured, we need to run the 
     "prepareclient" command.  prepareclient will collect the partition information
-    from your disks and put it in the /etc/partitionschemes directory.  A file 
+    from your disks and put it in the <filename>/etc/partitionschemes</filename> directory.  A file 
     will be created in this directory for each of your disks and will contain that
     disk's partition information.  prepareclient will also create an rsync(1) 
-    configuration file (/tmp/rsyncd.conf) and start rsync in server mode (rsync 
-    --daemon).  This allows the image server to pull the image from the client, 
+    configuration file (<filename>/tmp/rsyncd.conf</filename>) and start rsync in server mode (<command>rsync 
+    --daemon</command>).  This allows the image server to pull the image from the client, 
     but will not cause the rsync daemon to be restarted after the golden client is 
     rebooted.  This helps avoid security concerns of sharing a golden client's 
     root filesystem via rsync.
@@ -1424,7 +1414,8 @@ service tftp
 
    <para>
     getimage contacts the golden client and requests it's 
-    /etc/systemimager/mounted_filesystems file.  This file contains the list of 
+    <filename>/etc/systemimager/mounted_filesystems</filename> file.  This
+    file contains the list of 
     mounted filesystems and the devices on which they are mounted.  It pulls out 
     the mount points for the filesystems that are unsupported and creates an 
     exclusion list.  Currently supported filesystems are ext2, ext3, and reiserfs.
@@ -1664,7 +1655,7 @@ service tftp
    </para>
   </sect2>
   <sect2 id=FAQDHCPServerLocation>
-   <title>Q: Does the DHCP server have be on the image server?</title>
+   <title>Q: Does the DHCP server have to be on the image server?</title>
    <para>
     Yes.  At this point in time it does.  After the client gets it's address
     via DHCP, it determines the DHCP server to be the image server and tries
@@ -1676,7 +1667,8 @@ service tftp
   <sect2 id=FAQAddDriver>
    <title>How do I add a driver for a special card to the autoinstall client?</title>
    <para>
-    All you have to do is start with the <filename>.config</filename> file that
+    All you have to do is start with the linux kernel source and the 
+    <filename>.config</filename> file that
     you can find in the CVS repository on SourceForge:
    </para>
    <para>
@@ -1684,10 +1676,12 @@ service tftp
     VA SystemImager CVS Repository</ulink>
    </para>
    <para>
-    (note: the revision number in the URL above may change in future iterations)
+    The 1.4.0 autoinstall media is based on Linux 2.2.18 and has various
+    patches applied.  You can find this source on the SystemImager web site.
    </para>
    <para>
-    Put this in your <filename>/usr/src/linux</filename>directory 
+    Put the <filename>.config</filename> file in your
+    <filename>/usr/src/linux</filename> directory
     as <filename>.config</filename> and run <command>make menuconfig</command> 
     or your favourite kernel config utility.  Choose the driver for the card 
     you need.
@@ -1711,7 +1705,7 @@ service tftp
    </para>
    <para>
     Then copy the resultant kernel over the kernel (<filename>
-    /tftpboot/kernel</filename>) installed in 
+    /tftpboot/kernel</filename>) installed in
     <filename>/tftpboot</filename> by SystemImager.
    </para>
    <para>
@@ -1723,16 +1717,17 @@ service tftp
   <sect2 id=FAQExcludingStuff>
    <title>How do I exclude files or directories during a getimage?</title>
    <para>
-    Currently there is not support for this.  Look for this feature soon.
+    As of 1.4.0 there is not support for this.  Look for this feature soon.
    </para>
   </sect2>
   <sect2 id=FAQPrepareClient>
    <title>Do I have to do anything to prepare a client from which I will get 
     an image? </title>
    <para>
-    Yes.  Install the va-systemimager-client RPM.  If this RPM is already 
-    installed, all you have to do is run the "prepareclient" command prior to 
-    running "getimage" from the image server.
+    Yes.  Install the va-systemimager-client package.  If this package is
+    already installed, all you have to do is run the
+    <command>prepareclient</command> command prior to running
+    <command>getimage</command> from the image server.
    </para>
    <para>
     You will also want to add any software, configure any files, and do any 
@@ -1772,15 +1767,15 @@ service tftp
    <orderedlist>
     <listitem>
      <para>
-      <emphasis>autoinstalldiskette</emphasis> - (takes longer to boot and 
-      formats the diskette as 1.7M, which pushes this media's limit and 
-      causes many diskettes to fail)
+      <emphasis>autoinstalldiskette</emphasis> - (takes longer to boot and
+      floppies are often quite volatile)
      </para>
     </listitem>
     <listitem>
      <para>
       <emphasis>autoinstallcd</emphasis> - (takes slightly less time to boot 
-      and is more durable, but you have to have a CD burner)
+      and is more durable, but you have to have a CD burner and clients that
+      can read CD-R's)
      </para>
     </listitem>
     <listitem>
@@ -1811,12 +1806,12 @@ service tftp
     </listitem>
     <listitem>
      <para>
-      Gets an IP address from dhcp
+      Gets an IP address from DHCP
      </para>
     </listitem>
     <listitem>
      <para>
-      Determines the IP address of the image server via dhcp
+      Determines the IP address of the image server via DHCP
      </para>
     </listitem>
     <listitem>
@@ -1844,7 +1839,7 @@ service tftp
    <para>
     The script in question is typically a soft link pointing at the 
     <filename>$image.master</filename> script that was dynamically created when 
-    you ran getimage.  This script explicitly states which image to pull 
+    you ran <command>getimage</command>.  This script explicitly states which image to pull 
     from the image server.  Open it up and take a look!
    </para>
    <para>
@@ -1938,7 +1933,7 @@ service tftp
   <sect2 id=FAQStaticIP>
    <title>But I want to assign static IPs to my clients!</title>
    <para>
-    You can!  getimage will ask you if you want to assing static IPs.
+    You can!  <command>getimage</command> will ask you if you want to assing static IPs.
    </para>
   </sect2>
 
@@ -2040,9 +2035,9 @@ service tftp
      <para>
       Modify the files directly.  You can simply cd into the appropriate image
       directory and edit the files there, or (recommended) you can <command>cd 
-      </command>into the image directory and run <command>chroot . sh</command>.
+      </command>into the image directory and run <command>'chroot . sh'</command>.
       This will change your working root directory to the root of the image you 
-      want to manipulate.  You can then run <command>rpm</command>command and 
+      want to manipulate.  You can then run <command>rpm</command> command and 
       other commands on the image and not have to worry about getting 
       confused and damaging the image server.  When you are done, simply type 
       <command>exit</command> and you will be returned to your normal shell.
@@ -2058,7 +2053,7 @@ service tftp
     your clients to reflect this new or modified image.  (It is not necessary 
     to do a complete re-autoinstall.)  You will find the command,
     <command>updateclient</command>, on your clients.  This command takes as 
-    its parameters, the name of the image server and the name of the image that 
+    its parameters the name of the image server and the name of the image that 
     you want to update the client to.  Run <command>updateclient -help</command>
     to get more information about this command.
    </para>
@@ -2281,7 +2276,21 @@ the following command on a client that is already partitioned correctly:
  </sect1>
 
  <glossary>
-  <title>SystemImager Terminology</title>
+  <title>SystemImager Glossary</title>
+  <glossentry>
+   <glossterm>addclients</glossterm>
+   <glossdef>
+    <para>
+     Tells your image server which image to install on your
+     autoinstall clients.  It does so by creating soft links to the 
+     master autoinstall script with the name of each host that will 
+     receive that image.  It also allows you to populate the /etc/hosts 
+     file with sequential host names and IP addresses.  This information
+     in <filename>/etc/hosts</filename> is necessary for certain SystemImager
+     operations.
+    </para>
+   </glossdef>
+  </glossentry>
   <glossentry>
    <glossterm>autoinstall media</glossterm>
    <glossdef>
@@ -2293,38 +2302,31 @@ the following command on a client that is already partitioned correctly:
    </glossdef>
   </glossentry>
   <glossentry>
-   <glossterm>local.cfg</glossterm>
+   <glossterm>autoinstall script</glossterm>
    <glossdef>
     <para>
-     A configuration file that can be used for autoinstall clients
-     in lieu of DHCP and the /tftpboot/systemimager/hosts file on the image
-     server.
+     A unique autoinstall script is created for each 
+     image and is used by the autoinstall client as part of the autoinstall
+     process.  The names of autoinstall scripts begin with the image name 
+     and end in .master.  For example:
+     <filename>my_webserver_image_v1.master</filename>
     </para>
    </glossdef>
   </glossentry>
   <glossentry>
-   <glossterm>updateclient</glossterm>
+   <glossterm>
+    <ulink url="http://www.dictionary.com/cgi-bin/dict.pl?term=daemon">
+     daemon
+    </ulink>
+   </glossterm>
    <glossdef>
     <para>
-     A command that is executed on client systems allowing them 
-     to be updated or synchronized to a new or updated image after the
-     initial autoinstall.  updateclient enables software and content
-     distribution.
-    </para>
-   </glossdef>
-  </glossentry>
-  <glossentry>
-   <glossterm>image server</glossterm>
-   <glossdef>
-    <para>The machine that will hold and distribute the images.</para>
-   </glossdef>
-  </glossentry>
-  <glossentry>
-   <glossterm>golden client</glossterm>
-   <glossdef>
-    <para>
-     A machine from which an image is taken.  Golden clients
-     are manually installed and customized to taste.
+     This is not specifically a SystemImager term, but it really
+     bugs me when people pronounce this word as "daymen".  It is just
+     another, more interesting, less evil appearing way of spelling demon.
+     And just to be clear, in computer terms, a daemon is a program that
+     lies in wait for something to trigger it into action.  An example of
+     this is a web server daemon waiting for someone to request a web page.
     </para>
    </glossdef>
   </glossentry>
@@ -2338,11 +2340,27 @@ the following command on a client that is already partitioned correctly:
    </glossdef>
   </glossentry>
   <glossentry>
-   <glossterm>prepareclient</glossterm>
+   <glossterm>golden client</glossterm>
    <glossdef>
     <para>
-     This command is run on the golden client immediately 
-     prior to running getimage on the image server.
+     A machine from which an image is taken.  Golden clients
+     are manually installed and customized to taste.
+    </para>
+   </glossdef>
+  </glossentry>
+  <glossentry>
+   <glossterm>image server</glossterm>
+   <glossdef>
+    <para>The machine that will hold and distribute the images.</para>
+   </glossdef>
+  </glossentry>
+  <glossentry>
+   <glossterm>local.cfg</glossterm>
+   <glossdef>
+    <para>
+     A configuration file that can be used for autoinstall clients
+     in lieu of DHCP and the /tftpboot/systemimager/hosts file on the image
+     server.
     </para>
    </glossdef>
   </glossentry>
@@ -2367,45 +2385,22 @@ the following command on a client that is already partitioned correctly:
    </glossdef>
   </glossentry>
   <glossentry>
-   <glossterm>autoinstall script</glossterm>
+   <glossterm>prepareclient</glossterm>
    <glossdef>
     <para>
-     A unique autoinstall script is created for each 
-     image and is used by the autoinstall client as part of the autoinstall
-     process.  The names of autoinstall scripts begin with the image name 
-     and end in .master.  For example:
-     <filename>my_webserver_image_v1.master</filename>
+     This command is run on the golden client immediately 
+     prior to running getimage on the image server.
     </para>
    </glossdef>
   </glossentry>
   <glossentry>
-   <glossterm>addclients</glossterm>
+   <glossterm>updateclient</glossterm>
    <glossdef>
     <para>
-     Tells your image server which image to install on your
-     autoinstall clients.  It does so by creating soft links to the 
-     master autoinstall script with the name of each host that will 
-     receive that image.  It also allows you to populate the /etc/hosts 
-     file with sequential host names and IP addresses.  This information
-     in <filename>/etc/hosts</filename> is necessary for certain SystemImager
-     operations.
-    </para>
-   </glossdef>
-  </glossentry>
-  <glossentry>
-   <glossterm>
-    <ulink url="http://www.dictionary.com/cgi-bin/dict.pl?term=daemon">
-     daemon
-    </ulink>
-   </glossterm>
-   <glossdef>
-    <para>
-     This is not specifically a SystemImager term, but it really
-     bugs me when people pronounce this word as "daymen".  It is just
-     another, more interesting, less evil appearing way of spelling demon.
-     And just to be clear, in computer terms, a daemon is a program that
-     lies in wait for something to trigger it into action.  An example of
-     this is a web server daemon waiting for someone to request a web page.
+     A command that is executed on client systems allowing them 
+     to be updated or synchronized to a new or updated image after the
+     initial autoinstall.  updateclient enables software and content
+     distribution.
     </para>
    </glossdef>
   </glossentry>
