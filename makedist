@@ -1,9 +1,16 @@
 #!/bin/sh
+
 #
-# Build a systemimager distribution tarball
+# "VA SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com>
+#
+#   Others who have contributed to this code:
+#     Written by Michael Jennings <mej@valinux.com>
+#
+# This file is: makedist
+#               (Build a SystemImager distribution tarball)
 #
 
-PACKAGE=systemimager
+PACKAGE=va-systemimager
 VERSION=`cat VERSION`
 GZIP=-9
 
@@ -16,6 +23,7 @@ rm -f ${PACKAGE}.spec.in
 mkdir -p /tmp/${PACKAGE}-${VERSION}
 cp -a . /tmp/${PACKAGE}-${VERSION}
 (cd /tmp/${PACKAGE}-${VERSION} && find . -type d -name CVS -exec rm -rf {} \;)
+(cd /tmp/${PACKAGE}-${VERSION} && find . -type d -name www.systemimager.org -exec rm -rf {} \;)
 (cd /tmp && tar --owner=root --group=root -zcvf ${PACKAGE}-${VERSION}.tar.gz ${PACKAGE}-${VERSION}/)
 mv /tmp/${PACKAGE}-${VERSION}.tar.gz .
 rm -rf /tmp/${PACKAGE}-${VERSION}
