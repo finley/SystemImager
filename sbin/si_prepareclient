@@ -92,6 +92,9 @@ my $rsyncd_conf_file = "/tmp/rsyncd.conf.$$";
 # set path
 $ENV{PATH} = "/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin";
 
+# we rely on english text when parsing command output
+$ENV{"LANG"} = "C";
+
 my $version_info = <<"EOF";
 si_prepareclient (part of SystemImager) v$VERSION
 
