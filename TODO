@@ -10,6 +10,7 @@
 
 In Progress
 -----------
+- <wessmith@engr.sgi.com> - Modify getimage to allow for alternate image directory prefix.
 - <wessmith@engr.sgi.com> - GUI for SystemImager called SGI SystemImager GUI 
                             (not open sourced)
 - <brian@thefinleys.com> - support for software RAID
@@ -21,10 +22,10 @@ In Progress
 
 Assigned and waiting to be done
 ----------------------------------
-- <ian@valinux.com> - multicast install -- Ian McLeod <ian@valinux.com> will have mftp (multicast ftp) 
-  working as a drop in replacement for rsync by 5/15/2000 and we will begin testing
-  in the lab.
-- <brian@valinux.com> - consider inodes/block in getimage
+- Ian McLeod <ian@valinux.com> - multicast install -- working on mftp (multicast ftp) 
+  as a drop in alternative for rsync.
+- Roland Dreier <roland@valinux.com> -- working on the multicast library that Ian's utility will be based on.
+- <brian@thefinleys.com> - consider inodes/block in getimage
 - <brian@thefinleys.com> - getimage -- eject floppy/cd option
 - <brian@thefinleys.com> - getimage -- beep option
 - <brian@thefinleys.com> - getimage -- blink option
