@@ -94,6 +94,6 @@ $(SRC_DIR)/modules_build-stamp:	$(SRC_DIR)/patched_kernel-stamp
 
 PHONY += kernel_clean
 kernel_clean:
-	rm -rf $(SRC_DIR)/$(LINUX_DIR)
+	rm -rf $(LINUX_DIR)
 	rm -f $(SRC_DIR)/patched_kernel-stamp
 	rm -f $(SRC_DIR)/modules_build-stamp
