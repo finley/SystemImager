@@ -68,10 +68,10 @@ CVS Checkout Steps for Developers
      BRANCH="HEAD"; BRANCH_OPTS=""
 
    For the current stable branch, cut and paste this:
-     BRANCH="v3_2_0"; BRANCH_OPTS="-r $BRANCH"
+     BRANCH="v3_2_x"; BRANCH_OPTS="-r$BRANCH"
 
 4) Checkout the code:
-   cvs -z3 -d:ext:$MY_CVS_USERNAME@cvs.systemimager.sourceforge.net:/cvsroot/systemimager co $BRANCH_OPTS systemimager
+   cvs -z3 -d:ext:$MY_CVS_USERNAME@cvs.sourceforge.net:/cvsroot/systemimager co $BRANCH_OPTS systemimager
 
 5) Rename the checked out source tree:
    mv systemimager systemimager.$BRANCH
