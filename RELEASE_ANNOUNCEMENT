@@ -29,25 +29,28 @@ release, please send a quick "it worked on my box" message to
 the same list.
 
 
+
 Installation instructions
 ---------------------------------------------------------------------------
-Debian based distributions, cut and paste the following commands:
-
-    cd /tmp
-    wget http://sisuite.org/deb-installer
-    chmod +x deb-installer
-
-    ./deb-installer -client -devel
-or
-    ./deb-installer -server -devel
-
-
 RPM based distributions, cut and paste the following commands:
 
-    cd /tmp
-    wget http://sisuite.org/installer.pl
-    chmod +x installer.pl
-    ./installer.pl -v -i -t devel
+        cd /tmp
+        wget http://sisuite.org/installer.pl
+        chmod +x installer.pl
+        ./installer.pl -v -i -t devel
+
+    If you get dependency errors, you may also need to install the 
+    following RPMs.  These are the most common, but there may be 
+    others that your system requires:
+
+        perl-DBI
+            You can find this RPM on your Linux installation media.
+        perl-Tk 
+            You can find this RPM here:
+            http://rpmfind.net/linux/rpm2html/search.php?query=perl-Tk
+        perl-XML-Simple
+            You can find this RPM here:
+            http://rpmfind.net/linux/rpm2html/search.php?query=perl-XML-Simple
 
 
 
