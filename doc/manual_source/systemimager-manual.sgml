@@ -3,7 +3,7 @@
 <article id=index>
 
  <artheader>
-    <title>VA SystemImager v1.4.0 Documentation</title>
+    <title>VA SystemImager v1.5.0 Documentation</title>
     <pubdate>v1.3 12 Feb, 2001</pubdate>
     <author>
       <firstname>Greg</firstname>
@@ -24,27 +24,11 @@
     
     <revhistory>
       <revision>
-	<revnumber>v0.1</revnumber>
-	<date>15 September 2000</date>
+	<revnumber>v1.3</revnumber>
+	<date>12 February 2000</date>
 	<authorinitials>gap</authorinitials>
 	<revremark>
-	  Original document creation without FAQ Section
-	</revremark>
-      </revision>
-      <revision>
-	<revnumber>v1.0</revnumber>
-	<date>05 January 2001</date>
-	<authorinitials>gap</authorinitials>
-	<revremark>
-	  Added Sample Install
-	</revremark>
-      </revision>
-      <revision>
-	<revnumber>v1.1</revnumber>
-	<date>10 January 2000</date>
-	<authorinitials>gap</authorinitials>
-	<revremark>
-	  Completed FAQ Section
+	  Modified Acknowledgement Section
 	</revremark>
       </revision>
       <revision>
@@ -56,11 +40,27 @@
 	</revremark>
       </revision>
       <revision>
-	<revnumber>v1.3</revnumber>
-	<date>12 February 2000</date>
+	<revnumber>v1.1</revnumber>
+	<date>10 January 2000</date>
 	<authorinitials>gap</authorinitials>
 	<revremark>
-	  Modified Acknowledgement Section
+	  Completed FAQ Section
+	</revremark>
+      </revision>
+      <revision>
+	<revnumber>v1.0</revnumber>
+	<date>05 January 2001</date>
+	<authorinitials>gap</authorinitials>
+	<revremark>
+	  Added Sample Install
+	</revremark>
+      </revision>
+      <revision>
+	<revnumber>v0.1</revnumber>
+	<date>15 September 2000</date>
+	<authorinitials>gap</authorinitials>
+	<revremark>
+	  Original document creation without FAQ Section
 	</revremark>
       </revision>
     </revhistory>
@@ -1272,8 +1272,8 @@ Added systemimager *
 	    </para>
 	    
 	    <para>
-	      PXE booting is flaky and tends to vary wildly in it's hardware 
-	      implementation.  If you must boot without physically touching
+	      PXE booting can be flaky and client side firmware is less than
+	      consistent.  If you must boot without physically touching
 	      your machines, may I suggest that you try the
 	      <parameter>-autoinstall</parameter> option to
 	      <command>updateclient</command> first and see if it meets your
@@ -1281,9 +1281,12 @@ Added systemimager *
 	    </para>
 
 	    <para>
-	      That being said, Dann Frazier has put together a fairly
-	      comprehensive set of notes below if you want to attempt this
-	      most contemptuous method of doing an autoinstall.  
+              <application>SystemImager</application> comes with the
+              <command>mkbootserver</command> utility to help configure a
+              PXE server.  <command>mkbootserver</command>, is new with this
+	      release, and will likley not work with all PXE clients.  If it
+	      fails to work with your configuration, please submit a bug
+	      report.
 	    </para>
 	  </listitem>
 	  
@@ -1291,257 +1294,6 @@ Added systemimager *
 	
       </listitem>
    </orderedlist>
-    
-    <sect2 id=NetworkBoot>
-      <title>Network Booting the System</title>
-      <para>
-	If you prefer to boot off the network, change the settings in your
-	BIOS to boot off your PXE enabled network card, and reboot your
-	client system.  It *should* automatically find and boot off the
-	image server and begin to autoinstall itself.  Currently, there is no 
-	known single configuration that will work with every system.  The next 
-	sections describe some configurations that are known to work.
-	They assume you have one server which acts as your image server, PXE
-	server, and DHCP server.  However, they can reside on separate
-	machines.  If you are successful in configuring a system for PXE
-	autoinstalls, and it is in any way different from those already
-	mentioned below (i.e. different package versions, latest distribution,
-	etc.), please let us know so that it can be included in this document.
-      </para>
-      <sect3 id=RedHat6.2BootAgent3.x>
-	<title>RedHat 6.2 and Intel BootAgent 3.x</title>
-	<para>
-	  This testing was done on HP Netservers with Intel Ether Express Pro 
-	  cards.  The Netservers ran a typical RedHat 6.2 installation, while 
-	  the NIC's were running a 3.x version of the Intel BootAgent firmware.
-	  The relevant software was:
-	  <itemizedlist>
-	    <listitem>
-	      <para>
-		<filename>
-		  va-systemimager-1.1-1.i386.rpm
-		</filename>
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		<filename>
-		  pxe-0.1-14.i386.rpm
-		</filename>
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		<filename>
-		  dhcp-2.0-5.i386.rpm
-		</filename>
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		<filename>
-		  tftp-hpa-0.13-1.i386.rpm
-		</filename>
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		<filename>
-		  inetd-0.16-4.i386.rpm
-		</filename>
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		<filename>
-		  syslinux-1.48-2.i386.rpm
-		</filename>
-	      </para>
-	    </listitem>
-	  </itemizedlist>
-	  Taking the following steps should result in a working configuration:
-	  <orderedlist>
-	    <listitem>
-	      <para>
-		Install the above packages onto the image server.
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		# <command>mv /tftpboot/X86PC/UNDI/linux-install/linux.0 /tftpboot/X86PC/UNDI/linux-install/linux.0.bak</command>
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		# <command>cp /tftpboot/pxelinux.bin /tftpboot/X86PC/UNDI/linux-install/linux.0</command>
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		# <command>cp -r /tftpboot/kernel /tftpboot/initrd.gz /tftpboot/pxelinux.cfg /tftpboot/X86PC/UNDI/linux-install/</command>
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		# <command>cp /tftpboot/pxelinux.cfg/message.txt \
-		  /tftpboot/X86PC/UNDI/linux-install</command>
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		# <command>/etc/rc.d/init.d/pxe start</command>
-	      </para>
-	    </listitem>
-	  </orderedlist>
-	</para>
-      </sect3>
-      <sect3 id=RedHat7.0BootAgent3.x>
-	<title>RedHat 7.0 and Intel BootAgent 3.x</title>
-	<para>
-	  This testing was done on HP Netservers with Intel Ether Express Pro 
-	  cards.  The Netservers ran a typical RedHat 7.0 installation, while 
-	  the NIC's were running a 3.x version of the Intel BootAgent firmware.
-	  The relevant software was:
-	  <itemizedlist>
-	    <listitem>
-	      <para>
-		<filename>va-systemimager-1.3.0-1.i386.rpm</filename> - This
-		version has a few incompatiblities with RedHat 7.0.  It is unable
-		to parse the LABEL= entries in the golden client's
-		<filename>/etc/fstab</filename> file, and it assumes the
-		image server uses <application>inetd</application> instead of
-		<application>xinetd</application>.  These issues have been
-		resolved in <application>VA SystemImager 1.4</application>.
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		<filename>
-		  pxe-0.1-20.i386.rpm
-		</filename>
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		<filename>
-		  dhcp-2.0-12.i386.rpm
-		</filename>
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		<filename>tftp-server-0.17-5.i386.rpm</filename> - The default
-		<application>xinetd</application> entry for 
-		<application>tftp-server</application> must be modified 
-		for use with <application>VA SystemImager</application>.  This
-		entry is stored in <filename>/etc/xinetd.d/tftp</filename>.
-		An example of a valid entry is:
-		<example>
-		  <title>Sample tftp entry for xinetd</title>
-		  <literallayout>
-service tftp
-{
-        socket_type             = dgram
-        protocol                = udp
-        wait                    = yes
-        user                    = root
-        server                  = /usr/sbin/tftpd
-        server_args             = -s /tftpboot -r blksize
-        disable                 = no
-}
-		  </literallayout>
-		</example>
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		<filename>xinetd-2.1.8.9pre11-1.i386.rpm</filename> - this
-		version has a race condition which can prevent the tftp server
-		from responding.  this has supposedly been fixed in version
-		2.1.8.9pre13.  <application>xinetd</application> has a default
-		limit on how many connections can be spawned in a 60 second
-		period.  This is configurable, if necessary, by adding the
-		-loop argument in the <filename>/etc/init.d/xinetd</filename>
-		initscript.
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		<filename>
-		  syslinux-1.48-2.i386.rpm
-		</filename>
-	      </para>
-	    </listitem>
-	  </itemizedlist>
-	  Taking the following steps should result in a working configuration:
-	  <orderedlist>
-	    <listitem>
-	      <para>
-		Install the above packages onto the image server.
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		<command>
-		  # mv /tftpboot/X86PC/UNDI/linux-install/linux.0 
-		  /tftpboot/X86PC/UNDI/linux-install/linux.0.bak
-		</command>
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		<command>
-		  # cp /tftpboot/pxelinux.bin 
-		  /tftpboot/X86PC/UNDI/linux-install/linux.0
-		</command>
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		<command>
-		  # cp -r /tftpboot/kernel /tftpboot/initrd.gz 
-		  /tftpboot/pxelinux.cfg /tftpboot/X86PC/UNDI/linux-install/
-		</command>
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		<command>
-		  # cp /tftpboot/pxelinux.cfg/message.txt 
-		  /tftpboot/X86PC/UNDI/linux-install
-		</command>
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		<command>
-		  # touch /var/lib/dhcp/dhcpd.leases
-		</command>
-	      </para>
-	    </listitem>		
-	    <listitem>
-	      <para>
-		<command>
-		  # /etc/init.d/pxe start
-		</command>
-	      </para>
-	    </listitem>
-	  </orderedlist>
-	</para>
-      </sect3>
-      <sect3 id=RedHat7.0BootAgent4.x>
-	<title>RedHat 7.0 and Intel BootAgent 4.x</title>
-	<para>
-	  This configuration is very similar to the section "RedHat 7.0 and 
-	  Intel BootAgent 3.x".  The only noticable difference is that
-	  the pxe package is no longer required.  The entries created in
-	  <filename>/etc/dhcpd.conf</filename> by
-         <command>makedhcpserver</command> are sufficient.
-        </para>
-      </sect3>
-    </sect2>
-  </sect1>
-  
   <sect1 id=DesignGoals>
     <title>I Want More Details!  What were the Design Goals?</title>
     <itemizedlist>
@@ -1897,6 +1649,22 @@ service tftp
   <sect1 id=Troubleshooting>
     <title>Troubleshooting</title>
     <para></para>
+    <sect2 id=TftpFailure>
+      <title>
+	PXE installations work fine for a while, but eventually clients no
+	longer boot the autoinstall kernel.
+      </title>
+      <Para>
+       Are you using <application>xinetd</application>?
+       <application>xinetd</application> 2.1.8.9pre11 (and assumably earlier
+       versions) had a race condition which causes the tftp server to suddenly
+       stop responding.  this has supposedly been fixed in version
+       2.1.8.9pre13.  Also, <application>xinetd</application> and
+       <application>inetd</application> have default limits on how many
+       connections can be spawned in a 60 second period.  See the inetd or
+       xinetd manpage for details on increasing this limit.
+      </Para>
+    </sect2>  
     <sect2 id=TroubleAssignHostname>
       <title>
         My client fails to assign a hostname to itself, making the autoinstall
@@ -2081,8 +1849,8 @@ To:     "rsync --bwlimit=10000 -av --numeric-ids $IMAGESERVER::web_server_image_
       <title>When making the autoinstalldiskette, my system gives me an error 
 	involving "dd" or "mount".</title>
       <para>
-	You are using a pre v0.19 version of VA SystemImager.  Please download the 
-	latest version from <ulink url="http://systemimager.org/"></ulink>.
+	You are using a pre v0.19 version of VA SystemImager.  Please download
+	the latest version from <ulink url="http://systemimager.org/"></ulink>.
       </para>
       <para>
 	If you must use a pre v0.19 version for some reason, be sure that your 
@@ -2287,9 +2055,9 @@ To:     "rsync --bwlimit=10000 -av --numeric-ids $IMAGESERVER::web_server_image_
        add the appropriate entry for you.
       </para>
       <para>
-       Yes, we now know that option-100 has an official use.  We are working on either
-       getting an official number assigned or using a number from the private number
-       range.
+       Yes, we now know that option-100 has an official use.  We are working on
+       either getting an official number assigned or using a number from the
+       private number range.
       </para>
     </sect2>
 
@@ -2308,7 +2076,7 @@ To:     "rsync --bwlimit=10000 -av --numeric-ids $IMAGESERVER::web_server_image_
 	</ulink>
       </para>
       <para>
-	The 1.4.0 autoinstall media is based on Linux 2.2.18 and has various
+	The 1.5.0 autoinstall media is based on Linux 2.2.18 and has various
 	patches applied.  You can find this source on the SystemImager web
 	site.
       </para>
@@ -2350,7 +2118,7 @@ To:     "rsync --bwlimit=10000 -av --numeric-ids $IMAGESERVER::web_server_image_
     <sect2 id=FAQExcludingStuff>
       <title>How do I exclude files or directories during a getimage?</title>
       <para>
-	As of 1.4.0 there is not support for this.  Look for this feature soon.
+	As of 1.5.0 there is not support for this.  Look for this feature soon.
       </para>
     </sect2>
     <sect2 id=FAQPrepareClient>
@@ -2372,8 +2140,8 @@ To:     "rsync --bwlimit=10000 -av --numeric-ids $IMAGESERVER::web_server_image_
       <title>Can I use the autoinstalldiskette or autoinstallcd on more than one 
 	machine?</title>
       <para>
-	Yes.  The autoinstall media is generic, and can be on any machine that you 
-	want to autoinstall.
+	Yes.  The autoinstall media is generic, and can be on any machine that
+	you want to autoinstall.
       </para>
     </sect2>
     
@@ -2401,22 +2169,22 @@ To:     "rsync --bwlimit=10000 -av --numeric-ids $IMAGESERVER::web_server_image_
       <orderedlist>
 	<listitem>
 	  <para>
-	    <emphasis>autoinstalldiskette</emphasis> - (takes longer to boot and
-	    floppies are often quite volatile)
+	    <emphasis>autoinstalldiskette</emphasis> - takes longer to boot and
+	    floppies are often quite volatile
 	  </para>
 	</listitem>
 	<listitem>
 	  <para>
-	    <emphasis>autoinstallcd</emphasis> - (takes slightly less time to boot 
-	    and is more durable, but you have to have a CD burner and clients that
-	    can read CD-R's)
+	    <emphasis>autoinstallcd</emphasis> - takes slightly less time to
+	    boot and is more durable, but you have to have a CD burner and
+	    clients that can read CD-R's)
 	  </para>
 	</listitem>
 	<listitem>
 	  <para>
-	    <emphasis>network boot</emphasis> - (dramatically faster boot time, 
-	    but requires PXE capable network card on the client, and requires mucking 
-	    about with the BIOS to tell it to boot off the network)
+	    <emphasis>network boot</emphasis> - dramatically faster boot time,
+	    but requires PXE capable network cards in the clients, and
+	    additional server-side configuration.
 	  </para>
 	</listitem>
       </orderedlist>
@@ -2489,22 +2257,19 @@ To:     "rsync --bwlimit=10000 -av --numeric-ids $IMAGESERVER::web_server_image_
 	install the new version on top.
       </para>
       <para>
-	If you last installed a pre-1.0 version then the comments below still apply.
-      </para>
-      <para>
-	VA SystemImager is still changing dynamically, so you can't simply 
-	install a new version on top of an old one.  Depending on the version 
-	changes, this may work for you, but it is not guaranteed.  If you want 
-	to try this method, please check with the <filename>CHANGE.LOG</filename> 
+	If you last installed a pre-1.0 version then you can't simply install a
+	new version on top of an old one.  Depending on the version changes,
+	this may work for you, but it is not guaranteed.  If you want to try
+	this method, please check with the <filename>CHANGE.LOG</filename> 
 	document to find out what has changed.
       </para>
       <para>
-	Currently the recommended method is to move your images directory out of 
-	the systemimager directory hierarchy, back up your 
-	<filename> /etc/rsyncd.conf</filename> file and any other configuration 
-	files you may have changed.  Then install VA SystemImager as if you were 
-	installing it for the first time, after which you can move your images 
-	directory and <filename>/etc/rsyncd.conf</filename> file back.
+	Currently the recommended method is to move your images directory out
+	of the systemimager directory hierarchy, back up your 
+	<filename>/etc/rsyncd.conf</filename> file and any other configuration 
+	files you may have changed.  Then install VA SystemImager as if you
+	were installing it for the first time, after which you can move your
+	images directory and <filename>/etc/rsyncd.conf</filename> file back.
       </para>
     </sect2>
     
@@ -2827,8 +2592,8 @@ the following command on a client that is already partitioned correctly:
 
     <listitem>
      <para>
-      Run <command>updateclient</command> on the clients that you want to update.     
-      Execute <command>updateclient -help</command> to get the syntax.
+      Run <command>updateclient</command> on the clients that you want to
+      update.  Execute <command>updateclient -help</command> to get the syntax.
      </para>
     </listitem>
    </orderedlist>
@@ -2838,17 +2603,22 @@ the following command on a client that is already partitioned correctly:
   <sect2 id=FAQLogFile>
    <title>Is there a log file where autoinstall client status is kept?</title>
    <para>
-    Yes.  <filename>/var/log/systemimager</filename>
+    Yes.  SystemImager logs can be found on the image server in the directory
+    <filename>/var/log/systemimager</filename>
    </para>
   </sect2>
 
   <sect2 id=FAQBaseOn>
    <title>What other software is this based on?</title>
    <para>
-    VA SystemImager is based on <filename>rsync(1)</filename> and also makes 
-    use of <filename>syslinux(2)</filename> and <filename>pxelinux(3)
-    </filename>. Versions 0.23 and earlier made use of <filename>tomsrtbt(4)
-    </filename>.
+    VA SystemImager is based on <command>rsync(1)</command> and also makes
+    use of:
+    <ItemizedList>
+     <ListItem><para><command>busybox(1)</command></para></ListItem>
+     <ListItem><para><command>syslinux(2)</command></para></ListItem>
+     <ListItem><para><command>pxelinux(2)</command></para></ListItem>
+    </ItemizedList>
+    Versions 0.23 and earlier made use of tomsrtbt(4).
    </para>
   </sect2>
 
@@ -2960,6 +2730,15 @@ the following command on a client that is already partitioned correctly:
      Used to modify the <filename>/etc/dhcpd.conf</filename> file, adding 
      static entries for autoinstall clients based on the IP addresses 
      handed out to these clients by the DHCP server.
+    </para>
+   </glossdef>
+  </glossentry>
+  <glossentry>
+   <glossterm>mkbootserver</glossterm>
+   <glossdef>
+    <para>
+     A utility for configuring a network boot server.  Currently just
+     supports configuring PXE boot servers.
     </para>
    </glossdef>
   </glossentry>
