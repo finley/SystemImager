@@ -5,6 +5,7 @@
 #
 #   Others who have contributed to this code (in alphabetical order):
 #     Phil Champon <pchampon@valueweb.net>
+#     Sean Dague <sean@dague.net>
 #     Ian McLeod <ian@valinux.com>
 #     James Oakley <joakley@solutioninc.com>
 #     Laurence Sherzer <lsherzer@gate.net>
@@ -536,44 +537,16 @@ unless($update_script eq "yes") { exit 0; }
 
 ### END Overwrite $image.master? ###
 
-### BEGIN What kind of Linux are you? ###
-# Set a default for distro and hope it works -- in case /etc/issue is 
-# a zero byte file or doesn't name a distribution we're familiar with.
-$distro = "red_hat_linux";
-
-$file="$imagedir/etc/issue";
-open(FILE, "< $file") or die "$program_name: Couldn't open $file for reading: $!\n";
-    while (<FILE>)
-    {
-
-        if (/Debian/)
-	{
-	    if (/2\.1/) { $distro = "debian_linux_2.1"; }
-            elsif (/2\.2/) { $distro = "debian_linux_2.2"; }
-	    else { $distro = "debian_linux_2.2"; }
-	}
-	elsif (/Red Hat/) 
-	{ 
-	    $distro = "red_hat_linux"; 
-	}
-    # only read first line
-    last;
-    }
-close(FILE);
-### END What kind of Linux are you? ###
 
 ### BEGIN Got NIS? ###
-if ( $distro eq "red_hat_linux" ) {
-   $file="$imagedir/etc/sysconfig/network";
-   open (NETWORK, "< $file") or die "$program_name: Couldn't open $file for reading: $!\n";
-   while (<NETWORK>) {
-         if (/^NISDOMAIN/) {
-            chomp;
-            # set $nisdomainname but dump $placeholder (figure out a better way to do this later)
-            (my $placeholder, $nisdomainname) = split(/=/, $_);
-         }
-   }
-   close (NETWORK);
+$file="$imagedir/etc/sysconfig/network";
+if(open (NETWORK, "< $file")) {
+    while (<NETWORK>) {
+        if (/^NISDOMAIN\s*\=\s*(\S+)/) {
+            $nisdomain = $1;
+        }
+    }
+    close (NETWORK);
 }
 ### END Got NIS? ###
 
@@ -1250,186 +1223,51 @@ print MASTER_SCRIPT "# Leave notice of which image is installed on the client\n"
 print MASTER_SCRIPT "echo \$IMAGENAME > /a/etc/systemimager/IMAGE_LAST_SYNCED_TO || shellout\n\n";
 ### END graffiti ###
 
-### BEGIN distribution specific networking stuff ###
-unless($ip_assignment_method eq "replicant") { 
+### BEGIN System Configurator setup ###
 
-### BEGIN RedHat ###
-if ("$distro" eq "red_hat_linux") { 
-   print MASTER_SCRIPT << 'EOF';
-# set host specific information
-echo NETWORKING=yes > /a/etc/sysconfig/network || shellout
-echo FORWARD_IPV4=false >> /a/etc/sysconfig/network || shellout
+if ($ip_assignment_method eq "static") { 
 
+  print MASTER_SCRIPT <<'EOF';
+chroot /a/ systemconfigurator --configsi --stdin <<EOL || shellout
+[NETWORK]
+HOSTNAME = $HOSTNAME
+DOMAINNAME = $DOMAINNAME
+GATEWAY = $GATEWAY
+[INTERFACE0]
+DEVICE = eth0
+TYPE = static
+IPADDR = $IPADDR
+NETMASK = $NETMASK
+EOL
 EOF
 
-   if ($nisdomainname ne "") { 
-      print MASTER_SCRIPT "# set NIS domainname and imply that we want to be an NIS client\n";
-      print MASTER_SCRIPT "echo NISDOMAIN=$nisdomainname >> /a/etc/sysconfig/network || shellout\n\n";
-   }
-
-   if ($ip_assignment_method eq "static") { 
-   print MASTER_SCRIPT << 'EOF';
-# Stuff for static IP addressing
-#
-# /etc/sysconfig/network
-echo HOSTNAME=$HOSTNAME >> /a/etc/sysconfig/network || shellout
-echo DOMAINNAME=$DOMAIN >> /a/etc/sysconfig/network || shellout
-echo GATEWAY=$GATEWAY >> /a/etc/sysconfig/network || shellout
-echo GATEWAYDEV=eth0 >> /a/etc/sysconfig/network || shellout
-#
-# /etc/sysconfig/network-scripts/ifcfg-eth0
-echo DEVICE=eth0 > /a/etc/sysconfig/network-scripts/ifcfg-eth0 || shellout
-echo IPADDR=$IPADDR >> /a/etc/sysconfig/network-scripts/ifcfg-eth0 || shellout
-echo NETWORK=$NETWORK >> /a/etc/sysconfig/network-scripts/ifcfg-eth0 || shellout
-echo NETMASK=$NETMASK >> /a/etc/sysconfig/network-scripts/ifcfg-eth0 || shellout
-echo BROADCAST=$BROADCAST >> /a/etc/sysconfig/network-scripts/ifcfg-eth0 || shellout
-echo ONBOOT=yes >> /a/etc/sysconfig/network-scripts/ifcfg-eth0 || shellout
-echo BOOTPROTO=none >> /a/etc/sysconfig/network-scripts/ifcfg-eth0 || shellout
-
+} elsif ($ip_assignment_method eq "static_dhcp") {
+  print MASTER_SCRIPT <<'EOF';
+chroot /a/ systemconfigurator --configsi --stdin <<EOL || shellout
+[INTERFACE0]
+DEVICE = eth0
+TYPE = dhcp
+EOL
 EOF
 
-   } elsif ($ip_assignment_method eq "static_dhcp") {
-   print MASTER_SCRIPT << 'EOF';
-# Stuff for IP addressing with static DHCP.  Once makedhcpstatic is run,
-# hostnames will be assigned by the dhcp server.  Until then, you will
-# see "(none)" as the hostname.
-#
-# /etc/sysconfig/network
-echo DEVICE=eth0 > /a/etc/sysconfig/network-scripts/ifcfg-eth0 || shellout
-echo ONBOOT=yes >> /a/etc/sysconfig/network-scripts/ifcfg-eth0 || shellout
-echo BOOTPROTO=dhcp >> /a/etc/sysconfig/network-scripts/ifcfg-eth0 || shellout
-
+} elsif ($ip_assignment_method eq "replicant") {
+  print MASTER_SCRIPT << 'EOF';
+chroot /a/ systemconfigurator --runboot || shellout
 EOF
 
-   } else { 
-   print MASTER_SCRIPT << 'EOF';
-# Stuff for IP addressing via DHCP
-#
-# /etc/sysconfig/network
-echo HOSTNAME=$HOSTNAME >> /a/etc/sysconfig/network || shellout
-echo DEVICE=eth0 > /a/etc/sysconfig/network-scripts/ifcfg-eth0 || shellout
-echo ONBOOT=yes >> /a/etc/sysconfig/network-scripts/ifcfg-eth0 || shellout
-echo BOOTPROTO=dhcp >> /a/etc/sysconfig/network-scripts/ifcfg-eth0 || shellout
-
+} else { # aka elsif ($ip_assignment_method eq "dynamic_dhcp")
+  print MASTER_SCRIPT <<'EOF';
+chroot /a/ systemconfigurator --configsi --stdin <<EOL || shellout
+[NETWORK]
+HOSTNAME = $HOSTNAME
+DOMAINNAME = $DOMAINNAME
+[INTERFACE0]
+DEVICE = eth0
+TYPE = dhcp
+EOL
 EOF
 
-   }
-}
-### END RedHat ###
-
-### BEGIN debian_linux_2.2 ###
-if ($distro eq "debian_linux_2.2")
-{ 
-   if ($ip_assignment_method eq "static")
-   { 
-   print MASTER_SCRIPT << 'EOF';
-# Stuff for static IP addressing
-#
-# /etc/hostname
-echo $HOSTNAME > /a/etc/hostname || shellout
-
-# /etc/network/interfaces
-echo '# /etc/network/interfaces -- configuration file for ifup(8), ifdown(8)'            > /a/etc/network/interfaces || shellout
-echo ''                                                                                  >> /a/etc/network/interfaces || shellout
-echo '# The loopback interface'                                                          >> /a/etc/network/interfaces || shellout
-echo 'iface lo inet loopback'                                                            >> /a/etc/network/interfaces || shellout
-echo ''                                                                                  >> /a/etc/network/interfaces || shellout
-echo '# The first network card - this entry was created during the Debian installation'  >> /a/etc/network/interfaces || shellout
-echo '# (network, broadcast and gateway are optional)'                                   >> /a/etc/network/interfaces || shellout
-echo 'iface eth0 inet static'                                                            >> /a/etc/network/interfaces || shellout
-echo "        address $IPADDR"                                                           >> /a/etc/network/interfaces || shellout
-echo "        netmask $NETMASK"                                                          >> /a/etc/network/interfaces || shellout
-echo "        network $NETWORK"                                                          >> /a/etc/network/interfaces || shellout
-echo "        broadcast $BROADCAST"                                                      >> /a/etc/network/interfaces || shellout
-echo "        gateway $GATEWAY"                                                          >> /a/etc/network/interfaces || shellout
-
-EOF
-   }
-   elsif (($ip_assignment_method eq "dynamic_dhcp") or ($ip_assignment_method eq "static_dhcp"))
-   {
-   print MASTER_SCRIPT << 'EOF';
-# Stuff for IP addressing via DHCP
-#
-# /etc/hostname
-echo $HOSTNAME > /a/etc/hostname
-
-# /etc/network/interfaces
-echo '# /etc/network/interfaces -- configuration file for ifup(8), ifdown(8)'            > /a/etc/network/interfaces || shellout
-echo ''                                                                                  >> /a/etc/network/interfaces || shellout
-echo '# The loopback interface'                                                          >> /a/etc/network/interfaces || shellout
-echo 'iface lo inet loopback'                                                            >> /a/etc/network/interfaces || shellout
-echo ''                                                                                  >> /a/etc/network/interfaces || shellout
-echo '# The first network card - this entry was created during the Debian installation'  >> /a/etc/network/interfaces || shellout
-echo '# (network, broadcast and gateway are optional)'                                   >> /a/etc/network/interfaces || shellout
-echo 'iface eth0 inet dhcp'                                                              >> /a/etc/network/interfaces || shellout
-
-EOF
-   }
-}
-### END debian_linux_2.2 ###
-
-### BEGIN debian_linux_2.1 ###
-if ($distro eq "debian_linux_2.1"){ 
-   if ($ip_assignment_method eq "static")
-   { 
-   print MASTER_SCRIPT << 'EOF';
-# Stuff for static IP addressing
-#
-# /etc/hostname
-echo $HOSTNAME > /a/etc/hostname || shellout
-
-# /etc/init.d/network
-echo '#! /bin/sh'                                     > /a/etc/init.d/network || shellout
-echo 'ifconfig lo 127.0.0.1'                          >> /a/etc/init.d/network || shellout
-echo 'route add -net 127.0.0.0 netmask 255.0.0.0 lo'  >> /a/etc/init.d/network || shellout
-
-echo IPADDR=$IPADDR        >> /a/etc/init.d/network || shellout
-echo NETMASK=$NETMASK      >> /a/etc/init.d/network || shellout
-echo NETWORK=$NETWORK      >> /a/etc/init.d/network || shellout
-echo BROADCAST=$BROADCAST  >> /a/etc/init.d/network || shellout
-echo GATEWAY=$GATEWAY      >> /a/etc/init.d/network || shellout
-
-echo 'ifconfig eth0 ${IPADDR} netmask ${NETMASK} broadcast ${BROADCAST}'  >> /a/etc/init.d/network || shellout
-echo 'route add -net ${NETWORK}'                                          >> /a/etc/init.d/network || shellout
-echo '[ "${GATEWAY}" ] && route add default gw ${GATEWAY} metric 1'       >> /a/etc/init.d/network || shellout
-
-chmod 755 /a/etc/init.d/network || shellout
-
-EOF
-
-   }
-   elsif (($ip_assignment_method eq "dynamic_dhcp") or ($ip_assignment_method eq "static_dhcp"))
-   {
-   print MASTER_SCRIPT << 'EOF';
-# Stuff for IP addressing via DHCP
-#
-# /etc/hostname
-echo $HOSTNAME > /a/etc/hostname || shellout
-
-# /etc/init.d/network
-echo '#! /bin/sh'                                     > /a/etc/init.d/network || shellout
-echo 'ifconfig lo 127.0.0.1'                          >> /a/etc/init.d/network || shellout
-echo 'route add -net 127.0.0.0 netmask 255.0.0.0 lo'  >> /a/etc/init.d/network || shellout
-
-EOF
-
-   }
-}
-### END debian_linux_2.1 ###
-
-} ### close curly from: "unless($ip_assignment_method eq "replicant")" above ###
-### END distribution specific networking stuff ###
-
-### BEGIN end of autoinstall options ###
-print MASTER_SCRIPT << 'EOF';
-# run lilo
-# (no, we can not just do a lilo -r "/a/".
-# we need to use the lilo that came with the distribution in case
-# it has special modifications such as support for hardware or software RAID)
-chroot /a/ /sbin/lilo || shellout
-
-EOF
-
+}  ### END System Configurator setup ###
 
 print MASTER_SCRIPT "# unmount the freshly filled filesystems\n";
 foreach $mount_point (reverse sort @mount_points) {
