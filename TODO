@@ -119,6 +119,29 @@ o change option-100 -> option-207
 o add option-208 => "ssh_binaries_url"
 o Bug [ #419641 ] Install script fails 
   (if there are spaces below the install directory)
+o Notes regarding differences between v2 and v3 of dhcpd:
+  <<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+  The change from version 2 of ISC's dhcp server to version 3
+  regarding the systemimager dhcpd configfile file is:
+
+  With v2
+  -------
+  option option-100
+  
+  With v3
+  -------
+  option SImgsrv code 100 = text;
+  option SImgsrv xxx.xxx.xxx.xxx;
+  option dhcp-class-identifier --> vendor-class-identifier
+
+  Explanation
+  -----------
+  The first line is the definition of the name "SImgsrv" using
+  option 100. the second line uses the option name "SImgsrv" to
+  assign the actual value, which is supposed to be an ip address in
+  the case of systemimager 1.4.1 .
+  <<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
 
 
 
