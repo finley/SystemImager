@@ -192,7 +192,7 @@ get_flamethrower_directory() {
 #
 #   flamethrower_client
 #
-flamethrower_client() {
+flamethrower_client_old() {
 
     # validate
     if [ -z $PORTBASE ]; then
@@ -284,7 +284,7 @@ flamethrower_client() {
                     echo "WARNING: No progress since last check.  Killing udp-receiver."
                     while killall -9 udp-receiver; do sleep 1; done
                     unset UDP_RECEIVER_RUNNING
-                    sleep 5
+                    sleep 7
                 fi
                 LAST_STAMP=$THIS_STAMP
             fi
@@ -340,6 +340,123 @@ flamethrower_client() {
     unset TAR_OPTS
 }
 #
+################################################################################
+#
+# Usage: 
+#
+#   MODULE_NAME=my_module   # Required
+#   DIR=/my/destination/dir # Required
+#  [RETRY=7]                # Optional
+#  [PORTBASE=9000]          # Required if a sourceable file called $MODULE_NAME
+#                           # doesn't exist
+#
+#   flamethrower_client_new2  /* we can implement this once udp-receiver can exit properly, and timeout on it's own -BEF- */
+#
+flamethrower_client() {
+
+    # validate
+    if [ -z $PORTBASE ]; then
+        . ${FLAMETHROWER_DIRECTORY_DIR}/${MODULE_NAME}
+        if [ $? != 0 ]; then
+            echo You must either set PORTBASE, or have a sourceable file called
+            echo ${FLAMETHROWER_DIRECTORY_DIR}/MODULE_NAME
+            shellout
+        fi
+    fi
+    if [ -z $DIR ]; then
+        echo Must set DIR
+    else
+        mkdir -p $DIR
+    fi
+    
+
+    # build command
+    UDP_RECEIVER_OPTIONS="--interface ${DEVICE} --portbase $PORTBASE --nokbd"
+    if [ ! -z $TTL ]; then
+        UDP_RECEIVER_OPTIONS="$UDP_RECEIVER_OPTIONS --ttl $TTL"
+    fi
+    if [ "$NOSYNC" = "on" ]; then
+        UDP_RECEIVER_OPTIONS="$UDP_RECEIVER_OPTIONS --nosync"
+    fi
+    if [ "$ASYNC" = "on" ]; then
+        UDP_RECEIVER_OPTIONS="$UDP_RECEIVER_OPTIONS --async"
+    fi
+    if [ ! -z $MCAST_ALL_ADDR ]; then
+        UDP_RECEIVER_OPTIONS="$UDP_RECEIVER_OPTIONS --mcast-all-addr $MCAST_ALL_ADDR"
+    fi
+
+    # Which tar opts should we use?  If our tar has --overwrite capability, use it.
+    #   Summary: busybox tar doesn't (boel_binaries and prior).
+    #            Debian patched gnu tar does (image and on).
+    #            We want this option enabled for the image to ensure proper directory
+    #            permissions. -BEF-
+    tar --help 2>&1 | grep -q overwrite && TAR_OPTS='--overwrite -xp' || TAR_OPTS='-x'
+
+    # set vars
+    [ -z $RETRY ] && RETRY=0
+    COUNT=0
+    FLAMETHROWER_CLIENT_SLEEP=3
+
+    # it's the new new style (loop)
+    SUCCESS="Not Yet"
+    until [ "$SUCCESS" = "yes" ]
+    do
+        # receive cast
+        #   example udp-receiver command:
+        #   udp-receiver --interface lo --portbase 9002 --nokbd --nosync --file /tmp/multicast.tar
+        echo udp-receiver $UDP_RECEIVER_OPTIONS --file /tmp/multicast.tar
+        udp-receiver $UDP_RECEIVER_OPTIONS --file /tmp/multicast.tar
+        UDP_RECEIVER_EXIT_STATUS=$?
+
+        # untar it
+        if [ $UDP_RECEIVER_EXIT_STATUS -eq 0 ]; then
+            echo tar ${TAR_OPTS} -f /tmp/multicast.tar -C ${DIR}
+            tar ${TAR_OPTS} -f /tmp/multicast.tar -C ${DIR}
+            TAR_EXIT_STATUS=$?
+        fi
+
+        # did everything work properly
+        if [ $UDP_RECEIVER_EXIT_STATUS -eq 0 ] && [ $TAR_EXIT_STATUS -eq 0 ]; then
+            SUCCESS=yes
+        else
+            if [ $COUNT -lt $RETRY ]; then
+                COUNT=$(( $COUNT + 1 ))
+                echo "flamethrower_client: Proceeding with retry $COUNT of $RETRY"
+            else
+                echo
+                echo "flamethrower_client: FATAL: Initial attempt and $RETRY retries failed!"
+                shellout
+            fi
+        fi
+
+        # sleep apnea
+        sleep_loop $FLAMETHROWER_CLIENT_SLEEP
+    done
+
+    # done
+    echo "done!"
+    echo 'flamethrower_client: Success!'
+    echo '--------------------------------------------------------------------------------'
+
+
+    # Unset vars, so next module (which may not have them set) won't use then unintentially
+    unset TTL
+    unset NOSYNC
+    unset ASYNC
+    unset MCAST_ALL_ADDR
+    unset RETRY
+    unset COUNT
+    unset DIR
+    unset PORTBASE
+    unset UDP_RECEIVER_EXIT_STATUS
+    unset UDP_RECEIVER_OPTIONS
+    unset TAR_EXIT_STATUS
+    unset TAR_OPTS
+    unset SUCCESS
+
+}
+
+
 ################################################################################
 #
 # Usage: 
