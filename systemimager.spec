@@ -1,6 +1,6 @@
 %define name     systemimager
-%define ver      3.2.0
-%define rel      3
+%define ver      3.3.1
+%define rel      1
 %define prefix   /usr
 %define _build_all 1
 %define _boot_flavor standard
@@ -190,6 +190,9 @@ to boot and install %{_build_arch} Linux machines during the SystemImager autoin
 process.
 
 %changelog
+* Wed Jun 02 2004 sis devel <sisuite-devel@lists.sourceforge.net> 3.3.1-1
+- include pre-install and post-install directories
+
 * Fri Mar 12 2004 sis devel <sisuite-devel@lists.sourceforge.net> 3.2.0-3
 - html documentation returned to systemimager-server package
 
