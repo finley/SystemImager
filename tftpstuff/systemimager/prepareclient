@@ -34,7 +34,8 @@ if [ "$RPM_INSTALL" = "false" ]; then
  echo "may modify the following files to prepare your client for imaging."
  echo
  echo " /etc/services    -- add rsync line if necessary"
- echo " /etc/inetd.conf  -- add rsync line if necessary"
+ echo " /etc/inetd.conf  -- comment out rsync line if necessary"
+ echo "                     (rsync will run as a daemon until shutdown)"
  echo " /etc/rsyncd.conf -- create a new file with a [root] entry in it."
  echo "                     this file may be used for other things once the system's"
  echo "                     image has been retrieved by the image server."
@@ -411,22 +412,21 @@ fi
    echo "rsync           873/udp                         # rsync" >> /etc/services
  fi 
  
- # verify that rsync entry is in /etc/inetd.conf
+ # comment out rsync entry in inetd.conf if it exists
+ RESTART_INETD="false"
  egrep -q ^rsync /etc/inetd.conf
- if [ $? != "0" ]; then
+ if [ $? = "0" ]; then
    if [ ! -f /etc/inetd.conf.beforesystemimager ]; then
      [ "$RPM_INSTALL" = "false" ] && echo "Backing up /etc/inetd.conf to /etc/inetd.conf.beforesystemimager ..."
      cp /etc/inetd.conf /etc/inetd.conf.beforesystemimager
    fi
-   egrep -q ^#rsync /etc/inetd.conf
-   if [ $? != "0" ]; then
-     echo "rsync stream tcp nowait root /usr/bin/rsync rsyncd --daemon" >> /etc/inetd.conf
-   else
-     sed 's/^#rsync/rsync/' /etc/inetd.conf > /tmp/.systemimager
-     cp /tmp/.systemimager /etc/inetd.conf
-     rm /tmp/.systemimager
-   fi
+   sed 's/^rsync/#rsync/' /etc/inetd.conf > /tmp/.systemimager
+   cp /tmp/.systemimager /etc/inetd.conf
+   rm /tmp/.systemimager
+   RESTART_INETD="true"
  fi 
+ # comment out rsync entry in inetd.conf if it exists
+
  
  # install SystemImager brand rsyncd.conf file
  if [ ! -f /etc/rsyncd.conf ]; then
@@ -447,16 +447,20 @@ fi
    [ "$RPM_INSTALL" = "false" ] && echo "Creating /etc/rsyncd.conf ..."
    create_rsyncd_conf
  fi
+ # install SystemImager brand rsyncd.conf file
+
 
  # signal inetd to re-read /etc/inetd.conf
- [ "$RPM_INSTALL" = "false" ] && echo -n "Signalling inetd to re-read /etc/inetd.conf: "
- if [ "$RPM_INSTALL" = "false" ]; then
-   killproc inetd -HUP
- else
-   killall -HUP inetd
+ if [ "$RESTART_INETD" = "true" ]; then
+     if [ "$RPM_INSTALL" = "false" ]; then
+       echo -n "Signalling inetd to re-read /etc/inetd.conf: "
+       killproc inetd -HUP
+       echo
+     else
+       killall -HUP inetd
+     fi
  fi
- [ "$RPM_INSTALL" = "false" ] && echo
- 
+ # signal inetd to re-read /etc/inetd.conf
 
 
  ### BEGIN get list of IDE and SCSI disks ###
