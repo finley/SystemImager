@@ -16,6 +16,7 @@ $ENV{PATH} = "/usr/sbin:/sbin:/usr/bin:/bin";
 
 $version_number = "1.2";
 $program_name = "makeautoinstalldiskette";
+$floppy_device_suffix = "H1440";
 $version_info = <<"EOF";
 $program_name (part of VA SystemImager) version $version_number
     
@@ -94,7 +95,7 @@ EOF
 }
 
 # create floppy device if necessary
-$floppy_device="${floppy_device_prefix}H1440";
+$floppy_device= $floppy_device_prefix . $floppy_device_suffix;
 unless (-b $floppy_device) {
     if (!$quiet) {
 	print "Creating device file $floppy_device...\n";
@@ -117,7 +118,7 @@ unless (-b $floppy_device) {
 
 # format floppy
 if (!$quiet) {
-    print "Formatting floppy as 1.7MB ...\n";
+    print "Formatting floppy as 1.44MB ...\n";
 }
 if ($quiet) {
     system ("fdformat $floppy_device > /dev/null");
