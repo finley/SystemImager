@@ -8,8 +8,7 @@
 #   Written by Brian Elliott Finley <brian@systemimager.org>
 #
 
-use lib "/usr/lib/systemimager/perl";
-use lib "/usr/local/lib/systemimager/perl";
+use lib "USR_PREFIX/lib/systemimager/perl";
 use SystemImager::Server;
 use SystemImager::Common;
 use Getopt::Long;

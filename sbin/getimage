@@ -26,8 +26,7 @@ $version_number="SYSTEMIMAGER_VERSION_STRING";
 $nisdomain="";
 
 # use the long options module to allow us to use, well, long options ;)
-use lib "/usr/lib/systemimager/perl";
-use lib "/usr/local/lib/systemimager/perl";
+use lib "USR_PREFIX/lib/systemimager/perl";
 use SystemImager::Server;
 use SystemImager::Common;
 use Getopt::Long;

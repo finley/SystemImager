@@ -63,7 +63,8 @@
 #
 
 ### Packaging ###
-# SystemImager package names and contents (non-tarball forms of packaging will # use the same base names):
+# SystemImager package names and contents (non-tarball forms of packaging will
+# use the same base names):
 #
 #  o systemimager-server            all of the arch-independent components
 #                                   needed only by an image server
@@ -126,8 +127,6 @@ RELEASE_DOCS = CHANGE.LOG COPYING CREDITS ERRATA README TODO VERSION
 PATH = /sbin:/bin:/usr/sbin:/usr/bin:/usr/bin/X11:/usr/local/sbin:/usr/local/bin
 ARCH = $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/)
 SUDO = $(shell if [ `id -u` != 0 ]; then echo -n "sudo"; fi)
-
-TARBALL_BUILD_DIR = autoinstallbin/
 
 MANUAL_DIR = doc/manual_source/
 MANPAGE_DIR = doc/man/
@@ -227,30 +226,20 @@ install_client_all:	install_client install_common
 install_server:	install_manpages install_configs install_server_libs
 	### install files in $(USR)/bin ###
 	mkdir -p $(BIN)
-	$(foreach binary, $(BINARIES), \
-	  sed s/SYSTEMIMAGER_VERSION_STRING/"$(VERSION)"/ \
-	    < $(BINARY_SRC)/$(binary) > $(BIN)/$(binary) && \
-	  chmod 755 $(BIN)/$(binary);)
+	./si_install -e $(foreach binary, $(BINARIES), sbin/$(binary)) $(BIN)
 
 	### install files in $(USR)/sbin ###
 	mkdir -p $(SBIN)
-	$(foreach binary, $(SBINARIES), \
-	  sed s/SYSTEMIMAGER_VERSION_STRING/"$(VERSION)"/ \
-	    < $(BINARY_SRC)/$(binary) > $(SBIN)/$(binary) && \
-	  chmod 755 $(SBIN)/$(binary);)
+	./si_install -e $(foreach binary, $(SBINARIES), sbin/$(binary)) $(SBIN)
 
 	install -d -m 755 $(PXE_CONF_DEST)
-	$(foreach file, message.txt syslinux.cfg, \
-	  sed s/SYSTEMIMAGER_VERSION_STRING/"$(VERSION)"/ \
-	    < $(PXE_CONF_SRC)/$(file) > $(PXE_CONF_DEST)/$(file) && \
-	  chmod 644 $(PXE_CONF_DEST)/$(file);)
+	./si_install -t $(PXE_CONF_SRC)/message.txt \
+	  $(PXE_CONF_SRC)/syslinux.cfg $(PXE_CONF_DEST)
 	cp -a $(PXE_CONF_DEST)/syslinux.cfg $(PXE_CONF_DEST)/default
 
 	install -d -m 755 $(TFTP_BIN_DEST)
-	$(foreach binary, prepareclient updateclient, \
-	  sed s/SYSTEMIMAGER_VERSION_STRING/"$(VERSION)"/ \
-	    < $(TFTP_BIN_SRC)/$(binary) > $(TFTP_BIN_DEST)/$(binary) && \
-	  chmod 755 $(TFTP_BIN_DEST)/$(binary);)
+	./si_install -e $(TFTP_BIN_SRC)/prepareclient \
+	  $(TFTP_BIN_SRC)/updateclient $(TFTP_BIN_DEST)
 
 	install -d -m 755 $(IMAGEDEST)
 	$(foreach file, $(WARNING_FILES), \
@@ -268,42 +257,38 @@ install_client: install_client_manpages install_client_libs
 	  $(ETC)/systemimager
 	mkdir -p $(SBIN)
 
-	$(foreach binary, $(CLIENT_SBINARIES), \
-	  sed s/SYSTEMIMAGER_VERSION_STRING/"$(VERSION)"/ \
-	    < $(CLIENT_BINARY_SRC)/$(binary) > $(SBIN)/$(binary) && \
-	    chmod 755 $(SBIN)/$(binary);)
+	./si_install -e \
+	  $(foreach binary, $(CLIENT_SBINARIES), sbin/$(binary)) $(SBIN)
 
 #@@install_common:
 #@@  install files common to both the server and client
 #@@ 
 install_common:	install_common_manpages install_common_libs
 	mkdir -p $(BIN)
-	$(foreach binary, $(COMMON_BINARIES), \
-	  sed s/SYSTEMIMAGER_VERSION_STRING/"$(VERSION)"/ \
-	    < $(COMMON_BINARY_SRC)/$(binary) > $(BIN)/$(binary) && \
-	  chmod 755 $(BIN)/$(binary);)
+	./si_install -e \
+	  $(foreach binary, $(COMMON_BINARIES), \
+	    $(COMMON_BINARY_SRC)/$(binary)) $(BIN)
 
 #@@install_common_libs:
 #@@  install libraries common to the server and client
 #@@ 
 install_common_libs:
 	mkdir -p $(LIB_DEST)
-	sed s/SYSTEMIMAGER_VERSION_STRING/"$(VERSION)"/ \
-	  < $(LIB_SRC)/Common.pm > $(LIB_DEST)/Common.pm
+	./si_install -t $(LIB_SRC)/Common.pm $(LIB_DEST)
 
 #@@install_server_libs:
 #@@  install server-only libraries
 #@@ 
 install_server_libs:
 	mkdir -p $(LIB_DEST)
-	cp $(LIB_SRC)/Server.pm $(LIB_DEST)
+	./si_install -t $(LIB_SRC)/Server.pm $(LIB_DEST)
 
 #@@install_client_libs:
 #@@  install client-only libraries
 #@@ 
 install_client_libs:
 	mkdir -p $(LIB_DEST)
-	cp $(LIB_SRC)/Client.pm $(LIB_DEST)
+	./si_install -t $(LIB_SRC)/Client.pm $(LIB_DEST)
 
 #@@install_binaries:
 #@@  install architecture-dependent files
@@ -375,11 +360,11 @@ ramdisks-build-stamp:
 #@@ 
 install_configs:
 	mkdir -p $(ETC)/systemimager
-	install -b -m 644 etc/rsyncd.conf $(ETC)/systemimager
-	install -b -m 644 etc/systemimager.conf $(ETC)/systemimager
+	./si_install -c etc/rsyncd.conf etc/systemimager.conf \
+	  $(ETC)/systemimager
 	[ "$(INITD)" != "" ] || exit 1
 	mkdir -p $(INITD)
-	install -b -m 755 etc/init.d/rsync $(INITD)/$(INITSCRIPT_NAME)
+	./si_install -ce etc/init.d/rsync $(INITD)/$(INITSCRIPT_NAME)
 
 ########## END ramdisks ##########
 

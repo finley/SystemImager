@@ -14,8 +14,7 @@ $program_name="mvimage";
 $get_help = "         Try \"$program_name -help\" for more options.";
 
 # declare modules
-use lib "/usr/local/lib/systemimager/perl";
-use lib "/usr/lib/systemimager/perl";
+use lib "USR_PREFIX/lib/systemimager/perl";
 use SystemImager::Server;
 use SystemImager::Common;
 use Getopt::Long;
