@@ -19,6 +19,8 @@
 # 2004.03.24 Brian Elliott Finley
 # - start spinner with 1 second delay, so we don't get a / at the start of
 #   command being run.
+# 2004.04.14 Brian Elliott Finley
+# - add preinstallscript support at Rick Bradshaw's request
 #
 
 
@@ -916,6 +918,36 @@ run_autoinstall_script() {
         echo "       Be sure this script exists in the autoinstall scripts directory"
         echo "       on your image server."
         shellout
+    fi
+}
+#
+################################################################################
+#
+run_preinstall_scripts() {
+
+    echo
+    echo run_preinstall_scripts
+
+    get_base_hostname
+
+    cd ${SCRIPTS_DIR}/preinstall/
+
+    PRE_INSTALL_SCRIPTS_A=`ls | grep "^[0-9][0-9]${IMAGENAME}\..*"`
+    PRE_INSTALL_SCRIPTS_B=`ls | grep "^[0-9][0-9]${BASE_HOSTNAME}\..*"`
+    PRE_INSTALL_SCRIPTS_C=`ls | grep "^[0-9][0-9]${HOSTNAME}\..*"`
+
+    PRE_INSTALL_SCRIPTS="$PRE_INSTALL_SCRIPTS_A $PRE_INSTALL_SCRIPTS_B $PRE_INSTALL_SCRIPTS_C"
+    
+    if [ ! -z `echo ${PRE_INSTALL_SCRIPTS}|sed 's/ //'` ]; then
+
+        for PRE_INSTALL_SCRIPT in $PRE_INSTALL_SCRIPTS
+        do
+            echo ">>> $PRE_INSTALL_SCRIPT"
+            chmod +x $PRE_INSTALL_SCRIPT || shellout
+            ./preinstall.$$/$PRE_INSTALL_SCRIPT || shellout
+        done
+    else
+        echo "No pre install scripts found."
     fi
 }
 #

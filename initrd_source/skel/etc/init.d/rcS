@@ -19,7 +19,8 @@
 # - get entire scripts directory at once, whether using rsync or multicast
 # 2004.04.02 Brian Elliott Finley
 # - tmpfs_watcher must start after boel_binaries
-#
+# 2004.04.14 Brian Elliott Finley
+# - add preinstallscript support at Rick Bradshaw's request
 
 #set -x         # XXX comment out before each release. -BEF-
 
@@ -67,6 +68,8 @@ beep
 tmpfs_watcher
 
 get_scripts_directory
+
+run_preinstall_scripts
 
 autodetect_hardware_and_load_modules
 
