@@ -190,7 +190,7 @@ install_server:	install_server_man install_configs install_server_libs
 # somewhere else
 ifeq ($(ARCH),i386)
 	$(SI_INSTALL) -d -m 755 $(PXE_CONF_DEST)
-	$(SI_INSTALL) -m 644 --backup $(PXE_CONF_SRC)/message.txt \
+	$(SI_INSTALL) -m 644 --backup --text $(PXE_CONF_SRC)/message.txt \
 		$(PXE_CONF_DEST)/message.txt
 	$(SI_INSTALL) -m 644 --backup $(PXE_CONF_SRC)/syslinux.cfg \
 		$(PXE_CONF_DEST)/syslinux.cfg
