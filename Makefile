@@ -133,6 +133,7 @@ SBIN = $(USR)/sbin
 MAN8 = $(USR)/share/man/man8
 LIB_DEST = $(USR)/lib/systemimager/perl
 LOG_DIR = $(DESTDIR)/var/log/systemimager
+LOCK_DIR = $(DESTDIR)/var/lock/systemimager
 
 INITRD_DIR = $(TOPDIR)/initrd_source
 
@@ -144,7 +145,7 @@ PXE_CONF_SRC      = etc/pxelinux.cfg
 PXE_CONF_DEST     = $(ETC)/systemimager/pxelinux.cfg
 
 BINARIES := mkautoinstallcd mkautoinstalldiskette
-SBINARIES := addclients cpimage getimage mkdhcpserver mkdhcpstatic mkautoinstallscript mkbootserver mvimage pushupdate rmimage mkrsyncd_conf mkclientnetboot netbootmond
+SBINARIES := addclients cpimage getimage mkdhcpserver mkdhcpstatic mkautoinstallscript mkbootserver mvimage pushupdate rmimage mkrsyncd_conf mkclientnetboot netbootmond imagemanip
 CLIENT_SBINARIES  := updateclient prepareclient
 COMMON_BINARIES   = lsimage
 
@@ -207,6 +208,7 @@ install_server:	install_server_man install_configs install_server_libs
 	$(foreach binary, $(SBINARIES), \
 		$(SI_INSTALL) -m 755 $(BINARY_SRC)/$(binary) $(SBIN);)
 	$(SI_INSTALL) -d -m 755 $(LOG_DIR)
+	$(SI_INSTALL) -d -m 755 $(LOCK_DIR)
 	$(SI_INSTALL) -d -m 755 $(BOOT_BIN_DEST)
 	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_SCRIPT_DIR)
 	$(SI_INSTALL) -d -m 755 $(OVERRIDES_DIR)
@@ -295,6 +297,8 @@ install_configs:
 	$(SI_INSTALL) -m 644 etc/systemimager.conf $(ETC)/systemimager/
 	$(SI_INSTALL) -m 644 etc/flamethrower.conf $(ETC)/systemimager/
 	$(SI_INSTALL) -m 644 etc/autoinstallscript.template $(ETC)/systemimager/
+	$(SI_INSTALL) -m 644 etc/imagemanip.conf $(ETC)/systemimager/
+	$(SI_INSTALL) -m 644 etc/imagemanip.perm $(ETC)/systemimager/
 
 	mkdir -p $(RSYNC_STUB_DIR)
 	$(SI_INSTALL) -b -m 644 etc/rsync_stubs/10header $(RSYNC_STUB_DIR)
@@ -316,22 +320,22 @@ install_configs:
 # build all of the manpages
 PHONY += manpages
 manpages:
-	$(MAKE) -C $(MANPAGE_DIR)
+	$(MAKE) -C $(MANPAGE_DIR) TOPDIR=$(TOPDIR)
 
 # install the manpages for the server
 PHONY += install_server_man
-install_server_man:
-	cd $(MANPAGE_DIR) && $(MAKE) install_server_man PREFIX=$(PREFIX) $@
+install_server_man: manpages
+	cd $(MANPAGE_DIR) && $(MAKE) install_server_man TOPDIR=$(TOPDIR) PREFIX=$(PREFIX) $@
 
 # install the manpages for the client
 PHONY += install_client_man
-install_client_man:
-	cd $(MANPAGE_DIR) && $(MAKE) install_client_man PREFIX=$(PREFIX) $@
+install_client_man: manpages
+	cd $(MANPAGE_DIR) && $(MAKE) install_client_man TOPDIR=$(TOPDIR) PREFIX=$(PREFIX) $@
 
 # install manpages common to the server and client
 PHONY += install_common_man
-install_common_man:
-	cd $(MANPAGE_DIR) && $(MAKE) install_common_man PREFIX=$(PREFIX) $@
+install_common_man: manpages
+	cd $(MANPAGE_DIR) && $(MAKE) install_common_man TOPDIR=$(TOPDIR) PREFIX=$(PREFIX) $@
 
 ########## END man pages ##########
 

@@ -471,6 +471,7 @@ fi
 %prefix/sbin/netbootmond
 %prefix/sbin/pushupdate
 %prefix/sbin/rmimage
+%prefix/sbin/imagemanip
 %prefix/bin/mkautoinstall*
 %prefix/lib/systemimager/perl/SystemImager/Server.pm
 %prefix/lib/systemimager/perl/SystemImager/Config.pm

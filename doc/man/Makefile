@@ -16,7 +16,7 @@ SYSTEMIMAGER_VERSION = $(shell cat ../../VERSION)
 
 MANPAGES = $(SERVER_MAN) $(CLIENT_MAN) $(COMMON_MAN)
 
-SERVER_MAN = addclients.8 getimage.8 mkautoinstallcd.8 mkautoinstalldiskette.8 mkautoinstallscript.8 mkdhcpserver.8 mkdhcpstatic.8 cpimage.8 mvimage.8 rmimage.8 mkbootserver.8 systemimager.conf.5 systemimager-rsyncd.conf.5 mkrsyncd_conf.8 pushupdate.8
+SERVER_MAN = addclients.8 getimage.8 mkautoinstallcd.8 mkautoinstalldiskette.8 mkautoinstallscript.8 mkdhcpserver.8 mkdhcpstatic.8 cpimage.8 mvimage.8 rmimage.8 mkbootserver.8 systemimager.conf.5 systemimager-rsyncd.conf.5 mkrsyncd_conf.8 pushupdate.8 imagemanip.8
 
 CLIENT_MAN = prepareclient.8 updateclient.8
 
@@ -34,6 +34,9 @@ systemimager.conf.5:	systemimager.conf.pod
 
 systemimager-rsyncd.conf.5:	systemimager-rsyncd.conf.pod
 	pod2man --release=$(SYSTEMIMAGER_VERSION) -s 5 -c "SystemImager" $< $@
+
+imagemanip.8:	$(TOPDIR)/sbin/imagemanip
+	pod2man --release=$(SYSTEMIMAGER_VERSION) -s 8 -c "SystemImager" $< $@
 
 %.5 %.8:	%.sgml %.content.sgml
 	docbook2man $<
