@@ -14,7 +14,7 @@ use Getopt::Long;
 # set shell PATH for system() calls 
 $ENV{PATH} = "/usr/sbin:/sbin:/usr/bin:/bin";
 
-$version_number = "1.0";
+$version_number = "1.2";
 $program_name = "makeautoinstalldiskette";
 $version_info = <<"EOF";
 $program_name (part of VA SystemImager) version $version_number
@@ -82,13 +82,6 @@ This program assumes that you have a 1.44MB floppy drive and that it is
 
 If you do use -floppy, this command will run non-interactively!!!
 
-This program will create the device file /dev/fd0u1722 and use it to format
-your floppy to handle 1.722MB of capacity.
-
-Virtually all 1.44MB drives support 1.722MB just fine, but it is possible for
-an extended format to break a floppy drive -- so USE THIS COMMAND AT YOUR OWN 
-RISK!
-
 Insert your floppy now.  This will overwrite all information on the floppy.
 
 EOF
@@ -101,7 +94,7 @@ EOF
 }
 
 # create floppy device if necessary
-$floppy_device="${floppy_device_prefix}u1722";
+$floppy_device="${floppy_device_prefix}H1440";
 unless (-b $floppy_device) {
     if (!$quiet) {
 	print "Creating device file $floppy_device...\n";
