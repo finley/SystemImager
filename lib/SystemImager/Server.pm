@@ -832,16 +832,34 @@ sub _read_partition_info_and_prepare_pvcreate_commands {
                 my @flags = split (/,/, $flags{$m});
                 foreach my $flag (@flags) {
                     if ("$flag" eq "lvm") {
+                        # Get volume group for this patition -AR-
+                        my $vg_name = $xml_config->{disk}->{$dev}->{part}->{$m}->{lvm_group};
+                        unless (defined($vg_name)) {
+                            print "WARNING: LVM partition \"${dev}${m}\" is not assigned to any group!\n";
+                            next;
+                        }
+                        # Get the version of the LVM metadata to use -AR-
+                        foreach my $lvm (@{$xml_config->{lvm}}) {
+                            my $version = $lvm->{version};
+                            unless (defined($version)) {
+                                # Default => get LVM2 metadata type.
+                                $version = 2;
+                            }
+                            foreach my $lvm_group_name (@{$lvm->{lvm_group}}) {
+                                if ($lvm_group_name->{name} eq $vg_name) {
+                                    $cmd = "Initializing partition $part for use by LVM.";
+                                    print $out qq(echo "$cmd"\n);
 
-                        $cmd = "Initializing partition $part for use by LVM.";
-                        print $out qq(echo "$cmd"\n);
-
-                        $cmd = "pvcreate -ff -y $part || shellout";
-                        print $out qq(echo "$cmd"\n);
-                        print $out "$cmd\n";
-                        last;
+                                    $cmd = "pvcreate -M${version} -ff -y $part || shellout";
+                                    print $out qq(echo "$cmd"\n);
+                                    print $out "$cmd\n";
+                                    goto part_done;
+                                }
+                            }
+                        }
                     }
                 }
+part_done:
             }
         }
     }
@@ -857,70 +875,75 @@ sub write_lvm_groups_commands {
     
     my $cmd;
     
-    # Check if a LVM schema is present.
-    my $lvm = @{$xml_config->{lvm}}[0];
-    unless (defined($lvm)) { return; }
-
-    my @all_devices = get_all_devices($file);
-    my %devfs_map = dev_to_devfs(@all_devices) or return undef;
-
-    # Find the partitions assigned to each LVM group. -AR-    
-    foreach my $group_name (sort (keys ( %{$lvm->{lvm_group}} ))) {
-        my $part_list = "";
-
-        foreach my $disk (@{$xml_config->{disk}}) {
-            my $dev = $disk->{dev};
-            
-            # Figure out what the highest partition number is. -AR-
-            my $highest_part_num = 0;
-            foreach my $part ( @{$disk->{part}} ) {
-                my $num = $part->{num};
-                if ($num > $highest_part_num) {
-                    $highest_part_num = $num;
-                }
-            }
-            
-            # Evaluate the partition list for the current LVM group -AR-
-            my $m = "0";
-            foreach my $part (@{$disk->{part}}) {
-                $m++;
-                unless (defined($part->{lvm_group})) { next; }
-                if ($part->{lvm_group} eq $group_name) {
-                    if (defined($part->{num})) {
-                        $m = $part->{num};
-                    }
-                    my $part_name = &get_part_name($dev, $m);
-                    $part_list = $part_list . " $part_name";
-                }
-            }
-        }
+    # Get all LVM blocks.
+    foreach my $lvm (@{$xml_config->{lvm}}) {
+        my @all_devices = get_all_devices($file);
+        my %devfs_map = dev_to_devfs(@all_devices) or return undef;
         
-        if ($part_list ne "") {
-            # Evaluate the volume group options -AR-
-            my $vg_max_log_vols = $lvm->{lvm_group}->{$group_name}->{max_log_vols};
-            if (defined($vg_max_log_vols)) { 
-                $vg_max_log_vols = "-l $vg_max_log_vols ";
-            } else {
-                $vg_max_log_vols = ""; 
+        my $version = $lvm->{version};
+        unless (defined($version)) {
+            # Default => get LVM2 metadata type.
+            $version = 2;
+        }
+
+        # Find the partitions assigned to each LVM group. -AR-    
+        foreach my $group_name (sort (keys ( %{$lvm->{lvm_group}} ))) {
+            my $part_list = "";
+
+            foreach my $disk (@{$xml_config->{disk}}) {
+                my $dev = $disk->{dev};
+            
+                # Figure out what the highest partition number is. -AR-
+                my $highest_part_num = 0;
+                foreach my $part ( @{$disk->{part}} ) {
+                    my $num = $part->{num};
+                    if ($num > $highest_part_num) {
+                        $highest_part_num = $num;
+                    }
+                }
+            
+                # Evaluate the partition list for the current LVM group -AR-
+                my $m = "0";
+                foreach my $part (@{$disk->{part}}) {
+                    $m++;
+                    unless (defined($part->{lvm_group})) { next; }
+                    if ($part->{lvm_group} eq $group_name) {
+                        if (defined($part->{num})) {
+                            $m = $part->{num};
+                        }
+                        my $part_name = &get_part_name($dev, $m);
+                        $part_list = $part_list . " $part_name";
+                    }
+                }
             }
-            my $vg_max_phys_vols = $lvm->{lvm_group}->{$group_name}->{max_phys_vols};
-            if (defined($vg_max_phys_vols)) { 
-                $vg_max_phys_vols = "-p $vg_max_phys_vols ";
+        
+            if ($part_list ne "") {
+                # Evaluate the volume group options -AR-
+                my $vg_max_log_vols = $lvm->{lvm_group}->{$group_name}->{max_log_vols};
+                if (defined($vg_max_log_vols)) { 
+                    $vg_max_log_vols = "-l $vg_max_log_vols ";
+                } else {
+                    $vg_max_log_vols = ""; 
+                }
+                my $vg_max_phys_vols = $lvm->{lvm_group}->{$group_name}->{max_phys_vols};
+                if (defined($vg_max_phys_vols)) { 
+                    $vg_max_phys_vols = "-p $vg_max_phys_vols ";
+                } else {
+                    $vg_max_phys_vols = "";
+                }
+                my $vg_phys_extent_size = $lvm->{lvm_group}->{$group_name}->{phys_extent_size};
+                if (defined($vg_phys_extent_size)) { 
+                    $vg_phys_extent_size = "-s $vg_phys_extent_size ";
+                } else {
+                    $vg_phys_extent_size = ""; 
+                }
+                # Write the command to create the volume group -AR-
+                $cmd = "vgcreate -M${version} ${vg_max_log_vols}${vg_max_phys_vols}${vg_phys_extent_size}${group_name}${part_list} || shellout";
+                print $out qq(echo "$cmd"\n);
+                print $out "$cmd\n";
             } else {
-                $vg_max_phys_vols = "";
+                print "WARNING: LVM group \"$group_name\" doesn't have partitions!\n";
             }
-            my $vg_phys_extent_size = $lvm->{lvm_group}->{$group_name}->{phys_extent_size};
-            if (defined($vg_phys_extent_size)) { 
-                $vg_phys_extent_size = "-s $vg_phys_extent_size ";
-            } else {
-                $vg_phys_extent_size = ""; 
-            }
-            # Write the command to create the volume group -AR-
-            $cmd = "vgcreate ${vg_max_log_vols}${vg_max_phys_vols}${vg_phys_extent_size}${group_name}${part_list} || shellout";
-            print $out qq(echo "$cmd"\n);
-            print $out "$cmd\n";
-        } else {
-            print "WARNING: LVM group \"$group_name\" doesn't have partitions!\n";
         }
     }
 }
