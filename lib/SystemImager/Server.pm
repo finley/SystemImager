@@ -1339,7 +1339,7 @@ sub create_autoinstall_script{
     #
     my $dir = "/var/lib/systemimager/overrides/$script_name";
     if (! -d "$dir")  {
-      mkdir("$dir", 0750) or die "FATAL: Can't make directory $dir\n";
+      mkdir("$dir", 0755) or die "FATAL: Can't make directory $dir\n";
     }  
     
     # Add code to autoinstall script. -BEF-
