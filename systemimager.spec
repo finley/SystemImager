@@ -1,6 +1,6 @@
 %define name     systemimager
-%define ver	2.9.3
-%define rel      2
+%define ver	2.9.4
+%define rel      1
 %define prefix   /usr
 %define _build_all 1
 %define _boot_flavor standard
@@ -163,6 +163,9 @@ to boot and install %{_build_arch} Linux machines during the SystemImager autoin
 process.
 
 %changelog
+* Sun Oct 27 2002 dann frazier <dannf@dannf.org> 2.9.4-1
+- new upstream release
+
 * Thu Oct 13 2002 dann frazier <dannf@dannf.org> 2.9.3-2
 - added code to migrate users to rsync stubs
 
