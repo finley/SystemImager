@@ -4,6 +4,7 @@
 # "VA SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com>
 #
 #   Others who have contributed to this code (in alphabetical order):
+#     Phil Champon <pchampon@valueweb.net>
 #     Ian McLeod <ian@valinux.com>
 #     Laurence Sherzer <lsherzer@gate.net>
 #     Wesley Smith <wessmith@engr.sgi.com>
@@ -65,11 +66,17 @@ Options: (options can be presented in any order and may be abbreviated)
  -help                    Display this output.
  -version                 Display version and copyright information.
  -master-client HOSTNAME  Hostname or IP address of the \"master\" client.
+ -server HOSTNAME         Hostname or IP address of the imageserver
+                          holding the image you want to pull.  This allows
+                          you to copy an image from one imageserver to
+                          another.
  -image IMAGENAME         Where IMAGENAME is the name to assign to the 
                           image you are retrieving.  This can be either
                           the name of a new image if you want to create
                           a new image, or the name of an exisiting image
-                          if you want to update an image.
+                          if you want to update an image.  If you are
+                          using the -server option, the same imagename is
+                          used for both the source and destination.
  -quiet                   Don\'t ask any questions or print any output
                           (other than errors). In this mode, no warning
                           will be given if the image already exists on
@@ -106,6 +113,7 @@ $post_install = "beep"; # the default
 ### BEGIN evaluate options ###
 GetOptions( 
     "master-client=s" => \$master_client,
+    "server=s" => \$imageserver,
     "image=s" => \$image,
     "ip-assignment=s" => \$ip_assignment_method,
     "update-script=s" => \$update_script,
@@ -124,14 +132,29 @@ if($help) { die "$help_info"; }
 # if requested, print version and copyright information
 if($version) { die "$version_info"; }
 
-# both master_client and image must be set.
-if($master_client eq "" || $image eq "") {
+# only master client or server may be set
+if($master_client and $imageserver) {
+    die "$help_info";
+}
+
+# both a source host and image must be set.
+unless(($master_client or $imageserver) and $image) {
     die "$help_info";
 }
 
 # be sure $master_client name doesn't start with a hyphen
-$_ = $master_client;
-if(/^-/) { die qq(Master client name can't start with a hyphen.\n\n$help_info); }
+if($master_client){
+  $_ = $master_client;
+  if(/^-/) { die qq(Master client name can't start with a hyphen.\n\n$help_info); }
+  $source_host=$master_client;
+}
+
+# be sure $imageserver name doesn't start with a hyphen
+if($imageserver){
+  $_ = $imageserver;
+  if(/^-/) { die qq(Server name can't start with a hyphen.\n\n$help_info); }
+  $source_host=$imageserver;
+}
 
 # be sure $image doesn't start with a hyphen
 $_ = $image;
@@ -157,7 +180,7 @@ unless(
 check_if_root();
 
 # set up some variables for use elsewhere
-###FIX### at some point these should be set in /etc/systemimager.conf
+###FIX### at some point these should be set in /etc/systemimager/systemimager.conf
 $rsyncd_conf = '/etc/rsyncd.conf';
 $imagedir_prefix =  '/var/spool/systemimager/images';
 $imagedir = "$imagedir_prefix/$image";
@@ -166,7 +189,7 @@ $master_script = "/tftpboot/systemimager/$image.master";
 
 $warning =  <<"EOF";
 
-This program will get the entire system image from \"$master_client\"
+This program will get the entire system image from \"$source_host\"
 making the assumption that all filesystems considered part
 of the system image are using ext2, ext3, or reiserfs.
 
@@ -202,46 +225,60 @@ if (-d "$imagedir") {
 	die "Can't make directory $imagedir\n";
 }
 
-# get /etc/mtab from $master_client
-if (!$quiet) {
+### BEGIN master client stuff ###
+if($master_client) {
+  # get /etc/mtab from $master_client
+  if (!$quiet) {
     print "\n\nRetrieving /etc/mtab from $master_client to check for mounted filesystems...\n";
     open(RSYNC, "rsync -av ${master_client}::root/etc/mtab $imagedir|");
     print "------------- $master_client mtab RETRIEVAL PROGRESS -------------\n";
     while (<RSYNC>) {
-        print;
+      print;
     }
     print "------------- $master_client mtab RETRIEVAL FINISHED -------------\n";
     close(RSYNC);
-} else {
+  } else {
     $command = "rsync -a ${master_client}::root/etc/mtab $imagedir";
     system($command);
-}
-
-# $? is the return value from rsync
-if ($?) {
+  }
+  
+  # $? is the return value from rsync
+  if ($?) {
     print "Failed to retrieve /etc/mtab from $master_client.\n";
     die "Have you run \"prepareclient\" on $master_client?\n";
-}
-
-# create list of filesystems to *not* get
-open (MTAB, "<$imagedir/mtab") || die ("Couldn't open $imagedir/mtab for reading\n");
-@mtab = <MTAB>;
-close MTAB;
-open (EXCLUDE, ">$exclude_file") ||
+  }
+  
+  # create list of filesystems to *not* get
+  open (MTAB, "<$imagedir/mtab") || die ("Couldn't open $imagedir/mtab for reading\n");
+  @mtab = <MTAB>;
+  close MTAB;
+  open (EXCLUDE, ">$exclude_file") ||
     die "Couldn't open $exclude_file for writing\n";
-@mtab = grep (!/\s+ext2\s+/, @mtab);
-@mtab = grep (!/\s+ext3\s+/, @mtab);
-@mtab = grep (!/\s+reiserfs\s+/, @mtab);
-foreach (@mtab) {
+  @mtab = grep (!/\s+ext2\s+/, @mtab);
+  @mtab = grep (!/\s+ext3\s+/, @mtab);
+  @mtab = grep (!/\s+reiserfs\s+/, @mtab);
+  foreach (@mtab) {
     /\S+\s+(\S+)\s+/;
     print EXCLUDE "$1/*\n";
+  }
+  close EXCLUDE;
+  # compile rsync options
+  $options="--delete --exclude-from=$exclude_file ${master_client}::root/ $imagedir";
 }
-close EXCLUDE;
+### END master client stuff ###
 
-# Get the image from the $master_client
+### BEGIN pull from imageserver stuff ###
+if($imageserver) {
+  # compile rsync options
+  $options="--delete ${imageserver}::$image/ $imagedir";
+}
+### END pull from imageserver stuff ###
+
+### BEGIN generic image retrieval stuff ###
+# Get the image from the specified host
 if (!$quiet) {
-    print "\n\nRetrieving image $image from $master_client\n";
-    open (RSYNC, "rsync -av --delete --exclude-from=$exclude_file " . "${master_client}::root/ $imagedir |");
+    print "\n\nRetrieving image $image from $source_host\n";
+    open (RSYNC, "rsync -av $options |");
     print "------------- $image IMAGE RETRIEVAL PROGRESS -------------\n";
     while (<RSYNC>) {
         print $_;
@@ -249,13 +286,13 @@ if (!$quiet) {
     print "------------- $image IMAGE RETRIEVAL FINISHED -------------\n";
     close (RSYNC);
 } else {
-    $command = qq(rsync -a --delete --exclude-from=$exclude_file ${master_client}::root/ $imagedir);
+    $command = qq(rsync -a $options);
     system($command);
 }
 
 # $? is the return value from rsync
 if ($?) {
-    die "Failed to retrieve system image from $master_client.\n";
+    die "Failed to retrieve image $image from $source_host.\n";
 }
 
 
@@ -278,6 +315,7 @@ if (!grep(/\[$image\]/, <RSYNCD_CONF>)) {
 EOF
 };
 close(RSYNCD_CONF);
+### END generic image retrieval stuff ###
 
 
 ### BEGIN Overwrite $image.master? ###
