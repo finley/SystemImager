@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #
-# "SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com>
+# "VA SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com>
 #
 # This file is: afterburner
 #  (second stage install -- this script does all the configuration file stuff and
@@ -22,6 +22,7 @@ done
 
 # set some variables
 PATH=/bin:/usr/bin:/sbin:/usr/sbin
+PACKAGE_NAME=va-systemimager
 COMMAND_PATH=`dirname $0`
 cd $COMMAND_PATH
 INSTALL_DIR=`pwd`
@@ -46,7 +47,7 @@ RESTART_INETD=no
 # Hacked by:    Greg Galloway and Marc Ewing
 #
 # Mercilessly hacked by: "Brian Finley" <brian@valinux.com> 1999.09.18
-#                 for: SystemImager
+#                 for: VA SystemImager
 #
 
 # First set up a default search path.
@@ -349,7 +350,7 @@ confirm() {
 # SystemImager specific functions
 create_rsyncd_conf() {
   echo '#'                                                      > /etc/rsyncd.conf
-  echo '# "SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com>'    >> /etc/rsyncd.conf
+  echo '# "VA SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com>'    >> /etc/rsyncd.conf
   echo '#'                                                      >> /etc/rsyncd.conf
   echo ''                                                       >> /etc/rsyncd.conf
   echo 'list = yes'                                             >> /etc/rsyncd.conf
@@ -372,7 +373,7 @@ create_rsyncd_conf() {
 ### BEGIN introduction ###
 if [ $INTERACTIVE = "true" ]; then
   clear
-  echo "Welcome to SystemImager."
+  echo "Welcome to VA SystemImager."
   echo
   echo "This install script (afterburner) should normally not be run directly by"
   echo " you as a user.  It is called automatically when you run \"install\" and"
@@ -382,14 +383,14 @@ if [ $INTERACTIVE = "true" ]; then
   echo
   echo " /etc/services          -- add rsync and/or tftp entries if necessary"
   echo " /etc/inetd.conf        -- add/modify rsync and tftp entries if necessary"
-  echo " /etc/rsyncd.conf       -- it is assumed that SystemImager will manage this"
+  echo " /etc/rsyncd.conf       -- it is assumed that VA SystemImager will manage this"
   echo "                           file and that it will not be used for anything else"
   echo
   echo " All modified files will be backed up with the .beforesystemimager extension."
   echo
 
   # you sure you want to install?
-  echo -n "Modify the necessary files for SystemImager? (y/[n]) "
+  echo -n "Modify the necessary files for VA SystemImager? (y/[n]) "
   read REPLY
   case $REPLY in
     y|Y|Yes|yes|YES ) clear; echo Ok.  Modifying files... ;;
@@ -502,7 +503,7 @@ else
     rm -f /tmp/.systemimager
     # and add proper entry (If someone can show me how to get sed to append this line just below the
     #                       original "#tftp" entry, I'd love to do that instead.) <bef>
-    [ $QUIET = "false" ] && echo "Adding SystemImager brand tftp entry in /etc/inetd.conf..."
+    [ $QUIET = "false" ] && echo "Adding VA SystemImager brand tftp entry in /etc/inetd.conf..."
     echo "tftp    dgram   udp     wait    root    /usr/sbin/tcpd  in.tftpd -s -r blksize /tftpboot" >> /etc/inetd.conf
     RESTART_INETD=yes
   else
@@ -522,31 +523,31 @@ fi
 
 ### BEGIN rsync stuff ###
 
-# install SystemImager brand rsyncd.conf file
+# install VA SystemImager brand rsyncd.conf file
 # if it doesn't exist, create it
 if [ ! -f /etc/rsyncd.conf ]; then
-  [ $QUIET = "false" ] && echo "Creating SystemImager brand /etc/rsyncd.conf..."
+  [ $QUIET = "false" ] && echo "Creating VA SystemImager brand /etc/rsyncd.conf..."
   create_rsyncd_conf
 # OK, it does exist -- but if the backup file doesn't exist, back it up 
 elif [ ! -f /etc/rsyncd.conf.beforesystemimager ]; then
   [ $QUIET = "false" ] && echo "Backing up /etc/rsyncd.conf to /etc/rsyncd.conf.beforesystemimager..."
   cp -af /etc/rsyncd.conf /etc/rsyncd.conf.beforesystemimager
   # and create rsyncd.conf
-  [ $QUIET = "false" ] && echo "Creating SystemImager brand /etc/rsyncd.conf..."
+  [ $QUIET = "false" ] && echo "Creating VA SystemImager brand /etc/rsyncd.conf..."
   create_rsyncd_conf
 else 
   # the backup file exists, so check to see if current rsyncd.conf belongs
-  # to SystemImager.  If not, back it up and create our own.
+  # to VA SystemImager.  If not, back it up and create our own.
   TOUCHIT="yes"
   egrep -qw SystemImager /etc/rsyncd.conf && TOUCHIT="no"
   if [ $TOUCHIT = "yes" ]; then
     [ $QUIET = "false" ] && echo Backing up /etc/rsyncd.conf to /etc/rsyncd.conf.beforesystemimager...
     cp -af /etc/rsyncd.conf /etc/rsyncd.conf.beforesystemimager
     # and create rsyncd.conf
-    [ $QUIET = "false" ] && echo Creating SystemImager brand /etc/rsyncd.conf...
+    [ $QUIET = "false" ] && echo Creating VA SystemImager brand /etc/rsyncd.conf...
     create_rsyncd_conf
   else
-    [ $QUIET = "false" ] && echo SystemImager brand /etc/rsyncd.conf file already exists...
+    [ $QUIET = "false" ] && echo VA SystemImager brand /etc/rsyncd.conf file already exists...
   fi
 fi
 
@@ -572,8 +573,8 @@ fi
 # wrap up
 [ $QUIET = "false" ] && [ $INTERACTIVE = "true" ] && clear
 [ $QUIET = "false" ] && echo
-[ $QUIET = "false" ] && echo "All done!  Please read the FAQ-HOWTO before using SystemImager."
-[ $QUIET = "false" ] && echo "See /usr/doc/systemimager-$VERSION/ for all documentation."
+[ $QUIET = "false" ] && echo "All done!  Please read the FAQ-HOWTO before using VA SystemImager."
+[ $QUIET = "false" ] && echo "See /usr/doc/$PACKAGE_NAME-$VERSION/ for all documentation."
 [ $QUIET = "false" ] && echo
 
 exit 0

@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #
-# "SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com>
+# "VA SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com>
 #
 
 # do we want a quiet install? and do we want to run afterburner?
@@ -16,6 +16,7 @@ done
 
 # set some variables
 PATH=/bin:/usr/bin:/sbin:/usr/sbin
+PACKAGE_NAME=va-systemimager
 COMMAND_PATH=`dirname $0`
 test "x$COMMAND_PATH" != "x" && cd $COMMAND_PATH
 INSTALL_DIR=`pwd`
@@ -48,7 +49,7 @@ fi
 # Hacked by:    Greg Galloway and Marc Ewing
 #
 # Mercilessly hacked by: "Brian Finley" <brian@valinux.com> 1999.09.18
-#                 for: SystemImager
+#                 for: VA SystemImager
 #
 
 # First set up a default search path.
@@ -348,10 +349,10 @@ confirm() {
 
 
 
-# SystemImager specific functions
+# VA SystemImager specific functions
 create_rsyncd_conf() {
   echo '#'                                                      > /etc/rsyncd.conf
-  echo '# "SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com>'    >> /etc/rsyncd.conf
+  echo '# "VA SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com>'    >> /etc/rsyncd.conf
   echo '#'                                                      >> /etc/rsyncd.conf
   echo ''                                                       >> /etc/rsyncd.conf
   echo 'list = yes'                                             >> /etc/rsyncd.conf
@@ -374,7 +375,7 @@ create_rsyncd_conf() {
 ### BEGIN introduction ###
 if [ $QUIET = "false" ]; then
   clear
-  echo "Welcome to SystemImager."
+  echo "Welcome to VA SystemImager."
   echo
   echo "This install script may modify the following files and/or directories:"
   echo
@@ -382,17 +383,17 @@ if [ $QUIET = "false" ]; then
   echo " /tftpboot/pxelinux.cfg -- create if necessary and add appropriate files/links"
   echo " /etc/services          -- add rsync and/or tftp entries if necessary"
   echo " /etc/inetd.conf        -- add/modify rsync and tftp entries if necessary"
-  echo " /etc/rsyncd.conf       -- it is assumed that SystemImager will manage this"
+  echo " /etc/rsyncd.conf       -- it is assumed that VA SystemImager will manage this"
   echo "                           file and that it will not be used for anything else"
   echo
   echo " All modified files will be backed up with the .beforesystemimager extension."
   echo
 
   # you sure you want to install?
-  echo -n "Install SystemImager? (y/[n]) "
+  echo -n "Install VA SystemImager? (y/[n]) "
   read REPLY
   case $REPLY in
-    y|Y|Yes|yes|YES ) clear; echo Ok.  Installing SystemImager... ;;
+    y|Y|Yes|yes|YES ) clear; echo Ok.  Installing VA SystemImager... ;;
                   * ) echo Install cancelled.  No files modified. && exit 1 ;;
   esac
 
@@ -449,7 +450,7 @@ chmod 750 ${DESTDIR}/var/spool/systemimager/images
 # Create Warning file
 cat > ${DESTDIR}/var/spool/systemimager/images/README <<EOF
 #
-# "SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com>
+# "VA SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com>
 #
 
 ***GOTCHA!***
@@ -475,10 +476,10 @@ ln -sf README DO_NOT_TOUCH_THESE_DIRECTORIES
 # Documentation -- copy BIG CASE files
 # (RPM will take care of docs for us)
 if [ "x$DESTDIR" = "x" ]; then
-  rm -fr ${prefix}/doc/systemimager-*
-  mkdir -p ${prefix}/doc/systemimager-$VERSION/
-  cp -af $INSTALL_DIR/[A-Z]* ${prefix}/doc/systemimager-$VERSION/
-  chown -R root:root ${prefix}/doc/systemimager-$VERSION/
+  rm -fr ${prefix}/doc/$PACKAGE_NAME-*
+  mkdir -p ${prefix}/doc/$PACKAGE_NAME-$VERSION/
+  cp -af $INSTALL_DIR/[A-Z]* ${prefix}/doc/$PACKAGE_NAME-$VERSION/
+  chown -R root:root ${prefix}/doc/$PACKAGE_NAME-$VERSION/
 fi
 
 ### END documentation and what not stuff ###
