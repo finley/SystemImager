@@ -171,9 +171,10 @@ EOF
   ### END lilo.conf file stuff ###
 
   # and tell it to use the systemimager kernel on the next boot
-  print qq(running "lilo -D systemimager"...\n);
-  $rc = 0xffff & system("/sbin/lilo -D systemimager");
-  if ($rc != 0) {print "lilo -D systemimager failed!!!\n"; exit $rc >> 8;}  
+  my $lilo_command = "/sbin/lilo -d 50 -D systemimager";
+  print "running $lilo_command ...\n";
+  $rc = 0xffff & system("$lilo_command");
+  if ($rc != 0) {print "$lilo_command failed!!!\n"; exit $rc >> 8;}  
       
 } else {
   # go ahead and do that update thing you do
