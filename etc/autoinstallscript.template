@@ -96,8 +96,7 @@ modprobe jfs
 modprobe xfs
 
 echo "Load device mapper driver (for LVM)."
-grep "dm-mod" /proc/modules > /dev/null
-if [ $? -eq 1 ]; then modprobe dm-mod; fi
+modprobe dm-mod
 
 ### BEGIN LVM initialization commands -AR- ###
 ##INITIALIZE_LVM_PARTITIONS##
