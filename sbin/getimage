@@ -39,7 +39,7 @@ sub get_response {
 }
 
 sub check_if_root{
-    unless($< == 0) { die "Must be run as root!\n"; }
+    unless($< == 0) { die "$program_name: Must be run as root!\n"; }
 }
 
 ### END Subroutines ###
@@ -58,15 +58,16 @@ This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 EOF
 
+$get_help = "          Try \"getimage -help\" for more options.";
 $help_info = $version_info . <<"EOF";
 
-Usage: $program_name [OPTION]...  -master-client HOSTNAME -image IMAGENAME
+Usage: $program_name [OPTION]...  -golden-client HOSTNAME -image IMAGENAME
   or   $program_name [OPTION]...  -server HOSTNAME -image IMAGENAME
 
 Options: (options can be presented in any order and may be abbreviated)
  -help                    Display this output.
  -version                 Display version and copyright information.
- -master-client HOSTNAME  Hostname or IP address of the \"master\" client.
+ -golden-client HOSTNAME  Hostname or IP address of the \"golden\" client.
  -server HOSTNAME         Hostname or IP address of the imageserver
                           holding the image you want to pull.  This allows
                           you to copy an image from one imageserver to
@@ -103,6 +104,7 @@ Report bugs or suggestions to <systemimager-bugs\@systemimager.org>
 EOF
     
 
+$golden_client = "";
 $master_client = "";
 $ip_assignment_method = "";
 $image = "";
@@ -114,6 +116,7 @@ $imagedir_prefix =  "/var/spool/systemimager/images";
 ### BEGIN evaluate options ###
 GetOptions( 
     "master-client=s" => \$master_client,
+    "golden-client=s" => \$golden_client,
     "server=s" => \$imageserver,
     "image=s" => \$image,
     "directory=s" => \$imagedir_prefix,
@@ -129,42 +132,59 @@ $ip_assignment_method = lc $ip_assignment_method;
 $update_script = lc $update_script;
 
 #if requested, print help information
-if($help) { die "$help_info"; }
+if ($help) { die "$help_info"; }
 
 # if requested, print version and copyright information
-if($version) { die "$version_info"; }
+if ($version) { die "$version_info"; }
 
-# only master client or server may be set
-if($master_client and $imageserver) {
-    die "\nEither use -master-client or -server but not both.\n\n$help_info";
+# only golden client or master client may be set
+if ($golden_client and $master_client) {
+  print "\n";
+  print "getimage: Either use -golden-client or -master-client but not both.\n";
+  print "          (-master-client is depricated and will be unavailable in\n"; 
+  die   "           a future release.)\n$get_help\n\n";
+}
+
+# if $master_client is used, pass the variable on
+if ($master_client) { $golden_client = $master_client; }
+
+# only golden client or server may be set
+if ($golden_client and $imageserver) {
+  die "\n$program_name: Either use -golden-client or -server but not both.\n$get_help\n\n";
 }
 
 # both a source host and image must be set.
-unless(($master_client or $imageserver) and $image) {
-    die "\nYou must specify -master-client or -server and -image.\n\n$help_info";
+unless (($golden_client or $imageserver) and $image) {
+    die "\n$program_name: You must specify -golden-client or -server and -image.\n$get_help\n\n";
 }
 
-# be sure $master_client name doesn't start with a hyphen
-if($master_client){
-  $_ = $master_client;
-  if(/^-/) { die "\nMaster client name can't start with a hyphen.\n\n$help_info"; }
-  $source_host=$master_client;
+# be sure $golden_client name doesn't start with a hyphen
+if ($golden_client) {
+  if ($golden_client =~ /^-/) { 
+    die "\n$program_name: Golden client name can't start with a hyphen.\n$get_help\n\n";
+  }
+  $source_host = $golden_client;
 }
 
 # be sure $imageserver name doesn't start with a hyphen
 if($imageserver){
-  $_ = $imageserver;
-  if(/^-/) { die "\nServer name can't start with a hyphen.\n\n$help_info"; }
-  $source_host=$imageserver;
+  if ($imageserver =~ /^-/) { 
+    die "\n$program_name: Server name can't start with a hyphen.\n$get_help\n\n";
+  }
+  $source_host = $imageserver;
 }
 
 # be sure $image doesn't start with a hyphen
-$_ = $image;
-if(/^-/) { die "\nImage name can't start with a hyphen.\n\n$help_info"; }
+if($image){
+  if ($image =~ /^-/) { 
+    die "\n$program_name: Image name can't start with a hyphen.\n$get_help\n\n";
+  }
+}
 
 # be sure $imagedir_prefix is an absolute path starting with /
-$_ = $imagedir_prefix;
-unless(/^\//) { die "\n-directory must be an absolute path starting with /.\n\n$help_info"; }
+unless ($imagedir_prefix =~ /^\//) { 
+  die "\n$program_name: -directory must be an absolute path starting with \"/\".\n$get_help\n\n";
+}
 
 # be sure $ip_assignment_method was passed a proper option
 unless(
@@ -172,14 +192,14 @@ unless(
     or ($ip_assignment_method eq "static_dhcp")
     or ($ip_assignment_method eq "static")
     or ($ip_assignment_method eq "dynamic_dhcp")
-) { die "\n-ip-assignment must be static, static_dhcp, or dynamic_dhcp.\n\n$help_info"; }
+) { die "\n$program_name: -ip-assignment must be static, static_dhcp, or dynamic_dhcp.\n$get_help\n\n"; }
 
 # be sure $post_install was passed a proper option
 unless(
-    ($post_install eq "beep")
+       ($post_install eq "beep")
     or ($post_install eq "reboot")
     or ($post_install eq "shutdown")
-) { die "\n-post-install must be beep, reboot, or shutdown.\n\n$help_info"; }
+) { die "\n$program_name: -post-install must be beep, reboot, or shutdown.\n$get_help\n\n"; }
 ### END evaluate options ###
 
 # be sure program is run by root
@@ -211,7 +231,7 @@ if (!$quiet) {
 }
 
 if (! -d "$imagedir_prefix")  {
-  mkdir("$imagedir_prefix", 0750) or die "Can't make directory $imagedir_prefix\n";
+  mkdir("$imagedir_prefix", 0750) or die "$program_name: Can't make directory $imagedir_prefix\n";
 }
 
 if (-d "$imagedir") {
@@ -224,38 +244,38 @@ if (-d "$imagedir") {
   }
 } else  {
     mkdir("$imagedir", 0777) || 
-	die "Can't make directory $imagedir\n";
+	die "$program_name: Can't make directory $imagedir\n";
 }
 
-### BEGIN master client stuff ###
-if($master_client) {
-  # get /etc/mtab from $master_client
+### BEGIN golden client stuff ###
+if($golden_client) {
+  # get /etc/mtab from $golden_client
   if (!$quiet) {
-    print "Retrieving /etc/mtab from $master_client to check for mounted filesystems...\n";
-    open(RSYNC, "rsync -av --numeric-ids ${master_client}::root/etc/mtab $imagedir|");
-    print "------------- $master_client mtab RETRIEVAL PROGRESS -------------\n";
+    print "Retrieving /etc/mtab from $golden_client to check for mounted filesystems...\n";
+    open(RSYNC, "rsync -av --numeric-ids ${golden_client}::root/etc/mtab $imagedir|");
+    print "------------- $golden_client mtab RETRIEVAL PROGRESS -------------\n";
     while (<RSYNC>) {
       print;
     }
-    print "------------- $master_client mtab RETRIEVAL FINISHED -------------\n";
+    print "------------- $golden_client mtab RETRIEVAL FINISHED -------------\n";
     close(RSYNC);
   } else {
-    $command = "rsync -a --numeric-ids ${master_client}::root/etc/mtab $imagedir";
+    $command = "rsync -a --numeric-ids ${golden_client}::root/etc/mtab $imagedir";
     system($command);
   }
   
   # $? is the return value from rsync
   if ($?) {
-    print "Failed to retrieve /etc/mtab from $master_client.\n";
-    die "Have you run \"prepareclient\" on $master_client?\n";
+    print "Failed to retrieve /etc/mtab from $golden_client.\n";
+    die "$program_name: Have you run \"prepareclient\" on $golden_client?\n";
   }
   
   # create list of filesystems to *not* get
-  open (MTAB, "<$imagedir/mtab") || die ("Couldn't open $imagedir/mtab for reading\n");
+  open (MTAB, "<$imagedir/mtab") || die ("$program_name: Couldn't open $imagedir/mtab for reading\n");
   @mtab = <MTAB>;
   close MTAB;
   open (EXCLUDE, ">$exclude_file") ||
-    die "Couldn't open $exclude_file for writing\n";
+    die "$program_name: Couldn't open $exclude_file for writing\n";
   @mtab = grep (!/\s+ext2\s+/, @mtab);
   @mtab = grep (!/\s+ext3\s+/, @mtab);
   @mtab = grep (!/\s+reiserfs\s+/, @mtab);
@@ -265,9 +285,9 @@ if($master_client) {
   }
   close EXCLUDE;
   # compile rsync options
-  $options="--delete --exclude-from=$exclude_file ${master_client}::root/ $imagedir";
+  $options="--delete --exclude-from=$exclude_file ${golden_client}::root/ $imagedir";
 }
-### END master client stuff ###
+### END golden client stuff ###
 
 ### BEGIN pull from imageserver stuff ###
 if($imageserver) {
@@ -294,7 +314,7 @@ if (!$quiet) {
 
 # $? is the return value from rsync
 if ($?) {
-    die "Failed to retrieve image $image from $source_host.\n";
+    die "$program_name: Failed to retrieve image $image from $source_host.\n";
 }
 
 
@@ -303,12 +323,12 @@ if(!$quiet) {
     <STDIN>;
 }
 
-unlink $exclude_file || die "Removal of file $exclude_file failed\n";
+unlink $exclude_file || die "$program_name: Removal of file $exclude_file failed\n";
 
 # Add entry to image server's rsyncd.conf if necessary
 open (RSYNCD_CONF, "<$rsyncd_conf");
 if (!grep(/\[$image\]/, <RSYNCD_CONF>)) {
-    open(RSYNCD_CONF, ">>$rsyncd_conf") || die "Cannot open $rsyncd_conf for writing";
+    open(RSYNCD_CONF, ">>$rsyncd_conf") || die "$program_name: Cannot open $rsyncd_conf for writing";
     print RSYNCD_CONF <<"EOF";
 [$image]
     path = $imagedir
@@ -356,7 +376,7 @@ if ( -d "$imagedir/etc/sysconfig/" ) {
 ### BEGIN Got NIS? ###
 if ( $distro eq "RedHat" ) {
    $file="$imagedir/etc/sysconfig/network";
-   open (NETWORK, "< $file") or die "Couldn't open $file for reading: $!\n";
+   open (NETWORK, "< $file") or die "$program_name: Couldn't open $file for reading: $!\n";
    while (<NETWORK>) {
          if (/^NISDOMAIN/) {
             chomp;
@@ -406,7 +426,7 @@ EOF
 ### END IP Assignment Method ###
 
 ### BEGIN create a fresh /tftpboot/systemimager/$image.master ###
-open (MASTER_SCRIPT, ">$master_script") || die "Can't open $master_script for writing\n";
+open (MASTER_SCRIPT, ">$master_script") || die "$program_name: Can't open $master_script for writing\n";
 
 # add standard header stuff
 print MASTER_SCRIPT << 'EOF';
@@ -453,7 +473,7 @@ EOF
 # get list of hardware RAID devices
 $partition_dir="$systemimagerdir/partitionschemes/rd";
 if(-d "$imagedir$partition_dir") {
-    opendir(PARTITIONSCHEMES, "$imagedir$partition_dir") || die "Can't read the $imagedir$partition_dir directory";
+    opendir(PARTITIONSCHEMES, "$imagedir$partition_dir") || die "$program_name: Can't read the $imagedir$partition_dir directory";
         # Skip anything that begins with a "."
         push(my @hardware_raid_disks, grep( !/^\..*/, readdir(PARTITIONSCHEMES) ) );
 
@@ -468,7 +488,7 @@ if(-d "$imagedir$partition_dir") {
 # get list of IDE and SCSI devices
 $partition_dir="$systemimagerdir/partitionschemes";
 if(-d "$imagedir$partition_dir") {
-    opendir(PARTITIONSCHEMES, "$imagedir$partition_dir") || die "Can't read the $imagedir$partition_dir directory";
+    opendir(PARTITIONSCHEMES, "$imagedir$partition_dir") || die "$program_name: Can't read the $imagedir$partition_dir directory";
         # Skip anything that begins with a "." or an "rd"
         push(@disks, grep( !/^rd$/, grep( !/^\..*/, readdir(PARTITIONSCHEMES) ) ) );
     close(PARTITIONSCHEMES);
@@ -478,7 +498,7 @@ if(-d "$imagedir$partition_dir") {
 
 ### BEGIN get info on devices for software RAID, swap, and filesystems ###
 %device_file_by_mount_point = ();
-open (FSTAB, "<$imagedir/etc/fstab") || die "Failed to open $imagedir/etc/fstab for reading\n";
+open (FSTAB, "<$imagedir/etc/fstab") || die "$program_name: Failed to open $imagedir/etc/fstab for reading\n";
 while (<FSTAB>) {
     # Skip the line if it starts with a '#' or if it is for a floppy device
     if (m@(^\s*\#)|(/dev/fd)@) { next; }
@@ -590,7 +610,7 @@ foreach $disk (@disks)  {
     $lowest_start_device = "10000000";  # some random large number
 
     open (PARTITIONS, "<$imagedir$systemimagerdir/partitionschemes/${disk}")
-    || die "Cannot open $imagedir$systemimagerdir/partitionschemes/$disk for reading\n";
+    || die "$program_name: Cannot open $imagedir$systemimagerdir/partitionschemes/$disk for reading\n";
       @partitions = <PARTITIONS>;
     close(PARTITIONS);
 
@@ -602,12 +622,17 @@ foreach $disk (@disks)  {
         # get rid of an asterisk that may be indicating a boot partition (Linux doesn't need this)
         $_ =~ s/\*//g;
 
-        # get rid of + and - signs -- we're not going to worry about those...
-        $_ =~ s/-//g;
+        # get rid of + signs -- we're not going to worry about those...
         $_ =~ s/\+//g;
 
         # split on space(s) and assign values to variables
         (my $device_file, my $start, my $end, my $megabytes, my $blocks, my $id) = split(/ +/);
+
+        # round down if there is a minus sign on the value
+        if ($megabytes =~ /-/) {
+          $megabytes =~ s/-//g;
+          $megabytes--;
+        }
 
         # figure out what the starting device is (probably partition 1)
         if (($megabytes ne "0") and ($start lt $lowest_start_device)) { 
