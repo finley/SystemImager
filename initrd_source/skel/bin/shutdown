@@ -1,0 +1,10 @@
+#!/bin/sh
+
+#
+# part of:
+# "VA SystemImager" - Copyright (C) 1999 Brian Elliott Finley <brian@systemimager.org>
+#
+
+[ "x$1" = "x" ] && halt && exit 0
+[ "$1" = "-r" ] && reboot && exit 0
+exit 1

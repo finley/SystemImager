@@ -1,0 +1,40 @@
+linux|console|Linux console:\
+	:am:eo:mi:ms:ut:xn:xo:\
+	:it#8:\
+	:&7=^Z:@7=\E[4~:AL=\E[%dL:DC=\E[%dP:DL=\E[%dM:F1=\E[23~:\
+	:F2=\E[24~:F3=\E[25~:F4=\E[26~:F5=\E[28~:F6=\E[29~:\
+	:F7=\E[31~:F8=\E[32~:F9=\E[33~:FA=\E[34~:IC=\E[%d@:\
+	:K2=\E[G:al=\E[L:bl=^G:cb=\E[1K:cd=\E[J:ce=\E[K:\
+	:ch=\E[%i%dG:cl=\E[H\E[J:cm=\E[%i%d;%dH:cr=^M:\
+	:cs=\E[%i%d;%dr:ct=\E[3g:cv=\E[%i%dd:dc=\E[P:dl=\E[M:\
+	:do=^J:ec=\E[%dX:ei=\E[4l:ho=\E[H:ic=\E[@:im=\E[4h:\
+	:k1=\E[[A:k2=\E[[B:k3=\E[[C:k4=\E[[D:k5=\E[[E:k6=\E[17~:\
+	:k7=\E[18~:k8=\E[19~:k9=\E[20~:k;=\E[21~:kB=\E[Z:kD=\E[3~:\
+	:kI=\E[2~:kN=\E[6~:kP=\E[5~:kb=\177:kd=\E[B:kh=\E[1~:\
+	:kl=\E[D:kr=\E[C:ku=\E[A:le=^H:mh=\E[2m:mr=\E[7m:nd=\E[C:\
+	:nw=^M^J:r1=\Ec:rc=\E8:\
+	:..sa=\E[0;10%?%p1%t;7%;%?%p2%t;4%;%?%p3%t;7%;%?%p4%t;5%;%?%p5%t;2%;%?%p6%t;1%;%?%p7%t;8%;%?%p9%t;11%;m:\
+	:sc=\E7:se=\E[27m:sf=^J:sr=\EM:st=\EH:ta=^I:u6=\E[%i%d;%dR:\
+	:u7=\E[6n:u8=\E[?6c:u9=\E[c:ue=\E[24m:up=\E[A:us=\E[4m:\
+	:vb=200\E[?5h\E[?5l:ve=\E[?25h:vi=\E[?25l:\
+	:tc=klone+sgr:tc=ecma+color:
+linux-m|Linux console no color:\
+	:Co@:pa@:\
+	:AB@:AF@:Sb@:Sf@:tc=linux:
+
+klone+acs|alternate character set for ansi.sys displays:\
+	:ac=`\004a\261f\370g\361h\260j\331k\277l\332m\300n\305o~q\304r\362s_t\303u\264v\301w\302x\263y\371z\372{\373|\374}\375~\376.\031-\030\054\021+^P0\333p\304r\304y\363z\362{\343|\330}\234:\
+	:ae=\E[10m:as=\E[11m:
+
+klone+sgr|attribute control for ansi.sys displays:\
+	:S2=\E[11m:S3=\E[10m:mb=\E[5m:md=\E[1m:me=\E[0;10m:\
+	:mk=\E[8m:mr=\E[7m:\
+	:..sa=\E[0;10%?%p1%t;7%;%?%p2%t;4%;%?%p3%t;7%;%?%p4%t;5%;%?%p6%t;1%;%?%p7%t;8%;%?%p9%t;11%;m:\
+	:se=\E[m:so=\E[7m:ue=\E[m:us=\E[4m:\
+	:tc=klone+acs:
+
+ecma+color|color control for ECMA-48-compatible terminals:\
+	:Co#8:NC#3:pa#64:\
+	:Sb=\E[4%dm:Sf=\E[3%dm:op=\E[39;49m:
+#
+# End...	

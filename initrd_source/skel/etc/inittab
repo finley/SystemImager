@@ -1,0 +1,16 @@
+# This is run first except when booting in single-user mode.
+#
+::sysinit:/etc/init.d/rcS
+
+# /bin/sh invocations on selected ttys
+#
+# Start an "askfirst" shell on the console (whatever that may be)
+::askfirst:-/bin/sh
+# Start an "askfirst" shell on /dev/tty2-4
+tty2::askfirst:-/bin/sh
+tty3::askfirst:-/bin/sh
+tty4::askfirst:-/bin/sh
+
+# Stuff to do before rebooting
+::ctrlaltdel:/bin/umount -a -r > /dev/null 2>&1
+::ctrlaltdel:/sbin/swapoff -a > /dev/null 2>&1
