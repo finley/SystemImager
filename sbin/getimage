@@ -87,7 +87,7 @@ Options: (options can be presented in any order and may be abbreviated)
  -image IMAGENAME         Where IMAGENAME is the name to assign to the 
                           image you are retrieving.  This can be either
                           the name of a new image if you want to create
-                          a new image, or the name of an exisiting image
+                          a new image, or the name of an existing image
                           if you want to update an image.  
 
  -ssh-user USERNAME       Username for ssh connection to the client.
@@ -331,7 +331,7 @@ if (! -d "$default_image_dir")  {
 if (-d "$imagedir") {
     if (!$quiet) {
         print "An image named \"$image\" already exists...\n";
-        print "Update exisiting image? ([y]/n): ";
+        print "Update existing image? ([y]/n): ";
         $continue = SystemImager::Common->get_response('y');
         ($continue ne "n") or die "$program_name: No files were modified.\n";
         print "\n";
