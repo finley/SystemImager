@@ -30,9 +30,9 @@ o modify RPM spec file to deal with
   o changed files
 
 
--------------
-Stable Branch
--------------
+--------------------------
+Stable Branch Sub Projects
+--------------------------
 
 Dann Frazier <dannf@hazel.fc.hp.com>
 ------------------------------------
@@ -45,24 +45,30 @@ o initrd.gz -- don't pull hosts file if HOSTNAME is already known
 o deal with LABEL= and UUID= for any filesystem or device type
 o add " || shellout" to the end of almost everything in <image>.master
 o calculate network number in makedhcpserver & maybe figure out other stuff too.
+o Apply patches from:
+  o Wesley Smith <wessmith@cthulhu.engr.sgi.com>
+    --------------------------------------------
+    o devfs patch
+    o TurboLinux patch
+    o SuSe patch
+
+  o Fred Gray <fegray@npl.uiuc.edu>
+    -------------------------------
+    o patch to allow exclude on golden client during getimage.
+      o /etc/systemimager/getimage.exclude on golden client
 
 
-Wesley Smith <wessmith@cthulhu.engr.sgi.com>
---------------------------------------------
-o devfs patch
-o TurboLinux patch
-o SuSe patch
-
-
-Fred Gray <fegray@npl.uiuc.edu>
 -------------------------------
-o patch to allow exclude on golden 
-  client during getimage.  ~/systemimager/contrib/patches.email
+Development Branch Sub Projects
+-------------------------------
 
+Brian Chrisman <bchrisman@valinux.com>
+--------------------------------------
+o serial redirect for autoinstallclient
+  o See email with Subject of: 
+    Subject: serial redirect for autoinstalling systems remotely with systemimager
+  o See linux/Documentation/serial-console.txt
 
-------------------
-Development Branch
-------------------
 
 Greg Smith <grs@xuma.com>
 Committed to task: Tue, 23 Jan 2001
@@ -83,8 +89,8 @@ o mvimage
                   o image entry in /etc/rsyncd.conf
 
 
-Volunteer needed
-----------------
+Volunteer needed (also Greg Smith?)
+-----------------------------------
 o rmimage
   o usage: rmimage [OPTIONS] <image>
   o removes /var/spool/systemimager/images/<image>
@@ -191,9 +197,9 @@ o Also have buttons for each of the utilities labelled something like:
 
 
 James Morton <jmorton@viata.com>
+Committed to task: 03 Jan 2001
 --------------------------------
-o patch to have autoinstallclient
-  ask user for settings. ~/systemimager/contrib/IOUs.email
+o have the autoinstallclient ask user for settings.
 
 
 George Perry <perryg@elcsci.com>
@@ -208,12 +214,10 @@ Committed to task: Tue, 06 Mar 2001
 o Add kernel bug/rsync bug info to Troubleshooting section in docs.
 
 
-
-
 <brian@thefinleys.com>
 ----------------------
 o Jose_AP_Celestino.ida.prepareclient.patch to make systemimager work
-  properly with Smart Array cards.
+  properly with Smart Array cards.  (must get a Smart Array card first)
 o getimage - put exclude/include stuff on imageserver by image
   /tftpboot/systemimager/$image.updateclient.include
   /tftpboot/systemimager/$image.updateclient.exclude
@@ -277,6 +281,7 @@ Miscellaneous and Possibilities
 -------------------------------
 o /etc/systemimager/systemimager.conf file to hold things like domain name, nis domain, etc.
 o support for imaging dual boot systems (Linux/Windows with FAT/HPFS/NTFS)
+  o see mondo (available on freshmeat)
 o makedhcpserver -- autodiscover and calculate more information 
   (including if system has more than one network interface).
 o makedhcpserver -- automatically change line in /etc/rc.d/init.d/dhcpd for you
