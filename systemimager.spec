@@ -27,7 +27,6 @@ Version: %ver
 Release: %rel
 Copyright: GPL
 Group: Applications/System
-Source: http://download.sourceforge.net/systemimager/%{name}-%{ver}.tar.gz
 BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: Brian Finley <brian@baldguysoftware.com>
 Docdir: %{prefix}/doc
@@ -57,7 +56,6 @@ Version: %ver
 Release: %rel
 Copyright: GPL
 Group: Applications/System
-Source: http://download.sourceforge.net/systemimager/%{name}-%{ver}.tar.gz
 BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: Brian Finley <brian@baldguysoftware.com>
 Docdir: %{prefix}/doc
@@ -87,7 +85,6 @@ Version: %ver
 Release: %rel
 Copyright: GPL
 Group: Applications/System
-Source: http://download.sourceforge.net/systemimager/%{name}-%{ver}.tar.gz
 BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: Brian Finley <brian@baldguysoftware.com>
 Docdir: %{prefix}/doc
