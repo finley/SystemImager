@@ -11,22 +11,19 @@
 In Progress
 -----------
 Version 1.4.0 specific:
-- <brian@thefinleys.com> - Contemplate using "use chroot = yes" in 
-                           /etc/rsyncd.conf
-                           and how this affects --numeric-ids.
 - <brian@thefinleys.com> - Wes Smith's distribution specific patches
-- <brian@thefinleys.com> - modify RPM spec file
+- <brian@thefinleys.com> - modify RPM spec file to deal with:
+                           - configuration files
+			   - additional files
+			   - changed files
+			   - use install to install files in install scripts
 - <brian@thefinleys.com> - put exclude/include stuff on imageserver by image
                            /tftpboot/systemimager/$image.include
                            /tftpboot/systemimager/$image.exclude
-- <brian@thefinleys.com> - add support for 3c905 if it will fit.
-- <brian@thefinleys.com> - add support for 3c59x if it will fit.
-- <brian@thefinleys.com> - add support for pcnet32 if it will fit.
 - <brian@thefinleys.com> - deal with ext3 journal files differently according 
                            to Ted Ts'o
 - <brian@thefinleys.com> - add a -autoconfig option to updateclient that figures
                            out the current values and writes them to /local.cfg
-- <brian@thefinleys.com> - addclients -- test for /etc/hosts before using
 - <brian@thefinleys.com> - label autoinstallcd.iso with v1.4.x (x is literal)
 - <brian@thefinleys.com> - start using bzip2
 
