@@ -5,14 +5,18 @@
 #
 
 
-#######################################################################
+################################################################################
+#
 #  This is at least a partial credits-file of people that have contributed
 #  to the SystemImager project.  It is sorted by name and formatted to allow
 #  easy grepping and beautification by scripts.  The fields are: name (N), 
 #  email (E), web-address (W), PGP key ID and fingerprint (P), description (D),
 #  and snail-mail address (S).
 #
-#  If you are not listed here, but should be, please send me an entry for yourself. -Brian
+#  If you are not listed here, but should be, please send a patch with an
+#  entry for yourself to <sisuite-devel@sisuite-devel@lists.sourceforge.net>.
+#
+#  Thanks!
 #
 
 N: Sean Dague
@@ -25,6 +29,14 @@ E: jgd@lanl.gov
 D: RH9 specific patches
 D: RPM spec file maintainer starting with 3.1.6
 
+N: Mehmet Demirtas
+E: m.demirtas@chello.nl
+D: Official Tester
+
+N: David Driggers
+E: davman@racksaver.com
+D: Official Tester
+
 N: Brian Elliott Finley
 E: brian@bgsw.net
 W: http://thefinleys.com/
@@ -36,6 +48,7 @@ S: USA
 
 N: Dann Frazier
 E: dannf@fc.hp.com
+D: Lots of stuff.  Dann, please fill in, eh?
 
 N: Austin Gonyou
 E: austin@coremetrics.com
@@ -43,6 +56,10 @@ E: austin@coremetrics.com
 N: David Lombard
 E: david.n.lombard@intel.com
 D: prepareclient patches
+
+N: Michael Peterson
+E: peterson@chem.duke.edu
+D: Official Tester
 
 N: Greg Pratt 
 E: gpratt@valinux.com
@@ -78,6 +95,11 @@ E: Mathew.J.Binkley@vanderbilt.edu
 N: Cath Burrowes
 E: cath@starbiz.com.au
 
+N: James Braid
+E: jamesb@peace.com
+D: Official Tester
+D: wiki.sisuite.org hoster / administrator
+
 N: Jose AP Celestino
 E: japc@sl.pt
 D: Official Tester
@@ -98,6 +120,10 @@ D: Added the "imagemanip" command
 N: Benot des Ligneris
 E: benoit@des.ligneris.net
 
+N: edarra 
+E: edarra@maxim.acxiom.com
+D: Official Tester
+
 N: Paonia Ezrine
 E: paonia@home.welcomehome.org
 
@@ -109,6 +135,10 @@ E: jgoebel@valinux.com
 
 N: Fred Gray
 E: fegray@npl.uiuc.edu
+
+N: Nicholas Henke
+E: henken@seas.upenn.edu, henken@central.cis.upenn.edu
+D: Official Tester
 
 N: Drew Hess
 E: dhess@bothan.net
@@ -123,8 +153,16 @@ D: EFI issues - additional paths for elilo and append fix
 N: Michael Jennings
 E: mej@valinux.com
 
+N: Kalyan 
+E: kalyan@iiitb.ac.in
+D: Official Tester
+
 N: Lorn Kay
 E: lorn_kay@hotmail.com
+
+N: Troy Klein
+E: troy@racksaver.com
+D: Official Tester
 
 N: James Oakley
 E: joakley@solutioninc.com
@@ -140,6 +178,14 @@ E: ian@valinux.com
 
 N: Michael P. McLeod
 E: mmcleod@bcm.tmc.edu
+
+N: Gary Molenkamp
+E: gary@sharcnet.ca
+D: alpha support
+
+N: Don Moore
+E: donmoore@utdallas.edu
+D: Official Tester
 
 N: Michael R. Nolta
 E: mrnolta@princeton.edu
@@ -162,65 +208,33 @@ E: anton.smith@nzwireless.co.nz
 D: Code example: 
 D:  restrict rsync access to golden client with rsync's hosts allow/deny
 
+N: Ben Spade
+E: spade@radik.com
+
 N: Alain St-Denis
 E: Alain.St-Denis@ec.gc.ca
 
 N: Don Stocks
 E: dstocks@newvation.com
 
+N: James Stroehmann
+E: james.stroehmann@il.proquest.com
+D: Official Tester
+
 N: Charles Thorns
-E: Charles_Thorns@veritasdgc.com
+E: Charles_Thorns@veritasdgc.com, charles_thorns@veritasdgc.co.uk
 D: Submitted patch to rcS to fix sed of $DOMAINNAME
+D: Official Tester
 
 N: Steve Traugott
 E: stevegt@users.sourceforge.net
 
+N: David Weenink
+E: david.weenink@hum.uva.nl
+
 N: Dirk Wetter
 E: dirkw@rentec.com
 
-N: Gary Molenkamp
-E: gary@sharcnet.ca
-D: alpha support
-
-
-#######################################################################
-People who have signed up as official "TESTERS".  
-Sign up here: http://systemimager.org/development/
-(alphabetical order):
-
-N: James Braid
-E: jamesb@peace.com
-D: Official Tester
-
-N: Mehmet Demirtas
-E: m.demirtas@chello.nl
-
-N: David Driggers
-E: davman@racksaver.com
-
-N: edarra 
-E: edarra@maxim.acxiom.com
-
-N: Nicholas Henke
-E: henken@seas.upenn.edu
-
-N: Kalyan 
-E: kalyan@iiitb.ac.in
-
-N: Troy Klein
-E: troy@racksaver.com
-
-N: Don Moore
-E: donmoore@utdallas.edu
-
-N: Michael Peterson
-E: peterson@chem.duke.edu
-
-N: James Stroehmann
-E: james.stroehmann@il.proquest.com
-
-N: Charles Thorns
-E: charles_thorns@veritasdgc.co.uk
 
 
 Other people who have contributed ideas, suggestions, found bugs, or 
@@ -240,7 +254,6 @@ N: Duchene, Steven <sad@valinux.com>
 N: Efstratios, Efstathiadis <stratos@bnl.gov>
 N: Fischer, Michael S. <michael@auctionwatch.com>
 N: Greene, Stephen <sgreene@valinux.com>
-N: Henke, Nicholas <henken@central.cis.upenn.edu>
 N: Harris, Dale <rodmur@valinux.com>
 N: Hughes, Chad A. <chughes@coremetrics.com>
 N: Ilkowski, Bartosz <barbi@danforthcenter.org>
@@ -259,16 +272,10 @@ N: Redinger, Michael <Michael.Redinger@uibk.ac.at>
 N: Salzenberg, Chip <chip@valinux.com>
 N: Saft, Robert <zardoz@valinux.com>
 
-N: Ben Spade
-E: spade@radik.com
-
 N: Timothy Tenhave
 E: timothy.tenhave@baesystems.com
 
 N: Jerry Uanino
 E: Jerry.Uanino@usi.net
-
-N: David Weenink
-E: david.weenink@hum.uva.nl
 
 
