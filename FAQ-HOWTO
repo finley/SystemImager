@@ -1196,3 +1196,82 @@ Thanks for the help, Brian.
 [                    Rob Latham <rlatham@plogic.com>                  ]
 [      Paralogic Inc. - www.plogic.com - www.xtreme-machines.com      ]
 
+
+From: Brian Elliott Finley <brian@thefinleys.com>
+To: Todd Sargent <tsargent@pioneertechnology.com>, "Yan P. Yuan" <Yanping.Yuan@EMBL-Heidelberg.de>
+Cc: systemimager@systemimager.org
+Bcc: 
+Subject: Re: Downloading images via PXE
+Reply-To: 
+In-Reply-To: <3A78136D.A466CEA7@pioneertechnology.com>; from tsargent@pioneertechnology.com on Wed, Jan 31, 2001 at 07:34:23AM -0600
+X-TheFinleys: If you can read this header, you're following too close.
+
+I highly recommend avoiding PXE altogether, if at all possible.  It is
+very screwy and the actual implementations in NICs is inconsistent.
+
+If the machines you want to autoinstall are already running Linux, may I
+recommend copying "updateclient" to these machines and using the
+"updateclient -autoinstall" option.
+
+If you *must* use PXE, the only configuration that I have verified to
+work is using tftp-hpa (available from http://systemimager.org/).  When
+you install SystemImager, it should make the appropriate changes to your 
+inetd.conf file.  RedHat 7 uses xinetd, so you're on your own with PXE
+if you're using a RedHat 7 imageserver.
+
+Everything can be done from the one imageserver with this configuration.
+The dhcp server, tftp server, and imageserver *must* be on the same
+machine with this configuration.  makedhcpserver adds the necessary 
+information to tell the client what to do.
+
+The Process:
+1) client boots
+2) client NIC makes dhcp request
+3) dhcp server (imageserver) responds with an IP address and additional
+   tftpbooting info (see "# what to get to boot the autoinstallclient"
+   in the dhcpd.conf file)
+4) PXE client (if it works right) connects back to the dhcp server and
+   requests the filename specified ("/pxelinux.bin") by the dhcp server
+   via tftp
+5) client runs pxelinux.bin
+6) pxelinux.bin connects back to the same tftp server (imageserver) and
+   requests a configuration file.
+
+   <<<<<<<< excerpt from pxelinux.doc by H.P. Anvin >>>>>>>>>>>>>>>>>>
+   First, it will search for the config file using its own IP address
+   in upper case hexadecimal, e.g. 192.0.2.91 -> C000025B.
+ 
+   If that file is not found, it will remove one hex digit and try
+   again.  For 192.0.2.91, if C000025B is not found, it will try
+   C000025, C00002, C0000, C000, C00, C0, and C in that order.
+
+   Finally, it will try looking for a file named "default" (in lower 
+   case).
+   <<<<<<<< excerpt from pxelinux.doc by H.P. Anvin >>>>>>>>>>>>>>>>>>
+
+   SystemImager only installs the "default" file.
+  
+7) after retrieving the file "default", pxelinux.bin uses this file to
+   control how it boots.  default contains lilo like entries, including
+   the name of the kernel image (kernel) and initial ramdisk image 
+   (initrd.gz).
+8) pxelinux.bin then uses tftp to pull the kernel and initrd.gz files
+   from the same tftpserver.
+9) it pulls initrd.gz first, decompresses it, and copies it into a ram
+   disk on the client
+10) it then pulls the kernel and runs it
+11) Now the kernel takes over and you're running Linux.  The 
+    autoinstall client then does it's thing.  Part of it's thing is 
+    requesting an IP address via dhcp if it doesn't find a /local.cfg 
+    file on a floppy.  The kernel has no knowledge of the IP address 
+    assigned to the NIC for the PXE booting process, however, the 
+    dhcpserver should assign the same IP address both times (based on 
+    the lease it gave based on the NICs MAC address).
+
+
+Step 4 is where things usually break.  This is because of the way that
+different NICs implement PXE differently.  Even different versions of
+the same NIC can work very differntly.  At least differently enough to
+break things.
+
+Cheers, -Brian
