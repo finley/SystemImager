@@ -5,6 +5,9 @@
 #
 
 VA SystemImager-1.1 2000.05.26
+- updateclient -- Fixed a bug.  root --> / was not becoming the default 
+  if the -directory option was not used and updateclient was exiting 
+  quietly.  Just an if/then/else issue.
 - syslinux RPM -- Bug in the syslinux RPM prevented proper creation of 
   bootable CD image with makeautoinstallcd.  This is fixed as of 
   syslinux-1.48-2.i386.rpm.  (Note: this was not a bug in syslinux, just
