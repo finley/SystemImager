@@ -1539,7 +1539,7 @@ sub copy_boot_files_to_boot_media {
     #
     #   Copy standard files to mount dir
     #
-    my $cmd = "umount $mnt_dir";
+    my $cmd = "df $mnt_dir ; umount $mnt_dir";
     unless( copy($kernel, "$mnt_dir/kernel") ) {
         system($cmd);
         print "Couldn't copy $kernel to $mnt_dir!\n";
