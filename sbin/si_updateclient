@@ -472,7 +472,7 @@ SC_EOF
     while (<SYSTEMIMAGER_EXCLUDE>) {
       if (m|^\s*$directory|) {  # match non commented explicit path
         chomp;
-        s|^$directory||;
+        s|^$directory|/|;
         $cmdopts .= " --exclude=$_";
       }
     }
