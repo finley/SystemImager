@@ -84,7 +84,7 @@ write_variables() {
     echo "SSH_USER=$SSH_USER"	            	>> /tmp/variables.txt
     echo "SSH_DOWNLOAD_URL=$SSH_DOWNLOAD_URL"	>> /tmp/variables.txt
 
-    echo "MCAST_DIRECTORY_PORT=$MCAST_DIRECTORY_PORT"	    >> /tmp/variables.txt
+    echo "FLAMETHROWER_PORT=$FLAMETHROWER_PORT"	    >> /tmp/variables.txt
 }
 #
 ################################################################################
@@ -138,8 +138,8 @@ get_boel_binaries_tarball() {
         # If we're using SSH, get the boel_binaries from a web server.
         echo "SSH_DOWNLOAD_URL variable is set, so we will install over SSH!"
 
-        if [ ! -z $MCAST_DIRECTORY_PORT ]; then
-            echo "MCAST_DIRECTORY_PORT is also set, but I will be conservative and proceed with SSH."
+        if [ ! -z $FLAMETHROWER_PORT ]; then
+            echo "FLAMETHROWER_PORT is also set, but I will be conservative and proceed with SSH."
         fi
 
         # Remove possible trailing / from URL
@@ -150,11 +150,11 @@ get_boel_binaries_tarball() {
         echo "$CMD"
         $CMD || shellout
 
-    elif [ ! -z $MCAST_DIRECTORY_PORT ]; then
+    elif [ ! -z $FLAMETHROWER_PORT ]; then
         # Use multicast
-        echo "MCAST_DIRECTORY_PORT variable is set, so we will use multicast!"
-        echo "MCAST_DIRECTORY_PORT: $MCAST_DIRECTORY_PORT"
-        udp-receiver --pipe "tar -x -C /" --portbase ${MCAST_DIRECTORY_PORT} || shellout
+        echo "FLAMETHROWER_PORT variable is set, so we will use multicast!"
+        echo "FLAMETHROWER_PORT: $FLAMETHROWER_PORT"
+        udp-receiver --pipe "tar -x -C /" --portbase ${FLAMETHROWER_PORT} || shellout
 
     else
         # Use rsync
@@ -489,8 +489,8 @@ autodetect_hardware_and_load_modules() {
 #
 get_hostname_by_hosts_file() {
 
-    if [ ! -z $MCAST_DIRECTORY_PORT ]; then
-	    # MCAST_DIRECTORY_PORT is set, therfore we should have a hosts file in /scripts/
+    if [ ! -z $FLAMETHROWER_PORT ]; then
+	    # FLAMETHROWER_PORT is set, therfore we should have a hosts file in /scripts/
 		echo "Using hosts file pulled over by multicast."
     else
         # Try pulling hosts file from imageserver -BEF-
