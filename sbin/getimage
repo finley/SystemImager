@@ -9,8 +9,6 @@
 # This file is: getimage 
 #
 
-#don't overwrite master --switch
-
 # set system path for system() calls
 $ENV{PATH} = "/usr/sbin:/sbin:/usr/bin:/bin";
 
@@ -69,8 +67,13 @@ Options: (options can be presented in any order and may be abbreviated)
                            (other than errors). In this mode, no warning
                            will be given if the image already exists on
                            the server.
- --ip-assignment METHOD    Where METHOD can be static_dhcp, dynamic_dhcp, 
+ --ip-assignment METHOD    Where METHOD can be static_dhcp, dynamic_dhcp,
                            or static. (static_dhcp is recommended)
+ --update-script [YES|NO]  Update the \$image.master script?
+                           Defaults are:
+                           - NO if --quiet
+                           - Otherwise prompt for response if not
+                             specified
 
 Download from http://systemimager.org/
 Report bugs or suggestions to <systemimager-bugs\@systemimager.org>
@@ -80,15 +83,20 @@ EOF
 $master_client = "";
 $ip_assignment_method = "";
 $image = "";
+$update_script = "";
 
 GetOptions( 
+    "master-client=s" => \$master_client,
+    "image=s" => \$image,
+    "ip-assignment=s" => \$ip_assignment_method,
+    "update-script=s" => \$update_script,
     "help" => \$help,
     "version" => \$version,
-    "master-client=s" => \$master_client,
-    "ip-assignment=s" => \$ip_assignment_method,
-    "image=s" => \$image,
     "quiet" => \$quiet
 ) || die "$help_info";
+
+$ip_assignment_method = lc $ip_assignment_method;
+$update_script = lc $update_script;
 
 #if requested, print help information
 if($help) { die "$help_info"; }
@@ -242,7 +250,7 @@ close(RSYNCD_CONF);
 
 
 ### BEGIN Overwrite $image.master? ###
-if( (!$quiet) and (-e "/tftpboot/systemimager/$image.master") ) {
+if( (!$quiet) and (!$update_script) and (-e "/tftpboot/systemimager/$image.master") ) {
     system("clear");
     print "Update Autoinstall Script?\n";
     print "--------------------------\n\n";
@@ -251,10 +259,11 @@ if( (!$quiet) and (-e "/tftpboot/systemimager/$image.master") ) {
     print "(You will know if you have customized it.)\n\n";
     print "Would you like to update the autoinstall script for this image? ([y]/n): ";
 
-    #if not, then exit -- we're done
-    $continue = get_response('y');
-    if($continue eq "n") { exit 0; }
+    $update_script = get_response('yes');
 }
+
+# if we don't need to update the master script, then exit -- we're done
+unless($update_script eq "yes") { exit 0; }
 
 ### END Overwrite $image.master? ###
 
@@ -309,7 +318,7 @@ EOF
 }
 ### END IP Assignment Method ###
 
-# create a fresh /tftpboot/systemimager/$image.master
+### BEGIN create a fresh /tftpboot/systemimager/$image.master ###
 open (MASTER_SCRIPT, ">$master_script") || die "Can't open $master_script for writing\n";
 
 # add standard header stuff
@@ -356,23 +365,27 @@ EOF
 ### BEGIN get list of disks to partition ###
 # get list of hardware RAID devices
 $partition_dir="/etc/partitionschemes/rd";
-opendir(PARTITIONSCHEMES, "$imagedir$partition_dir") || die "Can't read the $imagedir$partition_dir directory";
-    # Skip anything that begins with a "."
-    push(my @hardware_raid_disks, grep( !/^\..*/, readdir(PARTITIONSCHEMES) ) );
+if(-d "$imagedir$partition_dir") {
+    opendir(PARTITIONSCHEMES, "$imagedir$partition_dir") || die "Can't read the $imagedir$partition_dir directory";
+        # Skip anything that begins with a "."
+        push(my @hardware_raid_disks, grep( !/^\..*/, readdir(PARTITIONSCHEMES) ) );
 
-    # add the rd/ bit to each device
-    for (@hardware_raid_disks) {
-      $_ =~ s/^/rd\//;
-      push(@disks);
-    }
-close(PARTITIONSCHEMES);
+        # add the rd/ bit to each device
+        for (@hardware_raid_disks) {
+          $_ =~ s/^/rd\//;
+          push(@disks);
+        }
+    close(PARTITIONSCHEMES);
+}
 
 # get list of IDE and SCSI devices
 $partition_dir="/etc/partitionschemes";
-opendir(PARTITIONSCHEMES, "$imagedir$partition_dir") || die "Can't read the $imagedir$partition_dir directory";
-    # Skip anything that begins with a "." or an "rd"
-    push(@disks, grep( !/^rd$/, grep( !/^\..*/, readdir(PARTITIONSCHEMES) ) ) );
-close(PARTITIONSCHEMES);
+if(-d "$imagedir$partition_dir") {
+    opendir(PARTITIONSCHEMES, "$imagedir$partition_dir") || die "Can't read the $imagedir$partition_dir directory";
+        # Skip anything that begins with a "." or an "rd"
+        push(@disks, grep( !/^rd$/, grep( !/^\..*/, readdir(PARTITIONSCHEMES) ) ) );
+    close(PARTITIONSCHEMES);
+}
 ### END get list of disks to partition ###
 
 
@@ -558,6 +571,7 @@ shutdown -h now
 EOF
 
 close(MASTER_SCRIPT);
+### END create a fresh /tftpboot/systemimager/$image.master ###
 
 # prompt to run makedhcpstatic after autoinstalling clients if using static_dhcp
 if((!$quiet) and ($ip_assignment_method eq "static_dhcp")) {
