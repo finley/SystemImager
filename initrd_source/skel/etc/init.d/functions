@@ -190,7 +190,7 @@ get_flamethrower_directory() {
 #
 flamethrower_client() {
 
-    local COMPLETED STARTED THIS_STAMP LAST_STAMP TAR_STDERR_LOG
+    local COMPLETED STARTED THIS_STAMP LAST_STAMP TAR_STDERR_LOG TAR_OPTS
 
     # validate
     if [ -z $PORTBASE ]; then
@@ -223,6 +223,13 @@ flamethrower_client() {
         UDP_RECEIVER_OPTIONS="$UDP_RECEIVER_OPTIONS --mcast-all-addr $MCAST_ALL_ADDR"
     fi
 
+    # Which tar opts should we use?  If our tar has --overwrite capability, use it.
+    #   Summary: busybox tar doesn't (boel_binaries and prior).
+    #            Debian patched gnu tar does (image and on).
+    #            We want this option enabled for the image to ensure proper directory
+    #            permissions. -BEF-
+    tar --help 2>&1 | grep -q overwrite && TAR_OPTS='--overwrite -xp' || TAR_OPTS='-x'
+
 
     # set vars
     [ -z $RETRY ] && RETRY=0
@@ -249,9 +256,9 @@ flamethrower_client() {
             echo
             echo "flamethrower_client(${MODULE_NAME})"
             echo '--------------------------------------------------------------------------------'
-            echo "udp-receiver $UDP_RECEIVER_OPTIONS 2>${UDP_RECEIVER_STDERR_LOG} | tar --overwrite -xp -C ${DIR} 2>$TAR_STDERR_LOG"
+            echo "udp-receiver $UDP_RECEIVER_OPTIONS 2>${UDP_RECEIVER_STDERR_LOG} | tar ${TAR_OPTS} -C ${DIR} 2>$TAR_STDERR_LOG"
             ( 
-                udp-receiver $UDP_RECEIVER_OPTIONS 2>${UDP_RECEIVER_STDERR_LOG} | tar --overwrite -xp -C ${DIR} 2>$TAR_STDERR_LOG
+                udp-receiver $UDP_RECEIVER_OPTIONS 2>${UDP_RECEIVER_STDERR_LOG} | tar ${TAR_OPTS} -C ${DIR} 2>$TAR_STDERR_LOG
                 echo "TAR_EXIT_STATUS=$?" > $TAR_EXIT_FILE
              ) &
         fi    
