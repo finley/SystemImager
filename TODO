@@ -172,9 +172,9 @@ o Notes regarding differences between v2 and v3 of dhcpd:
   <<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 o Modify etc/issue in inird.gz
 o getimage: add a -check-for-bad-blocks-during-install option
-
-
-
+o Rename make* to mk* & leave binaries of make* saying that make* is 
+  depricated.
+o Modify initrd to use tmpfs instead of a ramdisk for root (if possible).
 
 
 <<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -263,7 +263,15 @@ o commandlineize addclients
 
   Example:
   $ addclients -b www -d systemimager.org -f 7 -l 11 -image web_image_v1 -ip-range 192.168.1.7-192.168.1.11
-o add zero padding option: "-add-zeros ZEROS" (where ZEROS is the 
+o add zero padding option: 
+  o take input like normal:
+    "-first 001 -last 099"
+  o and test to see if leading zeros exist
+  o if leading zero exists for starting point, make sure that number of
+    digits are the same in 
+    o if number of digits
+
+"-add-zeros ZEROS" (where ZEROS is the 
   number of zeros to pad with).  Accept either a number of actual
   zeros as input "000" or the number of zeros as input "3".  Simply
   test to see:
@@ -273,9 +281,15 @@ o add zero padding option: "-add-zeros ZEROS" (where ZEROS is the
 
 Dann Frazier <dannf@ldl.fc.hp.com>
 ------------------------------------
-x replace install scripts with Makefile(s)
-  - incorporated in the source package (tarball) on http://dannf.org
-  - also builds kernel/initrd.gz from source
+o Modify Makefile for initrd:
+  o create tarball of modules and binaries (binaries.tar.gz)
+    o run mklibs.sh to create libraries for initrd
+      (currently doing this)
+    o make sure that gzip and tar are included in the mklibs.sh for the initrd
+    o also run mklibs.sh against binaries on initrd and other binaries 
+      to create libraries for tarball.
+  o place gzip, tar, and binaries.tar.gz with other tftp stuff
+  o rcS will *always* pull gzip, tar, and binaries.tar.gz
 o PXE booting ideas...
 with pxe, you can specify what files to serve to a specific hardware
 address.
