@@ -26,18 +26,16 @@
 #   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 #
-# Errors when running make:
+# ERRORS when running make:
 #   If you encounter errors when running "make", because make couldn't find
 #   certain things that it needs, and you are fortunate enough to be building
 #   on a Debian system, you can issue the following command to ensure that
 #   all of the proper tools are installed.
 #
-#   On i386: "apt-get install  gcc make patch libc6-dev libpopt-dev wget less \
-#             bzip2 sgmltools-lite jadetex docbook-to-man uuid-dev ash rsync \
-#             snarf host"
-#   On ia64: "apt-get install  gcc make patch libc6.1-dev libc6.1-pic \
-#             libpopt-dev wget less bzip2 sgmltools-lite jadetex \
-#             docbook-to-man uuid-dev ash rsync snarf host"
+#   On i386: "apt-get install  ash autoconf bzip2 docbook-utils gcc host jadetex less libpopt-dev libreadline4-dev libtool make mkcramfs patch rsync sgmltools-lite snarf uuid-dev wget  libc6-dev"
+#
+#   On ia64: "apt-get install  ash autoconf bzip2 docbook-utils gcc host jadetex less libpopt-dev libreadline4-dev libtool make mkcramfs patch rsync sgmltools-lite snarf uuid-dev wget  libc6.1-dev libc6.1-pic"
+#
 #
 # SystemImager file location standards:
 #   o images will be stored in: /var/lib/systemimager/images/
@@ -46,9 +44,9 @@
 #
 #   o web gui pages:            /usr/share/systemimager/web-gui/
 #
-#   o autoinstall kernels:      /usr/share/systemimager/boot/`arch`/
-#   o initial ram disks:        /usr/share/systemimager/boot/`arch`/
-#   o autoinstall binaries:     /usr/share/systemimager/boot/`arch`/
+#   o kernels:                  /usr/share/systemimager/boot/`arch`/flavor/
+#   o initrd.img:               /usr/share/systemimager/boot/`arch`/flavor/
+#   o boel_binaries.tar.gz:     /usr/share/systemimager/boot/`arch`/flavor/
 #
 #   o perl libraries:           /usr/lib/systemimager/perl/
 #
@@ -63,19 +61,21 @@
 #   o configuration files:      /etc/systemimager/
 #   o rsyncd.conf:              /etc/systemimager/rsyncd.conf
 #   o rsyncd init script:       /etc/init.d/systemimager
+#   o netbootmond init script:  /etc/init.d/netbootmond
 #   
 #   o tftp files will be copied to the appropriate destination (as determined
 #     by the local SysAdmin when running "mkbootserver".
 #
-#   o user visible binaries:    /usr/local/bin (default)
+#   o user visible binaries:    /usr/bin
 #     (lsimage, mkautoinstalldiskette, mkautoinstallcd)
-#   o sysadmin binaries:        /usr/local/sbin (default)
+#   o sysadmin binaries:        /usr/sbin
 #     (all other binaries)
 #
 # Standards for pre-defined rsync modules:
-#   o scripts
 #   o boot (directory that holds architecture specific directories with
 #           boot files for clients)
+#   o overrides
+#   o scripts
 #
 # To include the ctcs test suite, and associated files, do a 'make WITH_CTCS=1 all'
 #
