@@ -12,9 +12,6 @@ $version_number="0.24beta";
 # declare modules
 use Getopt::Long;
 
-# if not run as root, this script will surely fail
-unless($< == 0) { die "Must be run as root!\n"; }
-
 # set version information
 $version_info = <<"EOF";
 updateclient (part of SystemImager) version $version_number
@@ -31,17 +28,17 @@ Usage: updateclient [OPTION]... --imageserver HOSTNAME --image IMAGENAME
   or   updateclient --imageserver HOSTNAME --listing
 
 Options: (options can be presented in any order)
- --help                    duh
- --version                 display version and copyright information
- --imageserver HOSTNAME    hostname or IP address of the imageserver
- --image IMAGENAME         image from which the client should be updated
- --directory DIRECTORY     absolute path of directory to be updated
- --listing                 list avaliable images on imageserver
+ --help                    Display this output.
+ --version                 Display version and copyright information.
+ --imageserver HOSTNAME    Hostname or IP address of the imageserver.
+ --image IMAGENAME         Image from which the client should be updated.
+ --directory DIRECTORY     Absolute path of directory to be updated.
+ --listing                 List avaliable images on imageserver.
                            (supercedes and ignores all options 
                             other than --imageserver)
- --nolilo                  don't run lilo after update completes
+ --nolilo                  Don't run lilo after update completes.
                            (lilo is always run unless specified)
- --reboot                  reboot client after update completes
+ --reboot                  Reboot client after update completes.
 
 Download from http://systemimager.org/
 Report bugs or suggestions to <systemimager-bugs\@systemimager.org>
@@ -64,7 +61,16 @@ if($help) { die qq($help_info); }
 # if requested, print version and copyright information
 if($version) { die qq($version_info); }
 
+# be sure $imageserver name doesn't start with a hyphen
+$_ = $imageserver;
+if(/^-/) { die qq(Imageserver name can't start with a hyphen.\n\n$help_info); }
+
+# be sure $image doesn't start with a hyphen
+$_ = $image;
+if(/^-/) { die qq(Image name can't start with a hyphen.\n\n$help_info); }
+
 # if usage is bad, print help information
+#if($image /
 unless( ($imageserver and $image) or ($imageserver and $listing) ) { 
   die qq($help_info);
 }
@@ -72,15 +78,20 @@ unless( ($imageserver and $image) or ($imageserver and $listing) ) {
 # if listing, get listing
 if($listing) {
   print qq(Available image(s):\n);
-  $command = qq(rsync -v $imageserver) . q(::) . q( |grep -vw etc|grep -vw installstuff);
+  $command = qq(rsync -v $imageserver) . q(::);
   system($command);
+
+# if not run as root, this script will surely fail
+} elsif($< != 0) { 
+  die "Must be run as root!\n";
+
+# go ahead and do that thing you do
 } else {
   # set directory to default if not specified on command line
   unless($directory) { $directory = "/"; }
 
   # pad directory with a trailing / in case user didn't supply one (extras don't hurt)
   if($directory) { $directory = $directory . "/"; }
-  
 
   # start with base command
   $command = "rsync -avz";
@@ -116,7 +127,7 @@ if($listing) {
   # lilo
   unless($nolilo) { 
     print qq(running lilo...\n);
-    system("/sbin/lilo; sync; sync; sync");
+    system("/sbin/lilo");
   }
 
   # reboot
