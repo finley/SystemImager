@@ -1,6 +1,7 @@
 ifdef WITH_CTCS
 	CTCS_VERSION := 1.3.0pre4
 	CTCS_TARBALL := ctcs-$(CTCS_VERSION).tar.gz
+	CTCS_TARBALL_TARGET := $(SRC_DIR)/$(CTCS_TARBALL)
 	CTCS_DIR := ctcs-$(CTCS_VERSION)
 	CTCS_BINARY := $(SRC_DIR)/$(CTCS_DIR)/newburn
 	CTCS_URL := http://unc.dl.sourceforge.net/sourceforge/va-ctcs/$(CTCS_TARBALL)
@@ -138,9 +139,9 @@ ifdef WITH_CTCS
 						/sbin/fdisk \
 						/bin/stty 
 
-endif
+	ALL_SOURCE += $(SRC_DIR)/$(CTCS_TARBALL)
 
-ALL_SOURCE += $(SRC_DIR)/$(CTCS_TARBALL)
+endif
 
 PHONY += ctcs
 ctcs:	$(CTCS_BINARY)
@@ -149,7 +150,7 @@ $(CTCS_BINARY):	$(SRC_DIR)/$(CTCS_TARBALL) $(CTCS_PATCHES)
 	cd $(SRC_DIR)/$(CTCS_DIR) && cat $(CTCS_PATCHES) < /dev/null | patch -p1
 	touch $(CTCS_BINARY)
 
-$(SRC_DIR)/$(CTCS_TARBALL):
+$(CTCS_TARBALL_TARGET):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
 	$(GETSOURCE) $(CTCS_URL) $(SRC_DIR)
 
