@@ -161,13 +161,14 @@
 	    Where <replaceable>FILE</replaceable> is the SSH2 id_dsa or id_rsa 
         private key of the user account that the autoinstall client will 
         use to connect to the imageserver.  It is usually found in the
-	    <filename>~/.ssh</filename> directory.
+	    user's <filename>.ssh</filename> directory.
 	  </para>
 	  <para>
 	    To use this private key, you must also add the corresponding public
 	    key to this user's <filename>.ssh/authorized_keys</filename> file
 	    on the imageserver.  The public key is usually called
-	    <filename>.ssh/identity.pub</filename>.  The
+	    <filename>.ssh/id_rsa.pub</filename> or
+	    <filename>.ssh/id_dsa.pub</filename>.  The
 	    <filename>.ssh/authorized_keys</filename> must be readable only by
 	    this user.  (<command>chmod 600 .ssh/authorized_keys</command>)
 	  </para>
