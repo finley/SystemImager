@@ -9,6 +9,7 @@
 OPENSSH_VERSION         := 3.8.1p1
 OPENSSH_DIR             := openssh-$(OPENSSH_VERSION)
 OPENSSH_TARBALL         := openssh-$(OPENSSH_VERSION).tar.gz
+OPENSSH_MD5SUM          := 1dbfd40ae683f822ae917eebf171ca42
 OPENSSH_TARBALL_TARGET  := $(SRC_DIR)/$(OPENSSH_TARBALL)
 OPENSSH_URL             := http://alpaca.mcs.anl.gov/openssh/portable/$(OPENSSH_TARBALL)
 OPENSSH_BINARIES        := $(SRC_DIR)/$(OPENSSH_DIR)/ssh \
@@ -41,14 +42,7 @@ $(OPENSSH_BINARIES):	$(SRC_DIR)/openssh_verify.stamp
 	$(MAKE) -C $(SRC_DIR)/$(OPENSSH_DIR)
 
 $(SRC_DIR)/openssh_verify.stamp:	$(OPENSSH_TARBALL_TARGET)
-	#
-	# If the following command fails, you may need to do a 
-	#
-	#   gpg --keyserver gpg.dtype.org --recv-keys <KEYID>
-	#
-	# with the "DSA key ID" listed below.
-	#
-	gpg --verify $(SRC_DIR)/$(OPENSSH_TARBALL).sig $(SRC_DIR)/$(OPENSSH_TARBALL)
+	[ "$(shell md5sum $(OPENSSH_TARBALL_TARGET) | cut -d' ' -f1)" == "$(OPENSSH_MD5SUM)" ]
 	touch $(SRC_DIR)/openssh_verify.stamp
 
 $(OPENSSH_TARBALL_TARGET):
