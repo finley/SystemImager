@@ -129,12 +129,14 @@ foreach $mac (@macs) {
 }
 close(DHCPDCONF);
 
-if( -e "/etc/rc.d/init.d/dhcpd" ){
-  print "\nWould you like me to restart your DHCP server software now? (y/N): ";
-  $continue=get_response();
-  $continue=lc($continue);
-  if( $continue eq "y" ){
-    $command="/etc/rc.d/init.d/dhcpd restart";
-    system($command);
-  }
-}
+# SIGHUP dhcpd.  Differnent distro's call the binary different things...
+# Only one of these will actually be running on your system (unless you've done
+# something *really* funky).
+for DAEMON_NAME in dhcpd-2.0.x dhcpd-2.2.x dhcpd
+do
+  PID_OF_DHCPD=`pidof $DAEMON_NAME`
+  echo PID_OF_DHCPD=`pidof $DAEMON_NAME`
+  echo $DAEMON_NAME: $PID_OF_DHCPD
+  #[ ! -z $PID_OF_DHCPD ] && kill -HUP $PID_OF_DHCPD
+done
+
