@@ -55,19 +55,17 @@ MKCRAMFS = $(shell which mkcramfs || which mkfs.cramfs || \
 # inodes needed on the initial RAM disk -BEF-
 
 ### BEGIN uclibc decisions ###
-# Not all architectures use uclibc. -BEF-
+# Only use UCLIBC for i386 -BEF-
 ifeq ($(ARCH),i386)
 	UCLIBC_ARCH_NAME := i386
 endif
-ifeq ($(ARCH),ppc)
-	UCLIBC_ARCH_NAME := powerpc
-endif
+
 
 ifdef UCLIBC_ARCH_NAME
 	UCLIBC_PATH = $(UCLIBC_DEV)/bin
 	INITRD_BUILD_PATH = $(UCLIBC_PATH):$(PATH)
-	UCLIBC_TARGET := $(INITRD_SRC_DIR)/uclibc_dev-stamp \
-		$(INITRD_SRC_DIR)/uclibc_runtime-stamp
+    UCLIBC_TARGET := $(INITRD_SRC_DIR)/uclibc_dev-stamp \
+        $(INITRD_SRC_DIR)/uclibc_runtime-stamp
 else
 	INITRD_BUILD_PATH = $(PATH)
 endif
@@ -79,16 +77,21 @@ include $(INITRD_DIR)/make.d/*.rul
 
 build_dir:	$(INITRD_DIR)/build_dir-stamp
 
-$(INITRD_DIR)/build_dir-stamp:	$(SKEL_FILES) $(BUSYBOX_BINARY) \
-				$(DEVFSD_BINARY) $(DHCLIENT_BINARY) \
-				$(RSYNC_BINARY) $(UCLIBC_TARGET) \
-				$(INSMOD_BINARY) $(MODPROBE_BINARY) \
-				$(UDPCAST_BINARY)
+$(INITRD_DIR)/build_dir-stamp:	$(SKEL_FILES) \
+								$(BUSYBOX_BINARY) \
+								$(DEVFSD_BINARY) \
+								$(DHCLIENT_BINARY) \
+								$(RSYNC_BINARY) \
+								$(UCLIBC_TARGET) \
+								$(INSMOD_BINARY) \
+								$(MODPROBE_BINARY) \
+								$(UDPCAST_BINARY)
 	# Create directory structure.
 	rm -fr $(INITRD_BUILD_DIR)
 	mkdir $(INITRD_BUILD_DIR)
 	cd $(INITRD_BUILD_DIR) && \
 	  mkdir -m 755 bin dev etc lib proc root sbin usr var
+	test ! -d /lib64 || mkdir -m 755 -p $(INITRD_BUILD_DIR)/lib64
 	cd $(INITRD_BUILD_DIR) && \
 	  mkdir -m 755 usr/bin usr/sbin etc/init.d var/run
 	cd $(INITRD_BUILD_DIR) && mkdir -m 1777 tmp
@@ -118,12 +121,12 @@ ifdef UCLIBC_TARGET
 else
 	# If we're not using uclibc, then copy over the 
 	# standard libs instead. -BEF-
+	cp -a /lib/ld*   $(INITRD_BUILD_DIR)/lib
+	test ! -d /lib64 || cp -a /lib64/ld* $(INITRD_BUILD_DIR)/lib64
 	( cd $(INITRD_BUILD_DIR) && \
 	  $(PYTHON) $(INITRD_DIR)/mklibs -L /lib64:/usr/lib64 \
 	  -v -d lib ./*bin/* )
 endif
-	## hack for x86_64
-	cd $(INITRD_BUILD_DIR) && ln -s lib lib64
 
 	# Strip 'em. -BEF-
 	strip $(INITRD_BUILD_DIR)/bin/*
