@@ -115,6 +115,20 @@
   <qandaentry>
    <question>
     <para>
+     I've got netbootmond running, but it isn't working.  Why?
+    </para>
+   </question>
+   <answer>
+    <para>
+     In order for netbootmond to do it's thang, you must have the rsync
+     daemon running: "/etc/init.d/systemimager-server-rsyncd start".
+    </para>
+   </answer>
+  </qandaentry>
+     
+  <qandaentry>
+   <question>
+    <para>
      How do I configure my server to net boot ia64 clients?
     </para>
    </question>
