@@ -391,6 +391,7 @@ ifdef WITH_SSH
 	mkdir -m 755 -p $(BOEL_BINARIES_DIR)/etc/ssh
 	install -m 644 $(OPENSSH_CONF_FILES) $(BOEL_BINARIES_DIR)/etc/ssh
 	install -m 755 --strip $(OPENSSH_BINARIES) $(BOEL_BINARIES_DIR)/sbin/
+	tar -cv $(OPENSSH_OTHER_FILES) | tar -C $(BOEL_BINARIES_DIR) -xv
 endif
 	#
 	# Put libraries in the boel_binaries_tarball...
