@@ -121,9 +121,13 @@ endif
 	$(SI_INSTALL) -m 755 $(INITRD_DIR)/skel/etc/init.d/rcS \
 	  $(INITRD_BUILD_DIR)/etc/init.d/rcS
 
+ifeq ($(ARCH),i386)
 	# Put the e1000 driver into the my_modules directory and append a standard
 	# insmod command to the INSMOD_COMMANDS file if it's not already there. -BEF-
 	cp -a $(E1000_BINARY) $(INITRD_DIR)/my_modules/
+	egrep -q '^insmod e1000.o' initrd_source/my_modules/INSMOD_COMMANDS || \
+		echo "insmod e1000.o" >> initrd_source/my_modules/INSMOD_COMMANDS
+endif
 
 	# Copy over modules required prior to retrieving the autoinstall
 	# binaries tarball. -BEF-

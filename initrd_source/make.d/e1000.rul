@@ -1,10 +1,13 @@
 E1000_VERSION := 4.3.15
 E1000_DIR := e1000-$(E1000_VERSION)
-E1000_TARBALL := e1000-$(E1000_VERSION).tar.gz
-E1000_URL := http://aiedownload.intel.com/df-support/2897/eng/$(E1000_TARBALL)
-E1000_BINARY := $(INITRD_SRC_DIR)/$(E1000_DIR)/src/e1000.o
 
-ALL_SOURCE += $(INITRD_SRC_DIR)/$(E1000_TARBALL)
+ifeq ($(ARCH),i386)
+	E1000_TARBALL := e1000-$(E1000_VERSION).tar.gz
+	E1000_URL := http://aiedownload.intel.com/df-support/2897/eng/$(E1000_TARBALL)
+	E1000_BINARY := $(INITRD_SRC_DIR)/$(E1000_DIR)/src/e1000.o
+
+	ALL_SOURCE += $(INITRD_SRC_DIR)/$(E1000_TARBALL)
+endif
 
 PHONY += e1000
 e1000:	$(E1000_BINARY)
