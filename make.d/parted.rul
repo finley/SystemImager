@@ -16,8 +16,8 @@ PHONY += parted
 parted:	$(PARTED_BINARY)
 
 $(PARTED_BINARY):	$(SRC_DIR)/$(PARTED_TARBALL) $(PARTED_PATCHES)
-	[ -d $(SRC_DIR)/$(PARTED_DIR) ] || \
-	  ( cd $(SRC_DIR) && tar -xvzf $(PARTED_TARBALL) )
+	rm -rf $(SRC_DIR)/$(PARTED_DIR)
+	cd $(SRC_DIR) && tar -xvzf $(PARTED_TARBALL)
 	cd $(SRC_DIR)/$(PARTED_DIR) && \
 	  cat $(PARTED_PATCHES) < /dev/null | patch -p1
 	( cd $(SRC_DIR)/$(PARTED_DIR) && \
