@@ -1,10 +1,12 @@
 #!/bin/sh
-
 #
-# part of:
-# "SystemImager" - Copyright (C) 1999 Brian Elliott Finley <brian@systemimager.org>
+# "SystemImager"
+#
+#  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
+#
+#    $Id$
 #
 
-[ "x$1" = "x" ] && halt && exit 0
+[ "x$1" = "x" ] && poweroff && exit 0
 [ "$1" = "-r" ] && reboot && exit 0
 exit 1

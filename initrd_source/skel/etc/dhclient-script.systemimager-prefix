@@ -1,12 +1,11 @@
 #!/bin/sh
-# dhclient-script for Linux. Dan Halbert, March, 1997.
-# Updated for Linux 2.[12] by Brian J. Murrell, January 1999.
-# No guarantees about this. I'm a novice at the details of Linux
-# networking.
 #
-# Modified for SystemImager by <brian@systemimager.org> 2000.11.29
+# "SystemImager"
 #
-
+#  Copyright (C) 2000 Brian Elliott Finley <brian@thefinleys.com>
+#
+#    $Id$
+#
 ### BEGIN SystemImager stuff part 0 ###
 echo "# This file was generated  by /etc/dhclient-start" > /tmp/dhcp_info.$interface
 echo "HOSTNAME=$new_host_name" >> /tmp/dhcp_info.$interface
@@ -22,5 +21,3 @@ echo "IMAGESERVER=$new_option_100" >> /tmp/dhcp_info.$interface
 echo "SSH_DOWNLOAD_URL=$new_option_208" >> /tmp/dhcp_info.$interface
 echo "DHCPSIADDR=$new_dhcp_server_identifier" >> /tmp/dhcp_info.$interface
 ### END SystemImager stuff part 0 ###
-
-
