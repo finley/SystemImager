@@ -1,10 +1,9 @@
 #
 # "SystemImager" 
 #
-#  Copyright (C) 1999-2002 Brian Elliott Finley 
-#                          <brian.finley@baldguysoftware.com>
-#  Copyright (C) 2002 Bald Guy Software 
-#                     <brian.finley@baldguysoftware.com>
+#  Copyright (C) 1999-2002 Brian Elliott Finley <bef@bgsw.net>
+#  Copyright (C) 2002 Bald Guy Software
+#                     Brian Elliott Finley <bef@bgsw.net>
 #
 #   $Id$
 #
@@ -1591,17 +1590,14 @@ sub copy_boot_files_to_boot_media {
     #
     if ($arch eq "ia64") {
 
-        my $elilo = "";
-        my @elilo_locations = qw(/usr/lib/elilo/elilo.efi /boot/efi/elilo.efi /tftpboot/elilo.efi);
-        foreach my $possible (@elilo_locations) {
-            if(-e $possible) {
-                $elilo = $possible;
-                last;
-            }
-        }
+        use SystemImager::Common.pm;
 
-        if($elilo) {
-            copy($elilo,  "$mnt_dir/elilo.efi") or croak("Couldn't copy $elilo to $mnt_dir/elilo.efi $!");
+        my $efi_dir = SystemImager::Common.pm->where_is_my_efi_dir();
+
+        my $elilo_efi = "$efi_dir/elilo.efi";
+
+        if (-f $elilo_efi) {
+            copy($elilo_efi,  "$mnt_dir/elilo.efi") or croak("Couldn't copy $elilo_efi to $mnt_dir/elilo.efi $!");
         } else {
             print "\nCouldn't find elilo.efi executable in any of the following locations:\n";
             foreach my $possible (@elilo_locations) { print "    $possible\n"; }
