@@ -925,7 +925,7 @@ sub save_filesystem_information {
                     
                         # Get the fat size (12, 16, or 32). -BEF-
                         my $cmd = "export MTOOLSRC=$file2 && minfo c:";
-                        open (FH_IN2, "$cmd|") or croak("Couldn't execute $cmd to read the output.");
+                        open (FH_IN2, "$cmd|") or die("Couldn't execute $cmd to read the output.\nBe sure mtools is installed!");
                         while (<FH_IN2>) {
                             if (/disk type=/) {
                                 my ($junk, $fat_size) = split(/\"/);
