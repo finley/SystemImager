@@ -34,6 +34,7 @@
 use lib "USR_PREFIX/lib/systemimager/perl";
 use Carp;
 use POSIX;
+use strict;
 use Socket;
 use AppConfig;
 use File::Copy;
@@ -43,13 +44,13 @@ use SystemImager::Common;
 use vars qw($config $VERSION);
 
 # set version number
-$VERSION = "SYSTEMIMAGER_VERSION_STRING";
+my $VERSION = "SYSTEMIMAGER_VERSION_STRING";
 
 # Make sure proper things are in the path.
 $ENV{PATH} = "/usr/local/sbin:/usr/sbin:/sbin:/usr/local/bin:/usr/bin:/bin";
 
 # Version details
-$version_info = <<"EOF";
+my $version_info = <<"EOF";
 updateclient (part of SystemImager) v$VERSION
 
 Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley\@baldguysoftware.com>
@@ -59,7 +60,7 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 EOF
 
 # Help stuff
-$help_info = $version_info . <<"EOF";
+my $help_info = $version_info . <<"EOF";
 
 Usage: updateclient [OPTION]... --server HOSTNAME --image IMAGENAME
 
@@ -141,22 +142,29 @@ if(-e "/etc/systemimager/client.conf") {
 my $exclude_file = $config->exclude_file;
 my $port = $config->rsync_port; 
 
-GetOptions( "listing" => \$listing,
-    "configure-from=s" => \$DEVICE,
-    "help" => \$help,
-    "version" => \$version,
-    "reboot" => \$reboot,
-    "no-lilo" => \$no_bootloader,     # XXX deprecated, but backwards
-                                      # compatible (remove in 3.2.x)
-    "no-bootloader" => \$no_bootloader,
-    "autoinstall" => \$autoinstall,
-    "dry-run" => \$dry_run,
-    "ssh-user=s" => \$ssh_user,
-    "flavor=s" => \$flavor,
-    "server=s" => \$server,
-    "image=s" => \$image,
-    "directory=s" => \$directory,
-    "log=s" => \$log,
+# Set some vars.
+my $directory;
+my $no_bootloader;
+my $DEVICE;
+
+GetOptions(
+    "listing"           => \my $listing,
+    "config-from=s"     => \$DEVICE,	# alias to -configure-from
+    "configure-from=s"  => \$DEVICE,
+    "help"              => \my $help,
+    "version"           => \my $version,
+    "reboot"            => \my $reboot,
+    "no-lilo"           => \$no_bootloader,     # XXX Deprecated, but backwards
+                                                #     compatible -- remove in 3.2.0.
+    "no-bootloader"     => \$no_bootloader,
+    "autoinstall"       => \my $autoinstall,
+    "dry-run"           => \my $dry_run,
+    "ssh-user=s"        => \my $ssh_user,
+    "flavor=s"          => \my $flavor,
+    "server=s"          => \my $server,
+    "image=s"           => \my $image,
+    "directory=s"       => \$directory,
+    "log=s"             => \my $log,
 ) or die qq($help_info);
 
 # if requested, print version information
@@ -179,41 +187,49 @@ if($listing) {
 
 # if not run as root, updateclient will surely fail
 unless($< == 0) {
-  print "FATAL: Must be run as root!\n";
-  exit 1;
+    print "FATAL: Must be run as root!\n";
+    exit 1;
 }
 
 
 ### Now we do option validation testing ###
 # -flavor assumes -autoinstall
-if ($flavor) { $autoinstall = 1; }
+if ($flavor) { 
+    $autoinstall = 1;
+}
 
 # -server and -image must be defined
 #  or -server and -autoinstall
 unless(($server and $image) or ($server and $autoinstall)) {
-  print "You must specify -server and either -image or -autoinstall.\n";
-  get_help();
-  exit(1);
+    print "You must specify -server and either -image or -autoinstall.\n";
+    get_help();
+    exit(1);
 }
 
-if($image and $autoinstall) {
-  print "-image and -autoinstall are not compatible options.!\n\n";
-  get_help();
-  exit(1);
+if ($image and $autoinstall) {
+    print "-image and -autoinstall are not compatible options.!\n\n";
+    get_help();
+    exit(1);
+}
+
+if ($DEVICE and ! $autoinstall) {
+    print "-configure-from can only be used with -autoinstall.\n";
+    get_help();
+    exit(1);
 }
 
 # IMAGENAME must not start with a hyphen
 if (($image) and ($image =~ /^-/)) {
-  print "IMAGENAME (specified with -image) can't start with a hyphen.\n";
-  get_help();
-  exit(1);
+    print "IMAGENAME (specified with -image) can't start with a hyphen.\n";
+    get_help();
+    exit(1);
 }
 
 # IMAGENAME must not start with a hyphen
 if ($server =~ /^-/) {
-  print "HOSTNAME (specified with -server) can't start with a hyphen.\n";
-  get_help();
-  exit(1);
+    print "HOSTNAME (specified with -server) can't start with a hyphen.\n";
+    get_help();
+    exit(1);
 }
 
 # -autoinstall and -no-bootloader conflict
@@ -232,9 +248,6 @@ if($dry_run and $autoinstall) {
 
 # -dry-run implies -no-bootloader
 if($dry_run) { $no_bootloader="true"; }
-
-# DANGER WILL ROBINSON -- I don't know quite how the ssh stuff works, so
-# this is untouched from SI 1.5.  It should still work.
 
 # If we're using SSH, go ahead and establish port forwarding
 if($ssh_user) {
@@ -313,6 +326,7 @@ if ($autoinstall) {
     }
 
     #     If ia64          and  this is *not* a Debian based system, find bootdir using function. -BEF-
+    my $bootdir;
     if ( ($ARCH eq "ia64") and (( ! -x "/usr/sbin/elilo") and (! -e "/etc/elilo.conf")) ) {
         $bootdir = SystemImager::Common->where_is_my_efi_dir();
     } else {
@@ -358,8 +372,13 @@ if ($autoinstall) {
 
     # Elilo
     if ($boot_loader eq "Elilo") {
+
         # Let's just get what's currently specified. -BEF-
-        @eliloconf_locations = ("$bootdir/elilo.conf", "/etc/elilo.conf");
+        my @eliloconf_locations = (
+		"$bootdir/elilo.conf",
+	        "/etc/elilo.conf"
+        );
+
         foreach my $file (@eliloconf_locations) {
             if (-f $file) {
                 open(FILE, "<$file") or croak("Couldn't open $file for reading!");
@@ -540,7 +559,7 @@ sub version {
 }
 
 sub get_help {
-    print qq( Try "updateclient -help" for more information.\n);
+    print qq(  Try "updateclient -help" for more information.\n);
 }
 
 sub usage {
@@ -651,13 +670,13 @@ sub create_local_cfg {
 
     # if resolv.conf didn't work, try dnsdomainname
     unless($netvars{DOMAINNAME}) {
-      $cmd = "dnsdomainname 2>&1";
-      $netvars{DOMAINNAME} = qx/$cmd/;
-      chomp $netvars{DOMAINNAME};
-      $_ = $netvars{DOMAINNAME};
-      if(/s+/) {
-        $netvars{DOMAINNAME}="";
-      }
+        my $cmd = "dnsdomainname 2>&1";
+        $netvars{DOMAINNAME} = qx/$cmd/;
+        chomp $netvars{DOMAINNAME};
+        $_ = $netvars{DOMAINNAME};
+        if(/s+/) {
+            $netvars{DOMAINNAME}="";
+        }
     }
     ### END get domainname ###
 
