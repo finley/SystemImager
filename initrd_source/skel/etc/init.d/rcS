@@ -21,9 +21,10 @@
 #   Variables
 #
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/tmp
-
 SCRIPTS=scripts
-
+SCRIPTS_DIR=/scripts
+FLAMETHROWER_DIR=/var/lib/systemimager/flamethrower
+BOEL_BINARIES_DIR=/tmp/boel_binaries
 VERSION="SYSTEMIMAGER_VERSION_STRING"
 FLAVOR="SYSTEMIMAGER_FLAVOR_STRING"
 
@@ -60,10 +61,14 @@ adjust_arch() {
 
 
 write_variables() {
+
+    echo
+    echo write_variables
+
     # pass all variables set here on to the hostname.sh script
     rm -f /tmp/variables.txt
   
-    echo "HOSTNAME=$HOSTNAME"                   >> /tmp/variables.txt
+    echo "HOSTNAME=$HOSTNAME"                   >> /tmp/variables.txt || shellout
     echo "DOMAINNAME=$DOMAINNAME"               >> /tmp/variables.txt
   
     echo "DEVICE=$DEVICE"                       >> /tmp/variables.txt
@@ -84,7 +89,7 @@ write_variables() {
     echo "SSH_USER=$SSH_USER"	            	>> /tmp/variables.txt
     echo "SSH_DOWNLOAD_URL=$SSH_DOWNLOAD_URL"	>> /tmp/variables.txt
 
-    echo "FLAMETHROWER_PORT=$FLAMETHROWER_PORT"	>> /tmp/variables.txt
+    echo "FLAMETHROWER_DIRECTORY_PORTBASE=$FLAMETHROWER_DIRECTORY_PORTBASE"	>> /tmp/variables.txt
 }
 #
 ################################################################################
@@ -128,45 +133,114 @@ count_loop() {
 #
 ################################################################################
 #
+# Usage: get_flamethrower_directory
+#
+get_flamethrower_directory() {
+    echo
+    echo Using multicast...
+    echo get_flamethrower_directory
+
+    mkdir -p ${FLAMETHROWER_DIR}
+    echo udp-receiver --portbase ${FLAMETHROWER_DIRECTORY_PORTBASE} --pipe \"tar -C ${FLAMETHROWER_DIR} -x\"
+         udp-receiver --portbase ${FLAMETHROWER_DIRECTORY_PORTBASE} --pipe "tar -C ${FLAMETHROWER_DIR} -x"
+    sleep 2
+
+    if [ $? != 0 ]; then
+        shellout
+    fi
+
+    echo
+}
+#
+################################################################################
+#
+# Usage: get_scripts_directory
+#
+get_scripts_directory() {
+    echo
+    echo get_scripts_directory
+
+    MODULE_NAME="autoinstall_scripts"
+    get_udp_receiver_options
+
+    mkdir -p ${SCRIPTS_DIR}
+    echo udp-receiver $UDP_RECEIVER_OPTIONS --pipe \"tar -C ${SCRIPTS_DIR} -x\"
+         udp-receiver $UDP_RECEIVER_OPTIONS --pipe "tar -C ${SCRIPTS_DIR} -x"
+    sleep 2
+
+    if [ $? != 0 ]; then
+        shellout
+    fi
+
+    echo
+}
+#
+################################################################################
+#
+# Usage: get_udp_receiver_options ; echo $UDP_RECEIVER_OPTIONS
+#
+get_udp_receiver_options() {
+
+    . ${FLAMETHROWER_DIR}/${MODULE_NAME}
+
+    UDP_RECEIVER_OPTIONS="--portbase $PORTBASE --ttl $TTL"
+    if [ "$ASYNC" = "on" ]; then
+        UDP_RECEIVER_OPTIONS="$UDP_RECEIVER_OPTIONS --async"
+    fi
+
+}
+#
+################################################################################
+#
 #   Get other binaries, kernel module tree, and miscellaneous other stuff that
 #   got put in the binaries tarball. -BEF-
 #
 get_boel_binaries_tarball() {
+
     echo
     echo get_boel_binaries_tarball
+    mkdir -p ${BOEL_BINARIES_DIR}
+
     if [ ! -z $SSH_DOWNLOAD_URL ]; then
         # If we're using SSH, get the boel_binaries from a web server.
         echo "SSH_DOWNLOAD_URL variable is set, so we will install over SSH!"
 
-        if [ ! -z $FLAMETHROWER_PORT ]; then
-            echo "FLAMETHROWER_PORT is also set, but I will be conservative and proceed with SSH."
+        if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
+            echo "FLAMETHROWER_DIRECTORY_PORTBASE is also set, but I will be conservative and proceed with SSH."
         fi
 
         # Remove possible trailing / from URL
         SSH_DOWNLOAD_URL=`echo $SSH_DOWNLOAD_URL | sed 's/\/$//'`
 
-        cd /
+        cd ${BOEL_BINARIES_DIR}
         CMD="wget ${SSH_DOWNLOAD_URL}/${ARCH}/${FLAVOR}/boel_binaries.tar.gz"
         echo "$CMD"
         $CMD || shellout
 
-    elif [ ! -z $FLAMETHROWER_PORT ]; then
-        # Use multicast
-        echo "FLAMETHROWER_PORT variable is set, so we will use multicast!"
-        echo "FLAMETHROWER_PORT: $FLAMETHROWER_PORT"
-        # XXX change command below to receive directory information
-        # Create function "get_port_number_for_flamethrower_module(${MODULE_NAME})"
-        #udp-receiver --pipe "tar -x -C /" --portbase ${FLAMETHROWER_PORT} || shellout
+    elif [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
+
+        MODULE_NAME="boot-${ARCH}-${FLAVOR}"
+        get_udp_receiver_options
+
+        echo udp-receiver ${UDP_RECEIVER_OPTIONS} --pipe \"tar -C ${BOEL_BINARIES_DIR} -x\"
+             udp-receiver ${UDP_RECEIVER_OPTIONS} --pipe "tar -C ${BOEL_BINARIES_DIR} -x"
+        sleep 2
+
+        if [ $? != 0 ]; then
+            shellout
+        fi
+
+        echo
 
     else
         # Use rsync
-        CMD="rsync -av ${IMAGESERVER}::boot/${ARCH}/${FLAVOR}/boel_binaries.tar.gz /"
+        CMD="rsync -av ${IMAGESERVER}::boot/${ARCH}/${FLAVOR}/boel_binaries.tar.gz ${BOEL_BINARIES_DIR}"
         echo "$CMD"
         $CMD || shellout
     fi
 
     # Untar the tarball
-    tar -C / -xzf /boel_binaries.tar.gz || shellout
+    tar -C / -xzf ${BOEL_BINARIES_DIR}/boel_binaries.tar.gz || shellout
     chown -R 0.0 /lib/modules || shellout
 }
 #
@@ -491,13 +565,13 @@ autodetect_hardware_and_load_modules() {
 #
 get_hostname_by_hosts_file() {
 
-    if [ ! -z $FLAMETHROWER_PORT ]; then
-	    # FLAMETHROWER_PORT is set, therfore we should have a hosts file in /scripts/
+    if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
+	    # FLAMETHROWER_DIRECTORY_PORTBASE is set, therfore we should have a hosts file in ${SCRIPTS_DIR}
 		echo "Using hosts file pulled over by multicast."
     else
         # Try pulling hosts file from imageserver -BEF-
-		mkdir -p /scripts
-        CMD="rsync -aL ${IMAGESERVER}::${SCRIPTS}/hosts /scripts/ >/dev/null 2>&1"
+		mkdir -p ${SCRIPTS_DIR}
+        CMD="rsync -aL ${IMAGESERVER}::${SCRIPTS}/hosts ${SCRIPTS_DIR}/ >/dev/null 2>&1"
         echo "$CMD"
         $CMD
     fi
@@ -505,7 +579,7 @@ get_hostname_by_hosts_file() {
     #
     # Look in $FILE for that magic joy.
 	#
-	FILE=/scripts/hosts
+	FILE=${SCRIPTS_DIR}/hosts
     if [ -e $FILE ]; then
         # add escape characters to IPADDR so that it can be used to find HOSTNAME below
         IPADDR_ESCAPED=`echo "$IPADDR" | sed -e 's/\./\\\./g'`
@@ -548,8 +622,12 @@ get_hostname_by_dns() {
 ################################################################################
 #
 run_autoinstall_script() {
+
+    echo
+    echo run_autoinstall_script
+
     # Run the autoinstall script.
-    FILE="/scripts/$SCRIPTNAME"
+    FILE="${SCRIPTS_DIR}/$SCRIPTNAME"
     if [ -f $FILE ]; then
         chmod 755 $FILE || shellout
         echo
@@ -718,11 +796,17 @@ get_script() {
     echo
     echo "get_script"
     echo "I will now try to get the autoinstall script:  $SCRIPTNAME"
-    if [ -e /scripts/${SCRIPTNAME} ]; then
-        echo "Excellent!  It's already here -- in the /scripts directory."
+    if [ -e ${SCRIPTS_DIR}/${SCRIPTNAME} ]; then
+        echo "Excellent!  It's already here -- in the ${SCRIPTS_DIR} directory."
+
+    elif [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
+
+        get_scripts_directory
+
     else
-        mkdir -p /scripts
-        CMD="rsync -aL ${IMAGESERVER}::${SCRIPTS}/${SCRIPTNAME} /scripts"
+
+        mkdir -p ${SCRIPTS_DIR}
+        CMD="rsync -aL ${IMAGESERVER}::${SCRIPTS}/${SCRIPTNAME} ${SCRIPTS_DIR}"
         echo "$CMD"
         $CMD
     fi
@@ -751,6 +835,12 @@ start_network
 ping_test
 
 start_syslogd
+
+if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
+
+    get_flamethrower_directory
+
+fi
 
 get_boel_binaries_tarball
 
@@ -819,12 +909,8 @@ else
     fi
 fi
 
-echo
-echo write_variables
-write_variables || shellout
+write_variables
 
-echo
-echo run_autoinstall_script
 run_autoinstall_script
 
 exit 0
