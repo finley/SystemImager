@@ -16,6 +16,8 @@ endif
 PHONY += e2fsprogs
 e2fsprogs:	$(MKE2FS_BINARY)
 
+$(TUNE2FS_BINARY):	$(MKE2FS_BINARY)
+
 $(MKE2FS_BINARY):	$(SRC_DIR)/$(E2FSPROGS_TARBALL)
 	[ -d $(SRC_DIR)/$(E2FSPROGS_DIR) ] || ( cd $(SRC_DIR) && tar -xvzf $(E2FSPROGS_TARBALL) )
 	( cd $(SRC_DIR)/$(E2FSPROGS_DIR) && chmod +x ./configure && ./configure  $(E2FSPROGS_CONFIGURE) )
