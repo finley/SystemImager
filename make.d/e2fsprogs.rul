@@ -1,3 +1,6 @@
+#
+# $Id$
+#
 E2FSPROGS_VERSION := 1.35
 E2FSPROGS_DIR := e2fsprogs-$(E2FSPROGS_VERSION)
 E2FSPROGS_TARBALL := e2fsprogs-$(E2FSPROGS_VERSION)-WIP-0131.tar.gz
@@ -18,6 +21,7 @@ e2fsprogs:	$(TUNE2FS_BINARY) $(MKE2FS_BINARY)
 
 $(TUNE2FS_BINARY) $(MKE2FS_BINARY):	$(SRC_DIR)/$(E2FSPROGS_TARBALL)
 	[ -d $(SRC_DIR)/$(E2FSPROGS_DIR) ] || ( cd $(SRC_DIR) && tar -xvzf $(E2FSPROGS_TARBALL) )
+	chmod -R u+rw $(SRC_DIR)/$(E2FSPROGS_DIR)
 	( cd $(SRC_DIR)/$(E2FSPROGS_DIR) && chmod +x ./configure && ./configure  $(E2FSPROGS_CONFIGURE) )
 	$(MAKE) -C $(SRC_DIR)/$(E2FSPROGS_DIR)
 

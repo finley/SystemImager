@@ -2,7 +2,7 @@
 # "SystemImager"  
 #
 #   Copyright (C) 1999-2004 Brian Elliott Finley
-#   Copyright (C) 2001-2002 Hewlett-Packard Company <dannf@fc.hp.com>
+#   Copyright (C) 2001-2004 Hewlett-Packard Company <dannf@hp.com>
 #   
 #   Others who have contributed to this code:
 #   Sean Dague <sean@dague.net>
@@ -22,6 +22,9 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+# 2004.04.13 Brian Elliott Finley
+# - Michael Jennings suggested permissions changes on some files.  done.
 #
 #
 # ERRORS when running make:
@@ -594,6 +597,8 @@ ifeq ($(UNSTABLE), 1)
 	cd $(TOPDIR)/tmp/systemimager-$(VERSION) && cat README.tmp >> README
 endif
 	rm $(TOPDIR)/tmp/systemimager-$(VERSION)/README.unstable
+	find . -type f -exec chmod ug+r  {} \;
+	find . -type d -exec chmod ug+rx {} \;
 	cd $(TOPDIR)/tmp && tar -ch systemimager-$(VERSION) | bzip2 > systemimager-$(VERSION).tar.bz2
 	@echo
 	@echo "source tarball has been created in $(TOPDIR)/tmp"

@@ -17,7 +17,7 @@ $(MKDOSFS_BINARY):	$(SRC_DIR)/$(DOSFSTOOLS_TARBALL)
 		&& (cd $(DOSFSTOOLS_DIR) && (cat $(DOSFSTOOLS_PATCHES) < /dev/null | patch -p0)) )
 	## these CFLAGS stolen from the src rpm in redhat 9, and go along
 	## with dosfstools.10llseek.patch
-	$(MAKE) -C $(SRC_DIR)/$(DOSFSTOOLS_DIR) \
+	$(MAKE) -C $(SRC_DIR)/$(DOSFSTOOLS_DIR)/mkdosfs \
 	  'CFLAGS=-O2 -Dllseek=lseek64 -D_LARGEFILE64_SOURCE'
 
 # download the dosfstools tarball
