@@ -170,13 +170,26 @@ WARNING_FILES = $(IMAGEDEST)/README $(IMAGEDEST)/DO_NOT_TOUCH_THESE_DIRECTORIES 
 AUTOINSTALL_SCRIPT_DIR = $(DESTDIR)/var/lib/systemimager/scripts
 
 LINUX_SRC = $(SRC_DIR)/linux
-LINUX_VERSION = 2.4.14
+
+# Now we do multi architecture defines for kernel building
+
+ifeq ($(ARCH),i386)
+	 LINUX_VERSION = 2.4.14
+	 LINUX_MD5SUM = dc03387783a8f58c90ef7b1ec6af252a
+	 LINUX_IMAGE = $(LINUX_SRC)/arch/i386/boot/bzImage
+	 LINUX_PATCH = $(PATCH_DIR)/linux.i386.patch.bz2
+	 LINUX_CONFIG = $(PATCH_DIR)/linux.config
+endif
+ifeq ($(ARCH),ia64)
+	 LINUX_VERSION = 2.4.9
+	 LINUX_MD5SUM = 991c485866bd4c52504ec4721337b46c
+	 LINUX_IMAGE = $(LINUX_SRC)/arch/ia64/boot/vmlinux
+	 LINUX_PATCH = $(PATCH_DIR)/linux.ia64.patch.bz2
+	 LINUX_CONFIG = $(PATCH_DIR)/linux.ia64.config
+endif
+
 LINUX_TARBALL = linux-$(LINUX_VERSION).tar.bz2
 LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.4/$(LINUX_TARBALL)
-LINUX_MD5SUM = dc03387783a8f58c90ef7b1ec6af252a
-LINUX_IMAGE = $(LINUX_SRC)/arch/i386/boot/bzImage
-LINUX_PATCH = $(PATCH_DIR)/linux.patch
-LINUX_CONFIG = $(PATCH_DIR)/linux.config
 
 RAMDISK_DIR = initrd_source
 
@@ -313,7 +326,7 @@ patched_kernel-stamp:
 	[ -d $(LINUX_SRC) ] || \
 		( cd $(SRC_DIR) && bzcat $(LINUX_TARBALL) | tar xv && \
 		  [ ! -f ../$(LINUX_PATCH) ] || \
-		  cd linux && patch -p1 < ../../$(LINUX_PATCH) )
+		  cd linux && bzcat ../../$(LINUX_PATCH) | patch -p1 )
 	cp -a $(LINUX_CONFIG) $(LINUX_SRC)/.config
 	cd $(LINUX_SRC) && make oldconfig dep
 	touch patched_kernel-stamp
