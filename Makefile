@@ -455,7 +455,7 @@ $(TOPDIR)/tmp/systemimager-source-$(VERSION).tar.bz2:
 	cd $(TOPDIR)/tmp && tar -ch systemimager-source-$(VERSION) | bzip2 > \
 	  systemimager-source-$(VERSION).tar.bz2
 	@echo
-	@echo "server tarball has been created in $(TOPDIR)/tmp"
+	@echo "source tarball has been created in $(TOPDIR)/tmp"
 	@echo
 
 # create user-distributable tarballs for the server and the client
