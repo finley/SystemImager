@@ -3,6 +3,9 @@
 #
 # "VA SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com>
 #
+#   Others who have contributed to this code (in alphabetical order):
+#     Michael R. Nolta <mrnolta@princeton.edu>
+#
 # This file is: install
 #  (this script does all the placing of files on the filesystem. "afterburner" is run
 #   automatically by "install" unless the --no-afterburner option is used.
@@ -427,9 +430,9 @@ if [ ! -d ${DESTDIR}/tftpboot/systemimager/ ]; then
 else
   [ $QUIET = "false" ] && echo "${DESTDIR}/tftpboot/systemimager/ already exists..."
 fi
-[ $QUIET = "false" ] && echo "copying ${DESTDIR}/etc/hosts to ${DESTDIR}/tftpboot/systemimager/hosts..."
+[ $QUIET = "false" ] && echo "copying /etc/hosts to ${DESTDIR}/tftpboot/systemimager/hosts..."
 cd ${DESTDIR}/tftpboot/systemimager/
-test -f ${DESTDIR}/etc/hosts && cp -p ${DESTDIR}/etc/hosts . || true > hosts
+test -f /etc/hosts && cp -p /etc/hosts . || true > hosts
 
 # gotta make sure the masses can read it...
 chmod a+r hosts
