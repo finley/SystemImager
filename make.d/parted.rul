@@ -1,7 +1,14 @@
-PARTED_VERSION := 1.6.5
+#
+#   $Id$
+#
+#   2004.12.13  Brian Elliott Finley
+#   - go to 1.6.19
+#
+
+PARTED_VERSION := 1.6.19
 PARTED_DIR := parted-$(PARTED_VERSION)
 PARTED_TARBALL := parted-$(PARTED_VERSION).tar.gz
-PARTED_URL := http://download.systemimager.org/pub/parted/$(PARTED_TARBALL)
+PARTED_URL := http://ftp.gnu.org/gnu/parted/$(PARTED_TARBALL)
 # SOURCE_URL -> http://ftp.gnu.org/gnu/parted/
 PARTED_BINARY := $(SRC_DIR)/$(PARTED_DIR)/parted/.libs/parted
 PARTED_PATCHES := $(shell ls $(PATCH_DIR)/parted.*.patch 2>/dev/null | sort)
