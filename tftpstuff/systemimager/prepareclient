@@ -3,6 +3,8 @@
 #
 # "SystemImager" - Copyright (C) 1999-2000 TheFinleys.com <brian@thefinleys.com> 
 #
+# This file: prepareclient
+#
  
 # set path
 PATH=/bin:/usr/bin:/sbin:/usr/sbin
@@ -463,12 +465,13 @@ EOF
  
  # wrap up
  echo
- echo "All done!  This client is ready to have it's image retrieved."
+ echo "Done!  This client is ready to have it's image retrieved."
 
 else
 
  echo ""
- echo "Usage: prepareclient [IMAGESERVER_IPADDRESS|IMAGESERVER_HOSTNAME]"
+ echo "Usage: prepareclient IMAGESERVER"
+ echo "(IMAGESERVER can be an IP address or a hostname)"
  echo ""
  exit 1
 
