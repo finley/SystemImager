@@ -93,7 +93,8 @@ write_variables() {
 #
 shellout() {
     write_variables
-    exec cat /etc/issue ; exit 1
+    cat /etc/issue
+    exec sh
 }
 #
 ################################################################################

@@ -327,10 +327,16 @@ if ($autoinstall) {
 
     #     If ia64          and  this is *not* a Debian based system, find bootdir using function. -BEF-
     my $bootdir;
+    my $relative_bootdir;
+    
     if ( ($ARCH eq "ia64") and (( ! -x "/usr/sbin/elilo") and (! -e "/etc/elilo.conf")) ) {
         $bootdir = SystemImager::Common->where_is_my_efi_dir();
+        ## $relative_bootdir is the relative path the bootloader uses to
+        ## access boot files.
+        $relative_bootdir = "";
     } else {
         $bootdir = "/boot";
+        $relative_bootdir = $bootdir . "/";
     }
     my $bootmodule = "boot/$ARCH/$flavor";
 
@@ -449,14 +455,14 @@ if ($autoinstall) {
 systemconfigurator --configboot --runboot --stdin <<EOF
 [BOOT]
 BOOTDEV = $bootdev
-ROOTDEV = $rootdev
+ROOTDEV = /dev/ram
 TIMEOUT = 50
 DEFAULTBOOT = SystemImager
 
 [KERNEL0]
 LABEL = SystemImager
-PATH = ${bootdir}/kernel.systemimager
-INITRD = ${bootdir}/initrd.img.systemimager
+PATH = ${relative_bootdir}kernel.systemimager
+INITRD = ${relative_bootdir}initrd.img.systemimager
 APPEND = $append
 EOF
 

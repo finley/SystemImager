@@ -66,9 +66,8 @@ build_dir:	$(INITRD_DIR)/build_dir-stamp
 $(INITRD_DIR)/build_dir-stamp:	$(SKEL_FILES) $(BUSYBOX_BINARY) \
 				$(DEVFSD_BINARY) $(DHCLIENT_BINARY) \
 				$(RSYNC_BINARY) $(UCLIBC_TARGET) \
-				$(INSMOD_BINARY) $(E1000_BINARY) \
-				$(NETCAST_BINARY)
-
+				$(INSMOD_BINARY) $(MODPROBE_BINARY)
+				$(E1000_BINARY) $(NETCAST_BINARY)
 	# Create directory structure.
 	rm -fr $(INITRD_BUILD_DIR)
 	mkdir $(INITRD_BUILD_DIR)
@@ -88,9 +87,10 @@ $(INITRD_DIR)/build_dir-stamp:	$(SKEL_FILES) $(BUSYBOX_BINARY) \
 	cp -a $(NETCAST_BINARY)     $(INITRD_BUILD_DIR)/bin/netcast-client
 	
 ifdef	INSMOD_BINARY
-	# If INSMOD_BINARY is set, then copy it on over. -BEF-
 	cp -a $(INSMOD_BINARY) $(INITRD_BUILD_DIR)/sbin
-	cd $(INITRD_BUILD_DIR)/sbin && ln -sf insmod modprobe
+endif
+ifdef	MODPROBE_BINARY
+	cp -a $(MODPROBE_BINARY) $(INITRD_BUILD_DIR)/sbin
 endif
 
 ifdef UCLIBC_TARGET
@@ -126,11 +126,9 @@ endif
 	  $(INITRD_BUILD_DIR)/etc/init.d/rcS
 
 ifeq ($(ARCH),i386)
-	# Put the e1000 driver into the my_modules directory and append a standard
-	# insmod command to the INSMOD_COMMANDS file if it's not already there. -BEF-
+	# Put the e1000 driver into the my_modules directory
+	## remember to remove the corresponding command in INSMOD_COMMANDS
 	cp -a $(E1000_BINARY) $(INITRD_DIR)/my_modules/
-	egrep -q '^insmod e1000.o' initrd_source/my_modules/INSMOD_COMMANDS || \
-		echo "insmod e1000.o" >> initrd_source/my_modules/INSMOD_COMMANDS
 endif
 
 	# Copy over modules required prior to retrieving the autoinstall
@@ -180,6 +178,7 @@ initrd_clean:	$(subst .rul,_clean,$(shell cd $(INITRD_DIR)/make.d && ls *.rul))
 	rm -f $(INITRD_DIR)/initrd
 	rm -f $(INITRD_DIR)/initrd.img
 	rm -f $(INITRD_DIR)/build_dir-stamp
+	rm -f $(INITRD_DIR)/my_modules/e1000.o
 
 initrd_distclean:	initrd_clean
 	-rm -rf $(INITRD_SRC_DIR)

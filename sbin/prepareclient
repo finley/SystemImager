@@ -193,10 +193,32 @@ backed up with the $backup_extension extension.
 See "prepareclient -help" for command line options.
 
 EOF
+
+    print "Continue? (y/[n]): ";
+    my $answer = <>;
+    unless($answer =~ /y/i) {
+        print "Client prepartion cancelled.  No files modified.\n";
+        exit 1;
+    }
+    system("clear");
+    print <<EOF;
+*********************************** WARNING *********************************** 
+This utility starts an rsync daemon that makes all of your files accessible
+by anyone who can connect to the rsync port of this machine.  This is the 
+case until you reboot, or kill the 'rsync --daemon' process by hand.  By 
+default, once you use getimage to retrieve this image on your image server, 
+these contents will become accessible to anyone who can connect to the rsync 
+port on your imageserver.  See rsyncd.conf(5) for details on restricting 
+access to these files on the imageserver.  See the systemimager-ssh package
+for a more secure method of making images available to clients.
+*********************************** WARNING *********************************** 
+
+EOF
+
   
   # you sure you want to install?
     print "Continue? (y/[n]): ";
-    my $answer = <>;
+    $answer = <>;
     unless($answer =~ /y/i) {
         print "Client prepartion cancelled.  No files modified.\n";
         exit 1;

@@ -63,7 +63,7 @@ LINUX_PATCHES = $(sort $(shell find $(PATCH_DIR) \
                                     -name "linux.all.*.patch" -o \
                                     -name "linux.$(ARCH),*.patch" -o \
                                     -name "linux.*,$(ARCH),*.patch" -o \
-                                    -name "linux.*,$(ARCH).patch"))
+                                    -name "linux.*,$(ARCH).*.patch"))
 ALL_SOURCE += $(SRC_DIR)/$(LINUX_TARBALL)
 
 PHONY += kernel_list_patches

@@ -1,7 +1,7 @@
 PARTED_VERSION := 1.6.3
 PARTED_DIR := parted-$(PARTED_VERSION)
 PARTED_TARBALL := parted-$(PARTED_VERSION).tar.gz
-PARTED_URL := http://systemimager.org/pub/parted/$(PARTED_TARBALL)
+PARTED_URL := http://download.systemimager.org/pub/parted/$(PARTED_TARBALL)
 PARTED_BINARY := $(SRC_DIR)/$(PARTED_DIR)/parted/.libs/parted
 
 ALL_SOURCE += $(SRC_DIR)/$(PARTED_TARBALL)

@@ -391,14 +391,14 @@ sub _read_partition_info_and_prepare_parted_commands {
             if (("$unit_of_measurement" eq "mb") 
                 or ("$unit_of_measurement" eq "megabytes")) {
 
-                $endMB{$m} = q#$(echo "scale=3; ($START_MB + # . qq#$size{$m})" | bc -l)#;
+                $endMB{$m} = q#$(echo "scale=3; ($START_MB + # . qq#$size{$m})" | bc)#;
 
             } elsif (("$unit_of_measurement" eq "%")
                 or ("$unit_of_measurement" eq "percent") 
                 or ("$unit_of_measurement" eq "percentage") 
                 or ("$unit_of_measurement" eq "percentages")) {
 
-                $endMB{$m} = q#$(echo "scale=3; (# . qq#$startMB{$m}# . q# + ($DISK_SIZE * # . qq#$size{$m} / 100))" | bc -l)#;
+                $endMB{$m} = q#$(echo "scale=3; (# . qq#$startMB{$m}# . q# + ($DISK_SIZE * # . qq#$size{$m} / 100))" | bc)#;
             }
 
         }
@@ -793,20 +793,29 @@ sub _get_array_of_disks {
 sub dev_to_devfs {
     my ($dev) = @_;
 
-    ## should rd (DAC960) be in this list?
-    my @array = ( "ida", "cciss", "rd" );
-    foreach my $dir (@array) {
-	## disks
-        if ($dev =~ /^\/dev\/$dir\/c(\d+)d(\d+)$/) {
-            return "/dev/" . $dir . "/c" . $1. "d" . $2 . "/disc";
-	}
-        ## partitions
-	elsif ($dev =~ /^\/dev\/$dir\/c(\d+)d(\d+)p(\d+)$/) {
-            return "/dev/" . $dir . "/c" . $1 . "d" . $2 . "/part" . $3;
-	}
+    ## disks
+    if ($dev =~ m{^/dev/(.*)/c(\d+)d(\d+)$}) {
+        if ($1 eq "cciss") {
+            return "/dev/" . $1 . "/disc" . $3 . "/disc";
+        }
+        else {
+            return "/dev/" . $1 . "/c" . $2. "d" . $3 . "/disc";
+        }
+    }
+    ## partitions
+    elsif ($dev =~ m{^/dev/(.*)/c(\d+)d(\d+)p(\d+)$}) {
+        ## the controller number is not taken into account here.
+        ## its unknown how this should work w/ multiple controllers.
+        if ($1 eq "cciss") {
+            return "/dev/" . $1 . "/disc" . $3 . "/part" . $4;
+        }
+        else {
+            return "/dev/" . $1 . "/c" . $2 . "d" . $3 . "/part" . $4;
+        }
     }
     return $dev;
 }
+
 
 # Description:
 # Read configuration information from /etc/systemimager/autoinstallscript.conf
@@ -1352,7 +1361,7 @@ sub create_autoinstall_script{
         print MASTER_SCRIPT q({ while :; do)                            . "\n";
         print MASTER_SCRIPT q(echo -ne "\b/";  sleep 1;)                . "\n";
         print MASTER_SCRIPT q(echo -ne "\b-";  sleep 1;)                . "\n";
-        print MASTER_SCRIPT q(echo -ne "\b\\"; sleep 1;)                . "\n";
+        print MASTER_SCRIPT q(echo -ne "\b\\\"; sleep 1;)               . "\n";
         print MASTER_SCRIPT q(echo -ne "\b|";  sleep 1;)                . "\n";
         print MASTER_SCRIPT q(done)                                     . "\n";
         print MASTER_SCRIPT q(}&)                                       . "\n";

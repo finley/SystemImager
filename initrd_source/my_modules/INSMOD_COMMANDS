@@ -22,4 +22,5 @@
 # insmod e100.o e100_speed_duplex=4
 # insmod my_special_scsi_driver.o
 #
-insmod e1000.o
+ARCH=`uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/`
+[ ! "$ARCH" = "i386" ] || insmod e1000.o

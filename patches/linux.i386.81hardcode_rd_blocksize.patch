@@ -1,0 +1,30 @@
+--- linux.orig/drivers/block/rd.c	2002-02-25 19:37:57.000000000 +0000
++++ linux/drivers/block/rd.c	2003-01-06 05:34:35.000000000 +0000
+@@ -120,7 +120,7 @@
+  * behaviour. The default is still BLOCK_SIZE (needed by rd_load_image that
+  * supposes the filesystem in the image uses a BLOCK_SIZE blocksize).
+  */
+-int rd_blocksize = BLOCK_SIZE;			/* blocksize of the RAM disks */
++int rd_blocksize = 4096;			/* blocksize of the RAM disks */
+ 
+ #ifndef MODULE
+ 
+@@ -171,18 +171,11 @@
+ 	return ramdisk_size(str);
+ }
+ 
+-static int __init ramdisk_blocksize(char *str)
+-{
+-	rd_blocksize = simple_strtol(str,NULL,0);
+-	return 1;
+-}
+-
+ __setup("ramdisk_start=", ramdisk_start_setup);
+ __setup("load_ramdisk=", load_ramdisk);
+ __setup("prompt_ramdisk=", prompt_ramdisk);
+ __setup("ramdisk=", ramdisk_size);
+ __setup("ramdisk_size=", ramdisk_size2);
+-__setup("ramdisk_blocksize=", ramdisk_blocksize);
+ 
+ #endif
+ 

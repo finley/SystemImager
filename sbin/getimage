@@ -298,10 +298,18 @@ $imagedir = "$default_image_dir/$image";
 $warning =  <<"EOF";
 This program will get the \"$image\" system image from \"$source_host\"
 making the assumption that all filesystems considered part
-of the system image are using ext2, ext3, or reiserfs.
+of the system image are using ext2, ext3, jfs, FAT, reiserfs, or xfs.
 
 This program will not get /proc, NFS, or other filesystems
 not mentioned above.
+
+*********************************** WARNING *********************************** 
+All files retrieved from a golden client are, by default, made accessible to 
+anyone who can connect to the rsync port of this machine.  See rsyncd.conf(5)
+for details on restricting access to these files on the imageserver.  See the
+systemimager-ssh package for a more secure (but less effecient) method of 
+making images available to clients.
+*********************************** WARNING *********************************** 
 
 See \"getimage -help\" for command line options.
 
