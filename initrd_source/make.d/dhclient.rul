@@ -1,6 +1,7 @@
 DHCLIENT_VERSION = 2.0pl5
 DHCLIENT_TARBALL = dhcp-$(DHCLIENT_VERSION).tar.gz
-DHCLIENT_URL = ftp://ftp.epix.net/pub/isc/dhcp/$(DHCLIENT_TARBALL)
+DHCLIENT_URL = http://download.systemimager.org/pub/dhcp/$(DHCLIENT_TARBALL)
+# SOURCE_URL -> ftp://ftp.epix.net/pub/isc/dhcp/
 DHCLIENT_DIR = dhcp-$(DHCLIENT_VERSION)
 DHCLIENT_BINARY = $(INITRD_SRC_DIR)/$(DHCLIENT_DIR)/client/dhclient
 DHCLIENT_PATCHES = $(shell ls $(INITRD_PATCH_DIR)/dhclient.*.patch 2>/dev/null | sort)
