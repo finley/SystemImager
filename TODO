@@ -55,6 +55,7 @@ o Deal with tftp support (for network booting) on xinetd systems.
   (this is actually something to deal with in the tftp-hpa package 
    install)
 o add " || shellout" to the end of almost everything in <image>.master
+o calculate network number in makedhcpserver & maybe figure out other stuff too.
 
 Greg Smith <grs@xuma.com>
 -------------------------
@@ -85,6 +86,15 @@ o patch to have autoinstallclient
 ---------------------------------
 Possibilities for future versions
 ---------------------------------
+
+Suggested by Todd Sargent <tsargent@pioneertechnology.net>
+----------------------------------------------------------
+o web interface that allows all image server operations as well as:
+  o schedule clients to be updated or re-autoinstalled at a later date
+    o produce a master schedule file, available from the webserver,
+      that clients pull down via a cron job.  parse the file to determine
+      the details of what they're supposed to do (if anything).
+  o provide for reporting of clients that have completed their autoinstalls.
 
 George Perry <perryg@elcsci.com>
 --------------------------------
