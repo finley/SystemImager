@@ -1,11 +1,11 @@
 diff -urN linux.orig/Makefile linux/Makefile
---- linux.orig/Makefile	Thu Aug 16 18:12:49 2001
-+++ linux/Makefile	Wed Dec 19 07:51:54 2001
-@@ -87,7 +87,7 @@
+--- linux.orig/Makefile	Sat Sep 21 19:29:51 2002
++++ linux/Makefile	Sat Sep 21 20:14:09 2002
+@@ -88,7 +88,7 @@
  
  CPPFLAGS := -D__KERNEL__ -I$(HPATH)
  
--CFLAGS := $(CPPFLAGS) -Wall -Wstrict-prototypes -Wno-trigraphs -O2 \
+-CFLAGS := $(CPPFLAGS) -Wall -Wstrict-prototypes -Wno-trigraphs -g -O2 \
 +CFLAGS := $(CPPFLAGS) -Wall -Wstrict-prototypes -Wno-trigraphs -Os \
  	  -fomit-frame-pointer -fno-strict-aliasing -fno-common
  AFLAGS := -D__ASSEMBLY__ $(CPPFLAGS)
