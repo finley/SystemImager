@@ -16,6 +16,7 @@ $get_help = "         Try \"$program_name -help\" for more options.";
 # declare modules
 use Getopt::Long;
 use File::Copy;
+use File::Path;
 
 ### BEGIN functions ###
 sub trim {
@@ -71,7 +72,7 @@ EOF
 GetOptions( 
   "help" => \$help,
   "version" => \$version,
-  "directory" => \$version,
+  "directory=s" => \$destination_path,
   "force" => \$force,
   "verbose" => \$verbose
 ) or die qq($help_info);
@@ -120,16 +121,27 @@ unless($source_path) {
 
 unless($destination_path) { $destination_path = $source_path; }
 
-$source="${source_path}${source_image}";
-$destination="${destination_path}${destination_image}";
+# remove any trailing slash
+$destination_path =~ s/\/$//;
+
+$source="$source_path/$source_image";
+$destination="$destination_path/$destination_image";
+
+# check for existence of destination path
+$file=$destination_path;
+unless(-e $file) {
+  if($force) {
+    mkpath($file, 0, 0750) or die "FATAL: Can't create $file!\n";
+  } else {
+    die "FATAL: Destination path \"$file\" doesn't exist!\n";
+  }
+}
 
 # check for existence of destination image
 $file=$destination;
 if(-e $file) {
   if($force) {
-    $cmd="rm -fr $file";
-    system($cmd);
-    if($? != 0) { die "FATAL: Can't remove $file!\n"; }
+    rmtree($file, 0, 0) or die "FATAL: Can't remove $file!\n";
   } else {
     die "FATAL: Destination image \"$file\" already exists!\n";
   }
@@ -162,7 +174,7 @@ open (TMP_FILE, ">$tmp_file") or die "FATAL: Couldn't open $tmp_file for writing
       print TMP_FILE "[$destination_image]\n";
     }
     elsif (/^\s*path\s*=.*$source_image/) { 
-      print TMP_FILE "    path = ${destination_path}${destination_image}\n";
+      print TMP_FILE "    path = $destination\n";
     }
     else {
       print TMP_FILE;
