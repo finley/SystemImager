@@ -1,0 +1,231 @@
+<!doctype refentry PUBLIC "-//Davenport//DTD DocBook V3.0//EN" [
+
+  <!-- Fill in your name for FIRSTNAME and SURNAME. -->
+  <!ENTITY dhfirstname "<firstname>dann</firstname>">
+  <!ENTITY dhsurname   "<surname>frazier</surname>">
+  <!-- Please adjust the date whenever revising the manpage. -->
+  <!ENTITY dhdate      "<date>October  18, 2001</date>">
+  <!-- SECTION should be 1-8, maybe w/ subsection other parameters are
+       allowed: see man(7), man(1). -->
+  <!ENTITY dhsection   "<manvolnum>8</manvolnum>">
+  <!ENTITY dhemail     "<email>dannf@dannf.org</email>">
+  <!ENTITY dhusername  "dann">
+  <!ENTITY dhucpackage "<refentrytitle>MKAUTOINSTALLSCRIPT</refentrytitle>">
+  <!ENTITY dhpackage   "mkautoinstallscript">
+
+  <!ENTITY debian      "<productname>Debian GNU/Linux</productname>">
+  <!ENTITY gnu         "<acronym>GNU</acronym>">
+]>
+
+<refentry>
+  <docinfo>
+    <address>
+      &dhemail;
+    </address>
+    <author>
+      &dhfirstname;
+      &dhsurname;
+    </author>
+    <copyright>
+      <year>2001</year>
+      <holder>&dhusername;</holder>
+    </copyright>
+    &dhdate;
+  </docinfo>
+  <refmeta>
+    &dhucpackage;
+
+    &dhsection;
+  </refmeta>
+  <refnamediv>
+    <refname>&dhpackage;</refname>
+
+    <refpurpose>
+      generate a bootable iso image for autoinstalling clients
+    </refpurpose>
+  </refnamediv>
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>&dhpackage;</command>
+      <arg><option>-help</option></arg>
+      <arg><option>-version</option></arg>
+      <arg><option>-quiet</option></arg>
+      <arg><option>-image <replaceable>IMAGENAME</replaceable></option></arg>
+      <arg><option>-update-script <replaceable>[YES|NO]</replaceable></option></arg>
+      <arg><option>-ip-assignment <replaceable>METHOD</replaceable></option></arg>
+      <arg><option>-post-install <replaceable>ACTION</replaceable></option></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+  <refsect1>
+    <title>DESCRIPTION</title>
+
+    <para>This manual page documents briefly the
+      <command>&dhpackage;</command> command.</para>
+
+    <para><command>&dhpackage;</command> creates an autoinstallscript
+      for a SystemImager image.
+    </para>
+
+  </refsect1>
+  <refsect1>
+    <title>OPTIONS</title>
+
+    <para>A summary of options is included below.</para>
+
+    <variablelist>
+      <varlistentry>
+	<term><option>-help</option></term>
+	<listitem><para>Show summary of options</para></listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-version</option></term>
+	<listitem>
+	  <para>Display version and copyright information.</para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-quiet</option></term>
+	<listitem>
+	  <para>
+	    Don't print any output, just provide an appropriate exit code.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-image <replaceable>IMAGENAME</replaceable></option></term>
+	<listitem>
+	  <para>
+	    Where IMAGENAME is the name of the image for which you want to
+	    create a new autoinstall script.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-update-script <replaceable>[YES|NO]</replaceable></option></term>
+	<listitem>
+	  <para>
+	    Update the $image.master script?  Defaults to NO if -quiet.  If
+	    not specified you will be prompted to confirm an updated.
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+    <para>
+      The following options affect the autoinstall client after autoinstalling.
+    </para>
+    <variablelist>
+      <varlistentry>
+        <term><option>-ip-assignment <replaceable>METHOD</replaceable></option></term>
+        <listitem>
+          <para>
+	    Where METHOD can be:
+	    <itemizedlist>
+	      <listitem>
+		<para>
+		  static_dhcp -- A DHCP server will assign the same static
+		  address each time to clients installed with this image.  The
+		  DHCP server in this case also assigns the corresponding host
+		  name.  It is possible therefore, when using static dhcp, to
+		  change a machine's hostname and IP address by simply changing
+		  one value in the dhcpd.conf file.  Some may find this
+		  desirable.  Also see the <command>makedhcpstatic</command>
+		  command.
+		</para>
+	      </listitem>
+	      <listitem>
+		<para>
+		  dynamic_dhcp -- A DHCP server will assign IP addresses
+		  dynamically to clients installed with this image.  In dynamic
+		  dhcp, the IP address of a machine may change, but you want it
+		  to retain the same host name.  Therefore the hostname is set
+		  by the machine itself.  They may be assigned a different
+		  address each time.
+		</para>
+	      </listitem>
+	      <listitem>
+		<para>
+		  static -- The IP address the client uses during autoinstall
+		  will be permanently assigned to that client.
+		</para>
+	      </listitem>
+	      <listitem>
+		<para>
+		  replicant -- Don't mess with the network settings in this
+		  image.  I'm using it as a backup and quick restore mechanism
+		  for a single machine.
+		</para>
+		</listitem>
+	    </itemizedlist>
+	  </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-post-install <replaceable>ACTION</replaceable></option></term>
+        <listitem>
+          <para>ACTION can be:</para>
+	  <itemizedlist>
+	    <listitem>
+	      <para>
+		beep -- Clients will beep incessantly after successful
+		completion of an autoinstall.
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		reboot -- Clients will reboot themselves after successful
+		completion of an autoinstall.
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		shutdown -- Clients will halt themselves after successful
+		completion of an autoinstall.
+	      </para>
+	    </listitem>
+	  </itemizedlist>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+  <refsect1>
+    <title>SEE ALSO</title>
+
+    <para><command>getimage</command>(8)</para>
+
+    <para>More details can be found in the <citetitle>SystemImager
+	manual.</citetitle>
+    </para>
+  </refsect1>
+  <refsect1>
+    <title>AUTHOR</title>
+
+    <para>This manual page was written by &dhusername; <&dhemail;> for
+      the &debian; system (but may be used by others).</para>
+
+    <!-- <para>Permission is granted to copy, distribute and/or modify
+      this document under the terms of the <acronym>GNU</acronym> Free
+      Documentation License, Version 1.1 or any later version
+      published by the Free Software Foundation; with no Invariant
+      Sections, no Front-Cover Texts and no Back-Cover Texts.  A copy
+      of the license can be found under
+      <filename>/usr/share/common-licenses/FDL</filename>.</para> -->
+
+  </refsect1>
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:2
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:nil
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+-->

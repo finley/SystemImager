@@ -1,8 +1,8 @@
 SECTION = 8
 
-compress:	prepareclient.8.gz updateclient.8.gz addclients.8.gz getimage.8.gz mkautoinstallcd.8.gz mkautoinstalldiskette.8.gz mkdhcpserver.8.gz mkdhcpstatic.8.gz lsimage.8.gz pushupdate.8.gz cpimage.8.gz mvimage.8.gz rmimage.8.gz mkbootserver.8.gz
+compress:	prepareclient.8.gz updateclient.8.gz addclients.8.gz getimage.8.gz mkautoinstallcd.8.gz mkautoinstalldiskette.8.gz mkautoinstallscript.8.gz mkdhcpserver.8.gz mkdhcpstatic.8.gz lsimage.8.gz pushupdate.8.gz cpimage.8.gz mvimage.8.gz rmimage.8.gz mkbootserver.8.gz
 
-manpages:	prepareclient.8 updateclient.8 addclients.8 getimage.8 mkautoinstallcd.8 mkautoinstalldiskette.8 mkdhcpserver.8 mkdhcpstatic.8 lsimage.8 pushupdate.8 cpimage.8 mvimage.8 rmimage.8 mkbootserver.8
+manpages:	prepareclient.8 updateclient.8 addclients.8 getimage.8 mkautoinstallcd.8 mkautoinstalldiskette.8 mkautoinstallscript.8 mkdhcpserver.8 mkdhcpstatic.8 lsimage.8 pushupdate.8 cpimage.8 mvimage.8 rmimage.8 mkbootserver.8
 
 prepareclient.8.gz:	prepareclient.8
 	gzip -9 < prepareclient.8 > prepareclient.8.gz
@@ -51,6 +51,12 @@ mkautoinstalldiskette.8.gz:	mkautoinstalldiskette.8
 
 mkautoinstalldiskette.8:	mkautoinstalldiskette.sgml
 	docbook-to-man mkautoinstalldiskette.sgml > mkautoinstalldiskette.8
+
+mkautoinstallscript.8.gz:	mkautoinstallscript.8
+	gzip -9 < mkautoinstallscript.8 > mkautoinstallscript.8.gz
+
+mkautoinstallscript.8:	mkautoinstallscript.sgml
+	docbook-to-man mkautoinstallscript.sgml > mkautoinstallscript.8
 
 mkdhcpstatic.8.gz:	mkdhcpstatic.8
 	gzip -9 < mkdhcpstatic.8 > mkdhcpstatic.8.gz
