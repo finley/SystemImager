@@ -146,7 +146,7 @@ image=/boot/kernel
       label=systemimager
       initrd=/boot/initrd.gz
       read-write
-      append="load_ramdisk=1 prompt_ramdisk=0"
+      append="load_ramdisk=1 prompt_ramdisk=0 root=/dev/ram0"
 EOF
     close (LILO_CONF);
   }
