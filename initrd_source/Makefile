@@ -13,7 +13,7 @@ SRC_DIR = ./src
 
 TEMP_DIR = ./systemimager.initrd.temp.dir
 INITRD_SIZE = 2600       # number of 1KB blocks in ramdisk.
-INITRD_INODE_COUNT = 590 # number of inodes available on ramdisk
+INITRD_INODE_COUNT = 640 # number of inodes available on ramdisk
 
 ########## BEGIN definitions for binaries built from source ##########
 
@@ -90,7 +90,7 @@ initrd:	binary-build-stamp $(LOCAL_BINARIES)
 	cp -a ./skel/* $(TEMP_DIR)
 
 	# clear out CVS cruft
-	find $(TEMP_DIR) -type d -name CVS -depth -exec rm -rf {} \;
+	find $(TEMP_DIR) -type d -name CVS -depth | xargs rm -rf
 
 	# create small dynamic libraries
 	./mklibs.sh -v -d $(TEMP_DIR)/lib $(TEMP_DIR)/bin/*
