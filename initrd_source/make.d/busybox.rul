@@ -7,8 +7,8 @@ BUSYBOX_PATCHES = $(shell ls $(INITRD_PATCH_DIR)/busybox.*.patch 2>/dev/null | s
 
 ALL_SOURCE += $(INITRD_SRC_DIR)/$(BUSYBOX_TARBALL)
 
-ifeq ($(ARCH),ia64)
-	BUSYBOX_CONFIG = $(INITRD_PATCH_DIR)/busybox.Config.h.ia64
+ifneq ($(ARCH),i386)
+	BUSYBOX_CONFIG = $(INITRD_PATCH_DIR)/busybox.Config.h.noinsmod
 else
 	BUSYBOX_CONFIG = $(INITRD_PATCH_DIR)/busybox.Config.h.standard
 endif
