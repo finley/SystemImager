@@ -137,59 +137,16 @@
 	</para>
       </step>
     </procedure>
-    <procedure>
+    <formalpara>
       <title>For other distributions:</title>
       <para>
 	If your distribution does not support RPMs or .debs, you must use
-	the tarball packages.
+	build and install from the source tarball; binary tarball
+	installations are no longer supported.  Instructions for building
+	SystemImager can be found in the <filename>README</filename> file
+	within the source tarball.
       </para>
-      <step>
-	<para>
-	  Download the systemimager-server tarball and its dependencies from
-	  <ulink url="http://systemimager.org/download/">
-	    http://systemimager.org/download/
-	  </ulink>.
-	</para>
-	<warning>
-	  <para>
-	    SystemImager depends on various other packages.  If you are using
-	    the tarball packages, you will have to make sure these dependencies
-	    are on your system before using SystemImager.
-	  </para>
-	</warning>
-      </step>
-      <step>
-	<para>
-	  Install the systemimager-server dependencies as documented in each
-	  tarball.
-	</para>
-      </step>
-      <step>
-	<para>
-	  Decompress the systemimager-server tarball.
-	</para>
-	<para>
-	  <command>
-	    <prompt>#</prompt> bzcat systemimager-server-x.y.z.tar.bz2 |
-	    tar xv
-	  </command>
-	</para>
-      </step>
-      <step>
-	<para>
-	  cd into the newly decompressed directory and run the
-	  <command>installserver</command> script.
-	</para>
-	<para>
-	  <command><prompt>#</prompt> cd systemimager-server-x.y.z</command>
-	</para>
-      </step>
-      <step>
-	<para>
-	  <command><prompt>#</prompt> ./installserver</command>
-	</para>
-      </step>
-    </procedure>
+    </formalpara>
   </section>
   <section>
     <title>Selecting A Machine To Use As A Golden Client</title>
@@ -254,59 +211,16 @@
 	</para>
       </step>
     </procedure>
-    <procedure>
+    <formalpara>
       <title>For other distributions:</title>
       <para>
 	If your distribution does not support RPMs or .debs, you must use
-	the tarball packages.
+	build and install from the source tarball; binary tarball
+	installations are no longer supported.  Instructions for building
+	SystemImager can be found in the <filename>README</filename> file
+	within the source tarball.
       </para>
-      <step>
-	<para>
-	  Download the systemimager-client tarball and its dependencies from
-	  <ulink url="http://systemimager.org/download/">
-	    http://systemimager.org/download/
-	  </ulink>.
-	</para>
-	<warning>
-	  <para>
-	    SystemImager depends on various other packages.  If you are using
-	    the tarball packages, you will have to make sure these dependencies
-	    are on your system before using SystemImager.
-	  </para>
-	</warning>
-      </step>
-      <step>
-	<para>
-	  Install the systemimager-client dependencies as documented in each
-	  tarball.
-	</para>
-      </step>
-      <step>
-	<para>
-	  Decompress the systemimager-client tarball.
-	</para>
-	<para>
-	  <command>
-	    <prompt>#</prompt> bzcat systemimager-client-x.y.z.tar.bz2 |
-	    tar xv
-	  </command>
-	</para>
-      </step>
-      <step>
-	<para>
-	  cd into the newly decompressed directory and run the
-	  <command>installclient</command> script.
-	</para>
-	<para>
-	  <command><prompt>#</prompt> cd systemimager-client-x.y.z</command>
-	</para>
-      </step>
-      <step>
-	<para>
-	  <command><prompt>#</prompt> ./installclient</command>
-	</para>
-      </step>
-    </procedure>
+    </formalpara>
   </section>
   <section>
     <title>Creating an Image on the Golden Client</title>
