@@ -57,19 +57,39 @@
 # Standards for pre-defined rsync modules:
 #   o scripts
 #   o <arch>-boot (Ie., i386-boot -- dynamically determine in rcS)
-#     (do an 
-#       ARCH=`uname -m | sed 's/i[3-6]86/i386/'`
-#     in the rcS script)
 #
-# SystemImager package names and contents (all forms of packaging will use the same base names):
-#   o package-one       brief description of contents
-#                       more relevant details
-#   o package-two       description of contents
+# SystemImager package names and contents (all forms of packaging will use the
+# same base names):
 #
-# Where should the server side exclude file be stored?
-# currently it is the only file in /usr/lib/systemimager/systemimager
-# maybe /etc/systemimager/systemimager.exclude?
+#  o systemimager-server            all of the arch-independent components
+#                                   neededonly  by an image server
 #
+#  o systemimager-client            all of the arch-independent components
+#                                   needed only by a golden client (there are
+#                                   no arch-dependent components atm)
+#
+#  o systemimager-common            all of the arch-independent components
+#                                   shared by both the image server and the
+#                                   golden client
+#
+#  o systemimager-kernel-<arch>     arch-specific kernel package.  the package
+#                                   itself is arch-any as it can reside on a
+#                                   server of any arch, so the arch is included
+#                                   in the package name.
+#
+#  o systemimager-initrd-<arch>     arch-specific ramdisk package.  the package
+#                                   itself is arch-any as it can reside on a
+#                                   server of any arch, so the arch is included
+#                                   in the package name.
+#
+#  o systemimager-bin-<arch>        arch-specific binary package.  the package
+#                                   itself is arch-any as it can reside on a
+#                                   server of any arch, so the arch is included
+#                                   in the package name.
+#
+#  o systemimager-doc               documentation (manual, etc).
+#
+
 
 DESTDIR =
 VERSION = $(shell cat VERSION)
