@@ -1,0 +1,21 @@
+#!/bin/sh
+#
+# Build a systemimager distribution tarball
+#
+
+PACKAGE=systemimager
+VERSION=`cat VERSION`
+GZIP=-9
+
+rm -f ${PACKAGE}-*.tar.gz
+
+cp ${PACKAGE}.spec ${PACKAGE}.spec.in
+sed 's/^%define ver \([ ]*\) [0-9].*$/%define ver \1 '$VERSION'/g' ${PACKAGE}.spec.in > ${PACKAGE}.spec
+rm -f ${PACKAGE}.spec.in
+
+mkdir -p /tmp/${PACKAGE}-${VERSION}
+cp -a . /tmp/${PACKAGE}-${VERSION}
+(cd /tmp && tar --owner=root --group=root -zcvf ${PACKAGE}-${VERSION}.tar.gz ${PACKAGE}-${VERSION}/)
+mv /tmp/${PACKAGE}-${VERSION}.tar.gz .
+rm -rf /tmp/${PACKAGE}-${VERSION}
+
