@@ -14,6 +14,9 @@ $program_name="mvimage";
 $get_help = "         Try \"$program_name -help\" for more options.";
 
 # declare modules
+use lib "/usr/lib/systemimager/perl";
+use SystemImager::Server;
+use SystemImager::Common;
 use Getopt::Long;
 use File::Copy;
 use File::Path;
@@ -25,6 +28,7 @@ my $config = AppConfig->new(
 			    'autoinstalldir' => { ARGCOUNT => 1 },
 			    'default_imagedir' => { ARGCOUNT => 1 },
 			    'rsyncd_conf' => { ARGCOUNT => 1 },
+			    'config_dir' => { ARGCOUNT => 1 },
 			    'autoinstall_kernel' => { ARGCOUNT => 1 },
 			    'autoinstall_initrd' => { ARGCOUNT => 1 }
 			    );
@@ -47,9 +51,7 @@ sub trim {
   }
   return wantarray ? @out : $out[0];
 }
-sub check_if_root{
-    unless($< == 0) { die "$program_name: Must be run as root!\n"; }
-}
+
 ### END functions ###
 
 # set version information
@@ -109,9 +111,6 @@ if($version) {
   exit 0;
 }
 
-# be sure program is run by root
-check_if_root();
-
 # Take the arguments left after Getopt::Long parses it's stuff out 
 # as the source and destination image names.
 $source_image=$ARGV[0];
@@ -121,18 +120,11 @@ unless(($source_image) and ($destination_image)) {
   die "\n$program_name: Must specify both SOURCE_IMAGE and DESTINATION_IMAGE.\n$get_help\n\n";
 }
 
+# be sure program is run by root
+SystemImager::Common->check_if_root();
+
 # get full path to image from $rsyncd_conf
-$file=$rsyncd_conf;
-open (FILE, "<$file") or die "FATAL: Couldn't open $file for reading!\n";
-  while (<FILE>) {
-    if (/^\s*path\s*=.*$source_image/) { 
-      (my $junk, $source_path) = split (/=/);
-      $source_path =~ s/^\s+//;
-      $source_path =~ s/\s+$//;
-      $source_path =~ s/$source_image//;
-    }
-  }
-close FILE;
+$source_path=SystemImager::Server->get_full_path_to_image_from_rsyncd_conf( $rsyncd_conf, $source_image );
 
 unless($source_path) { 
   print "FATAL: Can't get path to image $source_image from $rsyncd_conf!\n";
