@@ -339,15 +339,22 @@ unless($norsyncd) {
     
         # Give a couple of seconds for the old daemon to die.
         print "Starting or re-starting rsync as a daemon";
-        my $cmd="for i in 1 2; do echo -n .; sleep 1s; done";
-        system("$cmd");
+        $|++;
+        foreach (1..2) {
+             sleep 1;
+             print ".";
+        }
     
         # Start up the new one.
         system("rsync --daemon --config=$rsyncd_conf_file");
     
         # Give a few seconds for the new daemon to start.
-        $cmd="for i in 3 4 5; do echo -n .; sleep 1s; done";
-        system("$cmd");
+        $|++;
+        foreach (3..5) {
+             sleep 1;
+             print ".";
+        }
+        print "\n";
     
         # Wrap up
         print "done!\n";
