@@ -1,0 +1,900 @@
+#!/usr/bin/perl -w
+
+#
+#   "imagemanip"
+#
+#   Copyright (C) 2003 Kees Cook, OSDL <kees@osdl.org>
+#   Licensed under the GNU General Public License
+#
+#   $Id$
+#
+
+# set version number
+my $VERSION = "SYSTEMIMAGER_VERSION_STRING";
+my $program_name ="imagemanip";
+
+use lib "USR_PREFIX/lib/systemimager/perl";
+use strict;
+use Config::Simple;
+use Getopt::Long qw(:config no_ignore_case bundling);
+use Pod::Usage;
+use File::Basename;
+use File::Path;
+use LockFile::Simple;
+use Errno qw(:POSIX);
+
+use SystemImager::Options;
+use SystemImager::Config;
+use vars qw($config $VERSION);
+
+use constant DIE_ON_FAIL    => 1;
+use constant RETURN_ON_FAIL => 0;
+
+# Best not to trust this when running root
+delete $ENV{'IFS'};
+
+# Version details
+my $version_info = <<"EOF";
+$program_name (part of SystemImager) v$VERSION
+
+EOF
+
+$version_info .= SystemImager::Options->copyright();
+
+=head1 NAME
+
+imagemanip - systemimager image manipulation tool
+
+=head1 SYNOPSIS
+
+imagemanip [OPTIONS] [COMMAND] [IMAGE] [ARGS]
+
+ Commands (default is "help"):
+  list
+  new      IMAGE
+  brandnew IMAGE
+  install  IMAGE FILE
+  run      IMAGE SCRIPT
+  log      IMAGE
+  promote  IMAGE
+  rollback IMAGE
+  drop     IMAGE-(new|old)
+  help
+
+ Options:
+  -v, --verbose             Show commands as they are run
+  -n, --dryrun              Don't actully execute the commands
+  -V, --version             Display version
+
+=head1 COMMANDS
+
+=over 8
+
+=item B<list>
+
+Reports a list of all the systemimager images the user has access to on
+the system.
+
+=item B<new IMAGE>
+
+Creates a duplicate image of 'IMAGE', named IMAGE-new.  All "install",
+"run", and "promote" actions will work on this image, rather than the
+real production image.  If an unwanted IMAGE-new already exists, it
+must be removed with "drop".
+
+=item B<brandnew IMAGE>
+
+Same as the "new" command, except that it copies from IMAGE-virgin, instead
+of the regular 'IMAGE'.
+
+=item B<install IMAGE FILE>
+
+Copies FILE into IMAGE-new's "updates" directory.  If this file has a
+known package extension (rpm, deb), it will get installed.
+
+=item B<run IMAGE SCRIPT>
+
+Executes the script SCRIPT in IMAGE-new's "updates" directory.
+
+=item B<log IMAGE>
+
+Display the update log for IMAGE.
+
+=item B<promote IMAGE>
+
+Moves IMAGE-prev to IMAGE-old, IMAGE to IMAGE-prev, and IMAGE-new to
+IMAGE.  IMAGE-old must be removed with "drop" ahead of time.
+
+=item B<rollback IMAGE>
+
+Moves IMAGE to IMAGE-new, IMAGE-prev to IMAGE, and IMAGE-old to
+IMAGE-prev.  IMAGE-new must be removed with "drop" ahead of time.
+
+=item B<drop IMAGE>
+
+Removes IMAGE.  'IMAGE' must end in either "-new" or "-old".  No other
+images are allowed to be dropped.
+
+=item B<help>
+
+This reports the short command list usage summary.
+
+=back
+
+=head1 OPTIONS
+
+=over 8
+
+=item B<-v, --verbose>
+
+Run all commands verbosely.
+
+=item B<-n, --dryrun>
+
+Only display the commands, don't actually do anything with them.
+
+=item B<-V, --version>
+
+Display program version.
+
+=back
+
+=head1 DESCRIPTION
+
+Most SystemImager system images are maintained by the root user.  In the
+situation where multiple images are being booted in testing conditions by
+many different people or projects, there may come a need for non-root users
+to make changes to images.  This requires a certain level of auditing,
+access control, etc.  "imagemanip" helps provide that structure, but requires
+"sudo" to gain "root" permissions.
+
+An example /etc/sudoers file section could look like this:
+
+        User_Alias IMAGEMANIP_USERS=kees,cliff
+        IMAGEMANIP_USERS ALL=(root) /usr/sbin/imagemanip
+
+In order to manage systemimager images in a reliable fashion, a change-control
+method must exist. A set of directories and logs are enforced by this tool.
+In order to enforce forward-change, a single roll-back image is available,
+with the only way to "remove" a package is to build a "new" image from a
+"virgin" copy without the package you're interested in.
+
+SystemImager images under "imagemanip" control have suffixes to distinguish
+what state the image is in.  The default suffxes are:
+
+ NAME - The production image being downloaded/installed from right now
+ NAME-virgin - The original fresh-install virgin image
+ NAME-new - The new image being worked on 
+ NAME-prev - The previous production image
+ NAME-old - The previous previous production image (used to be NAME-prev)
+
+To help promote only "updates" to images, files should not be removed from
+images.  Therefore, the simplified method of operation to add files and 
+packages to an image follows these imagemanip commands:
+
+ - Create NAME-new image area ("new")
+ - Copy files into NAME-new/usr/src/updates/ ("install")
+ - chroot to NAME-new and install/run ("run")
+ - move NAME-prev to NAME-old, NAME to NAME-prev, and NAME-new to NAME ("promote")
+ - remove old image NAME-old ("drop")
+
+A log of all activities is kept in the image's update directory, named
+"B<update.log>".
+
+=head1 FILES
+
+=over 8
+
+=item B</etc/systemimager/imagemanip.conf>
+
+The script variables and defaults are:
+
+ img_dir = where the images are (defaults to SystemImager's defaults)
+ update_dir = "/usr/src/updates" - where to put newly installed packages
+ log_file = "update.log" - where to log imagemanip activities
+ perm_file = "/etc/imagemanip.perm" - where to load image permissions
+ cp_path = "/bin/cp" - what command to use for copying files
+ suffix-new = "-new" - image name suffix for images being worked on
+ suffix-virgin = "-virgin" - image name suffix for original images
+ suffix-prev = "-prev" - suffix given to the previous production tree
+ suffix-old = "-old" - suffix given to the -prev image after a "promote"
+ install_rpm = "/bin/rpm -Uvh" - command used to install "rpm" packages
+ install_deb = "/usr/bin/dpkg --install" - command used to install "deb" pkgs
+
+The "install_*" configuration options are special in that the "*" portion of
+the config option is used to match against file extensions when files are
+being installed on the image. If a match is found, the matching "install_..."
+command line will be executed within the image, using the file as the final
+argument. 
+
+=item B</etc/systemimager/imagemanip.perm>
+
+List of images followed by a comma-separated list of users allowed to
+modify those images.  For example:
+
+   rh9.0-ia32    cliff, cook
+   rh8.0-ia32    cliff, bilbo
+   rh7.3-ia64    carl, sam
+
+=back
+
+=head1 SEE ALSO
+
+L<systemimager(8)>
+
+=head1 AUTHOR
+
+Kees Cook <kees@osdl.org>.
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2003 by Kees Cook <kees@osdl.org>.
+
+This program is free software; you may redistribute it and/or modify
+it under the same terms ans Perl itself.
+
+=cut
+
+my $CONFDIR="/etc/systemimager";
+
+# load resources
+my %conf;
+my $conffile="$CONFDIR/$program_name.conf";
+if (-r $conffile) {
+    Config::Simple->import_from($conffile,\%conf);
+}
+
+# handle config defaults
+
+# This can come from SI
+$conf{'img_dir'}     ||= $config->default_image_dir() || \
+                         "/var/spool/systemimager/images";
+
+# imagemanip-specific (image-relative paths)
+$conf{'update_dir'}  ||= "/usr/src/updates";
+$conf{'log_file'}    ||= "update.log";
+# imagemanip-specific (server paths)
+$conf{'lock_dir'}    ||= "/var/lock/systemimager";
+$conf{'perm_file'}   ||= "/etc/systemimager/imagemanip.perm";
+
+# Paths to common system utilities
+$conf{'cp_path'}     ||= "/bin/cp";
+
+# Image directory suffixes
+$conf{'suffix-new'}    ||= "-new";
+$conf{'suffix-virgin'} ||= "-virgin";
+$conf{'suffix-prev'}   ||= "-prev";
+$conf{'suffix-old'}    ||= "-old";
+
+# Installation methods for various suffixes
+$conf{'install_rpm'} ||= "/bin/rpm -Uvh";
+$conf{'install_deb'} ||= "/usr/bin/dpkg --install";
+
+# Build customized locking manager object
+die "No such lock directory '$conf{'lock_dir'}'\n"
+    if (! -d $conf{'lock_dir'});
+my $locker = LockFile::Simple->make(
+    -autoclean => 1,
+    -hold => 0,
+    -stale => 1,
+    -format => $conf{'lock_dir'}.'/imagemanip-%F',
+    -nfs => 0,
+    -max => 2,
+    -delay => 1,
+    -warn => 0, # supress locking attempt warnings
+    -wfunc => undef, # stop ALL warnings
+) || die "Cannot set up file locking\n";
+
+
+my %perm;
+if (open(PERM,"<$conf{'perm_file'}")) {
+    my @lines=grep(!/^(#.*|)$/,<PERM>);
+    foreach my $line (@lines) {
+        chomp($line);
+        my($img,$list)=split(/\s+/,$line,2);
+        my(@users)=split(/,\s*/,$list);
+        @{$perm{$img}}=@users;
+    }
+    close PERM;
+}
+
+
+my %funcs=(
+    list     => \&do_list,
+    new      => \&do_new,
+    brandnew => \&do_brandnew,
+    install  => \&do_install,
+    run      => \&do_run,
+    log      => \&do_log,
+    promote  => \&do_promote,
+    rollback => \&do_rollback,
+    drop     => \&do_drop,
+    help     => \&do_help,
+);
+
+# Take out command options
+our $opt_verbose = undef;
+our $opt_version = undef;
+our $opt_debug   = undef;
+our $opt_dryrun  = undef;
+my  $opt_user    = undef;
+
+GetOptions(
+    'verbose|v',
+    'version|V',
+    'dryrun|n',
+    'debug',
+           ) or exit(do_help());
+exit (do_version()) if (defined($opt_version));
+
+# Verify that we're running as root
+if ($<!=0 || $(!=0) {
+    die "I'm expecting to run as uid/gid root.  Please configure 'sudo'\n";
+}
+
+# Required user name
+$opt_user=$ENV{'SUDO_USER'};
+if (!defined($opt_user)) {
+    die "Whoops: I don't know who you are.  'sudo' did not set 'SUDO_USER'\n";
+}
+
+# Which command do we have?
+my $cmd=shift @ARGV;
+$cmd="help" if (!defined($cmd));
+if (!defined($funcs{$cmd})) {
+    warn "No such command '$cmd'\n";
+    $cmd="help";
+}
+
+# Get the source image name
+my $source=shift @ARGV;
+if ($cmd ne "help" && $cmd ne "list") {
+    # sanitize source so people can't go hunting up through directories
+    if (defined($source)) {
+        $source=~s#/##g;
+        $source=~s#^\.+##g;
+    }
+
+    if (!defined($source) || $source eq "") {
+        warn "Missing required image name\n";
+        $cmd="help";
+    }
+    else {
+        # check that the user has perms to muck with that image
+        verify_img_perms($source);
+    }
+}
+
+exit(&{ $funcs{$cmd} }($source,@ARGV));
+
+###################
+# Utility functions
+
+# expand a full image directory path
+sub img_path
+{
+    my($name)=@_;
+
+    return $conf{'img_dir'}."/$name";
+}
+
+# check and see if an image exists
+sub img_exists
+{
+    my($name)=@_;
+
+    return (-d img_path($name));
+}
+
+# make sure we're the only instance of this tool working on these dirs
+sub img_lock
+{
+    my($name)=@_;
+
+    $locker->lock(img_path($name)) || die "lock of '$name' failed: $!\n";
+    return 0;
+}
+sub img_unlock
+{
+    my($name)=@_;
+
+    $locker->unlock(img_path($name));
+}
+
+sub System
+{
+    my($cmd,$name)=@_;
+    $name="Command" unless defined($name);
+
+    print "$cmd\n" if ($opt_verbose || $opt_dryrun);
+    if (!$opt_dryrun) {
+        system($cmd);
+        if ($? != 0) {
+            die "$name failed: exit code $?\n";
+        }
+    }
+}
+
+# Determine if the caller user has permission to read a file
+sub user_readable
+{
+    my($file)=@_;
+    die "\$opt_user not set!?\n" unless (defined($opt_user));
+    my $uid=getpwnam($opt_user);
+    die "User '$opt_user' does not exist!?\n" unless (defined($uid));
+    
+    my $pid=fork();
+    if (!defined($pid)) {
+        die "fork: $!\n";
+    }
+    if ($pid==0) {
+        # child
+        # Hack to get around missing "forget_all"
+        $locker->manager->{'pool'} = {};
+
+        my $code=1; # assume failure
+
+        $<=$>=$uid;
+        die "Could not setuid to $uid!?\n" if ($<!=$uid || $>!=$uid);
+
+        # So... is it readable?
+        $code=0 if (-f $file && -r _);
+
+        exit($code);
+    }
+    my $got=wait();
+    die "wait: $!\n" unless (defined($got));
+    if ($got != $pid) {
+        die "Wrong child died!? (Got pid $got instead of pid $pid)\n";
+    }
+    return ($? == 0);
+}
+
+# Adds a line to the update log (assumes the target is already locked)
+sub log_append
+{
+    my($target,$line)=@_;
+
+    my $fulldest=sprintf("%s/%s",img_path($target),$conf{'update_dir'});
+    my $log=sprintf("%s/%s", $fulldest, $conf{'log_file'});
+    if (!$opt_dryrun) {
+        # verify and create the destination directory
+        if (! -d $fulldest) {
+            eval { mkpath($fulldest); };
+            if ($@) {
+                die "$fulldest: $@\n";
+            }
+        }
+        open(LOG,">>$log") || die "$log: $!\n";
+        print LOG scalar(localtime())," $opt_user: $line\n" || die "$log: $!\n";
+        close LOG || die "$log: $!\n";
+    }
+}
+
+sub verify_img_perms
+{
+    my ($source,$die_on_fail)=@_;
+    $die_on_fail=1 unless (defined($die_on_fail));
+
+    # Verify they have permission to operate on that image
+    my $img=$source;
+    # check for -new or -old suffixes
+    $img=~s/($conf{'suffix-new'}|$conf{'suffix-old'})$//;
+    if (!defined($perm{$img})) {
+        if ($die_on_fail == DIE_ON_FAIL) {
+            die "No permissions defined for image '$img' -- aborting\n";
+        }
+        return 0;
+    }
+    my $allowed=undef;
+    foreach my $user (@{$perm{$img}}) {
+        if ($user eq $opt_user) {
+            $allowed=1;
+            last;
+        }
+    }
+    if (!defined($allowed)) {
+        if ($die_on_fail == DIE_ON_FAIL) {
+            die "User '$opt_user' cannot manipulate image '$img' -- aborting\n";
+        }
+        return 0;
+    }
+
+    return 1;
+}
+
+sub img_rename
+{
+    my ($src,$dst)=@_;
+
+    my $fullsrc=img_path($src);
+    my $fulldst=img_path($dst);
+
+    my $msg="rename '$fullsrc' -> '$fulldst'";
+    if ($opt_dryrun) {
+        print "$msg\n";
+    }
+    else {
+        die "Whoops: '$fulldst' already exists!\n" if (-d $fulldst);
+        die "Whoops: '$fullsrc' doesn't exist!\n" if (! -d $fullsrc);
+
+        if (!rename($fullsrc,$fulldst)) {
+            die "$msg: $!\n";
+        }
+    }
+}
+
+sub img_chroot_execute
+{
+    my($target,$subcmd)=@_;
+
+    # Saner method to handle chroot execution:
+    my $pid=fork();
+    if (!defined($pid)) {
+        die "fork: $!\n";
+    }
+    if ($pid==0) {
+        # child
+        # Hack to get around missing "forget_all"
+        $locker->manager->{'pool'} = {};
+
+        my $root=img_path($target);
+
+        # Sanity check before chroot
+        die "Directory path '$root' doesn't look deep enough for safe chroot\n"
+            unless ($root =~ m#^(/[^/]+){2}#);
+        die "Directory path '$root' not inside image dir for safe chroot!?\n"
+            unless ($root =~ m#^$conf{'img_dir'}/[^/]+#);
+
+        chroot($root) || die "Cannot chroot to '$root': $!\n";
+        # Make sure we leave the old working directory
+        chdir("/") || die "Cannot chdir to '/': $!\n";
+        # Relocate into the "updates" path
+        chdir($conf{'update_dir'}) || die "Cannot chdir to '/': $!\n";
+
+        # Execute whatever we want
+        exec($subcmd);
+        die "failed to exec '$subcmd': $!\n";
+    }
+    my $got=wait();
+    die "wait: $!\n" unless (defined($got));
+    if ($got != $pid) {
+        die "Wrong child died!? (Got pid $got instead of pid $pid)\n";
+    }
+    return ($? == 0);
+}
+
+sub img_install_package
+{
+    my($target,$pkg,$tool)=@_;
+
+    my $cmd=sprintf("%s %s/%s",
+                $tool,
+                $conf{'update_dir'},
+                $pkg);
+    img_chroot_execute($target,$cmd) || die "Failed: '$cmd'\n";
+}
+
+
+###################
+# Primary functions
+#
+
+# Show all the available images
+sub do_list
+{
+    my $dir=$conf{'img_dir'};
+    my $count=0;
+    opendir(DIR,$dir) || die "Cannot list '$dir': $!\n";
+    print "$dir:\n";
+    my @images=grep(!/^\.\.?$/ && -d "$dir/$_",readdir(DIR));
+    foreach my $img (sort @images) {
+        if (verify_img_perms($img,RETURN_ON_FAIL)) {
+            print "\t$img\n";
+            $count++;
+        }
+    }
+    if ($count==0) {
+        print "\tYou do not have permission to see any images\n";
+    }
+
+    return 0;
+}
+
+sub handle_new
+{
+    my ($source,$source_suffix)=@_;
+
+    my $base=$source;
+    $source.=$source_suffix if (defined($source_suffix));
+
+    my $target=$base.$conf{'suffix-new'};
+    my $args="-a";
+    $args.="v" if ($opt_debug);
+
+    # die if ends in suffix
+    die "Source image name cannot end in '$conf{'suffix-new'}'\n"
+        if ($source =~ /$conf{'suffix-new'}$/);
+
+    # die if not exists source
+    die "No such image '$source'\n"
+        if (!img_exists($source));
+
+    # die if exists NAME-new
+    die "Target image '$target' already exists (do you need to use 'drop'?)\n"
+        if (img_exists($target));
+
+    # lock NAME & NAME-new
+    img_lock($source);
+    img_lock($target);
+
+    # copy NAME to NAME-new
+    my $cmd=sprintf("%s %s %s %s",
+                $conf{'cp_path'},
+                $args,
+                img_path($source),
+                img_path($target));
+    System($cmd,"Copy");
+
+    log_append($target,"Duplicated from '$source'");
+
+    # unlock NAME & NAME-new
+    img_unlock($source);
+    img_unlock($target);
+
+    return 0;
+}
+
+sub do_new
+{
+    my ($source)=@_;
+    return handle_new($source);
+}
+
+sub do_brandnew
+{
+    my ($source)=@_;
+    return handle_new($source,"-virgin");
+}
+
+sub do_install
+{
+    my $source = shift;
+
+    my $target=$source.$conf{'suffix-new'};
+    my $args="-a";
+    $args.="v" if ($opt_debug);
+
+    die "No such image '$target' (do you need to use 'new' or 'brandnew'?)\n"
+        if (!img_exists($target));
+
+    # lock NAME
+    img_lock($target);
+
+    # copy file into $full/$update
+    my $fulldest=img_path($target)."/".$conf{'update_dir'};
+
+    # verify and create the destination directory
+    if (! -d $fulldest) {
+        eval { mkpath($fulldest); };
+        if ($@) {
+            die "$fulldest: $@\n";
+        }
+    }
+
+    foreach my $filepath (@_) {
+        die "Cannot read file '$filepath'\n"
+            if (!user_readable($filepath));
+
+        my $filename=basename($filepath);
+
+        # Make sure it doesn't already exist
+        my $fullname=sprintf("%s/%s",$fulldest,$filename);
+        die "Already exists: '$fullname'\n"
+            if (-f $fullname);
+
+        my $cmd=sprintf("%s %s %s %s/",
+                    $conf{'cp_path'},
+                    $args,
+                    $filepath,
+                    $fulldest);
+        System($cmd);
+
+        log_append($target,"Added '$filename'");
+
+        if ($filename=~/\.([^\.]+)$/) {
+            my $ext=$1;
+            if (defined($conf{"install_$ext"})) {
+                img_install_package($target,$filename,$conf{"install_$ext"});
+                log_append($target,"Installed '$filename'");
+            }
+        }
+
+    }
+
+    # unlock NAME
+    img_unlock($target);
+
+    return 0;
+}
+
+sub do_log
+{
+    my $source = shift;
+
+    my $fulldest=sprintf("%s/%s/%s",
+                         img_path($source),
+                         $conf{'update_dir'},
+                         $conf{'log_file'});
+    open(LOG,"<$fulldest") || die "No log '$fulldest': $!\n";
+    grep(print,<LOG>);
+    close(LOG);
+
+    return 0;
+}
+
+sub do_run
+{
+    my $source = shift;
+
+    my $target=$source.$conf{'suffix-new'};
+
+    die "No such image '$target' (do you need to use 'new' or 'brandnew'?)\n"
+        if (!img_exists($target));
+
+    # lock NAME
+    img_lock($target);
+
+    my $imgpath=img_path($target);
+    my $realpath=$imgpath."/".$conf{'update_dir'};
+    my $chrootpath=$conf{'update_dir'};
+    foreach my $exe (@_) {
+        my $filename=basename($exe);
+
+        my $realexe=sprintf("%s/%s",$realpath,$filename);
+        die "Not executable: '$realexe'\n" if (! -x $realexe);
+
+        my $cmd="./$filename";
+        img_chroot_execute($target,$cmd) || die "Failed: '$cmd'\n";
+
+        log_append($target,"Executed '$filename'");
+    }
+
+    # unlock NAME
+    img_unlock($target);
+
+    return 0;
+}
+
+sub do_promote
+{
+    my ($source)=@_;
+
+    my $prod=$source;
+    my $new=$source.$conf{'suffix-new'};
+    my $old=$source.$conf{'suffix-old'};
+    my $prev=$source.$conf{'suffix-prev'};
+
+    # bail if old exists
+    die "'$old' exists!  (Maybe you need to 'drop' it?)\n"
+        if (img_exists($old));
+    die "'$new' doesn't exist!\n"
+        if (!img_exists($new));
+   
+    # Lock image dirs
+    img_lock($prod);
+    img_lock($new);
+    img_lock($old);
+    img_lock($prev);
+
+    # move prev->old
+    if (img_exists($prev)) {
+        img_rename($prev,$old);
+    }
+    # move prod->prev
+    img_rename($prod,$prev);
+    # move new->prod
+    img_rename($new,$prod);
+
+    log_append($prod,"Promoted into production");
+    log_append($prev,"Replaced by new image in production");
+
+    # Unlock image dirs
+    img_unlock($prod);
+    img_unlock($new);
+    img_unlock($old);
+    img_unlock($prev);
+
+    return 0;
+}
+
+sub do_rollback
+{
+    my ($source)=@_;
+
+    my $prod=$source;
+    my $new=$source.$conf{'suffix-new'};
+    my $old=$source.$conf{'suffix-old'};
+    my $prev=$source.$conf{'suffix-prev'};
+
+    # bail if new exists
+    die "'$new' exists!  (Maybe you need to 'drop' it?)\n"
+        if (img_exists($new));
+    die "'$prev' doesn't exist!\n"
+        if (!img_exists($prev));
+   
+    # Lock image dirs
+    img_lock($prod);
+    img_lock($new);
+    img_lock($old);
+    img_lock($prev);
+
+    # move prod->new
+    img_rename($prod,$new);
+    # move prev->prod
+    img_rename($prev,$prod);
+    # move old->prev
+    if (img_exists($old)) {
+        img_rename($old,$prev);
+    }
+
+    log_append($new, "Rolled back from production");
+    log_append($prod,"Rolled back into production");
+
+    # Unlock image dirs
+    img_unlock($prod);
+    img_unlock($new);
+    img_unlock($old);
+    img_unlock($prev);
+
+    return 0;
+}
+
+sub do_drop
+{
+    my ($source)=@_;
+
+    # die if not ending in -new or -old
+    die "Source image name must end in either '$conf{'suffix-new'}' or '$conf{'suffix-old'}'\n"
+        if ($source !~ /($conf{'suffix-new'}|$conf{'suffix-old'})$/);
+
+    # die if not exists source
+    die "No such image '$source' in '$conf{'img_dir'}'\n"
+        if (!img_exists($source));
+
+    # lock NAME
+    img_lock($source);
+
+    # Get the full path
+    my $full=img_path($source);
+
+    # Sanity check before rm
+    die "Directory path '$full' doesn't look deep enough\n"
+        unless ($full =~ m#^(/[^/]+){2}#);
+    die "Directory path '$full' not inside image dir!?\n"
+        unless ($full =~ m#^$conf{'img_dir'}/[^/]+#);
+
+    if (rmtree($full, 0, 1)<1) {
+        die "Directory path '$full' could not be deleted\n";
+    }
+
+    # unlock NAME
+    img_unlock($source);
+
+    return 0;
+}
+
+sub do_help
+{
+    pod2usage(2);
+}
+
+sub do_version
+{
+    print $version_info;
+    return 0;
+}
+
+
+
+# vi:set ai ts=4 sw=4 expandtab:
