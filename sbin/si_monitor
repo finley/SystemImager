@@ -48,6 +48,9 @@ Options: (options can be presented in any order and may be abbreviated)
  --log LOGFILE          If specified every log information will be
                         reported in the file LOGFILE.
 
+ --daemon               Do not print anything to stdout, just handle and
+                        store data sent by clients.
+                        
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
 EOF
@@ -66,7 +69,7 @@ $conf{'lock_dir'} ||= "/var/lock/systemimager";
 die "No such lock directory '$conf{'lock_dir'}'\n"
     if (! -d $conf{'lock_dir'});
 
-my ($help, $version, $quiet, $port, $database, $log_file);
+my ($help, $version, $quiet, $port, $database, $log_file, $daemon);
 GetOptions(
 	"help"		=> \$help,
 	"version"	=> \$version,
@@ -74,6 +77,7 @@ GetOptions(
 	"port=s"	=> \$port,
 	"db=s"		=> \$database,
 	"log=s"		=> \$log_file,
+	"daemon"	=> \$daemon,
 ) or die "$help_info";
 
 ### BEGIN evaluate commad line options ###
@@ -131,24 +135,26 @@ bind(IN, $client_addr) or
 listen(IN, SOMAXCONN) or 
 	die "error: could not listen on port $port : $!\n";
 
-# Just print the header... -AR-
-display_clients();
-
 # Fork the interactive task.
-my $listen_pid = fork();
-if ($listen_pid) {
-	# Interactive task.
-	ReadMode(3);
-	my $key;
-	while($key = ReadKey(0)) { 
-		if (lc($key) eq "q") {
-			ReadMode(0);
-			kill(9, $listen_pid);
-			close(LOG);
-			unlink("$lock_file", "$video_lock_file");
-			exit(0);
-		}
-	}
+unless ($daemon) {
+    # Just print the header... -AR-
+    display_clients();
+
+   	# Fork interactive task.
+    my $listen_pid = fork();
+    if ($listen_pid) {
+    	ReadMode(3);
+    	my $key;
+    	while($key = ReadKey(0)) { 
+    		if (lc($key) eq "q") {
+    			ReadMode(0);
+    			kill(9, $listen_pid);
+    			close(LOG);
+    			unlink("$lock_file", "$video_lock_file");
+    			exit(0);
+    		}
+    	}
+    }
 }
 
 # Begin to accept client connections.
@@ -183,7 +189,7 @@ while (accept(CLIENT, IN)) {
 		update_db($other_host, $_);
 
 		# Refresh clients view.
-		display_clients();
+		display_clients() unless ($daemon);
 		
 		# Close client connection.
 		close(CLIENT);
