@@ -51,7 +51,7 @@ sub footprint {
 }
 
 sub build {
-    my ($tree) = @_;
+    my ($self, $tree) = @_;
 
     my $devsrc = "/dev";
     my $devdest = "$tree/dev";

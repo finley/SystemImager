@@ -61,7 +61,7 @@ sub footprint {
 }
 
 sub build {
-    my ($tree) = @_;
+    my ($self, $tree) = @_;
 
     ## probably just want to make some mark in
     ## the tree, so the initrd knows what to do.

@@ -1,5 +1,5 @@
 #  
-#  Copyright (C) 2003 dann frazier <dannf@dannf.org>
+#  Copyright (C) 2003-2004 dann frazier <dannf@dannf.org>
 #
 #  $Id$
 # 
@@ -48,7 +48,7 @@ sub footprint {
 }
 
 sub build {
-    my ($tree, $outfile) = @_;
+    my ($self, $tree, $outfile) = @_;
 
     my $mkcramfs = Util::Cmd::which("mkcramfs");
 
