@@ -136,3 +136,5 @@ clean:
 distclean:	clean
 	-rm -rf $(BEEP_ROOT) $(BUSYBOX_ROOT) $(MASSDNS_ROOT)
 	-rm -rf $(BEEP_TARBALL) $(BUSYBOX_TARBALL) $(MASSDNS_TARBALL)
+
+get_source:	$(BEEP_TARBALL) $(BUSYBOX_TARBALL) $(MASSDNS_TARBALL)
