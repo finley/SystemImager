@@ -541,9 +541,16 @@ endif
 	#
 	$(MAKE) -C $(LINUX_SRC) modules_install INSTALL_MOD_PATH="$(BOEL_BINARIES_DIR)"
 ifdef DEPMOD_BINARY
+	#
 	# If the build system doesn't have module-init-tools installed, and
 	# our modules need it, we need to use the depmod we built
-	$(DEPMOD_BINARY) -r -b $(BOEL_BINARIES_DIR) $(LINUX_VERSION)
+	#
+	# The find command is to figure out the kernel version string
+	#
+	$(DEPMOD_BINARY) -r -b $(BOEL_BINARIES_DIR) \
+	  $(shell find $(BOEL_BINARIES_DIR)/lib/modules -type d -mindepth 1 \
+                       -maxdepth 1 -printf "%f")
+	#
 endif
 	#
 	# get rid of build, which is a link to the kernel source directory (won't exist in BOEL anyway). -BEF-

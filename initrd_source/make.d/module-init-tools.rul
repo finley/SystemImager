@@ -4,7 +4,7 @@ MODULE_INIT_TOOLS_URL = http://www.kernel.org/pub/linux/utils/kernel/module-init
 MODULE_INIT_TOOLS_DIR = module-init-tools-$(MODULE_INIT_TOOLS_VERSION)
 MODULE_INIT_TOOLS_PATCHES = $(shell ls $(INITRD_PATCH_DIR)/module-init-tools.*.patch 2>/dev/null | sort)
 
-ifeq ($(ARCH),x86_64)
+ifeq ($(MODULE_UTILS),module-init-tools)
 ALL_SOURCE += $(INITRD_SRC_DIR)/$(MODULE_INIT_TOOLS_TARBALL)
 
 INSMOD_BINARY = $(INITRD_SRC_DIR)/$(MODULE_INIT_TOOLS_DIR)/insmod
