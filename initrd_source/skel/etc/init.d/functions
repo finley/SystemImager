@@ -114,6 +114,7 @@ write_variables() {
 #   Usage: $COMMAND || shellout
 #
 shellout() {
+    killall -9 udp-receiver rsync
     write_variables
     cat /etc/issue
     exec sh
@@ -192,8 +193,6 @@ get_flamethrower_directory() {
 #   flamethrower_client
 #
 flamethrower_client() {
-
-    local COMPLETED STARTED THIS_STAMP LAST_STAMP TAR_STDERR_LOG TAR_OPTS
 
     # validate
     if [ -z $PORTBASE ]; then
@@ -333,7 +332,12 @@ flamethrower_client() {
     unset DIR
     unset UDP_RECEIVER_RUNNING
     unset PORTBASE
-
+    unset COMPLETED
+    unset STARTED
+    unset THIS_STAMP
+    unset LAST_STAMP
+    unset TAR_STDERR_LOG
+    unset TAR_OPTS
 }
 #
 ################################################################################
@@ -349,8 +353,6 @@ flamethrower_client() {
 #   flamethrower_client_new  /* we can implement this once udp-receiver can exit properly, and timeout on it's own -BEF- */
 #
 flamethrower_client_new() {
-
-    local COMPLETED STARTED THIS_STAMP LAST_STAMP TAR_STDERR_LOG TAR_OPTS
 
     # validate
     if [ -z $PORTBASE ]; then
@@ -459,6 +461,11 @@ flamethrower_client_new() {
     unset UDP_RECEIVER_EXIT_STATUS
     unset UDP_RECEIVER_OPTIONS
     unset TAR_OPTS
+    unset COMPLETED
+    unset STARTED
+    unset THIS_STAMP
+    unset LAST_STAMP
+    unset TAR_STDERR_LOG
 
 }
 
@@ -514,12 +521,6 @@ get_boel_binaries_tarball() {
 #   Switch root to tmpfs
 #
 switch_root_to_tmpfs() {
-    local tmpfs_size
-    local tmpfs_nr_blocks
-    local tmpfs_nr_inodes
-    local tmpfs_mode
-    local tmpfs_opts
-
     mount_proc
     tmpfs_size=$(tr ' ' '\n' < /proc/cmdline | grep tmpfs_size\= | sed 's/.*=//')
     tmpfs_nr_blocks=$(tr ' ' '\n' < /proc/cmdline | grep tmpfs_nr_blocks\= | sed 's/.*=//')
@@ -570,6 +571,12 @@ switch_root_to_tmpfs() {
     cd /new_root || shellout
     mkdir -p old_root || shellout
     pivot_root . old_root || shellout
+
+    unset tmpfs_size
+    unset tmpfs_nr_blocks
+    unset tmpfs_nr_inodes
+    unset tmpfs_mode
+    unset tmpfs_opts
 }
 #
 #################################################################################
@@ -802,8 +809,6 @@ start_network() {
 #
 #   Ping test
 ping_test() {
-    local PING_DESTINATION
-    local HOST_TYPE
     echo
     echo ping_test
 
@@ -847,6 +852,9 @@ ping_test() {
             PING_EXIT_STATUS=0
         fi
     done
+
+    unset PING_DESTINATION
+    unset HOST_TYPE
 
 }
 #
@@ -1182,8 +1190,6 @@ beep_incessantly() {
 # Usage: beep [$COUNT [$INTERVAL]]
 # Usage: beep
 beep() {
-    local COUNT INTERVAL COUNTED
-
     COUNT=$1
     INTERVAL=$2
 
@@ -1197,6 +1203,10 @@ beep() {
         sleep $INTERVAL
         COUNTED=$(( $COUNTED + 1 ))
     done
+
+    unset COUNT 
+    unset COUNTED
+    unset INTERVAL 
 }
 
 #
@@ -1207,8 +1217,6 @@ beep() {
 # Usage: sleep_loop [[$COUNT [$INTERVAL]] $CHARACTER]
 # Usage: sleep_loop
 sleep_loop() {
-    local COUNT INTERVAL CHARACTER COUNTED
-
     COUNT=$1
     INTERVAL=$2
     CHARACTER=$3
@@ -1224,6 +1232,11 @@ sleep_loop() {
         sleep $INTERVAL
         COUNTED=$(( $COUNTED + 1 ))
     done
+
+    unset CHARACTER
+    unset COUNT
+    unset COUNTED
+    unset INTERVAL
 }
 
 #
