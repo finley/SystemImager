@@ -377,10 +377,6 @@ EOF
     if($? != 0) { die "Couldn't move $temp_file to /etc/hosts!\n", "Is the filesystem that contains /etc/ full?"; }
     ### move new hosts file in to place
 
-    ### copy /etc/hosts to /tftpboot/systemimager/hosts to be sure it stays up to date
-    system('cp', '-f', '/etc/hosts', '/tftpboot/systemimager/hosts');
-    if($? != 0) { die "Couldn't copy /etc/hosts to /tftpboot/systemimager/hosts!\n", "Does /etc/tftpboot/systemimager/ exist?"; }
-    ### copy /etc/hosts to /tftpboot/systemimager/hosts to be sure it stays up to date
   }
   ### END One Subnet at a time ###
   if ( $etc_hosts eq "y" ) { print "\nThese entries have been added to /etc/hosts.\n"; }
@@ -391,3 +387,9 @@ EOF
   print "\nNo entries will be added.\n";
 }
 ### END hosts questionaire ###
+
+### copy /etc/hosts to /tftpboot/systemimager/hosts to be sure it stays up to date
+# do this even if we didn't modify /etc/hosts -- it will prevent much user frusteration
+system('cp', '-f', '/etc/hosts', '/tftpboot/systemimager/hosts');
+if($? != 0) { die "Couldn't copy /etc/hosts to /tftpboot/systemimager/hosts!\n", "Does /etc/tftpboot/systemimager/ exist?"; }
+### copy /etc/hosts to /tftpboot/systemimager/hosts to be sure it stays up to date
