@@ -1,15 +1,13 @@
 #!/usr/bin/perl -w
 
 #
-# "SystemImager"
+#   "SystemImager"
 #
-#  Copyright (C) 1999-2001 Brian Elliott Finley <bef@bgsw.net>
-#  Copyright (C) 2002 International Business Machines
-#                     Sean Dague <sean@dague.net>
-#  Copyright (C) 2002-2003 Bald Guy Software 
-#                          Brian Elliott Finley <bef@bgsw.net>
+#   Copyright (C) 1999-2004 Brian Elliott Finley
+#   Copyright (C) 2002 International Business Machines
+#                      Sean Dague <sean@dague.net>
 #
-#  $Id$
+#   $Id$
 #
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -26,7 +24,11 @@
 #   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 #   Others who have contributed to this code (in alphabetical order):
-#     Adam L. Lambert <alambert@epicrealm.com> (credit for the -autoinstall option goes to Adam)
+#     Adam L. Lambert <alambert@epicrealm.com> 
+#     - (credit for the -autoinstall option goes to Adam)
+#
+#   2004.09.21  Brian Elliott Finley
+#   - Fix, I hope, logic in detecting transfer failures
 #
 
 
@@ -517,9 +519,16 @@ SC_EOF
         print "Updating image from module ${module}...\n";
 
         # Run the command. -BEF-
-        if (system($cmd)) {
-            if ($image eq $module) { die "$cmd failed!"; }
-            else { warn "$cmd failed, continuing..."; }
+        unless (!system($cmd)) {
+            
+            #
+            # $cmd must have failed...
+            #
+            if ($image eq $module) {
+                die "$cmd failed!";
+            } else { 
+                warn "$cmd failed, continuing...";
+            }
         }
     }
     # Now we install the bootloader if requested
@@ -532,7 +541,7 @@ SC_EOF
 
 
 ### BEGIN graffiti ###
-if($image) {
+if(defined $image) {
     unless( defined($dry_run) ) {
         my $file = "/etc/systemimager/IMAGE_LAST_SYNCED_TO";
         open (FILE, ">$file") or croak("Couldn't open $file for writing!");
@@ -542,8 +551,8 @@ if($image) {
 }
 ### END graffiti ###
 
-# -reboot
-if($reboot) {
+# --reboot
+if(defined $reboot) {
     print "Rebooting...\n";
     my $cmd = "/bin/sleep 10s; /sbin/init 6";
     !system($cmd) or die "$cmd failed!";
