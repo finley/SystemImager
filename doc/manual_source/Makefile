@@ -9,11 +9,13 @@
 #  Function: Create documentation from SGML source.
 #
 #  If you get errors when running make, and you are fortunate enough to be
-#  building on a Debian box, just run: 
+#  building on a Debian box, do the following to get all the proper tools 
+#  installed:
 # 
-#    "apt-get install jadetex docbook-utils"
+#    "apt-get install jadetex docbook-utils sgmltools-lite"
 #
-#  to get all of the proper tools installed. -BEF-
+#
+#  It may also be prefereable to do a "make USE_SGMLTOOLS=1 <target>" if you are on Debian.
 #
 
 
