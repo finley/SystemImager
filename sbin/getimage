@@ -1183,7 +1183,8 @@ EOF
 
 print MASTER_SCRIPT "# unmount the freshly filled filesystems\n";
 foreach $mount_point (reverse sort @mount_points) {
-    print MASTER_SCRIPT "umount /a$mount_point/\n";
+    print MASTER_SCRIPT "echo -n umount /a$mount_point/ ... \n";
+    print MASTER_SCRIPT "umount /a$mount_point/ && echo Done!\n";
 }
 print MASTER_SCRIPT "\n";
 
