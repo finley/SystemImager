@@ -1296,9 +1296,11 @@ start_report_task() {
     while :; do
         LIST=`df 2>/dev/null | sed -ne "/^\/dev/p" | sed "s/  */ /g" | sed "s/\(.*\) \(.*\) \(.*\) \(.*\) \(.*\) \(.*\)/\3+/"`0
         TOT=`echo $LIST | bc`
-        status=`echo "($TOT - $DISKSIZE) * 100 / $IMAGESIZE" | bc`
+        status=`echo "scale=2; ($TOT - $DISKSIZE) * 100 / $IMAGESIZE" | bc`
         if [ $status -eq 0 ]; then 
             status=1
+        elif [ $status -ge 100 ]; then
+            status=99
         fi
 
         # Send status to the monitor server -AR-
