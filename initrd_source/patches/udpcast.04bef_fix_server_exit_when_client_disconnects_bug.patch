@@ -1,0 +1,27 @@
+diff -urN udpcast.orig/participants.c udpcast/participants.c
+--- udpcast.orig/participants.c	2003-03-29 18:37:48.000000000 -0600
++++ udpcast/participants.c	2003-03-29 18:39:07.000000000 -0600
+@@ -34,7 +34,11 @@
+ 		 getIpString(&db->clientTable[i].addr, ipBuffer));
+ 	db->clientTable[i].used = 0;
+ 	db->nrParticipants--;
++	flprintf("Remaining Participants: %d\n", i, 
++        db->nrParticipants);
+     }
++    if(nrParticipants(db) == 0)
++	    exit(0);
+     return 0;
+ }
+ 
+diff -urN udpcast.orig/senddata.c udpcast/senddata.c
+--- udpcast.orig/senddata.c	2003-03-29 18:37:48.000000000 -0600
++++ udpcast/senddata.c	2003-03-29 18:34:04.000000000 -0600
+@@ -592,8 +592,6 @@
+     handleDisconnect1(db, slice1, clNo);
+     handleDisconnect1(db, slice2, clNo);
+     removeParticipant(db, clNo);
+-    if(nrParticipants(db) == 0)
+-	exit(0);
+     return 0;
+ }
+ 
