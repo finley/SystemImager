@@ -79,14 +79,6 @@ create_devices_by_label_file() {
   rm -f /etc/systemimager/ext2_devices_by_label.txt
   rm -f /etc/systemimager/devices_by_label.txt
 
-  # Just in case /etc/mtab is a symlink to /proc/mounts.  This method
-  # should still work, unless LABEL= statements are used.  We'll have
-  # to deal with that later.  Sedding through /proc/mounts directly is 
-  # useless as it is a zero length file. :)  This file is also left
-  # behind for getimage.
-  cat /etc/mtab > /etc/systemimager/mounted_filesystems
-
-
   # sed command below uses a literal tab: <ctrl>+<v>, then <tab>
   LABELS=`
 	  sed 's/	/ /' /etc/fstab | \
@@ -115,7 +107,6 @@ create_devices_by_label_file() {
 ### END functions
  
 
- 
 # default is an interactive install (nothing goes over the network any more)
 QUIET="false"
 HELP="false"
@@ -348,7 +339,17 @@ do
 done
 ### END leave disk info behind for the getimage command ###
 
-#egrep -q 'LABEL=' /etc/fstab && create_devices_by_label_file
+# A list of mounted filesystems is needed to determine which 
+# filesystems to exclude when getting an image.  This list is 
+# also used to determine the actual hardware device used when
+# a LABEL= statment is made in /etc/fstab.
+#
+# In the case that /etc/mtab is a symlink to /proc/mounts.  This 
+# method should still work.  This file is also left behind 
+# for getimage.
+mount > /etc/systemimager/mounted_filesystems
+
+# get a list of LABELled devices if any
 create_devices_by_label_file
 
 # wrap up

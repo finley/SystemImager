@@ -294,10 +294,13 @@ if($golden_client) {
   # get /etc/systemimager/mounted_filesystems from $golden_client
   if (!$quiet) {
     print "Retrieving /etc/systemimager/mounted_filesystems from $golden_client to check for mounted filesystems...\n";
+
     my $directory="${imagedir}/etc/";
-    mkdir("$directory", 0755) || die "$program_name: Can't make directory $directory\n";
-    my $directory="${imagedir}/etc/systemimager/";
-    mkdir("$directory", 0755) || die "$program_name: Can't make directory $directory\n";
+    unless (-d "$directory") { mkdir("$directory", 0755) || die "$program_name: Can't make directory $directory\n"; }
+
+    $directory="${imagedir}/etc/systemimager/";
+    unless (-d "$directory") { mkdir("$directory", 0755) || die "$program_name: Can't make directory $directory\n"; }
+
     $command =  "rsync -av --numeric-ids ${golden_client}::root/etc/systemimager/mounted_filesystems ${imagedir}/etc/systemimager/mounted_filesystems";
     open(RSYNC, "$command|");
     print "------------- $golden_client mounted_filesystems RETRIEVAL PROGRESS -------------\n";
@@ -307,8 +310,13 @@ if($golden_client) {
     print "------------- $golden_client mounted_filesystems RETRIEVAL FINISHED -------------\n";
     close(RSYNC);
   } else {
-    my $directory="${imagedir}/etc/systemimager/";
-    mkdir("$directory", 0755) || die "$program_name: Can't make directory $directory\n";
+
+    $directory="${imagedir}/etc/";
+    unless (-d "$directory") { mkdir("$directory", 0755) || die "$program_name: Can't make directory $directory\n"; }
+
+    $directory="${imagedir}/etc/systemimager/";
+    unless (-d "$directory") { mkdir("$directory", 0755) || die "$program_name: Can't make directory $directory\n"; }
+
     $command = "rsync -a --numeric-ids ${golden_client}::root/etc/systemimager/mounted_filesystems ${imagedir}/etc/systemimager/mounted_filesystems";
     system($command);
   }
@@ -329,8 +337,9 @@ if($golden_client) {
     @mounted_filesystems = grep (!/\s+ext3\s+/, @mounted_filesystems);
     @mounted_filesystems = grep (!/\s+reiserfs\s+/, @mounted_filesystems);
     foreach (@mounted_filesystems) {
-      /\S+\s+(\S+)\s+/;
-      print EXCLUDE "$1/*\n";
+      /\S+\s+\S+\s+(\S+)\s+/;
+      my $mount_point=$1;
+      print EXCLUDE "$mount_point/*\n";
     }
   close EXCLUDE;
   # compile rsync options
