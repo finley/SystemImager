@@ -13,7 +13,7 @@ o Current development branch is tagged "HEAD".
   this branch from another branch use the command "cvs update -r HEAD" 
   from the root of your development directory.
 o Current stable branch is tagged:
-   "v1_4_1-beta"
+   "v1_4_2-beta"
   Use "cvs update -r TAG_NAME" to switch to the stable CVS branch.
 o Only Brian Finley will modify CVS tags of any kind, such as for versioning 
   releases or creating development branches.
@@ -123,6 +123,9 @@ o addclients -- accept command line input such as --image $imagename
 o addclients -- re-cycle through each question if answer is ""
 o have getimage question what should be excluded in future when updateimage 
   is run.  /tmp/* and /home/* should be recommended as a starting place.
+o David Weenink <david.weenink@hum.uva.nl> suggests:
+  o rename systemimager.exclude -> updateclient.local.exclude
+  o include comments inside to indicate how the includes/excludes work
 
 
 
