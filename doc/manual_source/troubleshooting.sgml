@@ -1,6 +1,50 @@
 <chapter>
   <title>Troubleshooting</title>
+
   <para></para>
+
+  <section>
+    <title>
+     What's with the &quot;ETHER_SLEEP&quot; variable, and when should I mess
+     with it?
+    </title>
+    <para>
+     The ETHER_SLEEP variable specifies the number of seconds that your 
+     autoinstall client(s) should wait before trying to talk to the network.  
+     The default is zero (0), to make installs go faster, as a timeout is not 
+     normally needed.
+    </para>
+    <para>
+     Certain networking equipment, notable switches, may refuse to pass traffic
+     from a new interface that has appeared on a switch port until after a 30+
+     second delay.  This delay is usually a settable option (if your switch even
+     has this capability).  Whether or not it is set on your switches is vendor
+     and/or site specific.
+    </para>
+    <para>
+     If you encounter problems during an autoinstall, such as your autoinstall
+     client not recieving an IP address via DHCP: a) you find that when you ask
+     for a DHCP address from the command line, you get one.  b) you manually 
+     configure the network interface and can then contact the imageserver; then
+     you may want to change the ETHER_SLEEP variable.  
+    </para>
+    <para>
+     Both of these symptoms can often be explained by the 30+ second timeout 
+     passing prior to the manual intervention.
+    </para>
+    <para>
+     If you decide to change the ETHER_SLEEP variable, a value of 35 has been
+     found to work in most cases (ETHER_SLEEP=35).  ETHER_SLEEP can be set in
+     a local.cfg file or by modifying the ./etc/init.d/rcS script in the BOEL
+     source code.
+    </para>
+    <para>
+     NOTE: The 30+ second timeout at the switch begins with the interface on
+     your autoinstall client is made active (Ie: driver loaded), and is not
+     necessarily tied to when the interface is configured with an IP address.
+    </para>
+  </section>
+
   <section>
     <title>
       <command>getimage</command> fails with a "Failed to retrieve
@@ -33,6 +77,7 @@
       </listitem>
     </orderedlist>
   </section>
+
   <section id=TroubleAssignHostname>
     <title>
       My client fails to assign a hostname to itself, causing the autoinstall to
@@ -58,6 +103,7 @@ etc.
     </BlockQuote>
     <Para>This should be fixed in the next release (1.4.2).</Para>
   </section>
+
   <section id=Troubleslowrsync>
     <title>
       My client autoinstallation/update hangs, crashes, or is ridiculously
@@ -212,6 +258,7 @@ etc.
       <ulink url="http://systemimager.org/"></ulink>
     </para>
   </section>
+
   <section id=TroubleAutoInstallError>
     <title>When making the autoinstalldiskette, my system gives me an error 
       involving "dd" or "mount".</title>
@@ -227,6 +274,7 @@ etc.
     </para>
       
   </section>
+
   <section id=TroubleAutoinstallFail>
     <title>
       My client failed to autoinstall, and when I run an
@@ -239,6 +287,7 @@ etc.
       system.
     </para>
   </section>
+
   <section id=TroubleDHCPFailed>
     <title>
       My autoinstall client booted up and said "dhcp didn't work," but 
@@ -274,6 +323,7 @@ etc.
       </listitem>
     </itemizedlist>
   </section>
+
   <section>
     <title>
       My client fails with the error:
@@ -347,6 +397,7 @@ etc.
       </orderedlist>
     </example>
   </section>
+
   <section>
     <title>
       My client completes the autoinstall process successfully, but I get an
@@ -385,6 +436,7 @@ etc.
       </listitem>
     </itemizedlist>
   </section>
+
   <section id=TftpFailure>
     <title>
       PXE installations work fine for a while, but eventually clients no
@@ -401,6 +453,7 @@ etc.
       xinetd manpage for details on increasing this limit.
     </para>
   </section>  
+
   <section id=RootMountFailure>
     <title>
       My autoinstallclient fails with "Kernel panic: VFS: unable to mount root 
@@ -442,4 +495,5 @@ etc.
       </listitem>
     </itemizedlist>
   </section>
+
 </chapter>
