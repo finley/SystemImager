@@ -3,7 +3,7 @@
 %define rel      3
 %define prefix   /usr/local
 
-Summary: Software that automates Linux installs and software distribution
+Summary: Software that automates Linux installs, software distribution, and production deployment.
 Name: %name
 Version: %ver
 Release: %rel
@@ -22,7 +22,7 @@ AutoReqProv: no
 This is bogus and not used anywhere
 
 %package server
-Summary: Software that automates Linux installs and software distribution
+Summary: Software that automates Linux installs, software distribution, and production deployment.
 Version: %ver
 Release: %rel
 Copyright: GPL
@@ -37,18 +37,22 @@ Requires: rsync >= 2.4.6, syslinux >= 1.48, systemimager-common, libappconfig-pe
 AutoReqProv: no
 
 %description server
-SystemImager is software that automates Linux installs and software
-distribution.  It also makes software distribution, configuration, and
-operating system updates easy. You can even update from one Linux 
-release version to another! SystemImager can also be used for 
-content distribution on web servers.  It is most useful in environments
-where you have large numbers of identical machines. Some typical
-environments include: Internet server farms, high performance clusters,
-computer labs, or corporate desktop environments where all workstations
-have the same basic hardware configuration.
+SystemImager is software that automates Linux installs, software 
+distribution, and production deployment.  SystemImager makes it easy to
+do installs, software distribution, content or data distribution, 
+configuration changes, and operating system updates to your network of 
+Linux machines. You can even update from one Linux release version to 
+another!  It can also be used to ensure safe production deployments.  
+By saving your current production image before updating to your new 
+production image, you have a highly reliable contingency mechanism.  If
+the new production enviroment is found to be flawed, simply roll-back 
+to the last production image with a simple update command!  Some 
+typical environments include: Internet server farms, database server 
+farms, high performance clusters, computer labs, and corporate desktop
+environments.
 
 %package common
-Summary: Software that automates Linux installs and software distribution
+Summary: Software that automates Linux installs, software distribution, and production deployment.
 Version: %ver
 Release: %rel
 Copyright: GPL
@@ -63,19 +67,22 @@ Requires: /usr/bin/perl
 AutoReqProv: no
 
 %description common
-SystemImager is software that automates Linux installs and software
-distribution.  It also makes software distribution, configuration, and
-operating system updates easy. You can even update from one Linux 
-release version to another! SystemImager can also be used for 
-content distribution on web servers.  It is most useful in environments
-where you have large numbers of identical machines. Some typical
-environments include: Internet server farms, high performance clusters,
-computer labs, or corporate desktop environments where all workstations
-have the same basic hardware configuration.
-
+SystemImager is software that automates Linux installs, software 
+distribution, and production deployment.  SystemImager makes it easy to
+do installs, software distribution, content or data distribution, 
+configuration changes, and operating system updates to your network of 
+Linux machines. You can even update from one Linux release version to 
+another!  It can also be used to ensure safe production deployments.  
+By saving your current production image before updating to your new 
+production image, you have a highly reliable contingency mechanism.  If
+the new production enviroment is found to be flawed, simply roll-back 
+to the last production image with a simple update command!  Some 
+typical environments include: Internet server farms, database server 
+farms, high performance clusters, computer labs, and corporate desktop
+environments.
 
 %package client
-Summary: Software that automates Linux installs and software distribution
+Summary: Software that automates Linux installs, software distribution, and production deployment.
 Version: %ver
 Release: %rel
 Copyright: GPL
@@ -90,15 +97,19 @@ Requires: systemimager-common, systemconfigurator, libappconfig-perl, rsync >= 2
 AutoReqProv: no
 
 %description client
-SystemImager is software that automates Linux installs and software
-distribution.  It also makes software distribution, configuration, and
-operating system updates easy. You can even update from one Linux 
-release version to another! SystemImager can also be used for 
-content distribution on web servers.  It is most useful in environments
-where you have large numbers of identical machines. Some typical
-environments include: Internet server farms, high performance clusters,
-computer labs, or corporate desktop environments where all workstations
-have the same basic hardware configuration.
+SystemImager is software that automates Linux installs, software 
+distribution, and production deployment.  SystemImager makes it easy to
+do installs, software distribution, content or data distribution, 
+configuration changes, and operating system updates to your network of 
+Linux machines. You can even update from one Linux release version to 
+another!  It can also be used to ensure safe production deployments.  
+By saving your current production image before updating to your new 
+production image, you have a highly reliable contingency mechanism.  If
+the new production enviroment is found to be flawed, simply roll-back 
+to the last production image with a simple update command!  Some 
+typical environments include: Internet server farms, database server 
+farms, high performance clusters, computer labs, and corporate desktop
+environments.
 
 %changelog
 * Sat Oct 20 2001  Sean Dague <sean@dague.net> 2.0.0-2
