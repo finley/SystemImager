@@ -1,8 +1,8 @@
 SECTION = 8
 
-compress:	prepareclient.8.gz updateclient.8.gz addclients.8.gz getimage.8.gz makeautoinstallcd.8.gz makeautoinstalldiskette.8.gz makedhcpserver.8.gz makedhcpstatic.8.gz lsimage.8.gz pushupdate.8.gz cpimage.8.gz mvimage.8.gz rmimage.8.gz
+compress:	prepareclient.8.gz updateclient.8.gz addclients.8.gz getimage.8.gz makeautoinstallcd.8.gz makeautoinstalldiskette.8.gz makedhcpserver.8.gz makedhcpstatic.8.gz lsimage.8.gz pushupdate.8.gz cpimage.8.gz mvimage.8.gz rmimage.8.gz mkbootserver.8.gz
 
-manpages:	prepareclient.8 updateclient.8 addclients.8 getimage.8 makeautoinstallcd.8 makeautoinstalldiskette.8 makedhcpserver.8 makedhcpstatic.8 lsimage.8 pushupdate.8 cpimage.8 mvimage.8 rmimage.8
+manpages:	prepareclient.8 updateclient.8 addclients.8 getimage.8 makeautoinstallcd.8 makeautoinstalldiskette.8 makedhcpserver.8 makedhcpstatic.8 lsimage.8 pushupdate.8 cpimage.8 mvimage.8 rmimage.8 mkbootserver.8
 
 prepareclient.8.gz:	prepareclient.8
 	gzip -9 < prepareclient.8 > prepareclient.8.gz
@@ -81,6 +81,12 @@ rmimage.8.gz:	rmimage.8
 
 rmimage.8:	rmimage.sgml
 	docbook-to-man rmimage.sgml > rmimage.8
+
+mkbootserver.8.gz:	mkbootserver.8
+	gzip -9 < mkbootserver.8 > mkbootserver.8.gz
+
+mkbootserver.8:	mkbootserver.sgml
+	docbook-to-man mkbootserver.sgml > mkbootserver.8
 
 clean:
 	rm -f *~ \#*\# *.8 *.gz
