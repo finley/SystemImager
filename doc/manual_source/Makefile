@@ -4,7 +4,7 @@
 #
 
 DB2HTML = /usr/bin/db2html
-NAME	= si-manual
+NAME	= systemimager-manual
 SRC	= $(NAME).sgml
 DEST	= ..
 
