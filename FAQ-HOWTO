@@ -3,13 +3,16 @@
 #
 # This file is: FAQ-HOWTO
 #
-# Current version as of the writing of this document: 0.24beta4
+# Current version as of the writing of this document: 1.0
 #
 # This document written by:  
 #  Brian Finley <brian@valinux.com>
 #  Ari Jort <ajort@valinux.com>
 #
 
+# add something about makeautoinstallcd
+# new file locations (simply refer to commands, not full paths)
+# something about /var/log/systemimager/images and how to link it to somewhere else
 
                                SystemImager
                         Frequently Asked Questions
@@ -537,6 +540,15 @@ This is accomplished with the "updateclient" command on the client.
 
 2) run "updateclient" on the clients that you want to update.  Do an
    "updateclient --help" to get the syntax.
+
+
+--------------------------------------------------------------------------------
+Question:  Is there a log file where autoinstall client status is kept?
+--------------------------------------------------------------------------------
+
+Answer:
+
+Yes.  "/var/log/systemimager"
 
 
 --------------------------------------------------------------------------------
