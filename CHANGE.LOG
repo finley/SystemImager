@@ -22,6 +22,16 @@ o Fixed bug where the "Would you like to update the autoinstall script
   typed a "y".  Thanks to John Chabalko <john.chabalko@nbci.com> for 
   finding this bug.
 o Added some syntax checking for the -update-script option.  
+o Fixed IP assignment question out of order bug.  Thanks to
+  Cath Burrowes <cath@starbiz.com.au> for this patch.
+o Added section to autoinstall.master scripts to deal with testing                                                                            for and doing raidstop if necessary -- even if we're not 
+  autoinstalling a raid image.
+
+
+makeautoinstallcd
+-----------------
+o Verify that the kernel and initrd.gz actually exist.  Suggested by 
+  Greg Pratt <gpratt@valinux.com>.
 
 
 
