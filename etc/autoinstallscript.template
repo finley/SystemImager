@@ -105,66 +105,23 @@ echo "mount proc /a/proc -t proc -o defaults || shellout"
 mount proc /a/proc -t proc -o defaults || shellout
 ### END mount proc in image for tools like System Configurator ###
 
-if [ $NO_LISTING ]; then
-    echo -n "Quietly installing image...|"
-    { while :; do
-            echo -ne "\b/";  sleep 1;
-            echo -ne "\b-";  sleep 1;
-            echo -ne "\b\\"; sleep 1;
-            echo -ne "\b|";  sleep 1;
-      done
-    }&
-    SPINNER_PID=$!
-fi
-
 ################################################################################
 #
 #   Lay the image down on the freshly formatted disk(s)
 #
 if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then 
+
     # Use multicast 
     MODULE_NAME="${IMAGENAME}"
-    if [ "${TMPFS_STAGING}" = "yes" ]; then 
-
-        # Deposit cast into tmpfs
-        TMPFS_STAGING_DIR=/tmp/tmpfs_staging
-        DIR=$TMPFS_STAGING_DIR
-        echo
-        echo "TMPFS_STAGING=${TMPFS_STAGING} -- Staging in ${DIR}"
-        mkdir -p ${DIR}
-
-        # Note: Transfer to staging area can fail if tmpfs runs out of inodes.
-        { 
-            while :; do
-                DF=`df -k /tmp/tmpfs_staging | grep -v 'Filesystem' | sed -e 's/  */ /g' -e 's/.*[0-9] //' -e 's/%.*//'`
-                [ $DF -ge 95 ] && echo "WARNING: Your tmpfs staging filesystem is ${DF}% full!"
-                [ $DF -eq 100 ] && echo "         Search the FAQ for tmpfs to learn about sizing options."
-                [ $DF -eq 100 ] && shellout
-                sleep 1
-            done
-            unset DF
-        }&
-        DF_PID=$!
-
-        RETRY=7
-        flamethrower_client
-
-        echo "Killing tmpfs watcher (pid $DF_PID)... "
-        kill -9 $DF_PID
-        unset DF_PID
-
-        # Copy from staging in tmpfs to disk
-        echo "Copying from tmpfs staging directory to disk..."
-        rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --exclude=proc/ --numeric-ids ${TMPFS_STAGING_DIR}/ /a/ || shellout
-
-    else
-        # Deposit cast directly into client filesystem
-        DIR=/a
-        RETRY=7
-        flamethrower_client
-    fi
+    DIR=/a
+    RETRY=7
+    flamethrower_client
 else 
     # Use rsync 
+    if [ $NO_LISTING ]; then
+        echo "Quietly installing image... "
+        start_spinner
+    fi
     if [ "${TMPFS_STAGING}" = "yes" ]; then 
 
         # Deposit image into tmpfs
@@ -173,25 +130,8 @@ else
         echo "TMPFS_STAGING=${TMPFS_STAGING} -- Staging in ${DIR}"
         mkdir -p ${DIR}
 
-        # Note: Transfer to staging area can fail if tmpfs runs out of inodes.
-        { 
-            while :; do
-                DF=`df -k /tmp/tmpfs_staging | grep -v 'Filesystem' | sed -e 's/  */ /g' -e 's/.*[0-9] //' -e 's/%.*//'`
-                [ $DF -ge 95 ] && echo "WARNING: Your tmpfs staging filesystem is ${DF}% full!"
-                [ $DF -eq 100 ] && echo "         Search the FAQ for tmpfs to learn about sizing options."
-                [ $DF -eq 100 ] && shellout
-                sleep 1
-            done
-            unset DF
-        }&
-        DF_PID=$!
-
         echo "rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ ${DIR}/" 
         rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ ${DIR}/ || shellout 
-
-        echo "Killing tmpfs watcher (pid $DF_PID)... "
-        kill -9 $DF_PID
-        unset DF_PID
 
         # Move from staging in tmpfs to disk
         rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${DIR}/ /a/
@@ -208,9 +148,7 @@ beep
 
 
 if [ $NO_LISTING ]; then
-    # stop spinner
-    echo "Killing spinner (pid $SPINNER_PID)... "
-    kill -9 $SPINNER_PID
+    stop_spinner
 fi
 
 # Leave notice of which image is installed on the client
