@@ -1,5 +1,5 @@
 %define name     systemimager
-%define ver	2.9.4
+%define ver      2.9.4
 %define rel      1
 %define prefix   /usr
 %define _build_all 1
@@ -322,12 +322,24 @@ fi
 
 /usr/sbin/mkrsyncd_conf
 
-/sbin/chkconfig --add systemimager
+if [[ -a /usr/lib/lsb/install_initd ]]; then
+    /usr/lib/lsb/install_initrd /etc/init.d/systemimager
+fi
+
+if [[ -a /sbin/chkconfig ]]; then
+    /sbin/chkconfig --del systemimager
+fi
 
 %preun server
 /etc/init.d/systemimager stop
 
-/sbin/chkconfig --del systemimager
+if [[ -a /usr/lib/lsb/remove_initd ]]; then
+    /usr/lib/lsb/remove_initd /etc/init.d/systemimager
+fi
+
+if [[ -a /sbin/chkconfig ]]; then
+    /sbin/chkconfig --del systemimager
+fi
 
 if [[ -a /etc/xinetd.d/rsync.presis~ ]]; then
     mv /etc/xinetd.d/rsync.presis~ /etc/xinetd.d/rsync
