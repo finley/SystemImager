@@ -44,6 +44,7 @@ load_my_modules
 read_local_cfg
 
 start_network
+beep
 
 ping_test
 
@@ -54,6 +55,7 @@ if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
 fi
 
 get_boel_binaries_tarball
+beep
 
 if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
     # Hosts file is included here
@@ -127,6 +129,7 @@ fi
 
 write_variables
 
+beep
 run_autoinstall_script
 #
 #################################################################################
