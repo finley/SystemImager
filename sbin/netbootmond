@@ -15,8 +15,9 @@ use SystemImager::Config;
 use SystemImager::Server;
 use vars qw($config $VERSION);
 
-my $net_boot_default = $config->net_boot_default();
+my $net_boot_default = lc $config->net_boot_default();
 if("$net_boot_default" eq "net") {
+    print STDERR qq(\nNET_BOOT_DEFAULT = "$net_boot_default".  No need for me here, so I'm exiting.\n);
     exit 0;
 }
 
