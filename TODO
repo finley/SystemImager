@@ -11,7 +11,7 @@ Developer Guidelines
 o Current development branch is tagged "HEAD".  
   This is the default.  Most developers will use this.
 o To work on the latest stable branch, download the development branch,
-  then run "cvs -z3 update -r v1_4_1".
+  then run "cvs -z3 update -r v1_4_1-beta".
 o Only Brian Finley will modify CVS tags of any kind, such as for versioning 
   releases or creating development branches.
 o Always get approval from Brian Finley prior to adding any new files or 
@@ -50,6 +50,7 @@ o add the pushupdate script.
 
 Brian Finley <brian@thefinleys.com>
 -----------------------------------
+o Create stable branch after release called 1.6.x-stable, or similar.
 o Add Curtis Zinzilieta to CVS.
 o prepareclient: make Y default at beginning
 o updateclient:  Change -nolilo to -no-lilo, and hide nolilo in the background.
