@@ -79,6 +79,7 @@
 # XXX include pcmcia utilities in boel-binaries tarball
 #
 # To do a 'standard-ssh' flavor, do a 'make WITH_SSH=1 all'
+# To include the ctcs test suite, and associated files, do a 'make WITH_CTCS=1 all'
 #
 
 DESTDIR =
@@ -365,20 +366,20 @@ $(BOEL_BINARIES_TARBALL):	$(DISCOVER_BINARY) $(DISCOVER_DATA_FILES) \
 	rm -fr $(BOEL_BINARIES_DIR)
 	mkdir -m 755 -p $(BOEL_BINARIES_DIR)/bin
 	mkdir -m 755 -p $(BOEL_BINARIES_DIR)/sbin
-	install -m 755 $(BC_BINARY) $(BOEL_BINARIES_DIR)/bin/
-	install -m 755 $(DISCOVER_BINARY) $(BOEL_BINARIES_DIR)/sbin/
-	install -m 755 $(MKDOSFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
-	install -m 755 $(MKE2FS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
-	install -m 755 $(TUNE2FS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
-	install -m 755 $(PARTED_BINARY) $(BOEL_BINARIES_DIR)/sbin/
-	install -m 755 $(SFDISK_BINARY) $(BOEL_BINARIES_DIR)/sbin/
-	install -m 755 $(RAIDTOOLS_BINARIES) $(BOEL_BINARIES_DIR)/sbin/
+	install -m 755 --strip $(BC_BINARY) $(BOEL_BINARIES_DIR)/bin/
+	install -m 755 --strip $(DISCOVER_BINARY) $(BOEL_BINARIES_DIR)/sbin/
+	install -m 755 --strip $(MKDOSFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
+	install -m 755 --strip $(MKE2FS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
+	install -m 755 --strip $(TUNE2FS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
+	install -m 755 --strip $(PARTED_BINARY) $(BOEL_BINARIES_DIR)/sbin/
+	install -m 755 --strip $(SFDISK_BINARY) $(BOEL_BINARIES_DIR)/sbin/
+	install -m 755 --strip $(RAIDTOOLS_BINARIES) $(BOEL_BINARIES_DIR)/sbin/
 	cd $(BOEL_BINARIES_DIR)/sbin/ && ln -f raidstart raidstop
-	install -m 755 $(MKREISERFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
-	install -m 755 $(MKJFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
-	install -m 755 $(MKXFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
+	install -m 755 --strip $(MKREISERFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
+	install -m 755 --strip $(MKJFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
+	install -m 755 --strip $(MKXFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
 ifdef WITH_SSH
-	install -m 755 $(OPENSSH_BINARIES) $(BOEL_BINARIES_DIR)/sbin/
+	install -m 755 --strip $(OPENSSH_BINARIES) $(BOEL_BINARIES_DIR)/sbin/
 endif
 	#
 	# Put libraries in the boel_binaries_tarball...
@@ -399,6 +400,13 @@ endif
 		$(BOEL_BINARIES_DIR)/lib/
 	strip $(BOEL_BINARIES_DIR)/lib/*
 	#
+ifdef WITH_CTCS
+	mkdir -p $(BOEL_BINARIES_DIR)/usr/src
+	tar -C $(BOEL_BINARIES_DIR)/usr/src -xvjf $(SRC_DIR)/$(LINUX_TARBALL)
+	tar -C $(BOEL_BINARIES_DIR)/usr/src -xvzf $(SRC_DIR)/$(CTCS_TARBALL)
+	tar -cv $(CTCS_OTHER_FILES) | tar -C $(BOEL_BINARIES_DIR) -xv
+	cd /usr/include && h2ph -d $(BOEL_BINARIES_DIR)/usr/lib/perl/5.6.1 asm/*
+endif
 	#
 	# Copy over miscellaneous other files...
 	#
@@ -409,13 +417,7 @@ endif
 	# any soft links.  Note: This does not require PIC libraries -- it will
 	# copy standard libraries if it can't find a PIC equivalent.  -BEF-
 	#
-	( cd $(BOEL_BINARIES_DIR) && $(TOPDIR)/initrd_source/mklibs.sh -v -d lib sbin/* lib/* )
-	#
-	#
-	# Strip to the bones. -BEF-
-	#
-	strip $(BOEL_BINARIES_DIR)/bin/*
-	strip $(BOEL_BINARIES_DIR)/sbin/*
+	( cd $(BOEL_BINARIES_DIR) && $(TOPDIR)/initrd_source/mklibs.sh -v -d lib bin/* usr/bin/* sbin/* usr/sbin/* lib/* )
 	#
 	#
 	# install kernel modules. -BEF-
@@ -425,7 +427,8 @@ endif
 	#
 	# Tar it up, baby! -BEF-
 	( cd $(BOEL_BINARIES_DIR) && tar -cv * | gzip -9 > $(BOEL_BINARIES_TARBALL) )
-	# Note: This tarball should be installed to the "boot/$(ARCH)/" directory.
+	#
+	# Note: This tarball should be installed to the "boot/$(ARCH)/$(FLAVOR)" directory.
 
 ### END autoinstall binaries tarball ###
 

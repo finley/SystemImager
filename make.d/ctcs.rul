@@ -1,0 +1,145 @@
+ifdef WITH_CTCS
+	CTCS_VERSION := 1.3.0pre4
+	CTCS_TARBALL := ctcs-$(CTCS_VERSION).tar.gz
+	CTCS_URL := http://unc.dl.sourceforge.net/sourceforge/va-ctcs/$(CTCS_TARBALL)
+	CTCS_BINARY := $(SRC_DIR)/$(CTCS_DIR)/newburn
+	CTCS_OTHER_FILES := /usr/lib/perl \
+						/usr/share/perl \
+						/usr/bin/a2p \
+						/usr/bin/c2ph \
+						/usr/bin/h2ph \
+						/usr/bin/h2xs \
+						/usr/bin/perlbug \
+						/usr/bin/pl2pm \
+						/usr/bin/splain \
+						/usr/bin/perlcc \
+						/usr/bin/dprofpp \
+						/usr/bin/s2p \
+						/usr/bin/find2perl \
+						/usr/bin/pod2man \
+						/usr/bin/pod2html \
+						/usr/bin/pod2latex \
+						/usr/bin/pod2text \
+						/usr/bin/pod2usage \
+						/usr/bin/podchecker \
+						/usr/bin/podselect \
+						/usr/bin/pstruct \
+						/usr/bin/perldoc \
+						/usr/bin/rename \
+						/sbin/badblocks \
+						/usr/bin/basename \
+						/bin/bash \
+						/usr/bin/chattr \
+						/usr/bin/cut \
+						/usr/bin/clear \
+						/usr/bin/dialog \
+						/usr/bin/diff \
+						/bin/dmesg \
+						/bin/egrep \
+						/usr/bin/cc \
+						/etc/alternatives/cc \
+						/usr/bin/gcc \
+						/usr/bin/gcc-2.95 \
+						/usr/bin/cpp \
+						/usr/bin/cpp-2.95 \
+						/usr/lib/gcc-lib/i386-linux/2.95.4 \
+						/usr/bin/as \
+						/usr/bin/ld \
+						/usr/bin/size \
+						/usr/bin/objdump \
+						/usr/bin/ar \
+						/usr/bin/strings \
+						/usr/bin/ranlib \
+						/usr/bin/objcopy \
+						/usr/bin/addr2line \
+						/usr/bin/readelf \
+						/usr/bin/nm \
+						/usr/bin/strip \
+						/usr/bin/c++filt \
+						/usr/bin/gprof \
+						/usr/include \
+						/usr/bin/gencat \
+						/usr/bin/getconf \
+						/usr/bin/mtrace \
+						/usr/bin/rpcgen \
+						/usr/lib/Mcrt1.o \
+						/usr/lib/crt1.o \
+						/usr/lib/crti.o \
+						/usr/lib/crtn.o \
+						/usr/lib/gcrt1.o \
+						/usr/lib/libBrokenLocale.a \
+						/usr/lib/libanl.a \
+						/usr/lib/libbsd-compat.a \
+						/usr/lib/libc.a \
+						/usr/lib/libc_nonshared.a \
+						/usr/lib/libc.so \
+						/usr/lib/libcrypt.a \
+						/usr/lib/libdl.a \
+						/usr/lib/libg.a \
+						/usr/lib/libieee.a \
+						/usr/lib/libm.a \
+						/usr/lib/libmcheck.a \
+						/usr/lib/libnsl.a \
+						/usr/lib/libpthread.a \
+						/usr/lib/libresolv.a \
+						/usr/lib/librpcsvc.a \
+						/usr/lib/librt.a \
+						/usr/lib/libutil.a \
+						/usr/lib/libBrokenLocale.so \
+						/usr/lib/libanl.so \
+						/usr/lib/libcrypt.so \
+						/usr/lib/libdb1.so \
+						/usr/lib/libdl.so \
+						/usr/lib/libm.so \
+						/usr/lib/libnsl.so \
+						/usr/lib/libnss_compat.so \
+						/usr/lib/libnss_dns.so \
+						/usr/lib/libresolv.so \
+						/usr/lib/libnss_files.so \
+						/usr/lib/libnss_hesiod.so \
+						/usr/lib/libnss_nis.so \
+						/usr/lib/libnss_nisplus.so \
+						/usr/lib/libpthread.so \
+						/usr/lib/librt.so \
+						/usr/lib/libutil.so \
+						/usr/bin/dirname \
+						/bin/mktemp \
+						/usr/bin/head \
+						/usr/bin/find \
+						/usr/bin/make \
+						/usr/bin/nice \
+						/usr/bin/perl \
+						/usr/bin/pstree \
+						/bin/pwd \
+						/usr/bin/renice \
+						/usr/bin/setterm \
+						/bin/sync \
+						/usr/bin/tail \
+						/usr/bin/wc \
+						/usr/bin/awk \
+						/etc/alternatives/awk \
+						/usr/bin/mawk \
+						/usr/bin/tee \
+						/usr/bin/yes \
+						/usr/sbin/chat \
+						/usr/bin/sensors \
+						/usr/sbin/smartctl \
+						/usr/bin/which \
+						/bin/date \
+						/sbin/fdisk \
+						/bin/stty 
+
+endif
+
+ALL_SOURCE += $(SRC_DIR)/$(CTCS_TARBALL)
+
+PHONY += ctcs
+ctcs:	$(SRC_DIR)/$(CTCS_TARBALL)
+
+$(SRC_DIR)/$(CTCS_TARBALL):
+	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
+	$(GETSOURCE) $(CTCS_URL) $(SRC_DIR)
+
+PHONY += ctcs_clean
+ctcs_clean:
+
