@@ -143,7 +143,7 @@ PXE_CONF_SRC      = etc/pxelinux.cfg
 PXE_CONF_DEST     = $(ETC)/systemimager/pxelinux.cfg
 
 BINARIES := mkautoinstallcd mkautoinstalldiskette
-SBINARIES := addclients cpimage getimage mkdhcpserver mkdhcpstatic mkautoinstallscript mkbootserver mvimage pushupdate rmimage mkrsyncd_conf mkclientnetboot netbootmond
+SBINARIES := addclients cpimage getimage mkdhcpserver mkdhcpstatic mkautoinstallscript mkbootserver mvimage pushupdate rmimage mkrsyncd_conf mkclientnetboot netbootmond imagecast
 CLIENT_SBINARIES  := updateclient prepareclient
 COMMON_BINARIES   = lsimage
 
