@@ -1,0 +1,23 @@
+#
+# "SystemImager"
+#
+#  Copyright (C) 2002 Bald Guy Software 
+#                     Brian E. Finley <brian.finley@baldguysoftware.com>
+#
+#    $Id$
+#
+
+See http://www.iana.org/assignments/bootp-dhcp-parameters for details on DHCP
+options.  The following are special DHCP options used by SystemImager.
+
+    option-140  ->  IMAGESERVER
+    option-141  ->  LOG_SERVER_PORT
+    option-142  ->  SSH_DOWNLOAD_URL
+
+
+Files in the SystemImager source code that are affected by these options 
+include:
+
+    sbin/mkdhcpserver
+    initrd_source/skel/etc/dhclient-script.systemimager-prefix
+
