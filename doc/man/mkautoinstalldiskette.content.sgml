@@ -158,10 +158,10 @@
 	<term><option>-ssh-key=<replaceable>FILE</replaceable></option></term>
 	<listitem>
 	  <para>
-	    Where <replaceable>FILE</replaceable> is the SSH1 private key of
-	    the user account that the autoinstall client will use to connect to
-	    the imageserver.  It is usually called
-	    <filename>.ssh/identity</filename>.
+	    Where <replaceable>FILE</replaceable> is the SSH2 id_dsa or id_rsa 
+        private key of the user account that the autoinstall client will 
+        use to connect to the imageserver.  It is usually found in the
+	    <filename>~/.ssh</filename> directory.
 	  </para>
 	  <para>
 	    To use this private key, you must also add the corresponding public
