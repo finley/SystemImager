@@ -26,13 +26,13 @@ sub get_response {
 	return $garbage_out;
 }
 
-## Usage:
-## get_boot_flavors($arch, $version, $where)
-##   return the list of available boot flavors for a given arch for a given
-##   version of SystemImager.
-##   $where is a string that specifies where to look.  if $where contains
-##   a "/", then we assume $where is a local directory.  otherwise, we
-##   assume $where is a remote machine & we look in the standard place.
+# Usage:
+# get_boot_flavors($arch, $version, $where)
+#   return the list of available boot flavors for a given arch for a given
+#   version of SystemImager.
+#   $where is a string that specifies where to look.  if $where contains
+#   a "/", then we assume $where is a local directory.  otherwise, we
+#   assume $where is a remote machine & we look in the standard place.
 sub get_boot_flavors {
     my ($class, $arch, $version, $where) = @_;
 
@@ -126,7 +126,8 @@ sub write_auto_install_script_conf_header {
         print DISK_FILE qq(  This output was brought to you by the partition tool "$partition_tool".\n);
         print DISK_FILE qq(  And by the numbers 4 and 5 and the letter Q.\n);
         print DISK_FILE qq(  \n);
-        print DISK_FILE qq(  See "man autoinstallscript.conf" for details.\n);
+        print DISK_FILE qq(  You can change the information in this file to affect how your target\n);
+        print DISK_FILE qq(  machines are installed.  See "man autoinstallscript.conf" for details.\n);
         print DISK_FILE qq(-->\n);
         print DISK_FILE qq(\n);
         print DISK_FILE qq(<config>\n);
