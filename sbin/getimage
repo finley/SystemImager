@@ -41,7 +41,7 @@ sub check_if_root{
 # figure out the program name
 $0  =~ /(.*)\/+([^\/]*)$/;
 $program_name = $2;
-$version_number = "0.24beta4";
+$version_number = "1.0";
 
 $version_info = <<"EOF";
 $program_name (part of VA SystemImager) version $version_number
