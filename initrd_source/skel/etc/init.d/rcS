@@ -463,7 +463,7 @@ get_hostname_by_hosts_file() {
             sed 's/ [0-9]*\.[0-9]*\.[0-9]*\.[0-9]*//' | \
             sed 's/ *//' | \
             sed 's/ .*//' | \
-            sed "s/\.$DOMAINNAME//"
+            sed "s/\.$DOMAINNAME$//"
         `
     fi
 }
