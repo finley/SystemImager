@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
+
 #
-# "SystemImager" - Copyright (C) 1999-2000 TheFinleys.com <brian@thefinleys.com>
+# "SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com>
 #
 # This file is: updateclient
 #
@@ -16,28 +17,25 @@ unless($< == 0) { die "Must be run as root!\n"; }
 
 # set version information
 $version_info = <<"EOF";
+updateclient (part of SystemImager) version $version_number
 
-updateclient (SystemImager) v$version_number
-
-Copyright (C) 1999-2000 TheFinleys.com <brian\@thefinleys.com>
+Copyright (C) 1999-2000 Brian Elliott Finley <brian\@valinux.com>
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
-Written by Brian Finley <brian\@thefinleys.com>
-
 EOF
 
 # set help information
 $help_info = $version_info . <<"EOF";
+
 Usage: updateclient [OPTION]... --imageserver HOSTNAME --image IMAGENAME
   or   updateclient --imageserver HOSTNAME --listing
 
 Options: (options can be presented in any order)
  --help                    duh
  --version                 display version and copyright information
- --imageserver=HOSTNAME    hostname or IP address of the imageserver
- --image=IMAGENAME         image from which the client should be updated
- --directory=DIRECTORY     absolute path of directory to be updated
+ --imageserver HOSTNAME    hostname or IP address of the imageserver
+ --image IMAGENAME         image from which the client should be updated
+ --directory DIRECTORY     absolute path of directory to be updated
  --listing                 list avaliable images on imageserver
                            (supercedes and ignores all options 
                             other than --imageserver)
@@ -47,7 +45,6 @@ Options: (options can be presented in any order)
 
 Download from http://systemimager.org/
 Report bugs or suggestions to <systemimager-bugs\@systemimager.org>
-
 EOF
 
 # interpret command line options
