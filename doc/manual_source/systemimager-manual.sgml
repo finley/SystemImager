@@ -525,17 +525,6 @@
       Install the <application>VA SystemImager</application> server package 
       on the machine you have chosen as your image server.  
      </para>
-     <para>
-      You can find the SystemImager packages and links to some of the dependent 
-      packages that may not be a part of your Linux distribution at 
-      <ulink url="http://systemimager.org/"></ulink>.
-     </para>
-     <para>
-      The SystemImager server software is available in tar ball format and may be
-      available in other distribution specific packaged formats.  The example below
-      is for installing from a tar ball.  The software is the same regardless of 
-      the packaging format.
-     </para>
      <example>
       <title>
        Often times, a machine that is already performing some kind of 
@@ -999,34 +988,37 @@ Press &lt;Enter> to continue...
      </para>
 
      <para>
-      The most common way to assign IP addresses to autoinstall clients is DHCP.  
-      To easify the configuration of the DHCP configuration file (/etc/dhcpd.conf), 
-      SystemImager includes a utility called <command>makedhcpserver</command>.  
+      The most common way to assign IP addresses to autoinstall clients is
+      DHCP.  To easify the configuration of the DHCP configuration file
+      (<filename>/etc/dhcpd.conf</filename>), SystemImager includes a utility
+      called <command>makedhcpserver</command>.  
       This utility asks you for all the information it needs 
       to create a DHCP configuration file that 
-      is appropriate for your installation of SystemImager.  It is also possible to 
-      use DHCP to assign static IP addresses to your clients on an ongoing basis 
-      after installation.  If you choose to do so, simply run the <command>makedhcpstatic</command>
-      command after all of your clients have had a chance to boot and be assigned
-      an IP address.  It will modify your /etc/dhcpd.conf file on the imageserver 
-      to include static entries for each of your hosts.
+      is appropriate for your installation of SystemImager.  It is also
+      possible to use DHCP to assign static IP addresses to your clients on
+      an ongoing basis after installation.  If you choose to do so, simply
+      run the <command>makedhcpstatic</command> command after all of your
+      clients have had a chance to boot and be assigned an IP address.  It
+      will modify your <filename>/etc/dhcpd.conf</filename>
+      file on the imageserver to include static entries for each of your hosts.
      </para>
 
      <para>
-      Alternately, hostname, imageserver, and networking information can be put in 
-      a configuration file on a floppy diskette.  Or if you are using a running 
-      system's hard drive as the boot media, you can run 
+      Alternately, hostname, imageserver, and networking information can be
+      put in a configuration file on a floppy diskette.  Or if you are using a
+      running system's hard drive as the boot media, you can run 
       "<command>updateclient -autoinstall -server &lt;imageserver> -config eth0</command>"
-      which will create a local.cfg file at the root of the client's hard drive 
-      containing the existing live network settings.
+      which will create a local.cfg file at the root of the client's hard
+      drive containing the existing live network settings.
      </para>
     
      <para>
       When the autoinstall client boots, it will look for this 
       file and use the provided values instead of getting them from DHCP and the
-      /tftpboot/systemimager/hosts file on the image server.  A local.cfg file on
-      a floppy will work with any of the autoinstall media.  The configuration file 
-      can even be put on the autoinstall floppy itself!  If you use a local.cfg file
+      <filename>/tftpboot/systemimager/hosts</filename> file on the image server.
+      A <filename>local.cfg</filename> file on a floppy will work with any of the
+      autoinstall media.  The configuration file can even be put on the autoinstall
+      floppy itself!  If you use a <filename>local.cfg</filename> file
       on a hard drive and on a floppy, the settings on the floppy will override the
       settings on the hard drive.
      </para>
@@ -1103,15 +1095,19 @@ be done with a command like "/etc/init.d/dhcpd restart" or similar.
 
      <example><title>Running updateclient with the "-autoinstall" and "-config" options</title>
       <para>
-       Note that the options -autoinstall, -server, and -configure-from are
-       abbreviated below as -a, -s, and -c.  It is possible to abbreviate 
+       Note that the options <parameter>-autoinstall</parameter>,
+       <parameter>-server</parameter>, and <parameter>-configure-from</parameter> are
+       abbreviated below as <parameter>-a</parameter>, <parameter>-s</parameter>,
+       and <parameter>-c</parameter>.  It is possible to abbreviate 
        options to minimum uniqueness with most SystemImager commands.  
       </para>
 
       <para>
        Minimum uniqueness means that if you have two options for a single 
-       command that are similar, such as the -image and -ip-assignment options
-       to getimage, they can be abbreviated to -im and -ip.
+       command that are similar, such as the <parameter>-image</parameter> and
+       <parameter>-ip-assignment</parameter> options to <command>getimage,</command>
+       they can be abbreviated to <parameter>-im</parameter> and
+       <parameter>-ip</parameter>.
       </para>
       <programlisting>
 [root@server7]# updateclient -a -s imageserver -c eth0
@@ -1167,7 +1163,7 @@ IMAGESERVER=192.168.1.203
 	<para>
 	 Run <command>makeautoinstalldiskette</command> to create an autoinstall
 	 diskette.  Autoinstall diskettes can be used with any machine unless you
-	 add a customized /local.cfg file to the diskette.
+	 add a customized <filename>/local.cfg</filename> file to the diskette.
 	</para>
 
        </listitem>
@@ -1191,8 +1187,8 @@ IMAGESERVER=192.168.1.203
 
 	<para>
 	 If your client is already running Linux, and uses LILO as it's boot
-	 loader, then you can simply copy over the updateclient command and
-	 run it with the -autoinstall option.
+	 loader, then you can simply copy over the <command>updateclient</command>
+         command and run it with the <parameter>-autoinstall</parameter> option.
 	</para>
 	<example><title>Copy over the updateclient command</title>
          <programlisting>
@@ -1227,8 +1223,8 @@ Added systemimager *
 	<para>
 	 PXE booting is flaky and tends to vary wildly in it's hardware 
 	 implementation.  If you must boot without physically touching your 
-	 machines, may I suggest that you try the -autoinstall option to 
-	 updateclient first and see if it meets your needs.
+	 machines, may I suggest that you try the <parameter>-autoinstall</parameter>
+         option to <command>updateclient</command> first and see if it meets your needs.
 	</para>
 
 	<para>
