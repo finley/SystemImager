@@ -8,6 +8,13 @@
 ./installclient
 ./installdocs
 
+./lib/SystemImager/Client.pm
+./lib/SystemImager/Common.pm
+
+./tftpstuff/systemimager/prepareclient
+./tftpstuff/systemimager/systemimager.exclude
+./tftpstuff/systemimager/updateclient
+
 ./doc/autoinstall.kernel.config
 ./doc/autoinstall.kernel.support
 ./doc/local.cfg
@@ -56,7 +63,3 @@
 ./doc/manual/pdf/CREDITS
 ./doc/manual/pdf/systemimager-manual.pdf
 ./doc/manual/pdf/systemimager-manual.sgml
-
-./tftpstuff/systemimager/prepareclient
-./tftpstuff/systemimager/systemimager.exclude
-./tftpstuff/systemimager/updateclient
