@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 #
-# "VA SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com>
+# "VA SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@valinux.com>
 #
 #   Others who have contributed to this code (in alphabetical order):
 #     Adam L. Lambert <alambert@epicrealm.com> (credit for the -autoinstall option goes to Adam)
@@ -58,7 +58,7 @@ sub ip_bin2ip_quad {
 $version_info = <<"EOF";
 updateclient (part of VA SystemImager) version $version_number
 
-Copyright (C) 1999-2000 Brian Elliott Finley <brian\@valinux.com>
+Copyright (C) 1999-2001 Brian Elliott Finley <brian\@valinux.com>
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 EOF
@@ -379,7 +379,7 @@ if($DEVICE){
   $file="/local.cfg";
   open(FILE, "> $file") or die "Couldn't open $file for writing: $!\n";
   print FILE "#\n";
-  print FILE "# \"VA SystemImager\" - Copyright (C) 1999-2000 Brian Elliott Finley <brian\@valinux.com>\n";
+  print FILE "# \"VA SystemImager\" - Copyright (C) 1999-2001 Brian Elliott Finley <brian\@valinux.com>\n";
   print FILE "#\n";
   print FILE "# This file is: /local.cfg\n";
   print FILE "#\n";

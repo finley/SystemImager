@@ -1,7 +1,7 @@
 #!/bin/sh
  
 #
-# "VA SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com> 
+# "VA SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@valinux.com> 
 #
 # Others who have contributed to this code (in alphabetical order):
 #   Jose AP Celestino <japc@sl.pt>
@@ -26,7 +26,7 @@ PATH=/bin:/usr/bin:/sbin:/usr/sbin
 # VA SystemImager specific functions
 create_rsyncd_conf() {
   echo '#'                                                      > $rsyncd_conf_file
-  echo '# Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com>'    >> $rsyncd_conf_file
+  echo '# Copyright (C) 1999-2001 Brian Elliott Finley <brian@valinux.com>'    >> $rsyncd_conf_file
   echo '#'                                                      >> $rsyncd_conf_file
   echo '# This file: /tmp/rsyncd.conf'                          >> $rsyncd_conf_file
   echo '#'                                                      >> $rsyncd_conf_file
@@ -45,7 +45,7 @@ create_rsyncd_conf() {
 show_version() {
   echo "prepareclient (part of VA SystemImager) version $version_number"
   echo ""
-  echo "Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com>"
+  echo "Copyright (C) 1999-2001 Brian Elliott Finley <brian@valinux.com>"
   echo "This is free software; see the source for copying conditions.  There is NO"
   echo "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."
 }
