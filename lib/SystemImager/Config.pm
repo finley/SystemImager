@@ -14,12 +14,12 @@ use AppConfig;
 
 
 my $config = AppConfig->new(
-    'autoinstall_script_dir' => { ARGCOUNT => 1 },
-    'autoinstall_boot_dir' => { ARGCOUNT => 1 },
-    'default_image_dir' => { ARGCOUNT => 1 },
-    'rsyncd_conf' => { ARGCOUNT => 1 },
-    'rsync_stub_dir' => { ARGCOUNT => 1 },
-    'tftp_dir' => { ARGCOUNT => 1 },
+    'default_image_dir'         => { ARGCOUNT => 1 },
+    'autoinstall_script_dir'    => { ARGCOUNT => 1 },
+    'autoinstall_boot_dir'      => { ARGCOUNT => 1 },
+    'rsyncd_conf'               => { ARGCOUNT => 1 },
+    'rsync_stub_dir'            => { ARGCOUNT => 1 },
+    'tftp_dir'                  => { ARGCOUNT => 1 },
 );
 
 $config->file('/etc/systemimager/systemimager.conf');

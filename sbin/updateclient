@@ -28,25 +28,25 @@
 #     Adam L. Lambert <alambert@epicrealm.com> (credit for the -autoinstall option goes to Adam)
 #
 
-use lib "USR_PREFIX/lib/systemimager/perl";
 
 # declare modules
-use AppConfig;
-use Getopt::Long;
-use POSIX;
+use lib "USR_PREFIX/lib/systemimager/perl";
 use Carp;
+use POSIX;
 use Socket;
 use File::Copy;
+use Getopt::Long;
 use Sys::Hostname;
-use vars qw($VERSION);
 use SystemImager::Common;
+use SystemImager::Config;
+use vars qw($config $VERSION);
 
 # set version number
 $VERSION = "SYSTEMIMAGER_VERSION_STRING";
 
 # Version details
 $version_info = <<"EOF";
-updateclient (part of SystemImager) version $VERSION
+updateclient (part of SystemImager) v$VERSION
 
 Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley\@baldguysoftware.com>
 Copyright (C) 2001-2002 Bald Guy Software <brian.finley\@baldguysoftware.com>

@@ -11,12 +11,12 @@
 #    Curtis Zinzilieta <czinzilieta@valinux.com>
 #
 
-use Getopt::Long;
+use Socket;
 use IO::Handle;
 use FileHandle;
 use Time::Local;
+use Getopt::Long;
 use POSIX qw(strftime);
-use Socket;
 
 ### BEGIN Parameters to be read from /etc/systemimager/systemimager.conf
 $si_logdir = "/var/log/systemimager";

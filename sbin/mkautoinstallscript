@@ -10,24 +10,15 @@
 #
 
 use lib "USR_PREFIX/lib/systemimager/perl";
-use AppConfig;
 use Getopt::Long;
 use SystemImager::Server;
 use SystemImager::Common;
+use SystemImager::Config;
+use vars qw($config $VERSION);
 
 my $config_dir = "/etc/systemimager";
 
 ### BEGIN parse the config file ###
-my $config = AppConfig->new(
-			    'autoinstall_script_dir' => { ARGCOUNT => 1 },
-			    'autoinstall_boot_dir' => { ARGCOUNT => 1 },
-			    'default_image_dir' => { ARGCOUNT => 1 },
-			    'rsyncd_conf' => { ARGCOUNT => 1 },
-			    'rsync_stub_dir' => { ARGCOUNT => 1 },
-			    );
-
-$config->file('/etc/systemimager/systemimager.conf');
-
 my $autoinstall_script_dir = $config->autoinstall_script_dir();
 my $rsyncd_conf = $config->rsyncd_conf();
 my $rsync_stub_dir = $config->rsync_stub_dir();
@@ -39,10 +30,10 @@ if (!$rsyncd_conf) { die "RSYNCD_CONF not defined in the config file."; }
 if (!$rsync_stub_dir) { die "RSYNC_STUB_DIR not defined in the config file."; }
 ### END parse the config file ###
 
-$version_number="SYSTEMIMAGER_VERSION_STRING";
+$VERSION="SYSTEMIMAGER_VERSION_STRING";
 $program_name = "mkautoinstallscript";
 $version_info = <<"EOF";
-$program_name (part of SystemImager) v$version_number
+$program_name (part of SystemImager) v$VERSION
     
 Copyright (C) 1999-2001 Brian Elliott Finley <brian\@systemimager.org>
 This is free software; see the source for copying conditions.  There is NO

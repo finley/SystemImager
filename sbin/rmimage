@@ -16,25 +16,14 @@ $get_help = "         Try \"$program_name -help\" for more options.";
 
 # declare modules
 use lib "USR_PREFIX/lib/systemimager/perl";
-use SystemImager::Server;
-use SystemImager::Common;
-use Getopt::Long;
 use File::Copy;
 use File::Path;
-use AppConfig;
+use Getopt::Long;
+use SystemImager::Server;
+use SystemImager::Common;
+use SystemImager::Config;
 
 ### BEGIN parse the config file ###
-
-my $config = AppConfig->new(
-			    'autoinstall_script_dir' => { ARGCOUNT => 1 },
-			    'autoinstall_boot_dir' => { ARGCOUNT => 1 },
-			    'default_image_dir' => { ARGCOUNT => 1 },
-			    'rsyncd_conf' => { ARGCOUNT => 1 },
-			    'rsync_stub_dir' => { ARGCOUNT => 1 },
-			    );
-
-$config->file('/etc/systemimager/systemimager.conf');
-
 my $autoinstall_script_dir = $config->autoinstall_script_dir();
 my $rsyncd_conf = $config->rsyncd_conf();
 my $rsync_stub_dir = $config->rsync_stub_dir();

@@ -61,6 +61,7 @@
 #     both new and old, which I have stored up for you, my lover. 
 #
 
+use lib "USR_PREFIX/lib/systemimager/perl";
 use strict;
 use Carp;
 use POSIX;
@@ -68,7 +69,6 @@ use File::Copy;
 use File::Path;
 use Getopt::Long;
 use vars qw($VERSION);
-use lib "USR_PREFIX/lib/systemimager/perl";
 use SystemImager::Common;
 
 # set version
@@ -87,7 +87,7 @@ my $rsyncd_conf_file = "/tmp/rsyncd.conf.$$";
 $ENV{PATH} = "/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin";
 
 my $version_info = <<"EOF";
-prepareclient (part of SystemImager) version $VERSION
+prepareclient (part of SystemImager) v$VERSION
 
 Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley\@baldguysoftware.com>
 Copyright (C) 2002 Bald Guy Software <brian.finley\@baldguysoftware.com>

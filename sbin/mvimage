@@ -10,34 +10,24 @@
 #
 
 # set some variables
-my $version_number="SYSTEMIMAGER_VERSION_STRING";
+my $VERSION = "SYSTEMIMAGER_VERSION_STRING";
 my $program_name="mvimage";
 my $get_help = "         Try \"$program_name -help\" for more options.";
 
 # declare modules
 use lib "USR_PREFIX/lib/systemimager/perl";
-use SystemImager::Server;
-use SystemImager::Common;
-use Getopt::Long;
-use File::Basename;
+use strict;
 use File::Copy;
 use File::Path;
-use AppConfig;
-use strict;
+use Getopt::Long;
+use File::Basename;
+use SystemImager::Server;
+use SystemImager::Common;
+use SystemImager::Config;
+use vars qw($VERSION $config);
 
 
 ### BEGIN parse the config file ###
-
-my $config = AppConfig->new(
-			    'autoinstall_script_dir' => { ARGCOUNT => 1 },
-			    'autoinstall_boot_dir' => { ARGCOUNT => 1 },
-			    'default_image_dir' => { ARGCOUNT => 1 },
-			    'rsyncd_conf' => { ARGCOUNT => 1 },
-			    'rsync_stub_dir' => { ARGCOUNT => 1 },
-			    );
-
-$config->file('/etc/systemimager/systemimager.conf');
-
 my $autoinstall_script_dir = $config->autoinstall_script_dir();
 my $rsyncd_conf = $config->rsyncd_conf();
 my $rsync_stub_dir = $config->rsync_stub_dir();
@@ -48,12 +38,13 @@ if (!$autoinstall_script_dir) {
 }
 if (!$rsyncd_conf) { die "RSYNCD_CONF not defined in the config file."; }
 if (!$rsync_stub_dir) { die "RSYNC_STUB_DIR not defined in the config file."; }
+if (!$default_image_dir) { die "DEFAULT_IMAGE_DIR not defined in the config file."; }
 
 ### END parse the config file ###
 
 # set version information
 my $version_info = <<"EOF";
-$program_name (part of SystemImager) version $version_number
+$program_name (part of SystemImager) v$VERSION
 
 Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley\@baldguysoftware.com>
 Copyright (C) 2002 Bald Guy Software <brian.finley\@baldguysoftware.com>

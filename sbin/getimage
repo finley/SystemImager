@@ -30,28 +30,17 @@ $nisdomain="";
 
 # use the long options module to allow us to use, well, long options ;)
 use lib "USR_PREFIX/lib/systemimager/perl";
+use AppConfig;
+use Getopt::Long;
 use SystemImager::Server;
 use SystemImager::Common;
-use Getopt::Long;
-use AppConfig;
+use SystemImager::Config;
+use vars qw($config $VERSION);
 
 my $config_dir = "/etc/systemimager";
 
 ### BEGIN parse the config file ###
 #
-# Try $config->getopts(); instead of $config->args(); as per Sean's suggestion.
-# Sean says, "you get all the same getopts expansions as you did before."
-#
-my $config = AppConfig->new(
-			    'autoinstall_script_dir' => { ARGCOUNT => 1 },
-			    'autoinstall_boot_dir' => { ARGCOUNT => 1 },
-			    'default_image_dir' => { ARGCOUNT => 1 },
-			    'rsyncd_conf' => { ARGCOUNT => 1 },
-			    'rsync_stub_dir' => { ARGCOUNT => 1 },
-			    );
-
-$config->file('/etc/systemimager/systemimager.conf');
-
 my $autoinstall_script_dir = $config->autoinstall_script_dir();
 my $rsync_stub_dir = $config->rsync_stub_dir();
 my $rsyncd_conf = $config->rsyncd_conf();

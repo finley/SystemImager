@@ -27,18 +27,7 @@ use lib "USR_PREFIX/lib/systemimager/perl";
 
 use SystemImager::Server;
 use SystemImager::Common;
-
-use AppConfig;
-
-my $config = AppConfig->new(
-                            'autoinstall_script_dir' => { ARGCOUNT => 1 },
-                            'autoinstall_boot_dir' => { ARGCOUNT => 1 },
-                            'default_image_dir' => { ARGCOUNT => 1 },
-                            'rsyncd_conf' => { ARGCOUNT => 1 },
-                            'rsync_stub_dir' => { ARGCOUNT => 1 }
-                            );
-
-$config->file('/etc/systemimager/systemimager.conf');
+use SystemImager::Config;
 
 my $rsyncd_conf = $config->rsyncd_conf();
 my $rsync_stub_dir = $config->rsync_stub_dir();

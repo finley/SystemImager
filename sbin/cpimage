@@ -10,35 +10,26 @@
 #
 
 # set some variables
-$version_number="SYSTEMIMAGER_VERSION_STRING";
-$program_name="cpimage";
-$get_help = "         Try \"$program_name -help\" for more options.";
+$VERSION = "SYSTEMIMAGER_VERSION_STRING";
+my $program_name = "cpimage";
+my $get_help = "  Try \"$program_name -help\" for more options.";
 
 # declare modules
 use lib "USR_PREFIX/lib/systemimager/perl";
-use SystemImager::Server;
-use SystemImager::Common;
-use Getopt::Long;
+use strict;
 use File::Copy;
 use File::Path;
-use AppConfig;
+use Getopt::Long;
+use SystemImager::Server;
+use SystemImager::Common;
+use SystemImager::Config;
+use vars qw($config $VERSION);
 
 ### BEGIN parse the config file ###
-
-my $config = AppConfig->new(
-			    'autoinstall_script_dir' => { ARGCOUNT => 1 },
-			    'autoinstall_boot_dir' => { ARGCOUNT => 1 },
-			    'default_imagedir' => { ARGCOUNT => 1 },
-			    'rsyncd_conf' => { ARGCOUNT => 1 },
-			    'rsync_stub_dir' => { ARGCOUNT => 1 }
-			    );
-
-$config->file('/etc/systemimager/systemimager.conf');
-
 my $rsync_stub_dir = $config->rsync_stub_dir();
 my $autoinstall_script_dir = $config->autoinstall_script_dir();
 my $rsyncd_conf = $config->rsyncd_conf();
-my $default_imagedir = $config->default_imagedir();
+my $default_image_dir = $config->default_image_dir();
 
 if (!$autoinstall_script_dir) {
     die "AUTOINSTALL_SCRIPT_DIR not defined in the config file.";
@@ -46,7 +37,7 @@ if (!$autoinstall_script_dir) {
 
 if (!$rsyncd_conf) { die "RSYNCD_CONF not defined in the config file."; }
 
-if (!$default_imagedir) {
+if (!$default_image_dir) {
     die "DEFAULT_IMAGEDIR not defined in the config file.";
 }
 
@@ -71,8 +62,8 @@ sub check_if_root{
 ### END functions ###
 
 # set version information
-$version_info = <<"EOF";
-$program_name (part of SystemImager) version $version_number
+my $version_info = <<"EOF";
+$program_name (part of SystemImager) v$VERSION
 
 Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley\@baldguysoftware.com>
 Copyright (C) 2002 Bald Guy Software <brian.finley\@baldguysoftware.com>
@@ -81,7 +72,7 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 EOF
 
 # set help information
-$help_info = $version_info . <<"EOF";
+my $help_info = $version_info . <<"EOF";
 
 Usage: $program_name [OPTION]... SOURCE_IMAGE DESTINATION_IMAGE
 
@@ -117,13 +108,13 @@ EOF
 
 # interpret command line options
 GetOptions( 
-  "help" => \$help,
-  "version" => \$version,
-  "directory=s" => \$destination_path,
-  "force" => \$force,
-  "server=s" => \$server,
-  "ssh-user=s" => \$ssh_user,
-  "verbose" => \$verbose
+  "help" => \my $help,
+  "version" => \my $version,
+  "directory=s" => \my $destination_path,
+  "force" => \my $force,
+  "server=s" => \my $server,
+  "ssh-user=s" => \my $ssh_user,
+  "verbose" => \my $verbose
 ) or die qq($help_info);
 
 # if requested, print help information
@@ -140,11 +131,11 @@ if($version) {
 
 # Take the arguments left after Getopt::Long parses it's stuff out 
 # as the source and destination image names.
-$source_image=$ARGV[0];
-$destination_image=$ARGV[1];
+my $source_image=$ARGV[0];
+my $destination_image=$ARGV[1];
 
 # default port number
-$port = "873";
+my $port = "873";
 
 # If we're using SSH, go ahead and establish port forwarding
 if (($ssh_user) and ("$server" ne "127.0.0.1") and ("$server" ne "localhost"))
@@ -158,7 +149,7 @@ if (($ssh_user) and ("$server" ne "127.0.0.1") and ("$server" ne "localhost"))
     $port =~ s/\..*//;
 
     # Be sure port isn't reserved
-    $file="/etc/services";
+    my $file="/etc/services";
     open (FILE, "<$file") || die ("$0: Couldn't open $file for reading\n");
       while (<FILE>) {
         if (/$port/) { 
@@ -183,8 +174,8 @@ if (($ssh_user) and ("$server" ne "127.0.0.1") and ("$server" ne "localhost"))
   }
 
   # Setup the port forwarding
-  $command="ssh -f -l $ssh_user -L $port:$server:873 $server sleep 5";
-  $rc = 0xffff & system($command);
+  my $cmd = "ssh -f -l $ssh_user -L $port:$server:873 $server sleep 5";
+  my $rc = 0xffff & system($cmd);
   if ($rc != 0) { 
     print "FATAL: Failed to establish secure port forwarding to $server!\n";
     die   "       Be sure that you can run \"ssh -l $ssh_user $server\" successfully.\n";
@@ -211,16 +202,16 @@ check_if_root();
 
 unless($server) { $server="127.0.0.1"; }
 
-unless($destination_path) { $destination_path = $default_imagedir; }
+unless($destination_path) { $destination_path = $default_image_dir; }
 
 # remove any trailing slash
 $destination_path =~ s/\/$//;
 
-$source="rsync://$server:$port/$source_image";
-$destination="$destination_path/$destination_image";
+my $source="rsync://$server:$port/$source_image";
+my $destination="$destination_path/$destination_image";
 
 # check for existence of destination path
-$file=$destination_path;
+my $file=$destination_path;
 unless(-e $file) {
   if($force) {
     mkpath($file, 0, 0750) or die "FATAL: Can't create $file!\n";
@@ -247,14 +238,14 @@ if(-e $file) {
 
 # copy the image
 if($verbose) {print "  Copying image $source_image to $destination_image.\n";}
-$cmd="rsync -a --delete $source $destination";
+my $cmd = "rsync -a --delete $source $destination";
 system($cmd);
   if($? != 0) { die "FATAL: Failed to copy $source to $destination.\n"; }
 
 # Copy the standard override directory. -BEF-
 if ($verbose) {print "  Copying override directory $source_image to $destination_image.\n";}
-$source_override = "rsync://$server:$port/overrides/$source_image/";
-$destination_override = "/var/lib/systemimager/overrides/${destination_image}/";
+my $source_override = "rsync://$server:$port/overrides/$source_image/";
+my $destination_override = "/var/lib/systemimager/overrides/${destination_image}/";
 $cmd="rsync -a --delete $source_override $destination_override";
 system($cmd);
     if($? != 0) { 
@@ -276,8 +267,8 @@ SystemImager::Server->gen_rsyncd_conf($rsync_stub_dir, $rsyncd_conf)
 ### BEGIN Change entries in master autoinstall script ###
 # copy master autoinstall script
 if($verbose) {print "  Copying $source_image.master to $destination_image.master.\n";}
-$source_script="rsync://$server:$port/scripts/$source_image.master";
-$destination_script=$autoinstall_script_dir . "/$destination_image.master";
+my $source_script="rsync://$server:$port/scripts/$source_image.master";
+my $destination_script=$autoinstall_script_dir . "/$destination_image.master";
 $cmd="rsync -a $source_script $destination_script";
 system($cmd);
     if($? != 0) { die "FATAL: Failed to copy $source_script to $destination_script.\n"; }
@@ -287,7 +278,7 @@ $file=$destination_script;
 if($verbose) {print "  Updating entries in $destination_image.master.\n";}
 open (FILE, "<$file") or die "FATAL: couldn't open $file for reading!\n";
 
-$tmp_file="/tmp/tmp_file.$$";
+my $tmp_file = "/tmp/tmp_file.$$";
 open (TMP_FILE, ">$tmp_file") or die "FATAL: couldn't open $tmp_file for writing!\n";
   while (<FILE>) {
     s/IMAGENAME=${source_image}/IMAGENAME=${destination_image}/;
