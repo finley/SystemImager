@@ -336,7 +336,7 @@ patched_kernel-stamp:
 	[ -d $(LINUX_SRC) ] || \
 		( cd $(SRC_DIR) && bzcat $(LINUX_TARBALL) | tar xv && \
 		  [ ! -f ../$(LINUX_PATCH) ] || \
-		  cd linux && patch -p1 < ../../$(LINUX_PATCH))
+		    (cd linux && patch -p1 < ../../$(LINUX_PATCH)))
 	cp -a $(LINUX_CONFIG) $(LINUX_SRC)/.config
 	cd $(LINUX_SRC) && make oldconfig dep
 	touch patched_kernel-stamp
