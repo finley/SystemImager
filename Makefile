@@ -178,9 +178,8 @@ install_server:	install_manpages install_configs install_server_libs
 		$(PXE_CONF_DEST)/syslinux.cfg
 	install -m 644 --backup $(PXE_CONF_SRC)/syslinux.cfg \
 		$(PXE_CONF_DEST)/default
-	install -d -m 755 $(TFTP_ROOT)/systemimager
 	install -b -m 644 tftpstuff/systemimager/updateclient.local.exclude \
-		$(TFTP_ROOT)/systemimager
+		$(ETC)/systemimager
 	install -m 755 $(TFTP_BIN_SRC)/prepareclient $(TFTP_BIN_DEST)
 	install -m 755 $(TFTP_BIN_SRC)/updateclient $(TFTP_BIN_DEST)
 	install -d -m 755 $(IMAGEDEST)
