@@ -14,6 +14,8 @@ use strict;
 #
 # Subroutines in this module include:
 #
+#   confedit_options_body
+#   confedit_options_header
 #   copyright
 #   generic_footer
 #   generic_options_help_version
@@ -23,7 +25,6 @@ use strict;
 #   pushupdate_options_header
 #   updateclient_options_body
 #   updateclient_options_header
-#
 #
 ################################################################################
 
@@ -215,7 +216,8 @@ Example:
     confedit \
       --file  flamethrower.conf \
       --entry "boot-ia64-standard" \
-      --data  "[boot-ia64-standard]\nDIR = /usr/share/systemimager/boot/ia64/standard"
+      --data  "DIR = /usr/share/systemimager/boot/ia64/standard \n OPT2 = Value"
+              (Note the use of "\n" to seperate lines for multi-line entries.)
 
 EOF
 }

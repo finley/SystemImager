@@ -64,7 +64,7 @@ if(($file) and ($entry) and ($data)) {
     #
     $data =~ s/\\n/\n/g;    # apparently, getopt padds specialty characters
     chomp $data;
-    $data .= "\n\n";
+    $data = "[${entry}]\n${data}\n\n";
     SystemImager::Common->add_or_delete_conf_file_entry($file, $entry, $data)
         or die "$program_name: Cannot remove entry from $file";
 
