@@ -4,6 +4,8 @@
 # This file on client: /etc/systemimager/systemimager.exclude
 #
 
+# This is a list of files to exclude during the updateclient process only
+
 # Do _NOT_ modify these exclusions or _very_ strange things may happen
 /proc/*
 /var/lock/*
@@ -13,7 +15,13 @@
 
 # You may modify or add to the exclusions below at your own risk...
 # -- Wait a minute, this is all at your own risk! ;)
-# Also consider modifying the file in $image/etc/systemimager.exclude
+# You should consider modifying this file on both on the client 
+# and in the image stored on the image server.
+# (in /var/spool/systemimager/images/<image>/etc/systemimager/)
+# if you just modify it on the client, it
+# will be replaced by the image server copy after an updateclient
+# if you just modify it in the image, your changes will not take effect
+# until after the next updateclient
 
 # RedHat stuff
 /etc/HOSTNAME
