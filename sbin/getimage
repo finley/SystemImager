@@ -145,10 +145,10 @@ $warning =  <<"EOF";
 
 This program will get the entire system image from \"$master_client\"
 making the assumption that all filesystems considered part
-of the system image are using the ext2 format.
+of the system image are using ext2, ext3, or reiserfs.
 
 This program will not get /proc or network mounted filesystems.
-It will only get ext2 formated file systems.
+It will only get ext2 and reiserfs formated file systems.
 
 EOF
 
@@ -190,7 +190,7 @@ if (!$quiet) {
     print "------------- $master_client mtab RETRIEVAL FINISHED -------------\n";
     close(RSYNC);
 } else {
-    $command = qq(rsync -a ${master_client}::root/etc/mtab $imagedir);
+    $command = "rsync -a ${master_client}::root/etc/mtab $imagedir";
     system($command);
 }
 
@@ -207,6 +207,8 @@ close MTAB;
 open (EXCLUDE, ">$exclude_file") ||
     die "Couldn't open $exclude_file for writing\n";
 @mtab = grep (!/\s+ext2\s+/, @mtab);
+@mtab = grep (!/\s+ext3\s+/, @mtab);
+@mtab = grep (!/\s+reiserfs\s+/, @mtab);
 foreach (@mtab) {
     /\S+\s+(\S+)\s+/;
     print EXCLUDE "$1/*\n";
@@ -423,8 +425,6 @@ foreach $disk (@disks)  {
     ### BEGIN partitioning output ###
     $sfdisk_command_part_one = "sfdisk -uS /dev/$disk <<EOF\n";
     $sfdisk_command_part_two = "";
-    @swaps = ( );
-    @ext2s = ( );
 
     # gather up partition information
     open (PARTITIONS, "<$imagedir/etc/partitionschemes/${disk}") || die "Cannot open $imagedir/etc/partitionschemes/$disk for reading\n";
@@ -442,17 +442,10 @@ foreach $disk (@disks)  {
             # split on space(s) and assign values to variables
             (my $dev, my $start, my $end, my $sectors, my $id) = split(/ +/);
 
-            # gather up swap partitions
-            if($id eq "82") { push(@swaps, $dev); }
-
-            # gather up ext2 partitions
-            if($id eq "83") { push(@ext2s, $dev); }
-
             # continue compiling sfdisk command
             $sfdisk_command_part_one = $sfdisk_command_part_one . "$dev : start= $start, size= $sectors, Id=$id\n";
         }
     }
-
     $sfdisk_command = $sfdisk_command_part_one . $sfdisk_command_part_two . "EOF\n";
     ### END partitioning output ###
 
@@ -461,67 +454,73 @@ foreach $disk (@disks)  {
     print MASTER_SCRIPT "echo partitioning $disk...\n";
     print MASTER_SCRIPT "sleep 1s\n";
     print MASTER_SCRIPT $sfdisk_command;
-
-    # output swap creation section (sort order doesn't matter here)
-    (@swaps) && print MASTER_SCRIPT "\n# create swap space(s) on $disk -- do a \"man mkswap\" for more info\n";
-    foreach $swapdev (@swaps) {
-        print MASTER_SCRIPT "mkswap -v1 $swapdev\n";
-    }
-
-    # output ext2 creation section (sort order doesn't matter here)
-    (@ext2s) && print MASTER_SCRIPT "\n# create ext2 filesystem(s) on $disk -- do a \"man mke2fs\" for more info\n";
-    foreach $ext2dev (@ext2s) {
-        #my $block_size = "4096";
-        #my $inodes_per_block = "16384";
-        #my $min_free = "1";
-        #print MASTER_SCRIPT "mke2fs -b $block_size -i $inodes_per_block -m $min_free $ext2dev\n";
-        ### Take the conservative option for now.  Change when we can detect existing settings. ###
-        print MASTER_SCRIPT "mke2fs $ext2dev\n";
-    }
 }
 
-
-# initialize and void %fstab hash
-%fstab = ();
-
-# gather up mount point creation information
+### BEGIN gather up mount point, swap, and filesystem creation information ###
+print MASTER_SCRIPT "\n# swap and filesystem creation stuff\n";
 open (FSTAB, "<$imagedir/etc/fstab") || die "Failed to open $imagedir/etc/fstab for reading\n";
 while (<FSTAB>) {
-    # Skip the line if it starts with a '#' or does not contain 'ext2'
-    if (m@(^\s*\#)|(/dev/fd)@ || (! (/\s+ext2\s+/))) {
+    # Skip the line if it starts with a '#'
+    if (m@(^\s*\#)|(/dev/fd)@) {
         next;
     }
-    # Pull out the device file ($1) and the mount point ($2).
-    # mount point is key so we can easily sort for the mkdir section
-    if (/^\s*(\S+)\s+(\S+)\s/)  {
-	$fstab{$2} = $1;
-    }
-}
-close FSTAB;
 
-# these must be in proper order, so we'll employ sort()
-print MASTER_SCRIPT "\n# mount the freshly formatted partitions\n";
-foreach $dir (sort keys %fstab) {
-    # pre-pend /a to the target directory and
-    # in case directory doesn't already have one, add a trailing slash
+    # split on space(s) and assign values to variables
+    (my $device_file, my $mount_point, my $filesystem_type) = split(/ +/);
+
+    ### BEGIN Find filesystem type and apply appropriate filesystem creation options ###
+    # Also be sure to pre-pend /a to each target directory being created
+    # in case directory doesn't already have one, add a trailing slash???XXX
     # (We could easily test to see if it does, but we've got to normalize multiple
     #  slashes into one down below anyway...  Same number of functions to execute.)
-    my $target_dir = qq(/a$dir/);
 
-    # turn multiple slashes "///" into a single slash "/"
-    $target_dir =~ s/\/+/\//g;
-    print MASTER_SCRIPT qq(mkdir -p $target_dir\n);
-    print MASTER_SCRIPT qq(mount $fstab{$dir} $target_dir\n);
+    # swap
+    if ($filesystem_type eq "swap") {
+      print MASTER_SCRIPT "mkswap -v1 $device_file\n";
+      print MASTER_SCRIPT "\n";
+    }
+
+    # ext2
+    if ($filesystem_type eq "ext2") {
+      # Take the conservative option for now.  Change when we can detect existing settings.
+      print MASTER_SCRIPT "mkdir -p /a$mount_point\n";
+      print MASTER_SCRIPT "mke2fs $device_file\n";
+      print MASTER_SCRIPT "mount $device_file /a$mount_point\n";
+      print MASTER_SCRIPT "\n";
+      push(@mount_points, $mount_point);
+    }
+
+    # ext3
+    if ($filesystem_type eq "ext3") {
+      # Take the conservative option for now.  Change when we can detect existing settings.
+      print MASTER_SCRIPT "mkdir -p /a$mount_point\n";
+      print MASTER_SCRIPT "mke2fs $device_file\n";
+      print MASTER_SCRIPT "mount $device_file /a$mount_point\n";
+      print MASTER_SCRIPT "\n";
+      push(@mount_points, $mount_point);
+    }
+
+    # reiserfs
+    if ($filesystem_type eq "reiserfs") {
+      print MASTER_SCRIPT "mkdir -p /a$mount_point\n";
+      print MASTER_SCRIPT "mkreiserfs $device_file\n";
+      print MASTER_SCRIPT "mount $device_file /a$mount_point\n";
+      print MASTER_SCRIPT "\n";
+      push(@mount_points, $mount_point);
+    }
+    ### END Find filesystem type and apply appropriate filesystem creation options ###
+
 }
+close FSTAB;
+### END gather up mount point, swap, and filesystem creation information ###
 
 # This information is passed from the linuxrc script on the autoinstall media via /tmp1/variables.txt
 # Apparently the shell on the autoinstall media is not intelligent enough to take a "set -a" parameter
 print MASTER_SCRIPT "\n# Pull in variables left behind by the linuxrc script\n";
 print MASTER_SCRIPT ". /tmp1/variables.txt\n";
-
-print MASTER_SCRIPT "\n# filler up!\n";
+print MASTER_SCRIPT "\n";
+print MASTER_SCRIPT "# filler up!\n";
 print MASTER_SCRIPT "rsync -av \$DHCPSIADDR::$image /a/\n\n";
-
 
 
 ### BEGIN distribution specific networking stuff ###
@@ -648,8 +647,8 @@ EOF
 
 
 print MASTER_SCRIPT "# unmount the freshly filled filesystems\n";
-foreach $dir (reverse sort keys %fstab) {
-    print MASTER_SCRIPT "umount /a$dir\n";
+foreach $mount_point (reverse sort @mount_points) {
+    print MASTER_SCRIPT "umount /a$mount_point\n";
 }
 
 print MASTER_SCRIPT << 'EOF';
