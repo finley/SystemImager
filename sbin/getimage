@@ -373,7 +373,7 @@ if(-d "$imagedir$partition_dir") {
         # add the rd/ bit to each device
         for (@hardware_raid_disks) {
           $_ =~ s/^/rd\//;
-          push(@disks);
+          push(@disks, $_);
         }
     close(PARTITIONSCHEMES);
 }
