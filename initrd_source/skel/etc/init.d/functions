@@ -344,6 +344,9 @@ flamethrower_client() {
             TAR_EXIT_STATUS=$?
         fi
 
+        # discard used tarball like an old sock (recommended by: Ramon Bastiaans <bastiaans@sara.nl>)
+        rm -f /tmp/multicast.tar
+
         # did everything work properly
         if [ $UDP_RECEIVER_EXIT_STATUS -eq 0 ] && [ $TAR_EXIT_STATUS -eq 0 ]; then
             SUCCESS=yes
