@@ -126,7 +126,7 @@ if [ "x$DESTDIR" = "x" ]; then
   install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/howdoesitwork.html	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/ || exit 1
   install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/terminology.html	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/ || exit 1
   install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/overview.html	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/ || exit 1
-  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/theactualhowto.html	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/ || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/theactualstep-by-stephowto.html	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/ || exit 1
   install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/designgoals.html	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/ || exit 1
   install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/architecture.html	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/ || exit 1
   install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/faq.html	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/ || exit 1
