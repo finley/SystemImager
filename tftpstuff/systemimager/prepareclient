@@ -7,18 +7,26 @@
 #
  
 # set path
-PATH=/bin:/usr/bin:/sbin:/usr/sbin
- 
-# if not run as root, install will surely fail
-[ `whoami` != "root" ] && echo "Must be run as root!" && exit 1
+PATH=/bin:/usr/bin:/sbin:/usr/sbin:/tmp
  
 # assign ip for imageserver
 IMAGESERVER=$1
+
+# is this an RPM install (as in "don't talk over the network")
+RPM_INSTALL="false"
+case $1 in
+    -r|-rpm-install|--rpm-install ) RPM_INSTALL="true" ;;
+esac
+
  
 # be sure script was called properly
 if [ "$IMAGESERVER" != "" ]; then
+
+# if not run as root, install will surely fail
+[ "$RPM_INSTALL" = "false" ] && [ `whoami` != "root" ] && echo "Must be run as root!" && exit 1
  
- # do introduction
+# do introduction
+if [ "$RPM_INSTALL" = "false" ]; then
  clear
  echo "Welcome to the SystemImager prepareclient script.  This install script"
  echo "may modify the following files to prepare your client for imaging."
@@ -41,6 +49,7 @@ if [ "$IMAGESERVER" != "" ]; then
  esac
  echo
  sleep 2
+fi
  
  # BEGIN functions
  #!/bin/sh
@@ -373,8 +382,8 @@ if [ "$IMAGESERVER" != "" ]; then
  
 
 
-
-
+# unless --rpm-install do this
+if [ "$RPM_INSTALL" = "false" ]; then
  # copy over client scripts, and what not
  # _and_ statically linked sfdisk utility
  # EOF must not be indented!
@@ -385,6 +394,7 @@ if [ "$IMAGESERVER" != "" ]; then
  get systemimager/systemimager.exclude
 EOF
  echo
+fi
 
  # verify that rsync entry is in /etc/services
  egrep -q ^rsync /etc/services
@@ -417,27 +427,31 @@ EOF
  # install SystemImager brand rsyncd.conf file
  if [ ! -f /etc/rsyncd.conf ]; then
    # if it doesn't exist, create it
-   echo "Creating /etc/rsyncd.conf ..."
+   [ "$RPM_INSTALL" = "false" ] && echo "Creating /etc/rsyncd.conf ..."
    create_rsyncd_conf
  elif [ ! -f /etc/rsyncd.conf.beforesystemimager ]; then
    # OK, it does exist -- if the backup file doesn't exist,
    # back it up
-   echo "Backing up /etc/rsyncd.conf to /etc/rsyncd.conf.beforesystemimager ..."
+   [ "$RPM_INSTALL" = "false" ] && echo "Backing up /etc/rsyncd.conf to /etc/rsyncd.conf.beforesystemimager ..."
    cp /etc/rsyncd.conf /etc/rsyncd.conf.beforesystemimager
    # and create rsyncd.conf
-   echo "Creating /etc/rsyncd.conf ..."
+   [ "$RPM_INSTALL" = "false" ] && echo "Creating /etc/rsyncd.conf ..."
    create_rsyncd_conf
  else
    # if the backup file exists, then presume we've done due diligence
    # and create rsyncd.conf
-   echo "Creating /etc/rsyncd.conf ..."
+   [ "$RPM_INSTALL" = "false" ] && echo "Creating /etc/rsyncd.conf ..."
    create_rsyncd_conf
  fi
 
  # signal inetd to re-read /etc/inetd.conf
- echo -n "Signalling inetd to re-read /etc/inetd.conf: "
- killproc inetd -HUP
- echo
+ [ "$RPM_INSTALL" = "false" ] && echo -n "Signalling inetd to re-read /etc/inetd.conf: "
+ if [ "$RPM_INSTALL" = "false" ]; then
+   killproc inetd -HUP
+ else
+   killall -HUP inetd
+ fi
+ [ "$RPM_INSTALL" = "false" ] && echo
  
 
 
@@ -482,14 +496,14 @@ EOF
  [ "x$hardware_raid_disks" != "x" ] && mkdir -p /etc/partitionschemes/rd
 
  # make sfdisk executeable
- chmod +x /tmp/sfdisk
+ [ -e /tmp/sfdisk ] && chmod +x /tmp/sfdisk
 
  # get sfdisk to report IDE and SCSI disk partition info
  for disk in $ide_and_scsi_disks
  do
   # Specify sectors explicitly -- this format may be used in the future
   # for partitioning with MB.
-  /tmp/sfdisk -l -uS /dev/$disk > /etc/partitionschemes/$disk
+  sfdisk -l -uS /dev/$disk > /etc/partitionschemes/$disk
  done
 
  # get sfdisk to report Hardware RAID disk info
@@ -500,37 +514,37 @@ EOF
 
   # Specify sectors explicitly -- this format may be used in the future
   # for partitioning with MB.
-  /tmp/sfdisk -l -uS /dev/$disk"p" > /etc/partitionschemes/$disk
+  sfdisk -l -uS /dev/$disk"p" > /etc/partitionschemes/$disk
 
   # get rid of the funkification
   rm -f /dev/$disk"p"
  done
 
  # get rid of sfdisk
- rm -f /tmp/sfdisk
+ [ -e /tmp/sfdisk ] && rm -f /tmp/sfdisk
  ### END leave disk info behind for "getimage" script ###
  
- mv -f updateclient /usr/sbin
- chmod 755 /usr/sbin/updateclient
+ [ "$RPM_INSTALL" = "false" ] && mv -f updateclient /usr/sbin
+ [ "$RPM_INSTALL" = "false" ] && chmod 755 /usr/sbin/updateclient
 
  if [ ! -f /etc/systemimager.exclude ]; then
    # if it doesn't exist, create it
-   echo "Creating /etc/systemimager.exclude ..."
+   [ "$RPM_INSTALL" = "false" ] && echo "Creating /etc/systemimager.exclude ..."
    mv -f systemimager.exclude /etc
  else
-   echo "Using existing /etc/systemimager.exclude ..."
+   [ "$RPM_INSTALL" = "false" ] && echo "Using existing /etc/systemimager.exclude ..."
  fi
  
  # wrap up
- echo
- echo "Done!  This client is ready to have it's image retrieved."
+ [ "$RPM_INSTALL" = "false" ] && echo
+ [ "$RPM_INSTALL" = "false" ] && echo "Done!  This client is ready to have it's image retrieved."
 
 else
 
- echo ""
- echo "Usage: prepareclient IMAGESERVER"
- echo "(IMAGESERVER can be an IP address or a hostname)"
- echo ""
+ [ "$RPM_INSTALL" = "false" ] && echo ""
+ [ "$RPM_INSTALL" = "false" ] && echo "Usage: prepareclient IMAGESERVER"
+ [ "$RPM_INSTALL" = "false" ] && echo "(IMAGESERVER can be an IP address or a hostname)"
+ [ "$RPM_INSTALL" = "false" ] && echo ""
  exit 1
 
 fi
