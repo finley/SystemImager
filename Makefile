@@ -153,7 +153,11 @@ GETSOURCE = $(TOPDIR)/tools/getsource
 
 # build everything, install nothing
 PHONY += all
-all:	$(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.gz docs manpages
+all:	$(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.gz 
+
+# All has been modified as docs don't build on non debian platforms
+#
+#all:	$(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.gz docs manpages
 
 # Now include the other targets
 # This has to be right after all to make all the default target
