@@ -125,15 +125,15 @@ This reports the short command list usage summary.
 
 =over 8
 
-=item B<-v, --verbose>
+=item B<-v>, B<--verbose>
 
 Run all commands verbosely.
 
-=item B<-n, --dryrun>
+=item B<-n>, B<--dryrun>
 
 Only display the commands, don't actually do anything with them.
 
-=item B<-V, --version>
+=item B<-V>, B<--version>
 
 Display program version.
 
@@ -189,17 +189,38 @@ A log of all activities is kept in the image's update directory, named
 
 The script variables and defaults are:
 
- img_dir = where the images are (defaults to SystemImager's defaults)
- update_dir = "/usr/src/updates" - where to put newly installed packages
- log_file = "update.log" - where to log imagemanip activities
- perm_file = "/etc/imagemanip.perm" - where to load image permissions
- cp_path = "/bin/cp" - what command to use for copying files
- suffix-new = "-new" - image name suffix for images being worked on
- suffix-virgin = "-virgin" - image name suffix for original images
- suffix-prev = "-prev" - suffix given to the previous production tree
- suffix-old = "-old" - suffix given to the -prev image after a "promote"
- install_rpm = "/bin/rpm -Uvh" - command used to install "rpm" packages
- install_deb = "/usr/bin/dpkg --install" - command used to install "deb" pkgs
+B<img_dir> = (defaults to SystemImager's defaults)
+   where the images are
+
+B<update_dir> = "/usr/src/updates"
+   where to put newly installed packages
+
+B<log_file> = "update.log"
+   where to log imagemanip activities
+
+B<perm_file> = "/etc/imagemanip.perm"
+   where to load image permissions
+
+B<cp_path> = "/bin/cp"
+   what command to use for copying files
+
+B<suffix-new> = "-new"
+   image name suffix for images being worked on
+
+B<suffix-virgin> = "-virgin"
+   image name suffix for original images
+
+B<suffix-prev> = "-prev"
+   suffix given to the previous production tree
+
+B<suffix-old> = "-old"
+   suffix given to the -prev image after a "promote"
+
+B<install_rpm> = "/bin/rpm -Uvh"
+   command used to install "rpm" packages
+
+B<install_deb> = "/usr/bin/dpkg --install"
+   command used to install "deb" pkgs
 
 The "install_*" configuration options are special in that the "*" portion of
 the config option is used to match against file extensions when files are
