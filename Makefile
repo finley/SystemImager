@@ -576,7 +576,6 @@ PHONY += clean
 clean:	$(subst .rul,_clean,$(shell cd $(TOPDIR)/make.d && ls *.rul)) initrd_clean
 	-$(MAKE) -C $(MANPAGE_DIR) clean
 	-$(MAKE) -C $(MANUAL_DIR) clean
-	-rm $(MANUAL_DIR)/images
 
 	## where the tarballs are built
 	-rm -rf tmp
