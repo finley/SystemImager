@@ -509,7 +509,7 @@ switch_root_to_tmpfs() {
     mkdir -p /new_root || shellout
     mount tmpfs /new_root -t tmpfs $tmpfs_opts || shellout
     cd / || shellout
-    rsync -a bin etc lib my_modules root sbin tmp usr var /new_root/ || shellout
+    rsync -a --exclude='/proc' --exclude='/dev' * /new_root/ || shellout
     cd /new_root || shellout
     mkdir -p old_root || shellout
     pivot_root . old_root || shellout
