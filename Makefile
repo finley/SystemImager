@@ -473,6 +473,8 @@ srpm_tarball:  $(TOPDIR)/tmp/systemimager-$(VERSION).tar.gz
 
 $(TOPDIR)/tmp/systemimager-$(VERSION).tar.gz: systemimager.spec
 	perl -pi -e 's/define ver\b.*/define ver\t$(VERSION)/' $(TOPDIR)/systemimager.spec
+	perl -pi -e 's/define _boot_flavor\b.*/define _boot_flavor\t$(FLAVOR)/' $(TOPDIR)/systemimager.spec
+
 	mkdir -p tmp/systemimager-$(VERSION)
 	find . -maxdepth 1 -not -name . -not -name tmp \
 	  -exec cp -a {} tmp/systemimager-$(VERSION) \;

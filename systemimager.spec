@@ -3,6 +3,7 @@
 %define rel      1
 %define prefix   /usr
 %define _build_all 1
+%define _boot_flavor standard
 # Set this to 1 to build only the boot rpm
 # it can also be done in the .rpmmacros file
 #%define _build_only_boot 1
@@ -128,7 +129,7 @@ be imaged by a SystemImager server.
 
 %endif
 
-%package %{_build_arch}boot
+%package %{_build_arch}boot-%{_boot_flavor}
 Summary: Software that automates Linux installs, software distribution, and production deployment.
 Version: %ver
 Release: %rel
@@ -142,7 +143,7 @@ Distribution: System Installation Suite
 Requires: systemimager-server >= %{version}
 AutoReqProv: no
 
-%description %{_build_arch}boot
+%description %{_build_arch}boot-%{_boot_flavor}
 SystemImager is software that automates Linux installs, software 
 distribution, and production deployment.  SystemImager makes it easy to
 do installs, software distribution, content or data distribution, 
@@ -321,7 +322,7 @@ fi
 
 %endif
 
-%files %{_build_arch}boot
+%files %{_build_arch}boot-%{_boot_flavor}
 %defattr(-, root, root)
 %dir %prefix/share/systemimager/boot/%{_build_arch}
 %prefix/share/systemimager/boot/%{_build_arch}/*
