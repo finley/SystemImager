@@ -1084,7 +1084,7 @@ print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::$image/ /a/\n\n";
 
 ### BEGIN graffiti ###
 print MASTER_SCRIPT "# Leave notice of which image is installed on the client\n";
-print MASTER_SCRIPT "echo \$image > /a/etc/systemimager/IMAGE_LAST_SYNCED_TO\n\n";
+print MASTER_SCRIPT "echo $image > /a/etc/systemimager/IMAGE_LAST_SYNCED_TO\n\n";
 ### END graffiti ###
 
 ### BEGIN distribution specific networking stuff ###
