@@ -1,7 +1,10 @@
-UDPCAST_VERSION = 20030706
-UDPCAST_TARBALL = udpcast_$(UDPCAST_VERSION).orig.tar.gz
-UDPCAST_URL = http://http.us.debian.org/debian/pool/main/u/udpcast/$(UDPCAST_TARBALL)
-UDPCAST_DIR = udpcast
+#
+# http://download.systemimager.org/pub/udpcast/
+#
+UDPCAST_VERSION = 20011231sis3
+UDPCAST_TARBALL = udpcast-$(UDPCAST_VERSION).tar.gz
+UDPCAST_URL = http://download.systemimager.org/pub/udpcast/$(UDPCAST_TARBALL)
+UDPCAST_DIR = udpcast-$(UDPCAST_VERSION)
 UDPCAST_BINARY = $(INITRD_SRC_DIR)/$(UDPCAST_DIR)/udp-receiver
 UDPCAST_PATCHES = $(shell ls $(INITRD_PATCH_DIR)/udpcast.*.patch 2>/dev/null | sort)
 
