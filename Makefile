@@ -151,11 +151,13 @@ INITRD_DIR := initrd_source
 SI_INSTALL = $(TOPDIR)/si_install --si-prefix=$(PREFIX)
 WGET = wget --passive-ftp
 
-# Now include the other targets
-include make.d/*.rul
-
 # build everything, install nothing
 all:	boel_binaries_tarball kernel initrd.gz docs manpages
+
+# Now include the other targets
+# This has to be right after all to make all the default target
+include make.d/*.rul
+
 
 # a complete server install
 install_server_all:	install_server install_common install_binaries boot_tarball
