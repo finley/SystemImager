@@ -16,6 +16,7 @@ use SystemImager::Config;
 use SystemImager::Server;
 use vars qw($config $VERSION);
 
+$0 = "netbootmond";
 
 my $net_boot_default = lc $config->net_boot_default();
 if("$net_boot_default" eq "net") {
