@@ -22,6 +22,9 @@ VA SystemImager-1.1 2000.??.??
 - prepareclient -- gave it a real usage statement.  Behavior is 
   no longer to traipse upon the network with tftp, but to use the 
   utilities on the client system.  Options are -help, -version, and -quiet
+- va-systemimager-client RPM -- now you *must* run prepareclient after
+  installing the client RPM.  This is so that you don't unwittingly have
+  an rsync daemon running sharing things you don't want shared.
 
 VA SystemImager-1.0 2000.05.02
 - The name changed ever so slightly ;)
