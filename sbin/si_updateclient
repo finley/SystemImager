@@ -491,13 +491,19 @@ SC_EOF
     }
     close(ETC_MTAB);
 
-    my $delete;
     my $cmd = "";
+    my $imagepass = 1;  ## Set this flag so we know whether we're syncing
+                        ## the image or we're onto the overrides
     foreach my $module ($image, @overrides) {
+        ## leave this off unless we're doing the image
+        my $delete = "";
+
         # finalize command
-        $delete = "";
-        if ($image eq $module) {
+        if ($imagepass) {
+            ## if we're doing the rsync of the image, go ahead and delete
+            ## files that aren't on the server side
             $delete = "--delete";
+            $imagepass = 0;
         }
         else {
             $module = "overrides/$module";
