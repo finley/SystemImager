@@ -600,7 +600,7 @@ This install script may modify the following files and/or directories:
 
  /tftpboot/systemimager/ -- create if necessary and add appropriate files/links
  /tftpboot/pxelinux.cfg/ -- create if necessary and add appropriate files/links
- /etc/services           -- add rsync and/or tftp entries if necessary
+ /etc/services           -- add /sync and/or tftp entries if necessary
  /etc/inetd.conf         -- remove rsync entry if necessary and
                             add or modify tftp entry if necessary
  /etc/rsyncd.conf        -- it is assumed that VA SystemImager will manage this
@@ -1955,6 +1955,14 @@ etc.
 	  these issues.
 	</Para>
 	<Para>
+	  Here's a hack that seems to work for Chris Black.  Add "--bwlimit=10000" 
+	  right after "rsync" in each rsync command in the &lt;image&gt;.master script.
+	  <ProgramListing>
+Change: "rsync -av --numeric-ids $IMAGESERVER::web_server_image_v1/ /a/"
+To:     "rsync --bwlimit=10000 -av --numeric-ids $IMAGESERVER::web_server_image_v1/ /a/"
+	  </ProgramListing>
+	</Para>
+	<Para>
 	Here are some tips on diagnosing the problem:
 	</Para>
 	<ItemizedList>
@@ -2264,6 +2272,7 @@ etc.
 	</LiteralLayout>
       </BlockQuote>
     </sect2>
+
     <sect2 id=FAQDHCPServerLocation>
       <title>Does the DHCP server have to be on the image server?</title>
       <para>
@@ -2278,7 +2287,7 @@ etc.
        range.
       </para>
     </sect2>
-    
+
     <sect2 id=FAQAddDriver>
       <title>
 	How do I add a driver for a special card to the autoinstall client?
