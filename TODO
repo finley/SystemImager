@@ -11,14 +11,25 @@
 In Progress
 -----------
 
+- <brian@thefinleys.com> - update the FAQ-HOWTO (maybe after release? yes.)
+
 Version 1.4.0 specific:
+- <brian@thefinleys.com> - getimage -- add -explicit-geometry option? (default to variable)
+- <brian@thefinleys.com> - start using bzip2
+- <brian@thefinleys.com> - see tmp/RedHat_7.0_issues.txt
+- <brian@thefinleys.com> - DHCPSIADDR -> IMAGESERVER
+                           
 - <brian@thefinleys.com> - Wes Smith's distribution specific patches
-- <brian@thefinleys.com> - support for LABEL= format in /etc/fstab
+- <brian@thefinleys.com> - support for more distributions
 - <brian@thefinleys.com> - fix network booting
+- <brian@thefinleys.com> - put exclude/include stuff on imageserver by image
+                           /tftpboot/systemimager/$image.include
+                           /tftpboot/systemimager/$image.exclude
 
 Other stuff:
-- <brian@thefinleys.com> - update the FAQ-HOWTO (maybe after release? yes.)
-- <brian@thefinleys.com> - put exclude/include stuff on imageserver by image
+- <brian@thefinleys.com> - run rsyncd from an init script on the imageserver
+                           /etc/rc.d/init.d/rsyncd
+                           /etc/init.d/rsyncd
 - <brian@thefinleys.com> - autoinstall client to cycle through eth interfaces
                            for N in 0 1 2 3 4 5 6 7 8 9; do
                              dhcpcd eth$N

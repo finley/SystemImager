@@ -4,7 +4,7 @@
 # This file is: FAQ-HOWTO
 #
 # Current version as of the writing of this document: 1.3.0
-#                                           revision: 0
+#                                           revision: 1
 #
 # See http://systemimager.org/ for the most recent version of this document.
 # It may be updated between releases.
@@ -16,6 +16,7 @@
 #     Paonia Ezrine <paonia@home.welcomehome.org>
 #     Ari Jort <ajort@valinux.com>
 #     Jason R. Mastaler <jasonrm@lanl.gov>
+#     Ben Spade <spade@radik.com>
 #
 
 
@@ -96,6 +97,9 @@ the list.
 
 - Kondara
   - 1.1
+
+- Mandrake
+  - 7.1 reported by Ben Spade <spade@radik.com>
 
 - RedHat
   - 6.0
@@ -916,4 +920,19 @@ with "TFTP open timeout".  Flashing the BIOS fixed this.
 
 --
 Jason R. Mastaler <jasonrm@lanl.gov>
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+I love the system you've created and would really like to make full use of it. We have used it here to configure a cluster of
+rackmounted compute notes, that exist on a private network on the backside of their server. In this role it works great except you
+should state in the documentation that rsyncd should be configured (or tcpwrapped) such that external users cannot pull back the
+entire nodes filesystem. In our case we did this with wrappers only serving rsync to the 10.0.0. net. 
+
+The problem occurs when I attempted to use the great new tool you've created to administrate a cluster of lab machine on the real
+network. The security holes of running rsync on the clients during the getimage stage should be pointed out or at least prompt for the
+server machine and only allow rsync connections from that machine. 
+
+My guess is that you're currently working on using an ssh connection and its security to plug this hole. If this is not an active part of
+the developement I would like to find out more information on helping get this hole plugged so that I can use the great tool you've
+developed. 
+
+At minimum you should alert users to the security holes that running these tools opens up. And perhaps suggest some solutions. 
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>

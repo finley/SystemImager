@@ -4,8 +4,30 @@
 # This file: CHANGE.LOG
 #
 
-VA SystemImager-1.3 2000.10.04
-- prepareclient -- Added the -n or -no-rsyncd option.  This allows
+VA SystemImager-1.4.0 2000.xx.xx
+- prepareclient -- Now uses megabytes to store partition information.
+- getimage -- Now uses megabytes to recreate partitioning in such a way
+              that disks don't have to have the same geometry.  They can
+              even be significantly different sizes.  They can easily be
+              much larger than the original master client disks and can
+              even be smaller (within reason -- depends on specific 
+              partition scheme)
+- getimage -- Now uses the --numeric-ids rsync option.
+- autoinstall scripts -- Now use the --numeric-ids rsync option.
+- updateclient -- Now uses the --numeric-ids rsync option.
+- prepareclient -- What was I thinking in v1.3.0 with the -no-rsyncd option?!?
+                   Don't try this, folks.  It would record your imageserver's 
+                   partition information as if it were the client's.
+
+VA SystemImager-1.3.0 2000.10.04
+- autoinstall kernel -- Patched with:
+                        - http://people.redhat.com/mingo/raid-patches/raid-2.2.17-A0
+                        - http://www.tux.org/pub/devel/reiserfs/linux-2.2.17-reiserfs-3.5.25-patch.gz
+- prepareclient -- <<<<< Don't use this feature to update    >>>>>
+                   <<<<< your master scripts.  I must have   >>>>>
+                   <<<<< been up *really* late the night I   >>>>>
+                   <<<<< did this.  See comments for v1.4.0. >>>>>
+                   Added the -n or -no-rsyncd option.  This allows
                    you to run prepareclient from a chrooted image
                    and then run getimage with the -s option to
                    update your master autoinstall script.
