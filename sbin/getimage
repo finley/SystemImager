@@ -604,16 +604,18 @@ EOF
 
 ### BEGIN foreach disk, gather up the partition info for that disk and prepare an sfdisk command ###
 foreach $disk (@disks)  {
-    ### BEGIN get partition information ###
-    %id_by_device_file = ();
-    %megabytes_by_device_file = ();
-    $lowest_start_device = "10000000";  # some random large number
+  ### BEGIN get partition information ###
+  %id_by_device_file = ();
+  %megabytes_by_device_file = ();
+  $lowest_start_device = "10000000";  # some random large number
 
-    open (PARTITIONS, "<$imagedir$systemimagerdir/partitionschemes/${disk}")
-    || die "$program_name: Cannot open $imagedir$systemimagerdir/partitionschemes/$disk for reading\n";
-      @partitions = <PARTITIONS>;
-    close(PARTITIONS);
+  open (PARTITIONS, "<$imagedir$systemimagerdir/partitionschemes/${disk}")
+  || die "$program_name: Cannot open $imagedir$systemimagerdir/partitionschemes/$disk for reading\n";
+    @partitions = <PARTITIONS>;
+  close(PARTITIONS);
 
+  # Determine whether we are using megabytes (the default) or sectors (prepareclient -explicit-geometry)
+  if ( grep(/^Units = megabytes/, @partitions)) {
     for (@partitions) {
       if(/^\/dev/) {
         # get rid of newline
@@ -701,6 +703,48 @@ foreach $disk (@disks)  {
     print MASTER_SCRIPT "sleep 1s\n";
     print MASTER_SCRIPT $sfdisk_command;
     print MASTER_SCRIPT "\n";
+
+  } elsif ( grep(/^Units = sectors/, @partitions)) {
+
+    ### BEGIN do stuff for disks partitioned in sectors (prepareclient -explicit-geometry)
+
+      ### BEGIN partitioning output ###
+      $sfdisk_command_part_one = "sfdisk -uS /dev/$disk <<EOF\n";
+      $sfdisk_command_part_two = "";
+
+      # gather up partition information
+      open (PARTITIONS, "<$imagedir$systemimagerdir/partitionschemes/${disk}")
+      || die "Cannot open $imagedir$systemimagerdir/partitionschemes/$disk for reading\n";
+        @partitions = <PARTITIONS>;
+      close(PARTITIONS);
+
+      for (@partitions) {
+        if(/^\/dev/) {
+            # get rid of newline
+            chomp;
+
+            # get rid of an asterisk that may be indicating a boot partition (Linux doesn't need this)
+            $_ =~ s/\*//g;
+
+            # split on space(s) and assign values to variables
+            (my $dev, my $start, my $end, my $sectors, my $id) = split(/ +/);
+
+            # continue compiling sfdisk command
+            $sfdisk_command_part_one = $sfdisk_command_part_one . "$dev : start= $start, size= $sectors, Id=$id\n";
+        }
+      }
+      $sfdisk_command = $sfdisk_command_part_one . $sfdisk_command_part_two . "EOF\n";
+      ### END partitioning output ###
+
+      # output disk partition section
+      print MASTER_SCRIPT "# partition $disk\n";
+      print MASTER_SCRIPT "echo partitioning $disk...\n";
+      print MASTER_SCRIPT "sleep 1s\n";
+      print MASTER_SCRIPT $sfdisk_command;
+      print MASTER_SCRIPT "\n";
+
+    ### END do stuff for disks partitioned in sectors (prepareclient -explicit-geometry)
+  }
 }
 ### END foreach disk, gather up the partition info for that disk and prepare an sfdisk command ###
 
