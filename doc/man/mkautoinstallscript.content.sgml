@@ -32,7 +32,8 @@
       <arg><option>-quiet</option></arg>
       <arg><option>-no-listing</option></arg>
       <arg><option>-image <replaceable>IMAGENAME</replaceable></option></arg>
-      <arg><option>-update-script <replaceable>[YES|NO]</replaceable></option></arg>
+      <arg><option>-force <replaceable>[YES|NO]</replaceable></option></arg>
+      <arg><option>-config-file <replaceable>FILE</replaceable></option></arg>
       <arg><option>-ip-assignment <replaceable>METHOD</replaceable></option></arg>
       <arg><option>-post-install <replaceable>ACTION</replaceable></option></arg>
     </cmdsynopsis>
@@ -93,11 +94,22 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-update-script <replaceable>[YES|NO]</replaceable></option></term>
+	<term><option>-force <replaceable>[YES|NO]</replaceable></option></term>
 	<listitem>
 	  <para>
 	    Update the $image.master script?  Defaults to NO if -quiet.  If
 	    not specified you will be prompted to confirm an updated.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-config-file <replaceable>FILE</replaceable></option></term>
+	<listitem>
+	  <para>
+            Use FILE to get autoinstallscript configuration information.
+            Defaults to
+            <filename>./etc/systemimager/autoinstallscript.conf</filename>
+            in the image directory.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -182,7 +194,10 @@
   <refsect1>
     <title>SEE ALSO</title>
 
-    <para><command>getimage</command>(8)</para>
+    <para>
+      <command>getimage</command>(8),
+      <command>autoinstallscript.conf</command>(5)
+    </para>
 
     <para>More details can be found in the <citetitle>SystemImager
 	manual.</citetitle>
