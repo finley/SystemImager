@@ -6,38 +6,73 @@
 # This file is: makedist
 #               (Build a SystemImager distribution tarball)
 #
+# Version: 1.2
+#
 #   Written by Michael Jennings <mej@valinux.com>
 #     Others who have contributed to this code:
 #       Brian Finley <brian@valinux.com>
 #
 
-PACKAGE=va-systemimager
+if [ ! -f VERSION ]; then
+  echo "Must be run from the base of the systemimager development directory!"
+  echo "Like this:"
+  echo "\$ ./makedist"
+  exit 1
+fi
+
+BASE=va-systemimager
+SUBSET=
+PACKAGE=${BASE}${SUBSET}
 VERSION=`cat VERSION`
 GZIP=-9
+SHELL_FILES_TO_VERSION="tftpstuff/systemimager/prepareclient"
+PERL_FILES_TO_VERSION="tftpstuff/systemimager/updateclient sbin/addclients sbin/getimage sbin/makeautoinstallcd sbin/makeautoinstalldiskette sbin/makedhcpserver sbin/makedhcpstatic"
+
+# set version number on shell files
+for file in $SHELL_FILES_TO_VERSION; do
+  sed "s/^version_number=.*/version_number=\"$VERSION\"/" $file > $file.$$
+  cat $file.$$ > $file
+  rm -f $file.$$
+done
+
+# set version number on perl files
+for file in $PERL_FILES_TO_VERSION; do
+  sed "s/^\$version_number=.*/\$version_number=\"$VERSION\";/" $file > $file.$$
+  cat $file.$$ > $file
+  rm -f $file.$$
+done
+
+# set version number on other files
+file="tftpstuff/pxelinux.cfg/message.txt"
+sed "s/v[0-9]*\.[0-9]*\./v$VERSION./" $file  > $file.$$
+cat $file.$$ > $file
+rm -f $file.$$
 
 rm -f ${PACKAGE}-*.tar.gz
 
-cp ${PACKAGE}.spec ${PACKAGE}.spec.in
-sed 's/^%define ver \([ ]*\) [0-9].*$/%define ver \1 '$VERSION'/g' ${PACKAGE}.spec.in > ${PACKAGE}.spec
-rm -f ${PACKAGE}.spec.in
+cp ${BASE}.spec ${BASE}.spec.in
+sed 's/^%define ver \([ ]*\) [0-9].*$/%define ver \1 '$VERSION'/g' ${BASE}.spec.in > ${BASE}.spec
+rm -f ${BASE}.spec.in
 
-# va-systemimager
+# va-systemimager-server
 rm -rf /tmp/${PACKAGE}-${VERSION}
 mkdir -p /tmp/${PACKAGE}-${VERSION}
 cp -a . /tmp/${PACKAGE}-${VERSION}
-(cd /tmp/${PACKAGE}-${VERSION} && find . -type d -name CVS -exec rm -rf {} \;)
-(cd /tmp/${PACKAGE}-${VERSION} && find . -type d -name www.systemimager.org -exec rm -rf {} \;)
+(cd /tmp/${PACKAGE}-${VERSION} && find . -type d -name CVS -exec rm -rf {} \; 2>/dev/null)
+(cd /tmp/${PACKAGE}-${VERSION} && rm -fr tmp )
 (cd /tmp && tar --owner=root --group=root -zcvf ${PACKAGE}-${VERSION}.tar.gz ${PACKAGE}-${VERSION}/)
 mv /tmp/${PACKAGE}-${VERSION}.tar.gz .
 rm -rf /tmp/${PACKAGE}-${VERSION}
 
 
 # va-systemimager-client
-PACKAGE=va-systemimager-client
+BASE=va-systemimager
+SUBSET=-client
+PACKAGE=${BASE}${SUBSET}
 
 rm -rf /tmp/${PACKAGE}-${VERSION}
 mkdir -p /tmp/${PACKAGE}-${VERSION}
-cp -a installclient CHANGE.LOG COPYING CREDITS FAQ-HOWTO README TODO VERSION /tmp/${PACKAGE}-${VERSION}
+cp -a installclient CHANGE.LOG COPYING CREDITS FAQ-HOWTO README TODO VERSION local.cfg /tmp/${PACKAGE}-${VERSION}
 mkdir -p /tmp/${PACKAGE}-${VERSION}/tftpstuff/systemimager/
 ( cd ./tftpstuff/systemimager/ && cp prepareclient updateclient systemimager.exclude /tmp/${PACKAGE}-${VERSION}/tftpstuff/systemimager/ )
 ( cd /tmp && tar --owner=root --group=root -zcvf ${PACKAGE}-${VERSION}.tar.gz ${PACKAGE}-${VERSION}/ )

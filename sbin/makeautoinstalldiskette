@@ -14,11 +14,11 @@ use Getopt::Long;
 # set shell PATH for system() calls 
 $ENV{PATH} = "/usr/sbin:/sbin:/usr/bin:/bin";
 
-$version_number = "1.2";
+$version_number="1.2";
 $program_name = "makeautoinstalldiskette";
 $floppy_device_suffix = "H1440";
 $version_info = <<"EOF";
-$program_name (part of VA SystemImager) version $version_number
+$program_name (part of VA SystemImager) v$version_number
     
 Copyright (C) 1999-2000 Brian Elliott Finley <brian\@valinux.com>
 This is free software; see the source for copying conditions.  There is NO

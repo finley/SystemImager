@@ -11,7 +11,14 @@
 In Progress
 -----------
 - <brian@thefinleys.com> - update web page in preparation of 1.2 release
-                           make tftp-hpa not necessary unless... mention
+                           - take restart inetd code out of prepareclient
+                           - include pdf
+                           - include mention of ALS talk
+                           - new cdrom image
+                           - description of support in the default kernel and kernel.config file and how new kernels work
+                           - new tftp-hpa release v0.14 (package as RPM)
+                           x- new rsync v2.4.6 (put on diskette)
+
 - <brian@thefinleys.com> - put exclude/include stuff on imageserver by image
 - <brian@thefinleys.com> - support for software RAID
 
@@ -21,7 +28,7 @@ In Progress
 
 - Cameron Meadors <cmeadors@valinux.com> and Roland Dreier <roland@valinux.com>
   - write a new tftp daemon to do that special PXE thang, so that we no longer have to use
-    the buggy tftp-hpa daemon.
+    the buggy tftp-hpa daemon.  There is also a new tftp-hpa daemon out that may not be so buggy...
 
 - Chris Black <cblack@mokey.com> - hack dhclient to allow for imageserver specification via dhcp
 
@@ -76,12 +83,6 @@ getimage
   (there may be additional things to do on the prepareclient side as well)
   (perhaps use a virtual disk presented to a "real" fdisk to allow user partitioning? --
    or maybe just calculate partition information with the script and ask the user to specify sizes)
-
-prepareclient
--------------
-- don't even mess with /etc/rsyncd.conf -- create a custom configuration file like: 
-   /tmp/.systemimager.rsyncd.conf and reference it with:
-    rsync --daemon --config=/tmp/.systemimager.rsyncd.conf
 
 addclients
 ----------

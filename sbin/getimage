@@ -16,7 +16,7 @@
 $ENV{PATH} = "/usr/sbin:/sbin:/usr/bin:/bin";
 
 # version
-$version_number = "1.2";
+$version_number="1.2";
 
 # systemimager configuration directory
 $systemimagerdir="/etc/systemimager";
@@ -51,7 +51,7 @@ $0  =~ /(.*)\/+([^\/]*)$/;
 $program_name = $2;
 
 $version_info = <<"EOF";
-$program_name (part of VA SystemImager) version $version_number
+$program_name (part of VA SystemImager) v$version_number
 
 Copyright (C) 1999-2000 Brian Elliott Finley <brian\@valinux.com>
 This is free software; see the source for copying conditions.  There is NO
@@ -61,6 +61,7 @@ EOF
 $help_info = $version_info . <<"EOF";
 
 Usage: $program_name [OPTION]...  -master-client HOSTNAME -image IMAGENAME
+  or   $program_name [OPTION]...  -server HOSTNAME -image IMAGENAME
 
 Options: (options can be presented in any order and may be abbreviated)
  -help                    Display this output.
@@ -81,23 +82,21 @@ Options: (options can be presented in any order and may be abbreviated)
                           (other than errors). In this mode, no warning
                           will be given if the image already exists on
                           the server.
- -path-to-image PATH      ###Feature to be added###
+ -directory PATH          The full path and directory name where you want
+                          this image to be stored.  The directory bearing
+                          the image name itself will be placed inside the
+                          directory specified here.
  -update-script [YES|NO]  Update the \$image.master script?  Defaults to 
                           NO if -quiet.  If not specified you will be
                           prompted to confirm an update.
 
 (The following options affect the autoinstall client after autoinstalling)
- -ip-assignment METHOD    Where METHOD can be:
-                           static_dhcp
-                           dynamic_dhcp
-                           static
+ -ip-assignment METHOD    Where METHOD can be: static_dhcp, dynamic_dhcp,
+                          or static
  -post-install ACTION     After installation, make the autoinstall client
                           take the specified action.  ACTION can be:
-                           beep     (the default -- beeping is perpetual)
-                           reboot   (be carefull that you don\'t begin
-                                     another autoinstall upon reboot)
-                           shutdown (halts the system and powers it off
-                                     if possible)
+                          beep, reboot, or shutdown.  This will default
+                          to beep if not specified.
 
 Download from http://systemimager.org/
 Report bugs or suggestions to <systemimager-bugs\@systemimager.org>
@@ -109,12 +108,15 @@ $ip_assignment_method = "";
 $image = "";
 $update_script = "";
 $post_install = "beep"; # the default
+$rsyncd_conf = "/etc/rsyncd.conf";
+$imagedir_prefix =  "/var/spool/systemimager/images";
 
 ### BEGIN evaluate options ###
 GetOptions( 
     "master-client=s" => \$master_client,
     "server=s" => \$imageserver,
     "image=s" => \$image,
+    "directory=s" => \$imagedir_prefix,
     "ip-assignment=s" => \$ip_assignment_method,
     "update-script=s" => \$update_script,
     "post-install=s" => \$post_install,
@@ -134,31 +136,35 @@ if($version) { die "$version_info"; }
 
 # only master client or server may be set
 if($master_client and $imageserver) {
-    die "$help_info";
+    die "\nEither use -master-client or -server but not both.\n\n$help_info";
 }
 
 # both a source host and image must be set.
 unless(($master_client or $imageserver) and $image) {
-    die "$help_info";
+    die "\nYou must specify -master-client or -server and -image.\n\n$help_info";
 }
 
 # be sure $master_client name doesn't start with a hyphen
 if($master_client){
   $_ = $master_client;
-  if(/^-/) { die qq(Master client name can't start with a hyphen.\n\n$help_info); }
+  if(/^-/) { die "\nMaster client name can't start with a hyphen.\n\n$help_info"; }
   $source_host=$master_client;
 }
 
 # be sure $imageserver name doesn't start with a hyphen
 if($imageserver){
   $_ = $imageserver;
-  if(/^-/) { die qq(Server name can't start with a hyphen.\n\n$help_info); }
+  if(/^-/) { die "\nServer name can't start with a hyphen.\n\n$help_info"; }
   $source_host=$imageserver;
 }
 
 # be sure $image doesn't start with a hyphen
 $_ = $image;
-if(/^-/) { die qq(Image name can't start with a hyphen.\n\n$help_info); }
+if(/^-/) { die "\nImage name can't start with a hyphen.\n\n$help_info"; }
+
+# be sure $imagedir_prefix is an absolute path starting with /
+$_ = $imagedir_prefix;
+unless(/^\//) { die "\n-directory must be an absolute path starting with /.\n\n$help_info"; }
 
 # be sure $ip_assignment_method was passed a proper option
 unless(
@@ -166,30 +172,27 @@ unless(
     or ($ip_assignment_method eq "static_dhcp")
     or ($ip_assignment_method eq "static")
     or ($ip_assignment_method eq "dynamic_dhcp")
-) { die "$help_info"; }
+) { die "\n-ip-assignment must be static, static_dhcp, or dynamic_dhcp.\n\n$help_info"; }
 
 # be sure $post_install was passed a proper option
 unless(
     ($post_install eq "beep")
     or ($post_install eq "reboot")
     or ($post_install eq "shutdown")
-) { die "$help_info"; }
+) { die "\n-post-install must be beep, reboot, or shutdown.\n\n$help_info"; }
 ### END evaluate options ###
 
 # be sure program is run by root
 check_if_root();
 
-# set up some variables for use elsewhere
-###FIX### at some point these should be set in /etc/systemimager/systemimager.conf
-$rsyncd_conf = '/etc/rsyncd.conf';
-$imagedir_prefix =  '/var/spool/systemimager/images';
-$imagedir = "$imagedir_prefix/$image";
-$exclude_file = "/tmp/.exclude.$image";
+# fill in variables based on options passed
 $master_script = "/tftpboot/systemimager/$image.master";
+$exclude_file = "/tmp/.exclude.$image";
+$imagedir = "$imagedir_prefix/$image";
 
 $warning =  <<"EOF";
 
-This program will get the entire system image from \"$source_host\"
+This program will get the \"$image\" system image from \"$source_host\"
 making the assumption that all filesystems considered part
 of the system image are using ext2, ext3, or reiserfs.
 
@@ -208,8 +211,7 @@ if (!$quiet) {
 }
 
 if (! -d "$imagedir_prefix")  {
-    die "Directory $imagedir_prefix doesn't exist.  " .
-	"Please reinstall VA SystemImager.\n";
+  mkdir("$imagedir_prefix", 0750) or die "Can't make directory $imagedir_prefix\n";
 }
 
 if (-d "$imagedir") {

@@ -5,8 +5,15 @@
 #
 
 VA SystemImager-1.2 2000.xx.xx
+- makedist -- Only used by me really (Brian).  Now automatically sets the
+              version number in each of the appropriate files.
+- prepareclient -- No longer messes with /etc/rsyncd.conf.  Now uses a
+                   temporary configuration file: /tmp/rsyncd.conf and
+                   references it like this:
+                     rsync --daemon --config=/tmp/rsyncd.conf
 - afterburner -- modified to add [tftpboot] section to existing 
                  rsyncd.conf file.
+- updateclient -- Now looks for systemimager.exclude in /etc/systemimager/.
 - updateclient -- added the -autoinstall option.  Courtesy of
                   Alan Lambert <alambert@epicrealm.com>.  Allows you to 
                   tell any machine that is currently running to autoinstall 
@@ -42,6 +49,9 @@ VA SystemImager-1.2 2000.xx.xx
 - autoinstallclient -- added ifconfig and route utilities.
 - autoinstallclient -- using rsync again for everything except network
                        boot installs.
+- getimage -- you can now specify the path to the image directory with
+              the -directory option.  Suggested by Wesley Smith 
+              <wessmith@engr.sgi.com>.
 - getimage -- added the -server option to allow copying an image from one
               imageserver to another.  Suggestion and example code
               contributed by Phil Champon <pchampon@valueweb.net>.
