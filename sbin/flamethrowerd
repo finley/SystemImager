@@ -8,10 +8,6 @@
 #   $Id$
 #
 #   XXX Add syslogging
-#   XXX Add code to add/remove entries from flamethrowerd.conf
-#       getimage
-#       boot_tarball_installer
-#       override_directory_creator
 #
 
 use lib "USR_PREFIX/lib/systemimager/perl";
@@ -496,7 +492,7 @@ sub conf_file_updated {
 sub REAPER {
     $SIG{CHLD} = \&REAPER;
     my $waitedpid = wait;
-    print STDERR "    Dead child: $waitedpid\n" if($debug);
+    print STDERR "    Process $waitedpid has exited.\n" if($debug);
 }
 
 # Usage: &daemonize;
