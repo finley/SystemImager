@@ -1,14 +1,26 @@
 SECTION = 8
 
-compress:	prepareclient.8.gz updateclient.8.gz addclients.8.gz getimage.8.gz makeautoinstallcd.8.gz makeautoinstalldiskette.8.gz makedhcpserver.8.gz makedhcpstatic.8.gz
+compress:	prepareclient.8.gz updateclient.8.gz addclients.8.gz getimage.8.gz makeautoinstallcd.8.gz makeautoinstalldiskette.8.gz makedhcpserver.8.gz makedhcpstatic.8.gz lsimage.8.gz pushupdate.8.gz
 
-manpages:	prepareclient.8 updateclient.8 addclients.8 getimage.8 makeautoinstallcd.8 makeautoinstalldiskette.8 makedhcpserver.8 makedhcpstatic.8
+manpages:	prepareclient.8 updateclient.8 addclients.8 getimage.8 makeautoinstallcd.8 makeautoinstalldiskette.8 makedhcpserver.8 makedhcpstatic.8 lsimage.8 pushupdate.8
 
 prepareclient.8.gz:	prepareclient.8
 	gzip -9 < prepareclient.8 > prepareclient.8.gz
 
 prepareclient.8:	prepareclient.sgml
 	docbook-to-man prepareclient.sgml > prepareclient.8
+
+pushupdate.8.gz:	pushupdate.8
+	gzip -9 < pushupdate.8 > pushupdate.8.gz
+
+pushupdate.8:	pushupdate.sgml
+	docbook-to-man pushupdate.sgml > pushupdate.8
+
+lsimage.8.gz:	lsimage.8
+	gzip -9 < lsimage.8 > lsimage.8.gz
+
+lsimage.8:	lsimage.sgml
+	docbook-to-man lsimage.sgml > lsimage.8
 
 updateclient.8.gz:	updateclient.8
 	gzip -9 < updateclient.8 > updateclient.8.gz
