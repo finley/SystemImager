@@ -630,7 +630,6 @@ sub create_auto_install_script_conf {
     #
     my $arch = get_arch();
     SystemImager::UseYourOwnKernel->create_uyok_initrd($arch);
-    SystemImager::UseYourOwnKernel->capture_uyok_info_to_autoinstallscript($file);
 
     SystemImager::Common->write_auto_install_script_conf_footer($file);
 

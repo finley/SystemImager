@@ -25,7 +25,9 @@
 package SystemImager::UseYourOwnKernel;
 
 use strict;
+our ($verbose);
 
+$verbose = 1; #XXX just for debug.  take from prepareclient later
 
 #
 # Usage: 
@@ -38,24 +40,25 @@ sub create_uyok_initrd($) {
 
         use File::Copy;
         use File::Basename;
+        use File::Path;
 
         my $cmd;
 
         #
         # Create temp dir
         #
-        my $initrd_dir = _mk_tmp_dir();
+        my $staging_dir = _mk_tmp_dir();
 
         #
         # Copy template over
         #
-        $cmd = qq(rsync -a /usr/share/systemimager/boot/$arch/standard/initrd_template/ $initrd_dir/);
+        $cmd = qq(rsync -a /usr/share/systemimager/boot/$arch/standard/initrd_template/ $staging_dir/);
         !system( $cmd ) or die( "Couldn't $cmd." );
 
         #
         # add modules and insmod commands
         #
-        my $my_modules_dir = "${initrd_dir}/my_modules";
+        my $my_modules_dir = "$staging_dir/my_modules";
         my $file = "$my_modules_dir" . "/INSMOD_COMMANDS";
         open( FILE,">>$file" ) or die( "Couldn't open $file for appending" );
 
@@ -72,7 +75,7 @@ sub create_uyok_initrd($) {
                         copy( $1, $my_modules_dir )
                                 or die( "Couldn't copy $1 $my_modules_dir" );
 
-                        print "Adding: $1\n";
+                        print "Adding: $1\n" if( defined $verbose);
 
                         my $module = basename( $1 );
                         print FILE "insmod $module\n";
@@ -89,18 +92,27 @@ sub create_uyok_initrd($) {
         #
         # Copy over /dev
         #
-        $cmd = qq(rsync -a /dev/ $initrd_dir/dev/);
+        $cmd = qq(rsync -a /dev/ $staging_dir/dev/);
         !system( $cmd ) or die( "Couldn't $cmd." );
 
         # 
-        # See TODO for next step. -BEF-
+        # Dir in which to hold stuff.  XXX dannf where should this really go?
         #
-      exit 3; #XXX
+        my $boot_dir = "/etc/systemimager/boot";
+        eval { mkpath($boot_dir, 0, 0755) };
+        if ($@) {
+                print "Couldn't create $boot_dir: $@";
+        }
+
+        #
+        # Create initrd
+        #
+        _create_new_initrd( $staging_dir, $boot_dir );
 
         #
         # Remove temp dir
         #
-        $cmd = "rm -fr $initrd_dir";
+        $cmd = "rm -fr $staging_dir";
         !system( $cmd ) or die( "Couldn't $cmd." );
 
         return 1;
@@ -124,41 +136,41 @@ sub _mk_tmp_dir() {
 }
 
 
-sub capture_uyok_info_to_autoinstallscript {
+#sub capture_uyok_info_to_autoinstallscript {
+#
+#        my $module      = shift;
+#        my $file        = shift;
+#
+#        open(FILE,">>$file") or die("Couldn't open $file");
+#
+#                # initrd kernel
+#                my $uname_r = get_uname_r();
+#                print FILE qq(  <initrd kernel_version="$uname_r"/>\n) or die($!);
+#
+#                # initrd fs
+#                my $fs = choose_file_system_for_new_initrd();
+#                print FILE qq(  <initrd fs="$fs"/>\n) or die($!);
+#                print FILE qq(\n) or die($!);
+#
+#                # initrd modules
+#                my @modules = get_load_ordered_list_of_running_modules();
+#                my $line = 1;
+#                foreach( @modules ) {
+#                        print FILE qq(  <initrd load_order="$line"\tmodule="$_"/>\n) or die($!);
+#                        $line++;
+#                }
+#
+#
+#        close(FILE);
+#
+#        capture_dev();
+#
+#        return 1;
+#}
 
-        my $module      = shift;
-        my $file        = shift;
 
-        open(FILE,">>$file") or die("Couldn't open $file");
+sub choose_file_system_for_new_initrd() {
 
-                # initrd kernel
-                my $uname_r = get_uname_r();
-                print FILE qq(  <initrd kernel_version="$uname_r"/>\n) or die($!);
-
-                # initrd fs
-                my $fs = choose_file_system_for_new_initrd();
-                print FILE qq(  <initrd fs="$fs"/>\n) or die($!);
-                print FILE qq(\n) or die($!);
-
-                # initrd modules
-                my @modules = get_load_ordered_list_of_running_modules();
-                my $line = 1;
-                foreach( @modules ) {
-                        print FILE qq(  <initrd load_order="$line"\tmodule="$_"/>\n) or die($!);
-                        $line++;
-                }
-
-
-        close(FILE);
-
-        capture_dev();
-
-        return 1;
-}
-
-
-sub choose_file_system_for_new_initrd
-{
         my @filesystems;
         my $fs;
         my $uname_r = get_uname_r();
@@ -264,18 +276,253 @@ sub get_load_ordered_list_of_running_modules() {
         return @modules;
 }
 
-sub capture_dev {
+#sub capture_dev {
+#
+#        my $file = "/etc/systemimager/my_device_files.tar";
+#
+#        my $cmd = "tar -cpf $file /dev >/dev/null 2>&1";
+#        !system($cmd) or die("Couldn't $cmd");
+#
+#        $cmd = "gzip --force -9 $file";
+#        !system($cmd) or die("Couldn't $cmd");
+#        
+#        return 1;
+#}
 
-        my $file = "/etc/systemimager/my_device_files.tar";
 
-        my $cmd = "tar -cpf $file /dev >/dev/null 2>&1";
-        !system($cmd) or die("Couldn't $cmd");
+sub _create_new_initrd($$) {
 
-        $cmd = "gzip --force -9 $file";
-        !system($cmd) or die("Couldn't $cmd");
-        
+        my $staging_dir = shift;
+        my $boot_dir = shift;
+
+        use Switch; 
+
+        my $fs = choose_file_system_for_new_initrd();
+
+        if($fs eq "ext3") { 
+                # use ext2 as the filesystem (same as ext3, but no journal)
+                $fs = "ext2";
+        }   
+
+        print ">>> Filesystem for new initrd:  $fs\n" if($verbose);
+        print ">>> Creating new initrd from:   $staging_dir\n" if($verbose);
+
+        # Sean Dague's little jewel that helps keep the size down. -BEF-
+        run_cmd("find $staging_dir -depth -exec touch -t 196912311900 '{}' ';'");
+
+        switch ($fs) {                                             # Sizes from a sample run with the same data
+                case 'cramfs'   { _create_initrd_cramfs(   $staging_dir, $boot_dir) }       # 1107131 bytes
+                case 'ext2'     { _create_initrd_ext2(     $staging_dir, $boot_dir) }       # 1011284 bytes
+                case 'reiserfs' { _create_initrd_reiserfs( $staging_dir, $boot_dir) }       # 1036832 bytes
+                case 'jfs'      { _create_initrd_jfs(      $staging_dir, $boot_dir) }       # 1091684 bytes
+                case 'xfs'      { _create_initrd_xfs(      $staging_dir, $boot_dir) }       # untested XXX
+                else            { die("FATAL: Unable to create initrd using $fs") }
+        }
+
         return 1;
 }
+
+sub _create_initrd_reiserfs($$) {
+
+        my $staging_dir = shift;
+        my $boot_dir    = shift;
+
+        my $new_initrd  = $boot_dir . "/initrd";
+
+        my $new_initrd_mount_dir = _mk_tmp_dir();
+        print ">>> New initrd mount point:     $new_initrd_mount_dir\n" if($verbose);
+        eval { mkpath($new_initrd_mount_dir, 0, 0755) }; 
+        if( $@ ) { 
+                die "Couldn't mkpath $new_initrd_mount_dir $@";
+        }
+
+        my $cmd;
+
+        # loopback file
+        chomp(my $size = `du -ks $staging_dir`);
+        $size =~ s/\s+.*$//;
+        my $journal_blocks = 513;               # minimum journal size in blocks
+        my $journal_size = $journal_blocks * 4; # journal size in blocks * block size in kilobytes
+        my $breathing_room = 100;
+        $size = $size + $journal_size + $breathing_room;
+        run_cmd("dd if=/dev/zero of=$new_initrd bs=1024 count=$size", $verbose, 1);
+
+        # fs creation
+        run_cmd("mkreiserfs -q -s $journal_blocks $new_initrd", $verbose);
+
+        # mount
+        run_cmd("mount $new_initrd $new_initrd_mount_dir -o loop -t reiserfs", $verbose);
+
+        # copy from staging dir to new initrd
+        #my $v = '';
+        #$v = "v" if($verbose); 
+        run_cmd("tar -C $staging_dir -cf - . | tar -C $new_initrd_mount_dir -xf -", $verbose, 0);
+
+        # umount and gzip up
+        run_cmd("umount $new_initrd_mount_dir", $verbose);
+        run_cmd("gzip -9 -S .img $new_initrd", $verbose);
+        run_cmd("ls -l $new_initrd.img", $verbose, 1) if($verbose);
+
+        return 1;
+}
+
+sub _create_initrd_ext2($$) {
+
+        my $staging_dir = shift;
+        my $boot_dir    = shift;
+
+        my $new_initrd  = $boot_dir . "/initrd";
+
+        my $new_initrd_mount_dir = _mk_tmp_dir();
+        print ">>> New initrd mount point:     $new_initrd_mount_dir\n" if($verbose);
+        eval { mkpath($new_initrd_mount_dir, 0, 0755) }; 
+        if ($@) { 
+                die "Couldn't mkpath $new_initrd_mount_dir $@";
+        }
+
+        my $cmd;
+
+        # loopback file
+        chomp(my $size = `du -ks $staging_dir`);
+        $size =~ s/\s+.*$//;
+        my $breathing_room = 100;
+        $size = $size + $breathing_room;
+        run_cmd("dd if=/dev/zero of=$new_initrd bs=1024 count=$size", $verbose, 1);
+
+        # fs creation
+        chomp(my $inodes = `find $staging_dir -printf "%i\n" | sort -u | wc -l`);
+        $inodes = $inodes + 10;
+        run_cmd("mke2fs -m 0 -N $inodes -F $new_initrd", $verbose, 1);
+
+        # mount
+        run_cmd("mount $new_initrd $new_initrd_mount_dir -o loop -t ext2", $verbose);
+
+        # copy from staging dir to new initrd
+        run_cmd("tar -C $staging_dir -cf - . | tar -C $new_initrd_mount_dir -xf -", $verbose, 0);
+
+        # umount and gzip up
+        run_cmd("umount $new_initrd_mount_dir", $verbose);
+        run_cmd("gzip -9 -S .img $new_initrd", $verbose);
+        run_cmd("ls -l $new_initrd.img", $verbose, 1) if($verbose);
+
+        return 1;
+}
+
+sub _create_initrd_cramfs($$) {
+
+        my $staging_dir = shift;
+        my $boot_dir    = shift;
+
+        my $new_initrd  = $boot_dir . "/initrd";
+
+        my $cmd;
+
+        # initrd creation
+        run_cmd("mkcramfs $staging_dir $new_initrd", $verbose, 1);
+
+        # gzip up
+        run_cmd("gzip -9 -S .img $new_initrd", $verbose);
+        run_cmd("ls -l $new_initrd.img", $verbose, 1) if($verbose);
+
+        return 1;
+}
+
+sub _create_initrd_xfs($$) {
+
+        my $staging_dir = shift;
+        my $boot_dir    = shift;
+
+        my $new_initrd  = $boot_dir . "/initrd";
+
+        my $new_initrd_mount_dir = _mk_tmp_dir();
+        print ">>> New initrd mount point:     $new_initrd_mount_dir\n" if($verbose);
+        eval { mkpath($new_initrd_mount_dir, 0, 0755) }; 
+        if ($@) { 
+                die "Couldn't mkpath $new_initrd_mount_dir $@";
+        }
+
+        print "\nPlease fill in this subroutine, _create_initrd_xfs(), and email the patch!\n\n";
+        exit 1;
+}
+
+sub _create_initrd_jfs($$) {
+
+        my $staging_dir = shift;
+        my $boot_dir    = shift;
+
+        my $new_initrd  = $boot_dir . "/initrd";
+
+        my $cmd;
+
+        my $new_initrd_mount_dir = _mk_tmp_dir();
+        print ">>> New initrd mount point:     $new_initrd_mount_dir\n" if($verbose);
+        eval { mkpath($new_initrd_mount_dir, 0, 0755) }; 
+        if ($@) { 
+                die "Couldn't mkpath $new_initrd_mount_dir $@";
+        }
+
+        # loopback file
+        chomp(my $size = `du -ks $staging_dir`);
+        $size =~ s/\s+.*$//;
+        my $breathing_room = 3072;      # We may need to tweak this -- not for size(<), but for size(>). -BEF-
+        $size = $size + $breathing_room;
+        #
+        # jfs_mkfs farts on you with an "Partition must be at least 16 megabytes."
+        # if you try to use anything smaller.  However, because this is before we
+        # compress the initrd, it results in suprisingly little increase in the 
+        # size of the resultant initrd.
+        #
+        my $min_jfs_fs_size = 16384;    
+        if($size < $min_jfs_fs_size) { $size = $min_jfs_fs_size; }
+        run_cmd("dd if=/dev/zero of=$new_initrd bs=1024 count=$size", $verbose, 1);
+
+        # fs creation
+        run_cmd("jfs_mkfs -q $new_initrd", $verbose);
+
+        # mount
+        run_cmd("mount $new_initrd $new_initrd_mount_dir -o loop -t jfs", $verbose);
+
+        # copy from staging dir to new initrd
+        run_cmd("tar -C $staging_dir -cf - . | tar -C $new_initrd_mount_dir -xf -", $verbose, 0);
+
+        # umount and gzip up
+        run_cmd("umount $new_initrd_mount_dir", $verbose);
+        run_cmd("gzip -9 -S .img $new_initrd", $verbose);
+        run_cmd("ls -l $new_initrd.img", $verbose, 1) if($verbose);
+
+        return 1;
+}
+
+#
+# Usage:  
+#       run_cmd("my shell command", 1, 1);
+#
+#       First argument:  the "command" to run.
+#           Required.
+#
+#       Second argument: '1' to print command before running.
+#           Defaults to "off".
+#
+#       Third argument:  '1' to print a newline after the command.
+#           Defaults to "off".
+#
+sub run_cmd
+{
+        my $cmd = shift;
+        my $verbose = shift;
+        my $add_newline = shift;
+
+        if(!$verbose) {
+                $cmd .= " >/dev/null 2>/dev/null";
+        }
+
+        print ">>> $cmd\n" if($verbose);
+        !system($cmd) or die("FAILED: $cmd");
+        print "\n" if($add_newline and $verbose);
+
+        return 1;
+}
+
 
 1;
 
