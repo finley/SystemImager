@@ -287,16 +287,16 @@
    <itemizedlist>
     <listitem>
      <para>
-      You will need to have rsync installed on your "imageserver" and on your 
-      "golden" client.
+      Your imageserver will must have enough disk space to hold the images
+      to be installed on your client systems.
      </para>
     </listitem>
     <listitem>
      <para>
-      You will need to run a DHCP server on your network.  The 
-      <command>makedhcpserver</command> command, run on your chosen 
-      "imageserver", will give you the opportunity to have it ask you 
-      the questions necessary to properly configure it as a DHCP server.
+      All of the clients for a particular image should have hardware that is
+      as similar as possible.  Most importantly they should use the same chipset
+      on the network device(s) and the same number and kind of hard drive(s) 
+      (IDE, SCSI, Mylex Hardware RAID, etc.)
      </para>
     </listitem>
     <listitem>
@@ -310,13 +310,6 @@
       network-based installations may also require a pxe daemon to be running 
       on your imageserver.  This requirement depends on the firmware used on 
      the client side, and the capabilities of your DHCP server.
-     </para>
-    </listitem>
-    <listitem>
-     <para>
-      All of the clients for a particular image should have an identical 
-      hardware configuration.  They should at least have the same hard 
-      drive(s) and the same ethernet card(s).
      </para>
     </listitem>
    </itemizedlist>
