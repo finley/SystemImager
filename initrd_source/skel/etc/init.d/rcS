@@ -23,6 +23,15 @@ SCRIPTS=scripts
 VERSION="SYSTEMIMAGER_VERSION_STRING"
 FLAVOR="SYSTEMIMAGER_FLAVOR_STRING"
 
+ARCH=`uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/`
+if [ "ppc64" = $ARCH ] ; then
+    # This takes a little bit of futzing with due to all the PPC platforms that exist.
+    if [ -d /proc/iSeries/ ] ; then
+        ARCH=ppc64-iSeries
+    fi
+fi
+
+
 #################################################################################
 #   Subroutines
 #
@@ -331,16 +340,6 @@ if [ ! -z $LOG_SERVER ]; then
     syslogd -R ${LOG_SERVER}:${LOG_SERVER_PORT}
 fi
 ### END logging ###
-
-# Determine ARCH.  This takes a little bit of futzing with due to all the PPC 
-# platforms that exist.
-#
-ARCH=`uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/`
-if [ "ppc64" = $ARCH ] ; then
-    if [ -d /proc/iSeries/ ] ; then
-        ARCH=ppc64-iSeries
-    fi
-fi
 
 # Get other binaries, kernel module tree, and miscellaneous other stuff that
 # got put in the binaries tarball. -BEF-
