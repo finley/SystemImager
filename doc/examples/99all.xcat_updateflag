@@ -1,0 +1,57 @@
+#!/bin/gawk -f
+
+#
+#       NOTE:  Be sure to change the following variables as appropriate
+#              for your site: xcatdhost, xcatdport
+#
+
+#
+#       $Id$
+#       
+#       Written by Egan Ford
+#
+#       2004.10.19  Brian Elliott Finley
+#       - requires gawk, so explicitly changed to gawk
+#       - explicitly set xcatdhost and xcatdport
+#
+
+BEGIN {
+
+        # 
+        # Set these to match the entries of the same name in your 
+        # /opt/xcat/etc/site.tab file. -BEF-
+        #
+        xcatdhost = "192.5.198.221"
+        xcatdport = "3001"
+
+        # 
+        # No modifications below here should be necessary. -BEF-
+        #
+	if(xcatdport == "")
+		print "$0: xcatdport not set" | "logger -t xcat"
+	if(xcatdhost == "")
+		print "$0: xcatdhost not set" | "logger -t xcat"
+
+	if(xcatdport == "" || xcatdhost == "")
+		exit 1
+
+	ns = "/inet/tcp/0/" xcatdhost "/" xcatdport
+
+	print "xCAT_xcatd" |& ns
+
+	while(1) {
+		if((ns |& getline) > 0)
+			print $0 | "logger -t xcat"
+
+		if($0 == "ready")
+			print "boot" |& ns
+		if($0 == "done")
+			break
+	}
+
+	close(ns)
+
+	exit 0
+}
+
+# /* vi: set ai et ts=8: */
