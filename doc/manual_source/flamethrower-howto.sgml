@@ -1,0 +1,126 @@
+<chapter>
+  <title>Using SystemImager with Flamethrower for Multicast Installs HOWTO</title>
+  
+  <section>
+    <title>
+      Install SystemImager v3.2.x or higher
+    </title>
+   
+	<para>
+	</para>
+  </section>
+
+  <section>
+    <title>
+      Install the <application>Flamethrower</application> Package and its Dependencies
+    </title>
+   
+	<para>
+	</para>
+  </section>
+
+  <section>
+    <title>
+      Run getimage, mvimage, or cpimage
+    </title>
+   
+	<para>
+      Flamethrower is a stand-alone utility, but SystemImager maintains
+      a SystemImager seperate copy (/etc/systemimager/flamethrower.conf)
+      of the Flamethrower configuration file 
+      (/etc/flamethrower/flamethrower.conf).  Each of these three
+      commands (getimage, mvimage, cpimage) will create an appropriate
+      entry in /etc/systemimager/flamethrower.conf for the image you
+      specify.
+	</para>
+	<para>
+      It is also possible to manually add an entry, if you feel
+      compelled to to so.  Take a look at the flamethrower.conf man
+      page, or the comments inside the configuration file (image entries
+      go at the very bottom of the file).  However, it's much easier to
+      just do a &quot;mvimage orig_name tmp_name &amp;&amp; mvimage tmp_name
+      orig_name&quot;.
+	</para>
+  </section>
+
+  <section>
+    <title>
+      Start up your Flamethrower daemon
+    </title>
+   
+	<para>
+      Edit /etc/systemimager/flamethrower.conf, and change
+      <programlisting>
+        START_FLAMETHROWER_DAEMON = no
+      </programlisting>
+      to
+      <programlisting>
+        START_FLAMETHROWER_DAEMON = yes
+      </programlisting>
+	</para>
+    <para>
+      Then crank it up with a
+      <programlisting>
+        /etc/init.d/systemimager-server-flamethrowerd restart
+      </programlisting>
+    </para>
+  </section>
+
+  <section>
+    <title>
+      Tell your autoinstall clients to use Flamethrower
+    </title>
+   
+	<para>
+      If you use DHCP, you can add the following to your dhcpd.conf file:
+      <programlisting>
+        option option-143 "9000";
+      </programlisting>
+      Then restart your DHCP daemon.  This is usually
+      <programlisting>
+        /etc/init.d/dhcp restart
+      </programlisting>
+      or
+      <programlisting>
+        /etc/init.d/dhcpd restart
+      </programlisting>
+	</para>
+    <para>
+      If you use a local.cfg file, you can add the following to that
+      file:
+      <programlisting>
+        FLAMETHROWER_DIRECTORY_PORTBASE=9000
+      </programlisting>
+    </para>
+  </section>
+
+  <section>
+    <title>
+      Autoinstall your clients!
+    </title>
+   
+	<para>
+      Boot your clients from your favorite autoinstall media (network,
+      floppy, CD, or hard drive) and off you go.
+	</para>
+  </section>
+
+</chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-namecase-general:t
+sgml-general-insert-case:lower
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:2
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+-->
