@@ -553,21 +553,30 @@ sub create_auto_install_script_conf {
     #
     my $partition_tool = which_partition_tool();
 
-    # BEGIN partition_tool friendly output
-    unless ($quiet) {
-      print qq/Using "$partition_tool" to gather information about your disk(s).../;
-    }
-
-    SystemImager::Common->write_auto_install_script_conf_header($partition_tool, $file);
+    SystemImager::Common->write_auto_install_script_conf_header($file);
 
     # First we do Hardware RAID devices
     foreach my $disk (sort keys %{$disks->{HWRAID}}) {
-      SystemImager::Common->save_partition_information($disk, $partition_tool, $file);
+
+        my $label_type = SystemImager::Common->get_disk_label_type($partition_tool, $disk);
+        if (($label_type eq "gpt") and ($partition_tool eq "sfdisk")) {
+            $partition_tool = which_partition_tool("parted");
+        }
+        unless ($quiet) { print qq(Using "$partition_tool" to gather information about /dev/$disk... ); }
+        SystemImager::Common->save_partition_information($disk, $partition_tool, $file, $label_type);
+
     }
 
     # Now we do /dev/ide and /dev/sda disks
     foreach my $disk (sort keys %{$disks->{IDESCSI}}) {
-      SystemImager::Common->save_partition_information($disk, $partition_tool, $file);
+
+        my $label_type = SystemImager::Common->get_disk_label_type($partition_tool, $disk);
+        if (($label_type eq "gpt") and ($partition_tool eq "sfdisk")) {
+            $partition_tool = which_partition_tool("parted");
+        }
+        unless ($quiet) { print qq(Using "$partition_tool" to gather information about /dev/$disk... ); }
+        SystemImager::Common->save_partition_information($disk, $partition_tool, $file, $label_type);
+
     }
 
     save_filesystem_information("/etc/fstab", $file);
@@ -576,7 +585,7 @@ sub create_auto_install_script_conf {
 
     # END partition_tool friendly output
     unless ($quiet) {
-      print "done!\n";
+        print "done!\n";
     }
 
     return 1;
@@ -585,19 +594,30 @@ sub create_auto_install_script_conf {
 
 # Usage:
 # my $partition_tool = which_partition_tool();
+# my $partition_tool = which_partition_tool("preferred_tool");
 sub which_partition_tool {
 
+    my $preferred_tool = shift;
     my $partition_tool;
 
-    # Determine which partition tool is available.  Preference is sfdisk. -BEF-
-    if (which('sfdisk')) {
-      $partition_tool="sfdisk";
-    } elsif (which('parted')) { 
-      $partition_tool="parted";
+    # Check to see if preferred tool is available.
+    if ( ($preferred_tool) and (which("$preferred_tool")) ) {
+
+        $partition_tool = $preferred_tool;
+
     } else {
-      print "FATAL: I can't find an appropriate partition tool.  Please install \"parted\",\n";
-      print "       or better yet, \"sfdisk\", which is my favorite!\n";
-      exit 1;
+
+        # Determine which partition tool is available.  Preference is sfdisk. -BEF-
+        if (which('sfdisk')) {
+          $partition_tool="sfdisk";
+        } elsif (which('parted')) { 
+          $partition_tool="parted";
+        } else {
+          print "FATAL: I can't find an appropriate partition tool.  Please install \"parted\",\n";
+          print "       or better yet, \"sfdisk\", which is my favorite!\n";
+          exit 1;
+        }
+
     }
 
     return $partition_tool;

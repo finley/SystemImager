@@ -22,6 +22,7 @@ $VERSION = $version_number;
 #   check_if_root
 #   get_response
 #   get_boot_flavors
+#   get_disk_label_type
 #   numerically
 #   save_partition_information
 #   where_is_my_efi_dir
@@ -30,7 +31,6 @@ $VERSION = $version_number;
 #   write_auto_install_script_conf_header
 #   valid_ip_quad
 #   _get_device_size
-#   _get_disk_label_type
 #   _print_to_auto_install_conf_file
 #   _turn_sfdisk_output_into_generic_partitionschemes_file
 #   _validate_label_type_and_partition_tool_combo
@@ -170,10 +170,10 @@ sub which {
 }
 
 # Usage:
-# write_auto_install_script_conf_header($partition_tool, $file);
+# write_auto_install_script_conf_header($file);
 sub write_auto_install_script_conf_header {
 
-    my ($module, $partition_tool, $file) = @_;
+    my ($module, $file) = @_;
 
     # Open up the file that we'll be putting our generic partition info in. -BEF-
     open (DISK_FILE, ">$file") or die ("FATAL: Couldn't open $file for writing!"); 
@@ -182,9 +182,6 @@ sub write_auto_install_script_conf_header {
         print DISK_FILE qq(  client.  It is stored here in a generic format that is used by your\n);
         print DISK_FILE qq(  SystemImager server to create an autoinstall script for cloning this\n);
         print DISK_FILE qq(  system.\n);
-        print DISK_FILE qq(  \n);
-        print DISK_FILE qq(  This output was brought to you by the partition tool "$partition_tool".\n);
-        print DISK_FILE qq(  And by the numbers 4 and 5 and the letter Q.\n);
         print DISK_FILE qq(  \n);
         print DISK_FILE qq(  You can change the information in this file to affect how your target\n);
         print DISK_FILE qq(  machines are installed.  See "man autoinstallscript.conf" for details.\n);
@@ -209,30 +206,32 @@ sub write_auto_install_script_conf_footer {
 
 
 # Usage:
-# save_partition_information($old_sfdisk_file, $partition_tool, $destination_file);
-# save_partition_information($disk, $partition_tool, $file);
+# save_partition_information($old_sfdisk_file, $partition_tool, $destination_file, $label_type);
+# save_partition_information($disk, $partition_tool, $file, $label_type);
 sub save_partition_information {
-    my ($module, $disk, $partition_tool, $file) = @_;
-    my ($label_type, $disk_size, $dev);
+    my ($module, $disk, $partition_tool, $file, $label_type) = @_;
+    my ($disk_size, $dev);
 
 
     if ($partition_tool eq "old_sfdisk_file") {
-      $dev = "$disk";
-      $label_type = "msdos";
+        $dev = "$disk";
+        $label_type = "msdos";
 
     } else {
-      $dev = "/dev/$disk";
-
-      # Determine Label Type. -BEF-
-      $label_type = _get_disk_label_type($partition_tool, $disk);
-  
-      # Make sure the tools we have available will work with this label type -BEF-
-      _validate_label_type_and_partition_tool_combo($disk, $partition_tool, $label_type);
+        $dev = "/dev/$disk";
+        
+        # Make sure the tools we have available will work with this label type -BEF-
+        _validate_label_type_and_partition_tool_combo($disk, $partition_tool, $label_type);
   
     }
  
     # Open up the file that we'll be putting our generic partition info in. -BEF-
     open (DISK_FILE, ">>$file") or die ("FATAL: Couldn't open $file for appending!"); 
+
+    print DISK_FILE qq(  <!--\n);
+    print DISK_FILE qq(   This disk's output was brought to you by the partition tool "$partition_tool".\n);
+    print DISK_FILE qq(   And by the numbers 4 and 5 and the letter Q.\n);
+    print DISK_FILE qq(  -->\n);
 
     print DISK_FILE qq(  <disk dev=\"$dev\" label_type=\"$label_type\" unit_of_measurement=\"MB\">\n);
 
@@ -244,7 +243,7 @@ sub save_partition_information {
 
         # Catch output. -BEF-
         open (PARTITION_TOOL_OUTPUT, "$cmd|"); 
-          @partition_tool_output = <PARTITION_TOOL_OUTPUT>;
+            @partition_tool_output = <PARTITION_TOOL_OUTPUT>;
         close (PARTITION_TOOL_OUTPUT);
 
         # Find partitions that are closest to the end of the disk. -BEF-
@@ -629,10 +628,10 @@ sub _print_to_auto_install_conf_file {
 
 
 # Usage: 
-# my $label_type = _get_disk_label_type($partition_tool, $disk);
-sub _get_disk_label_type {
+# my $label_type = get_disk_label_type($partition_tool, $disk);
+sub get_disk_label_type {
 
-    my ($partition_tool, $disk) = @_;
+    my ($module, $partition_tool, $disk) = @_;
     my $label_type;
 
     # If we're using parted, simply take the label_type from the 4th item of
@@ -677,11 +676,12 @@ sub _validate_label_type_and_partition_tool_combo {
     my ($disk, $partition_tool, $label_type) = @_;
 
     if (($label_type eq "gpt") and ($partition_tool eq "sfdisk")) {
-      print qq(FATAL:  I'm dreadfully sorry, but I must give up.  You appear to have a GPT\n);
-      print qq(        style partition label on /dev/$disk, but do not have "parted"\n);
-      print qq(        installed.  Please install "parted" (partition editor) and try again.\n);
-      print qq(        You can find parted at http://www.gnu.org/software/parted/.\n);
-      exit 1;
+        print qq(\n);
+        print qq(FATAL:  I'm dreadfully sorry, but I must give up.  You appear to have a GPT\n);
+        print qq(        style partition label on /dev/$disk, but do not have "parted"\n);
+        print qq(        installed.  Please install "parted" (partition editor) and try again.\n);
+        print qq(        You can find parted at http://www.gnu.org/software/parted/.\n);
+        exit 1;
     }
 }
 
