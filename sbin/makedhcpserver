@@ -9,8 +9,11 @@
 # This file is: makedhcpserver
  
 
+# what do I call myself?
+$program=$0;
+
 # Not everyone may want to create a dhcpd.conf in /etc...
-$dhconf = "/etc/dhcpd.conf";
+$dhcpd_conf = "/etc/dhcpd.conf";
 
 
 # Subroutines
@@ -30,25 +33,26 @@ system("clear");
 # give warning
 print <<"EOF";
 
-Welcome to the VA SystemImager "makedhcpserver" command.  This 
-command will prepare this computer to be a DHCP server by creating
-the following file:
+Welcome to the VA SystemImager "makedhcpserver" command.  This command
+will prepare this computer to be a DHCP server by creating the 
+following file:
 
- $dhconf
+ $dhcpd_conf
 
-If there is an existing file, it will be backed up with the 
-.beforesystemimager extension.
+If there is an existing file, it will be backed up as:
+
+ ${dhcpd_conf}.beforesystemimager
 
 EOF
 
-print "Continue? (y/N): ";
+print "Continue? (y/[n]): ";
 $continue=<STDIN>;
 chomp $continue;
-($continue eq "y") or die "\n$0: No files were modified.\n";
+($continue eq "y") or die "\n$program: No files were modified.\n";
 
 # backup dhcpd.conf if necessary
-if( -e "/etc/dhcpd.conf" && ! -e "/etc/dhcpd.conf.beforesystemimager") { 
- rename("/etc/dhcpd.conf", "/etc/dhcpd.conf.beforesystemimager");
+if( -e "$dhcpd_conf" && ! -e "${dhcpd_conf}.beforesystemimager") { 
+ rename("$dhcpd_conf", "${dhcpd_conf}.beforesystemimager");
 }
 
 # set some default values
@@ -62,24 +66,18 @@ $dnsserver2 = "";
 $dnsserver3 = "";
 $router = "192.168.1.254";
 $imageserver = "192.168.1.254";
-$advanced_services = "n";
-$ntp0 = "";
-$ntp1 = "";
-$ntp2 = "";
-$syslogd = "";
-$nisdomain = "";
-$nisserver0 = "";
-$nisserver1 = "";
 $swallow = "";
 
 ### Begin questionnaire ###
 $satisfied = "n";
 while ($satisfied ne "y") {
  system("clear");
- print "Type your response or hit <Enter> to accept [defaults].\n";
+ print << "EOF";
+Type your response or hit <Enter> to accept [defaults].  If you don't
+have a response, such as no first or second DNS server, just hit 
+<Enter> and none will be used.
 
- print "If you don't have a response, such as no first or second DNS server,\n";
- print "just hit <Enter> and none will be used.\n";
+EOF
 
  print "\nWhat is your domain name? [$dnsdomainname]: ";
  $dnsdomainname=get_response($dnsdomainname);
@@ -115,43 +113,6 @@ while ($satisfied ne "y") {
  print "What is the IP address of imageserver? [$imageserver]: ";
  $imageserver=get_response($imageserver);
 
- # Set some advanced DHCPD configurations if desired
-
- print "\nWould you like to add advanced DHCPD services to your dhcpd.conf file? [y/N]: ";
- $advanced_services = get_response( $advanced_services );
- if ( $advanced_services eq "y" ) {
-
-	## Services related DHCPD
-	# Syslog Services
-	print "What is the domain name of your SYSLOGD repository? []: ";
- 	$syslogd = get_response( $syslogd );
-
-	# Time Services
-	print "What is the domain name of your first NTP server? []: ";
- 	$ntp0 = get_response( $ntp0 );
-	
-	print "What is the domain name of your second NTP server? []: ";
- 	$ntp1 = get_response( $ntp1 );
-	
-	print "What is the domain name of your third NTP server? []: ";
- 	$ntp2 = get_response( $ntp2 );
-
-	# NIS
-	print "What NIS domain name would you like? []: ";
- 	$nisdomain = get_response( $nisdomain );
-
-	print "What is the domain name of the NIS server? [] ";
- 	$nisserver0 = get_response( $nisserver0 );
-
-	print "What is the second domain name of the NIS server? [] ";
- 	$nisserver1 = get_response( $nisserver1 );
-
-	} else {
-	print "\nOk, we\'ll continue...\n";
-	system("clear");
- }	
-
-
  print "What is the air speed velocity of the common swallow? [$swallow]: ";
  $swallow=<STDIN>;
  system("clear");
@@ -179,24 +140,9 @@ while ($satisfied ne "y") {
  print "third DNS server:                         $dnsserver3\n";
  print "default gateway:                          $router\n";
  print "imageserver:                              $imageserver\n";
-
-  if ( $advanced_services eq "y" ) {
- 	print "\nAdvanced DHCPD features: \n";
-
-        print " Syslog repository:  $syslogd\n";
- 	print " First NTP server:   $ntp0\n";
- 	print " Second NTP server:  $ntp1\n";
- 	print " Third NTP server:   $ntp2\n";
- 	print " NIS Domain Name:    $nisdomain\n";
- 	print " First NIS server:   $nisserver0\n";
- 	print " Second NIS server:  $nisserver1\n";
- } else {
-	print "\nNo advanced setting choosen.\n";
- }
- 
  print "################################################################\n";
  
- print "\nAre you satisfied? (y/N): ";
+ print "\nAre you satisfied? (y/[n]): ";
  $satisfied=<STDIN>;
  chomp $satisfied;
 }
@@ -204,7 +150,7 @@ while ($satisfied ne "y") {
 ### End questionnaire ###
 
 # open /etc/dhcpd.conf for writing
-open(DHCPDCONF, "> $dhconf") || die "Couldn't open /etc/dhcpd.conf for writing: $!\n";
+open(DHCPDCONF, "> $dhcpd_conf") || die "Couldn't open /etc/dhcpd.conf for writing: $!\n";
 
 print DHCPDCONF << 'EOF';
 # make network booting the VA SystemImager autoinstallclient possible
@@ -230,52 +176,61 @@ if($dnsserver2 ne "") { print DHCPDCONF qq(, $dnsserver2); }
 if($dnsserver3 ne "") { print DHCPDCONF qq(, $dnsserver3); }
 if($dnsserver1 ne "") { print DHCPDCONF qq(;\n); }
 print DHCPDCONF qq(  option routers $router; \n);
-print DHCPDCONF qq(  # option-100 specifies the IP address of your imageserver\n);
+print DHCPDCONF qq(  # option-100 specifies the IP address of your SystemImager image server\n);
 print DHCPDCONF qq(  option option-100 "$imageserver"; \n);
-if( $syslogd ne "" ) { print DHCPDCONF qq(  option log-servers $syslogd; \n) ; }
-if( $ntp0 ne "" ) { print DHCPDCONF qq(  option time-servers $ntp0); }
-if( $ntp1 ne "" ) {  print DHCPDCONF qq(, $ntp1); }
-if( $ntp2 ne "" ) {  print DHCPDCONF qq(, $ntp2); }
-if($ntp1 ne "") { print DHCPDCONF qq(;\n); }
-if( $nisdomain ne "" ) { print DHCPDCONF qq(  option nis-domain $nisdomain; \n);}
-if( $nisserver0 ne "" ) { print DHCPDCONF qq(  option nis-servers $nisserver0); }
-if( $nisserver1 ne "" ) {  print DHCPDCONF qq(, $nisserver1); }
-if($nisserver0 ne "") { print DHCPDCONF qq(;\n); }
-
 print DHCPDCONF qq( } \n);
-
 close(DHCPDCONF);
 
-system("chmod 600 $dhconf");
-system("chown root.root $dhconf");
+system("chmod 600 $dhcpd_conf");
 
-# touch dhcpd.leases file(s) so that dhcpd won't fart when started
-# different RPM installs put the file in different places so we touch
-# one of two files and a monkey
-if( ! -e "/var/state/dhcp") {system("touch /etc/dhcpd.leases");}
-if( -e "/var/state/dhcp" ) {system("touch /var/state/dhcp/dhcpd.leases");}
+# Oh where oh where could my leases file directory be?
+@lease_file_directories_du_jour = ( 
+                        "/var/dhcp",
+                        "/var/state/dhcp",
+                        "/etc"
+                       );
+
+foreach my $directory (@lease_file_directories_du_jour) {
+    # does *this* one exist?
+    if ( -d "$directory" ) { 
+        $dhcpd_lease_file_directory = $directory;
+    }
+    last if ( $dhcpd_lease_file_directory );
+}
+
+# Touch dhcpd.leases file so that dhcpd won't fart when started.
+# Different installs put the file in different places so we touch
+# one of several potential files and a monkey.
+if( -d "$dhcpd_lease_file_directory" )
+{
+     my $file="$dhcpd_lease_file_directory/dhcpd.leases";
+     system("touch $file");
+     ($?) && die "\n$program: Couldn't touch $file.\n";
+}
 
 # words of wisdom
 system("clear");
 print <<"EOF";
 
-The dhcp server configuration file (/etc/dhcpd.conf) file has been created 
-for you.  Please verify it for accuracy.
+The dhcp server configuration file (/etc/dhcpd.conf) file has been 
+created for you.  Please verify it for accuracy.
 
-If this file does not look satisfactory, you can run this command again to 
-re-create it: "makedhcpserver"
+If this file does not look satisfactory, you can run this command again
+to re-create it: "makedhcpserver"
 
 WARNING!:  If you have multiple physical network interfaces, be sure to 
-edit the init script that starts dhcpd so that it looks like: 
-"dhcpd \$interfacename" ( ie. /sbin/dhcpd eth0 )
+edit the init script that starts dhcpd to specify the interface that 
+is connected to your DHCP clients.  Here's an example:
 
-Also, be sure to start or restart your dhcpd daemon. 
-( ie. service dhcpd restart )
+ Change "/usr/sbin/dhcpd" to "/usr/sbin/dhcpd eth1".
+
+Also, be sure to start or restart your dhcpd daemon.  This can usually
+be done with a command like "/etc/init.d/dhcpd restart" or similar.
 
 EOF
 
 if( -e "/etc/rc.d/init.d/dhcpd" ){
-  print "Would you like me to restart your DHCP server software now? (y/N): ";
+  print "Would you like me to restart your DHCP server software now? (y/[n]): ";
   $continue=get_response();
   $continue=lc($continue);
   if( $continue eq "y" ){
