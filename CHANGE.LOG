@@ -18,6 +18,10 @@ VA SystemImager-1.4.0 2000.xx.xx
               master client disks and can even be smaller...
               (within reason -- depends on specific partition scheme)
 - getimage -- Now uses the --numeric-ids rsync option.
+- getimage -- Fixed a harmless bug that made nasty output when blank 
+              lines were in the golden clients /etc/fstab file.  The 
+              fix was to tell getimage to skip blank lines in the 
+              /etc/fstab file.  
 - autoinstall scripts -- Now use the --numeric-ids rsync option.
 - updateclient -- Now uses the --numeric-ids rsync option.
 - prepareclient -- What was I thinking in v1.3.0 with the -no-rsyncd option?!?
