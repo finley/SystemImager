@@ -876,8 +876,8 @@ foreach $mount_point (sort (@mount_points)) {
       }
     }
     ### END this do for labelled devices
-    print MASTER_SCRIPT "mount $device_file /a$mount_point/\n";
   }
+  print MASTER_SCRIPT "mount $device_file /a$mount_point/\n";
   print MASTER_SCRIPT "\n";
 }
 ### END Write out mkdir and mount commands ###
