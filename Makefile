@@ -611,12 +611,12 @@ tarballs:
 # make the srpms for systemimager
 .PHONY:	srpm
 srpm: $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
-	rpm -ts $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
+	rpmbuild -ts $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
 
 # make the rpms for systemimager
 .PHONY:	rpm
 rpm: $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
-	rpm -tb $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
+	rpmbuild -tb $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
 
 # removes object files, docs, editor backup files, etc.
 .PHONY:	clean

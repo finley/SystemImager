@@ -1,5 +1,5 @@
 %define name     systemimager
-%define ver      3.3.1
+%define ver      3.5.00
 %define rel      1
 %define prefix   /usr
 %define _build_all 1
@@ -462,8 +462,8 @@ fi
 
 %files common
 %defattr(-, root, root)
-%prefix/bin/lsimage
-%prefix/share/man/man8/lsimage*
+%prefix/bin/si_lsimage
+%prefix/share/man/man8/si_lsimage*
 %prefix/share/man/man5/autoinstall*
 %dir %prefix/lib/systemimager
 %prefix/lib/systemimager/perl/SystemImager/Common.pm
@@ -495,27 +495,27 @@ fi
 /var/lib/systemimager/images/*
 /var/lib/systemimager/scripts/post-install/*
 /var/lib/systemimager/scripts/pre-install/*
-%prefix/sbin/addclients
-%prefix/sbin/cpimage
-%prefix/sbin/getimage
-%prefix/sbin/mk*
-%prefix/sbin/mvimage
-%prefix/sbin/netbootmond
-%prefix/sbin/pushupdate
-%prefix/sbin/rmimage
-%prefix/sbin/imagemanip
-%prefix/bin/mkautoinstall*
+%prefix/sbin/si_addclients
+%prefix/sbin/si_cpimage
+%prefix/sbin/si_getimage
+%prefix/sbin/si_mk*
+%prefix/sbin/si_mvimage
+%prefix/sbin/si_netbootmond
+%prefix/sbin/si_pushupdate
+%prefix/sbin/si_rmimage
+%prefix/sbin/si_imagemanip
+%prefix/bin/si_mkautoinstall*
 %prefix/lib/systemimager/perl/SystemImager/Server.pm
 %prefix/lib/systemimager/perl/SystemImager/Config.pm
 %prefix/lib/systemimager/perl/confedit
 %prefix/share/man/man5/systemimager*
-%prefix/share/man/man8/addclients*
-%prefix/share/man/man8/cpimage*
-%prefix/share/man/man8/getimage*
-%prefix/share/man/man8/mk*
-%prefix/share/man/man8/mvimage*
-%prefix/share/man/man8/rmimage*
-%prefix/share/man/man8/pushupdate*
+%prefix/share/man/man8/si_addclients*
+%prefix/share/man/man8/si_cpimage*
+%prefix/share/man/man8/si_getimage*
+%prefix/share/man/man8/si_mk*
+%prefix/share/man/man8/si_mvimage*
+%prefix/share/man/man8/si_rmimage*
+%prefix/share/man/man8/si_pushupdate*
 
 %files client
 %defattr(-, root, root)
@@ -523,10 +523,10 @@ fi
 %dir /etc/systemimager
 %config /etc/systemimager/updateclient.local.exclude
 %config /etc/systemimager/client.conf
-%prefix/sbin/updateclient
-%prefix/sbin/prepareclient
-%prefix/share/man/man8/updateclient*
-%prefix/share/man/man8/prepareclient*
+%prefix/sbin/si_updateclient
+%prefix/sbin/si_prepareclient
+%prefix/share/man/man8/si_updateclient*
+%prefix/share/man/man8/si_prepareclient*
 %prefix/lib/systemimager/perl/SystemImager/Client.pm
 
 %files flamethrower
