@@ -11,6 +11,7 @@
 3.0 PRE-RELEASE
 --------------------------------------------------------------------------------
 Pending:
+* e1000 module loading is broken - see #638731
 * I'm concerned that rsync is being compiled in such a way that it believes
   that it has access to libraries that will let it do 64-Bit file access, but
   when run on the client against uclibc, it can't (i386 only).  Is there some
