@@ -548,7 +548,9 @@ sub create_auto_install_script_conf {
     # Where the configuration information be stored. -BEF-
     my $file = "$systemimagerdir/autoinstallscript.conf";
 
-    # Determine which partition tool is available.  Preference is parted.
+    # Determine which partition tool is available.  Preference is sfdisk -- 
+    # it provides more information. -BEF-
+    #
     my $partition_tool = which_partition_tool();
 
     # BEGIN partition_tool friendly output
@@ -587,14 +589,14 @@ sub which_partition_tool {
 
     my $partition_tool;
 
-    # Determine which partition tool is available.  Preference is parted.
-    if (which('parted')) { 
-      $partition_tool="parted";
-    } elsif (which('sfdisk')) {
+    # Determine which partition tool is available.  Preference is sfdisk. -BEF-
+    if (which('sfdisk')) {
       $partition_tool="sfdisk";
+    } elsif (which('parted')) { 
+      $partition_tool="parted";
     } else {
-      print "FATAL: I can't find an appropriate partition tool.  Please install \"sfdisk\",\n";
-      print "       or better yet, \"parted\", which is my favorite!\n";
+      print "FATAL: I can't find an appropriate partition tool.  Please install \"parted\",\n";
+      print "       or better yet, \"sfdisk\", which is my favorite!\n";
       exit 1;
     }
 

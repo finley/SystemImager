@@ -183,7 +183,7 @@ sub save_partition_information {
           # output. -BEF-
           if (/^\d+\s+/) {
 
-            my ($minor, $startMB, $endMB, $partition_type, $fstype, $flags, $name);
+            my ($minor, $startMB, $endMB, $partition_type, $fstype, $id, $flags, $name);
 
             chomp;
 
@@ -263,7 +263,9 @@ sub save_partition_information {
                 $size = "*";
             }
 
-            _print_to_auto_install_conf_file( $minor, $size, $partition_type, $fstype, $name, $flags );
+            unless($id) { $id=""; }
+
+            _print_to_auto_install_conf_file( $minor, $size, $partition_type, $id, $name, $flags );
 
           }
 
@@ -355,9 +357,9 @@ sub _turn_sfdisk_output_into_generic_partitionschemes_file {
      
         # Split the remaining datar up into it's components. -BEF-
         #
-        my ($minor, $startMB, $endMB, $startSECTORS, $endSECTORS, $junkMB, $junkBLOCKS, $junkSECTORS, $Id) = split;
+        my ($minor, $startMB, $endMB, $startSECTORS, $endSECTORS, $junkMB, $junkBLOCKS, $junkSECTORS, $id) = split;
         if ($units eq "megabytes") {
-          ($minor, $startMB, $endMB, $junkMB, $junkBLOCKS, $Id) = split;
+          ($minor, $startMB, $endMB, $junkMB, $junkBLOCKS, $id) = split;
 
           # We're not keeping track of partitions that aren't there, 
           # so let's just move along, shall we? -BEF-
@@ -365,7 +367,7 @@ sub _turn_sfdisk_output_into_generic_partitionschemes_file {
           if (($startMB eq "0") and ($endMB eq "-")) { next; }
 
         } elsif ($units eq "sectors") {
-          ($minor, $startSECTORS, $endSECTORS, $junkSECTORS, $Id) = split;
+          ($minor, $startSECTORS, $endSECTORS, $junkSECTORS, $id) = split;
 
           # We're not keeping track of partitions that aren't there, 
           # so let's just move along, shall we? -BEF-
@@ -409,87 +411,68 @@ sub _turn_sfdisk_output_into_generic_partitionschemes_file {
         # other flags that may be set.  Valid flags from parted's perspective are:
         # boot, root, swap, hidden, raid, lvm, lba, hp-service
         #
-        if ($Id eq "0") {         # 0  Empty
-          $fstype = "-";
+        if ($id eq "0") {         # 0  Empty
           $partition_type = "-";
      
-        } elsif ($Id eq "4") {  # 4  FAT16 <32M
-          $fstype = "fat16";
+        } elsif ($id eq "4") {  # 4  FAT16 <32M
      
-        } elsif ($Id eq "5") {  # 5  Extended
-          $fstype = "-";
+        } elsif ($id eq "5") {  # 5  Extended
           $partition_type = "extended";
      
-        } elsif ($Id eq "6") {  # 6  FAT16
-          $fstype = "fat16";
+        } elsif ($id eq "6") {  # 6  FAT16
      
-        } elsif ($Id eq "7") {  # 7  HPFS/NTFS
-          $fstype = "ntfs";
+        } elsif ($id eq "7") {  # 7  HPFS/NTFS
      
-        } elsif ($Id eq "b") {  # b  Win95 FAT32
-          $fstype = "fat32";
+        } elsif ($id eq "b") {  # b  Win95 FAT32
      
-        } elsif ($Id eq "c") {  # c  Win95 FAT32 (LBA)
-          $fstype = "fat32";
+        } elsif ($id eq "c") {  # c  Win95 FAT32 (LBA)
           $flags = "lba";
      
-        } elsif ($Id eq "e") {  # e  Win95 FAT16 (LBA)
-          $fstype = "fat16";
+        } elsif ($id eq "e") {  # e  Win95 FAT16 (LBA)
           $flags = "lba";
      
-        } elsif ($Id eq "f") {  # f  Win95 Ext'd (LBA)
-          $fstype = "-";
+        } elsif ($id eq "f") {  # f  Win95 Ext'd (LBA)
           $partition_type = "extended";
           $flags = "lba";
      
-        } elsif ($Id eq "14") {  # 14  Hidden FAT16 <32M
+        } elsif ($id eq "14") {  # 14  Hidden FAT16 <32M
           $flags = "hidden";
-          $fstype = "fat16";
      
-        } elsif ($Id eq "16") {  # 16  Hidden FAT16
+        } elsif ($id eq "16") {  # 16  Hidden FAT16
           $flags = "hidden";
-          $fstype = "fat16";
      
-        } elsif ($Id eq "17") {  # 17  Hidden HPFS/NTFS
+        } elsif ($id eq "17") {  # 17  Hidden HPFS/NTFS
           $flags = "hidden";
-          $fstype = "ntfs";
      
-        } elsif ($Id eq "1b") {  # 1b  Hidden Win95 FAT32
+        } elsif ($id eq "1b") {  # 1b  Hidden Win95 FAT32
           $flags = "hidden";
-          $fstype = "fat32";
      
-        } elsif ($Id eq "1c") {  # 1c  Hidden Win95 FAT32 (LBA)
+        } elsif ($id eq "1c") {  # 1c  Hidden Win95 FAT32 (LBA)
           $flags = "hidden, lba";
-          $fstype = "fat32";
      
-        } elsif ($Id eq "1e") {  # 1e  Hidden Win95 FAT16 (LBA)
+        } elsif ($id eq "1e") {  # 1e  Hidden Win95 FAT16 (LBA)
           $flags = "hidden, lba";
-          $fstype = "fat16";
      
-        } elsif ($Id eq "82") {  # 82  Linux swap
-          $fstype = "linux-swap";
+        } elsif ($id eq "41") {  # 41  PPC PReP Boot
+
+        } elsif ($id eq "82") {  # 82  Linux swap
      
-        } elsif ($Id eq "83") {  # 83  Linux
-          $fstype = "ext2";
+        } elsif ($id eq "83") {  # 83  Linux
      
-        } elsif ($Id eq "85") {  # 85  Linux extended
-          $fstype = "-";
+        } elsif ($id eq "85") {  # 85  Linux extended
           $partition_type = "extended";
      
-        } elsif ($Id eq "8e") {  # 8e  Linux LVM
-          $fstype = "ext2";
+        } elsif ($id eq "8e") {  # 8e  Linux LVM
           $flags = "lvm";
      
-        } elsif ($Id eq "ef") {  # ef  EFI (FAT-12/16/32)
-          $fstype = "fat16";
+        } elsif ($id eq "ef") {  # ef  EFI (FAT-12/16/32)
      
-        } elsif ($Id eq "fd") {  # fd  Linux raid autodetect
-          $fstype = "ext2";
+        } elsif ($id eq "fd") {  # fd  Linux raid autodetect
           $flags = "raid";
      
         } else {
           print qq(\n\n);
-          print qq(FATAL:  I don't quite know how to interpret the Id tag of "$Id" on partition\n);
+          print qq(FATAL:  I don't quite know how to interpret the Id tag of "$id" on partition\n);
           print qq(        number "$minor" on disk "/dev/$disk".  Please submit a bug report, including\n);
           print qq(        this output, at http://systemimager.org/support/.  Thanks!  -Brian\n);
           exit 1;
@@ -522,7 +505,7 @@ sub _turn_sfdisk_output_into_generic_partitionschemes_file {
             $size = "*";
         }
 
-        _print_to_auto_install_conf_file( $minor, $size, $partition_type, $fstype, $name, $flags );
+        _print_to_auto_install_conf_file( $minor, $size, $partition_type, $id, $name, $flags );
      
       }
     }
@@ -530,10 +513,10 @@ sub _turn_sfdisk_output_into_generic_partitionschemes_file {
 
 
 # Usage:
-# _print_to_auto_install_conf_file($minor, $startMB, $endMB, $partition_type, $fstype, $name, $flags);
+# _print_to_auto_install_conf_file($minor, $startMB, $endMB, $partition_type, $id, $name, $flags);
 sub _print_to_auto_install_conf_file {
 
-    my ($minor, $size, $partition_type, $fstype, $name, $flags) = @_;
+    my ($minor, $size, $partition_type, $id, $name, $flags) = @_;
 
     # Name may not be set in some cases.
     unless ($name) { $name = "-"; }
@@ -547,7 +530,14 @@ sub _print_to_auto_install_conf_file {
     }
     
     # Begin output for a line.
-    print DISK_FILE qq(    <part  num="$minor"  size="$size"  p_type="$partition_type"  fs="$fstype"  p_name="$name"  flags="$flags");
+    print DISK_FILE qq(    <part  num="$minor"  size="$size"  p_type="$partition_type"  p_name="$name"  flags="$flags");
+
+    # id= is optional, and should only be used when needed. -BEF-
+    if (
+        ("$id" eq "41")  # 41  PPC PReP Boot 
+       ) {
+        print DISK_FILE qq(  id="$id");
+    }
     print DISK_FILE qq( />\n);
 }
 

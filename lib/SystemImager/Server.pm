@@ -226,7 +226,7 @@ sub _read_partition_info_and_prepare_parted_commands {
         my (
             %end_of_disk,
             %flags,
-            %fstype, 
+            %id, 
             %p_type, 
             %p_name, 
             %size, 
@@ -364,7 +364,7 @@ sub _read_partition_info_and_prepare_parted_commands {
 
         foreach my $m (sort (keys ( %{$config->{disk}->{$dev}->{part}} ))) {
             $flags{$m}       = $config->{disk}->{$dev}->{part}{$m}->{flags};
-            $fstype{$m}      = $config->{disk}->{$dev}->{part}{$m}->{fs};
+            $id{$m}          = $config->{disk}->{$dev}->{part}{$m}->{id};
             $p_name{$m}      = $config->{disk}->{$dev}->{part}{$m}->{p_name};
             $p_type{$m}      = $config->{disk}->{$dev}->{part}{$m}->{p_type};
             $size{$m}        = $config->{disk}->{$dev}->{part}{$m}->{size};
@@ -429,7 +429,6 @@ sub _read_partition_info_and_prepare_parted_commands {
             $MB_from_end_of_disk++;
 
             $p_type{$m} = "primary";
-            $fstype{$m} = "ext2";
             $p_name{$m} = "-";
             $flags{$m}  = "-";
 
@@ -463,8 +462,6 @@ sub _read_partition_info_and_prepare_parted_commands {
           #
           unless ($endMB{$m}) { next; }
 
-          if ($fstype{$m} eq "-") { $fstype{$m} = ""; }
-
           ### Print partitioning commands. -BEF-
           print MASTER_SCRIPT "\n";
 
@@ -473,7 +470,11 @@ sub _read_partition_info_and_prepare_parted_commands {
 
           print MASTER_SCRIPT qq(START_MB=$startMB{$m}\n);
           print MASTER_SCRIPT qq(END_MB=$endMB{$m}\n);
-          $cmd = qq(parted -s -- $dev mkpart $p_type{$m} $fstype{$m} ) . q($START_MB $END_MB) . qq( || shellout);
+          #
+          # parted *always* requires that you specify a filesystem type, even
+          # though it does nothing with it with the "mkpart" command. -BEF-
+          #
+          $cmd = qq(parted -s -- $dev mkpart $p_type{$m} ext2 ) . q($START_MB $END_MB) . qq( || shellout);
           print MASTER_SCRIPT qq(echo "$cmd"\n);
           print MASTER_SCRIPT "$cmd\n";
 
@@ -487,7 +488,18 @@ sub _read_partition_info_and_prepare_parted_commands {
 
           } elsif ("$p_type{$m}" eq "logical") {
             print MASTER_SCRIPT q(END_OF_LAST_LOGICAL=$END_MB) . qq(\n);
+          }
 
+          #
+          # If $id is set for a partition, we invoke sfdisk to tag the partition
+          # id appropriately.  parted is lame (in the true sense of the word) in 
+          # this regard and is incapable of # adding an arbitrary id to a 
+          # partition. -BEF-
+          #
+          if ($id{$m}) {
+            print MASTER_SCRIPT qq(# Use sfdisk to change the partition id.  parted is\n);
+            print MASTER_SCRIPT qq(# incapable of this particular operation.\n);
+            print MASTER_SCRIPT qq(sfdisk --change-id $dev $m $id{$m} \n);
           }
 
           # Name any partitions that need that kinda treatment.
