@@ -1,7 +1,7 @@
 %define name     systemimager
-%define ver      2.0.0
-%define rel      4
-%define prefix   /usr/local
+%define ver      2.0.1
+%define rel      1
+%define prefix   /usr
 
 Summary: Software that automates Linux installs, software distribution, and production deployment.
 Name: %name
@@ -50,6 +50,9 @@ typical environments include: Internet server farms, database server
 farms, high performance clusters, computer labs, and corporate desktop
 environments.
 
+The server package contains those files needed to run a SystemImager
+server.
+
 %package common
 Summary: Software that automates Linux installs, software distribution, and production deployment.
 Version: %ver
@@ -78,6 +81,42 @@ to the last production image with a simple update command!  Some
 typical environments include: Internet server farms, database server 
 farms, high performance clusters, computer labs, and corporate desktop
 environments.
+
+The common package contains files common to SystemImager clients 
+and servers.
+
+%package i386boot
+Summary: Software that automates Linux installs, software distribution, and production deployment.
+Version: %ver
+Release: %rel
+Copyright: GPL
+Group: Applications/System
+BuildRoot: /tmp/%{name}-%{ver}-root
+Packager: Brian Finley <brian@baldguysoftware.com>
+Docdir: %{prefix}/doc
+URL: http://systemimager.org/
+Distribution: System Installation Suite
+Requires: systemimager-server
+AutoReqProv: no
+
+%description i386boot
+SystemImager is software that automates Linux installs, software 
+distribution, and production deployment.  SystemImager makes it easy to
+do installs, software distribution, content or data distribution, 
+configuration changes, and operating system updates to your network of 
+Linux machines. You can even update from one Linux release version to 
+another!  It can also be used to ensure safe production deployments.  
+By saving your current production image before updating to your new 
+production image, you have a highly reliable contingency mechanism.  If
+the new production enviroment is found to be flawed, simply roll-back 
+to the last production image with a simple update command!  Some 
+typical environments include: Internet server farms, database server 
+farms, high performance clusters, computer labs, and corporate desktop
+environments.
+
+The i386boot package provides specific kernel, ramdisk, and fs utilities
+to boot and install i386 machines during the SystemImager autoinstall
+process.
 
 %package client
 Summary: Software that automates Linux installs, software distribution, and production deployment.
@@ -108,7 +147,15 @@ typical environments include: Internet server farms, database server
 farms, high performance clusters, computer labs, and corporate desktop
 environments.
 
+The client package contains the files needed on a machine for it to
+be imaged by a SystemImager server.
+
 %changelog
+* Wed Dec  5 2001 Sean Dague <sean@dague.net> 2.0.1-1
+- Update SystemImager version
+- Changed prefix to /usr
+- Made seperate i386boot package
+
 * Mon Nov  5 2001 Sean Dague <sean@dague.net> 2.0.0-4
 - Added build section for true SRPM ability
 
@@ -131,8 +178,8 @@ make all
 
 %install
 cd $RPM_BUILD_DIR/%{name}-%{version}/
-make install_server_all DESTDIR=/tmp/%{name}-%{ver}-root
-make install_client_all DESTDIR=/tmp/%{name}-%{ver}-root
+make install_server_all DESTDIR=/tmp/%{name}-%{ver}-root USR=/tmp/%{name}-%{ver}-root%prefix
+make install_client_all DESTDIR=/tmp/%{name}-%{ver}-root USR=/tmp/%{name}-%{ver}-root%prefix
 
 %clean
 cd $RPM_BUILD_DIR/%{name}-%{version}/
@@ -150,8 +197,13 @@ chkconfig --del systemimager
 %defattr(-, root, root)
 %prefix/bin/lsimage
 %prefix/share/man/man8/lsimage*
-%dir /usr/local/lib/systemimager
-/usr/local/lib/systemimager/perl/SystemImager/Common.pm
+%dir %prefix/lib/systemimager
+%prefix/lib/systemimager/perl/SystemImager/Common.pm
+
+%files i386boot
+%defattr(-, root, root)
+%dir %prefix/share/systemimager/i386-boot
+%prefix/share/systemimager/i386-boot/*
 
 %files server
 %defattr(-, root, root)
@@ -161,11 +213,9 @@ chkconfig --del systemimager
 %dir /var/log/systemimager
 %dir /var/lib/systemimager/images
 %dir /var/lib/systemimager/scripts
-%dir /usr/local/share/systemimager/i386-boot
 %dir /etc/systemimager
 %config /etc/systemimager/rsyncd.conf
 %config /etc/systemimager/systemimager.conf
-
 /etc/init.d/systemimager
 /var/lib/systemimager/images/*
 %prefix/sbin/addclients
@@ -179,8 +229,7 @@ chkconfig --del systemimager
 %prefix/sbin/pushupdate
 %prefix/sbin/rmimage
 %prefix/bin/mkautoinstall*
-/usr/local/lib/systemimager/perl/SystemImager/Server.pm
-/usr/local/share/systemimager/i386-boot/*
+%prefix/lib/systemimager/perl/SystemImager/Server.pm
 %prefix/share/man/man8/addclients*
 %prefix/share/man/man8/cpimage*
 %prefix/share/man/man8/getimage*
@@ -193,7 +242,7 @@ chkconfig --del systemimager
 %doc CHANGE.LOG COPYING CREDITS README TODO VERSION
 %dir /etc/systemimager
 %config /etc/systemimager/updateclient.local.exclude
-/usr/local/lib/systemimager/perl/SystemImager/Client.pm
+# %prefix/lib/systemimager/perl/SystemImager/Client.pm
 %prefix/sbin/updateclient
 %prefix/sbin/prepareclient
 %prefix/share/man/man8/updateclient*
