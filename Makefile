@@ -153,7 +153,7 @@ GETSOURCE = $(TOPDIR)/tools/getsource
 
 # build everything, install nothing
 PHONY += all
-all:	$(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.gz 
+all:	$(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.gz manpages
 
 # All has been modified as docs don't build on non debian platforms
 #
