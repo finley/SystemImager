@@ -7,10 +7,11 @@
 
 Top Requests
 ------------
+- support for use without DHCP
 - support for software RAID
 - replicate mke2fs parameters on clients to match the "master client"
 - commandline-ize the rest of the commands
-- support for use without DHCP
+- support for imageserver specification in DHCP client (hack dhcpcd)
 
 Bug list
 --------
@@ -34,6 +35,10 @@ Other stuff
 - message during network booting (if possible)
 - make the <Backspace> key work ;)
 - create man pages
+- support for Caldera Open Linux
+  - IF_LIST in /etc/sysconfig/network
+- support for SuSE
+- support for Slackware
 
 getimage
 --------
@@ -96,6 +101,11 @@ Miscellaneous and Possibilities
   seems to be able to take made up options, and it is not the dhcp client
   of choice (for several reasons).  Maybe the other clients, dhcpcd and
   pump, will find their way along soon...
+
+  Reasons are:
+  - dhcpcd is the defacto dhcp client used on most linux systems
+  - dhclient compiles large
+
 - curses wrapper around the whole thing
 - updateclient - log what was updated and or deleted?
 - makedhcpstatic -- allow for -f "filename" option to specify dhcpd.leases file.

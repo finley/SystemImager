@@ -1,4 +1,0 @@
-#!/bin/sh
-
-# script to upload the changes to the systemimager website
-rsync -avz --delete -e ssh . brianfinley@shell.sourceforge.net:/home/groups/systemimager/htdocs/

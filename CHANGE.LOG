@@ -4,6 +4,11 @@
 # This file: CHANGE.LOG
 #
 
+VA SystemImager-1.2 2000.xx.xx
+- getimage -- changed the mke2fs options to the conservative defaults.
+  Hopefully soon we will be able to detect existing settings and 
+  re-create those by partition.
+
 VA SystemImager-1.1 2000.05.26
 - updateclient -- Fixed a bug.  root --> / was not becoming the default 
   if the -directory option was not used and updateclient was exiting 

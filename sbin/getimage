@@ -464,10 +464,12 @@ foreach $disk (@disks)  {
     # output ext2 creation section (sort order doesn't matter here)
     (@ext2s) && print MASTER_SCRIPT "\n# create ext2 filesystem(s) on $disk -- do a \"man mke2fs\" for more info\n";
     foreach $ext2dev (@ext2s) {
-        my $block_size = "4096";
-        my $inodes_per_block = "16384";
-        my $min_free = "1";
-        print MASTER_SCRIPT "mke2fs -b $block_size -i $inodes_per_block -m $min_free $ext2dev\n";
+        #my $block_size = "4096";
+        #my $inodes_per_block = "16384";
+        #my $min_free = "1";
+        #print MASTER_SCRIPT "mke2fs -b $block_size -i $inodes_per_block -m $min_free $ext2dev\n";
+        ### Take the conservative option for now.  Change when we can detect existing settings. ###
+        print MASTER_SCRIPT "mke2fs $ext2dev\n";
     }
 }
 
