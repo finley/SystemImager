@@ -5,64 +5,64 @@
  <artheader>
   <title>VA SystemImager v1.4.0 Documentation</title>
    <pubdate>v1.3 12 Feb, 2001</pubdate>
-  <author>
+    <author>
      <firstname>Greg</firstname>
      <surname>Pratt</surname>
      <affiliation>
-        <orgname>VA Linux Systems</orgname>
-        <address><email>gpratt@valinux.com</email></address>
+      <orgname>VA Linux Systems</orgname>
+      <address><email>gpratt@valinux.com</email></address>
      </affiliation>
-  </author>
-  <author>
+    </author>
+    <author>
      <firstname>Dann</firstname>
      <surname>Frazier</surname>
      <affiliation>
-        <orgname>Hewlett Packard</orgname>
-        <address><email>daniel_frazier@hp.com</email></address>
+      <orgname>Hewlett Packard</orgname>
+      <address><email>daniel_frazier@hp.com</email></address>
      </affiliation>
-  </author>
+    </author>
 
-   <revhistory>
-      <revision>
-         <revnumber>v0.1</revnumber>
-         <date>15 September 2000</date>
-         <authorinitials>gap</authorinitials>
-          <revremark>
-            Original document creation without FAQ Section
-         </revremark>
-      </revision>
-      <revision>
-         <revnumber>v1.0</revnumber>
-         <date>05 January 2001</date>
-         <authorinitials>gap</authorinitials>
-          <revremark>
-            Added Sample Install
-         </revremark>
-      </revision>
-      <revision>
-         <revnumber>v1.1</revnumber>
-         <date>10 January 2000</date>
-         <authorinitials>gap</authorinitials>
-          <revremark>
-            Completed FAQ Section
-         </revremark>
-      </revision>
-      <revision>
-         <revnumber>v1.2</revnumber>
-         <date>14 January 2000</date>
-         <authorinitials>gap</authorinitials>
-          <revremark>
-            Added several images and clarification in key areas
-         </revremark>
-      </revision>
-      <revision>
-         <revnumber>v1.3</revnumber>
-         <date>12 February 2000</date>
-         <authorinitials>gap</authorinitials>
-          <revremark>
-            Modified Acknowledgement Section
-         </revremark>
-      </revision>
+    <revhistory>
+     <revision>
+      <revnumber>v0.1</revnumber>
+      <date>15 September 2000</date>
+      <authorinitials>gap</authorinitials>
+      <revremark>
+       Original document creation without FAQ Section
+      </revremark>
+     </revision>
+     <revision>
+      <revnumber>v1.0</revnumber>
+      <date>05 January 2001</date>
+      <authorinitials>gap</authorinitials>
+      <revremark>
+       Added Sample Install
+      </revremark>
+     </revision>
+     <revision>
+      <revnumber>v1.1</revnumber>
+      <date>10 January 2000</date>
+      <authorinitials>gap</authorinitials>
+      <revremark>
+       Completed FAQ Section
+      </revremark>
+     </revision>
+     <revision>
+      <revnumber>v1.2</revnumber>
+      <date>14 January 2000</date>
+      <authorinitials>gap</authorinitials>
+      <revremark>
+       Added several images and clarification in key areas
+      </revremark>
+     </revision>
+     <revision>
+      <revnumber>v1.3</revnumber>
+      <date>12 February 2000</date>
+      <authorinitials>gap</authorinitials>
+      <revremark>
+       Modified Acknowledgement Section
+      </revremark>
+     </revision>
    </revhistory>
 
   <abstract>
@@ -72,11 +72,11 @@
 
     <para>
      This document has been prepared to aid in the installation, configuration 
-     and on-going administration of the <application>VA SystemImager
-     </application> product. 
+     and on-going administration of the 
+     <application>VA SystemImager</application> product. 
     </para>
 
-    <para><ulink url="systemimager-manual.sgml"> SGML source</ulink>
+    <para><ulink url="systemimager-manual.sgml">SGML source</ulink>
     for this document is available and should be consulted while reading.
     </para>
   </abstract>
@@ -126,12 +126,15 @@
     </listitem>
    </itemizedlist>
    <para>
-    SystemImager was conceived and developed by Brian Finley.  It's initial 
-    implementation was known as Pterodactyl and was used for software and 
-    password updates to Solaris boxes of varying hardware and OS versions 
+    <application>SystemImager</application> was conceived and developed by
+    Brian Finley.  It's initial implementation was known as
+    <application>Pterodactyl</application> and was used for software and 
+    password updates to <productname>Solaris</productname> boxes of varying
+    hardware and OS versions 
     across a nation wide enterprise network.  Over time it evolved into the 
     Linux specific autoinstall and software distribution tool that it is 
-    today.  Many of the design decisions for SystemImager were based on 
+    today.  Many of the design decisions for
+    <application>SystemImager</application> were based on 
     perceived short comings in other automated install tools for systems 
     such as Solaris, RedHat Linux, and Windows.
    </para>
@@ -300,18 +303,18 @@
    <itemizedlist>
     <listitem>
      <para>
-      Your image server will must have enough disk space to hold the images
+      Your image server must have enough disk space to hold the images
       to be installed on your client systems.
      </para>
     </listitem>
     <listitem>
      <para>
-      All of the clients that will use the same image should have hardware that is
-      as similar as possible.  Most importantly they should use the same chipset
-      on the network device(s) and the same number and kind of hard drive(s) 
-      (IDE, SCSI, Mylex Hardware RAID, etc.)  The hard drives may be of different
-      capacities.  Devices may be larger with no problem and can be smaller 
-      within reason.
+      All of the clients that will use the same image should have hardware 
+      that is as similar as possible.  Most importantly they should use the 
+      same chipset on the network device(s) and the same number and kind of
+      hard drive(s) (IDE, SCSI, Mylex Hardware RAID, etc.)  The hard drives
+      may be of different capacities.  Devices may be larger with no problem
+      and can be smaller within reason.
      </para>
     </listitem>
     <listitem>
@@ -321,15 +324,15 @@
       maintains the <application>tftp-hpa</application> package, which 
       provides the required functionality.  RedHat 7.0 includes this server
       in their tftp-server package, but the tftp package included with earlier 
-      RedHat releases doesn't provide the required functionality.  PXE 
+      RedHat releases doesn't provide the required functionality.  Debian
+      provides this server in the tftpd-hpa package.  PXE 
       network-based installations may also require a pxe daemon to be running 
       on your image server.  This requirement depends on the firmware used on 
-     the client side, and the capabilities of your DHCP server.
+      the client side, and the capabilities of your DHCP server.
      </para>
     </listitem>
    </itemizedlist>
  </sect1>
-
 
  <sect1 id=HowDoesItWork>
   <title>How Does it Work? (summary)</title>
@@ -359,19 +362,21 @@
       a CDROM, the network, or the local hard drive of the autoinstall client.
      </para>
     </listitem>
-
     <listitem>
      <para>
       local.cfg - A configuration file that can be used for autoinstall clients
-      in lieu of DHCP and the /tftpboot/systemimager/hosts file on the image server.
+      in lieu of DHCP and the
+      <filename>/tftpboot/systemimager/hosts</filename> file on the image
+      server.
      </para>
     </listitem>
     
     <listitem>
      <para>
-      updateclient - A command that is executed on client systems allowing them 
-      to be updated or synchronized to a new or updated image after the initial
-      autoinstall.  updateclient enables software and content distribution.
+      updateclient - A command that is executed on client systems allowing
+      them to be updated or synchronized to a new or updated image after the
+      initial autoinstall.  <command>updateclient</command> enables software
+      and content distribution.
      </para>
     </listitem>
       
@@ -398,7 +403,7 @@
     <listitem>
      <para>
       prepareclient - This command is run on the golden client immediately 
-      prior to running getimage on the image server.
+      prior to running <command>getimage</command> on the image server.
      </para>
     </listitem>
       
@@ -412,9 +417,9 @@
       
     <listitem>
      <para>
-      makedhcpstatic - Used to modify the /etc/dhcpd.conf file, adding 
-      static entries for autoinstall clients based on the IP addresses 
-      handed out to these clients by the DHCP server.
+      makedhcpstatic - Used to modify the <filename>/etc/dhcpd.conf</filename>
+      file, adding static entries for autoinstall clients based on the IP
+      addresses handed out to these clients by the DHCP server.
      </para>
     </listitem>
 
@@ -423,18 +428,19 @@
       autoinstall script - A unique autoinstall script is created for each 
       image and is used by the autoinstall client as part of the autoinstall 
       process.  The names of autoinstall scripts begin with the image name 
-      and end in .master.  For example:"my_webserver_image_v1.master"
+      and end in .master.  For example:  "my_webserver_image_v1.master"
      </para>
     </listitem>
 
     <listitem>
      <para>
-      addclients - Tells your image server which image to install on your
+      addclients - Tells your image server which image to install on your 
       autoinstall clients.  It does so by creating soft links to the 
       master autoinstall script with the name of each host that will 
-      receive that image.  It also allows you to populate the /etc/hosts 
-      file with sequential host names and IP addresses.  This information
-      in <filename>/etc/hosts</filename> is necessary for certain SystemImager
+      receive that image.  It also allows you to populate the 
+      <filename>/etc/hosts</filename> 
+      file with sequential host names and IP addresses.  This information 
+      in <filename>/etc/hosts</filename> is necessary for certain SystemImager 
       operations.
      </para>
     </listitem>
@@ -461,8 +467,8 @@
 
     <listitem>
      <para>
-      Install the <application>VA SystemImager</application> server package on the 
-      machine you have chosen as your image server. 
+      Install the <application>VA SystemImager</application> server package 
+      on the machine you have chosen as your image server. 
      </para>
     </listitem>
 
@@ -474,15 +480,15 @@
 
     <listitem>
      <para>
-      Install the VA SystemImager client software on your "golden client" and run
-      the <command>prepareclient</command> command.
+      Install the VA SystemImager client software on your "golden client" and 
+      run the <command>prepareclient</command> command.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Run <command>getimage</command> on the image server to pull the image from the "golden client" 
-      to the image server.
+      Run <command>getimage</command> on the image server to pull the image 
+      from the "golden client" to the image server.
      </para>
     </listitem>
 
@@ -490,7 +496,8 @@
      <para>
       Run <command>addclients</command> on the image server to tell it
       which clients will receive which image, and to populate the 
-      image server's /etc/hosts and /tftpboot/systemimager/hosts files.
+      image server's <filename>/etc/hosts</filename> and 
+      <filename>/tftpboot/systemimager/hosts</filename> files.
      </para>
     </listitem>
 
@@ -517,24 +524,24 @@
 
     <listitem>
      <para>
-      Install the <application>VA SystemImager</application> server package on the 
-      machine you have chosen as your image server.  
+      Install the <application>VA SystemImager</application> server package 
+      on the machine you have chosen as your image server.  
      </para>
      <para>
-      You can find the SystemImager packages and links to some of the dependent 
-      packages that may not be a part of your Linux distribution at 
+      You can find the SystemImager packages and links to some of the 
+      dependent packages that may not be a part of your Linux distribution at 
       <ulink url="http://systemimager.org/"></ulink>.
      </para>
      <para>
-      The SystemImager server software is available in tar ball format and may be
-      available in other distribution specific packaged formats.  The example below
-      is for installing from a tar ball.  The software is the same regardless of 
-      the packaging format.
+      The SystemImager server software is available in tar ball format and 
+      may be available in other distribution specific packaged formats.  The 
+      example below is for installing from a tar ball.  The software is the 
+      same regardless of the packaging format.
      </para>
      <example>
       <title>
-       Often times, a machine that is already performing some kind of management 
-       function is a good choice for your image server.
+       Often times, a machine that is already performing some kind of 
+       management function is a good choice for your image server.
       </title>
       <mediaobject>
        <imageobject>
@@ -837,143 +844,6 @@ Would you like to run the "addclients" utility now? (y/[n]): n
       which clients will receive which image, and to populate the 
       image server's /etc/hosts and /tftpboot/systemimager/hosts files.
      </para>
-
-     <example><title>Running addclients</title>
-      <programlisting>
-[root@imageserver]# addclients
-
-Welcome to the VA SystemImager "addclients" utility  
----------------------------------------------------
-
-This utility has 3 sections.  
-
-
-"Section 1" will ask you for your hostname information.
-
-
-"Section 2" will allow you to create softlinks from each
-client hostname to your "master" script in the
-"/tftpboot/systemimager/" directory.  
-
-Example: www297.sh -> web_server_image_v1.master
-
-
-"Section 3" will ask you for IP address information that will
-be combined with the hostname information provided in Section 1
-to create entries in "/etc/hosts" for each of these same clients.
-New entries will be appended to the end of "/etc/hosts".  If you 
-specify new hostnames for existing IP addresses, those entries 
-will be re-written in place to reflect the new host names.
-
-
-Continue? ([y]/n): 
-
-
-addclients -- Section 1 (hostname information)
-----------------------------------------------
-
-The next series of questions will be used to create a range
-of hostnames.  You will be asked for your domain name, the 
-base host name, a beginning number, and an ending number.
-
-For example, if you answer:
-  domain name     = systemimager.org
-  base host name  = www
-  starting number = 7
-  ending number   = 11
-
-Then the result will be a series of hostnames that looks like this:
-  www7.systemimager.org
-  www8.systemimager.org
-  www9.systemimager.org
-  www10.systemimager.org
-  www11.systemimager.org
-
-
-What is your domain name? []: mydomain.com
-What is the base host name that you want me to use? []: server
-What number should I begin with? []: 1
-What number should I end with? []: 99
-
-
-I will work with hostnames:  server1 through server99
-             in the domain:  mydomain.com
-
-Are you satisfied? (y/[n]): y
-
-
-addclients -- Section 2 (soft links to master script)
------------------------------------------------------
-
-Would you like me to create soft links to a "master" script so
-that hosts:
-
-  server1 through server99
-
-can be autoinstalled with that image? ([y]/n): 
-
-Here is a list of available images:
-
-debian_ide_2.2 
-debian_hwraid_ext2 
-web_server_image_v1 
-
-Which image would you like these hosts to receive? [web_server_image_v1]: 
-
-Your soft links have been created.
-
-Press &lt;Enter> to continue...
-
-
-addclients -- Section 3 (adding or modifying /etc/hosts entries)
-----------------------------------------------------------------
-
-It is necessary to have an entry for each client in "/etc/hosts".
-
-I will ask you for your clients' IP addresses one subnet at a time.
-
-
-Would you like me to make these entries for you? ([y]/n): 
-
-
-addclients -- Section 3 (adding or modifying /etc/hosts entries -- continued...)
---------------------------------------------------------------------------------
-subnet 1
-
-The first host in subnet 1 will be: server1
-What is the starting IP address for subnet 1? []: 192.168.1.1
-What is the ending IP address? []: 192.168.1.99
-I will work with IP addresses:  192.168.1.1 through 192.168.1.99
-
-Are you satisfied? (y/[n]): y
-
-These entries have been added to /etc/hosts.
-
-Press &lt;Enter> to continue...
-      </programlisting>
-     </example>
-
-     <example><title>Entries in /etc/hosts created by addclients</title>
-      <programlisting>
-192.168.1.1    server1.mydomain.com  server1
-192.168.1.2    server2.mydomain.com  server2
-192.168.1.3    server3.mydomain.com  server3
-192.168.1.4    server4.mydomain.com  server4
-192.168.1.5    server5.mydomain.com  server5
-192.168.1.6    server6.mydomain.com  server6
-192.168.1.7    server7.mydomain.com  server7
-192.168.1.8    server8.mydomain.com  server8
-192.168.1.9    server9.mydomain.com  server9
-192.168.1.10    server10.mydomain.com  server10
-192.168.1.11    server11.mydomain.com  server11
-
-[ ... etc, etc, etc ... ]
-
-192.168.1.97    server97.mydomain.com  server97
-192.168.1.98    server98.mydomain.com  server98
-192.168.1.99    server99.mydomain.com  server99
-      </programlisting>
-     </example>
     </listitem>
 
     <listitem>
@@ -985,7 +855,7 @@ Press &lt;Enter> to continue...
 
     <listitem>
      <para>
-      Autoinstall the "golden image" on other machines.
+      Autoinstall the "golden" image on other machines.
      </para>
     </listitem>
 
@@ -2501,7 +2371,7 @@ the following command on a client that is already partitioned correctly:
    <glossdef>
     <para>
      A unique autoinstall script is created for each 
-     image and is used by the autoinstall client as part of the autoinstall 
+     image and is used by the autoinstall client as part of the autoinstall
      process.  The names of autoinstall scripts begin with the image name 
      and end in .master.  For example:
      <filename>my_webserver_image_v1.master</filename>
