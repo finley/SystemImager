@@ -443,18 +443,18 @@ image=vmlinux-rh.img
 	  in the standard flavor boot package, you can build a custom boot
 	  package.  Unlike earlier (pre-2.9) releases, you will need more than
 	  a new kernel binary.  However, also unlike earlier releases, you can
-	  have multiple boot packages available simultaneously.
+	  have multiple boot packages installed simultaneously on your system.
 	</para>
 	<warning>
 	  <para>
 	    Boot packages are tightly linked to the version of SystemImager
 	    you are using.  If you make customizations to a boot package
-	    for SystemImager 3.0, you will need to forward port, and recreate
+	    for SystemImager 3.0, you will need to forward port
 	    those changes when you move to SystemImager 3.2.0.
 	  </para>
 	</warning>
 	<formalpara>
-	  <title>Adding a module to the autoinstall ramdisk</title>
+	  <title>Creating a custom boot package</title>
 	  <para>
 	    If the driver you need to add can be built as a module,
 	    you may choose to add it directly onto the autoinstall ramdisk.
