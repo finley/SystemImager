@@ -568,13 +568,14 @@ start_ssh() {
 
     else
 
+        ########################################################################
+        #
         # Looks like we didn't get a private key from the floppy, so let's just
         # fire up sshd and wait for someone to connect to us to initiate the
         # next step of the autoinstall. -BEF-
-        
-        # download authorized_keys  #XXX re-consider this bit
+        #
+        # download authorized_keys
         # (public keys of users allowed to ssh *in* to this machine)
-
         cd /root/.ssh/ || shellout
         CMD="wget ${SSH_DOWNLOAD_URL}/${ARCH}/ssh/authorized_keys"
         echo
