@@ -384,24 +384,25 @@ EOF
  ##BEGIN &LINKS_QUESTIONS##
   ##########################
 sub Links_questions {
-	if ( $base_host_name && $starting_number && $ending_number ne '') {  
-	unless($imagename ne '') { 
-					   die "There are no available images."
-						  ."Please use getimage to retrieve an image first.\n"
-						  ."   -The Mgmt\n"; 
-				 }
-	print "Setting Up parameters for symbolic links.\n";			 
-$image=$imagename;
- print "All hosts will recieve image \[".uc($imagename)."\]\n"
- 	  ."All hosts will have name \[".uc($base_host_name)."\]"
- 	  ." and will have a number between \[$starting_number - $ending_number\]\n";
- if ( -f "$autoinstall_script_dir/$image.master" ) {
-  foreach $node_number ($starting_number .. $ending_number) {
-  system("cd $autoinstall_script_dir; ln -sf $image.master $base_host_name$node_number.sh");
+    if ( @_ == 1 ) {
+	if ($base_host_name && $starting_number && $ending_number ne '') {  
+	    unless($imagename ne '') { 
+		die "There are no available images.  Please use getimage to retrieve an image first.\n   -The Mgmt\n"; 
+	    }
+	    print "Setting Up parameters for symbolic links.\n";		 
+	    $image=$imagename;
+	    print "All hosts will recieve image \[".uc($imagename)."\]\n";
+	    print "All hosts will have name \[".uc($base_host_name)."\]";
+	    print " and will have a number between \[$starting_number - $ending_number\]\n";
+	    if ( -f "$autoinstall_script_dir/$image.master" ) {
+		foreach $node_number ($starting_number .. $ending_number) {
+		    system("cd $autoinstall_script_dir; ln -sf $image.master $base_host_name$node_number.sh");
 		}
-	} else {
-system("clear");
-print <<EOF;
+	    }
+	}
+    } else {
+	system("clear");
+	print <<EOF;
 addclients -- Section 2 (soft links to master script)
 -----------------------------------------------------
 
@@ -409,67 +410,67 @@ Would you like me to create soft links to a "master" script so
 that hosts:
 
   $base_host_name$starting_number through $base_host_name$ending_number
-
+      
 EOF
-print "can be autoinstalled with that image? ([y]/n): ";
-$createlinks=<STDIN>;
-chomp $createlinks;
-$createlinks = lc $createlinks;
-
-unless($createlinks eq "n") {
-  $satisfied="n";
-  while ($satisfied eq "n") {
-
-    # gather a list of available images
-    @files = ();
-    # ------------------------------------> sort by timestamp -- oldest to newest
-    $command = "cd $autoinstall_script_dir; ls -1tr *.master";
-    open(LS, "$command |");
-    while (<LS>) {
-      chomp;
-      s/\.master//;
-      push(@files, $_);
-      # make the newest image the default
-      $image = $_;
-    }
-    close(LS);
-    # display the list of available images
-    unless(@files) { die "There are no available images.  Please use getimage to retrieve an image first.\n   -The Mgmt\n"; }
-    print qq(\nHere is a list of available images:\n);
-    print "\n";
-    foreach(@files) {
-      print "$_ \n";
-    }
-    print "\n";
-    print "Which image would you like these hosts to receive? [$image]: ";
-    $image=get_response($image);
-    if ( -f "$autoinstall_script_dir/$image.master" ) {
-      foreach $node_number ($starting_number .. $ending_number) {
-        system("cd $autoinstall_script_dir; ln -sf $image.master $base_host_name$node_number.sh");
-      }
-      print "\nYour soft links have been created.\n";
-      print "\nPress <Enter> to continue...";
-      $satisfied="y";
-      <STDIN>;
-      system("clear");
-    } else {
-      print qq(\nImage \"$image\" does not exist...\n);
-      print qq(Let's try again, shall we?\n);
-      print qq(\nPress <Enter> to continue...);
-      $satisfied="n";
-      <STDIN>;
-      system("clear");
-    }
-  }
+    print "can be autoinstalled with that image? ([y]/n): ";
+	$createlinks=<STDIN>;
+	chomp $createlinks;
+	$createlinks = lc $createlinks;
+	
+	unless($createlinks eq "n") {
+	    $satisfied="n";
+	    while ($satisfied eq "n") {
+		
+		# gather a list of available images
+		@files = ();
+		# sort by timestamp -- oldest to newest
+		$command = "cd $autoinstall_script_dir; ls -1tr *.master";
+		open(LS, "$command |");
+		while (<LS>) {
+		    chomp;
+		    s/\.master//;
+		    push(@files, $_);
+		    # make the newest image the default
+		    $image = $_;
+		}
+		close(LS);
+		# display the list of available images
+		unless(@files) { 
+		    die "There are no available images.  Please use getimage to retrieve an image first.\n   -The Mgmt\n"; }
+		print qq(\nHere is a list of available images:\n);
+		print "\n";
+		foreach(@files) {
+		    print "$_ \n";
+		}
+		print "\n";
+		print "Which image would you like these hosts to receive? [$image]: ";
+		$image=get_response($image);
+		if ( -f "$autoinstall_script_dir/$image.master" ) {
+		    foreach $node_number ($starting_number .. $ending_number) {
+			system("cd $autoinstall_script_dir; ln -sf $image.master $base_host_name$node_number.sh");
+		    }
+		    print "\nYour soft links have been created.\n";
+		    print "\nPress <Enter> to continue...";
+		    $satisfied="y";
+		    <STDIN>;
+		    system("clear");
+		} else {
+		    print qq(\nImage \"$image\" does not exist...\n);
+		    print qq("Let's try again, shall we?\n");
+		    print qq(\nPress <Enter> to continue...);
+		    $satisfied="n";
+		    <STDIN>;
+		    system("clear");
+		}
+	    }
 	} else {
-	  print "\nNo links will be created.\n";
-	  print "\nPress <Enter> to continue...";
-	  <STDIN>;
-			}
-		} #End of first else{}
-	} #End of first if{}
+	    print "\nNo links will be created.\n";
+	    print "\nPress <Enter> to continue...";
+	    <STDIN>;
+	} #End of first else{}
+    } #End of first if{}
 }###END &LINKS_QUESTIONS###
-
+    
 ###BEGIN &SUBNET###
 sub SubNet {
    if(@_ != 1) {
