@@ -619,6 +619,8 @@ sub _turn_sfdisk_output_into_generic_partitionschemes_file {
      
         } elsif ($id eq "41") {  # 41  PPC PReP Boot
 
+        } elsif ($id eq "7f") {  # 7f  Unknown -- last seen on a Dell 2600 w/PERC-3 SCSI
+     
         } elsif ($id eq "82") {  # 82  Linux swap
      
         } elsif ($id eq "83") {  # 83  Linux
