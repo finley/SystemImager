@@ -102,7 +102,7 @@ Options: (options can be presented in any order)
 
  -reboot                  Reboot client after update completes.
     
- -dryrun                  Only shows what would have been updated. 
+ -dry-run                  Only shows what would have been updated. 
 
  -log "STRING"	    	  Quoted string for log file format.  See the
 			  rsyncd.conf man page for options.
@@ -119,7 +119,7 @@ GetOptions( "listing" => \$listing,
             "reboot" => \$reboot,
             "nolilo" => \$nolilo,
             "autoinstall" => \$autoinstall,
-            "dryrun" => \$dryrun,
+            "dry-run" => \$dry_run,
             "ssh-user=s" => \$ssh_user,
             "server=s" => \$imageserver,
             "image=s" => \$image,
@@ -161,14 +161,14 @@ if($autoinstall and $nolilo) {
   die qq($help_info);
 }
 
-# -autoinstall and -dryrun conflict
-if($dryrun and $autoinstall) { 
+# -autoinstall and -dry-run conflict
+if($dry_run and $autoinstall) { 
   print qq($help_info);
-  die "\nautoinstall and dryrun don't like each other\n\n";
+  die "\nautoinstall and dry-run don't like each other\n\n";
 }
 
-# -nolilo and -dryrun: latter one implies the first one
-if(($dryrun) and !($nolilo)) { 
+# -nolilo and -dry-run: latter one implies the first one
+if(($dry_run) and !($nolilo)) { 
 	$nolilo=1; 
 }
 	
@@ -330,7 +330,7 @@ EOF
 
   # start with base command
   $command = "rsync -av --numeric-ids";
-  if ($dryrun) {
+  if ($dry_run) {
       $command = $command . qq( --dry-run) ;
   }
 
@@ -362,7 +362,7 @@ EOF
   $command = $command . " --delete rsync://${imageserver}:${port}/$image$directory $directory";
 
   # execute command
-  if ($dryrun) {
+  if ($dry_run) {
   	print qq(dryrun against image...\n); }
   else {
   	print qq(Updating image...\n);
