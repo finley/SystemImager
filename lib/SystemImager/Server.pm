@@ -9,6 +9,28 @@ package SystemImager::Server;
 $version_number="1.5.0";
 $VERSION = $version_number;
 
+sub add2rsyncd {
+    my ($class, $rsyncconf, $imagename, $imagedir) = @_;
+    
+    if(!_imageexists($rsyncconf, $imagename)) {
+        open(OUT,">>$rsyncconf") or return undef;
+        print OUT "[$imagename]\n\tpath=$imagedir\n\n";
+        close OUT;
+        return 1;
+    }
+    return 1;
+}
+
+sub _imageexists {
+    my ($rsyncconf, $imagename) = @_;
+    open(IN,"<$rsyncconf") or return undef;
+    if(grep(/\[$imagename\]/, <IN>)) {
+        close(IN);
+        return 1;
+    }
+    return undef;
+}
+
 sub validate_post_install_option {
   my $post_install=$_[1];
 

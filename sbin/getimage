@@ -491,16 +491,10 @@ if(!$quiet) {
 unlink $final_exclude_file || die "$program_name: Removal of file $final_exclude_file failed\n";
 
 # Add entry to image server's rsyncd.conf if necessary
-open (RSYNCD_CONF, "<$rsyncd_conf");
-if (!grep(/\[$image\]/, <RSYNCD_CONF>)) {
-    open(RSYNCD_CONF, ">>$rsyncd_conf") || die "$program_name: Cannot open $rsyncd_conf for writing";
-    print RSYNCD_CONF <<"EOF";
-[$image]
-    path = $imagedir
-	    
-EOF
-};
-close(RSYNCD_CONF);
+
+SystemImager::Server->add2rsyncd($rsync_conf,$image,$imagedir) or 
+  die "$program_name: Cannot add $image entry to $rsyncd_conf";
+
 ### END generic image retrieval stuff ###
 
 
