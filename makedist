@@ -37,6 +37,7 @@ wrap_it_up() {
   mkdir -p  /tmp/${PACKAGE} || exit 1
 
   # copy down selected files
+  echo 
   echo "Copying files from file.listing.${SUBSET} down to /tmp/${PACKAGE}..."
   tar -cf - `cat file.listing.${SUBSET}` | tar -C /tmp/${PACKAGE} -x || exit 1
 
@@ -47,7 +48,7 @@ wrap_it_up() {
   bzip2 /tmp/${PACKAGE}.tar || exit 1
 
   # put it back in our working directory
-  mv -i /tmp/${PACKAGE}.tar.bz2 . || exit 1
+  mv /tmp/${PACKAGE}.tar.bz2 . || exit 1
 
   # remove fresh cruft
   rm -rf /tmp/${PACKAGE} || exit 1
