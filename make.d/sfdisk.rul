@@ -1,0 +1,23 @@
+UTILLINUX_VERSION := 2.11u
+UTILLINUX_DIR := util-linux-$(UTILLINUX_VERSION)
+UTILLINUX_TARBALL := util-linux-$(UTILLINUX_VERSION).tar.gz
+UTILLINUX_URL := ftp://ftp.us.kernel.org/pub/linux/utils/util-linux/$(UTILLINUX_TARBALL)
+SFDISK_BINARY := $(SRC_DIR)/$(UTILLINUX_DIR)/fdisk/sfdisk
+
+ALL_SOURCE += $(SRC_DIR)/$(UTILLINUX_TARBALL)
+
+PHONY += sfdisk
+sfdisk:	$(SFDISK_BINARY)
+
+$(SFDISK_BINARY):	$(SRC_DIR)/$(UTILLINUX_TARBALL)
+	[ -d $(SRC_DIR)/$(UTILLINUX_DIR) ] || ( cd $(SRC_DIR) && tar -xvzf $(UTILLINUX_TARBALL) )
+	( cd $(SRC_DIR)/$(UTILLINUX_DIR) && ./configure )
+	$(MAKE) -C $(SRC_DIR)/$(UTILLINUX_DIR) fdisk
+
+$(SRC_DIR)/$(UTILLINUX_TARBALL):
+	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
+	$(GETSOURCE) $(UTILLINUX_URL) $(SRC_DIR)
+
+PHONY += bc_clean
+sfdisk_clean:
+	rm -rf $(SRC_DIR)/$(UTILLINUX_DIR)
