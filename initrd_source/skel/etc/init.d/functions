@@ -180,8 +180,8 @@ get_flamethrower_directory() {
 #
 #   MODULE_NAME=my_module   # Required
 #   DIR=/my/destination/dir # Required
-#   RETRY=7                 # Optional
-#   PORTBASE=9000           # Required if a sourceable file called $MODULE_NAME
+#  [RETRY=7]                # Optional
+#  [PORTBASE=9000]          # Required if a sourceable file called $MODULE_NAME
 #                           # doesn't exist
 #
 #   flamethrower_client
@@ -264,6 +264,7 @@ flamethrower_client() {
                 if [ "$THIS_STAMP" = "$LAST_STAMP" ]; then
                     echo "Uh oh, no progress since we last checked, so die, die, die my darlin'"
                     killall -9 udp-receiver
+                    unset UDP_RECEIVER_RUNNING
                     sleep 1
                 fi
                 LAST_STAMP=$THIS_STAMP
@@ -279,12 +280,9 @@ flamethrower_client() {
             # just proceed, no worries
         elif [ "$TAR_EXIT_STATUS" = "0" ]; then
             # success -- break loop, and proceed with install
-            echo 'flamethrower_client: Success!'
-            echo '--------------------------------------------------------------------------------'
             break
         else
             # failure
-            unset UDP_RECEIVER_RUNNING
             if [ $COUNT -lt $RETRY ]; then
                 COUNT=$(( $COUNT + 1 ))
                 echo "flamethrower_client: Proceeding with retry $COUNT of $RETRY"
@@ -298,7 +296,15 @@ flamethrower_client() {
         # sleep apnea
         sleep $FLAMETHROWER_CLIENT_SLEEP
 
+        # progress bar
+        echo -n "."
+
     done
+
+    # done
+    echo "done!"
+    echo 'flamethrower_client: Success!'
+    echo '--------------------------------------------------------------------------------'
 
 
     # Unset vars, so next module (which may not have them set) won't use then unintentially
@@ -309,6 +315,8 @@ flamethrower_client() {
     unset RETRY
     unset COUNT
     unset DIR
+    unset UDP_RECEIVER_RUNNING
+    unset PORTBASE
 
 }
 
@@ -345,7 +353,7 @@ get_boel_binaries_tarball() {
         MODULE_NAME="boot-${ARCH}-${FLAVOR}"
         DIR="${BOEL_BINARIES_DIR}"
         RETRY=7
-        flamethrower_client $MODULE_NAME $DIR
+        flamethrower_client
 
     else
         # Use rsync
