@@ -413,13 +413,14 @@ endif
 	mkdir -m 755 -p $(SYSTEMIMAGER_SSH_DIR)/sbin
 	install -m 755 --strip $(OPENSSH_BINARIES) $(SYSTEMIMAGER_SSH_DIR)/sbin/
 
-	# Use the mklibs.sh script from Debian to find and copy libraries and 
+	# Use the mklibs utility from Debian to find and copy libraries and 
 	# any soft links.  Note: This does not require PIC libraries -- it will
 	# copy standard libraries if it can't find a PIC equivalent.  -BEF-
 	#
 	mkdir -m 755 -p $(SYSTEMIMAGER_SSH_DIR)/lib
 	cd $(SYSTEMIMAGER_SSH_DIR) && \
-	  $(PYTHON) $(TOPDIR)/initrd_source/mklibs -v -d lib sbin/*
+	  $(PYTHON) $(TOPDIR)/initrd_source/mklibs \
+	  -L /lib64:/usr/lib64 -v -d lib sbin/*
 
 	tar -cv $(OPENSSH_OTHER_FILES) | tar -C $(SYSTEMIMAGER_SSH_DIR) -xv
 
@@ -485,21 +486,22 @@ PHONY += boel_binaries_tarball
 boel_binaries_tarball:	$(BOEL_BINARIES_TARBALL)
 
 $(BOEL_BINARIES_TARBALL):	$(DISCOVER_BINARY) \
-							$(DISCOVER_DATA_FILES) \
-							$(MKDOSFS_BINARY) \
-							$(MKE2FS_BINARY) \
-							$(TUNE2FS_BINARY) \
-							$(PARTED_BINARY) \
-							$(MKJFS_BINARY) \
-							$(RAIDTOOLS_BINARIES) \
-							$(MKREISERFS_BINARY) \
-							$(BC_BINARY) \
-							$(SFDISK_BINARY) \
-							$(MKXFS_BINARY) \
-							$(CTCS_BINARY) \
-							$(TAR_BINARY) \
-							$(GZIP_BINARY) \
-							$(SRC_DIR)/modules_build-stamp
+				$(DISCOVER_DATA_FILES) \
+				$(MKDOSFS_BINARY) \
+				$(MKE2FS_BINARY) \
+				$(TUNE2FS_BINARY) \
+				$(PARTED_BINARY) \
+				$(MKJFS_BINARY) \
+				$(RAIDTOOLS_BINARIES) \
+				$(MKREISERFS_BINARY) \
+				$(BC_BINARY) \
+				$(SFDISK_BINARY) \
+				$(MKXFS_BINARY) \
+				$(CTCS_BINARY) \
+				$(TAR_BINARY) \
+				$(GZIP_BINARY) \
+				$(DEPMOD_BINARY) \
+				$(SRC_DIR)/modules_build-stamp
 	#
 	# Put binaries in the boel_binaries_tarball...
 	#
@@ -543,8 +545,16 @@ endif
 
 	# copy over libnss files for non-uclibc arches
 	# (mklibs doesn't automatically pull these in)
-ifneq ($(ARCH), i386)
-	cp -a /lib/libnss_dns* $(BOEL_BINARIES_DIR)/lib
+ifneq ($(ARCH),i386)
+	# there maybe older compat versions that we don't want, but
+	# they have names like libnss1_dns so this shouldn't copy them.
+	# we do the sort so that filse from /lib64 files will be copied over
+	# identically named files from /lib
+	cp -a $(sort $(wildcard /lib*/libnss_dns-*)) $(BOEL_BINARIES_DIR)/lib
+	# if multiple libnss_dns.so.* symlinks exist, only grab the one with
+	# the greatest soname, which should drop the old compat versions
+	cp -a $(word $(words $(sort $(wildcard /lib*/libnss_dns*))), \
+	  $(sort $(wildcard /lib*/libnss_dns*))) $(BOEL_BINARIES_DIR)/lib
 endif
 
 	#
@@ -553,12 +563,17 @@ endif
 	# copy standard libraries if it can't find a PIC equivalent.  -BEF-
 	#
 	cd $(BOEL_BINARIES_DIR) && $(PYTHON) $(TOPDIR)/initrd_source/mklibs \
-	  -L $(SRC_DIR)/$(PARTED_DIR)/libparted/.libs:$(SRC_DIR)/$(DISCOVER_DIR)/lib/.libs -v -d lib bin/* sbin/*
+	  -L /lib64:/usr/lib64:$(SRC_DIR)/$(PARTED_DIR)/libparted/.libs:$(SRC_DIR)/$(DISCOVER_DIR)/lib/.libs -v -d lib bin/* sbin/*
 	#
 	#
 	# install kernel modules. -BEF-
 	#
 	$(MAKE) -C $(LINUX_SRC) modules_install INSTALL_MOD_PATH="$(BOEL_BINARIES_DIR)"
+ifdef DEPMOD_BINARY
+	# If the build system doesn't have module-init-tools installed, and
+	# our modules need it, we need to use the depmod we built
+	$(DEPMOD_BINARY) -r -b $(BOEL_BINARIES_DIR) $(LINUX_VERSION)
+endif
 	#
 	# get rid of build, which is a link to the kernel source directory (won't exist in BOEL anyway). -BEF-
 	rm -f $(BOEL_BINARIES_DIR)/lib/modules/*/build
