@@ -71,9 +71,9 @@ WARNING_FILES = $(IMAGEDEST)/README $(IMAGEDEST)/DO_NOT_TOUCH_THESE_DIRECTORIES 
 
 LINUX_SRC = $(SRC_DIR)/linux
 LINUX_VERSION = 2.2.18
-LINUX_TARBALL = linux-$(LINUX_VERSION).tar.gz
+LINUX_TARBALL = linux-$(LINUX_VERSION).tar.bz2
 LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.2/$(LINUX_TARBALL)
-LINUX_MD5SUM = 2be6aacc7001b061de2eec51a4c89b3b
+LINUX_MD5SUM = 9a8f4b1003ff6b096678d193fd438467
 LINUX_IMAGE = $(LINUX_SRC)/arch/i386/boot/bzImage
 LINUX_PATCH = $(PATCH_DIR)/linux.patch
 LINUX_CONFIG = $(PATCH_DIR)/autoinstall.kernel.config
@@ -91,7 +91,7 @@ REISERFSPROGS_DIR = $(LINUX_SRC)/fs/reiserfs/utils
 #@all:
 #@  build everything, install nothing
 #@ 
-all:	raidtools reiserfsprogs $(LINUX_IMAGE) $(INITRD) docs manpages
+all:	raidtools reiserfsprogs kernel initrd docs manpages
 
 #@install_server_all:
 #@  a complete server install
@@ -230,7 +230,7 @@ patched_kernel:	patched_kernel-stamp
 patched_kernel-stamp:
 	$(MAKE) $(SRC_DIR)/$(LINUX_TARBALL)
 	[ -d $(LINUX_SRC) ] || \
-		( cd $(SRC_DIR) && tar xvfz $(LINUX_TARBALL) && \
+		( cd $(SRC_DIR) && bzcat $(LINUX_TARBALL) | tar xv && \
 		  [ ! -f ../$(LINUX_PATCH) ] || \
 		  patch -p0 < ../$(LINUX_PATCH) || /bin/true )
 	cp -a $(LINUX_CONFIG) $(LINUX_SRC)/.config
