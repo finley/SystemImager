@@ -380,11 +380,11 @@ sub _read_partition_info_and_prepare_parted_commands {
         print $out qq(DISK_SIZE=`parted -s $devfs_dev print ) . q(| grep 'Disk geometry for' | sed 's/^.*-//g' | sed 's/\..*$//' `) . qq(\n);
         print $out q([ -z $DISK_SIZE ] && shellout) . qq(\n);
 
-        print $out qq(if [ "$ARCH" = "alpha" ]; then\n);	
-        print $out qq(    END_OF_LAST_PRIMARY=1\n);
-        print $out qq(else\n);
-        print $out qq(    END_OF_LAST_PRIMARY=0\n);
-        print $out qq(fi\n\n);
+        print $out q(if [ "$ARCH" = "alpha" ]; then) . qq(\n);	
+        print $out q(    END_OF_LAST_PRIMARY=1) . qq(\n);
+        print $out q(else) . qq(\n);
+        print $out q(    END_OF_LAST_PRIMARY=0) . qq(\n);
+        print $out q(fi) . qq(\n\n);
 
         ### BEGIN Populate the simple hashes. -BEF- ###
         my (
