@@ -53,7 +53,7 @@ ps:	$(DB2PS) $(SRC) clean_ps
 pdf:	$(DB2PDF) $(SRC) clean_pdf
 	$(DB2PDF) $(SRC)
 	mkdir -p $(DEST)/$(PDFDIR)
-	mv $(NAME).aux $(NAME).log $(NAME).tex $(NAME).pdf $(DEST)/$(PDFDIR)
+	mv (NAME).aux $(NAME).log $(NAME).tex $(NAME).pdf $(DEST)/$(PDFDIR)
 	cp -a $(SRC) $(DEST)/$(PDFDIR)
 	cp -a $(CREDITS) $(DEST)/$(PDFDIR)
 	@echo

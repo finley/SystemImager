@@ -2237,4 +2237,135 @@ the following command on a client that is already partitioned correctly:
    </para>
   </sect2>
  </sect1>
+
+ <glossary>
+  <title>SystemImager Terminology</title>
+  <glossentry>
+   <glossterm>autoinstall media</glossterm>
+   <glossdef>
+    <para>
+     The media that is used to boot an autoinstall client in order to begin
+     the autoinstall process.  This media can be a floppy, a CDROM, the
+     network, or the local hard drive of the autoinstall client.
+    </para>
+   </glossdef>
+  </glossentry>
+  <glossentry>
+   <glossterm>local.cfg</glossterm>
+   <glossdef>
+    <para>
+     A configuration file that can be used for autoinstall clients
+     in lieu of DHCP and the /tftpboot/systemimager/hosts file on the image
+     server.
+    </para>
+   </glossdef>
+  </glossentry>
+  <glossentry>
+   <glossterm>updateclient</glossterm>
+   <glossdef>
+    <para>
+     A command that is executed on client systems allowing them 
+     to be updated or synchronized to a new or updated image after the
+     initial autoinstall.  updateclient enables software and content
+     distribution.
+    </para>
+   </glossdef>
+  </glossentry>
+  <glossentry>
+   <glossterm>image server</glossterm>
+   <glossdef>
+    <para>The machine that will hold and distribute the images.</para>
+   </glossdef>
+  </glossentry>
+  <glossentry>
+   <glossterm>golden client</glossterm>
+   <glossdef>
+    <para>
+     A machine from which an image is taken.  Golden clients
+     are manually installed and customized to taste.
+    </para>
+   </glossdef>
+  </glossentry>
+  <glossentry>
+   <glossterm>getimage</glossterm>
+   <glossdef>
+    <para>
+     This command is run from the image server to pull a system
+     image from a golden client.
+    </para>
+   </glossdef>
+  </glossentry>
+  <glossentry>
+   <glossterm>prepareclient</glossterm>
+   <glossdef>
+    <para>
+     This command is run on the golden client immediately 
+     prior to running getimage on the image server.
+    </para>
+   </glossdef>
+  </glossentry>
+  <glossentry>
+   <glossterm>makedhcpserver</glossterm>
+   <glossdef>
+    <para>
+     An easy way to create a <application>SystemImager</application>
+     appropriate <filename>/etc/dhcpd.conf</filename> file.  DHCP can be
+     used to assign IP addresses to autoinstall clients.
+    </para>
+   </glossdef>
+  </glossentry>
+  <glossentry>
+   <glossterm>makedhcpstatic</glossterm>
+   <glossdef>
+    <para>
+     Used to modify the <filename>/etc/dhcpd.conf</filename> file, adding 
+     static entries for autoinstall clients based on the IP addresses 
+     handed out to these clients by the DHCP server.
+    </para>
+   </glossdef>
+  </glossentry>
+  <glossentry>
+   <glossterm>autoinstall script</glossterm>
+   <glossdef>
+    <para>
+     A unique autoinstall script is created for each 
+     image and is used by the autoinstall client as part of the autoinstall 
+     process.  The names of autoinstall scripts begin with the image name 
+     and end in .master.  For example:
+     <filename>my_webserver_image_v1.master</filename>
+    </para>
+   </glossdef>
+  </glossentry>
+  <glossentry>
+   <glossterm>addclients</glossterm>
+   <glossdef>
+    <para>
+     Tells your image server which image to install on your
+     autoinstall clients.  It does so by creating soft links to the 
+     master autoinstall script with the name of each host that will 
+     receive that image.  It also allows you to populate the /etc/hosts 
+     file with sequential host names and IP addresses.  This information
+     in <filename>/etc/hosts</filename> is necessary for certain SystemImager
+     operations.
+    </para>
+   </glossdef>
+  </glossentry>
+  <glossentry>
+   <glossterm>
+    <ulink url="http://www.dictionary.com/cgi-bin/dict.pl?term=daemon">
+     daemon
+    </ulink>
+   </glossterm>
+   <glossdef>
+    <para>
+     This is not specifically a SystemImager term, but it really
+     bugs me when people pronounce this word as "daymen".  It is just
+     another, more interesting, less evil appearing way of spelling demon.
+     And just to be clear, in computer terms, a daemon is a program that
+     lies in wait for something to trigger it into action.  An example of
+     this is a web server daemon waiting for someone to request a web page.
+    </para>
+   </glossdef>
+  </glossentry>
+ </glossary>
 </article>
