@@ -45,7 +45,10 @@ mount | grep c[0-9]+d[0-9]+p > /dev/null 2>&1
 ### END Check to be sure this not run from a working machine ###
 
 
-### BEGIN Stop RAID devices before partitioning begins ###
+################################################################################
+#
+#   Stop RAID devices before partitioning begins
+#
 # Q1) Why did they get started in the first place?  
 # A1) So we can pull a local.cfg file off a root mounted software RAID system.
 #     They may not be started on your system -- they would only be started if
@@ -65,7 +68,6 @@ mount | grep c[0-9]+d[0-9]+p > /dev/null 2>&1
 # A3) Compile an autoinstall kernel with software RAID, and any other drivers 
 #     you might need built in (filesystem, SCSI drivers, etc.).
 #
-# Find running raid devices
 if [ -f /proc/mdstat ]; then
   RAID_DEVICES=` cat /proc/mdstat | grep ^md | sed 's/ .*$//g' `
 
@@ -80,7 +82,8 @@ if [ -f /proc/mdstat ]; then
     echo "raidstop ${DEV}" && raidstop ${DEV}
   done
 fi
-### END Stop RAID devices before partitioning begins ###
+#
+################################################################################
 
 ##PARTITION_DISKS##
 
@@ -114,7 +117,10 @@ if [ $NO_LISTING ]; then
     pid=$!
 fi
 
-# Filler up!
+################################################################################
+#
+#   Lay the image down on the freshly formatted disk(s)
+#
 if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then 
     # Use multicast 
     MODULE_NAME="${IMAGENAME}"
@@ -157,6 +163,11 @@ else
     fi
 fi 
 
+beep
+
+#
+################################################################################
+
 
 if [ $NO_LISTING ]; then
     kill $pid
@@ -171,7 +182,10 @@ echo $IMAGENAME > /a/etc/systemimager/IMAGE_LAST_SYNCED_TO || shellout
 ##GENERATE_FSTAB##
 ### END generate new fstab file from autoinstallscript.conf ###
 
-### BEGIN overrides ###
+################################################################################
+#
+#   Process override directories
+#
 for OVERRIDE in $OVERRIDES
 do
     if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
@@ -186,7 +200,11 @@ do
         rsync -av --numeric-ids $IMAGESERVER::overrides/$OVERRIDE/ /a/ || echo "Override directory $OVERRIDE doesn't seem to exist, but that may be OK."
     fi
 done
-### END overrides ###
+
+beep
+
+#
+################################################################################
 
 
 ##################################################################
@@ -196,26 +214,46 @@ done
 # hostname provided by a DHCP server.  The default is to have
 # SystemConfigurator assign your clients the hostname that
 # corresponds to the IP address the use during the install.
-# (If you used to use static_dhcp, is your man.)
+# (If you used to use the static_dhcp option, this is your man.)
 #
 #HOSTNAME=""
 
+#
+################################################################################
 
-### BEGIN systemconfigurator ###
+################################################################################
+#
+#   System Configurator
+#
 # Configure the client's hardware, network interface, and boot loader.
+#
 ##SYSTEMCONFIGURATOR##
-### END systemconfigurator ###
+#
+################################################################################
 
 
-### BEGIN Unmount filesystems ###
+################################################################################
+#
+#   Unmount filesystems
+#
 ##UMOUNT_FILESYSTEMS##
-### END Unmount filesystems ###
+#
+################################################################################
 
 
-# Tell the image server we're done.
+################################################################################
+#
+#   Tell the image server we're done
+#   
 rsync $IMAGESERVER::scripts/imaging_complete > /dev/null 2>&1
+
+#
+################################################################################
 
 # Take network interface down
 ifconfig eth0 down || shellout
+
+# Announce completion (even for non beep-incessantly --post-install options)
+beep 3
 
 ##POSTINSTALL##
