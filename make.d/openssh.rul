@@ -55,7 +55,6 @@ $(SRC_DIR)/openssh_verify.stamp:	$(OPENSSH_TARBALL_TARGET)
 $(OPENSSH_TARBALL_TARGET):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
 	$(GETSOURCE) $(OPENSSH_URL) $(SRC_DIR)
-	$(GETSOURCE) $(OPENSSH_URL).sig $(SRC_DIR)
 
 PHONY += ssh_clean
 ssh_clean:  openssh_clean
