@@ -59,6 +59,7 @@ TEMP_DIR="$(dirname $0)/si_install.tmp"
 FORMAT="unknown"
 
 ERRMSG=""
+force_text=0
 
 ## if ERRMSG is set, print out an error message and exit non-zero
 ## otherwise, just exit cleanly.
@@ -87,6 +88,10 @@ while [ $# -gt 1 ]; do
 	## options intended for si_install
 	if [ "$(echo "$1" | cut -c -12)" == "--si-prefix=" ]; then
 	    SI_PREFIX=$(echo "$1" | cut -c 13-)
+	    shift
+	    continue
+	elif [ "$1" == "--text" ]; then
+	    force_text=1
 	    shift
 	    continue
 	fi
@@ -138,7 +143,7 @@ else
 	file $1 | grep -q text
 	## not a text file, so don't mess with it.
 	## is there a better way to determine if a file is binary or not?
-	if [ $? -ne 0 ]; then
+	if [ $? -ne 0 -a $force_text -eq 0 ]; then
 	    echo "$0: $1 appears to be binary, so leaving it alone."
 	    INSTALL_OPTS="$INSTALL_OPTS $1"
 	else
