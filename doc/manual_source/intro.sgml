@@ -94,55 +94,15 @@
       </para>
       
       <para>
-	Following is an incomplete list of distributions known to work with 
-	<application>SystemImager</application>.  If you are successfully 
-	using <application>SystemImager</application> with a distribution or 
-	version not listed here, please submit a
-	<ulink url="http://sourceforge.net/bugs/?group_id=259">
-	  bug report
-	</ulink>, 
-	so the distribution can be added to the list.  Though not a bug,
-	reporting the success here is the best way to communicate the
-	information.
-      </para>
-      
-      <formalpara>
-      <title>Distribution Support</title>
-      <para>
-	This is far from an exhaustive list of distributions supported
-	by SystemImager.  SystemImager is distribution agnostic in nearly
+	Therefore, SystemImager is distribution agnostic in nearly
 	all areas.  With few exceptions, all distribution specific
 	knowledge exists within the SystemConfigurator tool, which
-	supports a very large range of distributions.
+	supports a very large range of distributions.  If you find a distribution that does not work
+    with SystemImager, please file a bug report.
       </para>
-      </formalpara>
-      <table frame="all">
-	<title>Author Tested and Supported Distributions</title>
-	<tgroup cols="2">
-	  <colspec colname="column1">
-	    <colspec colname="column2">
-	      <spanspec namest="column2" nameend="column2" spanname="span-horiz" align="center">
-		<thead>
-		  <row>
-		    <entry>Distribution</entry>
-		    <entry spanname="span-horiz">Versions</entry>
-		  </row>
-		</thead>
-		<tbody>
-		  <row>
-		    <entry>Debian</entry>
-		    <entry>3.0</entry>
-		  </row>
-		  <row>
-		    <entry>RedHat</entry>
-		    <entry>7.2, Advanced Server 2.1</entry>
-		  </row>
-		</tbody>
-	</tgroup>
-      </table>
       
       <para>
-	Linux kernel 2.0.x-based distributions are not supported at this time, nor
+	NOTE: Linux kernel 2.0.x-based distributions are not supported at this time, nor
 	are there plans to add support for Linux kernel 2.0.x-based 
 	distributions.
       </para>
