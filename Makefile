@@ -67,7 +67,7 @@
 #
 
 DESTDIR = 
-
+PATH = /sbin:/bin:/usr/sbin:/usr/bin:/usr/bin/X11:/usr/local/sbin:/usr/local/bin
 ARCH = $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/)
 
 TEMP_DIR = systemimager.initrd.temp.dir/
@@ -170,7 +170,7 @@ install_server:	install_manpages install_configs install_server_libs
 	install -m 644 --backup $(PXE_CONF_SRC)/syslinux.cfg \
 		$(PXE_CONF_DEST)/default
 	install -d -m 755 $(TFTP_ROOT)/systemimager
-	install -m 644 tftpstuff/systemimager/systemimager.exclude \
+	install -m 644 tftpstuff/systemimager/updateclient.local.exclude \
 		$(TFTP_ROOT)/systemimager
 	install -m 755 $(TFTP_BIN_SRC)/prepareclient $(TFTP_BIN_DEST)
 	install -m 755 $(TFTP_BIN_SRC)/updateclient $(TFTP_BIN_DEST)
@@ -183,7 +183,7 @@ install_server:	install_manpages install_configs install_server_libs
 #@@ 
 install_client: install_client_manpages
 	mkdir -p $(ETC)/systemimager
-	install -m 644 tftpstuff/systemimager/systemimager.exclude \
+	install -m 644 tftpstuff/systemimager/updateclient.local.exclude \
 		$(ETC)/systemimager
 	mkdir -p $(SBIN)
 
@@ -194,7 +194,7 @@ install_client: install_client_manpages
 #@@  install files common to both the server and client
 #@@ 
 install_common:	install_common_manpages
-	mkdir -p $(SBIN)
+	mkdir -p $(BIN)
 	$(foreach binary, $(COMMON_BINARIES), \
 		install -m 755 $(COMMON_BINARY_SRC)/$(binary) $(BIN);)
 
