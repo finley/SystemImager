@@ -214,13 +214,13 @@
   <title>Supported Distributions</title>
   <para>
    <application>VA SystemImager</application> is designed to work with 
-   most any Linux distribution.  However, there are certain parts of 
-   <application>VA SystemImager</application> that expect certain 
-   SystemImager expects, then you will probably find that the networking and 
-   maybe the hostname are not configured properly after doing an autoinstall.  
-   If you try <application>VA SystemImager</application> with your favourite 
-   distribution and it doesn't work properly, it can be made to work.  Please 
-   submit a bug report to: 
+   most any Linux distribution.  However, there are parts of 
+   <application>VA SystemImager</application> that may need to be customized 
+   to deal with untested distributions.   For example, you may find that the 
+   networking and  maybe the hostname are not configured properly after doing 
+   an autoinstall.  If you try <application>VA SystemImager</application> with 
+   your favourite distribution and it doesn't work properly, it can be made to
+   work.  Please submit a bug report to: 
    <email>systemimager-bugs@systemimager.org</email>.
   </para>
 
@@ -247,7 +247,7 @@
              </row>
             </thead>
             <tbody>
-<row><entry>debian</entry><entry>2.1 w/ 2.2.x kernel upgrade</entry><entry>2.2</entry></row>
+<row><entry>Debian</entry><entry>2.1 w/ 2.2.x kernel upgrade</entry><entry>2.2</entry></row>
 <row><entry>Kondara</entry><entry>1.1</entry><entry></entry><entry></entry></row>
 <row><entry>RedHat</entry><entry>6.0</entry><entry>6.1</entry><entry>6.2</entry></row>
 <row><entry>RedHat w/ VA Enhancements</entry><entry>6.0.x</entry><entry>6.1.x</entry><entry>6.2.x</entry></row>
@@ -256,8 +256,9 @@
 </table>
 
   <para>
-   2.0.x based distributions are not fully supported at this time.  Currently
-   there are no plans to add support for 2.0.x based distributions.
+   Linux-2.0.x based distributions are not fully supported at this time.  
+   Currently there are no plans to add support for Linux 2.0.x based 
+   distributions.
   </para>
  </sect1>
 
@@ -265,14 +266,14 @@
   <title>System Requirements</title>
    <para>
     To set up a <application>VA SystemImager</application> server 
-    installation, you will require two services:  
+    installation, you will require the following configuration:
    </para>
 
    <itemizedlist>
     <listitem>
      <para>
       You will need to have rsync installed on your "imageserver" and on your 
-      "master" client.
+      "golden" client.
      </para>
     </listitem>
     <listitem>
@@ -285,9 +286,22 @@
     </listitem>
     <listitem>
      <para>
+      For PXE installations, you will need a compatible tftp server running on 
+      the boot server (usually the image/DHCP server).  H. Peter Anvin 
+      maintains the <application>tftp-hpa</application> package, which 
+      provides the required functionality.  RedHat 7.0 includes this server
+      in their tftp-server package, but the tftp package included with earlier 
+      RedHat releases doesn't provide the required functionality.  PXE 
+      network-based installations may also require a pxe daemon to be running 
+      on your imageserver.  This requirement depends on the firmware used on 
+     the client side, and the capabilities of your DHCP server.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
       All of the clients for a particular image should have an identical 
-      hardware configuration.  They should at least have the same hard drive(s) 
-      and the same ethernet card(s).
+      hardware configuration.  They should at least have the same hard 
+      drive(s) and the same ethernet card(s).
      </para>
     </listitem>
    </itemizedlist>
@@ -310,17 +324,17 @@
     </listitem>
     <listitem>
      <para>
-      Install the "master" client with Linux
+      Install and customize the "golden" client with Linux
      </para>
     </listitem>
     <listitem>
      <para>
-      Install the VA System Imager client software on the "master" client
+      Install the VA System Imager client software on the "golden" client
      </para>
     </listitem>
     <listitem>
      <para>
-      Retrieve the image from the "master" client
+      Retrieve the image from the "golden" client
      </para>
     </listitem>
     <listitem>
@@ -330,7 +344,7 @@
     </listitem>
     <listitem>
      <para>
-      Install the "master" image on other nodes
+      Install the "golden" image on other nodes
      </para>
     </listitem>
    </itemizedlist>
@@ -342,7 +356,7 @@
   <title>How <application>VA SystemImager</application> Works</title>
    <para>
     The basic idea behind <application>VA SystemImager</application> is 
-    to retrieve the entire system image from a "master" client to an 
+    to retrieve the entire system image from a "golden" client to an 
     "imageserver" (the imageserver is the machine where you install this 
     software).  This image can then be replicated to any number of client 
     systems you want configured in the same way.
@@ -351,8 +365,9 @@
    <para>
     Once your client systems have had the initial image replicated to them,
     they can be updated/upgraded by syncing them to an updated image on the
-    image server.  During an update, only modified files are pulled to the 
-    client.  This makes for a fast, efficient, and accurate mass update.
+    image server.  During an update, only the modified parts of files are 
+    pulled to the client.  This makes for a fast, efficient, and accurate mass 
+    update.
    </para>
  </sect1>
 
@@ -366,8 +381,8 @@
     NFS, DNS, DHCP, YP, LDAP, VACM (VA Cluster Manager), Scheduling Services, 
     etc.
    </para>
-  <example><title>Install the ImageServer on the node designated as the 
-   Cluster/Farm Management Server</title>
+  <example><title>Install the ImageServer software on the node designated as 
+   the Cluster/Farm Management Server</title>
    <mediaobject>
     <imageobject>
      <imagedata format="jpg" fileref="images/si_image1.jpg">
@@ -473,13 +488,13 @@ Press <command>Enter</command> to continue...
 
    </sect2>
    <sect2 id=BuildMasterClient>
-    <title>Create the Master Image</title>
+    <title>Create the Golden Image</title>
      <para>
-      Select a machine which will be the "master" client.  This machine's 
+      Select a machine which will be the "golden" client.  This machine's 
       image is the image you will eventually replicate across other machines.  
      </para>
 
-    <example><title>Install the "master" client</title>
+    <example><title>Install the "golden" client</title>
      <mediaobject>
       <imageobject>
        <imagedata format="jpg" fileref="images/si_image2.jpg">
@@ -489,7 +504,7 @@ Press <command>Enter</command> to continue...
       </imageobject>
       <textobject>
        <phrase>
-        Install the "master" client 
+        Install the "golden" client 
        </phrase>
       </textobject>
      </mediaobject>
@@ -498,7 +513,7 @@ Press <command>Enter</command> to continue...
      <itemizedlist>
       <listitem>
        <para>
-        Configure this "master" client as you normally would any machine. 
+        Configure this "golden" client as you normally would any machine. 
         Install Linux on this node with the understanding that the software
         installed will eventually constitute the image for all other nodes
         installed with <application>VA System Imager</application>.
@@ -510,16 +525,16 @@ Press <command>Enter</command> to continue...
       <listitem>
        <para>
         Download and install the latest <filename>va-systemimager-client
-        </filename> RPM or tarball on  the "master" client.
+        </filename> package on the "golden" client.
        </para>
       </listitem>
       <listitem>
        <para>
-        Run the <command>prepareclient</command> command on the "master" client.
+        Run the <command>prepareclient</command> command on the "golden" client.
        </para>
      <example><title>Running the prepare command</title>
       <programlisting>
-[bash@imagemaster]$  <command>prepareclient</command> 
+[bash@imagegolden]$  <command>prepareclient</command> 
 
 Welcome to the VA SystemImager prepareclient command.  This command
 may modify the following files to prepare your client for having it's
@@ -551,13 +566,13 @@ You must now run the "getimage" command on the imageserver.
      </itemizedlist>
    </sect2>
    <sect2 id=PullImage>
-    <title>Pull the Master Image from the "master" client</title>
+    <title>Pull the Golden Image from the "golden" client</title>
      <para>
-      You are then ready to pull the image from the "master" client onto
+      You are then ready to pull the image from the "golden" client onto
       the "imageserver" with the <command>getimage</command> command.
      </para>
 
-    <example><title>Pull the "master" client's image back to the image server</title>
+    <example><title>Pull the "golden" client's image back to the image server</title>
      <mediaobject>
       <imageobject>
        <imagedata format="jpg" fileref="images/si_image3.jpg">
@@ -567,17 +582,17 @@ You must now run the "getimage" command on the imageserver.
       </imageobject>
       <textobject>
        <phrase>
-        Pull the "master" client's image back to the image server
+        Pull the "golden" client's image back to the image server
        </phrase>
       </textobject>
      </mediaobject>
     </example>
 
      <para>
-       Syntax: <command>getimage</command> <command>-master-client</command> [client_hostname] <command>-image</command> [image_name]
+       Syntax: <command>getimage</command> <command>-golden-client</command> [client_hostname] <command>-image</command> [image_name]
      </para>
      <para>
-       where [client_hostname] is the hostname or IP address of the "master"
+       where [client_hostname] is the hostname or IP address of the "golden"
        client and [image_name] is the name that you want to give to this image.
      </para>
 
@@ -763,7 +778,7 @@ Press <command>Enter</command> to continue...
    <sect2 id=AutoInstall>
     <title>Auto-install the clients</title>
      <para>
-      There are two methods to Auto-installing the clients:
+      There are three methods to Auto-installing the clients:
       <itemizedlist>
        <listitem>
         <para>
@@ -773,8 +788,16 @@ Press <command>Enter</command> to continue...
        </listitem>
        <listitem>
         <para>
-         Using the network boot function if your system supports it such as 
-         PXE which is usually enabled through a BIOS setting 
+         Using a network boot function, such as PXE,  if your system supports 
+         it.  This is usually enabled through a BIOS setting.
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         A client node can be told to autoinstall when it is next rebooted.
+         For this method, the client must already have Linux, 
+         <application>LILO</application>, and the 
+         <application>VA Systemimager</application> client installed.
         </para>
        </listitem>
       </itemizedlist>
@@ -793,9 +816,19 @@ Press <command>Enter</command> to continue...
      <para>
       If you prefer to boot off the network, change the settings in your
       BIOS to boot off your PXE enabled network card, and reboot your
-      client system.  It should automatically find and boot off the
-      imageserver and begin to autoinstall itself.
+      client system.  It *should* automatically find and boot off the
+      imageserver and begin to autoinstall itself.  Currently, there is no 
+      known single configuration that will work with every system.  The next 
+      sections describe some configurations that are known to work.
      </para>
+       <sect4 id=RedHat6.2BootAgent3.x>
+       <title>RedHat 6.2 and Intel BootAgent 3.x</title>
+       <para>
+        This testing was done on HP Netservers with Intel Ether Express Pro 
+        cards.  The Netservers ran a typical RedHat 6.2 installation, while 
+        the NIC's were running a 3.x version of the Intel BootAgent firmware.
+       </para>
+       </sect4>
      </sect3>
    </sect2>
  </sect1>
