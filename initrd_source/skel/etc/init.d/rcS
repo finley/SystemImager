@@ -50,17 +50,14 @@ ping_test
 start_syslogd
 
 if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
-
     get_flamethrower_directory
-
 fi
 
 get_boel_binaries_tarball
 
 if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
-
+    # Hosts file is included here
     get_scripts_directory
-
 fi
 
 autodetect_hardware_and_load_modules
@@ -93,8 +90,8 @@ fi
 # (IMAGENAME may have been set by local.cfg).  -BEF-
 if [ -z $IMAGENAME ] && [ -z $HOSTNAME ]; then
     echo
-    echo "HOSTNAME was not specified in a local.cfg file, and I couldn't find"
-    echo "it via the hosts file or DNS.  Additionally, IMAGENAME was not"
+    echo "HOSTNAME for $IPADDR was not specified in a local.cfg file, and I could"
+    echo "not find it via the hosts file or DNS.  Additionally, IMAGENAME was not"
     echo "specified.  I must have one or the other in order to proceed!!!"
     echo
     shellout

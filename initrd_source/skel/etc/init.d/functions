@@ -611,6 +611,8 @@ get_hostname_by_hosts_file() {
             sed 's/ .*//' | \
             sed 's/\..*$//g'
         `
+    else
+        echo "Couldn't find hosts file: $FILE"
     fi
 }
 #
@@ -638,6 +640,12 @@ run_autoinstall_script() {
         echo "I will now run the autoinstall script: $FILE"
         echo
         $FILE || shellout
+    else
+        echo
+        echo "FATAL: Your autoinstall script doesn't appear to exist: $FILE"
+        echo "       Be sure this script exists in the autoinstall scripts directory"
+        echo "       on your image server."
+        shellout
     fi
 }
 #
@@ -804,11 +812,14 @@ get_script() {
         echo "Excellent!  It's already here -- in the ${SCRIPTS_DIR} directory."
 
     elif [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
-
-        get_scripts_directory
+        #
+        # We're using Multicast, so we should already have a directory 
+        # full of scripts.  Break out here, so that we don't try to pull
+        # the scripts dir again (that would be redundant).
+        #
+        break
 
     else
-
         mkdir -p ${SCRIPTS_DIR}
         CMD="rsync -aL ${IMAGESERVER}::${SCRIPTS}/${SCRIPTNAME} ${SCRIPTS_DIR}"
         echo "$CMD"
