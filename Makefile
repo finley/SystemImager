@@ -22,25 +22,32 @@
 #   so normal comments are fine.
 #
 # SystemImager file location standards:
-#   o images will be stored in: /usr/share/systemimager/images/
+#   o images will be stored in: /var/share/systemimager/images/
+#   o autoinstall scripts:      /var/share/systemimager/scripts/
+#
 #   o web gui pages:            /usr/share/systemimager/web-gui/
+#
 #   o autoinstall kernels:      /usr/share/systemimager/`arch`/boot/
 #   o initial ram disks:        /usr/share/systemimager/`arch`/boot/
 #   o autoinstall binaries:     /usr/share/systemimager/`arch`/boot/
+#
+#   o docs:                     /usr/share/doc/systemimager-<version>
+#   o perl libraries:           /usr/share/systemimager/perl/
+#   o man pages:                /usr/share/man/man8/
+#
+#   o log files:                /var/log/systemimager/
+#
+#   o configuration files:      /etc/systemimager/
+#   o rsyncd.conf:              /etc/systemimager/rsyncd.conf
+#   o rsyncd init script:       /etc/init.d/systemimager
+#
 #   o tftp files will be copied to the appropriate destination (as determined
 #     by the local SysAdmin when running "mkbootserver".
-#   o autoinstall scripts:      /usr/share/systemimager/scripts/
+#
 #   o user visible commands:    /usr/bin
 #     (lsimage, mkautoinstalldiskette, mkautoinstallcd)
 #   o sysadmin commands:        /usr/sbin
 #     (all other commands)
-#   o docs:                     /usr/share/doc/systemimager-<version>
-#   o perl libraries:           /usr/share/systemimager/perl/
-#   o man pages:                /usr/share/man/man8/
-#   o log files:                /var/log/systemimager/
-#   o configuration files:      /etc/systemimager/
-#   o rsyncd.conf:              /etc/systemimager/rsyncd.conf
-#   o rsyncd init script:       /etc/init.d/systemimager
 #
 
 
@@ -399,6 +406,7 @@ help_all:
 #@helpless:
 #@  pipes the output of 'make help' through less
 #@ 
+install: help
 helpless:
 	$(MAKE) help | less
 
