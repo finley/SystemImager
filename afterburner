@@ -3,6 +3,9 @@
 #
 # "VA SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com>
 #
+#   Others who have contributed to this code (in alphabetical order):
+#     Michael R. Nolta <mrnolta@princeton.edu>
+#
 # This file is: afterburner
 #  (second stage install -- this script does all the configuration file stuff and
 #   is run automatically by "install" unless the --no-afterburner option is used.
@@ -501,10 +504,12 @@ else
     sed 's/^tftp/#tftp/' /etc/inetd.conf > /tmp/.systemimager
     cp -af /tmp/.systemimager /etc/inetd.conf
     rm -f /tmp/.systemimager
-    # and add proper entry (If someone can show me how to get sed to append this line just below the
-    #                       original "#tftp" entry, I'd love to do that instead.) <bef>
     [ $QUIET = "false" ] && echo "Adding VA SystemImager brand tftp entry in /etc/inetd.conf..."
-    echo "tftp    dgram   udp     wait    root    /usr/sbin/tcpd  in.tftpd -s -r blksize /tftpboot" >> /etc/inetd.conf
+    # Now we can put this entry right after the original one -- thanks to Michael Nolta!
+    TFTP_ENTRY="tftp    dgram   udp     wait    root    \/usr\/sbin\/tcpd  in.tftpd -s -r blksize \/tftpboot"
+    sed "/^#tftp/{G;s/$/$TFTP_ENTRY/;}" /etc/inetd.conf > /tmp/.systemimager
+    cp -af /tmp/.systemimager /etc/inetd.conf
+    rm -f /tmp/.systemimager
     RESTART_INETD=yes
   else
     [ $QUIET = "false" ] && echo "tftp entry already enabled in /etc/inetd.conf..."
