@@ -5,14 +5,32 @@ package SystemImager::Server;
 $version_number="1.5.0";
 $VERSION = $version_number;
 
+sub get_full_path_to_image_from_rsyncd_conf {
+        my $rsyncd_conf=$_[1];
+	my $image=$_[2];
+
+        my $path_to_image="";
+	open (FILE, "<$rsyncd_conf") or die "FATAL: Couldn't open $rsyncd_conf for reading!\n";
+	  while (<FILE>) {
+	    if (/^\s*path\s*=.*$image/) { 
+	      (my $junk, $path_to_image) = split (/=/);
+	      $path_to_image =~ s/^\s+//;
+	      $path_to_image =~ s/\s+$//;
+	      $path_to_image =~ s/$image//;
+	    }
+	  }
+	close FILE;
+	return $path_to_image;
+}
+
 sub _gather_up_partition_info_for_each_disk_and_prepare_an_sfdisk_command {
     my $imagedir = $_[0];
-    my $systemimagerdir = $_[1];
+    my $config_dir = $_[1];
     my $disk = $_[2];
 
     foreach $disk (@disks)  {
 
-        _get_partition_information( $imagedir, $systemimagerdir, $disk ); 
+        _get_partition_information( $imagedir, $config_dir, $disk ); 
 
         _format_output_for_partitions_one_to_four( $disk );
 
@@ -151,8 +169,8 @@ sub _are_we_using_megabytes_or_sectors {
         $sfdisk_command_part_two = "";
   
         # gather up partition information
-        open (PARTITIONS, "<$imagedir$systemimagerdir/partitionschemes/${disk}")
-        || die "Cannot open $imagedir$systemimagerdir/partitionschemes/$disk for reading\n";
+        open (PARTITIONS, "<$imagedir$config_dir/partitionschemes/${disk}")
+        || die "Cannot open $imagedir$config_dir/partitionschemes/$disk for reading\n";
           @partitions = <PARTITIONS>;
         close(PARTITIONS);
 
@@ -187,15 +205,15 @@ sub _are_we_using_megabytes_or_sectors {
 
 sub _get_partition_information {
     my $imagedir = $_[0];
-    my $systemimagerdir = $_[1];
+    my $config_dir = $_[1];
     my $disk = $_[2];
 
     %id_by_device = ();
     %megabytes_by_device = ();
     $lowest_partition_start_point = "10000000";  # some random large number
 
-    open (PARTITIONS, "<$imagedir$systemimagerdir/partitionschemes/$disk")
-    || die "Cannot open $imagedir$systemimagerdir/partitionschemes/$disk for reading\n";
+    open (PARTITIONS, "<$imagedir$config_dir/partitionschemes/$disk")
+    || die "Cannot open $imagedir$config_dir/partitionschemes/$disk for reading\n";
       @partitions = <PARTITIONS>;
     close(PARTITIONS);
 
@@ -359,9 +377,9 @@ sub _add_proc_to_list_of_filesystems_to_mount_on_autoinstall_client {
 
 sub _get_list_of_IDE_and_SCSI_devices {
   my $imagedir = $_[0];
-  my $systemimagerdir = $_[1];
+  my $config_dir = $_[1];
 
-  $partition_dir="$systemimagerdir/partitionschemes";
+  $partition_dir="$config_dir/partitionschemes";
   if(-d "$imagedir$partition_dir") {
     opendir(PARTITIONSCHEMES, "$imagedir$partition_dir") || die "$program_name: Can't read the $imagedir$partition_dir directory";
         # Skip anything that begins with a "." or an "rd"
@@ -373,9 +391,9 @@ sub _get_list_of_IDE_and_SCSI_devices {
 
 sub _get_list_of_hardware_RAID_devices {
   my $imagedir = $_[0];
-  my $systemimagerdir = $_[1];
+  my $config_dir = $_[1];
 
-  $partition_dir="$systemimagerdir/partitionschemes/rd";
+  $partition_dir="$config_dir/partitionschemes/rd";
   if(-d "$imagedir$partition_dir") {
     opendir(PARTITIONSCHEMES, "$imagedir$partition_dir") || die "$program_name: Can't read the $imagedir$partition_dir directory";
         # Skip anything that begins with a "."
@@ -461,7 +479,7 @@ sub _get_info_on_devices_for_software_RAID_swap_and_filesystems {
 
 sub create_autoinstall_script{
   my $master_script=$_[1];
-  my $systemimagerdir=$_[2];
+  my $config_dir=$_[2];
   my $image=$_[3];
   my $imagedir=$_[4];
   my $ip_assignment_method=$_[5];
@@ -471,9 +489,9 @@ sub create_autoinstall_script{
 
   _in_script_add_standard_header_stuff($image);
 
-  _get_list_of_hardware_RAID_devices( $imagedir, $systemimagerdir );
+  _get_list_of_hardware_RAID_devices( $imagedir, $config_dir );
 
-  _get_list_of_IDE_and_SCSI_devices( $imagedir, $systemimagerdir );
+  _get_list_of_IDE_and_SCSI_devices( $imagedir, $config_dir );
 
   _get_info_on_devices_for_software_RAID_swap_and_filesystems($imagedir);
 
@@ -485,7 +503,7 @@ sub create_autoinstall_script{
 
   _in_script_give_a_custom_partitioning_example(); 
 
-  _gather_up_partition_info_for_each_disk_and_prepare_an_sfdisk_command( $imagedir, $systemimagerdir, $disk );
+  _gather_up_partition_info_for_each_disk_and_prepare_an_sfdisk_command( $imagedir, $config_dir, $disk );
 
 
   ### BEGIN Write out software RAID device creation commands ###

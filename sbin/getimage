@@ -21,9 +21,6 @@ $ENV{PATH} = "/usr/sbin:/sbin:/usr/bin:/bin";
 # version
 $version_number="1.5.0";
 
-# systemimager configuration directory
-$systemimagerdir="/etc/systemimager";
-
 # miscellaneous variables and what not
 # NIS domain name will be figured out automatically (if it exists)
 $nisdomain="";
@@ -36,24 +33,24 @@ use Getopt::Long;
 use AppConfig;
 
 ### BEGIN parse the config file ###
-
 my $config = AppConfig->new(
 			    'autoinstalldir' => { ARGCOUNT => 1 },
 			    'default_imagedir' => { ARGCOUNT => 1 },
 			    'rsyncd_conf' => { ARGCOUNT => 1 },
+			    'config_dir' => { ARGCOUNT => 1 },
 			    'autoinstall_kernel' => { ARGCOUNT => 1 },
 			    'autoinstall_initrd' => { ARGCOUNT => 1 }
 			    );
 $config->file('/etc/systemimager/config');
 
 my $autoinstalldir = $config->autoinstalldir();
+my $config_dir = $config->config_dir();
 my $rsyncd_conf = $config->rsyncd_conf();
 my $default_imagedir = $config->default_imagedir();
 
 if (!$autoinstalldir) { die "AUTOINSTALLDIR not defined in the config file."; }
 if (!$rsyncd_conf) { die "RSYNCD_CONF not defined in the config file."; }
 if (!$default_imagedir) { die "DEFAULT_IMAGEDIR not defined in the config file."; }
-
 ### END parse the config file
 
 
@@ -623,7 +620,7 @@ elsif($ip_assignment_method == "4") { $ip_assignment_method = "replicant"   ; }
 ### BEGIN create a fresh $autoinstalldir/systemimager/$image.master ###
 SystemImager::Server->create_autoinstall_script(
 	$master_script,
-	$systemimagerdir,
+	$config_dir,
 	$image,
 	$imagedir,
 	$ip_assignment_method,
