@@ -1,0 +1,96 @@
+#!/usr/bin/perl -w
+#
+#   "SystemImager"
+#
+#   Copyright (C) 2003 Bald Guy Software 
+#                      Brian Elliott Finley <brian@bgsw.net>
+#
+#   $Id$
+#
+
+use lib "USR_PREFIX/lib/systemimager/perl";
+use strict;
+#use File::Copy;
+use POSIX qw(setsid);
+use SystemImager::Config;
+use SystemImager::Flamethrower_Config;
+#use SystemImager::Server;
+use vars qw($config $ft_config $VERSION);
+
+$0 = "flamethrower";
+
+# Should we start up?
+if ( $ft_config->start_flamethrower_daemon() ne "yes" ) {
+    exit 0;
+}
+
+&dump_config_info;
+
+print "HERE\n"; exit 0;
+
+my $pid_file = "/var/run/flamethrower.pid";
+
+
+################################################################################
+#
+# Misc. Daemon stuff
+#
+################################################################################
+chdir '/'                   or die "Can't chdir to /: $!";
+open STDIN, '/dev/null'     or die "Can't read /dev/null: $!";
+open STDOUT, '>>/dev/null'  or die "Can't write to /dev/null: $!";
+open STDERR, '>>/dev/null'  or die "Can't write to /dev/null: $!";
+umask 0;
+sub REAPER {
+    $SIG{CHLD} = \&REAPER;
+    my $waitedpid = wait;
+    print STDERR "Dead child: $waitedpid\n";
+}
+$SIG{CHLD} = \&REAPER;
+
+
+################################################################################
+#
+# Fork the watching process
+#
+################################################################################
+my $pid;
+if ($pid = fork) {
+} elsif (defined $pid) { # send the forked child off
+
+    setsid or die "Can't start a new session: $!";
+
+    my $file = $pid_file;
+    local *FILE;
+    open(FILE,">$file") or die ("FATAL: Can't open file: $file\n");
+        print FILE "$$\n";
+    close(FILE);
+
+    # Subroutine(s) here XXX
+    #tail_rsync_log_file();
+
+} else {
+        die "Can't fork: $!\n";
+}
+
+
+################################################################################
+#
+# BEGIN subroutines 
+#
+
+# Usage: create_no_boot_symlink($client_ip);
+sub tail_rsync_log_file {
+}
+
+# Usage: dump_config_info();
+sub dump_config_info {
+    use Data::Dumper;
+    print Dumper($ft_config);
+}
+
+#
+# END subroutines
+#
+################################################################################
+
