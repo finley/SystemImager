@@ -31,8 +31,12 @@ VA SystemImager-1.4.0 2000.xx.xx
                is backwards compatible so as not to completely confuse
                you. ;)
 - rsyncd.conf -- Change back to using one log file: /var/log/systemimager
-- updateclient -- Now uses the --numeric-ids rsync option.
+- updateclient -- Now uses the --numeric-ids rsync option.  Thanks to all
+                  who submitted info on this one.  This closes bug #123339.
 - goldenclient -- Changed phraseology from "master client" to "golden client"
+- installclient -- /etc/systemimager/ directory is now properly created.
+                   This closes bug #123337.  Thanks to "jfunk".
+- prepareclient -- Offers to add "127.0.0.1 $hostname" to /etc/hosts.
 - prepareclient -- Offers to add "127.0.0.1 $hostname" to /etc/hosts.
 - prepareclient -- Now defaults to using megabytes to store partition 
                    information.  Can be told to leave explicit 
