@@ -5,8 +5,6 @@
 #
 
 VA SystemImager-1.4.0 2000.xx.xx
-- autoinstallclient - Enforce that the client sleeps 35s before trying
-                      to use the network.  Even if using local.cfg.
 - getimage -- Improper usage statements no longer include the entire
               output from the --help option.  In earlier versions this
               would often run the usage correction statement off the 
@@ -24,7 +22,10 @@ VA SystemImager-1.4.0 2000.xx.xx
               lines were in the golden clients /etc/fstab file.  The 
               fix was to tell getimage to skip blank lines in the 
               /etc/fstab file.  
-- autoinstall scripts -- Now use the --numeric-ids rsync option.
+- local.cfg -- Now uses IMAGESERVER instead of DHCPSIADDR.  Of course, it
+               is backwards compatible so as not to completely confuse
+               you. ;)
+- rsyncd.conf -- Change back to using one log file: /var/log/systemimager
 - updateclient -- Now uses the --numeric-ids rsync option.
 - prepareclient -- Now defaults to using megabytes to store partition 
                    information.  Can be told to leave explicit 
@@ -33,6 +34,20 @@ VA SystemImager-1.4.0 2000.xx.xx
 - prepareclient -- What was I thinking in v1.3.0 with the -no-rsyncd option?!?
                    Don't try this, folks.  It would record your imageserver's 
                    partition information as if it were the client's.
+- autoinstallclient-- Was using POSIX [[:blank:]] in sed statement to 
+                       find and change spaces and tabs to single spaces.
+- autoinstallclient -- Enforce that the client sleeps 35s before trying
+                       to use the network.  Even if using local.cfg.
+- autoinstall scripts -- Now use the --numeric-ids rsync option.
+- autoinstall scripts -- Fixed a bit where egrep is run from autoinstall
+                         scripts to be sure that it is not being run from
+                         a working machine.  egrep doesn't actually
+                         exist on the autoinstall media, so the test
+                         will always fail.  This is fine according to the
+                         logic, but the error messages can be confusing to
+                         unassuming onlookers.  So "> /dev/null 2>&1" was
+                         added to shut it up.  Maybe we'll fix it in a way
+                         that is technically proper some day...
 
 VA SystemImager-1.3.0 2000.10.04
 - autoinstall kernel -- Patched with:

@@ -10,23 +10,15 @@
 
 In Progress
 -----------
-
-- <brian@thefinleys.com> - update the FAQ-HOWTO (maybe after release? yes.)
-
-
 Version 1.4.0 specific:
-- <brian@thefinleys.com> - Change back to using one log file: /var/log/systemimager
-- <brian@thefinleys.com> - Test for tabs vs. spaces in hosts files issue?
-- <brian@thefinleys.com> - Fix egrep thing in autoinstall scripts.
+- <brian@thefinleys.com> - migrate to golden client from master client
 - <brian@thefinleys.com> - deal with ext3 journal files differently according to Ted Ts'o
 - <brian@thefinleys.com> - Contemplate using "use chroot = yes" in /etc/rsyncd.conf
                            and how this affects --numeric-ids.
 - <brian@thefinleys.com> - see tmp/RedHat_7.0_issues.txt
-- <brian@thefinleys.com> - DHCPSIADDR -> IMAGESERVER
 - <brian@thefinleys.com> - run rsync as a daemon from an init script with no maximum connections
 - <brian@thefinleys.com> - Wes Smith's distribution specific patches
 - <brian@thefinleys.com> - support for more distributions
-- <brian@thefinleys.com> - migrate to golden client from master client
 - <brian@thefinleys.com> - put exclude/include stuff on imageserver by image
                            /tftpboot/systemimager/$image.include
                            /tftpboot/systemimager/$image.exclude
@@ -36,6 +28,8 @@ Version 1.4.0 specific:
 
 
 Other stuff:
+- <brian@thefinleys.com> - contemplate using MAKEDEV instead of having pre-existing device files
+- <brian@thefinleys.com> - contemplate using hard links to busybox instead of soft links
 - <brian@thefinleys.com> - fix network booting
 - <brian@thefinleys.com> - run rsyncd from an init script on the imageserver
                            /etc/rc.d/init.d/rsyncd
@@ -48,6 +42,8 @@ Other stuff:
 - <brian@thefinleys.com> - add -exclude option to getimage
 - <brian@thefinleys.com> - incorporate ssh
 - <brian@thefinleys.com> - put autoinstallmedia source into cvs
+- <brian@thefinleys.com> - add a -use-same-settings option to updateclient that figures
+                           out the current values and writes them to /local.cfg
 
 - <gpratt@valinux.com> - Docbookization of the FAQ-HOWTO
 
