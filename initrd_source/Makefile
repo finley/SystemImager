@@ -43,7 +43,7 @@ initrd:	binaries $(LOCAL_BINARIES)
 	# create ramdisk file & mount it as a filesystem
 	dd if=/dev/zero of=initrd bs=1k count=$(INITRD_SIZE)
 	mke2fs -N 584 -m 0 -q -F initrd
-	mkdir $(TEMP_DIR)
+	mkdir -p $(TEMP_DIR)
 	mount initrd $(TEMP_DIR) -o loop
 
 	# create directory structure
