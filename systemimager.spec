@@ -22,12 +22,12 @@ VA SystemImager is a software package designed to make it easy for
 system administrators to install and update large numbers of
 like machines running Linux.
 
-%package %{name}-client
+%package client
 Summary: Client installation for VA SystemImager
 Group: Applications/System
 Conflicts: %{name}
 
-%description %{name}-client
+%description client
 This is the package you install on a VA SystemImager client node.
 
 %changelog
@@ -48,25 +48,6 @@ prefix=%{prefix} ; export prefix
 
 install -m 755 afterburner $RPM_BUILD_ROOT/tftpboot/systemimager/
 
-###############################################################
-# This part is completely unnecessary, but may be useful for
-# making sure you don't have $RPM_BUILD_ROOT appearing in any
-# config files.
-###############################################################
-cd $RPM_BUILD_ROOT
-for i in `find . -type f -print` ; do
-  if (grep $RPM_BUILD_ROOT $i >/dev/null 2>&1); then
-    echo "ERROR:  $i contains the string $RPM_BUILD_ROOT"
-  fi
-done
-
-###############################################################
-# This part is also not needed but can be useful for building
-# the %files lists in the sections below.
-###############################################################
-cd $RPM_BUILD_ROOT
-find . -print | sed "s@$RPM_BUILD_ROOT%{prefix}@%""{prefix}@g"
-
 %clean
 rm -rf $RPM_BUILD_ROOT
 
@@ -82,7 +63,7 @@ rm -rf $RPM_BUILD_ROOT
 /tftpboot/*
 /var/*
 
-%files %{name}-client
+%files client
 %defattr(-, root, root)
 %doc CHANGE.LOG COPYING CREDITS FAQ-HOWTO README TODO
 %{prefix}/*
