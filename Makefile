@@ -54,7 +54,7 @@ PXE_CONF_DEST     = $(TFTP_ROOT)/pxelinux.cfg
 AUTOINSTALL_TARBALL = ./autoinstallbin.tar.gz
 
 BINARY_SRC = ./sbin
-BINARIES := makeautoinstallcd addclients getimage makeautoinstalldiskette makedhcpstatic makedhcpserver pushupdate
+BINARIES := addclients cpimage getimage makeautoinstallcd makeautoinstalldiskette makedhcpserver makedhcpstatic makeautoinstallscript mkbootserver mvimage rmimage # what happened to pushupdate?
 
 CLIENT_BINARY_SRC = ./tftpstuff/systemimager
 CLIENT_BINARIES  := updateclient prepareclient
@@ -62,7 +62,10 @@ CLIENT_BINARIES  := updateclient prepareclient
 COMMON_BINARY_SRC = $(BINARY_SRC)
 COMMON_BINARIES   = lsimage
 
-IMAGESRC    = ./var/lib/systemimager/images
+LIB_SRC = ./lib/SystemImager
+LIB_DEST = $(DESTDIR)/usr/lib/systemimager/perl/SystemImager
+
+IMAGESRC    = ./var/spool/systemimager/images
 IMAGEDEST   = $(DESTDIR)/var/lib/systemimager/images
 WARNING_FILES = $(IMAGEDEST)/README $(IMAGEDEST)/DO_NOT_TOUCH_THESE_DIRECTORIES $(IMAGEDEST)/CUIDADO $(IMAGEDEST)/ACHTUNG
 
@@ -78,7 +81,7 @@ LINUX_CONFIG = $(PATCH_DIR)/autoinstall.kernel.config
 INITRD_DIR = initrd_source
 INITRD = $(INITRD_DIR)/initrd.gz
 
-RAIDTOOLS_DIR = raidtools-0.90
+RAIDTOOLS_DIR = $(SRC_DIR)/raidtools-0.90
 RAIDTOOLS_TARBALL = raidtools-19990824-0.90.tar.bz2
 RAIDTOOLS_URL = http://www.kernel.org/pub/linux/daemons/raid/alpha/$(RAIDTOOLS_TARBALL)
 RAIDTOOLS_PATCH = $(PATCH_DIR)/raidtools.patch
@@ -103,7 +106,7 @@ install_client_all:	install_client install_common
 #@@install_server:
 #@@  install server-only architecture independent files
 #@@ 
-install_server:	install_manpages install_rsync_configs
+install_server:	install_manpages install_configs install_server_libs
 	mkdir -p $(SBIN)
 	$(foreach binary, $(BINARIES), \
 		install -m 555 $(BINARY_SRC)/$(binary) $(SBIN);)
@@ -144,6 +147,13 @@ install_common:	install_common_manpages
 	$(foreach binary, $(COMMON_BINARIES), \
 		install -m 755 $(COMMON_BINARY_SRC)/$(binary) $(SBIN);)
 
+#@@install_server_libs:
+#@@  install server-only libraries
+#@@ 
+install_server_libs:
+	mkdir -p $(LIB_DEST)
+	cp $(LIB_SRC)/*.pm $(LIB_DEST)
+
 #@@install_binaries:
 #@@  install architecture-dependent files
 #@@ 
@@ -170,8 +180,8 @@ raidtools:
 		( cd $(SRC_DIR) && bzcat $(RAIDTOOLS_TARBALL) | tar xv && \
 		  [ ! -f ../$(RAIDTOOLS_PATCH) ] || \
 		  patch -p0 < ../$(RAIDTOOLS_PATCH) )
-	( cd $(SRC_DIR)/$(RAIDTOOLS_DIR) && ./configure )
-	$(MAKE) -C $(SRC_DIR)/$(RAIDTOOLS_DIR)
+	( cd $(RAIDTOOLS_DIR) && ./configure )
+	$(MAKE) -C $(RAIDTOOLS_DIR)
 
 # download the raidtools tarball
 $(SRC_DIR)/$(RAIDTOOLS_TARBALL):
@@ -211,7 +221,8 @@ install_kernel:	kernel
 #@@  build the kernel that autoinstall clients will boot from during
 #@@  autoinstallation
 #@@ 
-kernel:	patched_kernel
+kernel:
+	$(MAKE) patched_kernel
 	$(MAKE) -C $(LINUX_SRC) oldconfig dep bzImage
 
 patched_kernel:	patched_kernel-stamp
@@ -240,7 +251,8 @@ $(SRC_DIR)/$(LINUX_TARBALL):
 #@@  install the autoinstall ramdisk - the initial ramdisk used by autoinstall
 #@@  clients when beginning an autoinstall
 #@@ 
-install_initrd:	initrd
+install_initrd:
+	$(MAKE) initrd
 	mkdir -p $(TFTP_ROOT)
 	install -m 644 $(INITRD_DIR)/initrd.gz $(TFTP_ROOT)
 
@@ -250,12 +262,13 @@ install_initrd:	initrd
 initrd:
 	make -C $(INITRD_DIR)
 
-#@@install_rsync_configs:
-#@@  install the rsync config file and initscript
+#@@install_configs:
+#@@  install the initscript & config files
 #@@ 
-install_rsync_configs:
+install_configs:
 	mkdir -p $(ETC)/systemimager
 	install -m 644 etc/rsyncd.conf $(ETC)/systemimager
+	install -m 644 etc/systemimager.conf $(ETC)/systemimager
 	mkdir -p $(INITD)
 	install -m 755 etc/init.d/rsync $(INITD)/$(INITSCRIPT_NAME)
 
