@@ -1,0 +1,85 @@
+#!/bin/sh
+
+wget_opts="--passive-ftp"
+
+## paths in the search path must be absolute
+search_path="$(pwd) /usr/src"
+
+source_found=0
+usage() {
+    echo "Usage $0 URL DEST DIR1 ... DIRN"
+}
+
+if [ $# -lt 2 ]; then
+    usage
+    exit 1
+fi
+
+## BEGIN process command line args ##
+program=$(basename $0)
+url=$1
+shift
+dest=$1
+shift
+
+while [ $# -gt 0 ]; do
+    search_path="$search_path $1"
+    shift
+done
+## END process command line args ##
+
+tarball=$(basename $url)
+
+if [ -e "$dest/$tarball" ]; then
+    echo "$program: Warning: $dest/$tarball already exists - doing nothing."
+    exit 0
+fi
+
+if [ ! -d $dest ]; then
+    echo "$program: Error: $dest does not exist or is not a directory"
+    usage
+    exit 1
+fi
+
+## BEGIN look for tarballs on the system
+for dir in $(echo $search_path); do
+    if [ -f $dir/$tarball ]; then
+        cd $dest
+	ln -s $dir/$tarball . || exit 1
+        exit 0
+    fi
+done
+## END look for tarballs on the system
+
+## BEGIN look for already extracted directories
+dirname=$(echo $tarball | sed s/'\.tar\.\(\(gz\)\|\(bz2\)\)'//)
+extension=$(echo $tarball | sed s/$dirname//)
+
+zip=""
+if [ "$extension" == ".tar.bz2" ]; then
+    zip="bzip2"
+elif [ "$extension" == ".tar.gz" ]; then
+    zip="gzip -9"
+fi
+
+if [ "$zip" != "" ]; then
+    for dir in $(echo $search_path); do
+        if [ -d "$dir/$dirname" ]; then
+            (cd $dir; tar -c $dirname) | $zip > $dest/$tarball
+	    exit 0
+	fi
+    done
+fi
+## END look for already extracted directories
+	    
+echo "$program: Can't find a local copy of $tarball."  
+echo "$program: I will try to fetch it from a well known site.  Please copy this"
+echo "$program: tarball to one of the following locations to prevent downloading"
+echo "$program: the source again and sucking up unnecessary bandwidth:"
+
+for dir in $(echo $search_path); do
+  echo "    $dir"
+done
+  
+cd $dest
+wget $wget_opts $url || exit 1
