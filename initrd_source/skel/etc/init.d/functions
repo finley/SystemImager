@@ -27,7 +27,7 @@ FLAMETHROWER_DIRECTORY_DIR=/var/lib/systemimager/flamethrower
 BOEL_BINARIES_DIR=/tmp/boel_binaries
 VERSION="SYSTEMIMAGER_VERSION_STRING"
 FLAVOR="SYSTEMIMAGER_FLAVOR_STRING"
-DEBUG=1     # XXX Make sure this is commented out for releases. -BEF-
+#DEBUG=1     # XXX Make sure this is commented out for releases. -BEF-
 
 #
 ################################################################################
@@ -227,7 +227,7 @@ flamethrower_client() {
     # set vars
     [ -z $RETRY ] && RETRY=0
     COUNT=0
-    FLAMETHROWER_CLIENT_SLEEP=7
+    FLAMETHROWER_CLIENT_SLEEP=2
     unset TAR_EXIT_STATUS
     TAR_EXIT_FILE=/tmp/tar_exit
     echo TAR_EXIT_STATUS= > $TAR_EXIT_FILE
@@ -266,7 +266,8 @@ flamethrower_client() {
                 [ ! -z $DEBUG ] && echo COMPLETED=yes
             elif [ "$STARTED" = "yes" ]; then
                 THIS_STAMP=`ls -l $UDP_RECEIVER_STDERR_LOG`
-                [ ! -z $DEBUG ] && echo ; echo LAST $LAST_STAMP
+                [ ! -z $DEBUG ] && echo
+                [ ! -z $DEBUG ] && echo LAST $LAST_STAMP
                 [ ! -z $DEBUG ] && echo THIS $THIS_STAMP
                 if [ "$THIS_STAMP" = "$LAST_STAMP" ]; then
                     echo "Ruh roh, no progress since we last checked, so die, die, die my darlin'!"
