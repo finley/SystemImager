@@ -1,14 +1,21 @@
 #
-# "SystemImager" 
+#   "SystemImager" 
 #
-#  Copyright (C) 1999-2004 Brian Elliott Finley
+#   Copyright (C) 1999-2005 Brian Elliott Finley
 #
-#  $Id$
+#   $Id$
 #
 
-3.6.0
+3.5.2
 --------------------------------------------------------------------------------
-- miscellaneous patches (Josh Aas)
+Brian Finley
+- added lib/SystemImager/UseYourOwnKernel.pm
+
+Josh Aas
+- miscellaneous patches aimed at improving Altix support
+
+3.5.1
+--------------------------------------------------------------------------------
 - added hfsutils to boel
 - 2.6 series kernel capability and 2.6 series kernels for many archs.
 - x86_64 (aka. Opteron) support 
@@ -1053,3 +1060,6 @@ Pterodactyl v0.01
   Never really packaged for use by others and not very intuitive.  Originally
   created to allow 4 sysadmins to administer ~400 Solaris boxes of varying
   hardware and OS revisions on a nationwide network.
+
+
+# /* vi: set ai et ts=4 tw=72: */
