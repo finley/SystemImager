@@ -9,7 +9,7 @@ Version: %ver
 Release: %rel
 Copyright: GPL
 Group: Applications/System
-Source: http://download.sourceforge.net/%{name}/%{name}-%{ver}.tar.gz
+Source: http://download.sourceforge.net/systemimager/%{name}-%{ver}.tar.gz
 BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: Michael Jennings <mej@valinux.com>
 Docdir: %{prefix}/doc
