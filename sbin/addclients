@@ -130,6 +130,7 @@ unless($createlinks eq "n") {
     closedir (DIR);
 
     # display the list of available images
+    unless(@files) { die "There are no available images.  Please use getimage to retrieve an image first.\n   -The Mgmt\n"; }
     print qq(\nHere is a list of available images:\n);
     while (<@files>) {
       $_ =~ s/\.master//g;
@@ -240,6 +241,12 @@ if($etc_hosts eq "y") {
     }
     close(ETC_HOSTS);
     if ( $etc_hosts eq "y" ) { print "\nYour entries have been added to /etc/hosts.\n"; }
+
+    # copy /etc/hosts to /tftpboot/systemimager/hosts to be sure it stays up to date
+    system('cp', '-f', '/etc/hosts', '/tftpboot/systemimager/hosts');
+    if($? != 0) { die "Couldn't copy /etc/hosts to /tftpboot/systemimager/hosts!\n",
+                      "Does /etc/tftpboot/systemimager/ exist?"; }
+
     print "\nPress <Enter> to continue...";
     $pause=<STDIN>;
   }

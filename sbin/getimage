@@ -50,10 +50,10 @@ $help_info = $version_info . <<"EOF";
 Usage: $program_name [OPTION]...  --master-client HOSTNAME --image IMAGENAME
 
 Options: (options can be presented in any order)
- --help                    duh
- --version                 display version and copyright information
- --master-client HOSTNAME  hostname or IP address of the \"master\" client
- --image IMAGENAME         the name of the image to retrieve.  This can be 
+ --help                    Display this output.
+ --version                 Display version and copyright information.
+ --master-client HOSTNAME  Hostname or IP address of the \"master\" client.
+ --image IMAGENAME         The name of the image to retrieve.  This can be 
                            either the name of a new image if you want to create 
                            a new image, or the name of an exisiting image if
                            you want to update an image.

@@ -33,11 +33,11 @@ Options: (options can be presented in any order)
  --version          Display version and copyright information.
  --floppy=DEVICE    The  1.44MB floppy drive device containing the disk
                     to format.  If not specified, /dev/fd0 is assumed.
-                    This command understands \"/dev/fd0\" through \"/dev/fd7\"
+                    This command understands \"/dev/fd0\" through \"/dev/fd7\".
                     (if you specify --floppy, this command will run 
                      non-interactively)
  --quiet            Don\'t print any output, just provide an appropriate 
-                    exit code (requires --floppy).
+                    exit code.  (requires --floppy)
 
 Download from http://systemimager.org/
 Report bugs or suggestions to <systemimager-bugs\@systemimager.org>
