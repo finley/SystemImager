@@ -370,12 +370,13 @@ if [ $QUIET = "false" ]; then
   echo
   echo "This install script may modify the following files and/or directories:"
   echo
-  echo " /tftpboot/systemimager -- create if necessary and add appropriate files/links"
-  echo " /tftpboot/pxelinux.cfg -- create if necessary and add appropriate files/links"
-  echo " /etc/services          -- add rsync and/or tftp entries if necessary"
-  echo " /etc/inetd.conf        -- add/modify rsync and tftp entries if necessary"
-  echo " /etc/rsyncd.conf       -- it is assumed that VA SystemImager will manage this"
-  echo "                           file and that it will not be used for anything else"
+  echo " /tftpboot/systemimager/ -- create if necessary and add appropriate files/links"
+  echo " /tftpboot/pxelinux.cfg/ -- create if necessary and add appropriate files/links"
+  echo " /etc/services           -- add rsync and/or tftp entries if necessary"
+  echo " /etc/inetd.conf         -- remove rsync entry if necessary"
+  echo " /etc/inetd.conf         -- add/modify tftp entry if necessary"
+  echo " /etc/rsyncd.conf        -- it is assumed that VA SystemImager will manage this"
+  echo "                            file and that it will not be used for anything else"
   echo
   echo " All modified files will be backed up with the .beforesystemimager extension."
   echo
