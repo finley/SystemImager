@@ -15,14 +15,14 @@ To customize your initrd.gz
 4) cd /usr/src
 5) untar boot-floppies.tar.gz:
     tar -xvzf boot-floppies.tar.gz
-    (this will be used by the mk_new_initrd script)
+    (this will be used by the mk_new_initrd script you will run later)
 6) pull down the SystemImager source tar ball from:
     http://download.sourceforge.net/systemimager/
 7) untar the SystemImager source
-8) make your changes in the initrd directory ( systemimager_source_dir/initrd_source/initrd/ ) 
-9) edit mk_new_initrd to set the following variables to the uid/gid you will use while developing:
-    MY_DEVELOPMENT_UID=joebob
-    MY_DEVELOPMENT_GID=joebobsgroup
-10) run ./mk_new_initrd
-11) a file named something like "initrd-2001.02.01-00:19.gz" will be produced -- this is your new initrd.gz
-12) copy this file to /tftpboot/initrd.gz and use like normal!
+8) cd into initrd_source/
+9) run ./prep_initrd_dev
+10) make your changes in the initrd_dev directory 
+11) run ./mk_new_initrd
+12) a file named something like "initrd-2001.02.02-00:09:03.gz" will be
+    produced -- this is your new initrd.gz
+13) copy this file to /tftpboot/initrd.gz and use like normal!

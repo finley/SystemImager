@@ -5,15 +5,11 @@
 #
 # This file is: mk_new_initrd
 #
-
-# I use this file to produce the initrd.gz from the stuff I put into initrd
-
-
-MY_DEVELOPMENT_UID=bfinley
-MY_DEVELOPMENT_GID=bfinley
+# I use this script to produce the initrd.gz from the stuff I put into initrd_dev
+#
 
 
-# if not run as root, install will surely fail (unless it's an RPM build)
+# if not run as root, will surely fail
 if [ `whoami` != "root" ]
 then
     echo "Must be run as root!"
@@ -21,25 +17,20 @@ then
 fi
 
 
-DATE=`date +%Y.%m.%d-%H:%M`
+DATE=`date +%Y.%m.%d-%H:%M:%S`
 
-chown -R root.root initrd
+chown -R root.root initrd_dev
 
-cd initrd \
+cd initrd_dev \
   && /usr/src/boot-floppies/scripts/rootdisk/mklibs.sh -v -d lib bin/*
 
 cd .. \
   && dd if=/dev/zero of=initrd2 bs=1k count=2000 && echo 'y' | mke2fs -N 584 -m 0 initrd2 \
   && mkdir -p initrd2.dir \
   && mount -o loop initrd2 initrd2.dir/ \
-  && ( cd initrd/ ; tar -cvf - * ) | tar -C initrd2.dir/ -xv \
-  && chown -R ${MY_DEVELOPMENT_UID}.${MY_DEVELOPMENT_GID} initrd \
+  && ( cd initrd_dev/ ; tar -cvf - * ) | tar -C initrd2.dir/ -xv \
   && umount initrd2 \
   && rmdir initrd2.dir \
   && gzip -9 initrd2 \
   && mv initrd2.gz initrd-${DATE}.gz \
-  && chown ${MY_DEVELOPMENT_UID}.${MY_DEVELOPMENT_GID} initrd-${DATE}.gz \
   && ls -l initrd-${DATE}.gz /tftpboot/initrd.gz
-
-
-beep -l 5000
