@@ -127,7 +127,6 @@ sub write_auto_install_script_conf_footer {
 # save_partition_information($old_sfdisk_file, $partition_tool, $destination_file);
 # save_partition_information($disk, $partition_tool, $file);
 sub save_partition_information {
-
     my ($module, $disk, $partition_tool, $file) = @_;
     my ($label_type, $disk_size, $dev);
 
@@ -273,6 +272,8 @@ sub save_partition_information {
       } elsif ($partition_tool eq "sfdisk") {
 
         my $cmd = "sfdisk -l -uM /dev/$disk";
+
+        local *PARTITION_TOOL_OUTPUT;
         open (PARTITION_TOOL_OUTPUT, "$cmd|"); 
           _turn_sfdisk_output_into_generic_partitionschemes_file($disk, \*PARTITION_TOOL_OUTPUT);
         close (PARTITION_TOOL_OUTPUT);
@@ -280,6 +281,8 @@ sub save_partition_information {
       } elsif ($partition_tool eq "old_sfdisk_file") {
 
         my $file = $disk;
+
+        local *PARTITION_TOOL_OUTPUT;
         open (PARTITION_TOOL_OUTPUT, "<$file") or croak("Couldn't open $file for reading!"); 
           _turn_sfdisk_output_into_generic_partitionschemes_file($file, \*PARTITION_TOOL_OUTPUT);
         close (PARTITION_TOOL_OUTPUT);
@@ -300,7 +303,7 @@ sub _turn_sfdisk_output_into_generic_partitionschemes_file {
     my ($disk, $PARTITION_TOOL_OUTPUT) = @_;
     my $units;
 
-    my @partition_tool_output = <*$PARTITION_TOOL_OUTPUT>;
+    my @partition_tool_output = <$PARTITION_TOOL_OUTPUT>;
 
     # Find partitions that are closest to the end of the disk. -BEF-
     my $end_of_last_partition_on_disk = 0;
