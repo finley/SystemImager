@@ -163,7 +163,7 @@ if [ "x$DESTDIR" = "x" ]; then
   install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/index.html               ${prefix}/doc/$PACKAGE_NAME-$VERSION/
   if [ "x$?" != "x0" ]; then
     echo "Maybe you need to cd into <source>/doc/manual_source/"
-    echo "and run ./mk_manual first..."
+    echo "and run \"make manual\" first..."
     exit 1
   fi
   install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/intro.html               ${prefix}/doc/$PACKAGE_NAME-$VERSION/manual/ || exit 1
