@@ -54,6 +54,7 @@ $dnsserver1 = "";
 $dnsserver2 = "";
 $dnsserver3 = "";
 $router = "192.168.1.254";
+$imageserver = "192.168.1.254";
 $swallow = "";
 
 ### Begin questionnaire ###
@@ -96,6 +97,9 @@ while ($satisfied ne "y") {
  print "What is the IP address of your default gateway? [$router]: ";
  $router=get_response($router);
 
+ print "What is the IP address of imageserver? [$imageserver]: ";
+ $imageserver=get_response($imageserver);
+
  print "What is the air speed velocity of the common swallow? [$swallow]: ";
  $swallow=<STDIN>;
  system("clear");
@@ -122,6 +126,7 @@ while ($satisfied ne "y") {
  print "second DNS server: $dnsserver2\n";
  print "third DNS server:  $dnsserver3\n";
  print "default gateway: $router\n";
+ print "imageserver: $imageserver\n";
  print "################################################################\n";
  
  print "\nAre you satisfied? (y/[n]): ";
@@ -157,6 +162,7 @@ if($dnsserver2 ne "") { print DHCPDCONF qq(, $dnsserver2); }
 if($dnsserver3 ne "") { print DHCPDCONF qq(, $dnsserver3); }
 if($dnsserver1 ne "") { print DHCPDCONF qq(;\n); }
 print DHCPDCONF qq(  option routers $router; \n);
+print DHCPDCONF qq(  option option-100 "$imageserver"; \n);
 print DHCPDCONF qq(} \n);
 
 close(DHCPDCONF);
