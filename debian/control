@@ -2,7 +2,7 @@ Source: systemimager
 Section: admin
 Priority: optional
 Maintainer: dann frazier <dannf@dannf.org>
-Build-Depends: ash, bzip2, cygnus-stylesheets, debhelper (>> 2.0.0), dhcp-client, docbook-to-man, e2fsprogs, libc6-pic, mawk, mtools, rsync, sed, snarf, util-linux, wget
+Build-Depends: ash, bzip2, cygnus-stylesheets, debhelper (>> 2.0.0), dhcp-client, docbook-to-man, e2fsprogs, libc6-pic, mawk, mtools, rsync, snarf, util-linux, wget
 Standards-Version: 3.2.1
 
 Package: systemimager-server
@@ -17,7 +17,7 @@ Description: SystemImager Image-Server
 
 Package: systemimager-client
 Architecture: all
-Depends: perl5, rsync, systemimager-common
+Depends: perl5, rsync, systemimager-common, systemconfigurator
 Description: SystemImager client side utilities
  SystemImager is a set of utilities for installing GNU/Linux images to
  clients machines over the network.  Images are stored in flat files on the
@@ -49,22 +49,6 @@ Description: SystemImager kernel for client nodes
  .
  This package contains a binary linux kernel for booting client nodes.  This
  package should be installed on the image server.
-
-Package: systemimager-initrd-dkf-i386
-Architecture: all
-Suggests: systemimager-server
-Conflicts: systemimager-initrd-i386
-Description: SystemImager unofficial ramdisk for client nodes
- SystemImager is a set of utilities for installing GNU/Linux images to
- clients machines over the network.  Images are stored in flat files on the
- server, making updates easy.  rsync is used for transfers, making updates
- efficient.
- .
- This package contains a compressed ramdisk for booting client nodes.  This
- package should be installed on the image server.  It is unofficial because
- it is not the one provided with the upstream source.  This package is 
- provided for those who want to be able to build the entire ramdisk from
- source.  For the official upstream ramdisk, use systemimager-initrd-i386.
 
 Package: systemimager-initrd-i386
 Architecture: all

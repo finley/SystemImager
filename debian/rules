@@ -10,7 +10,7 @@ export DH_COMPAT=2
 
 TFTP_DIR = /usr/lib/systemimager
 
-#OVERRIDE_PKGS := systemimager-server systemimager-kernel-i386 systemimager-initrd-i386 systemimager-bin-i386 systemimager-initrd-dkf-i386
+#OVERRIDE_PKGS := systemimager-server systemimager-kernel-i386 systemimager-initrd-i386 systemimager-bin-i386
 
 configure: configure-stamp
 configure-stamp:
@@ -35,10 +35,10 @@ clean:
 	rm -f build-stamp configure-stamp
 
 	# Add here commands to clean up after the build process.
-	-$(MAKE) clean
+	-$(MAKE) distclean
 	-rm -rf debian/systemimager-client debian/systemimager-server \
 	debian/systemimager-kernel-i386 debian/systemimager-initrd-i386 \
-	debian/systemimager-initrd-dkf-i386 debian/systemimager-bin-i386
+	debian/systemimager-bin-i386
 	-rm -f $(CURDIR)/changelog
 	dh_clean
 
@@ -50,33 +50,30 @@ install: build
 
 	# Add here commands to install the packages
 	mkdir -p debian/systemimager-client
-	$(MAKE) installclient DESTDIR=$(CURDIR)/debian/systemimager-client
+	$(MAKE) install_client DESTDIR=$(CURDIR)/debian/systemimager-client
 
 	mkdir -p debian/systemimager-server
-	$(MAKE) installserver DESTDIR=$(CURDIR)/debian/systemimager-server
+	$(MAKE) install_server DESTDIR=$(CURDIR)/debian/systemimager-server
 	mkdir -p $(CURDIR)/debian/systemimager-server/etc/systemimager
-	install -m 644 $(CURDIR)/debian/config \
-		$(CURDIR)/debian/systemimager-server/etc/systemimager
+#	install -m 644 $(CURDIR)/debian/config \
+#		$(CURDIR)/debian/systemimager-server/etc/systemimager
 
 	mkdir -p debian/systemimager-common
-	$(MAKE) installcommon DESTDIR=$(CURDIR)/debian/systemimager-common
+	$(MAKE) install_common DESTDIR=$(CURDIR)/debian/systemimager-common
 
 	mkdir -p debian/systemimager-doc
-	$(MAKE) installdocs DESTDIR=$(CURDIR)/debian/systemimager-doc
+	$(MAKE) install_docs DESTDIR=$(CURDIR)/debian/systemimager-doc
 
 	mkdir -p debian/systemimager-kernel-i386
-	$(MAKE) installkernel DESTDIR=$(CURDIR)/debian/systemimager-kernel-i386
-
-	mkdir -p debian/systemimager-initrd-dkf-i386
-	$(MAKE) installinitrd DESTDIR=$(CURDIR)/debian/systemimager-initrd-dkf-i386
-
-	mkdir -p debian/systemimager-bin-i386
-	$(MAKE) installraidtools DESTDIR=$(CURDIR)/debian/systemimager-bin-i386
-	$(MAKE) installreiserfsprogs DESTDIR=$(CURDIR)/debian/systemimager-bin-i386
+	$(MAKE) install_kernel DESTDIR=$(CURDIR)/debian/systemimager-kernel-i386
 
 	mkdir -p debian/systemimager-initrd-i386
-	mkdir -p debian/systemimager-initrd-i386/$(TFTP_DIR)
-	install -m 644 tftpstuff/initrd.gz debian/systemimager-initrd-i386/$(TFTP_DIR)
+	$(MAKE) install_initrd DESTDIR=$(CURDIR)/debian/systemimager-initrd-i386
+
+	mkdir -p debian/systemimager-bin-i386
+	$(MAKE) install_raidtools DESTDIR=$(CURDIR)/debian/systemimager-bin-i386
+	$(MAKE) install_reiserfsprogs DESTDIR=$(CURDIR)/debian/systemimager-bin-i386
+
 
 	# install lintian overrides
 
