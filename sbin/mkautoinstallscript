@@ -3,9 +3,9 @@
 #
 # "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>
 #
-#   Others who have contributed to this code:
+#   This file is: mkautoinstallscript
 #
-# This file is: mkautoinstallscript
+#   $Id$
 #
 
 use lib "/usr/lib/systemimager/perl";
@@ -44,7 +44,7 @@ This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 EOF
 
-$get_help = "\nNOTE: Try \"-help\" for more options.";
+$get_help = "\n       Try \"-help\" for more options.";
 
 $help_info = $version_info . <<"EOF";
 
@@ -74,7 +74,8 @@ The following options affect the autoinstall client after autoinstalling:
                           static_dhcp -- A DHCP server will assign the
 			    same static address each time to clients 
 			    installed with this image.  Also see the
-			    \"makedhcpstatic\" command.
+			    \"makedhcpstatic\" command.  
+			    (This is the default)
 
 			  dynamic_dhcp -- A DHCP server will assign IP
 			    addresses dynamically to clients installed
@@ -109,7 +110,7 @@ Download, report bugs, and make suggestions at:
 http://systemimager.org/
 EOF
 
-$ip_assignment_method = "";
+$ip_assignment_method = "static_dhcp";
 $post_install = "beep";     # the default
 $update_script = "no";      # the default
 
@@ -172,6 +173,9 @@ if(( -e "$master_script" ) && ( $update_script eq "no" )) {
   die qq(\nWARNING: "$master_script" already exists.\n         Use "-update-script YES" to overwrite.\n$get_help\n\n);
 }
 
+SystemImager::Server->validate_ip_assignment_option( $ip_assignment_method );
+SystemImager::Server->validate_post_install_option( $post_install );
+
 ### BEGIN create a fresh $autoinstalldir/systemimager/$image.master ###
 SystemImager::Server->create_autoinstall_script(
 	$master_script,
@@ -182,7 +186,7 @@ SystemImager::Server->create_autoinstall_script(
 	$post_install
 );
 ### END create a fresh $autoinstalldir/systemimager/$image.master ###
-unless ($quiet) { print "Your new autoinstallscript has been created:\n\n"; }
+unless ($quiet) { print qq(\nYour new autoinstallscript has been created:\n\n); }
 unless ($quiet) { print qq(  "$master_script"\n); }
 
 exit 0;
