@@ -440,6 +440,10 @@ sub create_auto_install_script_conf {
 
     my $disks = shift;
 
+    unless ($quiet) { 
+        system("clear");
+    }
+
     # Remove old-style partitionschemes directory if it exists. -BEF-
     rmtree("$systemimagerdir/partitionschemes");
 
@@ -452,10 +456,6 @@ sub create_auto_install_script_conf {
     my $partition_tool = which_partition_tool();
 
     SystemImager::Common->write_auto_install_script_conf_header($file);
-
-    unless ($quiet) { 
-        system("clear");
-    }
 
     # First we do Hardware RAID devices
     foreach my $disk (sort keys %{$disks->{HWRAID}}) {
@@ -490,6 +490,24 @@ sub create_auto_install_script_conf {
     }
 
     SystemImager::Common->save_filesystem_information("/etc/fstab", $file);
+
+    ############################################################################
+    #
+    # Which devstyle should BOEL use?
+    #
+    open(FILE, ">>$file") or die("Couldn't open $file for appending.");
+        print FILE qq(\n);
+        print FILE qq(  <boel devstyle=);
+        if(SystemImager::Common->is_devfs_client()) {
+            print FILE qq("devfs");
+        } else {
+            print FILE qq("static");
+        }
+        print FILE qq(/>\n);
+        print FILE qq(\n);
+    close(FILE);
+    #
+    ############################################################################
 
     SystemImager::Common->write_auto_install_script_conf_footer($file);
 
@@ -631,6 +649,7 @@ EOF
   close(OUT);
 }
 
+
 sub killall {
     my ($pname,$signal) = @_;
     my @list = split(/\s+/,`pidof $pname`);
@@ -658,5 +677,6 @@ sub devfs_transform {
 
     return $realentry;
 }
+
 
 ### END functions
