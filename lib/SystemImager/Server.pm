@@ -339,9 +339,12 @@ sub _read_partition_info_and_prepare_parted_commands {
     my @all_devices = get_all_devices($file);
     my %devfs_map = dev_to_devfs(@all_devices) or return undef;
 
-    foreach my $dev (sort (keys ( %{$xml_config->{disk}} ))) {
-	    print "Found disk: $dev.\n";
-    }
+    #
+    # Diagnostic output. -BEF-
+    #
+    #foreach my $dev (sort (keys ( %{$xml_config->{disk}} ))) {
+	#    print "Found disk: $dev.\n";
+    #}
 
     #
     # Ok.  Now that we've read all of the partition scheme info into hashes, let's do stuff with it. -BEF-
