@@ -9,7 +9,10 @@
 #
 
 # set version
-version="1.1"
+version="1.2"
+
+# configuration directory
+systemimagerdir="/etc/systemimager"
 
 # set path
 PATH=/bin:/usr/bin:/sbin:/usr/sbin
@@ -563,20 +566,20 @@ sort -u
 
 ### BEGIN leave disk info behind for "getimage" script ###
 # clean up after last "prepare"
-rm -fr /etc/partitionschemes/
+rm -fr $systemimagerdir/partitionschemes/
 
 # create receiving directory for SCSI and IDE disk info
-[ "x$ide_and_scsi_disks" != "x" ] && mkdir -p /etc/partitionschemes
+[ "x$ide_and_scsi_disks" != "x" ] && mkdir -p $systemimagerdir/partitionschemes
 
 # create receiving directory for Hardware RAID disk info
-[ "x$hardware_raid_disks" != "x" ] && mkdir -p /etc/partitionschemes/rd
+[ "x$hardware_raid_disks" != "x" ] && mkdir -p $systemimagerdir/partitionschemes/rd
 
 # get sfdisk to report IDE and SCSI disk partition info
 for disk in $ide_and_scsi_disks
 do
  # Specify sectors explicitly -- this format may be used in the future
  # for partitioning with MB.
- sfdisk -l -uS /dev/$disk > /etc/partitionschemes/$disk
+ sfdisk -l -uS /dev/$disk > $systemimagerdir/partitionschemes/$disk
 done
 
 # get sfdisk to report Hardware RAID disk info
@@ -587,12 +590,56 @@ do
 
  # Specify sectors explicitly -- this format may be used in the future
  # for partitioning with MB.
- sfdisk -l -uS /dev/$disk"p" > /etc/partitionschemes/$disk
+ sfdisk -l -uS /dev/$disk"p" > $systemimagerdir/partitionschemes/$disk
 
  # get rid of the funkification
  rm -f /dev/$disk"p"
 done
-### END leave disk info behind for "getimage" script ###
+### END leave disk info behind for the getimage command ###
+
+### BEGIN leave ext3 info behind for the autoinstall client ###
+grep -qw ext3 /etc/fstab
+if [ $? -eq 0 ]; then
+
+  # what file are we working with?
+  file="/etc/fstab"
+
+  # let's start fresh, shall we?
+  rm -f $systemimagerdir/put_new_ext3_journal_file_inodes_in_fstab.sh
+
+  # get listing of ext3 mountpoints
+  directories=`grep -v ^# $file | egrep -w ext3 | awk '{print $2}'`
+  
+  # create script to be run at the end of the autoinstall
+  for directory in $directories; do
+
+    # get current inode so we can find the file
+    inode=`grep -v ^[[:blank:]]*# $file | grep -w $directory | awk '{print $4}' | sed 's/journal=//'`
+
+    # get filename by looking it up by it's inode
+    journalfile=`find $directory -inum $inode -print`
+
+    # escape the slashes in the directory name for later sed commands
+    echo $directory | sed 's/\//\\\//g' > /tmp/escaped_directory.$$
+    escaped_directory=`cat /tmp/escaped_directory.$$`
+    rm -f /tmp/escaped_directory.$$
+
+    # create script to find new inodes on each freshly installed client
+    echo "newinode=\`ls -i $journalfile | awk '{print \$1}'\`" \
+          >> $systemimagerdir/put_new_ext3_journal_file_inodes_in_fstab.sh
+    echo "sed \"/[[:blank:]]$escaped_directory[[:blank:]]/s/journal=[0-9]*/journal=\$newinode/\" /etc/fstab > /tmp/fstab.\$\$" \
+          >> $systemimagerdir/put_new_ext3_journal_file_inodes_in_fstab.sh
+    echo "cat /tmp/fstab.\$\$ > /etc/fstab" \
+          >> $systemimagerdir/put_new_ext3_journal_file_inodes_in_fstab.sh
+    echo "" \
+          >> $systemimagerdir/put_new_ext3_journal_file_inodes_in_fstab.sh
+  done
+  
+  # remove kruft
+  echo "rm -f /tmp/fstab.\$\$" \
+        >> $systemimagerdir/put_new_ext3_journal_file_inodes_in_fstab.sh
+fi
+### END leave ext3 info behind for the autoinstall client ###
 
 # wrap up
 if [ "$QUIET" = "false" ]; then
@@ -602,4 +649,3 @@ if [ "$QUIET" = "false" ]; then
 fi
 
 exit 0
-
