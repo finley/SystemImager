@@ -646,5 +646,14 @@ if (!$quiet) {
     ($continue ne "n") or exit 0;
     my ($base_host_name, $domain_name) = split(/\./, $golden_client, 2);
     $base_host_name =~ s/\d+$//g;
-    exec("addclients -script $image -host $base_host_name -domainname $domain_name");
+    my $cmd;
+    if ($domain_name) {
+        $cmd = "addclients -script $image -host $base_host_name -domainname $domain_name";
+    } else {
+        $cmd = "addclients -script $image -host $base_host_name";
+    }
+    exec($cmd);
 }
+
+
+
