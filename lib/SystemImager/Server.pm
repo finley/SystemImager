@@ -29,6 +29,7 @@ $VERSION="SYSTEMIMAGER_VERSION_STRING";
 #   _imageexists 
 #   _in_script_add_standard_header_stuff 
 #   _read_partition_info_and_prepare_parted_commands 
+#   _write_boel_devstyle_entry
 #   _write_elilo_conf
 #   _write_out_mkfs_commands 
 #   _write_out_new_fstab_file 
@@ -60,10 +61,12 @@ sub create_image_stub {
     close OUT;
 }
 
+
 sub remove_image_stub {
     my ($class, $stub_dir, $imagename) = @_;
     unlink "$stub_dir/40$imagename" or return undef;
 }
+
 
 sub gen_rsyncd_conf {
     my ($class, $stub_dir, $rsyncconf) = @_;
@@ -194,10 +197,6 @@ sub _read_partition_info_and_prepare_parted_commands {
     my ($out, $image_dir, $file) = @_;
 
     my $xml_config = XMLin($file, keyattr => { disk => "+dev", part => "+num" }, forcearray => 1 );  
-
-    foreach my $dev (sort (keys ( %{$xml_config->{disk}} ))) {
-	    print "Found disk: $dev.\n";
-    }
 
     #
     # Ok.  Now that we've read all of the partition scheme info into hashes, let's do stuff with it. -BEF-
@@ -1112,6 +1111,7 @@ sub _write_out_umount_commands {
 
     my $xml_config = XMLin($file, keyattr => { fsinfo => "+line" }, forcearray => 1 );
 
+    #
     # We can't use mp as a hash key, because not all fsinfo lines will have an 
     # mp entry.  Associate filesystems by mount points in a hash here, then we
     # can reverse sort by mount point below to unmount them all. -BEF-
@@ -1153,11 +1153,21 @@ sub _write_out_umount_commands {
         }
     }
 
+    #
     # Add this so that /proc gets umounted -- even if there is no proc entry in
     # the <fsinfo> section of the autoinstallscript.conf file.
     #
     $fs_by_mp{'/proc'} = "proc";
 
+    #
+    # If client uses devfs, then unmount the bound /dev filesystem.
+    #
+#XXX    
+#    if("$xml_config->{boel}->{devstyle}" eq "devfs") {
+#        $fs_by_mp{'/a/dev'} = "/dev";
+#    }
+
+    #
     # Cycle through the mount points in reverse and umount those filesystems.
     # -BEF-
     #
@@ -1245,8 +1255,8 @@ sub create_autoinstall_script{
     #
     my $file="$image_dir/etc/mtab";
     if (-f $file) {
-      open(MTAB, ">$file") || die "Can't open $file for truncating\n";
-      close(MTAB);
+        open(MTAB, ">$file") || die "Can't open $file for truncating\n";
+        close(MTAB);
     }
     
     $file = "$auto_install_script_dir/$script_name.master";
@@ -1256,72 +1266,86 @@ sub create_autoinstall_script{
 
     my $delim = '##';
     while (<$TEMPLATE>) {
-      SWITCH: {
-	  if (/^\s*${delim}VERSION_INFO${delim}\s*$/) {
-	      print $MASTER_SCRIPT "# This master autoinstall script was created with SystemImager v${VERSION}\n";
-	      last SWITCH;
-	  }
-	  if (/^\s*${delim}SET_IMAGENAME${delim}\s*$/) {
-          print $MASTER_SCRIPT  q([ -z $IMAGENAME ] && ) . qq(IMAGENAME=$image\n);
-	      last SWITCH;
-	  }
-	  if (/^\s*${delim}SET_OVERRIDES${delim}\s*$/) {
-          print $MASTER_SCRIPT  q([ -z $OVERRIDES ] && ) . qq(OVERRIDES="$script_name"\n);
-	      last SWITCH;
-	  }
-	  if (/^\s*${delim}PARTITION_DISKS${delim}\s*$/) { 
-	      _read_partition_info_and_prepare_parted_commands( $MASTER_SCRIPT,
-								$image_dir, 
-								$auto_install_script_conf);
-	      last SWITCH;
-	  }
-	  if (/^\s*${delim}CREATE_FILESYSTEMS${delim}\s*$/) {
-	      _write_out_mkfs_commands( $MASTER_SCRIPT, 
-					$image_dir, 
-					$auto_install_script_conf,
-					$raidtab );
-	      last SWITCH;
-	  }
-	  if (/^\s*${delim}GENERATE_FSTAB${delim}\s*$/) {
-	      _write_out_new_fstab_file( $MASTER_SCRIPT, 
-					 $image_dir, 
-					 $auto_install_script_conf );
-	      last SWITCH;
-	  }
-	  if (/^\s*${delim}NO_LISTING${delim}\s*$/) {
-	      if ($no_listing) { print $MASTER_SCRIPT "NO_LISTING=yes\n"; }
-	      last SWITCH;
-	  }
-	  if (/^\s*${delim}SYSTEMCONFIGURATOR${delim}\s*$/) {
-	      write_sc_command($MASTER_SCRIPT, $ip_assignment_method);
-	      last SWITCH;
-	  }
-	  if (/^\s*${delim}UMOUNT_FILESYSTEMS${delim}\s*$/) {
-	      _write_out_umount_commands( $MASTER_SCRIPT,
-					  $image_dir, 
-					  $auto_install_script_conf );
-	      last SWITCH;
-	  }
-	  if (/^\s*${delim}POSTINSTALL${delim}\s*/) {
-	      
-          if ($post_install eq "beep") {
-              # beep incessantly stuff
-              print $MASTER_SCRIPT "beep_incessantly";
-          } elsif ($post_install eq "reboot") {
-              # reboot stuff
-              print $MASTER_SCRIPT "# reboot the autoinstall client\n";
-              print $MASTER_SCRIPT "shutdown -r now\n";
-          } elsif ($post_install eq "shutdown") {
-              # shutdown stuff
-              print $MASTER_SCRIPT "# shutdown the autoinstall client\n";
-              print $MASTER_SCRIPT "shutdown -h now\n";
-              print $MASTER_SCRIPT "\n";
-          }
-          last SWITCH;
-	  }
-	### END end of autoinstall options ###
-	print $MASTER_SCRIPT $_;
-      }
+        SWITCH: {
+	        if (/^\s*${delim}VERSION_INFO${delim}\s*$/) {
+	            print $MASTER_SCRIPT "# This master autoinstall script was created with SystemImager v${VERSION}\n";
+	            last SWITCH;
+	        }
+
+	        if (/^\s*${delim}SET_IMAGENAME${delim}\s*$/) {
+                print $MASTER_SCRIPT  q([ -z $IMAGENAME ] && ) . qq(IMAGENAME=$image\n);
+	            last SWITCH;
+	        }
+
+	        if (/^\s*${delim}SET_OVERRIDES${delim}\s*$/) {
+                print $MASTER_SCRIPT  q([ -z $OVERRIDES ] && ) . qq(OVERRIDES="$script_name"\n);
+	            last SWITCH;
+	        }
+
+	        if (/^\s*${delim}PARTITION_DISKS${delim}\s*$/) { 
+	            _read_partition_info_and_prepare_parted_commands( $MASTER_SCRIPT,
+	          						$image_dir, 
+	          						$auto_install_script_conf);
+	            last SWITCH;
+	        }
+
+	        if (/^\s*${delim}CREATE_FILESYSTEMS${delim}\s*$/) {
+	            _write_out_mkfs_commands( $MASTER_SCRIPT, 
+	          			$image_dir, 
+	          			$auto_install_script_conf,
+	          			$raidtab );
+	            last SWITCH;
+	        }
+
+	        if (/^\s*${delim}GENERATE_FSTAB${delim}\s*$/) {
+	            _write_out_new_fstab_file( $MASTER_SCRIPT, 
+	          			 $image_dir, 
+	          			 $auto_install_script_conf );
+	            last SWITCH;
+	        }
+
+	        if (/^\s*${delim}NO_LISTING${delim}\s*$/) {
+	            if ($no_listing) { print $MASTER_SCRIPT "NO_LISTING=yes\n"; }
+	            last SWITCH;
+	        }
+            
+	        if (/^\s*${delim}BOEL_DEVSTYLE${delim}\s*$/) {
+	            _write_boel_devstyle_entry($MASTER_SCRIPT, $auto_install_script_conf);
+	            last SWITCH;
+	        }
+
+	        if (/^\s*${delim}SYSTEMCONFIGURATOR${delim}\s*$/) {
+	            write_sc_command($MASTER_SCRIPT, $ip_assignment_method);
+	            last SWITCH;
+	        }
+
+	        if (/^\s*${delim}UMOUNT_FILESYSTEMS${delim}\s*$/) {
+	            _write_out_umount_commands( $MASTER_SCRIPT,
+	          			  $image_dir, 
+	          			  $auto_install_script_conf );
+	            last SWITCH;
+	        }
+
+	        if (/^\s*${delim}POSTINSTALL${delim}\s*/) {
+	            
+                if ($post_install eq "beep") {
+                    # beep incessantly stuff
+                    print $MASTER_SCRIPT "beep_incessantly";
+                } elsif ($post_install eq "reboot") {
+                    # reboot stuff
+                    print $MASTER_SCRIPT "# reboot the autoinstall client\n";
+                    print $MASTER_SCRIPT "shutdown -r now\n";
+                } elsif ($post_install eq "shutdown") {
+                    # shutdown stuff
+                    print $MASTER_SCRIPT "# shutdown the autoinstall client\n";
+                    print $MASTER_SCRIPT "shutdown -h now\n";
+                    print $MASTER_SCRIPT "\n";
+                }
+                last SWITCH;
+	        }
+	        ### END end of autoinstall options ###
+	        print $MASTER_SCRIPT $_;
+        }
     }
     close($TEMPLATE);
 
@@ -1527,5 +1551,34 @@ sub _write_elilo_conf {
     close(ELILO_CONF);
     return 1;
 }
+
+
+#
+# Description:
+#   Decide whether to "mount /dev /a/dev -o bind", and write to master
+#   autoinstall script.
+#   
+# Usage:
+#   _write_boel_devstyle_entry($MASTER_SCRIPT, $auto_install_script_conf);
+#
+sub _write_boel_devstyle_entry {
+
+    my ($script, $file) = @_;
+
+    my $xml_config = XMLin($file, keyattr => { boel => "+devstyle"} );
+
+    if("$xml_config->{boel}->{devstyle}" eq "devfs") {
+
+        my $cmd = q(mount /dev /a/dev -o bind || shellout);
+        print $script qq(echo "$cmd"\n);
+        print $script qq($cmd\n);
+        
+    } else {
+
+        print $script qq(#not needed for this image\n);
+        
+    }
+}
+
 
 

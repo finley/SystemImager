@@ -218,13 +218,12 @@ beep
 #
 #HOSTNAME=""
 
+
 ################################################################################
 #
-# mount devfs 
-#   devfs and devfsd is already running on /dev, simply double mount to /a/dev
+# mount /dev /a/dev -o bind if needed
 #
-echo "mount /dev /a/dev -o bind || shellout"
-mount /dev /a/dev -o bind || shellout
+##BOEL_DEVSTYLE##
 #
 ################################################################################
 
@@ -244,9 +243,6 @@ mount /dev /a/dev -o bind || shellout
 #
 #   Unmount filesystems
 #
-echo "umount /a/dev || shellout"
-umount /a/dev
-
 ##UMOUNT_FILESYSTEMS##
 #
 ################################################################################
