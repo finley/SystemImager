@@ -15,12 +15,12 @@
 # - get entire scripts directory at once, whether using rsync or multicast
 # - redirect output from kills in shellout() to /dev/null
 # - create choose_autoinstall_script() function to simplify script selection
-# - create run_postinstall_scripts() function
+# - create run_post_install_scripts() function
 # 2004.03.24 Brian Elliott Finley
 # - start spinner with 1 second delay, so we don't get a / at the start of
 #   command being run.
 # 2004.04.14 Brian Elliott Finley
-# - add preinstallscript support at Rick Bradshaw's request
+# - add pre-install script support at Rick Bradshaw's request
 #
 
 
@@ -923,14 +923,14 @@ run_autoinstall_script() {
 #
 ################################################################################
 #
-run_preinstall_scripts() {
+run_pre_install_scripts() {
 
     echo
-    echo run_preinstall_scripts
+    echo run_pre_install_scripts
 
     get_base_hostname
 
-    cd ${SCRIPTS_DIR}/preinstall/
+    cd ${SCRIPTS_DIR}/pre-install/
 
     PRE_INSTALL_SCRIPTS_A=`ls | grep "^[0-9][0-9]${IMAGENAME}\..*"`
     PRE_INSTALL_SCRIPTS_B=`ls | grep "^[0-9][0-9]${BASE_HOSTNAME}\..*"`
@@ -944,23 +944,23 @@ run_preinstall_scripts() {
         do
             echo ">>> $PRE_INSTALL_SCRIPT"
             chmod +x $PRE_INSTALL_SCRIPT || shellout
-            ./preinstall.$$/$PRE_INSTALL_SCRIPT || shellout
+            ./$PRE_INSTALL_SCRIPT || shellout
         done
     else
-        echo "No pre install scripts found."
+        echo "No pre-install scripts found."
     fi
 }
 #
 ################################################################################
 #
-run_postinstall_scripts() {
+run_post_install_scripts() {
 
     echo
-    echo run_postinstall_scripts
+    echo run_post_install_scripts
 
     get_base_hostname
 
-    cd ${SCRIPTS_DIR}/postinstall/
+    cd ${SCRIPTS_DIR}/post-install/
 
     POST_INSTALL_SCRIPTS_A=`ls | grep "^[0-9][0-9]${IMAGENAME}\..*"`
     POST_INSTALL_SCRIPTS_B=`ls | grep "^[0-9][0-9]${BASE_HOSTNAME}\..*"`
@@ -971,18 +971,18 @@ run_postinstall_scripts() {
     if [ ! -z `echo ${POST_INSTALL_SCRIPTS}|sed 's/ //'` ]; then
 
         
-        mkdir -p /a/tmp/postinstall.$$/ || shellout
+        mkdir -p /a/tmp/post-install.$$/ || shellout
 
-        rsync -a ${SCRIPTS_DIR}/postinstall/ /a/tmp/postinstall.$$/ || shellout
+        rsync -a ${SCRIPTS_DIR}/post-install/ /a/tmp/post-install.$$/ || shellout
 
         for POST_INSTALL_SCRIPT in $POST_INSTALL_SCRIPTS
         do
             echo ">>> $POST_INSTALL_SCRIPT"
-            chmod +x /a/tmp/postinstall.$$/$POST_INSTALL_SCRIPT || shellout
-            chroot /a/ /tmp/postinstall.$$/$POST_INSTALL_SCRIPT || shellout
+            chmod +x /a/tmp/post-install.$$/$POST_INSTALL_SCRIPT || shellout
+            chroot /a/ /tmp/post-install.$$/$POST_INSTALL_SCRIPT || shellout
         done
     else
-        echo "No post install scripts found."
+        echo "No post-install scripts found."
     fi
 }
 #
