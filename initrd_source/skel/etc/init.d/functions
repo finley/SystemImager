@@ -27,7 +27,7 @@ FLAMETHROWER_DIRECTORY_DIR=/var/lib/systemimager/flamethrower
 BOEL_BINARIES_DIR=/tmp/boel_binaries
 VERSION="SYSTEMIMAGER_VERSION_STRING"
 FLAVOR="SYSTEMIMAGER_FLAVOR_STRING"
-#DEBUG=1     # XXX Make sure this is commented out for releases. -BEF-
+DEBUG=1     # XXX Make sure this is commented out for releases. -BEF-
 
 #
 ################################################################################
@@ -228,8 +228,8 @@ flamethrower_client() {
     #            Debian patched gnu tar does (image and on).
     #            We want this option enabled for the image to ensure proper directory
     #            permissions. -BEF-
-    #XXX tar --help 2>&1 | grep -q overwrite && TAR_OPTS='--overwrite -xp' || TAR_OPTS='-x'
-    tar --help 2>&1 | grep -q overwrite && TAR_OPTS='--overwrite -xzp' || TAR_OPTS='-xz'
+    tar --help 2>&1 | grep -q overwrite && TAR_OPTS='--overwrite -xp' || TAR_OPTS='-x'
+    #tar --help 2>&1 | grep -q overwrite && TAR_OPTS='--overwrite -xzp' || TAR_OPTS='-xz'
 
 
     # set vars
@@ -674,28 +674,43 @@ start_network() {
 #
 #   Ping test
 ping_test() {
+    local PING_DESTINATION
+    local HOST_TYPE
     echo
     echo ping_test
 
+    if [ ! -z "$FLAMETHROWER_DIRECTORY_PORTBASE" ]; then
+        PING_DESTINATION=$GATEWAY
+        HOST_TYPE="default gateway"
+    else
+        PING_DESTINATION=$IMAGESERVER
+    fi 
+    echo
+    echo "Pinging your $HOST_TYPE to ensure we have network connectivity."
+    echo
+
+
+    # Ping test code submitted by Grant Noruschat <grant@eigen.ee.ualberta.ca>
+    # modified slightly by <brian.finley@baldguysoftware.com>
     PING_COUNT=1
     PING_EXIT_STATUS=1
-
-    # ping test code submitted by Grant Noruschat <grant@eigen.ee.ualberta.ca>
-    # modified slightly by <brian.finley@baldguysoftware.com>
-    echo
-    echo "Pinging image server \"$IMAGESERVER\""
-    echo "to ensure we have network connectivity."
-    echo
-
     while [ "$PING_EXIT_STATUS" != "0" ]
     do
         echo "PING ATTEMPT $PING_COUNT: "
-        ping -c 1 $IMAGESERVER; PING_EXIT_STATUS=$?; PING_COUNT=$(( $PING_COUNT + 1 ))
+        ping -c 1 $PING_DESTINATION
+        PING_EXIT_STATUS=$?
+
+        if [ "$PING_EXIT_STATUS" = "0" ]; then
+            echo
+            echo "  We have connectivity to your $HOST_TYPE!"
+        fi
+
+        PING_COUNT=$(( $PING_COUNT + 1 ))
         if [ "$PING_COUNT" = "4" ]; then
             echo
-            echo "  WARNING:  Cannot ping the image server \"$IMAGESERVER\""
+            echo "  WARNING:  Failed ping test."
             echo "            Despite this seemingly depressing result, I will attempt"
-            echo "            to proceed with the install.  Your imageserver may be"
+            echo "            to proceed with the install.  Your $HOST_TYPE may be"
             echo "            configured to not respond to pings, but it wouldn't hurt"
             echo "            to double check that your networking equipment is"
             echo "            working properly!"
@@ -705,10 +720,6 @@ ping_test() {
         fi
     done
 
-    if [ "$PING_EXIT_STATUS" = "0" ]; then
-        echo
-        echo "  We have connectivity to the Image Server!"
-    fi
 }
 #
 ################################################################################
@@ -855,6 +866,7 @@ get_ssh_tarball() {
 #
 #   Stuff for SSH installs
 #
+
 start_ssh() {
 
 	get_ssh_tarball
