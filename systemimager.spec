@@ -143,7 +143,7 @@ rm -rf $RPM_BUILD_ROOT
 chkconfig --add systemimager
 
 
-%postun server
+%preun server
 chkconfig --del systemimager
 
 %files common
@@ -193,7 +193,6 @@ chkconfig --del systemimager
 %doc CHANGE.LOG COPYING CREDITS README TODO VERSION
 %dir /etc/systemimager
 %config /etc/systemimager/updateclient.local.exclude
-
 /usr/local/lib/systemimager/perl/SystemImager/Client.pm
 %prefix/sbin/updateclient
 %prefix/sbin/prepareclient
