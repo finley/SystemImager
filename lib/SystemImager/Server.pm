@@ -804,8 +804,6 @@ sub _write_out_mkfs_commands {
     print MASTER_SCRIPT "modprobe ext2\n";
     print MASTER_SCRIPT "modprobe ext3\n";
     print MASTER_SCRIPT "modprobe jfs\n";
-    print MASTER_SCRIPT "modprobe xfs_support\n";
-    print MASTER_SCRIPT "modprobe xfs_dmapi\n";
     print MASTER_SCRIPT "modprobe xfs\n";
     print MASTER_SCRIPT "\n";
 
