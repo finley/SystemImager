@@ -1526,6 +1526,7 @@ sub _write_out_umount_commands {
                    or ($fs eq "jfs")
                    or ($fs eq "xfs")
                    or ($fs eq "proc")
+                   or ($fs eq "sysfs")
             ) { next; }
 
             # 
@@ -1541,6 +1542,7 @@ sub _write_out_umount_commands {
     # the <fsinfo> section of the autoinstallscript.conf file.
     #
     $fs_by_mp{'/proc'} = "proc";
+    $fs_by_mp{'/sys'} = "sysfs";
 
     #
     # If client uses devfs, then unmount the bound /dev filesystem.
