@@ -1,0 +1,139 @@
+diff -urN udpcast.orig/Makefile udpcast/Makefile
+--- udpcast.orig/Makefile	2003-01-29 21:48:40.000000000 -0600
++++ udpcast/Makefile	2003-01-29 20:45:53.000000000 -0600
+@@ -14,7 +14,7 @@
+ clean:
+ 	rm -f *.o udp-sender udp-receiver udp-sender.1* udp-receiver.1* *~
+ 
+-install: udp-sender udp-receiver
++install: all
+ 	install -m 555 udp-sender udp-receiver /usr/sbin
+ 	install -m 644 udp-sender.1.gz udp-receiver.1.gz /usr/share/man/man1
+ 
+@@ -31,6 +31,7 @@
+ 	gcc $(LDFLAGS) $^ -lpthread -o $@
+ 
+ udp-receiver.1.gz udp-sender.1.gz: html2man.pl cmd.html
++	rm -f udp-receiver.1.gz  udp-sender.1.gz
+ 	./html2man.pl <cmd.html
+ 	gzip -9 udp-receiver.1 udp-sender.1
+ 
+diff -urN udpcast.orig/cmd.html udpcast/cmd.html
+--- udpcast.orig/cmd.html	2003-01-29 21:48:40.000000000 -0600
++++ udpcast/cmd.html	2003-01-29 19:45:17.000000000 -0600
+@@ -34,7 +34,7 @@
+ <!-- =text Alain Knaff -->
+ <!-- =section udp-sender SYNOPSIS -->
+ <!-- =text
+-udp-sender [--file <i>file</i>] [--full-duplex] [--half-duplex] [--pipe <i>pipe</i>] [--portbase <i>portbase</i>] [--blocksize <i>size</i>] [--interface <i>net-interface</i>] [--mcast-addr <i>data-mcast-address</i>] [--mcast-all-addr <i>mcast-all-address</i>] [--max-bitrate <i>bitrate</i>] [--pointopoint</i>] [--async] [--log <i>file</i>] [--min-slice-size <i>min</i>] [--max-slice-size <i>max</i>] [--slice-size] [--ttl <i>time-to-live</i>] [--fec <i>stripes</i>x<i>redundancy</i>/<i>stripesize</i>] [--print-seed] [--rexmit-hello-interval <i>interval</i>] [--autostart <i>autostart</i>] [--broadcast] [--min-clients <i>clients</i>] [--min-client-wait <i>sec</i>] [--max-client-wait <i>sec</i>]
++udp-sender [--file <i>file</i>] [--full-duplex] [--half-duplex] [--pipe <i>pipe</i>] [--portbase <i>portbase</i>] [--blocksize <i>size</i>] [--interface <i>net-interface</i>] [--mcast-addr <i>data-mcast-address</i>] [--mcast-all-addr <i>mcast-all-address</i>] [--max-bitrate <i>bitrate</i>] [--pointopoint</i>] [--async] [--log <i>file</i>] [--min-slice-size <i>min</i>] [--max-slice-size <i>max</i>] [--slice-size] [--ttl <i>time-to-live</i>] [--fec <i>stripes</i>x<i>redundancy</i>/<i>stripesize</i>] [--print-seed] [--rexmit-hello-interval <i>interval</i>] [--autostart <i>autostart</i>] [--broadcast] [--min-clients <i>clients</i>] [--min-wait <i>sec</i>] [--max-wait <i>sec</i>]
+ <!-- =stop -->
+ <!-- =cont -->
+ 
+diff -urN udpcast.orig/participants.c udpcast/participants.c
+--- udpcast.orig/participants.c	2001-12-11 14:36:11.000000000 -0600
++++ udpcast/participants.c	2003-01-29 21:53:01.000000000 -0600
+@@ -30,6 +30,8 @@
+ 	char ipBuffer[16];	
+ 	flprintf("Disconnecting #%d (%s)\n", i, 
+ 		 getIpString(&db->clientTable[i].addr, ipBuffer));
++	logprintf(log, "Disconnecting #%d (%s)\n", i, 
++		 getIpString(&db->clientTable[i].addr, ipBuffer));
+ 	db->clientTable[i].used = 0;
+ 	db->nrParticipants--;
+     }
+@@ -70,8 +72,10 @@
+ 	    db->clientTable[i].rcvbuf = rcvbuf;
+ 	    db->nrParticipants++;
+ 
+-	    flprintf("New connection from %s  (#%d) %08x\n", 
+-		     getIpString(addr, ipBuffer), i, capabilities);
++        flprintf("New connection from %s  (#%d) %08x\n", 
++            getIpString(addr, ipBuffer), i, capabilities);
++        logprintf(log, "New connection from %s  (#%d) %08x\n", 
++            getIpString(addr, ipBuffer), i, capabilities);
+ 	    return i;
+ 	} else if(pointopoint)
+ 	    return -1;
+diff -urN udpcast.orig/senddata.c udpcast/senddata.c
+--- udpcast.orig/senddata.c	2001-12-09 08:58:59.000000000 -0600
++++ udpcast/senddata.c	2003-01-29 21:53:47.000000000 -0600
+@@ -363,15 +363,15 @@
+ 	/* already acked */
+ 	return 0;
+     if(!(net_config->flags & FLAG_SN)) {
+-	if(net_config->discovery == DSC_DOUBLING) {
+-		net_config->sliceSize += net_config->sliceSize / 4;
+-	   if(net_config->sliceSize >= net_config->max_slice_size) {
+-	       net_config->sliceSize = net_config->max_slice_size;
+-	       net_config->discovery = DSC_REDUCING;
+-	   }
+-	   logprintf(log, "Doubling slice size to %d\n", 
+-		     net_config->sliceSize);
+-       }
++        if(net_config->discovery == DSC_DOUBLING) {
++            net_config->sliceSize += net_config->sliceSize / 4;
++            if(net_config->sliceSize >= net_config->max_slice_size) {
++                net_config->sliceSize = net_config->max_slice_size;
++                net_config->discovery = DSC_REDUCING;
++            }
++            logprintf(log, "Increasing slice size to %d blocks.\n", 
++                net_config->sliceSize);
++        }
+     }
+     slice->state = SLICE_ACKED;
+     pc_produce(fifo->freeMemQueue, slice->bytes);
+@@ -420,7 +420,8 @@
+ 		/* a minimum of 32 */
+ 		net_config->sliceSize = 32;
+ 	    }
+-	    logprintf(log, "Slice size=%d\n", net_config->sliceSize);
++	    logprintf(log, "Slice size=%d\n",
++            net_config->sliceSize);
+ 	}
+     }
+ 
+diff -urN udpcast.orig/udp-sender.c udpcast/udp-sender.c
+--- udpcast.orig/udp-sender.c	2003-01-29 21:48:40.000000000 -0600
++++ udpcast/udp-sender.c	2003-01-29 19:44:39.000000000 -0600
+@@ -64,12 +64,12 @@
+     { "broadcast", 0, NULL, 0x801 },
+ 
+     { "min-clients", 1, NULL, 0x901 },
+-    { "max-client-wait", 1, NULL, 0x902 },
+-    { "min-client-wait", 1, NULL, 0x903 },
++    { "max-wait", 1, NULL, 0x902 },
++    { "min-wait", 1, NULL, 0x903 },
+ };
+ 
+ void usage(char *progname) {
+-    fprintf(stderr, "%s [--file file] [--full-duplex] [--half-duplex] [--pipe pipe] [--portbase portbase] [--blocksize size] [--interface net-interface] [--mcast-addr data-mcast-address] [--mcast-all-addr mcast-all-address] [--max-bitrate bitrate] [--pointopoint] [--async] [--log file] [--min-slice-size min] [--max-slice-size max] [--slice-size] [--ttl time-to-live] [--fec <stripes>x<redundancy>/<stripesize>] [--print-seed] [--rexmit-hello-interval interval] [--autostart autostart] [--broadcast] [--min-clients clients] [--min-client-wait sec] [--max-client-wait sec]\n", progname);
++    fprintf(stderr, "%s [--file file] [--full-duplex] [--half-duplex] [--pipe pipe] [--portbase portbase] [--blocksize size] [--interface net-interface] [--mcast-addr data-mcast-address] [--mcast-all-addr mcast-all-address] [--max-bitrate bitrate] [--pointopoint] [--async] [--log file] [--min-slice-size min] [--max-slice-size max] [--slice-size] [--ttl time-to-live] [--fec <stripes>x<redundancy>/<stripesize>] [--print-seed] [--rexmit-hello-interval interval] [--autostart autostart] [--broadcast] [--min-clients clients] [--min-wait sec] [--max-wait sec]\n", progname);
+     exit(1);
+ }
+ 
+diff -urN udpcast.orig/udps-negotiate.c udpcast/udps-negotiate.c
+--- udpcast.orig/udps-negotiate.c	2003-01-29 21:48:40.000000000 -0600
++++ udpcast/udps-negotiate.c	2003-01-29 21:54:14.000000000 -0600
+@@ -311,8 +311,10 @@
+ 	char ipBuffer[16];
+ 	getDefaultMcastAddress(socket, net_config->net_if, 
+ 			       &net_config->dataMcastAddr);
+-	flprintf("Using mcast address %s\n",
+-		 getIpString(&net_config->dataMcastAddr, ipBuffer));
++	flprintf("Using multicast address %s\n", 
++        getIpString(&net_config->dataMcastAddr, ipBuffer));
++	logprintf(log, "Using multicast address %s\n", 
++        getIpString(&net_config->dataMcastAddr, ipBuffer));
+ 	setMcastDestination(socket, net_config->net_if, 
+ 			    &net_config->dataMcastAddr);
+     }
+@@ -331,6 +333,8 @@
+     flprintf(" on %s \n", net_config->net_if);
+     flprintf("Broadcasting control to %s\n",
+ 	     getIpString(&net_config->controlMcastAddr, ipBuffer));
++	logprintf(log, "Broadcasting control to %s\n",
++	     getIpString(&net_config->controlMcastAddr, ipBuffer));
+ 
+     net_config->capabilities = SENDER_CAPABILITIES;
+     if(net_config->flags & FLAG_ASYNC)
