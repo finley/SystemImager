@@ -86,6 +86,7 @@ Options: (options can be presented in any order and may be abbreviated)
                           this image to be stored.  The directory bearing
                           the image name itself will be placed inside the
                           directory specified here.
+ -explicit-geometry       blah, blah, ###
  -update-script [YES|NO]  Update the \$image.master script?  Defaults to 
                           NO if -quiet.  If not specified you will be
                           prompted to confirm an update.
@@ -232,7 +233,7 @@ if($master_client) {
   # get /etc/mtab from $master_client
   if (!$quiet) {
     print "Retrieving /etc/mtab from $master_client to check for mounted filesystems...\n";
-    open(RSYNC, "rsync -av ${master_client}::root/etc/mtab $imagedir|");
+    open(RSYNC, "rsync -av --numeric-ids ${master_client}::root/etc/mtab $imagedir|");
     print "------------- $master_client mtab RETRIEVAL PROGRESS -------------\n";
     while (<RSYNC>) {
       print;
@@ -240,7 +241,7 @@ if($master_client) {
     print "------------- $master_client mtab RETRIEVAL FINISHED -------------\n";
     close(RSYNC);
   } else {
-    $command = "rsync -a ${master_client}::root/etc/mtab $imagedir";
+    $command = "rsync -a --numeric-ids ${master_client}::root/etc/mtab $imagedir";
     system($command);
   }
   
@@ -280,7 +281,7 @@ if($imageserver) {
 # Get the image from the specified host
 if (!$quiet) {
     print "\n\nRetrieving image $image from $source_host\n";
-    open (RSYNC, "rsync -av $options |");
+    open (RSYNC, "rsync -av --numeric-ids $options |");
     print "------------- $image IMAGE RETRIEVAL PROGRESS -------------\n";
     while (<RSYNC>) {
         print $_;
@@ -288,7 +289,7 @@ if (!$quiet) {
     print "------------- $image IMAGE RETRIEVAL FINISHED -------------\n";
     close (RSYNC);
 } else {
-    $command = qq(rsync -a $options);
+    $command = qq(rsync -a --numeric-ids $options);
     system($command);
 }
 
@@ -528,12 +529,12 @@ close FSTAB;
 ### BEGIN stop RAID devices before partitioning ###
 if (@software_raid_devices) {
   print MASTER_SCRIPT "# Pull /etc/raidtab over to autoinstall client\n";
-  print MASTER_SCRIPT "rsync -av \$DHCPSIADDR::$image/etc/raidtab /etc/raidtab\n";
+  print MASTER_SCRIPT "rsync -av --numeric-ids \$DHCPSIADDR::$image/etc/raidtab /etc/raidtab\n";
   print MASTER_SCRIPT "\n";
   print MASTER_SCRIPT "# get software RAID utilities\n";
-  print MASTER_SCRIPT "rsync -av \$DHCPSIADDR::tftpboot/systemimager/mkraid /tmp/\n";
-  print MASTER_SCRIPT "rsync -av \$DHCPSIADDR::tftpboot/systemimager/raidstart /tmp/\n";
-  print MASTER_SCRIPT "rsync -av \$DHCPSIADDR::tftpboot/systemimager/raidstop /tmp/\n";
+  print MASTER_SCRIPT "rsync -av --numeric-ids \$DHCPSIADDR::tftpboot/systemimager/mkraid /tmp/\n";
+  print MASTER_SCRIPT "rsync -av --numeric-ids \$DHCPSIADDR::tftpboot/systemimager/raidstart /tmp/\n";
+  print MASTER_SCRIPT "rsync -av --numeric-ids \$DHCPSIADDR::tftpboot/systemimager/raidstop /tmp/\n";
   print MASTER_SCRIPT "\n";
 
   print MASTER_SCRIPT "# Stop RAID devices before partitioning begins\n";
@@ -725,7 +726,7 @@ if (@ext3_devices) {
 ### BEGIN Write out reiserfs creation commands ###
 if (@reiserfs_devices) {
   print MASTER_SCRIPT "# get mkreiserfs utility\n";
-  print MASTER_SCRIPT "rsync -av \$DHCPSIADDR::tftpboot/systemimager/mkreiserfs /tmp/\n";
+  print MASTER_SCRIPT "rsync -av --numeric-ids \$DHCPSIADDR::tftpboot/systemimager/mkreiserfs /tmp/\n";
   print MASTER_SCRIPT "\n";
   print MASTER_SCRIPT "# format reiserfs devices\n";
   foreach my $device_file (sort @reiserfs_devices) {
@@ -751,7 +752,7 @@ foreach $mount_point (sort (@mount_points)) {
 
 ### BEGIN pull the image down ###
 print MASTER_SCRIPT "# filler up!\n";
-print MASTER_SCRIPT "rsync -av \$DHCPSIADDR::$image/ /a/\n\n";
+print MASTER_SCRIPT "rsync -av --numeric-ids \$DHCPSIADDR::$image/ /a/\n\n";
 ### END pull the image down ###
 
 

@@ -110,7 +110,7 @@ if ($autoinstall) {
   print qq(Retrieving SystemImager kernel...\n);
   # if the write fails for some reason (read only filesystem, full filesystem, etc.) rsync will 
   # not return a proper exit code -- a bug report has been submitted <brian@thefinleys.com>
-  $command = qq(rsync -a $imageserver) . q(::tftpboot/kernel /boot);
+  $command = qq(rsync -a --numeric-ids $imageserver) . q(::tftpboot/kernel /boot);
   $rc = 0xffff & system($command);
   if ($rc != 0) { die "Failed to copy SystemImager kernel to /boot on client!!!\n"; }  
 
@@ -118,7 +118,7 @@ if ($autoinstall) {
   print qq(Retrieving SystemImager initial ramdisk...\n);
   # if the write fails for some reason (read only filesystem, full filesystem, etc.) rsync will 
   # not return a proper exit code -- a bug report has been submitted <brian@thefinleys.com>
-  $command = qq(rsync -a $imageserver) . q(::tftpboot/initrd.gz /boot);
+  $command = qq(rsync -a --numeric-ids $imageserver) . q(::tftpboot/initrd.gz /boot);
   $rc = 0xffff & system($command);
   if ($rc != 0) { die "Failed to copy SystemImager initrd.gz file to /boot on client!!!\n"; }  
 
@@ -194,7 +194,7 @@ EOF
   }
 
   # start with base command
-  $command = "rsync -av";
+  $command = "rsync -av --numeric-ids";
 
   # get exclusions from /etc/systemimager.exclude
   $systemimager_exclude="/etc/systemimager/systemimager.exclude";
