@@ -355,7 +355,7 @@ $(BOEL_BINARIES_TARBALL):	$(DISCOVER_BINARY) $(DISCOVER_DATA_FILES) \
 				$(MKDOSFS_BINARY) $(MKE2FS_BINARY) \
 				$(TUNE2FS_BINARY) $(PARTED_BINARY) \
 				$(MKJFS_BINARY) $(RAIDTOOLS_BINARIES) \
-				$(MKREISERFS_BINARY) $(BC_BINARY) \
+				$(MKREISERFS_BINARY) $(BC_BINARY) $(SFDISK_BINARY) \
 				$(SRC_DIR)/modules_build-stamp
 	#
 	# Put binaries in the boel_binaries_tarball...
