@@ -94,11 +94,17 @@ RELEASE_DOCS = CHANGE.LOG COPYING CREDITS ERRATA README VERSION
 # should we be messing with the user's PATH? -dannf
 PATH = /sbin:/bin:/usr/sbin:/usr/bin:/usr/bin/X11:/usr/local/sbin:/usr/local/bin
 ARCH = $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/)
+
 # Follows is a set of arch manipulations to distinguish between ppc types
 ifeq ($(ARCH),ppc64)
-ifneq ($(strip ls /proc/iSeries)),)
-        ARCH=ppc64-iSeries
+IS_PPC64 := 1
+ifneq ($(shell ls /proc/iSeries 2>/dev/null),)
+        ARCH := ppc64-iSeries
 endif
+endif
+
+ifneq ($(BUILD_ARCH),)
+	ARCH := $(BUILD_ARCH)
 endif
 
 SUDO = $(shell if [ `id -u` != 0 ]; then `which sudo`; fi)
@@ -159,6 +165,10 @@ GETSOURCE = $(TOPDIR)/tools/getsource
 # build everything, install nothing
 PHONY += all
 all:	$(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.img manpages
+
+arch:
+	echo $(ARCH)
+	echo $(TEST_ARCH)
 
 binaries: $(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.img
 
