@@ -82,15 +82,15 @@ Options: (options can be presented in any order)
  -autoinstall             Autoinstall this client the next time it
                           reboots.  (conflicts with -no-bootloader)
 
- -flavor                  The boot flavor to used for doing an autoinstall.
-                          (Assumes -autoinstall).
+ -flavor FLAVOR           The boot flavor to used for doing an autoinstall.
+                          (assumes -autoinstall).
 
  -configure-from DEVICE   Only used with -autoinstall.  Stores the
                           network configuration for DEVICE in the
                           /local.cfg file so that the same settings
                           will be used during the autoinstall process.
 
- -ssh-user USERNAME	      Username for ssh connection from the client.
+ -ssh-user USERNAME       Username for ssh connection from the client.
                           Only needed if a secure connection is 
                           required.
 
@@ -98,7 +98,7 @@ Options: (options can be presented in any order)
 
  -dry-run                 Only shows what would have been updated.
 
- -log "STRING"	    	  Quoted string for log file format.  See the
+ -log "STRING"            Quoted string for log file format.  See the
                           rsyncd.conf man page for options.
 
 Tip: Use \"lsimage -server HOSTNAME\" to get a list of available images.
@@ -149,7 +149,7 @@ my $DEVICE;
 
 GetOptions(
     "listing"           => \my $listing,
-    "config-from=s"     => \$DEVICE,	# alias to -configure-from
+    "config-from=s"     => \$DEVICE,            # alias to -configure-from
     "configure-from=s"  => \$DEVICE,
     "help"              => \my $help,
     "version"           => \my $version,
@@ -375,19 +375,19 @@ if ($autoinstall) {
 
         # Let's just get what's currently specified. -BEF-
         my @eliloconf_locations = (
-		"$bootdir/elilo.conf",
-	        "/etc/elilo.conf"
+                "$bootdir/elilo.conf",
+                "/etc/elilo.conf"
         );
 
         foreach my $file (@eliloconf_locations) {
             if (-f $file) {
                 open(FILE, "<$file") or croak("Couldn't open $file for reading!");
                     while (<FILE>) {
-        	        if (/^\s*boot\s*=(.*)$/) {
-        		    $bootdev = $1;
-        	        }
-        	    }
-        	close(FILE);
+                        if (/^\s*boot\s*=(.*)$/) {
+                            $bootdev = $1;
+                        }
+                    }
+                close(FILE);
             }
         }
         unless ($bootdev) { die "FATAL: Couldn't determine the boot device."; }
@@ -399,7 +399,7 @@ if ($autoinstall) {
             open(FILE, "<$file") or croak("Couldn't open $file for reading!");
                 while (<FILE>) {
                     if (/^\s*boot\s*=(.*)$/) {
-            	    $bootdev = $1;
+                        $bootdev = $1;
                     }
                 }
             close(FILE);
@@ -522,7 +522,7 @@ SC_EOF
     if ($dry_run) {
         print "Performing a dry run -- no files will be modified...\n";
     } else {
-  	print "Updating image...\n";
+        print "Updating image...\n";
     }
 
     # Run the command. -BEF-
@@ -531,8 +531,8 @@ SC_EOF
     # Now we install the bootloader if requested
     unless($no_bootloader) {
         print "Running bootloader...\n";
-	my $cmd = "systemconfigurator --runboot";
-    	!system($cmd) or die "$cmd failed!";
+        my $cmd = "systemconfigurator --runboot";
+        !system($cmd) or die "$cmd failed!";
     }
 } ### END update image section ###
 
