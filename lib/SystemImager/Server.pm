@@ -395,9 +395,9 @@ sub _in_script_stop_RAID_devices_before_partitioning {
     print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::\$IMAGENAME/etc/raidtab /etc/raidtab || shellout\n";
     print MASTER_SCRIPT "\n";
     print MASTER_SCRIPT "# get software RAID utilities\n";
-    print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::${ARCH}-boot/mkraid /tmp/ || shellout\n";
-    print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::${ARCH}-boot/raidstart /tmp/ || shellout\n";
-    print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::${ARCH}-boot/raidstop /tmp/ || shellout\n";
+    print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::\${ARCH}-boot/mkraid /tmp/ || shellout\n";
+    print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::\${ARCH}-boot/raidstart /tmp/ || shellout\n";
+    print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::\${ARCH}-boot/raidstop /tmp/ || shellout\n";
     print MASTER_SCRIPT "\n";
 
     print MASTER_SCRIPT << 'EOF';
@@ -649,7 +649,7 @@ if (@ext3_devices) {
 ### BEGIN Write out reiserfs creation commands ###
 if (@reiserfs_devices) {
   print MASTER_SCRIPT "# get mkreiserfs utility\n";
-  print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::${ARCH}-boot/mkreiserfs /tmp/ || shellout\n";
+  print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::\${ARCH}-boot/mkreiserfs /tmp/ || shellout\n";
   print MASTER_SCRIPT "\n";
   print MASTER_SCRIPT "# format reiserfs devices\n";
   foreach my $device (sort @reiserfs_devices) {
