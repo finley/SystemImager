@@ -2,6 +2,12 @@
 %define ver      2.9.1
 %define rel      1
 %define prefix   /usr
+%define _build_all 1
+# Set this to 1 to build only the boot rpm
+# it can also be done in the .rpmmacros file
+#%define _build_only_boot 1
+%{?_build_only_boot:%define _build_all 0}
+
 
 Summary: Software that automates Linux installs, software distribution, and production deployment.
 Name: %name
@@ -22,7 +28,7 @@ AutoReqProv: no
 %description
 This is bogus and not used anywhere
 
-%ifarch i386 i486 i586 i686 athlon
+%if %{_build_all}
 
 %package server
 Summary: Software that automates Linux installs, software distribution, and production deployment.
@@ -157,7 +163,7 @@ process.
 
 %changelog
 * Thu Sep 19 2002 Sean Dague <sean@dague.net> 2.9.1-1
-- Added %ifarch stanzas to make building easier.
+- Added \%if \%{_build_all} stanzas to make building easier.
 
 * Tue Feb  5 2002 Sean Dague <sean@dague.net> 2.1.1-1
 - Added section 5 manpages
@@ -188,10 +194,20 @@ process.
 
 %prep
 %setup
+
+%if %{_skip_build_all}
+echo test 1
+%else
+echo test 2
+%endif
+echo test 3
+
+exit 1
+
 make -j11 get_source
 
 # Only build everything if on x86, this helps with PPC build issues
-%ifarch i386 i486 i586 i686 athlon
+%if %{_build_all}
 %build
 cd $RPM_BUILD_DIR/%{name}-%{version}/
 make all
@@ -203,7 +219,7 @@ make binaries
 
 %endif
 
-%ifarch i386 i486 i586 i686 athlon
+%if %{_build_all}
 
 %install
 cd $RPM_BUILD_DIR/%{name}-%{version}/
@@ -222,7 +238,7 @@ make install_binaries DESTDIR=/tmp/%{name}-%{ver}-root PREFIX=%prefix
 #make distclean
 #rm -rf $RPM_BUILD_ROOT
 
-%ifarch i386 i486 i586 i686 athlon
+%if %{_build_all}
 
 %post server
 # First we check for rsync service under xinetd and get rid of it
