@@ -3,10 +3,12 @@
 #
 # "SystemImager"
 #
-#  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
+#  Copyright (C) 1999-2001 Brian Elliott Finley 
+#                          <brian.finley@baldguysoftware.com>
 #  Copyright (C) 2002 International Business Machines
 #                     Sean Dague <sean@dague.net>
-#  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
+#  Copyright (C) 2002 Bald Guy Software 
+#                     <brian.finley@baldguysoftware.com>
 #
 #  $Id$
 #
@@ -43,6 +45,9 @@ use vars qw($config $VERSION);
 
 # set version number
 $VERSION = "SYSTEMIMAGER_VERSION_STRING";
+
+# Make sure proper things are in the path.
+$ENV{PATH} = "/usr/local/sbin:/usr/sbin:/sbin:/usr/local/bin:/usr/bin:/bin";
 
 # Version details
 $version_info = <<"EOF";
