@@ -735,11 +735,11 @@ sub _write_out_mkfs_commands {
 	# file.  We should also look at the format and write functions for that 
 	# same file. -BEF-
         print $out qq(# /etc/raidtab that will be used for creating software RAID devices on client(s).\n);
-        print $out qq(cat <<'EOF' > /a/etc/raidtab\n);
+        print $out qq(cat <<'EOF' > /etc/raidtab\n);
         my $raidtab = $image_dir . "/etc/raidtab";
         open(FILE,"<$raidtab") or croak("Couldn't open $raidtab for reading.");
             while (<FILE>) {
-                print $out;
+                print $out $_;
             }
         close(FILE);
         print $out qq(EOF\n);
