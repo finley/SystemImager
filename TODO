@@ -301,8 +301,11 @@ o commandlineize addclients
 
 Dann Frazier <dannf@hazel.fc.hp.com>
 ------------------------------------
-o replace install scripts with Makefile(s)
-o have deb package created
+x replace install scripts with Makefile(s)
+  - incorporated in the source package (tarball) on http://dannf.org
+  - also builds kernel/initrd.gz from source
+x have deb package created
+  - can be found at http://dannf.org
 o PXE booting ideas...
 with pxe, you can specify what files to serve to a specific hardware
 address.
