@@ -155,7 +155,7 @@ fi
 # do introduction
 if [ "$QUIET" = "false" ]; then
  clear
- cat << "EOF"
+ cat << 'EOF'
 Welcome to the VA SystemImager prepareclient command.  This command
 may modify the following files to prepare your client for having it's
 image retrieved by the imageserver.  It will also create the 
@@ -170,6 +170,8 @@ golden client, such as the disk partitioning scheme(s).
  
 All modified files will be backed up with the .beforesystemimager 
 extension.
+
+See "prepareclient -help" for command line options.
 
 EOF
 
