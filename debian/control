@@ -29,7 +29,7 @@ Description: VA SystemImager Image-Server
 
 Package: va-systemimager-kernel
 Architecture: all
-Depends: tftpd-hpa
+Suggests: va-systemimager
 Description: VA SystemImager kernel for client nodes
  VA SystemImager is a set of utilities for installing GNU/Linux images to
  clients machines over the network.  Images are stored in flat files on the
