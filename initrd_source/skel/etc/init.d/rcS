@@ -56,6 +56,8 @@ if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
     get_flamethrower_directory
 fi
 
+tmpfs_watcher
+
 get_boel_binaries_tarball
 beep
 
