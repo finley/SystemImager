@@ -37,6 +37,8 @@
 #   - add double quotes around non-null tests in pre and post-install script functions
 #   2004.07.26  Brian Elliott Finley
 #   - check kernel version against intrd version
+#   2004.09.10  Brian Elliott Finley
+#   - remove get_ssh_tarball() -- now handled as part of get_boel_binaries_tarball()
 #
 
 
@@ -1085,33 +1087,10 @@ run_post_install_scripts() {
 #
 ################################################################################
 #
-#	Get ssh_tarball
-#
-get_ssh_tarball() {
-
-    echo
-    echo get_ssh_tarball
-
-    # Remove possible trailing / from URL
-    SSH_DOWNLOAD_URL=`echo $SSH_DOWNLOAD_URL | sed 's/\/$//'`
-
-    cd /tmp
-    CMD="wget ${SSH_DOWNLOAD_URL}/${ARCH}/ssh/systemimager_ssh.tar.gz"
-    echo "$CMD"
-    $CMD || shellout
-
-    # Untar the tarball
-    tar -C / -xzf /tmp/systemimager_ssh.tar.gz || shellout
-}
-#
-################################################################################
-#
 #   Stuff for SSH installs
 #
 
 start_ssh() {
-
-    get_ssh_tarball
 
     # create root's ssh dir
     mkdir /root/.ssh
