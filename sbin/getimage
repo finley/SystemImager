@@ -12,6 +12,8 @@
 # set system path for system() calls
 $ENV{PATH} = "/usr/sbin:/sbin:/usr/bin:/bin";
 
+use Getopt::Long;
+
 ### BEGIN Subroutines ###
 
 sub get_response {
@@ -35,27 +37,68 @@ sub usage {
 ### END Subroutines ###
 
 ### BEGIN Program ###
-check_if_root();
 
 # figure out the program name
 $0  =~ /(.*)\/+([^\/]*)$/;
 $program_name = $2;
+$version_number = "0.24";
 
-###FIX### we should go ahead and use use options modules
-if ($#ARGV < 1) {
-    usage();
+$version_info = <<"EOF";
+
+$program_name (SystemImager) v$version_number
+
+Copyright (C) 1999-2000 TheFinleys.com <brian\@thefinleys.com>
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Written by Brian Finley <brian\@thefinleys.com>
+
+EOF
+
+$help_info = $version_info . <<"EOF";
+Usage: $program_name [OPTION]...  --master=HOSTNAME --image=IMAGE
+
+Options: (options can be presented in any order)
+ --help                    this information
+ --version                 display version and copyright information
+ --master=HOSTNAME         hostname or IP address of the master.
+ --image=IMAGE             the name of the image to retrieve.  This can be 
+                           either the name of a new image if you want to create 
+                           a new image, or the name of an exisiting image if
+                           you want to update an image.
+ --quiet                   Don\'t ask any questions or print any output (other
+			   than errors). In this mode, no warning will be given
+                           if the image already exists on the server.
+
+
+Download from http://systemimager.org/
+Report bugs or suggestions to <systemimager-bugs\@systemimager.org>
+
+EOF
+    
+
+$master_client = "";
+$image = "";
+
+GetOptions( "help" => \$help,
+            "version" => \$version,
+            "master=s" => \$master_client,
+            "image=s" => \$image,
+            "quiet" => \$quiet) || 
+    die "$help_info";
+
+#if requested, print help information
+if($help) { die "$help_info"; }
+
+# if requested, print version and copyright information
+if($version) { die "$version_info"; }
+
+# both master_client and image must be set.
+if ($master_client eq "" || $image eq "") {
+    die "$help_info";
 }
-if ($ARGV[0] eq '-q')  {
-    if ($#ARGV != 2) {
-	usage();
-    }
-    $quiet = 1;
-    $master_client =  $ARGV[1];
-    $image = $ARGV[2];
-} else {
-    $master_client =  $ARGV[0];
-    $image = $ARGV[1];
-}
+
+check_if_root();
 
 # set up some variables for use elsewhere
 ###FIX### at some point these should be set in /etc/systemimager.conf
