@@ -26,6 +26,8 @@ use lib qw(/usr/lib/systemconfig);
 use Util::Log qw(:all);
 use Util::Cmd; # for which()
 
+use vars qw ($VERBOSE);
+
 push @BootGen::InitrdFS::fstypes, qw(BootGen::InitrdFS::Ext2);
 
 sub footprint {
@@ -90,7 +92,7 @@ sub build {
 sub my_system {
     my $cmd = shift;
 
-    $cmd .= " > /dev/null 2>&1" unless 
+    $cmd .= " > /dev/null 2>&1" unless $VERBOSE;
     verbose("Executing: $cmd.");
     
     return !system($cmd);
