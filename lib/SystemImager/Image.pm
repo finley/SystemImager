@@ -39,13 +39,14 @@ $VERSION = sprintf("%d.%02d", q$Revision$ =~ /(\d+)\.(\d+)/);
 
 sub image_exists {
     my $imagename = shift;
-    my $config = get_config();
-    my $dir = $config->default_imagedir . '/' . $imagename;
-    return -d $dir;
+    return _image_exists_filesystem($imagename);
 }
 
 sub _image_exists_filesystem {
-    return image_exists(@_);
+    my $imagename = shift;
+    my $config = get_config();
+    my $dir = $config->default_imagedir . '/' . $imagename;
+    return -d $dir;
 }
 
 sub _image_exists_rsync {
@@ -60,6 +61,30 @@ sub _image_exists_rsync {
     }
     close(IN);
     return $found;
+}
+
+#
+#  IMAGE INFORMATION Functions
+#
+
+sub image_info {
+    my $name = shift;
+    carp("I am not implemented yet");
+    return {};
+}
+
+sub list_images {
+    my $config = get_config();
+    my $dir = $config->default_imagedir;
+    my @images = ();
+    opendir(IN,$dir) or (carp($!),return undef);
+    while(my $file = readdir(IN)) {
+        if($file !~ /^\./ and -d "$dir/$file") {
+            push @images, "$dir/$file";
+        }
+    }
+    closedir(IN);
+    return @images;
 }
 
 ############################################################
@@ -83,7 +108,7 @@ sub addimage {
 sub _addimage_rsync {
     my ($rsyncconf, $imagename, $imagedir) = @_;
     if(!_image_exists_rsync($rsyncconf, $imagename)) {
-        open(OUT,">>$rsyncconf") or (carp "Couldn't open $rsyncconf in append mode", return undef);
+        open(OUT,">>$rsyncconf") or (carp "Couldn't open $rsyncconf in append mode", return 0);
         print OUT "[$imagename]\n\tpath=$imagedir\n\n";
         close OUT;
         return 1;
