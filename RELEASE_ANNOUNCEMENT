@@ -19,23 +19,40 @@ SystemImager 2.9.2 is Released, and 3.0.0 is Mostly Frozen
 BODY:
 Greetings and salutations,
 
-SystemImager(R) unstable 2.9.2 is released.  This is a development 
-release leading up to the 3.0 release. 
+SystemImager(R) unstable 2.9.2 is released.  This is a development release
+leading up to the 3.0 release.  This should not be considered stable 
+software, and should not be used in a production environment.
 
 Official "testers" should test this release and send feedback to
 <sisuite-devel@lists.sourceforge.net>.  For others who test this 
 release, please send a quick "it worked on my box" message to 
 the same list.
 
-To install, cut and paste the following commands:
 
-    wget URL...
-    sh scriptname
+Installation instructions
+---------------------------------------------------------------------------
+Debian based distributions, cut and paste the following commands:
+
+    cd /tmp
+    wget http://sisuite.org/deb-installer
+    chmod +x deb-installer
+
+    ./deb-installer -client -devel
+or
+    ./deb-installer -server -devel
+
+
+RPM based distributions, cut and paste the following commands:
+
+    cd /tmp
+    wget http://sisuite.org/installer.pl
+    chmod +x installer.pl
+    ./installer.pl -v -i -t devel
 
 
 
 What to expect from this development release, and from SystemImager 3.0
-------------------------------------------------------------------------
+---------------------------------------------------------------------------
 The following are some of the key features or modifications that will be
 included in the next stable release, SystemImager v3.0.
 
@@ -185,5 +202,4 @@ Please feel free to forward this message on to other lists, or groups
 that use SystemImager and System Installation Suite (SIS).
 
 Cheers, -Brian
-
 
