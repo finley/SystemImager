@@ -25,7 +25,8 @@
 # - need to manpageize --help
 #
 
-use lib "USR_PREFIX/lib/systemimager/perl";
+# XXX use lib "USR_PREFIX/lib/systemimager/perl";
+use lib "/usr/lib/systemimager/perl";
 
 use strict;
 use File::Path;
@@ -532,6 +533,15 @@ sub usage
 
 Usage: mkbootpackage --kernel FILE --flavor NAME [OPTION]...
 
+Description: 
+        Takes the kernel specified, and necessary modules from it, and creates
+        a new boot package based on said kernel.  The resultant files include
+        a matched kernel, initrd.img, and boel_binaries.tar.gz that can be 
+        used as the SystemImager autoinstall client software.
+
+Current Assumptions:
+        You are running this command on your imageserver.  Maybe others...
+
 Options: (options can be presented in any order)
 
  --help
@@ -588,11 +598,12 @@ Options: (options can be presented in any order)
         when you do a "cat /proc/modules | tac".
 
  --filesystem,--fs FILESYSTEM
-        Filesystem that you want used on the initrd.img.  
+        Filesystem that you want used on the initrd.img.  The initrd.img is 
+        made with a filesystem driver compiled into the kernel (not a module),
+        and may be one of cramfs, ext2, ext3, reiserfs, jfs, or xfs.
 
         Default:
-        A filesystem will be automatically chosen that a) is supported by your
-        kernel, and b) is actually part of the kernel (not a module).
+        An appropriate filesystem will be chosen automatically.
 
  --modules-dir DIR
         Path to your kernel's modules directory.  These modules must be the
