@@ -130,7 +130,7 @@ Packager: dann frazier <dannf@dannf.org>
 Docdir: %{prefix}/doc
 URL: http://systemimager.org/
 Distribution: System Installation Suite
-Requires: systemimager-common, systemconfigurator, libappconfig-perl, rsync >= 2.4.6, /usr/bin/perl, mtools (specifically minfo.  Thought I'd let you do this right, Sean. -BEF-)
+Requires: systemimager-common, systemconfigurator, libappconfig-perl, rsync >= 2.4.6, /usr/bin/perl, mtools 
 AutoReqProv: no
 
 %description client
