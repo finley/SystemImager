@@ -597,7 +597,7 @@ ifeq ($(UNSTABLE), 1)
 	cd $(TOPDIR)/tmp/systemimager-$(VERSION) && cp README README.tmp
 	cd $(TOPDIR)/tmp/systemimager-$(VERSION) && cp README.unstable README
 	cd $(TOPDIR)/tmp/systemimager-$(VERSION) && cat README.tmp >> README
-	rm README.tmp
+	cd $(TOPDIR)/tmp/systemimager-$(VERSION) && rm README.tmp
 endif
 	rm $(TOPDIR)/tmp/systemimager-$(VERSION)/README.unstable
 	perl -pi -e "s/^%define\s+ver\s+\d+\.\d+\.\d+.*/%define ver $(VERSION)/" \
