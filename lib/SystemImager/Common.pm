@@ -22,6 +22,7 @@ $VERSION = $version_number;
 #   check_if_root
 #   get_response
 #   get_boot_flavors
+#   numerically
 #   save_partition_information
 #   where_is_my_efi_dir
 #   which
@@ -37,6 +38,19 @@ $VERSION = $version_number;
 ################################################################################
 
 
+# Description:
+# Modify a sort so that 10 comes after 2.  
+# Standard sort: (sort $numbers);               # 1,10,2,3,4,5,6,7,8,9
+# Numerically:   (sort numerically $numbers);   # 1,2,3,4,5,6,7,8,9,10
+#
+# Usage:
+# foreach my $line (sort numerically (keys ( %{hash} )))
+#
+sub numerically {
+    $a <=> $b;
+}
+
+
 # Usage:
 # my $efi_dir = where_is_my_efi_dir()
 #   Finds the directory that holds efi boot files on the machine 
@@ -44,25 +58,40 @@ $VERSION = $version_number;
 #
 sub where_is_my_efi_dir {
 
+    my %dirs_by_length;
+
     # Prefer newer vendor specific directories to the deprecated location. -BEF-
     #
-    my @dirs = ("/boot/efi/efi/*/elilo.efi", "/boot/efi/elilo.efi");
+    # find all elilo.efi locations
+    #
+    my $cmd = "find /boot/efi -name elilo.efi";
+    open(CMD, "$cmd |") or die qq(Couldn't $cmd. $!\n);
+        while (<CMD>) {
+            chomp;
+            if (m/.*\/elilo\.efi$/) {
+                $_ =~ s/\/elilo\.efi$//;
+                my $length = length($_);
+                $dirs_by_length{$length} = $_;
+            } 
+        }
+    close(CMD);
 
-    foreach my $dir (@dirs) {
+    my $dir;
+    foreach my $key (sort numerically keys (%dirs_by_length)) {
 
-        my $cmd = "ls $dir";
-        open(CMD, "$cmd |") or die qq(Couldn't $cmd. $!\n);
-            while (<CMD>) {
-                chomp;
-                if (m/.*\/elilo\.efi$/) {
-                    $_ =~ s/\/elilo\.efi$//;
-                    return $_;
-                } 
-            }
-        close(CMD);
+        # Give preference to vendor location.  If both vendor location, and
+        # depricated location exist, vendor location will win, as it is longer,
+        # and because of this sort, will be the last location that 
+        # $dir is set to.
+        #
+        $dir = $dirs_by_length{$key};
     }
 
-    return undef;
+    if ($dir) {
+        return $dir;
+    } else {
+        return undef;
+    }
 
 }
 
