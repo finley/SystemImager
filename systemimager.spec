@@ -34,7 +34,7 @@ Packager: Sean Dague <japh@us.ibm.com>
 Docdir: %{prefix}/doc
 URL: http://systemimager.org/
 Distribution: System Installation Suite
-Requires: rsync >= 2.4.6, syslinux >= 1.48, libappconfig-perl, dosfstools, /usr/bin/perl
+Requires: rsync >= 2.4.6, syslinux >= 1.48, systemimager-common, libappconfig-perl, dosfstools, /usr/bin/perl
 AutoReqProv: no
 
 %description server
@@ -48,6 +48,33 @@ environments include: Internet server farms, high performance clusters,
 computer labs, or corporate desktop environments where all workstations
 have the same basic hardware configuration.
 
+%package common
+Summary: Software that automates Linux installs and software distribution
+Version: %ver
+Release: %rel
+Copyright: GPL
+Group: Applications/System
+Source: http://download.sourceforge.net/systemimager/%{name}-%{ver}.tar.gz
+BuildRoot: /tmp/%{name}-%{ver}-root
+Packager: Sean Dague <japh@us.ibm.com>
+Docdir: %{prefix}/doc
+URL: http://systemimager.org/
+Distribution: System Installation Suite
+Requires: /usr/bin/perl
+AutoReqProv: no
+
+%description common
+SystemImager is software that automates Linux installs and software
+distribution.  It also makes software distribution, configuration, and
+operating system updates easy. You can even update from one Linux 
+release version to another! SystemImager can also be used for 
+content distribution on web servers.  It is most useful in environments
+where you have large numbers of identical machines. Some typical
+environments include: Internet server farms, high performance clusters,
+computer labs, or corporate desktop environments where all workstations
+have the same basic hardware configuration.
+
+
 %package client
 Summary: Software that automates Linux installs and software distribution
 Version: %ver
@@ -60,7 +87,7 @@ Packager: Sean Dague <japh@us.ibm.com>
 Docdir: %{prefix}/doc
 URL: http://systemimager.org/
 Distribution: System Installation Suite
-Requires: systemconfigurator, libappconfig-perl, rsync >= 2.4.6, /usr/bin/perl
+Requires: systemimager-common, systemconfigurator, libappconfig-perl, rsync >= 2.4.6, /usr/bin/perl
 AutoReqProv: no
 
 %description client
@@ -104,6 +131,12 @@ chkconfig --add systemimager
 %postun server
 chkconfig --del systemimager
 
+%files common
+%defattr(-, root, root)
+%prefix/bin/lsimage
+%prefix/share/man/man8/lsimage*
+/usr/local/lib/systemimager/perl/SystemImager/Common.pm
+
 %files server
 %defattr(-, root, root)
 %doc CHANGE.LOG COPYING CREDITS README TODO VERSION
@@ -130,11 +163,15 @@ chkconfig --del systemimager
 %prefix/sbin/mvimage
 %prefix/sbin/pushupdate
 %prefix/sbin/rmimage
-%prefix/bin
-/usr/local/lib/systemimager/perl/SystemImager/Common.pm
+%prefix/bin/mkautoinstall*
 /usr/local/lib/systemimager/perl/SystemImager/Server.pm
 /usr/local/share/systemimager/i386-boot/*
-/usr/local/share/man/*
+%prefix/share/man/man8/addclients*
+%prefix/share/man/man8/cpimage*
+%prefix/share/man/man8/getimage*
+%prefix/share/man/man8/mk*
+%prefix/share/man/man8/mvimage*
+%prefix/share/man/man8/rmimage*
 
 %files client
 %defattr(-, root, root)
@@ -146,4 +183,6 @@ chkconfig --del systemimager
 /usr/local/lib/systemimager/perl/SystemImager/Client.pm
 %prefix/sbin/updateclient
 %prefix/sbin/prepareclient
+%prefix/share/man/man8/updateclient*
+%prefix/share/man/man8/prepareclient*
 
