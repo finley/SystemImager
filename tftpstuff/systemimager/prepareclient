@@ -499,6 +499,25 @@ if [ "$RESTART_INETD" = "true" ]; then
 fi
 # signal inetd to re-read /etc/inetd.conf
 
+# test for hostname in hosts file -- this is necessary for rsyncd to run
+HOSTNAME=`uname -n`
+egrep -q $HOSTNAME /etc/hosts
+if [ "$?" != "0" ]; then
+   echo
+   echo "******************************* WARNING *******************************"
+   echo "This hosts name: \"$HOSTNAME\" must appear in the /etc/hosts file in"
+   echo "order for me to crank up the rsyncd daemon.  rsync doesn't seem to be"
+   echo "particular about the hostname being associated with an appropriate IP"
+   echo "address, it just wants to see the hostname in there somewhere..."
+   echo
+   echo "Please add \"$HOSTNAME\" with the proper IP address to the /etc/hosts file"
+   echo "and run \"prepareclient\" again."
+   echo
+   echo "-The Mgmt."
+   echo "******************************* WARNING *******************************"
+   echo
+   exit 1
+fi
 
 # restart rsync as a daemon
 killall rsync rsyncd > /dev/null 2>&1
