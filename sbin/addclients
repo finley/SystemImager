@@ -157,7 +157,7 @@ sub numerically {
 
 ### BEGIN Program ###
 # if not run as root this script will surely fail
-#unless($< == 0) { die "Must be run as root!\n"; }
+unless($< == 0) { die "Must be run as root!\n"; }
 
 # give warning
 sub Interactive {
