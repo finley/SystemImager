@@ -1217,7 +1217,7 @@ start_ssh() {
         echo "Starting sshd.  You must now go to your imageserver and issue"
         echo "the following command:"
         echo
-        echo " \"pushupdate -continue-install -image <IMAGENAME> -client ${HOST_OR_IP}\"."
+        echo " \"si_pushupdate -continue-install -image <IMAGENAME> -client ${HOST_OR_IP}\"."
         echo
         echo
         
