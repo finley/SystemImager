@@ -58,7 +58,7 @@ show_usage() {
   echo ' -h, -help                Display this output.'
   echo ' -q, -quiet               Run silently.  Return an exit status of 0 for'
   echo '                          success or a non-zero exit status for failure.'
-  echo ' -N, -no-docs             Don not install documentation.  Use this if you'
+  echo ' -N, -no-docs             Do not install documentation.  Use this if you'
   echo '                          are unable to create the documentation, but'
   echo '                          still need to install the code.'
   echo ' -n, -no-afterburner      Do not run the afterburner script.'
@@ -120,6 +120,8 @@ if [ $QUIET = "false" ]; then
   echo "                            file and that it will not be used for anything else"
   echo
   echo " All modified files will be backed up with the .beforesystemimager extension."
+  echo
+  echo " See \"install -help\" for command line options."
   echo
 
   # you sure you want to install?
