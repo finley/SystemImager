@@ -43,6 +43,7 @@ Development Branch Sub Projects
 
 Unclaimed Sub Projects
 ----------------------
+o Documentation: how to migrate from KickStart to SystemImager.
 
 Curtis Zinzilieta <czinzilieta@valinux.com>
 -------------------------------------------
@@ -80,34 +81,22 @@ o Modify binaries to use /var/lib/systemimager/ instead of /tftpboot/
 o Austin Gonyou patch: Dual NIC Installs
 o Jose_AP_Celestino.ida.prepareclient.patch to make systemimager work
   properly with Smart Array cards.  (must get a Smart Array card first)
+o getimage -- exclude option
 o getimage - put exclude/include stuff on imageserver by image
   /tftpboot/systemimager/$image.updateclient.include
   /tftpboot/systemimager/$image.updateclient.exclude
-o updateclient - local /etc/systemimager/systemimager.exclude or include
+o updateclient - local /etc/systemimager/updateclient.exclude or include
   take precedence over include and exclude on imageserver.
 o updateclient - include/exclude pulled to temporary files.
 o prepareclient - no longer puts /etc/systemimager/systemimager.exclude on
   client.
-o check for the presence of a BIOS file written by BIOSwriter. If 
-  found, then at the tail end of a client's image pull, it runs 
-  BIOSwriter to write the file.
 o deal with LABEL=UUID as well as LABEL=mount_point
 o next release (1.5.x), make the -imageserver option go away
   in getimage.
-o getimage -- exclude option
 o if local.cfg and dhcp fails, have client ask for manual input
-o redirect to serial port:
-  - manual change to syslinux.cfg
-  - maybe an append parameter if necessary
-  - detect if serial is wanted by having rcS look for variable in
-    - $image.master
-    - local.cfg
 o add -exclude option to getimage
 o incorporate ssh
-  1) client generates and gives it's key to imageserver prior to pulling down image?
-  2) imageserver adds client's key to it's .ssh/authorized_keys file
-  3) client can rsync -e ssh in.
-o incorporate casper (multicast by Aaron Hillegass <aaron@bignerdranch.com>)
+o incorporate multicaster
 o getimage -- blink option
 o getimage -- eject option
 o contemplate using wget to pull stuff?
@@ -126,15 +115,24 @@ o have getimage question what should be excluded in future when updateimage
 o David Weenink <david.weenink@hum.uva.nl> suggests:
   o rename systemimager.exclude -> updateclient.local.exclude
   o include comments inside to indicate how the includes/excludes work
+o change option-100 -> option-207
+o add option-208 => "ssh_binaries_url"
 
 
 
 Brian Chrisman <bchrisman@valinux.com>
 --------------------------------------
 o serial redirect for autoinstallclient
-  o See email with Subject of: 
-    Subject: serial redirect for autoinstalling systems remotely with systemimager
-  o See linux/Documentation/serial-console.txt
+  o See email from michael@auctionwatch.com
+  And if necessary, do the following too:
+    o See email with Subject of: 
+      Subject: serial redirect for autoinstalling systems remotely with systemimager
+    o See linux/Documentation/serial-console.txt
+    - manual change to syslinux.cfg
+    - maybe an append parameter if necessary
+    - detect if serial is wanted by having rcS look for variable in
+      - $image.master
+      - local.cfg
 
 
 Greg Smith <grs@xuma.com>
@@ -409,6 +407,11 @@ o makedhcpserver -- autodiscover and calculate more information
 o makedhcpserver -- automatically change line in /etc/rc.d/init.d/dhcpd for you
 o updateclient - log what was updated and or deleted?
 o makedhcpstatic -- allow for -f "filename" option to specify dhcpd.leases file.
+o check for the presence of a BIOS file written by BIOSwriter. If 
+  found, then at the tail end of a client's image pull, it runs 
+  BIOSwriter to write the file.
+o pad hostnames with zeros option
+
 
 
 Bug list
