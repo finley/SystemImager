@@ -5,6 +5,8 @@
 #
 
 VA SystemImager-1.4.0 2000.xx.xx
+- install -- The imageserver now runs rsync as a daemon from an init
+             script.  This is configured automatically at install time.
 - getimage -- Added support for LABEL=/partition/label format in 
               /etc/fstab.  This format is used in new (not upgrades) 
               RedHat 7 installations.
@@ -31,6 +33,7 @@ VA SystemImager-1.4.0 2000.xx.xx
 - rsyncd.conf -- Change back to using one log file: /var/log/systemimager
 - updateclient -- Now uses the --numeric-ids rsync option.
 - goldenclient -- Changed phraseology from "master client" to "golden client"
+- prepareclient -- Offers to add "127.0.0.1 $hostname" to /etc/hosts.
 - prepareclient -- Now defaults to using megabytes to store partition 
                    information.  Can be told to leave explicit 
                    partitioning information for getimage with the 
@@ -40,34 +43,32 @@ VA SystemImager-1.4.0 2000.xx.xx
                    partition information as if it were the client's.
 - makedhcpstatic -- Automatically send a HUP signal to dhcpd (if running) to 
                     make it re-read the freshly modified config file.
-- autoinstallclient-- Smallerized.  More stuff done by BusyBox.
-- autoinstallclient-- Now using hardlinks for BusyBox.  Thanks for this suggestion
-                      go to: Rob Latham <rlatham@plogic.com>
-- autoinstallclient-- Added mawk.  Funky and easily breakable sed stuff can now
-                      be done with mawk.
-- autoinstallclient-- Changed to dhclient.  dhclient allows us to try all
-                      interfaces for DHCP.  This will solve some instances where
-		      a system would boot the autoinstall media off the network,
-		      but then couldn't get an IP address for the running OS.
-		      dhclient also allows us to specify the imageserver as
-		      seperate from the dhcp server.
-- autoinstallclient-- Bug fix:  Was using POSIX [[:blank:]] in sed statement
-                      to find and change spaces and tabs to single spaces.
-		      Sed version changed and no longer behaved properly.
-		      Spaces work fine with the v1.3.0 client but tabs
-		      will give you errors.
+- autoinstallclient -- Smallerized.  More stuff done by BusyBox.
+- autoinstallclient -- Now using hardlinks for BusyBox.  Thanks for this suggestion
+                       go to: Rob Latham <rlatham@plogic.com>
+- autoinstallclient -- Added mawk.  Funky and easily breakable sed stuff can now
+                       be done with mawk.
+- autoinstallclient -- Changed to dhclient.  dhclient allows us to try all
+                       interfaces for DHCP.  This will solve some instances where
+		       a system would boot the autoinstall media off the network,
+		       but then couldn't get an IP address for the running OS.
+		       dhclient also allows us to specify the imageserver as
+		       seperate from the dhcp server.
+- autoinstallclient -- Bug fix:  Was using POSIX [[:blank:]] in sed statement
+                       to find and change spaces and tabs to single spaces.
+		       Sed version changed and no longer behaved properly.
+		       Spaces work fine with the v1.3.0 client but tabs
+		       will give you errors.
 - autoinstallclient -- Enforce that the client sleeps 35s before trying
                        to use the network.  Even if using local.cfg.
-- autoinstall scripts -- Now use the --numeric-ids rsync option.
-- autoinstall scripts -- Fixed a bit where egrep is run from autoinstall
-                         scripts to be sure that it is not being run from
-                         a working machine.  egrep doesn't actually
-                         exist on the autoinstall media, so the test
-                         will always fail.  This is fine according to the
-                         logic, but the error messages can be confusing to
-                         unassuming onlookers.  So "> /dev/null 2>&1" was
-                         added to shut it up.  Maybe we'll fix it in a way
-                         that is technically proper some day...
+- autoinstall scripts -- Turn on swap space after initializing.  In the past we didn't
+                         use the swap space at all.  Go ahead and use it to help out in
+			 low memory situations.
+- autoinstall scripts -- Now uses the --numeric-ids rsync option.
+- autoinstall scripts -- Fixed the bit where egrep is used to test for mounted
+                         filesystems (indicating a running machine that shouldn't
+			 be touched).  grep is now used and no error messages should
+			 be seen.
 - makeautoinstalldiskette -- Test for either superformat or fdformat.  Use
                              superformat if both exist.
 

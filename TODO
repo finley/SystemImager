@@ -11,38 +11,31 @@
 In Progress
 -----------
 Version 1.4.0 specific:
-- <brian@thefinleys.com> - prepareclient. -- offer to add "127.0.0.1 $hostname"
-                           to /etc/hosts
-- <brian@thefinleys.com> - errata.txt on website
-- <brian@thefinleys.com> - test for superformat and fdformat in makeautoinstalldiskette
-- <brian@thefinleys.com> - run rsyncd from an init script on the imageserver 
-                           with no maximum connections
-                           /etc/rc.d/init.d/rsyncd
-                           /etc/init.d/rsyncd
+- <brian@thefinleys.com> - Goebel's patches to makedhcpserver
+- <brian@thefinleys.com> - add option-100 to makedhcpserver
+- <brian@thefinleys.com> - modify RPM spec file
 - <brian@thefinleys.com> - work with either /etc/rc.d/init.d/ or /etc/init.d/
-- <brian@thefinleys.com> - use dhclient
 - <brian@thefinleys.com> - Contemplate using "use chroot = yes" in 
                            /etc/rsyncd.conf
                            and how this affects --numeric-ids.
-- <brian@thefinleys.com> - fix egrep test thingy on client
 - <brian@thefinleys.com> - Wes Smith's distribution specific patches
-- <brian@thefinleys.com> - support for more distributions
 - <brian@thefinleys.com> - put exclude/include stuff on imageserver by image
                            /tftpboot/systemimager/$image.include
                            /tftpboot/systemimager/$image.exclude
 - <brian@thefinleys.com> - label autoinstallcd.iso with v1.4.x (x is literal)
 - <brian@thefinleys.com> - start using bzip2
 - <brian@thefinleys.com> - add support for 3c905 if it will fit.
+- <brian@thefinleys.com> - add support for 3c59x if it will fit.
+- <brian@thefinleys.com> - add support for pcnet32 if it will fit.
 - <brian@thefinleys.com> - deal with ext3 journal files differently according 
                            to Ted Ts'o
-- <brian@thefinleys.com> - error checking and diagnostic messages on 
-                           autoinstall client
 - <brian@thefinleys.com> - add a -autoconfig option to updateclient that figures
                            out the current values and writes them to /local.cfg
 - <brian@thefinleys.com> - addclients -- test for /etc/hosts before using
 
 
 Other stuff:
+- <brian@thefinleys.com> - if local.cfg and dhcp fails, have client ask for manual input
 - <brian@thefinleys.com> - redirect to serial port:
                            - manual change to syslinux.cfg
 			   - maybe an append parameter if necessary
@@ -206,3 +199,7 @@ Pre-Release Checklist
 - test CD-ROM install
 - test floppy install
 - test hard drive install
+- test explicit geometry
+- test dynamic geometry
+- test that egrep thing is fixed
+- test that dynamically linked binaries in /tftpboot work
