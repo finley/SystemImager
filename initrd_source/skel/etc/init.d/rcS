@@ -252,11 +252,9 @@ if [ -f /tmp/local.cfg ]; then
   . /tmp/local.cfg || shellout
 fi
 
-# If IMAGESERVER is still not set, exit out.
+# If IMAGESERVER is still not set, set it to DHCPSERVER IP ADDRESS
 if [ -z $IMAGESERVER ]; then
-  echo "IMAGESERVER has not been specified -- I cannot continue."
-  echo "Check your local.cfg or DHCP server settings."
-  shellout
+    IMAGESERVER = $DHCPSIADDR
 fi
 
 ### BEGIN ping test for switch initialization ###
