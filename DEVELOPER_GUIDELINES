@@ -62,12 +62,16 @@ CVS Checkout Steps for Developers
 2) Tell cvs to operate over ssh:
    CVS_RSH=ssh
 
-3) Choose your branch:
-   BRANCH=HEAD                  (current development branch)
-   BRANCH=stable-2_0_x          (current stable branch -- bug fixes only)
+3) Set BRANCH_OPTS to choose your branch.
+
+   For the development branch (HEAD), cut and paste this:
+     BRANCH="HEAD"; BRANCH_OPTS=""
+
+   For the current stable branch, cut and paste this:
+     BRANCH="stable-2_0_x"; BRANCH_OPTS="-r $BRANCH"
 
 4) Checkout the code:
-   cvs -z3 -d:ext:$MY_CVS_USERNAME@cvs.systemimager.sourceforge.net:/cvsroot/systemimager co -r $BRANCH systemimager
+   cvs -z3 -d:ext:$MY_CVS_USERNAME@cvs.systemimager.sourceforge.net:/cvsroot/systemimager co $BRANCH_OPTS systemimager
 
 5) Rename the checked out source tree:
    mv systemimager systemimager.$BRANCH
