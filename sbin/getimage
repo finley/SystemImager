@@ -915,12 +915,17 @@ if (@ext3_devices) {
   print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::tftpboot/systemimager/mke2fs-v1.20.WIP /tmp/\n";
   print MASTER_SCRIPT "\n";
   print MASTER_SCRIPT "# format ext3 devices\n";
-  print MASTER_SCRIPT "#   For now, all ext3 devices get an arbitrary journal of size 15MB.\n";
-  print MASTER_SCRIPT "#   In the future, I hope to detect and re-create the size of existing hidden journals.\n";
-  print MASTER_SCRIPT "#   If you require a different journal size, simply make the change here in the.\n";
+  print MASTER_SCRIPT "#   SystemImager will use the default parameters to create an appropriately sized\n";
+  print MASTER_SCRIPT "#   journal (given the size of the filesystem) stored internally in the filesystem.\n";
+  print MASTER_SCRIPT "#\n";
+  print MASTER_SCRIPT "#   In the future, I hope to detect and re-create journals of an appropriate size.\n";
+  print MASTER_SCRIPT "#   Currently we don't deal with non-hidden journals or journals on a device other\n";
+  print MASTER_SCRIPT "#   than the filesystem device itself.\n";
+  print MASTER_SCRIPT "#\n";
+  print MASTER_SCRIPT "#   If you different journal options, simply make the changes here in the.\n";
   print MASTER_SCRIPT "#   master autoinstall script.\n";
   foreach my $device_file (sort @ext3_devices) {
-    print MASTER_SCRIPT "/tmp/mke2fs-v1.20.WIP -jsize=15 $device_file\n";
+    print MASTER_SCRIPT "/tmp/mke2fs-v1.20.WIP -j $device_file\n";
   }
   print MASTER_SCRIPT "\n";
 }
