@@ -1287,58 +1287,36 @@ sub create_autoinstall_script{
     _mount_proc_in_image_on_client();
 
     if ($no_listing) {
-	print MASTER_SCRIPT << 'EOF';
-echo -n "Quietly installing image...|"
-{ while :; do
-echo -ne "\b/";  sleep 1;
-echo -ne "\b-";  sleep 1;
-echo -ne "\b\\"; sleep 1;
-echo -ne "\b|";  sleep 1;
-done
-}&
-pid=$!
-EOF
-    }
-    else {
+
+        # Display a spinner instead of the standard file listing.  A dannf feature. -BEF-
+        print MASTER_SCRIPT q(echo -n "Quietly installing image...|")   . "\n";
+        print MASTER_SCRIPT q({ while :; do)                            . "\n";
+        print MASTER_SCRIPT q(echo -ne "\b/";  sleep 1;)                . "\n";
+        print MASTER_SCRIPT q(echo -ne "\b-";  sleep 1;)                . "\n";
+        print MASTER_SCRIPT q(echo -ne "\b\\"; sleep 1;)                . "\n";
+        print MASTER_SCRIPT q(echo -ne "\b|";  sleep 1;)                . "\n";
+        print MASTER_SCRIPT q(done)                                     . "\n";
+        print MASTER_SCRIPT q(}&)                                       . "\n";
+        print MASTER_SCRIPT q(pid=$!)                                   . "\n";
+
+    } else {
+        
+        # Display the standard file listing. -BEF-
         $rsync_opts .= "v";
     }
-    ### BEGIN pull the image down ###
-    print MASTER_SCRIPT << 'EOF';
-# Filler up!
-#
-# If we are installing over ssh, we must limit the bandwidth used by 
-# rsync with the --bwlimit option.  This is because of a bug in ssh that
-# causes a deadlock.  The only problem with --bwlimit is that it slows 
-# down your autoinstall significantly.  We try to guess which one you need:
-# o if you ran getimage with -ssh-user, we presume you need --bwlimit
-# o if you ran getimage without -ssh-user, we presume you don't need 
-#   --bwlimit and would rather have a faster autoinstall.
-#   XXX verify that this is still true... -BEF-
-#
-# Both options are here for your convenience.  We have done our best to 
-# choose the one you need and have commented out the other.
-#
-EOF
-    $rsync_opts .= " --exclude=lost+found/ --numeric-ids";
-    if ($ssh_user) {
-      # using ssh
-      print MASTER_SCRIPT "rsync $rsync_opts --bwlimit=10000 \$IMAGESERVER::\$IMAGENAME/ /a/ || shellout\n";
 
-      print MASTER_SCRIPT "#rsync $rsync_opts \$IMAGESERVER::\$IMAGENAME/ /a/ || shellout\n\n";
-    } else {
-      # not using ssh
-      print MASTER_SCRIPT "#rsync $rsync_opts --bwlimit=10000 \$IMAGESERVER::\$IMAGENAME/ /a/ || shellout\n";
-      print MASTER_SCRIPT "rsync $rsync_opts \$IMAGESERVER::\$IMAGENAME/ /a/ || shellout\n\n";
-    }
+    ### BEGIN pull the image down ###
+    print MASTER_SCRIPT "# Filler up!\n";
+    $rsync_opts .= " --exclude=lost+found/ --numeric-ids";
+    print MASTER_SCRIPT "rsync $rsync_opts \$IMAGESERVER::\$IMAGENAME/ /a/ || shellout\n\n";
     ### END pull the image down ###
 
     if ($no_listing) {
-	print MASTER_SCRIPT << 'EOF';
-(kill $pid && shellout)
-kill $pid
-echo "done."
-EOF
+        print MASTER_SCRIPT '(kill $pid && shellout)'   . "\n";
+        print MASTER_SCRIPT 'kill $pid'                 . "\n";
+        print MASTER_SCRIPT 'echo "done."'              . "\n";
     }   
+
     ### BEGIN graffiti ###
     print MASTER_SCRIPT "# Leave notice of which image is installed on the client\n";
     print MASTER_SCRIPT "echo \$IMAGENAME > /a/etc/systemimager/IMAGE_LAST_SYNCED_TO || shellout\n";
