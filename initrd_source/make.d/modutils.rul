@@ -4,16 +4,16 @@ MODUTILS_URL = http://www.kernel.org/pub/linux/utils/kernel/modutils/v2.4/$(MODU
 MODUTILS_DIR = modutils-$(MODUTILS_VERSION)
 MODUTILS_PATCHES = $(shell ls $(INITRD_PATCH_DIR)/modutils.*.patch 2>/dev/null | sort)
 
+ifneq ($(ARCH),i386)
+ifneq ($(ARCH),x86_64)
 ALL_SOURCE += $(INITRD_SRC_DIR)/$(MODUTILS_TARBALL)
 
 ########## BEGIN modutils rules ##########
-# busybox insmod only works on i386
-# known to not work on ia64 and ppc64
+# busybox insmod works on i386, but is known to not work on ia64 and ppc64
+# x86_64 uses a 2.6 kernel, so module-init-tools is used instead
 
-ifneq ($(ARCH),i386)
-	INSMOD_BINARY = $(INITRD_SRC_DIR)/$(MODUTILS_DIR)/insmod/insmod
-	MODPROBE_BINARY = $(INITRD_SRC_DIR)/$(MODUTILS_DIR)/insmod/modprobe
-endif
+INSMOD_BINARY = $(INITRD_SRC_DIR)/$(MODUTILS_DIR)/insmod/insmod
+MODPROBE_BINARY = $(INITRD_SRC_DIR)/$(MODUTILS_DIR)/insmod/modprobe
 
 ifeq ($(ARCH),hppa)
 	CONFIGURE_OPTS += --target=hppa
@@ -38,6 +38,8 @@ $(INSMOD_BINARY) $(MODPROBE_BINARY):	$(INITRD_SRC_DIR)/$(MODUTILS_TARBALL) \
 $(INITRD_SRC_DIR)/$(MODUTILS_TARBALL):
 	[ -d $(INITRD_SRC_DIR) ] || mkdir -p $(INITRD_SRC_DIR)
 	$(GETSOURCE) $(MODUTILS_URL) $(INITRD_SRC_DIR)
+endif
+endif
 
 PHONY += modutils_clean
 modutils_clean:
