@@ -29,6 +29,8 @@
 
 # XXX use lib "USR_PREFIX/lib/systemimager/perl";
 use lib "/usr/lib/systemimager/perl";
+print "WARNING: mkbootpackage is currently considered an experimental tool.\n";
+print "         \"Your Mileage May Vary\"\n";
 
 use strict;
 use File::Path;
