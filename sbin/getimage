@@ -127,6 +127,10 @@ Options: (options can be presented in any order and may be abbreviated)
                           NO if -quiet.  If not specified you will be
                           prompted to confirm an update.
 
+ -no-listing             Don't show each filename as it is copied over during
+                          install.  This is useful for times when your console
+                          device is slow (e.g. serial console), and is the 
+                          bottleneck of your installation.
 
 The following options affect the autoinstall client after autoinstalling:
 
@@ -199,6 +203,7 @@ GetOptions(
     "exclude-file=s" => \$exclude_file,
     "update-script=s" => \$update_script,
     "post-install=s" => \$post_install,
+    "no-listing" => \$no_listing,
     "ssh-user=s" => \$ssh_user,
     "log=s" => \$log,
     "help" => \$help,
@@ -629,6 +634,7 @@ SystemImager::Server->create_autoinstall_script(
 	$imagedir,
 	$ip_assignment_method,
 	$post_install,
+        $no_listing,
     $auto_install_script_conf
 );
 ### END create a fresh master autoinstall script ###

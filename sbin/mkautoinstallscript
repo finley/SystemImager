@@ -71,6 +71,10 @@ Options: (options can be presented in any order and may be abbreviated)
                           ./etc/systemimager/autoinstallscript.conf file
                           in the image.
 
+ -no-listing              Don't show each filename as it is copied over during
+                          install.  This is useful for times when your console
+                          device is slow (e.g. serial console), and is the 
+                          bottleneck of your installation.
 
 The following options affect the autoinstall client after autoinstalling:
 
@@ -111,7 +115,6 @@ The following options affect the autoinstall client after autoinstalling:
                 Clients will halt themselves after successful completion of an 
                 autoinstall.
 
-
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
 EOF
@@ -132,7 +135,8 @@ GetOptions(
     "config-file=s" => \$auto_install_script_conf,
     "ip-assignment=s" => \$ip_assignment_method,
     "update-script=s" => \$update_script,
-    "post-install=s" => \$post_install
+    "post-install=s" => \$post_install,
+    "no-listing" => \$no_listing
 ) || die "$help_info";
 
 
@@ -209,6 +213,7 @@ SystemImager::Server->create_autoinstall_script(
 	$imagedir,
 	$ip_assignment_method,
 	$post_install,
+        $no_listing,
     $auto_install_script_conf
 );
 ### END create a fresh master autoinstall script ###

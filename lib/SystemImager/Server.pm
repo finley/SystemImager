@@ -1256,10 +1256,12 @@ sub create_autoinstall_script{
         $image_dir, 
         $ip_assignment_method, 
         $post_install,
+	$no_listing,
         $auto_install_script_conf,
         $ssh_user
     ) = @_;
 
+    my $rsync_opts = "-a";
     # Lose the /etc/mtab file.  It can cause confusion on the autoinstall client, making 
     # it think that filesystems are mounted when they really aren't.  And because it is
     # automatically updated on running systems, we don't really need it for anything 
@@ -1282,7 +1284,23 @@ sub create_autoinstall_script{
     _write_out_mkfs_commands( $image_dir, $auto_install_script_conf );
     
     _mount_proc_in_image_on_client();
-    
+
+    if ($no_listing) {
+	print MASTER_SCRIPT << 'EOF';
+echo -n "Quietly installing image...|"
+{ while :; do
+echo -ne "\b/";  sleep 1;
+echo -ne "\b-";  sleep 1;
+echo -ne "\b\\"; sleep 1;
+echo -ne "\b|";  sleep 1;
+done
+}&
+pid=$!
+EOF
+    }
+    else {
+        $rsync_opts .= "v";
+    }
     ### BEGIN pull the image down ###
     print MASTER_SCRIPT << 'EOF';
 # Filler up!
@@ -1300,19 +1318,26 @@ sub create_autoinstall_script{
 # choose the one you need and have commented out the other.
 #
 EOF
-
+    $rsync_opts .= " --exclude=lost+found/ --numeric-ids";
     if ($ssh_user) {
       # using ssh
-      print MASTER_SCRIPT "rsync -av  --exclude=lost+found/ --bwlimit=10000 --numeric-ids \$IMAGESERVER::\$IMAGENAME/ /a/ || shellout\n";
-      print MASTER_SCRIPT "#rsync -av  --exclude=lost+found/ --numeric-ids \$IMAGESERVER::\$IMAGENAME/ /a/ || shellout\n\n";
+      print MASTER_SCRIPT "rsync $rsync_opts --bwlimit=10000 \$IMAGESERVER::\$IMAGENAME/ /a/ || shellout\n";
+
+      print MASTER_SCRIPT "#rsync $rsync_opts \$IMAGESERVER::\$IMAGENAME/ /a/ || shellout\n\n";
     } else {
       # not using ssh
-      print MASTER_SCRIPT "#rsync -av  --exclude=lost+found/ --bwlimit=10000 --numeric-ids \$IMAGESERVER::\$IMAGENAME/ /a/ || shellout\n";
-      print MASTER_SCRIPT "rsync -av  --exclude=lost+found/ --numeric-ids \$IMAGESERVER::\$IMAGENAME/ /a/ || shellout\n\n";
+      print MASTER_SCRIPT "#rsync $rsync_opts --bwlimit=10000 \$IMAGESERVER::\$IMAGENAME/ /a/ || shellout\n";
+      print MASTER_SCRIPT "rsync $rsync_opts \$IMAGESERVER::\$IMAGENAME/ /a/ || shellout\n\n";
     }
     ### END pull the image down ###
 
-
+    if ($no_listing) {
+	print MASTER_SCRIPT << 'EOF';
+(kill $pid && shellout)
+kill $pid
+echo "done."
+EOF
+    }   
     ### BEGIN graffiti ###
     print MASTER_SCRIPT "# Leave notice of which image is installed on the client\n";
     print MASTER_SCRIPT "echo \$IMAGENAME > /a/etc/systemimager/IMAGE_LAST_SYNCED_TO || shellout\n";
@@ -1326,7 +1351,7 @@ EOF
     my $dir = "/var/lib/systemimager/overrides/$script_name";
     if (! -d "$dir")  {
       mkdir("$dir", 0750) or die "FATAL: Can't make directory $dir\n";
-    }
+    }  
     
     # Add code to autoinstall script. -BEF-
     print MASTER_SCRIPT   qq(### BEGIN overrides ###\n);
