@@ -1,0 +1,85 @@
+#!/usr/bin/perl -w
+
+#
+# "VA SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@thefinleys.com>
+#
+#   Others who have contributed to this code (in alphabetical order):
+#
+# This file is: lsimage
+#
+
+# set some variables
+$version_number="1.4.0";
+$program_name="lsimage";
+$get_help = "         Try \"getimage -help\" for more options.";
+$imageserver="127.0.0.1";
+
+# declare modules
+use Getopt::Long;
+
+# set version information
+$version_info = <<"EOF";
+$program_name (part of SystemImager) version $version_number
+
+Copyright (C) 1999-2001 Brian Elliott Finley <brian\@thefinleys.com>
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+EOF
+
+# set help information
+$help_info = $version_info . <<"EOF";
+
+Usage: $program_name [OPTION]... -server HOSTNAME -image IMAGENAME
+
+Options: (options can be presented in any order)
+
+ -help                    Display this output.
+
+ -version                 Display version and copyright information.
+
+ -server HOSTNAME         Hostname or IP address of the imageserver.
+                          Defaults to localhost.
+
+Download, report bugs, and make suggestions at:
+http://systemimager.org/
+EOF
+
+
+# interpret command line options
+GetOptions( 
+            "help" => \$help,
+            "version" => \$version,
+            "server=s" => \$imageserver
+) or die qq($help_info);
+
+# if requested, print help information
+if($help) {
+  print qq($help_info);
+  exit 0;
+}
+
+# if requested, print version and copyright information
+if($version) {
+  print qq($version_info);
+  exit 0;
+}
+
+# be sure $imageserver name doesn't start with a hyphen
+if($imageserver) {
+  $_ = $imageserver;
+  if(/^-/) { die "\n$program_name: Imageserver name can\'t start with a hyphen.\n\n$get_help"; }
+}
+
+# if listing, get listing
+print "-------------------\n";
+print "Available image(s):\n";
+print "-------------------\n";
+$command = "rsync ${imageserver}::";
+open(FILE, "$command|");
+  while (<FILE>) {
+    print "  $_";
+  }
+close(FILE);
+print "\n";
+
+exit 0;
