@@ -1,8 +1,9 @@
 #
 # "SystemImager"  
 #
-#  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
-#  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
+#  Copyright (C) 1999-2001 Brian Elliott Finley <bef@bgsw.net>
+#  Copyright (C) 2002 Bald Guy Software
+#  					  Brian Elliott Finley <bef@bgsw.net>
 #  Copyright (C) 2001-2002 Hewlett-Packard Company <dannf@fc.hp.com>
 #
 #  Others who have contributed to this code:
@@ -517,8 +518,7 @@ endif
 	    INSTALL_MOD_PATH="$(BOEL_BINARIES_DIR)"
 	#
 	# Tar it up, baby! -BEF-
-	fakeroot chown -R 0.0 $(BOEL_BINARIES_DIR)
-	cd $(BOEL_BINARIES_DIR) && fakeroot tar -cv * | gzip -9 > $(BOEL_BINARIES_TARBALL)
+	cd $(BOEL_BINARIES_DIR) && tar -cv * | gzip -9 > $(BOEL_BINARIES_TARBALL)
 	#
 	# Note: This tarball should be installed to the "boot/$(ARCH)/$(FLAVOR)" directory.
 
