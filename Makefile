@@ -61,6 +61,11 @@
 #       ARCH=`uname -m | sed 's/i[3-6]86/i386/'`
 #     in the rcS script)
 #
+# SystemImager package names and contents (all forms of packaging will use the same base names):
+#   o package-one       brief description of contents
+#                       more relevant details
+#   o package-two       description of contents
+#
 # Where should the server side exclude file be stored?
 # currently it is the only file in /usr/lib/systemimager/systemimager
 # maybe /etc/systemimager/systemimager.exclude?
