@@ -40,8 +40,8 @@
 
 INSTALL_OPTS=""
 SI_PREFIX="\/usr\/local"
-SI_VERSION=$(cat $(dirname $0)/VERSION)
-SI_FLAVOR=$(cat $(dirname $0)/FLAVOR)
+SI_VERSION=$(cat $(dirname $0)/../VERSION)
+SI_FLAVOR=$(cat $(dirname $0)/../FLAVOR)
 TEMP_DIR="$(dirname $0)/si_install.tmp"
 
 ## The FORMAT variable is the format # of the install command.
