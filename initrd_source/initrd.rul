@@ -86,7 +86,7 @@ $(INITRD_DIR)/build_dir-stamp:	$(SKEL_FILES) $(BUSYBOX_BINARY) \
 ifdef	INSMOD_BINARY
 	# If INSMOD_BINARY is set, then copy it on over. -BEF-
 	cp -a $(INSMOD_BINARY) $(INITRD_BUILD_DIR)/sbin
-	cd $(INITRD_BUILD_DIR)/sbin && ln insmod modprobe
+	cd $(INITRD_BUILD_DIR)/sbin && ln -sf insmod modprobe
 endif
 
 ifdef UCLIBC_TARGET

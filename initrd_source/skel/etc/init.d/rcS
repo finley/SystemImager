@@ -134,6 +134,7 @@ get_boel_binaries_tarball() {
 
     # Untar the tarball
     tar -C / -xvzf /tmp/boel_binaries.tar.gz || shellout
+    chown -R 0.0 /lib/modules
 }
 #
 #################################################################################
@@ -424,7 +425,7 @@ autodetect_hardware_and_load_modules() {
     do
         echo
         echo "Loading $MODULE..."
-        modprobe -r $MODULE 2>/dev/null || echo "Assuming $MODULE is compiled into the kernel or is not needed."
+        modprobe $MODULE 2>/dev/null || echo "Assuming $MODULE is compiled into the kernel or is not needed."
     done
 }
 #
