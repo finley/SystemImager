@@ -1,0 +1,11 @@
+--- systemimager-3.0.1/initrd_source/make.d/uclibc.rul.orig	2003-05-29 01:01:22.000000000 -0600
++++ systemimager-3.0.1/initrd_source/make.d/uclibc.rul	2003-05-29 01:02:08.000000000 -0600
+@@ -46,7 +46,7 @@
+ 
+ $(INITRD_SRC_DIR)/uclibc_dev-stamp:	$(INITRD_SRC_DIR)/uclibc_build-stamp
+ 	$(MAKE) -C $(INITRD_SRC_DIR)/$(UCLIBC_DIR) \
+-	    install_toolchain install_dev DEVEL_PREFIX=$(UCLIBC_DEV)
++	    install_toolchain install_dev DEVEL_PREFIX=$(UCLIBC_DEV) PREFIX=
+ 	$(MAKE) -C $(INITRD_SRC_DIR)/$(UCLIBC_DIR) install_runtime \
+ 	    PREFIX=$(UCLIBC_DEV)/ DEVEL_PREFIX=/
+ 	touch $(INITRD_SRC_DIR)/uclibc_dev-stamp
