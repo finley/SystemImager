@@ -97,7 +97,7 @@ if($help) { die "$help_info"; }
 if($version) { die "$version_info"; }
 
 # both master_client and image must be set.
-if ($master_client eq "" || $image eq "") {
+if($master_client eq "" || $image eq "") {
     die "$help_info";
 }
 
