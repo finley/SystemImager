@@ -6,7 +6,7 @@
 
 
 # And today's release in progress is:
-2.4.0 is the version currently striving to be released.
+2.2.0 is the version currently striving to be released.
 
 
 
@@ -20,6 +20,22 @@
 #   o tests may be run by volunteers
 #   o Brian Finley, Dann Frazier, Sean Dague, and Curtis Zinzilieta may
 #     modify this file as is appropriate.
+
+At some point, we need to put these steps into a chronological order.
+
+1) Formally announce a code freeze and get everyone to make their final
+   pre-freeze commits.
+
+2) Bring development systems up to date, if appropriate: 
+
+    "apt-get update && apt-get upgrade"
+   
+   Do not update development systems again until after the release.
+
+3) Do other stuff in this file.
+
+4) Save an image of the final build system after the release, but 
+   before any updates or modifications are made to it.
 
 Files to Update:
   o ERRATA
@@ -82,6 +98,7 @@ o etc.
 
 ### Doing the Release ###
 o clean CVS tree
+o remove README.1ST file
 o make source_tarball
    suggestion:  copy to a good place, you will need to access it from multiple
                 machines, and want to make sure you are using the same tarball
