@@ -21,8 +21,12 @@
 # - tmpfs_watcher must start after boel_binaries
 # 2004.04.14 Brian Elliott Finley
 # - add pre-install script support at Rick Bradshaw's request
+# 2004.06.04 Brian Elliott Finley
+# - add support for SCRIPTNAME as a pre-boot variable
+# - improve some of the "these settings override those settings logic"
+#
 
-#set -x         # XXX comment out before each release. -BEF-
+#set -x         # can be uncommented for debug purposes
 
 #################################################################################
 #   Load functions and other variables
@@ -49,9 +53,16 @@ ifconfig_loopback
 
 load_my_modules
 
+# Need to do this prior to read_local_cfg to get last_root parameter, 
+# if specified. -BEF-
 variableize_kernel_append_parameters
+read_kernel_append_parameters
 
 read_local_cfg
+
+# Re-read kernel append parameters -- we want them to override what's in 
+# the local.cfg files. -BEF-
+read_kernel_append_parameters
 
 start_network
 beep
@@ -95,13 +106,21 @@ fi
 
 run_pre_install_scripts
 
-# If neither HOSTNAME or IMAGENAME is set, then we cannot proceed.  
+# If none of SCRIPTNAME, HOSTNAME, or IMAGENAME is set, then we cannot proceed.
 # (IMAGENAME may have been set by local.cfg).  -BEF-
-if [ -z $IMAGENAME ] && [ -z $HOSTNAME ]; then
+if [ -z $SCRIPTNAME ] && [ -z $IMAGENAME ] && [ -z $HOSTNAME ]; then
     echo
-    echo "HOSTNAME for $IPADDR was not specified in a local.cfg file, and I could"
-    echo "not find it via the hosts file or DNS.  Additionally, IMAGENAME was not"
-    echo "specified.  I must have one or the other in order to proceed!!!"
+    echo "FATAL:  None of SCRIPTNAME, IMAGENAME, or HOSTNAME were set, and I"
+    echo "can no proceed!  (Scottish accent -- think Groundskeeper Willie)"
+    echo
+    echo "HOSTNAME is what most people use, and I try to determine it automatically"
+    echo "from this hosts IP address ($IPADDR) in the following order:"
+    echo
+    echo "  1)  /var/lib/systemimager/scripts/hosts on your imageserver"
+    echo "  2)  DNS"
+    echo
+    echo "Finally, you can explicitly set many variables pre-boot, including SCRIPTNAME,"
+    echo "IMAGENAME, and HOSTNAME, as kernel append parameters or with a local.cfg file."
     echo
     shellout
 fi

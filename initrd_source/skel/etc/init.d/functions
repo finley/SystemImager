@@ -30,6 +30,9 @@
 # - make seperate function for variablizing kernel append parameters
 # 2004.06.03 Brian Elliott Finley
 # - fix regex used by get_base_hostname()
+# 2004.06.04 Brian Elliott Finley
+# - add support for SCRIPTNAME as a pre-boot variable
+# - improve some of the "these settings override those settings logic"
 #
 
 
@@ -545,14 +548,23 @@ load_my_modules() {
 #
 ################################################################################
 #
+# read in varibles obtained from kernel appends
+#
+read_kernel_append_parameters() {
+    echo
+    echo read_kernel_append_parameters
+
+    . /tmp/kernel_append_parameter_variables.txt
+}
+#
+################################################################################
+#
 # Variable-ize /proc/cmdline arguments
 #
 variableize_kernel_append_parameters() {
     echo
     echo variableize_kernel_append_parameters
     cat /proc/cmdline | tr ' ' '\n' | grep '=' > /tmp/kernel_append_parameter_variables.txt
-
-    . /tmp/kernel_append_parameter_variables.txt
 }
 #
 ################################################################################
@@ -644,8 +656,11 @@ start_network() {
         ifconfig $DEVICE $IPADDR  netmask $NETMASK  broadcast $BROADCAST
         if [ $? != 0 ]; then
             echo
-            echo "I couldn't configure the network interface using the local.cfg file."
-            echo "Check the entries in your /local.cfg file."
+            echo "I couldn't configure the network interface using your pre-boot settings:"
+            echo "  DEVICE:     $DEVICE"
+            echo "  IPADDR:     $IPADDR"
+            echo "  NETMASK:    $NETMASK"
+            echo "  BROADCAST:  $BROADCAST"
             echo
             shellout
         fi
@@ -655,7 +670,7 @@ start_network() {
             if [ $? != 0 ]; then
                 echo
                 echo "The command \"route add default gw $GATEWAY\" failed."
-                echo "Check the entries in your /local.cfg file."
+                echo "Check your pre-boot network settings."
                 echo
                 shellout
             fi
@@ -664,7 +679,7 @@ start_network() {
     else
 
         ### try dhcp ###
-        echo "IP Address not set by local.cfg.  I will use DHCP."
+        echo "IP Address not set with pre-boot settings."
         
         ### BEGIN ether sleep ###
         # Give the switch time to start passing packets.  Some switches won't
@@ -726,9 +741,15 @@ start_network() {
         # Re-read configuration information from local.cfg to over-ride
         # DHCP settings, if necessary. -BEF-
         if [ -f /tmp/local.cfg ]; then
-            echo "Override DHCP settings with local.cfg settings by re-reading (/tmp/local.cfg)."
+            echo
+            echo "Overriding any DHCP settings with pre-boot local.cfg settings."
             . /tmp/local.cfg || shellout
         fi
+
+        echo
+        echo "Overriding any DHCP settings with pre-boot settings from kernel append"
+        echo "parameters."
+        read_kernel_append_parameters
     fi
 }
 #
@@ -901,21 +922,31 @@ choose_autoinstall_script() {
     get_base_hostname
 
     # 
-    # Script names to choose from, in order of preference.  First hit wins.
+    # If SCRIPTNAME is specified as a kernel append, or via local.cfg, then use that script.
     #
-    if [ ! -z $IMAGENAME ]; then
-        SCRIPTNAMES="${SCRIPTS_DIR}/${IMAGENAME}.master ${SCRIPTS_DIR}/${HOSTNAME}.sh ${SCRIPTS_DIR}/${BASE_HOSTNAME}.master"
-    else
-        SCRIPTNAMES="${SCRIPTS_DIR}/${HOSTNAME}.sh ${SCRIPTS_DIR}/${BASE_HOSTNAME}.master"
+    if [ -z $SCRIPTNAME ]; then
+        # 
+        # If SCRIPTNAME was not specified, choose one, in order of preference.  First hit wins.
+        #
+        if [ ! -z $IMAGENAME ]; then
+            SCRIPTNAMES="${SCRIPTS_DIR}/${IMAGENAME}.master ${SCRIPTS_DIR}/${HOSTNAME}.sh ${SCRIPTS_DIR}/${BASE_HOSTNAME}.master"
+        else
+            SCRIPTNAMES="${SCRIPTS_DIR}/${HOSTNAME}.sh ${SCRIPTS_DIR}/${BASE_HOSTNAME}.master"
+        fi
+        
+        #
+        # Choose a winner!
+        #
+        for SCRIPTNAME in $SCRIPTNAMES
+        do
+            [ -e $SCRIPTNAME ] && break
+        done
     fi
-    
-    #
-    # Choose a winner!
-    #
-    for SCRIPTNAME in $SCRIPTNAMES
-    do
-        [ -e $SCRIPTNAME ] && break
-    done
+
+    # make sure it exists
+    if [ ! -e $SCRIPTNAME ]; then
+        echo "FATAL: I can't find ${SCRIPTNAME}!"
+    fi
     echo "Using autoinstall script: ${SCRIPTNAME}"
 }
 #
