@@ -72,6 +72,7 @@ sub read_config {
         'pointopoint'                       => { ARGCOUNT => ARGCOUNT_ONE },
         'rexmit_hello_interval'             => { ARGCOUNT => ARGCOUNT_ONE },
         'ttl'                               => { ARGCOUNT => ARGCOUNT_ONE },
+        'nosync'                            => { ARGCOUNT => ARGCOUNT_ONE },
         
     );
 
