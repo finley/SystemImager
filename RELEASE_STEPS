@@ -11,16 +11,10 @@
 3.2 stuff
 --------------------------------------------------------------------------------
 o update documentation
-o flamethrower as seperate utility
-o do initscripts in a more proper way
-  a) single init script with /etc/defaults/systemimager that specifies which
-     daemons to run
-     (won't work for flamethrower as a seperate package, or shouldn't be made 
-      to)
-  b) init script per daemon
-     /etc/init.d/netbootmon
-     /etc/init.d/rsync-systemimager
-     /etc/init.d/flamethrower
+    o Secure Install (over SSH) section
+    o Multicast installs using Flamethrower
+o flamethrower as seperate utility, with configs in 
+  /etc/flamethrower/flamethrowerd.conf.
 o dann's configure failure -- resolve
 o knock out bugs
 

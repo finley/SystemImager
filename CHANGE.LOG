@@ -9,6 +9,7 @@
 
 SystemImager-3.2.0 2003.06.XXX
 -------------------------------------------------------------------------------
+o renamed init scripts to /etc/init.d/systemimager-server-<foo>
 o Fix bug #[ 501646 ] prepareclient shouldn't killall rsyncs.
 o added hardlink/parse files patch for rsync from stevegt (Closes #669565).
 o added multicast support via Flamethrower. -BEF-
