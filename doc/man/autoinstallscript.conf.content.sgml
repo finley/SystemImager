@@ -113,21 +113,8 @@
 		partitioning disks.  <command>parted(8)</command> requires you to tell
 		it what kind of filesystem you intend to put on a partition, but it
     	doesn't really affect what kind of filesystem SystemImager creates.
-    	Valid values for this tag are:
-		<simplelist>
-		  <member>ext2</member>
-		  <member>ext3</member>
-		  <member>fat16</member>
-		  <member>fat32</member>
-		  <member>hfs</member>
-		  <member>hp-ufs</member>
-		  <member>jfs</member>
-		  <member>linux-swap</member>
-		  <member>ntfs</member>
-		  <member>reiserfs</member>
-		  <member>sun-ufs</member>
-		  <member>xfs</member>
-		</simplelist>
+    	Valid values for this tag are: ext2, ext3, fat16, fat32, hfs, hp-ufs,
+        jfs, linux-swap, ntfs, reiserfs, sun-ufs, or xfs.
       </para>
 
       <note>
@@ -150,14 +137,8 @@
     <listitem>
       <para>
 		flags - A comma separated list (no spaces) of flags used to specify
-		particulars about a partition.  Possible values are:
-		<simplelist>
-		  <member>boot</member>
-		  <member>hidden</member>
-		  <member>raid</member>
-		  <member>lvm</member>
-		  <member>lba</member>
-		</simplelist>
+		particulars about a partition.  Possible values are: boot, hidden,
+        raid, lvm, and lba.
       </para>
     </listitem>
 
@@ -219,82 +200,99 @@
 
     <listitem>
       <para>
-	mp - The second field in the fstab file.  Mount point.  This is the 
-	name of the directory where the filesystem should be mounted.  See 
-	<filename>fstab(5)</filename> for more information.
+		mp - The second field in the fstab file.  Mount point.  This is the 
+		name of the directory where the filesystem should be mounted.  See 
+		<filename>fstab(5)</filename> for more information.
       </para>
     </listitem>
 
     <listitem>
       <para>
-	fs - The third field in the fstab file.  This is where you specify what
-	filesystem you want created on the partition specified on "mount_dev" 
-	(or "real_dev").  Valid filesystem types supported by SystemImager are:
-	<simplelist>
-	  <member>ext2</member>
-	  <member>ext3</member>
-	  <member>msdos</member>
-	  <member>reiserfs</member>
-	  <member>vfat</member>
-	  <member>XXX more? more?</member>
-	</simplelist>
+		fs - The third field in the fstab file.  This is where you specify what
+		filesystem you want created on the partition specified on "mount_dev" 
+		(or "real_dev").  Valid filesystem types supported by SystemImager are:
+        ext2, ext3, msdos, reiserfs, vfat, jfs
       </para>
+
     </listitem>
 
     <listitem>
       <para>
-	mkfs_opts - Certain filesystems may require additional information to
-	properly create a filesystem.  Currently, this is only used by msdos
-	and vfat filesystems.  Valid values for msdos and vfat filesystems are
-	"-F 12", "-F 16", or "-F 32" to specify the FAT size.  If you don't
-	know what you need, or don't care, you can leave this blank and
-	defaults will be used.
+		mkfs_opts - Certain filesystems may require additional information to
+		properly create a filesystem.  Currently, this is only used by msdos
+		and vfat filesystems.  Valid values for msdos and vfat filesystems are
+		"-F 12", "-F 16", or "-F 32" to specify the FAT size.  If you don't
+		know what you need, or don't care, you can leave this blank and
+		defaults will be used.
       </para>
     </listitem>
     <listitem>
       <para>
-	options - The fourth field in the <filename>fstab</filename> file.
-	Options needed when mounting the filesystem.  If you don't know that
-	you need any special options, just use "default".  See
-	<filename>fstab(5)</filename> for more information.
+		options - The fourth field in the <filename>fstab</filename> file.
+		Options needed when mounting the filesystem.  If you don't know that
+		you need any special options, just use "default".  See
+		<filename>fstab(5)</filename> for more information.
       </para>
     </listitem>
     <listitem>
       <para>
-	dump - The fifth field in the fstab file.  This should be a number that
-	is used by <command>dump(8)</command>.  If you don't know what to put
-	here, just use "0".  See <filename>fstab(5)</filename> for more
-	information.
+		dump - The fifth field in the fstab file.  This should be a number that
+		is used by <command>dump(8)</command>.  If you don't know what to put
+		here, just use "0".  See <filename>fstab(5)</filename> for more
+		information.
       </para>
     </listitem>
     <listitem>
       <para>
-	pass - The sixth field in the fstab file.  This is used by the fsck
-	program to determine the order in which filesystem checks are done at
-	boot time.  See <filename>fstab(5)</filename> for more information.
+		pass - The sixth field in the fstab file.  This is used by the fsck
+		program to determine the order in which filesystem checks are done at
+		boot time.  See <filename>fstab(5)</filename> for more information.
       </para>
     </listitem>
     <listitem>
       <para>
-	format - Used to tell SystemImager to not create a filesystem on a 
-	partition.  If this is set to "no", the filesystem will not be created.
-	If it is absent, or contains any other value, then a filesystem will 
-	be created.
+		format - Used to tell SystemImager to not create a filesystem on a 
+		partition.  If this is set to "no", the filesystem will not be created.
+		If it is absent, or contains any other value, then a filesystem will 
+		be created.
       </para>
     </listitem>
   </itemizedlist>
   </refsect1>
+
+
   <refsect1>
+
+    <title>LIMITATIONS</title>
+
+    <para>
+        If you make a change to this file that could affect the boot process, 
+        for example, changing your root device, then you must also modify 
+        your boot loader's configuration file.  This file can be modified either
+        directly in the image, or in an override directory.  For more information
+        on override directories, see the full manual in 
+        /usr/share/doc/systemimager-doc/ or at http://systemimager.org/documentation/.
+    </para>
+
+  </refsect1>
+
+
+  <refsect1>
+
     <title>SEE ALSO</title>
 
     <para>
       <command>mkautoinstallscript</command>(8), <filename>fstab(5)</filename>
     </para>
 
-    <para>More details can be found in the <citetitle>SystemImager
-	manual.</citetitle>
+    <para>
+      More details can be found in the <citetitle>SystemImager
+      manual.</citetitle>
     </para>
+
   </refsect1>
+
+
   <refsect1>
     <title>AUTHOR</title>
 
