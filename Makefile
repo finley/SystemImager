@@ -105,8 +105,8 @@ PXE_CONF_DEST     = $(TFTP_BIN_DEST)/pxelinux.cfg
 
 AUTOINSTALL_TARBALL = autoinstallbin.tar.gz
 
-BINARIES := makeautoinstallcd makeautoinstalldiskette
-SBINARIES := addclients cpimage getimage makedhcpserver makedhcpstatic mkautoinstallscript mkbootserver mvimage pushupdate rmimage
+BINARIES := mkautoinstallcd mkautoinstalldiskette
+SBINARIES := addclients cpimage getimage mkdhcpserver mkdhcpstatic mkautoinstallscript mkbootserver mvimage pushupdate rmimage
 CLIENT_SBINARIES  := updateclient prepareclient
 COMMON_BINARIES   = lsimage
 
@@ -429,8 +429,8 @@ help_all:
 	@grep -e "^#@[^@]" Makefile | sed s/"#@"/""/
 	@grep -e "^#@@" Makefile | sed s/"#@@"/""/
 
-#@helpless:
-#@  pipes the output of 'make help' through less
+#@install:
+#@ prints short message with installation instructions
 #@ 
 install: 
 	@echo 'To install the server, type:'
@@ -442,6 +442,9 @@ install:
 	@echo 'Try "make help" for more options.'
 	@echo ''
 
+#@helpless:
+#@  pipes the output of 'make help' through less
+#@ 
 helpless:
 	$(MAKE) help | less
 
