@@ -46,7 +46,7 @@ LOCAL_BINARIES := /sbin/sfdisk /usr/bin/mawk /sbin/mke2fs /bin/ash /usr/bin/rsyn
 initrd.gz:	initrd
 	gzip -9 < initrd > initrd.gz
 
-initrd:	binaries $(LOCAL_BINARIES)
+initrd:	binary-build-stamp $(LOCAL_BINARIES)
 	# create ramdisk file & mount it as a filesystem
 	dd if=/dev/zero of=initrd bs=1k count=$(INITRD_SIZE)
 	mke2fs -N $(INITRD_INODE_COUNT) -m 0 -q -F initrd
@@ -98,8 +98,11 @@ install:	initrd.gz
 	cp -a initrd.gz $(TFTPROOT)
 
 # binaries that we build from source
-binaries:
+binaries:	binary-build-stamp
+
+binary-build-stamp:
 	$(MAKE) beep busybox massdns
+	touch binary-build-stamp
 
 ########## BEGIN beep rules ##########
 
@@ -220,6 +223,6 @@ clean:
 	-find . -name "*~" -exec rm -f {} \;
 	-umount $(TEMP_DIR)
 	-rm -rf $(TEMP_DIR) initrd initrd.gz
-
+	-rm -rf binary-build-stamp
 distclean:	clean
 	-rm -rf $(SRC_DIR)

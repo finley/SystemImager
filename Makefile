@@ -261,9 +261,12 @@ install_kernel:	kernel
 #@@  build the kernel that autoinstall clients will boot from during
 #@@  autoinstallation
 #@@ 
-kernel:
+kernel:	kernel-build-stamp
+
+kernel-build-stamp:
 	$(MAKE) patched_kernel
 	$(MAKE) -C $(LINUX_SRC) oldconfig dep bzImage
+	touch kernel-build-stamp
 
 patched_kernel:	patched_kernel-stamp
 
@@ -447,6 +450,6 @@ clean:
 #@  same as clean, but also removes downloaded source, stamp files, etc.
 #@ 
 distclean:	clean
-	-rm patched_kernel-stamp
+	-rm patched_kernel-stamp kernel-build-stamp
 	-rm -rf $(SRC_DIR)
 	-$(MAKE) -C $(INITRD_DIR) distclean
