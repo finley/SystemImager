@@ -7,10 +7,9 @@
 
 Short list (in progress)
 ------------------------
-
+- need to add proper tftp entry in /etc/inetd.conf for tftp-hpa rpm
+- message during network booting (if possible)
 - make the <Backspace> key work ;)
-- $image.exclude on imageserver
-- more diags on autoinstall client
 
 Other stuff
 -----------
@@ -21,6 +20,7 @@ Other stuff
 
 getimage
 --------
+- $image.exclude on imageserver
 - identify mke2fs parameters -b, -i, and -m on the master client and replicate this on autoinstall clients
 - use something other than mtab for getting active ext2 filesystems?
 - offer user the ability to change this, and store the changes in 
@@ -117,4 +117,5 @@ autoinstalldiskette
 -------------------
 - no screen-blanking
 - redirect syslog messages to $imagserver
+- more diags on autoinstall client
 
