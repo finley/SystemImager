@@ -32,9 +32,9 @@
 #   on a Debian system, you can issue the following command to ensure that
 #   all of the proper tools are installed.
 #
-#   On i386: "apt-get install build-essential autoconf bzip2 docbook-utils jadetex libreadline4-dev libtool mkcramfs rsync uuid-dev wget"
-#
-#   On ia64: "apt-get install build-essential autoconf bzip2 docbook-utils jadetex libreadline4-dev libtool mkcramfs rsync uuid-dev wget"
+#   On Debian, "apt-get build-dep systemimager", will install all the right 
+#   tools.  Note that you need the deb-src entries in your 
+#   /etc/apt/sources.list file.
 #
 #
 # SystemImager file location standards:
