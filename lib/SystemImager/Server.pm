@@ -236,31 +236,128 @@ sub _read_partition_info_and_prepare_parted_commands {
 
         my $unit_of_measurement = lc $config->{disk}->{$dev}->{unit_of_measurement};
 
+        ########################################################################
+        #
         # Make sure the user specified 100% or less of the disk (if used). -BEF-
+        # (may want to functionize these at some point)
+        #
+        ########################################################################
         if (("$unit_of_measurement" eq "%")
             or ("$unit_of_measurement" eq "percent") 
             or ("$unit_of_measurement" eq "percentage") 
             or ("$unit_of_measurement" eq "percentages")) {
 
-            my $sum;
+            #
+            # Primary partitions. -BEF-
+            #
+            my $p_sum = 0;
             foreach my $m (sort (keys ( %{$config->{disk}->{$dev}->{part}} ))) {
+
+                #
+                # Skip over logical partitions. -BEF-
+                # 
+                $_ = $config->{disk}->{$dev}->{part}{$m}->{p_type};
+                if ( $_ ne "primary" ) { next; }
+
+                #
+                # Skip over if size is end_of_disk (we can't measure that without the disk.) -BEF-
+                #
                 $_ = $config->{disk}->{$dev}->{part}{$m}->{size};
                 if ( $_ eq "end_of_disk" ) { next; }
+
                 if (/[[:alpha:]]/) {
                     print qq(FATAL:  autoinstallscript.conf cannot contain "$_" as a percentage.\n);
                     print qq(        Disk: $dev, partition: $m\n);
                     exit 1;
                 }
 
-                $sum += $_;
+                $p_sum += $_;
 
             }
-            if ($sum > 100) {
-                print qq(FATAL:  Your autoinstallscript.conf file specifies that "${sum}%" of your disk\n);
+
+            #
+            # Extended partition. -BEF-
+            #
+            my $e_sum = 0;
+            foreach my $m (sort (keys ( %{$config->{disk}->{$dev}->{part}} ))) {
+
+                $_ = $config->{disk}->{$dev}->{part}{$m}->{p_type};
+                if ( $_ ne "extended" ) { next; }
+
+                #
+                # Skip over if size is end_of_disk (we can't measure that without the disk.) -BEF-
+                #
+                $_ = $config->{disk}->{$dev}->{part}{$m}->{size};
+                if ( $_ eq "end_of_disk" ) { next; }
+
+                if (/[[:alpha:]]/) {
+                    print qq(FATAL:  autoinstallscript.conf cannot contain "$_" as a percentage.\n);
+                    print qq(        Disk: $dev, partition: $m\n);
+                    exit 1;
+                }
+
+                $e_sum += $_;
+
+            }
+
+            #
+            # Logical partitions must not exceed percentage size of the extended partition.  But
+            # we only need to process this loop if an extended partition exists. -BEF-
+            #
+            my $l_sum = 0;
+            if ($e_sum > 0) {
+                foreach my $m (sort (keys ( %{$config->{disk}->{$dev}->{part}} ))) {
+ 
+                    #
+                    # Skip over primary and extended partitions. -BEF-
+                    # 
+                    $_ = $config->{disk}->{$dev}->{part}{$m}->{p_type};
+                    unless ( $_ eq "logical" ) { next; }
+ 
+                    #
+                    # Skip over if size is end_of_disk (we can't measure that without the disk.) -BEF-
+                    #
+                    $_ = $config->{disk}->{$dev}->{part}{$m}->{size};
+                    if ( $_ eq "end_of_disk" ) { next; }
+ 
+                    if (/[[:alpha:]]/) {
+                        print qq(FATAL:  autoinstallscript.conf cannot contain "$_" as a percentage.\n);
+                        print qq(        Disk: $dev, partition: $m\n);
+                        exit 1;
+                    }
+ 
+                    $l_sum += $_;
+ 
+                }
+            }
+
+            #
+            # Produce error message if necessary. -BEF-
+            #
+            my $p_e_sum = $p_sum + $e_sum;
+            if ($p_e_sum > 100) {
+                print qq(FATAL:  Your autoinstallscript.conf file specifies that "${p_e_sum}%" of your disk\n);
                 print   "        should be partitioned.  Ummm, I don't think you have that much disk. ;-)\n";
+                exit 1;
+            } elsif ($l_sum > 100) {
+                print qq(FATAL:  Your autoinstallscript.conf file specifies that "${l_sum}%" of your disk\n);
+                print   "        should be partitioned.  Ummm, I don't think you have that much disk. ;-)\n";
+                exit 1;
+            } elsif ($l_sum > $e_sum) {
+                print qq(FATAL:  Your autoinstallscript.conf file specifies that the sum of your logical\n);
+                print qq(partitions should take up "${l_sum}%" of your disk but the extended partition,\n);
+                print qq(in which the logical partitions must fit, is specified as only "${e_sum}%" of\n);
+                print qq(your disk.  Please modify and try again.\n);
                 exit 1;
             }
         } 
+
+
+        ########################################################################
+        #
+        # Continue processing. -BEF-
+        #
+        ########################################################################
 
         my $end_of_last_primary = 0;
         my $end_of_last_logical;
@@ -334,7 +431,7 @@ sub _read_partition_info_and_prepare_parted_commands {
 
         # For partitions that go to the end of the disk, tell $endMB to grow to end of disk. -BEF-
         foreach $m (keys %endMB) {
-            if ( $size{$m} eq "end_of_disk" ) {
+            if (($size{$m}) and ( $size{$m} eq "end_of_disk" )) {
                 $endMB{$m} = '$(( $DISK_SIZE - ' . "$MB_from_end_of_disk" . ' ))';
             }
         }
