@@ -25,13 +25,6 @@ EXTRA_INODES_STAGE2 = 50        # number of inodes available on ramdisk
 
 ########## BEGIN definitions for binaries built from source ##########
 
-BEEP_VERSION = 1.2.1
-BEEP_ROOT = $(SRC_DIR)/beep-$(BEEP_VERSION)
-BEEP_BINARY = $(BEEP_ROOT)/beep
-BEEP_TARBALL = beep-$(BEEP_VERSION).tar.gz
-BEEP_URL = http://www.johnath.com/beep/$(BEEP_TARBALL)
-BEEP_PATCH = $(PATCH_DIR)/beep.patch
-
 BUSYBOX_VERSION = 0.60.0
 BUSYBOX_TARBALL = busybox-$(BUSYBOX_VERSION).tar.gz
 BUSYBOX_URL = ftp://opensource.lineo.com/busybox/$(BUSYBOX_TARBALL)
@@ -98,7 +91,7 @@ stage2rd:	binary-build-stamp $(LOCAL_BINARIES_STAGE2) $(LOCAL_SBINARIES_STAGE2)
 	find skel2.tmp -type d -name CVS -depth | xargs rm -rf
 
 	# copy over files from local system
-	cp -a $(BEEP_BINARY) $(LOCAL_BINARIES_STAGE2) skel2.tmp/bin
+	cp -a $(LOCAL_BINARIES_STAGE2) skel2.tmp/bin
 	mkdir skel2.tmp/sbin
 	cp -a $(LOCAL_SBINARIES_STAGE2) skel2.tmp/sbin
 
@@ -139,7 +132,7 @@ stage2rd-ssh:	binary-build-stamp $(LOCAL_BINARIES_STAGE2_SSH)
 	find skel2-ssh.tmp -type d -name CVS -depth | xargs rm -rf
 
 	# copy over files from local system
-	cp -a $(BEEP_BINARY) $(LOCAL_BINARIES_STAGE2_SSH) skel2-ssh.tmp/bin
+	cp -a $(LOCAL_BINARIES_STAGE2_SSH) skel2-ssh.tmp/bin
 	mkdir skel2-ssh.tmp/sbin
 	cp -a $(LOCAL_SBINARIES_STAGE2_SSH) skel2-ssh.tmp/sbin
 	cd skel2-ssh.tmp && ln ./bin/ash ./bin/sh
@@ -178,26 +171,8 @@ install:	initrd.gz stage2rd.gz stage2rd-ssh.gz
 binaries:	binary-build-stamp
 
 binary-build-stamp:
-	$(MAKE) beep $(BUSYBOX_BINARY_STAGE1) $(BUSYBOX_BINARY_STAGE2)
+	$(MAKE) $(BUSYBOX_BINARY_STAGE1) $(BUSYBOX_BINARY_STAGE2)
 	touch binary-build-stamp
-
-########## BEGIN beep rules ##########
-
-beep:
-	$(MAKE) $(SRC_DIR)/$(BEEP_TARBALL)
-	[ -d $(BEEP_ROOT) ] || \
-		( cd $(SRC_DIR) && tar xvfz $(BEEP_TARBALL) && \
-		  [ ! -f ../$(BEEP_PATCH) ] || \
-		  patch -p0 < ../$(BEEP_PATCH) )
-	$(MAKE) -C $(BEEP_ROOT) beep
-	strip $(BEEP_BINARY)
-
-$(SRC_DIR)/$(BEEP_TARBALL):
-	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
-	cd $(SRC_DIR) && ([ -f /usr/src/$(BEEP_TARBALL) ] && \
-	  ln -s /usr/src/$(BEEP_TARBALL) .) || $(WGET) $(BEEP_URL)
-
-########## END beep rules ##########
 
 ########## BEGIN busybox rules ##########
 
@@ -228,7 +203,7 @@ $(SRC_DIR)/$(BUSYBOX_TARBALL):
 
 ########## END busybox rules ##########
 
-get_source:	$(SRC_DIR)/$(BEEP_TARBALL) $(SRC_DIR)/$(BUSYBOX_TARBALL)
+get_source:	$(SRC_DIR)/$(BUSYBOX_TARBALL)
 
 help:
 	@echo ' This Makefile provides rules to create a ramdisk (initrd.gz) for'
@@ -294,7 +269,6 @@ helpless:
 
 clean:
 	-$(MAKE) -C $(BUSYBOX_ROOT) clean
-	-$(MAKE) -C $(BEEP_ROOT) clean
 	-find . -name "*~" -exec rm -f {} \;
 	rm -rf stage2rd.gz stage2rd-ssh.gz stage2rd stage2rd-ssh
 	rm -rf initrd initrd.gz busybox-1 busybox-2
