@@ -588,6 +588,7 @@ clean:	$(subst .rul,_clean,$(shell cd $(TOPDIR)/make.d && ls *.rul)) initrd_clea
 	## editor backups
 	-find . -name "*~" -exec rm -f {} \;
 	-find . -name "#*#" -exec rm -f {} \;
+	-find . -name ".#*" -exec rm -f {} \;
 
 # same as clean, but also removes downloaded source, stamp files, etc.
 PHONY += distclean
