@@ -855,6 +855,8 @@ sub write_lvm_groups_commands {
 
     my $xml_config = XMLin($file, keyattr => { lvm_group => "+name" }, forcearray => 1 );
     
+    my $cmd;
+    
     # Check if a LVM schema is present.
     my $lvm = @{$xml_config->{lvm}}[0];
     unless (defined($lvm)) { return; }
@@ -911,7 +913,13 @@ sub write_lvm_groups_commands {
                 $vg_phys_extent_size = ""; 
             }
             # Write the command to create the volume group -AR-
-            my $cmd = "vgcreate ${vg_max_log_vols}${vg_max_phys_vols}${vg_phys_extent_size}${group_name}${part_list} || shellout";
+            $cmd = "vgcreate ${vg_max_log_vols}${vg_max_phys_vols}${vg_phys_extent_size}${group_name}${part_list} || shellout";
+            print $out qq(echo "$cmd"\n);
+            print $out "$cmd\n";
+            
+            # Create the volume group directory under /dev -AR-
+            # FIXME: handle group names and device names conflicts.
+            $cmd = "mkdir -p /dev/$group_name || shellout";
             print $out qq(echo "$cmd"\n);
             print $out "$cmd\n";
         } else {
@@ -960,6 +968,16 @@ sub write_lvm_volumes_commands {
             print $out "$cmd\n";
         }
     }
+
+    # Create LVM logical volume devices under /dev -AR-
+    print $out qq(\n# Create logical volumes devices under /dev -AR-\n) .
+               qq(for lvm_line in `lvdisplay -c 2>/dev/null`; do\n) .
+               qq(\tname=`echo \$lvm_line | cut -d: -f1`\n) .
+               qq(\tmaj=`echo \$lvm_line | cut -d: -f12`\n) .
+               qq(\tmin=`echo \$lvm_line | cut -d: -f13`\n) .
+               qq(\tmknod \$name b \$maj \$min || shellout\n) .
+               qq(done\n) .
+               qq(unset lvm_line name maj min\n);
 }
 
 # Usage:  
