@@ -4,25 +4,32 @@
 # This file is: README.initrd
 #
 
-To customize your initrd.gz
----------------------------
-1) You must use a debian based system.  I currently use debian 2.2.
-2) Bring your system up to date with this command:
-    "apt-get update && apt-get upgrade"
-3) Install the boot-floppies package:
-    "apt-get install boot-floppies"
-    (allow apt-get to install all dependent packages)
-4) cd /usr/src
-5) untar boot-floppies.tar.gz:
-    tar -xvzf boot-floppies.tar.gz
-    (this will be used by the mk_new_initrd script you will run later)
-6) pull down the SystemImager source tar ball from:
-    http://download.sourceforge.net/systemimager/
-7) untar the SystemImager source
-8) cd into initrd_source/
-9) run ./prep_initrd_dev
-10) make your changes in the initrd_dev directory 
-11) run ./mk_new_initrd
-12) a file named something like "initrd-2001.02.02-00:09:03.gz" will be
-    produced -- this is your new initrd.gz
-13) copy this file to /tftpboot/initrd.gz and use like normal!
+Notes on customizing and building your initrd.gz
+------------------------------------------------
+o files in the skel/ directory are copied directly to the ramdisk
+  you can edit the files there, or drop in your own.
+o source tarballs for a few binaries are needed during the build.  an attempt
+  is made to download them w/ wget, but you can download them separately and
+  drop them into the tree by hand.  see the Makefile for locations.  if the
+  download attempt fails because these files no longer exist, please report
+  this as a bug.
+o development is done on Debian systems, so this is the suggested platform
+  for building.
+o dynamic libraries can hog up a lot of the space in your ramdisk.  the
+  mklibs.sh script from Debian's boot-floppies package is used to reduce the
+  overall size, but it is dependent on the existence of the associated
+  pic archives.  on Debian systems, you can 'apt-get install libc6-pic'.
+  in the case of libc6, newer versions usually mean larger libraries.
+  I currently use libc6-2.1.3.  as a comparison:
+
+	Debian Version	  	libc6 version		initrd.gz size
+	--------------------------------------------------------------
+	2.2 (potato)		2.1.3			610761
+	unstable (sid)		2.2.3			682281
+
+o your kernel must support loopback devices.
+o /dev entries are created from the contents of the dev_ls-lR file.
+  to customize, either edit this file, or
+  1) modify the entries in /dev of an existing ramdisk to suit your needs
+  2) create a new dev_ls-lR file by cd'ing to the customized /dev directory
+     and capturing the output of 'ls -lR'
