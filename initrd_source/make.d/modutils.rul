@@ -6,13 +6,13 @@ MODUTILS_PATCHES = $(shell ls $(INITRD_PATCH_DIR)/modutils.*.patch 2>/dev/null |
 
 ALL_SOURCE += $(INITRD_SRC_DIR)/$(MODUTILS_TARBALL)
 
-ifeq ($(ARCH),ia64)
+########## BEGIN modutils rules ##########
+# busybox insmod only works on i386
+# know to not work on ia64 and ppc64
+
+ifneq ($(ARCH),i386)
 	INSMOD_BINARY = $(INITRD_SRC_DIR)/$(MODUTILS_DIR)/insmod/insmod
 endif
-
-########## BEGIN modutils rules ##########
-# Only used on ia64 right now -- because busybox's insmod won't compile. -BEF-
-#
 
 PHONY += modutils
 modutils:	$(INSMOD_BINARY)
