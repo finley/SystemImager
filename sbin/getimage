@@ -550,6 +550,35 @@ close FSTAB;
 ### END get info on devices for software RAID, swap, and filesystems ###
 
 
+### BEGIN compile hash of ext2 partitions to label ###
+%ext2_devices_by_label = ();
+open (LABELS, "<$imagedir/etc/systemimager/ext2_devices_by_label.txt") || die "program_name: Failed to open file for reading\n";
+while (<LABELS>) {
+    # remove carriage returns
+    chomp;
+
+    # Skip the line if it starts with a '#'
+    if (m@(^\s*\#)@) { next; }
+
+    # turn all tabs into single spaces -- Note: <ctrl-v><tab>
+    s/  / /g;
+
+    # Remove spaces from the beginning of the line
+    s/^ +//;
+
+    # Skip blank lines
+    if (m@(^$)@) { next; }
+
+    # split on space(s) and assign values to variables
+    (my $label, my $device) = split(/ +/);
+
+    # Create hash to be used in labelling
+    $ext2_devices_by_label{$label} = $device;
+}
+close (LABELS);
+### END compile hash of ext2 partitions to label ###
+
+
 ### BEGIN stop RAID devices before partitioning ###
 if (@software_raid_devices) {
   print MASTER_SCRIPT "# Pull /etc/raidtab over to autoinstall client\n";
@@ -777,7 +806,23 @@ if (@swap_devices) {
 if (@ext2_devices) {
   print MASTER_SCRIPT "# format ext2 devices\n";
   foreach my $device_file (sort @ext2_devices) {
-    print MASTER_SCRIPT "mke2fs $device_file\n";
+    if ($device_file =~ /LABEL=/) {
+      ### BEGIN this do for labelled devices
+      foreach my $label (keys %ext2_devices_by_label) {
+        if ($device_file eq $label) {
+          # get device
+          my $device_file = $ext2_devices_by_label{$label};
+          # strip out LABEL= bit so that we're left with just the actual label
+          $label =~ s/LABEL=//;
+          print MASTER_SCRIPT "mke2fs -L $label $device_file\n";
+        }
+      }
+      ### END this do for labelled devices
+    } else {
+      ### BEGIN this do for non-labelled devices
+      print MASTER_SCRIPT "mke2fs $device_file\n";
+      ### END this do for non-labelled devices
+    }
   }
   print MASTER_SCRIPT "\n";
 }
@@ -817,7 +862,12 @@ print MASTER_SCRIPT "# create mount points and mount filesystems\n";
 foreach $mount_point (sort (@mount_points)) {
   my $device_file = $device_file_by_mount_point{$mount_point};
   print MASTER_SCRIPT "mkdir -p /a$mount_point/\n";
-  print MASTER_SCRIPT "mount $device_file /a$mount_point/\n";
+  if ($device_file =~ /LABEL=/) {
+    my $label = $device_file;
+    print MASTER_SCRIPT "mount -L $label /a$mount_point/\n";
+  } else {
+    print MASTER_SCRIPT "mount $device_file /a$mount_point/\n";
+  }
   print MASTER_SCRIPT "\n";
 }
 ### END Write out mkdir and mount commands ###
