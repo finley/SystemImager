@@ -1,5 +1,5 @@
 %define name     systemimager
-%define ver      3.1.5
+%define ver      3.1.6
 %define rel      1
 %define prefix   /usr
 %define _build_all 1
@@ -74,7 +74,7 @@ Packager: dann frazier <dannf@dannf.org>
 Docdir: %{prefix}/share/doc
 URL: http://systemimager.org/
 Distribution: System Installation Suite
-Requires: systemimager-server = %{version}, /sbin/chkconfig, perl, flamethrower
+Requires: systemimager-server = %{version}, /sbin/chkconfig, perl, flamethrower >= 0.1.6
 AutoReqProv: no
 
 %description flamethrower
@@ -196,6 +196,10 @@ to boot and install %{_build_arch} Linux machines during the SystemImager autoin
 process.
 
 %changelog
+* Wed Nov 12 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.1.6-1
+- new upstream release
+- add version dependency for systemimager-flamethrower package
+
 * Tue Aug 19 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.1.5-1
 - new upstream release
 
@@ -306,6 +310,7 @@ make binaries
 cd $RPM_BUILD_DIR/%{name}-%{version}/
 make install_server_all DESTDIR=/tmp/%{name}-%{ver}-root PREFIX=%prefix
 make install_client_all DESTDIR=/tmp/%{name}-%{ver}-root PREFIX=%prefix
+
 %else
 
 %install
