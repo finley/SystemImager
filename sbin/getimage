@@ -410,21 +410,21 @@ $file="$imagedir/etc/issue";
 open(FILE, "< $file") or die "$program_name: Couldn't open $file for reading: $!\n";
     while (<FILE>)
     {
-        if ((/Debian GNU/) and (/2\.1/))
+
+        if (/Debian/)
 	{
-	    $distro = "debian_linux_2.1";
+	    if (/2\.1/) { $distro = "debian_linux_2.1"; }
+            elsif (/2\.2/) { $distro = "debian_linux_2.2"; }
+	    else { $distro = "debian_linux_2.2"; }
 	}
-	elsif ((/Debian GNU/) and (/2\.2/))
-	{
-	    $distro = "debian_linux_2.2";
-	}
-	elsif (/Red Hat Linux release 7\.0/)
-	{
+	elsif (/Red Hat/) { $distro = "red_hat_linux"; }
+        else 
+	{ 
+	    # taking a guess here 
 	    $distro = "red_hat_linux";
 	}
-        elsif ( -d "$imagedir/etc/sysconfig/" ) {
-            $distro = "red_hat_linux";
-        }
+	# only read first line
+	last;
     }
 close(FILE);
 ### END What kind of Linux are you? ###
@@ -724,7 +724,7 @@ foreach $disk (@disks)  {
   %megabytes_by_device = ();
   $lowest_start_device = "10000000";  # some random large number
 
-  open (PARTITIONS, "<$imagedir$systemimagerdir/partitionschemes/${disk}")
+  open (PARTITIONS, "<$imagedir$systemimagerdir/partitionschemes/$disk")
   || die "$program_name: Cannot open $imagedir$systemimagerdir/partitionschemes/$disk for reading\n";
     @partitions = <PARTITIONS>;
   close(PARTITIONS);
@@ -774,7 +774,13 @@ foreach $disk (@disks)  {
     $sfdisk_command = "";
     my $has_a_non_null_partition_been_created = "no";
     foreach my $partition_number (4, 3, 2, 1) {
-      my $device = "/dev/$disk$partition_number";
+
+      my $device = "";
+      if ($disk =~ /c*d*/ )
+          { $device = "/dev/$disk" . "p" . "$partition_number"; }
+      else
+          { $device = "/dev/$disk" . "$partition_number"; }
+
       my $megabytes = $megabytes_by_device{$device};
       my $id = $id_by_device{$device};
       if ($megabytes eq "0") {
@@ -803,7 +809,13 @@ foreach $disk (@disks)  {
         $sfdisk_command = $sfdisk_command . "$device : start= , size= $megabytes, Id=$id\n";
         $partition_number++;
       } 
-      my $device = "/dev/$disk$partition_number";
+
+      my $device = "";
+      if ($disk =~ /c*d*/ )
+          { $device = "/dev/$disk" . "p" . "$partition_number"; }
+      else
+          { $device = "/dev/$disk" . "$partition_number"; }
+
       my $id = $id_by_device{$device};
       $sfdisk_command = $sfdisk_command . "$device : start= , size= , Id=$id\n";
     }
