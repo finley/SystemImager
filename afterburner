@@ -145,71 +145,81 @@ if [ $? != "0" ]; then
   RESTART_INETD=yes
 fi 
 
-# verify that rsync entry is in /etc/inetd.conf
-egrep -qw ^rsync /etc/inetd.conf
-# if we find an rsync entry in /etc/inetd.conf, let's get rid of it
-if [ $? = "0" ]; then 
-  if [ ! -f /etc/inetd.conf.beforesystemimager ]; then
-    [ $QUIET = "false" ] && echo "backing up /etc/inetd.conf to /etc/inetd.conf.beforesystemimager..."
-    cp -af /etc/inetd.conf /etc/inetd.conf.beforesystemimager
-  fi
-  [ $QUIET = "false" ] && echo "commenting out (disabling) rsync entry in /etc/inetd.conf..."
-  sed 's/^rsync/#rsync/' /etc/inetd.conf > /tmp/.inetd.conf.$$
-  # we use cat here to maintain the same file permissions on /etc/inetd.conf
-  cat /tmp/.inetd.conf.$$ > /etc/inetd.conf
-  rm -f /tmp/.inetd.conf.$$
-  RESTART_INETD=yes
-fi 
+### BEGIN Do if we have an inetd.conf file ###
+if [ -f /etc/inetd.conf ]
+then
+  # verify that rsync entry is in /etc/inetd.conf
+  egrep -qw ^rsync /etc/inetd.conf
+  # if we find an rsync entry in /etc/inetd.conf, let's get rid of it
+  if [ $? = "0" ]; then 
+    if [ ! -f /etc/inetd.conf.beforesystemimager ]; then
+      [ $QUIET = "false" ] && echo "backing up /etc/inetd.conf to /etc/inetd.conf.beforesystemimager..."
+      cp -af /etc/inetd.conf /etc/inetd.conf.beforesystemimager
+    fi
+    [ $QUIET = "false" ] && echo "commenting out (disabling) rsync entry in /etc/inetd.conf..."
+    sed 's/^rsync/#rsync/' /etc/inetd.conf > /tmp/.inetd.conf.$$
+    # we use cat here to maintain the same file permissions on /etc/inetd.conf
+    cat /tmp/.inetd.conf.$$ > /etc/inetd.conf
+    rm -f /tmp/.inetd.conf.$$
+    RESTART_INETD=yes
+  fi 
 
-# verify that a tftp entry is in /etc/inetd.conf
-egrep -qw ^tftp /etc/inetd.conf
-if [ $? != "0" ]; then
-  if [ ! -f /etc/inetd.conf.beforesystemimager ]; then
-    [ $QUIET = "false" ] && echo "backing up /etc/inetd.conf to /etc/inetd.conf.beforesystemimager..."
-    cp -af /etc/inetd.conf /etc/inetd.conf.beforesystemimager
-  fi
-  egrep -qw ^#tftp /etc/inetd.conf | egrep -q "\-s \-r blksize \/tftpboot"
+  # verify that a tftp entry is in /etc/inetd.conf
+  egrep -qw ^tftp /etc/inetd.conf
   if [ $? != "0" ]; then
-    [ $QUIET = "false" ] && echo "adding tftp entry to /etc/inetd.conf..."
-    echo "tftp    dgram   udp     wait    root    /usr/sbin/tcpd  in.tftpd -s -r blksize /tftpboot" >> /etc/inetd.conf
-  else
-    [ $QUIET = "false" ] && echo "uncommenting (enabling) tftp entry in /etc/inetd.conf..."
-    sed 's/^#tftp/tftp/' /etc/inetd.conf > /tmp/.systemimager
-    cp -af /tmp/.systemimager /etc/inetd.conf
-    rm -f /tmp/.systemimager
-  fi
-  RESTART_INETD=yes
-else
-  egrep -q "\-s \-r blksize \/tftpboot" /etc/inetd.conf
-  if [ $? != "0" ]; then
-    # tftp entry may exist, however, tftp-hpa special options are not enabled
-    # so comment out existing entry
-    [ $QUIET = "false" ] && echo "commenting out (disabling) tftp entry in /etc/inetd.conf..."
-    sed 's/^tftp/#tftp/' /etc/inetd.conf > /tmp/.systemimager
-    cp -af /tmp/.systemimager /etc/inetd.conf
-    rm -f /tmp/.systemimager
-    [ $QUIET = "false" ] && echo "adding VA SystemImager brand tftp entry in /etc/inetd.conf..."
-    # Now we can put this entry right after the original one -- thanks to Michael Nolta!
-    TFTP_ENTRY="tftp    dgram   udp     wait    root    \/usr\/sbin\/tcpd  in.tftpd -s -r blksize \/tftpboot"
-    sed "/^#tftp/{G;s/$/$TFTP_ENTRY/;}" /etc/inetd.conf > /tmp/.systemimager
-    cp -af /tmp/.systemimager /etc/inetd.conf
-    rm -f /tmp/.systemimager
+    if [ ! -f /etc/inetd.conf.beforesystemimager ]; then
+      [ $QUIET = "false" ] && echo "backing up /etc/inetd.conf to /etc/inetd.conf.beforesystemimager..."
+      cp -af /etc/inetd.conf /etc/inetd.conf.beforesystemimager
+    fi
+    egrep -qw ^#tftp /etc/inetd.conf | egrep -q "\-s \-r blksize \/tftpboot"
+    if [ $? != "0" ]; then
+      [ $QUIET = "false" ] && echo "adding tftp entry to /etc/inetd.conf..."
+      echo "tftp    dgram   udp     wait    root    /usr/sbin/tcpd  in.tftpd -s -r blksize /tftpboot" >> /etc/inetd.conf
+    else
+      [ $QUIET = "false" ] && echo "uncommenting (enabling) tftp entry in /etc/inetd.conf..."
+      sed 's/^#tftp/tftp/' /etc/inetd.conf > /tmp/.systemimager
+      cp -af /tmp/.systemimager /etc/inetd.conf
+      rm -f /tmp/.systemimager
+    fi
     RESTART_INETD=yes
   else
-    [ $QUIET = "false" ] && echo "tftp entry already enabled in /etc/inetd.conf..."
-  fi
-fi 
+    egrep -q "\-s \-r blksize \/tftpboot" /etc/inetd.conf
+    if [ $? != "0" ]; then
+      # tftp entry may exist, however, tftp-hpa special options are not enabled
+      # so comment out existing entry
+      [ $QUIET = "false" ] && echo "commenting out (disabling) tftp entry in /etc/inetd.conf..."
+      sed 's/^tftp/#tftp/' /etc/inetd.conf > /tmp/.systemimager
+      cp -af /tmp/.systemimager /etc/inetd.conf
+      rm -f /tmp/.systemimager
+      [ $QUIET = "false" ] && echo "adding VA SystemImager brand tftp entry in /etc/inetd.conf..."
+      # Now we can put this entry right after the original one -- thanks to Michael Nolta!
+      TFTP_ENTRY="tftp    dgram   udp     wait    root    \/usr\/sbin\/tcpd  in.tftpd -s -r blksize \/tftpboot"
+      sed "/^#tftp/{G;s/$/$TFTP_ENTRY/;}" /etc/inetd.conf > /tmp/.systemimager
+      cp -af /tmp/.systemimager /etc/inetd.conf
+      rm -f /tmp/.systemimager
+      RESTART_INETD=yes
+    else
+      [ $QUIET = "false" ] && echo "tftp entry already enabled in /etc/inetd.conf..."
+    fi
+  fi 
+fi
+### END Do if we have an inetd.conf file ###
 
-# signal inetd to re-read /etc/inetd.conf
-if [ $RESTART_INETD = "yes" ]; then
-  [ $QUIET = "false" ] && echo -n "Signalling inetd to re-read /etc/inetd.conf: "
+# signal inetd to re-read it's configuration information
+if [ $RESTART_INETD = "yes" ]
+then
+  # this stuff for regular inetd
+  [ $QUIET = "false" ] && echo -n "Signalling inetd to re-read it's configuration information: "
   PID_OF_INETD=`pidof inetd`
   [ ! -z $PID_OF_INETD ] && kill -HUP $PID_OF_INETD
   [ $QUIET = "false" ] && echo ""
-else
-  [ $QUIET = "false" ] && echo "no need to modify /etc/inetd.conf..."
+  
+   # this stuff for xinetd
+  [ $QUIET = "false" ] && echo -n "Signalling inetd to re-read it's configuration information: "
+  PID_OF_XINETD=`pidof xinetd`
+  [ ! -z $PID_OF_XINETD ] && kill -HUP $PID_OF_XINETD
+  [ $QUIET = "false" ] && echo "" 
 fi
-
 ### END inetd stuff ###
 
 
