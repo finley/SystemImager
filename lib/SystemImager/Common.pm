@@ -1079,7 +1079,7 @@ sub add_or_delete_conf_file_entry {
     # write out modified conf file
     open(FILE,">$file") or die("Couldn't open $file for reading!");
         flock(FILE, LOCK_EX);
-            foreach (sort keys %hash) {
+            foreach (sort numerically keys %hash) {
                 print FILE $hash{$_};
             }
         flock(FILE, LOCK_UN);
