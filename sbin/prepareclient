@@ -368,6 +368,26 @@ sub get_mounted_devs_by_mount_point_array {
 }
 
 
+# Usage:
+# %array = get_active_swaps_by_dev();
+# my %active_swaps_by_dev = get_active_swaps_by_dev();
+sub get_active_swaps_by_dev {
+
+    # Create an array that we can use to determine if a swap partition is in use
+    # and should be formatted and activated during autoinstall. -BEF-
+    #
+    my %active_swaps_by_dev;
+    my $cmd = "swapon -s";
+    open (FH, "$cmd|") or croak("Couldn't execute $cmd to read the output.");
+        while (<FH>) {
+            my ($dev, $type, $size, $used, $priority) = split;
+            $active_swaps_by_dev{$dev}=1;
+    }
+    close(FH);
+    return %active_swaps_by_dev;
+}
+
+
 # Description:
 # Reads in an fstab file and outputs an XML stanza with the atomic parts from 
 # the fstab file, and includes real device info for LABEL and UUID devices. -BEF-
@@ -381,6 +401,7 @@ sub save_filesystem_information {
     my ($file, $auto_install_script) = @_;
 
     my %mounted_devs_by_mount_point = get_mounted_devs_by_mount_point_array();
+    my %active_swaps_by_dev = get_active_swaps_by_dev();
 
     # Read in fstab file and output fstab stanza. -BEF-
     #
@@ -432,6 +453,8 @@ sub save_filesystem_information {
                 
                 if ($mounted_devs_by_mount_point{$mp}) {
                     $mounted = "true";
+                } elsif ($active_swaps_by_dev{$real_dev}) {
+                    $mounted = "true";
                 }
 
                 # Some of the info we gather can only be gathered for mounted
@@ -480,7 +503,7 @@ sub save_filesystem_information {
                     }
                 
                 } else {
-                    # Tell SystemImager to not try to format or mount this device during the autoinstall
+                    # Tell SystemImager to not format or mount this device during the autoinstall
                     # process. -BEF-
                     #
                     $format="no";
