@@ -365,6 +365,11 @@ mount | egrep -q c[0-9]+d[0-9]+p
 [ $? -eq 0 ] &&  echo Sorry.  Must not run on a working machine... && exit 1
 ### END Check to be sure this not run from a working machine ###
 
+# Pull in variables left behind by the linuxrc script.
+# This information is passed from the linuxrc script on the autoinstall media via /tmp1/variables.txt
+# Apparently the shell on the autoinstall media is not intelligent enough to take a "set -a" parameter
+. /tmp1/variables.txt
+
 # Partition the disk (see the sfdisk man page for customization details)
 #
 # Below is an example of how to customize a disk.  This can be useful if your clients
@@ -457,6 +462,7 @@ foreach $disk (@disks)  {
 }
 
 ### BEGIN gather up mount point, swap, and filesystem creation information ###
+$got_mkreiserfs = "no";
 print MASTER_SCRIPT "\n# swap and filesystem creation stuff\n";
 open (FSTAB, "<$imagedir/etc/fstab") || die "Failed to open $imagedir/etc/fstab for reading\n";
 while (<FSTAB>) {
@@ -470,9 +476,6 @@ while (<FSTAB>) {
 
     ### BEGIN Find filesystem type and apply appropriate filesystem creation options ###
     # Also be sure to pre-pend /a to each target directory being created
-    # in case directory doesn't already have one, add a trailing slash???XXX
-    # (We could easily test to see if it does, but we've got to normalize multiple
-    #  slashes into one down below anyway...  Same number of functions to execute.)
 
     # swap
     if ($filesystem_type eq "swap") {
@@ -483,9 +486,9 @@ while (<FSTAB>) {
     # ext2
     if ($filesystem_type eq "ext2") {
       # Take the conservative option for now.  Change when we can detect existing settings.
-      print MASTER_SCRIPT "mkdir -p /a$mount_point\n";
+      print MASTER_SCRIPT "mkdir -p /a$mount_point/\n";
       print MASTER_SCRIPT "mke2fs $device_file\n";
-      print MASTER_SCRIPT "mount $device_file /a$mount_point\n";
+      print MASTER_SCRIPT "mount $device_file /a$mount_point/\n";
       print MASTER_SCRIPT "\n";
       push(@mount_points, $mount_point);
     }
@@ -493,18 +496,37 @@ while (<FSTAB>) {
     # ext3
     if ($filesystem_type eq "ext3") {
       # Take the conservative option for now.  Change when we can detect existing settings.
-      print MASTER_SCRIPT "mkdir -p /a$mount_point\n";
+      print MASTER_SCRIPT "mkdir -p /a$mount_point/\n";
       print MASTER_SCRIPT "mke2fs $device_file\n";
-      print MASTER_SCRIPT "mount $device_file /a$mount_point\n";
+      print MASTER_SCRIPT "mount $device_file /a$mount_point/\n";
+
+      ## create ext3 journal file
+      #mount /dev/sdb2 /mnt/tmp
+      #dd if=/dev/zero of=/mnt/tmp/journal.dat bs=1k count=128000
+      #
+      ## set the imutable bit:
+      #chattr +i /mnt/tmp/journal.dat
+      #
+      # find the inode  of the journal:
+      #ls -i /mnt/tmp/journal.dat
+      #
+      ## unmount the partition and mount it as follows:
+      #mount -t ext3 /dev/sdb2 /mnt/tmp -o journal=12
+
       print MASTER_SCRIPT "\n";
       push(@mount_points, $mount_point);
     }
 
     # reiserfs
     if ($filesystem_type eq "reiserfs") {
-      print MASTER_SCRIPT "mkdir -p /a$mount_point\n";
-      print MASTER_SCRIPT "mkreiserfs $device_file\n";
-      print MASTER_SCRIPT "mount $device_file /a$mount_point\n";
+      if ($got_mkreiserfs eq "no") {
+        print MASTER_SCRIPT "rsync -av \$DHCPSIADDR::tftpboot/systemimager/mkreiserfs /tmp1/\n";
+        $got_mkreiserfs = "yes";
+      }
+      print MASTER_SCRIPT "mkdir -p /a$mount_point/\n";
+      print MASTER_SCRIPT "# rupasov is the default, but we are explicit here anyway\n";
+      print MASTER_SCRIPT "echo \"y\" | mkreiserfs -h rupasov $device_file\n";
+      print MASTER_SCRIPT "mount $device_file /a$mount_point/\n";
       print MASTER_SCRIPT "\n";
       push(@mount_points, $mount_point);
     }
@@ -514,14 +536,10 @@ while (<FSTAB>) {
 close FSTAB;
 ### END gather up mount point, swap, and filesystem creation information ###
 
-# This information is passed from the linuxrc script on the autoinstall media via /tmp1/variables.txt
-# Apparently the shell on the autoinstall media is not intelligent enough to take a "set -a" parameter
-print MASTER_SCRIPT "\n# Pull in variables left behind by the linuxrc script\n";
-print MASTER_SCRIPT ". /tmp1/variables.txt\n";
-print MASTER_SCRIPT "\n";
+### BEGIN pull the image down ###
 print MASTER_SCRIPT "# filler up!\n";
 print MASTER_SCRIPT "rsync -av \$DHCPSIADDR::$image /a/\n\n";
-
+### END pull the image down ###
 
 ### BEGIN distribution specific networking stuff ###
 ### BEGIN RedHat ###
@@ -648,7 +666,7 @@ EOF
 
 print MASTER_SCRIPT "# unmount the freshly filled filesystems\n";
 foreach $mount_point (reverse sort @mount_points) {
-    print MASTER_SCRIPT "umount /a$mount_point\n";
+    print MASTER_SCRIPT "umount /a$mount_point/\n";
 }
 
 print MASTER_SCRIPT << 'EOF';
