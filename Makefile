@@ -184,8 +184,10 @@ PHONY += all
 all:	$(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.img manpages
 
 PHONY += help
-help:	show_targets
+help:  show_targets
 
+#
+#
 # Show me a list of all targets in this entire build heirarchy
 PHONY += show_targets
 SHOW_TARGETS_ALL_MAKEFILES = $(shell find . -name 'Makefile' -or -name '*.rul')
@@ -193,21 +195,17 @@ show_targets:
 	@echo
 	@echo Makefile targets you are probably most interested in:
 	@echo ---------------------------------------------------------------------
-	@echo	all
-	@echo	install_client_all
-	@echo	install_server_all
-	@echo	install_boel_binaries_tarball
-	@echo	install_initrd
+	@echo   all
+	@echo   install_client_all
+	@echo   install_server_all
+	@echo   install_boel_binaries_tarball
+	@echo   install_initrd
 	@echo
 	@echo
 	@echo All Available Targets Include:
 	@echo ---------------------------------------------------------------------
 	cat $(SHOW_TARGETS_ALL_MAKEFILES) | egrep '^[a-z_]+:' | sed 's/:.*//' | sort -u
 	@echo
-
-arch:
-	echo $(ARCH)
-	echo $(IS_PPC64)
 
 binaries: $(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.img
 
@@ -475,12 +473,12 @@ $(BOEL_BINARIES_TARBALL):	\
 	install -m 755 --strip $(MKJFS_BINARY) 			$(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(OPENSSH_BINARIES) 		$(BOEL_BINARIES_DIR)/sbin/
 	install -m 644 $(OPENSSH_CONF_FILES) 			$(BOEL_BINARIES_DIR)/etc/ssh
-
 ifdef MKXFS_BINARY
 	install -m 755 --strip $(MKXFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
 endif
 
 	mkdir -m 755 -p $(BOEL_BINARIES_DIR)/lib
+	test ! -d /lib64 || mkdir -m 755 -p $(BOEL_BINARIES_DIR)/lib64
 
 	#
 ifdef WITH_CTCS
@@ -500,15 +498,22 @@ endif
 	# copy over libnss files for non-uclibc arches
 	# (mklibs doesn't automatically pull these in)
 ifneq ($(ARCH),i386)
-	# there maybe older compat versions that we don't want, but
-	# they have names like libnss1_dns so this shouldn't copy them.
-	# we do the sort so that filse from /lib64 files will be copied over
-	# identically named files from /lib
-	cp -a $(sort $(wildcard /lib*/libnss_dns-*)) $(BOEL_BINARIES_DIR)/lib
-	# if multiple libnss_dns.so.* symlinks exist, only grab the one with
-	# the greatest soname, which should drop the old compat versions
-	cp -a $(word $(words $(sort $(wildcard /lib*/libnss_dns*))), \
-	  $(sort $(wildcard /lib*/libnss_dns*))) $(BOEL_BINARIES_DIR)/lib
+	## there maybe older compat versions that we don't want, but
+	## they have names like libnss1_dns so this shouldn't copy them.
+	## we do the sort so that filse from /lib64 files will be copied over
+	## identically named files from /lib
+	#cp -a $(sort $(wildcard /lib*/libnss_dns-*)) $(BOEL_BINARIES_DIR)/lib
+	## if multiple libnss_dns.so.* symlinks exist, only grab the one with
+	## the greatest soname, which should drop the old compat versions
+	#cp -a $(word $(words $(sort $(wildcard /lib*/libnss_dns*))), \
+	#  $(sort $(wildcard /lib*/libnss_dns*))) $(BOEL_BINARIES_DIR)/lib
+	#
+	#
+	#XXX trying new code below -BEF- XXX  cp -a $(sort $(wildcard /lib*/libnss_dns-*)) $(BOEL_BINARIES_DIR)/lib
+	#XXX we're not concerned about space here, why are we trying to only get the largest .so name?  why not all?
+	#XXX simplifying the code.  let's see if anything breaks. -BEF-
+	cp -a /lib/libnss_dns*   $(BOEL_BINARIES_DIR)/lib
+	test ! -d /lib64 || cp -a /lib64/libnss_dns* $(BOEL_BINARIES_DIR)/lib64
 endif
 
 	#
@@ -516,8 +521,15 @@ endif
 	# any soft links.  Note: This does not require PIC libraries -- it will
 	# copy standard libraries if it can't find a PIC equivalent.  -BEF-
 	#
-	cd $(BOEL_BINARIES_DIR) && $(PYTHON) $(TOPDIR)/initrd_source/mklibs \
-		-L /lib64:/usr/lib64:$(SRC_DIR)/$(PARTED_DIR)/libparted/.libs:$(SRC_DIR)/$(DISCOVER_DIR)/lib/.libs -v -d lib bin/* sbin/*
+ifneq ($(ARCH),i386)
+	# But copy over ld.so* files first.  for some reason these don't always 
+	# get copied by mklibs if both /lib/ld* and /lib64/ld* exist) -BEF-
+	#
+	cp -a /lib/ld*   $(BOEL_BINARIES_DIR)/lib
+	test ! -d /lib64 || cp -a /lib64/ld* $(BOEL_BINARIES_DIR)/lib64
+endif
+	cd $(BOEL_BINARIES_DIR) \
+		&& $(PYTHON) $(TOPDIR)/initrd_source/mklibs -L /lib64:/usr/lib64:$(SRC_DIR)/$(PARTED_DIR)/libparted/.libs:$(SRC_DIR)/$(DISCOVER_DIR)/lib/.libs -v -d lib bin/* sbin/*
 	#
 	# Include other files required by openssh that apparently aren't 
 	# picked up by mklibs for some reason. -BEF-
