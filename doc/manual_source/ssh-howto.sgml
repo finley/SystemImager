@@ -1,0 +1,52 @@
+<chapter>
+  <title>HOWTO Use OpenSSH for Secure Installs</title>
+  
+  <section>
+    <title>
+      Using OpenSSH for Secure Installs
+    </title>
+   
+	<para>
+            SystemImager supports the ability to capture and install images
+            over ssh.  You might want to use this feature if you are doing
+            installations in an unprotected network, or over the public
+            Internet.  Some amount of scalability and installation time
+            degredation is expected, and we currently do not support secure
+            multicast (flamethrower) installations.
+	</para>
+  </section>
+
+  <section>
+    <title>
+      Installing systemimager-ssh
+    </title>
+   
+    <para>
+      Debian users can do an &quot;apt-get update&quot; and &quot;apt-get install systemimager-ssh-&lt;client-arch&gt;&quot;.
+    </para>
+
+	<para>
+      For RPM based distributions, you currently need to build your own ssh
+      packages.
+	</para>
+  </section>
+
+</chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-namecase-general:t
+sgml-general-insert-case:lower
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:2
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+-->
