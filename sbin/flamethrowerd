@@ -501,7 +501,12 @@ sub REAPER {
 sub daemonize {
 
     chdir '/'                  or die "Can't chdir to /: $!";
-    open STDIN, '/dev/null'    or die "Can't read /dev/null: $!";
+    #
+    # Commenting out the line below allows the udp-senders to behave in the way
+    # you would expect, by automatically starting according to the --min-client, 
+    # --min-wait, and --max-wait parameters.
+    #
+    #open STDIN, '/dev/null'    or die "Can't read /dev/null: $!";
     open STDOUT, '>>/dev/null' or die "Can't write to /dev/null: $!" unless($debug);
     open STDERR, '>>/dev/null' or die "Can't write to /dev/null: $!" unless($debug);
     defined(my $pid = fork)    or die "Can't fork: $!";
