@@ -1,6 +1,11 @@
-va-systemimager for Debian
----------------------------------
+rsync configuration:
+  VA SystemImager is heavily dependent on rsync.  For it to function properly,
+  some configuration is necessary.  If your machine is not already configured
+  to be an rsync server, you can just:
+	cp -a /usr/share/doc/va-systemimager/examples/rsync /etc/init.d
+	cp -a /usr/share/doc/va-systemimager/examples/rsyncd.conf /etc
 
-A sample tftp entry was added to /etc/inetd.conf
+  otherwise, you may need to edit these files by hand if you want to retain
+  the functionality of your current rsync server configuration.
 
- -- dann <dannf@dannf.org>, Sun,  4 Mar 2001 17:42:48 -0700
+  This will probably become a debconf question in the future.

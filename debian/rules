@@ -48,6 +48,9 @@ install: build
 	$(MAKE) installserver DESTDIR=$(CURDIR)/debian/va-systemimager
 	mkdir -p debian/va-systemimager-kernel
 	$(MAKE) installkernel DESTDIR=$(CURDIR)/debian/va-systemimager-kernel
+	mkdir -p $(CURDIR)/debian/va-systemimager-kernel/usr/share/lintian/overrides
+	cp -a debian/va-systemimager-kernel.lintian.overrides \
+		$(CURDIR)/debian/va-systemimager-kernel/usr/share/lintian/overrides/va-systemimager-kernel
 
 # Build architecture-independent files here.
 binary-indep: build install
