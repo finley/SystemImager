@@ -271,22 +271,22 @@ EOF
             !system($cmd) or die("Couldn't $cmd.");
         }
     }
-}
  
-my $result;
-$result = `ps axww|grep -v grep|grep -w rsync`;
-if (!$result) {
-    $result = `ps axww|grep -v grep|grep -w rsyncd`;
-}
-if ($result) {
-    print "One or more rsync daemons appear to be running on this machine.  If you\n";
-    print "continue, those daemons will be killed.\n";
-    print "\n";
-    print "Continue? (y/[n]): ";
-    my $answer = <>;
-    unless($answer =~ /y/i) {
-        print "Client prepartion cancelled.  No files modified.\n";
-        exit 1;
+    my $result;
+    $result = `ps axww|grep -v grep|grep -w rsync`;
+    if (!$result) {
+        $result = `ps axww|grep -v grep|grep -w rsyncd`;
+    }
+    if ($result) {
+        print "One or more rsync daemons appear to be running on this machine.  If you\n";
+        print "continue, those daemons will be killed.\n";
+        print "\n";
+        print "Continue? (y/[n]): ";
+        my $answer = <>;
+        unless($answer =~ /y/i) {
+            print "Client prepartion cancelled.  No files modified.\n";
+            exit 1;
+        }
     }
 }
 
@@ -452,6 +452,10 @@ sub create_auto_install_script_conf {
     my $partition_tool = which_partition_tool();
 
     SystemImager::Common->write_auto_install_script_conf_header($file);
+
+    unless ($quiet) { 
+        system("clear");
+    }
 
     # First we do Hardware RAID devices
     foreach my $disk (sort keys %{$disks->{HWRAID}}) {
