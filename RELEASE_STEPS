@@ -1,0 +1,32 @@
+#
+# "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>
+#
+#   $Id$
+#
+
+# The purpose of this file is to detail steps for making releases.  It 
+# is my intention that, by following the steps outlined here, we are
+# able to produce clean, stable, reliable releases time after time.
+
+### Stable Releases ###
+#   o final releases must comply completely
+#   o test releases need not comply completely
+#   o tests may be run by volunteers
+#   o Brian Finley, Dann Frazier, Sean Dague, and Curtis Zinzilieta may
+#     modify this file as is appropriate.
+
+o update ERRATA
+o update VERSION
+o test with ext3
+o test with reiserfs
+o test with software RAID
+o test with DAC960 HW RAID
+
+
+
+### Development Releases ###
+o step one
+o step two
+o test one
+o test two
+o etc.
