@@ -1,9 +1,12 @@
 #
-# $Id$
+#   $Id$
 #
 #   2004.07.26  Brian Elliott Finley
 #   - added perl bit to change EXTRAVERSION automatically.
+#   2004.10.08  Brian Elliott Finley
+#   - add bit for yellow dog linux (YDL) kernel
 #
+
 ifeq ($(ARCH),i386)
 	LINUX_VERSION = 2.4.25
 	LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.4/$(LINUX_TARBALL)
@@ -47,11 +50,15 @@ endif
 # currently ppc only supports rs6k machines.  Help is welcome to
 # make this support other machines.  This is 32bit kernel only.
 ifeq ($(ARCH),ppc)
-	LINUX_VERSION = 2.4.17
-	LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.4/$(LINUX_TARBALL)
+ifdef WITH_YDL_KERNEL
+	LINUX_VERSION = 2.6.8-1.ydl.7
+else
+	LINUX_VERSION = 2.6.8
+endif
+	LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.6/$(LINUX_TARBALL)
 	LINUX_IMAGE = $(LINUX_SRC)/arch/ppc/boot/images/zImage.chrp-rs6k
 	LINUX_TARGET = zImage
-	LINUX_DIR = linux
+	LINUX_DIR = linux-$(LINUX_VERSION)
 endif
 
 # This is for iSeries (AS/400) machines
