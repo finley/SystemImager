@@ -4,6 +4,7 @@
 #
 #  Copyright (C) 2002 Bald Guy Software 
 #                     Brian E. Finley <brian.finley@baldguysoftware.com>
+#  Copyright (C) 2003 Brian E. Finley <finley@mcs.anl.gov>
 #
 #    $Id$
 #
@@ -34,7 +35,7 @@ unless($tftp_dir) {
     $pxe_conf_dir = "$tftp_dir" . "/pxelinux.cfg";
 }
 
-my $syslinux_cfg_noboot = "/etc/systemimager/pxelinux.cfg/syslinux.cfg.noboot";
+my $syslinux_cfg_localboot = "/etc/systemimager/pxelinux.cfg/syslinux.cfg.localboot";
 my $pid_file = "/var/run/netbootmond.pid";
 my $log_file = "/var/log/systemimager/rsyncd";
 
@@ -123,7 +124,7 @@ sub create_no_boot_symlink {
     #print "ip_hex: $ip_hex\n";
 
     unlink("$pxe_conf_dir/$ip_hex");
-    copy("$syslinux_cfg_noboot", "$pxe_conf_dir/$ip_hex");
+    copy("$syslinux_cfg_localboot", "$pxe_conf_dir/$ip_hex");
     
 }
 #
