@@ -1005,6 +1005,20 @@ sub _write_out_mkfs_commands {
         }
 
     }
+    
+    print MASTER_SCRIPT "### Now add /proc to the mounts as well ###\n";
+    
+    my $cmd = "mkdir -p /a/proc || shellout";
+    print MASTER_SCRIPT qq(echo "$cmd"\n);
+    print MASTER_SCRIPT "$cmd\n";
+
+    $cmd = "mount proc /a/proc -t proc -o defaults || shellout";
+    print MASTER_SCRIPT qq(echo "$cmd"\n);
+    print MASTER_SCRIPT "$cmd\n";
+
+    print MASTER_SCRIPT "\n";
+
+
     print MASTER_SCRIPT "### END swap and filesystem creation commands ###\n";
     print MASTER_SCRIPT "\n";
     print MASTER_SCRIPT "\n";
@@ -1143,6 +1157,9 @@ sub _write_out_umount_commands {
         }
     }
 
+    # Add this so that /proc also gets umounted
+    $fs_by_mp{'/proc'} = "proc";
+
     # Cycle through the mount points in reverse and umount those filesystems.
     # -BEF-
     #
@@ -1156,6 +1173,7 @@ sub _write_out_umount_commands {
                or ($fs eq "msdos")
                or ($fs eq "vfat")
                or ($fs eq "jfs")
+               or ($fs eq "proc")
         ) { next; }
 
         # umount
