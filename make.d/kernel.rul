@@ -62,32 +62,40 @@ endif
 	LINUX_DIR = linux-$(LINUX_VERSION)
 endif
 
-# This is for iSeries (AS/400) machines
-ifeq ($(ARCH),ppc64-iSeries)
-	LINUX_VERSION = 2.4.19
-	LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.4/$(LINUX_TARBALL)
-	LINUX_IMAGE = $(LINUX_SRC)/arch/ppc64/boot/vmlinux.sminitrd
-	LINUX_TARGET = vmlinux.sminitrd
-	LINUX_DIR := linux-$(LINUX_VERSION)
-endif
+# This is for iSeries (AS/400) machines - way not supported at this point
+# ifeq ($(ARCH),ppc64-iSeries)
+#	LINUX_VERSION = 2.4.19
+#	LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.4/$(LINUX_TARBALL)
+#	LINUX_IMAGE = $(LINUX_SRC)/arch/ppc64/boot/vmlinux.sminitrd
+#	LINUX_TARGET = vmlinux.sminitrd
+#	LINUX_DIR := linux-$(LINUX_VERSION)
+# endif
 
 # This will be for pSeries (ppc64 IBM machines)
 ifeq ($(ARCH),ppc64)
 ifdef WITH_YDL_KERNEL
 	LINUX_VERSION = 2.6.8-1.ydl.7
+    LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.6/$(LINUX_TARBALL)
+    LINUX_IMAGE = $(LINUX_SRC)/arch/ppc64/boot/zImage
+    LINUX_TARGET = zImage
+    LINUX_DIR = linux-$(LINUX_VERSION)
+
 else
-	LINUX_VERSION = 2.6.8
-endif
+	LINUX_VERSION = 2.6.11
 	LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.6/$(LINUX_TARBALL)
-	LINUX_IMAGE = $(LINUX_SRC)/arch/ppc64/boot/zImage
-	LINUX_TARGET = zImage
+	LINUX_IMAGE = $(LINUX_SRC)/arch/ppc64/boot/zImage.initrd
+	LINUX_TARGET = zImage.initrd
 	LINUX_DIR = linux-$(LINUX_VERSION)
+endif
 endif
 
 LINUX_SRC := $(SRC_DIR)/$(LINUX_DIR)
 LINUX_TARBALL := linux-$(LINUX_VERSION).tar.bz2
 LINUX_CONFIG := $(PATCH_DIR)/linux.$(ARCH).config
 
+ifdef WITH_YDL_KERNEL
+	LINUX_CONFIG := $(PATCH_DIR)/linux.$(ARCH)ydl.config
+endif
 ## names for kernel patch files can be of 2 forms:
 ##  1) patches that apply to all architectures
 ##       linux.all.XX<name>.patch
