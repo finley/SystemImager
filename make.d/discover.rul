@@ -13,6 +13,7 @@ DISCOVER_DATA_FILES := $(SRC_DIR)/$(DISCOVER_DATA_DIR)/pci.lst \
                        $(SRC_DIR)/$(DISCOVER_DATA_DIR)/pcmcia.lst \
                        $(SRC_DIR)/$(DISCOVER_DATA_DIR)/usb.lst
 DISCOVER_DATA_FILES_DIR := usr/share/discover
+DISCOVER_DATA_PATCHES := $(shell ls $(PATCH_DIR)/discover-data.*.patch 2>/dev/null | sort)
 
 ALL_SOURCE += $(SRC_DIR)/$(DISCOVER_TARBALL) \
               $(SRC_DIR)/$(DISCOVER_DATA_TARBALL)
@@ -35,10 +36,14 @@ discover-data:  $(DISCOVER_DATA_FILES)
 
 $(DISCOVER_DATA_FILES): $(SRC_DIR)/$(DISCOVER_DATA_DIR)/Makefile
 
-$(SRC_DIR)/$(DISCOVER_DATA_DIR)/Makefile:   $(SRC_DIR)/$(DISCOVER_DATA_TARBALL)
+$(SRC_DIR)/$(DISCOVER_DATA_DIR)/Makefile: $(SRC_DIR)/$(DISCOVER_DATA_TARBALL) \
+					  $(DISCOVER_DATA_PATCHES)
 	rm -rf $(SRC_DIR)/$(DISCOVER_DATA_DIR)
 	[ -d $(SRC_DIR)/$(DISCOVER_DATA_DIR) ] || \
 	  ( cd $(SRC_DIR) && tar -m -xvzf $(DISCOVER_DATA_TARBALL) )
+	cd $(SRC_DIR)/$(DISCOVER_DATA_DIR) && \
+	          cat $(DISCOVER_DATA_PATCHES) < /dev/null | patch -p0
+		  
 
 $(SRC_DIR)/$(DISCOVER_DATA_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
