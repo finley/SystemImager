@@ -1163,7 +1163,7 @@ EOF
   if ($ip_assignment_method eq "static") { 
     print MASTER_SCRIPT <<'EOF';
 # Configure the client's hardware, network interface, and boot loader.
-chroot /a/ systemconfigurator --configsi --stdin <<EOL || shellout
+chroot /a/ systemconfigurator --configsi --excludesto=/etc/systemimager/systemconfig.local.exclude --stdin <<EOL || shellout
 
 [NETWORK]
 HOSTNAME = $HOSTNAME
