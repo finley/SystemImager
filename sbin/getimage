@@ -780,6 +780,15 @@ while (<FSTAB>) {
 close FSTAB;
 ### END get info on devices for software RAID, swap, and filesystems ###
 
+### BEGIN add proc to list of filesystems
+#  The following allows a proc filesystem to be mounted in the fakeroot.
+#  This provides /proc to programs which are called by SystemImager
+#  (eg. System Configurator).
+
+push (@mount_points, '/proc');
+$device_by_mount_point{'/proc'} = 'proc';
+$filesystem_type_by_mount_point{'proc'} = 'proc';
+### END add proc to list of filesystems
 
 ### BEGIN compile hash of ext2 partitions to label ###
 %devices_by_label = ();
