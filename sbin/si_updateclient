@@ -403,9 +403,9 @@ if ($autoinstall) {
     # Create append arguments
     my $append;
     if ($last_root) {
-        $append = "LAST_ROOT=$last_root root=/dev/ram0 load_ramdisk=1 prompt_ramdisk=0 vga=extended ramdisk_blocksize=4096";
+        $append = "LAST_ROOT=$last_root root=/dev/ram0 load_ramdisk=1 prompt_ramdisk=0 ramdisk_blocksize=4096";
     } else {
-        $append = "root=/dev/ram0 load_ramdisk=1 prompt_ramdisk=0 vga=extended ramdisk_blocksize=4096";
+        $append = "root=/dev/ram0 load_ramdisk=1 prompt_ramdisk=0 ramdisk_blocksize=4096";
     }
 
     ### BEGIN autoinstall boot configuration ###
@@ -416,6 +416,7 @@ BOOTDEV = $bootdev
 ROOTDEV = /dev/ram
 TIMEOUT = 50
 DEFAULTBOOT = SystemImager
+VGA = extended
 
 [KERNEL0]
 LABEL = SystemImager
