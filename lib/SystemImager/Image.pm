@@ -21,6 +21,7 @@ package SystemImager::Image;
 use strict;
 use Carp;
 use SystemImager::Config qw(get_config);
+use SystemImager::Client qw(listclients removeclient);
 use base qw(Exporter);
 use vars qw(@EXPORT @EXPORT_OK %EXPORT_TAGS $VERSION);
 
@@ -126,6 +127,11 @@ sub removeimage {
 }
 
 sub _removeimage_clients {
+    my $image = shift;
+    my @clients = listclients($image);
+    foreach my $client (@clients) {
+        removeclient($client) or (carp("Couldn't remove client $client for image $image"), return undef);
+    }
     return 1;
 }
 
