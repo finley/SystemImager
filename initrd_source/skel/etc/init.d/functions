@@ -656,12 +656,16 @@ ping_test() {
     do
         echo "PING ATTEMPT $PING_COUNT: "
         ping -c 1 $IMAGESERVER; PING_EXIT_STATUS=$?; PING_COUNT=$(( $PING_COUNT + 1 ))
-        if [ "$PING_COUNT" = "21" ]; then
+        if [ "$PING_COUNT" = "7" ]; then
             echo
             echo "  WARNING:  Cannot ping the image server \"$IMAGESERVER\""
-            echo "            Be sure that your networking equipment is"
+            echo "            Despite this seemingly depressing result, I will attempt"
+            echo "            to proceed with the install.  Your imageserver may be"
+            echo "            configured to not respond to pings, but it wouldn't hurt"
+            echo "            to double check that your networking equipment is"
             echo "            working properly!"
             echo
+            sleep 5
         fi
     done
 
