@@ -68,16 +68,36 @@ FLAVOR="SYSTEMIMAGER_FLAVOR_STRING"
 #
 ################################################################################
 #
+#  logmsg
+#
+# Usage: log a message, redirects to console / syslog depending on usage
+logmsg() {
+    # log to console
+    echo $@
+    # log to temporary file (which will go away when we reboot)
+    # this is good for envs that have bad consoles
+    echo $@ >> /tmp/si.log
+    
+    # if syslog is running, log to it.  In order to avoid hangs we have to 
+    # add the "logger: " part in case $@ is ""
+    if [ ! -z $USELOGGER ] ;
+        then logger "logger: $@"
+    fi
+}
+
+
+################################################################################
+#
 #  check_version
 #
 # Usage: check_version
 check_version() {
-    echo
-    echo check_version
+    logmsg
+    logmsg check_version
     INITRD_VERSION=$VERSION
     KERNEL_VERSION=`uname -r | sed -e s/.*boel_v//`
     if [ "$INITRD_VERSION" != "$KERNEL_VERSION" ] ; then
-        echo "FATAL: Kernel version ($KERNEL_VERSION) doesn't match initrd version ($INITRD_VERSION)!"
+        logmsg "FATAL: Kernel version ($KERNEL_VERSION) doesn't match initrd version ($INITRD_VERSION)!"
         shellout
     fi
 }
@@ -88,8 +108,8 @@ check_version() {
 #
 # Usage: get_arch; echo $ARCH
 get_arch() {
-    echo
-    echo get_arch
+    logmsg
+    logmsg get_arch
     ARCH=`uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/`
 }
 #
@@ -101,13 +121,13 @@ get_arch() {
 #  after proc is mounted.
 #
 adjust_arch() {
-    echo
-    echo adjust_arch
+    logmsg
+    logmsg adjust_arch
     if [ "ppc64" = "$ARCH" ] ; then
         # This takes a little bit of futzing with due to all the PPC platforms that exist.
         if [ -d /proc/iSeries ] ; then
             ARCH=ppc64-iSeries
-            echo "Detected ppc64 is really an iSeries partition..."
+            logmsg "Detected ppc64 is really an iSeries partition..."
         fi
     fi
 }
@@ -119,8 +139,8 @@ adjust_arch() {
 # Usage: write_variables
 write_variables() {
 
-    echo
-    echo write_variables
+    logmsg
+    logmsg write_variables
 
     # pass all variables set here on to the hostname.sh script
     rm -f /tmp/variables.txt
@@ -142,6 +162,7 @@ write_variables() {
   
     echo "LOG_SERVER=$LOG_SERVER"               >> /tmp/variables.txt
     echo "LOG_SERVER_PORT=$LOG_SERVER_PORT" 	>> /tmp/variables.txt
+    echo "USELOGGER=$USELOGGER"                 >> /tmp/variables.txt
 
     echo "TMPFS_STAGING=$TMPFS_STAGING"         >> /tmp/variables.txt
  
@@ -177,8 +198,8 @@ start_spinner() {
 #   Also see: start_spinner
 #
 stop_spinner() {
-    echo
-    echo "stop_spinner"
+    logmsg
+    logmsg "stop_spinner"
     kill -9 $SPINNER_PID
 }
 #
@@ -191,8 +212,8 @@ stop_spinner() {
 #
 tmpfs_watcher() {
 
-    echo
-    echo tmpfs_watcher
+    logmsg
+    logmsg tmpfs_watcher
 
     # Note: Transfer to staging area can fail if tmpfs runs out of inodes.
     { 
@@ -200,8 +221,8 @@ tmpfs_watcher() {
             #
             # apparently the busybox-1.00-rc3 can't do "df -k /".  changed to just df -k. -BEF-
             DF=`df -k | grep '^tmpfs' | sed -e 's/  */ /g' -e 's/.*[0-9] //' -e 's/%.*//'`
-            [ $DF -ge 95 ] && echo "WARNING: Your tmpfs filesystem is ${DF}% full!"
-            [ $DF -ge 99 ] && echo "         Search the FAQ for tmpfs to learn about sizing options."
+            [ $DF -ge 95 ] && logmsg "WARNING: Your tmpfs filesystem is ${DF}% full!"
+            [ $DF -ge 99 ] && logmsg "         Search the FAQ for tmpfs to learn about sizing options."
             [ $DF -ge 99 ] && shellout
             sleep 1
         done
@@ -219,11 +240,14 @@ tmpfs_watcher() {
 #
 shellout() {
     COUNT="$RETRY"
-    echo "Killing off running processes."
+    logmsg "Killing off running processes."
     kill -9 $TMPFS_WATCHER_PID  >/dev/null 2>/dev/null
     killall -9 udp-receiver rsync  >/dev/null 2>/dev/null
     write_variables
     cat /etc/issue
+    if [ ! -z $USELOGGER ] ;
+        then cat /etc/issue | logger
+    fi
     exec sh
 }
 #
@@ -247,13 +271,13 @@ count_loop() {
   I=0
   while [ $I -lt $COUNT ]; do
     I=$(( $I + 1 ))
-    echo -n "$I "
+    logmsg -n "$I "
     sleep 1
   done
 
   trap INT
 
-  echo
+  logmsg
 }
 #
 ################################################################################
@@ -261,8 +285,8 @@ count_loop() {
 # Usage: get_scripts_directory
 #
 get_scripts_directory() {
-    echo
-    echo get_scripts_directory
+    logmsg
+    logmsg get_scripts_directory
 
     if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
         #
@@ -278,7 +302,7 @@ get_scripts_directory() {
     else
         mkdir -p ${SCRIPTS_DIR}
         CMD="rsync -a ${IMAGESERVER}::${SCRIPTS}/ ${SCRIPTS_DIR}/"
-        echo "$CMD"
+        logmsg "$CMD"
         $CMD
     fi
 }
@@ -288,9 +312,9 @@ get_scripts_directory() {
 # Usage: get_flamethrower_directory
 #
 get_flamethrower_directory() {
-    echo
-    echo Using multicast...
-    echo get_flamethrower_directory
+    logmsg
+    logmsg Using multicast...
+    logmsg get_flamethrower_directory
 
     MODULE_NAME=flamethrower_directory
     DIR=${FLAMETHROWER_DIRECTORY_DIR}
@@ -313,21 +337,21 @@ get_flamethrower_directory() {
 #
 flamethrower_client() {
 
-    echo
-    echo "flamethrower_client(${MODULE_NAME})"
-    echo ---------------------------------------------------------------------
+    logmsg
+    logmsg "flamethrower_client(${MODULE_NAME})"
+    logmsg ---------------------------------------------------------------------
 
     # validate
     if [ -z $PORTBASE ]; then
         . ${FLAMETHROWER_DIRECTORY_DIR}/${MODULE_NAME}
         if [ $? != 0 ]; then
-            echo You must either set PORTBASE, or have a sourceable file called
-            echo ${FLAMETHROWER_DIRECTORY_DIR}/MODULE_NAME
+            logmsg You must either set PORTBASE, or have a sourceable file called
+            logmsg ${FLAMETHROWER_DIRECTORY_DIR}/MODULE_NAME
             shellout
         fi
     fi
     if [ -z $DIR ]; then
-        echo Must set DIR
+        logmsg Must set DIR
     else
         mkdir -p $DIR
     fi
@@ -367,13 +391,13 @@ flamethrower_client() {
         # receive cast
         #   example udp-receiver command:
         #   udp-receiver --interface lo --portbase 9002 --nokbd --nosync --file /tmp/multicast.tar
-        echo udp-receiver $UDP_RECEIVER_OPTIONS --file /tmp/multicast.tar
+        logmsg udp-receiver $UDP_RECEIVER_OPTIONS --file /tmp/multicast.tar
         udp-receiver $UDP_RECEIVER_OPTIONS --file /tmp/multicast.tar
         UDP_RECEIVER_EXIT_STATUS=$?
 
         # untar it
         if [ "$UDP_RECEIVER_EXIT_STATUS" = "0" ]; then
-            echo tar ${TAR_OPTS} -f /tmp/multicast.tar -C ${DIR}
+            logmsg tar ${TAR_OPTS} -f /tmp/multicast.tar -C ${DIR}
             tar ${TAR_OPTS} -f /tmp/multicast.tar -C ${DIR}
             TAR_EXIT_STATUS=$?
         fi
@@ -387,10 +411,10 @@ flamethrower_client() {
         else
             if [ $COUNT -lt $RETRY ]; then
                 COUNT=$(( $COUNT + 1 ))
-                echo "flamethrower_client: Proceeding with retry $COUNT of $RETRY"
+                logmsg "flamethrower_client: Proceeding with retry $COUNT of $RETRY"
             else
-                echo
-                echo "flamethrower_client: FATAL: Initial attempt and $RETRY retries failed!"
+                logmsg
+                logmsg "flamethrower_client: FATAL: Initial attempt and $RETRY retries failed!"
                 shellout
             fi
         fi
@@ -400,8 +424,8 @@ flamethrower_client() {
     done
 
     # done
-    echo 'finished!'
-    echo 
+    logmsg 'finished!'
+    logmsg 
 
 
     # Unset vars, so next module (which may not have them set) won't use then unintentially
@@ -428,16 +452,16 @@ flamethrower_client() {
 #
 get_boel_binaries_tarball() {
 
-    echo
-    echo get_boel_binaries_tarball
+    logmsg
+    logmsg get_boel_binaries_tarball
     mkdir -p ${BOEL_BINARIES_DIR}
 
     if [ ! -z $SSH_DOWNLOAD_URL ]; then
         # If we're using SSH, get the boel_binaries from a web server.
-        echo "SSH_DOWNLOAD_URL variable is set, so we will install over SSH!"
+        logmsg "SSH_DOWNLOAD_URL variable is set, so we will install over SSH!"
 
         if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
-            echo "FLAMETHROWER_DIRECTORY_PORTBASE is also set, but I will be conservative and proceed with SSH."
+            logmsg "FLAMETHROWER_DIRECTORY_PORTBASE is also set, but I will be conservative and proceed with SSH."
         fi
 
         # Remove possible trailing / from URL
@@ -445,7 +469,7 @@ get_boel_binaries_tarball() {
 
         cd ${BOEL_BINARIES_DIR}
         CMD="wget ${SSH_DOWNLOAD_URL}/${ARCH}/${FLAVOR}/boel_binaries.tar.gz"
-        echo "$CMD"
+        logmsg "$CMD"
         $CMD || shellout
 
     elif [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
@@ -458,7 +482,7 @@ get_boel_binaries_tarball() {
     else
         # Use rsync
         CMD="rsync -av ${IMAGESERVER}::boot/${ARCH}/${FLAVOR}/boel_binaries.tar.gz ${BOEL_BINARIES_DIR}"
-        echo "$CMD"
+        logmsg "$CMD"
         $CMD || shellout
     fi
 
@@ -511,8 +535,8 @@ switch_root_to_tmpfs() {
         tmpfs_opts="-o $tmpfs_opts"
     fi
 
-    echo
-    echo "switch_root_to_tmpfs"
+    logmsg
+    logmsg "switch_root_to_tmpfs"
     # Switch root over to tmpfs so we don't have to worry about the size of
     # the tarball and binaries that users may decide to copy over. -BEF-
     mkdir -p /new_root || shellout
@@ -533,8 +557,8 @@ switch_root_to_tmpfs() {
 ################################################################################
 #
 mount_dev_on_devfs() {
-    echo
-    echo mount_dev_on_devfs
+    logmsg
+    logmsg mount_dev_on_devfs
     # Re-mount /dev on devfs. -BEF-
     mkdir -p /dev || shellout
     mount devfs /dev -t devfs || shellout
@@ -549,8 +573,8 @@ mount_dev_on_devfs() {
 #
 # Now mount proc. -BEF-
 mount_proc() {
-    echo
-    echo mount_proc
+    logmsg
+    logmsg mount_proc
     mkdir -p proc || shellout
     mount proc /proc -t proc || shellout
 }
@@ -559,8 +583,8 @@ mount_proc() {
 #
 # Configure loopback interface (may as well)
 ifconfig_loopback() {
-    echo
-    echo ifconfig_loopback
+    logmsg
+    logmsg ifconfig_loopback
     ifconfig lo 127.0.0.1
 }
 #
@@ -569,8 +593,8 @@ ifconfig_loopback() {
 # Load any modules that were placed in the my_modules directory prior to
 # running "make initrd.gz".  -BEF-
 load_my_modules() {
-    echo
-    echo load_my_modules
+    logmsg
+    logmsg load_my_modules
     cd /my_modules || shellout
     sh ./INSMOD_COMMANDS
 }
@@ -580,8 +604,8 @@ load_my_modules() {
 # read in varibles obtained from kernel appends
 #
 read_kernel_append_parameters() {
-    echo
-    echo read_kernel_append_parameters
+    logmsg
+    logmsg read_kernel_append_parameters
 
     . /tmp/kernel_append_parameter_variables.txt
 }
@@ -591,8 +615,8 @@ read_kernel_append_parameters() {
 # Variable-ize /proc/cmdline arguments
 #
 variableize_kernel_append_parameters() {
-    echo
-    echo variableize_kernel_append_parameters
+    logmsg
+    logmsg variableize_kernel_append_parameters
     cat /proc/cmdline | tr ' ' '\n' | grep '=' > /tmp/kernel_append_parameter_variables.txt
 }
 #
@@ -602,71 +626,71 @@ variableize_kernel_append_parameters() {
 #   This code inspired by Ian McLeod <ian@valinux.com>
 #
 read_local_cfg() {
-    echo
-    echo read_local_cfg
+    logmsg
+    logmsg read_local_cfg
 
     #
     # BEGIN try hard drive
     #
     if [ ! -z "$LAST_ROOT" ]; then
 
-        echo
-        echo "Checking for /local.cfg file on hard drive..."
+        logmsg
+        logmsg "Checking for /local.cfg file on hard drive..."
         mkdir /last_root
-        echo "Mounting hard drive..."
+        logmsg "Mounting hard drive..."
         mount $LAST_ROOT /last_root -o ro > /dev/null 2>&1
         if [ $? != 0 ]; then
-            echo "FATAL: Couldn't mount hard drive!"
-            echo "Your kernel must have all necessary block and filesystem drivers compiled in"
-            echo "statically (not modules) in order to use a local.cfg on your hard drive.  The"
-            echo "standard SystemImager kernel is modular, so you will need to compile your own"
-            echo "kernel.  See the SystemImager documentation for details.  To proceed at this"
-            echo "point, you will need to unset the LAST_ROOT append parameter by typing"
-            echo ""systemimager LAST_ROOT=", or similar, at your boot prompt.  This will not use"
-            echo "the local.cfg file on your hard drive, but will still use one on a floppy."
+            logmsg "FATAL: Couldn't mount hard drive!"
+            logmsg "Your kernel must have all necessary block and filesystem drivers compiled in"
+            logmsg "statically (not modules) in order to use a local.cfg on your hard drive.  The"
+            logmsg "standard SystemImager kernel is modular, so you will need to compile your own"
+            logmsg "kernel.  See the SystemImager documentation for details.  To proceed at this"
+            logmsg "point, you will need to unset the LAST_ROOT append parameter by typing"
+            logmsg ""systemimager LAST_ROOT=", or similar, at your boot prompt.  This will not use"
+            logmsg "the local.cfg file on your hard drive, but will still use one on a floppy."
             shellout
         fi
 
         if [ -f /last_root/local.cfg ]; then
-            echo "Found /local.cfg on hard drive."
-            echo "Copying /local.cfg settings to /tmp/local.cfg."
+            logmsg "Found /local.cfg on hard drive."
+            logmsg "Copying /local.cfg settings to /tmp/local.cfg."
             cat /last_root/local.cfg >> /tmp/local.cfg || shellout
         else
-            echo "No /local.cfg on hard drive."
+            logmsg "No /local.cfg on hard drive."
         fi
-        echo "Unmounting hard drive..."
+        logmsg "Unmounting hard drive..."
         umount /last_root || shellout
-        echo
+        logmsg
     fi
     # END try hard drive
 
     ### BEGIN try floppy ###
-    echo "Checking for floppy diskette."
-    echo 'YOU MAY SEE SOME "wrong magic" ERRORS HERE, AND THAT IS NORMAL.'
+    logmsg "Checking for floppy diskette."
+    logmsg 'YOU MAY SEE SOME "wrong magic" ERRORS HERE, AND THAT IS NORMAL.'
     mkdir -p /floppy
     mount /dev/fd0 /floppy -o ro > /dev/null 2>&1
     if [ $? = 0 ]; then
-        echo "Found floppy diskette."
+        logmsg "Found floppy diskette."
         if [ -f /floppy/local.cfg ]; then
-            echo "Found /local.cfg on floppy."
-            echo "Copying /local.cfg settings to /tmp/local.cfg."
-            echo "NOTE: local.cfg settings from a floppy will override settings from"
-            echo "      a local.cfg file on your hard drive and DHCP."
+            logmsg "Found /local.cfg on floppy."
+            logmsg "Copying /local.cfg settings to /tmp/local.cfg."
+            logmsg "NOTE: local.cfg settings from a floppy will override settings from"
+            logmsg "      a local.cfg file on your hard drive and DHCP."
             # We use cat instead of copy, so that floppy settings can
             # override hard disk settings. -BEF-
             cat /floppy/local.cfg >> /tmp/local.cfg || shellout
         else
-            echo "No /local.cfg on floppy diskette."
+            logmsg "No /local.cfg on floppy diskette."
         fi
     else
-        echo "No floppy diskette in drive."
+        logmsg "No floppy diskette in drive."
     fi
     ### END try floppy ###
 
     # /tmp/local.cfg may be created from a local.cfg file on the hard drive, or a
     # floppy.  If both are used, settings on the floppy take precedence. -BEF-
     if [ -f /tmp/local.cfg ]; then
-        echo "Reading configuration from /tmp/local.cfg"
+        logmsg "Reading configuration from /tmp/local.cfg"
         . /tmp/local.cfg || shellout
     fi
 }
@@ -677,30 +701,30 @@ read_local_cfg() {
 #   use DHCP. -BEF-
 #
 start_network() {
-    echo
-    echo start_network
+    logmsg
+    logmsg start_network
     if [ ! -z $IPADDR ]; then
 
         # configure interface and add default gateway
         ifconfig $DEVICE $IPADDR  netmask $NETMASK  broadcast $BROADCAST
         if [ $? != 0 ]; then
-            echo
-            echo "I couldn't configure the network interface using your pre-boot settings:"
-            echo "  DEVICE:     $DEVICE"
-            echo "  IPADDR:     $IPADDR"
-            echo "  NETMASK:    $NETMASK"
-            echo "  BROADCAST:  $BROADCAST"
-            echo
+            logmsg
+            logmsg "I couldn't configure the network interface using your pre-boot settings:"
+            logmsg "  DEVICE:     $DEVICE"
+            logmsg "  IPADDR:     $IPADDR"
+            logmsg "  NETMASK:    $NETMASK"
+            logmsg "  BROADCAST:  $BROADCAST"
+            logmsg
             shellout
         fi
 
         if [ ! -z $GATEWAY ]; then
             route add default gw $GATEWAY
             if [ $? != 0 ]; then
-                echo
-                echo "The command \"route add default gw $GATEWAY\" failed."
-                echo "Check your pre-boot network settings."
-                echo
+                logmsg
+                logmsg "The command \"route add default gw $GATEWAY\" failed."
+                logmsg "Check your pre-boot network settings."
+                logmsg
                 shellout
             fi
         fi
@@ -708,7 +732,7 @@ start_network() {
     else
 
         ### try dhcp ###
-        echo "IP Address not set with pre-boot settings."
+        logmsg "IP Address not set with pre-boot settings."
         
         ### BEGIN ether sleep ###
         # Give the switch time to start passing packets.  Some switches won't
@@ -722,13 +746,13 @@ start_network() {
         # with a local.cfg file. -BEF-
         #
         [ -z $ETHER_SLEEP ] && ETHER_SLEEP=0
-        echo
-        echo "sleep $ETHER_SLEEP:  This is to give your switch (if you're using one) time to"
-        echo "           recognize your ethernet card before we try the network."
-        echo "           Tip: You can use <ctrl>+<c> to pass the time (pun intended)."
-        echo
+        logmsg
+        logmsg "sleep $ETHER_SLEEP:  This is to give your switch (if you're using one) time to"
+        logmsg "           recognize your ethernet card before we try the network."
+        logmsg "           Tip: You can use <ctrl>+<c> to pass the time (pun intended)."
+        logmsg
         count_loop $ETHER_SLEEP
-        echo
+        logmsg
         ### END ether sleep ###
         
         # create directory to catch dhcp information
@@ -743,13 +767,13 @@ start_network() {
         chmod +x /etc/dhclient-script
         
         # get info via dhcp
-        echo
-        echo "dhclient"
+        logmsg
+        logmsg "dhclient"
         dhclient
         if [ ! -s ${DHCLIENT_DIR}/dhclient.leases ]; then
-            echo
-            echo "I couldn't configure the network interface using DHCP."
-            echo
+            logmsg
+            logmsg "I couldn't configure the network interface using DHCP."
+            logmsg
             shellout
         fi
         
@@ -770,14 +794,14 @@ start_network() {
         # Re-read configuration information from local.cfg to over-ride
         # DHCP settings, if necessary. -BEF-
         if [ -f /tmp/local.cfg ]; then
-            echo
-            echo "Overriding any DHCP settings with pre-boot local.cfg settings."
+            logmsg
+            logmsg "Overriding any DHCP settings with pre-boot local.cfg settings."
             . /tmp/local.cfg || shellout
         fi
 
-        echo
-        echo "Overriding any DHCP settings with pre-boot settings from kernel append"
-        echo "parameters."
+        logmsg
+        logmsg "Overriding any DHCP settings with pre-boot settings from kernel append"
+        logmsg "parameters."
         read_kernel_append_parameters
     fi
 }
@@ -786,8 +810,8 @@ start_network() {
 #
 #   Ping test
 ping_test() {
-    echo
-    echo ping_test
+    logmsg
+    logmsg ping_test
 
     # The reason we don't ping the IMAGESERVER if FLAMETHROWER_DIRECTORY_PORTBASE
     # is set, is that the client may never be given, know, or need to know, the 
@@ -802,9 +826,9 @@ ping_test() {
         PING_DESTINATION=$IMAGESERVER
         HOST_TYPE="SystemImager server"
     fi 
-    echo
-    echo "Pinging your $HOST_TYPE to ensure we have network connectivity."
-    echo
+    logmsg
+    logmsg "Pinging your $HOST_TYPE to ensure we have network connectivity."
+    logmsg
 
 
     # Ping test code submitted by Grant Noruschat <grant@eigen.ee.ualberta.ca>
@@ -813,25 +837,25 @@ ping_test() {
     PING_EXIT_STATUS=1
     while [ "$PING_EXIT_STATUS" != "0" ]
     do
-        echo "PING ATTEMPT $PING_COUNT: "
+        logmsg "PING ATTEMPT $PING_COUNT: "
         ping -c 1 $PING_DESTINATION
         PING_EXIT_STATUS=$?
 
         if [ "$PING_EXIT_STATUS" = "0" ]; then
-            echo
-            echo "  We have connectivity to your $HOST_TYPE!"
+            logmsg
+            logmsg "  We have connectivity to your $HOST_TYPE!"
         fi
 
         PING_COUNT=$(( $PING_COUNT + 1 ))
         if [ "$PING_COUNT" = "4" ]; then
-            echo
-            echo "  WARNING:  Failed ping test."
-            echo "            Despite this seemingly depressing result, I will attempt"
-            echo "            to proceed with the install.  Your $HOST_TYPE may be"
-            echo "            configured to not respond to pings, but it wouldn't hurt"
-            echo "            to double check that your networking equipment is"
-            echo "            working properly!"
-            echo
+            logmsg
+            logmsg "  WARNING:  Failed ping test."
+            logmsg "            Despite this seemingly depressing result, I will attempt"
+            logmsg "            to proceed with the install.  Your $HOST_TYPE may be"
+            logmsg "            configured to not respond to pings, but it wouldn't hurt"
+            logmsg "            to double check that your networking equipment is"
+            logmsg "            working properly!"
+            logmsg
             sleep 5
             PING_EXIT_STATUS=0
         fi
@@ -845,13 +869,18 @@ ping_test() {
 ################################################################################
 #
 start_syslogd() {
-    echo
-    echo start_syslogd
+    logmsg
+    logmsg start_syslogd
     if [ ! -z $LOG_SERVER ]; then
-        echo -n "Starting syslogd..."
+        logmsg "Starting syslogd..."
         [ -z $LOG_SERVER_PORT ] && LOG_SERVER_PORT="514"
         syslogd -R ${LOG_SERVER}:${LOG_SERVER_PORT}
-        echo "done!"
+        # as long as we are starting syslogd, start klogd as well, in case
+        # there is a kernel issue that happens
+        klogd
+        # set USELOGGER=1 so logmsg knows to do the right thing
+        USELOGGER=1
+        logmsg "Successfully started syslogd!"
     fi
 }
 #
@@ -863,20 +892,20 @@ start_syslogd() {
 #       custom initrd.gz. -BEF-
 #
 autodetect_hardware_and_load_modules() {
-    echo
-    echo autodetect_hardware_and_load_modules
-    echo -n "Detecting hardware: "
+    logmsg
+    logmsg autodetect_hardware_and_load_modules
+    logmsg "Detecting hardware: "
     MODULES=`discover --module bridge ethernet ide scsi usb`
-    echo $MODULES
+    logmsg $MODULES
 
     # Prepend with other modules that we will probably need.
     MODULES="sd_mod ide-disk $MODULES"
 
     for MODULE in $MODULES
     do
-        echo
-        echo -n "Loading $MODULE... "
-        modprobe $MODULE 2>/dev/null && echo "done!" || echo "not needed or already loaded."
+        logmsg
+        logmsg "Loading $MODULE... "
+        modprobe $MODULE 2>/dev/null && logmsg "done!" || logmsg "not needed or already loaded."
     done
 }
 #
@@ -884,8 +913,8 @@ autodetect_hardware_and_load_modules() {
 #
 get_hostname_by_hosts_file() {
 
-    echo
-    echo get_hostname_by_hosts_file
+    logmsg
+    logmsg get_hostname_by_hosts_file
 
     #
     # Look in $FILE for that magic joy.
@@ -893,13 +922,13 @@ get_hostname_by_hosts_file() {
     FILE=${SCRIPTS_DIR}/hosts
     if [ -e $FILE ]; then
 
-        echo "Hosts file exists..."
+        logmsg "Hosts file exists..."
 
         # add escape characters to IPADDR so that it can be used to find HOSTNAME below
         IPADDR_ESCAPED=`echo "$IPADDR" | sed -e 's/\./\\\./g'`
         
         # get HOSTNAME by parsing hosts file
-        echo "Searching for this machine's hostname in $FILE by IP: $IPADDR"
+        logmsg "Searching for this machine's hostname in $FILE by IP: $IPADDR"
         
         # Command summary by line:
         # 1: convert tabs to spaces -- contains a literal tab: <ctrl>+<v> then <tab>
@@ -922,7 +951,7 @@ get_hostname_by_hosts_file() {
             sed 's/\..*$//g'
         `
     else
-        echo "No hosts file."
+        logmsg "No hosts file."
     fi
 }
 #
@@ -930,8 +959,8 @@ get_hostname_by_hosts_file() {
 #
 get_hostname_by_dns() {
 
-    echo
-    echo get_hostname_by_dns
+    logmsg
+    logmsg get_hostname_by_dns
 
     # Get base hostname.  For example, www7.domain.com will become www7. -BEF-
     HOSTNAME=`nslookup $IPADDR | grep "^Name:" | sed -e 's/Name:[[:space:]]*//' -e 's/\..*$//g'`
@@ -947,8 +976,8 @@ get_base_hostname() {
 #
 choose_autoinstall_script() {
 
-    echo
-    echo choose_autoinstall_script
+    logmsg
+    logmsg choose_autoinstall_script
 
     #
     # Get the base hostname for the last attempt at choosing an autoinstall
@@ -991,28 +1020,28 @@ choose_autoinstall_script() {
 
     # Did we really find one, or just exit the loop without a 'break'
     if [ ! -e $SCRIPTNAME ]; then
-        echo "FATAL: I can't find ${SCRIPTNAME}!"
+        logmsg "FATAL: I can't find ${SCRIPTNAME}!"
     fi
-    echo "Using autoinstall script: ${SCRIPTNAME}"
+    logmsg "Using autoinstall script: ${SCRIPTNAME}"
 }
 #
 ################################################################################
 #
 run_autoinstall_script() {
 
-    echo
-    echo run_autoinstall_script
+    logmsg
+    logmsg run_autoinstall_script
 
     # Run the autoinstall script.
     if [ -f $SCRIPTNAME ]; then
         chmod 755 $SCRIPTNAME || shellout
-        echo ">>> $SCRIPTNAME"
+        logmsg ">>> $SCRIPTNAME"
         $SCRIPTNAME || shellout
     else
-        echo
-        echo "FATAL: Your autoinstall script doesn't appear to exist: $SCRIPTNAME"
-        echo "       Be sure this script exists in the autoinstall scripts directory"
-        echo "       on your image server."
+        logmsg
+        logmsg "FATAL: Your autoinstall script doesn't appear to exist: $SCRIPTNAME"
+        logmsg "       Be sure this script exists in the autoinstall scripts directory"
+        logmsg "       on your image server."
         shellout
     fi
 }
@@ -1021,8 +1050,8 @@ run_autoinstall_script() {
 #
 run_pre_install_scripts() {
 
-    echo
-    echo run_pre_install_scripts
+    logmsg
+    logmsg run_pre_install_scripts
 
     get_base_hostname
 
@@ -1042,12 +1071,12 @@ run_pre_install_scripts() {
 
             for PRE_INSTALL_SCRIPT in $PRE_INSTALL_SCRIPTS
             do
-                echo ">>> $PRE_INSTALL_SCRIPT"
+                logmsg ">>> $PRE_INSTALL_SCRIPT"
                 chmod +x $PRE_INSTALL_SCRIPT || shellout
                 ./$PRE_INSTALL_SCRIPT || shellout
             done
         else
-            echo "No pre-install scripts found."
+            logmsg "No pre-install scripts found."
         fi
 
         if [ -e "/tmp/pre-install_variables.txt" ]; then
@@ -1061,8 +1090,8 @@ run_pre_install_scripts() {
 #
 run_post_install_scripts() {
 
-    echo
-    echo run_post_install_scripts
+    logmsg
+    logmsg run_post_install_scripts
 
     get_base_hostname
 
@@ -1095,13 +1124,13 @@ run_post_install_scripts() {
             for POST_INSTALL_SCRIPT in $POST_INSTALL_SCRIPTS
             do
                 if [ -e "$POST_INSTALL_SCRIPT" ]; then
-                    echo ">>> $POST_INSTALL_SCRIPT"
+                    logmsg ">>> $POST_INSTALL_SCRIPT"
                     chmod +x /a/tmp/post-install/$POST_INSTALL_SCRIPT || shellout
                     chroot /a/ /tmp/post-install/$POST_INSTALL_SCRIPT || shellout
                 fi
             done
         else
-            echo "No post-install scripts found."
+            logmsg "No post-install scripts found."
         fi
     fi
 }
@@ -1154,7 +1183,7 @@ start_ssh() {
         fi
 
         CMD="ssh -N -l $SSH_USER -n -f -L873:127.0.0.1:873 $IMAGESERVER $REDIRECTION_OPTIONS"
-        echo $CMD
+        logmsg $CMD
         $CMD || shellout
         
         # Since we're using SSH, change the $IMAGESERVER variable to reflect
@@ -1173,8 +1202,8 @@ start_ssh() {
         # (public keys of users allowed to ssh *in* to this machine)
         cd /root/.ssh/ || shellout
         CMD="wget ${SSH_DOWNLOAD_URL}/${ARCH}/ssh/authorized_keys"
-        echo
-        echo $CMD
+        logmsg
+        logmsg $CMD
         $CMD || shellout
         
         # set permissions to 600 -- otherwise, sshd will refuse to use it
@@ -1191,18 +1220,18 @@ start_ssh() {
         write_variables || shellout
         
         # create a private host key for this autoinstall client
-        echo
-        echo "Using ssh-keygen to create this hosts private key"
-        echo
+        logmsg
+        logmsg "Using ssh-keygen to create this hosts private key"
+        logmsg
         mkdir -p /var/empty || shellout
         ssh-keygen -t dsa -N "" -f /etc/ssh/ssh_host_dsa_key || shellout
         ssh-keygen -t rsa -N "" -f /etc/ssh/ssh_host_rsa_key || shellout
         
         # if hostname not set, try DNS
         if [ -z $HOSTNAME ]; then
-            echo
-            echo "Trying to get hostname via DNS..."
-            echo
+            logmsg
+            logmsg "Trying to get hostname via DNS..."
+            logmsg
             get_hostname_by_dns
         fi
         
@@ -1212,14 +1241,14 @@ start_ssh() {
             HOST_OR_IP=$HOSTNAME
         fi
         
-        echo
-        echo
-        echo "Starting sshd.  You must now go to your imageserver and issue"
-        echo "the following command:"
-        echo
-        echo " \"si_pushupdate -continue-install -image <IMAGENAME> -client ${HOST_OR_IP}\"."
-        echo
-        echo
+        logmsg
+        logmsg
+        logmsg "Starting sshd.  You must now go to your imageserver and issue"
+        logmsg "the following command:"
+        logmsg
+        logmsg " \"si_pushupdate -continue-install -image <IMAGENAME> -client ${HOST_OR_IP}\"."
+        logmsg
+        logmsg
         
         # fire up sshd and wait
         mkdir -p /var/run/sshd || shellout
@@ -1247,12 +1276,12 @@ beep_incessantly() {
         do
             echo -n -e "\\a"
             if [ $SECONDS -lt 60 ]; then 
-                echo "I have been done for $SECONDS seconds.  Reboot me already!"
+                logmsg "I have been done for $SECONDS seconds.  Reboot me already!"
             else
                 MINUTES=`echo "$SECONDS / 60"|bc`
                 MINUTES_X_SIXTY=`echo "$MINUTES * 60"|bc`
                 if [ "$MINUTES_X_SIXTY" = "$SECONDS" ]; then 
-                    echo "I have been done for $MINUTES minutes now.  Reboot me already!"
+                    logmsg "I have been done for $MINUTES minutes now.  Reboot me already!"
                 fi  
             fi
             sleep 1
