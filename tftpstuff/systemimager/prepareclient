@@ -282,6 +282,14 @@ sort -u
 `
 ### END get list of IDE and SCSI disks ###
 
+### BEGIN get list of IDE and SCSI disks on Devfs ###
+if ls /dev/discs/* 2>/dev/null; then
+    # for devfs there should be a /dev/discs directory, so we now
+    # assume that the /dev/hd and /dev/sd compatibility is turned
+    # on.
+    ide_and_scsi_disks=`ls -1 /dev/[sh]d? | sed -e 's/\/dev\///g' | awk '{print $1}' | sort -u`
+fi
+
 
 ### BEGIN get list of hardware RAID "disks" ###
 hardware_raid_disks=`
@@ -316,7 +324,9 @@ do
  if [ "$EXPLICIT" = "yes" ]; then
    sfdisk -l -uS /dev/$disk > $systemimagerdir/partitionschemes/$disk
  else
-   sfdisk -l -uM /dev/$disk > $systemimagerdir/partitionschemes/$disk
+    if ls -l /dev/$disk | grep -v '/cd' 2>/dev/null; then
+        sfdisk -l -uM /dev/$disk > $systemimagerdir/partitionschemes/$disk
+    fi
  fi
 done
 
