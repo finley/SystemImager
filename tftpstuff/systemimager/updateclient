@@ -146,7 +146,9 @@ image=/boot/kernel
       label=systemimager
       initrd=/boot/initrd.gz
       read-write
-      append="load_ramdisk=1 prompt_ramdisk=0 root=/dev/ram0"
+      # appending root=/dev/ram0 ensures that the kernel will 
+      # not try to run the non-existent /linuxrc script
+      append="root=/dev/ram0 load_ramdisk=1 prompt_ramdisk=0"
 EOF
     close (LILO_CONF);
   }
@@ -180,7 +182,8 @@ EOF
   $command = "rsync -av";
 
   # get exclusions from /etc/systemimager.exclude
-  open(SYSTEMIMAGER_EXCLUDE, "< /etc/systemimager.exclude") or die "Couldn't open /etc/systemimager.exclude for reading: $!\n";
+  $systemimager_exclude="/etc/systemimager/systemimager.exclude";
+  open(SYSTEMIMAGER_EXCLUDE, "< $systemimager_exclude") or die "Couldn't open $systemimager_exclude for reading: $!\n";
   while (<SYSTEMIMAGER_EXCLUDE>) {
       if (/^\s*\//) {  # match non commented explicit path
 	chomp;
