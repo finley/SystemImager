@@ -1,0 +1,183 @@
+#
+# "SystemImager"
+#
+#  Copyright (C) 2002 Bald Guy Software 
+#                     Brian E. Finley <brian.finley@baldguysoftware.com>
+#
+#   $Id$
+#
+
+TO:
+systemimager-announce@lists.sourceforge.net
+sisuite-announce@lists.sourceforge.net
+
+
+SUBJECT:
+SystemImager 2.9.2 is Released, and 3.0.0 is Mostly Frozen
+
+
+BODY:
+Greetings and salutations,
+
+SystemImager(R) unstable 2.9.2 is released.  This is a development 
+release leading up to the 3.0 release. 
+
+Official "testers" should test this release and send feedback to
+<sisuite-devel@lists.sourceforge.net>.  For others who test this 
+release, please send a quick "it worked on my box" message to 
+the same list.
+
+
+What to expect from this development release, and from SystemImager 3.0
+------------------------------------------------------------------------
+The following are some of the key features or modifications that will be
+included in the next stable release, SystemImager v3.0.
+
+    * SIS (System Installation Suite) script for easy installation
+      on RPM based distributions.  Debian installation is still as 
+      easy as lickety-split!  
+
+      SystemImager is a component of System Installation Suite, and
+      it is recommended that you install the entire suite.  The 
+      entire suite includes SystemInstaller, SystemImager, and 
+      System Configurator.
+
+    * Modular kernel
+        * SCSI, file system, other drivers compiled as modules.
+        * Network drivers compiled in statically.
+        * Many more network drivers compiled in.
+        * Gigabit Ethernet support on autoinstall clients.
+        * "Module only" drivers can be used, including network
+          drivers.
+        * Allows a "complete" kernel to be provided with
+          SystemImager
+        * Makes it possible to add support for additional file
+          systems much more easily.
+
+    * USB keyboard support on autoinstall client machines.
+
+    * addclients
+        * now allows leading zeros for client host names
+        * recommends the use of DNS instead of /etc/hosts
+
+    * Hardware auto-detection
+        * Necessary modules are automatically loaded.
+
+    * devfs is used
+        * Eliminates the need to keep up with device files for new
+          block devices as they get added (Hardware RAID controllers
+          for example).
+        * Building of initrd.gz from source code happens faster.
+
+    * tmpfs
+        * BOEL(2) now uses tmpfs as its root file system.
+        * Size constraint of files that can be copied to the in
+          memory file system on autoinstall clients is effectively
+          eliminated.  See
+          /usr/src/linux/Documentation/filesystems/tmpfs.txt for
+          details.
+
+    * Additional filesystems now supported.  The complete list now
+      includes:
+        * ext2
+        * ext3
+        * FAT (12, 16, and 32 bit)
+        * JFS
+        * reiserfs
+        * XFS
+    * boel_binaries tarball
+        * A single tarball of additional binaries (that don't fit on
+          the autoinstall media) is now pulled over to autoinstall
+          clients once network connectivity is achieved.
+        * This tarball contains additional kernel modules and other
+          binaries, such as mke2fs, mkraid, mkreiserfs, and their
+          shared libraries.
+
+    * Many additional features in BOEL including:
+        * a "vi" editor
+        * filename completion in the shell
+        * syslogd
+          * Auto-install clients can send their syslog messages to 
+            the image server, or to a separate logging server.
+
+    * HP Smart Array 5xxx series
+        * Support for the HP Smart Array 5xxx series of hardware
+          RAID controllers has been added.  These devices use
+          /dev/cciss/* device files.
+
+    * Other HP Smart Array controllers
+        * Support for HP Smart Array controllers that use /dev/ida/*
+          device files has been added.
+
+    * IA64
+        * IA64 support has been added.
+        * GPT (GUID Partition Table) support has been added.
+
+    * Build environment
+        * The entire SystemImager package can be built on any
+          distribution.  It is no longer limited to a hand modified
+          version of a specific Debian release.  
+        * Debian rocks, and I will continue to use it as *my*
+          development environment, but this will make it much easier
+          for packaging into other distributions, and for
+          maintaining past releases.
+
+    * Dynamic Partitioning support
+        * Giving users the ability to specify percentages or
+          megabytes for partition schemes.
+        * Easily change file system types used by an image.  This
+          will an image pulled from a golden client using ext2 to be
+          deployed on a machine as XFS, for example.
+        * Easily change destination disks.  This will allow an image
+          pulled from a machine with IDE disks to be installed on a
+          machine with SCSI disks.
+        * A single image can be used across machines using different
+          drive types and different file system types.
+
+    * netbootmond and mkclientnetboot
+        * The ability to control which PXE enabled machines boot
+          from the network, and when they boot.  This will give the
+          system administrator control over network booting so that
+          a machine can be made to boot from the network for an
+          autoinstall, but not boot from the network after
+          completing the install.
+        * The imageserver can be configured to make PXE enabled
+          machines automatically boot off their own hard drives 
+          after successful completion of a PXE based SystemImager 
+          install.  
+        * This allows you to plug in your brand new machines
+          (configured to use PXE at the factory) and simply turn 
+          them on.  On the first boot, the SystemImager imageserver
+          will install them, and on subsequent boots, it will tell 
+          them to boot off their own hard drives!
+        
+Certainly it's not possible to include all improvements here, but as you
+can see, there have been quite a few.  Many of them are structural
+changes that will significantly improve our ability to add support to
+SystemImager for new file systems, hardware, and architectures.  
+
+And of course you will see a number of bug fixes.  The 2.0.x series 
+happened to be a particularly buggy series.  Funding levels have 
+increased, allowing me to concentrate more time and effort on 
+SystemImager and I'm anticipating that v3.0 will be a very 
+stable release.
+
+If you have other features or modifications that you would like to see,
+please submit a feature request (http://systemimager.org/support/) or
+contact <sales@baldguysoftware.com> to commission development.  If a
+feature you are interested in is already listed, please add a "ME TOO!"
+comment as a logged in SourceForge user.  This will help us determine
+demand for certain features.
+
+Notes:  
+
+        1. All of this is subject to change prior to release.
+        2. BOEL is Brian's Own Embedded Linux.  It is the embedded Linux
+           used to autoinstall clients.
+
+Please feel free to forward this message on to other lists, or groups
+that use SystemImager and System Installation Suite (SIS).
+
+Cheers, -Brian
+
+
