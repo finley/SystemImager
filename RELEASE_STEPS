@@ -12,7 +12,6 @@
 3.0 PRE-FEATURE FREEZE
 --------------------------------------------------------------------------------
 Pending:
-* Fix mkautoinstalldiskette files being truncated. (bef)
 * mkdhcpserver -- commandlineize and require -dhcp-version 2 or -dhcp-version 3
 * Verify DHCP option numbers.
 * Variables in dhcpd.conf and local.cfg -> make sure that all
@@ -22,7 +21,6 @@ Pending:
 
 * Get SSH working again (BEF)  Legality issues?
 * XFS (bef or df)
-* test mkdhcpstatic
 
 
 Completed:
@@ -82,7 +80,8 @@ Completed:
 * We should tell the user when they run addclients that if they have 
   backwards and forwards dns resolution setup for their clients, that they need
   not add the local hosts entries.  
-* add ETHERSLEEP option (boolean)
+* add ETHER_SLEEP option
+* Fix mkautoinstalldiskette files being truncated. (bef)
 
 
 
@@ -95,6 +94,8 @@ PRE-RELEASE
 * warn users that we are no longer supporting tarball based installs.  
   Adventurous souls can check out the source from CVS and do a make, but 
   normal users should use a package.
+* test mkdhcpstatic
+* change "Please send email to: -> systemimager-discuss@"
 
 
 

@@ -1,14 +1,16 @@
 #!/bin/sh
-
 #
 # "SystemImager" 
 #
-#  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
-#  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
+#  Copyright (C) 1999-2001 Brian Elliott Finley 
+#                          <brian.finley@baldguysoftware.com>
+#  Copyright (C) 2002 Bald Guy Software 
+#                     <brian.finley@baldguysoftware.com>
 #
 #  $Id$
 #
 #  Others who have contributed to this code:
+#    Charles C. Bennett, Jr. <ccb@acm.org>
 #    Sean Dague <japh@us.ibm.com>
 #    Dann Frazier <dannf@dannf.org>
 #    Curtis Zinzilieta <czinzilieta@valinux.com>
@@ -18,10 +20,48 @@ PATH=/sbin:/bin:/usr/bin:/usr/sbin:/tmp
 
 SCRIPTS=scripts
 
-# These get set by the Makefile in ./initrd_source. -BEF-
 VERSION="SYSTEMIMAGER_VERSION_STRING"
 FLAVOR="SYSTEMIMAGER_FLAVOR_STRING"
 
+#################################################################################
+#   Subroutines
+#
+################################################################################
+
+################################################################################
+#
+#   Description:  
+#   Count the specified number, printing each number, and exit only the count
+#   loop when <ctrl>+<c> is hit (SIGINT, or Signal 2).  Thanks to 
+#   CCB <ccb@acm.org> for this chunk of code.  -BEF-
+#
+#   Usage: 
+#   count_loop 35
+#   count_loop $ETHER_SLEEP
+#
+count_loop() {
+
+  COUNT=$1
+
+  trap 'echo "Skipping ETHER_SLEEP -> Caught <ctrl>+<c>"; I=$COUNT' 2
+
+  I=0
+  while [ $I -lt $COUNT ]; do
+    I=$(( $I + 1 ))
+    echo -n "$I "
+    sleep 1
+  done
+  echo
+}
+
+
+################################################################################
+#
+#   Description:
+#   Exit with the message stored in /etc/issue.
+#
+#   Usage: $COMMAND || shellout
+#
 shellout() {
   exec cat /etc/issue ; exit 1
 }
@@ -193,9 +233,10 @@ else
   # This means the dhcp server won't even get the request for 30 seconds.
   # Many ethernet cards aren't considered "up" by the switch until the
   # driver is loaded.  Because the driver is compiled directly into the
-  # kernel here, the driver is definitely loaded at this point. -BEF-
-  #
-  # XXX Add CCB's ctrl+c catching code here. -BEF-
+  # kernel here, the driver is definitely loaded at this point. 
+  # 
+  # Default is 0.  The recommended setting of ETHER_SLEEP=35 can be set 
+  # with a local.cfg file. -BEF-
   #
   [ -z $ETHER_SLEEP ] && ETHER_SLEEP=0
   echo
@@ -203,7 +244,7 @@ else
   echo "           recognize your ethernet card before we try the network."
   echo "           Tip: You can use <ctrl>+<c> to pass the time (pun intended)."
   echo
-  I=1; while [ $I != $(( $count + 1)) ]; do echo -n "$I "; sleep 1s; I=$(( $I + 1 )) ; done
+  count_loop $ETHER_SLEEP
   echo
   ### END ether sleep ###
 
