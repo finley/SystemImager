@@ -190,6 +190,144 @@ sub get_part_name {
     return $disk . $num;
 }
 
+# Description:
+#  Returns a list of all devices (disks & partitions) from a given
+#  autoinstallscript.conf file.
+#
+# Usage:
+#  get_all_devices($file)
+#
+sub get_all_devices($) {
+    my ($file) = @_;
+
+    
+    my @dev_list = ();
+    
+    my $part_config = XMLin($file, keyattr => { fsinfo => "+line" }, forcearray => 1 );
+    foreach my $line (keys %{$part_config->{fsinfo}}) {
+	if ($part_config->{fsinfo}->{$line}->{comment}) { next; }
+	if ($part_config->{fsinfo}->{$line}->{real_dev}) {
+	    push @dev_list, $part_config->{fsinfo}->{$line}->{real_dev};
+	}
+    }
+    my $fs_config = XMLin($file, keyattr => { disk => "+dev", part => "+num" }, forcearray => 1 );  
+    foreach my $key (keys %{$fs_config->{disk}}) {
+	push @dev_list, $key;
+    }
+    
+    return @dev_list;
+}
+
+
+# Description:
+#   A sort for raid controller device names
+#
+# Usage:
+#   sort by_raid_controller @raid_devices
+#
+sub by_raid_controller {
+    # sort by controller, then by disc, then by partition
+    ($a =~ /c(\d+)/)[0] <=> ($b =~ /c(\d+)/)[0]     ||
+	($a =~ /d(\d+)/)[0] <=> ($b =~ /d(\d+)/)[0] ||
+	(($a =~ /p(\d+)/)[0] || -1) <=> (($b =~ /p(\d+)/)[0] || -1);
+}
+
+# Description:
+#   Takes a list of devices for a single raid type (cciss, rd, etc)
+#   and returns a hash mapping them to their devfs names.
+#
+# Usage:
+#   raid_to_devfs( @raid_devices );
+#
+sub raid_to_devfs {
+    my $discnum = -1;
+    my %table = ();
+    foreach my $dev (@_) {
+	# its a disk
+	if ($dev =~ m,^/dev/(.*)/c(\d+)d(\d+)$,) {
+	    $discnum = $discnum + 1;
+	    $table{$dev} = "/dev/" . $1 . "/disc" . $discnum . "/disc";
+	}
+	# its a partition
+	elsif ($dev =~ m,^/dev/(.*)/c(\d+)d(\d+)p(\d+)$,) {
+	    $table{$dev} = "/dev/" . $1 . "/disc" . $discnum . "/part" . $4;
+	}
+	else {
+	    return undef;
+	}
+    }
+    return %table;
+}
+
+# Description:
+# Convert standard /dev names to the corresponding devfs names.
+# In most cases this is not needed.  However, there are a few cases
+# in which using devfsd symbolic links is not possible.
+# 
+# An example of a case where this is necessary is the cpqarray driver.
+# The standard /dev file name includes /dev/ida/c0d0 for the disk,
+# while the devfs name it exports is /dev/ida/c0d0/disc.  The overlapping
+# use of the /dev/ida/c0d0 name (in one case a file, and in another a
+# directory), makes it impossible for both sets of names to exist in the
+# same namespace.
+#
+# Usage:
+# dev_to_devfs( @disk_and_partition_list );
+#
+# returns a mapping of [standard /dev name] -> [devfs name] in a hash
+sub dev_to_devfs {
+    my @devices = @_;
+    my %table = ();
+
+    my @cciss_devs = ();
+    my @rd_devs = ();
+
+    foreach my $dev (@devices) {
+	## some devices do not have a static devfs counterpart.
+	## for example, if you have two logical disks on the first
+	## controller (/dev/cciss/c0d0 and a /dev/cciss/c0d1)
+	## then the first disk on the second controller (/dev/cciss/c1d0)
+	## becomes /dev/cciss/disc2 under devfs, since it is the third
+	## cciss disk.  however, if you just have a single disk on the first
+	## controller (/dev/cciss/c0d0), then the first disk on the second
+	## controller is now /dev/cciss/disc1.
+	##
+	## we'll save these types of disks for later, where we can evaluate
+	## them as a group
+	if ($dev =~ m,^/dev/(.*)/c(\d+)d(\d+)(p(\d+))?$,) {
+	    if ($1 eq "cciss") {
+		push @cciss_devs, $dev;
+	    }
+	    elsif ($1 eq "rd") {
+		push @rd_devs, $dev;
+	    }
+	    # some raid devices do have a static mapping
+	    else {
+		## discs
+		if ($dev =~ m,^/dev/(.*)/c(\d+)d(\d+)$,) {
+		    $table{$dev} = "/dev/${1}/c${2}d${3}/disc";
+		}
+		elsif ($dev =~ m,^/dev/(.*)/c(\d+)d(\d+)p(\d+)$,) {
+		    $table{$dev} = "/dev/${1}/c${2}d${3}/part${4}";
+		}
+		else {
+		    return undef;
+		}
+	    }
+	}
+	else {
+	    # everything else should have the same name in boel's /dev
+	    $table{$dev} = $dev;
+	}
+    }
+
+    ## process dynamic mapped device types as a group
+    my @sorted_cciss = sort by_raid_controller @cciss_devs;
+    my @sorted_rd = sort by_raid_controller @rd_devs;
+
+    return (%table, raid_to_devfs(@sorted_cciss), raid_to_devfs(@sorted_rd));
+}
+
 # Usage:  
 # _read_partition_info_and_prepare_parted_commands( $out, $image_dir, $auto_install_script_conf );
 sub _read_partition_info_and_prepare_parted_commands {
@@ -197,6 +335,13 @@ sub _read_partition_info_and_prepare_parted_commands {
     my ($out, $image_dir, $file) = @_;
 
     my $xml_config = XMLin($file, keyattr => { disk => "+dev", part => "+num" }, forcearray => 1 );  
+
+    my @all_devices = get_all_devices($file);
+    my %devfs_map = dev_to_devfs(@all_devices) or return undef;
+
+    foreach my $dev (sort (keys ( %{$xml_config->{disk}} ))) {
+	    print "Found disk: $dev.\n";
+    }
 
     #
     # Ok.  Now that we've read all of the partition scheme info into hashes, let's do stuff with it. -BEF-
@@ -215,7 +360,7 @@ sub _read_partition_info_and_prepare_parted_commands {
             $MB_from_end_of_disk
         );
 
-        my $devfs_dev = &dev_to_devfs($dev);
+        my $devfs_dev = $devfs_map{$dev};
 
         print $out "### BEGIN partition $devfs_dev ###\n";
         print $out qq(echo "Partitioning $devfs_dev..."\n);
@@ -661,47 +806,6 @@ sub _get_array_of_disks {
 }
 
 # Description:
-# Convert standard /dev names to the corresponding devfs names.
-# In most cases this is not needed.  However, there are a few cases
-# in which using devfsd symbolic links is not possible.
-# 
-# An example of a case where this is necessary is the cpqarray driver.
-# The standard /dev file name includes /dev/ida/c0d0 for the disk,
-# while the devfs name it exports is /dev/ida/c0d0/disc.  The overlapping
-# use of the /dev/ida/c0d0 name (in one case a file, and in another a
-# directory), makes it impossible for both sets of names to exist in the
-# same namespace.
-#
-# Usage:
-# dev_to_devfs( $dev );
-#
-sub dev_to_devfs {
-    my ($dev) = @_;
-
-    ## disks
-    if ($dev =~ m{^/dev/(.*)/c(\d+)d(\d+)$}) {
-        if ($1 eq "cciss" or $1 eq "rd") {
-            return "/dev/" . $1 . "/disc" . $3 . "/disc";
-        }
-        else {
-            return "/dev/" . $1 . "/c" . $2. "d" . $3 . "/disc";
-        }
-    }
-    ## partitions
-    elsif ($dev =~ m{^/dev/(.*)/c(\d+)d(\d+)p(\d+)$}) {
-        ## the controller number is not taken into account here.
-        ## its unknown how this should work w/ multiple controllers.
-        if ($1 eq "cciss" or $1 eq "rd") {
-            return "/dev/" . $1 . "/disc" . $3 . "/part" . $4;
-        }
-        else {
-            return "/dev/" . $1 . "/c" . $2 . "d" . $3 . "/part" . $4;
-        }
-    }
-    return $dev;
-}
-
-# Description:
 # Read configuration information from /etc/systemimager/autoinstallscript.conf
 # and write filesystem creation commands to the autoinstall script. -BEF-
 #
@@ -714,6 +818,10 @@ sub _write_out_mkfs_commands {
     my ($out, $image_dir, $file, $raidtab) = @_;
 
     my $xml_config = XMLin($file, keyattr => { fsinfo => "+line" }, forcearray => 1 );
+
+    my @all_devices = get_all_devices($file);
+    my %devfs_map = dev_to_devfs(@all_devices) or return undef;
+
 
     # Figure out if software RAID is in use. -BEF-
     #
@@ -787,7 +895,7 @@ sub _write_out_mkfs_commands {
         # mount_dev should contain fs LABEL or UUID information. -BEF-
         my $mount_dev = $xml_config->{fsinfo}->{$line}->{mount_dev};
 
-        my $real_dev = &dev_to_devfs($xml_config->{fsinfo}->{$line}->{real_dev});
+        my $real_dev = $devfs_map{$xml_config->{fsinfo}->{$line}->{real_dev}};
         my $mp = $xml_config->{fsinfo}->{$line}->{mp};
         my $fs = $xml_config->{fsinfo}->{$line}->{fs};
         my $options = $xml_config->{fsinfo}->{$line}->{options};
