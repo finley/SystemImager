@@ -32,14 +32,14 @@ use lib "USR_PREFIX/lib/systemimager/perl";
 use Cwd;
 use Carp;
 use AppConfig;
-use Getopt::Long;
 use File::Path;
 use File::Copy;
+use Getopt::Long;
 use File::Basename;
 use POSIX qw(uname);
 use SystemImager::Common;
-
-use vars qw($VERSION $quiet);
+use SystemImager::Config;
+use vars qw($config $VERSION $quiet);
 
 $SIG{__DIE__} = \&bailing_umount;
 
@@ -48,26 +48,13 @@ $VERSION = "SYSTEMIMAGER_VERSION_STRING";
 # set path for system calls
 $ENV{PATH} = "/usr/local/sbin:/usr/sbin:/sbin:/usr/local/bin:/usr/bin:/bin";
 
-my $config = AppConfig->new(
-  'autoinstall_script_dir' => { ARGCOUNT => 1 },
-  'autoinstall_boot_dir' => { ARGCOUNT => 1 },
-  'default_image_dir' => { ARGCOUNT => 1 },
-  'rsyncd_conf' => { ARGCOUNT => 1 },
-  'rsync_stub_dir' => { ARGCOUNT => 1 },
-);
-
-my $config_file = "/etc/systemimager/systemimager.conf";
-$config->file($config_file);
-
-my ($kernel, $initrd, $flavor, $arch, $autoinstall_boot_dir, $append_string, 
-    $bin_dir);
-
-if ($config->autoinstall_boot_dir) {
-  $autoinstall_boot_dir = $config->autoinstall_boot_dir;
-} else { 
-  print "Fatal: AUTOINSTALL_BOOT_DIR not specified in $config_file.";
+my $autoinstall_boot_dir = $config->autoinstall_boot_dir;
+if (!$autoinstall_boot_dir) {
+  print "Fatal: AUTOINSTALL_BOOT_DIR not specified in the systemimager.conf file.";
   exit 1;
 }
+
+my ($kernel, $initrd, $flavor, $arch, $append_string, $bin_dir);
 
 GetOptions( 
 "listing" => 
@@ -423,7 +410,7 @@ sub version {
 $progname (part of SystemImager) v$VERSION
     
 Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley\@baldguysoftware.com>
-Copyright (C) 2002 Brian Elliott Finley <brian.finley\@baldguysoftware.com>
+Copyright (C) 2002 Bald Guy Software <brian.finley\@baldguysoftware.com>
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 EOF
@@ -434,7 +421,7 @@ sub usage {
     version();
     print <<EOF;
 
-Usage: $progname [OPTION]... -out-file FILE_NAME
+Usage: $progname [OPTION]... -out-file FILE
 
 Options: (options can be presented in any order and may be abbreviated)
  -help             Display this output.
@@ -444,7 +431,7 @@ Options: (options can be presented in any order and may be abbreviated)
  -kernel FILE      Optionally specify an alternate autoinstall kernel.
  -initrd FILE      Optionally specify an alternate autoinstall ramdisk.
  -append "STRING"  A string of options that will be passed to the autoinstall
-                   kernel
+                   kernel.
  -arch ARCH        Create a CD image for an architecture other than that of
                    this host.
  -quiet            Don\'t print any output, just provide an appropriate 
