@@ -4,7 +4,7 @@
 # This file is: FAQ-HOWTO
 #
 # Current version as of the writing of this document: 1.0
-#                                           revision: 3
+#                                           revision: 4
 #
 # This document written by:  
 #  Brian Finley <brian@valinux.com>
@@ -197,6 +197,42 @@ Answer:
 
 There was a problem with the following RPM:  syslinux-1.48-1.i386.rpm 
 Download and install a newer syslinux RPM from http://systemimager.org/.
+
+
+--------------------------------------------------------------------------------
+Question:  How do I add a driver for a special card to the autoinstall client?
+--------------------------------------------------------------------------------
+
+Answer:
+
+All you have to do is start with the .config file that you can find
+in the CVS repository on SourceForge:
+http://cvs.sourceforge.net/cgi-bin/cvsweb.cgi/~checkout~/systemimager/autoinstall.kernel.config?rev=1.1&cvsroot=systemimager
+(note: the revision number in the URL above may change in future iterations)
+
+Put this in your /usr/src/linux directory as .config and run
+"make menuconfig" or your favourite kernel config utility.  Choose the
+driver for the card you need.
+
+However!  This will probably make the kernel too large for the floppy.
+So you will want to de-select drivers for many of the cards that will
+not be used.  I would recommend de-selecting all of the Ethernet cards
+except for the ones you need.
+
+Do the standard:
+make dep
+make clean
+make bzImage
+
+(Please refer to the Kernel-HOWTO for more information on recompiling a kernel:
+ http://www.caldera.com/LDP/HOWTO/Kernel-HOWTO.html)
+
+Then copy the resultant kernel over the kernel installed in /tftpboot by
+SystemImager: /tftboot/kernel
+
+You should now be able to do a "makeautoinstalldiskette",
+"makeautoinstallcd", or boot off the network.
+
 
 --------------------------------------------------------------------------------
 Question:  How do I exclude files or directories during a getimage?
