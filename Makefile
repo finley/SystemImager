@@ -84,7 +84,7 @@ COMMON_BINARY_SRC = $(BINARY_SRC)
 
 # destination directories
 ETC  = $(DESTDIR)/etc
-INITD = $(ETC)/init.d
+INITD = $(shell ([ -d $(ETC)/init.d ] && echo "$(ETC)/init.d") || ([ -d $(ETC)/rc.d/init.d ] && echo "$(ETC)/rc.d/init.d"))
 USR = $(DESTDIR)/usr/local
 DOC  = $(USR)/share/doc/systemimager-doc
 BIN = $(USR)/bin
@@ -337,6 +337,7 @@ install_configs:
 	mkdir -p $(ETC)/systemimager
 	install -b -m 644 etc/rsyncd.conf $(ETC)/systemimager
 	install -b -m 644 etc/systemimager.conf $(ETC)/systemimager
+	[ "$(INITD)" != "" ] || exit 1
 	mkdir -p $(INITD)
 	install -b -m 755 etc/init.d/rsync $(INITD)/$(INITSCRIPT_NAME)
 
@@ -477,8 +478,8 @@ distrib_clean:
 	# make a skeleton kernel tree which just contains the files needed
 	# by the install_* rules
 	mkdir -p $(LINUX_SRC)/../linux.tmp
-	cd $(LINUX_SRC) && find . -name "mkreiserfs" -type f -exec cp -aP {} ../linux.tmp \;
-	cd $(LINUX_SRC) && find . -name "bzImage" -type f -exec cp -aP {} ../linux.tmp \;
+	cd $(LINUX_SRC) && find . -name "mkreiserfs" -type f -exec cp --parents -a {} ../linux.tmp \;
+	cd $(LINUX_SRC) && find . -name "bzImage" -type f -exec cp --parents -a {} ../linux.tmp \;
 	rm -rf $(LINUX_SRC)/*
 	mv $(LINUX_SRC)/../linux.tmp/* $(LINUX_SRC)
 	rm -rf $(LINUX_SRC)/../linux.tmp
