@@ -8,7 +8,8 @@ PATCH_DIR = ./patches
 SRC_DIR = ./src
 
 TEMP_DIR = ./systemimager.initrd.temp.dir
-INITRD_SIZE = 2600      # number of 1KB blocks in ramdisk.
+INITRD_SIZE = 2600       # number of 1KB blocks in ramdisk.
+INITRD_INODE_COUNT = 590 # number of inodes available on ramdisk
 
 ########## BEGIN definitions for binaries built from source ##########
 
@@ -48,8 +49,11 @@ initrd.gz:	initrd
 initrd:	binaries $(LOCAL_BINARIES)
 	# create ramdisk file & mount it as a filesystem
 	dd if=/dev/zero of=initrd bs=1k count=$(INITRD_SIZE)
-	mke2fs -N 584 -m 0 -q -F initrd
+	mke2fs -N $(INITRD_INODE_COUNT) -m 0 -q -F initrd
 	mkdir -p $(TEMP_DIR)
+
+	# umount the ramdisk if it is already mounted due to a previous failure
+	-umount $(TEMP_DIR)
 	mount initrd $(TEMP_DIR) -o loop
 
 	# create directory structure
@@ -80,6 +84,9 @@ initrd:	binaries $(LOCAL_BINARIES)
 
 	# copy over text files from the skel directory
 	cp -a ./skel/* $(TEMP_DIR)
+
+	# clear out CVS cruft
+	find $(TEMP_DIR) -type d -name CVS -depth -exec rm -rf {} \;
 
 	# create small dynamic libraries
 	./mklibs.sh -v -d $(TEMP_DIR)/lib $(TEMP_DIR)/bin/*
