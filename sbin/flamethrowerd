@@ -15,12 +15,13 @@ use strict;
 use File::stat;
 use POSIX qw(setsid);
 use SystemImager::Config;
+use SystemImager::Common;
 use SystemImager::Flamethrower;
 use vars qw($config $ft_config $VERSION);
 
 my $last_time = 0;
 my $conf_file = '/etc/systemimager/flamethrower.conf';
-my $pid_file  = '/var/run/flamethrower.pid';
+my $pid_file  = '/var/run/flamethrowerd.pid';
 
 # Read the config file and update the directory
 read_config_file($conf_file);
@@ -35,6 +36,13 @@ if ( lc $ft_config->debug() eq "on" ) {
 # Should we start up?
 if ( $ft_config->start_flamethrower_daemon() ne "yes" ) {
     exit 0;
+}
+
+my $file = "udp-sender";
+unless( SystemImager::Common->which($file,$ENV{PATH}) ){
+    print STDOUT ("Couldn't find $file in path: $ENV{PATH}\n");
+    print STDOUT ("Please install udp-sender, then try again.\n");
+    exit 1;
 }
 
 &daemonize;
