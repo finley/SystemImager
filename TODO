@@ -35,18 +35,22 @@ o http://www.loria.fr/~molli/cvs/doc/cvs_toc.html
 o http://www.loria.fr/~molli/cvs/doc/cvs.pdf
 
 
----------------------------------
-CVS Checkout Steps for Developers
----------------------------------
-1) To checkout the development branch:
+------------------------------------------------------------
+CVS Checkout Steps for Developers for the Development Branch
+------------------------------------------------------------
+1) Checkout the code:
+   "cvs -z3 -d:ext:developer_name@cvs.systemimager.sourceforge.net:/cvsroot/systemimager co systemimager"
 2) Rename the checked out source tree (suggested):
-   "mv systemimager systemimager.head"
-
-4) T
-         "cd systemimager.v1_4_1-beta"
-	    "cvs -z3 update -r v1_4_1-beta"
+   "mv systemimager systemimager.devel"
 
 
+------------------------------------------------------------------------
+CVS Checkout Steps for Developers for the Stable Branch (bug fixes only)
+------------------------------------------------------------------------
+1) Checkout the code:
+   "cvs -z3 -d:ext:developer_name@cvs.systemimager.sourceforge.net:/cvsroot/systemimager co -r v1_4_1-beta systemimager"
+2) Rename the checked out source tree (suggested):
+   "mv systemimager systemimager.stable"
 
 
 -------------------------------
