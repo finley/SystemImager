@@ -1,6 +1,6 @@
 %define name     systemimager
 %define ver      2.9.4
-%define rel      4ibm
+%define rel      1
 %define prefix   /usr
 %define _build_all 1
 %define _boot_flavor standard
