@@ -159,6 +159,7 @@ o Notes regarding differences between v2 and v3 of dhcpd:
 o Modify rcS to do a ping loop instead of a 35s timeout.  When a ping
   succeeds, break out of the loop and proceed.
 o Modify etc/issue in inird.gz
+o getimage: add a -check-for-bad-blocks-during-install option
 
 
 
@@ -218,20 +219,6 @@ o rmimage
 John Chabalko <john.chabalko@nbci.com> / <johnchabalko@hotmail.com>
 Committed to task: Thur Mar 8, 2001  
 -------------------------------------------------------------------
-o lsimage 
-  (3/19/2001 - first review)
-  (3/26/2001 - next review)
-  o usage: lsimage [OPTIONS]
-  o essentially does an: 
-     "rsync $server::"
-    and returns the output.
-  o assumes $server="localhost" if -server not specified.
-  o OPTIONS:
-    -help
-    -verbose
-    -quiet
-    -server IMAGESERVER
-
 
 Austin Gonyou <austin@coremetrics.com> 
 Wed Mar 21 12:19:10 CST 2001  
