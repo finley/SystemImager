@@ -1175,7 +1175,7 @@ sub write_sc_command {
     else {
 	## FIXME - is --excludesto only for the static method? 
 	## currently, 
-	$sc_cmd .= " --configsi --stdin << EOF";
+	$sc_cmd .= " --configsi --stdin << EOL";
     }
     $sc_cmd .= " || shellout";
 
@@ -1206,19 +1206,6 @@ sub write_sc_command {
     print $out "EOL\n";
 }
 
-my $beep_code = <<'EOL';
-# Cause the system to make noise and display an "I'm done." message
-ralph="sick"
-count="1"
-while [ $ralph="sick" ]
-do
-    echo -n -e "\\a"
-    [ $count -lt 60 ] && echo "I've been done for $count seconds.  Reboot me already!"
-    [ $(($count / 60 * 60)) = $count ] && echo "I've been done for $(($count / 60)) minutes now.  Reboot me already!"
-    sleep 1
-    count=$(($count + 1))
-done
-EOL
 
 sub create_autoinstall_script{
 
@@ -1307,19 +1294,20 @@ sub create_autoinstall_script{
 	  }
 	  if (/^\s*${delim}POSTINSTALL${delim}\s*/) {
 	      
-	      if ($post_install eq "beep") {
-		  print $MASTER_SCRIPT $beep_code;
-              } elsif ($post_install eq "reboot") {
-		  #reboot stuff
-		  print $MASTER_SCRIPT "# reboot the autoinstall client\n";
-		  print $MASTER_SCRIPT "shutdown -r now\n";
-	      } elsif ($post_install eq "shutdown") {
-		  #shutdown stuff
-		  print $MASTER_SCRIPT "# shutdown the autoinstall client\n";
-		  print $MASTER_SCRIPT "shutdown -h now\n";
-		  print $MASTER_SCRIPT "\n";
-	      }
-	      last SWITCH;
+          if ($post_install eq "beep") {
+              # beep incessantly stuff
+              print $MASTER_SCRIPT "beep_incessantly";
+          } elsif ($post_install eq "reboot") {
+              # reboot stuff
+              print $MASTER_SCRIPT "# reboot the autoinstall client\n";
+              print $MASTER_SCRIPT "shutdown -r now\n";
+          } elsif ($post_install eq "shutdown") {
+              # shutdown stuff
+              print $MASTER_SCRIPT "# shutdown the autoinstall client\n";
+              print $MASTER_SCRIPT "shutdown -h now\n";
+              print $MASTER_SCRIPT "\n";
+          }
+          last SWITCH;
 	  }
 	### END end of autoinstall options ###
 	print $MASTER_SCRIPT $_;
