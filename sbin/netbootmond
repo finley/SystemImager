@@ -10,10 +10,12 @@
 
 use lib "USR_PREFIX/lib/systemimager/perl";
 use strict;
+use File::Copy;
 use POSIX qw(setsid);
 use SystemImager::Config;
 use SystemImager::Server;
 use vars qw($config $VERSION);
+
 
 my $net_boot_default = lc $config->net_boot_default();
 if("$net_boot_default" eq "net") {
@@ -112,7 +114,7 @@ sub create_no_boot_symlink {
     #print "ip_hex: $ip_hex\n";
 
     unlink("$pxe_conf_dir/$ip_hex");
-    symlink("$syslinux_cfg_noboot", "$pxe_conf_dir/$ip_hex");
+    copy("$syslinux_cfg_noboot", "$pxe_conf_dir/$ip_hex");
     
 }
 
