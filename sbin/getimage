@@ -537,7 +537,7 @@ if (@software_raid_devices) {
   print MASTER_SCRIPT "\n";
 
   print MASTER_SCRIPT "# Stop RAID devices before partitioning begins\n";
-  foreach $device_file (sort (@software_raid_devices)) {
+  foreach my $device_file (sort (@software_raid_devices)) {
     # Why did they get started in the first place?  So we can pull a local.cfg
     # file off a root mounted RAID system.  raidstop must live on the autoinstall
     # media.
@@ -623,7 +623,7 @@ foreach $disk (@disks)  {
 ### BEGIN Write out software RAID device creation commands ###
 if (@software_raid_devices) {
   print MASTER_SCRIPT "# create software RAID devices\n";
-  foreach $device_file (sort @software_raid_devices) {
+  foreach my $device_file (sort @software_raid_devices) {
     print MASTER_SCRIPT "mkraid --really-force $device_file\n";
   }
   print MASTER_SCRIPT "\n";
@@ -634,7 +634,7 @@ if (@software_raid_devices) {
 ### BEGIN Write out swap creation commands ###
 if (@swap_devices) {
   print MASTER_SCRIPT "# initialize swap devices\n";
-  foreach $device_file (sort @swap_devices) {
+  foreach my $device_file (sort @swap_devices) {
     print MASTER_SCRIPT "mkswap -v1 $device_file\n";
   }
   print MASTER_SCRIPT "\n";
@@ -645,7 +645,7 @@ if (@swap_devices) {
 ### BEGIN Write out ext2 creation commands ###
 if (@ext2_devices) {
   print MASTER_SCRIPT "# format ext2 devices\n";
-  foreach $device_file (sort @ext2_devices) {
+  foreach my $device_file (sort @ext2_devices) {
     print MASTER_SCRIPT "mke2fs $device_file\n";
   }
   print MASTER_SCRIPT "\n";
@@ -656,7 +656,7 @@ if (@ext2_devices) {
 ### BEGIN Write out ext3 creation commands ###
 if (@ext3_devices) {
   print MASTER_SCRIPT "# format ext3 devices\n";
-  foreach $device_file (sort @ext3_devices) {
+  foreach my $device_file (sort @ext3_devices) {
     print MASTER_SCRIPT "mke2fs $device_file\n";
   }
   print MASTER_SCRIPT "\n";
@@ -671,7 +671,7 @@ if (@reiserfs_devices) {
   print MASTER_SCRIPT "rsync -av \$DHCPSIADDR::tftpboot/systemimager/mkreiserfs /tmp/\n";
   print MASTER_SCRIPT "\n";
   print MASTER_SCRIPT "# format reiserfs devices\n";
-  foreach $device_file (sort @reiserfs_devices) {
+  foreach my $device_file (sort @reiserfs_devices) {
     print MASTER_SCRIPT "# rupasov is the default, but we are explicit here anyway\n";
     print MASTER_SCRIPT "echo \"y\" | mkreiserfs -h rupasov $device_file\n";
   }
@@ -684,7 +684,7 @@ if (@reiserfs_devices) {
 # be sure to pre-pend /a to each target directory being created
 print MASTER_SCRIPT "# create mount points and mount filesystems\n";
 foreach $mount_point (sort (@mount_points)) {
-  $device_file = $device_file_by_mount_point{$mount_point};
+  my $device_file = $device_file_by_mount_point{$mount_point};
   print MASTER_SCRIPT "mkdir -p /a$mount_point/\n";
   print MASTER_SCRIPT "mount $device_file /a$mount_point/\n";
   print MASTER_SCRIPT "\n";
