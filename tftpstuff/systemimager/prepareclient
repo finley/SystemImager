@@ -1,9 +1,23 @@
-#!/bin/sh
+#!/usr/bin/perl
+
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
  
-#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+ 
+#   You should have received a copy of the GNU General Public License
+#   along with this program; if not, write to the Free Software
+#   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
 # "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org> 
 #
-# Others who have contributed to this code (in alphabetical order):
+# Sean Dague <sean@dague.net>
+#   This is a port to Perl of the original Bash script written by Brian Elliott Finley and 
 #   Jose AP Celestino <japc@sl.pt>
 #
 # This file: prepareclient
@@ -11,144 +25,60 @@
 #             image retrieved by an imageserver)
 #
 
+use strict;
+use Carp;
+use POSIX;
+use File::Copy;
+use File::Path;
+use AppConfig;
+use vars qw($VERSION);
 
 # set version
-version_number=SYSTEMIMAGER_VERSION_STRING
+$VERSION = "2.1.0";
 
 # configuration directory
-systemimagerdir="/etc/systemimager"
+my $systemimagerdir = "/etc/systemimager";
 
 # set path
-PATH=/bin:/usr/bin:/sbin:/usr/sbin
+$ENV{PATH} = "/bin:/usr/bin:/sbin:/usr/sbin";
 
- 
-### BEGIN functions
-# SystemImager specific functions
-create_rsyncd_conf() {
-  echo '#'                                                      > $rsyncd_conf_file
-  echo '# Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>'    >> $rsyncd_conf_file
-  echo '#'                                                      >> $rsyncd_conf_file
-  echo '# This file: /tmp/rsyncd.conf'                          >> $rsyncd_conf_file
-  echo '#'                                                      >> $rsyncd_conf_file
-  echo ''                                                       >> $rsyncd_conf_file
-  echo 'list = yes'                                             >> $rsyncd_conf_file
-  echo 'timeout = 600'                                          >> $rsyncd_conf_file
-  echo 'dont compress = *.gz *.tgz *.zip *.Z *.ZIP *.bz2 *.deb *.rpm *.dbf'  >> $rsyncd_conf_file
-  echo 'uid = root'                                             >> $rsyncd_conf_file
-  echo 'gid = root'                                             >> $rsyncd_conf_file
-  echo ''                                                       >> $rsyncd_conf_file
-  echo '[root]'                                                 >> $rsyncd_conf_file
-  echo '    path = /'                                           >> $rsyncd_conf_file
-  echo ''                                                       >> $rsyncd_conf_file
-}
+my $config = new AppConfig(
+                           'quiet' => {ARGCOUNT => 0, DEFAULT => 0, ALIAS => 'q'},
+                           'help' => {ARGCOUNT => 0, DEFAULT => 0, ALIAS => 'h|?'},
+                           'norsyncd' => {ARGCOUNT => 0, DEFAULT => 0, ALIAS => 'n|no-rsyncd'},
+                           'explicit' => {ARGCOUNT => 0, DEFAULT => 0, ALIAS => 'e|explicit-geometry'},
+                           'version' => {ARGCOUNT => 0, DEFAULT => 0, ALIAS => 'v'},
+                           'rpm' => {ARGCOUNT => 0, DEFAULT => 0, ALIAS => 'r|rpm-install'},
+                          );
 
-show_version() {
-  echo "prepareclient (part of SystemImager) version $version_number"
-  echo ""
-  echo "Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>"
-  echo "This is free software; see the source for copying conditions.  There is NO"
-  echo "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."
-}
-
-show_usage() {
-  show_version
-  echo ''
-  echo 'Usage: prepareclient [OPTION]...'
-  echo ''
-  echo 'Options: (only one option is taken)'
-  echo ' -version                 Display version and copyright information.'
-  echo ' -h, -help                Display this output.'
-  echo ' -e, -explicit-geometry   Leave partition information for getimage'
-  echo '                          using explicit disk geometry.  The default'
-  echo '                          is to use megabytes which allows getimage'
-  echo '                          to create an autoinstall script that will'
-  echo '                          work with client disks of different geometries'
-  echo '                          and sizes (within reason).'
-  echo ' -n, -no-rsyncd           Do not start the rsync daemon.'
-  echo ' -q, -quiet               Run silently.  Return an exit status of 0 for'
-  echo '                          success or a non-zero exit status for failure.'
-  echo ' -r, -rpm-install         This is only used when building an RPM.'
-  echo ''
-  echo 'Download, report bugs, and make suggestions at:'
-  echo 'http://systemimager.org/'
-
-}
-
-create_devices_by_label_file() {
-
-  rm -f /etc/systemimager/ext2_devices_by_label.txt
-  rm -f /etc/systemimager/devices_by_label.txt
-
-  # sed command below uses a literal tab: <ctrl>+<v>, then <tab>
-  LABELS=`
-	  sed 's/	/ /' /etc/fstab | \
-	  grep -v '^ *#'                | \
-	  grep 'LABEL='                 | \
-	  awk '{print $1}'
-	 `
-  for LABEL in $LABELS; do
-    # sed command below uses a literal tab: <ctrl>+<v>, then <tab>
-    MOUNT_POINT=`
-		 sed 's/	/ /' /etc/fstab | \
-		 grep -v '^ *#'                 | \
-                 grep "$LABEL "                 | \
-		 awk '{print $2}'
-		`
-
-    # sed command below uses a literal tab: <ctrl>+<v>, then <tab>
-    DEVICE=`
-            sed 's/	/ /' /etc/systemimager/mounted_filesystems | \
-            grep "$MOUNT_POINT "                                   | \
-	    awk '{print $1}'
-	   `
-    echo $LABEL $DEVICE >> /etc/systemimager/devices_by_label.txt
-  done
-}
-### END functions
- 
-
-# default is an interactive install (nothing goes over the network any more)
-QUIET="false"
-HELP="false"
-NO_RSYNCD="false"
-SHOW_VERSION="false"
-EXPLICIT="no"
-
-# if only one option is given, verify it as a proper one
-for cl_option ; do
-  case $cl_option in
-    -r | -rpm-install | --rpm-install          	) QUIET="true" ;;
-    -q | -quiet | --quiet                      	) QUIET="true" ;;
-    -e | -explicit-geometry | --explicit-geometry	) EXPLICIT="yes" ;;
-    -h | -help | --help                        	) HELP="true" ;;
-    -n | -no-rsyncd | --no-rsyncd              	) NO_RSYNCD="true" ;;
-    -version | --version                       	) SHOW_VERSION="true" ;;
-  esac
-done
+$config->args();
 
 # show version if requested
-if [ "$SHOW_VERSION" = "true" ]; then
-    show_version
-    exit 0
-fi
+if($config->version) {
+    version();
+    exit(0);
+}
 
 # give help if requested
-if [ "$HELP" = "true" ]; then
-    show_usage
-    exit 0
-fi
+if($config->help) {
+    usage();
+    exit(0);
+}
 
-# if not run as root, install will surely fail
-[ "$QUIET" = "false" ] && [ `whoami` != "root" ] && echo "Must be run as root!" && exit 1
-[ "$QUIET" = "true" ] && [ `whoami` != "root" ] && exit 1
+# bail if not root
+croak("Must be run as root!") if ($> != 0);
 
- 
-# do introduction
-if [ "$QUIET" = "false" ]; then
- clear
- cat << 'EOF'
+# -rpm-install appeared to be the same as -no-rsyncd.  Until
+# proven otherwise, we assume that to be true.
+if($config->rpm) {
+    $config->set('norsyncd',1);
+}
+
+unless($config->quiet) {
+    # do the interactive part
+    print <<EOF;
 Welcome to the SystemImager prepareclient command.  This command
-may modify the following files to prepare your client for having it's
+may modify the following files to prepare your client for having its
 image retrieved by the imageserver.  It will also create the 
 /etc/systemimager directory and fill it with information about your 
 golden client, such as the disk partitioning scheme(s). 
@@ -165,188 +95,60 @@ extension.
 See "prepareclient -help" for command line options.
 
 EOF
-
- # you sure you want to install?
- echo -n "Prepare client for SystemImager? (y/[n]): "
- read REPLY
- case $REPLY in
-  y|Y|Yes|yes|YES ) echo Ok.  Preparing client for SystemImager... ;;
-  * ) echo Client preparation cancelled.  No files modified. && exit 1 ;;
- esac
- echo
- sleep 2
-fi
-
+  
+  # you sure you want to install?
+    print "Prepare client for SystemImager? (y/[n]): ";
+    my $answer = <>;
+    unless($answer =~ /y/i) {
+        croak("Client prepartion cancelled.  No files modified.");
+    }
+}
+ 
 # verify that rsync entry is in /etc/services
-egrep -q ^rsync /etc/services
-if [ $? != "0" ]; then
-  if [ ! -f /etc/services.beforesystemimager ]; then
-    [ "$QUIET" = "false" ] && echo "Backing up /etc/services to /etc/services.beforesystemimager ..."
-    cp /etc/services /etc/services.beforesystemimager
-  fi
-  echo "rsync           873/tcp                         # rsync" >> /etc/services
-  echo "rsync           873/udp                         # rsync" >> /etc/services
-fi 
+add_rsync_services();
 
 # comment out rsync entry in inetd.conf if it exists
-RESTART_INETD="false"
-egrep -q ^rsync /etc/inetd.conf > /dev/null 2>&1
-if [ $? = "0" ]; then
-  if [ ! -f /etc/inetd.conf.beforesystemimager ]; then
-    [ "$QUIET" = "false" ] && echo "Backing up /etc/inetd.conf to /etc/inetd.conf.beforesystemimager ..."
-    cp /etc/inetd.conf /etc/inetd.conf.beforesystemimager
-  fi
-  sed 's/^rsync/#rsync/' /etc/inetd.conf > /tmp/.systemimager
-  cp /tmp/.systemimager /etc/inetd.conf
-  rm /tmp/.systemimager
-  RESTART_INETD="true"
-fi 
-# comment out rsync entry in inetd.conf if it exists
+remove_rsync_inetd();
 
+# get rid of xinetd configuration for rsync if it exits
+remove_rsync_xinetd();
 
 # location of rsyncd.conf file
-rsyncd_conf_file="/tmp/rsyncd.conf"
+my $rsyncd_conf_file = "/tmp/rsyncd.conf";
 
 # install SystemImager brand rsyncd.conf file ($rsyncd_conf_file)
-[ "$QUIET" = "false" ] && [ "$NO_RSYNCD" = "false" ] && echo "Creating $rsyncd_conf_file ..."
-[ "$NO_RSYNCD" = "false" ] && create_rsyncd_conf
-# install SystemImager brand rsyncd.conf file
-
-
-# signal inetd to re-read /etc/inetd.conf
-if [ "$RESTART_INETD" = "true" ]; then
-    if [ "$QUIET" = "false" ]; then
-      echo -n "Signalling inetd to re-read /etc/inetd.conf: "
-      echo
-    fi
-    PID_OF_INETD=`pidof inetd`
-    [ ! -z $PID_OF_INETD ] && kill -HUP $PID_OF_INETD
-fi
-# signal inetd to re-read /etc/inetd.conf
+create_rsyncd_conf($rsyncd_conf_file) unless $config->norsyncd;
 
 # test for hostname in hosts file -- this is necessary for rsyncd to run
-HOSTNAME=`uname -n`
-egrep -q $HOSTNAME /etc/hosts
-if [ "$?" != "0" ]; then
-   echo
-   echo "******************************* WARNING *******************************"
-   echo "This hosts name: \"$HOSTNAME\" must appear in the /etc/hosts file in"
-   echo "order for me to crank up the rsyncd daemon.  rsync doesn't seem to be"
-   echo "particular about the hostname being associated with an appropriate IP"
-   echo "address, it just wants to see the hostname in there somewhere..."
-   echo 
-   echo "-The Mgmt."
-   echo "******************************* WARNING *******************************"
-   echo
-   echo "An entry like the one below will usually work fine:"
-   echo "127.0.0.1  \"$HOSTNAME\""
-   echo
-   echo -n "Would you like me to add this entry for you? (y/[n]): "
+add_hosts_entry();
 
-   read REPLY
-   case $REPLY in
-     y|Y|Yes|yes|YES ) echo Ok.  Adding entry to /etc/hosts...
-                       echo "127.0.0.1  $HOSTNAME" >> /etc/hosts
-                       ;;
+# if we are supposed to setup rsyncd, then kill the old daemons, wait
+# for them to stop, then start the new one.
+if(!$config->norsyncd) {
+    killall("rsync",1);
+    killall("rsyncd",1);
+    if(!$config->quiet) {
+        print "Starting or re-starting rsync as a daemon";
+        for (qw(1 2 3 4 5)) {
+            print '.';
+            sleep 1;
+        }
+    }
+    system("rsync --daemon --config=$rsyncd_conf_file");
+    print "done!\n";
+}
 
-     * ) echo Please add an entry for \"$HOSTNAME\" and run "prepareclient" again.
-         exit 1
-	 ;;
+# Collect all the disk information
+my $disks = collect_disks();
 
-   esac
-fi
-
-# restart rsync as a daemon
-killall rsync rsyncd > /dev/null 2>&1
-[ "$QUIET" = "false" ] && [ "$NO_RSYNCD" = "false" ] && echo -n Starting or re-starting rsync as a daemon
-for i in 1 2 3 4 5; do 
-    [ "$QUIET" = "false" ] && [ "$NO_RSYNCD" = "false" ] && echo -n .
-    [ "$NO_RSYNCD" = "false" ] && sleep 1s
-done
-[ "$QUIET" = "false" ] && [ "$NO_RSYNCD" = "false" ] && echo done!
-[ "$NO_RSYNCD" = "false" ] && rsync --daemon --config=$rsyncd_conf_file
-# restart rsync as a daemon
-
-
-### BEGIN get list of IDE and SCSI disks ###
-ide_and_scsi_disks=`
-
-# extract SCSI and IDE disk device partitions
-egrep [hs]d[a-z][0-9] /proc/partitions | awk '{print $4}' | \
-
-# strip out partition numbers
-sed -e 's/[0-9]//g' | \
-
-# show each unique device only once
-sort -u
-`
-### END get list of IDE and SCSI disks ###
-
-### BEGIN get list of IDE and SCSI disks on Devfs ###
-if ls /dev/discs/* 2>/dev/null; then
-    # for devfs there should be a /dev/discs directory, so we now
-    # assume that the /dev/hd and /dev/sd compatibility is turned
-    # on.
-    ide_and_scsi_disks=`ls -1 /dev/[sh]d? | sed -e 's/\/dev\///g' | awk '{print $1}' | sort -u`
-fi
-
-
-### BEGIN get list of hardware RAID "disks" ###
-hardware_raid_disks=`
-
-# extract hardware RAID disk device partitions
-egrep c[0-9]+d[0-9]+p /proc/partitions | awk '{print $4}' | \
-
-# strip out partition numbers
-sed -e 's/p[0-9][0-9]*//' | \
-
-# show each unique device only once
-sort -u
-`
-### END get list of hardware RAID "disks" ###
-
-
-### BEGIN leave disk info behind for "getimage" script ###
 # clean up after last "prepare"
-rm -fr $systemimagerdir/partitionschemes/
+rmtree("$systemimagerdir/partitionschemes");
+mkpath("$systemimagerdir/partitionschemes");
 
-# create receiving directory for SCSI and IDE disk info
-[ "x$ide_and_scsi_disks" != "x" ] && mkdir -p $systemimagerdir/partitionschemes
+# Create the files in /etc/systemimager/partitionschemes from
+# the $disks structure
+create_diskfiles($disks);
 
-# create receiving directory for Hardware RAID disk info
-[ "x$hardware_raid_disks" != "x" ] && mkdir -p $systemimagerdir/partitionschemes/rd
-
-# get sfdisk to report IDE and SCSI disk partition info
-for disk in $ide_and_scsi_disks
-do
- # Specify sectors explicitly -- this format may be used in the future
- # for partitioning with MB.
- if [ "$EXPLICIT" = "yes" ]; then
-   sfdisk -l -uS /dev/$disk > $systemimagerdir/partitionschemes/$disk
- else
-    if ls -l /dev/$disk | grep -v '/cd' 2>/dev/null; then
-        sfdisk -l -uM /dev/$disk > $systemimagerdir/partitionschemes/$disk
-    fi
- fi
-done
-
-# get sfdisk to report Hardware RAID disk info
-for disk in $hardware_raid_disks
-do
- # must do some funkification for sfdisk to report properly
- ln -s /dev/$disk /dev/$disk"p"
-
- # Specify sectors explicitly -- this format may be used in the future
- # for partitioning with MB.
- if [ "$EXPLICIT" = "yes" ]; then
-   sfdisk -l -uS /dev/$disk"p" > $systemimagerdir/partitionschemes/$disk
- else
-   sfdisk -l -uM /dev/$disk"p" > $systemimagerdir/partitionschemes/$disk
- fi
-
- # get rid of the funkification
- rm -f /dev/$disk"p"
-done
 ### END leave disk info behind for the getimage command ###
 
 # A list of mounted filesystems is needed to determine which 
@@ -357,22 +159,341 @@ done
 # In the case that /etc/mtab is a symlink to /proc/mounts.  This 
 # method should still work.  This file is also left behind 
 # for getimage.
-mount > /etc/systemimager/mounted_filesystems
+system("mount > /etc/systemimager/mounted_filesystems");
 
 # get a list of LABELled devices if any
-create_devices_by_label_file
+create_label_file();
 
 # wrap up
-if [ "$QUIET" = "false" ] && [ "$NO_RSYNCD" = "false" ]; then
- echo
- echo "This client is ready to have it's image retrieved."
- echo "You must now run the \"getimage\" command on the imageserver."
-fi
+if(!$config->quiet and !$config->norsyncd) {
+    print <<EOF;
+This client is ready to have its image retrieved.
+You must now run the "getimage" command on the imageserver.
+EOF
 
-if [ "$QUIET" = "false" ] && [ "$NO_RSYNCD" = "true" ]; then
- echo "Warning:  The rsync daemon was not started.  You must run"
- echo "prepareclient again, without the -n option, before you can"
- echo "pull it's image to an imageserver."
- echo
-fi
-exit 0
+} elsif(!$config->quiet) {
+    print <<EOF;
+Warning:  The rsync daemon was not started.  You must run
+prepareclient again, without the -n option, before you can
+pull its image to an imageserver.
+EOF
+
+}
+
+exit(0);
+
+### BEGIN functions
+# SystemImager specific functions
+
+sub collect_disks {
+    open(IN,"</proc/partitions") or croak("Couldn't open /proc/partitions for reading.");
+    my $disks;
+    my $devfsscsi = 0;
+    while(<IN>) {
+        if(/(\S*c[0-9]+d[0-9]+)p[0-9]+/) { # hardware raid devices
+            $disks->{HWRAID}->{$1}++;
+        } elsif (/(\S*[hs]d[a-z])[0-9]/) { # standard disk devices
+            $disks->{IDESCSI}->{$1}++;
+        } elsif (/\b(ide\/host\S+disc)\b/) { # devfs standard for ide disk devices
+            # now strip off the partition number
+            $disks->{IDESCSI}->{devfs_transform($1)}++;
+        } elsif (/\b(scsi\/host\S+disc)\b/) { # devfs standard for scsi disk devices
+            # if we have a devfs scsi disk and we want to get
+            # back to old school format, we just count up each disk
+            # and assign it to /dev/sdN in order
+            $disks->{IDESCSI}->{"/dev/sd" . chr(97 + $devfsscsi)}++;
+            $devfsscsi++;
+        }
+    }
+    close(IN);
+    return $disks;
+}
+
+sub create_diskfiles {
+    my $disks = shift;
+
+    # First we do the HardWare RAID devices
+
+    foreach my $disk (sort keys %{$disks->{HWRAID}}) {
+        # must do some funkification for sfdisk to report properly
+        symlink "/dev/$disk", "/dev/$disk"."p";
+
+        # If explicit was specified then we have to deal with sectors
+        # instead of Megabytes
+        my $cmd;
+        if($config->explicit) {
+            $cmd = "sfdisk -l -uS /dev/$disk" . "p > $systemimagerdir/partitionschemes/$disk";
+        } else {
+            $cmd = "sfdisk -l -uM /dev/$disk" . "p > $systemimagerdir/partitionschemes/$disk";
+        }
+        system($cmd);
+        # get rid of the funk
+        unlink  "/dev/$disk"."p";
+    }
+
+    # Now we do the normal devices
+     foreach my $disk (sort keys %{$disks->{IDESCSI}}) {
+
+        # If explicit was specified then we have to deal with sectors
+        # instead of Megabytes
+        my $cmd;
+        if($config->explicit) {
+            $cmd = "sfdisk -l -uS /dev/$disk > $systemimagerdir/partitionschemes/$disk";
+        } else {
+            $cmd = "sfdisk -l -uM /dev/$disk > $systemimagerdir/partitionschemes/$disk";
+        }
+        system($cmd);
+    }
+    return 1;
+}
+
+sub devfs_transform {
+    my $devfsentry = shift;
+    my ($type, $host, $bus, $target, $lun, $part) = split(/\//,$devfsentry);
+    # get rid of the keywords in the sections
+    $bus =~ s/\D+//g;
+    $target =~ s/\D+//g;
+    $part =~ s/\D+//g;
+    my $realentry = "hd";
+    my $total = $bus * 2 + $target;
+
+    # now we add the real entry... remembering that chr(97) == 'a'
+    $realentry .= chr(97 + $total);
+    # add the partition number.  $part should always be blank, but
+    # it is here for completeness sake
+    $realentry .= $part;
+
+    return $realentry;
+}
+
+sub remove_rsync_xinetd {
+    # this is the trouble file in an xinted environment
+    my $file = "/etc/xinetd.d/rsync";
+    if(-e $file) {
+        unlink $file;
+        print "Signaling xinetd to restart...\n" unless($config->quiet);
+        killall('xinetd',1); # Send SIGHUP to all xinetd processes
+    }
+    return 1;
+}
+
+sub remove_rsync_inetd {
+    my $file = "/etc/inetd.conf";
+    my $rsyncfound = 0;
+    my $inetdcontents = "";
+    
+    # get out of here if inetd.conf doesn't exist
+    return 1 if(!-e $file);
+    
+    open(IN,"<$file") or croak("Couldn't open $file for reading.");
+    while(<IN>) {
+        if(s/^rsync/\#rsync/) {
+            $rsyncfound = 1;
+        }
+        $inetdcontents .= $_;
+    }
+    close(IN);
+    
+    return 1 unless($rsyncfound);
+    
+    backup_file($file) or croak("Couldn't back up $file.");
+    open(OUT,">$file") or croak("Couldn't open $file for writing.");
+    print OUT $inetdcontents;
+    close(OUT);
+
+    print "Signaling inetd to restart...\n" unless($config->quiet);
+    killall('inetd',1); # sends SIGHUP to all inetd processes
+    return 1;
+}
+
+sub add_hosts_entry {
+    my $hostname = (uname)[1];
+    my $file = "/etc/hosts";
+    open(IN,"<$file") or croak("Couldn't open $file for reading");
+    my @hosts = <IN>;
+    close(IN);
+    if(grep(/$hostname/,@hosts)) {
+        return 1;
+    }
+    # do we change the file?  not yet?
+    my $goforit = 0;
+    if($config->quiet) {
+        # we assume that if they are running silent, then they really
+        # do want this to be changed.
+        $goforit = 1;
+    } else {
+        print <<EOF;
+ ******************************* WARNING *******************************
+ This hosts name: "$hostname" must appear in the /etc/hosts file in
+ order for me to crank up the rsyncd daemon.  rsync does not seem to be
+ particular about the hostname being associated with an appropriate IP
+ address, it just wants to see the hostname in there somewhere...
+
+ -The Mgmt.
+ ******************************* WARNING *******************************
+
+ An entry like the one below will usually work fine:
+ 127.0.0.1  "$hostname"
+
+EOF
+        print "Would you like me to add this entry for you? (y/[n]):";
+        my $answer = <>;
+        if($answer =~ /y/i) {
+            $goforit = 1;
+        }
+    }
+    
+    # if we got the go ahead, then write the entry to the hosts file
+    if($goforit) {
+        push @hosts, "127.0.0.1  $hostname\n";
+        open(OUT,">$file") or croak("Couldn't open $file for writing.");
+        print OUT @hosts;
+        close(OUT);
+    }
+    return 1;
+}
+
+sub add_rsync_services {
+    my $file = "/etc/services";
+    open(IN,"<$file") or croak("Couldn't open $file for reading");
+   
+    my @services = <IN>;
+    close(IN);
+    return 1 if(grep(/^rsync/,@services));
+
+    backup_file("$file") or croak("Couldn't back up file $file.");
+    
+    open(OUT,">>$file") or croak("Couldn't open $file for appending");
+    print OUT <<EOF;
+rsync           873/tcp                         # rsync
+rsync           873/udp                         # rsync
+EOF
+
+    close(OUT);
+    return 1;
+} 
+
+sub backup_file {
+    my $file = shift;
+    my $newfile = $file . ".beforesystemimager";
+    return 1 if(-e $newfile);
+    
+    if(!$config->quiet) {
+        print "Backing up $file to $newfile....\n";
+    }
+    return copy($file,$newfile);
+}
+
+sub create_rsyncd_conf {
+    my $file = shift;
+    open(OUT,">$file") or croak("Couldn't open file $file");
+    print OUT <<EOF;
+#
+# Copyright (C) 1999-2001 Brian Elliott Finley <brian\@systemimager.org>
+#
+# This file: /tmp/rsyncd.conf
+#
+list = yes
+timeout = 600
+dont compress = *.gz *.tgz *.zip *.Z *.ZIP *.bz2 *.deb *.rpm *.dbf
+uid = root
+gid = root
+
+[root]
+    path = /
+
+EOF
+
+  close(OUT);
+}
+
+sub killall {
+    my ($pname,$signal) = @_;
+    my @list = split(/\s+/,`pidof $pname`);
+    if(scalar(@list)) {
+        kill $signal, @list;
+    }
+}
+
+
+sub version {
+    print <<EOF;
+prepareclient (part of SystemImager) version $VERSION
+
+Copyright (C) 1999-2001 Brian Elliott Finley <brian\@systemimager.org>
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+EOF
+}
+
+sub usage {
+    version();
+    print <<EOF;
+
+Usage: prepareclient [OPTION]...
+
+Options: (only one option is taken)
+ -version                 Display version and copyright information.
+ -h, -help                Display this output.
+ -e, -explicit-geometry   Leave partition information for getimage
+                          using explicit disk geometry.  The default
+                          is to use megabytes which allows getimage
+                          to create an autoinstall script that will
+                          work with client disks of different geometries
+                          and sizes (within reason).
+ -n, -no-rsyncd           Do not start the rsync daemon.
+ -q, -quiet               Run silently.  Return an exit status of 0 for
+                          success or a non-zero exit status for failure.
+ -r, -rpm-install         This is only used when building an RPM.
+
+Download, report bugs, and make suggestions at:
+http://systemimager.org/
+
+EOF
+}
+
+sub create_label_file {
+    unlink("/etc/systemimager/ext2_devices_by_label.txt");
+    unlink("/etc/systemimager/devices_by_label.txt");
+
+    my %mountlabels = ();
+
+    open(IN,"</etc/fstab") or croak("Couldn't open /etc/fstab for reading.");
+    while(<IN>) {
+        if(/^\s*\#/) {
+            next;
+        }
+        if(/LABEL=(\S+)\s+(\S+)/) {
+            $mountlabels{$2} = {
+                                LABEL => $1,
+                               };
+        }
+    }
+    close(IN);
+
+    open(IN,"<$systemimagerdir/mounted_filesystems") or croak("Couldn't open $systemimagerdir/mounted_filesystems for reading.");
+    while(<IN>) {
+        if(/^(\S+)\s+on\s+(\S+)/) {
+            if($mountlabels{$2}->{LABEL}) {
+                $mountlabels{$2}->{DEVICE} = $1;
+            }
+        }
+    }
+    close(IN);
+
+    return if(!scalar keys %mountlabels); # This gets us out if there aren't any lables
+
+    open(OUT,">$systemimagerdir/devices_by_label.txt") or 
+      croak("Can't open $systemimagerdir/devices_by_label.txt for writing.");
+    
+    # The odd sort is here so that the end file looks propper.  There probably is no real
+    # need for it except to make the files a little more human friendly.
+    
+    foreach my $mount (sort {$mountlabels{$a}->{LABEL} cmp $mountlabels{$b}->{LABEL}} keys %mountlabels) {
+        print OUT "$mountlabels{$mount}->{LABEL} $mountlabels{$mount}->{DEVICE}\n";
+    }
+    close(OUT);
+
+    return 1;
+}
+### END functions
