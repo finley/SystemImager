@@ -1,7 +1,5 @@
 #!/usr/bin/perl -w
 #
-# "SystemImager"
-#  
 #  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
 #  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
 #  Copyright (C) 2001 Sean Dague <sean@dague.net>
@@ -30,7 +28,6 @@
 
 use strict;
 use Carp;
-use AppConfig;
 use Getopt::Long;
 use POSIX qw(uname);
 use File::Temp;
@@ -38,9 +35,13 @@ use File::Temp;
 use lib qw(/usr/lib/systemimager/perl);
 use SystemImager::Config;
 use SystemImager::Common;
-use Media;
 
-use vars qw($config $VERSION);
+use BootMedia::BootMedia;
+
+use lib qw(/usr/lib/systemconfig);
+use Util::Log qw(:all);
+
+use vars qw($config $VERSION $VERBOSE);
 
 $ENV{PATH} = "/usr/local/sbin:/usr/sbin:/sbin:/usr/local/bin:/usr/bin:/bin";
 
@@ -78,8 +79,7 @@ GetOptions(
 
 if($help) { usage() and exit(0); }
 
-my $verbose_level = 1;
-if ($quiet) { $verbose_level = 0; }
+start_verbose() unless $quiet;
 
 if($version) { version() and exit(0); }
 
@@ -89,7 +89,13 @@ unless($< == 0) {
     exit 1;
 }
 
-($type eq "cd" or $type eq "floppy") or die "Invalid media type";
+my %spec = ( kernel => "",
+	     initrd => "",
+	     append_string => "",
+	     message => ""
+	     );
+
+($type and $type eq "cd" or $type eq "floppy") or die "Invalid media type";
     
 # If -arch was not specified on the command line, get it from the system. -BEF-
 unless ($arch) {
@@ -98,7 +104,7 @@ unless ($arch) {
 }
 
 # Do we have a supported architecture? -BEF-
-$arch =~ /^(i386|ia64)$/ or
+$arch =~ /^(i386|ia64|alpha)$/ or
     die("\nI'm terribly sorry, but I don't yet know how to make autoinstall media\n for the \"$arch\" architecture.\n");
 
 $out_file or usage() and die "Output file not specified!";
@@ -108,8 +114,8 @@ unless ($kernel and $initrd) {
 	SystemImager::Common->get_boot_flavors($arch, $autoinstall_boot_dir);
     
     unless (%available_flavors) {
-	print qq(\nI couldn't find any boot flavors for SystemImager on $arch.\n);
-        print qq(Please install the appropriate boot files.\n\n);
+	print "I couldn't find any boot flavors for SystemImager on $arch.\n";
+        print "Please install the appropriate boot files.\n\n";
         exit 1;
     }
 
@@ -143,40 +149,29 @@ unless ($kernel and $initrd) {
     if (! $kernel) { $kernel = "$bin_dir/kernel"; }
     if (! $initrd) { $initrd = "$bin_dir/initrd.img"; }
 }
-my $msg = "/etc/systemimager/pxelinux.cfg/message.txt";
--e $kernel or die "$kernel does not exist.";
--e $initrd or die "$initrd does not exist";
--e $msg or die "$msg does not exist";
 
-my %files = (
-    $kernel => "kernel", 
-    $initrd => "initrd.img",
-    $msg    => "message.txt",
-);
-if ($local_cfg) { $files{$local_cfg} = "local.cfg"; }
+$spec{kernel} = $kernel;
+$spec{initrd} = $initrd;
+$spec{msg} = "/etc/systemimager/pxelinux.cfg/message.txt";
 
-my $image_name;
-if ($type eq "floppy") { 
-  $image_name = $out_file; 
+-e $spec{kernel} or die "$spec{kernel} does not exist.";
+-e $spec{initrd} or die "$spec{initrd} does not exist";
+-e $spec{msg} or die "$spec{msg} does not exist";
+
+if ($local_cfg) {
+    print "Please teach me how to do local.cfg stuff.";
+    exit 1;
+#    $files{$local_cfg} = "local.cfg";
 }
-elsif ($type eq "cd") { 
-  (my $FOO, $image_name) = File::Temp::tempfile("systemimager.tmp.XXXXX");
+	
+if ($append) {
+  $spec{append} = $append;
 }
 
-Media::init_boot_image($image_name, $arch, $verbose_level) 
-    or die "Media::init_boot_image() failed.";
-Media::create_ramdisk_fs($image_name, $verbose_level) 
-    or die "Media::create_ramdisk_fs failed.";
-Media::populate_ramdisk($image_name, $verbose_level, %files)
-    or die "Media::populate_ramdisk failed.";
-Media::make_ramdisk_bootable($image_name, $arch, $verbose_level)
-    or die "Media::make_ramdisk_bootable failed.";
-$append = "" unless $append;
-Media::create_bootloader_conf($image_name, $arch, $append, $verbose_level)
-    or die "Media::create_bootloader_conf failed.";
+if ($type eq "floppy") {
+    BootMedia::BootMedia::build_floppy_image(\%spec, $arch, $out_file);
+}
 
 if ($type eq "cd") {
-    Media::make_boot_iso($image_name, $arch, $out_file, 
-                         $VERSION, $verbose_level)
-    or die "Media::make_boot_iso failed.";
+    BootMedia::BootMedia::build_iso_image(\%spec, $arch, $out_file);
 }
