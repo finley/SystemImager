@@ -7,6 +7,12 @@
 #
 #   $Id$
 #
+#   XXX Add syslogging
+#   XXX Add code to add/remove entries from flamethrowerd.conf
+#       getimage
+#       boot_tarball_installer
+#       override_directory_creator
+#
 
 use lib "USR_PREFIX/lib/systemimager/perl";
 use strict;
@@ -131,7 +137,7 @@ sub build_udp_sender_cmd {
     
     my $log;
     if ( $ft_config->get("log") ) {
-        $log = " --log " . $ft_config->get("log");
+        $log = " --log " . $ft_config->get("log") . ".$module";
     }
     
     my $max_bitrate;
@@ -274,17 +280,27 @@ sub update_directory {
     # dynamically use one that already exists.
     #
     my %portbases = $ft_config->varlist('_portbase$');
-    foreach (values %portbases) {
-        #
-        # Make the values the keys, so we can simply to an 
-        # if (defined()) in the module loop below.
-        #
-        $portbases{$_} = $_;
-    }
 
     # Be sure to include the flamethrower_directory port.
     $_ = $ft_config->get("flamethrower_directory_portbase");
     $portbases{$_} = $_;
+
+    #
+    # Make the values the keys, so we can simply to an 
+    # if (defined()) in the module loop below.
+    #
+    foreach my $portbase (values %portbases) {
+        #
+        # Test to be sure portbase is an even number.
+        #
+        $_ = $portbase / 2;
+        if (m/\./) {
+            print qq(FATAL: portbases must be even numbers!  Failed on "PORTBASE=$portbase"\n);
+            print qq(Please check your config file.\n);
+            exit 1;
+        }
+        $portbases{$portbase} = $portbase;
+    }
 
     #
     ############################################################################
