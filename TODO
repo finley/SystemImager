@@ -8,26 +8,32 @@
 #             (Only Brian Finley will do CVS tags of any kind, such as for version releases.)
 #
 
+
+cvs commit -m "apparently this file was too big and cvs choked with  _Terminated with fatal signal 11_." other_source_and_patches_used_in_this_release.tar.bz2
+
+
 -----------------------
 Version 1.4.0 specific:
 -----------------------
 
-<brian@thefinleys.com>
-----------------------
-o modify/verify documentation
-o finish pre-release checklist
-
-o label autoinstallcd.iso with v1.4.x (x is literal)
-
 Post release
 ------------
+
+<brian@thefinleys.com>
+----------------------
 o create and submit custom load
   o test client on VA hardware
-o modify RPM spec file to deal with:
+
+Dann Frazier <dannf@hazel.fc.hp.com>
+------------------------------------
+o have deb package created
+
+Unknown
+------------------------------------
+o modify RPM spec file to deal with
   o configuration files
   o additional files
   o changed files
-o have deb package created
 
 
 -----------------------
@@ -215,58 +221,3 @@ http://systemimager.org/
 
 Pre-Release Checklist
 ---------------------
-- just release the darned thing...  :)
-
-x- installdoc (/usr/share/doc ?)
-x- prepareclient bug
-x- hardware RAID client
-x- getimage bug:
-  ( getimage -s localhost -image debian_hwraid_ext2 -ip static_dhcp -post reboot -up yes -q )
-x- installclient
-x- install
-x- makedhcpstatic bug
-  (say now you must restart your dhcp server)
-x- also fix flaw in the way software raid devices are created.  LABEL=
-   flubs this up...
-x- deal with ext3 clients using LABEL=
-x- fix flaw in the way raidstop works in <image>.master
-  (parse /proc/mdstat from booting autoinstall client)
-  RAID_DEVICES=`cat /proc/mdstat | grep ^md | mawk '{print "/dev/" $1}'`
-  for blah
-  do
-    do stuff
-  done
-x- software RAID client, RH7, with LABEL=
-x- prepareclient on RH 6
-x- updateclient -a -s <server> -c eth0
-x- updateclient -a -s <server> -c eth0 on RAID
-x- pryzby's issue
-x- hello's issue
-x- software RAID client (destroy partitions good)
-x- reiserfs client
-x- ext2 client
-x- RH7 client
-x- RH7 client with LABEL=
-x- debian client
-x- prepareclient on debian
-x- prepareclient on RH 7
-x- hand made /etc/hosts /tftpboot/systemimager/hosts files
-x- test floppy install
-x- repeated prepareclient/installs to see if disk partition sizes remain the same
-x- test CD-ROM install
-x- test hard drive install
-x- test explicit geometry
-x- test dynamic geometry
-x- test that egrep thing is fixed
-x- test that dynamically linked binaries in /tftpboot work
-x- test -configure-from option
-
-Post-Release Checklist
-----------------------
-- server RPM install on virgin RH 6 system
-- server RPM install on virgin RH 7 system
-- client RPM install on virgin RH 6 system
-- client RPM install on virgin RH 7 system
-- server deb install on virgin debian system
-- client deb install on virgin debian system
-- dependent packages install properly
