@@ -7,12 +7,11 @@
 #               Written by: Dann Frazier <daniel_frazier@hp.com>
 #
 
-DB_BIN_DIR = /usr/bin
-DB2DVI	= $(DB_BIN_DIR)/db2dvi
-DB2HTML = $(DB_BIN_DIR)/db2html
-DB2PDF	= $(DB_BIN_DIR)/db2pdf
-DB2PS   = $(DB_BIN_DIR)/db2ps
-DB2RTF	= $(DB_BIN_DIR)/db2rtf
+DB2DVI	= $(shell which db2dvi || which docbook2dvi)
+DB2HTML = $(shell which db2html || which docbook2html)
+DB2PDF	= $(shell which db2pdf || which docbook2pdf)
+DB2PS   = $(shell which db2ps || which docbook2ps)
+DB2RTF	= $(shell which db2rtf || which docbook2rtf)
 
 NAME	= systemimager-manual
 SRC	= $(NAME).sgml
