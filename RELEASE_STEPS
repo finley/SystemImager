@@ -60,3 +60,21 @@ o step two
 o test one
 o test two
 o etc.
+
+### Doing the Release ###
+- clean CVS tree
+- make source_tarball
+   suggestion:  copy to a good place, you will need to access it from multiple
+                machines, and want to make sure you are using the same tarball
+                everywhere.  this is all happening before CVS is tagged, so
+                we want to make sure that a last minute commit doesn't make
+                one arch's source different from another.
+
+for each arch (including the one where you created the source tarball)
+  - make sure the build machine is in a stable state (i.e., apt-get upgrade
+    and make sure all the build-deps are available)
+  - extract the source tarball
+  - make client_tarball server_tarball
+  - remove build tree & extract a new one
+  - find /usr/src/rpm -type f -exec rm {}
+  - make rpm (revisit, now that srpm rule exists)
