@@ -1,7 +1,7 @@
 #
-# "VA SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com>
+# "VA SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@valinux.com>
 #
-# This file: /etc/systemimager.exclude
+# This file on client: /etc/systemimager/systemimager.exclude
 #
 
 # Do _NOT_ modify these exclusions or _very_ strange things may happen
@@ -14,8 +14,19 @@
 # You may modify or add to the exclusions below at your own risk...
 # -- Wait a minute, this is all at your own risk! ;)
 # Also consider modifying the file in $image/etc/systemimager.exclude
+
+# RedHat stuff
 /etc/HOSTNAME
 /etc/sysconfig/network
 /etc/sysconfig/network-scripts/ifcfg-*
-/tmp/*
+
+# Debian stuff
+/etc/hostname
+/etc/network/interfaces
+/cdrom/*
+/floppy/*
+
+# generic stuff
 /home/*
+/mnt/*
+/tmp/*
