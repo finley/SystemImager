@@ -5,15 +5,18 @@
 # (not in any specific order)
 #
 
-Top priorities 
-(generally speaking, broken stuff will be fixed before new features are added)
---------------
+rpm
+---
+- require syslinux version x rpm
+
 autoinstalldiskette 
+-------------------
 - no screen-blanking
 - use bootp enabled kernel and do an append="no-bootp" or whatever
 - incorporate the ability to do network booting for installs
   (also using syslinux)
 - redirect syslog messages to $imagserver
+- SystemImager vs. autoinstalldiskette version checking against server?
 
 Other stuff
 -----------
@@ -23,12 +26,11 @@ Other stuff
 - create man pages
 
 makedhcpstatic
+--------------
 - allow for -f "filename" option.
 
-autoinstalldiskette 
-- SystemImager vs. autoinstalldiskette version checking against server?
-
 getimage
+--------
 - add an --exclude option
 - add "Do you want me open up the imageserver as a syslogd server?"
 - ask if hosts autoinstalled from this image will use static IP or 
@@ -36,21 +38,25 @@ getimage
 - pass variables, such as $imagename to "addclients"
 
 addclients
+----------
 - test for both IP addresses and hostnames in /etc/hosts
 - accept command line input such as --image $imagename
 - re-cycle through each question if answer is ""
 - use FQHN in soft links?
 
 systemimager.exclude
+--------------------
 - Have getimage question what should be excluded in future when updateimage 
   is run.  /tmp/* and /home/* should be recommended as a starting place.
 - Add support for a systemimager.include file
 
 updateimage
+-----------
 - have client pull systemimager.exclude and systemimager.include from
   imageserver before pulling image
 
 Miscellaneous and Possibilities
+-------------------------------
 - "perlify" the rest of the server side scripts
 - add more error checking
 - Dan of Argonne says there may be a better way of identifying the
@@ -74,10 +80,12 @@ Miscellaneous and Possibilities
 - make everything work with either DNS or hosts
 
 makedhcpserver 
+--------------
 - autodiscover and calculate more information 
   (including if system has more than one network interface).
 
 systemimager.conf
+-----------------
 - SYSTEMIMAGER_ROOT=$path
 - SYSTEMIMAGER_FQHN=$boolean
 - EXCLUDE=$path $path $path

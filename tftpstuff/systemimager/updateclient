@@ -2,15 +2,11 @@
 #
 # "SystemImager" - Copyright (C) 1999-2000 TheFinleys.com <brian@thefinleys.com>
 #
-# This file is: /usr/bin/updateimage
-#               (on clients)
-#
-# This file is: /systemimager/installstuff/updateimage
-#               (on the imageserver)
+# This file is: updateclient
 #
 
 # set version_number
-$version_number="0.24";
+$version_number="0.24beta";
 
 # declare modules
 use Getopt::Long;
@@ -21,7 +17,7 @@ unless($< == 0) { die "Must be run as root!\n"; }
 # set version information
 $version_info = <<"EOF";
 
-updateimage (SystemImager) v$version_number
+updateclient (SystemImager) v$version_number
 
 Copyright (C) 1999-2000 TheFinleys.com <brian\@thefinleys.com>
 This is free software; see the source for copying conditions.  There is NO
@@ -33,8 +29,8 @@ EOF
 
 # set help information
 $help_info = $version_info . <<"EOF";
-Usage: updateimage [OPTION]... --imageserver HOSTNAME --image IMAGENAME
-  or   updateimage --imageserver HOSTNAME --listing
+Usage: updateclient [OPTION]... --imageserver HOSTNAME --image IMAGENAME
+  or   updateclient --imageserver HOSTNAME --listing
 
 Options: (options can be presented in any order)
  --help                    duh

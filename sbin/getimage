@@ -8,15 +8,9 @@
 #
 # This file is: getimage 
 #
-# <bef> = Brian Finley <brian@thefinleys.com>
-#
-# client.XXX: Should be getmaster????
-# <NOTE> I still prefer getimage.  We are not really getting a master, we're
-#        getting an image. (taken literally)  Perhaps getmasterimage, but then
-#        I think it is inherent that if you're getting an image, that it would
-#        be a master image. <bef>
-#
-#
+
+# set system path for system() calls
+$ENV{PATH} = "/usr/sbin:/sbin:/usr/bin:/bin";
 
 ### BEGIN Subroutines ###
 
@@ -34,7 +28,7 @@ sub check_if_root{
 
 
 sub usage {
-    print "Usage: $program_name [-q] master_client imagename\n";
+    print "Usage: getimage [-q] master_client imagename\n";
     exit(1);
 }
 
@@ -43,22 +37,9 @@ sub usage {
 ### BEGIN Program ###
 check_if_root();
 
+# figure out the program name
 $0  =~ /(.*)\/+([^\/]*)$/;
 $program_name = $2;
-
-##Figure out where this script lives, so that we can find the templates.
-#
-#if ($0 =~ /^\//) {
-##If the path to this script starts with a slash, then just remove the
-##part after the last slash to get the directory.
-#    $0 =~ /(.*)\/[^\/]*$/;
-#    $directory = $1;
-#} else {
-##Otherwise, we concat the current working directory, a '/', and the
-##name that was used to run this script minus anything after the final slash.
-#    $0  =~ /(.*)\/[^\/]*$/;
-#    $directory = $ENV{'PWD'} . "/" . $1;
-#}
 
 ###FIX### we should go ahead and use use options modules
 if ($#ARGV < 1) {

@@ -1,27 +1,30 @@
 #!/usr/bin/perl -w
 #
-# "SystemImager" - Copyright (C) 1999-2000 TheFinleys.com <brian@thefinleys.com> 
+# "SystemImager" - Copyright (C) 1999-2000 TheFinleys.com <brian@thefinleys.com>
 #
 # This file is: makeautoinstalldiskette
 #
 
+# set shell PATH for system() calls 
+$ENV{PATH} = "/usr/sbin:/sbin:/usr/bin:/bin";
+
 # if not run as root, this script will surely fail
 unless($< == 0) { die "Must be run as root!\n"; }
 
-#FIX# give warning
+###FIX### be real quiet now
 #if -q then no warning
 
 system('clear');
 print << "EOF";
 
-This program assumes that you have a 1.44M floppy drive and that it is the
+This program assumes that you have a 1.44MB floppy drive and that it is the
 first floppy drive on your system (/dev/fd0).
 
 It will create the device file /dev/fd0u1722 and use it to format your floppy
-to handle 1.722M of capacity.
+to handle 1.722MB of capacity.
 
-Virtually all 1.44M drives support 1.722M just fine, but it is possible for an
-extended format to break a floppy drive -- so USE THIS SCRIPT AT YOUR OWN RISK!
+Virtually all 1.44MB drives support 1.722MB just fine, but it is possible for an
+extended format to break a floppy drive -- so USE THIS COMMAND AT YOUR OWN RISK!
 
 Insert your floppy now.  This will overwrite all information on the floppy.
 
@@ -33,10 +36,54 @@ chomp $continue;
 $continue = lc $continue;
 ($continue eq "y") or die "\nOk Mr. Sensitive, I\'ll leave your silly diskette alone!\n";
 
-test for /dev/fd0u1722 and make if not there
-fdformat /dev/fd0u1722 and die if fails
-mkdosfs /dev/fd0u1722 and die if fails
-mount /dev/fd0u1722 and die if fails
-cp initrd.gz, kernel, syslinux.cfg, message.txt to floppy
-unmount floppy
-syslinux -s /dev/fd0u1722 and die if fails
+# create floppy device if necessary
+$floppy_device="/dev/fd0u1722";
+unless (-b $floppy_device) {
+    print "Creating device file $floppy_device...\n";
+    system('mknod /dev/fd0u1722 b 2 60');
+    if($? != 0) { die "Couldn't make device file $floppy_device.\n"; }
+}
+
+# format floppy
+print "Formatting floppy as 1.7MB ...\n";
+system('fdformat', $floppy_device);
+    if($? != 0) { die "Couldn't format $floppy_device.\n"; }
+
+# create dos filesystem on floppy
+print "Creating DOS filesystem on floppy...\n";
+system('mkdosfs', $floppy_device);
+    if($? != 0) { die "Couldn't create dos filesystem on $floppy_device.\n"; }
+
+# create temporary mount point
+print "Creating temporary mount point...\n";
+$mount_dir="/tmp/.autoinstalldiskette.$$";
+mkdir $mount_dir, 0770 or die "Couldn't create temporary mount point $mount_dir.\n";
+
+# mount the freshly created filesystem
+print "Mounting floppy...\n";
+system('mount', '-t', 'msdos', $floppy_device, $mount_dir);
+    if($? != 0) { die "Couldn't mount $floppy_device on $mount_dir.\n"; }
+
+# copy stuff to floppy
+foreach $file ("/tftpboot/initrd.gz", "/tftpboot/kernel", "/tftpboot/pxelinux.cfg/syslinux.cfg", "/tftpboot/pxelinux.cfg/message.txt") {
+    print "Copying $file to floppy.\n";
+    system('cp', '-f', $file, $mount_dir);
+        if($? != 0) { die "Couldn't copy $file to $mount_dir.\n"; }
+}
+
+# unmount floppy
+print "Un-mounting floppy...\n";
+system('umount', $floppy_device);
+    if($? != 0) { die "Couldn't un-mount $floppy_device from $mount_dir.\n"; }
+
+# get rid of temporary directory
+print "Removing temporary mount point...\n";
+rmdir $mount_dir or die "Couldn't remove temporary mount point $mount_dir\n";
+
+# run syslinux
+print "Using \"syslinux\" to make floppy bootable...\n";
+system('syslinux', '-s', $floppy_device);
+    if($? != 0) { die "\"syslinux -s $floppy_device\" failed.\n"; }
+
+# print done!
+print "Done!\n";

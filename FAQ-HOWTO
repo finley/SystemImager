@@ -1,9 +1,9 @@
 #
 # "SystemImager" - Copyright (C) 1999-2000 TheFinleys.com <brian@thefinleys.com> 
 #
-# This file is: /systemimager/documents/FAQ-HOWTO
+# This file is: FAQ-HOWTO
 #
-# Current version as of the writing of this document: 0.24
+# Current version as of the writing of this document: 0.24beta
 #
 # This document written by:  
 #  Ari Jort <ajort@valinux.com>
@@ -65,38 +65,14 @@ manner. ;)  There is a good chance your answer will come faster from the list.
   - You will need to have rsync installed on your "imageserver" and on your 
     "master" client.
 
-  - You will need to run a DHCP server on your network.  The "install" command, 
-    run on your chosen "imageserver", will give you the opportunity to have it
-    ask you the questions necessary to properly configure it as a DHCP server.
+  - You will need to run a DHCP server on your network.  The "makedhcpserver" 
+    command, run on your chosen "imageserver", will give you the opportunity to 
+    have it ask you the questions necessary to properly configure it as a DHCP 
+    server.
 
   - All of the clients for a particular image should have an identical hardware
     configuration.  They should at least have the same hard drive(s) and the
     same ethernet card(s).
-
-  - If you are using SystemImager v0.19 or later, there are no specific kernel
-    requirements.
-
-    If you are using a pre v0.19 version of SystemImager, you should upgrade.  
-    If you must use a pre v0.19 version for some reason, then here are the 
-    requirements:
-
-    SystemImager pre v0.19 requires that the "imageserver" kernel support ram 
-    disks.  In order to create floppy disks, you will also need support for the 
-    minix filesystem.  If have built these as kernel modules, you will find
-    the ramdisk module at:
-
-	/lib/modules/`uname -r`/block/rd.o
-
-    and the minix filesystem driver at 
-
-	/lib/modules/`uname -r`/fs/minix.o
-
-    where `uname -r` represents the version of the linux kernel you
-    are currently running.  So for in my current system, I see the 
-    following:
-
-    [arijort@imageserver /systemimager]$ uname -r
-    2.2.11
 
 
 --------------------------------------------------------------------------------
@@ -122,8 +98,7 @@ manner. ;)  There is a good chance your answer will come faster from the list.
   The initial setup of SystemImager is a three step process:
 
   1) Install SystemImager on the machine you designate as your "imageserver".
-     - download and untar the SystemImager tarball
-     - cd into the unpacked directory (ie. cd SystemImager-v0.20)
+     - download and untar the latest SystemImager tarball
      - run the "install" command (ie. ./install)
 
   2) Then you will select a machine that we call the "master" client.  This 
@@ -371,19 +346,19 @@ manner. ;)  There is a good chance your answer will come faster from the list.
 
   Once you have updated an image on the imageserver, you can then update your
   clients to reflect this new or modified image.  (It is not necessary to do a
-  complete re-autoinstall.)  You will find the command "updateimage" on your 
+  complete re-autoinstall.)  You will find the command "updateclient" on your 
   clients.  This command takes as it's parameters, the name of the imageserver
   and the name of the image that you want to update the client to.  Run
-  "updateimage --help" to get more information about this command.
+  "updateclient --help" to get more information about this command.
 
   If you use the revision control method recommended in "How do I update an
   image on the imageserver?" then you will be able to bring your production
-  environment back to a known state (by doing an updateimage to the last 
-  working image) after having done an updateimage to a not quite so 
+  environment back to a known state (by doing an updateclient to the last 
+  working image) after having done an updateclient to a not quite so 
   thoroughly tested image.
 
   Note:  The file /etc/systemimager.exclude on your clients is used to exclude
-  files and directories from being updated by the updateimage command.  Please
+  files and directories from being updated by the updateclient command.  Please
   take a look at this file and modify it to suit your local environment.
 
 
@@ -391,7 +366,7 @@ manner. ;)  There is a good chance your answer will come faster from the list.
 -  What is systemimager.exclude used for?
 --------------------------------------------------------------------------------
 
-  It is used by the "updateimage" command.  See the section:
+  It is used by the "updateclient" command.  See the section:
   "How do I update a client to match an image?"
 
 
@@ -498,7 +473,7 @@ no entries for the other disks:
 -  How can I use SystemImager to update a small set of files? For instance,
    I apply a security patch and I want all boxes to reflect that change.
 --------------------------------------------------------------------------------
-This is accomplished with the "updateimage" command on the client.
+This is accomplished with the "updateclient" command on the client.
 
 1) Choose one of the following methods to update the image on the server:
    A - apply the patch to the image directly
@@ -509,8 +484,8 @@ This is accomplished with the "updateimage" command on the client.
        specifying a _different_ imagename.  This is preferred as it
        allows for revision control.
 
-2) run "updateimage" on the clients that you want to update.  Do an
-   "updateimage --help" to get the syntax.
+2) run "updateclient" on the clients that you want to update.  Do an
+   "updateclient --help" to get the syntax.
 --------------------------------------------------------------------------------
 
 
