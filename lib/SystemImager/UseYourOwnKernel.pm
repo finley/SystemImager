@@ -25,18 +25,18 @@
 package SystemImager::UseYourOwnKernel;
 
 use strict;
-our ($verbose);
+our $verbose;
 
-$verbose = 1; #XXX just for debug.  take from prepareclient later
 
 #
 # Usage: 
 #       SystemImager::UseYourOwnKernel->create_uyok_initrd($arch);
 #
-sub create_uyok_initrd($) {
+sub create_uyok_initrd($$) {
 
         my $module      = shift;
         my $arch        = shift;
+        $verbose        = shift;
 
         use File::Copy;
         use File::Basename;
@@ -75,7 +75,7 @@ sub create_uyok_initrd($) {
                         copy( $1, $my_modules_dir )
                                 or die( "Couldn't copy $1 $my_modules_dir" );
 
-                        print "Adding: $1\n" if( defined $verbose);
+                        print "Adding: $1\n" if( $verbose );
 
                         my $module = basename( $1 );
                         print FILE "insmod $module\n";
@@ -105,9 +105,10 @@ sub create_uyok_initrd($) {
         }
 
         #
-        # Create initrd
+        # Create initrd and save copy of kernel
         #
         _create_new_initrd( $staging_dir, $boot_dir );
+        _get_copy_of_kernel( $uname_r );
 
         #
         # Remove temp dir
@@ -117,6 +118,79 @@ sub create_uyok_initrd($) {
 
         return 1;
 }
+
+
+sub _get_copy_of_kernel($) {
+
+        my $uname_r = shift;
+
+        my $kernel_file = _identify_kernel_file( $uname_r );
+        unless( defined $kernel_file ) {
+                print "I couldn't identify your kernel file.  Please try --XXX.\n";
+                exit 1;
+        }
+
+        print "kernel_file $kernel_file\n"; #XXX debug
+
+        # copy kernel file over
+
+        return 1;
+}
+
+
+
+#
+# Usage:
+#       my $kernel_file = _identify_kernel_file( $uname_r );
+#
+sub _identify_kernel_file($) {
+
+        my $uname_r = shift;
+
+        my @dirs = ('/boot', '/');
+
+        foreach my $dir (@dirs) {
+                
+                # 
+                # Check each binary to see if it contains the uname string
+                #
+                opendir(DIR, $dir) || die("Can't opendir $dir: $!");
+                        my @files = readdir(DIR);
+                closedir DIR;
+
+                foreach (@files) {
+
+                        my $file = "$dir/$_";
+                        next unless( -B $file );
+                        my $kernel_release = _get_kernel_release($file);
+                        return $file if( defined($kernel_release) and ($kernel_release eq $uname_r) );
+                }
+        }
+
+        return undef;
+}
+
+
+#
+# Usage:
+#       my $uname_r = _get_kernel_release( '/path/to/kernel/file' );
+sub _get_kernel_release($) {
+
+        my $file = shift;
+
+        my $uname_r;
+        open(FILE,"$file") or die("Couldn't open $file for reading.");
+        while(<FILE>) {
+                # extract the `uname -r` string from the kernel file
+                if(m/(2\.[4|6]\.\d{1,2}.*) \(.*\) [#]\d+ \w{3} \w{3} \d+ \d+:\d+:\d+ \w{3} \d+/o) {
+                        $uname_r = $1;
+                }
+        }
+        close(FILE);
+
+        return $uname_r;
+}
+
 
 
 #
@@ -304,8 +378,8 @@ sub _create_new_initrd($$) {
                 $fs = "ext2";
         }   
 
-        print ">>> Filesystem for new initrd:  $fs\n" if($verbose);
-        print ">>> Creating new initrd from:   $staging_dir\n" if($verbose);
+        print ">>> Filesystem for new initrd:  $fs\n" if( $verbose );
+        print ">>> Creating new initrd from:   $staging_dir\n" if( $verbose );
 
         # Sean Dague's little jewel that helps keep the size down. -BEF-
         run_cmd("find $staging_dir -depth -exec touch -t 196912311900 '{}' ';'");
@@ -318,6 +392,23 @@ sub _create_new_initrd($$) {
                 case 'xfs'      { _create_initrd_xfs(      $staging_dir, $boot_dir) }       # untested XXX
                 else            { die("FATAL: Unable to create initrd using $fs") }
         }
+
+        return 1;
+}
+
+sub _create_initrd_cramfs($$) {
+
+        my $staging_dir = shift;
+        my $boot_dir    = shift;
+
+        my $new_initrd  = $boot_dir . "/initrd";
+
+        # initrd creation
+        run_cmd("mkcramfs $staging_dir $new_initrd", $verbose, 1);
+
+        # gzip up
+        run_cmd("gzip -9 -S .img $new_initrd", $verbose);
+        run_cmd("ls -l $new_initrd.img", $verbose, 1) if($verbose);
 
         return 1;
 }
@@ -354,8 +445,6 @@ sub _create_initrd_reiserfs($$) {
         run_cmd("mount $new_initrd $new_initrd_mount_dir -o loop -t reiserfs", $verbose);
 
         # copy from staging dir to new initrd
-        #my $v = '';
-        #$v = "v" if($verbose); 
         run_cmd("tar -C $staging_dir -cf - . | tar -C $new_initrd_mount_dir -xf -", $verbose, 0);
 
         # umount and gzip up
@@ -402,25 +491,6 @@ sub _create_initrd_ext2($$) {
 
         # umount and gzip up
         run_cmd("umount $new_initrd_mount_dir", $verbose);
-        run_cmd("gzip -9 -S .img $new_initrd", $verbose);
-        run_cmd("ls -l $new_initrd.img", $verbose, 1) if($verbose);
-
-        return 1;
-}
-
-sub _create_initrd_cramfs($$) {
-
-        my $staging_dir = shift;
-        my $boot_dir    = shift;
-
-        my $new_initrd  = $boot_dir . "/initrd";
-
-        my $cmd;
-
-        # initrd creation
-        run_cmd("mkcramfs $staging_dir $new_initrd", $verbose, 1);
-
-        # gzip up
         run_cmd("gzip -9 -S .img $new_initrd", $verbose);
         run_cmd("ls -l $new_initrd.img", $verbose, 1) if($verbose);
 
@@ -506,15 +576,14 @@ sub _create_initrd_jfs($$) {
 #       Third argument:  '1' to print a newline after the command.
 #           Defaults to "off".
 #
-sub run_cmd
-{
+sub run_cmd($$$) {
+
         my $cmd = shift;
-        my $verbose = shift;
         my $add_newline = shift;
 
-        if(!$verbose) {
-                $cmd .= " >/dev/null 2>/dev/null";
-        }
+        #if(!$verbose) {
+        #        $cmd .= " >/dev/null 2>/dev/null";
+        #}
 
         print ">>> $cmd\n" if($verbose);
         !system($cmd) or die("FAILED: $cmd");
