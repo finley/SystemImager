@@ -142,13 +142,6 @@ if($listing) {
     exit(1);
 }
 
-# if not run as root, updateclient will surely fail
-unless($< == 0) {
-    print "FATAL: Must be run as root!\n";
-    exit 1;
-}
-
-
 ### Now we do option validation testing ###
 # -flavor assumes -autoinstall
 if ($flavor) { 
@@ -205,6 +198,12 @@ if($dry_run and $autoinstall) {
 
 # -dry-run implies -no-bootloader
 if($dry_run) { $no_bootloader="true"; }
+
+# if not run as root, updateclient will surely fail
+unless($< == 0) {
+    print "FATAL: Must be run as root!\n";
+    exit 1;
+}
 
 # If we're using SSH, go ahead and establish port forwarding
 if($ssh_user) {
