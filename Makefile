@@ -36,6 +36,8 @@
 #   - install everything in the doc/examples directory.
 #   2004.09.19  Brian Elliott Finley
 #   - add 'show_targets' target.
+#   2004.10.13  Brian Elliott Finley
+#   - add hfsutils
 #
 #
 # ERRORS when running make:
@@ -437,6 +439,7 @@ $(BOEL_BINARIES_TARBALL):	\
 				$(GZIP_BINARY) \
 				$(DISCOVER_BINARY) \
 				$(DISCOVER_DATA_FILES) \
+				$(HFSUTILS_BINARY) \
 				$(MKDOSFS_BINARY) \
 				$(MKE2FS_BINARY) \
 				$(TUNE2FS_BINARY) \
@@ -462,14 +465,15 @@ $(BOEL_BINARIES_TARBALL):	\
 	install -m 755 --strip $(TAR_BINARY) 			$(BOEL_BINARIES_DIR)/bin/
 	install -m 755 --strip $(GZIP_BINARY) 			$(BOEL_BINARIES_DIR)/bin/
 	install -m 755 --strip $(DISCOVER_BINARY) 		$(BOEL_BINARIES_DIR)/sbin/
+	install -m 755 --strip $(HFSUTILS_BINARY) 		$(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(MKDOSFS_BINARY) 		$(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(MKE2FS_BINARY) 		$(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(TUNE2FS_BINARY) 		$(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(PARTED_BINARY)			$(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(MKSWAP_BINARY)			$(BOEL_BINARIES_DIR)/sbin/
-	install -m 755 --strip $(RAIDTOOLS_BINARIES) 	$(BOEL_BINARIES_DIR)/sbin/
+	install -m 755 --strip $(RAIDTOOLS_BINARIES) 		$(BOEL_BINARIES_DIR)/sbin/
 	cd $(BOEL_BINARIES_DIR)/sbin/ && ln -f raidstart raidstop
-	install -m 755 --strip $(MKREISERFS_BINARY) 	$(BOEL_BINARIES_DIR)/sbin/
+	install -m 755 --strip $(MKREISERFS_BINARY) 		$(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(MKJFS_BINARY) 			$(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(OPENSSH_BINARIES) 		$(BOEL_BINARIES_DIR)/sbin/
 	install -m 644 $(OPENSSH_CONF_FILES) 			$(BOEL_BINARIES_DIR)/etc/ssh
