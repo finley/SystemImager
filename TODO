@@ -10,12 +10,17 @@
 
 In Progress
 -----------
-- <wessmith@engr.sgi.com> - GUI for SystemImager called SGI SystemImager GUI (not open sourced)
+- <wessmith@engr.sgi.com> - GUI for SystemImager called SGI SystemImager GUI 
+                            (not open sourced)
 - <brian@thefinleys.com> - support for software RAID
 - <brian@thefinleys.com> - support for reiserfs
 - <brian@thefinleys.com> - support for use without DHCP
-- <brian@valinux.com> - have autoinstallclient check floppy for file and assign IP and hostname based on file, not on DHCP.
+- <brian@valinux.com> - have autoinstallclient check floppy for file and 
+                        assign IP and hostname based on file, not on DHCP
 - <gpratt@valinux.com> - Docbookization of the FAQ-HOWTO
+- Cameron Meadors <cmeadors@valinux.com> and Roland Dreier <roland@valinux.com>
+  - get tftp-hpa fixed or modify stock tftp to do that special PXE thang
+- Chris Black <cblack@mokey.com> - hack dhclient to allow for imageserver specification via dhcp
 
 Assigned and waiting to be done
 ----------------------------------
@@ -23,7 +28,6 @@ Assigned and waiting to be done
   working as a drop in replacement for rsync by 5/15/2000 and we will begin testing
   in the lab.
 - <brian@valinux.com> - consider inodes/block in getimage
-- Chris Black <cblack@mokey.com> - hack dhclient to allow for imageserver specification via dhcp
 - <brian@thefinleys.com> - getimage -- eject floppy/cd option
 - <brian@thefinleys.com> - getimage -- beep option
 - <brian@thefinleys.com> - getimage -- blink option
