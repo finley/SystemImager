@@ -118,4 +118,7 @@ foreach $mac (@macs) {
 }
 close(DHCPDCONF);
 
+print "\n";
+print "Now you must restart your dhcp daemon for the changes to take effect.\n";
+
 exit 0;
