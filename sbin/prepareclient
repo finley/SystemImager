@@ -2,13 +2,16 @@
 #
 # "SystemImager"
 # 
-#  Copyright (C) 2001-2003 Bald Guy Software <brian@bgsw.net>
-#  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
-#  Copyright (C) 2002 Internation Business Machines
-#                     Sean Dague <sean@dague.net>
+#   Copyright (C) 1999-2004 Brian Elliott Finley
+#   Copyright (C) 2002 Internation Business Machines
+#                      Sean Dague <sean@dague.net>
 #
 #   $Id$
 # 
+#   2004.02.02 Brian Elliott Finley
+#   - add '--server' option
+#
+#
 #   Function: prepareclient is used to, well, prepare a client to have 
 #   it's image retrieved by an imageserver
 # 
@@ -96,16 +99,35 @@ EOF
 
 my $help_info = $version_info . <<"EOF";
 
-Usage: prepareclient [OPTION]...
+Usage: prepareclient --server IMAGESERVER [OPTION]...
 
 Options:
- --version             Display version and copyright information.
- --help                Display this output.
- --no-rsyncd           Do not start the rsync daemon.
- --yes                 Answer yes to all yes/no questions.
- --quiet               Run silently.  Return an exit status of 0 for
-                       success or a non-zero exit status for failure.
- --rpm-install         This is only used when building an RPM.
+ --version             
+    Display version and copyright information.
+
+ --help                
+    Display this output.
+
+ --server IMAGESERVER
+    Where IMAGESERVER is either the IP address or host name of your 
+    SystemImager server.  Prepareclient makes your golden client's root
+    filesystem readable to other rsync capable machines.  While this
+    access is read only, it may expose sensitive information.  This
+    option limits access so that only your SystemImager server can read
+    your golden client's root filesystem.
+
+ --no-rsyncd           
+    Do not start the rsync daemon.
+
+ --yes                 
+    Answer yes to all yes/no questions.
+
+ --quiet
+    Run silently.  Return an exit status of 0 for success or a non-zero
+    exit status for failure.
+
+ --rpm-install         
+    This is only used when building an RPM.
 
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
@@ -120,6 +142,7 @@ GetOptions(
     "quiet"     => \my $quiet,
     "rpm"       => \my $rpm,
     "version"   => \my $version,
+    "server=s"  => \my $server,
     "yes"       => \my $yes
 ) || die "$help_info";
 
@@ -159,6 +182,22 @@ which('systemconfigurator') or croak("'systemconfigurator' is required for prepa
 # -rpm-install does the same thing as -no-rsyncd.  -BEF-
 if($rpm) {
     $norsyncd = "1";  # set it to true.
+}
+
+my $hosts_allow;
+if($server) {
+        if($server =~ m/^(\d{1,3}\.){3}\d{1,3}$/) {
+                $hosts_allow .= "${server}/32";
+        } else {
+                my @ips = get_ips($server);
+                foreach (@ips) {
+                        $hosts_allow .= "${_}/32 ";
+                }
+        }
+} else {
+        print "$help_info";
+        print "Try the --server option.\n\n";
+        exit 1;
 }
 ### END option validation ###
 
@@ -206,7 +245,7 @@ EOF
 This utility starts an rsync daemon that makes all of your files accessible
 by anyone who can connect to the rsync port of this machine.  This is the 
 case until you reboot, or kill the 'rsync --daemon' process by hand.  By 
-default, once you use getimage to retrieve this image on your image server, 
+default, once you use getimage to retrieve this image on your imageserver, 
 these contents will become accessible to anyone who can connect to the rsync 
 port on your imageserver.  See rsyncd.conf(5) for details on restricting 
 access to these files on the imageserver.  See the systemimager-ssh package
@@ -672,9 +711,6 @@ sub create_rsyncd_conf {
 #
 # "SystemImager"
 #
-#  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley\@baldguysoftware.com>
-#  Copyright (C) 2002 Bald Guy Software <brian.finley\@baldguysoftware.com>
-#
 #  This file: $rsyncd_conf_file
 #
 list = yes
@@ -682,6 +718,7 @@ timeout = 600
 dont compress = *.gz *.tgz *.zip *.Z *.ZIP *.bz2 *.deb *.rpm *.dbf
 uid = root
 gid = root
+hosts allow = 127.0.0.0/24 $hosts_allow
 
 [root]
     path = /
@@ -718,6 +755,33 @@ sub devfs_transform {
     $realentry .= $part;
 
     return $realentry;
+}
+
+
+################################################################################
+#
+# Description:
+# Produce a list of IP addresses from a host name.
+#
+# Usage:
+# my @ips = get_ips($hostname);
+sub get_ips {
+
+        use Socket;
+        use Net::hostent;
+
+        my $host = $_[0];
+        
+        my ($hinfo, @ips);
+        if ( $hinfo = gethost($host) ) { 
+            foreach my $addr ( @{$hinfo->addr_list} ) {
+                push @ips, inet_ntoa($addr);
+            }
+        } else {
+            die "Can't find an IP address for $host!\n";
+        }
+        
+        return @ips;
 }
 
 
