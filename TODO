@@ -14,54 +14,9 @@
 # where should we move the Development stuff at the top?  README.devel?
 #
 
---------------------
-Developer Guidelines
---------------------
-o Current development branch is tagged "HEAD".  This is the default.
-  Most developers will use this.  To check out the development branch:
-   "cvs -z3 -d:ext:developer_name@cvs.systemimager.sourceforge.net:/cvsroot/systemimager co systemimager"
-o The stable branch is only to be used for fixing bugs.  To check out
-  the stable branch:
-   "cvs -z3 -d:ext:developer_name@cvs.systemimager.sourceforge.net:/cvsroot/systemimager co -r stable-1_5_x systemimager"
-o Only Brian Finley will modify CVS tags of any kind, such as for versioning 
-  releases or creating development branches.
-o Always get approval from Brian Finley prior to adding any new files or 
-  directories to CVS.
-o You may modify sections in the TODO file bearing your name.
-o When you finish an item in your section of the TODO file:
-  o Add an appropriate line to the CHANGE.LOG file before removing the 
-    item from the TODO file (so we don't forget about keen changes 
-    we've made).
-  o Send an email to the <systemimager-devel> list announcing completion.
-o Always give people credit in the CREDITS file.
-o Do not modify anyone elses section.
-o Have fun!
 
-----------------------
-CVS Reference Material
-----------------------
-o http://www.loria.fr/~molli/cvs/doc/cvs_toc.html
- or
-o http://cvsbook.red-bean.com/cvsbook.html
- or
-o http://www.cvshome.org/
+See -> "DEVELOPER_GUIDELINES" for the Developer Guidelines...
 
-------------------------------------------------------------
-CVS Checkout Steps for Developers for the Development Branch
-------------------------------------------------------------
-1) Checkout the code:
-   "cvs -z3 -d:ext:developer_name@cvs.systemimager.sourceforge.net:/cvsroot/systemimager co systemimager"
-2) Rename the checked out source tree (suggested):
-   "mv systemimager systemimager.devel"
-
-
-------------------------------------------------------------------------
-CVS Checkout Steps for Developers for the Stable Branch (bug fixes only)
-------------------------------------------------------------------------
-1) Checkout the code:
-   "cvs -z3 -d:ext:developer_name@cvs.systemimager.sourceforge.net:/cvsroot/systemimager co -r stable-1_5_x systemimager"
-2) Rename the checked out source tree (suggested):
-   "mv systemimager systemimager.stable"
 
 --------------------------------------------------------------
 Brian's Priorities 

@@ -7,12 +7,13 @@
 --------------------
 Developer Guidelines
 --------------------
-o Current development branch is tagged "HEAD".  This is the default.
-  Most developers will use this.  To check out the development branch:
-   "cvs -z3 -d:ext:developer_name@cvs.systemimager.sourceforge.net:/cvsroot/systemimager co systemimager"
+o Current development branch is tagged "HEAD".  This is the default.  
+  Most developers will use this.  To check out the development branch,
+  see "CVS Checkout Steps for Developers for the Development Branch"
+  below.
 o The stable branch is only to be used for fixing bugs.  To check out
-  the stable branch:
-   "cvs -z3 -d:ext:developer_name@cvs.systemimager.sourceforge.net:/cvsroot/systemimager co -r stable-1_5_x systemimager"
+  the stable branch see "CVS Checkout Steps for Developers for the 
+  Stable Branch (bug fixes only)" below.
 o Only Brian Finley will modify CVS tags of any kind, such as for versioning 
   releases or creating development branches.
 o Always get approval from Brian Finley prior to adding any new files or 
@@ -49,7 +50,7 @@ CVS Checkout Steps for Developers for the Development Branch
 CVS Checkout Steps for Developers for the Stable Branch (bug fixes only)
 ------------------------------------------------------------------------
 1) Checkout the code:
-   "cvs -z3 -d:ext:developer_name@cvs.systemimager.sourceforge.net:/cvsroot/systemimager co -r stable-1_5_x systemimager"
+   "cvs -z3 -d:ext:developer_name@cvs.systemimager.sourceforge.net:/cvsroot/systemimager co -r stable-2_0_x systemimager"
 2) Rename the checked out source tree (suggested):
    "mv systemimager systemimager.stable"
 
