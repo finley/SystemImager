@@ -28,12 +28,6 @@ sub check_if_root{
     unless($< == 0) { die "Must be run as root!\n"; }
 }
 
-
-sub usage {
-    print "Usage: getimage [-q] master_client imagename\n";
-    exit(1);
-}
-
 ### END Subroutines ###
 
 ### BEGIN Program ###
@@ -53,12 +47,12 @@ EOF
 
 $help_info = $version_info . <<"EOF";
 
-Usage: $program_name [OPTION]...  --masterclient HOSTNAME --image IMAGENAME
+Usage: $program_name [OPTION]...  --master-client HOSTNAME --image IMAGENAME
 
 Options: (options can be presented in any order)
  --help                    duh
  --version                 display version and copyright information
- --masterclient HOSTNAME   hostname or IP address of the \"master\" client
+ --master-client HOSTNAME  hostname or IP address of the \"master\" client
  --image IMAGENAME         the name of the image to retrieve.  This can be 
                            either the name of a new image if you want to create 
                            a new image, or the name of an exisiting image if
@@ -78,7 +72,7 @@ $image = "";
 
 GetOptions( "help" => \$help,
             "version" => \$version,
-            "master=s" => \$master_client,
+            "master-client=s" => \$master_client,
             "image=s" => \$image,
             "quiet" => \$quiet) || 
     die "$help_info";
