@@ -42,7 +42,7 @@ Packager: dann frazier <dannf@dannf.org>
 Docdir: %{prefix}/share/doc
 URL: http://systemimager.org/
 Distribution: System Installation Suite
-Requires: rsync >= 2.4.6, systemimager-common = %{version}, perl-AppConfig, dosfstools, /sbin/chkconfig, /sbin/service, perl
+Requires: rsync >= 2.4.6, systemimager-common = %{version}, perl-AppConfig, perl-XML-Simple, dosfstooll, /sbin/chkconfig, /sbin/service, perl
 AutoReqProv: no
 
 %description server
@@ -74,7 +74,7 @@ Packager: dann frazier <dannf@dannf.org>
 Docdir: %{prefix}/share/doc
 URL: http://systemimager.org/
 Distribution: System Installation Suite
-Requires: perl, perl-XML-Simple
+Requires: perl
 AutoReqProv: no
 
 %description common
