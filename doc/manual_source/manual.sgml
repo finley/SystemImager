@@ -752,7 +752,7 @@ Press <command>Enter</command> to continue...
   <para>
   </para>
   <sect2 id=FAQImages>
-  <title>Question: Where are the images stored?</title>
+  <title>Q: Where are the images stored?</title>
    <para>
     The images are stored in <filename>/var/spool/systemimager/images</filename>  
    </para>
@@ -771,20 +771,20 @@ Press <command>Enter</command> to continue...
    </para>
   </sect2>
   <sect2 id=FAQInstallFloppy>
-   <title>Question: How do I make an autoinstalldiskette?</title>
+   <title>Q: How do I make an autoinstalldiskette?</title>
    <para>
     Run the <command>makeautoinstalldiskette</command> command on the 
     imageserver.
    </para>
   </sect2>
   <sect2 id=FAQInstallCD>
-   <title>Question: How do I make an autoinstallcd?</title>
+   <title>Q: How do I make an autoinstallcd?</title>
    <para>
     Run the <command>makeautoinstallcd</command> command on the imageserver.
    </para>
   </sect2>
   <sect2 id=FAQCDNoBoot>
-    <title>Question: I made an autoinstallcd, but it didn't boot.  What's wrong?</title>
+    <title>Q: I made an autoinstallcd, but it didn't boot.  What's wrong?</title>
    <para>
     There was a problem with the following RPM:   
     <filename>syslinux-1.48-1.i386.rpm</filename>
@@ -793,7 +793,7 @@ Press <command>Enter</command> to continue...
    </para>
   </sect2>
   <sect2 id=FAQDHCPServerLocation>
-   <title>Question: Does the DHCP server have be on the imageserver?</title>
+   <title>Q: Does the DHCP server have be on the imageserver?</title>
    <para>
     Yes.  At this point in time it does.  After the client gets it's address
     via DHCP, it determines the DHCP server to be the imageserver and tries
