@@ -64,7 +64,6 @@ CVS Checkout Steps for Developers
 
 3) Choose your branch:
    BRANCH=HEAD                  (current development branch)
-   BRANCH=unstable-2_1_x        (special: we will not normally have unstable)
    BRANCH=stable-2_0_x          (current stable branch -- bug fixes only)
 
 4) Checkout the code:
@@ -84,30 +83,15 @@ o SystemImager uses kernel style versioning (X.Y.Z):
     o an even number indicates a stable release
   o Z = bug fix release (no new features)
 
-o We make the unstable packages available as downloads, but with warnings, etc.
+o Development releases may be made available unofficially.
 
-o We don't put the unstable systemimager packages into Debian unstable, at least not until
-  the systemimager stable packages make it into Debian stable, but maybe not even then.
-
-o Outside of the Debian contemplation above, if someone wants access to the development
-  code, it must be downloaded via systemimager.org, and we do our best to resist having it 
-  packaged in any kind of release (I know we can't really control this, but we often have influence)
-
-o Announcements on the website are only updated for stable package releases, but
-  We have an ongoing general statement about development releases available here: (pointer to sf download page)
-
-o Examples from the current tree (as of 2001.12.14):
+o Examples from the current tree (as of 2002.08.10):
   o stable-2_0_x, getting bug fixes only
-  o unstable-2_1_x, ia64 feature branch
-    o soon to be stable and we can release it as 2.2.0 and leave stable-2_0_x behind
-  o HEAD, will continue on as HEAD, releases will be called 2.3.0, 2.3.1, etc.
-    o when it's ready, it will hatch into 2.4.0 and be branched as stable-2_4_x
+  o HEAD, will continue on as HEAD
+    o When ready for an official release as 3.0.0, release candidate packages
+	  will be made.  These will be named 3.0.0rc1, 3.0.0rc2, etc.
+	o When 3.0.0 is finally released, the code in HEAD will be tagged as
+	  stable-3_0_x.  Feature development will continue in HEAD, and bug fixes
+	  to the 3.0.x release will be made in HEAD and 3.0.x.  Bug fix releases
+	  will be made from the stable-3_0_x branch.
 
-  o So for now, we'll have three active branches, stable-2_0_x, unstable-2_1_x, and 
-    HEAD, but in the future, we will only have a single active stable-?_?_x branch 
-    and HEAD (no unstable-?_?_x branch will be necessary).
-
-
-It is now law.
-
--Brian
