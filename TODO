@@ -11,10 +11,14 @@
 In Progress
 -----------
 
+- <wessmith@engr.sgi.com> - Fix update client to return error code if rsync or other commands fail
+- <wessmith@engr.sgi.com> - Make autoinstalldiskette work if IP addresses contain leading 0's (eg. 1.2.3.001)
+- <wessmith@engr.sgi.com> - Fix autoinstalldiskette to umount the disk if the cp fails
+
 
 Assigned and/or waiting to be done
 -------------------------------
-- <wessmith@engr.sgi.com> - GUI for SystemImager called "Rhino".
+- <wessmith@engr.sgi.com> - GUI for SystemImager called SGI SystemImager GUI (NOT Open Sourced)
 - <wessmith@engr.sgi.com> - /etc/systemimager.conf file to hold things like domain name, nis domain, etc.
 - <ian@valinux.com> - have autoinstallclient check floppy for file and assign IP and hostname based on file, not on DHCP.
 - <ian@valinux.com> - multicast install -- Ian McLeod <ian@valinux.com> will have mftp (multicast ftp) 
