@@ -4,7 +4,7 @@
 # This file: CHANGE.LOG
 #
 
-VA SystemImager-1.1 2000.??.??
+VA SystemImager-1.1 2000.05.26
 - syslinux RPM -- Bug in the syslinux RPM prevented proper creation of 
   bootable CD image with makeautoinstallcd.  This is fixed as of 
   syslinux-1.48-2.i386.rpm.  (Note: this was not a bug in syslinux, just
@@ -17,6 +17,7 @@ VA SystemImager-1.1 2000.??.??
 - prepareclient -- (also part of the va-systemimager-client RPM)
   Implemented a delay between killing a running rsync daemon and starting
   up the fresh one.
+- prepareclient -- now tests for hostname in /etc/hosts for rsync.
 - autoinstallcd.iso -- autoinstallcd ISO image put up on the download 
   site. (3 Meg)
 - prepareclient -- gave it a real usage statement.  Behavior is 

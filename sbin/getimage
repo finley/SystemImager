@@ -41,7 +41,7 @@ sub check_if_root{
 # figure out the program name
 $0  =~ /(.*)\/+([^\/]*)$/;
 $program_name = $2;
-$version_number = "1.0";
+$version_number = "1.1";
 
 $version_info = <<"EOF";
 $program_name (part of VA SystemImager) version $version_number
@@ -612,6 +612,11 @@ EOF
 #
 # /etc/hostname
 echo $HOSTNAME > /a/etc/hostname
+
+# /etc/init.d/network
+echo '#! /bin/sh'                                     > /a/etc/init.d/network
+echo 'ifconfig lo 127.0.0.1'                          >> /a/etc/init.d/network
+echo 'route add -net 127.0.0.0 netmask 255.0.0.0 lo'  >> /a/etc/init.d/network
 
 EOF
 

@@ -7,9 +7,10 @@
 
 Top Requests
 ------------
-- Support for software RAID
+- support for software RAID
 - replicate mke2fs parameters on clients to match the "master client"
 - commandline-ize the rest of the commands
+- support for use without DHCP
 
 Bug list
 --------
@@ -23,12 +24,10 @@ Short list (in progress by)
 - <ian@valinux.com> - multicast install -- Ian McLeod <ian@valinux.com> will have mftp (multicast ftp) 
   working as a drop in replacement for rsync by 5/15/2000 and we will begin testing
   in the lab.
-- <brian@valinux.com> - add more error checking to makedhcpstatic
 - <brian@valinux.com> - consider inodes/block in getimage
 
 Other stuff
 -----------
-- seperate client and server source
 - (part of the making of the tftp-hpa RPM) need to add proper tftp entry in /etc/inetd.conf 
    for tftp-hpa rpm.  If systemimager is installed with tftp-hpa, then systemimager's 
    afterburner will make the proper changes to /etc/inetd.conf.
@@ -52,6 +51,10 @@ getimage
   (perhaps use a virtual disk presented to a "real" fdisk to allow user partitioning? --
    or maybe just calculate partition information with the script and ask the user to specify sizes)
 
+makeautoinstalldiskette
+-----------------------
+- options to specify a particular image, imageserver, IP, hostname, domainname, etc.
+
 addclients
 ----------
 - accept command line input such as --image $imagename
@@ -64,6 +67,11 @@ systemimager.exclude
 - Add support for a systemimager.include file
 - make systemimager.exclude and systemimager.include image specific.
   (systemimager.exclude.$image)
+
+prepareclient
+-------------
+- test for running rsync daemon before finish -- if not running, give warning
+  about having proper hostname and IP address in /etc/hosts
 
 updateclient
 -----------
