@@ -43,6 +43,7 @@
 #   - apparently the busybox-1.00-rc3 can't do "df -k /".  changed to just df -k.
 #   2004.10.28  Brian Elliott Finley
 #   - make variables.txt available to post-install scripts.
+#   - with SCRIPTNAME specified, accept $SCRIPTNAME, or $SCRIPTNAME.{master,sh}
 #
 
 
@@ -799,6 +800,7 @@ ping_test() {
         HOST_TYPE="default gateway"
     else
         PING_DESTINATION=$IMAGESERVER
+        HOST_TYPE="SystemImager server"
     fi 
     echo
     echo "Pinging your $HOST_TYPE to ensure we have network connectivity."
@@ -873,8 +875,8 @@ autodetect_hardware_and_load_modules() {
     for MODULE in $MODULES
     do
         echo
-        echo "Loading $MODULE..."
-        modprobe $MODULE 2>/dev/null || echo "Assuming $MODULE is compiled into the kernel, not needed, or already loaded."
+        echo -n "Loading $MODULE... "
+        modprobe $MODULE 2>/dev/null && echo "done!" || echo "not needed or already loaded."
     done
 }
 #
@@ -958,26 +960,36 @@ choose_autoinstall_script() {
     # 
     # If SCRIPTNAME is specified as a kernel append, or via local.cfg, then use that script.
     #
-    if [ -z $SCRIPTNAME ]; then
+    if [ ! -z $SCRIPTNAME ]; then
+        #
+        # SCRIPTNAME was specified, but let's be flexible.  Try explicit first, then .master, .sh. -BEF-
+        #
+        SCRIPTNAMES="${SCRIPTS_DIR}/${SCRIPTNAME} ${SCRIPTS_DIR}/${SCRIPTNAME}.sh ${SCRIPTS_DIR}/${SCRIPTNAME}.master"
+
+    else
         # 
         # If SCRIPTNAME was not specified, choose one, in order of preference.  First hit wins.
+        # Order of preference is:
+        #   IMAGENAME               oscar_image.master  (if this is specified, then the user _really_ wants it)
+        #   HOSTNAME.sh             oscar_node187.sh    (then most specific -- the node)
+        #   BASE_HOSTNAME.master    oscar_node.sh       (to least specific -- the class)
         #
         if [ ! -z $IMAGENAME ]; then
             SCRIPTNAMES="${SCRIPTS_DIR}/${IMAGENAME}.master ${SCRIPTS_DIR}/${HOSTNAME}.sh ${SCRIPTS_DIR}/${BASE_HOSTNAME}.master"
         else
             SCRIPTNAMES="${SCRIPTS_DIR}/${HOSTNAME}.sh ${SCRIPTS_DIR}/${BASE_HOSTNAME}.master"
         fi
-        
-        #
-        # Choose a winner!
-        #
-        for SCRIPTNAME in $SCRIPTNAMES
-        do
-            [ -e $SCRIPTNAME ] && break
-        done
     fi
 
-    # make sure it exists
+    #
+    # Choose a winner!
+    #
+    for SCRIPTNAME in $SCRIPTNAMES
+    do
+        [ -e $SCRIPTNAME ] && break
+    done
+
+    # Did we really find one, or just exit the loop without a 'break'
     if [ ! -e $SCRIPTNAME ]; then
         echo "FATAL: I can't find ${SCRIPTNAME}!"
     fi
@@ -1300,3 +1312,4 @@ sleep_loop() {
 }
 #
 ################################################################################
+# /* vi: set et ts=4: */
