@@ -18,11 +18,14 @@ use vars qw($config $ft_config $VERSION);
 
 my $last_time = 0;
 my $conf_file = '/etc/systemimager/flamethrower.conf';
+my $pid_file  = "/var/run/flamethrower.pid";
+my $state_dir = "/var/state/flamethrower";
 
 $0 = "flamethrowerd";
 
-# Uncomment for debug information
-my $debug = "";
+# Set to 1 to produce debug output
+my $debug = 1;
+print "debug output turned on\n" if($debug);
 
 # Read the config file
 read_config_file($conf_file);
@@ -32,118 +35,43 @@ if ( $ft_config->start_flamethrower_daemon() ne "yes" ) {
     exit 0;
 }
 
-print STDOUT "\n" if($debug);
-
-#conf_file_updated($conf_file);
-update_directory();
-
-print STDOUT "\n" if($debug);
-
-my $pid_file = "/var/run/flamethrower.pid";
-
-################################################################################
-#
-# Misc. Daemon stuff
-#
-################################################################################
-chdir '/'                   or die "Can't chdir to /: $!";
-open STDIN, '/dev/null'     or die "Can't read /dev/null: $!";
-unless($debug) {
-    open STDOUT, '>>/dev/null'  or die "Can't write to /dev/null: $!";
+# Create our directory directory, if necessary.
+my $dir = $ft_config->get("flamethrower_directory_dir");
+if ( ! -e $dir ) {
+    mkdir("$dir", 0755) or die("Couddn't mkdir $dir!");
 }
-open STDERR, '>>/dev/null'  or die "Can't write to /dev/null: $!";
-umask 0;
-sub REAPER {
-    $SIG{CHLD} = \&REAPER;
-    my $waitedpid = wait;
-    print STDERR "Dead child: $waitedpid\n";
+unlink <$dir/*>;
+
+# Create our state directory, if necessary, and clean it up.
+$dir = $ft_config->get("flamethrower_state_dir");
+if ( ! -e $dir ) {
+    mkdir("$dir", 0755) or die("Couddn't mkdir $dir!");
 }
-$SIG{CHLD} = \&REAPER;
+unlink <$dir/*>;
 
+&update_directory;
+&daemonize;
 
-################################################################################
-#
-# Fork
-#
-################################################################################
-my $pid;
-if ($pid = fork) {
-} elsif (defined $pid) { # send the forked child off
-
-    setsid or die "Can't start a new session: $!";
-
-    my $file = $pid_file;
-    local *FILE;
-    open(FILE,">$file") or die ("FATAL: Can't open file: $file\n");
-        print FILE "$$\n";
-    close(FILE);
-
-    # Subroutine(s) here
-    main();
-
-} else {
-        die "Can't fork: $!\n";
+while(1) {
+    &main;
+    sleep 5;
 }
 
-exit 0; #XXX
+exit 0;
+
 
 ################################################################################
 #
 # BEGIN subroutines 
 #
 
-# Usage: main();
-sub main {
-    print STDOUT "main()" if($debug); 
-    my $quit;
-    until ($quit) {
-        if(conf_file_updated($conf_file)) {
-            #print STDOUT "  Re-read configuration file.\n";
-            read_config_file($conf_file);
-            update_directory();
-        }
-        sleep 2;
-    }
-}
-
-# Usage: read_config_file($file);
-sub read_config_file {
-    my $file = shift;
-    SystemImager::Flamethrower->read_config($file) or die("Couldn't read $file!");
-}
-
-# Usage: if(conf_file_updated($conf_file)) {};
-sub conf_file_updated {
-
-    my $file = shift;
-    #print STDOUT "conf_file_updated($file)\n" if ($debug);
-
-    my $st = stat($file);
-    my $this_time = $st->ctime;
-
-    if($this_time ne $last_time) {
-        print STDOUT "    $file updated\n" if($debug);
-        $last_time = $this_time;
-        return 1;
-    }
-    return undef;
-}
-
 # Usage: update_directory();
 sub update_directory {
 
     print STDOUT "update_directory()\n" if ($debug);
 
-    ############################################################################
-    #
-    # Create our directory directory, if necessary.
-    #
-    my $dir = $ft_config->get("flamethrower_directory_dir");
-    if ( ! -e $dir ) {
-        mkdir("$dir", 0755) or die("Couddn't mkdir $dir!");
-    }
-    #
-    ############################################################################
+    my $flamethrower_directory_dir = $ft_config->get("flamethrower_directory_dir");
+    unlink <$flamethrower_directory_dir/*>;
 
     ############################################################################
     #
@@ -177,7 +105,7 @@ sub update_directory {
         # Put directory information that is useful to clients in
         # sourceable files.
         #
-        my $file = $ft_config->get("flamethrower_directory_dir") . "/" . $module;
+        my $file = $flamethrower_directory_dir . "/" . $module;
         open(FILE, ">$file") or die("Couldn't open $file for writing!");
 
             print FILE "MODULE=$module\n";
@@ -252,6 +180,135 @@ sub update_directory {
     }
     #
     ############################################################################
+}
+
+# Usage: main();
+sub main {
+wait;
+    print STDOUT "main()\n" if($debug); 
+    if(conf_file_updated($conf_file)) {
+        read_config_file($conf_file);
+        update_directory();
+    }
+    my $modules = $ft_config->modules();
+    foreach my $module ( @$modules ) {
+        my $file = $state_dir . "/" . $module;
+        unless(-e "$file") {
+            touch($file);
+            cast($module, $file);
+        }
+    }
+}
+
+# Usage: touch($file);
+sub touch {
+    my $file = shift;
+    print "touch($file)\n" if($debug);
+    open(FILE, ">$file") or die("Couldn't touch $file!");
+    close(FILE);
+}
+
+# Usage: cast($module, $file);
+sub cast {
+
+    my $module = shift;
+    my $file = shift;
+
+    print STDOUT "cast()\n" if($debug);
+    
+    # Fork and cast
+    my $pid;
+    if ($pid = fork) {
+    } elsif (defined $pid) { # send the forked child off
+
+        setsid or die "Can't start a new session: $!";
+
+        $0 = "flamethrowerd-$module";
+
+        #fork cast of module
+        print STDOUT "   casting $module\n" if($debug);
+        sleep length($module);  # Install actual casting stuff here -- sleep just for testing
+        print STDOUT "   unlinking $file\n" if($debug);
+        unlink($file) or die("Couldn't remove $file!\n");
+        sleep 5;    #XXX remove for production
+        exit 0;
+
+    } else {
+        die "Can't fork: $!\n";
+    }
+
+}
+
+# Usage: read_config_file($file);
+sub read_config_file {
+    my $file = shift;
+    SystemImager::Flamethrower->read_config($file) or die("Couldn't read $file!");
+}
+
+# Usage: if(conf_file_updated($conf_file)) {};
+sub conf_file_updated {
+
+    my $file = shift;
+    #print STDOUT "conf_file_updated($file)\n" if ($debug);
+
+    my $st = stat($file);
+    my $this_time = $st->ctime;
+
+    if($this_time ne $last_time) {
+        print STDOUT "    $file updated\n" if($debug);
+        $last_time = $this_time;
+        return 1;
+    }
+    return undef;
+}
+
+# Usage: $SIG{CHLD} = \&REAPER;
+sub REAPER {
+    $SIG{CHLD} = \&REAPER;
+    my $waitedpid = wait;
+    print STDERR "Dead child: $waitedpid\n" if($debug);
+}
+
+# Usage: &daemonize;
+sub daemonize {
+
+    chdir '/'                  or die "Can't chdir to /: $!";
+    open STDIN, '/dev/null'    or die "Can't read /dev/null: $!";
+    open STDOUT, '>>/dev/null' or die "Can't write to /dev/null: $!" unless($debug);
+    open STDERR, '>>/dev/null' or die "Can't write to /dev/null: $!" unless($debug);
+    defined(my $pid = fork)    or die "Can't fork: $!";
+    exit if $pid;
+    setsid                     or die "Can't start a new session: $!";
+
+    my $file = $pid_file;
+    local *FILE;
+    open(FILE,">$file") or die ("FATAL: Can't open file: $file\n");
+        print FILE "$$\n";
+    close(FILE);
+
+    $SIG{CHLD} = \&REAPER;
+}
+
+# Usage: fork_caster($module);
+sub fork_caster {
+    my $pid;
+    if ($pid = fork) {
+    } elsif (defined $pid) { # send the forked child off
+    
+        setsid or die "Can't start a new session: $!";
+    
+        my $file = $pid_file;
+        local *FILE;
+        open(FILE,">$file") or die ("FATAL: Can't open file: $file\n");
+            print FILE "$$\n";
+        close(FILE);
+    
+        # Subroutine(s) here
+        main();
+    
+    } else {
+            die "Can't fork: $!\n";
+    }
 }
 
 #
