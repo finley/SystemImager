@@ -6,7 +6,109 @@
 # This file is: addclients
 #
 
+use Getopt::Long;
+
+my $help;
+my $version;
+my $client;
+my $hostrange;
+my $domainname;
+my $ip_range;
+
+GetOptions(
+    "help" => \$help,
+    "version" => \$version,
+    "client=s" => \$base_hostname,
+    "domainname=s" => \$domainname,
+    "range=s" =>\$hostrange,
+    "ip-range=s" => \$ip_range,
+    "file=s" => \$clientfile
+) || die "$0 <arguments>, use -h for help\n";
+
+#if -help was passed print usage
+if ($help) {
+    &help_info(0);
+  exit 0;
+}
+
+#if -version was passed print version
+if ($version) {
+  &version_info;
+  exit 0;
+}
+
+
+#if any options were called perform non-interactive install
+#otherwise  go interactive
+if ($base_hostname || $hostrange  || $domainname || $image || $ip_range || $clientfile) {
+    #@passvar=($base_hostname,$domainname,$hostrange,$image,$ip_range);
+    #&Interactive(@passvar);
+    print "Non-interactive mode not yet enabled\n";
+} else { 
+    &Interactive;
+}
+
+##                     ##  
 ### BEGIN Subroutines ###
+##                     ##
+
+sub help_info{
+    system("clear");
+
+    if($_[0] == 1){
+	print "Not enough arguments! Printing help...\n";
+	&help
+    } else {
+	&help;
+    }
+}
+
+sub help {
+    printf "Usage: $0 <argument(s)>\n";
+print << 'EOF';
+ -help                    Display this output.
+
+ -version                 Display version and copyright information.
+
+ -client HOSTNAME         Host name of the client you want to update.
+                          When used with -continue-install, the name 
+                          of the client to autoinstall.
+
+ -range N-N               Number range used to create a series of host
+                          names based on the -client option.  For
+                          example, "-client www -range 1-3" will cause
+                          addclients to use www1, www2, and www3 as host
+                          names. 
+
+ -domain DOMAINNAME       If this option is used, DOMAINNAME will be
+                          appended to the client host name(s).
+
+ -i N.N.N.N-N.N.N.N       This is a comma delimited list of IP ranges, 
+	                  usually used for complex topologies
+
+ -file FILE       Read host names and images to process from FILE.
+                          (format is like:
+                            client1 my_web_image_v1
+                            client2 my_web_image_v1
+                            bigbox1 my_web_image_v2
+
+Example: ./addclients -c SomeHost -d yoursite.org -r 1-10 \
+         -ip-range 12.1.1.1-12.1.1.9,12.1.1.20-12.1.1.25 -file clientsfile
+EOF
+
+    exit 0;
+}
+
+sub version_info{
+    system("clear");
+    printf "This is a pre-release version of addclient from\n";
+    printf "VA Linux SystemImager.\n";
+    printf "This release of addclient will have the ability to take\n";
+    printf "command line arguments to allow a more 'scriptable' interface.\n";
+    system("sleep 2");
+}
+
+
 sub get_response {
  my $garbage_out=$_[0];
  my $garbage_in=<STDIN>;
@@ -55,9 +157,19 @@ sub numerically {
 
 ### BEGIN Program ###
 # if not run as root this script will surely fail
-unless($< == 0) { die "Must be run as root!\n"; }
+#unless($< == 0) { die "Must be run as root!\n"; }
 
 # give warning
+sub Interactive {
+    local (*parms)=@_;
+    &Begin_add(*parms);
+    &Main_questions;
+    &Links_questions;
+    &SubNet;
+
+}
+
+sub Begin_add {
 system("clear");
 print << 'EOF';
 Welcome to the VA SystemImager "addclients" utility  
@@ -92,8 +204,9 @@ chomp $continue;
 $continue = lc $continue;
 ($continue ne "n") or die "\naddclients: No files were modified.\n";
 
+}
 ### BEGIN main questionnaire ###
-
+sub Main_questions {
 $image="";
 $domain_name="";
 $base_host_name="";
@@ -151,7 +264,9 @@ EOF
  chomp($satisfied=<STDIN>);
 }
 ### END main questionnaire ###
+}
 
+sub Links_questions {
 ### BEGIN links questionaire ###
 system("clear");
 
@@ -237,7 +352,9 @@ I will ask you for your clients' IP addresses one subnet at a time.
 
 
 EOF
+}
 
+sub SubNet {
 print "Would you like me to make these entries for you? ([y]/n): ";
 
 $etc_hosts=<STDIN>;
@@ -393,3 +510,7 @@ EOF
 system('cp', '-f', '/etc/hosts', '/tftpboot/systemimager/hosts');
 if($? != 0) { die "Couldn't copy /etc/hosts to /tftpboot/systemimager/hosts!\n", "Does /etc/tftpboot/systemimager/ exist?"; }
 ### copy /etc/hosts to /tftpboot/systemimager/hosts to be sure it stays up to date
+	   
+}
+
+$Id$
