@@ -74,11 +74,11 @@ ifeq ($(ARCH),ppc64-iSeries)
 $(LINUX_IMAGE):	$(SRC_DIR)/patched_kernel-stamp $(INITRD_DIR)/initrd.img
 	cp $(TOPDIR)/initrd_source/initrd.img \
 	    ${LINUX_SRC}/arch/ppc64/boot/ramdisk.image.gz
-	$(MAKE) -C $(LINUX_SRC) oldconfig dep $(LINUX_TARGET)
+	$(MAKE) -C $(LINUX_SRC) $(LINUX_TARGET)
 	mkdir -p $(TOPDIR)/tmp
 else 
 $(LINUX_IMAGE): $(SRC_DIR)/patched_kernel-stamp
-	$(MAKE) -C $(LINUX_SRC) oldconfig dep $(LINUX_TARGET)
+	$(MAKE) -C $(LINUX_SRC) $(LINUX_TARGET)
 	mkdir -p $(TOPDIR)/tmp
 endif
 
@@ -91,6 +91,7 @@ $(SRC_DIR)/patched_kernel-stamp:	$(SRC_DIR)/$(LINUX_TARBALL) \
 	cd $(SRC_DIR) && tar xvjf $(LINUX_TARBALL)
 	cd $(LINUX_SRC) && cat $(LINUX_PATCHES) | patch -p1
 	cp -a $(LINUX_CONFIG) $(LINUX_SRC)/.config
+	$(MAKE) -C $(LINUX_SRC) oldconfig dep
 	touch $(SRC_DIR)/patched_kernel-stamp
 
 PHONY += get_kernel_source
@@ -105,7 +106,7 @@ modules:	$(SRC_DIR)/modules_build-stamp
 
 $(SRC_DIR)/modules_build-stamp:	$(SRC_DIR)/patched_kernel-stamp
 	rm -fr $(TOPDIR)/tmp/kernel_modules
-	$(MAKE) -C $(LINUX_SRC) oldconfig dep modules
+	$(MAKE) -C $(LINUX_SRC) modules
 	touch $(SRC_DIR)/modules_build-stamp
 
 PHONY += kernel_clean
