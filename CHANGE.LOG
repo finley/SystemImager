@@ -10,8 +10,13 @@ VA SystemImager-1.2 2000.xx.xx
   sections.
 - rsyncd.conf -- now has entry for /tftpboot and the /var/log/systemimager
   entry is added on a per image basis.
+- autoinstalldiskette -- now uses a 1.44M floppy!
+  - faster creation
+  - faster booting
+  - fewer floppy failures
 - autoinstallclient -- kernel includes support for software RAID and for
   reiserfs.
+- autoinstallclient -- can now be used *without* DHCP.
 - autoinstallclient -- added beep utility.
 - autoinstallclient -- added mkraid and raidstart utilities.
 - autoinstallclient -- added mkreiserfs.
