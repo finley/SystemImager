@@ -1,0 +1,96 @@
+#!/usr/bin/perl -w
+
+#
+# "SystemImager" 
+#
+#  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
+#
+#  $Id$
+#
+
+# set some variables
+$version_number="SYSTEMIMAGER_VERSION_STRING";
+$program_name="mkclientnetboot";
+$get_help = "   Try \"$program_name -help\" for more options.";
+
+# declare modules
+use lib "USR_PREFIX/lib/systemimager/perl";
+use Getopt::Long;
+use File::Copy;
+use File::Path;
+use AppConfig;
+
+### BEGIN parse the config file ###
+
+my $config = AppConfig->new(
+    {CREATE => 1}
+);
+
+$config->file('/etc/systemimager/systemimager.conf');
+
+my $tftp_dir = $config->tftp_dir();
+if (!$tftp_dir) { die "TFTP_DIR not defined in the config file."; }
+
+#
+### END parse the config file ###
+
+# set version information
+$version_info = <<"EOF";
+$program_name (part of SystemImager) version $version_number
+
+Copyright (C) 2002 Bald Guy Software <brian.finley\@baldguysoftware.com>
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+EOF
+
+# set help information
+$help_info = $version_info . <<"EOF";
+
+Usage: $program_name [OPTION]... SOURCE_IMAGE DESTINATION_IMAGE
+
+Options: (options can be presented in any order)
+
+ -help                    Display this output.
+
+ -version                 Display version and copyright information.
+
+ -verbose                 Explain what is being done.
+
+ -client HOSTNAME         Hostname or IP address of the imageserver
+                          from which you want to copy the image.  
+
+Download, report bugs, and make suggestions at:
+http://systemimager.org/
+EOF
+
+# interpret command line options
+GetOptions( 
+  "help" => \$help,
+  "version" => \$version,
+  "clients=s" => \$clients,
+  "verbose" => \$verbose
+) or die qq($help_info);
+
+# if requested, print help information
+if($help) {
+  print qq($help_info);
+  exit 0;
+}
+
+# if requested, print version and copyright information
+if($version) {
+  print qq($version_info);
+  exit 0;
+}
+
+# Take the arguments left after Getopt::Long parses it's stuff out 
+# as the source and destination image names.
+#$source_image=$ARGV[0];
+#$destination_image=$ARGV[1];
+
+if ($verbose) {;}
+if (!$clients) {
+    print qq(Must specify at least one client hostname or IP address!\n);
+    print qq($get_help\n);
+    exit 1;
+}
