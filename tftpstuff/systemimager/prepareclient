@@ -73,13 +73,14 @@ show_usage() {
   echo 'Report bugs or suggestions to <systemimager-bugs@systemimager.org>'
 }
 
-create_ext2_devices_by_label_file() {
+create_devices_by_label_file() {
   rm -f /etc/systemimager/ext2_devices_by_label.txt
+  rm -f /etc/systemimager/devices_by_label.txt
   LABELS=`grep 'LABEL=' /etc/fstab | awk '{print $1}'`
   for LABEL in $LABELS; do
     MOUNT_POINT=`grep -w $LABEL /etc/fstab | awk '{print $2}'`
     DEVICE=`grep -w $MOUNT_POINT /etc/mtab | awk '{print $1}'`
-    echo $LABEL $DEVICE >> /etc/systemimager/ext2_devices_by_label.txt
+    echo $LABEL $DEVICE >> /etc/systemimager/devices_by_label.txt
   done
 }
 ### END functions
@@ -316,7 +317,7 @@ do
 done
 ### END leave disk info behind for the getimage command ###
 
-egrep -q 'LABEL=' /etc/fstab && create_ext2_devices_by_label_file
+egrep -q 'LABEL=' /etc/fstab && create_devices_by_label_file
 
 # wrap up
 if [ "$QUIET" = "false" ] && [ "$NO_RSYNCD" = "false" ]; then

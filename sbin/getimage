@@ -570,7 +570,7 @@ if(-d "$imagedir$partition_dir") {
 
 
 ### BEGIN get info on devices for software RAID, swap, and filesystems ###
-%device_file_by_mount_point     = ();
+%device_by_mount_point          = ();
 %filesystem_type_by_mount_point = ();
 %mount_options_by_mount_point   = ();
 open (FSTAB, "<$imagedir/etc/fstab") || die "$program_name: Failed to open $imagedir/etc/fstab for reading\n";
@@ -588,35 +588,35 @@ while (<FSTAB>) {
     if (m@(^$)@) { next; }
 
     # split on space(s) and assign values to variables
-    (my $device_file, my $mount_point, my $filesystem_type, my $mount_options) = split(/ +/);
+    (my $device, my $mount_point, my $filesystem_type, my $mount_options) = split(/ +/);
 
     # Create hashes to be used in mounting and unmounting
-    $device_file_by_mount_point{$mount_point}     = $device_file;
+    $device_by_mount_point{$mount_point}     = $device;
     $filesystem_type_by_mount_point{$mount_point} = $filesystem_type;
     $mount_options_by_mount_point{$mount_point}   = $mount_options;
 
     ### BEGIN create arrays of device files by device type ###
-    # software RAID
-    if ($device_file =~ /\/dev\/md/) { push (@software_raid_devices, $device_file); }
+    # get software RAID devices that are not using LABEL= or UUID=
+    if ($device =~ /\/dev\/md/) { push (@software_raid_devices, $device); }
 
     # swap
-    if ($filesystem_type eq "swap") { push (@swap_devices, $device_file); }
+    if ($filesystem_type eq "swap") { push (@swap_devices, $device); }
 
     # ext2
     if ($filesystem_type eq "ext2") { 
-      push (@ext2_devices, $device_file);
+      push (@ext2_devices, $device);
       push (@mount_points, $mount_point);
     }
 
     # ext3
     if ($filesystem_type eq "ext3") { 
-      push (@ext3_devices, $device_file);
+      push (@ext3_devices, $device);
       push (@mount_points, $mount_point);
     }
 
     # reiserfs
     if ($filesystem_type eq "reiserfs") { 
-      push (@reiserfs_devices, $device_file);
+      push (@reiserfs_devices, $device);
       push (@mount_points, $mount_point);
     }
     ### END create arrays of device files by device type ###
@@ -626,12 +626,12 @@ close FSTAB;
 
 
 ### BEGIN compile hash of ext2 partitions to label ###
-%ext2_devices_by_label = ();
+%devices_by_label = ();
 
-$file="$imagedir/etc/systemimager/ext2_devices_by_label.txt";
+$file="$imagedir/etc/systemimager/devices_by_label.txt";
 if (-e $file) {
-  open (EXT2_LABELS, "<$file") || die "program_name: Failed to open $file for reading\n";
-  while (<EXT2_LABELS>) {
+  open (LABELS, "<$file") || die "program_name: Failed to open $file for reading\n";
+  while (<LABELS>) {
     # remove carriage returns
     chomp;
 
@@ -651,9 +651,12 @@ if (-e $file) {
     (my $label, my $device) = split(/ +/);
 
     # Create hash to be used in labelling
-    $ext2_devices_by_label{$label} = $device;
+    $devices_by_label{$label} = $device;
+
+    # get software RAID devices that are using LABEL=
+    if ($device =~ /\/dev\/md/) { push (@software_raid_devices, $device); }
   }
-  close (EXT2_LABELS);
+  close (LABELS);
 }
 ### END compile hash of ext2 partitions to label ###
 
@@ -717,8 +720,8 @@ EOF
 ### BEGIN foreach disk, gather up the partition info for that disk and prepare an sfdisk command ###
 foreach $disk (@disks)  {
   ### BEGIN get partition information ###
-  %id_by_device_file = ();
-  %megabytes_by_device_file = ();
+  %id_by_device = ();
+  %megabytes_by_device = ();
   $lowest_start_device = "10000000";  # some random large number
 
   open (PARTITIONS, "<$imagedir$systemimagerdir/partitionschemes/${disk}")
@@ -740,7 +743,7 @@ foreach $disk (@disks)  {
         $_ =~ s/\+//g;
 
         # split on space(s) and assign values to variables
-        (my $device_file, my $start, my $end, my $megabytes, my $blocks, my $id) = split(/ +/);
+        (my $device, my $start, my $end, my $megabytes, my $blocks, my $id) = split(/ +/);
 
         # round down if there is a minus sign on the value
         if ($megabytes =~ /-/) {
@@ -751,19 +754,19 @@ foreach $disk (@disks)  {
         # figure out what the starting device is (probably partition 1)
         if (($megabytes ne "0") and ($start lt $lowest_start_device)) { 
           $lowest_start_number = $start; 
-          $start_device = $device_file; 
+          $start_device = $device; 
         }
 
         # create the megabytes by device hash
-        $megabytes_by_device_file{$device_file} = $megabytes;
+        $megabytes_by_device{$device} = $megabytes;
 
         # create the Id by device hash
-        $id_by_device_file{$device_file} = $id;
+        $id_by_device{$device} = $id;
       }
     }
 
     # get number of partitions
-    $number_of_partitions = (keys %id_by_device_file);
+    $number_of_partitions = (keys %id_by_device);
     ### END get partition information ###
 
 
@@ -771,19 +774,19 @@ foreach $disk (@disks)  {
     $sfdisk_command = "";
     my $has_a_non_null_partition_been_created = "no";
     foreach my $partition_number (4, 3, 2, 1) {
-      my $device_file = "/dev/$disk$partition_number";
-      my $megabytes = $megabytes_by_device_file{$device_file};
-      my $id = $id_by_device_file{$device_file};
+      my $device = "/dev/$disk$partition_number";
+      my $megabytes = $megabytes_by_device{$device};
+      my $id = $id_by_device{$device};
       if ($megabytes eq "0") {
-        $sfdisk_command = "$device_file : start= 0, size= 0, Id=0\n" . $sfdisk_command;
+        $sfdisk_command = "$device : start= 0, size= 0, Id=0\n" . $sfdisk_command;
         next;
       } 
       if ($has_a_non_null_partition_been_created eq "no") { $megabytes = ""; }
-      if ($device_file eq $start_device) {
-        $sfdisk_command = "$device_file : start= $lowest_start_number, size= $megabytes, Id=$id\n" . $sfdisk_command;
+      if ($device eq $start_device) {
+        $sfdisk_command = "$device : start= $lowest_start_number, size= $megabytes, Id=$id\n" . $sfdisk_command;
         $has_a_non_null_partition_been_created = "yes";
       } else {
-        $sfdisk_command = "$device_file : start= , size= $megabytes, Id=$id\n" . $sfdisk_command;
+        $sfdisk_command = "$device : start= , size= $megabytes, Id=$id\n" . $sfdisk_command;
         $has_a_non_null_partition_been_created = "yes";
       }
     }
@@ -794,15 +797,15 @@ foreach $disk (@disks)  {
     my $partition_number = "5";
     if ($number_of_partitions gt "4") {
       until ($partition_number eq $number_of_partitions) {
-        my $device_file = "/dev/$disk$partition_number";
-        my $megabytes = $megabytes_by_device_file{$device_file};
-        my $id = $id_by_device_file{$device_file};
-        $sfdisk_command = $sfdisk_command . "$device_file : start= , size= $megabytes, Id=$id\n";
+        my $device = "/dev/$disk$partition_number";
+        my $megabytes = $megabytes_by_device{$device};
+        my $id = $id_by_device{$device};
+        $sfdisk_command = $sfdisk_command . "$device : start= , size= $megabytes, Id=$id\n";
         $partition_number++;
       } 
-      my $device_file = "/dev/$disk$partition_number";
-      my $id = $id_by_device_file{$device_file};
-      $sfdisk_command = $sfdisk_command . "$device_file : start= , size= , Id=$id\n";
+      my $device = "/dev/$disk$partition_number";
+      my $id = $id_by_device{$device};
+      $sfdisk_command = $sfdisk_command . "$device : start= , size= , Id=$id\n";
     }
     ### END format output for logical partitions 5+ ###
 
@@ -864,8 +867,8 @@ foreach $disk (@disks)  {
 ### BEGIN Write out software RAID device creation commands ###
 if (@software_raid_devices) {
   print MASTER_SCRIPT "# create software RAID devices\n";
-  foreach my $device_file (sort @software_raid_devices) {
-    print MASTER_SCRIPT "mkraid --really-force $device_file\n";
+  foreach my $device (sort @software_raid_devices) {
+    print MASTER_SCRIPT "mkraid --really-force $device\n";
   }
   print MASTER_SCRIPT "\n";
 }
@@ -875,9 +878,9 @@ if (@software_raid_devices) {
 ### BEGIN Write out swap creation commands ###
 if (@swap_devices) {
   print MASTER_SCRIPT "# initialize swap devices\n";
-  foreach my $device_file (sort @swap_devices) {
-    print MASTER_SCRIPT "mkswap -v1 $device_file\n";
-    print MASTER_SCRIPT "swapon $device_file\n";
+  foreach my $device (sort @swap_devices) {
+    print MASTER_SCRIPT "mkswap -v1 $device\n";
+    print MASTER_SCRIPT "swapon $device\n";
   }
   print MASTER_SCRIPT "\n";
 }
@@ -887,22 +890,22 @@ if (@swap_devices) {
 ### BEGIN Write out ext2 creation commands ###
 if (@ext2_devices) {
   print MASTER_SCRIPT "# format ext2 devices\n";
-  foreach my $device_file (sort @ext2_devices) {
-    if ($device_file =~ /LABEL=/) {
+  foreach my $device (sort @ext2_devices) {
+    if ($device =~ /LABEL=/) {
       ### BEGIN this do for labelled devices
-      foreach my $label (keys %ext2_devices_by_label) {
-        if ($device_file eq $label) {
+      foreach my $label (keys %devices_by_label) {
+        if ($device eq $label) {
           # get device
-          my $device_file = $ext2_devices_by_label{$label};
+          my $device = $devices_by_label{$label};
           # strip out LABEL= bit so that we're left with just the actual label
           $label =~ s/LABEL=//;
-          print MASTER_SCRIPT "mke2fs -L $label $device_file\n";
+          print MASTER_SCRIPT "mke2fs -L $label $device\n";
         }
       }
       ### END this do for labelled devices
     } else {
       ### BEGIN this do for non-labelled devices
-      print MASTER_SCRIPT "mke2fs $device_file\n";
+      print MASTER_SCRIPT "mke2fs $device\n";
       ### END this do for non-labelled devices
     }
   }
@@ -914,18 +917,37 @@ if (@ext2_devices) {
 ### BEGIN Write out ext3 creation commands ###
 if (@ext3_devices) {
   print MASTER_SCRIPT "# format ext3 devices\n";
-  print MASTER_SCRIPT "#   SystemImager will use the default parameters to create an appropriately sized\n";
-  print MASTER_SCRIPT "#   journal (given the size of the filesystem) stored internally in the filesystem.\n";
+  print MASTER_SCRIPT "#   SystemImager will use the default parameters to create an appropriately\n";
+  print MASTER_SCRIPT "#   sized journal (given the size of the filesystem) stored internally in the\n";
+  print MASTER_SCRIPT "#   filesystem.\n";
   print MASTER_SCRIPT "#\n";
-  print MASTER_SCRIPT "#   In the future, I hope to detect and re-create journals of an appropriate size.\n";
-  print MASTER_SCRIPT "#   Currently we don't deal with non-hidden journals or journals on a device other\n";
-  print MASTER_SCRIPT "#   than the filesystem device itself.\n";
+  print MASTER_SCRIPT "#   In the future, I hope to detect and re-create journals of an appropriate\n";
+  print MASTER_SCRIPT "#   size.  Currently we don't deal with non-hidden journals or journals on a\n";
+  print MASTER_SCRIPT "#   device other than the filesystem device itself.\n";
   print MASTER_SCRIPT "#\n";
-  print MASTER_SCRIPT "#   If you different journal options, simply make the changes here in the.\n";
-  print MASTER_SCRIPT "#   master autoinstall script.\n";
-  foreach my $device_file (sort @ext3_devices) {
-    print MASTER_SCRIPT "mke2fs -j $device_file\n";
+  print MASTER_SCRIPT "#   If you require different journal options, simply make the changes here in\n";
+  print MASTER_SCRIPT "#   this <image>.master script.\n";
+
+  foreach my $device (sort @ext3_devices) {
+    if ($device =~ /LABEL=/) {
+      ### BEGIN this do for labelled devices
+      foreach my $label (keys %devices_by_label) {
+        if ($device eq $label) {
+          # get device
+          my $device = $devices_by_label{$label};
+          # strip out LABEL= bit so that we're left with just the actual label
+          $label =~ s/LABEL=//;
+          print MASTER_SCRIPT "mke2fs -j -L $label $device\n";
+        }
+      }
+      ### END this do for labelled devices
+    } else {
+      ### BEGIN this do for non-labelled devices
+      print MASTER_SCRIPT "mke2fs -j $device\n";
+      ### END this do for non-labelled devices
+    }
   }
+
   print MASTER_SCRIPT "\n";
 }
 ### END Write out ext3 creation commands ###
@@ -937,9 +959,9 @@ if (@reiserfs_devices) {
   print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::tftpboot/systemimager/mkreiserfs /tmp/\n";
   print MASTER_SCRIPT "\n";
   print MASTER_SCRIPT "# format reiserfs devices\n";
-  foreach my $device_file (sort @reiserfs_devices) {
+  foreach my $device (sort @reiserfs_devices) {
     print MASTER_SCRIPT "# rupasov is the default, but we are explicit here anyway\n";
-    print MASTER_SCRIPT "echo \"y\" | mkreiserfs -h rupasov $device_file\n";
+    print MASTER_SCRIPT "echo \"y\" | mkreiserfs -h rupasov $device\n";
   }
   print MASTER_SCRIPT "\n";
 }
@@ -950,15 +972,15 @@ if (@reiserfs_devices) {
 # be sure to pre-pend /a to each target directory being created
 print MASTER_SCRIPT "# create mount points and mount filesystems\n";
 foreach $mount_point (sort (@mount_points)) {
-  my $device_file = $device_file_by_mount_point{$mount_point};
+  my $device = $device_by_mount_point{$mount_point};
   print MASTER_SCRIPT "mkdir -p /a$mount_point\n";
 
   ### BEGIN this do for labelled devices
-  if ($device_file =~ /LABEL=/) {
-    foreach my $label (keys %ext2_devices_by_label) {
-      if ($device_file eq $label) {
+  if ($device =~ /LABEL=/) {
+    foreach my $label (keys %devices_by_label) {
+      if ($device eq $label) {
         # get device
-        $device_file = $ext2_devices_by_label{$label};
+        $device = $devices_by_label{$label};
         next;
       }
     }
@@ -984,10 +1006,10 @@ foreach $mount_point (sort (@mount_points)) {
     $mount_options =~ s/,ro,/,rw,/;
 
     # add commands to master script
-    print MASTER_SCRIPT "mount $device_file /a$mount_point -t $filesystem_type -o $mount_options\n";
+    print MASTER_SCRIPT "mount $device /a$mount_point -t $filesystem_type -o $mount_options\n";
   } else {
     # add commands to master script
-    print MASTER_SCRIPT "mount $device_file /a$mount_point -t $filesystem_type\n";
+    print MASTER_SCRIPT "mount $device /a$mount_point -t $filesystem_type\n";
   }
   print MASTER_SCRIPT "\n";
 }
