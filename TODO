@@ -5,9 +5,6 @@
 # (not in any specific order)
 #
 
-makedhcpstatic
-makedhcpserver
-
 Top priorities 
 (generally speaking, broken stuff will be fixed before new features are added)
 --------------
@@ -25,10 +22,7 @@ Other stuff
   /etc/systemimager.conf as IMAGESDIRECTORY="/var/spool/systemimager/images"
 
 makedhcpstatic
-- default in RH 6.1 is to not put DHCP info in /var/log/messages?
-  RH 6.1 uses /var/state/dhcp/dhcpd.leases.  change program to check for
-  this file or /etc/dhcpd.leases and use the newer file (if there are two).
-  Also allow for -f "filename" option.
+- allow for -f "filename" option.
 
 autoinstalldiskette 
 - SystemImager vs. autoinstalldiskette version checking against server?
@@ -44,7 +38,6 @@ addclients
 - test for both IP addresses and hostnames in /etc/hosts
 - accept command line input such as --image $imagename
 - re-cycle through each question if answer is ""
-- provide list of images from which to choose 
 - use FQHN in soft links?
 
 systemimager.exclude
@@ -59,7 +52,6 @@ updateimage
 Miscellaneous and Possibilities
 - "perlify" the rest of the server side scripts
 - add more error checking
-- Complete HOW-TO/FAQ
 - Dan of Argonne says there may be a better way of identifying the
   imageserver via DHCP.  This has been verified -- you can make a
   statement such as:
@@ -74,13 +66,11 @@ Miscellaneous and Possibilities
 - Script to do software inventory of nodes via RPM database? or deb database? 
   or track all files?
 - nis friendly
-- curses style wrapper around the whole thing
-- updateimage - log what was updated and or deleted?
-- updateimage - check whether files will be destroyed and throw an interactive 
+- curses and/or gui wrapper around the whole thing
+- updateclient - log what was updated and or deleted?
+- updateclient - check whether files will be destroyed and throw an interactive 
   check to the user? -- probably not.
-- modify defaults
 - make everything work with either DNS or hosts
-- spellcheck everything
 
 makedhcpserver 
 - autodiscover and calculate more information 
