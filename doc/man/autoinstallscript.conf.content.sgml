@@ -133,9 +133,72 @@
       </para>
     </listitem>
 
+    <listitem>
+      <para>
+		lvm_group - The partition is used to be part of the specified volume
+		group name. The attribute "flags" must contain the value 'lvm'. 
+      </para>
+    </listitem>
+  
   </itemizedlist>
   </refsect1>
 
+  <refsect1>
+  <title>LVM Section</title>
+  <para>
+    This section is used to define LVM groups and logical volumes on each of your
+    autoinstall client's disks. This section is indicated with the "lvm" tag.
+  </para>
+
+  <itemizedlist>
+    <listitem>
+      <para>lvm - LVM definitions delimiter.</para>
+    </listitem>
+  
+    <listitem>
+      <para>lvm_group - LVM group definition.</para>
+    </listitem>
+  
+    <listitem>
+      <para>name - The LVM group name.</para>
+    </listitem>
+    
+    <listitem>
+      <para>max_log_vols - The maximum possible logical volume count.</para>
+    </listitem>
+  
+    <listitem>
+      <para>max_phys_vols - The maximum possible physical volume count.</para>
+    </listitem>
+  
+    <listitem>
+      <para>
+          phys_extent_size - Sets the physical extent size on physical volumes of 
+          this volume group. A size suffix (k for kilobytes up to t for terabytes) 
+          is optional, megabytes is the default  if  no  suffix  is  present.
+          Values  can be from 8 KB to 16 GB in powers of 2.
+      </para>
+    </listitem>
+  
+    <listitem>
+      <para>lv - LVM logical volume definition.</para>
+    </listitem>
+  
+    <listitem>
+      <para>name - The name of the LVM logical volume.</para>
+    </listitem>
+  
+    <listitem>
+      <para>
+          size - The size of the LVM logical volume. A size suffix (k for 
+          kilobytes up to t for terabytes) is optional, megabytes is the default  
+          if no suffix is present.
+      </para>
+    </listitem>
+  
+  </itemizedlist>
+  </refsect1>
+  
   <refsect1>
   <title>Filesystem Section</title>
   <para>
