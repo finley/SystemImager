@@ -4,6 +4,7 @@
 #  $Id$
 #
 
+
 First Things First
 --------------------------------------------------------------------------------
 All documentation is in /usr/share/doc/systemimager-*
@@ -19,20 +20,35 @@ o Read at _least_ the HOWTO section of the manual:
     or
       "acroread systemimager-manual.pdf"
 
-o If you're looking in here to find out how to install SystemImager, please
-  visit http://systemimager.org/download for instructions.
 o See the FAQ section of the manual if you still have questions.
 o See the Troubleshooting section of the manual if you have problems.
 o If you still have questions, visit http://systemimager.org/support/
 
 
-Building SystemImager
+Installing SystemImager Packages (recommended)
+--------------------------------------------------------------------------------
+If you're looking in here to find out how to install SystemImager, please 
+visit the following web page for instructions on installing pre-built 
+SystemImager packages for Debian or RPM based distributions:
+
+    http://systemimager.org/download/ 
+
+
+Building and/or Installing SystemImager from Source
 --------------------------------------------------------------------------------
 SystemImager should now build on most any distribution, as well as work on any
-distribution.  The SystemImager team is no longer supporting "installable 
-tarballs", but instead provide packages for RPM and Debian based distributions.
+distribution.  If you must build SystemImager yourself, here are a few tips:
 
-If you must build SystemImager yourself, it should now be possible on any
-distribution.  Please refer to the Makefile for details.
+    o Refer to the Makefile for details.
+    o Makefile targets you are probably most interested in:
+
+        all
+        install_client_all
+        install_server_all
+        install_boel_binaries_tarball
+
+    o For a list of all possible Makefile targets, you can try this command:
+
+        make show_targets
 
 
