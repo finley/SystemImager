@@ -26,7 +26,7 @@ How post-install scripts are processed
   filesystem on the client.  The newly installed client filesystem is 
   mounted on /a/, so the actual script execution looks something like:
   
-      "chmod +x /a/tmp/post-install/$SCRIPT"
+      "chmod +x /a/tmp/post-install/$POST_INSTALL_SCRIPT"
       "chroot /a/ /tmp/post-install/$POST_INSTALL_SCRIPT"
 
   This means that you can write your scripts as if they were executing on a
