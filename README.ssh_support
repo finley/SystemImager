@@ -1,0 +1,17 @@
+#!/bin/sh
+#
+# "SystemImager"
+#
+#  Copyright (C) 2002 Bald Guy Software 
+#                     Brian E. Finley <brian.finley@baldguysoftware.com>
+#
+#   $Id$
+#
+
+Alias /systemimager/boot/ /usr/share/systemimager/boot/
+<Directory /usr/share/systemimager/boot>
+    Options Indexes MultiViews
+    AllowOverride None
+    Order allow,deny
+    Allow from all
+</Directory>
