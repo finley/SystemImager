@@ -9,7 +9,7 @@
 # Author:	Miquel van Smoorenburg, <miquels@drinkel.nl.mugnet.org>
 # Hacked by:    Greg Galloway and Marc Ewing
 #
-# Mercilessly hacked by: "Brian Finley" <brian@thefinleys.com> 1999.09.18
+# Mercilessly hacked by: "Brian Finley" <brian@valinux.com> 1999.09.18
 #                 for: SystemImager
 #
 
@@ -313,7 +313,7 @@ confirm() {
 # SystemImager specific functions
 create_rsyncd_conf() {
   echo '#'                                                      > /etc/rsyncd.conf
-  echo '# "SystemImager" - Copyright (C) 1999-2000 TheFinleys.com <brian@thefinleys.com>'    >> /etc/rsyncd.conf
+  echo '# "SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com>'    >> /etc/rsyncd.conf
   echo '#'                                                      >> /etc/rsyncd.conf
   echo ''                                                       >> /etc/rsyncd.conf
   echo 'list = yes'                                             >> /etc/rsyncd.conf
