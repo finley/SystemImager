@@ -13,6 +13,9 @@
 #    Smith, Wesley <wessmith@engr.sgi.com>
 #    Zinzilieta, Curtis <czinzilieta@valinux.com>
 #
+#   2004.07.27  Brian Elliott Finley
+#   - allow users to specify _any_ floppy device
+#
 
 use lib "USR_PREFIX/lib/systemimager/perl";
 use File::Copy;
@@ -37,7 +40,7 @@ if (!$autoinstall_boot_dir) {
 $ENV{PATH} = "/usr/local/sbin:/usr/sbin:/sbin:/usr/local/bin:/usr/bin:/bin";
 
 $VERSION="SYSTEMIMAGER_VERSION_STRING";
-$program_name = "mkautoinstalldiskette";
+$program_name = "si_mkautoinstalldiskette";
 $version_info = <<"EOF";
 $program_name (part of SystemImager) v$VERSION
     
@@ -52,31 +55,57 @@ $help_info = $version_info . <<"EOF";
 Usage: $program_name [OPTION]...
 
 Options: (options can be presented in any order and may be abbreviated)
- -help             Display this output.
- -version          Display version and copyright information.
- -quiet            Don\'t print any output, just provide an appropriate 
-                   exit code.  (requires -floppy or -out-file)
- -floppy DEVICE    The  1.44MB floppy drive device containing the disk
-                   to format.  If not specified, /dev/fd0 is assumed.
-                   This command understands \"/dev/fd0\" through \"/dev/fd7\".
-                   (if you specify -floppy, this command will run 
-                    non-interactively)
- -out-file FILE    Create a 1.44MB floppy image in FILE.
- -flavor FLAVOR    Specify a flavor of boot media.  
-                   (defaults to "standard" if -quiet is used)
- -kernel FILE      Specify an alternate autoinstall kernel.
- -initrd FILE      Specify an alternate autoinstall ramdisk.
- -append STRING    A string of options that will be passed to the autoinstall
-                   kernel.
- -ssh-key FILE	   Where FILE is the SSH2 id_dsa or id_rsa private key of the
-                   user account that the autoinstall client will use to
-                   connect to the imageserver.  
- -config FILE      Where FILE contains all the settings necessary for
-                   the client to set it's hostname and configure it's
-                   networking information without DHCP.  This file is
-                   copied to /local.cfg on the autoinstalldiskette.  See 
-                   /usr/share/doc/systemimager/local.cfg for a well 
-                   commented example.
+ --help
+    Display this output.
+
+ --version
+    Display version and copyright information.
+
+ --quiet
+    Don\'t print any output, just provide an appropriate exit code.
+    (requires --floppy or --out-file)
+
+ --floppy DEVICE
+    The floppy drive device containing the disk to format.  If not 
+    specified, /dev/fd0 is assumed.  If your kernel, initrd, and 
+    local.cfg file won't fit on a standard 1.44 floppy, you may 
+    specify an alternate floppy device (such as /dev/fd0u1680).
+
+    Use alternate devices at your own risk -- they can do physical
+    damage to _really_ old floppy drives in some cases.  But you 
+    probably wanted to get rid of that floppy drive anyway...
+
+    (if you specify -floppy, $program_name will run non-interactively)
+
+ --out-file FILE    
+    Create a 1.44MB floppy image in FILE.
+
+ --flavor FLAVOR    
+    Specify a flavor of boot media.  
+    (defaults to "standard" if -quiet is used)
+
+ --kernel FILE      
+    Specify an alternate autoinstall kernel.
+
+ --initrd FILE      
+    Specify an alternate autoinstall ramdisk.
+
+ --append STRING    
+    A string of options that will be passed to the autoinstall
+    kernel.
+
+ --ssh-key FILE	   
+    Where FILE is the SSH2 id_dsa or id_rsa private key of the
+    user account that the autoinstall client will use to
+    connect to the imageserver.  
+
+ --config FILE      
+    Where FILE contains all the settings necessary for
+    the client to set it's hostname and configure it's
+    networking information without DHCP.  This file is
+    copied to /local.cfg on the autoinstalldiskette.  See 
+    /usr/share/doc/systemimager/local.cfg for a well 
+    commented example.
 
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
@@ -120,7 +149,7 @@ unless($< == 0) { die "Must be run as root!\n"; }
 
 # if floppy device not specified, set value to run in interactive mode
 if ($floppy_device_prefix and $file) {
-    die "-floppy and -file are mutually exclusive";
+    die "--floppy and --file are mutually exclusive";
 }
 
 if($floppy_device_prefix) { 
@@ -180,9 +209,9 @@ unless ($kernel and $initrd) {
     
 if (!$append_string) { $append_string = ""; }
 
-# Be sure the user includes -floppy or -out-file when doing -quiet
+# Be sure the user includes --floppy or --out-file when doing --quiet
 if($quiet and !$user_specified_floppy and !$user_specified_file) { 
-    print "FATAL: Must use -floppy or -out-file with -quiet! (use -help for options)\n";
+    print "FATAL: Must use --floppy or --out-file with --quiet! (use -help for options)\n";
     exit 1;
 }
 
@@ -193,8 +222,8 @@ if(!$user_specified_floppy and !$user_specified_file) {
 
 # verify that a valid floppy device was specified
 if (! $file) {
-    if (! ($floppy_device_prefix =~ /^\/dev\/fd[0-7]$/)) {
-	    die "ERROR: Invalid -floppy argument.\n $help_info";
+    if (! ($floppy_device_prefix =~ /^\/dev\/fd/)) {
+	    die "ERROR: Invalid --floppy argument.\n $help_info";
     }
 }
 
@@ -204,11 +233,11 @@ if (!$user_specified_floppy and !$user_specified_file) {
     print << 'EOF';
 
 This program assumes that you have a 1.44MB floppy drive and that
-it is /dev/fd0.  You can use the -floppy command line option to
+it is /dev/fd0.  You can use the --floppy command line option to
 change this value.
 
-If you do use -floppy, this command will run non-interactively!!!
-Use the -help option to see all options.
+If you do use --floppy, this command will run non-interactively!!!
+Use the --help option to see all options.
 
 Insert your floppy diskette now.  This will overwrite all
 information on your diskette.
@@ -229,29 +258,26 @@ if ($floppy_device_prefix and !$file) {
 	    die "Couldn't find device file $floppy_device.\n";
     }
 
+    # format floppy
+    if (!$quiet) { print "Formatting floppy using $floppy_device ...\n"; }
     if (-x "/usr/bin/superformat") {
 
-        # format floppy
-        if (!$quiet) { print "Formatting floppy as 1.44MB ...\n"; }
-        
         if ($quiet) {
             system ("superformat $floppy_device hd > /dev/null 2>&1");
         } else {
             system ("superformat $floppy_device hd");
         }
-        
         unless ($? == 0) { die "Couldn't format $floppy_device.\n"; }
 
     } elsif (-x "/usr/bin/fdformat") {
         
-        # format floppy
-        if (!$quiet) { print "Formatting floppy as 1.44MB ...\n"; }
         if ($quiet) {
             system ("fdformat $floppy_device > /dev/null 2>&1");
         } else {
             system ("fdformat $floppy_device");
         }
         if($? != 0) { die "Couldn't format $floppy_device.\n"; }
+
     }
 
     if (!$quiet) {
