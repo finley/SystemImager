@@ -266,8 +266,21 @@ o PXE booting ideas...
   the machine will try to pxe boot, won't be able to find its kernel and
   initrd.gz, and will boot from the harddrive.
   a tool similar to addclients might be useful for this.
-        -dann
-
+o look at replacing dhcp-client w/ udhcp - possibly a savings of 88k
+o for the ramdisk build system, instead of creating a fs of a certain
+  size, then filling it (and often times running out of space), create
+  the directory structure, create the fs based on the now-known size
+  of the directory tree, and copy the directory tree into the fs.
+o instead of explicitly stating each thing that should be linked to busybox
+  in the Makefile, just run busybox and parse out what it provides.  this
+  will require some way of mapping every busybox applet to a directory
+  (e.g. /sbin vs. /usr/sbin vs. /bin vs. /usr/bin) - just to be anal.
+o generalize ramdisk build system to take a config file.  this way we
+  can use it to build a recovery ramdisk, a ramdisk for offline image
+  collection, as well as the autoinstall ramdisk (and the secondary ramdisk
+  mentioned above.
+o serial console support
+o dosfs support (sdague was working on this)
 
 Austin Gonyou <austin@coremetrics.com>
 Wed Mar 21 12:19:10 CST 2001  
