@@ -101,6 +101,8 @@ Options: (options can be presented in any order)
 			   than -server)
 
  -reboot                  Reboot client after update completes.
+    
+ -dryrun                  Only shows what would have been updated. 
 
  -log "STRING"	    	  Quoted string for log file format.  See the
 			  rsyncd.conf man page for options.
@@ -117,7 +119,8 @@ GetOptions( "listing" => \$listing,
             "reboot" => \$reboot,
             "nolilo" => \$nolilo,
             "autoinstall" => \$autoinstall,
-	    "ssh-user=s" => \$ssh_user,
+            "dryrun" => \$dryrun,
+            "ssh-user=s" => \$ssh_user,
             "server=s" => \$imageserver,
             "image=s" => \$image,
             "directory=s" => \$directory,
@@ -158,6 +161,17 @@ if($autoinstall and $nolilo) {
   die qq($help_info);
 }
 
+# -autoinstall and -dryrun conflict
+if($dryrun and $autoinstall) { 
+  print qq($help_info);
+  die "\nautoinstall and dryrun don't like each other\n\n";
+}
+
+# -nolilo and -dryrun: latter one implies the first one
+if(($dryrun) and !($nolilo)) { 
+	$nolilo=1; 
+}
+	
 # -configure-from requires -autoinstall
 if($DEVICE) {
   unless ($autoinstall) { 
@@ -316,10 +330,14 @@ EOF
 
   # start with base command
   $command = "rsync -av --numeric-ids";
+  if ($dryrun) {
+      $command = $command . qq( --dry-run) ;
+  }
+
   if ($log) { $command = $command . qq( --log-format="$log"); }
 
   # get exclusions from /etc/systemimager/updateclient.local.exclude
-  $systemimager_exclude="/etc/systemimager/updateclient.local.exclude";
+  $systemimager_exclude = "/etc/systemimager/updateclient.local.exclude";
   open(SYSTEMIMAGER_EXCLUDE, "< $systemimager_exclude") or die "Couldn't open $systemimager_exclude for reading: $!\n";
   while (<SYSTEMIMAGER_EXCLUDE>) {
       if (/^\s*\//) {  # match non commented explicit path
@@ -344,8 +362,12 @@ EOF
   $command = $command . " --delete rsync://${imageserver}:${port}/$image$directory $directory";
 
   # execute command
-  print qq(Updating image...\n);
-  $rc = 0xffff & system($command);
+  if ($dryrun) {
+  	print qq(dryrun against image...\n); }
+  else {
+  	print qq(Updating image...\n);
+  }
+  $rc = 0xffff & system($command); 
   if ($rc != 0) { exit $rc >> 8; }  
 
   # lilo
