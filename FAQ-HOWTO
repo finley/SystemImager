@@ -5,6 +5,7 @@
 #
 # Current version as of the writing of this document: 1.3.0 (certain answers pertain to v1.4.0)
 #                                           revision: 2000.10.23
+#                                           revision: 2000.11.02
 #
 # See http://systemimager.org/ for the most recent version of this document.
 # It may be updated between releases.
@@ -1106,3 +1107,34 @@ No Dual boot either.
 
 Austin
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+----------------------------------------------------------------------------
+When I boot my autoinstall client I get the error message:
+  "@ERROR: Unknown module 'tftpboot'".
+----------------------------------------------------------------------------
+Assuming that you installed SystemImager properly, this is probably
+because rsyncd is not running on your imageserver.  To test to be sure
+rsyncd is running, do this on the imageserver:
+
+"rsync -av localhost::"
+
+
+With rsyncd running
+-------------------
+$ rsync -av localhost::
+tftpboot
+
+
+With rsyncd not running
+-----------------------
+$ rsync -av localhost::
+failed to connect to localhost - Connection refused
+
+
+If rsyncd is not running, it is probably because:
+- you don't have inetd installed or running on the imageserver
+- you are running xinetd on the imageserver (RedHat 7)
+
+To start rsyncd in either of these cases, just run the following command
+as root: "rsync --daemon"
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
