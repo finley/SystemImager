@@ -860,6 +860,9 @@ sub _write_out_mkfs_commands {
         my $mkfs_opts = $xml_config->{fsinfo}->{$line}->{mkfs_opts};
         unless ($mkfs_opts) { $mkfs_opts = ""; }
 
+        # Remove options that may cause problems and are unnecessary during the install.
+        $options = _remove_mount_option($options, "errors=remount-ro");
+
         # Deal with filesystems to be mounted read only (ro) after install.  We 
         # still need to write to them to install them. ;)
         $options =~ s/\bro\b/rw/g;
@@ -1443,3 +1446,31 @@ sub ip_quad_2_ip_hex {
 }
 
 
+
+# Description:
+# Removes a mount option from a comma seperated option list.
+#
+# Usage:
+# $options = _remove_mount_option($options, $pattern_to_remove);
+# $options = _remove_mount_option($options, "errors=remount-ro");
+#
+sub _remove_mount_option {
+
+    my ($options, $regex) = @_;
+
+    my @array = split (/,/, $options);
+
+    my $new_options = "";
+    foreach (@array) {
+        unless (m/$regex/) {
+            if ("$new_options" eq "") {
+                # First run through
+                $new_options = "$_";
+            } else {
+                $new_options .= ",$_";
+            }
+        }
+    }
+
+    return $new_options;
+}
