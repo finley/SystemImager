@@ -263,6 +263,11 @@ if( (!$quiet) and (!$update_script) and (-e "/tftpboot/systemimager/$image.maste
     $update_script = get_response('yes');
 }
 
+# If it just ain't there yet, make it and don't even ask about it.
+elsif(!-e "/tftpboot/systemimager/$image.master") {
+    $update_script="yes";
+}
+
 # if we don't need to update the master script, then exit -- we're done
 unless($update_script eq "yes") { exit 0; }
 
@@ -332,9 +337,15 @@ print MASTER_SCRIPT << 'EOF';
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/tmp1
 
-# Check to be sure this not run from a working machine
-mount | grep [hs]d[a-z][1-9] > /dev/null
+### BEGIN Check to be sure this not run from a working machine ###
+# test for mounted SCSI or IDE disks
+mount | egrep -q [hs]d[a-z][1-9]
 [ $? -eq 0 ] &&  echo Sorry.  Must not run on a working machine... && exit 1
+
+# test for mounted hardware RAID disks
+mount | egrep -q c[0-9]+d[0-9]+p
+[ $? -eq 0 ] &&  echo Sorry.  Must not run on a working machine... && exit 1
+### END Check to be sure this not run from a working machine ###
 
 # Partition the disk (see the sfdisk man page for customization details)
 #
