@@ -44,7 +44,7 @@ $(SRC_DIR)/$(DISCOVER_DATA_DIR)/Makefile: $(SRC_DIR)/$(DISCOVER_DATA_TARBALL) \
 	[ -d $(SRC_DIR)/$(DISCOVER_DATA_DIR) ] || \
 	  ( cd $(SRC_DIR) && tar -m -xvzf $(DISCOVER_DATA_TARBALL) )
 	cd $(SRC_DIR)/$(DISCOVER_DATA_DIR) && \
-	          cat $(DISCOVER_DATA_PATCHES) < /dev/null | patch -p0
+	          cat $(DISCOVER_DATA_PATCHES) < /dev/null | patch -p1
 		  
 
 $(SRC_DIR)/$(DISCOVER_DATA_TARBALL):
