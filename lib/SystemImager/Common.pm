@@ -1,5 +1,3 @@
-package SystemImager::Common;
-
 #
 # "SystemImager"
 #
@@ -9,6 +7,8 @@ package SystemImager::Common;
 #
 #    $Id$
 #
+
+package SystemImager::Common;
 
 use strict;
 use vars qw($version_number $VERSION);
