@@ -56,7 +56,7 @@ fi
 
 
 ### BEGIN binaries ###
-for BINARY in `ls $INSTALL_DIR/sbin/`
+for BINARY in `ls $INSTALL_DIR/sbin/ | grep -wv CVS`
 do
   cp -af $INSTALL_DIR/sbin/$BINARY /usr/sbin/
   chown root:root /usr/sbin/$BINARY
@@ -85,7 +85,7 @@ ln -f syslinux.cfg default
 chmod +r /etc/hosts
 
 # copy tftpstuff into tftp area
-for TFTP_ITEM in `ls $INSTALL_DIR/tftpstuff/`
+for TFTP_ITEM in `ls $INSTALL_DIR/tftpstuff/ | grep -wv CVS`
 do
   cp -af $INSTALL_DIR/tftpstuff/$TFTP_ITEM /tftpboot/
   chown -R root:root /tftpboot/$TFTP_ITEM
