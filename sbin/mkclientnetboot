@@ -88,13 +88,13 @@ if($version) {
     exit 0;
 }
 
-SystemImager::Common->check_if_root();
-
 unless($clients) {
     print qq(FATAL: Please specify one or more clients with -clients.\n);
     print qq($get_help\n);
     exit 1;
 }
+
+SystemImager::Common->check_if_root();
 
 # Make array from -clients "hostnames and ip addresses" -BEF-
 $_ = $clients;
