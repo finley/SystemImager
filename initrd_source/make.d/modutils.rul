@@ -1,3 +1,7 @@
+#
+#   $Id$
+#
+
 MODUTILS_VERSION = 2.4.26
 MODUTILS_TARBALL = modutils-$(MODUTILS_VERSION).tar.bz2
 MODUTILS_URL = http://www.kernel.org/pub/linux/utils/kernel/modutils/v2.4/$(MODUTILS_TARBALL)
@@ -6,6 +10,7 @@ MODUTILS_PATCHES = $(shell ls $(INITRD_PATCH_DIR)/modutils.*.patch 2>/dev/null |
 
 ifneq ($(ARCH),i386)
 ifneq ($(ARCH),x86_64)
+ifneq ($(ARCH),ppc)
 ALL_SOURCE += $(INITRD_SRC_DIR)/$(MODUTILS_TARBALL)
 
 ########## BEGIN modutils rules ##########
@@ -38,6 +43,7 @@ $(INSMOD_BINARY) $(MODPROBE_BINARY):	$(INITRD_SRC_DIR)/$(MODUTILS_TARBALL) \
 $(INITRD_SRC_DIR)/$(MODUTILS_TARBALL):
 	[ -d $(INITRD_SRC_DIR) ] || mkdir -p $(INITRD_SRC_DIR)
 	$(GETSOURCE) $(MODUTILS_URL) $(INITRD_SRC_DIR)
+endif
 endif
 endif
 
