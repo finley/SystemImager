@@ -37,7 +37,12 @@ case "$1" in
     ;;
   stop)
     echo -n "Stopping SystemImager's Flamethrower (multicast): flamethrowerd"
-    [ -f $PIDFILE ] && kill `cat $PIDFILE`
+    if [ -f $PIDFILE ]; then
+        kill `cat $PIDFILE`
+        rm -f $PIDFILE
+    fi
+    pidof udp-sender > /dev/null
+    [ $? = 0 ] && kill `pidof udp-sender`
     echo "."
     ;;
   reload)
