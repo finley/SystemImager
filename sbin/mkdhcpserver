@@ -362,9 +362,9 @@ if ($dhcpd_version eq "2") {
     }
 
     print DHCPDCONF qq(  # option-143 specifies the starting multicast group number.\n);
-    print DHCPDCONF qq(  # This should be a four digit number.  For example, "0001".\n);
+    print DHCPDCONF qq(  # This should be an even four digit number.  For example, "9000".\n);
     if($mcast_group eq "") { 
-        print DHCPDCONF qq(  #option option-143 "0001"; \n);
+        print DHCPDCONF qq(  #option option-143 "9000"; \n);
     } else {
         print DHCPDCONF qq(  option option-143 "$mcast_group"; \n);
     }
@@ -433,9 +433,9 @@ if ($dhcpd_version eq "2") {
     }
 
     print DHCPDCONF qq(\n# systemimager.mcast_group specifies the starting multicast group number.\n);
-    print DHCPDCONF qq(  # This should be a four digit number.  For example, "0001".\n);
+    print DHCPDCONF qq(  # This should be an even four digit number.  For example, "9000".\n);
     if($mcast_group eq "") { 
-        print DHCPDCONF qq(#option systemimager.mcast_group "0001"; \n);
+        print DHCPDCONF qq(#option systemimager.mcast_group "9000"; \n);
     } else {
         print DHCPDCONF qq(option systemimager.mcast_group "$mcast_group"; \n);
     }
