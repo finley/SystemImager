@@ -34,6 +34,8 @@
 #     reports. :-)
 #   2004.09.11  Brian Elliott Finley
 #   - install everything in the doc/examples directory.
+#   2004.09.19  Brian Elliott Finley
+#   - add 'show_targets' target.
 #
 #
 # ERRORS when running make:
@@ -180,6 +182,12 @@ PYTHON = $(shell which python2 || which python)
 # build everything, install nothing
 PHONY += all
 all:	$(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.img manpages
+
+# Show me a list of all targets in this entire build heirarchy
+PHONY += show_targets
+SHOW_TARGETS_ALL_MAKEFILES = $(shell find . -name 'Makefile' -or -name '*.rul')
+show_targets:
+	cat $(SHOW_TARGETS_ALL_MAKEFILES) | egrep '^[a-z_]+:' | sed 's/:.*//' | sort -u
 
 arch:
 	echo $(ARCH)
@@ -389,7 +397,7 @@ install:
 	@echo ''
 
 PHONY += install_binaries
-install_binaries:	install_kernel initrd_install \
+install_binaries:	install_kernel install_initrd \
 			install_boel_binaries_tarball
 
 
