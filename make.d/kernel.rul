@@ -3,6 +3,7 @@ ifeq ($(ARCH),i386)
 	LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.4/$(LINUX_TARBALL)
 	LINUX_IMAGE = $(LINUX_SRC)/arch/i386/boot/bzImage
 	LINUX_TARGET = bzImage
+	LINUX_DIR = linux
 endif
 
 ifeq ($(ARCH),ia64)
@@ -10,6 +11,7 @@ ifeq ($(ARCH),ia64)
 	LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.4/$(LINUX_TARBALL)
 	LINUX_IMAGE = $(LINUX_SRC)/vmlinux.gz
 	LINUX_TARGET = compressed
+	LINUX_DIR = linux
 endif
 # currently ppc only supports rs6k machines.  Help is welcome to
 # make this support other machines.  This is 32bit kernel only.
@@ -18,25 +20,27 @@ ifeq ($(ARCH),ppc)
 	LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.4/$(LINUX_TARBALL)
 	LINUX_IMAGE = $(LINUX_SRC)/arch/ppc/boot/images/zImage.chrp-rs6k
 	LINUX_TARGET = zImage
+	LINUX_DIR = linux
 endif
 
 # This is for iSeries (AS/400) machines
 ifeq ($(ARCH),ppc64-iSeries)
-	LINUX_VERSION = 2.4.13
+	LINUX_VERSION = 2.4.19
 	LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.4/$(LINUX_TARBALL)
 	LINUX_IMAGE = $(LINUX_SRC)/arch/ppc64/boot/vmlinux.sminitrd
 	LINUX_TARGET = vmlinux.sminitrd
+	LINUX_DIR := linux-$(LINUX_VERSION)
 endif
 
 # This will be for pSeries (ppc64 IBM machines)
 ifeq ($(ARCH),ppc64)
-	LINUX_VERSION = 2.4.13
+	LINUX_VERSION = 2.4.19
         LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.4/$(LINUX_TARBALL)
         LINUX_IMAGE = $(LINUX_SRC)/arch/ppc64/boot/zImage.initrd
         LINUX_TARGET = zImage.initrd
+	LINUX_DIR := linux-$(LINUX_VERSION)
 endif
 
-LINUX_DIR := linux
 LINUX_SRC := $(SRC_DIR)/$(LINUX_DIR)
 LINUX_TARBALL := linux-$(LINUX_VERSION).tar.bz2
 LINUX_CONFIG := $(PATCH_DIR)/linux.$(ARCH).config
