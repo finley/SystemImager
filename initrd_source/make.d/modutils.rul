@@ -1,4 +1,4 @@
-MODUTILS_VERSION = 2.4.21
+MODUTILS_VERSION = 2.4.26
 MODUTILS_TARBALL = modutils-$(MODUTILS_VERSION).tar.bz2
 MODUTILS_URL = http://www.kernel.org/pub/linux/utils/kernel/modutils/v2.4/$(MODUTILS_TARBALL)
 MODUTILS_DIR = modutils-$(MODUTILS_VERSION)
@@ -8,7 +8,7 @@ ALL_SOURCE += $(INITRD_SRC_DIR)/$(MODUTILS_TARBALL)
 
 ########## BEGIN modutils rules ##########
 # busybox insmod only works on i386
-# know to not work on ia64 and ppc64
+# known to not work on ia64 and ppc64
 
 ifneq ($(ARCH),i386)
 	INSMOD_BINARY = $(INITRD_SRC_DIR)/$(MODUTILS_DIR)/insmod/insmod
