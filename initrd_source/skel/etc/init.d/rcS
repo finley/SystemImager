@@ -20,7 +20,7 @@
 # 2004.04.02 Brian Elliott Finley
 # - tmpfs_watcher must start after boel_binaries
 # 2004.04.14 Brian Elliott Finley
-# - add preinstallscript support at Rick Bradshaw's request
+# - add pre-install script support at Rick Bradshaw's request
 
 #set -x         # XXX comment out before each release. -BEF-
 
@@ -69,8 +69,6 @@ tmpfs_watcher
 
 get_scripts_directory
 
-run_preinstall_scripts
-
 autodetect_hardware_and_load_modules
 
 if [ ! -z $SSH_DOWNLOAD_URL ]; then
@@ -92,6 +90,8 @@ if [ ! -z $HOSTNAME ]; then
     echo
     echo "This hosts name is: $HOSTNAME"
 fi
+
+run_pre_install_scripts
 
 # If neither HOSTNAME or IMAGENAME is set, then we cannot proceed.  
 # (IMAGENAME may have been set by local.cfg).  -BEF-
