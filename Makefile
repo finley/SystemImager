@@ -22,8 +22,8 @@
 #   so normal comments are fine.
 #
 # SystemImager file location standards:
-#   o images will be stored in: /var/share/systemimager/images/
-#   o autoinstall scripts:      /var/share/systemimager/scripts/
+#   o images will be stored in: /var/lib/systemimager/images/
+#   o autoinstall scripts:      /var/lib/systemimager/scripts/
 #
 #   o web gui pages:            /usr/share/systemimager/web-gui/
 #
