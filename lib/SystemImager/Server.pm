@@ -21,7 +21,7 @@ $VERSION="SYSTEMIMAGER_VERSION_STRING";
 #
 # Subroutines in this module include:
 #
-#    _add_proc_to_list_of_filesystems_to_mount_on_autoinstall_client 
+#    _mount_proc_in_image_on_client 
 #
 #    _get_array_of_disks 
 #
@@ -641,14 +641,23 @@ EOF
 }
 
 
-sub _add_proc_to_list_of_filesystems_to_mount_on_autoinstall_client {
-  #  The following allows a proc filesystem to be mounted in the fakeroot.
-  #  This provides /proc to programs which are called by SystemImager
-  #  (eg. System Configurator).
+sub _mount_proc_in_image_on_client {
 
-  push (@mount_points, '/proc');
-  $device_by_mount_point{'/proc'} = 'proc';
-  $filesystem_type_by_mount_point{'proc'} = 'proc';
+    #  The following allows a proc filesystem to be mounted in the fakeroot.
+    #  This provides /proc to programs which are called by SystemImager
+    #  (eg. System Configurator).
+
+    print MASTER_SCRIPT "### BEGIN mount proc in image for tools like System Configurator ###\n";
+    my $cmd = "mkdir -p /a/proc || shellout";
+    print MASTER_SCRIPT qq(echo "$cmd"\n);
+    print MASTER_SCRIPT "$cmd\n";
+    $cmd = "mount proc /a/proc -t proc -o defaults || shellout";
+    print MASTER_SCRIPT qq(echo "$cmd"\n);
+    print MASTER_SCRIPT "$cmd\n";
+    print MASTER_SCRIPT "### END mount proc in image for tools like System Configurator ###\n";
+    print MASTER_SCRIPT "\n";
+    print MASTER_SCRIPT "\n";
+
 }
 
 
@@ -1006,19 +1015,6 @@ sub _write_out_mkfs_commands {
 
     }
     
-    print MASTER_SCRIPT "### Now add /proc to the mounts as well ###\n";
-    
-    my $cmd = "mkdir -p /a/proc || shellout";
-    print MASTER_SCRIPT qq(echo "$cmd"\n);
-    print MASTER_SCRIPT "$cmd\n";
-
-    $cmd = "mount proc /a/proc -t proc -o defaults || shellout";
-    print MASTER_SCRIPT qq(echo "$cmd"\n);
-    print MASTER_SCRIPT "$cmd\n";
-
-    print MASTER_SCRIPT "\n";
-
-
     print MASTER_SCRIPT "### END swap and filesystem creation commands ###\n";
     print MASTER_SCRIPT "\n";
     print MASTER_SCRIPT "\n";
@@ -1157,7 +1153,9 @@ sub _write_out_umount_commands {
         }
     }
 
-    # Add this so that /proc also gets umounted
+    # Add this so that /proc gets umounted -- even if there is no proc entry in
+    # the <fsinfo> section of the autoinstallscript.conf file.
+    #
     $fs_by_mp{'/proc'} = "proc";
 
     # Cycle through the mount points in reverse and umount those filesystems.
@@ -1221,11 +1219,11 @@ sub create_autoinstall_script{
 
   _upgrade_partition_schemes_to_generic_style($image_dir, $config_dir);
 
-  _add_proc_to_list_of_filesystems_to_mount_on_autoinstall_client();
-
   _read_partition_info_and_prepare_parted_commands( $image_dir, $auto_install_script_conf );
 
   _write_out_mkfs_commands( $image_dir, $auto_install_script_conf );
+
+  _mount_proc_in_image_on_client();
   
   ### BEGIN pull the image down ###
   print MASTER_SCRIPT << 'EOF';
