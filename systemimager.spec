@@ -85,7 +85,7 @@ environments.
 The common package contains files common to SystemImager clients 
 and servers.
 
-%package i386boot
+%package %{_build_arch}boot
 Summary: Software that automates Linux installs, software distribution, and production deployment.
 Version: %ver
 Release: %rel
@@ -99,7 +99,7 @@ Distribution: System Installation Suite
 Requires: systemimager-server
 AutoReqProv: no
 
-%description i386boot
+%description %{_build_arch}boot
 SystemImager is software that automates Linux installs, software 
 distribution, and production deployment.  SystemImager makes it easy to
 do installs, software distribution, content or data distribution, 
@@ -114,8 +114,8 @@ typical environments include: Internet server farms, database server
 farms, high performance clusters, computer labs, and corporate desktop
 environments.
 
-The i386boot package provides specific kernel, ramdisk, and fs utilities
-to boot and install i386 machines during the SystemImager autoinstall
+The %{_build_arch}boot package provides specific kernel, ramdisk, and fs utilities
+to boot and install %{_build_arch} Linux machines during the SystemImager autoinstall
 process.
 
 %package client
@@ -200,10 +200,10 @@ chkconfig --del systemimager
 %dir %prefix/lib/systemimager
 %prefix/lib/systemimager/perl/SystemImager/Common.pm
 
-%files i386boot
+%files %{_build_arch}boot
 %defattr(-, root, root)
-%dir %prefix/share/systemimager/i386-boot
-%prefix/share/systemimager/i386-boot/*
+%dir %prefix/share/systemimager/%{_build_arch}-boot
+%prefix/share/systemimager/%{_build_arch}-boot/*
 
 %files server
 %defattr(-, root, root)
