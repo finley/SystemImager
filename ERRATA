@@ -1,0 +1,42 @@
+#
+# "VA SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com>
+#
+# This file: ERRATA
+#
+# version 1.3.0
+
+- makedhcpstatic:
+
+  You will need to have the dhcp server re-read it's configuration
+  file after running makedhcpstatic.  You can do this with the 
+  following command or simply stop and re-start the dhcpd daemon.
+  - killall -HUP dhcpd
+
+- autoinstallclient:
+
+  "Couldn't find this hosts name in /tmp/hosts!!!"  The version of
+  sed changed in the autoinstall media in version 1.3.0. The 
+  initialization scripts used POSIX statements to find any blank
+  space (spaces or tabs).  The new sed binary didn't respond in the
+  same way to these statements.  The result is that hosts files
+  created by the addclients command (run automatically after getimage)
+  are parsed properly.  Hand edited hosts files may not work properly.
+
+- autoinstall clients with reiserfs root filesystems:
+
+  lilo complains about a hole in a mapfile and will not make the disk
+  bootable.  This is because the "notail" mount option is needed.
+
+  This will be resolved in the next release.
+
+  The hack for now is to edit your /tftpboot/systemimager/<imagename>.master 
+  file, and add the options "-o notail" to the end of the mount command for
+  your root filesystem (reiserfs only).
+
+  The modified entry will look something like:
+
+  #mount /dev/hda3 /a/
+  mount /dev/hda3 /a/ -o notail
+
+  Thanks to Matthew Marlowe for submitting this one.
+
