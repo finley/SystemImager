@@ -4,7 +4,7 @@
 # This file is: FAQ-HOWTO
 #
 # Current version as of the writing of this document: 1.1
-#                                           revision: 1
+#                                           revision: 2
 #
 #   Others who have contributed to this document (in alphabetical order):
 #     Paonia Ezrine <paonia@home.welcomehome.org>
@@ -260,6 +260,20 @@ via DHCP, it determines the DHCP server to be the imageserver and tries
 to connect to the DHCP server with tftp to get it's utilities and it's 
 autoinstall script.
 
+
+--------------------------------------------------------------------------------
+Question:  When I try to do a network autoinstall, the client gets a DHCP 
+           address, but when it tries to tftp the pxelinux.cfg/default file 
+           it fails.  What's up with that?
+--------------------------------------------------------------------------------
+
+Answer:
+
+Be sure that you have the right tftp server software installed.  You should be
+using the tftp-hpa package.  If you are on a RedHat based system, when you do
+an "rpm -qa | grep tftp" you should only see an entry for "tftp-hpa".  If you
+have other tftp software installed, uninstall all of your tftp software and
+then re-install the tftp-hpa package.
 
 --------------------------------------------------------------------------------
 Question:  How do I add a driver for a special card to the autoinstall client?
@@ -716,6 +730,16 @@ Yes.  "/var/log/systemimager"
 
 
 --------------------------------------------------------------------------------
+Question:  How do I know when an autoinstall client is finished autoinstalling?
+--------------------------------------------------------------------------------
+
+Answer:
+
+It will stop responding to pings.  Soon it will make noise too!
+(look for noise in v1.2)
+
+
+--------------------------------------------------------------------------------
 Question:  What other software is this based on?
 --------------------------------------------------------------------------------
 
@@ -772,9 +796,6 @@ References
   Questions yet to be answered -- please send more!
 --------------------------------------------------------------------------------
 
--  My client failed to autoinstall, and when I run an rsync command on it 
-   manually it takes forever for the imageserver to respond.
 -  Some of my clients have disks from different manufacturers or with different
    geometries.  Will an autoinstall work on them?
--  How do I know when an autoinstall client is finished autoinstalling?
 -  How do I use multiple imageservers to serve a large number of clients?
