@@ -58,7 +58,7 @@ delim() {
 #         separated from the next w/ whitespace.  the two files in each pair
 #         are separated from each other with a ":".
 #         Example:
-#           CONFIG_FILES="/etc/systemimager/server.conf:`pwd`/etc/server.conf /etc/init.d/systemimager:`pwd`/debian/systemimager-server.init"
+#           CONFIG_FILES="/etc/systemimager/systemimager.conf:`pwd`/etc/systemimager.conf /etc/init.d/systemimager:`pwd`/debian/systemimager-server.init"
 #
 upgrade_config_files() {
   echo "Checking for old configuration files..."

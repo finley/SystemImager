@@ -33,7 +33,7 @@ my $config = AppConfig->new(
 			    'rsync_stub_dir' => { ARGCOUNT => 1 },
 			    );
 
-$config->file('/etc/systemimager/server.conf');
+$config->file('/etc/systemimager/systemimager.conf');
 
 my $autoinstall_boot_dir = $config->autoinstall_boot_dir();
 

@@ -16,7 +16,7 @@ SYSTEMIMAGER_VERSION = $(shell cat ../../VERSION)
 
 MANPAGES = $(SERVER_MAN) $(CLIENT_MAN) $(COMMON_MAN)
 
-SERVER_MAN = addclients.8 getimage.8 install_siboot.8 mkautoinstallcd.8 mkautoinstalldiskette.8 mkautoinstallscript.8 mkdhcpserver.8 mkdhcpstatic.8 pushupdate.8 cpimage.8 mvimage.8 rmimage.8 mkbootserver.8 server.conf.5 systemimager-rsyncd.conf.5 mkrsyncd_conf.8
+SERVER_MAN = addclients.8 getimage.8 install_siboot.8 mkautoinstallcd.8 mkautoinstalldiskette.8 mkautoinstallscript.8 mkdhcpserver.8 mkdhcpstatic.8 pushupdate.8 cpimage.8 mvimage.8 rmimage.8 mkbootserver.8 systemimager.conf.5 systemimager-rsyncd.conf.5 mkrsyncd_conf.8
 
 CLIENT_MAN = prepareclient.8 updateclient.8
 
@@ -29,7 +29,7 @@ all:	compress
 %.gz:	%
 	gzip -9 < $< > $@
 
-server.conf.5:	server.conf.pod
+systemimager.conf.5:	systemimager.conf.pod
 	pod2man --release=$(SYSTEMIMAGER_VERSION) -s 5 -c "SystemImager" $< $@
 
 systemimager-rsyncd.conf.5:	systemimager-rsyncd.conf.pod

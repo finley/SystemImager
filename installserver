@@ -58,7 +58,7 @@ echo "Checking for old utilities..."
 OLD_FILES="/usr/sbin/addclients /usr/sbin/cpimage /usr/sbin/getimage /usr/sbin/makedhcpserver /usr/sbin/makedhcpstatic /usr/sbin/makeautoinstallcd /usr/sbin/makeautoinstalldiskette /usr/sbin/mvimage /usr/sbin/pushupdate /usr/sbin/rmimage /usr/sbin/lsimage"
 remove_old_files
 
-CONFIG_FILES="/etc/systemimager/server.conf:./etc/systemimager/server.conf /etc/init.d/systemimager:./etc/init.d/systemimager /etc/systemimager/rsync_stubs/10header:./etc/systemimager/rsync_stubs/10header /etc/systemimager/rsync_stubs/99local:./etc/systemimager/rsync_stubs/99local"
+CONFIG_FILES="/etc/systemimager/systemimager.conf:./etc/systemimager/systemimager.conf /etc/init.d/systemimager:./etc/init.d/systemimager /etc/systemimager/rsync_stubs/10header:./etc/systemimager/rsync_stubs/10header /etc/systemimager/rsync_stubs/99local:./etc/systemimager/rsync_stubs/99local"
 
 upgrade_config_files
 ### END clean up old files ###

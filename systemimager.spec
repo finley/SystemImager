@@ -252,7 +252,7 @@ fi
 %dir /var/lib/systemimager/scripts
 %dir /etc/systemimager
 %config /etc/systemimager/rsyncd.conf
-%config /etc/systemimager/server.conf
+%config /etc/systemimager/systemimager.conf
 /etc/init.d/systemimager
 /var/lib/systemimager/images/*
 %prefix/sbin/addclients

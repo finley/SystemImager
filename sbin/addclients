@@ -43,7 +43,7 @@ my $config = AppConfig->new(
                             'quiet' => {ARGCOUNT => 0, DEFAULT => 0},
 			    );
 
-$config->file('/etc/systemimager/server.conf');
+$config->file('/etc/systemimager/systemimager.conf');
 
 my $autoinstall_script_dir = $config->autoinstall_script_dir();
 

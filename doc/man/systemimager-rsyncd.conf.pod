@@ -40,7 +40,7 @@ SystemImager to function properly.
 The scripts module must be defined so that the autoinstall clients can
 fetch their autoinstall scripts during install.  The I<path> for
 I<scripts> should be set to the same value as I<AUTOINSTALL_SCRIPT_DIR>
-is set to in I<server.conf>.
+is set to in I<systemimager.conf>.
 
 =item B<[i386-boot]>
 
@@ -60,7 +60,7 @@ specific $arch-boot directory needed.  For example:
 In addition to the two required modules specified about, there also
 needs to be a module for every I<image> that you want available for
 installation from your Image Server.  The I<path> entry for the image
-should be I<DEFAULT_IMAGE_DIR> from the server.conf file, with
+should be I<DEFAULT_IMAGE_DIR> from the systemimager.conf file, with
 the image's directory appended to the end.  For example:
 
   [rh71image]
@@ -76,12 +76,12 @@ the image's directory appended to the end.  For example:
 
 =head1 BUGS
 
-This file should be kept in sync from server.conf, and the
+This file should be kept in sync from systemimager.conf, and the
 autoinstallscripts, as there is no unique information in this file.
 
 =head1 SEE ALSO
 
-The SystemImager Manual, B<rsyncd.conf(5)>, B<server.conf(5)>
+The SystemImager Manual, B<rsyncd.conf(5)>, B<systemimager.conf(5)>
 
 =head1 AUTHORS
 

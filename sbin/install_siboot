@@ -90,7 +90,7 @@ my $config = AppConfig->new(
    'quiet' => { ARGCOUNT => 0, DEFAULT => 0 }
 );
 
-$config->file('/etc/systemimager/server.conf');
+$config->file('/etc/systemimager/systemimager.conf');
 
 my $autoinstall_boot_dir = $config->autoinstall_boot_dir();
 my $rsyncd_conf = $config->rsyncd_conf();

@@ -263,8 +263,8 @@ initrd.gz:	kernel
 # install the initscript & config files for the server
 install_configs:
 	$(SI_INSTALL) -d $(ETC)/systemimager
-	$(SI_INSTALL) -m 644 etc/server.conf \
-	  $(ETC)/systemimager/server.conf
+	$(SI_INSTALL) -m 644 etc/systemimager.conf \
+	  $(ETC)/systemimager/systemimager.conf
 
 	mkdir -p $(RSYNC_STUB_DIR)
 	$(SI_INSTALL) -b -m 644 etc/rsync_stubs/10header $(RSYNC_STUB_DIR)

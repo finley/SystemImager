@@ -18,7 +18,7 @@ use Time::Local;
 use POSIX qw(strftime);
 use Socket;
 
-### BEGIN Parameters to be read from /etc/systemimager/server.conf
+### BEGIN Parameters to be read from /etc/systemimager/systemimager.conf
 $si_logdir = "/var/log/systemimager";
 $si_log_format = "%t %o %f";
 ### END Parameters ###
