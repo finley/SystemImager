@@ -12,24 +12,26 @@ use lib "USR_PREFIX/lib/systemimager/perl";
 use strict;
 use POSIX qw(setsid);
 use SystemImager::Config;
-use SystemImager::Flamethrower_Config;
+use SystemImager::Flamethrower;
 use vars qw($config $ft_config $VERSION);
 
-$0 = "flamethrower";
+$0 = "flamethrowerd";
+
+my $file = '/etc/systemimager/flamethrower.conf';
+SystemImager::Flamethrower->read_config($file) or die("Couldn't read $file!");
 
 # Should we start up?
 if ( $ft_config->start_flamethrower_daemon() ne "yes" ) {
     exit 0;
 }
 
+print "\n";
+process_modules();
+
 # Uncomment for debug info
-#&dump_config_info;
+#use Data::Dumper; print Dumper($ft_config);
 
-foreach ( @{$ft_config->modules()} ) {
-    print "$_\n";
-}
-
-print "HERE\n"; exit 0;
+exit 0; #XXX
 
 my $pid_file = "/var/run/flamethrower.pid";
 
@@ -82,10 +84,56 @@ if ($pid = fork) {
 # BEGIN subroutines 
 #
 
-# Usage: dump_config_info();
-sub dump_config_info {
-    use Data::Dumper;
-    print Dumper($ft_config);
+# Usage: process_modules();
+sub process_modules {
+
+print "\n"; #XXX
+    #
+    # Get list of explicitly specified portbase numbers so we don't 
+    # dynamically use one that already exists.
+    #
+    my %portbases = $ft_config->varlist('_portbase$');
+
+    print "Portbases:\n";
+    foreach (values %portbases) {
+        #
+        # Make the values the keys, so we can simply to an 
+        # if (defined()) in the module loop below.
+        #
+        $portbases{$_}=$_;
+        print "$_\n";
+    }
+print "\n"; #XXX
+    foreach (keys %portbases) {
+        print "$_\n";
+    }
+print "\n"; #XXX
+
+    #
+    # Create the Flamethrower "directory" (sourceable files) for each module.
+    my $modules = $ft_config->modules();
+    foreach my $module ( @$modules ) {
+
+        print STDOUT "MODULE=$module\n";
+
+        # DIR
+        if ( defined($ft_config->get("${module}_dir")) ) {
+            print STDOUT "DIR=" . $ft_config->get("${module}_dir") . "\n";
+        } else {
+            die("Please set DIR in flamethrower.conf for [$module]!");
+        }
+
+        # PORTBASE
+        my $portbase = $ft_config->get("${module}_portbase");
+        if ( ! defined($portbase) ) {
+            $portbase = ($ft_config->get("flamethrower_directory") + 2);
+        }
+        print STDOUT "PORTBASE=$portbase\n";
+
+
+
+        print "\n";
+    }
 }
 
 #
