@@ -37,9 +37,9 @@ ifeq ($(ARCH),alpha)
 endif
 
 ifeq ($(ARCH),x86_64)
-	LINUX_VERSION = 2.4.25
-	LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.4/$(LINUX_TARBALL)
-	LINUX_IMAGE = $(LINUX_SRC)/arch/i386/boot/bzImage
+	LINUX_VERSION = 2.6.7
+	LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.6/$(LINUX_TARBALL)
+	LINUX_IMAGE = $(LINUX_SRC)/arch/x86_64/boot/bzImage
 	LINUX_TARGET = bzImage
 	LINUX_DIR = linux-$(LINUX_VERSION)
 endif
