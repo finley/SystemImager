@@ -89,12 +89,12 @@
       </para>
 
       <para>
-		Size can also hold the special value of "end_of_disk".  This is used 
+		Size can also hold the special value of "*".  This is used 
         to indicate that the specified partition should be growable to the end 
         of the disk.  If the last partition is a primary partition, then only 
-        that partition should have "end_of_disk" specified.  If the last 
+        that partition should have "*" specified.  If the last 
         partition is a logical partition, then both the logical partition, and 
-        the extended partition that contains it, should have "end_of_disk" 
+        the extended partition that contains it, should have "*" 
         specified.
       </para>
     </listitem>

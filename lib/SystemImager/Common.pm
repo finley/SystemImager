@@ -285,7 +285,7 @@ sub save_partition_information {
             my $size = $endMB - $startMB;
 
             if ($endMB == $end_of_last_partition_on_disk) {
-                $size = "end_of_disk";
+                $size = "*";
             }
 
             _print_to_auto_install_conf_file( $minor, $size, $partition_type, $fstype, $name, $flags );
@@ -540,7 +540,7 @@ sub _turn_sfdisk_output_into_generic_partitionschemes_file {
         my $size = $endMB - $startMB;
 
         if ($endMB == $end_of_last_partition_on_disk) {
-            $size = "end_of_disk";
+            $size = "*";
         }
 
         _print_to_auto_install_conf_file( $minor, $size, $partition_type, $fstype, $name, $flags );

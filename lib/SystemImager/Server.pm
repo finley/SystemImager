@@ -132,21 +132,6 @@ sub get_full_path_to_image_from_rsyncd_conf {
     print "Please tell this tool to call the following subroutine instead:\n";
     print 'SystemImager::Server->get_image_path( $rsync_stub_dir, $image );' . "\n";
     die;
-#        my $rsyncd_conf=$_[1];
-#	my $image=$_[2];
-#
-#        my $path_to_image="";
-#	open (FILE, "<$rsyncd_conf") or die "FATAL: Couldn't open $rsyncd_conf for reading!\n";
-#	  while (<FILE>) {
-#	    if (/^\s*path\s*=.*\/$image$/) { 
-#	      (my $junk, $path_to_image) = split (/=/);
-#	      $path_to_image =~ s/^\s+//;
-#	      $path_to_image =~ s/\s+$//;
-#	      $path_to_image =~ s/$image$//;    # The $ at the end is critical here. -BEF-
-#	    }
-#	  }
-#	close FILE;
-#	return $path_to_image;
 }
 
 
@@ -213,7 +198,7 @@ sub _read_partition_info_and_prepare_parted_commands {
             my $sum;
             foreach my $m (sort (keys ( %{$config->{disk}->{$dev}->{part}} ))) {
                 $_ = $config->{disk}->{$dev}->{part}{$m}->{size};
-                if ( $_ eq "end_of_disk" ) { next; }
+                if ( $_ eq "*" ) { next; }
                 if (/[[:alpha:]]/) {
                     print qq(FATAL:  autoinstallscript.conf cannot contain "$_" as a percentage.\n);
                     print qq(        Disk: $dev, partition: $m\n);
@@ -302,7 +287,7 @@ sub _read_partition_info_and_prepare_parted_commands {
 
         # For partitions that go to the end of the disk, tell $endMB to grow to end of disk. -BEF-
         foreach $m (keys %endMB) {
-            if ( $size{$m} eq "end_of_disk" ) {
+            if ( $size{$m} eq "*" ) {
                 $endMB{$m} = '$(( $DISK_SIZE - ' . "$MB_from_end_of_disk" . ' ))';
             }
         }
@@ -496,48 +481,6 @@ EOF
 }
 
 
-#sub _create_arrays_of_device_files_by_device_type {
-#
-#    #
-#    # Filesystems what don't get created here, get created in the
-#    # _read_partition_info_and_prepare_parted_commands subroutine,
-#    # But we still need to add their mount points to @mount_points. -BEF-
-#    #
-#    
-#    my ($device, $mount_point, $filesystem_type) = @_;
-#
-#    # get software RAID devices that are not using LABEL= or UUID=
-#    if ($device =~ /\/dev\/md/) { push (@software_raid_devices, $device); }
-#
-#    # swap
-#    if ($filesystem_type eq "swap") { push (@swap_devices, $device); }
-#
-#    # fat
-#    if ($filesystem_type eq "vfat") { 
-#      push (@mount_points, $mount_point);
-#    }
-#
-#    # ext2
-#    if ($filesystem_type eq "ext2") { 
-#      push (@ext2_devices, $device);
-#      push (@mount_points, $mount_point);
-#    }
-#
-#    # ext3
-#    if ($filesystem_type eq "ext3") { 
-#      push (@ext3_devices, $device);
-#      push (@mount_points, $mount_point);
-#    }
-#
-#    # reiserfs
-#    if ($filesystem_type eq "reiserfs") { 
-#      push (@reiserfs_devices, $device);
-#      push (@mount_points, $mount_point);
-#    }
-#    
-#}
-
-
 sub _add_proc_to_list_of_filesystems_to_mount_on_autoinstall_client {
   #  The following allows a proc filesystem to be mounted in the fakeroot.
   #  This provides /proc to programs which are called by SystemImager
@@ -555,7 +498,7 @@ sub _upgrade_partition_schemes_to_generic_style {
 
   my ($image_dir, $config_dir) = @_;
 
-  my $new_file = "$systemimagerdir/autoinstallscript.conf";
+  my $new_file = "$config_dir/autoinstallscript.conf";
   my $partition_dir = "$config_dir/partitionschemes";
 
   # Disk types ide and scsi are pretty self explanatory.  Here are 
@@ -575,7 +518,7 @@ sub _upgrade_partition_schemes_to_generic_style {
     }
 
     if(-d $dir) {
-      opendir(DIR, $dir) || die "$program_name: Can't read the $dir directory.";
+      opendir(DIR, $dir) || die "Can't read the $dir directory.";
         while(my $device = readdir(DIR)) {
 
           # Skip over any "dot" files. -BEF-
@@ -611,7 +554,7 @@ sub _get_array_of_disks {
   foreach my $type (@disk_types) {
     my $dir = $image_dir . $partition_dir . "/" . $type;
     if(-d $dir) {
-      opendir(DIR, $dir) || die "$program_name: Can't read the $dir directory.";
+      opendir(DIR, $dir) || die "Can't read the $dir directory.";
         while(my $device = readdir(DIR)) {
 
           # Skip over any "dot" files. -BEF-
@@ -630,43 +573,6 @@ sub _get_array_of_disks {
   }
   return @disks;
 }
-
-
-#sub _compile_hash_of_ext2_partitions_to_label {
-#  my $image_dir = $_[0];
-#
-#  %devices_by_label = ();
-#  $file="$image_dir/etc/systemimager/devices_by_label.txt";
-#  if (-e $file) {
-#    open (LABELS, "<$file") || die "program_name: Failed to open $file for reading\n";
-#    while (<LABELS>) {
-#      # remove carriage returns
-#      chomp;
-#
-#      # Skip the line if it starts with a '#'
-#      if (m@(^\s*\#)@) { next; }
-#
-#      # turn all tabs into single spaces -- Note: <ctrl-v><tab>
-#      s/	/ /g;
-#
-#      # Remove spaces from the beginning of the line
-#      s/^ +//;
-#
-#      # Skip blank lines
-#      if (m@(^$)@) { next; }
-#
-#      # split on space(s) and assign values to variables
-#      (my $label, my $device) = split(/ +/);
-#
-#      # Create hash to be used in labelling
-#      $devices_by_label{$label} = $device;
-#
-#      # get software RAID devices that are using LABEL=
-#      if ($device =~ /\/dev\/md/) { push (@software_raid_devices, $device); }
-#    }
-#    close (LABELS);
-#  }
-#}
 
 
 # Description:
@@ -1065,40 +971,6 @@ sub _write_out_umount_commands {
 }
 
 
-#sub _get_info_on_devices_for_software_RAID_swap_and_filesystems {
-#  my $image_dir = $_[0];
-#
-#  %device_by_mount_point          = ();
-#  %filesystem_type_by_mount_point = ();
-#  %mount_options_by_mount_point   = ();
-#
-#  open (FSTAB, "<$image_dir/etc/fstab") || die "Failed to open $image_dir/etc/fstab for reading!\n";
-#  while (<FSTAB>) {
-#    # Skip the line if it starts with a '#' or if it is for a floppy device
-#    if (m@(^\s*\#)|(/dev/fd)@) { next; }
-#
-#    # turn all tabs into single spaces -- Note: <ctrl-v><tab>
-#    s/	/ /g;
-#
-#    # Remove spaces from the beginning of the line
-#    s/^ +//;
-#
-#    # Skip blank lines
-#    if (m@(^$)@) { next; }
-#
-#    # split on space(s) and assign values to variables
-#    (my $device, my $mount_point, my $filesystem_type, my $mount_options) = split(/ +/);
-#
-#    # Create hashes to be used in mounting and unmounting
-#    $device_by_mount_point{$mount_point}     = $device;
-#    $filesystem_type_by_mount_point{$mount_point} = $filesystem_type;
-#    $mount_options_by_mount_point{$mount_point}   = $mount_options;
-#
-#    _create_arrays_of_device_files_by_device_type( $device, $mount_point, $filesystem_type);
-#  }
-#  close FSTAB;
-#}
-
 sub create_autoinstall_script{
 
   my (  $module, 
@@ -1109,7 +981,8 @@ sub create_autoinstall_script{
         $image_dir, 
         $ip_assignment_method, 
         $post_install,
-        $auto_install_script_conf
+        $auto_install_script_conf,
+        $ssh_user
     ) = @_;
 
   # Lose the /etc/mtab file.  It can cause confusion on the autoinstall client, making 
@@ -1123,39 +996,15 @@ sub create_autoinstall_script{
   }
 
   $file = "$auto_install_script_dir/$script_name.master";
-  open (MASTER_SCRIPT, ">$file") || die "$program_name: Can't open $file for writing\n";
+  open (MASTER_SCRIPT, ">$file") || die "Can't open $file for writing\n";
 
   _in_script_add_standard_header_stuff($image, $script_name);
 
   _upgrade_partition_schemes_to_generic_style($image_dir, $config_dir);
 
-  #_get_info_on_devices_for_software_RAID_swap_and_filesystems($image_dir);
-
   _add_proc_to_list_of_filesystems_to_mount_on_autoinstall_client();
 
   _read_partition_info_and_prepare_parted_commands( $image_dir, $auto_install_script_conf );
-
-  #### BEGIN Write out software RAID device creation commands ###
-  #if (@software_raid_devices) {
-  #  print MASTER_SCRIPT "# Pull /etc/raidtab over to autoinstall client\n";
-  #  print MASTER_SCRIPT qq(echo\n);
-  #  print MASTER_SCRIPT qq(echo "Let's go get that image!"\n);
-  #  print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::\$IMAGENAME/etc/raidtab /etc/raidtab || shellout\n";
-  #  print MASTER_SCRIPT "\n";
-  #  print MASTER_SCRIPT "# Load RAID modules, if necessary, and create software RAID devices.\n";
-  #  print MASTER_SCRIPT "if [ ! -f /proc/mdstat ]; then\n";
-  #  print MASTER_SCRIPT "  modprobe linear\n";
-  #  print MASTER_SCRIPT "  modprobe raid0\n";
-  #  print MASTER_SCRIPT "  modprobe raid1\n";
-  #  print MASTER_SCRIPT "  modprobe raid5\n";
-  #  print MASTER_SCRIPT "fi\n";
-  #  print MASTER_SCRIPT "\n";
-  #  foreach my $device (sort @software_raid_devices) {
-  #    print MASTER_SCRIPT "mkraid --really-force $device || shellout\n";
-  #  }
-  #  print MASTER_SCRIPT "\n";
-  #}
-  #### END Write out software RAID device creation commands ###
 
   _write_out_mkfs_commands( $image_dir, $auto_install_script_conf );
   
