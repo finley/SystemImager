@@ -857,6 +857,9 @@ sub _write_out_mkfs_commands {
 
     if ($software_raid) {
 
+	# XXX at some point, we want to include this in the autoinstallscript.conf
+	# file.  We should also look at the format and write functions for that 
+	# same file. -BEF-
         print MASTER_SCRIPT qq(# /etc/raidtab that will be used for creating software RAID devices on client(s).\n);
         print MASTER_SCRIPT qq(cat <<'EOF' > /a/etc/raidtab\n);
         my $raidtab = $image_dir . "/etc/raidtab";
