@@ -118,16 +118,21 @@ if [ "x$DESTDIR" = "x" ]; then
   # doc/manual/html
   install -d -m 755 $OWNERSHIP ${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html || exit 1
 
-  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/index.html	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/index.html || exit 1
-  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/intro.html	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/intro.html || exit 1
-  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/who.html	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/who.html || exit 1
-  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/sect2.html	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/sect2.html || exit 1
-  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/sect3.html	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/sect3.html || exit 1
-  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/overview.html	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/overview.html || exit 1
-  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/how.html	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/how.html || exit 1
-  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/installconfigure.html	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/installconfigure.html || exit 1
-  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/faq.html	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/faq.html || exit 1
-  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/docbook.css	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/docbook.css || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/index.html	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/ || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/intro.html	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/ || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/who.html	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/ || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/sect2.html	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/ || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/sect3.html	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/ || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/howdoesitwork.html	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/ || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/terminology.html	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/ || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/overview.html	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/ || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/theactualstep-by-stephowto.html	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/ || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/designgoals.html	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/ || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/architecture.html	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/ || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/faq.html	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/ || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/docbook.css	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/ || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/systemimager-manual.sgml	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/ || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/CREDITS	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/ || exit 1
 
 
   install -d -m 755 $OWNERSHIP ${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/stylesheet-images || exit 1
