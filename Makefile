@@ -125,7 +125,7 @@ RAIDTOOLS_DIR = $(SRC_DIR)/raidtools-0.90
 RAIDTOOLS_TARBALL = raidtools-19990824-0.90.tar.bz2
 RAIDTOOLS_URL = http://www.kernel.org/pub/linux/daemons/raid/alpha/$(RAIDTOOLS_TARBALL)
 RAIDTOOLS_PATCH = $(PATCH_DIR)/raidtools.patch
-
+RAIDTOOLS_MD5SUM = 8a8460ae6731fa4debd912297c2402ca
 REISERFSPROGS_DIR = $(LINUX_SRC)/fs/reiserfs/utils
 
 #@all:
@@ -227,7 +227,9 @@ raidtools:
 $(SRC_DIR)/$(RAIDTOOLS_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
 	cd $(SRC_DIR) && wget $(RAIDTOOLS_URL)
-
+	[ "$(RAIDTOOLS_MD5SUM)" == \
+		`md5sum $(SRC_DIR)/$(RAIDTOOLS_TARBALL) | cut -d " " -f 1` ] \
+		|| exit 1
 ########## END raidtools ##########
 
 ######### BEGIN reiserfsprogs ##########
