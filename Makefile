@@ -19,6 +19,9 @@
 
 DESTDIR = 
 
+TEMP_DIR = ./systemimager.initrd.temp.dir
+TARBALL_BUILD_DIR = ./autoinstallbin
+
 MANUAL_DIR = doc/manual_source
 MANPAGE_DIR = doc/man
 
@@ -40,6 +43,8 @@ TFTP_BIN_DEST     = $(TFTP_ROOT)/systemimager
 
 PXE_CONF_SRC      = tftpstuff/pxelinux.cfg
 PXE_CONF_DEST     = $(TFTP_ROOT)/pxelinux.cfg
+
+AUTOINSTALL_TARBALL = ./autoinstallbin.tar.gz
 
 BINARY_SRC = ./sbin
 BINARIES := makeautoinstallcd addclients getimage makeautoinstalldiskette makedhcpstatic makedhcpserver pushupdate
@@ -217,6 +222,28 @@ docs:
 	-cd doc/manual_source && ln -sf ../manual/html/images
 	$(MAKE) -C $(MANUAL_DIR) html ps
 
+# this target creates a tarball containing modules, binaries, and libraries
+# for the autoinstall client to copy over.  before this can be used,
+# the autoinstall ramdisk will need tar/gzip support
+#
+# this tarball will be downloaded by the autoinstall client, which will
+# extract these files into it's ramdisk
+# the libraries in the tarball are built against the initial ramdisk so
+# that the ramdisk binaries will still function
+$(AUTOINSTALL_TARBALL):	kernel
+	$(MAKE) -C $(LINUX_SRC) modules_install INSTALL_MOD_PATH=./modules
+	$(MAKE) -C $(INITRD_DIR) initrd
+	mkdir -p $(TEMP_DIR)
+	mkdir -p $(TARBALL_BUILD_DIR)/lib
+	mkdir -p $(TARBALL_BUILD_DIR)/bin
+	cp -a ./modules/lib/* $(TARBALL_BUILD_DIR)/lib
+
+	### copy over binaries into $(TARBALL_BUILD_DIR)/bin ###
+	mount $(INITRD_DIR)/initrd $(TEMP_DIR) -o loop
+	$(INITRD_DIR)/mklibs.sh -v -d $(TARBALL_BUILD_DIR)/lib $(TEMP_DIR)/bin/* $(TARBALL_BUILD_DIR)/bin/*
+	umount $(TEMP_DIR) && rmdir $(TEMP_DIR)
+	tar -c $(TARBALL_BUILD_DIR)/* | gzip -9 > $(AUTOINSTALL_TARBALL)
+
 get_source:	$(LINUX_TARBALL) $(RAIDTOOLS_TARBALL)
 
 help:
@@ -315,6 +342,9 @@ clean:
 	-find . -name "#*#" -exec rm -f {} \;
 	-rm doc/manual_source/images
 	-rm patchedkernel-stamp raidtools-stamp
+	-umount $(TEMP_DIR)
+	-rm -rf $(TEMP_DIR) ./modules $(TARBALL_BUILD_DIR)
+	-rm $(AUTOINSTALL_TARBALL)
 
 distclean:	clean
 	-rm -rf $(LINUX_SRC) $(RAIDTOOLS_DIR)
