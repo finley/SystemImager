@@ -318,8 +318,8 @@ EOF
   $command = "rsync -av --numeric-ids";
   if ($log) { $command = $command . qq( --log-format="$log"); }
 
-  # get exclusions from /etc/systemimager.exclude
-  $systemimager_exclude="/etc/systemimager/systemimager.exclude";
+  # get exclusions from /etc/systemimager/updateclient.local.exclude
+  $systemimager_exclude="/etc/systemimager/updateclient.local.exclude";
   open(SYSTEMIMAGER_EXCLUDE, "< $systemimager_exclude") or die "Couldn't open $systemimager_exclude for reading: $!\n";
   while (<SYSTEMIMAGER_EXCLUDE>) {
       if (/^\s*\//) {  # match non commented explicit path
