@@ -655,7 +655,7 @@ ralph="sick"
 count="1"
 while [ $ralph="sick" ]
 do
-  echo -ne \\007
+  beep
   [ $count -lt 60 ] && echo I\'ve been done for $count seconds.  Reboot me already\!
   [ $(($count / 60 * 60)) = $count ] && echo I\'ve been done for $(($count / 60)) minutes now.  Reboot me already\!
   sleep 1
