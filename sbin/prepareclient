@@ -651,11 +651,8 @@ sub add_rsync_services {
     backup_file("$file") or croak("Couldn't back up file $file.");
     
     open(OUT,">>$file") or croak("Couldn't open $file for appending");
-    print OUT <<EOF;
-rsync           873/tcp                         # rsync
-rsync           873/udp                         # rsync
-EOF
-
+        print OUT qq(rsync           873/tcp                         # rsync\n);
+        print OUT qq(rsync           873/udp                         # rsync\n);
     close(OUT);
     return 1;
 } 
