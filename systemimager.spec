@@ -1,6 +1,6 @@
 %define name     systemimager
 %define ver	2.9.3
-%define rel      1
+%define rel      2
 %define prefix   /usr
 %define _build_all 1
 %define _boot_flavor standard
@@ -42,7 +42,7 @@ Packager: dann frazier <dannf@dannf.org>
 Docdir: %{prefix}/share/doc
 URL: http://systemimager.org/
 Distribution: System Installation Suite
-Requires: rsync >= 2.4.6, systemimager-common = %{version}, perl-AppConfig, perl-XML-Simple, dosfstools, /sbin/chkconfig, /sbin/service, perl
+Requires: rsync >= 2.4.6, systemimager-common = %{version}, perl-AppConfig, dosfstools, /sbin/chkconfig, /sbin/service, perl, perl-XML-Simple
 AutoReqProv: no
 
 %description server
@@ -163,6 +163,9 @@ to boot and install %{_build_arch} Linux machines during the SystemImager autoin
 process.
 
 %changelog
+* Thu Oct 13 2002 dann frazier <dannf@dannf.org> 2.9.3-2
+- added code to migrate users to rsync stubs
+
 * Thu Oct 02 2002 dann frazier <dannf@dannf.org> 2.9.3-1
 - new upstream release
 
@@ -235,6 +238,27 @@ make install_binaries DESTDIR=/tmp/%{name}-%{ver}-root PREFIX=%prefix
 
 %if %{_build_all}
 
+%pre server
+# /etc/systemimager/rsyncd.conf is now generated from stubs stored
+# in /etc/systemimager/rsync_stubs.  if upgrading from an early
+# version, we need to create stub files for all image entries
+if [ -f /etc/systemimager/rsyncd.conf -a \
+    ! -d /etc/systemimager/rsync_stubs ]; then
+    echo "You appear to be upgrading from a pre-rsync stubs release."
+    echo "/etc/systemimager/rsyncd.conf is now auto-generated from stub"
+    echo "files stored in /etc/systemimager/rsync_stubs."
+    echo "Backing up /etc/systemimager/rsyncd.conf to:"
+    echo -n "  /etc/systemimager/rsyncd.conf-before-rsync-stubs... "
+    mv /etc/systemimager/rsyncd.conf \
+      /etc/systemimager/rsyncd.conf-before-rsync-stubs
+
+    ## leave an extra copy around so the postinst knows to make stub files from it
+    cp /etc/systemimager/rsyncd.conf-before-rsync-stubs \
+      /etc/systemimager/rsyncd.conf-before-rsync-stubs.tmp
+    echo "done."
+fi    
+
+
 %post server
 # First we check for rsync service under xinetd and get rid of it
 # also note the use of DURING_INSTALL, which is used to
@@ -249,6 +273,49 @@ if [[ -a /etc/xinetd.d/rsync ]]; then
         fi
     fi
 fi
+
+# If we are upgrading from a pre-rsync-stubs release, the preinst script
+# will have left behind a copy of the old rsyncd.conf file.  we need to parse
+# it and make stubs files for each image.
+
+# This assumes that this file has been managed by systemimager, and
+# that there is nothing besides images entries that need to be carried
+# forward.
+
+in_image_section=0
+current_image=""
+if [ -f /etc/systemimager/rsyncd.conf-before-rsync-stubs.tmp ]; then
+    echo "Migrating image entries from existing /etc/systemimager/rsyncd.conf to"
+    echo "individual files in the /etc/systemimager/rsync_stubs/ directory..."
+    while read line; do
+	## Ignore all lines until we get to the image section
+	if [ $in_image_section -eq 0 ]; then
+	    echo $line | grep -q "^# only image entries below this line"
+	    if [ $? -eq 0 ]; then
+		in_image_section=1
+	    fi
+	else
+	    echo $line | grep -q "^\[.*]$"
+	    if [ $? -eq 0 ]; then
+		current_image=$(echo $line | sed 's/^\[//' | sed 's/\]$//')
+		echo -e "\tMigrating entry for $current_image"
+		if [ -e "/etc/systemimager/rsync_stubs/40$current_image" ]; then
+		    echo -e "\t/etc/systemimager/rsync_stubs/40$current_image already exists."
+		    echo -e "\tI'm not going to overwrite it with the value from"
+		    echo -e "\t/etc/systemimager/rsyncd.conf-before-rsync-stubs.tmp"
+		    current_image=""
+		fi
+	    fi
+	    if [ "$current_image" != "" ]; then
+		echo "$line" >> /etc/systemimager/rsync_stubs/40$current_image
+	    fi
+	fi
+    done < /etc/systemimager/rsyncd.conf-before-rsync-stubs.tmp
+    rm -f /etc/systemimager/rsyncd.conf-before-rsync-stubs.tmp
+    echo "Migration complete - please make sure to migrate any configuration you have"
+    echo "    made in /etc/systemimager/rsyncd.conf outside of the image section."
+fi
+## END make stubs from pre-stub /etc/systemimager/rsyncd.conf file
 
 /usr/sbin/mkrsyncd_conf
 
