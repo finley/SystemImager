@@ -1,6 +1,6 @@
 %define name     systemimager
 %define ver      2.0.0
-%define rel      2
+%define rel      3
 %define prefix   /usr/local
 
 Summary: Software that automates Linux installs and software distribution
@@ -9,7 +9,6 @@ Version: %ver
 Release: %rel
 Copyright: GPL
 Group: Applications/System
-Conflicts: systemimager-client
 Source: http://download.sourceforge.net/systemimager/%{name}-%{ver}.tar.gz
 BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: Sean Dague <japh@us.ibm.com>
