@@ -4,11 +4,11 @@
 # This file is: FAQ-HOWTO
 #
 # Current version as of the writing of this document: 1.0
-#                                           revision: 4
+#                                           revision: 6
 #
-# This document written by:  
-#  Brian Finley <brian@valinux.com>
-#  Ari Jort <ajort@valinux.com>
+#   Others who have contributed to this document (in alphabetical order):
+#     Paonia Ezrine <paonia@home.welcomehome.org>
+#     Ari Jort <ajort@valinux.com>
 #
 
 
@@ -129,14 +129,14 @@ The initial setup of VA SystemImager is a three step process:
      Run this command as follows:
 
      [arijort@imageserver]$ \
-     > getimage -master-client <client_hostname> -image-name <image_name>
+     > getimage -master-client <client_hostname> -image <image_name>
 
      where <client_hostname> is the hostname or IP address of the "master"
      client and <image_name> is the name that you want to give to this image.
 
      Example:
      [arijort@imageserver]$ \
-     > getimage -master-client computenode1 -image-name valinux6.2.1
+     > getimage -master-client computenode1 -image valinux6.2.1
 
      Answer all the questions that the "getimage" command asks you, and you
      should be ready to autoinstall your first client by simply booting it
@@ -197,6 +197,18 @@ Answer:
 
 There was a problem with the following RPM:  syslinux-1.48-1.i386.rpm 
 Download and install a newer syslinux RPM from http://systemimager.org/.
+
+
+--------------------------------------------------------------------------------
+Question:  Does the DHCP server have be on the imageserver?
+--------------------------------------------------------------------------------
+
+Answer:
+
+Yes.  At this point in time it does.  After the client gets it's address
+via DHCP, it determines the DHCP server to be the imageserver and tries
+to connect to the DHCP server with tftp to get it's utilities and it's 
+autoinstall script.
 
 
 --------------------------------------------------------------------------------
