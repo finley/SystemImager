@@ -55,7 +55,7 @@ Options: (options can be presented in any order and may be abbreviated)
  -help             Display this output.
  -version          Display version and copyright information.
  -quiet            Don\'t print any output, just provide an appropriate 
-                   exit code.  (requires -floppy)
+                   exit code.  (requires -floppy or -out-file)
  -floppy DEVICE    The  1.44MB floppy drive device containing the disk
                    to format.  If not specified, /dev/fd0 is assumed.
                    This command understands \"/dev/fd0\" through \"/dev/fd7\".
@@ -169,9 +169,10 @@ unless ($kernel and $initrd) {
     
 if (!$append_string) { $append_string = ""; }
 
-# Be sure the user includes -floppy or -file when doing -quiet
+# Be sure the user includes -floppy or -out-file when doing -quiet
 if($quiet and !$user_specified_floppy and !$user_specified_file) { 
-    die "Must use -floppy or -file with -quiet! (use -help for options)\n";
+    print "FATAL: Must use -floppy or -out-file with -quiet! (use -help for options)\n";
+    exit 1;
 }
 
 # if user did not specify a floppy device, choose the default
@@ -214,66 +215,76 @@ EOF
 if ($floppy_device_prefix and !$file) {
     $floppy_device=$floppy_device_prefix;
     unless (-b $floppy_device) {
-	die "Couldn't find device file $floppy_device.\n";
+	    die "Couldn't find device file $floppy_device.\n";
     }
 
     if (-x "/usr/bin/superformat") {
-	# format floppy
-	if (!$quiet) { print "Formatting floppy as 1.44MB ...\n"; }
-	if ($quiet) {
-	    system ("superformat $floppy_device hd > /dev/null 2>&1");
-	} else {
-	    system ("superformat $floppy_device hd");
-	}
-	unless ($? == 0) { die "Couldn't format $floppy_device.\n"; }
+
+        # format floppy
+        if (!$quiet) { print "Formatting floppy as 1.44MB ...\n"; }
+        
+        if ($quiet) {
+            system ("superformat $floppy_device hd > /dev/null 2>&1");
+        } else {
+            system ("superformat $floppy_device hd");
+        }
+        
+        unless ($? == 0) { die "Couldn't format $floppy_device.\n"; }
 
     } elsif (-x "/usr/bin/fdformat") {
-	
-	# format floppy
-	if (!$quiet) { print "Formatting floppy as 1.44MB ...\n"; }
-	if ($quiet) {
-	    system ("fdformat $floppy_device > /dev/null 2>&1");
-	} else {
-	    system ("fdformat $floppy_device");
-	}
-	if($? != 0) { die "Couldn't format $floppy_device.\n"; }
+        
+        # format floppy
+        if (!$quiet) { print "Formatting floppy as 1.44MB ...\n"; }
+        if ($quiet) {
+            system ("fdformat $floppy_device > /dev/null 2>&1");
+        } else {
+            system ("fdformat $floppy_device");
+        }
+        if($? != 0) { die "Couldn't format $floppy_device.\n"; }
     }
+
     if (!$quiet) {
-	print "Creating DOS filesystem on floppy...\n";
+	    print "Creating DOS filesystem on floppy...\n";
     }
+
     if ($quiet) {
-	system("mkdosfs $floppy_device > /dev/null");
+	    system("mkdosfs $floppy_device > /dev/null");
     } else {
-	system("mkdosfs $floppy_device");
+	    system("mkdosfs $floppy_device");
     }
+
     unless ($? == 0) { die "Couldn't create dos filesystem on $floppy_device.\n"; }
     $loop = "";
 }
 
 elsif ($file) {
     if (-e "$file") {
-	if ($quiet) { die "$file already exists, exiting."; }
-	else {
-	    print "$file already exists, overwrite? (y/[n]): ";
-	    $continue=<STDIN>;
-	    chomp $continue;
-	    $continue = lc $continue;
-	    ($continue eq "y") or die "\nYour diskette has not been modified...\n";
-	}
+        if ($quiet) { 
+            print "FATAL: $file already exists, taking conservative action and exiting.\n";
+            print "Your diskette has not been modified...\n";
+            exit 1;
+        } else {
+            print "$file already exists, overwrite? (y/[n]): ";
+            $continue=<STDIN>;
+            chomp $continue;
+            $continue = lc $continue;
+            ($continue eq "y") or die "\nYour diskette has not been modified...\n";
+        }
     }
     system ("dd if=/dev/zero of=$file bs=512 count=2880");
     if ($? != 0) { die "Couldn't create $file"; }
+
     $floppy_device=$file;
     $loop = "-o loop";
     
     # create dos filesystem on floppy
     if (!$quiet) {
-	print "Creating DOS filesystem in $file...\n";
+        print "Creating DOS filesystem in $file...\n";
     }
     if ($quiet) {
-	system("mkdosfs $floppy_device > /dev/null");
+        system("mkdosfs $floppy_device > /dev/null");
     } else {
-	system("mkdosfs $floppy_device");
+        system("mkdosfs $floppy_device");
     }
     unless ($? == 0) { die "Couldn't create dos filesystem on $floppy_device.\n"; }
 }

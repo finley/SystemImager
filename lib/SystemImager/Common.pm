@@ -33,6 +33,7 @@ sub get_response {
 #   $where is a string that specifies where to look.  if $where contains
 #   a "/", then we assume $where is a local directory.  otherwise, we
 #   assume $where is a remote machine & we look in the standard place.
+#
 sub get_boot_flavors {
     my ($class, $arch, $where) = @_;
 
@@ -42,30 +43,32 @@ sub get_boot_flavors {
     # if $where contains a "/", we look in a local directory named $where
     # otherwise, we look on a remote server named $where
     if (m{.*/.*}) {
-	my $autoinstall_bootdir = $where;
-	opendir BOOTDIR, "$autoinstall_bootdir/$arch" or return undef;
-	my @dirlist = readdir BOOTDIR;
+        my $autoinstall_bootdir = $where;
+        opendir BOOTDIR, "$autoinstall_bootdir/$arch" or return undef;
+        my @dirlist = readdir BOOTDIR;
+        
+        for my $file (@dirlist) {
+            unless (($file eq ".") or ($file eq "..") or ($file eq "ssh")) {
+        		$allflavors{$file} = 1;
+            }
+        }
+        close BOOTDIR;
 
-	for my $file (@dirlist) {
-	    unless (($file eq ".") or ($file eq "..")) {
-		$allflavors{$file} = 1;
-	    }
-	}
-	close BOOTDIR;
-    }
-    else {
-	my $server = $where;
-	my $cmd = "rsync $server"."::boot/$arch/";
-	open(RSYNC, "$cmd |")
-	    or do { print "Error running rsync: $!\n"; return undef; };
-	while (<RSYNC>) {
-	    if (/.*\s(\S+)$/) {
-		unless (($1 eq ".") or ($1 eq "..")) {
-		    $allflavors{$1} = 1;
-		}
-	    }
-	}
-	close RSYNC or return undef;
+    } else {
+
+        my $server = $where;
+        my $cmd = "rsync $server"."::boot/$arch/";
+        open(RSYNC, "$cmd |")
+            or do { print "Error running rsync: $!\n"; return undef; };
+
+        while (<RSYNC>) {
+            if (/.*\s(\S+)$/) {
+        		unless (($1 eq ".") or ($1 eq "..") or ($1 eq "ssh")) {
+        	    	$allflavors{$1} = 1;
+        		}
+            }
+        }
+        close RSYNC or return undef;
     }
 
     return %allflavors;

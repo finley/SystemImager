@@ -245,8 +245,8 @@ EOF
     my $ssh_install=<STDIN>;
     chomp $ssh_install;
     if ($ssh_install eq "y") {
-      if ($ssh_download_url eq "") { $ssh_download_url="http://$imageserver/ssh_files/"; }
-      print "What is the URL for your ssh_files directory? [$ssh_download_url]: ";
+      if ($ssh_download_url eq "") { $ssh_download_url="http://$imageserver/systemimager/boot/"; }
+      print "What is the base URL to use for ssh installs? [$ssh_download_url]: ";
       $ssh_download_url=get_response($ssh_download_url);
     }
    
@@ -332,8 +332,9 @@ if ($dhcpd_version eq "2") {
     print DHCPDCONF qq(  option option-140 "$imageserver"; \n);
   
     print DHCPDCONF qq(  # option-142 specifies the URL address of your ssh download\n);
+    print DHCPDCONF qq(  # This should be in the format of "http://$imageserver/systemimager/boot/".\n);
     if($ssh_download_url eq "") { 
-        print DHCPDCONF qq(  #option option-142 "$ssh_download_url"; \n);
+        print DHCPDCONF qq(  #option option-142 "http://$imageserver/systemimager/boot/"; \n);
     } else {
         print DHCPDCONF qq(  option option-142 "$ssh_download_url"; \n);
     }
@@ -393,8 +394,9 @@ if ($dhcpd_version eq "2") {
     print DHCPDCONF qq(option systemimager.imageserver $imageserver; \n);
 
     print DHCPDCONF qq(\n# systemimager.ssh_download_url specifies the URL address of your ssh download\n);
+    print DHCPDCONF qq(  # This should be in the format of "http://$imageserver/systemimager/boot/".\n);
     if($ssh_download_url eq "") { 
-        print DHCPDCONF qq(#option systemimager.ssh_download_url "http://www.mycompany.mydomain/ssh_files"; \n);
+        print DHCPDCONF qq(#option systemimager.ssh_download_url "http://$imageserver/systemimager/boot/"; \n);
     } else {
         print DHCPDCONF qq(option systemimager.ssh_download_url "$ssh_download_url"; \n);
     }

@@ -122,7 +122,7 @@ get_boel_binaries_tarball() {
         SSH_DOWNLOAD_URL=`echo $SSH_DOWNLOAD_URL | sed 's/\/$//'`
 
         cd /tmp
-        CMD="wget ${SSH_DOWNLOAD_URL}/systemimager/boot/${ARCH}/${FLAVOR}/boel_binaries.tar.gz"
+        CMD="wget ${SSH_DOWNLOAD_URL}/${ARCH}/${FLAVOR}/boel_binaries.tar.gz"
         echo "$CMD"
         $CMD || shellout
         cd -
@@ -501,7 +501,7 @@ get_ssh_tarball() {
     SSH_DOWNLOAD_URL=`echo $SSH_DOWNLOAD_URL | sed 's/\/$//'`
 
     cd /tmp
-    CMD="wget ${SSH_DOWNLOAD_URL}/systemimager/boot/${ARCH}/ssh/systemimager_ssh.tar.gz"
+    CMD="wget ${SSH_DOWNLOAD_URL}/${ARCH}/ssh/systemimager_ssh.tar.gz"
     echo "$CMD"
     $CMD || shellout
     cd -
@@ -574,7 +574,7 @@ start_ssh() {
         # (public keys of users allowed to ssh *in* to this machine)
 
         cd /root/.ssh/ || shellout
-        CMD="wget ${SSH_DOWNLOAD_URL}/systemimager/boot/${ARCH}/${FLAVOR}/authorized_keys"
+        CMD="wget ${SSH_DOWNLOAD_URL}/${ARCH}/ssh/authorized_keys"
         echo
         echo $CMD
         $CMD || shellout
