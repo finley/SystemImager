@@ -78,8 +78,8 @@ EOF
 my $script;
 my $domain_name = "";
 my $base_host_name = "";
-my $starting_number = "";
-my $ending_number = "";
+my $starting_number;
+my $ending_number;
 my $starting_ip = "";
 my $ending_ip = "";
 my $interactive = "";
@@ -134,11 +134,22 @@ if ($script) {
     }
 }
 
-if($host_range) {
+if ($host_range) {
     ($starting_number, $ending_number) = split(/-/, $host_range);
+    unless ( ($starting_number ne "") and ($ending_number ne "") ) {
+        print qq(FATAL:  for "-host-range X-Y", both X and Y must be specified!\n);
+        print qq(See "$program_name -help" for more information.\n);
+        exit 1;
+    }
+
+    unless ( ($starting_number + 0) and ($ending_number + 0) ) {
+        print qq(FATAL:  for "-host-range X-Y", both X and Y must be numeric!\n);
+        print qq(See "$program_name -help" for more information.\n);
+        exit 1;
+    }
 }
 
-if($ip_range) {
+if ($ip_range) {
     ($starting_ip, $ending_ip) = split(/-/, $ip_range);
 }
 
