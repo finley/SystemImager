@@ -439,22 +439,31 @@ EOF
  killproc inetd -HUP
  echo
  
+
+
+ ### BEGIN get list of IDE and SCSI disks ###
+ ide_and_scsi_disks=`
+
+ # extract SCSI and IDE disk device partitions
+ egrep [hs]d[a-z][0-9] /proc/partitions | gawk '{print $4}' | \
+
+ # strip out partition numbers
+ sed -e 's/[0-9]//g' | \
+
+ # show each unique device only once
+ sort -u
+ `
+ ### END get list of IDE and SCSI disks ###
+
+
  ### BEGIN get list of hardware RAID "disks" ###
  hardware_raid_disks=`
- # pull out minor device number and device name from raw partition information
- awk '{print $2" "$4}' /proc/partitions | \
 
- # exclude devices with a minor number of "0" (gets rid of CD-ROM drives, etc.)
- egrep -v ^0 | \
+ # extract hardware RAID disk device partitions
+ egrep c[0-9]+d[0-9]+p /proc/partitions | gawk '{print $4}' | \
 
- # drop minor device number, leaving only the device names
- awk '{print $2}' | \
-
- # extract hardware RAID "disks"
- egrep rd\/c[0-9]+d[0-9]+ | \
-
- # strip partition information, leaving just the device name
- sed -e 's/p.*//' | \
+ # strip out partition numbers
+ sed -e 's/p[0-9][0-9]*//' | \
 
  # show each unique device only once
  sort -u
@@ -462,66 +471,21 @@ EOF
  ### END get list of hardware RAID "disks" ###
 
 
- ### BEGIN get list of IDE disks ###
- ide_disks=`
- # pull out minor device number and device name from raw partition information
- awk '{print $2" "$4}' /proc/partitions | \
-
- # exclude devices with a minor number of "0" (gets rid of CD-ROM drives, etc.)
- egrep -v ^0 | \
-
- # drop minor device number, leaving only the device names
- awk '{print $2}' | \
-
- # extract IDE disk devices
- egrep hd[a-z] | \
-
- # strip partition information, leaving just the device name
- sed -e 's/[0-9].*//' | \
-
- # show each unique device only once
- sort -u
- `
- ### END get list of IDE disks ###
-
- ### BEGIN get list of SCSI disks ###
- scsi_disks=`
- # pull out minor device number and device name from raw partition information
- awk '{print $2" "$4}' /proc/partitions | \
-
- # exclude devices with a minor number of "0" (gets rid of CD-ROM drives, etc.)
- egrep -v ^0 | \
-
- # drop minor device number, leaving only the device names
- awk '{print $2}' | \
-
- # extract SCSI disk devices
- egrep sd[a-z] | \
-
- # strip partition information, leaving just the device name
- sed -e 's/[0-9].*//' | \
-
- # show each unique device only once
- sort -u
- `
- ### END get list of SCSI disks ###
-
  ### BEGIN leave disk info behind for "getimage" script ###
  # clean up after last "prepare"
  rm -fr /etc/partitionschemes/
  
  # create receiving directory for SCSI and IDE disk info
- mkdir -p /etc/partitionschemes
+ [ "x$ide_and_scsi_disks" != "x" ] && mkdir -p /etc/partitionschemes
 
  # create receiving directory for Hardware RAID disk info
- mkdir -p /etc/partitionschemes/rd
+ [ "x$hardware_raid_disks" != "x" ] && mkdir -p /etc/partitionschemes/rd
 
  # make sfdisk executeable
  chmod +x /tmp/sfdisk
 
  # get sfdisk to report IDE and SCSI disk partition info
- disks=$ide_disks" "$scsi_disks
- for disk in $disks
+ for disk in $ide_and_scsi_disks
  do
   # Specify sectors explicitly -- this format may be used in the future
   # for partitioning with MB.
@@ -529,8 +493,7 @@ EOF
  done
 
  # get sfdisk to report Hardware RAID disk info
- disks=$hardware_raid_disks
- for disk in $disks
+ for disk in $hardware_raid_disks
  do
   # must do some funkification for sfdisk to report properly
   ln -s /dev/$disk /dev/$disk"p"
