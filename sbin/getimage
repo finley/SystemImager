@@ -179,11 +179,11 @@ if (-d "$imagedir") {
 if (!$quiet) {
     print "\n\nRetrieving /etc/mtab from $master_client to check for mounted filesystems...\n";
     open(RSYNC, "rsync -av ${master_client}::root/etc/mtab $imagedir|");
-    print "------------- $image mtab RETRIEVAL PROGRESS -------------\n";
+    print "------------- $master_client mtab RETRIEVAL PROGRESS -------------\n";
     while (<RSYNC>) {
         print;
     }
-    print "------------- $image mtab RETRIEVAL FINISHED -------------\n";
+    print "------------- $master_client mtab RETRIEVAL FINISHED -------------\n";
     close(RSYNC);
 } else {
     $command = qq(rsync -a ${master_client}::root/etc/mtab $imagedir);
@@ -211,7 +211,7 @@ close EXCLUDE;
 
 # Get the image from the $master_client
 if (!$quiet) {
-    print "\n\nRetrieving system image from $master_client\n";
+    print "\n\nRetrieving image $image from $master_client\n";
     open (RSYNC, "rsync -av --delete --exclude-from=$exclude_file " . "${master_client}::root/ $imagedir |");
     print "------------- $image IMAGE RETRIEVAL PROGRESS -------------\n";
     while (<RSYNC>) {
