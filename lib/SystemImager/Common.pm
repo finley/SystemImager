@@ -310,13 +310,14 @@ sub _turn_sfdisk_output_into_generic_partitionschemes_file {
     # Find partitions that are closest to the end of the disk. -BEF-
     my $end_of_last_partition_on_disk = 0;
     foreach (@partition_tool_output) {
-        if (m|^/dev/|) {
-            # Third column of output should contain the end of each partition either in MB or in sectors.
-            s/\*//g;
-            my ($junk1, $junk2, $end_of_this_partition) = split;
-            $end_of_this_partition =~ s/\+//g;
-            $end_of_this_partition =~ s/\-//g;
-            if (! $end_of_this_partition ) { next; }    # If value was just "-", it's now blank. -BEF-
+        # Regex matches out the end of partition info if it is a number (if it 
+        # isn't (i.e. '-') we didn't care about it anyway
+
+        # /dev/\S+   = device name
+        # \*?        = 0 or 1 '*' characters (bootable flag) (note \+? used as well)
+        #        device   boot  start     end 
+        if (m{^/dev/\S+\s+\*?\s+\d+\+?\s+(\d+)}) {
+            my $end_of_this_partition = $1;
             if ( $end_of_this_partition > $end_of_last_partition_on_disk ) {
                 $end_of_last_partition_on_disk = $end_of_this_partition;
             }
