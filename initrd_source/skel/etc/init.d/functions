@@ -194,12 +194,8 @@ flamethrower_client() {
 
     mkdir -p ${DIR}
     echo udp-receiver $UDP_RECEIVER_OPTIONS --pipe \"tar -C ${DIR} -x\"
-         udp-receiver $UDP_RECEIVER_OPTIONS --pipe "tar -C ${DIR} -x"
-    #sleep 2
-
-    #if [ $? != 0 ]; then
-    #    shellout
-    #fi
+    sleep 1
+         udp-receiver $UDP_RECEIVER_OPTIONS --pipe "tar -C ${DIR} -x" || flamethrower_client
 
 }
 #
