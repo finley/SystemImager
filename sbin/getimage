@@ -105,7 +105,7 @@ GetOptions(
     "directory=s"       => \$default_image_dir,
     "ip-assignment=s"   => \$ip_assignment_method,
     "exclude=s"         => \my @excludes,
-    "exclude-file=s"    => \$exclude_file,
+    "exclude-file|exclude-from=s"    => \$exclude_file,
     "update-script=s"   => \$update_script,
     "post-install=s"    => \$post_install,
     "no-listing"        => \$no_listing,
