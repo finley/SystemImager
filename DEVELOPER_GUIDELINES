@@ -1,7 +1,7 @@
 #
 #   "SystemImager"
 #
-#   Copyright (C) 1999-2004 Brian Elliott Finley
+#   Copyright (C) 1999-2005 Brian Elliott Finley
 #
 #   $Id$
 #
@@ -26,8 +26,13 @@ o   Try to mimick the style of the code that you are working in, unless
 o   Include a usage statement with every function/subroutine, no matter how
     simple and self-explanatory that function is.  Example:
 
+        #
+        # Description:
+        #   Chooses most appropriate from the available partition tools.
+        #
         # Usage:
-        # my $partition_tool = which_partition_tool();
+        #   my $partition_tool = which_partition_tool();
+        #
         sub which_partition_tool {
             [... code here ...]
         }
