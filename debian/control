@@ -2,13 +2,13 @@ Source: systemimager
 Section: admin
 Priority: optional
 Maintainer: dann frazier <dannf@dannf.org>
-Build-Depends: ash, bin86, bzip2, cygnus-stylesheets, debhelper (>> 2.0.0), dhcp-client, docbook-to-man, e2fsprogs, host, libc6-pic, mawk, mtools, rsync, snarf, util-linux, wget
+Build-Depends: ash, bin86, bzip2, debhelper (>> 2.0.0), dhcp-client, docbook-to-man, e2fsprogs, host, libc6-pic, mawk, mtools, rsync, sgmltools-lite, snarf, util-linux, wget
 Standards-Version: 3.2.1
 
 Package: systemimager-server
 Architecture: all
-Depends: debianutils (>= 1.7), dhcp, dosfstools, libappconfig-perl, perl5, rsync, syslinux, systemimager-kernel-i386 (= ${Source-Version}), systemimager-initrd-i386 (= ${Source-Version}), systemimager-bin-i386 (= ${Source-Version}), systemimager-common
-Recommends: mkisofs
+Depends: debianutils (>= 1.7), dhcp, dosfstools, libappconfig-perl, perl5, rsync, systemimager-kernel-i386 (= ${Source-Version}), systemimager-initrd-i386 (= ${Source-Version}), systemimager-bin-i386 (= ${Source-Version}), systemimager-common (= ${Source-Version})
+Recommends: mkisofs, syslinux
 Description: SystemImager Image-Server
  SystemImager is a set of utilities for installing GNU/Linux images to
  clients machines over the network.  Images are stored in flat files on the
@@ -17,8 +17,8 @@ Description: SystemImager Image-Server
 
 Package: systemimager-client
 Architecture: all
-Depends: perl5, rsync, systemimager-common, systemconfigurator
-Description: SystemImager client side utilities
+Depends: perl5, rsync, systemimager-common (= ${Source-Version}), systemconfigurator
+Description: SystemImager utilities for golden clients
  SystemImager is a set of utilities for installing GNU/Linux images to
  clients machines over the network.  Images are stored in flat files on the
  server, making updates easy.  rsync is used for transfers, making updates
@@ -30,7 +30,7 @@ Description: SystemImager client side utilities
 Package: systemimager-common
 Architecture: all
 Depends: perl5, rsync
-Description: SystemImager client side utilities
+Description: SystemImager utilities common to both the server and client
  SystemImager is a set of utilities for installing GNU/Linux images to
  clients machines over the network.  Images are stored in flat files on the
  server, making updates easy.  rsync is used for transfers, making updates

@@ -4,21 +4,13 @@
 # This file is: Makefile
 #               (Create documentation from SGML source)
 #
-#               Written by: Dann Frazier <daniel_frazier@hp.com>
+#               Written by: Dann Frazier <dannf@ldl.fc.hp.com>
 #
-
-DB2DVI	= $(shell which db2dvi || which docbook2dvi)
-DB2HTML = $(shell which db2html || which docbook2html)
-DB2PDF	= $(shell which db2pdf || which docbook2pdf)
-DB2PS   = $(shell which db2ps || which docbook2ps)
-DB2RTF	= $(shell which db2rtf || which docbook2rtf)
 
 NAME	= systemimager-manual
 SRC	= $(NAME).sgml
-
-CREDITS = ../../CREDITS
-
 HTMLDIR = html
+SGMLTOOLS = $(shell which sgmltools)
 
 all:    html ps pdf dvi rtf
 
@@ -27,24 +19,25 @@ pdf:    $(NAME).pdf
 ps:	$(NAME).ps
 rtf:	$(NAME).rtf
 
-html:	$(DB2HTML) $(SRC)
-	$(DB2HTML) $(SRC)
-	rm -rf $(HTMLDIR)
-	mv -f $(NAME) $(HTMLDIR)
+html:	$(SGMLTOOLS) $(SRC)
+	$(SGMLTOOLS) -b html $(SRC)
+	mkdir $(HTMLDIR)
+	mv $(NAME)/* $(HTMLDIR)
+	rmdir $(NAME)
 	cp -a images/ $(HTMLDIR)/images
-	cp -a systemimager-manual.sgml $(HTMLDIR)
 
-$(NAME).dvi:	$(DB2DVI) $(SRC)
-	$(DB2DVI) $(SRC)
-$(NAME).pdf:	$(DB2PDF) $(SRC)
-	$(DB2PDF) $(SRC)
-$(NAME).ps:	$(DB2PS) $(SRC)
-	$(DB2PS) $(SRC)
+$(NAME).dvi:	$(SGMLTOOLS) $(SRC)
+	$(SGMLTOOLS) -b dvi $(SRC)
+$(NAME).pdf:	$(SGMLTOOLS) $(SRC)
+	$(SGMLTOOLS) -b pdf $(SRC)
+$(NAME).ps:	$(SGMLTOOLS) $(SRC)
+	$(SGMLTOOLS) -b ps $(SRC)
 $(NAME).rtf:	$(DB2RTF) $(SRC)
-	$(DB2RTF) $(SRC)
+	$(SGMLTOOLS) -b rtf $(SRC)
 clean:
 	find . -name "*~" -exec rm -f {} \;
 	find . -name "#*#" -exec rm -f {} \;
 	rm -rf $(NAME).aux $(NAME).dvi $(NAME).log $(NAME).out $(NAME).pdf \
-	  $(NAME).ps $(NAME).rtf $(NAME).tex $(HTMLDIR) DBTOHTML_OUTPUT_DIR*
+	  $(NAME).ps $(NAME).rtf $(NAME).tex $(HTMLDIR) $(NAME) \
+	  DBTOHTML_OUTPUT_DIR*
 
