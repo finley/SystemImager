@@ -9,6 +9,7 @@
 # This file is: rcS
 #
 
+
 TFTPROOT=tftpboot
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/tmp
 
@@ -68,22 +69,6 @@ echo "END Creating ram disk for /tmp to hold extra binaries"
 
 # Configure loopback interface (may as well)
 ifconfig lo 127.0.0.1
-
-### BEGIN ether sleep ###
-# Give the switch time to start passing packets.  Some switches won't
-# forward packets until 30 seconds or so after an interface comes up.
-# This means the dhcp server won't even get the request for 30 seconds.
-# Many ethernet cards aren't considered "up" by the switch until the
-# driver is loaded.  Because the driver is compiled directly into the
-# kernel here, the driver is definitely loaded at this point.
-count=35
-echo
-echo "sleep $count:  This is to give your switch (if you're using one) time to"
-echo "           recognize your ethernet card before we try the network."
-echo
-I=1; while [ $I != $(( $count + 1)) ]; do echo -n "$I "; sleep 1s; I=$(( $I + 1 )) ; done
-echo
-### END ether sleep ###
 
 ### BEGIN look for local.cfg file ###
 # This code inspired by Ian McLeod <ian@valinux.com>
@@ -150,6 +135,22 @@ else
   ### BEGIN dhcp ###
   echo "IP Address not set by local.cfg.  I will use DHCP."
 
+  ### BEGIN ether sleep ###
+  # Give the switch time to start passing packets.  Some switches won't
+  # forward packets until 30 seconds or so after an interface comes up.
+  # This means the dhcp server won't even get the request for 30 seconds.
+  # Many ethernet cards aren't considered "up" by the switch until the
+  # driver is loaded.  Because the driver is compiled directly into the
+  # kernel here, the driver is definitely loaded at this point.
+  count=35
+  echo
+  echo "sleep $count:  This is to give your switch (if you're using one) time to"
+  echo "           recognize your ethernet card before we try the network."
+  echo
+  I=1; while [ $I != $(( $count + 1)) ]; do echo -n "$I "; sleep 1s; I=$(( $I + 1 )) ; done
+  echo
+  ### END ether sleep ###
+
   # create directory to catch dhcp information
   mkdir /var/dhcp
 
@@ -186,6 +187,37 @@ fi
 # (that doesn't contain explicit specification of the imageserver)
 [ -z $IMAGESERVER ] && IMAGESERVER=$DHCPSIADDR
 
+### BEGIN ping test for switch initialization ###
+# ping test code submitted by Grant Noruschat <grant@eigen.ee.ualberta.ca>
+# modified slightly by <brian@systemimager.org>
+echo
+echo "  Pinging image server \"$IMAGESERVER\""
+echo "  to ensure we have network connectivity."
+echo
+
+PING_COUNT=1
+PING_EXIT_STATUS=1
+
+while [ $PING_EXIT_STATUS != 0 ]
+do
+  echo "  Ping attempt number $PING_COUNT: "
+  ping -c 1 $IMAGESERVER; PING_EXIT_STATUS=$?; PING_COUNT=$(( $PING_COUNT + 1 ))
+  if [ $PING_COUNT = 21 ]; then
+    echo
+    echo "  FATAL:  Cannot ping the image server \"$IMAGESERVER\""
+    echo "          Be sure that your networking equipment is"
+    echo "          working properly!"
+    echo
+    shellout
+  fi
+done
+
+if [ $PING_EXIT_STATUS = 0 ]; then
+  echo
+  echo "  We have connectivity to the Image Server!"
+  echo
+fi
+### END ping test ###
 
 # Are we installing over SSH?
 if [ ! -z $SSH_DOWNLOAD_URL ]; then
