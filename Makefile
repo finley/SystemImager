@@ -516,6 +516,13 @@ endif
 	#
 	mkdir -m 755 -p $(BOEL_BINARIES_DIR)/usr/share/discover
 	install -m 644 $(DISCOVER_DATA_FILES) $(BOEL_BINARIES_DIR)/usr/share/discover
+
+	# copy over libnss files for non-uclibc arches
+	# (mklibs doesn't automatically pull these in)
+ifneq ($(ARCH), i386)
+	cp -a /lib/libnss_dns* $(BOEL_BINARIES_DIR)/lib
+endif
+
 	#
 	# Use the mklibs script from Debian to find and copy libraries and 
 	# any soft links.  Note: This does not require PIC libraries -- it will
