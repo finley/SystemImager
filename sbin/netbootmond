@@ -38,13 +38,22 @@ my $pid_file = "/var/run/netbootmond.pid";
 my $log_file = "/var/log/systemimager/rsyncd";
 
 
-### BEGIN misc daemon stuff ###
+################################################################################
+#
+# Misc. Daemon stuff
+#
+################################################################################
 chdir '/'                   or die "Can't chdir to /: $!";
 open STDIN, '/dev/null'     or die "Can't read /dev/null: $!";
 open STDOUT, '>>/dev/null'  or die "Can't write to /dev/null: $!";
 open STDERR, '>>/dev/null'  or die "Can't write to /dev/null: $!";
 umask 0;
-### END misc daemon stuff ###
+sub REAPER {
+    $SIG{CHLD} = \&REAPER;
+    my $waitedpid = wait;
+    print STDERR "Dead child: $waitedpid\n";
+}
+$SIG{CHLD} = \&REAPER;
 
 
 ################################################################################
@@ -72,12 +81,10 @@ if ($pid = fork) {
 }
 
 
-
 ################################################################################
 #
 # BEGIN subroutines 
 #
-################################################################################
 sub tail_rsync_log_file {
 
     my $cmd = "tail -n 0 --follow=name $log_file";
@@ -118,9 +125,6 @@ sub create_no_boot_symlink {
     copy("$syslinux_cfg_noboot", "$pxe_conf_dir/$ip_hex");
     
 }
-
-
-################################################################################
 #
 # END subroutines
 #
