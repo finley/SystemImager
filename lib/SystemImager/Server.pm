@@ -5,6 +5,291 @@ package SystemImager::Server;
 $version_number="1.5.0";
 $VERSION = $version_number;
 
+sub _gather_up_partition_info_for_each_disk_and_prepare_an_sfdisk_command {
+    my $imagedir = $_[0];
+    my $systemimagerdir = $_[1];
+    my $disk = $_[2];
+
+    foreach $disk (@disks)  {
+
+        _get_partition_information( $imagedir, $systemimagerdir, $disk ); 
+
+        _format_output_for_partitions_one_to_four( $disk );
+
+        _format_output_for_logical_partitions_five_plus( $disk );
+
+        # put final touch on sfdisk command
+        $sfdisk_command = "sfdisk -L -uM /dev/$disk <<EOF || shellout\n" . $sfdisk_command . "EOF\n";
+
+        # output disk partition section
+        print MASTER_SCRIPT "# partition $disk\n";
+        print MASTER_SCRIPT "echo partitioning $disk...\n";
+        print MASTER_SCRIPT "sleep 1s\n";
+        print MASTER_SCRIPT $sfdisk_command;
+        print MASTER_SCRIPT "\n";
+
+    }
+}
+
+sub _in_script_add_standard_header_stuff {
+  my $image = $_[0];
+  print MASTER_SCRIPT << 'EOF';
+#!/bin/sh
+
+#
+# "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>
+#
+#
+EOF
+
+  print MASTER_SCRIPT "# This master autoinstall script was created with SystemImager v$version_number\n";
+  print MASTER_SCRIPT "\n";
+  print MASTER_SCRIPT "VERSION=$version_number\n";
+  print MASTER_SCRIPT "IMAGENAME=$image\n";
+
+  print MASTER_SCRIPT << 'EOF';
+PATH=/sbin:/bin:/usr/bin:/usr/sbin:/tmp
+
+shellout() {
+  exec cat /etc/issue ; exit 1
+}
+
+### BEGIN Check to be sure this not run from a working machine ###
+# test for mounted SCSI or IDE disks
+mount | grep [hs]d[a-z][1-9] > /dev/null 2>&1
+[ $? -eq 0 ] &&  echo Sorry.  Must not run on a working machine... && shellout
+
+# test for mounted software RAID devices
+mount | grep md[0-9] > /dev/null 2>&1
+[ $? -eq 0 ] &&  echo Sorry.  Must not run on a working machine... && shellout
+
+# test for mounted hardware RAID disks
+mount | grep c[0-9]+d[0-9]+p > /dev/null 2>&1
+[ $? -eq 0 ] &&  echo Sorry.  Must not run on a working machine... && shellout
+### END Check to be sure this not run from a working machine ###
+
+# Pull in variables left behind by the linuxrc script.
+# This information is passed from the linuxrc script on the autoinstall media via /tmp/variables.txt
+# Apparently the shell on the autoinstall media is not intelligent enough to take a "set -a" parameter
+. /tmp/variables.txt || shellout
+
+### BEGIN Stop RAID devices before partitioning begins ###
+# Why did they get started in the first place?  So we can pull a local.cfg
+# file off a root mounted RAID system.  We do this even if a system does not
+# use RAID, in case you are using a disk that was previously part of a RAID
+# array.
+
+# find running raid devices
+RAID_DEVICES=`cat /proc/mdstat | grep ^md | mawk '{print "/dev/" $1}'`
+
+# get raidstop utility if any raid devices exist
+if [ ! -z "${RAID_DEVICES}" ]
+then
+  rsync -av --numeric-ids $IMAGESERVER::tftpboot/systemimager/raidstop /tmp/ || shellout
+fi
+
+# raidstop will not run unless a raidtab file exists
+touch /etc/raidtab || shellout
+
+# turn dem pesky raid devices off!
+for RAID_DEVICE in ${RAID_DEVICES}
+do
+  # we don't do a shellout here because, well I forgot why, but we don't.
+  echo "raidstop ${RAID_DEVICE}" && raidstop ${RAID_DEVICE}
+done
+### END Stop RAID devices before partitioning begins ###
+
+EOF
+}
+
+sub _are_we_using_megabytes_or_sectors {
+    # are we using megabytes or sectors (prepareclient -explicit-geometry)
+    if ( grep(/^Units = megabytes/, @partitions)) {
+      for (@partitions) {
+        if(/^\/dev/) {
+          # get rid of newline
+          chomp;
+
+          # get rid of an asterisk that may be indicating a boot partition (Linux doesn't need this)
+          $_ =~ s/\*//g;
+
+          # get rid of + signs -- we're not going to worry about those...
+          $_ =~ s/\+//g;
+
+          # split on space(s) and assign values to variables
+          (my $device, my $start, my $end, my $megabytes, my $blocks, my $id) = split(/ +/);
+
+          # round down if there is a minus sign on the value
+          if ($megabytes =~ /-/) {
+            $megabytes =~ s/-//g;
+            $megabytes--;
+          }
+
+          # figure out what the starting device is (probably partition 1)
+          if (($megabytes != "0") and ($start < $lowest_partition_start_point)) { 
+            $lowest_partition_start_point = $start; 
+            $start_device = $device; 
+          }
+
+          # create the megabytes by device hash
+          $megabytes_by_device{$device} = $megabytes;
+
+          # create the Id by device hash
+          $id_by_device{$device} = $id;
+        }
+      }
+
+      # get number of partitions
+      $number_of_partitions = (keys %id_by_device);
+
+    } elsif ( grep(/^Units = sectors/, @partitions)) {
+
+      ### BEGIN do stuff for disks partitioned in sectors (prepareclient -explicit-geometry)
+
+        ### BEGIN partitioning output ###
+        $sfdisk_command_part_one = "sfdisk -L -uS /dev/$disk <<EOF\n";
+        $sfdisk_command_part_two = "";
+  
+        # gather up partition information
+        open (PARTITIONS, "<$imagedir$systemimagerdir/partitionschemes/${disk}")
+        || die "Cannot open $imagedir$systemimagerdir/partitionschemes/$disk for reading\n";
+          @partitions = <PARTITIONS>;
+        close(PARTITIONS);
+
+        for (@partitions) {
+          if(/^\/dev/) {
+            # get rid of newline
+            chomp;
+
+            # get rid of an asterisk that may be indicating a boot partition (Linux doesn't need this)
+            $_ =~ s/\*//g;
+
+            # split on space(s) and assign values to variables
+            (my $dev, my $start, my $end, my $sectors, my $id) = split(/ +/);
+
+            # continue compiling sfdisk command
+            $sfdisk_command_part_one = $sfdisk_command_part_one . "$dev : start= $start, size= $sectors, Id=$id\n";
+          }
+        }
+        $sfdisk_command = $sfdisk_command_part_one . $sfdisk_command_part_two . "EOF\n";
+        ### END partitioning output ###
+
+        # output disk partition section
+        print MASTER_SCRIPT "# partition $disk\n";
+        print MASTER_SCRIPT "echo partitioning $disk...\n";
+        print MASTER_SCRIPT "sleep 1s\n";
+        print MASTER_SCRIPT $sfdisk_command;
+        print MASTER_SCRIPT "\n";
+
+      ### END do stuff for disks partitioned in sectors (prepareclient -explicit-geometry)
+    }
+}
+
+sub _get_partition_information {
+    my $imagedir = $_[0];
+    my $systemimagerdir = $_[1];
+    my $disk = $_[2];
+
+    %id_by_device = ();
+    %megabytes_by_device = ();
+    $lowest_partition_start_point = "10000000";  # some random large number
+
+    open (PARTITIONS, "<$imagedir$systemimagerdir/partitionschemes/$disk")
+    || die "Cannot open $imagedir$systemimagerdir/partitionschemes/$disk for reading\n";
+      @partitions = <PARTITIONS>;
+    close(PARTITIONS);
+
+    _are_we_using_megabytes_or_sectors();
+}
+
+sub _format_output_for_logical_partitions_five_plus {
+      my $disk = $_[0];
+
+      my $partition_number = "5";
+      if ($number_of_partitions > "4") {
+        until ($partition_number == $number_of_partitions) {
+          my $device = "/dev/$disk$partition_number";
+          my $megabytes = $megabytes_by_device{$device};
+          my $id = $id_by_device{$device};
+          $sfdisk_command = $sfdisk_command . "$device : start= , size= $megabytes, Id=$id\n";
+          $partition_number++;
+        } 
+
+        my $device = "";
+        if ($disk =~ /c[0-9]+d[0-9]+/ )
+          { $device = "/dev/$disk" . "p" . "$partition_number"; }
+        else
+          { $device = "/dev/$disk" . "$partition_number"; }
+
+        my $id = $id_by_device{$device};
+        $sfdisk_command = $sfdisk_command . "$device : start= , size= , Id=$id\n";
+      }
+}
+
+sub _format_output_for_partitions_one_to_four {
+      my $disk = $_[0];
+
+      # format output for partitions 1-4 (must do these backwards)
+      $sfdisk_command = "";
+      my $has_a_non_null_partition_been_created = "no";
+      foreach my $partition_number (4, 3, 2, 1) {
+
+        my $device = "";
+        if ( $disk =~ /c[0-9]+d[0-9]+/ )
+        {
+            $device = "/dev/$disk" . "p" . "$partition_number";
+        }
+        else
+        {
+            $device = "/dev/$disk" . "$partition_number";
+        }
+
+        my $megabytes = $megabytes_by_device{$device};
+        my $id = $id_by_device{$device};
+        if ($megabytes == "0") {
+          $sfdisk_command = "$device : start= 0, size= 0, Id=0\n" . $sfdisk_command;
+          next;
+        } 
+        if ($has_a_non_null_partition_been_created eq "no") { $megabytes = ""; }
+        if ($device eq $start_device) {
+          $sfdisk_command = "$device : start= $lowest_partition_start_point, size= $megabytes, Id=$id\n" . $sfdisk_command;
+          $has_a_non_null_partition_been_created = "yes";
+        } else {
+          $sfdisk_command = "$device : start= , size= $megabytes, Id=$id\n" . $sfdisk_command;
+          $has_a_non_null_partition_been_created = "yes";
+        }
+      }
+}
+
+sub _in_script_give_a_custom_partitioning_example {
+  print MASTER_SCRIPT << 'EOF';
+# Partition the disk (see the sfdisk man page for customization details)
+#
+# Below is an example of how to customize a disk.  This can be useful if your clients
+# have disks of differing sizes or geometries.  Here is a description of the sfdisk
+# command presented in the example below:
+#
+# line 1 -- the sfdisk command and arguments (-uM means "units are MB)
+# line 2 -- this is a comment
+# line 3 -- start at the beginning of the disk 0, give 22M /dev/sda1 (/boot)
+# line 4 -- start where the last partition left off, and add 512M /dev/sda2 for swap, partition type 82
+# line 5 -- start where the last partition left off, and add 6000M /dev/sda3 (/)
+# line 6 -- start where the last partition left off, and give the remaining space to /dev/sda4 (/var)
+# line 7 -- the EOF statement indicating to sfdisk that we are finished giving it commands
+#
+# <<<< BEGIN EXAMPLE >>>>
+#sfdisk -uM /dev/sda <<EOF
+## partition    start_of_partition      size_in_megabytes       partition_type
+#  /dev/sda1 :  start= 0,          	size= 22,               Id=83
+#  /dev/sda2 :  start= ,                size= 512,              Id=82
+#  /dev/sda3 :  start= ,                size= 6000,             Id=83
+#  /dev/sda4 :  start= ,                size= ,                 Id=83
+#EOF
+# <<<< END EXAMPLE >>>>
+
+EOF
+}
+
 sub _create_arrays_of_device_files_by_device_type {
     my $device = $_[0];
     my $mount_point = $_[1];
@@ -35,7 +320,7 @@ sub _create_arrays_of_device_files_by_device_type {
     }
 }
 
-sub _in_autoinstall_script_stop_RAID_devices_before_partitioning {
+sub _in_script_stop_RAID_devices_before_partitioning {
   if (@software_raid_devices) {
     print MASTER_SCRIPT "# Pull /etc/raidtab over to autoinstall client\n";
     print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::\$IMAGENAME/etc/raidtab /etc/raidtab || shellout\n";
@@ -184,79 +469,7 @@ sub create_autoinstall_script{
 
   open (MASTER_SCRIPT, ">$master_script") || die "$program_name: Can't open $master_script for writing\n";
 
-  # add standard header stuff
-  print MASTER_SCRIPT << 'EOF';
-#!/bin/sh
-
-#
-# "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>
-#
-#
-EOF
-
-  print MASTER_SCRIPT "# This master autoinstall script was created with SystemImager v$version_number\n";
-  print MASTER_SCRIPT "\n";
-  print MASTER_SCRIPT "VERSION=$version_number\n";
-  print MASTER_SCRIPT "IMAGENAME=$image\n";
-
-  print MASTER_SCRIPT << 'EOF';
-PATH=/sbin:/bin:/usr/bin:/usr/sbin:/tmp
-
-shellout() {
-  exec cat /etc/issue ; exit 1
-}
-
-
-### BEGIN Check to be sure this not run from a working machine ###
-
-# test for mounted SCSI or IDE disks
-mount | grep [hs]d[a-z][1-9] > /dev/null 2>&1
-[ $? -eq 0 ] &&  echo Sorry.  Must not run on a working machine... && shellout
-
-# test for mounted software RAID devices
-mount | grep md[0-9] > /dev/null 2>&1
-[ $? -eq 0 ] &&  echo Sorry.  Must not run on a working machine... && shellout
-
-# test for mounted hardware RAID disks
-mount | grep c[0-9]+d[0-9]+p > /dev/null 2>&1
-[ $? -eq 0 ] &&  echo Sorry.  Must not run on a working machine... && shellout
-
-### END Check to be sure this not run from a working machine ###
-
-
-# Pull in variables left behind by the linuxrc script.
-# This information is passed from the linuxrc script on the autoinstall media via /tmp/variables.txt
-# Apparently the shell on the autoinstall media is not intelligent enough to take a "set -a" parameter
-. /tmp/variables.txt || shellout
-
-### BEGIN Stop RAID devices before partitioning begins ###
-# Why did they get started in the first place?  So we can pull a local.cfg
-# file off a root mounted RAID system.  We do this even if a system does not
-# use RAID, in case you are using a disk that was previously part of a RAID
-# array.
-
-# find running raid devices
-RAID_DEVICES=`cat /proc/mdstat | grep ^md | mawk '{print "/dev/" $1}'`
-
-# get raidstop utility if any raid devices exist
-if [ ! -z "${RAID_DEVICES}" ]
-then
-  rsync -av --numeric-ids $IMAGESERVER::tftpboot/systemimager/raidstop /tmp/ || shellout
-fi
-
-# raidstop will not run unless a raidtab file exists
-touch /etc/raidtab || shellout
-
-# turn dem pesky raid devices off!
-for RAID_DEVICE in ${RAID_DEVICES}
-do
-  # we don't do a shellout here because, well I forgot why, but we don't.
-  echo "raidstop ${RAID_DEVICE}" && raidstop ${RAID_DEVICE}
-done
-### END Stop RAID devices before partitioning begins ###
-
-EOF
-
+  _in_script_add_standard_header_stuff($image);
 
   _get_list_of_hardware_RAID_devices( $imagedir, $systemimagerdir );
 
@@ -268,200 +481,11 @@ EOF
 
   _compile_hash_of_ext2_partitions_to_label( $imagedir ); 
 
-  _in_autoinstall_script_stop_RAID_devices_before_partitioning();
+  _in_script_stop_RAID_devices_before_partitioning();
 
+  _in_script_give_a_custom_partitioning_example(); 
 
-  ### BEGIN give a custom partitioning example ###
-print MASTER_SCRIPT << 'EOF';
-# Partition the disk (see the sfdisk man page for customization details)
-#
-# Below is an example of how to customize a disk.  This can be useful if your clients
-# have disks of differing sizes or geometries.  Here is a description of the sfdisk
-# command presented in the example below:
-#
-# line 1 -- the sfdisk command and arguments (-uM means "units are MB)
-# line 2 -- this is a comment
-# line 3 -- start at the beginning of the disk 0, give 22M /dev/sda1 (/boot)
-# line 4 -- start where the last partition left off, and add 512M /dev/sda2 for swap, partition type 82
-# line 5 -- start where the last partition left off, and add 6000M /dev/sda3 (/)
-# line 6 -- start where the last partition left off, and give the remaining space to /dev/sda4 (/var)
-# line 7 -- the EOF statement indicating to sfdisk that we are finished giving it commands
-#
-# <<<< BEGIN EXAMPLE >>>>
-#sfdisk -uM /dev/sda <<EOF
-## partition    start_of_partition      size_in_megabytes       partition_type
-#  /dev/sda1 :  start= 0,          	size= 22,               Id=83
-#  /dev/sda2 :  start= ,                size= 512,              Id=82
-#  /dev/sda3 :  start= ,                size= 6000,             Id=83
-#  /dev/sda4 :  start= ,                size= ,                 Id=83
-#EOF
-# <<<< END EXAMPLE >>>>
-
-EOF
-  ### END give a custom partitioning example ###
-
-
-  ### BEGIN foreach disk, gather up the partition info for that disk and prepare an sfdisk command ###
-  foreach $disk (@disks)  {
-    ### BEGIN get partition information ###
-    %id_by_device = ();
-    %megabytes_by_device = ();
-    $lowest_partition_start_point = "10000000";  # some random large number
-
-    open (PARTITIONS, "<$imagedir$systemimagerdir/partitionschemes/$disk")
-    || die "$program_name: Cannot open $imagedir$systemimagerdir/partitionschemes/$disk for reading\n";
-      @partitions = <PARTITIONS>;
-    close(PARTITIONS);
-
-    # Determine whether we are using megabytes (the default) or sectors (prepareclient -explicit-geometry)
-    if ( grep(/^Units = megabytes/, @partitions)) {
-      for (@partitions) {
-        if(/^\/dev/) {
-          # get rid of newline
-          chomp;
-
-          # get rid of an asterisk that may be indicating a boot partition (Linux doesn't need this)
-          $_ =~ s/\*//g;
-
-          # get rid of + signs -- we're not going to worry about those...
-          $_ =~ s/\+//g;
-
-          # split on space(s) and assign values to variables
-          (my $device, my $start, my $end, my $megabytes, my $blocks, my $id) = split(/ +/);
-
-          # round down if there is a minus sign on the value
-          if ($megabytes =~ /-/) {
-            $megabytes =~ s/-//g;
-            $megabytes--;
-          }
-
-          # figure out what the starting device is (probably partition 1)
-          if (($megabytes != "0") and ($start < $lowest_partition_start_point)) { 
-            $lowest_partition_start_point = $start; 
-            $start_device = $device; 
-          }
-
-          # create the megabytes by device hash
-          $megabytes_by_device{$device} = $megabytes;
-
-          # create the Id by device hash
-          $id_by_device{$device} = $id;
-        }
-      }
-
-      # get number of partitions
-      $number_of_partitions = (keys %id_by_device);
-      ### END get partition information ###
-
-
-      ### BEGIN format output for partitions 1-4 (must do these backwards) ###
-      $sfdisk_command = "";
-      my $has_a_non_null_partition_been_created = "no";
-      foreach my $partition_number (4, 3, 2, 1) {
-
-        my $device = "";
-        if ( $disk =~ /c[0-9]+d[0-9]+/ )
-        {
-            $device = "/dev/$disk" . "p" . "$partition_number";
-        }
-        else
-        {
-            $device = "/dev/$disk" . "$partition_number";
-        }
-
-        my $megabytes = $megabytes_by_device{$device};
-        my $id = $id_by_device{$device};
-        if ($megabytes == "0") {
-          $sfdisk_command = "$device : start= 0, size= 0, Id=0\n" . $sfdisk_command;
-          next;
-        } 
-        if ($has_a_non_null_partition_been_created eq "no") { $megabytes = ""; }
-        if ($device eq $start_device) {
-          $sfdisk_command = "$device : start= $lowest_partition_start_point, size= $megabytes, Id=$id\n" . $sfdisk_command;
-          $has_a_non_null_partition_been_created = "yes";
-        } else {
-          $sfdisk_command = "$device : start= , size= $megabytes, Id=$id\n" . $sfdisk_command;
-          $has_a_non_null_partition_been_created = "yes";
-        }
-      }
-      ### END format output for partitions 1-4 (must do these backwards) ###
-
-
-      ### BEGIN format output for logical partitions 5+ ###
-      my $partition_number = "5";
-      if ($number_of_partitions > "4") {
-        until ($partition_number == $number_of_partitions) {
-          my $device = "/dev/$disk$partition_number";
-          my $megabytes = $megabytes_by_device{$device};
-          my $id = $id_by_device{$device};
-          $sfdisk_command = $sfdisk_command . "$device : start= , size= $megabytes, Id=$id\n";
-          $partition_number++;
-        } 
-
-        my $device = "";
-        if ($disk =~ /c[0-9]+d[0-9]+/ )
-          { $device = "/dev/$disk" . "p" . "$partition_number"; }
-        else
-          { $device = "/dev/$disk" . "$partition_number"; }
-
-        my $id = $id_by_device{$device};
-        $sfdisk_command = $sfdisk_command . "$device : start= , size= , Id=$id\n";
-      }
-      ### END format output for logical partitions 5+ ###
-
-      # put final touch on sfdisk command
-      $sfdisk_command = "sfdisk -L -uM /dev/$disk <<EOF || shellout\n" . $sfdisk_command . "EOF\n";
-
-      # output disk partition section
-      print MASTER_SCRIPT "# partition $disk\n";
-      print MASTER_SCRIPT "echo partitioning $disk...\n";
-      print MASTER_SCRIPT "sleep 1s\n";
-      print MASTER_SCRIPT $sfdisk_command;
-      print MASTER_SCRIPT "\n";
-
-    } elsif ( grep(/^Units = sectors/, @partitions)) {
-
-      ### BEGIN do stuff for disks partitioned in sectors (prepareclient -explicit-geometry)
-
-        ### BEGIN partitioning output ###
-        $sfdisk_command_part_one = "sfdisk -L -uS /dev/$disk <<EOF\n";
-        $sfdisk_command_part_two = "";
-  
-        # gather up partition information
-        open (PARTITIONS, "<$imagedir$systemimagerdir/partitionschemes/${disk}")
-        || die "Cannot open $imagedir$systemimagerdir/partitionschemes/$disk for reading\n";
-          @partitions = <PARTITIONS>;
-        close(PARTITIONS);
-
-        for (@partitions) {
-          if(/^\/dev/) {
-            # get rid of newline
-            chomp;
-
-            # get rid of an asterisk that may be indicating a boot partition (Linux doesn't need this)
-            $_ =~ s/\*//g;
-
-            # split on space(s) and assign values to variables
-            (my $dev, my $start, my $end, my $sectors, my $id) = split(/ +/);
-
-            # continue compiling sfdisk command
-            $sfdisk_command_part_one = $sfdisk_command_part_one . "$dev : start= $start, size= $sectors, Id=$id\n";
-          }
-        }
-        $sfdisk_command = $sfdisk_command_part_one . $sfdisk_command_part_two . "EOF\n";
-        ### END partitioning output ###
-
-        # output disk partition section
-        print MASTER_SCRIPT "# partition $disk\n";
-        print MASTER_SCRIPT "echo partitioning $disk...\n";
-        print MASTER_SCRIPT "sleep 1s\n";
-        print MASTER_SCRIPT $sfdisk_command;
-        print MASTER_SCRIPT "\n";
-
-      ### END do stuff for disks partitioned in sectors (prepareclient -explicit-geometry)
-    }
-  }
-  ### END foreach disk, gather up the partition info for that disk and prepare an sfdisk command ###
+  _gather_up_partition_info_for_each_disk_and_prepare_an_sfdisk_command( $imagedir, $systemimagerdir, $disk );
 
 
   ### BEGIN Write out software RAID device creation commands ###
@@ -655,15 +679,18 @@ if ($ip_assignment_method eq "static") {
 
   print MASTER_SCRIPT <<'EOF';
 chroot /a/ systemconfigurator --configsi --stdin <<EOL || shellout
+
 [NETWORK]
 HOSTNAME = $HOSTNAME
 DOMAINNAME = $DOMAINNAME
 GATEWAY = $GATEWAY
+
 [INTERFACE0]
 DEVICE = eth0
 TYPE = static
 IPADDR = $IPADDR
 NETMASK = $NETMASK
+
 EOL
 
 EOF
@@ -671,9 +698,11 @@ EOF
 } elsif ($ip_assignment_method eq "static_dhcp") {
   print MASTER_SCRIPT <<'EOF';
 chroot /a/ systemconfigurator --configsi --stdin <<EOL || shellout
+
 [INTERFACE0]
 DEVICE = eth0
 TYPE = dhcp
+
 EOL
 
 EOF
@@ -687,12 +716,15 @@ EOF
 } else { # aka elsif ($ip_assignment_method eq "dynamic_dhcp")
   print MASTER_SCRIPT <<'EOF';
 chroot /a/ systemconfigurator --configsi --stdin <<EOL || shellout
+
 [NETWORK]
 HOSTNAME = $HOSTNAME
 DOMAINNAME = $DOMAINNAME
+
 [INTERFACE0]
 DEVICE = eth0
 TYPE = dhcp
+
 EOL
 
 EOF
