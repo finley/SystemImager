@@ -1,25 +1,25 @@
 #
 # http://download.systemimager.org/pub/udpcast/
 #
-UDPCAST_VERSION = 20011231sis3
+UDPCAST_VERSION = 20030831
 UDPCAST_TARBALL = udpcast-$(UDPCAST_VERSION).tar.gz
 UDPCAST_URL = http://download.systemimager.org/pub/udpcast/$(UDPCAST_TARBALL)
-UDPCAST_DIR = udpcast-$(UDPCAST_VERSION)
+UDPCAST_DIR = udpcast
 UDPCAST_BINARY = $(INITRD_SRC_DIR)/$(UDPCAST_DIR)/udp-receiver
 UDPCAST_PATCHES = $(shell ls $(INITRD_PATCH_DIR)/udpcast.*.patch 2>/dev/null | sort)
 
 ALL_SOURCE += $(INITRD_SRC_DIR)/$(UDPCAST_TARBALL)
 
 PHONY += udpcast
-udpcast:	$(UDPCAST_BINARY)
+udpcast:    $(UDPCAST_BINARY)
 
 $(UDPCAST_BINARY):	$(INITRD_SRC_DIR)/$(UDPCAST_TARBALL) $(UDPCAST_PATCHES) \
-			$(UCLIBC_TARGET)
+					$(UCLIBC_TARGET)
 	rm -rf $(INITRD_SRC_DIR)/$(UDPCAST_DIR)
 	cd $(INITRD_SRC_DIR) && tar -xvzf $(UDPCAST_TARBALL)
-
+	
 	cd $(INITRD_SRC_DIR)/$(UDPCAST_DIR) && \
-	  cat $(UDPCAST_PATCHES) < /dev/null | patch -p1
+		cat $(UDPCAST_PATCHES) < /dev/null | patch -p1
 
 	$(MAKE) -C $(INITRD_SRC_DIR)/$(UDPCAST_DIR) udp-receiver PATH=$(INITRD_BUILD_PATH)
 
@@ -28,6 +28,6 @@ $(INITRD_SRC_DIR)/$(UDPCAST_TARBALL):
 	$(GETSOURCE) $(UDPCAST_URL) $(INITRD_SRC_DIR)
 
 PHONY += udpcast_clean
-udpcast_clean:	
+udpcast_clean:
 	rm -rf $(INITRD_SRC_DIR)/$(UDPCAST_DIR)
 
