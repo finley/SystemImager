@@ -1,12 +1,11 @@
 #
-# "SystemImager"  
+#	"SystemImager"  
 #
-#  Copyright (C) 1999-2003 Bald Guy Software
-#                          <brian@bgsw.net>
-#  Copyright (C) 2002-2004 dann frazier <dannf@hp.com>
+#	Copyright (C) 1999-2004 Brian Elliott Finley
+#	Copyright (C) 2002-2004 dann frazier <dannf@hp.com>
 #
-#  Others who have contributed to this code:
-#    Sean Dague <sean@dague.net>
+#	Others who have contributed to this code:
+#		Sean Dague <sean@dague.net>
 #
 #   $Id$
 #
@@ -27,6 +26,8 @@
 #   2004.09.19  Brian Elliott Finley
 #   - rename initrd_install -> install_initrd
 #   - add PHONY += install_initrd
+#   2004.10.18  Brian Elliott Finley
+#   - add "build_dir_clean" target
 
 INITRD_PATCH_DIR = $(INITRD_DIR)/patches
 INITRD_SRC_DIR = $(INITRD_DIR)/src
@@ -193,15 +194,20 @@ initrd_get_source:	$(INITRD_SRC_DIR)/$(BUSYBOX_TARBALL) \
 			$(INITRD_SRC_DIR)/$(UCLIBC_TARBALL) \
 			$(INITRD_SRC_DIR)/$(UDPCAST_TARBALL)
 
-initrd_clean:	$(subst .rul,_clean,$(shell cd $(INITRD_DIR)/make.d && ls *.rul))
+PHONY += build_dir_clean
+build_dir_clean:
+	rm -rf $(INITRD_BUILD_DIR)
+	rm -f $(INITRD_DIR)/build_dir-stamp
+
+initrd_clean:	build_dir_clean $(subst .rul,_clean,$(shell cd $(INITRD_DIR)/make.d && ls *.rul))
 	-find . -name "*~" -exec rm -f {} \;
-	-rm -rf $(INITRD_BUILD_DIR)
 	rm -f $(INITRD_DIR)/initrd
 	rm -f $(INITRD_DIR)/initrd.img
-	rm -f $(INITRD_DIR)/build_dir-stamp
 
 initrd_distclean:	initrd_clean
 	-rm -rf $(INITRD_SRC_DIR)
 
 .PHONY:	all build_dir install get_source help helpless clean distclean \
 	$(subst .rul,,$(shell cd make.d && ls *.rul)) uclibc_dev
+
+# /* vi: set noet ts=4: */
