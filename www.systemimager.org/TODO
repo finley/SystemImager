@@ -1,0 +1,93 @@
+#
+# "SystemImager" - Copyright (C) 1999-2000 TheFinleys.com <brian@thefinleys.com>
+#
+# This file: TODO
+# (not in any specific order)
+#
+
+rpm
+---
+- require syslinux version x rpm
+
+autoinstalldiskette 
+-------------------
+- no screen-blanking
+- use bootp enabled kernel and do an append="no-bootp" or whatever
+- incorporate the ability to do network booting for installs
+  (also using syslinux)
+- redirect syslog messages to $imagserver
+- SystemImager vs. autoinstalldiskette version checking against server?
+
+Other stuff
+-----------
+- multicast install
+- offer user the ability to change this, and store the changes in 
+  /etc/systemimager.conf as IMAGESDIRECTORY="/var/spool/systemimager/images"
+- create man pages
+
+makedhcpstatic
+--------------
+- allow for -f "filename" option.
+
+getimage
+--------
+- create disk partition sections of $image.master using MB instead of cylinders
+  (there may be additional things to do on the prepareclient side as well)
+- add an --exclude option
+- add "Do you want me open up the imageserver as a syslogd server?"
+- ask if hosts autoinstalled from this image will use static IP or 
+  dhcp _after_ install
+- pass variables, such as $imagename to "addclients"
+
+addclients
+----------
+- test for both IP addresses and hostnames in /etc/hosts
+- accept command line input such as --image $imagename
+- re-cycle through each question if answer is ""
+- use FQHN in soft links?
+
+systemimager.exclude
+--------------------
+- Have getimage question what should be excluded in future when updateimage 
+  is run.  /tmp/* and /home/* should be recommended as a starting place.
+- Add support for a systemimager.include file
+
+updateimage
+-----------
+- have client pull systemimager.exclude and systemimager.include from
+  imageserver before pulling image
+
+Miscellaneous and Possibilities
+-------------------------------
+- "perlify" the rest of the server side scripts
+- add more error checking
+- Dan of Argonne says there may be a better way of identifying the
+  imageserver via DHCP.  This has been verified -- you can make a
+  statement such as:
+   option option-100 "10.0.0.8";
+  in the /etc/dhcpd.conf file to make up your own option that specifies
+  the address of the imageserver.  However, only the ISC's own dhclient
+  seems to be able to take made up options, and it is not the dhcp client
+  of choice (for several reasons).  Maybe the other clients, dhcpcd and
+  pump, will find their way along soon...
+- Use statically compiled rsyncd.systemimager & funky port number?
+- Track state of nodes?
+- Script to do software inventory of nodes via RPM database? or deb database? 
+  or track all files?
+- nis friendly
+- curses and/or gui wrapper around the whole thing
+- updateclient - log what was updated and or deleted?
+- updateclient - check whether files will be destroyed and throw an interactive 
+  check to the user? -- probably not.
+- make everything work with either DNS or hosts
+
+makedhcpserver 
+--------------
+- autodiscover and calculate more information 
+  (including if system has more than one network interface).
+
+systemimager.conf
+-----------------
+- SYSTEMIMAGER_ROOT=$path
+- SYSTEMIMAGER_FQHN=$boolean
+- EXCLUDE=$path $path $path
