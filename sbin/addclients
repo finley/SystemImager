@@ -17,17 +17,20 @@ use AppConfig;
 ### BEGIN parse the config file ###
 
 my $config = AppConfig->new(
-			    'autoinstalldir' => { ARGCOUNT => 1 },
+			    'autoinstall_script_dir' => { ARGCOUNT => 1 },
+			    'autoinstall_boot_dir' => { ARGCOUNT => 1 },
 			    'default_imagedir' => { ARGCOUNT => 1 },
 			    'rsyncd_conf' => { ARGCOUNT => 1 },
-			    'autoinstall_kernel' => { ARGCOUNT => 1 },
-			    'autoinstall_initrd' => { ARGCOUNT => 1 }
+			    'config_dir' => { ARGCOUNT => 1 },
 			    );
+
 $config->file('/etc/systemimager/systemimager.conf');
 
-my $autoinstalldir = $config->autoinstalldir();
+my $autoinstall_script_dir = $config->autoinstall_script_dir();
 
-if (!$autoinstalldir) { die "AUTOINSTALLDIR not defined in the config file."; }
+if (!$autoinstall_script_dir) {
+    die "AUTOINSTALL_SCRIPT_DIR not defined in the config file.";
+}
 
 ### END parse the config file ###
 
@@ -263,7 +266,7 @@ This utility has 3 sections.
 
 \"Section 2\" will allow you to create softlinks from each
 client hostname to your "master" script in the
-\"$autoinstalldir/systemimager/\" directory.  
+\"$autoinstall_script_dir\" directory.  
 
 Example: www297.sh -> web_server_image_v1.master
 
@@ -373,9 +376,9 @@ $image=$imagename;
  print "All hosts will recieve image \[".uc($imagename)."\]\n"
  	  ."All hosts will have name \[".uc($base_host_name)."\]"
  	  ." and will have a number between \[$starting_number - $ending_number\]\n";
- if ( -f "$autoinstalldir/systemimager/$image.master" ) {
+ if ( -f "$autoinstall_script_dir/$image.master" ) {
   foreach $node_number ($starting_number .. $ending_number) {
-  system("cd $autoinstalldir/systemimager; ln -sf $image.master $base_host_name$node_number.sh");
+  system("cd $autoinstall_script_dir; ln -sf $image.master $base_host_name$node_number.sh");
 		}
 	} else {
 system("clear");
@@ -401,7 +404,7 @@ unless($createlinks eq "n") {
     # gather a list of available images
     @files = ();
     # ------------------------------------> sort by timestamp -- oldest to newest
-    $command = "cd $autoinstalldir/systemimager/; ls -1tr *.master";
+    $command = "cd $autoinstall_script_dir; ls -1tr *.master";
     open(LS, "$command |");
     while (<LS>) {
       chomp;
@@ -421,9 +424,9 @@ unless($createlinks eq "n") {
     print "\n";
     print "Which image would you like these hosts to receive? [$image]: ";
     $image=get_response($image);
-    if ( -f "$autoinstalldir/systemimager/$image.master" ) {
+    if ( -f "$autoinstall_script_dir/$image.master" ) {
       foreach $node_number ($starting_number .. $ending_number) {
-        system("cd $autoinstalldir/systemimager; ln -sf $image.master $base_host_name$node_number.sh");
+        system("cd $autoinstall_script_dir; ln -sf $image.master $base_host_name$node_number.sh");
       }
       print "\nYour soft links have been created.\n";
       print "\nPress <Enter> to continue...";
@@ -589,9 +592,9 @@ EOF
   print "\nNo entries will be added.\n";
 }
 # do this even if we didn't modify /etc/hosts -- it will prevent much user frusteration
-system('cp', '-f', '/etc/hosts', "$autoinstalldir/systemimager/hosts");
-if($? != 0) { die "Couldn't copy /etc/hosts to $autoinstalldir/systemimager/hosts!\n", "Does $autoinstalldir/systemimager/ exist?"; }
-### copy /etc/hosts to $autoinstalldir/systemimager/hosts to be sure it stays up to date
+system('cp', '-f', '/etc/hosts', "$autoinstall_script_dir/hosts");
+if($? != 0) { die "Couldn't copy /etc/hosts to $autoinstall_script_dir/hosts!\n", "Does $autoinstall_script_dir/ exist?"; }
+### copy /etc/hosts to $autoinstall_script_dir/hosts to be sure it stays up to date
 } else { 
 ###########################
 ##Beginning IP Conversions##
@@ -671,10 +674,10 @@ $subnet_count="0";
     	die "Couldn't move $temp_file to /etc/hosts!\n"
     	."Is the filesystem that contains /etc/ full?"; }
   }
-system('cp', '-f', '/etc/hosts', "$autoinstalldir/systemimager/hosts");
+system('cp', '-f', '/etc/hosts', "$autoinstall_script_dir/hosts");
 if($? != 0) { 
-	die "Couldn't copy /etc/hosts to $autoinstalldir/systemimager/hosts!\n"
-	."Does $autoinstalldir/systemimager/ exist?"; }
+	die "Couldn't copy /etc/hosts to $autoinstall_script_dir/hosts!\n"
+	."Does $autoinstall_script_dir/ exist?"; }
 		}
 		print "Done!\n";
 	} 

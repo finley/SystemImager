@@ -7,35 +7,28 @@
 #
 #   Written by Brian Elliott Finley <brian@systemimager.org>
 #
-#   Others who have contributed to this code (alphabetically):
-#     Frazier, Dann <daniel_frazier@hp.com>
-#     Smith, Wesley <wessmith@engr.sgi.com>
-#
 
-use Getopt::Long;
-use AppConfig;
+print <<'EOF';
 
-### BEGIN parse the config file ###
+makeautoinstallcd has been renamed to 
+  "mkautoinstallcd"
 
 my $config = AppConfig->new(
-			    'autoinstalldir' => { ARGCOUNT => 1 },
+			    'autoinstall_script_dir' => { ARGCOUNT => 1 },
+			    'autoinstall_boot_dir' => { ARGCOUNT => 1 },
 			    'default_imagedir' => { ARGCOUNT => 1 },
 			    'rsyncd_conf' => { ARGCOUNT => 1 },
-			    'autoinstall_kernel' => { ARGCOUNT => 1 },
-			    'autoinstall_initrd' => { ARGCOUNT => 1 }
+			    'config_dir' => { ARGCOUNT => 1 },
 			    );
 $config->file('/etc/systemimager/systemimager.conf');
 
-my $autoinstalldir = $config->autoinstalldir();
-my $autoinstall_kernel = $config->autoinstall_kernel();
-my $autoinstall_initrd = $config->autoinstall_initrd();
+my $autoinstall_boot_dir = $config->autoinstall_boot_dir();
 
-if (!$autoinstalldir) { die "AUTOINSTALLDIR not defined in the config file."; }
-if (!$autoinstall_kernel) {
-    die "AUTOINSTALL_KERNEL not defined in the config file.";
-}
-if (!$autoinstall_initrd) {
-    die "AUTOINSTALL_INITRD not defined in the config file.";
+# this can be changed as more architectures are added
+$autoinstall_boot_dir = $autoinstall_boot_dir . "/i386-boot";
+
+if (!$autoinstall_boot_dir) {
+    die "AUTOINSTALL_BOOT_DIR not defined in the config file.";
 }
 
 ### END parse the config file ###
@@ -44,7 +37,7 @@ if (!$autoinstall_initrd) {
 $ENV{PATH} = "/usr/sbin:/sbin:/usr/bin:/bin";
 
 $version_number="1.5.0";
-$program_name = "makeautoinstallcd";
+$program_name = "mkautoinstallcd";
 $version_info = <<"EOF";
 $program_name (part of SystemImager) v$version_number
     
@@ -124,7 +117,7 @@ if($? != 0) {
 
 # Verify that the kernel and initrd.gz actually exist.
 # Suggested by Greg Pratt <gpratt@valinux.com>.
-@files = ( $autoinstall_kernel, $autoinstall_initrd );
+@files = ( "$autoinstall_boot_dir/kernel", "$autoinstall_boot_dir/initrd.gz");
 foreach my $file ( @files ) {
   unless ( -e "$file" ) {
     die "FATAL: I can't find $file!";
@@ -192,7 +185,10 @@ system("$command");
 if($? != 0) { die "FATAL: Couldn't mount temporary image in loopback mode!\n"; }
 
 # copy stuff to image
-foreach $file ( $autoinstall_initrd, $autoinstall_kernel, "$autoinstalldir/pxelinux.cfg/syslinux.cfg", "$autoinstalldir/pxelinux.cfg/message.txt") {
+foreach $file ( "$autoinstall_boot_dir/initrd.gz",
+		"$autoinstall_boot_dir/kernel",
+		"$autoinstall_boot_dir/pxelinux.cfg/syslinux.cfg",
+		"$autoinstall_boot_dir/pxelinux.cfg/message.txt") {
     unless ($quiet) {print "Copying $file to temporary image...\n";}
     $command = "cp -f $file $mount_dir";
     system("$command");
@@ -233,4 +229,3 @@ unless ($quiet) { print qq("cdrecord -v speed=2 dev=1,0,0 $iso_file"\n); }
 unless ($quiet) { print "\nSee the cdrecord manual for more information. (\"man cdrecord\")\n"; }
 
 exit 0;
-

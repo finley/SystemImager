@@ -22,18 +22,21 @@ use AppConfig;
 ### BEGIN parse the config file ###
 
 my $config = AppConfig->new(
-			    'autoinstalldir' => { ARGCOUNT => 1 },
+			    'autoinstall_script_dir' => { ARGCOUNT => 1 },
+			    'autoinstall_boot_dir' => { ARGCOUNT => 1 },
 			    'default_imagedir' => { ARGCOUNT => 1 },
 			    'rsyncd_conf' => { ARGCOUNT => 1 },
-			    'autoinstall_kernel' => { ARGCOUNT => 1 },
-			    'autoinstall_initrd' => { ARGCOUNT => 1 }
+			    'config_dir' => { ARGCOUNT => 1 },
 			    );
+
 $config->file('/etc/systemimager/systemimager.conf');
 
-my $autoinstalldir = $config->autoinstalldir();
+my $autoinstall_script_dir = $config->autoinstall_script_dir();
 my $rsyncd_conf = $config->rsyncd_conf();
 
-if (!$autoinstalldir) { die "AUTOINSTALLDIR not defined in the config file."; }
+if (!$autoinstall_script_dir) {
+    die "AUTOINSTALL_SCRIPT_DIR not defined in the config file.";
+}
 if (!$rsyncd_conf) { die "RSYNCD_CONF not defined in the config file."; }
 
 ### END parse the config file ###
@@ -139,7 +142,7 @@ if($force) {
 
 # remove master autoinstall script
 if($verbose) {print "  Removing master autoinstall script $image.master.\n";}
-$file="$autoinstalldir/systemimager/$image.master";
+$file="$autoinstall_script_dir/$image.master";
 if($force) {
   if($file) { unlink($file); }
 } else {
@@ -148,7 +151,7 @@ if($force) {
 
 # remove soft links
 if($verbose) {print "  Removing softlinks that point to $image.master.\n";}
-$cmd="cd $autoinstalldir/systemimager; find . -lname $image.master -exec rm -f \\{\\} \\;";
+$cmd="cd $autoinstall_script_dir; find . -lname $image.master -exec rm -f \\{\\} \\;";
 system($cmd);
 if($? != 0) { die "FATAL: couldn't remove softlinks that point to $image.master!"; }
 

@@ -19,33 +19,29 @@ use AppConfig;
 ### BEGIN parse the config file ###
 
 my $config = AppConfig->new(
-			    'autoinstalldir' => { ARGCOUNT => 1 },
+			    'autoinstall_script_dir' => { ARGCOUNT => 1 },
+			    'autoinstall_boot_dir' => { ARGCOUNT => 1 },
 			    'default_imagedir' => { ARGCOUNT => 1 },
 			    'rsyncd_conf' => { ARGCOUNT => 1 },
-			    'autoinstall_kernel' => { ARGCOUNT => 1 },
-			    'autoinstall_initrd' => { ARGCOUNT => 1 }
+			    'config_dir' => { ARGCOUNT => 1 },
 			    );
 $config->file('/etc/systemimager/systemimager.conf');
 
-my $autoinstalldir = $config->autoinstalldir();
-my $autoinstall_kernel = $config->autoinstall_kernel();
-my $autoinstall_initrd = $config->autoinstall_initrd();
+my $autoinstall_boot_dir = $config->autoinstall_boot_dir();
 
-if (!$autoinstalldir) { die "AUTOINSTALLDIR not defined in the config file."; }
-if (!$autoinstall_kernel) {
-    die "AUTOINSTALL_KERNEL not defined in the config file.";
-}
-if (!$autoinstall_initrd) {
-    die "AUTOINSTALL_INITRD not defined in the config file.";
-}
+# this can be changed as more architectures are added
+$autoinstall_boot_dir = $autoinstall_boot_dir . "/i386-boot";
 
+if (!$autoinstall_boot_dir) {
+    die "AUTOINSTALL_BOOT_DIR not defined in the config file.";
+}
 ### END parse the config file ###
 
 # set shell PATH for system() calls 
 $ENV{PATH} = "/usr/sbin:/sbin:/usr/bin:/bin";
 
 $version_number="1.5.0";
-$program_name = "makeautoinstalldiskette";
+$program_name = "mkautoinstalldiskette";
 $version_info = <<"EOF";
 $program_name (part of SystemImager) v$version_number
     
@@ -199,10 +195,10 @@ if (! $file) {
 #
 # array of standard files
 @files = ( 
-  $autoinstall_initrd,
-  $autoinstall_kernel, 
-  "$autoinstalldir/pxelinux.cfg/message.txt",
-  "$autoinstalldir/pxelinux.cfg/syslinux.cfg"
+  "$autoinstall_boot_dir/initrd.gz",
+  "$autoinstall_boot_dir/kernel", 
+  "$autoinstall_boot_dir/pxelinux.cfg/message.txt",
+  "$autoinstall_boot_dir/pxelinux.cfg/syslinux.cfg"
 );
 
 # Verify that the config file, if specified, exists

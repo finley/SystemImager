@@ -22,19 +22,22 @@ use AppConfig;
 ### BEGIN parse the config file ###
 
 my $config = AppConfig->new(
-			    'autoinstalldir' => { ARGCOUNT => 1 },
+			    'autoinstall_script_dir' => { ARGCOUNT => 1 },
+			    'autoinstall_boot_dir' => { ARGCOUNT => 1 },
 			    'default_imagedir' => { ARGCOUNT => 1 },
 			    'rsyncd_conf' => { ARGCOUNT => 1 },
-			    'autoinstall_kernel' => { ARGCOUNT => 1 },
-			    'autoinstall_initrd' => { ARGCOUNT => 1 }
+			    'config_dir' => { ARGCOUNT => 1 },
 			    );
+
 $config->file('/etc/systemimager/systemimager.conf');
 
-my $autoinstalldir = $config->autoinstalldir();
+my $autoinstall_script_dir = $config->autoinstall_script_dir();
 my $rsyncd_conf = $config->rsyncd_conf();
 my $default_imagedir = $config->default_imagedir();
 
-if (!$autoinstalldir) { die "AUTOINSTALLDIR not defined in the config file."; }
+if (!$autoinstall_script_dir) {
+    die "AUTOINSTALL_SCRIPT_DIR not defined in the config file.";
+}
 if (!$rsyncd_conf) { die "RSYNCD_CONF not defined in the config file."; }
 if (!$default_imagedir) {
     die "DEFAULT_IMAGEDIR not defined in the config file.";
@@ -165,7 +168,7 @@ if(-e $file) {
 }
 
 # check for existence of destination master autoinstall script
-$file=$autoinstalldir . "/systemimager/$destination_image.master";
+$file=$autoinstall_script_dir . "/$destination_image.master";
 if(-e $file) {
   if($force) {
     unlink($file) or die "FATAL: Can't remove $file!\n";
@@ -211,7 +214,7 @@ move($tmp_file, $file) or die "FATAL: Can't move $tmp_file to $file: $!";
 # copy master autoinstall script
 if($verbose) {print "  Copying $source_image.master to $destination_image.master.\n";}
 $source_script="rsync://$server/tftpboot/systemimager/$source_image.master";
-$destination_script=$autoinstalldir . "/systemimager/$destination_image.master";
+$destination_script=$autoinstall_script_dir . "/$destination_image.master";
 $cmd="rsync -a $source_script $destination_script";
 system($cmd);
   if($? != 0) { die "FATAL: Failed to copy $source_script to $destination_script.\n"; }

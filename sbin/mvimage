@@ -14,6 +14,7 @@ $program_name="mvimage";
 $get_help = "         Try \"$program_name -help\" for more options.";
 
 # declare modules
+use lib "/usr/local/lib/systemimager/perl";
 use lib "/usr/lib/systemimager/perl";
 use SystemImager::Server;
 use SystemImager::Common;
@@ -25,21 +26,21 @@ use AppConfig;
 ### BEGIN parse the config file ###
 
 my $config = AppConfig->new(
-			    'autoinstalldir' => { ARGCOUNT => 1 },
+			    'autoinstall_script_dir' => { ARGCOUNT => 1 },
+			    'autoinstall_boot_dir' => { ARGCOUNT => 1 },
 			    'default_imagedir' => { ARGCOUNT => 1 },
 			    'rsyncd_conf' => { ARGCOUNT => 1 },
 			    'config_dir' => { ARGCOUNT => 1 },
-			    'autoinstall_kernel' => { ARGCOUNT => 1 },
-			    'autoinstall_initrd' => { ARGCOUNT => 1 }
 			    );
 $config->file('/etc/systemimager/systemimager.conf');
 
-my $autoinstalldir = $config->autoinstalldir();
+my $autoinstall_script_dir = $config->autoinstall_script_dir();
 my $rsyncd_conf = $config->rsyncd_conf();
 
-if (!$autoinstalldir) { die "AUTOINSTALLDIR not defined in the config file."; }
+if (!$autoinstall_script_dir) {
+    die "AUTOINSTALL_SCRIPT_DIR not defined in the config file.";
+}
 if (!$rsyncd_conf) { die "RSYNCD_CONF not defined in the config file."; }
-
 ### END parse the config file ###
 
 ### BEGIN functions ###
@@ -160,7 +161,7 @@ if(-e $file) {
 }
 
 # check for existence of destination master autoinstall script
-$file="$autoinstalldir/systemimager/$destination_image.master";
+$file="$autoinstall_script_dir/$destination_image.master";
 if(-e $file) {
   if($force) {
     unlink($file) or die "FATAL: Can't remove $file!\n";
@@ -202,8 +203,8 @@ move($tmp_file, $file) or die "FATAL: Can't move $tmp_file to $file: $!";
 ### BEGIN Change entries in master autoinstall script ###
 # move master autoinstall script
 if($verbose) {print "  Moving $source_image.master to $destination_image.master.\n";}
-$old="$autoinstalldir/systemimager/$source_image.master";
-$new="$autoinstalldir/systemimager/$destination_image.master";
+$old="$autoinstall_script_dir/$source_image.master";
+$new="$autoinstall_script_dir/$destination_image.master";
 move($old, $new) or die "FATAL: Can't move $old to $new: $!";
 
 
@@ -226,7 +227,7 @@ move($tmp_file, $file) or die "FATAL: Can't move $tmp_file to $file: $!";
 
 # re-create soft links
 if($verbose) {print "  Re-creating softlinks to point to $destination_image.master.\n";}
-$cmd="cd $autoinstalldir/systemimager; find . -lname $source_image.master -exec ln -sf $destination_image.master \\{\\} \\;";
+$cmd="cd $autoinstall_script_dir; find . -lname $source_image.master -exec ln -sf $destination_image.master \\{\\} \\;";
 system($cmd);
 if($? != 0) { die "FATAL: couldn't re-create softlinks pointing to $destination_image.master!"; }
 

@@ -27,6 +27,7 @@ $nisdomain="";
 
 # use the long options module to allow us to use, well, long options ;)
 use lib "/usr/lib/systemimager/perl";
+use lib "/usr/local/lib/systemimager/perl";
 use SystemImager::Server;
 use SystemImager::Common;
 use Getopt::Long;
@@ -34,25 +35,29 @@ use AppConfig;
 
 ### BEGIN parse the config file ###
 my $config = AppConfig->new(
-			    'autoinstalldir' => { ARGCOUNT => 1 },
+			    'autoinstall_script_dir' => { ARGCOUNT => 1 },
+			    'autoinstall_boot_dir' => { ARGCOUNT => 1 },
 			    'default_imagedir' => { ARGCOUNT => 1 },
 			    'rsyncd_conf' => { ARGCOUNT => 1 },
 			    'config_dir' => { ARGCOUNT => 1 },
-			    'autoinstall_kernel' => { ARGCOUNT => 1 },
-			    'autoinstall_initrd' => { ARGCOUNT => 1 }
 			    );
+
 $config->file('/etc/systemimager/systemimager.conf');
 
-my $autoinstalldir = $config->autoinstalldir();
+my $autoinstall_script_dir = $config->autoinstall_script_dir();
 my $config_dir = $config->config_dir();
 my $rsyncd_conf = $config->rsyncd_conf();
 my $default_imagedir = $config->default_imagedir();
 
-if (!$autoinstalldir) { die "AUTOINSTALLDIR not defined in the config file."; }
+if (!$autoinstall_script_dir) {
+    die "AUTOINSTALL_SCRIPT_DIR not defined in the config file.";
+}
+if (!$config_dir) { die "CONFIG_DIR not defined in the config file."; }
 if (!$rsyncd_conf) { die "RSYNCD_CONF not defined in the config file."; }
-if (!$default_imagedir) { die "DEFAULT_IMAGEDIR not defined in the config file."; }
+if (!$default_imagedir) {
+    die "DEFAULT_IMAGEDIR not defined in the config file.";
+}
 ### END parse the config file
-
 
 ### BEGIN Program ###
 
@@ -273,7 +278,7 @@ if ($exclude_file) {
 SystemImager::Common->check_if_root();
 
 # fill in variables based on options passed
-$master_script = $autoinstalldir . "/systemimager/$image.master";
+$master_script = $autoinstall_script_dir . "/$image.master";
 $final_exclude_file = "/tmp/.exclude.$image";
 $imagedir = "$default_imagedir/$image";
 
@@ -500,7 +505,7 @@ close(RSYNCD_CONF);
 
 
 ### BEGIN Overwrite $image.master? ###
-if( (!$quiet) and (!$update_script) and (-e $autoinstalldir . "/systemimager/$image.master") ) {
+if( (!$quiet) and (!$update_script) and (-e $autoinstall_script_dir . "/$image.master") ) {
     system("clear");
     print "Update Autoinstall Script?\n";
     print "--------------------------\n\n";
@@ -517,7 +522,7 @@ if( (!$quiet) and (!$update_script) and (-e $autoinstalldir . "/systemimager/$im
 }
 
 # If it just ain't there yet, make it and don't even ask about it.
-elsif(! -e $autoinstalldir . "/systemimager/$image.master") {
+elsif(! -e $autoinstall_script_dir . "/$image.master") {
     $update_script="yes";
 }
 
@@ -603,7 +608,7 @@ elsif($ip_assignment_method == "4") { $ip_assignment_method = "replicant"   ; }
 }
 ### END IP Assignment Method ###
 
-### BEGIN create a fresh $autoinstalldir/systemimager/$image.master ###
+### BEGIN create a fresh $autoinstall_script_dir/$image.master ###
 SystemImager::Server->create_autoinstall_script(
 	$master_script,
 	$config_dir,
@@ -612,7 +617,7 @@ SystemImager::Server->create_autoinstall_script(
 	$ip_assignment_method,
 	$post_install
 );
-### END create a fresh $autoinstalldir/systemimager/$image.master ###
+### END create a fresh $autoinstall_script_dir/$image.master ###
 
 # prompt to run makedhcpstatic after autoinstalling clients if using static_dhcp
 if((!$quiet) and ($ip_assignment_method eq "static_dhcp")) {

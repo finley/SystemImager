@@ -9,27 +9,30 @@
 #
 
 use lib "/usr/lib/systemimager/perl";
-use SystemImager::Server;
-use SystemImager::Common;
+use lib "/usr/local/lib/systemimager/perl";
 use Getopt::Long;
 use AppConfig;
+use SystemImager::Server;
+use SystemImager::Common;
 
 ### BEGIN parse the config file ###
 my $config = AppConfig->new(
-			    'autoinstalldir' => { ARGCOUNT => 1 },
-                            'default_imagedir' => { ARGCOUNT => 1 },
-                            'rsyncd_conf' => { ARGCOUNT => 1 },
-                            'config_dir' => { ARGCOUNT => 1 },
-                            'autoinstall_kernel' => { ARGCOUNT => 1 },
-                            'autoinstall_initrd' => { ARGCOUNT => 1 }
+			    'autoinstall_script_dir' => { ARGCOUNT => 1 },
+			    'autoinstall_boot_dir' => { ARGCOUNT => 1 },
+			    'default_imagedir' => { ARGCOUNT => 1 },
+			    'rsyncd_conf' => { ARGCOUNT => 1 },
+			    'config_dir' => { ARGCOUNT => 1 },
 			    );
+
 $config->file('/etc/systemimager/systemimager.conf');
 
-my $autoinstalldir = $config->autoinstalldir();
+my $autoinstall_script_dir = $config->autoinstall_script_dir();
 my $rsyncd_conf = $config->rsyncd_conf();
 my $config_dir = $config->config_dir();
 
-if (!$autoinstalldir) { die "AUTOINSTALLDIR not defined in the config file."; }
+if (!$autoinstall_script_dir) {
+    die "AUTOINSTALL_SCRIPT_DIR not defined in the config file.";
+}
 if (!$rsyncd_conf) { die "RSYNCD_CONF not defined in the config file."; }
 if (!$config_dir) { die "CONFIG_DIR not defined in the config file."; }
 ### END parse the config file ###
@@ -167,7 +170,7 @@ unless ($base_imagedir) { die "\nFATAL: can't find image entry in $rsyncd_conf!\
 
 $imagedir="$base_imagedir$image";
 
-$master_script="$autoinstalldir/systemimager/$image.master";
+$master_script="$autoinstall_script_dir/$image.master";
 
 if(( -e "$master_script" ) && ( $update_script eq "no" )) {
   die qq(\nWARNING: "$master_script" already exists.\n         Use "-update-script YES" to overwrite.\n$get_help\n\n);
@@ -176,7 +179,7 @@ if(( -e "$master_script" ) && ( $update_script eq "no" )) {
 SystemImager::Server->validate_ip_assignment_option( $ip_assignment_method );
 SystemImager::Server->validate_post_install_option( $post_install );
 
-### BEGIN create a fresh $autoinstalldir/systemimager/$image.master ###
+### BEGIN create a fresh $autoinstall_script_dir/$image.master ###
 SystemImager::Server->create_autoinstall_script(
 	$master_script,
 	$config_dir,
@@ -185,7 +188,7 @@ SystemImager::Server->create_autoinstall_script(
 	$ip_assignment_method,
 	$post_install
 );
-### END create a fresh $autoinstalldir/systemimager/$image.master ###
+### END create a fresh $autoinstall_script_dir/$image.master ###
 unless ($quiet) { print qq(\nYour new autoinstallscript has been created:\n\n); }
 unless ($quiet) { print qq(  "$master_script"\n); }
 
