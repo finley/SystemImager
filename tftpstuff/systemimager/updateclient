@@ -84,8 +84,8 @@ unless( ($imageserver and $image) or ($imageserver and $listing) ) {
 if($listing) {
   print qq(Available image(s):\n);
   $command = qq(rsync -v $imageserver) . q(::);
-  system($command);
-  exit 0;
+  $rc = 0xffff & system($command);
+  exit $rc >> 8;
 }
 
 # if not run as root, this script will surely fail
@@ -137,18 +137,26 @@ $command = $command . qq( --delete $imageserver) . q(::) . qq($image$directory $
   
 # execute command
 print qq(Updating image...\n);
-system($command);
-  
+$rc = 0xffff & system($command);
+if ($rc != 0) {
+    exit $rc >> 8;
+}  
 # lilo
 unless($nolilo) { 
     print qq(running lilo...\n);
-    system("/sbin/lilo");
+    $rc = 0xffff & system("/sbin/lilo");
+    if ($rc != 0) {
+	exit $rc >> 8;
+    }  
 }
   
 # reboot
 if($reboot) { 
     print qq(rebooting...\n);
-    system("/bin/sleep 10s; /sbin/init 6");
+    $rc = 0xffff & system("/bin/sleep 10s; /sbin/init 6");
+    if ($rc != 0) {
+	exit $rc >> 8;
+    }  
 }
 
 exit 0;
