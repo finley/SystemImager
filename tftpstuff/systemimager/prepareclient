@@ -575,7 +575,7 @@ for disk in $ide_and_scsi_disks
 do
  # Specify sectors explicitly -- this format may be used in the future
  # for partitioning with MB.
- sfdisk -l -uS /dev/$disk > $systemimagerdir/partitionschemes/$disk
+ sfdisk -l -uM /dev/$disk > $systemimagerdir/partitionschemes/$disk
 done
 
 # get sfdisk to report Hardware RAID disk info
@@ -586,7 +586,7 @@ do
 
  # Specify sectors explicitly -- this format may be used in the future
  # for partitioning with MB.
- sfdisk -l -uS /dev/$disk"p" > $systemimagerdir/partitionschemes/$disk
+ sfdisk -l -uM /dev/$disk"p" > $systemimagerdir/partitionschemes/$disk
 
  # get rid of the funkification
  rm -f /dev/$disk"p"
