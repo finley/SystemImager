@@ -214,6 +214,8 @@ mount /dev/ram2 -t ext2 /stage2
 
 # pass variables to second stage script
 write_variables || shellout
+# and make sure we bring the old resolv.conf with us...
+cp /etc/resolv.conf /stage2/etc/resolv.conf
 
 echo "Pivoting into second stage ramdisk..."
 
