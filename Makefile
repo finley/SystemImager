@@ -129,7 +129,7 @@ PXE_CONF_SRC      = etc/pxelinux.cfg
 PXE_CONF_DEST     = $(ETC)/systemimager/pxelinux.cfg
 
 BINARIES := mkautoinstallcd mkautoinstalldiskette
-SBINARIES := addclients cpimage getimage install_siboot mkdhcpserver mkdhcpstatic mkautoinstallscript mkbootserver mvimage pushupdate rmimage mkrsyncd_conf
+SBINARIES := addclients cpimage getimage install_siboot mkdhcpserver mkdhcpstatic mkautoinstallscript mkbootserver mvimage pushupdate rmimage mkrsyncd_conf mkclientnetboot
 CLIENT_SBINARIES  := updateclient prepareclient
 COMMON_BINARIES   = lsimage
 
@@ -243,6 +243,7 @@ PHONY += install_common_libs
 install_common_libs:
 	mkdir -p $(LIB_DEST)
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/Common.pm $(LIB_DEST)
+	$(SI_INSTALL) -m 644 $(LIB_SRC)/Config.pm $(LIB_DEST)
 
 # checks the sized of the i386 kernel and initrd to make sure they'll fit 
 # on an autoinstall diskette
