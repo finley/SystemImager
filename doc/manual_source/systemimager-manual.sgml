@@ -2097,7 +2097,7 @@ service tftp
     <para>
     </para>
     <sect2 id=FAQImages>
-      <title>Q: Where are the images stored?</title>
+      <title>Where are the images stored?</title>
       <para>
 	The images are stored in
 	<filename>/var/spool/systemimager/images</filename>  
@@ -2121,14 +2121,14 @@ service tftp
       </para>
     </sect2>
     <sect2 id=FAQInstallFloppy>
-      <title>Q: How do I make an autoinstalldiskette?</title>
+      <title>How do I make an autoinstalldiskette?</title>
       <para>
 	Run the <command>makeautoinstalldiskette</command> command on the 
 	image server.
       </para>
     </sect2>
     <sect2 id=FAQInstallCD>
-      <title>Q: How do I make an autoinstallcd?</title>
+      <title>How do I make an autoinstallcd?</title>
       <para>
 	Run the <command>makeautoinstallcd</command> command on the image
 	server.
@@ -2136,7 +2136,7 @@ service tftp
     </sect2>
 
     <sect2 id=FAQDHCPServerLocation>
-      <title>Q: Does the DHCP server have to be on the image server?</title>
+      <title>Does the DHCP server have to be on the image server?</title>
       <para>
 	Yes.  At this point in time it does.  After the client gets it's
 	address via DHCP, it determines the DHCP server to be the image
