@@ -3,6 +3,12 @@
 #
 # "VA SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com>
 #
+# This file is: install
+#  (this script does all the placing of files on the filesystem. "afterburner" is run
+#   automatically by "install" unless the --no-afterburner option is used.
+#   "afterburner" does all the configuration stuff.)
+#
+
 
 # do we want a quiet install? and do we want to run afterburner?
 QUIET="false"
@@ -27,6 +33,7 @@ test "x$prefix" = "x" && prefix=/usr
 RESTART_INETD=no
 
 # if not run as root, install will surely fail
+# (DESTDIR is needed for the RPM creation process)
 if [ "x$DESTDIR" = "x" ]; then
   [ `whoami` != "root" ] && echo "Must be run as root!" && exit 1
 else
