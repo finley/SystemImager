@@ -18,6 +18,7 @@ package SystemImager::Client;
 #   $Id$
 
 use strict;
+use File::Basename;
 use Carp;
 use SystemImager::Config qw(get_config);
 use base qw(Exporter);
@@ -30,6 +31,7 @@ $VERSION = sprintf("%d.%02d", q$Revision$ =~ /(\d+)\.(\d+)/);
 
 sub client_exists {
     my ($name) = @_;
+    return _client_exists_link($name);
 }
 
 sub _client_exists_hosts {
@@ -39,11 +41,29 @@ sub _client_exists_hosts {
 
 sub _client_exists_link {
     my ($name) = @_;
-    
+    return (_client_image($name)) ? 1 : 0;
 }
 
-sub _client_link {
+#################################
+#
+#  Not actually sure if we need to look for $name.master here, or if
+#  it would be better somewhere else.
+#
+#################################
+
+sub _client_image {
     my ($name) = @_;
+    my $config = get_config();
+    my $image = undef;
+    if(-l ($config->autoinstall_script_dir . "/$name.sh")) {
+        my $linkcontents = readlink $link or (carp "$!", return undef);
+        my $filename = basename($linkcontents);
+        $filename =~ s/\.master$/;
+        $image = $filename;
+    } elsif (-f ($config->autoinstall_script_dir . "/$name.master")) {
+        $image = $filename;
+    }
+    return $image;
 }
 
 sub addclient {
