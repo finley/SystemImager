@@ -8,10 +8,13 @@
 #   Written by Brian Elliott Finley <brian@systemimager.org>
 #
 
-print <<'EOF';
+#print <<'EOF';
 
-makeautoinstallcd has been renamed to 
-  "mkautoinstallcd"
+#makeautoinstallcd has been renamed to 
+#  "mkautoinstallcd"
+
+use Getopt::Long;
+use AppConfig;
 
 my $config = AppConfig->new(
 			    'autoinstall_script_dir' => { ARGCOUNT => 1 },
