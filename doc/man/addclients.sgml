@@ -51,9 +51,10 @@
       <arg><option>-yes</option></arg>
       <arg><option>-client <replaceable>HOSTNAME</replaceable></option></arg>
       <arg><option>-host-range <replaceable>X-Y</replaceable></option></arg>
-      <arg><option>-domain <replaceable>DOMAINNAME</replaceable></option></arg>
+      <arg><option>-domainname <replaceable>DOMAINNAME</replaceable></option></arg>
       <arg><option>-ip-range <replaceable>IP-IP</replaceable></option></arg>
       <arg><option>-file <replaceable>FILE</replaceable></option></arg>
+      <arg><option>-image <replaceable>IMAGE</replaceable></option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
   <refsect1>
@@ -132,7 +133,7 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-domain <replaceable>DOMAINNAME</replaceable></option></term>
+	<term><option>-domainname <replaceable>DOMAINNAME</replaceable></option></term>
 	<listitem>
 	  <para>
 	    If this option is used, <replaceable>DOMAINNAME</replaceable> will
@@ -170,6 +171,14 @@
 	      db1 database_image_v1
 	      db2 database_image_v1
 	    </literallayout>
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-image <replaceable>IMAGE</replaceable></option></term>
+	<listitem>
+	  <para>
+	    The image that these clients should autoinstall.
 	  </para>
 	</listitem>
       </varlistentry>
