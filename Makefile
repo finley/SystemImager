@@ -341,7 +341,6 @@ install:
 	@echo 'Read README for installation details.'
 	@echo ''
 
-install_binaries:	install_kernel initrd_install \
 PHONY += install_binaries
 install_binaries:	install_kernel initrd_install \
 			install_boel_binaries_tarball
