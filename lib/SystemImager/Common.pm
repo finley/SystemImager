@@ -339,7 +339,7 @@ sub save_partition_information {
 
             chomp;
 
-            if ($label_type eq "gpt") {
+            if (($label_type eq "gpt") || ($label_type eq "bsd")) {
 
               # Unfortunately, parted doesen't produce it's output in a comma delimited
               # format, or even produce a n/a value such as "-" for fields that don't
