@@ -289,9 +289,9 @@ if ($autoinstall) {
       SystemImager::Common->get_boot_flavors($ARCH, $server);
 
     unless (%available_flavors) {
-	print "\nI couldn't find any boot flavors for SystemImager on $ARCH.\n";
+        print "\nI couldn't find any boot flavors for SystemImager on $ARCH.\n";
         print "Please install the appropriate boot files on $server.\n\n";
-	exit 1;
+        exit 1;
     }
     
     unless ($flavor) {
