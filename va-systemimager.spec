@@ -1,5 +1,5 @@
 %define name     va-systemimager
-%define ver      0.24beta4
+%define ver      1.0
 %define rel      1
 %define prefix   /usr
 
@@ -14,7 +14,7 @@ BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: Michael Jennings <mej@valinux.com>
 Docdir: %{prefix}/doc
 URL: http://systemimager.org/
-Requires: rsync syslinux tftp-hpa
+Requires: rsync >= 2.3.1, syslinux >= 1.48, tftp-hpa >= 0.13
 
 %description
 VA SystemImager is software that makes the installation of Linux to
@@ -31,7 +31,7 @@ workstations have the same basic hardware configuration.
 Summary: VA SystemImager "Master Client" software
 Group: Applications/System
 Conflicts: %{name}
-Requires: rsync util-linux
+Requires: rsync >= 2.3.1, util-linux
 
 %description client
 This is the package you install on a VA SystemImager "master client".
