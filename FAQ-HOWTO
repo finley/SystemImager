@@ -475,6 +475,46 @@ Nope.  Just a little customization ahead of you...
 
 
 --------------------------------------------------------------------------------
+-  How do I edit the scripts so only the FIRST disk is sfdisk'ed? I MUST
+   leave the other disks alone.
+--------------------------------------------------------------------------------
+
+First, be sure you are using the latest version of SystemImager.
+
+Then, after you run "prepareclient", look in the /etc/partitionschemes
+directory on that client.  You will find a file that has the partition
+information for each of that clients disks.  Simply delete all except
+for the primary disk.
+
+Now you can do your "getimage" and everything else like normal.
+
+The only other thing to verify is that the fstab file in the image has
+no entries for the other disks:
+"vi /systemimager/images/$imagename/etc/fstab"
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+-  How can I use SystemImager to update a small set of files? For instance,
+   I apply a security patch and I want all boxes to reflect that change.
+--------------------------------------------------------------------------------
+This is accomplished with the "updateimage" command on the client.
+
+1) Choose one of the following methods to update the image on the server:
+   A - apply the patch to the image directly
+   B - apply the patch to a client and then do another getimage
+       specifying the same imagename (won't take long and will
+       update the image).
+   C - apply the patch to a client and then do another getimage
+       specifying a _different_ imagename.  This is preferred as it
+       allows for revision control.
+
+2) run "updateimage" on the clients that you want to update.  Do an
+   "updateimage --help" to get the syntax.
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
 -  What other software is this based on?
 --------------------------------------------------------------------------------
 
