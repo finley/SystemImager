@@ -1,0 +1,14 @@
+#!/bin/sh
+
+#
+# "VA SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@systemimager.org>
+#
+# This file is: mk_manual
+#
+# I use this script to produce the manual html from the source sgml file
+#
+
+rm -fr manual
+db2html manual.sgml
+cp -a images/ manual/images
+
