@@ -1,0 +1,94 @@
+package SystemImager::Image;
+
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+ 
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+ 
+#   You should have received a copy of the GNU General Public License
+#   along with this program; if not, write to the Free Software
+#   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+#  Sean Dague <sean@dague.net>
+
+#  $Id$
+
+use strict;
+use Carp;
+use SystemImager::Config qw(get_config);
+use Exporter;
+use vars qw(@ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $VERSION);
+
+$VERSION = sprintf("%d.%02d", q$Revision$ =~ /(\d+)\.(\d+)/);
+
+@EXPORT_OK = qw(image_exists);
+%EXPORT_TAGS = ('all' => [@EXPORT_OK]);
+
+############################################
+#
+#  image_exists - takes one arguement, which is the name
+#  of an image.  Determines whether or not the image exists
+#  on the local image server
+#
+############################################
+
+sub image_exists {
+    my $imagename = shift;
+    my $config = get_config();
+    my $dir = $config->default_imagedir . '/' . $imagename;
+    return -d $dir;
+}
+
+sub _image_exists_filesystem {
+    return image_exists(@_);
+}
+
+sub _image_exists_rsync {
+    my ($file, $imagename) = shift;
+    open(IN,"<$file") or (carp "Can't open $file for reading", return undef);
+    my $found = 0;
+    while(<IN>) {
+        if(/^\[$imagename\]/) {
+            $found = 1;
+            last;
+        }
+    }
+    close(IN);
+    return $found;
+}
+
+sub addimage {
+    
+}
+
+sub _addimage_rsync {
+    my ($rsyncconf, $imagename, $imagedir) = @_;
+    if(!_image_exists_rsync($rsyncconf, $imagename)) {
+        open(OUT,">>$rsyncconf") or (carp "Couldn't open $rsyncconf in append mode", return undef);
+        print OUT "[$imagename]\n\tpath=$imagedir\n\n";
+        close OUT;
+        return 1;
+    }
+    return 1;
+}
+
+sub removeimage {
+    my $image = shift;
+    my $config = get_config();
+    _removeimage_clients($config->$image);
+    _removeimage_script($image);
+    _removeimage_rsync($image);
+    _removeimage_filesystem($image);
+ 
+}
+
+
+
+42; # Just for fun
+
+
