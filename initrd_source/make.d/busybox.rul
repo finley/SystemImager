@@ -13,26 +13,23 @@ BUSYBOX_PATCHES = $(shell ls $(INITRD_PATCH_DIR)/busybox.*.patch 2>/dev/null | s
 
 ALL_SOURCE += $(INITRD_SRC_DIR)/$(BUSYBOX_TARBALL)
 
-ifeq ($(ARCH),ia64)
-BUSYBOX_CONFIG := $(INITRD_PATCH_DIR)/busybox.no_modutils.config
-else
-BUSYBOX_CONFIG := $(INITRD_PATCH_DIR)/busybox.standard.config
-endif
+BUSYBOX_CONFIG = $(INITRD_PATCH_DIR)/busybox.standard.config
 
 PHONY += busybox
 busybox:	$(BUSYBOX_BINARY)
 
-$(BUSYBOX_BINARY):	$(INITRD_SRC_DIR)/$(BUSYBOX_TARBALL) $(BUSYBOX_CONFIG) \
+$(BUSYBOX_BINARY):	$(INITRD_SRC_DIR)/$(BUSYBOX_TARBALL) $(BUSYBOX_CONFIG)\
 			$(BUSYBOX_PATCHES) $(UCLIBC_TARGET)
 	rm -rf $(INITRD_SRC_DIR)/$(BUSYBOX_DIR)
 	cd $(INITRD_SRC_DIR) && tar -xvjf $(BUSYBOX_TARBALL)
 	cd $(INITRD_SRC_DIR)/$(BUSYBOX_DIR) && \
-        cat $(BUSYBOX_PATCHES) < /dev/null | patch -p1
+	  cat $(BUSYBOX_PATCHES) < /dev/null | patch -p1
 	cp -a $(BUSYBOX_CONFIG) $(INITRD_SRC_DIR)/$(BUSYBOX_DIR)/.config
-	$(MAKE) -C $(INITRD_SRC_DIR)/$(BUSYBOX_DIR) oldconfig
+	yes '' | $(MAKE) -C $(INITRD_SRC_DIR)/$(BUSYBOX_DIR) oldconfig
 	$(MAKE) -C $(INITRD_SRC_DIR)/$(BUSYBOX_DIR) dep
-	$(MAKE) -C $(INITRD_SRC_DIR)/$(BUSYBOX_DIR)
-	$(MAKE) -C $(INITRD_SRC_DIR)/$(BUSYBOX_DIR) install-hardlinks PATH=$(INITRD_BUILD_PATH)
+	$(MAKE) -C $(INITRD_SRC_DIR)/$(BUSYBOX_DIR) PATH=$(INITRD_BUILD_PATH)
+	$(MAKE) -C $(INITRD_SRC_DIR)/$(BUSYBOX_DIR) install-hardlinks \
+	    PATH=$(INITRD_BUILD_PATH)
 
 $(INITRD_SRC_DIR)/$(BUSYBOX_TARBALL):
 	[ -d $(INITRD_SRC_DIR) ] || mkdir -p $(INITRD_SRC_DIR)
