@@ -554,10 +554,23 @@ sub remove_rsync_xinetd {
     # this is the trouble file in an xinted environment
     my $file = "/etc/xinetd.d/rsync";
     if(-e $file) {
-        # xinetd should ignore ~ files
+	#
+        # Move rsync entry out of the way -- xinetd should ignore ~ files. -BEF-
+	#
         move($file,$file . '~');
+
+	#
+	# restart xinetd with rsync disabled -BEF-
+	#
         print "Signaling xinetd to restart...\n" unless($quiet);
         killall('xinetd',12); # Send SIGHUP to all xinetd processes
+
+	#
+	# Put rsync entry back, so that we leave the system as we found it.
+	# Won't take effect though until system is rebooted, or xinetd 
+	# restarted again. -BEF-
+	#
+        move($file . '~',$file);
     }
     return 1;
 }
@@ -581,13 +594,30 @@ sub remove_rsync_inetd {
     
     return 1 unless($rsyncfound);
     
-    backup_file($file) or croak("Couldn't back up $file.");
+    #
+    # Backup original inetd.conf file -BEF-
+    #
+    move($file,"$file.bak.$$") or die("Couldn't move $file to $file.bak.$$");
+
+    # 
+    # Write changes to inetd.conf without rsync entry. -BEF-
+    #
     open(OUT,">$file") or croak("Couldn't open $file for writing.");
     print OUT $inetdcontents;
     close(OUT);
 
+    # 
+    # restart inetd without rsync enabled. -BEF-
+    #
     print "Signaling inetd to restart...\n" unless($quiet);
     killall('inetd',1); # sends SIGHUP to all inetd processes
+
+    #
+    # Put rsync entry back, so that we leave the system as we found it.
+    # Won't take effect though until system is rebooted, or inetd 
+    # restarted again. -BEF-
+    #
+    move("$file.bak.$$",$file) or die("Couldn't move $file.bak.$$ to $file");
     return 1;
 }
 
