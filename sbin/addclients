@@ -4,12 +4,12 @@
 # "SystemImager"
 #
 #  Copyright (C) 1999-2002 Bald Guy Software 
-#                     Brian E. Finley <brian.finley@baldguysoftware.com>
+#                          Brian Elliott Finley <bef@bgsw.net>
 #
 #    $Id$
 #
 
-# XXX add IP address, hostname, and domain name validation routines. -BEF-
+# XXX Someday, we should add IP address, hostname, and domain name validation routines. -BEF-
 
 use lib "USR_PREFIX/lib/systemimager/perl";
 use strict;
@@ -44,9 +44,9 @@ Options: (options can be presented in any order)
                      
  -version            Display version and copyright information.
                      
- -domainname NAME    Domain name.
-                     
  -host NAME          Base host name.
+                     
+ -domainname NAME    Domain name.
                      
  -host-range N-N     Range of hosts involved.  Examples: 1-99 or 01-99.
                      
@@ -367,54 +367,56 @@ EOF
     my $etc_hosts=<STDIN>;
     chomp $etc_hosts;
     $etc_hosts = lc $etc_hosts;
-    if($etc_hosts ne "y") {$etc_hosts = "n";}
+    if ($etc_hosts ne "y") { $etc_hosts = "n"; }
 
     my $node_number = $starting_number;
 
-    if($etc_hosts eq "y") {
+    if ($etc_hosts eq "y") {
 
-    my $subnet_count = "0";
-
-    ### BEGIN One Subnet at a time ###
-    #
-    my $satisfied;
-
-    while ( $node_number <= $ending_number ) {
-        $subnet_count = $subnet_count + 1;
-
-        ### get IP information ###
-        # ne "y" is used instead of eq "n" because the dissatisfied response may be something other than "n".
-        $satisfied="n";
-        while ($satisfied ne "y") {
-            system("clear");
-            print "addclients -- Section 3 (adding or modifying /etc/hosts entries -- continued...)\n";
-            print "--------------------------------------------------------------------------------\n";
-            print "subnet $subnet_count\n\n";
-            print "The first host in subnet $subnet_count will be: $base_host_name$node_number\n";
-            print "What is the starting IP address for subnet $subnet_count? [$starting_ip]: ";
-            $starting_ip = get_response($starting_ip);
-            
-            print "What is the ending IP address? [$ending_ip]: ";
-            $ending_ip = get_response($ending_ip);
-            
-            print "I will work with IP addresses:  $starting_ip through $ending_ip\n";
-            print "\nAre you satisfied? (y/[n]): ";
-            chomp($satisfied=<STDIN>);
+        my $subnet_count = "0";
+        
+        ### BEGIN One Subnet at a time ###
+        #
+        my $satisfied;
+        
+        while ( $node_number <= $ending_number ) {
+            $subnet_count = $subnet_count + 1;
+        
+            ### get IP information ###
+            # ne "y" is used instead of eq "n" because the dissatisfied response may be something other than "n".
+            $satisfied="n";
+            while ($satisfied ne "y") {
+                system("clear");
+                print "addclients -- Section 3 (adding or modifying /etc/hosts entries -- continued...)\n";
+                print "--------------------------------------------------------------------------------\n";
+                print "subnet $subnet_count\n\n";
+                print "The first host in subnet $subnet_count will be: $base_host_name$node_number\n";
+                print "What is the starting IP address for subnet $subnet_count? [$starting_ip]: ";
+                $starting_ip = get_response($starting_ip);
+                
+                print "What is the ending IP address? [$ending_ip]: ";
+                $ending_ip = get_response($ending_ip);
+                
+                print "I will work with IP addresses:  $starting_ip through $ending_ip\n";
+                print "\nAre you satisfied? (y/[n]): ";
+                chomp($satisfied=<STDIN>);
+            }
+            ### get IP information ###
+        
+            ($starting_ip, $ending_ip, $node_number) = add_hosts_entries($starting_ip, $ending_ip, $starting_number, $ending_number, $base_host_name, $domain_name);
+        
         }
-        ### get IP information ###
-
-        ($starting_ip, $ending_ip, $node_number) = add_hosts_entries($starting_ip, $ending_ip, $starting_number, $ending_number, $base_host_name, $domain_name);
-
-    }
-    ### END One Subnet at a time ###
-
-  
-    if ( $etc_hosts eq "y" ) { print "\nThese entries have been added to /etc/hosts.\n"; }
-    print "\nPress <Enter> to continue...";
-    <STDIN>;
+        ### END One Subnet at a time ###
+        
+        
+        if ( $etc_hosts eq "y" ) { print "\nThese entries have been added to /etc/hosts.\n"; }
+        print "\nPress <Enter> to continue...";
+        <STDIN>;
 
     } else {
+
         print "\nNo entries will be added to your /etc/hosts file.\n";
+
     }
     ### END hosts questionaire ###
 
@@ -423,7 +425,6 @@ EOF
     create_links($starting_number, $ending_number, $base_host_name, $script, $autoinstall_script_dir);
 
     if( ($base_host_name) and
-        ($domain_name) and
         ($starting_ip) and
         ($ending_ip) and
         ($starting_number ne "") ) { 
@@ -438,26 +439,26 @@ EOF
 
 ### BEGIN Subroutines ###
 sub get_response {
- my $garbage_out=$_[0];
- my $garbage_in=<STDIN>;
- chomp $garbage_in;
- unless($garbage_in eq "") { $garbage_out = $garbage_in; }
- return $garbage_out;
+    my $garbage_out=$_[0];
+    my $garbage_in=<STDIN>;
+    chomp $garbage_in;
+    unless ($garbage_in eq "") { $garbage_out = $garbage_in; }
+    return $garbage_out;
 }
 
 sub dec2bin {
-  my $str = unpack("B32", pack("N", shift));
-  return $str;
+    my $str = unpack("B32", pack("N", shift));
+    return $str;
 }
 
 sub dec2bin8bit {
-  my $str = unpack("B32", pack("N", shift));
-  $str = substr($str, -8); # 32bit number -- get last 8 bits (the relevant ones)
-  return $str;
+    my $str = unpack("B32", pack("N", shift));
+    $str = substr($str, -8); # 32bit number -- get last 8 bits (the relevant ones)
+    return $str;
 }
 
 sub bin2dec {
-  return unpack("N", pack("B32", substr("0" x 32 . shift, -32))); # get all 32bits
+    return unpack("N", pack("B32", substr("0" x 32 . shift, -32))); # get all 32bits
 }
 
 sub ip_quad2ip_dec {
@@ -564,7 +565,11 @@ sub add_hosts_entries {
     ### munge new ips and hostname info into %etc_hosts_lines_by_ip
     my @new_ip_addresses = sort (keys %new_hostnames_by_ip);
     foreach my $new_ip_address (@new_ip_addresses) {
-        $etc_hosts_lines_by_ip{$new_ip_address} = "$new_ip_address    $new_hostnames_by_ip{$new_ip_address}.$domain_name  $new_hostnames_by_ip{$new_ip_address}";
+        if ($domain_name) {
+            $etc_hosts_lines_by_ip{$new_ip_address} = "$new_ip_address    $new_hostnames_by_ip{$new_ip_address}.$domain_name  $new_hostnames_by_ip{$new_ip_address}";
+        } else {
+            $etc_hosts_lines_by_ip{$new_ip_address} = "$new_ip_address    $new_hostnames_by_ip{$new_ip_address}";
+        }
     }
     ### munge new ips and hostname info into %etc_hosts_lines_by_ip
 
