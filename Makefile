@@ -66,9 +66,16 @@
 # maybe /etc/systemimager/systemimager.exclude?
 #
 
-DESTDIR = 
+DESTDIR =
+VERSION = $(shell cat VERSION)
+
+# RELEASE_DOCS are toplevel files that should be included with all posted
+# tarballs, but aren't installed onto the destination machine by default
+RELEASE_DOCS = CHANGE.LOG COPYING CREDITS ERRATA README TODO VERSION
+
 PATH = /sbin:/bin:/usr/sbin:/usr/bin:/usr/bin/X11:/usr/local/sbin:/usr/local/bin
 ARCH = $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/)
+SUDO = $(shell if [ `id -u` != 0 ]; then echo -n "sudo"; fi)
 
 TEMP_DIR = systemimager.initrd.temp.dir/
 TARBALL_BUILD_DIR = autoinstallbin/
@@ -84,7 +91,7 @@ COMMON_BINARY_SRC = $(BINARY_SRC)
 
 # destination directories
 ETC  = $(DESTDIR)/etc
-INITD = $(shell ([ -d $(ETC)/init.d ] && echo "$(ETC)/init.d") || ([ -d $(ETC)/rc.d/init.d ] && echo "$(ETC)/rc.d/init.d"))
+INITD = $(ETC)/init.d
 USR = $(DESTDIR)/usr/local
 DOC  = $(USR)/share/doc/systemimager-doc
 BIN = $(USR)/bin
@@ -381,7 +388,7 @@ manpages:
 install_docs: docs
 	mkdir -p $(DOC)
 	cp -a $(MANUAL_DIR)/html $(DOC)
-	cd $(MANUAL_DIR) && cp *.ps *.pdf $(DOC)
+	cp $(MANUAL_DIR)/*.ps $(MANUAL_DIR)/*.pdf $(DOC)
 	mkdir -p $(DOC)/examples
 	install -m 644 etc/rsyncd.conf $(DOC)/examples
 	install -m 644 etc/init.d/rsync $(DOC)/examples
@@ -484,6 +491,43 @@ distrib_clean:
 	mv $(LINUX_SRC)/../linux.tmp/* $(LINUX_SRC)
 	rm -rf $(LINUX_SRC)/../linux.tmp
 
+#@client_tarball:
+#@  create a user-distributable tarball for the client
+#@ 
+client_tarball:
+	mkdir -p ./tmp/systemimager-client-$(VERSION)
+	$(MAKE) install_client_all DESTDIR=./tmp/systemimager-client-$(VERSION)
+	$(MAKE) install_docs DESTDIR=./tmp/systemimager-client-$(VERSION)
+	cp $(RELEASE_DOCS) installclient install_lib ./tmp/systemimager-client-$(VERSION)
+	cd tmp && tar -c systemimager-client-$(VERSION) | bzip2 > \
+		systemimager-client-$(VERSION).tar.bz2
+
+#@server_tarball:
+#@  create a user-distributable tarball for the server
+#@ 
+server_tarball:
+	mkdir -p ./tmp/systemimager-server-$(VERSION)
+	$(MAKE) install_server_all DESTDIR=./tmp/systemimager-server-$(VERSION)
+	$(MAKE) install_docs DESTDIR=./tmp/systemimager-server-$(VERSION)
+	cp $(RELEASE_DOCS) installserver install_lib ./tmp/systemimager-server-$(VERSION)
+	cd tmp && tar -c systemimager-server-$(VERSION) | bzip2 > \
+		systemimager-server-$(VERSION).tar.bz2
+
+#@tarballs:
+#@  create user-distributable tarballs for the server and the client
+#@ 
+tarballs:
+	$(MAKE) client_tarball server_tarball
+
+debs:	all
+	dpkg-buildpackage -r$(SUDO)
+
+rpm:
+	echo "I don't know how to build an RPM - will you please teach me?"
+	echo "see debian/rules to see how the debs are built"
+	echo "My .spec file is out of date" && exit 1
+	# rpm -ba systemimager.spec
+
 #@clean:
 #@  removes object files, docs, editor backup files, etc.
 #@ 
@@ -507,4 +551,5 @@ clean:
 distclean:	clean
 	-rm *stamp
 	-rm -rf $(SRC_DIR)
+	-rm -rf tmp
 	-$(MAKE) -C $(INITRD_DIR) distclean

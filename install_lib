@@ -6,15 +6,28 @@
 #
 # This file is: install_lib
 #   This file provides variables and functions for use by the
-#   install{client,server} wrapper scripts.
+#   install{client,server} scripts.
 #
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/bin/X11:/usr/local/sbin:/usr/local/bin
-DESTDIR=`pwd`
-VERSION=`cat $DESTDIR/VERSION`
+if [ -f VERSION ]; then
+  VERSION=`cat VERSION`
+  if [ $? -ne 0 ]; then
+    echo "Error:  Couldn't read file VERSION."
+    exit 1
+  fi
+else
+  echo "Error:  Couldn't find file VERSION."
+  exit 1
+fi
 
 # if not run as root, install will surely fail
 [ "`whoami`" != "root" ] && echo "Must be run as root!" && exit 1
+
+# delim() - prints out a delimiter
+delim() {
+  echo "********************************************************************************"
+}
 
 # upgrade_config_files() compares already-installed configuration files with
 #   the new, virgin config files that are a part of this release.  if there is
@@ -41,7 +54,7 @@ upgrade_config_files() {
       if [ $? -ne 0 ]; then
         echo "Warning: $old already exists, but it differs from the one I am going to install."
         echo "I'm going to move this file to $old.beforesystemimager$VERSION."
-        echo "Press enter to continue."
+        echo "Press <Enter> to continue..."
         read
         mv $old $old.beforesystemimager$VERSION
       fi
@@ -62,7 +75,12 @@ upgrade_config_files() {
 #         have just been removed from SystemImager.
 #
 remove_old_files() {
+  echo ""
+  delim
   echo "Note:  Binaries have moved from /usr to /usr/local by default."
+  delim
+  echo "Press <Enter> to continue..."
+  read
   echo "Checking for files which are no longer pertinent..."
   for file in $OLD_FILES; do
     if [ -f "$file" ]; then

@@ -7,11 +7,11 @@
 #
 #
 # This file is: installserver
-#   This script is a wrapper around the install_server_all rule in the
-#   Makefile.  This takes care of upgrade issues and interacting with users.
-#
+#   Interactively installs the SystemImager server files, and takes care of 
+#   upgrade issues.
 
 # set some variables
+DESTDIR=""
 COMMAND_PATH=`dirname $0`
 test "x$COMMAND_PATH" != "x" && cd $COMMAND_PATH
 
@@ -37,10 +37,10 @@ sleep 2
 ### BEGIN clean up old files ###
 echo "Checking for old utilities..."
 
-OLD_FILES="/usr/sbin/addclients /usr/sbin/cpimage /usr/sbin/getimage /usr/sbin/mkdhcpserver /usr/sbin/mkdhcpstatic /usr/sbin/mvimage /usr/sbin/pushupdate /usr/sbin/rmimage /usr/sbin/lsimage"
+OLD_FILES="/usr/sbin/addclients /usr/sbin/cpimage /usr/sbin/getimage /usr/sbin/makedhcpserver /usr/sbin/makedhcpstatic /usr/sbin/makeautoinstallcd /usr/sbin/makeautoinstalldiskette /usr/sbin/mvimage /usr/sbin/pushupdate /usr/sbin/rmimage /usr/sbin/lsimage"
 remove_old_files
 
-CONFIG_FILES="/etc/systemimager/systemimager.conf:./etc/systemimager.conf /etc/systemimager/rsyncd.conf:./etc/rsyncd.conf /etc/init.d/systemimager:./etc/init.d/rsync"
+CONFIG_FILES="/etc/systemimager/systemimager.conf:./etc/systemimager/systemimager.conf /etc/systemimager/rsyncd.conf:./etc/systemimager/rsyncd.conf /etc/init.d/systemimager:./etc/init.d/systemimager"
 upgrade_config_files
 ### END clean up old files ###
 
@@ -48,7 +48,7 @@ upgrade_config_files
 if [ -f /var/log/systemimager ]; then
     echo "You appear to be using the old style /var/log/systemimager file."
     echo "I will automatically update your system to use /var/log/systemimager/rsyncd instead."
-    echo "Press enter to continue."
+    echo "Press <Enter> to continue..."
     read
     echo -n "Moving /var/log/systemimager to /var/log/systemimager/rsyncd... "
     mv /var/log/systemimager /var/log/systemimager.beforesystemimager$VERSION
@@ -58,14 +58,34 @@ if [ -f /var/log/systemimager ]; then
 fi
 ### END update log files ###
 
-### BEGIN make install_server_all
-echo "Running 'make install_server_all'..."
-make install_server_all
+### BEGIN adjust directories to match system ###
+if [ ! -d /etc/init.d ]; then
+  if [ ! -d /etc/rc.d/init.d ]; then
+    echo "Couldn't find init.d directory."
+    exit 1
+  else
+    echo "Moving ./etc/init.d ./etc/rc.d/init.d, to match your system..."
+    mkdir ./etc/rc.d
+    mv ./etc/init.d ./etc/rc.d
+  fi
+fi
+
+# keep a doc directory for each version - this is just easier than keeping
+# a database of all the files that would need to be removed to insure
+# no out-of-date documents.
+mv ./usr/local/share/doc/systemimager-doc \
+  ./usr/local/share/doc/systemimager-$VERSION
+
+### END adjust directories to match system ###
+  
+### BEGIN install files ###
+echo "Installing..."
+find . -type f -mindepth 2 -exec install -D {} $DESTDIR/{} \;
 if [ $? -ne 0 ]; then
-    echo "Install failed - hopefully the messages above will help you debug the problem."
+    echo "Install failed."
     exit 1
 fi
-### END make install_server_all
+### END install files ###
 
 ### BEGIN copy over existing rsyncd.conf entries ###
 echo "Looking for existing rsyncd.conf files..."
@@ -97,12 +117,35 @@ for file in /etc/rsyncd.conf /etc/systemimager/rsyncd.conf.beforesystemimager$VE
 		     if [ $start_copying == "false" ]; then
 		       echo "Warning:  $file doesn't look like it was created by SystemImager."
 		       echo "No image entries were copied over."
+		       echo "Press <Enter> to continue..."
+		       read
 		     fi
     esac
   fi
 done  
 ### END copy over existing rsyncd.conf entries ###
 
+if [ -d /tftpboot/systemimager ]; then
+  # warn about the relocation of the tftpboot stuff
+  delim
+  echo "NOTE: The files that were stored in /tftpboot in previous releases have moved."
+  echo "Autoinstall scripts have moved to /var/lib/systemimager/scripts, and"
+  echo "most everything else is now in /usr/local/share/systemimager/<arch>-boot"
+  delim
+  echo "Press <Enter> to continue..."
+  read
+  echo "Shall I copy any master scripts/links you have over to the new"
+  echo -n "location? ([y]/n]) "
+  read REPLY
+  case $REPLY in
+    n|N|No|NO ) echo "Ok, not copying over master scripts." ;;
+            * ) echo "Copying scripts..."
+	        cp /tftpboot/systemimager/*.master /var/lib/systemimager/scripts
+	        cp -i /tftpboot/systemimager/*.sh /var/lib/systemimager/scripts
+		;;
+  esac
+fi
+		
 ### BEGIN init scripts ###
 # find where init.d lives
 [ -d /etc/rc.d/init.d ] && INITDIR_PREFIX="/etc/rc.d"
@@ -164,20 +207,24 @@ fi
 
 ### END inetd stuff ###
 
-echo "Running initscript to starting rsync daemon..."
+echo "Running initscript to start rsync daemon..."
 $INITDIR_PREFIX/init.d/systemimager restart
 if [ $? -ne 0 ]; then
   echo "Error:  The initscript returned a non-zero status"
   exit 1
 fi  
 
-### BEGIN dhcp stuff ###
-# Hey! Want dhcp?
+echo ""
+delim
 echo "Note:  SystemImager now uses the AppConfig perl module.  This module is"
 echo "available via CPAN and must be installed before using the SystemImager"
 echo "utilities."
+delim
 echo -n "Press <Enter> to continue..."
-read REPLY
+read
+
+### BEGIN dhcp stuff ###
+# Hey! Want dhcp?
 clear
 echo -n "Would you like me to configure this computer as a dhcp server now? (y/[n]) "
 read REPLY

@@ -7,11 +7,12 @@
 #
 #
 # This file is: installclient
-#   This script is a wrapper around the install_client_all rule in the
-#   Makefile.  This takes care of upgrade issues and interacting with users.
+#   Interactively installs the SystemImager client files, and takes care of
+#   upgrade issues.
 #
 
 # set some variables
+DESTDIR=""
 COMMAND_PATH=`dirname $0`
 test "x$COMMAND_PATH" != "x" && cd $COMMAND_PATH
 
@@ -37,25 +38,27 @@ sleep 2
 OLD_FILES="/usr/sbin/prepareclient /usr/sbin/updateclient /usr/sbin/lsimage"
 remove_old_files
 
-CONFIG_FILES="/etc/systemimager/updateclient.local.exclude:./tftpstuff/systemimager/updateclient.local.exclude"
+CONFIG_FILES="/etc/systemimager/updateclient.local.exclude:./etc/systemimager/updateclient.local.exclude"
 upgrade_config_files
 
-### BEGIN make install_client_all
-echo "Running 'make install_client_all'..."
-make install_client_all
+### BEGIN install files
+echo "Installing..."
+find . -type f -mindepth 2 -exec install -D {} $DESTDIR/{} \;
 if [ $? -ne 0 ]; then
-    echo "Install failed - hopefully the messages above will help you debug the problem."
+    echo "Install failed."
     exit 1
 fi
-### END make install_client_all
+### END install files
 
 echo "Checking for SystemConfigurator..."
 which systemconfigurator > /dev/null
 if [ $? -ne 0 ]; then
+  delim
   echo "Warning:  The SystemImager client depends on SystemConfigurator, but"
   echo "it doesn't appear to be installed.  SystemConfigurator can be"
   echo "downloaded from:  http://sourceforge.net/projects/systemconfig"
-  echo "Press enter to continue"
+  delim
+  echo "Press <Enter> to continue..."
   read
 fi  
 
