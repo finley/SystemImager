@@ -639,10 +639,6 @@ mount | grep c[0-9]+d[0-9]+p > /dev/null 2>&1
 # A3) Compile an autoinstall kernel with software RAID, and any other drivers 
 #     you might need built in (filesystem, SCSI drivers, etc.).
 #
-#     XXX To make this work now, we'll also need to pass the filesystem type in 
-#         the LAST_ROOT append parameter.  Perhaps like 
-#         "LAST_ROOT=/dev/md0,ext3".
-#      
 # Find running raid devices
 if [ -f /proc/mdstat ]; then
   RAID_DEVICES=` cat /proc/mdstat | grep ^md | sed 's/ .*$//g' `
