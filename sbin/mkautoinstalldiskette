@@ -166,7 +166,7 @@ unless ($kernel and $initrd) {
     
     # make sure the specified flavor is available
     unless ($available_flavors{$flavor}) {
-      print "\nI can't find boot files of the flavor and architecture specified.\n";
+      print qq(\nI can't find boot files of flavor "$flavor" for the "$arch" architecture.\n);
       print "\nTry running with no options.\n";
       exit 1;
     }
