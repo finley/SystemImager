@@ -1,4 +1,7 @@
 /* vi: set sw=4 ts=4: */
+//
+//  $Id$
+//
 // This file defines the feature set to be compiled into busybox.
 // When you turn things off here, they won't be compiled in at all.
 //
@@ -77,7 +80,7 @@
 //#define BB_MKFIFO
 //#define BB_MKFS_MINIX
 //#define BB_MKNOD
-#define BB_MKSWAP
+//#define BB_MKSWAP
 //#define BB_MKTEMP
 //#define BB_MODPROBE
 #define BB_MORE
