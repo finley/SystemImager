@@ -1,0 +1,1261 @@
+################################################################################
+# 
+# 	Added by Brian E. Finley.  Originally found here:
+#   	http://alpaca.mcs.anl.gov/debian/pool/main/d/discover/discover_1.5-1.4.diff.gz
+#
+################################################################################
+
+--- discover-1.5.orig/discover/discover.init
++++ discover-1.5/discover/discover.init
+@@ -110,7 +110,8 @@
+     echo $MODULE > /var/lib/discover/crash
+     sync
+ 
+-    modprobe $MODULE
++    # '|| true' make sure we start up, even if one module fails to load.
++    modprobe $MODULE || true
+ 
+     # The module loaded without incident, so we can safely remove the crash
+     # file.
+--- discover-1.5.orig/debian/changelog
++++ discover-1.5/debian/changelog
+@@ -0,0 +1,606 @@
++discover (1.5-1.4) unstable; urgency=low
++
++  * NMU with permission
++  * Put libdiscover* in /lib in the udeb, so it overwrites what's on the
++    boot medium.
++
++ -- Tollef Fog Heen <tfheen@debian.org>  Tue, 12 Nov 2002 23:44:40 +0100
++
++discover (1.5-1.3) unstable; urgency=low
++
++  * NMU.  Again.  Silly me forgot to upload source as well when making
++    this a non-native package.
++
++ -- Tollef Fog Heen <tfheen@debian.org>  Thu, 24 Oct 2002 11:59:49 +0200
++
++discover (1.5-1.2) unstable; urgency=low
++
++  * NMU with maintainer's permission
++  * Make the init script start even if a module fails to load. 
++    (closes: #153656)
++  * Depend on ash | dash.  (closes: #162747)
++  * Make this a non-native package again.
++
++ -- Tollef Fog Heen <tfheen@debian.org>  Thu, 24 Oct 2002 02:07:29 +0200
++
++discover (1.5-1.1) unstable; urgency=low
++
++  * NMU
++  * Add udeb generation.  (Closes: #110461)
++
++ -- Tollef Fog Heen <tfheen@debian.org>  Mon,  9 Sep 2002 10:44:47 +0200
++
++discover (1.5-1) unstable; urgency=low
++
++  * new upstream version
++  * debian/discover.postinst:
++    - Stop redirecting the output of update-rc.d to /dev/null.
++    - Migrate people to the correct runlevel; just changing the
++      update-rc.d call in the postinst is insufficient. (Closes: #149256)
++
++ -- Branden Robinson <branden@progeny.com>  Tue, 11 Jun 2002 13:43:44 -0500
++
++discover (1.4-1) unstable; urgency=low
++
++  * new upstream version; recognize "disk" device type on the command line
++    (thanks, Oliver Kurth) (Closes: #149125)
++  * debian/control: fix error in libdiscover1-pic's extended description
++
++ -- Branden Robinson <branden@progeny.com>  Wed,  5 Jun 2002 11:11:41 -0500
++
++discover (1.3.2-1) unstable; urgency=low
++
++  * new upstream version; awk script inside init script reads from
++    /proc/mounts now, instead of standard input (Closes: #146519)
++  * debian/discover.postrm: Move "update-rc.d remove" to package purge per
++    policy 10.3.3. (Closes: #146774)
++
++ -- Branden Robinson <branden@progeny.com>  Mon,  3 Jun 2002 12:24:45 -0500
++
++discover (1.3.1-1) unstable; urgency=low
++
++  * new upstream version; fixes problem with vendor IDs from the list files
++    getting clobbered by a memset()
++
++ -- Branden Robinson <branden@progeny.com>  Thu, 23 May 2002 14:56:00 -0500
++
++discover (1.3-1) unstable; urgency=low
++
++  * new upstream version; among other changes:
++    + discover/discover.{8,c}: Applied patch from Mike Simons to support "a
++      way to get all possible devices detected at once, without typing the
++      complete list." (Closes: #146009)
++    + discover/discover.init: Don't permit failure to unmount the initrd or
++      free the ramdisk to be fatal errors. (Closes: #146519)
++    + discover/discover.init: Run the list of modules returned by discover
++      through "sort -u" so that we don't needlessly attempt to load the same
++      module multiple times. (Closes: #146256)
++    + discover/discover.init: Don't attempt to set up the (e.g.) /cdrom ->
++      /cdrom0 if /cdrom is already being used as a mount point according to
++      /proc/mounts. (Closes: #146266)
++    + lib/{ide.c,lst.c,pci.c,usb.c}: Fix unitialized variables and other
++      problems found with valgrind.  Thanks to Petter Reinholdtsen for this
++      patch. (Closes: #147687)
++
++ -- Branden Robinson <branden@progeny.com>  Thu, 23 May 2002 13:56:49 -0500
++
++discover (1.2-1) unstable; urgency=low
++
++  * Development moved back to Progeny CVS; because of this and the now-useful
++    "upstream" ChangeLog, this is the last release where the Debian changelog
++    file will go into excruciating detail.  Instead, the Debian changelog will
++    be used mostly for the bug auto-closing feature (an explanation will
++    accompany the auto-closed bugs, of course).
++
++  * discover/ChangeLog: made this file useful with cvs2cl (Closes: #142046)
++  * discover/discover.8: add information about how to report unrecognized
++    hardware data to maintainers (Closes: #137522)
++  * discover/discover.init:
++    - load init script's configuration parameters from /etc/default/discover
++      if the file is readable
++    - only update /dev/cdrom* and corresponding mount points if
++      $MANAGE_CDROM_DEVICES is true (corresponds to debconf template)
++      (Closes: #118760)
++    - use -p argument to mkdir in case parent directories of mount points do
++      not exist
++    - use $CDROM_BASE_MOUNTPOINT as prefix to mount points
++    - implement more precise check for mounted /initrd filesystem
++    - migrate from /var/state to /var/lib per FHS (Closes: #136992)
++    - added comments describing the function of each of the three
++      configuration files
++
++  * debian/control:
++    - change maintainer to Progeny Debian Packaging Team
++    - add Uploaders: field
++    - new package: libdiscover1-pic (thanks, Tollef Fog Heen)
++      (Closes: #143871)
++    - libdiscover-dev Replaces: libdiscover0, libdiscover0-dev
++    - discover Depends: debconf (>> 0.5)
++  * debian/copyright: corrected URL to package source
++  * debian/discover.dirs: /var/state/discover -> /var/lib/discover
++  * debian/discover.postinst:
++    - discover's rcS.d script needs to run after hotplug's (S35), but before
++      networking is set up (S39).  It's getting to be a tight squeeze here.  Run
++      it at S36.  (Closes: #143329)
++    - manage /etc/default/discover file with debconf, and write debconf
++      section containing values of discover/manage_cdrom_devices and
++      discover/cdrom_base_mountpoint templates
++  * debian/discover.postrm: remove configuration files on package purge
++  * debian/discover.templates.pt_BR: added Brazilian Portuguese template
++    translations (thanks, Andre Luis Lopes) (Closes: #141526)
++  * debian/docs: Stop shipping outdated and misleading Mandrake README and
++    BUGS files, and do ship ChangeLog.mandrake.
++  * debian/rules:
++    - Comment out useless call to dh_installinit.  We don't want to get into
++      trouble if it suddenly starts working.  See Debian bug #140881.
++    - build libdiscover1-pic (thanks, Tollef Fog Heen)
++    - add dh_installdebconf to binary-arch rule
++  * debian/shlibs: remove unused file (see libdiscover1.shlibs for the real
++    thing)
++
++ -- Branden Robinson <branden@progeny.com>  Mon, 29 Apr 2002 11:56:34 -0500
++
++discover (1.1-6) unstable; urgency=medium
++
++  * debian/postinst: oops, pass correct arguments to update-rc.d (thanks,
++    Thomas Hood) (Closes: #141492)
++
++ -- Branden Robinson <branden@debian.org>  Sat,  6 Apr 2002 01:47:01 -0500
++
++discover (1.1-5) unstable; urgency=low
++
++  * debian/docs: stop shipping obsolete upstream FAQ (Closes: #127088)
++  * debian/{postinst,postrm}: run discover's init script much earlier, so
++    that, e.g., network modules are loaded before networking is set up
++    (thanks, Christoph Lameter) (Closes: #120602)
++  * discover/discover.init:
++    - put names of config files in shell variables for consistency
++    - semantic updates to some user-visible messages
++    - clarify how re-enablement of skipped modules is done (Closes: #137515)
++  * discover/{discover.8,discover.conf.5,update-initrd.8}: minor updates
++
++ -- Branden Robinson <branden@debian.org>  Tue,  2 Apr 2002 02:55:29 -0500
++
++discover (1.1-4) unstable; urgency=low
++
++  * discover/discover.init: fix typo (thanks, Thomas Poindessous)
++    (Closes: #118349)
++
++ -- Branden Robinson <branden@debian.org>  Mon,  5 Nov 2001 07:44:19 -0500
++
++discover (1.1-3) unstable; urgency=low
++
++  * lib/{ethernet,floppy,scsi}.c: comment-out PowerPC-specific code
++
++ -- Branden Robinson <branden@debian.org>  Thu,  1 Nov 2001 13:01:10 -0500
++
++discover (1.1-2) unstable; urgency=low
++
++  * configure.ac: comment out check for "--with-kernel-source" (and re-ran
++    autoconf)
++  * debian/control: remove now-unnecessary build-dependencies on
++    libisapnp-dev, kernel-headers-2.2.19, autoconf, automake, and libtool
++  * debian/rules: comment out invocation of autogen.sh, and passing of
++    "--with-kernel-source" argument to configure
++  * debian/discover.overrides: format this file correctly and explain the
++    override in a comment
++
++ -- Branden Robinson <branden@debian.org>  Fri, 19 Oct 2001 21:16:00 -0500
++
++discover (1.1-1) unstable; urgency=low
++
++  * re-ran libtoolize --force --copy; aclocal; automake; autoconf
++  * re-generated source package without .cvsignore files and debian directory
++  * discover/Makefile.am:
++    - add "data_DATA = linuxrc"
++    - add "update-initrd.8" to man_MANS
++  * discover/discover.init:
++    - cleaned up shell syntax and output messages a little bit
++    - policy-compliant init script (doesn't ignore $1)
++  * discover/update-initrd:
++    - safe temporary directory usage (also, respect $TMPDIR)
++    - import and use my handy-dandy message(), message_nonl(), and errormsg()
++      shell functions
++    - "port" this script to the new discover-data/discover 1.0 way of doing
++      things
++  * discover/update-initrd.8: wrote manpage
++  * discover/discover.8: corrections to discover manpage
++    (thanks, Bernd Eckenfels) (Closes: #111389)
++  * debian/control:
++    - add versioning to build-dep on debhelper
++    - updated package descriptions
++    - remove redundant dependency on libdiscover1 from discover
++  * debian/copyright: updated copyright notice and list of authors
++  * debian/discover.dirs:
++    - add usr/share/discover
++    - add var/state/discover (Closes: #114112)
++  * debian/discover.files: ship linuxrc, update-initrd manpage, and lintian
++    override file
++  * debian/discover.overrides: new file containing lintian overrides
++  * debian/discover.{postinst,postrm}: add update-rc.d calls
++  * debian/libdiscover0.files: obsolete file removed
++  * debian/libdiscover1.{postinst,postrm}: run ldconfig as necessary
++  * debian/libdiscover1.shlibs: renamed from "shlibs"
++  * debian/rules:
++    - remove *.gmo files in clean rule
++    - add appropriate -l argument to dh_shlibdeps
++    - put linuxrc in correct place
++
++ -- Branden Robinson <branden@debian.org>  Mon, 15 Oct 2001 22:04:04 -0500
++
++discover (1.0-2) unstable; urgency=low
++
++  * libdiscover1 Depends: discover-data (Closes: #110284)
++
++ -- Branden Robinson <branden@debian.org>  Mon, 27 Aug 2001 16:23:14 -0500
++
++discover (1.0-1) unstable; urgency=low
++
++  * Integrate libdiscover (the old Mandrake libdetect) into the same
++    source package. (epg@progeny.com)
++  * Yank out all the ISA stuff, including SuperProbe. (epg@progeny.com)
++  * Library version has changed; now shipping libdiscover1 package.
++
++ -- Branden Robinson <branden@debian.org>  Wed, 15 Aug 2001 16:02:18 -0500
++
++discover (0.9.20) unstable; urgency=low
++
++  * Compile against libdiscover instead of libdetect.
++
++ -- Branden Robinson <branden@debian.org>  Tue,  7 Aug 2001 09:03:52 -0500
++
++discover (0.9.19) unstable; urgency=low
++
++  * discover.init: add test to skip attempts at X server "module"
++    autoloading if discover tries to do so
++
++ -- Branden Robinson <branden@progeny.com>  Fri, 23 Mar 2001 15:47:18 -0500
++
++discover (0.9.18) unstable; urgency=low
++
++  * discover.init: got sense of new test backwards; fixed
++
++ -- Branden Robinson <branden@progeny.com>  Fri, 23 Mar 2001 12:13:19 -0500
++
++discover (0.9.17) unstable; urgency=low
++
++  * discover.init: change module existence check to work for both 2.2 and 2.4
++    kernels (addresses Progeny pr/1352)
++
++ -- Branden Robinson <branden@progeny.com>  Fri, 23 Mar 2001 11:27:14 -0500
++
++discover (0.9.16) unstable; urgency=low
++
++  * discover.init now checks to see if a module exists before trying to
++    load it; this eliminates scary-looking modprobe errors at boot time.
++
++ -- Jeff Licquia <jlicquia@progeny.com>  Tue, 20 Mar 2001 18:08:38 -0500
++
++discover (0.9.15) unstable; urgency=low
++
++  * changes to discover.c:
++    - change return_xserver() and return_xdriver() functions; issue a warning,
++      not a fatal error, in the event that we cannot parse the X server and/or
++      driver that we get back from libdetect (this works around what I feel is
++      brain damage in libdetect); also, return the string "unknown" when X
++      servers or drivers are requested for such cards; the X server config
++      scripts will recognize this and do the right thing
++    - tabs -> 8 spaces
++    - added vim modeline
++
++ -- Branden Robinson <branden@progeny.com>  Tue, 13 Mar 2001 17:21:33 -0500
++
++discover (0.9.14) unstable; urgency=low
++
++  * recompile against libdetect 0.9.72-2.0progeny12
++
++ -- Branden Robinson <branden@progeny.com>  Mon, 19 Feb 2001 11:53:22 -0500
++
++discover (0.9.13) unstable; urgency=low
++
++  * CD handling changed.  Numbering now starts with 1, with 1 being the
++    "default" CD drive.
++
++ -- Jeff Licquia <jlicquia@progeny.com>  Thu, 15 Feb 2001 15:30:28 -0500
++
++discover (0.9.12) unstable; urgency=low
++
++  * Now create directories /cdromX for each /dev/cdromX that we find in
++    the init script.
++
++ -- Jeff Licquia <jlicquia@progeny.com>  Mon, 12 Feb 2001 17:04:06 -0500
++
++discover (0.9.11) unstable; urgency=low
++
++  * Oops.  Fixed a typo in the init script.
++  * Enabled ISA scans in the default configuration.
++
++ -- Jeff Licquia <jlicquia@progeny.com>  Mon,  5 Feb 2001 12:58:43 -0500
++
++discover (0.9.10) unstable; urgency=low
++
++  * Hard-coded a special case: add ide-scsi as a SCSI driver if IDE CD-ROM
++    drives are present.  This way, all CD-ROMS will be treated as SCSI,
++    and burners will work out of the box.
++  * Fixed up the init script so /dev/cdromX (X is a number) files are
++    created when files are detected, one for each detected CD drive.
++  * Finished up man pages, and set them to be installed.
++  * Modules that crash the system are now written to
++    /etc/discover-autoskip.conf, instead of /etc/discover.conf.  This is
++    more in line with Debian policy, and ensures that autoskip information
++    isn't lost when the conffile /etc/discover.conf is updates upstream.
++  * Added libisapnp-dev to Build-Depends.
++
++ -- Jeff Licquia <jlicquia@progeny.com>  Sun,  4 Feb 2001 21:53:37 -0500
++
++discover (0.9.9) unstable; urgency=low
++
++  * Don't print "ignore" and "unknown" modules names.
++  * Fix use of the 'function' keyword in discover.init. This is a bashism;
++    functions are declared with 'funcname () body' in POSIX sh.
++
++ -- Ian Murdock <imurdock@progeny.com>  Fri, 12 Jan 2001 15:27:06 -0500
++
++discover (0.9.8) unstable; urgency=low
++
++  * discover.init: Only free the ramdisk if the umount succeeds.
++
++ -- Ian Murdock <imurdock@progeny.com>  Mon, 11 Dec 2000 19:56:49 -0500
++
++discover (0.9.7) unstable; urgency=low
++
++  * Major pre-1.0 interface changes: --enable and --disable now only take
++    bus arguments (pci, isa, pcmcia, usb, ide, scsi, parallel, and
++    serial); --vendor replaces --print-vendor and takes no arguments;
++    --model replaces --print-model and takes no arguments; --module
++    replaces --print-module and takes no arguments; --device replaces
++    --print-device and takes no arguments; --xdriver replaces
++    --print-xdriver and takes no arguments; --xserver replaces
++    --print-xserver and takes no arguments; a new option, --format,
++    takes a printf-style string and formats the output accordingly; and
++    arguments separate from any of the options specify which device
++    types to operate on (bridge, cdrom, ethernet, ide, scsi, sound, usb,
++    and video).
++  * Other reworkings and cleanup in preparation for 1.0.
++
++ -- Ian Murdock <imurdock@progeny.com>  Sun, 10 Dec 2000 18:57:05 -0500
++
++discover (0.9.6) unstable; urgency=low
++
++  * Check that update-boot-loader exists before trying to execute it.
++
++ -- Ian Murdock <imurdock@progeny.com>  Mon, 27 Nov 2000 15:10:54 -0500
++
++discover (0.9.5) unstable; urgency=low
++
++  * Renamed --print-server option to --print-xserver.
++  * Renamed --print-driver option to --print-xdriver.
++  * Separate each item of output by a newline instead of a space.
++  * Call update-boot-loader in postinst script.
++
++ -- Ian Murdock <imurdock@progeny.com>  Tue, 21 Nov 2000 14:48:56 -0500
++
++discover (0.9.4) unstable; urgency=low
++
++  * Reenabled pcmcia and bridge scans, now that pcmcia-cs no longer tries
++    to load modules manually when discover is present.
++  * Added /etc/discover.conf, which specifies hardware detection settings.
++  * /etc/init.d/discover: Keep track of which module is being loaded (by
++    writing a file to /var/state/discover/crash), and add an appropriate
++    "skip" line to discover.conf if the system crashed trying to load it.
++  * Moved the discover binary to /lib/discover/discover and added a shell
++    script wrapper script /sbin/discover which parses /etc/discover.conf.
++  * Moved all configuration information into /etc/discover.conf.
++
++ -- Ian Murdock <imurdock@progeny.com>  Tue,  7 Nov 2000 14:26:34 -0500
++
++discover (0.9.3) unstable; urgency=low
++
++  * Added better description to control file.
++  * Fixed typo in linuxrc.
++
++ -- Ian Murdock <imurdock@progeny.com>  Mon, 30 Oct 2000 22:45:26 -0500
++
++discover (0.9.2) unstable; urgency=low
++
++  * As of 0.9.2, discover only *reports* information about the
++    hardware--it no longer does anything with it.  The *caller* is
++    now expected to perform any actions given the information reported,
++    such as loading modules.  This allows us to do most of the work
++    in scripts, creating fewer opportunities for bugs to crop up,
++    and allowing for greater flexibility in how discover gets used.
++  * Added `--print-vendor', `--print-model', `--print-device',
++    `--print-driver', `--print-module', and `--print-server'.
++  * Removed `--load' and `--no-load' options, since discover no longer
++    loads modules.
++  * Disable ISA probes by default for now.
++  * Added echo to busybox Config.h.
++  * busybox's sh doesn't seem to have any looping constructs, so for now,
++    we copy in ash to serve as /bin/sh.
++  * /etc/init.d/discover now loads the modules for detected hardware and
++    creates /dev/cdrom.
++  * /etc/init.d/discover now checks to make sure the ramdisk is mounted
++    before trying to umount it.
++
++ -- Ian Murdock <imurdock@progeny.com>  Mon, 30 Oct 2000 14:36:07 -0500
++
++discover (0.9.1) unstable; urgency=low
++
++  * Restructured to work like libdetect's report program: We now only
++    load the specific types of modules the user is interested in rather
++    than trying to load every module found during the PCI scan.  This
++    should fix the problems where discover was trying to load modules
++    twice.
++  * Scan each bus individually rather than calling bus_scan().  This
++    allows us to selectively disable any of the bus scans.
++  * Added a bevy of options.  The most useful are `--disable', `--enable',
++    `--disable-all', and `--enable-all'.  These allow potentially
++    dangerous scans (e.g., ISA) to be disabled on systems that don't need
++    them.  They also allow us to minimize the number of scans done in
++    the first stage (e.g., discover --disable-all --enable=pci,ide,scsi),
++    which speeds up the boot process significantly.
++  * update-initrd: Use /usr/share/detect/*.lst to pull in the modules that
++    could potentially be loaded during the first stage rather than pulling
++    in arbitrary modules by hand.
++  * Added /sbin/modprobe and a minimal /etc/modules.conf to the ramdisk,
++    so that kmod doesn't fail on SCSI-only systems trying to load block-
++    major-8.  This needs to be generalized, but this quick fix at least
++    allows us to work on SCSI systems now.
++  * Disabled parallel port scan.  This caused a kernel panic on my Toshiba
++    Satellite 2180CDT.  Disabled serial port scan as well, since I'm a bit
++    dubious about doing that too.
++  * Disabled pcmcia and bridge scans.  These cause the PCMCIA modules to
++    be loaded.  That's not necessarily bad, but before we can do that,
++    we'll need to coordinate with the PCMCIA packages to make sure we're
++    not stepping on any toes.
++
++ -- Ian Murdock <imurdock@progeny.com>  Sun, 29 Oct 2000 01:00:49 -0500
++
++discover (0.9-16) unstable; urgency=low
++
++  * Now checks for existance of a module properly before doing an insmod
++    (or printing that the hardware was detected..)
++  * cosmetic fixes
++
++ -- Joseph Carter <knghtbrd@progeny.com>  Thu, 26 Oct 2000 14:59:48 -0500
++
++discover (0.9-15) unstable; urgency=low
++
++  * update-initrd and mkinstalldisks now depmod the ramdisk kernel
++  * some of the debug output from mkinstalldisks has been removed
++  * modules should no longer be loaded again if they're already loaded
++  * modules not found in stage 1 will not cause an error message to be
++    printed.  For our purposes, missing modules in stage 1 is correct
++    behavior and should fail quietly.
++  * fixed some bugs lintian pointed out
++  * Only one error message in stage 1 remains - the kernel's spitting it
++    out.  The problem is likely in the /linuxrc patch
++
++ -- Joseph Carter <knghtbrd@progeny.com>  Wed, 25 Oct 2000 13:08:49 -0500
++
++discover (0.9-14) unstable; urgency=low
++
++  * Disabled PCMCIA probing per Ian's request
++  * Disabled USB probing because it doesn't work
++  * Don't create /var/state/discover/rodents - there's nothing in it, ever
++
++ -- Joseph Carter <knghtbrd@progeny.com>  Tue, 24 Oct 2000 20:54:09 -0500
++
++discover (0.9-13) unstable; urgency=low
++
++  * Disabled /proc/bus/usb since our kernel doesn't have usbcore compiled
++    in.  libdetect doesn't support probing it at the moment anyway.
++  * Now outputs before ISA probes so you don't think your system just froze.
++  * Package now includes /etc/discover directory
++  * Fixed init script override bug - crash recovery in discover's second
++    stage now WORKS.
++  * Wrote a package description
++
++ -- Joseph Carter <knghtbrd@progeny.com>  Tue, 24 Oct 2000 19:15:35 -0500
++
++discover (0.9-12) unstable; urgency=low
++
++  * Don't fail to install if postinst can't run update-initrd, just tell
++    the user calmly that they have to fix it and run update-initrd on
++    their own.  Note, update-initrd should NOT be modified to support non-
++    kernel-package kernels because of the necessary patch to make booting
++    /linuxrc actually work as documented.
++
++ -- Joseph Carter <knghtbrd@progeny.com>  Tue, 24 Oct 2000 15:20:54 -0500
++
++discover (0.9-11) unstable; urgency=low
++
++  * dontload file now works properly
++  * tried moving setvbuf to get unbuffered output - doesn't work
++
++ -- Joseph Carter <knghtbrd@progeny.com>  Mon, 23 Oct 2000 03:14:46 -0500
++
++discover (0.9-10) unstable; urgency=low
++
++  * update-initrd no longer spits out debug output (ie, no more mke2fs is
++    shown in package postinst to scare people...)
++  * Neither does mkinstalldisks
++  * Fixed dependencies
++
++ -- Joseph Carter <knghtbrd@progeny.com>  Thu, 19 Oct 2000 17:49:32 -0500
++
++discover (0.9-9) unstable; urgency=low
++
++  * A little more work on the install disk script, fixed annoying bug
++
++ -- Joseph Carter <knghtbrd@progeny.com>  Wed, 18 Oct 2000 11:01:22 -0500
++
++discover (0.9-8) unstable; urgency=low
++
++  * insmod should no longer ever print out anything, ever, period.
++
++ -- Joseph Carter <knghtbrd@progeny.com>  Mon, 16 Oct 2000 15:36:36 -0500
++
++discover (0.9-7) unstable; urgency=low
++
++  * Changed the style of the output for discover, fflush and setvbuf didn't
++    have the desired effect, will look at it more later
++  * new script: mkinstalldisks - makes a two-floppy ramdisk image.  The
++    first is compressed and mounts the way you'd expect when you set it
++    up with grub.  The second is mounted only if your cdrom can't be found
++    (it's not compressed, just dd it to a floppy..)  Note, I didn't have a
++    chance to test this on a SCSI system, but the script is pretty simple.
++    The second floppy is FULL, if there are any ancient and rare SCSI
++    modules that can be removed, we should remove them.  I'd appreciate it
++    if someone more knowledgable than I about SCSI cards could build a list
++    of these.
++
++ -- Joseph Carter <knghtbrd@progeny.com>  Wed, 11 Oct 2000 19:35:00 -0500
++
++discover (0.9-6) unstable; urgency=low
++
++  * symlink busybox to umount
++  * remove block modules from ramdisk to try and save space
++
++ -- Joseph Carter <knghtbrd@progeny.com>  Wed, 11 Oct 2000 14:12:28 -0500
++
++discover (0.9-5) unstable; urgency=low
++
++  * New cmdline option, nodevcdrom - disables removal and recreation of
++    /dev/cdrom symlink
++  * New cmdline option, dryrun - just detects and prints stuff to screen
++  * Mount /proc/bus/usb in ramdisk
++  * Added a very stripped down busybox to replace GNU utils on the ramdisk,
++    can expand this if necessary to include more than it currently does.
++  * Add modules.dep to ramdisk
++  * Use /dev/ram0, not /dev/ram
++  * Made umounting of /dev/ram0 quiet
++  * Removed some already tested debugging cruft for smaller code size
++  * Make a ramdisk for the current kernel - NOTE this COULD break if you do
++    something you shouldn't.
++  * Implemented a modprobe replacement in discover
++
++ -- Joseph Carter <knghtbrd@progeny.com>  Thu,  5 Oct 2000 16:36:58 -0500
++
++discover (0.9-4) unstable; urgency=low
++
++  * Somehow update-initrd didn't get in here - it's in /sbin now
++
++ -- Joseph Carter <knghtbrd@progeny.com>  Wed,  4 Oct 2000 13:15:30 -0500
++
++discover (0.9-3) unstable; urgency=low
++
++  * Make discover not run in postinst
++
++ -- Joseph Carter <knghtbrd@progeny.com>  Wed,  4 Oct 2000 12:55:27 -0500
++
++discover (0.9-2) unstable; urgency=low
++
++  * Debhelper v2
++  * Moved stage two's init script from S46 to S36 (typo on my part)
++
++ -- Joseph Carter <knghtbrd@progeny.com>  Wed,  4 Oct 2000 11:28:52 -0500
++
++discover (0.9-1) unstable; urgency=low
++
++  * Initial Release.
++
++ -- Joseph Carter <knghtbrd@progenylinux.com>  Mon,  2 Oct 2000 10:48:43 -0500
++
++  vim:ai:et:sts=2:sw=2:tw=78:
++  $Progeny: changelog,v 1.21.4.30 2002/06/11 18:45:33 branden Exp $
+--- discover-1.5.orig/debian/control
++++ discover-1.5/debian/control
+@@ -0,0 +1,72 @@
++Source: discover
++Section: admin
++Priority: optional
++Maintainer: Progeny Debian Packaging Team <debian-packages@progeny.com>
++Uploaders: Branden Robinson <branden@progeny.com>, Doug Porter <dsp@progeny.com>, Eric Gillespie <epg@progeny.com>, John R.  Daily <jdaily@progeny.com>, Jeff Licquia <jlicquia@progeny.com>, Michael Schultheiss <schultmc@progeny.com>
++Build-Depends: debhelper (>> 3.0), gettext
++Standards-Version: 3.5.6
++
++Package: discover
++Architecture: any
++Depends: ${shlibs:Depends}, debconf (>> 0.5), ash | dash
++Description: hardware identification system
++ Discover is a hardware identification system based on the libdiscover1
++ library.  Discover provides a flexible interface that programs can use to
++ report a wide range of information about the hardware that is installed on a
++ Linux system.  In addition to reporting information, discover includes
++ support for doing hardware detection at boot time.  Detection occurs in two
++ stages: The first stage, which runs from an initial ramdisk (initrd), loads
++ just the drivers needed to mount the root file system, and the second stage
++ loads the rest (ethernet cards, sound cards, etc.).
++
++Package: libdiscover1
++Section: libs
++Architecture: any
++Depends: ${shlibs:Depends}, discover-data
++Description: hardware identification library
++ libdiscover1 is a library enabling identification of various PCI, PCMCIA, and
++ USB devices.
++
++Package: libdiscover-dev
++Section: devel
++Architecture: any
++Depends: libdiscover1 (= ${Source-Version}), libc6-dev
++Replaces: libdiscover0, libdiscover0-dev
++Description:  hardware identification library development files
++ libdiscover1 is a library enabling identification of various PCI, PCMCIA, and
++ USB devices.
++ .
++ This package contains the header files and static libraries needed for
++ development.
++
++Package: libdiscover1-pic
++Section: libs
++Priority: extra
++Architecture: any
++Depends: ${shlibs:Depends}
++Description: hardware identification library - static PIC version
++ libdiscover1 is a library enabling identification of various PCI, PCMCIA, and
++ USB devices.
++ .
++ This package contains a static version of the library containing
++ position-independent code, used to develop subsets of the discover shared
++ library for use on custom installation disks and in embedded systems.  Unless
++ you're making one of those, you won't need this package.
++
++Package: discover-udeb
++Section: debian-installer
++Priority: standard
++Architecture: any
++Depends: ${shlibs:Depends}
++Description: hardware identification library (udeb)
++ Discover is a hardware identification system based on the libdiscover1
++ library.  Discover provides a flexible interface that programs can use to
++ report a wide range of information about the hardware that is installed on a
++ Linux system.  In addition to reporting information, discover includes
++ support for doing hardware detection at boot time.  Detection occurs in two
++ stages: The first stage, which runs from an initial ramdisk (initrd), loads
++ just the drivers needed to mount the root file system, and the second stage
++ loads the rest (ethernet cards, sound cards, etc.).
++ .
++ This contains the udeb, which is used for the debian-installer
++ installation system.  It won't work well on a normal debian system.
+--- discover-1.5.orig/debian/copyright
++++ discover-1.5/debian/copyright
+@@ -0,0 +1,25 @@
++This package is maintained by Progeny Linux Systems, Inc.  It was
++originally written by MandrakeSoft, Inc. and others.
++
++It was downloaded from <URL:http://archive.progeny.com/progeny/discover/>
++
++Copyright (C) 2001 Progeny Linux Systems, Inc.
++  Authors: MandrakeSoft; Remy Card; David A. Hinds; GeaArt, Inc.;
++           Free Software Foundation, Inc.; Jesús Bravo Álvarez;
++           Branden Robinson; Jeff Licquia; Eric Gillespie, Jr.;
++           John R. Daily
++
++discover is free software; you can redistribute it and/or modify it under the
++terms of the GNU General Public License as published by the Free Software
++Foundation; either version 2, or (at your option) any later version.
++
++discover is distributed in the hope that it will be useful, but WITHOUT ANY
++WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
++PARTICULAR PURPOSE.  See the GNU General Public License for more details.
++
++You should have received a copy of the GNU General Public License along with
++discover; see the file COPYING.  If not, write to the Free Software Foundation,
++59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
++
++On Debian systems, a copy of the GNU General Public License is available in
++/usr/share/common-licenses/GPL as part of the base-files package.
+--- discover-1.5.orig/debian/discover.config
++++ discover-1.5/debian/discover.config
+@@ -0,0 +1,47 @@
++#!/bin/sh
++
++# $Progeny: discover.config,v 1.1.2.4 2002/04/29 17:07:00 branden Exp $
++
++set -e
++
++# source debconf library
++. /usr/share/debconf/confmodule
++
++db_input medium discover/manage_cdrom_devices || true
++db_go
++
++db_get discover/manage_cdrom_devices
++if [ "$RET" = "false" ]; then
++  exit 0
++fi
++
++# this question requires input validation
++db_get discover/cdrom_base_mountpoint
++SAFE="$RET"
++set +e
++while :; do
++  db_input low discover/cdrom_base_mountpoint
++  # is the question going to be asked?
++  if [ $? = 30 ]; then
++    break # no; bail out of validation loop
++  fi
++  db_go
++  db_get discover/cdrom_base_mountpoint
++  if ! expr "$RET" : "/.*" > /dev/null 2>&1; then
++    # bad input; restore the known good value in case we are interrupted before
++    # the user provides a valid one
++    db_set discover/cdrom_base_mountpoint "$SAFE"
++    db_fset discover/cdrom_base_mountpoint seen false
++    # now display the error
++    db_fset discover/cdrom_base_mountpoint_error seen false
++    db_input high discover/cdrom_base_mountpoint_error
++    db_go
++  else
++    break # valid input
++  fi
++done
++set -e
++
++exit 0
++
++# vim:ai:et:sts=2:sw=2:tw=0:
+--- discover-1.5.orig/debian/discover.dirs
++++ discover-1.5/debian/discover.dirs
+@@ -0,0 +1,3 @@
++usr/share/discover
++usr/share/lintian/overrides
++var/lib/discover
+--- discover-1.5.orig/debian/discover.files
++++ discover-1.5/debian/discover.files
+@@ -0,0 +1,9 @@
++etc/discover.conf
++etc/init.d/discover
++sbin/discover
++sbin/update-initrd
++usr/share/discover/linuxrc
++usr/share/lintian/overrides/discover
++usr/share/man/man5/discover.conf.5
++usr/share/man/man8/discover.8
++usr/share/man/man8/update-initrd.8
+--- discover-1.5.orig/debian/discover.overrides
++++ discover-1.5/debian/discover.overrides
+@@ -0,0 +1,3 @@
++# this script shouldn't be executable because it is only run inside an
++# initrd environment
++discover: script-not-executable ./usr/share/discover/linuxrc
+--- discover-1.5.orig/debian/discover-udeb.dirs
++++ discover-1.5/debian/discover-udeb.dirs
+@@ -0,0 +1,2 @@
++lib
++sbin
+\ No newline at end of file
+--- discover-1.5.orig/debian/discover.postinst
++++ discover-1.5/debian/discover.postinst
+@@ -0,0 +1,100 @@
++#!/bin/sh
++
++# $Progeny: discover.postinst,v 1.1.2.4 2002/06/11 18:43:11 branden Exp $
++
++set -e
++
++SCRIPT=discover.postinst
++
++CONFIG_FILE=/etc/default/discover
++
++message () {
++  # pretty-print messages of arbitrary length
++  echo "$*" | fold -s -w ${COLUMNS:-80} >&2;
++}
++
++debug_echo () {
++  # echo debugging messages
++  if [ -n "$DEBCONF_DEBUG" ]; then
++    message "$*"
++  fi;
++}
++
++find_discover_markers () {
++  if [ -z "$1" ]; then
++    echo "$SCRIPT: internal error: find_discover_markers() called without argument" >&2
++    exit 1
++  fi
++  if grep -q "^### BEGIN DEBCONF SECTION FOR discover" $1 && \
++     grep -q "^### END DEBCONF SECTION FOR discover" $1; then
++    return 0
++  else
++    return 1
++  fi;
++}
++
++# source debconf library
++. /usr/share/debconf/confmodule
++
++#DEBHELPER#
++
++# create/update configuration file using debconf db values
++
++WORKTMP=$CONFIG_FILE.discover-tmp
++DEBCONFTMP=$CONFIG_FILE.debconf-tmp
++
++rm -f $WORKTMP $DEBCONFTMP
++
++cat > $DEBCONFTMP << EOF
++### BEGIN DEBCONF SECTION FOR discover
++# Do not edit within this region if you want your changes to be preserved by
++# debconf.  Instead, make changes before the "### BEGIN DEBCONF SECTION FOR
++# discover" line, and/or after the "### END DEBCONF SECTION FOR discover" line.
++EOF
++
++db_get discover/manage_cdrom_devices
++echo "MANAGE_CDROM_DEVICES=$RET" >> $DEBCONFTMP
++
++db_get discover/cdrom_base_mountpoint
++echo "CDROM_BASE_MOUNTPOINT=$RET" >> $DEBCONFTMP
++
++echo "### END DEBCONF SECTION FOR discover" >> $DEBCONFTMP
++
++# does the config file already exist?
++if [ -e $CONFIG_FILE ]; then
++  # does the file have discover's debconf markers in it?
++  if find_discover_markers $CONFIG_FILE; then
++    debug_echo "found discover markers in $CONFIG_FILE"
++    sed -n '/^### BEGIN DEBCONF SECTION FOR discover/q;p' < $CONFIG_FILE > $WORKTMP
++    cat $DEBCONFTMP >> $WORKTMP
++    sed '1,/^### END DEBCONF SECTION FOR discover/d' < $CONFIG_FILE >> $WORKTMP
++  else
++    debug_echo "did not find discover markers in $CONFIG_FILE"
++    # append our settings to the end of the existing file
++    # (the environment file may have debconf sections from several packages)
++    cat $CONFIG_FILE $DEBCONFTMP > $WORKTMP
++  fi
++else
++  cp $DEBCONFTMP $WORKTMP
++fi
++
++[ -e $WORKTMP ] && mv $WORKTMP $CONFIG_FILE || true
++
++rm -f $WORKTMP $DEBCONFTMP
++
++if [ "$1" = "configure" ]; then
++  if [ -n "$2" ]; then
++    if dpkg --compare-versions "$2" le "1.5"; then
++      # get rid of symlinks at wrong, old priority
++      update-rc.d -f discover remove
++    fi
++  fi
++  # register the init script
++  update-rc.d discover start 36 S .
++  # execute the program (it is not a daemon)
++  /etc/init.d/discover start
++fi
++
++exit 0
++
++# vim:ai:et:sts=2:sw=2:tw=0:
+--- discover-1.5.orig/debian/discover.postrm
++++ discover-1.5/debian/discover.postrm
+@@ -0,0 +1,18 @@
++#!/bin/sh
++
++# $Progeny: discover.postrm,v 1.1.2.4 2002/06/03 17:24:35 branden Exp $
++
++#DEBHELPER#
++
++CONFFILE=/etc/discover.conf
++SKIPFILE=/etc/discover-autoskip.conf
++INITFILE=/etc/default/discover
++
++if [ "$1" = "purge" ]; then
++  update-rc.d discover remove
++  rm -f $CONFFILE $SKIPFILE $INITFILE
++fi
++
++exit 0
++
++# vim:ai:et:sts=2:sw=2:tw=0:
+--- discover-1.5.orig/debian/discover.templates
++++ discover-1.5/debian/discover.templates
+@@ -0,0 +1,36 @@
++Template: discover/manage_cdrom_devices
++Type: boolean
++Default: true
++Description: Manage CD-ROM device names and mount points with discover?
++ The "discover" program can automatically manage the /dev/cdrom* symbolic
++ links and device mount points, if you desire.  The available CD-ROM (and
++ compatible) devices are scanned at boot-time and these links and mount points
++ can be automatically updated.
++ .
++ If you enable this option, discover will link /dev/cdrom to /dev/cdrom0
++ for convenience.
++ .
++ If you don't want discover to manage the device symbolic links and mount
++ points for you, decline this option.
++
++Template: discover/cdrom_base_mountpoint
++Type: string
++Default: /
++Description: Enter the directory where CD-ROM device mount points should reside.
++ Mounted filesystems accessible via CD-ROM (or compatible) devices can be
++ placed just about anywhere in the filesystem hierarchy, but it is common to
++ place them off the root directory, so that they are available as, e.g.,
++ "/cdrom0", "/cdrom1", and so forth.
++ .
++ Note that discover will link the "cdrom" mount point to the "cdrom0" mount
++ point for convenience.
++ .
++ Unless you have a need or preference for placing the CD-ROM mount points
++ elsewhere, the root directory ("/") is a good choice.
++
++Template: discover/cdrom_base_mountpoint_error
++Type: note
++Description: Please enter a valid filesystem path.
++ The base filesystem mount point for CD-ROM drives must be an absolute path
++ (begin with "/") and must not be null.  If the path does not exist, it will
++ be created when needed.
+--- discover-1.5.orig/debian/rules
++++ discover-1.5/debian/rules
+@@ -0,0 +1,120 @@
++#!/usr/bin/make -f
++
++export DH_COMPAT=3
++
++PACKAGE=$(shell dh_listpackages | grep -- -udeb$$)
++VERSION=$(shell dpkg-parsechangelog | grep ^Version: | cut -d ' ' -f 2)
++ARCH=$(shell dpkg --print-architecture)
++UFILENAME=$(PACKAGE)_$(VERSION)_$(ARCH).udeb
++
++configure: configure-stamp
++configure-stamp:
++	dh_testdir
++
++	#sh ./autogen.sh
++	./configure --prefix=/usr \
++		--sbindir=/sbin \
++		--sysconfdir=/etc \
++		--mandir=\$${prefix}/share/man \
++		--infodir=\$${prefix}/share/info
++	#	--with-kernel-source=/usr/src/kernel-headers-2.2.19
++
++	touch configure-stamp
++
++build: configure-stamp build-stamp
++build-stamp:
++	dh_testdir
++
++	$(MAKE)
++
++	# This builds the pic library
++	ar cqv lib/libdiscover_pic.a lib/*.lo
++
++	touch build-stamp
++
++clean:
++	dh_testdir
++	dh_testroot
++	rm -f build-stamp configure-stamp
++
++	-$(MAKE) distclean
++	rm -f po/*.gmo lib/libdiscover_pic.a
++
++	dh_clean
++
++install: build
++	dh_testdir
++	dh_testroot
++	dh_clean -k
++	dh_installdirs -v
++
++	$(MAKE) install DESTDIR=$(CURDIR)/debian/tmp
++
++# FIXME: Not quite sure what to do about this.  Clearly something
++# better needs to be done in Makefile.am, but I'm not sure what.
++# In the meantime, we'll just fix it here and let other packages
++# and those installing from source worry about it themselves.
++	install -m 755 $(CURDIR)/debian/tmp/etc/init.d/discover.init \
++		$(CURDIR)/debian/tmp/etc/init.d/discover
++	install -m 755 -d $(CURDIR)/debian/tmp/usr/share/discover
++	install -m 644 $(CURDIR)/debian/tmp/usr/share/linuxrc \
++		$(CURDIR)/debian/tmp/usr/share/discover
++
++# lintian overrides file; no way this should be in the upstream install rule
++	install -m 755 -d $(CURDIR)/debian/tmp/usr/share/lintian/overrides
++	install -m 644 $(CURDIR)/debian/discover.overrides \
++		$(CURDIR)/debian/tmp/usr/share/lintian/overrides/discover
++
++	mkdir -p debian/libdiscover1-pic/usr/lib
++	cp lib/libdiscover_pic.a debian/libdiscover1-pic/usr/lib/
++
++# discover-udeb
++	cp -a lib/.libs/*so* $(CURDIR)/debian/discover-udeb/lib
++	rm -f $(CURDIR)/debian/discover-udeb/usr/lib/*so
++	cp -a $(CURDIR)/debian/tmp/sbin/discover \
++		$(CURDIR)/debian/discover-udeb/sbin
++#	$(MAKE) -C discover install DESTDIR=$(CURDIR)/debian/discover-udeb
++
++# Build architecture-independent files here.
++binary-indep: build install
++# We have nothing to do by default.
++
++# Build architecture-dependent files here.
++binary-arch: build install discover-udeb
++	dh_testdir
++	dh_testroot
++	dh_movefiles
++
++	dh_installdocs
++	dh_installchangelogs ChangeLog
++	#XXX: dh_installinit appears to be busted :-P (see Debian #140881)
++	#dh_installinit -v --no-restart-on-upgrade --update-rcd-params="start 36 S ."
++	dh_strip -Ndiscover-udeb
++	dh_compress  -Ndiscover-udeb
++	dh_fixperms -Ndiscover-udeb
++#	dh_makeshlibs
++	dh_installdebconf -Ndiscover-udeb
++	dh_installdeb -Ndiscover-udeb
++	dh_shlibdeps -ldebian/libdiscover1/usr/lib -Ndiscover-udeb
++	dh_gencontrol -Ndiscover-udeb
++	dh_md5sums -Ndiscover-udeb
++	dh_builddeb -Ndiscover-udeb
++
++discover-udeb: build install
++	dh_testdir
++	dh_testroot
++
++	dh_strip -pdiscover-udeb
++	dh_compress -pdiscover-udeb
++	dh_fixperms -pdiscover-udeb
++#	dh_makeshlibs
++	dh_installdeb -pdiscover-udeb  --filename=discover-udeb.udeb
++	dh_shlibdeps -ldebian/libdiscover1/usr/lib -pdiscover-udeb
++	# Don't write your stupid guesses to debian/files.
++	dh_gencontrol -pdiscover-udeb -- -fdebian/files~
++	# Register file manually.
++	dpkg-distaddfile $(UFILENAME) debian-installer standard
++	dh_builddeb -pdiscover-udeb --filename=$(UFILENAME)
++
++binary: binary-indep binary-arch
++.PHONY: build clean binary-indep binary-arch binary install configure
+--- discover-1.5.orig/debian/discover.templates.pt_BR
++++ discover-1.5/debian/discover.templates.pt_BR
+@@ -0,0 +1,64 @@
++Template: discover/manage_cdrom_devices
++Type: boolean
++Default: true
++Description: Manage CD-ROM device names and mount points with discover?
++ The "discover" program can automatically manage the /dev/cdrom* symbolic
++ links and device mount points, if you desire.  The available CD-ROM (and
++ compatible) devices are scanned at boot-time and these links and mount points
++ can be automatically updated.
++ .
++ If you enable this option, discover will link /dev/cdrom to /dev/cdrom0
++ for convenience.
++ .
++ If you don't want discover to manage the device symbolic links and mount
++ points for you, decline this option.
++Description-pt_BR: Gerenciar nomes de dispositivos de CD-ROM e pontos de montagem com discover ?
++ O programa "discover" pode gerenciar automaticamente as ligações
++ simbólicas /dev/cdrom* e pontos de montagem de dispositivos, caso você
++ deseje. Os dispositivos de CD-ROM disponíveis (e compatíveis) são
++ procurados em tempo de inicialização e ligações e pontos e montagem podem
++ ser automaticamente atualizados.
++ .
++ Caso você habilite essa opção, o discover irá apontar /dec/cdrom para
++ /dev/cdrom0 por conveniência.
++ .
++ Se você não quer que o discover gerencie ligações simbólicas de
++ dispositivos e pontos de montagem para você, não aceite esta opção.
++
++Template: discover/cdrom_base_mountpoint
++Type: string
++Default: /
++Description: Enter the directory where CD-ROM device mount points should reside.
++ Mounted filesystems accessible via CD-ROM (or compatible) devices can be
++ placed just about anywhere in the filesystem hierarchy, but it is common to
++ place them off the root directory, so that they are available as, e.g.,
++ "/cdrom0", "/cdrom1", and so forth.
++ .
++ Note that discover will link the "cdrom" mount point to the "cdrom0" mount
++ point for convenience.
++ .
++ Unless you have a need or preference for placing the CD-ROM mount points
++ elsewhere, the root directory ("/") is a good choice.
++Description-pt_BR: Informe o diretório onde os pontos de montagem do dispositivo de CD-ROM devem ficar.
++ Sistemas de arquivos montados acessíveis através de dispositivos de
++ CD-ROM (ou dispositivos compatíveis) podem ser colocados em qualquer
++ lugar na hierarquia do sistema de arquivos, mas é comum colocá-los no
++ diretório raíz, sendo assim eles ficam disponíveis como, por exemplo,
++ "/cdrom0", "/cdrom1" e assim consecutivamente.
++ .
++ Note que o discover irá apontar o ponto de montagem "cdrom" para o ponto
++ de montagem "cdrom0" por conveniência.
++ .
++ A menos que você prefira colocar os pontos de montagens de CD-ROM em
++ outros locais, o diretório raíz ("/") é uma boa escolha.
++
++Template: discover/cdrom_base_mountpoint_error
++Type: note
++Description: Please enter a valid filesystem path.
++ The base filesystem mount point for CD-ROM drives must be an absolute path
++ (begin with "/") and must not be null.  If the path does not exist, it will
++ be created when needed.
++Description-pt_BR: Por favor informe um caminho caminho válido no sistema de arquivos
++ O ponto de montagem básico no sistema de arquivos para drives de CD-ROM
++ devem ser um caminho absoluto (começando com "/") e não devem ser nulos.
++ Caso o caminho não existe, o mesmo será criado se quando necessário.
+--- discover-1.5.orig/debian/docs
++++ discover-1.5/debian/docs
+@@ -0,0 +1,8 @@
++AUTHORS
++ChangeLog
++ChangeLog.mandrake
++NEWS
++TODO
++docs/ISA-Structure
++docs/PCI-Structure
++docs/Programming
+--- discover-1.5.orig/debian/libdiscover-dev.files
++++ discover-1.5/debian/libdiscover-dev.files
+@@ -0,0 +1,4 @@
++usr/include/*
++usr/lib/lib*.a
++usr/lib/lib*.la
++usr/lib/lib*.so
+--- discover-1.5.orig/debian/libdiscover1.files
++++ discover-1.5/debian/libdiscover1.files
+@@ -0,0 +1,36 @@
++usr/lib/lib*.so.*
++usr/share/locale/af/LC_MESSAGES/discover.mo
++usr/share/locale/ar/LC_MESSAGES/discover.mo
++usr/share/locale/be/LC_MESSAGES/discover.mo
++usr/share/locale/bg/LC_MESSAGES/discover.mo
++usr/share/locale/ca/LC_MESSAGES/discover.mo
++usr/share/locale/cs/LC_MESSAGES/discover.mo
++usr/share/locale/da/LC_MESSAGES/discover.mo
++usr/share/locale/de/LC_MESSAGES/discover.mo
++usr/share/locale/eo/LC_MESSAGES/discover.mo
++usr/share/locale/es/LC_MESSAGES/discover.mo
++usr/share/locale/et/LC_MESSAGES/discover.mo
++usr/share/locale/fi/LC_MESSAGES/discover.mo
++usr/share/locale/fr/LC_MESSAGES/discover.mo
++usr/share/locale/gl/LC_MESSAGES/discover.mo
++usr/share/locale/hr/LC_MESSAGES/discover.mo
++usr/share/locale/hu/LC_MESSAGES/discover.mo
++usr/share/locale/id/LC_MESSAGES/discover.mo
++usr/share/locale/it/LC_MESSAGES/discover.mo
++usr/share/locale/lt/LC_MESSAGES/discover.mo
++usr/share/locale/nl/LC_MESSAGES/discover.mo
++usr/share/locale/no/LC_MESSAGES/discover.mo
++usr/share/locale/pl/LC_MESSAGES/discover.mo
++usr/share/locale/pt_BR/LC_MESSAGES/discover.mo
++usr/share/locale/ro/LC_MESSAGES/discover.mo
++usr/share/locale/ru/LC_MESSAGES/discover.mo
++usr/share/locale/sk/LC_MESSAGES/discover.mo
++usr/share/locale/sp/LC_MESSAGES/discover.mo
++usr/share/locale/sr/LC_MESSAGES/discover.mo
++usr/share/locale/sv/LC_MESSAGES/discover.mo
++usr/share/locale/tr/LC_MESSAGES/discover.mo
++usr/share/locale/vi/LC_MESSAGES/discover.mo
++usr/share/locale/vi_VN.VISCII/LC_MESSAGES/discover.mo
++usr/share/locale/wa/LC_MESSAGES/discover.mo
++usr/share/locale/zh_CN.GB2312/LC_MESSAGES/discover.mo
++usr/share/locale/zh_TW.Big5/LC_MESSAGES/discover.mo
+--- discover-1.5.orig/debian/libdiscover1.postinst
++++ discover-1.5/debian/libdiscover1.postinst
+@@ -0,0 +1,15 @@
++#!/bin/sh
++
++# $Progeny
++
++set -e
++
++if [ "$1" = "configure" ]; then
++  ldconfig
++fi
++
++#DEBHELPER#
++
++exit 0
++
++# vim:ai:et:sts=2:sw=2:tw=0:
+--- discover-1.5.orig/debian/libdiscover1.postrm
++++ discover-1.5/debian/libdiscover1.postrm
+@@ -0,0 +1,15 @@
++#!/bin/sh
++
++# $Progeny: libdiscover1.postrm,v 1.1.2.2 2002/04/26 20:37:07 branden Exp $
++
++set -e
++
++if [ "$1" = "remove" ]; then
++  ldconfig
++fi
++
++#DEBHELPER#
++
++exit 0
++
++# vim:ai:et:sts=2:sw=2:tw=0:
+--- discover-1.5.orig/debian/libdiscover1.shlibs
++++ discover-1.5/debian/libdiscover1.shlibs
+@@ -0,0 +1 @@
++libdiscover 1 libdiscover1
