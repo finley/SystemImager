@@ -243,7 +243,7 @@ if($ssh_user) {
     }
 
     # Setup the port forwarding
-    my $command="ssh -f -l $ssh_user -L $port:$server:" . $port . " $server sleep 5";
+    my $command="ssh -f -l $ssh_user -L $port:$server:" . $config->rsync_port . " $server sleep 5";
     my $rc = 0xffff & system($command);
     if ($rc != 0) { croak "FATAL: Failed to establish secure port forwarding to $server!"; }  
 
