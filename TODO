@@ -8,11 +8,14 @@
 Short list (in progress)
 ------------------------
 - need to add proper tftp entry in /etc/inetd.conf for tftp-hpa rpm
+
+- make a list of client files for Michael
 - create man pages
 - update FAQ-HOWTO
 
 Other stuff
 -----------
+- make bootable CD-ROM *.iso image available
 - message during network booting (if possible)
 - make the <Backspace> key work ;)
 - multicast install -- Ian McLeod <ian@valinux.com> will have mftp (multicast ftp) 
@@ -28,8 +31,6 @@ getimage
   /etc/systemimager.conf as IMAGESDIRECTORY="/var/spool/systemimager/images"
 - add an --exclude option
 - add "Do you want me open up the imageserver as a syslogd server?"
-- ask if hosts autoinstalled from this image will use static IP or 
-  dhcp _after_ install
 - pass variables, such as $imagename to "addclients"
 - create disk partition sections of $image.master using MB instead of cylinders
   in order to support disks of different sizes. (not feasable at this point.)
