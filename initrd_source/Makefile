@@ -15,8 +15,13 @@ INSTALL_DIR = $(USR)/share/systemimager/$(ARCH)-boot
 PATCH_DIR = ./patches
 SRC_DIR = ./src
 
-EXTRA_BLOCKS = 100       # number of 1KB blocks in ramdisk.
-EXTRA_INODES = 50 # number of inodes available on ramdisk
+LINUX_SRC = ../src/linux
+
+EXTRA_BLOCKS_STAGE1 = 100       # number of 1KB blocks in ramdisk.
+EXTRA_INODES_STAGE1 = 50        # number of inodes available on ramdisk
+
+EXTRA_BLOCKS_STAGE2 = 100       # number of 1KB blocks in ramdisk.
+EXTRA_INODES_STAGE2 = 50        # number of inodes available on ramdisk
 
 ########## BEGIN definitions for binaries built from source ##########
 
@@ -28,26 +33,32 @@ BEEP_URL = http://www.johnath.com/beep/$(BEEP_TARBALL)
 BEEP_PATCH = $(PATCH_DIR)/beep.patch
 
 BUSYBOX_VERSION = 0.60.0
-BUSYBOX_ROOT = $(SRC_DIR)/busybox-$(BUSYBOX_VERSION)
-BUSYBOX_BINARY = $(BUSYBOX_ROOT)/busybox
 BUSYBOX_TARBALL = busybox-$(BUSYBOX_VERSION).tar.gz
 BUSYBOX_URL = ftp://opensource.lineo.com/busybox/$(BUSYBOX_TARBALL)
+BUSYBOX_ROOT = $(SRC_DIR)/busybox-$(BUSYBOX_VERSION)
+BUSYBOX_ROOT_STAGE1 = $(SRC_DIR)/busybox-$(BUSYBOX_VERSION)-stage1
+BUSYBOX_ROOT_STAGE2 = $(SRC_DIR)/busybox-$(BUSYBOX_VERSION)-stage2
+BUSYBOX_BINARY_STAGE1 = $(BUSYBOX_ROOT_STAGE1)/busybox
+BUSYBOX_BINARY_STAGE2 = $(BUSYBOX_ROOT_STAGE2)/busybox
 
 ########## END definitions for binaries built from source ##########
 
-# tools provided by busybox (i.e. hard links to create)
-BUSY_BIN := cat chgrp chmod chown cp df dmesg grep hostname kill ln ls mkdir mknod more mount mv ping ps pwd rm rmdir sed sleep sync touch umount uname ifconfig route
-BUSY_SBIN := halt init insmod loadkmap makedevs mkswap reboot swapoff swapon update
-BUSY_USR_BIN := clear cut expr find free killall reset telnet tr
-BUSY_USR_SBIN := chroot
+###### BEGIN binaries that will be copied over from the local system #####
 
-# these binaries will be copied over from the local system
-LOCAL_BINARIES := /sbin/sfdisk /usr/bin/mawk /sbin/mke2fs /bin/ash /usr/bin/rsync /usr/bin/snarf /sbin/dhclient-2.2.x /usr/bin/host
+LOCAL_BINARIES_STAGE1 := /sbin/dhclient-2.2.x /sbin/mke2fs /bin/ash /usr/bin/mawk /usr/bin/rsync /usr/bin/snarf 
+
+LOCAL_BINARIES_STAGE2 := $(LOCAL_BINARIES_STAGE1) /sbin/devfsd /sbin/discover /sbin/insmod /sbin/mkreiserfs /sbin/mkraid /sbin/modprobe /sbin/raidstart /sbin/raidstop /sbin/rmmod /sbin/sfdisk /usr/bin/host
+
+LOCAL_BINARIES_STAGE2_SSH := $(LOCAL_BINARIES_STAGE2) /usr/bin/ssh /usr/sbin/sshd /usr/bin/scp /usr/bin/ssh-keygen
+
+###### END binaries that will be copied over from the local system #####
+
+all:	initrd.gz stage2rd.gz
 
 initrd.gz:	initrd
 	gzip -9 < initrd > initrd.gz
 
-initrd:	binary-build-stamp $(LOCAL_BINARIES)
+initrd:	binary-build-stamp $(LOCAL_BINARIES_STAGE1)
 	# create a temporary skeleton directory
 	cp -a skel skel.tmp
 
@@ -55,33 +66,106 @@ initrd:	binary-build-stamp $(LOCAL_BINARIES)
 	find skel.tmp -type d -name CVS -depth | xargs rm -rf
 
 	# copy over files from local system
-	cp -a $(BEEP_BINARY) $(LOCAL_BINARIES) skel.tmp/bin
+	cp -a $(LOCAL_BINARIES_STAGE1) skel.tmp/bin
 	cd skel.tmp && ln ./bin/ash ./bin/sh
 	mv skel.tmp/bin/dhclient-2.2.x skel.tmp/bin/dhclient
-
-	# copy over needed libs that aren't automatically
-	# pulled in by mklibs.sh
-	mkdir skel.tmp/lib
-	cp -a /lib/libnss_dns* skel.tmp/lib
 
 	$(SUDO) chown 0 -R skel.tmp/*
 	$(SUDO) chgrp 0 -R skel.tmp/*
 
-	$(SUDO) ./mkboel.sh -busybox $(BUSYBOX_BINARY) -d dev_ls-lR \
-	  -s skel.tmp -eb $(EXTRA_BLOCKS) -ei $(EXTRA_INODES) -fs ext2 \
-	  -o initrd
+	$(SUDO) ./mkboel.sh -busybox $(BUSYBOX_BINARY_STAGE1) -d dev_ls-lR \
+	  -s skel.tmp -eb $(EXTRA_BLOCKS_STAGE1) -ei \
+	  $(EXTRA_INODES_STAGE1) -fs ext2 -o initrd
 
 	$(SUDO) rm -rf skel.tmp
 
-install:	initrd.gz
-	mkdir $(INSTALL_DIR)
-	cp -a initrd.gz $(INSTALL_DIR)
+stage2rd.gz:	stage2rd
+	gzip -9 < stage2rd > stage2rd.gz
+
+stage2rd:	binary-build-stamp $(LOCAL_BINARIES_STAGE2)
+	# create a temporary skeleton directory
+	cp -a skel skel2.tmp
+
+	# clear out CVS cruft
+	find skel2.tmp -type d -name CVS -depth | xargs rm -rf
+
+	# copy over files from local system
+	cp -a $(BEEP_BINARY) $(LOCAL_BINARIES_STAGE2) skel2.tmp/bin
+	cd skel2.tmp && ln ./bin/ash ./bin/sh
+	mv skel2.tmp/bin/dhclient-2.2.x skel2.tmp/bin/dhclient
+
+	# copy over needed libs that aren't automatically
+	# pulled in by mklibs.sh
+	mkdir skel2.tmp/lib
+	cp -a /lib/libnss_dns* skel2.tmp/lib
+
+	# copy over the discover data
+	mkdir -p skel2.tmp/usr/share/discover
+	cp -a /usr/share/discover/* skel2.tmp/usr/share/discover
+
+	# copy over kernel modules
+	$(MAKE) -C .. patched_kernel
+	$(MAKE) -C $(LINUX_SRC) modules modules_install \
+	  INSTALL_MOD_PATH=$(PWD)/initrd_source/skel2.tmp
+
+	$(SUDO) chown 0 -R skel2.tmp/*
+	$(SUDO) chgrp 0 -R skel2.tmp/*
+
+	$(SUDO) ./mkboel.sh -busybox $(BUSYBOX_BINARY_STAGE2) -d dev_ls-lR \
+	  -s skel2.tmp -eb $(EXTRA_BLOCKS_STAGE2) \
+	  -ei $(EXTRA_INODES_STAGE2) -fs ext2 -o stage2rd
+
+	$(SUDO) rm -rf skel2.tmp
+
+stage2rd-ssh.gz:	stage2rd-ssh
+	gzip -9 < stage2rd-ssh > stage2rd-ssh.gz
+
+stage2rd-ssh:	binary-build-stamp $(LOCAL_BINARIES_STAGE2_SSH)
+	# create a temporary skeleton directory
+	cp -a skel skel2-ssh.tmp
+
+	# clear out CVS cruft
+	find skel2-ssh.tmp -type d -name CVS -depth | xargs rm -rf
+
+	# copy over files from local system
+	cp -a $(BEEP_BINARY) $(LOCAL_BINARIES_STAGE2_SSH) skel2-ssh.tmp/bin
+	cd skel2-ssh.tmp && ln ./bin/ash ./bin/sh
+	mv skel2-ssh.tmp/bin/dhclient-2.2.x skel2-ssh.tmp/bin/dhclient
+
+	# copy over needed libs that aren't automatically
+	# pulled in by mklibs.sh
+	mkdir skel2-ssh.tmp/lib
+	cp -a /lib/libnss_dns* skel2-ssh.tmp/lib
+
+	# copy over the discover data
+	mkdir -p skel2-ssh.tmp/usr/share/discover
+	cp -a /usr/share/discover/* skel2-ssh.tmp/usr/share/discover
+
+	# copy over kernel modules
+	$(MAKE) -C .. patched_kernel
+	$(MAKE) -C $(LINUX_SRC) modules modules_install \
+	  INSTALL_MOD_PATH=$(PWD)/initrd_source/skel2-ssh.tmp
+
+	$(SUDO) chown 0 -R skel2-ssh.tmp/*
+	$(SUDO) chgrp 0 -R skel2-ssh.tmp/*
+
+	$(SUDO) ./mkboel.sh -busybox $(BUSYBOX_BINARY_STAGE2) -d dev_ls-lR \
+	  -s skel2-ssh.tmp -eb $(EXTRA_BLOCKS_STAGE2) \
+	  -ei $(EXTRA_INODES_STAGE2) -fs ext2 -o stage2rd-ssh
+
+	$(SUDO) rm -rf skel2-ssh.tmp
+
+install:	initrd.gz stage2rd.gz stage2rd-ssh.gz
+	mkdir -p $(INSTALL_DIR)
+	install -m 644 initrd.gz $(INSTALL_DIR)
+	install -m 644 stage2rd.gz $(INSTALL_DIR)
+	install -m 644 stage2rd-ssh.gz $(INSTALL_DIR)
 
 # binaries that we build from source
 binaries:	binary-build-stamp
 
 binary-build-stamp:
-	$(MAKE) beep busybox
+	$(MAKE) beep $(BUSYBOX_BINARY_STAGE1) $(BUSYBOX_BINARY_STAGE2)
 	touch binary-build-stamp
 
 ########## BEGIN beep rules ##########
@@ -97,23 +181,37 @@ beep:
 
 $(SRC_DIR)/$(BEEP_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
-	cd $(SRC_DIR) && $(WGET) $(BEEP_URL)
+	cd $(SRC_DIR) && ([ -f /usr/src/$(BEEP_TARBALL) ] && \
+	  ln -s /usr/src/$(BEEP_TARBALL) .) || $(WGET) $(BEEP_URL)
 
 ########## END beep rules ##########
 
 ########## BEGIN busybox rules ##########
 
-busybox:
+$(BUSYBOX_BINARY_STAGE1):
 	$(MAKE) $(SRC_DIR)/$(BUSYBOX_TARBALL)
-	[ -d $(BUSYBOX_ROOT) ] || \
-		( cd $(SRC_DIR) && tar xvfz $(BUSYBOX_TARBALL) )
-	cp -a busybox.Config.h $(BUSYBOX_ROOT)/Config.h
-	$(MAKE) -C $(BUSYBOX_ROOT) busybox
-	strip $(BUSYBOX_BINARY)
+	[ -d $(BUSYBOX_ROOT_STAGE1) ] || \
+		( cd $(SRC_DIR) && tar xvfz $(BUSYBOX_TARBALL) && \
+		  mv $(shell basename $(BUSYBOX_ROOT)) \
+		  $(shell basename $(BUSYBOX_ROOT_STAGE1)) )
+	cp -a busybox-1.Config.h $(BUSYBOX_ROOT_STAGE1)/Config.h
+	$(MAKE) -C $(BUSYBOX_ROOT_STAGE1) busybox
+	strip $(BUSYBOX_BINARY_STAGE1)
+
+$(BUSYBOX_BINARY_STAGE2):
+	$(MAKE) $(SRC_DIR)/$(BUSYBOX_TARBALL)
+	[ -d $(BUSYBOX_ROOT_STAGE2) ] || \
+		( cd $(SRC_DIR) && tar xvfz $(BUSYBOX_TARBALL) && \
+		  mv $(shell basename $(BUSYBOX_ROOT)) \
+		  $(shell basename $(BUSYBOX_ROOT_STAGE2)) )
+	cp -a busybox-2.Config.h $(BUSYBOX_ROOT_STAGE2)/Config.h
+	$(MAKE) -C $(BUSYBOX_ROOT_STAGE2) busybox
+	strip $(BUSYBOX_BINARY_STAGE2)
 
 $(SRC_DIR)/$(BUSYBOX_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
-	cd $(SRC_DIR) && $(WGET) $(BUSYBOX_URL)
+	cd $(SRC_DIR) && ([ -f /usr/src/$(BUSYBOX_TARBALL) ] && \
+	  ln -s /usr/src/$(BUSYBOX_TARBALL) .) || $(WGET) $(BUSYBOX_URL)
 
 ########## END busybox rules ##########
 
@@ -185,7 +283,10 @@ clean:
 	-$(MAKE) -C $(BUSYBOX_ROOT) clean
 	-$(MAKE) -C $(BEEP_ROOT) clean
 	-find . -name "*~" -exec rm -f {} \;
-	-$(SUDO) rm -rf initrd initrd.gz skel.tmp
-	-rm -rf binary-build-stamp
+	rm -rf stage2rd.gz stage2rd-ssh.gz stage2rd stage2rd-ssh
+	rm -rf initrd initrd.gz busybox-1 busybox-2
+	$(SUDO) rm -rf skel.tmp skel2.tmp skel2-ssh.tmp
+	rm -rf binary-build-stamp
+
 distclean:	clean
 	-rm -rf $(SRC_DIR)

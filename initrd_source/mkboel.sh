@@ -21,7 +21,7 @@
 #   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-BUSYBOX_SBIN="halt ifconfig init klogd mkswap modprobe poweroff reboot route swapoff swapon syslogd update"
+BUSYBOX_SBIN="halt ifconfig init klogd mkswap modprobe pivot_root poweroff reboot route swapoff swapon syslogd update"
 BUSYBOX_USR_SBIN="chroot"
 BUSYBOX_BIN="cat chgrp chmod chown cp dd df dmesg echo false grep gunzip gzip hostname kill ln ls mkdir mknod more mount mv ping ps pwd rm rmdir sed sleep sync tar touch true umount uname zcat"
 BUSYBOX_USR_BIN="[ ar clear cut dirname expr find free head id killall logger md5sum reset sort tail telnet test tr tty uniq uptime wc wget which whoami"
@@ -96,7 +96,7 @@ for argument in $@; do
       cleanup_and_die
     fi
     busybox_specified="true"
-    cp -a $argument $temp_dir/bin
+    cp -a $argument $temp_dir/bin/busybox
     applets=""
     busybox_delimiter_found="false"
     TMPFILE=`mktemp /tmp/$p.XXXXXX` || exit 1

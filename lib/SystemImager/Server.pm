@@ -173,12 +173,6 @@ mount | grep c[0-9]+d[0-9]+p > /dev/null 2>&1
 # find running raid devices
 RAID_DEVICES=`cat /proc/mdstat | grep ^md | mawk '{print "/dev/" $1}'`
 
-# get raidstop utility if any raid devices exist
-if [ ! -z "${RAID_DEVICES}" ]
-then
-  rsync -av --numeric-ids $IMAGESERVER::${ARCH}-boot/raidstop /tmp/ || shellout
-fi
-
 # raidstop will not run unless a raidtab file exists
 touch /etc/raidtab || shellout
 
@@ -415,11 +409,6 @@ sub _in_script_stop_RAID_devices_before_partitioning {
   if (@software_raid_devices) {
     print MASTER_SCRIPT "# Pull /etc/raidtab over to autoinstall client\n";
     print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::\$IMAGENAME/etc/raidtab /etc/raidtab || shellout\n";
-    print MASTER_SCRIPT "\n";
-    print MASTER_SCRIPT "# get software RAID utilities\n";
-    print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::\${ARCH}-boot/mkraid /tmp/ || shellout\n";
-    print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::\${ARCH}-boot/raidstart /tmp/ || shellout\n";
-    print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::\${ARCH}-boot/raidstop /tmp/ || shellout\n";
     print MASTER_SCRIPT "\n";
 
     print MASTER_SCRIPT << 'EOF';
@@ -670,9 +659,6 @@ if (@ext3_devices) {
 
 ### BEGIN Write out reiserfs creation commands ###
 if (@reiserfs_devices) {
-  print MASTER_SCRIPT "# get mkreiserfs utility\n";
-  print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::\${ARCH}-boot/mkreiserfs /tmp/ || shellout\n";
-  print MASTER_SCRIPT "\n";
   print MASTER_SCRIPT "# format reiserfs devices\n";
   foreach my $device (sort @reiserfs_devices) {
     print MASTER_SCRIPT "# rupasov is the default, but we are explicit here anyway\n";

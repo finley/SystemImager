@@ -127,7 +127,6 @@ PATH = /sbin:/bin:/usr/sbin:/usr/bin:/usr/bin/X11:/usr/local/sbin:/usr/local/bin
 ARCH = $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/)
 SUDO = $(shell if [ `id -u` != 0 ]; then echo -n "sudo"; fi)
 
-TEMP_DIR = systemimager.initrd.temp.dir/
 TARBALL_BUILD_DIR = autoinstallbin/
 
 MANUAL_DIR = doc/manual_source/
@@ -153,14 +152,12 @@ LOG_DIR = $(DESTDIR)/var/log/systemimager
 INITSCRIPT_NAME = systemimager
 
 TFTP_BIN_SRC      = tftpstuff/systemimager
-TFTP_BIN         := raidstart mkraid mkreiserfs prepareclient updateclient
+TFTP_BIN          = prepareclient updateclient
 TFTP_ROOT	  = $(USR)/share/systemimager
 TFTP_BIN_DEST     = $(TFTP_ROOT)/$(ARCH)-boot
 
 PXE_CONF_SRC      = tftpstuff/pxelinux.cfg
 PXE_CONF_DEST     = $(TFTP_BIN_DEST)/pxelinux.cfg
-
-AUTOINSTALL_TARBALL = autoinstallbin.tar.gz
 
 BINARIES := mkautoinstallcd mkautoinstalldiskette
 SBINARIES := addclients cpimage getimage mkdhcpserver mkdhcpstatic mkautoinstallscript mkbootserver mvimage pushupdate rmimage
@@ -173,30 +170,22 @@ WARNING_FILES = $(IMAGEDEST)/README $(IMAGEDEST)/DO_NOT_TOUCH_THESE_DIRECTORIES 
 AUTOINSTALL_SCRIPT_DIR = $(DESTDIR)/var/lib/systemimager/scripts
 
 LINUX_SRC = $(SRC_DIR)/linux
-LINUX_VERSION = 2.2.18
+LINUX_VERSION = 2.4.14
 LINUX_TARBALL = linux-$(LINUX_VERSION).tar.bz2
-LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.2/$(LINUX_TARBALL)
-LINUX_MD5SUM = 9a8f4b1003ff6b096678d193fd438467
+LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.4/$(LINUX_TARBALL)
+LINUX_MD5SUM = dc03387783a8f58c90ef7b1ec6af252a
 LINUX_IMAGE = $(LINUX_SRC)/arch/i386/boot/bzImage
 LINUX_PATCH = $(PATCH_DIR)/linux.patch
 LINUX_CONFIG = $(PATCH_DIR)/linux.config
 
-INITRD_DIR = initrd_source
-INITRD = $(INITRD_DIR)/initrd.gz
-
-RAIDTOOLS_DIR = $(SRC_DIR)/raidtools-0.90
-RAIDTOOLS_TARBALL = raidtools-19990824-0.90.tar.bz2
-RAIDTOOLS_URL = http://www.kernel.org/pub/linux/daemons/raid/alpha/$(RAIDTOOLS_TARBALL)
-RAIDTOOLS_PATCH = $(PATCH_DIR)/raidtools.patch
-RAIDTOOLS_MD5SUM = 8a8460ae6731fa4debd912297c2402ca
-REISERFSPROGS_DIR = $(LINUX_SRC)/fs/reiserfs/utils
+RAMDISK_DIR = initrd_source
 
 WGET = wget --passive-ftp
 
 #@all:
 #@  build everything, install nothing
 #@ 
-all:	raidtools reiserfsprogs kernel initrd docs manpages
+all:	kernel ramdisks docs manpages
 
 #@install_server_all:
 #@  a complete server install
@@ -295,65 +284,7 @@ install_client_libs:
 #@@install_binaries:
 #@@  install architecture-dependent files
 #@@ 
-install_binaries:	install_raidtools install_reiserfsprogs install_kernel install_initrd
-
-
-########## BEGIN raidtools ##########
-
-#@@install_raidtools:
-#@@  install the raidtools binaries (pulled by some autoinstall clients)
-#@@ 
-install_raidtools:	raidtools
-	mkdir -p $(TFTP_BIN_DEST)
-	install -m 755 $(RAIDTOOLS_DIR)/mkraid $(TFTP_BIN_DEST)
-	install -m 755 $(RAIDTOOLS_DIR)/raidstart $(TFTP_BIN_DEST)
-	cp -a $(TFTP_BIN_DEST)/raidstart $(TFTP_BIN_DEST)/raidstop
-
-#@@raidtools:
-#@@  build the raidtools binaries
-#@@ 
-raidtools:	raidtools-build-stamp
-
-raidtools-build-stamp:
-	$(MAKE) $(SRC_DIR)/$(RAIDTOOLS_TARBALL)
-	[ -d $(RAIDTOOLS_DIR) ] || \
-		( cd $(SRC_DIR) && bzcat $(RAIDTOOLS_TARBALL) | tar xv && \
-		  [ ! -f ../$(RAIDTOOLS_PATCH) ] || \
-		  patch -p0 < ../$(RAIDTOOLS_PATCH) )
-	( cd $(RAIDTOOLS_DIR) && ./configure )
-	$(MAKE) -C $(RAIDTOOLS_DIR)
-	touch raidtools-build-stamp
-
-# download the raidtools tarball
-$(SRC_DIR)/$(RAIDTOOLS_TARBALL):
-	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
-	cd $(SRC_DIR) && $(WGET) $(RAIDTOOLS_URL)
-	[ "$(RAIDTOOLS_MD5SUM)" == \
-		`md5sum $(SRC_DIR)/$(RAIDTOOLS_TARBALL) | cut -d " " -f 1` ] \
-		|| exit 1
-########## END raidtools ##########
-
-######### BEGIN reiserfsprogs ##########
-
-#@@install_reiserfsprogs:
-#@@  install a statically linked mkreiserfs binary - this is retrieved by
-#@@  autoinstall clients that use the reiser filesystem
-#@@ 
-install_reiserfsprogs:	reiserfsprogs
-	mkdir -p $(TFTP_BIN_DEST)
-	install -m 755 $(REISERFSPROGS_DIR)/bin/mkreiserfs $(TFTP_BIN_DEST)
-
-#@@reiserfsprogs:
-#@@  build statically-linked reiserfsprogs	
-#@@ 
-reiserfsprogs:	reiserfsprogs-build-stamp
-
-reiserfsprogs-build-stamp:
-	make patched_kernel
-	make -C $(REISERFSPROGS_DIR)
-	touch reiserfsprogs-build-stamp
-
-######### END reiserfsprogs ##########
+install_binaries:	install_kernel install_ramdisks
 
 ########## BEGIN kernel ##########
 #@@install_kernel:
@@ -372,7 +303,7 @@ kernel:	kernel-build-stamp
 
 kernel-build-stamp:
 	$(MAKE) patched_kernel
-	$(MAKE) -C $(LINUX_SRC) oldconfig dep bzImage
+	$(MAKE) -C $(LINUX_SRC) bzImage
 	touch kernel-build-stamp
 
 patched_kernel:	patched_kernel-stamp
@@ -382,38 +313,38 @@ patched_kernel-stamp:
 	[ -d $(LINUX_SRC) ] || \
 		( cd $(SRC_DIR) && bzcat $(LINUX_TARBALL) | tar xv && \
 		  [ ! -f ../$(LINUX_PATCH) ] || \
-		  patch -p0 < ../$(LINUX_PATCH) || /bin/true )
+		  cd linux && patch -p1 < ../../$(LINUX_PATCH) )
 	cp -a $(LINUX_CONFIG) $(LINUX_SRC)/.config
+	cd $(LINUX_SRC) && make oldconfig dep
 	touch patched_kernel-stamp
 
 $(SRC_DIR)/$(LINUX_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
-	cd $(SRC_DIR) && $(WGET) $(LINUX_URL)
+	cd $(SRC_DIR) && ([ -f /usr/src/$(LINUX_TARBALL) ] && \
+	  ln -s /usr/src/$(LINUX_TARBALL) .) || $(WGET) $(LINUX_URL)
 	[ "$(LINUX_MD5SUM)" == \
 		`md5sum $(SRC_DIR)/$(LINUX_TARBALL) | cut -d " " -f 1` ] || \
 		exit 1
 
 ########## END kernel ##########
 
-########## BEGIN initrd ##########
+########## BEGIN ramdisks ##########
 
-#@@install_initrd:
-#@@  install the autoinstall ramdisk - the initial ramdisk used by autoinstall
-#@@  clients when beginning an autoinstall
+#@@install_ramdisks:
+#@@  install the autoinstall ramdisks - the initial ramdisk used by autoinstall
+#@@  clients when beginning an autoinstall, and the second stage ramdisk
 #@@ 
-install_initrd:
-	$(MAKE) initrd
-	mkdir -p $(TFTP_BIN_DEST)
-	install -m 644 $(INITRD_DIR)/initrd.gz $(TFTP_BIN_DEST)
+install_ramdisks:
+	$(MAKE) -C $(RAMDISK_DIR) install
 
-#@@initrd:
+#@@ramdisks:
 #@@  build the autoinstall ramdisk
 #@@ 
-initrd:	initrd-build-stamp
+ramdisks:	ramdisks-build-stamp
 
-initrd-build-stamp:
-	make -C $(INITRD_DIR)
-	touch initrd-build-stamp
+ramdisks-build-stamp:
+	make -C $(RAMDISK_DIR) all
+	touch ramdisks-build-stamp
 
 #@@install_configs:
 #@@  install the initscript & config files
@@ -426,7 +357,7 @@ install_configs:
 	mkdir -p $(INITD)
 	install -b -m 755 etc/init.d/rsync $(INITD)/$(INITSCRIPT_NAME)
 
-########## END initrd ##########
+########## END ramdisks ##########
 
 ########## BEGIN man pages ##########
 
@@ -477,33 +408,11 @@ install_docs: docs
 docs:
 	$(MAKE) -C $(MANUAL_DIR) html ps pdf
 
-# this target creates a tarball containing modules, binaries, and libraries
-# for the autoinstall client to copy over.  before this can be used,
-# the autoinstall ramdisk will need tar/gzip support
-#
-# this tarball will be downloaded by the autoinstall client, which will
-# extract these files into it's ramdisk
-# the libraries in the tarball are built against the initial ramdisk so
-# that the ramdisk binaries will still function
-$(AUTOINSTALL_TARBALL):	kernel
-	$(MAKE) -C $(LINUX_SRC) modules_install INSTALL_MOD_PATH=./modules
-	$(MAKE) -C $(INITRD_DIR) initrd
-	mkdir -p $(TEMP_DIR)
-	mkdir -p $(TARBALL_BUILD_DIR)/lib
-	mkdir -p $(TARBALL_BUILD_DIR)/bin
-	cp -a ./modules/lib/* $(TARBALL_BUILD_DIR)/lib
-
-	### copy over binaries into $(TARBALL_BUILD_DIR)/bin ###
-	mount $(INITRD_DIR)/initrd $(TEMP_DIR) -o loop
-	$(INITRD_DIR)/mklibs.sh -v -d $(TARBALL_BUILD_DIR)/lib $(TEMP_DIR)/bin/* $(TARBALL_BUILD_DIR)/bin/*
-	umount $(TEMP_DIR) && rmdir $(TEMP_DIR)
-	tar -c $(TARBALL_BUILD_DIR)/* | gzip -9 > $(AUTOINSTALL_TARBALL)
-
 #@get_source:
 #@  pre-download the source to other packages that may be needed by other
 #@  rules
 #@ 
-get_source:	$(SRC_DIR)/$(LINUX_TARBALL) $(SRC_DIR)/$(RAIDTOOLS_TARBALL)
+get_source:	$(SRC_DIR)/$(LINUX_TARBALL)
 
 #@help:
 #@  prints a short description of the rules that are useful in most cases
@@ -552,27 +461,30 @@ helpless:
 helpless_all:
 	$(MAKE) help_all | less
 
-#@distrib_clean:
-#@  removes large components of the build tree (mostly downloaded source),
-#@  but leaves all installable binaries.  this reduces the size of the tree
-#@  to something more easily downloadable.
-#@ 
-distrib_clean:
-	# remove downloaded source tarballs.
-	rm -rf $(SRC_DIR)/$(LINUX_TARBALL) $(SRC_DIR)/$(RAIDTOOLS_TARBALL) $(INITRD_DIR)/src
-	# make a skeleton kernel tree which just contains the files needed
-	# by the install_* rules
-	mkdir -p $(LINUX_SRC)/../linux.tmp
-	cd $(LINUX_SRC) && find . -name "mkreiserfs" -type f -exec cp --parents -a {} ../linux.tmp \;
-	cd $(LINUX_SRC) && find . -name "bzImage" -type f -exec cp --parents -a {} ../linux.tmp \;
-	rm -rf $(LINUX_SRC)/*
-	mv $(LINUX_SRC)/../linux.tmp/* $(LINUX_SRC)
-	rm -rf $(LINUX_SRC)/../linux.tmp
+#@source_tarball:
+#@  create a source tarball
+#@
+source_tarball: ./tmp/systemimager-source-$(VERSION).tar.bz2
+
+./tmp/systemimager-source-$(VERSION).tar.bz2:
+	mkdir -p tmp/systemimager-source-$(VERSION)
+	find . -maxdepth 1 -not -name . -not -name tmp \
+	  -exec cp -a {} tmp/systemimager-source-$(VERSION) \;
+	rm -rf `find tmp/systemimager-source-$(VERSION) -name CVS \
+	  -type d -printf "%p "`
+	$(MAKE) -C tmp/systemimager-source-$(VERSION) distclean
+	cd tmp && tar -c systemimager-source-$(VERSION) | bzip2 > \
+	  systemimager-source-$(VERSION).tar.bz2
+	@echo
+	@echo "server tarball has been created in ./tmp"
+	@echo
 
 #@client_tarball:
 #@  create a user-distributable tarball for the client
 #@ 
-client_tarball:
+client_tarball:	./tmp/systemimager-client-$(VERSION).tar.bz2
+
+./tmp/systemimager-client-$(VERSION).tar.bz2:
 	mkdir -p ./tmp/systemimager-client-$(VERSION)
 	$(MAKE) install_client_all DESTDIR=./tmp/systemimager-client-$(VERSION)
 	$(MAKE) install_docs DESTDIR=./tmp/systemimager-client-$(VERSION)
@@ -586,7 +498,9 @@ client_tarball:
 #@server_tarball:
 #@  create a user-distributable tarball for the server
 #@ 
-server_tarball:
+server_tarball:	./tmp/systemimager-server-$(VERSION).tar.bz2
+
+./tmp/systemimager-server-$(VERSION).tar.bz2:
 	mkdir -p ./tmp/systemimager-server-$(VERSION)
 	$(MAKE) install_server_all DESTDIR=./tmp/systemimager-server-$(VERSION)
 	$(MAKE) install_docs DESTDIR=./tmp/systemimager-server-$(VERSION)
@@ -601,7 +515,8 @@ server_tarball:
 #@  create user-distributable tarballs for the server and the client
 #@ 
 tarballs:
-	$(MAKE) client_tarball server_tarball
+	$(MAKE) source_tarball client_tarball server_tarball
+	@ echo -e "\ntarballs have been created in ./tmp\n"
 
 debs:	all
 	dpkg-buildpackage -r$(SUDO)
@@ -616,18 +531,13 @@ rpm:
 #@  removes object files, docs, editor backup files, etc.
 #@ 
 clean:
-	-$(MAKE) -C $(RAIDTOOLS_DIR) clean
-	-$(MAKE) -C $(REISERFSPROGS_DIR) clean
 	-$(MAKE) -C $(LINUX_SRC) mrproper
 	-$(MAKE) -C $(MANPAGE_DIR) clean
 	-$(MAKE) -C $(MANUAL_DIR) clean
-	-$(MAKE) -C $(INITRD_DIR) clean
+	-$(MAKE) -C $(RAMDISK_DIR) clean
 	-find . -name "*~" -exec rm -f {} \;
 	-find . -name "#*#" -exec rm -f {} \;
 	-rm doc/manual_source/images
-	-umount $(TEMP_DIR)
-	-rm -rf $(TEMP_DIR) ./modules $(TARBALL_BUILD_DIR)
-	-rm $(AUTOINSTALL_TARBALL)
 
 #@distclean:
 #@  same as clean, but also removes downloaded source, stamp files, etc.
@@ -636,4 +546,4 @@ distclean:	clean
 	-rm *stamp
 	-rm -rf $(SRC_DIR)
 	-rm -rf tmp
-	-$(MAKE) -C $(INITRD_DIR) distclean
+	-$(MAKE) -C $(RAMDISK_DIR) distclean

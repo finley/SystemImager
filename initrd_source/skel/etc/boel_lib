@@ -1,0 +1,46 @@
+#
+# "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>
+#
+#   Others who have contributed to this code:
+#     Curtis Zinzilieta <czinzilieta@valinux.com>
+#     dann frazier <dannf@fc.hp.com>
+#
+# This file is: boel_lib
+#
+
+PATH=/sbin:/bin:/usr/bin:/usr/sbin:/tmp
+SCRIPTS=scripts
+ARCH=$(uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/)
+
+shellout() {
+  exec cat /etc/issue ; exit 1
+}
+
+write_variables() {
+  # pass all variables set here on to the hostname.sh script
+  echo "HOSTNAME=$HOSTNAME" 		> /tmp/variables.txt
+  echo "DOMAINNAME=$DOMAINNAME" 	>> /tmp/variables.txt
+  echo "DEVICE=$DEVICE" 		>> /tmp/variables.txt
+  echo "IPADDR=$IPADDR" 		>> /tmp/variables.txt
+  echo "NETMASK=$NETMASK" 		>> /tmp/variables.txt
+  echo "NETWORK=$NETWORK" 		>> /tmp/variables.txt
+  echo "BROADCAST=$BROADCAST" 		>> /tmp/variables.txt
+  echo "GATEWAY=$GATEWAY" 		>> /tmp/variables.txt
+  echo "GATEWAYDEV=$GATEWAYDEV" 	>> /tmp/variables.txt
+  echo "IMAGESERVER=$IMAGESERVER" 	>> /tmp/variables.txt
+  echo "SSH_USER=$SSH_USER"		>> /tmp/variables.txt
+  echo "SSH_DOWNLOAD_URL=$SSH_DOWNLOAD_URL"	>> /tmp/variables.txt
+}
+
+get_hostname_by_dns() {
+  # get the nameserver from the resolv.conf file
+  NAMESERVER=`cat /etc/resolv.conf \
+  | mawk '/nameserver/ {print $2}'`
+
+  # get base hostname.  For example, b2b99.domain.com will become b2b99
+  HOSTNAME=`host $IPADDR \
+  | grep "^Name:.*" \
+  | cut -d " " -f 2 \
+  | cut -d "." -f 1`
+}
+    
