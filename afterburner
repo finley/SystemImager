@@ -280,13 +280,13 @@ fi
 [ -d /etc/init.d ] && INITDIR_PREFIX="/etc"
 if [ -f $INITDIR_PREFIX/init.d/rsync ]
 then
-  ln -sf $INITDIR_PREFIX/init.d/rsync $INITDIR_PREFIX/rc0.d/K20rsync
-  ln -sf $INITDIR_PREFIX/init.d/rsync $INITDIR_PREFIX/rc1.d/K20rsync
-  ln -sf $INITDIR_PREFIX/init.d/rsync $INITDIR_PREFIX/rc2.d/S20rsync
-  ln -sf $INITDIR_PREFIX/init.d/rsync $INITDIR_PREFIX/rc3.d/S20rsync
-  ln -sf $INITDIR_PREFIX/init.d/rsync $INITDIR_PREFIX/rc4.d/S20rsync
-  ln -sf $INITDIR_PREFIX/init.d/rsync $INITDIR_PREFIX/rc5.d/S20rsync
-  ln -sf $INITDIR_PREFIX/init.d/rsync $INITDIR_PREFIX/rc6.d/K20rsync
+  cd $INITDIR_PREFIX/rc0.d; ln -sf ../init.d/rsync K20rsync
+  cd $INITDIR_PREFIX/rc1.d; ln -sf ../init.d/rsync K20rsync
+  cd $INITDIR_PREFIX/rc2.d; ln -sf ../init.d/rsync S20rsync
+  cd $INITDIR_PREFIX/rc3.d; ln -sf ../init.d/rsync S20rsync
+  cd $INITDIR_PREFIX/rc4.d; ln -sf ../init.d/rsync S20rsync
+  cd $INITDIR_PREFIX/rc5.d; ln -sf ../init.d/rsync S20rsync
+  cd $INITDIR_PREFIX/rc6.d; ln -sf ../init.d/rsync K20rsync
 fi
 # run rsync init script
 [ $QUIET = "false" ] && echo "running rsync init script..."
