@@ -66,6 +66,55 @@
   <qandaentry>
    <question>
     <para>
+     How do I edit files on the initial ramdisk?
+    </para>
+   </question>
+   <answer>
+    <para>
+     In SystemImager 3.0.x, the initial ramdisk is a cramfs filesystem.
+     The following example shows you how to open it, edit a file, and 
+     create a new ramdisk.  You might want to edit this file if you want
+     to change things in the process prior to the execution of the .master
+     script.
+    </para>
+    <orderedlist>
+     <listitem>
+      <para>gunzip &lt; initrd.img &gt; /tmp/initrd</para>
+     </listitem>
+     <listitem>
+      <para>mkdir /mnt/tmp</para>
+     </listitem>
+     <listitem>
+      <para>mount /tmp/initrd /mnt/tmp -o loop</para>
+     </listitem>
+     <listitem>
+      <para>mkdir /tmp/initrd.new</para>
+     </listitem>
+     <listitem>
+      <para>cp -a /mnt/tmp/* /tmp/initrd.new</para>
+     </listitem>
+     <listitem>
+      <para>umount /mnt/tmp</para>
+     </listitem>
+     <listitem>
+      <para>cd /tmp/initrd.new</para>
+     </listitem>
+     <listitem>
+      <para>make your edits here - vi etc/init.d/rcS, for example</para>
+     </listitem>
+     <listitem>
+      <para>mkcramfs /tmp/initrd.new /tmp/newinitrd</para>
+     </listitem>
+     <listitem>
+      <para>gzip -9 &lt; /tmp/newinitrd &gt; /tmp/initrd.img</para>
+     </listitem>
+    </orderedlist>
+   </answer>
+  </qandaentry>
+     
+  <qandaentry>
+   <question>
+    <para>
      How do I configure my server to net boot ia64 clients?
     </para>
    </question>
