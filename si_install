@@ -1,0 +1,43 @@
+#!/bin/sh
+
+# install wrapper for SystemImager
+# -t  == text file
+# -e  == executable
+# -c  == config file
+# -ce == executable config (i.e. initscript)
+
+USR_PREFIX="\/usr\/local"
+version=$(cat VERSION)
+filelist=""
+backup=""
+
+usage="$0 [-e | -t] FILE... DIRECTORY"
+
+if [ "$1" == "-t" ]; then
+  mod="644"
+  shift
+elif [ "$1" == "-c" ]; then
+  mod="644"
+  backup="-b"
+  shift
+elif [ "$1" == "-ce" ]; then
+  mod="755"
+  backup="-b"
+  shift
+elif [ "$1" == "-e" ]; then
+  mod="755"
+  shift
+else
+  mod="755"
+fi
+
+mkdir -p tmp
+
+while [ $# -gt 1 ]; do
+  sed s/SYSTEMIMAGER_VERSION_STRING/"$version"/ < $1 > tmp/$(basename $1).tmp
+  sed s/USR_PREFIX/"$USR_PREFIX"/ < tmp/$(basename $1).tmp > tmp/$(basename $1)
+  filelist=$filelist" tmp/$(basename $1)"
+  shift
+done
+
+install $backup -m $mod $filelist $1
