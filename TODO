@@ -297,6 +297,20 @@ o makedhcpserver -- automatically change line in /etc/rc.d/init.d/dhcpd for you
 o updateclient - log what was updated and or deleted?
 o makedhcpstatic -- allow for -f "filename" option to specify dhcpd.leases file.
 
+Dann Frazier <dannf@hazel.fc.hp.com>
+------------------------------------
+o PXE booting ideas...
+with pxe, you can specify what files to serve to a specific hardware
+address.
+you could have symbolic links that point to the SystemImager kernel &
+initrd.gz for each node, with no default files.
+you can then remove these links when you decide not to allow that
+machine to PXE boot.
+the machine will try to pxe boot, won't be able to find its kernel and
+initrd.gz, and will boot from the harddrive.
+a tool similar to addclients might be useful for this.
+        -dann
+
 
 Bug list
 --------
