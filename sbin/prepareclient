@@ -1,10 +1,9 @@
 #!/usr/bin/perl -w
-
 #
 # "SystemImager"
 # 
+#  Copyright (C) 2001-2003 Bald Guy Software <brian@bgsw.net>
 #  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
-#  Copyright (C) 2001-2002 Bald Guy Software <brian.finley@baldguysoftware.com>
 #  Copyright (C) 2002 Internation Business Machines
 #                     Sean Dague <sean@dague.net>
 #
@@ -225,6 +224,24 @@ EOF
     }
 }
  
+my $result;
+$result = `ps axww|grep -v grep|grep -w rsync`;
+if (!$result) {
+    $result = `ps axww|grep -v grep|grep -w rsyncd`;
+}
+if ($result) {
+    print "\n";
+    print "One or more rsync daemons appear to be running on this machine.  If you\n";
+    print "continue, those daemons will be killed.\n";
+    print "\n";
+    print "Continue? (y/[n]): ";
+    my $answer = <>;
+    unless($answer =~ /y/i) {
+        print "Client prepartion cancelled.  No files modified.\n";
+        exit 1;
+    }
+}
+
 # verify that rsync entry is in /etc/services
 add_rsync_services();
 
@@ -242,62 +259,62 @@ create_auto_install_script_conf($disks);
 
 # Run the rsync daemon for getimage?
 unless($norsyncd) {
-  # install SystemImager brand rsyncd.conf file ($rsyncd_conf_file)
-  create_rsyncd_conf($rsyncd_conf_file);
-
-  # rsync < v2.5.x requires that a host have an entry with it's hostname
-  # in it's /etc/hosts before rsync will start up in daemon mode.  I've 
-  # always wanted a better way of doing this than simply adding an entry
-  # and leaving it there.  It's usually harmless, but I prefer to not leave
-  # footprints.  I've determined that if you add an entry, start up rsync
-  # in daemon mode, then remove the entry, things work fine.  So now we do 
-  # just that. -BEF-
-  my $hostname = (uname)[1];
-  my $file = "/etc/hosts";
-
-  # kill off any running rsync daemons
-  killall("rsync",1);
-  killall("rsyncd",1);
-
-  # Make a copy of the original /etc/hosts file.
-  my $source      = $file;
-  my $destination = "$file.before-prepareclient";
-  copy($source, $destination) or die "FATAL: Failed to copy $source to $destination.\n";
-
-  # Append our temporary entry.
-  open(TMP,">>$file") or croak("Couldn't open $file for writing.");
-    print TMP "127.0.0.1  $hostname\n";
-  close(TMP);
-
-
-  # start up our fresh daemon
-  if(!$quiet) {
-
-      # Give a couple of seconds for the old daemon to die.
-      print "Starting or re-starting rsync as a daemon";
-      my $cmd="for i in 1 2; do echo -n .; sleep 1s; done";
-      system("$cmd");
-
-      # Start up the new one.
+    # install SystemImager brand rsyncd.conf file ($rsyncd_conf_file)
+    create_rsyncd_conf($rsyncd_conf_file);
+    
+    # rsync < v2.5.x requires that a host have an entry with it's hostname
+    # in it's /etc/hosts before rsync will start up in daemon mode.  I've 
+    # always wanted a better way of doing this than simply adding an entry
+    # and leaving it there.  It's usually harmless, but I prefer to not leave
+    # footprints.  I've determined that if you add an entry, start up rsync
+    # in daemon mode, then remove the entry, things work fine.  So now we do 
+    # just that. -BEF-
+    my $hostname = (uname)[1];
+    my $file = "/etc/hosts";
+    
+    # kill off any running rsync daemons
+    killall("rsync",1);
+    killall("rsyncd",1);
+    
+    # Make a copy of the original /etc/hosts file.
+    my $source      = $file;
+    my $destination = "$file.before-prepareclient";
+    copy($source, $destination) or die "FATAL: Failed to copy $source to $destination.\n";
+    
+    # Append our temporary entry.
+    open(TMP,">>$file") or croak("Couldn't open $file for writing.");
+      print TMP "127.0.0.1  $hostname\n";
+    close(TMP);
+    
+    
+    # start up our fresh daemon
+    if(!$quiet) {
+    
+        # Give a couple of seconds for the old daemon to die.
+        print "Starting or re-starting rsync as a daemon";
+        my $cmd="for i in 1 2; do echo -n .; sleep 1s; done";
+        system("$cmd");
+    
+        # Start up the new one.
+        system("rsync --daemon --config=$rsyncd_conf_file");
+    
+        # Give a few seconds for the new daemon to start.
+        $cmd="for i in 3 4 5; do echo -n .; sleep 1s; done";
+        system("$cmd");
+    
+        # Wrap up
+        print "done!\n";
+    } else {
+      # still need to sleep
+      sleep 2;
       system("rsync --daemon --config=$rsyncd_conf_file");
-
-      # Give a few seconds for the new daemon to start.
-      $cmd="for i in 3 4 5; do echo -n .; sleep 1s; done";
-      system("$cmd");
-
-      # Wrap up
-      print "done!\n";
-  } else {
-    # still need to sleep
-    sleep 2;
-    system("rsync --daemon --config=$rsyncd_conf_file");
-    sleep 3;
-  }
-
-  # Put the original /etc/hosts file back (sans our temporary entry).
-  $source      = "$file.before-prepareclient";
-  $destination = $file;
-  move($source, $destination) or die "FATAL: Failed to copy $source to $destination.\n";
+      sleep 3;
+    }
+    
+    # Put the original /etc/hosts file back (sans our temporary entry).
+    $source      = "$file.before-prepareclient";
+    $destination = $file;
+    move($source, $destination) or die "FATAL: Failed to copy $source to $destination.\n";
 }
 ### END leave disk info behind for the getimage command ###
 
