@@ -1,0 +1,31 @@
+This patch was applied to the virgin ssh 1.1.26 source code prior to
+compiling the binaries found here.
+
+This patch and the virgin ssh 1.1.26 source code can also be found with
+the SystemImager source in the following file:
+
+  other_source_and_patches_used_in_this_release.tar.bz2 
+
+
+*** login.c.orig	Wed May 16 16:40:35 2001
+--- login.c	Wed May 16 16:41:28 2001
+***************
+*** 84,89 ****
+--- 84,90 ----
+  #endif /* HAVE_LASTLOG_H */
+  #endif /* HAVE_UTMP_H */
+  #ifdef HAVE_UTMPX_H
++ #define __USE_GNU
+  #include <utmpx.h>
+  #ifndef SCO
+  #ifdef MAJOR_IN_MKDEV
+***************
+*** 434,440 ****
+      ux.ut_session = pid;
+      strncpy(ux.ut_host, host, sizeof(ux.ut_host));
+      ux.ut_host[sizeof(ux.ut_host) - 1] = 0;
+-     ux.ut_syslen = strlen(ux.ut_host);
+  #ifdef HAVE_SYSLEN_IN_UTMPX
+      ux.ut_syslen = strlen(ux.ut_host);
+  #endif
+--- 435,440 ----

@@ -1,0 +1,17 @@
+# This is ssh server systemwide configuration file.
+Port 22
+ListenAddress 0.0.0.0
+ServerKeyBits 768
+LoginGraceTime 600
+KeyRegenerationInterval 3600
+PermitRootLogin yes
+IgnoreRhosts yes
+StrictModes yes
+X11Forwarding no
+PrintMotd yes
+KeepAlive yes
+RhostsAuthentication no
+RhostsRSAAuthentication no
+RSAAuthentication yes
+PasswordAuthentication no
+PermitEmptyPasswords no
