@@ -40,32 +40,35 @@ Usage: $program_name [OPTION]... REQUIRED_ARGUMENTS
 
 Options: (options can be presented in any order)
 
- -help              Display this output.
+ -help               Display this output.
+                     
+ -version            Display version and copyright information.
+                     
+ -domainname NAME    Domain name.
+                     
+ -host NAME          Base host name.
+                     
+ -host-range N-N     Range of hosts involved.  Examples: 1-99 or 01-99.
+                     
+ -script NAME        Master autoinstall script name.  Don't include
+                     the path or the .master extension.  Example: my_image
+                     
+ -ip-range IP-IP     Range of IP addresses for clients.  Used to create an
+                     optional hosts file that clients can use for IP address
+                     to hostname resolution during install.  Not necessary if
+                     DNS reverse resolution is configured for the IP addresses
+                     in question.  If both DNS and a hosts file are used, 
+                     information in the hosts file will supercede the 
+                     information in DNS.  Example: 10.0.0.1-10.0.0.99.
 
- -version           Display version and copyright information.
-
- -domainname NAME   Domain name.
-
- -host NAME         Base host name.
-
- -host-range N-N    Range of hosts involved.  Examples: 1-99 or 01-99.
-
- -script NAME       Master autoinstall script name.  Don't include
-                    the path or the .master extension.  Example: my_image
-
- -ip-range IP-IP    Range of IP addresses for clients.  Used to create an
-                    optional hosts file that clients can use for IP address
-                    to hostname resolution during install.  Not necessary if
-                    DNS reverse resolution is configured for the IP addresses
-                    in question.  If both DNS and a hosts file are used, 
-                    information in the hosts file will supercede the 
-                    information in DNS.  Example: 10.0.0.1-10.0.0.99.
-
- -interactive       If domainname, host, host-range, and script are all 
-                    specified, then this program will go non-interactive
-                    automatically.  If you want to ensure that it remains
-                    interactive, even if all of these settings are specified,
-                    use this switch.
+ -interactive YES/NO This program will go interactive by default if domainname,
+                     host, host-range, and script are all specified.  
+                     
+                     If you specify YES here, then it will go interactive, even
+                     if all of these values are specified.  
+                     
+                     If you specify NO here, then it will not go interactive,
+                     even if it is missing some of the required values.
 
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
@@ -84,14 +87,14 @@ my $interactive = "";
 
 # interpret command line options
 GetOptions( 
-  "help" => \my $help,
-  "version" => \my $version,
-  "domainname=s" => \$domain_name,
-  "host=s" => \$base_host_name,
-  "host-range=s" => \my $host_range,
-  "script=s" => \$script,
-  "ip-range=s" => \my $ip_range,
-  "interactive" => \$interactive,
+  "help"            => \my $help,
+  "version"         => \my $version,
+  "domainname=s"    => \$domain_name,
+  "host=s"          => \$base_host_name,
+  "host-range=s"    => \my $host_range,
+  "script=s"        => \$script,
+  "ip-range=s"      => \my $ip_range,
+  "interactive=s"   => \$interactive,
 ) or die qq($help_info);
 
 # if requested, print help information
@@ -107,6 +110,17 @@ if($version) {
 }
 
 unless($< == 0) { die "Must be run as root!\n"; }
+
+if($interactive) {
+    $interactive = lc $interactive;
+    unless( ($interactive eq "yes") or
+            ($interactive eq "no")
+        ) {
+        print qq(FATAL: If -interactive is used, it must be set to YES or NO.\n);
+        print qq(See "$program_name -help" for more information.\n);
+        exit 1;
+    }
+}
 
 if($script =~ m|/|) {
     print qq(FATAL: -script must not be a path or a file.\n);
@@ -130,31 +144,31 @@ $domain_name = lc $domain_name;
 $base_host_name = lc $base_host_name;
 
 
-################################################################################
-#
-# Go non-interactive if enough of the right arguments are passed. -BEF-
-#
-if (
-    ($base_host_name) and 
+my $all_parameters_set;
+if (($base_host_name) and 
     ($script) and 
     ($starting_number ne "") and 
-    ($ending_number ne "")
-) {
+    ($ending_number ne "")) {
 
-    # Go non-interactive, unless we're told not to. -BEF-
-    unless ($interactive) { $interactive = ""; }
+    $all_parameters_set = 1;
 
-} else {
-
-    # Go interactive. -BEF-
-    $interactive = 1;
 }
-################################################################################
+
+if( ! $all_parameters_set) {
+
+    if($interactive eq "no") {
+        print qq(FATAL: Not all required parameters were specified.  Exiting with status of 1.\n);
+        print qq(See "$program_name -help" for more information.\n);
+        exit 1;
+    } else {
+        $interactive = "yes";
+    }
+}
 
 
 my $autoinstall_script_dir = $config->autoinstall_script_dir();
 
-if($interactive) {
+if($interactive eq "yes") {
     system("clear");
     print << "EOF";
 Welcome to the SystemImager "addclients" utility  
@@ -183,7 +197,7 @@ host names.
 EOF
 }
 
-if ($interactive) {
+if($interactive eq "yes") {
     print "Continue? ([y]/n): ";
     my $continue=<STDIN>;
     chomp $continue;
@@ -193,7 +207,7 @@ if ($interactive) {
 
 my $satisfied;
 
-if ($interactive) {
+if($interactive eq "yes") {
     ### BEGIN main questionnaire ###
     $satisfied = "n";
     while ($satisfied ne "y") {
@@ -417,7 +431,7 @@ EOF
         add_hosts_entries($starting_ip, $ending_ip, $starting_number,  $ending_number, $base_host_name, $domain_name);
     }
     
-} #if ($interactive)
+}
 
 
 
@@ -489,8 +503,6 @@ sub create_links {
 sub add_hosts_entries { 
 
     my ($starting_ip, $ending_ip, $node_number, $ending_number, $base_host_name, $domain_name) = @_;
-print "starting_ip $starting_ip\n";
-print "ending_ip $ending_ip\n";
 
     $base_host_name = lc $base_host_name;
     $domain_name = lc $domain_name;
@@ -585,7 +597,6 @@ print "ending_ip $ending_ip\n";
     ### create hash of entries by decimal ip (for sorting purposes)
 
     ### print remaining entries
-    print NEW_ETC_HOSTS "\n";
     foreach my $ip_decimal ( sort( keys %etc_hosts_lines_by_ip_decimal )) {
         print NEW_ETC_HOSTS "$etc_hosts_lines_by_ip_decimal{$ip_decimal}\n";
     }
