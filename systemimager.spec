@@ -1,5 +1,5 @@
 %define name     systemimager
-%define ver      0.24beta3
+%define ver      0.24beta4
 %define rel      1
 %define prefix   /usr
 
@@ -14,7 +14,7 @@ BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: Michael Jennings <mej@valinux.com>
 Docdir: %{prefix}/doc
 URL: http://systemimager.org/
-Requires: syslinux tftp-hpa
+Requires: rsync syslinux tftp-hpa
 
 %description
 VA SystemImager is software that makes the installation of Linux to
@@ -54,34 +54,51 @@ DESTDIR=$RPM_BUILD_ROOT ; export DESTDIR
 prefix=%{prefix} ; export prefix
 ./install -q -n
 
-install -m 755 afterburner functions $RPM_BUILD_ROOT/tftpboot/systemimager/
-install -m 644 VERSION $RPM_BUILD_ROOT/tftpboot/systemimager/
+mkdir -p $RPM_BUILD_ROOT/etc/
+install -m 644 tftpstuff/systemimager/systemimager.exclude $RPM_BUILD_ROOT/etc/
+install -m 755 tftpstuff/systemimager/prepareclient        $RPM_BUILD_ROOT/usr/sbin/
+install -m 755 tftpstuff/systemimager/updateclient         $RPM_BUILD_ROOT/usr/sbin/
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 %post
-cd /tftpboot/systemimager && ./afterburner -q -n
+cd /usr/doc/systemimager-%{ver}/ && ./afterburner -q -n
 
 %post client
-cd /tftpboot/systemimager && ./prepareclient --rpm-install
+cd /usr/sbin && ./prepareclient --rpm-install
 
 %postun
 
 %files
 %defattr(-, root, root)
-%doc CHANGE.LOG COPYING CREDITS FAQ-HOWTO README TODO VERSION
-%{prefix}/*
-/tftpboot/*
+%doc CHANGE.LOG COPYING CREDITS FAQ-HOWTO README TODO VERSION afterburner
 /var/*
+
+/tftpboot/initrd.gz
+/tftpboot/kernel
+
+/tftpboot/pxelinux.cfg/*
+
+/tftpboot/systemimager/grep
+/tftpboot/systemimager/hosts
+/tftpboot/systemimager/prepareclient
+/tftpboot/systemimager/rsync
+/tftpboot/systemimager/sed
+/tftpboot/systemimager/sfdisk
+/tftpboot/systemimager/systemimager.exclude
+/tftpboot/systemimager/updateclient
+
+/usr/sbin/addclients
+/usr/sbin/getimage
+/usr/sbin/makeautoinstalldiskette
+/usr/sbin/makedhcpserver
+/usr/sbin/makedhcpstatic
+
 
 %files client
 %defattr(-, root, root)
 %doc CHANGE.LOG COPYING CREDITS FAQ-HOWTO README TODO VERSION
-/tftpboot/systemimager/updateclient
-/tftpboot/systemimager/grep
-/tftpboot/systemimager/rsync
-/tftpboot/systemimager/prepareclient
-/tftpboot/systemimager/sed
-/tftpboot/systemimager/sfdisk
-/tftpboot/systemimager/systemimager.exclude
+/usr/sbin/updateclient
+/usr/sbin/prepareclient
+/etc/systemimager.exclude
