@@ -37,7 +37,7 @@ if (!$rsyncd_conf) { die "RSYNCD_CONF not defined in the config file."; }
 if (!$config_dir) { die "CONFIG_DIR not defined in the config file."; }
 ### END parse the config file ###
 
-$version_number="1.5.0";
+$version_number="2.0.0";
 $program_name = "mkautoinstallscript";
 $version_info = <<"EOF";
 $program_name (part of SystemImager) v$version_number
