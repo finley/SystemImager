@@ -398,6 +398,13 @@ if($? != 0) { die "Couldn't execute: $command!\n"; }
 # copy stuff to floppy
 foreach my $file ( @files ) {
     if (!$quiet) {print "Copying $file to floppy.\n";}
+#
+#XXX get rid of all the substr()'s.  Just copy the files to known names of 
+# kernel, initrd.gz, etc.  There will only be one on each floppy or CD (at this point).
+# Also, if this code passes the pre-release testing, then leave as is until 3.2.  If it
+# fails, then perhaps now is the time to merge the floppy functionality into mkautoinstallcd
+# and call it mkautoinstallmedia, or similar. -BEF-
+#
     my $command="cp $file $mount_dir/" . substr(basename($file), 0, 8);
     system($command);
         if($? != 0) { 
@@ -445,7 +452,7 @@ sub build_syslinux_cfg {
     if (!$append) {
 	$append = "vga=extended prompt_ramdisk=0 initrd=initrd.gz load_ramdisk=1 root=/dev/ram rw";
     }
-    if (!$display) { $display = "message.txt"; }
+    if (!$display) { $display = "message"; }
     if (!$prompt) { $prompt = "0"; }
     if (!$timeout) { $timeout = "50"; }
     if (!$outfile) { return undef; }
