@@ -13,7 +13,6 @@
 
 use lib "USR_PREFIX/lib/systemimager/perl";
 use strict;
-use AppConfig;
 use Getopt::Long;
 use SystemImager::Config;
 use vars qw($config $VERSION);
@@ -21,8 +20,6 @@ use vars qw($config $VERSION);
 
 
 ### BEGIN Program ###
-# if not run as root this script will surely fail
-
 # set version information
 my $VERSION = "SYSTEMIMAGER_VERSION_STRING";
 my $program_name = "addclients";
@@ -159,19 +156,18 @@ This utility has 3 sections.
 "Section 1" will ask you for your hostname information.
 
 
-"Section 2" will allow you to create softlinks from each
-client hostname to your "master" script in the
-"$autoinstall_script_dir" directory.  
+"Section 2" will allow you to create softlinks from each client hostname to
+your "master" script in the "$autoinstall_script_dir" directory.  
 
-Example: www297.sh -> web_server_image_v1.master
+  Example: www297.sh -> web_server_image_v1.master
 
 
-"Section 3" will ask you for IP address information that will
-be combined with the hostname information provided in Section 1
-to create entries in "/etc/hosts" for each of these same clients.
-New entries will be appended to the end of "/etc/hosts".  If you 
-specify new hostnames for existing IP addresses, those entries 
-will be re-written in place to reflect the new host names.
+"Section 3" will ask you for IP address information that will be combined 
+with the hostname information provided in Section 1 to create entries in 
+"/etc/hosts" for each of these same clients.  New entries will be appended 
+to the end of "/etc/hosts".  If you specify new hostnames for existing IP 
+addresses, those entries will be re-written in place to reflect the new 
+host names.
 
 
 EOF
@@ -194,11 +190,11 @@ if ($interactive) {
         system("clear");
         print <<EOF;
 addclients -- Section 1 (hostname information)
-----------------------------------------------
+--------------------------------------------------------------------------------
 
-The next series of questions will be used to create a range
-of hostnames.  You will be asked for your domain name, the 
-base host name, a beginning number, and an ending number.
+The next series of questions will be used to create a range of hostnames.  
+You will be asked for your domain name, the base host name, a beginning 
+number, and an ending number.
 
 For example, if you answer:
   domain name     = systemimager.org
@@ -246,8 +242,7 @@ EOF
 addclients -- Section 2 (soft links to master script)
 --------------------------------------------------------------------------------
 
-Would you like me to create soft links to a "master" script so
-that hosts:
+Would you like me to create soft links to a "master" script so that hosts:
 
   $base_host_name$starting_number through $base_host_name$ending_number
 
@@ -287,7 +282,8 @@ EOF
             }
             print "\n";
           
-            print "Which script would you like these hosts to be installed with? [$script]: ";
+            print "Which script would you like these hosts to be installed with?\n";
+            print "[$script]: ";
             $script=get_response($script);
             if ( -f "$autoinstall_script_dir/$script.master" ) {
           
@@ -328,13 +324,13 @@ Your target machines need to be able to determine their host names from their
 IP addresses, unless their host name is specified in a local.cfg file.  
 
 The preferred method for doing this is with DNS.  If you have a working DNS 
-that has IP address to hostname resolution properly configured for your target
-machines, then answer "n" here.
+that has IP address to hostname resolution properly configured for your 
+target machines, then answer "n" here.
 
 If you don't have a working DNS, or you want to override the information in
 DNS, then answer "y" here to add entries to the "/etc/hosts" file on your
-image server.  After adding these entries, the /etc/hosts file will be copied
-to "$autoinstall_script_dir" where it can be retrieved by your 
+image server.  After adding these entries, the /etc/hosts file will be 
+copied to "$autoinstall_script_dir" where it can be retrieved by your 
 target machines.
 
 I will ask you for your clients' IP addresses one subnet at a time.
@@ -394,7 +390,7 @@ EOF
     <STDIN>;
 
     } else {
-        print "\nNo entries will be added.\n";
+        print "\nNo entries will be added to your /etc/hosts file.\n";
     }
     ### END hosts questionaire ###
 

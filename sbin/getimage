@@ -30,7 +30,6 @@ $nisdomain="";
 
 # use the long options module to allow us to use, well, long options ;)
 use lib "USR_PREFIX/lib/systemimager/perl";
-use AppConfig;
 use Getopt::Long;
 use SystemImager::Server;
 use SystemImager::Common;
@@ -662,5 +661,7 @@ if (!$quiet) {
     print "Would you like to run the \"addclients\" utility now? (y/[n]): ";
     $continue = SystemImager::Common->get_response('n');
     ($continue ne "n") or exit 0;
-    exec("addclients");
+    my ($base_host_name, $domain_name) = split(/\./, $golden_client, 2);
+    $base_host_name =~ s/\d+$//g;
+    exec("addclients -script $image -host $base_host_name -domainname $domain_name");
 }
