@@ -349,6 +349,9 @@ Options: (options can be presented in any order and may be abbreviated)
  -initrd FILE      Optionally specify an alternate autoinstall ramdisk.
  -append "STRING"  A string of options that will be passed to the autoinstall
                    kernel.
+ -flavor FLAVOR    The flavor of the boot package to use.  If this option
+                   is not specified,  you will be asked to choose a flavor 
+                   from the available list interactively.
  -arch ARCH        Create a CD image for an architecture other than that of
                    this host.
  -quiet            Don\'t print any output, just provide an appropriate 
