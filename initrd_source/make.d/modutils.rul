@@ -14,6 +14,14 @@ ifneq ($(ARCH),i386)
 	INSMOD_BINARY = $(INITRD_SRC_DIR)/$(MODUTILS_DIR)/insmod/insmod
 endif
 
+ifeq ($(ARCH),hppa)
+	CONFIGURE_OPTS += --target=hppa
+endif
+
+########## BEGIN modutils rules ##########
+# Only used on ia64 right now -- because busybox's insmod won't compile. -BEF-
+#
+
 PHONY += modutils
 modutils:	$(INSMOD_BINARY)
 
@@ -23,7 +31,7 @@ $(INSMOD_BINARY):	$(INITRD_SRC_DIR)/$(MODUTILS_TARBALL) \
 	cd $(INITRD_SRC_DIR) && tar -xvjf $(MODUTILS_TARBALL)
 	cd $(INITRD_SRC_DIR)/$(MODUTILS_DIR) && \
 	  cat $(MODUTILS_PATCHES) < /dev/null | patch -p1
-	cd $(INITRD_SRC_DIR)/$(MODUTILS_DIR) && ./configure --disable-combined
+	cd $(INITRD_SRC_DIR)/$(MODUTILS_DIR) && ./configure $(CONFIGURE_OPTS)
 	$(MAKE) -C $(INITRD_SRC_DIR)/$(MODUTILS_DIR) PATH=$(INITRD_BUILD_PATH)
 
 $(INITRD_SRC_DIR)/$(MODUTILS_TARBALL):
