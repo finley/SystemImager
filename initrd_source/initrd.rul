@@ -218,8 +218,8 @@ install_initrd_template:	$(INITRD_DIR)/build_dir-stamp
 	rsync -a $(INITRD_BUILD_DIR)/ $(BOOT_BIN_DEST)/initrd_template/
 	@echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
 	@echo "XXX Dann, I'm expecting this should this be part of:"
-	@echo "XXX 	systemimager-initrd_template-$ARCH and 
-	@echo "XXX	systemimager-client will need to depend on it.
+	@echo "XXX 	systemimager-initrd_template-$ARCH and" 
+	@echo "XXX	systemimager-client will need to depend on it."
 	@echo "XXX 	Do you agree? disagree?"
 	@echo "XXX" 
 	@echo "XXX  Still in progress, no need to answer yet..."
