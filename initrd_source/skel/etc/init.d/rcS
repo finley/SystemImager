@@ -44,9 +44,9 @@ ARCH=`uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa
 #  based on info in /proc adjust the ARCH variable.  This needs to run
 #  after proc is mounted.
 #
-################################################################################
-
 adjust_arch() {
+    echo
+    echo adjust_arch
     if [ "ppc64" = $ARCH ] ; then
         # This takes a little bit of futzing with due to all the PPC platforms that exist.
         if [ -d /proc/iSeries ] ; then
@@ -55,6 +55,9 @@ adjust_arch() {
         fi
     fi
 }
+#
+################################################################################
+
 
 write_variables() {
     # pass all variables set here on to the hostname.sh script
@@ -129,6 +132,8 @@ count_loop() {
 #   got put in the binaries tarball. -BEF-
 #
 get_boel_binaries_tarball() {
+    echo
+    echo get_boel_binaries_tarball
     if [ ! -z $SSH_DOWNLOAD_URL ]; then
         # If we're using SSH, get the boel_binaries from a web server.
         echo "SSH_DOWNLOAD_URL variable is set, so we will install over SSH!"
@@ -169,6 +174,8 @@ get_boel_binaries_tarball() {
 #   Switch root to tmpfs
 #
 switch_root_to_tmpfs() {
+    echo
+    echo "switch_root_to_tmpfs"
     # Switch root over to tmpfs so we don't have to worry about the size of
     # the tarball and binaries that users may decide to copy over. -BEF-
     mkdir -p /new_root || shellout
@@ -183,6 +190,8 @@ switch_root_to_tmpfs() {
 #################################################################################
 #
 mount_dev_on_devfs() {
+    echo
+    echo mount_dev_on_devfs
     # Re-mount /dev on devfs. -BEF-
     mkdir -p /dev || shellout
     mount devfs /dev -t devfs || shellout
@@ -196,6 +205,8 @@ mount_dev_on_devfs() {
 #
 # Now mount proc. -BEF-
 mount_proc() {
+    echo
+    echo mount_proc
     mkdir -p proc || shellout
     mount proc /proc -t proc || shellout
 }
@@ -204,6 +215,8 @@ mount_proc() {
 #
 # Configure loopback interface (may as well)
 ifconfig_loopback() {
+    echo
+    echo ifconfig_loopback
     ifconfig lo 127.0.0.1
 }
 #
@@ -212,6 +225,8 @@ ifconfig_loopback() {
 # Load any modules that were placed in the my_modules directory prior to
 # running "make initrd.gz".  -BEF-
 load_my_modules() {
+    echo
+    echo load_my_modules
     cd /my_modules || shellout
     sh ./INSMOD_COMMANDS
 }
@@ -222,6 +237,8 @@ load_my_modules() {
 #   This code inspired by Ian McLeod <ian@valinux.com>
 #
 read_local_cfg() {
+    echo
+    echo read_local_cfg
     # BEGIN try hard drive
     #
     # this must be on two lines in order to substitute the newline
@@ -300,6 +317,8 @@ read_local_cfg() {
 #   use DHCP. -BEF-
 #
 start_network() {
+    echo
+    echo start_network
     if [ ! -z $IPADDR ]; then
 
         # configure interface and add default gateway
@@ -396,6 +415,8 @@ start_network() {
 #
 #   Ping test
 ping_test() {
+    echo
+    echo ping_test
 
     PING_COUNT=1
     PING_EXIT_STATUS=1
@@ -430,6 +451,8 @@ ping_test() {
 ################################################################################
 #
 start_syslogd() {
+    echo
+    echo start_syslogd
     if [ ! -z $LOG_SERVER ]; then
         echo -n "Starting syslogd..."
         [ -z $LOG_SERVER_PORT ] && LOG_SERVER_PORT="514"
@@ -447,6 +470,7 @@ start_syslogd() {
 #
 autodetect_hardware_and_load_modules() {
     echo
+    echo autodetect_hardware_and_load_modules
     echo -n "Detecting hardware: "
     MODULES=`discover --module bridge ethernet ide scsi usb | sort -u`
     echo $MODULES
@@ -466,17 +490,27 @@ autodetect_hardware_and_load_modules() {
 #
 get_hostname_by_hosts_file() {
 
-    # Try pulling hosts file from imageserver -BEF-
-    CMD="rsync -aL ${IMAGESERVER}::${SCRIPTS}/hosts /tmp/ >/dev/null 2>&1"
-    echo "$CMD"
-    $CMD
-    
-    if [ -e /tmp/hosts ]; then
+    if [ ! -z $MCAST_GROUP ]; then
+	    # MCAST_GROUP is set, therfore we should have a hosts file in /tmp/scripts/
+		echo "Using hosts file pulled over by multicast."
+    else
+        # Try pulling hosts file from imageserver -BEF-
+		mkdir -p /tmp/scripts
+        CMD="rsync -aL ${IMAGESERVER}::${SCRIPTS}/hosts /tmp/scripts/ >/dev/null 2>&1"
+        echo "$CMD"
+        $CMD
+    fi
+
+    #
+    # Look in $FILE for that magic joy.
+	#
+	FILE=/tmp/scripts/hosts
+    if [ -e $FILE ]; then
         # add escape characters to IPADDR so that it can be used to find HOSTNAME below
         IPADDR_ESCAPED=`echo "$IPADDR" | sed -e 's/\./\\\./g'`
         
         # get HOSTNAME by parsing hosts file
-        echo "Looking for hostname of this host in /tmp/hosts by IP: $IPADDR ..."
+        echo "Looking for hostname of this host in $FILE by IP: $IPADDR"
         
         # Command summary by line:
         # 1: convert tabs to spaces -- contains a literal tab: <ctrl>+<v> then <tab>
@@ -489,7 +523,7 @@ get_hostname_by_hosts_file() {
         # 8: remove domain name, leaving naught but the hostname, naked as the day it were born
         
         HOSTNAME=`
-            sed 's/[[:space:]]/ /g' /tmp/hosts | \
+            sed 's/[[:space:]]/ /g' $FILE | \
             grep -v '^ *#' | \
             sed 's/^/ /' | \
             grep " $IPADDR_ESCAPED " | \
@@ -681,63 +715,44 @@ start_ssh() {
 #
 get_script() {
     echo
+    echo "get_script"
     echo "I will now try to get the autoinstall script:  $SCRIPTNAME"
-    mkdir -p /tmp/scripts
-    CMD="rsync -aL ${IMAGESERVER}::${SCRIPTS}/${SCRIPTNAME} /tmp/scripts"
-    echo "$CMD"
-    $CMD
+    if [ -e /tmp/scripts/${SCRIPTNAME} ]; then
+        echo "Excellent!  It's already here -- in the /tmp/scripts directory."
+    else
+        mkdir -p /tmp/scripts
+        CMD="rsync -aL ${IMAGESERVER}::${SCRIPTS}/${SCRIPTNAME} /tmp/scripts"
+        echo "$CMD"
+        $CMD
+    fi
 }
 #
 ################################################################################
 #
 
 
-echo
-echo switch_root_to_tmpfs
 switch_root_to_tmpfs
 
-echo
-echo mount_dev_on_devfs
 mount_dev_on_devfs
 
-echo
-echo mount_proc
 mount_proc
 
-echo
-echo adjust_arch
 adjust_arch
 
-echo
-echo ifconfig_loopback
 ifconfig_loopback
 
-echo
-echo load_my_modules
 load_my_modules
 
-echo
-echo read_local_cfg
 read_local_cfg
 
-echo
-echo start_network
 start_network
 
-echo
-echo ping_test
 ping_test
 
-echo
-echo start_syslogd
 start_syslogd
 
-echo
-echo get_boel_binaries_tarball
 get_boel_binaries_tarball
 
-echo
-echo autodetect_hardware_and_load_modules
 autodetect_hardware_and_load_modules
 
 if [ ! -z $SSH_DOWNLOAD_URL ]; then
