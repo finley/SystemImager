@@ -210,7 +210,13 @@ Pre-Release Checklist
 ---------------------
 - fix flaw in the way raidstop works in <image>.master
   (parse /proc/mdstat from booting autoinstall client)
-  RAID_DEVICES=`cat /proc/mdstat | grep ^md | awk '{print "/dev/" $1}'`
+  RAID_DEVICES=`cat /proc/mdstat | grep ^md | mawk '{print "/dev/" $1}'`
+  for blah
+  do
+  done
+- also fix flaw in the way software raid devices are created.  LABEL=
+  flubs this up...
+
 - install
 - installclient
 - hardware RAID client
