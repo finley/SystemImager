@@ -150,14 +150,15 @@ for file in /etc/rsyncd.conf /etc/systemimager/rsyncd.conf.beforesystemimager$VE
 done
 ### END copy over existing rsyncd.conf entries ###
 
+### if 
 if [ -f /etc/rsyncd.conf ]; then
   ## if it's not our rsyncd.conf, leave it alone.
-  grep "^# only image entries below this line" > /dev/null
+  grep "^# only image entries below this line" < /etc/rsyncd.conf > /dev/null
   if [ $? -ne 0 ]; then
     break
   fi
   delim
-  echo "Warning:  /etc/rsyncd.conf is no longer used by SystemImager
+  echo "Warning:  /etc/rsyncd.conf is no longer used by SystemImager"
   delim
   echo "Moving /etc/rsyncd.conf to /etc/rsyncd.conf-no-longer-used-by-systemimager..."
   mv /etc/rsyncd.conf /etc/rsyncd.conf-no-longer-used-by-systemimager
@@ -177,7 +178,7 @@ if [ -d /tftpboot/systemimager ]; then
   echo "Press <Enter> to continue..."
   read
   echo "Shall I copy any master scripts/links you have over to the new"
-  echo -n "location? ([y]/n]) "
+  echo -n "location? ([y]/n) "
   read REPLY
   case $REPLY in
     n|N|No|NO ) echo "Ok, not copying over master scripts." ;;
