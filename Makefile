@@ -169,40 +169,29 @@ IMAGEDEST   = $(DESTDIR)/var/lib/systemimager/images
 WARNING_FILES = $(IMAGEDEST)/README $(IMAGEDEST)/DO_NOT_TOUCH_THESE_DIRECTORIES $(IMAGEDEST)/CUIDADO $(IMAGEDEST)/ACHTUNG
 AUTOINSTALL_SCRIPT_DIR = $(DESTDIR)/var/lib/systemimager/scripts
 
-LINUX_SRC = $(SRC_DIR)/linux
+LINUX_DIR = linux
+LINUX_SRC = $(SRC_DIR)/$(LINUX_DIR)
 
 # Now we do multi architecture defines for kernel building
 
 ifeq ($(ARCH),i386)
-	 LINUX_VERSION = 2.4.14
-	 LINUX_MD5SUM = dc03387783a8f58c90ef7b1ec6af252a
+	 LINUX_VERSION = 2.4.16
 	 LINUX_IMAGE = $(LINUX_SRC)/arch/i386/boot/bzImage
-	 LINUX_PATCH = $(PATCH_DIR)/linux.i386.patch
-	 LINUX_CONFIG = $(PATCH_DIR)/linux.i386.config
 	 LINUX_TARGET = bzImage
 endif
 ifeq ($(ARCH),ia64)
 	 LINUX_VERSION = 2.4.9
-	 LINUX_MD5SUM = 991c485866bd4c52504ec4721337b46c
 	 LINUX_IMAGE = $(LINUX_SRC)/arch/ia64/boot/vmlinux
-	 LINUX_PATCH = $(PATCH_DIR)/linux.ia64.patch
-	 LINUX_CONFIG = $(PATCH_DIR)/linux.ia64.config
 	 LINUX_TARGET = vmlinux
 endif
 ifeq ($(ARCH),s390)
 	 LINUX_VERSION = 2.4.7
-	 LINUX_MD5SUM = 5890ac5273402635e6fc7a804a3b5d7d
 	 LINUX_IMAGE = $(LINUX_SRC)/arch/s390/boot/image
-	 LINUX_PATCH = $(PATCH_DIR)/linux.s390.patch
-	 LINUX_CONFIG = $(PATCH_DIR)/linux.s390.config
 	 LINUX_TARGET = image
 endif
 ifeq ($(ARCH),ppc)
 	LINUX_VERSION = 2.4.14
-	LINUX_MD5SUM = dc03387783a8f58c90ef7b1ec6af252a
 	LINUX_IMAGE = $(LINUX_SRC)/arch/ppc/boot/zImage
-	LINUX_PATCH = $(PATCH_DIR)/linux.ppc.patch
-	LINUX_CONFIG = $(PATCH_DIR)/linux.ppc.config
 	LINUX_TARGET = zImage                          
 endif
 
@@ -329,19 +318,19 @@ patched_kernel-stamp:
 	$(MAKE) $(SRC_DIR)/$(LINUX_TARBALL)
 	[ -d $(LINUX_SRC) ] || \
 		( cd $(SRC_DIR) && bzcat $(LINUX_TARBALL) | tar xv && \
-		  [ ! -f ../$(LINUX_PATCH) ] || \
-		    (cd linux && patch -p1 < ../../$(LINUX_PATCH)))
-	cp -a $(LINUX_CONFIG) $(LINUX_SRC)/.config
+            cd linux && cat `find ../../$(PATCH_DIR) \
+              -name "linux.$(ARCH).*.patch" | sort` | patch -p1 )
+	cp -a $(PATCH_DIR)/linux.$(ARCH).config $(LINUX_SRC)/.config
 	cd $(LINUX_SRC) && make oldconfig dep
 	touch patched_kernel-stamp
 
 $(SRC_DIR)/$(LINUX_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
-	cd $(SRC_DIR) && ([ -f /usr/src/$(LINUX_TARBALL) ] && \
-	  ln -s /usr/src/$(LINUX_TARBALL) .) || $(WGET) $(LINUX_URL)
-	[ "$(LINUX_MD5SUM)" == \
-		`md5sum $(SRC_DIR)/$(LINUX_TARBALL) | cut -d " " -f 1` ] || \
-		exit 1
+	( [  -a /usr/src/$(LINUX_TARBALL) ] && \
+	  ln -s /usr/src/$(LINUX_TARBALL) $(SRC_DIR) ) || \
+	( [ -d $(LINUX_DIR) ] && tar -c $(LINUX_DIR) | \
+	  gzip -9 > $(SRC_DIR)/$(LINUX_TARBALL) ) || \
+	( cd $(SRC_DIR) && $(WGET) $(LINUX_URL) )
 
 ########## END kernel ##########
 
