@@ -27,7 +27,7 @@ FLAMETHROWER_DIRECTORY_DIR=/var/lib/systemimager/flamethrower
 BOEL_BINARIES_DIR=/tmp/boel_binaries
 VERSION="SYSTEMIMAGER_VERSION_STRING"
 FLAVOR="SYSTEMIMAGER_FLAVOR_STRING"
-#DEBUG=1     # XXX Make sure this is commented out for releases. -BEF-
+DEBUG=1     # XXX Make sure this is commented out for releases. -BEF-
 
 #
 ################################################################################
@@ -279,7 +279,7 @@ flamethrower_client() {
                 [ ! -z $DEBUG ] && echo THIS $THIS_STAMP
                 if [ "$THIS_STAMP" = "$LAST_STAMP" ]; then
                     echo "WARNING: No progress since last check.  Killing udp-receiver."
-                    while killall -9 udp-reciever; do sleep 1; done
+                    while killall -9 udp-receiver; do sleep 1; done
                     unset UDP_RECEIVER_RUNNING
                     sleep 1
                 fi
