@@ -105,6 +105,14 @@ $(BUILD_DIR)/etc/hosts:	$(SKEL_FILES) $(BUSYBOX_BINARY) $(DEVFSD_BINARY) \
 	# Copy over busybox binary and all it's hard links. -BEF-
 	cp -a $(SRC_DIR)/$(BUSYBOX_DIR)/_install/* $(BUILD_DIR)/
 
+	# Copy over other binaries.
+	cp -a $(RSYNC_BINARY) $(BUILD_DIR)/bin
+	cp -a $(DHCLIENT_BINARY) $(BUILD_DIR)/sbin
+	cp -a $(DEVFSD_BINARY) $(BUILD_DIR)/sbin
+	# If INSMOD_BINARY is set, then copy it on over. -BEF-
+	[ "x$(INSMOD_BINARY)" == "x" ] || \
+		cp -a $(INSMOD_BINARY) $(BUILD_DIR)/sbin
+
 	# If UCLIBC_TARGET is set, then copy over uclibc libraries. -BEF-
 	[ "x$(UCLIBC_TARGET)" == "x" ] || mkdir -m 755 -p \
 	  $(BUILD_DIR)/usr/$(UCLIBC_ARCH_NAME)-linux-uclibc/lib/
@@ -116,14 +124,6 @@ $(BUILD_DIR)/etc/hosts:	$(SKEL_FILES) $(BUSYBOX_BINARY) $(DEVFSD_BINARY) \
 	# standard libs instead. -BEF-
 	[ "x$(UCLIBC_TARGET)" != "x" ] || ( cd $(BUILD_DIR) && \
 	  $(TOPDIR)/initrd_source/mklibs.sh -v -d lib ./*bin/* ./lib/* )
-
-	# Copy over other binaries.
-	cp -a $(RSYNC_BINARY) $(BUILD_DIR)/bin
-	cp -a $(DHCLIENT_BINARY) $(BUILD_DIR)/sbin
-	cp -a $(DEVFSD_BINARY) $(BUILD_DIR)/sbin
-	# If INSMOD_BINARY is set, then copy it on over. -BEF-
-	[ "x$(INSMOD_BINARY)" == "x" ] || \
-		cp -a $(INSMOD_BINARY) $(BUILD_DIR)/sbin
 
 	# Strip 'em. -BEF-
 	strip $(BUILD_DIR)/bin/*
