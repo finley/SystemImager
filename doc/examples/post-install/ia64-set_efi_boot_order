@@ -1,0 +1,33 @@
+#!/bin/sh
+
+#
+# "SystemImager"
+#
+#   Copyright (C) 2004 Brian Elliott Finley
+#       Based on "bootmenu" by Egan Ford.
+#
+#   $Id$
+#
+
+# get list of linux boot entries
+LINUX_ENTRY_NOS=`efibootmgr | egrep "(Linux|SuSE)" | perl -pi -e 's/Boot([^\*]+).*/\1/'`
+
+# remove each linux boot entry
+for i in $LINUX_ENTRY_NOS; do
+        # remove each linux entry
+        efibootmgr --bootnum $i --delete-bootnum
+done
+
+# re-add linux boot entry (elilo)
+efibootmgr --create --disk /dev/sda --loader \\efi\\SuSE\\elilo.efi     
+
+# get entry numbers for linux and ethernet
+ETHERNET_ENTRY_NO=`efibootmgr | grep "Ethernet" | perl -pi -e 's/Boot([^\*]+).*/\1/'`
+LINUX_ENTRY_NO=`efibootmgr | grep "Linux" | perl -pi -e 's/Boot([^\*]+).*/\1/'`
+
+# get current boot entry order
+OTHER_ENTRY_NOS=`efibootmgr | grep BootOrder | perl -pi -e "s/^BootOrder: //; s/$LINUX_ENTRY_NO//g; s/$ETHERNET_ENTRY_NO//g; s/,,/,/g; s/^,//; s/,$//"`
+
+# specify boot order
+efibootmgr --bootorder $ETHERNET_ENTRY_NO,$LINUX_ENTRY_NO,$OTHER_ENTRY_NOS
+
