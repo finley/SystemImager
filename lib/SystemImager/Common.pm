@@ -564,27 +564,31 @@ sub _turn_sfdisk_output_into_generic_partitionschemes_file {
         # other flags that may be set.  Valid flags from parted's perspective are:
         # boot, root, swap, hidden, raid, lvm, lba, hp-service
         #
-        if ($id eq "0") {         # 0  Empty
+        if ($id eq "0") {        # 0   Empty
           $partition_type = "-";
      
-        } elsif ($id eq "4") {  # 4  FAT16 <32M
-     
-        } elsif ($id eq "5") {  # 5  Extended
-          $partition_type = "extended";
-     
-        } elsif ($id eq "6") {  # 6  FAT16
-     
-        } elsif ($id eq "7") {  # 7  HPFS/NTFS
-     
-        } elsif ($id eq "b") {  # b  Win95 FAT32
-     
-        } elsif ($id eq "c") {  # c  Win95 FAT32 (LBA)
-          $flags = "lba";
-     
-        } elsif ($id eq "e") {  # e  Win95 FAT16 (LBA)
-          $flags = "lba";
-     
-        } elsif ($id eq "f") {  # f  Win95 Ext'd (LBA)
+        } elsif ($id eq "1") {   # 1   Ghost boot partition formatted with FAT12
+                                       
+        } elsif ($id eq "4") {   # 4   FAT16 <32M
+                                       
+        } elsif ($id eq "5") {   # 5   Extended
+          $partition_type = "extended"";
+                                       
+        } elsif ($id eq "6") {   # 6   FAT16
+                                       
+        } elsif ($id eq "7") {   # 7   HPFS/NTFS
+                                       
+        } elsif ($id eq "b") {   # b   Win95 FAT32
+                                       
+        } elsif ($id eq "c") {   # c   Win95 FAT32 (LBA)
+          $flags = "lba";              
+                                       
+        } elsif ($id eq "de") {  # de  Dell Utility partition
+                                       
+        } elsif ($id eq "e") {   # e   Win95 FAT16 (LBA)
+          $flags = "lba";              
+                                       
+        } elsif ($id eq "f") {   # f   Win95 Ext'd (LBA)
           $partition_type = "extended";
           $flags = "lba";
      
