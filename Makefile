@@ -91,8 +91,10 @@ RELEASE_DOCS = CHANGE.LOG COPYING CREDITS ERRATA README VERSION
 PATH = /sbin:/bin:/usr/sbin:/usr/bin:/usr/bin/X11:/usr/local/sbin:/usr/local/bin
 ARCH = $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/)
 # Follows is a set of arch manipulations to distinguish between ppc types
+ifeq ($(ARCH),ppc64)
 ifneq ($(strip ls /proc/iSeries)),)
         ARCH=ppc64-iSeries
+endif
 endif
 
 SUDO = $(shell if [ `id -u` != 0 ]; then `which sudo`; fi)
