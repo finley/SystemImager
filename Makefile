@@ -303,6 +303,7 @@ install_configs:
 	mkdir -p $(INITD)
 	$(SI_INSTALL) -b -m 755 etc/init.d/rsync $(INITD)/systemimager
 	$(SI_INSTALL) -b -m 755 etc/init.d/netbootmond $(INITD)
+	$(SI_INSTALL) -b -m 755 etc/init.d/systemimager-flamethrowerd $(INITD)
 
 ########## END initrd ##########
 

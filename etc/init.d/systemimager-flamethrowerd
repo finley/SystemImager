@@ -1,0 +1,56 @@
+#!/bin/sh
+#
+# "SystemImager"
+#
+#  Copyright (C) 2003 Bald Guy Software 
+#                     Brian E. Finley <bef@bgsw.net>
+#
+#    $Id$
+#
+#
+# Support for IRIX style chkconfig:
+# chkconfig:   2345 20 20
+# description: The SystemImager flamethrowerd daemon.
+#
+#
+# Support for LSB compliant init system:
+### BEGIN INIT INFO
+# Provides: flamethrowerd
+# Required-Start: $network $syslog
+# Required-Stop:
+# Default-Start:  3 5
+# Default-Stop:   0 1 2 6
+# Short-Description: SystemImager's daemon multicast installs
+# Description: SystemImager's daemon multicast installs
+#
+### END INIT INFO
+
+
+PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin:
+PIDFILE=/var/run/flamethrowerd.pid
+
+case "$1" in
+  start)
+    echo -n "Starting SystemImager's Flamethrower (multicast): flamethrowerd"
+    flamethrowerd
+    echo "."
+    ;;
+  stop)
+    echo -n "Stopping SystemImager's Flamethrower (multicast): flamethrowerd"
+    [ -f $PIDFILE ] && kill `cat $PIDFILE`
+    echo "."
+    ;;
+  reload)
+    echo "Not implemented."
+    ;;
+  force-reload|restart)
+    sh $0 stop
+    sh $0 start
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart}"
+    exit 1
+    ;;
+esac
+
+exit 0
