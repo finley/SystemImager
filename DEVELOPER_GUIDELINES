@@ -28,6 +28,7 @@ o Always give people credit in the CREDITS file.
 o Do not modify anyone elses section.
 o Have fun!
 
+
 ----------------------
 CVS Reference Material
 ----------------------
@@ -37,22 +38,39 @@ o http://cvsbook.red-bean.com/cvsbook.html
  or
 o http://www.cvshome.org/
 
+
 ------------------------------------------------------------
 CVS Checkout Steps for Developers for the Development Branch
 ------------------------------------------------------------
 1) Checkout the code:
    "cvs -z3 -d:ext:developer_name@cvs.systemimager.sourceforge.net:/cvsroot/systemimager co systemimager"
 2) Rename the checked out source tree (suggested):
-   "mv systemimager systemimager.devel"
+   "mv systemimager systemimager.HEAD"
+
+
+-----------------------------------------------------------------------
+CVS Checkout Steps for Developers for the ia64 specific Unstable Branch
+(This branch is a special case.  Normally, there will only be HEAD for 
+ development)
+-----------------------------------------------------------------------
+1) Choose your branch:
+   "BRANCH=unstable-2_1_x"
+2) Checkout the code:
+   "cvs -z3 -d:ext:developer_name@cvs.systemimager.sourceforge.net:/cvsroot/systemimager co -r $BRANCH systemimager"
+3) Rename the checked out source tree (suggested):
+   "mv systemimager systemimager.$BRANCH"
 
 
 ------------------------------------------------------------------------
 CVS Checkout Steps for Developers for the Stable Branch (bug fixes only)
 ------------------------------------------------------------------------
-1) Checkout the code:
-   "cvs -z3 -d:ext:developer_name@cvs.systemimager.sourceforge.net:/cvsroot/systemimager co -r stable-2_0_x systemimager"
-2) Rename the checked out source tree (suggested):
-   "mv systemimager systemimager.stable"
+1) Choose your branch:
+   "BRANCH=stable-2_0_x"
+2) Checkout the code:
+   "cvs -z3 -d:ext:developer_name@cvs.systemimager.sourceforge.net:/cvsroot/systemimager co -r $BRANCH systemimager"
+3) Rename the checked out source tree (suggested):
+   "mv systemimager systemimager.$BRANCH"
+
 
 ----------
 Versioning
