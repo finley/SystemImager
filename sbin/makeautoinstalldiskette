@@ -3,6 +3,9 @@
 #
 # "SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com>
 #
+#   Others who have contributed to this code:
+#     Wesley Smith <wessmith@engr.sgi.com>
+#
 # This file is: makeautoinstalldiskette
 #
 
@@ -26,25 +29,28 @@ $help_info = $version_info . <<"EOF";
 Usage: $program_name [OPTION]...
 
 Options: (options can be presented in any order)
- --help             duh
- --version          display version and copyright information
+ --help             Display this output.
+ --version          Display version and copyright information.
  --floppy=DEVICE    The  1.44MB floppy drive device containing the disk
                     to format.  If not specified, /dev/fd0 is assumed.
                     This command understands \"/dev/fd0\" through \"/dev/fd7\"
+                    (if you specify --floppy, this command will run 
+                     non-interactively)
  --quiet            Don\'t print any output, just provide an appropriate 
-                    exit code.  (requires --floppy)
+                    exit code (requires --floppy).
 
 Download from http://systemimager.org/
 Report bugs or suggestions to <systemimager-bugs\@systemimager.org>
 EOF
-
-#$floppy_device_prefix = "/dev/fd0";
 
 GetOptions( "help" => \$help,
             "version" => \$version,
             "floppy=s" => \$floppy_device_prefix,
             "quiet" => \$quiet 
 ) || die "$help_info";
+
+# if floppy device not specified, set value to run in interactive mode
+if($floppy_device_prefix) { $user_specified_floppy=1; }
 
 # if requested, print help information
 if($help) { die "$help_info"; }
@@ -53,10 +59,12 @@ if($help) { die "$help_info"; }
 if($version) { die "$version_info"; }
 
 # be sure the user includes --floppy when doing --quiet
-if($quiet and !$floppy_device_prefix) { die "Must use --floppy with --quiet! (use --help for options)\n"; }
+if($quiet and !$user_specified_floppy) { die "Must use --floppy with --quiet! (use --help for options)\n"; }
 
-if(!$floppy_device_prefix) { $floppy_device_prefix = "/dev/fd0"; }
+# if user did not specify a floppy device, choose the default
+if(!$user_specified_floppy) { $floppy_device_prefix = "/dev/fd0"; }
 
+# verify that a valid floppy device was specified
 if (! ($floppy_device_prefix =~ /^\/dev\/fd[0-7]$/)) {
     die "ERROR: Invalid --floppy argument.\n $help_info";
 }
@@ -64,19 +72,22 @@ if (! ($floppy_device_prefix =~ /^\/dev\/fd[0-7]$/)) {
 # if not run as root, this script will surely fail
 unless($< == 0) { die "Must be run as root!\n"; }
 
-if (!$quiet) {
+# if appropriate, run interactively
+if (!$user_specified_floppy) {
     system('clear');
-    print << "EOF";
+    print << 'EOF';
 
 This program assumes that you have a 1.44MB floppy drive and that it is 
-$floppy_device_prefix.  You can use the --floppy command line option
-to change this value.
+/dev/fd0.  You can use the --floppy command line option to change this value.  
 
-This program will create the device file ${floppy_device_prefix}u1722 and use it to format your floppy
-to handle 1.722MB of capacity.
+If you do use --floppy, this command will run non-interactively!!!
 
-Virtually all 1.44MB drives support 1.722MB just fine, but it is possible for an
-extended format to break a floppy drive -- so USE THIS COMMAND AT YOUR OWN RISK!
+This program will create the device file /dev/fd0u1722 and use it to format
+your floppy to handle 1.722MB of capacity.
+
+Virtually all 1.44MB drives support 1.722MB just fine, but it is possible for
+an extended format to break a floppy drive -- so USE THIS COMMAND AT YOUR OWN 
+RISK!
 
 Insert your floppy now.  This will overwrite all information on the floppy.
 
@@ -86,7 +97,7 @@ EOF
     $continue=<STDIN>;
     chomp $continue;
     $continue = lc $continue;
-    ($continue eq "y") or die "\nOk Mr. Sensitive, I\'ll leave your silly diskette alone!\n";
+    ($continue eq "y") or die "\nYour diskette has not been modified...\n";
 }
 
 # create floppy device if necessary
