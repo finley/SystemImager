@@ -4,6 +4,12 @@
 #   $Id$
 #
 
+
+# And today's release in progress is:
+2.2.0 is the version currently striving to be released.
+
+
+
 # The purpose of this file is to detail steps for making releases.  It 
 # is my intention that, by following the steps outlined here, we are
 # able to produce clean, stable, reliable releases time after time.
@@ -16,10 +22,11 @@
 #     modify this file as is appropriate.
 
 Files to Update:
-  _ ERRATA
-  _ VERSION
-  _ CHANGE.LOG
-  _ CREDITS
+  o ERRATA
+  o VERSION
+  o CHANGE.LOG
+  o CREDITS
+
 
 ----------------------------------------
 Tests (for each supported architecture)
@@ -38,34 +45,33 @@ Servers
 
 Clients
   o get and autoinstall an image containing the following filesystems:
-    _ ext3
-    _ reiserfs
-  _ get and autoinstall an image with software RAID
-  _ get and autoinstall an image with DAC960 HW RAID
-  _ autoinstall an image using DHCP, booting from a floppy
-  _ autoinstall an image using DHCP, booting from a harddisk
-  _ autoinstall an image using local.cfg, booting from a floppy
-  _ autoinstall an image using local.cfg, booting from a harddisk
-  _ autoinstall an image over ssh
-  _ get an image over ssh
-  _ get an image over ssh w/ both machines firewalled except for ssh
-  - getimage -golden-client <client> -image <image> -update-script yes -ip-assignment replicant
+    o ext3
+    o reiserfs
+  o get and autoinstall an image with software RAID
+  o get and autoinstall an image with DAC960 HW RAID
+  o autoinstall an image using DHCP, booting from a floppy
+  o autoinstall an image using DHCP, booting from a harddisk
+  o autoinstall an image using local.cfg, booting from a floppy
+  o autoinstall an image using local.cfg, booting from a harddisk
+  o autoinstall an image over ssh
+  o get an image over ssh
+  o get an image over ssh w/ both machines firewalled except for ssh
 
 Distros
-  _ get and autoinstall an image with the most recent stable RedHat release
-  _ get and autoinstall an image with the most recent stable Debian release
+  o get and autoinstall an image with the most recent stable RedHat release
+  o get and autoinstall an image with the most recent stable Debian release
 
 Tools
   o cpimage
-    _ copy an image from a remote image server to the local machine
+    o copy an image from a remote image server to the local machine
   o rmimage
-    _ remove an image
+    o remove an image
   o mkbootserver
-    _ create a pxe server, and install a client via pxe
+    o create a pxe server, and install a client via pxe
   o mkautoinstalldiskette
-    _ create a floppy (i386 only)
+    o create a floppy (i386 only)
   o mkautoinstallcd
-    _ create a cd image
+    o create a cd image
 
 ### Development Releases ###
 o step one
@@ -75,8 +81,8 @@ o test two
 o etc.
 
 ### Doing the Release ###
-- clean CVS tree
-- make source_tarball
+o clean CVS tree
+o make source_tarball
    suggestion:  copy to a good place, you will need to access it from multiple
                 machines, and want to make sure you are using the same tarball
                 everywhere.  this is all happening before CVS is tagged, so
@@ -84,11 +90,16 @@ o etc.
                 one arch's source different from another.
 
 for each arch (including the one where you created the source tarball)
-  - make sure the build machine is in a stable state (i.e., apt-get upgrade
+  o make sure the build machine is in a stable state (i.e., apt-get upgrade
     and make sure all the build-deps are available)
-  - extract the source tarball
-  - make client_tarball server_tarball
-  - remove build tree & extract a new one
-  - find /usr/src/rpm -type f -exec rm {}
-  - make rpm (revisit, now that srpm rule exists)
-  - produce one MD5SUM file for all files for a particular release version
+  o extract the source tarball
+  o make client_tarball server_tarball boot_tarball
+  o remove build tree & extract a new one
+  o clear out /usr/src/rpm
+  o make rpm (use the srpm created by the first arch for all other arches)
+
+o produce one MD5SUM file for all files for a particular release version
+o upload
+o close any pending bugs that were closed by this upload.
+o download
+  o test each package against it's MD5SUM
