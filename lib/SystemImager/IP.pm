@@ -66,7 +66,7 @@ sub _iplist_start_num {
         push @ips, $block->nth($index);
         if($block->nth($index) eq $block->nth(-2)) {
             $block = new Net::Netmask($block->next, '255.255.255.0');
-            $index = 0;
+            $index = -1;
         }
     }
     return @ips;
@@ -88,7 +88,7 @@ sub _iplist_start_end {
     for my $block (@blocks) {
         my @temps = $block->enumerate();
         foreach my $temp (@temps) {
-            if($temp !~ /\.(0|255)$/) {
+            if($temp !~ /\.255$/) {
                 push @ips, $temp;
             }
         }
