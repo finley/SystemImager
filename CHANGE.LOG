@@ -8,15 +8,34 @@
 SystemImager-1.6.0 2001.xx.xx
 -----------------------------------------------------------------------
 
+Client.pm
+---------
+o created it.
+
+Common.pm
+---------
+o created it.
+
 cpimage
 -------
 o created it.
 
+dev_ls-lR
+---------
+o added entries for /dev/rd/c0d[3456789]*
+
 getimage
 --------
+o broke certain functions out into the Server.pm and Common.pm libraries
 o added -exclude option
 o depricated -server now recommends using cpimage
 o removed depricated -master-client option (use -golden-client instead)
+
+initrd
+------
+o We now use a Makefile to create the initrd.  This means that the rcS
+  script and other important files are stored in CVS as text files that
+  can be edited induhvidually.
 
 lsimage
 -------
@@ -28,6 +47,10 @@ o created it.
 
 rmimage
 -------
+o created it.
+
+Server.pm
+---------
 o created it.
 
 
