@@ -387,13 +387,48 @@ get_boel_binaries_tarball() {
 #
 switch_root_to_tmpfs() {
     local tmpfs_size
+    local tmpfs_nr_blocks
+    local tmpfs_nr_inodes
+    local tmpfs_mode
     local tmpfs_opts
 
     mount_proc
     tmpfs_size=$(tr ' ' '\n' < /proc/cmdline | grep tmpfs_size\= | sed 's/.*=//')
+    tmpfs_nr_blocks=$(tr ' ' '\n' < /proc/cmdline | grep tmpfs_nr_blocks\= | sed 's/.*=//')
+    tmpfs_nr_inodes=$(tr ' ' '\n' < /proc/cmdline | grep tmpfs_nr_inodes\= | sed 's/.*=//')
+    tmpfs_mode=$(tr ' ' '\n' < /proc/cmdline | grep tmpfs_mode\= | sed 's/.*=//')
     umount /proc
+
     if [ "$tmpfs_size" != "" ]; then
-        tmpfs_opts="-o size=$tmpfs_size"
+        tmpfs_opts="size=$tmpfs_size"
+    fi
+
+    if [ "$tmpfs_nr_blocks" != "" ]; then
+        if [ "$tmpfs_opts" != "" ]; then
+	    tmpfs_opts="${tmpfs_opts},nr_blocks=$tmpfs_nr_blocks"
+        else
+            tmpfs_opts="nr_blocks=$tmpfs_nr_blocks"
+	fi
+    fi
+
+    if [ "$tmpfs_nr_inodes" != "" ]; then
+        if [ "$tmpfs_opts" != "" ]; then
+	    tmpfs_opts="${tmpfs_opts},nr_inodes=$tmpfs_nr_inodes"
+        else
+            tmpfs_opts="nr_inodes=$tmpfs_nr_inodes"
+	fi
+    fi
+
+    if [ "$tmpfs_mode" != "" ]; then
+        if [ "$tmpfs_opts" != "" ]; then
+	    tmpfs_opts="${tmpfs_opts},mode=$tmpfs_mode"
+        else
+            tmpfs_opts="mode=$tmpfs_mode"
+	fi
+    fi
+
+    if [ "$tmpfs_opts" != "" ]; then
+        tmpfs_opts="-o $tmpfs_opts"
     fi
 
     echo
