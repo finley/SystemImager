@@ -11,8 +11,8 @@
 #  $Id$
 #
 #  Others who have contributed to this code (in alphabetical order):
-#    John Goebel <jgoebel@valinux.com>
-#    Curtis Zinzilieta <czinzilieta@valinux.com>
+#   John Goebel <jgoebel@valinux.com>
+#   Curtis Zinzilieta <czinzilieta@valinux.com>
 #
 #   See http://www.iana.org/assignments/bootp-dhcp-parameters for info on
 #   custom option numbers.
@@ -22,7 +22,6 @@ use lib "USR_PREFIX/lib/systemimager/perl";
 use strict;
 use SystemImager::Common;
 use vars qw($VERSION);
-
 
 # set some variables
 $VERSION="SYSTEMIMAGER_VERSION_STRING";
@@ -72,49 +71,36 @@ my $dhcpd_conf_v3_part1 = <<"EOF";
 # This is an ISC DHCP v3 configuration file.
 
 # general options
+authoritative;
 ddns-update-style none;
+
 EOF
 
 
 my $dhcpd_conf_v3_part2 = <<"EOF";
 
-# make network booting the SystemImager autoinstall client possible
-allow booting;
-allow bootp;
+# set lease time to infinite (-1)
+default-lease-time -1;
 
-# set lease time to 3 days
-default-lease-time 259200;
-max-lease-time 259200;
-
-# The following three lines will allow netbooting of most x86 pxe clients.
-# However, they will not allow ia64 clients to netboot.
-# Refer to the SystemImager manual for additional details on network 
-# booting ia64 clients
-filename "/pxelinux.bin"; # what to get to boot the autoinstall client
-option vendor-class-identifier "PXEClient";
-option vendor-encapsulated-options 09:0f:80:00:0c:4e:65:74:77:6f:72:6b:20:62:6f:6f:74:0a:07:00:50:72:6f:6d:70:74:06:01:02:08:03:80:00:00:47:04:80:00:00:00:ff;
+# Uncomment one of the two following lines.  The first, if you need to
+# boot i386 clients, or the second for booting ia64 clients.
+filename "/pxelinux.bin";   # i386
+filename "/elilo.efi";   # ia64
 
 EOF
 
+#XXX include elilo.efi and elilo.conf in systemimager bundle.  Also include pxelinux.bin, methinks. -BEF-
 
 my $dhcpd_conf_v2_part1 = <<'EOF';
 # This is an ISC DHCP v2 configuration file.
 
-# make network booting the SystemImager autoinstall client possible
-allow booting;
-allow bootp;
+# set lease time to infinite (-1)
+default-lease-time -1;
 
-# set lease time to 3 days
-default-lease-time 259200;
-max-lease-time 259200;
-
-# The following three lines will allow netbooting of most x86 pxe clients.
-# However, they will not allow ia64 clients to netboot.
-# Refer to the SystemImager manual for additional details on network 
-# booting ia64 clients
-filename "/pxelinux.bin"; # what to get to boot the autoinstall client
-option dhcp-class-identifier "PXEClient";
-option vendor-encapsulated-options 09:0f:80:00:0c:4e:65:74:77:6f:72:6b:20:62:6f:6f:74:0a:07:00:50:72:6f:6d:70:74:06:01:02:08:03:80:00:00:47:04:80:00:00:00:ff;
+# Uncomment one of the two following lines.  The first, if you need to
+# boot i386 clients, or the second for booting ia64 clients.
+filename "/pxelinux.bin";   # i386
+filename "/elilo.efi";   # ia64
 
 EOF
 
@@ -410,53 +396,67 @@ if ($dhcpd_version eq "2") {
         print DHCPDCONF qq(#host-checking true;\n);
     }
 
-    print DHCPDCONF qq(\n);
-    print DHCPDCONF qq(option space systemimager;\n);
-    print DHCPDCONF qq(option systemimager.imageserver          code 140 = ip-address;\n);
-    print DHCPDCONF qq(option systemimager.log_server_port      code 141 = unsigned integer 32;\n);
-    print DHCPDCONF qq(option systemimager.ssh_download_url     code 142 = string;\n);
-    print DHCPDCONF qq(option systemimager.flamethrower_directory_portbase    code 143 = string;\n);
+    print DHCPDCONF qq(# Imageserver\n);
+    print DHCPDCONF qq(option option-140 code 140 = ip-address;\n);
     print DHCPDCONF qq(\n);
 
-    print DHCPDCONF qq(# systemimager.imageserver is the IP address of your SystemImager image server\n);
-    print DHCPDCONF qq(option systemimager.imageserver $imageserver; \n);
+    print DHCPDCONF qq(# log_server_port\n);
+    print DHCPDCONF qq(option option-141 code 141 = unsigned integer 32;\n);
+    print DHCPDCONF qq(\n);
 
-    print DHCPDCONF qq(\n# systemimager.ssh_download_url specifies the URL address of your ssh download\n);
-    print DHCPDCONF qq(  # This should be in the format of "http://$imageserver/systemimager/boot/".\n);
+    print DHCPDCONF qq(# ssh_download_url\n);
+    print DHCPDCONF qq(option option-142 code 142 = string;\n);
+    print DHCPDCONF qq(\n);
+
+    print DHCPDCONF qq(# flamethrower_directory_portbase\n);
+    print DHCPDCONF qq(option option-143 code 143 = string;\n);
+    print DHCPDCONF qq(\n);
+
+    print DHCPDCONF qq(# option-140 is the IP address of your SystemImager image server\n);
+    print DHCPDCONF qq(option option-140 $imageserver; \n);
+    print DHCPDCONF qq(\n);
+
+    print DHCPDCONF qq(# option-142 specifies the URL address of your ssh download\n);
+    print DHCPDCONF qq(# This should be in the format of "http://$imageserver/systemimager/boot/".\n);
     if($ssh_download_url eq "") { 
-        print DHCPDCONF qq(#option systemimager.ssh_download_url "http://$imageserver/systemimager/boot/"; \n);
+        print DHCPDCONF qq(#option option-142 "http://$imageserver/systemimager/boot/"; \n);
     } else {
-        print DHCPDCONF qq(option systemimager.ssh_download_url "$ssh_download_url"; \n);
+        print DHCPDCONF qq(option option-142 "$ssh_download_url"; \n);
     }
+    print DHCPDCONF qq(\n);
 
-    print DHCPDCONF qq(\n# systemimager.flamethrower_directory_portbase specifies the Flamethrower directory port.\n);
-    print DHCPDCONF qq(  # The default is "9000".\n);
+    print DHCPDCONF qq(# option-143 specifies the Flamethrower directory port.\n);
+    print DHCPDCONF qq(# The default is "9000".\n);
     if($flamethrower_directory_portbase eq "") { 
-        print DHCPDCONF qq(#option systemimager.flamethrower_directory_portbase "9000"; \n);
+        print DHCPDCONF qq(#option option-143 "9000"; \n);
     } else {
-        print DHCPDCONF qq(option systemimager.flamethrower_directory_portbase "$flamethrower_directory_portbase"; \n);
+        print DHCPDCONF qq(option option-143 "$flamethrower_directory_portbase"; \n);
     }
+    print DHCPDCONF qq(\n);
 
-    print DHCPDCONF qq(\n# next-server is your network boot server\n);
+    print DHCPDCONF qq(# next-server is your network boot server\n);
     if($boot_server eq "") { 
         print DHCPDCONF qq(#next-server 1.2.3.4; \n);
     } else {
         print DHCPDCONF qq(next-server $boot_server; \n);
     }
+    print DHCPDCONF qq(\n);
 
-    print DHCPDCONF qq(\n# log-servers\n);
+    print DHCPDCONF qq(# log-servers\n);
     if($log_server eq "") { 
         print DHCPDCONF qq(#option log-servers 1.2.3.4; \n);
     } else {
         print DHCPDCONF qq(option log-servers $log_server; \n);
     }
+    print DHCPDCONF qq(\n);
 
-    print DHCPDCONF qq(\n# systemimager.log_server_port is the port number your log server uses\n);
+    print DHCPDCONF qq(# option-141 is the port number your log server uses\n);
     if($log_server_port eq "") { 
-        print DHCPDCONF qq(#option systemimager.log_server_port 514; \n);
+        print DHCPDCONF qq(#option option-141 514; \n);
     } else {
-        print DHCPDCONF qq(option systemimager.log_server_port $log_server_port; \n);
+        print DHCPDCONF qq(option option-141 $log_server_port; \n);
     }
+    print DHCPDCONF qq(\n);
 
     print DHCPDCONF $dhcpd_conf_v3_part2;
    
@@ -508,7 +508,7 @@ if( -d "$dhcpd_lease_file_directory" )
 system("clear");
 print <<"EOF";
 
-The dhcp server configuration file (/etc/dhcpd.conf) file has been 
+The dhcp server configuration file ($dhcpd_conf) file has been 
 created for you.  Please verify it for accuracy.
 
 If this file does not look satisfactory, you can run this command again
