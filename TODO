@@ -31,6 +31,8 @@ makedhcpstatic
 
 getimage
 --------
+- create disk partition sections of $image.master using MB instead of cylinders
+  (there may be additional things to do on the prepareclient side as well)
 - add an --exclude option
 - add "Do you want me open up the imageserver as a syslogd server?"
 - ask if hosts autoinstalled from this image will use static IP or 
