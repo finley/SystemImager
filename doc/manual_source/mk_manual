@@ -9,6 +9,11 @@
 #
 
 rm -fr manual
+rm -fr ../manual
 db2html manual.sgml
 cp -a images/ manual/images
-
+mv manual ..
+echo
+echo
+echo "You can now find the manual in <source>/doc/manual/"
+echo "  (also known as ../manual)"
