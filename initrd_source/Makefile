@@ -153,6 +153,10 @@ help:
 	#				are just copied over from the local
 	#				system)
 	#
+	# make get_source		download the source for all binaries
+	#				that are required, but not a part
+	#				of Debian/unstable.
+	#
 	# make help			print this message
 	#
 	# make clean			execute the clean rule for each
