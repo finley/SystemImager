@@ -5,23 +5,23 @@
 # (not in any specific order)
 #
 
-Short list (in progress)
+Short list (in progress by)
 ------------------------
-- update FAQ-HOWTO
-- add more error checking to makedhcpstatic
+- <brian@valinux.com> - update FAQ-HOWTO
+- <brian@valinux.com> - add more error checking to makedhcpstatic
+- <ian@valinux.com> - multicast install -- Ian McLeod <ian@valinux.com> will have mftp (multicast ftp) 
+  working as a drop in replacement for rsync by 5/15/2000 and we will begin testing
+  in the lab.
 - create man pages
+- <ian@valinux.com> - script checks floppy for file and assigns IP and hostname based on file, not on DHCP.
 
 Other stuff
 -----------
 - (part of the making of the tftp-hpa RPM) need to add proper tftp entry in /etc/inetd.conf 
    for tftp-hpa rpm.  If systemimager is installed with tftp-hpa, then systemimager's 
    afterburner will make the proper changes to /etc/inetd.conf.
-- make bootable CD-ROM *.iso image available
 - message during network booting (if possible)
 - make the <Backspace> key work ;)
-- multicast install -- Ian McLeod <ian@valinux.com> will have mftp (multicast ftp) 
-  working as a drop in replacement for rsync by 5/15/2000 and we will begin testing
-  in the lab.
 
 getimage
 --------
@@ -43,7 +43,6 @@ addclients
 ----------
 - accept command line input such as --image $imagename
 - re-cycle through each question if answer is ""
-- use FQHN in soft links?
 
 systemimager.exclude
 --------------------
@@ -70,22 +69,15 @@ Miscellaneous and Possibilities
   seems to be able to take made up options, and it is not the dhcp client
   of choice (for several reasons).  Maybe the other clients, dhcpcd and
   pump, will find their way along soon...
-- Use statically compiled rsyncd.systemimager & funky port number?
-- Track state of nodes?
-- Script to do software inventory of nodes via RPM database? or deb database? 
-  or track all files?
 - curses and/or gui wrapper around the whole thing -- Wesley Smith 
-  <wessmith@engr.sgi.com> is working on this.  Rhino, I think they're calling it.
+  <wessmith@engr.sgi.com> is working on this.  It will be called Rhino.
 - updateclient - log what was updated and or deleted?
+- makedhcpstatic -- allow for -f "filename" option to specify dhcpd.leases file.
 
 makedhcpserver 
 --------------
 - autodiscover and calculate more information 
   (including if system has more than one network interface).
-
-makedhcpstatic
---------------
-- allow for -f "filename" option to specify dhcpd.leases file.
 
 systemimager.conf
 -----------------
@@ -97,5 +89,4 @@ autoinstalldiskette
 -------------------
 - no screen-blanking
 - redirect syslog messages to $imagserver
-- more diags on autoinstall client
 
