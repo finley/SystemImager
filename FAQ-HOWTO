@@ -184,8 +184,8 @@ Or better yet, make them yourself and mail me the changes! :)
   3) Determines the IP address of the imageserver via dhcp
      (the last nameserver entry)
   4) Requests a hosts file from the imageserver
-  5) Finds it's hostname in the hosts file based on it's IP address
-  6) Requests a script from the imageserver based on it's hostname
+  5) Finds its hostname in the hosts file based on its IP address
+  6) Requests a script from the imageserver based on its hostname
      ( for example: installstuff/web-host239.sh )
   7) Executes this script
 
@@ -254,7 +254,7 @@ Or better yet, make them yourself and mail me the changes! :)
    manually it takes forever for the imageserver to respond.
 --------------------------------------------------------------------------------
 
-  Be sure that the imageserver can look up the client's hostname based on it's
+  Be sure that the imageserver can look up the client's hostname based on its
   IP address.  The easiest way to do this is to have entry in the imageserver's 
   /etc/hosts file for the client system.
 
@@ -285,7 +285,7 @@ Or better yet, make them yourself and mail me the changes! :)
   have.  
 
   After booting your systems, run makedhcpstatic.  It will re-write your 
-  /etc/dhcpd.conf file associating each clients MAC address with it's host
+  /etc/dhcpd.conf file associating each clients MAC address with its host
   name.  You should then restart your dhcpd daemon.  Subsequently, each time
   your clients request an IP address via DHCP, the will always be assigned 
   their appropriate static IP address.
@@ -348,7 +348,7 @@ Or better yet, make them yourself and mail me the changes! :)
   Once you have updated an image on the imageserver, you can then update your
   clients to reflect this new or modified image.  (It is not necessary to do a
   complete re-autoinstall.)  You will find the command "updateclient" on your 
-  clients.  This command takes as it's parameters, the name of the imageserver
+  clients.  This command takes as its parameters, the name of the imageserver
   and the name of the image that you want to update the client to.  Run
   "updateclient --help" to get more information about this command.
 
