@@ -252,9 +252,8 @@ flamethrower_client() {
         echo "udp-receiver $UDP_RECEIVER_OPTIONS --pipe 'tar ${TAR_OPTS} -C ${DIR}'"
         # Create script to do tar stuff.  Can't seem to get the tar command escaped properly for direct use 
         # with --pipe.  For example, --pipe 'tar --overwrite -xp -C  /tmp/.flamethrower.12298' fails. -BEF-
-        echo "#!/bin/sh"                    > /tmp/tar_cmd.sh
+        echo '#!/bin/sh'                    > /tmp/tar_cmd.sh
         echo "tar ${TAR_OPTS} -C ${DIR}"    >> /tmp/tar_cmd.sh
-        echo "exit $?"                      >> /tmp/tar_cmd.sh
         chmod 755 /tmp/tar_cmd.sh
 set -x
         udp-receiver $UDP_RECEIVER_OPTIONS --pipe /tmp/tar_cmd.sh
