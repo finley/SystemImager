@@ -12,7 +12,13 @@ use lib "USR_PREFIX/lib/systemimager/perl";
 use strict;
 use POSIX qw(setsid);
 use SystemImager::Config;
+use SystemImager::Server;
 use vars qw($config $VERSION);
+
+my $net_boot_default = $config->net_boot_default();
+if("$net_boot_default" eq "net") {
+    exit 0;
+}
 
 my $tftp_dir = $config->tftp_dir();
 my $pxe_conf_dir;
@@ -31,7 +37,7 @@ my $log_file = "/var/log/systemimager/rsyncd";
 ### BEGIN misc daemon stuff ###
 chdir '/'                   or die "Can't chdir to /: $!";
 open STDIN, '/dev/null'     or die "Can't read /dev/null: $!";
-#open STDOUT, '>>/dev/null'  or die "Can't write to /dev/null: $!";
+open STDOUT, '>>/dev/null'  or die "Can't write to /dev/null: $!";
 open STDERR, '>>/dev/null'  or die "Can't write to /dev/null: $!";
 umask 0;
 ### END misc daemon stuff ###
@@ -98,15 +104,13 @@ sub tail_rsync_log_file {
 sub create_no_boot_symlink {
 
     my ($client_ip) = @_;
-    my ($a, $b, $c, $d) = split(/\./, $client_ip);
 
-    # Figure out the hex equivalent of the IP address
-    my $ip_hex = sprintf("%02X%02X%02X%02X", $a, $b, $c, $d);
+    my $ip_hex = SystemImager::Server->ip_quad_2_ip_hex($client_ip);
 
     # Diagnostic output
-    print "ip_hex: $ip_hex\n";
-    
-    print qq|symlink("$syslinux_cfg_noboot", "$pxe_conf_dir/$ip_hex"\n|;
+    #print "ip_hex: $ip_hex\n";
+
+    unlink("$pxe_conf_dir/$ip_hex");
     symlink("$syslinux_cfg_noboot", "$pxe_conf_dir/$ip_hex");
     
 }

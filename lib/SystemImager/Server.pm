@@ -1,8 +1,10 @@
 #
 # "SystemImager" 
 #
-#  Copyright (C) 1999-2002 Brian Elliott Finley <brian.finley@baldguysoftware.com>
-#  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
+#  Copyright (C) 1999-2002 Brian Elliott Finley 
+#                          <brian.finley@baldguysoftware.com>
+#  Copyright (C) 2002 Bald Guy Software 
+#                     <brian.finley@baldguysoftware.com>
 #
 #   $Id$
 #
@@ -50,6 +52,8 @@ $VERSION="SYSTEMIMAGER_VERSION_STRING";
 #    get_full_path_to_image_from_rsyncd_conf 
 #
 #    get_image_path 
+#
+#    ip_quad_2_ip_hex
 #
 #    numerically 
 #
@@ -1418,3 +1422,22 @@ EOF
 
   close(MASTER_SCRIPT);
 } # sub create_autoinstall_script 
+
+
+
+# Usage:
+# my $ip_hex = ip_quad_2_ip_hex($client_ip);
+sub ip_quad_2_ip_hex {
+
+    my ($client_ip) = $_[1];
+
+    my ($a, $b, $c, $d) = split(/\./, $client_ip);
+
+    # Figure out the hex equivalent of the IP address
+    my $ip_hex = sprintf("%02X%02X%02X%02X", $a, $b, $c, $d);
+
+    return $ip_hex;
+}
+
+
+
