@@ -31,7 +31,7 @@ workstations have the same basic hardware configuration.
 Summary: VA SystemImager "Master Client" software
 Group: Applications/System
 Conflicts: %{name}
-Requires: rsync >= 2.3.1, util-linux
+Requires: rsync >= 2.3.1, util-linux, sh-utils
 
 %description client
 This is the package you install on a VA SystemImager "master client".
