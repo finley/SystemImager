@@ -37,7 +37,7 @@ if (!$autoinstall_boot_dir) {
 ### END parse the config file ###
 
 # set shell PATH for system() calls 
-$ENV{PATH} = "/usr/sbin:/sbin:/usr/bin:/bin";
+$ENV{PATH} = "/usr/local/sbin:/usr/sbin:/sbin:/usr/local/bin:/usr/bin:/bin";
 
 $version_number="1.5.0";
 $program_name = "mkautoinstallcd";
