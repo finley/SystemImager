@@ -7,8 +7,8 @@ DISCOVER_URL        := http://download.systemimager.org/pub/discover/$(DISCOVER_
 DISCOVER_BINARY     := $(SRC_DIR)/$(DISCOVER_DIR)/discover/.libs/discover
 DISCOVER_PATCHES    := $(shell ls $(PATCH_DIR)/discover.*.patch 2>/dev/null | sort)
 
-DISCOVER_DATA_VERSION := 2.2004.05.03
-DISCOVER_DATA_DIR := discover-data-2.2004.05.03
+DISCOVER_DATA_VERSION := 2.2004.11.22
+DISCOVER_DATA_DIR := discover-data-2.2004.11.22
 DISCOVER_DATA_TARBALL := discover-data_$(DISCOVER_DATA_VERSION).orig.tar.gz
 DISCOVER_DATA_URL := http://http.us.debian.org/debian/pool/main/d/discover-data/$(DISCOVER_DATA_TARBALL)
 DISCOVER_DATA_FILES := 	$(SRC_DIR)/$(DISCOVER_DATA_DIR)/pci.lst \
