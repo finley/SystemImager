@@ -6,7 +6,7 @@
 # Set this to 1 to build only the boot rpm
 # it can also be done in the .rpmmacros file
 #%define _build_only_boot 1
-%{?_build_only_boot:%define _build_all 0}
+%{?_build_only_boot:%{expand: %%define _build_all 0}}
 
 
 Summary: Software that automates Linux installs, software distribution, and production deployment.
