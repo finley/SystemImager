@@ -46,12 +46,11 @@ o Redo the website
 
 <brian@thefinleys.com>
 ----------------------
+o deal with LABEL= and UUID= for any filesystem or device type
 o update ext3 stuff to find FS size (Ted T'so to modify dumpe2fs to include journal size)
 o Deal with tftp support (for network booting) on xinetd systems.
   (this is actually something to deal with in the tftp-hpa package 
    install)
-o move mailing list over to sourceforge
-o deal with UUID= in /etc/fstab
 o add " || shellout" to the end of almost everything in <image>.master
 
 Greg Smith <grs@xuma.com>
@@ -208,15 +207,6 @@ http://systemimager.org/
 
 Pre-Release Checklist
 ---------------------
-- fix flaw in the way raidstop works in <image>.master
-  (parse /proc/mdstat from booting autoinstall client)
-  RAID_DEVICES=`cat /proc/mdstat | grep ^md | mawk '{print "/dev/" $1}'`
-  for blah
-  do
-  done
-- also fix flaw in the way software raid devices are created.  LABEL=
-  flubs this up...
-
 - install
 - installclient
 - hardware RAID client
@@ -227,6 +217,17 @@ Pre-Release Checklist
 - server deb install on virgin debian system
 - client deb install on virgin debian system
 - dependent packages install properly
+
+x- also fix flaw in the way software raid devices are created.  LABEL=
+   flubs this up...
+x- deal with ext3 clients using LABEL=
+x- fix flaw in the way raidstop works in <image>.master
+  (parse /proc/mdstat from booting autoinstall client)
+  RAID_DEVICES=`cat /proc/mdstat | grep ^md | mawk '{print "/dev/" $1}'`
+  for blah
+  do
+    do stuff
+  done
 x- software RAID client, RH7, with LABEL=
 x- prepareclient on RH 6
 x- updateclient -a -s <server> -c eth0
@@ -235,7 +236,6 @@ x- pryzby's issue
 x- hello's issue
 x- software RAID client (destroy partitions good)
 x- reiserfs client
-x- ext3 client
 x- ext2 client
 x- RH7 client
 x- RH7 client with LABEL=
