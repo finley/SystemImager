@@ -3,7 +3,7 @@
 <article id=index>
 
  <artheader>
-  <title>VA System Imager Documentation</title>
+  <title>VA SystemImager v1.4.0 Documentation</title>
    <pubdate>v1.3 12 Feb, 2001</pubdate>
   <author>
      <firstname>Greg</firstname>
@@ -76,8 +76,7 @@
      </application> product. 
     </para>
 
-    <para><ulink url="systemimager.sourceforge.net/~/doc.sgml">
-          SGML source</ulink>
+    <para><ulink url="systemimager-manual.sgml"> SGML source</ulink>
     for this document is available and should be consulted while reading.
     </para>
   </abstract>
@@ -162,15 +161,6 @@
     </textobject>
    </mediaobject>
   </example>
-
-  <para>
-   <application>VA SystemImager</application> is designed to be distribution 
-   independent.  Currently it is only tested with RedHat based systems such 
-   as RedHat and RedHat with VA Enhancements.  If you have difficulty using 
-   it with your particular distribution, please mail me so that I can make 
-   appropriate changes.  Or better yet, make them yourself and mail me the 
-   changes! :)
-  </para>
  </sect1>
 
  <sect1 id=Who>
@@ -216,47 +206,72 @@
    <application>VA SystemImager</application> is designed to work with 
    most any Linux distribution.  However, there are parts of 
    <application>VA SystemImager</application> that may need to be customized 
-   to deal with untested distributions.   For example, you may find that the 
-   networking and  maybe the hostname are not configured properly after doing 
-   an autoinstall.  If you try <application>VA SystemImager</application> with 
-   your favourite distribution and it doesn't work properly, it can be made to
-   work.  Please submit a bug report to: 
-   <email>systemimager-bugs@systemimager.org</email>.
+   to deal with particular distributions.   If you are using an untested 
+   distribution, you may find that the networking and hostname information are
+   not configured properly after doing an autoinstall.  If you try 
+   <application>VA SystemImager</application> with your favourite distribution
+   and it doesn't work properly, please submit a 
+   <ulink url="http://sourceforge.net/bugs/?group_id=259">bug report</ulink>, 
+   preferably with
+   patches you've created to fix the problem.  Appropriate credit is given to 
+   all who find and submit valid bugs or contribute code or documentation that 
+   is used.
   </para>
 
   <para>
    Here is an incomplete list of distributions known to work with 
    <application>VA SystemImager</application>.  If you are successfully 
-   using <application>VA SystemImager</application> with other distributions, 
-   please send me email to <email>systemimager-bugs@systemimager.org</email> 
-   so we can add them to the list.
+   using <application>VA SystemImager</application> with a distribution or 
+   version not listed here, please submit a
+   <ulink url="http://sourceforge.net/bugs/?group_id=259">bug report</ulink>, 
+   so we can add them to the list.  (Not a bug I know, but this is the best
+   way to report success!)
   </para>
 
 <table frame="all">
-    <title>VA System Imager Supported 2.2.x based Distributions</title>
-        <tgroup cols="4">
+    <title>Author Tested and Supported Distributions</title>
+        <tgroup cols="2">
           <colspec colname="column1">
           <colspec colname="column2">
-          <colspec colname="column3">
-          <colspec colname="column4">
-          <spanspec namest="column2" nameend="column4" spanname="span-horiz" align="center">
+          <spanspec namest="column2" nameend="column2" spanname="span-horiz" align="center">
             <thead>
              <row>
-              <entry>Linux Distribution</entry>
-              <entry spanname="span-horiz">Version</entry>
+              <entry>Distribution</entry>
+              <entry spanname="span-horiz">Versions</entry>
              </row>
             </thead>
             <tbody>
-<row><entry>Debian</entry><entry>2.1 w/ 2.2.x kernel upgrade</entry><entry>2.2</entry></row>
-<row><entry>Kondara</entry><entry>1.1</entry><entry></entry><entry></entry></row>
-<row><entry>RedHat</entry><entry>6.0</entry><entry>6.1</entry><entry>6.2</entry></row>
-<row><entry>RedHat w/ VA Enhancements</entry><entry>6.0.x</entry><entry>6.1.x</entry><entry>6.2.x</entry></row>
+<row> <entry>Debian</entry>                            <entry>2.1 ('slink' with 2.2.x kernel), 2.2 ('potato'), ('woody')</entry> </row>
+<row> <entry>Kondara</entry>                           <entry>1.1</entry>                                               </row>
+<row> <entry>RedHat</entry>                            <entry>6.0, 6.1, 6.2, 7.0</entry>                                </row>
+<row> <entry>RedHat with VA Linux Enhancements</entry> <entry>6.0.x, 6.1.x, 6.2.x, 7.0.x</entry>                        </row>
+<row> <entry>Storm</entry>                             <entry>1.4</entry>                                               </row>
+            </tbody>
+        </tgroup>
+</table>
+
+<table frame="all">
+    <title>Other Distributions Reported to Work</title>
+        <tgroup cols="3">
+          <colspec colname="column1">
+          <colspec colname="column2">
+          <colspec colname="column3">
+            <thead>
+             <row>
+              <entry>Distribution</entry>
+              <entry>Versions</entry>
+              <entry>Reported by</entry>
+             </row>
+            </thead>
+            <tbody>
+<row> <entry>Mandrake</entry>          <entry>7.1</entry> <entry>Ben Spade (spade@radik.com) </entry> </row>
+<row> <entry>TurboLinux Server</entry> <entry>6.0</entry> <entry>unknown</entry>                     </row>
             </tbody>
         </tgroup>
 </table>
 
   <para>
-   Linux-2.0.x based distributions are not fully supported at this time.  
+   Linux-2.0.x based distributions are not supported at this time.  
    Currently there are no plans to add support for Linux 2.0.x based 
    distributions.
   </para>
@@ -329,7 +344,7 @@
     </listitem>
     <listitem>
      <para>
-      Install the VA System Imager client software on the "golden" client
+      Install the VA SystemImager client software on the "golden" client
      </para>
     </listitem>
     <listitem>
@@ -516,7 +531,7 @@ Press <command>Enter</command> to continue...
         Configure this "golden" client as you normally would any machine. 
         Install Linux on this node with the understanding that the software
         installed will eventually constitute the image for all other nodes
-        installed with <application>VA System Imager</application>.
+        installed with <application>VA SystemImager</application>.
         Don't worry too much about getting it exactly right the first time, 
         since you can easily use <application>VA SystemImager</application> 
         to make incremental changes to your image.
@@ -1104,7 +1119,7 @@ Press <command>Enter</command> to continue...
    </para>
    <para>
     <ulink url="http://cvs.sourceforge.net/cgi-bin/cvsweb.cgi/~checkout~/systemimager/systemimager/">
-    VA System Imager CVS Repository</ulink>
+    VA SystemImager CVS Repository</ulink>
    </para>
    <para>
     (note: the revision number in the URL above may change in future iterations)
@@ -1408,7 +1423,7 @@ Press <command>Enter</command> to continue...
    </para>
 
    <table frame="all">
-    <title>VA System Imager Performance Statistics</title>
+    <title>VA SystemImager Performance Statistics</title>
         <tgroup cols="4">
           <colspec colname="column1">
           <colspec colname="column2">
