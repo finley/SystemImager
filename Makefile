@@ -16,10 +16,11 @@ BINARIES := makeautoinstallcd addclients getimage makeautoinstalldiskette makedh
 
 TFTP_BIN_SRC      = tftpstuff/systemimager
 TFTP_BIN         := raidstart mkraid mkreiserfs prepareclient updateclient
-TFTP_BIN_DEST     = $(DESTDIR)/tftpboot/systemimager
+TFTP_ROOT	  = $(DESTDIR)/tftpboot
+TFTP_BIN_DEST     = $(TFTP_ROOT)/systemimager
 
 PXE_CONF_SRC      = tftpstuff/pxelinux.cfg
-PXE_CONF_DEST     = $(DESTDIR)/tftpboot/pxelinux.cfg
+PXE_CONF_DEST     = $(TFTP_ROOT)/pxelinux.cfg
 
 CLIENT_BINARY_SRC = ./tftpstuff/systemimager
 CLIENT_BINARIES  := updateclient prepareclient
@@ -27,13 +28,14 @@ CLIENT_BINARIES  := updateclient prepareclient
 IMAGESRC    = var/spool/systemimager/images
 IMAGEDEST   = $(DESTDIR)/var/spool/systemimager/images
 
-install:	installdocs
+install:	installserver installkernel
+
+installserver:	installdocs install_manpages
 	mkdir -p $(SBIN)
 	$(foreach binary, $(BINARIES), \
 		install -m 555 $(BINARY_SRC)/$(binary) $(SBIN);)
-	install -d -m 755 $(DESTDIR)/tftpboot/systemimager
-	install -m 644 tftpstuff/initrd.gz $(DESTDIR)/tftpboot
-	install -m 644 tftpstuff/kernel $(DESTDIR)/tftpboot
+	install -d -m 755 $(TFTP_ROOT)/systemimager
+	install -m 644 tftpstuff/initrd.gz $(TFTP_ROOT)
 	install -d -m 755 $(PXE_CONF_DEST)
 	install -m 444 --backup $(PXE_CONF_SRC)/message.txt \
 		$(PXE_CONF_DEST)/message.txt
@@ -42,7 +44,7 @@ install:	installdocs
 	install -m 444 --backup $(PXE_CONF_SRC)/syslinux.cfg \
 		$(PXE_CONF_DEST)/default
 	install -m 644 tftpstuff/systemimager/systemimager.exclude \
-		$(DESTDIR)/tftpboot/systemimager
+		$(TFTP_ROOT)/systemimager
 	$(foreach binary, $(TFTP_BIN), \
 		install -m 555 $(TFTP_BIN_SRC)/$(binary) $(TFTP_BIN_DEST);)
 	cp -a $(TFTP_BIN_DEST)/raidstart $(TFTP_BIN_DEST)/raidstop
@@ -57,22 +59,36 @@ install:	installdocs
 	mkdir -p $(INITD)
 	install -m 755 etc/init.d/rsync $(INITD)
 
-installclient: installdocs
+installclient: installdocs install_client_manpages
 	mkdir -p $(ETC)/systemimager
 	install -m 644 tftpstuff/systemimager/systemimager.exclude $(ETC)/systemimager
 	mkdir -p $(SBIN)
 	$(foreach binary, $(CLIENT_BINARIES), \
 		install -m 755 $(CLIENT_BINARY_SRC)/$(binary) $(SBIN);)
 
+installkernel:
+	mkdir -p $(TFTP_ROOT)
+	install -m 644 tftpstuff/kernel $(TFTP_ROOT)
+
+install_manpages:	manpages
+	mkdir -p $(MAN8)
+	$(foreach binary, $(BINARIES), \
+		cp -a $(MANPAGE_DIR)/$(binary).8.gz $(MAN8); )
+
+install_client_manpages:	manpages
+	mkdir -p $(MAN8)
+	$(foreach binary, $(CLIENT_BINARIES), \
+		cp -a $(MANPAGE_DIR)/$(binary).8.gz $(MAN8); )
+
 installdocs: docs
 	mkdir -p $(DOC)
 	cp -a $(MANUAL_DIR)/html $(DOC)
-	mkdir -p $(MAN8)
-	find $(MANPAGE_DIR) -name "*.8.gz" -exec cp -a {} $(MAN8) \;
 
 docs:
-	$(MAKE) -C $(MANPAGE_DIR)
 	$(MAKE) -C $(MANUAL_DIR) html ps
+
+manpages:
+	$(MAKE) -C $(MANPAGE_DIR)
 
 clean:
 	$(MAKE) -C $(MANPAGE_DIR) clean
