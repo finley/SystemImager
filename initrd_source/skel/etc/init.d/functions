@@ -469,7 +469,7 @@ start_network() {
             shellout
         fi
         
-        if [ -z ${DEVICE} ];
+        if [ -z ${DEVICE} ]; then
             # Figure out which interface actually got configured.
             # Suggested by James Oakley.
             #
