@@ -18,13 +18,11 @@ use vars qw($config $ft_config $VERSION);
 
 my $last_time = 0;
 my $conf_file = '/etc/systemimager/flamethrower.conf';
-my $pid_file  = "/var/run/flamethrower.pid";
-my $state_dir = "/var/state/flamethrower";
-
-$0 = "flamethrowerd";
+my $pid_file  = '/var/run/flamethrower.pid';
+my $state_dir = '/var/state/flamethrower';
 
 # Set to 1 to produce debug output
-my $debug = 1;
+my $debug = 0;
 print "debug output turned on\n" if($debug);
 
 # Read the config file and update the directory
@@ -53,8 +51,7 @@ unlink <$dir/*>;
 
 while(1) {
     &main;
-    sleep 2;    #XXX change to something like 5 for production
-                # 2 gives more interesting output for testing.
+    sleep 2;
 }
 
 exit 0;
@@ -65,20 +62,199 @@ exit 0;
 # BEGIN subroutines 
 #
 
-# Usage: build_udp_sender_cmd($module);
+# Usage: my $cmd = build_udp_sender_cmd($module);
 sub build_udp_sender_cmd {
 
     my $module = shift;
 
-    my $dir = $ft_config->get("${module}_dir");
-    my $portbase = $ft_config->get("${module}_portbase");
+    ############################################################################
+    #
+    # Set vars for all options
+    #
+    ############################################################################
+    
+    ############################################################################
+    #
+    # Global settings
+    #
+    my $min_clients;
+    if ( $ft_config->get("min_clients") ) {
+        $min_clients = " --min-clients " . $ft_config->get("min_clients");
+    }
+    
+    my $max_wait;
+    if ( $ft_config->get("max_wait") ) {
+        $max_wait = " --max-wait " . $ft_config->get("max_wait");
+    }
+    
+    my $min_wait;
+    if ( $ft_config->get("min_wait") ) {
+        $min_wait = " --min-wait " . $ft_config->get("min_wait");
+    }
+    
+    my $async;
+    if ( $ft_config->get("async") ) {
+        if ( lc ($ft_config->get("async")) eq "on" ) {
+            $async = " --async";
+        }
+    }
+    
+    my $autostart;
+    if ( $ft_config->get("autostart") ) {
+        $autostart = " --autostart " . $ft_config->get("autostart");
+    }
+    
+    my $blocksize;
+    if ( $ft_config->get("blocksize") ) {
+        $blocksize = " --blocksize " . $ft_config->get("blocksize");
+    }
+    
+    my $broadcast;
+    if ( $ft_config->get("broadcast") ) {
+        if ( lc ($ft_config->get("broadcast")) eq "on" ) {
+            $broadcast = " --broadcast";
+        }
+    }
+    
+    my $fec;
+    if ( $ft_config->get("fec") ) {
+        $fec = " --fec " . $ft_config->get("fec");
+    }
+    
+    my $interface;
+    if ( $ft_config->get("interface") ) {
+        $interface = " --interface " . $ft_config->get("interface");
+    }
+    
+    my $log;
+    if ( $ft_config->get("log") ) {
+        $log = " --log " . $ft_config->get("log");
+    }
+    
+    my $max_bitrate;
+    if ( $ft_config->get("max_bitrate") ) {
+        $max_bitrate = " --max-bitrate " . $ft_config->get("max_bitrate");
+    }
+    
+    my $full_duplex;
+    if ( $ft_config->get("full_duplex") ) {
+        if ( lc ($ft_config->get("full_duplex")) eq "on" ) {
+            $full_duplex = " --full-duplex";
+        }
+    }
+    
+    my $mcast_addr;
+    if ( $ft_config->get("mcast_addr") ) {
+        $mcast_addr = " --mcast-addr " . $ft_config->get("mcast_addr");
+    }
+    
+    my $mcast_all_addr;
+    if ( $ft_config->get("mcast_all_addr") ) {
+        $mcast_all_addr = " --mcast-all-addr " . $ft_config->get("mcast_all_addr");
+    }
+    
+    my $min_slice_size;
+    if ( $ft_config->get("min_slice_size") ) {
+        $min_slice_size = " --min-slice-size " . $ft_config->get("min_slice_size");
+    }
+    
+    my $slice_size;
+    if ( $ft_config->get("slice_size") ) {
+        $slice_size = " --slice-size " . $ft_config->get("slice_size");
+    }
+    
+    my $pointopoint;
+    if ( $ft_config->get("pointopoint") ) {
+        if ( lc ($ft_config->get("pointopoint")) eq "on" ) {
+            $pointopoint = " --pointopoint";
+        }
+    }
+    
+    my $rexmit_hello_interval;
+    if ( $ft_config->get("rexmit_hello_interval") ) {
+        $rexmit_hello_interval = " --rexmit-hello-interval " . $ft_config->get("rexmit_hello_interval");
+    }
+    
+    my $ttl;
+    if ( $ft_config->get("ttl") ) {
+        $ttl = " --ttl " . $ft_config->get("ttl");
+    }
+    #
+    ############################################################################
+    
+    
+    ############################################################################
+    #
+    # Module specific overrides
+    #
+    my $dir;
+    if ( $ft_config->get("${module}_dir") ) {
+        $dir = $ft_config->get("${module}_dir");
+    }
+    
+    my $portbase;
+    if ( $ft_config->get("${module}_portbase") ) {
+        $portbase = " --portbase " . $ft_config->get("${module}_portbase");
+    }
+    
+    if ($ft_config->varlist("${module}_async")) {
+        if ( $ft_config->get("${module}_async") ) {
+            if ( lc ($ft_config->get("${module}_async")) eq "on" ) {
+                $async = " --async";
+            }
+        }
+    }
 
-    # We will always have $dir and $portbase
-    my $cmd = qq(udp-sender --pipe 'tar -cf - -C $dir .' --portbase $portbase);
+    if ($ft_config->varlist("${module}_ttl")) {
+        if ( $ft_config->get("${module}_ttl") ) {
+            $ttl = " --ttl " . $ft_config->get("${module}_ttl");
+        }
+    }
 
-    # Append additional options if then are set.
+    if ($ft_config->varlist("${module}_mcast_all_addr")) {
+        if ( $ft_config->get("${module}_mcast_all_addr") ) {
+            $mcast_all_addr = " --mcast-all-addr " . $ft_config->get("${module}_mcast_all_addr");
+        }
+    }
+    
+    if ($ft_config->varlist("${module}_log")) {
+        if ( $ft_config->get("${module}_log") ) {
+            $log = " --log " . $ft_config->get("${module}_log");
+        }
+    }
+    
+    if ($ft_config->varlist("${module}_interface")) {
+        if ( $ft_config->get("${module}_interface") ) {
+            $interface = " --interface " . $ft_config->get("${module}_interface");
+        }
+    }
+    #
+    ############################################################################
 
+    # Build command
+    my $cmd = qq(udp-sender --pipe 'tar -cf - -C $dir .');
+    $cmd .= $portbase               if(defined $portbase);
+    $cmd .= $min_clients            if(defined $min_clients);
+    $cmd .= $max_wait               if(defined $max_wait);
+    $cmd .= $min_wait               if(defined $min_wait);
+    $cmd .= $async                  if(defined $async);
+    $cmd .= $autostart              if(defined $autostart);
+    $cmd .= $blocksize              if(defined $blocksize);
+    $cmd .= $broadcast              if(defined $broadcast);
+    $cmd .= $fec                    if(defined $fec);
+    $cmd .= $interface              if(defined $interface);
+    $cmd .= $log                    if(defined $log);
+    $cmd .= $max_bitrate            if(defined $max_bitrate);
+    $cmd .= $full_duplex            if(defined $full_duplex);
+    $cmd .= $mcast_addr             if(defined $mcast_addr);
+    $cmd .= $mcast_all_addr         if(defined $mcast_all_addr);
+    $cmd .= $min_slice_size         if(defined $min_slice_size);
+    $cmd .= $slice_size             if(defined $slice_size);
+    $cmd .= $pointopoint            if(defined $pointopoint);
+    $cmd .= $rexmit_hello_interval  if(defined $rexmit_hello_interval);
+    $cmd .= $ttl                    if(defined $ttl);
 
+    return $cmd;
 }
 
 # Usage: update_directory();
@@ -104,7 +280,7 @@ sub update_directory {
     }
 
     # Be sure to include the flamethrower_directory port.
-    $_ = $ft_config->get("flamethrower_directory_port");
+    $_ = $ft_config->get("flamethrower_directory_portbase");
     $portbases{$_} = $_;
 
     #
@@ -140,8 +316,8 @@ sub update_directory {
 
             } else {
             
-                # Start with flamethrower_directory_port + 2.
-                $portbase = $ft_config->get("flamethrower_directory_port") + 2;
+                # Start with flamethrower_directory_portbase + 2.
+                $portbase = $ft_config->get("flamethrower_directory_portbase") + 2;
             
                 # If that port is already in use, increment by two until we
                 # get a free one.
@@ -255,14 +431,15 @@ sub cast {
 
         setsid or die "Can't start a new session: $!";
 
-        $0 = "flamethrowerd-$module";
-
-        #fork cast of module
         print STDOUT "    casting $module\n" if($debug);
-        sleep length($module);  # Install actual casting stuff here -- sleep just for testing
+
+        my $cmd = build_udp_sender_cmd($module);
+        print STDOUT "cmd $cmd\n" if($debug);
+        !system($cmd) or die ("FATAL:  \"$cmd\"  failed!");
+
         print STDOUT "    unlinking $file\n" if($debug);
         unlink($file) or die("Couldn't remove $file!\n");
-        #sleep 5;    #XXX remove for production
+
         exit 0;
 
     } else {
