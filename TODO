@@ -208,10 +208,12 @@ http://systemimager.org/
 
 Pre-Release Checklist
 ---------------------
+- fix flaw in the way raidstop works in <image>.master
+  (parse /proc/mdstat from booting autoinstall client)
+  RAID_DEVICES=`cat /proc/mdstat | grep ^md | awk '{print "/dev/" $1}'`
 - install
 - installclient
 - hardware RAID client
-- software RAID client, RH7, with LABEL=
 - server RPM install on virgin RH 6 system
 - server RPM install on virgin RH 7 system
 - client RPM install on virgin RH 6 system
@@ -219,6 +221,7 @@ Pre-Release Checklist
 - server deb install on virgin debian system
 - client deb install on virgin debian system
 - dependent packages install properly
+x- software RAID client, RH7, with LABEL=
 x- prepareclient on RH 6
 x- updateclient -a -s <server> -c eth0
 x- updateclient -a -s <server> -c eth0 on RAID
