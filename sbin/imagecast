@@ -1,7 +1,4 @@
 #!/usr/bin/perl -w
-
-#!/usr/bin/perl -w
-
 #
 # "SystemImager" 
 #
@@ -57,12 +54,21 @@ Options: (options can be presented in any order and may be abbreviated)
                         number, ane must match the setting used in dhcpd.conf
                         and/or local.cfg.  Defaults to 9000.
 
+ --mcast-opts "OPTIONS" Quoted set of options to be passed directly to
+                        udp-sender.  Two useful examples are "--interface eth1"
+			and "--max-bitrate 25M".  Multiple options should be 
+			quoted together: "--interface eth1 --max-bitrate 25M".
+			See "man udp-sender" for details and many other options.  
+			NOTE: Do not specify udp-sender's --portbase option, as
+			      this is set by the --mcast-group option.
+
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
 EOF
 
 # Set some defaults. -BEF-
 my $mcast_group = 9000;
+my $mcast_opts = "";
 
 # take options
 GetOptions( 
@@ -71,6 +77,7 @@ GetOptions(
     "verbose"           => \my $verbose,
     "script=s"          => \my $script_name,
     "mcast-group=s"     => \$mcast_group,
+    "mcast-opts=s"      => \$mcast_opts,
 ) || die "$help_info";
 
 
@@ -131,15 +138,23 @@ close (FILE);
 
 
 ### BOEL Binaries and autoinstall scripts
-$cmd = "tar -cv -C /usr/share/systemimager/boot/i386/standard/ boel_binaries.tar.gz -C /var/lib/systemimager/ scripts | udp-sender --portbase $mcast_group --autostart 1";
-if ($verbose) { print "casting_1: $cmd\n"; }
+if ($verbose) { 
+    print "casting_1:    BOEL binaries tarball and autoinstall scripts\n";
+    print "mcast_group:  $mcast_group\n";
+}
+$cmd = "tar -cv -C /usr/share/systemimager/boot/i386/standard/ boel_binaries.tar.gz -C /var/lib/systemimager/ scripts | udp-sender $mcast_opts --portbase $mcast_group";
 !system($cmd) or die ("$cmd failed!");
+sleep 35;  # Wait for autoinstallclient to partition disks, etc. before proceeding.
 
 ### IMAGE
 $mcast_group = $mcast_group + 2;
-$cmd = "tar -cv -C /var/lib/systemimager/images/$imagename . | udp-sender --portbase $mcast_group --autostart 1";
-if ($verbose) { print "casting_2: $cmd\n"; }
+$cmd = "tar -cv -C /var/lib/systemimager/images/$imagename . | udp-sender $mcast_opts --portbase $mcast_group";
+if ($verbose) { 
+    print "casting_2:    The Image -- $imagename\n";
+    print "mcast_group:  $mcast_group\n";
+}
 !system($cmd) or die ("$cmd failed!");
+sleep 10; # Give autoinstallclient time to rest before proceeding.
 
 ### OVERRIDES
 $mcast_group = $mcast_group + 2;
@@ -150,24 +165,13 @@ foreach my $override ( split(/[[:space:]]/,$overrides) ) {
         $cmd .= " -C $dir .";
     }
 }    
-$cmd .= " | udp-sender --portbase $mcast_group --autostart 1";
-if ($verbose) { print "casting_3: $cmd\n"; }
+$cmd .= " | udp-sender $mcast_opts --portbase $mcast_group";
+if ($verbose) { 
+    print "casting_3:    Override Directories\n";
+    print "mcast_group:  $mcast_group\n";
+}
 !system($cmd) or die ("$cmd failed!");
 
 exit 0;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
