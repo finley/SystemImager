@@ -28,13 +28,15 @@ Version 1.4.0 specific:
 - <brian@thefinleys.com> - add support for 3c905 if it will fit.
 - <brian@thefinleys.com> - deal with ext3 journal files differently according to Ted Ts'o
 - <brian@thefinleys.com> - error checking and diagnostic messages on autoinstall client
-- <brian@thefinleys.com> - add a -use-same-settings option to updateclient that figures
+- <brian@thefinleys.com> - add a -autoconfig option to updateclient that figures
                            out the current values and writes them to /local.cfg
+- <brian@thefinleys.com> - addclients -- test for /etc/hosts before using
 
 
 Other stuff:
+- <brian@thefinleys.com> - add a -quick-boot option to makeautoinstallfloppy
+                           - disclaimer -- may not work on all systems
 - <brian@thefinleys.com> - contemplate using MAKEDEV instead of having pre-existing device files
-- <brian@thefinleys.com> - contemplate using hard links to busybox instead of soft links
 - <brian@thefinleys.com> - fix network booting
 - <bchrisman@valinux.com> - autoinstall client to cycle through eth interfaces
                            for N in 0 1 2 3 4 5 6 7 8 9; do
@@ -44,6 +46,9 @@ Other stuff:
 - <brian@thefinleys.com> - add -exclude option to getimage
 - <brian@thefinleys.com> - incorporate ssh
 - <brian@thefinleys.com> - put autoinstallmedia source into cvs
+- <brian@thefinleys.com> - smallerize the initrd.gz with a custom busybox, hardlinks, busybox for
+                           init, etc.
+
 - <gpratt@valinux.com> - Docbookization of the FAQ-HOWTO
 
 - Cameron Meadors <cmeadors@valinux.com> and Roland Dreier <roland@valinux.com>

@@ -38,8 +38,12 @@ VA SystemImager-1.4.0 2000.xx.xx
 - prepareclient -- What was I thinking in v1.3.0 with the -no-rsyncd option?!?
                    Don't try this, folks.  It would record your imageserver's 
                    partition information as if it were the client's.
-- autoinstallclient-- Was using POSIX [[:blank:]] in sed statement to 
-                       find and change spaces and tabs to single spaces.
+- autoinstallclient-- Smallerized.  More stuff done by BusyBox.
+- autoinstallclient-- Bug fix:  Was using POSIX [[:blank:]] in sed statement
+                      to find and change spaces and tabs to single spaces.
+		      Sed version changed and no longer behaved properly.
+		      Spaces work fine with the v1.3.0 client but tabs
+		      will give you errors.
 - autoinstallclient -- Enforce that the client sleeps 35s before trying
                        to use the network.  Even if using local.cfg.
 - autoinstall scripts -- Now use the --numeric-ids rsync option.
