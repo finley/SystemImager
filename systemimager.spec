@@ -1,5 +1,5 @@
 %define name     systemimager
-%define ver      2.9.1
+%define ver	2.9.2
 %define rel      1
 %define prefix   /usr
 %define _build_all 1
@@ -285,7 +285,6 @@ fi
 %dir /etc/systemimager
 %config(noreplace) /etc/systemimager/rsync_stubs/*
 %config(noreplace) /etc/systemimager/systemimager.conf
-%config(missingok) /etc/systemimager/rsyncd.conf
 /etc/init.d/systemimager
 /var/lib/systemimager/images/*
 %prefix/sbin/addclients
