@@ -380,8 +380,8 @@
     <listitem>
      <para>
       makedhcpserver - An easy way to create a SystemImager appropriate 
-      /etc/dhcpd.conf file.  DHCP can be used to assign IP addresses to 
-      autoinstall clients. 
+      <filename>/etc/dhcpd.conf</filename> file.  DHCP can be used to assign
+      IP addresses to autoinstall clients. 
      </para>
     </listitem>
       
@@ -409,7 +409,8 @@
       master autoinstall script with the name of each host that will 
       receive that image.  It also allows you to populate the /etc/hosts 
       file with sequential host names and IP addresses.  This information
-      in /etc/hosts is necessary for certain SystemImager operations.
+      in <filename>/etc/hosts</filename> is necessary for certain SystemImager
+      operations.
      </para>
     </listitem>
    </itemizedlist>
@@ -1027,32 +1028,44 @@ Press <command>Enter</command> to continue...
         <itemizedlist>
          <listitem>
           <para>
+	   <filename>
            va-systemimager-1.1-1.i386.rpm
+	   </filename>
           </para>
          </listitem>
          <listitem>
           <para>
+	   <filename>
            pxe-0.1-14.i386.rpm
+	   </filename>
           </para>
          </listitem>
          <listitem>
           <para>
+	   <filename>
 	   dhcp-2.0-5.i386.rpm
+	   </filename>
           </para>
          </listitem>
          <listitem>
           <para>
+	   <filename>
            tftp-hpa-0.13-1.i386.rpm
+	   </filename>
           </para>
          </listitem>
          <listitem>
           <para>
+	   <filename>
            inetd-0.16-4.i386.rpm
+	   </filename>
           </para>
          </listitem>
          <listitem>
           <para>
+	   <filename>
            syslinux-1.48-2.i386.rpm
+	   </filename>
           </para>
          </listitem>
         </itemizedlist>
@@ -1115,41 +1128,71 @@ Press <command>Enter</command> to continue...
         <itemizedlist>
          <listitem>
           <para>
-           va-systemimager-1.3.0-1.i386.rpm - This version has a few
-           incompatiblities with RedHat 7.0.  It is unable to parse the LABEL=
-           entries in the golden client's /etc/fstab file, and it assumes the
-           image server uses inetd instead of xinetd.  This issues have been
+           <filename>va-systemimager-1.3.0-1.i386.rpm</filename> - This
+	   version has a few incompatiblities with RedHat 7.0.  It is unable
+	   to parse the LABEL= entries in the golden client's
+	   <filename>/etc/fstab</filename> file, and it assumes the
+           image server uses <application>inetd</application> instead of
+	   <application>xinetd</application>.  This issues have been
            resolved in <application>VA SystemImager 1.4</application>.
           </para>
          </listitem>
          <listitem>
           <para>
+	   <filename>
            pxe-0.1-20.i386.rpm
+	   </filename>
           </para>
          </listitem>
          <listitem>
           <para>
+	   <filename>
 	   dhcp-2.0-12.i386.rpm
+	   </filename>
           </para>
          </listitem>
          <listitem>
           <para>
-           tftp-server-0.17-5.i386.rpm
+           <filename>tftp-server-0.17-5.i386.rpm</filename> - The default
+	   <application>xinetd</application> entry for 
+	   <application>tftp-server</application> must be modified 
+	   for use with <application>VA SystemImager</application>.  This entry
+	   is stored in <filename>/etc/xinetd.d/tftp</filename>.  An example
+	   of a valid entry is:
+	   <example>
+	    <title>Sample tftp entry for xinetd</title>
+	     <literallayout>
+service tftp
+{
+        socket_type             = dgram
+        protocol                = udp
+        wait                    = yes
+        user                    = root
+        server                  = /usr/sbin/tftpd
+        server_args             = -s /tftpboot -r blksize
+        disable                 = no
+}
+	    </literallayout>
+	   </example>
           </para>
          </listitem>
          <listitem>
           <para>
-           xinetd-2.1.8.9pre11-1.i386.rpm - this version has a race condition
-           which can prevent the tftp server from responding.  this has
-           supposedly been fixed in version 2.1.8.9pre13.  xinetd has a limit
-           on how many connections can be spawned in a 60 second period.  This
-           can be altered, if necessary, by adding the -loop argument in the
-           /etc/init.d/xinetd initscript.
+           <filename>xinetd-2.1.8.9pre11-1.i386.rpm</filename> - this version
+	   has a race condition which can prevent the tftp server from
+	   responding.  this has supposedly been fixed in version
+	   2.1.8.9pre13.
+	   <application>xinetd</application> has a default limit on how many
+	   connections can be spawned in a 60 second period.  This is
+	   configurable, if necessary, by adding the -loop argument in the
+	   <filename>/etc/init.d/xinetd</filename> initscript.
           </para>
          </listitem>
          <listitem>
           <para>
-           syslinux-1.48-2.i386.rpm
+           <filename>
+	    syslinux-1.48-2.i386.rpm
+	   </filename>
           </para>
          </listitem>
         </itemizedlist>
