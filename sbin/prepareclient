@@ -99,13 +99,13 @@ my $help_info = $version_info . <<"EOF";
 Usage: prepareclient [OPTION]...
 
 Options:
- -version             Display version and copyright information.
- -help                Display this output.
- -no-rsyncd           Do not start the rsync daemon.
- -yes                 Answer yes to all yes/no questions.
- -quiet               Run silently.  Return an exit status of 0 for
-                      success or a non-zero exit status for failure.
- -rpm-install         This is only used when building an RPM.
+ --version             Display version and copyright information.
+ --help                Display this output.
+ --no-rsyncd           Do not start the rsync daemon.
+ --yes                 Answer yes to all yes/no questions.
+ --quiet               Run silently.  Return an exit status of 0 for
+                       success or a non-zero exit status for failure.
+ --rpm-install         This is only used when building an RPM.
 
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
@@ -114,13 +114,13 @@ EOF
 
 
 GetOptions(
-    "explicit" => \my $explicit,
-    "help" => \my $help,
-    "norsyncd" => \my $norsyncd,
-    "quiet" => \my $quiet,
-    "rpm" => \my $rpm,
-    "version" => \my $version,
-    "yes" => \my $yes
+    "explicit"  => \my $explicit,
+    "help"      => \my $help,
+    "norsyncd"  => \my $norsyncd,
+    "quiet"     => \my $quiet,
+    "rpm"       => \my $rpm,
+    "version"   => \my $version,
+    "yes"       => \my $yes
 ) || die "$help_info";
 
 ### BEGIN option validation ###
@@ -138,8 +138,8 @@ if($help) {
 
 # bail if not root
 if ($> != 0) {
-  print "Must be run as root!\n";
-  exit 1;
+    print "Must be run as root!\n";
+    exit 1;
 }
 
 if($explicit) {
@@ -148,7 +148,7 @@ if($explicit) {
     print "        for you without the -explicit option, please file a bug report at\n";
     print "        http://systemimager.org/support/.  Thanks!\n";
     print "\n";
-    print qq(Try "prepareclient -help" for more options.\n);
+    print qq(Try "prepareclient --help" for more options.\n);
     exit 1;
 }
 
@@ -172,24 +172,25 @@ following files to prepare your golden client for having its image retrieved by
 the imageserver.  It will also create the /etc/systemimager directory and fill
 it with information about your golden client.  All modified files will be
 backed up with the $backup_extension extension.
- 
+
  /etc/services:
    This file defines the port numbers used by certain software on your system.
-   I will add appropriate entries for rsync if necessary.
-
- /etc/inetd.conf:
-   This is the configuration file for the inet daemon, which starts up certain
-   server software when the associated client software connects to your 
-   machine.  SystemImager needs to run rsync as a standalone daemon on your 
-   golden client until it's image is retrieved by your image server.  I will 
-   comment out the rsync entry in this file if it exists.  The rsync daemon will
-   not be restarted when this machine is rebooted.
+   Entries for rsync will be added if necessary.
 
  $rsyncd_conf_file:
    This is a temporary configuration file that rsync needs on your golden client
-   in order to make your filesystem available to your image server.
+   in order to make your filesystem available to your SystemImager server.
 
-See "prepareclient -help" for command line options.
+ inetd configuration:
+   SystemImager needs to run rsync as a standalone daemon on your golden client
+   until it's image is retrieved by your SystemImager server.  If rsyncd is 
+   configured to run as a service started by inetd, it will be temporarily
+   disabled, and any running rsync daemons or commands will be stopped.  Then,
+   an rsync daemon will be started using the temporary configuration file
+   mentioned above.
+   
+XXX bu inetd.conf, change inetd.conf entry, HUP inetd, cp inetd.conf.bak inetd.conf
+See "prepareclient --help" for command line options.
 
 EOF
 
@@ -405,11 +406,10 @@ sub which {
     return 0;
 }
 
-# read /proc/partitions and figure out all the disks that need
-# to have their partitions captured
 #
-# XXX may no longer need to distinguish between different types of disks. -BEF-
-# XXX may no longer need to convert devfs device names. -BEF-
+# Read /proc/partitions and figure out all the disks that need
+# to have their partitions captured.
+#
 sub collect_disks {
     open(IN,"</proc/partitions") or croak("Couldn't open /proc/partitions for reading.");
     my $disks;
@@ -420,14 +420,9 @@ sub collect_disks {
         } elsif (/(\S*[hs]d[a-z])[0-9]/) { # standard disk devices
             $disks->{IDESCSI}->{$1}++;
         } elsif (/\b(ide\/host\S+disc)\b/) { # devfs standard for ide disk devices
-            # now strip off the partition number
-            $disks->{IDESCSI}->{devfs_transform($1)}++;
+            $disks->{IDESCSI}->{$1}++;
         } elsif (/\b(scsi\/host\S+disc)\b/) { # devfs standard for scsi disk devices
-            # if we have a devfs scsi disk and we want to get
-            # back to old school format, we just count up each disk
-            # and assign it to /dev/sdN in order
-            $disks->{IDESCSI}->{"sd" . chr(97 + $devfsscsi)}++;
-            $devfsscsi++;
+            $disks->{IDESCSI}->{$1}++;
         }
     }
     close(IN);
@@ -461,7 +456,11 @@ sub create_auto_install_script_conf {
         if (($label_type eq "gpt") and ($partition_tool eq "sfdisk")) {
             $partition_tool = which_partition_tool("parted");
         }
-        unless ($quiet) { print qq(Using "$partition_tool" to gather information about /dev/$disk... ); }
+        unless ($quiet) { 
+            print qq(Using "$partition_tool" to gather information about disk:\n);
+            print qq(    /dev/$disk\n);
+            print qq(\n);
+        }
         SystemImager::Common->save_partition_information($disk, $partition_tool, $file, $label_type);
 
     }
@@ -473,7 +472,11 @@ sub create_auto_install_script_conf {
         if (($label_type eq "gpt") and ($partition_tool eq "sfdisk")) {
             $partition_tool = which_partition_tool("parted");
         }
-        unless ($quiet) { print qq(Using "$partition_tool" to gather information about /dev/$disk... ); }
+        unless ($quiet) { 
+            print qq(Using "$partition_tool" to gather information about disk:\n);
+            print qq(    /dev/$disk\n);
+            print qq(\n);
+        }
         SystemImager::Common->save_partition_information($disk, $partition_tool, $file, $label_type);
 
     }
@@ -482,11 +485,9 @@ sub create_auto_install_script_conf {
 
     SystemImager::Common->write_auto_install_script_conf_footer($file);
 
+    #
     # END partition_tool friendly output
-    unless ($quiet) {
-        print "done!\n";
-    }
-
+    #
     return 1;
 }
 
@@ -522,25 +523,6 @@ sub which_partition_tool {
     return $partition_tool;
 }
 
-
-sub devfs_transform {
-    my $devfsentry = shift;
-    my ($type, $host, $bus, $target, $lun, $part) = split(/\//,$devfsentry);
-    # get rid of the keywords in the sections
-    $bus =~ s/\D+//g;
-    $target =~ s/\D+//g;
-    $part =~ s/\D+//g;
-    my $realentry = "hd";
-    my $total = $bus * 2 + $target;
-
-    # now we add the real entry... remembering that chr(97) == 'a'
-    $realentry .= chr(97 + $total);
-    # add the partition number.  $part should always be blank, but
-    # it is here for completeness sake
-    $realentry .= $part;
-
-    return $realentry;
-}
 
 sub remove_rsync_xinetd {
     # this is the trouble file in an xinted environment
