@@ -586,6 +586,8 @@ sub _turn_sfdisk_output_into_generic_partitionschemes_file {
           $partition_type = "extended";
           $flags = "lba";
      
+        } elsif ($id eq "12") {  # 12  Compaq diagnostic
+
         } elsif ($id eq "14") {  # 14  Hidden FAT16 <32M
           $flags = "hidden";
      
