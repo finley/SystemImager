@@ -10,8 +10,7 @@ MODUTILS_PATCHES = $(shell ls $(PATCH_DIR)/modutils.*.patch 2>/dev/null | sort)
 
 modutils:	$(INSMOD_BINARY)
 
-$(INSMOD_BINARY):	$(SRC_DIR)/$(MODUTILS_TARBALL) $(MODUTILS_PATCHES) \
-			$(STAMP_DIR)/uclibc_dev-stamp
+$(INSMOD_BINARY):	$(SRC_DIR)/$(MODUTILS_TARBALL) $(MODUTILS_PATCHES) 
 	rm -rf $(SRC_DIR)/$(MODUTILS_DIR)
 	cd $(SRC_DIR) && tar -xvjf $(MODUTILS_TARBALL)
 	cd $(SRC_DIR)/$(MODUTILS_DIR) && \
