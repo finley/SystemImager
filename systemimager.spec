@@ -1,5 +1,5 @@
 %define name     systemimager
-%define ver      2.0.1
+%define ver      2.1.2
 %define rel      1
 %define prefix   /usr
 
@@ -11,7 +11,8 @@ Copyright: GPL
 Group: Applications/System
 Source: http://download.sourceforge.net/systemimager/%{name}-%{ver}.tar.gz
 BuildRoot: /tmp/%{name}-%{ver}-root
-Packager: Brian Finley <brian@baldguysoftware.com>
+BuildArchitectures: noarch
+Packager: dann frazier <dannf@dannf.org>
 Docdir: %{prefix}/doc
 URL: http://systemimager.org/
 Distribution: System Installation Suite
@@ -28,11 +29,11 @@ Release: %rel
 Copyright: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
-Packager: Brian Finley <brian@baldguysoftware.com>
+Packager: dann frazier <dannf@dannf.org>
 Docdir: %{prefix}/doc
 URL: http://systemimager.org/
 Distribution: System Installation Suite
-Requires: rsync >= 2.4.6, syslinux >= 1.48, systemimager-common, libappconfig-perl, dosfstools, /usr/bin/perl
+Requires: rsync >= 2.4.6, systemimager-common, libappconfig-perl, dosfstools, /sbin/chkconfig, /sbin/service, /usr/bin/perl
 AutoReqProv: no
 
 %description server
@@ -60,7 +61,7 @@ Release: %rel
 Copyright: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
-Packager: Brian Finley <brian@baldguysoftware.com>
+Packager: dann frazier <dannf@dannf.org>
 Docdir: %{prefix}/doc
 URL: http://systemimager.org/
 Distribution: System Installation Suite
@@ -92,7 +93,7 @@ Release: %rel
 Copyright: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
-Packager: Brian Finley <brian@baldguysoftware.com>
+Packager: dann frazier <dannf@dannf.org>
 Docdir: %{prefix}/doc
 URL: http://systemimager.org/
 Distribution: System Installation Suite
@@ -125,11 +126,11 @@ Release: %rel
 Copyright: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
-Packager: Brian Finley <brian@baldguysoftware.com>
+Packager: dann frazier <dannf@dannf.org>
 Docdir: %{prefix}/doc
 URL: http://systemimager.org/
 Distribution: System Installation Suite
-Requires: systemimager-common, systemconfigurator, libappconfig-perl, rsync >= 2.4.6, /usr/bin/perl
+Requires: systemimager-common, systemconfigurator, libappconfig-perl, rsync >= 2.4.6, /usr/bin/perl, mtools (specifically minfo.  Thought I'd let you do this right, Sean. -BEF-)
 AutoReqProv: no
 
 %description client
@@ -151,6 +152,15 @@ The client package contains the files needed on a machine for it to
 be imaged by a SystemImager server.
 
 %changelog
+* Tue Feb  5 2002 Sean Dague <sean@dague.net> 2.1.1-1
+- Added section 5 manpages
+- removed syslinux requirement, as it isn't need for ia64
+
+* Mon Jan 14 2002 Sean Dague <sean@dague.net> 2.1.0-1
+- Set Macro to build $ARCHboot packages propperly
+- Targetted rpms for noarch target (dannf@dannf.org)
+- Synced up file listing
+
 * Wed Dec  5 2001 Sean Dague <sean@dague.net> 2.0.1-1
 - Update SystemImager version
 - Changed prefix to /usr
@@ -178,8 +188,8 @@ make all
 
 %install
 cd $RPM_BUILD_DIR/%{name}-%{version}/
-make install_server_all DESTDIR=/tmp/%{name}-%{ver}-root USR=/tmp/%{name}-%{ver}-root%prefix
-make install_client_all DESTDIR=/tmp/%{name}-%{ver}-root USR=/tmp/%{name}-%{ver}-root%prefix
+make install_server_all DESTDIR=/tmp/%{name}-%{ver}-root PREFIX=%prefix
+make install_client_all DESTDIR=/tmp/%{name}-%{ver}-root PREFIX=%prefix
 
 %clean
 cd $RPM_BUILD_DIR/%{name}-%{version}/
@@ -187,11 +197,38 @@ make distclean
 rm -rf $RPM_BUILD_ROOT
 
 %post server
-chkconfig --add systemimager
+# First we check for rsync service under xinetd and get rid of it
+# also note the use of DURING_INSTALL, which is used to
+# support using this package in Image building without affecting
+# processes running on the parrent
+if [[ -a /etc/xinetd.d/rsync ]]; then
+    mv /etc/xinetd.d/rsync /etc/xinetd.d/rsync.presis~
+    `pidof xinetd > /dev/null`
+    if [[ $? == 0 ]]; then
+        if [ -z $DURING_INSTALL ]; then
+            /sbin/service xinetd restart
+        fi
+    fi
+fi
 
+/sbin/chkconfig --add systemimager
+
+if [ -z $DURING_INSTALL ]; then
+    /sbin/service systemimager start
+fi
 
 %preun server
-chkconfig --del systemimager
+/sbin/service systemimager stop
+/sbin/chkconfig --del systemimager
+
+if [[ -a /etc/xinetd.d/rsync.presis~ ]]; then
+    mv /etc/xinetd.d/rsync.presis~ /etc/xinetd.d/rsync
+    `pidof xinetd > /dev/null`
+    if [[ $? == 0 ]]; then
+        /sbin/service xinetd restart
+    fi
+fi
+
 
 %files common
 %defattr(-, root, root)
@@ -215,7 +252,7 @@ chkconfig --del systemimager
 %dir /var/lib/systemimager/scripts
 %dir /etc/systemimager
 %config /etc/systemimager/rsyncd.conf
-%config /etc/systemimager/systemimager.conf
+%config /etc/systemimager/server.conf
 /etc/init.d/systemimager
 /var/lib/systemimager/images/*
 %prefix/sbin/addclients
@@ -230,6 +267,7 @@ chkconfig --del systemimager
 %prefix/sbin/rmimage
 %prefix/bin/mkautoinstall*
 %prefix/lib/systemimager/perl/SystemImager/Server.pm
+%prefix/share/man/man5/systemimager*
 %prefix/share/man/man8/addclients*
 %prefix/share/man/man8/cpimage*
 %prefix/share/man/man8/getimage*
@@ -242,6 +280,7 @@ chkconfig --del systemimager
 %doc CHANGE.LOG COPYING CREDITS README TODO VERSION
 %dir /etc/systemimager
 %config /etc/systemimager/updateclient.local.exclude
+%config /etc/systemimager/client.conf
 # %prefix/lib/systemimager/perl/SystemImager/Client.pm
 %prefix/sbin/updateclient
 %prefix/sbin/prepareclient

@@ -1,43 +1,160 @@
 #!/bin/sh
+#
+# "SystemImager"
+#
+#  Copyright (C) 2002 Hewlett-Packard Company <dannf@fc.hp.com>
+#
+#  $Id$
+#
+# 
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program; if not, write to the Free Software
+#   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+#  This is a simple wrapper around the install utility that replaces dummy
+#  strings with their values.  Currently it fills in the following:
+#
+#  STRING                                  VALUE
+#  ----------------------------------------------------------------------
+#  SYSTEMIMAGER_VERSION_STRING             contents of the VERSION file
+#  SYSTEMIMAGER_FLAVOR_STRING              contents of the FLAVOR file
+#  USR_PREFIX                              /usr/local by default.  override
+#                                          by passing --si-prefix=<path>
+#
+#  All install options are accepted (and non-install options too, for that
+#  matter).  They are just passed through to the install program.
+#
+#        ***No effort has been made to make this SMP safe.***
+#  Running multiple instances of this script from the same build tree
+#  at the same time will produce unknown (but likely broken) results.
 
-# install wrapper for SystemImager
-# -t  == text file
-# -e  == executable
-# -c  == config file
-# -ce == executable config (i.e. initscript)
+INSTALL_OPTS=""
+SI_PREFIX="\/usr\/local"
+SI_VERSION=$(cat $(dirname $0)/VERSION)
+SI_FLAVOR=$(cat $(dirname $0)/FLAVOR)
+TEMP_DIR="$(dirname $0)/si_install.tmp"
 
-USR_PREFIX="\/usr\/local"
-version=$(cat VERSION)
-filelist=""
-backup=""
+## The FORMAT variable is the format # of the install command.
+## from the install man page:
+##   SYNOPSIS
+##          install [OPTION]... SOURCE DEST           (1st format)
+##          install [OPTION]... SOURCE... DIRECTORY   (2nd format)
+##          install -d [OPTION]... DIRECTORY...       (3rd format)
+##
+##   DESCRIPTION
+##          In  the first two formats, copy SOURCE to DEST or multiple
+##          SOURCE(s) to the existing DIRECTORY, while setting permis
+##          sion  modes  and owner/group.  In the third format, create
+##          all components of the given DIRECTORY(ies).
+FORMAT="unknown"
 
-usage="$0 [-e | -t] FILE... DIRECTORY"
+ERRMSG=""
 
-if [ "$1" == "-t" ]; then
-  mod="644"
-  shift
-elif [ "$1" == "-c" ]; then
-  mod="644"
-  backup="-b"
-  shift
-elif [ "$1" == "-ce" ]; then
-  mod="755"
-  backup="-b"
-  shift
-elif [ "$1" == "-e" ]; then
-  mod="755"
-  shift
-else
-  mod="755"
-fi
+## if ERRMSG is set, print out an error message and exit non-zero
+## otherwise, just exit cleanly.
+die() {
+    retval=0
+    if [ "$ERRMSG" != "" ]; then
+	echo "Error: $(basename $0): $ERRMSG"
+	retval=1
+    fi
+    
+    ## Clean up temporary directory ##
+      ##  [ this whole temporary directory thing needs to be fixed up
+      ##    before multiple si_install processes can run at once -dannf ]
+    rm -rf $TEMP_DIR
+    exit $retval
+}
 
-mkdir -p tmp
+## make quit an alias for die, so not to freak perl folks.
+quit() {
+    die
+}
 
+## collect all install options
 while [ $# -gt 1 ]; do
-  sed s/SYSTEMIMAGER_VERSION_STRING/"$version"/ < $1 > tmp/$(basename $1).tmp
-  sed s/USR_PREFIX/"$USR_PREFIX"/ < tmp/$(basename $1).tmp > tmp/$(basename $1)
-  filelist=$filelist" tmp/$(basename $1)"
-  shift
+    if [ "$(echo $1 | cut -c 1)" == "-" ]; then
+	## options intended for si_install
+	if [ "$(echo "$1" | cut -c -12)" == "--si-prefix=" ]; then
+	    SI_PREFIX=$(echo "$1" | cut -c 13-)
+	    shift
+	    continue
+	fi
+	INSTALL_OPTS="$INSTALL_OPTS $1"
+	if [ "$1" == "-d" ]; then
+	    FORMAT="3"
+	fi
+	## these install options all take exactly one argument
+	if [ "$1" == "-g" -o "$1" == "-m" -o \
+	     "$1" == "-o" -o "$1" == "-S" ]; then
+	    shift
+	    if [ $? -ne 0 -o "$(echo $1 | cut -c 1)" == "-" ]; then
+		ERRMSG="An argument was not passed to an install option that required one." && die
+		
+	    fi
+	    INSTALL_OPTS="$INSTALL_OPTS $1"
+	fi
+    else
+	break
+    fi
+    shift
 done
 
-install $backup -m $mod $filelist $1
+## figure out the form of install taking place
+if [ "$FORMAT" == "unknown" ]; then
+    if [ $# -gt 2 ]; then
+	FORMAT="1"
+    else
+	FORMAT="2"
+    fi
+fi
+
+## pass everything through to install - we're just creating directories
+if [ "$FORMAT" == "3" ]; then
+    while [ $# -gt 0 ]; do
+	INSTALL_OPTS="$INSTALL_OPTS $1"
+	shift
+    done
+else
+    mkdir -p $TEMP_DIR
+
+    ## replace variables w/ their real values, and put the
+    ## resulting files in a temporary directory.
+    while [ $# -gt 1 ]; do
+	if [ ! -f $1 ]; then
+	    ERRMSG="$1 does not exist." && die
+	fi
+
+	file $1 | grep -q text
+	## not a text file, so don't mess with it.
+	## is there a better way to determine if a file is binary or not?
+	if [ $? -ne 0 ]; then
+	    echo "$0: $1 appears to be binary, so leaving it alone."
+	    INSTALL_OPTS="$INSTALL_OPTS $1"
+	else
+	    outfile=$TEMP_DIR/$(basename $1)
+	    sed -e s!"SYSTEMIMAGER_VERSION_STRING"!"$SI_VERSION"! \
+            -e s!"SYSTEMIMAGER_FLAVOR_STRING"!"$SI_FLAVOR"! \
+            -e s!"USR_PREFIX"!"$SI_PREFIX"! \
+            $1 > $outfile
+	    INSTALL_OPTS="$INSTALL_OPTS $outfile"
+	fi
+	shift
+    done    
+
+    ## tack on the destination
+    INSTALL_OPTS="$INSTALL_OPTS $1"
+fi
+
+## finally, call install with the new options
+install $INSTALL_OPTS && quit

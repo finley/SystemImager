@@ -1,38 +1,53 @@
 #
-# "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org> 
+# "SystemImager"  
+#
+#  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
+#  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
+#  Copyright (C) 2001-2002 Hewlett-Packard Company <dannf@fc.hp.com>
+#
+#  Others who have contributed to this code:
+#    Sean Dague <sean@dague.net>
 #
 #   $Id$
 #
-#   Written by Dann Frazier <dannf@ldl.fc.hp.com>
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
 #
-#   Others who have contributed to this code:
-#     Brian Finley <brian@systemimager.org>
-#     Sean Dague <sean@dague.net>
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program; if not, write to the Free Software
+#   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 #
-
-### Editing this file ###
-#   When adding a rule to this makefile, you should also add a properly
-#   formatted comment just above.  This is so that the 'help' rules can parse
-#   this file and print out a short description of the various rules.
-#   Comments that begin with '#@' describe rules for use by end-users
-#   (install_server, get_source, clean, etc.)  Comments that begin
-#   with '#@@' describe rules that aren't intended for use by end-users, but
-#   might be useful for others. Rules that aren't intended to be executed
-#   directly shouldn't be commented with the '#@' notation - the assumption is
-#   that if you're messing with these rules, you've opened up this file anyway,
-#   so normal comments are fine.
+# Errors when running make:
+#   If you encounter errors when running "make", because make couldn't find
+#   certain things that it needs, and you are fortunate enough to be building
+#   on a Debian system, you can issue the following command to ensure that
+#   all of the proper tools are installed.
 #
-
-### File Locations ###
+#   On i386: "apt-get install  gcc make patch libc6-dev libpopt-dev wget less \
+#             bzip2 sgmltools-lite jadetex docbook-to-man uuid-dev ash rsync \
+#             snarf host"
+#   On ia64: "apt-get install  gcc make patch libc6.1-dev libc6.1-pic \
+#             libpopt-dev wget less bzip2 sgmltools-lite jadetex \
+#             docbook-to-man uuid-dev ash rsync snarf host"
+#
+# SystemImager file location standards:
 #   o images will be stored in: /var/lib/systemimager/images/
 #   o autoinstall scripts:      /var/lib/systemimager/scripts/
+#   o override directories:     /var/lib/systemimager/overrides/
 #
 #   o web gui pages:            /usr/share/systemimager/web-gui/
 #
-#   o autoinstall kernels:      /usr/share/systemimager/`arch`-boot/
-#   o initial ram disks:        /usr/share/systemimager/`arch`-boot/
-#   o autoinstall binaries:     /usr/share/systemimager/`arch`-boot/
+#   o autoinstall kernels:      /usr/share/systemimager/boot/`arch`/
+#   o initial ram disks:        /usr/share/systemimager/boot/`arch`/
+#   o autoinstall binaries:     /usr/share/systemimager/boot/`arch`/
 #
 #   o perl libraries:           /usr/lib/systemimager/perl/
 #
@@ -56,89 +71,38 @@
 #   o sysadmin binaries:        /usr/local/sbin (default)
 #     (all other binaries)
 #
-
-### Pre-defined rsync modules ###
-#   o scripts                       autoinstallscripts/symlinks
-#   o <arch>-boot (Ie., i386-boot -- dynamically determined in rcS)
+# Standards for pre-defined rsync modules:
+#   o scripts
+#   o boot (directory that holds architecture specific directories with
+#           boot files for clients)
 #
-
-### Packaging ###
-# SystemImager package names and contents (non-tarball forms of packaging will
-# use the same base names):
-#
-#  o systemimager-server            all of the arch-independent components
-#                                   needed only by an image server
-#
-#  o systemimager-client            all of the arch-independent components
-#                                   needed only by a golden client (there are
-#                                   no arch-dependent components at the moment)
-#
-#  o systemimager-common            all of the arch-independent components
-#                                   shared by both the image server and the
-#                                   golden client
-#
-#  o systemimager-kernel-<arch>     arch-specific kernel package.  the package
-#                                   itself is arch-any as it can reside on a
-#                                   server of any arch, so the arch is included
-#                                   in the package name.
-#
-#  o systemimager-initrd-<arch>     arch-specific ramdisk package.  the package
-#                                   itself is arch-any as it can reside on a
-#                                   server of any arch, so the arch is included
-#                                   in the package name.
-#
-#  o systemimager-bin-<arch>        arch-specific binary package.  the package
-#                                   itself is arch-any as it can reside on a
-#                                   server of any arch, so the arch is included
-#                                   in the package name.
-#
-#  o systemimager-doc               documentation (manual, etc).
-#
-# There will be fewer SystemImager tarballs.  Currently, we have:
-#   o systemimager-server           all components that reside on the server
-#   o systemimager-client           all components that reside on the client
-#   o systemimager-source           the source - duh.
-#
-# Justification for the inconsistency between tarballs and RPM/deb packaging:
-#   o Package management allows us to enforce file dependencies.  We can
-#     specify that systemimager-server shouldn't be installed until
-#     systemimager-kernel-i386 is.  Including the kernel in the server package
-#     thus gets rid of the FAQs such as:
-#     "mkautoinstalldiskette fails - it claims it can't find
-#      /usr/local/share/systemimager/i386-boot/kernel, what's wrong?"
-#   o Package management allows us to enforce versioned dependencies in a
-#     straightforward way.  We can require that systemimager-server version X
-#     also has systemimager-initrd-i386 version X.  Tarballs don't have this
-#     feature.  Using a newer systemimager-server with an older, incompatible
-#     systemimager-initrd-i386 could cause installs to fail in mysterious ways.
-#     
-#   Sure, all of these issues could be fixed with smarter install scripts.
-#   But we would essentially be writing our own package manager, and I don't
-#   want to do that.  -dann
-#         
+# XXX include pcmcia utilities in boel-binaries tarball
 
 DESTDIR =
 VERSION = $(shell cat VERSION)
+FLAVOR = $(shell cat FLAVOR)
+
+TOPDIR  := $(shell /bin/pwd)
 
 # RELEASE_DOCS are toplevel files that should be included with all posted
 # tarballs, but aren't installed onto the destination machine by default
-RELEASE_DOCS = CHANGE.LOG COPYING CREDITS ERRATA README TODO VERSION
+RELEASE_DOCS = CHANGE.LOG COPYING CREDITS ERRATA README VERSION
 
 PATH = /sbin:/bin:/usr/sbin:/usr/bin:/usr/bin/X11:/usr/local/sbin:/usr/local/bin
 ARCH = $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/)
-SUDO = $(shell if [ `id -u` != 0 ]; then echo -n "sudo"; fi)
+SUDO = $(shell if [ `id -u` != 0 ]; then `which sudo`; fi)
 
-MANUAL_DIR = doc/manual_source/
-MANPAGE_DIR = doc/man/
-PATCH_DIR = patches/
-LIB_SRC = lib/SystemImager/
-SRC_DIR = src/
-BINARY_SRC = sbin/
-CLIENT_BINARY_SRC = tftpstuff/systemimager
-COMMON_BINARY_SRC = $(BINARY_SRC)
+TEMP_DIR = systemimager.initrd.temp.dir
+
+MANUAL_DIR = $(TOPDIR)/doc/manual_source
+MANPAGE_DIR = $(TOPDIR)/doc/man
+PATCH_DIR = $(TOPDIR)/patches
+LIB_SRC = $(TOPDIR)/lib/SystemImager
+SRC_DIR = $(TOPDIR)/src
+BINARY_SRC = $(TOPDIR)/sbin
 
 # destination directories
-PREFIX = /usr/local
+PREFIX = /usr
 ETC  = $(DESTDIR)/etc
 INITD = $(ETC)/init.d
 USR = $(DESTDIR)$(PREFIX)
@@ -151,417 +115,404 @@ LOG_DIR = $(DESTDIR)/var/log/systemimager
 
 INITSCRIPT_NAME = systemimager
 
-TFTP_BIN_SRC      = tftpstuff/systemimager
-TFTP_BIN          = prepareclient updateclient
-TFTP_ROOT	  = $(USR)/share/systemimager
-TFTP_BIN_DEST     = $(TFTP_ROOT)/$(ARCH)-boot
+TFTP_BIN         := raidstart mkraid mkreiserfs mkfs.jfs prepareclient updateclient
+TFTP_ROOT	  = $(USR)/share/systemimager/boot
+TFTP_BIN_DEST     = $(TFTP_ROOT)/$(ARCH)
 
-PXE_CONF_SRC      = tftpstuff/pxelinux.cfg
-PXE_CONF_DEST     = $(TFTP_BIN_DEST)/pxelinux.cfg
+PXE_CONF_SRC      = etc/pxelinux.cfg
+PXE_CONF_DEST     = $(ETC)/systemimager/pxelinux.cfg
 
 BINARIES := mkautoinstallcd mkautoinstalldiskette
-SBINARIES := addclients cpimage getimage mkdhcpserver mkdhcpstatic mkautoinstallscript mkbootserver mvimage pushupdate rmimage
+SBINARIES := addclients cpimage getimage install_siboot mkdhcpserver mkdhcpstatic mkautoinstallscript mkbootserver mvimage pushupdate rmimage mkrsyncd_conf
 CLIENT_SBINARIES  := updateclient prepareclient
 COMMON_BINARIES   = lsimage
 
-IMAGESRC    = ./var/spool/systemimager/images
+IMAGESRC    = $(TOPDIR)/var/lib/systemimager/images
 IMAGEDEST   = $(DESTDIR)/var/lib/systemimager/images
-WARNING_FILES = $(IMAGEDEST)/README $(IMAGEDEST)/DO_NOT_TOUCH_THESE_DIRECTORIES $(IMAGEDEST)/CUIDADO $(IMAGEDEST)/ACHTUNG
+WARNING_FILES = $(IMAGESRC)/README $(IMAGESRC)/CUIDADO $(IMAGESRC)/ACHTUNG
 AUTOINSTALL_SCRIPT_DIR = $(DESTDIR)/var/lib/systemimager/scripts
+OVERRIDES_DIR = $(DESTDIR)/var/lib/systemimager/overrides
+OVERRIDES_README = $(TOPDIR)/var/lib/systemimager/overrides/README
 
-LINUX_DIR = linux
-LINUX_SRC = $(SRC_DIR)/$(LINUX_DIR)
+RSYNC_STUB_DIR = $(ETC)/systemimager/rsync_stubs
 
-# Now we do multi architecture defines for kernel building
+CHECK_FLOPPY_SIZE = expr \`du -b $(INITRD_DIR)/initrd.gz | cut -f 1\` + \`du -b $(LINUX_IMAGE) | cut -f 1\`
 
-ifeq ($(ARCH),i386)
-	 LINUX_VERSION = 2.4.16
-	 LINUX_IMAGE = $(LINUX_SRC)/arch/i386/boot/bzImage
-	 LINUX_TARGET = bzImage
-endif
-ifeq ($(ARCH),ia64)
-	 LINUX_VERSION = 2.4.9
-	 LINUX_IMAGE = $(LINUX_SRC)/arch/ia64/boot/vmlinux
-	 LINUX_TARGET = compressed
-endif
-ifeq ($(ARCH),s390)
-	 LINUX_VERSION = 2.4.7
-	 LINUX_IMAGE = $(LINUX_SRC)/arch/s390/boot/image
-	 LINUX_TARGET = image
-endif
-# currently ppc only supports rs6k machines.  Help is welcome to
-# make this support other machines
-ifeq ($(ARCH),ppc)
-	LINUX_VERSION = 2.4.17
-	LINUX_IMAGE = $(LINUX_SRC)/arch/ppc/boot/images/zImage.initrd.chrp-rs6k
-	LINUX_TARGET = zImage                          
-endif
+BOEL_BINARIES_TARBALL = $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION).tar.gz
+INITRD_DIR := initrd_source
 
-LINUX_TARBALL = linux-$(LINUX_VERSION).tar.bz2
-LINUX_URL = http://www.us.kernel.org/pub/linux/kernel/v2.4/$(LINUX_TARBALL)
-
-RAMDISK_DIR = initrd_source
-
+SI_INSTALL = $(TOPDIR)/si_install --si-prefix=$(PREFIX)
 WGET = wget --passive-ftp
 
-#@all:
-#@  build everything, install nothing
-#@ 
-all:	kernel ramdisks docs manpages
+# build everything, install nothing
+all:	boel_binaries_tarball kernel initrd.gz docs manpages
 
-#@install_server_all:
-#@  a complete server install
-#@ 
-install_server_all:	install_server install_common install_binaries
+# a complete server install
+install_server_all:	install_server install_common install_binaries boot_tarball
+	make install_boot_tarball
 
-#@install_client_all:
-#@  a complete client install
-#@ 
+# a complete client install
 install_client_all:	install_client install_common
 
-#@@install_server:
-#@@  install server-only architecture independent files
-#@@ 
-install_server:	install_manpages install_configs install_server_libs
-	### install files in $(USR)/bin ###
-	mkdir -p $(BIN)
-	./si_install -e $(foreach binary, $(BINARIES), sbin/$(binary)) $(BIN)
+# install server-only architecture independent files
+install_server:	install_server_man install_configs install_server_libs
+	$(SI_INSTALL) -d $(BIN)
+	$(SI_INSTALL) -d $(SBIN)
+	$(foreach binary, $(BINARIES), \
+		$(SI_INSTALL) -m 755 $(BINARY_SRC)/$(binary) $(BIN);)
+	$(foreach binary, $(SBINARIES), \
+		$(SI_INSTALL) -m 755 $(BINARY_SRC)/$(binary) $(SBIN);)
+	$(SI_INSTALL) -d -m 755 $(LOG_DIR)
+	$(SI_INSTALL) -d -m 755 $(TFTP_BIN_DEST)
+	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_SCRIPT_DIR)
+	$(SI_INSTALL) -d -m 755 $(OVERRIDES_DIR)
+	$(SI_INSTALL) -m 644 $(OVERRIDES_README) $(OVERRIDES_DIR)
 
-	### install files in $(USR)/sbin ###
-	mkdir -p $(SBIN)
-	./si_install -e $(foreach binary, $(SBINARIES), sbin/$(binary)) $(SBIN)
-
-	install -d -m 755 $(PXE_CONF_DEST)
-	./si_install -t $(PXE_CONF_SRC)/message.txt \
-	  $(PXE_CONF_SRC)/syslinux.cfg $(PXE_CONF_DEST)
-	cp -a $(PXE_CONF_DEST)/syslinux.cfg $(PXE_CONF_DEST)/default
-
-	install -d -m 755 $(TFTP_BIN_DEST)
-	./si_install -e $(TFTP_BIN_SRC)/prepareclient \
-	  $(TFTP_BIN_SRC)/updateclient $(TFTP_BIN_DEST)
-
-	install -d -m 755 $(IMAGEDEST)
-	$(foreach file, $(WARNING_FILES), \
-		install -m 644 $(IMAGESRC)/README $(file);)
-
-	install -d -m 755 $(LOG_DIR)
-	install -d -m 755 $(AUTOINSTALL_SCRIPT_DIR)
-
-#@@install_client:
-#@@  install client-only files
-#@@ 
-install_client: install_client_manpages install_client_libs
-	mkdir -p $(ETC)/systemimager
-	install -b -m 644 tftpstuff/systemimager/updateclient.local.exclude \
-	  $(ETC)/systemimager
-	mkdir -p $(SBIN)
-
-	./si_install -e \
-	  $(foreach binary, $(CLIENT_SBINARIES), sbin/$(binary)) $(SBIN)
-
-#@@install_common:
-#@@  install files common to both the server and client
-#@@ 
-install_common:	install_common_manpages install_common_libs
-	mkdir -p $(BIN)
-	./si_install -e \
-	  $(foreach binary, $(COMMON_BINARIES), \
-	    $(COMMON_BINARY_SRC)/$(binary)) $(BIN)
-
-#@@install_common_libs:
-#@@  install libraries common to the server and client
-#@@ 
-install_common_libs:
-	mkdir -p $(LIB_DEST)
-	./si_install -t $(LIB_SRC)/Common.pm $(LIB_DEST)
-
-#@@install_server_libs:
-#@@  install server-only libraries
-#@@ 
-install_server_libs:
-	mkdir -p $(LIB_DEST)
-	./si_install -t $(LIB_SRC)/Server.pm $(LIB_DEST)
-
-#@@install_client_libs:
-#@@  install client-only libraries
-#@@ 
-install_client_libs:
-	mkdir -p $(LIB_DEST)
-	./si_install -t $(LIB_SRC)/Client.pm $(LIB_DEST)
-
-#@@install_binaries:
-#@@  install architecture-dependent files
-#@@ 
-install_binaries:	install_kernel install_ramdisks
-
-########## BEGIN kernel ##########
-#@@install_kernel:
-#@@  install the kernel that autoinstall clients will boot from during
-#@@  autoinstallation
-#@@ 
-install_kernel:	kernel
-	mkdir -p $(TFTP_BIN_DEST)
-	cp -a $(LINUX_IMAGE) $(TFTP_BIN_DEST)/kernel
-
-#@@kernel:
-#@@  build the kernel that autoinstall clients will boot from during
-#@@  autoinstallation
-#@@ 
-kernel:	kernel-build-stamp
-
-ifeq ($(ARCH),ppc)
-kernel: kernel.initrd
+# no need to do this on non-i386, though this should be generalized
+# somewhere else in 2.3
+ifeq ($(ARCH),i386)
+	$(SI_INSTALL) -d -m 755 $(PXE_CONF_DEST)
+	$(SI_INSTALL) -m 644 --backup $(PXE_CONF_SRC)/message.txt \
+		$(PXE_CONF_DEST)/message.txt
+	$(SI_INSTALL) -m 644 --backup $(PXE_CONF_SRC)/syslinux.cfg \
+		$(PXE_CONF_DEST)/syslinux.cfg
+	$(SI_INSTALL) -m 644 --backup $(PXE_CONF_SRC)/syslinux.cfg \
+		$(PXE_CONF_DEST)/default
 endif
 
-# This is only used for ppc architectures!
-kernel.initrd: kernel-build-stamp ramdisks-build-stamp
-	cp -a $(RAMDISK_DIR)/initrd.gz $(LINUX_SRC)/arch/ppc/boot/images/ramdisk.image.gz
-	$(MAKE) -C $(LINUX_SRC) zImage.initrd
+	$(SI_INSTALL) -m 755 $(BINARY_SRC)/prepareclient $(TFTP_BIN_DEST)
+	$(SI_INSTALL) -m 755 $(BINARY_SRC)/updateclient $(TFTP_BIN_DEST)
+	$(SI_INSTALL) -d -m 755 $(IMAGEDEST)
+	$(SI_INSTALL) -m 644 $(WARNING_FILES) $(IMAGEDEST)
+	cp -a $(IMAGEDEST)/README $(IMAGEDEST)/DO_NOT_TOUCH_THESE_DIRECTORIES
 
-
-kernel-build-stamp:
-	$(MAKE) patched_kernel
-	$(MAKE) -C $(LINUX_SRC) $(LINUX_TARGET)
-	touch kernel-build-stamp
-
-patched_kernel:	patched_kernel-stamp
-
-patched_kernel-stamp:
-	$(MAKE) $(SRC_DIR)/$(LINUX_TARBALL)
-	[ -d $(LINUX_SRC) ] || \
-		( cd $(SRC_DIR) && bzcat $(LINUX_TARBALL) | tar xv && \
-            cd linux && cat `find ../../$(PATCH_DIR) \
-              -name "linux.$(ARCH).*.patch" | sort` | patch -p1 )
-	cp -a $(PATCH_DIR)/linux.$(ARCH).config $(LINUX_SRC)/.config
-	cd $(LINUX_SRC) && make oldconfig dep
-	touch patched_kernel-stamp
-
-$(SRC_DIR)/$(LINUX_TARBALL):
-	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
-	( [  -a /usr/src/$(LINUX_TARBALL) ] && \
-	  ln -s /usr/src/$(LINUX_TARBALL) $(SRC_DIR) ) || \
-	( [ -d $(LINUX_DIR) ] && tar -c $(LINUX_DIR) | \
-	  gzip -9 > $(SRC_DIR)/$(LINUX_TARBALL) ) || \
-	( cd $(SRC_DIR) && $(WGET) $(LINUX_URL) )
-
-########## END kernel ##########
-
-########## BEGIN ramdisks ##########
-
-#@@install_ramdisks:
-#@@  install the autoinstall ramdisks - the initial ramdisk used by autoinstall
-#@@  clients when beginning an autoinstall, and the second stage ramdisk
-#@@ 
-install_ramdisks:
-	$(MAKE) -C $(RAMDISK_DIR) install
-
-#@@ramdisks:
-#@@  build the autoinstall ramdisk
-#@@ 
-ramdisks:	ramdisks-build-stamp
-
-ramdisks-build-stamp:
-	make -C $(RAMDISK_DIR) all
-	touch ramdisks-build-stamp
-
-#@@install_configs:
-#@@  install the initscript & config files
-#@@ 
-install_configs:
+# install client-only files
+install_client: install_client_man install_client_libs
 	mkdir -p $(ETC)/systemimager
-	./si_install -c etc/rsyncd.conf etc/systemimager.conf \
+	$(SI_INSTALL) -b -m 644 etc/updateclient.local.exclude \
 	  $(ETC)/systemimager
+	$(SI_INSTALL) -b -m 644 etc/client.conf \
+	  $(ETC)/systemimager
+	mkdir -p $(SBIN)
+
+	$(foreach binary, $(CLIENT_SBINARIES), \
+		$(SI_INSTALL) -m 755 $(BINARY_SRC)/$(binary) $(SBIN);)
+
+# install files common to both the server and client
+install_common:	install_common_man install_common_libs
+	mkdir -p $(BIN)
+	$(foreach binary, $(COMMON_BINARIES), \
+		$(SI_INSTALL) -m 755 $(BINARY_SRC)/$(binary) $(BIN);)
+
+# install server-only libraries
+install_server_libs:
+	mkdir -p $(LIB_DEST)
+	$(SI_INSTALL) -m 644 $(LIB_SRC)/Server.pm $(LIB_DEST)
+
+# install client-only libraries
+install_client_libs:
+	mkdir -p $(LIB_DEST)
+	$(SI_INSTALL) -m 644 $(LIB_SRC)/Client.pm $(LIB_DEST)
+
+# install common libraries
+install_common_libs:
+	mkdir -p $(LIB_DEST)
+	$(SI_INSTALL) -m 644 $(LIB_SRC)/Common.pm $(LIB_DEST)
+
+# checks the sized of the i386 kernel and initrd to make sure they'll fit 
+# on an autoinstall diskette
+check_floppy_size:	kernel initrd.gz
+ifeq ($(ARCH), i386)
+	@### see if the kernel and ramdisk are larger than the size of a 1.44MB
+	@### floppy image, minus about 10k for syslinux stuff
+	@echo -n "Ramdisk + Kernel == "
+	@echo -n "`$(CHECK_FLOPPY_SIZE)`"
+	@[ `$(CHECK_FLOPPY_SIZE)` -lt `expr 1474560 - 10240` ] || \
+	     (echo "" && \
+	      echo "************************************************" && \
+	      echo "Dammit.  The kernel and ramdisk are too large.  " && \
+	      echo "************************************************" && \
+	      exit 1)
+	@echo " - ok, that should fit on a floppy"
+endif
+
+########## BEGIN initrd ##########
+# install the autoinstall ramdisk - the initial ramdisk used by autoinstall
+# clients when beginning an autoinstall
+install_initrd:
+	$(MAKE) initrd.gz
+	mkdir -p $(TFTP_BIN_DEST)
+	$(SI_INSTALL) -m 644 $(INITRD_DIR)/initrd.gz $(TFTP_BIN_DEST)/initrd-$(FLAVOR)-$(VERSION).gz
+
+# install the autoinstall ramdisk - the initial ramdisk used by autoinstall
+# clients when beginning an autoinstall.
+# This rule is for installing into the boot tarball.
+install_standard_initrd.gz:
+	$(MAKE) initrd.gz
+	$(SI_INSTALL) -m 644 $(INITRD_DIR)/initrd.gz \
+	  $(DESTDIR)/initrd-$(FLAVOR)-$(VERSION).gz
+
+
+### BEGIN build the autoinstall ramdisk ###
+initrd.gz:	kernel
+	make -C $(INITRD_DIR) initrd.gz
+
+### END build the autoinstall ramdisk ###
+
+
+# install the initscript & config files for the server
+install_configs:
+	$(SI_INSTALL) -d $(ETC)/systemimager
+	$(SI_INSTALL) -m 644 etc/server.conf \
+	  $(ETC)/systemimager/server.conf
+
+	mkdir -p $(RSYNC_STUB_DIR)
+	$(SI_INSTALL) -b -m 644 etc/rsync_stubs/10header $(RSYNC_STUB_DIR)
+	[ -f $(RSYNC_STUB_DIR)/99local ] \
+		&& $(SI_INSTALL) -b -m 644 etc/rsync_stubs/99local $(RSYNC_STUB_DIR)/99local.dist~ \
+		|| $(SI_INSTALL) -b -m 644 etc/rsync_stubs/99local $(RSYNC_STUB_DIR)
+	$(SI_INSTALL) -b -m 644 etc/rsync_stubs/README $(RSYNC_STUB_DIR)
+
 	[ "$(INITD)" != "" ] || exit 1
 	mkdir -p $(INITD)
-	./si_install -ce etc/init.d/rsync $(INITD)/$(INITSCRIPT_NAME)
+	$(SI_INSTALL) -b -m 755 etc/init.d/rsync $(INITD)/$(INITSCRIPT_NAME)
 
-########## END ramdisks ##########
+########## END initrd ##########
+
 
 ########## BEGIN man pages ##########
-
-#@@install_manpages
-#@@  install the manpages for the server
-#@@ 
-install_manpages:	manpages
-	mkdir -p $(MAN8)
-	$(foreach binary, $(BINARIES) $(SBINARIES), \
-		cp -a $(MANPAGE_DIR)/$(binary).8.gz $(MAN8); )
-
-#@@install_client_manpages
-#@@  install the manpages for the client
-#@@ 
-install_client_manpages:	manpages
-	mkdir -p $(MAN8)
-	$(foreach binary, $(CLIENT_SBINARIES), \
-		cp -a $(MANPAGE_DIR)/$(binary).8.gz $(MAN8); )
-
-#@@install_common_manpages:
-#@@  installs the manpages that are common to both the server and client
-#@@ 
-install_common_manpages:	manpages
-	mkdir -p $(MAN8)
-	$(foreach binary, $(COMMON_BINARIES), \
-		cp -a $(MANPAGE_DIR)/$(binary).8.gz $(MAN8); )
-#@@manpages
-#@@  builds the man pages from SGML source
-#@@ 
+# build all of the manpages
 manpages:
 	$(MAKE) -C $(MANPAGE_DIR)
+
+# install the manpages for the server
+install_server_man:
+	cd $(MANPAGE_DIR) && $(MAKE) install_server_man $@
+
+# install the manpages for the client
+install_client_man:
+	cd $(MANPAGE_DIR) && $(MAKE) install_client_man $@
+
+# install manpages common to the server and client
+install_common_man:
+	cd $(MANPAGE_DIR) && $(MAKE) install_common_man $@
+
 ########## END man pages ##########
 
-#@install_docs:
-#@  installs the manual and some examples
-#@ 
+
+# installs the manual and some examples
 install_docs: docs
 	mkdir -p $(DOC)
 	cp -a $(MANUAL_DIR)/html $(DOC)
 	cp $(MANUAL_DIR)/*.ps $(MANUAL_DIR)/*.pdf $(DOC)
 	mkdir -p $(DOC)/examples
-	install -m 644 etc/rsyncd.conf $(DOC)/examples
-	install -m 644 etc/init.d/rsync $(DOC)/examples
+	$(SI_INSTALL) -m 644 etc/rsyncd.conf $(DOC)/examples
+	$(SI_INSTALL) -m 644 etc/init.d/rsync $(DOC)/examples
 
-#@docs:
-#@  builds the manual from SGML source
-#@ 
+# builds the manual from SGML source
 docs:
 	$(MAKE) -C $(MANUAL_DIR) html ps pdf
 
-#@get_source:
-#@  pre-download the source to other packages that may be needed by other
-#@  rules
-#@ 
-get_source:	$(SRC_DIR)/$(LINUX_TARBALL)
+# pre-download the source to other packages that are needed by 
+# the build system
+get_source:	$(SRC_DIR)/$(LINUX_TARBALL) $(SRC_DIR)/$(RAIDTOOLS_TARBALL) $(SRC_DIR)/$(REISERFSPROGS_TARBALL) $(SRC_DIR)/$(BC_TARBALL) $(SRC_DIR)/$(JFSUTILS_TARBALL)
 
-#@help:
-#@  prints a short description of the rules that are useful in most cases
-#@ 
-help:
-	@echo 'This Makefiles provides targets to build and install the'
-	@echo 'SystemImager packages.  Here are descriptions of the targets'
-	@echo 'that are useful in most cases.'
-	@echo ''
-	@grep -e "^#@[^@]" Makefile | sed s/"#@"/""/
-
-#@help_all:
-#@  prints a short description of all rules, except those that aren't meant
-#@  to be called directly
-#@ 
-help_all:
-	@echo 'This Makefiles provides targets to build and install the'
-	@echo 'SystemImager packages.  Here are descriptions of all the'
-	@echo 'targets that should be called directly.'
-	@echo ''
-	@grep -e "^#@[^@]" Makefile | sed s/"#@"/""/
-	@grep -e "^#@@" Makefile | sed s/"#@@"/""/
-
-#@install:
-#@ prints short message with installation instructions
-#@ 
 install: 
-	@echo 'To install the server, type:'
-	@echo '  "make install_server_all"'
 	@echo ''
-	@echo 'To install the client, type:'
-	@echo '  "make install_client_all"'
-	@echo ''
-	@echo 'Try "make help" for more options.'
+	@echo 'Read README for installation details.'
 	@echo ''
 
-#@helpless:
-#@  pipes the output of 'make help' through less
-#@ 
-helpless:
-	$(MAKE) help | less
+### BEGIN autoinstall binaries tarball ###
+# Perhaps there could be problems here in building multiple arch's from
+# a single source directory, but we'll deal with that later...  Perhaps use
+# $(TOPDIR)/tmp/$(ARCH)/ instead of just $(TOPDIR)/tmp/. -BEF-
+#
+# XXX can't get this to do a "make: Nothing to be done for `boel_binaries_tarball'." -BEF-
+#
+boel_binaries_tarball:	$(BOEL_BINARIES_TARBALL)
 
-#@helpless_all:
-#@  pipes the output of 'make help_all' through less
-#@ 
-helpless_all:
-	$(MAKE) help_all | less
+$(BOEL_BINARIES_TARBALL):	discover dosfstools e2fsprogs parted raidtools reiserfsprogs modules bc jfsutils
+	#
+	# Put binaries in the boel_binaries_tarball...
+	#
+	rm -fr $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)
+	mkdir -m 755 -p $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/bin
+	mkdir -m 755 -p $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/sbin
+	install -m 755 $(BC_BINARY) $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/bin/
+	install -m 755 $(DISCOVER_BINARY) $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/sbin/
+	install -m 755 $(MKDOSFS_BINARY) $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/sbin/
+	install -m 755 $(MKE2FS_BINARY) $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/sbin/
+	install -m 755 $(TUNE2FS_BINARY) $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/sbin/
+	install -m 755 $(PARTED_BINARY) $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/sbin/
+	install -m 755 $(MKRAID_BINARY) $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/sbin/
+	install -m 755 $(RAIDSTART_BINARY) $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/sbin/
+	( cd $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/sbin/ && ln -f raidstart raidstop )
+	install -m 755 $(MKREISERFS_BINARY) $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/sbin/
 
-#@source_tarball:
-#@  create a source tarball
-#@
-source_tarball: ./tmp/systemimager-source-$(VERSION).tar.bz2
+	install -m 755 $(MKJFS_BINARY) $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/sbin/
+	#
+	# Put libraries in the boel_binaries_tarball...
+	#
+	#
+	# Copy over any special libraries that mklibs.sh probably won't find.  
+	# This should be done for any binary that causes a mklibs.sh message 
+	# like this: "objcopy: : No such file or directory". -BEF-
+	#
+	mkdir -m 755 -p $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/lib
+	#
+	# libparted
+	rsync -av $(SRC_DIR)/$(PARTED_DIR)/libparted/.libs/libparted-*.so* \
+		$(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/lib/
+	#
+	# libdiscover
+	rsync -av $(SRC_DIR)/$(DISCOVER_DIR)/lib/.libs/libdiscover.so* \
+		$(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/lib/
+	strip $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/lib/*
+	#
+	#
+	# Copy over miscellaneous other files...
+	#
+	mkdir -m 755 -p $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/usr/share/discover
+	install -m 644 $(DISCOVER_DATA_FILES) $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/usr/share/discover
+	#
+	# Use the mklibs.sh script from Debian to find and copy libraries and 
+	# any soft links.  Note: This does not require PIC libraries -- it will
+	# copy standard libraries if it can't find a PIC equivalent.  -BEF-
+	#
+	( cd $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION) && $(TOPDIR)/initrd_source/mklibs.sh -v -d lib sbin/* )
+	#
+	#
+	# Strip to the bones. -BEF-
+	#
+	strip $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/bin/*
+	strip $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/sbin/*
+	#
+	#
+	# Copy over kernel modules. -BEF-
+	#
+	rsync -av $(TOPDIR)/tmp/kernel_modules/lib $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)
+	#
+	# Tar it up, baby! -BEF-
+	( cd $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION) && tar -cv * | gzip -9 > $(BOEL_BINARIES_TARBALL) )
+	# Note: This tarball should be installed to the "boot/$(ARCH)/" directory.
 
-./tmp/systemimager-source-$(VERSION).tar.bz2:
+### END autoinstall binaries tarball ###
+
+### BEGIN boot tarball ###
+install_boot_tarball:	boot_tarball
+	install_siboot $(TOPDIR)/tmp/systemimager-boot-$(ARCH)-$(FLAVOR)-$(VERSION).tar.bz2
+
+boot_tarball:	$(TOPDIR)/tmp/systemimager-boot-$(ARCH)-$(FLAVOR)-$(VERSION).tar.bz2
+
+$(TOPDIR)/tmp/systemimager-boot-$(ARCH)-$(FLAVOR)-$(VERSION).tar.bz2:	DESTDIR := $(TOPDIR)/tmp/systemimager-boot-$(ARCH)-$(FLAVOR)-$(VERSION)
+$(TOPDIR)/tmp/systemimager-boot-$(ARCH)-$(FLAVOR)-$(VERSION).tar.bz2:	kernel initrd.gz boel_binaries_tarball
+	mkdir -p $(DESTDIR)
+	make DESTDIR=$(DESTDIR) install_standard_kernel  
+	make DESTDIR=$(DESTDIR) install_standard_initrd.gz
+	cp $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION).tar.gz $(DESTDIR)
+	echo "systemimager-boot-$(ARCH)-$(FLAVOR)-$(VERSION)" > $(DESTDIR)/README-$(FLAVOR)-$(VERSION)
+	cd tmp && tar -c systemimager-boot-$(ARCH)-$(FLAVOR)-$(VERSION) | \
+	  bzip2 > systemimager-boot-$(ARCH)-$(FLAVOR)-$(VERSION).tar.bz2
+	@echo
+	@echo "systemimager-boot-$(ARCH)-$(FLAVOR)-$(VERSION).tar.bz2 created in $(TOPDIR)/tmp"
+	@echo
+
+### END boot tarball ###
+
+
+client_tarball:	$(TOPDIR)/tmp/systemimager-client-$(VERSION).tar.bz2
+
+$(TOPDIR)/tmp/systemimager-client-$(VERSION).tar.bz2:
+	mkdir -p $(TOPDIR)/tmp/systemimager-client-$(VERSION)
+	$(MAKE) install_client_all DESTDIR=$(TOPDIR)/tmp/systemimager-client-$(VERSION)
+	$(MAKE) install_docs DESTDIR=$(TOPDIR)/tmp/systemimager-client-$(VERSION)
+	cp $(RELEASE_DOCS) installclient install_lib $(TOPDIR)/tmp/systemimager-client-$(VERSION)
+	cd tmp && tar -c systemimager-client-$(VERSION) | bzip2 > \
+		systemimager-client-$(VERSION).tar.bz2
+	@echo
+	@echo "client tarball has been created in $(TOPDIR)/tmp"
+	@echo
+
+server_tarball:	$(TOPDIR)/tmp/systemimager-server-$(VERSION).tar.bz2
+
+$(TOPDIR)/tmp/systemimager-server-$(VERSION).tar.bz2:
+	mkdir -p $(TOPDIR)/tmp/systemimager-server-$(VERSION)
+	$(MAKE) install_server install_common DESTDIR=$(TOPDIR)/tmp/systemimager-server-$(VERSION)
+	$(MAKE) install_docs DESTDIR=$(TOPDIR)/tmp/systemimager-server-$(VERSION)
+	cp $(RELEASE_DOCS) installserver install_lib $(TOPDIR)/tmp/systemimager-server-$(VERSION)
+	cd tmp && tar -c systemimager-server-$(VERSION) | bzip2 > \
+		systemimager-server-$(VERSION).tar.bz2
+	@echo
+	@echo "server tarball has been created in $(TOPDIR)/tmp"
+	@echo
+
+source_tarball:	$(TOPDIR)/tmp/systemimager-source-$(VERSION).tar.bz2
+
+$(TOPDIR)/tmp/systemimager-source-$(VERSION).tar.bz2:
 	mkdir -p tmp/systemimager-source-$(VERSION)
 	find . -maxdepth 1 -not -name . -not -name tmp \
 	  -exec cp -a {} tmp/systemimager-source-$(VERSION) \;
 	rm -rf `find tmp/systemimager-source-$(VERSION) -name CVS \
-	  -type d -printf "%p "`
+	         -type d -printf "%p "`
 	$(MAKE) -C tmp/systemimager-source-$(VERSION) distclean
 	cd tmp && tar -c systemimager-source-$(VERSION) | bzip2 > \
 	  systemimager-source-$(VERSION).tar.bz2
 	@echo
-	@echo "server tarball has been created in ./tmp"
+	@echo "server tarball has been created in $(TOPDIR)/tmp"
 	@echo
 
-#@client_tarball:
-#@  create a user-distributable tarball for the client
-#@ 
-client_tarball:	./tmp/systemimager-client-$(VERSION).tar.bz2
-
-./tmp/systemimager-client-$(VERSION).tar.bz2:
-	mkdir -p ./tmp/systemimager-client-$(VERSION)
-	$(MAKE) install_client_all DESTDIR=./tmp/systemimager-client-$(VERSION)
-	$(MAKE) install_docs DESTDIR=./tmp/systemimager-client-$(VERSION)
-	cp $(RELEASE_DOCS) installclient install_lib ./tmp/systemimager-client-$(VERSION)
-	cd tmp && tar -c systemimager-client-$(VERSION) | bzip2 > \
-		systemimager-client-$(VERSION).tar.bz2
-	@echo
-	@echo "client tarball has been created in ./tmp"
-	@echo
-
-#@server_tarball:
-#@  create a user-distributable tarball for the server
-#@ 
-server_tarball:	./tmp/systemimager-server-$(VERSION).tar.bz2
-
-./tmp/systemimager-server-$(VERSION).tar.bz2:
-	mkdir -p ./tmp/systemimager-server-$(VERSION)
-	$(MAKE) install_server_all DESTDIR=./tmp/systemimager-server-$(VERSION)
-	$(MAKE) install_docs DESTDIR=./tmp/systemimager-server-$(VERSION)
-	cp $(RELEASE_DOCS) installserver install_lib ./tmp/systemimager-server-$(VERSION)
-	cd tmp && tar -c systemimager-server-$(VERSION) | bzip2 > \
-		systemimager-server-$(VERSION).tar.bz2
-	@echo
-	@echo "server tarball has been created in ./tmp"
-	@echo
-
-#@tarballs:
-#@  create user-distributable tarballs for the server and the client
-#@ 
-tarballs:
-	$(MAKE) source_tarball client_tarball server_tarball
-	@ echo -e "\ntarballs have been created in ./tmp\n"
+# create user-distributable tarballs for the server and the client
+tarballs:	source_tarball client_tarball server_tarball boot_tarball
+	@ echo -e "\ntarballs have been created in $(TOPDIR)/tmp\n"
 
 debs:	all
 	dpkg-buildpackage -r$(SUDO)
 
-rpm:
-	echo "I don't know how to build an RPM - will you please teach me?"
-	echo "see debian/rules to see how the debs are built"
-	echo "My .spec file is out of date" && exit 1
-	# rpm -ba systemimager.spec
+# create a source tarball useable for SRPM and RPM creation
+srpm_tarball:  $(TOPDIR)/tmp/systemimager-$(VERSION).tar.gz
 
-#@clean:
-#@  removes object files, docs, editor backup files, etc.
-#@ 
-clean:
-	-$(MAKE) -C $(LINUX_SRC) mrproper
+$(TOPDIR)/tmp/systemimager-$(VERSION).tar.gz:
+	mkdir -p tmp/systemimager-$(VERSION)
+	find . -maxdepth 1 -not -name . -not -name tmp \
+	  -exec cp -a {} tmp/systemimager-$(VERSION) \;
+	rm -rf `find tmp/systemimager-$(VERSION) -name CVS \
+	         -type d -printf "%p "`
+	$(MAKE) -C tmp/systemimager-$(VERSION) distclean
+	cd tmp && tar -czf systemimager-$(VERSION).tar.gz systemimager-$(VERSION) 
+	@echo
+	@echo "srpm tarball has been created in $(TOPDIR)/tmp"
+	@echo
+
+# make the srpms for systemimager
+srpm: srpm_tarball
+	rpm -ts tmp/systemimager-$(VERSION).tar.gz
+
+
+# make the rpms for systemimager
+rpm: srpm_tarball
+	rpm -tb tmp/systemimager-$(VERSION).tar.gz
+
+include make.d/*.rul
+
+# removes object files, docs, editor backup files, etc.
+clean:	$(subst .rul,_clean,$(shell cd make.d && ls *.rul))
 	-$(MAKE) -C $(MANPAGE_DIR) clean
 	-$(MAKE) -C $(MANUAL_DIR) clean
-	-$(MAKE) -C $(RAMDISK_DIR) clean
+	-$(MAKE) -C $(INITRD_DIR) clean
+	-rm $(MANUAL_DIR)/images
+	# where the tarballs are built
+	-$(SUDO) rm -rf tmp
+	-rm *stamp
 	-find . -name "*~" -exec rm -f {} \;
 	-find . -name "#*#" -exec rm -f {} \;
-	-rm doc/manual_source/images
 
-#@distclean:
-#@  same as clean, but also removes downloaded source, stamp files, etc.
-#@ 
+	# kill all source directories from external source
+	-find $(SRC_DIR) -mindepth 1 -maxdepth 1 -type d -exec rm -rf {} \;
+
+# same as clean, but also removes downloaded source, stamp files, etc.
 distclean:	clean
-	-rm *stamp
 	-rm -rf $(SRC_DIR)
 	-rm -rf tmp
-	-$(MAKE) -C $(RAMDISK_DIR) distclean
+	-$(MAKE) -C $(INITRD_DIR) distclean
+
+.PHONY:	all install_server_all install_server install_client_all install_client install_common install_server_libs install_client_libs install_common_libs install_binaries check_floppy_size install_raidtools raidtools install_reiserfsprogs reiserfsprogs install_jfsutils jfsutils install_kernel kernel patched_kernel install_initrd initrd install_configs manpages install_server_man install_client_man install_common_man install_docs docs get_source install boot_tarball client_tarball server_tarball source_tarball tarballs debs srpm_tarball srpm rpm clean distclean boel_binaries_tarball discover dosfstools e2fsprogs parted modules bc

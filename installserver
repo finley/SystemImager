@@ -1,14 +1,32 @@
 #!/bin/sh
 #
-# "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>
-#   Others who have contributed to this code (in alphabetical order):
-#     dann frazier <dannf@ldl.fc.hp.com>
-#     Michael R. Nolta <mrnolta@princeton.edu>
+# "SystemImager"  
 #
+#  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
+#  Copyright (C) 2002 Hewlett-Packard Company <dannf@fc.hp.com>
 #
-# This file is: installserver
+#  Others who have contributed to this code (in alphabetical order):
+#   Michael R. Nolta <mrnolta@princeton.edu>
+#
+#   $Id$
+#
 #   Interactively installs the SystemImager server files, and takes care of 
 #   upgrade issues.
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program; if not, write to the Free Software
+#   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#  
 
 # set some variables
 DESTDIR=""
@@ -40,7 +58,8 @@ echo "Checking for old utilities..."
 OLD_FILES="/usr/sbin/addclients /usr/sbin/cpimage /usr/sbin/getimage /usr/sbin/makedhcpserver /usr/sbin/makedhcpstatic /usr/sbin/makeautoinstallcd /usr/sbin/makeautoinstalldiskette /usr/sbin/mvimage /usr/sbin/pushupdate /usr/sbin/rmimage /usr/sbin/lsimage"
 remove_old_files
 
-CONFIG_FILES="/etc/systemimager/systemimager.conf:./etc/systemimager/systemimager.conf /etc/systemimager/rsyncd.conf:./etc/systemimager/rsyncd.conf /etc/init.d/systemimager:./etc/init.d/systemimager"
+CONFIG_FILES="/etc/systemimager/server.conf:./etc/systemimager/server.conf /etc/init.d/systemimager:./etc/init.d/systemimager /etc/systemimager/rsync_stubs/10header:./etc/systemimager/rsync_stubs/10header /etc/systemimager/rsync_stubs/99local:./etc/systemimager/rsync_stubs/99local"
+
 upgrade_config_files
 ### END clean up old files ###
 
@@ -80,6 +99,7 @@ cp -a ./usr/local/share/doc/systemimager-doc \
   
 ### BEGIN install files ###
 echo "Installing..."
+find . -type d -mindepth 2 -exec install -d {} $DESTDIR/{} \;
 find . -type f -mindepth 2 -exec install -D {} $DESTDIR/{} \;
 if [ $? -ne 0 ]; then
     echo "Install failed."
@@ -92,62 +112,72 @@ echo "Looking for existing rsyncd.conf files..."
 
 for file in /etc/rsyncd.conf /etc/systemimager/rsyncd.conf.beforesystemimager$VERSION; do
   if [ -f $file ]; then
-    echo "SystemImager now uses /etc/systemimager/rsyncd.conf instead of /etc/rsyncd.conf"
+    echo "SystemImager now uses /etc/systemimager/rsyncd.conf instead of /etc/rsyncd.conf."
+    echo "/etc/systemimager/rsyncd.conf is automatically generated from stub files"
+    echo "that are installed in /etc/systemimager/rsync_stubs."
     echo
     delim
     echo "WARNING:  $file was found on your system."
     delim
     echo
-    echo "Shall I copy any image entries from $file to "
-    echo -n "/etc/systemimager/rsyncd.conf? ([y]/n) "
+    echo -n "Shall I create rsync stubs for any image entries found in $file? ([y]/n) "
     read REPLY
     case $REPLY in
       n|N|no|NO|No ) echo "Not adding old entries, as requested." ;;
-                 * ) start_copying="false"
-		     skip_next_line="false"
-	             while /bin/true; do
-		       read line
-		       if [ $? -ne 0 ]; then
-		         break
-		       fi
-		       ## if we find a duplicate heading, we need to skip it and the
-		       ## next line (the next line being the path entry)
-		       if [ "skip_next_line" == "true" ]; then
-		         skip_next_line="false"
-			 continue
-		       fi
-		       if [ "$start_copying" == "true" ]; then
-		         ## check to see if this is a module section header
-		         echo "$line" | grep "^\[.*\]$" > /dev/null
-			 if [ $? -eq 0 ]; then
-			   ## check to see if this module section header already exists
-			   grep "$line" /etc/systemimager/rsyncd.conf > /dev/null
-			   if [ $? -eq 0 ]; then
-			     echo "An entry for the image $line already exists, skipping..."
-			     skip_next_line="true"
-			     continue
-			   fi
-		         fi
-	                 echo "$line" >> /etc/systemimager/rsyncd.conf
-		         continue
-		       fi
-		       echo "$line" | \
-		       grep "^# only image entries below this line" > /dev/null
-		       if [ $? -eq 0 ]; then
-		         start_copying="true"
-		       fi
-		     done < $file
-		     if [ $start_copying == "false" ]; then
-		       delim
-		       echo "WARNING:  $file doesn't look like it was created by SystemImager."
-		       delim
-		       echo "No image entries were copied over."
-		       echo "Press <Enter> to continue..."
-		       read
-		     fi
+      * ) start_copying="false"
+          while /bin/true; do
+            read line
+            ## check if input is exhausted
+            if [ $? -ne 0 ]; then
+              break
+            fi
+            if [ "$start_copying" == "true" ]; then
+              ## check to see if this is a module section header
+              echo "$line" | grep "^\[.*\]$" > /dev/null
+              if [ $? -eq 0 ]; then
+                line_length=$(echo $line | wc | cut -c 16-23)
+                image=$(echo $line | cut -c 2-$(expr $line_length - 2))
+		rsync_stub="/etc/systemimager/rsync_stubs/40$image"
+
+                if [ -f $rsync_stub ]; then
+                  echo "A stub for image $image already exists, skipping..."
+                  ## skip past the next 2 lines
+                  read line
+                  read line
+                  continue
+                fi
+              fi
+	      if [ "$rsync_stub" != "" ]; then
+                echo "$line" >> "$rsync_stub"
+                continue
+	      fi
+            else
+              echo "$line" | \
+                grep "^# only image entries below this line" > /dev/null
+              if [ $? -eq 0 ]; then
+                start_copying="true"
+              fi
+            fi
+          done < $file
+          if [ "$start_copying" == "false" ]; then
+            delim
+            echo "WARNING:  $file doesn't look like it was created by SystemImager."
+            delim
+            echo "No image entries were copied over."
+            echo "Press <Enter> to continue..."
+            read
+          fi
     esac
   fi
 done
+
+echo "Generating new rsyncd.conf..."
+mkrsyncd_conf
+if [ $? -ne 0 ]; then
+  echo "mkrsyncd_conf failed."
+  echo "Installation Failed."
+  exit 1
+fi
 ### END copy over existing rsyncd.conf entries ###
 
 ### if 
@@ -172,8 +202,8 @@ if [ -d /tftpboot/systemimager ]; then
   # warn about the relocation of the tftpboot stuff
   delim
   echo "NOTE: The files that were stored in /tftpboot in previous releases have moved."
-  echo "Autoinstall scripts have moved to /var/lib/systemimager/scripts, and"
-  echo "most everything else is now in /usr/local/share/systemimager/<arch>-boot"
+  echo "      Autoinstall scripts have moved to /var/lib/systemimager/scripts, and"
+  echo "      most everything else is now in /usr/local/share/systemimager/boot/<arch>"
   delim
   echo "Press <Enter> to continue..."
   read
@@ -261,7 +291,7 @@ fi
 
 echo ""
 delim
-echo "Note:  SystemImager now uses the AppConfig perl module.  This module is"
+echo "Note:  SystemImager uses the AppConfig perl module.  This module is"
 echo "available at:"
 echo "  http://www.perl.com/CPAN/authors/id/ABW/AppConfig-1.52.tar.gz"
 echo "and must be installed before using the SystemImager utilities."
@@ -271,6 +301,14 @@ echo "can be found at:"
 echo "  http://www.dannf.org/testing"
 echo "The RPM package is available from:"
 echo "  http://sf.net/projects/systemconfig"
+delim
+echo -n "Press <Enter> to continue..."
+read
+
+echo ""
+delim
+echo "Note:  You must install a boot-<arch> tarball for each architecture"
+echo "of clients you want to install."
 delim
 echo -n "Press <Enter> to continue..."
 read

@@ -1,12 +1,28 @@
 #
-# "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>
-#   Others who have contributed to this code (in alphabetical order):
-#     dann frazier <dannf@ldl.fc.hp.com>
+# "SystemImager"
 #
+#  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
+#  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
+#  Copyright (C) 2002 Hewlett-Packard Company <dannf@fc.hp.com>
 #
-# This file is: install_lib
+#   $Id$
+#
 #   This file provides variables and functions for use by the
 #   install{client,server} scripts.
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program; if not, write to the Free Software
+#   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/bin/X11:/usr/local/sbin:/usr/local/bin
@@ -42,22 +58,24 @@ delim() {
 #         separated from the next w/ whitespace.  the two files in each pair
 #         are separated from each other with a ":".
 #         Example:
-#           CONFIG_FILES="/etc/systemimager/systemimager.conf:`pwd`/etc/systemimager.conf /etc/init.d/systemimager:`pwd`/debian/systemimager-server.init"
+#           CONFIG_FILES="/etc/systemimager/server.conf:`pwd`/etc/server.conf /etc/init.d/systemimager:`pwd`/debian/systemimager-server.init"
 #
 upgrade_config_files() {
   echo "Checking for old configuration files..."
   for file in $CONFIG_FILES; do
     old=`echo $file | cut -d ":" -f 1`
     new=`echo $file | cut -d ":" -f 2`
-    if [ -f "$old" ]; then
+    if [ -f "$old" ] && [ -f "$new" ]; then
       diff $old $new > /dev/null
       if [ $? -ne 0 ]; then
-        echo
-        echo "WARNING: $old already exists, but it differs"
-        echo "         from the one I am going to install.  I'm going to move this file"
-        echo "         to $old.beforesystemimager$VERSION."
+	delim
+        echo "Warning: $old already exists, but it"
+        echo "Warning: /etc/systemimager/updateclient.local.exclude already exists, but it"
+        echo "         differs from the one I am going to install.  I'm going to move this"
+        echo "         file to:"
+        echo "           $old.beforesystemimager$VERSION."
+	delim
         echo "Press <Enter> to continue..."
-        echo
         read
         mv $old $old.beforesystemimager$VERSION
       fi
@@ -78,7 +96,6 @@ upgrade_config_files() {
 #         have just been removed from SystemImager.
 #
 remove_old_files() {
-  echo ""
   delim
   echo "Note:  SystemImager binaries are now installed in /usr/local/bin"
   echo "       and /usr/local/sbin by default."
@@ -88,18 +105,19 @@ remove_old_files() {
   echo "Checking for files which are no longer pertinent..."
   for file in $OLD_FILES; do
     if [ -f "$file" ]; then
-      echo
-      echo "WARNING:  $file was found on this system."
-      echo "          This file has either been moved, renamed, or is no longer used"
-      echo "          by SystemImager.  You should probably remove this old version,"
-      echo "          to make sure it is not used by mistake."
-      echo
+      delim
+      echo "Warning:  $file was found on this system."
+      echo "          This file has either been moved, renamed, or is no longer used in"
+      echo "          this release.  You should probably remove this older version, to"
+      echo "          make sure it is not executed by mistake."
+      delim
       echo -n "Shall I remove $file for you? ([y]/n) "
       read REPLY
       case $REPLY in
         n|N|No|no|NO ) echo "Not removing $file, as requested." ;;
         * ) rm $file ;;
       esac
+      echo
     fi
   done
 }

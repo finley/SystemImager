@@ -3,15 +3,11 @@
 # "SystemImager"  
 #
 #  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
-#  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
 #  Copyright (C) 2002 Hewlett-Packard Company <dannf@fc.hp.com>
-#
-#  Others who have contributed to this code (in alphabetical order):
-#   James Oakley <joakley@solutioninc.com>
 #
 #   $Id$
 #
-#   Interactively installs the SystemImager client files, and takes care of
+#   Interactively installs binaries required for booting auoinstall clients
 #   upgrade issues.
 #
 #   This program is free software; you can redistribute it and/or modify
@@ -42,25 +38,25 @@ fi
 
 ### BEGIN introduction
 # you sure you want to install?
-echo -n "Install SystemImager client? (y/[n]) "
+echo -n "Install autoinstall binaries? (y/[n]) "
 read REPLY
 case $REPLY in
-  y|Y|Yes|yes|YES ) clear; echo Ok.  Installing SystemImager client... ;;
+  y|Y|Yes|yes|YES ) clear; echo Ok.  Installing autoinstall binaries... ;;
                 * ) echo Install cancelled.  No files installed. && exit 1 ;;
 esac
 
+echo
 sleep 2
 ### END introduction ###
 
-OLD_FILES="/usr/sbin/prepareclient /usr/sbin/updateclient /usr/sbin/lsimage"
-echo
-remove_old_files
+#OLD_FILES="/usr/sbin/prepareclient /usr/sbin/updateclient /usr/sbin/lsimage"
 
-CONFIG_FILES="/etc/systemimager/updateclient.local.exclude:./etc/updateclient.local.exclude /etc/systemimager/client.conf:./etc/client.conf"
+#remove_old_files
 
 upgrade_config_files
 
 ### BEGIN install files
+echo "Installing..."
 find . -type d -mindepth 2 -exec install -d {} $DESTDIR/{} \;
 find . -type f -mindepth 2 -exec install -D {} $DESTDIR/{} \;
 if [ $? -ne 0 ]; then
@@ -69,30 +65,9 @@ if [ $? -ne 0 ]; then
 fi
 ### END install files
 
-echo "Checking for SystemConfigurator..."
-which systemconfigurator > /dev/null
-if [ $? -ne 0 ]; then
-  delim
-  echo "Warning:  The SystemImager client depends on SystemConfigurator, but it doesn't"
-  echo "          appear to be installed.  SystemConfigurator can be downloaded from:"
-  echo "          http://sourceforge.net/projects/systemconfig"
-  delim
-  echo "Press <Enter> to continue..."
-  read
-fi  
-
-echo 
-echo "The SystemImager Client package is now installed.  You must now run"
-echo "\"prepareclient\" before you can retrieve this client's image."
-echo
-echo -n "Do you want to run \"prepareclient\" now? ([y]/n) "
-read REPLY
-case $REPLY in
-  n|N|No|no|NO ) echo "\"prepareclient\" not run."
-                 echo "Be sure to run \"prepareclient\" before you run \"getimage\" on the imageserver."
-                 exit 0
-                 ;;
-  * ) prepareclient ;;
-esac
+## BEGIN regenerate /etc/systemimager/rsyncd.conf
+echo "Regenerating /etc/systemimager/rsyncd.conf..."
+mkrsyncd_conf
+## END regenerate /etc/systemimager/rsyncd.conf
 
 exit 0
