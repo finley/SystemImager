@@ -47,6 +47,10 @@ Possibilities for future versions
 
 <brian@thefinleys.com>
 ----------------------
+- check for the presence of a BIOS file written by BIOSwriter. If 
+  found, then at the tail end of a client's image pull, it runs 
+  BIOSwriter to write the file.
+- deal with LABEL=UUID as well as LABEL=mount_point
 - next minor release (1.5.x), make the -imageserver option go away
   in getimage.
 - getimage -- exclude option
@@ -160,3 +164,4 @@ Pre-Release Checklist
 - test that egrep thing is fixed
 - test that dynamically linked binaries in /tftpboot work
 - dependent packages install properly
+- test -configure-from option
