@@ -656,7 +656,7 @@ ping_test() {
     do
         echo "PING ATTEMPT $PING_COUNT: "
         ping -c 1 $IMAGESERVER; PING_EXIT_STATUS=$?; PING_COUNT=$(( $PING_COUNT + 1 ))
-        if [ "$PING_COUNT" = "7" ]; then
+        if [ "$PING_COUNT" = "4" ]; then
             echo
             echo "  WARNING:  Cannot ping the image server \"$IMAGESERVER\""
             echo "            Despite this seemingly depressing result, I will attempt"
@@ -666,6 +666,7 @@ ping_test() {
             echo "            working properly!"
             echo
             sleep 5
+            PING_EXIT_STATUS=0
         fi
     done
 
