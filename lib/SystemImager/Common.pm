@@ -875,6 +875,8 @@ sub save_filesystem_information {
                 if ($_ eq "") 
                     { $_ = " "; }
 
+                # XXX look at using perl's "format" and "write"
+                # functions to prettify this output. -BEF-
                 print FH_OUT qq(  <fsinfo  line="$line" comment="$_");
 
             } else {
