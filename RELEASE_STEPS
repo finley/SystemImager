@@ -41,6 +41,21 @@ Pending:
 
 * updateclient -a bug: http://sourceforge.net/tracker/index.php?func=detail&aid=610755&group_id=259&atid=100259
 
+* Get rid of static_dhcp and dynamic_dhcp in favor of simply "dhcp" (and
+  don't mess with the hostname at all).
+
+  Add these comments to autoinstallscripts.
+  ##################################################################
+  #
+  # Uncomment the line below to leave your hostname blank.  Certain
+  # distributions use this as an indication to take on the hostname
+  # provided by a DHCP server.  The default is to have
+  # SystemConfigurator assign your clients the hostname that
+  # corresponds to the IP address the use during the install.
+  #
+  #HOSTNAME=""
+
+
 
 Completed:
 * remove stuff from lsimage listings
@@ -122,7 +137,7 @@ PRE-RELEASE
 * warn users that we are no longer supporting tarball based installs.  
   Adventurous souls can check out the source from CVS and do a make, but 
   normal users should use a package.
-* test mkdhcpstatic
+* update mkdhcpstatic (if needed)
 * change "Please send email to: -> systemimager-discuss@"
 * add bit to to troubleshooting that describes the case where ETHER_SLEEP 
   should be increased
