@@ -42,7 +42,7 @@ Packager: dann frazier <dannf@dannf.org>
 Docdir: %{prefix}/share/doc
 URL: http://systemimager.org/
 Distribution: System Installation Suite
-Requires: rsync >= 2.4.6, systemimager-common = %{version}, perl-AppConfig, dosfstools, /sbin/chkconfig, /sbin/service, perl, perl-XML-Simple
+Requires: rsync >= 2.4.6, systemimager-common = %{version}, perl-AppConfig, dosfstools, /sbin/chkconfig, perl, perl-XML-Simple
 AutoReqProv: no
 
 %description server
@@ -272,7 +272,7 @@ if [[ -a /etc/xinetd.d/rsync ]]; then
     `pidof xinetd > /dev/null`
     if [[ $? == 0 ]]; then
         if [ -z $DURING_INSTALL ]; then
-            /sbin/service xinetd restart
+            /etc/init.d/xinetd restart
         fi
     fi
 fi
@@ -325,7 +325,7 @@ fi
 /sbin/chkconfig --add systemimager
 
 %preun server
-/sbin/service systemimager stop
+/etc/init.d/systemimager stop
 
 /sbin/chkconfig --del systemimager
 
@@ -333,7 +333,7 @@ if [[ -a /etc/xinetd.d/rsync.presis~ ]]; then
     mv /etc/xinetd.d/rsync.presis~ /etc/xinetd.d/rsync
     `pidof xinetd > /dev/null`
     if [[ $? == 0 ]]; then
-        /sbin/service xinetd restart
+        /etc/init.d/xinetd restart
     fi
 fi
 
