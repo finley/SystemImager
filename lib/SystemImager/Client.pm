@@ -36,7 +36,46 @@ sub client_exists {
 
 sub _client_exists_hosts {
     my ($name) = @_;
-    
+    return (_client_ip($name)) ? 1 : 0;
+}
+
+######################################################
+#
+#  _client_ip - given a host name that should be in the hosts file
+#               return the ip address.  This uses the perl builtin
+#               function gethostent which parses /etc/hosts for you.
+#
+######################################################
+
+sub _client_ip {
+    my ($name) = @_;
+    my $ip;
+    while(my ($fullname, $aliases, $addrtype, $length, @addrs) = gethostent()) {
+        my @aliases = split(/\s+/, $aliases);
+        if($name eq $fullname or _in($name, @aliases)) {
+            # Ok... known issue already... this only grabs the first ip address.  Maybe not
+            # a bad solution for now, but we have to think about this.
+            # The unpack is taken from pg 721 Camel 3
+            $ip = join '.', unpack('C4',$addrs[0]);
+            last;
+        }
+    }
+    return $ip;
+}
+
+######################################################
+#
+#   _in - this just takes an scalar and an array and tells you if the
+#         the scalar is in the array.  It would be nice if this was a builtin.
+#
+######################################################
+
+sub _in {
+    my ($item, @array) = @_;
+    foreach my $a (@array) {
+        return 1 if($item eq $a) 
+    }
+    return undef;
 }
 
 sub _client_exists_link {
@@ -54,14 +93,15 @@ sub _client_exists_link {
 sub _client_image {
     my ($name) = @_;
     my $config = get_config();
-    my $image = undef;
-    if(-l ($config->autoinstall_script_dir . "/$name.sh")) {
-        my $linkcontents = readlink $link or (carp "$!", return undef);
+    my $image = "";
+    my $link = $config->autoinstall_script_dir . "/$name.sh";
+    if(-l $link) {
+        my $linkcontents = readlink $link or (carp($!), return undef);
         my $filename = basename($linkcontents);
-        $filename =~ s/\.master$/;
+        $filename =~ s/\.master$//;
         $image = $filename;
     } elsif (-f ($config->autoinstall_script_dir . "/$name.master")) {
-        $image = $filename;
+        $image = $name;
     }
     return $image;
 }
