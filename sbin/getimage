@@ -14,6 +14,9 @@
 # set system path for system() calls
 $ENV{PATH} = "/usr/sbin:/sbin:/usr/bin:/bin";
 
+# version
+$version_number = "1.2";
+
 # miscellaneous variables and what not
 # NIS domain name will be figured out automatically (if it exists)
 $nisdomainname="";
@@ -42,7 +45,6 @@ sub check_if_root{
 # figure out the program name
 $0  =~ /(.*)\/+([^\/]*)$/;
 $program_name = $2;
-$version_number = "1.2";
 
 $version_info = <<"EOF";
 $program_name (part of VA SystemImager) version $version_number
@@ -70,6 +72,7 @@ Options: (options can be presented in any order and may be abbreviated)
                           will be given if the image already exists on
                           the server.
  -ip-assignment METHOD    Where METHOD can be static_dhcp, dynamic_dhcp,
+ -path-to-image PATH   Where METHOD can be static_dhcp, dynamic_dhcp,
                           or static. (static_dhcp is recommended)
  -update-script [YES|NO]  Update the \$image.master script?
                           Defaults are:
@@ -245,7 +248,7 @@ if (!grep(/\[$image\]/, <RSYNCD_CONF>)) {
     print RSYNCD_CONF <<"EOF";
 [$image]
     path = $imagedir
-    log file = /var/log/systemimager
+    log file = /var/log/systemimager.$image
 	    
 EOF
 };
@@ -455,6 +458,8 @@ foreach $disk (@disks)  {
 
     # output disk partition section
     print MASTER_SCRIPT "\n# partition $disk\n";
+    print MASTER_SCRIPT "echo partitioning $disk...\n";
+    print MASTER_SCRIPT "sleep 1s\n";
     print MASTER_SCRIPT $sfdisk_command;
 
     # output swap creation section (sort order doesn't matter here)
