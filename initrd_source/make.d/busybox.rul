@@ -13,7 +13,12 @@ BUSYBOX_PATCHES = $(shell ls $(INITRD_PATCH_DIR)/busybox.*.patch 2>/dev/null | s
 
 ALL_SOURCE += $(INITRD_SRC_DIR)/$(BUSYBOX_TARBALL)
 
+
+ifeq ($(MODULE_UTILS),busybox)
 BUSYBOX_CONFIG = $(INITRD_PATCH_DIR)/busybox.standard.config
+else
+BUSYBOX_CONFIG = $(INITRD_PATCH_DIR)/busybox.no_modutils.config
+endif
 
 PHONY += busybox
 busybox:	$(BUSYBOX_BINARY)

@@ -123,10 +123,16 @@ $(INITRD_DIR)/build_dir-stamp:	$(SKEL_FILES) \
 	cp -a $(UDPCAST_BINARY)     $(INITRD_BUILD_DIR)/bin
 	
 ifdef	INSMOD_BINARY
-	cp -a $(INSMOD_BINARY) $(INITRD_BUILD_DIR)/sbin
+	( [ ! -e $(INITRD_BUILD_DIR)/sbin/$(INSMOD_BINARY) ] && \
+          cp -a $(INSMOD_BINARY) $(INITRD_BUILD_DIR)/sbin ) || \
+        ( echo "$(INITRD_BUILD_DIR)/sbin/$(INSMOD_BINARY) already exists." &&\
+          echo "Is insmod maybe already provided by busybox?" && exit 1 )
 endif
 ifdef	MODPROBE_BINARY
-	cp -a $(MODPROBE_BINARY) $(INITRD_BUILD_DIR)/sbin
+	( [ ! -e $(INITRD_BUILD_DIR)/sbin/$(MODPROBE_BINARY) ] && \
+          cp -a $(MODPROBE_BINARY) $(INITRD_BUILD_DIR)/sbin ) || \
+        ( echo "$(INITRD_BUILD_DIR)/sbin/$(MODPROBE_BINARY) already exists." &&\
+          echo "Is modprobe maybe already provided by busybox?" && exit 1 )
 endif
 
 ifdef UCLIBC_TARGET
