@@ -3,7 +3,6 @@
 %define rel      2
 %define prefix   /usr/local
 
-
 Summary: Software that automates Linux installs and software distribution
 Name: %name
 Version: %ver
@@ -16,7 +15,9 @@ BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: Sean Dague <japh@us.ibm.com>
 Docdir: %{prefix}/doc
 URL: http://systemimager.org/
+Distribution: System Installation Suite
 Requires: rsync >= 2.4.6, syslinux >= 1.48, libappconfig-perl, dosfstools, /usr/bin/perl
+AutoReqProv: no
 
 %description
 This is bogus and not used anywhere
@@ -27,13 +28,14 @@ Version: %ver
 Release: %rel
 Copyright: GPL
 Group: Applications/System
-Conflicts: systemimager-client
 Source: http://download.sourceforge.net/systemimager/%{name}-%{ver}.tar.gz
 BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: Sean Dague <japh@us.ibm.com>
 Docdir: %{prefix}/doc
 URL: http://systemimager.org/
+Distribution: System Installation Suite
 Requires: rsync >= 2.4.6, syslinux >= 1.48, libappconfig-perl, dosfstools, /usr/bin/perl
+AutoReqProv: no
 
 %description server
 SystemImager is software that automates Linux installs and software
@@ -52,13 +54,14 @@ Version: %ver
 Release: %rel
 Copyright: GPL
 Group: Applications/System
-Conflicts: systemimager-server
 Source: http://download.sourceforge.net/systemimager/%{name}-%{ver}.tar.gz
 BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: Sean Dague <japh@us.ibm.com>
 Docdir: %{prefix}/doc
 URL: http://systemimager.org/
+Distribution: System Installation Suite
 Requires: systemconfigurator, libappconfig-perl, rsync >= 2.4.6, /usr/bin/perl
+AutoReqProv: no
 
 %description client
 SystemImager is software that automates Linux installs and software
@@ -117,17 +120,17 @@ chkconfig --del systemimager
 
 /etc/init.d/systemimager
 /var/lib/systemimager/images/*
-/usr/local/sbin/addclients
-/usr/local/sbin/cpimage
-/usr/local/sbin/getimage
-/usr/local/sbin/mkautoinstallscript
-/usr/local/sbin/mkbootserver
-/usr/local/sbin/mkdhcpserver
-/usr/local/sbin/mkdhcpstatic
-/usr/local/sbin/mvimage
-/usr/local/sbin/pushupdate
-/usr/local/sbin/rmimage
-/usr/local/bin
+%prefix/sbin/addclients
+%prefix/sbin/cpimage
+%prefix/sbin/getimage
+%prefix/sbin/mkautoinstallscript
+%prefix/sbin/mkbootserver
+%prefix/sbin/mkdhcpserver
+%prefix/sbin/mkdhcpstatic
+%prefix/sbin/mvimage
+%prefix/sbin/pushupdate
+%prefix/sbin/rmimage
+%prefix/bin
 /usr/local/lib/systemimager/perl/SystemImager/Common.pm
 /usr/local/lib/systemimager/perl/SystemImager/Server.pm
 /usr/local/share/systemimager/i386-boot/*
@@ -135,12 +138,12 @@ chkconfig --del systemimager
 
 %files client
 %defattr(-, root, root)
-%doc CHANGE.LOG COPYING CREDITS README TODO VERSION afterburner 
+%doc CHANGE.LOG COPYING CREDITS README TODO VERSION
 %dir /etc/systemimager
 %dir /usr/local/lib/systemimager
 %config /etc/systemimager/updateclient.local.exclude
 
 /usr/local/lib/systemimager/perl/SystemImager/Client.pm
-/usr/local/sbin/updateclient
-/usr/local/sbin/prepareclient
+%prefix/sbin/updateclient
+%prefix/sbin/prepareclient
 
