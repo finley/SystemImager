@@ -73,7 +73,7 @@ sub image_info {
     return {};
 }
 
-sub list_images {
+sub listimages {
     my $config = get_config();
     my $dir = $config->default_imagedir;
     my @images = ();

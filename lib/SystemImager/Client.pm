@@ -50,6 +50,11 @@ sub client_info {
     return $hash;
 }
 
+sub listclients {
+    my ($image) = @_;
+    
+}
+
 sub _client_exists_hosts {
     my ($name) = @_;
     return (_client_ip($name)) ? 1 : 0;
