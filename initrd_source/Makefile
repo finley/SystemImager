@@ -4,7 +4,7 @@ DESTDIR =
 # by autoinstall clients are stored
 TFTPROOT = $(DESTDIR)/usr/lib/systemimager
 
-PATCH_DIR = ../patches
+PATCH_DIR = ./patches
 SRC_DIR = ./src
 
 TEMP_DIR = ./systemimager.initrd.temp.dir
