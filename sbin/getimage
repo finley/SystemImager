@@ -491,7 +491,7 @@ if($source_host) {
 # Get the image from the specified host
 if (!$quiet) {
     print "\n\nRetrieving image $image from $source_host\n";
-    open (RSYNC, "rsync -av --numeric-ids $options |");
+    open (RSYNC, "rsync -aHSv --numeric-ids $options |");
     print "------------- $image IMAGE RETRIEVAL PROGRESS -------------\n";
     while (<RSYNC>) {
         print $_;
@@ -499,7 +499,7 @@ if (!$quiet) {
     print "------------- $image IMAGE RETRIEVAL FINISHED -------------\n";
     close (RSYNC);
 } else {
-    $command = qq(rsync -a --numeric-ids $options);
+    $command = qq(rsync -aHS --numeric-ids $options);
     system($command);
 }
 

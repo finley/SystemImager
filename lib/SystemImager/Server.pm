@@ -1333,7 +1333,7 @@ sub create_autoinstall_script{
 
     my $cmd;
 
-    my $rsync_opts = "-a";
+    my $rsync_opts = "-aHS";
     # Truncate the /etc/mtab file.  It can cause confusion on the autoinstall
     # client, making it think that filesystems are mounted when they really
     # aren't.  And because it is automatically updated on running systems, we
