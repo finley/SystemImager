@@ -459,6 +459,7 @@ $(BOEL_BINARIES_TARBALL):	\
 				$(MKE2FS_BINARY) \
 				$(TUNE2FS_BINARY) \
 				$(PARTED_BINARY) \
+				$(SFDISK_BINARY) \
 				$(MKSWAP_BINARY) \
 				$(RAIDTOOLS_BINARIES) \
 				$(MKREISERFS_BINARY) \
@@ -486,6 +487,7 @@ $(BOEL_BINARIES_TARBALL):	\
 	install -m 755 --strip $(MKE2FS_BINARY) 		$(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(TUNE2FS_BINARY) 		$(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(PARTED_BINARY)			$(BOEL_BINARIES_DIR)/sbin/
+	install -m 755 --strip $(SFDISK_BINARY)			$(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(MKSWAP_BINARY)			$(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(RAIDTOOLS_BINARIES) 		$(BOEL_BINARIES_DIR)/sbin/
 	cd $(BOEL_BINARIES_DIR)/sbin/ && ln -f raidstart raidstop
