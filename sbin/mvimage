@@ -57,6 +57,12 @@ Options: (options can be presented in any order)
                           overwriting the destination image or master
 			  autoinstall script (if they exist).
 
+ -directory PATH          The full path and directory name where you want
+                          this image to be stored.  The directory bearing
+                          the image name itself will be placed inside the
+                          directory specified here.
+
+
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
 EOF
@@ -65,7 +71,8 @@ EOF
 GetOptions( 
   "help" => \$help,
   "version" => \$version,
-  #"force" => \$force,
+  "directory" => \$version,
+  "force" => \$force,
   "verbose" => \$verbose
 ) or die qq($help_info);
 
@@ -95,18 +102,110 @@ unless(($source_image) and ($destination_image)) {
 
 # get full path to image from /etc/rsyncd.conf
 $file="/etc/rsyncd.conf";
-open (FILE, "<$file") || die ("FATAL: Couldn't open $file for reading\n");
+open (FILE, "<$file") or die "FATAL: Couldn't open $file for reading!\n";
   while (<FILE>) {
-    if (/$source_image/) { 
-      print;
-      next;
+    if (/^\s*path\s*=.*$source_image/) { 
+      (my $junk, $source_path) = split (/=/);
+      $source_path =~ s/^\s+//;
+      $source_path =~ s/\s+$//;
+      $source_path =~ s/$source_image//;
     }
   }
 close FILE;
 
+unless($source_path) { 
+  print "FATAL: Can't get path to image $source_image from /etc/rsyncd.conf!\n";
+  die   "       Nothing has been done.\n";
+}
 
-### BEGIN move image ### 
-if($verbose) {print "Moving image $source_image to $destination_image.\n";}
-### END move image ### 
+unless($destination_path) { $destination_path = $source_path; }
+
+$source="${source_path}${source_image}";
+$destination="${destination_path}${destination_image}";
+
+# check for existence of destination image
+$file=$destination;
+if(-e $file) {
+  if($force) {
+    $cmd="rm -fr $file";
+    system($cmd);
+    if($? != 0) { die "FATAL: Can't remove $file!\n"; }
+  } else {
+    die "FATAL: Destination image \"$file\" already exists!\n";
+  }
+}
+
+# check for existence of destination master autoinstall script
+$file="/tftpboot/systemimager/$destination_image.master";
+if(-e $file) {
+  if($force) {
+    unlink($file) or die "FATAL: Can't remove $file!\n";
+  } else {
+    die "FATAL: Destination master autoinstall script \"$file\" already exists!\n";
+  }
+}
+
+# move the actual image
+if($verbose) {print "  Moving image $source_image to $destination_image.\n";}
+move($source, $destination)
+  or die "FATAL: Failed to move $source to $destination.\n";
+
+### BEGIN Change entries in /etc/rsyncd.conf ###
+$file="/etc/rsyncd.conf";
+if($verbose) {print "  Updating entries in $file.\n";}
+open (FILE, "<$file") or die "FATAL: Couldn't open $file for reading!\n";
+
+$tmp_file="/tmp/tmp_file.$$";
+open (TMP_FILE, ">$tmp_file") or die "FATAL: Couldn't open $tmp_file for writing!\n";
+  while (<FILE>) {
+    if (/\[$source_image\]/) {
+      print TMP_FILE "[$destination_image]\n";
+    }
+    elsif (/^\s*path\s*=.*$source_image/) { 
+      print TMP_FILE "    path = ${destination_path}${destination_image}\n";
+    }
+    else {
+      print TMP_FILE;
+    }
+  }
+close TMP_FILE or die "FATAL: Can't close $tmp_file: $!";
+close FILE or die "FATAL: Can't close $file: $!";
+
+move($file, "$file.orig") or die "FATAL: Can't move $file to $file.orig: $!";
+move($tmp_file, $file) or die "FATAL: Can't move $tmp_file to $file: $!";
+### END Change entries in /etc/rsyncd.conf ###
+
+### BEGIN Change entries in master autoinstall script ###
+# move master autoinstall script
+if($verbose) {print "  Moving $source_image.master to $destination_image.master.\n";}
+$old="/tftpboot/systemimager/$source_image.master";
+$new="/tftpboot/systemimager/$destination_image.master";
+move($old, $new) or die "FATAL: Can't move $old to $new: $!";
+
+
+# update new master autoinstall script
+$file=$new;
+if($verbose) {print "  Updating entries in $destination_image.master.\n";}
+open (FILE, "<$file") or die "FATAL: couldn't open $file for reading!\n";
+
+$tmp_file="/tmp/tmp_file.$$";
+open (TMP_FILE, ">$tmp_file") or die "FATAL: couldn't open $tmp_file for writing!\n";
+  while (<FILE>) {
+    s/^IMAGENAME=$source_image$/IMAGENAME=$destination_image/;
+    print TMP_FILE;
+  }
+close TMP_FILE or die "FATAL: Can't close $tmp_file: $!";
+close FILE or die "FATAL: Can't close $file: $!";
+
+move($tmp_file, $file) or die "FATAL: Can't move $tmp_file to $file: $!";
+
+
+# re-create soft links
+if($verbose) {print "  Re-creating softlinks to point to $destination_image.master.\n";}
+$cmd="cd /tftpboot/systemimager; find . -lname $source_image.master -exec ln -sf $destination_image.master \\{\\} \\;";
+system($cmd);
+if($? != 0) { die "FATAL: couldn't re-create softlinks pointing to $destination_image.master!"; }
+
+### END Change entries in /etc/rsyncd.conf ###
 
 exit 0;
