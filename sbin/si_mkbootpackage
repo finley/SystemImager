@@ -19,13 +19,17 @@
 #   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
+#
 # 2004.03.15 Brian Elliott Finley
 # - Specify destination kernel name as 'kernel'.  Bug found by Thomas 
 #   Naughton.
+# 2005.03.17 Remi Veyne-Marti (patch applied by Brian Finley)
+# - update FLAVOR string in initrd.img/etc/init.d/functions
+# - fixed a bug with an rsync line
+#
 
 #
 # TODO: 
-# - update FLAVOR string in initrd.img/etc/init.d/functions
 # - deal with FLAVOR via DHCP and/or net boot loader config files
 # - need to libraryize all subroutines
 # - need to manpageize --help
@@ -123,6 +127,7 @@ $opt{old_initrd_dir}    = $opt{tmp_dir} . "/old_initrd_dir";
 if(!$opt{from_flavor}) { $opt{from_flavor} = "standard"; }
 
 &extract_initrd;
+&modify_flavor;
 &copy_new_modules;
 &create_new_initrd;
 &create_new_boel_binaries_tarball;
@@ -149,7 +154,7 @@ sub create_new_boel_binaries_tarball
         rmtree $d;
         eval { mkpath($d, 0, 0755) }; if ($@) { die("Couldn't mkpath $d $@"); }
 
-        run_cmd("rsync -a $opt{modules_dir}/ $d/", $opt{v});
+        run_cmd("rsync -a $opt{modules_dir} --exclude=build $d/", $opt{v});
         run_cmd("tar -C $opt{tmp_dir}/boel -czf $opt{tmp_dir}/boel_binaries.tar.gz .", $opt{v});
 }
 
@@ -420,6 +425,42 @@ sub copy_new_modules
                 print FILE @new_file;
         close(FILE);
 
+}
+
+sub modify_flavor
+{
+    my $file = "$opt{staging_dir}/etc/init.d/functions";
+
+    print ">> Updating $file with Flavor = $opt{new_flavor}\n";
+
+
+    open (FILE,"<$file") or die("Couldn't open $file for reading.");
+
+    my @new_file;
+    my $line;
+
+    while ($line  = <FILE>)
+    {
+	if ($line =~ /FLAVOR=/)
+	{
+	    push (@new_file, "FLAVOR=\"$opt{new_flavor}\"\n");
+	}
+	else
+	{
+	    	    push (@new_file,$line);
+	}
+    }
+    close(FILE);
+
+    # Write out new file
+
+    open(FILE,">$file") or die("Couldn't open $file for writing.");
+    print FILE @new_file;
+    close(FILE);
+
+    print ">> Flavor Update complete";
+
+    system("cat $file | grep -i flavor");
 }
 
 sub get_load_ordered_list_of_running_modules
