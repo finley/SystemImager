@@ -84,8 +84,8 @@ default-lease-time -1;
 
 # Uncomment one of the two following lines.  The first, if you need to
 # boot i386 clients, or the second for booting ia64 clients.
-filename "/pxelinux.bin";   # i386
-filename "/elilo.efi";   # ia64
+filename "pxelinux.bin";   # i386
+#filename "elilo.efi";   # ia64
 
 EOF
 
@@ -99,8 +99,8 @@ default-lease-time -1;
 
 # Uncomment one of the two following lines.  The first, if you need to
 # boot i386 clients, or the second for booting ia64 clients.
-filename "/pxelinux.bin";   # i386
-filename "/elilo.efi";   # ia64
+filename "pxelinux.bin";   # i386
+#filename "elilo.efi";   # ia64
 
 EOF
 
@@ -148,6 +148,7 @@ my $imageserver = "192.168.1.254";
 my $boot_server = "";
 my $ssh_download_url = "";
 my $flamethrower_directory_portbase = "";
+my $tmpfs_staging = "no";
 my $swallow = "";
 
 # Oh where oh where could my dhcpd.conf file be?
@@ -167,6 +168,7 @@ if("$dhcpd_conf" eq "/etc/dhcp3/dhcpd.conf") { $dhcpd_version = "3"; }
 
 
 ### Begin questionnaire ###
+my $mcast_install = "n";
 my $satisfied = "n";
 while ($satisfied ne "y") {
  system("clear");
@@ -177,7 +179,7 @@ have a response, such as no first or second DNS server, just hit
 
 EOF
 
-    print "\nWhat is your DHCP daemon major version number (2 or 3)? [$dhcpd_version]: ";
+    print "What is your DHCP daemon major version number (2 or 3)? [$dhcpd_version]: ";
     $dhcpd_version = get_response($dhcpd_version);
 
     if ("$dhcpd_version" eq "3") {
@@ -186,10 +188,10 @@ EOF
       $dhcpd_patch = uc $dhcpd_patch;
     }
    
-    print "\nWhat is the name of your DHCP daemon config file? [$dhcpd_conf]: ";
+    print "What is the name of your DHCP daemon config file? [$dhcpd_conf]: ";
     $dhcpd_conf = get_response($dhcpd_conf);
    
-    print "\nWhat is your domain name? [$dnsdomainname]: ";
+    print "What is your domain name? [$dnsdomainname]: ";
     $dnsdomainname = get_response($dnsdomainname);
    
     print "What is your network number? [$netnumber]: ";
@@ -234,17 +236,23 @@ EOF
         $log_server_port = get_response($log_server_port);
     }
    
-    print "\nDo you want to use Flamethrower (multicast) to install your clients?";
-    print "\n(Flamethrower uses udpcast to provide it's multicast transport): (y/[n]): ";
-    my $mcast_install=<STDIN>;
-    chomp $mcast_install;
+    print qq/Use tmpfs staging on client?  (If unsure, choose "no") [$tmpfs_staging]: /;
+    $tmpfs_staging = get_response($tmpfs_staging);
+    $tmpfs_staging = lc $tmpfs_staging;
+    if("$tmpfs_staging" eq "y") {
+        $tmpfs_staging = "yes";
+    }
+   
+    print "Do you want to use Flamethrower (multicast) to install your clients?";
+    print "\n (Flamethrower uses udpcast to provide it's multicast transport): [no]: ";
+    $mcast_install = get_response($mcast_install);
     if ($mcast_install eq "y") {
         if ($flamethrower_directory_portbase eq "") { $flamethrower_directory_portbase="9000"; }
         print "On which port is your Flamethrower directory? [$flamethrower_directory_portbase]: ";
         $flamethrower_directory_portbase = get_response($flamethrower_directory_portbase);
 
     } else {
-        print "\nWill your clients be installed over SSH? (y/[n]): ";
+        print "Do you want your clients installed over SSH? (y/[n]): ";
         my $ssh_install=<STDIN>;
         chomp $ssh_install;
         if ($ssh_install eq "y") {
@@ -289,6 +297,7 @@ EOF
     print "Log server:                               $log_server\n";
     print "Log server port:                          $log_server_port\n";
     print "Flamethrower directory port:              $flamethrower_directory_portbase\n";
+    print "Use tmpfs staging on client:              $tmpfs_staging\n";
     print "SSH files download URL:                   $ssh_download_url\n";
     print "#######################################################################\n";
     
@@ -352,6 +361,8 @@ if ($dhcpd_version eq "2") {
         print DHCPDCONF qq(  option option-143 "$flamethrower_directory_portbase"; \n);
     }
 
+    option_144($tmpfs_staging);
+
     print DHCPDCONF qq(  # next-server is your network boot server\n);
     if($boot_server eq "") { 
         print DHCPDCONF qq(  #next-server $boot_server; \n);
@@ -412,6 +423,10 @@ if ($dhcpd_version eq "2") {
     print DHCPDCONF qq(option option-143 code 143 = string;\n);
     print DHCPDCONF qq(\n);
 
+    print DHCPDCONF qq(# tmpfs_staging\n);
+    print DHCPDCONF qq(option option-144 code 144 = string;\n);
+    print DHCPDCONF qq(\n);
+
     print DHCPDCONF qq(# option-140 is the IP address of your SystemImager image server\n);
     print DHCPDCONF qq(option option-140 $imageserver; \n);
     print DHCPDCONF qq(\n);
@@ -433,6 +448,8 @@ if ($dhcpd_version eq "2") {
         print DHCPDCONF qq(option option-143 "$flamethrower_directory_portbase"; \n);
     }
     print DHCPDCONF qq(\n);
+
+    option_144($tmpfs_staging);
 
     print DHCPDCONF qq(# next-server is your network boot server\n);
     if($boot_server eq "") { 
@@ -557,10 +574,27 @@ exit 0;
 
 # Subroutines
 sub get_response {
- my $garbage_out=$_[0];
- my $garbage_in=<STDIN>;
- chomp $garbage_in;
- unless($garbage_in eq "") { $garbage_out = $garbage_in; }
- return $garbage_out;
+    my $garbage_out=$_[0];
+    my $garbage_in=<STDIN>;
+    chomp $garbage_in;
+    unless($garbage_in eq "") { $garbage_out = $garbage_in; }
+    return $garbage_out;
+}
+
+# Usage: option_144($tmpfs_staging);
+sub option_144 {
+
+    my $value = shift;
+
+    print DHCPDCONF qq(  # \n);
+    print DHCPDCONF qq(  # option-144 tells your autoinstallclient to spool the image into a tmpfs\n);
+    print DHCPDCONF qq(  # prior to laying it down on disk.  It is not certain that this is always\n);
+    print DHCPDCONF qq(  # a good thing to do.  And if you're feeling gutsy and want to try it, be\n);
+    print DHCPDCONF qq(  # sure that your (memory + swap) is at least twice the size of your image\n);
+    print DHCPDCONF qq(  # or your image transfer will fail when the tmpfs filesystem gets full!!!\n);
+    print DHCPDCONF qq(  # If unsure, say "no".\n);
+    print DHCPDCONF qq(  # \n);
+    print DHCPDCONF qq(  option option-144 "$value"; \n);
+    print DHCPDCONF qq(\n);
 }
 
