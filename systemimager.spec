@@ -390,7 +390,6 @@ fi
 %prefix/share/man/man8/addclients*
 %prefix/share/man/man8/cpimage*
 %prefix/share/man/man8/getimage*
-%prefix/share/man/man8/install_si*
 %prefix/share/man/man8/mk*
 %prefix/share/man/man8/mvimage*
 %prefix/share/man/man8/rmimage*
