@@ -7,7 +7,7 @@ Standards-Version: 3.2.1
 
 Package: systemimager-server
 Architecture: all
-Depends: debianutils (>= 1.7), dhcp, dosfstools, perl5, rsync, syslinux, systemimager-kernel-i386 (>= 1.5.0), systemimager-initrd-i386 (>= 1.5.0) | systemimager-initrd-dkf-i386 (>= 1.5.0), systemimager-bin-i386 (>= 1.5.0), systemimager-common
+Depends: debianutils (>= 1.7), dhcp, dosfstools, perl5, rsync, syslinux, systemimager-kernel-i386 (= ${Source-Version}), systemimager-initrd-i386 (= ${Source-Version}), systemimager-bin-i386 (= ${Source-Version}), systemimager-common
 Recommends: mkisofs
 Description: SystemImager Image-Server
  SystemImager is a set of utilities for installing GNU/Linux images to
