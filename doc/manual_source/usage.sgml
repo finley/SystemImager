@@ -324,8 +324,10 @@ IMAGESERVER=192.168.1.203
       </listitem>
       
       <listitem>
- <para><command>addclients</command> creates a symbolic link to the master script for the image to
-	  which each specified autoinstall client is assigned.  <command>addclients</command> also
+        <para>
+          <command>addclients</command> creates a symbolic link to the master 
+          script for the image to which each specified autoinstall client is 
+          assigned.  <command>addclients</command> also
 	  populates the image server's <filename>/etc/hosts</filename> and 
 	  <filename>/var/lib/systemimager/scripts/hosts</filename> files.  The
 	  hosts file provides the default mechanism used by autoinstall clients
@@ -412,12 +414,13 @@ IMAGESERVER=192.168.1.203
 192.168.1.98    server98.mydomain.com  server98
 192.168.1.99    server99.mydomain.com  server99
 	  </programlisting>
-	</example>
+        </para>
+      </example>
 
 
       </listitem>
       </orderedlist>
-      
+      </listitem>
       
       <listitem>
 	<para>
@@ -685,11 +688,17 @@ IMAGESERVER=192.168.1.203
 	  DHCP and the <filename>/var/lib/systemimager/scripts</filename> file pulled from the image server to determine 
 	  the autoinstall client's IP address and hostname information.</para>
 
-	  <para>If DHCP is used, the client parses the hosts file which was retrieved from the image server to find 
-	  its IP address and determine its hostname.  Finally, the client retrieves an autoinstall script from the 
-	  image server based on its hostname and executes it.  The autoinstall script is image specific, determining 
-	  which image a client will receive. Following is a summary: 
-	  <filename>IP address -> hostname -> image specific autoinstall script named with hostname</filename>.
+	  <para>
+            If DHCP is used, the client parses the hosts file which was 
+            retrieved from the image server to find its IP address and 
+            determine its hostname.  Finally, the client retrieves an 
+            autoinstall script from the image server based on its hostname and
+            executes it.  The autoinstall script is image specific, 
+            determining which image a client will receive. Following is a 
+            summary: 
+	    IP address -> hostname -> image specific autoinstall script named 
+            with hostname.
+          </para>
 	</listitem>
 	</itemizedlist>
 	</section>
@@ -717,8 +726,9 @@ IMAGESERVER=192.168.1.203
 		  <command>getimage</command> command are that you can verify that your new configuration works on the golden client 
 		  and that the master autoinstall script is updated.
 		</para>
-	</listitem>
-	</orderedlist>
+              </listitem>
+            </orderedlist>
+	  </listitem>
 	    <listitem>
 	      <para>
 		Once a system has been autoinstalled, you can use the <command>updateclient</command> 

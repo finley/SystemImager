@@ -95,16 +95,16 @@
     </para>
 
     <para>
-	To install a boot package(s) check to see if the boot flavor package you want is packaged
-	for your distribution.  Use the packaged version (.rpm or .deb) if available.  
-	If only the tarball is available, 
-	use the install_siboot utility to install a boot tarball onto your system.
+      To install a boot package(s) check to see if the boot flavor package 
+      you want is packaged for your distribution.  Use the packaged version 
+      (.rpm or .deb) if available.  If only the tarball is available, use the 
+      install_siboot utility to install a boot tarball onto your system.
 	For example:
    	# <command>install_siboot ./systemimager-boot-standard-ia64-2.2.0.tar.bz2</command>
 
 See the install_siboot manpage (included in the Command Reference section)
 of this manual) for details on creating your own boot packages.
-
+    </para>
     <procedure>
       <title>To install an image server for Debian GNU/Linux 3.0 (woody) and later, run:</title>
       <step>
