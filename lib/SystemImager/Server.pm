@@ -1376,6 +1376,9 @@ EOF
 
   _write_out_umount_commands( $image_dir, $auto_install_script_conf );
 
+  print MASTER_SCRIPT  qq(# Tell the image server we're done.\n);
+  print MASTER_SCRIPT  qq(rsync -av \$IMAGESERVER::scripts/imaging_complete\n);
+
   print MASTER_SCRIPT "\n";
 
   print MASTER_SCRIPT "# Take network interface down\n";
