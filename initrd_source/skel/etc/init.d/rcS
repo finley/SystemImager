@@ -299,10 +299,21 @@ if [ ! -z $LOG_SERVER ]; then
 fi
 ### END logging ###
 
+# Determine ARCH.  This takes a little bit of futzing with due to all the PPC 
+# platforms that exist.
+
+ARCH=`uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/`
+
+if [ "ppc64" = $ARCH ] ; then
+    if [ -d /proc/iSeries/ ] ; then
+        ARCH=ppc64-iSeries
+    fi
+fi
+
 # Get other binaries, kernel module tree, and miscellaneous other stuff that
 # got put in the binaries tarball. -BEF-
 #
-ARCH=`uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/`
+
 rsync -av ${IMAGESERVER}::boot/${ARCH}/boel_binaries-${FLAVOR}-${VERSION}.tar.gz /tmp/ || shellout
 ( cd / && tar -xvzf /tmp/boel_binaries-standard-${VERSION}.tar.gz ) || shellout
 
