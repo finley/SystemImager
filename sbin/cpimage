@@ -1,0 +1,213 @@
+#!/usr/bin/perl -w
+
+#
+# "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>
+#
+#   Others who have contributed to this code (in alphabetical order):
+#
+# This file is: cpimage
+#
+
+# set some variables
+$version_number="1.5.0";
+$program_name="cpimage";
+$get_help = "         Try \"$program_name -help\" for more options.";
+
+# declare modules
+use Getopt::Long;
+use File::Copy;
+use File::Path;
+
+### BEGIN functions ###
+sub trim {
+  my @out = @_;
+  for (@out) {
+    s/^\s+//;
+    s/\s+$//;
+  }
+  return wantarray ? @out : $out[0];
+}
+sub check_if_root{
+    unless($< == 0) { die "$program_name: Must be run as root!\n"; }
+}
+### END functions ###
+
+# set version information
+$version_info = <<"EOF";
+$program_name (part of SystemImager) version $version_number
+
+Copyright (C) 1999-2001 Brian Elliott Finley <brian\@systemimager.org>
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+EOF
+
+# set help information
+$help_info = $version_info . <<"EOF";
+
+Usage: $program_name [OPTION]... SOURCE_IMAGE DESTINATION_IMAGE
+
+Options: (options can be presented in any order)
+
+ -help                    Display this output.
+
+ -version                 Display version and copyright information.
+
+ -verbose                 Explain what is being done.
+
+ -force                   Don\'t ask for confirmation before 
+                          overwriting the destination image or master
+			  autoinstall script (if they exist).
+
+ -directory PATH          The full path and directory name where you want
+                          this image to be stored.  The directory bearing
+                          the image name itself will be placed inside the
+                          directory specified here.
+
+ -server HOSTNAME         Hostname or IP address of the imageserver
+                          holding the image you want to pull.  This allows
+                          you to copy an image from another imageserver.
+			  (Defaults to \"localhost\".)
+
+
+Download, report bugs, and make suggestions at:
+http://systemimager.org/
+EOF
+
+# interpret command line options
+GetOptions( 
+  "help" => \$help,
+  "version" => \$version,
+  "directory=s" => \$destination_path,
+  "force" => \$force,
+  "server=s" => \$server,
+  "verbose" => \$verbose
+) or die qq($help_info);
+
+# if requested, print help information
+if($help) {
+  print qq($help_info);
+  exit 0;
+}
+
+# if requested, print version and copyright information
+if($version) {
+  print qq($version_info);
+  exit 0;
+}
+
+# Take the arguments left after Getopt::Long parses it's stuff out 
+# as the source and destination image names.
+$source_image=$ARGV[0];
+$destination_image=$ARGV[1];
+
+# be sure both source and destination images are specified
+unless(($source_image) and ($destination_image)) {
+  die "\n$program_name: Must specify both SOURCE_IMAGE and DESTINATION_IMAGE.\n$get_help\n\n";
+}
+
+# be sure $server name doesn't start with a hyphen
+if($server) {
+  if($server =~ /^-/) { 
+    die "\n$program_name: Server name can\'t start with a hyphen.\n\n$get_help";
+  }
+}
+
+# be sure program is run by root
+check_if_root();
+
+unless($server) { $server="127.0.0.1"; }
+
+unless($destination_path) { $destination_path = "/var/spool/systemimager/images"; }
+
+# remove any trailing slash
+$destination_path =~ s/\/$//;
+
+$source="rsync://$server/$source_image";
+$destination="$destination_path/$destination_image";
+
+# check for existence of destination path
+$file=$destination_path;
+unless(-e $file) {
+  if($force) {
+    mkpath($file, 0, 0750) or die "FATAL: Can't create $file!\n";
+  } else {
+    die "FATAL: Destination path \"$file\" doesn't exist!\n";
+  }
+}
+
+# check for existence of destination image
+$file=$destination;
+if(-e $file) {
+  unless($force) { die "FATAL: Destination image \"$file\" already exists!\n"; }
+}
+
+# check for existence of destination master autoinstall script
+$file="/tftpboot/systemimager/$destination_image.master";
+if(-e $file) {
+  if($force) {
+    unlink($file) or die "FATAL: Can't remove $file!\n";
+  } else {
+    die "FATAL: Destination master autoinstall script \"$file\" already exists!\n";
+  }
+}
+
+# copy the image
+if($verbose) {print "  Copying image $source_image to $destination_image.\n";}
+$cmd="rsync -a --delete $source $destination";
+system($cmd);
+  if($? != 0) { die "FATAL: Failed to copy $source to $destination.\n"; }
+
+### BEGIN Change entries in /etc/rsyncd.conf ###
+$file="/etc/rsyncd.conf";
+if($verbose) {print "  Updating entries in $file.\n";}
+open (FILE, "<$file") or die "FATAL: Couldn't open $file for reading!\n";
+
+$tmp_file="/tmp/tmp_file.$$";
+open (TMP_FILE, ">$tmp_file") or die "FATAL: Couldn't open $tmp_file for writing!\n";
+  while (<FILE>) {
+    if (/^\s*path\s*=.*\/$destination_image/) { 
+      print TMP_FILE "    path = $destination\n";
+      $module_entry_exists="true";
+    }
+    else {
+      print TMP_FILE;
+    }
+  }
+  unless($module_entry_exists) {
+      print TMP_FILE "[$destination_image]\n";
+      print TMP_FILE "    path = $destination\n\n";
+  }
+close TMP_FILE or die "FATAL: Can't close $tmp_file: $!";
+close FILE or die "FATAL: Can't close $file: $!";
+
+move($file, "$file.orig") or die "FATAL: Can't move $file to $file.orig: $!";
+move($tmp_file, $file) or die "FATAL: Can't move $tmp_file to $file: $!";
+### END Change entries in /etc/rsyncd.conf ###
+
+### BEGIN Change entries in master autoinstall script ###
+# copy master autoinstall script
+if($verbose) {print "  Copying $source_image.master to $destination_image.master.\n";}
+$source_script="rsync://$server/tftpboot/systemimager/$source_image.master";
+$destination_script="/tftpboot/systemimager/$destination_image.master";
+$cmd="rsync -a $source_script $destination_script";
+system($cmd);
+  if($? != 0) { die "FATAL: Failed to copy $source_script to $destination_script.\n"; }
+
+# update new master autoinstall script
+$file=$destination_script;
+if($verbose) {print "  Updating entries in $destination_image.master.\n";}
+open (FILE, "<$file") or die "FATAL: couldn't open $file for reading!\n";
+
+$tmp_file="/tmp/tmp_file.$$";
+open (TMP_FILE, ">$tmp_file") or die "FATAL: couldn't open $tmp_file for writing!\n";
+  while (<FILE>) {
+    s/^IMAGENAME=$source_image$/IMAGENAME=$destination_image/;
+    print TMP_FILE;
+  }
+close TMP_FILE or die "FATAL: Can't close $tmp_file: $!";
+close FILE or die "FATAL: Can't close $file: $!";
+
+move($tmp_file, $file) or die "FATAL: Can't move $tmp_file to $file: $!";
+### END Change entries in /etc/rsyncd.conf ###
+
+exit 0;
