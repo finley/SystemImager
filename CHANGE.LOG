@@ -32,7 +32,11 @@ VA SystemImager-1.4.0 2000.xx.xx
                is backwards compatible so as not to completely confuse
                you. ;)
 - rsyncd.conf -- Change back to using one log file: /var/log/systemimager
-- afterburner -- Test for xinetd and inetd and SIGHUP them as is appropriate.
+- afterburner -- Test for inetd and SIGHUP as is appropriate.
+- afterburner -- Test for xinetd and SIGUSR1 as is appropriate.
+                 Thanks to Dann Frazier <daniel_frazier@hp.com> for 
+		 pointing out that xinetd only does a state dump with a 
+		 SIGHUP and requres a SIGUSR1 to do a soft reconfigure.
 - afterburner -- Now works with /etc/rc.d/init.d/ or /etc/init.d.
 - updateclient -- Now uses the --numeric-ids rsync option.  Thanks to all
                   who submitted info on this one.  This closes bug #123339.
