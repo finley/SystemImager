@@ -1,0 +1,182 @@
+#!/usr/bin/perl -w
+#
+# "SystemImager"
+#  
+#  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
+#  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
+#  Copyright (C) 2001 Sean Dague <sean@dague.net>
+#  Copyright (C) 2003 dann frazier <dannf@danf.org>
+#
+#  $Id$
+# 
+#   Based on the original mkautoinstallcd by Brian Elliott Finley <brian.finley@baldguysoftware.com>
+#   New version by Sean Dague <sean@dague.net>
+#   mkbootmedia tranformation by dann frazier <dannf@dannf.org>
+# 
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+# 
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+# 
+#   You should have received a copy of the GNU General Public License
+#   along with this program; if not, write to the Free Software
+#   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+
+use strict;
+use Carp;
+use AppConfig;
+use Getopt::Long;
+use POSIX qw(uname);
+use File::Temp;
+
+use lib qw(/usr/lib/systemimager/perl);
+use SystemImager::Config;
+use SystemImager::Common;
+use Media;
+
+use vars qw($config $VERSION);
+
+$ENV{PATH} = "/usr/local/sbin:/usr/sbin:/sbin:/usr/local/bin:/usr/bin:/bin";
+
+sub usage {
+    print "usage\n";
+}
+
+sub get_response {
+    my $garbage_out=$_[0];
+    my $garbage_in=<STDIN>;
+    chomp $garbage_in;
+    unless($garbage_in eq "") { $garbage_out = $garbage_in; }
+    return $garbage_out;
+}
+
+my $autoinstall_boot_dir = $config->autoinstall_boot_dir;
+if (!$autoinstall_boot_dir) {
+  print "Fatal: AUTOINSTALL_BOOT_DIR not specified in the systemimager.conf file.";
+  exit 1;
+}
+
+GetOptions( 
+    "help"          => \my $help,
+    "version"       => \my $version,
+    "arch=s"        => \my $arch,
+    "config=s"      => \my $local_cfg,
+    "out-file=s"    => \my $out_file,
+    "quiet"         => \my $quiet,
+    "append=s"      => \my $append,
+    "kernel=s"      => \my $kernel,
+    "initrd=s"      => \my $initrd,
+    "flavor=s"      => \my $flavor,
+    "type=s"        => \my $type,
+) or usage() and die "Error parsing options.";
+
+if($help) { usage() and exit(0); }
+
+my $verbose_level = 1;
+if ($quiet) { $verbose_level = 0; }
+
+if($version) { version() and exit(0); }
+
+# if not run as root, this script will surely fail
+unless($< == 0) { 
+    print "FATAL: Must be run as root!\n";
+    exit 1;
+}
+
+($type eq "cd" or $type eq "floppy") or die "Invalid media type";
+    
+# If -arch was not specified on the command line, get it from the system. -BEF-
+unless ($arch) {
+    $arch = (uname())[4];
+    $arch =~ s/i.86/i386/;
+}
+
+# Do we have a supported architecture? -BEF-
+$arch =~ /^(i386|ia64)$/ or
+    die("\nI'm terribly sorry, but I don't yet know how to make autoinstall media\n for the \"$arch\" architecture.\n");
+
+$out_file or usage() and die "Output file not specified!";
+
+unless ($kernel and $initrd) {
+    my %available_flavors =
+	SystemImager::Common->get_boot_flavors($arch, $autoinstall_boot_dir);
+    
+    unless (%available_flavors) {
+	print qq(\nI couldn't find any boot flavors for SystemImager on $arch.\n);
+        print qq(Please install the appropriate boot files.\n\n);
+        exit 1;
+    }
+
+    if (($quiet) and (!$flavor)) { $flavor = "standard"; }
+
+    unless ($flavor) {
+	print "Here is a list of available flavors:\n\n";
+	foreach (sort (keys %available_flavors)) {
+	    print "  $_\n";
+	    $flavor = $_;
+	}
+
+        # If "standard" is one of the available flavours, default to it. -BEF-
+        if ($available_flavors{"standard"}) { $flavor = "standard"; }
+	
+	print "\nWhich flavor would you like to use? [$flavor]: ";
+	$flavor = get_response($flavor);
+    }
+    
+    
+    # make sure the specified flavor is available
+    unless ($available_flavors{$flavor}) {
+      print "\nI can't find boot files of the flavor and architecture specified.\n";
+      print "The files you specified would come from a SystemImager boot tarball named:\n\n";
+      print qq( "systemimager-boot-${arch}-${flavor}-${VERSION}.tar.bz2"\n\n); 
+      exit 1;
+    }
+
+    my $bin_dir = "$autoinstall_boot_dir/$arch/$flavor";
+
+    if (! $kernel) { $kernel = "$bin_dir/kernel"; }
+    if (! $initrd) { $initrd = "$bin_dir/initrd.img"; }
+}
+my $msg = "/etc/systemimager/pxelinux.cfg/message.txt";
+-e $kernel or die "$kernel does not exist.";
+-e $initrd or die "$initrd does not exist";
+-e $msg or die "$msg does not exist";
+
+my %files = (
+    $kernel => "kernel", 
+    $initrd => "initrd.img",
+    $msg    => "message.txt",
+);
+if ($local_cfg) { $files{$local_cfg} = "local.cfg"; }
+
+my $image_name;
+if ($type eq "floppy") { 
+  $image_name = $out_file; 
+}
+elsif ($type eq "cd") { 
+  (my $FOO, $image_name) = File::Temp::tempfile("systemimager.tmp.XXXXX");
+}
+
+Media::init_boot_image($image_name, $arch, $verbose_level) 
+    or die "Media::init_boot_image() failed.";
+Media::create_ramdisk_fs($image_name, $verbose_level) 
+    or die "Media::create_ramdisk_fs failed.";
+Media::populate_ramdisk($image_name, $verbose_level, %files)
+    or die "Media::populate_ramdisk failed.";
+Media::make_ramdisk_bootable($image_name, $arch, $verbose_level)
+    or die "Media::make_ramdisk_bootable failed.";
+$append = "" unless $append;
+Media::create_bootloader_conf($image_name, $arch, $append, $verbose_level)
+    or die "Media::create_bootloader_conf failed.";
+
+if ($type eq "cd") {
+    Media::make_boot_iso($image_name, $arch, $out_file, 
+                         $VERSION, $verbose_level)
+    or die "Media::make_boot_iso failed.";
+}
