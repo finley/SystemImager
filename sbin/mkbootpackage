@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-#  Copyright (C) 2003-2004 Brian Elliott Finley <brian@thefinleys.com>
+#  Copyright (C) 2003-2004 Brian Elliott Finley
 #
 #  $Id$
 # 
@@ -18,6 +18,10 @@
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
+
+# 2004.03.15 Brian Elliott Finley
+# - Specify destination kernel name as 'kernel'.  Bug found by Thomas 
+#   Naughton.
 
 #
 # TODO: 
@@ -157,7 +161,7 @@ sub copy_into_place
         eval { mkpath($d, 0, 0755) }; if ($@) { die("Couldn't mkpath $d $@"); }
 
         print ">>> Copying $opt{kernel} to:  $d\n" if($opt{v});
-        copy("$opt{kernel}", "${d}/") or die("Couldn't copy $opt{kernel} to $d");
+        copy("$opt{kernel}", "${d}/kernel") or die("Couldn't copy $opt{kernel} to ${d}/kernel");
 
         print ">>> Copying $opt{new_initrd}.img to:  $d\n" if($opt{v});
         copy("$opt{new_initrd}.img", "${d}/") or die("Couldn't copy $opt{new_initrd} to $d");
