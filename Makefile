@@ -499,30 +499,9 @@ $(BOEL_BINARIES_TARBALL):	$(DISCOVER_BINARY) \
 ifdef MKXFS_BINARY
 	install -m 755 --strip $(MKXFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
 endif
-	#
-	# Put libraries in the boel_binaries_tarball...
-	#
-	#
-	# Copy over any special libraries that mklibs.sh probably won't find.  
-	# This should be done for any binary that causes a mklibs.sh message 
-	# like this: "objcopy: : No such file or directory". -BEF-
-	#
+
 	mkdir -m 755 -p $(BOEL_BINARIES_DIR)/lib
-	#
-	# libparted
-	cp -a $(SRC_DIR)/$(PARTED_DIR)/libparted/.libs/libparted-*.so* \
-		$(BOEL_BINARIES_DIR)/lib/
-	#
-	# libdiscover
-	cp -a $(SRC_DIR)/$(DISCOVER_DIR)/lib/.libs/libdiscover.so* \
-		$(BOEL_BINARIES_DIR)/lib/
-ifeq ($(ARCH),ia64)
-	# mklibs was removing the real lib file, then choking on the symlinks that 
-	# pointed to it.  This line may be appropriate (or harmless) for all arches.
-	# -BEF-
-	find $(BOEL_BINARIES_DIR)/lib/ -name libdiscover\* -type l -exec rm -f {} \;
-endif
-	strip $(BOEL_BINARIES_DIR)/lib/*
+
 	#
 ifdef WITH_CTCS
 	mkdir -p $(BOEL_BINARIES_DIR)/usr/src
@@ -542,8 +521,8 @@ endif
 	# any soft links.  Note: This does not require PIC libraries -- it will
 	# copy standard libraries if it can't find a PIC equivalent.  -BEF-
 	#
-	cd $(BOEL_BINARIES_DIR) && \
-	  $(PYTHON) $(TOPDIR)/initrd_source/mklibs -v -d lib bin/* sbin/* lib/*
+	cd $(BOEL_BINARIES_DIR) && $(PYTHON) $(TOPDIR)/initrd_source/mklibs \
+	  -L $(SRC_DIR)/$(PARTED_DIR)/libparted/.libs:$(SRC_DIR)/$(DISCOVER_DIR)/lib/.libs -v -d lib bin/* sbin/*
 	#
 	#
 	# install kernel modules. -BEF-
