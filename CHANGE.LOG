@@ -16,6 +16,8 @@ install
 
 getimage
 --------
+- now leaves it's mark -> "/etc/systemimager/IMAGE_LAST_SYNCED_TO"
+- added the "replicant" option to the -ip-assignment option.
 - -help and -version now exit with a status of 0.
 - Added support for LABEL=/partition/label format in /etc/fstab.  This
   format is used in new (not upgrades) RedHat 7 installations.
@@ -55,6 +57,11 @@ afterburner
 
 updateclient
 ------------
+- now leaves it's mark -> "/etc/systemimager/IMAGE_LAST_SYNCED_TO"
+  noting the image the client was last synced to.
+- added the -configure-from DEVICE option.  Only used with -autoinstall.
+  Stores the network configuration for DEVICE in the /local.cfg file so
+  that the same settings will be used during the autoinstall process.
 - -help and -version now exit with a status of 0.
 - Now uses the --numeric-ids rsync option.  Thanks to all who submitted
   info on this one.  This closes bug #123339.
