@@ -230,6 +230,7 @@ if($dnsserver2 ne "") { print DHCPDCONF qq(, $dnsserver2); }
 if($dnsserver3 ne "") { print DHCPDCONF qq(, $dnsserver3); }
 if($dnsserver1 ne "") { print DHCPDCONF qq(;\n); }
 print DHCPDCONF qq(  option routers $router; \n);
+print DHCPDCONF qq(  # option-100 specifies the IP address of your imageserver\n);
 print DHCPDCONF qq(  option option-100 "$imageserver"; \n);
 if( $syslogd ne "" ) { print DHCPDCONF qq(  option log-servers $syslogd; \n) ; }
 if( $ntp0 ne "" ) { print DHCPDCONF qq(  option time-servers $ntp0); }
@@ -283,5 +284,4 @@ if( -e "/etc/rc.d/init.d/dhcpd" ){
   }
 }
 
-print "Press <Enter> to continue...";
-<STDIN>;
+exit 0;
