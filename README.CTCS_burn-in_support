@@ -1,0 +1,50 @@
+#!/bin/sh
+#
+# "SystemImager"
+#
+#  Copyright (C) 2002 Bald Guy Software 
+#                     Brian E. Finley <brian.finley@baldguysoftware.com>
+#
+#   $Id$
+#
+# 	This file is an example master autoinstall script for using CTCS for
+#   burn-in support without imaging clients or touching their disks.  To
+#   use this file as your master script, simply copy it to 
+#   /var/lib/systemimager/scripts/ctcs.master, then run addclients to 
+#   tell your client machines to use this script.  See the CTCS package
+#   for more information on burn-in parameters, etc:
+#   http://sourceforge.net/projects/va-ctcs/
+#
+
+beep_of_success() {
+	echo "I passed!"
+	ralph="sick"
+	count="1"
+	while [ $ralph="sick" ]
+	do
+		echo -n -e "\\a"
+		sleep 2
+		count=$(($count + 1))
+	done
+}
+
+beep_of_failure() {
+	echo "I'm a failure!"
+	ralph="sick"
+	count="1"
+	while [ $ralph="sick" ]
+	do
+		echo -n -e "\\a"
+		sleep 1
+		count=$(($count + 1))
+	done
+}
+
+
+rm /tmp/boel*
+
+#mount tmpfs / -o remount,size=384M
+
+cd /usr/src/ctcs/
+./newburn -K -n -m -z 0d0h4m0s -A SMTWUFA-0000-2359 && beep_of_success || beep_of_failure
+exit 0
