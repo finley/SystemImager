@@ -7,6 +7,9 @@
 #
 #   2004.06.01 Brian Elliott Finley
 #   - add record_image_retrieval_time function
+#   2004.06.24 Brian Elliott Finley
+#   - add record_image_retrieved_from function
+#
 
 package SystemImager::Server;
 
@@ -44,6 +47,7 @@ $VERSION="SYSTEMIMAGER_VERSION_STRING";
 #   ip_quad_2_ip_hex
 #   numerically 
 #   record_image_retrieval_time
+#   record_image_retrieved_from
 #   remove_boot_file
 #   remove_image_stub 
 #   upgrade_partition_schemes_to_generic_style 
@@ -53,6 +57,22 @@ $VERSION="SYSTEMIMAGER_VERSION_STRING";
 #
 ################################################################################
 
+
+sub record_image_retrieved_from {
+
+    shift;
+    my $image_dir       = shift @_;
+    my $golden_client   = shift @_;
+
+    my $file = $image_dir . "/etc/systemimager/IMAGE_RETRIEVED_FROM";
+
+    local *FILE;
+    open(FILE,">$file") or die("Couldn't open $file for writing!");
+        print FILE "$golden_client\n";
+    close(FILE);
+
+    return 1;
+}
 
 sub record_image_retrieval_time {
 
