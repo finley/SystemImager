@@ -15,9 +15,16 @@ The naming convention for kernel patches is:
 Patches are applied in the order in which the filenames sort.  For example, 
 linux.i386.10reiserfs.patch would be applied before linux.i386.20raid.patch.
 
-Here is a listing of each patch, and a URL to the original patch, or to the
-source from which the patch was derived.
+If you are a developer, when you add a patch, include a comment at the top that
+explains where the patch was found or how it was created.  The goal is to 
+easily find new patches or be able to re-create them in the future.
 
-linux.all.99tg3-0.97.patch
-    http://kernel.org/pub/linux/kernel/people/davem/TIGON3/tg3-0.97.patch.bz2 
-    
+Example comment at the top of a patch:
+################################################################################
+# 
+# Added by Brian E. Finley.  Originally found here:
+#   http://kernel.org/pub/linux/kernel/people/davem/TIGON3/tg3-0.97.patch.bz2
+#
+################################################################################
+
+
