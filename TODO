@@ -56,7 +56,6 @@ CVS Checkout Steps for Developers for the Stable Branch (bug fixes only)
 Brian's Priorities 
   These tasks are in the order that I intend to complete them.
 --------------------------------------------------------------
-o Have first go at integrating SystemConfigurator
 o Verify Don's serial console changes
 o Add interactive autoinstall client patch
 
@@ -82,27 +81,30 @@ o X Windows GUI
 
 Curtis Zinzilieta <czinzilieta@valinux.com>
 -------------------------------------------
-o documentation
 o updateclient:  Add a -no-update "Don't actually *do* the update, just 
   show me what would have been done." option.
 
 Brian Finley <brian@thefinleys.com>
 -----------------------------------
+o Create "mkautoinstallscript" tool.
 o Break out functions from all scripts and put into SystemImager 
   libraries.
 o updateclient:  Change -nolilo to -no-lilo, and hide nolilo in the background.
 o deal with LABEL= and UUID= for any filesystem or device type
 o chroot=yes in /etc/rsyncd.conf and test...
+
 Change paths:
 o images:        /var/lib/systemimager/images/
 o all other SystemImager stuff (other than imageserver commands) will be
   stored in:            /var/lib/systemimager/
+o perl modules:         /var/lib/systemimager/perl/
 o web gui pages:        /var/lib/systemimager/web-gui/
 o autoinstall kernels:  /var/lib/systemimager/`arch`/kernels/
 o initial ram disks:    /var/lib/systemimager/`arch`/initial-ramdisks/
 o autoinstall scripts:  /var/lib/systemimager/`arch`/scripts/
 o autoinstall binaries: /var/lib/systemimager/`arch`/bin/
    (instead of the binary.architecture idea)
+
 o PXE stuff will *not* be dealt with during install, but details will be
    documented in the howto.  Later, this configuration will be handled by
    the "pxeconfig" utility.  (I'm not sure I have your final buy in on
@@ -117,8 +119,7 @@ o Modify binaries to use /var/lib/systemimager/ instead of /tftpboot/
 o Jose_AP_Celestino.ida.prepareclient.patch to make systemimager work
   properly with Smart Array cards.  (must get a Smart Array card first)
 
-o getimage -- exclude option
-  o put exclude/include stuff on imageserver by image
+o put exclude/include stuff on imageserver by image
     /tftpboot/systemimager/$image.updateclient.include
     /tftpboot/systemimager/$image.updateclient.exclude
 o David Weenink <david.weenink@hum.uva.nl> suggests:
