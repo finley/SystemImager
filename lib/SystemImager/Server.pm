@@ -1599,7 +1599,7 @@ sub write_sc_command {
     print $out "\n";
 
     print $out "[INTERFACE0]\n";
-    print $out "DEVICE = \$DEVICE\n";
+    print $out "DEVICE = eth0\n";
 
     if ($ip_assignment_method eq "dhcp") {
 	print $out "TYPE = dhcp\n";
