@@ -28,6 +28,9 @@ $systemimagerdir="/etc/systemimager";
 $nisdomainname="";
 
 # use the long options module to allow us to use, well, long options ;)
+use lib "/var/lib/systemimager/perl";
+use SystemImager::Server;
+use SystemImager::Common;
 use Getopt::Long;
 
 ### BEGIN Subroutines ###
@@ -64,8 +67,6 @@ $get_help = "          Try \"$program_name -help\" for more options.";
 $help_info = $version_info . <<"EOF";
 
 Usage: $program_name [OPTION]...  -golden-client HOSTNAME -image IMAGENAME
-  or   $program_name [OPTION]...  -server HOSTNAME -image IMAGENAME
-
 
 Options: (options can be presented in any order and may be abbreviated)
 
@@ -75,18 +76,11 @@ Options: (options can be presented in any order and may be abbreviated)
 
  -golden-client HOSTNAME  Hostname or IP address of the \"golden\" client.
 
- -server HOSTNAME         Hostname or IP address of the imageserver
-                          holding the image you want to pull.  This allows
-                          you to copy an image from one imageserver to
-                          another.
-
  -image IMAGENAME         Where IMAGENAME is the name to assign to the 
                           image you are retrieving.  This can be either
                           the name of a new image if you want to create
                           a new image, or the name of an exisiting image
-                          if you want to update an image.  If you are
-                          using the -server option, the same imagename 
-			  is used for both the source and destination.
+                          if you want to update an image.  
 
  -ssh-user USERNAME       Username for ssh connection to the client.
                           Only needed if a secure connection is required.
@@ -103,6 +97,23 @@ Options: (options can be presented in any order and may be abbreviated)
                           this image to be stored.  The directory bearing
                           the image name itself will be placed inside the
                           directory specified here.
+
+ -exclude PATH            Don\'t pull the contents of PATH from the 
+                          golden client.  PATH must be absolute (starting 
+			  with a "/").  
+			  
+			  To exclude a single file use:
+			   -exclude /directoryname/filename
+
+                          To exclude a directory and it's contents use:
+                           -exclude /directoryname/
+
+			  To exclude the contents of a directory, but
+			  pull the directory itself use:
+			   -exclude "/directoryname/*"
+
+ -exclude-file FILE       Don\'t pull the PATHs specified in FILE from the
+                          golden client.
 
  -update-script [YES|NO]  Update the \$image.master script?  Defaults to 
                           NO if -quiet.  If not specified you will be
@@ -152,9 +163,11 @@ EOF
     
 
 $golden_client = "";
-$master_client = "";
+$imageserver = "";
 $ip_assignment_method = "";
 $image = "";
+$exclude = "";
+$exclude_file = "";
 $update_script = "";
 $post_install = "beep"; # the default
 $rsyncd_conf = "/etc/rsyncd.conf";
@@ -162,12 +175,13 @@ $imagedir_prefix =  "/var/spool/systemimager/images";
 
 ### BEGIN evaluate options ###
 GetOptions( 
-    "master-client=s" => \$master_client,
     "golden-client=s" => \$golden_client,
     "server=s" => \$imageserver,
     "image=s" => \$image,
     "directory=s" => \$imagedir_prefix,
     "ip-assignment=s" => \$ip_assignment_method,
+    "exclude=s" => \$exclude,
+    "exclude-file=s" => \$exclude_file,
     "update-script=s" => \$update_script,
     "post-install=s" => \$post_install,
     "ssh-user=s" => \$ssh_user,
@@ -192,25 +206,8 @@ if ($version) {
   exit 0;
 }
 
-# only golden client or master client may be set
-if ($golden_client and $master_client) {
-  print "\n";
-  print "getimage: Either use -golden-client or -master-client but not both.\n";
-  print "          (-master-client is depricated and will be unavailable in\n"; 
-  die   "           a future release.)\n$get_help\n\n";
-}
-
-# if $master_client is used, pass the variable on
-if ($master_client) { $golden_client = $master_client; }
-
-# only golden client or server may be set
-if ($golden_client and $imageserver) {
-  die "\n$program_name: Either use -golden-client or -server but not both.\n$get_help\n\n";
-}
-
-# both a source host and image must be set.
-unless (($golden_client or $imageserver) and $image) {
-    die "\n$program_name: You must specify -golden-client or -server and -image.\n$get_help\n\n";
+if($imageserver){
+  die "\n$program_name: -server is now depricated.  Try cpimage command instead.\n$get_help\n\n";
 }
 
 # be sure $golden_client name doesn't start with a hyphen
@@ -221,13 +218,11 @@ if ($golden_client) {
   $source_host = $golden_client;
 }
 
-# be sure $imageserver name doesn't start with a hyphen
-if($imageserver){
-  if ($imageserver =~ /^-/) { 
-    die "\n$program_name: Server name can't start with a hyphen.\n$get_help\n\n";
-  }
-  $source_host = $imageserver;
+# both a source host and image must be set.
+unless ($source_host and $image) {
+    die "\n$program_name: You must specify -golden-client and -image.\n$get_help\n\n";
 }
+
 
 # be sure $image doesn't start with a hyphen
 if($image){
@@ -239,6 +234,13 @@ if($image){
 # be sure $imagedir_prefix is an absolute path starting with /
 unless ($imagedir_prefix =~ /^\//) { 
   die "\n$program_name: -directory must be an absolute path starting with \"/\".\n$get_help\n\n";
+}
+
+# be sure $exclude is an absolute path starting with /
+if($exclude){
+  unless($exclude =~ /^\//){ 
+    die "\n$program_name: -exclude must be an absolute path starting with \"/\".\n$get_help\n\n";
+  }
 }
 
 # be sure $update_script was passed a proper option
@@ -263,6 +265,18 @@ unless(
     or ($post_install eq "reboot")
     or ($post_install eq "shutdown")
 ) { die "\n$program_name: -post-install must be beep, reboot, or shutdown.\n$get_help\n\n"; }
+
+# only golden client or server may be set
+if ($exclude and $exclude_file) {
+  die "\n$program_name: Either use -exclude or -exclude-file but not both.\n$get_help\n\n";
+}
+
+# if -exclude-file is used, exclude file must exist
+if ($exclude_file) {
+  unless(-e $exclude_file){
+    die "\n$program_name: I can\'t find the exclude file specified by -exclude-file!\n$get_help\n\n";
+  }
+}
 ### END evaluate options ###
 
 # be sure program is run by root
@@ -270,7 +284,7 @@ check_if_root();
 
 # fill in variables based on options passed
 $master_script = "/tftpboot/systemimager/$image.master";
-$exclude_file = "/tmp/.exclude.$image";
+$final_exclude_file = "/tmp/.exclude.$image";
 $imagedir = "$imagedir_prefix/$image";
 
 $warning =  <<"EOF";
@@ -364,8 +378,8 @@ if($ssh_user) {
 
 
 ### BEGIN golden client stuff ###
-if($golden_client) {
-  # get /etc/systemimager/mounted_filesystems from $golden_client
+if($source_host) {
+  # get /etc/systemimager/mounted_filesystems from $source_host
   if (!$quiet) {
     print "Retrieving /etc/systemimager/mounted_filesystems from $source_host to check for mounted filesystems...\n";
 
@@ -398,7 +412,7 @@ if($golden_client) {
     $command = "rsync -a --numeric-ids";
     if ($log) { $command = $command . qq( --log-format="$log"); }
     if ($ssh_user) { $command = $command . " --bwlimit=10000"; }
-    $command = " rsync://${source_host}:${port}/root/etc/systemimager/mounted_filesystems ${imagedir}/etc/systemimager/mounted_filesystems";
+    $command = $command . " rsync://${source_host}:${port}/root/etc/systemimager/mounted_filesystems ${imagedir}/etc/systemimager/mounted_filesystems";
 
     system($command);
   }
@@ -414,37 +428,43 @@ if($golden_client) {
   
   # create list of filesystems to *not* get
   $file="${imagedir}/etc/systemimager/mounted_filesystems";
-  open (FILE, "<$file") || die ("$program_name: Couldn't open $file for reading\n");
+  open (FILE, "<$file") || die ("$program_name: Couldn't open $file for reading!\n");
     @mounted_filesystems = <FILE>;
   close FILE;
-  open (EXCLUDE, ">$exclude_file") || die "$program_name: Couldn't open $exclude_file for writing\n";
+
+  $file="$final_exclude_file";
+  open (FINAL_EXCLUDE_FILE, ">$file") || die "$program_name: Couldn't open $file for writing!\n";
     @mounted_filesystems = grep (!/\s+ext2\s+/, @mounted_filesystems);
     @mounted_filesystems = grep (!/\s+ext3\s+/, @mounted_filesystems);
     @mounted_filesystems = grep (!/\s+reiserfs\s+/, @mounted_filesystems);
+    print FINAL_EXCLUDE_FILE "\n# Automatic exclusions made by SystemImager.\n";
     foreach (@mounted_filesystems) {
       /\S+\s+\S+\s+(\S+)\s+/;
       my $mount_point=$1;
-      print EXCLUDE "$mount_point/*\n";
+      print FINAL_EXCLUDE_FILE "$mount_point/*\n";
     }
-  close EXCLUDE;
+    if($exclude) { 
+      print FINAL_EXCLUDE_FILE "\n# Exclusions from -exclude on the command line.\n";
+      print FINAL_EXCLUDE_FILE "$exclude\n";
+    }
+    if($exclude_file) { 
+      print FINAL_EXCLUDE_FILE "\n# Exclusions from -exclude-file.\n";
+      $file="$exclude_file";
+      open (EXCLUDE_FILE, "<$file") || die "$program_name: Couldn't open $file for reading!\n";
+        while(<EXCLUDE_FILE>){
+          print FINAL_EXCLUDE_FILE "$_\n";
+	}
+      close EXCLUDE_FILE;
+    }
+  close FINAL_EXCLUDE_FILE;
 
   # compile rsync options
-  $options = "--delete --exclude-from=$exclude_file";
+  $options = "--delete --delete-excluded --exclude-from=$final_exclude_file";
   if ($log) { $options = $options . qq( --log-format="$log"); }
   if ($ssh_user) { $options = $options . " --bwlimit=10000"; }
   $options = $options . " rsync://${source_host}:${port}/root/ $imagedir";
 }
 ### END golden client stuff ###
-
-### BEGIN pull from imageserver stuff ###
-if($imageserver) {
-  # compile rsync options
-  $options = "--delete";
-  if ($log) { $options = $options . qq( --log-format="$log"); }
-  if ($ssh_user) { $options = $options . " --bwlimit=10000"; }
-  $options = $options . " rsync://${source_host}:${port}/$image/ $imagedir";
-}
-### END pull from imageserver stuff ###
 
 ### BEGIN generic image retrieval stuff ###
 # Get the image from the specified host
@@ -473,7 +493,7 @@ if(!$quiet) {
     <STDIN>;
 }
 
-unlink $exclude_file || die "$program_name: Removal of file $exclude_file failed\n";
+unlink $final_exclude_file || die "$program_name: Removal of file $final_exclude_file failed\n";
 
 # Add entry to image server's rsyncd.conf if necessary
 open (RSYNCD_CONF, "<$rsyncd_conf");
