@@ -37,9 +37,8 @@
   <section>
     <title>Obtaining SystemImager</title>
     <para>
-      SystemImager is packaged in tarball, .deb, and RPM formats.  Use of the
-      RPMs or .debs is recommended over the tarball packages if supported by
-      your distribution.  SystemImager is a part of the Debian GNU/Linux 3.0
+      SystemImager is currently packaged in .deb, and RPM formats.
+      SystemImager is a part of the Debian GNU/Linux 3.0
       distribution, starting with 3.0 (woody).  For earlier releases and
       other distributions, download packages from
       <ulink url="http://systemimager.org">http://systemimager.org/</ulink>.
@@ -74,12 +73,12 @@
 	are known as "boot flavors."
     </para>
 
-    <para>Each SystemImager release provides the "standard" flavors for each supported
-	architecture.  For example, the 2.2.0 release should have the following
-	tarballs (and corresponding debs and RPMs) for i386 and ia64, respectively:
-  	systemimager-boot-standard-i386-2.2.0.tar.bz2
-  	systemimager-boot-standard-ia64-2.2.0.tar.bz2
-     </para>
+    <para>Each SystemImager release provides the "standard" flavors for each
+      supported	architecture.  For example, the 3.0.0 release should have the 
+      packages systemimager-boot-i386-standard_3.0.0-1_all.deb,
+      systemimager-boot-ia64-standard_3.0.0-1_all.deb,
+      systemimager-i386boot-standard.noarch.rpm, and
+      systemimager-ia64boot-standard.noarch.rpm</para>
 
     <para>
 	SystemImager and its standard boot flavors support most common hardware configurations.
@@ -87,24 +86,13 @@
     </para>
 
     <para>You can use other flavors at any time to support alternate
-	client configurations, and mulitple boot flavors can be installed simultaneously.
-      However, boot packages are strongly coupled to the
-	version of SystemImager for which they were created.  The SystemImager tools
-	will only recognize flavors that have the same version string as the installed
-	version of SystemImager.
+	client configurations, and mulitple boot flavors can be installed
+      simultaneously.  However, boot packages are strongly coupled to the
+      version of SystemImager for which they were created.  The SystemImager
+      boot package versions strings should match the version
+      string of the installed version of SystemImager.
     </para>
 
-    <para>
-      To install a boot package(s) check to see if the boot flavor package 
-      you want is packaged for your distribution.  Use the packaged version 
-      (.rpm or .deb) if available.  If only the tarball is available, use the 
-      install_siboot utility to install a boot tarball onto your system.
-	For example:
-   	# <command>install_siboot ./systemimager-boot-standard-ia64-2.2.0.tar.bz2</command>
-
-See the install_siboot manpage (included in the Command Reference section)
-of this manual) for details on creating your own boot packages.
-    </para>
     <procedure>
       <title>To install an image server for Debian GNU/Linux 3.0 (woody) and later, run:</title>
       <step>
