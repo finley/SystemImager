@@ -658,11 +658,10 @@ ping_test() {
         ping -c 1 $IMAGESERVER; PING_EXIT_STATUS=$?; PING_COUNT=$(( $PING_COUNT + 1 ))
         if [ "$PING_COUNT" = "21" ]; then
             echo
-            echo "  FATAL:  Cannot ping the image server \"$IMAGESERVER\""
-            echo "          Be sure that your networking equipment is"
-            echo "          working properly!"
+            echo "  WARNING:  Cannot ping the image server \"$IMAGESERVER\""
+            echo "            Be sure that your networking equipment is"
+            echo "            working properly!"
             echo
-            shellout
         fi
     done
 
