@@ -1,0 +1,40 @@
+#
+# "SystemImager"
+#
+#  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
+#
+#    $Id$
+#
+
+This directory holds the rsync stub files.  These files are used to re-create
+SystemImager's rsyncd.conf file.  If you need to make changes to the 
+rsyncd.conf file, you do that by changing one of the stub files or by creating
+a new stub file.  Stub files are put into the rsyncd.conf file in order.  
+Therefore, a stub file starting with a 10 will go in before a file starting 
+with a 20.  
+
+The "99local" stub file is provided for your customizing pleasure.  Simply add
+your changes to this file, and run the "mkrsyncd_conf" command to re-generate
+a fresh rsyncd.conf file with your changes.
+
+Stub files have a very specific naming scheme to prevent README files, backup 
+files, and similar from being used.  For a stub file to be used, that stub 
+file's name must:
+o start with one or more digits
+o have one or more letters and or underscores
+o have no other characters
+
+Valid examples:
+ 99bob
+ 35johnny_rotten
+ 50_bobby_sue
+
+Invalid examples:
+ 35johnny_rotten~       # Tilde (~) not allowed
+ S50_bobby_sue          # Can't start with a letter (S)
+ 40johnny_rotten.bak    # .bak indicates a backup file
+
+Therefore, to create a backup file that won't be used, simply:
+"mv 40johnny_rotten 40johnny_rotten.bak"
+"mkrsyncd_conf"
+

@@ -1,0 +1,63 @@
+#
+# "SystemImager"
+#
+#  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
+#  Copyright (C) 2001-2002 Bald Guy Software <brian.finley@baldguysoftware.com>
+#
+#  $Id$
+#
+#  Function:  
+#    This is a list of files to exclude DURING THE UPDATECLIENT PROCESS 
+#    ONLY.  If you want to exclude files or directories during a 
+#    "getimage" operation, use "man getimage" or "getimage --help" 
+#    to see the "-exclude PATH" and "-exclude-file FILE" options.
+#
+#  This file supercedes systemimager.exclude.  systemimager.exclude is now
+#  depricated and is not used.
+#
+
+
+
+# Do NOT modify these exclusions or VERY STRANGE things may happen!
+/etc/mtab
+/proc/*
+/var/lock/*
+/var/log/*
+/var/run/*
+/var/spool/*
+
+# This is to avoid overwriting ext3 journal files.  ext3 .journal files
+# are now depricated, but may still exist on older systems.
+*/.journal
+
+# This entry is needed for grub to work in the System Configurator
+# environment.
+/boot/grub/device.map
+
+# You may modify or add to the exclusions below at your own risk...
+# -- Wait a minute, this is all at your own risk! ;)
+#
+# You should consider modifying this file on both on the client and in
+# the image stored on the image server.  If you only modify it on the 
+# client, it will be replaced by the one in the image you are updating
+# to.  If you only modify it in the image, you will need to run 
+# updateclient twice for it to take effect.  The first run will pull 
+# the new file to your client, and the second run will actually make 
+# use of the new file.
+
+# RedHat stuff
+/etc/HOSTNAME
+/etc/sysconfig/network
+/etc/sysconfig/network-scripts/ifcfg-*
+
+# Debian stuff
+/etc/hostname
+/etc/network/interfaces
+/cdrom/*
+/floppy/*
+
+# generic stuff
+/etc/fstab
+/home/*
+/mnt/*
+/tmp/*
