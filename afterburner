@@ -362,7 +362,9 @@ create_rsyncd_conf() {
   echo 'uid = root'                                             >> /etc/rsyncd.conf
   echo 'gid = root'                                             >> /etc/rsyncd.conf
   echo 'use chroot = no'                                        >> /etc/rsyncd.conf
-  echo 'log file = /var/log/systemimager'                       >> /etc/rsyncd.conf
+  echo ''                                                       >> /etc/rsyncd.conf
+  echo '[tftpboot]'                                             >> /etc/rsyncd.conf
+  echo '  path = /tftpboot'                                     >> /etc/rsyncd.conf
   echo ''                                                       >> /etc/rsyncd.conf
   echo '# only image entries below this line'                   >> /etc/rsyncd.conf
   echo ''                                                       >> /etc/rsyncd.conf

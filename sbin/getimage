@@ -5,6 +5,7 @@
 #
 #   Others who have contributed to this code (in alphabetical order):
 #     Ian McLeod <ian@valinux.com>
+#     Laurence Sherzer <lsherzer@gate.net>
 #     Wesley Smith <wessmith@engr.sgi.com>
 #
 # This file is: getimage 
@@ -244,6 +245,7 @@ if (!grep(/\[$image\]/, <RSYNCD_CONF>)) {
     print RSYNCD_CONF <<"EOF";
 [$image]
     path = $imagedir
+    log file = /var/log/systemimager
 	    
 EOF
 };
