@@ -1,12 +1,12 @@
 #
 # "SystemImager" 
 #
-#  Copyright (C) 1999-2002 Brian Elliott Finley <bef@bgsw.net>
-#  Copyright (C) 2002 Bald Guy Software
-#                     Brian Elliott Finley <bef@bgsw.net>
+#   Copyright (C) 1999-2004 Brian Elliott Finley
 #
 #   $Id$
 #
+#   2004.06.01 Brian Elliott Finley
+#   - add record_image_retrieval_time function
 
 package SystemImager::Server;
 
@@ -43,6 +43,7 @@ $VERSION="SYSTEMIMAGER_VERSION_STRING";
 #   get_image_path 
 #   ip_quad_2_ip_hex
 #   numerically 
+#   record_image_retrieval_time
 #   remove_boot_file
 #   remove_image_stub 
 #   upgrade_partition_schemes_to_generic_style 
@@ -52,6 +53,25 @@ $VERSION="SYSTEMIMAGER_VERSION_STRING";
 #
 ################################################################################
 
+
+sub record_image_retrieval_time {
+
+    shift;
+    my $image_dir = shift @_;
+
+    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+    $year += 1900;
+
+    my $file = $image_dir . "/etc/systemimager/IMAGE_RETRIEVAL_TIME";
+
+    local *FILE;
+    open(FILE,">$file") or die("Couldn't open $file for writing!");
+        printf(FILE "%04d.%02d.%02d %02d:%02d\n", $year,$mon,$mday,$hour,$min);
+    close(FILE);
+
+    return 1;
+
+}
 
 sub create_image_stub {
     my ($class, $stub_dir, $imagename, $image_dir) = @_;
