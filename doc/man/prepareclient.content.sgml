@@ -7,7 +7,7 @@
       &dhsurname;
     </author>
     <copyright>
-      <year>2001</year>
+      <year>2002</year>
       <holder>&dhusername;</holder>
     </copyright>
     &dhdate;
@@ -29,14 +29,13 @@
       <arg><option>-version</option></arg>
       <arg><option>-h</option></arg>
       <arg><option>-help</option></arg>
-      <arg><option>-e</option></arg>
-      <arg><option>-explicit-geometry</option></arg>
       <arg><option>-n</option></arg>
       <arg><option>-no-rsyncd</option></arg>
       <arg><option>-q</option></arg>
       <arg><option>-quiet</option></arg>
       <arg><option>-r</option></arg>
       <arg><option>-rpm-install</option></arg>
+      <arg><option>-yes</option></arg>
 
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -70,17 +69,6 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-e</option>, <option>-explicit-geometry</option></term>
-        <listitem>
-          <para>
-	    Leave partition information for getimage using explicit
-	    disk geometry.  The default is to use megabytes which allow
-	    getimage to create an autoinstall script that will work with
-	    client disks of different geometries.
-	  </para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
         <term><option>-n, </option><option>-no-rsyncd</option></term>
         <listitem>
           <para>Do not start the rsync daemon</para>
@@ -99,6 +87,12 @@
         <term><option>-r</option>, <option>-rpm-install</option></term>
         <listitem>
           <para>This is only used when building an RPM</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-yes</option></term>
+        <listitem>
+          <para>Answer yes to all yes/no questions</para>
         </listitem>
       </varlistentry>
     </variablelist>

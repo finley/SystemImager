@@ -34,8 +34,9 @@
       <arg><option>-server <replaceable>HOSTNAME</replaceable></option></arg>
       <arg><option>-image <replaceable>IMAGENAME</replaceable></option></arg>
       <arg><option>-directory <replaceable>DIRECTORY</replaceable></option></arg>
-      <arg><option>-nobootloader</option></arg>
+      <arg><option>-no-bootloader</option></arg>
       <arg><option>-autoinstall</option></arg>
+    <arg><option>-flavor</option> <replaceable>FLAVOR</replaceable></option></arg>
       <arg><option>-configure-from <replaceable>DEVICE</replaceable></option></arg>
       <arg><option>-ssh-user <replaceable>USERNAME</replaceable></option></arg>
       <arg><option>-reboot</option></arg>
@@ -131,6 +132,15 @@
 	</para>
         </listitem>
       </varlistentry>
+    <varlistentry>
+      <term><option>-flavor <replaceable>FLAVOR</replaceable></option></term>
+      <listitem>
+	<para>
+	  The boot flavor to be used for doing an autoinstall 
+	  (assumes -autoinstall).
+	</para>
+      </listitem>
+    </varlistentry>
       <varlistentry>
         <term><option>-configure-from <replaceable>DEVICE</replaceable></option></term>
         <listitem>
