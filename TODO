@@ -12,14 +12,8 @@ Version 1.4.0 specific:
 
 <brian@thefinleys.com>
 ----------------------
-- deal with ext3 journal files differently according to Ted Ts'o
-- verify that getimage deals with networking properly for debian systems.
-  - look at a default debian dhcp installation
-    - is the /etc/init.d/network script there?
-    - how is it different for 2.1 and 2.2 installs
-  - look at a default debian static ip installation
-    - is the /etc/init.d/network script there?
-    - how is it different for 2.1 and 2.2 installs
+- deal with UUID= in /etc/fstab
+
 - Deal with tftp support (for network booting) on xinetd systems.
   (this is actually something to deal with in the tftp-hpa package 
    install)
@@ -39,6 +33,8 @@ Version 1.4.0 specific:
 -----------------------
 Version 1.4.1 specific:
 -----------------------
+o rmimage
+o mvimage
 o Wesley Smith <wessmith@cthulhu.engr.sgi.com> -- devfs patch
 o Wesley Smith <wessmith@cthulhu.engr.sgi.com> -- TurboLinux patch
 o Wesley Smith <wessmith@cthulhu.engr.sgi.com> -- SuSe patch
@@ -51,7 +47,7 @@ o James Morton <jmorton@viata.com> -- patch to have autoinstallclient
 Possibilities for future versions
 ---------------------------------
 
-George Perry <PerryG@elcsci.com>
+George Perry <perryg@elcsci.com>
 --------------------------------
 o bootable recovery CD that self-installs from image stored on same CD
 
