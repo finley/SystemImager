@@ -62,8 +62,22 @@ sub _image_exists_rsync {
     return $found;
 }
 
+############################################################
+#
+#  addimage($imagename, [$imagedir]) - adds the meta information for a SystemImager image.
+#  Takes the image name, and an optional image directory (if defaults are
+#  not good enough) and adds everything you need.
+#
+#  returns 1 on success, undef on error
+#
+############################################################
+
 sub addimage {
-    
+    my ($imagename, $imagedir) = @_;
+    my $config = get_config();
+    $imagedir ||= $config->default_imagedir . "/" . $imagename;
+    my $rsyncconf = $config->rsyncd_conf;
+    return _addimage_rsync($rsyncconf, $imagename, $imagedir);
 }
 
 sub _addimage_rsync {
@@ -80,15 +94,29 @@ sub _addimage_rsync {
 sub removeimage {
     my $image = shift;
     my $config = get_config();
-    _removeimage_clients($config->$image);
+    _removeimage_clients($image);
     _removeimage_script($image);
     _removeimage_rsync($image);
     _removeimage_filesystem($image);
  
 }
 
+sub _removeimage_clients {
+    return 1;
+}
 
+sub _removeimage_script {
+    return 1;
+}
 
-42; # Just for fun
+sub _removeimage_rsync {
+    return 1;
+}
+
+sub _removeimage_filesystem {
+    return 1;
+}
+
+42;
 
 
