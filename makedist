@@ -3,11 +3,12 @@
 #
 # "VA SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com>
 #
-#   Others who have contributed to this code:
-#     Written by Michael Jennings <mej@valinux.com>
-#
 # This file is: makedist
 #               (Build a SystemImager distribution tarball)
+#
+#   Written by Michael Jennings <mej@valinux.com>
+#     Others who have contributed to this code:
+#       Brian Finley <brian@valinux.com>
 #
 
 PACKAGE=va-systemimager
@@ -20,6 +21,8 @@ cp ${PACKAGE}.spec ${PACKAGE}.spec.in
 sed 's/^%define ver \([ ]*\) [0-9].*$/%define ver \1 '$VERSION'/g' ${PACKAGE}.spec.in > ${PACKAGE}.spec
 rm -f ${PACKAGE}.spec.in
 
+# va-systemimager
+rm -rf /tmp/${PACKAGE}-${VERSION}
 mkdir -p /tmp/${PACKAGE}-${VERSION}
 cp -a . /tmp/${PACKAGE}-${VERSION}
 (cd /tmp/${PACKAGE}-${VERSION} && find . -type d -name CVS -exec rm -rf {} \;)
@@ -27,4 +30,18 @@ cp -a . /tmp/${PACKAGE}-${VERSION}
 (cd /tmp && tar --owner=root --group=root -zcvf ${PACKAGE}-${VERSION}.tar.gz ${PACKAGE}-${VERSION}/)
 mv /tmp/${PACKAGE}-${VERSION}.tar.gz .
 rm -rf /tmp/${PACKAGE}-${VERSION}
+
+
+# va-systemimager-client
+PACKAGE=va-systemimager-client
+
+rm -rf /tmp/${PACKAGE}-${VERSION}
+mkdir -p /tmp/${PACKAGE}-${VERSION}
+cp -a installclient CHANGE.LOG COPYING CREDITS FAQ-HOWTO README TODO VERSION /tmp/${PACKAGE}-${VERSION}
+mkdir -p /tmp/${PACKAGE}-${VERSION}/tftpstuff/systemimager/
+( cd ./tftpstuff/systemimager/ && cp prepareclient updateclient systemimager.exclude /tmp/${PACKAGE}-${VERSION}/tftpstuff/systemimager/ )
+( cd /tmp && tar --owner=root --group=root -zcvf ${PACKAGE}-${VERSION}.tar.gz ${PACKAGE}-${VERSION}/ )
+mv /tmp/${PACKAGE}-${VERSION}.tar.gz .
+rm -rf /tmp/${PACKAGE}-${VERSION}
+
 
