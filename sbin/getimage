@@ -1252,8 +1252,8 @@ EOF
 
 # prompt to run "addclients"
 if (!$quiet) {
-    print "Would you like to run the \"addclents\" utility now? ([y]/n): ";
-    $continue = get_response('y');
+    print "Would you like to run the \"addclents\" utility now? (y/[n]): ";
+    $continue = get_response('n');
     ($continue ne "n") or exit 0;
     exec("addclients");
 }
