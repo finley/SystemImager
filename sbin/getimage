@@ -972,19 +972,10 @@ print MASTER_SCRIPT "# filler up!\n";
 print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::$image/ /a/\n\n";
 ### END pull the image down ###
 
-
 ### BEGIN graffiti ###
 print MASTER_SCRIPT "# Leave notice of which image is installed on the client\n";
 print MASTER_SCRIPT "echo \$image > /a/etc/systemimager/IMAGE_LAST_SYNCED_TO\n\n";
 ### END graffiti ###
-
-### BEGIN graffiti ###
-$file="/etc/systemimager/IMAGE_LAST_SYNCED_TO";
-open (FILE, "> $file") or die "Couldn't open $file for writing: $!\n";
-  print FILE "$image\n";
-  close (FILE);
-  ### BEGIN graffiti ###
-
 
 ### BEGIN distribution specific networking stuff ###
 unless($ip_assignment_method eq "replicant") { 
