@@ -68,94 +68,32 @@ Options: (options can be presented in any order and may be abbreviated)
  -initrd FILE      Specify an alternate autoinstall ramdisk.
  -append STRING    A string of options that will be passed to the autoinstall
                    kernel.
+ -ssh-key FILE	   Where FILE is the SSH1 private key of the user 
+                   account that the autoinstall client will use to
+                   connect to the imageserver.  
  -config FILE      Where FILE contains all the settings necessary for
                    the client to set it's hostname and configure it's
                    networking information without DHCP.  This file is
-                   copied to /local.cfg on the autoinstalldiskette.
- -ssh-key FILE	   Where FILE is the SSH1 private key of the user 
-                   account that the autoinstall client will use to
-                   connect to the imageserver.  It is usually called
-                   ".ssh/identity".
-
-                   To use this private key, you must also add the
-                   corresponding public key to this user's 
-                   ".ssh/authorized_keys" file on the imageserver.
-                   The public key is usually called ".ssh/identity.pub".
-                   The ".ssh/authorized_keys" must be readable only by
-                   this user.  ("chmod 600 .ssh/authorized_keys")
-
-
-Contents of an example local.cfg file:
-
- HOSTNAME=www1
- DOMAINNAME=systemimager.org
- DEVICE=eth0
- IPADDR=10.0.0.99
- NETMASK=255.255.255.0
- NETWORK=10.0.0.0
- BROADCAST=10.0.0.255
- GATEWAY=10.0.0.1
- GATEWAYDEV=eth0
- IMAGESERVER=10.0.0.3
- IMAGENAME=oracle_db_server-1.0
- ETHER_SLEEP=35
-
-
-If you will be using SSH, you have two options:
-
- 1) You can have the autoinstall client boot up and wait for you
-    to run the "pushupdate -continue-install" command from the
-    imageserver.
-
-    If you choose this option, you must supply the following variable
-    via the local.cfg, or via dhcp (see makedhcpserver):
-
-      SSH_DOWNLOAD_URL=http://10.0.0.3/ssh_files/
-  
- 2) You can have the autoinstall client do the whole install completely
-    non-interactively.  This option *only* works when using a floppy.
-    
-    If you choose this option, you must also supply the following two
-    variables:
-
-      SSH_DOWNLOAD_URL=http://10.0.0.3/ssh_files/
-      SSH_USER=username
-
-    And copy username's private key (.ssh/identity) to the root of the
-    floppy diskette.
-
-    username must be a valid user on your imageserver, and you will
-    need to put username's public ssh key (identity\.pub) in the
-    .ssh/authorized_keys file in username's home directory on the
-    imageserver.
-    
-    Also be sure that the permissions for the authorized_keys file are
-    set to 600 (chmod 600 .ssh/authorized_keys).
-    
-    When you are done with this part of the setup, username should be
-    able to ssh in to the imageserver without a password.  You can test
-    this with "ssh localhost" as username on the imageserver.
-    
-
-You can cut and paste this into your own file, but change each of the
-values to the appropriate values for your specific client.
+                   copied to /local.cfg on the autoinstalldiskette.  See 
+                   /usr/share/doc/systemimager/local.cfg for a well 
+                   commented example.
 
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
 EOF
 
 GetOptions( 
-    "help" => \$help,
-    "version" => \$version,
-    "floppy=s" => \$floppy_device_prefix,
-    "config=s" => \$local_cfg,
-    "ssh-key=s" => \$ssh_key,
-    "flavor=s" => \$flavor,
-    "kernel=s" => \$kernel,
-    "initrd=s" => \$initrd,
-    "append=s" => \$append_string,
-    "quiet" => \$quiet,
-    "out-file=s" => \$file
+    "help"          => \$help,
+    "version"       => \$version,
+    "floppy=s"      => \$floppy_device_prefix,
+    "config=s"      => \$local_cfg,
+    "ssh-key=s"     => \$ssh_key,
+    "flavor=s"      => \$flavor,
+    "kernel=s"      => \$kernel,
+    "initrd=s"      => \$initrd,
+    "append=s"      => \$append_string,
+    "quiet"         => \$quiet,
+    "out-file=s"    => \$file
 ) || die "$help_info";
 
 # if requested, print help information

@@ -1520,17 +1520,37 @@ sub copy_boot_files_to_boot_media {
     #
     #   Copy standard files to mount dir
     #
-    copy($kernel, "$mnt_dir/kernel") or die "Couldn't copy $kernel to $mnt_dir! $!";
-    copy($initrd, "$mnt_dir/initrd.img") or die "Couldn't copy $initrd to $mnt_dir! $!";
-    copy($message_txt, "$mnt_dir/message.txt") or die "Couldn't copy $message_txt to $mnt_dir! $!";
+    my $cmd = "umount $mnt_dir";
+    unless( copy($kernel, "$mnt_dir/kernel") ) {
+        system($cmd);
+        print "Couldn't copy $kernel to $mnt_dir!\n";
+        exit 1;
+    }
+    unless( copy($initrd, "$mnt_dir/initrd.img") ) {
+        system($cmd);
+        print "Couldn't copy $initrd to $mnt_dir!\n";
+        exit 1;
+    }
+    unless( copy($message_txt, "$mnt_dir/message.txt") ) {
+        system($cmd);
+        print "Couldn't copy $message_txt to $mnt_dir!\n";
+        exit 1;
+    }
     if($local_cfg) {
-        copy($local_cfg, "$mnt_dir/local.cfg") or die "Couldn't copy $local_cfg to $mnt_dir! $!";
+        unless( copy($local_cfg, "$mnt_dir/local.cfg") ) {
+            system($cmd);
+            print "Couldn't copy $local_cfg to $mnt_dir!\n";
+            exit 1;
+        }
     }
 
     # Unless an append string was given on the command line, just copy over.
     unless ($append_string) {
-        copy("$syslinux_cfg","$mnt_dir/syslinux.cfg") 
-            or die "Couldn't copy $syslinux_cfg to $mnt_dir! $!";
+        unless( copy("$syslinux_cfg","$mnt_dir/syslinux.cfg") ) {
+            system($cmd);
+            print "Couldn't copy $syslinux_cfg to $mnt_dir!\n";
+            exit 1;
+        }
     } else {
         # Append to APPEND line in config file.
         my $infile = "$syslinux_cfg";
