@@ -19,8 +19,7 @@ OPENSSH_BINARIES        := $(SRC_DIR)/$(OPENSSH_DIR)/ssh \
 OPENSSH_CONF_FILES := $(TOPDIR)/etc/ssh/ssh_config \
 				$(TOPDIR)/etc/ssh/sshd_config
 
-OPENSSH_OTHER_FILES := /lib/libnss_files-2.2.5.so \
-				/lib/libnss_files.so.2
+OPENSSH_OTHER_FILES := $(shell echo /lib/libnss_files*)
 
 OPENSSH_SOURCE := $(SRC_DIR)/$(OPENSSH_TARBALL)
 
