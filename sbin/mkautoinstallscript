@@ -41,43 +41,43 @@ This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 EOF
 
-$get_help = "\n       Try \"-help\" for more options.";
+$get_help = "\n       Try \"--help\" for more options.";
 
 $help_info = $version_info . <<"EOF";
 
 Usage: $program_name [OPTION]... -image IMAGENAME
 
 Options: (options can be presented in any order and may be abbreviated)
- -help                  Display this output.
+ --help                 Display this output.
 
- -version               Display version and copyright information.
+ --version              Display version and copyright information.
 
- -quiet                 Don\'t print any output, just provide an 
+ --quiet                Don\'t print any output, just provide an 
                         appropriate exit code.
 
- -image IMAGENAME       Where IMAGENAME is the name of the image for 
+ --image IMAGENAME      Where IMAGENAME is the name of the image for 
                         which you want to create a new autoinstall 
 			            script.
 
- -script SCRIPTNAME     Where SCRIPTNAME is the base name to use for the 
+ --script SCRIPTNAME    Where SCRIPTNAME is the base name to use for the 
                         resultant autoinstall script.  If not specified,
                         SCRIPTNAME defaults to IMAGENAME.
 
- -force                 Overwrite the \$image.master script, if it exists.
+ --force                Overwrite the \$image.master script, if it exists.
 
- -config-file FILE      Use FILE to get autoinstall script configuration
+ --config-file FILE     Use FILE to get autoinstall script configuration
                         information.  Defaults to the 
                         ./etc/systemimager/autoinstallscript.conf file
                         in the image.
 
- -no-listing            Don't show each filename as it is copied over during
+ --no-listing           Don't show each filename as it is copied over during
                         install.  This is useful for times when your console
                         device is slow (e.g. serial console), and is the 
                         bottleneck of your installation.
 
 The following options affect the autoinstall client after autoinstalling:
 
- -ip-assignment METHOD    Where METHOD can be DHCP, STATIC, or REPLICANT.
+ --ip-assignment METHOD    Where METHOD can be DHCP, STATIC, or REPLICANT.
 
                 DHCP
                 ----------------------------------------------------------------
@@ -97,7 +97,7 @@ The following options affect the autoinstall client after autoinstalling:
                 it as a backup and quick restore mechanism for a single machine.
 
 
- -post-install ACTION     Where ACTION can be BEEP, REBOOT, or SHUTDOWN.
+ --post-install ACTION     Where ACTION can be BEEP, REBOOT, or SHUTDOWN.
 
                 BEEP 
                 ----------------------------------------------------------------
@@ -154,13 +154,13 @@ if($version) {
 
 # be sure $image is set
 unless ($image) {
-  die "\n$program_name: -image IMAGENAME must be specified.\n$get_help\n\n";
+  die "\n$program_name: --image IMAGENAME must be specified.\n$get_help\n\n";
 }
 
 # -update is deprecated -BEF-
 # XXX change print to DIE in 3.2.
 if ($update) 
-    { print "\n$program_name: -update YES/NO is deprecated.  Please use -force.\n$get_help\n\n"; }
+    { print "\n$program_name: --update YES/NO is deprecated.  Please use --force.\n$get_help\n\n"; }
 
 # be sure $image doesn't start with a hyphen
 if ($image =~ /^-/) {
@@ -208,7 +208,7 @@ unless ($script_name) { $script_name = "$image"; }
 
 my $file = "$autoinstall_script_dir/$script_name.master";
 if (( -e "$file" ) && ( ! $force )) {
-    die qq(\nWARNING: "$file" already exists.\n         Use "-force" to overwrite.\n$get_help\n\n);
+    die qq(\nWARNING: "$file" already exists.\n         Use "--force" to overwrite.\n$get_help\n\n);
 }
 
 SystemImager::Server->validate_ip_assignment_option( $ip_assignment_method );
