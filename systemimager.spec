@@ -246,14 +246,13 @@ if [[ -a /etc/xinetd.d/rsync ]]; then
     fi
 fi
 
-/sbin/chkconfig --add systemimager
+/usr/sbin/mkrsyncd_conf
 
-if [ -z $DURING_INSTALL ]; then
-    /sbin/service systemimager start
-fi
+/sbin/chkconfig --add systemimager
 
 %preun server
 /sbin/service systemimager stop
+
 /sbin/chkconfig --del systemimager
 
 if [[ -a /etc/xinetd.d/rsync.presis~ ]]; then
@@ -269,6 +268,7 @@ fi
 %defattr(-, root, root)
 %prefix/bin/lsimage
 %prefix/share/man/man8/lsimage*
+%prefix/share/man/man5/autoinstall*
 %dir %prefix/lib/systemimager
 %prefix/lib/systemimager/perl/SystemImager/Common.pm
 %prefix/lib/systemimager/perl/SystemImager/Config.pm
@@ -283,18 +283,18 @@ fi
 %dir /var/lib/systemimager/scripts
 %dir /var/lib/systemimager/overrides
 %dir /etc/systemimager
+%config /etc/systemimager/pxelinux.cfg/*
 %config(noreplace) /etc/systemimager/rsync_stubs/*
 %config(noreplace) /etc/systemimager/systemimager.conf
 /etc/init.d/systemimager
+/etc/init.d/netboot*
 /var/lib/systemimager/images/*
 %prefix/sbin/addclients
 %prefix/sbin/cpimage
 %prefix/sbin/getimage
-%prefix/sbin/mkautoinstallscript
-%prefix/sbin/mkbootserver
-%prefix/sbin/mkdhcpserver
-%prefix/sbin/mkdhcpstatic
+%prefix/sbin/mk*
 %prefix/sbin/mvimage
+%prefix/sbin/netbootmond
 %prefix/sbin/pushupdate
 %prefix/sbin/rmimage
 %prefix/bin/mkautoinstall*
@@ -303,6 +303,7 @@ fi
 %prefix/share/man/man8/addclients*
 %prefix/share/man/man8/cpimage*
 %prefix/share/man/man8/getimage*
+%prefix/share/man/man8/install_si*
 %prefix/share/man/man8/mk*
 %prefix/share/man/man8/mvimage*
 %prefix/share/man/man8/rmimage*
@@ -313,7 +314,6 @@ fi
 %dir /etc/systemimager
 %config /etc/systemimager/updateclient.local.exclude
 %config /etc/systemimager/client.conf
-# %prefix/lib/systemimager/perl/SystemImager/Client.pm
 %prefix/sbin/updateclient
 %prefix/sbin/prepareclient
 %prefix/share/man/man8/updateclient*
