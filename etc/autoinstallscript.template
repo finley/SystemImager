@@ -125,7 +125,6 @@ if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
     # Use multicast 
     MODULE_NAME="${IMAGENAME}"
     if [ "${TMPFS_STAGING}" = "yes" ]; then 
-        
 
         # Deposit cast into tmpfs
         TMPFS_STAGING_DIR=/tmp/tmpfs_staging
@@ -140,7 +139,9 @@ if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
         # Note: Transfer to staging area can fail if tmpfs runs out of inodes.
         echo "Copying from tmpfs staging directory to disk..."
         rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --exclude=proc/ --numeric-ids ${TMPFS_STAGING_DIR}/ /a/ || shellout
+
     else
+        # Deposit cast directly into client filesystem
         DIR=/a
         RETRY=7
         flamethrower_client
