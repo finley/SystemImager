@@ -14,14 +14,17 @@ Version 1.4.0 specific:
 
 <brian@thefinleys.com>
 ----------------------
-o installclient -- install manual
+o makedhcpstatic bug
 
 o modify/verify documentation
 o finish pre-release checklist
 
+o label autoinstallcd.iso with v1.4.x (x is literal)
+
+Post release
+------------
 o create and submit custom load
   o test client on VA hardware
-o label autoinstallcd.iso with v1.4.x (x is literal)
 o modify RPM spec file to deal with:
   o configuration files
   o additional files
@@ -207,13 +210,6 @@ Pre-Release Checklist
 - install
 - installclient
 - hardware RAID client
-- server RPM install on virgin RH 6 system
-- server RPM install on virgin RH 7 system
-- client RPM install on virgin RH 6 system
-- client RPM install on virgin RH 7 system
-- server deb install on virgin debian system
-- client deb install on virgin debian system
-- dependent packages install properly
 x- also fix flaw in the way software raid devices are created.  LABEL=
    flubs this up...
 x- deal with ext3 clients using LABEL=
@@ -248,3 +244,13 @@ x- test dynamic geometry
 x- test that egrep thing is fixed
 x- test that dynamically linked binaries in /tftpboot work
 x- test -configure-from option
+
+Post-Release Checklist
+----------------------
+- server RPM install on virgin RH 6 system
+- server RPM install on virgin RH 7 system
+- client RPM install on virgin RH 6 system
+- client RPM install on virgin RH 7 system
+- server deb install on virgin debian system
+- client deb install on virgin debian system
+- dependent packages install properly
