@@ -77,6 +77,7 @@ use Carp;
 use POSIX;
 use File::Copy;
 use File::Path;
+use File::Basename;
 use Getopt::Long;
 use vars qw($VERSION);
 use SystemImager::Common;
@@ -100,8 +101,10 @@ $ENV{PATH} = "/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin";
 # we rely on english text when parsing command output
 $ENV{"LANG"} = "C";
 
+my $progname = basename $0;
+
 my $version_info = <<"EOF";
-si_prepareclient (part of SystemImager) v$VERSION
+$progname (part of SystemImager) v$VERSION
 
 Copyright (C) 1999-2005 Brian Elliott Finley
 
@@ -111,7 +114,7 @@ EOF
 
 my $help_info = $version_info . <<"EOF";
 
-Usage: si_prepareclient --server IMAGESERVER [OPTION]...
+Usage: $progname --server IMAGESERVER [OPTION]...
 
 Options:
  --version             
@@ -195,13 +198,13 @@ if($explicit) {
     print "        for you without the -explicit option, please file a bug report at\n";
     print "        http://systemimager.org/support/.  Thanks!\n";
     print "\n";
-    print qq(Try "si_prepareclient --help" for more options.\n);
+    print qq(Try "$progname --help" for more options.\n);
     exit 1;
 }
 
 # Make sure we have certain tools that we need.
-which('rsync') or croak("'rsync' is required for si_prepareclient to function properly.  Please see http://systemimager.org for more details.");
-which('systemconfigurator') or croak("'systemconfigurator' is required for si_prepareclient to function properly.  Please see http://systemimager.org for more details.");
+which('rsync') or croak("'rsync' is required for $progname to function properly.  Please see http://systemimager.org for more details.");
+which('systemconfigurator') or croak("'systemconfigurator' is required for $progname to function properly.  Please see http://systemimager.org for more details.");
 
 # -rpm-install does the same thing as -no-rsyncd.  -BEF-
 if($rpm) {
@@ -230,8 +233,8 @@ unless(($quiet) or ($yes)) {
     # do the interactive part
     system("clear");
     print <<EOF;
-Welcome to the SystemImager si_prepareclient command.  This command may modify
-the following files to prepare your golden client for having its image 
+Welcome to the SystemImager $progname command.  This command may modify
+the following files to prepare your golden client for having it's image 
 retrieved by the imageserver.  It will also create the /etc/systemimager 
 directory and fill it with information about your golden client.  All modified
 files will be backed up with the $backup_extension extension.
@@ -252,7 +255,7 @@ files will be backed up with the $backup_extension extension.
    an rsync daemon will be started using the temporary configuration file
    mentioned above.
    
-See "si_prepareclient --help" for command line options.
+See "$progname --help" for command line options.
 
 EOF
 
@@ -404,7 +407,7 @@ unless($norsyncd) {
     
     # Make a copy of the original /etc/hosts file.
     my $source      = $file;
-    my $destination = "$file.before-si_prepareclient";
+    my $destination = "$file.before-$progname";
     copy($source, $destination) or die "FATAL: Failed to copy $source to $destination.\n";
     
     # Append our temporary entry.
@@ -445,7 +448,7 @@ unless($norsyncd) {
     }
     
     # Put the original /etc/hosts file back (sans our temporary entry).
-    $source      = "$file.before-si_prepareclient";
+    $source      = "$file.before-$progname";
     $destination = $file;
     move($source, $destination) or die "FATAL: Failed to copy $source to $destination.\n";
 }
@@ -460,16 +463,16 @@ system("mount > /etc/systemimager/mounted_filesystems");
 if(!$quiet and !$norsyncd) {
     print <<EOF;
 
-This client is ready to have its image retrieved.  You must now run 
+This client is ready to have it's image retrieved.  You must now run 
 the "si_getimage" command on your imageserver.
 EOF
 
 } elsif(!$quiet) {
     print <<EOF;
 
-WARNING:  The rsync daemon was not started.  You must run si_prepareclient again,
-          without the -n option, before you can pull it's image to an
-          imageserver.
+WARNING:  The rsync daemon was not started.  You must run $progname again,
+          without the -n option, before you can pull this client's image
+          to an imageserver.
 EOF
 
 }
@@ -629,7 +632,9 @@ sub create_auto_install_script_conf {
     #   Do UYOK stuff
     #
     my $arch = get_arch();
-    SystemImager::UseYourOwnKernel->create_uyok_initrd($arch);
+    my $verbose;
+    unless($quiet) { $verbose = 1; }
+    SystemImager::UseYourOwnKernel->create_uyok_initrd( $arch, $verbose );
 
     SystemImager::Common->write_auto_install_script_conf_footer($file);
 
