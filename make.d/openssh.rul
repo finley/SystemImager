@@ -39,8 +39,7 @@ $(OPENSSH_BINARIES):	$(SRC_DIR)/openssh_verify.stamp
 												--host=i586-pc-linux-gnu
 	$(MAKE) -C $(SRC_DIR)/$(OPENSSH_DIR)
 
-$(SRC_DIR)/openssh_verify.stamp:	$(SRC_DIR)/$(OPENSSH_TARBALL)
-	$(GETSOURCE) $(OPENSSH_URL).sig $(SRC_DIR)
+$(SRC_DIR)/openssh_verify.stamp:	$(OPENSSH_TARBALL_TARGET)
 	#
 	# If the following command fails, you may need to do a 
 	#
@@ -54,6 +53,7 @@ $(SRC_DIR)/openssh_verify.stamp:	$(SRC_DIR)/$(OPENSSH_TARBALL)
 $(OPENSSH_TARBALL_TARGET):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
 	$(GETSOURCE) $(OPENSSH_URL) $(SRC_DIR)
+	$(GETSOURCE) $(OPENSSH_URL).sig $(SRC_DIR)
 
 PHONY += ssh_clean
 ssh_clean:  openssh_clean
