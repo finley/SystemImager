@@ -1,5 +1,5 @@
 <chapter>
-  <title>Using SystemImager with Flamethrower for Multicast Installs HOWTO</title>
+  <title>HOWTO Use Flamethrower for Multicast Installs</title>
   
   <section>
     <title>
@@ -7,6 +7,7 @@
     </title>
    
 	<para>
+      See <ulink url="http://systemimager.org/download">http://systemimager.org/download</ulink> for details.
 	</para>
   </section>
 
@@ -15,7 +16,13 @@
       Install the <application>Flamethrower</application> Package and its Dependencies
     </title>
    
+    <para>
+      Debian users can do an &quot;apt-get update&quot; and &quot;apt-get install flamethrower&quot;.
+    </para>
+
 	<para>
+      For RPM based distributions, you can download the Flamethrower RPMs from
+      <ulink url="http://sourceforge.net/project/showfiles.php?group_id=259">here</ulink>.
 	</para>
   </section>
 
@@ -38,8 +45,10 @@
       compelled to to so.  Take a look at the flamethrower.conf man
       page, or the comments inside the configuration file (image entries
       go at the very bottom of the file).  However, it's much easier to
-      just do a &quot;mvimage orig_name tmp_name &amp;&amp; mvimage tmp_name
-      orig_name&quot;.
+      just do a:
+      <programlisting>
+    "mvimage my_image-v1 tmp_name && mvimage tmp_name my_image-v1"
+      </programlisting>
 	</para>
   </section>
 
@@ -49,19 +58,15 @@
     </title>
    
 	<para>
-      Edit /etc/systemimager/flamethrower.conf, and change
+      Edit /etc/systemimager/flamethrower.conf, and set the following:
       <programlisting>
-        START_FLAMETHROWER_DAEMON = no
-      </programlisting>
-      to
-      <programlisting>
-        START_FLAMETHROWER_DAEMON = yes
+    START_FLAMETHROWER_DAEMON = yes
       </programlisting>
 	</para>
     <para>
-      Then crank it up with a
+      Then crank it up with:
       <programlisting>
-        /etc/init.d/systemimager-server-flamethrowerd restart
+    /etc/init.d/systemimager-server-flamethrowerd restart
       </programlisting>
     </para>
   </section>
@@ -76,13 +81,13 @@
       <programlisting>
         option option-143 "9000";
       </programlisting>
-      Then restart your DHCP daemon.  This is usually
+      Then restart your DHCP daemon.  This is usually either
       <programlisting>
-        /etc/init.d/dhcp restart
-      </programlisting>
-      or
-      <programlisting>
-        /etc/init.d/dhcpd restart
+    /etc/init.d/dhcp restart
+
+or
+
+    /etc/init.d/dhcpd restart
       </programlisting>
 	</para>
     <para>
