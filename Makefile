@@ -458,6 +458,7 @@ $(BOEL_BINARIES_TARBALL):	$(DISCOVER_BINARY) \
 							$(SFDISK_BINARY) \
 							$(MKXFS_BINARY) \
 							$(CTCS_BINARY) \
+							$(TAR_BINARY) \
 							$(SRC_DIR)/modules_build-stamp
 	#
 	# Put binaries in the boel_binaries_tarball...
@@ -466,6 +467,7 @@ $(BOEL_BINARIES_TARBALL):	$(DISCOVER_BINARY) \
 	mkdir -m 755 -p $(BOEL_BINARIES_DIR)/bin
 	mkdir -m 755 -p $(BOEL_BINARIES_DIR)/sbin
 	install -m 755 --strip $(BC_BINARY) $(BOEL_BINARIES_DIR)/bin/
+	install -m 755 --strip $(TAR_BINARY) $(BOEL_BINARIES_DIR)/bin/
 	install -m 755 --strip $(DISCOVER_BINARY) $(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(MKDOSFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(MKE2FS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
