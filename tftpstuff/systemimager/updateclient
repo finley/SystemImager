@@ -327,6 +327,8 @@ if($DEVICE){
 
   ### BEGIN get hostname ###
   $HOSTNAME = hostname();
+  my @fields = split(/\./, $HOSTNAME);
+  $HOSTNAME = $fields[0];
   ### END get hostname ###
 
 
