@@ -4,9 +4,16 @@
 # This file: TODO
 # (not in any specific order)
 #
-# Developers: Please update (and commit) the "In Progress" section before and after any work.
-#             (Only Brian Finley will do CVS tags of any kind, such as for version releases.)
-#
+
+Developers Guidelines:
+o Only Brian Finley will do CVS tags of any kind, such as for version releases.
+o You may modify sections in the TODO file bearing your name.
+o Do not modify anyone elses section.
+o When you finish an item in your section of the TODO file:
+  o Add an appropriate line to the CHANGE.LOG file before removing the 
+    item from the TODO file (so we don't forget about keen changes 
+    we've made).
+  o Send an email to the <systemimager-devel> list announcing completion.
 
 
 -----------------------
@@ -33,6 +40,12 @@ o modify RPM spec file to deal with
 --------------------------
 Stable Branch Sub Projects
 --------------------------
+
+Greg Pratt <gpratt@valinux.com>
+Committed to task: Tue, 06 Mar 2001
+-----------------------------------
+o Add kernel bug/rsync bug info to Troubleshooting section in docs.
+
 
 Dann Frazier <dannf@hazel.fc.hp.com>
 ------------------------------------
@@ -209,14 +222,9 @@ Wed, 17 Jan 2001
 o bootable recovery CD that self-installs from image stored on same CD
 
 
-Greg Pratt <gpratt@valinux.com>
-Committed to task: Tue, 06 Mar 2001
------------------------------------
-o Add kernel bug/rsync bug info to Troubleshooting section in docs.
-
-
-<brian@thefinleys.com>
+Brian Finley <brian@thefinleys.com>
 ----------------------
+o Austin Gonyou patch: Dual NIC Installs
 o Jose_AP_Celestino.ida.prepareclient.patch to make systemimager work
   properly with Smart Array cards.  (must get a Smart Array card first)
 o getimage - put exclude/include stuff on imageserver by image
