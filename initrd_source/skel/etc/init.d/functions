@@ -58,7 +58,7 @@ get_arch() {
 adjust_arch() {
     echo
     echo adjust_arch
-    if [ "ppc64" = $ARCH ] ; then
+    if [ "ppc64" = "$ARCH" ] ; then
         # This takes a little bit of futzing with due to all the PPC platforms that exist.
         if [ -d /proc/iSeries ] ; then
             ARCH=ppc64-iSeries
@@ -231,7 +231,7 @@ flamethrower_client() {
 
 
     # loop
-    until [ $TAR_EXIT_STATUS = 0 ]
+    until [ "$TAR_EXIT_STATUS" = "0" ]
     do
         # launch udp-receiver
         if [ -z $UDP_RECEIVER_RUNNING ]; then
@@ -275,9 +275,9 @@ flamethrower_client() {
         # test exit status from tar command
         . $TAR_EXIT_FILE
 
-        if [ $TAR_EXIT_STATUS = '' ]; then
+        if [ "$TAR_EXIT_STATUS" = "" ]; then
             # just proceed, no worries
-        elif [ $TAR_EXIT_STATUS = 0 ]; then
+        elif [ "$TAR_EXIT_STATUS" = "0" ]; then
             # success -- break loop, and proceed with install
             echo 'flamethrower_client: Success!'
             echo '--------------------------------------------------------------------------------'
@@ -620,11 +620,11 @@ ping_test() {
     echo "to ensure we have network connectivity."
     echo
 
-    while [ $PING_EXIT_STATUS != 0 ]
+    while [ "$PING_EXIT_STATUS" != "0" ]
     do
         echo "PING ATTEMPT $PING_COUNT: "
         ping -c 1 $IMAGESERVER; PING_EXIT_STATUS=$?; PING_COUNT=$(( $PING_COUNT + 1 ))
-        if [ $PING_COUNT = 21 ]; then
+        if [ "$PING_COUNT" = "21" ]; then
             echo
             echo "  FATAL:  Cannot ping the image server \"$IMAGESERVER\""
             echo "          Be sure that your networking equipment is"
@@ -634,7 +634,7 @@ ping_test() {
         fi
     done
 
-    if [ $PING_EXIT_STATUS = 0 ]; then
+    if [ "$PING_EXIT_STATUS" = "0" ]; then
         echo
         echo "  We have connectivity to the Image Server!"
     fi
@@ -955,7 +955,7 @@ beep_incessantly() {
             else
                 MINUTES=`echo "$SECONDS / 60"|bc`
                 MINUTES_X_SIXTY=`echo "$MINUTES * 60"|bc`
-                if [ $MINUTES_X_SIXTY = $SECONDS ]; then 
+                if [ "$MINUTES_X_SIXTY" = "$SECONDS" ]; then 
                     echo "I have been done for $MINUTES minutes now.  Reboot me already!"
                 fi  
             fi
