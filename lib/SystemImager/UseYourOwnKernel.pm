@@ -28,15 +28,23 @@ sub capture_uyok_info_to_autoinstallscript {
 
         open(FILE,">>$file") or die("Couldn't open $file");
 
-                my $kernel_version = get_kernel_version();
-                print FILE qq(  <kernel version="$kernel_version"/>\n\n);
+                # initrd kernel
+                my $uname_r = get_uname_r();
+                print FILE qq(  <initrd kernel_version="$uname_r"/>\n) or die($!);
 
+                # initrd fs
+                my $fs = choose_file_system_for_new_initrd();
+                print FILE qq(  <initrd fs="$fs"/>\n) or die($!);
+                print FILE qq(\n) or die($!);
+
+                # initrd modules
                 my @modules = get_load_ordered_list_of_running_modules();
                 my $line = 1;
                 foreach(@modules) {
-                        print FILE qq(  <modules order="$line"\tname="$_"/>\n);
+                        print FILE qq(  <initrd load_order="$line"\tmodule="$_"/>\n) or die($!);
                         $line++;
                 }
+
 
         close(FILE);
 
@@ -45,31 +53,82 @@ sub capture_uyok_info_to_autoinstallscript {
         return 1;
 }
 
-# save ordered list of modules to autoinstallscript.conf
 
-#if($opt{fs}) {
-#    # get list of running filesystems
-#    my %filesystems = get_hash_of_running_filesystems();
-#
-#    if( (grep(/$opt{fs}/, @modules) and ($filesystems{$opt{fs}}) ) {
-#        then we can use it. XXXXX
-#    }
-#
-#    # see if user specified fs is available as compiled into kernel
-#    if(! $non_module_filesystems{$opt{fs}}) {
-#        print "Filesystem $opt{fs} doesn't appear to be compiled into $opt{kernel}\n";
-#    }
-#} else {
-#    $opt{fs} = choose_file_system_for_new_initrd()
-#        or die("Couldn't choose_file_system_for_new_initrd()");
-#  }
-#}
-##XXX record preferred fs for initrd in autoinstallscript.conf
-#
-#
-#
+sub choose_file_system_for_new_initrd
+{
+        my @filesystems;
+        my $fs;
+        my $uname_r = get_uname_r();
+        my $modules_dir = "/lib/modules/$uname_r";
 
-sub get_kernel_version {
+        my $file = "/proc/filesystems";
+        open(FILESYSTEMS,"<$file") or die("Couldn't open $file for reading.");
+        while (<FILESYSTEMS>) {
+                chomp;
+                push (@filesystems, $_) if (m/(cramfs|ext2|ext3|reiserfs|xfs|jfs)/);
+        }
+        close(FILESYSTEMS);
+
+        # cramfs
+        if ((grep { /cramfs/ } @filesystems) 
+                and (! -e "$modules_dir/kernel/fs/cramfs/cramfs.o")
+                and (! -e "$modules_dir/kernel/fs/cramfs/cramfs.ko")
+                ) { 
+                $fs = "cramfs";
+        }
+
+        # ext2
+        elsif ((grep { /ext2/ } @filesystems) 
+                and (! -e "$modules_dir/kernel/fs/ext2/ext2.o")
+                and (! -e "$modules_dir/kernel/fs/ext2/ext2.ko")
+                ) { 
+                $fs = "ext2";
+        }
+
+        # ext3
+        elsif ((grep { /ext3/ } @filesystems) 
+                and (! -e "$modules_dir/kernel/fs/ext3/ext3.o")
+                and (! -e "$modules_dir/kernel/fs/ext3/ext3.ko")
+                ) { 
+                $fs = "ext3";
+        }
+
+        # reiserfs
+        elsif ((grep { /reiserfs/ } @filesystems) 
+                and (! -e "$modules_dir/kernel/fs/reiserfs/reiserfs.o")
+                and (! -e "$modules_dir/kernel/fs/reiserfs/reiserfs.ko")
+                ) { 
+                $fs = "reiserfs";
+        }
+
+        # jfs
+        elsif ((grep { /jfs/ } @filesystems) 
+                and (! -e "$modules_dir/kernel/fs/jfs/jfs.o")
+                and (! -e "$modules_dir/kernel/fs/jfs/jfs.ko")
+                ) { 
+                $fs = "jfs";
+        }
+
+        # xfs
+        elsif ((grep { /xfs/ } @filesystems) 
+                and (! -e "$modules_dir/kernel/fs/xfs/xfs.o")
+                and (! -e "$modules_dir/kernel/fs/xfs/xfs.ko")
+                ) { 
+                $fs = "xfs";
+                print "XXX remove this warning line once xfs is tested.\n";
+                print "XXX just need to verify where the xfs module lives.\n";
+        }
+
+        unless(defined $fs) {
+
+                die("Can't determine the appropriate filesystem to use for an initrd.");
+        }
+
+        return $fs;
+}
+
+
+sub get_uname_r {
 
         #
         # later, deal with this:
@@ -102,19 +161,6 @@ sub get_load_ordered_list_of_running_modules {
         return @modules;
 }
 
-
-#sub get_hash_of_running_filesystems {
-#}
-#
-#sub choose_file_system_for_new_initrd {
-#}
-#
-#sub check_for_fs_as_module {
-#}
-#
-#sub check_for_fs_in_kernel {
-#}
-
 sub capture_dev {
 
         my $file = "/etc/systemimager/my_device_files.tar";
@@ -122,7 +168,7 @@ sub capture_dev {
         my $cmd = "tar -cpf $file /dev >/dev/null 2>&1";
         !system($cmd) or die("Couldn't $cmd");
 
-        my $cmd = "gzip --force -9 $file";
+        $cmd = "gzip --force -9 $file";
         !system($cmd) or die("Couldn't $cmd");
         
         return 1;
