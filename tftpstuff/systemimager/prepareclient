@@ -9,7 +9,7 @@
 #
 
 # set version
-version_number="1.2"
+version_number="1.3_Beta_2000.09.29"
 
 # configuration directory
 systemimagerdir="/etc/systemimager"
@@ -364,8 +364,10 @@ show_usage() {
   echo 'Options: (only one option is taken)'
   echo ' -version                 Display version and copyright information.'
   echo ' -h, -help                Display this output.'
+  echo ' -n, -no-rsyncd           Do not start the rsync daemon.'
   echo ' -q, -quiet               Run silently.  Return an exit status of 0 for'
   echo '                          success or a non-zero exit status for failure.'
+  echo ' -r, -rpm-install         This is only used when building an RPM.'
   echo ''
   echo 'Download from http://systemimager.org/'
   echo 'Report bugs or suggestions to <systemimager-bugs@systemimager.org>'
@@ -378,6 +380,7 @@ show_usage() {
 # default is an interactive install (nothing goes over the network any more)
 QUIET="false"
 HELP="false"
+NO_RSYNCD="false"
 SHOW_VERSION="false"
 
 # if two or more options are given, die and show usage
@@ -389,11 +392,12 @@ fi
 # if only one option is given, verify it as a proper one
 if [ "x$1" != "x" ]; then
    case $1 in
-        -r | -rpm-install | --rpm-install ) QUIET="true" ;;
-        -q | -quiet | --quiet             ) QUIET="true" ;;
-        -h | -help | --help               ) HELP="true" ;;
-        -version | --version              ) SHOW_VERSION="true" ;;
-        *                                 ) show_usage && exit 1 ;;
+        -r | -rpm-install | --rpm-install          ) QUIET="true" ;;
+        -q | -quiet | --quiet                      ) QUIET="true" ;;
+        -h | -help | --help                        ) HELP="true" ;;
+        -n | -no-rsyncd | --no-rsyncd              ) NO_RSYNCD="true" ;;
+        -version | --version                       ) SHOW_VERSION="true" ;;
+        *                                          ) show_usage && exit 1 ;;
    esac
 fi
 
@@ -436,7 +440,7 @@ extension.
 EOF
 
  # you sure you want to install?
- echo -n "Prepare client for VA SystemImager? (y/[n]) "
+ echo -n "Prepare client for VA SystemImager? (y/[n]): "
  read REPLY
  case $REPLY in
   y|Y|Yes|yes|YES ) echo Ok.  Preparing client for VA SystemImager... ;;
@@ -477,8 +481,8 @@ fi
 rsyncd_conf_file="/tmp/rsyncd.conf"
 
 # install SystemImager brand rsyncd.conf file ($rsyncd_conf_file)
-[ "$QUIET" = "false" ] && echo "Creating $rsyncd_conf_file ..."
-create_rsyncd_conf
+[ "$QUIET" = "false" ] && [ "$NO_RSYNCD" = "false" ] && echo "Creating $rsyncd_conf_file ..."
+[ "$NO_RSYNCD" = "false" ] && create_rsyncd_conf
 # install SystemImager brand rsyncd.conf file
 
 
@@ -516,13 +520,13 @@ fi
 
 # restart rsync as a daemon
 killall rsync rsyncd > /dev/null 2>&1
-[ "$QUIET" = "false" ] && echo -n Starting or re-starting rsync as a daemon
+[ "$QUIET" = "false" ] && [ "$NO_RSYNCD" = "false" ] && echo -n Starting or re-starting rsync as a daemon
 for i in 1 2 3 4 5; do 
-    [ "$QUIET" = "false" ] && echo -n .
-    sleep 1s
+    [ "$QUIET" = "false" ] && [ "$NO_RSYNCD" = "false" ] && echo -n .
+    [ "$NO_RSYNCD" = "false" ] && sleep 1s
 done
-[ "$QUIET" = "false" ] && echo done!
-rsync --daemon --config=$rsyncd_conf_file
+[ "$QUIET" = "false" ] && [ "$NO_RSYNCD" = "false" ] && echo done!
+[ "$NO_RSYNCD" = "false" ] && rsync --daemon --config=$rsyncd_conf_file
 # restart rsync as a daemon
 
 
@@ -648,10 +652,21 @@ fi
 ### END leave ext3 info behind for the autoinstall client ###
 
 # wrap up
-if [ "$QUIET" = "false" ]; then
+if [ "$QUIET" = "false" ] && [ "$NO_RSYNCD" = "false" ]; then
  echo
  echo "This client is ready to have it's image retrieved."
  echo "You must now run the \"getimage\" command on the imageserver."
 fi
 
+if [ "$QUIET" = "false" ] && [ "$NO_RSYNCD" = "true" ]; then
+ echo
+ echo "The rsync daemon was not started.  If this is an image on an"
+ echo "imageserver, you can now update your master autoinstall script"
+ echo "by running getimage with the -s option."
+ echo
+ echo "If this is a master client, you must run prepareclient again,"
+ echo "without the -n option, before you can pull it's image to an"
+ echo "imageserver."
+ echo
+fi
 exit 0
