@@ -1,0 +1,795 @@
+Linux version 2.4.20-boel (dannf@jale) (gcc version 3.3.1 20030626 (Debian prerelease)) #1 SMP Mon Jul 14 22:31:50 MDT 2003
+BIOS-provided physical RAM map:
+ BIOS-e820: 0000000000000000 - 00000000000a0000 (usable)
+ BIOS-e820: 00000000000f0000 - 0000000000100000 (reserved)
+ BIOS-e820: 0000000000100000 - 00000000d7ff0000 (usable)
+ BIOS-e820: 00000000d7ff0000 - 00000000d7ff3000 (ACPI NVS)
+ BIOS-e820: 00000000d7ff3000 - 00000000d8000000 (ACPI data)
+ BIOS-e820: 00000000fec00000 - 0000000100000000 (reserved)
+Warning only 896MB will be used.
+Use a HIGHMEM enabled kernel.
+896MB LOWMEM available.
+found SMP MP-table at 000f54b0
+hm, page 000f5000 reserved twice.
+hm, page 000f6000 reserved twice.
+hm, page 000f1000 reserved twice.
+hm, page 000f2000 reserved twice.
+On node 0 totalpages: 229376
+zone(0): 4096 pages.
+zone(1): 225280 pages.
+zone(2): 0 pages.
+ACPI: Searched entire block, no RSDP was found.
+ACPI: RSDP located at physical address c00f75c0
+RSD PTR  v0 [MSISYS]
+__va_range(0xd7ff3000, 0x68): idx=32 mapped at fffde000
+ACPI table found: RSDT v1 [MSISYS AWRDACPI 16944.11825]
+__va_range(0xd7ff3040, 0x24): idx=32 mapped at fffde000
+__va_range(0xd7ff3040, 0x74): idx=32 mapped at fffde000
+ACPI table found: FACP v1 [MSISYS AWRDACPI 16944.11825]
+__va_range(0xd7ff69c0, 0x24): idx=32 mapped at fffde000
+__va_range(0xd7ff69c0, 0x6c): idx=32 mapped at fffde000
+ACPI table found: APIC v1 [MSISYS AWRDACPI 16944.11825]
+__va_range(0xd7ff69c0, 0x6c): idx=32 mapped at fffde000
+LAPIC (acpi_id[0x0000] id[0x0] enabled[1])
+CPU 0 (0x0000) enabledProcessor #0 Pentium 4(tm) XEON(tm) APIC version 16
+
+LAPIC (acpi_id[0x0001] id[0x6] enabled[1])
+CPU 1 (0x0600) enabledProcessor #6 Pentium 4(tm) XEON(tm) APIC version 16
+
+LAPIC (acpi_id[0x0002] id[0x1] enabled[0])
+CPU 2 (0x0100) disabled
+LAPIC (acpi_id[0x0003] id[0x7] enabled[0])
+CPU 3 (0x0700) disabled
+IOAPIC (id[0x2] address[0xfec00000] global_irq_base[0x0])
+INT_SRC_OVR (bus[0] irq[0x0] global_irq[0x2] polarity[0x0] trigger[0x0])
+INT_SRC_OVR (bus[0] irq[0x9] global_irq[0x9] polarity[0x1] trigger[0x3])
+4 CPUs total
+Local APIC address fee00000
+Enabling the CPU's according to the ACPI table
+Intel MultiProcessor Specification v1.4
+    Virtual Wire compatibility mode.
+OEM ID: OEM00000 Product ID: PROD00000000 APIC at: 0xFEE00000
+I/O APIC #2 Version 17 at 0xFEC00000.
+Enabling APIC mode: Flat.	Using 1 I/O APICs
+Processors: 2
+IBM machine detected. Enabling interrupts during APM calls.
+Kernel command line: load_ramdisk=1 initrd=xcat/systemimager/x86/initrd.img root=/dev/ram rw ramdisk_blocksize=4096 console=ttyS1,57600 BOOT_IMAGE=xcat/systemimager/x86/kernel 
+Initializing CPU#0
+Detected 2379.072 MHz processor.
+Console: colour VGA+ 80x25
+Calibrating delay loop... 4744.80 BogoMIPS
+Memory: 904256k/917504k available (1159k kernel code, 12864k reserved, 350k data, 512k init, 0k highmem)
+Dentry cache hash table entries: 131072 (order: 8, 1048576 bytes)
+Inode cache hash table entries: 65536 (order: 7, 524288 bytes)
+Mount-cache hash table entries: 16384 (order: 5, 131072 bytes)
+Buffer-cache hash table entries: 65536 (order: 6, 262144 bytes)
+Page-cache hash table entries: 262144 (order: 8, 1048576 bytes)
+CPU: L1 I cache: 0K, L1 D cache: 8K
+CPU: L2 cache: 512K
+CPU: Physical Processor ID: 0
+Enabling fast FPU save and restore... done.
+Enabling unmasked SIMD FPU exception support... done.
+Checking 'hlt' instruction... OK.
+POSIX conformance testing by UNIFIX
+CPU: L1 I cache: 0K, L1 D cache: 8K
+CPU: L2 cache: 512K
+CPU: Physical Processor ID: 0
+CPU0: Intel(R) Xeon(TM) CPU 2.40GHz stepping 07
+per-CPU timeslice cutoff: 1462.70 usecs.
+enabled ExtINT on CPU#0
+ESR value before enabling vector: 00000000
+ESR value after enabling vector: 00000000
+Booting processor 1/6 eip 2000
+Initializing CPU#1
+masked ExtINT on CPU#1
+ESR value before enabling vector: 00000000
+ESR value after enabling vector: 00000000
+Calibrating delay loop... 4757.91 BogoMIPS
+CPU: L1 I cache: 0K, L1 D cache: 8K
+CPU: L2 cache: 512K
+CPU: Physical Processor ID: 3
+CPU1: Intel(R) Xeon(TM) CPU 2.40GHz stepping 07
+Total of 2 processors activated (9502.72 BogoMIPS).
+WARNING: No sibling found for CPU 0.
+WARNING: No sibling found for CPU 1.
+ENABLING IO-APIC IRQs
+Setting 2 in the phys_id_present_map
+...changing IO-APIC physical APIC ID to 2 ... ok.
+..TIMER: vector=0x31 pin1=2 pin2=0
+testing the IO APIC.......................
+
+.................................... done.
+Using local APIC timer interrupts.
+calibrating APIC timer ...
+..... CPU clock speed is 2379.0628 MHz.
+..... host bus clock speed is 99.1275 MHz.
+cpu: 0, clocks: 991275, slice: 330425
+CPU0<T0:991264,T1:660832,D:7,S:330425,C:991275>
+cpu: 1, clocks: 991275, slice: 330425
+CPU1<T0:991264,T1:330400,D:14,S:330425,C:991275>
+checking TSC synchronization across CPUs: passed.
+Waiting on wait_init_idle (map = 0x2)
+All processors have done init_idle
+PCI: PCI BIOS revision 2.10 entry at 0xfaf60, last bus=4
+PCI: Using configuration type 1
+PCI: Probing PCI hardware
+Transparent bridge - Intel Corp. 82801BA/CA/DB PCI Bridge
+PCI: Using IRQ router PIIX [8086/2440] at 00:1f.0
+PCI->APIC IRQ transform: (B0,I31,P3) -> 19
+PCI->APIC IRQ transform: (B0,I31,P1) -> 17
+PCI->APIC IRQ transform: (B0,I31,P1) -> 17
+PCI->APIC IRQ transform: (B1,I0,P0) -> 22
+PCI->APIC IRQ transform: (B3,I1,P0) -> 20
+PCI->APIC IRQ transform: (B3,I1,P1) -> 20
+PCI->APIC IRQ transform: (B3,I8,P0) -> 20
+PCI->APIC IRQ transform: (B4,I10,P0) -> 18
+Linux NET4.0 for Linux 2.4
+Based upon Swansea University Computer Society NET3.039
+Initializing RT netlink socket
+Starting kswapd
+devfs: v1.12c (20020818) Richard Gooch (rgooch@atnf.csiro.au)
+devfs: boot_options: 0x1
+pty: 256 Unix98 ptys configured
+keyboard: Timeout - AT keyboard not present?(ed)
+keyboard: Timeout - AT keyboard not present?(f4)
+Serial driver version 5.05c (2001-07-08) with MANY_PORTS SHARE_IRQ SERIAL_PCI enabled
+ttyS00 at 0x03f8 (irq = 4) is a 16550A
+ttyS01 at 0x02f8 (irq = 3) is a 16550A
+Uniform Multi-Platform E-IDE driver Revision: 6.31
+ide: Assuming 33MHz system bus speed for PIO modes; override with idebus=xx
+ICH2: IDE controller on PCI bus 00 dev f9
+ICH2: detected chipset, but driver not compiled in!
+ICH2: chipset revision 4
+ICH2: not 100% native mode: will probe irqs later
+    ide0: BM-DMA at 0xf000-0xf007, BIOS settings: hda:pio, hdb:pio
+    ide1: BM-DMA at 0xf008-0xf00f, BIOS settings: hdc:DMA, hdd:pio
+hdc: LTN486S, ATAPI CD/DVD-ROM drive
+ide1 at 0x170-0x177,0x376 on irq 15
+ide-floppy driver 0.99.newide
+Floppy drive(s): fd0 is 1.44M
+FDC 0 is a post-1991 82077
+RAMDISK driver initialized: 16 RAM disks of 8192K size 4096 blocksize
+loop: loaded (max 8 devices)
+Intel(R) PRO/1000 Network Driver - version 4.4.12-k1
+Copyright (c) 1999-2002 Intel Corporation.
+eth0: Intel(R) PRO/1000 Network Connection
+pcnet32.c:v1.27b 01.10.2002 tsbogend@alpha.franken.de
+ns83820.c: National Semiconductor DP83820 10/100/1000 driver.
+sk98lin: No adapter found.
+ide-floppy driver 0.99.newide
+NET4: Linux TCP/IP 1.0 for NET4.0
+IP Protocols: ICMP, UDP, TCP
+IP: routing cache hash table of 8192 buckets, 64Kbytes
+TCP: Hash tables configured (established 262144 bind 65536)
+NET4: Unix domain sockets 1.0/SMP for Linux NET4.0.
+RAMDISK: Compressed image found at block 0
+Freeing initrd memory: 488k freed
+VFS: Mounted root (cramfs filesystem).
+Mounted devfs on /dev
+Freeing unused kernel memory: 512k freed
+serial console detected.  Disabling virtual terminals.
+init started:  BusyBox v0.60.3 (2003.07.15-04:57+0000) multi-call binary
+
+get_arch
+
+mount_proc
+
+switch_root_to_tmpfs
+
+mount_dev_on_devfs
+Started device management daemon v1.3.25 for /dev
+
+mount_proc
+
+adjust_arch
+
+ifconfig_loopback
+
+load_my_modules
+
+read_local_cfg
+Checking for floppy diskette.
+YOU MAY SEE SOME "wrong magic" ERRORS HERE, AND THAT IS NORMAL.
+end_request: I/O error, dev 02:00 (floppy), sector 0
+end_request: I/O error, dev 02:00 (floppy), sector 0
+end_request: I/O error, dev 02:00 (floppy), sector 0
+No floppy diskette in drive.
+
+start_network
+IP Address not set by local.cfg.  I will use DHCP.
+
+sleep 0:  This is to give your switch (if you're using one) time to
+           recognize your ethernet card before we try the network.
+           Tip: You can use <ctrl>+<c> to pass the time (pun intended).
+
+
+
+
+dhclient
+Internet Software Consortium DHCP Client 2.0pl5
+Copyright 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.
+All rights reserved.
+
+Please contribute if you find this software useful.
+For info, please visit http://www.isc.org/dhcp-contrib.html
+
+e1000: eth0 NIC Link is Up 1000 Mbps Full Duplex
+Listening on LPF/eth0/00:02:b3:ac:7d:df
+Sending on   LPF/eth0/00:02:b3:ac:7d:df
+Listening on LPF/lo/<null>
+Sending on   LPF/lo/<null>
+Sending on   Socket/fallback/fallback-net
+DHCPDISCOVER on eth0 to 255.255.255.255 port 67 interval 4
+DHCPDISCOVER on lo to 255.255.255.255 port 67 interval 8
+DHCPDISCOVER on eth0 to 255.255.255.255 port 67 interval 4
+DHCPOFFER from 192.5.198.221
+DHCPDISCOVER on lo to 255.255.255.255 port 67 interval 15
+DHCPREQUEST on eth0 to 255.255.255.255 port 67
+DHCPACK from 192.5.198.221
+Using DHCP server (very deprecated) as IMAGESERVER: 192.5.198.221
+bound to 192.5.198.95 -- renewal in 43200 seconds.
+
+ping_test
+
+Pinging image server "192.5.198.221"
+to ensure we have network connectivity.
+
+PING ATTEMPT 1: 
+PING 192.5.198.221 (192.5.198.221): 56 data bytes
+64 bytes from 192.5.198.221: icmp_seq=0 ttl=64 time=0.7 ms
+
+--- 192.5.198.221 ping statistics ---
+1 packets transmitted, 1 packets received, 0% packet loss
+round-trip min/avg/max = 0.7/0.7/0.7 ms
+
+  We have connectivity to the Image Server!
+
+start_syslogd
+
+Using multicast...
+get_flamethrower_directory
+
+flamethrower_client(flamethrower_directory)
+--------------------------------------------------------------------------------
+udp-receiver --interface eth0 --portbase 9000 2>/tmp/udp-receiver.flamethrower_directory | tar -x -C /var/lib/systemimager/flamethrower 2>/tmp/tar.stderr.log
+...done!
+flamethrower_client: Success!
+--------------------------------------------------------------------------------
+
+get_boel_binaries_tarball
+
+flamethrower_client(boot-i386-standard)
+--------------------------------------------------------------------------------
+udp-receiver --interface eth0 --portbase 9006 --nosync 2>/tmp/udp-receiver.boot-i386-standard | tar -x -C /tmp/boel_binaries 2>/tmp/tar.stderr.log
+...done!
+flamethrower_client: Success!
+--------------------------------------------------------------------------------
+
+get_scripts_directory
+
+flamethrower_client(autoinstall_scripts)
+--------------------------------------------------------------------------------
+udp-receiver --interface eth0 --portbase 9002 --nosync 2>/tmp/udp-receiver.autoinstall_scripts | tar --overwrite -xp -C /scripts 2>/tmp/tar.stderr.log
+...done!
+flamethrower_client: Success!
+--------------------------------------------------------------------------------
+
+autodetect_hardware_and_load_modules
+Detecting hardware: agpgart agpgart aic7xxx aic7xxx ide-scsi usb-uhcSCSI subsystem driver Revision: 1.00
+i
+
+Loading sd_mod...
+Using /lib/modules/2.4.20-boel/kernel/drivers/scsi/scsi_mod.o
+Using /lib/modules/2.4.20-boel/kernel/drivers/scsi/sd_mod.o
+
+Loading ide-disk...
+Using /lib/modules/2.4.20-boel/kernel/drivers/ide/ide-disk.o
+
+Loading agpgart...
+Assuming agpgart is compiled into the kernel, not needed, or already loaded.
+
+Loading agpgart...
+Assuming agpgart is compiled into the kernel, not needed, or already loaded.
+
+Loading aic7xxx...
+Using /lib/modules/2.4.20-boel/kernel/drivers/scsi/scsi_mod.o
+Using /lib/modules/2.4.20-boel/kernel/drivers/scsi/aic7xxx/aic7xxx.o
+scsi0 : Adaptec AIC7XXX EISA/VLB/PCI SCSI HBA DRIVER, Rev 6.2.8
+        <Adaptec aic7899 Ultra160 SCSI adapter>
+        aic7899: Ultra160 Wide Channel A, SCSI Id=7, 32/253 SCBs
+
+scsi1 : Adaptec AIC7XXX EISA/VLB/PCI SCSI HBA DRIVER, Rev 6.2.8
+        <Adaptec aic7899 Ultra160 SCSI adapter>
+        aic7899: Ultra160 Wide Channel B, SCSI Id=7, 32/253 SCBs
+
+  Vendor: IBM-ESXS  Model: MAN3184MP     F   Rev: 5408
+  Type:   Direct-Access                      ANSI SCSI revision: 03
+  Vendor: IBM-ESXS  Model: MAN3367MP     F   Rev: 5408
+  Type:   Direct-Access                      ANSI SCSI revision: 03
+  Vendor: IBM-ESXS  Model: MAN3367MP     F   Rev: 5408
+  Type:   Direct-Access                      ANSI SCSI revision: 03
+  Vendor: IBM-ESXS  Model: MAN3367MP     F   Rev: 5408
+  Type:   Direct-Access                      ANSI SCSI revision: 03
+  Vendor: IBM-ESXS  Model: MAN3367MP     F   Rev: 5408
+  Type:   Direct-Access                      ANSI SCSI revision: 03
+scsi0:A:0:0: Tagged Queuing enabled.  Depth 8
+scsi0:A:1:0: Tagged Queuing enabled.  Depth 8
+scsi0:A:2:0: Tagged Queuing enabled.  Depth 8
+scsi0:A:3:0: Tagged Queuing enabled.  Depth 8
+scsi0:A:4:0: Tagged Queuing enabled.  Depth 8
+Attached scsi disk sda at scsi0, channel 0, id 0, lun 0
+Attached scsi disk sdb at scsi0, channel 0, id 1, lun 0
+Attached scsi disk sdc at scsi0, channel 0, id 2, lun 0
+Attached scsi disk sdd at scsi0, channel 0, id 3, lun 0
+Attached scsi disk sde at scsi0, channel 0, id 4, lun 0
+(scsi0:A:0): 160.000MB/s transfers (80.000MHz DT, offset 127, 16bit)
+SCSI device sda: 35548320 512-byte hdwr sectors (18201 MB)
+Partition check:
+ /dev/scsi/host0/bus0/target0/lun0: p1 p2 p3 p4
+(scsi0:A:1): 160.000MB/s transfers (80.000MHz DT, offset 127, 16bit)
+SCSI device sdb: 71096640 512-byte hdwr sectors (36401 MB)
+ /dev/scsi/host0/bus0/target1/lun0: p1
+(scsi0:A:2): 160.000MB/s transfers (80.000MHz DT, offset 127, 16bit)
+SCSI device sdc: 71096640 512-byte hdwr sectors (36401 MB)
+ /dev/scsi/host0/bus0/target2/lun0: p1
+(scsi0:A:3): 160.000MB/s transfers (80.000MHz DT, offset 127, 16bit)
+SCSI device sdd: 71096640 512-byte hdwr sectors (36401 MB)
+ /dev/scsi/host0/bus0/target3/lun0: p1
+(scsi0:A:4): 160.000MB/s transfers (80.000MHz DT, offset 127, 16bit)
+SCSI device sde: 71096640 512-byte hdwr sectors (36401 MB)
+ /dev/scsi/host0/bus0/target4/lun0: p1
+
+Loading aic7xxx...
+Using /lib/modules/2.4.20-boel/kernel/drivers/scsi/scsi_mod.o
+Using /lib/modules/2.4.20-boel/kernel/drivers/scsi/aic7xxx/aic7xxx.o
+Assuming aiusb.c: registered new driver usbdevfs
+c7xxx is compileusb.c: registered new driver hub
+d into the kernel, not needed, ousb-uhci.c: $Revision$ time 22:46:07 Jul 14 2003
+usb-uhci.c: High bandwidth mode enabled
+r already loadedusb-uhci.c: USB UHCI at I/O 0xb000, IRQ 19
+.u
+
+Loading idesb-uhci.c: Detected 2 ports
+-scsi...
+Assuming ide-scsi is compiled into the kernel, not needed, or already loaded.
+
+Loading usb-uhci...
+Using /lib/modules/2.4.20-boel/kernel/drivers/usb/usbcore.o
+Using /lib/modules/2.4.20-boel/kernel/drivers/usb/usb-uhci.o
+usb.c: new USB bus registered, assigned bus number 1
+Product: USB UHCI Root Hub
+SerialNumber: b000
+hub.c: USB hub found
+hub.c: 2 ports detected
+usb-uhci.c: v1.275:USB Universal Host Controller Interface driver
+
+This hosts name is: tg-v095
+
+get_script
+I will now try to get the autoinstall script:  tg-v095.sh
+Excellent!  It's already here -- in the /scripts directory.
+
+write_variables
+
+run_autoinstall_script
+
+I will now run the autoinstall script: /scripts/tg-v095.sh
+
+
+get_arch
+Partitioning /dev/sda...
+Old partition table for /dev/sda:
+Disk geometry for /dev/scsi/host0/bus0/target0/lun0/disc: 0.000-17357.578 megabytes
+Disk label type: msdos
+Minor    Start       End     Type      Filesystem  Flags
+1        SCSI device sda: 35548320 512-byte hdwr sectors (18201 MB)
+  0.031     15.6 /dev/scsi/host0/bus0/target0/lun0:88  primary   ex
+t2        boot
+2         15.688   1043.283  primary   linux-swap  
+3       1043.284   3098.474  primary   reiserfs    
+4       3098.474  17351.455  primary   reiserfs    
+parted -s -- /dev/sda mklabel msdos || shellout
+Creating partition /dev/sda1.
+parted -s -- /devSCSI device sda: 35548320 512-byte hdwr sectors (18201 MB)
+/sda mkpart prim /dev/scsi/host0/bus0/target0/lun0:ary ext2 0 15 || p1 shellout
+
+parted -s -- /dev/sda set 1 boot on
+SCSI device sda: 35548320 512-byte hdwr sectors (18201 MB)
+ /dev/scsi/host0/bus0/target0/lun0: p1
+Creating partition /dev/sda2.
+parted -s -- /dev/sda mkpart primary ext2 15 1043 || shellout
+SCSI device sda: 35548320 512-byte hdwr sectors (18201 MB)
+ /dev/scsi/host0/bus0/target0/lun0: p1 p2
+Creating partition /dev/sda3.
+parted -s -- /dev/sda mkpart primary ext2 1043 3098 || shellout
+SCSI device sda: 35548320 512-byte hdwr sectors (18201 MB)
+ /dev/scsi/host0/bus0/target0/lun0: p1 p2 p3
+Creating partition /dev/sda4.
+parted -s -- /dev/sda mkpart primary ext2 3098 17357 || shellout
+SCSI device sda: 35548320 512-byte hdwr sectors (18201 MB)
+ /dev/scsi/host0/bus0/target0/lun0: p1 p2 p3 p4
+New partition table for /dev/sda:
+parted -s -- /dev/sda print
+Disk geometry for /dev/scsi/host0/bus0/target0/lun0/disc: 0.000-17357.578 megabytes
+Disk label type: msdos
+Minor    Start       End     Type      Filesystem  Flags
+1          0.031     15.688  primary   ext2        boot
+2         15.688   1043.283  primary   linux-swap  
+3       1043.284   3098.474  primary   reiserfs    
+4       3098.474  17351.455  primary  SCSI device sdb: 71096640 512-byte hdwr sectors (36401 MB)
+ reiserfs    
+P /dev/scsi/host0/bus0/target1/lun0:artitioning /dev/sdb...
+Old par
+tition table for /dev/sdb:
+Disk geometry for /dev/scsi/host0/bus0/target1/lun0/disc: 0.000-34715.156 megabytes
+Disk label type: msdos
+Minor    Start       End     Type      Filesystem  Flags
+1          0.031  34710.754  primary               
+parted -s -- /dev/sdb mklabel msdos || sSCSI device sdb: 71096640 512-byte hdwr sectors (36401 MB)
+hellout
+Creatin /dev/scsi/host0/bus0/target1/lun0:g partition /dev/sdb1.
+parted - p1
+s -- /dev/sdb mkpart primary ext2 0 34715 || shellout
+New partition table for /dev/sdb:
+parted -s -- /dev/sdb print
+Disk geometry for /dev/scsi/host0/bus0/target1/lun0/disc: 0.000-34715.156 megabytes
+Disk label type: msdos
+Minor    Start       End     Type      Filesystem  Flags
+1          0.031  34710.754  primary               
+Partitioning /dev/sdc...
+Old partition table for /dev/sdc:
+Disk geometry for /dev/scsi/host0/bus0/target2/lun0/disSCSI device sdc: 71096640 512-byte hdwr sectors (36401 MB)
+c: 0.000-34715.1 /dev/scsi/host0/bus0/target2/lun0:56 megabytes
+Disk label type: m
+sdos
+Minor    Start       End     Type      Filesystem  Flags
+1          0.031  34710.754  primary               
+parted -s -- /dev/sdc mklabel msdos || shellout
+Creating partition /dev/sdc1.
+parted -s -- /dev/sdc mkpart primary ext2 0 34715 || shellout
+SCSI device sdc: 71096640 512-byte hdwr sectors (36401 MB)
+ /dev/scsi/host0/bus0/target2/lun0: p1
+New partition table for /dev/sdc:
+parted -s -- /dev/sdc print
+Disk geometry for /dev/scsi/host0/bus0/target2/lun0/disc: 0.000-34715.156 megabytes
+Disk label type: msdos
+Minor    Start       End     Type      Filesystem  Flags
+1          0.031  34710.754  primary               
+Partitioning /dev/sdd...
+Old partition table for /dev/sdd:
+Disk geometry for /dev/scsi/host0/bus0/target3/lun0/disSCSI device sdd: 71096640 512-byte hdwr sectors (36401 MB)
+c: 0.000-34715.1 /dev/scsi/host0/bus0/target3/lun0:56 megabytes
+Disk label type: m
+sdos
+Minor    Start       End     Type      Filesystem  Flags
+1          0.031  34710.754  primary               
+parted -s -- /dev/sdd mklabel msdos || shellout
+Creating partition /dev/sdd1.
+parted -s -- /dev/sdd mkpart primary ext2 0 34715 || shellout
+SCSI device sdd: 71096640 512-byte hdwr sectors (36401 MB)
+ /dev/scsi/host0/bus0/target3/lun0: p1
+New partition table for /dev/sdd:
+parted -s -- /dev/sdd print
+Disk geometry for /dev/scsi/host0/bus0/target3/lun0/disc: 0.000-34715.156 megabytes
+Disk label type: msdos
+Minor    Start       End     Type      Filesystem  Flags
+1          0.031  34710.754  primary               
+Partitioning /dev/sde...
+Old partition table for /dev/sde:
+Disk geometry for /dev/SCSI device sde: 71096640 512-byte hdwr sectors (36401 MB)
+s csi/host0/bus0//dev/scsi/host0/bus0/target4/lun0:target4/lun0/disc: 0.000-34715.156 megabytes
+Di
+sk label type: msdos
+Minor    Start       End     Type      Filesystem  Flags
+1          0.031  34710.754  primary               
+parted -s -- /dev/sde mklabel msdos || shellout
+Creating partition /dev/sde1.
+parted -s -- /dev/sde mkpart primary ext2 0 34715 || shelloSCSI device sde: 71096640 512-byte hdwr sectors (36401 MB)
+u t
+/dev/scsi/host0/bus0/target4/lun0: p1
+New partition table for /dev/sde:
+parted -s -- /dev/sde print
+Disk geometry for /dev/scsi/host0/bus0/target4/lun0/disc: 0.000-34715.156 megabytes
+Disk label type: msdos
+Minor    Start     Journalled Block Device driver loaded
+  End     Type      Filesystem  Flags
+1          0.031  34710.754  primary               
+Load additional filesystem drivers.
+Using /lib/modules/2.4.20-boel/SGI XFS snapshot 2.4.20-2002-11-29_01:21_UTC with DMAPI, realtime, no debug enabled
+kernel/fs/reiserfs/reiserfs.o
+Using /lib/modules/2.4.20-boel/kemd: md driver 0.90.0 MAX_MD_DEVS=256, MD_SB_DISKS=27
+rnel/fs/ext2/ext2.o
+Using /lib/modules/2.4.20-bmd: linear personality registered as nr 1
+oel/kernel/fs/jbd/jbd.o
+Using /lib/modules/2.4.20-boel/kernel/fs/ext3/ext3.o
+Umd: raid0 personality registered as nr 2
+sing /lib/modules/2.4.20-boel/kernel/fs/jfs/jfs.o
+Using /lib/momd: raid1 personality registered as nr 3
+dules/2.4.20-boel/kernel/fs/xfs/xfs.o
+Ah, good.  Found an /etc/raid5: measuring checksumming speed
+raidtab file.  Proceeding...
+Using /lib/modules/2.4.20-boel/kernel/drivers/md/md.o
+Using /lib/modules/2.4.20-boel/kernel/drivers/md/linear.o
+Using /lib/modules/2.4.20-boel/kernel/drivers/md/md.o
+Using /lib/modules/2.4.20-boel/kernel/dri   8regs     :  2780.400 MB/sec
+vers/md/raid0.o
+Using /lib/modules/2.4.20-boel/kernel/drivers/md/md.o
+Using /lib/modules/2.4.20-boel/kernel/drivers/md/raid1.o
+Using /lib/modules/2.4.20-boel/kernel/drivers/md/md.o
+Using /lib/modules/2.4.20-boel/kernel/drivers/md/xor.o
+   32regs    :  1695.200 MB/sec
+   pIII_sse  :  3034.000 MB/sec
+   pII_mmx   :  2797.600 MB/sec
+   p5_mmx    :  2825.200 MB/sec
+raid5: using function: pIII_sse (3034.000 MB/sec)
+Using /lib/modulmd: raid5 personality registered as nr 4
+es/2.4.20-boel/kernel/drivers/md/raid5.o
+echo y | mkreiserfs /dev/sda4 || shellout
+
+<-------------mkreiserfs, 2003------------->
+reiserfsprogs 3.6.7
+
+mkreiserfs: Guessing about desired format.. 
+mkreiserfs: Kernel 2.4.20-boel is running.
+Format 3.6 with standard journal
+Count of blocks on the device: 3648763
+Number of blocks consumed by mkreiserfs formatting process: 8323
+Blocksize: 4096
+Hash function used to sort names: "r5"
+Journal Size 8193 blocks (first block 18)
+Journal Max transaction length 1024
+inode generation number: 0
+UUID: d6566936-5910-40b1-ac31-888b3a4168ab
+ATTENTION: YOU SHOULD REBOOT AFTER FDISK!
+	ALL DATA WILL BE LOST ON '/dev/sda4'!
+Continue (y/n):Initializing journal - 0%....20%....40%....60%....80%....100%
+Syncing..ok
+
+The Defense Advanced Research Projects Agency (DARPA) is the primary sponsor of
+Reiser4. DARPA does not endorse this project; it merely sponsors it.
+
+Continuing core development of version 3 is mostly paid for by Hans Reiser from
+money made selling licenses in addition to the GPL to companies who don't want
+it known that they use ReiserFS as a foundation for their proprietary product.
+And my lawyer asked 'People pay you money for this?'.  Yup.  Hee Hee.  Life is
+good.  If you buy ReiserFS, you can focus on your value add rather than
+reinventing an entire FS.  You should buy some free software too....
+
+SuSE pays for continuing work on journaling for version 3, and paid for much of
+the previous version 3 work.  Reiserfs integration in their distro is
+consistently solid.
+
+MP3.com paid for initial journaling development.
+
+Bigstorage.com contributes to our general fund every month, and has done so for
+quite a long time.
+
+Thanks to all of those sponsors, including the secret ones.  Without you, Hans
+would still have that day job, and the merry band of hackers would be missing
+quite a few....
+
+Have fun.
+mkdir -p /a/ || shellout
+mount /dev/sda4 /a/ -t reiserfs -o defaults || shellout
+reiserfs: checking transaction log (device 08:04) ...
+Using r5 hash to sort names
+ReiserFS version 3.6.25
+mke2fs /dev/sda1 || shellout
+mke2fs 1.33 (21-Apr-2003)
+Filesystem label=
+OS type: Linux
+Block size=1024 (log=0)
+Fragment size=1024 (log=0)
+4016 inodes, 16033 blocks
+801 blocks (5.00%) reserved for the super user
+First data block=1
+2 block groups
+8192 blocks per group, 8192 fragments per group
+2008 inodes per group
+Superblock backups stored on blocks: 
+	8193
+
+Writing inode tables: 0/21/2done                            
+Writing superblocks and filesystem accounting information: done
+
+This filesystem will be automatically checked every 20 mounts or
+180 days, whichever comes first.  Use tune2fs -c or -i to override.
+mkdir -p /a/boot || shellout
+mount /dev/sda1 /a/boot -t ext2 -o defaults || shellout
+echo y | mkreiserfs /dev/sda3 || shellout
+
+<-------------mkreiserfs, 2003------------->
+reiserfsprogs 3.6.7
+
+mkreiserfs: Guessing about desired format.. 
+mkreiserfs: Kernel 2.4.20-boel is running.
+Format 3.6 with standard journal
+Count of blocks on the device: 526128
+Number of blocks consumed by mkreiserfs formatting process: 8228
+Blocksize: 4096
+Hash function used to sort names: "r5"
+Journal Size 8193 blocks (first block 18)
+Journal Max transaction length 1024
+inode generation number: 0
+UUID: 4e87275e-ce68-4ad5-8d0e-d2e6f58452db
+ATTENTION: YOU SHOULD REBOOT AFTER FDISK!
+	ALL DATA WILL BE LOST ON '/dev/sda3'!
+Continue (y/n):Initializing journal - 0%....20%....40%....60%....80%....100%
+Syncing..ok
+
+The Defense Advanced Research Projects Agency (DARPA) is the primary sponsor of
+Reiser4. DARPA does not endorse this project; it merely sponsors it.
+
+Continuing core development of version 3 is mostly paid for by Hans Reiser from
+money made selling licenses in addition to the GPL to companies who don't want
+it known that they use ReiserFS as a foundation for their proprietary product.
+And my lawyer asked 'People pay you money for this?'.  Yup.  Hee Hee.  Life is
+goodreiserfs: checking transaction log (device 08:03) ...
+.  If you buy ReiserFS, you can focus on your value add rather than
+reinventing an entire FS.  You should buy some free software too....
+
+SuSE pays for continuing work on journaling for version 3, and paid for much of
+the previous version 3 work.  Reiserfs integration in their distro is
+consistently solid.
+
+MP3.com paid for initial journaling development.
+
+Bigstorage.com contributes to our general fund every month, and has done so for
+quite a long time.
+
+Thanks to all of those sponsors, including the secret ones.  Without you, Hans
+would still have that day job, and the merry band of hackers would be missing
+quite a few....
+
+Have fun.
+mkdir -p /a/var || shellout
+mount /dev/sda3 /a/var -t reiserfs -o defaults || shellout
+Using r5 hash to sort names
+ReiserFS version 3.6.25
+mkswap -v1 /dev/sda2 || shellout
+Setting up swapspace version 1, size = 1077506048 bytes
+swapoAdding Swap: 1052248k swap-space (priority -1)
+n /dev/sda2 || shellout
+DESTROYING the contents of /dev/md1 in 5 seconds, Ctrl-C if unsure!
+handling MD devimd: bind<scsi/host0/bus0/target1/lun0/part1,1>
+ce /dev/md1
+anamd: bind<scsi/host0/bus0/target2/lun0/part1,2>
+lyzing super-blomd: bind<scsi/host0/bus0/target3/lun0/part1,3>
+ck
+disk 0: /devmd: bind<scsi/host0/bus0/target4/lun0/part1,4>
+/sdb1, 35543781kmd: scsi/host0/bus0/target4/lun0/part1's event counter: 00000000
+Bm, raid superblod: scsi/host0/bus0/target3/lun0/part1's event counter: 00000000
+cmk at 35543680kBd: scsi/host0/bus0/target2/lun0/part1's event counter: 00000000
+m
+disk 1: /dev/sd: scsi/host0/bus0/target1/lun0/part1's event counter: 00000000
+dc1, 35543781kB,md1: max total readahead window set to 2048k
+m raid superblockd1: 4 data-disks, max readahead per data-disk: 512k
+ at 35543680kB
+raid0: looking at scsi/host0/bus0/target1/lun0/part1
+drisk 2: /dev/sddaid0:   comparing scsi/host0/bus0/target1/lun0/part1(35543680) with scsi/host0/bus0/target1/lun0/part1(35543680)
+raid0:   END
+raid0:   ==> UNIQUE
+r1, 35543781kB, raid0: 1 zones
+raid superblock aaid0: looking at scsi/host0/bus0/target2/lun0/part1
+tr 35543680kB
+diaid0:   comparing scsi/host0/bus0/target2/lun0/part1(35543680) with scsi/host0/bus0/target1/lun0/part1(35543680)
+raid0:   EQUAL
+rsk 3: /dev/sde1,aid0: looking at scsi/host0/bus0/target3/lun0/part1
+r 35543781kB, raiaid0:   comparing scsi/host0/bus0/target3/lun0/part1(35543680) with scsi/host0/bus0/target1/lun0/part1(35543680)
+raid0:   EQUAL
+raid0: looking at scsi/host0/bus0/target4/lun0/part1
+rd superblock at aid0:   comparing scsi/host0/bus0/target4/lun0/part1(35543680) with scsi/host0/bus0/target1/lun0/part1(35543680)
+raid0:   EQUAL
+raid0: FINAL 1 zones
+r35543680kB
+aid0: zone 0
+raid0: checking scsi/host0/bus0/target1/lun0/part1 ... contained as device 0
+  (35543680) is smallest!.
+raid0: checking scsi/host0/bus0/target2/lun0/part1 ... contained as device 1
+raid0: checking scsi/host0/bus0/target3/lun0/part1 ... contained as device 2
+raid0: checking scsi/host0/bus0/target4/lun0/part1 ... contained as device 3
+raid0: zone->nb_dev: 4, size: 142174720
+raid0: current zone offset: 35543680
+raid0: done.
+raid0 : md_size is 142174720 blocks.
+raid0 : conf->smallest->size is 142174720 blocks.
+raid0 : nb_zone is 1.
+raid0 : Allocating 8 bytes for hash.
+md: updating md1 RAID superblock on device
+md: scsi/host0/bus0/target4/lun0/part1 [events: 00000001]<6>(write) scsi/host0/bus0/target4/lun0/part1's sb offset: 35543680
+md: scsi/host0/bus0/target3/lun0/part1 [events: 00000001]<6>(write) scsi/host0/bus0/target3/lun0/part1's sb offset: 35543680
+md: scsi/host0/bus0/target2/lun0/part1 [events: 00000001]<6>(write) scsi/host0/bus0/target2/lun0/part1's sb offset: 35543680
+md: scsi/host0/bus0/target1/lun0/part1 [events: 00000001]<6>(write) scsi/host0/bus0/target1/lun0/part1's sb offset: 35543680
+echo y | mkreiserfs /dev/md1 || shellout
+
+<-------------mkreiserfs, 2003------------->
+reiserfsprogs 3.6.7
+
+mkreiserfs: Guessing about desired format.. 
+mkreiserfs: Kernel 2.4.20-boel is running.
+Format 3.6 with standard journal
+Count of blocks on the device: 35543680
+Number of blocks consumed by mkreiserfs formatting process: 9296
+Blocksize: 4096
+Hash function used to sort names: "r5"
+Journal Size 8193 blocks (first block 18)
+Journal Max transaction length 1024
+inode generation number: 0
+UUID: 12aa1aeb-f008-47a8-910c-0e2e6a48a124
+ATTENTION: YOU SHOULD REBOOT AFTER FDISK!
+	ALL DATA WILL BE LOST ON '/dev/md1'!
+Continue (y/n):Initializing journal - 0%....20%....40%....60%....80%....100%
+Syncing..ok
+
+The Defense Advanced Research Projects Agency (DARPA) is the primary sponsor of
+Reiser4. DARPA does not endorse this project; it merely sponsors it.
+
+Continuing core development of version 3 is mostly paid for by Hans Reiser from
+money made selling licenses in addition to the GPL to companies who don't want
+it known that they use ReiserFS as a foundation for their proprietary product.
+And my lawyer asked 'People pay you money for this?'.  Yup.  Hee Hee.  Life is
+good.  If you buy ReiserFS, you can focus on your value add rather than
+reinventing an entire FS.  You should buy some free software too....
+
+SuSE pays for continuing work on journaling for version 3, and paid for much of
+the previous version 3 work.  Reiserfs integration in their distro is
+consistently solid.
+
+MP3.com paid for initial journaling development.
+
+Bigstorage.com contributes to our general fund every month, and has done so for
+quite a long time.
+
+Thanks to all of those sponsors, including the secret ones.  Without you, Hans
+would still have that day job, and the merry band of hackers would be missing
+quite a few....
+
+Have fun.
+mkdir -p /a/scratch/local || shellout
+mount /dev/md1 /a/scratch/local -t reiserfs -o defaults,noatime || shellout
+reiserfs: checking transaction log (device 09:01) ...
+Using r5 hash to sort names
+ReiserFS version 3.6.25
+mkdir -p /a/proc || shellout
+mount proc /a/proc -t proc -o defaults || shellout
+Quietly installing image...
+/
+flamethrower_client(ia32-compute-2003.08.22)
+--------------------------------------------------------------------------------
+udp-receiver --interface eth0 --portbase 9028 --nosync 2>/tmp/udp-receiver.ia32-compute-2003.08.22 | tar --overwrite -xp -C /a 2>/tmp/tar.stderr.log
+.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-.\.|./.-done!
+flamethrower_client: Success!
+--------------------------------------------------------------------------------
+\890: Terminated
+done.
+
+flamethrower_client(override_ia32-compute-2003.08.22)
+--------------------------------------------------------------------------------
+udp-receiver --interface eth0 --portbase 9030 --nosync 2>/tmp/udp-receiver.override_ia32-compute-2003.08.22 | tar --overwrite -xp -C /a 2>/tmp/tar.stderr.log
+...done!
+flamethrower_client: Success!
+--------------------------------------------------------------------------------
+
+
+
+
+umount /a/var || shellout
+umount /a/scratch/local || shellout
+umount /a/proc || shellout
+umount /a/boot || shellout
+umount /a/ || shellout
+
+Sending SIGKILL to all processes.
+md: recovery thread got woken up ...
+md: recovery thread finished ...
+Please stand by while rebooting the system.
+md: stopping all md devices.
+md: marking sb clean...
+md: updating md1 RAID superblock on device
+md: scsi/host0/bus0/target4/lun0/part1 [events: 00000002]<6>(write) scsi/host0/bus0/target4/lun0/part1's sb offset: 35543680
+md: scsi/host0/bus0/target3/lun0/part1 [events: 00000002]<6>(write) scsi/host0/bus0/target3/lun0/part1's sb offset: 35543680
+md: scsi/host0/bus0/target2/lun0/part1 [events: 00000002]<6>(write) scsi/host0/bus0/target2/lun0/part1's sb offset: 35543680
+md: scsi/host0/bus0/target1/lun0/part1 [events: 00000002]<6>(write) scsi/host0/bus0/target1/lun0/part1's sb offset: 35543680
+md: md1 switched to read-only mode.
+flushing ide devices: hdc 
+Restarting system.
