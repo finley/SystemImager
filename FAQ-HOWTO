@@ -4,6 +4,7 @@
 # This file is: FAQ-HOWTO
 #
 # Current version as of the writing of this document: 1.0
+#                                           revision: 1
 #
 # This document written by:  
 #  Brian Finley <brian@valinux.com>
@@ -146,14 +147,14 @@ Question:  Where are the images stored?
 
 Answer:
 
-The images are stored in "/var/log/systemimager/images".  
+The images are stored in "/var/spool/systemimager/images".  
 
 NOTE: If you are short on disk space in this location, move the directory in 
       another location:
-        "mv /var/log/systemimager/images /home/systemimager_images"
+        "mv /var/spool/systemimager/images /home/systemimager_images"
 
       And create a soft link to the new directory.
-        "ln -s /home/systemimager_images /var/log/systemimager/images"
+        "ln -s /home/systemimager_images /var/spool/systemimager/images"
 
 
 --------------------------------------------------------------------------------
