@@ -8,6 +8,11 @@
 VA SystemImager-1.4.1 2001.xx.xx
 -----------------------------------------------------------------------
 
+updateclient
+------------
+o Removed support for the depricated -imageserver option.  This means
+  you can now abbreviate to -i for the -image option.
+
 getimage
 --------
 o We were escaping $image so that IMAGE_LAST_SYNCED_TO was not being 
