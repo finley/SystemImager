@@ -38,6 +38,7 @@ $VERSION = $version_number;
 #   is_devfs_client
 #   numerically
 #   save_filesystem_information
+#   save_lvm_information -AR-
 #   save_partition_information
 #   where_is_my_efi_dir
 #   which
@@ -450,7 +451,7 @@ sub save_partition_information {
 
             unless($id) { $id=""; }
 
-            _print_to_auto_install_conf_file( $minor, $size, $partition_type, $id, $name, $flags );
+            _print_to_auto_install_conf_file( $disk, $minor, $size, $partition_type, $id, $name, $flags );
 
           }
 
@@ -710,7 +711,7 @@ sub _turn_sfdisk_output_into_generic_partitionschemes_file {
             $size = "*";
         }
 
-        _print_to_auto_install_conf_file( $minor, $size, $partition_type, $id, $name, $flags );
+        _print_to_auto_install_conf_file( $disk, $minor, $size, $partition_type, $id, $name, $flags );
      
       }
     }
@@ -718,10 +719,10 @@ sub _turn_sfdisk_output_into_generic_partitionschemes_file {
 
 
 # Usage:
-# _print_to_auto_install_conf_file($minor, $startMB, $endMB, $partition_type, $id, $name, $flags);
+# _print_to_auto_install_conf_file($disk, $minor, $startMB, $endMB, $partition_type, $id, $name, $flags);
 sub _print_to_auto_install_conf_file {
 
-    my ($minor, $size, $partition_type, $id, $name, $flags) = @_;
+    my ($disk, $minor, $size, $partition_type, $id, $name, $flags) = @_;
 
     # Name may not be set in some cases.
     unless ($name) { $name = "-"; }
@@ -742,10 +743,92 @@ sub _print_to_auto_install_conf_file {
         ("$id" eq "41")  # 41  PPC PReP Boot 
        ) {
         print DISK_FILE qq(  id="$id");
+    } elsif (
+        ("$id" eq "8e") # LVM partition needs lvm_group attribute -AR-
+        ) {
+        my $part;
+        $_ = "$disk";
+        if ((m|\S/(c[0-9]+d[0-9]+)|) or (m|\S/ar[0-9]+/|) or (m|\S/ataraid/|)) {
+            # Hardware RAID device -AR-
+            $part = $disk . 'p' . $minor;
+        } else {
+            # Standard block device -AR-
+            $part = $disk . $minor;
+        }
+        # Get physical volume information -AR-
+        my $cmd = "pvs --noheadings --separator : /dev/$part 2>/dev/null";
+        open (PV_INFO, "$cmd|");
+        unless (eof(PV_INFO)) {
+            my @pv_data = split(/:/, <PV_INFO>);
+            my $vg_name = $pv_data[1];
+            # This partition will become part to the volume group $vg_name -AR-
+            print DISK_FILE qq( lvm_group="$vg_name");
+        }
+        close(PV_INFO);
     }
     print DISK_FILE qq( />\n);
 }
 
+# Usage: 
+# save_lvm_information( $file );
+sub save_lvm_information {
+    
+    my ($file) = @_;
+    
+    # Parse volume group informations -AR-
+    my $cmd = "vgdisplay -c 2>/dev/null";
+    
+    open(VG, "$cmd|") || return undef;
+    unless (eof(VG)) {
+        open(OUT, ">>$file") or die ("FATAL: Couldn't open $file for appending!");
+        print OUT "\n<lvm>\n";
+    
+        foreach my $vg_line (<VG>) {
+            $vg_line =~ s/^  //;
+            my @vg_data = split(/:/, $vg_line);
+            # Volume group name.
+            my $vg_name = $vg_data[0];
+            # Maximum number of logical volumes.
+            my $vg_max_log_vols = $vg_data[4];
+            # Maximum number of physical volumes.
+            my $vg_max_phys_vols = $vg_data[8];
+            # Physical extent size.
+            my $vg_phys_extent_size = $vg_data[12];
+            
+            print OUT "\t<lvm_group name=\"$vg_name\" max_log_vols=\"$vg_max_log_vols\" max_phys_vols=\"$vg_max_phys_vols\" phys_exent_size=\"${vg_phys_extent_size}K\">\n";
+
+            # Print logical volumes informations for this group -AR-
+            $cmd = "lvdisplay -c 2>/dev/null";
+            open(LV, "$cmd|");
+            foreach my $lv_line (<LV>) {
+                $lv_line =~ s/^  //;
+                my @lv_data = split(/:/, $lv_line);
+                
+                my $lv_group_name = $lv_data[1];
+                unless ($lv_group_name eq $vg_name) {
+                    next;
+                }
+                my $lv_dev = $lv_data[0];
+                $lv_dev =~ s/^.*\///;
+                my $lv_size = $lv_data[6];
+                
+                print OUT "\t\t<lv name=\"$lv_dev\" size=\"${lv_size}K\" />\n";
+            }
+            
+            close(LV);
+    
+            print OUT "\t</lvm_group>\n";
+        }
+        
+        print OUT "</lvm>\n";
+        close(OUT);
+    } else {
+        # print "DEBUG: No LVM groups defined on this system.\n";
+    }
+        
+    close(VG);    
+
+}
 
 # Usage: 
 # my $label_type = get_disk_label_type($partition_tool, $disk);
