@@ -312,13 +312,6 @@ fi
 ### END dhcp stuff ###
 
 
-# wrap up
-[ $QUIET = "false" ] && [ $INTERACTIVE = "true" ] && clear
-[ $QUIET = "false" ] && echo
-[ $QUIET = "false" ] && echo "All done!  Please read the manual before using SystemImager."
-[ $QUIET = "false" ] && echo "See /usr/doc/$PACKAGE_NAME-$VERSION/ for all documentation."
-[ $QUIET = "false" ] && echo
-
 exit 0
 
 

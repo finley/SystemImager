@@ -13,13 +13,19 @@
 #
 
 
-# do we want a quiet install? and do we want to run afterburner?
 QUIET="false"
 AFTERBURNER="yes"
+DOCS="yes"
+HELP="no"
+SHOW_VERSION="no"
+
 for cl_option ; do
   case $cl_option in
     -q|-quiet|--quiet ) QUIET="true" ;;
     -n|-no-afterburner|--no-afterburner ) AFTERBURNER="no" ;;
+    -N|-no-docs|--no-docs               ) DOCS="no" ;;
+    -h|-help|--help                     ) HELP="yes" ;;
+    -v|-version|--version               ) SHOW_VERSION="yes" ;; 
   esac
 done
 
@@ -31,6 +37,51 @@ test "x$COMMAND_PATH" != "x" && cd $COMMAND_PATH
 INSTALL_DIR=`pwd`
 VERSION=`cat $INSTALL_DIR/VERSION`
 test "x$prefix" = "x" && prefix=/usr
+
+version_number="1.4.0"
+
+show_version() {
+  echo "install (part of VA SystemImager) version $version_number"
+  echo ""
+  echo "Copyright (C) 1999-2001 Brian Elliott Finley <brian@thefinleys.com>"
+  echo "This is free software; see the source for copying conditions.  There is NO"
+  echo "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."
+}
+
+show_usage() {
+  show_version
+  echo
+  echo 'Usage: install [OPTION]...'
+  echo
+  echo 'Options:'
+  echo ' -version                 Display version and copyright information.'
+  echo ' -h, -help                Display this output.'
+  echo ' -q, -quiet               Run silently.  Return an exit status of 0 for'
+  echo '                          success or a non-zero exit status for failure.'
+  echo ' -N, -no-docs             Don not install documentation.  Use this if you'
+  echo '                          are unable to create the documentation, but'
+  echo '                          still need to install the code.'
+  echo ' -n, -no-afterburner      Do not run the afterburner script.'
+  echo '                          afterburner does necessary post'
+  echo '                          installation configuration.'
+  echo
+  echo 'Download, report bugs, and make suggestions at:'
+  echo 'http://systemimager.org/'
+
+}
+
+if [ "$HELP" = "yes" ]
+then
+  show_usage
+  exit 0
+fi
+
+if [ "$SHOW_VERSION" = "yes" ]
+then
+  show_version
+  exit 0
+fi
+
 
 # Set ownership properties for "install" based on whether we're doing a relocated install or not
 [ "x$DESTDIR" = "x" ] && OWNERSHIP="-o root -g root" || OWNERSHIP=""
@@ -155,19 +206,6 @@ install -m 444 $OWNERSHIP $INSTALL_DIR/var/spool/systemimager/images/README  ${D
 ### END images stuff ###
 
 
-### BEGIN documentation and what not stuff ###
-if [ "x$DESTDIR" = "x" ]
-then
-  if [ $QUIET = "true" ]
-  then
-    $INSTALL_DIR/installdocs -q || exit 1
-  else
-    $INSTALL_DIR/installdocs || exit 1
-  fi
-fi
-### END documentation and what not stuff ###
-
-
 # run afterburner unless told otherwise...
 if [ "$AFTERBURNER" = "yes" ]
 then
@@ -178,5 +216,20 @@ then
     $INSTALL_DIR/afterburner --non-interactive || exit 1
   fi
 fi
+
+### BEGIN documentation and what not stuff ###
+if [ "x$DESTDIR" = "x" ]
+then
+  if [ "$DOCS" = "yes" ]
+  then
+    if [ $QUIET = "true" ]
+    then
+      $INSTALL_DIR/installdocs -q || exit 1
+    else
+      $INSTALL_DIR/installdocs || exit 1
+    fi
+  fi
+fi
+### END documentation and what not stuff ###
 
 exit 0

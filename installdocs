@@ -162,4 +162,11 @@ if [ "x$DESTDIR" = "x" ]; then
 fi
 ### END install documentation ###
 
+# wrap up
+[ $QUIET = "false" ] && echo
+[ $QUIET = "false" ] && echo "All done!  Please read the manual before using SystemImager."
+[ $QUIET = "false" ] && echo "See /usr/doc/$PACKAGE_NAME-$VERSION/ for all documentation."
+[ $QUIET = "false" ] && echo
+
+
 exit 0
