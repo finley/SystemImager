@@ -1,36 +1,45 @@
-DISCOVER_VERSION := 1.5
-DISCOVER_PATCH_VERSION := 1.1
-DISCOVER_DIR := discover-$(DISCOVER_VERSION)
-DISCOVER_TARBALL := discover_$(DISCOVER_VERSION)-$(DISCOVER_PATCH_VERSION).tar.gz
-DISCOVER_URL := http://ftp.debian.org/debian/pool/main/d/discover/$(DISCOVER_TARBALL)
-DISCOVER_BINARY := $(SRC_DIR)/$(DISCOVER_DIR)/discover/.libs/discover
+DISCOVER_VERSION    := 1.5
+DISCOVER_DIR        := discover-$(DISCOVER_VERSION).orig
+DISCOVER_TARBALL    := discover_$(DISCOVER_VERSION).orig.tar.gz
+DISCOVER_URL        := http://ftp.debian.org/debian/pool/main/d/discover/$(DISCOVER_TARBALL)
+DISCOVER_BINARY     := $(SRC_DIR)/$(DISCOVER_DIR)/discover/.libs/discover
+DISCOVER_PATCH      := discover_1.5-1.4.diff.gz
+DISCOVER_PATCH_URL  := http://ftp.debian.org/debian/pool/main/d/discover/$(DISCOVER_PATCH)
+DISCOVER_PATCHES    := $(shell ls $(PATCH_DIR)/discover.*.patch 2>/dev/null | sort)
 
 DISCOVER_DATA_VERSION := 1.2002.08.21
 DISCOVER_DATA_PATCH_VERSION := 1.1
 DISCOVER_DATA_DIR := discover-data-$(DISCOVER_DATA_VERSION)
 DISCOVER_DATA_TARBALL := discover-data_$(DISCOVER_DATA_VERSION)-$(DISCOVER_DATA_PATCH_VERSION).tar.gz
 DISCOVER_DATA_URL := http://ftp.debian.org/debian/pool/main/d/discover-data/$(DISCOVER_DATA_TARBALL)
-DISCOVER_DATA_FILES := $(SRC_DIR)/$(DISCOVER_DATA_DIR)/pci.lst \
-                       $(SRC_DIR)/$(DISCOVER_DATA_DIR)/pcmcia.lst \
-                       $(SRC_DIR)/$(DISCOVER_DATA_DIR)/usb.lst
+DISCOVER_DATA_FILES := 	$(SRC_DIR)/$(DISCOVER_DATA_DIR)/pci.lst \
+						$(SRC_DIR)/$(DISCOVER_DATA_DIR)/pcmcia.lst \
+   						$(SRC_DIR)/$(DISCOVER_DATA_DIR)/usb.lst
 DISCOVER_DATA_FILES_DIR := usr/share/discover
 DISCOVER_DATA_PATCHES := $(shell ls $(PATCH_DIR)/discover-data.*.patch 2>/dev/null | sort)
 
-ALL_SOURCE += $(SRC_DIR)/$(DISCOVER_TARBALL) \
-              $(SRC_DIR)/$(DISCOVER_DATA_TARBALL)
+ALL_SOURCE += 	$(SRC_DIR)/$(DISCOVER_TARBALL) \
+				$(SRC_DIR)/$(DISCOVER_DATA_TARBALL) \
+				$(SRC_DIR)/$(DISCOVER_PATCH)
 
 PHONY += discover
 discover:	$(DISCOVER_BINARY) discover-data
 
-$(DISCOVER_BINARY):	$(SRC_DIR)/$(DISCOVER_TARBALL)
-	[ -d $(SRC_DIR)/$(DISCOVER_DIR) ] || \
-	  ( cd $(SRC_DIR) && tar -xvzf $(DISCOVER_TARBALL) )
-	( cd $(SRC_DIR)/$(DISCOVER_DIR) && ./configure --prefix=/usr )
+$(DISCOVER_BINARY):	$(SRC_DIR)/$(DISCOVER_TARBALL) $(SRC_DIR)/$(DISCOVER_PATCH)
+	rm -fr $(SRC_DIR)/$(DISCOVER_DIR)
+	cd $(SRC_DIR) && tar -xvzf $(DISCOVER_TARBALL)
+	cd $(SRC_DIR)/$(DISCOVER_DIR) && zcat $(SRC_DIR)/$(DISCOVER_PATCH) < /dev/null | patch -p1
+	cd $(SRC_DIR)/$(DISCOVER_DIR) && cat $(DISCOVER_PATCHES) < /dev/null | patch -p0
+	cd $(SRC_DIR)/$(DISCOVER_DIR) && ./configure --prefix=/usr
 	$(MAKE) -C $(SRC_DIR)/$(DISCOVER_DIR)
 
 $(SRC_DIR)/$(DISCOVER_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
 	$(GETSOURCE) $(DISCOVER_URL) $(SRC_DIR)
+
+$(SRC_DIR)/$(DISCOVER_PATCH):
+	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
+	$(GETSOURCE) $(DISCOVER_PATCH_URL) $(SRC_DIR)
 
 PHONY += discover-data
 discover-data:  $(DISCOVER_DATA_FILES)
