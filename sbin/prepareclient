@@ -463,6 +463,9 @@ sub create_auto_install_script_conf {
         if (($label_type eq "gpt") and ($partition_tool eq "sfdisk")) {
             $partition_tool = which_partition_tool("parted");
         }
+        if (($label_type eq "bsd") and ($partition_tool eq "sfdisk")) {
+            $partition_tool = which_partition_tool("parted");
+        }
         unless ($quiet) { 
             print qq(Using "$partition_tool" to gather information about disk:\n);
             print qq(    /dev/$disk\n);
@@ -477,6 +480,9 @@ sub create_auto_install_script_conf {
 
         my $label_type = SystemImager::Common->get_disk_label_type($partition_tool, $disk);
         if (($label_type eq "gpt") and ($partition_tool eq "sfdisk")) {
+            $partition_tool = which_partition_tool("parted");
+        }
+        if (($label_type eq "bsd") and ($partition_tool eq "sfdisk")) {
             $partition_tool = which_partition_tool("parted");
         }
         unless ($quiet) { 
