@@ -189,6 +189,14 @@ ifeq ($(ARCH),ia64)
 	 LINUX_CONFIG = $(PATCH_DIR)/linux.ia64.config
 	 LINUX_TARGET = vmlinux
 endif
+ifeq ($(ARCH),s390)
+	 LINUX_VERSION = 2.4.7
+	 LINUX_MD5SUM = 5890ac5273402635e6fc7a804a3b5d7d
+	 LINUX_IMAGE = $(LINUX_SRC)/arch/s390/boot/image
+	 LINUX_PATCH = $(PATCH_DIR)/linux.s390.patch
+	 LINUX_CONFIG = $(PATCH_DIR)/linux.s390.config
+	 LINUX_TARGET = image
+endif
 
 LINUX_TARBALL = linux-$(LINUX_VERSION).tar.bz2
 LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.4/$(LINUX_TARBALL)
