@@ -365,6 +365,7 @@ create_rsyncd_conf() {
   echo ''                                                       >> /etc/rsyncd.conf
   echo '[tftpboot]'                                             >> /etc/rsyncd.conf
   echo '  path = /tftpboot'                                     >> /etc/rsyncd.conf
+  echo '  log file = /var/log/systemimager.tftpboot'            >> /etc/rsyncd.conf
   echo ''                                                       >> /etc/rsyncd.conf
   echo '# only image entries below this line'                   >> /etc/rsyncd.conf
   echo ''                                                       >> /etc/rsyncd.conf
@@ -558,6 +559,15 @@ else
   fi
 fi
 
+# be sure we have a tftpboot entry
+egrep -q '[tftpboot]' /etc/rsyncd.conf && ADD_TFTPBOOT="no"
+if [ $ADD_TFTPBOOT != "no" ]; then
+  echo ''                                                       >> /etc/rsyncd.conf
+  echo '[tftpboot]'                                             >> /etc/rsyncd.conf
+  echo '  path = /tftpboot'                                     >> /etc/rsyncd.conf
+  echo '  log file = /var/log/systemimager.tftpboot'            >> /etc/rsyncd.conf
+  echo ''                                                       >> /etc/rsyncd.conf
+fi
 ### END rsync stuff ###
 
 
