@@ -492,7 +492,7 @@ unlink $final_exclude_file || die "$program_name: Removal of file $final_exclude
 
 # Add entry to image server's rsyncd.conf if necessary
 
-SystemImager::Server->add2rsyncd($rsync_conf,$image,$imagedir) or 
+SystemImager::Server->add2rsyncd($rsyncd_conf,$image,$imagedir) or 
   die "$program_name: Cannot add $image entry to $rsyncd_conf";
 
 ### END generic image retrieval stuff ###
