@@ -1,13 +1,188 @@
 #
-# "SystemImager" - Copyright (C) 1999-2002 Brian Elliott Finley <brian@baldguysoftware.com>
+# "SystemImager"
+#
+#  Copyright (C) 1999-2002 Brian Elliott Finley 
+#                <brian@baldguysoftware.com>
+#  Copyright (C) 2002 Bald Guy Software 
+#                     Brian E. Finley <brian.finley@baldguysoftware.com>
 #
 #   $Id$
 #
 
-Due to a perceived bug in the SourceForge CVS browsing software, all 2.2.0 RELEASE_STEPS info
-should be entered in the development branch (HEAD) RELEASE_STEPS file.  This way it can be 
-viewed from the website even when the version changes.
+3.0 PRE-FEATURE FREEZE
+--------------------------------------------------------------------------------
+Pending:
+* Fix mkautoinstalldiskette files being truncated. (bef)
+* mkdhcpserver -- commandlineize and require -dhcp-version 2 or -dhcp-version 3
+* Verify DHCP option numbers.
+* Variables in dhcpd.conf and local.cfg -> make sure that all
+  variables that can be used in either dhcpd.conf or local.cfg
+  can be used in both.  (unless it's impossible as Sean noted
+  with ETHER_SLEEP ;-)  Add ETHER_SLEEP=35 to local.cfg.
 
--Brian
+* Get SSH working again (BEF)  Legality issues?
+* XFS (bef or df)
+* test mkdhcpstatic
 
+
+Completed:
+* remove stuff from lsimage listings
+* JFS (SD) 
+* server.conf -> systemimager.conf (BEF)
+* ethersleep 0 -> 35
+* combine initrd makefile with the top level (df)
+* XML codes instead of \ASCII codes (BEF or SD)
+    http://www.w3.org/TR/1998/REC-xml-19980210#sec-predefined-ent
+* addclients re-write -> clean up and functionize (BEF)
+  (done enough for 3.0 release)
+* cramfs (DF)
+* move flavors into their own directories (DF)
+* add sfdisk to boel binaries tarball. (bef, no! -> sd ;-) )
+* uclibc working like we want (DF)
+* sfdisk not working in prepareclient (bef)
+* remove fs= from disk section.  add optional id= , and code to use sfdisk
+  to use it. (bef)
+* docs to build on other distros (df)
+* add netbootmond (bef)
+
+  Have client grab a bogus file, say "<imageserver>::scripts/finished", at the
+  end of an install.  Have a daemon running that changes the pxelinux config
+  file for that client based on rules in the systemimager.conf file.  Perhaps
+  those rules look like this:
+
+  NET_BOOT_DEFAULT = [ LOCAL | NET ]
+
+  If the default is set to LOCAL, then the daemon automatically creates a 
+  symlink to "/etc/systemimager/pxelinux.cfg/syslinux.cfg.noboot" with the hex 
+  equiv of the machines IP address, thereby causing the machine to 
+  automatically boot from a local device next time.
+
+  If the default is set to NET, then the daemon doesn't start up.
+
+  Perhaps in the future, we can also ranges of hosts with different net boot
+  mechanisms so that the same daemon can do the appropriate thing for each 
+  range of hosts.  We would then also add a flag to mknetbootable to indicate
+  the appropriate boot system, like "-pxe".
+
+* add mkclientnetboot (was mknetbootable) (bef) 
+
+  mknetbootable will accept a host name or IP address as input, and will remove
+  the file named with the ip address hex equiv that is preventing it from net 
+  booting.
+
+* Add XML::Simple to SystemImager lib install (df or bef)
+  No longer necessary.  RPMs were found.
+  http://rpmfind.net/linux/rpm2html/search.php?query=perl-XML-Simple
+   and
+  http://rpm.pbone.net/index.php3/idpl/294219/idpa/294219/stat/4
+
+* remove install_siboot (df)
+* Add CCB's ctrl+c catching code to rcS (bef)
+
+* We should tell the user when they run addclients that if they have 
+  backwards and forwards dns resolution setup for their clients, that they need
+  not add the local hosts entries.  
+* add ETHERSLEEP option (boolean)
+
+
+
+
+
+
+
+PRE-RELEASE
+--------------------------------------------------------------------------------
+* warn users that we are no longer supporting tarball based installs.  
+  Adventurous souls can check out the source from CVS and do a make, but 
+  normal users should use a package.
+
+
+
+3.2 stuff
+--------------------------------------------------------------------------------
+o multiple small function related libraries
+o consider making mkautoinstalldiskette and mkautoinstallcd not require root 
+    when using -out-file.
+
+o Hey all,
+
+  First off, are we going to try to support local.cfg files on CDs in 3.0?  I
+  thought that was on the list (especially with the fact that many boxes are
+  floppyless at the moment, and cd-rw are pretty cheap).  It would require
+  adding isofs to the kernel, and trying to mount it.
+
+  I also have another request for passing variables, via kernel appends.  On
+  the big boxen (iSeries and zSeries) that have virtual linuxes running on top
+  of a base OS, there is no floppy boot or such.  You just say "Boot this
+  kernel, that ramdisk, and here is your kernel append line."  The kernel
+  append options are available from userspace on a running machine via
+  /proc/cmdline.  Hence we could even possibly use this in the cd boot case
+  instead of isofs support as well.  The autoinstall script would just parse
+  off all the cmdline options that were a=b, and add them to the config
+  variables.  With this trick you could also theoretically set local.cfg like
+  parameters during pxeboot as well.
+
+  Ok, value seems to be 80 bytes.  It is set by a define in
+  include/linux/elfcore.h
+  
+  #define ELF_PRARGSZ     (80)    /* Number of chars for args */
+
+  so hopefully we could just up it and things wouldn't completely fall appart.
+
+  What do you all think?
+
+        -Sean
+
+o Move most of -help output to man pages.
+o Standardized format for man pages and for -help output.
+* improve dhclient delay wait. (bef or sdague)
+* add full -h text to man page for mkautoinstalldiskette.
+
+
+
+
+
+Other things to consider
+--------------------------------------------------------------------------------
+o Modular kernel notes:
+  o If we go to modular drivers for disk devices, then we no longer have 
+    the ability to read a local.cfg file from a local disk.  Possible options
+    are:
+    1) Only offer local.cfg support by floppy or CD.
+    2) Offer local.cfg support by floppy, CD, or disk, but require that the user
+       compile the required drivers statically in order to use the local.cfg on
+       hard drive option.
+
+o Modify updateclient -autoinstall to use whatever kernel/initrd combo it 
+  finds if it only finds one, but to present the user with a choice if it 
+  finds more than one flavor.
+
+o make local.cfg work on CD
+o include a cerberus test suite option
+
+o NAMESERVER= option for local.cfg
+
+o lsimage on client gives error messages when run without options.
+  Give better output at least.
+
+o updateclient -> SERVER_LAST_SYNCED_TO
+o autoinstallscript -> SERVER_LAST_SYNCED_TO
+
+o LABEL= with md devices
+
+o re-read contrib emails
+
+o exclude files on server and on client
+
+o create rmclient
+
+o have rmimage,mvimage,cpimage tell the user what it's doing if($verbose)
+  Removing rsync entry...done!
+  Removing image...done!
+  etc...
+
+o test $IMAGENAME stuff
+  o IMAGENAME in local.cfg
+  o dhcp23.sh
+  o dhcp.master
 
