@@ -4,7 +4,7 @@
 #
 
 DB2HTML = /usr/bin/db2html
-NAME	= manual
+NAME	= si-manual
 SRC	= $(NAME).sgml
 DEST	= ..
 
