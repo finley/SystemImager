@@ -352,7 +352,8 @@ $(BOEL_BINARIES_TARBALL):	$(DISCOVER_BINARY) $(DISCOVER_DATA_FILES) \
 				$(MKDOSFS_BINARY) $(MKE2FS_BINARY) \
 				$(TUNE2FS_BINARY) $(PARTED_BINARY) \
 				$(MKJFS_BINARY) $(RAIDTOOLS_BINARIES) \
-				$(MKREISERFS_BINARY) $(BC_BINARY) $(SFDISK_BINARY) \
+				$(MKREISERFS_BINARY) $(BC_BINARY) \
+				$(SFDISK_BINARY) $(MKXFS_BINARY) \
 				$(SRC_DIR)/modules_build-stamp
 	#
 	# Put binaries in the boel_binaries_tarball...
@@ -370,8 +371,8 @@ $(BOEL_BINARIES_TARBALL):	$(DISCOVER_BINARY) $(DISCOVER_DATA_FILES) \
 	install -m 755 $(RAIDTOOLS_BINARIES) $(BOEL_BINARIES_DIR)/sbin/
 	cd $(BOEL_BINARIES_DIR)/sbin/ && ln -f raidstart raidstop
 	install -m 755 $(MKREISERFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
-
 	install -m 755 $(MKJFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
+	install -m 755 $(MKXFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
 	#
 	# Put libraries in the boel_binaries_tarball...
 	#

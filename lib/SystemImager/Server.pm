@@ -804,6 +804,9 @@ sub _write_out_mkfs_commands {
     print MASTER_SCRIPT "modprobe ext2\n";
     print MASTER_SCRIPT "modprobe ext3\n";
     print MASTER_SCRIPT "modprobe jfs\n";
+    print MASTER_SCRIPT "modprobe xfs_support\n";
+    print MASTER_SCRIPT "modprobe xfs_dmapi\n";
+    print MASTER_SCRIPT "modprobe xfs\n";
     print MASTER_SCRIPT "\n";
 
 
@@ -1024,6 +1027,26 @@ sub _write_out_mkfs_commands {
 
             # create fs
             $cmd = "mkfs.jfs -q $real_dev || shellout";
+            print MASTER_SCRIPT qq(echo "$cmd"\n);
+            print MASTER_SCRIPT "$cmd\n";
+
+            # mkdir
+            $cmd = "mkdir -p /a$mp || shellout";
+            print MASTER_SCRIPT qq(echo "$cmd"\n);
+            print MASTER_SCRIPT "$cmd\n";
+
+            # mount
+            $cmd = "mount $real_dev /a$mp -t $fs -o $options || shellout";
+            print MASTER_SCRIPT qq(echo "$cmd"\n);
+            print MASTER_SCRIPT "$cmd\n";
+            
+            print MASTER_SCRIPT "\n";
+	    
+        # xfs
+        } elsif ( $xml_config->{fsinfo}->{$line}->{fs} eq "xfs" ) {
+
+            # create fs
+            $cmd = "mkfs.xfs -f -q $real_dev || shellout";
             print MASTER_SCRIPT qq(echo "$cmd"\n);
             print MASTER_SCRIPT "$cmd\n";
 
