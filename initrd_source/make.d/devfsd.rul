@@ -1,0 +1,33 @@
+DEVFSD_VERSION = 1.3.25
+DEVFSD_TARBALL = devfsd-v$(DEVFSD_VERSION).tar.bz2
+DEVFSD_URL = http://www.kernel.org/pub/linux/daemons/devfsd/$(DEVFSD_TARBALL)
+DEVFSD_DIR = devfsd
+DEVFSD_BINARY = $(SRC_DIR)/$(DEVFSD_DIR)/devfsd
+DEVFSD_PATCHES = $(shell ls $(PATCH_DIR)/devfsd.*.patch 2>/dev/null | sort)
+
+devfsd:	$(DEVFSD_BINARY) $(UCLIBC_TARGET)
+
+
+$(DEVFSD_BINARY):	$(SRC_DIR)/$(DEVFSD_TARBALL) $(DEVFSD_PATCHES) \
+			$(STAMP_DIR)/uclibc_dev-stamp
+	rm -rf $(SRC_DIR)/$(DEVFSD_DIR)
+	cd $(SRC_DIR) && tar -xvjf $(DEVFSD_TARBALL)
+
+	cd $(SRC_DIR)/$(DEVFSD_DIR) && \
+	  cat $(DEVFSD_PATCHES) < /dev/null | patch -p1
+
+	# XXX nothing insures the presence of KERNEL_SOURCE_DIR here.
+	$(MAKE) KERNEL_DIR=$(KERNEL_SOURCE_DIR) WITHOUT_NSL=1 \
+	  -C $(SRC_DIR)/$(DEVFSD_DIR) devfsd PATH=$(INITRD_BUILD_PATH)
+
+$(SRC_DIR)/$(DEVFSD_TARBALL):
+	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
+	( [ -a /usr/src/$(DEVFSD_TARBALL) ] && \
+	  ln -s /usr/src/$(DEVFSD_TARBALL) $(SRC_DIR) ) || \
+	( [ -d $(DEVFSD_DIR) ] && tar -c $(DEVFSD_DIR) | \
+	  gzip -9 > $(SRC_DIR)/$(DEVFSD_TARBALL) ) || \
+	( cd $(SRC_DIR) && $(WGET) $(DEVFSD_URL) )
+
+
+devfsd_clean:	
+	rm -rf $(SRC_DIR)/$(DEVFSD_DIR)

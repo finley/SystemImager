@@ -1,0 +1,31 @@
+MODUTILS_VERSION = 2.4.17
+MODUTILS_TARBALL = modutils-$(MODUTILS_VERSION).tar.bz2
+MODUTILS_URL = http://www.kernel.org/pub/linux/utils/kernel/modutils/v2.4/$(MODUTILS_TARBALL)
+MODUTILS_DIR = modutils-$(MODUTILS_VERSION)
+MODUTILS_PATCHES = $(shell ls $(PATCH_DIR)/modutils.*.patch 2>/dev/null | sort)
+
+########## BEGIN modutils rules ##########
+# Only used on ia64 right now -- because busybox's insmod won't compile. -BEF-
+#
+
+modutils:	$(INSMOD_BINARY)
+
+$(INSMOD_BINARY):	$(SRC_DIR)/$(MODUTILS_TARBALL) $(MODUTILS_PATCHES) \
+			$(STAMP_DIR)/uclibc_dev-stamp
+	rm -rf $(SRC_DIR)/$(MODUTILS_DIR)
+	cd $(SRC_DIR) && tar -xvjf $(MODUTILS_TARBALL)
+	cd $(SRC_DIR)/$(MODUTILS_DIR) && \
+	  cat $(MODUTILS_PATCHES) < /dev/null | patch -p1
+	cd $(SRC_DIR)/$(MODUTILS_DIR) && ./configure --disable-combined
+	$(MAKE) -C $(SRC_DIR)/$(MODUTILS_DIR) PATH=$(INITRD_BUILD_PATH)
+
+$(SRC_DIR)/$(MODUTILS_TARBALL):
+	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
+	( [ -a /usr/src/$(MODUTILS_TARBALL) ] && \
+	  ln -s /usr/src/$(MODUTILS_TARBALL) $(SRC_DIR) ) || \
+	( [ -d $(MODUTILS_DIR) ] && tar -c $(MODUTILS_DIR) | \
+	  gzip -9 > $(SRC_DIR)/$(MODUTILS_TARBALL) ) || \
+	( cd $(SRC_DIR) && $(WGET) $(MODUTILS_URL) )
+
+modutils_clean:
+	rm -rf $(SRC_DIR)/$(MODUTILS_DIR)

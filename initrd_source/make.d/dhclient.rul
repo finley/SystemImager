@@ -1,0 +1,28 @@
+DHCLIENT_VERSION = 2.0pl5
+DHCLIENT_TARBALL = dhcp-$(DHCLIENT_VERSION).tar.gz
+DHCLIENT_URL = ftp://ftp.epix.net/pub/isc/dhcp/$(DHCLIENT_TARBALL)
+DHCLIENT_DIR = dhcp-$(DHCLIENT_VERSION)
+DHCLIENT_BINARY = $(SRC_DIR)/$(DHCLIENT_DIR)/client/dhclient
+DHCLIENT_PATCHES = $(shell ls $(PATCH_DIR)/dhclient.*.patch 2>/dev/null | sort)
+
+dhclient:	$(DHCLIENT_BINARY) $(UCLIBC_TARGET)
+
+$(DHCLIENT_BINARY):	PATH := $(UCLIBC_PATH)$(PATH)
+$(DHCLIENT_BINARY):	$(SRC_DIR)/$(DHCLIENT_TARBALL) $(DHCLIENT_PATCHES)
+	rm -rf $(SRC_DIR)/$(DHCLIENT_DIR)
+	cd $(SRC_DIR) && tar -xvzf $(DHCLIENT_TARBALL)
+	cd $(SRC_DIR)/$(DHCLIENT_DIR) && \
+	  cat $(DHCLIENT_PATCHES) < /dev/null | patch -p1
+	cd $(SRC_DIR)/$(DHCLIENT_DIR) && ./configure
+	$(MAKE) -C $(SRC_DIR)/$(DHCLIENT_DIR) PATH=$(INITRD_BUILD_PATH)
+
+$(SRC_DIR)/$(DHCLIENT_TARBALL):
+	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
+	( [  -a /usr/src/$(DHCLIENT_TARBALL) ] && \
+	  ln -s /usr/src/$(DHCLIENT_TARBALL) $(SRC_DIR) ) || \
+	( [ -d $(DHCLIENT_DIR) ] && tar -c $(DHCLIENT_DIR) | \
+	  gzip -9 > $(SRC_DIR)/$(DHCLIENT_TARBALL) ) || \
+	( cd $(SRC_DIR) && $(WGET) $(DHCLIENT_URL) )
+
+dhclient_clean:
+	rm -rf $(SRC_DIR)/$(DHCLIENT_DIR)

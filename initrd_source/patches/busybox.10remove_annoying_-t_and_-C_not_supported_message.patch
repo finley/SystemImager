@@ -1,0 +1,11 @@
+diff -urN busybox-0.60.3.orig/modprobe.c busybox-0.60.3/modprobe.c
+--- busybox-0.60.3.orig/modprobe.c	Wed Apr 24 14:49:03 2002
++++ busybox-0.60.3/modprobe.c	Mon Jul  8 23:44:55 2002
+@@ -249,7 +249,6 @@
+ 		}
+ 
+ 	if (load_type || config) {
+-		fprintf(stderr, "-t and -C not supported\n");
+ 		exit(EXIT_FAILURE);
+ 	}
+ 

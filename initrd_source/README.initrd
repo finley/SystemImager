@@ -1,46 +1,80 @@
 #
-# "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>
+# "SystemImager"
 #
-# This file is: README.initrd
+#  Copyright (C) 1999-2002 Brian Elliott Finley <brian@baldguysoftware.com>
 #
+#  $Id$
+#
+
+Steps for the Chronically Impatient
+-----------------------------------
+1) Do a "make get_source".'
+2) Modify the source code as desired.'
+3) Modify the init script as desired "vi skel/etc/init.d/rcS".'
+4) Modify any other configuration files as desired.  Most of these'
+   are in the "skel" directory. (skel is short for skeleton files)'
+5) Run "make install"'
 
 Notes on customizing and building your initrd.gz
 ------------------------------------------------
-o the build requires superuser privileges as it mounts a file via the loopback
+o The build requires superuser privileges as it mounts a file via the loopback
   device.  If you are not root, it will attempt to use sudo for commands
   requiring root access.
-o files in the skel/ directory are copied directly to the ramdisk
+o Files in the ./skel/ directory are copied directly to the ramdisk
   you can edit the files there, or drop in your own.
-o source tarballs for a few binaries are needed during the build.  an attempt
+o Source tarballs for a few binaries are needed during the build.  An attempt
   is made to download them w/ wget, but you can download them separately and
-  drop them into the tree by hand.  see the Makefile for locations.  if the
+  drop them into the tree by hand.  See the Makefile for locations.  If the
   download attempt fails because these files no longer exist, please report
   this as a bug.  wget will pay attention to your http_proxy and ftp_proxy
   environmental variables.
-o development is done on Debian systems, so this is the suggested platform
-  for building.
-o dynamic libraries can hog up a lot of the space in your ramdisk.  the
-  mklibs.sh script from Debian's boot-floppies package is used to reduce the
+o Development is done on Debian systems, therefore this is the suggested 
+  platform for building.
+o Dynamic libraries can hog up a lot of the space in your ramdisk.  The
+  "mklibs.sh" script from Debian's boot-floppies package is used to reduce the
   overall size, but it is dependent on the existence of the associated
-  pic archives.  on Debian systems, you can 'apt-get install libc6-pic'.
-  in the case of libc6, newer versions usually mean larger libraries.
-  I currently use libc6-2.1.3.  as a comparison:
+  pic archives.  On Debian systems, you can 'apt-get install libc6-pic' to 
+  insure that these libraries are on your system.  If you ran 
+  'apt-get boot-floppies' to install that package, then the pic libraries
+  should have been installed along side the boot floppies package.  In the 
+  case of libc6, newer versions usually mean larger libraries.  We 
+  currently use libc6-2.1.3.  As a comparison:
 
-	Debian Version	  	libc6 version		initrd.gz size
+	Debian Version   libc6 version   resultant initrd.gz size
 	--------------------------------------------------------------
-	2.2 (potato)		2.1.3			610761
-	unstable (sid)		2.2.3			682281
+	2.2 (potato)     2.1.3           610761 bytes
+	unstable (sid)   2.2.3           682281 bytes
 
-o your kernel must support loopback devices.
+o The kernel on your development machine must support loopback devices.
 o /dev entries are created from the contents of the dev_ls-lR file.
-  to customize, either edit this file, or
-  1) modify the entries in /dev of an existing ramdisk to suit your needs
-  2) create a new dev_ls-lR file by cd'ing to the customized /dev directory
+  To customize, either edit this file, or:
+  1) Modify the entries in /dev of an existing ramdisk to suit your needs
+  2) Create a new dev_ls-lR file by cd'ing to the customized /dev directory
      and capturing the output of 'ls -lR'
-o you may also need to customize the size of your ramdisk, and the number
-  of inodes available on your ramdisk.  these are options in the Makefile.
-o be sure that the binaries that will be installed from your local system
-  are actually on your local system.  make sure you have all of
-  the Build-Depends packages from debian/control installed.  you should also
-  have all of the Debian build-essential packages installed (stuff like make
-  and gcc).
+o You may also need to customize the size of your ramdisk, and the number
+  of inodes available on your ramdisk.  These are options in the Makefile.
+o Be sure that the binaries that will be installed from your local system
+  are actually *on* your local system.  Make sure you have all of the 
+  "Build-Depends" packages from the ./debian/control file installed.  You 
+  should also have all of the Debian build-essential packages installed 
+  (stuff like make and gcc).
+
+Interesting Make Targets
+------------------------
+install:    installs a compressed ramdisk to your local system
+initrd.gz:  builds a compressed ramdisk
+get_source: the build system checks in multiple locations for external source
+            these locations are, in order of preference:
+              - upstream tarballs in /usr/src/
+              - upstream uncompressed source in the top level (this is 
+                primarily here for the debian packaging).
+              - a well-known url on the net
+            the get_source target will cause all of the required third party
+            source to be downloaded.  once you have downloaded this source
+            once, please copy it to one of the other locations to reduce
+            unnecessary load on the respective servers, and speed up your build
+            process.
+clean:      cleans the source tree, but leave around downloaded third party
+            source
+distclean:  cleans the source tree, including removal of downloaded third party
+            source

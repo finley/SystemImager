@@ -1,0 +1,29 @@
+RSYNC_VERSION = 2.5.5
+RSYNC_TARBALL = rsync-$(RSYNC_VERSION).tar.gz
+RSYNC_URL = http://rsync.samba.org/ftp/rsync/$(RSYNC_TARBALL)
+RSYNC_DIR = rsync-$(RSYNC_VERSION)
+RSYNC_BINARY = $(SRC_DIR)/$(RSYNC_DIR)/rsync
+RSYNC_PATCHES = $(shell ls $(PATCH_DIR)/rsync.*.patch 2>/dev/null | sort)
+
+rsync:	$(RSYNC_BINARY) $(UCLIBC_TARGET)
+
+$(RSYNC_BINARY):	$(SRC_DIR)/$(RSYNC_TARBALL) $(RSYNC_PATCHES) \
+			$(STAMP_DIR)/uclibc_dev-stamp
+	rm -rf $(SRC_DIR)/$(RSYNC_DIR)
+	cd $(SRC_DIR) && tar -xvzf $(RSYNC_TARBALL)
+	cd $(SRC_DIR)/$(RSYNC_DIR) && \
+	  cat $(RSYNC_PATCHES) < /dev/null | patch -p1
+	cd $(SRC_DIR)/$(RSYNC_DIR) && ./configure --with-included-popt \
+	  PATH=$(INITRD_BUILD_PATH)
+	$(MAKE) -C $(SRC_DIR)/$(RSYNC_DIR) rsync PATH=$(INITRD_BUILD_PATH)
+
+$(SRC_DIR)/$(RSYNC_TARBALL):
+	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
+	( [  -a /usr/src/$(RSYNC_TARBALL) ] && \
+	  ln -s /usr/src/$(RSYNC_TARBALL) $(SRC_DIR) ) || \
+	( [ -d $(RSYNC_DIR) ] && tar -c $(RSYNC_DIR) | \
+	  gzip -9 > $(SRC_DIR)/$(RSYNC_TARBALL) ) || \
+	( cd $(SRC_DIR) && $(WGET) $(RSYNC_URL) )
+
+rsync_clean:
+	rm -rf $(SRC_DIR)/$(RSYNC_DIR)

@@ -1,0 +1,24 @@
+#
+# "SystemImager"
+#
+#  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
+#
+#    $Id$
+#
+#
+# NOTES
+# ------------------------------------------------------------------------------
+# o List the commands, one per line, that should be used to load any modules you
+#   have placed in this directory.  
+# o You must use insmod, and not modprobe, to load your modules.
+# o This file will be executed as a script from this directory during the BOEL
+#   (Brian's Own Embedded Linux) initialization process.
+# o This file will be executed prior to searching for any local.cfg files and
+#   prior to any network configuration.
+#
+#
+# EXAMPLES
+# ------------------------------------------------------------------------------
+# insmod e100.o e100_speed_duplex=4
+# insmod my_special_scsi_driver.o
+#

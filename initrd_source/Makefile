@@ -1,279 +1,192 @@
+#
+# "SystemImager"  
+#
+#  Copyright (C) 1999-2002 Bald Guy Software <brian.finley@baldguysoftware.com>
+#  Copyright (C) 2002 Hewlett-Packard Company <dannf@fc.hp.com>
+#
+#  Others who have contributed to this code:
+#    Sean Dague <sean@dague.net>
+#
+#   $Id$
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program; if not, write to the Free Software
+#   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+
 DESTDIR =
 
-PATH = /sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
-
-SUDO = $(shell if [ `id -u` != 0 ]; then echo -n "sudo"; fi)
 ARCH = $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/)
 
+SUDO = $(shell if [ `id -u` != 0 ]; then echo -n "sudo"; fi)
 WGET = wget --passive-ftp
 
 # where utilities that may need to be retrieved
 # by autoinstall clients are stored
-USR = $(DESTDIR)/usr/local
-INSTALL_DIR = $(USR)/share/systemimager/$(ARCH)-boot
+TFTPROOT = $(DESTDIR)/usr/lib/systemimager
 
-PATCH_DIR = ./patches
-SRC_DIR = ./src
+TOPDIR  := $(shell cd ..; /bin/pwd)
+PATCH_DIR = $(CURDIR)/patches
+SRC_DIR = $(CURDIR)/src
+STAMP_DIR = $(SRC_DIR)
 
-LINUX_SRC = ../src/linux
+BUILD_DIR = $(CURDIR)/build_dir
+MOUNT_DIR = $(CURDIR)/mount_dir
 
-EXTRA_BLOCKS_STAGE1 = 100       # number of 1KB blocks in ramdisk.
-EXTRA_INODES_STAGE1 = 50        # number of inodes available on ramdisk
+# This is needed by uClibc. -BEF-
+KERNEL_SOURCE_DIR = $(shell pwd | sed -e s,initrd_source,src/linux,)
 
-EXTRA_BLOCKS_STAGE2 = 100       # number of 1KB blocks in ramdisk.
-EXTRA_INODES_STAGE2 = 50        # number of inodes available on ramdisk
+SKEL_FILES = $(shell find ./skel -not -regex '.*/CVS.*' -and \
+                                 -not -regex '.*/CVS')
 
-########## BEGIN definitions for binaries built from source ##########
+# Number of inodes in the build directory and number of 
+# inodes needed on the initial RAM disk -BEF-
+BUILD_DIR_INODE_COUNT = $(shell $(SUDO) find $(BUILD_DIR) -printf "%i\n" | sort -u | wc -l)
+INITRD_INODE_COUNT = $(shell echo $(BUILD_DIR_INODE_COUNT) + 100 | bc)
 
-BUSYBOX_VERSION = 0.60.0
-BUSYBOX_TARBALL = busybox-$(BUSYBOX_VERSION).tar.gz
-BUSYBOX_URL = ftp://opensource.lineo.com/busybox/$(BUSYBOX_TARBALL)
-BUSYBOX_ROOT = $(SRC_DIR)/busybox-$(BUSYBOX_VERSION)
-BUSYBOX_ROOT_STAGE1 = $(SRC_DIR)/busybox-$(BUSYBOX_VERSION)-stage1
-BUSYBOX_ROOT_STAGE2 = $(SRC_DIR)/busybox-$(BUSYBOX_VERSION)-stage2
-BUSYBOX_BINARY_STAGE1 = $(BUSYBOX_ROOT_STAGE1)/busybox
-BUSYBOX_BINARY_STAGE2 = $(BUSYBOX_ROOT_STAGE2)/busybox
+# Total size of build directory and size to make raw initrd file -BEF-
+BUILD_DIR_SIZE = $(shell sudo du -bks $(BUILD_DIR) | cut -f1 )
+INITRD_SIZE = $(shell echo $(BUILD_DIR_SIZE) + 250 | bc)
 
-########## END definitions for binaries built from source ##########
-
-###### BEGIN binaries that will be copied over from the local system #####
-
-LOCAL_BINARIES_STAGE1 := /sbin/dhclient-2.2.x /sbin/mke2fs /bin/ash /usr/bin/mawk /usr/bin/rsync /usr/bin/snarf 
-
-LOCAL_BINARIES_STAGE2 := $(LOCAL_BINARIES_STAGE1) /usr/bin/host
-
-LOCAL_SBINARIES_STAGE2 := /sbin/devfsd /sbin/discover /sbin/mkfs.jfs /sbin/mkfs.xfs /sbin/insmod /sbin/mkreiserfs /sbin/mkraid /sbin/modprobe /sbin/raidstart /sbin/raidstop /sbin/rmmod /sbin/sfdisk
-
-ifeq ($(ARCH),s390)
-	LOCAL_BINARIES_STAGE2 := $(LOCAL_BINARIES_STAGE1) /sbin/devfsd /sbin/discover /sbin/mkfs.jfs /sbin/insmod /sbin/mkreiserfs /sbin/modprobe /sbin/rmmod /usr/bin/host /sbin/fdasd /sbin/dasdfmt
+### BEGIN uclibc decisions ###
+# Not all architectures use uclibc. -BEF-
+ifeq ($(ARCH),i386)
+	UCLIBC_ARCH_NAME := i386
+endif
+ifeq ($(ARCH),ppc)
+	UCLIBC_ARCH_NAME := powerpc
 endif
 
-LOCAL_BINARIES_STAGE2_SSH := $(LOCAL_BINARIES_STAGE2) /usr/bin/ssh /usr/sbin/sshd /usr/bin/scp /usr/bin/ssh-keygen
+ifdef UCLIBC_ARCH_NAME
+	UCLIBC_PATH = $(UCLIBC_DEV)/bin
+	INITRD_BUILD_PATH = $(UCLIBC_PATH):$(PATH)
+        UCLIBC_TARGET := uclibc
+else
+	INITRD_BUILD_PATH = $(PATH)
+endif
+### END uclibc decisions ###
 
-LOCAL_SBINARIES_STAGE2_SSH := $(LOCAL_SBINARIES_STAGE2)
+### BEGIN build insmod on ia64 only ###
+ifeq ($(ARCH),ia64)
+	INSMOD_BINARY = $(SRC_DIR)/$(MODUTILS_DIR)/insmod/insmod
+endif
+### END build insmod on ia64 only ###
 
-###### END binaries that will be copied over from the local system #####
 
-all:	initrd.gz stage2rd.gz
+all:	initrd.gz
+
+include make.d/*.rul
+
+build_dir:	$(BUILD_DIR)/etc/hosts
+
+$(BUILD_DIR)/etc/hosts:	$(SKEL_FILES) $(BUSYBOX_BINARY) $(DEVFSD_BINARY) \
+			$(DHCLIENT_BINARY) $(RSYNC_BINARY) $(UCLIBC_TARGET) \
+			$(INSMOD_BINARY) $(STAMP_DIR)/uclibc_runtime-stamp
+
+	# Create directory structure.
+	$(SUDO) rm -fr $(BUILD_DIR)
+	mkdir $(BUILD_DIR)
+	cd $(BUILD_DIR) && mkdir -m 755 bin dev etc lib proc root sbin usr var
+	cd $(BUILD_DIR) && mkdir -m 1777 tmp
+	cd $(BUILD_DIR) && mkdir -m 755 usr/bin usr/sbin etc/init.d var/run
+
+	# Copy over busybox binary and all it's hard links. -BEF-
+	cp -a $(SRC_DIR)/$(BUSYBOX_DIR)/_install/* $(BUILD_DIR)/
+
+	# If UCLIBC_TARGET is set, then copy over uclibc libraries. -BEF-
+	[ "x$(UCLIBC_TARGET)" == "x" ] || mkdir -m 755 -p \
+	  $(BUILD_DIR)/usr/$(UCLIBC_ARCH_NAME)-linux-uclibc/lib/
+	[ "x$(UCLIBC_TARGET)" == "x" ] || \
+	  cp -a $(UCLIBC_RUNTIME)/* $(BUILD_DIR)/
+
+	# If we're not using uclibc, then copy over the 
+	# standard libs instead. -BEF-
+	[ "x$(UCLIBC_TARGET)" != "x" ] || ( cd $(BUILD_DIR) && \
+	  $(TOPDIR)/initrd_source/mklibs.sh -v -d lib ./*bin/* )
+
+	# Copy over other binaries.
+	cp -a $(RSYNC_BINARY) $(BUILD_DIR)/bin
+	cp -a $(DHCLIENT_BINARY) $(BUILD_DIR)/sbin
+	cp -a $(DEVFSD_BINARY) $(BUILD_DIR)/sbin
+	# If INSMOD_BINARY is set, then copy it on over. -BEF-
+	[ "x$(INSMOD_BINARY)" == "x" ] || \
+		cp -a $(INSMOD_BINARY) $(BUILD_DIR)/sbin
+
+	# Strip 'em. -BEF-
+	strip $(BUILD_DIR)/bin/*
+	strip $(BUILD_DIR)/sbin/*
+	strip $(BUILD_DIR)/usr/bin/*
+	strip $(BUILD_DIR)/usr/sbin/*
+
+	# Copy over text files from the skel directory.
+	cp -a ./skel/* $(BUILD_DIR)
+	../si_install -m 755 ./skel/etc/init.d/rcS $(BUILD_DIR)/etc/init.d/rcS
+
+	# Copy over modules required prior to retrieving the autoinstall
+	# binaries tarball. -BEF-
+	cp -a ./my_modules $(BUILD_DIR)
+
+	# Clear out CVS cruft.
+	find $(BUILD_DIR) -type d -name CVS -depth | xargs rm -rf
+
+	# Make sure root owns everything.
+	$(SUDO) chown 0.0 -R $(BUILD_DIR)/*
+
+	# Changing the date stamps of the files helps the size of the ramdisk
+	# stay more consistent between builds.  Sean Dague figured out this optimal
+	# time stamp somehow... -BEF-
+	$(SUDO) find $(BUILD_DIR) -depth -exec touch -t 196912311900 {} \;
+	$(SUDO) touch $(BUILD_DIR)/etc/hosts
+
+initrd:	$(BUILD_DIR)/etc/hosts
+
+	# Make sure any old ram disks are unmounted.
+	-$(SUDO) umount $(MOUNT_DIR)
+
+	# Create ramdisk file and format.
+	dd if=/dev/zero of=initrd bs=1k count=$(INITRD_SIZE)
+	mke2fs -N $(INITRD_INODE_COUNT) -m 0 -q -F initrd
+
+	# Mount the new ramdisk.
+	mkdir -p $(MOUNT_DIR)
+	$(SUDO) mount initrd $(MOUNT_DIR) -o loop
+
+	# Use tar to cleanly lay down the files from our build directory into
+	# our fresh ram disk -- without using any temporary files! -BEF-
+	( cd $(BUILD_DIR) ; $(SUDO) tar cpf - * ) | \
+	  ( cd $(MOUNT_DIR) ; $(SUDO) tar -xp)
+
+	$(SUDO) umount $(MOUNT_DIR) && rmdir $(MOUNT_DIR)
 
 initrd.gz:	initrd
 	gzip -9 < initrd > initrd.gz
+	du -b initrd.gz
 
-initrd:	binary-build-stamp $(LOCAL_BINARIES_STAGE1)
-	# create a temporary skeleton directory
-	cp -a skel skel.tmp
+install:	initrd.gz
+	mkdir -p $(TFTPROOT)
+	cp -a initrd.gz $(TFTPROOT)
 
-	# clear out CVS cruft
-	find skel.tmp -type d -name CVS -depth | xargs rm -rf
+get_source:	$(SRC_DIR)/$(BUSYBOX_TARBALL) $(SRC_DIR)/$(DEVFSD_TARBALL) \
+		$(SRC_DIR)/$(DHCLIENT_TARBALL) $(SRC_DIR)/$(MODUTILS_TARBALL) \
+		$(SRC_DIR)/$(RSYNC_TARBALL) $(SRC_DIR)/$(UCLIBC_TARBALL) 
 
-	# copy over files from local system
-	cp -a $(LOCAL_BINARIES_STAGE1) skel.tmp/bin
-	cd skel.tmp && ln ./bin/ash ./bin/sh
-	mv skel.tmp/bin/dhclient-2.2.x skel.tmp/bin/dhclient
-
-	$(SUDO) chown 0 -R skel.tmp/*
-	$(SUDO) chgrp 0 -R skel.tmp/*
-
-	$(SUDO) ./mkboel.sh -busybox $(BUSYBOX_BINARY_STAGE1) -d dev_ls-lR \
-	  -s skel.tmp -eb $(EXTRA_BLOCKS_STAGE1) -ei \
-	  $(EXTRA_INODES_STAGE1) -fs ext2 -o initrd
-
-	$(SUDO) rm -rf skel.tmp
-
-stage2rd.gz:	stage2rd
-	gzip -9 < stage2rd > stage2rd.gz
-
-stage2rd:	binary-build-stamp $(LOCAL_BINARIES_STAGE2) $(LOCAL_SBINARIES_STAGE2)
-	# create a temporary skeleton directory
-	cp -a skel skel2.tmp
-
-	# clear out CVS cruft
-	find skel2.tmp -type d -name CVS -depth | xargs rm -rf
-
-	# copy over files from local system
-	cp -a $(LOCAL_BINARIES_STAGE2) skel2.tmp/bin
-	mkdir skel2.tmp/sbin
-	cp -a $(LOCAL_SBINARIES_STAGE2) skel2.tmp/sbin
-
-	cd skel2.tmp && ln ./bin/ash ./bin/sh
-	mv skel2.tmp/bin/dhclient-2.2.x skel2.tmp/bin/dhclient
-
-	# copy over needed libs that aren't automatically
-	# pulled in by mklibs.sh
-	mkdir skel2.tmp/lib
-	cp -a /lib/libnss_dns* skel2.tmp/lib
-
-	# copy over the discover data
-	mkdir -p skel2.tmp/usr/share/discover
-	cp -a /usr/share/discover/* skel2.tmp/usr/share/discover
-
-	# copy over kernel modules
-	$(MAKE) -C .. patched_kernel
-	$(MAKE) -C $(LINUX_SRC) modules modules_install \
-	  INSTALL_MOD_PATH=$(PWD)/initrd_source/skel2.tmp
-
-	$(SUDO) chown 0 -R skel2.tmp/*
-	$(SUDO) chgrp 0 -R skel2.tmp/*
-
-	$(SUDO) ./mkboel.sh -busybox $(BUSYBOX_BINARY_STAGE2) -d dev_ls-lR \
-	  -s skel2.tmp -eb $(EXTRA_BLOCKS_STAGE2) \
-	  -ei $(EXTRA_INODES_STAGE2) -fs ext2 -o stage2rd
-
-	$(SUDO) rm -rf skel2.tmp
-
-stage2rd-ssh.gz:	stage2rd-ssh
-	gzip -9 < stage2rd-ssh > stage2rd-ssh.gz
-
-stage2rd-ssh:	binary-build-stamp $(LOCAL_BINARIES_STAGE2_SSH)
-	# create a temporary skeleton directory
-	cp -a skel skel2-ssh.tmp
-
-	# clear out CVS cruft
-	find skel2-ssh.tmp -type d -name CVS -depth | xargs rm -rf
-
-	# copy over files from local system
-	cp -a $(LOCAL_BINARIES_STAGE2_SSH) skel2-ssh.tmp/bin
-	mkdir skel2-ssh.tmp/sbin
-	cp -a $(LOCAL_SBINARIES_STAGE2_SSH) skel2-ssh.tmp/sbin
-	cd skel2-ssh.tmp && ln ./bin/ash ./bin/sh
-	mv skel2-ssh.tmp/bin/dhclient-2.2.x skel2-ssh.tmp/bin/dhclient
-
-	# copy over needed libs that aren't automatically
-	# pulled in by mklibs.sh
-	mkdir skel2-ssh.tmp/lib
-	cp -a /lib/libnss_dns* skel2-ssh.tmp/lib
-
-	# copy over the discover data
-	mkdir -p skel2-ssh.tmp/usr/share/discover
-	cp -a /usr/share/discover/* skel2-ssh.tmp/usr/share/discover
-
-	# copy over kernel modules
-	$(MAKE) -C .. patched_kernel
-	$(MAKE) -C $(LINUX_SRC) modules modules_install \
-	  INSTALL_MOD_PATH=$(PWD)/initrd_source/skel2-ssh.tmp
-
-	$(SUDO) chown 0 -R skel2-ssh.tmp/*
-	$(SUDO) chgrp 0 -R skel2-ssh.tmp/*
-
-	$(SUDO) ./mkboel.sh -busybox $(BUSYBOX_BINARY_STAGE2) -d dev_ls-lR \
-	  -s skel2-ssh.tmp -eb $(EXTRA_BLOCKS_STAGE2) \
-	  -ei $(EXTRA_INODES_STAGE2) -fs ext2 -o stage2rd-ssh
-
-	$(SUDO) rm -rf skel2-ssh.tmp
-
-install:	initrd.gz stage2rd.gz stage2rd-ssh.gz
-	mkdir -p $(INSTALL_DIR)
-	install -m 644 initrd.gz $(INSTALL_DIR)
-	install -m 644 stage2rd.gz $(INSTALL_DIR)
-	install -m 644 stage2rd-ssh.gz $(INSTALL_DIR)
-
-# binaries that we build from source
-binaries:	binary-build-stamp
-
-binary-build-stamp:
-	$(MAKE) $(BUSYBOX_BINARY_STAGE1) $(BUSYBOX_BINARY_STAGE2)
-	touch binary-build-stamp
-
-########## BEGIN busybox rules ##########
-
-$(BUSYBOX_BINARY_STAGE1):
-	$(MAKE) $(SRC_DIR)/$(BUSYBOX_TARBALL)
-	[ -d $(BUSYBOX_ROOT_STAGE1) ] || \
-		( cd $(SRC_DIR) && tar xvfz $(BUSYBOX_TARBALL) && \
-		  mv $(shell basename $(BUSYBOX_ROOT)) \
-		  $(shell basename $(BUSYBOX_ROOT_STAGE1)) )
-	cp -a busybox-1.Config.h $(BUSYBOX_ROOT_STAGE1)/Config.h
-	$(MAKE) -C $(BUSYBOX_ROOT_STAGE1) busybox
-	strip $(BUSYBOX_BINARY_STAGE1)
-
-$(BUSYBOX_BINARY_STAGE2):
-	$(MAKE) $(SRC_DIR)/$(BUSYBOX_TARBALL)
-	[ -d $(BUSYBOX_ROOT_STAGE2) ] || \
-		( cd $(SRC_DIR) && tar xvfz $(BUSYBOX_TARBALL) && \
-		  mv $(shell basename $(BUSYBOX_ROOT)) \
-		  $(shell basename $(BUSYBOX_ROOT_STAGE2)) )
-	cp -a busybox-2.Config.h $(BUSYBOX_ROOT_STAGE2)/Config.h
-	$(MAKE) -C $(BUSYBOX_ROOT_STAGE2) busybox
-	strip $(BUSYBOX_BINARY_STAGE2)
-
-$(SRC_DIR)/$(BUSYBOX_TARBALL):
-	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
-	cd $(SRC_DIR) && ([ -f /usr/src/$(BUSYBOX_TARBALL) ] && \
-	  ln -s /usr/src/$(BUSYBOX_TARBALL) .) || $(WGET) $(BUSYBOX_URL)
-
-########## END busybox rules ##########
-
-get_source:	$(SRC_DIR)/$(BUSYBOX_TARBALL)
-
-help:
-	@echo ' This Makefile provides rules to create a ramdisk (initrd.gz) for'
-	@echo ' SystemImager autoinstall clients.  '
-	@echo ''
-	@echo ' Steps for the Chronically Impatient'
-	@echo ' -----------------------------------'
-	@echo ' 1) Do a "make get_source".'
-	@echo ' 2) Modify the source code as desired.'
-	@echo ' 3) Modify the init script as desired "vi skel/etc/init.d/rcS".'
-	@echo ' 4) Modify any other configuration files as desired.  Most of these'
-	@echo '    are in the "skel" directory. (skel is short for skeleton files)'
-	@echo ' 5) Modify "dev_ls-lR" to add or remove device entries.'
-	@echo ' 5) Run "make install"'
-	@echo ''
-	@echo ''
-	@echo ' Details so that the Impatient can know what broke'
-	@echo ' -------------------------------------------------'
-	@echo ' Here are descriptions of the various rules:'
-	@echo ''
-	@echo ' make initrd.gz          makes a complete compressed ramdisk'
-	@echo ''
-	@echo ' make initrd             makes a complete uncompressed ramdisk'
-	@echo ''
-	@echo ' make install            installs a complete compressed ramdisk'
-	@echo '                         to $(INSTALL_DIR)'
-	@echo ''
-	@echo ' make binaries           downloads the source for and builds'
-	@echo '                         all required binaries that are not'
-	@echo '                         a part of the Debian/unstable distro'
-	@echo '                         (binaries that are in Debian/unstable'
-	@echo '                         are just copied over from the local'
-	@echo '                         system)'
-	@echo ''
-	@echo ' make <binary>           downloads the source for and builds'
-	@echo '                         a single required binary that is not'
-	@echo '                         a part of the Debian/unstable distro'
-	@echo '                         (binaries that are in Debian/unstable'
-	@echo '                         are just copied over from the local'
-	@echo '                         system)'
-	@echo ''
-	@echo ' make get_source         download the source for all binaries'
-	@echo '                         that are required, but not a part'
-	@echo '                         of Debian/unstable.'
-	@echo ''
-	@echo ' make help               print this message'
-	@echo ''
-	@echo ' make helpless           pipe this message through less'
-	@echo ''
-	@echo ' make clean              execute the clean rule in the source'
-	@echo '                         tree for each utility, remove editor'
-	@echo '                         backup files and files that have'
-	@echo '                         already been built.'
-	@echo ''
-	@echo ' make distclean          make clean + remove all downloaded'
-	@echo '                         tarballs & their build trees.'
-	@echo ''
-	@echo ' Please read the README.initrd for more build and customization'
-	@echo ' details.'
-
-helpless:
-	$(MAKE) help | less
-
-clean:
-	-$(MAKE) -C $(BUSYBOX_ROOT) clean
-	-find . -name "*~" -exec rm -f {} \;
-	rm -rf stage2rd.gz stage2rd-ssh.gz stage2rd stage2rd-ssh
-	rm -rf initrd initrd.gz busybox-1 busybox-2
-	$(SUDO) rm -rf skel.tmp skel2.tmp skel2-ssh.tmp
-	rm -rf binary-build-stamp
+clean:	$(subst .rul,_clean,$(shell cd make.d && ls *.rul))
+	-$(SUDO) find . -name "*~" -exec rm -f {} \;
+	-$(SUDO) umount $(MOUNT_DIR)
+	-$(SUDO) rm -rf $(MOUNT_DIR) $(BUILD_DIR) initrd initrd.gz
 
 distclean:	clean
 	-rm -rf $(SRC_DIR)
+
+.PHONY:	all build_dir install get_source help helpless clean distclean \
+	$(subst .rul,,$(shell cd make.d && ls *.rul)) uclibc_dev
