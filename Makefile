@@ -225,7 +225,9 @@ install_raidtools:	raidtools
 #@@raidtools:
 #@@  build the raidtools binaries
 #@@ 
-raidtools:
+raidtools:	raidtools-build-stamp
+
+raidtools-build-stamp:
 	$(MAKE) $(SRC_DIR)/$(RAIDTOOLS_TARBALL)
 	[ -d $(RAIDTOOLS_DIR) ] || \
 		( cd $(SRC_DIR) && bzcat $(RAIDTOOLS_TARBALL) | tar xv && \
@@ -233,6 +235,7 @@ raidtools:
 		  patch -p0 < ../$(RAIDTOOLS_PATCH) )
 	( cd $(RAIDTOOLS_DIR) && ./configure )
 	$(MAKE) -C $(RAIDTOOLS_DIR)
+	touch raidtools-build-stamp
 
 # download the raidtools tarball
 $(SRC_DIR)/$(RAIDTOOLS_TARBALL):
@@ -256,8 +259,12 @@ install_reiserfsprogs:	reiserfsprogs
 #@@reiserfsprogs:
 #@@  build statically-linked reiserfsprogs	
 #@@ 
-reiserfsprogs:	patched_kernel
+reiserfsprogs:	reiserfsprogs-build-stamp
+
+reiserfsprogs-build-stamp:
+	make patched_kernel
 	make -C $(REISERFSPROGS_DIR)
+	touch reiserfsprogs-build-stamp
 
 ######### END reiserfsprogs ##########
 
@@ -454,6 +461,23 @@ helpless:
 helpless_all:
 	$(MAKE) help_all | less
 
+#@distrib_clean:
+#@  removes large components of the build tree (mostly downloaded source),
+#@  but leaves all installable binaries.  this reduces the size of the tree
+#@  to something more easily downloadable.
+#@ 
+distrib_clean:
+	# remove downloaded source tarballs.
+	rm -rf $(SRC_DIR)/$(LINUX_TARBALL) $(SRC_DIR)/$(RAIDTOOLS_TARBALL) $(INITRD_DIR)/src
+	# make a skeleton kernel tree which just contains the files needed
+	# by the install_* rules
+	mkdir -p $(LINUX_SRC)/../linux.tmp
+	cd $(LINUX_SRC) && find . -name "mkreiserfs" -type f -exec cp -aP {} ../linux.tmp \;
+	cd $(LINUX_SRC) && find . -name "bzImage" -type f -exec cp -aP {} ../linux.tmp \;
+	rm -rf $(LINUX_SRC)/*
+	mv $(LINUX_SRC)/../linux.tmp/* $(LINUX_SRC)
+	rm -rf $(LINUX_SRC)/../linux.tmp
+
 #@clean:
 #@  removes object files, docs, editor backup files, etc.
 #@ 
@@ -475,6 +499,6 @@ clean:
 #@  same as clean, but also removes downloaded source, stamp files, etc.
 #@ 
 distclean:	clean
-	-rm patched_kernel-stamp kernel-build-stamp
+	-rm *stamp
 	-rm -rf $(SRC_DIR)
 	-$(MAKE) -C $(INITRD_DIR) distclean

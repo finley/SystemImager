@@ -35,7 +35,8 @@ clean:
 	rm -f build-stamp configure-stamp
 
 	# Add here commands to clean up after the build process.
-	-$(MAKE) distclean
+#	-$(MAKE) distclean
+	-$(MAKE) clean
 	-rm -rf debian/systemimager-client debian/systemimager-server \
 	debian/systemimager-kernel-i386 debian/systemimager-initrd-i386 \
 	debian/systemimager-bin-i386
