@@ -7,14 +7,14 @@
 
 Short list (in progress)
 ------------------------
-- need to add proper tftp entry in /etc/inetd.conf for tftp-hpa rpm
-
-- make a list of client files for Michael
 - create man pages
 - update FAQ-HOWTO
 
 Other stuff
 -----------
+- (part of the making of the tftp-hpa RPM) need to add proper tftp entry in /etc/inetd.conf 
+   for tftp-hpa rpm.  If systemimager is installed with tftp-hpa, then systemimager's 
+   afterburner will make the proper changes to /etc/inetd.conf.
 - make bootable CD-ROM *.iso image available
 - message during network booting (if possible)
 - make the <Backspace> key work ;)
