@@ -4,9 +4,9 @@
 # "VA SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com>
 #
 # This file is: installclient
-#  (this script does all the placing of files on the filesystem. "afterburner" is run
-#   automatically by "install" unless the --no-afterburner option is used.
-#   "afterburner" does all the configuration stuff.)
+#  (This script does all the placing of files on the filesystem.  This script
+#   is only used when installing the client from source.  It is not used
+#   in the preparation of the client RPM or during an RPM install.)
 #
 
 
@@ -415,5 +415,17 @@ fi
 
 ### END documentation and what not stuff ###
 
+if [ $QUIET = "false" ]; then 
+   echo "You must run \"prepareclient\" before you can retrieve this clients image."
+   echo -n "Do you want to run \"prepareclient\" now? (y/[n]) "
+   read REPLY
+   case $REPLY in
+        y|Y|Yes|yes|YES ) prepareclient ;;
+                      * ) echo \"prepareclient\" not run.
+                          echo Be sure to run \"prepareclient\" before you run \"getimage\" on the imageserver.
+                          exit 0
+                          ;;
+   esac
+fi
 
 exit 0
