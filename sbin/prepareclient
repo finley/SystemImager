@@ -88,8 +88,8 @@ $ENV{PATH} = "/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin";
 my $version_info = <<"EOF";
 prepareclient (part of SystemImager) v$VERSION
 
-Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley\@baldguysoftware.com>
-Copyright (C) 2002 Bald Guy Software <brian.finley\@baldguysoftware.com>
+Copyright (C) 1999-2003 Brian Elliott Finley <brian\@bgsw.net>
+
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 EOF
@@ -143,13 +143,13 @@ if ($> != 0) {
 }
 
 if($explicit) {
-  # Depricated.  Remove after v3.0.x.  Today's date: 2002.07.10 -BEF-  
-  print "FATAL:  -explicit is now depricated.  If SystemImager does not work properly\n";
-  print "        for you without the -explicit option, please file a bug report at\n";
-  print "        http://systemimager.org/support/.  Thanks!\n";
-  print "\n";
-  print qq(Try "prepareclient -help" for more options.\n);
-  exit 1;
+    # Depricated.  Remove after v3.2.x.  Today's date: 2003.06.21 -BEF-  
+    print "FATAL:  -explicit is now depricated.  If SystemImager does not work properly\n";
+    print "        for you without the -explicit option, please file a bug report at\n";
+    print "        http://systemimager.org/support/.  Thanks!\n";
+    print "\n";
+    print qq(Try "prepareclient -help" for more options.\n);
+    exit 1;
 }
 
 # Make sure we have certain tools that we need.
@@ -199,6 +199,7 @@ EOF
         print "Client prepartion cancelled.  No files modified.\n";
         exit 1;
     }
+    
     system("clear");
     print <<EOF;
 *********************************** WARNING *********************************** 
@@ -221,6 +222,53 @@ EOF
     unless($answer =~ /y/i) {
         print "Client prepartion cancelled.  No files modified.\n";
         exit 1;
+    }
+
+    #
+    # Deal with supermount module
+    #
+    system("clear");
+    my @supermounts;
+    open(MOUNT, "mount |");
+        while(<MOUNT>) {
+            my @fields = split;
+            if("$fields[4]" eq "supermount") {
+                push @supermounts, $fields[2];
+            }
+        }
+    close(MOUNT);
+    
+    if (@supermounts) {
+        print << "EOF";
+You appear to have mount points managed by the supermount kernel module.  These
+supermount managed mount points will cause your image retrieval to fail, unless
+they are unmounted.  
+
+Devices managed by supermount are typically CDROM and floppy devices, which
+won't be retrieved by SystemImager anyway, so unmounting these devices should
+cause no harm.  You can safely re-mount them after running the getimage command
+from your SystemImager server.
+
+Here are the mount points on this system that are managed by supermount:
+EOF
+
+        print "\n";
+        foreach (@supermounts) {
+            print "    $_\n";
+        }
+        print "\n";
+        print "SystemImager needs to unmount these to continue.\n\n";
+
+        print "Continue? (y/[n]): ";
+        my $answer = <>;
+        unless($answer =~ /y/i) {
+            print "Client prepartion cancelled.  No files modified.\n";
+            exit 1;
+        }
+        foreach (@supermounts) {
+            my $cmd = "umount $_";
+            !system($cmd) or die("Couldn't $cmd.");
+        }
     }
 }
  
