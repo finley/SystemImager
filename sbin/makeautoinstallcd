@@ -32,7 +32,7 @@ Usage: $program_name [OPTION]... -out-file FILE_NAME
 Options: (options can be presented in any order and may be abbreviated)
  -help             Display this output.
  -version          Display version and copyright information.
- -out-file FILE    Name of the file that will hold the resulting iso image.
+ -out-file FILE    Name of the file that will hold the resulting ISO image.
                    (Not to worry, this will only be about 3 MB in size.)
  -quiet            Don\'t print any output, just provide an appropriate 
                    exit code.
@@ -60,14 +60,20 @@ if($help) { die "$help_info"; }
 # if requested, print version and copyright information
 if($version) { die "$version_info"; }
 
-# verify that a valid filename was specified
-unless ($iso_file) { die "$help_info"; }
-$command = "touch $iso_file";
-system("$command");
-if($? != 0) { die "Couldn't create $iso_file!\n"; }
-
 # if not run as root, this script will surely fail
 unless($< == 0) { die "Must be run as root!\n"; }
+
+# verify that a valid filename was specified
+unless ($iso_file) { die "$help_info"; }
+$command = "touch $iso_file > /dev/null 2>&1";
+system("$command");
+if($? != 0) { 
+    unless ($quiet) {
+        die "Couldn't create $iso_file!\n";
+    } else {
+        exit 1;
+    }
+}
 
 # create temporary working directory
 unless ($quiet) { print "Creating temporary working directory...\n"; }
@@ -139,6 +145,10 @@ system("$command");
 if($? != 0) { die "Couldn't remove temporary working directory!\n"; }
 
 # print done!
-unless ($quiet) { print "Done!\n";}
+unless ($quiet) { print "Done!\n"; }
+unless ($quiet) { print "\nYou can now burn your ISO image to a CDROM with a command such as:\n"; }
+unless ($quiet) { print qq("cdrecord -v speed=2 dev=1,0,0 $iso_file"\n); }
+unless ($quiet) { print "\nSee the cdrecord manual for more information. (\"man cdrecord\")\n"; }
+
 exit 0;
 
