@@ -83,6 +83,7 @@ sub record_image_retrieval_time {
 
     my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
     $year += 1900;
+    $mon += 1;
 
     my $file = $image_dir . "/etc/systemimager/IMAGE_RETRIEVAL_TIME";
 
