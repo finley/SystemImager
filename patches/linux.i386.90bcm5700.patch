@@ -1,22 +1,18 @@
-###############################################################################
-# linux.i386.90bcm5700.patch                                                  #
-#     http://www.compaq.com/support/files/server/us/download/15515.html       #
-###############################################################################
-diff -urN linux.orig/drivers/net/Config.in linux/drivers/net/Config.in
---- linux.orig/drivers/net/Config.in	2002-11-06 21:14:42.000000000 -0700
-+++ linux/drivers/net/Config.in	2002-11-06 21:20:38.000000000 -0700
-@@ -234,6 +234,7 @@
+diff -urN linux-2.4.20.orig/drivers/net/Config.in linux-2.4.20/drivers/net/Config.in
+--- linux-2.4.20.orig/drivers/net/Config.in	2002-11-28 16:53:13.000000000 -0700
++++ linux-2.4.20/drivers/net/Config.in	2003-01-12 15:48:36.000000000 -0700
+@@ -242,6 +242,7 @@
  if [ "$CONFIG_ACENIC" != "n" ]; then
     bool '  Omit support for old Tigon I based AceNICs' CONFIG_ACENIC_OMIT_TIGON_I
  fi
 +dep_tristate 'Broadcom BCM5700 support' CONFIG_NET_BROADCOM $CONFIG_PCI
  dep_tristate 'D-Link DL2000-based Gigabit Ethernet support' CONFIG_DL2K $CONFIG_PCI
+ dep_tristate 'Intel(R) PRO/1000 Gigabit Ethernet support' CONFIG_E1000 $CONFIG_PCI
  dep_tristate 'MyriCOM Gigabit Ethernet support' CONFIG_MYRI_SBUS $CONFIG_SBUS
- dep_tristate 'National Semiconduct DP83820 support' CONFIG_NS83820 $CONFIG_PCI
-diff -urN linux.orig/drivers/net/Makefile linux/drivers/net/Makefile
---- linux.orig/drivers/net/Makefile	2002-11-06 21:14:42.000000000 -0700
-+++ linux/drivers/net/Makefile	2002-11-06 21:18:51.000000000 -0700
-@@ -29,6 +29,10 @@
+diff -urN linux-2.4.20.orig/drivers/net/Makefile linux-2.4.20/drivers/net/Makefile
+--- linux-2.4.20.orig/drivers/net/Makefile	2002-11-28 16:53:13.000000000 -0700
++++ linux-2.4.20/drivers/net/Makefile	2003-01-12 15:49:22.000000000 -0700
+@@ -33,6 +33,10 @@
    obj-$(CONFIG_ISDN) += slhc.o
  endif
  
@@ -27,17 +23,17 @@ diff -urN linux.orig/drivers/net/Makefile linux/drivers/net/Makefile
  subdir-$(CONFIG_NET_PCMCIA) += pcmcia
  subdir-$(CONFIG_NET_WIRELESS) += wireless
  subdir-$(CONFIG_TULIP) += tulip
-@@ -40,6 +44,7 @@
- subdir-$(CONFIG_APPLETALK) += appletalk
- subdir-$(CONFIG_SK98LIN) += sk98lin
+@@ -46,6 +50,7 @@
  subdir-$(CONFIG_SKFP) += skfp
+ subdir-$(CONFIG_E100) += e100
+ subdir-$(CONFIG_E1000) += e1000
 +subdir-$(CONFIG_NET_BROADCOM) += bcm
  
  #
  # link order important here
-diff -urN linux.orig/drivers/net/bcm/5701rls.c linux/drivers/net/bcm/5701rls.c
---- linux.orig/drivers/net/bcm/5701rls.c	1969-12-31 17:00:00.000000000 -0700
-+++ linux/drivers/net/bcm/5701rls.c	2002-06-18 08:37:38.000000000 -0600
+diff -urN linux-2.4.20.orig/drivers/net/bcm/5701rls.c linux-2.4.20/drivers/net/bcm/5701rls.c
+--- linux-2.4.20.orig/drivers/net/bcm/5701rls.c	1969-12-31 17:00:00.000000000 -0700
++++ linux-2.4.20/drivers/net/bcm/5701rls.c	2003-01-12 15:48:36.000000000 -0700
 @@ -0,0 +1,48 @@
 +/******************************************************************************/
 +/*                                                                            */
@@ -87,9 +83,9 @@ diff -urN linux.orig/drivers/net/bcm/5701rls.c linux/drivers/net/bcm/5701rls.c
 +}
 +
 +#endif /* INCLUDE_5701_AX_FIX */
-diff -urN linux.orig/drivers/net/bcm/5701rls.h linux/drivers/net/bcm/5701rls.h
---- linux.orig/drivers/net/bcm/5701rls.h	1969-12-31 17:00:00.000000000 -0700
-+++ linux/drivers/net/bcm/5701rls.h	2002-06-18 08:37:38.000000000 -0600
+diff -urN linux-2.4.20.orig/drivers/net/bcm/5701rls.h linux-2.4.20/drivers/net/bcm/5701rls.h
+--- linux-2.4.20.orig/drivers/net/bcm/5701rls.h	1969-12-31 17:00:00.000000000 -0700
++++ linux-2.4.20/drivers/net/bcm/5701rls.h	2003-01-12 15:48:36.000000000 -0700
 @@ -0,0 +1,198 @@
 +/******************************************************************************/
 +/*                                                                            */
@@ -289,9 +285,9 @@ diff -urN linux.orig/drivers/net/bcm/5701rls.h linux/drivers/net/bcm/5701rls.h
 +0x0, 0x0, 0x0, 
 +0x0, 0x0, 0x0, 0x0, 
 +0x0, 0x0 };
-diff -urN linux.orig/drivers/net/bcm/Makefile linux/drivers/net/bcm/Makefile
---- linux.orig/drivers/net/bcm/Makefile	1969-12-31 17:00:00.000000000 -0700
-+++ linux/drivers/net/bcm/Makefile	2002-11-06 21:24:57.000000000 -0700
+diff -urN linux-2.4.20.orig/drivers/net/bcm/Makefile linux-2.4.20/drivers/net/bcm/Makefile
+--- linux-2.4.20.orig/drivers/net/bcm/Makefile	1969-12-31 17:00:00.000000000 -0700
++++ linux-2.4.20/drivers/net/bcm/Makefile	2003-01-12 15:48:36.000000000 -0700
 @@ -0,0 +1,12 @@
 +
 +#
@@ -305,9 +301,9 @@ diff -urN linux.orig/drivers/net/bcm/Makefile linux/drivers/net/bcm/Makefile
 +EXTRA_CFLAGS = -DDBG=0 -DT3_JUMBO_RCV_RCB_ENTRY_COUNT=256 -DNICE_SUPPORT -DPCIX_TARGET_WORKAROUND=1 -DINCLUDE_TBI_SUPPORT -DINCLUDE_5701_AX_FIX=1
 +
 +include $(TOPDIR)/Rules.make
-diff -urN linux.orig/drivers/net/bcm/autoneg.c linux/drivers/net/bcm/autoneg.c
---- linux.orig/drivers/net/bcm/autoneg.c	1969-12-31 17:00:00.000000000 -0700
-+++ linux/drivers/net/bcm/autoneg.c	2002-06-18 08:37:38.000000000 -0600
+diff -urN linux-2.4.20.orig/drivers/net/bcm/autoneg.c linux-2.4.20/drivers/net/bcm/autoneg.c
+--- linux-2.4.20.orig/drivers/net/bcm/autoneg.c	1969-12-31 17:00:00.000000000 -0700
++++ linux-2.4.20/drivers/net/bcm/autoneg.c	2003-01-12 15:48:36.000000000 -0700
 @@ -0,0 +1,535 @@
 +/******************************************************************************/
 +/*                                                                            */
@@ -844,9 +840,9 @@ diff -urN linux.orig/drivers/net/bcm/autoneg.c linux/drivers/net/bcm/autoneg.c
 +}
 +#endif /* INCLUDE_TBI_SUPPORT */
 +
-diff -urN linux.orig/drivers/net/bcm/autoneg.h linux/drivers/net/bcm/autoneg.h
---- linux.orig/drivers/net/bcm/autoneg.h	1969-12-31 17:00:00.000000000 -0700
-+++ linux/drivers/net/bcm/autoneg.h	2002-06-18 08:37:38.000000000 -0600
+diff -urN linux-2.4.20.orig/drivers/net/bcm/autoneg.h linux-2.4.20/drivers/net/bcm/autoneg.h
+--- linux-2.4.20.orig/drivers/net/bcm/autoneg.h	1969-12-31 17:00:00.000000000 -0700
++++ linux-2.4.20/drivers/net/bcm/autoneg.h	2003-01-12 15:48:36.000000000 -0700
 @@ -0,0 +1,416 @@
 +/******************************************************************************/
 +/*                                                                            */
@@ -1264,9 +1260,9 @@ diff -urN linux.orig/drivers/net/bcm/autoneg.h linux/drivers/net/bcm/autoneg.h
 +
 +#endif /* AUTONEG_H */
 +
-diff -urN linux.orig/drivers/net/bcm/b57proc.c linux/drivers/net/bcm/b57proc.c
---- linux.orig/drivers/net/bcm/b57proc.c	1969-12-31 17:00:00.000000000 -0700
-+++ linux/drivers/net/bcm/b57proc.c	2002-06-18 08:37:38.000000000 -0600
+diff -urN linux-2.4.20.orig/drivers/net/bcm/b57proc.c linux-2.4.20/drivers/net/bcm/b57proc.c
+--- linux-2.4.20.orig/drivers/net/bcm/b57proc.c	1969-12-31 17:00:00.000000000 -0700
++++ linux-2.4.20/drivers/net/bcm/b57proc.c	2003-01-12 15:48:36.000000000 -0700
 @@ -0,0 +1,341 @@
 +
 +/******************************************************************************/
@@ -1609,9 +1605,9 @@ diff -urN linux.orig/drivers/net/bcm/b57proc.c linux/drivers/net/bcm/b57proc.c
 +}
 +
 +#endif
-diff -urN linux.orig/drivers/net/bcm/b57um.c linux/drivers/net/bcm/b57um.c
---- linux.orig/drivers/net/bcm/b57um.c	1969-12-31 17:00:00.000000000 -0700
-+++ linux/drivers/net/bcm/b57um.c	2002-06-18 08:37:38.000000000 -0600
+diff -urN linux-2.4.20.orig/drivers/net/bcm/b57um.c linux-2.4.20/drivers/net/bcm/b57um.c
+--- linux-2.4.20.orig/drivers/net/bcm/b57um.c	1969-12-31 17:00:00.000000000 -0700
++++ linux-2.4.20/drivers/net/bcm/b57um.c	2003-01-12 15:48:36.000000000 -0700
 @@ -0,0 +1,2954 @@
 +/******************************************************************************/
 +/*                                                                            */
@@ -4567,9 +4563,9 @@ diff -urN linux.orig/drivers/net/bcm/b57um.c linux/drivers/net/bcm/b57um.c
 +}
 +
 +
-diff -urN linux.orig/drivers/net/bcm/bits.h linux/drivers/net/bcm/bits.h
---- linux.orig/drivers/net/bcm/bits.h	1969-12-31 17:00:00.000000000 -0700
-+++ linux/drivers/net/bcm/bits.h	2002-06-18 08:37:38.000000000 -0600
+diff -urN linux-2.4.20.orig/drivers/net/bcm/bits.h linux-2.4.20/drivers/net/bcm/bits.h
+--- linux-2.4.20.orig/drivers/net/bcm/bits.h	1969-12-31 17:00:00.000000000 -0700
++++ linux-2.4.20/drivers/net/bcm/bits.h	2003-01-12 15:48:36.000000000 -0700
 @@ -0,0 +1,62 @@
 +
 +/******************************************************************************/
@@ -4633,9 +4629,9 @@ diff -urN linux.orig/drivers/net/bcm/bits.h linux/drivers/net/bcm/bits.h
 +
 +#endif /* BITS_H */
 +
-diff -urN linux.orig/drivers/net/bcm/debug.h linux/drivers/net/bcm/debug.h
---- linux.orig/drivers/net/bcm/debug.h	1969-12-31 17:00:00.000000000 -0700
-+++ linux/drivers/net/bcm/debug.h	2002-06-18 08:37:38.000000000 -0600
+diff -urN linux-2.4.20.orig/drivers/net/bcm/debug.h linux-2.4.20/drivers/net/bcm/debug.h
+--- linux-2.4.20.orig/drivers/net/bcm/debug.h	1969-12-31 17:00:00.000000000 -0700
++++ linux-2.4.20/drivers/net/bcm/debug.h	2003-01-12 15:48:36.000000000 -0700
 @@ -0,0 +1,108 @@
 +
 +/******************************************************************************/
@@ -4745,9 +4741,9 @@ diff -urN linux.orig/drivers/net/bcm/debug.h linux/drivers/net/bcm/debug.h
 +
 +#endif /* DEBUG_H */
 +
-diff -urN linux.orig/drivers/net/bcm/lm.h linux/drivers/net/bcm/lm.h
---- linux.orig/drivers/net/bcm/lm.h	1969-12-31 17:00:00.000000000 -0700
-+++ linux/drivers/net/bcm/lm.h	2002-06-18 08:37:38.000000000 -0600
+diff -urN linux-2.4.20.orig/drivers/net/bcm/lm.h linux-2.4.20/drivers/net/bcm/lm.h
+--- linux-2.4.20.orig/drivers/net/bcm/lm.h	1969-12-31 17:00:00.000000000 -0700
++++ linux-2.4.20/drivers/net/bcm/lm.h	2003-01-12 15:48:36.000000000 -0700
 @@ -0,0 +1,478 @@
 +
 +/******************************************************************************/
@@ -5227,9 +5223,9 @@ diff -urN linux.orig/drivers/net/bcm/lm.h linux/drivers/net/bcm/lm.h
 +
 +#endif /* LM_H */
 +
-diff -urN linux.orig/drivers/net/bcm/lmcfg.h linux/drivers/net/bcm/lmcfg.h
---- linux.orig/drivers/net/bcm/lmcfg.h	1969-12-31 17:00:00.000000000 -0700
-+++ linux/drivers/net/bcm/lmcfg.h	2002-06-18 08:37:38.000000000 -0600
+diff -urN linux-2.4.20.orig/drivers/net/bcm/lmcfg.h linux-2.4.20/drivers/net/bcm/lmcfg.h
+--- linux-2.4.20.orig/drivers/net/bcm/lmcfg.h	1969-12-31 17:00:00.000000000 -0700
++++ linux-2.4.20/drivers/net/bcm/lmcfg.h	2003-01-12 15:48:36.000000000 -0700
 @@ -0,0 +1,39 @@
 +
 +/******************************************************************************/
@@ -5270,9 +5266,9 @@ diff -urN linux.orig/drivers/net/bcm/lmcfg.h linux/drivers/net/bcm/lmcfg.h
 +
 +#endif /* LMCFG_H */
 +
-diff -urN linux.orig/drivers/net/bcm/mm.h linux/drivers/net/bcm/mm.h
---- linux.orig/drivers/net/bcm/mm.h	1969-12-31 17:00:00.000000000 -0700
-+++ linux/drivers/net/bcm/mm.h	2002-11-06 21:28:33.000000000 -0700
+diff -urN linux-2.4.20.orig/drivers/net/bcm/mm.h linux-2.4.20/drivers/net/bcm/mm.h
+--- linux-2.4.20.orig/drivers/net/bcm/mm.h	1969-12-31 17:00:00.000000000 -0700
++++ linux-2.4.20/drivers/net/bcm/mm.h	2003-01-12 15:48:36.000000000 -0700
 @@ -0,0 +1,192 @@
 +
 +/******************************************************************************/
@@ -5466,9 +5462,9 @@ diff -urN linux.orig/drivers/net/bcm/mm.h linux/drivers/net/bcm/mm.h
 +#define MM_Wait(time) udelay(time)
 +
 +#endif
-diff -urN linux.orig/drivers/net/bcm/nicext.h linux/drivers/net/bcm/nicext.h
---- linux.orig/drivers/net/bcm/nicext.h	1969-12-31 17:00:00.000000000 -0700
-+++ linux/drivers/net/bcm/nicext.h	2002-06-18 08:37:38.000000000 -0600
+diff -urN linux-2.4.20.orig/drivers/net/bcm/nicext.h linux-2.4.20/drivers/net/bcm/nicext.h
+--- linux-2.4.20.orig/drivers/net/bcm/nicext.h	1969-12-31 17:00:00.000000000 -0700
++++ linux-2.4.20/drivers/net/bcm/nicext.h	2003-01-12 15:48:36.000000000 -0700
 @@ -0,0 +1,110 @@
 +/****************************************************************************
 + * Copyright(c) 2000-2001 Broadcom Corporation. All rights reserved.
@@ -5580,9 +5576,9 @@ diff -urN linux.orig/drivers/net/bcm/nicext.h linux/drivers/net/bcm/nicext.h
 +
 +#endif  // _nicext_h_ 
 +
-diff -urN linux.orig/drivers/net/bcm/queue.h linux/drivers/net/bcm/queue.h
---- linux.orig/drivers/net/bcm/queue.h	1969-12-31 17:00:00.000000000 -0700
-+++ linux/drivers/net/bcm/queue.h	2002-06-18 08:37:38.000000000 -0600
+diff -urN linux-2.4.20.orig/drivers/net/bcm/queue.h linux-2.4.20/drivers/net/bcm/queue.h
+--- linux-2.4.20.orig/drivers/net/bcm/queue.h	1969-12-31 17:00:00.000000000 -0700
++++ linux-2.4.20/drivers/net/bcm/queue.h	2003-01-12 15:48:36.000000000 -0700
 @@ -0,0 +1,342 @@
 +
 +/******************************************************************************/
@@ -5926,9 +5922,9 @@ diff -urN linux.orig/drivers/net/bcm/queue.h linux/drivers/net/bcm/queue.h
 +
 +
 +#endif /* QUEUE_H */
-diff -urN linux.orig/drivers/net/bcm/tigon3.c linux/drivers/net/bcm/tigon3.c
---- linux.orig/drivers/net/bcm/tigon3.c	1969-12-31 17:00:00.000000000 -0700
-+++ linux/drivers/net/bcm/tigon3.c	2002-06-18 08:37:38.000000000 -0600
+diff -urN linux-2.4.20.orig/drivers/net/bcm/tigon3.c linux-2.4.20/drivers/net/bcm/tigon3.c
+--- linux-2.4.20.orig/drivers/net/bcm/tigon3.c	1969-12-31 17:00:00.000000000 -0700
++++ linux-2.4.20/drivers/net/bcm/tigon3.c	2003-01-12 15:48:36.000000000 -0700
 @@ -0,0 +1,5949 @@
 +/******************************************************************************/
 +/*                                                                            */
@@ -11879,9 +11875,9 @@ diff -urN linux.orig/drivers/net/bcm/tigon3.c linux/drivers/net/bcm/tigon3.c
 +    return ret;
 +}
 +
-diff -urN linux.orig/drivers/net/bcm/tigon3.h linux/drivers/net/bcm/tigon3.h
---- linux.orig/drivers/net/bcm/tigon3.h	1969-12-31 17:00:00.000000000 -0700
-+++ linux/drivers/net/bcm/tigon3.h	2002-06-18 08:37:38.000000000 -0600
+diff -urN linux-2.4.20.orig/drivers/net/bcm/tigon3.h linux-2.4.20/drivers/net/bcm/tigon3.h
+--- linux-2.4.20.orig/drivers/net/bcm/tigon3.h	1969-12-31 17:00:00.000000000 -0700
++++ linux-2.4.20/drivers/net/bcm/tigon3.h	2003-01-12 15:48:36.000000000 -0700
 @@ -0,0 +1,3351 @@
 +
 +/******************************************************************************/
