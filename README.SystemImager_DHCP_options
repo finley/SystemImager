@@ -1,8 +1,8 @@
 #
 # "SystemImager"
 #
-#  Copyright (C) 2002 Bald Guy Software 
-#                     Brian E. Finley <brian.finley@baldguysoftware.com>
+#  Copyright (C) 2002-2003 Bald Guy Software 
+#                          Brian E. Finley <brian@bgsw.net>
 #
 #    $Id$
 #
@@ -20,6 +20,7 @@ Files in the SystemImager source code that are affected by these options
 include:
 
     sbin/mkdhcpserver
+    initrd_source/skel/etc/dhclient.conf
     initrd_source/skel/etc/dhclient-script.systemimager-prefix
     doc/local.cfg
     README.SystemImager_DHCP_options
