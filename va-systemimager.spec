@@ -3,7 +3,7 @@
 %define rel      1
 %define prefix   /usr
 
-Summary: Software to install and update mass numbers of Linux systems
+Summary: Software that automates Linux installs and software distribution.
 Name: %name
 Version: %ver
 Release: %rel
@@ -18,26 +18,25 @@ URL: http://systemimager.org/
 Requires: rsync >= 2.4.6, syslinux >= 1.48, dhcp = 2.0, fileutils, grep, util-linux, sh-utils, gawk, sed, findutils, textutils, perl, dosfstools
 
 %description
-VA SystemImager is software that makes the installation of Linux to
-masses of similar machines relatively easy.  It also makes software,
-configuration, and operating system updates easy.  You can even update
-from one release version to another!  VA SystemImager can even be used
-for content management on web servers.  It is most useful in 
-environments where you have large numbers of identical machines.  Some
-typical environments include: Internet server farms, high performance
-clusters, computer labs, or corporate desktop environments where all
-workstations have the same basic hardware configuration.
-
+VA SystemImager is software that automates Linux installs and software
+distribution.  It also makes software distribution, configuration, and
+operating system updates easy. You can even update from one Linux 
+release version to another! VA SystemImager can also be used for 
+content distribution on web servers.  It is most useful in environments
+where you have large numbers of identical machines. Some typical
+environments include: Internet server farms, high performance clusters,
+computer labs, or corporate desktop environments where all workstations
+have the same basic hardware configuration.
 
 %package client
-Summary: VA SystemImager "Master Client" software
+Summary: VA SystemImager "golden client" software
 Group: Applications/System
 Conflicts: va-systemimager
 Requires: rsync >= 2.4.6, util-linux, sh-utils, fileutils, grep, gawk, sed, findutils, textutils, perl, mtools
 
 %description client
-This is the package you install on a VA SystemImager "master client".
-It prepares the "master client" to have its image retrieved by an 
+This is the package you install on a VA SystemImager "golden client".
+It prepares the "golden client" to have its image retrieved by an 
 image server.
 
 %changelog
@@ -104,4 +103,4 @@ cd /usr/doc/va-systemimager-%{ver}/ && ./afterburner -q -n
 %doc CHANGE.LOG COPYING CREDITS FAQ-HOWTO README TODO VERSION local.cfg
 /usr/sbin/updateclient
 /usr/sbin/prepareclient
-/etc/systemimager/systemimager.exclude
+%config /etc/systemimager/systemimager.exclude
