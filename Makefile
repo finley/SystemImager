@@ -176,6 +176,8 @@ ifeq ($(ARCH),i386)
 		$(PXE_CONF_DEST)/message.txt
 	$(SI_INSTALL) -m 644 --backup $(PXE_CONF_SRC)/syslinux.cfg \
 		$(PXE_CONF_DEST)/syslinux.cfg
+	$(SI_INSTALL) -m 644 --backup $(PXE_CONF_SRC)/syslinux.cfg.noboot \
+		$(PXE_CONF_DEST)/syslinux.cfg.noboot
 	$(SI_INSTALL) -m 644 --backup $(PXE_CONF_SRC)/syslinux.cfg \
 		$(PXE_CONF_DEST)/default
 endif
