@@ -436,6 +436,7 @@ $(TOPDIR)/tmp/systemimager-ssh-$(VERSION).tar.bz2:
 PHONY += install_boel_binaries_tarball
 install_boel_binaries_tarball:	$(BOEL_BINARIES_TARBALL)
 	$(SI_INSTALL) -m 644 $(BOEL_BINARIES_TARBALL) $(BOOT_BIN_DEST)
+	# boel_binaries.tar.gz installed.
 
 PHONY += boel_binaries_tarball
 boel_binaries_tarball:	$(BOEL_BINARIES_TARBALL)
