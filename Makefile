@@ -195,7 +195,7 @@ install_client_all:	install_client install_common
 
 # install server-only architecture independent files
 PHONY += install_server
-install_server:	install_server_man install_configs install_server_libs
+install_server:	install_configs install_server_libs
 	$(SI_INSTALL) -d $(BIN)
 	$(SI_INSTALL) -d $(SBIN)
 	$(foreach binary, $(BINARIES), \
@@ -224,7 +224,7 @@ install_server:	install_server_man install_configs install_server_libs
 
 # install client-only files
 PHONY += install_client
-install_client: install_client_man install_client_libs
+install_client: install_client_libs
 	mkdir -p $(ETC)/systemimager
 	$(SI_INSTALL) -b -m 644 etc/updateclient.local.exclude \
 	  $(ETC)/systemimager
@@ -237,7 +237,7 @@ install_client: install_client_man install_client_libs
 
 # install files common to both the server and client
 PHONY += install_common
-install_common:	install_common_man install_common_libs
+install_common:	install_common_libs
 	mkdir -p $(BIN)
 	$(foreach binary, $(COMMON_BINARIES), \
 		$(SI_INSTALL) -m 755 $(BINARY_SRC)/$(binary) $(BIN);)
@@ -476,7 +476,10 @@ $(BOEL_BINARIES_TARBALL):	$(DISCOVER_BINARY) \
 	cd $(BOEL_BINARIES_DIR)/sbin/ && ln -f raidstart raidstop
 	install -m 755 --strip $(MKREISERFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(MKJFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
+	
+ifdef MKXFS_BINARY
 	install -m 755 --strip $(MKXFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
+endif
 	#
 	# Put libraries in the boel_binaries_tarball...
 	#
