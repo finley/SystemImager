@@ -206,17 +206,23 @@ read_local_cfg() {
 
     if [ ! -z "$LAST_ROOT" ]; then
 
-        echo "Your kernel must have all necessary block and filesystem drivers"
-        echo "compiled in statically (not modules) in order for a local.cfg on"
-        echo "your hard drive to work properly.  You will need to compile your"
-        echo "own kernel as the standard SystemImager kernel is modular.  See"
-        echo "the SystemImager documentation for more information on compiling"
-        echo "your own kernel for SystemImager."
         echo
         echo "Checking for /local.cfg file on hard drive..."
         mkdir /last_root
         echo "Mounting hard drive..."
-        mount $LAST_ROOT /last_root -o ro > /dev/null 2>&1 || echo "Couldn't mount hard drive."
+        mount $LAST_ROOT /last_root -o ro > /dev/null 2>&1
+        if [ $? != 0 ]; then
+            echo "FATAL: Couldn't mount hard drive!"
+            echo "Your kernel must have all necessary block and filesystem drivers compiled in"
+            echo "statically (not modules) in order to use a local.cfg on your hard drive.  The"
+            echo "standard SystemImager kernel is modular, so you will need to compile your own"
+            echo "kernel.  See the SystemImager documentation for details.  To proceed at this"
+            echo "point, you will need to unset the LAST_ROOT append parameter by typing"
+            echo ""systemimager LAST_ROOT=", or similar, at your boot prompt.  This will not use"
+            echo "the local.cfg file on your hard drive, but will still use one on a floppy."
+            shellout
+        fi
+
         if [ -f /last_root/local.cfg ]; then
             echo "Found /local.cfg on hard drive."
             echo "Copying /local.cfg settings to /tmp/local.cfg."
