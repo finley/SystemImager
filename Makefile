@@ -1,11 +1,11 @@
 #
-# "SystemImager"  
+#	"SystemImager"  
 #
 #   Copyright (C) 1999-2004 Brian Elliott Finley
 #   Copyright (C) 2001-2004 Hewlett-Packard Company <dannf@hp.com>
 #   
 #   Others who have contributed to this code:
-#   Sean Dague <sean@dague.net>
+#   	Sean Dague <sean@dague.net>
 #
 #   $Id$
 #
@@ -23,8 +23,17 @@
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
-# 2004.04.13 Brian Elliott Finley
-# - Michael Jennings suggested permissions changes on some files.  done.
+#	2004.04.13 	Brian Elliott Finley
+#	- Michael Jennings suggested permissions changes on some files.  done.
+#	2004.09.08  Brian Elliott Finley
+#	- add MKSWAP_BINARY
+#   2004.09.10  Brian Elliott Finley
+#   - include as part of standard boel_binaries_tarball
+#   - move to using gpg .sign files only.  no need for md5 too, especially
+#     if we want to be knee-jerk reactionary to the recent md5 hash collision
+#     reports. :-)
+#   2004.09.11  Brian Elliott Finley
+#   - install everything in the doc/examples directory.
 #
 #
 # ERRORS when running make:
@@ -140,8 +149,6 @@ INITRD_DIR = $(TOPDIR)/initrd_source
 
 BOOT_BIN_DEST     = $(USR)/share/systemimager/boot/$(ARCH)/$(FLAVOR)
 
-SSH_BIN_DEST 	  = $(USR)/share/systemimager/boot/$(ARCH)/ssh
-
 PXE_CONF_SRC      = etc/pxelinux.cfg
 PXE_CONF_DEST     = $(ETC)/systemimager/pxelinux.cfg
 
@@ -164,9 +171,6 @@ CHECK_FLOPPY_SIZE = expr \`du -b $(INITRD_DIR)/initrd.img | cut -f 1\` + \`du -b
 
 BOEL_BINARIES_DIR = $(TOPDIR)/tmp/boel_binaries
 BOEL_BINARIES_TARBALL = $(BOEL_BINARIES_DIR).tar.gz
-
-SYSTEMIMAGER_SSH_DIR = $(TOPDIR)/tmp/systemimager_ssh
-SYSTEMIMAGER_SSH_TARBALL = $(SYSTEMIMAGER_SSH_DIR).tar.gz
 
 SI_INSTALL = $(TOPDIR)/tools/si_install --si-prefix=$(PREFIX)
 GETSOURCE = $(TOPDIR)/tools/getsource
@@ -365,9 +369,8 @@ install_docs: docs
 	mkdir -p $(DOC)
 	cp -a $(MANUAL_DIR)/html $(DOC)
 	cp $(MANUAL_DIR)/*.ps $(MANUAL_DIR)/*.pdf $(DOC)
-	mkdir -p $(DOC)/examples
-	$(SI_INSTALL) -m 644 doc/local.cfg $(DOC)/examples
-	$(SI_INSTALL) -m 644 doc/elilo-ia64.conf $(DOC)/examples
+	rsync -av --exclude 'CVS/' doc/examples/ $(DOC)/examples/
+	#XXX $(SI_INSTALL) -m 644 doc/media-api.txt $(DOC)/
 
 # builds the manual from SGML source
 PHONY += docs
@@ -392,85 +395,6 @@ install_binaries:	install_kernel initrd_install \
 
 ################################################################################
 #
-#	ssh_tarball
-#
-PHONY += ssh_tarball
-ssh_tarball:	$(SYSTEMIMAGER_SSH_TARBALL)
-
-$(SYSTEMIMAGER_SSH_TARBALL):	$(OPENSSH_BINARIES) \
-								$(OPENSSH_CONF_FILES)
-
-ifndef WITH_SSH
-	@echo ''
-	@echo 'Please use "make WITH_SSH=1 ssh_tarball".'
-	@echo ''
-	@exit 1
-endif
-
-	mkdir -m 755 -p $(SYSTEMIMAGER_SSH_DIR)/etc/ssh
-	install -m 644 $(OPENSSH_CONF_FILES) $(SYSTEMIMAGER_SSH_DIR)/etc/ssh
-
-	mkdir -m 755 -p $(SYSTEMIMAGER_SSH_DIR)/sbin
-	install -m 755 --strip $(OPENSSH_BINARIES) $(SYSTEMIMAGER_SSH_DIR)/sbin/
-
-	# Use the mklibs utility from Debian to find and copy libraries and 
-	# any soft links.  Note: This does not require PIC libraries -- it will
-	# copy standard libraries if it can't find a PIC equivalent.  -BEF-
-	#
-	mkdir -m 755 -p $(SYSTEMIMAGER_SSH_DIR)/lib
-	cd $(SYSTEMIMAGER_SSH_DIR) && \
-	  $(PYTHON) $(TOPDIR)/initrd_source/mklibs \
-	  -L /lib64:/usr/lib64 -v -d lib sbin/*
-
-	tar -cv $(OPENSSH_OTHER_FILES) | tar -C $(SYSTEMIMAGER_SSH_DIR) -xv
-
-	# Tar it up, baby! -BEF-
-	cd $(SYSTEMIMAGER_SSH_DIR) && tar -cv * | gzip -9 > $(SYSTEMIMAGER_SSH_TARBALL)
-
-
-PHONY += get_ssh_source
-get_ssh_source:	$(OPENSSH_SOURCE)
-ifndef WITH_SSH
-	@echo ''
-	@echo 'Please use "make WITH_SSH=1 get_ssh_source".'
-	@echo ''
-	@exit 1
-endif
-
-PHONY += install_ssh_tarball
-install_ssh_tarball:	$(SYSTEMIMAGER_SSH_TARBALL)
-	$(SI_INSTALL) -d -m 755 $(SSH_BIN_DEST)
-	$(SI_INSTALL) -m 644 $(SYSTEMIMAGER_SSH_TARBALL) $(SSH_BIN_DEST)
-
-PHONY += ssh_source_tarball
-ssh_source_tarball:	$(TOPDIR)/tmp/systemimager-ssh-$(VERSION).tar.bz2.md5sum $(TOPDIR)/tmp/systemimager-ssh-$(VERSION).tar.bz2.sign
-
-$(TOPDIR)/tmp/systemimager-ssh-$(VERSION).tar.bz2.md5sum:	$(TOPDIR)/tmp/systemimager-ssh-$(VERSION).tar.bz2
-	cd $(TOPDIR)/tmp && md5sum systemimager-ssh-$(VERSION).tar.bz2 > systemimager-ssh-$(VERSION).tar.bz2.md5sum
-
-$(TOPDIR)/tmp/systemimager-ssh-$(VERSION).tar.bz2.sign:	$(TOPDIR)/tmp/systemimager-ssh-$(VERSION).tar.bz2
-	cd $(TOPDIR)/tmp && gpg --detach-sign -a --output systemimager-ssh-$(VERSION).tar.bz2.sign systemimager-ssh-$(VERSION).tar.bz2
-	cd $(TOPDIR)/tmp && gpg --verify systemimager-ssh-$(VERSION).tar.bz2.sign
-
-$(TOPDIR)/tmp/systemimager-ssh-$(VERSION).tar.bz2:
-	mkdir -p tmp/systemimager-ssh-$(VERSION)
-	find . -maxdepth 1 -not -name . -not -name tmp -not -name src \
-	  -exec cp -a {} tmp/systemimager-ssh-$(VERSION) \;
-	rm -rf `find tmp/systemimager-ssh-$(VERSION) -name CVS \
-	         -type d -printf "%p "`
-	$(MAKE) -C $(TOPDIR)/tmp/systemimager-ssh-$(VERSION) distclean
-	$(MAKE) -C $(TOPDIR)/tmp/systemimager-ssh-$(VERSION) WITH_SSH=1 get_ssh_source
-	cd $(TOPDIR)/tmp && tar -ch systemimager-ssh-$(VERSION) | bzip2 > systemimager-ssh-$(VERSION).tar.bz2
-	@echo
-	@echo "ssh source tarball has been created in $(TOPDIR)/tmp"
-	@echo
-
-#
-################################################################################
-
-
-################################################################################
-#
 #	boel_binaries_tarball
 #
 # 	Perhaps there could be problems here in building multiple arch's from
@@ -485,22 +409,25 @@ install_boel_binaries_tarball:	$(BOEL_BINARIES_TARBALL)
 PHONY += boel_binaries_tarball
 boel_binaries_tarball:	$(BOEL_BINARIES_TARBALL)
 
-$(BOEL_BINARIES_TARBALL):	$(DISCOVER_BINARY) \
+$(BOEL_BINARIES_TARBALL):	\
+				$(BC_BINARY) \
+				$(TAR_BINARY) \
+				$(GZIP_BINARY) \
+				$(DISCOVER_BINARY) \
 				$(DISCOVER_DATA_FILES) \
 				$(MKDOSFS_BINARY) \
 				$(MKE2FS_BINARY) \
 				$(TUNE2FS_BINARY) \
 				$(PARTED_BINARY) \
-				$(MKJFS_BINARY) \
+				$(MKSWAP_BINARY) \
 				$(RAIDTOOLS_BINARIES) \
 				$(MKREISERFS_BINARY) \
-				$(BC_BINARY) \
-				$(SFDISK_BINARY) \
+				$(MKJFS_BINARY) \
 				$(MKXFS_BINARY) \
 				$(CTCS_BINARY) \
-				$(TAR_BINARY) \
-				$(GZIP_BINARY) \
 				$(DEPMOD_BINARY) \
+				$(OPENSSH_BINARIES) \
+				$(OPENSSH_CONF_FILES) \
 				$(SRC_DIR)/modules_build-stamp
 	#
 	# Put binaries in the boel_binaries_tarball...
@@ -508,19 +435,22 @@ $(BOEL_BINARIES_TARBALL):	$(DISCOVER_BINARY) \
 	rm -fr $(BOEL_BINARIES_DIR)
 	mkdir -m 755 -p $(BOEL_BINARIES_DIR)/bin
 	mkdir -m 755 -p $(BOEL_BINARIES_DIR)/sbin
-	install -m 755 --strip $(BC_BINARY) $(BOEL_BINARIES_DIR)/bin/
-	install -m 755 --strip $(TAR_BINARY) $(BOEL_BINARIES_DIR)/bin/
-	install -m 755 --strip $(GZIP_BINARY) $(BOEL_BINARIES_DIR)/bin/
-	install -m 755 --strip $(DISCOVER_BINARY) $(BOEL_BINARIES_DIR)/sbin/
-	install -m 755 --strip $(MKDOSFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
-	install -m 755 --strip $(MKE2FS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
-	install -m 755 --strip $(TUNE2FS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
-	install -m 755 --strip $(PARTED_BINARY) $(BOEL_BINARIES_DIR)/sbin/
-	install -m 755 --strip $(SFDISK_BINARY) $(BOEL_BINARIES_DIR)/sbin/
-	install -m 755 --strip $(RAIDTOOLS_BINARIES) $(BOEL_BINARIES_DIR)/sbin/
+	mkdir -m 755 -p $(BOEL_BINARIES_DIR)/etc/ssh
+	install -m 755 --strip $(BC_BINARY) 			$(BOEL_BINARIES_DIR)/bin/
+	install -m 755 --strip $(TAR_BINARY) 			$(BOEL_BINARIES_DIR)/bin/
+	install -m 755 --strip $(GZIP_BINARY) 			$(BOEL_BINARIES_DIR)/bin/
+	install -m 755 --strip $(DISCOVER_BINARY) 		$(BOEL_BINARIES_DIR)/sbin/
+	install -m 755 --strip $(MKDOSFS_BINARY) 		$(BOEL_BINARIES_DIR)/sbin/
+	install -m 755 --strip $(MKE2FS_BINARY) 		$(BOEL_BINARIES_DIR)/sbin/
+	install -m 755 --strip $(TUNE2FS_BINARY) 		$(BOEL_BINARIES_DIR)/sbin/
+	install -m 755 --strip $(PARTED_BINARY)			$(BOEL_BINARIES_DIR)/sbin/
+	install -m 755 --strip $(MKSWAP_BINARY)			$(BOEL_BINARIES_DIR)/sbin/
+	install -m 755 --strip $(RAIDTOOLS_BINARIES) 	$(BOEL_BINARIES_DIR)/sbin/
 	cd $(BOEL_BINARIES_DIR)/sbin/ && ln -f raidstart raidstop
-	install -m 755 --strip $(MKREISERFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
-	install -m 755 --strip $(MKJFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
+	install -m 755 --strip $(MKREISERFS_BINARY) 	$(BOEL_BINARIES_DIR)/sbin/
+	install -m 755 --strip $(MKJFS_BINARY) 			$(BOEL_BINARIES_DIR)/sbin/
+	install -m 755 --strip $(OPENSSH_BINARIES) 		$(BOEL_BINARIES_DIR)/sbin/
+	install -m 644 $(OPENSSH_CONF_FILES) 			$(BOEL_BINARIES_DIR)/etc/ssh
 
 ifdef MKXFS_BINARY
 	install -m 755 --strip $(MKXFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
@@ -563,7 +493,12 @@ endif
 	# copy standard libraries if it can't find a PIC equivalent.  -BEF-
 	#
 	cd $(BOEL_BINARIES_DIR) && $(PYTHON) $(TOPDIR)/initrd_source/mklibs \
-	  -L /lib64:/usr/lib64:$(SRC_DIR)/$(PARTED_DIR)/libparted/.libs:$(SRC_DIR)/$(DISCOVER_DIR)/lib/.libs -v -d lib bin/* sbin/*
+		-L /lib64:/usr/lib64:$(SRC_DIR)/$(PARTED_DIR)/libparted/.libs:$(SRC_DIR)/$(DISCOVER_DIR)/lib/.libs -v -d lib bin/* sbin/*
+	#
+	# Include other files required by openssh that apparently aren't 
+	# picked up by mklibs for some reason. -BEF-
+	#
+	tar -cv $(OPENSSH_OTHER_FILES) | tar -C $(BOEL_BINARIES_DIR) -xv
 	#
 	#
 	# install kernel modules. -BEF-
@@ -588,10 +523,7 @@ endif
 
 
 PHONY += source_tarball
-source_tarball:	$(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2.md5sum $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2.sign
-
-$(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2.md5sum:	$(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
-	cd $(TOPDIR)/tmp && md5sum systemimager-$(VERSION).tar.bz2 > systemimager-$(VERSION).tar.bz2.md5sum
+source_tarball:	$(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2.sign
 
 $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2.sign:	$(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
 	cd $(TOPDIR)/tmp && gpg --detach-sign -a --output systemimager-$(VERSION).tar.bz2.sign systemimager-$(VERSION).tar.bz2
