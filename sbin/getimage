@@ -140,7 +140,6 @@ EOF
     
 
 $golden_client = "";
-$master_client = "";
 $ip_assignment_method = "";
 $image = "";
 $update_script = "";
@@ -150,7 +149,6 @@ $imagedir_prefix =  "/var/spool/systemimager/images";
 
 ### BEGIN evaluate options ###
 GetOptions( 
-    "master-client=s" => \$master_client,
     "golden-client=s" => \$golden_client,
     "server=s" => \$imageserver,
     "image=s" => \$image,
@@ -177,17 +175,6 @@ if ($version) {
   print "$version_info";
   exit 0;
 }
-
-# only golden client or master client may be set
-if ($golden_client and $master_client) {
-  print "\n";
-  print "getimage: Either use -golden-client or -master-client but not both.\n";
-  print "          (-master-client is depricated and will be unavailable in\n"; 
-  die   "           a future release.)\n$get_help\n\n";
-}
-
-# if $master_client is used, pass the variable on
-if ($master_client) { $golden_client = $master_client; }
 
 # only golden client or server may be set
 if ($golden_client and $imageserver) {
