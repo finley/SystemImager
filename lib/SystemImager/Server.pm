@@ -1138,9 +1138,35 @@ sub _write_out_umount_commands {
     foreach my $line (reverse sort (keys ( %{$config->{fsinfo}} ))) {
 
         if ( $config->{fsinfo}->{$line}->{fs} ) { 
+
+            #
+            # We don't need to add filesystems that will not be formatted, and
+            # therefore not mounted, to the list of filesystems to umount. -BEF-
+            #
+            my $format = $config->{fsinfo}->{$line}->{format};
+            if (($format) and ( "$format" eq "no")) { next; }
+
             my $mp = $config->{fsinfo}->{$line}->{mp};
             my $fs = $config->{fsinfo}->{$line}->{fs};
+
+            # 
+            # Don't include in hash below unless it's a supported filesystem. -BEF-
+            #
+            unless( 
+                   ($fs eq "ext2") 
+                   or ($fs eq "ext3") 
+                   or ($fs eq "reiserfs")
+                   or ($fs eq "msdos")
+                   or ($fs eq "vfat")
+                   or ($fs eq "jfs")
+                   or ($fs eq "proc")
+            ) { next; }
+
+            # 
+            # Create the hash. -BEF-
+            #
             $fs_by_mp{$mp} = $fs;
+
         }
     }
 
@@ -1155,15 +1181,6 @@ sub _write_out_umount_commands {
     foreach my $mp (reverse sort (keys ( %fs_by_mp ))) {
        
         my $fs = $fs_by_mp{$mp};
-        unless( 
-               ($fs eq "ext2") 
-               or ($fs eq "ext3") 
-               or ($fs eq "reiserfs")
-               or ($fs eq "msdos")
-               or ($fs eq "vfat")
-               or ($fs eq "jfs")
-               or ($fs eq "proc")
-        ) { next; }
 
         # umount
         my $cmd = "umount /a$mp || shellout";
