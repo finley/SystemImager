@@ -2,8 +2,8 @@ rsync configuration:
   VA SystemImager is heavily dependent on rsync.  For it to function properly,
   some configuration is necessary.  If your machine is not already configured
   to be an rsync server, you can just:
-	cp -a /usr/share/doc/va-systemimager/examples/rsync /etc/init.d
-	cp -a /usr/share/doc/va-systemimager/examples/rsyncd.conf /etc
+	cp -a /usr/share/doc/systemimager-server/examples/rsync /etc/init.d
+	cp -a /usr/share/doc/systemimager-server/examples/rsyncd.conf /etc
 
   otherwise, you may need to edit these files by hand if you want to retain
   the functionality of your current rsync server configuration.

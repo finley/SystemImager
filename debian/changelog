@@ -1,3 +1,82 @@
+systemimager (1.5.0-5) unstable; urgency=low
+  
+  * added mtools dependency - thanks sdague@raleigh.ibm.com
+
+ -- dann <dannf@dannf.org>  Mon,  9 Jul 2001 20:34:18 -0600
+
+systemimager (1.5.0-4) unstable; urgency=low
+  
+  * changed initscript description to mention systemimager
+  * fixed obsolete depends entries in systemimager-server package
+
+ -- dann <dannf@dannf.org>  Wed, 27 Jun 2001 21:23:19 -0600
+
+systemimager (1.5.0-3) unstable; urgency=low
+  
+  * moved /tftpboot files to /usr/lib/systemimager
+
+ -- dann <dannf@dannf.org>  Tue, 26 Jun 2001 23:50:04 -0600
+
+systemimager (1.5.0-2) unstable; urgency=low
+  
+  * created a systemimager-common package to prevent conflicts
+    between the server & client packages
+
+ -- dann <dannf@dannf.org>  Tue, 26 Jun 2001 21:37:01 -0600
+
+systemimager (1.5.0-1) unstable; urgency=low
+  
+  * new upstream release
+  * no longer builds binaries that are already available in other debian
+    packages for the initrd.  now build depends on those packages & copies
+    them over.
+
+ -- dann <dannf@dannf.org>  Tue, 12 Jun 2001 20:46:58 -0600
+
+systemimager (1.4.1-5) unstable; urgency=low
+  
+  * docs are now only installed by systemimager-server, preventing
+    a conflict between systemimager-server and systemimager-client
+  * systemimager-server now depends on systemimager-[initrd|kernel|bin]-i386
+
+ -- dann <dannf@dannf.org>  Sun, 27 May 2001 10:46:24 -0600
+
+systemimager (1.4.1-4) unstable; urgency=low
+  
+  * va-systemimager-* have become systemimager-*
+
+ -- dann <dannf@dannf.org>  Mon, 30 Apr 2001 21:26:46 -0600
+
+va-systemimager (1.4.1-3) unstable; urgency=low
+
+  * va-systemimager-raidtools2 and va-systemimager-reiserfsprogs
+    have now merged into va-systemimager-bin-i386
+  * the va-systemimager package is now called va-systemimager-server
+
+ -- dann <dannf@dannf.org>  Sat, 21 Apr 2001 20:34:36 -0600
+
+va-systemimager (1.4.1-2) unstable; urgency=low
+
+  * what was va-systemimager-initrd is now va-systemimager-initrd-dkf
+  * va-systemimager-initrd now contains the initrd.gz distributed with
+    upstream source.
+
+ -- dann <dannf@dannf.org>  Sat, 21 Apr 2001 20:34:36 -0600
+
+va-systemimager (1.4.1-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- dann <dannf@dannf.org>  Fri, 20 Apr 2001 20:48:56 -0600
+  
+va-systemimager (1.4.0-2) unstable; urgency=low
+
+  * Now recommends what it used to suggest
+  * Recommends mkisofs (needed by makeautoinstallcd).  makeautoinstalldiskette
+    and makeautoinstallcd should work now.  
+
+ -- dann <dannf@dannf.org>  Thu, 19 Apr 2001 21:10:29 -0600
+
 va-systemimager (1.4.0-1) unstable; urgency=low
 
   * Initial Release.

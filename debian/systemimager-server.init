@@ -1,0 +1,53 @@
+#! /bin/sh
+#
+# skeleton	example file to build /etc/init.d/ scripts.
+#		This file should be used to construct scripts for /etc/init.d.
+#
+#		Written by Miquel van Smoorenburg <miquels@cistron.nl>.
+#		Modified for Debian GNU/Linux
+#		by Ian Murdock <imurdock@gnu.ai.mit.edu>.
+#
+# Version:	@(#)skeleton  1.8  03-Mar-1998  miquels@cistron.nl
+#
+# rsync         Hacked by Brian Finley <brian@systemimager.org>
+#               for rsync.
+#
+# chkconfig:   2345 20 20
+# description: The rsync daemon.
+#
+
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+NAME=rsync
+OPTIONS="--daemon --config=/etc/systemimager/rsyncd.conf"
+DAEMON=`which $NAME` || exit 0
+DESC="rsync daemon for systemimager"
+
+test -f $DAEMON || exit 0
+
+case "$1" in
+  start)
+	echo -n "Starting $DESC: "
+	PID=`pidof $NAME`
+	[ ! -z "$PID" ] && echo "already running." && exit 0
+	$DAEMON $OPTIONS
+	echo "$NAME."
+	;;
+  stop)
+	echo -n "Stopping $DESC: "
+	PID=`pidof $NAME`
+	[ ! -z "$PID" ] && kill $PID
+	echo "$NAME."
+	;;
+  restart|force-reload)
+	$0 stop
+	sleep 1
+	$0 start
+	;;
+  *)
+	echo "Usage: $0 {start|stop|restart|force-reload}" >&2
+	exit 1
+	;;
+esac
+
+exit 0
