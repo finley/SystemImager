@@ -254,7 +254,7 @@ fi
 
 # If IMAGESERVER is still not set, set it to DHCPSERVER IP ADDRESS
 if [ -z $IMAGESERVER ]; then
-    IMAGESERVER = $DHCPSIADDR
+    IMAGESERVER=$DHCPSIADDR
 fi
 
 ### BEGIN ping test for switch initialization ###
