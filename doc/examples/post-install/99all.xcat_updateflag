@@ -1,9 +1,14 @@
 #!/bin/gawk -f
 
 #
-#       $Id$
+#       NOTE:  Be sure to change the following variables as appropriate
+#              for your site: xcatdhost, xcatdport
 #
-#       Created by Egan Ford
+
+#
+#       $Id$
+#       
+#       Written by Egan Ford
 #
 #       2004.10.19  Brian Elliott Finley
 #       - requires gawk, so explicitly changed to gawk
@@ -16,8 +21,8 @@ BEGIN {
         # Set these to match the entries of the same name in your 
         # /opt/xcat/etc/site.tab file. -BEF-
         #
-        xcatdhost = '192.5.198.221'
-        xcatdport = '3001'
+        xcatdhost = "192.5.198.221"
+        xcatdport = "3001"
 
         # 
         # No modifications below here should be necessary. -BEF-
