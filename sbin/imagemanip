@@ -21,6 +21,7 @@ use Pod::Usage;
 use File::Basename;
 use File::Path;
 use LockFile::Simple;
+use Sys::Hostname;
 use Errno qw(:POSIX);
 
 use SystemImager::Options;
@@ -333,6 +334,8 @@ my %funcs=(
     help     => \&do_help,
 );
 
+my $hostname = hostname;
+
 # Take out command options
 our $opt_verbose = undef;
 our $opt_version = undef;
@@ -487,7 +490,7 @@ sub log_append
             }
         }
         open(LOG,">>$log") || die "$log: $!\n";
-        print LOG scalar(localtime())," $opt_user: $line\n" || die "$log: $!\n";
+        print LOG scalar(localtime())," $opt_user($hostname): $line\n" || die "$log: $!\n";
         close LOG || die "$log: $!\n";
     }
 }
