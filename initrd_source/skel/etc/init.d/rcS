@@ -145,7 +145,7 @@ get_boel_binaries_tarball() {
         # Remove possible trailing / from URL
         SSH_DOWNLOAD_URL=`echo $SSH_DOWNLOAD_URL | sed 's/\/$//'`
 
-        cd /tmp
+        cd /
         CMD="wget ${SSH_DOWNLOAD_URL}/${ARCH}/${FLAVOR}/boel_binaries.tar.gz"
         echo "$CMD"
         $CMD || shellout
@@ -154,18 +154,17 @@ get_boel_binaries_tarball() {
         # Use multicast
         echo "MCAST_GROUP variable is set, so we will use multicast!"
         echo "MCAST_GROUP: $MCAST_GROUP"
-        cd /tmp
-        udp-receiver --portbase ${MCAST_GROUP} | tar -xv || shellout
+        udp-receiver --pipe "tar -x -C /" --portbase ${MCAST_GROUP} || shellout
 
     else
         # Use rsync
-        CMD="rsync -av ${IMAGESERVER}::boot/${ARCH}/${FLAVOR}/boel_binaries.tar.gz /tmp/"
+        CMD="rsync -av ${IMAGESERVER}::boot/${ARCH}/${FLAVOR}/boel_binaries.tar.gz /"
         echo "$CMD"
         $CMD || shellout
     fi
 
     # Untar the tarball
-    tar -C / -xvzf /tmp/boel_binaries.tar.gz || shellout
+    tar -C / -xzf /boel_binaries.tar.gz || shellout
     chown -R 0.0 /lib/modules || shellout
 }
 #
@@ -491,12 +490,12 @@ autodetect_hardware_and_load_modules() {
 get_hostname_by_hosts_file() {
 
     if [ ! -z $MCAST_GROUP ]; then
-	    # MCAST_GROUP is set, therfore we should have a hosts file in /tmp/scripts/
+	    # MCAST_GROUP is set, therfore we should have a hosts file in /scripts/
 		echo "Using hosts file pulled over by multicast."
     else
         # Try pulling hosts file from imageserver -BEF-
-		mkdir -p /tmp/scripts
-        CMD="rsync -aL ${IMAGESERVER}::${SCRIPTS}/hosts /tmp/scripts/ >/dev/null 2>&1"
+		mkdir -p /scripts
+        CMD="rsync -aL ${IMAGESERVER}::${SCRIPTS}/hosts /scripts/ >/dev/null 2>&1"
         echo "$CMD"
         $CMD
     fi
@@ -504,7 +503,7 @@ get_hostname_by_hosts_file() {
     #
     # Look in $FILE for that magic joy.
 	#
-	FILE=/tmp/scripts/hosts
+	FILE=/scripts/hosts
     if [ -e $FILE ]; then
         # add escape characters to IPADDR so that it can be used to find HOSTNAME below
         IPADDR_ESCAPED=`echo "$IPADDR" | sed -e 's/\./\\\./g'`
@@ -548,7 +547,7 @@ get_hostname_by_dns() {
 #
 run_autoinstall_script() {
     # Run the autoinstall script.
-    FILE="/tmp/scripts/$SCRIPTNAME"
+    FILE="/scripts/$SCRIPTNAME"
     if [ -f $FILE ]; then
         chmod 755 $FILE || shellout
         echo
@@ -573,7 +572,7 @@ get_ssh_tarball() {
     $CMD || shellout
 
     # Untar the tarball
-    tar -C / -xvzf /tmp/systemimager_ssh.tar.gz || shellout
+    tar -C / -xzf /tmp/systemimager_ssh.tar.gz || shellout
 }
 #
 ################################################################################
@@ -717,11 +716,11 @@ get_script() {
     echo
     echo "get_script"
     echo "I will now try to get the autoinstall script:  $SCRIPTNAME"
-    if [ -e /tmp/scripts/${SCRIPTNAME} ]; then
-        echo "Excellent!  It's already here -- in the /tmp/scripts directory."
+    if [ -e /scripts/${SCRIPTNAME} ]; then
+        echo "Excellent!  It's already here -- in the /scripts directory."
     else
-        mkdir -p /tmp/scripts
-        CMD="rsync -aL ${IMAGESERVER}::${SCRIPTS}/${SCRIPTNAME} /tmp/scripts"
+        mkdir -p /scripts
+        CMD="rsync -aL ${IMAGESERVER}::${SCRIPTS}/${SCRIPTNAME} /scripts"
         echo "$CMD"
         $CMD
     fi
