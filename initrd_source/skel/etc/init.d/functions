@@ -182,6 +182,9 @@ get_scripts_directory() {
 #
 flamethrower_client() {
 
+    echo
+    echo "flamethrower_client(${MODULE_NAME})"
+
     . ${FLAMETHROWER_DIRECTORY_DIR}/${MODULE_NAME}
 
     UDP_RECEIVER_OPTIONS="--portbase $PORTBASE --ttl $TTL"
@@ -197,8 +200,6 @@ flamethrower_client() {
     #if [ $? != 0 ]; then
     #    shellout
     #fi
-
-    echo
 
 }
 #
