@@ -465,10 +465,12 @@ if ( $distro eq "red_hat_linux" ) {
 
 
 ### BEGIN IP Assignment Method ###
-if((!$quiet) and (!$ip_assignment_method)) {
+if((!$quiet) and (!$ip_assignment_method))
+{
     $satisfied="n";
     $ip_assignment_method="1";
-    until($satisfied eq "y") {
+    until($satisfied eq "y")
+    {
         system("clear");
         print << 'EOF';
 IP Address Assignment
@@ -503,12 +505,25 @@ EOF
         print "You have chosen method $ip_assignment_method for assigning IP addresses.\n";
         print "\nAre you satisfied? ([y]/n): ";
         $satisfied=get_response('y');
-        if($ip_assignment_method eq "1") { $ip_assignment_method = "static_dhcp" ; }
-        elsif($ip_assignment_method eq "2") { $ip_assignment_method = "static"      ; }
-        elsif($ip_assignment_method eq "3") { $ip_assignment_method = "dynamic_dhcp"; }
-        elsif($ip_assignment_method eq "4") { $ip_assignment_method = "replicant"; }
-        else { $satisfied="n"; }
+	unless(
+	           ($ip_assignment_method eq "1")
+                or ($ip_assignment_method eq "2")
+                or ($ip_assignment_method eq "3")
+                or ($ip_assignment_method eq "4")
+	      )
+              {
+                 # reset to default
+                 $ip_assignment_method = "1";
+                 # send 'em back through the wringer
+                 $satisfied="n" ;
+              }
     }
+
+# turn number values into useable string values
+if   ($ip_assignment_method eq "1") { $ip_assignment_method = "static_dhcp" ; }
+elsif($ip_assignment_method eq "2") { $ip_assignment_method = "static"      ; }
+elsif($ip_assignment_method eq "3") { $ip_assignment_method = "dynamic_dhcp"; }
+elsif($ip_assignment_method eq "4") { $ip_assignment_method = "replicant"   ; }
 }
 ### END IP Assignment Method ###
 
@@ -834,7 +849,7 @@ foreach $disk (@disks)  {
       } 
 
       my $device = "";
-      if ($disk =~ /c*d*/ )
+      if ($disk =~ /c[0-9]+d[0-9]+/ )
           { $device = "/dev/$disk" . "p" . "$partition_number"; }
       else
           { $device = "/dev/$disk" . "$partition_number"; }
