@@ -9,9 +9,8 @@
 # This file is: rcS
 #
 
-
-TFTPROOT=tftpboot
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/tmp
+SCRIPTS=scripts
 
 shellout() {
   exec cat /etc/issue ; exit 1
@@ -479,8 +478,8 @@ fi
 # get hosts file if necessary
 if [ -z $HOSTNAME ]; then
   file="hosts"
-  echo "Using rsync to copy $IMAGESERVER::$TFTPROOT/systemimager/$file..."
-  rsync -aL $IMAGESERVER::$TFTPROOT/systemimager/$file /tmp/
+  echo "Using rsync to copy $IMAGESERVER::$SCRIPTS/$file..."
+  rsync -aL $IMAGESERVER::$SCRIPTS/$file /tmp/
 
   if [ -e /tmp/hosts ]; then
     # add escape characters to IPADDR so that it can be used to find HOSTNAME below
@@ -529,9 +528,9 @@ echo "This host's name is ${HOSTNAME}."
 file="${HOSTNAME}.sh"
 echo
 echo "I will now try to get the autoinstall script:  $file"
-rsync -aL $IMAGESERVER::$TFTPROOT/systemimager/$file /tmp/
+rsync -aL $IMAGESERVER::$SCRIPTS/$file /tmp/
 if [ $? != 0 ]; then
-  echo "rsync copy of $IMAGESERVER::$TFTPROOT/systemimager/$file failed!!!"
+  echo "rsync copy of $IMAGESERVER::$SCRIPTS/$file failed!!!"
 
   # try to get the generic master file, since no specific file was found
   # strip off trailing numerics, and use that for an autoinstall script name
@@ -541,11 +540,11 @@ if [ $? != 0 ]; then
   file="${BASE_HOSTNAME}.master"
   echo
   echo "I will now try to get the autoinstall script:  $file"
-  rsync -aL $IMAGESERVER::$TFTPROOT/systemimager/$file /tmp/
+  rsync -aL $IMAGESERVER::$SCRIPTS/$file /tmp/
   if [ $? != 0 ]; then
     # we really failed, no more fallback
     echo
-    echo "rsync copy of $IMAGESERVER::$TFTPROOT/systemimager/$file failed!!!"
+    echo "rsync copy of $IMAGESERVER::$SCRIPTS/$file failed!!!"
     echo
     echo "All attempts to get an autoinstall script have failed!!!"
     echo
