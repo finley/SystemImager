@@ -1,5 +1,5 @@
 %define name     systemimager
-%define ver      3.1.6
+%define ver      3.2.0
 %define rel      1
 %define prefix   /usr
 %define _build_all 1
@@ -196,6 +196,8 @@ to boot and install %{_build_arch} Linux machines during the SystemImager autoin
 process.
 
 %changelog
+* Wed Mar 03 2004 sis devel <sisuite-devel@lists.sourceforge.net> 3.2.0-1
+
 * Wed Nov 12 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.1.6-1
 - new upstream release
 - add version dependency for systemimager-flamethrower package
@@ -453,7 +455,8 @@ fi
 %files server
 %defattr(-, root, root)
 %doc CHANGE.LOG COPYING CREDITS README VERSION
-%doc doc/manual/systemimager* doc/manual/html doc/manual/examples
+# These should move to a files doc section, because they are missing if you don't do doc
+# %doc doc/manual/systemimager* doc/manual/html doc/manual/examples
 %doc doc/autoinstall* doc/local.cfg
 %dir /var/log/systemimager
 %dir /var/lib/systemimager/images
@@ -465,6 +468,8 @@ fi
 %config /etc/systemimager/autoinstallscript.template
 %config(noreplace) /etc/systemimager/rsync_stubs/*
 %config(noreplace) /etc/systemimager/systemimager.conf
+%config /etc/systemimager/imagemanip.conf
+%config /etc/systemimager/imagemanip.perm
 /etc/init.d/systemimager-server-rsyncd
 /etc/init.d/systemimager-server-netboot*
 /var/lib/systemimager/images/*
