@@ -38,15 +38,16 @@
 #
 #   main
 #
-check_version
-
-get_arch
-
 switch_root_to_tmpfs
 
 mount_dev_on_devfs
 
 mount_proc
+
+# this must be here to avoid read only fs errors, or other ugly stuff. -BEF-
+check_version
+
+get_arch
 
 adjust_arch
 
