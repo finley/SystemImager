@@ -209,7 +209,7 @@ flamethrower_client() {
     
 
     # build command
-    UDP_RECEIVER_OPTIONS="--interface ${DEVICE} --portbase $PORTBASE"
+    UDP_RECEIVER_OPTIONS="--interface ${DEVICE} --portbase $PORTBASE --nokbd"
     if [ ! -z $TTL ]; then
         UDP_RECEIVER_OPTIONS="$UDP_RECEIVER_OPTIONS --ttl $TTL"
     fi
@@ -231,80 +231,39 @@ flamethrower_client() {
     tar --help 2>&1 | grep -q overwrite && TAR_OPTS='--overwrite -xp' || TAR_OPTS='-x'
     #tar --help 2>&1 | grep -q overwrite && TAR_OPTS='--overwrite -xzp' || TAR_OPTS='-xz'
 
+    # finalize arguments
+    UDP_RECEIVER_OPTIONS="$UDP_RECEIVER_OPTIONS --pipe 'tar ${TAR_OPTS} -C ${DIR}'"
 
     # set vars
     [ -z $RETRY ] && RETRY=0
     COUNT=0
     FLAMETHROWER_CLIENT_SLEEP=3
-    unset TAR_EXIT_STATUS
-    TAR_EXIT_FILE=/tmp/tar_exit
-    UDP_RECEIVER_STDERR_LOG="/tmp/udp-receiver.${MODULE_NAME}"
-    TAR_STDERR_LOG=/tmp/tar.stderr.log
+    unset UDP_RECEIVER_EXIT_STATUS
 
+    # example udp-receiver command:
+    #   udp-receiver --interface lo --portbase 9002 --nosync --nokbd --pipe 'tar --overwrite -xp -C  /tmp/.flamethrower.12298'
 
-
-    # loop
-    until [ "$TAR_EXIT_STATUS" = "0" ]
+    # the new style (loop)
+    until [ "$UDP_RECEIVER_EXIT_STATUS" = "0" ]
     do
+        #
         # launch udp-receiver
-        if [ -z $UDP_RECEIVER_RUNNING ]; then
-
-            UDP_RECEIVER_RUNNING=1
-
-            rm -f $UDP_RECEIVER_STDERR_LOG $TAR_STDERR_LOG
-            echo TAR_EXIT_STATUS= > $TAR_EXIT_FILE
-
-            echo
-            echo "flamethrower_client(${MODULE_NAME})"
-            echo '--------------------------------------------------------------------------------'
-            echo "udp-receiver $UDP_RECEIVER_OPTIONS 2>${UDP_RECEIVER_STDERR_LOG} | tar ${TAR_OPTS} -C ${DIR} 2>$TAR_STDERR_LOG"
-            ( 
-                udp-receiver $UDP_RECEIVER_OPTIONS 2>${UDP_RECEIVER_STDERR_LOG} | tar ${TAR_OPTS} -C ${DIR} 2>$TAR_STDERR_LOG
-                echo "TAR_EXIT_STATUS=$?" > $TAR_EXIT_FILE
-             ) &
-        fi    
-        
-
-        # test udp-receiver log file
-        if [ -e $UDP_RECEIVER_STDERR_LOG ]; then
-            grep -q '^Transfer complete' $UDP_RECEIVER_STDERR_LOG && COMPLETED=yes || COMPLETED=no
-            grep -q ^bytes $UDP_RECEIVER_STDERR_LOG && STARTED=yes || STARTED=no
-
-            if [ "$COMPLETED" = "yes" ]; then
-                # Cool!  Let's proceed
-                [ ! -z $DEBUG ] && echo COMPLETED=yes
-            elif [ "$STARTED" = "yes" ]; then
-                THIS_STAMP=`ls -l $UDP_RECEIVER_STDERR_LOG`
-                [ ! -z $DEBUG ] && echo
-                [ ! -z $DEBUG ] && echo LAST $LAST_STAMP
-                [ ! -z $DEBUG ] && echo THIS $THIS_STAMP
-                if [ "$THIS_STAMP" = "$LAST_STAMP" ]; then
-                    echo "WARNING: No progress since last check.  Killing udp-receiver."
-                    while killall -9 udp-receiver; do sleep 1; done
-                    unset UDP_RECEIVER_RUNNING
-                    sleep 5
-                fi
-                LAST_STAMP=$THIS_STAMP
-            fi
-
-        fi
+        #
+        echo
+        echo "flamethrower_client(${MODULE_NAME})"
+        echo '--------------------------------------------------------------------------------'
+        echo "udp-receiver $UDP_RECEIVER_OPTIONS"
+        udp-receiver $UDP_RECEIVER_OPTIONS
+        UDP_RECEIVER_EXIT_STATUS=$?
 
 
-        # test exit status from tar command
-        . $TAR_EXIT_FILE
-
-        if [ "$TAR_EXIT_STATUS" = "" ]; then
-            # just proceed, no worries
-        elif [ "$TAR_EXIT_STATUS" = "0" ]; then
-            # success -- break loop, and proceed with install
-            break
-        else
-            # failure
+        # proceed or retry based on exit status
+        if [ "$UDP_RECEIVER_EXIT_STATUS" != "0" ]; then
             if [ $COUNT -lt $RETRY ]; then
                 COUNT=$(( $COUNT + 1 ))
-                echo "flamethrower_client: Proceeding with retry $COUNT of $RETRY"
+                echo "flamethrower_client: WARNING: attempting retry $COUNT of $RETRY"
             else
-                echo "flamethrower_client: FATAL: Initial attempt and $RETRY retries failed!"
+                echo "flamethrower_client: FATAL: giving up after $RETRY attempts failed!"
                 shellout
             fi
         fi
@@ -329,8 +288,10 @@ flamethrower_client() {
     unset RETRY
     unset COUNT
     unset DIR
-    unset UDP_RECEIVER_RUNNING
     unset PORTBASE
+    unset UDP_RECEIVER_EXIT_STATUS
+    unset UDP_RECEIVER_OPTIONS
+    unset TAR_OPTS
 
 }
 
