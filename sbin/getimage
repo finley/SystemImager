@@ -406,6 +406,10 @@ unless($update_script eq "yes") { exit 0; }
 ### END Overwrite $image.master? ###
 
 ### BEGIN What kind of Linux are you? ###
+# Set a default for distro and hope it works -- in case /etc/issue is 
+# a zero byte file or doesn't name a distribution we're familiar with.
+$distro = "red_hat_linux";
+
 $file="$imagedir/etc/issue";
 open(FILE, "< $file") or die "$program_name: Couldn't open $file for reading: $!\n";
     while (<FILE>)
@@ -417,14 +421,12 @@ open(FILE, "< $file") or die "$program_name: Couldn't open $file for reading: $!
             elsif (/2\.2/) { $distro = "debian_linux_2.2"; }
 	    else { $distro = "debian_linux_2.2"; }
 	}
-	elsif (/Red Hat/) { $distro = "red_hat_linux"; }
-        else 
+	elsif (/Red Hat/) 
 	{ 
-	    # taking a guess here 
-	    $distro = "red_hat_linux";
+	    $distro = "red_hat_linux"; 
 	}
-	# only read first line
-	last;
+    # only read first line
+    last;
     }
 close(FILE);
 ### END What kind of Linux are you? ###
@@ -1042,7 +1044,7 @@ print MASTER_SCRIPT "echo \$image > /a/etc/systemimager/IMAGE_LAST_SYNCED_TO\n\n
 unless($ip_assignment_method eq "replicant") { 
 
 ### BEGIN RedHat ###
-if ($distro eq "red_hat_linux") { 
+if ("$distro" eq "red_hat_linux") { 
    print MASTER_SCRIPT << 'EOF';
 # set host specific information
 echo NETWORKING=yes > /a/etc/sysconfig/network
