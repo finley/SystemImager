@@ -521,14 +521,19 @@ sub _read_partition_info_and_prepare_parted_commands {
           # Consider submitting a patch to parted that would print easily parsable output 
           # with n/a values "-" and no spaces in the flags. -BEF-
           #
-          if (($label_type eq "gpt") and ($p_name{$m} ne "-")) {  # We're kinda assuming no one names their partitions "-". -BEF-
+          if (
+                ($label_type eq "gpt") 
+                and ($p_name{$m}) 
+                and ($p_name{$m} ne "-")
+            ) {  # We're kinda assuming no one names their partitions "-". -BEF-
+
             $cmd = "parted -s -- $dev name $m $p_name{$m} || shellout\n";
             print MASTER_SCRIPT "echo $cmd";
             print MASTER_SCRIPT "$cmd";
           }
 
           ### Deal with flags for each partition. -BEF-
-          if ($flags{$m} ne "-") {
+          if(($flags{$m}) and ($flags{$m} ne "-")) {
 
             # $flags{$m} will look something like "boot,lba,raid" or "boot" at this point.
             my @flags = split (/,/, $flags{$m});
