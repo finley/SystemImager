@@ -1,7 +1,7 @@
 BC_VERSION := 1.06
 BC_DIR := bc-$(BC_VERSION)
 BC_TARBALL := bc-$(BC_VERSION).tar.gz
-BC_URL := http://download.systemimager.org/pub/bc/$(BC_TARBALL)
+BC_URL := http://ftp.gnu.org/gnu/bc/$(BC_TARBALL)
 BC_BINARY := $(SRC_DIR)/$(BC_DIR)/bc/bc
 
 ALL_SOURCE += $(SRC_DIR)/$(BC_TARBALL)
