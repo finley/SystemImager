@@ -13,7 +13,6 @@
 
 # do we want a quiet install? and do we want to run afterburner?
 QUIET="false"
-AFTERBURNER="yes"
 for cl_option ; do
   case $cl_option in
     -q|-quiet|--quiet ) QUIET="true" ;;
@@ -102,7 +101,6 @@ if [ "x$DESTDIR" = "x" ]; then
   install -m 444 $OWNERSHIP $INSTALL_DIR/README	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/README || exit 1
   install -m 444 $OWNERSHIP $INSTALL_DIR/TODO	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/TODO || exit 1
   install -m 444 $OWNERSHIP $INSTALL_DIR/VERSION	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/VERSION || exit 1
-  install -m 444 $OWNERSHIP $INSTALL_DIR/afterburner	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/afterburner || exit 1
 
   install -m 444 $OWNERSHIP $INSTALL_DIR/doc/local.cfg	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/local.cfg || exit 1
   install -m 444 $OWNERSHIP $INSTALL_DIR/doc/autoinstall.kernel.config	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/autoinstall.kernel.config || exit 1
@@ -112,7 +110,9 @@ if [ "x$DESTDIR" = "x" ]; then
   # doc/manual/pdf
   install -d -m 755 $OWNERSHIP ${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/pdf  || exit 1
 
-  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/pdf/systemimager-manual.pdf	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/pdf/systemimager-manual.pdf || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/pdf/systemimager-manual.pdf	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/pdf/ || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/pdf/CREDITS	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/pdf/ || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/pdf/systemimager-manual.sgml	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/pdf/ || exit 1
 
 
   # doc/manual/html
@@ -130,6 +130,7 @@ if [ "x$DESTDIR" = "x" ]; then
   install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/designgoals.html	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/ || exit 1
   install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/architecture.html	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/ || exit 1
   install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/faq.html	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/ || exit 1
+  install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/g847.html	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/ || exit 1
   install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/docbook.css	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/ || exit 1
   install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/systemimager-manual.sgml	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/ || exit 1
   install -m 444 $OWNERSHIP $INSTALL_DIR/doc/manual/html/CREDITS	${prefix}/share/doc/$PACKAGE_NAME-$VERSION/manual/html/ || exit 1
