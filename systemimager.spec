@@ -3,7 +3,7 @@
 %define rel      1
 %define prefix   /usr
 
-Summary: System Replication Tool
+Summary: Software to install and update mass numbers of Linux systems
 Name: %name
 Version: %ver
 Release: %rel
@@ -17,17 +17,25 @@ URL: http://systemimager.org/
 Requires: syslinux tftp-hpa
 
 %description
-VA SystemImager is a software package designed to make it easy for
-system administrators to install and update large numbers of
-like machines running Linux.
+VA SystemImager is software that makes the installation of Linux to
+masses of similar machines relatively easy.  It also makes software,
+configuration, and operating system updates easy.  You can even update
+from one release version to another!  VA SystemImager can even be used
+for content management on web servers.  It is most useful in 
+environments where you have large numbers of identical machines.  Some
+typical environments include: Internet server farms, high performance
+clusters, computer labs, or corporate desktop environments where all
+workstations have the same basic hardware configuration.
 
 %package client
-Summary: Client installation for VA SystemImager
+Summary: VA SystemImager "Master Client" software
 Group: Applications/System
 Conflicts: %{name}
 
 %description client
-This is the package you install on a VA SystemImager client node.
+This is the package you install on a VA SystemImager "master client".
+It prepares the "master client" to have it's image retrieved by an 
+image server.
 
 %changelog
 
