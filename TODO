@@ -205,10 +205,10 @@ http://systemimager.org/
 
 Pre-Release Checklist
 ---------------------
-- hardware RAID client
 - installdoc (/usr/share/doc ?)
 - prepareclient bug
 
+x- hardware RAID client
 x- getimage bug:
   ( getimage -s localhost -image debian_hwraid_ext2 -ip static_dhcp -post reboot -up yes -q )
 x- installclient
