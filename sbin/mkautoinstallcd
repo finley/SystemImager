@@ -57,16 +57,15 @@ if (!$autoinstall_boot_dir) {
 my ($kernel, $initrd, $flavor, $arch, $append_string, $bin_dir);
 
 GetOptions( 
-"listing" => 
-            "help" => \$help,
-            "version" => \$version,
-            "arch=s" => \$arch,
-            "out-file=s" => \$out_file,
-            "quiet" => \$quiet,
-            "append=s" => \$append_string,
-            "kernel=s" => \$kernel,
-            "initrd=s" => \$initrd,
-            "flavor=s" => \$flavor,
+    "help"          => \$help,
+    "version"       => \$version,
+    "arch=s"        => \$arch,
+    "out-file=s"    => \$out_file,
+    "quiet"         => \$quiet,
+    "append=s"      => \$append_string,
+    "kernel=s"      => \$kernel,
+    "initrd=s"      => \$initrd,
+    "flavor=s"      => \$flavor,
 ) or usage() and exit(1);
 
 if($help) { usage() and exit(0); }
@@ -75,26 +74,26 @@ if($version) { version() and exit(0); }
 
 # if not run as root, this script will surely fail
 unless($< == 0) { 
-  print "FATAL: Must be run as root!\n";
-  exit 1;
+    print "FATAL: Must be run as root!\n";
+    exit 1;
 }
 
 # If -kernel specified, $kernel must exist. -BEF-
 if (($kernel) and (! -f $kernel)) {
-  message("\nI'm terribly sorry, but kernel \"$kernel\" doesn't seem to exist.\n");
-  exit 1;
+    message("\nI'm terribly sorry, but kernel \"$kernel\" doesn't seem to exist.\n");
+    exit 1;
 }
 
 # If -initrd specified, $initrd must exist. -BEF-
 if (($initrd) and (! -f $initrd)) {
-  message("\nI'm terribly sorry, but initrd \"$initrd\" doesn't seem to exist.\n");
-  exit 1;
+    message("\nI'm terribly sorry, but initrd \"$initrd\" doesn't seem to exist.\n");
+    exit 1;
 }
 
 # If -arch was not specified on the command line, get it from the system. -BEF-
 unless ($arch) {
-  $arch = (uname())[4];
-  $arch =~ s/i.86/i386/;
+    $arch = (uname())[4];
+    $arch =~ s/i.86/i386/;
 }
 
 # Do we have a supported architecture? -BEF-
