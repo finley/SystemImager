@@ -36,7 +36,7 @@ systemimager-rsyncd.conf.5:	systemimager-rsyncd.conf.pod
 	pod2man --release=$(SYSTEMIMAGER_VERSION) -s 5 -c "SystemImager" $< $@
 
 %.5 %.8:	%.sgml %.content.sgml
-	docbook-to-man $< > $@
+	docbook2man $< > $@
 
 install_all:	install_common_man install_server_man install_client_man
 
