@@ -65,8 +65,7 @@ sub check_if_root{
 my $version_info = <<"EOF";
 $program_name (part of SystemImager) v$VERSION
 
-Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley\@baldguysoftware.com>
-Copyright (C) 2002 Bald Guy Software <brian.finley\@baldguysoftware.com>
+Copyright (C) 1999-2004 Brian Elliott Finley
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 EOF
@@ -78,27 +77,31 @@ Usage: $program_name [OPTION]... SOURCE_IMAGE DESTINATION_IMAGE
 
 Options: (options can be presented in any order)
 
- -help                    Display this output.
+ --help
+    Display this output.
 
- -version                 Display version and copyright information.
+ --version
+    Display version and copyright information.
 
- -verbose                 Explain what is being done.
+ --verbose
+    Explain what is being done.
 
- -force                   Don\'t ask for confirmation before 
-                          overwriting the destination image or master
-			  autoinstall script (if they exist).
+ --force
+    Don\'t ask for confirmation before overwriting the destination
+    image or master autoinstall script (if they exist).
 
- -directory PATH          The full path and directory name where you want
-                          this image to be stored.  The directory bearing
-                          the image name itself will be placed inside the
-                          directory specified here.
+ --directory PATH
+    The full path and directory name where you want this image to be
+    stored.  The directory bearing the image name itself will be 
+    placed inside the directory specified here.
 
- -server HOSTNAME         Hostname or IP address of the imageserver
-                          from which you want to copy the image.  
-			  (Defaults to \"localhost\".)
+ --server HOSTNAME
+    Hostname or IP address of the imageserver from which you want to
+    copy the image.  (Defaults to \"localhost\".)
 
- -ssh-user USERNAME       Username for ssh connection to the imageserver.
-                          Only needed if a secure connection is required.
+ --ssh-user USERNAME
+    Username for ssh connection to the imageserver.  Only needed if a
+    secure connection is required.
 
 Tip: Use \"lsimage\" to get a list of available images.
 
@@ -114,7 +117,7 @@ GetOptions(
   "force" => \my $force,
   "server=s" => \my $server,
   "ssh-user=s" => \my $ssh_user,
-  "verbose" => \my $verbose
+  "verbose|v" => \my $verbose
 ) or die qq($help_info);
 
 # if requested, print help information

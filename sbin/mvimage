@@ -3,8 +3,7 @@
 #
 # "SystemImager" 
 #
-#  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
-#  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
+#  Copyright (C) 1999-2004 Brian Elliott Finley
 #
 #  $Id$
 #
@@ -59,20 +58,23 @@ Usage: $program_name [OPTION]... SOURCE_IMAGE DESTINATION_IMAGE
 
 Options: (options can be presented in any order)
 
- -help                    Display this output.
+ --help
+    Display this output.
 
- -version                 Display version and copyright information.
+ --version
+    Display version and copyright information.
 
- -verbose                 Explain what is being done.
+ --verbose
+    Explain what is being done.
 
- -force                   Don\'t ask for confirmation before 
-                          overwriting the destination image or master
-			  autoinstall script (if they exist).
+ --force
+    Don\'t ask for confirmation before overwriting the destination
+    image or master autoinstall script (if they exist).
 
- -directory PATH          The full path and directory name where you want
-                          this image to be stored.  The directory bearing
-                          the image name itself will be placed inside the
-                          directory specified here.
+ --directory PATH
+    The full path and directory name where you want this image to be
+    stored.  The directory bearing the image name itself will be 
+    placed inside the directory specified here.
 
 Tip: Use \"lsimage\" to get a list of available images.
 
@@ -86,7 +88,7 @@ GetOptions(
   "version" => \my $version,
   "directory=s" => \my $destination_path,
   "force" => \my $force,
-  "verbose" => \my $verbose
+  "verbose|v" => \my $verbose
 ) or die qq($help_info);
 
 # if requested, print help information
