@@ -208,7 +208,7 @@ x- updateclient -a -s <server> -c eth0 on RAID
 x- pryzby's issue
 x- hello's issue
 - hardware RAID client
-- software RAID client (destroy partitions good)
+x- software RAID client (destroy partitions good)
 x- reiserfs client
 x- ext3 client
 x- ext2 client
@@ -216,20 +216,21 @@ x- RH7 client
 - RH7 client with LABEL=
 - debian client
 - prepareclient on debian
-- prepareclient on RH
+- prepareclient on RH 6
+x- prepareclient on RH 7
 - hand made /etc/hosts /tftpboot/systemimager/hosts files
 - server RPM install on virgin RH system
 - client RPM install on virgin RH system
 - server deb install on virgin debian system
 - client deb install on virgin debian system
+- dependent packages install properly
 x- repeated prepareclient/installs to see if disk partition sizes remain the same
 - test netboot install with versions x, y, and z of PXE
-- test CD-ROM install
+x- test CD-ROM install
 - test floppy install
 x- test hard drive install
 - test explicit geometry
 x- test dynamic geometry
-- test that egrep thing is fixed
+x- test that egrep thing is fixed
 x- test that dynamically linked binaries in /tftpboot work
-- dependent packages install properly
 x- test -configure-from option
