@@ -180,9 +180,9 @@ if ($autoinstall) {
   if ($rc != 0) { die "Failed to copy SystemImager initrd.gz file to /boot on client!!!\n"; }  
 
   # find out on which partition the current root file system resides
-  $file="/etc/fstab";
-  open(FSTAB, "< $file") or die "Couldn't open $file for reading: $!\n";
-  while (<FSTAB>) {
+  $file="/etc/mtab";
+  open(MTAB, "< $file") or die "Couldn't open $file for reading: $!\n";
+  while (<MTAB>) {
     # turn tabs into spaces (not a normal space --> <ctrl>+<v> then <tab> )
     $_ =~ s/	/ /g;
     # turn multiple spaces into single spaces
@@ -192,7 +192,7 @@ if ($autoinstall) {
       $last_root=$fields[0];
     }
   }
-  close(FSTAB);
+  close(MTAB);
 
   ### BEGIN lilo.conf file stuff ###
   $file = "/etc/lilo.conf";
