@@ -22,6 +22,20 @@ my $config = AppConfig->new(
 			    'default_imagedir' => { ARGCOUNT => 1 },
 			    'rsyncd_conf' => { ARGCOUNT => 1 },
 			    'config_dir' => { ARGCOUNT => 1 },
+                            'help' => {ARGCOUNT => 0, DEFAULT => 0, ALIAS => 'h'},
+                            'version' => {ARGCOUNT => 0, DEFAULT => 0},
+                            'client' => {ARGCOUNT => 1, DEFAULT => ""},
+                            'domainname' => {ARGCOUNT => 1, DEFAULT => ""},
+                            'host-range' => {ARGCOUNT => 1, 
+                                             VALIDATE => '-',
+                                             DEFAULT => ""},
+                            'ip-range' => {ARGCOUNT => 1, 
+                                           DEFAULT => "",
+                                           VALIDATE => '^([0-9]+\.){3}[0-9]+-([0-9]+\.){3}[0-9]+$', # This won't let bumm ip addrs through
+                                          },
+                            'image' => {ARGCOUNT => 1, DEFAULT => ""},
+                            'file' => {ARGCOUNT => 1, DEFAULT => ""},
+                            'quiet' => {ARGCOUNT => 0, DEFAULT => 0},
 			    );
 
 $config->file('/etc/systemimager/systemimager.conf');
@@ -34,36 +48,37 @@ if (!$autoinstall_script_dir) {
 
 ### END parse the config file ###
 
-my $help;
-my $version;
-my $clientname;
-my $host_range;
-my $domainname;
-my $ip_range;
-my $base_hostname;
-my $imagename;
+$config->args();
 
-GetOptions(
-    "help" => \$help,
-    "version" => \$version,
-    "client=s" => \$clientname,
-    "domainname=s" => \$domainname,
-    "host-range=s" =>\$host_range,
-    "ip-range=s" => \$ip_range,
-    "image=s" => \$imagename,
-    "file=s" => \$clientfile
-) || die "$0 <arguments>, use -h for help\n";
+my $clientname = $config->client;
+my $host_range = $config->get('host-range');
+my $domainname = $config->domainname;
+my $ip_range = $config->get('ip-range');
+my $clientfile = $config->get('file');
+my $base_hostname;
+my $imagename = $config->image;
+
+#GetOptions(
+#    "help" => \$help,
+#    "version" => \$version,
+#    "client=s" => \$clientname,
+#    "domainname=s" => \$domainname,
+#    "host-range=s" =>\$host_range,
+#    "ip-range=s" => \$ip_range,
+#    "image=s" => \$imagename,
+#    "file=s" => \$clientfile
+#) || die "$0 <arguments>, use -h for help\n";
 
 #if -help was passed print usage
-if ($help) {
+if ($config->help) {
     &help_info(0);
-  exit 0;
+    exit 0;
 }
 
 #if -version was passed print version
-if ($version) {
-  &version_info;
-  exit 0;
+if ($config->version) {
+    &version_info;
+    exit 0;
 }
 #if any options were called perform non-interactive install
 #otherwise go interactive
@@ -75,9 +90,13 @@ if ($clientname && $host_range  && $domainname && $imagename && $ip_range || $cl
     		  $ip_range);
     &Scripts(@passvar);
 #print "Non-interactive mode not yet enabled\n";
-} else { 
-	print "Not enough arguments. Falling back to interactive setup\n";
-	system("sleep 2");
+} else {
+    if($config->quiet()) {
+        print "Not enough arguments. Exiting!\n";
+        exit(1);
+    }
+    print "Not enough arguments. Falling back to interactive setup\n";
+    sleep 2;
     &Interactive;
 }
 #####################  
@@ -100,7 +119,7 @@ print << 'EOF';
 
  -version                   Display version and copyright information.
 
- -quiet                     Don't ask any questions or print any output
+ -quiet                     Do not ask any questions or print any output
                             (other than errors). In this mode, no 
 			    warning will be given if the image already 
 			    exists on the server.  
@@ -163,7 +182,7 @@ sub version_info{
     printf "This is a beta version of the addclients from\n";
     printf "SystemImager. \[HTTP\:\/\/WWW.SYSTEMIMAGER.ORG\/\]\n";
     printf "Type .\/$0 -help for usage\n\n";
-    system("sleep 2");
+    sleep 2;
     print "This program is free software; you can redistribute it and/or modify\n"
  		 ."it under the terms of the GNU General Public License as published by\n"
 	 	 ."the Free Software Foundation; either version 2 of the License, or\n"
