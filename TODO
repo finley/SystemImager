@@ -11,90 +11,79 @@
 In Progress
 -----------
 Version 1.4.0 specific:
-- <brian@thefinleys.com> - Wes Smith's distribution specific patches
-- <brian@thefinleys.com> - modify RPM spec file to deal with:
-                           - configuration files
-			   - additional files
-			   - changed files
-			   - use install to install files in install scripts
-- <brian@thefinleys.com> - put exclude/include stuff on imageserver by image
-                           /tftpboot/systemimager/$image.include
-                           /tftpboot/systemimager/$image.exclude
-- <brian@thefinleys.com> - deal with ext3 journal files differently according 
-                           to Ted Ts'o
-- <brian@thefinleys.com> - add a -autoconfig option to updateclient that figures
-                           out the current values and writes them to /local.cfg
-- <brian@thefinleys.com> - label autoinstallcd.iso with v1.4.x (x is literal)
-- <brian@thefinleys.com> - start using bzip2
+
+<brian@thefinleys.com>
+----------------------
+- getimage -ip virgin
+- add an -autoconfig DEVICE option to updateclient that figures
+  out the current values and writes them to /local.cfg
+- series of slides as a HOW-TO
+- series of slides for marketing
+  - competitive analysis
+    - kickstart
+    - nothing at all
+  - time saved
+  - customer list
+- systemimager-v1.4.x label in lilo instead of vanilla
+- find out which GigE driver to include for VA
+- Deal with tftp support (for network booting) on xinetd systems.
+- Wes Smith's distribution specific patches
+- have deb package created
+- modify RPM spec file to deal with:
+  - configuration files
+  - additional files
+  - changed files
+  - use install to install files in install scripts
+- put exclude/include stuff on imageserver by image
+  /tftpboot/systemimager/$image.updateclient.include
+  /tftpboot/systemimager/$image.updateclient.exclude
+- deal with ext3 journal files differently according to Ted Ts'o
+- label autoinstallcd.iso with v1.4.x (x is literal)
+- start using bzip2
+- Talk to Ian McLeod and Roland Drier about state of multicast
 
 
-Other stuff:
-- <brian@thefinleys.com> - if local.cfg and dhcp fails, have client ask for manual input
-- <brian@thefinleys.com> - redirect to serial port:
-                           - manual change to syslinux.cfg
-			   - maybe an append parameter if necessary
-			   - detect if serial is wanted by looking for variable in
-			     - rcS
-			     - $image.master
-- <brian@thefinleys.com> - add a -quick-boot option to makeautoinstallfloppy
-                           - disclaimer -- may not work on all systems
-- <brian@thefinleys.com> - contemplate using MAKEDEV instead of having 
-                           pre-existing device files
-- <brian@thefinleys.com> - fix network booting
-- <brian@thefinleys.com> - add -exclude option to getimage
-- <brian@thefinleys.com> - incorporate ssh
-- <brian@thefinleys.com> - put autoinstallmedia source into cvs
-- <brian@thefinleys.com> - smallerize the initrd.gz with a custom busybox, 
-                           hardlinks, busybox for init, etc.
-- <brian@thefinleys.com> - Record imagename to /etc/systemimager/current_image
-                           after an autoinstall (*.master) or an updateclient
-			   (if syncing from the root "/"). 
+Possibilities for future versions
+---------------------------------
 
-- <gpratt@valinux.com> - Docbookization of the FAQ-HOWTO
-
-- Cameron Meadors <cmeadors@valinux.com> and Roland Dreier <roland@valinux.com>
-  - write a new tftp daemon to do that special PXE thang, so that we no longer 
-    have to use the buggy tftp-hpa daemon.  There is also a new tftp-hpa 
-    daemon out that may not be so buggy...
-
-- Chris Black <cblack@mokey.com> - hack dhclient to allow for imageserver 
-                                   specification via dhcp
-
-- Ian McLeod <ian@valinux.com> - multicast install -- working on mftp 
-                                 (multicast ftp) as a drop in alternative for 
-				 rsync.
-- Roland Dreier <roland@valinux.com> -- working on the multicast library that 
-                                        Ian's utility will be based on.
-- <brian@thefinleys.com> - consider inodes/block in getimage
-- <brian@thefinleys.com> - getimage -- blink option
-- <brian@thefinleys.com> - getimage -- eject option
-- <brian@thefinleys.com> - makeautoinstalldiskette -- consider adding config 
-                           file options?
-- <brian@thefinleys.com> - updateclient -autoinstall -- consider adding config 
-                           file options?
-- <brian@thefinleys.com> - contemplate using wget to pull stuff?
-- <brian@thefinleys.com> - contemplate using khttpd to show autoinstall client 
-                           status
-- <brian@thefinleys.com> - command to put mac addresses/host names into 
-                           /etc/dhcpd.conf by using broadcast pings, the arp 
-			   table, and /etc/hosts or dns.
-
-
-
-Other Requests
-------------
-- commandline-ize the rest of the commands
-- support for imageserver specification in DHCP client (hack dhcpcd)
-- modify systemimager.exclude to deal with debian network info
-- /etc/systemimager.conf file to hold things like domain name, nis domain, etc.
-- support for dual boot systems (Linux/Windows with FAT/HPFS/NTFS)
-
-Bug list
---------
-- Bugs? ;)
-
-Other stuff
------------
+<brian@thefinleys.com>
+----------------------
+- next minor release (1.5.x), make the -imageserver option go away
+  in getimage.
+- getimage -- exclude option
+- if local.cfg and dhcp fails, have client ask for manual input
+- redirect to serial port:
+  - manual change to syslinux.cfg
+  - maybe an append parameter if necessary
+  - detect if serial is wanted by having rcS look for variable in
+    - $image.master
+    - local.cfg
+- add a -quick-boot option to makeautoinstallfloppy
+  - disclaimer -- may not work on all systems
+- contemplate using MAKEDEV instead of having pre-existing device files
+- fix network booting
+- add -exclude option to getimage
+- incorporate ssh
+- incorporate casper (multicast by Aaron Hillegass <aaron@bignerdranch.com>)
+- put autoinstallmedia source into cvs
+- Record imagename to /etc/systemimager/current_image on client
+  after an autoinstall (*.master) or an updateclient (if syncing from the root "/"). 
+- consider inodes/block in getimage
+- getimage -- blink option
+- getimage -- eject option
+- makeautoinstalldiskette -- consider adding config 
+  file options?
+- contemplate using wget to pull stuff?
+- contemplate using khttpd to show autoinstall client status
+- command to put mac addresses/host names into 
+  /etc/dhcpd.conf by using broadcast pings, the arp 
+  table, and /etc/hosts or dns.
+- identify mke2fs parameters -b, -i, and -m on the master client and replicate this on autoinstall clients
+- use something other than mtab for getting active ext2 filesystems?
+- offer user the ability to change this, and store the changes in 
+  /etc/systemimager.conf as IMAGESDIRECTORY="/var/spool/systemimager/images"
+- add an --exclude option
+- pass variables, such as $imagename to "addclients"
 - (part of the making of the tftp-hpa RPM) need to add proper tftp entry in /etc/inetd.conf 
    for tftp-hpa rpm.  If systemimager is installed with tftp-hpa, then systemimager's 
    afterburner will make the proper changes to /etc/inetd.conf.
@@ -106,72 +95,46 @@ Other stuff
 - support for Slackware
 - section of howto that helps Kickstart users transition to SystemImager.
 - redirect syslog messages from autoinstall clients to $imagserver
-
-getimage
---------
-- identify mke2fs parameters -b, -i, and -m on the master client and replicate this on autoinstall clients
-- use something other than mtab for getting active ext2 filesystems?
-- offer user the ability to change this, and store the changes in 
-  /etc/systemimager.conf as IMAGESDIRECTORY="/var/spool/systemimager/images"
-- add an --exclude option
-- pass variables, such as $imagename to "addclients"
-- create disk partition sections of $image.master using MB instead of cylinders
-  in order to support disks of different sizes. (not feasable at this point.)
-  (there may be additional things to do on the prepareclient side as well)
-  (perhaps use a virtual disk presented to a "real" fdisk to allow user partitioning? --
-   or maybe just calculate partition information with the script and ask the user to specify sizes)
-
-addclients
-----------
-- accept command line input such as --image $imagename
-- re-cycle through each question if answer is ""
-
-systemimager.exclude
---------------------
-- keep this in the image on the imageserver
-- add support for a systemimager.include file
+- addclients -- accept command line input such as --image $imagename
+- addclients -- re-cycle through each question if answer is ""
 - have getimage question what should be excluded in future when updateimage 
   is run.  /tmp/* and /home/* should be recommended as a starting place.
-
-updateclient
------------
 - have client pull systemimager.exclude and systemimager.include from
   imageserver before pulling image
 
-makedhcpserver 
---------------
-- autodiscover and calculate more information 
-  (including if system has more than one network interface).
-- automatically change line in /etc/rc.d/init.d/dhcpd for you
+
+Greg Pratt <gpratt@valinux.com>
+-------------------------------
+- Docbookization of the FAQ-HOWTO
+
+
+Cameron Meadors <cmeadors@valinux.com>
+and Roland Dreier <roland@valinux.com>
+--------------------------------------
+- write a new tftp daemon to do that special PXE thang, so that we no longer 
+  have to use the buggy tftp-hpa daemon.
+
 
 Miscellaneous and Possibilities
 -------------------------------
+- commandline-ize the rest of the commands
+- support for imageserver specification in DHCP client (hack dhcpcd)
+- modify systemimager.exclude to deal with debian network info
+- /etc/systemimager.conf file to hold things like domain name, nis domain, etc.
+- support for dual boot systems (Linux/Windows with FAT/HPFS/NTFS)
+- makedhcpserver -- autodiscover and calculate more information 
+  (including if system has more than one network interface).
+- makedhcpserver -- automatically change line in /etc/rc.d/init.d/dhcpd for you
 - add more error checking (always) :)
-- Dan of Argonne says there may be a better way of identifying the
-  imageserver via DHCP.  This has been verified -- you can make a
-  statement such as:
-   option option-100 "10.0.0.8";
-  in the /etc/dhcpd.conf file to make up your own option that specifies
-  the address of the imageserver.  However, only the ISC's own dhclient
-  seems to be able to take made up options, and it is not the dhcp client
-  of choice (for several reasons).  Maybe the other clients, dhcpcd and
-  pump, will find their way along soon...
-
-  Reasons are:
-  - dhcpcd is the defacto dhcp client used on most linux systems
-  - dhclient compiles large
-
 - curses wrapper around the whole thing?
 - updateclient - log what was updated and or deleted?
 - makedhcpstatic -- allow for -f "filename" option to specify dhcpd.leases file.
 
-systemimager.conf
------------------
-- SYSTEMIMAGER_ROOT=$path
-- SYSTEMIMAGER_FQHN=$boolean
-- EXCLUDE=$path $path $path
 
-
+Bug list
+--------
+Please submit bugs via the "SystemImager Bug Tracking System" link at
+http://systemimager.org/
 
 
 Pre-Release Checklist
@@ -197,3 +160,4 @@ Pre-Release Checklist
 - test dynamic geometry
 - test that egrep thing is fixed
 - test that dynamically linked binaries in /tftpboot work
+- dependent packages install properly
