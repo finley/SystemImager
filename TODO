@@ -36,52 +36,86 @@ o http://www.loria.fr/~molli/cvs/doc/cvs_toc.html
 o http://www.loria.fr/~molli/cvs/doc/cvs.pdf
 
 
------------------------
-Version 1.4.1 specific:
------------------------
-
-Brian Chrisman <bchrisman@valinux.com>
---------------------------------------
-o modify RPM spec file to deal with
-  o configuration files
-  o additional files
-  o changed files
-
-
---------------------------
-Stable Branch Sub Projects
---------------------------
-
-Greg Pratt <gpratt@valinux.com>
-Committed to task: Tue, 06 Mar 2001
------------------------------------
-o Add kernel bug/rsync bug info to Troubleshooting section in docs.
-
-
-Brian Finley <brian@thefinleys.com>
------------------------------------
-o eepro100 bug
-o Reported bug: http://sourceforge.net/tracker/?func=detail&atid=100259&aid=407316&group_id=259
-o initrd.gz -- don't pull hosts file if HOSTNAME is already known
-o deal with LABEL= and UUID= for any filesystem or device type
-o add " || shellout" to the end of almost everything in <image>.master
-o calculate network number in makedhcpserver & maybe figure out other stuff too.
-o Apply patches from:
-  o Wesley Smith <wessmith@cthulhu.engr.sgi.com>
-    --------------------------------------------
-    o devfs patch
-    o TurboLinux patch
-    o SuSe patch
-
-  o Fred Gray <fegray@npl.uiuc.edu>
-    -------------------------------
-    o patch to allow exclude on golden client during getimage.
-      o /etc/systemimager/getimage.exclude on golden client
-
 
 -------------------------------
 Development Branch Sub Projects
 -------------------------------
+
+Brian Finley <brian@thefinleys.com>
+-----------------------------------
+cvs -z3 commit -m "added better error checking" initrd_source/mk_new_initrd
+
+o chroot=yes in /etc/rsyncd.conf and test...
+Change paths:
+o images:        /var/lib/systemimager/images/
+o all other SystemImager stuff (other than imageserver commands) will be
+  stored in:            /var/lib/systemimager/
+o web gui pages:        /var/lib/systemimager/web-gui/
+o autoinstall kernels:  /var/lib/systemimager/`arch`/kernels/
+o initial ram disks:    /var/lib/systemimager/`arch`/initial-ramdisks/
+o autoinstall scripts:  /var/lib/systemimager/`arch`/scripts/
+o autoinstall binaries: /var/lib/systemimager/`arch`/bin/
+   (instead of the binary.architecture idea)
+o PXE stuff will *not* be dealt with during install, but details will be
+   documented in the howto.  Later, this configuration will be handled by
+   the "pxeconfig" utility.  (I'm not sure I have your final buy in on
+   this one)
+o source for the kernel and initrd.gz and everything will be provided in
+   a single package that has a master Makefile that will compile source
+   provided, and copy over binaries that are just, well, copied over.
+   (this also helps deal with the fact that it is sometimes difficult to
+   get all the kernel patches to apply properly -- we can provide the
+   actual kernel source tree with the patches pre-applied.)
+
+o Modify binaries to use /var/lib/systemimager/ instead of /tftpboot/
+o Austin Gonyou patch: Dual NIC Installs
+o Jose_AP_Celestino.ida.prepareclient.patch to make systemimager work
+  properly with Smart Array cards.  (must get a Smart Array card first)
+o getimage - put exclude/include stuff on imageserver by image
+  /tftpboot/systemimager/$image.updateclient.include
+  /tftpboot/systemimager/$image.updateclient.exclude
+o updateclient - local /etc/systemimager/systemimager.exclude or include
+  take precedence over include and exclude on imageserver.
+o updateclient - include/exclude pulled to temporary files.
+o prepareclient - no longer puts /etc/systemimager/systemimager.exclude on
+  client.
+o check for the presence of a BIOS file written by BIOSwriter. If 
+  found, then at the tail end of a client's image pull, it runs 
+  BIOSwriter to write the file.
+o deal with LABEL=UUID as well as LABEL=mount_point
+o next release (1.5.x), make the -imageserver option go away
+  in getimage.
+o getimage -- exclude option
+o if local.cfg and dhcp fails, have client ask for manual input
+o redirect to serial port:
+  - manual change to syslinux.cfg
+  - maybe an append parameter if necessary
+  - detect if serial is wanted by having rcS look for variable in
+    - $image.master
+    - local.cfg
+o add -exclude option to getimage
+o incorporate ssh
+  1) client generates and gives it's key to imageserver prior to pulling down image?
+  2) imageserver adds client's key to it's .ssh/authorized_keys file
+  3) client can rsync -e ssh in.
+o incorporate casper (multicast by Aaron Hillegass <aaron@bignerdranch.com>)
+o getimage -- blink option
+o getimage -- eject option
+o contemplate using wget to pull stuff?
+o contemplate using khttpd or tux or similar to show autoinstall client status
+o command to put mac addresses/host names into 
+  /etc/dhcpd.conf by using broadcast pings, the arp 
+  table, and /etc/hosts or dns.
+o store certain parameters in /etc/systemimager/systemimager.conf as 
+  IMAGESDIRECTORY="/var/spool/systemimager/images"
+o section of HOWTO that helps Kickstart users transition to SystemImager.
+o redirect syslog messages from autoinstall clients to $imagserver
+o addclients -- accept command line input such as --image $imagename
+o addclients -- re-cycle through each question if answer is ""
+o have getimage question what should be excluded in future when updateimage 
+  is run.  /tmp/* and /home/* should be recommended as a starting place.
+
+
 
 Brian Chrisman <bchrisman@valinux.com>
 --------------------------------------
@@ -252,77 +286,6 @@ Wed, 17 Jan 2001
 o bootable recovery CD that self-installs from image stored on same CD
 
 
-Brian Finley <brian@thefinleys.com>
------------------------------------
-
-Change paths:
-o images:        /var/lib/systemimager/images/
-o all other SystemImager stuff (other than imageserver commands) will be
-  stored in:            /var/lib/systemimager/
-o web gui pages:        /var/lib/systemimager/web-gui/
-o autoinstall kernels:  /var/lib/systemimager/`arch`/kernels/
-o initial ram disks:    /var/lib/systemimager/`arch`/initial-ramdisks/
-o autoinstall scripts:  /var/lib/systemimager/`arch`/scripts/
-o autoinstall binaries: /var/lib/systemimager/`arch`/bin/
-   (instead of the binary.architecture idea)
-o PXE stuff will *not* be dealt with during install, but details will be
-   documented in the howto.  Later, this configuration will be handled by
-   the "pxeconfig" utility.  (I'm not sure I have your final buy in on
-   this one)
-o source for the kernel and initrd.gz and everything will be provided in
-   a single package that has a master Makefile that will compile source
-   provided, and copy over binaries that are just, well, copied over.
-   (this also helps deal with the fact that it is sometimes difficult to
-   get all the kernel patches to apply properly -- we can provide the
-   actual kernel source tree with the patches pre-applied.)
-
-o Modify binaries to use /var/lib/systemimager/ instead of /tftpboot/
-o Austin Gonyou patch: Dual NIC Installs
-o Jose_AP_Celestino.ida.prepareclient.patch to make systemimager work
-  properly with Smart Array cards.  (must get a Smart Array card first)
-o getimage - put exclude/include stuff on imageserver by image
-  /tftpboot/systemimager/$image.updateclient.include
-  /tftpboot/systemimager/$image.updateclient.exclude
-o updateclient - local /etc/systemimager/systemimager.exclude or include
-  take precedence over include and exclude on imageserver.
-o updateclient - include/exclude pulled to temporary files.
-o prepareclient - no longer puts /etc/systemimager/systemimager.exclude on
-  client.
-o check for the presence of a BIOS file written by BIOSwriter. If 
-  found, then at the tail end of a client's image pull, it runs 
-  BIOSwriter to write the file.
-o deal with LABEL=UUID as well as LABEL=mount_point
-o next release (1.5.x), make the -imageserver option go away
-  in getimage.
-o getimage -- exclude option
-o if local.cfg and dhcp fails, have client ask for manual input
-o redirect to serial port:
-  - manual change to syslinux.cfg
-  - maybe an append parameter if necessary
-  - detect if serial is wanted by having rcS look for variable in
-    - $image.master
-    - local.cfg
-o add -exclude option to getimage
-o incorporate ssh
-  1) client generates and gives it's key to imageserver prior to pulling down image?
-  2) imageserver adds client's key to it's .ssh/authorized_keys file
-  3) client can rsync -e ssh in.
-o incorporate casper (multicast by Aaron Hillegass <aaron@bignerdranch.com>)
-o getimage -- blink option
-o getimage -- eject option
-o contemplate using wget to pull stuff?
-o contemplate using khttpd or tux or similar to show autoinstall client status
-o command to put mac addresses/host names into 
-  /etc/dhcpd.conf by using broadcast pings, the arp 
-  table, and /etc/hosts or dns.
-o store certain parameters in /etc/systemimager/systemimager.conf as 
-  IMAGESDIRECTORY="/var/spool/systemimager/images"
-o section of HOWTO that helps Kickstart users transition to SystemImager.
-o redirect syslog messages from autoinstall clients to $imagserver
-o addclients -- accept command line input such as --image $imagename
-o addclients -- re-cycle through each question if answer is ""
-o have getimage question what should be excluded in future when updateimage 
-  is run.  /tmp/* and /home/* should be recommended as a starting place.
 
 
 Ian McLeod <ian@valinux.com> (suggestions)
