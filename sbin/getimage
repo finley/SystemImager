@@ -194,21 +194,21 @@ my $auto_install_script_conf;
 
 ### BEGIN evaluate options ###
 GetOptions( 
-    "golden-client=s" => \$golden_client,
-    "server=s" => \$imageserver,
-    "image=s" => \$image,
-    "directory=s" => \$default_image_dir,
-    "ip-assignment=s" => \$ip_assignment_method,
-    "exclude=s" => \$exclude,
-    "exclude-file=s" => \$exclude_file,
-    "update-script=s" => \$update_script,
-    "post-install=s" => \$post_install,
-    "no-listing" => \$no_listing,
-    "ssh-user=s" => \$ssh_user,
-    "log=s" => \$log,
-    "help" => \$help,
-    "version" => \$version,
-    "quiet" => \$quiet
+    "golden-client=s"   => \$golden_client,
+    "server=s"          => \$imageserver,
+    "image=s"           => \$image,
+    "directory=s"       => \$default_image_dir,
+    "ip-assignment=s"   => \$ip_assignment_method,
+    "exclude=s"         => \$exclude,
+    "exclude-file=s"    => \$exclude_file,
+    "update-script=s"   => \$update_script,
+    "post-install=s"    => \$post_install,
+    "no-listing"        => \$no_listing,
+    "ssh-user=s"        => \$ssh_user,
+    "log=s"             => \$log,
+    "help"              => \$help,
+    "version"           => \$version,
+    "quiet"             => \$quiet
 ) || die "$help_info";
 
 $update_script = lc $update_script;
@@ -318,17 +318,17 @@ if (!$quiet) {
 }
 
 if (! -d "$default_image_dir")  {
-  mkdir("$default_image_dir", 0750) or die "$program_name: Can't make directory $default_image_dir\n";
+    mkdir("$default_image_dir", 0750) or die "$program_name: Can't make directory $default_image_dir\n";
 }
 
 if (-d "$imagedir") {
-  if (!$quiet) {
-    print "An image named \"$image\" already exists...\n";
-    print "Update exisiting image? ([y]/n): ";
-    $continue = SystemImager::Common->get_response('y');
-    ($continue ne "n") or die "$program_name: No files were modified.\n";
-    print "\n";
-  }
+    if (!$quiet) {
+        print "An image named \"$image\" already exists...\n";
+        print "Update exisiting image? ([y]/n): ";
+        $continue = SystemImager::Common->get_response('y');
+        ($continue ne "n") or die "$program_name: No files were modified.\n";
+        print "\n";
+    }
 } else  {
     mkdir("$imagedir", 0777) || 
 	die "$program_name: Can't make directory $imagedir\n";
@@ -474,7 +474,7 @@ if($source_host) {
   $options = "--delete --delete-excluded --exclude-from=$final_exclude_file";
   if ($log) { $options = $options . qq( --log-format="$log"); }
   if ($ssh_user) { $options = $options . " --bwlimit=10000"; }
-  $options = $options . " rsync://${source_host}:${port}/root/ $imagedir";
+  $options = $options . " rsync://${source_host}:${port}/root/ $imagedir/";
 }
 ### END golden client stuff ###
 
