@@ -1,3 +1,9 @@
+###############################################################################
+This patch modifies the raidtools-0.90 Makefile so that the mkraid command
+is statically linked.
+	-dann <dannf@ldl.fc.hp.com>
+###############################################################################
+
 diff -urN raidtools-0.90/Makefile.in raidtools/Makefile.in
 --- raidtools-0.90/Makefile.in	Tue Aug 24 10:24:56 1999
 +++ raidtools/Makefile.in	Mon Jul 16 18:31:04 2001
