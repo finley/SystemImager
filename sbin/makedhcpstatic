@@ -3,122 +3,15 @@
 #
 # "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>
 #
-# This file is: makedhcpstatic
+#   $Id$
+#
+#   Written by Brian Elliott Finley <brian@systemimager.org>
 #
 
-### BEGIN Subroutines ###
-sub get_response {
- my $garbage_out=$_[0];
- my $garbage_in=<STDIN>;
- chomp $garbage_in;
- unless($garbage_in eq "") { $garbage_out = $garbage_in; }
- return $garbage_out;
-}
-### END Subroutines ###
+print <<'EOF';
 
+makedhcpstatic has been renamed to 
+  "mkdhcpstatic"
 
-# if not run as root, this script will surely fail
-unless($< == 0) { die "Must be run as root!\n"; }
-
-#FIX# give warning
-#if -q then no warning
-
-# read in /etc/dhcpd.conf
-open(DHCPDCONF, "< /etc/dhcpd.conf") or die "Couldn't open /etc/dhcpd.conf for reading: $!\n";
-while (<DHCPDCONF>) { push(@dhcpdconf, $_); }
-close(DHCPDCONF);
-
-# Oh where oh where could my leases file be?
-@lease_files_du_jour = ( 
-                        "/var/dhcp/dhcpd.leases",
-                        "/var/state/dhcp/dhcpd.leases",
-                        "/etc/dhcpd.leases"
-                       );
-
-foreach my $file (@lease_files_du_jour) {
-    # does *this* one exist?
-    if ( -e "$file" ) { 
-        $dhcpd_lease_file = $file;
-    }
-    last if ( $dhcpd_lease_file );
-}
-
-if ( $dhcpd_lease_file )
-{
-    # read in dhcpd.leases and create an IP/mac address hash
-    %ipbymac = ();
-    open(FILE, "< $dhcpd_lease_file") or die "Couldn't open $dhcpd_lease_file for reading: $!\n";
-    $line = "";
-    while(<FILE>) {
-        chomp;
-        # get rid of tabs (not a normal space --> <ctrl>+<v> then <tab> )
-        $_ =~ s/	//;
-        $_ =~ s/;/ /;
-        if ( /^#/ )     { next; }
-        elsif( ! /}/ )  { $line = $line . $_; }
-        else            {
-            $line = $line . $_;
-            my @fields = split(/ /, $line);
-            $ipbymac{$fields[12]} = $fields[1];
-            $line = "";
-        }
-    }
-    close(FILE);
-}
-
-# default to using info in /var/log/messages
-else {
-    # read in /var/log/messages and create an IP/mac address hash
-    %ipbymac = ();
-    open(FILE, "< /var/log/messages") or die "Couldn't open /var/log/messages for reading: $!\n";
-    while (<FILE>) {
-        if (/DHCPACK/) {
-            my @fields = split;
-            $ipbymac{$fields[9]} = $fields[7];
-        }
-    }
-    close(FILE);
-}
-
-# read in /etc/hosts and create an IP address/host name hash
-%hostsbyip = ();
-open(HOSTS, "< /etc/hosts") or die "Couldn't open /etc/hosts for reading: $!\n";
-while (<HOSTS>) {
-  if (/^\s*\d+\.\d+\.\d+\.\d+\s+\w/) {	# match a non-commented IP/hostname entry
-    my @fields = split;
-    $hostsbyip{$fields[0]} = $fields[1]; }
-}
-close(HOSTS);
-
-# open /etc/dhcpd.conf for writing
-open(DHCPDCONF, ">> /etc/dhcpd.conf") or die "Couldn't open /etc/dhcpd.conf for appending: $!\n";
-#FIX# need to add section for testing to see if IP is already assigned (and sort there instead ;)...
-@macs = sort (keys %ipbymac);
-foreach $mac (@macs) {
-  $exists="no";
-  foreach(@dhcpdconf) { 
-    if(/$mac/) { 
-      $exists="yes";
-      last;
-    } 
-  }
-  # update dhcpd.conf as necessary
-  #FIX# need to remove fixed addresses from range -- test to be sure, but I believe hosts that
-  # are already in dhcpd.leases, or hosts that have a MAC specified will continue to get the 
-  # appropriate address, but if a _new_ host boots, it may get an address from the range that
-  # is actually reserved for a specific MAC address.  -- must test -- <bef>
-  unless($exists eq "yes") { 
-    # autoinstall client gets it's hostname from hosts file pulled from $imageserver::etc/hosts
-    #  that's how it knows which script file to pull
-    #
-    $hostname = $hostsbyip{$ipbymac{$mac}};
-    print "Adding entry for $hostname:\t$mac $ipbymac{$mac} to /etc/dhcpd.conf\n";
-    print DHCPDCONF qq(host $hostname { hardware ethernet $mac; fixed-address $hostname; }\n);
-  }
-}
-close(DHCPDCONF);
-
-print "\n";
-print "Now you must restart your dhcp daemon for the changes to take effect.\n";
-
-exit 0;
+EOF
+exit 1
