@@ -7,7 +7,7 @@
 #
 #   Others who have contributed to this code:
 #     Brian Finley <brian@systemimager.org>
-#
+#     Sean Dague <sean@dague.net>
 #
 #
 
@@ -185,7 +185,7 @@ ifeq ($(ARCH),ia64)
 	 LINUX_VERSION = 2.4.9
 	 LINUX_MD5SUM = 991c485866bd4c52504ec4721337b46c
 	 LINUX_IMAGE = $(LINUX_SRC)/arch/ia64/boot/vmlinux
-	 LINUX_PATCH = $(PATCH_DIR)/linux.ia64.patch.bz2
+	 LINUX_PATCH = $(PATCH_DIR)/linux.ia64.patch
 	 LINUX_CONFIG = $(PATCH_DIR)/linux.ia64.config
 	 LINUX_TARGET = vmlinux
 endif
@@ -328,7 +328,7 @@ patched_kernel-stamp:
 	[ -d $(LINUX_SRC) ] || \
 		( cd $(SRC_DIR) && bzcat $(LINUX_TARBALL) | tar xv && \
 		  [ ! -f ../$(LINUX_PATCH) ] || \
-		  cd linux && bzcat ../../$(LINUX_PATCH) | patch -p1 )
+		  cd linux && patch -p1 < ../../$(LINUX_PATCH))
 	cp -a $(LINUX_CONFIG) $(LINUX_SRC)/.config
 	cd $(LINUX_SRC) && make oldconfig dep
 	touch patched_kernel-stamp
