@@ -92,6 +92,7 @@ cd /usr/sbin && ./prepareclient --rpm-install
 /usr/sbin/addclients
 /usr/sbin/getimage
 /usr/sbin/makeautoinstalldiskette
+/usr/sbin/makeautoinstallcd
 /usr/sbin/makedhcpserver
 /usr/sbin/makedhcpstatic
 
