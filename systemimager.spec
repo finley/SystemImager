@@ -34,7 +34,7 @@ Conflicts: %{name}
 
 %description client
 This is the package you install on a VA SystemImager "master client".
-It prepares the "master client" to have it's image retrieved by an 
+It prepares the "master client" to have its image retrieved by an 
 image server.
 
 %changelog
@@ -53,13 +53,14 @@ DESTDIR=$RPM_BUILD_ROOT ; export DESTDIR
 prefix=%{prefix} ; export prefix
 ./install -q -n
 
-install -m 755 afterburner $RPM_BUILD_ROOT/tftpboot/systemimager/
+install -m 755 afterburner functions $RPM_BUILD_ROOT/tftpboot/systemimager/
+install -m 644 VERSION $RPM_BUILD_ROOT/tftpboot/systemimager/
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 %post
-/tftpboot/systemimager/afterburner -q -n
+cd /tftpboot/systemimager && ./afterburner -q -n
 
 %postun
 
