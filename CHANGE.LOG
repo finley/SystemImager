@@ -1,5 +1,5 @@
 #
-# "VA SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com> 
+# "VA SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@valinux.com> 
 #
 # This file: CHANGE.LOG
 #
@@ -13,6 +13,11 @@ install
 o Now works with /etc/rc.d/init.d/ or /etc/init.d.
 o The imageserver now runs rsync as a daemon from an init script.  This
   is configured automatically at install time.
+
+installclient
+-------------
+o Don't overwrite systemimager.exclude if it already exists.  Thanks to
+  Wesley Smith <wessmith@engr.sgi.com>.
 
 getimage
 --------

@@ -14,19 +14,10 @@ Version 1.4.0 specific:
 
 <brian@thefinleys.com>
 ----------------------
-- find out which GigE driver to include for VA
-- 3ware IDE RAID
-- Submitted patches
-
-- getimage - assignes different include/exclude based on distro
-- getimage - put exclude/include stuff on imageserver by image
-  /tftpboot/systemimager/$image.updateclient.include
-  /tftpboot/systemimager/$image.updateclient.exclude
-- updateclient - local /etc/systemimager/systemimager.exclude or include
-  take precedence over include and exclude on imageserver.
-- updateclient - include/exclude pulled to temporary files.
-- prepareclient - no longer puts /etc/systemimager/systemimager.exclude on
-  client.
+- change copyright to 1999-2001
+- wording in spec file
+- Make it clear that people should mail the list and not me.
+- Redo the website
 
 - verify that getimage deals with networking properly for debian systems.
   - look at a default debian dhcp installation
@@ -35,25 +26,44 @@ Version 1.4.0 specific:
   - look at a default debian static ip installation
     - is the /etc/init.d/network script there?
     - how is it different for 2.1 and 2.2 installs
+
 - Deal with tftp support (for network booting) on xinetd systems.
   (this is actually something to deal with in the tftp-hpa package 
    install)
+
 - have deb package created
 - modify RPM spec file to deal with:
   - configuration files
   - additional files
   - changed files
-  - use install to install files in install scripts
 - deal with ext3 journal files differently according to Ted Ts'o
 - label autoinstallcd.iso with v1.4.x (x is literal)
 - start using bzip2
+- move mailing list over to sourceforge
 
+Version 1.4.1 specific:
+-----------------------
+o Fred Gray <fegray@npl.uiuc.edu> -- patch to allow exclude on golden 
+  client during getimage.  ~/systemimager/contrib/patches.email
+o James Morton <jmorton@viata.com> -- patch to have autoinstallclient
+  ask user for settings. ~/systemimager/contrib/IOUs.email
 
 Possibilities for future versions
 ---------------------------------
 
 <brian@thefinleys.com>
 ----------------------
+- use install to install files in install scripts
+o Jose_AP_Celestino.ida.prepareclient.patch to make systemimager work
+  properly with Smart Array cards.
+o getimage - put exclude/include stuff on imageserver by image
+  /tftpboot/systemimager/$image.updateclient.include
+  /tftpboot/systemimager/$image.updateclient.exclude
+- updateclient - local /etc/systemimager/systemimager.exclude or include
+  take precedence over include and exclude on imageserver.
+- updateclient - include/exclude pulled to temporary files.
+- prepareclient - no longer puts /etc/systemimager/systemimager.exclude on
+  client.
 - series of slides as a HOW-TO
 - series of slides for marketing
   - competitive analysis
@@ -75,8 +85,6 @@ Possibilities for future versions
   - detect if serial is wanted by having rcS look for variable in
     - $image.master
     - local.cfg
-- add a -quick-boot option to makeautoinstallfloppy
-  - disclaimer -- may not work on all systems
 - contemplate using MAKEDEV instead of having pre-existing device files
 - fix network booting
 - add -exclude option to getimage
@@ -86,28 +94,20 @@ Possibilities for future versions
   3) client can rsync -e ssh in.
 - incorporate casper (multicast by Aaron Hillegass <aaron@bignerdranch.com>)
 - put autoinstallmedia source into cvs
-- Record imagename to /etc/systemimager/current_image on client
-  after an autoinstall (*.master) or an updateclient (if syncing from the root "/"). 
-- consider inodes/block in getimage
+- identify mke2fs parameters -b, -i, and -m on the master client and replicate this on autoinstall clients
 - getimage -- blink option
 - getimage -- eject option
-- makeautoinstalldiskette -- consider adding config 
-  file options?
+- makeautoinstalldiskette -- consider adding config file options?
 - contemplate using wget to pull stuff?
 - contemplate using khttpd to show autoinstall client status
 - command to put mac addresses/host names into 
   /etc/dhcpd.conf by using broadcast pings, the arp 
   table, and /etc/hosts or dns.
-- identify mke2fs parameters -b, -i, and -m on the master client and replicate this on autoinstall clients
 - use something other than mtab for getting active ext2 filesystems?
-- offer user the ability to change this, and store the changes in 
-  /etc/systemimager.conf as IMAGESDIRECTORY="/var/spool/systemimager/images"
-- add an --exclude option
-- pass variables, such as $imagename to "addclients"
+- store certain parameters in /etc/systemimager/systemimager.conf as IMAGESDIRECTORY="/var/spool/systemimager/images"
 - (part of the making of the tftp-hpa RPM) need to add proper tftp entry in /etc/inetd.conf 
    for tftp-hpa rpm.  If systemimager is installed with tftp-hpa, then systemimager's 
    afterburner will make the proper changes to /etc/inetd.conf.
-- make the <Backspace> key work ;)
 - create man pages
 - support for Caldera Open Linux
   - IF_LIST in /etc/sysconfig/network
@@ -119,8 +119,6 @@ Possibilities for future versions
 - addclients -- re-cycle through each question if answer is ""
 - have getimage question what should be excluded in future when updateimage 
   is run.  /tmp/* and /home/* should be recommended as a starting place.
-- have client pull systemimager.exclude and systemimager.include from
-  imageserver before pulling image
 
 Ian McLeod <ian@valinux.com>
 - autoinstall clients report to imageserver "I'm up"
@@ -161,6 +159,8 @@ Miscellaneous and Possibilities
 - curses wrapper around the whole thing?
 - updateclient - log what was updated and or deleted?
 - makedhcpstatic -- allow for -f "filename" option to specify dhcpd.leases file.
+- mvimage command -- rename an image
+- rmimage command -- remove an image
 
 
 Bug list
