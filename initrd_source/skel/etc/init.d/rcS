@@ -28,13 +28,7 @@ VERSION="SYSTEMIMAGER_VERSION_STRING"
 FLAVOR="SYSTEMIMAGER_FLAVOR_STRING"
 
 ARCH=`uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/`
-if [ "ppc64" = $ARCH ] ; then
-    # This takes a little bit of futzing with due to all the PPC platforms that exist.
-    if [ -d /proc/iSeries/ ] ; then
-        ARCH=ppc64-iSeries
-    fi
-fi
-#
+
 ################################################################################
 
 
@@ -43,7 +37,25 @@ fi
 #   Subroutines
 #
 ################################################################################
+
+#################################################################################
+#  adjust_arch
 #
+#  based on info in /proc adjust the ARCH variable.  This needs to run
+#  after proc is mounted.
+#
+################################################################################
+
+adjust_arch() {
+    if [ "ppc64" = $ARCH ] ; then
+        # This takes a little bit of futzing with due to all the PPC platforms that exist.
+        if [ -d /proc/iSeries ] ; then
+            ARCH=ppc64-iSeries
+            echo "Detected ppc64 is really an iSeries partition..."
+        fi
+    fi
+}
+
 write_variables() {
     # pass all variables set here on to the hostname.sh script
     rm -f /tmp/variables.txt
@@ -674,6 +686,10 @@ mount_dev_on_devfs
 echo
 echo mount_proc
 mount_proc
+
+echo
+echo adjust_arch
+adjust_arch
 
 echo
 echo ifconfig_loopback
