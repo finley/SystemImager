@@ -7,14 +7,16 @@
 Notes on customizing and building your initrd.gz
 ------------------------------------------------
 o the build requires superuser privileges as it mounts a file via the loopback
-  device
+  device.  If you are not root, it will attempt to use sudo for commands
+  requiring root access.
 o files in the skel/ directory are copied directly to the ramdisk
   you can edit the files there, or drop in your own.
 o source tarballs for a few binaries are needed during the build.  an attempt
   is made to download them w/ wget, but you can download them separately and
   drop them into the tree by hand.  see the Makefile for locations.  if the
   download attempt fails because these files no longer exist, please report
-  this as a bug.
+  this as a bug.  wget will pay attention to your http_proxy and ftp_proxy
+  environmental variables.
 o development is done on Debian systems, so this is the suggested platform
   for building.
 o dynamic libraries can hog up a lot of the space in your ramdisk.  the
@@ -35,3 +37,5 @@ o /dev entries are created from the contents of the dev_ls-lR file.
   1) modify the entries in /dev of an existing ramdisk to suit your needs
   2) create a new dev_ls-lR file by cd'ing to the customized /dev directory
      and capturing the output of 'ls -lR'
+o you may also need to customize the size of your ramdisk, and the number
+  of inodes available on your ramdisk.  these are options in the Makefile.
