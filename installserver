@@ -121,7 +121,7 @@ for file in /etc/rsyncd.conf /etc/systemimager/rsyncd.conf.beforesystemimager$VE
 		         echo "$line" | grep "^\[.*\]$" > /dev/null
 			 if [ $? -eq 0 ]; then
 			   ## check to see if this module section header already exists
-			   grep "$line" /etc/systemimager/rscynd.conf > /dev/null
+			   grep "$line" /etc/systemimager/rsyncd.conf > /dev/null
 			   if [ $? -eq 0 ]; then
 			     echo "An entry for the image $line already exists, skipping..."
 			     skip_next_line="true"
