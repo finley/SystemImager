@@ -65,21 +65,16 @@ done
 
 
 ### BEGIN tftpboot stuff ###
-
 # Create /tftpboot/systemimager/ directory if necessary and copy/link files
 if [ ! -d /tftpboot/systemimager/ ]; then
-  [ $QUIET = "false" ] && echo "Creating /tftpboot/systemimager/ ..."
+  [ $QUIET = "false" ] && echo "Creating /tftpboot/systemimager/..."
   mkdir -p /tftpboot/systemimager/
 else
-  [ $QUIET = "false" ] && echo "/tftpboot/systemimager/ already exists ..."
+  [ $QUIET = "false" ] && echo "/tftpboot/systemimager/ already exists..."
 fi
-[ $QUIET = "false" ] && echo "soft linking /tftpboot/systemimager/hosts to /etc/hosts ..."
+[ $QUIET = "false" ] && echo "soft linking /tftpboot/systemimager/hosts to /etc/hosts..."
 cd /tftpboot/systemimager/
 ln -sf /etc/hosts hosts
-
-mkdir -p /tftpboot/pxelinux.cfg/
-cd /tftpboot/pxelinux.cfg/
-ln -f syslinux.cfg default
 
 # gotta make sure the masses can read it...
 chmod +r /etc/hosts
@@ -91,6 +86,8 @@ do
   chown -R root:root /tftpboot/$TFTP_ITEM
 done
 
+cd /tftpboot/pxelinux.cfg/
+ln -f syslinux.cfg default
 ### END tftpboot stuff ###
 
 
@@ -128,59 +125,59 @@ ln -sf README DO_NOT_TOUCH_THESE_DIRECTORIES
 egrep -qw ^rsync /etc/services
 if [ $? != "0" ]; then
   if [ ! -f /etc/services.beforesystemimager ]; then
-    [ $QUIET = "false" ] && echo "Backing up /etc/services to /etc/services.beforesystemimager ..."
+    [ $QUIET = "false" ] && echo "Backing up /etc/services to /etc/services.beforesystemimager..."
     cp -af /etc/services /etc/services.beforesystemimager
   fi
-  [ $QUIET = "false" ] && echo "Adding rsync entries to /etc/services ..."
+  [ $QUIET = "false" ] && echo "Adding rsync entries to /etc/services..."
   echo "rsync           873/tcp                         # rsync" >> /etc/services
   echo "rsync           873/udp                         # rsync" >> /etc/services
 else
-  [ $QUIET = "false" ] && echo "rsync entries already exist in /etc/services ..."
+  [ $QUIET = "false" ] && echo "rsync entries already exist in /etc/services..."
 fi 
 
 # verify that rsync entry is in /etc/inetd.conf
 egrep -qw ^rsync /etc/inetd.conf
 if [ $? != "0" ]; then
   if [ ! -f /etc/inetd.conf.beforesystemimager ]; then
-    [ $QUIET = "false" ] && echo "Backing up /etc/inetd.conf to /etc/inetd.conf.beforesystemimager ..."
+    [ $QUIET = "false" ] && echo "Backing up /etc/inetd.conf to /etc/inetd.conf.beforesystemimager..."
 
     cp -af /etc/inetd.conf /etc/inetd.conf.beforesystemimager
   fi
   egrep -qw ^#rsync /etc/inetd.conf
   if [ $? != "0" ]; then
-    [ $QUIET = "false" ] && echo "Adding rsync entry to /etc/inetd.conf ..."
+    [ $QUIET = "false" ] && echo "Adding rsync entry to /etc/inetd.conf..."
     echo "rsync stream tcp nowait root /usr/bin/rsync rsyncd --daemon" >> /etc/inetd.conf
   else
-    [ $QUIET = "false" ] && echo "Uncommenting (enabling) rsync entry in /etc/inetd.conf ..."
+    [ $QUIET = "false" ] && echo "Uncommenting (enabling) rsync entry in /etc/inetd.conf..."
     sed 's/^#rsync/rsync/' /etc/inetd.conf > /tmp/.systemimager
     cp -af /tmp/.systemimager /etc/inetd.conf
     rm -f /tmp/.systemimager
   fi
   RESTART_INETD=yes
 else
-  [ $QUIET = "false" ] && echo "rsync entry already enabled in /etc/inetd.conf ..."
+  [ $QUIET = "false" ] && echo "rsync entry already enabled in /etc/inetd.conf..."
 fi 
 
 # verify that a tftp entry is in /etc/inetd.conf
 egrep -qw ^tftp /etc/inetd.conf
 if [ $? != "0" ]; then
   if [ ! -f /etc/inetd.conf.beforesystemimager ]; then
-    [ $QUIET = "false" ] && echo "Backing up /etc/inetd.conf to /etc/inetd.conf.beforesystemimager ..."
+    [ $QUIET = "false" ] && echo "Backing up /etc/inetd.conf to /etc/inetd.conf.beforesystemimager..."
     cp -af /etc/inetd.conf /etc/inetd.conf.beforesystemimager
   fi
   egrep -qw ^#tftp /etc/inetd.conf
   if [ $? != "0" ]; then
-    [ $QUIET = "false" ] && echo "Adding tftp entry to /etc/inetd.conf ..."
+    [ $QUIET = "false" ] && echo "Adding tftp entry to /etc/inetd.conf..."
     echo "tftp   dgram   udp     wait    root    /usr/sbin/tcpd  in.tftpd" >> /etc/inetd.conf
   else
-    [ $QUIET = "false" ] && echo "Uncommenting (enabling) tftp entry in /etc/inetd.conf ..."
+    [ $QUIET = "false" ] && echo "Uncommenting (enabling) tftp entry in /etc/inetd.conf..."
     sed 's/^#tftp/tftp/' /etc/inetd.conf > /tmp/.systemimager
     cp -af /tmp/.systemimager /etc/inetd.conf
     rm -f /tmp/.systemimager
   fi
   RESTART_INETD=yes
 else
-  [ $QUIET = "false" ] && echo "tftp entry already enabled in /etc/inetd.conf ..."
+  [ $QUIET = "false" ] && echo "tftp entry already enabled in /etc/inetd.conf..."
 fi 
 
 # signal inetd to re-read /etc/inetd.conf
@@ -198,23 +195,23 @@ fi
 # install SystemImager brand rsyncd.conf file
 if [ ! -f /etc/rsyncd.conf ]; then
   # if it doesn't exist, create it
-  [ $QUIET = "false" ] && echo "Creating /etc/rsyncd.conf ..."
+  [ $QUIET = "false" ] && echo "Creating /etc/rsyncd.conf..."
   create_rsyncd_conf
 elif [ ! -f /etc/rsyncd.conf.beforesystemimager ]; then
   # OK, it does exist -- if the backup file doesn't exist, 
   # back it up 
-  [ $QUIET = "false" ] && echo "Backing up /etc/rsyncd.conf to /etc/rsyncd.conf.beforesystemimager ..."
+  [ $QUIET = "false" ] && echo "Backing up /etc/rsyncd.conf to /etc/rsyncd.conf.beforesystemimager..."
   cp -af /etc/rsyncd.conf /etc/rsyncd.conf.beforesystemimager
   # and create rsyncd.conf
-  [ $QUIET = "false" ] && echo "Creating /etc/rsyncd.conf ..."
+  [ $QUIET = "false" ] && echo "Creating /etc/rsyncd.conf..."
   create_rsyncd_conf
 elif ! egrep -qw SystemImager /etc/rsyncd.conf; then
   # if the backup file exists, then check to see if current rsyncd.conf belongs
   # to SystemImager.  If not, back it up.
-  [ $QUIET = "false" ] && echo Backing up /etc/rsyncd.conf to /etc/rsyncd.conf.beforesystemimager ...
+  [ $QUIET = "false" ] && echo Backing up /etc/rsyncd.conf to /etc/rsyncd.conf.beforesystemimager...
   cp -af /etc/rsyncd.conf /etc/rsyncd.conf.beforesystemimager
   # and create rsyncd.conf
-  [ $QUIET = "false" ] && echo Creating /etc/rsyncd.conf ...
+  [ $QUIET = "false" ] && echo Creating /etc/rsyncd.conf...
   create_rsyncd_conf
 fi
 
