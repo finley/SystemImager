@@ -669,15 +669,17 @@ if (@software_raid_devices) {
   print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::tftpboot/systemimager/raidstop /tmp/\n";
   print MASTER_SCRIPT "\n";
 
-  print MASTER_SCRIPT "# Stop RAID devices before partitioning begins\n";
-  foreach my $device_file (sort (@software_raid_devices)) {
-    # Why did they get started in the first place?  So we can pull a local.cfg
-    # file off a root mounted RAID system.  raidstop must live on the autoinstall
-    # media.
-    $command="raidstop $device_file";
-    print MASTER_SCRIPT "echo $command && $command\n";
-  }
-  print MASTER_SCRIPT "\n";
+  print MASTER_SCRIPT << 'EOF';
+# Stop RAID devices before partitioning begins
+# Why did they get started in the first place?  So we can pull a local.cfg
+# file off a root mounted RAID system.
+RAID_DEVICES=`cat /proc/mdstat | grep ^md | mawk '{print "/dev/" $1}'`
+for RAID_DEVICE in ${RAID_DEVICES}
+do
+  echo "raidstop ${RAID_DEVICE}" && raidstop ${RAID_DEVICE}
+done
+
+EOF
 }
 ### END stop RAID devices before partitioning ###
 
