@@ -59,55 +59,57 @@
 #     (do an 
 #       ARCH=`uname -m | sed 's/i[3-6]86/i386/'`
 #     in the rcS script)
-
+#
+# Where should the server side exclude file be stored?
+# currently it is the only file in /usr/lib/systemimager/systemimager
+# maybe /etc/systemimager/systemimager.exclude?
+#
 
 DESTDIR = 
 
-TEMP_DIR = ./systemimager.initrd.temp.dir
-TARBALL_BUILD_DIR = ./autoinstallbin
+ARCH = $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/)
 
-MANUAL_DIR = doc/manual_source
-MANPAGE_DIR = doc/man
+TEMP_DIR = systemimager.initrd.temp.dir/
+TARBALL_BUILD_DIR = autoinstallbin/
+
+MANUAL_DIR = doc/manual_source/
+MANPAGE_DIR = doc/man/
+PATCH_DIR = patches/
+LIB_SRC = lib/SystemImager/
+SRC_DIR = src/
+BINARY_SRC = sbin/
+CLIENT_BINARY_SRC = tftpstuff/systemimager
+COMMON_BINARY_SRC = $(BINARY_SRC)
 
 # destination directories
-DOC  = $(DESTDIR)/usr/share/doc/systemimager-doc
+DOC  = $(DESTDIR)/usr/local/share/doc/systemimager-doc
 ETC  = $(DESTDIR)/etc
 INITD = $(ETC)/init.d
-SBIN = $(DESTDIR)/usr/sbin
-MAN8 = $(DESTDIR)/usr/share/man/man8
-
-PATCH_DIR = ./patches
-SRC_DIR = ./src
-
+SBIN = $(DESTDIR)/usr/local/sbin
+MAN8 = $(DESTDIR)/usr/local/share/man/man8
 LOG_DIR = $(DESTDIR)/var/log/systemimager
+LIB_DEST = $(DESTDIR)/usr/lib/systemimager/perl/SystemImager
 
 INITSCRIPT_NAME = systemimager
 
 TFTP_BIN_SRC      = tftpstuff/systemimager
 TFTP_BIN         := raidstart mkraid mkreiserfs prepareclient updateclient
 TFTP_ROOT	  = $(DESTDIR)/usr/lib/systemimager
-TFTP_BIN_DEST     = $(TFTP_ROOT)/systemimager
+TFTP_BIN_DEST     = $(TFTP_ROOT)/$(ARCH)-boot
 
 PXE_CONF_SRC      = tftpstuff/pxelinux.cfg
 PXE_CONF_DEST     = $(TFTP_ROOT)/pxelinux.cfg
 
-AUTOINSTALL_TARBALL = ./autoinstallbin.tar.gz
+AUTOINSTALL_TARBALL = autoinstallbin.tar.gz
 
-BINARY_SRC = ./sbin
-BINARIES := addclients cpimage getimage makeautoinstallcd makeautoinstalldiskette makedhcpserver makedhcpstatic makeautoinstallscript mkbootserver mvimage rmimage # what happened to pushupdate?
-
-CLIENT_BINARY_SRC = ./tftpstuff/systemimager
+BINARIES := addclients cpimage getimage makeautoinstallcd makeautoinstalldiskette makedhcpserver makedhcpstatic mkautoinstallscript mkbootserver mvimage rmimage # what happened to pushupdate?
 CLIENT_BINARIES  := updateclient prepareclient
-
-COMMON_BINARY_SRC = $(BINARY_SRC)
 COMMON_BINARIES   = lsimage
-
-LIB_SRC = ./lib/SystemImager
-LIB_DEST = $(DESTDIR)/usr/lib/systemimager/perl/SystemImager
 
 IMAGESRC    = ./var/spool/systemimager/images
 IMAGEDEST   = $(DESTDIR)/var/lib/systemimager/images
 WARNING_FILES = $(IMAGEDEST)/README $(IMAGEDEST)/DO_NOT_TOUCH_THESE_DIRECTORIES $(IMAGEDEST)/CUIDADO $(IMAGEDEST)/ACHTUNG
+AUTOINSTALL_SCRIPT_DIR = $(DESTDIR)/var/lib/systemimager/scripts
 
 LINUX_SRC = $(SRC_DIR)/linux
 LINUX_VERSION = 2.2.18
@@ -151,7 +153,8 @@ install_server:	install_manpages install_configs install_server_libs
 	$(foreach binary, $(BINARIES), \
 		install -m 555 $(BINARY_SRC)/$(binary) $(SBIN);)
 	install -d -m 750 $(LOG_DIR)
-	install -d -m 755 $(TFTP_ROOT)/systemimager
+	install -d -m 755 $(TFTP_BIN_DEST)
+	install -d -m 755 $(AUTOINSTALL_SCRIPT_DIR)
 	install -d -m 755 $(PXE_CONF_DEST)
 	install -m 444 --backup $(PXE_CONF_SRC)/message.txt \
 		$(PXE_CONF_DEST)/message.txt
@@ -159,6 +162,7 @@ install_server:	install_manpages install_configs install_server_libs
 		$(PXE_CONF_DEST)/syslinux.cfg
 	install -m 444 --backup $(PXE_CONF_SRC)/syslinux.cfg \
 		$(PXE_CONF_DEST)/default
+	install -d -m 755 $(TFTP_ROOT)/systemimager
 	install -m 644 tftpstuff/systemimager/systemimager.exclude \
 		$(TFTP_ROOT)/systemimager
 	install -m 555 $(TFTP_BIN_SRC)/prepareclient $(TFTP_BIN_DEST)
@@ -256,8 +260,8 @@ reiserfsprogs:	patched_kernel
 #@@  autoinstallation
 #@@ 
 install_kernel:	kernel
-	mkdir -p $(TFTP_ROOT)
-	cp -a $(LINUX_IMAGE) $(TFTP_ROOT)/kernel
+	mkdir -p $(TFTP_BIN_DEST)
+	cp -a $(LINUX_IMAGE) $(TFTP_BIN_DEST)/kernel
 
 #@@kernel:
 #@@  build the kernel that autoinstall clients will boot from during
@@ -298,8 +302,8 @@ $(SRC_DIR)/$(LINUX_TARBALL):
 #@@ 
 install_initrd:
 	$(MAKE) initrd
-	mkdir -p $(TFTP_ROOT)
-	install -m 644 $(INITRD_DIR)/initrd.gz $(TFTP_ROOT)
+	mkdir -p $(TFTP_BIN_DEST)
+	install -m 644 $(INITRD_DIR)/initrd.gz $(TFTP_BIN_DEST)
 
 #@@initrd:
 #@@  build the autoinstall ramdisk
