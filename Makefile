@@ -141,7 +141,7 @@ SSH_BIN_DEST 	  = $(USR)/share/systemimager/boot/$(ARCH)/ssh
 PXE_CONF_SRC      = etc/pxelinux.cfg
 PXE_CONF_DEST     = $(ETC)/systemimager/pxelinux.cfg
 
-BINARIES := mkautoinstallcd mkautoinstalldiskette
+BINARIES := mkautoinstallcd mkautoinstalldiskette mkbootmedia
 SBINARIES := addclients cpimage getimage mkdhcpserver mkdhcpstatic mkautoinstallscript mkbootserver mvimage pushupdate rmimage mkrsyncd_conf mkclientnetboot netbootmond imagemanip mkbootpackage
 CLIENT_SBINARIES  := updateclient prepareclient
 COMMON_BINARIES   = lsimage
@@ -253,7 +253,12 @@ install_common:	install_common_man install_common_libs
 PHONY += install_server_libs
 install_server_libs:
 	mkdir -p $(LIB_DEST)/SystemImager
-	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/Server.pm $(LIB_DEST)/SystemImager
+	mkdir -p $(LIB_DEST)/BootMedia
+	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/Server.pm  $(LIB_DEST)/SystemImager
+	$(SI_INSTALL) -m 644 $(LIB_SRC)/BootMedia/BootMedia.pm 	$(LIB_DEST)/BootMedia
+	$(SI_INSTALL) -m 644 $(LIB_SRC)/BootMedia/MediaLib.pm 	$(LIB_DEST)/BootMedia
+	$(SI_INSTALL) -m 644 $(LIB_SRC)/BootMedia/alpha.pm 	$(LIB_DEST)/BootMedia
+	$(SI_INSTALL) -m 644 $(LIB_SRC)/BootMedia/i386.pm 	$(LIB_DEST)/BootMedia
 
 # install client-only libraries
 PHONY += install_client_libs
