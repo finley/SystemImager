@@ -44,6 +44,7 @@ o removed depricated -master-client option (use -golden-client instead)
 
 initrd
 ------
+o Added /dev/sdg* and /dev/sdh* entries. (Brian)
 o We now use a Makefile to create the initrd.  This means that the rcS
   script and other important files are stored in CVS as text files that
   can be edited induhvidually. (go Dann!)
