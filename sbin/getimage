@@ -517,10 +517,10 @@ EOF
         print "\nAre you satisfied? ([y]/n): ";
         $satisfied=get_response('y');
 	unless(
-	           ($ip_assignment_method eq "1")
-                or ($ip_assignment_method eq "2")
-                or ($ip_assignment_method eq "3")
-                or ($ip_assignment_method eq "4")
+	           ($ip_assignment_method == "1")
+                or ($ip_assignment_method == "2")
+                or ($ip_assignment_method == "3")
+                or ($ip_assignment_method == "4")
 	      )
               {
                  # reset to default
@@ -531,10 +531,10 @@ EOF
     }
 
 # turn number values into useable string values
-if   ($ip_assignment_method eq "1") { $ip_assignment_method = "static_dhcp" ; }
-elsif($ip_assignment_method eq "2") { $ip_assignment_method = "dynamic_dhcp"      ; }
-elsif($ip_assignment_method eq "3") { $ip_assignment_method = "static"; }
-elsif($ip_assignment_method eq "4") { $ip_assignment_method = "replicant"   ; }
+if   ($ip_assignment_method == "1") { $ip_assignment_method = "static_dhcp" ; }
+elsif($ip_assignment_method == "2") { $ip_assignment_method = "dynamic_dhcp"      ; }
+elsif($ip_assignment_method == "3") { $ip_assignment_method = "static"; }
+elsif($ip_assignment_method == "4") { $ip_assignment_method = "replicant"   ; }
 }
 ### END IP Assignment Method ###
 
@@ -793,7 +793,7 @@ foreach $disk (@disks)  {
   ### BEGIN get partition information ###
   %id_by_device = ();
   %megabytes_by_device = ();
-  $lowest_start_device = "10000000";  # some random large number
+  $lowest_partition_start_point = "10000000";  # some random large number
 
   open (PARTITIONS, "<$imagedir$systemimagerdir/partitionschemes/$disk")
   || die "$program_name: Cannot open $imagedir$systemimagerdir/partitionschemes/$disk for reading\n";
@@ -823,8 +823,8 @@ foreach $disk (@disks)  {
         }
 
         # figure out what the starting device is (probably partition 1)
-        if (($megabytes ne "0") and ($start lt $lowest_start_device)) { 
-          $lowest_start_number = $start; 
+        if (($megabytes != "0") and ($start < $lowest_partition_start_point)) { 
+          $lowest_partition_start_point = $start; 
           $start_device = $device; 
         }
 
@@ -858,13 +858,13 @@ foreach $disk (@disks)  {
 
       my $megabytes = $megabytes_by_device{$device};
       my $id = $id_by_device{$device};
-      if ($megabytes eq "0") {
+      if ($megabytes == "0") {
         $sfdisk_command = "$device : start= 0, size= 0, Id=0\n" . $sfdisk_command;
         next;
       } 
       if ($has_a_non_null_partition_been_created eq "no") { $megabytes = ""; }
       if ($device eq $start_device) {
-        $sfdisk_command = "$device : start= $lowest_start_number, size= $megabytes, Id=$id\n" . $sfdisk_command;
+        $sfdisk_command = "$device : start= $lowest_partition_start_point, size= $megabytes, Id=$id\n" . $sfdisk_command;
         $has_a_non_null_partition_been_created = "yes";
       } else {
         $sfdisk_command = "$device : start= , size= $megabytes, Id=$id\n" . $sfdisk_command;
@@ -876,8 +876,8 @@ foreach $disk (@disks)  {
 
     ### BEGIN format output for logical partitions 5+ ###
     my $partition_number = "5";
-    if ($number_of_partitions gt "4") {
-      until ($partition_number eq $number_of_partitions) {
+    if ($number_of_partitions > "4") {
+      until ($partition_number == $number_of_partitions) {
         my $device = "/dev/$disk$partition_number";
         my $megabytes = $megabytes_by_device{$device};
         my $id = $id_by_device{$device};
