@@ -26,7 +26,7 @@ PATH=/bin:/usr/bin:/sbin:/usr/sbin
 # VA SystemImager specific functions
 create_rsyncd_conf() {
   echo '#'                                                      > $rsyncd_conf_file
-  echo '# Copyright (C) 1999-2001 Brian Elliott Finley <brian@valinux.com>'    >> $rsyncd_conf_file
+  echo '# Copyright (C) 1999-2001 Brian Elliott Finley <brian@thefinleys.com>'    >> $rsyncd_conf_file
   echo '#'                                                      >> $rsyncd_conf_file
   echo '# This file: /tmp/rsyncd.conf'                          >> $rsyncd_conf_file
   echo '#'                                                      >> $rsyncd_conf_file
@@ -45,7 +45,7 @@ create_rsyncd_conf() {
 show_version() {
   echo "prepareclient (part of VA SystemImager) version $version_number"
   echo ""
-  echo "Copyright (C) 1999-2001 Brian Elliott Finley <brian@valinux.com>"
+  echo "Copyright (C) 1999-2001 Brian Elliott Finley <brian@thefinleys.com>"
   echo "This is free software; see the source for copying conditions.  There is NO"
   echo "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."
 }
@@ -75,12 +75,31 @@ show_usage() {
 }
 
 create_devices_by_label_file() {
+
   rm -f /etc/systemimager/ext2_devices_by_label.txt
   rm -f /etc/systemimager/devices_by_label.txt
-  LABELS=`grep 'LABEL=' /etc/fstab | awk '{print $1}'`
+
+  # sed command below uses a literal tab: <ctrl>+<v>, then <tab>
+  LABELS=`
+	  sed 's/	/ /' /etc/fstab | \
+	  grep -v '^ *#'                | \
+	  grep 'LABEL='                 | \
+	  awk '{print $1}'
+	 `
   for LABEL in $LABELS; do
-    MOUNT_POINT=`grep -w $LABEL /etc/fstab | awk '{print $2}'`
-    DEVICE=`grep -w $MOUNT_POINT /etc/mtab | awk '{print $1}'`
+    # sed command below uses a literal tab: <ctrl>+<v>, then <tab>
+    MOUNT_POINT=`
+		 sed 's/	/ /' /etc/fstab | \
+		 grep -v '^ *#'                 | \
+                 grep "$LABEL "                 | \
+		 awk '{print $2}'
+		`
+    # sed command below uses a literal tab: <ctrl>+<v>, then <tab>
+    DEVICE=`
+            sed 's/	/ /' /etc/mtab | \
+            grep "$MOUNT_POINT "       | \
+	    awk '{print $1}'
+	   `
     echo $LABEL $DEVICE >> /etc/systemimager/devices_by_label.txt
   done
 }
@@ -318,7 +337,8 @@ do
 done
 ### END leave disk info behind for the getimage command ###
 
-egrep -q 'LABEL=' /etc/fstab && create_devices_by_label_file
+#egrep -q 'LABEL=' /etc/fstab && create_devices_by_label_file
+create_devices_by_label_file
 
 # wrap up
 if [ "$QUIET" = "false" ] && [ "$NO_RSYNCD" = "false" ]; then
