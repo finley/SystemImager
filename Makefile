@@ -301,9 +301,9 @@ install_configs:
 
 	[ "$(INITD)" != "" ] || exit 1
 	mkdir -p $(INITD)
-	$(SI_INSTALL) -b -m 755 etc/init.d/rsync $(INITD)/systemimager
-	$(SI_INSTALL) -b -m 755 etc/init.d/netbootmond $(INITD)
-	$(SI_INSTALL) -b -m 755 etc/init.d/systemimager-flamethrowerd $(INITD)
+	$(SI_INSTALL) -b -m 755 etc/init.d/systemimager-server-rsyncd 			$(INITD)
+	$(SI_INSTALL) -b -m 755 etc/init.d/systemimager-server-netbootmond 		$(INITD)
+	$(SI_INSTALL) -b -m 755 etc/init.d/systemimager-server-flamethrowerd 	$(INITD)
 
 ########## END initrd ##########
 
