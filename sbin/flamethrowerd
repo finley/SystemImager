@@ -370,7 +370,7 @@ sub update_directory {
                 $ft_config->set("${module}_async", $async);
 
             }
-            print FILE "ASYNC=$async\n";
+            print FILE "ASYNC=$async\n" if ($async);
 
             # TTL
             my $ttl;
@@ -378,13 +378,17 @@ sub update_directory {
                 # ttl is already set
                 $ttl = $ft_config->get("${module}_ttl");
             } else {
-                # get it from global setting
-                $ttl = $ft_config->get("ttl");
 
-                # Put it into module specific data structure
-                $ft_config->set("${module}_ttl", $ttl);
+                # May or may not be set
+                # get it from global setting (if it exists)
+                if ($ft_config->varlist("^ttl")) {
+                    $ttl = $ft_config->get("ttl");
+
+                    # Put it into module specific data structure
+                    $ft_config->set("${module}_ttl", $ttl);
+                }
             }
-            print FILE "TTL=$ttl\n";
+            print FILE "TTL=$ttl\n" if ($ttl);
 
             # MCAST_ALL_ADDR
             my $mcast_all_addr;
@@ -399,10 +403,28 @@ sub update_directory {
                     $mcast_all_addr = $ft_config->get("mcast_all_addr");
 
                     # Put it into module specific data structure
-                    $ft_config->set("${module}_ttl", $ttl);
+                    $ft_config->set("${module}_mcast_all_addr", $mcast_all_addr);
                 }
             }
             print FILE "MCAST_ALL_ADDR=$mcast_all_addr\n" if ($mcast_all_addr);
+
+            # NOSYNC
+            my $nosync;
+            if ($ft_config->varlist("${module}_nosync")) {
+                # nosync is already set
+                $nosync = $ft_config->get("${module}_nosync");
+            } else {
+
+                # May or may not be set
+                # get it from global setting (if it exists)
+                if ($ft_config->varlist("^nosync")) {
+                    $nosync = $ft_config->get("nosync");
+
+                    # Put it into module specific data structure
+                    $ft_config->set("${module}_nosync", $nosync);
+                }
+            }
+            print FILE "NOSYNC=$nosync\n" if ($nosync);
 
 
         close(FILE);
