@@ -225,5 +225,14 @@ SystemImager::Server->create_autoinstall_script(
 $file = "$autoinstall_script_dir/$script_name.master";
 unless ($quiet) { print qq(\nYour new autoinstall script has been created:\n\n); }
 unless ($quiet) { print qq("$file"\n\n); }
+unless ($quiet) {
+    print qq(WARNING:  If you made a change to your autoinstallscript.conf file that could\n);
+    print qq(          affect the boot process, for example, changing your root device, then\n);
+    print qq(          you must also modify your boot loader's configuration file.  This \n);
+    print qq(          file can be modified either directly in the image, or in an override\n);
+    print qq(          directory.  For more information on override directories, see the\n);
+    print qq(          full manual in /usr/share/doc/systemimager-doc/ or at\n);
+    print qq(          http://systemimager.org/documentation/.\n);
+}
 
 exit 0;
