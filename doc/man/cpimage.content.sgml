@@ -7,7 +7,7 @@
       &dhsurname;
     </author>
     <copyright>
-      <year>2001</year>
+      <year>2002</year>
       <holder>&dhusername;</holder>
     </copyright>
     &dhdate;
@@ -32,6 +32,7 @@
       <arg><option>-force</option></arg>
       <arg><option>-directory <replaceable>PATH</replaceable></option></arg>
       <arg><option>-server <replaceable>HOSTNAME</replaceable></option></arg>
+    <arg><option>-ssh-user <replaceable>USERNAME</replaceable></option></arg>
       <arg><replaceable>SOURCE_IMAGE</replaceable></arg>
       <arg><replaceable>DESTINATION_IMAGE</replaceable></arg>
     </cmdsynopsis>
@@ -95,6 +96,15 @@
 	    Hostname or IP address of the imageserver from which you want to
 	    copy the image. (Defaults to "localhost".)
 	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-ssh-user <replaceable>USERNAME</replaceable></option></term>
+      <listitem>
+	<para>
+	  Username for ssh connection to the imageserver.  Only needed if a 
+	  secure connection is required.
+	</para>
 	</listitem>
       </varlistentry>
     </variablelist>
