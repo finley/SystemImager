@@ -17,7 +17,7 @@
 $ENV{PATH} = "/usr/sbin:/sbin:/usr/bin:/bin";
 
 # version
-$version_number="1.3.0";
+$version_number="1.4.0";
 
 # systemimager configuration directory
 $systemimagerdir="/etc/systemimager";
@@ -67,12 +67,16 @@ Usage: $program_name [OPTION]...  -golden-client HOSTNAME -image IMAGENAME
 
 Options: (options can be presented in any order and may be abbreviated)
  -help                    Display this output.
+
  -version                 Display version and copyright information.
+
  -golden-client HOSTNAME  Hostname or IP address of the \"golden\" client.
+
  -server HOSTNAME         Hostname or IP address of the imageserver
                           holding the image you want to pull.  This allows
                           you to copy an image from one imageserver to
                           another.
+
  -image IMAGENAME         Where IMAGENAME is the name to assign to the 
                           image you are retrieving.  This can be either
                           the name of a new image if you want to create
@@ -80,25 +84,55 @@ Options: (options can be presented in any order and may be abbreviated)
                           if you want to update an image.  If you are
                           using the -server option, the same imagename is
                           used for both the source and destination.
+
  -quiet                   Don\'t ask any questions or print any output
                           (other than errors). In this mode, no warning
                           will be given if the image already exists on
                           the server.
+
  -directory PATH          The full path and directory name where you want
                           this image to be stored.  The directory bearing
                           the image name itself will be placed inside the
                           directory specified here.
+
  -update-script [YES|NO]  Update the \$image.master script?  Defaults to 
                           NO if -quiet.  If not specified you will be
                           prompted to confirm an update.
 
 (The following options affect the autoinstall client after autoinstalling)
- -ip-assignment METHOD    Where METHOD can be: static_dhcp, dynamic_dhcp,
-                          or static
- -post-install ACTION     After installation, make the autoinstall client
-                          take the specified action.  ACTION can be:
-                          beep, reboot, or shutdown.  This will default
-                          to beep if not specified.
+ -ip-assignment METHOD    Where METHOD can be:
+
+                          static_dhcp -- A DHCP server will assign the
+			    same static address each time to clients 
+			    installed with this image.  Also see the
+			    \"makedhcpstatic\" command.
+
+			  dynamic_dhcp -- A DHCP server will assign IP
+			    addresses dynamically to clients installed
+			    with this image.  They may be assigned a
+			    different address each time.
+
+                          static -- The IP address the client uses
+			    during autoinstall will be permanently
+			    assigned to that client.
+
+			  replicant -- Don\'t mess with the network
+			    settings in this image.  I\'m using it as a
+			    backup and quick restore mechanism for a 
+			    single machine.
+
+ -post-install ACTION     ACTION can be:
+
+                          beep -- Clients will beep incessantly after 
+			    succussful completion of an autoinstall.
+
+			  reboot -- Clients will reboot themselves
+			    after successful completion of an 
+			    autoinstall.
+
+			  shutdown -- Clients will halt themselves
+			    after successful completion of an 
+			    autoinstall.
 
 Download from http://systemimager.org/
 Report bugs or suggestions to <systemimager-bugs\@systemimager.org>
@@ -199,6 +233,7 @@ unless(
     or ($ip_assignment_method eq "static_dhcp")
     or ($ip_assignment_method eq "static")
     or ($ip_assignment_method eq "dynamic_dhcp")
+    or ($ip_assignment_method eq "replicant")
 ) { die "\n$program_name: -ip-assignment must be static, static_dhcp, or dynamic_dhcp.\n$get_help\n\n"; }
 
 # be sure $post_install was passed a proper option
@@ -406,29 +441,41 @@ if((!$quiet) and (!$ip_assignment_method)) {
 IP Address Assignment
 ---------------------
 
-There are three ways to assign IP addresses to the client systems on an
+There are four ways to assign IP addresses to the client systems on an
 ongoing basis:
 
-1) Static IP addresses assigned by DHCP
-   (recommended if you can continue to run the DHCP server
-    on your imageserver -- use makedhcpstatic after autoinstalling
-    your clients to make the addresses permanent)
-2) Static IP addresses
-   (recommended if you can not continue to run the DHCP server
-    on your imageserver)
-3) Dynamic IP addresses assigned by DHCP
+1) static_dhcp -- A DHCP server will assign the
+     same static address each time to clients 
+     installed with this image.  Also see the
+     "makedhcpstatic" command.
+
+2) dynamic_dhcp -- A DHCP server will assign IP
+     addresses dynamically to clients installed
+     with this image.  They may be assigned a
+     different address each time.
+
+3) static -- The IP address the client uses
+     during autoinstall will be permanently
+     assigned to that client.
+
+4) replicant -- Don't mess with the network
+     settings in this image.  I'm using it as a
+     backup and quick restore mechanism for a 
+     single machine.
 
 EOF
 
         print "Which method do you prefer? [$ip_assignment_method]: ";
-        $ip_assignment_method = get_response('1');
+        $ip_assignment_method = get_response("$ip_assignment_method");
         print "You have chosen method $ip_assignment_method for assigning IP addresses.\n";
         print "\nAre you satisfied? ([y]/n): ";
         $satisfied=get_response('y');
+        if($ip_assignment_method eq "1") { $ip_assignment_method = "static_dhcp" ; }
+        elsif($ip_assignment_method eq "2") { $ip_assignment_method = "static"      ; }
+        elsif($ip_assignment_method eq "3") { $ip_assignment_method = "dynamic_dhcp"; }
+        elsif($ip_assignment_method eq "4") { $ip_assignment_method = "replicant"; }
+        else { $satisfied="n"; }
     }
-    if($ip_assignment_method eq "1") { $ip_assignment_method = "static_dhcp" ; }
-    if($ip_assignment_method eq "2") { $ip_assignment_method = "static"      ; }
-    if($ip_assignment_method eq "3") { $ip_assignment_method = "dynamic_dhcp"; }
 }
 ### END IP Assignment Method ###
 
@@ -926,7 +973,22 @@ print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::$image/ /a/\n\n";
 ### END pull the image down ###
 
 
+### BEGIN graffiti ###
+print MASTER_SCRIPT "# Leave notice of which image is installed on the client\n";
+print MASTER_SCRIPT "echo \$image > /a/etc/systemimager/IMAGE_LAST_SYNCED_TO\n\n";
+### END graffiti ###
+
+### BEGIN graffiti ###
+$file="/etc/systemimager/IMAGE_LAST_SYNCED_TO";
+open (FILE, "> $file") or die "Couldn't open $file for writing: $!\n";
+  print FILE "$image\n";
+  close (FILE);
+  ### BEGIN graffiti ###
+
+
 ### BEGIN distribution specific networking stuff ###
+unless($ip_assignment_method eq "replicant") { 
+
 ### BEGIN RedHat ###
 if ($distro eq "RedHat") { 
    print MASTER_SCRIPT << 'EOF';
@@ -1036,6 +1098,8 @@ EOF
    }
 }
 ### END debian ###
+
+} ### close curly from: "unless($ip_assignment_method eq "replicant")" above ###
 ### END distribution specific networking stuff ###
 
 ### BEGIN end of autoinstall options ###
