@@ -891,7 +891,27 @@ sub write_lvm_groups_commands {
         }
         
         if ($part_list ne "") {
-            my $cmd = "vgcreate ${group_name}${part_list} || shellout";
+            # Evaluate the volume group options -AR-
+            my $vg_max_log_vols = $lvm->{lvm_group}->{$group_name}->{max_log_vols};
+            if (defined($vg_max_log_vols)) { 
+                $vg_max_log_vols = "-l $vg_max_log_vols ";
+            } else {
+                $vg_max_log_vols = ""; 
+            }
+            my $vg_max_phys_vols = $lvm->{lvm_group}->{$group_name}->{max_phys_vols};
+            if (defined($vg_max_phys_vols)) { 
+                $vg_max_phys_vols = "-p $vg_max_phys_vols ";
+            } else {
+                $vg_max_phys_vols = "";
+            }
+            my $vg_phys_extent_size = $lvm->{lvm_group}->{$group_name}->{phys_extent_size};
+            if (defined($vg_phys_extent_size)) { 
+                $vg_phys_extent_size = "-s $vg_phys_extent_size ";
+            } else {
+                $vg_phys_extent_size = ""; 
+            }
+            # Write the command to create the volume group -AR-
+            my $cmd = "vgcreate ${vg_max_log_vols}${vg_max_phys_vols}${vg_phys_extent_size}${group_name}${part_list} || shellout";
             print $out qq(echo "$cmd"\n);
             print $out "$cmd\n";
         } else {
