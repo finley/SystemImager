@@ -379,6 +379,15 @@ show_usage() {
   echo 'Report bugs or suggestions to <systemimager-bugs@systemimager.org>'
 }
 
+create_ext2_devices_by_label_file() {
+  rm -f /etc/systemimager/ext2_devices_by_label.txt
+  LABELS=`grep 'LABEL=' /etc/fstab | awk '{print $1}'`
+  for LABEL in $LABELS; do
+    MOUNT_POINT=`grep -w $LABEL /etc/fstab | awk '{print $2}'`
+    DEVICE=`grep -w $MOUNT_POINT /etc/mtab | awk '{print $1}'`
+    echo $LABEL $DEVICE >> /etc/systemimager/ext2_devices_by_label.txt
+  done
+}
 ### END functions
  
 
@@ -659,6 +668,8 @@ if [ $? -eq 0 ]; then
         >> $systemimagerdir/put_new_ext3_journal_file_inodes_in_fstab.sh
 fi
 ### END leave ext3 info behind for the autoinstall client ###
+
+egrep -q 'LABEL=' /etc/fstab && create_ext2_devices_by_label_file
 
 # wrap up
 if [ "$QUIET" = "false" ] && [ "$NO_RSYNCD" = "false" ]; then
