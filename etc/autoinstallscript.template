@@ -27,8 +27,8 @@ fi
 #
 . /tmp/variables.txt || shellout
 
-[ -z $IMAGENAME ] && IMAGENAME=longs-rhas
-[ -z $OVERRIDES ] && OVERRIDES="longs-rhas"
+##SET_IMAGENAME##
+##SET_OVERRIDES##
 
 ### BEGIN Check to be sure this not run from a working machine ###
 # Test for mounted SCSI or IDE disks

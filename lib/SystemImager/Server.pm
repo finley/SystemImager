@@ -1261,8 +1261,16 @@ sub create_autoinstall_script{
     my $delim = '##';
     while (<$TEMPLATE>) {
       SWITCH: {
-	  if (/^\s*${delim}VERSION${delim}\s*$/) {
+	  if (/^\s*${delim}VERSION_INFO${delim}\s*$/) {
 	      print $MASTER_SCRIPT "# This master autoinstall script was created with SystemImager v${VERSION}\n";
+	      last SWITCH;
+	  }
+	  if (/^\s*${delim}SET_IMAGENAME${delim}\s*$/) {
+          print $MASTER_SCRIPT  q([ -z $IMAGENAME ] && ) . qq(IMAGENAME=$image\n);
+	      last SWITCH;
+	  }
+	  if (/^\s*${delim}SET_OVERRIDES${delim}\s*$/) {
+          print $MASTER_SCRIPT  q([ -z $OVERRIDES ] && ) . qq(OVERRIDES="$script_name"\n);
 	      last SWITCH;
 	  }
 	  if (/^\s*${delim}PARTITION_DISKS${delim}\s*$/) { 
