@@ -81,7 +81,8 @@
       </para>
     </abstract>
   </artheader>
-  
+
+
   <sect1 id="acknowledgements">
     <title>Acknowledgments and Thanks</title>
     <para>
@@ -147,7 +148,7 @@
     </para>
     
   </sect1>
-  
+
   <sect1 id=Intro>
     <title>Introduction</title>
     <para>
@@ -1885,7 +1886,212 @@ service tftp
       with some BIOSes).  
     </para>
   </sect1>
-  
+
+  <sect1 id=Troubleshooting>
+    <title>Troubleshooting</title>
+    <para></para>
+    <sect2 id=Troubleslowrsync>
+      <title>
+	My client autoinstallation/update hangs, crashes, or is ridiculously
+	slow.
+      </title>
+      <Para>Goran Pocian reported an instance of horrible
+	<command>updateclient</command> performance which went away when he
+	upgraded from kernel 2.2.17 to 2.2.18.
+      </Para>
+      <Para>
+	Also, he noted that if you mount an NFS filesystem after 
+	executing <command>prepareclient</command>, <command>getimage</command>
+	will retrieve its contents.  As this can heavily increase network load,
+	it can also cause bad performance.
+      </Para>
+      <Para>Brian Finley reported other possible causes:</Para>
+      <BlockQuote>
+	<Para>
+	  Every once in a while, someone reports some mysterious hanging, or
+	  transfer interruption issue related to rsync.  I had a chance to
+	  speak with Andrew Tridgell in person today to discuss these issues.
+	</Para>
+	<Para>
+	  There are two know issues that could be the source of these symptoms.
+	  One is a known kernel issue, and one is an rsync issue.  The kernel
+	  issue is supposedly resolved in 2.4.x series kernels, (SystemImager
+	  has not yet been "officially" tested with 2.4.x kernels) and may not
+	  be present in all 2.2.x series kernels (I believe).
+	</Para>
+	<Para>
+	  The rsync bug will be fixed in the rsync 2.4.7 release (to happen 
+	  "Real Soon Now (TM)" ).  The rsync bug is caused by excessive numbers
+	  of errors filling the error queue which causes a race condition.
+	  However, until rsync 2.4.7 has been out for some time, I will still
+	  recommend using v2.4.6 unless you specifically experience one of
+	  these issues.
+	</Para>
+	<Para>
+	Here are some tips on diagnosing the problem:
+	</Para>
+	<ItemizedList>
+	  <ListItem>
+	    <Para>
+	      If you get an error message in
+	      <Filename>/var/log/messages</Filename> that looks like:
+	    </Para>
+	    <Para>
+	      Jan 23 08:49:42 mybox rsyncd[19347]: transfer interrupted (code 30) at io.c(65)
+	    </Para>
+	    <Para>
+	      You can look up the code number in the
+	      <Filename>errcode.h</Filename> file which you can find in the
+	      rsync source code.
+	    </Para>
+	  </ListItem>
+	  <ListItem>
+	    <Para>
+	      To diagnose the kernel bug:
+	      Run <command>netstat -tn</command>.  Here is some sample output
+	      (from a properly working system):
+	    </Para>
+	    <ProgramListing>
+  $ netstat -tn
+  Active Internet connections (w/o servers)
+  Proto Recv-Q Send-Q Local Address           Foreign Address State
+  tcp        1      0 192.168.1.149:1094      216.62.20.226:80 CLOSE_WAIT
+  tcp        1      0 192.168.1.149:1090      216.62.20.226:80 CLOSE_WAIT
+  tcp        1      0 192.168.1.149:1089      216.62.20.226:80 CLOSE_WAIT
+  tcp        0      0 127.0.0.1:16001         127.0.0.1:1029 ESTABLISHED
+  tcp        0      0 127.0.0.1:1029          127.0.0.1:16001 ESTABLISHED
+  tcp        0      0 127.0.0.1:16001         127.0.0.1:1028 ESTABLISHED
+  tcp        0      0 127.0.0.1:1028          127.0.0.1:16001 ESTABLISHED
+	    </ProgramListing>
+	    <Para>The symptoms are:</Para>
+	    <ItemizedList>
+	      <ListItem>
+		<para>machine A has data in it's Send-Q</para>
+	      </ListItem>
+	      <ListItem>
+		<para>machine B has no data in it's Recv-Q</para>
+	      </ListItem>
+	      <ListItem>
+		<para>
+		  the data in machine A's Send-Q is not being reduced
+		</para>
+	      </ListItem>
+	    </ItemizedList>
+	    
+	    <Para>What's happening is:</Para>
+	    <OrderedList>
+	      <ListItem>
+		<Para>
+		  one or both kernels aren't honoring the other's
+		  send/receive window settings (these are dynamically
+		  calculated)
+		</Para>
+	      </ListItem>
+	      <ListItem>
+		<Para>
+		  the result is the kernel(s) aren't getting data from
+		  machine A to machine B
+		</Para>
+	      </ListItem>
+	      <ListItem>
+		<Para>
+		  rsync, therefore, isn't getting data on the receive side
+		</Para>
+	      </ListItem>
+	      <ListItem><Para>the process appears to hang</Para></ListItem>
+	    </OrderedList>
+	  </ListItem>
+	  <ListItem>
+	    <Para>Details about the rsync bug:</Para>
+	    <Para>What happens:</Para>
+	    <OrderedList>
+	      <ListItem>
+		<Para>
+		  a large numbers of errors clogs the error pipe between
+		  the receiver and generator
+		</Para>
+	      </ListItem>
+	      <ListItem><Para>all progress stops</Para></ListItem>
+	      <ListItem>
+		<Para>again, the process appears to hang</Para>
+	      </ListItem>
+	    </OrderedList>
+	  </ListItem>
+	</ItemizedList>
+	<Para>I hope this information helps...</Para>
+      </BlockQuote>
+    </Sect2>
+    <sect2 id=TroubleCDNoBoot>
+      <title>
+	My autoinstallcd doesn't boot.
+      </title>
+      <para>
+	There was a problem with the following RPM:   
+	<filename>syslinux-1.48-1.i386.rpm</filename>
+	Download and install a newer syslinux RPM from 
+	<ulink url="http://systemimager.org/"></ulink>
+      </para>
+    </sect2>
+    <sect2 id=TroubleAutoInstallError>
+      <title>When making the autoinstalldiskette, my system gives me an error 
+	involving "dd" or "mount".</title>
+      <para>
+	You are using a pre v0.19 version of VA SystemImager.  Please download the 
+	latest version from <ulink url="http://systemimager.org/"></ulink>.
+      </para>
+      <para>
+	If you must use a pre v0.19 version for some reason, be sure that your 
+	kernel has "ramdisk" support.  Or that you have ramdisk support with a 
+	module.  If you are using a module, be sure that it is loaded with the 
+	<command>modprobe</command> command.
+      </para>
+      <para>
+	But it's probably easier to just get the latest version...
+      </para>
+    </sect2>
+    <sect2 id=TroubleAutoinstallFail>
+      <title>
+        My client failed to autoinstall, and when I run an
+        <command>rsync</command> command on it manually it takes forever for
+        the image server to respond.</title>
+      <para>
+	Be sure that the image server can look up the client's hostname based
+	on its IP address.  The easiest way to do this is to have entry in the 
+	image server's <filename>/etc/hosts</filename> file for the client
+	system.
+      </para>
+    </sect2>
+    <sect2 id=TroubleDHCPFailed>
+      <title>
+        My autoinstall client booted up and said "dhcp didn't work", but 
+	when I do an ifconfig eth0 it has an IP address.
+      </title>
+      <para>
+	Are you using a pre 1.0 version of VA SystemImager?  If so, please
+        upgrade.
+      </para>
+      <para>
+	If for some reason you can't upgrade, then:
+      </para>
+      <para>
+	Are you connected to a switch?  Most switches will wait a period of
+        time (usually 30 seconds) after a connected system's interface has
+        come up before transmitting on that port. Newer versions of the
+        autoinstalldiskette bring the ethernet interface up and wait 45 seconds
+	or so before making a DHCP request.  It will then wait 35 seconds or
+        so to give the system time to receive an address.  You could be using
+	an autoinstalldiskette that does not wait the proper time for your
+	switch and is giving up before it should.
+      </para>
+      <para>
+	Be sure that you are using the latest version of VA SystemImager and
+	that you are using the autoinstalldiskette image that comes with that
+	version.  Note that the version numbers may not match.  See the 
+	<filename>VERSION</filename> file.
+      </para>
+    </sect2>
+  </Sect1>
+     	
   <sect1 id=FAQ>
     <title>Frequently Asked Questions</title>
     <para>
@@ -1928,17 +2134,7 @@ service tftp
 	server.
       </para>
     </sect2>
-    <sect2 id=FAQCDNoBoot>
-      <title>
-	Q: I made an autoinstallcd, but it didn't boot.  What's wrong?
-      </title>
-      <para>
-	There was a problem with the following RPM:   
-	<filename>syslinux-1.48-1.i386.rpm</filename>
-	Download and install a newer syslinux RPM from 
-	<ulink url="http://systemimager.org/"></ulink>
-      </para>
-    </sect2>
+
     <sect2 id=FAQDHCPServerLocation>
       <title>Q: Does the DHCP server have to be on the image server?</title>
       <para>
@@ -2163,66 +2359,10 @@ service tftp
       </para>
     </sect2>
     
-    <sect2 id=FAQAutoInstallError>
-      <title>When making the autoinstalldiskette, my system gives me an error 
-	involving "dd" or "mount".</title>
-      <para>
-	You are using a pre v0.19 version of VA SystemImager.  Please download the 
-	latest version from <ulink url="http://systemimager.org/"></ulink>.
-      </para>
-      <para>
-	If you must use a pre v0.19 version for some reason, be sure that your 
-	kernel has "ramdisk" support.  Or that you have ramdisk support with a 
-	module.  If you are using a module, be sure that it is loaded with the 
-	<command>modprobe</command> command.
-      </para>
-      <para>
-	But it's probably easier to just get the latest version...
-      </para>
-    </sect2>
-    
-    <sect2 id=FAQDHCPFailed>
-      <title>My autoinstall client booted up and said "dhcp didn't work", but 
-	when I do an ifconfig eth0 it has an IP address.  What happened?</title>
-      <para>
-	Are you using a pre 1.0 version of VA SystemImager?  If so, please upgrade.
-      </para>
-      <para>
-	If for some reason you can't upgrade, then:
-      </para>
-      <para>
-	Are you connected to a switch?  Most switches will wait a period of time
-	(usually 30 seconds) after a connected system's interface has come up 
-	before transmitting on that port. Newer versions of the autoinstalldiskette
-	bring the ethernet interface up and wait 45 seconds or so before making a 
-	dhcp request.  It will then wait 35 seconds or so to give the system time 
-	to receive an address.  You could be using an autoinstalldiskette that 
-	does not wait the proper time for your switch and is giving up before it 
-	should.
-      </para>
-      <para>
-	Be sure that you are using the latest version of VA SystemImager and that 
-	you are using the autoinstalldiskette image that comes with that version.  
-	Note that the version numbers may not match.  See the 
-	<filename>VERSION</filename> file.
-      </para>
-    </sect2>
-    
-    <sect2 id=FAQAutoinstallFail>
-      <title>My client failed to autoinstall, and when I run an <command>rsync 
-	</command>command on it manually it takes forever for the image server to 
-	respond.</title>
-      <para>
-	Be sure that the image server can look up the client's hostname based on its
-	IP address.  The easiest way to do this is to have entry in the 
-	image server's <filename>/etc/hosts</filename> file for the client system.
-      </para>
-    </sect2>
-    
     <sect2 id=FAQStaticIP>
       <title>But I want to assign static IPs to my clients!</title>
       <para>
-    You can!  <command>getimage</command> will ask you if you want to assing static IPs.
+    You can!  <command>getimage</command> will ask you if you want to assign static IPs.
       </para>
     </sect2>
 
@@ -2563,137 +2703,6 @@ the following command on a client that is already partitioned correctly:
    </para>
   </sect2>
 
-    <sect2 id=FAQSlowAutoinstall>
-      <title>
-	My client autoinstallation/update hangs, crashes, or is just
-	ridiculously slow - what's wrong?
-      </title>
-      <Para>Goran Pocian reported an instance of horrible
-	<command>updateclient</command> performance which went away when he
-	upgraded from kernel 2.2.17 to 2.2.18.
-      </Para>
-      <Para>
-	Also, he noted that if you mount an NFS filesystem after 
-	executing <command>prepareclient</command>, <command>getimage</command>
-	will retrieve its contents.  As this can heavily increase network load,
-	it can also cause bad performance.
-      </Para>
-      <Para>Brian Finley reported other possible causes:</Para>
-      <BlockQuote>
-	<Para>
-	  Every once in a while, someone reports some mysterious hanging, or
-	  transfer interruption issue related to rsync.  I had a chance to
-	  speak with Andrew Tridgell in person today to discuss these issues.
-	</Para>
-	<Para>
-	  There are two know issues that could be the source of these symptoms.
-	  One is a known kernel issue, and one is an rsync issue.  The kernel
-	  issue is supposedly resolved in 2.4.x series kernels, (SystemImager
-	  has not yet been "officially" tested with 2.4.x kernels) and may not
-	  be present in all 2.2.x series kernels (I believe).
-	</Para>
-	<Para>
-	  The rsync bug will be fixed in the rsync 2.4.7 release (to happen 
-	  "Real Soon Now (TM)" ).  The rsync bug is caused by excessive numbers
-	  of errors filling the error queue which causes a race condition.
-	  However, until rsync 2.4.7 has been out for some time, I will still
-	  recommend using v2.4.6 unless you specifically experience one of
-	  these issues.
-	</Para>
-	<Para>
-	Here are some tips on diagnosing the problem:
-	</Para>
-	<ItemizedList>
-	  <ListItem>
-	    <Para>
-	      If you get an error message in
-	      <Filename>/var/log/messages</Filename> that looks like:
-	    </Para>
-	    <Para>
-	      Jan 23 08:49:42 mybox rsyncd[19347]: transfer interrupted (code 30) at io.c(65)
-	    </Para>
-	    <Para>
-	      You can look up the code number in the
-	      <Filename>errcode.h</Filename> file which you can find in the
-	      rsync source code.
-	    </Para>
-	  </ListItem>
-	  <ListItem>
-	    <Para>
-	      To diagnose the kernel bug:
-	      Run <command>netstat -tn</command>.  Here is some sample output
-	      (from a properly working system):
-	    </Para>
-	    <ProgramListing>
-  $ netstat -tn
-  Active Internet connections (w/o servers)
-  Proto Recv-Q Send-Q Local Address           Foreign Address State
-  tcp        1      0 192.168.1.149:1094      216.62.20.226:80 CLOSE_WAIT
-  tcp        1      0 192.168.1.149:1090      216.62.20.226:80 CLOSE_WAIT
-  tcp        1      0 192.168.1.149:1089      216.62.20.226:80 CLOSE_WAIT
-  tcp        0      0 127.0.0.1:16001         127.0.0.1:1029 ESTABLISHED
-  tcp        0      0 127.0.0.1:1029          127.0.0.1:16001 ESTABLISHED
-  tcp        0      0 127.0.0.1:16001         127.0.0.1:1028 ESTABLISHED
-  tcp        0      0 127.0.0.1:1028          127.0.0.1:16001 ESTABLISHED
-	    </ProgramListing>
-	    <Para>The symptoms are:</Para>
-	    <ItemizedList>
-	      <ListItem>
-		<para>machine A has data in it's Send-Q</para>
-	      </ListItem>
-	      <ListItem>
-		<para>machine B has no data in it's Recv-Q</para>
-	      </ListItem>
-	      <ListItem>
-		<para>
-		  the data in machine A's Send-Q is not being reduced
-		</para>
-	      </ListItem>
-	    </ItemizedList>
-	    
-	    <Para>What's happening is:</Para>
-	    <OrderedList>
-	      <ListItem>
-		<Para>
-		  one or both kernels aren't honoring the other's
-		  send/receive window settings (these are dynamically
-		  calculated)
-		</Para>
-	      </ListItem>
-	      <ListItem>
-		<Para>
-		  the result is the kernel(s) aren't getting data from
-		  machine A to machine B
-		</Para>
-	      </ListItem>
-	      <ListItem>
-		<Para>
-		  rsync, therefore, isn't getting data on the receive side
-		</Para>
-	      </ListItem>
-	      <ListItem><Para>the process appears to hang</Para></ListItem>
-	    </OrderedList>
-	  </ListItem>
-	  <ListItem>
-	    <Para>Details about the rsync bug:</Para>
-	    <Para>What happens:</Para>
-	    <OrderedList>
-	      <ListItem>
-		<Para>
-		  a large numbers of errors clogs the error pipe between
-		  the receiver and generator
-		</Para>
-	      </ListItem>
-	      <ListItem><Para>all progress stops</Para></ListItem>
-	      <ListItem>
-		<Para>again, the process appears to hang</Para>
-	      </ListItem>
-	    </OrderedList>
-	  </ListItem>
-	</ItemizedList>
-	<Para>I hope this information helps...</Para>
-      </BlockQuote>
-    </Sect2>
   </Sect1>
 
  <glossary>
