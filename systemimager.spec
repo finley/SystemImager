@@ -317,6 +317,6 @@ fi
 
 %files %{_build_arch}boot
 %defattr(-, root, root)
-%dir %prefix/share/systemimager/%{_build_arch}-boot
-%prefix/share/systemimager/%{_build_arch}-boot/*
+%dir %prefix/share/systemimager/boot/%{_build_arch}
+%prefix/share/systemimager/boot/%{_build_arch}/*
 
