@@ -26,7 +26,8 @@ o Fixed IP assignment question out of order bug.  Thanks to
   Cath Burrowes <cath@starbiz.com.au> for this patch.
 o Added section to autoinstall.master scripts to deal with testing                                                                            for and doing raidstop if necessary -- even if we're not 
   autoinstalling a raid image.
-
+o Add " || shellout" to the end of almost everything in <image>.master
+  for better error testing.
 
 makeautoinstallcd
 -----------------
