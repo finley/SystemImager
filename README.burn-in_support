@@ -10,7 +10,7 @@
 # 	This file is an example master autoinstall script for using CTCS for
 #   burn-in support without imaging clients or touching their disks.  To
 #   use this file as your master script, simply copy it to 
-#   /var/lib/systemimager/scripts/ctcs.master, then run addclients to 
+#   /var/lib/systemimager/scripts/burn-in.master, then run addclients to 
 #   tell your client machines to use this script.  See the CTCS package
 #   for more information on burn-in parameters, etc:
 #   http://sourceforge.net/projects/va-ctcs/
@@ -46,5 +46,5 @@ rm /tmp/boel*
 #mount tmpfs / -o remount,size=384M
 
 cd /usr/src/ctcs/
-./newburn -K -n -m -z 0d0h4m0s -A SMTWUFA-0000-2359 && beep_of_success || beep_of_failure
+./newburn -K -n -m -z 0d4h0m0s -A SMTWUFA-0000-2359 && beep_of_success || beep_of_failure
 exit 0
