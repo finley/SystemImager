@@ -42,7 +42,7 @@ sub check_if_root{
 # figure out the program name
 $0  =~ /(.*)\/+([^\/]*)$/;
 $program_name = $2;
-$version_number = "1.1";
+$version_number = "1.2";
 
 $version_info = <<"EOF";
 $program_name (part of VA SystemImager) version $version_number
@@ -509,8 +509,10 @@ foreach $dir (sort keys %fstab) {
     print MASTER_SCRIPT qq(mount $fstab{$dir} $target_dir\n);
 }
 
-print MASTER_SCRIPT "\n# get imageserver, hostname, and other info by sourcing dhcp info file\n";
-print MASTER_SCRIPT ". /etc/dhcpc/dhcpcd-eth0.info\n";
+# This information is passed from the linuxrc script on the autoinstall media via /tmp1/variables.txt
+# Apparently the shell on the autoinstall media is not intelligent enough to take a "set -a" parameter
+print MASTER_SCRIPT "\n# Pull in variables left behind by the linuxrc script\n";
+print MASTER_SCRIPT ". /tmp1/variables.txt\n";
 
 print MASTER_SCRIPT "\n# filler up!\n";
 print MASTER_SCRIPT "rsync -av \$DHCPSIADDR::$image /a/\n\n";
