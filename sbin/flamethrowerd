@@ -228,7 +228,7 @@ sub build_udp_sender_cmd {
     ############################################################################
 
     # Build command
-    my $cmd = qq(udp-sender --pipe 'tar -cf - -C $dir .');
+    my $cmd = qq(udp-sender --pipe 'tar -cpf - -C $dir .');
     $cmd .= $portbase               if(defined $portbase);
     $cmd .= $min_clients            if(defined $min_clients);
     $cmd .= $max_wait               if(defined $max_wait);
