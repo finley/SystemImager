@@ -431,81 +431,137 @@ image=vmlinux-rh.img
     </answer>
   </qandaentry>
  
-  <qandaentry>
-    <question>
-      <para>
-        How do I add a driver for a special card to the autoinstall client?
-      </para>
-    </question>
-    <answer>
-      <para>
-        It is usually easiest to start with the linux kernel source and the <filename>.config</filename>
-        file that you can find in the source tarball for your release of SystemImager.  
-      </para>
-      
-    <orderedlist>
-      <listitem><para>Download the source tarball</para></listitem>
-      
-      <listitem><para>Extract the source tarball</para></listitem>
-      
-      <listitem>
-        <para>
-          <command>cd</command> into the extracted source directory
-        </para>
-      </listitem>
- 
-      <listitem>
-        <para>
-          run 'make patched_kernel-stamp'
-          - This will locate the kernel source (it will first check in <filename>/usr/src</filename>.
-          If that fails it will attempt to download it from kernel.org).
-          - It will then apply various patches from the <filename>patches/</filename> directory.
-          - Finally, it will copy over the <filename>.config</filename> for your architecture from the
-          <filename>patches/ directory</filename>.
-        </para>
-      </listitem>
- 
-      <listitem>
-        <para>
-          <command>cd</command> into the kernel source directory
-          (<filename>src/linux</filename>) and apply your own patches if
-          necessary.  You can also run <command>make menuconfig</command>
-          to add or remove drivers from the kernel.  If you add drivers and
-          require a floppy for autoinstalls, you will likely have to remove
-          other drivers for the kernel to fit on your floppy diskette.
-          Consider de-selecting all unnecessary Ethernet cards.
-        </para>
-      </listitem>
-    	
-      <listitem>
-        <para>
-          <command>cd</command> back to the toplevel of the source tree, and run <command>make kernel</command>
-          to begin a kernel build for your system.  When complete, you
-          can find the kernel in the linux source directory
-          (<filename>src/linux/arch/i386/boot/bzImage</filename> on i386
-          systems, <filename>src/linux/vmlinux.gz</filename> on ia64
-          systems.)
-        </para>
-      </listitem>
- 
-    	<listitem><para>Choose a string to use as the "flavor" for your kernel,
-    		and copy your kernel to	<filename>{/usr|/usr/local}/share/systemimager/boot/&lt;arch&gt;/kernel-&lt;flavor&gt;-&lt;version&gt;</filename>
-    		Where &lt;arch&gt; is the architecture the kernel was built for, &lt;flavor&gt; is
-    		a short alphanumeric string describing your kernel, and &lt;version&gt; is
-    		the version of SystemImager you are running.
-    		You will also need a corresponding initial ramdisk with the same flavor
-    		string.  In most cases, you can just copy the initrd-standard-&lt;version&gt;.gz
-    		to initrd-&lt;flavor&gt;-&lt;version&gt;.gz, where &lt;flavor&gt; matches the flavor string
-    		you chose for your kernel and &lt;version&gt; is the version of SystemImager
-    		you are running (must match the version string of your kernel).</para>
- 
-    	<para>Please refer to the Kernel-HOWTO for more information on recompiling a kernel.</para>
- 
-    	<para>You should now see your new flavor when you run <command>mkautoinstalldiskette</command>,
-    	<command>mkautoinstallcd</command>, or boot off the network.</para></listitem>
-    	</orderedlist>
-        </answer>
-  </qandaentry>
+    <qandaentry>
+      <question>
+	<para>
+	  How do I add a driver for a special card to the autoinstall kernel?
+	</para>
+      </question>
+      <answer>
+	<para>
+	  If you have hardware that requires a driver that was not included
+	  in the standard flavor boot package, you can build a custom boot
+	  package.  Unlike earlier (pre-2.9) releases, you will need more than
+	  a new kernel binary.  However, also unlike earlier releases, you can
+	  have multiple boot packages available simultaneously.
+	</para>
+	<warning>
+	  <para>
+	    Boot packages are tightly linked to the version of SystemImager
+	    you are using.  If you make customizations to a boot package
+	    for SystemImager 3.0, you will need to forward port, and recreate
+	    those changes when you move to SystemImager 3.2.0.
+	  </para>
+	</warning>
+	<formalpara>
+	  <title>Adding a module to the autoinstall ramdisk</title>
+	  <para>
+	    If the driver you need to add can be built as a module,
+	    you may choose to add it directly onto the autoinstall ramdisk.
+	    You should definitely choose this method if you need to add
+	    a driver for the network interface you plan to install over,
+	    and the driver is only available as a module.  This is also
+	    the suggested method for adding a module for a device
+	    when it failed to be discovered at install time.  Alternatively, 
+	    you can add a patch to be added to the kernel build tree, or
+	    make modifications to the .config file used to build the kernel.
+	  </para>
+	</formalpara>
+	<orderedlist>
+	  <listitem>
+	    <para>
+	      Download the source tarball for the release of SystemImager
+	      you are using from http://systemimager.org/.
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Extract the source tarball and cd into the top level of the
+	      source tree.
+	    </para>
+	    <informalexample>
+	      <programlisting>
+		# tar xvfj systemimager-3.0.0.tar.bz2
+		# cd systemimager-3.0.0
+	      </programlisting>
+	    </informalexample>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      If you need to add a patch to the kernel, you can do so
+	      by dropping your patch file in the patches subdirectory of the
+	      toplevel build tree.  You will need to follow the naming
+	      convention, which is described in the README.patches file in
+	      the patches/ subdirectory.
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      If you need to modify the .config file for your kernel, e.g.
+	      to turn on a driver, you can find these files in the patch
+	      directory, named linux.&lt;arch&gt;.config.  (If you added
+	      a patch that includes a new driver, you should be prompted
+	      to turn that on later, during the 'make binaries' step).
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      If you are building a module from external source to be 
+	      included in the autoinstall ramdisk, you will need a linux
+	      source tree to build against.  You can generate a tree by
+	      running 'make patched_kernel-stamp'.  This will create
+	      a source tree in the src/linux directory in the source
+	      tree.  Follow the instructions that came with your module
+	      source to compile your module against this tree.
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      If you have a binary module (created in the last step), you 
+	      can now copy it into the initrd_source/my_modules directory.  
+	      You will then need to add instructions to the 
+	      <filename>INSMOD_COMMANDS</filename> file in order to have
+	      your module loaded at install time.  Take a look at the
+	      comments in that file for details.
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Next, edit the <filename>FLAVOR</filename> file in the
+	      top level of the source tree.  Choose an alphanumeric
+	      string that describes your modifications.
+	    </para>
+	    <informalexample>
+	      <programlisting>
+		echo "mygigabitnic" &gt; FLAVOR
+	      </programlisting>
+	    </informalexample>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      From the toplevel of the source tree, run 'make binaries'.
+	      See the README file for details on what your system needs
+	      to have installed for this to succeed.
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      Run 'make binaries_install'.  This will copy the binaries
+	      built in the last step into the appropriate place in
+	      /usr/share/systemimager/boot directory.  You will now
+	      have an additional flavor to choose from when you create
+	      autoinstall media.
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      File a bug asking for this driver to be added to future
+	      releases.
+	    </para>
+	  </listitem>
+	</orderedlist>
+      </answer>
+    </qandaentry>
     	
   <qandaentry>
     <question>
