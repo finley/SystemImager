@@ -552,8 +552,11 @@ close FSTAB;
 
 ### BEGIN compile hash of ext2 partitions to label ###
 %ext2_devices_by_label = ();
-open (LABELS, "<$imagedir/etc/systemimager/ext2_devices_by_label.txt") || die "program_name: Failed to open file for reading\n";
-while (<LABELS>) {
+
+$file="$imagedir/etc/systemimager/ext2_devices_by_label.txt";
+if (-e $file) {
+  open (EXT2_LABELS, "<$file") || die "program_name: Failed to open $file for reading\n";
+  while (<EXT2_LABELS>) {
     # remove carriage returns
     chomp;
 
@@ -561,7 +564,7 @@ while (<LABELS>) {
     if (m@(^\s*\#)@) { next; }
 
     # turn all tabs into single spaces -- Note: <ctrl-v><tab>
-    s/  / /g;
+    s/	/ /g;
 
     # Remove spaces from the beginning of the line
     s/^ +//;
@@ -574,8 +577,9 @@ while (<LABELS>) {
 
     # Create hash to be used in labelling
     $ext2_devices_by_label{$label} = $device;
+  }
+  close (EXT2_LABELS);
 }
-close (LABELS);
 ### END compile hash of ext2 partitions to label ###
 
 
