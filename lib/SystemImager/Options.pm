@@ -64,6 +64,20 @@ EOF
 #
 # Usage:
 #
+#   $help = $help . SystemImager::Options->confedit_options_header();
+#
+sub confedit_options_header {
+
+return << "EOF";
+Usage:  confedit --file CONF_FILE --entry "MODULE" [--data "DATA"]
+
+EOF
+}
+
+
+#
+# Usage:
+#
 #   $help = $help . SystemImager::Options->getimage_options_header();
 #
 sub getimage_options_header {
@@ -172,6 +186,36 @@ return << "EOF";
 
 Options for --updateclient-options:
     (The following options will be passed on to the updateclient command.)
+
+EOF
+}
+
+
+#
+# Usage:
+#
+#   $help = $help . SystemImager::Options->confedit_options_body();
+#
+sub confedit_options_body {
+
+return << 'EOF';
+ --file CONF_FILE
+    Path to configuration file to manipulate.
+
+ --entry "MODULE"
+    Name of the module to add or remove.  You _must_ specify --data, or MODULE
+    will be removed.
+
+ --data "DATA"
+    Acts as a boolean flag, as well as specifying "DATA".  If specified, 
+    the module specified by --entry will be added.  If not specified, the
+    module specified by --entry will be removed.
+
+Example:
+    confedit \
+      --file  flamethrower.conf \
+      --entry "boot-ia64-standard" \
+      --data  "[boot-ia64-standard]\nDIR = /usr/share/systemimager/boot/ia64/standard"
 
 EOF
 }

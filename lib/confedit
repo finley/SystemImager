@@ -1,0 +1,97 @@
+#!/usr/bin/perl -w
+
+#
+#   "SystemImager"
+#
+#   Copyright (C) 2003 Brian Elliott Finley <finley@mcs.anl.gov>
+#
+#   $Id$
+#
+
+use lib "USR_PREFIX/lib/systemimager/perl";
+use strict;
+use Getopt::Long;
+use SystemImager::Common;
+use SystemImager::Options;
+use vars qw($VERSION);
+
+# set version number
+my $VERSION = "SYSTEMIMAGER_VERSION_STRING";
+my $program_name = "confedit";
+
+
+# Version details
+my $version_info = <<"EOF";
+$program_name (part of SystemImager) v$VERSION
+
+EOF
+
+$version_info .= SystemImager::Options->copyright();
+
+# Help stuff
+my $help_info = $version_info . SystemImager::Options->confedit_options_header();
+$help_info = $help_info . SystemImager::Options->generic_options_help_version();
+$help_info = $help_info . SystemImager::Options->confedit_options_body();
+$help_info = $help_info . SystemImager::Options->generic_footer();
+
+
+GetOptions(
+
+    "help"      => \my $help,
+    "version"   => \my $version,
+    "file=s"    => \my $file,
+    "entry=s"   => \my $entry,
+    "data=s"    => \my $data,
+
+) or die qq($help_info);
+
+
+# if requested, print version information
+if($version) {
+    version();
+    exit 0;
+}
+
+# if requested, print help
+if($help) {
+    usage();
+    exit 0;
+}
+
+if(($file) and ($entry) and ($data)) {
+    #
+    # add
+    #
+    $data =~ s/\\n/\n/g;    # apparently, getopt padds specialty characters
+    chomp $data;
+    $data .= "\n\n";
+    SystemImager::Common->add_or_delete_conf_file_entry($file, $entry, $data)
+        or die "$program_name: Cannot remove entry from $file";
+
+} elsif(($file) and ($entry)) {
+    #
+    # remove
+    #
+    SystemImager::Common->add_or_delete_conf_file_entry($file, $entry)
+        or die "$program_name: Cannot remove entry from $file";
+
+} else {
+    usage();
+    exit 1;
+
+}
+
+
+### BEGIN Subroutines ###
+sub version {
+    print qq($version_info);
+}
+
+sub get_help {
+    print qq(  Try "updateclient -help" for more information.\n);
+}
+
+sub usage {
+    print qq($help_info);
+}
+
