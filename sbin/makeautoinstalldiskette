@@ -14,7 +14,7 @@ use Getopt::Long;
 # set shell PATH for system() calls 
 $ENV{PATH} = "/usr/sbin:/sbin:/usr/bin:/bin";
 
-$version_number = "1.1";
+$version_number = "1.0";
 $program_name = "makeautoinstalldiskette";
 $version_info = <<"EOF";
 $program_name (part of VA SystemImager) version $version_number
@@ -160,13 +160,20 @@ system('mount', '-t', 'msdos', $floppy_device, $mount_dir);
 foreach $file ("/tftpboot/initrd.gz", "/tftpboot/kernel", "/tftpboot/pxelinux.cfg/syslinux.cfg", "/tftpboot/pxelinux.cfg/message.txt") {
     if (!$quiet) {print "Copying $file to floppy.\n";}
     system('cp', '-f', $file, $mount_dir);
-        if($? != 0) { die "Couldn't copy $file to $mount_dir.\n"; }
+        if($? != 0) { 
+	    system('umount', $floppy_device);
+	    rmdir $mount_dir;
+	    die "Couldn't copy $file to $mount_dir.\n";
+	}
 }
 
 # unmount floppy
 if (!$quiet) {print "Un-mounting floppy...\n";}
 system('umount', $floppy_device);
-    if($? != 0) { die "Couldn't un-mount $floppy_device from $mount_dir.\n"; }
+    if($? != 0) { 
+	rmdir $mount_dir;
+	die "Couldn't un-mount $floppy_device from $mount_dir.\n";
+    }
 
 # get rid of temporary directory
 if (!$quiet) { print "Removing temporary mount point...\n";}
