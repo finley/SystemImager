@@ -190,6 +190,12 @@ to boot and install %{_build_arch} Linux machines during the SystemImager autoin
 process.
 
 %changelog
+* Sun Dec 19 2004 Josh Aas <josha@sgi.com>
+- Here is another patch for RPM building. With this patch, you should be
+  able to make an srpm, install it, build from the spec file ("rpmbuild
+  -ba systemimager.spec") and get a full set of RPMs. I assume you want
+  BootMedia stuff in the server RPM.
+
 * Wed Jun 02 2004 sis devel <sisuite-devel@lists.sourceforge.net> 3.3.1-1
 - include pre-install and post-install directories
 
@@ -476,7 +482,7 @@ fi
 %doc doc/manual_source/html
 # These should move to a files doc section, because they are missing if you don't do doc
 # %doc doc/manual/systemimager* doc/manual/html doc/manual/examples
-%doc doc/autoinstall* doc/local.cfg
+%doc doc/man/autoinstall* doc/examples/local.cfg
 %dir /var/log/systemimager
 %dir /var/lib/systemimager/images
 %dir /var/lib/systemimager/scripts/pre-install
@@ -504,10 +510,11 @@ fi
 %prefix/sbin/si_pushupdate
 %prefix/sbin/si_rmimage
 %prefix/sbin/si_imagemanip
-%prefix/bin/si_mkautoinstall*
+%prefix/bin/si_mk*
 %prefix/lib/systemimager/perl/SystemImager/Server.pm
 %prefix/lib/systemimager/perl/SystemImager/Config.pm
 %prefix/lib/systemimager/perl/confedit
+%prefix/lib/systemimager/perl/BootMedia/*
 %prefix/share/man/man5/systemimager*
 %prefix/share/man/man8/si_addclients*
 %prefix/share/man/man8/si_cpimage*
