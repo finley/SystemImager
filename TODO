@@ -4,6 +4,16 @@
 #   $Id$
 #
 
+# This file is going away as it's content is moved to the TODO Tracker:
+# <https://sourceforge.net/tracker/?atid=426762&group_id=259&func=browse>
+# 
+# as sections are moved to the Tracker, mark the number in this TODO file
+# if you have an update to a section that has already been moved to the
+# Tracker, be sure to update it on the Tracker.
+#
+# where should we move the Development stuff at the top?  README.devel?
+#
+
 --------------------
 Developer Guidelines
 --------------------
@@ -57,10 +67,12 @@ Brian's Priorities
   These tasks are in the order that I intend to complete them.
 --------------------------------------------------------------
 o Install scripts wrap Makefile
+  [ DONE! ]
 o Upgrade reiserfs support
 o Verify Don's serial console changes
-o Add interactive autoinstall client patch
-
+  [ #482949 on TODO Tracker ]
+o Add interactive autoinstall client patch 
+  [ probably should include the patch along with the Trackers submission ]
 
 -------------------------------
 Development Branch Sub Projects
@@ -69,6 +81,7 @@ Development Branch Sub Projects
 Unclaimed Sub Projects
 ----------------------
 o Documentation: how to migrate from KickStart to SystemImager.
+  [ #482951 on TODO Tracker ]
 o X Windows GUI
   o Run from the imageserver sending the X display back to a sysadmins
     desktop.
@@ -80,43 +93,60 @@ o X Windows GUI
     buttons, filling in boxes, etc.
   o See the "GUI Layout" section in this document for details on the 
     proposed logical arrangement of screens, etc.
+  [ #482953 on TODO Tracker ]
 
 Curtis Zinzilieta <czinzilieta@valinux.com>
 -------------------------------------------
 o updateclient:  Add a -no-update "Don't actually *do* the update, just 
   show me what would have been done." option.
+  [ as of 2.0.0, updateclient has a -dry-run option ]
 
 Brian Finley <brian@systemimager.org>
 -----------------------------------
 o updateclient:  Change -nolilo to -no-lilo, and hide nolilo in the background.
+  [ #482955 on TODO Tracker ]
 o deal with LABEL= *and* UUID= for any filesystem or device type
+  [ #482962 on TODO Tracker ]
 o Jose_AP_Celestino.ida.prepareclient.patch to make systemimager work
   properly with Smart Array cards.  (must get a Smart Array card first)
-
+  [ we should probably include this patch with the initial TODO Tracker entry ]
 o put exclude/include stuff on imageserver by image
     /tftpboot/systemimager/$image.updateclient.include
     /tftpboot/systemimager/$image.updateclient.exclude
+  [ #482963 on TODO Tracker ]
 o updateclient - local /etc/systemimager/updateclient.local.exclude or include
   take precedence over include and exclude on imageserver.
+  [ #482965 on TODO Tracker ]
 o updateclient - include/exclude pulled to temporary files.
+  [ maybe this should be added to #482963? ]
 o prepareclient - no longer puts /etc/systemimager/updateclient.local.exclude on
   client.  Rather, rely primarily on the image.include and image.exclude files.
+  [ maybe this should be added to #482963? ]
 o have getimage question what should be excluded in future when updateimage 
   is run.  /tmp/* and /home/* should be recommended as a starting place.
 
 o deal with LABEL=UUID as well as LABEL=mount_point
+  [ #482967 on TODO Tracker ]
 o if local.cfg and dhcp fails, have client ask for manual input
+  [ #482968 on TODO Tracker ]
 o incorporate multicaster
+  [ #482969 on TODO Tracker ]
 o getimage -- blink option
+  [ what will be blinking? ]
 o getimage -- eject option
+  [ #482970 on TODO Tracker ]
 o contemplate using khttpd or tux or similar to show autoinstall client status
 o command to put mac addresses/host names into 
   /etc/dhcpd.conf by using broadcast pings, the arp 
   table, and /etc/hosts or dns.
+  [ #482971 on TODO Tracker ]
 o section of HOWTO that helps Kickstart users transition to SystemImager.
-o redirect syslog messages from autoinstall clients to $imagserver
+  [ is this different than #482951? ]
+o redirect syslog messages from autoinstall clients to $imageserver
+  [ #482972 on TODO Tracker ]
 o addclients -- re-cycle through each question if answer is ""
 o change option-100 -> option-207
+  [ #482974 on TODO Tracker ]
 o Notes regarding differences between v2 and v3 of dhcpd:
   <<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
   The change from version 2 of ISC's dhcp server to version 3
@@ -146,7 +176,7 @@ o Add a "-dry-run" option to updateclient (and maybe getimage)
 <<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
  Serial Console Redirect
 <<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
+[ all this content has been added to #482949 on TODO tracker ]
 o serial redirect for autoinstallclient
   o See email from michael@auctionwatch.com
   And if necessary, do the following too:
@@ -244,6 +274,7 @@ o add zero padding option:
   unless(it is a number), die useage;
   if($add_zeros numerically-equals "0") then use it's literal string value "000"
   else(use $add_zeros to make the right number of zeros)
+[ #482979 on TODO Tracker ]
 
 Dann Frazier <dannf@ldl.fc.hp.com>
 ------------------------------------
@@ -256,6 +287,7 @@ o Modify Makefile for initrd:
       to create libraries for tarball.
   o place gzip, tar, and binaries.tar.gz with other tftp stuff
   o rcS will *always* pull gzip, tar, and binaries.tar.gz
+  [ #482983 on TODO Tracker ]
 o PXE booting ideas...
   with pxe, you can specify what files to serve to a specific hardware
   address.
@@ -267,20 +299,26 @@ o PXE booting ideas...
   initrd.gz, and will boot from the harddrive.
   a tool similar to addclients might be useful for this.
 o look at replacing dhcp-client w/ udhcp - possibly a savings of 88k
+  [ #482957 on TODO Tracker ]
 o for the ramdisk build system, instead of creating a fs of a certain
   size, then filling it (and often times running out of space), create
   the directory structure, create the fs based on the now-known size
   of the directory tree, and copy the directory tree into the fs.
+  DONE!
 o instead of explicitly stating each thing that should be linked to busybox
   in the Makefile, just run busybox and parse out what it provides.  this
   will require some way of mapping every busybox applet to a directory
   (e.g. /sbin vs. /usr/sbin vs. /bin vs. /usr/bin) - just to be anal.
+  DONE!
 o generalize ramdisk build system to take a config file.  this way we
   can use it to build a recovery ramdisk, a ramdisk for offline image
   collection, as well as the autoinstall ramdisk (and the secondary ramdisk
   mentioned above.
+  DONE!
 o serial console support
+  [ #482949 on TODO Tracker ]
 o dosfs support (sdague was working on this)
+  [ #482984 on TODO Tracker ]
 
 Austin Gonyou <austin@coremetrics.com>
 Wed Mar 21 12:19:10 CST 2001  
@@ -336,7 +374,7 @@ o have the autoinstallclient ask user for settings.
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
  Recovery CDROM -- George Perry <perryg@elcsci.com>
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
+[ this text has been added to #482985 on TODO Tracker ]
 Brian:
 
 I like the framework you are suggesting.  However, checking the SytemImager
