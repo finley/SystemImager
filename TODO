@@ -43,8 +43,6 @@ Development Branch Sub Projects
 
 Brian Finley <brian@thefinleys.com>
 -----------------------------------
-cvs -z3 commit -m "added better error checking" initrd_source/mk_new_initrd
-
 o chroot=yes in /etc/rsyncd.conf and test...
 Change paths:
 o images:        /var/lib/systemimager/images/
@@ -66,7 +64,6 @@ o source for the kernel and initrd.gz and everything will be provided in
    (this also helps deal with the fact that it is sometimes difficult to
    get all the kernel patches to apply properly -- we can provide the
    actual kernel source tree with the patches pre-applied.)
-
 o Modify binaries to use /var/lib/systemimager/ instead of /tftpboot/
 o Austin Gonyou patch: Dual NIC Installs
 o Jose_AP_Celestino.ida.prepareclient.patch to make systemimager work
