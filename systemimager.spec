@@ -1,6 +1,6 @@
 %define name     systemimager
 %define ver      2.9.4
-%define rel      1
+%define rel      4ibm
 %define prefix   /usr
 %define _build_all 1
 %define _boot_flavor standard
@@ -106,7 +106,7 @@ Packager: dann frazier <dannf@dannf.org>
 Docdir: %{prefix}/share/doc
 URL: http://systemimager.org/
 Distribution: System Installation Suite
-Requires: systemimager-common = %{version}, systemconfigurator, perl-AppConfig, rsync >= 2.4.6, perl, mtools
+Requires: systemimager-common = %{version}, systemconfigurator, perl-AppConfig, rsync >= 2.4.6, perl
 AutoReqProv: no
 
 %description client
