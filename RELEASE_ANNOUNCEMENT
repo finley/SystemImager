@@ -29,14 +29,13 @@ SystemImager 2.9.4 is Released, and 3.0.0 is Frozen
 BODY:
 Greetings and salutations,
 
-SystemImager(R) unstable 2.9.3 is released.  This is a SystemImager 3.0 
+SystemImager(R) unstable 2.9.4 is released.  This is a SystemImager 3.0 
 release candidate.  This should not be considered stable software, and 
 should not be used in a production environment.
 
-Official "testers" should test this release and send feedback to
-<sisuite-devel@lists.sourceforge.net>.  For others who test this 
-release, please send a quick "it worked on my box" message to 
-the same list.
+If you find bugs in this software, please report them via the bug tracker link
+at the bottom of the support page: http://systemimager.org/support/.  Be sure
+to include the version number (2.9.4).
 
 
 Installation instructions
@@ -50,11 +49,13 @@ Debian based distributions:
 
 2)  Cut and paste the following commands:
 
+        # On your Image Server(s)
         apt-get update
         apt-get install systemimager-server systemconfigurator
 
     or
 
+        # On your Golden Client(s)
         apt-get update
         apt-get install systemimager-client systemconfigurator
 
@@ -73,11 +74,17 @@ RPM based distributions:
     following RPMs.  These are the most common, but there may be 
     others that your system requires:
 
+        rsync
+            You can find this RPM on your Linux installation media, or at
+            http://rsync.samba.org/
+
         perl-DBI
             You can find this RPM on your Linux installation media.
+
         perl-Tk 
             You can find this RPM here:
             http://rpmfind.net/linux/rpm2html/search.php?query=perl-Tk
+
         perl-XML-Simple
             You can find this RPM here:
             http://rpmfind.net/linux/rpm2html/search.php?query=perl-XML-Simple
@@ -140,6 +147,7 @@ included in the next stable release, SystemImager v3.0.
         * JFS
         * reiserfs
         * XFS
+
     * boel_binaries tarball
         * A single tarball of additional binaries (that don't fit on
           the autoinstall media) is now pulled over to autoinstall
@@ -227,7 +235,7 @@ demand for certain features.
 Notes:  
 
         1. All of this is subject to change prior to release.
-        2. BOEL is Brian's Own Embedded Linux.  It is the embedded Linux
+        2. BOEL(TM) is Brian's Own Embedded Linux(TM).  It is the embedded Linux
            used to autoinstall clients.
 
 Please feel free to forward this message on to other lists, or groups

@@ -3,9 +3,16 @@
 # "SystemImager"
 #
 #  Copyright (C) 2002 Bald Guy Software 
-#                     Brian E. Finley <brian.finley@baldguysoftware.com>
+#                     Brian E. Finley <brian@bgsw.net>
 #
 #   $Id$
+#
+
+#
+# If you are using SystemImager over SSH, then you will need to add the 
+# following directives to your Apache configuration, or the equivalent if you
+# are using different web server software.  This must be done on the machine
+# where you installed the systemimager-ssh package.
 #
 
 Alias /systemimager/boot/ /usr/share/systemimager/boot/

@@ -11,19 +11,13 @@
 3.0 PRE-RELEASE
 --------------------------------------------------------------------------------
 Pending:
-* recommended Debian install method
-* proof-read all README, and similar files
+* ask Dann about how to build complete docs on Debian
 * add bit to to troubleshooting that describes the case where ETHER_SLEEP 
   should be increased
 * warn users that we are no longer supporting tarball based installs.  
   Adventurous souls can check out the source from CVS and do a make, but 
   normal users should use a package.
-* test using hosts only
-* test updateclient -a
-* test updateclient -dir
-* test updateclient normal
 * manual in pdf and html formats online
-* verify CHANGE.LOG additions
 * SHIP IT!
 * Post updated website changes.
 
@@ -43,6 +37,13 @@ Completed:
 * updateclient update portion
 * updateclient -a bug: http://sourceforge.net/tracker/index.php?func=detail&aid=610755&group_id=259&atid=100259
 * incorporate Common.pm elilo.efi stuff into mk*whatever
+* proof-read all README, and similar files
+* recommended Debian install method (Going with apt.sources addition for now)
+* test using hosts only
+* test updateclient -a
+* test updateclient -dir
+* test updateclient normal
+* verify CHANGE.LOG additions
 
 
 
