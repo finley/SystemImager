@@ -68,7 +68,7 @@ CVS Checkout Steps for Developers
      BRANCH="HEAD"; BRANCH_OPTS=""
 
    For the current stable branch, cut and paste this:
-     BRANCH="stable-2_0_x"; BRANCH_OPTS="-r $BRANCH"
+     BRANCH="v3_2_0"; BRANCH_OPTS="-r $BRANCH"
 
 4) Checkout the code:
    cvs -z3 -d:ext:$MY_CVS_USERNAME@cvs.systemimager.sourceforge.net:/cvsroot/systemimager co $BRANCH_OPTS systemimager
@@ -88,14 +88,4 @@ o SystemImager uses kernel style versioning (X.Y.Z):
   o Z = bug fix release (no new features)
 
 o Development releases may be made available unofficially.
-
-o Examples from the current tree (as of 2002.08.10):
-  o stable-2_0_x, getting bug fixes only
-  o HEAD, will continue on as HEAD
-    o When ready for an official release as 3.0.0, release candidate packages
-	  will be made.  These will be named 3.0.0rc1, 3.0.0rc2, etc.
-	o When 3.0.0 is finally released, the code in HEAD will be tagged as
-	  stable-3_0_x.  Feature development will continue in HEAD, and bug fixes
-	  to the 3.0.x release will be made in HEAD and 3.0.x.  Bug fix releases
-	  will be made from the stable-3_0_x branch.
 
