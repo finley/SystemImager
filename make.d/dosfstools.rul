@@ -2,6 +2,7 @@ DOSFSTOOLS_VERSION := 2.8
 DOSFSTOOLS_DIR := dosfstools-$(DOSFSTOOLS_VERSION)
 DOSFSTOOLS_TARBALL := dosfstools-$(DOSFSTOOLS_VERSION).src.tar.gz
 DOSFSTOOLS_URL := http://download.systemimager.org/pub/dosfstools/$(DOSFSTOOLS_TARBALL)
+# SOURCE_URL -> ftp://ftp.uni-erlangen.de/pub/Linux/LOCAL/dosfstools/
 MKDOSFS_BINARY := $(SRC_DIR)/$(DOSFSTOOLS_DIR)/mkdosfs/mkdosfs
 
 ALL_SOURCE += $(SRC_DIR)/$(DOSFSTOOLS_TARBALL)
