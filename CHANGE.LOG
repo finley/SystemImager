@@ -13,6 +13,8 @@ VA SystemImager-1.2 2000.xx.xx
   you reboot.  *Very* cool idea!  No mucking about with removeable media
   or that tricky PXE stuff for remote re-installs.
 - makedhcpstatic -- added support for restarting dhcp daemon.
+- addclients -- images are now presented in chronological order from
+  oldest to newest.  newest is now the default that is presented.
 - addclients -- made the descriptions more clear and broke it up into 3 
   sections.
 - rsyncd.conf -- now has entry for /tftpboot and the /var/log/systemimager

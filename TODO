@@ -15,7 +15,8 @@ In Progress
 - <brian@thefinleys.com> - support for reiserfs
 - <gpratt@valinux.com> - Docbookization of the FAQ-HOWTO
 - Cameron Meadors <cmeadors@valinux.com> and Roland Dreier <roland@valinux.com>
-  - get tftp-hpa fixed or modify stock tftp to do that special PXE thang
+  - write a new tftp daemon to do that special PXE thang, so that we no longer have to use
+    the buggy tftp-hpa daemon.
 - Chris Black <cblack@mokey.com> - hack dhclient to allow for imageserver specification via dhcp
 
 Assigned and waiting to be done
@@ -29,6 +30,7 @@ Assigned and waiting to be done
 - <brian@thefinleys.com> - getimage -- blink option
 - <brian@thefinleys.com> - getimage -- reboot option
 - <brian@thefinleys.com> - getimage -- incorporate the Phil Champon <pchampon@valueweb.net> updateimageserver hack
+- <brian@thefinleys.com> - makeautoinstalldiskette -- consider adding config file options?
 
 Other Requests
 ------------
@@ -41,6 +43,8 @@ Bug list
 --------
 - Bugs? ;)
 - There is, however, a bug in the tftp-hpa tftp daemon.
+- Potentially a bug in rsync that causes intermittent transfer failures.
+- Bug in rsync 2.4.4 (and prior I presume) where it does not return the expected exit status when it fails to write a file. 
 
 Other stuff
 -----------
@@ -58,7 +62,6 @@ Other stuff
 
 getimage
 --------
-- $image.exclude on imageserver
 - identify mke2fs parameters -b, -i, and -m on the master client and replicate this on autoinstall clients
 - use something other than mtab for getting active ext2 filesystems?
 - offer user the ability to change this, and store the changes in 
@@ -72,6 +75,12 @@ getimage
   (perhaps use a virtual disk presented to a "real" fdisk to allow user partitioning? --
    or maybe just calculate partition information with the script and ask the user to specify sizes)
 
+prepareclient
+-------------
+- don't even mess with /etc/rsyncd.conf -- create a custom configuration file like: 
+   /tmp/.systemimager.rsyncd.conf and reference it with:
+    rsync --daemon --config=/tmp/.systemimager.rsyncd.conf
+
 makeautoinstalldiskette
 -----------------------
 - options to specify a particular image, imageserver, IP, hostname, domainname, etc.
@@ -83,16 +92,10 @@ addclients
 
 systemimager.exclude
 --------------------
-- Have getimage question what should be excluded in future when updateimage 
+- keep this in the image on the imageserver
+- add support for a systemimager.include file
+- have getimage question what should be excluded in future when updateimage 
   is run.  /tmp/* and /home/* should be recommended as a starting place.
-- Add support for a systemimager.include file
-- make systemimager.exclude and systemimager.include image specific.
-  (systemimager.exclude.$image)
-
-prepareclient
--------------
-- test for running rsync daemon before finish -- if not running, give warning
-  about having proper hostname and IP address in /etc/hosts
 
 updateclient
 -----------
