@@ -122,14 +122,16 @@ if($interactive) {
     }
 }
 
-if($script =~ m|/|) {
-    print qq(FATAL: -script must not be a path or a file.\n);
-    print qq(See "$program_name -help" for more information.\n);
-    exit 1;
-} elsif($script =~ m|\.master$|) {
-    print qq(FATAL: -script must not include the .master extension.\n);
-    print qq(See "$program_name -help" for more information.\n);
-    exit 1;
+if ($script) {
+    if($script =~ m|/|) {
+        print qq(FATAL: -script must not be a path or a file.\n);
+        print qq(See "$program_name -help" for more information.\n);
+        exit 1;
+    } elsif($script =~ m|\.master$|) {
+        print qq(FATAL: -script must not include the .master extension.\n);
+        print qq(See "$program_name -help" for more information.\n);
+        exit 1;
+    }
 }
 
 if($host_range) {
