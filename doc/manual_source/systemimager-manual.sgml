@@ -2,7 +2,7 @@
 <article id=index>
 
  <artheader>
-    <title>SystemImager v1.5.0 Documentation</title>
+    <title>SystemImager v1.6.0 Documentation</title>
     <pubdate>$Date$</pubdate>
     <author>
       <firstname>Greg</firstname>
@@ -17,10 +17,10 @@
       <surname>Frazier</surname>
       <affiliation>
 	<orgname>Hewlett Packard</orgname>
-	<address><email>daniel_frazier@hp.com</email></address>
+	<address><email>dannf@ldl.fc.hp.com</email></address>
       </affiliation>
     </author>
-        
+
     <revhistory>
       <revision>
 	<revnumber>v1.3</revnumber>
@@ -135,10 +135,9 @@
       Brian Finley.  It's initial implementation was known as
       <application>Pterodactyl</application> and was used for software and 
       password updates to <productname>Solaris</productname> boxes of varying
-      hardware and OS versions 
-      across a nation wide enterprise network.  Over time it evolved into the 
-      Linux specific autoinstall and software distribution tool that it is 
-      today.  Many of the design decisions for
+      hardware and OS versions across a nation wide enterprise network.  Over
+      time it evolved into the Linux specific autoinstall and software
+      distribution tool that it is today.  Many of the design decisions for
       <application>SystemImager</application> were based on 
       perceived short comings in other automated install tools for systems 
       such as Solaris, RedHat Linux, and Windows.
@@ -223,17 +222,25 @@
 	  number of machines
 	</para>
       </listitem>
+      <listitem>
+        <para>
+          manufacturing organizations who must automate the software preload
+          process for Linux based machines
+        </para>
     </itemizedlist>
   </sect1>
   
   <sect1 id=Sect2>
     <title>Supported Distributions</title>
     <para>
-      <application>SystemImager</application> is designed to work with 
-      most any Linux distribution.  However, there are parts of 
-      <application>SystemImager</application> that may need to be
-      customized to deal with particular distributions.   If you are using an
-      untested distribution, you may find that the networking and hostname
+      <application>SystemImager</application> is built on top of
+      <ulink url="http://sourceforge.net/projects/systemconfig">
+        <application>SystemConfigurator</application>
+      </ulink>, which takes care of all of the distribution specific details.
+      Therefore, <application>SystemImager</application> should work with any
+      distribution that <application>SystemConfigurator</application>
+      supports (and some that it doesn't :).  If you are using an untested
+      distribution, you may find that the networking and hostname
       information are not configured properly after doing an autoinstall.  If
       you try <application>SystemImager</application> with your favourite
       distribution and it doesn't work properly, please submit a
@@ -351,12 +358,15 @@
 	<para>
 	  For PXE installations, you will need a compatible tftp server running
 	  on the boot server (usually the image/DHCP server).  H. Peter Anvin 
-	  maintains the <application>tftp-hpa</application> package, which 
+	  created the <application>tftp-hpa</application> package, which 
 	  provides the required functionality.  RedHat 7.0 includes this server
 	  in their tftp-server package, but the tftp package included with
 	  earlier RedHat releases doesn't provide the required functionality.
-	  Debian provides this server in the tftpd-hpa package.  PXE
-	  network-based installations may also require a pxe daemon to be
+	  Debian provides this server in the tftpd-hpa package.  The atftpd
+          server is also reported to work.
+        </para>
+	<para>
+	  PXE network-based installations may also require a pxe daemon to be
 	  running on your image server.  This requirement depends on the
 	  firmware used on the client side, and the capabilities of your DHCP
 	  server.
@@ -441,7 +451,7 @@
       
       <listitem>
 	<para>
-	  makedhcpserver - An easy way to create a SystemImager appropriate 
+	  mkdhcpserver - An easy way to create a SystemImager appropriate 
 	  <filename>/etc/dhcpd.conf</filename> file.  DHCP can be used to
 	  assign IP addresses to autoinstall clients. 
 	</para>
@@ -449,7 +459,7 @@
       
       <listitem>
 	<para>
-	  makedhcpstatic - Used to modify the
+	  mkdhcpstatic - Used to modify the
 	  <filename>/etc/dhcpd.conf</filename> file, adding static entries for
 	  autoinstall clients based on the IP addresses handed out to these
 	  clients by the DHCP server.
@@ -852,7 +862,7 @@ ongoing basis:
 1) static_dhcp -- A DHCP server will assign the
      same static address each time to clients 
      installed with this image.  Also see the
-     "makedhcpstatic" command.
+     "mkdhcpstatic" command.
 
 2) dynamic_dhcp -- A DHCP server will assign IP
      addresses dynamically to clients installed
@@ -1033,13 +1043,13 @@ Press &lt;Enter> to continue...
 	  The most common way to assign IP addresses to autoinstall clients is
 	  DHCP.  To easify the configuration of the DHCP configuration file
 	  (<filename>/etc/dhcpd.conf</filename>), SystemImager includes a
-	  utility called <command>makedhcpserver</command>.  
+	  utility called <command>mkdhcpserver</command>.  
 	  This utility asks you for all the information it needs 
 	  to create a DHCP configuration file that 
 	  is appropriate for your installation of SystemImager.  It is also
 	  possible to use DHCP to assign static IP addresses to your clients on
 	  an ongoing basis after installation.  If you choose to do so, simply
-	  run the <command>makedhcpstatic</command> command after all of your
+	  run the <command>mkdhcpstatic</command> command after all of your
 	  clients have had a chance to boot and be assigned an IP address.  It
 	  will modify your <filename>/etc/dhcpd.conf</filename>
 	  file on the imageserver to include static entries for each of your
@@ -1068,11 +1078,11 @@ Press &lt;Enter> to continue...
 	  drive.
 	</para>
 	<example>
-	  <title>Running makedhcpserver</title>
+	  <title>Running mkdhcpserver</title>
 	  <programlisting>
-[root@imageserver]# makedhcpserver
+[root@imageserver]# mkdhcpserver
 
-Welcome to the SystemImager "makedhcpserver" command.  This command
+Welcome to the SystemImager "mkdhcpserver" command.  This command
 will prepare this computer to be a DHCP server by creating the 
 following file:
 
@@ -1126,7 +1136,7 @@ The dhcp server configuration file (/etc/dhcpd.conf) file has been
 created for you.  Please verify it for accuracy.
 
 If this file does not look satisfactory, you can run this command again
-to re-create it: "makedhcpserver"
+to re-create it: "mkdhcpserver"
 
 WARNING!:  If you have multiple physical network interfaces, be sure to 
 edit the init script that starts dhcpd to specify the interface that 
@@ -1202,7 +1212,7 @@ IMAGESERVER=192.168.1.203
 	</para>
 	
 	<para>
-	  There are four methods to autoinstalling the clients:
+	  There are four methods for autoinstalling the clients:
 	</para>
 	<itemizedlist>
 	  <listitem>
@@ -1211,7 +1221,7 @@ IMAGESERVER=192.168.1.203
 	    </para>
 	    
 	    <para>
-	      Run <command>makeautoinstalldiskette</command> to create an
+	      Run <command>mkautoinstalldiskette</command> to create an
 	      autoinstall diskette.  Autoinstall diskettes can be used with any
 	      machine unless you add a customized
 	      <filename>/local.cfg</filename> file to the diskette.
@@ -1223,7 +1233,7 @@ IMAGESERVER=192.168.1.203
 	    </para>
 	    
 	    <para>
-	      Run <command>makeautoinstallcd</command> to create an ISO image
+	      Run <command>mkautoinstallcd</command> to create an ISO image
 	      that can be burned to CDROM.  This CDROM can then be used to boot
 	      your autoinstall clients and can also be used with any machine.
 	    </para>
@@ -1282,9 +1292,9 @@ Added systemimager *
 	    <para>
               <application>SystemImager</application> comes with the
               <command>mkbootserver</command> utility to help configure a
-              PXE server.  <command>mkbootserver</command>, is new with this
-	      release, and will likley not work with all PXE clients.  If it
-	      fails to work with your configuration, please submit a bug
+              PXE server.  <command>mkbootserver</command>, is new with the
+	      1.6.0 release, and will likley not work with all PXE clients.  If
+	      it fails to work with your configuration, please submit a bug
 	      report.
 	    </para>
 	  </listitem>
@@ -1423,7 +1433,8 @@ Added systemimager *
    <para>
     Now that you have your golden client configured, we need to run the 
     "prepareclient" command.  prepareclient will collect the partition information
-    from your disks and put it in the <filename>/etc/partitionschemes</filename> directory.  A file 
+    from your disks and put it in the
+    <filename>/etc/systemimager/partitionschemes</filename> directory.  A file 
     will be created in this directory for each of your disks and will contain that
     disk's partition information.  prepareclient will also create an rsync(1) 
     configuration file (<filename>/tmp/rsyncd.conf</filename>) and start rsync in server mode (<command>rsync 
@@ -1470,15 +1481,15 @@ Added systemimager *
     revision control on an image by image basis.  This form of revision control 
     also ties in to the updateclient command which will be discussed later.  By 
     default, all images are stored in the parent directory of 
-    "/var/spool/systemimager/images/" in a directory that bears the image name.  
-    For example: "/var/spool/systemimager/images/my_webserver_image_v1/".
+    "/var/lib/systemimager/images/" in a directory that bears the image name.  
+    For example: "/var/lib/systemimager/images/my_webserver_image_v1/".
    </para>
 
    <para>
     After getimage has pulled the files to the image directory on the imageserver
     it creates a customized autoinstall script.  The autoinstall script in our
     example would be named "my_webserver_image_v1.master".  All autoinstall 
-    scripts are placed in the "/tftpboot/systemimager/" directory.  The disk 
+    scripts are placed in the "/var/lib/systemimager/scripts" directory.  The disk 
     partitioning information left behind by the prepareclient command is used to 
     add the necessary commands to re-partition the disk(s) on the autoinstall 
     clients.  File system information is taken from the /etc/fstab file in the 
@@ -1509,10 +1520,11 @@ Added systemimager *
    </para>
 
    <para>
-    addclients will then prompt you for the IP address information for these hosts
+    addclients will then prompt you for the IP address infornnmation for these hosts
     and will re-write the imageserver's /etc/hosts file accordingly, then copy 
-    this file to /tftpboot/systemimager/hosts.  The latter file is used during the 
-    autoinstall process for clients using DHCP to determine their host names.
+    this file to /var/lib/systemimager/scripts/hosts.  The latter file is used
+    during the autoinstall process for clients using DHCP to determine their
+    host names.
    </para>
 
    <para>
@@ -1523,8 +1535,8 @@ Added systemimager *
     which contains only the specific commands and utilities necessary to perform
     autoinstalls. The same kernel and initial ram disk (initrd.gz) can be used to 
     boot from floppy disks, CDROMs, the network, or any running Linux system's 
-    local hard drive.  The commands "makeautoinstalldiskette" and 
-    "makeautoinstallcd" make use of the syslinux(2) utility to create floppies and 
+    local hard drive.  The commands "mkautoinstalldiskette" and 
+    "mkautoinstallcd" make use of the syslinux(2) utility to create floppies and 
     CDROMs that will boot the SystemImager kernel and initial ram disk.  
     pxelinux(2), which is a sister tool to syslinux, allows the same kernel and 
     initial ram disk to boot PXE capable machines from the network.  A 
@@ -1536,43 +1548,46 @@ Added systemimager *
    <para>
     The autoinstall kernel is compiled to contain all the necessary drivers for 
     the majority of systems.  Custom kernels can be compiled to meet special 
-    disk and network driver requirements.  To use a custom kernel, simply copy it 
-    to /tftpboot/kernel.  All of the autoinstall media is created from 
-    /tftpboot/kernel and /tftpboot/initrd.gz on the image server.
+    disk and network driver requirements.  To use a custom kernel, simply copy
+    it to /usr/share/systemimager/i386-boot/kernel.  All of the autoinstall
+    media is created from /usr/share/systemimager/i386-boot/kernel and
+    /usr/share/systemimager/i386-boot/initrd.gz on the image server.
    </para>
 
    <para>
     Once the kernel has booted, it mounts the initial ram disk as it's root 
-    filesystem.  It then executes an initialization script on the ram disk that 
+    filesystem.  It then executes an initialization script on the ram disk that
     has been written to do SystemImager specific things.  This script will use 
-    either a configuration file (/local.cfg) or a combination of DHCP and the
-    /tftpboot/systemimager/hosts file pulled from the image server to determine
+    either a configuration file (/local.cfg), DNS, or a combination of DHCP
+    and the /var/lib/systemimager/scripts/hosts file pulled from the image
+    server to determine
     the autoinstall client's IP address and hostname information.  If DHCP is 
     used, the client parses the hosts file retrieved from the image server to 
-    find it's IP address and can therefore determine it's hostname.  Finally it 
-    retrieves an autoinstall script from the image server based on it's hostname 
-    and executes it.  The autoinstall script is image specific.  This is how a 
-    client determines which image it will receive.  Here is a summary:  
+    find it's IP address and can therefore determine it's hostname.  Finally it
+    retrieves an autoinstall script from the image server based on it's
+    hostname and executes it.  The autoinstall script is image specific.  This
+    is how a client determines which image it will receive.  Here is a summary:
     IP address -> hostname -> image specific autoinstall script named with hostname.
    </para>
 
    <para>
-    The most common way to assign IP addresses to autoinstall clients is DHCP.  
-    To easify the configuration of the DHCP configuration file (/etc/dhcpd.conf), 
-    SystemImager includes a utility called makedhcpserver.  This utility asks 
+    The most common way to assign IP addresses to autoinstall clients is DHCP.
+    To easify the configuration of the DHCP configuration file
+    (<filename>/etc/dhcpd.conf</filename>), 
+    SystemImager includes a utility called mkdhcpserver.  This utility asks 
     you for all the information it needs to create a DHCP configuration file that 
     is appropriate for your installation of SystemImager.  It is also possible to 
     use DHCP to assign static IP addresses to your clients on an ongoing basis 
-    after installation.  If you choose to do so, simply run the makedhcpstatic 
+    after installation.  If you choose to do so, simply run the mkdhcpstatic 
     command after all of your clients have had a chance to boot and be assigned
-    an IP address.  It will modify your /etc/dhcpd.conf file on the imageserver 
+    an IP address.  It will modify your /etc/dhcpd.conf file on the imageserver
     to include static entries for each of your hosts.
    </para>
 
    <para>
-    Alternately, hostname, imageserver, and networking information can be put in 
-    a configuration file on a floppy diskette.  Or if you are using a running 
-    system's hard drive as the boot media, you can run 
+    Alternately, hostname, imageserver, and networking information can be put
+    in a configuration file on a floppy diskette.  Or if you are using a
+    running system's hard drive as the boot media, you can run 
     "<command>updateclient -autoinstall -server &lt;imageserver> -config eth0</command>"
     which will create a local.cfg file at the root of the client's hard drive 
     containing the existing live network settings.
@@ -1581,48 +1596,52 @@ Added systemimager *
    <para>
     When the autoinstall client boots, it will look for this 
     file and use the provided values instead of getting them from DHCP and the
-    /tftpboot/systemimager/hosts file on the image server.  A local.cfg file on
-    a floppy will work with any of the autoinstall media.  The configuration file 
-    can even be put on the autoinstall floppy itself!  If you use a local.cfg file
-    on a hard drive and on a floppy, the settings on the floppy will override the
-    settings on the hard drive.
+    /var/lib/systemimager/scripts/hosts file on the image server.  A
+    <filename>local.cfg</filename> file on
+    a floppy will work with any of the autoinstall media.  The configuration
+    file can even be put on the autoinstall floppy itself!  If you use a
+    <filename>local.cfg</filename> file
+    on a hard drive and on a floppy, the settings on the floppy will override
+    the settings on the hard drive.
    </para>
     
    <para>
     The format of this configuration file is simply VARIABLE=value for all the 
     appropriate settings.  The name of this file must be local.cfg and it must 
-    exist on the root of the floppy or hard drive.  The floppy can be formatted 
-    with either ext2 or fat.  An example local.cfg file can be found with the 
-    documentation files which are usually installed in /usr/share/doc.
+    exist on the root of the floppy or hard drive.  The floppy can be formatted
+    with either ext2 or fat.  An example <filename>local.cfg</filename> file
+    can be found with the documentation files which are usually installed in
+    /usr/share/doc.
    </para>
 
    <para>
-    Sometimes you will want to update an image on your image server.  There are 
-    a couple of ways to do this.  The first way is to directly edit the files in 
-    the image directory.  The best way to do this is to chroot into the image 
-    directory.  Once you have done the chroot, you can work with the image as if 
-    it were a running machine.  You can even install packages with apt-get or RPM,
-    for example.  The second way is to run the getimage command again, specifying 
-    a golden client that has been modified in the desired way.  Again, only the 
-    parts of the files that have changed will be pulled across.  Files that have 
-    been deleted on the golden client will also be deleted in the image.  You are 
-    also given the option to update the master autoinstall script for the image 
-    or to leave it alone.  The advantages of this method are that you can verify 
-    that your new configuration works on the golden client, and that the
-    master autoinstall script is updated.
+    Sometimes you will want to update an image on your image server.  There are
+    a couple of ways to do this.  The first way is to directly edit the files
+    in the image directory.  The best way to do this is to chroot into the
+    image directory.  Once you have done the chroot, you can work with the
+    image as if it were a running machine.  You can even install packages with
+    apt-get or RPM, for example.  The second way is to run the getimage command
+    again, specifying a golden client that has been modified in the desired
+    way.  Again, only the parts of the files that have changed will be pulled
+    across.  Files that have been deleted on the golden client will also be
+    deleted in the image.  You are also given the option to update the master
+    autoinstall script for the image or to leave it alone.  The advantages of
+    this method are that you can verify that your new configuration works on
+    the golden client, and that the master autoinstall script is updated.
    </para>
    
    <para>
     Once a system has been autoinstalled, the updateclient command can be used 
-    to update a client system to match a new or updated image on the image server.  
-    Let's say that you've installed your company's 300 web servers and a security 
-    patch comes out the next day.  You simply update the image on the image server 
-    and run updateclient on each of your web servers.  Only the modified files are 
-    pulled over, so it takes very little time, and your entire site is patched!  
+    to update a client system to match a new or updated image on the image
+    server.  Let's say that you've installed your company's 300 web servers and
+    a security patch comes out the next day.  You simply update the image on
+    the image server and run updateclient on each of your web servers.  Only
+    the modified files are pulled over, so it takes very little time, and your
+    entire site is patched!  
     It is recommended that you create an entirely new image with a new version 
-    number so that you have some form of revision control.  This way, if you find 
-    out that the patch you applied hosed up your entire web farm, you simply do 
-    an updateclient back to the last known working image!
+    number so that you have some form of revision control.  This way, if you
+    find out that the patch you applied hosed up your entire web farm, you
+    simply do an updateclient back to the last known working image!
    </para>
 
    <para>
@@ -1633,11 +1652,11 @@ Added systemimager *
     currently running, but needs to be re-deployed.  It will then modify the 
     /etc/lilo.conf file to include an appropriate entry for the new kernel and 
     initial ram disk and will make this new kernel the default.  The next time 
-    the client system is booted, it will load the SystemImager kernel and initial 
-    ram disk, which will begin the autoinstall process!  This means that you can 
-    remotely re-deploy any running Linux machine without having to have someone 
-    feed the machine a floppy or CD and without having to reconfigure the BIOS 
-    to boot off the network (which can be quite 
+    the client system is booted, it will load the SystemImager kernel and
+    initial ram disk, which will begin the autoinstall process!  This means
+    that you can remotely re-deploy any running Linux machine without having to
+    have someone feed the machine a floppy or CD and without having to
+    reconfigure the BIOS to boot off the network (which can be quite 
     <ulink url="http://www.dictionary.com/cgi-bin/dict.pl?term=squirrelly">
 	squirrelly
       </ulink>
@@ -1903,7 +1922,7 @@ To:     "rsync --bwlimit=10000 -av --numeric-ids $IMAGESERVER::web_server_image_
       </para>
     </sect2>
   </Sect1>
-     	
+
   <sect1 id=FAQ>
     <title>Frequently Asked Questions</title>
     <para>
@@ -1912,7 +1931,7 @@ To:     "rsync --bwlimit=10000 -av --numeric-ids $IMAGESERVER::web_server_image_
       <title>Where are the images stored?</title>
       <para>
 	The images are stored in
-	<filename>/var/spool/systemimager/images</filename>  
+	<filename>/var/lib/systemimager/images</filename>  
       </para>
       <para>
 	NOTE: If you are short on disk space in this location, move the
@@ -1920,7 +1939,7 @@ To:     "rsync --bwlimit=10000 -av --numeric-ids $IMAGESERVER::web_server_image_
       </para>
       <para>
 	<command>
-	  mv /var/spool/systemimager/images /home/systemimager_images
+	  mv /var/lib/systemimager/images /home/systemimager_images
 	</command>
       </para>
       <para>
@@ -1928,22 +1947,29 @@ To:     "rsync --bwlimit=10000 -av --numeric-ids $IMAGESERVER::web_server_image_
       </para>
       <para>
 	<command>
-	  ln -s /home/systemimager_images /var/spool/systemimager/images
+	  ln -s /home/systemimager_images /var/lib/systemimager/images
 	</command>
       </para>
     </sect2>
     <sect2 id=FAQInstallFloppy>
-      <title>How do I make an autoinstalldiskette?</title>
+      <title>How do I make an autoinstall diskette?</title>
       <para>
-	Run the <command>makeautoinstalldiskette</command> command on the 
+	Run the <command>mkautoinstalldiskette</command> command on the 
 	image server.
       </para>
     </sect2>
     <sect2 id=FAQInstallCD>
-      <title>How do I make an autoinstallcd?</title>
+      <title>How do I make an autoinstall CD?</title>
       <para>
-	Run the <command>makeautoinstallcd</command> command on the image
+	Run the <command>mkautoinstallcd</command> command on the image
 	server.
+      </para>
+    </sect2>
+    <sect2 id=FAQInstallPunchCard>
+      <title>How do I make an autoinstall punch card?</title>
+      <para>
+	Run the <command>mkautoinstallpunchcard</command> command on the image
+	server - deprecated :)
       </para>
     </sect2>
     <sect2 id=FAQSerialConsole>
@@ -2049,7 +2075,7 @@ To:     "rsync --bwlimit=10000 -av --numeric-ids $IMAGESERVER::web_server_image_
       <title>Does the DHCP server have to be on the image server?</title>
       <para>
        No.  If you are using DHCP, you can use "option-100" and set it's value to the
-       IP address of the image server.  If you use "makedhcpstatic" to configure your
+       IP address of the image server.  If you use "mkdhcpstatic" to configure your
        dhcpd.conf file, it will ask you for the IP address of your image server and
        add the appropriate entry for you.
       </para>
@@ -2087,10 +2113,10 @@ To:     "rsync --bwlimit=10000 -av --numeric-ids $IMAGESERVER::web_server_image_
 	utility.  Choose the driver for the card you need.
       </para>
       <para>
-	However!  This will probably make the kernel too large for the floppy.  So 
-	you will want to de-select drivers for many of the cards that will not be 
-	used.  I would recommend de-selecting all of the Ethernet cards except for 
-	the ones you need.
+	However!  This will probably make the kernel too large for the floppy.
+        So you will want to de-select drivers for many of the cards that will
+        not be used.  I would recommend de-selecting all of the Ethernet cards
+        except for the ones you need.
       </para>
       <para>
 	Do the standard:
@@ -2105,32 +2131,32 @@ To:     "rsync --bwlimit=10000 -av --numeric-ids $IMAGESERVER::web_server_image_
       </para>
       <para>
 	Then copy the resultant kernel over the kernel (<filename>
-	  /tftpboot/kernel</filename>) installed in
-	<filename>/tftpboot</filename> by SystemImager.
+	  /usr/share/systemimager/i386-boot/kernel</filename>) installed in
+	<filename>/usr/share/systemimager/i386-boot</filename> by SystemImager.
       </para>
       <para>
-	You should now be able to do a <command>makeautoinstalldiskette</command>,
-	<command>makeautoinstallcd</command>, or boot off the network.
+	You should now be able to do a <command>mkautoinstalldiskette</command>,
+	<command>mkautoinstallcd</command>, or boot off the network.
       </para>
     </sect2>
     
     <sect2 id=FAQExcludingStuff>
       <title>How do I exclude files or directories during a getimage?</title>
       <para>
-	As of 1.5.0 there is not support for this.  Look for this feature soon.
+	As of 1.6.0 there is not support for this.  Look for this feature soon.
       </para>
     </sect2>
     <sect2 id=FAQPrepareClient>
       <title>Do I have to do anything to prepare a client from which I will get 
 	an image? </title>
       <para>
-	Yes.  Install the va-systemimager-client package.  If this package is
+	Yes.  Install the systemimager-client package.  If this package is
 	already installed, all you have to do is run the
 	<command>prepareclient</command> command prior to running
 	<command>getimage</command> from the image server.
       </para>
       <para>
-	You will also want to add any software, configure any files, and do any 
+	You will also want to add any software, configure any files, and do any
 	tweaking to make the system just how you like it!
       </para>
     </sect2>
@@ -2156,7 +2182,7 @@ To:     "rsync --bwlimit=10000 -av --numeric-ids $IMAGESERVER::web_server_image_
     <sect2 id=FAQPullImage>
       <title>Ok, so how do I pull an image to a client?</title>
       <para>
-	If you ran <command>makedhcpserver</command> to configure your dhcp 
+	If you ran <command>mkdhcpserver</command> to configure your dhcp 
 	information, and if you answered all the questions you were asked when 
 	you did your <command>getimage</command>, including the hostnames and 
 	IP addresses, then all you have to do is boot your client with any one 
@@ -2188,15 +2214,15 @@ To:     "rsync --bwlimit=10000 -av --numeric-ids $IMAGESERVER::web_server_image_
 	</listitem>
       </orderedlist>
       <para>
-	Search this document for <command>makeautoinstallcd</command> and 
-	<command>makeautoinstalldiskette</command> for more information.
+	Search this document for <command>mkautoinstallcd</command> and 
+	<command>mkautoinstalldiskette</command> for more information.
       </para>
     </sect2>
     
     <sect2 id=FAQHowClientKnowRightImage>
       <title>How does an autoinstall client know which image to install?</title>
       <para>
-	In order to better understand the answer, let me lead up to it with the 
+	In order to better understand the answer, let me lead up to it with the
 	steps the autoinstall client goes through:
       </para>
       <orderedlist>
@@ -2228,7 +2254,7 @@ To:     "rsync --bwlimit=10000 -av --numeric-ids $IMAGESERVER::web_server_image_
 	<listitem>
 	  <para>
 	    Requests a script from the image server based on its hostname
-	    (for example: <command>www237.sh</command>)
+	    (for example: <filename>www237.sh</filename>)
 	  </para>
 	</listitem>
 	<listitem>
@@ -2245,7 +2271,7 @@ To:     "rsync --bwlimit=10000 -av --numeric-ids $IMAGESERVER::web_server_image_
       </para>
       <para>
 	These scripts and the <filename>$image.master</filename> script can be 
-	found in <filename>/tftpboot/systemimager</filename>.
+	found in <filename>/var/lib/systemimager/scripts</filename>.
       </para>
     </sect2>
     
@@ -2253,7 +2279,8 @@ To:     "rsync --bwlimit=10000 -av --numeric-ids $IMAGESERVER::web_server_image_
       <title>How do I upgrade to a new version?</title>
       <para>
 	If you installed SystemImager as of 1.0 or later, you can simply 
-	install the new version on top.
+	install the new version on top.  Using a packaged version (.rpm, .deb)
+        is recommended as this will prevent cruft build-up on your system.
       </para>
       <para>
 	If you last installed a pre-1.0 version then you can't simply install a
@@ -2284,14 +2311,14 @@ To:     "rsync --bwlimit=10000 -av --numeric-ids $IMAGESERVER::web_server_image_
 	want to have to manually enter my 1000 mac addresses.  What can I do?
       </title>
       <para>
-	SystemImager comes with the <command>makedhcpstatic</command> utility.  
+	SystemImager comes with the <command>mkdhcpstatic</command> utility.  
 	As you boot your client systems, the DHCP server will assign addresses 
 	sequentially.  By initially booting your systems in the order you want 
-	them to receive their IP addresses, you can ensure that they get the IP 
+	them to receive their IP addresses, you can ensure that they get the IP
 	address you want them to have.  
       </para>
       <para>
-	After booting your systems, run <command>makedhcpstatic</command>.  It 
+	After booting your systems, run <command>mkdhcpstatic</command>.  It 
 	will re-write your <filename>/etc/dhcpd.conf</filename> file associating 
 	each clients MAC address with its host name.  You should then restart your 
 	dhcpd daemon.  Subsequently, each time your clients request an IP address 
@@ -2613,6 +2640,7 @@ the following command on a client that is already partitioned correctly:
     SystemImager is based on <command>rsync(1)</command> and also makes
     use of:
     <ItemizedList>
+     <ListItem><para><command>systemconfigurator(1)</command></para></ListItem>
      <ListItem><para><command>busybox(1)</command></para></ListItem>
      <ListItem><para><command>syslinux(2)</command></para></ListItem>
      <ListItem><para><command>pxelinux(2)</command></para></ListItem>
@@ -2707,13 +2735,13 @@ the following command on a client that is already partitioned correctly:
    <glossdef>
     <para>
      A configuration file that can be used for autoinstall clients
-     in lieu of DHCP and the /tftpboot/systemimager/hosts file on the image
-     server.
+     in lieu of DHCP and the /var/lib/systemimager/scripts/hosts file on the
+     image server.
     </para>
    </glossdef>
   </glossentry>
   <glossentry>
-   <glossterm>makedhcpserver</glossterm>
+   <glossterm>mkdhcpserver</glossterm>
    <glossdef>
     <para>
      An easy way to create a <application>SystemImager</application>
@@ -2723,7 +2751,7 @@ the following command on a client that is already partitioned correctly:
    </glossdef>
   </glossentry>
   <glossentry>
-   <glossterm>makedhcpstatic</glossterm>
+   <glossterm>mkdhcpstatic</glossterm>
    <glossdef>
     <para>
      Used to modify the <filename>/etc/dhcpd.conf</filename> file, adding 
