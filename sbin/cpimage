@@ -213,7 +213,7 @@ move($tmp_file, $file) or die "FATAL: Can't move $tmp_file to $file: $!";
 ### BEGIN Change entries in master autoinstall script ###
 # copy master autoinstall script
 if($verbose) {print "  Copying $source_image.master to $destination_image.master.\n";}
-$source_script="rsync://$server/tftpboot/systemimager/$source_image.master";
+$source_script="rsync://$server/scripts/$source_image.master";
 $destination_script=$autoinstall_script_dir . "/$destination_image.master";
 $cmd="rsync -a $source_script $destination_script";
 system($cmd);
