@@ -6,9 +6,9 @@
 DB2HTML = /usr/bin/db2html
 SRC     := manual.sgml
 
-all:    doc
+all:    manual
 
-doc:    $(DB2HTML) $(SRC)
+manual:    $(DB2HTML) $(SRC)
 	$(DB2HTML) manual.sgml
 	mv manual ..
 	cp -a images/ ../manual/images
