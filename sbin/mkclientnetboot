@@ -9,16 +9,18 @@
 #
 
 # set some variables
-$version_number="SYSTEMIMAGER_VERSION_STRING";
+$VERSION="SYSTEMIMAGER_VERSION_STRING";
 $program_name="mkclientnetboot";
 $get_help = "   Try \"$program_name -help\" for more options.";
 
 # declare modules
 use lib "USR_PREFIX/lib/systemimager/perl";
+use strict;
 use Getopt::Long;
 use File::Copy;
 use File::Path;
 use SystemImager::Config;
+use vars qw($config $VERSION);
 
 ### BEGIN parse the config file ###
 
@@ -30,7 +32,7 @@ if (!$tftp_dir) { die "TFTP_DIR not defined in the config file."; }
 
 # set version information
 $version_info = <<"EOF";
-$program_name (part of SystemImager) version $version_number
+$program_name (part of SystemImager) version $VERSION
 
 Copyright (C) 2002 Bald Guy Software <brian.finley\@baldguysoftware.com>
 This is free software; see the source for copying conditions.  There is NO
