@@ -1,19 +1,30 @@
 #
 # "SystemImager" 
 #
-#  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
-#  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
+#  Copyright (C) 1999-2001 Brian Elliott Finley <brian@bgsw.net>
+#  Copyright (C) 2002-2003 Bald Guy Software <brian@bgsw.net>
 #
 #   $Id$
 #
 
-SystemImager-version yyyy.mm.dd
+SystemImager-3.2.0 2003.06.XXX
 -------------------------------------------------------------------------------
+o Fix bug #[ 501646 ] prepareclient shouldn't killall rsyncs.
 o added hardlink/parse files patch for rsync from stevegt (Closes #669565).
+o added multicast support via Flamethrower. -BEF-
+o new version of discover.
+o e2fsprogs v1.33
+o openssh v3.6.1p1
+o discover v1.5-1.4
+o parted v1.6.5
+o reiserfsprogs-3.6.7
+o sfdisk version 3.07 (aeb@cwi.nl, 990908)
+	(from util-linux-2.11z)
+o xfsprogs-2.3.9
 -------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------
-SystemImager-3.0.1 2003.XXX
+SystemImager-3.0.1 2003.03.30
 --------------------------------------------------------------------------------
 o updateclient: fixed bug [ 676908 ] GATEWAY not set in /local.cfg
 
