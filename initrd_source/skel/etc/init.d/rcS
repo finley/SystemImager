@@ -10,12 +10,16 @@
 #  $Id$
 #
 #  Others who have contributed to this code:
-#    Charles C. Bennett, Jr. <ccb@acm.org>
-#    Sean Dague <japh@us.ibm.com>
-#    Dann Frazier <dannf@dannf.org>
-#    Curtis Zinzilieta <czinzilieta@valinux.com>
+#   Charles C. Bennett, Jr. <ccb@acm.org>
+#   Sean Dague <japh@us.ibm.com>
+#   Dann Frazier <dannf@dannf.org>
+#   Curtis Zinzilieta <czinzilieta@valinux.com>
 #
 
+#################################################################################
+#
+#   Variables
+#
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/tmp
 
 SCRIPTS=scripts
@@ -30,13 +34,25 @@ if [ "ppc64" = $ARCH ] ; then
         ARCH=ppc64-iSeries
     fi
 fi
-
-
-#################################################################################
-#   Subroutines
 #
 ################################################################################
 
+
+#################################################################################
+#
+#   Subroutines
+#
+################################################################################
+#
+#   Description:
+#   Exit with the message stored in /etc/issue.
+#
+#   Usage: $COMMAND || shellout
+#
+shellout() {
+  exec cat /etc/issue ; exit 1
+}
+#
 ################################################################################
 #
 #   Description:  
@@ -62,19 +78,9 @@ count_loop() {
   done
   echo
 }
-
-
+#
 ################################################################################
 #
-#   Description:
-#   Exit with the message stored in /etc/issue.
-#
-#   Usage: $COMMAND || shellout
-#
-shellout() {
-  exec cat /etc/issue ; exit 1
-}
-
 write_variables() {
   # pass all variables set here on to the hostname.sh script
   rm -f /tmp/variables.txt
@@ -101,631 +107,655 @@ write_variables() {
   echo "SSH_DOWNLOAD_URL=$SSH_DOWNLOAD_URL"	>> /tmp/variables.txt
 
 }
+#
+################################################################################
+#
+#   Get other binaries, kernel module tree, and miscellaneous other stuff that
+#   got put in the binaries tarball. -BEF-
+#
+get_boel_binaries_tarball() {
+    if [ ! -z $SSH_DOWNLOAD_URL ]; then
+        # If we're using SSH, get the boel_binaries from a web server.
+        echo
+        echo "SSH_DOWNLOAD_URL variable is set, so we will install over SSH!"
 
-get_hostname_by_dns() {
+        # Remove possible trailing / from URL
+        SSH_DOWNLOAD_URL=`echo $SSH_DOWNLOAD_URL | sed 's/\/$//'`
 
-    # Get base hostname.  For example, www7.domain.com will become www7. -BEF-
-    HOSTNAME=`nslookup $IPADDR | grep "^Name:" | sed -e 's/Name:[[:space:]]*//' -e 's/\..*$//g'`
+        CMD="cd /tmp/ && snarf ${SSH_DOWNLOAD_URL}/systemimager/boot/${ARCH}/${FLAVOR}/boel_binaries.tar.gz"
+        echo "$CMD"
+        $CMD || shellout
+
+    else
+        # Unless we're using SSH, use rsync
+        CMD="rsync -av ${IMAGESERVER}::boot/${ARCH}/${FLAVOR}/boel_binaries.tar.gz /tmp/"
+        echo "$CMD"
+        $CMD || shellout
+
+    fi
+
+    # Untar the tarball
+    ( cd / && tar -xvzf /tmp/boel_binaries.tar.gz ) || shellout
+}
+#
+#################################################################################
+#
+#   Switch root to tmpfs
+#
+switch_root_to_tmpfs() {
+    # Switch root over to tmpfs so we don't have to worry about the size of
+    # the tarball and binaries that users may decide to copy over. -BEF-
+    mkdir -p /new_root || shellout
+    mount tmpfs /new_root -t tmpfs || shellout
+    cd / || shellout
+    rsync -a bin etc lib my_modules root sbin tmp usr var /new_root/ || shellout
+    cd /new_root || shellout
+    mkdir -p old_root || shellout
+    pivot_root . old_root || shellout
+}
+#
+#################################################################################
+#
+mount_dev_on_devfs() {
+    # Re-mount /dev on devfs. -BEF-
+    mkdir -p /dev || shellout
+    mount devfs /dev -t devfs || shellout
+
+    # Crank up devfsd
+    /sbin/devfsd /dev || shellout
 
 }
-
-    
-# Switch root over to tmpfs so we don't have to worry about the size of
-# the tarball and binaries that users may decide to copy over. -BEF-
-mkdir -p /new_root || shellout
-mount tmpfs /new_root -t tmpfs || shellout
-cd / || shellout
-rsync -a bin etc lib my_modules root sbin tmp usr var /new_root/ || shellout
-cd /new_root || shellout
-mkdir -p old_root || shellout
-pivot_root . old_root || shellout
-
-# Re-mount /dev on devfs. -BEF-
-mkdir -p /dev || shellout
-mount devfs /dev -t devfs || shellout
-
-# Crank up devfsd
-/sbin/devfsd /dev || shellout
-
+#
+#################################################################################
+#
 # Now mount proc. -BEF-
-mkdir -p proc || shellout
-mount proc /proc -t proc || shellout
-
+mount_proc() {
+    mkdir -p proc || shellout
+    mount proc /proc -t proc || shellout
+}
+#
+#################################################################################
+#
 # Configure loopback interface (may as well)
-ifconfig lo 127.0.0.1
-
+ifconfig_loopback() {
+    ifconfig lo 127.0.0.1
+}
+#
+#################################################################################
+#
 # Load any modules that were placed in the my_modules directory prior to
 # running "make initrd.gz".  -BEF-
-( cd /my_modules && sh ./INSMOD_COMMANDS )
-
-
+load_my_modules() {
+    ( cd /my_modules && sh ./INSMOD_COMMANDS )
+}
+#
 ################################################################################
 #
 # Look for local.cfg file
 #   This code inspired by Ian McLeod <ian@valinux.com>
 #
-# BEGIN try hard drive
-#
-# this must be on two lines in order to substitute the newline
-cat /proc/cmdline | sed "s/ /\\
+read_local_cfg() {
+    # BEGIN try hard drive
+    #
+    # this must be on two lines in order to substitute the newline
+    cat /proc/cmdline | sed "s/ /\\
 /g" | sed -n "s/=/=/p" > /tmp/last_root.$$
 
-# suck in variable
-. /tmp/last_root.$$
+    # suck in variable
+    . /tmp/last_root.$$
 
-if [ ! -z "$LAST_ROOT" ]; then
+    if [ ! -z "$LAST_ROOT" ]; then
 
-  echo "Your kernel must have all necessary block and filesystem drivers"
-  echo "compiled in statically (not modules) in order for a local.cfg on"
-  echo "your hard drive to work properly.  You will need to compile your"
-  echo "own kernel as the standard SystemImager kernel is modular.  See"
-  echo "the SystemImager documentation for more information on compiling"
-  echo "your own kernel for SystemImager."
-  echo
-  echo "Checking for /local.cfg file on hard drive..."
-  mkdir /last_root
-  echo "Mounting hard drive..."
-  mount $LAST_ROOT /last_root -o ro > /dev/null 2>&1 || echo "Couldn't mount hard drive."
-  if [ -f /last_root/local.cfg ]; then
-    echo "Found /local.cfg on hard drive."
-    echo "Copying /local.cfg settings to /tmp/local.cfg."
-    cat /last_root/local.cfg >> /tmp/local.cfg || shellout
-  else
-    echo "No /local.cfg on hard drive."
-  fi
-  echo "Unmounting hard drive..."
-  umount /last_root || shellout
-fi
-# END try hard drive
+        echo "Your kernel must have all necessary block and filesystem drivers"
+        echo "compiled in statically (not modules) in order for a local.cfg on"
+        echo "your hard drive to work properly.  You will need to compile your"
+        echo "own kernel as the standard SystemImager kernel is modular.  See"
+        echo "the SystemImager documentation for more information on compiling"
+        echo "your own kernel for SystemImager."
+        echo
+        echo "Checking for /local.cfg file on hard drive..."
+        mkdir /last_root
+        echo "Mounting hard drive..."
+        mount $LAST_ROOT /last_root -o ro > /dev/null 2>&1 || echo "Couldn't mount hard drive."
+        if [ -f /last_root/local.cfg ]; then
+            echo "Found /local.cfg on hard drive."
+            echo "Copying /local.cfg settings to /tmp/local.cfg."
+            cat /last_root/local.cfg >> /tmp/local.cfg || shellout
+        else
+            echo "No /local.cfg on hard drive."
+        fi
+        echo "Unmounting hard drive..."
+        umount /last_root || shellout
+        echo
+    fi
+    # END try hard drive
 
-### BEGIN try floppy ###
-echo
-echo "Checking for floppy diskette."
-echo "  You may see some I/O errors here, but that is normal."
-mkdir -p /floppy
-mount /dev/fd0 /floppy -o ro > /dev/null 2>&1
-if [ $? = 0 ]; then
-    echo "  Found floppy diskette."
-    if [ -f /floppy/local.cfg ]; then
-        echo "  Found /local.cfg on floppy."
-        echo "  Copying /local.cfg settings to /tmp/local.cfg."
-        echo "  NOTE: local.cfg settings from a floppy will override settings from"
-        echo "        a local.cfg file on your hard drive and DHCP."
-        # We use cat instead of copy, so that floppy settings can
-        # override hard disk settings. -BEF-
-        cat /floppy/local.cfg >> /tmp/local.cfg || shellout
+    ### BEGIN try floppy ###
+    echo "Checking for floppy diskette."
+    echo "YOU MAY SEE SOME I/O AND CRAMFS ERRORS HERE, BUT THAT IS NORMAL."
+    mkdir -p /floppy
+    mount /dev/fd0 /floppy -o ro > /dev/null 2>&1
+    if [ $? = 0 ]; then
+        echo "Found floppy diskette."
+        if [ -f /floppy/local.cfg ]; then
+            echo "Found /local.cfg on floppy."
+            echo "Copying /local.cfg settings to /tmp/local.cfg."
+            echo "NOTE: local.cfg settings from a floppy will override settings from"
+            echo "      a local.cfg file on your hard drive and DHCP."
+            # We use cat instead of copy, so that floppy settings can
+            # override hard disk settings. -BEF-
+            cat /floppy/local.cfg >> /tmp/local.cfg || shellout
+        else
+            echo "No /local.cfg on floppy diskette."
+        fi
     else
-        echo "  No /local.cfg on floppy diskette."
+        echo "No floppy diskette in drive."
     fi
-else
-    echo "  No floppy diskette in drive."
-fi
-echo
-### END try floppy ###
+    ### END try floppy ###
 
-# /tmp/local.cfg may be created from a local.cfg file on the hard drive, or a
-# floppy.  If both are used, settings on the floppy take precedence. -BEF-
-if [ -f /tmp/local.cfg ]; then
-  echo "Reading configuration from /tmp/local.cfg"
-  . /tmp/local.cfg || shellout
-fi
-
-if [ ! -z $IPADDR ]; then
-  # configure interface and add default gateway
-  ifconfig $DEVICE $IPADDR  netmask $NETMASK  broadcast $BROADCAST
-  if [ $? != 0 ]; then
-    echo
-    echo "I couldn't configure the network interface using the local.cfg file."
-    echo "Check the entries in your /local.cfg file."
-    echo
-    shellout
-  fi
-
-  if [ ! -z $GATEWAY ]; then
-    route add default gw $GATEWAY
-    if [ $? != 0 ]; then
-      echo
-      echo "The command \"route add default gw $GATEWAY\" failed."
-      echo "Check the entries in your /local.cfg file."
-      echo
-      shellout
+    # /tmp/local.cfg may be created from a local.cfg file on the hard drive, or a
+    # floppy.  If both are used, settings on the floppy take precedence. -BEF-
+    if [ -f /tmp/local.cfg ]; then
+        echo "Reading configuration from /tmp/local.cfg"
+        . /tmp/local.cfg || shellout
     fi
-  fi
-### END look for local.cfg file ###
-
-else
-  ### BEGIN dhcp ###
-  echo "IP Address not set by local.cfg.  I will use DHCP."
-
-  ### BEGIN ether sleep ###
-  # Give the switch time to start passing packets.  Some switches won't
-  # forward packets until 30 seconds or so after an interface comes up.
-  # This means the dhcp server won't even get the request for 30 seconds.
-  # Many ethernet cards aren't considered "up" by the switch until the
-  # driver is loaded.  Because the driver is compiled directly into the
-  # kernel here, the driver is definitely loaded at this point. 
-  # 
-  # Default is 0.  The recommended setting of ETHER_SLEEP=35 can be set 
-  # with a local.cfg file. -BEF-
-  #
-  [ -z $ETHER_SLEEP ] && ETHER_SLEEP=0
-  echo
-  echo "sleep $ETHER_SLEEP:  This is to give your switch (if you're using one) time to"
-  echo "           recognize your ethernet card before we try the network."
-  echo "           Tip: You can use <ctrl>+<c> to pass the time (pun intended)."
-  echo
-  count_loop $ETHER_SLEEP
-  echo
-  ### END ether sleep ###
-
-  # create directory to catch dhcp information
-  DHCLIENT_DIR="/var/state/dhcp"
-  mkdir -p $DHCLIENT_DIR
-
-  # combine systemimager code to the stock debian dhclient-script
-  # and make executable
-  cat /etc/dhclient-script.systemimager-prefix \
-      /etc/dhclient-script.debian-dist \
-      > /etc/dhclient-script
-  chmod +x /etc/dhclient-script
-
-  # get info via dhcp
-  echo
-  echo "dhclient"
-  dhclient
-  if [ ! -s ${DHCLIENT_DIR}/dhclient.leases ]; then
-    echo
-    echo "I couldn't configure the network interface using DHCP."
-    echo
-    shellout
-  fi
-
-  # Figure out which interface actually got configured.
-  # Suggested by James Oakley.
-  #
-  INTERFACE=`grep interface ${DHCLIENT_DIR}/dhclient.leases | \
-        sed -e 's/^.*interface "//' -e 's/";//'`
-
-
-
-  # read dhcp info in as variables -- this file will be created by 
-  # the /etc/dhclient-start script that is run automatically by
-  # dhclient.
-  . /tmp/dhcp_info.${INTERFACE} || shellout
-  ### END dhcp ###
-fi
-
-# Re-read configuration information from local.cfg to over-ride
-# DHCP settings, if necessary. -BEF-
-if [ -f /tmp/local.cfg ]; then
-  echo "Override DHCP settings with local.cfg settings by re-reading (/tmp/local.cfg)."
-  . /tmp/local.cfg || shellout
-fi
-
-### BEGIN ping test for switch initialization ###
-# ping test code submitted by Grant Noruschat <grant@eigen.ee.ualberta.ca>
-# modified slightly by <brian.finley@baldguysoftware.com>
-echo
-echo "  Pinging image server \"$IMAGESERVER\""
-echo "  to ensure we have network connectivity."
-echo
-
-PING_COUNT=1
-PING_EXIT_STATUS=1
-
-while [ $PING_EXIT_STATUS != 0 ]
-do
-  echo "  Ping attempt number $PING_COUNT: "
-  ping -c 1 $IMAGESERVER; PING_EXIT_STATUS=$?; PING_COUNT=$(( $PING_COUNT + 1 ))
-  if [ $PING_COUNT = 21 ]; then
-    echo
-    echo "  FATAL:  Cannot ping the image server \"$IMAGESERVER\""
-    echo "          Be sure that your networking equipment is"
-    echo "          working properly!"
-    echo
-    shellout
-  fi
-done
-
-if [ $PING_EXIT_STATUS = 0 ]; then
-  echo
-  echo "  We have connectivity to the Image Server!"
-  echo
-fi
-### END ping test ###
-
-### BEGIN logging ###
-if [ ! -z $LOG_SERVER ]; then
-    [ -z $LOG_SERVER_PORT ] && LOG_SERVER_PORT="514"
-    syslogd -R ${LOG_SERVER}:${LOG_SERVER_PORT}
-fi
-### END logging ###
-
-# Get other binaries, kernel module tree, and miscellaneous other stuff that
-# got put in the binaries tarball. -BEF-
+}
 #
-rsync -av ${IMAGESERVER}::boot/${ARCH}/${FLAVOR}/boel_binaries.tar.gz /tmp/ || shellout
-( cd / && tar -xvzf /tmp/boel_binaries.tar.gz ) || shellout
+################################################################################
+#
+#   Configure network interface using local.cfg settings if possible, else
+#   use DHCP. -BEF-
+#
+start_network() {
+    if [ ! -z $IPADDR ]; then
 
-### BEGIN Load modules ###
+        # configure interface and add default gateway
+        ifconfig $DEVICE $IPADDR  netmask $NETMASK  broadcast $BROADCAST
+        if [ $? != 0 ]; then
+            echo
+            echo "I couldn't configure the network interface using the local.cfg file."
+            echo "Check the entries in your /local.cfg file."
+            echo
+            shellout
+        fi
+
+        if [ ! -z $GATEWAY ]; then
+            route add default gw $GATEWAY
+            if [ $? != 0 ]; then
+                echo
+                echo "The command \"route add default gw $GATEWAY\" failed."
+                echo "Check the entries in your /local.cfg file."
+                echo
+                shellout
+            fi
+        fi
+
+    else
+
+        ### try dhcp ###
+        echo "IP Address not set by local.cfg.  I will use DHCP."
+        
+        ### BEGIN ether sleep ###
+        # Give the switch time to start passing packets.  Some switches won't
+        # forward packets until 30 seconds or so after an interface comes up.
+        # This means the dhcp server won't even get the request for 30 seconds.
+        # Many ethernet cards aren't considered "up" by the switch until the
+        # driver is loaded.  Because the driver is compiled directly into the
+        # kernel here, the driver is definitely loaded at this point. 
+        # 
+        # Default is 0.  The recommended setting of ETHER_SLEEP=35 can be set 
+        # with a local.cfg file. -BEF-
+        #
+        [ -z $ETHER_SLEEP ] && ETHER_SLEEP=0
+        echo
+        echo "sleep $ETHER_SLEEP:  This is to give your switch (if you're using one) time to"
+        echo "           recognize your ethernet card before we try the network."
+        echo "           Tip: You can use <ctrl>+<c> to pass the time (pun intended)."
+        echo
+        count_loop $ETHER_SLEEP
+        echo
+        ### END ether sleep ###
+        
+        # create directory to catch dhcp information
+        DHCLIENT_DIR="/var/state/dhcp"
+        mkdir -p $DHCLIENT_DIR
+        
+        # combine systemimager code to the stock debian dhclient-script
+        # and make executable
+        cat /etc/dhclient-script.systemimager-prefix \
+            /etc/dhclient-script.debian-dist \
+            > /etc/dhclient-script
+        chmod +x /etc/dhclient-script
+        
+        # get info via dhcp
+        echo
+        echo "dhclient"
+        dhclient
+        if [ ! -s ${DHCLIENT_DIR}/dhclient.leases ]; then
+            echo
+            echo "I couldn't configure the network interface using DHCP."
+            echo
+            shellout
+        fi
+        
+        # Figure out which interface actually got configured.
+        # Suggested by James Oakley.
+        #
+        INTERFACE=`grep interface ${DHCLIENT_DIR}/dhclient.leases | \
+            sed -e 's/^.*interface "//' -e 's/";//'`
+        
+        # read dhcp info in as variables -- this file will be created by 
+        # the /etc/dhclient-start script that is run automatically by
+        # dhclient.
+        . /tmp/dhcp_info.${INTERFACE} || shellout
+        ### END dhcp ###
+        
+        # Re-read configuration information from local.cfg to over-ride
+        # DHCP settings, if necessary. -BEF-
+        if [ -f /tmp/local.cfg ]; then
+            echo "Override DHCP settings with local.cfg settings by re-reading (/tmp/local.cfg)."
+            . /tmp/local.cfg || shellout
+        fi
+    fi
+}
+#
+################################################################################
+#
+#   Ping test
+ping_test() {
+
+    PING_COUNT=1
+    PING_EXIT_STATUS=1
+
+    # ping test code submitted by Grant Noruschat <grant@eigen.ee.ualberta.ca>
+    # modified slightly by <brian.finley@baldguysoftware.com>
+    echo
+    echo "Pinging image server \"$IMAGESERVER\""
+    echo "to ensure we have network connectivity."
+    echo
+
+    while [ $PING_EXIT_STATUS != 0 ]
+    do
+        echo "PING ATTEMPT $PING_COUNT: "
+        ping -c 1 $IMAGESERVER; PING_EXIT_STATUS=$?; PING_COUNT=$(( $PING_COUNT + 1 ))
+        if [ $PING_COUNT = 21 ]; then
+            echo
+            echo "  FATAL:  Cannot ping the image server \"$IMAGESERVER\""
+            echo "          Be sure that your networking equipment is"
+            echo "          working properly!"
+            echo
+            shellout
+        fi
+    done
+
+    if [ $PING_EXIT_STATUS = 0 ]; then
+        echo
+        echo "  We have connectivity to the Image Server!"
+        echo
+    fi
+}
+#
+################################################################################
+#
+start_syslogd() {
+    if [ ! -z $LOG_SERVER ]; then
+        echo -n "Starting syslogd..."
+        [ -z $LOG_SERVER_PORT ] && LOG_SERVER_PORT="514"
+        syslogd -R ${LOG_SERVER}:${LOG_SERVER_PORT}
+        echo "done!"
+    fi
+}
+#
+################################################################################
+#
 # Detect what we can.
 # Note: Modules that are needed during the initial boot stages of BOEL should
 #       be copied to the "skel/my_modules" directory prior to creating your
 #       custom initrd.gz. -BEF-
 #
-echo
-echo -n "Detecting hardware: "
-MODULES=`discover --module bridge ethernet ide scsi usb | sort -u`
-echo $MODULES
-
-# Prepend with other modules that we will probably need.
-MODULES="sd_mod ide-disk $MODULES"
-
-for MODULE in $MODULES
-do
-    echo "Loading $MODULE:"
-    modprobe $MODULE 2>/dev/null || echo "  Assuming $MODULE is compiled into the kernel or is not needed."
-done
-### END Load modules ###
-
-
-# Are we installing over SSH?
-if [ ! -z $SSH_DOWNLOAD_URL ]; then
-  echo
-  echo "SSH_DOWNLOAD_URL variable is set, so we will install over SSH!"
-
-  # Remove possible trailing / from URL
-  SSH_DOWNLOAD_URL=`echo $SSH_DOWNLOAD_URL | sed 's/\/$//'`
-
-  # download binaries for ssh
-  files="ssh sshd scp ssh-keygen"
-  for file in $files
-  do
+autodetect_hardware_and_load_modules() {
     echo
-    echo "wget $SSH_DOWNLOAD_URL/$file..."
-    ( cd /tmp/ && wget $SSH_DOWNLOAD_URL/$file )
+    echo -n "Detecting hardware: "
+    MODULES=`discover --module bridge ethernet ide scsi usb | sort -u`
+    echo $MODULES
 
-    if [ $? != 0 ]; then
-      echo
-      echo "wget of $file failed!!!"
-      echo
-      shellout
-    fi
+    # Prepend with other modules that we will probably need.
+    MODULES="sd_mod ide-disk $MODULES"
 
-    # create links in /usr/bin directory so that binaries can find themselves ;)
-    # (they look for themselves in a particular location defined at compile time)
-    echo "Linking /tmp/$file to /usr/bin/$file"
-    ln -s -f /tmp/$file /usr/bin/$file
-    if [ $? != 0 ]; then
-      echo
-      echo "Soft link of $file failed!!!"
-      echo
-      shellout
-    fi
-
-    # mark each binary executable
-    echo "Setting permissions on /tmp/$file..."
-    chmod 700 /tmp/$file || shellout
-  done
-
-  # get list of libraries needed for ssh
-  files="libs.list"
-  for file in $files
-  do
-    echo
-    echo "wget $SSH_DOWNLOAD_URL/$file..."
-    ( cd /tmp/ && wget $SSH_DOWNLOAD_URL/$file )
-    if [ $? != 0 ]; then
-      echo
-      echo "wget of $file failed!!!"
-      echo
-      shellout
-    fi
-  done
-
-  # make room for new libraries
-  mke2fs /dev/ram2         || shellout
-  mkdir /tmp/lib           || shellout
-  mount /dev/ram2 /tmp/lib || shellout
-
-  # download libraries for binaries for ssh
-  files=`cat /tmp/libs.list`
-  for file in $files
-  do
-    echo
-    echo "wget $SSH_DOWNLOAD_URL/$file..."
-    ( cd /tmp/lib/ && wget $SSH_DOWNLOAD_URL/$file )
-    if [ $? != 0 ]; then
-      echo
-      echo "wget of $file failed!!!"
-      echo
-      shellout
-    fi
-  done
-
-  # get list of links to point to libraries with
-  files="libs.links"
-  for file in $files
-  do
-    echo
-    echo "wget $SSH_DOWNLOAD_URL/$file..."
-    ( cd /tmp/ && wget $SSH_DOWNLOAD_URL/$file )
-    if [ $? != 0 ]; then
-      echo
-      echo "wget of $file failed!!!"
-      echo
-      shellout
-    fi
-  done
-
-  # recreate links
-  cd /tmp/lib	            || shellout
-  /bin/sh /tmp/libs.links   || shellout
-  cd -	                    || shellout
-
-  # mount the device with the new libraries over the old ones
-  umount /tmp/lib/	|| shellout
-  mount /dev/ram2 /lib	|| shellout
-
-  # download the required configuration files for ssh
-  mkdir /tmp/etc     || shellout
-  mkdir /tmp/etc/ssh || shellout
-
-  # link /etc/ssh to /tmp/ssh so binaries can find the config files
-  # (one link for the directory take up fewer inodes)
-  ln -s /tmp/etc/ssh /etc/ssh || shellout
-
-  # download config files needed by ssh
-  files="ssh_config sshd_config nsswitch.conf"
-  for file in $files
-  do
-    echo
-    echo "wget $SSH_DOWNLOAD_URL/$file..."
-    ( cd /etc/ssh/ && wget $SSH_DOWNLOAD_URL/$file )
-    if [ $? != 0 ]; then
-      echo
-      echo "wget of $SSH_DOWNLOAD_URL/$file failed!!!"
-      echo
-      shellout
-    fi
-  done
-
-  # create root's ssh dir
-  mkdir /root/.ssh
-
-  # If a private key exists, put it in the right place so this autoinstall
-  # client can use it to authenticate itself to the imageserver.
-  # (ssh1 style user private key)
-  if [ -e /floppy/identity ]; then
-    PRIVATE_KEY=/root/.ssh/identity
-    cp /floppy/identity $PRIVATE_KEY || shellout
-    chmod 600 $PRIVATE_KEY           || shellout
-  fi
-  # (ssh2 style user private key)
-  if [ -e /floppy/id_dsa ]; then
-    PRIVATE_KEY=/root/.ssh/id_dsa
-    cp /floppy/id_dsa $PRIVATE_KEY || shellout
-    chmod 600 $PRIVATE_KEY         || shellout
-  fi
-
-  # If we have a private key from the media above, go ahead and open secure tunnel
-  # to the imageserver and continue with the autoinstall like normal.
-  if [ ! -z $PRIVATE_KEY ]; then
-    # with the prep ready, start the ssh tunnel connection.
-    # the sleep command executes remotely.  Just need something long here
-    # as the connection will be severed when the newly imaged client reboots
-    # 14400 = 4 hours...if we're not imaged by then....oh boy!
-    #
-    # Determine if we should run interactive and set redirection options appropriately.
-    # So if the key is blank, go interactive. (Suggested by Don Stocks <don_stocks@leaseloan.com>)
-    if [ -s $PRIVATE_KEY ]; then
-      # key is *not* blank
-      REDIRECTION_OPTIONS="> /dev/null 2>&1"
-    else
-      # key is blank - go interactive
-      REDIRECTION_OPTIONS=""
-    fi
-    ssh -l $SSH_USER -n -f -L873:127.0.0.1:873 $IMAGESERVER sleep 14400 $REDIRECTION_OPTIONS
-    if [ $? != 0 ]; then
-      echo
-      echo "ssh tunnel command to $IMAGESERVER failed!!!"
-      echo "The command was: ssh -l $SSH_USER -n -f -L873:127.0.0.1:873 $IMAGESERVER sleep 14400"
-      echo
-      shellout
-    fi
-
-    # Since we're using SSH, change the $IMAGESERVER variable to reflect
-    # the forwarded connection.
-    IMAGESERVER=127.0.0.1
-  else
-    # Looks like we didn't get a private key from the floppy, so let's just
-    # fire up sshd and wait for someone to connect to us to initiate the
-    # next step of the autoinstall.
-
-    # download authorized_keys
-    # (public keys of users allowed to ssh *in* to this machine)
-    files="authorized_keys"
-    for file in $files
+    for MODULE in $MODULES
     do
-      echo
-      echo "wget $SSH_DOWNLOAD_URL/$file..."
-      ( cd /root/.ssh/ && wget $SSH_DOWNLOAD_URL/$file )
-      if [ $? != 0 ]; then
-        echo
-        echo "wget of $SSH_DOWNLOAD_URL/$file failed!!!"
-        echo
-        shellout
-      fi
+        echo "Loading $MODULE:"
+        modprobe $MODULE 2>/dev/null || echo "  Assuming $MODULE is compiled into the kernel or is not needed."
     done
+}
+#
+################################################################################
+#
+get_hostname_by_hosts_file() {
 
-    # set permissions to 600 -- otherwise, sshd will refuse to use it
-    chmod 600 /root/.ssh/authorized_keys || shellout
-
-    # Since we're using SSH, change the $IMAGESERVER variable to reflect
-    # the forwarded connection.
-    IMAGESERVER=127.0.0.1
-
-    # save variables for autoinstall script
-    write_variables || shellout
-
-    # create a private host key for this autoinstall client
-    echo
-    echo "Using ssh-keygen to create this hosts private key"
-    echo
-    ssh-keygen -N "" -f /etc/ssh/ssh_host_key || shellout
-
-    # create necessary ptys, etc. for sshd
-    mknod /dev/ptmx c 5 2                    || shellout
-    chmod 666 /dev/ptmx                      || shellout
-    mkdir /dev/pts                           || shellout
-    echo "none /dev/pts devpts" > /etc/fstab || shellout
-    mount /dev/pts                           || shellout
-
-    # if hostname not set, try DNS
-    if [ -z $HOSTNAME ]; then
-      echo
-      echo "Trying to get hostname via DNS..."
-      echo
-      get_hostname_by_dns
-    fi
-
-    if [ -z $HOSTNAME ]; then
-      HOST_OR_IP=$IPADDR
-    else
-      HOST_OR_IP=$HOSTNAME
-    fi
-
-    echo
-    echo
-    echo "Starting sshd.  You must now go to your imageserver and issue"
-    echo "the following command:"
-    echo
-    echo " \"pushupdate -continue-install -image <IMAGE> -client ${HOST_OR_IP}\"."
-    echo
-    echo
+    # Try pulling hosts file from imageserver -BEF-
+    CMD="rsync -aL ${IMAGESERVER}::${SCRIPTS}/hosts /tmp/ >/dev/null 2>&1"
+    echo "$CMD"
+    $CMD
     
-    # fire up sshd and wait
-    sshd -f /etc/ssh/sshd_config -h /etc/ssh/ssh_host_key || shellout
+    if [ -e /tmp/hosts ]; then
+        # add escape characters to IPADDR so that it can be used to find HOSTNAME below
+        IPADDR_ESCAPED=`echo "$IPADDR" | sed -e 's/\./\\\./g'`
+        
+        # get HOSTNAME by parsing hosts file
+        echo "Looking for hostname of this host in /tmp/hosts by IP: $IPADDR ..."
+        
+        # Command summary by line:
+        # 1: convert tabs to spaces -- contains a literal tab: <ctrl>+<v> then <tab>
+        # 2: remove comments
+        # 3: add a space at the beginning of every line
+        # 4: get line with IP address (no more no less)
+        # 5: strip out ip address
+        # 6: strip out space before first hostname on line
+        # 7: remove everything after first hostname on line
+        # 8: remove .domain.name so that we're left with just the hostname
+        
+        HOSTNAME=`
+            sed 's/	/ /g' /tmp/hosts | \
+            grep -v '^ *#' | \
+            sed 's/^/ /' | \
+            grep " $IPADDR_ESCAPED " | \
+            sed 's/ [0-9]*\.[0-9]*\.[0-9]*\.[0-9]*//' | \
+            sed 's/ *//' | \
+            sed 's/ .*//' | \
+            sed "s/\.$DOMAINNAME//"
+        `
+    fi
+}
+#
+################################################################################
+#
+get_hostname_by_dns() {
 
-    # Give sshd time to initialize before we yank the parent process
-    # rug out from underneath it.
-    sleep 15
-
-    # remove rug
-    exit 1
-  fi
-fi
-
-# If hostname was not set in /floppy/local.cfg or by DHCP, figure it now
-# get hosts file if necessary
-if [ -z $HOSTNAME ]; then
-  SCRIPTNAME="hosts"
-  echo "Using rsync to copy $IMAGESERVER::$SCRIPTS/$SCRIPTNAME..."
-  rsync -aL $IMAGESERVER::$SCRIPTS/$SCRIPTNAME /tmp/ >/dev/null 2>&1
-
-  if [ -e /tmp/hosts ]; then
-    # add escape characters to IPADDR so that it can be used to find HOSTNAME below
-    IPADDR_ESCAPED=`echo "$IPADDR" | sed -e 's/\./\\\./g'`
-
-    # get HOSTNAME by parsing hosts file
-    echo "Looking for hostname of this host in /tmp/hosts by IP: $IPADDR ..."
-
-    # Command summary by line:
-    # 1: convert tabs to spaces -- contains a literal tab: <ctrl>+<v> then <tab>
-    # 2: remove comments
-    # 3: add a space at the beginning of every line
-    # 4: get line with IP address (no more no less)
-    # 5: strip out ip address
-    # 6: strip out space before first hostname on line
-    # 7: remove everything after first hostname on line
-    # 8: remove .domain.name so that we're left with just the hostname
-
-    HOSTNAME=`
-      sed 's/	/ /g' /tmp/hosts | \
-      grep -v '^ *#' | \
-      sed 's/^/ /' | \
-      grep " $IPADDR_ESCAPED " | \
-      sed 's/ [0-9]*\.[0-9]*\.[0-9]*\.[0-9]*//' | \
-      sed 's/ *//' | \
-      sed 's/ .*//' | \
-      sed "s/\.$DOMAINNAME//"
-    `
-  fi
-
-  # if hostname not set, try DNS
-  if [ -z $HOSTNAME ]; then
-    echo
+    # Get base hostname.  For example, www7.domain.com will become www7. -BEF-
     echo "Trying to get hostname via DNS..."
-    echo
-    get_hostname_by_dns
-  fi
+    HOSTNAME=`nslookup $IPADDR | grep "^Name:" | sed -e 's/Name:[[:space:]]*//' -e 's/\..*$//g'`
+}
+#
+################################################################################
+#
+run_autoinstall_script() {
+    # Run the autoinstall script.
+    if [ -f /tmp/$SCRIPTNAME ]; then
+        chmod 755 /tmp/$SCRIPTNAME || shellout
+        echo
+        echo "I will now run the autoinstall script: $SCRIPTNAME"
+        echo
+        /tmp/$SCRIPTNAME || shellout
+    fi
+}
+#
+################################################################################
+#
+#   Stuff for SSH installs
+#
+start_ssh() {
 
-  if [ "x$IMAGENAME" != "x" ]; then
-    # Install with IMAGENAME if possible.
-    echo
-    echo "This host will be installed with image: $IMAGENAME"
-    echo
-    SCRIPTNAME="${IMAGENAME}.master"
+    # create root's ssh dir
+    mkdir /root/.ssh
+
+#  # If a private key exists, put it in the right place so this autoinstall
+#  # client can use it to authenticate itself to the imageserver.
+#  # (ssh1 style user private key)
+#  if [ -e /floppy/identity ]; then
+#    PRIVATE_KEY=/root/.ssh/identity
+#    cp /floppy/identity $PRIVATE_KEY || shellout
+#    chmod 600 $PRIVATE_KEY           || shellout
+#  fi
+#  # (ssh2 style user private key)
+#  if [ -e /floppy/id_dsa ]; then
+#    PRIVATE_KEY=/root/.ssh/id_dsa
+#    cp /floppy/id_dsa $PRIVATE_KEY || shellout
+#    chmod 600 $PRIVATE_KEY         || shellout
+#  fi
+#
+#  # If we have a private key from the media above, go ahead and open secure tunnel
+#  # to the imageserver and continue with the autoinstall like normal.
+#  if [ ! -z $PRIVATE_KEY ]; then
+#    # with the prep ready, start the ssh tunnel connection.
+#    # the sleep command executes remotely.  Just need something long here
+#    # as the connection will be severed when the newly imaged client reboots
+#    # 14400 = 4 hours...if we're not imaged by then....oh boy!
+#    #
+#    # Determine if we should run interactive and set redirection options appropriately.
+#    # So if the key is blank, go interactive. (Suggested by Don Stocks <don_stocks@leaseloan.com>)
+#    if [ -s $PRIVATE_KEY ]; then
+#      # key is *not* blank
+#      REDIRECTION_OPTIONS="> /dev/null 2>&1"
+#    else
+#      # key is blank - go interactive
+#      REDIRECTION_OPTIONS=""
+#    fi
+#    ssh -l $SSH_USER -n -f -L873:127.0.0.1:873 $IMAGESERVER sleep 14400 $REDIRECTION_OPTIONS
+#    if [ $? != 0 ]; then
+#      echo
+#      echo "ssh tunnel command to $IMAGESERVER failed!!!"
+#      echo "The command was: ssh -l $SSH_USER -n -f -L873:127.0.0.1:873 $IMAGESERVER sleep 14400"
+#      echo
+#      shellout
+#    fi
+#
+#    # Since we're using SSH, change the $IMAGESERVER variable to reflect
+#    # the forwarded connection.
+#    IMAGESERVER=127.0.0.1
+#  else
+#    # Looks like we didn't get a private key from the floppy, so let's just
+#    # fire up sshd and wait for someone to connect to us to initiate the
+#    # next step of the autoinstall.
+#
+#    # download authorized_keys
+#    # (public keys of users allowed to ssh *in* to this machine)
+#    files="authorized_keys"
+#    for file in $files
+#    do
+#      echo
+#      echo "wget $SSH_DOWNLOAD_URL/$file..."
+#      ( cd /root/.ssh/ && wget $SSH_DOWNLOAD_URL/$file )
+#      if [ $? != 0 ]; then
+#        echo
+#        echo "wget of $SSH_DOWNLOAD_URL/$file failed!!!"
+#        echo
+#        shellout
+#      fi
+#    done
+#
+#    # set permissions to 600 -- otherwise, sshd will refuse to use it
+#    chmod 600 /root/.ssh/authorized_keys || shellout
+#
+#    # Since we're using SSH, change the $IMAGESERVER variable to reflect
+#    # the forwarded connection.
+#    IMAGESERVER=127.0.0.1
+#
+#    # save variables for autoinstall script
+#    write_variables || shellout
+#
+#    # create a private host key for this autoinstall client
+#    echo
+#    echo "Using ssh-keygen to create this hosts private key"
+#    echo
+#    ssh-keygen -N "" -f /etc/ssh/ssh_host_key || shellout
+#
+#    ## create necessary ptys, etc. for sshd
+#    #mknod /dev/ptmx c 5 2                    || shellout
+#    #chmod 666 /dev/ptmx                      || shellout
+#    #mkdir /dev/pts                           || shellout
+#    #echo "none /dev/pts devpts" > /etc/fstab || shellout
+#    #mount /dev/pts                           || shellout
+#
+#    # if hostname not set, try DNS
+#    if [ -z $HOSTNAME ]; then
+#      echo
+#      echo "Trying to get hostname via DNS..."
+#      echo
+#      get_hostname_by_dns
+#    fi
+#
+#    if [ -z $HOSTNAME ]; then
+#      HOST_OR_IP=$IPADDR
+#    else
+#      HOST_OR_IP=$HOSTNAME
+#    fi
+#
+#    echo
+#    echo
+#    echo "Starting sshd.  You must now go to your imageserver and issue"
+#    echo "the following command:"
+#    echo
+#    echo " \"pushupdate -continue-install -image <IMAGE> -client ${HOST_OR_IP}\"."
+#    echo
+#    echo
+#    
+#    # fire up sshd and wait
+#    sshd -f /etc/ssh/sshd_config -h /etc/ssh/ssh_host_key || shellout
+#
+#    # Give sshd time to initialize before we yank the parent process
+#    # rug out from underneath it.
+#    sleep 15
+#
+#    # remove rug
+#    exit 1
+#  fi
+#fi
+}
+#
+################################################################################
+#
+#   Pull over the autoinstall script SCRIPTNAME
+#
+get_script() {
     echo
     echo "I will now try to get the autoinstall script:  $SCRIPTNAME"
-    rsync -aL $IMAGESERVER::$SCRIPTS/$SCRIPTNAME /tmp/
-    if [ $? != 0 ]; then
-      echo
-      echo "rsync copy of $IMAGESERVER::$SCRIPTS/$SCRIPTNAME failed!!!"
-      echo
-      shellout
-    fi
-  elif [ "x$HOSTNAME" != "x" ]; then
+    CMD="rsync -aL ${IMAGESERVER}::${SCRIPTS}/${SCRIPTNAME} /tmp/"
+    echo "$CMD"
+    $CMD
+}
+#
+################################################################################
+#
+
+
+echo
+echo switch_root_to_tmpfs
+switch_root_to_tmpfs
+
+echo
+echo mount_dev_on_devfs
+mount_dev_on_devfs
+
+echo
+echo mount_proc
+mount_proc
+
+echo
+echo ifconfig_loopback
+ifconfig_loopback
+
+echo
+echo load_my_modules
+load_my_modules
+
+echo
+echo read_local_cfg
+read_local_cfg
+
+echo
+echo start_network
+start_network
+
+echo
+echo ping_test
+ping_test
+
+echo
+echo start_syslogd
+start_syslogd
+
+echo
+echo get_boel_binaries_tarball
+get_boel_binaries_tarball
+
+echo
+echo autodetect_hardware_and_load_modules
+autodetect_hardware_and_load_modules
+
+if [ ! -z $SSH_DOWNLOAD_URL ]; then
+    echo
+    echo start_ssh
+    start_ssh
+fi
+
+# HOSTNAME may already be set via local.cfg -BEF-
+if [ -z $HOSTNAME ]; then
+    get_hostname_by_hosts_file
+fi
+
+if [ -z $HOSTNAME ]; then
+    get_hostname_by_dns
+fi
+
+if [ ! -z $HOSTNAME ]; then
     echo
     echo "This hosts name is: $HOSTNAME"
+fi
+
+echo HERE
+
+if [ -z $IMAGENAME ] && [ -z $HOSTNAME ]; then
+
+    # If neither HOSTNAME or IMAGENAME is set, then we cannot proceed.  (IMAGENAME 
+    # may have been set by local.cfg).  -BEF-
     echo
+    echo "HOSTNAME was not specified in a local.cfg file, and I couldn't find"
+    echo "it via the hosts file or DNS.  Additionally, IMAGENAME was not"
+    echo "specified.  I must have one or the other in order to proceed!!!"
+    echo
+    shellout
+
+fi
+    
+if [ ! -z $IMAGENAME ]; then
+    # If IMAGENAME is specified, then the IMAGENAME.master script takes
+    # precedence over the HOSTNAME.sh script. -BEF-
+    echo
+    echo "This host will be installed with image: ${IMAGENAME}"
+    SCRIPTNAME="${IMAGENAME}.master"
+    get_script || shellout
+
+else 
 
     # Try to get an autoinstall script based on $HOSTNAME.
     SCRIPTNAME="${HOSTNAME}.sh"
-    echo
-    echo "I will now try to get the autoinstall script:  $SCRIPTNAME"
-    rsync -aL $IMAGESERVER::$SCRIPTS/$SCRIPTNAME /tmp/
+    get_script
+
     if [ $? != 0 ]; then
-      # Try to get the generic master file, since no specific file was found
-      # strip off trailing numerics, and use that for an autoinstall script name.
-      BASE_HOSTNAME=`echo $HOSTNAME \
-      | sed "s/[0-9]*$//"` 
-    
-      echo
-      echo "rsync copy of $IMAGESERVER::$SCRIPTS/$SCRIPTNAME failed, so I will"
 
-      SCRIPTNAME="${BASE_HOSTNAME}.master"
+        echo "$CMD failed!"
 
-      echo "now try to get the autoinstall script:  $SCRIPTNAME"
-      rsync -aL $IMAGESERVER::$SCRIPTS/$SCRIPTNAME /tmp/
-      if [ $? != 0 ]; then
-        # we really failed, no more fallback
-        echo
-        echo "rsync copy of $IMAGESERVER::$SCRIPTS/$SCRIPTNAME failed!!!"
-        echo
-        shellout
-      fi
+        # Try to get a master file based on the "base hostname".  For example,
+        # if the hostname is compute99, then try to get compute.master. -BEF-
+        #
+        BASE_HOSTNAME=`echo $HOSTNAME | sed "s/[0-9]*$//"` 
+
+        SCRIPTNAME="${BASE_HOSTNAME}.master"
+        get_script || shellout
+
     fi
-  else 
-    # If neither HOSTNAME or IMAGENAME is set, then we cannot proceed.  IMAGENAME 
-    # may have been set by local.cfg.  -BEF-
-    echo
-    echo "Couldn't find this hosts name in /tmp/hosts or via DNS.  Additionally, IMAGENAME"
-    echo "was not specified.  I need one or the other in order to proceed!!!"
-    echo
-    shellout
-  fi
 fi
 
-# pass all variables set here on to the hostname.sh script
+echo
+echo write_variables
 write_variables || shellout
 
-# Run the autoinstall script.
-if [ -f /tmp/$SCRIPTNAME ]; then
-  chmod 755 /tmp/$SCRIPTNAME || shellout
-  echo
-  echo "I will now run the autoinstall script: $SCRIPTNAME"
-  echo
-  /tmp/$SCRIPTNAME || shellout
-fi
+echo
+echo run_autoinstall_script
+run_autoinstall_script
+
 exit 0
+
+
+

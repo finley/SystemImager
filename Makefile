@@ -366,6 +366,7 @@ $(BOEL_BINARIES_TARBALL):	$(DISCOVER_BINARY) \
 							$(SFDISK_BINARY) \
 							$(MKXFS_BINARY) \
 							$(OPENSSH_BINARIES) \
+							$(OPENSSH_CONF_FILES) \
 							$(CTCS_BINARY) \
 							$(SRC_DIR)/modules_build-stamp
 	#
@@ -387,6 +388,8 @@ $(BOEL_BINARIES_TARBALL):	$(DISCOVER_BINARY) \
 	install -m 755 --strip $(MKJFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(MKXFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
 ifdef WITH_SSH
+	mkdir -m 755 -p $(BOEL_BINARIES_DIR)/etc/ssh
+	install -m 644 $(OPENSSH_CONF_FILES) $(BOEL_BINARIES_DIR)/etc/ssh
 	install -m 755 --strip $(OPENSSH_BINARIES) $(BOEL_BINARIES_DIR)/sbin/
 endif
 	#
