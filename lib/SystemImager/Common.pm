@@ -1,11 +1,11 @@
 #
-# "SystemImager"
+#   "SystemImager"
 #
-#  Copyright (C) 2001-2002 Bald Guy Software
-#                          Brian Elliott Finley <bef@bgsw.net>
-#  Copyright (C) 2002 Dann Frazier <dannf@dannf.org>
+#   Copyright (C) 2001-2003 Bald Guy Software
+#                           Brian Elliott Finley <brian@bgsw.net>
+#   Copyright (C) 2002 Dann Frazier <dannf@dannf.org>
 #
-#    $Id$
+#       $Id$
 #
 
 package SystemImager::Common;
@@ -20,6 +20,7 @@ $VERSION = $version_number;
 #
 # Subroutines in this module include:
 #
+#   add_or_delete_conf_file_entry
 #   check_if_root
 #   detect_bootloader
 #   get_active_swaps_by_dev
@@ -1002,6 +1003,89 @@ sub save_filesystem_information {
         close(FH_IN);
 
     close(FH_OUT);
+}
+
+
+
+#
+# Usage:
+#
+#   Deleting an entry:
+#       add_or_delete_conf_file_entry($file, $entry_name);
+#
+#   Adding an entry:
+#       add_or_delete_conf_file_entry($file, $entry_name, $new_entry_data);
+#
+#       NOTE: Format for $new_entry_data is a single variable that includes
+#             the entry header ([entry]), and any additoinal lines of
+#             data for the entry, with lines seperated with \n's.
+#
+#             If a variable is passed, it should be build using double
+#             quotes (or equivalent).  Ie.: $new_entry_data = "my_data";
+#
+#             If text is passed, it should be enclosed in double quotes
+#             (or equivalent).
+#
+#             The double quotes will ensure that \n entries are
+#             interpolated correctly.
+#
+sub add_or_delete_conf_file_entry {
+
+    use Fcntl ':flock';
+    
+    # passed vars
+    my $module = shift;
+    my $file = shift;
+    my $entry_name = shift;
+    my $new_entry_data = shift;
+
+    # other vars
+    my %hash;
+    my @file;
+    my $delete_me;
+    my $count = 0;
+
+    # read in conf file
+    open(FILE,"<$file") or die("Couldn't open $file for reading!");
+        @file = <FILE>;
+    close(FILE);
+    
+    while(@file) {
+        # take the first bite (pun intended) -BEF-
+        $_ = shift @file;
+        if( m/^[[:space:]]*\[(.*)\]/ ) {  # is the start of a entry_name -- put 
+                                          # the whole thing in the hash
+            $count++;
+            if ($1 eq $entry_name) {
+                $delete_me = $count;    
+            }
+        }
+    
+        $hash{$count} .= $_;
+    
+    }
+    
+    # Delete entry
+    if($delete_me) {
+        delete $hash{$delete_me};
+    }
+
+    # Add new entry
+    if ($new_entry_data) {
+        $count++;
+        $hash{$count} = "\n" . $new_entry_data;
+    }
+    
+    # write out modified conf file
+    open(FILE,">$file") or die("Couldn't open $file for reading!");
+        flock(FILE, LOCK_EX);
+            foreach (sort keys %hash) {
+                print FILE $hash{$_};
+            }
+        flock(FILE, LOCK_UN);
+    close(FILE);
+
+    return 1;   # success
 }
 
 
