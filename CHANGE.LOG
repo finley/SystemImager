@@ -28,6 +28,10 @@ o Added section to autoinstall.master scripts to deal with testing              
   autoinstalling a raid image.
 o Add " || shellout" to the end of almost everything in <image>.master
   for better error testing.
+o Fixed bug: changed stringwise operators to numeric operators where 
+  appropriate.  This bug caused dynamic partitioning to fail when
+  the golden client had 10 or more partitions.  Thanks to
+  Efstathiadis Efstratios <stratos@bnl.gov> for finding this bug.
 
 makeautoinstallcd
 -----------------
