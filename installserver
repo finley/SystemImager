@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# "VA SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@valinux.com>
+# "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>
 #   Others who have contributed to this code (in alphabetical order):
 #     dann frazier <dannf@ldl.fc.hp.com>
 #     Michael R. Nolta <mrnolta@princeton.edu>
@@ -73,7 +73,7 @@ fi
 # keep a doc directory for each version - this is just easier than keeping
 # a database of all the files that would need to be removed to insure
 # no out-of-date documents.
-mv ./usr/local/share/doc/systemimager-doc \
+cp -a ./usr/local/share/doc/systemimager-doc \
   ./usr/local/share/doc/systemimager-$VERSION
 
 ### END adjust directories to match system ###

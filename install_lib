@@ -1,5 +1,5 @@
 #
-# "VA SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@valinux.com>
+# "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>
 #   Others who have contributed to this code (in alphabetical order):
 #     dann frazier <dannf@ldl.fc.hp.com>
 #
@@ -77,7 +77,8 @@ upgrade_config_files() {
 remove_old_files() {
   echo ""
   delim
-  echo "Note:  Binaries have moved from /usr to /usr/local by default."
+  echo "Note:  SystemImager binaries are now installed in /usr/local/bin"
+  echo "       and /usr/local/sbin by default."
   delim
   echo "Press <Enter> to continue..."
   read
