@@ -97,7 +97,8 @@ TOPDIR  := $(CURDIR)
 RELEASE_DOCS = CHANGE.LOG COPYING CREDITS ERRATA README VERSION
 
 # should we be messing with the user's PATH? -dannf
-PATH = /sbin:/bin:/usr/sbin:/usr/bin:/usr/bin/X11:/usr/local/sbin:/usr/local/bin
+# no i don't think so. -bef-
+#PATH = /sbin:/bin:/usr/sbin:/usr/bin:/usr/bin/X11:/usr/local/sbin:/usr/local/bin
 ARCH = $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/)
 
 # Follows is a set of arch manipulations to distinguish between ppc types
