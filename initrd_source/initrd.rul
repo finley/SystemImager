@@ -64,7 +64,7 @@ build_dir:	$(INITRD_DIR)/build_dir-stamp
 $(INITRD_DIR)/build_dir-stamp:	$(SKEL_FILES) $(BUSYBOX_BINARY) \
 				$(DEVFSD_BINARY) $(DHCLIENT_BINARY) \
 				$(RSYNC_BINARY) $(UCLIBC_TARGET) \
-				$(INSMOD_BINARY) $(E1000_BINARY)
+				$(INSMOD_BINARY)
 
 	# Create directory structure.
 	rm -fr $(INITRD_BUILD_DIR)
@@ -119,13 +119,6 @@ endif
 
 	$(SI_INSTALL) -m 755 $(INITRD_DIR)/skel/etc/init.d/rcS \
 	  $(INITRD_BUILD_DIR)/etc/init.d/rcS
-
-	# If we're using the e1000 driver, put it into the my_modules directory
-	# and append a standard insmod command to the INSMOD_COMMANDS file. -BEF-
-ifdef WITH_E1000
-	cp -a $(E1000_BINARY) $(INITRD_DIR)/my_modules/
-	echo "insmod e1000.o" >> $(INITRD_DIR)/my_modules/INSMOD_COMMANDS
-endif
 
 	# Copy over modules required prior to retrieving the autoinstall
 	# binaries tarball. -BEF-

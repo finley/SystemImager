@@ -80,7 +80,6 @@
 #
 # To do a 'standard-ssh' flavor, do a 'make WITH_SSH=1 all'
 # To include the ctcs test suite, and associated files, do a 'make WITH_CTCS=1 all'
-# To include the Intel e1000 module only Gig-E driver, 'make WITH_E1000=1 all'
 #
 
 DESTDIR =
