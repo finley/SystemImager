@@ -16,7 +16,7 @@
 $ENV{PATH} = "/usr/sbin:/sbin:/usr/bin:/bin";
 
 # version
-$version_number="1.2";
+$version_number="1.3.0";
 
 # systemimager configuration directory
 $systemimagerdir="/etc/systemimager";
@@ -191,7 +191,6 @@ $exclude_file = "/tmp/.exclude.$image";
 $imagedir = "$imagedir_prefix/$image";
 
 $warning =  <<"EOF";
-
 This program will get the \"$image\" system image from \"$source_host\"
 making the assumption that all filesystems considered part
 of the system image are using ext2, ext3, or reiserfs.
@@ -208,6 +207,7 @@ if (!$quiet) {
     print "Continue? ([y]/n): ";
     $continue = get_response('y');
     ($continue ne "n") or die "$program_name: No files were modified.\n";
+    print "\n";
 }
 
 if (! -d "$imagedir_prefix")  {
@@ -215,13 +215,13 @@ if (! -d "$imagedir_prefix")  {
 }
 
 if (-d "$imagedir") {
-    if (!$quiet) {
-	print "An image named \"$image\" already exists...\n\n" .
-	    "Update exisiting image? ([y]/n): ";
-	
-	$continue = get_response('y');
-	($continue ne "n") or die "$program_name: No files were modified.\n";
-    }
+  if (!$quiet) {
+    print "An image named \"$image\" already exists...\n";
+    print "Update exisiting image? ([y]/n): ";
+    $continue = get_response('y');
+    ($continue ne "n") or die "$program_name: No files were modified.\n";
+    print "\n";
+  }
 } else  {
     mkdir("$imagedir", 0777) || 
 	die "Can't make directory $imagedir\n";
@@ -231,7 +231,7 @@ if (-d "$imagedir") {
 if($master_client) {
   # get /etc/mtab from $master_client
   if (!$quiet) {
-    print "\n\nRetrieving /etc/mtab from $master_client to check for mounted filesystems...\n";
+    print "Retrieving /etc/mtab from $master_client to check for mounted filesystems...\n";
     open(RSYNC, "rsync -av ${master_client}::root/etc/mtab $imagedir|");
     print "------------- $master_client mtab RETRIEVAL PROGRESS -------------\n";
     while (<RSYNC>) {
@@ -415,12 +415,25 @@ print MASTER_SCRIPT << 'EOF';
 #
 # "VA SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com>
 #
+#
+EOF
 
+print MASTER_SCRIPT "# This master autoinstall script was created with SystemImager v$version_number\n";
+print MASTER_SCRIPT "\n";
+
+print MASTER_SCRIPT << 'EOF';
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/tmp
 
 ### BEGIN Check to be sure this not run from a working machine ###
+# egrep does not exist on the autoinstall media so these should *always* fail
+# unless run from a working machine.
+
 # test for mounted SCSI or IDE disks
 mount | egrep -q [hs]d[a-z][1-9]
+[ $? -eq 0 ] &&  echo Sorry.  Must not run on a working machine... && exit 1
+
+# test for mounted software RAID devices
+mount | egrep -q md[0-9]
 [ $? -eq 0 ] &&  echo Sorry.  Must not run on a working machine... && exit 1
 
 # test for mounted hardware RAID disks
@@ -433,30 +446,6 @@ mount | egrep -q c[0-9]+d[0-9]+p
 # Apparently the shell on the autoinstall media is not intelligent enough to take a "set -a" parameter
 . /tmp/variables.txt
 
-# Partition the disk (see the sfdisk man page for customization details)
-#
-# Below is an example of how to customize a disk.  This can be useful if your clients
-# have disks of differing sizes or geometries.  Here is a description of the sfdisk
-# command presented in the example below:
-#
-# line 1 -- the sfdisk command and arguments (-uM means "units are MB)
-# line 2 -- this is a comment
-# line 3 -- start at the beginning of the disk 0, give 22M /dev/sda1 (/boot)
-# line 4 -- start where the last partition left off, and add 512M /dev/sda2 for swap, partition type 82
-# line 5 -- start where the last partition left off, and add 6000M /dev/sda3 (/)
-# line 6 -- start where the last partition left off, and give the remaining space to /dev/sda4 (/var)
-# line 7 -- the EOF statement indicating to sfdisk that we are finished giving it commands
-#
-# <<<< BEGIN EXAMPLE >>>>
-#sfdisk -uM /dev/sda <<EOF
-## partition    start_of_partition      size_in_megabytes       partition_type
-#  /dev/sda1 :  start= 0,          	size= 22,               Id=83
-#  /dev/sda2 :  start= ,                size= 512,              Id=82
-#  /dev/sda3 :  start= ,                size= 6000,             Id=83
-#  /dev/sda4 :  start= ,                size= ,                 Id=83
-#EOF
-# <<<< END EXAMPLE >>>>
-#
 EOF
 
 
@@ -487,7 +476,110 @@ if(-d "$imagedir$partition_dir") {
 ### END get list of disks to partition ###
 
 
-# Foreach disk, gather up the partition info for that disk and prepare an sfdisk command
+### BEGIN get info on devices for software RAID, swap, and filesystems ###
+%device_file_by_mount_point = ();
+open (FSTAB, "<$imagedir/etc/fstab") || die "Failed to open $imagedir/etc/fstab for reading\n";
+while (<FSTAB>) {
+    # Skip the line if it starts with a '#' or if it is for a floppy device
+    if (m@(^\s*\#)|(/dev/fd)@) { next; }
+
+    # turn all tabs into single spaces -- Note: <ctrl-v><tab>
+    s/	/ /g;
+
+    # Remove spaces from the beginning of the line
+    s/^ +//;
+
+    # split on space(s) and assign values to variables
+    (my $device_file, my $mount_point, my $filesystem_type) = split(/ +/);
+
+    # Create hash to be used in mounting and unmounting
+    $device_file_by_mount_point{$mount_point} = $device_file;
+
+    ### BEGIN create arrays of device files by device type ###
+    # software RAID
+    if ($device_file =~ /\/dev\/md/) { push (@software_raid_devices, $device_file); }
+
+    # swap
+    if ($filesystem_type eq "swap") { push (@swap_devices, $device_file); }
+
+    # ext2
+    if ($filesystem_type eq "ext2") { 
+      push (@ext2_devices, $device_file);
+      push (@mount_points, $mount_point);
+    }
+
+    # ext3
+    if ($filesystem_type eq "ext3") { 
+      push (@ext3_devices, $device_file);
+      push (@mount_points, $mount_point);
+    }
+
+    # reiserfs
+    if ($filesystem_type eq "reiserfs") { 
+      push (@reiserfs_devices, $device_file);
+      push (@mount_points, $mount_point);
+    }
+    ### END create arrays of device files by device type ###
+}
+close FSTAB;
+### END get info on devices for software RAID, swap, and filesystems ###
+
+
+### BEGIN stop RAID devices before partitioning ###
+if (@software_raid_devices) {
+  print MASTER_SCRIPT "# Pull /etc/raidtab over to autoinstall client\n";
+  print MASTER_SCRIPT "rsync -av \$DHCPSIADDR::$image/etc/raidtab /etc/raidtab\n";
+  print MASTER_SCRIPT "\n";
+  print MASTER_SCRIPT "# get software RAID utilities\n";
+  print MASTER_SCRIPT "rsync -av \$DHCPSIADDR::tftpboot/systemimager/mkraid /tmp/\n";
+  print MASTER_SCRIPT "rsync -av \$DHCPSIADDR::tftpboot/systemimager/raidstart /tmp/\n";
+  print MASTER_SCRIPT "rsync -av \$DHCPSIADDR::tftpboot/systemimager/raidstop /tmp/\n";
+  print MASTER_SCRIPT "\n";
+
+  print MASTER_SCRIPT "# Stop RAID devices before partitioning begins\n";
+  foreach $device_file (sort (@software_raid_devices)) {
+    # Why did they get started in the first place?  So we can pull a local.cfg
+    # file off a root mounted RAID system.  raidstop must live on the autoinstall
+    # media.
+    $command="raidstop $device_file";
+    print MASTER_SCRIPT "echo $command && $command\n";
+  }
+  print MASTER_SCRIPT "\n";
+}
+### END stop RAID devices before partitioning ###
+
+
+### BEGIN give a custom partitioning example ###
+print MASTER_SCRIPT << 'EOF';
+# Partition the disk (see the sfdisk man page for customization details)
+#
+# Below is an example of how to customize a disk.  This can be useful if your clients
+# have disks of differing sizes or geometries.  Here is a description of the sfdisk
+# command presented in the example below:
+#
+# line 1 -- the sfdisk command and arguments (-uM means "units are MB)
+# line 2 -- this is a comment
+# line 3 -- start at the beginning of the disk 0, give 22M /dev/sda1 (/boot)
+# line 4 -- start where the last partition left off, and add 512M /dev/sda2 for swap, partition type 82
+# line 5 -- start where the last partition left off, and add 6000M /dev/sda3 (/)
+# line 6 -- start where the last partition left off, and give the remaining space to /dev/sda4 (/var)
+# line 7 -- the EOF statement indicating to sfdisk that we are finished giving it commands
+#
+# <<<< BEGIN EXAMPLE >>>>
+#sfdisk -uM /dev/sda <<EOF
+## partition    start_of_partition      size_in_megabytes       partition_type
+#  /dev/sda1 :  start= 0,          	size= 22,               Id=83
+#  /dev/sda2 :  start= ,                size= 512,              Id=82
+#  /dev/sda3 :  start= ,                size= 6000,             Id=83
+#  /dev/sda4 :  start= ,                size= ,                 Id=83
+#EOF
+# <<<< END EXAMPLE >>>>
+
+EOF
+### END give a custom partitioning example ###
+
+
+### BEGIN Foreach disk, gather up the partition info for that disk and prepare an sfdisk command ###
 foreach $disk (@disks)  {
 
     ### BEGIN partitioning output ###
@@ -495,8 +587,9 @@ foreach $disk (@disks)  {
     $sfdisk_command_part_two = "";
 
     # gather up partition information
-    open (PARTITIONS, "<$imagedir$systemimagerdir/partitionschemes/${disk}") || die "Cannot open $imagedir$systemimagerdir/partitionschemes/$disk for reading\n";
-        @partitions = <PARTITIONS>;
+    open (PARTITIONS, "<$imagedir$systemimagerdir/partitionschemes/${disk}") 
+    || die "Cannot open $imagedir$systemimagerdir/partitionschemes/$disk for reading\n";
+      @partitions = <PARTITIONS>;
     close(PARTITIONS);
 
     for (@partitions) {
@@ -518,78 +611,92 @@ foreach $disk (@disks)  {
     ### END partitioning output ###
 
     # output disk partition section
-    print MASTER_SCRIPT "\n# partition $disk\n";
+    print MASTER_SCRIPT "# partition $disk\n";
     print MASTER_SCRIPT "echo partitioning $disk...\n";
     print MASTER_SCRIPT "sleep 1s\n";
     print MASTER_SCRIPT $sfdisk_command;
+    print MASTER_SCRIPT "\n";
 }
+### END Foreach disk, gather up the partition info for that disk and prepare an sfdisk command ###
 
-### BEGIN gather up mount point, swap, and filesystem creation information ###
-$got_mkreiserfs = "no";
-print MASTER_SCRIPT "\n# swap and filesystem creation stuff\n";
-open (FSTAB, "<$imagedir/etc/fstab") || die "Failed to open $imagedir/etc/fstab for reading\n";
-while (<FSTAB>) {
-    # Skip the line if it starts with a '#'
-    if (m@(^\s*\#)|(/dev/fd)@) {
-        next;
-    }
 
-    # split on space(s) and assign values to variables
-    (my $device_file, my $mount_point, my $filesystem_type) = split(/ +/);
-
-    ### BEGIN Find filesystem type and apply appropriate filesystem creation options ###
-    # Also be sure to pre-pend /a to each target directory being created
-
-    # swap
-    if ($filesystem_type eq "swap") {
-      print MASTER_SCRIPT "mkswap -v1 $device_file\n";
-      print MASTER_SCRIPT "\n";
-    }
-
-    # ext2
-    if ($filesystem_type eq "ext2") {
-      # Take the conservative option for now.  Change when we can detect existing settings.
-      print MASTER_SCRIPT "mkdir -p /a$mount_point/\n";
-      print MASTER_SCRIPT "mke2fs $device_file\n";
-      print MASTER_SCRIPT "mount $device_file /a$mount_point/\n";
-      print MASTER_SCRIPT "\n";
-      push(@mount_points, $mount_point);
-    }
-
-    # ext3
-    if ($filesystem_type eq "ext3") {
-      # Take the conservative option for now.  Change when we can detect existing settings.
-      print MASTER_SCRIPT "mkdir -p /a$mount_point/\n";
-      print MASTER_SCRIPT "mke2fs $device_file\n";
-      print MASTER_SCRIPT "mount $device_file /a$mount_point/\n";
-      print MASTER_SCRIPT "\n";
-      push(@mount_points, $mount_point);
-      $got_ext3="yes";
-    }
-
-    # reiserfs
-    if ($filesystem_type eq "reiserfs") {
-      if ($got_mkreiserfs eq "no") {
-        print MASTER_SCRIPT "rsync -av \$DHCPSIADDR::tftpboot/systemimager/mkreiserfs /tmp/\n";
-        $got_mkreiserfs = "yes";
-      }
-      print MASTER_SCRIPT "mkdir -p /a$mount_point/\n";
-      print MASTER_SCRIPT "# rupasov is the default, but we are explicit here anyway\n";
-      print MASTER_SCRIPT "echo \"y\" | mkreiserfs -h rupasov $device_file\n";
-      print MASTER_SCRIPT "mount $device_file /a$mount_point/\n";
-      print MASTER_SCRIPT "\n";
-      push(@mount_points, $mount_point);
-    }
-    ### END Find filesystem type and apply appropriate filesystem creation options ###
-
+### BEGIN Write out software RAID device creation commands ###
+if (@software_raid_devices) {
+  print MASTER_SCRIPT "# create software RAID devices\n";
+  foreach $device_file (sort @software_raid_devices) {
+    print MASTER_SCRIPT "mkraid --really-force $device_file\n";
+  }
+  print MASTER_SCRIPT "\n";
 }
-close FSTAB;
-### END gather up mount point, swap, and filesystem creation information ###
+### END Write out software RAID device creation commands ###
+
+
+### BEGIN Write out swap creation commands ###
+if (@swap_devices) {
+  print MASTER_SCRIPT "# initialize swap devices\n";
+  foreach $device_file (sort @swap_devices) {
+    print MASTER_SCRIPT "mkswap -v1 $device_file\n";
+  }
+  print MASTER_SCRIPT "\n";
+}
+### END Write out swap creation commands ###
+
+
+### BEGIN Write out ext2 creation commands ###
+if (@ext2_devices) {
+  print MASTER_SCRIPT "# format ext2 devices\n";
+  foreach $device_file (sort @ext2_devices) {
+    print MASTER_SCRIPT "mke2fs $device_file\n";
+  }
+  print MASTER_SCRIPT "\n";
+}
+### END Write out ext2 creation commands ###
+
+
+### BEGIN Write out ext3 creation commands ###
+if (@ext3_devices) {
+  print MASTER_SCRIPT "# format ext3 devices\n";
+  foreach $device_file (sort @ext3_devices) {
+    print MASTER_SCRIPT "mke2fs $device_file\n";
+  }
+  print MASTER_SCRIPT "\n";
+  $got_ext3="yes";
+}
+### END Write out ext3 creation commands ###
+
+
+### BEGIN Write out reiserfs creation commands ###
+if (@reiserfs_devices) {
+  print MASTER_SCRIPT "# get mkreiserfs utility\n";
+  print MASTER_SCRIPT "rsync -av \$DHCPSIADDR::tftpboot/systemimager/mkreiserfs /tmp/\n";
+  print MASTER_SCRIPT "\n";
+  print MASTER_SCRIPT "# format reiserfs devices\n";
+  foreach $device_file (sort @reiserfs_devices) {
+    print MASTER_SCRIPT "# rupasov is the default, but we are explicit here anyway\n";
+    print MASTER_SCRIPT "echo \"y\" | mkreiserfs -h rupasov $device_file\n";
+  }
+  print MASTER_SCRIPT "\n";
+}
+### END Write out ext2 creation commands ###
+
+
+### BEGIN Write out mkdir and mount commands ###
+# be sure to pre-pend /a to each target directory being created
+print MASTER_SCRIPT "# create mount points and mount filesystems\n";
+foreach $mount_point (sort (@mount_points)) {
+  $device_file = $device_file_by_mount_point{$mount_point};
+  print MASTER_SCRIPT "mkdir -p /a$mount_point/\n";
+  print MASTER_SCRIPT "mount $device_file /a$mount_point/\n";
+  print MASTER_SCRIPT "\n";
+}
+### END Write out mkdir and mount commands ###
+
 
 ### BEGIN pull the image down ###
 print MASTER_SCRIPT "# filler up!\n";
-print MASTER_SCRIPT "rsync -av \$DHCPSIADDR::$image /a/\n\n";
+print MASTER_SCRIPT "rsync -av \$DHCPSIADDR::$image/ /a/\n\n";
 ### END pull the image down ###
+
 
 ### BEGIN distribution specific networking stuff ###
 ### BEGIN RedHat ###
@@ -727,8 +834,12 @@ print MASTER_SCRIPT "# unmount the freshly filled filesystems\n";
 foreach $mount_point (reverse sort @mount_points) {
     print MASTER_SCRIPT "umount /a$mount_point/\n";
 }
-
 print MASTER_SCRIPT "\n";
+
+print MASTER_SCRIPT "# No need to manually stop software RAID devices -- the autodetect support\n";
+print MASTER_SCRIPT "# in the kernel will do that for us.\n";
+print MASTER_SCRIPT "\n";
+
 print MASTER_SCRIPT "# Take network interface down\n";
 print MASTER_SCRIPT "ifconfig eth0 down\n";
 print MASTER_SCRIPT "\n";
