@@ -3,41 +3,36 @@
 #
 # "SystemImager" 
 #
+#  Copyright (C) 2003 Brian Elliott Finley <finley@mcs.anl.gov>
 #  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
 #
 #  $Id$
 #
 
-### BEGIN Subroutines ###
-sub get_response {
- my $garbage_out=$_[0];
- my $garbage_in=<STDIN>;
- chomp $garbage_in;
- unless($garbage_in eq "") { $garbage_out = $garbage_in; }
- return $garbage_out;
-}
-### END Subroutines ###
+use strict;
+use Socket;
 
+
+my $dhcpd_lease_file;
 
 # if not run as root, this script will surely fail
 unless($< == 0) { die "Must be run as root!\n"; }
 
-#FIX# give warning
-#if -q then no warning
-
 # read in /etc/dhcpd.conf
-open(DHCPDCONF, "< /etc/dhcpd.conf") or die "Couldn't open /etc/dhcpd.conf for reading: $!\n";
-while (<DHCPDCONF>) { push(@dhcpdconf, $_); }
-close(DHCPDCONF);
+open(FILE, "< /etc/dhcpd.conf") or die "Couldn't open /etc/dhcpd.conf for reading: $!\n";
+    my @dhcpdconf = <FILE>;
+close(FILE);
 
+#
 # Oh where oh where could my leases file be?
-@lease_files_du_jour = ( 
-                        "/var/dhcp/dhcpd.leases",
-                        "/var/dhcpd/dhcpd.leases",
-                        "/var/state/dhcp/dhcpd.leases",
-                        "/var/lib/dhcp/dhcpd.leases",
-                        "/etc/dhcpd.leases"
-                       );
+#
+my @lease_files_du_jour = ( 
+    "/var/dhcp/dhcpd.leases",
+    "/var/dhcpd/dhcpd.leases",
+    "/var/state/dhcp/dhcpd.leases",
+    "/var/lib/dhcp/dhcpd.leases",
+    "/etc/dhcpd.leases"
+);
 
 foreach my $file (@lease_files_du_jour) {
     # does *this* one exist?
@@ -47,89 +42,215 @@ foreach my $file (@lease_files_du_jour) {
     last if ( $dhcpd_lease_file );
 }
 
-if ( $dhcpd_lease_file )
-{
-    # read in dhcpd.leases and create an IP/mac address hash
-    %ipbymac = ();
-    open(FILE, "< $dhcpd_lease_file") or die "Couldn't open $dhcpd_lease_file for reading: $!\n";
-    $line = "";
-    while(<FILE>) {
-        chomp;
-        # get rid of tabs (not a normal space --> <ctrl>+<v> then <tab> )
-        $_ =~ s/	//;
-        $_ =~ s/;/ /;
-        if ( /^#/ )     { next; }
-        elsif( ! /}/ )  { $line = $line . $_; }
-        else            {
-            $line = $line . $_;
-            my @fields = split(/ /, $line);
-            $ipbymac{$fields[12]} = $fields[1];
-            $line = "";
-        }
+if( ! $dhcpd_lease_file ) {
+    print "Can't find your dhcpd.leases file.  Please submit a bug report at\n";
+    print "http://systemimager.org/support.  Be sure to include your operating\n";
+    print "system name and version, as well as the full path to your dhcpd.leases\n";
+    print "file.  Thanks!\n";
+    exit 1;
+}
+
+my %ip_by_mac = get_ip_by_mac($dhcpd_lease_file);
+my %host_by_ip = get_host_by_ip(%ip_by_mac);
+
+# Oh where oh where could my dhcpd.conf file be?
+my @dhcpd_conf_file_locations_du_jour = ( 
+    "/etc/dhcp3/dhcpd.conf",
+    "/etc/dhcpd.conf"
+);
+
+my $dhcpd_conf;
+foreach my $file (@dhcpd_conf_file_locations_du_jour) {
+    # does *this* one exist?
+    if( -e $file ) { 
+        $dhcpd_conf = $file;
+        last;
     }
-    close(FILE);
 }
 
-# default to using info in /var/log/messages
-else {
-    # read in /var/log/messages and create an IP/mac address hash
-    %ipbymac = ();
-    open(FILE, "< /var/log/messages") or die "Couldn't open /var/log/messages for reading: $!\n";
-    while (<FILE>) {
-        if (/DHCPACK/) {
-            my @fields = split;
-            $ipbymac{$fields[9]} = $fields[7];
-        }
-    }
-    close(FILE);
-}
+#
+# open dhcpd.conf for writing
+#
+my $file = $dhcpd_conf;
+open(FILE, ">> $file") or die "Couldn't open $file for appending: $!\n";
 
-# read in /etc/hosts and create an IP address/host name hash
-%hostsbyip = ();
-open(HOSTS, "< /etc/hosts") or die "Couldn't open /etc/hosts for reading: $!\n";
-while (<HOSTS>) {
-  if (/^\s*\d+\.\d+\.\d+\.\d+\s+\w/) {	# match a non-commented IP/hostname entry
-    my @fields = split;
-    $hostsbyip{$fields[0]} = $fields[1]; }
-}
-close(HOSTS);
+    my $new_entry;
 
-# open /etc/dhcpd.conf for writing
-open(DHCPDCONF, ">> /etc/dhcpd.conf") or die "Couldn't open /etc/dhcpd.conf for appending: $!\n";
-#FIX# need to add section for testing to see if IP is already assigned (and sort there instead ;)...
-@macs = sort (keys %ipbymac);
-foreach $mac (@macs) {
-  $exists="no";
-  foreach(@dhcpdconf) { 
-    if(/$mac/) { 
-      $exists="yes";
-      last;
-    } 
-  }
-  # update dhcpd.conf as necessary
-  #FIX# need to remove fixed addresses from range -- test to be sure, but I believe hosts that
-  # are already in dhcpd.leases, or hosts that have a MAC specified will continue to get the 
-  # appropriate address, but if a _new_ host boots, it may get an address from the range that
-  # is actually reserved for a specific MAC address.  -- must test -- <bef>
-  unless($exists eq "yes") { 
-    # autoinstall client gets it's hostname from hosts file pulled from $imageserver::etc/hosts
-    #  that's how it knows which script file to pull
     #
-    if ( defined $hostsbyip{$ipbymac{$mac}} ) {
-      $hostname = $hostsbyip{$ipbymac{$mac}};
-      print "Adding entry for $hostname:\t$mac $ipbymac{$mac} to /etc/dhcpd.conf\n";
-      print DHCPDCONF qq(host $hostname { hardware ethernet $mac; fixed-address $hostname; }\n);
+    # XXX At some point, modify to update existing entries.
+    #
+    foreach my $mac (keys %ip_by_mac) {
+        my $existing;
+        foreach(@dhcpdconf) { 
+            if(/$mac/) { 
+                $existing="yes";
+                last;
+            } 
+        }
+
+        #
+        # Add entries only for new MAC addresses. -BEF-
+        #
+        if( ! $existing ) { 
+            if( $host_by_ip{$ip_by_mac{$mac}} ) {
+                my $hostname = $host_by_ip{$ip_by_mac{$mac}};
+                print "New entry:  $hostname  $mac  $ip_by_mac{$mac}\n";
+                print FILE qq(\nhost $hostname {\n    hardware ethernet $mac;\n    fixed-address $hostname;\n}\n);
+                $new_entry = 1;
+            }
+        }
     }
-    else {
-      print "No entry exists for $mac $ipbymac{$mac} in /etc/hosts - no /etc/dhcpd.conf\n";
-      print "entry added.\n";
-    }
-  }
+close(FILE);
+
+if( $new_entry ) {
+    print "New entries have been added to your $dhcpd_conf file.\n";
+    print "Be sure to restart your dhcp daemon for the changes to take effect.\n";
+} else {
+    print "No new entries have been made.\n";
 }
-
-close(DHCPDCONF);
-
-print "\n";
-print "Now you must restart your dhcp daemon for the changes to take effect.\n";
 
 exit 0;
+
+
+################################################################################
+#
+# Subroutines 
+#
+sub get_response {
+    my $garbage_out=$_[0];
+    my $garbage_in=<STDIN>;
+    chomp $garbage_in;
+    unless($garbage_in eq "") { $garbage_out = $garbage_in; }
+    return $garbage_out;
+}
+
+
+#
+# Description:
+#
+#   Read in dhcpd.leases and create an IP/mac address hash.
+#  
+#   Example entries:
+#  
+#   # dhcpd v2
+#   lease 192.5.198.116 {
+#     starts 1 2003/02/17 18:18:33;
+#     ends 1 2003/02/17 18:20:33;
+#     hardware ethernet 00:02:b3:ac:7e:31;
+#   }
+#  
+#   # dhcpd v3
+#   lease 192.168.1.22 {
+#     starts 3 2003/05/21 03:23:36;
+#     ends 6 2003/05/24 03:23:36;
+#     tstp 6 2003/05/24 03:23:36;
+#     binding state free;
+#     hardware ethernet 00:0b:cd:50:76:d2;
+#   }
+#
+#
+# Usage:
+#
+#   %ip_by_mac = get_ip_by_mac($dhcpd_lease_file);
+#
+sub get_ip_by_mac {
+
+    
+    my $file = shift;
+    my %ip_by_mac;
+
+    open(FILE, "< $file") or die "Couldn't open $file for reading: $!\n";
+        my @file = <FILE>;
+    close(FILE);
+    
+    while(@file) {
+
+        $_ = shift @file;
+
+        if(/^lease (\d+\.\d+\.\d+\.\d+)/) {
+            my $ip;
+            my $mac;
+
+            $ip = $1;
+            $_ = shift @file;
+
+            until (/^}$/) {
+                if(/hardware ethernet ((([0-9A-Fa-f]){2}:){5}([0-9A-Fa-f]){2})/) {
+                    $mac = $1;
+                }
+                $_ = shift @file;
+            }
+
+            #
+            # A lease may be abandoned, leaving the mac blank, so we make sure it
+            # exists so we don't mangle the hash. -BEF-
+            #
+            if($mac) {
+                $ip_by_mac{$mac} = $ip;
+            }
+        }
+    }
+    return %ip_by_mac;
+}
+
+
+#
+# Description:
+#
+#   Resolve ip addresses to host names and put in a hash.
+#  
+#
+# Usage:
+#
+# my %host_by_ip = get_host_by_ip(%ip_by_mac);
+#
+#
+sub get_host_by_ip {
+    
+    my (%ip_by_mac) = @_;
+    my %host_by_ip;
+
+    #
+    # 1) Resolve IPs to hostnames via DNS
+    #
+    foreach my $mac (sort (keys %ip_by_mac)) { 
+        my $ip = $ip_by_mac{$mac};
+        #
+        # resolve ip to host name
+        #
+        my $host = gethostbyaddr(inet_aton($ip), AF_INET);
+
+        if($host) {
+            $host_by_ip{$ip} = $host;
+        }
+    }
+
+    #
+    # 2) Resolve IPs to hostnames via /etc/hosts (and override any conflicting
+    #    DNS entries).
+    #
+    my $file = "/etc/hosts";
+    open(FILE, "< $file") or die "Couldn't open $file for reading: $!\n";
+        while (<FILE>) {
+            if (/^\s*(\d+\.){3}\d+\s+\w/) {   # match a non-commented IPv4 ip/hostname entry
+                my @fields = split;
+                $host_by_ip{$fields[0]} = $fields[1];
+            }
+        }
+    close(FILE);
+
+    foreach my $mac (sort (keys %ip_by_mac)) {
+        my $ip = $ip_by_mac{$mac};
+        if( ! $host_by_ip{$ip} ) {
+            # issue warning
+            print "WARNING:  $ip failed to resolve to a hostname.  Skipping.\n";
+        }
+    }
+
+    return %host_by_ip;
+}
+
+#
+################################################################################
+
+
