@@ -45,6 +45,8 @@
 #   - make 'make (rpm|srpm)' work again
 #   2005.01.15  Brian Elliott Finley
 #   - install UseYourOwnKernel.pm as part of 'make install_common_libs'
+# 	2005-01-12 Andrea Righi
+# 	- patches to add lvm support
 #
 #
 # ERRORS when running make:
@@ -461,6 +463,7 @@ $(BOEL_BINARIES_TARBALL):	\
 				$(DEPMOD_BINARY) \
 				$(OPENSSH_BINARIES) \
 				$(OPENSSH_CONF_FILES) \
+				$(LVM_BINARY) \
 				$(SRC_DIR)/modules_build-stamp
 	#
 	# Put binaries in the boel_binaries_tarball...
@@ -488,6 +491,19 @@ $(BOEL_BINARIES_TARBALL):	\
 ifdef MKXFS_BINARY
 	install -m 755 --strip $(MKXFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
 endif
+	#
+	# 2005-01-12 Andrea Righi
+	# 
+	install -m 755 --strip $(LVM_BINARY)			$(BOEL_BINARIES_DIR)/sbin/
+	#
+	# Create LVM symlinks to lvm binary
+	#
+	@( \
+		for v in `cat $(SRC_DIR)/$(LVM_DIR)/tools/.commands`; do \
+			cd $(BOEL_BINARIES_DIR)/sbin; \
+			ln -s -f lvm $$v; \
+		done; \
+        )
 
 	mkdir -m 755 -p $(BOEL_BINARIES_DIR)/lib
 	test ! -d /lib64 || mkdir -m 755 -p $(BOEL_BINARIES_DIR)/lib64
