@@ -361,6 +361,8 @@ fi
      ;;
      esac
  }
+ ############################################################################################
+
  
  # SystemImager specific functions
  create_rsyncd_conf() {
@@ -395,14 +397,14 @@ if [ "$RPM_INSTALL" = "false" ]; then
  get systemimager/sfdisk
  get systemimager/systemimager.exclude
 EOF
- echo
+ [ "$RPM_INSTALL" = "false" ] && echo
 fi
 
  # verify that rsync entry is in /etc/services
  egrep -q ^rsync /etc/services
  if [ $? != "0" ]; then
    if [ ! -f /etc/services.beforesystemimager ]; then
-     echo "Backing up /etc/services to /etc/services.beforesystemimager ..."
+     [ "$RPM_INSTALL" = "false" ] && echo "Backing up /etc/services to /etc/services.beforesystemimager ..."
      cp /etc/services /etc/services.beforesystemimager
    fi
    echo "rsync           873/tcp                         # rsync" >> /etc/services
@@ -413,7 +415,7 @@ fi
  egrep -q ^rsync /etc/inetd.conf
  if [ $? != "0" ]; then
    if [ ! -f /etc/inetd.conf.beforesystemimager ]; then
-     echo "Backing up /etc/inetd.conf to /etc/inetd.conf.beforesystemimager ..."
+     [ "$RPM_INSTALL" = "false" ] && echo "Backing up /etc/inetd.conf to /etc/inetd.conf.beforesystemimager ..."
      cp /etc/inetd.conf /etc/inetd.conf.beforesystemimager
    fi
    egrep -q ^#rsync /etc/inetd.conf
