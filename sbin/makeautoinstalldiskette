@@ -26,48 +26,50 @@ $help_info = $version_info . <<"EOF";
 Usage: $program_name [OPTION]...
 
 Options: (options can be presented in any order)
- --help                    this information
- --version                 display version and copyright information
- --floppy-device=DEVICE    The  1.44MB floppy drive device containing the disk
-                           to format.  If not specified, /dev/fd0 is assumed.
-                           This command understands \"/dev/fd0\" through
-                            \"/dev/fd7\"
- --non-interactive         Don\'t ask any questions.  The default is to be
-                           interactive.
- --quiet                   Don\'t print any output (other than errors). 
+ --help             duh
+ --version          display version and copyright information
+ --floppy=DEVICE    The  1.44MB floppy drive device containing the disk
+                    to format.  If not specified, /dev/fd0 is assumed.
+                    This command understands \"/dev/fd0\" through \"/dev/fd7\"
+ --quiet            Don\'t print any output, just provide an appropriate 
+                    exit code.  (requires --floppy)
 
 Download from http://systemimager.org/
 Report bugs or suggestions to <systemimager-bugs\@systemimager.org>
 EOF
 
-$floppy_device_prefix = "/dev/fd0";
+#$floppy_device_prefix = "/dev/fd0";
 
 GetOptions( "help" => \$help,
             "version" => \$version,
-            "floppy-device=s" => \$floppy_device_prefix,
-            "quiet" => \$quiet,
-            "non-interactive" => \$non_interactive) ||
-    die "$help_info";
+            "floppy=s" => \$floppy_device_prefix,
+            "quiet" => \$quiet 
+) || die "$help_info";
 
-#if requested, print help information
+# if requested, print help information
 if($help) { die "$help_info"; }
 
 # if requested, print version and copyright information
 if($version) { die "$version_info"; }
 
+# be sure the user includes --floppy when doing --quiet
+if($quiet and !$floppy_device_prefix) { die "Must use --floppy with --quiet! (use --help for options)\n"; }
+
+if(!$floppy_device_prefix) { $floppy_device_prefix = "/dev/fd0"; }
+
 if (! ($floppy_device_prefix =~ /^\/dev\/fd[0-7]$/)) {
-    die "ERROR: Invalid --floppy-device argument.\n $help_info";
+    die "ERROR: Invalid --floppy argument.\n $help_info";
 }
 
 # if not run as root, this script will surely fail
 unless($< == 0) { die "Must be run as root!\n"; }
 
-if (!$non_interactive) {
+if (!$quiet) {
     system('clear');
     print << "EOF";
 
 This program assumes that you have a 1.44MB floppy drive and that it is 
-$floppy_device_prefix.  You can use the --floppy-device command line option
+$floppy_device_prefix.  You can use the --floppy command line option
 to change this value.
 
 This program will create the device file ${floppy_device_prefix}u1722 and use it to format your floppy
@@ -166,4 +168,5 @@ system('syslinux', '-s', $floppy_device);
 
 # print done!
 if (!$quiet) { print "Done!\n";}
+exit 0;
 
