@@ -10,6 +10,8 @@
 # 
 #   2004.02.02 Brian Elliott Finley
 #   - add '--server' option
+#   2004.06.01 Brian Elliott Finley
+#   - set rsyncd.conf's host_allow to _not_ include localhost
 #
 #
 #   Function: prepareclient is used to, well, prepare a client to have 
@@ -718,7 +720,7 @@ timeout = 900
 dont compress = *.gz *.tgz *.zip *.Z *.ZIP *.bz2 *.deb *.rpm *.dbf
 uid = root
 gid = root
-hosts allow = 127.0.0.0/24 $hosts_allow
+hosts allow = $hosts_allow
 
 [root]
     path = /
