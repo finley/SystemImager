@@ -551,11 +551,13 @@ SC_EOF
 
 
 ### BEGIN graffiti ###
-if(($image) and ! defined($dry_run))
-    my $file = "/etc/systemimager/IMAGE_LAST_SYNCED_TO";
-    open (FILE, ">$file") or croak("Couldn't open $file for writing!");
-    print FILE $image, "\n";
-    close (FILE);
+if($image) {
+    unless( defined($dry_run) ) {
+        my $file = "/etc/systemimager/IMAGE_LAST_SYNCED_TO";
+        open (FILE, ">$file") or croak("Couldn't open $file for writing!");
+            print FILE $image, "\n";
+        close (FILE);
+    }
 }
 ### END graffiti ###
 
