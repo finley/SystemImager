@@ -104,9 +104,10 @@
       every level.  The protocol for transferring files during installs
       and updates is currently <filename>rsync(1)</filename>, but the modular
       code easily allows drop-in replacements as is appropriate.  All unicast
-      file transer mechanisms, including <filename>rsync(1)</filename> are implemented 
-	in a "pull" fashion, which is generally considered to be superior to a "push," 
-	because it is much easier to monitor the state of the receiving system prior to and during the
+      file transfer mechanisms, including <filename>rsync(1)</filename> are 
+      implemented in a "pull" fashion, which is generally considered to be 
+      superior to a "push," because it is much easier to monitor the state of 
+      the receiving system prior to and during the
       file transfers.  However, multicast may be an option in the future and
       may need to be implemented as a "push."
     </para>
