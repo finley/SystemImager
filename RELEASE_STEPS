@@ -10,6 +10,23 @@
 
 3.2 stuff
 --------------------------------------------------------------------------------
+o update documentation
+o flamethrower as seperate utility
+o do initscripts in a more proper way
+  a) single init script with /etc/defaults/systemimager that specifies which
+     daemons to run
+     (won't work for flamethrower as a seperate package, or shouldn't be made 
+      to)
+  b) init script per daemon
+     /etc/init.d/netbootmon
+     /etc/init.d/rsync-systemimager
+     /etc/init.d/flamethrower
+o dann's configure failure -- resolve
+o knock out bugs
+
+
+post 3.2 stuff
+--------------------------------------------------------------------------------
 o System Installation Suite HOWTO for linuxdoc.org
 o HOWTO Change the Filesystem of an Existing Machine
 o consider putting our CREDITS file into the Linux kernel's CREDITS file's 
@@ -20,7 +37,6 @@ o pcmcia utils in boel_binaries_tarball
 o multiple small function related libraries
 o consider making mkautoinstalldiskette and mkautoinstallcd not require root 
     when using -out-file.
-
 o Hey all,
 
   First off, are we going to try to support local.cfg files on CDs in 3.0?  I
@@ -52,33 +68,22 @@ o Hey all,
 
 o Move most of -help output to man pages.
 o Standardized format for man pages and for -help output.
-* improve dhclient delay wait. (bef or sdague)
-* add full -h text to man page for mkautoinstalldiskette.
+o add full -h text to man page for mkautoinstalldiskette.
 o Consider rsync's BATCH MODE
-o consider lvm support
+o add lvm support
 o parallelize si_install (is mktemp available on all distros)
-
+  (consider using install-N-sub)
 
 
 
 
 Other things to consider
 --------------------------------------------------------------------------------
-o Modular kernel notes:
-  o If we go to modular drivers for disk devices, then we no longer have 
-    the ability to read a local.cfg file from a local disk.  Possible options
-    are:
-    1) Only offer local.cfg support by floppy or CD.
-    2) Offer local.cfg support by floppy, CD, or disk, but require that the user
-       compile the required drivers statically in order to use the local.cfg on
-       hard drive option.
-
 o Modify updateclient -autoinstall to use whatever kernel/initrd combo it 
   finds if it only finds one, but to present the user with a choice if it 
   finds more than one flavor.
 
 o make local.cfg work on CD
-o include a cerberus test suite option
 
 o NAMESERVER= option for local.cfg
 
@@ -89,8 +94,6 @@ o updateclient -> SERVER_LAST_SYNCED_TO
 o autoinstallscript -> SERVER_LAST_SYNCED_TO
 
 o LABEL= with md devices
-
-o re-read contrib emails
 
 o exclude files on server and on client
 
