@@ -538,7 +538,7 @@ ifneq ($(ARCH),i386)
 	test ! -d /lib64 || cp -a /lib64/ld* $(BOEL_BINARIES_DIR)/lib64
 endif
 	cd $(BOEL_BINARIES_DIR) \
-		&& $(PYTHON) $(TOPDIR)/initrd_source/mklibs -L /lib64:/usr/lib64:$(SRC_DIR)/$(PARTED_DIR)/libparted/.libs:$(SRC_DIR)/$(DISCOVER_DIR)/lib/.libs -v -d lib bin/* sbin/*
+		&& $(PYTHON) $(TOPDIR)/initrd_source/mklibs -L /lib64:/usr/lib64:$(SRC_DIR)/$(PARTED_DIR)/libparted/.libs:/usr/kerberos/lib:$(SRC_DIR)/$(DISCOVER_DIR)/lib/.libs -v -d lib bin/* sbin/*
 	#
 	# Include other files required by openssh that apparently aren't 
 	# picked up by mklibs for some reason. -BEF-
