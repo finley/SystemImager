@@ -314,6 +314,11 @@ make install_binaries DESTDIR=/tmp/%{name}-%{ver}-root PREFIX=%prefix
 
 %endif
 
+rm -f /tmp/%{name}-%{ver}-root/etc/init.d/systemimager-server-flamethrowerd~
+rm -f /tmp/%{name}-%{ver}-root/etc/init.d/systemimager-server-rsyncd~
+rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/client.conf~
+rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/updateclient.local.exclude~
+
 %clean
 #cd $RPM_BUILD_DIR/%{name}-%{version}/
 #make distclean
