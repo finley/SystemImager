@@ -806,6 +806,7 @@ if (@swap_devices) {
   print MASTER_SCRIPT "# initialize swap devices\n";
   foreach my $device_file (sort @swap_devices) {
     print MASTER_SCRIPT "mkswap -v1 $device_file\n";
+    print MASTER_SCRIPT "swapon $device_file\n";
   }
   print MASTER_SCRIPT "\n";
 }
