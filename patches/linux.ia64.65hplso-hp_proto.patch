@@ -1,0 +1,358 @@
+diff -urN no-proto/arch/ia64/config.in patched/arch/ia64/config.in
+--- no-proto/arch/ia64/config.in	Fri Nov  9 13:38:17 2001
++++ patched/arch/ia64/config.in	Tue Nov 13 10:25:00 2001
+@@ -64,6 +64,7 @@
+ 	if [ "$CONFIG_MCKINLEY_ASTEP_SPECIFIC" = "y" ]; then
+ 	  bool '   Enable McKinley A0/A1-step specific code' CONFIG_MCKINLEY_A0_SPECIFIC
+ 	fi
++	bool '  Enable Hewlett-Packard prototype suport' CONFIG_IA64_HP_PROTO
+ fi
+ 
+ if [ "$CONFIG_IA64_DIG" = "y" ]; then
+diff -urN no-proto/arch/ia64/kernel/efi.c patched/arch/ia64/kernel/efi.c
+--- no-proto/arch/ia64/kernel/efi.c	Tue Nov 13 10:28:22 2001
++++ patched/arch/ia64/kernel/efi.c	Tue Nov 13 10:25:00 2001
+@@ -289,6 +289,37 @@
+ 			if (end != cp)
+ 				break;
+ 			cp = end;
++#ifdef CONFIG_IA64_HP_PROTO
++		} else if (memcmp(cp, "baud=", 4) == 0) {
++			extern int acpi_base_baud;
++
++			cp +=5;
++
++			acpi_base_baud = simple_strtoul(cp, NULL, 10);
++			printk("Using manual ACPI UART baud rate (%dMHz)\n",acpi_base_baud);
++			acpi_base_baud *= 1000000;
++			acpi_base_baud /= 16;
++		} else if (memcmp(cp, "noautoconf", 10) == 0) {
++			extern int acpi_autoconf_flag;
++
++			cp +=10;
++			printk("Autoconfig disabled for ACPI UARTs\n");
++			acpi_autoconf_flag = 0x0;
++
++		} else if (memcmp(cp, "crs", 3) == 0) {
++			extern int hp_proto_check_crs;
++
++			cp +=3;
++			printk("Skipping ACPI _CRS method check\n");
++			hp_proto_check_crs = 1;
++		} else if (memcmp(cp, "freq=", 5) == 0) {
++			extern unsigned long hp_proto_platform_base_freq;
++
++			cp +=5;
++			printk("Registered overriding platform base frequency\n");
++			hp_proto_platform_base_freq = simple_strtoul(cp, NULL, 10);
++			hp_proto_platform_base_freq *= 1000000;
++#endif
+ 		} else {
+ 			while (*cp != ' ' && *cp)
+ 				++cp;
+diff -urN no-proto/arch/ia64/kernel/process.c patched/arch/ia64/kernel/process.c
+--- no-proto/arch/ia64/kernel/process.c	Tue Jul 31 11:30:08 2001
++++ patched/arch/ia64/kernel/process.c	Tue Nov 13 10:25:00 2001
+@@ -518,7 +518,11 @@
+ void
+ machine_restart (char *restart_cmd)
+ {
++#ifdef CONFIG_IA64_HP_PROTO
++	(*efi.reset_system)(EFI_RESET_COLD, 0, 0, 0);
++#else
+ 	(*efi.reset_system)(EFI_RESET_WARM, 0, 0, 0);
++#endif
+ }
+ 
+ void
+diff -urN no-proto/arch/ia64/kernel/time.c patched/arch/ia64/kernel/time.c
+--- no-proto/arch/ia64/kernel/time.c	Fri Nov  9 13:38:17 2001
++++ patched/arch/ia64/kernel/time.c	Tue Nov 13 10:25:00 2001
+@@ -33,6 +33,10 @@
+ 
+ #endif
+ 
++#ifdef CONFIG_IA64_HP_PROTO
++unsigned long hp_proto_platform_base_freq = 0;
++#endif
++
+ static void
+ do_profile (unsigned long ip)
+ {
+@@ -263,6 +267,12 @@
+ 		       platform_base_freq);
+ 		platform_base_freq = 75000000;
+ 	}
++#ifdef CONFIG_IA64_HP_PROTO
++	if (hp_proto_platform_base_freq) {
++		printk("Overriding base frequency to %dMHz\n",hp_proto_platform_base_freq/1000000);
++		platform_base_freq = hp_proto_platform_base_freq;
++	}
++#endif
+ 	if (!proc_ratio.den)
+ 		proc_ratio.den = 1;	/* avoid division by zero */
+ 	if (!itc_ratio.den)
+diff -urN no-proto/drivers/acpi/acpiconf.c patched/drivers/acpi/acpiconf.c
+--- no-proto/drivers/acpi/acpiconf.c	Tue Nov 13 10:28:22 2001
++++ patched/drivers/acpi/acpiconf.c	Tue Nov 13 10:25:00 2001
+@@ -96,6 +96,119 @@
+ 	return status;
+ }
+ 
++#ifdef CONFIG_IA64_HP_PROTO
++
++static ACPI_STATUS acpi_cf_evaluate_method (ACPI_HANDLE handle,
++                                            UINT8 *method_name,
++                                            NATIVE_UINT *nuint);
++
++
++int hp_proto_check_crs = 0;
++
++static ACPI_STATUS      __init
++acpi_cf_get_hp_proto_crs_callback (
++	ACPI_HANDLE handle,
++	UINT32      level,
++	void        *context,
++	void        **retval
++)
++{
++	ACPI_STATUS status, name_status;
++	ACPI_BUFFER acpi_buffer, name_buf;
++	UINT8 buf[PATHNAME_MAX];
++	NATIVE_UINT     temp = 0x0F;
++
++	acpi_buffer.length = 0;
++	acpi_buffer.pointer = NULL;
++
++	name_buf.length  = PATHNAME_MAX;
++	name_buf.pointer = (void *) buf;
++
++	name_status = acpi_get_name(handle, ACPI_FULL_PATHNAME, &name_buf);
++	if (ACPI_SUCCESS(name_status)) {
++		printk("Acpi CRS:path=[%s]\n", (char *)name_buf.pointer);
++	} else {
++		printk("Error getting pathname\n");
++		return AE_OK;
++	}
++
++	status = acpi_cf_evaluate_method(handle, METHOD_NAME__STA, &temp);
++
++	if (status != AE_NOT_FOUND) {
++		if (ACPI_FAILURE(status)) {
++			printk("_STA Method failed (0x%x)\n",status);
++			return AE_OK;
++		} else if (!(temp & ACPI_STA_DEVICE_PRESENT)) {
++			printk("_STA Method reports device not present\n");
++			return AE_OK;
++		}
++	}
++
++	status = acpi_get_current_resources(handle, &acpi_buffer);
++
++	switch (status) {
++		case AE_BUFFER_OVERFLOW:
++			break;          /* found */
++		case AE_NOT_FOUND:
++			return AE_OK;   /* let acpi_walk_namespace continue. */
++		default:
++			printk("Acpi cfg:get current resource settings fail=0x%x\n", status);
++			return AE_OK;
++	}
++
++	acpi_buffer.pointer = acpi_os_callocate (acpi_buffer.length);
++	if (acpi_buffer.pointer == NULL) {
++		printk("Acpi cfg:callocate %d bytes Fail\n", acpi_buffer.length);
++		return AE_OK;
++	}
++
++	status = acpi_get_current_resources (handle, &acpi_buffer);
++	if (ACPI_FAILURE(status)) {
++		printk("Acpi cfg:get current resource settings Fail=0x%x\n", status);
++		acpi_os_free(acpi_buffer.pointer);
++		return AE_OK;
++	}
++
++	/*
++	acpi_rs_dump_resource_list ((ACPI_RESOURCE *) acpi_buffer.pointer);
++	*/
++	acpi_os_free(acpi_buffer.pointer);
++
++	return AE_OK;
++}
++
++ACPI_STATUS     __init
++acpi_cf_get_hp_proto_crs ( void )
++{
++	ACPI_STATUS status;
++
++	if (! ACPI_CF_INITIALIZED()) {
++		if (efi.acpi20)
++			status = acpi_cf_init((void *)efi.acpi20);
++		else
++			status = acpi_cf_init((void *)efi.acpi);
++		if (ACPI_FAILURE (status))
++			return status;
++	}
++
++	status = acpi_walk_namespace ( ACPI_TYPE_DEVICE,
++	                               ACPI_ROOT_OBJECT,
++	                               ACPI_UINT32_MAX,
++	                               acpi_cf_get_hp_proto_crs_callback,
++	                               NULL,
++	                               NULL);
++
++	if (ACPI_FAILURE (status)) {
++		printk("Acpi Cfg: get crs fail\n");
++		return status;
++	}
++
++	printk("Acpi Cfg: get CRS %s\n", (ACPI_SUCCESS(status))?"pass":"fail");
++
++	return status;
++}
++#endif /* CONFIG_IA64_HP_PROTO */
++
+ 
+ ACPI_STATUS	__init
+ acpi_cf_get_pci_vectors (
+@@ -130,6 +244,10 @@
+ 	printk("Acpi cfg: get PCI interrupt vectors %s\n",
+ 		(ACPI_SUCCESS(status))?"pass":"fail");
+ 
++#ifdef CONFIG_IA64_HP_PROTO
++	if (hp_proto_check_crs)
++		acpi_cf_get_hp_proto_crs();
++#endif
+ 	return status;
+ }
+ 
+diff -urN no-proto/drivers/acpi/events/evxfevnt.c patched/drivers/acpi/events/evxfevnt.c
+--- no-proto/drivers/acpi/events/evxfevnt.c	Wed Jun 20 18:47:40 2001
++++ patched/drivers/acpi/events/evxfevnt.c	Tue Nov 13 10:25:00 2001
+@@ -69,7 +69,12 @@
+ 
+ 	status = acpi_hw_set_mode (SYS_MODE_ACPI);
+ 	if (ACPI_FAILURE (status)) {
++#ifdef CONFIG_IA64_HP_PROTO
++		printk("acpi_hw_set_mode(SYS_MODE_ACPI) failed, ignored\n");
++		status = AE_OK;
++#else
+ 		return (status);
++#endif
+ 	}
+ 
+ 	return (status);
+diff -urN no-proto/drivers/char/acpi_serial.c patched/drivers/char/acpi_serial.c
+--- no-proto/drivers/char/acpi_serial.c	Tue Nov 13 10:28:33 2001
++++ patched/drivers/char/acpi_serial.c	Tue Nov 13 10:25:59 2001
+@@ -21,6 +21,10 @@
+ /*#include <asm/acpi-ext.h>*/
+ 
+ #undef SERIAL_DEBUG_ACPI
++#ifdef CONFIG_IA64_HP_PROTO
++int acpi_base_baud = 0;
++int acpi_autoconf_flag = ASYNC_BOOT_AUTOCONF;
++#endif
+ 
+ /*
+  * Query ACPI tables for a debug and a headless console serial
+@@ -123,11 +127,19 @@
+  		case ACPI_SERIAL_INTFC_16550:
+ 			serial_req.type = PORT_16550;
+ 			serial_req.baud_base = BASE_BAUD;
++#ifdef CONFIG_IA64_HP_PROTO
++			if (acpi_base_baud)
++				serial_req.baud_base = acpi_base_baud;
++#endif
+ 			break;
+ 
+  		case ACPI_SERIAL_INTFC_16450:
+ 			serial_req.type = PORT_16450;
+ 			serial_req.baud_base = BASE_BAUD;
++#ifdef CONFIG_IA64_HP_PROTO
++			if (acpi_base_baud)
++				serial_req.baud_base = acpi_base_baud;
++#endif
+ 			break;
+ 
+ 		default:
+@@ -162,7 +174,11 @@
+ 		return;
+ 	}
+ 
++#ifdef CONFIG_IA64_HP_PROTO
++	serial_req.flags = ASYNC_SKIP_TEST | acpi_autoconf_flag | ASYNC_AUTO_IRQ;
++#else
+ 	serial_req.flags = ASYNC_SKIP_TEST | ASYNC_BOOT_AUTOCONF | ASYNC_AUTO_IRQ;
++#endif
+ 
+ 	/*
+ 	 * If the table does not have IRQ information, use 0 for IRQ. 
+diff -urN no-proto/drivers/char/serial.c patched/drivers/char/serial.c
+--- no-proto/drivers/char/serial.c	Tue Nov 13 10:28:33 2001
++++ patched/drivers/char/serial.c	Tue Nov 13 10:25:00 2001
+@@ -5458,7 +5458,17 @@
+ 	for (i = 0, state = rs_table; i < NR_PORTS; i++,state++) {
+ 		state->magic = SSTATE_MAGIC;
+ 		state->line = i;
++#ifdef CONFIG_IA64_HP_PROTO
++		{
++			extern int acpi_autoconf_flag;
++			if (acpi_autoconf_flag)
++				state->type = PORT_UNKNOWN;
++			else
++				state->irq = 0;
++		}
++#else
+ 		state->type = PORT_UNKNOWN;
++#endif
+ 		state->custom_divisor = 0;
+ 		state->close_delay = 5*HZ/10;
+ 		state->closing_wait = 30*HZ;
+diff -urN no-proto/kernel/printk.c patched/kernel/printk.c
+--- no-proto/kernel/printk.c	Fri Nov  9 13:38:18 2001
++++ patched/kernel/printk.c	Tue Nov 13 10:25:00 2001
+@@ -511,20 +511,35 @@
+ #ifdef CONFIG_IA64_EARLY_PRINTK
+ 
+ #include <asm/io.h>
++#include <linux/serial_reg.h>
+ 
+ #define VGABASE		((char *)0xc0000000000b8000)
+ #define VGALINES	24
+ #define VGACOLS		80
+ 
++#define UART_BASE       ((char *)0xc0000000FF5E0000)
++
+ static int current_ypos = VGALINES, current_xpos = 0;
+ 
+ void
+ early_printk (const char *str)
+ {
+ 	char c;
++#ifndef CONFIG_IA64_HP_PROTO
+ 	int  i, k, j;
++#endif
+ 
+ 	while ((c = *str++) != '\0') {
++#ifdef CONFIG_IA64_HP_PROTO
++		while (!(UART_LSR_TEMT & readb((char *)(UART_BASE + UART_LSR))))
++			; /* spin */
++
++		writeb(c, (char *)UART_BASE + UART_TX);
++
++		if (c == '\n')
++			writeb('\r', (char *)UART_BASE + UART_TX);
++#else
++
+ 		if (current_ypos >= VGALINES) {
+ 			/* scroll 1 line up */
+ 			for (k = 1, j = 0; k < VGALINES; k++, j++) {
+@@ -549,6 +564,7 @@
+ 				current_ypos++;
+ 			}
+ 		}
++#endif
+ 	}
+ }
+ 

@@ -1,0 +1,39 @@
+--- clean/drivers/acpi/resources/rsirq.c	Wed Jun 20 18:47:40 2001
++++ linux/drivers/acpi/resources/rsirq.c	Mon Nov 12 21:40:06 2001
+@@ -307,28 +307,16 @@
+ 	output_struct->data.extended_irq.producer_consumer = temp8 & 0x01;
+ 
+ 	/*
+-	 * Check for HE, LL or HL
++	 * Check interrupt mode
++	 *  - Edge/Level are defined opposite in the table vs the headers
+ 	 */
+-	if(temp8 & 0x02) {
+-		output_struct->data.extended_irq.edge_level = EDGE_SENSITIVE;
+-		output_struct->data.extended_irq.active_high_low = ACTIVE_HIGH;
+-	}
++	output_struct->data.extended_irq.edge_level =
++	                          (temp8 & 0x2) ? EDGE_SENSITIVE : LEVEL_SENSITIVE;
+ 
+-	else {
+-		if(temp8 & 0x4) {
+-			output_struct->data.extended_irq.edge_level = LEVEL_SENSITIVE;
+-			output_struct->data.extended_irq.active_high_low = ACTIVE_LOW;
+-		}
+-
+-		else {
+-			/*
+-			 * Only _LL and _HE polarity/trigger interrupts
+-			 * are allowed (ACPI spec v1.0b ection 6.4.2.1),
+-			 * so an error will occur if we reach this point
+-			 */
+-			return (AE_BAD_DATA);
+-		}
+-	}
++	/*
++	 * Check interrupt polarity
++	 */
++	output_struct->data.extended_irq.active_high_low = (temp8 >> 2) & 0x1;
+ 
+ 	/*
+ 	 * Check for sharable

@@ -1,0 +1,442 @@
+diff -urN --exclude=offsets.h clean/Documentation/Configure.help linux/Documentation/Configure.help
+--- clean/Documentation/Configure.help	Fri Nov  9 13:38:17 2001
++++ linux/Documentation/Configure.help	Mon Nov 12 10:27:33 2001
+@@ -2423,6 +2423,14 @@
+   say N here to save some memory. You can also say Y if you have an
+   "intelligent" multiport card such as Cyclades, Digiboards, etc.
+ 
++Support for serial ports defined by ACPI tables
++CONFIG_SERIAL_ACPI
++  Legacy free machines may not have serial ports at the legacy COM1, 
++  COM2 etc addresses. Serial ports on such machines are described by
++  the ACPI tables SPCR (Serial Port Console Redirection) table and 
++  DBGP (Debug Port) table. Say Y here if you want to include support
++  for these serial ports.
++
+ Support for sharing serial interrupts
+ CONFIG_SERIAL_SHARE_IRQ
+   Some serial boards have hardware support which allows multiple dumb
+diff -urN --exclude=offsets.h clean/drivers/char/Config.in linux/drivers/char/Config.in
+--- clean/drivers/char/Config.in	Fri Nov  9 13:38:17 2001
++++ linux/drivers/char/Config.in	Mon Nov 12 10:27:33 2001
+@@ -16,6 +16,9 @@
+       tristate '   Dual serial port support' CONFIG_DUALSP_SERIAL
+    fi
+ fi
++if [ "$CONFIG_ACPI" = "y" ]; then
++   bool '  Support for serial ports defined by ACPI tables' CONFIG_SERIAL_ACPI
++fi
+ dep_mbool 'Extended dumb serial driver options' CONFIG_SERIAL_EXTENDED $CONFIG_SERIAL
+ if [ "$CONFIG_SERIAL_EXTENDED" = "y" ]; then
+    bool '  Support more than 4 serial ports' CONFIG_SERIAL_MANY_PORTS
+diff -urN --exclude=offsets.h clean/drivers/char/Makefile linux/drivers/char/Makefile
+--- clean/drivers/char/Makefile	Fri Nov  9 13:38:17 2001
++++ linux/drivers/char/Makefile	Mon Nov 12 10:27:33 2001
+@@ -125,6 +125,7 @@
+ 
+ obj-$(CONFIG_VT) += vt.o vc_screen.o consolemap.o consolemap_deftbl.o $(CONSOLE) selection.o
+ obj-$(CONFIG_SERIAL) += $(SERIAL)
++obj-$(CONFIG_SERIAL_ACPI) += acpi_serial.o
+ obj-$(CONFIG_SERIAL_21285) += serial_21285.o
+ obj-$(CONFIG_SERIAL_SA1100) += serial_sa1100.o
+ obj-$(CONFIG_SERIAL_AMBA) += serial_amba.o
+diff -urN --exclude=offsets.h clean/drivers/char/acpi_serial.c linux/drivers/char/acpi_serial.c
+--- clean/drivers/char/acpi_serial.c	Wed Dec 31 17:00:00 1969
++++ linux/drivers/char/acpi_serial.c	Mon Nov 12 10:27:33 2001
+@@ -0,0 +1,199 @@
++/*
++ *  linux/drivers/acpi_serial.c
++ *
++ *  Copyright (C) 2000  Hewlett-Packard Co.
++ *  Copyright (C) 2000  Khalid Aziz <khalid_aziz@hp.com>
++ *
++ *  Detect and initialize the headless console serial port defined in 
++ *  SPCR table and debug serial port defined in DBGP table
++ *
++ */
++#include <linux/kernel.h>
++#include <linux/types.h>
++#include <linux/pci.h>
++#include <linux/pm.h>
++#include <linux/acpi.h>
++#include <linux/init.h>
++#include <linux/serial.h>
++#include <asm/serial.h>
++#include <asm/io.h>
++#include <linux/acpi_serial.h>
++/*#include <asm/acpi-ext.h>*/
++
++#undef SERIAL_DEBUG_ACPI
++
++/*
++ * Query ACPI tables for a debug and a headless console serial
++ * port. If found, add them to rs_table[]. A pointer to either SPCR
++ * or DBGP table is passed as parameter. This function should be called 
++ * before serial_console_init() is called to make sure the SPCR serial 
++ * console will be available for use. IA-64 kernel calls this function
++ * from within acpi.c when it encounters SPCR or DBGP tables as it parses 
++ * the ACPI 2.0 tables during bootup.
++ *
++ */
++void __init setup_serial_acpi(void *tablep) 
++{
++	acpi_ser_t *acpi_ser_p;
++	struct serial_struct serial_req;
++	unsigned long iobase;
++	int global_sys_irq;
++
++#ifdef SERIAL_DEBUG_ACPI
++	printk("Entering setup_serial_acpi()\n");
++#endif
++
++	/* Now get the table */
++	if (tablep == NULL) {
++		return;
++	}
++
++	acpi_ser_p = (acpi_ser_t *)tablep;
++
++	/*
++	 * Perform a sanity check on the table. Table should have a 
++	 * signature of "SPCR" or "DBGP" and it should be atleast 52 bytes
++	 * long.
++	 */
++	if ((strncmp(acpi_ser_p->signature, ACPI_SPCRT_SIGNATURE, 
++					ACPI_SIG_LEN) != 0) && 
++		(strncmp(acpi_ser_p->signature, ACPI_DBGPT_SIGNATURE, 
++					ACPI_SIG_LEN) != 0)) {
++		return;
++	}
++	if (acpi_ser_p->length < 52) {
++		return;
++	}
++
++	iobase = (((u64) acpi_ser_p->base_addr.addrh) << 32) | acpi_ser_p->base_addr.addrl;
++	global_sys_irq = (acpi_ser_p->global_int[3] << 24) | 
++			(acpi_ser_p->global_int[2] << 16) |
++			(acpi_ser_p->global_int[1] << 8) |
++			acpi_ser_p->global_int[0];
++
++#ifdef SERIAL_DEBUG_ACPI
++	printk("setup_serial_acpi(): table pointer = 0x%p\n", acpi_ser_p);
++	printk("                     sig = '%c%c%c%c'\n",
++			acpi_ser_p->signature[0],
++			acpi_ser_p->signature[1],
++			acpi_ser_p->signature[2],
++			acpi_ser_p->signature[3]);
++	printk("                     length = %d\n", acpi_ser_p->length);
++	printk("                     Rev = %d\n", acpi_ser_p->rev);
++	printk("                     Interface type = %d\n", acpi_ser_p->intfc_type);
++	printk("                     Base address = 0x%lX\n", iobase);
++	printk("                     IRQ = %d\n", acpi_ser_p->irq);
++	printk("                     Global System Int = %d\n", global_sys_irq);
++	printk("                     Baud rate = ");
++	switch (acpi_ser_p->baud) {
++		case ACPI_SERIAL_BAUD_9600:
++			printk("9600\n");
++			break;
++
++		case ACPI_SERIAL_BAUD_19200:
++			printk("19200\n");
++			break;
++
++		case ACPI_SERIAL_BAUD_57600:
++			printk("57600\n");
++			break;
++
++		case ACPI_SERIAL_BAUD_115200:
++			printk("115200\n");
++			break;
++
++		default:
++			printk("Huh (%d)\n", acpi_ser_p->baud);
++			break;
++
++	}
++	if (acpi_ser_p->base_addr.space_id == ACPI_SERIAL_PCICONF_SPACE) {
++		printk("                     PCI serial port:\n");
++		printk("                         Bus %d, Device %d, Vendor ID 0x%x, Dev ID 0x%x\n",
++		acpi_ser_p->pci_bus, acpi_ser_p->pci_dev,
++		acpi_ser_p->pci_vendor_id, acpi_ser_p->pci_dev_id);
++	}
++#endif
++
++	/* 
++	 * Now build a serial_req structure to update the entry in
++	 * rs_table for the headless console port.
++	 */
++	switch (acpi_ser_p->intfc_type) {
++ 		case ACPI_SERIAL_INTFC_16550:
++			serial_req.type = PORT_16550;
++			serial_req.baud_base = BASE_BAUD;
++			break;
++
++ 		case ACPI_SERIAL_INTFC_16450:
++			serial_req.type = PORT_16450;
++			serial_req.baud_base = BASE_BAUD;
++			break;
++
++		default:
++			serial_req.type = PORT_UNKNOWN;
++			break;
++	}
++	if (strncmp(acpi_ser_p->signature, ACPI_SPCRT_SIGNATURE,
++					ACPI_SIG_LEN) == 0) {
++		serial_req.line = ACPI_SERIAL_CONSOLE_PORT;
++	}
++	else if (strncmp(acpi_ser_p->signature, ACPI_DBGPT_SIGNATURE, 
++					ACPI_SIG_LEN) == 0) {
++		serial_req.line = ACPI_SERIAL_DEBUG_PORT;
++	}
++	/*
++	 * Check if this is an I/O mapped address or a memory mapped address
++	 */
++	if (acpi_ser_p->base_addr.space_id == ACPI_SERIAL_MEM_SPACE) {
++		serial_req.port = 0;
++		serial_req.port_high = 0;
++		serial_req.iomem_base = (void *)ioremap(iobase, 64);
++		serial_req.io_type = SERIAL_IO_MEM;
++	}
++	else if (acpi_ser_p->base_addr.space_id == ACPI_SERIAL_IO_SPACE) {
++		serial_req.port = (unsigned long) iobase & 0xffffffff;
++		serial_req.port_high = (unsigned long)(((u64)iobase) >> 32);
++		serial_req.iomem_base = NULL;
++		serial_req.io_type = SERIAL_IO_PORT;
++	}
++	else if (acpi_ser_p->base_addr.space_id == ACPI_SERIAL_PCICONF_SPACE) {
++		printk("WARNING: No support for PCI serial console\n");
++		return;
++	}
++
++	serial_req.flags = ASYNC_SKIP_TEST | ASYNC_BOOT_AUTOCONF | ASYNC_AUTO_IRQ;
++
++	/*
++	 * If the table does not have IRQ information, use 0 for IRQ. 
++	 * This will force rs_init() to probe for IRQ. 
++	 */
++	if (acpi_ser_p->length < 53) {
++		serial_req.irq = 0;
++	}
++	else {
++		if (acpi_ser_p->int_type & 
++			(ACPI_SERIAL_INT_APIC | ACPI_SERIAL_INT_SAPIC)) {
++			serial_req.irq = global_sys_irq;
++		}
++		else if (acpi_ser_p->int_type & ACPI_SERIAL_INT_PCAT) {
++			serial_req.irq = acpi_ser_p->irq;
++		}
++		else {
++			serial_req.irq = 0;
++			serial_req.flags &= ~ASYNC_AUTO_IRQ;
++		}
++	}
++
++	serial_req.xmit_fifo_size = serial_req.custom_divisor = 0;
++	serial_req.close_delay = serial_req.hub6 = serial_req.closing_wait = 0;
++	serial_req.iomem_reg_shift = 0;
++	if (early_serial_setup(&serial_req) < 0) {
++		printk("early_serial_setup() for ACPI serial console port failed\n");
++		return;
++	}
++
++#ifdef SERIAL_DEBUG_ACPI
++	printk("Leaving setup_serial_acpi()\n");
++#endif
++}
+diff -urN --exclude=offsets.h clean/drivers/char/serial.c linux/drivers/char/serial.c
+--- clean/drivers/char/serial.c	Mon Aug 13 17:37:33 2001
++++ linux/drivers/char/serial.c	Mon Nov 12 10:27:33 2001
+@@ -85,6 +85,11 @@
+  * SERIAL_PARANOIA_CHECK
+  * 		Check the magic number for the async_structure where
+  * 		ever possible.
++ *
++ * CONFIG_SERIAL_ACPI
++ *		Enable support for serial console port and serial 
++ *		debug port as defined by the SPCR and DBGP tables in 
++ *		ACPI 2.0.
+  */
+ 
+ #include <linux/config.h>
+@@ -113,6 +118,10 @@
+ #endif
+ #endif
+ 
++#ifdef CONFIG_SERIAL_ACPI
++#define ENABLE_SERIAL_ACPI
++#endif
++
+ #if defined(CONFIG_ISAPNP)|| (defined(CONFIG_ISAPNP_MODULE) && defined(MODULE))
+ #ifndef ENABLE_SERIAL_PNP
+ #define ENABLE_SERIAL_PNP
+@@ -2353,7 +2362,7 @@
+ 
+ 	autoconfig(info->state);
+ 	if ((info->state->flags & ASYNC_AUTO_IRQ) &&
+-	    (info->state->port != 0) &&
++	    (info->state->port != 0  || info->state->iomem_base != 0) &&
+ 	    (info->state->type != PORT_UNKNOWN)) {
+ 		irq = detect_uart_irq(info->state);
+ 		if (irq > 0)
+@@ -3382,6 +3391,10 @@
+        " ISAPNP"
+ #define SERIAL_OPT
+ #endif
++#ifdef ENABLE_SERIAL_ACPI
++       " SERIAL_ACPI"
++#define SERIAL_OPT
++#endif
+ #ifdef SERIAL_OPT
+        " enabled\n";
+ #else
+@@ -5473,13 +5486,22 @@
+ 			continue;
+ 		if (   (state->flags & ASYNC_BOOT_AUTOCONF)
+ 		    && (state->flags & ASYNC_AUTO_IRQ)
+-		    && (state->port != 0))
++		    && (state->port != 0 || state->iomem_base != 0))
+ 			state->irq = detect_uart_irq(state);
+-		printk(KERN_INFO "ttyS%02d%s at 0x%04lx (irq = %d) is a %s\n",
+-		       state->line + SERIAL_DEV_OFFSET,
+-		       (state->flags & ASYNC_FOURPORT) ? " FourPort" : "",
+-		       state->port, state->irq,
+-		       uart_config[state->type].name);
++		if (state->io_type == SERIAL_IO_MEM) {
++			printk(KERN_INFO"ttyS%02d%s at 0x%px (irq = %d) is a %s\n",
++	 		       state->line + SERIAL_DEV_OFFSET,
++			       (state->flags & ASYNC_FOURPORT) ? " FourPort" : "",
++			       state->iomem_base, state->irq,
++			       uart_config[state->type].name);
++		}
++		else {
++			printk(KERN_INFO "ttyS%02d%s at 0x%04lx (irq = %d) is a %s\n",
++	 		       state->line + SERIAL_DEV_OFFSET,
++			       (state->flags & ASYNC_FOURPORT) ? " FourPort" : "",
++			       state->port, state->irq,
++			       uart_config[state->type].name);
++		}
+ 		tty_register_devfs(&serial_driver, 0,
+ 				   serial_driver.minor_start + state->line);
+ 		tty_register_devfs(&callout_driver, 0,
+diff -urN --exclude=offsets.h clean/include/linux/acpi_serial.h linux/include/linux/acpi_serial.h
+--- clean/include/linux/acpi_serial.h	Wed Dec 31 17:00:00 1969
++++ linux/include/linux/acpi_serial.h	Mon Nov 12 10:27:33 2001
+@@ -0,0 +1,103 @@
++/*
++ *  linux/drivers/acpi/serial.h
++ *
++ *  Copyright (C) 2000  Hewlett-Packard Co.
++ *  Copyright (C) 2000  Khalid Aziz <khalid_aziz@hp.com>
++ *
++ *  Definitions for ACPI defined serial ports (headless console and 
++ *  debug ports)
++ *
++ */
++
++extern void setup_serial_acpi(void *);
++
++/* ACPI table signatures */
++#define ACPI_SPCRT_SIGNATURE	"SPCR"
++#define ACPI_DBGPT_SIGNATURE	"DBGP"
++
++/* Interface type as defined in ACPI serial port tables */
++#define ACPI_SERIAL_INTFC_16550	0
++#define ACPI_SERIAL_INTFC_16450	1
++
++/* Interrupt types for ACPI serial port tables */
++#define ACPI_SERIAL_INT_PCAT	0x01
++#define ACPI_SERIAL_INT_APIC	0x02
++#define ACPI_SERIAL_INT_SAPIC	0x04
++
++/* Baud rates as defined in ACPI serial port tables */
++#define ACPI_SERIAL_BAUD_9600		3
++#define ACPI_SERIAL_BAUD_19200		4
++#define ACPI_SERIAL_BAUD_57600		6
++#define ACPI_SERIAL_BAUD_115200		7
++
++/* Parity as defined in ACPI serial port tables */
++#define ACPI_SERIAL_PARITY_NONE		0
++
++/* Flow control methods as defined in ACPI serial port tables */
++#define ACPI_SERIAL_FLOW_DCD	0x01
++#define ACPI_SERIAL_FLOW_RTS	0x02
++#define ACPI_SERIAL_FLOW_XON	0x04
++
++/* Terminal types as defined in ACPI serial port tables */
++#define ACPI_SERIAL_TERM_VT100		0
++#define ACPI_SERIAL_TERM_VT100X	1
++
++/* PCI Flags as defined by SPCR table */
++#define ACPI_SERIAL_PCIFLAG_PNP	0x00000001
++
++/* Space ID as defined in base address structure in ACPI serial port tables */
++#define ACPI_SERIAL_MEM_SPACE		0
++#define ACPI_SERIAL_IO_SPACE		1
++#define ACPI_SERIAL_PCICONF_SPACE	2
++
++/* 
++ * Generic Register Address Structure - as defined by Microsoft 
++ * in http://www.microsoft.com/hwdev/onnow/download/LFreeACPI.doc
++ *
++*/
++typedef struct {
++	u8  space_id;
++	u8  bit_width;
++	u8  bit_offset;
++	u8  resv;
++	u32 addrl;
++	u32 addrh;
++} gen_regaddr;
++
++/* Space ID for generic register address structure */
++#define REGADDR_SPACE_SYSMEM	0
++#define REGADDR_SPACE_SYSIO	1
++#define REGADDR_SPACE_PCICONFIG	2
++
++/* Serial Port Console Redirection and Debug Port Table formats */
++typedef struct {
++	u8 signature[4];
++	u32 length;
++	u8  rev;
++	u8  chksum;
++	u8  oemid[6];
++	u8  oem_tabid[8];
++	u32 oem_rev;
++	u8  creator_id[4];
++	u32 creator_rev;
++	u8  intfc_type;
++	u8  resv1[3];
++	gen_regaddr base_addr;
++	u8  int_type;
++	u8  irq;
++	u8  global_int[4];
++	u8  baud;
++	u8  parity;
++	u8  stop_bits;
++	u8  flow_ctrl;
++	u8  termtype;
++	u8  language;
++	u16 pci_dev_id;
++	u16 pci_vendor_id;
++	u8  pci_bus;
++	u8  pci_dev;
++	u8  pci_func;
++	u8  pci_flags[4];
++	u8  pci_seg;
++	u32 resv2;
++} acpi_ser_t;
+diff -urN --exclude=offsets.h clean/include/linux/serial.h linux/include/linux/serial.h
+--- clean/include/linux/serial.h	Wed Aug 15 15:21:30 2001
++++ linux/include/linux/serial.h	Mon Nov 12 10:27:33 2001
+@@ -182,5 +182,11 @@
+ /* Allow complicated architectures to specify rs_table[] at run time */
+ extern int early_serial_setup(struct serial_struct *req);
+ 
++#ifdef CONFIG_ACPI
++/* tty ports reserved for the ACPI serial console port and debug port */
++#define ACPI_SERIAL_CONSOLE_PORT        4
++#define ACPI_SERIAL_DEBUG_PORT          5
++#endif
++
+ #endif /* __KERNEL__ */
+ #endif /* _LINUX_SERIAL_H */

@@ -1,0 +1,17 @@
+diff -urN linux.orig/arch/ia64/vmlinux.lds.S linux/arch/ia64/vmlinux.lds.S
+--- linux.orig/arch/ia64/vmlinux.lds.S	Tue Jul 31 17:30:09 2001
++++ linux/arch/ia64/vmlinux.lds.S	Wed Dec 19 17:47:27 2001
+@@ -8,13 +8,6 @@
+ ENTRY(phys_start)
+ SECTIONS
+ {
+-  /* Sections to be discarded */
+-  /DISCARD/ : {
+-	*(.text.exit)
+-	*(.data.exit)
+-	*(.exitcall.exit)
+-	}
+-
+   v = PAGE_OFFSET;	/* this symbol is here to make debugging easier... */
+   phys_start = _start - PAGE_OFFSET;
+ 

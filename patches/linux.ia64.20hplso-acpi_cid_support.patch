@@ -1,0 +1,176 @@
+diff -urN --exclude=offsets.h clean/drivers/acpi/events/evrgnini.c linux/drivers/acpi/events/evrgnini.c
+--- clean/drivers/acpi/events/evrgnini.c	Wed Jun 20 18:47:40 2001
++++ linux/drivers/acpi/events/evrgnini.c	Mon Nov 12 09:28:39 2001
+@@ -214,15 +214,13 @@
+ 		 * Node is currently the parent object
+ 		 */
+ 		while (node != acpi_gbl_root_node) {
+-			status = acpi_ut_execute_HID (node, &object_hID);
+-			if (ACPI_SUCCESS (status)) {
+-				if (!(STRNCMP (object_hID.buffer, PCI_ROOT_HID_STRING,
+-						   sizeof (PCI_ROOT_HID_STRING)))) {
+-					acpi_install_address_space_handler (node,
+-							   ACPI_ADR_SPACE_PCI_CONFIG,
+-							   ACPI_DEFAULT_HANDLER, NULL, NULL);
+-					break;
+-				}
++			STRNCPY(object_hID.buffer, PCI_ROOT_HID_STRING, sizeof(ACPI_DEVICE_ID));
++			status = acpi_ut_match_PNP_ID (node, &object_hID);
++			if (status == AE_OK) {
++				acpi_install_address_space_handler (node,
++						   ACPI_ADR_SPACE_PCI_CONFIG,
++						   ACPI_DEFAULT_HANDLER, NULL, NULL);
++				break;
+ 			}
+ 
+ 			node = acpi_ns_get_parent_object (node);
+diff -urN --exclude=offsets.h clean/drivers/acpi/include/acutils.h linux/drivers/acpi/include/acutils.h
+--- clean/drivers/acpi/include/acutils.h	Wed Jun 20 18:47:40 2001
++++ linux/drivers/acpi/include/acutils.h	Mon Nov 12 09:51:11 2001
+@@ -402,6 +402,7 @@
+ /* Method name strings */
+ 
+ #define METHOD_NAME__HID        "_HID"
++#define METHOD_NAME__CID        "_CID"
+ #define METHOD_NAME__UID        "_UID"
+ #define METHOD_NAME__ADR        "_ADR"
+ #define METHOD_NAME__STA        "_STA"
+@@ -420,6 +421,11 @@
+ acpi_ut_execute_HID (
+ 	ACPI_NAMESPACE_NODE     *device_node,
+ 	ACPI_DEVICE_ID          *hid);
++
++ACPI_STATUS
++acpi_ut_match_PNP_ID (
++	ACPI_NAMESPACE_NODE     *device_node,
++	ACPI_DEVICE_ID          *pnpid);
+ 
+ ACPI_STATUS
+ acpi_ut_execute_STA (
+diff -urN --exclude=offsets.h clean/drivers/acpi/namespace/nsxfobj.c linux/drivers/acpi/namespace/nsxfobj.c
+--- clean/drivers/acpi/namespace/nsxfobj.c	Wed Jun 20 18:47:40 2001
++++ linux/drivers/acpi/namespace/nsxfobj.c	Mon Nov 12 09:38:23 2001
+@@ -629,10 +629,13 @@
+ 	}
+ 
+ 	/*
+-	 * Filter based on device HID
++	 * Filter based on device HID/CID
+ 	 */
+ 	if (info->hid != NULL) {
+-		status = acpi_ut_execute_HID (node, &device_id);
++
++		STRNCPY(device_id.buffer, info->hid, sizeof(ACPI_DEVICE_ID));
++
++		status = acpi_ut_match_PNP_ID (node, &device_id);
+ 		if (status == AE_NOT_FOUND) {
+ 			return (AE_OK);
+ 		}
+@@ -641,12 +644,9 @@
+ 			return (AE_CTRL_DEPTH);
+ 		}
+ 
+-		if (STRNCMP (device_id.buffer, info->hid, sizeof (device_id.buffer)) != 0) {
+-			return (AE_OK);
+-		}
++		info->user_function (obj_handle, nesting_level, info->context, return_value);
+ 	}
+ 
+-	info->user_function (obj_handle, nesting_level, info->context, return_value);
+ 	return (AE_OK);
+ }
+ 
+diff -urN --exclude=offsets.h clean/drivers/acpi/utilities/uteval.c linux/drivers/acpi/utilities/uteval.c
+--- clean/drivers/acpi/utilities/uteval.c	Wed Jun 20 18:47:40 2001
++++ linux/drivers/acpi/utilities/uteval.c	Mon Nov 12 09:53:03 2001
+@@ -244,6 +244,90 @@
+ 	return (status);
+ }
+ 
++/*******************************************************************************
++ *
++ * FUNCTION:    Acpi_ut_match_PNP_ID
++ *
++ * PARAMETERS:  Device_node         - Node for the device
++ *              *PNPID              - Device ID to match
++ *
++ * RETURN:      AE_OK = node matches id
++ *
++ * DESCRIPTION: Matches PNP ID to node based on _HID and _CID method data
++ *
++ *              NOTE: Internal function, no parameter validation
++ *
++ ******************************************************************************/
++ACPI_STATUS
++acpi_ut_match_PNP_ID (
++	ACPI_NAMESPACE_NODE     *device_node,
++	ACPI_DEVICE_ID			*pnpid)
++{
++	ACPI_DEVICE_ID			device_id;
++	ACPI_STATUS				status;
++	ACPI_OPERAND_OBJECT     *obj_desc, *obj_ptr;
++	u32						i;
++	
++	FUNCTION_TRACE ("Ut_match_PNP_ID");
++
++	status = acpi_ut_execute_HID(device_node, &device_id);
++
++	if (ACPI_SUCCESS(status)) {
++		if (!STRNCMP(device_id.buffer, pnpid->buffer, sizeof(ACPI_DEVICE_ID)))
++			return AE_OK;
++	}
++
++	status = acpi_ns_evaluate_relative (device_node, METHOD_NAME__CID, NULL, &obj_desc);
++
++	if (ACPI_FAILURE (status) || (obj_desc == NULL)) {
++		return AE_NOT_FOUND;
++	}
++			
++	status = AE_NOT_FOUND;
++
++	switch (obj_desc->common.type) {
++		
++		case ACPI_TYPE_INTEGER:
++			acpi_ex_eisa_id_to_string ((u32) obj_desc->integer.value, device_id.buffer);
++			if (!STRNCMP(device_id.buffer, pnpid->buffer, sizeof(ACPI_DEVICE_ID)))
++				status = AE_OK;
++			break;
++		
++		case ACPI_TYPE_STRING:
++			if (!STRNCMP(obj_desc->string.pointer, pnpid->buffer, sizeof(ACPI_DEVICE_ID)))
++				status = AE_OK;
++			break;
++		
++		case ACPI_TYPE_PACKAGE:
++			for (i = 0 ; i < obj_desc->package.count ; i++) {
++				obj_ptr = obj_desc->package.elements[i];
++				
++				switch (obj_ptr->common.type) {
++					case ACPI_TYPE_INTEGER:
++						acpi_ex_eisa_id_to_string ((u32) obj_ptr->integer.value, device_id.buffer);
++						if (!STRNCMP(device_id.buffer, pnpid->buffer, sizeof(ACPI_DEVICE_ID)))
++							status = AE_OK;
++						break;
++		
++					case ACPI_TYPE_STRING:
++						if (!STRNCMP(obj_ptr->string.pointer, pnpid->buffer, sizeof(ACPI_DEVICE_ID)))
++							status = AE_OK;
++						break;
++						
++					default:
++						break;
++				}
++			}
++		
++		default:
++			break;
++	}
++
++	acpi_ut_remove_reference (obj_desc);	
++	return (status);
++		
++}
++
+ 
+ /*******************************************************************************
+  *

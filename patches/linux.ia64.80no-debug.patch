@@ -1,0 +1,12 @@
+diff -urN linux-2.4.7/Makefile linux-2.4.7-lia/Makefile
+--- linux-2.4.7/Makefile	Sat Jul 21 20:17:50 2001
++++ linux-2.4.7-lia/Makefile	Mon Jul 23 13:59:25 2001
+@@ -87,7 +87,7 @@
+ 
+ CPPFLAGS := -D__KERNEL__ -I$(HPATH)
+ 
+-CFLAGS := $(CPPFLAGS) -Wall -Wstrict-prototypes -Wno-trigraphs -g -O2 \
++CFLAGS := $(CPPFLAGS) -Wall -Wstrict-prototypes -Wno-trigraphs -O2 \
+ 	  -fomit-frame-pointer -fno-strict-aliasing -fno-common
+ AFLAGS := -D__ASSEMBLY__ $(CPPFLAGS)
+ 

@@ -1,0 +1,248 @@
+diff -urN linux-clean/arch/ia64/kernel/acpi.c acpi-serial/arch/ia64/kernel/acpi.c
+--- linux-clean/arch/ia64/kernel/acpi.c	Wed Sep  5 09:58:32 2001
++++ acpi-serial/arch/ia64/kernel/acpi.c	Wed Sep  5 10:26:44 2001
+@@ -23,6 +23,9 @@
+ #include <linux/string.h>
+ #include <linux/types.h>
+ #include <linux/irq.h>
++#ifdef CONFIG_SERIAL_ACPI
++#include <linux/acpi_serial.h>
++#endif
+ 
+ #include <asm/acpi-ext.h>
+ #include <asm/acpikcfg.h>
+@@ -44,6 +47,7 @@
+ void (*pm_idle) (void);
+ void (*pm_power_off) (void);
+ 
++asm (".weak iosapic_register_irq");
+ asm (".weak iosapic_register_legacy_irq");
+ asm (".weak iosapic_register_platform_irq");
+ asm (".weak iosapic_init");
+@@ -395,6 +399,7 @@
+ # ifdef CONFIG_ACPI
+ 	acpi_xsdt_t *xsdt;
+ 	acpi_desc_table_hdr_t *hdrp;
++	acpi_madt_t *madt;
+ 	int tables, i;
+ 
+ 	if (strncmp(rsdp20->signature, ACPI_RSDP_SIG, ACPI_RSDP_SIG_LEN)) {
+@@ -436,8 +441,76 @@
+ 			ACPI_MADT_SIG, ACPI_MADT_SIG_LEN) != 0)
+ 			continue;
+ 
+-		acpi20_parse_madt((acpi_madt_t *) hdrp);
++		madt = (acpi_madt_t *)hdrp;
++		acpi20_parse_madt(madt);
+ 	}
++
++#ifdef CONFIG_SERIAL_ACPI
++
++	/*
++	 * Now we're interested in other tables, but we want the iosapics
++	 * already initialized, so we do it in a separate loop.
++	 */
++
++	for (i = 0; i < tables; i++) {
++		hdrp = (acpi_desc_table_hdr_t *) __va(readl_unaligned(&xsdt->entry_ptrs[i]));
++		/*
++		 * search for SPCR and DBGP table entries so we can enable
++		 * non-pci interrupts to IO-SAPICs.
++		 */
++		if (!strncmp(hdrp->signature, ACPI_SPCRT_SIG, ACPI_SPCRT_SIG_LEN) || 
++		    !strncmp(hdrp->signature, ACPI_DBGPT_SIG, ACPI_DBGPT_SIG_LEN)) {
++
++			acpi_ser_t *spcr = (void *)hdrp;
++			unsigned long global_int;
++
++			setup_serial_acpi(hdrp);
++
++			/*
++			 * ACPI is able to describe serial ports that live at non-standard
++			 * memory space addresses and use SAPIC interrupts.  If not also
++			 * PCI devices, there would be no interrupt vector information
++			 * for them.  This checks for and fixes that situation.
++			 */
++			if (spcr->length < sizeof(acpi_ser_t))
++				/* table is not long enough for full info, thus no int */
++				break;
++
++			/*
++			 * If the device is not in PCI space, but uses a SAPIC interrupt,
++			 * we need to program the SAPIC so that serial can autoprobe for
++			 * the IA64 interrupt vector later on.  If the device is on the
++			 * PCI space, it should already be setup via the PCI vectors
++			 */
++			if (spcr->base_addr.space_id != ACPI_SERIAL_PCICONF_SPACE &&
++				spcr->int_type == ACPI_SERIAL_INT_SAPIC) {
++
++				u32 irq_base;
++				char *iosapic_address;
++				int vector;
++
++				/* We have a UART in memory space with a SAPIC interrupt */
++				global_int = (spcr->global_int[3] << 24) |
++				             (spcr->global_int[2] << 16) |
++				             (spcr->global_int[1] << 8) |
++				              spcr->global_int[0];
++
++				if (!iosapic_register_irq)
++					continue;
++
++				/* which iosapic does this IRQ belong to? */
++				if (acpi20_which_iosapic(global_int, madt, &irq_base,
++				    &iosapic_address) == 0) {
++					vector = iosapic_register_irq(global_int, 
++					                              1, /* active high polarity */
++												  1, /* edge triggered */
++												  irq_base,
++												  iosapic_address);
++				}
++			}
++		}
++	}
++#endif
+ 
+ 	acpi_cf_terminate();
+ 
+diff -urN linux-clean/include/asm-ia64/acpi-ext.h acpi-serial/include/asm-ia64/acpi-ext.h
+--- linux-clean/include/asm-ia64/acpi-ext.h	Wed Sep  5 09:58:33 2001
++++ acpi-serial/include/asm-ia64/acpi-ext.h	Wed Sep  5 10:26:44 2001
+@@ -178,6 +178,12 @@
+ 	unsigned long lapic_address;
+ } acpi20_entry_lapic_addr_override_t;
+ 
++#define ACPI_SPCRT_SIG	"SPCR"
++#define ACPI_SPCRT_SIG_LEN 4
++
++#define ACPI_DBGPT_SIG	"DBGP"
++#define ACPI_DBGPT_SIG_LEN 4
++
+ typedef struct {
+ 	u8 type;
+ 	u8 length;
+diff -urN linux-clean/include/asm-ia64/serial.h acpi-serial/include/asm-ia64/serial.h
+--- linux-clean/include/asm-ia64/serial.h	Sun Feb  6 19:42:40 2000
++++ acpi-serial/include/asm-ia64/serial.h	Wed Sep  5 10:26:44 2001
+@@ -52,6 +52,17 @@
+ 
+ #define C_P(card,port) (((card)<<6|(port)<<3) + 1)
+ 
++#ifdef CONFIG_ACPI
++/* tty ports reserved for the ACPI serial console port and debug port */
++#define ACPI_SERIAL_CONSOLE_PORT	4
++#define ACPI_SERIAL_DEBUG_PORT		5
++#endif
++
++#if 0
++	{ 0, BASE_BAUD, 0, 30, STD_COM_FLAGS, 0, PORT_16550, 1, 0, 16, 0, 0, 0xc0000000FF5E2000, 0, 0, 0, {0}, {0}, {0}, SERIAL_IO_MEM },
++	{ 0, BASE_BAUD, 0, 20, STD_COM_FLAGS, 0, PORT_16550, 0, 0, 16, 0, 0, 0xc0000000FF5E0000, 0, 0, 0, {0}, {0}, {0}, SERIAL_IO_MEM },
++#endif
++
+ #define STD_SERIAL_PORT_DEFNS			\
+ 	/* UART CLK   PORT IRQ     FLAGS        */			\
+ 	{ 0, BASE_BAUD, 0x3F8, 4, STD_COM_FLAGS },	/* ttyS0 */	\
+@@ -59,37 +70,44 @@
+ 	{ 0, BASE_BAUD, 0x3E8, 4, STD_COM_FLAGS },	/* ttyS2 */	\
+ 	{ 0, BASE_BAUD, 0x2E8, 3, STD_COM4_FLAGS },	/* ttyS3 */
+ 
++#ifdef CONFIG_ACPI
++#define ACPI_SERIAL_PORT_DEFNS            \
++	{ 0, BASE_BAUD, -1, 0, STD_COM_FLAGS, 0, 0, 4 },   /* ttyS4 */ \
++	{ 0, BASE_BAUD, -1, 0, STD_COM_FLAGS, 0, 0, 5 },   /* ttyS5 */
++#else
++#define ACPI_SERIAL_PORT_DEFNS
++#endif
+ 
+ #ifdef CONFIG_SERIAL_MANY_PORTS
+ #define EXTRA_SERIAL_PORT_DEFNS			\
+-	{ 0, BASE_BAUD, 0x1A0, 9, FOURPORT_FLAGS }, 	/* ttyS4 */	\
+-	{ 0, BASE_BAUD, 0x1A8, 9, FOURPORT_FLAGS },	/* ttyS5 */	\
+-	{ 0, BASE_BAUD, 0x1B0, 9, FOURPORT_FLAGS },	/* ttyS6 */	\
+-	{ 0, BASE_BAUD, 0x1B8, 9, FOURPORT_FLAGS },	/* ttyS7 */	\
+-	{ 0, BASE_BAUD, 0x2A0, 5, FOURPORT_FLAGS },	/* ttyS8 */	\
+-	{ 0, BASE_BAUD, 0x2A8, 5, FOURPORT_FLAGS },	/* ttyS9 */	\
+-	{ 0, BASE_BAUD, 0x2B0, 5, FOURPORT_FLAGS },	/* ttyS10 */	\
+-	{ 0, BASE_BAUD, 0x2B8, 5, FOURPORT_FLAGS },	/* ttyS11 */	\
+-	{ 0, BASE_BAUD, 0x330, 4, ACCENT_FLAGS },	/* ttyS12 */	\
+-	{ 0, BASE_BAUD, 0x338, 4, ACCENT_FLAGS },	/* ttyS13 */	\
+-	{ 0, BASE_BAUD, 0x000, 0, 0 },	/* ttyS14 (spare) */		\
+-	{ 0, BASE_BAUD, 0x000, 0, 0 },	/* ttyS15 (spare) */		\
+-	{ 0, BASE_BAUD, 0x100, 12, BOCA_FLAGS },	/* ttyS16 */	\
+-	{ 0, BASE_BAUD, 0x108, 12, BOCA_FLAGS },	/* ttyS17 */	\
+-	{ 0, BASE_BAUD, 0x110, 12, BOCA_FLAGS },	/* ttyS18 */	\
+-	{ 0, BASE_BAUD, 0x118, 12, BOCA_FLAGS },	/* ttyS19 */	\
+-	{ 0, BASE_BAUD, 0x120, 12, BOCA_FLAGS },	/* ttyS20 */	\
+-	{ 0, BASE_BAUD, 0x128, 12, BOCA_FLAGS },	/* ttyS21 */	\
+-	{ 0, BASE_BAUD, 0x130, 12, BOCA_FLAGS },	/* ttyS22 */	\
+-	{ 0, BASE_BAUD, 0x138, 12, BOCA_FLAGS },	/* ttyS23 */	\
+-	{ 0, BASE_BAUD, 0x140, 12, BOCA_FLAGS },	/* ttyS24 */	\
+-	{ 0, BASE_BAUD, 0x148, 12, BOCA_FLAGS },	/* ttyS25 */	\
+-	{ 0, BASE_BAUD, 0x150, 12, BOCA_FLAGS },	/* ttyS26 */	\
+-	{ 0, BASE_BAUD, 0x158, 12, BOCA_FLAGS },	/* ttyS27 */	\
+-	{ 0, BASE_BAUD, 0x160, 12, BOCA_FLAGS },	/* ttyS28 */	\
+-	{ 0, BASE_BAUD, 0x168, 12, BOCA_FLAGS },	/* ttyS29 */	\
+-	{ 0, BASE_BAUD, 0x170, 12, BOCA_FLAGS },	/* ttyS30 */	\
+-	{ 0, BASE_BAUD, 0x178, 12, BOCA_FLAGS },	/* ttyS31 */
++	{ 0, BASE_BAUD, 0x1A0, 9, FOURPORT_FLAGS },	/* ttyS6 */	\
++	{ 0, BASE_BAUD, 0x1A8, 9, FOURPORT_FLAGS },	/* ttyS7 */	\
++	{ 0, BASE_BAUD, 0x1B0, 9, FOURPORT_FLAGS },	/* ttyS8 */	\
++	{ 0, BASE_BAUD, 0x1B8, 9, FOURPORT_FLAGS },	/* ttyS9 */	\
++	{ 0, BASE_BAUD, 0x2A0, 5, FOURPORT_FLAGS },	/* ttyS10 */	\
++	{ 0, BASE_BAUD, 0x2A8, 5, FOURPORT_FLAGS },	/* ttyS11 */	\
++	{ 0, BASE_BAUD, 0x2B0, 5, FOURPORT_FLAGS },	/* ttyS12 */	\
++	{ 0, BASE_BAUD, 0x2B8, 5, FOURPORT_FLAGS },	/* ttyS13 */	\
++	{ 0, BASE_BAUD, 0x330, 4, ACCENT_FLAGS },	/* ttyS14 */	\
++	{ 0, BASE_BAUD, 0x338, 4, ACCENT_FLAGS },	/* ttyS15 */	\
++	{ 0, BASE_BAUD, 0x000, 0, 0 },	/* ttyS16 (spare) */		\
++	{ 0, BASE_BAUD, 0x000, 0, 0 },	/* ttyS17 (spare) */		\
++	{ 0, BASE_BAUD, 0x100, 12, BOCA_FLAGS },	/* ttyS18 */	\
++	{ 0, BASE_BAUD, 0x108, 12, BOCA_FLAGS },	/* ttyS19 */	\
++	{ 0, BASE_BAUD, 0x110, 12, BOCA_FLAGS },	/* ttyS20 */	\
++	{ 0, BASE_BAUD, 0x118, 12, BOCA_FLAGS },	/* ttyS21 */	\
++	{ 0, BASE_BAUD, 0x120, 12, BOCA_FLAGS },	/* ttyS22 */	\
++	{ 0, BASE_BAUD, 0x128, 12, BOCA_FLAGS },	/* ttyS23 */	\
++	{ 0, BASE_BAUD, 0x130, 12, BOCA_FLAGS },	/* ttyS24 */	\
++	{ 0, BASE_BAUD, 0x138, 12, BOCA_FLAGS },	/* ttyS25 */	\
++	{ 0, BASE_BAUD, 0x140, 12, BOCA_FLAGS },	/* ttyS26 */	\
++	{ 0, BASE_BAUD, 0x148, 12, BOCA_FLAGS },	/* ttyS27 */	\
++	{ 0, BASE_BAUD, 0x150, 12, BOCA_FLAGS },	/* ttyS28 */	\
++	{ 0, BASE_BAUD, 0x158, 12, BOCA_FLAGS },	/* ttyS29 */	\
++	{ 0, BASE_BAUD, 0x160, 12, BOCA_FLAGS },	/* ttyS30 */	\
++	{ 0, BASE_BAUD, 0x168, 12, BOCA_FLAGS },	/* ttyS31 */	\
++	{ 0, BASE_BAUD, 0x170, 12, BOCA_FLAGS },	/* ttyS32 */	\
++	{ 0, BASE_BAUD, 0x178, 12, BOCA_FLAGS },	/* ttyS33 */
+ #else
+ #define EXTRA_SERIAL_PORT_DEFNS
+ #endif
+@@ -99,18 +117,18 @@
+  */
+ #if (defined(CONFIG_HUB6) && defined(CONFIG_SERIAL_MANY_PORTS))
+ #define HUB6_SERIAL_PORT_DFNS		\
+-	{ 0, BASE_BAUD, 0x302, 3, HUB6_FLAGS, C_P(0,0) },  /* ttyS32 */	\
+-	{ 0, BASE_BAUD, 0x302, 3, HUB6_FLAGS, C_P(0,1) },  /* ttyS33 */	\
+-	{ 0, BASE_BAUD, 0x302, 3, HUB6_FLAGS, C_P(0,2) },  /* ttyS34 */	\
+-	{ 0, BASE_BAUD, 0x302, 3, HUB6_FLAGS, C_P(0,3) },  /* ttyS35 */	\
+-	{ 0, BASE_BAUD, 0x302, 3, HUB6_FLAGS, C_P(0,4) },  /* ttyS36 */	\
+-	{ 0, BASE_BAUD, 0x302, 3, HUB6_FLAGS, C_P(0,5) },  /* ttyS37 */	\
+-	{ 0, BASE_BAUD, 0x302, 3, HUB6_FLAGS, C_P(1,0) },  /* ttyS38 */	\
+-	{ 0, BASE_BAUD, 0x302, 3, HUB6_FLAGS, C_P(1,1) },  /* ttyS39 */	\
+-	{ 0, BASE_BAUD, 0x302, 3, HUB6_FLAGS, C_P(1,2) },  /* ttyS40 */	\
+-	{ 0, BASE_BAUD, 0x302, 3, HUB6_FLAGS, C_P(1,3) },  /* ttyS41 */	\
+-	{ 0, BASE_BAUD, 0x302, 3, HUB6_FLAGS, C_P(1,4) },  /* ttyS42 */	\
+-	{ 0, BASE_BAUD, 0x302, 3, HUB6_FLAGS, C_P(1,5) },  /* ttyS43 */
++	{ 0, BASE_BAUD, 0x302, 3, HUB6_FLAGS, C_P(0,0) },  /* ttyS34 */	\
++	{ 0, BASE_BAUD, 0x302, 3, HUB6_FLAGS, C_P(0,1) },  /* ttyS35 */	\
++	{ 0, BASE_BAUD, 0x302, 3, HUB6_FLAGS, C_P(0,2) },  /* ttyS36 */	\
++	{ 0, BASE_BAUD, 0x302, 3, HUB6_FLAGS, C_P(0,3) },  /* ttyS37 */	\
++	{ 0, BASE_BAUD, 0x302, 3, HUB6_FLAGS, C_P(0,4) },  /* ttyS38 */	\
++	{ 0, BASE_BAUD, 0x302, 3, HUB6_FLAGS, C_P(0,5) },  /* ttyS39 */	\
++	{ 0, BASE_BAUD, 0x302, 3, HUB6_FLAGS, C_P(1,0) },  /* ttyS40 */	\
++	{ 0, BASE_BAUD, 0x302, 3, HUB6_FLAGS, C_P(1,1) },  /* ttyS41 */	\
++	{ 0, BASE_BAUD, 0x302, 3, HUB6_FLAGS, C_P(1,2) },  /* ttyS42 */	\
++	{ 0, BASE_BAUD, 0x302, 3, HUB6_FLAGS, C_P(1,3) },  /* ttyS43 */	\
++	{ 0, BASE_BAUD, 0x302, 3, HUB6_FLAGS, C_P(1,4) },  /* ttyS44 */	\
++	{ 0, BASE_BAUD, 0x302, 3, HUB6_FLAGS, C_P(1,5) },  /* ttyS45 */
+ #else
+ #define HUB6_SERIAL_PORT_DFNS
+ #endif
