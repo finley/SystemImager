@@ -275,7 +275,8 @@ ifeq ($(ARCH), i386)
 	@### see if the kernel and ramdisk are larger than the size of a 1.44MB
 	@### floppy image, minus about 10k for syslinux stuff
 	@echo -n "Ramdisk + Kernel == "
-	@echo -n "`$(CHECK_FLOPPY_SIZE)`"
+	@echo "`$(CHECK_FLOPPY_SIZE)`"
+	@echo "                    1454080 is the max that will fit."
 	@[ `$(CHECK_FLOPPY_SIZE)` -lt 1454081 ] || \
 	     (echo "" && \
 	      echo "************************************************" && \
@@ -283,7 +284,6 @@ ifeq ($(ARCH), i386)
 	      echo "************************************************" && \
 	      exit 1)
 	@echo " - ok, that should fit on a floppy"
-	@echo "1454080 is the max."
 endif
 
 # install the initscript & config files for the server
