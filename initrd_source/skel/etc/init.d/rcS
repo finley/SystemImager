@@ -347,13 +347,15 @@ if [ ! -z $SSH_DOWNLOAD_URL ]; then
   # client can use it to authenticate itself to the imageserver.
   # (ssh1 style user private key)
   if [ -e /floppy/identity ]; then
-    cp /floppy/identity /root/.ssh/identity || shellout
-    chmod 600 /root/.ssh/identity           || shellout
+    PRIVATE_KEY=/root/.ssh/identity
+    cp /floppy/identity $PRIVATE_KEY || shellout
+    chmod 600 $PRIVATE_KEY           || shellout
   fi
   # (ssh2 style user private key)
   if [ -e /floppy/id_dsa ]; then
-    cp /floppy/id_dsa /root/.ssh/id_dsa || shellout
-    chmod 600 /root/.ssh/id_dsa         || shellout
+    PRIVATE_KEY=/root/.ssh/id_dsa
+    cp /floppy/id_dsa $PRIVATE_KEY || shellout
+    chmod 600 $PRIVATE_KEY         || shellout
   fi
 
   # make urandom device, needed by ssh
@@ -361,12 +363,22 @@ if [ ! -z $SSH_DOWNLOAD_URL ]; then
 
   # If we have a private key from the media above, go ahead and open secure tunnel
   # to the imageserver and continue with the autoinstall like normal.
-  if [ -e /root/.ssh/identity ] || [ -e /root/.ssh/id_dsa ]; then
+  if [ ! -z $PRIVATE_KEY ]; then
     # with the prep ready, start the ssh tunnel connection.
     # the sleep command executes remotely.  Just need something long here
     # as the connection will be severed when the newly imaged client reboots
     # 14400 = 4 hours...if we're not imaged by then....oh boy!
-    ssh -l $SSH_USER -n -f -L873:127.0.0.1:873 $IMAGESERVER sleep 14400 > /dev/null 2>&1 
+    #
+    # Determine if we should run interactive and set redirection options appropriately.
+    # So if the key is blank, go interactive.
+    if [ -s $PRIVATE_KEY ]; then
+      # key is *not* blank
+      REDIRECTION_OPTIONS="> /dev/null 2>&1"
+    else
+      # key is blank - go interactive
+      REDIRECTION_OPTIONS=""
+    fi
+    ssh -l $SSH_USER -n -f -L873:127.0.0.1:873 $IMAGESERVER sleep 14400 $REDIRECTION_OPTIONS
     if [ $? != 0 ]; then
       echo
       echo "ssh tunnel command to $IMAGESERVER failed!!!"
