@@ -40,7 +40,7 @@ echo "Checking for old utilities..."
 OLD_FILES="/usr/sbin/addclients /usr/sbin/cpimage /usr/sbin/getimage /usr/sbin/makedhcpserver /usr/sbin/makedhcpstatic /usr/sbin/makeautoinstallcd /usr/sbin/makeautoinstalldiskette /usr/sbin/mvimage /usr/sbin/pushupdate /usr/sbin/rmimage /usr/sbin/lsimage"
 remove_old_files
 
-CONFIG_FILES="/etc/systemimager/systemimager.conf:./etc/systemimager/systemimager.conf /etc/systemimager/rsyncd.conf:./etc/systemimager/rsyncd.conf /etc/init.d/systemimager:./etc/init.d/systemimager:/etc/systemimager/updateclient.local.exclude:./tftpstuff/systemimager/updateclient.local.exclude"
+CONFIG_FILES="/etc/systemimager/systemimager.conf:./etc/systemimager/systemimager.conf /etc/systemimager/rsyncd.conf:./etc/systemimager/rsyncd.conf /etc/init.d/systemimager:./etc/init.d/systemimager"
 upgrade_config_files
 ### END clean up old files ###
 
@@ -263,8 +263,11 @@ echo "available at:"
 echo "  http://www.perl.com/CPAN/authors/id/ABW/AppConfig-1.52.tar.gz"
 echo "and must be installed before using the SystemImager utilities."
 echo "AppConfig is supplied by the libappconfig-perl deb package, which is"
-echo "in the Debian archive.  The RPM package is available from:"
-echo "http://sf.net/projects/systemconfig"
+echo "in the Debian archive.  A backported version for Debian 2.2 (potato)"
+echo "can be found at:"
+echo "  http://www.dannf.org/testing"
+echo "The RPM package is available from:"
+echo "  http://sf.net/projects/systemconfig"
 delim
 echo -n "Press <Enter> to continue..."
 read
