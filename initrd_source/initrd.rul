@@ -159,7 +159,7 @@ initrd_clean:	$(subst .rul,_clean,$(shell cd $(INITRD_DIR)/make.d && ls *.rul))
 	cd $(INITRD_DIR) && rm -f initrd initrd.img
 	rm -f $(INITRD_DIR)/build_dir-stamp
 
-initrd_distclean:	clean
+initrd_distclean:	initrd_clean
 	-rm -rf $(INITRD_SRC_DIR)
 
 .PHONY:	all build_dir install get_source help helpless clean distclean \
