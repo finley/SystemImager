@@ -35,6 +35,9 @@ INITRD_BUILD_DIR = $(INITRD_DIR)/build_dir
 SKEL_FILES = $(shell find $(INITRD_DIR)/skel -not -regex '.*/CVS.*' -and \
                                  -not -regex '.*/CVS')
 
+MKCRAMFS = $(shell which mkcramfs || which mkfs.cramfs || \
+             echo MKCRAMFS_WAS_NOT_FOUND_IN_YOUR_PATH)
+
 # Number of inodes in the build directory and number of 
 # inodes needed on the initial RAM disk -BEF-
 
@@ -152,7 +155,7 @@ $(INITRD_DIR)/initrd.img:	$(INITRD_DIR)/initrd
 endif
 
 $(INITRD_DIR)/initrd:	$(INITRD_DIR)/build_dir-stamp
-	mkcramfs $(INITRD_BUILD_DIR) $(INITRD_DIR)/initrd
+	$(MKCRAMFS) $(INITRD_BUILD_DIR) $(INITRD_DIR)/initrd
 
 ########## BEGIN initrd ##########
 # install the autoinstall ramdisk - the initial ramdisk used by autoinstall
