@@ -392,7 +392,8 @@ endif
 	# copy standard libraries if it can't find a PIC equivalent.  -BEF-
 	#
 	mkdir -m 755 -p $(SYSTEMIMAGER_SSH_DIR)/lib
-	cd $(SYSTEMIMAGER_SSH_DIR) && $(TOPDIR)/initrd_source/mklibs.sh -v -d lib sbin/*
+	cd $(SYSTEMIMAGER_SSH_DIR) && \
+	  $(TOPDIR)/initrd_source/mklibs -v -d lib sbin/*
 
 	tar -cv $(OPENSSH_OTHER_FILES) | tar -C $(SYSTEMIMAGER_SSH_DIR) -xv
 
@@ -525,11 +526,12 @@ endif
 	mkdir -m 755 -p $(BOEL_BINARIES_DIR)/usr/share/discover
 	install -m 644 $(DISCOVER_DATA_FILES) $(BOEL_BINARIES_DIR)/usr/share/discover
 	#
-	# Use the mklibs.sh script from Debian to find and copy libraries and 
+	# Use the mklibs script from Debian to find and copy libraries and 
 	# any soft links.  Note: This does not require PIC libraries -- it will
 	# copy standard libraries if it can't find a PIC equivalent.  -BEF-
 	#
-	cd $(BOEL_BINARIES_DIR) && $(TOPDIR)/initrd_source/mklibs.sh -v -d lib bin/* usr/bin/* sbin/* usr/sbin/* lib/*
+	cd $(BOEL_BINARIES_DIR) && \
+	  $(TOPDIR)/initrd_source/mklibs -v -d lib bin/* sbin/* lib/*
 	#
 	#
 	# install kernel modules. -BEF-
