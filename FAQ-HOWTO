@@ -3,8 +3,8 @@
 #
 # This file is: FAQ-HOWTO
 #
-# Current version as of the writing of this document: 1.0
-#                                           revision: 6
+# Current version as of the writing of this document: 1.1
+#                                           revision: 0
 #
 #   Others who have contributed to this document (in alphabetical order):
 #     Paonia Ezrine <paonia@home.welcomehome.org>
@@ -109,8 +109,8 @@ Answer:
 The initial setup of VA SystemImager is a three step process:
 
 1) Install VA SystemImager on the machine you designate as your "imageserver".
-   - Download and install the latest va-systemimager RPM.
-     (rpm -Uvh va-systemimager)
+   - Download and install the latest va-systemimager RPM or tarball.
+     (rpm -Uvh va-systemimager*.rpm for the RPM)
    - Run the command "makedhcpserver" to configure your "imageserver" to be a
      DHCP server.  Be sure to follow the instructions it gives you at the end.
 
@@ -121,9 +121,10 @@ The initial setup of VA SystemImager is a three step process:
      Don't worry too much about getting it exactly right the first time, 
      since you can use VA SystemImager to make incremental changes to your image
      rather easily.
-   - Download and install the latest va-systemimager-client RPM on the "master" 
-     client.
-
+   - Download and install the latest va-systemimager-client RPM or tarball on  
+     the "master" client.
+   - Run the "prepareclient" command on the "master" client.
+     
 3)   You are then ready to pull the image from the "master" client onto
      the "imageserver" with the command "getimage".
      Run this command as follows:

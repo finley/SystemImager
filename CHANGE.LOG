@@ -17,6 +17,11 @@ VA SystemImager-1.1 2000.??.??
 - prepareclient -- (also part of the va-systemimager-client RPM)
   Implemented a delay between killing a running rsync daemon and starting
   up the fresh one.
+- autoinstallcd.iso -- autoinstallcd ISO image put up on the download 
+  site. (3 Meg)
+- prepareclient -- gave it a real usage statement.  Behavior is 
+  no longer to traipse upon the network with tftp, but to use the 
+  utilities on the client system.  Options are -help, -version, and -quiet
 
 VA SystemImager-1.0 2000.05.02
 - The name changed ever so slightly ;)
