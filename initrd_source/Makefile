@@ -47,13 +47,17 @@ BUSYBOX_BINARY_STAGE2 = $(BUSYBOX_ROOT_STAGE2)/busybox
 
 LOCAL_BINARIES_STAGE1 := /sbin/dhclient-2.2.x /sbin/mke2fs /bin/ash /usr/bin/mawk /usr/bin/rsync /usr/bin/snarf 
 
-LOCAL_BINARIES_STAGE2 := $(LOCAL_BINARIES_STAGE1) /sbin/devfsd /sbin/discover /sbin/mkfs.jfs /sbin/mkfs.xfs /sbin/insmod /sbin/mkreiserfs /sbin/mkraid /sbin/modprobe /sbin/raidstart /sbin/raidstop /sbin/rmmod /sbin/sfdisk /usr/bin/host
+LOCAL_BINARIES_STAGE2 := $(LOCAL_BINARIES_STAGE1) /usr/bin/host
+
+LOCAL_SBINARIES_STAGE2 := /sbin/devfsd /sbin/discover /sbin/mkfs.jfs /sbin/mkfs.xfs /sbin/insmod /sbin/mkreiserfs /sbin/mkraid /sbin/modprobe /sbin/raidstart /sbin/raidstop /sbin/rmmod /sbin/sfdisk
 
 ifeq ($(ARCH),s390)
 	LOCAL_BINARIES_STAGE2 := $(LOCAL_BINARIES_STAGE1) /sbin/devfsd /sbin/discover /sbin/mkfs.jfs /sbin/insmod /sbin/mkreiserfs /sbin/modprobe /sbin/rmmod /usr/bin/host /sbin/fdasd /sbin/dasdfmt
 endif
 
 LOCAL_BINARIES_STAGE2_SSH := $(LOCAL_BINARIES_STAGE2) /usr/bin/ssh /usr/sbin/sshd /usr/bin/scp /usr/bin/ssh-keygen
+
+LOCAL_SBINARIES_STAGE2_SSH := $(LOCAL_SBINARIES_STAGE2)
 
 ###### END binaries that will be copied over from the local system #####
 
@@ -86,7 +90,7 @@ initrd:	binary-build-stamp $(LOCAL_BINARIES_STAGE1)
 stage2rd.gz:	stage2rd
 	gzip -9 < stage2rd > stage2rd.gz
 
-stage2rd:	binary-build-stamp $(LOCAL_BINARIES_STAGE2)
+stage2rd:	binary-build-stamp $(LOCAL_BINARIES_STAGE2) $(LOCAL_SBINARIES_STAGE2)
 	# create a temporary skeleton directory
 	cp -a skel skel2.tmp
 
@@ -95,6 +99,9 @@ stage2rd:	binary-build-stamp $(LOCAL_BINARIES_STAGE2)
 
 	# copy over files from local system
 	cp -a $(BEEP_BINARY) $(LOCAL_BINARIES_STAGE2) skel2.tmp/bin
+	mkdir skel2.tmp/sbin
+	cp -a $(LOCAL_SBINARIES_STAGE2) skel2.tmp/sbin
+
 	cd skel2.tmp && ln ./bin/ash ./bin/sh
 	mv skel2.tmp/bin/dhclient-2.2.x skel2.tmp/bin/dhclient
 
@@ -133,6 +140,8 @@ stage2rd-ssh:	binary-build-stamp $(LOCAL_BINARIES_STAGE2_SSH)
 
 	# copy over files from local system
 	cp -a $(BEEP_BINARY) $(LOCAL_BINARIES_STAGE2_SSH) skel2-ssh.tmp/bin
+	mkdir skel2.tmp/sbin
+	cp -a $(LOCAL_SBINARIES_STAGE2_SSH) skel2-ssh.tmp/sbin
 	cd skel2-ssh.tmp && ln ./bin/ash ./bin/sh
 	mv skel2-ssh.tmp/bin/dhclient-2.2.x skel2-ssh.tmp/bin/dhclient
 
