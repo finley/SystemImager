@@ -197,9 +197,17 @@ ifeq ($(ARCH),s390)
 	 LINUX_CONFIG = $(PATCH_DIR)/linux.s390.config
 	 LINUX_TARGET = image
 endif
+ifeq ($(ARCH),ppc)
+	LINUX_VERSION = 2.4.14
+	LINUX_MD5SUM = dc03387783a8f58c90ef7b1ec6af252a
+	LINUX_IMAGE = $(LINUX_SRC)/arch/ppc/boot/zImage
+	LINUX_PATCH = $(PATCH_DIR)/linux.ppc.patch
+	LINUX_CONFIG = $(PATCH_DIR)/linux.ppc.config
+	LINUX_TARGET = zImage                          
+endif
 
 LINUX_TARBALL = linux-$(LINUX_VERSION).tar.bz2
-LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.4/$(LINUX_TARBALL)
+LINUX_URL = http://www.us.kernel.org/pub/linux/kernel/v2.4/$(LINUX_TARBALL)
 
 RAMDISK_DIR = initrd_source
 

@@ -1,0 +1,2151 @@
+diff -urN -I BK Id linux-2.4.14/Documentation/Configure.help linuxppc-2.4.14/Documentation/Configure.help
+--- linux-2.4.14/Documentation/Configure.help	Tue Nov  6 18:21:27 2001
++++ linuxppc-2.4.14/Documentation/Configure.help	Sun Nov 11 18:33:35 2001
+@@ -1131,10 +1131,10 @@
+   Say Y if you have an IDE doubler.  The driver is enabled at kernel
+   runtime using the "ide=doubler" kernel boot parameter.
+ 
+-Support for PowerMac IDE devices (must also enable IDE)
++Builtin PowerMac IDE support
+ CONFIG_BLK_DEV_IDE_PMAC
+-  This driver provides support for the built-in IDE controller on most
+-  of the recent Apple Power Macintoshes and PowerBooks.
++  This driver provides support for the built-in IDE controller on
++  most of the recent Apple Power Macintoshes and PowerBooks.
+   If unsure, say Y.
+ 
+ PowerMac IDE DMA support
+diff -urN -I BK Id linux-2.4.14/arch/ppc/boot/common/misc-simple.c linuxppc-2.4.14/arch/ppc/boot/common/misc-simple.c
+--- linux-2.4.14/arch/ppc/boot/common/misc-simple.c	Mon Sep 24 09:31:16 2001
++++ linuxppc-2.4.14/arch/ppc/boot/common/misc-simple.c	Sun Nov 11 18:33:35 2001
+@@ -45,6 +45,15 @@
+ char *cmd_line = cmd_buf;
+ 
+ unsigned long initrd_start = 0, initrd_end = 0;
++
++/* These values must be variables.  If not, the compiler optimizer
++ * will remove some code, causing the size of the code to vary
++ * when these values are zero.  This is bad because we first
++ * compile with these zero to determine the size and offsets
++ * in an image, than compile again with these set to the proper
++ * discovered value.
++ */
++unsigned int initrd_offset, initrd_size;
+ char *zimage_start;
+ int zimage_size;
+ 
+@@ -69,7 +78,8 @@
+ 	 * were relocated to.
+ 	 */
+ 	puts("loaded at:     "); puthex(load_addr);
+-	puts(" "); puthex((unsigned long)(load_addr + (4*num_words))); puts("\n");
++	puts(" "); puthex((unsigned long)(load_addr + (4*num_words)));
++	puts("\n");
+ 	if ( (unsigned long)load_addr != (unsigned long)&start )
+ 	{
+ 		puts("relocated to:  "); puthex((unsigned long)&start);
+@@ -82,45 +92,38 @@
+ 	   the size of the elf header which we strip -- Cort */
+ 	zimage_start = (char *)(load_addr - 0x10000 + ZIMAGE_OFFSET);
+ 	zimage_size = ZIMAGE_SIZE;
++	initrd_offset = INITRD_OFFSET;
++	initrd_size = INITRD_SIZE;
+ 
+-	if ( INITRD_OFFSET )
+-		initrd_start = load_addr - 0x10000 + INITRD_OFFSET;
++	if ( initrd_offset )
++		initrd_start = load_addr - 0x10000 + initrd_offset;
+ 	else
+ 		initrd_start = 0;
+-	initrd_end = INITRD_SIZE + initrd_start;
++	initrd_end = initrd_size + initrd_start;
+ 
+-	/*
+-	 * Find a place to stick the zimage and initrd and 
+-	 * relocate them if we have to. -- Cort
+-	 */
++	/* Relocate the zImage */
+ 	avail_ram = (char *)PAGE_ALIGN((unsigned long)_end);
+ 	puts("zimage at:     "); puthex((unsigned long)zimage_start);
+-	puts(" "); puthex((unsigned long)(zimage_size+zimage_start)); puts("\n");
+-	if ( (unsigned long)zimage_start <= 0x00800000 )
+-	{
+-		memcpy( (void *)avail_ram, (void *)zimage_start, zimage_size );
+-		zimage_start = (char *)avail_ram;
+-		puts("relocated to:  "); puthex((unsigned long)zimage_start);
+-		puts(" ");
+-		puthex((unsigned long)zimage_size+(unsigned long)zimage_start);
+-		puts("\n");
++	puts(" "); puthex((unsigned long)(zimage_size+zimage_start));
++	puts("\n");
++	memcpy( (void *)avail_ram, (void *)zimage_start, zimage_size );
++	zimage_start = (char *)avail_ram;
++	puts("relocated to:  "); puthex((unsigned long)zimage_start);
++	puts(" ");
++	puthex((unsigned long)zimage_size+(unsigned long)zimage_start);
++	puts("\n");
+ 
+-		/* relocate initrd */
+-		if ( initrd_start )
+-		{
+-			puts("initrd at:     "); puthex(initrd_start);
+-			puts(" "); puthex(initrd_end); puts("\n");
+-			avail_ram = (char *)PAGE_ALIGN(
+-				(unsigned long)zimage_size+(unsigned long)zimage_start);
+-			memcpy ((void *)avail_ram, (void *)initrd_start, INITRD_SIZE );
+-			initrd_start = (unsigned long)avail_ram;
+-			initrd_end = initrd_start + INITRD_SIZE;
+-			puts("relocated to:  "); puthex(initrd_start);
+-			puts(" "); puthex(initrd_end); puts("\n");
+-		}
+-	} else if ( initrd_start ) {
++	if ( initrd_start ) {
+ 		puts("initrd at:     "); puthex(initrd_start);
+ 		puts(" "); puthex(initrd_end); puts("\n");
++		/* relocate initrd */
++		avail_ram = (char *)PAGE_ALIGN((unsigned long)zimage_size + 
++				(unsigned long)zimage_start);
++		memcpy( (void *)avail_ram, (void *)initrd_start, initrd_size );
++		initrd_start = (unsigned long)avail_ram;
++		initrd_end = initrd_start + initrd_size;
++		puts("relocated to:  "); puthex(initrd_start);
++		puts(" "); puthex(initrd_end); puts("\n");
+ 	}
+ 
+ 	avail_ram = (char *)0x00400000;
+@@ -161,11 +164,9 @@
+ 	puts("\n");
+ 
+ 	/* mappings on early boot can only handle 16M */
+-	if ( (int)(cmd_line[0]) > (16<<20))
++	if ( (u32)(cmd_line) > (16<<20))
+ 		puts("cmd_line located > 16M\n");
+-	if ( initrd_start > (16<<20))
+-		puts("initrd_start located > 16M\n");
+-       
++
+ 	puts("Uncompressing Linux...");
+ 
+ 	gunzip(0, 0x400000, zimage_start, &zimage_size);
+diff -urN -I BK Id linux-2.4.14/arch/ppc/boot/common/ns16550.c linuxppc-2.4.14/arch/ppc/boot/common/ns16550.c
+--- linux-2.4.14/arch/ppc/boot/common/ns16550.c	Mon Sep 24 09:31:16 2001
++++ linuxppc-2.4.14/arch/ppc/boot/common/ns16550.c	Sun Nov 11 18:33:03 2001
+@@ -10,6 +10,9 @@
+ #include <linux/serial_reg.h>
+ #include <asm/serial.h>
+ 
++/* Default serial baud rate */
++#define SERIAL_BAUD	9600
++
+ extern void outb(int port, unsigned char val);
+ extern unsigned char inb(int port);
+ extern unsigned long ISA_io;
+@@ -46,13 +49,20 @@
+ 	outb(com_port + (UART_IER << shift), 0x00);
+ 	/* Access baud rate */
+ 	outb(com_port + (UART_LCR << shift), 0x80);
+-#ifdef CONFIG_SERIAL_CONSOLE_NONSTD
+-	/* Input clock. */
+-	outb(com_port + (UART_DLL << shift), 
+-			(BASE_BAUD / CONFIG_SERIAL_CONSOLE_BAUD));
+-	outb(com_port + (UART_DLM << shift), 
+-		(BASE_BAUD / CONFIG_SERIAL_CONSOLE_BAUD) >> 8);
+-#endif
++	/*
++	 * Test if serial port is unconfigured.
++	 * We assume that no-one uses less than 110 baud or
++	 * less than 7 bits per character these days.
++	 *  -- paulus.
++	 */
++	if (inb(com_port + (UART_DLM << shift)) > 4
++	    || (inb(com_port + (UART_LCR << shift)) & 2) == 0) {
++		/* Input clock. */
++		outb(com_port + (UART_DLL << shift),
++		     (BASE_BAUD / SERIAL_BAUD));
++		outb(com_port + (UART_DLM << shift),
++		     (BASE_BAUD / SERIAL_BAUD) >> 8);
++	}
+ 	 /* 8 data, 1 stop, no parity */
+ 	outb(com_port + (UART_LCR << shift), 0x03);
+ 	/* RTS/DTR */
+diff -urN -I BK Id linux-2.4.14/arch/ppc/boot/images/Makefile linuxppc-2.4.14/arch/ppc/boot/images/Makefile
+--- linux-2.4.14/arch/ppc/boot/images/Makefile	Sat May 26 12:39:40 2001
++++ linuxppc-2.4.14/arch/ppc/boot/images/Makefile	Sun Nov 11 18:34:19 2001
+@@ -9,4 +9,4 @@
+ 	gzip -vf9 vmlinux
+ 
+ clean:
+-	rm -f sImage vmapus vmlinux.* miboot.image* zImage* zvmlinux.*
++	rm -f sImage vmapus vmlinux* miboot* zImage* zvmlinux*
+diff -urN -I BK Id linux-2.4.14/arch/ppc/boot/mbx/Makefile linuxppc-2.4.14/arch/ppc/boot/mbx/Makefile
+--- linux-2.4.14/arch/ppc/boot/mbx/Makefile	Wed Jul  4 14:33:18 2001
++++ linuxppc-2.4.14/arch/ppc/boot/mbx/Makefile	Sun Nov 11 18:33:40 2001
+@@ -73,6 +73,12 @@
+ 		-DZIMAGE_SIZE=0 -c -o $@ $*.c
+ 
+ zvmlinux.initrd: $(OBJECTS) $(LIBS) ../images/vmlinux.gz
++#
++# Recompile misc.o again with more 'correct' bogus offsets
++#
++	$(CC) $(CFLAGS) -DINITRD_OFFSET=0x0008c8e3 -DINITRD_SIZE=0x0000111a \
++		-DZIMAGE_OFFSET=0x00018000 -DZIMAGE_SIZE=0x000748e2 \
++		-c -o misc.o misc.c
+ 	$(LD) $(ZLINKFLAGS) -o $@.tmp $(OBJECTS) $(LIBS)
+ 	$(OBJCOPY) $(OBJCOPY_ARGS) -R .comment \
+ 		--add-section=initrd=../images/ramdisk.image.gz \
+@@ -88,6 +94,8 @@
+ 		--add-section=initrd=../images/ramdisk.image.gz \
+ 		--add-section=image=../images/vmlinux.gz \
+ 		$@.tmp ../images/$@.embedded
++# Remove zvmlinux and zvmlinux.temp, we have ../images/zvmlinux.embedded
++	rm -f $@.tmp $@
+ 
+ zImage: zvmlinux
+ ifeq ($(CONFIG_RPXCLASSIC),y)
+@@ -104,6 +112,12 @@
+ endif
+ 
+ zvmlinux: $(OBJECTS) $(LIBS) ../images/vmlinux.gz
++#
++# Recompile misc.o again with more 'correct' bogus offsets
++#
++	$(CC) $(CFLAGS) -DINITRD_OFFSET=0 -DINITRD_SIZE=0 \
++		-DZIMAGE_OFFSET=0x00018000 -DZIMAGE_SIZE=0x000748e2 \
++		-c -o misc.o misc.c
+ #
+ # build the boot loader image and then compute the offset into it
+ # for the kernel image
+diff -urN -I BK Id linux-2.4.14/arch/ppc/boot/mbx/misc.c linuxppc-2.4.14/arch/ppc/boot/mbx/misc.c
+--- linux-2.4.14/arch/ppc/boot/mbx/misc.c	Mon Sep 24 09:31:16 2001
++++ linuxppc-2.4.14/arch/ppc/boot/mbx/misc.c	Sun Nov 11 18:33:35 2001
+@@ -44,10 +44,6 @@
+ char *avail_ram;
+ char *end_avail;
+ 
+-/* See comment below.....
+-*/
+-unsigned int initrd_offset, initrd_size;
+-
+ /* Because of the limited amount of memory on embedded, it presents
+  * loading problems.  The biggest is that we load this boot program
+  * into a relatively low memory address, and the Linux kernel Bss often
+@@ -75,14 +71,13 @@
+ bd_t *hold_residual = &hold_resid_buf;
+ unsigned long initrd_start = 0, initrd_end = 0;
+ char *zimage_start;
+-int zimage_size;
+ 
+ extern void gunzip(void *, int, unsigned char *, int *);
+ 
+ unsigned long
+ decompress_kernel(unsigned long load_addr, int num_words, unsigned long cksum, bd_t *bp)
+ {
+-	int timer;
++	int timer, zimage_size = ZIMAGE_SIZE;
+ 	extern unsigned long start;
+ 	char *cp, ch;
+ 
+@@ -93,17 +88,6 @@
+ 	serial_init(bp);
+ #endif
+ 
+-	/* These values must be variables.  If not, the compiler optimizer
+-	 * will remove some code, causing the size of the code to vary
+-	 * when these values are zero.  This is bad because we first
+-	 * compile with these zero to determine the size and offsets
+-	 * in an image, than compile again with these set to the proper
+-	 * discovered value.....Ya know, we used to read these from the
+-	 * header a long time ago.....
+-	 */
+-	initrd_offset = INITRD_OFFSET;
+-	initrd_size = INITRD_SIZE;
+-
+ 	/* Grab some space for the command line and board info.  Since
+ 	 * we no longer use the ELF header, but it was loaded, grab
+ 	 * that space.
+@@ -154,13 +138,12 @@
+ 	/* we have to subtract 0x10000 here to correct for objdump including the
+ 	   size of the elf header which we strip -- Cort */
+ 	zimage_start = (char *)(load_addr - 0x10000 + ZIMAGE_OFFSET);
+-	zimage_size = ZIMAGE_SIZE;
+ 
+-	if ( initrd_offset )
+-		initrd_start = load_addr - 0x10000 + initrd_offset;
++	if ( INITRD_OFFSET )
++		initrd_start = load_addr - 0x10000 + INITRD_OFFSET;
+ 	else
+ 		initrd_start = 0;
+-	initrd_end = initrd_size + initrd_start;
++	initrd_end = INITRD_SIZE + initrd_start;
+ 
+ 	/*
+ 	 * setup avail_ram - this is the first part of ram usable
+@@ -201,9 +184,9 @@
+ 		if ((unsigned long)initrd_start > 0x01000000) {
+ 			memcpy ((void *)PAGE_ALIGN(-PAGE_SIZE+(unsigned long)end_avail-INITRD_SIZE),
+ 				(void *)initrd_start,
+-				initrd_size );
++				INITRD_SIZE );
+ 			initrd_start = PAGE_ALIGN(-PAGE_SIZE+(unsigned long)end_avail-INITRD_SIZE);
+-			initrd_end = initrd_start + initrd_size;
++			initrd_end = initrd_start + INITRD_SIZE;
+ 			end_avail = (char *)initrd_start;
+ 			puts("relocated to:  "); puthex(initrd_start);
+ 			puts(" "); puthex(initrd_end); puts("\n");
+diff -urN -I BK Id linux-2.4.14/arch/ppc/boot/pmac/Makefile linuxppc-2.4.14/arch/ppc/boot/pmac/Makefile
+--- linux-2.4.14/arch/ppc/boot/pmac/Makefile	Mon Sep 24 09:31:16 2001
++++ linuxppc-2.4.14/arch/ppc/boot/pmac/Makefile	Sun Nov 11 18:34:07 2001
+@@ -48,9 +48,9 @@
+ 	cp ../images/vmlinux.coff $(TFTPIMAGE)
+ 	cp ../images/vmlinux.elf-pmac $(TFTPIMAGE).elf
+ 
+-znetboot.initrd: vmlinux.coff.initrd vmlinux.initrd.elf-pmac
+-	cp ../images/vmlinux.coff.initrd $(TFTPIMAGE)
+-	cp ../images/vmlinux.elf-pmac.initrd $(TFTPIMAGE).elf
++znetboot.initrd: vmlinux.initrd.coff vmlinux.initrd.elf-pmac
++	cp ../images/vmlinux.initrd.coff $(TFTPIMAGE)
++	cp ../images/vmlinux.initrd.elf-pmac $(TFTPIMAGE).elf
+ 
+ #floppy: zImage
+ #	mount -t hfs /dev/fd0 /mnt
+@@ -61,7 +61,7 @@
+ 	$(OBJCOPY) $(OBJCOPY_ARGS) --add-section=image=../images/vmlinux.gz \
+ 		dummy.o ../images/$@
+ 
+-miboot.image.initrd: miboot.image ../images/ramdisk.image.gz
++miboot.initrd.image: miboot.image ../images/ramdisk.image.gz
+ 	$(OBJCOPY) $(OBJCOPY_ARGS) --add-section=initrd=../images/ramdisk.image.gz \
+ 		../images/miboot.image ../images/$@
+ 
+@@ -83,11 +83,11 @@
+ 	rm -f coffboot
+ 	ln -sf vmlinux.coff ../images/zImage.pmac
+ 
+-vmlinux.coff.initrd: coffboot.initrd $(HACKCOFF)
++vmlinux.initrd.coff: coffboot.initrd $(HACKCOFF)
+ 	$(OBJCOPY) $(OBJCOPY_ARGS) coffboot.initrd ../images/$@
+ 	$(HACKCOFF) ../images/$@
+ 	rm -f coffboot.initrd
+-	ln -sf vmlinux.coff.initrd ../images/zImage.initrd.pmac
++	ln -sf vmlinux.initrd.coff ../images/zImage.initrd.pmac
+ 
+ vmlinux.elf-pmac: $(CHRPOBJS) $(LIBS) ../common/no_initrd.o $(MKNOTE) ../images/vmlinux.gz
+ 	$(LD) $(CHRP_LD_ARGS) -o ../images/$@ $(CHRPOBJS) ../common/no_initrd.o $(LIBS)
+@@ -110,6 +110,6 @@
+ 
+ zImage: vmlinux.coff vmlinux.elf-pmac miboot.image
+ 
+-zImage.initrd: vmlinux.coff.initrd vmlinux.initrd.elf-pmac miboot.image.initrd
++zImage.initrd: vmlinux.initrd.coff vmlinux.initrd.elf-pmac miboot.initrd.image
+ 
+ include $(TOPDIR)/Rules.make
+diff -urN -I BK Id linux-2.4.14/arch/ppc/boot/prep/Makefile linuxppc-2.4.14/arch/ppc/boot/prep/Makefile
+--- linux-2.4.14/arch/ppc/boot/prep/Makefile	Wed Oct 10 12:38:52 2001
++++ linuxppc-2.4.14/arch/ppc/boot/prep/Makefile	Sun Nov 11 18:34:19 2001
+@@ -45,6 +45,12 @@
+ 		-DZIMAGE_SIZE=0 -c -o $@ $*.c
+ 
+ zvmlinux.initrd: $(obj-y) $(LIBS) ../images/vmlinux.gz
++#
++# Recompile misc.oagain with more 'correct' bogus offsets
++#
++	$(CC) $(CFLAGS) -DINITRD_OFFSET=0x00138466 -DINITRD_SIZE=0x0000111a \
++		-DZIMAGE_OFFSET=0x0001b000 -DZIMAGE_SIZE=0x0011d460 \
++		-c -o misc.o misc.c
+ 	$(LD) $(ZLINKFLAGS) -o $@.tmp $(obj-y) $(LIBS)
+ 	$(OBJCOPY) $(OBJCOPY_ARGS) -R .comment \
+ 		--add-section=initrd=../images/ramdisk.image.gz \
+@@ -60,7 +66,7 @@
+ 		--add-section=initrd=../images/ramdisk.image.gz \
+ 		--add-section=image=../images/vmlinux.gz \
+ 		$@.tmp $@
+-	rm -f $@.tmp zvmlinux
++	rm -f $@.tmp
+ 
+ zImage: zvmlinux $(MKPREP)
+ 	$(MKPREP) -pbp zvmlinux ../images/$@.prep
+@@ -72,6 +78,12 @@
+ 
+ zvmlinux: $(obj-y) $(LIBS) ../images/vmlinux.gz
+ #
++# Recompile misc.oagain with more 'correct' bogus offsets
++#
++	$(CC) $(CFLAGS) -DINITRD_OFFSET=0 -DINITRD_SIZE=0 \
++		-DZIMAGE_OFFSET=0x0001b000 -DZIMAGE_SIZE=0x0011d460 \
++		-c -o misc.o misc.c
++#
+ # build the boot loader image and then compute the offset into it
+ # for the kernel image
+ #
+@@ -88,7 +100,7 @@
+ 	$(LD) $(ZLINKFLAGS) -o zvmlinux.tmp $(obj-y) $(LIBS)
+ 	$(OBJCOPY) $(OBJCOPY_ARGS) -R .comment \
+ 		--add-section=image=../images/vmlinux.gz $@.tmp $@
+-	rm $@.tmp
++	rm -f $@.tmp
+ 
+ floppy: zImage
+ 	dd if=../images/zImage.prep of=/dev/fd0H1440 bs=64b
+diff -urN -I BK Id linux-2.4.14/arch/ppc/boot/prep/misc.c linuxppc-2.4.14/arch/ppc/boot/prep/misc.c
+--- linux-2.4.14/arch/ppc/boot/prep/misc.c	Wed Oct 24 23:04:56 2001
++++ linuxppc-2.4.14/arch/ppc/boot/prep/misc.c	Sun Nov 11 18:32:55 2001
+@@ -48,14 +48,6 @@
+ RESIDUAL *hold_residual = &hold_resid_buf;
+ unsigned long initrd_start = 0, initrd_end = 0;
+ 
+-/* These values must be variables.  If not, the compiler optimizer
+- * will remove some code, causing the size of the code to vary
+- * when these values are zero.  This is bad because we first
+- * compile with these zero to determine the size and offsets
+- * in an image, than compile again with these set to the proper
+- * discovered value.
+- */
+-unsigned int initrd_offset, initrd_size;
+ char *zimage_start;
+ int zimage_size;
+ 
+@@ -311,14 +303,12 @@
+ 	   size of the elf header which we strip -- Cort */
+ 	zimage_start = (char *)(load_addr - 0x10000 + ZIMAGE_OFFSET);
+ 	zimage_size = ZIMAGE_SIZE;
+-	initrd_offset = INITRD_OFFSET;
+-	initrd_size = INITRD_SIZE;
+ 
+-	if ( initrd_offset )
+-		initrd_start = load_addr - 0x10000 + initrd_offset;
++	if ( INITRD_OFFSET )
++		initrd_start = load_addr - 0x10000 + INITRD_OFFSET;
+ 	else
+ 		initrd_start = 0;
+-	initrd_end = initrd_size + initrd_start;
++	initrd_end = INITRD_SIZE + initrd_start;
+ 
+ 	/*
+ 	 * Find a place to stick the zimage and initrd and 
+@@ -343,9 +333,9 @@
+ 			puts(" "); puthex(initrd_end); puts("\n");
+ 			avail_ram = (char *)PAGE_ALIGN(
+ 				(unsigned long)zimage_size+(unsigned long)zimage_start);
+-			memcpy ((void *)avail_ram, (void *)initrd_start, initrd_size );
++			memcpy ((void *)avail_ram, (void *)initrd_start, INITRD_SIZE );
+ 			initrd_start = (unsigned long)avail_ram;
+-			initrd_end = initrd_start + initrd_size;
++			initrd_end = initrd_start + INITRD_SIZE;
+ 			puts("relocated to:  "); puthex(initrd_start);
+ 			puts(" "); puthex(initrd_end); puts("\n");
+ 		}
+@@ -395,7 +385,7 @@
+ 	puts("\n");
+ 
+ 	/* mappings on early boot can only handle 16M */
+-	if ( (int)(cmd_line[0]) > (16<<20))
++	if ( (int)(cmd_line) > (16<<20))
+ 		puts("cmd_line located > 16M\n");
+ 	if ( (int)hold_residual > (16<<20))
+ 		puts("hold_residual located > 16M\n");
+diff -urN -I BK Id linux-2.4.14/arch/ppc/boot/utils/mksimage.c linuxppc-2.4.14/arch/ppc/boot/utils/mksimage.c
+--- linux-2.4.14/arch/ppc/boot/utils/mksimage.c	Sat May 26 12:39:40 2001
++++ linuxppc-2.4.14/arch/ppc/boot/utils/mksimage.c	Sun Nov 11 18:33:50 2001
+@@ -96,7 +96,7 @@
+ 		die("can't open loader: %s", strerror(errno));
+ 
+ 	copy_blocks(fd, ofd, &ld_off, &ld_size);
+-	len = sprintf(buffer, "bootloader: %x %x\n", ld_off, ld_size);
++	len = sprintf(buffer, "bootloader: %lx %lx\n", ld_off, ld_size);
+ 	close(fd);
+ 
+ 	fd = open(kernel, O_RDONLY);
+@@ -104,7 +104,7 @@
+ 		die("can't open kernel: %s", strerror(errno));
+ 
+ 	copy_blocks(fd, ofd, &kern_off, &kern_size);
+-	len += sprintf(buffer+len, "zimage: %x %x\n", kern_off, kern_size);
++	len += sprintf(buffer+len, "zimage: %lx %lx\n", kern_off, kern_size);
+ 	close(fd);
+ 	
+ 	if (rdimage) {
+@@ -116,7 +116,7 @@
+ 		close(fd);
+ 	}
+ 
+-	len += sprintf(buffer+len, "initrd: %x %x", rd_off, rd_size);
++	len += sprintf(buffer+len, "initrd: %lx %lx", rd_off, rd_size);
+ 
+ 	close(ofd);
+ 
+diff -urN -I BK Id linux-2.4.14/arch/ppc/boot/utils/offset linuxppc-2.4.14/arch/ppc/boot/utils/offset
+--- linux-2.4.14/arch/ppc/boot/utils/offset	Sat May 26 12:39:40 2001
++++ linuxppc-2.4.14/arch/ppc/boot/utils/offset	Sun Nov 11 18:33:06 2001
+@@ -1,4 +1,4 @@
+-#!/bin/bash
++#!/bin/sh
+ 
+-OFFSET=`$1 -h $2  | grep $3 | grep -v zvmlinux| awk '{print $6}'`
++OFFSET=`$1 -h $2 | grep $3 | grep -v zvmlinux | awk '{print $6}'`
+ echo "0x"$OFFSET
+diff -urN -I BK Id linux-2.4.14/arch/ppc/boot/utils/sioffset linuxppc-2.4.14/arch/ppc/boot/utils/sioffset
+--- linux-2.4.14/arch/ppc/boot/utils/sioffset	Sat May 26 12:39:40 2001
++++ linuxppc-2.4.14/arch/ppc/boot/utils/sioffset	Sun Nov 11 18:32:52 2001
+@@ -1,4 +1,4 @@
+-#!/bin/bash
++#!/bin/sh
+ 
+ OFFSET=`grep $1 sImage.map | awk '{print $2}'`
+ echo "0x"$OFFSET
+diff -urN -I BK Id linux-2.4.14/arch/ppc/boot/utils/sisize linuxppc-2.4.14/arch/ppc/boot/utils/sisize
+--- linux-2.4.14/arch/ppc/boot/utils/sisize	Sat May 26 12:39:40 2001
++++ linuxppc-2.4.14/arch/ppc/boot/utils/sisize	Sun Nov 11 18:33:06 2001
+@@ -1,4 +1,4 @@
+-#!/bin/bash
++#!/bin/sh
+ 
+ OFFSET=`grep $1 sImage.map | awk '{print $3}'`
+ echo "0x"$OFFSET
+diff -urN -I BK Id linux-2.4.14/arch/ppc/boot/utils/size linuxppc-2.4.14/arch/ppc/boot/utils/size
+--- linux-2.4.14/arch/ppc/boot/utils/size	Sat May 26 12:39:40 2001
++++ linuxppc-2.4.14/arch/ppc/boot/utils/size	Sun Nov 11 18:34:17 2001
+@@ -1,4 +1,4 @@
+-#!/bin/bash
++#!/bin/sh
+ 
+-OFFSET=`$1 -h $2  | grep $3 | grep -v zvmlinux | awk '{print $3}'`
++OFFSET=`$1 -h $2 | grep $3 | grep -v zvmlinux | awk '{print $3}'`
+ echo "0x"$OFFSET
+diff -urN -I BK Id linux-2.4.14/arch/ppc/config.in linuxppc-2.4.14/arch/ppc/config.in
+--- linux-2.4.14/arch/ppc/config.in	Tue Nov  6 18:21:29 2001
++++ linuxppc-2.4.14/arch/ppc/config.in	Sun Nov 11 18:32:59 2001
+@@ -6,6 +6,7 @@
+ define_bool CONFIG_UID16 n
+ define_bool CONFIG_RWSEM_GENERIC_SPINLOCK n
+ define_bool CONFIG_RWSEM_XCHGADD_ALGORITHM y
++define_bool CONFIG_HAVE_DEC_LOCK y
+ 
+ mainmenu_name "Linux/PowerPC Kernel Configuration"
+ 
+diff -urN -I BK Id linux-2.4.14/arch/ppc/kernel/pci.c linuxppc-2.4.14/arch/ppc/kernel/pci.c
+--- linux-2.4.14/arch/ppc/kernel/pci.c	Tue Nov  6 18:21:29 2001
++++ linuxppc-2.4.14/arch/ppc/kernel/pci.c	Sun Nov 11 18:34:12 2001
+@@ -518,7 +518,7 @@
+ 		class_code = (unsigned int *) get_property(node, "class-code", 0);
+ 		if ((!class_code || ((*class_code >> 8) != PCI_CLASS_BRIDGE_PCI &&
+ 			(*class_code >> 8) != PCI_CLASS_BRIDGE_CARDBUS)) &&
+-			strcmp(node->name, "multifunc-device"))
++			node->name && strcmp(node->name, "multifunc-device"))
+ 			continue;
+ 		sub_node = scan_OF_childs_for_device(node->child, bus, dev_fn);
+ 		if (sub_node)
+diff -urN -I BK Id linux-2.4.14/arch/ppc/kernel/ppc_ksyms.c linuxppc-2.4.14/arch/ppc/kernel/ppc_ksyms.c
+--- linux-2.4.14/arch/ppc/kernel/ppc_ksyms.c	Tue Nov  6 18:21:30 2001
++++ linuxppc-2.4.14/arch/ppc/kernel/ppc_ksyms.c	Sun Nov 11 18:33:42 2001
+@@ -58,6 +58,7 @@
+ /* Tell string.h we don't want memcpy etc. as cpp defines */
+ #define EXPORT_SYMTAB_STROPS
+ 
++extern void ppc_generic_ide_fix_driveid(struct hd_driveid *id);
+ extern void transfer_to_handler(void);
+ extern void syscall_trace(void);
+ extern void do_IRQ(struct pt_regs *regs);
+@@ -167,6 +168,7 @@
+ EXPORT_SYMBOL(mm_ptov);
+ 
+ EXPORT_SYMBOL(ppc_ide_md);
++EXPORT_SYMBOL(ppc_generic_ide_fix_driveid);
+ 
+ #ifdef CONFIG_PCI
+ EXPORT_SYMBOL_NOVERS(isa_io_base);
+diff -urN -I BK Id linux-2.4.14/arch/ppc/kernel/prep_setup.c linuxppc-2.4.14/arch/ppc/kernel/prep_setup.c
+--- linux-2.4.14/arch/ppc/kernel/prep_setup.c	Tue Nov  6 18:21:30 2001
++++ linuxppc-2.4.14/arch/ppc/kernel/prep_setup.c	Sun Nov 11 18:33:39 2001
+@@ -852,11 +852,8 @@
+ 		unsigned long r6, unsigned long r7)
+ {
+ #ifdef CONFIG_PREP_RESIDUAL	
+-	RESIDUAL *old_res = (RESIDUAL *)(r3 + KERNELBASE);
+-
+ 	/* make a copy of residual data */
+-	if ( r3 )
+-	{
++	if ( r3 ) {
+ 		memcpy((void *)res,(void *)(r3+KERNELBASE),
+ 			 sizeof(RESIDUAL));
+ 	}
+diff -urN -I BK Id linux-2.4.14/arch/ppc/lib/Makefile linuxppc-2.4.14/arch/ppc/lib/Makefile
+--- linux-2.4.14/arch/ppc/lib/Makefile	Sat May 26 12:39:42 2001
++++ linuxppc-2.4.14/arch/ppc/lib/Makefile	Sun Nov 11 18:33:33 2001
+@@ -8,7 +8,9 @@
+ 
+ O_TARGET		:= lib.o
+ 
+-obj-y			:= checksum.o string.o strcase.o
++export-objs		:= dec_and_lock.o
++
++obj-y			:= checksum.o string.o strcase.o dec_and_lock.o
+ 
+ obj-$(CONFIG_SMP)	+= locks.o
+ 
+diff -urN -I BK Id linux-2.4.14/arch/ppc/lib/dec_and_lock.c linuxppc-2.4.14/arch/ppc/lib/dec_and_lock.c
+--- linux-2.4.14/arch/ppc/lib/dec_and_lock.c	Thu Jan  1 10:00:00 1970
++++ linuxppc-2.4.14/arch/ppc/lib/dec_and_lock.c	Sun Nov 11 18:33:36 2001
+@@ -0,0 +1,46 @@
++#include <linux/module.h>
++#include <linux/spinlock.h>
++#include <asm/atomic.h>
++#include <asm/system.h>
++
++/*
++ * This is an implementation of the notion of "decrement a
++ * reference count, and return locked if it decremented to zero".
++ *
++ * This implementation can be used on any architecture that
++ * has a cmpxchg, and where atomic->value is an int holding
++ * the value of the atomic (i.e. the high bits aren't used
++ * for a lock or anything like that).
++ *
++ * N.B. ATOMIC_DEC_AND_LOCK gets defined in include/linux/spinlock.h
++ * if spinlocks are empty and thus atomic_dec_and_lock is defined
++ * to be atomic_dec_and_test - in that case we don't need it
++ * defined here as well.
++ */
++
++#ifndef ATOMIC_DEC_AND_LOCK
++int atomic_dec_and_lock(atomic_t *atomic, spinlock_t *lock)
++{
++	int counter;
++	int newcount;
++
++	for (;;) {
++		counter = atomic_read(atomic);
++		newcount = counter - 1;
++		if (!newcount)
++			break;		/* do it the slow way */
++
++		newcount = cmpxchg(&atomic->counter, counter, newcount);
++		if (newcount == counter)
++			return 0;
++	}
++
++	spin_lock(lock);
++	if (atomic_dec_and_test(atomic))
++		return 1;
++	spin_unlock(lock);
++	return 0;
++}
++
++EXPORT_SYMBOL(atomic_dec_and_lock);
++#endif /* ATOMIC_DEC_AND_LOCK */
+diff -urN -I BK Id linux-2.4.14/drivers/block/loop.c linuxppc-2.4.14/drivers/block/loop.c
+--- linux-2.4.14/drivers/block/loop.c	Tue Nov  6 18:21:32 2001
++++ linuxppc-2.4.14/drivers/block/loop.c	Sun Nov 11 18:33:47 2001
+@@ -207,7 +207,6 @@
+ 		index++;
+ 		pos += size;
+ 		UnlockPage(page);
+-		deactivate_page(page);
+ 		page_cache_release(page);
+ 	}
+ 	return 0;
+@@ -218,7 +217,6 @@
+ 	kunmap(page);
+ unlock:
+ 	UnlockPage(page);
+-	deactivate_page(page);
+ 	page_cache_release(page);
+ fail:
+ 	return -1;
+diff -urN -I BK Id linux-2.4.14/drivers/char/keyboard.c linuxppc-2.4.14/drivers/char/keyboard.c
+--- linux-2.4.14/drivers/char/keyboard.c	Mon Sep 24 09:31:21 2001
++++ linuxppc-2.4.14/drivers/char/keyboard.c	Sun Nov 11 18:32:55 2001
+@@ -319,7 +319,7 @@
+ 			compute_shiftstate();
+ 			kbd->slockstate = 0; /* play it safe */
+ #else
+-			keysym =  U(plain_map[keycode]);
++			keysym = U(key_maps[0][keycode]);
+ 			type = KTYP(keysym);
+ 			if (type == KT_SHIFT)
+ 			  (*key_handler[type])(keysym & 0xff, up_flag);
+@@ -750,7 +750,7 @@
+ 	    k = i*BITS_PER_LONG;
+ 	    for(j=0; j<BITS_PER_LONG; j++,k++)
+ 	      if(test_bit(k, key_down)) {
+-		sym = U(plain_map[k]);
++		sym = U(key_maps[0][k]);
+ 		if(KTYP(sym) == KT_SHIFT || KTYP(sym) == KT_SLOCK) {
+ 		  val = KVAL(sym);
+ 		  if (val == KVAL(K_CAPSSHIFT))
+diff -urN -I BK Id linux-2.4.14/drivers/char/serial.c linuxppc-2.4.14/drivers/char/serial.c
+--- linux-2.4.14/drivers/char/serial.c	Tue Nov  6 18:21:32 2001
++++ linuxppc-2.4.14/drivers/char/serial.c	Sun Nov 11 18:33:03 2001
+@@ -222,8 +222,8 @@
+ #include <asm/irq.h>
+ #include <asm/bitops.h>
+ 
+-#ifdef CONFIG_MAC_SERIAL
+-#define SERIAL_DEV_OFFSET	2
++#if defined(CONFIG_MAC_SERIAL)
++#define SERIAL_DEV_OFFSET	((_machine == _MACH_prep || _machine == _MACH_chrp) ? 0 : 2)
+ #else
+ #define SERIAL_DEV_OFFSET	0
+ #endif
+@@ -5386,6 +5386,7 @@
+ #endif
+ 	serial_driver.major = TTY_MAJOR;
+ 	serial_driver.minor_start = 64 + SERIAL_DEV_OFFSET;
++	serial_driver.name_base = SERIAL_DEV_OFFSET;
+ 	serial_driver.num = NR_PORTS;
+ 	serial_driver.type = TTY_DRIVER_TYPE_SERIAL;
+ 	serial_driver.subtype = SERIAL_TYPE_NORMAL;
+diff -urN -I BK Id linux-2.4.14/drivers/char/tty_io.c linuxppc-2.4.14/drivers/char/tty_io.c
+--- linux-2.4.14/drivers/char/tty_io.c	Tue Nov  6 18:21:32 2001
++++ linuxppc-2.4.14/drivers/char/tty_io.c	Sun Nov 11 18:32:53 2001
+@@ -2192,6 +2192,11 @@
+ #ifdef CONFIG_SERIAL_CONSOLE
+ #if (defined(CONFIG_8xx) || defined(CONFIG_8260))
+ 	console_8xx_init();
++#elif defined(CONFIG_MAC_SERIAL) && defined(CONFIG_SERIAL)
++	if (_machine == _MACH_Pmac)
++ 		mac_scc_console_init();
++	else
++		serial_console_init();
+ #elif defined(CONFIG_MAC_SERIAL)
+  	mac_scc_console_init();
+ #elif defined(CONFIG_PARISC)
+diff -urN -I BK Id linux-2.4.14/drivers/ide/ide-features.c linuxppc-2.4.14/drivers/ide/ide-features.c
+--- linux-2.4.14/drivers/ide/ide-features.c	Thu Feb 22 14:25:06 2001
++++ linuxppc-2.4.14/drivers/ide/ide-features.c	Sun Nov 11 18:32:54 2001
+@@ -287,7 +287,11 @@
+ 
+ #if defined(CONFIG_BLK_DEV_IDEDMA) && !defined(CONFIG_DMA_NONPCI)
+ 	byte unit = (drive->select.b.unit & 0x01);
+-	outb(inb(hwif->dma_base+2) & ~(1<<(5+unit)), hwif->dma_base+2);
++	/* Some interfaces would like to use this routine, but don"t have this
++	 * kind of DMA engine. --BenH.
++	 */
++	if (hwif->dma_base)
++		outb(inb(hwif->dma_base+2) & ~(1<<(5+unit)), hwif->dma_base+2);
+ #endif /* (CONFIG_BLK_DEV_IDEDMA) && !(CONFIG_DMA_NONPCI) */
+ 
+ 	/*
+@@ -356,10 +360,15 @@
+ 	drive->id->dma_1word &= ~0x0F00;
+ 
+ #if defined(CONFIG_BLK_DEV_IDEDMA) && !defined(CONFIG_DMA_NONPCI)
+-	if (speed > XFER_PIO_4) {
+-		outb(inb(hwif->dma_base+2)|(1<<(5+unit)), hwif->dma_base+2);
+-	} else {
+-		outb(inb(hwif->dma_base+2) & ~(1<<(5+unit)), hwif->dma_base+2);
++	/* Some interfaces would like to use this routine, but don"t have this
++	 * kind of DMA engine. --BenH.
++	 */
++	if (hwif->dma_base) {
++		if (speed > XFER_PIO_4) {
++			outb(inb(hwif->dma_base+2)|(1<<(5+unit)), hwif->dma_base+2);
++		} else {
++			outb(inb(hwif->dma_base+2) & ~(1<<(5+unit)), hwif->dma_base+2);
++		}
+ 	}
+ #endif /* (CONFIG_BLK_DEV_IDEDMA) && !(CONFIG_DMA_NONPCI) */
+ 
+diff -urN -I BK Id linux-2.4.14/drivers/ide/ide-m8xx.c linuxppc-2.4.14/drivers/ide/ide-m8xx.c
+--- linux-2.4.14/drivers/ide/ide-m8xx.c	Wed Oct 10 12:38:53 2001
++++ linuxppc-2.4.14/drivers/ide/ide-m8xx.c	Sun Nov 11 18:33:00 2001
+@@ -1,8 +1,14 @@
+ /*
+- *
+- *
+  *  linux/drivers/ide/ide-m8xx.c
+  *
++ *  Copyright (C) 2000, 2001 Wolfgang Denk, wd@denx.de
++ *  Modified for direct IDE interface
++ *	by Thomas Lange, thomas@corelatus.com
++ *  Modified for direct IDE interface on 8xx without using the PCMCIA
++ *  controller
++ *	by Steven.Scholz@imc-berlin.de
++ *  Moved out of arch/ppc/kernel/m8xx_setup.c, other minor cleanups
++ *	by Mathew Locke <mattl@mvista.com>
+  */
+ 
+ #include <linux/config.h>
+diff -urN -I BK Id linux-2.4.14/drivers/net/Config.in linuxppc-2.4.14/drivers/net/Config.in
+--- linux-2.4.14/drivers/net/Config.in	Wed Oct 24 23:05:05 2001
++++ linuxppc-2.4.14/drivers/net/Config.in	Sun Nov 11 18:33:05 2001
+@@ -34,13 +34,17 @@
+       fi
+    fi
+    if [ "$CONFIG_PPC" = "y" ]; then
+-      tristate '  MACE (Power Mac ethernet) support' CONFIG_MACE
++      dep_tristate '  MACE (Power Mac ethernet) support' CONFIG_MACE $CONFIG_ALL_PPC
+       if [ "$CONFIG_MACE" != "n" ]; then
+-        bool '    Use AAUI port instead of TP by default' CONFIG_MACE_AAUI_PORT
++	 bool '    Use AAUI port instead of TP by default' CONFIG_MACE_AAUI_PORT
++      fi
++      dep_tristate '  BMAC (G3 ethernet) support' CONFIG_BMAC $CONFIG_ALL_PPC
++      dep_tristate '  GMAC (G4/iBook ethernet) support' CONFIG_GMAC $CONFIG_ALL_PPC
++      if [ "$CONFIG_4xx" = "y" ]; then
++         if [ "$CONFIG_STB03xxx" = "y" -o "$CONFIG_403GCX" = "y" ]; then
++	    tristate '  National DP83902AV (Oak ethernet) support' CONFIG_OAKNET
++	 fi
+       fi
+-      tristate '  BMAC (G3 ethernet) support' CONFIG_BMAC
+-      tristate '  GMAC (G4/iBook ethernet) support' CONFIG_GMAC
+-      tristate '  National DP83902AV (Oak ethernet) support' CONFIG_OAKNET
+    fi
+    if [ "$CONFIG_ZORRO" = "y" ]; then
+       tristate '  Ariadne support' CONFIG_ARIADNE
+diff -urN -I BK Id linux-2.4.14/drivers/net/bmac.c linuxppc-2.4.14/drivers/net/bmac.c
+--- linux-2.4.14/drivers/net/bmac.c	Wed Oct 24 23:05:05 2001
++++ linuxppc-2.4.14/drivers/net/bmac.c	Sun Nov 11 18:33:21 2001
+@@ -1659,7 +1659,7 @@
+ MODULE_AUTHOR("Randy Gobbel/Paul Mackerras");
+ MODULE_DESCRIPTION("PowerMac BMAC ethernet driver.");
+ MODULE_LICENSE("GPL");
+-
++EXPORT_NO_SYMBOLS;
+ 
+ static void __exit bmac_cleanup (void)
+ {
+diff -urN -I BK Id linux-2.4.14/drivers/net/gmac.c linuxppc-2.4.14/drivers/net/gmac.c
+--- linux-2.4.14/drivers/net/gmac.c	Wed Oct 24 23:05:05 2001
++++ linuxppc-2.4.14/drivers/net/gmac.c	Sun Nov 11 18:33:36 2001
+@@ -296,6 +296,7 @@
+ 	}
+ }
+ 
++#ifdef CONFIG_PMAC_PBOOK
+ /* Power management: stop PHY chip for suspend mode
+  * 
+  * TODO: This will have to be modified is WOL is to be supported.
+@@ -441,6 +442,7 @@
+ 		GM_OUT(GM_RX_CONF, 0);
+ 	}
+ }
++#endif
+ 
+ static int
+ mii_do_reset_phy(struct gmac *gm, int phy_addr)
+@@ -1677,6 +1679,7 @@
+ MODULE_AUTHOR("Paul Mackerras/Ben Herrenschmidt");
+ MODULE_DESCRIPTION("PowerMac GMAC driver.");
+ MODULE_LICENSE("GPL");
++EXPORT_NO_SYMBOLS;
+ 
+ static void __exit gmac_cleanup_module(void)
+ {
+diff -urN -I BK Id linux-2.4.14/drivers/net/mace.c linuxppc-2.4.14/drivers/net/mace.c
+--- linux-2.4.14/drivers/net/mace.c	Wed Oct 24 23:05:06 2001
++++ linuxppc-2.4.14/drivers/net/mace.c	Sun Nov 11 18:33:52 2001
+@@ -24,9 +24,6 @@
+ static struct net_device *mace_devs;
+ static int port_aaui = -1;
+ 
+-MODULE_PARM(port_aaui, "i");
+-MODULE_PARM_DESC(port_aaui, "MACE uses AAUI port (0-1)");
+-
+ #define N_RX_RING	8
+ #define N_TX_RING	6
+ #define MAX_TX_ACTIVE	1
+@@ -913,7 +910,10 @@
+ 
+ MODULE_AUTHOR("Paul Mackerras");
+ MODULE_DESCRIPTION("PowerMac MACE driver.");
++MODULE_PARM(port_aaui, "i");
++MODULE_PARM_DESC(port_aaui, "MACE uses AAUI port (0-1)");
+ MODULE_LICENSE("GPL");
++EXPORT_NO_SYMBOLS;
+ 
+ static void __exit mace_cleanup (void)
+ {
+diff -urN -I BK Id linux-2.4.14/drivers/net/ne2k-pci.c linuxppc-2.4.14/drivers/net/ne2k-pci.c
+--- linux-2.4.14/drivers/net/ne2k-pci.c	Wed Oct 10 12:39:00 2001
++++ linuxppc-2.4.14/drivers/net/ne2k-pci.c	Sun Nov 11 18:33:21 2001
+@@ -69,8 +69,6 @@
+ #if defined(__powerpc__)
+ #define inl_le(addr)  le32_to_cpu(inl(addr))
+ #define inw_le(addr)  le16_to_cpu(inw(addr))
+-#define insl insl_ns
+-#define outsl outsl_ns
+ #endif
+ 
+ #define PFX DRV_NAME ": "
+diff -urN -I BK Id linux-2.4.14/drivers/net/pcnet32.c linuxppc-2.4.14/drivers/net/pcnet32.c
+--- linux-2.4.14/drivers/net/pcnet32.c	Wed Oct 24 23:05:06 2001
++++ linuxppc-2.4.14/drivers/net/pcnet32.c	Sun Nov 11 18:34:15 2001
+@@ -655,6 +655,13 @@
+ #if defined(__i386__)
+ 	    printk(KERN_WARNING "%s: Probably a Compaq, using the PROM address of", dev->name);
+ 	    memcpy(dev->dev_addr, promaddr, 6);
++#elif defined(__powerpc__)
++	    if (!is_valid_ether_addr(dev->dev_addr)
++		&& is_valid_ether_addr(promaddr)) {
++		    printk("\n" KERN_WARNING "%s: using PROM address:",
++			   dev->name);
++		    memcpy(dev->dev_addr, promaddr, 6);
++	    }
+ #endif
+ 	}	    	    
+     }
+diff -urN -I BK Id linux-2.4.14/drivers/scsi/Config.in linuxppc-2.4.14/drivers/scsi/Config.in
+--- linux-2.4.14/drivers/scsi/Config.in	Wed Oct 24 23:05:09 2001
++++ linuxppc-2.4.14/drivers/scsi/Config.in	Sun Nov 11 18:33:03 2001
+@@ -202,7 +202,7 @@
+ if [ "$CONFIG_EXPERIMENTAL" = "y" ]; then
+    dep_tristate 'SCSI debugging host simulator (EXPERIMENTAL)' CONFIG_SCSI_DEBUG $CONFIG_SCSI
+ fi
+-if [ "$CONFIG_PPC" = "y" ]; then
++if [ "$CONFIG_ALL_PPC" = "y" ]; then
+    dep_tristate 'MESH (Power Mac internal SCSI) support' CONFIG_SCSI_MESH $CONFIG_SCSI
+    if [ "$CONFIG_SCSI_MESH" != "n" ]; then
+       int '  maximum synchronous transfer rate (MB/s) (0 = async)' CONFIG_SCSI_MESH_SYNC_RATE 5
+diff -urN -I BK Id linux-2.4.14/drivers/sound/dmasound/Makefile linuxppc-2.4.14/drivers/sound/dmasound/Makefile
+--- linux-2.4.14/drivers/sound/dmasound/Makefile	Sat Dec 30 09:07:23 2000
++++ linuxppc-2.4.14/drivers/sound/dmasound/Makefile	Sun Nov 11 18:34:16 2001
+@@ -7,15 +7,21 @@
+ #
+ # Note 2! The CFLAGS definitions are now in the main makefile...
+ 
++O_TARGET = dmasound.o
++
+ export-objs := dmasound_core.o
+ 
+-obj-$(CONFIG_DMASOUND_ATARI)  += dmasound_core.o dmasound_atari.o
+-obj-$(CONFIG_DMASOUND_AWACS)  += dmasound_core.o dmasound_awacs.o
+-obj-$(CONFIG_DMASOUND_PAULA)  += dmasound_core.o dmasound_paula.o
+-obj-$(CONFIG_DMASOUND_Q40)    += dmasound_core.o dmasound_q40.o
+-
+-ifeq ($(CONFIG_DMASOUND),y)
+-  O_TARGET = dmasound.o
+-endif
++list-multi := dmasound_pmac.o
++
++dmasound_pmac-objs := dmasound_awacs.o
++
++obj-$(CONFIG_DMASOUND)        += dmasound_core.o
++obj-$(CONFIG_DMASOUND_ATARI)  += dmasound_atari.o
++obj-$(CONFIG_DMASOUND_AWACS)  += dmasound_pmac.o
++obj-$(CONFIG_DMASOUND_PAULA)  += dmasound_paula.o
++obj-$(CONFIG_DMASOUND_Q40)    += dmasound_q40.o
+ 
+ include $(TOPDIR)/Rules.make
++
++dmasound_pmac.o: $(dmasound_pmac-objs)
++	$(LD) $(EXTRA_LDFLAGS) -r -o $@ $(dmasound_pmac-objs)
+diff -urN -I BK Id linux-2.4.14/drivers/sound/dmasound/dmasound.h linuxppc-2.4.14/drivers/sound/dmasound/dmasound.h
+--- linux-2.4.14/drivers/sound/dmasound/dmasound.h	Fri Aug 17 08:28:57 2001
++++ linuxppc-2.4.14/drivers/sound/dmasound/dmasound.h	Sun Nov 11 18:33:40 2001
+@@ -29,6 +29,9 @@
+ #define SND_DEV_SNDPROC 9	/* /dev/sndproc for programmable devices */
+ #define SND_DEV_PSS	SND_DEV_SNDPROC
+ 
++#define DMASOUND_CORE_REVISION	1
++#define DMASOUND_CORE_EDITION	1
++
+ #define DSP_DEFAULT_SPEED	8000
+ 
+ #define ON		1
+@@ -120,12 +123,13 @@
+     void (*record)(void);			/* optional */
+     void (*mixer_init)(void);			/* optional */
+     int (*mixer_ioctl)(u_int, u_long);		/* optional */
+-    void (*write_sq_setup)(void);		/* optional */
+-    void (*read_sq_setup)(void);		/* optional */
++    int (*write_sq_setup)(void);		/* optional */
++    int (*read_sq_setup)(void);			/* optional */
+     void (*sq_open)(void);			/* optional */
+     int (*state_info)(char *);			/* optional */
+     void (*abort_read)(void);			/* optional */
+     int min_dsp_speed;
++    int version;
+ } MACHINE;
+ 
+ 
+diff -urN -I BK Id linux-2.4.14/drivers/sound/dmasound/dmasound_atari.c linuxppc-2.4.14/drivers/sound/dmasound/dmasound_atari.c
+--- linux-2.4.14/drivers/sound/dmasound/dmasound_atari.c	Tue Nov  6 18:21:35 2001
++++ linuxppc-2.4.14/drivers/sound/dmasound/dmasound_atari.c	Sun Nov 11 18:32:55 2001
+@@ -1438,9 +1438,10 @@
+ 	return AtaMixerIoctl(cmd, arg);
+ }
+ 
+-static void AtaWriteSqSetup(void)
++static int AtaWriteSqSetup(void)
+ {
+ 	write_sq_ignore_int = 0;
++	return 0;
+ }
+ 
+ static void AtaSqOpen(void)
+diff -urN -I BK Id linux-2.4.14/drivers/sound/dmasound/dmasound_awacs.c linuxppc-2.4.14/drivers/sound/dmasound/dmasound_awacs.c
+--- linux-2.4.14/drivers/sound/dmasound/dmasound_awacs.c	Tue Nov  6 18:21:35 2001
++++ linuxppc-2.4.14/drivers/sound/dmasound/dmasound_awacs.c	Sun Nov 11 18:34:21 2001
+@@ -4,7 +4,14 @@
+  *
+  *  PowerMac `AWACS' and `Burgundy' DMA Sound Driver
+  *
+- *  See linux/drivers/sound/dmasound/dmasound_core.c for copyright and credits
++ *  See linux/drivers/sound/dmasound/dmasound_core.c for copyright and
++ *  history prior to 2001/01/26.
++ *
++ *	26/01/2001 ed 0.1 Iain Sandoe
++ *		- added version info.
++ *		- moved dbdma command buffer allocation to PMacXXXSqSetup()
++ *		- fixed up beep dbdma cmd buffers 
++ *
+  */
+ 
+ 
+@@ -18,6 +25,7 @@
+ #include <linux/nvram.h>
+ #include <linux/tty.h>
+ #include <linux/vt_kern.h>
++#include <linux/irq.h>
+ #ifdef CONFIG_ADB_CUDA
+ #include <linux/cuda.h>
+ #endif
+@@ -36,6 +44,8 @@
+ #include "awacs_defs.h"
+ #include "dmasound.h"
+ 
++#define DMASOUND_AWACS_REVISION	0
++#define DMASOUND_AWACS_EDITION	1
+ 
+ /*
+  * Interrupt numbers and addresses, obtained from the device tree.
+@@ -54,15 +64,18 @@
+ int awacs_device_id = 0;
+ int awacs_has_iic = 0;
+ #define AWACS_BURGUNDY	100		/* fake revision # for burgundy */
++#define AWACS_DACA	 80		/* fake revision # for daca (ibook)? */
+ 
+ /*
+  * Space for the DBDMA command blocks.
+  */
+ static void *awacs_tx_cmd_space;
+ static volatile struct dbdma_cmd *awacs_tx_cmds;
++static int number_of_tx_cmd_buffers = 0;
+ 
+ static void *awacs_rx_cmd_space;
+ static volatile struct dbdma_cmd *awacs_rx_cmds;
++static int number_of_rx_cmd_buffers = 0;
+ 
+ /*
+  * Cached values of AWACS registers (we can't read them).
+@@ -121,6 +134,7 @@
+ static int beep_playing = 0;
+ static int awacs_beep_state = 0;
+ static short *beep_buf;
++static void *beep_dbdma_cmd_space;
+ static volatile struct dbdma_cmd *beep_dbdma_cmd;
+ static void (*orig_mksound)(unsigned int, unsigned int);
+ static int is_pbook_3400;
+@@ -246,8 +260,8 @@
+ 
+ 
+ static int PMacMixerIoctl(u_int cmd, u_long arg);
+-static void PMacWriteSqSetup(void);
+-static void PMacReadSqSetup(void);
++static int PMacWriteSqSetup(void);
++static int PMacReadSqSetup(void);
+ static void PMacAbortRead(void);
+ 
+ 
+@@ -850,12 +864,16 @@
+ 	free_irq(awacs_irq, 0);
+ 	free_irq(awacs_tx_irq, 0);
+ 	free_irq(awacs_rx_irq, 0);
+-	kfree(awacs_tx_cmd_space);
++	if (awacs_tx_cmd_space)
++		kfree(awacs_tx_cmd_space);
+ 	if (awacs_rx_cmd_space)
+ 		kfree(awacs_rx_cmd_space);
+-	if (beep_buf)
++	if (beep_dbdma_cmd_space)
++		kfree(beep_dbdma_cmd_space);
++	if (beep_buf) {
+ 		kfree(beep_buf);
+-	kd_mksound = orig_mksound;
++		kd_mksound = orig_mksound;
++	}
+ #ifdef CONFIG_PMAC_PBOOK
+ 	pmu_unregister_sleep_notifier(&awacs_sleep_notifier);
+ #endif
+@@ -1017,6 +1035,8 @@
+ 	if (awacs_beep_state) {
+ 		/* sound takes precedence over beeps */
+ 		out_le32(&awacs_txdma->control, (RUN|PAUSE|FLUSH|WAKE) << 16);
++		while (in_le32(&awacs_txdma->status) & RUN)
++			udelay(1);
+ 		out_le32(&awacs->control,
+ 			 (in_le32(&awacs->control) & ~0x1f00)
+ 			 | (awacs_rate_index << 8));
+@@ -1043,6 +1063,7 @@
+ 		out_le16(&cp->command, OUTPUT_MORE + INTR_ALWAYS);
+ 		if (write_sq.active == 0)
+ 			out_le32(&awacs_txdma->cmdptr, virt_to_bus(cp));
++		(void)in_le32(&awacs_txdma->status);
+ 		out_le32(&awacs_txdma->control, ((RUN|WAKE) << 16) + (RUN|WAKE));
+ 		++write_sq.active;
+ 	}
+@@ -1099,7 +1120,6 @@
+ static void
+ pmac_awacs_rx_intr(int irq, void *devid, struct pt_regs *regs)
+ {
+-
+ 	/* For some reason on my PowerBook G3, I get one interrupt
+ 	 * when the interrupt vector is installed (like something is
+ 	 * pending).  This happens before the dbdma is initialize by
+@@ -1167,7 +1187,7 @@
+ static void
+ awacs_write(int val)
+ {
+-	if (awacs_revision >= AWACS_BURGUNDY)
++	if (awacs_revision >= AWACS_DACA)
+ 		return;
+ 	while (in_le32(&awacs->codec_ctrl) & MASK_NEWECMD)
+ 		;	/* XXX should have timeout */
+@@ -1182,6 +1202,8 @@
+ 	if (beep_playing) {
+ 		st_le16(&beep_dbdma_cmd->command, DBDMA_STOP);
+ 		out_le32(&awacs_txdma->control, (RUN|PAUSE|FLUSH|WAKE) << 16);
++		while (in_le32(&awacs_txdma->status) & RUN)
++			udelay(1);
+ 		out_le32(&awacs->control,
+ 			 (in_le32(&awacs->control) & ~0x1f00)
+ 			 | (awacs_rate_index << 8));
+@@ -1207,6 +1229,8 @@
+ 	static int beep_nsamples_cache;
+ 	static int beep_volume_cache;
+ 
++	if (beep_buf == NULL)
++		return;
+ 	for (i = 0; i < 8 && awacs_freqs[i] >= BEEP_SRATE; ++i)
+ 		if (awacs_freqs_ok[i])
+ 			beep_speed = i;
+@@ -1264,11 +1288,14 @@
+ 	save_flags(flags); cli();
+ 	if (beep_playing) {	/* i.e. haven't been terminated already */
+ 		out_le32(&awacs_txdma->control, (RUN|WAKE|FLUSH|PAUSE) << 16);
++		while (in_le32(&awacs_txdma->status) & RUN)
++			udelay(1);
+ 		out_le32(&awacs->control,
+ 			 (in_le32(&awacs->control) & ~0x1f00)
+ 			 | (beep_speed << 8));
+ 		out_le32(&awacs->byteswap, 0);
+ 		out_le32(&awacs_txdma->cmdptr, virt_to_bus(beep_dbdma_cmd));
++		(void)in_le32(&awacs_txdma->status);
+ 		out_le32(&awacs_txdma->control, RUN | (RUN << 16));
+ 	}
+ 	restore_flags(flags);
+@@ -1558,13 +1585,13 @@
+ static void
+ awacs_enable_amp(int spkr_vol)
+ {
++#ifdef CONFIG_ADB_CUDA
+ 	struct adb_request req;
+ 
+ 	awacs_spkr_vol = spkr_vol;
+ 	if (sys_ctrler != SYS_CTRLER_CUDA)
+ 		return;
+ 
+-#ifdef CONFIG_ADB_CUDA
+ 	/* turn on headphones */
+ 	cuda_request(&req, NULL, 5, CUDA_PACKET, CUDA_GET_SET_IIC,
+ 		     0x8a, 4, 0);
+@@ -1871,11 +1898,53 @@
+ }
+ 
+ 
+-static void PMacWriteSqSetup(void)
++/* Write/Read sq setup functions:
++   Check to see if we have enough (or any) dbdma cmd buffers for the
++   user's fragment settings.  If not, allocate some. If this fails we will
++   point at the beep buffer - as an emergency provision - to stop dma tromping
++   on some random bit of memory (if someone lets it go anyway).
++   The command buffers are then set up to point to the fragment buffers
++   (allocated elsewhere).  We need n+1 commands the last of which holds
++   a NOP + loop to start.
++*/
++
++static int PMacWriteSqSetup(void)
+ {
+ 	int i;
+ 	volatile struct dbdma_cmd *cp;
+ 
++	/* stop the controller from doing any output - if it isn't already.
++	   it _should_ be before this is called anyway */
++
++	out_le32(&awacs_txdma->control, (RUN|PAUSE|FLUSH|WAKE) << 16);
++	while (in_le32(&awacs_txdma->status) & RUN)
++		udelay(1);
++
++	if ((write_sq.numBufs+1) > number_of_tx_cmd_buffers) {
++		if (awacs_tx_cmd_space)
++			kfree(awacs_tx_cmd_space);
++		number_of_tx_cmd_buffers = 0;
++
++		/* we need nbufs + 1 (for the loop) and we should request + 1 again
++		   because the DBDMA_ALIGN might pull the start up by up to
++		   sizeof(struct dbdma_cmd) - 4 (assuming kmalloc aligns 32 bits).
++		*/
++		
++		awacs_tx_cmd_space = kmalloc
++			((write_sq.numBufs + 1 + 1) * sizeof(struct dbdma_cmd),
++			 GFP_KERNEL);
++		if (awacs_tx_cmd_space == NULL) {
++			/* don't leave it dangling - nasty but better than a random address */
++			out_le32(&awacs_txdma->cmdptr, virt_to_bus(beep_dbdma_cmd));
++			printk(KERN_ERR
++			   "dmasound_pmac: can't allocate dbdma cmd buffers, driver disabled\n");
++			return -ENOMEM;
++		}
++		awacs_tx_cmds = (volatile struct dbdma_cmd *)
++			DBDMA_ALIGN(awacs_tx_cmd_space);
++		number_of_tx_cmd_buffers = write_sq.numBufs + 1;
++	}
++
+ 	cp = awacs_tx_cmds;
+ 	memset((void *)cp, 0, (write_sq.numBufs+1) * sizeof(struct dbdma_cmd));
+ 	for (i = 0; i < write_sq.numBufs; ++i, ++cp) {
+@@ -1883,15 +1952,47 @@
+ 	}
+ 	st_le16(&cp->command, DBDMA_NOP + BR_ALWAYS);
+ 	st_le32(&cp->cmd_dep, virt_to_bus(awacs_tx_cmds));
+-	out_le32(&awacs_txdma->control, (RUN|PAUSE|FLUSH|WAKE) << 16);
++	/* point the controller at the command stack - ready to go */
+ 	out_le32(&awacs_txdma->cmdptr, virt_to_bus(awacs_tx_cmds));
++	return 0;
+ }
+ 
+-static void PMacReadSqSetup(void)
++static int PMacReadSqSetup(void)
+ {
+ 	int i;
+ 	volatile struct dbdma_cmd *cp;
+ 
++	/* stop the controller from doing any input - if it isn't already.
++	   it _should_ be before this is called anyway */
++
++	out_le32(&awacs_rxdma->control, (RUN|PAUSE|FLUSH|WAKE) << 16);
++	while (in_le32(&awacs_rxdma->status) & RUN)
++		udelay(1);
++
++	if( (read_sq.numBufs+1) > number_of_rx_cmd_buffers ) {
++		if (awacs_rx_cmd_space)
++			kfree(awacs_rx_cmd_space);
++		number_of_rx_cmd_buffers = 0;
++		
++		/* we need nbufs + 1 (for the loop) and we should request + 1 again
++		   because the DBDMA_ALIGN might pull the start up by up to 
++		   sizeof(struct dbdma_cmd) - 4 (assuming kmalloc aligns 32 bits).
++		*/
++		
++		awacs_rx_cmd_space = kmalloc
++			((read_sq.numBufs + 1 + 1) * sizeof(struct dbdma_cmd),
++			 GFP_KERNEL);
++		if (awacs_rx_cmd_space == NULL) {
++			/* don't leave it dangling - nasty but better than a random address */
++			out_le32(&awacs_rxdma->cmdptr, virt_to_bus(beep_dbdma_cmd));
++			printk(KERN_ERR
++			   "dmasound_pmac: can't allocate dbdma cmd buffers, driver disabled\n");
++			return -ENOMEM;
++		}
++		awacs_rx_cmds = (volatile struct dbdma_cmd *)
++			DBDMA_ALIGN(awacs_rx_cmd_space);
++		number_of_rx_cmd_buffers = read_sq.numBufs+1 ;
++	}
+ 	cp = awacs_rx_cmds;
+ 	memset((void *)cp, 0, (read_sq.numBufs+1) * sizeof(struct dbdma_cmd));
+ 
+@@ -1907,14 +2008,9 @@
+ 	*/
+ 	st_le16(&cp->command, DBDMA_NOP + BR_ALWAYS);
+ 	st_le32(&cp->cmd_dep, virt_to_bus(awacs_rx_cmds));
+-
+-	/* Don't start until the first read is done.
+-	 * This will also abort any operations in progress if the DMA
+-	 * happens to be running (and it shouldn't).
+-	 */
+-	out_le32(&awacs_rxdma->control, (RUN|PAUSE|FLUSH|WAKE) << 16);
++	/* point the controller at the command stack - ready to go */
+ 	out_le32(&awacs_rxdma->cmdptr, virt_to_bus(awacs_rx_cmds));
+-
++	return 0;
+ }
+ 
+ static void PMacAbortRead(void)
+@@ -1937,7 +2033,7 @@
+ 
+ static MACHINE machPMac = {
+ 	name:		awacs_name,
+-	name2:		"AWACS",
++	name2:		"Built-in Sound",
+ 	open:		PMacOpen,
+ 	release:	PMacRelease,
+ 	dma_alloc:	PMacAlloc,
+@@ -1956,7 +2052,8 @@
+ 	write_sq_setup:	PMacWriteSqSetup,
+ 	read_sq_setup:	PMacReadSqSetup,
+ 	abort_read:	PMacAbortRead,
+-	min_dsp_speed:	8000
++	min_dsp_speed:	8000,
++	version:	((DMASOUND_AWACS_REVISION<<8) + DMASOUND_AWACS_EDITION)
+ };
+ 
+ 
+@@ -1966,6 +2063,7 @@
+ int __init dmasound_awacs_init(void)
+ {
+ 	struct device_node *np;
++	int vol;
+ 
+ 	if (_machine != _MACH_Pmac)
+ 		return -ENODEV;
+@@ -1974,203 +2072,218 @@
+ 	awacs_revision = 0;
+ 	np = find_devices("awacs");
+ 	if (np == 0) {
++		unsigned int *prop, l, i;
++
+ 		/*
+ 		 * powermac G3 models have a node called "davbus"
+ 		 * with a child called "sound".
+ 		 */
+ 		struct device_node *sound;
+ 		np = find_devices("davbus");
++		/*
++		 * if we didn't find a davbus device, try 'i2s-a' since
++		 * this seems to be what iBooks have
++		 */
++		if (np == NULL) {
++			np = find_devices("i2s-a");
++		}
++		if (np == NULL)
++			return -ENODEV;
+ 		sound = find_devices("sound");
+-		if (sound != 0 && sound->parent == np) {
+-			unsigned int *prop, l, i;
+-			prop = (unsigned int *)
+-				get_property(sound, "sub-frame", 0);
+-			if (prop != 0 && *prop >= 0 && *prop < 16)
+-				awacs_subframe = *prop;
+-			if (device_is_compatible(sound, "burgundy"))
+-				awacs_revision = AWACS_BURGUNDY;
+-			/* This should be verified on older screamers */
+-			if (device_is_compatible(sound, "screamer"))
+-				awacs_is_screamer = 1;
+-			prop = (unsigned int *)get_property(sound, "device-id", 0);
+-			if (prop != 0)
+-				awacs_device_id = *prop;
+-			awacs_has_iic = (find_devices("perch") != NULL);
+-
+-			/* look for a property saying what sample rates
+-			   are available */
+-			for (i = 0; i < 8; ++i)
+-				awacs_freqs_ok[i] = 0;
++		while (sound != 0 && sound->parent != np)
++			sound = sound->next;
++		if (sound == 0)
++			return -ENODEV;
++		prop = (unsigned int *) get_property(sound, "sub-frame", 0);
++		if (prop != 0 && *prop >= 0 && *prop < 16)
++			awacs_subframe = *prop;
++		if (device_is_compatible(sound, "burgundy"))
++			awacs_revision = AWACS_BURGUNDY;
++		if (device_is_compatible(sound, "daca"))
++			awacs_revision = AWACS_DACA;
++		/* This should be verified on older screamers */
++		if (device_is_compatible(sound, "screamer"))
++			awacs_is_screamer = 1;
++		prop = (unsigned int *)get_property(sound, "device-id", 0);
++		if (prop != 0)
++			awacs_device_id = *prop;
++		awacs_has_iic = (find_devices("perch") != NULL);
++
++		/* look for a property saying what sample rates
++		   are available */
++		for (i = 0; i < 8; ++i)
++			awacs_freqs_ok[i] = 0;
++		prop = (unsigned int *)get_property(sound, "sample-rates", &l);
++		if (prop == 0)
+ 			prop = (unsigned int *) get_property
+-				(sound, "sample-rates", &l);
+-			if (prop == 0)
+-				prop = (unsigned int *) get_property
+-					(sound, "output-frame-rates", &l);
+-			if (prop != 0) {
+-				for (l /= sizeof(int); l > 0; --l) {
+-					/* sometimes the rate is in the
+-					   high-order 16 bits (?) */
+-					unsigned int r = *prop++;
+-					if (r >= 0x10000)
+-						r >>= 16;
+-					for (i = 0; i < 8; ++i) {
+-						if (r == awacs_freqs[i]) {
+-							awacs_freqs_ok[i] = 1;
+-							break;
+-						}
++				(sound, "output-frame-rates", &l);
++		if (prop != 0) {
++			for (l /= sizeof(int); l > 0; --l) {
++				/* sometimes the rate is in the
++				   high-order 16 bits (?) */
++				unsigned int r = *prop++;
++				if (r >= 0x10000)
++					r >>= 16;
++				for (i = 0; i < 8; ++i) {
++					if (r == awacs_freqs[i]) {
++						awacs_freqs_ok[i] = 1;
++						break;
+ 					}
+ 				}
+-			} else {
+-				/* assume just 44.1k is OK */
+-				awacs_freqs_ok[0] = 1;
+ 			}
++		} else {
++			/* assume just 44.1k is OK */
++			awacs_freqs_ok[0] = 1;
+ 		}
+ 	}
+-	if (np != NULL && np->n_addrs >= 3 && np->n_intrs >= 3) {
+-		int vol;
+-		dmasound.mach = machPMac;
+-
+-		awacs = (volatile struct awacs_regs *)
+-			ioremap(np->addrs[0].address, 0x80);
+-		awacs_txdma = (volatile struct dbdma_regs *)
+-			ioremap(np->addrs[1].address, 0x100);
+-		awacs_rxdma = (volatile struct dbdma_regs *)
+-			ioremap(np->addrs[2].address, 0x100);
+-
+-		awacs_irq = np->intrs[0].line;
+-		awacs_tx_irq = np->intrs[1].line;
+-		awacs_rx_irq = np->intrs[2].line;
+-
+-		awacs_tx_cmd_space = kmalloc((write_sq.numBufs + 4) * sizeof(struct dbdma_cmd),
+-					     GFP_KERNEL);
+-		if (awacs_tx_cmd_space == NULL) {
+-			printk(KERN_ERR "DMA sound driver: Not enough buffer memory, driver disabled!\n");
+-			return -ENOMEM;
+-		}
+-		awacs_node = np;
+-#ifdef CONFIG_PMAC_PBOOK
+-		if (machine_is_compatible("PowerBook1,1")
+-		    || machine_is_compatible("AAPL,PowerBook1998")) {
+-			pmu_suspend();
+-			feature_set(np, FEATURE_Sound_CLK_enable);
+-			feature_set(np, FEATURE_Sound_power);
+-			/* Shorter delay will not work */
+-			mdelay(1000);
+-			pmu_resume();
+-		}
+-#endif
+-		awacs_tx_cmds = (volatile struct dbdma_cmd *)
+-			DBDMA_ALIGN(awacs_tx_cmd_space);
++	if (np->n_addrs < 3 || np->n_intrs < 3) {
++		printk(KERN_ERR "AWACS: can't use %s (%d addrs, %d intrs)\n",
++		       np->full_name, np->n_addrs, np->n_intrs);
++		return -ENODEV;
++	}
+ 
++	dmasound.mach = machPMac;
+ 
+-		awacs_rx_cmd_space = kmalloc((read_sq.numBufs + 4) * sizeof(struct dbdma_cmd),
+-					     GFP_KERNEL);
+-		if (awacs_rx_cmd_space == NULL) {
+-		  printk("DMA sound driver: No memory for input");
+-		}
+-		awacs_rx_cmds = (volatile struct dbdma_cmd *)
+-		  DBDMA_ALIGN(awacs_rx_cmd_space);
++	awacs = (volatile struct awacs_regs *)
++		ioremap(np->addrs[0].address, 0x80);
++	awacs_txdma = (volatile struct dbdma_regs *)
++		ioremap(np->addrs[1].address, 0x100);
++	awacs_rxdma = (volatile struct dbdma_regs *)
++		ioremap(np->addrs[2].address, 0x100);
++
++	awacs_irq = np->intrs[0].line;
++	awacs_tx_irq = np->intrs[1].line;
++	awacs_rx_irq = np->intrs[2].line;
+ 
++	awacs_node = np;
+ 
++#ifdef CONFIG_PMAC_PBOOK
++	if (machine_is_compatible("PowerBook1,1")
++	    || machine_is_compatible("AAPL,PowerBook1998")) {
++		feature_set(np, FEATURE_Sound_CLK_enable);
++		feature_set(np, FEATURE_Sound_power);
++		/* Shorter delay will not work */
++		mdelay(1000);
++	}
++#endif
+ 
+-		awacs_reg[0] = MASK_MUX_CD;
+-		/* FIXME: Only machines with external SRS module need MASK_PAROUT */
+-		awacs_reg[1] = MASK_LOOPTHRU;
+-		if (awacs_has_iic || awacs_device_id == 0x5 || /*awacs_device_id == 0x8
+-			|| */awacs_device_id == 0xb)
+-			awacs_reg[1] |= MASK_PAROUT;
+-		/* get default volume from nvram */
+-		vol = (~nvram_read_byte(0x1308) & 7) << 1;
+-		awacs_reg[2] = vol + (vol << 6);
+-		awacs_reg[4] = vol + (vol << 6);
+-		awacs_reg[5] = 0;
+-		awacs_reg[6] = 0;
+-		awacs_reg[7] = 0;
+-		out_le32(&awacs->control, 0x11);
+-		awacs_write(awacs_reg[0] + MASK_ADDR0);
+-		awacs_write(awacs_reg[1] + MASK_ADDR1);
+-		awacs_write(awacs_reg[2] + MASK_ADDR2);
+-		awacs_write(awacs_reg[4] + MASK_ADDR4);
+-		if (awacs_is_screamer) {
+-			awacs_write(awacs_reg[5] + MASK_ADDR5);
+-			awacs_write(awacs_reg[6] + MASK_ADDR6);
+-			awacs_write(awacs_reg[7] + MASK_ADDR7);
++	awacs_reg[0] = MASK_MUX_CD;
++	/* FIXME: Only machines with external SRS module need MASK_PAROUT */
++	awacs_reg[1] = MASK_LOOPTHRU;
++	if (awacs_has_iic || awacs_device_id == 0x5
++	    || /*awacs_device_id == 0x8 ||*/ awacs_device_id == 0xb)
++		awacs_reg[1] |= MASK_PAROUT;
++	/* get default volume from nvram */
++	vol = (~nvram_read_byte(0x1308) & 7) << 1;
++	awacs_reg[2] = vol + (vol << 6);
++	awacs_reg[4] = vol + (vol << 6);
++	awacs_reg[5] = 0;
++	awacs_reg[6] = 0;
++	awacs_reg[7] = 0;
++	out_le32(&awacs->control, 0x11);
++	awacs_write(awacs_reg[0] + MASK_ADDR0);
++	awacs_write(awacs_reg[1] + MASK_ADDR1);
++	awacs_write(awacs_reg[2] + MASK_ADDR2);
++	awacs_write(awacs_reg[4] + MASK_ADDR4);
++	if (awacs_is_screamer) {
++		awacs_write(awacs_reg[5] + MASK_ADDR5);
++		awacs_write(awacs_reg[6] + MASK_ADDR6);
++		awacs_write(awacs_reg[7] + MASK_ADDR7);
++	}
++
++	/* Initialize recent versions of the awacs */
++	if (awacs_revision == 0) {
++		awacs_revision = (in_le32(&awacs->codec_stat) >> 12) & 0xf;
++		if (awacs_revision == 3) {
++			mdelay(100);
++			awacs_write(0x6000);
++			mdelay(2);
++			awacs_write(awacs_reg[1] + MASK_ADDR1);
++			awacs_enable_amp(100 * 0x101);
+ 		}
++	}
++	if (awacs_revision >= AWACS_BURGUNDY)
++		awacs_burgundy_init();
+ 
+-		/* Initialize recent versions of the awacs */
+-		if (awacs_revision == 0) {
+-			awacs_revision =
+-				(in_le32(&awacs->codec_stat) >> 12) & 0xf;
+-			if (awacs_revision == 3) {
+-				mdelay(100);
+-				awacs_write(0x6000);
+-				mdelay(2);
+-				awacs_write(awacs_reg[1] + MASK_ADDR1);
+-				awacs_enable_amp(100 * 0x101);
+-			}
+-		}
+-		if (awacs_revision >= AWACS_BURGUNDY)
+-			awacs_burgundy_init();
++	/* Reset dbdma channels */
++	out_le32(&awacs_txdma->control, (RUN|PAUSE|FLUSH|WAKE|DEAD) << 16);
++	while (in_le32(&awacs_txdma->status) & RUN)
++		udelay(1);
++	out_le32(&awacs_rxdma->control, (RUN|PAUSE|FLUSH|WAKE|DEAD) << 16);
++	while (in_le32(&awacs_rxdma->status) & RUN)
++		udelay(1);
++
++	/* Initialize beep stuff */
++	/* need to ask for two buffers to cater for potential pull-up
++	   by DBDMA_ALIGN 
++	*/
++	beep_dbdma_cmd_space = kmalloc((1 + 1) * sizeof(struct dbdma_cmd),
++				       GFP_KERNEL);
++	if (beep_dbdma_cmd_space == NULL) {
++		printk(KERN_ERR "dmasound_pmac: no beep dbdma cmd space\n") ;
++		return -ENOMEM;
++	}
++	beep_dbdma_cmd = (volatile struct dbdma_cmd *)
++		DBDMA_ALIGN(beep_dbdma_cmd_space);
++	beep_buf = (short *) kmalloc(BEEP_BUFLEN * 4, GFP_KERNEL);
++	if (beep_buf == NULL) {
++		printk(KERN_ERR "dmasound_pmac: no memory for beep buffer\n");
++		kfree(beep_dbdma_cmd_space);
++		return -ENOMEM;
++	}
++	/* OK, we should be safe to claim the mksound vector now */
++	orig_mksound = kd_mksound;
++	kd_mksound = awacs_mksound;
+ 
+-		/* Initialize beep stuff */
+-		beep_dbdma_cmd = awacs_tx_cmds + (write_sq.numBufs + 1);
+-		orig_mksound = kd_mksound;
+-		kd_mksound = awacs_mksound;
+-		beep_buf = (short *) kmalloc(BEEP_BUFLEN * 4, GFP_KERNEL);
+-		if (beep_buf == NULL)
+-			printk(KERN_WARNING "dmasound: no memory for "
+-			       "beep buffer\n");
+ #ifdef CONFIG_PMAC_PBOOK
+-		pmu_register_sleep_notifier(&awacs_sleep_notifier);
++	pmu_register_sleep_notifier(&awacs_sleep_notifier);
+ #endif /* CONFIG_PMAC_PBOOK */
+ 
+-		/* Powerbooks have odd ways of enabling inputs such as
+-		   an expansion-bay CD or sound from an internal modem
+-		   or a PC-card modem. */
+-		if (machine_is_compatible("AAPL,3400/2400")
+-			|| machine_is_compatible("AAPL,3500")) {
+-			is_pbook_3400 = 1;
+-			/*
+-			 * Enable CD and PC-card sound inputs.
+-			 * This is done by reading from address
+-			 * f301a000, + 0x10 to enable the expansion-bay
+-			 * CD sound input, + 0x80 to enable the PC-card
+-			 * sound input.  The 0x100 enables the SCSI bus
+-			 * terminator power.
+-			 */
+-			latch_base = (unsigned char *) ioremap
+-				(0xf301a000, 0x1000);
+-			in_8(latch_base + 0x190);
+-		} else if (machine_is_compatible("PowerBook1,1")
+-			   || machine_is_compatible("AAPL,PowerBook1998")) {
+-			struct device_node* mio;
+-			macio_base = 0;
+-			is_pbook_G3 = 1;
+-			for (mio = np->parent; mio; mio = mio->parent) {
+-				if (strcmp(mio->name, "mac-io") == 0
+-				    && mio->n_addrs > 0) {
+-					macio_base = (unsigned char *) ioremap
+-						(mio->addrs[0].address, 0x40);
+-					break;
+-				}
++	/* Powerbooks have odd ways of enabling inputs such as
++	   an expansion-bay CD or sound from an internal modem
++	   or a PC-card modem. */
++	if (machine_is_compatible("AAPL,3400/2400")
++	    || machine_is_compatible("AAPL,3500")) {
++		is_pbook_3400 = 1;
++		/*
++		 * Enable CD and PC-card sound inputs.
++		 * This is done by reading from address
++		 * f301a000, + 0x10 to enable the expansion-bay
++		 * CD sound input, + 0x80 to enable the PC-card
++		 * sound input.  The 0x100 enables the SCSI bus
++		 * terminator power.
++		 */
++		latch_base = (unsigned char *) ioremap (0xf301a000, 0x1000);
++		in_8(latch_base + 0x190);
++
++	} else if (machine_is_compatible("PowerBook1,1")
++		   || machine_is_compatible("AAPL,PowerBook1998")) {
++		struct device_node* mio;
++		macio_base = 0;
++		is_pbook_G3 = 1;
++		for (mio = np->parent; mio; mio = mio->parent) {
++			if (strcmp(mio->name, "mac-io") == 0
++			    && mio->n_addrs > 0) {
++				macio_base = (unsigned char *) ioremap
++					(mio->addrs[0].address, 0x40);
++				break;
+ 			}
+-			/*
+-			 * Enable CD sound input.
+-			 * The relevant bits for writing to this byte are 0x8f.
+-			 * I haven't found out what the 0x80 bit does.
+-			 * For the 0xf bits, writing 3 or 7 enables the CD
+-			 * input, any other value disables it.  Values
+-			 * 1, 3, 5, 7 enable the microphone.  Values 0, 2,
+-			 * 4, 6, 8 - f enable the input from the modem.
+-			 */
+-			if (macio_base)
+-				out_8(macio_base + 0x37, 3);
+-		}
+-		sprintf(awacs_name, "PowerMac (AWACS rev %d) ",
+-			awacs_revision);
+-		return dmasound_init();
++		}
++		/*
++		 * Enable CD sound input.
++		 * The relevant bits for writing to this byte are 0x8f.
++		 * I haven't found out what the 0x80 bit does.
++		 * For the 0xf bits, writing 3 or 7 enables the CD
++		 * input, any other value disables it.  Values
++		 * 1, 3, 5, 7 enable the microphone.  Values 0, 2,
++		 * 4, 6, 8 - f enable the input from the modem.
++		 *  -- paulus.
++		 */
++		if (macio_base)
++			out_8(macio_base + 0x37, 3);
+ 	}
+-	return -ENODEV;
++	sprintf(awacs_name, "PowerMac (AWACS rev %d) ", awacs_revision);
++	return dmasound_init();
+ }
+ 
+ static void __exit dmasound_awacs_cleanup(void)
+diff -urN -I BK Id linux-2.4.14/drivers/sound/dmasound/dmasound_core.c linuxppc-2.4.14/drivers/sound/dmasound/dmasound_core.c
+--- linux-2.4.14/drivers/sound/dmasound/dmasound_core.c	Tue Nov  6 18:21:35 2001
++++ linuxppc-2.4.14/drivers/sound/dmasound/dmasound_core.c	Sun Nov 11 18:34:16 2001
+@@ -103,6 +103,13 @@
+  *	2000/3/25	Geert Uytterhoeven:
+  *			  - Integration of dmasound_q40
+  *			  - Small clean ups
++ *
++ *	2001/01/26 [rev 1.0] Iain Sandoe
++ *		  - make /dev/sndstat show revision & edition information.
++ *		  - since dmasound.mach.sq_setup() can fail on pmac its type
++ *		    has been changed to int and the returns are checked.
++ *		   [1.1]  - stop missing translations from being called.
++ *
+  */
+ 
+ 
+@@ -117,7 +124,6 @@
+ 
+ #include "dmasound.h"
+ 
+-
+     /*
+      *  Declarations
+      */
+@@ -471,7 +477,12 @@
+ 	    default:
+ 		return 0;
+ 	}
+-	return ct_func(userPtr, userCount, frame, frameUsed, frameLeft);
++	/* if the user has requested a non-existent translation don't try
++	   to call it but just return 0 bytes moved
++	*/
++	if (ct_func)
++		return ct_func(userPtr, userCount, frame, frameUsed, frameLeft);
++	return 0;
+ }
+ 
+ 
+@@ -597,10 +608,10 @@
+ 	}
+ }
+ 
+-static void sq_setup(struct sound_queue *sq, int max_count, int max_active,
+-		     int block_size)
++static int sq_setup(struct sound_queue *sq, int max_count, int max_active,
++		    int block_size)
+ {
+-	void (*setup_func)(void);
++	int (*setup_func)(void);
+ 
+ 	sq->max_count = max_count;
+ 	sq->max_active = max_active;
+@@ -618,7 +629,8 @@
+ 	    setup_func = dmasound.mach.read_sq_setup;
+ 	}
+ 	if (setup_func)
+-	    setup_func();
++	    return setup_func();
++	return 0;
+ }
+ 
+ static inline void sq_play(void)
+@@ -808,7 +820,8 @@
+ 			return rc;
+ 		}
+ 
+-		sq_setup(sq, numbufs, numbufs, bufsize);
++		if ((rc = sq_setup(sq, numbufs, numbufs, bufsize)))
++			return rc;
+ 		sq->open_mode = file->f_mode;
+ 	}
+ 	return rc;
+@@ -927,7 +940,7 @@
+ static int sq_ioctl(struct inode *inode, struct file *file, u_int cmd,
+ 		    u_long arg)
+ {
+-	int val;
++	int val, result;
+ 	u_long fmt;
+ 	int data;
+ 	int size, nbufs;
+@@ -1004,7 +1017,9 @@
+ 				size = write_sq.bufSize;
+ 		} else
+ 			size = write_sq.bufSize;
+-		sq_setup(&write_sq, write_sq.numBufs, nbufs, size);
++		result = sq_setup(&write_sq, write_sq.numBufs, nbufs, size);
++		if (result)
++			return result;
+ 		return IOCTL_OUT(arg,write_sq.bufSize | write_sq.numBufs << 16);
+ 	case SNDCTL_DSP_GETOSPACE:
+ 		info.fragments = write_sq.max_active - write_sq.count;
+@@ -1072,9 +1087,11 @@
+      *  /dev/sndstat
+      */
+ 
++#define STAT_BUFF_LEN 512
++
+ static struct {
+     int busy;
+-    char buf[512];	/* state.buf should not overflow! */
++    char buf[STAT_BUFF_LEN];	/* state.buf should not overflow! */
+     int len, ptr;
+ } state;
+ 
+@@ -1090,7 +1107,13 @@
+ 	state.ptr = 0;
+ 	state.busy = 1;
+ 
+-	len += sprintf(buffer+len, "%sDMA sound driver:\n", dmasound.mach.name);
++	len += sprintf(buffer+len, "%sDMA sound driver rev %03d :\n", 
++		dmasound.mach.name, (DMASOUND_CORE_REVISION<<4) + 
++		((dmasound.mach.version>>8) & 0x0f));
++	len += sprintf(buffer+len, 
++		"Core driver edition %02d.%02d : %s driver edition %02d.%02d\n",
++		DMASOUND_CORE_REVISION, DMASOUND_CORE_EDITION, dmasound.mach.name2,
++		(dmasound.mach.version >> 8), (dmasound.mach.version & 0xff)) ; 
+ 
+ 	len += sprintf(buffer+len, "\tsound.format = 0x%x",
+ 		       dmasound.soft.format);
+@@ -1136,6 +1159,9 @@
+ 		       write_sq.count, write_sq.rear_size);
+ 	len += sprintf(buffer+len, "\tsq.active = %d sq.syncing = %d\n",
+ 		       write_sq.active, write_sq.syncing);
++	if (len >= STAT_BUFF_LEN)
++		printk(KERN_ERR "dmasound_core: stat buffer overflowed!\n") 
++;
+ 	state.len = len;
+ 	return 0;
+ }
+@@ -1228,6 +1254,7 @@
+ 	if (irq_installed) {
+ 		sound_silence();
+ 		dmasound.mach.irqcleanup();
++		irq_installed = 0;
+ 	}
+ 
+ 	write_sq_release_buffers();
+diff -urN -I BK Id linux-2.4.14/drivers/usb/usb-ohci.h linuxppc-2.4.14/drivers/usb/usb-ohci.h
+--- linux-2.4.14/drivers/usb/usb-ohci.h	Tue Nov  6 18:21:35 2001
++++ linuxppc-2.4.14/drivers/usb/usb-ohci.h	Sun Nov 11 18:33:51 2001
+@@ -58,7 +58,7 @@
+ 
+ 	dma_addr_t dma;
+ 	__u32 unused[3];
+-} __attribute((aligned(16)));
++} __attribute((aligned(32)));
+ typedef struct ed ed_t;
+ 
+  
+@@ -567,7 +567,7 @@
+ 		return -ENOMEM;
+ 	ohci->dev_cache = pci_pool_create ("ohci_dev", ohci->ohci_dev,
+ 		sizeof (struct ohci_device),
+-		16 /* byte alignment */,
++		32 /* byte alignment */,
+ 		0 /* no page-crossing issues */,
+ 		GFP_KERNEL | OHCI_MEM_FLAGS);
+ 	if (!ohci->dev_cache)
+diff -urN -I BK Id linux-2.4.14/drivers/video/Config.in linuxppc-2.4.14/drivers/video/Config.in
+--- linux-2.4.14/drivers/video/Config.in	Wed Oct 24 23:05:12 2001
++++ linuxppc-2.4.14/drivers/video/Config.in	Sun Nov 11 18:32:59 2001
+@@ -64,13 +64,13 @@
+       fi
+    fi
+    if [ "$CONFIG_PPC" = "y" ]; then
+-      bool '  Open Firmware frame buffer device support' CONFIG_FB_OF
+-      bool '  Apple "control" display support' CONFIG_FB_CONTROL
+-      bool '  Apple "platinum" display support' CONFIG_FB_PLATINUM
+-      bool '  Apple "valkyrie" display support' CONFIG_FB_VALKYRIE
++      dep_bool '  Open Firmware frame buffer device support' CONFIG_FB_OF $CONFIG_ALL_PPC
++      dep_bool '  Apple "control" display support' CONFIG_FB_CONTROL $CONFIG_ALL_PPC
++      dep_bool '  Apple "platinum" display support' CONFIG_FB_PLATINUM $CONFIG_ALL_PPC
++      dep_bool '  Apple "valkyrie" display support' CONFIG_FB_VALKYRIE $CONFIG_ALL_PPC
+       bool '  Chips 65550 display support' CONFIG_FB_CT65550
+       bool '  IMS Twin Turbo display support' CONFIG_FB_IMSTT
+-      bool '  S3 Trio display support' CONFIG_FB_S3TRIO
++      dep_bool '  S3 Trio display support' CONFIG_FB_S3TRIO $CONFIG_ALL_PPC
+       tristate '  VGA 16-color graphics console' CONFIG_FB_VGA16
+    fi
+    if [ "$CONFIG_PARISC" = "y" ]; then
+diff -urN -I BK Id linux-2.4.14/drivers/video/aty/atyfb_base.c linuxppc-2.4.14/drivers/video/aty/atyfb_base.c
+--- linux-2.4.14/drivers/video/aty/atyfb_base.c	Tue Nov  6 18:21:35 2001
++++ linuxppc-2.4.14/drivers/video/aty/atyfb_base.c	Sun Nov 11 18:33:35 2001
+@@ -88,6 +88,9 @@
+ #include <linux/adb.h>
+ #include <linux/pmu.h>
+ #endif
++#ifdef CONFIG_BOOTX_TEXT
++#include <asm/btext.h>
++#endif
+ #ifdef CONFIG_NVRAM
+ #include <linux/nvram.h>
+ #endif
+@@ -819,6 +822,13 @@
+ 	display_info.disp_reg_address = info->ati_regbase_phys;
+     }
+ #endif /* CONFIG_FB_COMPAT_XPMAC */
++#ifdef CONFIG_BOOTX_TEXT
++    btext_update_display(info->frame_buffer_phys,
++		    (((par->crtc.h_tot_disp>>16) & 0xff)+1)*8,
++		    ((par->crtc.v_tot_disp>>16) & 0x7ff)+1,
++		    par->crtc.bpp,
++		    par->crtc.vxres*par->crtc.bpp/8);
++#endif /* CONFIG_BOOTX_TEXT */
+ }
+ 
+ static int atyfb_decode_var(const struct fb_var_screeninfo *var,
+diff -urN -I BK Id linux-2.4.14/drivers/video/aty128.h linuxppc-2.4.14/drivers/video/aty128.h
+--- linux-2.4.14/drivers/video/aty128.h	Mon Sep 18 03:48:04 2000
++++ linuxppc-2.4.14/drivers/video/aty128.h	Sun Nov 11 18:33:04 2001
+@@ -267,7 +267,6 @@
+ #define DAC_MASK				0xFF000000
+ #define DAC_BLANKING				0x00000004
+ #define DAC_RANGE_CNTL				0x00000003
+-#define DAC_RANGE_CNTL				0x00000003
+ #define DAC_PALETTE_ACCESS_CNTL			0x00000020
+ #define DAC_PDWN				0x00008000
+ 
+diff -urN -I BK Id linux-2.4.14/drivers/video/aty128fb.c linuxppc-2.4.14/drivers/video/aty128fb.c
+--- linux-2.4.14/drivers/video/aty128fb.c	Wed Oct 24 23:05:12 2001
++++ linuxppc-2.4.14/drivers/video/aty128fb.c	Sun Nov 11 18:33:40 2001
+@@ -67,6 +67,9 @@
+ #ifdef CONFIG_FB_COMPAT_XPMAC
+ #include <asm/vc_ioctl.h>
+ #endif
++#ifdef CONFIG_BOOTX_TEXT
++#include <asm/btext.h>
++#endif /* CONFIG_BOOTX_TEXT */
+ 
+ #include <video/fbcon.h>
+ #include <video/fbcon-cfb8.h>
+@@ -143,7 +146,7 @@
+ };
+ 
+ /* supported Rage128 chipsets */
+-static const struct aty128_chip_info aty128_pci_probe_list[] __initdata =
++static struct aty128_chip_info aty128_pci_probe_list[] __initdata =
+ {
+     {"Rage128 RE (PCI)", PCI_DEVICE_ID_ATI_RAGE128_RE, rage_128},
+     {"Rage128 RF (AGP)", PCI_DEVICE_ID_ATI_RAGE128_RF, rage_128},
+@@ -151,6 +154,7 @@
+     {"Rage128 RL (AGP)", PCI_DEVICE_ID_ATI_RAGE128_RL, rage_128},
+     {"Rage128 Pro PF (AGP)", PCI_DEVICE_ID_ATI_RAGE128_PF, rage_128_pro},
+     {"Rage128 Pro PR (PCI)", PCI_DEVICE_ID_ATI_RAGE128_PR, rage_128_pro},
++    {"Rage128 Pro TR (AGP)", PCI_DEVICE_ID_ATI_RAGE128_U3, rage_128_pro},
+     {"Rage Mobility M3 (PCI)", PCI_DEVICE_ID_ATI_RAGE128_LE, rage_M3},
+     {"Rage Mobility M3 (AGP)", PCI_DEVICE_ID_ATI_RAGE128_LF, rage_M3},
+     {NULL, 0, rage_128}
+@@ -1240,6 +1244,13 @@
+ 	display_info.disp_reg_address = info->regbase_phys;
+     }
+ #endif /* CONFIG_FB_COMPAT_XPMAC */
++#if defined(CONFIG_BOOTX_TEXT)
++    btext_update_display(info->frame_buffer_phys,
++		    (((par->crtc.h_total>>16) & 0xff)+1)*8,
++		    ((par->crtc.v_total>>16) & 0x7ff)+1,
++		    par->crtc.bpp,
++		    par->crtc.vxres*par->crtc.bpp/8);
++#endif /* CONFIG_BOOTX_TEXT */
+ }
+ 
+     /*
+@@ -1716,6 +1727,29 @@
+         } else {
+             if (default_vmode <= 0 || default_vmode > VMODE_MAX)
+                 default_vmode = VMODE_1024_768_60;
++
++	    /* iMacs need that resolution
++	     * PowerMac2,1 first r128 iMacs
++	     * PowerMac2,2 summer 2000 iMacs
++	     * PowerMac4,1 january 2001 iMacs "flower power"
++	     */
++	    if (machine_is_compatible("PowerMac2,1") ||
++		machine_is_compatible("PowerMac2,2") ||
++		machine_is_compatible("PowerMac4,1"))
++		default_vmode = VMODE_1024_768_75;
++
++	    /* iBook SE */
++	    if (machine_is_compatible("PowerBook2,2"))
++		default_vmode = VMODE_800_600_60;
++ 
++	    /* PowerBook Firewire (Pismo), iBook Dual USB */
++	    if (machine_is_compatible("PowerBook3,1") ||
++	    	machine_is_compatible("PowerBook4,1"))
++		default_vmode = VMODE_1024_768_60;
++
++	    /* PowerBook Titanium */
++	    if (machine_is_compatible("PowerBook3,2"))
++		default_vmode = VMODE_1152_768_60;
+ 
+             if (default_cmode < CMODE_8 || default_cmode > CMODE_32)
+                 default_cmode = CMODE_8;
+diff -urN -I BK Id linux-2.4.14/drivers/video/offb.c linuxppc-2.4.14/drivers/video/offb.c
+--- linux-2.4.14/drivers/video/offb.c	Wed Oct 10 12:39:08 2001
++++ linuxppc-2.4.14/drivers/video/offb.c	Sun Nov 11 18:33:42 2001
+@@ -52,7 +52,8 @@
+ 	cmap_r128,	/* ATI Rage128 */
+ 	cmap_M3A,	/* ATI Rage Mobility M3 Head A */
+ 	cmap_M3B,	/* ATI Rage Mobility M3 Head B */
+-	cmap_radeon	/* ATI Radeon */
++	cmap_radeon,	/* ATI Radeon */
++	cmap_gxt2000	/* IBM GXT2000 */
+ };
+ 
+ struct fb_info_offb {
+@@ -64,6 +65,7 @@
+     volatile unsigned char *cmap_adr;
+     volatile unsigned char *cmap_data;
+     int cmap_type;
++    int blanked;
+     union {
+ #ifdef FBCON_HAS_CFB16
+ 	u16 cfb16[16];
+@@ -210,9 +212,11 @@
+ static int offb_get_cmap(struct fb_cmap *cmap, int kspc, int con,
+ 			 struct fb_info *info)
+ {
+-    if (con == currcon) /* current console? */
++    struct fb_info_offb *info2 = (struct fb_info_offb *)info;
++
++    if (con == currcon && !info2->blanked) /* current console? */
+ 	return fb_get_cmap(cmap, kspc, offb_getcolreg, info);
+-    else if (fb_display[con].cmap.len) /* non default colormap? */
++    if (fb_display[con].cmap.len) /* non default colormap? */
+ 	fb_copy_cmap(&fb_display[con].cmap, cmap, kspc ? 0 : 2);
+     else
+     {
+@@ -240,7 +244,7 @@
+ 	if ((err = fb_alloc_cmap(&fb_display[con].cmap, size, 0)))
+ 	    return err;
+     }
+-    if (con == currcon)			/* current console? */
++    if (con == currcon && !info2->blanked)		/* current console? */
+ 	return fb_set_cmap(cmap, kspc, offb_setcolreg, info);
+     else
+ 	fb_copy_cmap(cmap, &fb_display[con].cmap, kspc ? 0 : 1);
+@@ -367,7 +371,7 @@
+ 	address = (u_long)dp->addrs[i].address;
+ 
+ 	/* kludge for valkyrie */
+-	if (strcmp(dp->name, "valkyrie") == 0) 
++	if (dp->name && strcmp(dp->name, "valkyrie") == 0) 
+ 	    address += 0x1000;
+     }
+     offb_init_fb(dp->name, dp->full_name, width, height, depth,
+@@ -449,6 +453,10 @@
+ 		info->cmap_adr = ioremap(base + 0x7ff000, 0x1000) + 0xcc0;
+ 		info->cmap_data = info->cmap_adr + 1;
+ 		info->cmap_type = cmap_m64;
++	} else if (device_is_compatible(dp, "pci1014,b7")) {
++		unsigned long regbase = dp->addrs[0].address;
++		info->cmap_adr = ioremap(regbase + 0x6000, 0x1000);
++		info->cmap_type = cmap_gxt2000;
+ 	}
+         fix->visual = info->cmap_adr ? FB_VISUAL_PSEUDOCOLOR
+ 				     : FB_VISUAL_STATIC_PSEUDOCOLOR;
+@@ -620,8 +628,10 @@
+ 
+ static int offbcon_switch(int con, struct fb_info *info)
+ {
++    struct fb_info_offb *info2 = (struct fb_info_offb *)info;
++
+     /* Do we have to save the colormap? */
+-    if (fb_display[currcon].cmap.len)
++    if (fb_display[currcon].cmap.len && !info2->blanked)
+ 	fb_get_cmap(&fb_display[currcon].cmap, 1, offb_getcolreg, info);
+ 
+     currcon = con;
+@@ -652,6 +662,15 @@
+     if (!info2->cmap_adr)
+ 	return;
+ 
++    if (!info2->blanked) {
++	if (!blank)
++	    return;
++	if (fb_display[currcon].cmap.len)
++	    fb_get_cmap(&fb_display[currcon].cmap, 1, offb_getcolreg, info);
++    }
++
++    info2->blanked = blank;
++
+     if (blank)
+ 	for (i = 0; i < 256; i++) {
+ 	    switch(info2->cmap_type) {
+@@ -664,26 +683,29 @@
+ 	    	}
+ 	    	break;
+ 	    case cmap_M3A:
+-	        /* Clear PALETTE_ACCESS_CNTL in DAC_CNTL */
+-	    	out_le32((unsigned *)(info2->cmap_adr + 0x58),
+-	    		in_le32((unsigned *)(info2->cmap_adr + 0x58)) & ~0x20);
++		/* Clear PALETTE_ACCESS_CNTL in DAC_CNTL */
++		out_le32((unsigned *)(info2->cmap_adr + 0x58),
++			in_le32((unsigned *)(info2->cmap_adr + 0x58)) & ~0x20);
+ 	    case cmap_r128:
+-	    	/* Set palette index & data */
+-    	        out_8(info2->cmap_adr + 0xb0, i);
+-	    	out_le32((unsigned *)(info2->cmap_adr + 0xb4), 0);
+-	    	break;
++		/* Set palette index & data */
++		out_8(info2->cmap_adr + 0xb0, i);
++		out_le32((unsigned *)(info2->cmap_adr + 0xb4), 0);
++		break;
+ 	    case cmap_M3B:
+-	        /* Set PALETTE_ACCESS_CNTL in DAC_CNTL */
+-	    	out_le32((unsigned *)(info2->cmap_adr + 0x58),
+-	    		in_le32((unsigned *)(info2->cmap_adr + 0x58)) | 0x20);
+-	    	/* Set palette index & data */
+-	    	out_8(info2->cmap_adr + 0xb0, i);
+-	    	out_le32((unsigned *)(info2->cmap_adr + 0xb4), 0);
+-	    	break;
++		/* Set PALETTE_ACCESS_CNTL in DAC_CNTL */
++		out_le32((unsigned *)(info2->cmap_adr + 0x58),
++			in_le32((unsigned *)(info2->cmap_adr + 0x58)) | 0x20);
++		/* Set palette index & data */
++		out_8(info2->cmap_adr + 0xb0, i);
++		out_le32((unsigned *)(info2->cmap_adr + 0xb4), 0);
++		break;
+ 	    case cmap_radeon:
+-    	        out_8(info2->cmap_adr + 0xb0, i);
+-	    	out_le32((unsigned *)(info2->cmap_adr + 0xb4), 0);
+-	    	break;
++		out_8(info2->cmap_adr + 0xb0, i);
++		out_le32((unsigned *)(info2->cmap_adr + 0xb4), 0);
++		break;
++	    case cmap_gxt2000:
++		out_le32((unsigned *)info2->cmap_adr + i, 0);
++		break;
+ 	    }
+ 	}
+     else
+@@ -768,6 +790,10 @@
+ 	out_8(info2->cmap_adr + 0xb0, regno);
+   	out_le32((unsigned *)(info2->cmap_adr + 0xb4),
+     		(red << 16 | green << 8 | blue));
++	break;
++    case cmap_gxt2000:
++	out_le32((unsigned *)info2->cmap_adr + regno,
++		 (red << 16 | green << 8 | blue));
+ 	break;
+     }
+ 
+diff -urN -I BK Id linux-2.4.14/fs/proc/proc_devtree.c linuxppc-2.4.14/fs/proc/proc_devtree.c
+--- linux-2.4.14/fs/proc/proc_devtree.c	Mon May 22 13:34:37 2000
++++ linuxppc-2.4.14/fs/proc/proc_devtree.c	Sun Nov 11 18:33:47 2001
+@@ -96,9 +96,11 @@
+ 		 * add a symlink with the name property as its name.
+ 		 */
+ 		for (sib = np->child; sib != child; sib = sib->sibling)
+-			if (sib->name && strcmp(sib->name, child->name) == 0)
++			if (sib->name && child->name &&
++					strcmp(sib->name, child->name) == 0)
+ 				break;
+-		if (sib == child && strncmp(p, child->name, l) != 0) {
++		if (sib == child && p && child->name &&
++				strncmp(p, child->name, l) != 0) {
+ 			al = proc_symlink(child->name, de, ent->name);
+ 			if (al == 0)
+ 				break;
