@@ -5,6 +5,7 @@
 #
 
 VA SystemImager-1.4.0 2000.xx.xx
+- install -- Now works with /etc/rc.d/init.d/ or /etc/init.d.
 - install -- The imageserver now runs rsync as a daemon from an init
              script.  This is configured automatically at install time.
 - getimage -- Added support for LABEL=/partition/label format in 
@@ -31,6 +32,8 @@ VA SystemImager-1.4.0 2000.xx.xx
                is backwards compatible so as not to completely confuse
                you. ;)
 - rsyncd.conf -- Change back to using one log file: /var/log/systemimager
+- afterburner -- Test for xinetd and inetd and SIGHUP them as is appropriate.
+- afterburner -- Now works with /etc/rc.d/init.d/ or /etc/init.d.
 - updateclient -- Now uses the --numeric-ids rsync option.  Thanks to all
                   who submitted info on this one.  This closes bug #123339.
 - goldenclient -- Changed phraseology from "master client" to "golden client"
@@ -47,6 +50,10 @@ VA SystemImager-1.4.0 2000.xx.xx
                    partition information as if it were the client's.
 - makedhcpstatic -- Automatically send a HUP signal to dhcpd (if running) to 
                     make it re-read the freshly modified config file.
+- makedhcpserver -- Now supports specification of an imageserver that is a
+                    different machine from the dhcp server.
+- makedhcpserver -- Added patches from John Goebel <jgoebel@valinux.com> to allow
+                    for other non-systemimager specific advanced options!
 - autoinstallclient -- Smallerized.  More stuff done by BusyBox.
 - autoinstallclient -- Now using hardlinks for BusyBox.  Thanks for this suggestion
                        go to: Rob Latham <rlatham@plogic.com>
