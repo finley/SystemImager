@@ -837,6 +837,143 @@ Would you like to run the "addclients" utility now? (y/[n]): n
       which clients will receive which image, and to populate the 
       image server's /etc/hosts and /tftpboot/systemimager/hosts files.
      </para>
+
+     <example><title>Running addclients</title>
+      <programlisting>
+[root@imageserver]# addclients
+
+Welcome to the VA SystemImager "addclients" utility  
+---------------------------------------------------
+
+This utility has 3 sections.  
+
+
+"Section 1" will ask you for your hostname information.
+
+
+"Section 2" will allow you to create softlinks from each
+client hostname to your "master" script in the
+"/tftpboot/systemimager/" directory.  
+
+Example: www297.sh -> web_server_image_v1.master
+
+
+"Section 3" will ask you for IP address information that will
+be combined with the hostname information provided in Section 1
+to create entries in "/etc/hosts" for each of these same clients.
+New entries will be appended to the end of "/etc/hosts".  If you 
+specify new hostnames for existing IP addresses, those entries 
+will be re-written in place to reflect the new host names.
+
+
+Continue? ([y]/n): 
+
+
+addclients -- Section 1 (hostname information)
+----------------------------------------------
+
+The next series of questions will be used to create a range
+of hostnames.  You will be asked for your domain name, the 
+base host name, a beginning number, and an ending number.
+
+For example, if you answer:
+  domain name     = systemimager.org
+  base host name  = www
+  starting number = 7
+  ending number   = 11
+
+Then the result will be a series of hostnames that looks like this:
+  www7.systemimager.org
+  www8.systemimager.org
+  www9.systemimager.org
+  www10.systemimager.org
+  www11.systemimager.org
+
+
+What is your domain name? []: mydomain.com
+What is the base host name that you want me to use? []: server
+What number should I begin with? []: 1
+What number should I end with? []: 99
+
+
+I will work with hostnames:  server1 through server99
+             in the domain:  mydomain.com
+
+Are you satisfied? (y/[n]): y
+
+
+addclients -- Section 2 (soft links to master script)
+-----------------------------------------------------
+
+Would you like me to create soft links to a "master" script so
+that hosts:
+
+  server1 through server99
+
+can be autoinstalled with that image? ([y]/n): 
+
+Here is a list of available images:
+
+debian_ide_2.2 
+debian_hwraid_ext2 
+web_server_image_v1 
+
+Which image would you like these hosts to receive? [web_server_image_v1]: 
+
+Your soft links have been created.
+
+Press &lt;Enter> to continue...
+
+
+addclients -- Section 3 (adding or modifying /etc/hosts entries)
+----------------------------------------------------------------
+
+It is necessary to have an entry for each client in "/etc/hosts".
+
+I will ask you for your clients' IP addresses one subnet at a time.
+
+
+Would you like me to make these entries for you? ([y]/n): 
+
+
+addclients -- Section 3 (adding or modifying /etc/hosts entries -- continued...)
+--------------------------------------------------------------------------------
+subnet 1
+
+The first host in subnet 1 will be: server1
+What is the starting IP address for subnet 1? []: 192.168.1.1
+What is the ending IP address? []: 192.168.1.99
+I will work with IP addresses:  192.168.1.1 through 192.168.1.99
+
+Are you satisfied? (y/[n]): y
+
+These entries have been added to /etc/hosts.
+
+Press &lt;Enter> to continue...
+      </programlisting>
+     </example>
+
+     <example><title>Entries in /etc/hosts created by addclients</title>
+      <programlisting>
+192.168.1.1    server1.mydomain.com  server1
+192.168.1.2    server2.mydomain.com  server2
+192.168.1.3    server3.mydomain.com  server3
+192.168.1.4    server4.mydomain.com  server4
+192.168.1.5    server5.mydomain.com  server5
+192.168.1.6    server6.mydomain.com  server6
+192.168.1.7    server7.mydomain.com  server7
+192.168.1.8    server8.mydomain.com  server8
+192.168.1.9    server9.mydomain.com  server9
+192.168.1.10    server10.mydomain.com  server10
+192.168.1.11    server11.mydomain.com  server11
+
+[ ... etc, etc, etc ... ]
+
+192.168.1.97    server97.mydomain.com  server97
+192.168.1.98    server98.mydomain.com  server98
+192.168.1.99    server99.mydomain.com  server99
+      </programlisting>
+     </example>
     </listitem>
 
     <listitem>
@@ -848,7 +985,7 @@ Would you like to run the "addclients" utility now? (y/[n]): n
 
     <listitem>
      <para>
-      Autoinstall the "golden" image on other machines.
+      Autoinstall the "golden image" on other machines.
      </para>
     </listitem>
 
