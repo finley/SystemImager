@@ -27,7 +27,7 @@ fi
 
 ### BEGIN load modules
 echo "Loading default modules"
-DEFAULT_MODULES="reiserfs xfs md raid0 raid1 raid5 linear"
+DEFAULT_MODULES="reiserfs jfs xfs md raid0 raid1 raid5 linear"
 for MODULE in $MODULES; do
   if ! (modprobe -l ${MODULE}.o | grep ${MODULE}.o) > /dev/null; then
     echo "Skipping $MODULE - assuming it is compiled into the kernel."

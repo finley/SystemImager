@@ -47,7 +47,7 @@ BUSYBOX_BINARY_STAGE2 = $(BUSYBOX_ROOT_STAGE2)/busybox
 
 LOCAL_BINARIES_STAGE1 := /sbin/dhclient-2.2.x /sbin/mke2fs /bin/ash /usr/bin/mawk /usr/bin/rsync /usr/bin/snarf 
 
-LOCAL_BINARIES_STAGE2 := $(LOCAL_BINARIES_STAGE1) /sbin/devfsd /sbin/discover /sbin/insmod /sbin/mkreiserfs /sbin/mkraid /sbin/modprobe /sbin/raidstart /sbin/raidstop /sbin/rmmod /sbin/sfdisk /usr/bin/host
+LOCAL_BINARIES_STAGE2 := $(LOCAL_BINARIES_STAGE1) /sbin/devfsd /sbin/discover /sbin/mkfs.jfs /sbin/mkfs.xfs /sbin/insmod /sbin/mkreiserfs /sbin/mkraid /sbin/modprobe /sbin/raidstart /sbin/raidstop /sbin/rmmod /sbin/sfdisk /usr/bin/host
 
 LOCAL_BINARIES_STAGE2_SSH := $(LOCAL_BINARIES_STAGE2) /usr/bin/ssh /usr/sbin/sshd /usr/bin/scp /usr/bin/ssh-keygen
 
