@@ -903,6 +903,43 @@ sub write_lvm_groups_commands {
 # Usage:  
 # write_lvm_volumes_commands( $out, $image_dir, $auto_install_script_conf );
 sub write_lvm_volumes_commands {
+    my ($out, $image_dir, $file) = @_;
+
+    my $xml_config = XMLin($file, keyattr => { lvm_group => "+name" }, forcearray => 1 );
+    
+    my $lvm = @{$xml_config->{lvm}}[0];
+    unless (defined($lvm)) {
+        return;
+    }
+    
+    foreach my $group_name (sort (keys ( %{$lvm->{lvm_group}} ))) {
+        
+        foreach my $lv (@{$lvm->{lvm_group}->{$group_name}->{lv}}) {
+            
+            # Get logical volume name -AR-
+            my $lv_name = $lv->{name};
+            unless (defined($lv_name)) {
+                print "WARNING: undefined logical volume name! skipping volume creation.\n";
+                next;
+            }
+            # Get logical volume size -AR-
+            my $lv_size = $lv->{size};
+            unless (defined($lv_size)) {
+                print "WARNING: undefined logical volume size! skipping volume creation.\n";
+                next;
+            }
+            # Get additional options (expressed in lvcreate format) -AR-
+            my $lv_options = $lv->{lv_options};
+            unless (defined($lv_options)) {
+                $lv_options = "";
+            }
+
+            # Create the logical volume -AR-
+            my $cmd = "lvcreate $lv_options -L${lv_size}M -v$group_name $lv_name || shellout";
+            print $out qq(echo "$cmd"\n);
+            print $out "$cmd\n";
+        }
+    }
 }
 
 # Usage:  
