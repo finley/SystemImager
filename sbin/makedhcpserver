@@ -174,7 +174,8 @@ EOF
    $ssh_download_url=get_response($ssh_download_url);
  }
 
- print "\nWhat is the air speed velocity of the common swallow? [$swallow]: ";
+ # see http://www.armory.com/swallowscenes.html for details
+ print "\nWhat... is the air-speed velocity of an unladen swallow? [$swallow]: ";
  $swallow=<STDIN>;
  system("clear");
  chomp $swallow;
