@@ -51,6 +51,19 @@ AC_PATH_PROG(gxx_exec,g++)
 AC_SUBST(GCC,$gcc_exec)
 AC_SUBST(GXX,$gxx_exec)
 
+# parted needs uuid
+AC_CHECK_LIB([uuid], [uuid_generate], [have_uuid=yes], [
+	SI_CHECK_FAIL(libuuid,e2fsprogs-devel)
+	])
+
+# parted needs readline 
+
+AC_CHECK_LIB([ncurses],[keyok],[LIBS="-lncurses"],
+	     [SI_CHECK_FAIL(ncurses,ncurses-devel)])
+
+AC_CHECK_LIB([readline],[rl_initialize],[have_readline=yes], [
+	     SI_CHECK_FAIL(readline,readline-devel)])
+
 
 # where is python
 AC_PATH_PROG(python_exec,python2)

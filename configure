@@ -3435,6 +3435,297 @@ GCC=$gcc_exec
 GXX=$gxx_exec
 
 
+# parted needs uuid
+echo "$as_me:$LINENO: checking for uuid_generate in -luuid" >&5
+echo $ECHO_N "checking for uuid_generate in -luuid... $ECHO_C" >&6
+if test "${ac_cv_lib_uuid_uuid_generate+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-luuid  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char uuid_generate ();
+int
+main ()
+{
+uuid_generate ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_uuid_uuid_generate=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_uuid_uuid_generate=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_uuid_uuid_generate" >&5
+echo "${ECHO_T}$ac_cv_lib_uuid_uuid_generate" >&6
+if test $ac_cv_lib_uuid_uuid_generate = yes; then
+  have_uuid=yes
+else
+
+
+    SI_MSG=`echo -e "- libuuid not found!\n"`
+    if test "x" != "x"; then
+        SI_MSG=`echo -e "$SI_MSG\n- "`
+    fi
+    if test "xe2fsprogs-devel" != "x"; then
+        SI_MSG=`echo -e "$SI_MSG\n- Try installing the e2fsprogs-devel package\n"`
+    fi
+    if test "x" != "x"; then
+        SI_MSG=`echo -e "$SI_MSG\n- or get the latest software from \n"`
+    fi
+
+    { { echo "$as_me:$LINENO: error: !
+************************************************************
+$SI_MSG
+************************************************************
+" >&5
+echo "$as_me: error: !
+************************************************************
+$SI_MSG
+************************************************************
+" >&2;}
+   { (exit 1); exit 1; }; }
+
+
+
+fi
+
+
+# parted needs readline
+
+echo "$as_me:$LINENO: checking for keyok in -lncurses" >&5
+echo $ECHO_N "checking for keyok in -lncurses... $ECHO_C" >&6
+if test "${ac_cv_lib_ncurses_keyok+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lncurses  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char keyok ();
+int
+main ()
+{
+keyok ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_ncurses_keyok=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_ncurses_keyok=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_ncurses_keyok" >&5
+echo "${ECHO_T}$ac_cv_lib_ncurses_keyok" >&6
+if test $ac_cv_lib_ncurses_keyok = yes; then
+  LIBS="-lncurses"
+else
+
+    SI_MSG=`echo -e "- ncurses not found!\n"`
+    if test "x" != "x"; then
+        SI_MSG=`echo -e "$SI_MSG\n- "`
+    fi
+    if test "xncurses-devel" != "x"; then
+        SI_MSG=`echo -e "$SI_MSG\n- Try installing the ncurses-devel package\n"`
+    fi
+    if test "x" != "x"; then
+        SI_MSG=`echo -e "$SI_MSG\n- or get the latest software from \n"`
+    fi
+
+    { { echo "$as_me:$LINENO: error: !
+************************************************************
+$SI_MSG
+************************************************************
+" >&5
+echo "$as_me: error: !
+************************************************************
+$SI_MSG
+************************************************************
+" >&2;}
+   { (exit 1); exit 1; }; }
+
+
+fi
+
+
+echo "$as_me:$LINENO: checking for rl_initialize in -lreadline" >&5
+echo $ECHO_N "checking for rl_initialize in -lreadline... $ECHO_C" >&6
+if test "${ac_cv_lib_readline_rl_initialize+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lreadline  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char rl_initialize ();
+int
+main ()
+{
+rl_initialize ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_readline_rl_initialize=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_readline_rl_initialize=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_readline_rl_initialize" >&5
+echo "${ECHO_T}$ac_cv_lib_readline_rl_initialize" >&6
+if test $ac_cv_lib_readline_rl_initialize = yes; then
+  have_readline=yes
+else
+
+
+    SI_MSG=`echo -e "- readline not found!\n"`
+    if test "x" != "x"; then
+        SI_MSG=`echo -e "$SI_MSG\n- "`
+    fi
+    if test "xreadline-devel" != "x"; then
+        SI_MSG=`echo -e "$SI_MSG\n- Try installing the readline-devel package\n"`
+    fi
+    if test "x" != "x"; then
+        SI_MSG=`echo -e "$SI_MSG\n- or get the latest software from \n"`
+    fi
+
+    { { echo "$as_me:$LINENO: error: !
+************************************************************
+$SI_MSG
+************************************************************
+" >&5
+echo "$as_me: error: !
+************************************************************
+$SI_MSG
+************************************************************
+" >&2;}
+   { (exit 1); exit 1; }; }
+
+
+fi
+
+
 
 # where is python
 # Extract the first word of "python2", so it can be a program name with args.
