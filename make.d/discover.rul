@@ -22,7 +22,7 @@ ALL_SOURCE += 	$(SRC_DIR)/$(DISCOVER_TARBALL) \
 PHONY += discover
 discover:	$(DISCOVER_BINARY) discover-data
 
-$(DISCOVER_BINARY):	$(SRC_DIR)/$(DISCOVER_TARBALL)
+$(DISCOVER_BINARY):	$(SRC_DIR)/$(DISCOVER_TARBALL) $(DISCOVER_PATCHES)
 	rm -fr $(SRC_DIR)/$(DISCOVER_DIR)
 	cd $(SRC_DIR) && tar -xvzf $(DISCOVER_TARBALL)
 	cd $(SRC_DIR)/$(DISCOVER_DIR) && cat $(DISCOVER_PATCHES) < /dev/null | patch -p1

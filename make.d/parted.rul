@@ -4,6 +4,7 @@ PARTED_TARBALL := parted-$(PARTED_VERSION).tar.gz
 PARTED_URL := http://download.systemimager.org/pub/parted/$(PARTED_TARBALL)
 # SOURCE_URL -> http://ftp.gnu.org/gnu/parted/
 PARTED_BINARY := $(SRC_DIR)/$(PARTED_DIR)/parted/.libs/parted
+PARTED_PATCHES := $(shell ls $(PATCH_DIR)/parted.*.patch 2>/dev/null | sort)
 
 ALL_SOURCE += $(SRC_DIR)/$(PARTED_TARBALL)
 
@@ -14,9 +15,13 @@ endif
 PHONY += parted
 parted:	$(PARTED_BINARY)
 
-$(PARTED_BINARY):	$(SRC_DIR)/$(PARTED_TARBALL)
-	[ -d $(SRC_DIR)/$(PARTED_DIR) ] || ( cd $(SRC_DIR) && tar -xvzf $(PARTED_TARBALL) )
-	( cd $(SRC_DIR)/$(PARTED_DIR) && ./configure --prefix= $(PARTED_CONFIGURE))
+$(PARTED_BINARY):	$(SRC_DIR)/$(PARTED_TARBALL) $(PARTED_PATCHES)
+	[ -d $(SRC_DIR)/$(PARTED_DIR) ] || \
+	  ( cd $(SRC_DIR) && tar -xvzf $(PARTED_TARBALL) )
+	cd $(SRC_DIR)/$(PARTED_DIR) && \
+	  cat $(PARTED_PATCHES) < /dev/null | patch -p1
+	( cd $(SRC_DIR)/$(PARTED_DIR) && \
+	  ./configure --prefix= $(PARTED_CONFIGURE))
 	$(MAKE) -C $(SRC_DIR)/$(PARTED_DIR)
 
 $(SRC_DIR)/$(PARTED_TARBALL):
