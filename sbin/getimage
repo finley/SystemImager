@@ -3,8 +3,10 @@
 #
 # "SystemImager" 
 #
-#  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
-#  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
+#  Copyright (C) 1999-2001 Brian Elliott Finley 
+#                          <brian.finley@baldguysoftware.com>
+#  Copyright (C) 2002 Bald Guy Software 
+#                     <brian.finley@baldguysoftware.com>
 #
 #  $Id$
 #
@@ -128,40 +130,42 @@ Options: (options can be presented in any order and may be abbreviated)
 
 The following options affect the autoinstall client after autoinstalling:
 
- -ip-assignment METHOD    Where METHOD can be:
+ -ip-assignment METHOD    Where METHOD can be DHCP, STATIC, or REPLICANT.
 
-                          static_dhcp -- A DHCP server will assign the
-			    same static address each time to clients 
-			    installed with this image.  Also see the
-			    \"mkdhcpstatic\" command.
+                DHCP
+                ----------------------------------------------------------------
+                A DHCP server will assign IP addresses to clients installed with
+                this image.  They may be assigned a different address each time.
+                If you want to use DHCP, but must ensure that your clients
+                receive the same IP address each time, see \"man mkdhcpstatic\".
 
-			  dynamic_dhcp -- A DHCP server will assign IP
-			    addresses dynamically to clients installed
-			    with this image.  They may be assigned a
-			    different address each time.
+                STATIC
+                ----------------------------------------------------------------
+                The IP address the client uses during autoinstall will be
+                permanently assigned to that client.
 
-                          static -- The IP address the client uses
-			    during autoinstall will be permanently
-			    assigned to that client.
+                REPLICANT
+                ----------------------------------------------------------------
+                Don\'t mess with the network settings in this image.  I\'m using
+                it as a backup and quick restore mechanism for a single machine.
 
-			  replicant -- Don\'t mess with the network
-			    settings in this image.  I\'m using it as a
-			    backup and quick restore mechanism for a 
-			    single machine.
 
- -post-install ACTION     ACTION can be:
+ -post-install ACTION     Where ACTION can be BEEP, REBOOT, or SHUTDOWN.
 
-                          beep -- Clients will beep incessantly after 
-			    succussful completion of an autoinstall.
-			    (This is the default)
+                BEEP 
+                ----------------------------------------------------------------
+                Clients will beep incessantly after succussful completion of an
+                autoinstall.  (default)
 
-			  reboot -- Clients will reboot themselves
-			    after successful completion of an 
-			    autoinstall.
+                REBOOT 
+                ----------------------------------------------------------------
+                Clients will reboot themselves after successful completion of 
+                an autoinstall.
 
-			  shutdown -- Clients will halt themselves
-			    after successful completion of an 
-			    autoinstall.
+                SHUTDOWN 
+                ----------------------------------------------------------------
+                Clients will halt themselves after successful completion of an 
+                autoinstall.
 
 
 Download, report bugs, and make suggestions at:
@@ -564,24 +568,22 @@ IP Address Assignment
 There are four ways to assign IP addresses to the client systems on an
 ongoing basis:
 
-1) static_dhcp -- A DHCP server will assign the
-     same static address each time to clients 
-     installed with this image.  Also see the
-     "mkdhcpstatic" command.
+1) DHCP
+   ----------------------------------------------------------------
+   A DHCP server will assign IP addresses to clients installed with
+   this image.  They may be assigned a different address each time.
+   If you want to use DHCP, but must ensure that your clients
+   receive the same IP address each time, see \"man mkdhcpstatic\".
 
-2) dynamic_dhcp -- A DHCP server will assign IP
-     addresses dynamically to clients installed
-     with this image.  They may be assigned a
-     different address each time.
+2) STATIC
+   ----------------------------------------------------------------
+   The IP address the client uses during autoinstall will be
+   permanently assigned to that client.
 
-3) static -- The IP address the client uses
-     during autoinstall will be permanently
-     assigned to that client.
-
-4) replicant -- Don't mess with the network
-     settings in this image.  I'm using it as a
-     backup and quick restore mechanism for a 
-     single machine.
+3) REPLICANT
+   ----------------------------------------------------------------
+   Don\'t mess with the network settings in this image.  I\'m using
+   it as a backup and quick restore mechanism for a single machine.
 
 EOF
 
@@ -594,7 +596,6 @@ EOF
 	           ($ip_assignment_method == "1")
                 or ($ip_assignment_method == "2")
                 or ($ip_assignment_method == "3")
-                or ($ip_assignment_method == "4")
 	      )
               {
                  # reset to default
@@ -605,10 +606,9 @@ EOF
     }
 
 # turn number values into useable string values
-if   ($ip_assignment_method == "1") { $ip_assignment_method = "static_dhcp" ; }
-elsif($ip_assignment_method == "2") { $ip_assignment_method = "dynamic_dhcp"      ; }
-elsif($ip_assignment_method == "3") { $ip_assignment_method = "static"; }
-elsif($ip_assignment_method == "4") { $ip_assignment_method = "replicant"   ; }
+if   ($ip_assignment_method == "1") { $ip_assignment_method = "dhcp" ; }
+elsif($ip_assignment_method == "2") { $ip_assignment_method = "static"      ; }
+elsif($ip_assignment_method == "3") { $ip_assignment_method = "replicant"; }
 }
 ### END IP Assignment Method ###
 
@@ -632,29 +632,6 @@ SystemImager::Server->create_autoinstall_script(
     $auto_install_script_conf
 );
 ### END create a fresh master autoinstall script ###
-
-# prompt to run mkdhcpstatic after autoinstalling clients if using static_dhcp
-if((!$quiet) and ($ip_assignment_method eq "static_dhcp")) {
-    system("clear");
-    print << 'EOF';
-Static DHCP Instructions
-------------------------
-
-You have chosen to use "Static DHCP" for your IP addressing.  Be sure to
-run "mkdhcpstatic" after autoinstalling your client systems.  You will
-need to autoinstall your client systems in the order that you want them
-to be assigned their IP addresses.  When you run "mkdhcpstatic", it 
-will re-write the DHCP server configuration file to permanently assign
-to each client the same IP address that client received during it's 
-autoinstall process.
-
-EOF
-
-    # and then give 'em a chance to read the message
-    print "\nPress <Enter> to continue...";
-    <STDIN>;
-    system("clear");
-}
 
 # prompt to run "addclients"
 if (!$quiet) {

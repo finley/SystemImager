@@ -10,6 +10,9 @@
 --------------------------------------------------------------------------------
 SystemImager-3.0.0 2002.09.??
 --------------------------------------------------------------------------------
+o static_dhcp and dynamic_dhcp went away.  Now simply use "dhcp".  See comments
+  in autoinstall script on setting the host name to get the functionality that
+  static_dhcp used to provide. -BEF-
 o FAT support: FAT filesystems are now properly supported on i386 and ia64 (this
   includes vfat).  TODO #482984. -BEF-
 o jfs support

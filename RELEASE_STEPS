@@ -39,20 +39,6 @@ Pending:
         ( cd / && tar -xvzf /tmp/boel_binaries.tar.gz ) || shellout
 
 
-* Get rid of static_dhcp and dynamic_dhcp in favor of simply "dhcp" (and
-  don't mess with the hostname at all).
-
-  Add these comments to autoinstallscripts.
-  ##################################################################
-  #
-  # Uncomment the line below to leave your hostname blank.  Certain
-  # distributions use this as an indication to take on the hostname
-  # provided by a DHCP server.  The default is to have
-  # SystemConfigurator assign your clients the hostname that
-  # corresponds to the IP address the use during the install.
-  #
-  #HOSTNAME=""
-
 
 
 Completed:
@@ -122,6 +108,20 @@ Completed:
   can be used in both.  (unless it's impossible as Sean noted
   with ETHER_SLEEP ;-)  Add ETHER_SLEEP=35 to local.cfg.
 * modules issue
+* Get rid of static_dhcp and dynamic_dhcp in favor of simply "dhcp" (and
+  don't mess with the hostname at all).
+
+  Add these comments to autoinstallscripts.
+  ##################################################################
+  #
+  # Uncomment the line below to leave your hostname blank.  Certain
+  # distributions use this as an indication to take on the hostname
+  # provided by a DHCP server.  The default is to have
+  # SystemConfigurator assign your clients the hostname that
+  # corresponds to the IP address the use during the install.
+  #
+  #HOSTNAME=""
+
 
 
 

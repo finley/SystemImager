@@ -161,11 +161,10 @@ sub validate_ip_assignment_option {
   $ip_assignment_method = lc $ip_assignment_method;
   unless(
     ($ip_assignment_method eq "")
-    or ($ip_assignment_method eq "static_dhcp")
-    or ($ip_assignment_method eq "dynamic_dhcp")
+    or ($ip_assignment_method eq "dhcp")
     or ($ip_assignment_method eq "static")
     or ($ip_assignment_method eq "replicant")
-  ) { die qq(\nERROR: -ip-assignment must be static, static_dhcp, dynamic_dhcp, or replicant.\n\n       Try "-help" for more options.\n); }
+  ) { die qq(\nERROR: -ip-assignment must be dhcp, static, or replicant.\n\n       Try "-help" for more options.\n); }
   return 0;
 }
 
@@ -1243,7 +1242,8 @@ sub _write_out_umount_commands {
 
 sub create_autoinstall_script{
 
-  my (  $module, 
+    my (  
+        $module, 
         $script_name, 
         $auto_install_script_dir, 
         $config_dir, 
@@ -1255,31 +1255,31 @@ sub create_autoinstall_script{
         $ssh_user
     ) = @_;
 
-  # Lose the /etc/mtab file.  It can cause confusion on the autoinstall client, making 
-  # it think that filesystems are mounted when they really aren't.  And because it is
-  # automatically updated on running systems, we don't really need it for anything 
-  # anyway. -BEF-
-  #
-  my $file="$image_dir/etc/mtab";
-  if (-f $file) {
-    unlink "$file" or croak("Can't remove $file!");
-  }
-
-  $file = "$auto_install_script_dir/$script_name.master";
-  open (MASTER_SCRIPT, ">$file") || die "Can't open $file for writing\n";
-
-  _in_script_add_standard_header_stuff($image, $script_name);
-
-  _upgrade_partition_schemes_to_generic_style($image_dir, $config_dir);
-
-  _read_partition_info_and_prepare_parted_commands( $image_dir, $auto_install_script_conf );
-
-  _write_out_mkfs_commands( $image_dir, $auto_install_script_conf );
-
-  _mount_proc_in_image_on_client();
-  
-  ### BEGIN pull the image down ###
-  print MASTER_SCRIPT << 'EOF';
+    # Lose the /etc/mtab file.  It can cause confusion on the autoinstall client, making 
+    # it think that filesystems are mounted when they really aren't.  And because it is
+    # automatically updated on running systems, we don't really need it for anything 
+    # anyway. -BEF-
+    #
+    my $file="$image_dir/etc/mtab";
+    if (-f $file) {
+        unlink "$file" or croak("Can't remove $file!");
+    }
+    
+    $file = "$auto_install_script_dir/$script_name.master";
+    open (MASTER_SCRIPT, ">$file") || die "Can't open $file for writing\n";
+    
+    _in_script_add_standard_header_stuff($image, $script_name);
+    
+    _upgrade_partition_schemes_to_generic_style($image_dir, $config_dir);
+    
+    _read_partition_info_and_prepare_parted_commands( $image_dir, $auto_install_script_conf );
+    
+    _write_out_mkfs_commands( $image_dir, $auto_install_script_conf );
+    
+    _mount_proc_in_image_on_client();
+    
+    ### BEGIN pull the image down ###
+    print MASTER_SCRIPT << 'EOF';
 # Filler up!
 #
 # If we are installing over ssh, we must limit the bandwidth used by 
@@ -1296,51 +1296,62 @@ sub create_autoinstall_script{
 #
 EOF
 
-  if ($ssh_user) {
-    # using ssh
-    print MASTER_SCRIPT "rsync -av  --exclude=lost+found/ --bwlimit=10000 --numeric-ids \$IMAGESERVER::\$IMAGENAME/ /a/ || shellout\n";
-    print MASTER_SCRIPT "#rsync -av  --exclude=lost+found/ --numeric-ids \$IMAGESERVER::\$IMAGENAME/ /a/ || shellout\n\n";
-  } else {
-    # not using ssh
-    print MASTER_SCRIPT "#rsync -av  --exclude=lost+found/ --bwlimit=10000 --numeric-ids \$IMAGESERVER::\$IMAGENAME/ /a/ || shellout\n";
-    print MASTER_SCRIPT "rsync -av  --exclude=lost+found/ --numeric-ids \$IMAGESERVER::\$IMAGENAME/ /a/ || shellout\n\n";
-  }
-  ### END pull the image down ###
+    if ($ssh_user) {
+      # using ssh
+      print MASTER_SCRIPT "rsync -av  --exclude=lost+found/ --bwlimit=10000 --numeric-ids \$IMAGESERVER::\$IMAGENAME/ /a/ || shellout\n";
+      print MASTER_SCRIPT "#rsync -av  --exclude=lost+found/ --numeric-ids \$IMAGESERVER::\$IMAGENAME/ /a/ || shellout\n\n";
+    } else {
+      # not using ssh
+      print MASTER_SCRIPT "#rsync -av  --exclude=lost+found/ --bwlimit=10000 --numeric-ids \$IMAGESERVER::\$IMAGENAME/ /a/ || shellout\n";
+      print MASTER_SCRIPT "rsync -av  --exclude=lost+found/ --numeric-ids \$IMAGESERVER::\$IMAGENAME/ /a/ || shellout\n\n";
+    }
+    ### END pull the image down ###
 
 
-  ### BEGIN graffiti ###
-  print MASTER_SCRIPT "# Leave notice of which image is installed on the client\n";
-  print MASTER_SCRIPT "echo \$IMAGENAME > /a/etc/systemimager/IMAGE_LAST_SYNCED_TO || shellout\n";
-  ### END graffiti ###
+    ### BEGIN graffiti ###
+    print MASTER_SCRIPT "# Leave notice of which image is installed on the client\n";
+    print MASTER_SCRIPT "echo \$IMAGENAME > /a/etc/systemimager/IMAGE_LAST_SYNCED_TO || shellout\n";
+    ### END graffiti ###
+    
+    _write_out_new_fstab_file( $image_dir, $auto_install_script_conf );
+    
+    ### BEGIN overrides stuff ###
+    # Create default overrides directory. -BEF-
+    #
+    my $dir = "/var/lib/systemimager/overrides/$script_name";
+    if (! -d "$dir")  {
+      mkdir("$dir", 0750) or die "FATAL: Can't make directory $dir\n";
+    }
+    
+    # Add code to autoinstall script. -BEF-
+    print MASTER_SCRIPT   qq(### BEGIN overrides ###\n);
+    print MASTER_SCRIPT   q(for OVERRIDE in $OVERRIDES) . qq(\n);
+    print MASTER_SCRIPT   q(do) . qq(\n);
+    print MASTER_SCRIPT   q(    rsync -av --numeric-ids $IMAGESERVER::overrides/$OVERRIDE/ /a/ || echo "Override directory $OVERRIDE doesn't seem to exist, but that may be OK.") . qq(\n);
+    print MASTER_SCRIPT   q(done) . qq(\n);
+    print MASTER_SCRIPT   qq(### END overrides ###\n);
+    ### END overrides stuff ###
   
-  _write_out_new_fstab_file( $image_dir, $auto_install_script_conf );
+    print MASTER_SCRIPT   qq(\n\n);
 
-  ### BEGIN overrides stuff ###
-  # Create default overrides directory. -BEF-
-  #
-  my $dir = "/var/lib/systemimager/overrides/$script_name";
-  if (! -d "$dir")  {
-    mkdir("$dir", 0750) or die "FATAL: Can't make directory $dir\n";
-  }
+    print MASTER_SCRIPT qq(##################################################################\n);
+    print MASTER_SCRIPT qq(#\n);
+    print MASTER_SCRIPT qq(# Uncomment the line below to leave your hostname blank.\n);
+    print MASTER_SCRIPT qq(# Certain distributions use this as an indication to take on the\n);
+    print MASTER_SCRIPT qq(# hostname provided by a DHCP server.  The default is to have\n);
+    print MASTER_SCRIPT qq(# SystemConfigurator assign your clients the hostname that\n);
+    print MASTER_SCRIPT qq(# corresponds to the IP address the use during the install.\n);
+    print MASTER_SCRIPT qq(# (If you used to use static_dhcp, is your man.)\n);
+    print MASTER_SCRIPT qq(#\n);
+    print MASTER_SCRIPT qq(#HOSTNAME=""\n);
 
-  # Add code to autoinstall script. -BEF-
-  print MASTER_SCRIPT   qq(### BEGIN overrides ###\n);
-  print MASTER_SCRIPT   q(for OVERRIDE in $OVERRIDES) . qq(\n);
-  print MASTER_SCRIPT   q(do) . qq(\n);
-  print MASTER_SCRIPT   q(    rsync -av --numeric-ids $IMAGESERVER::overrides/$OVERRIDE/ /a/ || echo "Override directory $OVERRIDE doesn't seem to exist, but that may be OK.") . qq(\n);
-  print MASTER_SCRIPT   q(done) . qq(\n);
-  print MASTER_SCRIPT   qq(### END overrides ###\n);
-  ### END overrides stuff ###
-  
-  print MASTER_SCRIPT   qq(\n);
-  print MASTER_SCRIPT   qq(\n);
+    print MASTER_SCRIPT   qq(\n\n);
 
-  ### BEGIN System Configurator setup ###
-  print MASTER_SCRIPT "### BEGIN systemconfigurator ###\n";
-
-  # System Configurator for static IP
-  if ($ip_assignment_method eq "static") { 
-    print MASTER_SCRIPT <<'EOF';
+    ### BEGIN System Configurator setup ###
+    print MASTER_SCRIPT "### BEGIN systemconfigurator ###\n";
+    # System Configurator for static IP
+    if ($ip_assignment_method eq "static") { 
+        print MASTER_SCRIPT <<'EOF';
 # Configure the client's hardware, network interface, and boot loader.
 chroot /a/ systemconfigurator --configsi --excludesto=/etc/systemimager/systemconfig.local.exclude --stdin <<EOL || shellout
 
@@ -1355,35 +1366,16 @@ TYPE = static
 IPADDR = $IPADDR
 NETMASK = $NETMASK
 EOL
-
-
 EOF
 
-  # System Configurator for static dhcp
-  } elsif ($ip_assignment_method eq "static_dhcp") {
-    print MASTER_SCRIPT <<'EOF';
-# Configure the client's hardware, network interface, and boot loader.
-chroot /a/ systemconfigurator --configsi --stdin <<EOL || shellout
-
-[INTERFACE0]
-DEVICE = eth0
-TYPE = dhcp
-EOL
-
-
-EOF
-
-
-  } elsif ($ip_assignment_method eq "replicant") {
-    print MASTER_SCRIPT << 'EOF';
+    } elsif ($ip_assignment_method eq "replicant") {
+        print MASTER_SCRIPT << 'EOF';
 # Configure the client's boot loader.
 chroot /a/ systemconfigurator --runboot || shellout
-
-
 EOF
 
-  } else { # aka elsif ($ip_assignment_method eq "dynamic_dhcp")
-    print MASTER_SCRIPT <<'EOF';
+    } else { # aka elsif ($ip_assignment_method eq "dhcp")
+        print MASTER_SCRIPT <<'EOF';
 # Configure the client's hardware, network interface, and boot loader.
 chroot /a/ systemconfigurator --configsi --stdin <<EOL || shellout
 
@@ -1395,60 +1387,56 @@ DOMAINNAME = $DOMAINNAME
 DEVICE = eth0
 TYPE = dhcp
 EOL
-
-
 EOF
 
-  }  ### END System Configurator setup ###
-  print MASTER_SCRIPT "### END systemconfigurator ###\n";
+    }  ### END System Configurator setup ###
+    print MASTER_SCRIPT "### END systemconfigurator ###\n";
 
+    print MASTER_SCRIPT qq(\n\n);
 
-  print MASTER_SCRIPT "\n";
-  print MASTER_SCRIPT "\n";
+    _write_out_umount_commands( $image_dir, $auto_install_script_conf );
 
-  _write_out_umount_commands( $image_dir, $auto_install_script_conf );
+    print MASTER_SCRIPT  qq(# Tell the image server we're done.\n);
+    print MASTER_SCRIPT  qq(rsync \$IMAGESERVER::scripts/imaging_complete > /dev/null 2>&1\n);
 
-  print MASTER_SCRIPT  qq(# Tell the image server we're done.\n);
-  print MASTER_SCRIPT  qq(rsync \$IMAGESERVER::scripts/imaging_complete > /dev/null 2>&1\n);
+    print MASTER_SCRIPT "\n";
 
-  print MASTER_SCRIPT "\n";
-
-  print MASTER_SCRIPT "# Take network interface down\n";
-  print MASTER_SCRIPT "ifconfig eth0 down || shellout\n";
-  print MASTER_SCRIPT "\n";
-
-  if ($post_install eq "beep") {
-    print MASTER_SCRIPT << 'EOF';
+    print MASTER_SCRIPT "# Take network interface down\n";
+    print MASTER_SCRIPT "ifconfig eth0 down || shellout\n";
+    print MASTER_SCRIPT "\n";
+    
+    if ($post_install eq "beep") {
+        print MASTER_SCRIPT << 'EOF';
 # Cause the system to make noise and display an "I'm done." message
 ralph="sick"
 count="1"
 while [ $ralph="sick" ]
 do
-  echo -n -e "\\a"
-  [ $count -lt 60 ] && echo "I've been done for $count seconds.  Reboot me already!"
-  [ $(($count / 60 * 60)) = $count ] && echo "I've been done for $(($count / 60)) minutes now.  Reboot me already!"
-  sleep 1
-  count=$(($count + 1))
+    echo -n -e "\\a"
+    [ $count -lt 60 ] && echo "I've been done for $count seconds.  Reboot me already!"
+    [ $(($count / 60 * 60)) = $count ] && echo "I've been done for $(($count / 60)) minutes now.  Reboot me already!"
+    sleep 1
+    count=$(($count + 1))
 done
 
 
 EOF
 
 
-  } elsif ($post_install eq "reboot") {
-    #reboot stuff
-    print MASTER_SCRIPT "# reboot the autoinstall client\n";
-    print MASTER_SCRIPT "shutdown -r now\n";
-    print MASTER_SCRIPT "\n";
-  } elsif ($post_install eq "shutdown") {
-    #shutdown stuff
-    print MASTER_SCRIPT "# shutdown the autoinstall client\n";
-    print MASTER_SCRIPT "shutdown -h now\n";
-    print MASTER_SCRIPT "\n";
-  }
-  ### END end of autoinstall options ###
+    } elsif ($post_install eq "reboot") {
+        #reboot stuff
+        print MASTER_SCRIPT "# reboot the autoinstall client\n";
+        print MASTER_SCRIPT "shutdown -r now\n";
+        print MASTER_SCRIPT "\n";
+    } elsif ($post_install eq "shutdown") {
+       #shutdown stuff
+       print MASTER_SCRIPT "# shutdown the autoinstall client\n";
+       print MASTER_SCRIPT "shutdown -h now\n";
+       print MASTER_SCRIPT "\n";
+    }
+    ### END end of autoinstall options ###
 
-  close(MASTER_SCRIPT);
+    close(MASTER_SCRIPT);
 } # sub create_autoinstall_script 
 
 

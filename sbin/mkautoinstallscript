@@ -74,42 +74,42 @@ Options: (options can be presented in any order and may be abbreviated)
 
 The following options affect the autoinstall client after autoinstalling:
 
- -ip-assignment METHOD    Where METHOD can be:
+ -ip-assignment METHOD    Where METHOD can be DHCP, STATIC, or REPLICANT.
 
-                static_dhcp -- A DHCP server will assign the
-			    same static address each time to clients 
-			    installed with this image.  Also see the
-			    \"makedhcpstatic\" command.  
-			    (This is the default)
+                DHCP
+                ----------------------------------------------------------------
+                A DHCP server will assign IP addresses to clients installed with
+                this image.  They may be assigned a different address each time.
+                If you want to use DHCP, but must ensure that your clients 
+                receive the same IP address each time, see \"man mkdhcpstatic\".
 
-                dynamic_dhcp -- A DHCP server will assign IP
-			    addresses dynamically to clients installed
-			    with this image.  They may be assigned a
-			    different address each time.
+                STATIC
+                ----------------------------------------------------------------
+                The IP address the client uses during autoinstall will be 
+                permanently assigned to that client.
 
-                static -- The IP address the client uses
-			    during autoinstall will be permanently
-			    assigned to that client.
-
-                replicant -- Don\'t mess with the network
-			    settings in this image.  I\'m using it as a
-			    backup and quick restore mechanism for a 
-			    single machine.
+                REPLICANT
+                ----------------------------------------------------------------
+                Don\'t mess with the network settings in this image.  I\'m using
+                it as a backup and quick restore mechanism for a single machine.
 
 
- -post-install ACTION     Where ACTION can be:
+ -post-install ACTION     Where ACTION can be BEEP, REBOOT, or SHUTDOWN.
 
-                beep -- Clients will beep incessantly after 
-			    succussful completion of an autoinstall.
-			    (This is the default)
+                BEEP 
+                ----------------------------------------------------------------
+                Clients will beep incessantly after succussful completion of an
+                autoinstall.  (default)
 
-                reboot -- Clients will reboot themselves
-			    after successful completion of an 
-			    autoinstall.
+                REBOOT 
+                ----------------------------------------------------------------
+                Clients will reboot themselves after successful completion of 
+                an autoinstall.
 
-                shutdown -- Clients will halt themselves
-			    after successful completion of an 
-			    autoinstall.
+                SHUTDOWN 
+                ----------------------------------------------------------------
+                Clients will halt themselves after successful completion of an 
+                autoinstall.
 
 
 Download, report bugs, and make suggestions at:
@@ -117,7 +117,7 @@ http://systemimager.org/
 EOF
 
 # Set some defaults. -BEF-
-my $ip_assignment_method = "static_dhcp";
+my $ip_assignment_method = "dhcp";
 my $post_install = "beep";
 my $update_script = "no";
 my $auto_install_script_conf;
