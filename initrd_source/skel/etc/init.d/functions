@@ -208,9 +208,16 @@ flamethrower_client() {
     if [ ! -z $TTL ]; then
         UDP_RECEIVER_OPTIONS="$UDP_RECEIVER_OPTIONS --ttl $TTL"
     fi
+    if [ "$NOSYNC" = "on" ]; then
+        UDP_RECEIVER_OPTIONS="$UDP_RECEIVER_OPTIONS --nosync"
+    fi
     if [ "$ASYNC" = "on" ]; then
         UDP_RECEIVER_OPTIONS="$UDP_RECEIVER_OPTIONS --async"
     fi
+    if [ ! -z $MCAST_ALL_ADDR ]; then
+        UDP_RECEIVER_OPTIONS="$UDP_RECEIVER_OPTIONS --mcast-all-addr $MCAST_ALL_ADDR"
+    fi
+
 
     mkdir -p ${DIR}
     
@@ -237,7 +244,9 @@ flamethrower_client() {
     # Unset vars, so next module (which may not have them set) won't use then unintentially
     unset PORTBASE
     unset TTL
+    unset NOSYNC
     unset ASYNC
+    unset MCAST_ALL_ADDR
     unset RETRY
     unset COUNT
     unset UDP_RECEIVER_OPTIONS
