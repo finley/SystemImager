@@ -21,12 +21,15 @@ my $conf_file = '/etc/systemimager/flamethrower.conf';
 my $pid_file  = '/var/run/flamethrower.pid';
 my $state_dir = '/var/state/flamethrower';
 
-# Set to 1 to produce debug output
-my $debug = 0;
-print "debug output turned on\n" if($debug);
-
 # Read the config file and update the directory
 read_config_file($conf_file);
+
+# Turn on in flamethrower.conf file to see debug output.
+my $debug;
+if ( lc $ft_config->debug() eq "on" ) {
+    $debug = 1;
+    print "Flamethrower debug output turned on\n" if($debug);
+}
 
 # Should we start up?
 if ( $ft_config->start_flamethrower_daemon() ne "yes" ) {
