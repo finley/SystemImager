@@ -887,16 +887,23 @@ foreach $mount_point (sort (@mount_points)) {
 
   # Be sure to use proper mount options -- such as -notail for root mounted
   # reiserfs filesystems.  Thanks go to Matthew Marlowe <mmarlowe@jalan.com>
-  # for finding this bug (root mounted reiserfs needing the -notail option)
-  #
-  # Note:  If someone has ro as an option for a filesystem, problems will occur.
-  #        Simply hand editing the master script to change ro to rw in the mount
-  #        options is the solution for now.  I don't expect this to happen often.
+  # for finding this bug (root mounted reiserfs needing the -notail option).
   my $mount_options   = $mount_options_by_mount_point{$mount_point};
+
   my $filesystem_type = $filesystem_type_by_mount_point{$mount_point};
+
   if ($mount_options) {
+    # Deal with filesystems to be mounted read only (ro) after install.  We 
+    # still need to write to them to install them. ;)
+    $mount_options =~ s/^ro$/rw/;
+    $mount_options =~ s/^ro,/rw,/;
+    $mount_options =~ s/,ro$/,rw/;
+    $mount_options =~ s/,ro,/,rw,/;
+
+    # add commands to master script
     print MASTER_SCRIPT "mount $device_file /a$mount_point -t $filesystem_type -o $mount_options\n";
   } else {
+    # add commands to master script
     print MASTER_SCRIPT "mount $device_file /a$mount_point -t $filesystem_type\n";
   }
   print MASTER_SCRIPT "\n";
