@@ -7,13 +7,15 @@
 
 Short list (in progress by)
 ------------------------
-- <brian@valinux.com> - update FAQ-HOWTO
-- <brian@valinux.com> - add more error checking to makedhcpstatic
+- <wessmith@engr.sgi.com> - GUI for SystemImager called "Rhino".
 - <ian@valinux.com> - multicast install -- Ian McLeod <ian@valinux.com> will have mftp (multicast ftp) 
   working as a drop in replacement for rsync by 5/15/2000 and we will begin testing
   in the lab.
-- create man pages
 - <ian@valinux.com> - script checks floppy for file and assigns IP and hostname based on file, not on DHCP.
+- <brian@valinux.com> - update FAQ-HOWTO
+- <brian@valinux.com> - add more error checking to makedhcpstatic
+- <wessmith@engr.sgi.com> - /etc/systemimager.conf file to hold things like domain name, nis domain, etc.
+
 
 Other stuff
 -----------
@@ -22,6 +24,7 @@ Other stuff
    afterburner will make the proper changes to /etc/inetd.conf.
 - message during network booting (if possible)
 - make the <Backspace> key work ;)
+- create man pages
 
 getimage
 --------
@@ -69,8 +72,7 @@ Miscellaneous and Possibilities
   seems to be able to take made up options, and it is not the dhcp client
   of choice (for several reasons).  Maybe the other clients, dhcpcd and
   pump, will find their way along soon...
-- curses and/or gui wrapper around the whole thing -- Wesley Smith 
-  <wessmith@engr.sgi.com> is working on this.  It will be called Rhino.
+- curses wrapper around the whole thing
 - updateclient - log what was updated and or deleted?
 - makedhcpstatic -- allow for -f "filename" option to specify dhcpd.leases file.
 
