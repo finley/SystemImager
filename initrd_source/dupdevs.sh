@@ -1,3 +1,4 @@
+#!/bin/sh
 #
 # dupdevs.sh
 # this script takes the output of 'ls -lR' and duplicates
@@ -8,7 +9,7 @@
 # want to create nods & symlinks, and [output of ls -lR]
 # is created by running 'ls -lR' in the source directory
 #
-# Copyright 2001 by dann frazier <dannf@dannf.org>
+# Copyright 2001 by dann frazier <dannf@fc.hp.com>
 #
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
