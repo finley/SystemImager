@@ -57,6 +57,12 @@ fi
 
 get_boel_binaries_tarball
 
+if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
+
+    get_scripts_directory
+
+fi
+
 autodetect_hardware_and_load_modules
 
 if [ ! -z $SSH_DOWNLOAD_URL ]; then

@@ -152,7 +152,7 @@ get_flamethrower_directory() {
 
     mkdir -p ${FLAMETHROWER_DIRECTORY_DIR}
     echo udp-receiver --interface ${DEVICE} --portbase ${FLAMETHROWER_DIRECTORY_PORTBASE} --pipe \"tar -C ${FLAMETHROWER_DIRECTORY_DIR} -x\"
-         udp-receiver --interface ${DEVICE} --portbase ${FLAMETHROWER_DIRECTORY_PORTBASE} --pipe "tar -C ${FLAMETHROWER_DIRECTORY_DIR} -x" || echo "EXIT CODE: $?"
+         echo | udp-receiver --interface ${DEVICE} --portbase ${FLAMETHROWER_DIRECTORY_PORTBASE} --pipe "tar -C ${FLAMETHROWER_DIRECTORY_DIR} -x" || echo "EXIT CODE: $?"
     sleep 1
     echo
 }
@@ -192,7 +192,7 @@ flamethrower_client() {
 
     mkdir -p ${DIR}
     echo udp-receiver $UDP_RECEIVER_OPTIONS --pipe \"tar -C ${DIR} -x\"
-         udp-receiver $UDP_RECEIVER_OPTIONS --pipe "tar -C ${DIR} -x" || echo "EXIT CODE: $?"
+         echo | udp-receiver $UDP_RECEIVER_OPTIONS --pipe "tar -C ${DIR} -x" || echo "EXIT CODE: $?"
     sleep 1
 
     # Unset vars, so next module (which may not have them set) won't use then unintentially
