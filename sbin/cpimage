@@ -280,6 +280,19 @@ SystemImager::Server->gen_rsyncd_conf($rsync_stub_dir, $rsyncd_conf)
 
 ### END Change entries in $rsyncd_conf ###
 
+# Add image entry to flamethrower.conf file
+my $entry_name = $destination_image;
+my $new_entry_data = "[$destination_image]\nDIR = $destination\n";
+my $flamethrower_conf = "/etc/systemimager/flamethrower.conf";
+SystemImager::Common->add_or_delete_conf_file_entry($flamethrower_conf, $entry_name, $new_entry_data) or 
+    die "$program_name: Cannot create entry in $flamethrower_conf";
+
+# Add override entry to flamethrower.conf file
+$entry_name = "override_" . $destination_image;
+$new_entry_data = "[override_$destination_image]\nDIR = /var/lib/systemimager/overrides/$destination_image\n";
+SystemImager::Common->add_or_delete_conf_file_entry($flamethrower_conf, $entry_name, $new_entry_data) or 
+    die "$program_name: Cannot create entry in $flamethrower_conf";
+
 
 ### BEGIN Change entries in master autoinstall script ###
 # copy master autoinstall script

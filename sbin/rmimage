@@ -153,4 +153,17 @@ SystemImager::Server->gen_rsyncd_conf($rsync_stub_dir, $rsyncd_conf);
 
 ### END Remove entries in $rsyncd_conf ###
 
+# remove image from flamethrower.conf file
+my $entry_name = $image;
+my $flamethrower_conf = "/etc/systemimager/flamethrower.conf";
+SystemImager::Common->add_or_delete_conf_file_entry($flamethrower_conf, $entry_name) or
+    die "$program_name: Cannot remove entry from $flamethrower_conf";
+
+# remove override entry from flamethrower.conf file
+$entry_name = "override_" . $image;
+SystemImager::Common->add_or_delete_conf_file_entry($flamethrower_conf, $entry_name) or
+    die "$program_name: Cannot remove entry from $flamethrower_conf";
+
+
+
 exit 0;
