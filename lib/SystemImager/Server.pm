@@ -1663,7 +1663,15 @@ sub _write_elilo_conf {
 #
 # Description:
 #   Decide whether to "mount /dev /a/dev -o bind", and write to master
-#   autoinstall script.
+#   autoinstall script.  Clients that use devfs should have the following
+#   entry in autoinstallscript.conf:
+#
+#       <boel devstyle="devfs"/>
+#
+#   Other clients should have the following entry:
+#
+#       <boel devstyle="static"/>
+#
 #   
 # Usage:
 #   _write_boel_devstyle_entry($MASTER_SCRIPT, $auto_install_script_conf);
