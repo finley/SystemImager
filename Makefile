@@ -182,16 +182,18 @@ endif
 ifeq ($(ARCH),ia64)
 	 LINUX_VERSION = 2.4.9
 	 LINUX_IMAGE = $(LINUX_SRC)/arch/ia64/boot/vmlinux
-	 LINUX_TARGET = vmlinux
+	 LINUX_TARGET = compressed
 endif
 ifeq ($(ARCH),s390)
 	 LINUX_VERSION = 2.4.7
 	 LINUX_IMAGE = $(LINUX_SRC)/arch/s390/boot/image
 	 LINUX_TARGET = image
 endif
+# currently ppc only supports rs6k machines.  Help is welcome to
+# make this support other machines
 ifeq ($(ARCH),ppc)
-	LINUX_VERSION = 2.4.14
-	LINUX_IMAGE = $(LINUX_SRC)/arch/ppc/boot/zImage
+	LINUX_VERSION = 2.4.17
+	LINUX_IMAGE = $(LINUX_SRC)/arch/ppc/boot/images/zImage.initrd.chrp-rs6k
 	LINUX_TARGET = zImage                          
 endif
 
@@ -306,6 +308,16 @@ install_kernel:	kernel
 #@@  autoinstallation
 #@@ 
 kernel:	kernel-build-stamp
+
+ifeq ($(ARCH),ppc)
+kernel: kernel.initrd
+endif
+
+# This is only used for ppc architectures!
+kernel.initrd: kernel-build-stamp ramdisks-build-stamp
+	cp -a $(RAMDISK_DIR)/initrd.gz $(LINUX_SRC)/arch/ppc/boot/images/ramdisk.image.gz
+	$(MAKE) -C $(LINUX_SRC) zImage.initrd
+
 
 kernel-build-stamp:
 	$(MAKE) patched_kernel
