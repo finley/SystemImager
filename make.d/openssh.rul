@@ -45,7 +45,13 @@ $(OPENSSH_BINARIES):	$(SRC_DIR)/openssh_verify.stamp
 	( cd $(SRC_DIR) && tar -xvzf $(OPENSSH_TARBALL) )
 	cd $(SRC_DIR)/$(OPENSSH_DIR) && ./configure --prefix=/usr \
 												--sysconfdir=/etc/ssh \
-												--host=i586-pc-linux-gnu
+												--disable-last-log --disable-libutil \
+												--disable-pututxline --disable-utmpx --disable-wtmpx \
+												--without-pam --with-ldflags=-s --with-4in6=no \
+												--without-opensc --without-sectok \
+												--without-kerberos5 --without-kerberos4 \
+												--without-afs --without-md5-passwords --without-bsd-auth \
+												--with-xauth=no
 	$(MAKE) -C $(SRC_DIR)/$(OPENSSH_DIR)
 
 $(SRC_DIR)/openssh_verify.stamp:	$(OPENSSH_TARBALL_TARGET)
