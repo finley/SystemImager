@@ -8,8 +8,11 @@
 #  $Id$
 #
 
-#XXX consider changing --mcast-group to --portbase, and subsequently all
-#instances of MCAST_GROUP to PORTBASE. -BEF-
+#XXX o consider changing --mcast-group to --portbase, and subsequently all instances of MCAST_GROUP to PORTBASE. -BEF-
+#    o figure out what to do about --misc-opts.  Add all udp-sender opts in?  or what?
+#    o deal with --flavor
+#    o deal with --arch
+#
 
 use lib "USR_PREFIX/lib/systemimager/perl";
 use Getopt::Long;
@@ -20,7 +23,7 @@ use vars qw($config $VERSION);
 my $config_dir = "/etc/systemimager";
 
 ### BEGIN parse the config file ###
-my $autoinstall_script_dir  = $config->autoinstall_script_dir();
+my $autoinstall_script_dir = $config->autoinstall_script_dir();
 
 if (!$autoinstall_script_dir) {
     die "AUTOINSTALL_SCRIPT_DIR not defined in the config file.";
@@ -41,9 +44,10 @@ $get_help = "\n       Try \"-help\" for more options.";
 
 $help_info = $version_info . <<"EOF";
 
-Usage: $program_name [OPTION]... -script SCRIPTNAME
+Usage: $program_name [OPTION]... --script SCRIPTNAME
 
 Options: (options can be presented in any order and may be abbreviated)
+
  --help                 Display this output.
 
  --version              Display version and copyright information.
@@ -53,12 +57,9 @@ Options: (options can be presented in any order and may be abbreviated)
  --script SCRIPTNAME    Where SCRIPTNAME is the base name to use for the 
                         autoinstall script.
 
- --mcast-group NUM      Starting multicast group number.  Must be an even
-                        number, ane must match the setting used in dhcpd.conf
-                        and/or local.cfg.  Defaults to 9000.
-
  --min-clients NUM      Number of clients that must connect before the casting
                         begins.  Superceeded if --max-client-wait times out.
+                        Default is 1.
 
  --max-wait SEC         Initiate the cast after SEC seconds, even if the number
                         of clients specified by --min-clients have yet to 
@@ -67,6 +68,17 @@ Options: (options can be presented in any order and may be abbreviated)
  --min-wait SEC         Wait at least SEC seconds before initiating the cast, 
                         even if the number of clients specified by 
                         --min-clients have already connected.
+
+ --cycle COUNT          Cycle through the casting process COUNT times.  The 
+                        point here not to do perpetual re-installs, but to allow
+                        clients that missed the start of one cast to catch the
+                        next.  You might try this option in combination with 
+                        some combination of --min-wait, --min-clients, and 
+                        --max-wait.
+
+ --portbase NUM         Base port number.  An even number is recommended.  Must
+                        match the setting used in dhcpd.conf and/or local.cfg.
+                        Default is 9000.
 
  --misc-opts "OPTIONS"  Miscellaneous options to be passed directly to 
                         udp-sender (the multicast transport).  Two useful 
@@ -78,16 +90,22 @@ Options: (options can be presented in any order and may be abbreviated)
                         NOTE: Do not specify udp-sender's --portbase option, as 
                         this is set by the --mcast-group option.
 
+Simple Example:
+ 
+ imagecast --verbose --script debian-testing --min-clients 128
+
+
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
 EOF
 
 # Set some defaults. -BEF-
-my $mcast_group = 9000;
+my $portbase = 9000;
 my $udp_sender_opts = "";
 my $max_wait = 0;
 my $min_wait = 0;
-my $opts;
+my $min_clients = 1;
+my $cycle = 1;
 
 # take options
 GetOptions( 
@@ -95,13 +113,13 @@ GetOptions(
     "version"           => \my $version,
     "verbose"           => \my $verbose,
     "script=s"          => \my $script_name,
-    "mcast-group=s"     => \$mcast_group,
-    "min-clients=s"     => \my $min_clients,
-    "max-wait=s"        => \$max_wait,
-    "min-wait=s"        => \$min_wait,
+    "min-clients=i"     => \$min_clients,
+    "mcast-group=i"     => \$portbase,
+    "cycle=i"           => \$cycle,
+    "max-wait=i"        => \$max_wait,
+    "min-wait=i"        => \$min_wait,
     "misc-opts=s"       => \$udp_sender_opts,
 ) || die "$help_info";
-
 
 ### BEGIN evaluate options ###
 # if requested, print help information
@@ -123,28 +141,24 @@ unless ($script_name) {
     die "\n$program_name: --script SCRIPTNAME must be specified.\n$get_help\n\n";
 }
 
-unless ($min_clients) {
-    die "\n$program_name: --min-clients must be specified.\n$get_help\n\n";
-}
-
-if ($verbose) { 
-    print qq(script_name:\t$script_name\n);
-    print qq(mcast_group:\t$mcast_group\n);
-}
+#XXX
+#unless ($min_clients) {
+#    die "\n$program_name: --min-clients must be specified.\n$get_help\n\n";
+#}
 
 my $file = "$autoinstall_script_dir/${script_name}.master";
-if ($verbose) { print qq(script: $file\n); }
+if ($verbose) { print qq(Using Script:  $file\n); }
 
 unless (-e $file) {
     die "\n$program_name: Script $file doesn't exist!\n$get_help\n\n";
 }
 
-my ($junk, $imagename, $overrides);
+my ($junk, $image, $overrides);
 open (FILE, "<$file") or die ("Can't open $file for reading!");
     while (<FILE>) {
         if (m/IMAGENAME=/) {
             chomp;
-            ($junk, $imagename) = split(/=/);
+            ($junk, $image) = split(/=/);
             next;
         }
         if (m/OVERRIDES=/) {
@@ -156,47 +170,117 @@ open (FILE, "<$file") or die ("Can't open $file for reading!");
     }
 
     if ($verbose) {
-        print "imagename:\t$imagename\n";
-        print "overrides:\t$overrides\n";
+        print "Image Name:    $image\n";
+        print "Overrides:     $overrides\n";
     }
 close (FILE);
 
-
-### BOEL Binaries and autoinstall scripts
-if ($verbose) { 
-    print "casting_1:    BOEL binaries tarball and autoinstall scripts\n";
-    print "mcast_group:  $mcast_group\n";
+if ($verbose) {
+    print qq(Cast cycles:   $cycle\n\n);
 }
-$opts = "$udp_sender_opts --min-client-wait $min_wait --max-client-wait $max_wait --min-clients $min_clients --portbase $mcast_group";
-$cmd = "tar -cv -C /usr/share/systemimager/boot/i386/standard/ boel_binaries.tar.gz -C /var/lib/systemimager/ scripts | udp-sender $opts";
-!system($cmd) or die ("$cmd failed!");
-
-### IMAGE
-$mcast_group = $mcast_group + 2;
-$opts = "$udp_sender_opts --min-client-wait $min_wait --max-client-wait $max_wait --min-clients $min_clients --portbase $mcast_group";
-$cmd = "tar -cv -C /var/lib/systemimager/images/$imagename . | udp-sender $opts";
-if ($verbose) { 
-    print "casting_2:    The Image -- $imagename\n";
-    print "mcast_group:  $mcast_group\n";
+my $count = 0;
+while ($count ne $cycle) {
+    $count++;
+    cast(
+        $image, 
+        $min_wait,
+        $max_wait,
+        $min_clients,
+        $portbase,
+        $overrides,
+        $count
+    );
 }
-!system($cmd) or die ("$cmd failed!");
 
-### OVERRIDES
-$mcast_group = $mcast_group + 2;
-$opts = "$udp_sender_opts --min-client-wait $min_wait --max-client-wait $max_wait --min-clients $min_clients --portbase $mcast_group";
-$cmd = "tar -cv";
-foreach my $override ( split(/[[:space:]]/,$overrides) ) {
-    my $dir = "/var/lib/systemimager/overrides/$override";
-    if (-d $dir) {
-        $cmd .= " -C $dir .";
+sub cast {
+
+    my (
+        $image, 
+        $min_wait,
+        $max_wait,
+        $min_clients,
+        $portbase,
+        $overrides,
+        $count
+        ) = @_;
+
+    my $rsync_stub_dir = $config->rsync_stub_dir();
+    my $image_path = SystemImager::Server->get_image_path( $rsync_stub_dir, $image );
+    my $tar_cmd;
+    my $opts;
+    
+    ################################################################################ 
+    # 
+    # Casting_1: BOEL Binaries and autoinstall scripts
+    #
+    $tar_cmd = qq(tar -cf - -C /usr/share/systemimager/boot/i386/standard/ boel_binaries.tar.gz -C /var/lib/systemimager/ scripts);
+    if (-e "${image_path}/etc/raidtab") {
+        $tar_cmd .= qq( -C $image_path etc/raidtab);
     }
-}    
-$cmd .= " | udp-sender $opts";
-if ($verbose) { 
-    print "casting_3:    Override Directories\n";
-    print "mcast_group:  $mcast_group\n";
+    $opts = qq($udp_sender_opts --pipe '$tar_cmd' --min-client-wait $min_wait --max-client-wait $max_wait --min-clients $min_clients --portbase $portbase);
+    $cmd = qq(udp-sender $opts);
+    if ($verbose) { 
+        print qq(\n);
+        print qq(Cycle:         $count\n);
+        print qq(Now Casting:   BOEL binaries tarball and autoinstall scripts\n);
+        print qq(Base Port:     $portbase\n);
+        print qq(cmd:           $cmd\n); #XXX
+    }
+    !system($cmd) or die ("$cmd failed!");
+    #
+    ################################################################################ 
+    
+    ################################################################################ 
+    # 
+    # Casting_2: IMAGE
+    #
+    $portbase = $portbase + 2;
+    $tar_cmd = qq(tar -cf - -C $image_path .);
+    $opts = qq($udp_sender_opts --pipe '$tar_cmd' --min-client-wait $min_wait --max-client-wait $max_wait --min-clients $min_clients --portbase $portbase);
+    $cmd = qq(udp-sender $opts);
+    if ($verbose) { 
+        print qq(\n);
+        print qq(Cycle:         $count\n);
+        print qq(Now Casting:   The Image -- $image\n);
+        print qq(Base Port:     $portbase\n);
+        print qq(cmd:           $cmd\n);
+    }
+    !system($cmd) or die ("$cmd failed!");
+    #
+    ################################################################################ 
+    
+    ################################################################################ 
+    # 
+    # Casting_3: OVERRIDES
+    #
+    $portbase = $portbase + 2;
+    $file = ".${image}.$$";
+    open (FILE, ">/tmp/$file") or die ("Can't open $file for writing!");
+        print FILE qq(Bogus file sent in case no override directories exist -- the autoinstall\n);
+        print FILE qq(client's will still be expecting to receive something...  This file can be\n);
+        print FILE qq(safely deleted.\n);
+    close(FILE);
+    $tar_cmd = qq(tar -cf - -C /tmp $file);
+    foreach my $override ( split(/[[:space:]]/,$overrides) ) {
+        my $dir = "/var/lib/systemimager/overrides/$override";
+        if (-d $dir) {
+            $tar_cmd .= " -C $dir .";
+        }
+    }    
+    $opts = qq($udp_sender_opts --pipe '$tar_cmd' --min-client-wait $min_wait --max-client-wait $max_wait --min-clients $min_clients --portbase $portbase);
+    $cmd = qq(udp-sender $opts);
+    if ($verbose) { 
+        print qq(\n);
+        print qq(Cycle:         $count\n);
+        print qq(Now Casting:   Override Directories\n);
+        print qq(Base Port:     $portbase\n);
+        print qq(cmd:           $cmd\n);
+    }
+    !system($cmd) or die ("$cmd failed!");
+    unlink($file);
+    # 
+    ################################################################################ 
 }
-!system($cmd) or die ("$cmd failed!");
 
 exit 0;
 
