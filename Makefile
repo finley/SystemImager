@@ -347,7 +347,7 @@ install_docs: docs
 	cp $(MANUAL_DIR)/*.ps $(MANUAL_DIR)/*.pdf $(DOC)
 	mkdir -p $(DOC)/examples
 	$(SI_INSTALL) -m 644 doc/local.cfg $(DOC)/examples
-	$(SI_INSTALL) -m 644 doc/elilo.conf $(DOC)/examples
+	$(SI_INSTALL) -m 644 doc/elilo-ia64.conf $(DOC)/examples
 
 # builds the manual from SGML source
 PHONY += docs
