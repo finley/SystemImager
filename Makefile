@@ -322,8 +322,11 @@ install_initrd:
 #@@initrd:
 #@@  build the autoinstall ramdisk
 #@@ 
-initrd:
+initrd:	initrd-build-stamp
+
+initrd-build-stamp:
 	make -C $(INITRD_DIR)
+	touch initrd-build-stamp
 
 #@@install_configs:
 #@@  install the initscript & config files
