@@ -1,0 +1,28 @@
+#
+# "VA SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@valinux.com>
+#
+# This file is: README.initrd
+#
+
+To customize your initrd.gz
+---------------------------
+1) You must use a debian based system.  I currently use debian 2.2.
+2) Bring your system up to date with this command:
+    "apt-get update && apt-get upgrade"
+3) Install the boot-floppies package:
+    "apt-get install boot-floppies"
+    (allow apt-get to install all dependent packages)
+4) cd /usr/src
+5) untar boot-floppies.tar.gz:
+    tar -xvzf boot-floppies.tar.gz
+    (this will be used by the mk_new_initrd script)
+6) pull down the SystemImager source tar ball from:
+    http://download.sourceforge.net/systemimager/
+7) untar the SystemImager source
+8) make your changes in the initrd directory ( systemimager_source_dir/initrd_source/initrd/ ) 
+9) edit mk_new_initrd to set the following variables to the uid/gid you will use while developing:
+    MY_DEVELOPMENT_UID=joebob
+    MY_DEVELOPMENT_GID=joebobsgroup
+10) run ./mk_new_initrd
+11) a file named something like "initrd-2001.02.01-00:19.gz" will be produced -- this is your new initrd.gz
+12) copy this file to /tftpboot/initrd.gz and use like normal!
