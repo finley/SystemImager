@@ -499,128 +499,132 @@ start_ssh() {
     # create root's ssh dir
     mkdir /root/.ssh
 
-#  # If a private key exists, put it in the right place so this autoinstall
-#  # client can use it to authenticate itself to the imageserver.
-#  # (ssh1 style user private key)
-#  if [ -e /floppy/identity ]; then
-#    PRIVATE_KEY=/root/.ssh/identity
-#    cp /floppy/identity $PRIVATE_KEY || shellout
-#    chmod 600 $PRIVATE_KEY           || shellout
-#  fi
-#  # (ssh2 style user private key)
-#  if [ -e /floppy/id_dsa ]; then
-#    PRIVATE_KEY=/root/.ssh/id_dsa
-#    cp /floppy/id_dsa $PRIVATE_KEY || shellout
-#    chmod 600 $PRIVATE_KEY         || shellout
-#  fi
-#
-#  # If we have a private key from the media above, go ahead and open secure tunnel
-#  # to the imageserver and continue with the autoinstall like normal.
-#  if [ ! -z $PRIVATE_KEY ]; then
-#    # with the prep ready, start the ssh tunnel connection.
-#    # the sleep command executes remotely.  Just need something long here
-#    # as the connection will be severed when the newly imaged client reboots
-#    # 14400 = 4 hours...if we're not imaged by then....oh boy!
-#    #
-#    # Determine if we should run interactive and set redirection options appropriately.
-#    # So if the key is blank, go interactive. (Suggested by Don Stocks <don_stocks@leaseloan.com>)
-#    if [ -s $PRIVATE_KEY ]; then
-#      # key is *not* blank
-#      REDIRECTION_OPTIONS="> /dev/null 2>&1"
-#    else
-#      # key is blank - go interactive
-#      REDIRECTION_OPTIONS=""
-#    fi
-#    ssh -l $SSH_USER -n -f -L873:127.0.0.1:873 $IMAGESERVER sleep 14400 $REDIRECTION_OPTIONS
-#    if [ $? != 0 ]; then
-#      echo
-#      echo "ssh tunnel command to $IMAGESERVER failed!!!"
-#      echo "The command was: ssh -l $SSH_USER -n -f -L873:127.0.0.1:873 $IMAGESERVER sleep 14400"
-#      echo
-#      shellout
-#    fi
-#
-#    # Since we're using SSH, change the $IMAGESERVER variable to reflect
-#    # the forwarded connection.
-#    IMAGESERVER=127.0.0.1
-#  else
-#    # Looks like we didn't get a private key from the floppy, so let's just
-#    # fire up sshd and wait for someone to connect to us to initiate the
-#    # next step of the autoinstall.
-#
-#    # download authorized_keys
-#    # (public keys of users allowed to ssh *in* to this machine)
-#    files="authorized_keys"
-#    for file in $files
-#    do
-#      echo
-#      echo "wget $SSH_DOWNLOAD_URL/$file..."
-#      ( cd /root/.ssh/ && wget $SSH_DOWNLOAD_URL/$file )
-#      if [ $? != 0 ]; then
-#        echo
-#        echo "wget of $SSH_DOWNLOAD_URL/$file failed!!!"
-#        echo
-#        shellout
-#      fi
-#    done
-#
-#    # set permissions to 600 -- otherwise, sshd will refuse to use it
-#    chmod 600 /root/.ssh/authorized_keys || shellout
-#
-#    # Since we're using SSH, change the $IMAGESERVER variable to reflect
-#    # the forwarded connection.
-#    IMAGESERVER=127.0.0.1
-#
-#    # save variables for autoinstall script
-#    write_variables || shellout
-#
-#    # create a private host key for this autoinstall client
-#    echo
-#    echo "Using ssh-keygen to create this hosts private key"
-#    echo
-#    ssh-keygen -N "" -f /etc/ssh/ssh_host_key || shellout
-#
-#    ## create necessary ptys, etc. for sshd
-#    #mknod /dev/ptmx c 5 2                    || shellout
-#    #chmod 666 /dev/ptmx                      || shellout
-#    #mkdir /dev/pts                           || shellout
-#    #echo "none /dev/pts devpts" > /etc/fstab || shellout
-#    #mount /dev/pts                           || shellout
-#
-#    # if hostname not set, try DNS
-#    if [ -z $HOSTNAME ]; then
-#      echo
-#      echo "Trying to get hostname via DNS..."
-#      echo
-#      get_hostname_by_dns
-#    fi
-#
-#    if [ -z $HOSTNAME ]; then
-#      HOST_OR_IP=$IPADDR
-#    else
-#      HOST_OR_IP=$HOSTNAME
-#    fi
-#
-#    echo
-#    echo
-#    echo "Starting sshd.  You must now go to your imageserver and issue"
-#    echo "the following command:"
-#    echo
-#    echo " \"pushupdate -continue-install -image <IMAGE> -client ${HOST_OR_IP}\"."
-#    echo
-#    echo
-#    
-#    # fire up sshd and wait
-#    sshd -f /etc/ssh/sshd_config -h /etc/ssh/ssh_host_key || shellout
-#
-#    # Give sshd time to initialize before we yank the parent process
-#    # rug out from underneath it.
-#    sleep 15
-#
-#    # remove rug
-#    exit 1
-#  fi
-#fi
+    # If a private key exists, put it in the right place so this autoinstall
+    # client can use it to authenticate itself to the imageserver.
+    # (ssh1 style user private key)
+    if [ -e /floppy/identity ]; then
+        PRIVATE_KEY=/root/.ssh/identity
+        cp /floppy/identity $PRIVATE_KEY || shellout
+        chmod 600 $PRIVATE_KEY           || shellout
+    fi
+    #
+    # (ssh2 style user private key)
+    if [ -e /floppy/id_dsa ]; then
+        PRIVATE_KEY=/root/.ssh/id_dsa
+        cp /floppy/id_dsa $PRIVATE_KEY || shellout
+        chmod 600 $PRIVATE_KEY         || shellout
+    fi
+
+    # If we have a private key from the media above, go ahead and open secure tunnel
+    # to the imageserver and continue with the autoinstall like normal.
+    if [ ! -z $PRIVATE_KEY ]; then
+
+        # With the prep ready, start the ssh tunnel connection.
+        # the sleep command executes remotely.  Just need something long here
+        # as the connection will be severed when the newly imaged client reboots
+        # 14400 = 4 hours...if we're not imaged by then....oh boy!
+        #
+        # Determine if we should run interactive and set redirection options appropriately.
+        # So if the key is blank, go interactive. (Suggested by Don Stocks <don_stocks@leaseloan.com>)
+        if [ -s $PRIVATE_KEY ]; then
+            # key is *not* blank
+            REDIRECTION_OPTIONS="> /dev/null 2>&1"
+        else
+            # key is blank - go interactive
+            REDIRECTION_OPTIONS=""
+        fi
+        ssh -l $SSH_USER -n -f -L873:127.0.0.1:873 $IMAGESERVER sleep 14400 $REDIRECTION_OPTIONS
+        if [ $? != 0 ]; then
+            echo
+            echo "ssh tunnel command to $IMAGESERVER failed!!!"
+            echo "The command was: ssh -l $SSH_USER -n -f -L873:127.0.0.1:873 $IMAGESERVER sleep 14400"
+            echo
+            shellout
+        fi
+        
+        # Since we're using SSH, change the $IMAGESERVER variable to reflect
+        # the forwarded connection.
+        IMAGESERVER=127.0.0.1
+
+    else
+
+        # Looks like we didn't get a private key from the floppy, so let's just
+        # fire up sshd and wait for someone to connect to us to initiate the
+        # next step of the autoinstall. -BEF-
+        
+        # download authorized_keys  #XXX re-consider this bit
+        # (public keys of users allowed to ssh *in* to this machine)
+        files="authorized_keys"
+        for file in $files
+        do
+          echo
+          echo "snarf $SSH_DOWNLOAD_URL/$file..."
+          ( cd /root/.ssh/ && snarf $SSH_DOWNLOAD_URL/$file )
+          if [ $? != 0 ]; then
+            echo
+            echo "snarf of $SSH_DOWNLOAD_URL/$file failed!!!"
+            echo
+            shellout
+          fi
+        done
+        
+        # set permissions to 600 -- otherwise, sshd will refuse to use it
+        chmod 600 /root/.ssh/authorized_keys || shellout
+        
+        # Since we're using SSH, change the $IMAGESERVER variable to reflect
+        # the forwarded connection.
+        IMAGESERVER=127.0.0.1
+        
+        # save variables for autoinstall script
+        write_variables || shellout
+        
+        # create a private host key for this autoinstall client
+        echo
+        echo "Using ssh-keygen to create this hosts private key"
+        echo
+        ssh-keygen -N "" -f /etc/ssh/ssh_host_key || shellout
+        
+        ## create necessary ptys, etc. for sshd   #XXX remove if unnecessary -BEF-
+        #mknod /dev/ptmx c 5 2                    || shellout
+        #chmod 666 /dev/ptmx                      || shellout
+        #mkdir /dev/pts                           || shellout
+        #echo "none /dev/pts devpts" > /etc/fstab || shellout
+        #mount /dev/pts                           || shellout
+        
+        # if hostname not set, try DNS
+        if [ -z $HOSTNAME ]; then
+            echo
+            echo "Trying to get hostname via DNS..."
+            echo
+            get_hostname_by_dns
+        fi
+        
+        if [ -z $HOSTNAME ]; then
+            HOST_OR_IP=$IPADDR
+        else
+            HOST_OR_IP=$HOSTNAME
+        fi
+        
+        echo
+        echo
+        echo "Starting sshd.  You must now go to your imageserver and issue"
+        echo "the following command:"
+        echo
+        echo " \"pushupdate -continue-install -image <IMAGENAME> -client ${HOST_OR_IP}\"."
+        echo
+        echo
+        
+        # fire up sshd and wait
+        sshd -f /etc/ssh/sshd_config -h /etc/ssh/ssh_host_key || shellout
+        
+        # Give sshd time to initialize before we yank the parent process
+        # rug out from underneath it.
+        sleep 15
+        
+        # remove rug
+        exit 1
+    fi
+fi
 }
 #
 ################################################################################
