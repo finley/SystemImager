@@ -133,18 +133,34 @@ check_tftpd() {
 	 y|Y|Yes|yes|YES ) echo "Ok, installing... " ;;
 	 * ) echo "Ok, not installing." && return 1 ;;
 	esac
+	URL_TO_WGET=""
 	if [ "$DISTRO" == "Debian" ]; then
-	    if [ ! -f $TFTPD_DEB ]; then
-		URL_TO_WGET=TFTPD_DEB_URL
-		wget_file
-		if [ $? -ne 0 ]; then
-		    return 1
+	    if [ "$DEBIAN_VERSION" == "2.2" ]; then
+		if [ ! -f $TFTPD_POTATO_DEB ]; then
+		    URL_TO_WGET=$TFTPD_POTATO_DEB_URL
+		    wget_file
+		    if [ $? -ne 0 ]; then
+			return 1
+		    fi
+		    dpkg -i $TFTPD_POTATO_DEB
+		    if [ $? -ne 0 ]; then
+			echo "Error: dpkg returned a non-zero status."
+			return 1
+		    fi
 		fi
-	    fi
-	    dpkg -i $TFTPD_DEB
-	    if [ $? -ne 0 ]; then
-		echo "Error: dpkg returned a non-zero status."
-		return 1
+	    else
+		if [ ! -f $TFTPD_DEB ]; then
+		    URL_TO_WGET=$TFTPD_DEB_URL
+		    wget_file
+		    if [ $? -ne 0 ]; then
+			return 1
+		    fi
+		    dpkg -i $TFTPD_DEB
+		    if [ $? -ne 0 ]; then
+			echo "Error: dpkg returned a non-zero status."
+			return 1
+		    fi
+		fi
 	    fi
 	elif [ "$DISTRO" == "RedHat" ]; then
 	    rpm -Uvh $TFTPD_RPM
@@ -177,6 +193,11 @@ check_tftpd() {
 ### BEGIN CHECK_TFTPD_HPA
 check_tftpd_hpa() {
     echo -n "Checking if tftp server is H. Peter Anvin's tftp server... "
+    TFTPD_PATH=`which in.tftpd`
+    if [ "$TFTPD_PATH" == "" ]; then
+	echo "Couldn't find in.tftpd in your path."
+	return 1
+    fi
     
     # suggestions for a better test welcome!
     strings $TFTPD_PATH | grep "hpa" 1> /dev/null 2> /dev/null
@@ -597,8 +618,8 @@ configure_pxe_daemon() {
     fi
     
     echo -n "Checking to make sure $interface is up... "
-    ifconfig $interface | grep "inetd addr" 1> /dev/null 2> /dev/null
-    if [ $? -ne 0 ]; then
+    ifconfig $interface | grep "inet addr" 1> /dev/null 2> /dev/null
+    if [ $? -eq 0 ]; then
 	echo "yup."
     else
         echo "nope."
@@ -675,9 +696,9 @@ pxelinux_cfg() {
     echo "done."
     
     if [ -a $LINUX_INSTALL/linux.0 ]; then
-	if [ `md5sum $LINUX_INSTALL/linux.0 ` != \
+	if [ `md5sum $LINUX_INSTALL/linux.0` != \
 			`md5sum $PKGDIR/pxelinux.0` ]; then
-            echo "$LINUX_INSTALL/linux.0 already exists, but doesn't match to pxelinux.0 I want to install."
+            echo "$LINUX_INSTALL/linux.0 already exists, but doesn't match the pxelinux.0 I want to install."
 	    i=0
 	    while /bin/true; do
 		if [ ! -a $LINUX_INSTALL/linux.0.bak$i ]; then
@@ -689,6 +710,31 @@ pxelinux_cfg() {
 	    done
 	    echo -n "Copying $CONFIG_DIR/pxelinux.0 to $LINUX_INSTALL/linux.0 ... "
 	    cp -a $CONFIG_DIR/pxelinux.0 $LINUX_INSTALL/linux.0
+	    if [ $? -ne 0 ]; then
+		echo "failed."
+	        return 1
+	    fi
+	    echo "done."
+	    
+	    # some pxe clients get their boot file from the dhcp response,
+	    # others look for a specific file and require the pxe daemon.
+	    # we'll have 2 links to make everyone happy.
+	    # makedhcpserver configures systemimager for the former, so
+	    # we'll use that filename.
+	    if [ `md5sum $LINUX_INSTALL/linux.0` != \
+			`md5sum $TFTPDIR/pxelinux.bin` ]; then
+                echo "$TFTPDIR/pxelinux.bin already exists, but doesn't match the pxelinux.0 I want to install."
+	    i=0
+	    while /bin/true; do
+		if [ ! -a $TFTPDIR/pxelinux.bin.bak$i ]; then
+		    echo "Backing up $TFTPDIR/pxelinux.bin to $TFTPDIR/pxelinux.bin.bak$i"
+		    mv $TFTPDIR/pxelinux.bin $TFTPDIR/pxelinux.bin.bak$i
+		    break
+		fi
+		i=`expr $i + 1`
+	    done
+	    echo -n "Linking $TFTPDIR/pxelinux.bin to $LINUX_INSTALL/linux.0 ..."
+	    ln $LINUX_INSTALL/linux.0 $TFTPDIR/pxelinux.bin
 	    if [ $? -ne 0 ]; then
 		echo "failed."
 	        return 1
@@ -760,6 +806,9 @@ if [ "`whoami`" != "root" ]; then
     echo "You must be root to run this script, exiting."
     exit 1
 fi
+
+# so we can use relative pathnames - hopefully dirname is pretty standard.
+cd `dirname $0`
     
 while [ $# -gt 0 ]; do
     case "$1" in
