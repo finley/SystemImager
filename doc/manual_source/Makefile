@@ -48,3 +48,4 @@ clean:
 	find . -name "#*#" -exec rm -f {} \;
 	rm -rf $(NAME).aux $(NAME).dvi $(NAME).log $(NAME).out $(NAME).pdf \
 	  $(NAME).ps $(NAME).rtf $(NAME).tex $(HTMLDIR) DBTOHTML_OUTPUT_DIR*
+
