@@ -9,12 +9,13 @@ Version: %ver
 Release: %rel
 Copyright: GPL
 Group: Applications/System
+Conflicts: va-systemimager-client
 Source: http://download.sourceforge.net/systemimager/%{name}-%{ver}.tar.gz
 BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: Michael Jennings <mej@valinux.com>
 Docdir: %{prefix}/doc
 URL: http://systemimager.org/
-Requires: rsync >= 2.3.1, syslinux >= 1.48, dhcp = 2.0
+Requires: rsync >= 2.4.5, syslinux >= 1.48, dhcp = 2.0, fileutils, grep, util-linux, sh-utils, gawk, sed, findutils, textutils, perl, dosfstools
 
 %description
 VA SystemImager is software that makes the installation of Linux to
@@ -27,11 +28,12 @@ typical environments include: Internet server farms, high performance
 clusters, computer labs, or corporate desktop environments where all
 workstations have the same basic hardware configuration.
 
+
 %package client
 Summary: VA SystemImager "Master Client" software
 Group: Applications/System
-Conflicts: %{name}
-Requires: rsync >= 2.3.1, util-linux, sh-utils
+Conflicts: va-systemimager
+Requires: rsync >= 2.4.5, util-linux, sh-utils, fileutils, grep, gawk, sed, findutils, textutils, perl
 
 %description client
 This is the package you install on a VA SystemImager "master client".
@@ -54,8 +56,8 @@ DESTDIR=$RPM_BUILD_ROOT ; export DESTDIR
 prefix=%{prefix} ; export prefix
 ./install -q -n
 
-mkdir -p $RPM_BUILD_ROOT/etc/
-install -m 644 tftpstuff/systemimager/systemimager.exclude $RPM_BUILD_ROOT/etc/
+mkdir -p $RPM_BUILD_ROOT/etc/systemimager/
+install -m 644 tftpstuff/systemimager/systemimager.exclude $RPM_BUILD_ROOT/etc/systemimager/
 install -m 755 tftpstuff/systemimager/prepareclient        $RPM_BUILD_ROOT/usr/sbin/
 install -m 755 tftpstuff/systemimager/updateclient         $RPM_BUILD_ROOT/usr/sbin/
 
@@ -80,10 +82,9 @@ cd /usr/doc/va-systemimager-%{ver}/ && ./afterburner -q -n
 /tftpboot/pxelinux.cfg/*
 
 /tftpboot/systemimager/grep
-/tftpboot/systemimager/hosts
+/tftpboot/systemimager/mkraid
+/tftpboot/systemimager/mkreiserfs
 /tftpboot/systemimager/prepareclient
-/tftpboot/systemimager/rsync
-/tftpboot/systemimager/sed
 /tftpboot/systemimager/sfdisk
 /tftpboot/systemimager/systemimager.exclude
 /tftpboot/systemimager/updateclient
@@ -101,4 +102,4 @@ cd /usr/doc/va-systemimager-%{ver}/ && ./afterburner -q -n
 %doc CHANGE.LOG COPYING CREDITS FAQ-HOWTO README TODO VERSION
 /usr/sbin/updateclient
 /usr/sbin/prepareclient
-/etc/systemimager.exclude
+/etc/systemimager/systemimager.exclude
