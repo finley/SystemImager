@@ -21,6 +21,13 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+#   2004.12.25  Patched by Brian Elliott Finley w/patch from Josh Aas
+#       A patch that updates the current initrd-source/mklibs to the current
+#       version of mklibs. The update primarily fixes a problem where mklibs
+#       might create recursive symlinks when canonizing library names. This
+#       happens when you build on ia64/RHEL3.
+#
 
 # HOW IT WORKS
 #
@@ -143,7 +150,7 @@ def library_depends_gcc_libnames(obj):
 # Num:    Value          Size Type    Bind   Vis      Ndx Name
 #   1: 000000012002ab48   168 FUNC    GLOBAL DEFAULT  UND strchr@GLIBC_2.0 (2)
 symline_regexp = \
-    re.compile("\s*\d+: .+\s+\d+\s+\w+\s+(\w+)+\s+\w+\s+(\w+)\s+(\w+)")
+    re.compile("\s*\d+: .+\s+\d+\s+\w+\s+(\w+)+\s+\w+\s+(\w+)\s+([^\s@]+)")
 
 # Return undefined symbols in an object as a Set of tuples (name, weakness)
 def undefined_symbols(obj):
@@ -265,7 +272,8 @@ def version(vers):
 ## Required arguments for long options are also mandatory for the short options.
 
 # Clean the environment
-vers="0.12"
+# jaas == Josh Aas
+vers="0.12si1"
 os.environ['LC_ALL'] = "C"
 
 # Argument parsing
@@ -345,13 +353,14 @@ if not ldlib:
 	    match = pattern.match(x)
 	    if match:
 	        ldlib = match.group(1)
-                debug(DEBUG_NORMAL, "I: Using", ldlib, "as dynamic linker.")
 	        break
 	if ldlib:
 	    break
 
 if not ldlib:
     sys.exit("E: Dynamic linker not found, aborting.")
+
+debug(DEBUG_NORMAL, "I: Using", ldlib, "as dynamic linker.")
 
 # Check for rpaths
 for obj in objects.values():
@@ -546,7 +555,12 @@ for lib in regexpfilter(os.listdir(dest_path), "(.*-so)$").elems():
 
 # Canonicalize library names.
 for lib in regexpfilter(os.listdir(dest_path), "(.*so[.\d]*)$").elems():
-    soname = extract_soname(dest_path + "/" + lib)
+    this_lib_path = dest_path + "/" + lib
+    if os.path.islink(this_lib_path):
+        debug(DEBUG_VERBOSE, "Unlinking %s." % lib)
+        os.remove(this_lib_path)
+        continue
+    soname = extract_soname(this_lib_path)
     if soname:
         debug(DEBUG_VERBOSE, "Moving %s to %s." % (lib, soname))
         os.rename(dest_path + "/" + lib, dest_path + "/" + soname)
@@ -555,7 +569,8 @@ for lib in regexpfilter(os.listdir(dest_path), "(.*so[.\d]*)$").elems():
 ld_file = find_lib(ldlib)
 ld_file_name = os.path.basename(ld_file)
 
-if not os.access(dest_path + "/" + lib, os.F_OK):
+if not os.access(dest_path + "/" + ld_file_name, os.F_OK):
+    debug(DEBUG_NORMAL, "I: stripping and copying dynamic linker.")
     command(target + "objcopy", "--strip-unneeded -R .note -R .comment",
             ld_file, dest_path + "/" + ld_file_name)
 
