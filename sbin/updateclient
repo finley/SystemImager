@@ -54,16 +54,13 @@ $ENV{PATH} = "/usr/local/sbin:/usr/sbin:/sbin:/usr/local/bin:/usr/bin:/bin";
 my $version_info = <<"EOF";
 updateclient (part of SystemImager) v$VERSION
 
-Copyright (C) 1999-2003 Brian Elliott Finley <finley\@mcs.anl.gov>
-
-This is free software; see the source for copying conditions.  There is NO
-warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
 EOF
+
+$version_info .= SystemImager::Options->copyright();
 
 # Help stuff
 my $help_info = $version_info . SystemImager::Options->updateclient_options_header();
-$help_info = $help_info . SystemImager::Options->generic_options_help_version_header();
+$help_info = $help_info . SystemImager::Options->generic_options_help_version();
 $help_info = $help_info . SystemImager::Options->updateclient_options_body();
 $help_info = $help_info . SystemImager::Options->generic_footer();
 
