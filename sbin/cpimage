@@ -246,13 +246,30 @@ system($cmd);
 if ($verbose) {print "  Copying override directory $source_image to $destination_image.\n";}
 my $source_override = "rsync://$server:$port/overrides/$source_image/";
 my $destination_override = "/var/lib/systemimager/overrides/${destination_image}/";
-$cmd="rsync -a --delete $source_override $destination_override";
-system($cmd);
+
+# Test to see if override directory exists
+my $source_override_exists = "no";
+$cmd="rsync rsync://$server:$port/overrides";
+open(INPUT, "$cmd|");
+    while(<INPUT>) {
+        if (m/$source_image/) {
+            $source_override_exists = "yes";
+        }
+    }
+close(INPUT);
+
+if("$source_override_exists" eq "yes") {
+    $cmd="rsync -a --delete $source_override $destination_override";
+    system($cmd);
     if($? != 0) { 
         print "WARNING: Failed to copy override directory $source_image to $destination_override.\n";
-        print "If the source override directory doesn't exist, this shouldn't be considered a\n";
-        print "problem.  Continuing...\n";
+        print "         If the source override directory doesn't exist, this shouldn't be\n";
+        print "         considered a problem.  Continuing...\n";
     }
+} else {
+    print qq(  No override directory for $source_image found.\n) if($verbose);
+}
+
 
 ### BEGIN Change entries in $rsyncd_conf ###
 SystemImager::Server->create_image_stub($rsync_stub_dir, $destination_image, $destination) 
