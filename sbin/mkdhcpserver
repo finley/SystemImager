@@ -86,6 +86,11 @@ allow bootp;
 default-lease-time 259200;
 max-lease-time 259200;
 
+# The following lines will allow netbooting of most ia32 pxe clients
+# However, they will not allow ia64 clients to netboot.
+# Refer to the SystemImager manual for details on adding network boot support 
+# for ia64 # clients
+
 # what to get to boot the autoinstall client
 filename "/pxelinux.bin";
 option vendor-class-identifier "PXEClient";
@@ -104,6 +109,11 @@ allow bootp;
 # set lease time to 3 days
 default-lease-time 259200;
 max-lease-time 259200;
+
+# The following lines will allow netbooting of most ia32 pxe clients
+# However, they will not allow ia64 clients to netboot.
+# Refer to the SystemImager manual for details on adding network boot support 
+# for ia64 # clients
 
 # what to get to boot the autoinstall client
 filename "/pxelinux.bin";
