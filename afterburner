@@ -552,7 +552,7 @@ else
     [ $QUIET = "false" ] && echo Backing up /etc/rsyncd.conf to /etc/rsyncd.conf.beforesystemimager...
     cp -af /etc/rsyncd.conf /etc/rsyncd.conf.beforesystemimager
     # and create rsyncd.conf
-    [ $QUIET = "false" ] && echo Creating VA SystemImager brand /etc/rsyncd.conf...
+    [ "$QUIET" = "false" ] && echo Creating VA SystemImager brand /etc/rsyncd.conf...
     create_rsyncd_conf
   else
     [ $QUIET = "false" ] && echo VA SystemImager brand /etc/rsyncd.conf file already exists...
@@ -560,8 +560,9 @@ else
 fi
 
 # be sure we have a tftpboot entry
-egrep -q '[tftpboot]' /etc/rsyncd.conf && ADD_TFTPBOOT="no"
-if [ $ADD_TFTPBOOT != "no" ]; then
+egrep -q '\[tftpboot\]' /etc/rsyncd.conf || ADD_TFTPBOOT="yes"
+if [ "$ADD_TFTPBOOT" = "yes" ]; then
+  [ "$QUIET" = "false" ] && echo Adding [tftpboot] entry to /etc/rsyncd.conf...
   echo ''                                                       >> /etc/rsyncd.conf
   echo '[tftpboot]'                                             >> /etc/rsyncd.conf
   echo '  path = /tftpboot'                                     >> /etc/rsyncd.conf
