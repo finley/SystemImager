@@ -375,7 +375,6 @@ opendir(PARTITIONSCHEMES, "$imagedir$partition_dir") || die "Can't read the $ima
 close(PARTITIONSCHEMES);
 ### END get list of disks to partition ###
 
-print "\@disks: @disks\n"; <STDIN>;
 
 # Foreach disk, gather up the partition info for that disk and prepare an sfdisk command
 foreach $disk (@disks)  {
