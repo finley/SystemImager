@@ -47,6 +47,8 @@
 #   - install UseYourOwnKernel.pm as part of 'make install_common_libs'
 # 	2005-01-12 Andrea Righi
 # 	- patches to add lvm support
+# 	2005.01.30 Brian Elliott Finley
+# 	- 'make source_tarball' -> do cvs export, instead of 'find+cp -> find+rm'
 #
 #
 # ERRORS when running make:
@@ -105,6 +107,8 @@
 
 DESTDIR =
 VERSION = $(shell cat VERSION)
+CVS_TAG = $(shell cat VERSION | tr '.' '_')
+CVSROOT=$(shell cat CVS/Root)
 
 ## is this an unstable release?
 MINOR = $(shell echo $(VERSION) | cut -d "." -f 2)
@@ -600,11 +604,9 @@ $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2.sign:	$(TOPDIR)/tmp/systemimager-$
 
 
 $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2: systemimager.spec
-	mkdir -p tmp/systemimager-$(VERSION)
-	find . -maxdepth 1 -not -name . -not -name tmp -not -name src \
-	  -exec cp -a {} tmp/systemimager-$(VERSION) \;
-	rm -rf `find tmp/systemimager-$(VERSION) -name CVS \
-	         -type d -printf "%p "`
+	mkdir -p tmp/
+	cd tmp && cvs -d$(CVSROOT) export -r v$(CVS_TAG) systemimager
+	mv tmp/systemimager tmp/systemimager-$(VERSION)
 	$(MAKE) -C $(TOPDIR)/tmp/systemimager-$(VERSION) distclean
 	$(MAKE) -C $(TOPDIR)/tmp/systemimager-$(VERSION) get_source
 ifeq ($(UNSTABLE), 1)
