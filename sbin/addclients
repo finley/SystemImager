@@ -61,7 +61,7 @@ unless($< == 0) { die "Must be run as root!\n"; }
 system("clear");
 print << "EOF";
 
-Welcome to the SystemImager "addclients" utility.  This utility 
+Welcome to the VA SystemImager "addclients" utility.  This utility
 will create softlinks for each of your client names to your
 "\$image.master" script in the "/tftpboot/systemimager/"
 directory.  ( ie. computenode201.sh -> newlinuximage.master )
@@ -260,9 +260,10 @@ if($etc_hosts eq "y") {
     }
     ### munge new ips and hostname info into %etc_hosts_lines_by_ip
 
-    ### open /etc/hosts for writing
-    open(ETC_HOSTS, "> /etc/hosts") or die "Couldn't open /etc/hosts for writing: $!\n";
-    ### open /etc/hosts for writing
+    ### open temporary /etc/hosts for writing
+    $temp_file = "/tmp/.hosts.systemimager";
+    open(NEW_ETC_HOSTS, "> $temp_file") or die "Couldn't open $temp_file for writing: $!\n";
+    ### open temporary /etc/hosts for writing
 
     ### replace entries as necessary in numbered /etc/hosts lines and print numbered lines
     foreach my $line_number ( sort numerically ( keys %etc_hosts_lines_by_number )) {
@@ -274,7 +275,7 @@ if($etc_hosts eq "y") {
             delete $etc_hosts_lines_by_ip{$ip_quad};
         }
         # print numbered hosts entries
-        print ETC_HOSTS "$etc_hosts_lines_by_number{$line_number}\n";
+        print NEW_ETC_HOSTS "$etc_hosts_lines_by_number{$line_number}\n";
     }
     ### replace entries as necessary in numbered /etc/hosts lines and print numbered lines
 
@@ -287,22 +288,27 @@ if($etc_hosts eq "y") {
     ### create hash of entries by decimal ip (for sorting purposes)
 
     ### print remaining entries
-    print ETC_HOSTS "\n";
+    print NEW_ETC_HOSTS "\n";
     foreach my $ip_decimal ( sort( keys %etc_hosts_lines_by_ip_decimal )) {
-        print ETC_HOSTS "$etc_hosts_lines_by_ip_decimal{$ip_decimal}\n";
+        print NEW_ETC_HOSTS "$etc_hosts_lines_by_ip_decimal{$ip_decimal}\n";
     }
     ### print remaining entries
 
-    ### close /etc/hosts after writing
-    close(ETC_HOSTS);
-    ### close /etc/hosts after writing
+    ### close temporary /etc/hosts after writing
+    close(NEW_ETC_HOSTS);
+    ### close temporary /etc/hosts after writing
 
-    if ( $etc_hosts eq "y" ) { print "\nYour entries have been added to /etc/hosts.\n"; }
+    ### move new hosts file in to place
+    system('mv', '-f', $temp_file, '/etc/hosts');
+    if($? != 0) { die "Couldn't move $temp_file to /etc/hosts!\n", "Is the filesystem that contains /etc/ full?"; }
+    ### move new hosts file in to place
 
-    # copy /etc/hosts to /tftpboot/systemimager/hosts to be sure it stays up to date
+    ### copy /etc/hosts to /tftpboot/systemimager/hosts to be sure it stays up to date
     system('cp', '-f', '/etc/hosts', '/tftpboot/systemimager/hosts');
     if($? != 0) { die "Couldn't copy /etc/hosts to /tftpboot/systemimager/hosts!\n", "Does /etc/tftpboot/systemimager/ exist?"; }
-    # copy /etc/hosts to /tftpboot/systemimager/hosts to be sure it stays up to date
+    ### copy /etc/hosts to /tftpboot/systemimager/hosts to be sure it stays up to date
+
+    if ( $etc_hosts eq "y" ) { print "\nYour entries have been added to /etc/hosts.\n"; }
 
     print "\nPress <Enter> to continue...";
     <STDIN>;
