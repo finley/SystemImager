@@ -34,6 +34,10 @@
 #	- Explicitly include more w/mklibs -L.
 #   2004.10.19  Brian Elliott Finley
 #	- switch to busybox modutils for x86
+#   2005.02.14  Brian Elliott Finley
+#	- add install_initrd_template
+#
+
 
 INITRD_PATCH_DIR = $(INITRD_DIR)/patches
 INITRD_SRC_DIR = $(INITRD_DIR)/src
@@ -198,11 +202,29 @@ endif
 PHONY += initrd
 initrd:	$(INITRD_DIR)/initrd
 
+#
+#	  NOTE:  we don't want the initrd target to use the installed template 
+#		dir, as it could complicate distribution -- you might have 
+#		modified files in the template_dir, that aren't removed with a
+#		'make install_template_dir', that you don't want released as 
+#		part of the distribution. -BEF-
+#
 $(INITRD_DIR)/initrd:	$(INITRD_DIR)/build_dir-stamp
 	$(MKCRAMFS) $(INITRD_BUILD_DIR) $(INITRD_DIR)/initrd
 
+PHONY += install_initrd_template
+install_initrd_template:	$(INITRD_DIR)/build_dir-stamp
+	mkdir -p $(BOOT_BIN_DEST)
+	rsync -a $(INITRD_BUILD_DIR)/ $(BOOT_BIN_DEST)/initrd_template/
+	@echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+	@echo "XXX Dann, I'm expecting this should this be part of:"
+	@echo "XXX 	systemimager-initrd_template-$ARCH and 
+	@echo "XXX	systemimager-client will need to depend on it.
+	@echo "XXX 	Do you agree? disagree?"
+	@echo "XXX" 
+	@echo "XXX  Still in progress, no need to answer yet..."
+	@echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
 
-########## BEGIN initrd ##########
 # install the autoinstall ramdisk - the initial ramdisk used by autoinstall
 # clients when beginning an autoinstall
 PHONY += install_initrd
@@ -236,4 +258,4 @@ initrd_distclean:	initrd_clean
 .PHONY:	all build_dir install get_source help helpless clean distclean \
 	$(subst .rul,,$(shell cd make.d && ls *.rul)) uclibc_dev
 
-# /* vi: set noet ts=4: */
+# /* vi: set ai noet ts=4: */

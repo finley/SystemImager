@@ -428,7 +428,8 @@ install:
 
 .PHONY:	install_binaries
 install_binaries:	install_kernel install_initrd \
-			install_boel_binaries_tarball
+			install_boel_binaries_tarball \
+			install_initrd_template
 
 
 ################################################################################
