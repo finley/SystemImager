@@ -862,6 +862,7 @@ sub save_filesystem_information {
                 # Turn the characters below into their XML entities to keep the
                 # parser from tripping on them.  -BEF-
                 #
+                s/&/&amp;/g;        # This one must be first, otherwise it escapes all of the escapes above it. ;-) -BEF-
                 s/</&lt;/g;
                 s/>/&gt;/g;
                 s/\042/&quot;/g;     # " is \042
