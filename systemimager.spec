@@ -1,5 +1,5 @@
 %define name     systemimager
-%define ver      XXX_SET_BEFORE_USING_XXX
+%define ver      3.1.5
 %define rel      1
 %define prefix   /usr
 %define _build_all 1
@@ -16,7 +16,7 @@ Version: %ver
 Release: %rel
 Copyright: GPL
 Group: Applications/System
-Source: http://download.sourceforge.net/systemimager/%{name}-%{ver}.tar.bz2
+Source0: http://download.sourceforge.net/systemimager/%{name}-%{ver}.tar.bz2
 BuildRoot: /tmp/%{name}-%{ver}-root
 BuildArchitectures: noarch
 Packager: dann frazier <dannf@dannf.org>
@@ -39,10 +39,10 @@ Copyright: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: dann frazier <dannf@dannf.org>
-Docdir: %{prefix}/share/doc
+docdir: %{prefix}/share/doc
 URL: http://systemimager.org/
 Distribution: System Installation Suite
-Requires: rsync >= 2.4.6, systemimager-common = %{version}, perl-AppConfig, dosfstools, /sbin/chkconfig, perl
+Requires: rsync >= 2.4.6, systemimager-common = %{version}, perl-AppConfig, dosfstools, /sbin/chkconfig, perl, perl-XML-Simple
 AutoReqProv: no
 
 %description server
@@ -62,6 +62,38 @@ environments.
 
 The server package contains those files needed to run a SystemImager
 server.
+
+%package flamethrower
+Summary: Software that automates Linux installs, software distribution, and production deployment.
+Version: %ver
+Release: %rel
+Copyright: GPL
+Group: Applications/System
+BuildRoot: /tmp/%{name}-%{ver}-root
+Packager: dann frazier <dannf@dannf.org>
+Docdir: %{prefix}/share/doc
+URL: http://systemimager.org/
+Distribution: System Installation Suite
+Requires: systemimager-server = %{version}, /sbin/chkconfig, perl, flamethrower
+AutoReqProv: no
+
+%description flamethrower
+SystemImager is software that automates Linux installs, software 
+distribution, and production deployment.  SystemImager makes it easy to
+do installs, software distribution, content or data distribution, 
+configuration changes, and operating system updates to your network of 
+Linux machines. You can even update from one Linux release version to 
+another!  It can also be used to ensure safe production deployments.  
+By saving your current production image before updating to your new 
+production image, you have a highly reliable contingency mechanism.  If
+the new production enviroment is found to be flawed, simply roll-back 
+to the last production image with a simple update command!  Some 
+typical environments include: Internet server farms, database server 
+farms, high performance clusters, computer labs, and corporate desktop
+environments.
+
+The server package allows you to use the flamethrower utility to perform
+installations over multicast.
 
 %package common
 Summary: Software that automates Linux installs, software distribution, and production deployment.
@@ -164,6 +196,43 @@ to boot and install %{_build_arch} Linux machines during the SystemImager autoin
 process.
 
 %changelog
+* Tue Aug 19 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.1.5-1
+- new upstream release
+
+* Tue Jul 14 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.1.4-1
+- new upstream release
+
+* Tue Jul 09 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.1.3-1
+- new upstream release
+
+* Tue Jul 08 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.1.2-5
+- add missing Client.pm, pushupdate manpage & overrides readme
+
+* Sun Jul 06 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.1.2-4
+- add missing conf file & state dir to systemimager-server-flamethrower
+
+* Sat Jul 05 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.1.2-3
+- install missing autoinstallscript.template
+
+* Tue Jul 01 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.1.2-2
+- make systemimager-flamethrower depend on flamethrower
+- patch the x86 config to support sk98lin, so it does not go interactive
+
+* Tue Jul 01 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.1.2-1
+- new upstream development release
+
+* Tue Apr 02 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.0.1-4
+- fix mkautoinstallcd on ia64 - 751740
+
+* Tue Apr 02 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.0.1-3
+- added a patch from bef that no longer sorts module names - 755463
+
+* Tue Apr 02 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.0.1-2
+- remove eepro100 (but keep e100) so boel will fit on a floppy again
+
+* Sun Mar 30 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.0.1-1
+- new upstream bug-fix release
+
 * Sun Jan 08 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.0.0-2
 - various ia64 fixes
 - stop attempting to build ps manual
@@ -334,22 +403,22 @@ fi
 /usr/sbin/mkrsyncd_conf
 
 if [[ -a /usr/lib/lsb/install_initd ]]; then
-    /usr/lib/lsb/install_initrd /etc/init.d/systemimager
+    /usr/lib/lsb/install_initd /etc/init.d/systemimager-server-rsyncd
 fi
 
 if [[ -a /sbin/chkconfig ]]; then
-    /sbin/chkconfig --del systemimager
+    /sbin/chkconfig --add systemimager-server-rsyncd
 fi
 
 %preun server
-/etc/init.d/systemimager stop
+/etc/init.d/systemimager-server-rsyncd stop
 
 if [[ -a /usr/lib/lsb/remove_initd ]]; then
-    /usr/lib/lsb/remove_initd /etc/init.d/systemimager
+    /usr/lib/lsb/remove_initd /etc/init.d/systemimager-server-rsyncd
 fi
 
 if [[ -a /sbin/chkconfig ]]; then
-    /sbin/chkconfig --del systemimager
+    /sbin/chkconfig --del systemimager-server-rsyncd
 fi
 
 if [[ -a /etc/xinetd.d/rsync.presis~ ]]; then
@@ -379,12 +448,14 @@ fi
 %dir /var/lib/systemimager/images
 %dir /var/lib/systemimager/scripts
 %dir /var/lib/systemimager/overrides
+/var/lib/systemimager/overrides/README
 %dir /etc/systemimager
 %config /etc/systemimager/pxelinux.cfg/*
+%config /etc/systemimager/autoinstallscript.template
 %config(noreplace) /etc/systemimager/rsync_stubs/*
 %config(noreplace) /etc/systemimager/systemimager.conf
-/etc/init.d/systemimager
-/etc/init.d/netboot*
+/etc/init.d/systemimager-server-rsyncd
+/etc/init.d/systemimager-server-netboot*
 /var/lib/systemimager/images/*
 %prefix/sbin/addclients
 %prefix/sbin/cpimage
@@ -396,6 +467,9 @@ fi
 %prefix/sbin/rmimage
 %prefix/bin/mkautoinstall*
 %prefix/lib/systemimager/perl/SystemImager/Server.pm
+%prefix/lib/systemimager/perl/SystemImager/Options.pm
+%prefix/lib/systemimager/perl/SystemImager/Config.pm
+%prefix/lib/systemimager/perl/confedit
 %prefix/share/man/man5/systemimager*
 %prefix/share/man/man8/addclients*
 %prefix/share/man/man8/cpimage*
@@ -403,6 +477,7 @@ fi
 %prefix/share/man/man8/mk*
 %prefix/share/man/man8/mvimage*
 %prefix/share/man/man8/rmimage*
+%prefix/share/man/man8/pushupdate*
 
 %files client
 %defattr(-, root, root)
@@ -414,6 +489,14 @@ fi
 %prefix/sbin/prepareclient
 %prefix/share/man/man8/updateclient*
 %prefix/share/man/man8/prepareclient*
+%prefix/lib/systemimager/perl/SystemImager/Client.pm
+
+%files flamethrower
+%defattr(-, root, root)
+%doc CHANGE.LOG COPYING CREDITS README VERSION
+%dir /var/state/systemimager/flamethrower
+%config /etc/systemimager/flamethrower.conf
+/etc/init.d/systemimager-server-flamethrowerd
 
 %endif
 
