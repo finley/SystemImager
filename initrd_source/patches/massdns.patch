@@ -1,11 +1,15 @@
-###############################################################################
-the upstream source seems to be missing an include - this patch add it
-	-dann <dannf@ldl.fc.hp.com>
-###############################################################################
-
+diff -urN massdns-1.0.orig/Makefile massdns-1.0/Makefile
+--- massdns-1.0.orig/Makefile	Tue Jun 13 00:53:42 2000
++++ massdns-1.0/Makefile	Tue Sep 11 00:41:12 2001
+@@ -1,4 +1,4 @@
+-
++CC= g++
+ LDFLAGS= -s
+ CFLAGS= -g0 -O99 -fomit-frame-pointer -I. -DNDEBUG
+ 
 diff -urN massdns-1.0.orig/massdns.cpp massdns-1.0/massdns.cpp
 --- massdns-1.0.orig/massdns.cpp	Tue Jun 13 01:05:57 2000
-+++ massdns-1.0/massdns.cpp	Sun Jul 15 14:21:50 2001
++++ massdns-1.0/massdns.cpp	Tue Sep 11 00:40:58 2001
 @@ -1,4 +1,4 @@
 -
 +#include <time.h>
