@@ -465,7 +465,7 @@ $(TOPDIR)/tmp/systemimager-$(VERSION).tar.gz: systemimager.spec
 	rm -rf `find tmp/systemimager-$(VERSION) -name CVS \
 	         -type d -printf "%p "`
 	cd tmp/systemimager-$(VERSION) && $(MAKE) distclean
-	cd tmp/systemimager-$(VERSION) && $(MAKE) -j11 get_source
+	cd tmp/systemimager-$(VERSION) && $(MAKE) get_source
 	cd tmp && tar -czf systemimager-$(VERSION).tar.gz systemimager-$(VERSION) 
 	@echo
 	@echo "srpm tarball has been created in $(TOPDIR)/tmp"
