@@ -208,9 +208,6 @@ install_server:	install_server_man install_configs install_server_libs
 	$(SI_INSTALL) -d -m 755 $(OVERRIDES_DIR)
 	$(SI_INSTALL) -m 644 $(OVERRIDES_README) $(OVERRIDES_DIR)
 
-# no need to do this on non-i386, though this should be generalized
-# somewhere else
-ifeq ($(ARCH),i386)
 	$(SI_INSTALL) -d -m 755 $(PXE_CONF_DEST)
 	$(SI_INSTALL) -m 644 --backup --text $(PXE_CONF_SRC)/message.txt \
 		$(PXE_CONF_DEST)/message.txt
@@ -220,7 +217,6 @@ ifeq ($(ARCH),i386)
 		$(PXE_CONF_DEST)/syslinux.cfg.noboot
 	$(SI_INSTALL) -m 644 --backup $(PXE_CONF_SRC)/syslinux.cfg \
 		$(PXE_CONF_DEST)/default
-endif
 
 	$(SI_INSTALL) -d -m 755 $(IMAGEDEST)
 	$(SI_INSTALL) -m 644 $(WARNING_FILES) $(IMAGEDEST)
