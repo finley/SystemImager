@@ -279,7 +279,7 @@ flamethrower_client() {
                 [ ! -z $DEBUG ] && echo THIS $THIS_STAMP
                 if [ "$THIS_STAMP" = "$LAST_STAMP" ]; then
                     echo "WARNING: No progress since last check.  Killing udp-receiver."
-                    killall -9 udp-receiver
+                    while killall -9 udp-reciever; do sleep 1; done
                     unset UDP_RECEIVER_RUNNING
                     sleep 1
                 fi
