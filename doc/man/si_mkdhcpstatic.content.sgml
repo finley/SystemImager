@@ -13,12 +13,12 @@
     &dhdate;
   </refentryinfo>
   <refmeta>
-    <refentrytitle>MKDHCPSTATIC</refentrytitle>
+    <refentrytitle>SI_MKDHCPSTATIC</refentrytitle>
 
     &dhsection;
   </refmeta>
   <refnamediv>
-    <refname>mkdhcpstatic</refname>
+    <refname>si_mkdhcpstatic</refname>
 
     <refpurpose>
       create a DHCP server configuration file with static entries
@@ -26,17 +26,17 @@
   </refnamediv>
   <refsynopsisdiv>
     <cmdsynopsis>
-      <command>mkdhcpstatic</command>
+      <command>si_mkdhcpstatic</command>
     </cmdsynopsis>
   </refsynopsisdiv>
   <refsect1>
     <title>DESCRIPTION</title>
 
     <para>This manual page documents briefly the
-      <command>mkdhcpstatic</command> command.</para>
+      <command>si_mkdhcpstatic</command> command.</para>
 
     <para>
-      <command>mkdhcpstatic</command> is a utility for generating a 
+      <command>si_mkdhcpstatic</command> is a utility for generating a 
       a dhcpd configuration file for use with SystemImager.  Static entries
       are created for IP addresses that are currently dynamically leased.
       This utility should be used after autoinstalling clients with an image
@@ -49,7 +49,7 @@
     <title>OPTIONS</title>
 
     <para>
-      <command>mkdhcpstatic</command> currently accepts to options.
+      <command>si_mkdhcpstatic</command> currently accepts to options.
     </para>
 
   </refsect1>
@@ -57,7 +57,7 @@
     <title>SEE ALSO</title>
 
     <para>
-      <command>mkdhcpserver(8)</command>, <command>getimage</command>(8)
+      <command>si_mkdhcpserver(8)</command>, <command>getimage</command>(8)
     </para>
 
     <para>More details can be found in the <citetitle>SystemImager

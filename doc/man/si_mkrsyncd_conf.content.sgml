@@ -13,24 +13,24 @@
     &mandate;
   </refentryinfo>
   <refmeta>
-    <refentrytitle>MKRSYNCD_CONF</refentrytitle>
+    <refentrytitle>SI_MKRSYNCD_CONF</refentrytitle>
 
     &mansection;
   </refmeta>
   <refnamediv>
-    <refname>mkrsyncd_conf</refname>
+    <refname>si_mkrsyncd_conf</refname>
 
     <refpurpose>generates rsyncd.conf from a rsync stub directory</refpurpose>
   </refnamediv>
   <refsynopsisdiv>
     <cmdsynopsis>
-      <command>mkrsyncd_conf </command>
+      <command>si_mkrsyncd_conf </command>
     </cmdsynopsis>
   </refsynopsisdiv>
   <refsect1>
     <title>DESCRIPTION</title>
 
-    <para><command>mkrsyncd_conf</command> is a utility for generating a
+    <para><command>si_mkrsyncd_conf</command> is a utility for generating a
       rsyncd.conf file for SystemImager from an rsync stub directory.  The
       location of the rsync stub directory and the rsyncd.conf file are
       specified in <filename>/etc/systemimager/systemimager.conf</filename>

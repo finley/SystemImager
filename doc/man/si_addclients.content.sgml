@@ -13,18 +13,18 @@
   &dhdate;
   </refentryinfo>
   <refmeta>
-  <refentrytitle>ADDCLIENTS</refentrytitle>
+  <refentrytitle>SI_ADDCLIENTS</refentrytitle>
   
   &dhsection;
   </refmeta>
   <refnamediv>
-  <refname>addclients</refname>
+  <refname>si_addclients</refname>
   
   <refpurpose>assign clients to an image</refpurpose>
   </refnamediv>
   <refsynopsisdiv>
   <cmdsynopsis>
-    <command>addclients</command>
+    <command>si_addclients</command>
     <arg><option>-help</option></arg>
     <arg><option>-version</option></arg>
     <arg><option>-host <replaceable>HOSTNAME</replaceable></option></arg>
@@ -39,13 +39,13 @@
   <title>DESCRIPTION</title>
 
   <para>
-    This manual page documents briefly the <command>addclients</command>
+    This manual page documents briefly the <command>si_addclients</command>
     command.
   </para>
 
   <para>
-    <command>addclients</command> is a tool for mapping clients to a
-    SystemImager image.  There are three sections to the addclients
+    <command>si_addclients</command> is a tool for mapping clients to a
+    SystemImager image.  There are three sections to the si_addclients
     utility:
   </para>
   <orderedlist>
@@ -75,7 +75,7 @@
       </simplelist>
       <note>
 	<para>
-	  Currently, <command>addclients</command> does not support hostnames
+	  Currently, <command>si_addclients</command> does not support hostnames
 	  with leading zeros (e.g. node09.bogus.net, instead of
 	  node9.bogus.net), but this will likely be added in a future release.
 	  One reason for making the no-padded-zeros method the default
@@ -112,7 +112,7 @@
 
   <para>
     A summary of options is included below.  By default, if an insufficient 
-    set of options is specified, <command>addclients</command> will fall back 
+    set of options is specified, <command>si_addclients</command> will fall back 
     to an interactive mode.  See <option>-interactive</option> below if you
     wish to alter this behavior.
   </para>
@@ -152,7 +152,7 @@
 	  <para>
 	    Number range used to create a series of host names based on the
 	    <option>-client</option> option.  For example, "-client www -range
-	    1-3" will cause addclients to use www1, www2, and www3 as host
+	    1-3" will cause si_addclients to use www1, www2, and www3 as host
 	    names.  If leading zeros are used, then host names will be padded
 	    with zeros.  For example, "-client www -range 01-03" produces
 	    host names www01, www02, and www03.  Padding hostnames with zeros

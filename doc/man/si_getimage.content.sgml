@@ -13,18 +13,18 @@
     &dhdate;
   </refentryinfo>
   <refmeta>
-    <refentrytitle>GETIMAGE</refentrytitle>
+    <refentrytitle>SI_GETIMAGE</refentrytitle>
 
     &dhsection;
   </refmeta>
   <refnamediv>
-    <refname>getimage</refname>
+    <refname>si_getimage</refname>
 
     <refpurpose>pull an image from a golden client</refpurpose>
   </refnamediv>
   <refsynopsisdiv>
     <cmdsynopsis>
-      <command>getimage</command>
+      <command>si_getimage</command>
 
     <arg rep=repeat><option>OPTION</option></arg>
     <arg choice=req><option>-golden-client</option> <replaceable>HOSTNAME</replaceable></arg> 
@@ -35,10 +35,10 @@
     <title>DESCRIPTION</title>
 
     <para>This manual page documents briefly the
-      <command>getimage</command> command.</para>
+      <command>si_getimage</command> command.</para>
 
     <para>
-      <command>getimage</command> is a program that pulls an image
+      <command>si_getimage</command> is a program that pulls an image
       to the image server.  The source for this image can be either a
       golden client or an image stored on another image server
     </para>

@@ -13,12 +13,12 @@
     &dhdate;
   </refentryinfo>
   <refmeta>
-    <refentrytitle>MKAUTOINSTALLSCRIPT</refentrytitle>
+    <refentrytitle>SI_MKAUTOINSTALLSCRIPT</refentrytitle>
 
     &dhsection;
   </refmeta>
   <refnamediv>
-    <refname>mkautoinstallscript</refname>
+    <refname>si_mkautoinstallscript</refname>
 
     <refpurpose>
         create a SystemImager autoinstallscript
@@ -26,7 +26,7 @@
   </refnamediv>
   <refsynopsisdiv>
     <cmdsynopsis>
-      <command>mkautoinstallscript</command>
+      <command>si_mkautoinstallscript</command>
       <arg><option>--help</option></arg>
       <arg><option>--version</option></arg>
       <arg><option>--quiet</option></arg>
@@ -43,9 +43,9 @@
     <title>DESCRIPTION</title>
 
     <para>This manual page documents briefly the
-      <command>mkautoinstallscript</command> command.</para>
+      <command>si_mkautoinstallscript</command> command.</para>
 
-    <para><command>mkautoinstallscript</command> creates an autoinstallscript
+    <para><command>si_mkautoinstallscript</command> creates an autoinstallscript
       for a SystemImager image.
     </para>
 
@@ -146,7 +146,7 @@
 		  name.  It is possible therefore, when using static dhcp, to
 		  change a machine's hostname and IP address by simply changing
 		  one value in the dhcpd.conf file.  Some may find this
-		  desirable.  Also see the <command>mkdhcpstatic</command>
+		  desirable.  Also see the <command>si_mkdhcpstatic</command>
 		  command.
 		</para>
 	      </listitem>

@@ -16,27 +16,27 @@ SYSTEMIMAGER_VERSION = $(shell cat ../../VERSION)
 
 MANPAGES = $(SERVER_MAN) $(CLIENT_MAN) $(COMMON_MAN)
 
-SERVER_MAN = addclients.8 				\
-			getimage.8					\
-			mkautoinstallcd.8			\
-			mkautoinstalldiskette.8		\
-			mkautoinstallscript.8		\
-			mkdhcpserver.8				\
-			mkdhcpstatic.8				\
-			cpimage.8					\
-			mvimage.8					\
-			rmimage.8					\
-			mkbootserver.8				\
+SERVER_MAN = si_addclients.8 				\
+			si_getimage.8					\
+			si_mkautoinstallcd.8			\
+			si_mkautoinstalldiskette.8		\
+			si_mkautoinstallscript.8		\
+			si_mkdhcpserver.8				\
+			si_mkdhcpstatic.8				\
+			si_cpimage.8					\
+			si_mvimage.8					\
+			si_rmimage.8					\
+			si_mkbootserver.8				\
 			systemimager.conf.5			\
 			systemimager-rsyncd.conf.5	\
-			mkrsyncd_conf.8				\
-			pushupdate.8				\
-			mkclientnetboot.8			
-#			imagemanip.8
+			si_mkrsyncd_conf.8				\
+			si_pushupdate.8				\
+			si_mkclientnetboot.8			
+#			si_imagemanip.8
 
-CLIENT_MAN = prepareclient.8 updateclient.8
+CLIENT_MAN = si_prepareclient.8 si_updateclient.8
 
-COMMON_MAN = autoinstallscript.conf.5 lsimage.8
+COMMON_MAN = autoinstallscript.conf.5 si_lsimage.8
 
 .SUFFIXES: .5 .8 .8.gz .5.gz .pod .sgml
 
@@ -51,7 +51,7 @@ systemimager.conf.5:	systemimager.conf.pod
 systemimager-rsyncd.conf.5:	systemimager-rsyncd.conf.pod
 	pod2man --release=$(SYSTEMIMAGER_VERSION) -s 5 -c "SystemImager" $< $@
 
-imagemanip.8:	$(TOPDIR)/sbin/imagemanip
+si_imagemanip.8:	$(TOPDIR)/sbin/si_imagemanip
 	pod2man --release=$(SYSTEMIMAGER_VERSION) -s 8 -c "SystemImager" $< $@
 
 %.5 %.8:	%.sgml %.content.sgml

@@ -14,11 +14,11 @@
 </refentryinfo>
 
 <refmeta>
-  <refentrytitle>UPDATECLIENT</refentrytitle>
+  <refentrytitle>SI_UPDATECLIENT</refentrytitle>
     &dhsection;
   </refmeta>
   <refnamediv>
-    <refname>updateclient</refname>
+    <refname>si_updateclient</refname>
 
     <refpurpose>
       update the image running on the local client machine to match that of an
@@ -27,7 +27,7 @@
   </refnamediv>
   <refsynopsisdiv>
     <cmdsynopsis>
-      <command>updateclient</command>
+      <command>si_updateclient</command>
 
       <arg><option>-help</option></arg>
       <arg><option>-version</option></arg>
@@ -49,12 +49,12 @@
     <title>DESCRIPTION</title>
 
     <para>
-      This manual page documents briefly the <command>updateclient</command>
+      This manual page documents briefly the <command>si_updateclient</command>
       command.
     </para>
 
     <para>
-      <command>updateclient</command> is a program that brings the local
+      <command>si_updateclient</command> is a program that brings the local
       client's image up to date with an image on a image server.
     </para>
 
@@ -124,7 +124,7 @@
         <listitem>
           <para>
 	    Don't run the bootloader (lilo, elilo, grub, etc) after update
-	    completes.  (<command>updateclient</command> always runs the
+	    completes.  (<command>si_updateclient</command> always runs the
 	    bootloader unless specified).
 	  </para>
         </listitem>
@@ -219,8 +219,8 @@
     <title>SEE ALSO</title>
 
     <para>
-      <command>pushupdate</command>(8),
-      <command>lsimage</command>(8)
+      <command>si_pushupdate</command>(8),
+      <command>si_lsimage</command>(8)
     </para>
 
     <para>More details can be found in the <citetitle>SystemImager

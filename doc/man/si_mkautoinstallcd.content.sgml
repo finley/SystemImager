@@ -13,12 +13,12 @@
     &dhdate;
   </refentryinfo>
   <refmeta>
-    <refentrytitle>MKAUTOINSTALLCD</refentrytitle>
+    <refentrytitle>SI_MKAUTOINSTALLCD</refentrytitle>
 
     &dhsection;
   </refmeta>
   <refnamediv>
-    <refname>mkautoinstallcd</refname>
+    <refname>si_mkautoinstallcd</refname>
 
     <refpurpose>
       generate a bootable iso image for autoinstalling clients
@@ -26,7 +26,7 @@
   </refnamediv>
   <refsynopsisdiv>
     <cmdsynopsis>
-      <command>mkautoinstallcd</command>
+      <command>si_mkautoinstallcd</command>
       <arg><option>-help</option></arg>
       <arg><option>-version</option></arg>
       <arg><option>-arch <replaceable>ARCH</replaceable></option></arg>
@@ -42,9 +42,9 @@
     <title>DESCRIPTION</title>
 
     <para>This manual page documents briefly the
-      <command>mkautoinstallcd</command> command.</para>
+      <command>si_mkautoinstallcd</command> command.</para>
 
-    <para><command>mkautoinstallcd</command> creates an iso image which can be
+    <para><command>si_mkautoinstallcd</command> creates an iso image which can be
        used to boot an autoinstall client and initiate an autoinstall.
     </para>
 
@@ -71,7 +71,7 @@
 	  <para>
 	    Create a CD image for autoinstallclients of this architecture.
 	    Defaults to the architecture of the host on which
-	    <command>mkautoinstallcd</command> is being run.
+	    <command>si_mkautoinstallcd</command> is being run.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -129,7 +129,7 @@
   <refsect1>
     <title>SEE ALSO</title>
 
-    <para><command>mkautoinstalldiskette</command>(8)</para>
+    <para><command>si_mkautoinstalldiskette</command>(8)</para>
 
     <para>More details can be found in the <citetitle>SystemImager
 	manual.</citetitle>

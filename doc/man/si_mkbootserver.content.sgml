@@ -13,12 +13,12 @@
     &dhdate;
   </refentryinfo>
   <refmeta>
-    <refentrytitle>MKBOOTSERVER</refentrytitle>
+    <refentrytitle>SI_MKBOOTSERVER</refentrytitle>
 
     &dhsection;
   </refmeta>
   <refnamediv>
-    <refname>mkbootserver</refname>
+    <refname>si_mkbootserver</refname>
 
     <refpurpose>
       Configure a server so that other machines can boot from it over the
@@ -27,7 +27,7 @@
   </refnamediv>
   <refsynopsisdiv>
     <cmdsynopsis>
-      <command>mkbootserver</command>
+      <command>si_mkbootserver</command>
 
       <arg><option>-f</option></arg>
       <arg><option>--interface=<replaceable>INTERFACE</replaceable></option></arg>
@@ -42,10 +42,10 @@
     <title>DESCRIPTION</title>
 
     <para>This manual page documents briefly the
-      <command>mkbootserver</command> command.</para>
+      <command>si_mkbootserver</command> command.</para>
 
     <para>
-      <command>mkbootserver</command> is a tool that assists in configuring
+      <command>si_mkbootserver</command> is a tool that assists in configuring
       a network boot server (currently just PXE servers).  It runs in both
       interactive and non-interactive modes.
     </para>
