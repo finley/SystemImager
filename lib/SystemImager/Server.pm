@@ -168,6 +168,24 @@ sub get_full_path_to_image_from_rsyncd_conf {
     die;
 }
 
+# Description:
+#  Given a disk name, and a partition number, return the appropriate
+#  filename for the partition.
+#
+# Usage:
+#  get_part_name($disk, $num);
+#
+sub get_part_name {
+    my ($disk, $num) = @_;
+    my @array = ( "ida", "cciss", "rd" );
+    
+    foreach my $dir (@array) {
+	if ($disk =~ /^\/dev\/$dir\/c\d+d\d+$/) {
+	    return $disk . "/part" . $num;
+	}
+    }
+    return $disk . $num;
+}
 
 # Usage:  
 # _read_partition_info_and_prepare_parted_commands( $image_dir, $auto_install_script_conf );
@@ -188,24 +206,27 @@ sub _read_partition_info_and_prepare_parted_commands {
             $highest_p_or_e_part_num, 
             $m, 
             $cmd, 
+            $part, 
             $empty_partition_count, 
             $remaining_empty_partitions, 
             $MB_from_end_of_disk
         );
 
-        print MASTER_SCRIPT "### BEGIN partition $dev ###\n";
-        print MASTER_SCRIPT qq(echo "Partitioning $dev..."\n);
-        print MASTER_SCRIPT qq(echo "Old partition table for $dev:"\n);
-        print MASTER_SCRIPT "parted -s -- $dev print\n\n";
+        my $devfs_dev = &dev_to_devfs($dev);
+
+        print MASTER_SCRIPT "### BEGIN partition $devfs_dev ###\n";
+        print MASTER_SCRIPT qq(echo "Partitioning $devfs_dev..."\n);
+        print MASTER_SCRIPT qq(echo "Old partition table for $devfs_dev:"\n);
+        print MASTER_SCRIPT "parted -s -- $devfs_dev print\n\n";
 
         print MASTER_SCRIPT "# Create disk label.  This ensures that all remnants of the old label, whatever\n";
         print MASTER_SCRIPT "# type it was, are removed and that we're starting with a clean label.\n";
-        $cmd = "parted -s -- $dev mklabel $label_type || shellout";
+        $cmd = "parted -s -- $devfs_dev mklabel $label_type || shellout";
         print MASTER_SCRIPT qq(echo "$cmd"\n);
         print MASTER_SCRIPT "$cmd\n\n";
 
         print MASTER_SCRIPT "# Get the size of the destination disk so that we can make the partitions fit properly.\n";
-        print MASTER_SCRIPT qq(DISK_SIZE=`parted -s $dev print ) . q(| grep 'Disk geometry for' | sed 's/^.*-//g' | sed 's/\..*$//' `) . qq(\n);
+        print MASTER_SCRIPT qq(DISK_SIZE=`parted -s $devfs_dev print ) . q(| grep 'Disk geometry for' | sed 's/^.*-//g' | sed 's/\..*$//' `) . qq(\n);
         print MASTER_SCRIPT q([ -z $DISK_SIZE ] && shellout) . qq(\n);
         print MASTER_SCRIPT qq(END_OF_LAST_PRIMARY=0\n);
 
@@ -451,8 +472,9 @@ sub _read_partition_info_and_prepare_parted_commands {
             
             ### Print partitioning commands. -BEF-
             print MASTER_SCRIPT "\n";
-            
-            $cmd = "Creating partition ${dev}${m}.";
+	    
+            $part = &get_part_name($dev, $m);
+            $cmd = "Creating partition $part.";
             print MASTER_SCRIPT qq(echo "$cmd"\n);
             
             print MASTER_SCRIPT qq(START_MB=$startMB{$m}\n);
@@ -460,7 +482,7 @@ sub _read_partition_info_and_prepare_parted_commands {
 
             if($p_type{$m} eq "extended") {
 
-                $cmd = qq(parted -s -- $dev mkpart $p_type{$m} ) . q($START_MB $END_MB) . qq( || shellout);
+                $cmd = qq(parted -s -- $devfs_dev mkpart $p_type{$m} ) . q($START_MB $END_MB) . qq( || shellout);
 
             } else {
 
@@ -469,7 +491,7 @@ sub _read_partition_info_and_prepare_parted_commands {
                 # specify a filesystem type, even though it does nothing with it 
                 # with the "mkpart" command. -BEF-
                 #
-                $cmd = qq(parted -s -- $dev mkpart $p_type{$m} ext2 ) . q($START_MB $END_MB) . qq( || shellout);
+                $cmd = qq(parted -s -- $devfs_dev mkpart $p_type{$m} ext2 ) . q($START_MB $END_MB) . qq( || shellout);
 
             }
             print MASTER_SCRIPT qq(echo "$cmd"\n);
@@ -496,7 +518,7 @@ sub _read_partition_info_and_prepare_parted_commands {
             if ($id{$m}) {
                 print MASTER_SCRIPT qq(# Use sfdisk to change the partition id.  parted is\n);
                 print MASTER_SCRIPT qq(# incapable of this particular operation.\n);
-                print MASTER_SCRIPT qq(sfdisk --change-id $dev $m $id{$m} \n);
+                print MASTER_SCRIPT qq(sfdisk --change-id $devfs_dev $m $id{$m} \n);
             }
             
             # Name any partitions that need that kinda treatment.
@@ -513,7 +535,7 @@ sub _read_partition_info_and_prepare_parted_commands {
                   and ($p_name{$m} ne "-")
               ) {  # We're kinda assuming no one names their partitions "-". -BEF-
             
-              $cmd = "parted -s -- $dev name $m $p_name{$m} || shellout\n";
+              $cmd = "parted -s -- $devfs_dev name $m $p_name{$m} || shellout\n";
               print MASTER_SCRIPT "echo $cmd";
               print MASTER_SCRIPT "$cmd";
             }
@@ -527,7 +549,7 @@ sub _read_partition_info_and_prepare_parted_commands {
                 foreach my $flag (@flags) {
                     # Parted 1.6.0 doesn't seem to want to tag gpt partitions with lba.  Hmmm. -BEF-
                     if (($flag eq "lba") and ($label_type eq "gpt")) { next; }
-                    $cmd = "parted -s -- $dev set $m $flag on || shellout\n";
+                    $cmd = "parted -s -- $devfs_dev set $m $flag on || shellout\n";
                     print MASTER_SCRIPT "echo $cmd";
                     print MASTER_SCRIPT "$cmd";
                 }
@@ -537,17 +559,17 @@ sub _read_partition_info_and_prepare_parted_commands {
         # Kick the minors out.  (remove temporary partitions) -BEF-
         foreach $m (keys %minors_to_remove) {
           print MASTER_SCRIPT "\n# Gotta lose this one (${dev}${m}) to make the disk look right.\n";
-          $cmd = "parted -s -- $dev rm $m  || shellout";
+          $cmd = "parted -s -- $devfs_dev rm $m  || shellout";
           print MASTER_SCRIPT qq(echo "$cmd"\n);
           print MASTER_SCRIPT "$cmd\n";
         }
 
         print MASTER_SCRIPT "\n";
-        print MASTER_SCRIPT qq(echo "New partition table for $dev:"\n);
-        $cmd = "parted -s -- $dev print";
+        print MASTER_SCRIPT qq(echo "New partition table for $devfs_dev:"\n);
+        $cmd = "parted -s -- $devfs_dev print";
         print MASTER_SCRIPT qq(echo "$cmd"\n);
         print MASTER_SCRIPT "$cmd\n";
-        print MASTER_SCRIPT "### END partition $dev ###\n";
+        print MASTER_SCRIPT "### END partition $devfs_dev ###\n";
         print MASTER_SCRIPT "\n";
         print MASTER_SCRIPT "\n";
     }
@@ -753,6 +775,38 @@ sub _get_array_of_disks {
   return @disks;
 }
 
+# Description:
+# Convert standard /dev names to the corresponding devfs names.
+# In most cases this is not needed.  However, there are a few cases
+# in which using devfsd symbolic links is not possible.
+# 
+# An example of a case where this is necessary is the cpqarray driver.
+# The standard /dev file name includes /dev/ida/c0d0 for the disk,
+# while the devfs name it exports is /dev/ida/c0d0/disc.  The overlapping
+# use of the /dev/ida/c0d0 name (in one case a file, and in another a
+# directory), makes it impossible for both sets of names to exist in the
+# same namespace.
+#
+# Usage:
+# dev_to_devfs( $dev );
+#
+sub dev_to_devfs {
+    my ($dev) = @_;
+
+    ## should rd (DAC960) be in this list?
+    my @array = ( "ida", "cciss", "rd" );
+    foreach my $dir (@array) {
+	## disks
+        if ($dev =~ /^\/dev\/$dir\/c(\d+)d(\d+)$/) {
+            return "/dev/" . $dir . "/c" . $1. "d" . $2 . "/disc";
+	}
+        ## partitions
+	elsif ($dev =~ /^\/dev\/$dir\/c(\d+)d(\d+)p(\d+)$/) {
+            return "/dev/" . $dir . "/c" . $1 . "d" . $2 . "/part" . $3;
+	}
+    }
+    return $dev;
+}
 
 # Description:
 # Read configuration information from /etc/systemimager/autoinstallscript.conf
@@ -845,7 +899,7 @@ sub _write_out_mkfs_commands {
         # mount_dev should contain fs LABEL or UUID information. -BEF-
         my $mount_dev = $xml_config->{fsinfo}->{$line}->{mount_dev};
 
-        my $real_dev = $xml_config->{fsinfo}->{$line}->{real_dev};
+        my $real_dev = &dev_to_devfs($xml_config->{fsinfo}->{$line}->{real_dev});
         my $mp = $xml_config->{fsinfo}->{$line}->{mp};
         my $fs = $xml_config->{fsinfo}->{$line}->{fs};
         my $options = $xml_config->{fsinfo}->{$line}->{options};

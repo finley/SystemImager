@@ -498,7 +498,7 @@ sub _turn_sfdisk_output_into_generic_partitionschemes_file {
      
         chomp;                             # Get rid of "newline".
      
-        s/^\D+//;                          # Strip off /dev/device stuff, leaving just the 
+        s/^\s*\S+\D(\d+\s+.*)$/$1/;        # Strip off /dev/device stuff, leavi\ng just the
                                            #   device's minor number.
         my $bootable;
         if (/\*/) { $bootable = "true"; }  # Remember if this is a bootable partition.
