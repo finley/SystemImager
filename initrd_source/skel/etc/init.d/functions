@@ -815,4 +815,28 @@ get_script() {
 }
 #
 ################################################################################
+#
+#   Beep incessantly
+#
 
+beep_incessantly() {
+    SECONDS=1
+    { while :;
+        do
+            echo -n -e "\\a"
+            if [ $SECONDS -lt 60 ]; then 
+                echo "I have been done for $SECONDS seconds.  Reboot me already!"
+            else
+                MINUTES=`echo "$SECONDS / 60"|bc`
+                MINUTES_X_SIXTY=`echo "$MINUTES * 60"|bc`
+                if [ $MINUTES_X_SIXTY = $SECONDS ]; then 
+                    echo "I have been done for $MINUTES minutes now.  Reboot me already!"
+                fi  
+            fi
+            sleep 1
+            SECONDS=`echo "$SECONDS + 1"|bc`
+        done
+    }
+}
+#
+################################################################################
