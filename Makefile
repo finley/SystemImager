@@ -183,11 +183,27 @@ PYTHON = $(shell which python2 || which python)
 PHONY += all
 all:	$(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.img manpages
 
+PHONY += help
+help:	show_targets
+
 # Show me a list of all targets in this entire build heirarchy
 PHONY += show_targets
 SHOW_TARGETS_ALL_MAKEFILES = $(shell find . -name 'Makefile' -or -name '*.rul')
 show_targets:
+	@echo
+	@echo Makefile targets you are probably most interested in:
+	@echo ---------------------------------------------------------------------
+	@echo	all
+	@echo	install_client_all
+	@echo	install_server_all
+	@echo	install_boel_binaries_tarball
+	@echo	install_initrd
+	@echo
+	@echo
+	@echo All Available Targets Include:
+	@echo ---------------------------------------------------------------------
 	cat $(SHOW_TARGETS_ALL_MAKEFILES) | egrep '^[a-z_]+:' | sed 's/:.*//' | sort -u
+	@echo
 
 arch:
 	echo $(ARCH)
