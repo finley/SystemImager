@@ -58,6 +58,7 @@ Brian's Priorities
   These tasks are in the order that I intend to complete them.
 --------------------------------------------------------------
 o Ensure compliance with LSB
+o Install scripts wrap Makefile
 o Upgrade reiserfs and ext3 support
 o Verify Don's serial console changes
 o Add interactive autoinstall client patch
@@ -251,11 +252,6 @@ o I am going to be playing with this.  The more input the better.  I agree
   and just concentrate on console redirection.
 <<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-o take generation of autoinstall scripts out of getimage.  This should
-  be done in a seperate program whose job is solely to create the
-  autoinstall script for the image.  This second program could then
-  be called by System Installer.
-
 Austin Gonyou <austin@coremetrics.com> 
 Wed Mar 21 12:19:10 CST 2001  
 ----------------------------------------
@@ -271,6 +267,7 @@ o commandlineize addclients
 
   Example:
   $ addclients -b www -d systemimager.org -f 7 -l 11 -image web_image_v1 -ip-range 192.168.1.7-192.168.1.11
+
 o add zero padding option: 
   o take input like normal:
     "-first 001 -last 099"
@@ -299,24 +296,17 @@ o Modify Makefile for initrd:
   o place gzip, tar, and binaries.tar.gz with other tftp stuff
   o rcS will *always* pull gzip, tar, and binaries.tar.gz
 o PXE booting ideas...
-with pxe, you can specify what files to serve to a specific hardware
-address.
-you could have symbolic links that point to the SystemImager kernel &
-initrd.gz for each node, with no default files.
-you can then remove these links when you decide not to allow that
-machine to PXE boot.
-the machine will try to pxe boot, won't be able to find its kernel and
-initrd.gz, and will boot from the harddrive.
-a tool similar to addclients might be useful for this.
+  with pxe, you can specify what files to serve to a specific hardware
+  address.
+  you could have symbolic links that point to the SystemImager kernel &
+  initrd.gz for each node, with no default files.
+  you can then remove these links when you decide not to allow that
+  machine to PXE boot.
+  the machine will try to pxe boot, won't be able to find its kernel and
+  initrd.gz, and will boot from the harddrive.
+  a tool similar to addclients might be useful for this.
         -dann
 
-Sean Dague <japh@us.ibm.com>
-------------------------------------
-o editimage/sish - create a tool which provides an easy interface for
-  running a command in the chrooted environment of an image.
-  This would add the ability to run commands withing an image, or even
-  accross images.  One could potentially use this to install packages,
-  copy in files, or query the state of the image.
 
 Austin Gonyou <austin@coremetrics.com>
 Wed Mar 21 12:19:10 CST 2001  
@@ -338,13 +328,12 @@ o See the "GUI Layout" section in this document for details on the
 o command line scheduling utility
 
 
-
 GUI Layout (applies to Web GUI and X GUI)
 -----------------------------------------
 Main screen:
-o Maybe have a SystemImager Wizard (is the term Wizard copyrighted?)
-  that basically walks you through the steps in the "Step-by-Step 
-  HOWTO":
+o Web GUI as a Webmin module
+o Maybe have a SystemImager Wizard that basically walks you through 
+  the steps in the "Step-by-Step HOWTO":
   http://systemimager.org/manual/html/theactualstep-by-stephowto.html
 o Also have buttons for each of the utilities labelled something like:
   o "Pull and Image from a Golden Client" (getimage)
@@ -477,7 +466,6 @@ o autoinstall clients report to imageserver "I'm up"
 o ability to blink led, floppy light, eject cdrom, etc. on 
   autoinstallclient to identify the machine prior to initiating the 
   autoinstall.
-o option to initiate an autoinstall from the client or from the server.
 o option to assign permanent IP address/hostname from the server after
   an autoinstall client has booted and checked in.
 o ability to adapt to the hardware
@@ -492,13 +480,10 @@ o support for imaging dual boot systems (Linux/Windows with FAT/HPFS/NTFS)
 o makedhcpserver -- autodiscover and calculate more information 
   (including if system has more than one network interface).
 o makedhcpserver -- automatically change line in /etc/rc.d/init.d/dhcpd for you
-o updateclient - log what was updated and or deleted?
 o makedhcpstatic -- allow for -f "filename" option to specify dhcpd.leases file.
 o check for the presence of a BIOS file written by BIOSwriter. If 
   found, then at the tail end of a client's image pull, it runs 
   BIOSwriter to write the file.
-o pad hostnames with zeros option
-
 
 
 Bug list
