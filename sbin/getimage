@@ -3,10 +3,20 @@
 #
 # "SystemImager" - Copyright (C) 1999-2000 TheFinleys.com <brian@thefinleys.com> 
 #
-# This file is: getimage XXX: Should be getmaster????
+#   Others who have contributed to this code:
+#     Wesley Smith <wessmith@engr.sgi.com>
 #
-
-$testing = 1;
+# This file is: getimage 
+#
+# <bef> = Brian Finley <brian@thefinleys.com>
+#
+# client.XXX: Should be getmaster????
+# <NOTE> I still prefer getimage.  We are not really getting a master, we're
+#        getting an image. (taken literally)  Perhaps getmasterimage, but then
+#        I think it is inherent that if you're getting an image, that it would
+#        be a master image. <bef>
+#
+#
 
 ### BEGIN Subroutines ###
 
@@ -24,7 +34,7 @@ sub check_if_root{
 
 
 sub usage {
-    print "Usage: $program_name [-q] master imagename\n";
+    print "Usage: $program_name [-q] master_client imagename\n";
     exit(1);
 }
 
@@ -36,20 +46,21 @@ check_if_root();
 $0  =~ /(.*)\/+([^\/]*)$/;
 $program_name = $2;
 
-#Figure out where this script lives, so that we can find the templates.
+##Figure out where this script lives, so that we can find the templates.
+#
+#if ($0 =~ /^\//) {
+##If the path to this script starts with a slash, then just remove the
+##part after the last slash to get the directory.
+#    $0 =~ /(.*)\/[^\/]*$/;
+#    $directory = $1;
+#} else {
+##Otherwise, we concat the current working directory, a '/', and the
+##name that was used to run this script minus anything after the final slash.
+#    $0  =~ /(.*)\/[^\/]*$/;
+#    $directory = $ENV{'PWD'} . "/" . $1;
+#}
 
-if ($0 =~ /^\//) {
-#If the path to this script starts with a slash, then just remove the
-#part after the last slash to get the directory.
-    $0 =~ /(.*)\/[^\/]*$/;
-    $directory = $1;
-} else {
-#Otherwise, we concat the current working directory, a '/', and the
-#name that was used to run this script minus anything after the final slash.
-    $0  =~ /(.*)\/[^\/]*$/;
-    $directory = $ENV{'PWD'} . "/" . $1;
-}
-
+###FIX### we should go ahead and use use options modules
 if ($#ARGV < 1) {
     usage();
 }
@@ -58,31 +69,26 @@ if ($ARGV[0] eq '-q')  {
 	usage();
     }
     $quiet = 1;
-    $master =  $ARGV[1];
+    $master_client =  $ARGV[1];
     $image = $ARGV[2];
 } else {
-    $master =  $ARGV[0];
+    $master_client =  $ARGV[0];
     $image = $ARGV[1];
 }
 
-
 # set up some variables for use elsewhere
-
-$RSYNC_CONF = '/etc/rsyncd.conf';
+###FIX### at some point these should be set in /etc/systemimager.conf
+$rsyncd_conf = '/etc/rsyncd.conf';
 $imagedir_prefix =  '/var/spool/systemimager/images';
 $imagedir = "$imagedir_prefix/$image";
-$excludefile = "/tmp/.exclude.$image";
-$masterscript = "/tftpboot/systemimager/$image.master";
-
-if (!$quiet) {
-    system("clear");
-}
+$exclude_file = "/tmp/.exclude.$image";
+$master_script = "/tftpboot/systemimager/$image.master";
 
 $warning =  <<"EOF";
 
-This script will get the entire system image from \"$master\"
+This script will get the entire system image from \"$master_client\"
 making the assumption that all filesystems considered part
-of the system image are using ext2.
+of the system image are using the ext2 format.
 
 This script will not get /proc or network mounted filesystems.
 It will only get ext2 formated file systems.
@@ -91,6 +97,7 @@ EOF
 
 # give warning
 if (!$quiet) {
+    system("clear");
     print $warning;
     print "Continue? ([y]/n): ";
     $continue = get_response('y');
@@ -99,12 +106,12 @@ if (!$quiet) {
 
 if (! -d "$imagedir_prefix")  {
     die "Directory $imagedir_prefix doesn't exist.  " .
-	"Please reinstall systemimager.\n";
+	"Please reinstall SystemImager.\n";
 }
 
 if (-d "$imagedir") {
     if (!$quiet) {
-	print "An image with the name \"$image\" is already on this server.\n" .
+	print "An image with named \"$image\" already exists...\n" .
 	    "Update exisiting image?  ([y]/n)";
 	
 	$continue = get_response('y');
@@ -115,29 +122,30 @@ if (-d "$imagedir") {
 	die "Can't make directory $imagedir\n";
 }
 
-# get /etc/mtab from master
-print "Getting the mtab file from the master\n";
-open(RSYNC, "rsync -azv ${master}::root/etc/mtab $imagedir|");
+# get /etc/mtab from $master_client
+print "\nRetrieving /etc/mtab from $master_client to check for mounted filesystems...\n";
+open(RSYNC, "rsync -azv ${master_client}::root/etc/mtab $imagedir|");
 if (!$quiet) {
-    print "----------- rsync output ------------\n";
+    print "--------------------------------- rsync output ---------------------------------\n";
     while (<RSYNC>) {
-	print $_;
+        print $_;
     }
-    print "-------------------------------------\n";
+    print "--------------------------------------------------------------------------------\n";
 }
 close(RSYNC);
 
 # $? is the return value from rsync
 if ($?) {
-    die "Failed to get /etc/mtab from the master.\n";
+    print "Failed to retrieve /etc/mtab from $master_client.\n";
+    die "Have you run \"prepareclient\" on $master_client?\n";
 }
 
 # create list of filesystems to *not* get
 open (MTAB, "<$imagedir/mtab") || die ("Couldn't open $imagedir/mtab for reading\n");
 @mtab = <MTAB>;
 close MTAB;
-open (EXCLUDE, ">$excludefile") || 
-    die "Couldn't open $excludefile for writing\n";
+open (EXCLUDE, ">$exclude_file") ||
+    die "Couldn't open $exclude_file for writing\n";
 @mtab = grep (!/\s+ext2\s+/, @mtab);
 foreach (@mtab) {
     /\S+\s+(\S+)\s+/;
@@ -145,69 +153,73 @@ foreach (@mtab) {
 }
 close EXCLUDE;
 
-# Testing
-if ($testing) {
-    print "Adding to $excludefile\n";
-    system("echo \"+ /etc/\" >> $excludefile");
-    system("echo \"+ /etc/partitionschemes/\" >> $excludefile");
-    system("echo \"+ /etc/partitionschemes/*\" >> $excludefile");
-    system("echo \"/etc/*/*\" >> $excludefile");
-    system("echo \"/+ /etc/*\" >> $excludefile");
-    system("echo \"*\" >> $excludefile");
-}
-
-# Get the image from the master
-print "Retrieving files from the master\n";
-open (RSYNC, 
-      "rsync -av --delete --exclude-from=$excludefile " .
-      "${master}::root/ $imagedir |");
+# Get the image from the $master_client
+print "\nRetrieving system image from $master_client\n";
+open (RSYNC,
+      "rsync -av --delete --exclude-from=$exclude_file " .
+      "${master_client}::root/ $imagedir |");
 if (!$quiet) {
-    print "----------- rsync output ------------\n";
+    print "--------------------------------- rsync output ---------------------------------\n";
     while (<RSYNC>) {
-	print $_;
+        print $_;
     }
-    print "-------------------------------------\n";
+    print "--------------------------------------------------------------------------------\n";
 }
 close (RSYNC);
 # $? is the return value from rsync
 if ($?) {
-    die "rsync call to get image from master failed.\n";
+    die "Failed to retrieve system image from $master_client.\n";
 }
 
-unlink $excludefile || 
-    die "Removal of file $excludefile failed\n";
+unlink $exclude_file || die "Removal of file $exclude_file failed\n";
 
 # Add entry to image server's rsyncd.conf if necessary
-open (RSYNC_CONF, "<$RSYNC_CONF");
-if (!grep(/\[$image\]/, <RSYNC_CONF>)) {
-    open(RSYNC_CONF, ">>$RSYNC_CONF") || die 
-	"Cannot open $RSYNC_CONF for writing";
-    print RSYNC_CONF <<"EOF";
+open (RSYNCD_CONF, "<$rsyncd_conf");
+if (!grep(/\[$image\]/, <RSYNCD_CONF>)) {
+    open(RSYNCD_CONF, ">>$rsyncd_conf") || die "Cannot open $rsyncd_conf for writing";
+    print RSYNCD_CONF <<"EOF";
 [$image]
     path = $imagedir
 	    
 EOF
 };
-close(RSYNC_CONF);
-
-open (TEMPLATE1, "<$directory/image.master.1") || 
-    die "Cannot open image.master.1\n";
-open (TEMPLATE2, "<$directory/image.master.2") || 
-    die "Cannot open image.master.2\n";
-open (TEMPLATE3, "<$directory/image.master.3") || 
-    die "Cannot open image.master.3\n";
+close(RSYNCD_CONF);
 
 # create a fresh /tftpboot/systemimager/$image.master
-open (MASTER, ">$masterscript") || 
-    die "Can't open $masterscript for writing\n";
+open (MASTER_SCRIPT, ">$master_script") || die "Can't open $master_script for writing\n";
 
-# master.1 has no substitutions, so just dump it straight into the master.
-while (<TEMPLATE1>) {
-    print MASTER;
-}
+# add standard header stuff
+print MASTER_SCRIPT << 'EOF';
+#!/bin/sh
 
-opendir(PARTITIONSCHEMES, "$imagedir/etc/partitionschemes/") || 
-    die "Can't read $imagedir/etc/partitionschemes/ directory";
+#
+# "SystemImager" - Copyright (C) 1999-2000 TheFinleys.com <brian@thefinleys.com>
+#
+
+PATH=/sbin:/bin:/usr/bin:/usr/sbin:/tmp1
+
+# Check to be sure this not run from a working machine
+mount | grep [hs]d[a-z][1-9] > /dev/null
+[ $? -eq 0 ] &&  echo Sorry.  Must not run on a working machine... && exit 1
+
+# Partition the disk (see the sfdisk man page for customization details)
+#
+# Here's an example of how to customize a disk:
+# start at the beginning 0, give 20M /dev/sda1 for /boot, assume
+#   partition type 83
+# start where left off, 512M /dev/sda2 for swap, partition type 82
+# start where left off, give the rest of the disk to /dev/sda3
+#   for /, assume partition type 83
+#sfdisk -uM /dev/sda <<EOF
+#0,20
+#,512,82
+#,
+#;
+#EOF
+#
+EOF
+
+opendir(PARTITIONSCHEMES, "$imagedir/etc/partitionschemes/") || die "Can't read the $imagedir/etc/partitionschemes/ directory";
 
 #Skip the . and .. entries
 @disks = grep(!/^\.\.?$/, readdir(PARTITIONSCHEMES));
@@ -219,84 +231,123 @@ foreach $disk (@disks)  {
     # Foreach disk, look through the partition info for that disk and
     # note any swap and ext2 partions for later use.
 
-    open (PARTITIONS, "<$imagedir/etc/partitionschemes/${disk}") ||
-	die "Cannot open $imagedir/etc/partitionschemes/$disk for reading\n";
-    @partitions =  <PARTITIONS>;
+    open (PARTITIONS, "<$imagedir/etc/partitionschemes/${disk}") || die "Cannot open $imagedir/etc/partitionschemes/$disk for reading\n";
+    @partitions = <PARTITIONS>;
     close(PARTITIONS);
     $partitions = join('',@partitions);
-    @swaps = grep(/Id=82/, @partitions);
-    foreach $swapdev (@swaps) {
-	push(@swapdevs, (split(':',$swapdev))[0]);
-    }
-    @ext2s = grep (/Id=83/, @partitions);
-    foreach $ext2dev (@ext2s) {
-	push(@ext2devs, (split(':',$ext2dev))[0]);
+
+    # output disk partition section
+    print MASTER_SCRIPT "\n# partition $disk\n";
+    print MASTER_SCRIPT "sfdisk /dev/$disk <<EOF\n";
+    print MASTER_SCRIPT $partitions;
+    print MASTER_SCRIPT "EOF\n";
+
+    # gather up swap partition information and output swap creation section (sort order doesn't matter here)
+    my @swaps = grep (/Id=82/, @partitions);
+    (@swaps) && print MASTER_SCRIPT "\n# create swap space(s) on $disk -- do a \"man mkswap\" for more info\n";
+    foreach (@swaps) {
+	my $swapdev = (split(':',$_))[0];
+        print MASTER_SCRIPT "mkswap -v1 $swapdev\n";
     }
 
-    while (<TEMPLATE2>)  {
-	if (/<SFDISK>/) {
-	    print MASTER "sfdisk /dev/$disk <<EOF\n";
-	    print MASTER $partitions;
-	    print MASTER "EOF\n";
-	} elsif (/<SWAP>/) {
-	    foreach $swapdev (@swapdevs) {
-		print MASTER "mkswap -v1 $swapdev\n";
-	    }
-	} elsif (/<EXT2>/) {
-	    foreach $ext2dev (@ext2devs) {
-		print MASTER "mke2fs -b 4096 -i 16384 -m 1 $ext2dev\n";
-	    }
-	} else {
-	    print MASTER;
-	}
+    # gather up ext2 partition information and output ext2 creation section (sort order doesn't matter here)
+    my @ext2s = grep (/Id=83/, @partitions);
+    (@ext2s) && print MASTER_SCRIPT "\n# create ext2 filesystem(s) on $disk -- do a \"man mke2fs\" for more info\n";
+    foreach (@ext2s) {
+	my $ext2dev = (split(':',$_))[0];
+        print MASTER_SCRIPT "mke2fs -b 4096 -i 16384 -m 1 $ext2dev\n";
     }
 }
 
-open (FSTAB, "<$imagedir/etc/fstab") || 
-    die "Failed to open $imagedir/etc/fstab for reading\n";
+# initialize %fstab hash and zero out
+%fstab = ();
 
+# gather up mount point creation information
+open (FSTAB, "<$imagedir/etc/fstab") || die "Failed to open $imagedir/etc/fstab for reading\n";
 while (<FSTAB>) {
     # Skip the line if it starts with a '#' or does not contain 'ext2'
     if (m@(^\s*\#)|(/dev/fd)@ || (! (/\s+ext2\s+/))) {
         next;
     }
     # Pull out the device file ($1) and the mount point ($2).
+    # mount point is key so we can easily sort for the mkdir section
     if (/^\s*(\S+)\s+(\S+)\s/)  {
-	$fstab{$1} = $2;
+	$fstab{$2} = $1;
     }
 }
-
 close FSTAB;
 
-# We substitute for <MOUNT>, <RSYNC>, and <UMOUNT> sections from the
-# third part of the template.
-while (<TEMPLATE3>)  {
-    if (/<MOUNT>/) {
-	while (($dev, $dir) = each %fstab) {
-	    print MASTER "mkdir -p /a$dir/\n";
-	    print MASTER "mount $dev /a$dir\n";
-	}
-    }
-    elsif (/<RSYNC>/) {
-	print MASTER "rsync -av \$DHCPSIADDR::$image /a/\n";
-    }
-    elsif (/<UMOUNT>/) {
-	while (($dev, $dir) = each %fstab) {
-	    print MASTER "umount /a$dir\n";
-	}
-    } else {
-	print MASTER;
-    }
+# these must be in proper order, so we'll employ sort()
+print MASTER_SCRIPT "\n# mount the freshly formatted partitions\n";
+foreach $dir (sort keys %fstab) {
+    print MASTER_SCRIPT "mkdir -p /a$dir/\n";
+    print MASTER_SCRIPT "mount $fstab{$dir} /a$dir\n";
 }
 
-close(TEMPLATE1);
-close(TEMPLATE2);
-close(TEMPLATE3);
-close(MASTER);
+print MASTER_SCRIPT "\n# get imageserver, hostname, and other info by sourcing dhcp info file\n";
+print MASTER_SCRIPT ". /etc/dhcpc/dhcpcd-eth0.info\n";
 
+print MASTER_SCRIPT "\n# filler up!\n";
+print MASTER_SCRIPT "rsync -av \$DHCPSIADDR::$image /a/\n";
+
+
+print MASTER_SCRIPT << 'EOF';
+
+# set host specific information
+
+echo NETWORKING=yes > /a/etc/sysconfig/network
+echo FORWARD_IPV4=false >> /a/etc/sysconfig/network
+
+# XXX must ask for this information during the "getimage"
+# XXX and set this value statically in the $imagename.master file
+# XXX echo NISDOMAIN=$NISDOMAIN >> /a/etc/sysconfig/network
+
+# Stuff for DHCP client
+echo DEVICE=eth0 > /a/etc/sysconfig/network-scripts/ifcfg-eth0
+echo ONBOOT=yes >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
+echo BOOTPROTO=dhcp >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
+
+### uncomment this block to use static IP addresses ###
+### This will override the above DHCP settings ###
+#echo HOSTNAME=$HOSTNAME >> /a/etc/sysconfig/network
+#echo DOMAINNAME=$DOMAIN >> /a/etc/sysconfig/network
+#echo GATEWAY=$GATEWAY >> /a/etc/sysconfig/network
+#echo GATEWAYDEV=eth0 >> /a/etc/sysconfig/network
+#
+#echo DEVICE=eth0 > /a/etc/sysconfig/network-scripts/ifcfg-eth0
+#echo IPADDR=$IPADDR >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
+#echo NETWORK=$NETWORK >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
+#echo NETMASK=$NETMASK >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
+#echo BROADCAST=$BROADCAST >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
+#echo ONBOOT=yes >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
+#echo BOOTPROTO=none >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
+### uncomment this block to use static IP addresses ###
+
+# run lilo
+# (no, we can not just do a lilo -r "/a/".
+# we need to use the lilo that came with the distribution in case
+# it has special modifications such as support for hardware or software RAID)
+chroot /a/ /sbin/lilo
+EOF
+
+print MASTER_SCRIPT "\n# unmount the freshly filled filesystems\n";
+foreach $dir (reverse sort keys %fstab) {
+    print MASTER_SCRIPT "umount /a$dir\n";
+}
+
+print MASTER_SCRIPT << 'EOF';
+
+# take the system down so it is safe to power off/reboot
+# and so it will not respond to pings
+shutdown -h now
+EOF
+
+close(MASTER_SCRIPT);
+
+# prompt to run "addclients"
 if (!$quiet) {
     print "Would you like to add your client information now? ([y]/n): ";
     $continue = get_response('y');
     ($continue ne "n") or exit 0;
-    exec("$directory/addclients");
+    exec("addclients");
 }
