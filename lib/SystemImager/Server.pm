@@ -1384,8 +1384,8 @@ sub create_autoinstall_script{
     print MASTER_SCRIPT qq(if [ ! -z \$MCAST_GROUP ]; then \n);
     print MASTER_SCRIPT qq(# Use multicast \n);
     print MASTER_SCRIPT qq(    mcast_group+2 \n);
-    print MASTER_SCRIPT qq(    echo "echo y | udp-receiver --portbase \${MCAST_GROUP} -- | tar -xv -C /a" \n);
-    print MASTER_SCRIPT qq(    echo y | udp-receiver --portbase \${MCAST_GROUP} | tar -xv -C /a || shellout \n);
+    print MASTER_SCRIPT qq(    echo "udp-receiver --portbase \${MCAST_GROUP} -- | tar -xv -C /a" \n);
+    print MASTER_SCRIPT qq(    udp-receiver --portbase \${MCAST_GROUP} | tar -xv -C /a || shellout \n);
     print MASTER_SCRIPT qq( \n);
     print MASTER_SCRIPT qq(else \n);
     print MASTER_SCRIPT qq(    # Use rsync \n);
@@ -1424,8 +1424,8 @@ sub create_autoinstall_script{
     print MASTER_SCRIPT  q(    # A single cast will catch any and all override directories at once.) . qq(\n);
     print MASTER_SCRIPT  q(    #) . qq(\n);
     print MASTER_SCRIPT  q(    mcast_group+2) . qq(\n);
-    print MASTER_SCRIPT  q(    echo "echo y | udp-receiver --portbase ${MCAST_GROUP} -- | tar -xv -C /a") . qq(\n);
-    print MASTER_SCRIPT  q(    echo y | udp-receiver --portbase ${MCAST_GROUP} | tar -xv -C /a || shellout) . qq(\n);
+    print MASTER_SCRIPT  q(    echo "udp-receiver --portbase ${MCAST_GROUP} -- | tar -xv -C /a") . qq(\n);
+    print MASTER_SCRIPT  q(    echo udp-receiver --portbase ${MCAST_GROUP} | tar -xv -C /a || shellout) . qq(\n);
     print MASTER_SCRIPT  q(    ) . qq(\n);
     print MASTER_SCRIPT  q(else) . qq(\n);
     print MASTER_SCRIPT  q(    # Use rsync) . qq(\n);

@@ -8,6 +8,9 @@
 #  $Id$
 #
 
+#XXX consider changing --mcast-group to --portbase, and subsequently all
+#instances of MCAST_GROUP to PORTBASE. -BEF-
+
 use lib "USR_PREFIX/lib/systemimager/perl";
 use Getopt::Long;
 use SystemImager::Server;
@@ -50,16 +53,29 @@ Options: (options can be presented in any order and may be abbreviated)
  --script SCRIPTNAME    Where SCRIPTNAME is the base name to use for the 
                         autoinstall script.
 
- --mcast-group          Starting multicast group number.  Must be an even
+ --mcast-group NUM      Starting multicast group number.  Must be an even
                         number, ane must match the setting used in dhcpd.conf
                         and/or local.cfg.  Defaults to 9000.
 
- --mcast-opts "OPTIONS" Quoted set of options to be passed directly to
-                        udp-sender.  Two useful examples are "--interface eth1"
-                        and "--max-bitrate 25M".  Multiple options should be 
-                        quoted together: "--interface eth1 --max-bitrate 25M".
-                        See "man udp-sender" for details and many other options.  
-                        NOTE: Do not specify udp-sender's --portbase option, as
+ --min-clients NUM      Number of clients that must connect before the casting
+                        begins.  Superceeded if --max-client-wait times out.
+
+ --max-wait SEC         Initiate the cast after SEC seconds, even if the number
+                        of clients specified by --min-clients have yet to 
+                        connect.
+
+ --min-wait SEC         Wait at least SEC seconds before initiating the cast, 
+                        even if the number of clients specified by 
+                        --min-clients have already connected.
+
+ --misc-opts "OPTIONS"  Miscellaneous options to be passed directly to 
+                        udp-sender (the multicast transport).  Two useful 
+                        examples are "--interface eth1" and "--max-bitrate 25M".
+                        Multiple options should be quoted together: 
+                        "--interface eth1 --max-bitrate 25M".  See 
+                        "man udp-sender" for details and many other options.  
+
+                        NOTE: Do not specify udp-sender's --portbase option, as 
                         this is set by the --mcast-group option.
 
 Download, report bugs, and make suggestions at:
@@ -68,9 +84,10 @@ EOF
 
 # Set some defaults. -BEF-
 my $mcast_group = 9000;
-my $mcast_opts = "";
-my $sleep_count_1 = 35; # maybe turn into option.  may not need w/Gary's patch.
-my $sleep_count_2 = 5; # maybe turn into option.  may not need w/Gary's patch.
+my $udp_sender_opts = "";
+my $max_wait = 0;
+my $min_wait = 0;
+my $opts;
 
 # take options
 GetOptions( 
@@ -79,29 +96,35 @@ GetOptions(
     "verbose"           => \my $verbose,
     "script=s"          => \my $script_name,
     "mcast-group=s"     => \$mcast_group,
-    "mcast-opts=s"      => \$mcast_opts,
+    "min-clients=s"     => \my $min_clients,
+    "max-wait=s"        => \$max_wait,
+    "min-wait=s"        => \$min_wait,
+    "misc-opts=s"       => \$udp_sender_opts,
 ) || die "$help_info";
 
 
 ### BEGIN evaluate options ###
 # if requested, print help information
 if($help) { 
-  print "$help_info";
-  exit 0;
+    print "$help_info";
+    exit 0;
 }
 
 # if requested, print version and copyright information
 if($version) {
-  print "$version_info";
-  exit 0;
+    print "$version_info";
+    exit 0;
 }
 
 # be sure program is run by root
 SystemImager::Common->check_if_root();
 
-# be sure $image is set
 unless ($script_name) {
     die "\n$program_name: --script SCRIPTNAME must be specified.\n$get_help\n\n";
+}
+
+unless ($min_clients) {
+    die "\n$program_name: --min-clients must be specified.\n$get_help\n\n";
 }
 
 if ($verbose) { 
@@ -144,29 +167,23 @@ if ($verbose) {
     print "casting_1:    BOEL binaries tarball and autoinstall scripts\n";
     print "mcast_group:  $mcast_group\n";
 }
-$cmd = "tar -cv -C /usr/share/systemimager/boot/i386/standard/ boel_binaries.tar.gz -C /var/lib/systemimager/ scripts | udp-sender $mcast_opts --portbase $mcast_group";
+$opts = "$udp_sender_opts --min-client-wait $min_wait --max-client-wait $max_wait --min-clients $min_clients --portbase $mcast_group";
+$cmd = "tar -cv -C /usr/share/systemimager/boot/i386/standard/ boel_binaries.tar.gz -C /var/lib/systemimager/ scripts | udp-sender $opts";
 !system($cmd) or die ("$cmd failed!");
-if ($verbose) {
-    print "Sleep for $sleep_count_1 seconds to allow the autoinstall clients time to\n";
-    print "partition their disks and format their filesystems.\n";
-}
-sleep $sleep_count_1;
 
 ### IMAGE
 $mcast_group = $mcast_group + 2;
-$cmd = "tar -cv -C /var/lib/systemimager/images/$imagename . | udp-sender $mcast_opts --portbase $mcast_group";
+$opts = "$udp_sender_opts --min-client-wait $min_wait --max-client-wait $max_wait --min-clients $min_clients --portbase $mcast_group";
+$cmd = "tar -cv -C /var/lib/systemimager/images/$imagename . | udp-sender $opts";
 if ($verbose) { 
     print "casting_2:    The Image -- $imagename\n";
     print "mcast_group:  $mcast_group\n";
 }
 !system($cmd) or die ("$cmd failed!");
-if ($verbose) {
-    print "Sleep for $sleep_count_2 seconds before sending overrides.\n";
-}
-sleep $sleep_count_2;
 
 ### OVERRIDES
 $mcast_group = $mcast_group + 2;
+$opts = "$udp_sender_opts --min-client-wait $min_wait --max-client-wait $max_wait --min-clients $min_clients --portbase $mcast_group";
 $cmd = "tar -cv";
 foreach my $override ( split(/[[:space:]]/,$overrides) ) {
     my $dir = "/var/lib/systemimager/overrides/$override";
@@ -174,7 +191,7 @@ foreach my $override ( split(/[[:space:]]/,$overrides) ) {
         $cmd .= " -C $dir .";
     }
 }    
-$cmd .= " | udp-sender $mcast_opts --portbase $mcast_group";
+$cmd .= " | udp-sender $opts";
 if ($verbose) { 
     print "casting_3:    Override Directories\n";
     print "mcast_group:  $mcast_group\n";

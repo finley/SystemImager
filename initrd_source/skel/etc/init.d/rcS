@@ -155,7 +155,7 @@ get_boel_binaries_tarball() {
         echo "MCAST_GROUP variable is set, so we will use multicast!"
         echo "MCAST_GROUP: $MCAST_GROUP"
         cd /tmp
-        echo y | udp-receiver --portbase ${MCAST_GROUP} | tar -xv || shellout
+        udp-receiver --portbase ${MCAST_GROUP} | tar -xv || shellout
 
     else
         # Use rsync
