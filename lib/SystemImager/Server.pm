@@ -465,87 +465,97 @@ sub _read_partition_info_and_prepare_parted_commands {
         $m = "0";
         until ($m > $highest_part_num) {
 
-          $m++;
+            $m++;
+            
+            # Skip over partitions we don't have data for.  This is most likely to
+            # occur in the case of an msdos disk label, with empty partitions
+            # after an extended partition, but before logical partitions. -BEF-
+            #
+            unless ($endMB{$m}) { next; }
+            
+            ### Print partitioning commands. -BEF-
+            print MASTER_SCRIPT "\n";
+            
+            $cmd = "Creating partition ${dev}${m}.";
+            print MASTER_SCRIPT qq(echo "$cmd"\n);
+            
+            print MASTER_SCRIPT qq(START_MB=$startMB{$m}\n);
+            print MASTER_SCRIPT qq(END_MB=$endMB{$m}\n);
 
-          # Skip over partitions we don't have data for.  This is most likely to
-          # occur in the case of an msdos disk label, with empty partitions
-          # after an extended partition, but before logical partitions. -BEF-
-          #
-          unless ($endMB{$m}) { next; }
+            if($p_type{$m} eq "extended") {
 
-          ### Print partitioning commands. -BEF-
-          print MASTER_SCRIPT "\n";
+                $cmd = qq(parted -s -- $dev mkpart $p_type{$m} ) . q($START_MB $END_MB) . qq( || shellout);
 
-          $cmd = "Creating partition ${dev}${m}.";
-          print MASTER_SCRIPT qq(echo "$cmd"\n);
+            } else {
 
-          print MASTER_SCRIPT qq(START_MB=$startMB{$m}\n);
-          print MASTER_SCRIPT qq(END_MB=$endMB{$m}\n);
-          #
-          # parted *always* requires that you specify a filesystem type, even
-          # though it does nothing with it with the "mkpart" command. -BEF-
-          #
-          $cmd = qq(parted -s -- $dev mkpart $p_type{$m} ext2 ) . q($START_MB $END_MB) . qq( || shellout);
-          print MASTER_SCRIPT qq(echo "$cmd"\n);
-          print MASTER_SCRIPT "$cmd\n";
+                #
+                # parted *always* (except for extended partitions) requires that you 
+                # specify a filesystem type, even though it does nothing with it 
+                # with the "mkpart" command. -BEF-
+                #
+                $cmd = qq(parted -s -- $dev mkpart $p_type{$m} ext2 ) . q($START_MB $END_MB) . qq( || shellout);
 
-          # Leave info behind for the next partition. -BEF-
-          if ("$p_type{$m}" eq "primary") {
-            print MASTER_SCRIPT q(END_OF_LAST_PRIMARY=$END_MB) . qq(\n);
-
-          } elsif ("$p_type{$m}" eq "extended") {
-            print MASTER_SCRIPT q(END_OF_LAST_PRIMARY=$END_MB) . qq(\n);
-            print MASTER_SCRIPT q(END_OF_LAST_LOGICAL=$START_MB) . qq(\n);
-
-          } elsif ("$p_type{$m}" eq "logical") {
-            print MASTER_SCRIPT q(END_OF_LAST_LOGICAL=$END_MB) . qq(\n);
-          }
-
-          #
-          # If $id is set for a partition, we invoke sfdisk to tag the partition
-          # id appropriately.  parted is lame (in the true sense of the word) in 
-          # this regard and is incapable of # adding an arbitrary id to a 
-          # partition. -BEF-
-          #
-          if ($id{$m}) {
-            print MASTER_SCRIPT qq(# Use sfdisk to change the partition id.  parted is\n);
-            print MASTER_SCRIPT qq(# incapable of this particular operation.\n);
-            print MASTER_SCRIPT qq(sfdisk --change-id $dev $m $id{$m} \n);
-          }
-
-          # Name any partitions that need that kinda treatment.
-          #
-          # XXX Currently, we are assuming that no one is using a rediculously long name.  
-          # parted's output doesn't make it easy for us, and it is currently possible for
-          # a long name to get truncated, and the rest would be considered flags.   
-          # Consider submitting a patch to parted that would print easily parsable output 
-          # with n/a values "-" and no spaces in the flags. -BEF-
-          #
-          if (
-                ($label_type eq "gpt") 
-                and ($p_name{$m}) 
-                and ($p_name{$m} ne "-")
-            ) {  # We're kinda assuming no one names their partitions "-". -BEF-
-
-            $cmd = "parted -s -- $dev name $m $p_name{$m} || shellout\n";
-            print MASTER_SCRIPT "echo $cmd";
-            print MASTER_SCRIPT "$cmd";
-          }
-
-          ### Deal with flags for each partition. -BEF-
-          if(($flags{$m}) and ($flags{$m} ne "-")) {
-
-            # $flags{$m} will look something like "boot,lba,raid" or "boot" at this point.
-            my @flags = split (/,/, $flags{$m});
-
-            foreach my $flag (@flags) {
-              # Parted 1.6.0 doesn't seem to want to tag gpt partitions with lba.  Hmmm. -BEF-
-              if (($flag eq "lba") and ($label_type eq "gpt")) { next; }
-              $cmd = "parted -s -- $dev set $m $flag on || shellout\n";
+            }
+            print MASTER_SCRIPT qq(echo "$cmd"\n);
+            print MASTER_SCRIPT "$cmd\n";
+            
+            # Leave info behind for the next partition. -BEF-
+            if ("$p_type{$m}" eq "primary") {
+                print MASTER_SCRIPT q(END_OF_LAST_PRIMARY=$END_MB) . qq(\n);
+            
+            } elsif ("$p_type{$m}" eq "extended") {
+                print MASTER_SCRIPT q(END_OF_LAST_PRIMARY=$END_MB) . qq(\n);
+                print MASTER_SCRIPT q(END_OF_LAST_LOGICAL=$START_MB) . qq(\n);
+            
+            } elsif ("$p_type{$m}" eq "logical") {
+                print MASTER_SCRIPT q(END_OF_LAST_LOGICAL=$END_MB) . qq(\n);
+            }
+            
+            #
+            # If $id is set for a partition, we invoke sfdisk to tag the partition
+            # id appropriately.  parted is lame (in the true sense of the word) in 
+            # this regard and is incapable of # adding an arbitrary id to a 
+            # partition. -BEF-
+            #
+            if ($id{$m}) {
+                print MASTER_SCRIPT qq(# Use sfdisk to change the partition id.  parted is\n);
+                print MASTER_SCRIPT qq(# incapable of this particular operation.\n);
+                print MASTER_SCRIPT qq(sfdisk --change-id $dev $m $id{$m} \n);
+            }
+            
+            # Name any partitions that need that kinda treatment.
+            #
+            # XXX Currently, we are assuming that no one is using a rediculously long name.  
+            # parted's output doesn't make it easy for us, and it is currently possible for
+            # a long name to get truncated, and the rest would be considered flags.   
+            # Consider submitting a patch to parted that would print easily parsable output 
+            # with n/a values "-" and no spaces in the flags. -BEF-
+            #
+            if (
+                  ($label_type eq "gpt") 
+                  and ($p_name{$m}) 
+                  and ($p_name{$m} ne "-")
+              ) {  # We're kinda assuming no one names their partitions "-". -BEF-
+            
+              $cmd = "parted -s -- $dev name $m $p_name{$m} || shellout\n";
               print MASTER_SCRIPT "echo $cmd";
               print MASTER_SCRIPT "$cmd";
             }
-          }
+            
+            ### Deal with flags for each partition. -BEF-
+            if(($flags{$m}) and ($flags{$m} ne "-")) {
+            
+                # $flags{$m} will look something like "boot,lba,raid" or "boot" at this point.
+                my @flags = split (/,/, $flags{$m});
+                
+                foreach my $flag (@flags) {
+                    # Parted 1.6.0 doesn't seem to want to tag gpt partitions with lba.  Hmmm. -BEF-
+                    if (($flag eq "lba") and ($label_type eq "gpt")) { next; }
+                    $cmd = "parted -s -- $dev set $m $flag on || shellout\n";
+                    print MASTER_SCRIPT "echo $cmd";
+                    print MASTER_SCRIPT "$cmd";
+                }
+            }
         }
 
         # Kick the minors out.  (remove temporary partitions) -BEF-
