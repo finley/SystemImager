@@ -587,16 +587,16 @@ PATH=/sbin:/bin:/usr/bin:/usr/sbin:/tmp
 ARCH=`uname -m \
 | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/`
 
+shellout() {
+  exec cat /etc/issue ; exit 1
+}
+
 # Pull in variables left behind by the linuxrc script.
 # This information is passed from the linuxrc script on the autoinstall media 
 # via /tmp/variables.txt.  Apparently the shell we use in BOEL is not 
 # intelligent enough to take a "set -a" parameter.
 #
 . /tmp/variables.txt || shellout
-
-shellout() {
-  exec cat /etc/issue ; exit 1
-}
 
 EOF
 
