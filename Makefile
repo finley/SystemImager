@@ -58,8 +58,10 @@ LINUX_SRC = ./linux
 LINUX_TARBALL = linux-2.2.18.tar.gz
 LINUX_URL = ftp://ftp.kernel.org/pub/linux/kernel/v2.2/$(LINUX_TARBALL)
 LINUX_MD5SUM = 2be6aacc7001b061de2eec51a4c89b3b
+LINUX_IMAGE = $(LINUX_SRC)/arch/i386/boot/bzImage
 
 INITRD_DIR = initrd_source
+INITRD = $(INITRD_DIR)/initrd.gz
 
 RAIDTOOLS_DIR = raidtools-0.90
 RAIDTOOLS_TARBALL = raidtools-19990824-0.90.tar.bz2
@@ -67,7 +69,7 @@ RAIDTOOLS_URL = http://www.kernel.org/pub/linux/daemons/raid/alpha/$(RAIDTOOLS_T
 
 REISERFSPROGS_DIR = $(LINUX_SRC)/fs/reiserfs/utils
 
-all:	raidtools reiserfsprogs kernel initrd-build docs manpages
+all:	raidtools reiserfsprogs $(LINUX_IMAGE) $(INITRD) docs manpages
 
 # a complete server install
 installserverall:	installserver installcommon installbinaries
@@ -123,11 +125,13 @@ installraidtools:	raidtools
 	install -m 555 $(RAIDTOOLS_DIR)/raidstart $(TFTP_BIN_DEST)
 	cp -a $(TFTP_BIN_DEST)/raidstart $(TFTP_BIN_DEST)/raidstop
 
-raidtools:	$(RAIDTOOLS_TARBALL)
+raidtools:	raidtools-stamp
+raidtools-stamp:	$(RAIDTOOLS_TARBALL)
 	bzcat $(RAIDTOOLS_TARBALL) | tar xv
 	patch -p0 < raidtools.patch
 	cd $(RAIDTOOLS_DIR) && ./configure
 	make -C $(RAIDTOOLS_DIR)
+	touch raidtools-stamp
 
 $(RAIDTOOLS_TARBALL):
 	wget $(RAIDTOOLS_URL)
@@ -140,27 +144,32 @@ installreiserfsprogs:	reiserfsprogs
 reiserfsprogs:	patchedkernel
 	make -C $(REISERFSPROGS_DIR)
 
+########## BEGIN kernel ##########
 installkernel:	kernel
 	mkdir -p $(TFTP_ROOT)
-	cp -a $(LINUX_SRC)/arch/i386/boot/bzImage $(TFTP_ROOT)/kernel
+	cp -a $(LINUX_IMAGE) $(TFTP_ROOT)/kernel
 
-kernel:	$(LINUX_SRC)/arch/i386/boot/bzImage
+kernel:	$(LINUX_IMAGE)
 
-$(LINUX_SRC)/arch/i386/boot/bzImage:	patchedkernel
+$(LINUX_IMAGE):	patchedkernel-stamp
 	cp ./doc/autoinstall.kernel.config $(LINUX_SRC)/.config
 	$(MAKE) -C $(LINUX_SRC) oldconfig dep bzImage
 
-patchedkernel:	$(LINUX_TARBALL)
+patchedkernel:	patchedkernel-stamp
+
+patchedkernel-stamp:	$(LINUX_TARBALL)
 	# remove linux tree and restore to pristine state before patching
 	-rm -rf $(LINUX_SRC)
 	tar xvfz $(LINUX_TARBALL)
 
 	# attempt to patch the kernel - this patch is not currently in CVS!
 	patch -p0 < systemimager-1.5.0.patch
+	touch patchedkernel-stamp
 
 $(LINUX_TARBALL):
 	wget $(LINUX_URL)
 	[ "$(LINUX_MD5SUM)" == `md5sum $(LINUX_TARBALL) | cut -d " " -f 1` ] || exit 1
+########## END kernel ##########
 
 ########## install initrd built from source ##########
 installinitrd:	$(INITRD_DIR)/initrd.gz
@@ -208,16 +217,108 @@ docs:
 	-cd doc/manual_source && ln -sf ../manual/html/images
 	$(MAKE) -C $(MANUAL_DIR) html ps
 
+get_source:	$(LINUX_TARBALL) $(RAIDTOOLS_TARBALL)
+
+help:
+	# This Makefiles provides targets to build and install the
+	# SystemImager packages.  Here are descriptions of the various targets
+	#
+	# make all:			builds everything, but installs nothing
+	#
+	# make installclientserverall	installs all files necessary for an
+	#				image server
+	#
+	# make installclientclientall	installs all files necessary for a
+	#				golden client
+	#
+	# make installserver		install architecture independent
+	#				server-only files - this is an
+	#				incomplete server installation used
+	#				for packaging
+	#
+	# make installclient		install architecture independent
+	#				golden client-only files - this is an
+	#				incomplete client installation used
+	#				for packaging
+	#
+	# make installcommon		install files common to both the server
+	#				and the golden client
+	#
+	# make installbinaries		install architecture-dependent files
+	#				required by the image server (kernel,
+	#				ramdisk, and utilities that autoinstall
+	#				clients may need to retrieve during
+	#				autoinstallation
+	#
+	# make installraidtools		install static raid utilities that
+	#				autoinstall clients may need to
+	#				retrieve during autoinstallation
+	#
+	# make raidtools		install static raid utilities that
+	#				autoinstall clients may need to
+	#				retrieve during autoinstallation
+	#
+	# make installreiserfsprogs	install static reiserfs utilities that
+	#				autoinstall clients may need to
+	#				retrieve during autoinstallation
+	#
+	# make reiserfsprogs		install static reiserfs utilities that
+	#				autoinstall clients may need to
+	#				retrieve during autoinstallation
+	#
+	# make installkernel		install kernel used to boot autoinstall
+	#				clients
+	#
+	# make kernel			build kernel used to boot autoinstall
+	#				clients
+	#
+	# make patchedkernel		apply the systemimager kernel patch
+	#				to the kernel source tree
+	#
+	# make installinitrd		install ramdisk used to boot
+	#				autoinstall clients
+	#
+	# make installrsyncconfigs	install initscript and config file
+	#				for rsync, needed on image servers
+	#
+	# make installmanpages		install image server man pages
+	#
+	# make installclientmanpages	install golden client man pages
+	#
+	# make installcommonmanpages	install manpages common to both 
+	#				image servers and golden clients
+	#
+	# make manpages			build manpages from sgml source
+	#
+	# make installdocs		install docs into $(DOC)
+	#
+	# make get_source		download all source that could be
+	#				needed during the build
+	#
+	# make help			prints this message
+	#
+	# make clean			removes built binaries, cleans
+	#				downloaded source trees and tarballs,
+	#				editor backup files, etc.
+	#
+	# make distclean		make clean + rm downloaded source trees
+	#				and tarballs
+
 clean:
 	-$(MAKE) -C $(RAIDTOOLS_DIR) clean
 	-$(MAKE) -C $(REISERFSPROGS_DIR) clean
 	-$(MAKE) -C $(LINUX_SRC) mrproper
 	-$(MAKE) -C $(MANPAGE_DIR) clean
 	-$(MAKE) -C $(MANUAL_DIR) clean
-	-$(MAKE) -C $(INITRD_DIR) distclean
+	-$(MAKE) -C $(INITRD_DIR) clean
 	-find . -name "*~" -exec rm -f {} \;
 	-find . -name "#*#" -exec rm -f {} \;
 	-rm doc/manual_source/images
+	-rm patchedkernel-stamp raidtools-stamp
 
-distclean:
-	-rm -rf $(LINUX_SRC)
+distclean:	clean
+	-rm -rf $(LINUX_SRC) $(RAIDTOOLS_DIR)
+	-rm -rf $(LINUX_TARBALL) $(RAIDTOOLS_TARBALL)
+	-$(MAKE) -C $(INITRD_DIR) distclean
+
+
