@@ -370,7 +370,7 @@ if [ ! -z $SSH_DOWNLOAD_URL ]; then
     # 14400 = 4 hours...if we're not imaged by then....oh boy!
     #
     # Determine if we should run interactive and set redirection options appropriately.
-    # So if the key is blank, go interactive.
+    # So if the key is blank, go interactive. (Suggested by Don Stocks <don_stocks@leaseloan.com>)
     if [ -s $PRIVATE_KEY ]; then
       # key is *not* blank
       REDIRECTION_OPTIONS="> /dev/null 2>&1"
