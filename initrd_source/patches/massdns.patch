@@ -1,0 +1,9 @@
+diff -urN massdns-1.0.orig/massdns.cpp massdns-1.0/massdns.cpp
+--- massdns-1.0.orig/massdns.cpp	Tue Jun 13 01:05:57 2000
++++ massdns-1.0/massdns.cpp	Sun Jul 15 14:21:50 2001
+@@ -1,4 +1,4 @@
+-
++#include <time.h>
+ #include <errno.h>
+ #include <fcntl.h>
+ #include <netdb.h>
