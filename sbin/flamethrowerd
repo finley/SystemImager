@@ -27,7 +27,7 @@ $0 = "flamethrowerd";
 my $debug = 1;
 print "debug output turned on\n" if($debug);
 
-# Read the config file
+# Read the config file and update the directory
 read_config_file($conf_file);
 
 # Should we start up?
@@ -49,7 +49,6 @@ if ( ! -e $dir ) {
 }
 unlink <$dir/*>;
 
-&update_directory;
 &daemonize;
 
 while(1) {
@@ -65,6 +64,22 @@ exit 0;
 #
 # BEGIN subroutines 
 #
+
+# Usage: build_udp_sender_cmd($module);
+sub build_udp_sender_cmd {
+
+    my $module = shift;
+
+    my $dir = $ft_config->get("${module}_dir");
+    my $portbase = $ft_config->get("${module}_portbase");
+
+    # We will always have $dir and $portbase
+    my $cmd = qq(udp-sender --pipe 'tar -cf - -C $dir .' --portbase $portbase);
+
+    # Append additional options if then are set.
+
+
+}
 
 # Usage: update_directory();
 sub update_directory {
@@ -134,6 +149,9 @@ sub update_directory {
                     $portbase += 2;
                 }
             
+                # Put it into module specific data structure
+                $ft_config->set("${module}_portbase", $portbase);
+
                 # Add our new portbase to the existing list.
                 $portbases{$portbase} = $portbase;
             
@@ -148,6 +166,10 @@ sub update_directory {
             } else {
                 # get it from global setting
                 $async = $ft_config->get("async");
+
+                # Put it into module specific data structure
+                $ft_config->set("${module}_async", $async);
+
             }
             print FILE "ASYNC=$async\n";
 
@@ -159,6 +181,9 @@ sub update_directory {
             } else {
                 # get it from global setting
                 $ttl = $ft_config->get("ttl");
+
+                # Put it into module specific data structure
+                $ft_config->set("${module}_ttl", $ttl);
             }
             print FILE "TTL=$ttl\n";
 
@@ -168,9 +193,14 @@ sub update_directory {
                 # mcast_all_addr is already set
                 $mcast_all_addr = $ft_config->get("${module}_mcast_all_addr");
             } else {
-                # get it from global setting
+
+                # May or may not be set
+                # get it from global setting (if it exists)
                 if ($ft_config->varlist("^mcast_all_addr")) {
                     $mcast_all_addr = $ft_config->get("mcast_all_addr");
+
+                    # Put it into module specific data structure
+                    $ft_config->set("${module}_ttl", $ttl);
                 }
             }
             print FILE "MCAST_ALL_ADDR=$mcast_all_addr\n" if ($mcast_all_addr);
@@ -188,7 +218,6 @@ sub main {
     print STDOUT "main()\n" if($debug); 
     if(conf_file_updated($conf_file)) {
         read_config_file($conf_file);
-        update_directory();
     }
     my $modules = $ft_config->modules();
     foreach my $module ( @$modules ) {
@@ -246,6 +275,7 @@ sub cast {
 sub read_config_file {
     my $file = shift;
     SystemImager::Flamethrower->read_config($file) or die("Couldn't read $file!");
+    &update_directory;
 }
 
 # Usage: if(conf_file_updated($conf_file)) {};
