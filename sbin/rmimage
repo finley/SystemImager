@@ -159,12 +159,12 @@ my $flamethrower_conf = "/etc/systemimager/flamethrower.conf";
 if(-e $flamethrower_conf) {
     SystemImager::Common->add_or_delete_conf_file_entry($flamethrower_conf, $entry_name) or
         die "$program_name: Cannot remove entry from $flamethrower_conf";
-}
 
-# remove override entry from flamethrower.conf file
-$entry_name = "override_" . $image;
-SystemImager::Common->add_or_delete_conf_file_entry($flamethrower_conf, $entry_name) or
-    die "$program_name: Cannot remove entry from $flamethrower_conf";
+    # remove override entry from flamethrower.conf file
+    $entry_name = "override_" . $image;
+    SystemImager::Common->add_or_delete_conf_file_entry($flamethrower_conf, $entry_name) or
+        die "$program_name: Cannot remove entry from $flamethrower_conf";
+}
 
 
 

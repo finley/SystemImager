@@ -287,13 +287,13 @@ my $flamethrower_conf = "/etc/systemimager/flamethrower.conf";
 if(-e $flamethrower_conf ) {
     SystemImager::Common->add_or_delete_conf_file_entry($flamethrower_conf, $entry_name, $new_entry_data) or 
         die "$program_name: Cannot create entry in $flamethrower_conf";
-}
 
-# Add override entry to flamethrower.conf file
-$entry_name = "override_" . $destination_image;
-$new_entry_data = "[override_$destination_image]\nDIR = /var/lib/systemimager/overrides/$destination_image\n";
-SystemImager::Common->add_or_delete_conf_file_entry($flamethrower_conf, $entry_name, $new_entry_data) or 
-    die "$program_name: Cannot create entry in $flamethrower_conf";
+    # Add override entry to flamethrower.conf file
+    $entry_name = "override_" . $destination_image;
+    $new_entry_data = "[override_$destination_image]\nDIR = /var/lib/systemimager/overrides/$destination_image\n";
+    SystemImager::Common->add_or_delete_conf_file_entry($flamethrower_conf, $entry_name, $new_entry_data) or 
+        die "$program_name: Cannot create entry in $flamethrower_conf";
+}
 
 
 ### BEGIN Change entries in master autoinstall script ###

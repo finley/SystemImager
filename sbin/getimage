@@ -436,13 +436,13 @@ my $new_entry_data = "[$image]\nDIR = $imagedir\n";
 if(-e $flamethrower_conf) {
     SystemImager::Common->add_or_delete_conf_file_entry($flamethrower_conf, $entry_name, $new_entry_data) or 
         die "$program_name: Cannot add entry to $flamethrower_conf";
-}
 
-# Add override entry to flamethrower.conf file
-$entry_name = "override_" . $image;
-$new_entry_data = "[override_$image]\nDIR = /var/lib/systemimager/overrides/$image\n";
-SystemImager::Common->add_or_delete_conf_file_entry($flamethrower_conf, $entry_name, $new_entry_data) or 
-    die "$program_name: Cannot add entry to $flamethrower_conf";
+    # Add override entry to flamethrower.conf file
+    $entry_name = "override_" . $image;
+    $new_entry_data = "[override_$image]\nDIR = /var/lib/systemimager/overrides/$image\n";
+    SystemImager::Common->add_or_delete_conf_file_entry($flamethrower_conf, $entry_name, $new_entry_data) or 
+        die "$program_name: Cannot add entry to $flamethrower_conf";
+}
 
 
 ### BEGIN Overwrite $script_name.master? ###
