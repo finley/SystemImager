@@ -34,6 +34,9 @@ $VERSION="SYSTEMIMAGER_VERSION_STRING";
 #   _imageexists 
 #   _in_script_add_standard_header_stuff 
 #   _read_partition_info_and_prepare_parted_commands 
+#   _read_partition_info_and_prepare_pvcreate_commands -AR-
+#   _write_lvm_groups_commands -AR-
+#   _write_lvm_volumes_commands -AR-
 #   _write_boel_devstyle_entry
 #   _write_elilo_conf
 #   _write_out_mkfs_commands 
@@ -774,6 +777,134 @@ sub _read_partition_info_and_prepare_parted_commands {
     }
 }
 
+# Usage:
+# _read_partition_info_and_prepare_pvcreate_commands( $out, $image_dir, $auto_install_script_conf );
+sub _read_partition_info_and_prepare_pvcreate_commands {
+    my ($out, $image_dir, $file) = @_;
+
+    my $xml_config = XMLin($file, keyattr => { disk => "+dev", part => "+num" }, forcearray => 1 );
+
+    my @all_devices = get_all_devices($file);
+    my %devfs_map = dev_to_devfs(@all_devices) or return undef;
+
+    foreach my $dev (sort (keys ( %{$xml_config->{disk}} ))) {
+
+        my (
+            $highest_part_num,
+            $m,
+            $cmd,
+            $part,
+        );
+
+        my $devfs_dev = $devfs_map{$dev};
+
+        ### BEGIN Populate the simple hashes. -BEF- ###
+        my (
+            %flags,
+            %p_type,
+            %p_name,
+        );
+
+        foreach my $m (sort (keys ( %{$xml_config->{disk}->{$dev}->{part}} ))) {
+            $flags{$m}       = $xml_config->{disk}->{$dev}->{part}{$m}->{flags};
+            $p_name{$m}      = $xml_config->{disk}->{$dev}->{part}{$m}->{p_name};
+            $p_type{$m}      = $xml_config->{disk}->{$dev}->{part}{$m}->{p_type};
+        }
+
+        # Figure out what the highest partition number is. -BEF-
+        foreach (sort { $a <=> $b } (keys ( %{$xml_config->{disk}->{$dev}->{part}} ))) {
+            $highest_part_num = $_;
+        }
+
+        $m = "0";
+        until ($m >= $highest_part_num) {
+
+            $m++;
+            unless (defined($p_type{$m})) { next; }
+
+            $part = &get_part_name($dev, $m);
+
+            # Extended partitions can't be used by LVM. -AR-
+            if ("$p_type{$m}" eq "extended") { next; }
+
+            ### Deal with LVM flag for each partition. -AR-
+            if (($flags{$m}) and ($flags{$m} ne "-")) {
+                my @flags = split (/,/, $flags{$m});
+                foreach my $flag (@flags) {
+                    if ("$flag" eq "lvm") {
+
+                        $cmd = "Initializing partition $part for use by LVM.";
+                        print $out qq(echo "$cmd"\n);
+
+                        $cmd = "pvcreate $part || shellout";
+                        print $out qq(echo "$cmd"\n);
+                        print $out "$cmd\n";
+                        last;
+                    }
+                }
+            }
+        }
+    }
+}
+
+# Usage:  
+# write_lvm_groups_commands( $out, $image_dir, $auto_install_script_conf );
+sub write_lvm_groups_commands {
+    
+    my ($out, $image_dir, $file) = @_;
+
+    my $xml_config = XMLin($file, keyattr => { lvm_group => "+name" }, forcearray => 1 );
+    
+    # Check if a LVM schema is present.
+    my $lvm = @{$xml_config->{lvm}}[0];
+    unless (defined($lvm)) { return; }
+
+    my @all_devices = get_all_devices($file);
+    my %devfs_map = dev_to_devfs(@all_devices) or return undef;
+
+    # Find the partitions assigned to each LVM group. -AR-    
+    foreach my $group_name (sort (keys ( %{$lvm->{lvm_group}} ))) {
+        my $part_list = "";
+
+        foreach my $disk (@{$xml_config->{disk}}) {
+            my $dev = $disk->{dev};
+            
+            # Figure out what the highest partition number is. -AR-
+            my $highest_part_num = 0;
+            foreach my $part ( @{$disk->{part}} ) {
+                my $num = $part->{num};
+                if ($num > $highest_part_num) {
+                    $highest_part_num = $num;
+                }
+            }
+            
+            # Evaluate the partition list for the current LVM group -AR-
+            my $m = "0";
+            foreach my $part (@{$disk->{part}}) {
+                $m++;
+                unless (defined($part->{lvm_group})) { next; }
+                if ($part->{lvm_group} eq $group_name) {
+                    my $part_name = &get_part_name($dev, $m);
+                    $part_list = $part_list . " $part_name";
+                }
+            }
+        }
+        
+        if ($part_list ne "") {
+            my $cmd = "vgcreate ${group_name}${part_list} || shellout";
+            print $out qq(echo "$cmd"\n);
+            print $out "$cmd\n";
+        } else {
+            print "WARNING: LVM group \"$group_name\" doesn't have partitions!\n";
+        }
+    }
+}
+
+# Usage:  
+# write_lvm_volumes_commands( $out, $image_dir, $auto_install_script_conf );
+sub write_lvm_volumes_commands {
+}
+
 # Usage:  
 # upgrade_partition_schemes_to_generic_style($image_dir, $config_dir);
 sub upgrade_partition_schemes_to_generic_style {
@@ -1448,7 +1579,28 @@ sub create_autoinstall_script{
 	            last SWITCH;
 	        }
 
-	        if (/^\s*${delim}CREATE_FILESYSTEMS${delim}\s*$/) {
+                if (/^\s*${delim}INITIALIZE_LVM_PARTITIONS${delim}\s*$/) {
+ 	            _read_partition_info_and_prepare_pvcreate_commands( $MASTER_SCRIPT,
+ 	          						$image_dir,
+ 	          						$auto_install_script_conf);
+                     last SWITCH;
+                }
+
+                if (/^\s*${delim}CREATE_LVM_GROUPS${delim}\s*$/) {
+                    write_lvm_groups_commands( $MASTER_SCRIPT,
+                                            $image_dir,
+                                            $auto_install_script_conf);
+                     last SWITCH;
+                }
+
+                if (/^\s*${delim}CREATE_LVM_VOLUMES${delim}\s*$/) {
+                     write_lvm_volumes_commands( $MASTER_SCRIPT,
+                                            $image_dir,
+                                            $auto_install_script_conf);
+                     last SWITCH;
+                }
+	        
+                if (/^\s*${delim}CREATE_FILESYSTEMS${delim}\s*$/) {
 	            _write_out_mkfs_commands( $MASTER_SCRIPT, 
 	          			$image_dir, 
 	          			$auto_install_script_conf,
