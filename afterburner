@@ -80,6 +80,7 @@ if [ $INTERACTIVE = "true" ]; then
   echo "                            add or modify tftp entry if necessary"
   echo " /etc/rsyncd.conf        -- it is assumed that VA SystemImager will manage this"
   echo "                            file and that it will not be used for anything else"
+  echo " /etc/init.d/rsync       -- init script to start the rsync daemon"
   echo
   echo " All modified files will be backed up with the .beforesystemimager extension."
   echo
@@ -214,7 +215,7 @@ fi
 
 ### BEGIN rsync stuff ###
 
-# install VA SystemImager brand rsyncd.conf file
+### BEGIN install VA SystemImager brand rsyncd.conf file
 # if it doesn't exist, create it
 if [ ! -f /etc/rsyncd.conf ]; then
   [ $QUIET = "false" ] && echo "creating VA SystemImager brand /etc/rsyncd.conf..."
@@ -241,6 +242,7 @@ else
     [ $QUIET = "false" ] && echo VA SystemImager brand /etc/rsyncd.conf file already exists...
   fi
 fi
+### END install VA SystemImager brand rsyncd.conf file
 
 # be sure we have a tftpboot entry
 egrep -q '\[tftpboot\]' /etc/rsyncd.conf || ADD_TFTPBOOT="yes"
@@ -253,6 +255,29 @@ if [ "$ADD_TFTPBOOT" = "yes" ]; then
   echo ''                                                       >> /etc/rsyncd.conf
 fi
 ### END rsync stuff ###
+
+
+### BEGIN create softlinks and run rsync init script ###
+# create soft links to rsync init script
+[ $QUIET = "false" ] && echo "creating soft links to rsync init script..."
+[ -d /etc/rc.d/init.d ] && INITDIR_PREFIX="/etc/rc.d"
+[ -d /etc/init.d ] && INITDIR_PREFIX="/etc"
+if [ -f $INITDIR_PREFIX/init.d/rsync ]
+then
+  ln -sf $INITDIR_PREFIX/init.d/rsync $INITDIR_PREFIX/rc0.d/K20rsync
+  ln -sf $INITDIR_PREFIX/init.d/rsync $INITDIR_PREFIX/rc1.d/K20rsync
+  ln -sf $INITDIR_PREFIX/init.d/rsync $INITDIR_PREFIX/rc2.d/S20rsync
+  ln -sf $INITDIR_PREFIX/init.d/rsync $INITDIR_PREFIX/rc3.d/S20rsync
+  ln -sf $INITDIR_PREFIX/init.d/rsync $INITDIR_PREFIX/rc4.d/S20rsync
+  ln -sf $INITDIR_PREFIX/init.d/rsync $INITDIR_PREFIX/rc5.d/S20rsync
+  ln -sf $INITDIR_PREFIX/init.d/rsync $INITDIR_PREFIX/rc6.d/K20rsync
+fi
+# run rsync init script
+[ $QUIET = "false" ] && echo "running rsync init script..."
+[ $QUIET = "false" ] \
+  && $INITDIR_PREFIX/init.d/rsync restart \
+  || $INITDIR_PREFIX/init.d/rsync restart > /dev/null 2>&1
+### END create softlinks and run rsync init script ###
 
 
 ### BEGIN dhcp stuff ###
@@ -277,9 +302,6 @@ fi
 [ $QUIET = "false" ] && echo "All done!  Please read the FAQ-HOWTO before using VA SystemImager."
 [ $QUIET = "false" ] && echo "See /usr/doc/$PACKAGE_NAME-$VERSION/ for all documentation."
 [ $QUIET = "false" ] && echo
-
-#BEF# 
-echo Do init script for rsync -- init.d rc.d/init.d and rc0.d, etc.
 
 exit 0
 

@@ -404,6 +404,17 @@ done
 ### END binaries ###
 
 
+### BEGIN init scripts ###
+# Copy rsync init script
+[ -d /etc/rc.d/init.d ] && INITDIR_PREFIX="/etc/rc.d"
+[ -d /etc/init.d ] && INITDIR_PREFIX="/etc"
+if [ ! -f $INITDIR_PREFIX/init.d/rsync ]
+then
+  cp $INSTALL_DIR/init.d/rsync $INITDIR_PREFIX/init.d/
+fi
+### END init scripts ###
+
+
 ### BEGIN tftpboot stuff ###
 # Create ${DESTDIR}/tftpboot/systemimager/ directory if necessary and copy/link files
 if [ ! -d ${DESTDIR}/tftpboot/systemimager/ ]; then
