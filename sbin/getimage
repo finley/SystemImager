@@ -501,8 +501,9 @@ if(-d "$imagedir$partition_dir") {
 
 
 ### BEGIN get info on devices for software RAID, swap, and filesystems ###
-%device_file_by_mount_point = ();
-%mount_options_by_mount_point = ();
+%device_file_by_mount_point     = ();
+%filesystem_type_by_mount_point = ();
+%mount_options_by_mount_point   = ();
 open (FSTAB, "<$imagedir/etc/fstab") || die "$program_name: Failed to open $imagedir/etc/fstab for reading\n";
 while (<FSTAB>) {
     # Skip the line if it starts with a '#' or if it is for a floppy device
@@ -520,11 +521,10 @@ while (<FSTAB>) {
     # split on space(s) and assign values to variables
     (my $device_file, my $mount_point, my $filesystem_type, my $mount_options) = split(/ +/);
 
-    # Create hash to be used in mounting and unmounting
-    $device_file_by_mount_point{$mount_point} = $device_file;
-
-    # Create hash to be used in mounting and unmounting
-    $mount_options_by_mount_point{$mount_point} = $mount_options;
+    # Create hashes to be used in mounting and unmounting
+    $device_file_by_mount_point{$mount_point}     = $device_file;
+    $filesystem_type_by_mount_point{$mount_point} = $filesystem_type;
+    $mount_options_by_mount_point{$mount_point}   = $mount_options;
 
     ### BEGIN create arrays of device files by device type ###
     # software RAID
@@ -892,11 +892,12 @@ foreach $mount_point (sort (@mount_points)) {
   # Note:  If someone has ro as an option for a filesystem, problems will occur.
   #        Simply hand editing the master script to change ro to rw in the mount
   #        options is the solution for now.  I don't expect this to happen often.
-  my $mount_options = $mount_options_by_mount_point{$mount_point};
+  my $mount_options   = $mount_options_by_mount_point{$mount_point};
+  my $filesystem_type = $filesystem_type_by_mount_point{$mount_point};
   if ($mount_options) {
-    print MASTER_SCRIPT "mount $device_file /a$mount_point -o $mount_options\n";
+    print MASTER_SCRIPT "mount $device_file /a$mount_point -t $filesystem_type -o $mount_options\n";
   } else {
-    print MASTER_SCRIPT "mount $device_file /a$mount_point\n";
+    print MASTER_SCRIPT "mount $device_file /a$mount_point -t $filesystem_type\n";
   }
   print MASTER_SCRIPT "\n";
 }
