@@ -139,9 +139,10 @@ CLIENT_BINARY_SRC = tftpstuff/systemimager
 COMMON_BINARY_SRC = $(BINARY_SRC)
 
 # destination directories
+PREFIX = /usr/local
 ETC  = $(DESTDIR)/etc
 INITD = $(ETC)/init.d
-USR = $(DESTDIR)/usr/local
+USR = $(DESTDIR)$(PREFIX)
 DOC  = $(USR)/share/doc/systemimager-doc
 BIN = $(USR)/bin
 SBIN = $(USR)/sbin
