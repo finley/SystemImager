@@ -323,10 +323,10 @@ initrd:
 #@@ 
 install_configs:
 	mkdir -p $(ETC)/systemimager
-	install -m 644 etc/rsyncd.conf $(ETC)/systemimager
-	install -m 644 etc/systemimager.conf $(ETC)/systemimager
+	install -b -m 644 etc/rsyncd.conf $(ETC)/systemimager
+	install -b -m 644 etc/systemimager.conf $(ETC)/systemimager
 	mkdir -p $(INITD)
-	install -m 755 etc/init.d/rsync $(INITD)/$(INITSCRIPT_NAME)
+	install -b -m 755 etc/init.d/rsync $(INITD)/$(INITSCRIPT_NAME)
 
 ########## END initrd ##########
 
