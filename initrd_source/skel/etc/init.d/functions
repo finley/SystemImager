@@ -23,7 +23,7 @@
 # - add pre-install script support at Rick Bradshaw's request
 # 2004.05.12 Brian Elliott Finley
 # - added OVERRIDES to post-install script support
-# - changed up the way pre and post-scripts are found
+# - changed up the way pre and post-install scripts are found
 # 2004.05.26 Brian Elliott Finley
 # - look for "<number>all.<description>" pre and post-install scripts
 # - source file at end of pre-install scripts (/tmp/pre-install_variables.txt)
@@ -33,10 +33,12 @@
 # 2004.06.04 Brian Elliott Finley
 # - add support for SCRIPTNAME as a pre-boot variable
 # - improve some of the "these settings override those settings logic"
+# 2004.06.05 Brian Elliott Finley
+# - add double quotes around non-null tests in pre and post-install script functions
 #
 
 
-#################################################################################
+################################################################################
 #
 #   Variables
 #
@@ -51,11 +53,11 @@ FLAVOR="SYSTEMIMAGER_FLAVOR_STRING"
 ################################################################################
 
 
-#################################################################################
+################################################################################
 #
 #   Subroutines
 #
-#################################################################################
+################################################################################
 #
 #  get_arch
 #
@@ -66,7 +68,7 @@ get_arch() {
     ARCH=`uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/`
 }
 #
-#################################################################################
+################################################################################
 #
 #  adjust_arch
 #
@@ -85,7 +87,7 @@ adjust_arch() {
     fi
 }
 #
-#################################################################################
+################################################################################
 #
 #  write_variables
 #
@@ -438,7 +440,7 @@ get_boel_binaries_tarball() {
     chown -R 0.0 /lib/modules || shellout
 }
 #
-#################################################################################
+################################################################################
 #
 #   Switch root to tmpfs
 #
@@ -501,7 +503,7 @@ switch_root_to_tmpfs() {
     unset tmpfs_opts
 }
 #
-#################################################################################
+################################################################################
 #
 mount_dev_on_devfs() {
     echo
@@ -516,7 +518,7 @@ mount_dev_on_devfs() {
 
 }
 #
-#################################################################################
+################################################################################
 #
 # Now mount proc. -BEF-
 mount_proc() {
@@ -526,7 +528,7 @@ mount_proc() {
     mount proc /proc -t proc || shellout
 }
 #
-#################################################################################
+################################################################################
 #
 # Configure loopback interface (may as well)
 ifconfig_loopback() {
@@ -535,7 +537,7 @@ ifconfig_loopback() {
     ifconfig lo 127.0.0.1
 }
 #
-#################################################################################
+################################################################################
 #
 # Load any modules that were placed in the my_modules directory prior to
 # running "make initrd.gz".  -BEF-
@@ -992,7 +994,7 @@ run_pre_install_scripts() {
         # Now, to get rid of those pesky newlines. -BEF-
         PRE_INSTALL_SCRIPTS=`echo $PRE_INSTALL_SCRIPTS | tr '\n' ' '`
         
-        if [ ! -z `echo ${PRE_INSTALL_SCRIPTS}|sed 's/ //'` ]; then
+        if [ ! -z "`echo ${PRE_INSTALL_SCRIPTS}|sed 's/ //'`" ]; then
 
             for PRE_INSTALL_SCRIPT in $PRE_INSTALL_SCRIPTS
             do
@@ -1037,7 +1039,7 @@ run_post_install_scripts() {
         # Now, to get rid of those pesky newlines. -BEF-
         POST_INSTALL_SCRIPTS=`echo $POST_INSTALL_SCRIPTS | tr '\n' ' '`
         
-        if [ ! -z `echo ${POST_INSTALL_SCRIPTS}|sed 's/ //'` ]; then
+        if [ ! -z "`echo ${POST_INSTALL_SCRIPTS}|sed 's/ //'`" ]; then
 
             mkdir -p /a/tmp/post-install/ || shellout
 
