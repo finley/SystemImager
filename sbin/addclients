@@ -57,7 +57,7 @@ unless($< == 0) { die "Must be run as root!\n"; }
 system("clear");
 
 # give warning
-print <<EOF;
+print << "EOF";
 
 Welcome to the SystemImager "addclients" script.  This script 
 will create softlinks for each of your client names to your
