@@ -156,6 +156,8 @@ GETSOURCE = $(TOPDIR)/tools/getsource
 PHONY += all
 all:	$(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.img manpages
 
+binaries: $(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.img
+
 # All has been modified as docs don't build on non debian platforms
 #
 #all:	$(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.img docs manpages
@@ -516,7 +518,8 @@ $(TOPDIR)/tmp/systemimager-$(VERSION).tar.gz: systemimager.spec
 	  -exec cp -a {} tmp/systemimager-$(VERSION) \;
 	rm -rf `find tmp/systemimager-$(VERSION) -name CVS \
 	         -type d -printf "%p "`
-	$(MAKE) -C tmp/systemimager-$(VERSION) distclean
+	cd tmp/systemimager-$(VERSION) && $(MAKE) distclean
+	cd tmp/systemimager-$(VERSION) && $(MAKE) -j11 get_source
 	cd tmp && tar -czf systemimager-$(VERSION).tar.gz systemimager-$(VERSION) 
 	@echo
 	@echo "srpm tarball has been created in $(TOPDIR)/tmp"
