@@ -84,7 +84,7 @@ write_variables() {
     echo "SSH_USER=$SSH_USER"	            	>> /tmp/variables.txt
     echo "SSH_DOWNLOAD_URL=$SSH_DOWNLOAD_URL"	>> /tmp/variables.txt
 
-    echo "MCAST_GROUP=$MCAST_GROUP"	           	>> /tmp/variables.txt
+    echo "PORTBASE=$PORTBASE"	           	>> /tmp/variables.txt
 }
 #
 ################################################################################
@@ -138,8 +138,8 @@ get_boel_binaries_tarball() {
         # If we're using SSH, get the boel_binaries from a web server.
         echo "SSH_DOWNLOAD_URL variable is set, so we will install over SSH!"
 
-        if [ ! -z $MCAST_GROUP ]; then
-            echo "MCAST_GROUP is also set, but being conservative and proceeding with SSH."
+        if [ ! -z $PORTBASE ]; then
+            echo "PORTBASE is also set, but being conservative and proceeding with SSH."
         fi
 
         # Remove possible trailing / from URL
@@ -150,11 +150,11 @@ get_boel_binaries_tarball() {
         echo "$CMD"
         $CMD || shellout
 
-    elif [ ! -z $MCAST_GROUP ]; then
+    elif [ ! -z $PORTBASE ]; then
         # Use multicast
-        echo "MCAST_GROUP variable is set, so we will use multicast!"
-        echo "MCAST_GROUP: $MCAST_GROUP"
-        udp-receiver --pipe "tar -x -C /" --portbase ${MCAST_GROUP} || shellout
+        echo "PORTBASE variable is set, so we will use multicast!"
+        echo "PORTBASE: $PORTBASE"
+        udp-receiver --pipe "tar -x -C /" --portbase ${PORTBASE} || shellout
 
     else
         # Use rsync
@@ -489,8 +489,8 @@ autodetect_hardware_and_load_modules() {
 #
 get_hostname_by_hosts_file() {
 
-    if [ ! -z $MCAST_GROUP ]; then
-	    # MCAST_GROUP is set, therfore we should have a hosts file in /scripts/
+    if [ ! -z $PORTBASE ]; then
+	    # PORTBASE is set, therfore we should have a hosts file in /scripts/
 		echo "Using hosts file pulled over by multicast."
     else
         # Try pulling hosts file from imageserver -BEF-

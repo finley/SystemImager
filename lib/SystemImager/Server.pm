@@ -604,7 +604,7 @@ shellout() {
 }
 
 mcast_group+2() {
-    MCAST_GROUP=$(echo "scale=3; ($MCAST_GROUP + 2)" | bc)
+    PORTBASE=$(echo "scale=3; ($PORTBASE + 2)" | bc)
 }
 
 # Pull in variables left behind by the linuxrc script.
@@ -1383,10 +1383,10 @@ sub create_autoinstall_script{
 
     ### BEGIN pull the image down ###
     print MASTER_SCRIPT qq(# Filler up!\n);
-    print MASTER_SCRIPT qq(if [ ! -z \$MCAST_GROUP ]; then \n);
+    print MASTER_SCRIPT qq(if [ ! -z \$PORTBASE ]; then \n);
     print MASTER_SCRIPT qq(# Use multicast \n);
     print MASTER_SCRIPT qq(    mcast_group+2 \n);
-    $cmd = qq(udp-receiver --pipe 'tar -x -C /a' --portbase \${MCAST_GROUP});
+    $cmd = qq(udp-receiver --pipe 'tar -x -C /a' --portbase \${PORTBASE});
     print MASTER_SCRIPT qq(    echo "$cmd" \n);
     print MASTER_SCRIPT qq(    $cmd || shellout \n);
     print MASTER_SCRIPT qq( \n);
@@ -1421,13 +1421,13 @@ sub create_autoinstall_script{
     
     ### BEGIN overrides ###
     print MASTER_SCRIPT  q(### BEGIN overrides ###) . qq(\n);
-    print MASTER_SCRIPT  q(if [ ! -z $MCAST_GROUP ]; then) . qq(\n);
+    print MASTER_SCRIPT  q(if [ ! -z $PORTBASE ]; then) . qq(\n);
     print MASTER_SCRIPT  q(    # Use multicast) . qq(\n);
     print MASTER_SCRIPT  q(    #) . qq(\n);
     print MASTER_SCRIPT  q(    # A single cast will catch any and all override directories at once.) . qq(\n);
     print MASTER_SCRIPT  q(    #) . qq(\n);
     print MASTER_SCRIPT  q(    mcast_group+2) . qq(\n);
-    $cmd = qq(udp-receiver --pipe 'tar -x -C /a' --portbase \${MCAST_GROUP});
+    $cmd = qq(udp-receiver --pipe 'tar -x -C /a' --portbase \${PORTBASE});
     print MASTER_SCRIPT  qq(    echo "$cmd") . qq(\n);
     print MASTER_SCRIPT  qq(    $cmd || shellout) . qq(\n);
     print MASTER_SCRIPT  q(    ) . qq(\n);
