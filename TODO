@@ -43,6 +43,11 @@ Development Branch Sub Projects
 
 Brian Finley <brian@thefinleys.com>
 -----------------------------------
+cvs -z3 commit -m "added section to autoinstall.master scripts to deal with testing for and doing raidstop if necessary -- even if we're not autoinstalling a raid image" sbin/getimage
+cvs -z3 commit -m "added IBM ServeRAID support" tftpstuff/kernel
+
+o remove depricated -master-client option in getimage
+o deal with LABEL= and UUID= for any filesystem or device type
 o chroot=yes in /etc/rsyncd.conf and test...
 Change paths:
 o images:        /var/lib/systemimager/images/
@@ -281,6 +286,92 @@ George Perry <perryg@elcsci.com>
 Wed, 17 Jan 2001
 --------------------------------
 o bootable recovery CD that self-installs from image stored on same CD
+
+	Here's how I envision it working:
+	o first you pull the image to the imageserver with 
+	  "getimage -ip replicant" (This is a 1.4.0 feature.)
+	o then you run the "makerecoverycd" command (This is the command you 
+	  will create)
+
+	Here's how the CD will work:
+	1) one directory on the CD ( /imagename ) will hold the entire image.
+	2) one directory on the CD ( /tftpboot/systemimager ) will hold a hosts
+	   file that need only contain an entry for localhost and the machine to
+	   be installed:
+
+	<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>
+	127.0.0.1       localhost
+	10.0.0.99       www3.systemimager.org www3
+	<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>
+
+	3) Create a /local.cfg file on the CD.
+	   the local.cfg file will specify localhost as the name of the
+	   imageserver.  Other values will be filled in like normal.  It will
+	   look like this:
+
+	<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>
+	HOSTNAME=www3
+	DOMAINNAME=systemimager.org
+	DEVICE=eth0
+	IPADDR=10.0.0.99
+	NETMASK=255.255.255.0
+	NETWORK=10.0.0.0
+	BROADCAST=10.0.0.255
+	GATEWAY=10.0.0.1
+	GATEWAYDEV=eth0
+
+	# IP address of the imageserver
+	IMAGESERVER=127.0.0.1
+	<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>
+
+	4) create an /rsyncd.conf file on the CD.  It will contain the entries:
+
+	<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+	list = yes
+	timeout = 600
+	dont compress = *.gz *.tgz *.zip *.Z *.ZIP *.bz2 *.deb *.rpm *.dbf
+	uid = root
+	gid = root
+	use chroot = no
+
+	[tftpboot]
+	  path = /tftpboot
+
+	[imagename]
+	    path = /imagename
+
+	<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+		    
+
+	5) modify the /etc/init.d/rcS script on the initrd.gz to do the
+	   following:
+	   o look for a /local.cfg file on CDs
+	   o test to see if IMAGESERVER=127.0.0.1
+	     o if it is, crank up rsync in daemon mode:
+	       "rsync --daemon --config=/rsyncd.conf"
+	   o then proceed as normal
+	   ( I can take care of step 5 if you do the rest. )
+
+	6) the client will then become it's own imageserver!  and we don't have
+	   to modify any of the philosophy or methodology in the rest of the
+	   package!
+
+
+	So basically, if you write the command to create the CD as described
+	above, I'll take care of modifying the initrd.gz.  However, you're
+	welcome to tackle that too if you like.  Be sure that you are working
+	from the latest version from CVS.  Instructions for downloading the CVS
+	tree anonymously are here: http://sourceforge.net/cvs/?group_id=259
+
+	Final tips:
+	o Base the command on the "makeautoinstallcd" command.
+	o test the size of the image to be sure it will fit on a CD before 
+	  creating the iso image.
+	o have fun!
+
+	Feel free to let me know if you have any further questions.
+
+	Cheers, -Brian
 
 
 
