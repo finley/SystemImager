@@ -935,7 +935,7 @@ sub write_lvm_volumes_commands {
             }
 
             # Create the logical volume -AR-
-            my $cmd = "lvcreate $lv_options -L${lv_size}M -v$group_name $lv_name || shellout";
+            my $cmd = "lvcreate $lv_options -L${lv_size} -n $lv_name $group_name || shellout";
             print $out qq(echo "$cmd"\n);
             print $out "$cmd\n";
         }
