@@ -4,63 +4,66 @@ UCLIBC_VERSION := 0.9.12
 UCLIBC_DIR := uClibc-$(UCLIBC_VERSION)
 UCLIBC_TARBALL := uClibc-$(UCLIBC_VERSION).tar.bz2
 UCLIBC_URL := http://uclibc.org/downloads/$(UCLIBC_TARBALL)
-UCLIBC_PATCHES = $(shell ls $(PATCH_DIR)/uclibc.*.patch 2>/dev/null | sort)
+UCLIBC_PATCHES = $(shell ls $(INITRD_PATCH_DIR)/uclibc.*.patch 2>/dev/null | sort)
 
-UCLIBC_RUNTIME = $(SRC_DIR)/uclibc-runtime
-UCLIBC_DEV = $(SRC_DIR)/uclibc-dev
+UCLIBC_RUNTIME = $(INITRD_SRC_DIR)/uclibc-runtime
+UCLIBC_DEV = $(INITRD_SRC_DIR)/uclibc-dev
 STAGING_DIR = $(UCLIBC_RUNTIME)
 
-$(SRC_DIR)/$(UCLIBC_TARBALL):
-	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
-	( [ -a /usr/src/$(UCLIBC_TARBALL) ] && \
-	  ln -s /usr/src/$(UCLIBC_TARBALL) $(SRC_DIR) ) || \
-	( [ -d $(UCLIBC_DIR) ] && tar -c $(UCLIBC_DIR) | \
-	  gzip -9 > $(SRC_DIR)/$(UCLIBC_TARBALL) ) || \
-	( cd $(SRC_DIR) && $(WGET) $(UCLIBC_URL) )
+ALL_SOURCE += $(INITRD_SRC_DIR)/$(UCLIBC_TARBALL)
 
-$(SRC_DIR)/$(UCLIBC_DIR)/Config: $(SRC_DIR)/$(UCLIBC_TARBALL) $(UCLIBC_PATCHES)
-	rm -rf $(SRC_DIR)/$(UCLIBC_DIR)
-	cd $(SRC_DIR) && tar xvjf $(UCLIBC_TARBALL)
-	cd $(SRC_DIR)/$(UCLIBC_DIR) &&\
+PHONY += uclibc
+uclibc:	$(INITRD_SRC_DIR)/uclibc_runtime-stamp \
+	$(INITRD_SRC_DIR)/uclibc_dev-stamp
+
+$(INITRD_SRC_DIR)/$(UCLIBC_TARBALL):
+	[ -d $(INITRD_SRC_DIR) ] || mkdir -p $(INITRD_SRC_DIR)
+	$(GETSOURCE) $(UCLIBC_URL) $(INITRD_SRC_DIR)
+
+$(INITRD_SRC_DIR)/$(UCLIBC_DIR)/Config: $(INITRD_SRC_DIR)/$(UCLIBC_TARBALL) $(UCLIBC_PATCHES)
+	rm -rf $(INITRD_SRC_DIR)/$(UCLIBC_DIR)
+	cd $(INITRD_SRC_DIR) && tar xvjf $(UCLIBC_TARBALL)
+	cd $(INITRD_SRC_DIR)/$(UCLIBC_DIR) &&\
 	  cat $(UCLIBC_PATCHES) < /dev/null | patch -p1
 
-	$(SRC_DIR)/$(UCLIBC_DIR)/extra/Configs/uClibc_config_fix.pl \
+	$(INITRD_SRC_DIR)/$(UCLIBC_DIR)/extra/Configs/uClibc_config_fix.pl \
 		--arch=$(UCLIBC_ARCH_NAME) \
 		$(CROSSARG) --c99_math=true \
 		--devel_prefix=$(UCLIBC_DEV) \
 		--float=true \
 		--kernel_dir=$(LINUX_DIR) \
 		--large_file=true \
-		--ldso_path="/usr/$(UCLIBC_ARCH_NAME)-linux-uclibc/lib" \
+		--ldso_path="/usr/$(UCLIBC_ARCH_NAME)-linux-uclibc/lib/" \
 		--long_long=true \
 		--rpc_support=true \
 		--shadow=true \
 		--shared_support=true \
 		--threads=true \
-		--file=$(SRC_DIR)/$(UCLIBC_DIR)/extra/Configs/Config.$(UCLIBC_ARCH_NAME) \
-		> $(SRC_DIR)/$(UCLIBC_DIR)/Config;
-	perl -i -p -e 's,SYSTEM_DEVEL_PREFIX.*,SYSTEM_DEVEL_PREFIX=$(UCLIBC_DEV)/usr,g' $(SRC_DIR)/$(UCLIBC_DIR)/Config
+		--file=$(INITRD_SRC_DIR)/$(UCLIBC_DIR)/extra/Configs/Config.$(UCLIBC_ARCH_NAME) \
+		> $(INITRD_SRC_DIR)/$(UCLIBC_DIR)/Config;
+	perl -i -p -e 's,SYSTEM_DEVEL_PREFIX.*,SYSTEM_DEVEL_PREFIX=$(UCLIBC_DEV)/usr,g' $(INITRD_SRC_DIR)/$(UCLIBC_DIR)/Config
 
-$(SRC_DIR)/$(UCLIBC_DIR)/lib/libc.a: $(SRC_DIR)/$(UCLIBC_DIR)/Config
-	$(MAKE) -C $(SRC_DIR)/$(UCLIBC_DIR)
+$(INITRD_SRC_DIR)/uclibc_dev-stamp:	$(INITRD_SRC_DIR)/uclibc_build-stamp
+	$(MAKE) -C $(INITRD_SRC_DIR)/$(UCLIBC_DIR) \
+	    install_toolchain install_dev DEVEL_PREFIX=$(UCLIBC_DEV)
+	$(MAKE) -C $(INITRD_SRC_DIR)/$(UCLIBC_DIR) install_runtime \
+	    PREFIX=$(UCLIBC_DEV)/ DEVEL_PREFIX=/
+	touch $(INITRD_SRC_DIR)/uclibc_dev-stamp
 
-$(STAMP_DIR)/uclibc_dev-stamp:	$(UCLIBC_DEV)/lib/libc.a
-	touch $(STAMP_DIR)/uclibc_dev-stamp
+$(INITRD_SRC_DIR)/uclibc_runtime-stamp:	$(INITRD_SRC_DIR)/uclibc_build-stamp \
+	                                $(INITRD_SRC_DIR)/uclibc_dev-stamp
+	$(MAKE) -C $(INITRD_SRC_DIR)/$(UCLIBC_DIR) install_runtime \
+	    PREFIX=$(UCLIBC_RUNTIME)/ DEVEL_PREFIX=/ 
+	touch $(INITRD_SRC_DIR)/uclibc_runtime-stamp
 
-$(UCLIBC_DEV)/lib/libc.a: $(SRC_DIR)/$(UCLIBC_DIR)/lib/libc.a
-	$(MAKE) -C $(SRC_DIR)/$(UCLIBC_DIR) install
+$(INITRD_SRC_DIR)/uclibc_build-stamp:	$(INITRD_SRC_DIR)/$(UCLIBC_DIR)/Config\
+					$(SRC_DIR)/patched_kernel-stamp
+	$(MAKE) -C $(INITRD_SRC_DIR)/$(UCLIBC_DIR)
+	touch $(INITRD_SRC_DIR)/uclibc_build-stamp
 
-$(STAMP_DIR)/uclibc_runtime-stamp:	$(UCLIBC_RUNTIME)/lib/libc.so.0
-	touch $(STAMP_DIR)/uclibc_runtime-stamp
-
-$(UCLIBC_RUNTIME)/lib/libc.so.0: $(UCLIBC_DEV)/lib/libc.a
-	$(MAKE) -C $(SRC_DIR)/$(UCLIBC_DIR) PREFIX=$(UCLIBC_RUNTIME)/ \
-	  DEVEL_PREFIX=/ install_runtime
-
-#uclibc:	$(SRC_DIR)/$(UCLIBC_DIR)/Config $(UCLIBC_RUNTIME)/lib/libc.so.0
-uclibc:	$(STAMP_DIR)/uclibc_runtime-stamp $(STAMP_DIR)/uclibc_dev-stamp
-
+PHONY += uclibc_clean
 uclibc_clean:
-	rm -rf $(SRC_DIR)/$(UCLIBC_DIR)
+	rm -rf $(INITRD_SRC_DIR)/$(UCLIBC_DIR)
 	rm -rf $(UCLIBC_RUNTIME) $(UCLIBC_DEV)
-	rm -f $(STAMP_DIR)/uclibc_dev-stamp $(STAMP_DIR)/uclibc_runtime-stamp
+	rm -f $(INITRD_SRC_DIR)/uclibc_dev-stamp
+	rm -f $(INITRD_SRC_DIR)/uclibc_runtime-stamp

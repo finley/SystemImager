@@ -3,55 +3,57 @@ RAIDTOOLS_DIR := raidtools-$(RAIDTOOLS_VERSION)
 RAIDTOOLS_TARBALL := raidtools-$(RAIDTOOLS_VERSION).tar.gz
 RAIDTOOLS_URL := http://people.redhat.com/mingo/raidtools/$(RAIDTOOLS_TARBALL)
 RAIDTOOLS_PATCH := $(PATCH_DIR)/raidtools.patch
-MKRAID_BINARY := $(SRC_DIR)/$(RAIDTOOLS_DIR)/mkraid
-RAIDSTART_BINARY := $(SRC_DIR)/$(RAIDTOOLS_DIR)/raidstart
+RAIDTOOLS_BINARIES := $(SRC_DIR)/$(RAIDTOOLS_DIR)/mkraid $(SRC_DIR)/$(RAIDTOOLS_DIR)/raidstart
+
+ALL_SOURCE += $(SRC_DIR)/$(RAIDTOOLS_TARBALL)
 
 #
 # build  raidtools binaries
 # If you get an error about popt.h when running make, be sure to install
 # the "libpopt-dev" package. -BEF-
 #
-raidtools:	$(MKRAID_BINARY)
+PHONY += raidtools
+raidtools:	$(RAIDTOOLS_BINARIES)
 
 # install the raidtools binaries (pulled by some autoinstall clients)
-install_raidtools:	raidtools
+PHONY += install_raidtools
+install_raidtools:	$(RAIDTOOLS_BINARIES)
 	$(SI_INSTALL) -d $(TFTP_BIN_DEST)
 	$(SI_INSTALL) -m 755 $(SRC_DIR)/$(RAIDTOOLS_DIR)/mkraid \
-	  $(TFTP_BIN_DEST)
+	    $(TFTP_BIN_DEST)
 	$(SI_INSTALL) -m 755 $(SRC_DIR)/$(RAIDTOOLS_DIR)/raidstart \
-	  $(TFTP_BIN_DEST)/raidstart
+	    $(TFTP_BIN_DEST)/raidstart
 	$(SI_INSTALL) -m 755 $(SRC_DIR)/$(RAIDTOOLS_DIR)/raidstart \
-	  $(TFTP_BIN_DEST)/raidstop
+	    $(TFTP_BIN_DEST)/raidstop
 	$(SI_INSTALL) $(TFTP_BIN_DEST)/raidstart $(TFTP_BIN_DEST)/raidstop
 
 # install the raidtools binaries (pulled by some autoinstall clients)
 # this rule is for building the boot tarball
-install_standard_raidtools:	raidtools
+PHONY += install_standard_raidtools
+install_standard_raidtools:	$(RAIDTOOLS_BINARIES)
 	$(SI_INSTALL) -m 755 $(SRC_DIR)/$(RAIDTOOLS_DIR)/mkraid $(DESTDIR)
 	$(SI_INSTALL) -m 755 $(SRC_DIR)/$(RAIDTOOLS_DIR)/raidstart $(DESTDIR)
 	cp -a $(DESTDIR)/raidstart $(DESTDIR)/raidstop
 
-$(MKRAID_BINARY): kernel
+$(RAIDTOOLS_BINARIES): $(SRC_DIR)/patched_kernel-stamp
 	$(MAKE) $(SRC_DIR)/$(RAIDTOOLS_TARBALL)
 	[ -d $(SRC_DIR)/$(RAIDTOOLS_DIR) ] || \
-	  ( cd $(SRC_DIR) && tar -xvzf $(RAIDTOOLS_TARBALL) )
+	    ( cd $(SRC_DIR) && tar -xvzf $(RAIDTOOLS_TARBALL) )
 	( cd $(SRC_DIR)/$(RAIDTOOLS_DIR) && chmod +x ./configure && \
 	  ./configure )
 
 # This rule seems to hose iSeries builds, not sure why	
 ifneq ($(ARCH),ppc64-iSeries)
-	perl -pi -e 's{-O2}{-O2 -I../../src/linux/include}' $(SRC_DIR)/$(RAIDTOOLS_DIR)/Makefile
+	perl -pi -e 's{-O2}{-O2 -I$(LINUX_SRC)/linux/include}' \
+	    $(SRC_DIR)/$(RAIDTOOLS_DIR)/Makefile
 endif
 	$(MAKE) -C $(SRC_DIR)/$(RAIDTOOLS_DIR)
 
-# download the raidtools tarballn
+# download the raidtools tarball
 $(SRC_DIR)/$(RAIDTOOLS_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
-	( [  -a /usr/src/$(RAIDTOOLS_TARBALL) ] && \
-	  ln -s /usr/src/$(RAIDTOOLS_TARBALL) $(SRC_DIR) ) || \
-	( [ -d $(RAIDTOOLS_DIR) ] && tar -c $(RAIDTOOLS_DIR) | \
-	  gzip -9 > $(SRC_DIR)/$(RAIDTOOLS_TARBALL) ) || \
-	( cd $(SRC_DIR) && $(WGET) $(RAIDTOOLS_URL) )
+	$(GETSOURCE) $(RAIDTOOLS_URL) $(SRC_DIR)
 
+PHONY += raidtools_clean
 raidtools_clean:
 	rm -rf $(SRC_DIR)/$(RAIDTOOLS_DIR)

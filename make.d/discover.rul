@@ -10,11 +10,14 @@ DISCOVER_DATA_DIR := discover-data-discover-data-$(DISCOVER_DATA_VERSION)
 DISCOVER_DATA_TARBALL := discover-data_$(DISCOVER_DATA_VERSION).tar.gz
 DISCOVER_DATA_URL := http://ftp.debian.org/debian/pool/main/d/discover-data/$(DISCOVER_DATA_TARBALL)
 DISCOVER_DATA_FILES := $(SRC_DIR)/$(DISCOVER_DATA_DIR)/pci.lst \
-			$(SRC_DIR)/$(DISCOVER_DATA_DIR)/pcmcia.lst \
-			$(SRC_DIR)/$(DISCOVER_DATA_DIR)/usb.lst
+                       $(SRC_DIR)/$(DISCOVER_DATA_DIR)/pcmcia.lst \
+                       $(SRC_DIR)/$(DISCOVER_DATA_DIR)/usb.lst
 DISCOVER_DATA_FILES_DIR := usr/share/discover
 
+ALL_SOURCE += $(SRC_DIR)/$(DISCOVER_TARBALL) \
+              $(SRC_DIR)/$(DISCOVER_DATA_TARBALL)
 
+PHONY += discover
 discover:	$(DISCOVER_BINARY) discover-data
 
 $(DISCOVER_BINARY):	$(SRC_DIR)/$(DISCOVER_TARBALL)
@@ -25,27 +28,21 @@ $(DISCOVER_BINARY):	$(SRC_DIR)/$(DISCOVER_TARBALL)
 
 $(SRC_DIR)/$(DISCOVER_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
-	( [  -a /usr/src/$(DISCOVER_TARBALL) ] && \
-	  ln -s /usr/src/$(DISCOVER_TARBALL) $(SRC_DIR) ) || \
-	( [ -d $(DISCOVER_DIR) ] && tar -c $(DISCOVER_DIR) | \
-	  gzip -9 > $(SRC_DIR)/$(DISCOVER_TARBALL) ) || \
-	( cd $(SRC_DIR) && $(WGET) $(DISCOVER_URL) )
+	$(GETSOURCE) $(DISCOVER_URL) $(SRC_DIR)
 
+PHONY += discover-data
 discover-data:	$(SRC_DIR)/$(DISCOVER_DATA_DIR)/Makefile
 
-$(SRC_DIR)/$(DISCOVER_DATA_DIR)/Makefile:	$(SRC_DIR)/$(DISCOVER_DATA_TARBALL)
+$(DISCOVER_DATA_FILES):	$(SRC_DIR)/$(DISCOVER_DATA_TARBALL)
+	rm -rf $(SRC_DIR)/$(DISCOVER_DATA_DIR)
 	[ -d $(SRC_DIR)/$(DISCOVER_DATA_DIR) ] || \
-	  ( cd $(SRC_DIR) && tar -xvzf $(DISCOVER_DATA_TARBALL) )
-	touch $(SRC_DIR)/$(DISCOVER_DATA_DIR)/Makefile
+	  ( cd $(SRC_DIR) && tar -m -xvzf $(DISCOVER_DATA_TARBALL) )
 
 $(SRC_DIR)/$(DISCOVER_DATA_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
-	( [  -a /usr/src/$(DISCOVER_DATA_TARBALL) ] && \
-	  ln -s /usr/src/$(DISCOVER_DATA_TARBALL) $(SRC_DIR) ) || \
-	( [ -d $(DISCOVER_DATA_DIR) ] && tar -c $(DISCOVER_DATA_DIR) | \
-	  gzip -9 > $(SRC_DIR)/$(DISCOVER_DATA_TARBALL) ) || \
-	( cd $(SRC_DIR) && $(WGET) $(DISCOVER_DATA_URL) )
+	$(GETSOURCE) $(DISCOVER_DATA_URL) $(SRC_DIR)
 
+PHONY += discover_clean
 discover_clean:
 	rm -rf $(SRC_DIR)/$(DISCOVER_DIR)
 	rm -rf $(SRC_DIR)/$(DISCOVER_DATA_DIR)

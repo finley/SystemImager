@@ -4,15 +4,20 @@ JFSUTILS_TARBALL := $(JFSUTILS_DIR).tar.gz
 JFSUTILS_URL := http://www10.software.ibm.com/developer/opensource/jfs/project/pub/$(JFSUTILS_TARBALL)
 MKJFS_BINARY := $(SRC_DIR)/$(JFSUTILS_DIR)/mkfs/mkfs.jfs
 
+ALL_SOURCE += $(SRC_DIR)/$(JFSUTILS_TARBALL)
+
+PHONY += install_jfsutils
 install_jfsutils:	jfsutils
 	mkdir -p $(TFTP_BIN_DEST)
 	$(SI_INSTALL) -m 755 \
 	  $(MKJFS_BINARY) $(TFTP_BIN_DEST)
 
+PHONY += install_standard_jfsutils
 install_standard_jfsutils:	jfsutils
 	$(SI_INSTALL) -m 755 \
 	  $(MKJFS_BINARY) $(DESTDIR)
 
+PHONY += jfsutils
 jfsutils:	$(MKJFS_BINARY)
 
 $(MKJFS_BINARY):	$(SRC_DIR)/$(JFSUTILS_TARBALL)
@@ -24,11 +29,8 @@ $(MKJFS_BINARY):	$(SRC_DIR)/$(JFSUTILS_TARBALL)
 
 $(SRC_DIR)/$(JFSUTILS_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
-	( [  -a /usr/src/$(JFSUTILS_TARBALL) ] && \
-	  ln -s /usr/src/$(JFSUTILS_TARBALL) $(SRC_DIR) ) || \
-	( [ -d $(JFSUTILS_DIR) ] && tar -c $(JFSUTILS_DIR) | \
-	  gzip -9 > $(SRC_DIR)/$(JFSUTILS_TARBALL) ) || \
-	( cd $(SRC_DIR) && $(WGET) $(JFSUTILS_URL) )
+	$(GETSOURCE) $(JFSUTILS_URL) $(SRC_DIR)
 
+PHONY += jfsutils_clean
 jfsutils_clean:
 	rm -rf $(SRC_DIR)/$(JFSUTILS_DIR)

@@ -4,6 +4,9 @@ BC_TARBALL := bc-$(BC_VERSION).tar.gz
 BC_URL := http://systemimager.org/pub/bc/$(BC_TARBALL)
 BC_BINARY := $(SRC_DIR)/$(BC_DIR)/bc/bc
 
+ALL_SOURCE += $(SRC_DIR)/$(BC_TARBALL)
+
+PHONY += bc
 bc:	$(BC_BINARY)
 $(BC_BINARY):	$(SRC_DIR)/$(BC_TARBALL)
 	[ -d $(SRC_DIR)/$(BC_DIR) ] || ( cd $(SRC_DIR) && tar -xvzf $(BC_TARBALL) )
@@ -12,11 +15,8 @@ $(BC_BINARY):	$(SRC_DIR)/$(BC_TARBALL)
 
 $(SRC_DIR)/$(BC_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
-	( [  -a /usr/src/$(BC_TARBALL) ] && \
-	  ln -s /usr/src/$(BC_TARBALL) $(SRC_DIR) ) || \
-	( [ -d $(BC_DIR) ] && tar -c $(BC_DIR) | \
-	  gzip -9 > $(SRC_DIR)/$(BC_TARBALL) ) || \
-	( cd $(SRC_DIR) && $(WGET) $(BC_URL) )
+	$(GETSOURCE) $(BC_URL) $(SRC_DIR)
 
+PHONY += bc_clean
 bc_clean:
 	rm -rf $(SRC_DIR)/$(BC_DIR)

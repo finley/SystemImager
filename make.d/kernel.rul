@@ -38,58 +38,62 @@ LINUX_SRC := $(SRC_DIR)/$(LINUX_DIR)
 LINUX_TARBALL := linux-$(LINUX_VERSION).tar.bz2
 LINUX_CONFIG := $(PATCH_DIR)/linux.$(ARCH).config
 
-# install the kernel that autoinstall clients will boot from during
-# autoinstallation
-install_kernel:	kernel
-	mkdir -p $(TFTP_BIN_DEST)
-	$(SI_INSTALL) -m 644 $(LINUX_IMAGE) $(TFTP_BIN_DEST)/kernel-$(FLAVOR)-$(VERSION)
-	$(SI_INSTALL) -m 644 $(LINUX_CONFIG) $(TFTP_BIN_DEST)/config-$(FLAVOR)-$(VERSION)
+ALL_SOURCE += $(SRC_DIR)/$(LINUX_TARBALL)
 
 # install the kernel that autoinstall clients will boot from during
-# autoinstallation.  This rule is for building the boot tarball
-install_standard_kernel:	kernel
-	$(SI_INSTALL) -m 644 $(LINUX_IMAGE) $(DESTDIR)/kernel-$(FLAVOR)-$(VERSION)
-	$(SI_INSTALL) -m 644 $(LINUX_CONFIG) $(DESTDIR)/config-$(FLAVOR)-$(VERSION)
+# autoinstallation
+PHONY += install_kernel
+install_kernel:	$(LINUX_IMAGE)
+	mkdir -p $(BOOT_BIN_DEST)
+	$(SI_INSTALL) -m 644 $(LINUX_IMAGE) \
+	    $(BOOT_BIN_DEST)/kernel-$(FLAVOR)-$(VERSION)
+	$(SI_INSTALL) -m 644 $(LINUX_CONFIG) \
+	    $(BOOT_BIN_DEST)/config-$(FLAVOR)-$(VERSION)
 
 # build the kernel that autoinstall clients will boot from during
 # autoinstallation
-kernel:	$(TOPDIR)/tmp/kernel
+PHONY += kernel
+kernel:	$(LINUX_IMAGE)
 
 ifeq ($(ARCH),ppc64-iSeries)
-$(TOPDIR)/tmp/kernel: $(LINUX_SRC)/.config $(INITRD_DIR)/initrd.gz
-	cp $(INITRD_DIR)/initrd.gz ${LINUX_SRC}/arch/ppc64/boot/ramdisk.image.gz
+$(LINUX_IMAGE):	$(SRC_DIR)/patched_kernel-stamp $(INITRD_DIR)/initrd.gz
+	cp $(TOPDIR)/initrd_source/initrd.gz \
+	    ${LINUX_SRC}/arch/ppc64/boot/ramdisk.image.gz
 	$(MAKE) -C $(LINUX_SRC) oldconfig dep $(LINUX_TARGET)
 	mkdir -p $(TOPDIR)/tmp
-	cp $(LINUX_IMAGE) $(TOPDIR)/tmp/kernel
 else 
-$(TOPDIR)/tmp/kernel: $(LINUX_SRC)/.config
+$(LINUX_IMAGE): $(SRC_DIR)/patched_kernel-stamp
 	$(MAKE) -C $(LINUX_SRC) oldconfig dep $(LINUX_TARGET)
 	mkdir -p $(TOPDIR)/tmp
-	cp $(LINUX_IMAGE) $(TOPDIR)/tmp/kernel
 endif
 
-patched_kernel:	$(LINUX_SRC)/.config
-
-$(LINUX_SRC)/.config: $(SRC_DIR)/$(LINUX_TARBALL)
-	( cd $(SRC_DIR) && bzcat $(LINUX_TARBALL) | tar -xv )
-	( cd $(SRC_DIR)/$(LINUX_DIR) && cat `find $(PATCH_DIR) -name "linux.$(ARCH).*.patch" | sort` | patch -p1 )
+$(SRC_DIR)/patched_kernel-stamp:	$(SRC_DIR)/$(LINUX_TARBALL) \
+					$(LINUX_CONFIG)
+	rm -rf $(LINUX_DIR)
+	cd $(SRC_DIR) && tar xvjf $(LINUX_TARBALL)
+	( cd $(LINUX_DIR) && \
+	    cat `find $(PATCH_DIR) -name "linux.$(ARCH).*.patch" | sort` | \
+	        patch -p1 )
 	cp -a $(LINUX_CONFIG) $(LINUX_SRC)/.config
+	touch $(SRC_DIR)/patched_kernel-stamp
 
+PHONY += get_kernel_source
 get_kernel_source:	$(SRC_DIR)/$(LINUX_TARBALL)
 
 $(SRC_DIR)/$(LINUX_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
-	( [  -a /usr/src/$(LINUX_TARBALL) ] && \
-	  ln -s /usr/src/$(LINUX_TARBALL) $(SRC_DIR) ) || \
-	( [ -d $(LINUX_DIR) ] && tar -c $(LINUX_DIR) | \
-	  gzip -9 > $(SRC_DIR)/$(LINUX_TARBALL) ) || \
-	( cd $(SRC_DIR) && $(WGET) $(LINUX_URL) )
+	$(GETSOURCE) $(LINUX_URL) $(SRC_DIR)
 
-modules:	kernel $(TOPDIR)/tmp/kernel_modules
+PHONY += modules
+modules:	$(SRC_DIR)/modules_build-stamp
 
-$(TOPDIR)/tmp/kernel_modules:
+$(SRC_DIR)/modules_build-stamp:	$(SRC_DIR)/patched_kernel-stamp
 	rm -fr $(TOPDIR)/tmp/kernel_modules
-	$(MAKE) -C $(LINUX_SRC) INSTALL_MOD_PATH="$(TOPDIR)/tmp/kernel_modules" modules modules_install
+	$(MAKE) -C $(LINUX_SRC) oldconfig dep modules
+	touch $(SRC_DIR)/modules_build-stamp
 
+PHONY += kernel_clean
 kernel_clean:
 	rm -rf $(SRC_DIR)/$(LINUX_DIR)
+	rm -f $(SRC_DIR)/patched_kernel-stamp
+	rm -f $(SRC_DIR)/modules_build-stamp

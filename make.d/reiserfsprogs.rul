@@ -5,15 +5,20 @@ REISERFSPROGS_URL := http://ftp.namesys.com/pub/reiserfsprogs/$(REISERFSPROGS_TA
 REISERFSPROGS_PATCH := $(PATCH_DIR)/reiserfsprogs.patch
 MKREISERFS_BINARY := $(SRC_DIR)/$(REISERFSPROGS_DIR)/mkreiserfs/mkreiserfs
 
+ALL_SOURCE += $(SRC_DIR)/$(REISERFSPROGS_TARBALL)
+
+PHONY += install_reiserfsprogs
 install_reiserfsprogs:	reiserfsprogs
 	mkdir -p $(TFTP_BIN_DEST)
 	$(SI_INSTALL) -m 755 \
 	  $(SRC_DIR)/$(REISERFSPROGS_DIR)/mkreiserfs/mkreiserfs $(TFTP_BIN_DEST)
 
+PHONY += install_standard_reiserfsprogs
 install_standard_reiserfsprogs:	reiserfsprogs
 	$(SI_INSTALL) -m 755 \
 	  $(SRC_DIR)/$(REISERFSPROGS_DIR)/mkreiserfs/mkreiserfs $(DESTDIR)
 
+PHONY += reiserfsprogs
 reiserfsprogs:	$(MKREISERFS_BINARY)
 
 $(MKREISERFS_BINARY):	$(SRC_DIR)/$(REISERFSPROGS_TARBALL)
@@ -28,11 +33,8 @@ $(MKREISERFS_BINARY):	$(SRC_DIR)/$(REISERFSPROGS_TARBALL)
 
 $(SRC_DIR)/$(REISERFSPROGS_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
-	( [  -a /usr/src/$(REISERFSPROGS_TARBALL) ] && \
-	  ln -s /usr/src/$(REISERFSPROGS_TARBALL) $(SRC_DIR) ) || \
-	( [ -d $(REISERFSPROGS_DIR) ] && tar -c $(REISERFSPROGS_DIR) | \
-	  gzip -9 > $(SRC_DIR)/$(REISERFSPROGS_TARBALL) ) || \
-	( cd $(SRC_DIR) && $(WGET) $(REISERFSPROGS_URL) )
+	$(GETSOURCE) $(REISERFSPROGS_URL) $(SRC_DIR)
 
+PHONY += reiserfsprogs_clean
 reiserfsprogs_clean:
 	rm -rf $(SRC_DIR)/$(REISERFSPROGS_DIR)

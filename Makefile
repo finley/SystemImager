@@ -82,12 +82,13 @@ DESTDIR =
 VERSION = $(shell cat VERSION)
 FLAVOR = $(shell cat FLAVOR)
 
-TOPDIR  := $(shell /bin/pwd)
+TOPDIR  := $(PWD)
 
 # RELEASE_DOCS are toplevel files that should be included with all posted
 # tarballs, but aren't installed onto the destination machine by default
 RELEASE_DOCS = CHANGE.LOG COPYING CREDITS ERRATA README VERSION
 
+# should we be messing with the user's PATH? -dannf
 PATH = /sbin:/bin:/usr/sbin:/usr/bin:/usr/bin/X11:/usr/local/sbin:/usr/local/bin
 ARCH = $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/)
 # Follows is a set of arch manipulations to distinguish between ppc types
@@ -98,8 +99,6 @@ endif
 endif
 
 SUDO = $(shell if [ `id -u` != 0 ]; then `which sudo`; fi)
-
-TEMP_DIR = systemimager.initrd.temp.dir
 
 MANUAL_DIR = $(TOPDIR)/doc/manual_source
 MANPAGE_DIR = $(TOPDIR)/doc/man
@@ -120,11 +119,11 @@ MAN8 = $(USR)/share/man/man8
 LIB_DEST = $(USR)/lib/systemimager/perl/SystemImager
 LOG_DIR = $(DESTDIR)/var/log/systemimager
 
+INITRD_DIR = $(TOPDIR)/initrd_source
+
 INITSCRIPT_NAME = systemimager
 
-TFTP_BIN         := raidstart mkraid mkreiserfs mkfs.jfs prepareclient updateclient
-TFTP_ROOT	  = $(USR)/share/systemimager/boot
-TFTP_BIN_DEST     = $(TFTP_ROOT)/$(ARCH)
+BOOT_BIN_DEST     = $(USR)/share/systemimager/boot/$(ARCH)
 
 PXE_CONF_SRC      = etc/pxelinux.cfg
 PXE_CONF_DEST     = $(ETC)/systemimager/pxelinux.cfg
@@ -145,28 +144,31 @@ RSYNC_STUB_DIR = $(ETC)/systemimager/rsync_stubs
 
 CHECK_FLOPPY_SIZE = expr \`du -b $(INITRD_DIR)/initrd.gz | cut -f 1\` + \`du -b $(LINUX_IMAGE) | cut -f 1\`
 
-BOEL_BINARIES_TARBALL = $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION).tar.gz
-INITRD_DIR := initrd_source
+BOOT_TARBALL_DIR = $(TOPDIR)/tmp/systemimager-boot-$(ARCH)-$(FLAVOR)-$(VERSION)
+BOEL_BINARIES_DIR = $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)
+BOEL_BINARIES_TARBALL = $(BOEL_BINARIES_DIR).tar.gz
 
 SI_INSTALL = $(TOPDIR)/si_install --si-prefix=$(PREFIX)
-WGET = wget --passive-ftp
+GETSOURCE = $(TOPDIR)/tools/getsource
 
 # build everything, install nothing
-all:	boel_binaries_tarball kernel initrd.gz docs manpages
+PHONY += all
+all:	$(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.gz docs manpages
 
 # Now include the other targets
 # This has to be right after all to make all the default target
-include make.d/*.rul
-
+include $(TOPDIR)/make.d/*.rul $(INITRD_DIR)/initrd.rul
 
 # a complete server install
-install_server_all:	install_server install_common install_binaries boot_tarball
-	make install_boot_tarball
+PHONY += install_server_all
+install_server_all:	install_server install_common install_binaries
 
 # a complete client install
+PHONY += install_client_all
 install_client_all:	install_client install_common
 
 # install server-only architecture independent files
+PHONY += install_server
 install_server:	install_server_man install_configs install_server_libs
 	$(SI_INSTALL) -d $(BIN)
 	$(SI_INSTALL) -d $(SBIN)
@@ -175,13 +177,13 @@ install_server:	install_server_man install_configs install_server_libs
 	$(foreach binary, $(SBINARIES), \
 		$(SI_INSTALL) -m 755 $(BINARY_SRC)/$(binary) $(SBIN);)
 	$(SI_INSTALL) -d -m 755 $(LOG_DIR)
-	$(SI_INSTALL) -d -m 755 $(TFTP_BIN_DEST)
+	$(SI_INSTALL) -d -m 755 $(BOOT_BIN_DEST)
 	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_SCRIPT_DIR)
 	$(SI_INSTALL) -d -m 755 $(OVERRIDES_DIR)
 	$(SI_INSTALL) -m 644 $(OVERRIDES_README) $(OVERRIDES_DIR)
 
 # no need to do this on non-i386, though this should be generalized
-# somewhere else in 2.3
+# somewhere else
 ifeq ($(ARCH),i386)
 	$(SI_INSTALL) -d -m 755 $(PXE_CONF_DEST)
 	$(SI_INSTALL) -m 644 --backup $(PXE_CONF_SRC)/message.txt \
@@ -194,13 +196,14 @@ ifeq ($(ARCH),i386)
 		$(PXE_CONF_DEST)/default
 endif
 
-	$(SI_INSTALL) -m 755 $(BINARY_SRC)/prepareclient $(TFTP_BIN_DEST)
-	$(SI_INSTALL) -m 755 $(BINARY_SRC)/updateclient $(TFTP_BIN_DEST)
+	$(SI_INSTALL) -m 755 $(BINARY_SRC)/prepareclient $(BOOT_BIN_DEST)
+	$(SI_INSTALL) -m 755 $(BINARY_SRC)/updateclient $(BOOT_BIN_DEST)
 	$(SI_INSTALL) -d -m 755 $(IMAGEDEST)
 	$(SI_INSTALL) -m 644 $(WARNING_FILES) $(IMAGEDEST)
 	cp -a $(IMAGEDEST)/README $(IMAGEDEST)/DO_NOT_TOUCH_THESE_DIRECTORIES
 
 # install client-only files
+PHONY += install_client
 install_client: install_client_man install_client_libs
 	mkdir -p $(ETC)/systemimager
 	$(SI_INSTALL) -b -m 644 etc/updateclient.local.exclude \
@@ -213,29 +216,34 @@ install_client: install_client_man install_client_libs
 		$(SI_INSTALL) -m 755 $(BINARY_SRC)/$(binary) $(SBIN);)
 
 # install files common to both the server and client
+PHONY += install_common
 install_common:	install_common_man install_common_libs
 	mkdir -p $(BIN)
 	$(foreach binary, $(COMMON_BINARIES), \
 		$(SI_INSTALL) -m 755 $(BINARY_SRC)/$(binary) $(BIN);)
 
 # install server-only libraries
+PHONY += install_server_libs
 install_server_libs:
 	mkdir -p $(LIB_DEST)
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/Server.pm $(LIB_DEST)
 
 # install client-only libraries
+PHONY += install_client_libs
 install_client_libs:
 	mkdir -p $(LIB_DEST)
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/Client.pm $(LIB_DEST)
 
 # install common libraries
+PHONY += install_common_libs
 install_common_libs:
 	mkdir -p $(LIB_DEST)
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/Common.pm $(LIB_DEST)
 
 # checks the sized of the i386 kernel and initrd to make sure they'll fit 
 # on an autoinstall diskette
-check_floppy_size:	kernel initrd.gz
+PHONY += check_floppy_size
+check_floppy_size:	$(LINUX_IMAGE) $(INITRD_DIR)/initrd.gz
 ifeq ($(ARCH), i386)
 	@### see if the kernel and ramdisk are larger than the size of a 1.44MB
 	@### floppy image, minus about 10k for syslinux stuff
@@ -250,33 +258,8 @@ ifeq ($(ARCH), i386)
 	@echo " - ok, that should fit on a floppy"
 endif
 
-########## BEGIN initrd ##########
-# install the autoinstall ramdisk - the initial ramdisk used by autoinstall
-# clients when beginning an autoinstall
-install_initrd:
-	$(MAKE) initrd.gz
-	mkdir -p $(TFTP_BIN_DEST)
-	$(SI_INSTALL) -m 644 $(INITRD_DIR)/initrd.gz $(TFTP_BIN_DEST)/initrd-$(FLAVOR)-$(VERSION).gz
-
-# install the autoinstall ramdisk - the initial ramdisk used by autoinstall
-# clients when beginning an autoinstall.
-# This rule is for installing into the boot tarball.
-install_standard_initrd.gz:
-	$(MAKE) initrd.gz
-	$(SI_INSTALL) -m 644 $(INITRD_DIR)/initrd.gz \
-	  $(DESTDIR)/initrd-$(FLAVOR)-$(VERSION).gz
-
-
-### BEGIN build the autoinstall ramdisk ###
-initrd.gz:	$(LINUX_SRC)/.config $(INITRD_DIR)/initrd.gz
-
-$(INITRD_DIR)/initrd.gz:
-	make -C $(INITRD_DIR) initrd.gz
-
-### END build the autoinstall ramdisk ###
-
-
 # install the initscript & config files for the server
+PHONY += install_configs
 install_configs:
 	$(SI_INSTALL) -d $(ETC)/systemimager
 	$(SI_INSTALL) -m 644 etc/systemimager.conf \
@@ -298,25 +281,29 @@ install_configs:
 
 ########## BEGIN man pages ##########
 # build all of the manpages
+PHONY += manpages
 manpages:
 	$(MAKE) -C $(MANPAGE_DIR)
 
 # install the manpages for the server
+PHONY += install_server_man
 install_server_man:
-	cd $(MANPAGE_DIR) && $(MAKE) install_server_man $@
+	cd $(MANPAGE_DIR) && $(MAKE) install_server_man PREFIX=$(PREFIX) $@
 
 # install the manpages for the client
+PHONY += install_client_man
 install_client_man:
-	cd $(MANPAGE_DIR) && $(MAKE) install_client_man $@
+	cd $(MANPAGE_DIR) && $(MAKE) install_client_man PREFIX=$(PREFIX) $@
 
 # install manpages common to the server and client
+PHONY += install_common_man
 install_common_man:
-	cd $(MANPAGE_DIR) && $(MAKE) install_common_man $@
+	cd $(MANPAGE_DIR) && $(MAKE) install_common_man PREFIX=$(PREFIX) $@
 
 ########## END man pages ##########
 
-
 # installs the manual and some examples
+PHONY += install_docs
 install_docs: docs
 	mkdir -p $(DOC)
 	cp -a $(MANUAL_DIR)/html $(DOC)
@@ -326,46 +313,62 @@ install_docs: docs
 	$(SI_INSTALL) -m 644 etc/init.d/rsync $(DOC)/examples
 
 # builds the manual from SGML source
+PHONY += docs
 docs:
 	$(MAKE) -C $(MANUAL_DIR) html ps pdf
 
 # pre-download the source to other packages that are needed by 
 # the build system
-get_source:	$(SRC_DIR)/$(LINUX_TARBALL) $(SRC_DIR)/$(RAIDTOOLS_TARBALL) $(SRC_DIR)/$(REISERFSPROGS_TARBALL) $(SRC_DIR)/$(BC_TARBALL) $(SRC_DIR)/$(JFSUTILS_TARBALL)
+PHONY += get_source
+get_source:	$(ALL_SOURCE)
 
+PHONY += install
 install: 
 	@echo ''
 	@echo 'Read README for installation details.'
 	@echo ''
+
+PHONY += install_binaries
+install_binaries:	install_kernel install_initrd.gz \
+			install_boel_binaries_tarball
 
 ### BEGIN autoinstall binaries tarball ###
 # Perhaps there could be problems here in building multiple arch's from
 # a single source directory, but we'll deal with that later...  Perhaps use
 # $(TOPDIR)/tmp/$(ARCH)/ instead of just $(TOPDIR)/tmp/. -BEF-
 #
-# XXX can't get this to do a "make: Nothing to be done for `boel_binaries_tarball'." -BEF-
-#
+
+PHONY += install_boel_binaries_tarball
+install_boel_binaries_tarball:	$(BOEL_BINARIES_TARBALL)
+	$(SI_INSTALL) -m 644 $(BOEL_BINARIES_TARBALL) \
+	    $(BOOT_BIN_DEST)/$(shell basename $(BOEL_BINARIES_DIR))
+
+PHONY += boel_binaries_tarball
 boel_binaries_tarball:	$(BOEL_BINARIES_TARBALL)
 
-$(BOEL_BINARIES_TARBALL):	discover dosfstools e2fsprogs parted raidtools reiserfsprogs modules bc jfsutils
+$(BOEL_BINARIES_TARBALL):	$(DISCOVER_BINARY) $(DISCOVER_DATA_FILES) \
+				$(MKDOSFS_BINARY) $(MKE2FS_BINARY) \
+				$(TUNE2FS_BINARY) $(PARTED_BINARY) \
+				$(MKJFS_BINARY) $(RAIDTOOLS_BINARIES) \
+				$(MKREISERFS_BINARY) $(BC_BINARY) \
+				$(SRC_DIR)/modules_build-stamp
 	#
 	# Put binaries in the boel_binaries_tarball...
 	#
-	rm -fr $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)
-	mkdir -m 755 -p $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/bin
-	mkdir -m 755 -p $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/sbin
-	install -m 755 $(BC_BINARY) $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/bin/
-	install -m 755 $(DISCOVER_BINARY) $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/sbin/
-	install -m 755 $(MKDOSFS_BINARY) $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/sbin/
-	install -m 755 $(MKE2FS_BINARY) $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/sbin/
-	install -m 755 $(TUNE2FS_BINARY) $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/sbin/
-	install -m 755 $(PARTED_BINARY) $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/sbin/
-	install -m 755 $(MKRAID_BINARY) $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/sbin/
-	install -m 755 $(RAIDSTART_BINARY) $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/sbin/
-	( cd $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/sbin/ && ln -f raidstart raidstop )
-	install -m 755 $(MKREISERFS_BINARY) $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/sbin/
+	rm -fr $(BOEL_BINARIES_DIR)
+	mkdir -m 755 -p $(BOEL_BINARIES_DIR)/bin
+	mkdir -m 755 -p $(BOEL_BINARIES_DIR)/sbin
+	install -m 755 $(BC_BINARY) $(BOEL_BINARIES_DIR)/bin/
+	install -m 755 $(DISCOVER_BINARY) $(BOEL_BINARIES_DIR)/sbin/
+	install -m 755 $(MKDOSFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
+	install -m 755 $(MKE2FS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
+	install -m 755 $(TUNE2FS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
+	install -m 755 $(PARTED_BINARY) $(BOEL_BINARIES_DIR)/sbin/
+	install -m 755 $(RAIDTOOLS_BINARIES) $(BOEL_BINARIES_DIR)/sbin/
+	cd $(BOEL_BINARIES_DIR)/sbin/ && ln -f raidstart raidstop
+	install -m 755 $(MKREISERFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
 
-	install -m 755 $(MKJFS_BINARY) $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/sbin/
+	install -m 755 $(MKJFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
 	#
 	# Put libraries in the boel_binaries_tarball...
 	#
@@ -374,81 +377,87 @@ $(BOEL_BINARIES_TARBALL):	discover dosfstools e2fsprogs parted raidtools reiserf
 	# This should be done for any binary that causes a mklibs.sh message 
 	# like this: "objcopy: : No such file or directory". -BEF-
 	#
-	mkdir -m 755 -p $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/lib
+	mkdir -m 755 -p $(BOEL_BINARIES_DIR)/lib
 	#
 	# libparted
 	rsync -av $(SRC_DIR)/$(PARTED_DIR)/libparted/.libs/libparted-*.so* \
-		$(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/lib/
+		$(BOEL_BINARIES_DIR)/lib/
 	#
 	# libdiscover
 	rsync -av $(SRC_DIR)/$(DISCOVER_DIR)/lib/.libs/libdiscover.so* \
-		$(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/lib/
-	strip $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/lib/*
+		$(BOEL_BINARIES_DIR)/lib/
+	strip $(BOEL_BINARIES_DIR)/lib/*
 	#
 	#
 	# Copy over miscellaneous other files...
 	#
-	mkdir -m 755 -p $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/usr/share/discover
-	install -m 644 $(DISCOVER_DATA_FILES) $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/usr/share/discover
+	mkdir -m 755 -p $(BOEL_BINARIES_DIR)/usr/share/discover
+	install -m 644 $(DISCOVER_DATA_FILES) $(BOEL_BINARIES_DIR)/usr/share/discover
 	#
 	# Use the mklibs.sh script from Debian to find and copy libraries and 
 	# any soft links.  Note: This does not require PIC libraries -- it will
 	# copy standard libraries if it can't find a PIC equivalent.  -BEF-
 	#
-	( cd $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION) && $(TOPDIR)/initrd_source/mklibs.sh -v -d lib sbin/* lib/* )
+	( cd $(BOEL_BINARIES_DIR) && $(TOPDIR)/initrd_source/mklibs.sh -v -d lib sbin/* lib/* )
 	#
 	#
 	# Strip to the bones. -BEF-
 	#
-	strip $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/bin/*
-	strip $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)/sbin/*
+	strip $(BOEL_BINARIES_DIR)/bin/*
+	strip $(BOEL_BINARIES_DIR)/sbin/*
 	#
 	#
-	# Copy over kernel modules. -BEF-
+	# install kernel modules. -BEF-
 	#
-	rsync -av $(TOPDIR)/tmp/kernel_modules/lib $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)
+	$(MAKE) -C $(LINUX_SRC) modules_install \
+	    INSTALL_MOD_PATH="$(BOEL_BINARIES_DIR)"
 	#
 	# Tar it up, baby! -BEF-
-	( cd $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION) && tar -cv * | gzip -9 > $(BOEL_BINARIES_TARBALL) )
+	( cd $(BOEL_BINARIES_DIR) && tar -cv * | gzip -9 > $(BOEL_BINARIES_TARBALL) )
 	# Note: This tarball should be installed to the "boot/$(ARCH)/" directory.
 
 ### END autoinstall binaries tarball ###
 
 ### BEGIN boot tarball ###
-install_boot_tarball:	boot_tarball
-	install_siboot $(TOPDIR)/tmp/systemimager-boot-$(ARCH)-$(FLAVOR)-$(VERSION).tar.bz2
+PHONY += install_boot_tarball
+install_boot_tarball:	$(BOOT_TARBALL_DIR).tar.bz2
+	install_siboot $(BOOT_TARBALL_DIR).tar.bz2
 
-boot_tarball:	$(TOPDIR)/tmp/systemimager-boot-$(ARCH)-$(FLAVOR)-$(VERSION).tar.bz2
+PHONY += boot_tarball
+boot_tarball:	$(BOOT_TARBALL_DIR).tar.bz2
 
-$(TOPDIR)/tmp/systemimager-boot-$(ARCH)-$(FLAVOR)-$(VERSION).tar.bz2:	DESTDIR := $(TOPDIR)/tmp/systemimager-boot-$(ARCH)-$(FLAVOR)-$(VERSION)
-$(TOPDIR)/tmp/systemimager-boot-$(ARCH)-$(FLAVOR)-$(VERSION).tar.bz2:	kernel initrd.gz boel_binaries_tarball
-	mkdir -p $(DESTDIR)
-	make DESTDIR=$(DESTDIR) install_standard_kernel  
-	make DESTDIR=$(DESTDIR) install_standard_initrd.gz
-	cp $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION).tar.gz $(DESTDIR)
-	echo "systemimager-boot-$(ARCH)-$(FLAVOR)-$(VERSION)" > $(DESTDIR)/README-$(FLAVOR)-$(VERSION)
-	cd tmp && tar -c systemimager-boot-$(ARCH)-$(FLAVOR)-$(VERSION) | \
-	  bzip2 > systemimager-boot-$(ARCH)-$(FLAVOR)-$(VERSION).tar.bz2
+$(BOOT_TARBALL_DIR).tar.bz2:	$(LINUX_IMAGE) $(INITRD_DIR)/initrd.gz \
+				$(BOEL_BINARIES_TARBALL)
+	mkdir -p $(BOOT_TARBALL_DIR)
+	$(MAKE) BOOT_BIN_DEST=$(BOOT_TARBALL_DIR) install_kernel  
+	$(MAKE) BOOT_BIN_DEST=$(BOOT_TARBALL_DIR) install_initrd.gz
+	$(MAKE) BOOT_BIN_DEST=$(BOOT_TARBALL_DIR) install_boel_binaries_tarball
+	echo "$(shell basename $(BOOT_TARBALL_DIR))" > \
+	    $(BOOT_TARBALL_DIR)/README-$(FLAVOR)-$(VERSION)
+	cd $(shell dirname $(BOOT_TARBALL_DIR)) && \
+	    tar -c $(shell basename $(BOOT_TARBALL_DIR)) | \
+	    bzip2 > $(shell basename $(BOOT_TARBALL_DIR)).tar.bz2
 	@echo
-	@echo "systemimager-boot-$(ARCH)-$(FLAVOR)-$(VERSION).tar.bz2 created in $(TOPDIR)/tmp"
+	@echo "$(BOOT_TARBALL_DIR).tar.bz2 build complete."
 	@echo
 
 ### END boot tarball ###
-
-
+PHONY += client_tarball
 client_tarball:	$(TOPDIR)/tmp/systemimager-client-$(VERSION).tar.bz2
 
 $(TOPDIR)/tmp/systemimager-client-$(VERSION).tar.bz2:
 	mkdir -p $(TOPDIR)/tmp/systemimager-client-$(VERSION)
 	$(MAKE) install_client_all DESTDIR=$(TOPDIR)/tmp/systemimager-client-$(VERSION)
 	$(MAKE) install_docs DESTDIR=$(TOPDIR)/tmp/systemimager-client-$(VERSION)
-	cp $(RELEASE_DOCS) installclient install_lib $(TOPDIR)/tmp/systemimager-client-$(VERSION)
+	$(SI_INSTALL) $(RELEASE_DOCS) installclient install_lib \
+	    $(TOPDIR)/tmp/systemimager-client-$(VERSION)
 	cd tmp && tar -c systemimager-client-$(VERSION) | bzip2 > \
 		systemimager-client-$(VERSION).tar.bz2
 	@echo
 	@echo "client tarball has been created in $(TOPDIR)/tmp"
 	@echo
 
+PHONY += server_tarball
 server_tarball:	$(TOPDIR)/tmp/systemimager-server-$(VERSION).tar.bz2
 
 $(TOPDIR)/tmp/systemimager-server-$(VERSION).tar.bz2:
@@ -462,6 +471,7 @@ $(TOPDIR)/tmp/systemimager-server-$(VERSION).tar.bz2:
 	@echo "server tarball has been created in $(TOPDIR)/tmp"
 	@echo
 
+PHONY += source_tarball
 source_tarball:	$(TOPDIR)/tmp/systemimager-source-$(VERSION).tar.bz2
 
 $(TOPDIR)/tmp/systemimager-source-$(VERSION).tar.bz2:
@@ -470,21 +480,24 @@ $(TOPDIR)/tmp/systemimager-source-$(VERSION).tar.bz2:
 	  -exec cp -a {} tmp/systemimager-source-$(VERSION) \;
 	rm -rf `find tmp/systemimager-source-$(VERSION) -name CVS \
 	         -type d -printf "%p "`
-	$(MAKE) -C tmp/systemimager-source-$(VERSION) distclean
-	cd tmp && tar -c systemimager-source-$(VERSION) | bzip2 > \
+	$(MAKE) -C $(TOPDIR)/tmp/systemimager-source-$(VERSION) distclean
+	cd $(TOPDIR)/tmp && tar -c systemimager-source-$(VERSION) | bzip2 > \
 	  systemimager-source-$(VERSION).tar.bz2
 	@echo
 	@echo "server tarball has been created in $(TOPDIR)/tmp"
 	@echo
 
 # create user-distributable tarballs for the server and the client
+PHONY += tarballs
 tarballs:	source_tarball client_tarball server_tarball boot_tarball
 	@ echo -e "\ntarballs have been created in $(TOPDIR)/tmp\n"
 
+PHONY += debs
 debs:	all
 	dpkg-buildpackage -r$(SUDO)
 
 # create a source tarball useable for SRPM and RPM creation
+PHONY += srpm_tarball
 srpm_tarball:  $(TOPDIR)/tmp/systemimager-$(VERSION).tar.gz
 
 $(TOPDIR)/tmp/systemimager-$(VERSION).tar.gz:
@@ -500,34 +513,33 @@ $(TOPDIR)/tmp/systemimager-$(VERSION).tar.gz:
 	@echo
 
 # make the srpms for systemimager
+PHONY += srpm
 srpm: srpm_tarball
 	rpm -ts tmp/systemimager-$(VERSION).tar.gz
 
 
 # make the rpms for systemimager
+PHONY += rpm
 rpm: srpm_tarball
 	rpm -tb tmp/systemimager-$(VERSION).tar.gz
 
-
 # removes object files, docs, editor backup files, etc.
-clean:	$(subst .rul,_clean,$(shell cd make.d && ls *.rul))
+PHONY += clean
+clean:	$(subst .rul,_clean,$(shell cd $(TOPDIR)/make.d && ls *.rul)) initrd_clean
 	-$(MAKE) -C $(MANPAGE_DIR) clean
 	-$(MAKE) -C $(MANUAL_DIR) clean
-	-$(MAKE) -C $(INITRD_DIR) clean
 	-rm $(MANUAL_DIR)/images
-	# where the tarballs are built
+
+	## where the tarballs are built
 	-$(SUDO) rm -rf tmp
-	-rm *stamp
+
+	## editor backups
 	-find . -name "*~" -exec rm -f {} \;
 	-find . -name "#*#" -exec rm -f {} \;
 
-	# kill all source directories from external source
-	-find $(SRC_DIR) -mindepth 1 -maxdepth 1 -type d -exec rm -rf {} \;
-
 # same as clean, but also removes downloaded source, stamp files, etc.
-distclean:	clean
-	-rm -rf $(SRC_DIR)
-	-rm -rf tmp
-	-$(MAKE) -C $(INITRD_DIR) distclean
+PHONY += distclean
+distclean:	clean initrd_distclean
+	-rm -rf $(SRC_DIR) $(INITRD_SRC_DIR)
 
-.PHONY:	all install_server_all install_server install_client_all install_client install_common install_server_libs install_client_libs install_common_libs install_binaries check_floppy_size install_raidtools raidtools install_reiserfsprogs reiserfsprogs install_jfsutils jfsutils install_kernel kernel patched_kernel install_initrd initrd install_configs manpages install_server_man install_client_man install_common_man install_docs docs get_source install boot_tarball client_tarball server_tarball source_tarball tarballs debs srpm_tarball srpm rpm clean distclean boel_binaries_tarball discover dosfstools e2fsprogs parted modules bc
+.PHONY:	$(PHONY)

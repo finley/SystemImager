@@ -4,7 +4,10 @@ DOSFSTOOLS_TARBALL := dosfstools-$(DOSFSTOOLS_VERSION).src.tar.gz
 DOSFSTOOLS_URL := http://systemimager.org/pub/dosfstools/$(DOSFSTOOLS_TARBALL)
 MKDOSFS_BINARY := $(SRC_DIR)/$(DOSFSTOOLS_DIR)/mkdosfs/mkdosfs
 
+ALL_SOURCE += $(SRC_DIR)/$(DOSFSTOOLS_TARBALL)
+
 # build  dosfstools binaries
+PHONY += dosfstools
 dosfstools:	$(MKDOSFS_BINARY)
 
 $(MKDOSFS_BINARY):	$(SRC_DIR)/$(DOSFSTOOLS_TARBALL)
@@ -14,11 +17,8 @@ $(MKDOSFS_BINARY):	$(SRC_DIR)/$(DOSFSTOOLS_TARBALL)
 # download the dosfstools tarball
 $(SRC_DIR)/$(DOSFSTOOLS_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
-	( [  -a /usr/src/$(DOSFSTOOLS_TARBALL) ] && \
-	  ln -s /usr/src/$(DOSFSTOOLS_TARBALL) $(SRC_DIR) ) || \
-	( [ -d $(DOSFSTOOLS_DIR) ] && tar -c $(DOSFSTOOLS_DIR) | \
-	  gzip -9 > $(SRC_DIR)/$(DOSFSTOOLS_TARBALL) ) || \
-	( cd $(SRC_DIR) && $(WGET) $(DOSFSTOOLS_URL) )
+	$(GETSOURCE) $(DOSFSTOOLS_URL) $(SRC_DIR)
 
+PHONY += dosfstools_clean
 dosfstools_clean:
 	rm -rf $(SRC_DIR)/$(DOSFSTOOLS_DIR)

@@ -6,11 +6,14 @@ E2FSPROGS_PATCH := $(PATCH_DIR)/e2fsprogs.patch
 MKE2FS_BINARY := $(SRC_DIR)/$(E2FSPROGS_DIR)/misc/mke2fs 
 TUNE2FS_BINARY := $(SRC_DIR)/$(E2FSPROGS_DIR)/misc/tune2fs 
 
+ALL_SOURCE += $(SRC_DIR)/$(E2FSPROGS_TARBALL)
+
 ifeq ($(ARCH),ppc64-iSeries) 
 	E2FSPROGS_CONFIGURE = --host=ppc-unknown-linux
 endif
 
 # build  e2fsprogs binaries
+PHONY += e2fsprogs
 e2fsprogs:	$(MKE2FS_BINARY)
 
 $(MKE2FS_BINARY):	$(SRC_DIR)/$(E2FSPROGS_TARBALL)
@@ -21,11 +24,8 @@ $(MKE2FS_BINARY):	$(SRC_DIR)/$(E2FSPROGS_TARBALL)
 # download the e2fsprogs tarball
 $(SRC_DIR)/$(E2FSPROGS_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
-	( [  -a /usr/src/$(E2FSPROGS_TARBALL) ] && \
-	  ln -s /usr/src/$(E2FSPROGS_TARBALL) $(SRC_DIR) ) || \
-	( [ -d $(E2FSPROGS_DIR) ] && tar -c $(E2FSPROGS_DIR) | \
-	  gzip -9 > $(SRC_DIR)/$(E2FSPROGS_TARBALL) ) || \
-	( cd $(SRC_DIR) && $(WGET) $(E2FSPROGS_URL) )
+	$(GETSOURCE) $(E2FSPROGS_URL) $(SRC_DIR)
 
+PHONY += e2fsprogs_clean
 e2fsprogs_clean:
 	rm -rf $(SRC_DIR)/$(E2FSPROGS_DIR)
