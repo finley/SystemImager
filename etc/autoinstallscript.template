@@ -121,15 +121,17 @@ if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
     if [ "${TMPFS_STAGING}" = "yes" ]; then 
 
         # Deposit cast into tmpfs
-        DIR=/tmp/tmpfs_staging
+        TMPFS_STAGING_DIR=/tmp/tmpfs_staging
+        DIR=$TMPFS_STAGING_DIR
         echo
         echo "TMPFS_STAGING=${TMPFS_STAGING} -- Staging in ${DIR}"
         mkdir -p ${DIR}
         RETRY=7
         flamethrower_client
 
-        # Move from staging in tmpfs to disk
-        rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${DIR}/ /a/
+        # Copy from staging in tmpfs to disk
+        echo "Copying from tmpfs staging directory to disk..."
+	rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --exclude=proc/ --numeric-ids ${TMPFS_STAGING_DIR}/ /a/
     else
         DIR=/a
         RETRY=7
