@@ -1,0 +1,16 @@
+--- pci.lst~	Tue Oct 15 14:39:28 2002
++++ pci.lst	Tue Oct 15 14:59:03 2002
+@@ -66,7 +66,13 @@
+ 	10000012	scsi	sym53c8xx	53c895a
+ 	10000020	scsi	sym53c8xx	53c1010 Ultra3 SCSI Adapter
+ 	10000021	scsi	sym53c8xx	53c1010 66MHz Ultra3 SCSI Adapter
++	10000030	scsi	mptscsih	LSI Logic|53c1030
+ 	1000008f	scsi	ncr53c8xx	53c875J
++	10000621	scsi	mptscsih	LSI Logic|LSIFC909
++	10000622	scsi	mptscsih	LSI Logic|LSIFC929
++	10000624	scsi	mptscsih	LSI Logic|LSIFC919
++	10000626	scsi	mptscsih	LSI Logic|LSIFC929X
++	10000628	scsi	mptscsih	LSI Logic|LSIFC919X
+ 	10000701	scsi	yellowfin	83C885
+ 	10000702	scsi	yellowfin	Yellowfin G-NIC gigabit ethernet
+ 	10000901	unknown	unknown	61C102
