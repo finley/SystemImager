@@ -423,8 +423,6 @@ sub main {
     foreach my $module ( @$modules ) {
         my $file = $dir . "/" . $module;
         unless(-e "$file") {
-            print "    touch($file)\n" if($debug);
-            touch($file);
                         # In case this happens to get started *immediately* 
             sleep 1;    # after the cast() function does it's unlink, give 
                         # the child time to die.
@@ -433,10 +431,14 @@ sub main {
     }
 }
 
-# Usage: touch($file);
-sub touch {
+# Usage: record_pid($file, $pid);
+sub record_pid {
+
     my $file = shift;
-    open(FILE, ">$file") or die("Couldn't touch $file!");
+    my $pid = shift;
+
+    open(FILE, ">$file") or die("Couldn't open $file!");
+        print FILE "$pid\n";
     close(FILE);
 }
 
@@ -451,6 +453,8 @@ sub cast {
     # Fork and cast
     my $pid;
     if ($pid = fork) {
+        print "    record_pid($file, $pid)\n" if($debug);
+        record_pid($file, $pid);
     } elsif (defined $pid) { # send the forked child off
 
         setsid or die "Can't start a new session: $!";
@@ -526,28 +530,6 @@ sub daemonize {
     close(FILE);
 
     $SIG{CHLD} = \&REAPER;
-}
-
-# Usage: fork_caster($module);
-sub fork_caster {
-    my $pid;
-    if ($pid = fork) {
-    } elsif (defined $pid) { # send the forked child off
-    
-        setsid or die "Can't start a new session: $!";
-    
-        my $file = $pid_file;
-        local *FILE;
-        open(FILE,">$file") or die ("FATAL: Can't open file: $file\n");
-            print FILE "$$\n";
-        close(FILE);
-    
-        # Subroutine(s) here
-        main();
-    
-    } else {
-            die "Can't fork: $!\n";
-    }
 }
 
 #
