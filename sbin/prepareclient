@@ -421,13 +421,12 @@ sub save_filesystem_information {
             # Keep track of comments too. -BEF-
             if ((/^[[:space:]]*#/) or (/^[[:space:]]*$/)) {
 
-                # Turn the characters below into their ascii octals to keep the
-                # parser from tripping on them.  Then we use "echo -e \octal" to
-                # re-create the characters in our output. -BEF-
+                # Turn the characters below into their XML entities to keep the
+                # parser from tripping on them.  -BEF-
                 #
-                s/</\\074/g;
-                s/>/\\076/g;
-                s/\042/\\042/g;     # " is \042
+                s/</&lt;/g;
+                s/>/&gt;/g;
+                s/\042/&quot;/g;     # " is \042
 
                 print FH_OUT qq(  <fsinfo  line="$line" comment="$_");
 

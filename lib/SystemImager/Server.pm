@@ -1070,8 +1070,10 @@ sub _write_out_new_fstab_file {
 
     my $config = XMLin($file, keyattr => { fsinfo => "+line" }, forcearray => 1 );
 
-    print MASTER_SCRIPT "### BEGIN generate new fstab file from autoinstallscript.conf ###\n";
-    print MASTER_SCRIPT qq(rm -f /a/etc/fstab\n);
+    print MASTER_SCRIPT qq(\n);
+    print MASTER_SCRIPT qq(\n);
+    print MASTER_SCRIPT qq(### BEGIN generate new fstab file from autoinstallscript.conf ###\n);
+    print MASTER_SCRIPT qq(cat <<'EOF' > /a/etc/fstab\n);
 
     foreach my $line (sort numerically (keys ( %{$config->{fsinfo}} ))) {
         my $comment   = $config->{fsinfo}->{$line}->{comment};
@@ -1085,28 +1087,17 @@ sub _write_out_new_fstab_file {
         my $pass      = $config->{fsinfo}->{$line}->{pass};
 
         if ($comment) {
+            print MASTER_SCRIPT qq($comment\n);
 
-            # Turn special characters back into themselves. -BEF-
-            #
-            $_ = $comment;
-            s/\\074/</g;
-            s/\\076/>/g;
-
-            # If there is a " (double quote), then keep it in octal, and use 
-            # echo -e. -BEF-
-            #
-            if (/\\042/) {  
-                print MASTER_SCRIPT qq(echo -e "$_" >> /a/etc/fstab\n);
-            } else {
-                print MASTER_SCRIPT qq(echo "$_" >> /a/etc/fstab\n);
-            }
         } else {
-            print MASTER_SCRIPT qq(echo "$mount_dev\t$mp\t$fs\t$options\t$dump\t$pass" >> /a/etc/fstab\n);
+            print MASTER_SCRIPT qq($mount_dev\t$mp\t$fs\t$options\t$dump\t$pass\n);
+
         }
     }
-    print MASTER_SCRIPT "### END generate new fstab file from autoinstallscript.conf ###\n";
-    print MASTER_SCRIPT "\n";
-    print MASTER_SCRIPT "\n";
+    print MASTER_SCRIPT qq(EOF\n);
+    print MASTER_SCRIPT qq(### END generate new fstab file from autoinstallscript.conf ###\n);
+    print MASTER_SCRIPT qq(\n);
+    print MASTER_SCRIPT qq(\n);
 }
 
 
