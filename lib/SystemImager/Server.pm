@@ -916,6 +916,7 @@ sub _write_out_mkfs_commands {
         # Deal with filesystems to be mounted read only (ro) after install.  We 
         # still need to write to them to install them. ;)
         $options =~ s/\bro\b/rw/g;
+        $options =~ s/\bnoauto\b/defaults/g;
 
         # software RAID devices (/dev/md*)
         if ($real_dev =~ /\/dev\/md/) {
