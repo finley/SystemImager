@@ -410,6 +410,32 @@ image=vmlinux-rh.img
   </qandaentry>
  
   <qandaentry>
+   <question>
+    <para>
+      How can I change the mount options used for the tmpfs filesystem used by
+      BOEL during an autoinstall?
+    </para>
+      </question>
+      <answer>
+        <para>
+	  tmpfs filesystem mount options can be passed to the BOEL kernel as 
+	  append parameters by adding tmpfs_ to the beginning of the mount
+	  option.  For example, adding "tmpfs_size=2G tmpfs_nr_inodes=2000" is
+	  translated by BOEL to the tmpfs mount options 
+	  "size=3000,tmpfs_nr_inodes=2000".  The following tmpfs mount
+	  options are supported: size, nr_inodes, nr_blocks, and mode.  See 
+	  "man mount" for details on these options.
+        </para>
+        <para>
+	  Append parameters can be added with the mkautoinstallcd and 
+	  mkautoinstalldiskette --append option.  For network boot loaders, or
+	  local disk boot loaders, you will need to edit the boot configuration
+	  file to add the appropriate append parameter(s).
+        </para>
+      </answer>
+  </qandaentry>
+ 
+  <qandaentry>
         <question>
       <para>How do I configure my DHCP v3 server?</para>
     </question>
