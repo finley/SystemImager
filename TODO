@@ -141,6 +141,8 @@ o Notes regarding differences between v2 and v3 of dhcpd:
   assign the actual value, which is supposed to be an ip address in
   the case of systemimager 1.4.1 .
   <<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+o Modify rcS to do a ping loop instead of a 35s timeout.  When a ping
+  succeeds, break out of the loop and proceed.
 
 
 
