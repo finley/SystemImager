@@ -1272,14 +1272,19 @@ sub create_autoinstall_script{
     ) = @_;
 
     my $rsync_opts = "-a";
-    # Lose the /etc/mtab file.  It can cause confusion on the autoinstall client, making 
-    # it think that filesystems are mounted when they really aren't.  And because it is
-    # automatically updated on running systems, we don't really need it for anything 
-    # anyway. -BEF-
+    # Truncate the /etc/mtab file.  It can cause confusion on the autoinstall
+    # client, making it think that filesystems are mounted when they really
+    # aren't.  And because it is automatically updated on running systems, we
+    # don't really need it for anything anyway. -BEF-
+    #
+    # We don't just remove it because, at least in the case of RedHat,
+    # /proc/bus/usb will not be mounted and usb will not work the first time
+    # the system boots because it fails to truncate a non-existant /etc/mtab
     #
     my $file="$image_dir/etc/mtab";
     if (-f $file) {
-        unlink "$file" or croak("Can't remove $file!");
+      open(MTAB, ">$file") || die "$program_name: Can't open $file for truncating\n";
+      close(MTAB);
     }
     
     $file = "$auto_install_script_dir/$script_name.master";
