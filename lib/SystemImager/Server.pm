@@ -886,6 +886,9 @@ sub write_lvm_groups_commands {
                 $m++;
                 unless (defined($part->{lvm_group})) { next; }
                 if ($part->{lvm_group} eq $group_name) {
+		    if (defined($part->{num})) {
+		        $m = $part->{num};
+                    }
                     my $part_name = &get_part_name($dev, $m);
                     $part_list = $part_list . " $part_name";
                 }
