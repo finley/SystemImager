@@ -1,5 +1,5 @@
 %define name     va-systemimager
-%define ver      1.0
+%define ver      0.24beta4
 %define rel      1
 %define prefix   /usr
 
@@ -63,7 +63,7 @@ install -m 755 tftpstuff/systemimager/updateclient         $RPM_BUILD_ROOT/usr/s
 rm -rf $RPM_BUILD_ROOT
 
 %post
-cd /usr/doc/systemimager-%{ver}/ && ./afterburner -q -n
+cd /usr/doc/va-systemimager-%{ver}/ && ./afterburner -q -n
 
 %post client
 cd /usr/sbin && ./prepareclient --rpm-install
