@@ -631,6 +631,8 @@ unless ($auto_install_script_conf) {
     $auto_install_script_conf = "${imagedir}/etc/systemimager/autoinstallscript.conf";
 }
 
+SystemImager::Server->validate_auto_install_script_conf( $auto_install_script_conf );
+
 SystemImager::Server->create_autoinstall_script(
 	$script_name,
 	$autoinstall_script_dir,

@@ -3,6 +3,7 @@
 #
 # "SystemImager" 
 #
+#  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
 #  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
 #
 #  $Id$
@@ -206,6 +207,7 @@ if (( -e "$file" ) && ( $update_script eq "no" )) {
 
 SystemImager::Server->validate_ip_assignment_option( $ip_assignment_method );
 SystemImager::Server->validate_post_install_option( $post_install );
+SystemImager::Server->validate_auto_install_script_conf( $auto_install_script_conf );
 
 ### BEGIN create a fresh master autoinstall script ###
 SystemImager::Server->create_autoinstall_script(

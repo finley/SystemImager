@@ -17,11 +17,58 @@ use File::Path;
 
 $VERSION="SYSTEMIMAGER_VERSION_STRING";
 
+################################################################################
+#
+# Subroutines in this module include:
+#
+#    _add_proc_to_list_of_filesystems_to_mount_on_autoinstall_client 
+#
+#    _get_array_of_disks 
+#
+#    _imageexists 
+#
+#    _in_script_add_standard_header_stuff 
+#
+#    _read_partition_info_and_prepare_parted_commands 
+#
+#    _upgrade_partition_schemes_to_generic_style 
+#
+#    _write_out_mkfs_commands 
+#
+#    _write_out_new_fstab_file 
+#
+#    _write_out_umount_commands 
+#
+#    add2rsyncd 
+#
+#    create_autoinstall_script
+#
+#    create_image_stub 
+#
+#    gen_rsyncd_conf 
+#
+#    get_full_path_to_image_from_rsyncd_conf 
+#
+#    get_image_path 
+#
+#    numerically 
+#
+#    remove_image_stub 
+#
+#    validate_auto_install_script_conf 
+#
+#    validate_ip_assignment_option 
+#
+#    validate_post_install_option 
+#
+################################################################################
+
+
 sub create_image_stub {
     my ($class, $stub_dir, $imagename, $image_dir) = @_;
 
     open(OUT,">$stub_dir/40$imagename") or return undef;
-    print OUT "[$imagename]\n\tpath=$image_dir\n\n";
+        print OUT "[$imagename]\n\tpath=$image_dir\n\n";
     close OUT;
 }
 
@@ -852,6 +899,41 @@ sub _write_out_mkfs_commands {
     print MASTER_SCRIPT "\n";
     print MASTER_SCRIPT "\n";
 }
+
+
+# Description:
+# Validate information in $auto_install_script_conf. -BEF-
+#
+# (Currently only validates line numbers, but this function is intended to be
+#  expanded to do any necessary validation of this file.)
+#
+# Usage:
+# validate_auto_install_script_conf( $auto_install_script_conf );
+#
+sub validate_auto_install_script_conf {
+
+    my $file = $_[1];
+
+    ############################################################################
+    #
+    # Don't allow duplicate line numbers in the fsinfo section. -BEF-
+    #
+    ############################################################################
+    my %nodups;
+    my $config = XMLin($file, forcearray => 1 );
+    foreach my $hash ( @{$config->{fsinfo}} ) {
+
+        $_ = ${$hash}{'line'};
+
+        if ($nodups{$_}) {
+            print qq(Doh!  There's more than one line numbered "$_" in "$file"!\n);
+            print qq(We can't have that...  Please give each line a unique number.\n);
+            exit 1;
+        }
+        $nodups{$_} = 1;
+    }
+
+}        
 
 
 # Description:
