@@ -31,6 +31,7 @@ close(DHCPDCONF);
 # Oh where oh where could my leases file be?
 @lease_files_du_jour = ( 
                         "/var/dhcp/dhcpd.leases",
+                        "/var/dhcpd/dhcpd.leases",
                         "/var/state/dhcp/dhcpd.leases",
                         "/etc/dhcpd.leases"
                        );
@@ -111,11 +112,18 @@ foreach $mac (@macs) {
     # autoinstall client gets it's hostname from hosts file pulled from $imageserver::etc/hosts
     #  that's how it knows which script file to pull
     #
-    $hostname = $hostsbyip{$ipbymac{$mac}};
-    print "Adding entry for $hostname:\t$mac $ipbymac{$mac} to /etc/dhcpd.conf\n";
-    print DHCPDCONF qq(host $hostname { hardware ethernet $mac; fixed-address $hostname; }\n);
+    if ( defined $hostsbyip{$ipbymac{$mac}} ) {
+      $hostname = $hostsbyip{$ipbymac{$mac}};
+      print "Adding entry for $hostname:\t$mac $ipbymac{$mac} to /etc/dhcpd.conf\n";
+      print DHCPDCONF qq(host $hostname { hardware ethernet $mac; fixed-address $hostname; }\n);
+    }
+    else {
+      print "No entry exists for $mac $ipbymac{$mac} in /etc/hosts - no /etc/dhcpd.conf\n";
+      print "entry added.\n";
+    }
   }
 }
+
 close(DHCPDCONF);
 
 print "\n";
