@@ -316,64 +316,6 @@ do
 done
 ### END leave disk info behind for the getimage command ###
 
-### BEGIN leave ext3 info behind for the autoinstall client ###
-grep -qw ext3 /etc/fstab
-if [ $? -eq 0 ]; then
-
-  # what file are we working with?
-  file="/etc/fstab"
-
-  # let's start fresh, shall we?
-  rm -f $systemimagerdir/put_new_ext3_journal_file_inodes_in_fstab.sh
-
-  # get listing of ext3 mountpoints
-  directories=`grep -v ^# $file | egrep -w ext3 | awk '{print $2}'`
-  
-  # create script to be run at the end of the autoinstall
-  for directory in $directories; do
-
-    # get current inode so we can find the file
-    inode=`grep -v ^[[:blank:]]*# $file | grep -w $directory | awk '{print $4}' | sed 's/journal=//'`
-
-    # get filename by looking it up by it's inode
-    journalfile=`find $directory -inum $inode -print`
-
-    # escape the slashes in the directory name for later sed commands
-    echo $directory | sed 's/\//\\\//g' > /tmp/escaped_directory.$$
-    escaped_directory=`cat /tmp/escaped_directory.$$`
-    rm -f /tmp/escaped_directory.$$
-
-    # create script to find new inodes on each freshly installed client
-    echo "# set the immutable bit so that file doesn't float up into the filesystem buffer cache" \
-          >> $systemimagerdir/put_new_ext3_journal_file_inodes_in_fstab.sh
-    echo "chattr +i $journalfile" \
-          >> $systemimagerdir/put_new_ext3_journal_file_inodes_in_fstab.sh
-    echo \
-          >> $systemimagerdir/put_new_ext3_journal_file_inodes_in_fstab.sh
-    echo "# find the new inode number" \
-          >> $systemimagerdir/put_new_ext3_journal_file_inodes_in_fstab.sh
-    echo "newinode=\`ls -i $journalfile | awk '{print \$1}'\`" \
-          >> $systemimagerdir/put_new_ext3_journal_file_inodes_in_fstab.sh
-    echo \
-          >> $systemimagerdir/put_new_ext3_journal_file_inodes_in_fstab.sh
-    echo "# put the new inode number into the fstab file" \
-          >> $systemimagerdir/put_new_ext3_journal_file_inodes_in_fstab.sh
-    echo "sed \"/[[:blank:]]$escaped_directory[[:blank:]]/s/journal=[0-9]*/journal=\$newinode/\" /etc/fstab > /tmp/fstab.\$\$" \
-          >> $systemimagerdir/put_new_ext3_journal_file_inodes_in_fstab.sh
-    echo "cat /tmp/fstab.\$\$ > /etc/fstab" \
-          >> $systemimagerdir/put_new_ext3_journal_file_inodes_in_fstab.sh
-    echo "" \
-          >> $systemimagerdir/put_new_ext3_journal_file_inodes_in_fstab.sh
-  done
-  
-  # remove kruft
-  echo "# remove kruft" \
-        >> $systemimagerdir/put_new_ext3_journal_file_inodes_in_fstab.sh
-  echo "rm -f /tmp/fstab.\$\$" \
-        >> $systemimagerdir/put_new_ext3_journal_file_inodes_in_fstab.sh
-fi
-### END leave ext3 info behind for the autoinstall client ###
-
 egrep -q 'LABEL=' /etc/fstab && create_ext2_devices_by_label_file
 
 # wrap up
