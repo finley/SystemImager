@@ -288,9 +288,9 @@ if ($dhcpd_version eq "2") {
 
     print DHCPDCONF qq(  # next-server is your network boot server\n);
     if($boot_server eq "") { 
-        print DHCPDCONF qq(  #next-server "$boot_server"; \n);
+        print DHCPDCONF qq(  #next-server $boot_server; \n);
     } else {
-        print DHCPDCONF qq(  next-server "$boot_server"; \n);
+        print DHCPDCONF qq(  next-server $boot_server; \n);
     }
 
     print DHCPDCONF qq(} \n);
