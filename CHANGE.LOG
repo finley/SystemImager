@@ -5,6 +5,13 @@
 #
 
 VA SystemImager-1.2 2000.xx.xx
+- rsyncd.conf -- now has entry for /tftpboot and the /var/log/systemimager
+  entry is added on a per image basis.
+- autoinstallclient -- added Wes Smith's patch to sedding for the HOSTNAME.
+- autoinstallclient -- added some diagnostics.
+- autoinstallclient -- added ifconfig and route utilities.
+- autoinstallclient -- using rsync again for everything except network
+  boot installs.
 - getimage -- changed the mke2fs options to the conservative defaults.
   Hopefully soon we will be able to detect existing settings and 
   re-create those by partition.

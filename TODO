@@ -10,35 +10,33 @@
 
 In Progress
 -----------
+- <brian@thefinleys.com> - support for software RAID
+- <brian@thefinleys.com> - support for reiserfs
+- <brian@thefinleys.com> - support for use without DHCP
 
 
 Assigned and/or waiting to be done
 -------------------------------
 - <wessmith@engr.sgi.com> - GUI for SystemImager called SGI SystemImager GUI (not open sourced)
-- <wessmith@engr.sgi.com> - /etc/systemimager.conf file to hold things like domain name, nis domain, etc.
 - <ian@valinux.com> - have autoinstallclient check floppy for file and assign IP and hostname based on file, not on DHCP.
-- <brian@valinux.com> - Integrate patch to make autoinstalldiskette work if IP addresses contain leading 0's (eg. 1.2.3.001)
 - <ian@valinux.com> - multicast install -- Ian McLeod <ian@valinux.com> will have mftp (multicast ftp) 
   working as a drop in replacement for rsync by 5/15/2000 and we will begin testing
   in the lab.
 - <brian@valinux.com> - consider inodes/block in getimage
-- <brian@valinux.com> - DHCPless autoinstall
 - Chris Black <cblack@mokey.com> - hack dhclient to allow for imageserver specification via dhcp
-- diagnostics to verify successful rsync completion on autoinstallclient
-- modify systemimager.exclude to not touch deal with debian network info
+- modify systemimager.exclude to deal with debian network info
+- /etc/systemimager.conf file to hold things like domain name, nis domain, etc.
 
 Top Requests
 ------------
-- support for use without DHCP
-- support for software RAID
 - replicate mke2fs parameters on clients to match the "master client"
 - commandline-ize the rest of the commands
 - support for imageserver specification in DHCP client (hack dhcpcd)
-- support for reiserfs
 
 Bug list
 --------
 - Bugs? ;)
+- There is, however, a bug in the tftp-hpa tftp daemon.
 
 Other stuff
 -----------
