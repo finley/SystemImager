@@ -88,7 +88,8 @@ makedhcpserver
 - Added patches from John Goebel <jgoebel@valinux.com> to allow for
   other non-systemimager specific advanced options!
 
-autoinstallclient:
+autoinstallclient
+-----------------
 - added support for 3c905 
 - added support for 3c59x
 - added support for pcnet32
@@ -115,6 +116,8 @@ autoinstallclient:
 
 autoinstall scripts 
 -------------------
+- Added the -L option to sfdisk.  Recommended by Matthew Marlowe 
+  <mmarlowe@jalan.com>.
 - Turn on swap space after initializing.  In the past we didn't use the
   swap space at all.  Go ahead and use it to help out in low memory 
   situations.
