@@ -9,6 +9,10 @@
 #
 #   2004.06.02 Brian Elliott Finley
 #   - add --verbose option, and show image retrieval date
+#   2004.06.24 Brian Elliott Finley
+#   - show image retrieval time from IMAGE_RETRIEVAL_TIME if it exists, if not, 
+#     use mounted_filesystems
+#   - show client retrieved from, if it exists
 #
 
 # declare modules
@@ -161,17 +165,34 @@ while (<FILE>) {
 
         my $file = "/tmp/tmp_file.$$";
 
-        my $cmd = "rsync -a rsync://${imageserver}:$port/$_/etc/systemimager/mounted_filesystems $file";
-        !system($cmd) or die("Couldn't run:  $cmd\n");
+        # display time stamp
+        my $cmd1 = "rsync -a rsync://${imageserver}:$port/$_/etc/systemimager/IMAGE_RETRIEVAL_TIME $file";
+        my $cmd2 = "rsync -a rsync://${imageserver}:$port/$_/etc/systemimager/mounted_filesystems $file";
+        if( !system($cmd1) ) {
+            open(IMAGE_RETRIEVAL_TIME,"<$file") or die("Couldn't open $file! $!");
+                my $time = <IMAGE_RETRIEVAL_TIME>;
+                chomp($time);
+                print "$time -- $_";
+            close(IMAGE_RETRIEVAL_TIME);
+        } elsif( !system($cmd2) ) {
+            my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,$blksize,$blocks) = stat($file);
+            my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($mtime);
+            $mon++;
+            $year += 1900;
+            printf("  %04d.%02d.%02d %02d:%02d -- %s", $year,$mon,$mday,$hour,$min,$_);
+        }
 
-        my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,$blksize,$blocks) = stat($file);
+        # display golden client
+        my $cmd = "rsync -a rsync://${imageserver}:$port/$_/etc/systemimager/IMAGE_RETRIEVED_FROM $file";
+        my $golden_client;
+        if( !system($cmd) ) {
+            open(IMAGE_RETRIEVED_FROM,"<$file") or die("Couldn't open $file! $!");
+                $golden_client = <IMAGE_RETRIEVED_FROM>;
+                chomp($golden_client);
+            close(IMAGE_RETRIEVED_FROM);
+        if($golden_client) { print "\t-- Retrieved from: $golden_client"; }
+        print "\n";
         unlink($file);
-
-        my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($mtime);
-        $mon++;
-        $year += 1900;
-
-        printf("  %04d.%02d.%02d %02d:%02d -- %s\n", $year,$mon,$mday,$hour,$min,$_);
 
     } else {
 

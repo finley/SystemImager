@@ -17,9 +17,11 @@
 #
 #   2004.06.01 Brian Elliott Finley
 #   - call record_image_retrieval_time function
+#   2004.06.24 Brian Elliott Finley
+#   - call record_image_retrieved_from function
 #
 
-# TODO
+# TODO XXX
 # - touch image directory after each getimage
 
 # set system path for system() calls
@@ -406,14 +408,8 @@ if (!$quiet) {
     close (RSYNC);
 } else {
     $command = qq(rsync -aHS --numeric-ids $options);
-    system($command);
+    !system($command) or die("$program_name: Failed to retrieve image $image from $source_host.\n");
 }
-
-# $? is the return value from rsync
-if ($?) {
-    die "$program_name: Failed to retrieve image $image from $source_host.\n";
-}
-
 
 if(!$quiet) {
     print "\nPress <Enter> to continue...";
@@ -447,6 +443,7 @@ if(-e $flamethrower_conf) {
 }
 
 SystemImager::Server->record_image_retrieval_time($imagedir);
+SystemImager::Server->record_image_retrieved_from($imagedir,$golden_client);
 
 ### BEGIN Overwrite $script_name.master? ###
 if( (!$quiet) and (!$update_script) and (-e "$autoinstall_script_dir/$script_name.master") ) {
