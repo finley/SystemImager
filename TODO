@@ -12,20 +12,15 @@ Version 1.4.0 specific:
 
 <brian@thefinleys.com>
 ----------------------
-- Deal with tftp support (for network booting) on xinetd systems.
-  (this is actually something to deal with in the tftp-hpa package 
-   install)
-
-- Redo the website
-- Make it clear that people should mail the list and not me.
-
-- have deb package created
-- modify RPM spec file to deal with:
-  - configuration files
-  - additional files
-  - changed files
-- label autoinstallcd.iso with v1.4.x (x is literal)
-- start using bzip2
+o modify RPM spec file to deal with:
+  o configuration files
+  o additional files
+  o changed files
+o test client on VA hardware
+o create and submit custom load
+o Redo the website
+o label autoinstallcd.iso with v1.4.x (x is literal)
+o have deb package created
 
 -----------------------
 Version 1.4.1 specific:
@@ -33,6 +28,9 @@ Version 1.4.1 specific:
 
 <brian@thefinleys.com>
 ----------------------
+o Deal with tftp support (for network booting) on xinetd systems.
+  (this is actually something to deal with in the tftp-hpa package 
+   install)
 o move mailing list over to sourceforge
 o deal with UUID= in /etc/fstab
 
