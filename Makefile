@@ -340,8 +340,8 @@ install_docs: docs
 	cp -a $(MANUAL_DIR)/html $(DOC)
 	cp $(MANUAL_DIR)/*.ps $(MANUAL_DIR)/*.pdf $(DOC)
 	mkdir -p $(DOC)/examples
-	$(SI_INSTALL) -m 644 etc/rsyncd.conf $(DOC)/examples
-	$(SI_INSTALL) -m 644 etc/init.d/rsync $(DOC)/examples
+	$(SI_INSTALL) -m 644 doc/local.cfg $(DOC)/examples
+	$(SI_INSTALL) -m 644 doc/elilo.conf $(DOC)/examples
 
 # builds the manual from SGML source
 PHONY += docs
@@ -501,11 +501,11 @@ endif
 	mkdir -m 755 -p $(BOEL_BINARIES_DIR)/lib
 	#
 	# libparted
-	rsync -av $(SRC_DIR)/$(PARTED_DIR)/libparted/.libs/libparted-*.so* \
+	cp -a $(SRC_DIR)/$(PARTED_DIR)/libparted/.libs/libparted-*.so* \
 		$(BOEL_BINARIES_DIR)/lib/
 	#
 	# libdiscover
-	rsync -av $(SRC_DIR)/$(DISCOVER_DIR)/lib/.libs/libdiscover.so* \
+	cp -a $(SRC_DIR)/$(DISCOVER_DIR)/lib/.libs/libdiscover.so* \
 		$(BOEL_BINARIES_DIR)/lib/
 	strip $(BOEL_BINARIES_DIR)/lib/*
 	#
