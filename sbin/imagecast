@@ -1,0 +1,124 @@
+#!/usr/bin/perl -w
+
+my $script_name = "debian-stable-minimal.master";
+my $mcast_group = "9000";
+
+grep IMAGENAME= $SCRIPT_NAME
+grep OVERRIDES= $SCRIPT_NAME
+
+# BOEL Binaries and autoinstall scripts
+my $cmd = "tar -cv -C /usr/share/systemimager/boot/i386/standard/ boel_binaries.tar.gz -C /var/lib/systemimager/ scripts | udp-sender --portbase $MCAST_GROUP --autostart 1";
+
+# IMAGE
+$cmd = "tar -cv -C /var/lib/systemimager/images/${IMAGENAME} .";
+foreach $OVERRIDE in $OVERRIDES {
+    $cmd .= " -C /var/lib/systemimager/overrides/${OVERRIDE}";
+}    
+
+$cmd .= "udp-sender --portbase $MCAST_GROUP --autostart 1";
+
+
+
+#!/usr/bin/perl -w
+
+#
+# "SystemImager" 
+#
+#  Copyright (C) 2003 Bald Guy Software
+#                     Brian Elliott Finley <brian@bgsw.net>
+#
+#  $Id$
+#
+
+use lib "USR_PREFIX/lib/systemimager/perl";
+use Getopt::Long;
+use SystemImager::Server;
+use SystemImager::Config;
+use vars qw($config $VERSION);
+
+my $config_dir = "/etc/systemimager";
+
+### BEGIN parse the config file ###
+my $autoinstall_script_dir = $config->autoinstall_script_dir();
+my $rsyncd_conf = $config->rsyncd_conf();
+my $rsync_stub_dir = $config->rsync_stub_dir();
+
+if (!$autoinstall_script_dir) {
+    die "AUTOINSTALL_SCRIPT_DIR not defined in the config file.";
+}
+if (!$rsyncd_conf) { die "RSYNCD_CONF not defined in the config file."; }
+if (!$rsync_stub_dir) { die "RSYNC_STUB_DIR not defined in the config file."; }
+### END parse the config file ###
+
+$VERSION="SYSTEMIMAGER_VERSION_STRING";
+$program_name = "mkautoinstallscript";
+$version_info = <<"EOF";
+$program_name (part of SystemImager) v$VERSION
+    
+Copyright (C) 1999-2001 Brian Elliott Finley <brian\@systemimager.org>
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+EOF
+
+$get_help = "\n       Try \"-help\" for more options.";
+
+$help_info = $version_info . <<"EOF";
+
+Usage: $program_name [OPTION]... -script SCRIPTNAME
+
+Options: (options can be presented in any order and may be abbreviated)
+ -help                  Display this output.
+
+ -version               Display version and copyright information.
+
+ -script SCRIPTNAME     Where SCRIPTNAME is the base name to use for the 
+                        autoinstall script.
+
+Download, report bugs, and make suggestions at:
+http://systemimager.org/
+EOF
+
+# Set some defaults. -BEF-
+my $ip_assignment_method = "dhcp";
+my $post_install = "beep";
+my $auto_install_script_conf;
+my $script_name;
+
+GetOptions( 
+    "help"              => \$help,
+    "version"           => \$version,
+    "quiet"             => \$quiet,
+    "image=s"           => \$image,
+    "script=s"          => \$script_name,
+    "config-file=s"     => \$auto_install_script_conf,
+    "ip-assignment=s"   => \$ip_assignment_method,
+    "force"             => \my $force,
+    "update=s"          => \my $update,
+    "post-install=s"    => \$post_install,
+    "no-listing"        => \$no_listing
+) || die "$help_info";
+
+
+### BEGIN evaluate options ###
+# if requested, print help information
+if($help) { 
+  print "$help_info";
+  exit 0;
+}
+
+# if requested, print version and copyright information
+if($version) {
+  print "$version_info";
+  exit 0;
+}
+
+# be sure program is run by root
+SystemImager::Common->check_if_root();
+
+# be sure $image is set
+unless ($image) {
+  die "\n$program_name: -image IMAGENAME must be specified.\n$get_help\n\n";
+}
+
+
+exit 0;
