@@ -169,10 +169,10 @@ unless(($quiet) or ($yes)) {
     system("clear");
     print <<EOF;
 Welcome to the SystemImager prepareclient command.  This command may modify the
-following files to prepare your client for having its image retrieved by the 
-imageserver.  It will also create the /etc/systemimager directory and fill it 
-with information about your golden client.  All modified files will be backed 
-up with the $backup_extension extension.
+following files to prepare your golden client for having its image retrieved by
+the imageserver.  It will also create the /etc/systemimager directory and fill
+it with information about your golden client.  All modified files will be
+backed up with the $backup_extension extension.
  
  /etc/services:
    This file defines the port numbers used by certain software on your system.
