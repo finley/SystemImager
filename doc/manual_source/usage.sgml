@@ -186,7 +186,7 @@
 
 	<para>
 	  Alternatively, if you are using a running system's hard drive as the boot media, you can run 
-	  <command>updateclient -autoinstall -server &lt;imageserver&gt; -config eth0
+	  <command>updateclient -autoinstall -server &lt;imageserver&gt; -configure-from eth0
 	  </command>, which will create a <filename>local.cfg</filename> file at the root of the client's hard
 	  drive containing the existing live network settings. When the autoinstall client 
 	  boots, it will look for this file and use the provided values instead of getting 
