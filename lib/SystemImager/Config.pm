@@ -20,6 +20,7 @@ my $config = AppConfig->new(
     'rsyncd_conf'               => { ARGCOUNT => 1 },
     'rsync_stub_dir'            => { ARGCOUNT => 1 },
     'tftp_dir'                  => { ARGCOUNT => 1 },
+    'net_boot_default'          => { ARGCOUNT => 1 },
 );
 
 $config->file('/etc/systemimager/systemimager.conf');
