@@ -1,0 +1,35 @@
+#
+#	$Id$
+# 	/* vi: set noet ts=8: */
+#
+# 	http://cantaforda.com/cfcl/eryk/linux/pdisk/dist/pdisk.20000516.src.tar
+#
+#	2004.10.13  Brian Elliott Finley
+#	- added for pmac support
+#
+
+PDISK_VERSION	:= 20000516
+PDISK_DIR 	:= pdisk
+PDISK_TARBALL 	:= pdisk.$(PDISK_VERSION).src.tar
+PDISK_URL 	:= http://cantaforda.com/cfcl/eryk/linux/pdisk/dist/$(PDISK_TARBALL)
+PDISK_PATCHES 	:= $(shell ls $(PATCH_DIR)/pdisk.*.patch 2>/dev/null | sort)
+PDISK_BINARY 	:= $(SRC_DIR)/$(PDISK_DIR)/pdisk
+
+ALL_SOURCE += $(SRC_DIR)/$(PDISK_TARBALL)
+
+PHONY += pdisk
+pdisk:	$(PDISK_BINARY)
+
+$(PDISK_BINARY):	$(SRC_DIR)/$(PDISK_TARBALL)
+	[ -d $(SRC_DIR)/$(PDISK_DIR) ] || ( cd $(SRC_DIR) && tar -xvf $(PDISK_TARBALL) && \
+		(cd $(PDISK_DIR) && (cat $(PDISK_PATCHES) < /dev/null | patch -p1)))
+	$(MAKE) -C $(SRC_DIR)/$(PDISK_DIR) CFLAGS="-O2 -Wall"
+
+$(SRC_DIR)/$(PDISK_TARBALL):
+	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
+	$(GETSOURCE) $(PDISK_URL) $(SRC_DIR)
+
+PHONY += pdisk_clean
+pdisk_clean:
+	rm -rf $(SRC_DIR)/$(PDISK_DIR)
+
