@@ -22,6 +22,8 @@ AutoReqProv: no
 %description
 This is bogus and not used anywhere
 
+%ifarch i386 i486 i586 i686 athlon
+
 %package server
 Summary: Software that automates Linux installs, software distribution, and production deployment.
 Version: %ver
@@ -33,7 +35,7 @@ Packager: dann frazier <dannf@dannf.org>
 Docdir: %{prefix}/doc
 URL: http://systemimager.org/
 Distribution: System Installation Suite
-Requires: rsync >= 2.4.6, systemimager-common, libappconfig-perl, dosfstools, /sbin/chkconfig, /sbin/service, /usr/bin/perl
+Requires: rsync >= 2.4.6, systemimager-common = %{version}, perl-AppConfig, dosfstools, /sbin/chkconfig, /sbin/service, perl
 AutoReqProv: no
 
 %description server
@@ -65,7 +67,7 @@ Packager: dann frazier <dannf@dannf.org>
 Docdir: %{prefix}/doc
 URL: http://systemimager.org/
 Distribution: System Installation Suite
-Requires: /usr/bin/perl
+Requires: perl
 AutoReqProv: no
 
 %description common
@@ -86,6 +88,40 @@ environments.
 The common package contains files common to SystemImager clients 
 and servers.
 
+%package client
+Summary: Software that automates Linux installs, software distribution, and production deployment.
+Version: %ver
+Release: %rel
+Copyright: GPL
+Group: Applications/System
+BuildRoot: /tmp/%{name}-%{ver}-root
+Packager: dann frazier <dannf@dannf.org>
+Docdir: %{prefix}/doc
+URL: http://systemimager.org/
+Distribution: System Installation Suite
+Requires: systemimager-common = %{version}, systemconfigurator, perl-AppConfig, rsync >= 2.4.6, perl, mtools
+AutoReqProv: no
+
+%description client
+SystemImager is software that automates Linux installs, software
+distribution, and production deployment.  SystemImager makes it easy to
+do installs, software distribution, content or data distribution,
+configuration changes, and operating system updates to your network of
+Linux machines. You can even update from one Linux release version to
+another!  It can also be used to ensure safe production deployments.
+By saving your current production image before updating to your new
+production image, you have a highly reliable contingency mechanism.  If
+the new production enviroment is found to be flawed, simply roll-back
+to the last production image with a simple update command!  Some
+typical environments include: Internet server farms, database server
+farms, high performance clusters, computer labs, and corporate desktop
+environments.
+
+The client package contains the files needed on a machine for it to
+be imaged by a SystemImager server.
+
+%endif
+
 %package %{_build_arch}boot
 Summary: Software that automates Linux installs, software distribution, and production deployment.
 Version: %ver
@@ -97,7 +133,7 @@ Packager: dann frazier <dannf@dannf.org>
 Docdir: %{prefix}/doc
 URL: http://systemimager.org/
 Distribution: System Installation Suite
-Requires: systemimager-server
+Requires: systemimager-server >= %{version}
 AutoReqProv: no
 
 %description %{_build_arch}boot
@@ -119,39 +155,10 @@ The %{_build_arch}boot package provides specific kernel, ramdisk, and fs utiliti
 to boot and install %{_build_arch} Linux machines during the SystemImager autoinstall
 process.
 
-%package client
-Summary: Software that automates Linux installs, software distribution, and production deployment.
-Version: %ver
-Release: %rel
-Copyright: GPL
-Group: Applications/System
-BuildRoot: /tmp/%{name}-%{ver}-root
-Packager: dann frazier <dannf@dannf.org>
-Docdir: %{prefix}/doc
-URL: http://systemimager.org/
-Distribution: System Installation Suite
-Requires: systemimager-common, systemconfigurator, libappconfig-perl, rsync >= 2.4.6, /usr/bin/perl, mtools 
-AutoReqProv: no
-
-%description client
-SystemImager is software that automates Linux installs, software 
-distribution, and production deployment.  SystemImager makes it easy to
-do installs, software distribution, content or data distribution, 
-configuration changes, and operating system updates to your network of 
-Linux machines. You can even update from one Linux release version to 
-another!  It can also be used to ensure safe production deployments.  
-By saving your current production image before updating to your new 
-production image, you have a highly reliable contingency mechanism.  If
-the new production enviroment is found to be flawed, simply roll-back 
-to the last production image with a simple update command!  Some 
-typical environments include: Internet server farms, database server 
-farms, high performance clusters, computer labs, and corporate desktop
-environments.
-
-The client package contains the files needed on a machine for it to
-be imaged by a SystemImager server.
-
 %changelog
+* Thu Sep 19 2002 Sean Dague <sean@dague.net> 2.9.1-1
+- Added %ifarch stanzas to make building easier.
+
 * Tue Feb  5 2002 Sean Dague <sean@dague.net> 2.1.1-1
 - Added section 5 manpages
 - removed syslinux requirement, as it isn't need for ia64
@@ -181,20 +188,41 @@ be imaged by a SystemImager server.
 
 %prep
 %setup
+make -j11 get_source
 
+# Only build everything if on x86, this helps with PPC build issues
+%ifarch i386 i486 i586 i686 athlon
 %build
 cd $RPM_BUILD_DIR/%{name}-%{version}/
 make all
+
+%else
+%build
+cd $RPM_BUILD_DIR/%{name}-%{version}/
+make binaries
+
+%endif
+
+%ifarch i386 i486 i586 i686 athlon
 
 %install
 cd $RPM_BUILD_DIR/%{name}-%{version}/
 make install_server_all DESTDIR=/tmp/%{name}-%{ver}-root PREFIX=%prefix
 make install_client_all DESTDIR=/tmp/%{name}-%{ver}-root PREFIX=%prefix
+%else
+
+%install
+cd $RPM_BUILD_DIR/%{name}-%{version}/
+make install_binaries DESTDIR=/tmp/%{name}-%{ver}-root PREFIX=%prefix
+
+%endif
 
 %clean
-cd $RPM_BUILD_DIR/%{name}-%{version}/
-make distclean
-rm -rf $RPM_BUILD_ROOT
+#cd $RPM_BUILD_DIR/%{name}-%{version}/
+#make distclean
+#rm -rf $RPM_BUILD_ROOT
+
+%ifarch i386 i486 i586 i686 athlon
 
 %post server
 # First we check for rsync service under xinetd and get rid of it
@@ -236,11 +264,7 @@ fi
 %prefix/share/man/man8/lsimage*
 %dir %prefix/lib/systemimager
 %prefix/lib/systemimager/perl/SystemImager/Common.pm
-
-%files %{_build_arch}boot
-%defattr(-, root, root)
-%dir %prefix/share/systemimager/%{_build_arch}-boot
-%prefix/share/systemimager/%{_build_arch}-boot/*
+%prefix/lib/systemimager/perl/SystemImager/Config.pm
 
 %files server
 %defattr(-, root, root)
@@ -250,9 +274,11 @@ fi
 %dir /var/log/systemimager
 %dir /var/lib/systemimager/images
 %dir /var/lib/systemimager/scripts
+%dir /var/lib/systemimager/overrides
 %dir /etc/systemimager
-%config /etc/systemimager/rsyncd.conf
-%config /etc/systemimager/systemimager.conf
+%config(noreplace) /etc/systemimager/rsync_stubs/*
+%config(noreplace) /etc/systemimager/systemimager.conf
+%config(missingok) /etc/systemimager/rsyncd.conf
 /etc/init.d/systemimager
 /var/lib/systemimager/images/*
 %prefix/sbin/addclients
@@ -286,4 +312,11 @@ fi
 %prefix/sbin/prepareclient
 %prefix/share/man/man8/updateclient*
 %prefix/share/man/man8/prepareclient*
+
+%endif
+
+%files %{_build_arch}boot
+%defattr(-, root, root)
+%dir %prefix/share/systemimager/%{_build_arch}-boot
+%prefix/share/systemimager/%{_build_arch}-boot/*
 
