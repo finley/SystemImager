@@ -1,8 +1,17 @@
 #
-# "SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com> 
+# "VA SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com> 
 #
 # This file: CHANGE.LOG
 #
+
+VA SystemImager-0.24beta4 2000.05.01
+- The name changed ever so slightly ;)
+- Lots of little things -- bug fixes and what not.  Ease of use stuff.
+- added the "makeautoinstallcd" command.  This allows you to create a 
+  bootable 3 Meg iso9660 image that you can burn to a CD.
+- addclients -- If you give it new hostnames for a range of existing 
+  IP addresses, it now replaces the existing hostnames instead of 
+  ignoring them.
 
 SystemImager-0.24beta 2000.03.09
 - makedhcpstatic -- Modified to try /var/state/dhcp/dhcpd.leases, then
