@@ -67,7 +67,7 @@ $(INITRD_DIR)/build_dir-stamp:	$(SKEL_FILES) $(BUSYBOX_BINARY) \
 				$(DEVFSD_BINARY) $(DHCLIENT_BINARY) \
 				$(RSYNC_BINARY) $(UCLIBC_TARGET) \
 				$(INSMOD_BINARY) $(MODPROBE_BINARY) \
-				$(NETCAST_BINARY)
+				$(UDPCAST_BINARY)
 	# Create directory structure.
 	rm -fr $(INITRD_BUILD_DIR)
 	mkdir $(INITRD_BUILD_DIR)
@@ -81,10 +81,10 @@ $(INITRD_DIR)/build_dir-stamp:	$(SKEL_FILES) $(BUSYBOX_BINARY) \
 	cp -a $(INITRD_SRC_DIR)/$(BUSYBOX_DIR)/_install/* $(INITRD_BUILD_DIR)/
 
 	# Copy over other binaries.
-	cp -a $(RSYNC_BINARY)       $(INITRD_BUILD_DIR)/bin
-	cp -a $(DHCLIENT_BINARY)    $(INITRD_BUILD_DIR)/sbin
 	cp -a $(DEVFSD_BINARY)      $(INITRD_BUILD_DIR)/sbin
-	cp -a $(NETCAST_BINARY)     $(INITRD_BUILD_DIR)/bin/netcast-client
+	cp -a $(DHCLIENT_BINARY)    $(INITRD_BUILD_DIR)/sbin
+	cp -a $(RSYNC_BINARY)       $(INITRD_BUILD_DIR)/bin
+	cp -a $(UDPCAST_BINARY)     $(INITRD_BUILD_DIR)/bin
 	
 ifdef	INSMOD_BINARY
 	cp -a $(INSMOD_BINARY) $(INITRD_BUILD_DIR)/sbin
