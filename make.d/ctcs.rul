@@ -4,6 +4,7 @@ ifdef WITH_CTCS
 	CTCS_DIR := ctcs-$(CTCS_VERSION)
 	CTCS_BINARY := $(SRC_DIR)/$(CTCS_DIR)/newburn
 	CTCS_URL := http://unc.dl.sourceforge.net/sourceforge/va-ctcs/$(CTCS_TARBALL)
+	CTCS_PATCHES = $(shell ls $(PATCH_DIR)/ctcs.*.patch 2>/dev/null | sort)
 	CTCS_OTHER_FILES := /usr/lib/perl \
 						/usr/share/perl \
 						/usr/bin/a2p \
@@ -143,8 +144,9 @@ ALL_SOURCE += $(SRC_DIR)/$(CTCS_TARBALL)
 
 PHONY += ctcs
 ctcs:	$(CTCS_BINARY)
-$(CTCS_BINARY):	$(SRC_DIR)/$(CTCS_TARBALL)
+$(CTCS_BINARY):	$(SRC_DIR)/$(CTCS_TARBALL) $(CTCS_PATCHES)
 	[ -d $(SRC_DIR)/$(CTCS_DIR) ] || ( cd $(SRC_DIR) && tar -xvzf $(CTCS_TARBALL) )
+	cd $(SRC_DIR)/$(CTCS_DIR) && cat $(CTCS_PATCHES) < /dev/null | patch -p1
 	touch $(CTCS_BINARY)
 
 $(SRC_DIR)/$(CTCS_TARBALL):
@@ -153,4 +155,4 @@ $(SRC_DIR)/$(CTCS_TARBALL):
 
 PHONY += ctcs_clean
 ctcs_clean:
-
+	rm -fr $(SRC_DIR)/$(CTCS_DIR)
