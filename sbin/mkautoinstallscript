@@ -3,8 +3,9 @@
 #
 # "SystemImager" 
 #
-#  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
-#  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
+#  Copyright (C) 2002 Bald Guy Software
+#                     Brian Elliott Finley <brian@bgsw.net>
+#  Copyright (C) 1999-2001 Brian Elliott Finley <brian@bgsw.net>
 #
 #  $Id$
 #
@@ -47,34 +48,32 @@ $help_info = $version_info . <<"EOF";
 Usage: $program_name [OPTION]... -image IMAGENAME
 
 Options: (options can be presented in any order and may be abbreviated)
- -help                    Display this output.
+ -help                  Display this output.
 
- -version                 Display version and copyright information.
+ -version               Display version and copyright information.
 
- -quiet                   Don\'t print any output, just provide an 
-                          appropriate exit code.
+ -quiet                 Don\'t print any output, just provide an 
+                        appropriate exit code.
 
- -image IMAGENAME         Where IMAGENAME is the name of the image for 
-                          which you want to create a new autoinstall 
-			              script.
+ -image IMAGENAME       Where IMAGENAME is the name of the image for 
+                        which you want to create a new autoinstall 
+			            script.
 
- -script SCRIPTNAME       Where SCRIPTNAME is the base name to use for the 
-                          resultant autoinstall script.  If not specified,
-                          SCRIPTNAME defaults to IMAGENAME.
+ -script SCRIPTNAME     Where SCRIPTNAME is the base name to use for the 
+                        resultant autoinstall script.  If not specified,
+                        SCRIPTNAME defaults to IMAGENAME.
 
- -update-script [YES|NO]  Update the \$image.master script?  Defaults to 
-                          NO if -quiet.  If not specified you will be
-                          prompted to confirm an update.
+ -force                 Overwrite the \$image.master script, if it exists.
 
- -config-file FILE        Use FILE to get autoinstall script configuration
-                          information.  Defaults to the 
-                          ./etc/systemimager/autoinstallscript.conf file
-                          in the image.
+ -config-file FILE      Use FILE to get autoinstall script configuration
+                        information.  Defaults to the 
+                        ./etc/systemimager/autoinstallscript.conf file
+                        in the image.
 
- -no-listing              Don't show each filename as it is copied over during
-                          install.  This is useful for times when your console
-                          device is slow (e.g. serial console), and is the 
-                          bottleneck of your installation.
+ -no-listing            Don't show each filename as it is copied over during
+                        install.  This is useful for times when your console
+                        device is slow (e.g. serial console), and is the 
+                        bottleneck of your installation.
 
 The following options affect the autoinstall client after autoinstalling:
 
@@ -122,21 +121,20 @@ EOF
 # Set some defaults. -BEF-
 my $ip_assignment_method = "dhcp";
 my $post_install = "beep";
-my $update_script = "no";
 my $auto_install_script_conf;
 my $script_name;
 
 GetOptions( 
-    "help" => \$help,
-    "version" => \$version,
-    "quiet" => \$quiet,
-    "image=s" => \$image,
-    "script=s" => \$script_name,
-    "config-file=s" => \$auto_install_script_conf,
-    "ip-assignment=s" => \$ip_assignment_method,
-    "update-script=s" => \$update_script,
-    "post-install=s" => \$post_install,
-    "no-listing" => \$no_listing
+    "help"              => \$help,
+    "version"           => \$version,
+    "quiet"             => \$quiet,
+    "image=s"           => \$image,
+    "script=s"          => \$script_name,
+    "config-file=s"     => \$auto_install_script_conf,
+    "ip-assignment=s"   => \$ip_assignment_method,
+    "force"             => \my $force,
+    "post-install=s"    => \$post_install,
+    "no-listing"        => \$no_listing
 ) || die "$help_info";
 
 
@@ -162,16 +160,6 @@ unless ($image) {
 if ($image =~ /^-/) {
   die "\n$program_name: Image name can't start with a hyphen.\n$get_help\n\n";
 }
-
-# be sure $update_script was passed a proper option
-if($update_script) {
-  $update_script = lc $update_script;
-  unless(
-       ($update_script eq "yes")
-    or ($update_script eq "no" )
-  ) { die "\nERROR: -update-script must be YES or NO.\n$get_help\n\n"; }
-}
-
 ### END evaluate options ###
 
 # be sure program is run by root
@@ -213,8 +201,8 @@ if ($auto_install_script_conf) {
 unless ($script_name) { $script_name = "$image"; }
 
 my $file = "$autoinstall_script_dir/$script_name.master";
-if (( -e "$file" ) && ( $update_script eq "no" )) {
-    die qq(\nWARNING: "$file" already exists.\n         Use "-update-script YES" to overwrite.\n$get_help\n\n);
+if (( -e "$file" ) && ( ! $force )) {
+    die qq(\nWARNING: "$file" already exists.\n         Use "-force" to overwrite.\n$get_help\n\n);
 }
 
 SystemImager::Server->validate_ip_assignment_option( $ip_assignment_method );
