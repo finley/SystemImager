@@ -19,7 +19,7 @@ Description: VA SystemImager client side utilities
 
 Package: va-systemimager
 Architecture: all
-Depends: rsync, dhcp, syslinux, perl5, dosfstools, debianutils (>= 1.7), busybox, ash, util-linux, mawk, sed, tftpd-hpa
+Depends: rsync, dhcp, syslinux, perl5, dosfstools, debianutils (>= 1.7)
 Suggests: libc6-pic, va-systemimager-client-kernel, va-systemimager-client-kernel
 Description: VA SystemImager Image-Server
  VA SystemImager is a set of utilities for installing GNU/Linux images to
@@ -27,7 +27,7 @@ Description: VA SystemImager Image-Server
  server, making updates easy.  rsync is used for transfers, making updates
  efficient.
 
-Package: va-systemimager-client-kernel
+Package: va-systemimager-kernel
 Architecture: all
 Depends: tftpd-hpa
 Description: VA SystemImager kernel for client nodes
