@@ -1,0 +1,189 @@
+#!/bin/sh
+
+#
+# "SystemImager"
+#
+#  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
+#  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
+#
+##VERSION_INFO##
+
+# Load functions and other variables
+. /etc/init.d/functions
+
+get_arch
+
+##NO_LISTING##
+if [ -z $NO_LISTING ]; then
+    VERBOSE_OPT="v"
+else
+    VERBOSE_OPT=""
+fi
+
+# Pull in variables left behind by the linuxrc script.
+# This information is passed from the linuxrc script on the autoinstall media 
+# via /tmp/variables.txt.  Apparently the shell we use in BOEL is not 
+# intelligent enough to take a "set -a" parameter.
+#
+. /tmp/variables.txt || shellout
+
+[ -z $IMAGENAME ] && IMAGENAME=longs-rhas
+[ -z $OVERRIDES ] && OVERRIDES="longs-rhas"
+
+### BEGIN Check to be sure this not run from a working machine ###
+# Test for mounted SCSI or IDE disks
+mount | grep [hs]d[a-z][1-9] > /dev/null 2>&1
+[ $? -eq 0 ] &&  echo Sorry.  Must not run on a working machine... && shellout
+
+# Test for mounted software RAID devices
+mount | grep md[0-9] > /dev/null 2>&1
+[ $? -eq 0 ] &&  echo Sorry.  Must not run on a working machine... && shellout
+
+# Test for mounted hardware RAID disks
+mount | grep c[0-9]+d[0-9]+p > /dev/null 2>&1
+[ $? -eq 0 ] &&  echo Sorry.  Must not run on a working machine... && shellout
+### END Check to be sure this not run from a working machine ###
+
+
+### BEGIN Stop RAID devices before partitioning begins ###
+# Q1) Why did they get started in the first place?  
+# A1) So we can pull a local.cfg file off a root mounted software RAID system.
+#     They may not be started on your system -- they would only be started if
+#     you did the stuff in Q3 below.
+#
+# Q2) Why didn't my local.cfg on my root mounted software RAID work for me 
+#     with the standard kernel flavour?
+# A2) The standard kernel flavour uses modules for the software RAID drivers --
+#     therefore, software RAID is not available at the point in the boot process
+#     where BOEL needs to read the local.cfg file.  They are only pulled over 
+#     when this script is run, which is, of course, only runnable if it was
+#     pulled over the network using the settings that you would have wanted it
+#     to get from the local.cfg file, which it couldn't.  Right?
+#
+# Q3) Whatever.  So how do I make it work with a local.cfg file on my root
+#     mounted software RAID?  
+# A3) Compile an autoinstall kernel with software RAID, and any other drivers 
+#     you might need built in (filesystem, SCSI drivers, etc.).
+#
+# Find running raid devices
+if [ -f /proc/mdstat ]; then
+  RAID_DEVICES=` cat /proc/mdstat | grep ^md | sed 's/ .*$//g' `
+
+  # raidstop will not run unless a raidtab file exists
+  echo "" >> /etc/raidtab || shellout
+
+  # turn dem pesky raid devices off!
+  for RAID_DEVICE in ${RAID_DEVICES}
+  do
+    DEV="/dev/${RAID_DEVICE}"
+    # we don't do a shellout here because, well I forgot why, but we don't.
+    echo "raidstop ${DEV}" && raidstop ${DEV}
+  done
+fi
+### END Stop RAID devices before partitioning begins ###
+
+##PARTITION_DISKS##
+
+echo "Load additional filesystem drivers."
+modprobe reiserfs
+modprobe ext2
+modprobe ext3
+modprobe jfs
+modprobe xfs
+
+### BEGIN swap and filesystem creation commands ###
+##CREATE_FILESYSTEMS##
+### END swap and filesystem creation commands ###
+
+### BEGIN mount proc in image for tools like System Configurator ###
+echo "mkdir -p /a/proc || shellout"
+mkdir -p /a/proc || shellout
+echo "mount proc /a/proc -t proc -o defaults || shellout"
+mount proc /a/proc -t proc -o defaults || shellout
+### END mount proc in image for tools like System Configurator ###
+
+if [ $NO_LISTING ]; then
+    echo -n "Quietly installing image...|"
+    { while :; do
+            echo -ne "\b/";  sleep 1;
+            echo -ne "\b-";  sleep 1;
+            echo -ne "\b\\"; sleep 1;
+            echo -ne "\b|";  sleep 1;
+      done
+    }&
+    pid=$!
+fi
+
+# Filler up!
+if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then 
+    # Use multicast 
+    MODULE_NAME="${IMAGENAME}"
+    DIR=/a
+    flamethrower_client
+else 
+    # Use rsync 
+    echo "rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ /a/" 
+    rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ /a/ || shellout 
+ 
+fi 
+
+if [ $NO_LISTING ]; then
+    kill $pid
+    echo "done."
+fi
+
+# Leave notice of which image is installed on the client
+echo $IMAGENAME > /a/etc/systemimager/IMAGE_LAST_SYNCED_TO || shellout
+
+
+### BEGIN generate new fstab file from autoinstallscript.conf ###
+##GENERATE_FSTAB##
+### END generate new fstab file from autoinstallscript.conf ###
+
+### BEGIN overrides ###
+for OVERRIDE in $OVERRIDES
+do
+    if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
+        # Use multicast
+        MODULE_NAME="override_${OVERRIDE}"
+        DIR=/a
+        flamethrower_client
+    else
+        # Use rsync
+        echo "rsync -av --numeric-ids $IMAGESERVER::overrides/$OVERRIDE/ /a/"
+        rsync -av --numeric-ids $IMAGESERVER::overrides/$OVERRIDE/ /a/ || echo "Override directory $OVERRIDE doesn't seem to exist, but that may be OK."
+    fi
+done
+### END overrides ###
+
+
+##################################################################
+#
+# Uncomment the line below to leave your hostname blank.
+# Certain distributions use this as an indication to take on the
+# hostname provided by a DHCP server.  The default is to have
+# SystemConfigurator assign your clients the hostname that
+# corresponds to the IP address the use during the install.
+# (If you used to use static_dhcp, is your man.)
+#
+#HOSTNAME=""
+
+
+### BEGIN systemconfigurator ###
+# Configure the client's hardware, network interface, and boot loader.
+##SYSTEMCONFIGURATOR##
+### END systemconfigurator ###
+
+
+### BEGIN Unmount filesystems ###
+##UMOUNT_FILESYSTEMS##
+### END Unmount filesystems ###
+
+
+# Tell the image server we're done.
+rsync $IMAGESERVER::scripts/imaging_complete > /dev/null 2>&1
+
+# Take network interface down
+ifconfig eth0 down || shellout
+
+##POSTINSTALL##

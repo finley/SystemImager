@@ -188,10 +188,10 @@ sub get_part_name {
 }
 
 # Usage:  
-# _read_partition_info_and_prepare_parted_commands( $image_dir, $auto_install_script_conf );
+# _read_partition_info_and_prepare_parted_commands( $out, $image_dir, $auto_install_script_conf );
 sub _read_partition_info_and_prepare_parted_commands {
 
-    my ($image_dir, $file) = @_;
+    my ($out, $image_dir, $file) = @_;
 
     my $xml_config = XMLin($file, keyattr => { disk => "+dev", part => "+num" }, forcearray => 1 );  
 
@@ -214,21 +214,21 @@ sub _read_partition_info_and_prepare_parted_commands {
 
         my $devfs_dev = &dev_to_devfs($dev);
 
-        print MASTER_SCRIPT "### BEGIN partition $devfs_dev ###\n";
-        print MASTER_SCRIPT qq(echo "Partitioning $devfs_dev..."\n);
-        print MASTER_SCRIPT qq(echo "Old partition table for $devfs_dev:"\n);
-        print MASTER_SCRIPT "parted -s -- $devfs_dev print\n\n";
+        print $out "### BEGIN partition $devfs_dev ###\n";
+        print $out qq(echo "Partitioning $devfs_dev..."\n);
+        print $out qq(echo "Old partition table for $devfs_dev:"\n);
+        print $out "parted -s -- $devfs_dev print\n\n";
 
-        print MASTER_SCRIPT "# Create disk label.  This ensures that all remnants of the old label, whatever\n";
-        print MASTER_SCRIPT "# type it was, are removed and that we're starting with a clean label.\n";
+        print $out "# Create disk label.  This ensures that all remnants of the old label, whatever\n";
+        print $out "# type it was, are removed and that we're starting with a clean label.\n";
         $cmd = "parted -s -- $devfs_dev mklabel $label_type || shellout";
-        print MASTER_SCRIPT qq(echo "$cmd"\n);
-        print MASTER_SCRIPT "$cmd\n\n";
+        print $out qq(echo "$cmd"\n);
+        print $out "$cmd\n\n";
 
-        print MASTER_SCRIPT "# Get the size of the destination disk so that we can make the partitions fit properly.\n";
-        print MASTER_SCRIPT qq(DISK_SIZE=`parted -s $devfs_dev print ) . q(| grep 'Disk geometry for' | sed 's/^.*-//g' | sed 's/\..*$//' `) . qq(\n);
-        print MASTER_SCRIPT q([ -z $DISK_SIZE ] && shellout) . qq(\n);
-        print MASTER_SCRIPT qq(END_OF_LAST_PRIMARY=0\n);
+        print $out "# Get the size of the destination disk so that we can make the partitions fit properly.\n";
+        print $out qq(DISK_SIZE=`parted -s $devfs_dev print ) . q(| grep 'Disk geometry for' | sed 's/^.*-//g' | sed 's/\..*$//' `) . qq(\n);
+        print $out q([ -z $DISK_SIZE ] && shellout) . qq(\n);
+        print $out qq(END_OF_LAST_PRIMARY=0\n);
 
         ### BEGIN Populate the simple hashes. -BEF- ###
         my (
@@ -471,14 +471,14 @@ sub _read_partition_info_and_prepare_parted_commands {
             unless ($endMB{$m}) { next; }
             
             ### Print partitioning commands. -BEF-
-            print MASTER_SCRIPT "\n";
+            print $out "\n";
 	    
             $part = &get_part_name($dev, $m);
             $cmd = "Creating partition $part.";
-            print MASTER_SCRIPT qq(echo "$cmd"\n);
+            print $out qq(echo "$cmd"\n);
             
-            print MASTER_SCRIPT qq(START_MB=$startMB{$m}\n);
-            print MASTER_SCRIPT qq(END_MB=$endMB{$m}\n);
+            print $out qq(START_MB=$startMB{$m}\n);
+            print $out qq(END_MB=$endMB{$m}\n);
 
             if($p_type{$m} eq "extended") {
 
@@ -494,19 +494,19 @@ sub _read_partition_info_and_prepare_parted_commands {
                 $cmd = qq(parted -s -- $devfs_dev mkpart $p_type{$m} ext2 ) . q($START_MB $END_MB) . qq( || shellout);
 
             }
-            print MASTER_SCRIPT qq(echo "$cmd"\n);
-            print MASTER_SCRIPT "$cmd\n";
+            print $out qq(echo "$cmd"\n);
+            print $out "$cmd\n";
             
             # Leave info behind for the next partition. -BEF-
             if ("$p_type{$m}" eq "primary") {
-                print MASTER_SCRIPT q(END_OF_LAST_PRIMARY=$END_MB) . qq(\n);
+                print $out q(END_OF_LAST_PRIMARY=$END_MB) . qq(\n);
             
             } elsif ("$p_type{$m}" eq "extended") {
-                print MASTER_SCRIPT q(END_OF_LAST_PRIMARY=$END_MB) . qq(\n);
-                print MASTER_SCRIPT q(END_OF_LAST_LOGICAL=$START_MB) . qq(\n);
+                print $out q(END_OF_LAST_PRIMARY=$END_MB) . qq(\n);
+                print $out q(END_OF_LAST_LOGICAL=$START_MB) . qq(\n);
             
             } elsif ("$p_type{$m}" eq "logical") {
-                print MASTER_SCRIPT q(END_OF_LAST_LOGICAL=$END_MB) . qq(\n);
+                print $out q(END_OF_LAST_LOGICAL=$END_MB) . qq(\n);
             }
             
             #
@@ -516,9 +516,9 @@ sub _read_partition_info_and_prepare_parted_commands {
             # partition. -BEF-
             #
             if ($id{$m}) {
-                print MASTER_SCRIPT qq(# Use sfdisk to change the partition id.  parted is\n);
-                print MASTER_SCRIPT qq(# incapable of this particular operation.\n);
-                print MASTER_SCRIPT qq(sfdisk --change-id $devfs_dev $m $id{$m} \n);
+                print $out qq(# Use sfdisk to change the partition id.  parted is\n);
+                print $out qq(# incapable of this particular operation.\n);
+                print $out qq(sfdisk --change-id $devfs_dev $m $id{$m} \n);
             }
             
             # Name any partitions that need that kinda treatment.
@@ -536,8 +536,8 @@ sub _read_partition_info_and_prepare_parted_commands {
               ) {  # We're kinda assuming no one names their partitions "-". -BEF-
             
               $cmd = "parted -s -- $devfs_dev name $m $p_name{$m} || shellout\n";
-              print MASTER_SCRIPT "echo $cmd";
-              print MASTER_SCRIPT "$cmd";
+              print $out "echo $cmd";
+              print $out "$cmd";
             }
             
             ### Deal with flags for each partition. -BEF-
@@ -550,146 +550,30 @@ sub _read_partition_info_and_prepare_parted_commands {
                     # Parted 1.6.0 doesn't seem to want to tag gpt partitions with lba.  Hmmm. -BEF-
                     if (($flag eq "lba") and ($label_type eq "gpt")) { next; }
                     $cmd = "parted -s -- $devfs_dev set $m $flag on || shellout\n";
-                    print MASTER_SCRIPT "echo $cmd";
-                    print MASTER_SCRIPT "$cmd";
+                    print $out "echo $cmd";
+                    print $out "$cmd";
                 }
             }
         }
 
         # Kick the minors out.  (remove temporary partitions) -BEF-
         foreach $m (keys %minors_to_remove) {
-          print MASTER_SCRIPT "\n# Gotta lose this one (${dev}${m}) to make the disk look right.\n";
+          print $out "\n# Gotta lose this one (${dev}${m}) to make the disk look right.\n";
           $cmd = "parted -s -- $devfs_dev rm $m  || shellout";
-          print MASTER_SCRIPT qq(echo "$cmd"\n);
-          print MASTER_SCRIPT "$cmd\n";
+          print $out qq(echo "$cmd"\n);
+          print $out "$cmd\n";
         }
 
-        print MASTER_SCRIPT "\n";
-        print MASTER_SCRIPT qq(echo "New partition table for $devfs_dev:"\n);
+        print $out "\n";
+        print $out qq(echo "New partition table for $devfs_dev:"\n);
         $cmd = "parted -s -- $devfs_dev print";
-        print MASTER_SCRIPT qq(echo "$cmd"\n);
-        print MASTER_SCRIPT "$cmd\n";
-        print MASTER_SCRIPT "### END partition $devfs_dev ###\n";
-        print MASTER_SCRIPT "\n";
-        print MASTER_SCRIPT "\n";
+        print $out qq(echo "$cmd"\n);
+        print $out "$cmd\n";
+        print $out "### END partition $devfs_dev ###\n";
+        print $out "\n";
+        print $out "\n";
     }
 }
-
-
-sub _in_script_add_standard_header_stuff {
-  my ($image, $script_name) = @_;
-  print MASTER_SCRIPT << 'EOF';
-#!/bin/sh
-
-#
-# "SystemImager"
-#
-#  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
-#  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
-#
-EOF
-
-  print MASTER_SCRIPT "# This master autoinstall script was created with SystemImager v$VERSION\n";
-  print MASTER_SCRIPT "\n";
-  print MASTER_SCRIPT "VERSION=$VERSION\n";
-
-  print MASTER_SCRIPT << 'EOF';
-
-# Load functions and other variables
-. /etc/init.d/functions
-
-get_arch
-
-
-# Pull in variables left behind by the linuxrc script.
-# This information is passed from the linuxrc script on the autoinstall media 
-# via /tmp/variables.txt.  Apparently the shell we use in BOEL is not 
-# intelligent enough to take a "set -a" parameter.
-#
-. /tmp/variables.txt || shellout
-
-EOF
-
-  print MASTER_SCRIPT  q([ -z $IMAGENAME ] && ) . qq(IMAGENAME=$image\n);
-  print MASTER_SCRIPT  q([ -z $OVERRIDES ] && ) . qq(OVERRIDES="$script_name"\n);
-  print MASTER_SCRIPT << 'EOF';
-
-### BEGIN Check to be sure this not run from a working machine ###
-# Test for mounted SCSI or IDE disks
-mount | grep [hs]d[a-z][1-9] > /dev/null 2>&1
-[ $? -eq 0 ] &&  echo Sorry.  Must not run on a working machine... && shellout
-
-# Test for mounted software RAID devices
-mount | grep md[0-9] > /dev/null 2>&1
-[ $? -eq 0 ] &&  echo Sorry.  Must not run on a working machine... && shellout
-
-# Test for mounted hardware RAID disks
-mount | grep c[0-9]+d[0-9]+p > /dev/null 2>&1
-[ $? -eq 0 ] &&  echo Sorry.  Must not run on a working machine... && shellout
-### END Check to be sure this not run from a working machine ###
-
-
-### BEGIN Stop RAID devices before partitioning begins ###
-# Q1) Why did they get started in the first place?  
-# A1) So we can pull a local.cfg file off a root mounted software RAID system.
-#     They may not be started on your system -- they would only be started if
-#     you did the stuff in Q3 below.
-#
-# Q2) Why didn't my local.cfg on my root mounted software RAID work for me 
-#     with the standard kernel flavour?
-# A2) The standard kernel flavour uses modules for the software RAID drivers --
-#     therefore, software RAID is not available at the point in the boot process
-#     where BOEL needs to read the local.cfg file.  They are only pulled over 
-#     when this script is run, which is, of course, only runnable if it was
-#     pulled over the network using the settings that you would have wanted it
-#     to get from the local.cfg file, which it couldn't.  Right?
-#
-# Q3) Whatever.  So how do I make it work with a local.cfg file on my root
-#     mounted software RAID?  
-# A3) Compile an autoinstall kernel with software RAID, and any other drivers 
-#     you might need built in (filesystem, SCSI drivers, etc.).
-#
-# Find running raid devices
-if [ -f /proc/mdstat ]; then
-  RAID_DEVICES=` cat /proc/mdstat | grep ^md | sed 's/ .*$//g' `
-
-  # raidstop will not run unless a raidtab file exists
-  echo "" >> /etc/raidtab || shellout
-
-  # turn dem pesky raid devices off!
-  for RAID_DEVICE in ${RAID_DEVICES}
-  do
-    DEV="/dev/${RAID_DEVICE}"
-    # we don't do a shellout here because, well I forgot why, but we don't.
-    echo "raidstop ${DEV}" && raidstop ${DEV}
-  done
-fi
-### END Stop RAID devices before partitioning begins ###
-
-
-EOF
-}
-
-
-sub _mount_proc_in_image_on_client {
-
-    #  The following allows a proc filesystem to be mounted in the fakeroot.
-    #  This provides /proc to programs which are called by SystemImager
-    #  (eg. System Configurator).
-
-    print MASTER_SCRIPT "### BEGIN mount proc in image for tools like System Configurator ###\n";
-    my $cmd = "mkdir -p /a/proc || shellout";
-    print MASTER_SCRIPT qq(echo "$cmd"\n);
-    print MASTER_SCRIPT "$cmd\n";
-    $cmd = "mount proc /a/proc -t proc -o defaults || shellout";
-    print MASTER_SCRIPT qq(echo "$cmd"\n);
-    print MASTER_SCRIPT "$cmd\n";
-    print MASTER_SCRIPT "### END mount proc in image for tools like System Configurator ###\n";
-    print MASTER_SCRIPT "\n";
-    print MASTER_SCRIPT "\n";
-
-}
-
 
 # Usage:  
 # upgrade_partition_schemes_to_generic_style($image_dir, $config_dir);
@@ -824,7 +708,7 @@ sub dev_to_devfs {
 #
 sub _write_out_mkfs_commands {
 
-    my ($image_dir, $file) = @_;
+    my ($out, $image_dir, $file) = @_;
 
     my $xml_config = XMLin($file, keyattr => { fsinfo => "+line" }, forcearray => 1 );
 
@@ -845,48 +729,37 @@ sub _write_out_mkfs_commands {
         }
     }
 
-    print MASTER_SCRIPT "### BEGIN swap and filesystem creation commands ###\n";
-    print MASTER_SCRIPT qq(echo "Load additional filesystem drivers."\n);
-    print MASTER_SCRIPT "modprobe reiserfs\n";
-    print MASTER_SCRIPT "modprobe ext2\n";
-    print MASTER_SCRIPT "modprobe ext3\n";
-    print MASTER_SCRIPT "modprobe jfs\n";
-    print MASTER_SCRIPT "modprobe xfs\n";
-    print MASTER_SCRIPT "\n";
-
-
     if ($software_raid) {
 
 	# XXX at some point, we want to include this in the autoinstallscript.conf
 	# file.  We should also look at the format and write functions for that 
 	# same file. -BEF-
-        print MASTER_SCRIPT qq(# /etc/raidtab that will be used for creating software RAID devices on client(s).\n);
-        print MASTER_SCRIPT qq(cat <<'EOF' > /a/etc/raidtab\n);
+        print $out qq(# /etc/raidtab that will be used for creating software RAID devices on client(s).\n);
+        print $out qq(cat <<'EOF' > /a/etc/raidtab\n);
         my $raidtab = $image_dir . "/etc/raidtab";
         open(FILE,"<$raidtab") or croak("Couldn't open $raidtab for reading.");
             while (<FILE>) {
-                print MASTER_SCRIPT;
+                print $out;
             }
         close(FILE);
-        print MASTER_SCRIPT qq(EOF\n);
-        print MASTER_SCRIPT qq(# /etc/raidtab that will be used for creating software RAID devices on client(s).\n);
-        print MASTER_SCRIPT qq(\n);
-        print MASTER_SCRIPT qq(if [ -e /etc/raidtab ]; then\n);
-		print MASTER_SCRIPT qq(    echo "Ah, good.  Found an /etc/raidtab file.  Proceeding..."\n);
-		print MASTER_SCRIPT qq(else\n);
-		print MASTER_SCRIPT qq(    echo "No /etc/raidtab file.  Please verify that you have one in your image, or in an override directory."\n);
-		print MASTER_SCRIPT qq(    shellout\n);
-		print MASTER_SCRIPT qq(fi\n);
-        print MASTER_SCRIPT "\n";
+        print $out qq(EOF\n);
+        print $out qq(# /etc/raidtab that will be used for creating software RAID devices on client(s).\n);
+        print $out qq(\n);
+        print $out qq(if [ -e /etc/raidtab ]; then\n);
+		print $out qq(    echo "Ah, good.  Found an /etc/raidtab file.  Proceeding..."\n);
+		print $out qq(else\n);
+		print $out qq(    echo "No /etc/raidtab file.  Please verify that you have one in your image, or in an override directory."\n);
+		print $out qq(    shellout\n);
+		print $out qq(fi\n);
+        print $out "\n";
 
-        print MASTER_SCRIPT "if [ ! -f /proc/mdstat ]; then\n";
-        print MASTER_SCRIPT "  modprobe linear\n";
-        print MASTER_SCRIPT "  modprobe raid0\n";
-        print MASTER_SCRIPT "  modprobe raid1\n";
-        print MASTER_SCRIPT "  modprobe raid5\n";
-        print MASTER_SCRIPT "fi\n";
-        print MASTER_SCRIPT "\n";
-
+        print $out "if [ ! -f /proc/mdstat ]; then\n";
+        print $out "  modprobe linear\n";
+        print $out "  modprobe raid0\n";
+        print $out "  modprobe raid1\n";
+        print $out "  modprobe raid5\n";
+        print $out "fi\n";
+        print $out "\n";
     }
 
 
@@ -922,7 +795,7 @@ sub _write_out_mkfs_commands {
 
         # software RAID devices (/dev/md*)
         if ($real_dev =~ /\/dev\/md/) {
-            print MASTER_SCRIPT qq(mkraid --really-force $real_dev || shellout\n);
+            print $out qq(mkraid --really-force $real_dev || shellout\n);
         }
 
         # swap
@@ -930,35 +803,35 @@ sub _write_out_mkfs_commands {
 
             # create swap
             $cmd = "mkswap -v1 $real_dev || shellout";
-            print MASTER_SCRIPT qq(echo "$cmd"\n);
-            print MASTER_SCRIPT "$cmd\n";
+            print $out qq(echo "$cmd"\n);
+            print $out "$cmd\n";
 
             # swapon
             $cmd = "swapon $real_dev || shellout";
-            print MASTER_SCRIPT qq(echo "$cmd"\n);
-            print MASTER_SCRIPT "$cmd\n";
+            print $out qq(echo "$cmd"\n);
+            print $out "$cmd\n";
 
-            print MASTER_SCRIPT "\n";
+            print $out "\n";
 
         # msdos or vfat
         } elsif (( $xml_config->{fsinfo}->{$line}->{fs} eq "vfat" ) or ( $xml_config->{fsinfo}->{$line}->{fs} eq "msdos" )){
 
             # create fs
             $cmd = "mkdosfs $mkfs_opts -v $real_dev || shellout";
-            print MASTER_SCRIPT qq(echo "$cmd"\n);
-            print MASTER_SCRIPT "$cmd\n";
+            print $out qq(echo "$cmd"\n);
+            print $out "$cmd\n";
 
             # mkdir
             $cmd = "mkdir -p /a$mp || shellout";
-            print MASTER_SCRIPT qq(echo "$cmd"\n);
-            print MASTER_SCRIPT "$cmd\n";
+            print $out qq(echo "$cmd"\n);
+            print $out "$cmd\n";
 
             # mount
             $cmd = "mount $real_dev /a$mp -t $fs -o $options || shellout";
-            print MASTER_SCRIPT qq(echo "$cmd"\n);
-            print MASTER_SCRIPT "$cmd\n";
+            print $out qq(echo "$cmd"\n);
+            print $out "$cmd\n";
             
-            print MASTER_SCRIPT "\n";
+            print $out "\n";
 
 
         # ext2
@@ -966,8 +839,8 @@ sub _write_out_mkfs_commands {
 
             # create fs
             $cmd = "mke2fs $real_dev || shellout";
-            print MASTER_SCRIPT qq(echo "$cmd"\n);
-            print MASTER_SCRIPT "$cmd\n";
+            print $out qq(echo "$cmd"\n);
+            print $out "$cmd\n";
 
             if ($mount_dev) {
                 # add LABEL if necessary
@@ -976,8 +849,8 @@ sub _write_out_mkfs_commands {
                     $label =~ s/LABEL=//;
                 
                     $cmd = "tune2fs -L $label $real_dev";
-                    print MASTER_SCRIPT qq(echo "$cmd"\n);
-                    print MASTER_SCRIPT "$cmd\n";
+                    print $out qq(echo "$cmd"\n);
+                    print $out "$cmd\n";
                 }
                 
                 # add UUID if necessary
@@ -986,22 +859,22 @@ sub _write_out_mkfs_commands {
                     $uuid =~ s/UUID=//;
                 
                     $cmd = "tune2fs -U $uuid $real_dev";
-                    print MASTER_SCRIPT qq(echo "$cmd"\n);
-                    print MASTER_SCRIPT "$cmd\n";
+                    print $out qq(echo "$cmd"\n);
+                    print $out "$cmd\n";
                 }
             }
 
             # mkdir
             $cmd = "mkdir -p /a$mp || shellout";
-            print MASTER_SCRIPT qq(echo "$cmd"\n);
-            print MASTER_SCRIPT "$cmd\n";
+            print $out qq(echo "$cmd"\n);
+            print $out "$cmd\n";
 
             # mount
             $cmd = "mount $real_dev /a$mp -t $fs -o $options || shellout";
-            print MASTER_SCRIPT qq(echo "$cmd"\n);
-            print MASTER_SCRIPT "$cmd\n";
+            print $out qq(echo "$cmd"\n);
+            print $out "$cmd\n";
             
-            print MASTER_SCRIPT "\n";
+            print $out "\n";
 
 
         # ext3
@@ -1009,8 +882,8 @@ sub _write_out_mkfs_commands {
 
             # create fs
             $cmd = "mke2fs -j $real_dev || shellout";
-            print MASTER_SCRIPT qq(echo "$cmd"\n);
-            print MASTER_SCRIPT "$cmd\n";
+            print $out qq(echo "$cmd"\n);
+            print $out "$cmd\n";
 
             if ($mount_dev) {
                 # add LABEL if necessary
@@ -1019,8 +892,8 @@ sub _write_out_mkfs_commands {
                     $label =~ s/LABEL=//;
                 
                     $cmd = "tune2fs -L $label $real_dev";
-                    print MASTER_SCRIPT qq(echo "$cmd"\n);
-                    print MASTER_SCRIPT "$cmd\n";
+                    print $out qq(echo "$cmd"\n);
+                    print $out "$cmd\n";
                 }
                 
                 # add UUID if necessary
@@ -1029,22 +902,22 @@ sub _write_out_mkfs_commands {
                     $uuid =~ s/UUID=//;
                 
                     $cmd = "tune2fs -U $uuid $real_dev";
-                    print MASTER_SCRIPT qq(echo "$cmd"\n);
-                    print MASTER_SCRIPT "$cmd\n";
+                    print $out qq(echo "$cmd"\n);
+                    print $out "$cmd\n";
                 }
             }
 
             # mkdir
             $cmd = "mkdir -p /a$mp || shellout";
-            print MASTER_SCRIPT qq(echo "$cmd"\n);
-            print MASTER_SCRIPT "$cmd\n";
+            print $out qq(echo "$cmd"\n);
+            print $out "$cmd\n";
 
             # mount
             $cmd = "mount $real_dev /a$mp -t $fs -o $options || shellout";
-            print MASTER_SCRIPT qq(echo "$cmd"\n);
-            print MASTER_SCRIPT "$cmd\n";
+            print $out qq(echo "$cmd"\n);
+            print $out "$cmd\n";
             
-            print MASTER_SCRIPT "\n";
+            print $out "\n";
 
 
         # reiserfs
@@ -1052,68 +925,64 @@ sub _write_out_mkfs_commands {
 
             # create fs
             $cmd = "echo y | mkreiserfs $real_dev || shellout";
-            print MASTER_SCRIPT qq(echo "$cmd"\n);
-            print MASTER_SCRIPT "$cmd\n";
+            print $out qq(echo "$cmd"\n);
+            print $out "$cmd\n";
 
             # mkdir
             $cmd = "mkdir -p /a$mp || shellout";
-            print MASTER_SCRIPT qq(echo "$cmd"\n);
-            print MASTER_SCRIPT "$cmd\n";
+            print $out qq(echo "$cmd"\n);
+            print $out "$cmd\n";
 
             # mount
             $cmd = "mount $real_dev /a$mp -t $fs -o $options || shellout";
-            print MASTER_SCRIPT qq(echo "$cmd"\n);
-            print MASTER_SCRIPT "$cmd\n";
+            print $out qq(echo "$cmd"\n);
+            print $out "$cmd\n";
             
-            print MASTER_SCRIPT "\n";
+            print $out "\n";
 
         # jfs
         } elsif ( $xml_config->{fsinfo}->{$line}->{fs} eq "jfs" ) {
 
             # create fs
             $cmd = "mkfs.jfs -q $real_dev || shellout";
-            print MASTER_SCRIPT qq(echo "$cmd"\n);
-            print MASTER_SCRIPT "$cmd\n";
+            print $out qq(echo "$cmd"\n);
+            print $out "$cmd\n";
 
             # mkdir
             $cmd = "mkdir -p /a$mp || shellout";
-            print MASTER_SCRIPT qq(echo "$cmd"\n);
-            print MASTER_SCRIPT "$cmd\n";
+            print $out qq(echo "$cmd"\n);
+            print $out "$cmd\n";
 
             # mount
             $cmd = "mount $real_dev /a$mp -t $fs -o $options || shellout";
-            print MASTER_SCRIPT qq(echo "$cmd"\n);
-            print MASTER_SCRIPT "$cmd\n";
+            print $out qq(echo "$cmd"\n);
+            print $out "$cmd\n";
             
-            print MASTER_SCRIPT "\n";
+            print $out "\n";
 	    
         # xfs
         } elsif ( $xml_config->{fsinfo}->{$line}->{fs} eq "xfs" ) {
 
             # create fs
             $cmd = "mkfs.xfs -f -q $real_dev || shellout";
-            print MASTER_SCRIPT qq(echo "$cmd"\n);
-            print MASTER_SCRIPT "$cmd\n";
+            print $out qq(echo "$cmd"\n);
+            print $out "$cmd\n";
 
             # mkdir
             $cmd = "mkdir -p /a$mp || shellout";
-            print MASTER_SCRIPT qq(echo "$cmd"\n);
-            print MASTER_SCRIPT "$cmd\n";
+            print $out qq(echo "$cmd"\n);
+            print $out "$cmd\n";
 
             # mount
             $cmd = "mount $real_dev /a$mp -t $fs -o $options || shellout";
-            print MASTER_SCRIPT qq(echo "$cmd"\n);
-            print MASTER_SCRIPT "$cmd\n";
+            print $out qq(echo "$cmd"\n);
+            print $out "$cmd\n";
             
-            print MASTER_SCRIPT "\n";
+            print $out "\n";
 
         }
 
     }
-    
-    print MASTER_SCRIPT "### END swap and filesystem creation commands ###\n";
-    print MASTER_SCRIPT "\n";
-    print MASTER_SCRIPT "\n";
 }
 
 
@@ -1162,14 +1031,11 @@ sub validate_auto_install_script_conf {
 #
 sub _write_out_new_fstab_file {
 
-    my ($image_dir, $file) = @_;
+    my ($out, $image_dir, $file) = @_;
 
     my $xml_config = XMLin($file, keyattr => { fsinfo => "+line" }, forcearray => 1 );
 
-    print MASTER_SCRIPT qq(\n);
-    print MASTER_SCRIPT qq(\n);
-    print MASTER_SCRIPT qq(### BEGIN generate new fstab file from autoinstallscript.conf ###\n);
-    print MASTER_SCRIPT qq(cat <<'EOF' > /a/etc/fstab\n);
+    print $out qq(cat <<'EOF' > /a/etc/fstab\n);
 
     foreach my $line (sort numerically (keys ( %{$xml_config->{fsinfo}} ))) {
         my $comment   = $xml_config->{fsinfo}->{$line}->{comment};
@@ -1183,15 +1049,15 @@ sub _write_out_new_fstab_file {
         my $pass      = $xml_config->{fsinfo}->{$line}->{pass};
 
         if ($comment) {
-            print MASTER_SCRIPT qq($comment\n);
+            print $out qq($comment\n);
 
         } else {
-            print MASTER_SCRIPT qq($mount_dev\t$mp\t$fs);
+            print $out qq($mount_dev\t$mp\t$fs);
             if ($options)
-                { print MASTER_SCRIPT qq(\t$options); }
+                { print $out qq(\t$options); }
 
             if (defined $dump) { 
-                print MASTER_SCRIPT qq(\t$dump);
+                print $out qq(\t$dump);
 
                 # 
                 # If dump don't exist, we certainly don't want to print pass
@@ -1200,16 +1066,13 @@ sub _write_out_new_fstab_file {
                 # defined.
                 #
                 if (defined $pass)  
-                    { print MASTER_SCRIPT qq(\t$pass); }
+                    { print $out qq(\t$pass); }
             }
 
-            print MASTER_SCRIPT qq(\n);
+            print $out qq(\n);
         }
     }
-    print MASTER_SCRIPT qq(EOF\n);
-    print MASTER_SCRIPT qq(### END generate new fstab file from autoinstallscript.conf ###\n);
-    print MASTER_SCRIPT qq(\n);
-    print MASTER_SCRIPT qq(\n);
+    print $out qq(EOF\n);
 }
 
 
@@ -1236,11 +1099,9 @@ sub numerically {
 #
 sub _write_out_umount_commands {
 
-    my ($image_dir, $file) = @_;
+    my ($out, $image_dir, $file) = @_;
 
     my $xml_config = XMLin($file, keyattr => { fsinfo => "+line" }, forcearray => 1 );
-
-    print MASTER_SCRIPT "### BEGIN Unmount filesystems ###\n";
 
     # We can't use mp as a hash key, because not all fsinfo lines will have an 
     # mp entry.  Associate filesystems by mount points in a hash here, then we
@@ -1297,17 +1158,67 @@ sub _write_out_umount_commands {
 
         # umount
         my $cmd = "umount /a$mp || shellout";
-        print MASTER_SCRIPT qq(echo "$cmd"\n);
-        print MASTER_SCRIPT "$cmd\n";
-        print MASTER_SCRIPT "\n";
+        print $out qq(echo "$cmd"\n);
+        print $out "$cmd\n";
+        print $out "\n";
 
     }
-
-    print MASTER_SCRIPT "### END Unmount filesystems ###\n";
-    print MASTER_SCRIPT "\n";
-    print MASTER_SCRIPT "\n";
 }
 
+sub write_sc_command {
+    my ( $out, $ip_assignment_method ) = @_;
+    my $sc_excludes_to = "/etc/systemimager/systemconfig.local.exclude";
+    my $sc_cmd = "chroot /a/ systemconfigurator --excludesto=$sc_excludes_to";
+    if ($ip_assignment_method eq "replicant") {
+	$sc_cmd .= " --runboot";
+    }
+    else {
+	## FIXME - is --excludesto only for the static method? 
+	## currently, 
+	$sc_cmd .= " --configsi --stdin << EOF";
+    }
+    $sc_cmd .= " || shellout";
+
+    print $out "$sc_cmd\n";
+
+    unless ($ip_assignment_method eq "replicant") {
+	print $out "[NETWORK]\n";
+	print $out "HOSTNAME = \$HOSTNAME\n";
+	print $out "DOMAINNAME = \$DOMAINNAME\n";
+    }
+    if ($ip_assignment_method eq "static") {
+	print $out "GATEWAY = \$GATEWAY\n";
+    }
+    print $out "\n";
+
+    print $out "[INTERFACE0]\n";
+    print $out "DEVICE = eth0\n";
+
+    if ($ip_assignment_method eq "dhcp") {
+	print $out "TYPE = dhcp\n";
+    }
+    elsif ($ip_assignment_method eq "static") {
+	print $out "TYPE = static\n";
+	print $out "IPADDR = \$IPADDR\n";
+	print $out "NETMASK = \$NETMASK\n";
+    }
+
+    print $out "EOL\n";
+}
+
+my $beep_code = <<'EOL';
+# Cause the system to make noise and display an "I'm done." message
+ralph="sick"
+count="1"
+while [ $ralph="sick" ]
+do
+    echo -n -e "\\a"
+    [ $count -lt 60 ] && echo "I've been done for $count seconds.  Reboot me already!"
+    [ $(($count / 60 * 60)) = $count ] && echo "I've been done for $(($count / 60)) minutes now.  Reboot me already!"
+    sleep 1
+    count=$(($count + 1))
+done
+EOL
 
 sub create_autoinstall_script{
 
@@ -1327,7 +1238,6 @@ sub create_autoinstall_script{
 
     my $cmd;
 
-    my $rsync_opts = "-aHS";
     # Truncate the /etc/mtab file.  It can cause confusion on the autoinstall
     # client, making it think that filesystems are mounted when they really
     # aren't.  And because it is automatically updated on running systems, we
@@ -1344,65 +1254,71 @@ sub create_autoinstall_script{
     }
     
     $file = "$auto_install_script_dir/$script_name.master";
-    open (MASTER_SCRIPT, ">$file") || die "Can't open $file for writing\n";
-    
-    _in_script_add_standard_header_stuff($image, $script_name);
-    
-    _read_partition_info_and_prepare_parted_commands( $image_dir, $auto_install_script_conf );
-    
-    _write_out_mkfs_commands( $image_dir, $auto_install_script_conf );
-    
-    _mount_proc_in_image_on_client();
+    my $template = "/etc/systemimager/autoinstallscript.template";
+    open (my $TEMPLATE, "<$template") || die "Can't open $template for reading\n";
+    open (my $MASTER_SCRIPT, ">$file") || die "Can't open $file for writing\n";
 
-    if ($no_listing) {
-
-        # Display a spinner instead of the standard file listing.  A dannf feature. -BEF-
-        print MASTER_SCRIPT q(echo -n "Quietly installing image...|")   . "\n";
-        print MASTER_SCRIPT q({ while :; do)                            . "\n";
-        print MASTER_SCRIPT q(echo -ne "\b/";  sleep 1;)                . "\n";
-        print MASTER_SCRIPT q(echo -ne "\b-";  sleep 1;)                . "\n";
-        print MASTER_SCRIPT q(echo -ne "\b\\\"; sleep 1;)               . "\n";
-        print MASTER_SCRIPT q(echo -ne "\b|";  sleep 1;)                . "\n";
-        print MASTER_SCRIPT q(done)                                     . "\n";
-        print MASTER_SCRIPT q(}&)                                       . "\n";
-        print MASTER_SCRIPT q(pid=$!)                                   . "\n";
-
-    } else {
-        
-        # Display the standard file listing. -BEF-
-        $rsync_opts .= "v";
+    my $delim = '##';
+    while (<$TEMPLATE>) {
+      SWITCH: {
+	  if (/^\s*${delim}VERSION${delim}\s*$/) {
+	      print $MASTER_SCRIPT "# This master autoinstall script was created with SystemImager v${VERSION}\n";
+	      last SWITCH;
+	  }
+	  if (/^\s*${delim}PARTITION_DISKS${delim}\s*$/) { 
+	      _read_partition_info_and_prepare_parted_commands( $MASTER_SCRIPT,
+								$image_dir, 
+								$auto_install_script_conf);
+	      last SWITCH;
+	  }
+	  if (/^\s*${delim}CREATE_FILESYSTEMS${delim}\s*$/) {
+	      _write_out_mkfs_commands( $MASTER_SCRIPT, 
+					$image_dir, 
+					$auto_install_script_conf );
+	      last SWITCH;
+	  }
+	  if (/^\s*${delim}GENERATE_FSTAB${delim}\s*$/) {
+	      _write_out_new_fstab_file( $MASTER_SCRIPT, 
+					 $image_dir, 
+					 $auto_install_script_conf );
+	      last SWITCH;
+	  }
+	  if (/^\s*${delim}NO_LISTING${delim}\s*$/) {
+	      if ($no_listing) { print $MASTER_SCRIPT "NO_LISTING=yes\n"; }
+	      last SWITCH;
+	  }
+	  if (/^\s*${delim}SYSTEMCONFIGURATOR${delim}\s*$/) {
+	      write_sc_command($MASTER_SCRIPT, $ip_assignment_method);
+	      last SWITCH;
+	  }
+	  if (/^\s*${delim}UMOUNT_FILESYSTEMS${delim}\s*$/) {
+	      _write_out_umount_commands( $MASTER_SCRIPT,
+					  $image_dir, 
+					  $auto_install_script_conf );
+	      last SWITCH;
+	  }
+	  if (/^\s*${delim}POSTINSTALL${delim}\s*/) {
+	      
+	      if ($post_install eq "beep") {
+		  print $MASTER_SCRIPT $beep_code;
+              } elsif ($post_install eq "reboot") {
+		  #reboot stuff
+		  print $MASTER_SCRIPT "# reboot the autoinstall client\n";
+		  print $MASTER_SCRIPT "shutdown -r now\n";
+	      } elsif ($post_install eq "shutdown") {
+		  #shutdown stuff
+		  print $MASTER_SCRIPT "# shutdown the autoinstall client\n";
+		  print $MASTER_SCRIPT "shutdown -h now\n";
+		  print $MASTER_SCRIPT "\n";
+	      }
+	      last SWITCH;
+	  }
+	### END end of autoinstall options ###
+	print $MASTER_SCRIPT $_;
+      }
     }
+    close($TEMPLATE);
 
-    $rsync_opts .= " --exclude=lost+found/ --numeric-ids";
-
-    ### BEGIN pull the image down ###
-    print MASTER_SCRIPT qq(# Filler up!\n);
-    print MASTER_SCRIPT qq(if [ ! -z \$FLAMETHROWER_DIRECTORY_PORTBASE ]; then \n);
-    print MASTER_SCRIPT qq(    # Use multicast \n);
-    print MASTER_SCRIPT qq(    MODULE_NAME="\${IMAGENAME}" \n);
-    print MASTER_SCRIPT qq(    DIR=/a \n);
-    print MASTER_SCRIPT qq(    flamethrower_client \n);
-    print MASTER_SCRIPT qq(else \n);
-    print MASTER_SCRIPT qq(    # Use rsync \n);
-    print MASTER_SCRIPT qq(    echo "rsync $rsync_opts \${IMAGESERVER}::\${IMAGENAME}/ /a/" \n);
-    print MASTER_SCRIPT qq(    rsync $rsync_opts \${IMAGESERVER}::\${IMAGENAME}/ /a/ || shellout \n);
-    print MASTER_SCRIPT qq( \n);
-    print MASTER_SCRIPT qq(fi \n);
-    ### END pull the image down ###
-
-    if ($no_listing) {
-        print MASTER_SCRIPT '(kill $pid && shellout)'   . "\n";
-        print MASTER_SCRIPT 'kill $pid'                 . "\n";
-        print MASTER_SCRIPT 'echo "done."'              . "\n";
-    }   
-
-    ### BEGIN graffiti ###
-    print MASTER_SCRIPT "# Leave notice of which image is installed on the client\n";
-    print MASTER_SCRIPT "echo \$IMAGENAME > /a/etc/systemimager/IMAGE_LAST_SYNCED_TO || shellout\n";
-    ### END graffiti ###
-    
-    _write_out_new_fstab_file( $image_dir, $auto_install_script_conf );
-    
     ### BEGIN overrides stuff ###
     # Create default overrides directory. -BEF-
     #
@@ -1411,128 +1327,7 @@ sub create_autoinstall_script{
       mkdir("$dir", 0755) or die "FATAL: Can't make directory $dir\n";
     }  
     
-    ### BEGIN overrides ###
-    print MASTER_SCRIPT  q(### BEGIN overrides ###) . qq(\n);
-    print MASTER_SCRIPT  q(for OVERRIDE in $OVERRIDES) . qq(\n);
-    print MASTER_SCRIPT  q(do) . qq(\n);
-    print MASTER_SCRIPT  q(    if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then) . qq(\n);
-    print MASTER_SCRIPT  q(        # Use multicast) . qq(\n);
-    print MASTER_SCRIPT  q(        MODULE_NAME="override_${OVERRIDE}") . qq(\n);
-    print MASTER_SCRIPT  q(        DIR=/a) . qq(\n);
-    print MASTER_SCRIPT  q(        flamethrower_client) . qq(\n);
-    print MASTER_SCRIPT  q(    else) . qq(\n);
-    print MASTER_SCRIPT  q(        echo "rsync -av --numeric-ids $IMAGESERVER::overrides/$OVERRIDE/ /a/") . qq(\n);
-    print MASTER_SCRIPT  q(        rsync -av --numeric-ids $IMAGESERVER::overrides/$OVERRIDE/ /a/ || echo "Override directory $OVERRIDE doesn't seem to exist, but that may be OK.") . qq(\n);
-    print MASTER_SCRIPT  q(    fi) . qq(\n);
-    print MASTER_SCRIPT  q(done) . qq(\n);
-    print MASTER_SCRIPT  q(### END overrides ###) . qq(\n);
-    ### END overrides ###
-    
-    print MASTER_SCRIPT   qq(\n\n);
-
-    print MASTER_SCRIPT qq(##################################################################\n);
-    print MASTER_SCRIPT qq(#\n);
-    print MASTER_SCRIPT qq(# Uncomment the line below to leave your hostname blank.\n);
-    print MASTER_SCRIPT qq(# Certain distributions use this as an indication to take on the\n);
-    print MASTER_SCRIPT qq(# hostname provided by a DHCP server.  The default is to have\n);
-    print MASTER_SCRIPT qq(# SystemConfigurator assign your clients the hostname that\n);
-    print MASTER_SCRIPT qq(# corresponds to the IP address the use during the install.\n);
-    print MASTER_SCRIPT qq(# (If you used to use static_dhcp, is your man.)\n);
-    print MASTER_SCRIPT qq(#\n);
-    print MASTER_SCRIPT qq(#HOSTNAME=""\n);
-
-    print MASTER_SCRIPT   qq(\n\n);
-
-    ### BEGIN System Configurator setup ###
-    print MASTER_SCRIPT "### BEGIN systemconfigurator ###\n";
-    # System Configurator for static IP
-    if ($ip_assignment_method eq "static") { 
-        print MASTER_SCRIPT <<'EOF';
-# Configure the client's hardware, network interface, and boot loader.
-chroot /a/ systemconfigurator --configsi --excludesto=/etc/systemimager/systemconfig.local.exclude --stdin <<EOL || shellout
-
-[NETWORK]
-HOSTNAME = $HOSTNAME
-DOMAINNAME = $DOMAINNAME
-GATEWAY = $GATEWAY
-
-[INTERFACE0]
-DEVICE = eth0
-TYPE = static
-IPADDR = $IPADDR
-NETMASK = $NETMASK
-EOL
-EOF
-
-    } elsif ($ip_assignment_method eq "replicant") {
-        print MASTER_SCRIPT << 'EOF';
-# Configure the client's boot loader.
-chroot /a/ systemconfigurator --runboot || shellout
-EOF
-
-    } else { # aka elsif ($ip_assignment_method eq "dhcp")
-        print MASTER_SCRIPT <<'EOF';
-# Configure the client's hardware, network interface, and boot loader.
-chroot /a/ systemconfigurator --configsi --stdin <<EOL || shellout
-
-[NETWORK]
-HOSTNAME = $HOSTNAME
-DOMAINNAME = $DOMAINNAME
-
-[INTERFACE0]
-DEVICE = eth0
-TYPE = dhcp
-EOL
-EOF
-
-    }  ### END System Configurator setup ###
-    print MASTER_SCRIPT "### END systemconfigurator ###\n";
-
-    print MASTER_SCRIPT qq(\n\n);
-
-    _write_out_umount_commands( $image_dir, $auto_install_script_conf );
-
-    print MASTER_SCRIPT  qq(# Tell the image server we're done.\n);
-    print MASTER_SCRIPT  qq(rsync \$IMAGESERVER::scripts/imaging_complete > /dev/null 2>&1\n);
-
-    print MASTER_SCRIPT "\n";
-
-    print MASTER_SCRIPT "# Take network interface down\n";
-    print MASTER_SCRIPT "ifconfig eth0 down || shellout\n";
-    print MASTER_SCRIPT "\n";
-    
-    if ($post_install eq "beep") {
-        print MASTER_SCRIPT << 'EOF';
-# Cause the system to make noise and display an "I'm done." message
-ralph="sick"
-count="1"
-while [ $ralph="sick" ]
-do
-    echo -n -e "\\a"
-    [ $count -lt 60 ] && echo "I've been done for $count seconds.  Reboot me already!"
-    [ $(($count / 60 * 60)) = $count ] && echo "I've been done for $(($count / 60)) minutes now.  Reboot me already!"
-    sleep 1
-    count=$(($count + 1))
-done
-
-
-EOF
-
-
-    } elsif ($post_install eq "reboot") {
-        #reboot stuff
-        print MASTER_SCRIPT "# reboot the autoinstall client\n";
-        print MASTER_SCRIPT "shutdown -r now\n";
-        print MASTER_SCRIPT "\n";
-    } elsif ($post_install eq "shutdown") {
-       #shutdown stuff
-       print MASTER_SCRIPT "# shutdown the autoinstall client\n";
-       print MASTER_SCRIPT "shutdown -h now\n";
-       print MASTER_SCRIPT "\n";
-    }
-    ### END end of autoinstall options ###
-
-    close(MASTER_SCRIPT);
+    close($MASTER_SCRIPT);
 } # sub create_autoinstall_script 
 
 
