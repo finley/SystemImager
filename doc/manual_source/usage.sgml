@@ -119,13 +119,12 @@
 	    <warning>
 	      <para>
 		If you are not in ssh mode, all files on your
-		golden client will be openly accessible to anyone on your network.  
-		Once you have successfully pulled the image
-		from your golden client, you can deactivate the
-		<command>rsync</command> daemon by killing the
-		<command>rsync</command> process, or by simply rebooting the
+		golden client are openly accessible to anyone on your network.  
+		Once you have pulled the image from your golden client, you can 
+	      deactivate the <command>rsync</command> daemon by killing the
+		<command>rsync</command> process or by simply rebooting the
 		golden client.  This <command>rsync</command> server will not
-		be started automatically on future reboots.
+		start automatically on future reboots.
 	      </para>
 	    </warning>
 	  </listitem>
@@ -517,7 +516,7 @@ IMAGESERVER=192.168.1.203
     <section>
       <title>SystemImager Tools</title>
       <section>
-	<title>the<command>prepareclient</command> command</title>
+	<title>the <command>prepareclient</command> command</title>
 	<itemizedlist>
 	  <listitem>
 	    <para>
