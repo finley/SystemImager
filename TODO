@@ -12,13 +12,14 @@ In Progress
 -----------
 Version 1.4.0 specific:
 - <brian@thefinleys.com> - errata.txt on website
-- <brian@thefinleys.com> - run rsyncd from an init script on the imageserver with no maximum 
-                           connections
+- <brian@thefinleys.com> - run rsyncd from an init script on the imageserver 
+                           with no maximum connections
                            /etc/rc.d/init.d/rsyncd
                            /etc/init.d/rsyncd
 - <brian@thefinleys.com> - work with either /etc/rc.d/init.d/ or /etc/init.d/
 - <brian@thefinleys.com> - use dhclient
-- <brian@thefinleys.com> - Contemplate using "use chroot = yes" in /etc/rsyncd.conf
+- <brian@thefinleys.com> - Contemplate using "use chroot = yes" in 
+                           /etc/rsyncd.conf
                            and how this affects --numeric-ids.
 - <brian@thefinleys.com> - fix egrep test thingy on client
 - <brian@thefinleys.com> - Wes Smith's distribution specific patches
@@ -29,8 +30,10 @@ Version 1.4.0 specific:
 - <brian@thefinleys.com> - label autoinstallcd.iso with v1.4.x (x is literal)
 - <brian@thefinleys.com> - start using bzip2
 - <brian@thefinleys.com> - add support for 3c905 if it will fit.
-- <brian@thefinleys.com> - deal with ext3 journal files differently according to Ted Ts'o
-- <brian@thefinleys.com> - error checking and diagnostic messages on autoinstall client
+- <brian@thefinleys.com> - deal with ext3 journal files differently according 
+                           to Ted Ts'o
+- <brian@thefinleys.com> - error checking and diagnostic messages on 
+                           autoinstall client
 - <brian@thefinleys.com> - add a -autoconfig option to updateclient that figures
                            out the current values and writes them to /local.cfg
 - <brian@thefinleys.com> - addclients -- test for /etc/hosts before using
@@ -39,39 +42,46 @@ Version 1.4.0 specific:
 Other stuff:
 - <brian@thefinleys.com> - add a -quick-boot option to makeautoinstallfloppy
                            - disclaimer -- may not work on all systems
-- <brian@thefinleys.com> - contemplate using MAKEDEV instead of having pre-existing device files
+- <brian@thefinleys.com> - contemplate using MAKEDEV instead of having 
+                           pre-existing device files
 - <brian@thefinleys.com> - fix network booting
-- <bchrisman@valinux.com> - autoinstall client to cycle through eth interfaces
-                           for N in 0 1 2 3 4 5 6 7 8 9; do
-                             dhcpcd eth$N
-                             determine success or try again
-                           fi
 - <brian@thefinleys.com> - add -exclude option to getimage
 - <brian@thefinleys.com> - incorporate ssh
 - <brian@thefinleys.com> - put autoinstallmedia source into cvs
-- <brian@thefinleys.com> - smallerize the initrd.gz with a custom busybox, hardlinks, busybox for
-                           init, etc.
+- <brian@thefinleys.com> - smallerize the initrd.gz with a custom busybox, 
+                           hardlinks, busybox for init, etc.
+- <brian@thefinleys.com> - Record imagename to /etc/systemimager/current_image
+                           after an autoinstall (*.master) or an updateclient
+			   (if syncing from the root "/"). 
 
 - <gpratt@valinux.com> - Docbookization of the FAQ-HOWTO
 
 - Cameron Meadors <cmeadors@valinux.com> and Roland Dreier <roland@valinux.com>
-  - write a new tftp daemon to do that special PXE thang, so that we no longer have to use
-    the buggy tftp-hpa daemon.  There is also a new tftp-hpa daemon out that may not be so buggy...
+  - write a new tftp daemon to do that special PXE thang, so that we no longer 
+    have to use the buggy tftp-hpa daemon.  There is also a new tftp-hpa 
+    daemon out that may not be so buggy...
 
-- Chris Black <cblack@mokey.com> - hack dhclient to allow for imageserver specification via dhcp
+- Chris Black <cblack@mokey.com> - hack dhclient to allow for imageserver 
+                                   specification via dhcp
 
-- Ian McLeod <ian@valinux.com> - multicast install -- working on mftp (multicast ftp) 
-  as a drop in alternative for rsync.
-- Roland Dreier <roland@valinux.com> -- working on the multicast library that Ian's utility will be based on.
+- Ian McLeod <ian@valinux.com> - multicast install -- working on mftp 
+                                 (multicast ftp) as a drop in alternative for 
+				 rsync.
+- Roland Dreier <roland@valinux.com> -- working on the multicast library that 
+                                        Ian's utility will be based on.
 - <brian@thefinleys.com> - consider inodes/block in getimage
 - <brian@thefinleys.com> - getimage -- blink option
 - <brian@thefinleys.com> - getimage -- eject option
-- <brian@thefinleys.com> - makeautoinstalldiskette -- consider adding config file options?
-- <brian@thefinleys.com> - updateclient -autoinstall -- consider adding config file options?
+- <brian@thefinleys.com> - makeautoinstalldiskette -- consider adding config 
+                           file options?
+- <brian@thefinleys.com> - updateclient -autoinstall -- consider adding config 
+                           file options?
 - <brian@thefinleys.com> - contemplate using wget to pull stuff?
-- <brian@thefinleys.com> - contemplate using khttpd to show autoinstall client status
-- <brian@thefinleys.com> - command to put mac addresses/host names into /etc/dhcpd.conf
-                           by using broadcast pings, the arp table, and /etc/hosts or dns.
+- <brian@thefinleys.com> - contemplate using khttpd to show autoinstall client 
+                           status
+- <brian@thefinleys.com> - command to put mac addresses/host names into 
+                           /etc/dhcpd.conf by using broadcast pings, the arp 
+			   table, and /etc/hosts or dns.
 
 
 
@@ -99,6 +109,7 @@ Other stuff
 - support for SuSE
 - support for Slackware
 - section of howto that helps Kickstart users transition to SystemImager.
+- redirect syslog messages from autoinstall clients to $imagserver
 
 getimage
 --------
@@ -107,7 +118,6 @@ getimage
 - offer user the ability to change this, and store the changes in 
   /etc/systemimager.conf as IMAGESDIRECTORY="/var/spool/systemimager/images"
 - add an --exclude option
-- add "Do you want me open up the imageserver as a syslogd server?"
 - pass variables, such as $imagename to "addclients"
 - create disk partition sections of $image.master using MB instead of cylinders
   in order to support disks of different sizes. (not feasable at this point.)
@@ -164,9 +174,3 @@ systemimager.conf
 - SYSTEMIMAGER_ROOT=$path
 - SYSTEMIMAGER_FQHN=$boolean
 - EXCLUDE=$path $path $path
-
-autoinstalldiskette 
--------------------
-- no screen-blanking
-- redirect syslog messages to $imagserver
-
