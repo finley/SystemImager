@@ -1,0 +1,40 @@
+#!/bin/sh
+#
+# "SystemImager"
+#
+#  Copyright (C) 2002 Bald Guy Software 
+#                     Brian E. Finley <brian.finley@baldguysoftware.com>
+#
+#    $Id$
+#
+#   The netbootmond init script.
+#
+
+PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin:
+PIDFILE=/var/run/netbootmond.pid
+
+case "$1" in
+  start)
+    echo -n "Starting SystemImager's net boot client monitor: netbootmond"
+    netbootmond
+    echo "."
+    ;;
+  stop)
+    echo -n "Starting SystemImager's net boot client monitor: netbootmond"
+    [-f $PIDFILE] && kill `cat $PIDFILE` || exit 1
+    echo "."
+    ;;
+  reload)
+    echo "Not implemented."
+    ;;
+  force-reload|restart)
+    sh $0 stop
+    sh $0 start
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart}"
+    exit 1
+    ;;
+esac
+
+exit 0

@@ -121,8 +121,6 @@ LOG_DIR = $(DESTDIR)/var/log/systemimager
 
 INITRD_DIR = $(TOPDIR)/initrd_source
 
-INITSCRIPT_NAME = systemimager
-
 BOOT_BIN_DEST     = $(USR)/share/systemimager/boot/$(ARCH)/standard
 
 PXE_CONF_SRC      = etc/pxelinux.cfg
@@ -278,7 +276,8 @@ install_configs:
 
 	[ "$(INITD)" != "" ] || exit 1
 	mkdir -p $(INITD)
-	$(SI_INSTALL) -b -m 755 etc/init.d/rsync $(INITD)/$(INITSCRIPT_NAME)
+	$(SI_INSTALL) -b -m 755 etc/init.d/rsync $(INITD)/systemimager
+	$(SI_INSTALL) -b -m 755 etc/init.d/netbootmond $(INITD)
 
 ########## END initrd ##########
 
