@@ -5,13 +5,18 @@
 #
 
 VA SystemImager-1.4.0 2000.xx.xx
-- prepareclient -- Now uses megabytes to store partition information.
-- getimage -- Now uses megabytes to recreate partitioning in such a way
-              that disks don't have to have the same geometry.  They can
-              even be significantly different sizes.  They can easily be
-              much larger than the original master client disks and can
-              even be smaller (within reason -- depends on specific 
-              partition scheme)
+- prepareclient -- Now defaults to using megabytes to store partition 
+                   information.  Can be told to leave explicit 
+                   partitioning information for getimage with the 
+                   -explicit-geometry option.
+- getimage -- Now autodetects whether prepareclient left the partition
+              data behind as "-explicit-geometry" or as megabytes.  If
+              using megabytes, getimage creates the autoinstall script
+              in such a way that client disks don't have to have the 
+              same geometry.  They can even be significantly different 
+              sizes.  They can easily be much larger than the original 
+              master client disks and can even be smaller...
+              (within reason -- depends on specific partition scheme)
 - getimage -- Now uses the --numeric-ids rsync option.
 - autoinstall scripts -- Now use the --numeric-ids rsync option.
 - updateclient -- Now uses the --numeric-ids rsync option.
