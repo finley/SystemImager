@@ -79,6 +79,7 @@
 	<para>
       If you use DHCP, you can add the following to your dhcpd.conf file:
       <programlisting>
+        option option-143 code 143 = string;  # (only for ISC's dhcpd v3)
         option option-143 "9000";
       </programlisting>
       Then restart your DHCP daemon.  This is usually either
