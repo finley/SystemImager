@@ -2,7 +2,7 @@
 #
 # "SystemImager"
 # 
-#   Copyright (C) 1999-2004 Brian Elliott Finley
+#   Copyright (C) 1999-2005 Brian Elliott Finley
 #   Copyright (C) 2002 Internation Business Machines
 #                      Sean Dague <sean@dague.net>
 #
@@ -14,6 +14,8 @@
 #   - set rsyncd.conf's host_allow to _not_ include localhost
 #   2004.10.12  Brian Elliott Finley
 #   - prefer parted over sfdisk, unless i386.  was failing on ppc.
+#   2005.01.12  Brian Elliott Finley
+#   - add --exclude DISK option
 #
 #
 #   Function: si_prepareclient is used to, well, prepare a client to have 
@@ -129,6 +131,16 @@ Options:
  --yes                 
     Answer yes to all yes/no questions.
 
+ --exclude, -e DISK [-e DISK...]
+    Do not gather partition information for DISK(s).  The result of 
+    using this option, is that DISK(s) will not be partitioned during
+    the auto-install process.
+
+    You may prefix DISK with "/dev/", but it is not necessary, and a
+    base directory of /dev/ will be assumed.  
+
+    Example: -e /dev/sdb -e sdc -e /dev/ida/c0d0 -e ida/c0d1
+
  --quiet
     Run silently.  Return an exit status of 0 for success or a non-zero
     exit status for failure.
@@ -145,6 +157,7 @@ EOF
 GetOptions(
     "explicit"             => \my $explicit,
     "help"                 => \my $help,
+    "exclude-disk|e=s"     => \my %excluded_disks,
     "no-rsyncd|norsyncd"   => \my $norsyncd,
     "quiet"                => \my $quiet,
     "rpm"                  => \my $rpm,
@@ -339,6 +352,23 @@ EOF
 add_rsync_services();
 
 # comment out rsync entry in inetd.conf if it exists
+foreach (sort keys %excluded_disks) {
+	
+	# Remove entries that may have /dev/ prefixes.
+	delete $excluded_disks{$_};  
+
+	# Strip off the /dev/ part.  It's just for user non-confusion anyway. -BEF-
+	$_ =~ s#^/dev/##;
+	$_ =~ s#^/##;	# lose a leading / if someone happened to use one (Ie. /sda).
+
+	#
+	# Re-add entries without /dev/ prefixes, and set the values to match
+	# the keys so that we can do a simple "if defined" test later. 
+	# -BEF- 2005.01.12
+	#
+	$excluded_disks{$_} = $_;
+}
+
 temporarily_disable_rsync_in_inetd();
 
 # get rid of xinetd configuration for rsync if it exits
@@ -462,23 +492,46 @@ sub which {
 # partitions captured.
 #
 sub collect_disks {
-    open(IN,"</proc/partitions") or croak("Couldn't open /proc/partitions for reading.");
+
     my $disks;
     my $devfsscsi = 0;
+
+    open(IN,"</proc/partitions") or croak("Couldn't open /proc/partitions for reading.");
     while(<IN>) {
+
         if(/(\S*c[0-9]+d[0-9]+)p[0-9]+/) { # hardware raid devices (/dev/rd/c?d?, /dev/ida/c?d?, /dev/cciss/c?d?)
-            $disks->{HWRAID}->{$1}++;
+            my $disk = $1;
+            unless(defined $excluded_disks{$disk}) {
+                $disks->{HWRAID}->{$disk}++;
+            }
+
         } elsif (/(\S*[hs]d[a-z])[0-9]/) { # standard disk devices
-            $disks->{IDESCSI}->{$1}++;
+            my $disk = $1;
+            unless(defined $excluded_disks{$disk}) {
+                $disks->{IDESCSI}->{$disk}++;
+            }
+
         } elsif (/\b(ide\/host\S+disc)\b/) { # devfs standard for ide disk devices
-            # now strip off the partition number
-            $disks->{IDESCSI}->{devfs_transform($1)}++;
+            #          vvvvvvvvvvvvvvvvvvv -> strip off the partition number
+            my $disk = devfs_transform($1);
+
+            unless(defined $excluded_disks{$disk}) {
+                $disks->{IDESCSI}->{$disk}++;
+            }
+
         } elsif (/\b(scsi\/host\S+disc)\b/) { # devfs standard for scsi disk devices
-            # if we have a devfs scsi disk and we want to get
+
+            #
+            # If we have a devfs scsi disk and we want to get
             # back to old school format, we just count up each disk
-            # and assign it to /dev/sdN in order
-            $disks->{IDESCSI}->{"sd" . chr(97 + $devfsscsi)}++;
+            # and assign it to /dev/sdN in order.
+            #
+            my $disk = "sd" . chr(97 + $devfsscsi);
             $devfsscsi++;
+
+            unless(defined $excluded_disks{$disk}) {
+                $disks->{IDESCSI}->{$disk}++;
+            }
         }
     }
     close(IN);
