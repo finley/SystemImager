@@ -1,0 +1,15 @@
+--- pci.lst~	2002-08-21 13:07:44.000000000 -0600
++++ pci.lst	2002-11-08 16:16:00.000000000 -0700
+@@ -44,10 +44,10 @@
+ 	0e11b012	ethernet	tlan	Netelligent 10 T/2
+ 	0e11b030	ethernet	tlan	Netelligent WS 5100
+ 	0e11b04a	unknown	unknown	10/100TX WOL UTP Controller
+-	0e11b060	unknown	cciss	Smart Array 5300 Controller
++	0e11b060	scsi	cciss	Smart Array 5300 Controller
+ 	0e11b0c6	unknown	unknown	10/100TX Embedded WOL UTP Controller
+ 	0e11b0d7	unknown	unknown	NC3121 (Rev A & B)
+-	0e11b178	unknown	cciss	Smart Array 5i/532
++	0e11b178	scsi	cciss	Smart Array 5i/532
+ 	0e11f130	ethernet	tlan	NetFlex-3/P ThunderLAN 1.0
+ 	0e11f150	ethernet	tlan	NetFlex-3/P ThunderLAN 2.3
+ 1000 Symbios Logic Inc. / NCR
