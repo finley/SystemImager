@@ -30,6 +30,7 @@ html:	$(DB2HTML) $(SRC) clean_html
 	mkdir -p $(DEST)
 	mv -f $(NAME) $(DEST)/$(HTMLDIR)
 	cp -a images/ $(DEST)/$(HTMLDIR)/images
+	cp -a $(SRC) $(DEST)/$(HTMLDIR)
 	@echo
 	@echo "You can now find the manual in `cd $(DEST); pwd`/$(HTMLDIR)/"
 	@echo "  (also known as $(DEST)/$(HTMLDIR)/)"
@@ -38,8 +39,8 @@ html:	$(DB2HTML) $(SRC) clean_html
 ps:	$(DB2PS) $(SRC) clean_ps
 	$(DB2PS) $(SRC)
 	mkdir -p $(DEST)/$(PSDIR)
-	mv $(NAME).aux $(NAME).dvi $(NAME).log \
-        $(NAME).tex $(NAME).ps $(DEST)/$(PSDIR)
+	mv $(NAME).aux $(NAME).dvi $(NAME).log $(NAME).tex $(NAME).ps $(DEST)/$(PSDIR)
+	cp -a $(SRC) $(DEST)/$(PSDIR)
 	@echo
 	@echo "You can now find the manual in `cd $(DEST); pwd`/$(PSDIR)/"
 	@echo "  (also known as $(DEST)/$(PSDIR)/)"
@@ -48,8 +49,8 @@ ps:	$(DB2PS) $(SRC) clean_ps
 pdf:	$(DB2PDF) $(SRC) clean_pdf
 	$(DB2PDF) $(SRC)
 	mkdir -p $(DEST)/$(PDFDIR)
-	mv $(NAME).aux $(NAME).log \
-        $(NAME).tex $(NAME).pdf $(DEST)/$(PDFDIR)
+	mv $(NAME).aux $(NAME).log $(NAME).tex $(NAME).pdf $(DEST)/$(PDFDIR)
+	cp -a $(SRC) $(DEST)/$(PDFDIR)
 	@echo
 	@echo "You can now find the manual in `cd $(DEST); pwd`/$(PDFDIR)/"
 	@echo "  (also known as $(DEST)/$(PDFDIR)/)"
@@ -59,6 +60,7 @@ dvi:	$(DB2DVI) $(SRC) clean_dvi
 	$(DB2DVI) $(SRC)
 	mkdir -p $(DEST)/$(DVIDIR)
 	mv $(NAME).aux $(NAME).dvi $(NAME).log $(NAME).tex $(DEST)/$(DVIDIR)
+	cp -a $(SRC) $(DEST)/$(DVIDIR)
 	@echo
 	@echo "You can now find the manual in `cd $(DEST); pwd`/$(DVIDIR)/"
 	@echo "  (also known as $(DEST)/$(DVIDIR)/)"
@@ -68,6 +70,7 @@ rtf:	$(DB2RTF) $(SRC) clean_rtf
 	$(DB2RTF) $(SRC)
 	mkdir -p $(DEST)/$(RTFDIR)
 	mv $(NAME).rtf $(DEST)/$(RTFDIR)
+	cp -a $(SRC) $(DEST)/$(RTFDIR)
 	@echo
 	@echo "You can now find the manual in `cd $(DEST); pwd`/$(RTFDIR)/"
 	@echo "  (also known as $(DEST)/$(RTFDIR)/)"
