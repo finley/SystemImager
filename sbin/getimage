@@ -17,6 +17,9 @@ $ENV{PATH} = "/usr/sbin:/sbin:/usr/bin:/bin";
 # version
 $version_number = "1.2";
 
+# systemimager configuration directory
+$systemimagerdir="/etc/systemimager";
+
 # miscellaneous variables and what not
 # NIS domain name will be figured out automatically (if it exists)
 $nisdomainname="";
@@ -71,14 +74,23 @@ Options: (options can be presented in any order and may be abbreviated)
                           (other than errors). In this mode, no warning
                           will be given if the image already exists on
                           the server.
- -ip-assignment METHOD    Where METHOD can be static_dhcp, dynamic_dhcp,
- -path-to-image PATH   Where METHOD can be static_dhcp, dynamic_dhcp,
-                          or static. (static_dhcp is recommended)
- -update-script [YES|NO]  Update the \$image.master script?
-                          Defaults are:
-                          - NO if -quiet
-                          - Otherwise prompt for response if not
-                            specified
+ -path-to-image PATH      ###Feature to be added###
+ -update-script [YES|NO]  Update the \$image.master script?  Defaults to 
+                          NO if -quiet.  If not specified you will be
+                          prompted to confirm an update.
+
+(The following options affect the autoinstall client after autoinstalling)
+ -ip-assignment METHOD    Where METHOD can be:
+                           static_dhcp
+                           dynamic_dhcp
+                           static
+ -post-install ACTION     After installation, make the autoinstall client
+                          take the specified action.  ACTION can be:
+                           beep     (the default -- beeping is perpetual)
+                           reboot   (be carefull that you don\'t begin
+                                     another autoinstall upon reboot)
+                           shutdown (halts the system and powers it off
+                                     if possible)
 
 Download from http://systemimager.org/
 Report bugs or suggestions to <systemimager-bugs\@systemimager.org>
@@ -89,12 +101,15 @@ $master_client = "";
 $ip_assignment_method = "";
 $image = "";
 $update_script = "";
+$post_install = "beep"; # the default
 
+### BEGIN evaluate options ###
 GetOptions( 
     "master-client=s" => \$master_client,
     "image=s" => \$image,
     "ip-assignment=s" => \$ip_assignment_method,
     "update-script=s" => \$update_script,
+    "post-install=s" => \$post_install,
     "help" => \$help,
     "version" => \$version,
     "quiet" => \$quiet
@@ -130,6 +145,14 @@ unless(
     or ($ip_assignment_method eq "dynamic_dhcp")
 ) { die "$help_info"; }
 
+# be sure $post_install was passed a proper option
+unless(
+    ($post_install eq "beep")
+    or ($post_install eq "reboot")
+    or ($post_install eq "shutdown")
+) { die "$help_info"; }
+### END evaluate options ###
+
 # be sure program is run by root
 check_if_root();
 
@@ -147,8 +170,8 @@ This program will get the entire system image from \"$master_client\"
 making the assumption that all filesystems considered part
 of the system image are using ext2, ext3, or reiserfs.
 
-This program will not get /proc or network mounted filesystems.
-It will only get ext2 and reiserfs formated file systems.
+This program will not get /proc, NFS, or other filesystems
+not mentioned above.
 
 EOF
 
@@ -399,7 +422,7 @@ EOF
 
 ### BEGIN get list of disks to partition ###
 # get list of hardware RAID devices
-$partition_dir="/etc/partitionschemes/rd";
+$partition_dir="$systemimagerdir/partitionschemes/rd";
 if(-d "$imagedir$partition_dir") {
     opendir(PARTITIONSCHEMES, "$imagedir$partition_dir") || die "Can't read the $imagedir$partition_dir directory";
         # Skip anything that begins with a "."
@@ -414,7 +437,7 @@ if(-d "$imagedir$partition_dir") {
 }
 
 # get list of IDE and SCSI devices
-$partition_dir="/etc/partitionschemes";
+$partition_dir="$systemimagerdir/partitionschemes";
 if(-d "$imagedir$partition_dir") {
     opendir(PARTITIONSCHEMES, "$imagedir$partition_dir") || die "Can't read the $imagedir$partition_dir directory";
         # Skip anything that begins with a "." or an "rd"
@@ -432,7 +455,7 @@ foreach $disk (@disks)  {
     $sfdisk_command_part_two = "";
 
     # gather up partition information
-    open (PARTITIONS, "<$imagedir/etc/partitionschemes/${disk}") || die "Cannot open $imagedir/etc/partitionschemes/$disk for reading\n";
+    open (PARTITIONS, "<$imagedir$systemimagerdir/partitionschemes/${disk}") || die "Cannot open $imagedir$systemimagerdir/partitionschemes/$disk for reading\n";
         @partitions = <PARTITIONS>;
     close(PARTITIONS);
 
@@ -499,22 +522,9 @@ while (<FSTAB>) {
       print MASTER_SCRIPT "mkdir -p /a$mount_point/\n";
       print MASTER_SCRIPT "mke2fs $device_file\n";
       print MASTER_SCRIPT "mount $device_file /a$mount_point/\n";
-
-      ## create ext3 journal file
-      #mount /dev/sdb2 /mnt/tmp
-      #dd if=/dev/zero of=/mnt/tmp/journal.dat bs=1k count=128000
-      #
-      ## set the imutable bit:
-      #chattr +i /mnt/tmp/journal.dat
-      #
-      # find the inode  of the journal:
-      #ls -i /mnt/tmp/journal.dat
-      #
-      ## unmount the partition and mount it as follows:
-      #mount -t ext3 /dev/sdb2 /mnt/tmp -o journal=12
-
       print MASTER_SCRIPT "\n";
       push(@mount_points, $mount_point);
+      $got_ext3="yes";
     }
 
     # reiserfs
@@ -653,6 +663,15 @@ EOF
 ### END debian ###
 ### END distribution specific networking stuff ###
 
+### BEGIN end of autoinstall options ###
+# add ext3 stuff
+if ($got_ext3 && $got_ext3 eq "yes") {
+  print MASTER_SCRIPT << 'EOF';
+# execute script to find new inodes for ext3 journal files on the fresh filesystem
+chroot /a/ /bin/sh /etc/systemimager/put_new_ext3_journal_file_inodes_in_fstab.sh
+
+EOF
+}
 
 print MASTER_SCRIPT << 'EOF';
 # run lilo
@@ -669,11 +688,13 @@ foreach $mount_point (reverse sort @mount_points) {
     print MASTER_SCRIPT "umount /a$mount_point/\n";
 }
 
+print MASTER_SCRIPT "\n";
+print MASTER_SCRIPT "# Take network interface down\n";
+print MASTER_SCRIPT "ifconfig eth0 down\n";
+print MASTER_SCRIPT "\n";
+
+if ($post_install eq "beep") {
 print MASTER_SCRIPT << 'EOF';
-
-# Take network interface down
-ifconfig eth0 down
-
 # Cause the system to make noise and display an "I'm done." message
 ralph="sick"
 count="1"
@@ -687,6 +708,18 @@ do
 done
 
 EOF
+} elsif ($post_install eq "reboot") {
+  #reboot stuff
+  print MASTER_SCRIPT "# reboot the autoinstall client\n";
+  print MASTER_SCRIPT "shutdown -r now\n";
+  print MASTER_SCRIPT "\n";
+} elsif ($post_install eq "shutdown") {
+  #shutdown stuff
+  print MASTER_SCRIPT "# shutdown the autoinstall client\n";
+  print MASTER_SCRIPT "shutdown -h now\n";
+  print MASTER_SCRIPT "\n";
+}
+### END end of autoinstall options ###
 
 close(MASTER_SCRIPT);
 ### END create a fresh /tftpboot/systemimager/$image.master ###
