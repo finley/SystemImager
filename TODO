@@ -219,6 +219,26 @@ o with an additional option for updateclient one could tell by using the
 o it would be great then, if the default kernel shipped with SI would  
   have also CONFIG_SERIAL_CONSOLE set, and if the initrd.gz would contain 
   the right /dev/console and /dev/ttyS0.
+
+Comments from Michael S. Fischer <michael@auctionwatch.com>:
+o SERIAL=`tty | grep -c ttyS`
+ will not tell you whether the console is serial or not.  Serial console
+ is /dev/console, just like the keyboard/mouse-based virtual console.  If it
+ weren't, lots of things would break.
+
+o suggests that serial console support be chosen when running getimage.
+
+Don Stocks <don_stocks@leaseloan.com> says:
+o I am going to be playing with this.  The more input the better.  I agree
+  that adding getimage command line switches will give the end user the
+  ability to choose whatever configuration may be needed without having to try
+  and determine it at runtime.  Maybe a serial switch that has a tty as an
+  argument (something like -serial-console ttyS0 ).  A Logging switch to turn
+  logging on or off could also be added.
+
+  I think I remember reading something about Brian's team already working on
+  different logging options.  If that's true, then I will leave logging alone
+  and just concentrate on console redirection.
 <<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 
