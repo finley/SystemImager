@@ -23,8 +23,8 @@ system("clear");
 # give warning
 print <<"EOF";
 
-Welcome to the SystemImager "makedhcpserver" script.  This script 
-will prepare this computer to be a DHCP server by creating
+Welcome to the VA SystemImager "makedhcpserver" command.  This 
+command will prepare this computer to be a DHCP server by creating
 the following file:
 
  /etc/dhcpd.conf
@@ -134,7 +134,7 @@ while ($satisfied ne "y") {
 open(DHCPDCONF, "> /etc/dhcpd.conf") or die "Couldn't open /etc/dhcpd.conf for writing: $!\n";
 
 print DHCPDCONF << 'EOF';
-# make network booting the SystemImager autoinstallclient possible
+# make network booting the VA SystemImager autoinstallclient possible
 allow booting;
 allow bootp;
 
