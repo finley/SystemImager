@@ -71,7 +71,7 @@ cd /usr/doc/va-systemimager-%{ver}/ && ./afterburner -q -n
 
 %files
 %defattr(-, root, root)
-%doc CHANGE.LOG COPYING CREDITS FAQ-HOWTO README TODO VERSION afterburner
+%doc CHANGE.LOG COPYING CREDITS FAQ-HOWTO README TODO VERSION afterburner local.cfg
 /var/*
 
 /tftpboot/initrd.gz

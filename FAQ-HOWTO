@@ -801,3 +801,26 @@ References
 -  Some of my clients have disks from different manufacturers or with different
    geometries.  Will an autoinstall work on them?
 -  How do I use multiple imageservers to serve a large number of clients?
+-  Bit about PXE booting.  Here's an excerpt of how Jeremy Hansen <jeremy@xxedgexx.com> got it working:
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+Actually, I figured from the docs that this *should* be all that's needed,
+but none the less, it didn't work for me.  I did get it working, but in
+order to do so, I needed to run the pxe daemon.
+
+I did this:
+
+Took the pxe package, and under linux-install, used this:
+
+linux.0 is actually pxelinux.bin, linux.1 is vmlinuz, linux.2 is
+initrd.img.  The pxelinux.cfg directory is in
+
+/tftpboot/X86PC/UNDI/linux-install
+
+I used basically the defaults from the pxe daemon that come with RH.  I
+assume names and locations can all be altered.
+
+But, overall point, I needed to run the pxe daemon to get things working.
+
+-jeremy
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
