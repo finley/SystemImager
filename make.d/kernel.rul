@@ -56,13 +56,13 @@ install_standard_kernel:	kernel
 kernel:	$(TOPDIR)/tmp/kernel
 
 ifeq ($(ARCH),ppc64-iSeries)
-$(TOPDIR)/tmp/kernel: get_kernel_source patched_kernel initrd.gz
-	cp $(TOPDIR)/initrd_source/initrd.gz ${LINUX_SRC}/arch/ppc64/boot/ramdisk.image.gz
+$(TOPDIR)/tmp/kernel: $(LINUX_SRC)/.config $(INITRD_DIR)/initrd.gz
+	cp $(INITRD_DIR)/initrd.gz ${LINUX_SRC}/arch/ppc64/boot/ramdisk.image.gz
 	$(MAKE) -C $(LINUX_SRC) oldconfig dep $(LINUX_TARGET)
 	mkdir -p $(TOPDIR)/tmp
 	cp $(LINUX_IMAGE) $(TOPDIR)/tmp/kernel
 else 
-$(TOPDIR)/tmp/kernel: patched_kernel
+$(TOPDIR)/tmp/kernel: $(LINUX_SRC)/.config
 	$(MAKE) -C $(LINUX_SRC) oldconfig dep $(LINUX_TARGET)
 	mkdir -p $(TOPDIR)/tmp
 	cp $(LINUX_IMAGE) $(TOPDIR)/tmp/kernel

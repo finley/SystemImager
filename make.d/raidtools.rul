@@ -37,7 +37,11 @@ $(MKRAID_BINARY): kernel
 	  ( cd $(SRC_DIR) && tar -xvzf $(RAIDTOOLS_TARBALL) )
 	( cd $(SRC_DIR)/$(RAIDTOOLS_DIR) && chmod +x ./configure && \
 	  ./configure )
+
+# This rule seems to hose iSeries builds, not sure why	
+ifneq ($(ARCH),ppc64-iSeries)
 	perl -pi -e 's{-O2}{-O2 -I../../src/linux/include}' $(SRC_DIR)/$(RAIDTOOLS_DIR)/Makefile
+endif
 	$(MAKE) -C $(SRC_DIR)/$(RAIDTOOLS_DIR)
 
 # download the raidtools tarballn

@@ -151,6 +151,9 @@ INITRD_DIR := initrd_source
 SI_INSTALL = $(TOPDIR)/si_install --si-prefix=$(PREFIX)
 WGET = wget --passive-ftp
 
+# Now include the other targets
+include make.d/*.rul
+
 # build everything, install nothing
 all:	boel_binaries_tarball kernel initrd.gz docs manpages
 
@@ -263,7 +266,9 @@ install_standard_initrd.gz:
 
 
 ### BEGIN build the autoinstall ramdisk ###
-initrd.gz:	kernel
+initrd.gz:	$(LINUX_SRC)/.config $(INITRD_DIR)/initrd.gz
+
+$(INITRD_DIR)/initrd.gz:
 	make -C $(INITRD_DIR) initrd.gz
 
 ### END build the autoinstall ramdisk ###
@@ -501,7 +506,6 @@ srpm: srpm_tarball
 rpm: srpm_tarball
 	rpm -tb tmp/systemimager-$(VERSION).tar.gz
 
-include make.d/*.rul
 
 # removes object files, docs, editor backup files, etc.
 clean:	$(subst .rul,_clean,$(shell cd make.d && ls *.rul))
