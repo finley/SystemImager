@@ -33,7 +33,28 @@ the same list.
 
 Installation instructions
 ---------------------------------------------------------------------------
-RPM based distributions, cut and paste the following commands:
+Debian based distributions:
+
+1)  Add the following line to /etc/apt/sources.list.  Be sure to 
+    include the second slash at the end -- that's not a typo. ;-)
+
+        deb http://people.debian.org/~dannf/debian/systemimager/ /
+
+2)  Cut and paste the following commands:
+
+        apt-get update
+        apt-get install systemimager-server systemconfigurator
+
+    or
+
+        apt-get update
+        apt-get install systemimager-client systemconfigurator
+
+
+
+RPM based distributions:
+
+1)  Cut and paste the following commands:
 
         cd /tmp
         wget http://sisuite.org/installer.pl
