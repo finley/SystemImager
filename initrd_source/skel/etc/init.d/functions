@@ -28,6 +28,8 @@
 # - look for "<number>all.<description>" pre and post-install scripts
 # - source file at end of pre-install scripts (/tmp/pre-install_variables.txt)
 # - make seperate function for variablizing kernel append parameters
+# 2004.06.03 Brian Elliott Finley
+# - fix regex used by get_base_hostname()
 #
 
 
@@ -881,7 +883,7 @@ get_hostname_by_dns() {
 ################################################################################
 #
 get_base_hostname() {
-    BASE_HOSTNAME=`echo $HOSTNAME | sed "s/[0-9]*$//"` 
+    BASE_HOSTNAME=`echo $HOSTNAME | sed "s/[.0-9].*$//"` 
 }
 #
 ################################################################################
