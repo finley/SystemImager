@@ -114,7 +114,7 @@ if [ $NO_LISTING ]; then
             echo -ne "\b|";  sleep 1;
       done
     }&
-    pid=$!
+    SPINNER_PID=$!
 fi
 
 ################################################################################
@@ -132,11 +132,28 @@ if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
         echo
         echo "TMPFS_STAGING=${TMPFS_STAGING} -- Staging in ${DIR}"
         mkdir -p ${DIR}
+
+        # Note: Transfer to staging area can fail if tmpfs runs out of inodes.
+        { 
+            while :; do
+                DF=`df -k /tmp/tmpfs_staging | grep -v 'Filesystem' | sed -e 's/  */ /g' -e 's/.*[0-9] //' -e 's/%.*//'`
+                [ $DF -ge 95 ] && echo "WARNING: Your tmpfs staging filesystem is ${DF}% full!"
+                [ $DF -eq 100 ] && echo "         Search the FAQ for tmpfs to learn about sizing options."
+                [ $DF -eq 100 ] && shellout
+                sleep 1
+            done
+            unset DF
+        }&
+        DF_PID=$!
+
         RETRY=7
         flamethrower_client
 
+        echo "Killing tmpfs watcher (pid $DF_PID)... "
+        kill -9 $DF_PID
+        unset DF_PID
+
         # Copy from staging in tmpfs to disk
-        # Note: Transfer to staging area can fail if tmpfs runs out of inodes.
         echo "Copying from tmpfs staging directory to disk..."
         rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --exclude=proc/ --numeric-ids ${TMPFS_STAGING_DIR}/ /a/ || shellout
 
@@ -155,8 +172,26 @@ else
         echo
         echo "TMPFS_STAGING=${TMPFS_STAGING} -- Staging in ${DIR}"
         mkdir -p ${DIR}
+
+        # Note: Transfer to staging area can fail if tmpfs runs out of inodes.
+        { 
+            while :; do
+                DF=`df -k /tmp/tmpfs_staging | grep -v 'Filesystem' | sed -e 's/  */ /g' -e 's/.*[0-9] //' -e 's/%.*//'`
+                [ $DF -ge 95 ] && echo "WARNING: Your tmpfs staging filesystem is ${DF}% full!"
+                [ $DF -eq 100 ] && echo "         Search the FAQ for tmpfs to learn about sizing options."
+                [ $DF -eq 100 ] && shellout
+                sleep 1
+            done
+            unset DF
+        }&
+        DF_PID=$!
+
         echo "rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ ${DIR}/" 
         rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ ${DIR}/ || shellout 
+
+        echo "Killing tmpfs watcher (pid $DF_PID)... "
+        kill -9 $DF_PID
+        unset DF_PID
 
         # Move from staging in tmpfs to disk
         rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${DIR}/ /a/
@@ -173,8 +208,9 @@ beep
 
 
 if [ $NO_LISTING ]; then
-    kill $pid
-    echo "done."
+    # stop spinner
+    echo "Killing spinner (pid $SPINNER_PID)... "
+    kill -9 $SPINNER_PID
 fi
 
 # Leave notice of which image is installed on the client
