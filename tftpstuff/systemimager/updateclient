@@ -96,7 +96,7 @@ if($autoinstall and $nolilo) {
 # if listing, get listing
 if($listing) {
   print qq(Available image(s):\n);
-  $command = qq(rsync -v $imageserver) . q(::);
+  $command = qq(rsync $imageserver) . q(::);
   $rc = 0xffff & system($command);
   exit $rc >> 8;
 }
