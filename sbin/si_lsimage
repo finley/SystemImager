@@ -160,46 +160,60 @@ $command = "rsync rsync://${imageserver}:$port/";
 open(FILE, "$command|");
 while (<FILE>) {
     $_ = trim ($_);
-    next if( m/(scripts|boot|overrides)/ );
+    next if( m/^(scripts|boot|overrides)$/ );
     if($verbose) {
+
+	    print "  Image: $_"; 
 
         my $file = "/tmp/tmp_file.$$";
 
         # display time stamp
-        my $cmd1 = "rsync -a rsync://${imageserver}:$port/$_/etc/systemimager/IMAGE_RETRIEVAL_TIME $file";
-        my $cmd2 = "rsync -a rsync://${imageserver}:$port/$_/etc/systemimager/mounted_filesystems $file";
+        my $cmd1 = "rsync -a rsync://${imageserver}:$port/$_/etc/systemimager/IMAGE_RETRIEVAL_TIME $file 1>/dev/null 2>/dev/null";
+        my $cmd2 = "rsync -a rsync://${imageserver}:$port/$_/etc/systemimager/mounted_filesystems  $file 1>/dev/null 2>/dev/null";
         if( !system($cmd1) ) {
+
             open(IMAGE_RETRIEVAL_TIME,"<$file") or die("Couldn't open $file! $!");
                 my $time = <IMAGE_RETRIEVAL_TIME>;
                 chomp($time);
-                print "$time -- $_";
+                print "\tTime: $time";
             close(IMAGE_RETRIEVAL_TIME);
+
         } elsif( !system($cmd2) ) {
+
             my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,$blksize,$blocks) = stat($file);
             my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($mtime);
             $mon++;
             $year += 1900;
-            printf("  %04d.%02d.%02d %02d:%02d -- %s", $year,$mon,$mday,$hour,$min,$_);
+            printf("\tTime: %04d.%02d.%02d %02d:%02d", $year,$mon,$mday,$hour,$min);
+
+        } else {
+
+            print "\tTime: N/A";
         }
+        
 
         # display golden client
-        my $cmd = "rsync -a rsync://${imageserver}:$port/$_/etc/systemimager/IMAGE_RETRIEVED_FROM $file";
+        my $cmd = "rsync -a rsync://${imageserver}:$port/$_/etc/systemimager/IMAGE_RETRIEVED_FROM $file 1>/dev/null 2>/dev/null";
         my $golden_client;
         if( !system($cmd) ) {
+
             open(IMAGE_RETRIEVED_FROM,"<$file") or die("Couldn't open $file! $!");
                 $golden_client = <IMAGE_RETRIEVED_FROM>;
                 chomp($golden_client);
             close(IMAGE_RETRIEVED_FROM);
+        } else {
+            
+            $golden_client = "N/A";
         }
-        if($golden_client) { print "\t-- Retrieved from: $golden_client"; }
-        print "\n";
         unlink($file);
+
+        print "\tGolden Client: $golden_client"; 
 
     } else {
 
-	    print "  $_\n"; 
-
+	    print "  $_"; 
     }
+    print "\n";
 }
 close(FILE);
 print "\n";
