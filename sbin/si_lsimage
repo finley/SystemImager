@@ -190,6 +190,7 @@ while (<FILE>) {
                 $golden_client = <IMAGE_RETRIEVED_FROM>;
                 chomp($golden_client);
             close(IMAGE_RETRIEVED_FROM);
+        }
         if($golden_client) { print "\t-- Retrieved from: $golden_client"; }
         print "\n";
         unlink($file);
