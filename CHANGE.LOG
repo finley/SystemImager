@@ -5,6 +5,22 @@
 #
 
 -----------------------------------------------------------------------
+VA SystemImager-1.4.1 2001.xx.xx
+-----------------------------------------------------------------------
+
+getimage
+--------
+o We were escaping $image so that IMAGE_LAST_SYNCED_TO was not being 
+  set during autoinstall.  Fixed by un-escaping.
+o Fixed bug where the "Would you like to update the autoinstall script 
+  for this image? ([y]/n): " question would fail if the user actually 
+  typed a "y".  Thanks to John Chabalko <john.chabalko@nbci.com> for 
+  finding this bug.
+o Added some syntax checking for the -update-script option.  
+
+
+
+-----------------------------------------------------------------------
 VA SystemImager-1.4.0 2001.03.04
 -----------------------------------------------------------------------
 
@@ -93,6 +109,11 @@ o /etc/systemimager/ directory is now properly created.  This closes bug
 
 prepareclient
 -------------
+o No longer use /etc/mtab to get mounted filesystems.  Now we use mount.
+  Now works properly on systems with /etc/mtab linked to /proc/mounts.
+  Thanks to the folks below for helping debug and test this code:
+  o Austin Gonyou <austin@coremetrics.com>
+  o Chad A. Hughes <chughes@coremetrics.com>
 o removed ext3 stuff.  getimage now does all the ext3 stuff.
 o -help and -version now exit with a status of 0.
 o Offers to add "127.0.0.1 $hostname" to /etc/hosts.
