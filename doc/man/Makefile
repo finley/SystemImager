@@ -9,7 +9,7 @@
 
 
 DESTDIR = 
-PREFIX = /usr/local
+PREFIX = /usr
 USR = $(DESTDIR)$(PREFIX)
 
 SYSTEMIMAGER_VERSION = $(shell cat ../../VERSION)
