@@ -11,30 +11,32 @@
 #   Dann Frazier <dannf@dannf.org>
 #   Curtis Zinzilieta <czinzilieta@valinux.com>
 #
-# 2004.03.24 Brian Elliott Finley
-# - get entire scripts directory at once, whether using rsync or multicast
-# - redirect output from kills in shellout() to /dev/null
-# - create choose_autoinstall_script() function to simplify script selection
-# - create run_post_install_scripts() function
-# 2004.03.24 Brian Elliott Finley
-# - start spinner with 1 second delay, so we don't get a / at the start of
-#   command being run.
-# 2004.04.14 Brian Elliott Finley
-# - add pre-install script support at Rick Bradshaw's request
-# 2004.05.12 Brian Elliott Finley
-# - added OVERRIDES to post-install script support
-# - changed up the way pre and post-install scripts are found
-# 2004.05.26 Brian Elliott Finley
-# - look for "<number>all.<description>" pre and post-install scripts
-# - source file at end of pre-install scripts (/tmp/pre-install_variables.txt)
-# - make seperate function for variablizing kernel append parameters
-# 2004.06.03 Brian Elliott Finley
-# - fix regex used by get_base_hostname()
-# 2004.06.04 Brian Elliott Finley
-# - add support for SCRIPTNAME as a pre-boot variable
-# - improve some of the "these settings override those settings logic"
-# 2004.06.05 Brian Elliott Finley
-# - add double quotes around non-null tests in pre and post-install script functions
+#   2004.03.24  Brian Elliott Finley
+#   - get entire scripts directory at once, whether using rsync or multicast
+#   - redirect output from kills in shellout() to /dev/null
+#   - create choose_autoinstall_script() function to simplify script selection
+#   - create run_post_install_scripts() function
+#   2004.03.24  Brian Elliott Finley
+#   - start spinner with 1 second delay, so we don't get a / at the start of
+#     command being run.
+#   2004.04.14  Brian Elliott Finley
+#   - add pre-install script support at Rick Bradshaw's request
+#   2004.05.12  Brian Elliott Finley
+#   - added OVERRIDES to post-install script support
+#   - changed up the way pre and post-install scripts are found
+#   2004.05.26  Brian Elliott Finley
+#   - look for "<number>all.<description>" pre and post-install scripts
+#   - source file at end of pre-install scripts (/tmp/pre-install_variables.txt)
+#   - make seperate function for variablizing kernel append parameters
+#   2004.06.03  Brian Elliott Finley
+#   - fix regex used by get_base_hostname()
+#   2004.06.04  Brian Elliott Finley
+#   - add support for SCRIPTNAME as a pre-boot variable
+#   - improve some of the "these settings override those settings logic"
+#   2004.06.05  Brian Elliott Finley
+#   - add double quotes around non-null tests in pre and post-install script functions
+#   2004.07.26  Brian Elliott Finley
+#   - check kernel version against intrd version
 #
 
 
@@ -56,6 +58,22 @@ FLAVOR="SYSTEMIMAGER_FLAVOR_STRING"
 ################################################################################
 #
 #   Subroutines
+#
+################################################################################
+#
+#  check_version
+#
+# Usage: check_version
+check_version() {
+    echo
+    echo check_version
+    INITRD_VERSION=$VERSION
+    KERNEL_VERSION=`uname -r | sed -e s/.*boel_v//`
+    if [ "$INITRD_VERSION" != "$KERNEL_VERSION" ] ; then
+        echo "FATAL: Kernel version ($KERNEL_VERSION) doesn't match initrd version ($INITRD_VERSION)!"
+        shellout
+    fi
+}
 #
 ################################################################################
 #
