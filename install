@@ -32,336 +32,26 @@ INSTALL_DIR=`pwd`
 VERSION=`cat $INSTALL_DIR/VERSION`
 test "x$prefix" = "x" && prefix=/usr
 
+# Set ownership properties for "install" based on whether we're doing a relocated install or not
+[ "x$DESTDIR" = "x" ] && OWNERSHIP="-o root -g root" || OWNERSHIP=""
+
 # don't restart inetd unless necessary
 RESTART_INETD=no
 
-# if not run as root, install will surely fail
-# (DESTDIR is needed for the RPM creation process)
-if [ "x$DESTDIR" = "x" ]; then
-  [ `whoami` != "root" ] && echo "Must be run as root!" && exit 1
-else
-  mkdir -p $DESTDIR
-  [ -d $DESTDIR -a -w $DESTDIR ] || exit 2
-  mkdir -p ${DESTDIR}${prefix}/sbin
+# if not run as root, install will surely fail (unless it's an RPM build)
+if [ "x$DESTDIR" = "x" -a `whoami` != "root" ];then
+    echo "Must be run as root!"
+    exit 1
 fi
 
-##############################################################################################
-### BEGIN functions
-##############################################################################################
-#!/bin/sh
-#
-# functions	This file contains functions to be used by most or all
-#		shell scripts in the /etc/init.d directory.
-#
-# Version:	@(#) /etc/init.d/functions 1.01 26-Oct-1993
-#
-# Author:	Miquel van Smoorenburg, <miquels@drinkel.nl.mugnet.org>
-# Hacked by:    Greg Galloway and Marc Ewing
-#
-# Mercilessly hacked by: "Brian Finley" <brian@valinux.com> 1999.09.18
-#                 for: VA SystemImager
-#
-
-# First set up a default search path.
-export PATH="/sbin:/usr/sbin:/bin:/usr/bin:/usr/X11R6/bin"
-
-# Get a sane screen width
-[ -z "$COLUMNS" ] && COLUMNS=80
-
-# Read in our configuration
-if [ -z "$BOOTUP" ]; then
-  if [ -f /etc/sysconfig/init ]; then
-      . /etc/sysconfig/init
-  else
-    # This all seem confusing? Look in /etc/sysconfig/init,
-    # or in /usr/doc/initscripts-*/sysconfig.txt
-    BOOTUP=color
-    RES_COL=60
-    MOVE_TO_COL="echo -en \\033[300C\\033[$[${COLUMNS}-${RES_COL}]D"
-    SETCOLOR_SUCCESS="echo -en \\033[1;32m"
-    SETCOLOR_FAILURE="echo -en \\033[1;31m"
-    SETCOLOR_WARNING="echo -en \\033[1;33m"
-    SETCOLOR_NORMAL="echo -en \\033[0;39m"
-    LOGLEVEL=1
-  fi
+# create DESTDIR (DESTDIR is needed for the RPM creation process)
+if [ ! "x$DESTDIR" = "x" ]; then
+    install -d -m 755 $OWNERSHIP $DESTDIR
+    if [ "$?" != "0" ];then
+        echo "I can't create $DESTDIR"
+	exit 1
+    fi
 fi
-
-if [ "$BOOTUP" != "verbose" ]; then
-   INITLOG_ARGS="-q"
-else
-   INITLOG_ARGS=
-fi
-
-# A function to start a program.
-daemon() {
-	# Test syntax.
-	gotbase=
-	case $1 in
-	    '')    echo '$0: Usage: daemon [+/-nicelevel] {program}'
-	           return 1;;
-	    --check)
-	           shift
-		   base=$1
-		   gotbase="yes"
-		   shift
-		   nicelevel=0
-		   ;;
-	          
-	    -*|+*) nicelevel=$1
-	           shift;;
-	     *)    nicelevel=0;;
-	esac
-
-        # Save basename.
-        [ -z $gotbase ] && base=`basename $1`
-
-        # See if it's already running.
-	pid=`pidofproc $base`
-	[ -n "$pid" ] && ps h $pid >/dev/null 2>&1 && return
-
-	# make sure it doesn't core dump anywhere; while this could mask
-	# problems with the daemon, it also closes some security problems
-	ulimit -c 0
-	
-	# Echo daemon
-        [ "$BOOTUP" = "verbose" ] && echo -n " $base"
-
-	# And start it up.
-	nice -n $nicelevel initlog $INITLOG_ARGS -c "$*" && success "$base startup" || failure "$base startup"
-}
-
-# A function to stop a program.
-killproc() {
-	# Test syntax.
-	if [ $# = 0 ]; then
-		echo "Usage: killproc {program} [signal]"
-		return 1
-	fi
-
-	notset=0
-	# check for second arg to be kill level
-	if [ "$2" != "" ] ; then
-		killlevel=$2
-	else
-		notset=1
-		killlevel="-9"
-	fi
-
-        # Save basename.
-        base=`basename $1`
-
-        # Find pid.
-        pid=`pidofproc $base`
-
-        # Kill it.
-        if [ "$pid" != "" ] ; then
-                [ $BOOTUP = "verbose" ] && echo -n "$base "
-		if [ "$notset" = "1" ] ; then
-		       if ps h $pid>/dev/null 2>&1; then
-			   # TERM first, then KILL if not dead
-			   kill -TERM $pid
-			   usleep 100000
-			   if ps h $pid >/dev/null 2>&1 ; then
-				sleep 1
-				if ps h $pid >/dev/null 2>&1 ; then
-				        sleep 3
-					if ps h $pid >/dev/null 2>&1 ; then
-					   kill -KILL $pid
-					fi
-				fi
-			   fi
-		        fi
-			ps h $pid >/dev/null 2>&1 && failure "$base shutdown" || success "$base shutdown"
-		# use specified level only
-		else
-		        if ps h $pid >/dev/null 2>&1; then
-	                	kill $killlevel $pid && success "$base $killlevel" || failure "$base $killlevel"
-			fi
-		fi
-	else
-	    failure "$base shutdown"
-	fi
-
-        # Remove pid file if any.
-	if [ "$notset" = "1" ]; then
-            rm -f /var/run/$base.pid
-	fi
-}
-
-# A function to find the pid of a program.
-pidofproc() {
-	# Test syntax.
-	if [ $# = 0 ] ; then
-		echo "Usage: pidofproc {program}"
-		return 1
-	fi
-
-	# First try "/var/run/*.pid" files
-	if [ -f /var/run/$1.pid ] ; then
-	        pid=`head -1 /var/run/$1.pid`
-	        if [ "$pid" != "" ] ; then
-	                echo $pid
-	                return 0
-	        fi
-	fi
-
-	# Next try "pidof"
-	pid=`pidof $1`
-	if [ "$pid" != "" ] ; then
-	        echo $pid
-	        return 0
-	fi
-
-	# Finally try to extract it from ps
-	ps ax | awk 'BEGIN { prog=ARGV[1]; ARGC=1 } 
-			   { if ((prog == $5) || (("(" prog ")") == $5) ||
-			     (("[" prog "]") == $5) ||
-			   ((prog ":") == $5)) { print $1 ; exit 0 } }' $1
-}
-
-status() {
-	# Test syntax.
-	if [ $# = 0 ] ; then
-		echo "Usage: status {program}"
-		return 1
-	fi
-
-	# First try "pidof"
-	pid=`pidof $1`
-	if [ "$pid" != "" ] ; then
-	        echo "$1 (pid $pid) is running..."
-	        return 0
-        else
-                pid=`ps ax | awk 'BEGIN { prog=ARGV[1]; ARGC=1 } 
-			   { if ((prog == $5) || (("(" prog ")") == $5) ||
-			     (("[" prog "]") == $5) ||
-			   ((prog ":") == $5)) { print $1 ; exit 0 } }' $1`
-                if [ "$pid" != "" ] ; then
-                        echo "$1 (pid $pid) is running..."
-                        return 0
-                fi
-	fi
-
-	# Next try "/var/run/*.pid" files
-	if [ -f /var/run/$1.pid ] ; then
-	        pid=`head -1 /var/run/$1.pid`
-	        if [ "$pid" != "" ] ; then
-	                echo "$1 dead but pid file exists"
-	                return 1
-	        fi
-	fi
-	# See if /var/lock/subsys/$1 exists
-	if [ -f /var/lock/subsys/$1 ]; then
-		echo "$1 dead but subsys locked"
-		return 2
-	fi
-	echo "$1 is stopped"
-	return 3
-}
-
-echo_success() {
-  [ "$BOOTUP" = "color" ] && $MOVE_TO_COL
-  echo -n "[  "
-  [ "$BOOTUP" = "color" ] && $SETCOLOR_SUCCESS
-  echo -n "OK"
-  [ "$BOOTUP" = "color" ] && $SETCOLOR_NORMAL
-  echo -n "  ]"
-  return 0
-}
-
-echo_failure() {
-  [ "$BOOTUP" = "color" ] && $MOVE_TO_COL
-  echo -n "["
-  [ "$BOOTUP" = "color" ] && $SETCOLOR_FAILURE
-  echo -n "FAILED"
-  [ "$BOOTUP" = "color" ] && $SETCOLOR_NORMAL
-  echo -n "]"
-  return 1
-}
-
-echo_passed() {
-  [ "$BOOTUP" = "color" ] && $MOVE_TO_COL
-  echo -n "["
-  [ "$BOOTUP" = "color" ] && $SETCOLOR_WARNING
-  echo -n "PASSED"
-  [ "$BOOTUP" = "color" ] && $SETCOLOR_NORMAL
-  echo -n "]"
-  return 1
-}
-
-# Log that something succeeded
-success() {
-  if [ -z "$IN_INITLOG" ]; then
-     initlog -n $0 -s "$1" -e 1
-  else
-     echo "-n $0 -s \"$1\" -e 1" >&21
-  fi
-  #[ "$BOOTUP" != "verbose" ] && echo_success
-  [ "$BOOTUP" != "verbose" ] && [ $QUIET != "true" ] && echo_success
-  return 0
-}
-
-# Log that something failed
-failure() {
-  rc=$?
-  if [ -z "$IN_INITLOG" ]; then
-     initlog -n $0 -s "$1" -e 2
-  else
-     echo "-n $0 -s \"$1\" -e 2" >&21
-  fi
-  [ "$BOOTUP" != "verbose" ] && echo_failure
-  return $rc
-}
-
-# Log that something passed, but may have had errors. Useful for fsck
-passed() {
-  rc=$?
-  if [ -z "$IN_INITLOG" ]; then
-     initlog -n $0 -s "$1" -e 1
-  else
-     echo "-n $0 -s \"$1\" -e 1" >&21
-  fi
-  [ "$BOOTUP" != "verbose" ] && echo_passed
-  return $rc
-}  
-
-# Run some action. Log its output.
-action() {
-  STRING=$1
-  echo -n "$STRING "
-  shift
-  initlog $INITLOG_ARGS -c "$*" && success "$STRING" || failure "$STRING"
-  rc=$?
-  echo
-  return $rc
-}
-
-# Confirm whether we really want to run this service
-confirm() {
-  echo -n "Start service $1 (Y)es/(N)o/(C)ontinue? [Y] "
-  read answer
-  case $answer in
-    y|Y|"")
-      return 0
-    ;;
-    c|C)
-      return 2
-    ;;
-    n|N)
-      return 1
-    ;;
-    *)
-      confirm $1
-      return $?
-    ;;
-    esac
-}
-
-##############################################################################################
-### END functions
-##############################################################################################
-
-
 
 ### BEGIN introduction ###
 if [ $QUIET = "false" ]; then
@@ -394,83 +84,68 @@ if [ $QUIET = "false" ]; then
 fi
 ### END introduction ###
 
-
 ### BEGIN binaries ###
-for BINARY in `ls $INSTALL_DIR/sbin/ | grep -wv CVS`
-do
-  cp -af $INSTALL_DIR/sbin/$BINARY ${DESTDIR}${prefix}/sbin/
-  [ "x$DESTDIR" = "x" ] && chown root:root ${prefix}/sbin/$BINARY
-done
+[ $QUIET = "false" ] && echo "Installing files in ${DESTDIR}${prefix}/sbin/"
+[ ! -d "${DESTDIR}${prefix}/sbin" ] && install -d -m 755 $OWNERSHIP  ${DESTDIR}${prefix}/sbin/
+install -m 555 $OWNERSHIP $INSTALL_DIR/sbin/makeautoinstallcd        ${DESTDIR}${prefix}/sbin/
+install -m 555 $OWNERSHIP $INSTALL_DIR/sbin/addclients               ${DESTDIR}${prefix}/sbin/
+install -m 555 $OWNERSHIP $INSTALL_DIR/sbin/getimage                 ${DESTDIR}${prefix}/sbin/
+install -m 555 $OWNERSHIP $INSTALL_DIR/sbin/makeautoinstalldiskette  ${DESTDIR}${prefix}/sbin/
+install -m 555 $OWNERSHIP $INSTALL_DIR/sbin/makedhcpstatic           ${DESTDIR}${prefix}/sbin/
+install -m 555 $OWNERSHIP $INSTALL_DIR/sbin/makedhcpserver           ${DESTDIR}${prefix}/sbin/
 ### END binaries ###
 
 
 ### BEGIN init scripts ###
-# Copy rsync init script
+# find where init.d lives
 [ -d /etc/rc.d/init.d ] && INITDIR_PREFIX="/etc/rc.d"
 [ -d /etc/init.d ] && INITDIR_PREFIX="/etc"
-if [ ! -f $INITDIR_PREFIX/init.d/rsync ]
-then
-  cp $INSTALL_DIR/init.d/rsync $INITDIR_PREFIX/init.d/
+
+# test to be sure that init.d was found
+if [ "x$INITDIR_PREFIX" = "x" ];then
+  [ $QUIET = "false" ] && echo "Couldn't set the INITDIR_PREFIX variable because I couldn't"
+  [ $QUIET = "false" ] && echo "find either /etc/init.d/ or /etc/rc.d/init.d/."
+  exit 1
 fi
+
+# do the install
+[ ! -d "${DESTDIR}${INITDIR_PREFIX}/init.d" ] && install -d -m 755 $OWNERSHIP ${DESTDIR}${INITDIR_PREFIX}/init.d
+[ $QUIET = "false" ] && echo "Installing files in ${DESTDIR}${INITDIR_PREFIX}/init.d/"
+install -m 755 $OWNERSHIP --backup=numbered $INSTALL_DIR/etc/init.d/rsync ${DESTDIR}${INITDIR_PREFIX}/init.d
 ### END init scripts ###
 
 
 ### BEGIN tftpboot stuff ###
-# Create ${DESTDIR}/tftpboot/systemimager/ directory if necessary and copy/link files
-if [ ! -d ${DESTDIR}/tftpboot/systemimager/ ]; then
-  [ $QUIET = "false" ] && echo "Creating ${DESTDIR}/tftpboot/systemimager/..."
-  mkdir -p ${DESTDIR}/tftpboot/systemimager/
-else
-  [ $QUIET = "false" ] && echo "${DESTDIR}/tftpboot/systemimager/ already exists..."
-fi
-[ $QUIET = "false" ] && echo "copying /etc/hosts to ${DESTDIR}/tftpboot/systemimager/hosts..."
-cd ${DESTDIR}/tftpboot/systemimager/
-test -f /etc/hosts && cp -p /etc/hosts . || true > hosts
+install -d -m 755 $OWNERSHIP ${DESTDIR}/tftpboot/systemimager
+install -d -m 755 $OWNERSHIP ${DESTDIR}/tftpboot/pxelinux.cfg
 
-# gotta make sure the masses can read it...
-chmod a+r hosts
+[ $QUIET = "false" ] && echo "Installing files in ${DESTDIR}/tftpboot/"
+install -m 555 $OWNERSHIP $INSTALL_DIR/tftpstuff/initrd.gz  ${DESTDIR}/tftpboot
+install -m 555 $OWNERSHIP $INSTALL_DIR/tftpstuff/kernel     ${DESTDIR}/tftpboot
 
-# copy tftpstuff into tftp area
-for TFTP_ITEM in `ls $INSTALL_DIR/tftpstuff/ | grep -wv CVS`
-do
-  cp -af $INSTALL_DIR/tftpstuff/$TFTP_ITEM ${DESTDIR}/tftpboot/
-  [ "x$DESTDIR" = "x" ] && chown -R root:root ${DESTDIR}/tftpboot/$TFTP_ITEM
-  (test -d $TFTP_ITEM && cd ${DESTDIR}/tftpboot/$TFTP_ITEM && find . -name CVS -exec rm -rf {} \;) >/dev/null 2>&1
-done
+[ $QUIET = "false" ] && echo "Installing files in ${DESTDIR}/tftpboot/pxelinux.cfg/"
+install -m 444 --backup=numbered $OWNERSHIP $INSTALL_DIR/tftpstuff/pxelinux.cfg/message.txt   ${DESTDIR}/tftpboot/pxelinux.cfg/message.txt
+install -m 444 --backup=numbered $OWNERSHIP $INSTALL_DIR/tftpstuff/pxelinux.cfg/syslinux.cfg  ${DESTDIR}/tftpboot/pxelinux.cfg/syslinux.cfg
+install -m 444 --backup=numbered $OWNERSHIP $INSTALL_DIR/tftpstuff/pxelinux.cfg/syslinux.cfg  ${DESTDIR}/tftpboot/pxelinux.cfg/default
 
-# turns out we *can* actually use the exact same config file -- Thanks, H.P. Anvin ;)
-cd ${DESTDIR}/tftpboot/pxelinux.cfg/
-ln -f syslinux.cfg default
+[ $QUIET = "false" ] && echo "Installing files in ${DESTDIR}/tftpboot/systemimager/"
+install -m 555 $OWNERSHIP --backup=numbered $INSTALL_DIR/tftpstuff/systemimager/systemimager.exclude  ${DESTDIR}/tftpboot/systemimager
+install -m 555 $OWNERSHIP $INSTALL_DIR/tftpstuff/systemimager/raidstop              ${DESTDIR}/tftpboot/systemimager
+install -m 555 $OWNERSHIP $INSTALL_DIR/tftpstuff/systemimager/mkreiserfs            ${DESTDIR}/tftpboot/systemimager
+install -m 555 $OWNERSHIP $INSTALL_DIR/tftpstuff/systemimager/mkraid                ${DESTDIR}/tftpboot/systemimager
+install -m 555 $OWNERSHIP $INSTALL_DIR/tftpstuff/systemimager/prepareclient         ${DESTDIR}/tftpboot/systemimager
+install -m 555 $OWNERSHIP $INSTALL_DIR/tftpstuff/systemimager/raidstart             ${DESTDIR}/tftpboot/systemimager
+install -m 555 $OWNERSHIP $INSTALL_DIR/tftpstuff/systemimager/updateclient          ${DESTDIR}/tftpboot/systemimager
 ### END tftpboot stuff ###
 
 
 ### BEGIN images stuff ###
-
-# create ${DESTDIR}/var/spool/systemimager
-mkdir -p ${DESTDIR}/var/spool/systemimager/images
-chmod 750 ${DESTDIR}/var/spool/systemimager/images
-
-# Create Warning file
-cat > ${DESTDIR}/var/spool/systemimager/images/README <<EOF
-#
-# "VA SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com>
-#
-
-***GOTCHA!***
-
-DO NOT TOUCH THESE DIRECTORIES UNLESS YOU KNOW EXACTLY WHAT YOU ARE DOING!!!
-
-You have the ability to totally hose an entire network of computers if you put
-the wrong file in the right place.  OR EVEN MESS UP THE PERMISSIONS ON A FILE.
-
-Permissions, ownership, modes, sticky-bits, etc. are all very important as they
-will be replicated *exactly* on the clients!!!
-EOF
-
-# Create extra scary link to warning file
-cd ${DESTDIR}/var/spool/systemimager/images
-ln -sf README DO_NOT_TOUCH_THESE_DIRECTORIES
-
+[ $QUIET = "false" ] && echo "Installing files in ${DESTDIR}/var/spool/systemimager/images/"
+install -d -m 750 $OWNERSHIP ${DESTDIR}/var/spool/systemimager/images
+install -m 444 $OWNERSHIP $INSTALL_DIR/var/spool/systemimager/images/README  ${DESTDIR}/var/spool/systemimager/images/README
+install -m 444 $OWNERSHIP $INSTALL_DIR/var/spool/systemimager/images/README  ${DESTDIR}/var/spool/systemimager/images/DO_NOT_TOUCH_THESE_DIRECTORIES
+install -m 444 $OWNERSHIP $INSTALL_DIR/var/spool/systemimager/images/README  ${DESTDIR}/var/spool/systemimager/images/CUIDADO
+install -m 444 $OWNERSHIP $INSTALL_DIR/var/spool/systemimager/images/README  ${DESTDIR}/var/spool/systemimager/images/ACHTUNG
 ### END images stuff ###
 
 
@@ -479,19 +154,30 @@ ln -sf README DO_NOT_TOUCH_THESE_DIRECTORIES
 # Documentation -- copy BIG CASE files
 # (RPM will take care of docs for us)
 if [ "x$DESTDIR" = "x" ]; then
+  [ $QUIET = "false" ] && echo "Installing files in ${prefix}/doc/$PACKAGE_NAME-$VERSION/"
   rm -fr ${prefix}/doc/$PACKAGE_NAME-*
-  mkdir -p ${prefix}/doc/$PACKAGE_NAME-$VERSION/
-  cp -af $INSTALL_DIR/[A-Z]* ${prefix}/doc/$PACKAGE_NAME-$VERSION/
-  cp -af $INSTALL_DIR/local.cfg ${prefix}/doc/$PACKAGE_NAME-$VERSION/
-  chown -R root:root ${prefix}/doc/$PACKAGE_NAME-$VERSION/
+  install -d -m 755 $OWNERSHIP ${prefix}/doc/$PACKAGE_NAME-$VERSION/
+  install -m 444 $OWNERSHIP $INSTALL_DIR/ABSTRACT.pdf                ${prefix}/doc/$PACKAGE_NAME-$VERSION/
+  install -m 444 $OWNERSHIP $INSTALL_DIR/CHANGE.LOG                  ${prefix}/doc/$PACKAGE_NAME-$VERSION/
+  install -m 444 $OWNERSHIP $INSTALL_DIR/COPYING                     ${prefix}/doc/$PACKAGE_NAME-$VERSION/
+  install -m 444 $OWNERSHIP $INSTALL_DIR/CREDITS                     ${prefix}/doc/$PACKAGE_NAME-$VERSION/
+  install -m 444 $OWNERSHIP $INSTALL_DIR/ERRATA                      ${prefix}/doc/$PACKAGE_NAME-$VERSION/
+  install -m 444 $OWNERSHIP $INSTALL_DIR/FAQ-HOWTO                   ${prefix}/doc/$PACKAGE_NAME-$VERSION/
+  install -m 444 $OWNERSHIP $INSTALL_DIR/README                      ${prefix}/doc/$PACKAGE_NAME-$VERSION/
+  install -m 444 $OWNERSHIP $INSTALL_DIR/TODO                        ${prefix}/doc/$PACKAGE_NAME-$VERSION/
+  install -m 444 $OWNERSHIP $INSTALL_DIR/VERSION                     ${prefix}/doc/$PACKAGE_NAME-$VERSION/
+  install -m 444 $OWNERSHIP $INSTALL_DIR/autoinstall.kernel.config   ${prefix}/doc/$PACKAGE_NAME-$VERSION/
+  install -m 444 $OWNERSHIP $INSTALL_DIR/autoinstall.kernel.support  ${prefix}/doc/$PACKAGE_NAME-$VERSION/
+  install -m 444 $OWNERSHIP $INSTALL_DIR/local.cfg                   ${prefix}/doc/$PACKAGE_NAME-$VERSION/
+  install -m 555 $OWNERSHIP $INSTALL_DIR/afterburner                 ${prefix}/doc/$PACKAGE_NAME-$VERSION/
 fi
-
 ### END documentation and what not stuff ###
 
 
 # run afterburner unless told otherwise...
 if [ "$AFTERBURNER" = "yes" ]; then
-  [ $QUIET = "false" ] && $INSTALL_DIR/afterburner --non-interactive || $INSTALL_DIR/afterburner --non-interactive --quiet
+  [ $QUIET = "false" ] && $INSTALL_DIR/afterburner --non-interactive
+  [ $QUIET = "false" ] || $INSTALL_DIR/afterburner --non-interactive --quiet
 fi
 
 exit 0
