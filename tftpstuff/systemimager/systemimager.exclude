@@ -14,6 +14,9 @@
 /var/run/*
 /var/spool/*
 
+# This entry needed grub to work in the System Configurator environment
+/boot/grub/device.map
+
 # You may modify or add to the exclusions below at your own risk...
 # -- Wait a minute, this is all at your own risk! ;)
 # You should consider modifying this file on both on the client 
