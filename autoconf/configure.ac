@@ -70,8 +70,8 @@ AC_PATH_PROG(python_exec,python)
 AC_SUBST(PYTHON_PATH,$python_exec)
 
 # do we have devmapper
-AC_CHECK_LIB([libdevmapper],[dm_task_run],[have_libdevmapper=yes],
-	     [SI_CHECK_FAIL(libdevmapper,libdevmapper-devel)])
+AC_CHECK_HEADERS([libdevmapper.h],[have_libdevmapper=yes],
+		 [SI_CHECK_FAIL(libdevmapper,libdevmapper-devel)])
 
 # do we have docbook, if not say know
 AC_CHECK_PROG(found_docbook2man,[docbook2man],[yes])
