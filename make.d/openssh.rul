@@ -34,7 +34,7 @@ $(SRC_DIR)/openssh_verify.stamp:	$(SRC_DIR)/$(OPENSSH_TARBALL)
 	#
 	# If the following command fails, you may need to do a 
 	#
-	#   gpg --recv-keys <KEYID>
+	#   gpg --keyserver gpg.dtype.org --recv-keys <KEYID>
 	#
 	# with the "DSA key ID" listed below.
 	#
