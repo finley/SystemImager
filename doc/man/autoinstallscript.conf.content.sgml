@@ -251,6 +251,29 @@
   </itemizedlist>
   </refsect1>
 
+  <refsect1>
+  <title>BOEL Section</title>
+
+  <para>
+    This section contains miscellaneous settings used by BOEL (Brian's Own
+    Embedded Linux), the embedded linux that performs an install on 
+    autoinstall clients.
+  </para>
+
+  <itemizedlist>
+    <listitem>
+      <para>
+        devstyle - Tells the autoinstallscript to mount the devfs filesystem in
+        the image prior to running System Configurator, which prepares the 
+        client's boot loader.  Many boot loaders need to access the disks at
+        this point, and systems that use devfs won't have any device files in the
+        freshly copied image for the boot loader to use (at this point, BOEL has 
+        done a chroot into the root of the filesystem on the freshly installed 
+        client).
+      </para>
+    </listitem>
+  </itemizedlist>
+  </refsect1>
 
   <refsect1>
 
