@@ -20,7 +20,7 @@ Source: http://download.sourceforge.net/systemimager/%{name}-%{ver}.tar.bz2
 BuildRoot: /tmp/%{name}-%{ver}-root
 BuildArchitectures: noarch
 Packager: dann frazier <dannf@dannf.org>
-Docdir: %{prefix}/doc
+Docdir: %{prefix}/share/doc
 URL: http://systemimager.org/
 Distribution: System Installation Suite
 Requires: rsync >= 2.4.6, syslinux >= 1.48, libappconfig-perl, dosfstools, /usr/bin/perl
@@ -39,7 +39,7 @@ Copyright: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: dann frazier <dannf@dannf.org>
-Docdir: %{prefix}/doc
+Docdir: %{prefix}/share/doc
 URL: http://systemimager.org/
 Distribution: System Installation Suite
 Requires: rsync >= 2.4.6, systemimager-common = %{version}, perl-AppConfig, dosfstools, /sbin/chkconfig, /sbin/service, perl
@@ -71,7 +71,7 @@ Copyright: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: dann frazier <dannf@dannf.org>
-Docdir: %{prefix}/doc
+Docdir: %{prefix}/share/doc
 URL: http://systemimager.org/
 Distribution: System Installation Suite
 Requires: perl
@@ -103,7 +103,7 @@ Copyright: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: dann frazier <dannf@dannf.org>
-Docdir: %{prefix}/doc
+Docdir: %{prefix}/share/doc
 URL: http://systemimager.org/
 Distribution: System Installation Suite
 Requires: systemimager-common = %{version}, systemconfigurator, perl-AppConfig, rsync >= 2.4.6, perl, mtools
@@ -137,7 +137,7 @@ Copyright: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: dann frazier <dannf@dannf.org>
-Docdir: %{prefix}/doc
+Docdir: %{prefix}/share/doc
 URL: http://systemimager.org/
 Distribution: System Installation Suite
 Requires: systemimager-server >= %{version}
