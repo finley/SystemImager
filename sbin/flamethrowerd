@@ -441,7 +441,7 @@ sub main {
     my $dir = $ft_config->get("flamethrower_state_dir");
     my $modules = $ft_config->modules();
     foreach my $module ( @$modules ) {
-        my $file = $dir . "/" . $module;
+        my $file = "${dir}/flamethrowerd.${module}.pid";
         unless(-e "$file") {
                         # In case this happens to get started *immediately* 
             sleep 1;    # after the cast() function does it's unlink, give 
@@ -524,7 +524,6 @@ sub read_config_file {
 sub conf_file_updated {
 
     my $file = shift;
-    print "conf_file_updated($file)\n" if ($debug);
 
     my $st = stat($file);
     my $this_time = $st->ctime;
