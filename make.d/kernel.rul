@@ -73,7 +73,7 @@ install_kernel:	$(LINUX_IMAGE)
 PHONY += kernel
 kernel:	$(LINUX_IMAGE)
 
-ifeq ($(ARCH),ppc64-iSeries)
+ifdef IS_PPC64
 $(LINUX_IMAGE):	$(SRC_DIR)/patched_kernel-stamp $(INITRD_DIR)/initrd.img
 	cp $(TOPDIR)/initrd_source/initrd.img \
 	    ${LINUX_SRC}/arch/ppc64/boot/ramdisk.image.gz
