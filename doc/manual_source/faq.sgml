@@ -1,3 +1,7 @@
+<!-- 
+  $Id$
+-->
+
 <chapter>
  <title>FAQ (Frequently Asked Questions)</title>
  <qandaset defaultlabel='qanda'>
@@ -59,6 +63,40 @@
     <para>
      Run the <command>mkautoinstallpunchcard</command> command on the
      image server - deprecated :)
+    </para>
+   </answer>
+  </qandaentry>
+
+  <qandaentry>
+   <question>
+    <para>
+     How does the autoinstall client software know where to get the image?
+    </para>
+   </question>
+   <answer>
+    <para>
+     When the autoinstall client software (BOEL) is booted, if the LAST_ROOT 
+     append parameter has been used, then BOEL attempts to mount and read a 
+     local.cfg file from the device specified in LAST_ROOT (Aka: the device 
+     that was root on the machine before it was rebooted).  BOEL then tries to
+     read a local.cfg file from the floppy drive (if one exists).  Finally, BOEL
+     makes a DHCP request, if it still doesn't have enough information to
+     connect to the network.  Once it knows it's IP address, it resolves this to
+     it's host name, then retrieves an autoinstall script from the image server
+     based on it's hostname (Ie: hostname.sh).
+    </para>
+   </answer>
+  </qandaentry>
+
+  <qandaentry>
+   <question>
+    <para>
+     How does the netboot system know where to get the image?
+    </para>
+   </question>
+   <answer>
+    <para>
+     See "How does the autoinstall client software know where to get the image?"
     </para>
    </answer>
   </qandaentry>
