@@ -9,7 +9,7 @@
 # This file is: getimage 
 #
 
-don't overwrite master --switch
+#don't overwrite master --switch
 
 # set system path for system() calls
 $ENV{PATH} = "/usr/sbin:/sbin:/usr/bin:/bin";
@@ -353,11 +353,29 @@ mount | grep [hs]d[a-z][1-9] > /dev/null
 EOF
 
 
-# get the list of disks to partition
-opendir(PARTITIONSCHEMES, "$imagedir/etc/partitionschemes/") || die "Can't read the $imagedir/etc/partitionschemes/ directory";
+### BEGIN get list of disks to partition ###
+# get list of hardware RAID devices
+$partition_dir="/etc/partitionschemes/rd";
+opendir(PARTITIONSCHEMES, "$imagedir$partition_dir") || die "Can't read the $imagedir$partition_dir directory";
     # Skip anything that begins with a "."
-    @disks = grep(!/^\..*/, readdir(PARTITIONSCHEMES));
+    push(my @hardware_raid_disks, grep( !/^\..*/, readdir(PARTITIONSCHEMES) ) );
+
+    # add the rd/ bit to each device
+    for (@hardware_raid_disks) {
+      $_ =~ s/^/rd\//;
+      push(@disks, $_);
+    }
 close(PARTITIONSCHEMES);
+
+# get list of IDE and SCSI devices
+$partition_dir="/etc/partitionschemes";
+opendir(PARTITIONSCHEMES, "$imagedir$partition_dir") || die "Can't read the $imagedir$partition_dir directory";
+    # Skip anything that begins with a "." or an "rd"
+    push(@disks, grep( !/^rd$/, grep( !/^\..*/, readdir(PARTITIONSCHEMES) ) ) );
+close(PARTITIONSCHEMES);
+### END get list of disks to partition ###
+
+print "\@disks: @disks\n"; <STDIN>;
 
 # Foreach disk, gather up the partition info for that disk and prepare an sfdisk command
 foreach $disk (@disks)  {
@@ -376,7 +394,7 @@ foreach $disk (@disks)  {
             chomp;
 
             # split on space(s) and assign values to variables
-            (my $dev, my $start, my $end, my $sectors, my $id)  = split(/ +/);
+            (my $dev, my $start, my $end, my $sectors, my $id) = split(/ +/);
 
             ### BEGIN SAVE for future implimentation ###
             #

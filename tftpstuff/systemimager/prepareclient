@@ -60,7 +60,7 @@ if [ "$IMAGESERVER" != "" ]; then
  # First set up a default search path.
  export PATH="/sbin:/usr/sbin:/bin:/usr/bin:/usr/X11R6/bin"
  
- # Get a sane screen width
+
  [ -z "$COLUMNS" ] && COLUMNS=80
  
  # Read in our configuration
@@ -440,7 +440,75 @@ EOF
  echo
  
  # get a list of all disks on system
- disks=`grep [hs]d[a-z][1-9] /proc/partitions | gawk '{print $4}' | cut -c 1-3 | sort -u`
+ #disks=`grep [hs]d[a-z][1-9] /proc/partitions | gawk '{print $4}' | cut -c 1-3 | sort -u`
+ ### BEGIN get list of hardware RAID "disks" ###
+ hardware_raid_disks=`
+ # pull out minor device number and device name from raw partition information
+ awk '{print $2" "$4}' /proc/partitions | \
+
+ # exclude devices with a minor number of "0" (gets rid of CD-ROM drives, etc.)
+ egrep -v ^0 | \
+
+ # drop minor device number, leaving only the device names
+ awk '{print $2}' | \
+
+ # extract hardware RAID "disks"
+ egrep rd\/c[0-9]+d[0-9]+ | \
+
+ # strip partition information, leaving just the device name
+ sed -e 's/p.*//' | \
+
+ # show each unique device only once
+ sort -u
+ `
+ ### END get list of hardware RAID "disks" ###
+
+ ### BEGIN get list of IDE disks ###
+ ide_disks=`
+ # pull out minor device number and device name from raw partition information
+ awk '{print $2" "$4}' /proc/partitions | \
+
+ # exclude devices with a minor number of "0" (gets rid of CD-ROM drives, etc.)
+ egrep -v ^0 | \
+
+ # drop minor device number, leaving only the device names
+ awk '{print $2}' | \
+
+ # extract IDE disk devices
+ egrep hd[a-z] | \
+
+ # strip partition information, leaving just the device name
+ sed -e 's/[0-9].*//' | \
+
+ # show each unique device only once
+ sort -u
+ `
+ ### END get list of IDE disks ###
+
+ ### BEGIN get list of SCSI disks ###
+ scsi_disks=`
+ # pull out minor device number and device name from raw partition information
+ awk '{print $2" "$4}' /proc/partitions | \
+
+ # exclude devices with a minor number of "0" (gets rid of CD-ROM drives, etc.)
+ egrep -v ^0 | \
+
+ # drop minor device number, leaving only the device names
+ awk '{print $2}' | \
+
+ # extract SCSI disk devices
+ egrep sd[a-z] | \
+
+ # strip partition information, leaving just the device name
+ sed -e 's/[0-9].*//' | \
+
+ # show each unique device only once
+ sort -u
+ `
+ ### END get list of SCSI disks ###
+
+ # make master list of all disks
+ disks=$hardware_raid_disks" "$ide_disks" "$scsi_disks
  
  mv -f updateclient /usr/sbin
  chmod 755 /usr/sbin/updateclient
@@ -454,8 +522,11 @@ EOF
  fi
  
  # leave disk info behind for "getimage" script
- mkdir -p /etc/partitionschemes
- rm -f /etc/partitionschemes/*
+ # clean up after last "prepare"
+ rm -fr /etc/partitionschemes/
+ 
+ # create receiving directory for SCSI, IDE, and Hardware RAID disk info
+ mkdir -p /etc/partitionschemes/rd
  chmod +x /tmp/sfdisk
  for disk in $disks
  do
