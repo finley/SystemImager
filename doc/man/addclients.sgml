@@ -45,28 +45,107 @@
   <refsynopsisdiv>
     <cmdsynopsis>
       <command>&dhpackage;</command>
+      <arg><option>-help</option></arg>
+      <arg><option>-version</option></arg>
+      <arg><option>-client <replaceable>HOSTNAME</replaceable></option></arg>
+      <arg><option>-range <replaceable>X-Y</replaceable></option></arg>
+      <arg><option>-domain <replaceable>DOMAINNAME</replaceable></option></arg>
+      <arg><option>-i <replaceable>IP</replaceable></option></arg>
+      <arg><option>-file <replaceable>FILE</replaceable></option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
   <refsect1>
     <title>DESCRIPTION</title>
 
-    <para>This manual page documents briefly the
-      <command>&dhpackage;</command> command.</para>
+    <para>
+      This manual page documents briefly the <command>&dhpackage;</command>
+      command.
+    </para>
 
-    <para><command>&dhpackage;</command> is an interactive tool for
-      assigning clients to an image and configuring the image server .</para>
+    <para>
+      <command>&dhpackage;</command> is an interactive tool for assigning
+      clients to an image and configuring the image server.
+    </para>
 
   </refsect1>
   <refsect1>
     <title>OPTIONS</title>
 
-    <para>Currently no options are accepted.</para>
+    <para>A summary of options is included below.</para>
 
+    <variablelist>
+      <varlistentry>
+	<term><option>-help</option></term>
+	<listitem><para>Show summary of options</para></listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-version</option></term>
+	<listitem>
+	  <para>Display version and copyright information.</para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-client <replaceable>HOSTNAME</replaceable></option></term>
+	<listitem>
+	  <para>
+	    Host name of the client you want to update.  When used with
+	    <option>-continue-install</option>, the name of the client to
+	    autoinstall.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-range <replaceable>X-Y</replaceable></option></term>
+	<listitem>
+	  <para>
+	    Number range used to create a series of host names based on the
+	    <option>-client</option> option.  For example, "-client www -range
+	    1-3" will cause addclients to use www1, www2, and www3 as host
+	    names.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-domain <replaceable>DOMAINNAME</replaceable></option></term>
+	<listitem>
+	  <para>
+	    If this option is used, <replaceable>DOMAINNAME</replaceable> will
+	    be appended to the client host name(s).
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-i <replaceable>IP<subscript>0</subscript>-IP<subscript>1</subscript></replaceable></option></term>
+	<listitem>
+	  <para>
+	    This is a comma delimited list of IP ranges, usually used for
+	    complex topologies.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-file <replaceable>FILE</replaceable></option></term>
+	<listitem>
+	  <para>
+	    Read host names and images to process from FILE.  (format is like:
+	    <literallayout>
+	      client1 my_web_image_v1
+	      client2 my_web_image_v1
+	      bigbox1 my_web_image_v2
+	    </literallayout>
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
   </refsect1>
+  
   <refsect1>
     <title>SEE ALSO</title>
 
-    <para>getimage(8), makedhcpserver(8), makedhcpstatic(8)</para>
+    <para>
+      <command>getimage</command>(8), <command>makedhcpserver</command>(8),
+      <command>makedhcpstatic</command>(8)
+    </para>
 
     <para>More details can be found in the <citetitle>VA SystemImager
 	manual.</citetitle>

@@ -77,33 +77,25 @@
 
     <variablelist>
       <varlistentry>
-        <term>
-	  <option>-help</option>
-        </term>
+        <term><option>-help</option></term>
         <listitem>
           <para>Show summary of options</para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term>
-	  <option>-version</option>
-        </term>
+        <term><option>-version</option></term>
         <listitem>
           <para>Display version and copyright information</para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term>
-	  <option>-golden-client <replaceable>HOSTNAME</replaceable></option>
-        </term>
+        <term><option>-golden-client <replaceable>HOSTNAME</replaceable></option></term>
         <listitem>
           <para>Hostname or IP address of the "golden" client</para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term>
-	  <option>-server <replaceable>HOSTNAME</replaceable></option>
-        </term>
+        <term><option>-server <replaceable>HOSTNAME</replaceable></option></term>
         <listitem>
           <para>
 	    Hostname or IP address of the imageserver holding the image you
@@ -113,8 +105,7 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-image <replaceable>IMAGENAME</replaceable></option>
-        </term>
+        <term><option>-image <replaceable>IMAGENAME</replaceable></option></term>
         <listitem>
           <para>
 	    Where IMAGENAME is the name to assign to the image you are
@@ -127,8 +118,25 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-quiet</option>
-        </term>
+	<term><option>-ssh-user <replaceable>USERNAME</replaceable></option></term>
+	<listitem>
+	  <para>
+	    Username for ssh connection to the client.  Only needed if a secure
+	    connection is required.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-log <replaceable>"STRING"</replaceable></option></term>
+	<listitem>
+	  <para>
+	    Quoted string for log file format.  See the
+	    <filename>rsyncd.conf</filename>(5) man page for options.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-quiet</option></term>
         <listitem>
           <para>
 	    Don't ask any questions or print any output (other than errors).
@@ -138,9 +146,7 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term>
-	  <option>-directory <replaceable>PATH</replaceable></option>
-        </term>
+        <term><option>-directory <replaceable>PATH</replaceable></option></term>
         <listitem>
           <para>
 	    The full path and directory name where you want this image to be
@@ -150,9 +156,7 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term>
-	  <option>-update-script <replaceable>YES|NO</replaceable></option>
-	</term>
+        <term><option>-update-script <replaceable>YES|NO</replaceable></option></term>
 	<listitem>
 	  <para>
 	    Update the $image.master script? Defaults to NO if -quiet.  If
@@ -166,8 +170,7 @@
     </para>
     <variablelist>
       <varlistentry>
-        <term><option>-ip-assignment <replaceable>METHOD</replaceable></option>
-        </term>
+        <term><option>-ip-assignment <replaceable>METHOD</replaceable></option></term>
         <listitem>
           <para>
 	    Where METHOD can be:
@@ -204,9 +207,7 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term>
-	  <option>-post-install <replaceable>ACTION</replaceable></option>
-        </term>
+        <term><option>-post-install <replaceable>ACTION</replaceable></option></term>
         <listitem>
           <para>ACTION can be:</para>
 	  <itemizedlist>

@@ -79,7 +79,7 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-server HOSTNAME</option></term>
+	<term><option>-server <replaceable>HOSTNAME</replaceable></option></term>
 	<listitem>
 	  <para>
 	    Hostname or IP address of the imageserver.  Defaults to localhost.
@@ -87,7 +87,7 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-ssh-user USERNAME</option></term>
+	<term><option>-ssh-user <replaceable>USERNAME</replaceable></option></term>
 	<listitem>
 	  <para>
 	    Username for ssh connection to the client.  Only needed if a secure
@@ -100,7 +100,7 @@
   <refsect1>
     <title>SEE ALSO</title>
 
-    <para>getimage(8), makedhcpserver(8), makedhcpstatic(8)</para>
+    <para><command>getimage</command>(8)</para>
 
     <para>More details can be found in the <citetitle>VA SystemImager
 	manual.</citetitle>

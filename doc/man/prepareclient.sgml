@@ -78,52 +78,45 @@
 
     <variablelist>
       <varlistentry>
-        <term><option>-version</option>
-        </term>
+        <term><option>-version</option></term>
         <listitem>
           <para>Display version and copyright information</para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-h</option>
-          <option>-help</option>
-        </term>
+        <term><option>-h</option>, <option>-help</option></term>
         <listitem>
           <para>Show summary of options</para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-e</option>
-          <option>-explicit-geometry</option>
-        </term>
+        <term><option>-e</option>, <option>-explicit-geometry</option></term>
         <listitem>
-          <para>Leave partition information for getimage using explicit
+          <para>
+	    Leave partition information for getimage using explicit
 	    disk geometry.  The default is to use megabytes which allow
 	    getimage to create an autoinstall script that will work with
-	    client disks of different geometries</para>
+	    client disks of different geometries.
+	  </para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-n</option>
-          <option>-no-rsyncd</option>
-        </term>
+        <term><option>-n, </option><option>-no-rsyncd</option></term>
         <listitem>
           <para>Do not start the rsync daemon</para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-q</option>
-          <option>-quiet</option>
-        </term>
+        <term><option>-q</option>, <option>-quiet</option></term>
         <listitem>
-          <para>Run silently.  Return an exit status of 0 for success
-	    or a non-zero exit status for failure</para>
+          <para>
+	    Run silently.  Return an exit status of 0 for success or a non-zero
+	    exit status for failure
+	  </para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-r</option>
-          <option>-rpm-install</option>
-        </term>
+        <term><option>-r</option>, <option>-rpm-install</option></term>
         <listitem>
           <para>This is only used when building an RPM</para>
         </listitem>
@@ -133,7 +126,7 @@
   <refsect1>
     <title>SEE ALSO</title>
 
-    <para>updateclient (8)</para>
+    <para><command>updateclient</command>(8)</para>
 
     <para>More details can be found in the <citetitle>VA SystemImager
 	manual.</citetitle>

@@ -100,15 +100,13 @@
 
     <variablelist>
       <varlistentry>
-        <term><option>-help</option>
-        </term>
+        <term><option>-help</option></term>
         <listitem>
           <para>Show summary of options</para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-version</option>
-        </term>
+        <term><option>-version</option></term>
         <listitem>
           <para>Display version and copyright information</para>
         </listitem>
@@ -178,47 +176,41 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-server HOSTNAME</option>
-        </term>
+        <term><option>-server HOSTNAME</option></term>
         <listitem>
           <para>Hostname or IP address of the imageserver. (-imageserver is
 	    a deprecated option and will go away soon.)</para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-image IMAGENAME</option>
-        </term>
+        <term><option>-image IMAGENAME</option></term>
         <listitem>
           <para>Image from which the client should be updated</para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-directory DIRECTORY</option>
-        </term>
+        <term><option>-directory DIRECTORY</option></term>
         <listitem>
           <para>Absolute path of the directory to be updated (defaults to "/")
 	  </para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-nolilo</option>
-        </term>
+        <term><option>-nolilo</option></term>
         <listitem>
           <para>Don't run lilo after update completes.  (lilo is always run
 	    unless specified)</para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-autoinstall</option>
-        </term>
+        <term><option>-autoinstall</option></term>
         <listitem>
           <para>Autoinstall this client the next time it reboots.
 	    (can't be run with -nolilo)</para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-configure-from DEVICE</option>
-        </term>
+        <term><option>-configure-from DEVICE</option></term>
         <listitem>
           <para>Only used with -autoinstall.  Stores the network configuration
 	  for DEVICE in the /local.cfg file so that the same settings will be
@@ -226,15 +218,13 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-reboot</option>
-        </term>
+        <term><option>-reboot</option></term>
         <listitem>
           <para>Reboot client after update completes</para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-log "STRING"</option>
-        </term>
+        <term><option>-log "STRING"</option></term>
         <listitem>
           <para>
 	    Quoted string for log file format.  See the rsyncd.conf man page
@@ -247,7 +237,9 @@
   <refsect1>
     <title>SEE ALSO</title>
 
-    <para>prepareclient (8)</para>
+    <para>
+      <command>updateclient</command>(8)
+    </para>
 
     <para>More details can be found in the <citetitle>VA SystemImager
 	manual.</citetitle>

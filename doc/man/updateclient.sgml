@@ -56,9 +56,10 @@
       <arg><option>-autoinstall</option></arg>
       <arg><option>-configure-from <replaceable>DEVICE</replaceable>
 	</option></arg>
+      <arg><option>-ssh-user <replaceable>USERNAME</replaceable></option></arg>
       <arg><option>-listing</option></arg>
       <arg><option>-reboot</option></arg>
-
+      <arg><option>-log <replaceable>"STRING"</replaceable></option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
   <refsect1>
@@ -92,23 +93,20 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-server HOSTNAME</option>
-        </term>
+        <term><option>-server <replaceable>HOSTNAME</replaceable></option></term>
         <listitem>
           <para>Hostname or IP address of the imageserver. (-imageserver is
 	    a deprecated option and will go away soon.)</para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-image IMAGENAME</option>
-        </term>
+        <term><option>-image <replaceable>IMAGENAME</replaceable></option></term>
         <listitem>
           <para>Image from which the client should be updated</para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-directory DIRECTORY</option>
-        </term>
+        <term><option>-directory <replaceable>DIRECTORY</replaceable></option></term>
         <listitem>
           <para>Absolute path of the directory to be updated (defaults to "/")
 	  </para>
@@ -131,12 +129,22 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-configure-from DEVICE</option>
-        </term>
+        <term><option>-configure-from <replaceable>DEVICE</replaceable></option></term>
         <listitem>
-          <para>Only used with -autoinstall.  Stores the network configuration
-	  for DEVICE in the /local.cfg file so that the same settings will be
-	  used during the autoinstall process.</para>
+          <para>
+	    Only used with -autoinstall.  Stores the network configuration
+	    for DEVICE in the /local.cfg file so that the same settings will be
+	    used during the autoinstall process.
+	  </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-ssh-user <replaceable>USERNAME</replaceable></option></term>
+        <listitem>
+          <para>
+	    Username for ssh connection from the client.  Only needed if a
+	    secure connection is required.
+	  </para>
         </listitem>
       </varlistentry>
       <varlistentry>
@@ -144,7 +152,7 @@
         </term>
         <listitem>
           <para>List available images on imageserver.  (supercedes and ignores
-	    all options other than --imageserver)</para>
+	    all options other than -imageserver)</para>
         </listitem>
       </varlistentry>
       <varlistentry>
@@ -154,12 +162,21 @@
           <para>Reboot client after update completes</para>
         </listitem>
       </varlistentry>
+      <varlistentry>
+	<term><option>-log <replaceable>"STRING"</replaceable></option></term>
+	<listitem>
+	  <para>
+	    Quoted string for log file format.  See the
+	    <filename>rsyncd.conf</filename>(5) man page for options.
+	  </para>
+	</listitem>
+      </varlistentry>
     </variablelist>
   </refsect1>
   <refsect1>
     <title>SEE ALSO</title>
 
-    <para>prepareclient (8)</para>
+    <para><command>pushupdate</command>(8)</para>
 
     <para>More details can be found in the <citetitle>VA SystemImager
 	manual.</citetitle>

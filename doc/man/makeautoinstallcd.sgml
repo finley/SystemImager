@@ -47,6 +47,10 @@
   <refsynopsisdiv>
     <cmdsynopsis>
       <command>&dhpackage;</command>
+      <arg><option>-help</option></arg>
+      <arg><option>-version</option></arg>
+      <arg><option>-out-file <replaceable>FILE</replaceable></option></arg>
+      <arg><option>-quiet</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
   <refsect1>
@@ -63,13 +67,42 @@
   <refsect1>
     <title>OPTIONS</title>
 
-    <para>Currently no options are accepted.</para>
+    <para>A summary of options is included below.</para>
 
+    <variablelist>
+      <varlistentry>
+	<term><option>-help</option></term>
+	<listitem><para>Show summary of options</para></listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-version</option></term>
+	<listitem>
+	  <para>Display version and copyright information.</para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-out-file <replaceable>FILE</replaceable></option></term>
+	<listitem>
+	  <para>
+	    Name of the file that will hold the resulting ISO image.  (Not to
+	    worry, this will only be about 3 MB in size.)
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-quiet</option></term>
+	<listitem>
+	  <para>
+	    Don't pring any output, just provide an appropriate exit code.
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
   </refsect1>
   <refsect1>
     <title>SEE ALSO</title>
 
-    <para>makeautoinstalldiskette(8)</para>
+    <para><command>makeautoinstalldiskette</command>(8)</para>
 
     <para>More details can be found in the <citetitle>VA SystemImager
 	manual.</citetitle>

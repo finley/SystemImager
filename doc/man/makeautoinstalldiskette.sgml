@@ -47,6 +47,12 @@
   <refsynopsisdiv>
     <cmdsynopsis>
       <command>&dhpackage;</command>
+      <arg><option>-help</option></arg>
+      <arg><option>-version</option></arg>
+      <arg><option>-quiet</option></arg>
+      <arg><option>-floppy=<replaceable>DEVICE</replaceable></option></arg>
+      <arg><option>-config=<replaceable>FILE</replaceable></option></arg>
+      <arg><option>-ssh-key=<replaceable>FILE</replaceable></option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
   <refsect1>
@@ -63,13 +69,75 @@
   <refsect1>
     <title>OPTIONS</title>
 
-    <para>Currently no options are accepted.</para>
+    <para>A summary of options is included below.</para>
 
+    <variablelist>
+      <varlistentry>
+	<term><option>-help</option></term>
+        <listitem><para>Show summary of options</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-version</option></term>
+        <listitem>
+          <para>Display version and copyright information.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-quiet</option></term>
+	<listitem>
+	  <para>
+	    Don't print any output, just provide an appropriate exit code.
+	    (requires -floppy)
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-floppy=<replaceable>DEVICE</replaceable></option></term>
+	<listitem>
+	  <para>
+	    The 1.44MB floppy drive device containing the disk to format.  If
+	    not specified, /dev/fd0 is assumed.  This command understands
+	    "/dev/fd0" through "/dev/fd7".  (if you specify -floppy, this
+	    command will run non-interactively)
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-config=<replaceable>FILE</replaceable></option></term>
+	<listitem>
+	  <para>
+	    Where <replaceable>FILE</replaceable> contains all the settings
+	    necessary for the client to set it's hostname and configure it's
+	    networking information without DHCP.  This file is copied to
+	    <filename>/local.cfg</filename> on the autoinstalldiskette.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-ssh-key=<replaceable>FILE</replaceable></option></term>
+	<listitem>
+	  <para>
+	    Where <replaceable>FILE</replaceable> is the SSH1 private key of
+	    the user account that the autoinstall client will use to connect to
+	    the imageserver.  It is usually called
+	    <filename>.ssh/identity</filename>.
+	  </para>
+	  <para>
+	    To use this private key, you must also add the corresponding public
+	    key to this user's <filename>.ssh/authorized_keys</filename> file
+	    on the imageserver.  The public key is usually called
+	    <filename>.ssh/identity.pub</filename>.  The
+	    <filename>.ssh/authorized_keys</filename> must be readable only by
+	    this user.  (<command>chmod 600 .ssh/authorized_keys</command>)
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
   </refsect1>
   <refsect1>
     <title>SEE ALSO</title>
 
-    <para>makeautoinstallcd(8)</para>
+    <para><command>makeautoinstallcd</command>(8)</para>
 
     <para>More details can be found in the <citetitle>VA SystemImager
 	manual.</citetitle>
