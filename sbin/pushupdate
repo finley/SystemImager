@@ -1,0 +1,548 @@
+#!/usr/bin/perl
+
+#
+# "SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@systemimager.org>
+#
+#   $Id$
+#
+#   Others who have contributed to this code (in alphabetical order):
+#     Curtis Zinzilieta <czinzilieta@valinux.com>
+#
+
+use Getopt::Long;
+use IO::Handle;
+use FileHandle;
+use Time::Local;
+use POSIX qw(strftime);
+use Socket;
+
+### BEGIN Parameters to be read from /etc/systemimager/systemimager.conf
+$si_logdir = "/var/log/systemimager";
+$si_log_format = "%t %o %f";
+### END Parameters ###
+
+$program_name="pushupdate";
+
+### BEGIN Subroutines ###
+sub check_if_root{
+    unless($< == 0) { die "$program_name: Must be run as root!\n"; }
+}
+
+sub get_response {
+ my $garbage_out=$_[0];
+ my $garbage_in=<STDIN>;
+ chomp $garbage_in;
+ unless($garbage_in eq "") { $garbage_out = $garbage_in; }
+ return $garbage_out;
+}
+
+sub dec2bin {
+  my $str = unpack("B32", pack("N", shift));
+  return $str;
+}
+
+sub dec2bin8bit {
+  my $str = unpack("B32", pack("N", shift));
+  $str = substr($str, -8); # 32bit number -- get last 8 bits (the relevant ones)
+  return $str;
+}
+
+sub bin2dec {
+  return unpack("N", pack("B32", substr("0" x 32 . shift, -32))); # get all 32bits
+}
+
+sub ip_quad2ip_dec {
+    (my $a, my $b, my $c, my $d) = split(/\./, $_[0]);
+    my $a_bin=dec2bin8bit($a);
+    my $b_bin=dec2bin8bit($b);
+    my $c_bin=dec2bin8bit($c);
+    my $d_bin=dec2bin8bit($d);
+    return bin2dec(join('', $a_bin, $b_bin, $c_bin, $d_bin));
+}
+
+sub ip_dec2ip_quad {
+    my $ip_bin = dec2bin($_[0]);
+    my $a_dec = bin2dec(substr($ip_bin, 0, 8));
+    my $b_dec = bin2dec(substr($ip_bin, 8, 8));
+    my $c_dec = bin2dec(substr($ip_bin, 16, 8));
+    my $d_dec = bin2dec(substr($ip_bin, 24, 8));
+    return join('.', $a_dec, $b_dec, $c_dec, $d_dec);
+}
+
+sub numerically { 
+    $a <=> $b;
+}
+
+
+# trim leading/trailing spaces and return result
+sub trim {
+  my @converts = @_;
+  for (@converts) {
+    s/^\s+//;
+    s/\s+$//;
+  }
+  return wantarray ? @converts : $converts[0];
+}
+
+
+# write a record to pushupdate command log
+sub updatelogfile {
+  my ($logmessage) = @_;
+  my $fh=0;
+  open ($fh,">> $si_logdir/pushupdate");
+  my $datetime = strftime("%Y/%m/%d %H:%M:%S", localtime(time()));
+  print $fh "$datetime  $logmessage\n";
+  close ($fh);
+}
+
+# start a new install from within each fork
+sub processautoinstall {
+  my ($param_input) = @_;
+  my $logfile, $local_log_format, $status, $rc, $command;
+
+  # if -pre is specified, run it here, burying all results
+  if ($pre) {
+    $rc = `$pre > /dev/null 2>&1`;
+    if ($rc) { 
+      die "unusual error code from -pre script $pre of:$rc $!\n";
+    }
+  }
+
+  # split param-target, to pickup the target address & image/script
+  chomp($param_input);
+  my @fields = split(" ", $param_input);
+  my $param_target = trim($fields[0]);
+  my $param_image  = trim($fields[1]);
+
+  # output the command to the log
+  updatelogfile("pushupdate autoinstall started for $param_target");
+
+  # extract ip address and lookup client hostname
+  # if ip address given, just returns same value back
+  my $client = gethostbyaddr(inet_aton($param_target), AF_INET) 
+	       or die "Cant resolve $param_target: $!\n";
+
+  # set the machine specific logfile name
+  $logfile = "$si_logdir/pushupdate.$param_target";
+  if (defined($log_format)) {
+    if ($log_format) {
+      $local_log_format = $log_format;
+    } else {
+      $local_log_format = $si_log_format;
+    }
+  } else {
+    my $datetime = strftime("%Y/%m/%d %H:%M:%S", localtime(time()));
+    my $fh=0;
+    open ($fh,"> $logfile");
+    print $fh "client $param_target was autoinstalled $datetime.\n";
+    print $fh $logging_blurb;
+    close ($fh);
+    $logfile = "/dev/null";
+  }
+
+  # copy install script out to the client
+  $command = "ssh -o \"StrictHostKeyChecking no\" -l root -R8730:127.0.0.1:873 $client \"rsync -avL rsync://127.0.0.1:8730/tftpboot/systemimager/$param_image.master /tmp/\"";
+  $rc = 0xffff & system($command);
+  if ($rc != 0) { 
+    # get username from /etc/passwd as derived from the real user id "$>"
+    my $username = getpwuid $>;
+    my $message="FATAL: Could not copy /tftpboot/systemimager/$param_image.master to $client!\n";
+    $message = $message . "       Be sure that you have ${username}'s .ssh/identity.pub key in ssh_files/authorized_keys.\n";
+    updatelogfile($message);
+    die $message;
+  }
+
+  # install script is ready to run, so open ssh tunnel and execute script
+  $command = "ssh -o \"StrictHostKeyChecking no\" -l root -R873:127.0.0.1:873 $client sh /tmp/$param_image.master > $logfile 2>&1";
+  $rc = 0xffff & system($command);
+  if ($rc != 0) { 
+    my $message="FATAL: Could not connect via ssh and run autoinstall script on $client!\n";
+    updatelogfile($message);
+    die $message;
+  } else {
+    my $message="Completed pushupdate autoinstall for $client from $imageserver.\n";
+    updatelogfile($message);
+  }
+
+  # if -post is specified, run it here, burying all results
+  if ($post) {
+    $rc = `$post > /dev/null 2>&1`;
+    if ($rc) {
+      die "unusual error code from -post script $post of:$rc $!\n";
+    }
+  }
+}
+
+
+# run updateclient from within each fork
+sub processupdate {
+  my ($param_input) = @_;
+  my $logfile, $local_log_format, $status, $rc, $command;
+
+  # if -pre is specified, run it here, burying all results
+  if ($pre) {
+    $command = "$pre > /dev/null 2>&1";
+    $rc = 0xffff & system($command);
+    if ($rc) { 
+      die "unusual error code from -pre script $pre of:$rc $!\n";
+    }
+  }
+
+  # split param-target, to pickup the target address & image
+  chomp($param_input);
+  my @fields = split(" ", $param_input);
+  my $param_target = trim($fields[0]);
+  my $param_image  = trim($fields[1]);
+
+  # output the command to the log
+  updatelogfile("pushupdate started for $param_target");
+
+  # extract ip address and lookup client hostname
+  # if ip address given, just returns same value back
+  my $client = gethostbyaddr(inet_aton($param_target), AF_INET) 
+	       or die "Cant resolve $param_target: $!\n";
+
+  # set the machine specific logfile name
+  $logfile = "$si_logdir/pushupdate.$param_target";
+  if (defined($log_format)) {
+    if ($log_format) {
+      $local_log_format = $log_format;
+    } else {
+      $local_log_format = $si_log_format;
+    }
+  } else {
+    my $datetime = strftime("%Y/%m/%d %H:%M:%S", localtime(time()));
+    my $fh=0;
+    open ($fh,"> $logfile");
+    print $fh "client $param_target was last updated $datetime.\n";
+    print $fh $logging_blurb;
+    close ($fh);
+    $logfile = "/dev/null";
+  }
+
+  # build the command line, using the global command line variables
+  $command = "ssh -l $ssh_user ";
+  $command = $command . " $client sudo /usr/sbin/updateclient -server $imageserver -image $param_image -ssh-user $ssh_user";
+  if ($reboot) { 
+    $command = $command . " -reboot";
+  }
+  if ($local_log_format) { 
+    $command = $command . " -log" .  qq( "$local_log_format");
+  }
+  $command = $command . " > $logfile 2>&1";
+
+  # run command to start updateclient on the remote workstation
+  $rc = 0xffff & system($command);
+  if (!$rc) {
+    updatelogfile("completed pushupdate for $client from $imageserver");
+  } else {
+    updatelogfile("unsuccessful pushupdate for $client from $imageserver");
+  }
+
+  # if -post is specified, run it here, burying all results
+  if ($post) {
+    $command = "$post > /dev/null 2>&1";
+    $rc = 0xffff & system($command);
+    if ($rc) {
+      die "unusual error code from -post script $post of:$rc $!\n";
+    }
+  }
+
+
+}
+### END Subroutines ###
+
+
+### BEGIN Program ###
+# set version information
+$version_number = "1.5.0";
+$version_info = <<"EOF";
+pushupdate (part of SystemImager) version $version_number
+
+Copyright (C) 1999-2001 Brian Elliott Finley <brian\@systemimager.org>
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+EOF
+
+# set help information
+$get_help = "            Try \"pushupdate -help\" for more options.";
+$help_info = $version_info . <<"EOF";
+
+Usage: pushupdate [OPTION]... -client HOSTNAME   [UPDATECLIENT_OPTION]... -server HOSTNAME -image -IMAGENAME
+  or   pushupdate [OPTION]... -clients-file FILE [UPDATECLIENT_OPTION]... -server HOSTNAME -image -IMAGENAME
+
+Options: (options can be presented in any order and may be abbreviated)
+
+ -help                    Display this output.
+
+ -version                 Display version and copyright information.
+
+ -client HOSTNAME	  Host name of the client you want to update.
+                          When used with -continue-install, the name 
+			  of the client to autoinstall.
+
+ -range N-N		  Number range used to create a series of host
+			  names based on the -client option.  For
+			  example, "-client www -range 1-3" will cause
+			  pushupdate to use www1, www2, and www3 as host
+			  names.  If no -range is given with -client,
+			  then pushupdate assumes that only one client
+			  is to be updated.
+
+ -domain DOMAINNAME	  If this option is used, DOMAINNAME will be
+			  appended to the client host name(s).
+
+ -clients-file FILE 	  Read host names and images to process from FILE.
+
+ -concurrent-processes N  Number of concurrent process to run.  If this
+			  option is not used, N will default to 1.
+
+ -ssh-user		  Username for ssh connection to client.
+
+ -continue-install	  Hosts should be treated as autoinstall clients
+			  waiting for further instruction.
+
+
+Options for updateclient: (The following options will be passed on to 
+                           the updateclient command)
+
+ -server HOSTNAME         Hostname or IP address of the imageserver.
+			  If omitted here, current machine is assumed.
+
+ -image IMAGENAME         Image from which the client should be updated.
+			  Required if selecting a -client, forbidden if
+			  -clients-file is specified.
+
+ -directory DIRECTORY     Absolute path of directory to be updated.
+                          (defaults to "/")
+
+ -nolilo                  Don't run lilo after update completes.
+                          (lilo is always run unless specified)
+
+ -autoinstall             Autoinstall this client the next time it
+                          reboots.  (can't be run with -nolilo)
+
+ -configure-from DEVICE   Only used with -autoinstall.  Stores the
+                          network configuration for DEVICE in the
+                          /local.cfg file so that the same settings
+                          will be used during the autoinstall process.
+
+ -reboot                  Reboot client after update completes.
+
+ -log "STRING"		  Quoted string for log file format.  See the
+			  rsyncd.conf man page for options.
+
+Download, report bugs, and make suggestions at:
+http://systemimager.org/
+EOF
+
+# setup generic logging info message for detail client logs if needed
+$logging_blurb = <<"EOF";
+
+Check out the -log option with the command pushupdate -help
+to get information for capturing detailed file transfer logging
+from each client pushupdate targets.
+EOF
+
+
+
+
+# preset values, in case not specified on command line:
+$concurrent=1;
+
+# interpret command line options
+GetOptions( "help" => \$help,
+            "version" => \$version,
+	    "client=s" => \$base_host_name,
+	    "range=s" => \$range,
+	    "domain=s" => \$domain_name,
+	    "clients-file=s" => \$clients_file,
+	    "concurrent-processes=s" => \$concurrent,
+	    "ssh-user=s" => \$ssh_user,
+	    "continue-install" => \$continue_install,
+	    "pre=s" => \$pre_command,
+	    "post=s" => \$post_command,
+	    "log=s" => \$log_format,
+            "server=s" => \$imageserver,
+            "image=s" => \$image,
+            "directory=s" => \$directory,
+            "nolilo" => \$nolilo,
+            "autoinstall" => \$autoinstall,
+            "configure-from=s" => \$DEVICE,
+            "reboot" => \$reboot,
+) or die qq($help_info);
+
+# if requested, print help information
+if($help) {
+  print qq($help_info);
+  exit 0;
+}
+
+# if requested, print version and copyright information
+if($version) {
+  print qq($version_info);
+  exit 0;
+}
+
+# be sure $imageserver name doesn't start with a hyphen
+if($imageserver) {
+  $_ = $imageserver;
+  if(/^-/) { die "\n$program_name: Server name can\'t start with a hyphen.\n$get_help\n\n"; }
+}
+
+# be sure $image doesn't start with a hyphen
+if($image) {
+  $_ = $image;
+  if(/^-/) { die "\n$program_name: Image name can\'t start with a hyphen.\n$get_help\n\n"; }
+}
+
+# must have some specifier for processing files
+if((!$clients_file) and (!$base_host_name)) {
+  die "\n$program_name: Must specify -client or -clients-file.\n$get_help\n\n";
+}
+
+# if name usage is bad, print help information
+if ((!$imageserver) and (!$continue_install)) {
+  print "\n$program_name: Must specify -server if doing an update.\n";
+  die     "            Must specify -continue-install if doing an install.\n$get_help\n\n";
+}
+
+# -autoinstall and -nolilo conflict
+if($autoinstall and $nolilo) { 
+  die qq($get_help);
+}
+
+# -configure-from requires -autoinstall
+if($DEVICE) {
+  unless ($autoinstall) { 
+    die "$get_help"; 
+  }
+}
+
+# -clients-file doesn't exist
+if(($clients_file) and ( ! -e $clients_file )) {
+  die "\n$program_name: Unable to find $hostfile.\n$get_help\n\n";
+}
+
+# -clients-file and -client conflict
+if($clients_file and $base_host_name) {
+  die "\n$program_name: Must select either -clients-file or -client.\n$get_help\n\n";
+}
+
+# if -client, must have -image
+if($base_host_name and !$image) {
+  die "\n$program_name: Must also specify -image.\n$get_help\n\n";
+}
+
+# if -clients-file, cannot have -image
+if($clients_file and $image) {
+  print "\n$program_name: -clients-file and -image conflict.";
+  die   "\n               Images should be specified in the clients file.\n$get_help\n\n";
+}
+
+# setup @hostname array for processing
+if (-e $clients_file) {
+  open (FH, "< $clients_file") or die "\n$program_name: Unable to open $$clients_file: $!\n";
+  @hostnames = <FH>;
+  close (FH) or die "\n$program_name: Unable to close $hostfile: $!\n";
+  my (@fields, $testline, $i);
+  for ($i = 0; $i <= $#hostnames; $i++) {
+    # attempt to parse each line, just to make sure there is an image or script specified
+    chomp($hostnames[$i]);
+    @fields = split(" ", $hostnames[$i]);
+    if(!$fields[1]) {
+      die "No image/script defined for $fields[0] on line $i of file $clients_file\n";
+    }
+
+    # if we are running as autoinstall, find and verify the autoinstall script exists
+    # assume that the entry lists only a filename...add the /tftpboot/systemimager
+    # and ".master" in the path/filename.
+    if ($continue_install) {
+      my $installscript = "/tftpboot/systemimager/" . $fields[1] . ".master";
+      if (! -e $installscript) {
+	die "Master install script not found for $fields[0] on line $i of file $clients_file\n";
+      }
+    }
+  }
+} else {
+  # prepare needed variables
+  #if ($base_host_name) { $base_host_name = lc $base_host_name; }
+  if ($domain_name) { $domain_name = lc $domain_name; } 
+
+  # verify the script to install, if relevant
+  if ($continue_install) {
+    my $installscript = "/tftpboot/systemimager/" . $image . ".master";
+    if (! -e $installscript) {
+      die "\n$program_name: $installscript not found!\n";
+    }
+  }
+
+  # must have a hostname then...put it into the array for processing
+  if ($range)
+  {
+    # decide if there is a range, and extract it
+    my $starting_number, $ending_number;
+    $range =~ /\-/;
+    $starting_number = trim($`);
+    $ending_number = trim($');
+    if ((!starting_number) || (!ending_number))
+    {
+      die "Invalid range specifier.\n$get_help\n\n";
+    }
+
+    # given a good range, build the hostnames array
+    my $node_number;
+    my $count = 0;
+    foreach $node_number ($starting_number .. $ending_number)
+    {
+      $hostnames[$count] = $base_host_name . $node_number;
+      if ($domain_name)
+      {
+        $hostnames[$count] = "$hostnames[$count]." .  $domain_name .  " $image";
+      }
+      $count++;
+    }
+  }
+  else
+  {
+    my $hostname = $base_host_name;
+    if ($domainname)
+    {
+      $hostname = "$hostname." . $domain_name;
+    }
+    $hostname = $hostname . " $image";
+    @hostnames = $hostname;
+  }
+}
+
+# Begin main program loop, processing each push as needed
+$CONCURRENT_RUNNING_PROCESSES = 0;
+my $element;
+
+foreach $element (@hostnames) {
+    if ($CONCURRENT_RUNNING_PROCESSES >= $concurrent) {
+      wait;
+      $CONCURRENT_RUNNING_PROCESSES--;
+    }
+
+    # fork a new process with the command to execute
+    if ($pid = fork) {
+      $CONCURRENT_RUNNING_PROCESSES++;
+      sleep 1;
+    } elsif (defined $pid) {
+      # this is the newly forked process
+      if ($continue_install) {
+	processautoinstall($element);
+      } else {
+        processupdate($element);
+      }
+      exit(0);
+    } else {
+      die "error forking: $!\n";
+    }
+}
+
+# wait for children to finish
+while (wait != -1) { ; } ;
+
+### End of pushupdate ###
