@@ -122,8 +122,7 @@ sub removeimage {
     _removeimage_clients($image);
     _removeimage_script($image);
     _removeimage_rsync($image);
-    _removeimage_filesystem($image);
- 
+    _removeimage_filesystem($config->default_imagedir . "/$image");
 }
 
 sub _removeimage_clients {
@@ -131,15 +130,52 @@ sub _removeimage_clients {
 }
 
 sub _removeimage_script {
-    return 1;
+    my ($image) = @_;
+    my $config = get_config();
+    return unlink $config->autoinstall_script_dir . "/$image.master";
 }
 
+##################################################
+#
+#  _removeimage_rsync - slurps the rsync file, then iterates over
+#  it, printing out lines not related to the image we are trying to
+#  delete.
+#
+##################################################
+
 sub _removeimage_rsync {
-    return 1;
+    my ($imagename) = @_;
+    my $config = get_config();
+    my $file = $config->rsyncd_conf;
+    open(IN,"<$file") or (carp($!), return 0);
+    my @lines = <IN>;
+    close(IN);
+    open(OUT,">$file") or (carp($!), return 0);
+    my $print = 1;
+    foreach my $line (@lines) {
+        if($line =~ /\[/) {
+            $print = 1;
+        }
+        if($line =~ /\[$imagename\]/) {
+            $print = 0;
+            next;
+        }
+        print OUT $line if $print;
+    }
+    close(OUT);
+
 }
 
 sub _removeimage_filesystem {
-    return 1;
+    my ($dir) = @_;
+
+    # minor sanity test so you can't trick it to rm -rf /
+    if(-d $dir and $dir =~ m{.+/.+}) {
+        return rmtree($dir,1);
+    } else {
+        carp "$dir doesn't look like a safe directory to remove";
+        return undef;
+    }
 }
 
 42;
