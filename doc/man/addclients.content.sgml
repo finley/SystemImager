@@ -79,11 +79,11 @@
 	  with leading zeros (e.g. node09.bogus.net, instead of
 	  node9.bogus.net), but this will likely be added in a future release.
 	  One reason for making the no-padded-zeros method the default
-	  behavior is flexible cluster expansion.  Flexible cluster expansion.
-	  For example, if you had initially chosen node01 - node80 as your
-	  cluster range, and later decide to add 25 more nodes to your cluster,
-	  you will have to renumber all of your nodes to add another leading
-	  zero (i.e. node001 - node105).
+	  behavior is flexible cluster expansion.  For example, if you had
+	  initially chosen node01 - node80 as your cluster range, and later
+	  decide to add 25 more nodes to your cluster, you will have to
+	  renumber all of your nodes to add another leading zero
+	  (i.e. node001 - node105).
 	</para>
       </note>
     </listitem>
