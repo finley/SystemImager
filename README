@@ -1,14 +1,16 @@
 #
 # "SystemImager"
 #
-#  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
+#  Copyright (C) 2001-2002 Bald Guy Software
+#                          Brian Elliott Finley <brian@bgsw.net>
+#  Copyright (C) 1999-2001 Brian Elliott Finley <brian@bgsw.net>
 #
 #   $Id$
 #
 
-First thing's first
--------------------
-o All documentation is in the /usr/share/doc/systemimager-* directory
+First Things First
+--------------------------------------------------------------------------------
+All documentation is in /usr/share/doc/systemimager-*
 
 o Read at *least* the HOWTO section of the manual:
   1)  "cd /usr/share/doc/systemimager-*/manual/"
@@ -22,118 +24,16 @@ o See the FAQ section of the manual if you still have questions
 
 o See the Troubleshooting section of the manual if you have problems
 
-o If you *still* have questions, send them to the systemimager-discuss 
-  email list.  You can sign up for this list at http://systemimager.org/.
+o If you *still* have questions, visit http://systemimager.org/support/
 
-o Now that you've read the documentation, you don't need me to tell you
-  how to install it :)
 
 Building SystemImager
----------------------
+--------------------------------------------------------------------------------
+SystemImager should now build on most any distribution, as well as work on any
+distribution.  The SystemImager team is no longer supporting "installable 
+tarballs", but instead provide packages for RPM and Debian based distributions.
 
-  Build Environment - Limitations
-  -------------------------------
+If you must build SystemImager yourself, it should now be possible on any
+distribution.  Please refer to the Makefile for details.
 
-Although the project is moving towards being able to build on any distribution,
-it currently only builds on the Debian distribution:
-  o SystemImager uses the mklibs.sh script to do library reduction for the
-    ramdisk (initrd.gz).  mklibs.sh uses the -pic packages from the Debian
-    distibution to do this.
-  o Most of the utilities in the ramdisk are hardlinks to busybox.  However,
-    many of the remaining binaries are copied over from known Debian locations
-    on the local box.
-  o The i386 architecture's build environment is further limited by the need
-    to create 1.44MB autoinstall diskettes.  We must use the libc6-pic package
-    from Debian 2.2, as the reduced libraries from newer versions no longer
-    fit on a floppy.  To keep as close to Debian woody as possible, we build
-    releases in a chroot that was initially based on Debian 2.2, but packages
-    are backported from Debian 3.0 whenever possible.  This chroot is posted on
-    sourceforge.  If you do not require the use of a floppy, use of this
-    chroot is not a requirement.
-  o Building ramdisks on filesystems mounted over NFS is broken on some systems.
-    Linux will let you mount files from nfs servers via a loopback device, and 
-    let you fill them up.  However, once you umount the device, your changes
-    may be lost.  It is suspected that this is a kernel and/or nfs driver issue.
 
-  Getting Build Dependencies
-  --------------------------
-Obviously, we will need to go through some restructuring in order to clean
-this up - the ability to build on other linux distributions is a goal.
-
-The following command will install all the necessary packages required for
-building on a Debian 3.0 or unstable system:
-
-  # apt-get install build-dep systemimager
-
-Build dependencies are also listed in the debian/control file.  If the
-above build dependency list is outdated, check there for updates.
-
-  Third Party Source
-  ------------------
-Some additional source code is required for building SystemImager.
-The build system looks in various places on your system for the necessary
-tarballs:
-  1) /usr/src (recommended)
-  2) src/ directories in the build tree
-  3) The upstream location on the net (via wget)
-
-You can also tell the build system to pre-download any necessary source:
-  # make get_source
-
-This will leave the source tarballs in the appropriate src/ directories
-in the build tree.  Since a 'make distclean' will cause this source to
-be removed, it is suggested that you copy this source to /usr/src for
-future builds.
-
-  Building
-  --------
-  Pre-built binaries are available in various package formats on the
-systemimager web site - that is the easiest way to get SystemImager.
-
-  To build everything, run 'make' from the toplevel.  Parts of the build
-require root privileges.  You must have be root or have sudo access
-in order to build those components.  If you just want
-to build a specific component, there is probably a specific rule for
-that component in the Makefile.  Here are some examples of the most
-useful (imo) rules:
-
-Building tarballs:
-  # make tarballs     (this will build a pristine source, server, and client
-                       tarballs, as well as the "standard" flavor boot tarball
-                       for the architecture of the local machine)
-  # make source_tarball
-  # make server_tarball
-  # make client_tarball
-  # make boot_tarball
-
-Building the autoinstall ramdisk for the local architecture:
-  # cd initrd_source
-  # make initrd.gz
-
-Building the autoinstall kernel for the local architecture, run:
-  # make kernel
-
-Extracting & patching the kernel source, w/o building it:
-  # make patched_kernel-stamp
-
-Building a pdf of the manual:
-  # cd doc/manual_source
-  # make pdf
-
-  Installing
-  ----------
-  The recommended way to install systemimager is by using the install scripts
-provided in the prebuilt tarballs (see the examples for making tarballs in
-the "Build" section above).  These scripts provide logic for updating config
-files on your system that the install rules in the Makefile do not.
-
-  WARNING: The Makefile installs with "/usr" as the PREFIX by default.  If you
-           want PREFIX to be "/usr/local", for example, must do 
-           "make PREFIX=/usr/local <target>".
-
-  For development, it is often convenient to use the install rules in the
-Makefile.  The most common rules for installation are:
-  # make install_server_all    (these rules install all architecture dependent
-  # make install_client_all     and architecture independent files)
-  # make install_server        (these rules install all architecure independent
-  # make install_client         files)

@@ -1,20 +1,22 @@
 #
 # "SystemImager"
 #
-#  Copyright (C) 1999-2002 Brian Elliott Finley <bef@bgsw.net>
+#  Copyright (C) 1999-2002 Brian Elliott Finley <brian@bgsw.net>
 #  Copyright (C) 2002 Bald Guy Software
-#                     Brian Elliott Finley <bef@bgsw.net>
+#                     Brian Elliott Finley <brian@bgsw.net>
 #
 #    $Id$
 #
 #   Version 3.0.0
 
-Software RAID on Software RAID arrays are not currently supported.
-    To be specific, what we mean is something like RAID level 10, for example,
-    where you have two striped RAID 0 arrays, (/dev/md0 and /dev/md1), and you
+Software RAID levels such as 10, or 50, (arrays of arrays) are currently not 
+    supported.  
+    
+    To be specific, what we mean is something like RAID level 10, for example, 
+    where you have two striped RAID 0 arrays, (/dev/md0 and /dev/md1), and you 
     mirror them (RAID 1) for fault tolerance, and access the whole setup with 
-    a third software RAID device (such as /dev/md2).  This particular setup
-    could also be called RAID 0+1.
+    a third software RAID device (such as /dev/md2).  This particular setup 
+    is often called RAID 0+1, or RAID 10.
 
 Filesystem specific settings are picked up from the golden client for FAT file 
     systems only.  For example, 12, 16, or 32 bit FAT is detected and properly
