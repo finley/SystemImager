@@ -435,6 +435,13 @@ if($DEVICE){
 }
 ### END configure-from section ### 
 
+### BEGIN graffiti ###
+$file="/etc/systemimager/IMAGE_LAST_SYNCED_TO";
+open (FILE, "> $file") or die "Couldn't open $file for writing: $!\n";
+  print FILE "$image\n";
+close (FILE);
+### BEGIN graffiti ###
+
 
 # reboot
 if($reboot) { 
