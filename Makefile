@@ -510,13 +510,15 @@ endif
 	# any soft links.  Note: This does not require PIC libraries -- it will
 	# copy standard libraries if it can't find a PIC equivalent.  -BEF-
 	#
-	( cd $(BOEL_BINARIES_DIR) && $(TOPDIR)/initrd_source/mklibs.sh -v -d lib bin/* usr/bin/* sbin/* usr/sbin/* lib/* )
+	cd $(BOEL_BINARIES_DIR) && $(TOPDIR)/initrd_source/mklibs.sh -v -d lib bin/* usr/bin/* sbin/* usr/sbin/* lib/*
 	#
 	#
 	# install kernel modules. -BEF-
 	#
-	$(MAKE) -C $(LINUX_SRC) modules_install \
-	    INSTALL_MOD_PATH="$(BOEL_BINARIES_DIR)"
+	$(MAKE) -C $(LINUX_SRC) modules_install INSTALL_MOD_PATH="$(BOEL_BINARIES_DIR)"
+	#
+	# get rid of build, which is a link to the kernel source directory (won't exist in BOEL anyway). -BEF-
+	rm -f $(BOEL_BINARIES_DIR)/lib/modules/*/build
 	#
 	# Tar it up, baby! -BEF-
 	cd $(BOEL_BINARIES_DIR) && tar -cv * | gzip -9 > $(BOEL_BINARIES_TARBALL)
