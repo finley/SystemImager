@@ -1594,9 +1594,11 @@ sub copy_boot_files_to_boot_media {
         open(INFILE,"<$infile") or croak("Couldn't open $infile for reading.");
             open(OUTFILE,">$outfile") or croak("Couldn't open $outfile for writing.");
                 while (<INFILE>) {
-                    if (/APPEND/) { 
+                    if (/^\s*APPEND\s+/) { 
                         chomp;
+		      # Limit of 255 specified in Documentation/i386/boot.txt
                         $_ = $_ . " $append_string\n";
+			croak("kernel boot parameter string too long") unless (length() <= 255);
                     }
                     print OUTFILE;
                 }

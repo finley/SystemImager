@@ -109,8 +109,12 @@ sub write_syslinux_conf {
     }
     
     while (<DEFAULT>) {
-	if (/^\s*APPEND.*/) { 
+	if (/^\s*APPEND\s+.*/) { 
 	    chomp;
+	    my $newappend = $_ . " " . $append . "\n";
+             ## APPEND strings can only be 255 chars, according to
+             ## linux/Documentation/i386/boot.txt
+	    if (length($newappend) > 255)
 	    print $out $_ . " " . $append . "\n";
 	}
 	else {
