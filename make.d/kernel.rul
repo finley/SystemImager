@@ -61,8 +61,8 @@ LINUX_CONFIG := $(PATCH_DIR)/linux.$(ARCH).config
 LINUX_PATCHES = $(sort $(shell find $(PATCH_DIR) \
                                     -name "linux.$(ARCH).*.patch" -o \
                                     -name "linux.all.*.patch" -o \
-                                    -name "linux.$(ARCH),*.patch" -o \
-                                    -name "linux.*,$(ARCH),*.patch" -o \
+                                    -name "linux.$(ARCH),*.*.patch" -o \
+                                    -name "linux.*,$(ARCH),*.*.patch" -o \
                                     -name "linux.*,$(ARCH).*.patch"))
 ALL_SOURCE += $(SRC_DIR)/$(LINUX_TARBALL)
 
