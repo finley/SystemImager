@@ -14,12 +14,13 @@ use POSIX qw(setsid);
 use SystemImager::Config;
 use vars qw($config $VERSION);
 
+my $tftp_dir = $config->tftp_dir();
 my $pxe_conf_dir;
 
-if (!$config->tftp_dir()) {
+unless($tftp_dir) {
     die "TFTP_DIR not specified in systemimager.conf file!";
 } else {
-    $pxe_conf_dir = "$config->tftp_dir()" . "/pxelinux.cfg";
+    $pxe_conf_dir = "$tftp_dir" . "/pxelinux.cfg";
 }
 
 my $syslinux_cfg_noboot = "/etc/systemimager/pxelinux.cfg/syslinux.cfg.noboot";
@@ -30,7 +31,7 @@ my $log_file = "/var/log/systemimager/rsyncd";
 ### BEGIN misc daemon stuff ###
 chdir '/'                   or die "Can't chdir to /: $!";
 open STDIN, '/dev/null'     or die "Can't read /dev/null: $!";
-open STDOUT, '>>/dev/null'  or die "Can't write to /dev/null: $!";
+#open STDOUT, '>>/dev/null'  or die "Can't write to /dev/null: $!";
 open STDERR, '>>/dev/null'  or die "Can't write to /dev/null: $!";
 umask 0;
 ### END misc daemon stuff ###
@@ -73,35 +74,20 @@ sub tail_rsync_log_file {
     local *LOG_FILE;
     open(LOG_FILE,"$cmd |") || die("Can't $cmd!");
         while(<LOG_FILE>) {
-            print;
        
             # Get individual field values for this line
             my @array = split(/\s+/);
 
-            print "$array[9]\n";
-           
-#            # Test to see if this is a line we're concerned about
-#            if ($array[$field_1] eq $field_1_value && $array[$field_2] eq $field_2_value) {
-#                my $file="";
-#                
-#                my $host = $array[$fhost];
-#               
-#                # Get rid of braces if IP address is in [IP] or (ip)
-#                $host =~ s/\(//; 
-#                $host =~ s/\)//;
-#                $host =~ s/\[//;
-#                $host =~ s/\]//;
-#               
-#                # diagnostic output
-#                #print "Adding entry for: $host\n";
-#               
-#                # Create new ID file in spool dir
-#                $file="$pop_watcher_spool_dir/$host";
-#                open(FILE,">$file") or die ("FATAL: Can't create file: $file\n");
-#                close(FILE);
-#                
-#                create_no_boot_symlink($client_ip);
-#            }
+            if ("$array[5]" eq "scripts/imaging_complete") {
+
+                my $client_ip = $array[8];
+                $client_ip =~ s/\(//g;
+                $client_ip =~ s/\)//g;
+
+                # diagnostic output
+                #print "Configuring $client_ip for local booting.\n";
+                create_no_boot_symlink($client_ip);
+            }
         }
     close(LOG_FILE);
     exit 0;
@@ -111,8 +97,17 @@ sub tail_rsync_log_file {
 # Usage: create_no_boot_symlink($client_ip);
 sub create_no_boot_symlink {
 
-    #$ip_hex = figure hex equiv of IP
-    #ln -sf $syslinux_cfg_noboot $ip_hex
+    my ($client_ip) = @_;
+    my ($a, $b, $c, $d) = split(/\./, $client_ip);
+
+    # Figure out the hex equivalent of the IP address
+    my $ip_hex = sprintf("%02X%02X%02X%02X", $a, $b, $c, $d);
+
+    # Diagnostic output
+    print "ip_hex: $ip_hex\n";
+    
+    print qq|symlink("$syslinux_cfg_noboot", "$pxe_conf_dir/$ip_hex"\n|;
+    symlink("$syslinux_cfg_noboot", "$pxe_conf_dir/$ip_hex");
     
 }
 
