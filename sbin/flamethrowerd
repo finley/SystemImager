@@ -25,7 +25,6 @@ use vars qw($config $ft_config $VERSION);
 my $last_time = 0;
 my $conf_file = '/etc/systemimager/flamethrower.conf';
 my $pid_file  = '/var/run/flamethrower.pid';
-my $state_dir = '/var/state/flamethrower';
 
 # Read the config file and update the directory
 read_config_file($conf_file);
@@ -264,10 +263,12 @@ sub update_directory {
     }
     unlink <$dir/*>;
 
-    # Create our state directory, if necessary, and clean it up.
+    # Make sure our state directory exists, if necessary, and clean it up.
     $dir = $ft_config->get("flamethrower_state_dir");
     if ( ! -e $dir ) {
-        mkdir("$dir", 0755) or die("Couddn't mkdir $dir!");
+        print "FATAL: Flamethrower state dir $dir doesn't exist!\n";
+        print "Please create it and restart flamethrowerd!\n";
+        exit 1;
     }
     unlink <$dir/*>;
 
@@ -413,9 +414,10 @@ sub main {
     if(conf_file_updated($conf_file)) {
         read_config_file($conf_file);
     }
+    my $dir = $ft_config->get("flamethrower_state_dir");
     my $modules = $ft_config->modules();
     foreach my $module ( @$modules ) {
-        my $file = $state_dir . "/" . $module;
+        my $file = $dir . "/" . $module;
         unless(-e "$file") {
             print "    touch($file)\n" if($debug);
             touch($file);

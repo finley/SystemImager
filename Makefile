@@ -153,6 +153,7 @@ WARNING_FILES = $(IMAGESRC)/README $(IMAGESRC)/CUIDADO $(IMAGESRC)/ACHTUNG
 AUTOINSTALL_SCRIPT_DIR = $(DESTDIR)/var/lib/systemimager/scripts
 OVERRIDES_DIR = $(DESTDIR)/var/lib/systemimager/overrides
 OVERRIDES_README = $(TOPDIR)/var/lib/systemimager/overrides/README
+FLAMETHROWER_STATE_DIR = $(DESTDIR)/var/state/systemimager/flamethrower
 
 RSYNC_STUB_DIR = $(ETC)/systemimager/rsync_stubs
 
@@ -221,6 +222,8 @@ install_server:	install_server_man install_configs install_server_libs
 	$(SI_INSTALL) -d -m 755 $(IMAGEDEST)
 	$(SI_INSTALL) -m 644 $(WARNING_FILES) $(IMAGEDEST)
 	cp -a $(IMAGEDEST)/README $(IMAGEDEST)/DO_NOT_TOUCH_THESE_DIRECTORIES
+
+	$(SI_INSTALL) -d -m 755 $(FLAMETHROWER_STATE_DIR)
 
 # install client-only files
 PHONY += install_client
