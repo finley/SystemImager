@@ -1,3 +1,10 @@
+#
+# 	$Id$
+#
+#	2004.09.19  Brian Elliott Finley
+#	- include full path to patched_kernel-stamp so it doesn't always re-build.
+#
+
 DEVFSD_VERSION = 1.3.25
 DEVFSD_TARBALL = devfsd-v$(DEVFSD_VERSION).tar.bz2
 DEVFSD_URL = http://www.kernel.org/pub/linux/daemons/devfsd/$(DEVFSD_TARBALL)
@@ -11,7 +18,7 @@ PHONY += devfsd
 devfsd:	$(DEVFSD_BINARY)
 
 $(DEVFSD_BINARY):	$(INITRD_SRC_DIR)/$(DEVFSD_TARBALL) $(DEVFSD_PATCHES) \
-			$(UCLIBC_TARGET) patched_kernel-stamp
+			$(UCLIBC_TARGET) $(SRC_DIR)/patched_kernel-stamp
 	rm -rf $(INITRD_SRC_DIR)/$(DEVFSD_DIR)
 	cd $(INITRD_SRC_DIR) && tar -xvjf $(DEVFSD_TARBALL)
 
