@@ -6,12 +6,16 @@ E2FSPROGS_PATCH := $(PATCH_DIR)/e2fsprogs.patch
 MKE2FS_BINARY := $(SRC_DIR)/$(E2FSPROGS_DIR)/misc/mke2fs 
 TUNE2FS_BINARY := $(SRC_DIR)/$(E2FSPROGS_DIR)/misc/tune2fs 
 
+ifeq ($(ARCH),ppc64-iSeries) 
+	E2FSPROGS_CONFIGURE = --host=ppc-unknown-linux
+endif
+
 # build  e2fsprogs binaries
 e2fsprogs:	$(MKE2FS_BINARY)
 
 $(MKE2FS_BINARY):	$(SRC_DIR)/$(E2FSPROGS_TARBALL)
 	[ -d $(SRC_DIR)/$(E2FSPROGS_DIR) ] || ( cd $(SRC_DIR) && tar -xvzf $(E2FSPROGS_TARBALL) )
-	( cd $(SRC_DIR)/$(E2FSPROGS_DIR) && chmod +x ./configure && ./configure )
+	( cd $(SRC_DIR)/$(E2FSPROGS_DIR) && chmod +x ./configure && ./configure  $(E2FSPROGS_CONFIGURE) )
 	$(MAKE) -C $(SRC_DIR)/$(E2FSPROGS_DIR)
 
 # download the e2fsprogs tarball
