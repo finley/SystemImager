@@ -636,6 +636,8 @@ EOF
 
 print MASTER_SCRIPT "# This master autoinstall script was created with SystemImager v$version_number\n";
 print MASTER_SCRIPT "\n";
+print MASTER_SCRIPT "VERSION=$version_number\n";
+print MASTER_SCRIPT "IMAGENAME=$image\n";
 
 print MASTER_SCRIPT << 'EOF';
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/tmp
@@ -818,7 +820,7 @@ if (-e $file) {
 ### BEGIN stop RAID devices before partitioning ###
 if (@software_raid_devices) {
   print MASTER_SCRIPT "# Pull /etc/raidtab over to autoinstall client\n";
-  print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::$image/etc/raidtab /etc/raidtab || shellout\n";
+  print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::\$IMAGENAME/etc/raidtab /etc/raidtab || shellout\n";
   print MASTER_SCRIPT "\n";
   print MASTER_SCRIPT "# get software RAID utilities\n";
   print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::tftpboot/systemimager/mkraid /tmp/ || shellout\n";
@@ -1205,18 +1207,18 @@ EOF
 
 if ($ssh_user) {
   # using ssh
-  print MASTER_SCRIPT "rsync -av --bwlimit=10000 --numeric-ids \$IMAGESERVER::$image/ /a/ || shellout\n\n";
-  print MASTER_SCRIPT "#rsync -av --numeric-ids \$IMAGESERVER::$image/ /a/ || shellout\n\n";
+  print MASTER_SCRIPT "rsync -av --bwlimit=10000 --numeric-ids \$IMAGESERVER::\$IMAGENAME/ /a/ || shellout\n\n";
+  print MASTER_SCRIPT "#rsync -av --numeric-ids \$IMAGESERVER::\$IMAGENAME/ /a/ || shellout\n\n";
 } else {
   # not using ssh
-  print MASTER_SCRIPT "#rsync -av --bwlimit=10000 --numeric-ids \$IMAGESERVER::$image/ /a/ || shellout\n\n";
-  print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::$image/ /a/ || shellout\n\n";
+  print MASTER_SCRIPT "#rsync -av --bwlimit=10000 --numeric-ids \$IMAGESERVER::\$IMAGENAME/ /a/ || shellout\n\n";
+  print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::\$IMAGENAME/ /a/ || shellout\n\n";
 }
 ### END pull the image down ###
 
 ### BEGIN graffiti ###
 print MASTER_SCRIPT "# Leave notice of which image is installed on the client\n";
-print MASTER_SCRIPT "echo $image > /a/etc/systemimager/IMAGE_LAST_SYNCED_TO || shellout\n\n";
+print MASTER_SCRIPT "echo \$IMAGENAME > /a/etc/systemimager/IMAGE_LAST_SYNCED_TO || shellout\n\n";
 ### END graffiti ###
 
 ### BEGIN distribution specific networking stuff ###
