@@ -82,7 +82,6 @@ write_variables() {
   echo "GATEWAY=$GATEWAY"                   >> /tmp/variables.txt
   echo "GATEWAYDEV=$GATEWAYDEV"             >> /tmp/variables.txt
 
-  echo "DHCPSIADDR=$DHCPSIADDR"       	    >> /tmp/variables.txt
   echo "IMAGESERVER=$IMAGESERVER"       	>> /tmp/variables.txt
   echo "IMAGENAME=$IMAGENAME"               >> /tmp/variables.txt
 
@@ -292,11 +291,6 @@ fi
 if [ -f /tmp/local.cfg ]; then
   echo "Override DHCP settings with local.cfg settings by re-reading (/tmp/local.cfg)."
   . /tmp/local.cfg || shellout
-fi
-
-# If IMAGESERVER is still not set, set it to DHCPSERVER IP ADDRESS
-if [ -z $IMAGESERVER ]; then
-    IMAGESERVER=$DHCPSIADDR
 fi
 
 ### BEGIN ping test for switch initialization ###
