@@ -379,7 +379,16 @@ sub _read_partition_info_and_prepare_parted_commands {
         print $out "# Get the size of the destination disk so that we can make the partitions fit properly.\n";
         print $out qq(DISK_SIZE=`parted -s $devfs_dev print ) . q(| grep 'Disk geometry for' | sed 's/^.*-//g' | sed 's/\..*$//' `) . qq(\n);
         print $out q([ -z $DISK_SIZE ] && shellout) . qq(\n);
-        print $out qq(END_OF_LAST_PRIMARY=0\n);
+
+        ## the srm bootloader needs some space at the front of the boot disk
+        ## see swriteboot(8) for details.  it'd be nice to only do this
+        ## on the boot disk, but we don't have that context now.
+        if ($arch eq "alpha") {  
+            print $out qq(END_OF_LAST_PRIMARY=1\n);
+        }
+        else {
+            print $out qq(END_OF_LAST_PRIMARY=0\n);
+        }
 
         ### BEGIN Populate the simple hashes. -BEF- ###
         my (
