@@ -324,21 +324,22 @@ make install_binaries DESTDIR=/tmp/%{name}-%{ver}-root PREFIX=%prefix
 
 # Some things that get duplicated because there are multiple calls to
 # the make install_* phases.
-rm -f /tmp/%{name}-%{ver}-root/etc/init.d/systemimager-server-flamethrowerd~
-rm -f /tmp/%{name}-%{ver}-root/etc/init.d/systemimager-server-netbootmond~
-rm -f /tmp/%{name}-%{ver}-root/etc/init.d/systemimager-server-rsyncd~
-rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/client.conf~
-rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/pxelinux.cfg/default~
-rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/pxelinux.cfg/message.txt~
-rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/pxelinux.cfg/syslinux.cfg~
-rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/pxelinux.cfg/syslinux.cfg.localboot~
-rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/rsync_stubs/10header~
+find /tmp/%{name}-%{ver}-root/ -name \*~ -exec rm -f '{}' \;
+#rm -f /tmp/%{name}-%{ver}-root/etc/init.d/systemimager-server-flamethrowerd~
+#rm -f /tmp/%{name}-%{ver}-root/etc/init.d/systemimager-server-netbootmond~
+#rm -f /tmp/%{name}-%{ver}-root/etc/init.d/systemimager-server-rsyncd~
+#rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/client.conf~
+#rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/pxelinux.cfg/default~
+#rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/pxelinux.cfg/message.txt~
+#rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/pxelinux.cfg/syslinux.cfg~
+#rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/pxelinux.cfg/syslinux.cfg.localboot~
+#rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/rsync_stubs/10header~
 # Should I do this?
-rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/rsync_stubs/99local.dist~
-rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/rsync_stubs/99local.dist~~
+#rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/rsync_stubs/99local.dist~
+#rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/rsync_stubs/99local.dist~~
 #
-rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/rsync_stubs/README~
-rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/updateclient.local.exclude~
+#rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/rsync_stubs/README~
+#rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/updateclient.local.exclude~
 
 %clean
 #cd $RPM_BUILD_DIR/%{name}-%{version}/
@@ -475,7 +476,8 @@ fi
 %doc doc/autoinstall* doc/local.cfg
 %dir /var/log/systemimager
 %dir /var/lib/systemimager/images
-%dir /var/lib/systemimager/scripts
+%dir /var/lib/systemimager/scripts/pre-install
+%dir /var/lib/systemimager/scripts/post-install
 %dir /var/lib/systemimager/overrides
 /var/lib/systemimager/overrides/README
 %dir /etc/systemimager
@@ -488,6 +490,8 @@ fi
 /etc/init.d/systemimager-server-rsyncd
 /etc/init.d/systemimager-server-netboot*
 /var/lib/systemimager/images/*
+/var/lib/systemimager/scripts/post-install/*
+/var/lib/systemimager/scripts/pre-install/*
 %prefix/sbin/addclients
 %prefix/sbin/cpimage
 %prefix/sbin/getimage
