@@ -866,6 +866,12 @@ sub save_filesystem_information {
                 s/>/&gt;/g;
                 s/\042/&quot;/g;     # " is \042
 
+                # Give completely empty lines a single space.  This is so that "blank"
+                # comments can be properly detected by the 
+                # SystemImager::Server->_write_out_new_fstab_file routine. -BEF-
+                if ($_ eq "") 
+                    { $_ = " "; }
+
                 print FH_OUT qq(  <fsinfo  line="$line" comment="$_");
 
             } else {
@@ -955,7 +961,17 @@ sub save_filesystem_information {
                 if ($mount_dev)
                     { print FH_OUT qq( mount_dev="$mount_dev"); }
 
-                print FH_OUT qq( mp="$mp"  fs="$fs"  options="$options"  dump="$dump"  pass="$pass");
+
+                print FH_OUT qq( mp="$mp"  fs="$fs");
+
+                if ($options) 
+                    { print FH_OUT qq( options="$options"); }
+
+                if ($dump) 
+                    { print FH_OUT qq( dump="$dump"); }
+
+                if ($pass)
+                    { print FH_OUT qq( pass="$pass"); }
 
                 if ($mkfs_opts) 
                     { print FH_OUT qq(  mkfs_opts="$mkfs_opts"); }

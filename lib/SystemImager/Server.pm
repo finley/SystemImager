@@ -1148,8 +1148,14 @@ sub _write_out_new_fstab_file {
             print MASTER_SCRIPT qq($comment\n);
 
         } else {
-            print MASTER_SCRIPT qq($mount_dev\t$mp\t$fs\t$options\t$dump\t$pass\n);
-
+            print MASTER_SCRIPT qq($mount_dev\t$mp\t$fs);
+            if ($options)
+                { print MASTER_SCRIPT qq(\t$options); }
+            if ($dump)
+                { print MASTER_SCRIPT qq(\t$dump); }
+            if ($pass)
+                { print MASTER_SCRIPT qq(\t$pass); }
+            print MASTER_SCRIPT qq(\n);
         }
     }
     print MASTER_SCRIPT qq(EOF\n);
@@ -1283,7 +1289,7 @@ sub create_autoinstall_script{
     #
     my $file="$image_dir/etc/mtab";
     if (-f $file) {
-      open(MTAB, ">$file") || die "$program_name: Can't open $file for truncating\n";
+      open(MTAB, ">$file") || die "Can't open $file for truncating\n";
       close(MTAB);
     }
     
