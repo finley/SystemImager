@@ -1,5 +1,9 @@
 DESTDIR =
 
+PATH = /sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
+
+SUDO = $(shell if [ `id -u` != 0 ]; then echo -n "sudo"; fi)
+
 # where utilities that may need to be retrieved
 # by autoinstall clients are stored
 TFTPROOT = $(DESTDIR)/usr/lib/systemimager
@@ -53,8 +57,8 @@ initrd:	binary-build-stamp $(LOCAL_BINARIES)
 	mkdir -p $(TEMP_DIR)
 
 	# umount the ramdisk if it is already mounted due to a previous failure
-	-umount $(TEMP_DIR)
-	mount initrd $(TEMP_DIR) -o loop
+	-$(SUDO) umount $(TEMP_DIR)
+	$(SUDO) mount initrd $(TEMP_DIR) -o loop
 
 	# create directory structure
 	cd $(TEMP_DIR) && mkdir -m 755 bin dev etc lib proc root sbin usr var
@@ -62,7 +66,7 @@ initrd:	binary-build-stamp $(LOCAL_BINARIES)
 	cd $(TEMP_DIR) && mkdir -m 755 usr/bin usr/sbin etc/init.d var/run
 
 	# make /dev/entries
-	./dupdevs.sh $(TEMP_DIR)/dev < dev_ls-lR
+	$(SUDO) ./dupdevs.sh $(TEMP_DIR)/dev < dev_ls-lR
 
 	# create hardlinks to busybox
 	cp -a $(BUSYBOX_BINARY) $(TEMP_DIR)/bin
@@ -91,7 +95,10 @@ initrd:	binary-build-stamp $(LOCAL_BINARIES)
 	# create small dynamic libraries
 	./mklibs.sh -v -d $(TEMP_DIR)/lib $(TEMP_DIR)/bin/*
 
-	umount $(TEMP_DIR) && rmdir $(TEMP_DIR)
+	$(SUDO) chown 0 -R $(TEMP_DIR)/*
+	$(SUDO) chgrp 0 -R $(TEMP_DIR)/*
+
+	$(SUDO) umount $(TEMP_DIR) && rmdir $(TEMP_DIR)
 
 install:	initrd.gz
 	mkdir $(TFTPROOT)
@@ -221,7 +228,7 @@ clean:
 	-$(MAKE) -C $(BEEP_ROOT) clean
 	-$(MAKE) -C $(MASSDNS_ROOT) clean
 	-find . -name "*~" -exec rm -f {} \;
-	-umount $(TEMP_DIR)
+	-$(SUDO) umount $(TEMP_DIR)
 	-rm -rf $(TEMP_DIR) initrd initrd.gz
 	-rm -rf binary-build-stamp
 distclean:	clean
