@@ -212,27 +212,39 @@ install_client_all:	install_client install_common
 #@@  install server-only architecture independent files
 #@@ 
 install_server:	install_manpages install_configs install_server_libs
+	### install files in $(USR)/bin ###
 	mkdir -p $(BIN)
-	mkdir -p $(SBIN)
 	$(foreach binary, $(BINARIES), \
-		install -m 755 $(BINARY_SRC)/$(binary) $(BIN);)
+	  sed s/SYSTEMIMAGER_VERSION_STRING/"$(VERSION)"/ \
+	    < $(BINARY_SRC)/$(binary) > $(BIN)/$(binary) && \
+	  chmod 755 $(BIN)/$(binary);)
+
+	### install files in $(USR)/sbin ###
+	mkdir -p $(SBIN)
 	$(foreach binary, $(SBINARIES), \
-		install -m 755 $(BINARY_SRC)/$(binary) $(SBIN);)
-	install -d -m 755 $(LOG_DIR)
-	install -d -m 755 $(TFTP_BIN_DEST)
-	install -d -m 755 $(AUTOINSTALL_SCRIPT_DIR)
+	  sed s/SYSTEMIMAGER_VERSION_STRING/"$(VERSION)"/ \
+	    < $(BINARY_SRC)/$(binary) > $(SBIN)/$(binary) && \
+	  chmod 755 $(SBIN)/$(binary);)
+
 	install -d -m 755 $(PXE_CONF_DEST)
-	install -m 644 --backup $(PXE_CONF_SRC)/message.txt \
-		$(PXE_CONF_DEST)/message.txt
-	install -m 644 --backup $(PXE_CONF_SRC)/syslinux.cfg \
-		$(PXE_CONF_DEST)/syslinux.cfg
-	install -m 644 --backup $(PXE_CONF_SRC)/syslinux.cfg \
-		$(PXE_CONF_DEST)/default
-	install -m 755 $(TFTP_BIN_SRC)/prepareclient $(TFTP_BIN_DEST)
-	install -m 755 $(TFTP_BIN_SRC)/updateclient $(TFTP_BIN_DEST)
+	$(foreach file, message.txt syslinux.cfg, \
+	  sed s/SYSTEMIMAGER_VERSION_STRING/"$(VERSION)"/ \
+	    < $(PXE_CONF_SRC)/$(file) > $(PXE_CONF_DEST)/$(file) && \
+	  chmod 644 $(PXE_CONF_DEST)/$(file);)
+	cp -a $(PXE_CONF_DEST)/syslinux.cfg $(PXE_CONF_DEST)/default
+
+	install -d -m 755 $(TFTP_BIN_DEST)
+	$(foreach binary, prepareclient updateclient, \
+	  sed s/SYSTEMIMAGER_VERSION_STRING/"$(VERSION)"/ \
+	    < $(TFTP_BIN_SRC)/$(binary) > $(TFTP_BIN_DEST)/$(binary) && \
+	  chmod 755 $(TFTP_BIN_DEST)/$(binary);)
+
 	install -d -m 755 $(IMAGEDEST)
 	$(foreach file, $(WARNING_FILES), \
 		install -m 644 $(IMAGESRC)/README $(file);)
+
+	install -d -m 755 $(LOG_DIR)
+	install -d -m 755 $(AUTOINSTALL_SCRIPT_DIR)
 
 #@@install_client:
 #@@  install client-only files
@@ -240,11 +252,13 @@ install_server:	install_manpages install_configs install_server_libs
 install_client: install_client_manpages
 	mkdir -p $(ETC)/systemimager
 	install -b -m 644 tftpstuff/systemimager/updateclient.local.exclude \
-		$(ETC)/systemimager
+	  $(ETC)/systemimager
 	mkdir -p $(SBIN)
 
 	$(foreach binary, $(CLIENT_SBINARIES), \
-		install -m 755 $(CLIENT_BINARY_SRC)/$(binary) $(SBIN);)
+	  sed s/SYSTEMIMAGER_VERSION_STRING/"$(VERSION)"/ \
+	    < $(CLIENT_BINARY_SRC)/$(binary) > $(SBIN)/$(binary) && \
+	    chmod 755 $(SBIN)/$(binary);)
 
 #@@install_common:
 #@@  install files common to both the server and client
@@ -252,7 +266,9 @@ install_client: install_client_manpages
 install_common:	install_common_manpages
 	mkdir -p $(BIN)
 	$(foreach binary, $(COMMON_BINARIES), \
-		install -m 755 $(COMMON_BINARY_SRC)/$(binary) $(BIN);)
+	  sed s/SYSTEMIMAGER_VERSION_STRING/"$(VERSION)"/ \
+	    < $(COMMON_BINARY_SRC)/$(binary) > $(BIN)/$(binary) && \
+	  chmod 755 $(BIN)/$(binary);)
 
 #@@install_server_libs:
 #@@  install server-only libraries
