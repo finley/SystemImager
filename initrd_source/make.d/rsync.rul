@@ -8,7 +8,7 @@ RSYNC_PATCHES = $(shell ls $(PATCH_DIR)/rsync.*.patch 2>/dev/null | sort)
 rsync:	$(RSYNC_BINARY) $(UCLIBC_TARGET)
 
 $(RSYNC_BINARY):	$(SRC_DIR)/$(RSYNC_TARBALL) $(RSYNC_PATCHES) \
-			$(STAMP_DIR)/uclibc_dev-stamp
+			$(UCLIBC_TARGET)
 	rm -rf $(SRC_DIR)/$(RSYNC_DIR)
 	cd $(SRC_DIR) && tar -xvzf $(RSYNC_TARBALL)
 	cd $(SRC_DIR)/$(RSYNC_DIR) && \

@@ -5,11 +5,11 @@ DEVFSD_DIR = devfsd
 DEVFSD_BINARY = $(SRC_DIR)/$(DEVFSD_DIR)/devfsd
 DEVFSD_PATCHES = $(shell ls $(PATCH_DIR)/devfsd.*.patch 2>/dev/null | sort)
 
-devfsd:	$(DEVFSD_BINARY) $(UCLIBC_TARGET)
+devfsd:	$(DEVFSD_BINARY)
 
 
 $(DEVFSD_BINARY):	$(SRC_DIR)/$(DEVFSD_TARBALL) $(DEVFSD_PATCHES) \
-			$(STAMP_DIR)/uclibc_dev-stamp
+			$(UCLIBC_TARGET)
 	rm -rf $(SRC_DIR)/$(DEVFSD_DIR)
 	cd $(SRC_DIR) && tar -xvjf $(DEVFSD_TARBALL)
 

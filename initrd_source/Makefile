@@ -76,6 +76,8 @@ else
 endif
 ### END uclibc decisions ###
 
+PATH = $(INITRD_BUILD_PATH)
+
 ### BEGIN build insmod on ia64 only ###
 ifeq ($(ARCH),ia64)
 	INSMOD_BINARY = $(SRC_DIR)/$(MODUTILS_DIR)/insmod/insmod
@@ -91,7 +93,7 @@ build_dir:	$(BUILD_DIR)/etc/hosts
 
 $(BUILD_DIR)/etc/hosts:	$(SKEL_FILES) $(BUSYBOX_BINARY) $(DEVFSD_BINARY) \
 			$(DHCLIENT_BINARY) $(RSYNC_BINARY) $(UCLIBC_TARGET) \
-			$(INSMOD_BINARY) $(STAMP_DIR)/uclibc_runtime-stamp
+			$(INSMOD_BINARY)
 
 	# Create directory structure.
 	$(SUDO) rm -fr $(BUILD_DIR)
