@@ -912,12 +912,10 @@ EOF
 echo HOSTNAME=$HOSTNAME >> /a/etc/sysconfig/network
 echo DOMAINNAME=$DOMAIN >> /a/etc/sysconfig/network
 echo GATEWAY=$GATEWAY >> /a/etc/sysconfig/network
-echo GATEWAYDEV=eth0 >> /a/etc/sysconfig/network
 #
 # /etc/sysconfig/network-scripts/ifcfg-eth0
 echo DEVICE=eth0 > /a/etc/sysconfig/network-scripts/ifcfg-eth0
 echo IPADDR=$IPADDR >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
-echo NETWORK=$NETWORK >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
 echo NETMASK=$NETMASK >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
 echo BROADCAST=$BROADCAST >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
 echo ONBOOT=yes >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
@@ -970,12 +968,10 @@ echo 'route add -net 127.0.0.0 netmask 255.0.0.0 lo'  >> /a/etc/init.d/network
 
 echo IPADDR=$IPADDR        >> /a/etc/init.d/network
 echo NETMASK=$NETMASK      >> /a/etc/init.d/network
-echo NETWORK=$NETWORK      >> /a/etc/init.d/network
 echo BROADCAST=$BROADCAST  >> /a/etc/init.d/network
 echo GATEWAY=$GATEWAY      >> /a/etc/init.d/network
 
 echo 'ifconfig eth0 ${IPADDR} netmask ${NETMASK} broadcast ${BROADCAST}'  >> /a/etc/init.d/network
-echo 'route add -net ${NETWORK}'                                          >> /a/etc/init.d/network
 echo '[ "${GATEWAY}" ] && route add default gw ${GATEWAY} metric 1'       >> /a/etc/init.d/network
 
 chmod 755 /a/etc/init.d/network
