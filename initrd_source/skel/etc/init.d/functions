@@ -228,7 +228,8 @@ flamethrower_client() {
     #            Debian patched gnu tar does (image and on).
     #            We want this option enabled for the image to ensure proper directory
     #            permissions. -BEF-
-    tar --help 2>&1 | grep -q overwrite && TAR_OPTS='--overwrite -xp' || TAR_OPTS='-x'
+    #XXX tar --help 2>&1 | grep -q overwrite && TAR_OPTS='--overwrite -xp' || TAR_OPTS='-x'
+    tar --help 2>&1 | grep -q overwrite && TAR_OPTS='--overwrite -xzp' || TAR_OPTS='-xz'
 
 
     # set vars
