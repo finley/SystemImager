@@ -44,8 +44,9 @@ install: build
 	mkdir -p debian/va-systemimager-client
 	$(MAKE) installclient DESTDIR=$(CURDIR)/debian/va-systemimager-client
 	mkdir -p debian/va-systemimager
-	$(MAKE) install DESTDIR=$(CURDIR)/debian/va-systemimager
-
+	$(MAKE) installserver DESTDIR=$(CURDIR)/debian/va-systemimager
+	mkdir -p debian/va-systemimager-client-kernel
+	$(MAKE) installkernel DESTDIR=$(CURDIR)/debian/va-sytemimager-client-kernel
 
 # Build architecture-independent files here.
 binary-indep: build install
