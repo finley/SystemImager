@@ -407,7 +407,7 @@ if ($dhcpd_version eq "2") {
     }
 
     print DHCPDCONF qq(# Imageserver\n);
-    print DHCPDCONF qq(option option-140 code 140 = ip-address;\n);
+    print DHCPDCONF qq(option option-140 code 140 = text;\n);
     print DHCPDCONF qq(\n);
 
     print DHCPDCONF qq(# log_server_port\n);
@@ -427,7 +427,7 @@ if ($dhcpd_version eq "2") {
     print DHCPDCONF qq(\n);
 
     print DHCPDCONF qq(# option-140 is the IP address of your SystemImager image server\n);
-    print DHCPDCONF qq(option option-140 $imageserver; \n);
+    print DHCPDCONF qq(option option-140 "$imageserver";\n);
     print DHCPDCONF qq(\n);
 
     print DHCPDCONF qq(# option-142 specifies the URL address of your ssh download\n);
