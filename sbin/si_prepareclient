@@ -78,6 +78,7 @@ use File::Path;
 use Getopt::Long;
 use vars qw($VERSION);
 use SystemImager::Common;
+use SystemImager::UseYourOwnKernel;
 
 # set version
 $VERSION = "SYSTEMIMAGER_VERSION_STRING";
@@ -100,7 +101,7 @@ $ENV{"LANG"} = "C";
 my $version_info = <<"EOF";
 si_prepareclient (part of SystemImager) v$VERSION
 
-Copyright (C) 1999-2003 Brian Elliott Finley <brian\@bgsw.net>
+Copyright (C) 1999-2005 Brian Elliott Finley
 
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -157,7 +158,7 @@ EOF
 GetOptions(
     "explicit"             => \my $explicit,
     "help"                 => \my $help,
-    "exclude-disk|e=s"     => \my %excluded_disks,
+    "exclude-disk|e=s"     => \my @exclude_disk,
     "no-rsyncd|norsyncd"   => \my $norsyncd,
     "quiet"                => \my $quiet,
     "rpm"                  => \my $rpm,
@@ -165,6 +166,7 @@ GetOptions(
     "server=s"             => \my $server,
     "yes"                  => \my $yes
 ) || die "$help_info";
+
 
 ### BEGIN option validation ###
 # show version if requested
@@ -351,24 +353,23 @@ EOF
 # verify that rsync entry is in /etc/services
 add_rsync_services();
 
-# comment out rsync entry in inetd.conf if it exists
-foreach (sort keys %excluded_disks) {
+# process user specified list of disks to exclude
+my %excluded_disks;
+foreach(@exclude_disk) {
 	
-	# Remove entries that may have /dev/ prefixes.
-	delete $excluded_disks{$_};  
-
 	# Strip off the /dev/ part.  It's just for user non-confusion anyway. -BEF-
 	$_ =~ s#^/dev/##;
 	$_ =~ s#^/##;	# lose a leading / if someone happened to use one (Ie. /sda).
 
 	#
-	# Re-add entries without /dev/ prefixes, and set the values to match
+	# Put entries without /dev/ prefixes into hash, and set the values to match
 	# the keys so that we can do a simple "if defined" test later. 
 	# -BEF- 2005.01.12
 	#
 	$excluded_disks{$_} = $_;
 }
 
+# comment out rsync entry in inetd.conf if it exists
 temporarily_disable_rsync_in_inetd();
 
 # get rid of xinetd configuration for rsync if it exits
@@ -619,6 +620,11 @@ sub create_auto_install_script_conf {
     close(FILE);
     #
     ############################################################################
+
+    #
+    #   Do UYOK stuff
+    #
+    SystemImager::UseYourOwnKernel->capture_uyok_info_to_autoinstallscript($file);
 
     SystemImager::Common->write_auto_install_script_conf_footer($file);
 
