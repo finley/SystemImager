@@ -24,6 +24,7 @@ use strict;
 use Carp;
 
 use BootGen::InitrdFS::Cramfs;
+use BootGen::InitrdFS::Ext2;
 
 use vars qw(@fstypes);
 
