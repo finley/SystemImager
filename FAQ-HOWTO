@@ -3,8 +3,8 @@
 #
 # This file is: FAQ-HOWTO
 #
-# Current version as of the writing of this document: 1.1
-#                                           revision: 2
+# Current version as of the writing of this document: 1.2
+#                                           revision: 0
 #
 #   Others who have contributed to this document (in alphabetical order):
 #     Paonia Ezrine <paonia@home.welcomehome.org>
@@ -750,6 +750,37 @@ pxelinux(3).  Versions 0.23 and earlier made use of tomsrtbt(4).
 
 
 --------------------------------------------------------------------------------
+Question:  How do I tell the autoinstall client to use a specific IP address, 
+           hostname, and imageserver without using DHCP?
+--------------------------------------------------------------------------------
+
+Answer:
+
+The autoinstall client will check for a configuration file called "local.cfg" 
+when booting.  This file can be placed on a floppy (the floppy can be your 
+autoinstall media) or if you are booting from your client's hard drives 
+(updateclient -autoinstall), you can put a local.cfg file in the root of your 
+filesystem prior to reboot.
+
+An example local.cfg file can be found in your documentation directory,
+typically /usr/doc/va-systemimager-$version/local.cfg.
+
+Here is a summary of the actions taken with different autoinstall media:
+- When booting from floppy, CD, or network:
+  1) The client attempts to mount it's floppy diskette and checks for the
+     and uses the local.cfg file if present.
+
+- When booting from the hard drive:
+  1) Before modifying the hard drive(s), the client reads the local.cfg
+     file from the hard drive partition that was root before you rebooted.
+  2) The client attempts to mount it's floppy diskette and checks for the
+     and uses the local.cfg file if present.  Configuration settings on the
+     floppy override settings made in local.cfg on the hard drive.  This
+     allows you to override only one or two values with the floppy, if you
+     like.
+
+
+--------------------------------------------------------------------------------
 References
 --------------------------------------------------------------------------------
 
@@ -796,7 +827,15 @@ References
   Questions yet to be answered -- please send more!
 --------------------------------------------------------------------------------
 
+
 -  How does the -autoinstall option to updateclient work?
+
+-  How do I compile a dynamically linked executable against the libraries on 
+   the autoinstall media? 
+     Add the variable LIBS:
+       LIBS=/usr/src/lib/ld-linux.so.2 /usr/src/lib/libc.so.6 /usr/src/lib/libnss_files.so.1
+     and put $(LIBS) at the end of all cc commands in the Makefile:
+       cc $(LFLAGS) sedcomp.o sedexec.o -o sed $(LIBS)
 
 -  Some of my clients have disks from different manufacturers or with different
    geometries.  Will an autoinstall work on them?

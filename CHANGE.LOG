@@ -6,26 +6,34 @@
 
 VA SystemImager-1.2 2000.xx.xx
 - afterburner -- modified to add [tftpboot] section to existing 
-  rsyncd.conf file.
+                 rsyncd.conf file.
 - updateclient -- added the -autoinstall option.  Courtesy of
-  A.L. Lambert <alambert@epicrealm.com>.  Allows you to tell any
-  machine that is currently running to autoinstall itself the next time
-  you reboot.  *Very* cool idea!  No mucking about with removeable media
-  or that tricky PXE stuff for remote re-installs.
+                  Alan Lambert <alambert@epicrealm.com>.  Allows you to 
+                  tell any machine that is currently running to autoinstall 
+                  itself the next time you reboot.  *Very* cool idea!  No 
+                  mucking about with removeable media or that tricky PXE 
+                  stuff for remote re-installs.
 - makedhcpstatic -- added support for restarting dhcp daemon.
 - addclients -- images are now presented in chronological order from
-  oldest to newest.  newest is now the default that is presented.
+                oldest to newest.  newest is now the default that is 
+                presented.
 - addclients -- made the descriptions more clear and broke it up into 3 
-  sections.
+                sections.
 - rsyncd.conf -- now has entry for /tftpboot and the /var/log/systemimager
-  entry is added on a per image basis.
+                 entry is added on a per image basis.
 - autoinstalldiskette -- now uses a 1.44M floppy!
-  - faster creation
-  - faster booting
-  - fewer floppy failures
+                         - faster creation
+                         - faster booting
+                         - fewer floppy failures
+- autoinstallclient -- support for use *without* DHCP!  See the FAQ for 
+                       more info.
 - autoinstallclient -- kernel includes support for software RAID and for
-  reiserfs.
+                       reiserfs.
+- autoinstallclient -- added support for post install options of beeping,
+                       shutdown, or reboot.
 - autoinstallclient -- can now be used *without* DHCP.
+- autoinstallclient -- added support for ext3.
+- autoinstallclient -- added support for reiserfs.
 - autoinstallclient -- added beep utility.
 - autoinstallclient -- added mkraid and raidstart utilities.
 - autoinstallclient -- added mkreiserfs.
@@ -33,10 +41,18 @@ VA SystemImager-1.2 2000.xx.xx
 - autoinstallclient -- added some diagnostics.
 - autoinstallclient -- added ifconfig and route utilities.
 - autoinstallclient -- using rsync again for everything except network
-  boot installs.
+                       boot installs.
+- getimage -- added the -server option to allow copying an image from one
+              imageserver to another.  Suggestion and example code
+              contributed by Phil Champon <pchampon@valueweb.net>.
+- getimage -- modified the way getimage deals with filesystems to make it 
+              much easier to add new filesystems to the supported list.
+- getimage -- added support for post install options of beeping,
+              shutdown, or reboot.
+- getimage -- added support for ext3 and reiserfs.
 - getimage -- changed the mke2fs options to the conservative defaults.
-  Hopefully soon we will be able to detect existing settings and 
-  re-create those by partition.
+              Hopefully soon we will be able to detect existing settings and 
+              re-create those by partition.
 
 VA SystemImager-1.1 2000.05.26
 - updateclient -- Fixed a bug.  root --> / was not becoming the default 

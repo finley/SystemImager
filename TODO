@@ -10,13 +10,19 @@
 
 In Progress
 -----------
-- <wessmith@engr.sgi.com> - Modify getimage to allow for alternate image directory prefix.
+- <brian@thefinleys.com> - update web page in preparation of 1.2 release
+                           make tftp-hpa not necessary unless... mention
+- <brian@thefinleys.com> - put exclude/include stuff on imageserver by image
 - <brian@thefinleys.com> - support for software RAID
-- <brian@thefinleys.com> - support for ext3
+
+- <wessmith@engr.sgi.com> - Modify getimage to allow for alternate image directory prefix.
+
 - <gpratt@valinux.com> - Docbookization of the FAQ-HOWTO
+
 - Cameron Meadors <cmeadors@valinux.com> and Roland Dreier <roland@valinux.com>
   - write a new tftp daemon to do that special PXE thang, so that we no longer have to use
     the buggy tftp-hpa daemon.
+
 - Chris Black <cblack@mokey.com> - hack dhclient to allow for imageserver specification via dhcp
 
 Assigned and waiting to be done
@@ -25,12 +31,10 @@ Assigned and waiting to be done
   as a drop in alternative for rsync.
 - Roland Dreier <roland@valinux.com> -- working on the multicast library that Ian's utility will be based on.
 - <brian@thefinleys.com> - consider inodes/block in getimage
-- <brian@thefinleys.com> - getimage -- eject floppy/cd option
-- <brian@thefinleys.com> - getimage -- beep option
 - <brian@thefinleys.com> - getimage -- blink option
-- <brian@thefinleys.com> - getimage -- reboot option
-- <brian@thefinleys.com> - getimage -- incorporate the Phil Champon <pchampon@valueweb.net> updateimageserver hack
+- <brian@thefinleys.com> - getimage -- eject option
 - <brian@thefinleys.com> - makeautoinstalldiskette -- consider adding config file options?
+- <brian@thefinleys.com> - updateclient -autoinstall -- consider adding config file options?
 
 Other Requests
 ------------
@@ -43,7 +47,6 @@ Bug list
 --------
 - Bugs? ;)
 - There is, however, a bug in the tftp-hpa tftp daemon.
-- Potentially a bug in rsync that causes intermittent transfer failures.
 - Bug in rsync 2.4.4 (and prior I presume) where it does not return the expected exit status when it fails to write a file. 
 
 Other stuff
@@ -57,7 +60,6 @@ Other stuff
   - IF_LIST in /etc/sysconfig/network
 - support for SuSE
 - support for Slackware
-- message during network booting (if possible)
 - section of howto that helps Kickstart users transition to SystemImager.
 
 getimage
@@ -80,10 +82,6 @@ prepareclient
 - don't even mess with /etc/rsyncd.conf -- create a custom configuration file like: 
    /tmp/.systemimager.rsyncd.conf and reference it with:
     rsync --daemon --config=/tmp/.systemimager.rsyncd.conf
-
-makeautoinstalldiskette
------------------------
-- options to specify a particular image, imageserver, IP, hostname, domainname, etc.
 
 addclients
 ----------
@@ -125,7 +123,7 @@ Miscellaneous and Possibilities
   - dhcpcd is the defacto dhcp client used on most linux systems
   - dhclient compiles large
 
-- curses wrapper around the whole thing
+- curses wrapper around the whole thing?
 - updateclient - log what was updated and or deleted?
 - makedhcpstatic -- allow for -f "filename" option to specify dhcpd.leases file.
 
