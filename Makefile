@@ -177,7 +177,7 @@ ifeq ($(ARCH),i386)
 	 LINUX_VERSION = 2.4.14
 	 LINUX_MD5SUM = dc03387783a8f58c90ef7b1ec6af252a
 	 LINUX_IMAGE = $(LINUX_SRC)/arch/i386/boot/bzImage
-	 LINUX_PATCH = $(PATCH_DIR)/linux.i386.patch.bz2
+	 LINUX_PATCH = $(PATCH_DIR)/linux.patch
 	 LINUX_CONFIG = $(PATCH_DIR)/linux.config
 	 LINUX_TARGET = bzImage
 endif
