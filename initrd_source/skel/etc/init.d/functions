@@ -469,16 +469,18 @@ start_network() {
             shellout
         fi
         
-        # Figure out which interface actually got configured.
-        # Suggested by James Oakley.
-        #
-        INTERFACE=`grep interface ${DHCLIENT_DIR}/dhclient.leases | \
-            sed -e 's/^.*interface "//' -e 's/";//'`
+        if [ -z ${DEVICE} ];
+            # Figure out which interface actually got configured.
+            # Suggested by James Oakley.
+            #
+            DEVICE=`grep interface ${DHCLIENT_DIR}/dhclient.leases | \
+                sed -e 's/^.*interface "//' -e 's/";//'`
+        fi
         
         # read dhcp info in as variables -- this file will be created by 
         # the /etc/dhclient-start script that is run automatically by
         # dhclient.
-        . /tmp/dhcp_info.${INTERFACE} || shellout
+        . /tmp/dhcp_info.${DEVICE} || shellout
         ### END dhcp ###
         
         # Re-read configuration information from local.cfg to over-ride
