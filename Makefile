@@ -7,6 +7,7 @@ MANPAGE_DIR = doc/man
 DOC  = $(DESTDIR)/usr/share/doc/va-systemimager
 #CLIENT_DOC  = $(DESTDIR)/usr/share/doc/va-systemimager-client
 ETC  = $(DESTDIR)/etc
+INITD = $(ETC)/init.d
 SBIN = $(DESTDIR)/usr/sbin
 MAN8 = $(DESTDIR)/usr/share/man/man8
 
@@ -53,12 +54,15 @@ install:	installdocs
 	install -m 444 $(IMAGESRC)/README $(IMAGEDEST)/ACHTUNG
 	mkdir -p $(ETC)
 	install -m 644 etc/rsyncd.conf $(ETC)
+	mkdir -p $(INITD)
+	install -m 755 etc/init.d/rsync $(INITD)
 
 installclient: installdocs
 	mkdir -p $(ETC)/systemimager
 	install -m 644 tftpstuff/systemimager/systemimager.exclude $(ETC)/systemimager
+	mkdir -p $(SBIN)
 	$(foreach binary, $(CLIENT_BINARIES), \
-		install -m 555 $(CLIENT_BINARY_SRC)/$(binary) $(SBIN);)
+		install -m 755 $(CLIENT_BINARY_SRC)/$(binary) $(SBIN);)
 
 installdocs: docs
 	mkdir -p $(DOC)

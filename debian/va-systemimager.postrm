@@ -1,0 +1,3 @@
+if [ purge = "$1" ]; then
+update-rc.d rsync remove >/dev/null
+fi

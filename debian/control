@@ -7,7 +7,7 @@ Standards-Version: 3.2.1
 
 Package: va-systemimager-client
 Architecture: all
-Depends: rsync
+Depends: rsync, perl5
 Description: VA SystemImager client side utilities
  VA SystemImager is a set of utilities for installing GNU/Linux images to
  clients machines over the network.  Images are stored in flat files on the
@@ -19,7 +19,7 @@ Description: VA SystemImager client side utilities
 
 Package: va-systemimager
 Architecture: all
-Depends: rsync, dhcp, syslinux
+Depends: rsync, dhcp, syslinux, perl5
 Suggests: tftpd-hpa
 Description: VA SystemImager Image-Server
  VA SystemImager is a set of utilities for installing GNU/Linux images to
