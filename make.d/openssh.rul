@@ -24,13 +24,9 @@ OPENSSH_OTHER_FILES := $(shell echo /lib/libnss_files*)
 OPENSSH_SOURCE := $(SRC_DIR)/$(OPENSSH_TARBALL)
 
 ifeq ($(ARCH),i386)
+    # should this be i486?  as we use an i486 kernel? -BEF-
 	SSH_HOST_TYPE=i586-pc-linux-gnu
 endif
-ifeq ($(ARCH),ia64)
-	echo Fix Me XXX
-	SSH_HOST_TYPE=ia64-pc-linux-gnu ?
-endif
-
 
 
 PHONY += openssh
