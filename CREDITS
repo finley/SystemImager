@@ -1,7 +1,9 @@
 #
-# "SystemImager" 
+#   "SystemImager" 
 #
-#  Copyright (C) 1999-2003 Bald Guy Software / Brian Elliott Finley <brian@bgsw.net>
+#   Copyright (C) 1999-2004 Brian Elliott Finley
+#
+#   $Id$
 #
 
 
@@ -19,9 +21,13 @@
 #  Thanks!
 #
 
+N: Wichert Akkerman
+E: wichert@valinux.com
+
 N: Ramon Bastiaans
 E: bastiaans@sara.nl
 D: bug fix for initrd flamethrower_client code (rm -f /tmp/multicast.tar)
+D: initrd: bug fix contributions for COUNT var in sleep_loop function
 
 N: Sean Dague
 E: japh@us.ibm.com
@@ -90,9 +96,6 @@ D: Added ssh support
 N: Denise Walters
 E: denise.walters@hp.com
 D: Put the documentation into a much more professional format
-
-N: Wichert Akkerman
-E: wichert@valinux.com
 
 N: Tony Beauregard
 E: tonybeau@cajunbro.com
@@ -203,6 +206,10 @@ E: mrnolta@princeton.edu
 
 N: Grant Noruschat
 E: grant@eigen.ee.ualberta.ca
+
+N: Tognini Samuele
+E: samuele@cli.di.unipi.it
+D: initrd: bug fix contributions for COUNT var in sleep_loop function
 
 N: Thomas Schenk
 E: tschenk@origin.ea.com
