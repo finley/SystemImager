@@ -1,7 +1,7 @@
 UTIL_LINUX_VERSION := 2.11z
 UTIL_LINUX_DIR := util-linux-$(UTIL_LINUX_VERSION)
 UTIL_LINUX_TARBALL := util-linux-$(UTIL_LINUX_VERSION).tar.bz2
-UTIL_LINUX_URL := http://alpaca.mcs.anl.gov/kernel/linux/utils/util-linux/$(UTIL_LINUX_TARBALL)
+UTIL_LINUX_URL := http://www.kernel.org/pub/linux/utils/util-linux/$(UTIL_LINUX_TARBALL)
 
 SFDISK_BINARY := $(SRC_DIR)/$(UTIL_LINUX_DIR)/fdisk/sfdisk
 
