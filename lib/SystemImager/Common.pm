@@ -481,7 +481,7 @@ sub _turn_sfdisk_output_into_generic_partitionschemes_file {
       # If we catch the "Units =" line, and we confirm that the sfdisk output is using
       # megabytes or sectors, then we're good to go. -BEF-
       #
-      if ((m|^Units =|) and (m|^Units = megabytes|)) {
+      if ((m|^Units =|) and ((m|^Units = megabytes|) or (m|^Units = mebibytes|))) {
         $units = "megabytes";
       } elsif ((m|^Units =|) and (m|^Units = sectors|)) {
         $units = "sectors";
