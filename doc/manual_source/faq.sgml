@@ -743,59 +743,27 @@ image=vmlinux-rh.img
       </para>
     </answer>
   </qandaentry>
+
   <qandaentry>
     <question>
       <para>What kind of performance can I expect?</para>
     </question>
     <answer>
       <para>
-        Following are some unofficial numbers.  Your
-        experience may be quite different based on the speed of your
-        network, the performance of your image server and clients, and the
-        size of the image.
+       According to Ole Holm Nielsen, Department of Physics, Technical 
+       University of Denmark:
       </para>
+
       <para>
-        If you report statistics from your experience, they will be 
-        added below.
+       In our SystemImager installation, we can install 18 clients 
+       simultaneously with 1.8 GB images in 6 minutes.  Please see 
+       <ulink url="http://www.fysik.dtu.dk/CAMP/Niflheim/systemimager.html">The NIFLHEIM SystemImager Page</ulink>.
+       Our server has Gigabit network, 2 GB of RAM, dual Intel Xeon 2.4 GHz,
+       whereas the clients have Intel P4 and 100 Mbit Ethernet.
       </para>
-      
-      <table frame="all">
-        <title>SystemImager Performance Statistics</title>
-        <tgroup cols="4">
-          <colspec colname="column1">
-          <colspec colname="column2">
-          <colspec colname="column3">
-          <colspec colname="column4">
-          <colspec colname="column5">
-          <thead>
-    	<row>
-    	  <entry>Size of Image</entry>
-    	  <entry>Clients</entry>
-    	  <entry>Network Type</entry>
-    	  <entry>Switched</entry>
-    	  <entry>Elapsed Time</entry>
-    	</row>
-          </thead>
-          <tbody>
-    	<row>
-    	  <entry>2.5 GB</entry>
-    	  <entry>21</entry>
-    	  <entry>100BaseTx</entry>
-    	  <entry>yes</entry>
-    	  <entry>1.5 Hours</entry>
-    	</row>
-    	<row>
-    	  <entry>1.5 GB</entry>
-    	  <entry>20</entry>
-    	  <entry>100BaseTx</entry>
-    	  <entry>yes</entry>
-    	  <entry>.5 Hours</entry>
-    	</row>
-          </tbody>
-        </tgroup>
-      </table>
     </answer>
   </qandaentry>
+
   <qandaentry>
     <question>
       <para>How do I update an image on the image server?</para>
