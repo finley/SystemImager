@@ -414,7 +414,7 @@ if [ "x$DESTDIR" = "x" ]; then
   rm -fr ${prefix}/doc/$PACKAGE_NAME-*
   mkdir -p ${prefix}/doc/$PACKAGE_NAME-$VERSION/
   cp -af $INSTALL_DIR/[A-Z]* ${prefix}/doc/$PACKAGE_NAME-$VERSION/
-  cp -af $INSTALL_DIR/local.cfg ${prefix}/doc/$PACKAGE_NAME-$VERSION/
+  cp -af $INSTALL_DIR/doc/local.cfg ${prefix}/doc/$PACKAGE_NAME-$VERSION/
   chown -R root:root ${prefix}/doc/$PACKAGE_NAME-$VERSION/
   chmod -R 444 ${prefix}/doc/$PACKAGE_NAME-$VERSION/
 fi
