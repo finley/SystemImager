@@ -190,7 +190,7 @@ get_flamethrower_directory() {
 #
 flamethrower_client() {
 
-    local COMPLETED STARTED THIS_STAMP LAST_STAMP
+    local COMPLETED STARTED THIS_STAMP LAST_STAMP TAR_STDERR_LOG
 
     # validate
     if [ -z $PORTBASE ]; then
@@ -227,11 +227,11 @@ flamethrower_client() {
     # set vars
     [ -z $RETRY ] && RETRY=0
     COUNT=0
-    FLAMETHROWER_CLIENT_SLEEP=2
+    FLAMETHROWER_CLIENT_SLEEP=3
     unset TAR_EXIT_STATUS
     TAR_EXIT_FILE=/tmp/tar_exit
-    echo TAR_EXIT_STATUS= > $TAR_EXIT_FILE
     UDP_RECEIVER_STDERR_LOG="/tmp/udp-receiver.${MODULE_NAME}"
+    TAR_STDERR_LOG=/tmp/tar.stderr.log
 
 
 
@@ -243,14 +243,15 @@ flamethrower_client() {
 
             UDP_RECEIVER_RUNNING=1
 
-            rm -f $UDP_RECEIVER_STDERR_LOG
+            rm -f $UDP_RECEIVER_STDERR_LOG $TAR_STDERR_LOG
+            echo TAR_EXIT_STATUS= > $TAR_EXIT_FILE
 
             echo
             echo "flamethrower_client(${MODULE_NAME})"
             echo '--------------------------------------------------------------------------------'
-            echo "udp-receiver $UDP_RECEIVER_OPTIONS 2>${UDP_RECEIVER_STDERR_LOG} | tar -x -C ${DIR} 2>/tmp/tar.stderr.log"
+            echo "udp-receiver $UDP_RECEIVER_OPTIONS 2>${UDP_RECEIVER_STDERR_LOG} | tar -x -C ${DIR} 2>$TAR_STDERR_LOG"
             ( 
-                udp-receiver $UDP_RECEIVER_OPTIONS 2>${UDP_RECEIVER_STDERR_LOG} | tar -x -C ${DIR} 2>/tmp/tar.stderr.log
+                udp-receiver $UDP_RECEIVER_OPTIONS 2>${UDP_RECEIVER_STDERR_LOG} | tar -x -C ${DIR} 2>$TAR_STDERR_LOG
                 echo "TAR_EXIT_STATUS=$?" > $TAR_EXIT_FILE
              ) &
         fi    
@@ -258,7 +259,7 @@ flamethrower_client() {
 
         # test udp-receiver log file
         if [ -e $UDP_RECEIVER_STDERR_LOG ]; then
-            grep -q 'Transfer complete' $UDP_RECEIVER_STDERR_LOG && COMPLETED=yes || COMPLETED=no
+            grep -q '^Transfer complete' $UDP_RECEIVER_STDERR_LOG && COMPLETED=yes || COMPLETED=no
             grep -q ^bytes $UDP_RECEIVER_STDERR_LOG && STARTED=yes || STARTED=no
 
             if [ "$COMPLETED" = "yes" ]; then
@@ -270,7 +271,7 @@ flamethrower_client() {
                 [ ! -z $DEBUG ] && echo LAST $LAST_STAMP
                 [ ! -z $DEBUG ] && echo THIS $THIS_STAMP
                 if [ "$THIS_STAMP" = "$LAST_STAMP" ]; then
-                    echo "Ruh roh, no progress since we last checked, so die, die, die my darlin'!"
+                    echo "WARNING: No progress since last check.  Killing udp-receiver."
                     killall -9 udp-receiver
                     unset UDP_RECEIVER_RUNNING
                     sleep 1
