@@ -381,7 +381,7 @@ $(BOEL_BINARIES_TARBALL):	discover dosfstools e2fsprogs parted raidtools reiserf
 	# any soft links.  Note: This does not require PIC libraries -- it will
 	# copy standard libraries if it can't find a PIC equivalent.  -BEF-
 	#
-	( cd $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION) && $(TOPDIR)/initrd_source/mklibs.sh -v -d lib sbin/* )
+	( cd $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION) && $(TOPDIR)/initrd_source/mklibs.sh -v -d lib sbin/* lib/* )
 	#
 	#
 	# Strip to the bones. -BEF-

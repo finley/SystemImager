@@ -107,12 +107,13 @@ $(BUILD_DIR)/etc/hosts:	$(SKEL_FILES) $(BUSYBOX_BINARY) $(DEVFSD_BINARY) \
 	[ "x$(UCLIBC_TARGET)" == "x" ] || mkdir -m 755 -p \
 	  $(BUILD_DIR)/usr/$(UCLIBC_ARCH_NAME)-linux-uclibc/lib/
 	[ "x$(UCLIBC_TARGET)" == "x" ] || \
-	  cp -a $(UCLIBC_RUNTIME)/* $(BUILD_DIR)/
+	  cp -a $(UCLIBC_RUNTIME)/lib/* \
+	  $(BUILD_DIR)/usr/$(UCLIBC_ARCH_NAME)-linux-uclibc/lib
 
 	# If we're not using uclibc, then copy over the 
 	# standard libs instead. -BEF-
 	[ "x$(UCLIBC_TARGET)" != "x" ] || ( cd $(BUILD_DIR) && \
-	  $(TOPDIR)/initrd_source/mklibs.sh -v -d lib ./*bin/* )
+	  $(TOPDIR)/initrd_source/mklibs.sh -v -d lib ./*bin/* ./lib/* )
 
 	# Copy over other binaries.
 	cp -a $(RSYNC_BINARY) $(BUILD_DIR)/bin

@@ -31,7 +31,7 @@ $(SRC_DIR)/$(UCLIBC_DIR)/Config: $(SRC_DIR)/$(UCLIBC_TARBALL) $(UCLIBC_PATCHES)
 		--float=true \
 		--kernel_dir=$(LINUX_DIR) \
 		--large_file=true \
-		--ldso_path="/lib" \
+		--ldso_path="/usr/$(UCLIBC_ARCH_NAME)-linux-uclibc/lib" \
 		--long_long=true \
 		--rpc_support=true \
 		--shadow=true \
