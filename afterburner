@@ -39,316 +39,6 @@ RESTART_INETD=no
 ##############################################################################################
 ### BEGIN functions
 ##############################################################################################
-#!/bin/sh
-#
-# functions	This file contains functions to be used by most or all
-#		shell scripts in the /etc/init.d directory.
-#
-# Version:	@(#) /etc/init.d/functions 1.01 26-Oct-1993
-#
-# Author:	Miquel van Smoorenburg, <miquels@drinkel.nl.mugnet.org>
-# Hacked by:    Greg Galloway and Marc Ewing
-#
-# Mercilessly hacked by: "Brian Finley" <brian@valinux.com> 1999.09.18
-#                 for: VA SystemImager
-#
-
-# First set up a default search path.
-export PATH="/sbin:/usr/sbin:/bin:/usr/bin:/usr/X11R6/bin"
-
-# Get a sane screen width
-[ -z "$COLUMNS" ] && COLUMNS=80
-
-# Read in our configuration
-if [ -z "$BOOTUP" ]; then
-  if [ -f /etc/sysconfig/init ]; then
-      . /etc/sysconfig/init
-  else
-    # This all seem confusing? Look in /etc/sysconfig/init,
-    # or in /usr/doc/initscripts-*/sysconfig.txt
-    BOOTUP=color
-    RES_COL=60
-    MOVE_TO_COL="echo -en \\033[300C\\033[$[${COLUMNS}-${RES_COL}]D"
-    SETCOLOR_SUCCESS="echo -en \\033[1;32m"
-    SETCOLOR_FAILURE="echo -en \\033[1;31m"
-    SETCOLOR_WARNING="echo -en \\033[1;33m"
-    SETCOLOR_NORMAL="echo -en \\033[0;39m"
-    LOGLEVEL=1
-  fi
-fi
-
-if [ "$BOOTUP" != "verbose" ]; then
-   INITLOG_ARGS="-q"
-else
-   INITLOG_ARGS=
-fi
-
-# A function to start a program.
-daemon() {
-	# Test syntax.
-	gotbase=
-	case $1 in
-	    '')    echo '$0: Usage: daemon [+/-nicelevel] {program}'
-	           return 1;;
-	    --check)
-	           shift
-		   base=$1
-		   gotbase="yes"
-		   shift
-		   nicelevel=0
-		   ;;
-	          
-	    -*|+*) nicelevel=$1
-	           shift;;
-	     *)    nicelevel=0;;
-	esac
-
-        # Save basename.
-        [ -z $gotbase ] && base=`basename $1`
-
-        # See if it's already running.
-	pid=`pidofproc $base`
-	[ -n "$pid" ] && ps h $pid >/dev/null 2>&1 && return
-
-	# make sure it doesn't core dump anywhere; while this could mask
-	# problems with the daemon, it also closes some security problems
-	ulimit -c 0
-	
-	# Echo daemon
-        [ "$BOOTUP" = "verbose" ] && echo -n " $base"
-
-	# And start it up.
-	nice -n $nicelevel initlog $INITLOG_ARGS -c "$*" && success "$base startup" || failure "$base startup"
-}
-
-# A function to stop a program.
-killproc() {
-	# Test syntax.
-	if [ $# = 0 ]; then
-		echo "Usage: killproc {program} [signal]"
-		return 1
-	fi
-
-	notset=0
-	# check for second arg to be kill level
-	if [ "$2" != "" ] ; then
-		killlevel=$2
-	else
-		notset=1
-		killlevel="-9"
-	fi
-
-        # Save basename.
-        base=`basename $1`
-
-        # Find pid.
-        pid=`pidofproc $base`
-
-        # Kill it.
-        if [ "$pid" != "" ] ; then
-                [ $BOOTUP = "verbose" ] && echo -n "$base "
-		if [ "$notset" = "1" ] ; then
-		       if ps h $pid>/dev/null 2>&1; then
-			   # TERM first, then KILL if not dead
-			   kill -TERM $pid
-			   usleep 100000
-			   if ps h $pid >/dev/null 2>&1 ; then
-				sleep 1
-				if ps h $pid >/dev/null 2>&1 ; then
-				        sleep 3
-					if ps h $pid >/dev/null 2>&1 ; then
-					   kill -KILL $pid
-					fi
-				fi
-			   fi
-		        fi
-			ps h $pid >/dev/null 2>&1 && failure "$base shutdown" || success "$base shutdown"
-		# use specified level only
-		else
-		        if ps h $pid >/dev/null 2>&1; then
-	                	kill $killlevel $pid && success "$base $killlevel" || failure "$base $killlevel"
-			fi
-		fi
-	else
-	    failure "$base shutdown"
-	fi
-
-        # Remove pid file if any.
-	if [ "$notset" = "1" ]; then
-            rm -f /var/run/$base.pid
-	fi
-}
-
-# A function to find the pid of a program.
-pidofproc() {
-	# Test syntax.
-	if [ $# = 0 ] ; then
-		echo "Usage: pidofproc {program}"
-		return 1
-	fi
-
-	# First try "/var/run/*.pid" files
-	if [ -f /var/run/$1.pid ] ; then
-	        pid=`head -1 /var/run/$1.pid`
-	        if [ "$pid" != "" ] ; then
-	                echo $pid
-	                return 0
-	        fi
-	fi
-
-	# Next try "pidof"
-	pid=`pidof $1`
-	if [ "$pid" != "" ] ; then
-	        echo $pid
-	        return 0
-	fi
-
-	# Finally try to extract it from ps
-	ps ax | awk 'BEGIN { prog=ARGV[1]; ARGC=1 } 
-			   { if ((prog == $5) || (("(" prog ")") == $5) ||
-			     (("[" prog "]") == $5) ||
-			   ((prog ":") == $5)) { print $1 ; exit 0 } }' $1
-}
-
-status() {
-	# Test syntax.
-	if [ $# = 0 ] ; then
-		echo "Usage: status {program}"
-		return 1
-	fi
-
-	# First try "pidof"
-	pid=`pidof $1`
-	if [ "$pid" != "" ] ; then
-	        echo "$1 (pid $pid) is running..."
-	        return 0
-        else
-                pid=`ps ax | awk 'BEGIN { prog=ARGV[1]; ARGC=1 } 
-			   { if ((prog == $5) || (("(" prog ")") == $5) ||
-			     (("[" prog "]") == $5) ||
-			   ((prog ":") == $5)) { print $1 ; exit 0 } }' $1`
-                if [ "$pid" != "" ] ; then
-                        echo "$1 (pid $pid) is running..."
-                        return 0
-                fi
-	fi
-
-	# Next try "/var/run/*.pid" files
-	if [ -f /var/run/$1.pid ] ; then
-	        pid=`head -1 /var/run/$1.pid`
-	        if [ "$pid" != "" ] ; then
-	                echo "$1 dead but pid file exists"
-	                return 1
-	        fi
-	fi
-	# See if /var/lock/subsys/$1 exists
-	if [ -f /var/lock/subsys/$1 ]; then
-		echo "$1 dead but subsys locked"
-		return 2
-	fi
-	echo "$1 is stopped"
-	return 3
-}
-
-echo_success() {
-  [ "$BOOTUP" = "color" ] && $MOVE_TO_COL
-  echo -n "[  "
-  [ "$BOOTUP" = "color" ] && $SETCOLOR_SUCCESS
-  echo -n "OK"
-  [ "$BOOTUP" = "color" ] && $SETCOLOR_NORMAL
-  echo -n "  ]"
-  return 0
-}
-
-echo_failure() {
-  [ "$BOOTUP" = "color" ] && $MOVE_TO_COL
-  echo -n "["
-  [ "$BOOTUP" = "color" ] && $SETCOLOR_FAILURE
-  echo -n "FAILED"
-  [ "$BOOTUP" = "color" ] && $SETCOLOR_NORMAL
-  echo -n "]"
-  return 1
-}
-
-echo_passed() {
-  [ "$BOOTUP" = "color" ] && $MOVE_TO_COL
-  echo -n "["
-  [ "$BOOTUP" = "color" ] && $SETCOLOR_WARNING
-  echo -n "PASSED"
-  [ "$BOOTUP" = "color" ] && $SETCOLOR_NORMAL
-  echo -n "]"
-  return 1
-}
-
-# Log that something succeeded
-success() {
-  if [ -z "$IN_INITLOG" ]; then
-     initlog -n $0 -s "$1" -e 1
-  else
-     echo "-n $0 -s \"$1\" -e 1" >&21
-  fi
-  #[ "$BOOTUP" != "verbose" ] && echo_success
-  [ "$BOOTUP" != "verbose" ] && [ $QUIET != "true" ] && echo_success
-  return 0
-}
-
-# Log that something failed
-failure() {
-  rc=$?
-  if [ -z "$IN_INITLOG" ]; then
-     initlog -n $0 -s "$1" -e 2
-  else
-     echo "-n $0 -s \"$1\" -e 2" >&21
-  fi
-  [ "$BOOTUP" != "verbose" ] && echo_failure
-  return $rc
-}
-
-# Log that something passed, but may have had errors. Useful for fsck
-passed() {
-  rc=$?
-  if [ -z "$IN_INITLOG" ]; then
-     initlog -n $0 -s "$1" -e 1
-  else
-     echo "-n $0 -s \"$1\" -e 1" >&21
-  fi
-  [ "$BOOTUP" != "verbose" ] && echo_passed
-  return $rc
-}  
-
-# Run some action. Log its output.
-action() {
-  STRING=$1
-  echo -n "$STRING "
-  shift
-  initlog $INITLOG_ARGS -c "$*" && success "$STRING" || failure "$STRING"
-  rc=$?
-  echo
-  return $rc
-}
-
-# Confirm whether we really want to run this service
-confirm() {
-  echo -n "Start service $1 (Y)es/(N)o/(C)ontinue? [Y] "
-  read answer
-  case $answer in
-    y|Y|"")
-      return 0
-    ;;
-    c|C)
-      return 2
-    ;;
-    n|N)
-      return 1
-    ;;
-    *)
-      confirm $1
-      return $?
-    ;;
-    esac
-}
-
-
 
 # SystemImager specific functions
 create_rsyncd_conf() {
@@ -381,16 +71,15 @@ if [ $INTERACTIVE = "true" ]; then
   clear
   echo "Welcome to VA SystemImager."
   echo
-  echo "This install script (afterburner) should normally not be run directly by"
-  echo " you as a user.  It is called automatically when you run \"install\" and"
-  echo " is only run seperate from install during the RPMization process."
+  echo "This install script may modify the following files and/or directories:"
   echo
-  echo "This install script may modify the following files:"
-  echo
-  echo " /etc/services          -- add rsync and/or tftp entries if necessary"
-  echo " /etc/inetd.conf        -- add/modify rsync and tftp entries if necessary"
-  echo " /etc/rsyncd.conf       -- it is assumed that VA SystemImager will manage this"
-  echo "                           file and that it will not be used for anything else"
+  echo " /tftpboot/systemimager/ -- create if necessary and add appropriate files/links"
+  echo " /tftpboot/pxelinux.cfg/ -- create if necessary and add appropriate files/links"
+  echo " /etc/services           -- add rsync and/or tftp entries if necessary"
+  echo " /etc/inetd.conf         -- remove rsync entry if necessary and"
+  echo "                            add or modify tftp entry if necessary"
+  echo " /etc/rsyncd.conf        -- it is assumed that VA SystemImager will manage this"
+  echo "                            file and that it will not be used for anything else"
   echo
   echo " All modified files will be backed up with the .beforesystemimager extension."
   echo
@@ -414,17 +103,17 @@ fi
 egrep -qw ^rsync /etc/services
 if [ $? != "0" ]; then
   if [ ! -f /etc/services.beforesystemimager ]; then
-    [ $QUIET = "false" ] && echo "Backing up /etc/services to /etc/services.beforesystemimager..."
+    [ $QUIET = "false" ] && echo "backing up /etc/services to /etc/services.beforesystemimager..."
 
     cp -af /etc/services /etc/services.beforesystemimager
   fi
   egrep -qw ^#rsync /etc/services
   if [ $? != "0" ]; then
-    [ $QUIET = "false" ] && echo "Adding rsync entries to /etc/services..."
+    [ $QUIET = "false" ] && echo "adding rsync entries to /etc/services..."
     echo "rsync           873/tcp                         # rsync" >> /etc/services
     echo "rsync           873/udp                         # rsync" >> /etc/services
   else
-    [ $QUIET = "false" ] && echo "Uncommenting (enabling) rsync entries in /etc/services..."
+    [ $QUIET = "false" ] && echo "uncommenting (enabling) rsync entries in /etc/services..."
     sed 's/^#rsync/rsync/' /etc/services > /tmp/.systemimager
     cp -af /tmp/.systemimager /etc/services
     rm -f /tmp/.systemimager
@@ -438,61 +127,52 @@ fi
 egrep -qw ^tftp /etc/services
 if [ $? != "0" ]; then
   if [ ! -f /etc/services.beforesystemimager ]; then
-    [ $QUIET = "false" ] && echo "Backing up /etc/services to /etc/services.beforesystemimager..."
+    [ $QUIET = "false" ] && echo "backing up /etc/services to /etc/services.beforesystemimager..."
 
     cp -af /etc/services /etc/services.beforesystemimager
   fi
   egrep -qw ^#tftp /etc/services
   if [ $? != "0" ]; then
-    [ $QUIET = "false" ] && echo "Adding tftp entry to /etc/services..."
+    [ $QUIET = "false" ] && echo "adding tftp entry to /etc/services..."
     echo "tftp           69/udp                         # tftp" >> /etc/services
   else
-    [ $QUIET = "false" ] && echo "Uncommenting (enabling) tftp entry in /etc/services..."
+    [ $QUIET = "false" ] && echo "uncommenting (enabling) tftp entry in /etc/services..."
     sed 's/^#tftp/tftp/' /etc/services > /tmp/.systemimager
     cp -af /tmp/.systemimager /etc/services
     rm -f /tmp/.systemimager
   fi
   RESTART_INETD=yes
-else
-  [ $QUIET = "false" ] && echo "tftp entry already enabled in /etc/services..."
 fi 
 
 # verify that rsync entry is in /etc/inetd.conf
 egrep -qw ^rsync /etc/inetd.conf
-if [ $? != "0" ]; then
+# if we find an rsync entry in /etc/inetd.conf, let's get rid of it
+if [ $? = "0" ]; then 
   if [ ! -f /etc/inetd.conf.beforesystemimager ]; then
-    [ $QUIET = "false" ] && echo "Backing up /etc/inetd.conf to /etc/inetd.conf.beforesystemimager..."
-
+    [ $QUIET = "false" ] && echo "backing up /etc/inetd.conf to /etc/inetd.conf.beforesystemimager..."
     cp -af /etc/inetd.conf /etc/inetd.conf.beforesystemimager
   fi
-  egrep -qw ^#rsync /etc/inetd.conf
-  if [ $? != "0" ]; then
-    [ $QUIET = "false" ] && echo "Adding rsync entry to /etc/inetd.conf..."
-    echo "rsync stream tcp nowait root /usr/bin/rsync rsyncd --daemon" >> /etc/inetd.conf
-  else
-    [ $QUIET = "false" ] && echo "Uncommenting (enabling) rsync entry in /etc/inetd.conf..."
-    sed 's/^#rsync/rsync/' /etc/inetd.conf > /tmp/.systemimager
-    cp -af /tmp/.systemimager /etc/inetd.conf
-    rm -f /tmp/.systemimager
-  fi
+  [ $QUIET = "false" ] && echo "commenting out (disabling) rsync entry in /etc/inetd.conf..."
+  sed 's/^rsync/#rsync/' /etc/inetd.conf > /tmp/.inetd.conf.$$
+  # we use cat here to maintain the same file permissions on /etc/inetd.conf
+  cat /tmp/.inetd.conf.$$ > /etc/inetd.conf
+  rm -f /tmp/.inetd.conf.$$
   RESTART_INETD=yes
-else
-  [ $QUIET = "false" ] && echo "rsync entry already enabled in /etc/inetd.conf..."
 fi 
 
 # verify that a tftp entry is in /etc/inetd.conf
 egrep -qw ^tftp /etc/inetd.conf
 if [ $? != "0" ]; then
   if [ ! -f /etc/inetd.conf.beforesystemimager ]; then
-    [ $QUIET = "false" ] && echo "Backing up /etc/inetd.conf to /etc/inetd.conf.beforesystemimager..."
+    [ $QUIET = "false" ] && echo "backing up /etc/inetd.conf to /etc/inetd.conf.beforesystemimager..."
     cp -af /etc/inetd.conf /etc/inetd.conf.beforesystemimager
   fi
   egrep -qw ^#tftp /etc/inetd.conf | egrep -q "\-s \-r blksize \/tftpboot"
   if [ $? != "0" ]; then
-    [ $QUIET = "false" ] && echo "Adding tftp entry to /etc/inetd.conf..."
+    [ $QUIET = "false" ] && echo "adding tftp entry to /etc/inetd.conf..."
     echo "tftp    dgram   udp     wait    root    /usr/sbin/tcpd  in.tftpd -s -r blksize /tftpboot" >> /etc/inetd.conf
   else
-    [ $QUIET = "false" ] && echo "Uncommenting (enabling) tftp entry in /etc/inetd.conf..."
+    [ $QUIET = "false" ] && echo "uncommenting (enabling) tftp entry in /etc/inetd.conf..."
     sed 's/^#tftp/tftp/' /etc/inetd.conf > /tmp/.systemimager
     cp -af /tmp/.systemimager /etc/inetd.conf
     rm -f /tmp/.systemimager
@@ -503,11 +183,11 @@ else
   if [ $? != "0" ]; then
     # tftp entry may exist, however, tftp-hpa special options are not enabled
     # so comment out existing entry
-    [ $QUIET = "false" ] && echo "Commenting out existing tftp entry in /etc/inetd.conf..."
+    [ $QUIET = "false" ] && echo "commenting out (disabling) tftp entry in /etc/inetd.conf..."
     sed 's/^tftp/#tftp/' /etc/inetd.conf > /tmp/.systemimager
     cp -af /tmp/.systemimager /etc/inetd.conf
     rm -f /tmp/.systemimager
-    [ $QUIET = "false" ] && echo "Adding VA SystemImager brand tftp entry in /etc/inetd.conf..."
+    [ $QUIET = "false" ] && echo "adding VA SystemImager brand tftp entry in /etc/inetd.conf..."
     # Now we can put this entry right after the original one -- thanks to Michael Nolta!
     TFTP_ENTRY="tftp    dgram   udp     wait    root    \/usr\/sbin\/tcpd  in.tftpd -s -r blksize \/tftpboot"
     sed "/^#tftp/{G;s/$/$TFTP_ENTRY/;}" /etc/inetd.conf > /tmp/.systemimager
@@ -522,8 +202,11 @@ fi
 # signal inetd to re-read /etc/inetd.conf
 if [ $RESTART_INETD = "yes" ]; then
   [ $QUIET = "false" ] && echo -n "Signalling inetd to re-read /etc/inetd.conf: "
-  killproc inetd -HUP
+  PID_OF_INETD=`pidof inetd`
+  [ ! -z $PID_OF_INETD ] && kill -HUP $PID_OF_INETD
   [ $QUIET = "false" ] && echo ""
+else
+  [ $QUIET = "false" ] && echo "no need to modify /etc/inetd.conf..."
 fi
 
 ### END inetd stuff ###
@@ -534,14 +217,14 @@ fi
 # install VA SystemImager brand rsyncd.conf file
 # if it doesn't exist, create it
 if [ ! -f /etc/rsyncd.conf ]; then
-  [ $QUIET = "false" ] && echo "Creating VA SystemImager brand /etc/rsyncd.conf..."
+  [ $QUIET = "false" ] && echo "creating VA SystemImager brand /etc/rsyncd.conf..."
   create_rsyncd_conf
 # OK, it does exist -- but if the backup file doesn't exist, back it up 
 elif [ ! -f /etc/rsyncd.conf.beforesystemimager ]; then
-  [ $QUIET = "false" ] && echo "Backing up /etc/rsyncd.conf to /etc/rsyncd.conf.beforesystemimager..."
+  [ $QUIET = "false" ] && echo "backing up /etc/rsyncd.conf to /etc/rsyncd.conf.beforesystemimager..."
   cp -af /etc/rsyncd.conf /etc/rsyncd.conf.beforesystemimager
   # and create rsyncd.conf
-  [ $QUIET = "false" ] && echo "Creating VA SystemImager brand /etc/rsyncd.conf..."
+  [ $QUIET = "false" ] && echo "creating VA SystemImager brand /etc/rsyncd.conf..."
   create_rsyncd_conf
 else 
   # the backup file exists, so check to see if current rsyncd.conf belongs
@@ -549,10 +232,10 @@ else
   TOUCHIT="yes"
   egrep -qw SystemImager /etc/rsyncd.conf && TOUCHIT="no"
   if [ $TOUCHIT = "yes" ]; then
-    [ $QUIET = "false" ] && echo Backing up /etc/rsyncd.conf to /etc/rsyncd.conf.beforesystemimager...
+    [ $QUIET = "false" ] && echo "backing up /etc/rsyncd.conf to /etc/rsyncd.conf.beforesystemimager..."
     cp -af /etc/rsyncd.conf /etc/rsyncd.conf.beforesystemimager
     # and create rsyncd.conf
-    [ "$QUIET" = "false" ] && echo Creating VA SystemImager brand /etc/rsyncd.conf...
+    [ "$QUIET" = "false" ] && echo "creating VA SystemImager brand /etc/rsyncd.conf..."
     create_rsyncd_conf
   else
     [ $QUIET = "false" ] && echo VA SystemImager brand /etc/rsyncd.conf file already exists...
@@ -562,7 +245,7 @@ fi
 # be sure we have a tftpboot entry
 egrep -q '\[tftpboot\]' /etc/rsyncd.conf || ADD_TFTPBOOT="yes"
 if [ "$ADD_TFTPBOOT" = "yes" ]; then
-  [ "$QUIET" = "false" ] && echo Adding [tftpboot] entry to /etc/rsyncd.conf...
+  [ "$QUIET" = "false" ] && echo adding [tftpboot] entry to /etc/rsyncd.conf...
   echo ''                                                       >> /etc/rsyncd.conf
   echo '[tftpboot]'                                             >> /etc/rsyncd.conf
   echo '  path = /tftpboot'                                     >> /etc/rsyncd.conf
@@ -594,6 +277,9 @@ fi
 [ $QUIET = "false" ] && echo "All done!  Please read the FAQ-HOWTO before using VA SystemImager."
 [ $QUIET = "false" ] && echo "See /usr/doc/$PACKAGE_NAME-$VERSION/ for all documentation."
 [ $QUIET = "false" ] && echo
+
+#BEF# 
+echo Do init script for rsync -- init.d rc.d/init.d and rc0.d, etc.
 
 exit 0
 

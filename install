@@ -373,8 +373,8 @@ if [ $QUIET = "false" ]; then
   echo " /tftpboot/systemimager/ -- create if necessary and add appropriate files/links"
   echo " /tftpboot/pxelinux.cfg/ -- create if necessary and add appropriate files/links"
   echo " /etc/services           -- add rsync and/or tftp entries if necessary"
-  echo " /etc/inetd.conf         -- remove rsync entry if necessary"
-  echo " /etc/inetd.conf         -- add/modify tftp entry if necessary"
+  echo " /etc/inetd.conf         -- remove rsync entry if necessary and"
+  echo "                            add or modify tftp entry if necessary"
   echo " /etc/rsyncd.conf        -- it is assumed that VA SystemImager will manage this"
   echo "                            file and that it will not be used for anything else"
   echo
