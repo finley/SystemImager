@@ -356,17 +356,17 @@ The following options affect the autoinstall client after autoinstalling:
         backup and quick restore mechanism for a single machine.
 
  --post-install ACTION
-    Where ACTION can be BEEP, REBOOT, or SHUTDOWN.
+    Where ACTION can be beep, reboot, or shutdown.
 
-    BEEP 
+    beep 
         Clients will beep incessantly after succussful completion of an
         autoinstall.  (default)
 
-    REBOOT 
+    reboot 
         Clients will reboot themselves after successful completion of an
         autoinstall.
 
-    SHUTDOWN 
+    shutdown 
         Clients will halt themselves after successful completion of an
         autoinstall.
 
