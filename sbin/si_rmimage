@@ -1,12 +1,16 @@
 #!/usr/bin/perl -w
 
 #
-# "SystemImager" 
+#   "SystemImager" 
 #
-#  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
-#  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
+#   Copyright (C) 1999-2004 Brian Elliott Finley
+#   
+#   $Id$
 #
-#  $Id$
+#
+#   2004.09.27  Brian Elliott Finley
+#   - allow -v as unique option for --verbose
+#   - tweak --help formatting
 #
 
 # set some variables
@@ -71,13 +75,17 @@ Usage: $program_name [OPTION]... IMAGE
 
 Options: (options can be presented in any order)
 
- -help                    Display this output.
+ --help
+    Display this output.
 
- -version                 Display version and copyright information.
+ --version
+    Display version and copyright information.
 
- -verbose                 Explain what is being done.
+ --verbose, -v
+    Explain what is being done.
 
- -force                   Continue on error (default is to exit on error).
+ --force
+    Continue on error (default is to exit on error).
 
 Tip: Use \"lsimage\" to get a list of available images.
 
@@ -87,10 +95,12 @@ EOF
 
 # interpret command line options
 GetOptions( 
-  "help" => \$help,
-  "version" => \$version,
-  "force" => \$force,
-  "verbose" => \$verbose
+
+  "help"        => \$help,
+  "version"     => \$version,
+  "force"       => \$force,
+  "verbose|v"   => \$verbose
+
 ) or die qq($help_info);
 
 # if requested, print help information
