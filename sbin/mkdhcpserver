@@ -4,9 +4,9 @@
 # "SystemImager" 
 #
 #  Copyright (C) 1999-2001 Brian Elliott Finley 
-#                          <brian.finley@baldguysoftware.com>
-#  Copyright (C) 2002 Bald Guy Software 
-#                     <brian.finley@baldguysoftware.com>
+#                          <brian@bgsw.net>
+#  Copyright (C) 2002-2003 Bald Guy Software 
+#                          <brian@bgsw.net>
 #
 #  $Id$
 #
@@ -165,6 +165,7 @@ my $router = "192.168.1.254";
 my $imageserver = "192.168.1.254";
 my $boot_server = "";
 my $ssh_download_url = "";
+my $mcast_group = "";
 my $swallow = "";
 
 # Oh where oh where could my dhcpd.conf file be?
@@ -251,13 +252,23 @@ EOF
         $log_server_port = get_response($log_server_port);
     }
    
-    print "\nWill your clients be installed over SSH? (y/[n]): ";
-    my $ssh_install=<STDIN>;
-    chomp $ssh_install;
-    if ($ssh_install eq "y") {
-      if ($ssh_download_url eq "") { $ssh_download_url="http://$imageserver/systemimager/boot/"; }
-      print "What is the base URL to use for ssh installs? [$ssh_download_url]: ";
-      $ssh_download_url=get_response($ssh_download_url);
+    print "\nWill your clients be installed using Netcast brand multicast? (y/[n]): ";
+    my $mcast_install=<STDIN>;
+    chomp $mcast_install;
+    if ($mcast_install eq "y") {
+        if ($mcast_group eq "") { $mcast_group="0001"; }
+        print "What is the multicast group number you want to start with? [$mcast_group]: ";
+        $mcast_group = get_response($mcast_group);
+
+    } else {
+        print "\nWill your clients be installed over SSH? (y/[n]): ";
+        my $ssh_install=<STDIN>;
+        chomp $ssh_install;
+        if ($ssh_install eq "y") {
+          if ($ssh_download_url eq "") { $ssh_download_url="http://$imageserver/systemimager/boot/"; }
+          print "What is the base URL to use for ssh installs? [$ssh_download_url]: ";
+          $ssh_download_url=get_response($ssh_download_url);
+        }
     }
    
     # see http://www.armory.com/swallowscenes.html for details
@@ -294,6 +305,7 @@ EOF
     print "Boot server:                              $boot_server\n";
     print "Log server:                               $log_server\n";
     print "Log server port:                          $log_server_port\n";
+    print "Starting multicast group number:          $mcast_group\n";
     print "SSH files download URL:                   $ssh_download_url\n";
     print "#######################################################################\n";
     
@@ -349,6 +361,14 @@ if ($dhcpd_version eq "2") {
         print DHCPDCONF qq(  option option-142 "$ssh_download_url"; \n);
     }
 
+    print DHCPDCONF qq(  # option-143 specifies the starting multicast group number.\n);
+    print DHCPDCONF qq(  # This should be a four digit number.  For example, "0001".\n);
+    if($mcast_group eq "") { 
+        print DHCPDCONF qq(  #option option-143 "0001"; \n);
+    } else {
+        print DHCPDCONF qq(  option option-143 "$mcast_group"; \n);
+    }
+
     print DHCPDCONF qq(  # next-server is your network boot server\n);
     if($boot_server eq "") { 
         print DHCPDCONF qq(  #next-server $boot_server; \n);
@@ -398,6 +418,7 @@ if ($dhcpd_version eq "2") {
     print DHCPDCONF qq(option systemimager.imageserver      code 140 = ip-address;\n);
     print DHCPDCONF qq(option systemimager.log_server_port  code 141 = unsigned integer 32;\n);
     print DHCPDCONF qq(option systemimager.ssh_download_url code 142 = string;\n);
+    print DHCPDCONF qq(option systemimager.mcast_group      code 143 = string;\n);
     print DHCPDCONF qq(\n);
 
     print DHCPDCONF qq(# systemimager.imageserver is the IP address of your SystemImager image server\n);
@@ -409,6 +430,14 @@ if ($dhcpd_version eq "2") {
         print DHCPDCONF qq(#option systemimager.ssh_download_url "http://$imageserver/systemimager/boot/"; \n);
     } else {
         print DHCPDCONF qq(option systemimager.ssh_download_url "$ssh_download_url"; \n);
+    }
+
+    print DHCPDCONF qq(\n# systemimager.mcast_group specifies the starting multicast group number.\n);
+    print DHCPDCONF qq(  # This should be a four digit number.  For example, "0001".\n);
+    if($mcast_group eq "") { 
+        print DHCPDCONF qq(#option systemimager.mcast_group "0001"; \n);
+    } else {
+        print DHCPDCONF qq(option systemimager.mcast_group "$mcast_group"; \n);
     }
 
     print DHCPDCONF qq(\n# next-server is your network boot server\n);
