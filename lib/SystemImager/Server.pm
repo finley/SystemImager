@@ -600,7 +600,11 @@ ARCH=`uname -m \
 | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/`
 
 shellout() {
-  exec cat /etc/issue ; exit 1
+    exec cat /etc/issue ; exit 1
+}
+
+mcast_group+2() {
+    MCAST_GROUP=$(echo "scale=3; ($MCAST_GROUP + 2)" | bc)
 }
 
 # Pull in variables left behind by the linuxrc script.
@@ -1373,10 +1377,22 @@ sub create_autoinstall_script{
         $rsync_opts .= "v";
     }
 
-    ### BEGIN pull the image down ###
-    print MASTER_SCRIPT "# Filler up!\n";
     $rsync_opts .= " --exclude=lost+found/ --numeric-ids";
-    print MASTER_SCRIPT "rsync $rsync_opts \$IMAGESERVER::\$IMAGENAME/ /a/ || shellout\n\n";
+
+    ### BEGIN pull the image down ###
+    print MASTER_SCRIPT qq(# Filler up!\n);
+    print MASTER_SCRIPT qq(if [ ! -z \$MCAST_GROUP ]; then \n);
+    print MASTER_SCRIPT qq(# Use multicast \n);
+    print MASTER_SCRIPT qq(    mcast_group+2 \n);
+    print MASTER_SCRIPT qq(    echo "echo y | udp-receiver --portbase \${MCAST_GROUP} -- | tar -xv -C /a" \n);
+    print MASTER_SCRIPT qq(    echo y | udp-receiver --portbase \${MCAST_GROUP} | tar -xv -C /a || shellout \n);
+    print MASTER_SCRIPT qq( \n);
+    print MASTER_SCRIPT qq(else \n);
+    print MASTER_SCRIPT qq(    # Use rsync \n);
+    print MASTER_SCRIPT qq(    echo "rsync $rsync_opts \${IMAGESERVER}::\${IMAGENAME}/ /a/" \n);
+    print MASTER_SCRIPT qq(    rsync $rsync_opts \${IMAGESERVER}::\${IMAGENAME}/ /a/ || shellout \n);
+    print MASTER_SCRIPT qq( \n);
+    print MASTER_SCRIPT qq(fi \n);
     ### END pull the image down ###
 
     if ($no_listing) {
@@ -1400,15 +1416,28 @@ sub create_autoinstall_script{
       mkdir("$dir", 0755) or die "FATAL: Can't make directory $dir\n";
     }  
     
-    # Add code to autoinstall script. -BEF-
-    print MASTER_SCRIPT   qq(### BEGIN overrides ###\n);
-    print MASTER_SCRIPT   q(for OVERRIDE in $OVERRIDES) . qq(\n);
-    print MASTER_SCRIPT   q(do) . qq(\n);
-    print MASTER_SCRIPT   q(    rsync -av --numeric-ids $IMAGESERVER::overrides/$OVERRIDE/ /a/ || echo "Override directory $OVERRIDE doesn't seem to exist, but that may be OK.") . qq(\n);
-    print MASTER_SCRIPT   q(done) . qq(\n);
-    print MASTER_SCRIPT   qq(### END overrides ###\n);
-    ### END overrides stuff ###
-  
+    ### BEGIN overrides ###
+    print MASTER_SCRIPT  q(### BEGIN overrides ###) . qq(\n);
+    print MASTER_SCRIPT  q(if [ ! -z $MCAST_GROUP ]; then) . qq(\n);
+    print MASTER_SCRIPT  q(    # Use multicast) . qq(\n);
+    print MASTER_SCRIPT  q(    #) . qq(\n);
+    print MASTER_SCRIPT  q(    # A single cast will catch any and all override directories at once.) . qq(\n);
+    print MASTER_SCRIPT  q(    #) . qq(\n);
+    print MASTER_SCRIPT  q(    mcast_group+2) . qq(\n);
+    print MASTER_SCRIPT  q(    echo "echo y | udp-receiver --portbase ${MCAST_GROUP} -- | tar -xv -C /a") . qq(\n);
+    print MASTER_SCRIPT  q(    echo y | udp-receiver --portbase ${MCAST_GROUP} | tar -xv -C /a || shellout) . qq(\n);
+    print MASTER_SCRIPT  q(    ) . qq(\n);
+    print MASTER_SCRIPT  q(else) . qq(\n);
+    print MASTER_SCRIPT  q(    # Use rsync) . qq(\n);
+    print MASTER_SCRIPT  q(    for OVERRIDE in $OVERRIDES) . qq(\n);
+    print MASTER_SCRIPT  q(    do) . qq(\n);
+    print MASTER_SCRIPT  q(        echo "rsync -av --numeric-ids $IMAGESERVER::overrides/$OVERRIDE/ /a/") . qq(\n);
+    print MASTER_SCRIPT  q(        rsync -av --numeric-ids $IMAGESERVER::overrides/$OVERRIDE/ /a/ || echo "Override directory $OVERRIDE doesn't seem to exist, but that may be OK.") . qq(\n);
+    print MASTER_SCRIPT  q(    done) . qq(\n);
+    print MASTER_SCRIPT  q(fi) . qq(\n);
+    print MASTER_SCRIPT  q(### END overrides ###) . qq(\n);
+    ### END overrides ###
+    
     print MASTER_SCRIPT   qq(\n\n);
 
     print MASTER_SCRIPT qq(##################################################################\n);
