@@ -1,0 +1,27 @@
+#
+# $Id$
+#
+#   2005-01-12 Andrea Righi
+#   - provided patch for lvm support
+#
+LVM_VERSION	:= 2.2.00.32
+LVM_DIR		:= LVM$(LVM_VERSION)
+LVM_TARBALL	:= LVM2.2.00.32.tgz
+LVM_URL		:= ftp://sources.redhat.com/pub/lvm2/$(LVM_TARBALL)
+LVM_BINARY        := $(SRC_DIR)/$(LVM_DIR)/tools/lvm
+PHONY += lvm
+
+lvm: $(LVM_BINARY)
+$(LVM_BINARY): $(SRC_DIR)/$(LVM_TARBALL)
+	[ -d $(SRC_DIR)/$(LVM_DIR) ] || ( cd $(SRC_DIR) && tar -xvzf $(LVM_TARBALL) )
+	@cd $(SRC_DIR)/$(LVM_DIR) && \
+		./configure --prefix=/usr --disable-nls --with-optimisation=-Os
+	@$(MAKE) -C $(SRC_DIR)/$(LVM_DIR)
+
+$(SRC_DIR)/$(LVM_TARBALL):
+	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
+	$(GETSOURCE) $(LVM_URL) $(SRC_DIR)
+
+PHONY += lvm_clean
+lvm_clean:
+	rm -rf $(SRC_DIR)/$(LVM_DIR)
