@@ -3,7 +3,8 @@ package SystemImager::Common;
 #
 # "SystemImager"
 #
-#  Copyright (C) 2001-2002 Bald Guy Software <brian.finley@baldguysoftware.com>
+#  Copyright (C) 2001-2002 Bald Guy Software
+#                          Brian Elliott Finley <bef@bgsw.net>
 #
 #    $Id$
 #
@@ -14,7 +15,59 @@ use vars qw($version_number $VERSION);
 $version_number="SYSTEMIMAGER_VERSION_STRING";
 $VERSION = $version_number;
 
-sub check_if_root{
+################################################################################
+#
+# Subroutines in this module include:
+#
+#   check_if_root
+#   get_response
+#   get_boot_flavors
+#   save_partition_information
+#   where_is_my_efi_dir
+#   which
+#   write_auto_install_script_conf_footer
+#   write_auto_install_script_conf_header
+#   valid_ip_quad
+#   _get_device_size
+#   _get_disk_label_type
+#   _print_to_auto_install_conf_file
+#   _turn_sfdisk_output_into_generic_partitionschemes_file
+#   _validate_label_type_and_partition_tool_combo
+#
+################################################################################
+
+
+# Usage:
+# my $efi_dir = where_is_my_efi_dir()
+#   Finds the directory that holds efi boot files on the machine 
+#   on which this function is run. -BEF-
+#
+sub where_is_my_efi_dir {
+
+    # Prefer newer vendor specific directories to the deprecated location. -BEF-
+    #
+    my @dirs = ("/boot/efi/efi/*/elilo.efi", "/boot/efi/elilo.efi");
+
+    foreach my $dir (@dirs) {
+
+        my $cmd = "ls $dir";
+        open(CMD, "$cmd |") or die qq(Couldn't $cmd. $!\n);
+            while (<CMD>) {
+                chomp;
+                if (m/.*\/elilo\.efi$/) {
+                    $_ =~ s/\/elilo\.efi$//;
+                    return $_;
+                } 
+            }
+        close(CMD);
+    }
+
+    return undef;
+
+}
+
+
+sub check_if_root {
 	unless($< == 0) { die "Must be run as root!\n"; }
 }
 
