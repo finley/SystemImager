@@ -21,8 +21,8 @@ package SystemImager::Image;
 use strict;
 use Carp;
 use SystemImager::Config qw(get_config);
-use Exporter;
-use vars qw(@ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $VERSION);
+use base qw(Exporter);
+use vars qw(@EXPORT @EXPORT_OK %EXPORT_TAGS $VERSION);
 
 $VERSION = sprintf("%d.%02d", q$Revision$ =~ /(\d+)\.(\d+)/);
 
