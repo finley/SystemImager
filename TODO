@@ -190,7 +190,7 @@ o web-gui that allows all image server operations as well as:
         o -f filename
 	o other options...
   o provide for reporting of clients that have completed their autoinstalls.
-  o Add "Alias /systemimager/ /var/spool/systemimager/web-gui/" to srm.conf 
+  o Add "Alias /systemimager/ /var/lib/systemimager/web-gui/" to srm.conf 
     in Apache.
 o See the "GUI Layout" section in this document for details on the 
   proposed logical arrangement of screens, etc.
@@ -250,7 +250,8 @@ o bootable recovery CD that self-installs from image stored on same CD
 
 
 Brian Finley <brian@thefinleys.com>
-----------------------
+-----------------------------------
+o Modify binaries to use /var/lib/systemimager/ instead of /tftpboot/
 o Austin Gonyou patch: Dual NIC Installs
 o Jose_AP_Celestino.ida.prepareclient.patch to make systemimager work
   properly with Smart Array cards.  (must get a Smart Array card first)
