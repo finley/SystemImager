@@ -1448,7 +1448,7 @@ sub create_autoinstall_script{
                 } elsif ($post_install eq "shutdown") {
                     # shutdown stuff
                     print $MASTER_SCRIPT "# shutdown the autoinstall client\n";
-                    print $MASTER_SCRIPT "shutdown -h now\n";
+                    print $MASTER_SCRIPT "shutdown\n";
                     print $MASTER_SCRIPT "\n";
                 }
                 last SWITCH;
