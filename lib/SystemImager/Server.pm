@@ -836,7 +836,7 @@ sub _read_partition_info_and_prepare_pvcreate_commands {
                         $cmd = "Initializing partition $part for use by LVM.";
                         print $out qq(echo "$cmd"\n);
 
-                        $cmd = "pvcreate $part || shellout";
+                        $cmd = "pvcreate -ff -y $part || shellout";
                         print $out qq(echo "$cmd"\n);
                         print $out "$cmd\n";
                         last;
@@ -886,8 +886,8 @@ sub write_lvm_groups_commands {
                 $m++;
                 unless (defined($part->{lvm_group})) { next; }
                 if ($part->{lvm_group} eq $group_name) {
-		    if (defined($part->{num})) {
-		        $m = $part->{num};
+                    if (defined($part->{num})) {
+                        $m = $part->{num};
                     }
                     my $part_name = &get_part_name($dev, $m);
                     $part_list = $part_list . " $part_name";
@@ -917,12 +917,6 @@ sub write_lvm_groups_commands {
             }
             # Write the command to create the volume group -AR-
             $cmd = "vgcreate ${vg_max_log_vols}${vg_max_phys_vols}${vg_phys_extent_size}${group_name}${part_list} || shellout";
-            print $out qq(echo "$cmd"\n);
-            print $out "$cmd\n";
-            
-            # Create the volume group directory under /dev -AR-
-            # FIXME: handle group names and device names conflicts.
-            $cmd = "mkdir -p /dev/$group_name || shellout";
             print $out qq(echo "$cmd"\n);
             print $out "$cmd\n";
         } else {
@@ -968,12 +962,12 @@ sub write_lvm_volumes_commands {
             }
 
             # Create the logical volume -AR-
-            $cmd = "lvcreate $lv_options -L${lv_size} -n $lv_name $group_name";
+            $cmd = "lvcreate $lv_options -L${lv_size} -n $lv_name $group_name || shellout";
             print $out qq(echo "$cmd"\n);
             print $out "$cmd\n";
             
             # Enable the logical volume -AR-
-            $cmd = "lvchange -a y /dev/$group_name/$lv_name";
+            $cmd = "lvscan > /dev/null; lvchange -a y /dev/$group_name/$lv_name || shellout";
             print $out qq(echo "$cmd"\n);
             print $out "$cmd\n";
         }
