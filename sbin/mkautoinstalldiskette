@@ -123,8 +123,19 @@ if ($floppy_device_prefix and $file) {
     die "-floppy and -file are mutually exclusive";
 }
 
-if ($floppy_device_prefix) { $user_specified_floppy=1; }
-elsif($file) { $user_specified_file=1; }
+if($floppy_device_prefix) { 
+    $user_specified_floppy=1;
+} elsif($file) { 
+    $user_specified_file=1;
+}
+
+if($ssh_key) {
+    unless(-e $ssh_key) { 
+        print qq(SSH private key "$ssh_key" doesn't seem to exist.\n);
+        print qq(Please try again.\n);
+        exit 1;
+    }
+}
 
 unless ($kernel and $initrd) {
     my %available_flavors = 
@@ -308,7 +319,7 @@ system($command);
 if($? != 0) { die "Couldn't execute: $command!\n"; }
 
 # copy stuff to floppy
-SystemImager::Server->copy_boot_files_to_boot_media($kernel, $initrd, $local_cfg, $arch, $mnt_dir, $append_string)
+SystemImager::Server->copy_boot_files_to_boot_media($kernel, $initrd, $local_cfg, $arch, $mnt_dir, $append_string, $ssh_key)
     or die("Couldn't copy required files into the image!");
 
 # unmount floppy
@@ -325,9 +336,6 @@ rmdir $mnt_dir or die "Couldn't remove temporary mount point $mnt_dir\n";
 # print done!
 if (!$quiet) { print "Done!\n";}
 exit 0;
-
-# XXX re-add ssh support.
-$ssh_key = "";
 
 
 sub get_response {

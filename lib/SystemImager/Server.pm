@@ -1530,7 +1530,7 @@ sub _remove_mount_option {
 # copy_boot_files_to_boot_media($kernel, $initrd, $local_cfg, $arch, $mnt_dir, $append_string);
 sub copy_boot_files_to_boot_media {
 
-    my ($class, $kernel, $initrd, $local_cfg, $arch, $mnt_dir, $append_string) = @_;
+    my ($class, $kernel, $initrd, $local_cfg, $arch, $mnt_dir, $append_string, $ssh_key) = @_;
 
     my $message_txt = "/etc/systemimager/pxelinux.cfg/message.txt";
     my $syslinux_cfg = "/etc/systemimager/pxelinux.cfg/syslinux.cfg";
@@ -1559,6 +1559,13 @@ sub copy_boot_files_to_boot_media {
         unless( copy($local_cfg, "$mnt_dir/local.cfg") ) {
             system($cmd);
             print "Couldn't copy $local_cfg to $mnt_dir!\n";
+            exit 1;
+        }
+    }
+    if($ssh_key) {
+        unless( copy($ssh_key, $mnt_dir) ) {
+            system($cmd);
+            print "Couldn't copy $ssh_key to $mnt_dir!\n";
             exit 1;
         }
     }
