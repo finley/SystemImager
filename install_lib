@@ -1,0 +1,81 @@
+#
+# "VA SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@valinux.com>
+#   Others who have contributed to this code (in alphabetical order):
+#     dann frazier <dannf@ldl.fc.hp.com>
+#
+#
+# This file is: install_lib
+#   This file provides variables and functions for use by the
+#   install{client,server} wrapper scripts.
+#
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/bin/X11:/usr/local/sbin:/usr/local/bin
+DESTDIR=`pwd`
+VERSION=`cat $DESTDIR/VERSION`
+
+# if not run as root, install will surely fail
+[ "`whoami`" != "root" ] && echo "Must be run as root!" && exit 1
+
+# upgrade_config_files() compares already-installed configuration files with
+#   the new, virgin config files that are a part of this release.  if there is
+#   a preexisting config file, it is backed up.  if the preexisting version
+#   differs from the virgin version, the user is warned.
+#
+# input:  $CONFIG_FILES
+#         $CONFIG_FILES is a list of configuration filename pairs.  the first
+#         filename in the pair is the full pathname of the config file on an
+#         installed system.  the second filename in each pair is the path
+#
+#         separated from the next w/ whitespace.  the two files in each pair
+#         are separated from each other with a ":".
+#         Example:
+#           CONFIG_FILES="/etc/systemimager/systemimager.conf:`pwd`/etc/systemimager.conf /etc/init.d/systemimager:`pwd`/debian/systemimager-server.init"
+#
+upgrade_config_files() {
+  echo "Checking for old configuration files..."
+  for file in $CONFIG_FILES; do
+    old=`echo $file | cut -d ":" -f 1`
+    new=`echo $file | cut -d ":" -f 2`
+    if [ -f "$old" ]; then
+      diff $old $new > /dev/null
+      if [ $? -ne 0 ]; then
+        echo "Warning: $old already exists, but it differs from the one I am going to install."
+        echo "I'm going to move this file to $old.beforesystemimager$VERSION."
+        echo "Press enter to continue."
+        read
+        mv $old $old.beforesystemimager$VERSION
+      fi
+    fi
+  done
+}
+
+# remove_old_files() looks for files that are sitting around from old
+#   installations and prompts the user for permission to remove them.
+#   this tries to prevent the execution of older scripts in favor of
+#   the new ones, and also clears up some cruft.  this is for
+#   non-user-configurable files, where overwriting the old version is
+#   safe.
+#
+# input:  $OLD_FILES
+#         $OLD_FILES is a list of filenames that are no longer relevant in this
+#         release - this could be because they have moved, been renamed, or
+#         have just been removed from SystemImager.
+#
+remove_old_files() {
+  echo "Note:  Binaries have moved from /usr to /usr/local by default."
+  echo "Checking for files which are no longer pertinent..."
+  for file in $OLD_FILES; do
+    if [ -f "$file" ]; then
+      echo "Warning:  $file was found on this system."
+      echo "This file has either been moved, renamed, or is no longer used in this release."
+      echo "You should probably remove this older version, to make sure it is not executed"
+      echo "by mistake."
+      echo -n "Shall I remove $file for you? ([y]/n) "
+      read REPLY
+      case $REPLY in
+        n|N|No|no|NO ) echo "Not removing $file, as requested." ;;
+        * ) rm $file ;;
+      esac
+    fi
+  done
+}

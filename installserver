@@ -1,0 +1,187 @@
+#!/bin/sh
+#
+# "VA SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@valinux.com>
+#   Others who have contributed to this code (in alphabetical order):
+#     dann frazier <dannf@ldl.fc.hp.com>
+#     Michael R. Nolta <mrnolta@princeton.edu>
+#
+#
+# This file is: installserver
+#   This script is a wrapper around the install_server_all rule in the
+#   Makefile.  This takes care of upgrade issues and interacting with users.
+#
+
+# set some variables
+COMMAND_PATH=`dirname $0`
+test "x$COMMAND_PATH" != "x" && cd $COMMAND_PATH
+
+if [ ! -f ./install_lib ]; then
+  echo "Couldn't find ./install_lib, exiting."
+  exit 1
+fi  
+. ./install_lib
+
+### BEGIN introduction ###
+# you sure you want to install?
+echo -n "Install SystemImager server? (y/[n]) "
+read REPLY
+case $REPLY in
+  y|Y|Yes|yes|YES ) clear; echo Ok.  Installing SystemImager server... ;;
+                * ) echo Install cancelled.  No files installed. && exit 1 ;;
+esac
+
+echo
+sleep 2
+### END introduction ###
+
+### BEGIN clean up old files ###
+echo "Checking for old utilities..."
+
+OLD_FILES="/usr/sbin/addclients /usr/sbin/cpimage /usr/sbin/getimage /usr/sbin/mkdhcpserver /usr/sbin/mkdhcpstatic /usr/sbin/mvimage /usr/sbin/pushupdate /usr/sbin/rmimage /usr/sbin/lsimage"
+remove_old_files
+
+CONFIG_FILES="/etc/systemimager/systemimager.conf:./etc/systemimager.conf /etc/systemimager/rsyncd.conf:./etc/rsyncd.conf /etc/init.d/systemimager:./etc/init.d/rsync"
+upgrade_config_files
+### END clean up old files ###
+
+### BEGIN update log files ###
+if [ -f /var/log/systemimager ]; then
+    echo "You appear to be using the old style /var/log/systemimager file."
+    echo "I will automatically update your system to use /var/log/systemimager/rsyncd instead."
+    echo "Press enter to continue."
+    read
+    echo -n "Moving /var/log/systemimager to /var/log/systemimager/rsyncd... "
+    mv /var/log/systemimager /var/log/systemimager.beforesystemimager$VERSION
+    mkdir /var/log/systemimager
+    mv /var/log/systemimager.beforesystemimager$VERSION /var/log/systemimager/rsyncd
+    echo "done."
+fi
+### END update log files ###
+
+### BEGIN make install_server_all
+echo "Running 'make install_server_all'..."
+make install_server_all
+if [ $? -ne 0 ]; then
+    echo "Install failed - hopefully the messages above will help you debug the problem."
+    exit 1
+fi
+### END make install_server_all
+
+### BEGIN copy over existing rsyncd.conf entries ###
+echo "Looking for existing rsyncd.conf files..."
+for file in /etc/rsyncd.conf /etc/systemimager/rsyncd.conf.beforesystemimager$VERSION; do
+  if [ -f $file ]; then
+    echo "SystemImager now uses /etc/systemimager/rsyncd.conf instead of /etc/rsyncd.conf"
+    echo "Warning:  $file was found on your system."
+    echo "Shall I copy any image entries from $file to "
+    echo -n "/etc/systemimager/rsyncd.conf? ([y]/n) "
+    read REPLY
+    case $REPLY in
+      n|N|no|NO|No ) echo "Not adding old entries, as requested." ;;
+                 * ) start_copying="false"
+	             while /bin/true; do
+		       read line
+		       if [ $? -ne 0 ]; then
+		         break
+		       fi
+		       if [ $start_copying == "true" ]; then
+		         echo "$line" >> /etc/systemimager/rsyncd.conf
+		         continue
+		       fi
+		       echo "$line" | \
+		       grep "^# only image entries below this line" > /dev/null
+		       if [ $? -eq 0 ]; then
+		         start_copying="true"
+		       fi
+		     done < $file
+		     if [ $start_copying == "false" ]; then
+		       echo "Warning:  $file doesn't look like it was created by SystemImager."
+		       echo "No image entries were copied over."
+		     fi
+    esac
+  fi
+done  
+### END copy over existing rsyncd.conf entries ###
+
+### BEGIN init scripts ###
+# find where init.d lives
+[ -d /etc/rc.d/init.d ] && INITDIR_PREFIX="/etc/rc.d"
+[ -d /etc/init.d ] && INITDIR_PREFIX="/etc"
+if [ "$INITDIR_PREFIX" == "" ]; then
+  echo "Couldn't find the directory where initscripts are stored."
+  exit 1
+fi
+
+if [ -f $INITDIR_PREFIX/init.d/rsync ]; then
+  echo "Warning:  $INITDIR_PREFIX/init.d/rsync exists."
+  echo "SystemImager now uses $INITDIR_PREFIX/init.d/systemimager instead."
+  echo "I can go ahead and remove the symlinks to $INITDIR_PREFIX/init.d/rsync from the various"
+  echo "runlevels.  This will prevent a conflict between the new and old initscripts."
+  echo "Shall I remove the symlinks to /etc/init.d/rsync from the various"
+  echo -n "runlevels? ([y]/n) "
+  read REPLY
+  case $REPLY in
+    n|N|No|no|NO ) echo "Ok - not removing symlinks to $INITDIR_PREFIX/init.d/rsync." ;;
+               * ) echo -n "Removing symlinks to $INITDIR_PREFIX/init.d/rsync..."
+	           find $INITDIR_PREFIX -type l -name "[K,S]20rsync" \
+	             -exec rm -f {} \;
+		   echo "done."
+		   echo -n "Should I go ahead and remove $INITDIR_PREFIX/init.d/rsync too? ([y]/n) "
+		   read REPLY
+		   case $REPLY in
+		     n|N|No|no|NO ) echo "Ok - not removing $INITDIR_PREFIX/init.d/rsync" ;;
+		                * ) echo "Removing $INITDIR_PREFIX/init.d/rsync..."
+				    rm -f $INITDIR_PREFIX/init.d/rsync
+				    ;;
+		   esac
+		   ;;
+  esac
+fi		   
+
+### BEGIN create softlinks to initscript ###
+# create soft links to rsync init script
+echo "Creating soft links to systemimager init script..."
+
+if [ -f $INITDIR_PREFIX/init.d/systemimager ]; then
+  cd $INITDIR_PREFIX/rc0.d; ln -sf ../init.d/rsync K20rsync || exit 1
+  cd $INITDIR_PREFIX/rc1.d; ln -sf ../init.d/rsync K20rsync || exit 1
+  cd $INITDIR_PREFIX/rc2.d; ln -sf ../init.d/rsync S20rsync || exit 1
+  cd $INITDIR_PREFIX/rc3.d; ln -sf ../init.d/rsync S20rsync || exit 1
+  cd $INITDIR_PREFIX/rc4.d; ln -sf ../init.d/rsync S20rsync || exit 1
+  cd $INITDIR_PREFIX/rc5.d; ln -sf ../init.d/rsync S20rsync || exit 1
+  cd $INITDIR_PREFIX/rc6.d; ln -sf ../init.d/rsync K20rsync || exit 1
+else
+  echo "$INITDIR_PREFIX/init.d/systemimager not found, symlinks not created."
+fi
+
+### END init scripts ###
+
+### BEGIN inetd stuff ###
+
+# now that we run rsync in standalone mode, and mkbootserver
+# exists,  i don't think we still need to mess w/ /etc/services
+# or inetd.conf
+
+### END inetd stuff ###
+
+echo "Running initscript to starting rsync daemon..."
+$INITDIR_PREFIX/init.d/systemimager restart
+if [ $? -ne 0 ]; then
+  echo "Error:  The initscript returned a non-zero status"
+  exit 1
+fi  
+
+### BEGIN dhcp stuff ###
+# Hey! Want dhcp?
+echo
+echo -n "Press <Enter> to continue..."
+read REPLY
+clear
+echo -n "Would you like me to configure this computer as a dhcp server now? (y/[n]) "
+read REPLY
+case $REPLY in
+  y|Y|Yes|yes|YES ) mkdhcpserver ;;
+esac
+### END dhcp stuff ###
+
+exit 0
