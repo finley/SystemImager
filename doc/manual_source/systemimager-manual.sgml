@@ -475,13 +475,13 @@
     <listitem>
      <para>
       Install the VA SystemImager client software on your "golden client" and run
-      the prepareclient command.
+      the <command>prepareclient</command> command.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Run getimage on the image server to pull the image from the "golden client" 
+      Run <command>getimage</command> on the image server to pull the image from the "golden client" 
       to the image server.
      </para>
     </listitem>
@@ -634,7 +634,7 @@ See /usr/share/doc/va-systemimager-x.x.x/ for all documentation.
     <listitem>
      <para>
       Install the VA SystemImager client software on your "golden client" and run
-      the prepareclient command.
+      the <command>prepareclient</command> command.
      </para>
 
      <para>
@@ -664,7 +664,7 @@ Be sure to run "prepareclient" before you run "getimage" on the imageserver.
       </programlisting>
      </example>
 
-     <example><title>Running the prepareclient command</title>
+     <example><title>Running prepareclient</title>
       <programlisting>
 [root@imageserver]# <command>prepareclient</command>
 
@@ -728,7 +728,7 @@ You must now run the "getimage" command on the imageserver.
       There are many other options that can be seen with "<command>getimage -help</command>".
      </para>
 
-     <example><title>Running the getimage command</title>
+     <example><title>Running getimage</title>
       <programlisting>
 [root@imageserver]# getimage -g my-golden-client -image web_server_image_v1
 
