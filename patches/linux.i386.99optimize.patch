@@ -1,0 +1,11 @@
+--- linux.orig/Makefile	Thu May 30 18:34:09 2002
++++ linux/Makefile	Thu May 30 18:32:55 2002
+@@ -88,7 +88,7 @@
+ 
+ CPPFLAGS := -D__KERNEL__ -I$(HPATH)
+ 
+-CFLAGS := $(CPPFLAGS) -Wall -Wstrict-prototypes -Wno-trigraphs -O2 \
++CFLAGS := $(CPPFLAGS) -Wall -Wstrict-prototypes -Wno-trigraphs -Os \
+ 	  -fomit-frame-pointer -fno-strict-aliasing -fno-common
+ AFLAGS := -D__ASSEMBLY__ $(CPPFLAGS)
+ 

@@ -1,0 +1,268 @@
+***************************************************************************************
+This patch was taken from the kernel-image-2.4.17-ia64-011226.13 Debian source package,
+where it was named patch.blkioctl-sector
+***************************************************************************************
+--- linux/include/linux/fs.h.sector	Mon Feb 26 23:48:46 2001
++++ linux/include/linux/fs.h	Mon Feb 26 23:53:57 2001
+@@ -187,6 +187,8 @@
+ /* This was here just to show that the number is taken -
+    probably all these _IO(0x12,*) ioctls should be moved to blkpg.h. */
+ #endif
++#define BLKGETLASTSECT  _IO(0x12,108) /* get last sector of block device */
++#define BLKSETLASTSECT  _IO(0x12,109) /* get last sector of block device */
+ 
+ 
+ #define BMAP_IOCTL 1		/* obsolete - kept for compatibility */
+--- linux/drivers/block/blkpg.c.sector	Fri Oct 27 02:35:47 2000
++++ linux/drivers/block/blkpg.c	Mon Feb 26 23:53:57 2001
+@@ -39,6 +39,9 @@
+ 
+ #include <asm/uaccess.h>
+ 
++static int set_last_sector( kdev_t dev, const void *param );
++static int get_last_sector( kdev_t dev, const void *param );
++
+ /*
+  * What is the data describing a partition?
+  *
+@@ -210,6 +213,16 @@
+ 	int intval;
+ 
+ 	switch (cmd) {
++		case BLKGETLASTSECT:
++			return get_last_sector(dev, (char *)(arg));
++
++		case BLKSETLASTSECT:
++			if( is_read_only(dev) )
++				return -EACCES;
++			if (!capable(CAP_SYS_ADMIN))
++				return -EACCES;
++			return set_last_sector(dev, (char *)(arg));
++
+ 		case BLKROSET:
+ 			if (!capable(CAP_SYS_ADMIN))
+ 				return -EACCES;
+@@ -281,3 +294,209 @@
+ }
+ 
+ EXPORT_SYMBOL(blk_ioctl);
++
++ /*********************
++  * get_last_sector()
++  *  
++  * Description: This function will read any inaccessible blocks at the end
++  * 	of a device
++  * Why: Normal read/write calls through the block layer will not read the 
++  *      last sector of an odd-size disk. 
++  * parameters: 
++  *    dev: kdev_t -- which device to read
++  *    param: a pointer to a userspace struct. The struct has these members: 
++  *	block:  an int which denotes which block to return:
++  *		0 == Last block
++  * 		1 == Last block - 1
++  * 		n == Last block - n
++  *		This is validated so that only values of 
++  *		  <= ((total_sects + 1) % logical_block_size)  ||  0
++  *		  are allowed.
++  * 	block_contents: a pointer to userspace char*, this is where we write 
++  *	 returned blocks to.
++  * 	content_length: How big the userspace buffer is.
++  * return: 
++  *    0 on success
++  *   -ERRVAL on error.
++  *********************/
++int get_last_sector( kdev_t dev, const void *param )
++{   
++        struct buffer_head *bh;
++        struct gendisk *g;
++        int rc = 0;
++        unsigned int lastlba, readlba;
++        int orig_blksize = BLOCK_SIZE;
++        int hardblocksize;
++
++	struct {
++		unsigned int block;
++		size_t content_length;
++		char *block_contents;
++	} blk_ioctl_parameter;
++
++        if( !dev ) return -EINVAL;
++
++        if(copy_from_user(&blk_ioctl_parameter, param, sizeof(blk_ioctl_parameter)))
++		return -EFAULT;
++
++        g = get_gendisk( dev );
++
++        if( !g ) return -EINVAL;
++
++        lastlba = g->part[MINOR(dev)].nr_sects;
++
++        if( !lastlba ) return -EINVAL;
++
++        hardblocksize = get_hardsect_size(dev);
++        if( ! hardblocksize ) hardblocksize = 512;
++
++         /* Need to change the block size that the block layer uses */
++        if (blksize_size[MAJOR(dev)]){
++                orig_blksize = blksize_size[MAJOR(dev)][MINOR(dev)];
++        }
++
++         /* validate userspace input */
++        if( blk_ioctl_parameter.block == 0 )
++		goto good_params;
++
++	/* so we don't divide by zero below */  
++	if(orig_blksize == 0) 
++		return -EINVAL; 
++
++        if( blk_ioctl_parameter.block <= (lastlba % (orig_blksize / hardblocksize)))
++		goto good_params;
++
++	return -EINVAL; 
++
++good_params:
++        readlba = lastlba - blk_ioctl_parameter.block - 1;
++
++        if (orig_blksize != hardblocksize)
++                   set_blocksize(dev, hardblocksize);
++
++        bh =  bread(dev, readlba, hardblocksize);
++        if (!bh) {
++		/* We hit the end of the disk */
++		printk(KERN_WARNING
++			"get_last_sector ioctl: bread returned NULL.\n");
++		return -1;
++        }
++
++        rc = copy_to_user(blk_ioctl_parameter.block_contents, bh->b_data, 
++		(bh->b_size > blk_ioctl_parameter.content_length) ? 
++		blk_ioctl_parameter.content_length : bh->b_size);
++
++        brelse(bh);
++
++        /* change block size back */
++        if (orig_blksize != hardblocksize)
++                   set_blocksize(dev, orig_blksize);
++   
++        return rc;
++}
++
++ /*********************
++  * set_last_sector()
++  *  
++  * Description: This function will write to any inaccessible blocks at the end
++  * 	of a device
++  * Why: Normal read/write calls through the block layer will not read the 
++  *      last sector of an odd-size disk. 
++  * parameters: 
++  *    dev: kdev_t -- which device to read
++  *    sect: a pointer to a userspace struct. The struct has these members: 
++  *	block:  an int which denotes which block to return:
++  *		0 == Last block
++  * 		1 == Last block - 1
++  * 		n == Last block - n
++  *		This is validated so that only values of 
++  *		  <= ((total_sects + 1) % logical_block_size)  ||  0
++  *		  are allowed.
++  * 	block_contents: a pointer to userspace char*, this is where we write 
++  *	 returned blocks to.
++  * 	content_length: How big the userspace buffer is.
++  * return: 
++  *    0 on success
++  *   -ERRVAL on error.
++  *********************/
++int set_last_sector( kdev_t dev, const void *param ) 
++{
++        struct buffer_head *bh;
++        struct gendisk *g;
++        int rc = 0;
++        unsigned int lastlba, writelba;
++        int orig_blksize = BLOCK_SIZE;
++        int hardblocksize;
++
++	struct {
++		unsigned int block;
++		size_t content_length;
++		char *block_contents;
++	} blk_ioctl_parameter;
++
++        if( !dev ) return -EINVAL;
++
++	if(copy_from_user(&blk_ioctl_parameter, param, sizeof(blk_ioctl_parameter)))
++		return -EFAULT;
++
++        g = get_gendisk( dev );
++
++        if( !g ) return -EINVAL;
++    
++        lastlba = g->part[MINOR(dev)].nr_sects ;
++    
++        if( !lastlba ) return -EINVAL;
++    
++        hardblocksize = get_hardsect_size(dev);
++        if( ! hardblocksize ) hardblocksize = 512;
++    
++         /* Need to change the block size that the block layer uses */
++        if (blksize_size[MAJOR(dev)]){
++                orig_blksize = blksize_size[MAJOR(dev)][MINOR(dev)];
++        }
++
++         /* validate userspace input */
++        if( blk_ioctl_parameter.block == 0 )
++		goto good_params;
++
++	/* so we don't divide by zero below */  
++	if(orig_blksize == 0) 
++		return -EINVAL; 
++
++        if( blk_ioctl_parameter.block <= (lastlba % (orig_blksize / hardblocksize)))
++		goto good_params;
++
++	return -EINVAL; 
++
++good_params:
++        writelba = lastlba - blk_ioctl_parameter.block - 1;
++
++        if (orig_blksize != hardblocksize)
++                 set_blocksize(dev, hardblocksize);
++    
++        bh =  bread(dev, writelba, hardblocksize);
++        if (!bh) {
++		/* We hit the end of the disk */
++		printk(KERN_WARNING
++			"get_last_sector ioctl: getblk returned NULL.\n");
++		return -1;
++        }
++    
++        copy_from_user(bh->b_data, blk_ioctl_parameter.block_contents, 
++		(bh->b_size > blk_ioctl_parameter.content_length) ? 
++		blk_ioctl_parameter.content_length : bh->b_size);
++    
++        mark_buffer_dirty(bh);
++        ll_rw_block (WRITE, 1, &bh);
++        wait_on_buffer (bh);
++        if (!buffer_uptodate(bh))
++          rc=-1; 
++    
++        brelse(bh);
++    
++        /* change block size back */
++        if (orig_blksize != hardblocksize)
++                 set_blocksize(dev, orig_blksize);
++       
++       return rc;
++}
+--- linux/drivers/scsi/sd.c.sector	Mon Feb 26 23:48:45 2001
++++ linux/drivers/scsi/sd.c	Mon Feb 26 23:53:57 2001
+@@ -228,8 +228,10 @@
+ 				return -EINVAL;
+ 			return 0;
+ 		}
+ 		case BLKGETSIZE:
+ 		case BLKGETSIZE64:
++	 	case BLKGETLASTSECT:
++	 	case BLKSETLASTSECT:
+ 		case BLKROSET:
+ 		case BLKROGET:
+ 		case BLKRASET:
+
