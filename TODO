@@ -5,6 +5,35 @@
 # (not in any specific order)
 #
 
+
+sfdisk stuff
+------------
+
+#use this command for output
+[root]# sfdisk -l -uM
+
+Disk /dev/sda: 2233 cylinders, 255 heads, 63 sectors/track
+Units = megabytes of 1048576 bytes, blocks of 1024 bytes, counting from 0
+
+   Device Boot Start   End     MB   #blocks   Id  System
+/dev/sda1         0+    31-    32-    32129+  83  Linux
+/dev/sda2        31+   556-   526-   538177+  82  Linux swap
+/dev/sda3       556+  2619-  2064-  2112547+  83  Linux
+/dev/sda4      2619+ 17516- 14897- 15253717+  83  Linux
+
+#use this command for input
+[root]# cat /tmp/x
+sfdisk --force -uM /dev/sda <<EOF
+/dev/sda1 : start= 0, size= 24, Id=83
+/dev/sda2 : start= , size= 518, Id=82
+/dev/sda3 : start= , size= 2056, Id=83
+/dev/sda4 : start= , size= , Id=83
+EOF
+
+
+
+
+
 rpm
 ---
 - require syslinux version x rpm
