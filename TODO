@@ -41,11 +41,13 @@ o http://www.loria.fr/~molli/cvs/doc/cvs.pdf
 Development Branch Sub Projects
 -------------------------------
 
+Unclaimed Sub Projects
+----------------------
+o updateclient:  Add a "-no-update   "Don't actually *do* the update, just show me what would have been done."
+
 Brian Finley <brian@thefinleys.com>
 -----------------------------------
-cvs -z3 commit -m "added section to autoinstall.master scripts to deal with testing for and doing raidstop if necessary -- even if we're not autoinstalling a raid image" sbin/getimage
-cvs -z3 commit -m "added IBM ServeRAID support" tftpstuff/kernel
-
+o updateclient:  Change -nolilo to -no-lilo, and hide nolilo in the background.
 o remove depricated -master-client option in getimage
 o deal with LABEL= and UUID= for any filesystem or device type
 o chroot=yes in /etc/rsyncd.conf and test...
