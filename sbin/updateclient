@@ -36,11 +36,11 @@ use lib "USR_PREFIX/lib/systemimager/perl";
 use Carp;
 use POSIX;
 use Socket;
+use AppConfig;
 use File::Copy;
 use Getopt::Long;
 use Sys::Hostname;
 use SystemImager::Common;
-use SystemImager::Config;
 use vars qw($config $VERSION);
 
 # set version number
@@ -112,25 +112,25 @@ $ARCH =~ s/i.86/i386/;
 
 # Get settings using AppConfig.
 my $config = new AppConfig(
-  'directory' => {ARGCOUNT => 1,},
-  'ssh_user' => {ARGCOUNT => 1},
-
-  # These are the file system types that will be updated.
-  'fstype' => {ARGCOUNT => 2},
-
-  'rsync_port' => {ARGCOUNT => 1},
-  'exclude_file' => {ARGCOUNT => 1},
-  'image' => {ARGCOUNT => 1},
-  'server' => {ARGCOUNT => 1},
-  'log' => {ARGCOUNT => 1},
-
-  # We put bootmodule here so it can be overridden, but we aren't going to 
-  # advertize this yet.
-  # 
-  # this is dependent on flavor, which likely isn't determined yet,
-  # and this location is hardcoded in rcS, so it probably doesn't
-  # make sense to override it.
-  #'bootmodule' => {ARGCOUNT => 1, DEFAULT => "boot/$ARCH"},
+    'directory' => {ARGCOUNT => 1,},
+    'ssh_user' => {ARGCOUNT => 1},
+    
+    # These are the file system types that will be updated.
+    'fstype' => {ARGCOUNT => 2},
+    
+    'rsync_port' => {ARGCOUNT => 1},
+    'exclude_file' => {ARGCOUNT => 1},
+    'image' => {ARGCOUNT => 1},
+    'server' => {ARGCOUNT => 1},
+    'log' => {ARGCOUNT => 1},
+    
+    # We put bootmodule here so it can be overridden, but we aren't going to 
+    # advertize this yet.
+    # 
+    # this is dependent on flavor, which likely isn't determined yet,
+    # and this location is hardcoded in rcS, so it probably doesn't
+    # make sense to override it.
+    #'bootmodule' => {ARGCOUNT => 1, DEFAULT => "boot/$ARCH"},
 );
 
 # Read in settings from SystemImager client configuration file
@@ -143,21 +143,21 @@ my $exclude_file = $config->exclude_file;
 my $port = $config->rsync_port; 
 
 GetOptions( "listing" => \$listing,
-            "configure-from=s" => \$DEVICE,
-            "help" => \$help,
-            "version" => \$version,
-            "reboot" => \$reboot,
-            "no-lilo" => \$no_bootloader,     # XXX deprecated, but backwards
-                                              # compatible (remove in 3.2.x)
-            "no-bootloader" => \$no_bootloader,
-            "autoinstall" => \$autoinstall,
-            "dry-run" => \$dry_run,
-            "ssh-user=s" => \$ssh_user,
-	    "flavor=s" => \$flavor,
-            "server=s" => \$server,
-            "image=s" => \$image,
-            "directory=s" => \$directory,
-            "log=s" => \$log,
+    "configure-from=s" => \$DEVICE,
+    "help" => \$help,
+    "version" => \$version,
+    "reboot" => \$reboot,
+    "no-lilo" => \$no_bootloader,     # XXX deprecated, but backwards
+                                      # compatible (remove in 3.2.x)
+    "no-bootloader" => \$no_bootloader,
+    "autoinstall" => \$autoinstall,
+    "dry-run" => \$dry_run,
+    "ssh-user=s" => \$ssh_user,
+    "flavor=s" => \$flavor,
+    "server=s" => \$server,
+    "image=s" => \$image,
+    "directory=s" => \$directory,
+    "log=s" => \$log,
 ) or die qq($help_info);
 
 # if requested, print version information
@@ -174,9 +174,7 @@ if($help) {
 
 # listing is deprecated.  lsimage should now be used.
 if($listing) {
-    print <<EOF;
-The --listing option is depricated.  Use 'lsimage' instead.
-EOF
+    print qq('-listing' is depricated.  Use 'lsimage' instead.\n);
     exit(1);
 }
 
@@ -349,33 +347,52 @@ if ($autoinstall) {
     }
     close(MTAB);
 
+
     # Figure out what to specify as the boot device.
     my $lastboot;
-    if ($ARCH eq "ia64") {
-	# If we're dealing with elilo on ia64, then let's just get
-	# what's currently specified. -BEF-
-	@eliloconf_locations = qw(/etc/elilo.conf /boot/efi/elilo.conf);
-	foreach my $possible (@eliloconf_locations) {
-	    if (-f $possible) {
-		open(FILE, "<$possible") or
-		    croak("Couldn't open $possible for reading!");
-		while (<FILE>) {
-		    if (/^\s*boot\s*=(.*)$/) {
-			$lastboot = $1;
-		    }
-		}
-		close(FILE);
-	    }
-	}
 
-	if (! $lastboot) {
-	    # If we can't read it from /etc/elilo.conf, just guess for now.
-	    # XXX figure out a better way to do this. -BEF-
-	    $lastboot = $lastroot;        # Get the root device.
-	    $lastboot =~ s/\d+$//;        # Strip of the root partition number.
-	    $lastboot = $lastboot . "1";  # Add the assumed boot partition 
-	                                  # number of 1.
-	}
+    if ($ARCH eq "ia64") {
+
+        if (( -x "/usr/sbin/elilo") and (-e "/etc/elilo.conf")) {
+
+            # Must be Debian
+            #tweak elilo.conf, much the same way you would tweak lilo.conf
+
+            # Run elilo script
+            my $cmd = "/usr/sbin/elilo";
+            !system($cmd) or croak("FATAL: $cmd failed! $!");
+            
+        } else {
+
+            # Must be something other than Debian
+            #find elilo.conf in /boot/efi
+            #tweak it
+            #run efibootmgr, telling it what your boot part is ,etc.
+        }
+
+
+#        # If we're dealing with elilo on ia64, then let's just get
+#        # what's currently specified. -BEF-
+#        @eliloconf_locations = qw(/etc/elilo.conf /boot/efi/elilo.conf);
+#        foreach my $possible (@eliloconf_locations) {
+#            if (-f $possible) {
+#                open(FILE, "<$possible") or croak("Couldn't open $possible for reading!");
+#                    while (<FILE>) {
+#        	            if (/^\s*boot\s*=(.*)$/) {
+#        		            $lastboot = $1;
+#        	            }
+#        	        }
+#        	    close(FILE);
+#            }
+#        }
+#
+#        if (! $lastboot) {
+#            # If we can't read it from /etc/elilo.conf, just guess for now.
+#            # XXX figure out a better way to do this. -BEF-
+#            $lastboot = $lastroot;        # Get the root device.
+#            $lastboot =~ s/\d+$//;        # Strip of the root partition number.
+#            $lastboot = $lastboot . "1";  # Add the assumed boot partition 
+#        }
     } else {
       # Most other boot loaders just use the device that root is on, minus the device number.
       $lastboot = $lastroot;
