@@ -281,7 +281,7 @@ flamethrower_client() {
                     echo "WARNING: No progress since last check.  Killing udp-receiver."
                     while killall -9 udp-receiver; do sleep 1; done
                     unset UDP_RECEIVER_RUNNING
-                    sleep 1
+                    sleep 5
                 fi
                 LAST_STAMP=$THIS_STAMP
             fi
