@@ -76,8 +76,6 @@
 #   o boot (directory that holds architecture specific directories with
 #           boot files for clients)
 #
-# XXX include pcmcia utilities in boel-binaries tarball
-#
 # To include the ctcs test suite, and associated files, do a 'make WITH_CTCS=1 all'
 #
 
@@ -519,7 +517,8 @@ endif
 	    INSTALL_MOD_PATH="$(BOEL_BINARIES_DIR)"
 	#
 	# Tar it up, baby! -BEF-
-	( cd $(BOEL_BINARIES_DIR) && tar -cv * | gzip -9 > $(BOEL_BINARIES_TARBALL) )
+	fakeroot chown -R 0.0 $(BOEL_BINARIES_DIR)
+	cd $(BOEL_BINARIES_DIR) && fakeroot tar -cv * | gzip -9 > $(BOEL_BINARIES_TARBALL)
 	#
 	# Note: This tarball should be installed to the "boot/$(ARCH)/$(FLAVOR)" directory.
 
