@@ -41,10 +41,10 @@ sub check_if_root{
 # figure out the program name
 $0  =~ /(.*)\/+([^\/]*)$/;
 $program_name = $2;
-$version_number = "0.24beta3";
+$version_number = "0.24beta4";
 
 $version_info = <<"EOF";
-$program_name (part of SystemImager) version $version_number
+$program_name (part of VA SystemImager) version $version_number
 
 Copyright (C) 1999-2000 Brian Elliott Finley <brian\@valinux.com>
 This is free software; see the source for copying conditions.  There is NO
@@ -53,28 +53,28 @@ EOF
 
 $help_info = $version_info . <<"EOF";
 
-Usage: $program_name [OPTION]...  --master-client HOSTNAME --image IMAGENAME
+Usage: $program_name [OPTION]...  -master-client HOSTNAME -image IMAGENAME
 
 Options: (options can be presented in any order and may be abbreviated)
- --help                    Display this output.
- --version                 Display version and copyright information.
- --master-client HOSTNAME  Hostname or IP address of the \"master\" client.
- --image IMAGENAME         Where IMAGENAME is the name to assign to the 
-                           image you are retrieving.  This can be either
-                           the name of a new image if you want to create
-                           a new image, or the name of an exisiting image
-                           if you want to update an image.
- --quiet                   Don\'t ask any questions or print any output
-                           (other than errors). In this mode, no warning
-                           will be given if the image already exists on
-                           the server.
- --ip-assignment METHOD    Where METHOD can be static_dhcp, dynamic_dhcp,
-                           or static. (static_dhcp is recommended)
- --update-script [YES|NO]  Update the \$image.master script?
-                           Defaults are:
-                           - NO if --quiet
-                           - Otherwise prompt for response if not
-                             specified
+ -help                    Display this output.
+ -version                 Display version and copyright information.
+ -master-client HOSTNAME  Hostname or IP address of the \"master\" client.
+ -image IMAGENAME         Where IMAGENAME is the name to assign to the 
+                          image you are retrieving.  This can be either
+                          the name of a new image if you want to create
+                          a new image, or the name of an exisiting image
+                          if you want to update an image.
+ -quiet                   Don\'t ask any questions or print any output
+                          (other than errors). In this mode, no warning
+                          will be given if the image already exists on
+                          the server.
+ -ip-assignment METHOD    Where METHOD can be static_dhcp, dynamic_dhcp,
+                          or static. (static_dhcp is recommended)
+ -update-script [YES|NO]  Update the \$image.master script?
+                          Defaults are:
+                          - NO if -quiet
+                          - Otherwise prompt for response if not
+                            specified
 
 Download from http://systemimager.org/
 Report bugs or suggestions to <systemimager-bugs\@systemimager.org>
@@ -159,7 +159,7 @@ if (!$quiet) {
 
 if (! -d "$imagedir_prefix")  {
     die "Directory $imagedir_prefix doesn't exist.  " .
-	"Please reinstall SystemImager.\n";
+	"Please reinstall VA SystemImager.\n";
 }
 
 if (-d "$imagedir") {
@@ -332,7 +332,7 @@ print MASTER_SCRIPT << 'EOF';
 #!/bin/sh
 
 #
-# "SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com>
+# "VA SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com>
 #
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/tmp1
