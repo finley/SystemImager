@@ -810,11 +810,11 @@ sub _write_out_mkfs_commands {
 
     print MASTER_SCRIPT "### BEGIN swap and filesystem creation commands ###\n";
     print MASTER_SCRIPT qq(echo "Load additional filesystem drivers."\n);
-    print MASTER_SCRIPT "modprobe -r reiserfs\n";
-    print MASTER_SCRIPT "modprobe -r ext2\n";
-    print MASTER_SCRIPT "modprobe -r ext3\n";
-    print MASTER_SCRIPT "modprobe -r jfs\n";
-    print MASTER_SCRIPT "modprobe -r xfs\n";
+    print MASTER_SCRIPT "modprobe reiserfs\n";
+    print MASTER_SCRIPT "modprobe ext2\n";
+    print MASTER_SCRIPT "modprobe ext3\n";
+    print MASTER_SCRIPT "modprobe jfs\n";
+    print MASTER_SCRIPT "modprobe xfs\n";
     print MASTER_SCRIPT "\n";
 
 
