@@ -31,6 +31,7 @@ workstations have the same basic hardware configuration.
 Summary: VA SystemImager "Master Client" software
 Group: Applications/System
 Conflicts: %{name}
+Requires: rsync util-linux
 
 %description client
 This is the package you install on a VA SystemImager "master client".
@@ -62,18 +63,25 @@ rm -rf $RPM_BUILD_ROOT
 %post
 cd /tftpboot/systemimager && ./afterburner -q -n
 
+%post client
+cd /tftpboot/systemimager && ./prepareclient --rpm-install
+
 %postun
 
 %files
 %defattr(-, root, root)
-%doc CHANGE.LOG COPYING CREDITS FAQ-HOWTO README TODO
+%doc CHANGE.LOG COPYING CREDITS FAQ-HOWTO README TODO VERSION
 %{prefix}/*
 /tftpboot/*
 /var/*
 
 %files client
 %defattr(-, root, root)
-%doc CHANGE.LOG COPYING CREDITS FAQ-HOWTO README TODO
-%{prefix}/*
-/tftpboot/*
-/var/*
+%doc CHANGE.LOG COPYING CREDITS FAQ-HOWTO README TODO VERSION
+/tftpboot/systemimager/updateclient
+/tftpboot/systemimager/grep
+/tftpboot/systemimager/rsync
+/tftpboot/systemimager/prepareclient
+/tftpboot/systemimager/sed
+/tftpboot/systemimager/sfdisk
+/tftpboot/systemimager/systemimager.exclude

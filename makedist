@@ -15,6 +15,7 @@ rm -f ${PACKAGE}.spec.in
 
 mkdir -p /tmp/${PACKAGE}-${VERSION}
 cp -a . /tmp/${PACKAGE}-${VERSION}
+(cd /tmp/${PACKAGE}-${VERSION} && find . -type d -name CVS -exec rm -rf {} \;)
 (cd /tmp && tar --owner=root --group=root -zcvf ${PACKAGE}-${VERSION}.tar.gz ${PACKAGE}-${VERSION}/)
 mv /tmp/${PACKAGE}-${VERSION}.tar.gz .
 rm -rf /tmp/${PACKAGE}-${VERSION}

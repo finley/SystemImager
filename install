@@ -88,7 +88,7 @@ else
 fi
 [ $QUIET = "false" ] && echo "copying ${DESTDIR}/etc/hosts to ${DESTDIR}/tftpboot/systemimager/hosts..."
 cd ${DESTDIR}/tftpboot/systemimager/
-cp -p ${DESTDIR}/etc/hosts . || true > hosts
+test -f ${DESTDIR}/etc/hosts && cp -p ${DESTDIR}/etc/hosts . || true > hosts
 
 # gotta make sure the masses can read it...
 chmod a+r hosts
