@@ -279,7 +279,6 @@ if (!$result) {
     $result = `ps axww|grep -v grep|grep -w rsyncd`;
 }
 if ($result) {
-    print "\n";
     print "One or more rsync daemons appear to be running on this machine.  If you\n";
     print "continue, those daemons will be killed.\n";
     print "\n";
@@ -383,9 +382,9 @@ EOF
 } elsif(!$quiet) {
     print <<EOF;
 
-WARNING:  The rsync daemon was not started.  You must run prepareclient 
-          again, without the -n option, before you can pull it's image 
-	  to an imageserver.
+WARNING:  The rsync daemon was not started.  You must run prepareclient again,
+          without the -n option, before you can pull it's image to an
+          imageserver.
 EOF
 
 }
@@ -420,9 +419,14 @@ sub collect_disks {
         } elsif (/(\S*[hs]d[a-z])[0-9]/) { # standard disk devices
             $disks->{IDESCSI}->{$1}++;
         } elsif (/\b(ide\/host\S+disc)\b/) { # devfs standard for ide disk devices
-            $disks->{IDESCSI}->{$1}++;
+            # now strip off the partition number
+            $disks->{IDESCSI}->{devfs_transform($1)}++;
         } elsif (/\b(scsi\/host\S+disc)\b/) { # devfs standard for scsi disk devices
-            $disks->{IDESCSI}->{$1}++;
+            # if we have a devfs scsi disk and we want to get
+            # back to old school format, we just count up each disk
+            # and assign it to /dev/sdN in order
+            $disks->{IDESCSI}->{"sd" . chr(97 + $devfsscsi)}++;
+            $devfsscsi++;
         }
     }
     close(IN);
@@ -631,5 +635,24 @@ sub killall {
     }
 }
 
+
+sub devfs_transform {
+    my $devfsentry = shift;
+    my ($type, $host, $bus, $target, $lun, $part) = split(/\//,$devfsentry);
+    # get rid of the keywords in the sections
+    $bus =~ s/\D+//g;
+    $target =~ s/\D+//g;
+    $part =~ s/\D+//g;
+    my $realentry = "hd";
+    my $total = $bus * 2 + $target;
+
+    # now we add the real entry... remembering that chr(97) == 'a'
+    $realentry .= chr(97 + $total);
+    # add the partition number.  $part should always be blank, but
+    # it is here for completeness sake
+    $realentry .= $part;
+
+    return $realentry;
+}
 
 ### END functions
