@@ -460,15 +460,15 @@ image=vmlinux-rh.img
       <para>
         If you are using DHCP v3 from ISC, you will need to use
         the following configuration directives to make use of
-        option 100:
+        option 140:
       </para>
       <para>
-        option systemimager-server code 100 = text;
+        option systemimager-server code 140 = text;
         option systemimager-server "192.168.1.1";
       </para>
       <para>
         The first line defines 'systemimager-server' as the
-        name for option 100 and that it shall take as an
+        name for option 140 and that it shall take as an
         argument a text string. The second line assigns a
         value (an IP address) to the name. 
       </para>
@@ -481,7 +481,7 @@ image=vmlinux-rh.img
     </question>
     <answer>
       <para>
-        No.  If you are using DHCP, you can use "option-100" and set its
+        No.  If you are using DHCP, you can use "option-140" and set its
         value to the IP address of the image server.  If you use
         <command>mkdhcpstatic</command> to configure your
         <filename>dhcpd.conf</filename>
@@ -489,7 +489,7 @@ image=vmlinux-rh.img
         add the appropriate entry for you.
       </para>
       <para>
-        Because this is not the official use for option-100, work is being
+        Because this is not the official use for option-140, work is being
         done to either get an official number assigned or use a number from
         the private number range.
       </para>
