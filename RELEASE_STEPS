@@ -11,8 +11,9 @@
 3.0 PRE-RELEASE
 --------------------------------------------------------------------------------
 Pending:
-* incorporate Common.pm elilo.efi stuff into updateclient and mk*whatever in dannf's bug report.
-* updateclient XXX (exit 1 bit)
+* incorporate Common.pm elilo.efi stuff into mk*whatever
+* updateclient update portion
+* updateclient lilo portion
 * updateclient -a bug: http://sourceforge.net/tracker/index.php?func=detail&aid=610755&group_id=259&atid=100259
 * update mkdhcpstatic (if needed)
 * add bit to to troubleshooting that describes the case where ETHER_SLEEP 
@@ -38,6 +39,7 @@ Completed:
 * chown -R 0.0 /lib/modules after untarring boel_binaries.tar.gz
 * ia64 doesn't boot
 * addclients -domainname optional & related bug
+* incorporate Common.pm elilo.efi stuff into updateclient
 
 
 
