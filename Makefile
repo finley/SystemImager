@@ -20,7 +20,7 @@ SBIN = $(DESTDIR)/usr/sbin
 MAN8 = $(DESTDIR)/usr/share/man/man8
 
 BINARY_SRC = ./sbin
-BINARIES := makeautoinstallcd addclients getimage makeautoinstalldiskette makedhcpstatic makedhcpserver
+BINARIES := makeautoinstallcd addclients getimage makeautoinstalldiskette makedhcpstatic makedhcpserver lsimage mvimage rmimage cpimage
 
 TFTP_BIN_SRC      = tftpstuff/systemimager
 TFTP_BIN         := raidstart mkraid mkreiserfs prepareclient updateclient
