@@ -6,6 +6,8 @@
 
 Notes on customizing and building your initrd.gz
 ------------------------------------------------
+o the build requires superuser privileges as it mounts a file via the loopback
+  device
 o files in the skel/ directory are copied directly to the ramdisk
   you can edit the files there, or drop in your own.
 o source tarballs for a few binaries are needed during the build.  an attempt
