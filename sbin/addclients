@@ -59,16 +59,31 @@ unless($< == 0) { die "Must be run as root!\n"; }
 
 # give warning
 system("clear");
-print << "EOF";
+print << 'EOF';
 
-Welcome to the VA SystemImager "addclients" utility.  This utility
-will create softlinks for each of your client names to your
-"\$image.master" script in the "/tftpboot/systemimager/"
-directory.  ( ie. computenode201.sh -> newlinuximage.master )
+Welcome to the VA SystemImager "addclients" utility  
+---------------------------------------------------
 
-It will also give you the opportunity to create entries in
-"/etc/hosts" for each of these same clients.  (entries will 
-only be made if they don't already exist.)
+This utility has 3 sections.  
+
+
+"Section 1" will ask you for your hostname information.
+
+
+"Section 2" will allow you to create softlinks from each
+client hostname to your "master" script in the
+"/tftpboot/systemimager/" directory.  
+
+Example: www297.sh -> web_server_image_v1.master
+
+
+"Section 3" will ask you for IP address information that will
+be combined with the hostname information provided in Section 1
+to create entries in "/etc/hosts" for each of these same clients.
+New entries will be appended to the end of "/etc/hosts".  If you 
+specify new hostnames for existing IP addresses, those entries 
+will be re-written in place to reflect the new host names.
+
 
 EOF
 
@@ -89,9 +104,32 @@ $ending_number="";
 $satisfied = "n";
 while ($satisfied ne "y") {
  system("clear");
- print "Type your response and hit <Enter>.\n\n";
 
- print "What your domain name? [$domain_name]: ";
+print <<EOF;
+addclients -- Section 1 (hostname information)
+----------------------------------------------
+
+The next series of questions will be used to create a range
+of hostnames.  You will be asked for your domain name, the 
+base host name, a beginning number, and an ending number.
+
+For example, if you answer:
+  domain name     = systemimager.org
+  base host name  = www
+  starting number = 7
+  ending number   = 11
+
+Then the result will be a series of hostnames that looks like this:
+  www7.systemimager.org
+  www8.systemimager.org
+  www9.systemimager.org
+  www10.systemimager.org
+  www11.systemimager.org
+
+
+EOF
+
+ print "What is your domain name? [$domain_name]: ";
  $domain_name=get_response($domain_name);
  $domain_name = lc $domain_name;
 
@@ -107,8 +145,9 @@ while ($satisfied ne "y") {
  # "+ 0" is to ensure we have a flat number and not "001" or something
  $ending_number=get_response($ending_number) + 0;
 
- print "\nI will work with hostnames:\n";
- print "$base_host_name$starting_number through $base_host_name$ending_number in the domain $domain_name.\n";
+ print "\n\n";
+ print "I will work with hostnames:  $base_host_name$starting_number through $base_host_name$ending_number\n"; 
+ print "             in the domain:  $domain_name\n";
  print "\nAre you satisfied? (y/[n]): ";
  chomp($satisfied=<STDIN>);
 }
@@ -116,10 +155,19 @@ while ($satisfied ne "y") {
 
 ### BEGIN links questionaire ###
 system("clear");
-print qq(\n);
-print q(Would you like me to create soft links to an "$image.master" script so);
-print qq(\n);
-print "that hosts $base_host_name$starting_number through $base_host_name$ending_number can receive that image? ([y]/n): ";
+
+print <<"EOF";
+addclients -- Section 2 (soft links to master script)
+-----------------------------------------------------
+
+Would you like me to create soft links to a "master" script so
+that hosts:
+
+  $base_host_name$starting_number through $base_host_name$ending_number
+
+EOF
+
+print "can be autoinstalled with that image? ([y]/n): ";
 $createlinks=<STDIN>;
 chomp $createlinks;
 $createlinks = lc $createlinks;
@@ -173,12 +221,17 @@ unless($createlinks eq "n") {
 ### BEGIN hosts questionaire ###
 system("clear");
 print <<EOF;
-It is necessary to have an entry for each client in \"/etc/hosts\".
+addclients -- Section 3 (adding or modifying /etc/hosts entries)
+----------------------------------------------------------------
 
-Would you like me to make entries in \"/etc/hosts\" for these
+It is necessary to have an entry for each client in "/etc/hosts".
+
+I will ask you for your clients' IP addresses one subnet at a time.
+
+
 EOF
 
-print q<clients? ([y]/n): >; 
+print "Would you like me to make these entries for you? ([y]/n): ";
 
 $etc_hosts=<STDIN>;
 chomp $etc_hosts;
@@ -188,14 +241,12 @@ if($etc_hosts ne "n") {$etc_hosts = "y";}
 $node_number = $starting_number;
 
 if($etc_hosts eq "y") {
-  system("clear");
-  print "We should do one subnet at a time.  When we finish with the first subnet,\n";
-  print "I will prompt you for the next one.\n";
-  print "\nPress <Enter> to continue...";
-  <STDIN>;
+
+$subnet_count="0";
 
   ### BEGIN One Subnet at a time ###
   while ( $node_number <= $ending_number ) {
+  $subnet_count = $subnet_count + 1;
 
     $starting_ip="";
     $ending_ip="";
@@ -204,8 +255,14 @@ if($etc_hosts eq "y") {
     # ne "y" is used instead of eq "n" because the dissatisfied response may be something other than "n".
     $satisfied="n";
     while ($satisfied ne "y") {
-      system("clear");
-      print "What is the starting IP address for this subnet? [$starting_ip]: ";
+    system("clear");
+print <<EOF;
+addclients -- Section 3 (adding or modifying /etc/hosts entries -- continued...)
+--------------------------------------------------------------------------------
+EOF
+      print "subnet $subnet_count\n\n";
+      print "The first host in subnet $subnet_count will be: $base_host_name$node_number\n";
+      print "What is the starting IP address for subnet $subnet_count? [$starting_ip]: ";
       $starting_ip = get_response($starting_ip);
       $starting_ip_dec = ip_quad2ip_dec($starting_ip);
     
@@ -213,7 +270,7 @@ if($etc_hosts eq "y") {
       $ending_ip = get_response($ending_ip);
       $ending_ip_dec = ip_quad2ip_dec($ending_ip);
     
-      print "\nI will work with IP addresses \"$starting_ip\" through \"$ending_ip\".\n";
+      print "I will work with IP addresses:  $starting_ip through $ending_ip\n";
       print "\nAre you satisfied? (y/[n]): ";
       chomp($satisfied=<STDIN>);
     }
@@ -307,16 +364,13 @@ if($etc_hosts eq "y") {
     system('cp', '-f', '/etc/hosts', '/tftpboot/systemimager/hosts');
     if($? != 0) { die "Couldn't copy /etc/hosts to /tftpboot/systemimager/hosts!\n", "Does /etc/tftpboot/systemimager/ exist?"; }
     ### copy /etc/hosts to /tftpboot/systemimager/hosts to be sure it stays up to date
-
-    if ( $etc_hosts eq "y" ) { print "\nYour entries have been added to /etc/hosts.\n"; }
-
-    print "\nPress <Enter> to continue...";
-    <STDIN>;
   }
   ### END One Subnet at a time ###
-} else {
-  print "\nNo entries will be added.";
+  if ( $etc_hosts eq "y" ) { print "\nThese entries have been added to /etc/hosts.\n"; }
   print "\nPress <Enter> to continue...";
   <STDIN>;
+
+} else {
+  print "\nNo entries will be added.";
 }
 ### END hosts questionaire ###
