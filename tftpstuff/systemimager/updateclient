@@ -33,6 +33,7 @@ Options: (options can be presented in any order)
  --imageserver HOSTNAME    Hostname or IP address of the imageserver.
  --image IMAGENAME         Image from which the client should be updated.
  --directory DIRECTORY     Absolute path of directory to be updated.
+                           (defaults to "/")
  --listing                 List avaliable images on imageserver.
                            (supercedes and ignores all options 
                             other than --imageserver)
@@ -105,6 +106,7 @@ if(!$directory) {
   #  slashes.  This is actually done to avoid user consternation when reading
   #  any output that might include the multiple slashes.)
   $directory =~ s/\/+/\//g;
+}
 
   # start with base command
   $command = "rsync -avz";
@@ -148,5 +150,5 @@ if(!$directory) {
       print qq(rebooting...\n);
       system("/bin/sleep 10s; /sbin/init 6");
   }
-}
+
 exit 0;
