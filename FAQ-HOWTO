@@ -4,7 +4,7 @@
 # This file is: FAQ-HOWTO
 #
 # Current version as of the writing of this document: 1.1
-#                                           revision: 0
+#                                           revision: 1
 #
 #   Others who have contributed to this document (in alphabetical order):
 #     Paonia Ezrine <paonia@home.welcomehome.org>
@@ -69,9 +69,12 @@ Question:  Which distributions of Linux are supported?
 Answer:
 
 VA SystemImager is designed to work with most any Linux distribution.  However,
-there are certain parts of VA SystemImager that are distribution specific.  If
-you try VA SystemImager with your favourite distribution and it doesn't work
-properly, please submit a bug report to: <systemimager-bugs@systemimager.org>.
+there are certain parts of VA SystemImager that expect certain files to be in
+certain places.  If your distribution strays from what VA SystemImager expects,
+then you will probably find that the networking and maybe the hostname are not 
+configured properly after doing an autoinstall.  If you try VA SystemImager 
+with your favourite distribution and it doesn't work properly, it can be made
+to work.  Please submit a bug report to: <systemimager-bugs@systemimager.org>.
 
 Here is an incomplete list of distributions known to work with VA SystemImager.
 If you are successfully using VA SystemImager with other distributions, please
@@ -79,12 +82,34 @@ send me email to <systemimager-bugs@systemimager.org> so we can add them to
 the list.
 
 2.2.x based distributions:
-- RedHat
-- VA Enhanced RedHat
-- debian
 
-2.0.x based distributions:
-- not fully supported
+- debian
+  - 2.1 w/2.2.x kernel upgrade
+  - 2.2
+
+- Kondara
+  - 1.1
+
+- RedHat
+  - 6.0
+  - 6.1
+  - 6.2
+
+- Storm Linux
+  - 1.4
+
+- TurboLinux Server
+  - 6.0
+
+- VA Enhanced RedHat
+  - 6.0.x
+  - 6.1.x
+  - 6.2.x
+
+
+2.0.x based distributions are not fully supported at this time.  Currently
+      there are no plans to add support for 2.0.x based distributions.
+
 
 --------------------------------------------------------------------------------
 Question:  What are the requirements for running a VA SystemImager imageserver?
