@@ -1,0 +1,125 @@
+#!/usr/bin/perl -w
+#
+# "SystemImager"
+#
+#  Copyright (C) 2002 Bald Guy Software 
+#                     Brian E. Finley <brian.finley@baldguysoftware.com>
+#
+#    $Id$
+#
+
+use lib "USR_PREFIX/lib/systemimager/perl";
+use strict;
+use POSIX qw(setsid);
+use SystemImager::Config;
+use vars qw($config $VERSION);
+
+my $pxe_conf_dir;
+
+if (!$config->tftp_dir()) {
+    die "TFTP_DIR not specified in systemimager.conf file!";
+} else {
+    $pxe_conf_dir = "$config->tftp_dir()" . "/pxelinux.cfg";
+}
+
+my $syslinux_cfg_noboot = "/etc/systemimager/pxelinux.cfg/syslinux.cfg.noboot";
+my $pid_file = "/var/run/netbootmond.pid";
+my $log_file = "/var/log/systemimager/rsyncd";
+
+
+### BEGIN misc daemon stuff ###
+chdir '/'                   or die "Can't chdir to /: $!";
+open STDIN, '/dev/null'     or die "Can't read /dev/null: $!";
+open STDOUT, '>>/dev/null'  or die "Can't write to /dev/null: $!";
+open STDERR, '>>/dev/null'  or die "Can't write to /dev/null: $!";
+umask 0;
+### END misc daemon stuff ###
+
+
+################################################################################
+#
+# Fork the watching process
+#
+################################################################################
+my $pid;
+if ($pid = fork) {
+} elsif (defined $pid) { # send the forked child off
+
+    setsid or die "Can't start a new session: $!";
+
+    my $file = $pid_file;
+    local *FILE;
+    open(FILE,">$file") or die ("FATAL: Can't open file: $file\n");
+        print FILE "$$\n";
+    close(FILE);
+
+    # Lurk
+    tail_rsync_log_file();
+
+} else {
+        die "Can't fork: $!\n";
+}
+
+
+
+################################################################################
+#
+# BEGIN subroutines 
+#
+################################################################################
+sub tail_rsync_log_file {
+
+    my $cmd = "tail -n 0 --follow=name $log_file";
+    local *LOG_FILE;
+    open(LOG_FILE,"$cmd |") || die("Can't $cmd!");
+        while(<LOG_FILE>) {
+            print;
+       
+            # Get individual field values for this line
+            my @array = split(/\s+/);
+
+            print "$array[9]\n";
+           
+#            # Test to see if this is a line we're concerned about
+#            if ($array[$field_1] eq $field_1_value && $array[$field_2] eq $field_2_value) {
+#                my $file="";
+#                
+#                my $host = $array[$fhost];
+#               
+#                # Get rid of braces if IP address is in [IP] or (ip)
+#                $host =~ s/\(//; 
+#                $host =~ s/\)//;
+#                $host =~ s/\[//;
+#                $host =~ s/\]//;
+#               
+#                # diagnostic output
+#                #print "Adding entry for: $host\n";
+#               
+#                # Create new ID file in spool dir
+#                $file="$pop_watcher_spool_dir/$host";
+#                open(FILE,">$file") or die ("FATAL: Can't create file: $file\n");
+#                close(FILE);
+#                
+#                create_no_boot_symlink($client_ip);
+#            }
+        }
+    close(LOG_FILE);
+    exit 0;
+}
+
+
+# Usage: create_no_boot_symlink($client_ip);
+sub create_no_boot_symlink {
+
+    #$ip_hex = figure hex equiv of IP
+    #ln -sf $syslinux_cfg_noboot $ip_hex
+    
+}
+
+
+################################################################################
+#
+# END subroutines
+#
+################################################################################
+
