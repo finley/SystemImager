@@ -21,6 +21,7 @@ Dann Frazier <dannf@hazel.fc.hp.com>
 o create man pages
 o have deb package created
 
+
 Brian Chrisman <bchrisman@valinux.com>
 --------------------------------------
 o modify RPM spec file to deal with
@@ -29,33 +30,22 @@ o modify RPM spec file to deal with
   o changed files
 
 
------------------------
-Version 1.4.1 specific:
------------------------
+-------------
+Stable Branch
+-------------
 
 Dann Frazier <dannf@hazel.fc.hp.com>
 ------------------------------------
 o replace install scripts with Makefile(s)
 
 
-<brian@thefinleys.com>
-----------------------
+Brian Finley <brian@thefinleys.com>
+-----------------------------------
 o initrd.gz -- don't pull hosts file if HOSTNAME is already known
 o deal with LABEL= and UUID= for any filesystem or device type
 o add " || shellout" to the end of almost everything in <image>.master
 o calculate network number in makedhcpserver & maybe figure out other stuff too.
 
-Greg Smith <grs@xuma.com>
--------------------------
-o mvimage
-
-volunteers
-----------
-o rmimage
-
-John Chabalko <john.chabalko@nbci.com> / <johnchabalko@hotmail.com>
---------------------------------------
-o lsimage (3/19/2001 - first review)
 
 Wesley Smith <wessmith@cthulhu.engr.sgi.com>
 --------------------------------------------
@@ -63,23 +53,92 @@ o devfs patch
 o TurboLinux patch
 o SuSe patch
 
+
 Fred Gray <fegray@npl.uiuc.edu>
 -------------------------------
 o patch to allow exclude on golden 
   client during getimage.  ~/systemimager/contrib/patches.email
 
-James Morton <jmorton@viata.com>
---------------------------------
-o patch to have autoinstallclient
-  ask user for settings. ~/systemimager/contrib/IOUs.email
+
+------------------
+Development Branch
+------------------
+
+Greg Smith <grs@xuma.com>
+Committed to task: Tue, 23 Jan 2001
+-----------------------------------
+o mvimage
+  o usage: mvimage [OPTIONS] <image> <newimage>
+  o renames /var/spool/systemimager/images/<image>
+  o renames /tftpboot/systemimager/<image>.master
+    (and re-creates any softlinks that point to it)
+  o renames entries for <image> in /etc/rsyncd.conf
+  o OPTIONS:
+    -help
+    -verbose
+    -quiet
+    -interactive  Prompt before renaming each of the following:
+                  o image directory
+                  o <image>.master autoinstall script and softlinks
+                  o image entry in /etc/rsyncd.conf
 
 
+Volunteer needed
+----------------
+o rmimage
+  o usage: rmimage [OPTIONS] <image>
+  o removes /var/spool/systemimager/images/<image>
+  o removes /tftpboot/systemimager/<image>.master
+    (and any softlinks that point to it)
+  o removes entry for <image> in /etc/rsyncd.conf
+  o OPTIONS:
+    -help
+    -verbose
+    -quiet
+    -interactive  Prompt before removing each of the following:
+                  o image directory
+                  o <image>.master autoinstall script and softlinks
+                  o image entry in /etc/rsyncd.conf
 
----------------------------------
-Possibilities for future versions
----------------------------------
+  
+John Chabalko <john.chabalko@nbci.com> / <johnchabalko@hotmail.com>
+Committed to task: Thur Mar 8, 2001  
+-------------------------------------------------------------------
+o lsimage 
+  (3/19/2001 - first review)
+  (3/26/2001 - next review)
+  o usage: lsimage [OPTIONS]
+  o essentially does an: 
+     "rsync $server::"
+    and returns the output.
+  o assumes $server="localhost" if -server not specified.
+  o OPTIONS:
+    -help
+    -verbose
+    -quiet
+    -server IMAGESERVER
 
-Suggested by Todd Sargent <tsargent@pioneertechnology.net>
+
+Austin Gonyou <austin@coremetrics.com> 
+Wed Mar 21 12:19:10 CST 2001  
+--------------------------------------
+o commandlineize addclients
+  -version
+  -help
+  -base-hostname HOSTNAME
+  -domainname    DOMAINNAME
+  -first         HOST_NUMBER
+  -last          HOST_NUMBER
+  -image         IMAGENAME
+  -ip-range      1.2.3.4-1.2.3.99,5.6.7.8-5.6.7.108
+
+  Example:
+  $ addclients -b www -d systemimager.org -f 7 -l 11 -image web_image_v1 -ip-range 192.168.1.7-192.168.1.11
+
+
+Todd Sargent <tsargent@pioneertechnology.net>
+Austin Gonyou <austin@coremetrics.com>
+Wed Mar 21 12:19:10 CST 2001  
 ----------------------------------------------------------
 o web interface (gui) that allows all image server operations as well as:
   o schedule clients to be updated or re-autoinstalled at a later date
@@ -87,15 +146,72 @@ o web interface (gui) that allows all image server operations as well as:
       that clients pull down via a cron job.  parse the file to determine
       the details of what they're supposed to do (if anything).
   o provide for reporting of clients that have completed their autoinstalls.
+o See the "GUI Layout" section in this document for details on the 
+  proposed logical arrangement of screens, etc.
+
+
+Greg Pryzby <gjp@valinux.com>
+Committed to task: Mon, 12 Mar 2001
+----------------------------
+X Windows GUI
+o Run from the imageserver sending the X display back to a sysadmins
+  desktop.
+o Distribution independent.  The two main distros to initially be
+  concerned with are debian and redhat.  Minimal dependencies are
+  preferred -- this will be run from a server which may not have lots of
+  X and GUI stuff installed.
+o The goal is to allow for all of the commands to be run by clicking
+  buttons, filling in boxes, etc.
+o See the "GUI Layout" section in this document for details on the 
+  proposed logical arrangement of screens, etc.
+
+
+GUI Layout (applies to Web GUI and X GUI)
+-----------------------------------------
+Main screen:
+o Maybe have a SystemImager Wizard (is the term Wizard copyrighted?)
+  that basically walks you through the steps in the "Step-by-Step 
+  HOWTO":
+  http://systemimager.org/manual/html/theactualstep-by-stephowto.html
+o Also have buttons for each of the utilities labelled something like:
+  o "Pull and Image from a Golden Client" (getimage)
+  o "Add Client Autoinstall Information" (addclients)
+  o "DHCP Server Configuration"
+    o show me my existing config
+    o create a new configuration file (makedhcpserver)
+    o make existing DHCP leases static (makedhcpstatic)
+  o Autoinstall clients
+    o I want to re-install an existing system
+      o connect to the existing system with ssh 
+        (then autoinstall -a -s)
+      o connect to the existing system with rlogin
+        (then autoinstall -a -s)
+    o I want to install systems with an autoinstall diskette
+    o I want to install systems with an autoinstall CDROM
+
+
+James Morton <jmorton@viata.com>
+--------------------------------
+o patch to have autoinstallclient
+  ask user for settings. ~/systemimager/contrib/IOUs.email
+
 
 George Perry <perryg@elcsci.com>
+Wed, 17 Jan 2001
 --------------------------------
 o bootable recovery CD that self-installs from image stored on same CD
 
+
+Greg Pratt <gpratt@valinux.com>
+Committed to task: Tue, 06 Mar 2001
+-----------------------------------
+o Add kernel bug/rsync bug info to Troubleshooting section in docs.
+
+
+
+
 <brian@thefinleys.com>
 ----------------------
-o web gui
-o X gui
 o Jose_AP_Celestino.ida.prepareclient.patch to make systemimager work
   properly with Smart Array cards.
 o getimage - put exclude/include stuff on imageserver by image
@@ -142,8 +258,9 @@ o addclients -- re-cycle through each question if answer is ""
 o have getimage question what should be excluded in future when updateimage 
   is run.  /tmp/* and /home/* should be recommended as a starting place.
 
-Ian McLeod <ian@valinux.com>
-----------------------------
+
+Ian McLeod <ian@valinux.com> (suggestions)
+------------------------------------------
 o autoinstall clients report to imageserver "I'm up"
 o ability to blink led, floppy light, eject cdrom, etc. on 
   autoinstallclient to identify the machine prior to initiating the 
@@ -158,13 +275,11 @@ o ability to adapt to the hardware
 
 Miscellaneous and Possibilities
 -------------------------------
-o commandline-ize the rest of the commands
 o /etc/systemimager/systemimager.conf file to hold things like domain name, nis domain, etc.
-o support for dual boot systems (Linux/Windows with FAT/HPFS/NTFS)
+o support for imaging dual boot systems (Linux/Windows with FAT/HPFS/NTFS)
 o makedhcpserver -- autodiscover and calculate more information 
   (including if system has more than one network interface).
 o makedhcpserver -- automatically change line in /etc/rc.d/init.d/dhcpd for you
-o curses wrapper around the whole thing?
 o updateclient - log what was updated and or deleted?
 o makedhcpstatic -- allow for -f "filename" option to specify dhcpd.leases file.
 
@@ -173,7 +288,3 @@ Bug list
 --------
 Please submit bugs via the "SystemImager Bug Tracking System" link at
 http://systemimager.org/
-
-
-Pre-Release Checklist
----------------------
