@@ -32,6 +32,8 @@
 #   - add "initrd" target
 #   2004.10.18  David Smith
 #	- Explicitly include more w/mklibs -L.
+#   2004.10.19  Brian Elliott Finley
+#	- switch to busybox modutils for x86
 
 INITRD_PATCH_DIR = $(INITRD_DIR)/patches
 INITRD_SRC_DIR = $(INITRD_DIR)/src
@@ -61,7 +63,7 @@ MKCRAMFS = $(shell which mkcramfs || which mkfs.cramfs || \
 ### BEGIN module utility decisions ###
 MODULE_UTILS=modutils
 ifeq ($(ARCH),i386)
-  MODULE_UTILS=module-init-tools
+  MODULE_UTILS=busybox
 endif
 ifeq ($(ARCH),x86_64)
   MODULE_UTILS=module-init-tools
