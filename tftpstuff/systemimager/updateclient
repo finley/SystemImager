@@ -108,47 +108,47 @@ if(!$directory) {
   $directory =~ s/\/+/\//g;
 }
 
-  # start with base command
-  $command = "rsync -avz";
+# start with base command
+$command = "rsync -avz";
 
-  # get exclusions from /etc/systemimager.exclude
-  open(SYSTEMIMAGER_EXCLUDE, "< /etc/systemimager.exclude") or die "Couldn't open /etc/systemimager.exclude for reading: $!\n";
-  while (<SYSTEMIMAGER_EXCLUDE>) {
-      if (/^\s*\//) {  # match non commented explicit path
-        chomp;
-        $command = $command . qq( --exclude=$_);
-      }
-  }
-  close(SYSTEMIMAGER_EXCLUDE);
-
-  # append currently mounted non ext2 filesystems to exclusions list
-  open(ETC_MTAB, "< /etc/mtab") or die "Couldn't open /etc/mtab for reading: $!\n";
-  while (<ETC_MTAB>) {
+# get exclusions from /etc/systemimager.exclude
+open(SYSTEMIMAGER_EXCLUDE, "< /etc/systemimager.exclude") or die "Couldn't open /etc/systemimager.exclude for reading: $!\n";
+while (<SYSTEMIMAGER_EXCLUDE>) {
+    if (/^\s*\//) {  # match non commented explicit path
       chomp;
-      @fields = split(/ /, $_);
-      unless( ($fields[2] eq "ext2") or ($fields[1] eq '/proc') or ($fields[1] eq '/dev/pts') ) {
-        $command = $command . qq( --exclude=$fields[1]);
-      }
-  }
-  close(ETC_MTAB);
+      $command = $command . qq( --exclude=$_);
+    }
+}
+close(SYSTEMIMAGER_EXCLUDE);
+
+# append currently mounted non ext2 filesystems to exclusions list
+open(ETC_MTAB, "< /etc/mtab") or die "Couldn't open /etc/mtab for reading: $!\n";
+while (<ETC_MTAB>) {
+    chomp;
+    @fields = split(/ /, $_);
+    unless( ($fields[2] eq "ext2") or ($fields[1] eq '/proc') or ($fields[1] eq '/dev/pts') ) {
+      $command = $command . qq( --exclude=$fields[1]);
+    }
+}
+close(ETC_MTAB);
   
-  # finalize command
-  $command = $command . qq( --delete $imageserver) . q(::) . qq($image$directory $directory);
+# finalize command
+$command = $command . qq( --delete $imageserver) . q(::) . qq($image$directory $directory);
   
-  # execute command
-  print qq(Updating image...\n);
-  system($command);
+# execute command
+print qq(Updating image...\n);
+system($command);
   
-  # lilo
-  unless($nolilo) { 
-      print qq(running lilo...\n);
-      system("/sbin/lilo");
-  }
+# lilo
+unless($nolilo) { 
+    print qq(running lilo...\n);
+    system("/sbin/lilo");
+}
   
-  # reboot
-  if($reboot) { 
-      print qq(rebooting...\n);
-      system("/bin/sleep 10s; /sbin/init 6");
-  }
+# reboot
+if($reboot) { 
+    print qq(rebooting...\n);
+    system("/bin/sleep 10s; /sbin/init 6");
+}
 
 exit 0;
