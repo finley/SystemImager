@@ -1,0 +1,357 @@
+#!/usr/bin/perl -w
+#
+#  "SystemImager"
+#
+#  Copyright (C) 1999-2004 Brian Elliott Finley
+
+use lib "USR_PREFIX/lib/systemimager/perl";
+use strict;
+use Fcntl ':flock';
+use Socket;
+use XML::Simple;
+use Getopt::Long;
+use Term::ReadKey;
+use SystemImager::Options;
+use SystemImager::Config;
+use vars qw($config $VERSION);
+use constant DEFAULT_PORT => 8181;
+
+my $VERSION = "SYSTEMIMAGER_VERSION_STRING";
+my $program_name = "si_monitor";
+my $version_info = << "EOF";
+$program_name (part of SystemImager) v$VERSION
+
+Copyright (C) 1999-2001 Brian Elliott Finley <brian\@systemimager.org>
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+EOF
+
+my $get_help = "\n       Try \"--help\" for more options.";
+
+my $help_info = $version_info . <<"EOF";
+
+Usage: $program_name [OPTION]... -db DATABASENAME
+
+Options: (options can be presented in any order and may be abbreviated)
+ --help                 Display this output.
+
+ --version              Display version and copyright information.
+
+ --db DATABASENAME      Where DATABASENAME is the name of the file
+                        where clients informations will be stored.
+                        (All the data in this file will be stored in
+                        XML format).
+
+ --port PORT            The port used by $program_name for listening
+                        client connections (the default port is 8181).
+
+ --log LOGFILE          If specified every log information will be
+                        reported in the file LOGFILE.
+
+Download, report bugs, and make suggestions at:
+http://systemimager.org/
+EOF
+
+my $CONFDIR = '/etc/systemimager';
+
+# load resources
+my %conf;
+my $conffile = "$CONFDIR/$program_name";
+if (-r $conffile) {
+    Config::Simple->import_from($conffile, \%conf);
+}
+
+# Only lock directory is needed.
+$conf{'lock_dir'} ||= "/var/lock/systemimager";
+die "No such lock directory '$conf{'lock_dir'}'\n"
+    if (! -d $conf{'lock_dir'});
+
+my ($help, $version, $quiet, $port, $database, $log_file);
+GetOptions(
+	"help"		=> \$help,
+	"version"	=> \$version,
+	"quiet"		=> \$quiet,
+	"port=s"	=> \$port,
+	"db=s"		=> \$database,
+	"log=s"		=> \$log_file,
+) or die "$help_info";
+
+### BEGIN evaluate commad line options ###
+if ($help) {
+	print "$help_info";
+	exit(0);
+}
+
+if ($version) {
+	print "$version_info";
+	exit(0);
+}
+
+# Database argument is mandatory.
+unless ($database) {
+	die "\n$program_name: --db DATABASENAME must be specified.\n$get_help\n\n";
+} else {
+	# Create the database if it doesn't exist.
+	unless (-f $database) {
+		open(DB, '>', "$database") or 
+			die "error: cannot open file \"$database\" for writing!\n";
+		close(DB);
+	}
+}
+
+# Get the port to listen. 
+unless ($port) {
+	$port = DEFAULT_PORT;
+}
+
+# Get monitor log file.
+if ($log_file) {
+	open(LOG, ">>$log_file") or 
+		die "error: cannot open log file \"$log_file\" for writing!\n";
+}
+### END evaluate command line options ###
+
+# Define lock files.
+my $lock_file = $conf{'lock_dir'} . "/db.si_monitor.lock";
+my $video_lock_file = $conf{'lock_dir'} . "/stdout.si_monitor.lock";
+
+# Remove old locks.
+unlink("$lock_file", "$video_lock_file");
+
+# Use TCP protocol;
+my $proto = getprotobyname('tcp');
+
+# Open the socket.
+socket(IN, PF_INET, SOCK_STREAM, $proto) or 
+	die "error: could not create the socket: $!\n";
+setsockopt(IN, SOL_SOCKET, SO_REUSEADDR, 1);
+my $client_addr = sockaddr_in($port, INADDR_ANY);
+bind(IN, $client_addr) or 
+	die "error: could not bind to port $port : $!\n";
+listen(IN, SOMAXCONN) or 
+	die "error: could not listen on port $port : $!\n";
+
+# Just print the header... -AR-
+display_clients();
+
+# Fork the interactive task.
+my $listen_pid = fork();
+if ($listen_pid) {
+	# Interactive task.
+	ReadMode(3);
+	my $key;
+	while($key = ReadKey(0)) { 
+		if (lc($key) eq "q") {
+			ReadMode(0);
+			kill(9, $listen_pid);
+			close(LOG);
+			unlink("$lock_file", "$video_lock_file");
+			exit(0);
+		}
+	}
+}
+
+# Begin to accept client connections.
+while (accept(CLIENT, IN)) {
+	my $pid = fork();
+	if ($pid) {
+		close(CLIENT);
+		next;
+	}
+	my $other_end = getpeername(CLIENT);
+	if ($other_end) {
+		# Get client informations.
+		# TODO allow only authorized hosts... -AR-
+		my ($other_port, $other_iaddr) = unpack_sockaddr_in($other_end);
+		my $other_ip_address = inet_ntoa($other_iaddr);
+		my $other_host = gethostbyaddr($other_iaddr, AF_INET);
+
+		# Report info in the log if defined.
+		print LOG gmtime() . 
+			": connection accepted for ${other_host}:${other_port}\n"
+			if ($log_file);
+	
+		# Get the client request.
+		$_ = <CLIENT>; chomp;
+
+		# Report the request in the log.
+		print LOG gmtime() . 
+			": ${other_host} request -> $_\n"
+			if ($log_file);
+
+		# Update the database.
+		update_db($other_host, $_);
+
+		# Refresh clients view.
+		display_clients();
+		
+		# Close client connection.
+		close(CLIENT);
+	} else {
+		close(CLIENT);
+		print LOG gmtime() . 
+			": warning: could not identify other end of a client request, ignoring.\n"
+			if ($log_file);
+	}
+	exit(0);
+}
+
+die "error: cannot accept clients connections!\n";
+
+# Usage:
+# update_db($hostname, $client_request);
+# Description:
+#	Update the database according to the client request.
+sub update_db
+{
+	my ($host, $request) = @_;
+	my ($client, $mac);
+
+	# Parse the client request.
+	my @args = split(/:/, $request);
+	foreach (@args) {
+		if (s/^mac=//) {
+			$mac = $_;
+		} elsif (s/^ip=//) {
+			$client->{'ip'} = $_;
+		} elsif (s/^host=//) {
+			$client->{'host'} = $_;
+		} elsif (s/^cpu=//) {
+			$client->{'cpu'} = $_;
+		} elsif (s/^mem=//) {
+			$client->{'mem'} = int($_ / 1024);
+		} elsif (s/^tmpfs=//) {
+			$client->{'tmpfs'} = $_;
+		} elsif (s/^time=//) {
+			$client->{'time'} = int($_ / 60);
+		} elsif (s/^status=//) {
+			$client->{'status'} = $_;
+		}
+	}
+
+	# Check if mac address has been specified.
+	unless(defined($mac)) {
+		print LOG gmtime() . ": warning: bad request from $host (mac address not specified)!\n"
+			if ($log_file);
+		return;
+	}
+	
+	open(LOCK, ">", "$lock_file") or 
+		die "error: cannot open lock file \"$lock_file\"!\n";
+	flock(LOCK, LOCK_EX);
+	
+	# Open database in mutual exclusion.
+	open(DB, '<', $database) or 
+		die "error: cannot open \"$database\" for reading!\n";
+	
+	# Parse XML database.
+	my $xml;
+	if (-s $database) {
+		$xml = XMLin($database, KeyAttr => {client => 'name'}, ForceArray => 1);
+	}
+	close(DB);
+	
+	# Update the clients table.
+	$xml->{'client'}->{$mac}->{'ip'} = $client->{'ip'}
+		if $client->{'ip'};
+	$xml->{'client'}->{$mac}->{'host'} = $client->{'host'}
+		if $client->{'host'};
+	$xml->{'client'}->{$mac}->{'cpu'} = $client->{'cpu'}
+		if $client->{'cpu'};
+	$xml->{'client'}->{$mac}->{'mem'} = $client->{'mem'}
+		if $client->{'mem'};
+	$xml->{'client'}->{$mac}->{'tmpfs'} = $client->{'tmpfs'}
+		if $client->{'tmpfs'};
+	$xml->{'client'}->{$mac}->{'time'} = $client->{'time'}
+		|| 0;
+	$xml->{'client'}->{$mac}->{'status'} = $client->{'status'}
+		|| 0;
+	
+	open(DB, '>', $database) or
+		die "error: cannot open \"$database\" for writing!\n";
+	
+	# Sync the database.
+	print DB XMLout($xml); 
+
+	# Close and unlock database.
+	close(DB);
+	flock(LOCK, LOCK_UN);
+	close(LOCK);
+}
+
+# Usage:
+# display_clients(); 
+# Description:
+#	Print clients install status on standard output.
+sub display_clients 
+{
+	# Interface header.
+	my $header =  
+		"${program_name} is listening on port ${port}...\n" .
+		"Press 'q' to quit...\n" .
+		"\033[1;37m" .
+		"[  MAC address  ]  [   IP addr   ]  [   HostName  ]  [ Mem used ]  [  Time  ]   [  Status  ]" .
+		"\033[0;39m";
+
+	# Print header.
+	system 'clear';
+	print "$header\n";
+
+	# If database is empty simply quit... -AR-
+	return unless (-s $database);
+
+	open(LOCK, ">", "$lock_file") or
+		die "error: cannot open lock file \"$lock_file\"!\n";
+	flock(LOCK, LOCK_SH);
+	
+	# Open database for reading.
+	open(DB, "<$database") or 
+		die "error: cannot open \"$database\" for reading!\n";
+
+	# Parse XML database.
+	my $xml = XMLin($database, KeyAttr => {client => 'name'}, ForceArray => 1);
+
+	# Close and unlock database.
+	close(DB);
+	flock(LOCK, LOCK_UN);
+	close(LOCK);
+
+	open(STDOUT_LOCK, ">$video_lock_file") or
+		die "error: cannot open lock file \"$video_lock_file\"!\n";
+	flock(STDOUT_LOCK, LOCK_EX);
+	
+	# Display DB entries.
+	my $client = $xml->{'client'};
+	foreach my $mac (sort(keys(%{$client}))) {
+		# Print client informations.
+		printf("%10s  %15s  %15s  %12s  %7imin",
+			$mac, $client->{$mac}->{'ip'},
+			$client->{$mac}->{'host'}, 
+			$client->{$mac}->{'tmpfs'},
+			$client->{$mac}->{'time'});
+		# Print status.
+		my $status = $client->{$mac}->{'status'} || 0;
+		if (!$status) {
+			print "\033[1;33m";
+			print "           init";
+			print "\033[0;39m\n";
+		} elsif ($status < 0) {
+			print "\033[1;31m";
+			print "         error!";
+			print "\033[0;39m\n";
+		} elsif ($status == 100) {
+			print "\033[1;32m";
+			print "           done";
+			print "\033[0;39m\n";
+		} elsif (($status > 0) && ($status < 100)) {
+			printf("        %.2f %%\n", $status);
+		} else {
+			print "            ???\n";
+		}
+	}
+
+	flock(STDOUT_LOCK, LOCK_UN);
+	close(STDOUT_LOCK);
+}
+
+# vi: set et sw=4 ts=4: #
