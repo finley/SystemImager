@@ -24,26 +24,17 @@
 #   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-SUDO = $(shell if [ `id -u` != 0 ]; then echo -n "sudo"; fi)
-
 INITRD_PATCH_DIR = $(INITRD_DIR)/patches
 INITRD_SRC_DIR = $(INITRD_DIR)/src
 STAMP_DIR = $(INITRD_SRC_DIR)
 
 INITRD_BUILD_DIR = $(INITRD_DIR)/build_dir
-INITRD_MOUNT_DIR = $(INITRD_DIR)/mount_dir
 
 SKEL_FILES = $(shell find $(INITRD_DIR)/skel -not -regex '.*/CVS.*' -and \
                                  -not -regex '.*/CVS')
 
 # Number of inodes in the build directory and number of 
 # inodes needed on the initial RAM disk -BEF-
-BUILD_DIR_INODE_COUNT = $(shell $(SUDO) find $(INITRD_BUILD_DIR) -printf "%i\n" | sort -u | wc -l)
-INITRD_INODE_COUNT = $(shell echo $(BUILD_DIR_INODE_COUNT) + 100 | bc)
-
-# Total size of build directory and size to make raw initrd file -BEF-
-BUILD_DIR_SIZE = $(shell sudo du -bks $(INITRD_BUILD_DIR) | cut -f1 )
-INITRD_SIZE = $(shell echo $(BUILD_DIR_SIZE) + 250 | bc)
 
 ### BEGIN uclibc decisions ###
 # Not all architectures use uclibc. -BEF-
@@ -76,7 +67,7 @@ $(INITRD_DIR)/build_dir-stamp:	$(SKEL_FILES) $(BUSYBOX_BINARY) \
 				$(INSMOD_BINARY)
 
 	# Create directory structure.
-	$(SUDO) rm -fr $(INITRD_BUILD_DIR)
+	rm -fr $(INITRD_BUILD_DIR)
 	mkdir $(INITRD_BUILD_DIR)
 	cd $(INITRD_BUILD_DIR) && \
 	  mkdir -m 755 bin dev etc lib proc root sbin usr var
@@ -136,53 +127,24 @@ endif
 	# Clear out CVS cruft.
 	find $(INITRD_BUILD_DIR) -type d -name CVS -depth | xargs rm -rf
 
-	# Make sure root owns everything.
-	$(SUDO) chown 0.0 -R $(INITRD_BUILD_DIR)/*
+	mkdir $(INITRD_BUILD_DIR)/new_root
 
 	# Changing the date stamps of the files helps the size of the ramdisk
 	# stay more consistent between builds.  Sean Dague figured out this
         # optimal time stamp somehow... -BEF-
-	$(SUDO) find $(INITRD_BUILD_DIR) -depth -exec touch -t 196912311900 {} \;
-	$(SUDO) touch $(INITRD_DIR)/build_dir-stamp
+	find $(INITRD_BUILD_DIR) -depth -exec touch -t 196912311900 {} \;
+	touch $(INITRD_DIR)/build_dir-stamp
 
-$(INITRD_DIR)/initrd:	$(INITRD_DIR)/build_dir-stamp
-
-	# Make sure any old ram disks are unmounted.
-	-$(SUDO) umount $(INITRD_MOUNT_DIR)
-
-	# Create ramdisk file and format.
-	dd if=/dev/zero of=$(INITRD_DIR)/initrd bs=1k count=$(INITRD_SIZE)
-	mke2fs -N $(INITRD_INODE_COUNT) -m 0 -q -F $(INITRD_DIR)/initrd
-
-	# Mount the new ramdisk.
-	mkdir -p $(INITRD_MOUNT_DIR)
-	$(SUDO) mount $(INITRD_DIR)/initrd $(INITRD_MOUNT_DIR) -o loop
-
-	# Use tar to cleanly lay down the files from our build directory into
-	# our fresh ram disk -- without using any temporary files! -BEF-
-	( cd $(INITRD_BUILD_DIR) ; $(SUDO) tar cpf - * ) | \
-	  ( cd $(INITRD_MOUNT_DIR) ; $(SUDO) tar -xp)
-
-	$(SUDO) umount $(INITRD_MOUNT_DIR) && rmdir $(INITRD_MOUNT_DIR)
-
-$(INITRD_DIR)/initrd.gz:	$(INITRD_DIR)/initrd
-	gzip -9 < $(INITRD_DIR)/initrd > $(INITRD_DIR)/initrd.gz
-	du -b $(INITRD_DIR)/initrd.gz
+$(INITRD_DIR)/initrd.img:	$(INITRD_DIR)/build_dir-stamp
+	mkcramfs $(INITRD_BUILD_DIR) $(INITRD_DIR)/initrd.img
 
 ########## BEGIN initrd ##########
 # install the autoinstall ramdisk - the initial ramdisk used by autoinstall
 # clients when beginning an autoinstall
-initrd_install:
-	$(MAKE) initrd.gz
+initrd_install:	$(INITRD_DIR)/initrd.img
 	mkdir -p $(BOOT_BIN_DEST)
-	$(SI_INSTALL) -m 644 $(INITRD_DIR)/initrd.gz $(BOOT_BIN_DEST)/initrd-$(FLAVOR)-$(VERSION).gz
-
-# install the autoinstall ramdisk - the initial ramdisk used by autoinstall
-# clients when beginning an autoinstall.
-# This rule is for installing into the boot tarball.
-install_initrd.gz:	$(INITRD_DIR)/initrd.gz
-	$(SI_INSTALL) -m 644 $(INITRD_DIR)/initrd.gz \
-	  $(BOOT_BIN_DEST)/initrd-$(FLAVOR)-$(VERSION).gz
+	$(SI_INSTALL) -m 644 $(INITRD_DIR)/initrd.img \
+	    $(BOOT_BIN_DEST)/initrd.img
 
 initrd_get_source:	$(INITRD_SRC_DIR)/$(BUSYBOX_TARBALL) \
 			$(INITRD_SRC_DIR)/$(DEVFSD_TARBALL) \
@@ -192,10 +154,9 @@ initrd_get_source:	$(INITRD_SRC_DIR)/$(BUSYBOX_TARBALL) \
 			$(INITRD_SRC_DIR)/$(UCLIBC_TARBALL) 
 
 initrd_clean:	$(subst .rul,_clean,$(shell cd $(INITRD_DIR)/make.d && ls *.rul))
-	-$(SUDO) find . -name "*~" -exec rm -f {} \;
-	-$(SUDO) umount $(INITRD_MOUNT_DIR)
-	-$(SUDO) rm -rf $(INITRD_MOUNT_DIR) $(INITRD_BUILD_DIR)
-	cd $(INITRD_DIR) && rm -f initrd initrd.gz
+	-find . -name "*~" -exec rm -f {} \;
+	-rm -rf $(INITRD_BUILD_DIR)
+	cd $(INITRD_DIR) && rm -f initrd initrd.img
 	rm -f $(INITRD_DIR)/build_dir-stamp
 
 initrd_distclean:	clean

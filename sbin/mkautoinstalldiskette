@@ -42,9 +42,6 @@ if (!$autoinstall_boot_dir) {
 }
 ### END parse the config file ###
 
-# only floppies for i386 are supported in this release
-$bin_dir = $autoinstall_boot_dir . "/i386";
-
 # set shell PATH for system() calls 
 $ENV{PATH} = "/usr/local/sbin:/usr/sbin:/sbin:/usr/local/bin:/usr/bin:/bin";
 
@@ -136,7 +133,7 @@ If you will be using SSH, you have two options:
     floppy diskette.
 
     username must be a valid user on your imageserver, and you will
-    need to put username's public ssh key (identity.pub) in the
+    need to put username's public ssh key (identity\.pub) in the
     .ssh/authorized_keys file in username's home directory on the
     imageserver.
     
@@ -200,13 +197,11 @@ if ($floppy_device_prefix) { $user_specified_floppy=1; }
 elsif($file) { $user_specified_file=1; }
 
 unless ($kernel and $initrd) {
-    my %available_flavors =
-	SystemImager::Common->get_boot_flavors("i386", $VERSION,
-					       $autoinstall_boot_dir);
-
+    my %available_flavors = 
+	SystemImager::Common->get_boot_flavors("i386", $autoinstall_boot_dir);
     unless (%available_flavors) {
-	print qq(\nI couldn't find any boot flavors for SystemImager $VERSION on $arch.\n);
-        print qq(Please use "install_siboot" to install the appropriate boot files.\n\n);
+	print qq(\nI couldn't find any boot flavors for SystemImager on $arch.\n);
+        print qq(Please install the appropriate boot files.\n\n);
         exit 1;
     }
 
@@ -230,14 +225,17 @@ unless ($kernel and $initrd) {
     
     # make sure the specified flavor is available
     unless ($available_flavors{$flavor}) {
-      print "\nI can't find boot files of the flavor, version, and architecture specified.\n";
+      print "\nI can't find boot files of the flavor and architecture specified.\n";
       print "The files you specified would come from a SystemImager boot tarball named:\n\n";
       print qq( "systemimager-boot-${arch}-${flavor}-${VERSION}.tar.bz2"\n\n); 
       exit 1;
     }
 
-    if (! $kernel) { $kernel = "$bin_dir/kernel-$flavor-$VERSION"; }
-    if (! $initrd) { $initrd = "$bin_dir/initrd-$flavor-$VERSION.gz"; }
+    # only floppies for i386 are supported in this release
+    $bin_dir = "$autoinstall_boot_dir/i386/$flavor";
+
+    if (! $kernel) { $kernel = "$bin_dir/kernel"; }
+    if (! $initrd) { $initrd = "$bin_dir/initrd.img"; }
 }
     
 if (!$append) { $append = ""; }
@@ -400,7 +398,7 @@ foreach my $file ( @files ) {
     if (!$quiet) {print "Copying $file to floppy.\n";}
 #
 #XXX get rid of all the substr()'s.  Just copy the files to known names of 
-# kernel, initrd.gz, etc.  There will only be one on each floppy or CD (at this point).
+# kernel, initrd.img, etc.  There will only be one on each floppy or CD (at this point).
 # Also, if this code passes the pre-release testing, then leave as is until 3.2.  If it
 # fails, then perhaps now is the time to merge the floppy functionality into mkautoinstallcd
 # and call it mkautoinstallmedia, or similar. -BEF-
@@ -415,6 +413,7 @@ foreach my $file ( @files ) {
 }
 
 $append_string  = "vga=extended load_ramdisk=1 root=/dev/ram rw ";
+$append_string .= "ramdisk_blocksize=4096 ";
 $append_string .= "prompt_ramdisk=0 initrd=" . substr(basename($initrd), 0, 8);
 $append_string .= " " . $append;
 # XXX change this to simply copy the syslinux.cfg file from /etc/systemimager/pxelinux.cfg and
@@ -450,7 +449,7 @@ sub build_syslinux_cfg {
     
     if (!$kernel) { $kernel = "kernel"; }
     if (!$append) {
-	$append = "vga=extended prompt_ramdisk=0 initrd=initrd.gz load_ramdisk=1 root=/dev/ram rw";
+	$append = "vga=extended prompt_ramdisk=0 initrd=initrd.img load_ramdisk=1 root=/dev/ram rw";
     }
     if (!$display) { $display = "message"; }
     if (!$prompt) { $prompt = "0"; }

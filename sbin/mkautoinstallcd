@@ -59,7 +59,8 @@ my $config = AppConfig->new(
 my $config_file = "/etc/systemimager/systemimager.conf";
 $config->file($config_file);
 
-my ($kernel, $initrd, $flavor, $arch, $autoinstall_boot_dir, $append_string);
+my ($kernel, $initrd, $flavor, $arch, $autoinstall_boot_dir, $append_string, 
+    $bin_dir);
 
 if ($config->autoinstall_boot_dir) {
   $autoinstall_boot_dir = $config->autoinstall_boot_dir;
@@ -115,8 +116,6 @@ if($arch !~ /^(i386|ia64)$/) {
     exit 1;
 }
 
-my $bin_dir = "$autoinstall_boot_dir/$arch";
-
 if(!$out_file) {
     message("Output file not specified!");
     usage() unless $quiet;
@@ -125,19 +124,17 @@ if(!$out_file) {
 
 unless ($kernel and $initrd) {
     my %available_flavors =
-	SystemImager::Common->get_boot_flavors($arch, $VERSION,
-					       $autoinstall_boot_dir);
+	SystemImager::Common->get_boot_flavors($arch, $autoinstall_boot_dir);
 
     unless (%available_flavors) {
-	print qq(\nI couldn't find any boot flavors for SystemImager $VERSION on $arch.\n);
-        print qq(Please use "install_siboot" to install the appropriate boot files.\n\n);
+	print qq(\nI couldn't find any boot flavors for SystemImager on $arch.\n);
+        print qq(Please install the appropriate boot files.\n\n);
         exit 1;
     }
 
     if (($quiet) and (!$flavor)) { $flavor = "standard"; }
 
     unless ($flavor) {
-
 	print "Here is a list of available flavors:\n\n";
 	foreach (sort (keys %available_flavors)) {
 	    print "  $_\n";
@@ -154,14 +151,16 @@ unless ($kernel and $initrd) {
     
     # make sure the specified flavor is available
     unless ($available_flavors{$flavor}) {
-      print "\nI can't find boot files of the flavor, version, and architecture specified.\n";
+      print "\nI can't find boot files of the flavor and architecture specified.\n";
       print "The files you specified would come from a SystemImager boot tarball named:\n\n";
       print qq( "systemimager-boot-${arch}-${flavor}-${VERSION}.tar.bz2"\n\n); 
       exit 1;
     }
 
-    if (! $kernel) { $kernel = "$bin_dir/kernel-$flavor-$VERSION"; }
-    if (! $initrd) { $initrd = "$bin_dir/initrd-$flavor-$VERSION.gz"; }
+    $bin_dir = "$autoinstall_boot_dir/$arch/$flavor";
+
+    if (! $kernel) { $kernel = "$bin_dir/kernel"; }
+    if (! $initrd) { $initrd = "$bin_dir/initrd.img"; }
 }
 
 if(!-e "$kernel") {
@@ -291,7 +290,7 @@ sub copy_files_to_image {
       # the boot media -- we're not really offering options at boot time.  This 
       # allows us to have a stock syslinux.cfg file that the user can easily edit.
       copy($kernel, "$mnt_dir/kernel")    or croak("Couldn't copy $kernel to $mnt_dir/kernel: $!");
-      copy($initrd, "$mnt_dir/initrd.gz") or croak("Couldn't copy $initrd to $mnt_dir/initrd.gz: $!");
+      copy($initrd, "$mnt_dir/initrd.img") or croak("Couldn't copy $initrd to $mnt_dir/initrd.img: $!");
       copy("/etc/systemimager/pxelinux.cfg/message.txt","$mnt_dir/message.txt");
 
       # Unless an append string was given on the command line, just copy over.
@@ -334,11 +333,11 @@ sub copy_files_to_image {
         exit 1;
       }
 
-      write_elilo_conf("$mnt_dir/elilo.conf", "kernel", "initrd.gz", $append_string);
+      write_elilo_conf("$mnt_dir/elilo.conf", "kernel", "initrd.img", $append_string);
 
       # Because we must rename each of these files, we just copy them over one by one. -BEF-
       copy($kernel, "$mnt_dir/kernel")    or croak("Couldn't copy $kernel to $mnt_dir/kernel: $!");
-      copy($initrd, "$mnt_dir/initrd.gz") or croak("Couldn't copy $initrd to $mnt_dir/initrd.gz: $!");
+      copy($initrd, "$mnt_dir/initrd.img") or croak("Couldn't copy $initrd to $mnt_dir/initrd.img: $!");
       copy($elilo,  "$mnt_dir/elilo.efi") or croak("Couldn't copy $elilo to $mnt_dir/elilo.efi $!");
     }
     return 1;
@@ -358,7 +357,7 @@ sub write_elilo_conf {
       print ELILO_CONF "image=kernel\n";
       print ELILO_CONF "  label=linux\n";
       print ELILO_CONF "  read-only\n";
-      print ELILO_CONF "  initrd=initrd.gz\n";
+      print ELILO_CONF "  initrd=initrd.img\n";
       print ELILO_CONF "  root=/dev/ram\n";
 
     close(ELILO_CONF);

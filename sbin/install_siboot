@@ -44,27 +44,22 @@
 #      binaries, along with any release notes.  This will be displayed for the
 #      user prior to installation.
 #   
-#     kernel-<flavor>-<version> 
+#     kernel
 #      An autoinstall kernel, where <flavor> and <version> match the strings 
 #      used in the name of the tarball.
 #
-#     config-<flavor>-<version> 
+#     config
 #      The .config that was used to create kernel-<flavor>-<version>.  This is
 #      required if a kernel-<flavor>-<version> file is included.
 #
-#     initrd-<flavor>-<version>.gz 
+#     initrd
 #      An autoinstall ramdisk, where <flavor> and <version> match the strings 
 #      used in the name of the tarball.
-#   
 #
-#  The following files are optional, and are discouraged:
+#     boel_binaries.tar.gz       
+#      Contains the root filesystem for the second stage of an autoinstall.
 #
-#   <binary>-<flavor>-<version>
-#    Additional binaries that may be pulled over by the autoinstall client, 
-#    where <flavor> and <version> match the strings used in the name of the 
-#    tarball.  Note that additional modifications may be needed in the master
-#    autoinstall script or the initial RAM disk to take advantage of these
-#    binaries.
+#  Other files are optional, but are discouraged.
 #
 
 use lib "USR_PREFIX/lib/systemimager/perl";
@@ -115,6 +110,7 @@ foreach my $arg (@ARGV) {
     $kernel_found = 0;
     $config_found = 0;
     $initrd_found = 0;
+    $boel_found = 0;
 
     unless ( -f "$arg" ) {
 	croak "$arg does not exist or is not a regular file.\n";
@@ -135,7 +131,7 @@ foreach my $arg (@ARGV) {
 	$flavor = $2;
 	$version = $3;
     
-	$dest = "$autoinstall_boot_dir/$arch";
+	$dest = "$autoinstall_boot_dir/$version/$arch/$flavor";
 
 	unless ( -d "$dest" ) {
 	    unless ($quiet) {
@@ -145,24 +141,22 @@ foreach my $arg (@ARGV) {
 	}
     
 	foreach my $file (@tarball_contents) {
-	    if ( $file =~  m/^kernel-$flavor-$version$/ ) {
+	    if ( $file =~  m/^kernel$/ ) {
 		$kernel_found = 1;
 	    }
 	    
-	    if ( $file =~ m/^config-$flavor-$version$/ ) {
+	    if ( $file =~ m/^config$/ ) {
 		$config_found = 1;
 	    }
 
-	    if ( $file =~ m/^initrd-$flavor-$version.gz$/ ) {
+	    if ( $file =~ m/^initrd.img$/ ) {
 		$initrd_found = 1;
 	    }
 	    
-	    unless ( $file =~ m/^.*-$flavor-$version(.gz)?$/ ) {
-		# standard will not be excluded from this in future releases
-		unless ( "$flavor" eq "standard" ) {
-		    print STDERR "Warning:  $file is not in <name>-<flavor>-<version> format.\n";
-                }		
+	    if ( $file =~ m/^boel_binaries.tar.gz$/ ) {
+		$boel_found = 1;
 	    }
+	    
 	    unless ($quiet) {
 		print "Extracting $file...\n";
 	    }
@@ -177,7 +171,10 @@ foreach my $arg (@ARGV) {
 	    print STDERR "Warning:  kernel config file not found.\n";
 	}
         unless ( $initrd_found ) {
-	    print STDERR "Warning:  initial ramdisk (initrd.gz) not found.\n";
+	    print STDERR "Warning:  initial ramdisk (initrd.img) not found.\n";
+	}
+	unless ( $boel_found ) {
+	    print STDERR "Warning:  boel_binaries.tar.gz not found.\n";
 	}
     }
 }

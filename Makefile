@@ -123,7 +123,7 @@ INITRD_DIR = $(TOPDIR)/initrd_source
 
 INITSCRIPT_NAME = systemimager
 
-BOOT_BIN_DEST     = $(USR)/share/systemimager/boot/$(ARCH)
+BOOT_BIN_DEST     = $(USR)/share/systemimager/boot/$(ARCH)/standard
 
 PXE_CONF_SRC      = etc/pxelinux.cfg
 PXE_CONF_DEST     = $(ETC)/systemimager/pxelinux.cfg
@@ -142,10 +142,10 @@ OVERRIDES_README = $(TOPDIR)/var/lib/systemimager/overrides/README
 
 RSYNC_STUB_DIR = $(ETC)/systemimager/rsync_stubs
 
-CHECK_FLOPPY_SIZE = expr \`du -b $(INITRD_DIR)/initrd.gz | cut -f 1\` + \`du -b $(LINUX_IMAGE) | cut -f 1\`
+CHECK_FLOPPY_SIZE = expr \`du -b $(INITRD_DIR)/initrd.img | cut -f 1\` + \`du -b $(LINUX_IMAGE) | cut -f 1\`
 
 BOOT_TARBALL_DIR = $(TOPDIR)/tmp/systemimager-boot-$(ARCH)-$(FLAVOR)-$(VERSION)
-BOEL_BINARIES_DIR = $(TOPDIR)/tmp/boel_binaries-$(FLAVOR)-$(VERSION)
+BOEL_BINARIES_DIR = $(TOPDIR)/tmp/boel_binaries
 BOEL_BINARIES_TARBALL = $(BOEL_BINARIES_DIR).tar.gz
 
 SI_INSTALL = $(TOPDIR)/si_install --si-prefix=$(PREFIX)
@@ -153,11 +153,11 @@ GETSOURCE = $(TOPDIR)/tools/getsource
 
 # build everything, install nothing
 PHONY += all
-all:	$(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.gz manpages
+all:	$(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.img manpages
 
 # All has been modified as docs don't build on non debian platforms
 #
-#all:	$(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.gz docs manpages
+#all:	$(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.img docs manpages
 
 # Now include the other targets
 # This has to be right after all to make all the default target
@@ -173,7 +173,8 @@ install_client_all:	install_client install_common
 
 # install server-only architecture independent files
 PHONY += install_server
-install_server:	install_server_man install_configs install_server_libs
+install_server:	install_server_man install_configs install_server_libs \
+		install_common_libs
 	$(SI_INSTALL) -d $(BIN)
 	$(SI_INSTALL) -d $(SBIN)
 	$(foreach binary, $(BINARIES), \
@@ -208,7 +209,7 @@ endif
 
 # install client-only files
 PHONY += install_client
-install_client: install_client_man install_client_libs
+install_client: install_client_man install_client_libs install_common_libs
 	mkdir -p $(ETC)/systemimager
 	$(SI_INSTALL) -b -m 644 etc/updateclient.local.exclude \
 	  $(ETC)/systemimager
@@ -248,7 +249,7 @@ install_common_libs:
 # checks the sized of the i386 kernel and initrd to make sure they'll fit 
 # on an autoinstall diskette
 PHONY += check_floppy_size
-check_floppy_size:	$(LINUX_IMAGE) $(INITRD_DIR)/initrd.gz
+check_floppy_size:	$(LINUX_IMAGE) $(INITRD_DIR)/initrd.img
 ifeq ($(ARCH), i386)
 	@### see if the kernel and ramdisk are larger than the size of a 1.44MB
 	@### floppy image, minus about 10k for syslinux stuff
@@ -334,7 +335,7 @@ install:
 	@echo ''
 
 PHONY += install_binaries
-install_binaries:	install_kernel install_initrd.gz \
+install_binaries:	install_kernel initrd_install \
 			install_boel_binaries_tarball
 
 ### BEGIN autoinstall binaries tarball ###
@@ -430,14 +431,14 @@ install_boot_tarball:	$(BOOT_TARBALL_DIR).tar.bz2
 PHONY += boot_tarball
 boot_tarball:	$(BOOT_TARBALL_DIR).tar.bz2
 
-$(BOOT_TARBALL_DIR).tar.bz2:	$(LINUX_IMAGE) $(INITRD_DIR)/initrd.gz \
+$(BOOT_TARBALL_DIR).tar.bz2:	$(LINUX_IMAGE) $(INITRD_DIR)/initrd.img \
 				$(BOEL_BINARIES_TARBALL)
 	mkdir -p $(BOOT_TARBALL_DIR)
 	$(MAKE) BOOT_BIN_DEST=$(BOOT_TARBALL_DIR) install_kernel  
-	$(MAKE) BOOT_BIN_DEST=$(BOOT_TARBALL_DIR) install_initrd.gz
+	$(MAKE) BOOT_BIN_DEST=$(BOOT_TARBALL_DIR) initrd_install
 	$(MAKE) BOOT_BIN_DEST=$(BOOT_TARBALL_DIR) install_boel_binaries_tarball
 	echo "$(shell basename $(BOOT_TARBALL_DIR))" > \
-	    $(BOOT_TARBALL_DIR)/README-$(FLAVOR)-$(VERSION)
+	    $(BOOT_TARBALL_DIR)/README
 	cd $(shell dirname $(BOOT_TARBALL_DIR)) && \
 	    tar -c $(shell basename $(BOOT_TARBALL_DIR)) | \
 	    bzip2 > $(shell basename $(BOOT_TARBALL_DIR)).tar.bz2

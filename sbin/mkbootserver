@@ -40,7 +40,7 @@ CONFIG_DIR="/etc/systemimager"
 
 #SYSLINUX_DEFAULT="\
 #DEFAULT kernel
-#APPEND vga=extended load_ramdisk=1 prompt_ramdisk=0 initrd=initrd.gz root=/dev/ram rw
+#APPEND vga=extended load_ramdisk=1 prompt_ramdisk=0 initrd=initrd.img root=/dev/ram rw
 #DISPLAY message.txt
 #PROMPT 1
 #TIMEOUT 50"
@@ -940,7 +940,7 @@ pxelinux_cfg() {
     if [ "$INITRD" != "" ]; then
 	REPLY=$INITRD
     else
-	echo -n "What is the full pathname of the compressed ramdisk (initrd.gz) you want to use? "
+	echo -n "What is the full pathname of the compressed ramdisk (initrd.img) you want to use? "
 	read REPLY
     fi
     if [ ! -f $REPLY ]; then
@@ -950,8 +950,8 @@ pxelinux_cfg() {
     ### END PROMPT USER FOR RAMDISK
 
     ### BEGIN BACKUP EXISTING RAMDISK
-    if [ -a $LINUX_INSTALL/initrd.gz ]; then
-	FILE_TO_BACKUP=$LINUX_INSTALL/initrd.gz
+    if [ -a $LINUX_INSTALL/initrd.img ]; then
+	FILE_TO_BACKUP=$LINUX_INSTALL/initrd.img
 	backup_file
 	if [ $? -ne 0 ]; then
 	    return 1
@@ -960,8 +960,8 @@ pxelinux_cfg() {
     ### END BACKUP EXISTING RAMDISK
     
     ### BEGIN COPY OVER RAMDISK
-    echo -n "Copying $REPLY to $LINUX_INSTALL/initrd.gz ... "
-    cp -a $REPLY $LINUX_INSTALL/initrd.gz
+    echo -n "Copying $REPLY to $LINUX_INSTALL/initrd.img ... "
+    cp -a $REPLY $LINUX_INSTALL/initrd.img
     if [ $? -ne 0 ]; then
 	echo "failed."
 	return 1
@@ -970,11 +970,11 @@ pxelinux_cfg() {
     ### END COPY OVER RAMDISK
 
     ### BEGIN CHECK EXISTING RAMDISK IN TFTPDIR
-    if [ -a $TFTPDIR/initrd.gz ]; then
-	if [ `md5sum $LINUX_INSTALL/initrd.gz` != \
-		`md5sum $TFTPDIR/initrd.gz` ]; then
-	    echo "$TFTPDIR/initrd.gz already exists, but doesn't match the initrd.gz I want to install."
-	    FILE_TO_BACKUP=$TFTPDIR/initrd.gz
+    if [ -a $TFTPDIR/initrd.img ]; then
+	if [ `md5sum $LINUX_INSTALL/initrd.img` != \
+		`md5sum $TFTPDIR/initrd.img` ]; then
+	    echo "$TFTPDIR/initrd.img already exists, but doesn't match the initrd.img I want to install."
+	    FILE_TO_BACKUP=$TFTPDIR/initrd.img
 	    backup_file
 	    if [ $? -ne 0 ]; then
 		return 1
@@ -984,9 +984,9 @@ pxelinux_cfg() {
     ### END CHECK EXISTING RAMDISK IN TFTPDIR
 
     ### BEGIN CREATE RAMDISK LINK IN TFTPDIR
-    if [ ! -a $TFTPDIR/initrd.gz ]; then
-	echo -n "Linking $TFTPDIR/initrd.gz to $LINUX_INSTALL/initrd.gz ..."
-	ln $LINUX_INSTALL/initrd.gz $TFTPDIR/initrd.gz
+    if [ ! -a $TFTPDIR/initrd.img ]; then
+	echo -n "Linking $TFTPDIR/initrd.img to $LINUX_INSTALL/initrd.img ..."
+	ln $LINUX_INSTALL/initrd.img $TFTPDIR/initrd.img
 	if [ $? -ne 0 ]; then
 	    echo "failed."
 	    return 1

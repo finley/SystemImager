@@ -311,8 +311,8 @@ fi
 # got put in the binaries tarball. -BEF-
 #
 
-rsync -av ${IMAGESERVER}::boot/${ARCH}/boel_binaries-${FLAVOR}-${VERSION}.tar.gz /tmp/ || shellout
-( cd / && tar -xvzf /tmp/boel_binaries-standard-${VERSION}.tar.gz ) || shellout
+rsync -av ${IMAGESERVER}::boot/${ARCH}/${FLAVOR}/boel_binaries.tar.gz /tmp/ || shellout
+( cd / && tar -xvzf /tmp/boel_binaries.tar.gz ) || shellout
 
 ### BEGIN Load modules ###
 # Detect what we can.

@@ -121,7 +121,11 @@ my $config = new AppConfig(
 
   # We put bootmodule here so it can be overridden, but we aren't going to 
   # advertize this yet.
-  'bootmodule' => {ARGCOUNT => 1, DEFAULT => "boot/$ARCH"},
+  # 
+  # this is dependent on flavor, which likely isn't determined yet,
+  # and this location is hardcoded in rcS, so it probably doesn't
+  # make sense to override it.
+  #'bootmodule' => {ARGCOUNT => 1, DEFAULT => "boot/$ARCH"},
 );
 
 # Read in settings from SystemImager client configuration file
@@ -132,7 +136,6 @@ if(-e "/etc/systemimager/client.conf") {
 # Pull some settings from the variables pulled from the config file
 my $exclude_file = $config->exclude_file;
 my $port = $config->rsync_port; 
-my $bootmodule = $config->bootmodule; 
 
 GetOptions( "listing" => \$listing,
             "configure-from=s" => \$DEVICE,
@@ -278,11 +281,11 @@ if($ssh_user) {
 ### BEGIN update image section ###
 if ($autoinstall) {
     my %available_flavors =
-      SystemImager::Common->get_boot_flavors($ARCH, $VERSION, $server);
+      SystemImager::Common->get_boot_flavors($ARCH, $server);
 
     unless (%available_flavors) {
-	print "\nI couldn't find any boot flavors for SystemImager $VERSION on $ARCH.\n";
-        print "Please use \"install_siboot\" to install the appropriate boot files on $server.\n\n";
+	print "\nI couldn't find any boot flavors for SystemImager on $ARCH.\n";
+        print "Please install the appropriate boot files on $server.\n\n";
 	exit 1;
     }
     
@@ -301,14 +304,11 @@ if ($autoinstall) {
     
     # make sure the specified flavor is available
     unless ($available_flavors{$flavor}) {
-	print "\nI can't find boot files of the flavor, version, and architecture specified.\n";
-	print "The files you specified would come from a SystemImager boot tarball named:\n\n";
-	print qq( "systemimager-boot-${ARCH}-${flavor}-${VERSION}.tar.bz2"\n\n); 
+	print "\nI can't find boot files of the flavor and architecture specified.\n";
+	print "The files you specified would come from a SystemImager package named:\n\n";
+	print qq( "systemimager-boot-${ARCH}-${flavor}-${VERSION}"\n\n); 
 	exit 1;
     }
-
-    if (! $kernel) { $kernel = "$bin_dir/kernel-$flavor-$VERSION"; }
-    if (! $initrd) { $initrd = "$bin_dir/initrd-$flavor-$VERSION.gz"; }
 
     if ( -d "/boot/efi" ) {
 	$bootdir = "/boot/efi";
@@ -317,17 +317,19 @@ if ($autoinstall) {
 	$bootdir = "/boot";
     }
     
+    my $bootmodule = "boot/$ARCH/$flavor";
+
     # Suck down kernel.
     print "Retrieving SystemImager kernel...\n";
 
-    my $cmd = "rsync -a --numeric-ids rsync://${server}:${port}/${bootmodule}/$kernel ${bootdir}/kernel.systemimager";
-    !system($cmd) or croak("Failed to rsync SystemImager $kernel to ${bootdir} on client!!!");
+    my $cmd = "rsync -a --numeric-ids rsync://${server}:${port}/${bootmodule}/kernel ${bootdir}/kernel.systemimager";
+    !system($cmd) or croak("Failed to rsync SystemImager kernel to ${bootdir} on client!!!");
 
     # And initial ram disk image.
     print "Retrieving SystemImager initial ramdisk...\n";
 
-    $cmd = "rsync -a --numeric-ids rsync://${server}:${port}/${bootmodule}/$initrd ${bootdir}/initrd.gz.systemimager";
-    !system($cmd) or croak("Failed to rsync SystemImager initrd.gz to $bootdir on client!!!");
+    $cmd = "rsync -a --numeric-ids rsync://${server}:${port}/${bootmodule}/initrd.img ${bootdir}/initrd.img.systemimager";
+    !system($cmd) or croak("Failed to rsync SystemImager initrd.img to $bootdir on client!!!");
 
     # find out on which partition the current root file system resides
     my $file = "/etc/mtab";
@@ -388,7 +390,7 @@ DEFAULTBOOT = systemimager
 [KERNEL0]
 LABEL = systemimager
 PATH = ${bootdir}/kernel.systemimager
-INITRD = ${bootdir}/initrd.gz.systemimager
+INITRD = ${bootdir}/initrd.img.systemimager
 APPEND = LAST_ROOT=$lastroot root=/dev/ram0 load_ramdisk=1 prompt_ramdisk=0 vga=extended
 EOF
 

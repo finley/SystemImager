@@ -27,21 +27,16 @@ sub get_response {
 }
 
 # Usage:
-# get_boot_flavors($arch, $version, $where)
+# get_boot_flavors($arch, $where)
 #   return the list of available boot flavors for a given arch for a given
 #   version of SystemImager.
 #   $where is a string that specifies where to look.  if $where contains
 #   a "/", then we assume $where is a local directory.  otherwise, we
 #   assume $where is a remote machine & we look in the standard place.
 sub get_boot_flavors {
-    my ($class, $arch, $version, $where) = @_;
+    my ($class, $arch, $where) = @_;
 
-    my @allfiles = ();
-    my $file_flavor = "";
-    my $file_version = "";
-    my %kernel_flavors = ();
-    my %initrd_flavors = ();
-
+    my %allflavors = ();
     $_ = $where;
 
     # if $where contains a "/", we look in a local directory named $where
@@ -49,7 +44,13 @@ sub get_boot_flavors {
     if (m{.*/.*}) {
 	my $autoinstall_bootdir = $where;
 	opendir BOOTDIR, "$autoinstall_bootdir/$arch" or return undef;
-	@allfiles = readdir BOOTDIR;
+	my @dirlist = readdir BOOTDIR;
+
+	for my $file (@dirlist) {
+	    unless (($file eq ".") or ($file eq "..")) {
+		$allflavors{$file} = 1;
+	    }
+	}
 	close BOOTDIR;
     }
     else {
@@ -59,41 +60,15 @@ sub get_boot_flavors {
 	    or do { print "Error running rsync: $!\n"; return undef; };
 	while (<RSYNC>) {
 	    if (/.*\s(\S+)$/) {
-		push @allfiles, $1;
+		unless (($1 eq ".") or ($1 eq "..")) {
+		    $allflavors{$1} = 1;
+		}
 	    }
 	}
 	close RSYNC or return undef;
     }
 
-    while ($_ = shift @allfiles) {
-	if (/^kernel-(\w+)-(.*)$/) {
-	    $file_flavor = $1;
-	    $file_version = $2;
-
-	    if ($file_version eq $version) {
-		$kernel_flavors{$file_flavor} = 1;
-	    }
-	}
-	
-	elsif (/^initrd-(\w+)-(.*).gz$/) {
-	    $file_flavor = $1;
-	    $file_version = $2;
-
-	    if ($file_version eq $version) {
-		$initrd_flavors{$file_flavor} = 1;
-	    }
-	}
-    }
-    
-    my %available_flavors = ();
-    my @keys = keys %kernel_flavors;
-
-    foreach my $flavor (@keys) {
-      if (exists $initrd_flavors{$flavor}) {
-        $available_flavors{$flavor} = 1;     
-      }
-    }
-    return %available_flavors;
+    return %allflavors;
 }
 
 ## A pure perl which command
