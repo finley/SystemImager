@@ -1,6 +1,10 @@
 #
-# Creates documentation from SGML source
+# "VA SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@thefinleys.com>
+#
 # This file is: Makefile
+#               (Create documentation from SGML source)
+#
+#               Written by: Dann Frazier <daniel_frazier@hp.com>
 #
 
 DB2HTML = /usr/bin/db2html
