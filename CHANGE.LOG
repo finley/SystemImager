@@ -6,11 +6,25 @@
 #  $Id$
 #
 
+3.4.0
+--------------------------------------------------------------------------------
+- use pre-install script to turn on dma for ata thingies.  See
+  "/var/lib/systemimager/scripts/pre-install/99all.dma_on" (finley)
+- include ssh as part of standard build, standard release (finley)
+- renamed _all_ commands to use the "si_" prefix.  allows for tab 
+  completion with a competent shell, like zsh ;-) (finley)
+- took out sfdisk.rul -- haven't been using sfdisk for quite a while 
+  now (finley)
+- added util-linux.rul, for mkswap that supports >2G on ia32.  Recommended by
+  Viet Hoang. (finley)
+
 SystemImager-3.3.2 (unstable) UNRELEASED
+--------------------------------------------------------------------------------
 o dann frazier
   - merge in bug fixes from 3.2 branch
 
 SystemImager-3.3.1 (unstable) 2004.06.01
+--------------------------------------------------------------------------------
 o brian e finley
   - new version of udpcast
   - pre and post-install script tweaking
@@ -18,6 +32,7 @@ o brian e finley
   - getimage: record image retrieval time in $image/etc/systemimager/IMAGE_RETRIEVAL_TIME
 
 SystemImager-3.3.0 (unstable) 2004.04.14
+--------------------------------------------------------------------------------
 o brian e finley
   - add post-install script support
   - add pre-install script support
