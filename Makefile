@@ -39,7 +39,10 @@
 #   2004.10.13  Brian Elliott Finley
 #   - add hfsutils
 #   2004.10.24  Brian Elliott Finley
-#   - get rid of source, which may also exist as a link to the kernel source directory
+#   - get rid of source, which may also exist as a link to the kernel source
+#     directory
+#   2004.12.13  Josh Aas
+#   - make 'make (rpm|srpm)' work again
 #
 #
 # ERRORS when running make:
@@ -596,6 +599,8 @@ ifeq ($(UNSTABLE), 1)
 	cd $(TOPDIR)/tmp/systemimager-$(VERSION) && cat README.tmp >> README
 endif
 	rm $(TOPDIR)/tmp/systemimager-$(VERSION)/README.unstable
+	perl -pi -e "s/^%define\s+ver\s+\d+\.\d+\.\d+.*/%define ver $(VERSION)/" \
+		$(TOPDIR)/tmp/systemimager-$(VERSION)/systemimager.spec
 	find . -type f -exec chmod ug+r  {} \;
 	find . -type d -exec chmod ug+rx {} \;
 	cd $(TOPDIR)/tmp && tar -ch systemimager-$(VERSION) | bzip2 > systemimager-$(VERSION).tar.bz2
