@@ -436,7 +436,7 @@ if [ -f /etc/systemimager/rsyncd.conf-before-rsync-stubs.tmp ]; then
 fi
 ## END make stubs from pre-stub /etc/systemimager/rsyncd.conf file
 
-/usr/sbin/mkrsyncd_conf
+/usr/sbin/si_mkrsyncd_conf
 
 if [[ -a /usr/lib/lsb/install_initd ]]; then
     /usr/lib/lsb/install_initd /etc/init.d/systemimager-server-rsyncd
