@@ -33,11 +33,11 @@ use Cwd;
 use Carp;
 use AppConfig;
 use File::Path;
-use File::Copy;
 use Getopt::Long;
 use File::Basename;
 use POSIX qw(uname);
 use SystemImager::Common;
+use SystemImager::Server;
 use SystemImager::Config;
 use vars qw($config $VERSION $quiet);
 
@@ -169,7 +169,7 @@ if(!which('mkisofs')) {
 # set some variables
 my $temp_dir = "/tmp/systemimager.autoinstallcd.temp.dir";
 my $temp_file = "$temp_dir/boot/siboot.img";
-my $mount_dir = "$temp_dir/mnt";
+my $mnt_dir = "$temp_dir/mnt";
 my $boot_dir = "$temp_dir/boot";
 
 # if $out_file is not an absolute path, get current working directory and pre-pend
@@ -184,9 +184,9 @@ if(-e $temp_dir) {
     rmtree("$temp_dir") or croak("Couldn't remove $temp_dir");
 }
 
-mkdir $temp_dir, 0770 or croak("Couldn't create temporary working directory $mount_dir!");
-mkdir $mount_dir, 0770 or croak("Couldn't create temporary working directory $mount_dir/mnt!");
-mkdir $boot_dir, 0770 or croak("Couldn't create temporary working directory $mount_dir/boot!");
+mkdir $temp_dir, 0770 or croak("Couldn't create temporary working directory $mnt_dir!");
+mkdir $mnt_dir, 0770 or croak("Couldn't create temporary working directory $mnt_dir/mnt!");
+mkdir $boot_dir, 0770 or croak("Couldn't create temporary working directory $mnt_dir/boot!");
 
 # This does the dd, and is put in another seperate function because it is arch specific
 
@@ -205,18 +205,19 @@ if($arch eq "i386") {
 }
 
 # mount the loop device
-mount_loop_device($temp_file, $mount_dir,"Mounting temporary image in loopback mode...");
+mount_loop_device($temp_file, $mnt_dir,"Mounting temporary image in loopback mode...");
 
 # copy stuff to image
-copy_files_to_image($mount_dir, $bin_dir, $kernel, $initrd, $append_string) or 
-  croak("Couldn't copy required files into the image!");
+my $local_cfg = "";  # local.cfg currently not supported on CD. -BEF-
+SystemImager::Server->copy_boot_files_to_boot_media($kernel, $initrd, $local_cfg, $arch, $mnt_dir, $append_string)
+    or croak("Couldn't copy required files into the image!");
 
 # Umount the loopback device
-mysystem("umount $mount_dir","Un-mounting temporary image...") or
-  croak("Couldn't un-mount temporary from $mount_dir/tmp!");
+mysystem("umount $mnt_dir","Un-mounting temporary image...") or
+  croak("Couldn't un-mount temporary from $mnt_dir/tmp!");
 
 # and clean it up
-rmtree("$mount_dir") or croak("Couldn't clean up $mount_dir");
+rmtree("$mnt_dir") or croak("Couldn't clean up $mnt_dir");
 
 my $mkisofscmd = "";
 
@@ -258,97 +259,14 @@ sub build_loopfile {
 #
 
 sub mount_loop_device {
-    my ($temp_file, $mount_dir, $msg) = @_;
+    my ($temp_file, $mnt_dir, $msg) = @_;
     if($arch eq "i386") {
-        mysystem("mount -t msdos -o loop $temp_file $mount_dir",$msg) or
+        mysystem("mount -t msdos -o loop $temp_file $mnt_dir",$msg) or
           croak("Couldn't mount temporary image in loopback mode!");
     } elsif ($arch eq "ia64") {
-        mysystem("mount -t vfat -o loop $temp_file $mount_dir",$msg) or
+        mysystem("mount -t vfat -o loop $temp_file $mnt_dir",$msg) or
           croak("Couldn't mount temporary image in loopback mode!");
     }
-}
-
-sub copy_files_to_image {
-    my ($mnt_dir, $boot_dir, $kernel, $initrd, $append_string) = @_;
-
-    if($arch eq "i386") {
-
-      # Just copy the files over.  It doesn't matter if they have a fancy name on
-      # the boot media -- we're not really offering options at boot time.  This 
-      # allows us to have a stock syslinux.cfg file that the user can easily edit.
-      copy($kernel, "$mnt_dir/kernel")    or croak("Couldn't copy $kernel to $mnt_dir/kernel: $!");
-      copy($initrd, "$mnt_dir/initrd.img") or croak("Couldn't copy $initrd to $mnt_dir/initrd.img: $!");
-      copy("/etc/systemimager/pxelinux.cfg/message.txt","$mnt_dir/message.txt");
-
-      # Unless an append string was given on the command line, just copy over.
-      unless ($append_string) {
-        copy("/etc/systemimager/pxelinux.cfg/syslinux.cfg","$mnt_dir/syslinux.cfg");
-      } else {
-        # Append to APPEND line in config file.
-        my $infile = "/etc/systemimager/pxelinux.cfg/syslinux.cfg";
-        my $outfile = "$mnt_dir/syslinux.cfg";
-        open(INFILE,"<$infile") or croak("Couldn't open $infile for reading.");
-          open(OUTFILE,">$outfile") or croak("Couldn't open $outfile for writing.");
-            while (<INFILE>) {
-              if (/APPEND/) { 
-                chomp;
-                $_ = $_ . " $append_string\n";
-              }
-              print OUTFILE;
-            }
-          close(OUTFILE);
-        close(INFILE);
-      }
-
-
-    } elsif ($arch eq "ia64") {
-
-      my $elilo = "";
-      @elilo_locations = qw(/usr/lib/elilo/elilo.efi /boot/efi/elilo.efi /tftpboot/elilo.efi);
-      foreach my $possible (@elilo_locations) {
-        if(-e $possible) {
-          $elilo = $possible;
-          last;
-        }
-      }
-      if(!$elilo) {
-        print "\nCouldn't find elilo.efi executable in any of the following locations:\n";
-	foreach my $possible (@elilo_locations) { print "    $possible\n"; }
-	print "You can download elilo from ftp://ftp.hpl.hp.com/pub/linux-ia64/.\n";
-        print "If elilo.efi was installed elsewhere on your system, please submit a bug report at\n";
-        print "http://systemimager.org/support/\n\n";
-        exit 1;
-      }
-
-      write_elilo_conf("$mnt_dir/elilo.conf", "kernel", "initrd.img", $append_string);
-
-      # Because we must rename each of these files, we just copy them over one by one. -BEF-
-      copy($kernel, "$mnt_dir/kernel")    or croak("Couldn't copy $kernel to $mnt_dir/kernel: $!");
-      copy($initrd, "$mnt_dir/initrd.img") or croak("Couldn't copy $initrd to $mnt_dir/initrd.img: $!");
-      copy($elilo,  "$mnt_dir/elilo.efi") or croak("Couldn't copy $elilo to $mnt_dir/elilo.efi $!");
-    }
-    return 1;
-}
-
-sub write_elilo_conf {
-    my ($file, $kernel, $initrd, $append_string) = @_;
-
-    open(ELILO_CONF,">$file") or croak("Couldn't open $file for writing.");
-
-      print ELILO_CONF "timeout=20\n";
-
-      if ($append_string) { 
-        print ELILO_CONF "append=$append_string\n";
-      }
-
-      print ELILO_CONF "image=kernel\n";
-      print ELILO_CONF "  label=linux\n";
-      print ELILO_CONF "  read-only\n";
-      print ELILO_CONF "  initrd=initrd.img\n";
-      print ELILO_CONF "  root=/dev/ram\n";
-
-    close(ELILO_CONF);
-    return 1;
 }
 
 sub get_response {

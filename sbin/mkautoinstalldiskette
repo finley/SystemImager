@@ -15,11 +15,13 @@
 #
 
 use lib "USR_PREFIX/lib/systemimager/perl";
+use File::Copy;
 use Getopt::Long;
 use File::Basename;
 use POSIX qw(uname);
 use SystemImager::Config;
 use SystemImager::Common;
+use SystemImager::Server;
 use vars qw($config $VERSION);
 
 ### BEGIN parse the config file ###
@@ -72,15 +74,15 @@ Options: (options can be presented in any order and may be abbreviated)
                    copied to /local.cfg on the autoinstalldiskette.
  -ssh-key FILE	   Where FILE is the SSH1 private key of the user 
                    account that the autoinstall client will use to
-		   connect to the imageserver.  It is usually called
-		   ".ssh/identity".
+                   connect to the imageserver.  It is usually called
+                   ".ssh/identity".
 
-		   To use this private key, you must also add the
-		   corresponding public key to this user's 
-		   ".ssh/authorized_keys" file on the imageserver.
-		   The public key is usually called ".ssh/identity.pub".
-		   The ".ssh/authorized_keys" must be readable only by
-		   this user.  ("chmod 600 .ssh/authorized_keys")
+                   To use this private key, you must also add the
+                   corresponding public key to this user's 
+                   ".ssh/authorized_keys" file on the imageserver.
+                   The public key is usually called ".ssh/identity.pub".
+                   The ".ssh/authorized_keys" must be readable only by
+                   this user.  ("chmod 600 .ssh/authorized_keys")
 
 
 Contents of an example local.cfg file:
@@ -96,6 +98,7 @@ Contents of an example local.cfg file:
  GATEWAYDEV=eth0
  IMAGESERVER=10.0.0.3
  IMAGENAME=oracle_db_server-1.0
+ ETHER_SLEEP=35
 
 
 If you will be using SSH, you have two options:
@@ -142,17 +145,17 @@ http://systemimager.org/
 EOF
 
 GetOptions( 
-            "help" => \$help,
-            "version" => \$version,
-            "floppy=s" => \$floppy_device_prefix,
-            "config=s" => \$local_config,
-            "ssh-key=s" => \$ssh_key,
-	    "flavor=s" => \$flavor,
-	    "kernel=s" => \$kernel,
-	    "initrd=s" => \$initrd,
-	    "append=s" => \$append,
-            "quiet" => \$quiet,
-	    "out-file=s" => \$file
+    "help" => \$help,
+    "version" => \$version,
+    "floppy=s" => \$floppy_device_prefix,
+    "config=s" => \$local_cfg,
+    "ssh-key=s" => \$ssh_key,
+    "flavor=s" => \$flavor,
+    "kernel=s" => \$kernel,
+    "initrd=s" => \$initrd,
+    "append=s" => \$append_string,
+    "quiet" => \$quiet,
+    "out-file=s" => \$file
 ) || die "$help_info";
 
 # if requested, print help information
@@ -171,7 +174,7 @@ if($version) {
 my $arch = (uname())[4];
 $arch =~ s/i.86/i386/;
 if ($arch ne "i386") {
-    die "Autoinstall floppy diskettes are only supported for the i386 architecture.";
+    die "Autoinstall diskettes are only supported for the i386 architecture.";
 }
 
 # if not run as root, this script will surely fail
@@ -215,8 +218,7 @@ unless ($kernel and $initrd) {
     # make sure the specified flavor is available
     unless ($available_flavors{$flavor}) {
       print "\nI can't find boot files of the flavor and architecture specified.\n";
-      print "The files you specified would come from a SystemImager boot tarball named:\n\n";
-      print qq( "systemimager-boot-${arch}-${flavor}-${VERSION}.tar.bz2"\n\n); 
+      print "\nTry running with no options.\n";
       exit 1;
     }
 
@@ -227,10 +229,12 @@ unless ($kernel and $initrd) {
     if (! $initrd) { $initrd = "$bin_dir/initrd.img"; }
 }
     
-if (!$append) { $append = ""; }
+if (!$append_string) { $append_string = ""; }
 
 # Be sure the user includes -floppy or -file when doing -quiet
-if($quiet and !$user_specified_floppy and !$user_specified_file) { die "Must use -floppy or -file with -quiet! (use -help for options)\n"; }
+if($quiet and !$user_specified_floppy and !$user_specified_file) { 
+    die "Must use -floppy or -file with -quiet! (use -help for options)\n";
+}
 
 # if user did not specify a floppy device, choose the default
 if(!$user_specified_floppy and !$user_specified_file) {
@@ -240,36 +244,9 @@ if(!$user_specified_floppy and !$user_specified_file) {
 # verify that a valid floppy device was specified
 if (! $file) {
     if (! ($floppy_device_prefix =~ /^\/dev\/fd[0-7]$/)) {
-	die "ERROR: Invalid -floppy argument.\n $help_info";
+	    die "ERROR: Invalid -floppy argument.\n $help_info";
     }
 }
-
-### BEGIN Verify that all necessary files actually exist. ###
-# Suggested by Greg Pratt <gpratt@valinux.com>.
-#
-# array of standard files
-@files = ( 
-  "$initrd",
-  "$kernel", 
-  "/etc/systemimager/pxelinux.cfg/message.txt"
-);
-
-# Verify that the config file, if specified, exists
-if($local_config){
-  push @files, $local_config;
-}
-
-# Verify that the config file, if specified, exists
-if($ssh_key){
-  push @files, $ssh_key;
-}
-
-foreach my $file ( @files ) {
-  unless ( -e "$file" ) {
-    die "FATAL:  I can't find $file!";
-  }
-}
-### END Verify that all necessary files actually exist. ###
 
 # if appropriate, run interactively
 if (!$user_specified_floppy and !$user_specified_file) {
@@ -296,7 +273,6 @@ EOF
 }
 
 # create floppy device if necessary
-
 if ($floppy_device_prefix and !$file) {
     $floppy_device=$floppy_device_prefix;
     unless (-b $floppy_device) {
@@ -373,57 +349,37 @@ if($? != 0) { die "\"syslinux -s $floppy_device\" failed.\n"; }
 
 # create temporary mount point
 if (!$quiet) { print "Creating temporary mount point...\n"; }
-$mount_dir="/tmp/.autoinstalldiskette.$$";
-mkdir $mount_dir, 0770 or die "Couldn't create temporary mount point $mount_dir.\n";
+$mnt_dir="/tmp/.autoinstalldiskette.$$";
+mkdir $mnt_dir, 0770 or die "Couldn't create temporary mount point $mnt_dir.\n";
 
 # mount the freshly created filesystem
 if (!$quiet) { print "Mounting floppy...\n"; }
-$command="mount -t msdos $floppy_device $mount_dir $loop";
+$command="mount -t msdos $floppy_device $mnt_dir $loop";
 system($command);
 if($? != 0) { die "Couldn't execute: $command!\n"; }
 
 # copy stuff to floppy
-foreach my $file ( @files ) {
-    if (!$quiet) {print "Copying $file to floppy.\n";}
-#
-#XXX get rid of all the substr()'s.  Just copy the files to known names of 
-# kernel, initrd.img, etc.  There will only be one on each floppy or CD (at this point).
-# Also, if this code passes the pre-release testing, then leave as is until 3.2.  If it
-# fails, then perhaps now is the time to merge the floppy functionality into mkautoinstallcd
-# and call it mkautoinstallmedia, or similar. -BEF-
-#
-    my $command="cp $file $mount_dir/" . substr(basename($file), 0, 8);
-    system($command);
-        if($? != 0) { 
-	    system('umount', $floppy_device);
-	    rmdir $mount_dir;
-	    die "Couldn't copy $file to $mount_dir.\n";
-	}
-}
-
-$append_string  = "vga=extended load_ramdisk=1 root=/dev/ram rw ";
-$append_string .= "ramdisk_blocksize=4096 ";
-$append_string .= "prompt_ramdisk=0 initrd=" . substr(basename($initrd), 0, 8);
-$append_string .= " " . $append;
-# XXX change this to simply copy the syslinux.cfg file from /etc/systemimager/pxelinux.cfg and
-# add append string if necessary.  See mkautoinstallcd
-build_syslinux_cfg("$kernel", "$append_string", "", "", "",
-  "$mount_dir/syslinux.cfg") or die "Couldn't create $mount_dir/syslinux.cfg.\n";
+SystemImager::Server->copy_boot_files_to_boot_media($kernel, $initrd, $local_cfg, $arch, $mnt_dir, $append_string)
+    or die("Couldn't copy required files into the image!");
 
 # unmount floppy
 if (!$quiet) {print "Un-mounting floppy...\n";}
 system('umount', $floppy_device);
 if($? != 0) { 
-  die "Couldn't un-mount $floppy_device from $mount_dir.\n";
+  die "Couldn't un-mount $floppy_device from $mnt_dir.\n";
 }
 
 # get rid of temporary directory
 if (!$quiet) { print "Removing temporary mount point...\n";}
-rmdir $mount_dir or die "Couldn't remove temporary mount point $mount_dir\n";
+rmdir $mnt_dir or die "Couldn't remove temporary mount point $mnt_dir\n";
 
 # print done!
 if (!$quiet) { print "Done!\n";}
 exit 0;
+
+# XXX re-add ssh support.
+$ssh_key = "";
+
 
 sub get_response {
     my $garbage_out=$_[0];
@@ -433,24 +389,3 @@ sub get_response {
     return $garbage_out;
 }
 
-sub build_syslinux_cfg {
-    my ($kernel, $append, $display, $prompt, $timeout, $outfile) = @_;
-    
-    if (!$kernel) { $kernel = "kernel"; }
-    if (!$append) {
-	$append = "vga=extended prompt_ramdisk=0 initrd=initrd.img load_ramdisk=1 root=/dev/ram rw";
-    }
-    if (!$display) { $display = "message"; }
-    if (!$prompt) { $prompt = "0"; }
-    if (!$timeout) { $timeout = "50"; }
-    if (!$outfile) { return undef; }
-
-    open(OUT, ">$outfile") or return undef;
-
-    print OUT "DEFAULT " . substr(basename($kernel), 0, 8) . "\n";
-    print OUT "APPEND $append\n";
-    print OUT "DISPLAY $display\n";
-    print OUT "PROMPT $prompt\n";
-    print OUT "TIMEOUT $timeout\n";
-    close(OUT);
-}

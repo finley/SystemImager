@@ -14,6 +14,7 @@ package SystemImager::Server;
 use lib "USR_PREFIX/lib/systemimager/perl";
 use Carp;
 use strict;
+use File::Copy;
 use File::Path;
 use XML::Simple;
 use vars qw($VERSION @mount_points %device_by_mount_point %filesystem_type_by_mount_point);
@@ -24,49 +25,53 @@ $VERSION="SYSTEMIMAGER_VERSION_STRING";
 #
 # Subroutines in this module include:
 #
-#    _mount_proc_in_image_on_client 
+#   _mount_proc_in_image_on_client 
 #
-#    _get_array_of_disks 
+#   _get_array_of_disks 
 #
-#    _imageexists 
+#   _imageexists 
 #
-#    _in_script_add_standard_header_stuff 
+#   _in_script_add_standard_header_stuff 
 #
-#    _read_partition_info_and_prepare_parted_commands 
+#   _read_partition_info_and_prepare_parted_commands 
 #
-#    _upgrade_partition_schemes_to_generic_style 
+#   _upgrade_partition_schemes_to_generic_style 
 #
-#    _write_out_mkfs_commands 
+#   _write_elilo_conf
 #
-#    _write_out_new_fstab_file 
+#   _write_out_mkfs_commands 
 #
-#    _write_out_umount_commands 
+#   _write_out_new_fstab_file 
 #
-#    add2rsyncd 
+#   _write_out_umount_commands 
 #
-#    create_autoinstall_script
+#   add2rsyncd 
 #
-#    create_image_stub 
+#   copy_boot_files_to_boot_media
 #
-#    gen_rsyncd_conf 
+#   create_autoinstall_script
 #
-#    get_full_path_to_image_from_rsyncd_conf 
+#   create_image_stub 
 #
-#    get_image_path 
+#   gen_rsyncd_conf 
 #
-#    ip_quad_2_ip_hex
+#   get_full_path_to_image_from_rsyncd_conf 
 #
-#    numerically 
+#   get_image_path 
 #
-#    remove_boot_file
+#   ip_quad_2_ip_hex
 #
-#    remove_image_stub 
+#   numerically 
 #
-#    validate_auto_install_script_conf 
+#   remove_boot_file
 #
-#    validate_ip_assignment_option 
+#   remove_image_stub 
 #
-#    validate_post_install_option 
+#   validate_auto_install_script_conf 
+#
+#   validate_ip_assignment_option 
+#
+#   validate_post_install_option 
 #
 ################################################################################
 
@@ -1474,3 +1479,118 @@ sub _remove_mount_option {
 
     return $new_options;
 }
+
+
+# Description:
+# Copy files needed for autoinstall floppy or CD to boot media or boot image.
+#
+# Usage:
+# copy_boot_files_to_boot_media($kernel, $initrd, $local_cfg, $arch, $mnt_dir, $append_string);
+sub copy_boot_files_to_boot_media {
+
+    my ($class, $kernel, $initrd, $local_cfg, $arch, $mnt_dir, $append_string) = @_;
+
+    my $message_txt = "/etc/systemimager/pxelinux.cfg/message.txt";
+    my $syslinux_cfg = "/etc/systemimager/pxelinux.cfg/syslinux.cfg";
+
+    ############################################################################
+    #
+    #   Copy standard files to mount dir
+    #
+    copy($kernel, "$mnt_dir/kernel") or die "Couldn't copy $kernel to $mnt_dir! $!";
+    copy($initrd, "$mnt_dir/initrd.img") or die "Couldn't copy $initrd to $mnt_dir! $!";
+    copy($message_txt, "$mnt_dir/message.txt") or die "Couldn't copy $message_txt to $mnt_dir! $!";
+    if($local_cfg) {
+        copy($local_cfg, "$mnt_dir/local.cfg") or die "Couldn't copy $local_cfg to $mnt_dir! $!";
+    }
+
+    # Unless an append string was given on the command line, just copy over.
+    unless ($append_string) {
+        copy("$syslinux_cfg","$mnt_dir/syslinux.cfg") 
+            or die "Couldn't copy $syslinux_cfg to $mnt_dir! $!";
+    } else {
+        # Append to APPEND line in config file.
+        my $infile = "$syslinux_cfg";
+        my $outfile = "$mnt_dir/syslinux.cfg";
+        open(INFILE,"<$infile") or croak("Couldn't open $infile for reading.");
+            open(OUTFILE,">$outfile") or croak("Couldn't open $outfile for writing.");
+                while (<INFILE>) {
+                    if (/APPEND/) { 
+                        chomp;
+                        $_ = $_ . " $append_string\n";
+                    }
+                print OUTFILE;
+            }
+            close(OUTFILE);
+        close(INFILE);
+    }
+    #
+    ############################################################################
+
+
+    ############################################################################
+    #
+    #   Do ia64 specific stuff
+    #
+    if ($arch eq "ia64") {
+
+        my $elilo = "";
+        my @elilo_locations = qw(/usr/lib/elilo/elilo.efi /boot/efi/elilo.efi /tftpboot/elilo.efi);
+        foreach my $possible (@elilo_locations) {
+            if(-e $possible) {
+                $elilo = $possible;
+                last;
+            }
+        }
+
+        if($elilo) {
+            copy($elilo,  "$mnt_dir/elilo.efi") or croak("Couldn't copy $elilo to $mnt_dir/elilo.efi $!");
+        } else {
+            print "\nCouldn't find elilo.efi executable in any of the following locations:\n";
+            foreach my $possible (@elilo_locations) { print "    $possible\n"; }
+            print "You can download elilo from ftp://ftp.hpl.hp.com/pub/linux-ia64/.\n";
+            print "If elilo.efi was installed elsewhere on your system, please submit a bug report at\n";
+            print "http://systemimager.org/support/\n\n";
+            exit 1;
+        }
+
+        _write_elilo_conf("$mnt_dir/elilo.conf", $append_string);
+
+    }
+    #
+    ############################################################################
+    
+    return 1;
+
+}
+
+
+
+# Description:
+# Write new elilo.conf file to boot media
+#
+# Usage:
+# _write_elilo_conf($file, $append_string);
+sub _write_elilo_conf {
+
+    my ($file, $append_string) = @_;
+
+    open(ELILO_CONF,">$file") or croak("Couldn't open $file for writing.");
+
+      print ELILO_CONF "timeout=20\n";
+
+      if ($append_string) { 
+        print ELILO_CONF "append=$append_string\n";
+      }
+
+      print ELILO_CONF "image=kernel\n";
+      print ELILO_CONF "  label=linux\n";
+      print ELILO_CONF "  read-only\n";
+      print ELILO_CONF "  initrd=initrd.img\n";
+      print ELILO_CONF "  root=/dev/ram\n";
+
+    close(ELILO_CONF);
+    return 1;
+}
+
+
