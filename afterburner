@@ -276,17 +276,17 @@ fi
 ### BEGIN create softlinks and run rsync init script ###
 # create soft links to rsync init script
 [ $QUIET = "false" ] && echo "creating soft links to rsync init script..."
-[ -d /etc/rc.d/init.d ] && INITDIR_PREFIX="/etc/rc.d"
 [ -d /etc/init.d ] && INITDIR_PREFIX="/etc"
+[ -d /etc/rc.d/init.d ] && INITDIR_PREFIX="/etc/rc.d"
 if [ -f $INITDIR_PREFIX/init.d/rsync ]
 then
-  cd $INITDIR_PREFIX/rc0.d; ln -sf ../init.d/rsync K20rsync
-  cd $INITDIR_PREFIX/rc1.d; ln -sf ../init.d/rsync K20rsync
-  cd $INITDIR_PREFIX/rc2.d; ln -sf ../init.d/rsync S20rsync
-  cd $INITDIR_PREFIX/rc3.d; ln -sf ../init.d/rsync S20rsync
-  cd $INITDIR_PREFIX/rc4.d; ln -sf ../init.d/rsync S20rsync
-  cd $INITDIR_PREFIX/rc5.d; ln -sf ../init.d/rsync S20rsync
-  cd $INITDIR_PREFIX/rc6.d; ln -sf ../init.d/rsync K20rsync
+  cd $INITDIR_PREFIX/rc0.d; ln -sf ../init.d/rsync K20rsync || exit 1
+  cd $INITDIR_PREFIX/rc1.d; ln -sf ../init.d/rsync K20rsync || exit 1
+  cd $INITDIR_PREFIX/rc2.d; ln -sf ../init.d/rsync S20rsync || exit 1
+  cd $INITDIR_PREFIX/rc3.d; ln -sf ../init.d/rsync S20rsync || exit 1
+  cd $INITDIR_PREFIX/rc4.d; ln -sf ../init.d/rsync S20rsync || exit 1
+  cd $INITDIR_PREFIX/rc5.d; ln -sf ../init.d/rsync S20rsync || exit 1
+  cd $INITDIR_PREFIX/rc6.d; ln -sf ../init.d/rsync K20rsync || exit 1
 fi
 # run rsync init script
 [ $QUIET = "false" ] && echo "running rsync init script..."

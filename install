@@ -18,6 +18,7 @@ AFTERBURNER="yes"
 DOCS="yes"
 HELP="no"
 SHOW_VERSION="no"
+VERSION_CONTROL="numbered"
 
 for cl_option ; do
   case $cl_option in
@@ -151,8 +152,8 @@ install -m 555 $OWNERSHIP $INSTALL_DIR/sbin/makedhcpserver           ${DESTDIR}$
 
 ### BEGIN init scripts ###
 # find where init.d lives
-[ -d /etc/rc.d/init.d ] && INITDIR_PREFIX="/etc/rc.d"
 [ -d /etc/init.d ] && INITDIR_PREFIX="/etc"
+[ -d /etc/rc.d/init.d ] && INITDIR_PREFIX="/etc/rc.d"
 
 # test to be sure that init.d was found
 if [ "x$INITDIR_PREFIX" = "x" ];then
@@ -164,7 +165,7 @@ fi
 # do the install
 [ ! -d "${DESTDIR}${INITDIR_PREFIX}/init.d" ] && install -d -m 755 $OWNERSHIP ${DESTDIR}${INITDIR_PREFIX}/init.d
 [ $QUIET = "false" ] && echo "Installing files in ${DESTDIR}${INITDIR_PREFIX}/init.d/"
-install -m 755 $OWNERSHIP --backup=numbered $INSTALL_DIR/etc/init.d/rsync ${DESTDIR}${INITDIR_PREFIX}/init.d
+install -m 755 $OWNERSHIP --backup $INSTALL_DIR/etc/init.d/rsync ${DESTDIR}${INITDIR_PREFIX}/init.d
 ### END init scripts ###
 
 
@@ -177,12 +178,12 @@ install -m 555 $OWNERSHIP $INSTALL_DIR/tftpstuff/initrd.gz  ${DESTDIR}/tftpboot
 install -m 555 $OWNERSHIP $INSTALL_DIR/tftpstuff/kernel     ${DESTDIR}/tftpboot
 
 [ $QUIET = "false" ] && echo "Installing files in ${DESTDIR}/tftpboot/pxelinux.cfg/"
-install -m 444 --backup=numbered $OWNERSHIP $INSTALL_DIR/tftpstuff/pxelinux.cfg/message.txt   ${DESTDIR}/tftpboot/pxelinux.cfg/message.txt
-install -m 444 --backup=numbered $OWNERSHIP $INSTALL_DIR/tftpstuff/pxelinux.cfg/syslinux.cfg  ${DESTDIR}/tftpboot/pxelinux.cfg/syslinux.cfg
-install -m 444 --backup=numbered $OWNERSHIP $INSTALL_DIR/tftpstuff/pxelinux.cfg/syslinux.cfg  ${DESTDIR}/tftpboot/pxelinux.cfg/default
+install -m 444 --backup $OWNERSHIP $INSTALL_DIR/tftpstuff/pxelinux.cfg/message.txt   ${DESTDIR}/tftpboot/pxelinux.cfg/message.txt
+install -m 444 --backup $OWNERSHIP $INSTALL_DIR/tftpstuff/pxelinux.cfg/syslinux.cfg  ${DESTDIR}/tftpboot/pxelinux.cfg/syslinux.cfg
+install -m 444 --backup $OWNERSHIP $INSTALL_DIR/tftpstuff/pxelinux.cfg/syslinux.cfg  ${DESTDIR}/tftpboot/pxelinux.cfg/default
 
 [ $QUIET = "false" ] && echo "Installing files in ${DESTDIR}/tftpboot/systemimager/"
-install -m 555 $OWNERSHIP --backup=numbered $INSTALL_DIR/tftpstuff/systemimager/systemimager.exclude  ${DESTDIR}/tftpboot/systemimager
+install -m 555 $OWNERSHIP --backup $INSTALL_DIR/tftpstuff/systemimager/systemimager.exclude  ${DESTDIR}/tftpboot/systemimager
 
 #software RAID utilities (note -- raidstart and raidstop are the same binary)
 install -m 555 $OWNERSHIP $INSTALL_DIR/tftpstuff/systemimager/raidstart             ${DESTDIR}/tftpboot/systemimager/raidstop
