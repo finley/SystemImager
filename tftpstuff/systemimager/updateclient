@@ -73,8 +73,6 @@ Options: (options can be presented in any order)
  -help                    Display this output.
  -version                 Display version and copyright information.
  -server HOSTNAME         Hostname or IP address of the imageserver.
-                          (-imageserver is a depricated option and 
-                           will go away soon.)
  -image IMAGENAME         Image from which the client should be updated.
  -directory DIRECTORY     Absolute path of directory to be updated.
                           (defaults to "/")
@@ -88,7 +86,7 @@ Options: (options can be presented in any order)
                           will be used during the autoinstall process.
  -listing                 List avaliable images on imageserver.
                           (supercedes and ignores all options other
-			   than --imageserver)
+			   than -server)
  -reboot                  Reboot client after update completes.
 
 Download, report bugs, and make suggestions at:
@@ -103,7 +101,6 @@ GetOptions( "listing" => \$listing,
             "reboot" => \$reboot,
             "nolilo" => \$nolilo,
             "autoinstall" => \$autoinstall,
-            "imageserver=s" => \$imageserver,
             "server=s" => \$imageserver,
             "image=s" => \$image,
             "directory=s" => \$directory,
