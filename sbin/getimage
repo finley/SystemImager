@@ -243,41 +243,8 @@ while (<NETWORK>) {
   }
 }
 close(NETWORK);
-
-
-
-#if (!$quiet) {
-#    system("clear");
-#    print "NIS\n";
-#    print "---\n\n";
-#    print "Will these clients use NIS? (y/[n]): ";
-#    $continue = get_response('n');
-#    if($continue eq "y") {
-#        $satisfied="n";
-#        until($satisfied eq "y") {
-#            print "What is your NIS domain name? [$nisdomainname]: ";
-#            $nisdomainname=get_response($nisdomainname);
-#            if($nisdomainname eq "") {
-#                print "\nYou have not chosen an NIS domain name.  Will your clients use NIS? ([y]/n): ";
-#                $nis = get_response('y');
-#                # Sometimes there is an easier or shorter way of writing things such as:
-#                #  unless($nis eq "y") { $satisfied = "y"; }
-#                # but it is often better to make sense quickly... <bef>
-#                if($nis eq "y") { 
-#                  $satisfied="n";
-#                } else {
-#                  $satisfied="y";
-#                } 
-#            } else {
-#                print "\nYou have chosen \"$nisdomainname\" as your NIS domain name.\n";
-#                print "\nAre you satisfied? (y/[n]): ";
-#                $satisfied = get_response('n');
-#            }
-#            if($satisfied ne "y") { system("clear"); }
-#        }
-#    }
-#}
 ### END Got NIS? ###
+
 
 ### BEGIN Want static? ###
 if (!$quiet) {
