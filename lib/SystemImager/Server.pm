@@ -1271,7 +1271,7 @@ sub _write_out_umount_commands {
     # If client uses devfs, then unmount the bound /dev filesystem.
     #
     $xml_config = XMLin($file, keyattr => { boel => "+devstyle"} );
-    if("$xml_config->{boel}->{devstyle}" eq "devfs") {
+    if( defined($xml_config->{boel}->{devstyle}) && ("$xml_config->{boel}->{devstyle}" eq "devfs")) {
         $fs_by_mp{'/dev'} = "/dev";
     }
 
@@ -1674,7 +1674,7 @@ sub _write_boel_devstyle_entry {
 
     my $xml_config = XMLin($file, keyattr => { boel => "+devstyle"} );
 
-    if("$xml_config->{boel}->{devstyle}" eq "devfs") {
+    if( defined($xml_config->{boel}->{devstyle}) && ("$xml_config->{boel}->{devstyle}" eq "devfs")) {
 
         my $cmd = q(mount /dev /a/dev -o bind || shellout);
         print $script qq(echo "$cmd"\n);
