@@ -144,9 +144,13 @@ print "-------------------\n";
 $command = "rsync rsync://${imageserver}:$port/";
 open(FILE, "$command|");
 while (<FILE>) {
-    my $line = trim ($_);
-    unless (("$line" eq "scripts") or ("$line" eq "boot")) { 
-	print "  $line\n"; 
+    $_ = trim ($_);
+    unless (
+        ("$_" eq "scripts")
+        or ("$_" eq "boot")
+        or ("$_" eq "overrides")
+    ) { 
+	    print "  $_\n"; 
     }
 }
 close(FILE);
