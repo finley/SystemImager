@@ -424,7 +424,7 @@ autodetect_hardware_and_load_modules() {
     do
         echo
         echo "Loading $MODULE..."
-        modprobe $MODULE 2>/dev/null || echo "Assuming $MODULE is compiled into the kernel or is not needed."
+        modprobe -r $MODULE 2>/dev/null || echo "Assuming $MODULE is compiled into the kernel or is not needed."
     done
 }
 #
