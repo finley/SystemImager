@@ -143,7 +143,7 @@ PXE_CONF_SRC      = etc/pxelinux.cfg
 PXE_CONF_DEST     = $(ETC)/systemimager/pxelinux.cfg
 
 BINARIES := mkautoinstallcd mkautoinstalldiskette
-SBINARIES := addclients cpimage getimage mkdhcpserver mkdhcpstatic mkautoinstallscript mkbootserver mvimage pushupdate rmimage mkrsyncd_conf mkclientnetboot netbootmond flamethrower
+SBINARIES := addclients cpimage getimage mkdhcpserver mkdhcpstatic mkautoinstallscript mkbootserver mvimage pushupdate rmimage mkrsyncd_conf mkclientnetboot netbootmond flamethrowerd
 CLIENT_SBINARIES  := updateclient prepareclient
 COMMON_BINARIES   = lsimage
 
@@ -247,7 +247,7 @@ PHONY += install_server_libs
 install_server_libs:
 	mkdir -p $(LIB_DEST)
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/Server.pm $(LIB_DEST)
-	$(SI_INSTALL) -m 644 $(LIB_SRC)/Flamethrower_Config.pm $(LIB_DEST)
+	$(SI_INSTALL) -m 644 $(LIB_SRC)/Flamethrower.pm $(LIB_DEST)
 
 # install client-only libraries
 PHONY += install_client_libs
