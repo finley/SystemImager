@@ -158,8 +158,9 @@ unless ($image) {
 }
 
 # -update is deprecated -BEF-
+# XXX change print to DIE in 3.2.
 if ($update) 
-    { die "\n$program_name: -update YES/NO is deprecated.  Please use -force.\n$get_help\n\n"; }
+    { print "\n$program_name: -update YES/NO is deprecated.  Please use -force.\n$get_help\n\n"; }
 
 # be sure $image doesn't start with a hyphen
 if ($image =~ /^-/) {
