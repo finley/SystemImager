@@ -29,6 +29,11 @@ html:	$(SGMLTOOLS) $(SRC)
 $(NAME).dvi:	$(SGMLTOOLS) $(SRC)
 	$(SGMLTOOLS) -b dvi $(SRC)
 $(NAME).pdf:	$(SGMLTOOLS) $(SRC)
+	# workaround for broken something or other
+	cp --parents \
+	  /usr/share/sgml/docbook/stylesheet/dsssl/modular/images/note.pdf .
+	cp --parents \
+	  /usr/share/sgml/docbook/stylesheet/dsssl/modular/images/warning.pdf .
 	$(SGMLTOOLS) -b pdf $(SRC)
 $(NAME).ps:	$(SGMLTOOLS) $(SRC)
 	$(SGMLTOOLS) -b ps $(SRC)
@@ -40,4 +45,5 @@ clean:
 	rm -rf $(NAME).aux $(NAME).dvi $(NAME).log $(NAME).out $(NAME).pdf \
 	  $(NAME).ps $(NAME).rtf $(NAME).tex $(HTMLDIR) $(NAME) \
 	  DBTOHTML_OUTPUT_DIR*
+	rm -rf ./usr/
 

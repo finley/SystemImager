@@ -1,5 +1,5 @@
 <!doctype refentry PUBLIC "-//Davenport//DTD DocBook V3.0//EN" [
-
+  <!ENTITY content SYSTEM "prepareclient.content.sgml">
   <!-- Fill in your name for FIRSTNAME and SURNAME. -->
   <!ENTITY dhfirstname "<firstname>dann</firstname>">
   <!ENTITY dhsurname   "<surname>frazier</surname>">
@@ -10,143 +10,13 @@
   <!ENTITY dhsection   "<manvolnum>8</manvolnum>">
   <!ENTITY dhemail     "<email>dannf@dannf.org</email>">
   <!ENTITY dhusername  "dann">
-  <!ENTITY dhucpackage "<refentrytitle>PREPARECLIENT</refentrytitle>">
-  <!ENTITY dhpackage   "prepareclient">
 
   <!ENTITY debian      "<productname>Debian GNU/Linux</productname>">
   <!ENTITY gnu         "<acronym>GNU</acronym>">
 ]>
 
 <refentry>
-  <docinfo>
-    <address>
-      &dhemail;
-    </address>
-    <author>
-      &dhfirstname;
-      &dhsurname;
-    </author>
-    <copyright>
-      <year>2001</year>
-      <holder>&dhusername;</holder>
-    </copyright>
-    &dhdate;
-  </docinfo>
-  <refmeta>
-    &dhucpackage;
-
-    &dhsection;
-  </refmeta>
-  <refnamediv>
-    <refname>&dhpackage;</refname>
-
-    <refpurpose>prepare a golden client's image for retrieval</refpurpose>
-  </refnamediv>
-  <refsynopsisdiv>
-    <cmdsynopsis>
-      <command>&dhpackage;</command>
-
-      <arg><option>-version</option></arg>
-      <arg><option>-h</option></arg>
-      <arg><option>-help</option></arg>
-      <arg><option>-e</option></arg>
-      <arg><option>-explicit-geometry</option></arg>
-      <arg><option>-n</option></arg>
-      <arg><option>-no-rsyncd</option></arg>
-      <arg><option>-q</option></arg>
-      <arg><option>-quiet</option></arg>
-      <arg><option>-r</option></arg>
-      <arg><option>-rpm-install</option></arg>
-
-    </cmdsynopsis>
-  </refsynopsisdiv>
-  <refsect1>
-    <title>DESCRIPTION</title>
-
-    <para>This manual page documents briefly the
-      <command>&dhpackage;</command> command.</para>
-
-    <para><command>&dhpackage;</command> is a program that prepares
-      a golden client's image for extracting by an image server.</para>
-
-  </refsect1>
-  <refsect1>
-    <title>OPTIONS</title>
-
-    <para>A summary of options is included below.  Only one option is
-      taken.</para>
-
-    <variablelist>
-      <varlistentry>
-        <term><option>-version</option></term>
-        <listitem>
-          <para>Display version and copyright information</para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-        <term><option>-h</option>, <option>-help</option></term>
-        <listitem>
-          <para>Show summary of options</para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-        <term><option>-e</option>, <option>-explicit-geometry</option></term>
-        <listitem>
-          <para>
-	    Leave partition information for getimage using explicit
-	    disk geometry.  The default is to use megabytes which allow
-	    getimage to create an autoinstall script that will work with
-	    client disks of different geometries.
-	  </para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-        <term><option>-n, </option><option>-no-rsyncd</option></term>
-        <listitem>
-          <para>Do not start the rsync daemon</para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-        <term><option>-q</option>, <option>-quiet</option></term>
-        <listitem>
-          <para>
-	    Run silently.  Return an exit status of 0 for success or a non-zero
-	    exit status for failure
-	  </para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-        <term><option>-r</option>, <option>-rpm-install</option></term>
-        <listitem>
-          <para>This is only used when building an RPM</para>
-        </listitem>
-      </varlistentry>
-    </variablelist>
-  </refsect1>
-  <refsect1>
-    <title>SEE ALSO</title>
-
-    <para><command>updateclient</command>(8)</para>
-
-    <para>More details can be found in the <citetitle>SystemImager
-	manual.</citetitle>
-    </para>
-  </refsect1>
-  <refsect1>
-    <title>AUTHOR</title>
-
-    <para>This manual page was written by &dhusername; <&dhemail;> for
-      the &debian; system (but may be used by others).</para>
-
-    <!-- <para>Permission is granted to copy, distribute and/or modify
-      this document under the terms of the <acronym>GNU</acronym> Free
-      Documentation License, Version 1.1 or any later version
-      published by the Free Software Foundation; with no Invariant
-      Sections, no Front-Cover Texts and no Back-Cover Texts.  A copy
-      of the license can be found under
-      <filename>/usr/share/common-licenses/FDL</filename>.</para> -->
-
-  </refsect1>
+  &content;
 </refentry>
 
 <!-- Keep this comment at the end of the file

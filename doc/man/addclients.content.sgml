@@ -1,0 +1,194 @@
+  <refentryinfo>
+    <address>
+      &dhemail;
+    </address>
+    <author>
+      &dhfirstname;
+      &dhsurname;
+    </author>
+    <copyright>
+      <year>2001</year>
+      <holder>&dhusername;</holder>
+    </copyright>
+    &dhdate;
+  </refentryinfo>
+  <refmeta>
+    <refentrytitle>ADDCLIENTS</refentrytitle>
+
+    &dhsection;
+  </refmeta>
+  <refnamediv>
+    <refname>addclients</refname>
+
+    <refpurpose>assign clients to an image</refpurpose>
+  </refnamediv>
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>addclients</command>
+      <arg><option>-help</option></arg>
+      <arg><option>-version</option></arg>
+      <arg><option>-quiet</option></arg>
+      <arg><option>-yes</option></arg>
+      <arg><option>-client <replaceable>HOSTNAME</replaceable></option></arg>
+      <arg><option>-host-range <replaceable>X-Y</replaceable></option></arg>
+      <arg><option>-domainname <replaceable>DOMAINNAME</replaceable></option></arg>
+      <arg><option>-ip-range <replaceable>IP-IP</replaceable></option></arg>
+      <arg><option>-file <replaceable>FILE</replaceable></option></arg>
+      <arg><option>-image <replaceable>IMAGE</replaceable></option></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+  <refsect1>
+    <title>DESCRIPTION</title>
+
+    <para>
+      This manual page documents briefly the <command>addclients</command>
+      command.
+    </para>
+
+    <para>
+      <command>addclients</command> is a tool for mapping clients to a
+      SystemImager image.
+    </para>
+
+  </refsect1>
+  <refsect1>
+    <title>OPTIONS</title>
+
+    <para>A summary of options is included below.</para>
+
+    <variablelist>
+      <varlistentry>
+	<term><option>-help</option></term>
+	<listitem><para>Show summary of options</para></listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-version</option></term>
+	<listitem>
+	  <para>Display version and copyright information.</para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-quiet</option></term>
+	<listitem>
+	  <para>
+	    Don't ask any questions or print any output (other than errors).
+	    In this mode, no warning will be given if the image already exists
+	    on the server.
+	  </para>
+	  <para>
+	    NOTE: -quiet implies -yes
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-yes</option></term>
+	<listitem>
+	  <para>
+	    Assume an answer of "yes" to all questions.  Allows this command to
+	    be run non-interactively
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-client <replaceable>HOSTNAME</replaceable></option></term>
+	<listitem>
+	  <para>
+	    Base host name of the client(s) to be autoinstalled.  Will be
+	    combined with "-host-range" to derive actual host names.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-host-range <replaceable>X-Y</replaceable></option></term>
+	<listitem>
+	  <para>
+	    Number range used to create a series of host names based on the
+	    <option>-client</option> option.  For example, "-client www -range
+	    1-3" will cause addclients to use www1, www2, and www3 as host
+	    names.  If leading zeros are used, then host names will be padded
+	    with zeros.  For example, "-client www -range 01-03" produces
+	    host names www01, www02, and www03.  Padding hostnames with zeros
+	    is not recommended.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-domainname <replaceable>DOMAINNAME</replaceable></option></term>
+	<listitem>
+	  <para>
+	    If this option is used, <replaceable>DOMAINNAME</replaceable> will
+	    be appended to the client host name(s).
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-i <replaceable>IP<subscript>0</subscript>-IP<subscript>1</subscript></replaceable></option></term>
+	<listitem>
+	  <para>
+	    The range of IP addresses to assign to your autoinstall clients.
+	    Where IP<subscript>0</subscript> is the first IP address in the
+	    range and IP<subscript>1</subscript> is the last ip address in the
+	    range.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-file <replaceable>FILE</replaceable></option></term>
+	<listitem>
+	  <para>
+	    Read host names and images to process from FILE.  This option can
+	    be used instead of the <option>-client</option> and
+	    <option>-host-range</option> options.  The file format is
+	    <literallayout>
+	      hostname imagename
+	    </literallayout>
+	    
+	    Here are some example file contents:
+	    <literallayout>
+	      www1 web_image_v1
+	      www2 web_image_v1
+	      www-test web_image_v2
+	      db1 database_image_v1
+	      db2 database_image_v1
+	    </literallayout>
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-image <replaceable>IMAGE</replaceable></option></term>
+	<listitem>
+	  <para>
+	    The image that these clients should autoinstall.
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+  
+  <refsect1>
+    <title>SEE ALSO</title>
+
+    <para>
+      <command>getimage</command>(8), <command>makedhcpserver</command>(8),
+      <command>makedhcpstatic</command>(8)
+    </para>
+
+    <para>More details can be found in the <citetitle>SystemImager
+	manual.</citetitle>
+    </para>
+  </refsect1>
+  <refsect1>
+    <title>AUTHOR</title>
+
+    <para>This manual page was written by &dhusername; <&dhemail;> for
+      the &debian; system (but may be used by others).</para>
+
+    <!-- <para>Permission is granted to copy, distribute and/or modify
+      this document under the terms of the <acronym>GNU</acronym> Free
+      Documentation License, Version 1.1 or any later version
+      published by the Free Software Foundation; with no Invariant
+      Sections, no Front-Cover Texts and no Back-Cover Texts.  A copy
+      of the license can be found under
+      <filename>/usr/share/common-licenses/FDL</filename>.</para> -->
+
+  </refsect1>

@@ -1,0 +1,81 @@
+  <refentryinfo>
+    <address>
+      &dhemail;
+    </address>
+    <author>
+      &dhfirstname;
+      &dhsurname;
+    </author>
+    <copyright>
+      <year>2001</year>
+      <holder>&dhusername;</holder>
+    </copyright>
+    &dhdate;
+  </refentryinfo>
+  <refmeta>
+    <refentrytitle>MKDHCPSTATIC</refentrytitle>
+
+    &dhsection;
+  </refmeta>
+  <refnamediv>
+    <refname>mkdhcpstatic</refname>
+
+    <refpurpose>
+      create a DHCP server configuration file with static entries
+    </refpurpose>
+  </refnamediv>
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>mkdhcpstatic</command>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+  <refsect1>
+    <title>DESCRIPTION</title>
+
+    <para>This manual page documents briefly the
+      <command>mkdhcpstatic</command> command.</para>
+
+    <para>
+      <command>mkdhcpstatic</command> is a utility for generating a 
+      a dhcpd configuration file for use with SystemImager.  Static entries
+      are created for IP addresses that are currently dynamically leased.
+      This utility should be used after autoinstalling clients with an image
+      that uses the dhcp_static method.  This method is assigned to the image
+      by <command>getimage</command>.
+    </para>
+
+  </refsect1>
+  <refsect1>
+    <title>OPTIONS</title>
+
+    <para>
+      <command>mkdhcpstatic</command> currently accepts to options.
+    </para>
+
+  </refsect1>
+  <refsect1>
+    <title>SEE ALSO</title>
+
+    <para>
+      <command>mkdhcpserver(8)</command>, <command>getimage</command>(8)
+    </para>
+
+    <para>More details can be found in the <citetitle>SystemImager
+	manual.</citetitle>
+    </para>
+  </refsect1>
+  <refsect1>
+    <title>AUTHOR</title>
+
+    <para>This manual page was written by &dhusername; <&dhemail;> for
+      the &debian; system (but may be used by others).</para>
+
+    <!-- <para>Permission is granted to copy, distribute and/or modify
+      this document under the terms of the <acronym>GNU</acronym> Free
+      Documentation License, Version 1.1 or any later version
+      published by the Free Software Foundation; with no Invariant
+      Sections, no Front-Cover Texts and no Back-Cover Texts.  A copy
+      of the license can be found under
+      <filename>/usr/share/common-licenses/FDL</filename>.</para> -->
+
+  </refsect1>

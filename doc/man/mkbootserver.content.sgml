@@ -1,0 +1,144 @@
+  <refentryinfo>
+    <address>
+      &dhemail;
+    </address>
+    <author>
+      &dhfirstname;
+      &dhsurname;
+    </author>
+    <copyright>
+      <year>2001</year>
+      <holder>&dhusername;</holder>
+    </copyright>
+    &dhdate;
+  </refentryinfo>
+  <refmeta>
+    <refentrytitle>MKBOOTSERVER</refentrytitle>
+
+    &dhsection;
+  </refmeta>
+  <refnamediv>
+    <refname>mkbootserver</refname>
+
+    <refpurpose>
+      Configure a server so that other machines can boot from it over the
+      network.
+    </refpurpose>
+  </refnamediv>
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>mkbootserver</command>
+
+      <arg><option>-f</option></arg>
+      <arg><option>--interface=<replaceable>INTERFACE</replaceable></option></arg>
+      <arg><option>--localdhcp=<replaceable>[y|n]</replaceable></option></arg>
+      <arg><option>--kernel=<replaceable>PATH</replaceable></option></arg>
+      <arg><option>--initrd=<replaceable>PATH</replaceable></option></arg>
+      <arg><option>--tftpdir=<replaceable>PATH</replaceable></option></arg>
+      <arg><option>--pxelinux=<replaceable>PATH</replaceable></option></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+  <refsect1>
+    <title>DESCRIPTION</title>
+
+    <para>This manual page documents briefly the
+      <command>mkbootserver</command> command.</para>
+
+    <para>
+      <command>mkbootserver</command> is a tool that assists in configuring
+      a network boot server (currently just PXE servers).  It runs in both
+      interactive and non-interactive modes.
+    </para>
+
+  </refsect1>
+  <refsect1>
+    <title>OPTIONS</title>
+
+    <para>A summary of options is included below.</para>
+
+    <variablelist>
+      <varlistentry>
+	<term><option>-f</option></term>
+	<listitem>
+	  <para>
+	    Turn off interactive mode.  All other options must be specified
+	    for this to work.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>--interface=<replaceable>INTERFACE</replaceable></option></term>
+	<listitem>
+	  <para>The interface the PXE daemon will listen on.</para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>--localdhcp=<replaceable>[y|n]</replaceable></option></term>
+	<listitem>
+	  <para>
+	    This specifies whether or not the DHCP server will run locally
+	    or on another machine.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>--kernel=<replaceable>PATH</replaceable></option></term>
+	<listitem>
+	  <para>The full path to the kernel that clients should boot.</para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>--initrd=<replaceable>PATH</replaceable></option></term>
+	<listitem>
+	  <para>
+	    The full path to the initial ramdisk that clients should use.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>--tftpdir=<replaceable>PATH</replaceable></option></term>
+	<listitem>
+	  <para>
+	    The full path to the directory from which the tftp server will
+	    serve files.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>--pxelinux=<replaceable>PATH</replaceable></option></term>
+	<listitem>
+	  <para>
+	    The full path to the pxelinux bootloader.  This is a part of the
+	    syslinux package.
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+  <refsect1>
+    <title>SEE ALSO</title>
+
+    <para>
+      <command>makedhcpserver</command>(8),
+      <command>makedhcpstatic</command>(8)
+    </para>
+
+    <para>More details can be found in the <citetitle>SystemImager
+	manual.</citetitle>
+    </para>
+  </refsect1>
+  <refsect1>
+    <title>AUTHOR</title>
+
+    <para>This manual page was written by &dhusername; <&dhemail;> for
+      the &debian; system (but may be used by others).</para>
+
+    <!-- <para>Permission is granted to copy, distribute and/or modify
+      this document under the terms of the <acronym>GNU</acronym> Free
+      Documentation License, Version 1.1 or any later version
+      published by the Free Software Foundation; with no Invariant
+      Sections, no Front-Cover Texts and no Back-Cover Texts.  A copy
+      of the license can be found under
+      <filename>/usr/share/common-licenses/FDL</filename>.</para> -->
+
+  </refsect1>

@@ -1,0 +1,870 @@
+    <chapter>
+      <title>Frequently Asked Questions</title>
+    <qandaset defaultlabel='qanda'>
+      <qandaentry>
+	<question><para>Where are the images stored?</para></question>
+	<answer>
+	  <para>
+	    The images are stored in
+	    <filename>/var/lib/systemimager/images</filename>  
+	  </para>
+	  <note>
+	    <para>
+	      NOTE: If you are short on disk space in this location, move the
+	      directory in another location:
+	    </para>
+	  </note>
+	  <para>
+	    <command>
+	      mv /var/lib/systemimager/images /home/systemimager_images
+	    </command>
+	  </para>
+	  <para>
+	    And create a soft link to the new directory.
+	  </para>
+	  <para>
+	    <command>
+	      ln -s /home/systemimager_images /var/lib/systemimager/images
+	    </command>
+	  </para>
+	</answer>
+      </qandaentry>
+      <qandaentry>
+	<question>
+	  <para>How do I make an autoinstall diskette?</para>
+	</question>
+	<answer>
+	  <para>
+	    Run the <command>mkautoinstalldiskette</command> command on the 
+	    image server.
+	  </para>
+	</answer>
+      </qandaentry>
+      <qandaentry>
+	<question><para>How do I make an autoinstall CD?</para></question>
+	<answer>
+	  <para>
+	    Run the <command>mkautoinstallcd</command> command on the image
+	    server.
+	  </para>
+	</answer>
+      </qandaentry>
+      <qandaentry>
+	<question>
+	  <para>How do I make an autoinstall punch card?</para>
+	</question>
+	<answer>
+	  <para>
+	    Run the <command>mkautoinstallpunchcard</command> command on the
+	    image server - deprecated :)
+	  </para>
+	</answer>
+      </qandaentry>
+      <qandaentry>
+	<question>
+	  <para>
+	    How do I set up my autoinstall clients so that the console is
+	    available via the serial port?
+	  </para>
+	</question>
+	<answer>
+	  <BlockQuote>
+	    <LiteralLayout>
+	      Making SystemImager work with a serial console
+	      Michael S. Fischer, &lt;michael@auctionwatch.com&gt;
+	      Last modified: 01/04/26 19:20:27
+	      
+	      The current version of SystemImager as of this writing (1.4.1)
+	      does not support PXE booting of clients with serial console
+	      support.  This document describes how to rebuild the kernel and
+	      initrd such that serial console support is possible.
+	      
+	      Step 1: Download the sources
+	      
+	      Fetch the source tarball from
+	      http://prdownloads.sourceforge.net/systemimager/va-systemimager-source-1.4.1.tar.bz2
+	      Save it and unpack it to /tmp on your boot server.
+	      
+	      # bzcat va-systemimager-source-1.4.1.tar.bz2 | tar -C /tmp -xf -
+	      
+	      
+	      Step 2: Prepare the kernel
+	      
+	      # cd /tmp/va-systemimager-source-1.4.1
+	      # bzcat other_source_and_patches_used_in_this_release.tar.bz2 | tar xf -
+	      # cd other_source_and_patches_used_in_this_release
+	      # cd linux-2.2.18+reiserfs+raid+aic7xxx+VM
+	      
+	      Now, edit the .config file in this directory.  Search for a line that
+	      reads
+	      
+	      # CONFIG_SERIAL is not set
+	      
+	      and change it to read
+	      
+	      CONFIG_SERIAL=y
+	      CONFIG_SERIAL_CONSOLE=y
+	      
+	      Then, build the kernel:
+	      
+	      # make clean && make bzImage
+	      
+	      
+	      Step 3: Install the kernel
+	      
+	      Next, you'll need to place the kernel in /tftpboot and
+	      /tftpboot/X86PC/UNDI/linux-install:
+	      
+	      # cp arch/i386/boot/bzImage /tftpboot/kernel
+	      # cp arch/i386/boot/bzImage /tftpboot/X86PC/UNDI/linux-install/kernel
+	      
+	      
+	      Step 4: Fix the initrd
+	      
+	      The initrd, or initial RAM disk containing the root filesystem, needs
+	      to be unpacked, mounted, and its contents edited.  Here's how:
+	      
+	      # cp /tftpboot/initrd.gz /tmp
+	      # cd /tmp && gunzip initrd.gz
+	      # mkdir /mnt2
+	      # mount /tmp/initrd /mnt2 -o loop
+	      # cd /mnt2/dev
+	      # rm -f console
+	      # mknod -m 622 console c 5 1
+	      # mknod -m 600 ttyS0 c 4 64
+	      
+	      Once you've finished this, you should unmount the initrd, recompress
+	      it, and return it to /tftpboot:
+	      
+	      # cd /tmp
+	      # umount /mnt2
+	      # gzip -9 initrd
+	      # cp initrd.gz /tftpboot
+	      # cp initrd.gz /tftpboot/X86PC/UNDI/linux-install
+	      
+	      
+	      Step 5: Edit syslinux.cfg
+	      
+	      The final step is to configure pxelinux to pass the "console="
+	      arguments to the kernel.  Here is a suitable syslinux.cfg file:
+	      
+	      DEFAULT kernel
+	      APPEND console=tty0 console=ttyS0,9600n8 vga=extended load_ramdisk=1
+	      prompt_ramdisk=0 initrd=initrd.gz root=/dev/ram rw
+	      DISPLAY message.txt
+	      PROMPT 1
+	      TIMEOUT 50
+	      
+	      Edit the contents of /tftpboot/pxelinux.cfg/syslinux.cfg to reflect
+	      the changes above.  Then, copy this file to
+	      /tftpboot/X86PC/UNDI/linux-install/pxelinux.cfg/syslinux.cfg.
+	    </LiteralLayout>
+	  </BlockQuote>
+	</answer>
+      </qandaentry>
+      <qandaentry>
+	<question>
+	  <para>Does the DHCP server have to be on the image server?</para>
+	</question>
+	<answer>
+	  <para>
+	    No.  If you are using DHCP, you can use "option-100" and set it's
+	    value to the IP address of the image server.  If you use
+	    "mkdhcpstatic" to configure your <filename>dhcpd.conf</filename>
+	    file, it will ask you for the IP address of your image server and
+	    add the appropriate entry for you.
+	  </para>
+	  <para>
+	    Yes, we now know that option-100 has an official use.  We are
+	    working on either getting an official number assigned or using a
+	    number from the private number range.
+	  </para>
+	</answer>
+      </qandaentry>
+      <qandaentry>
+	<question>
+	  <para>
+	    How do I add a driver for a special card to the autoinstall client?
+	  </para>
+	</question>
+	<answer>
+	  <para>
+	    All you have to do is start with the linux kernel source and the 
+	    <filename>.config</filename> file that you can find in the CVS
+	    repository on SourceForge:
+	  </para>
+	  <para>
+	    <ulink url="http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/~checkout~/systemimager/systemimager/">
+	      SystemImager CVS Repository
+	    </ulink>
+	  </para>
+	  <para>
+	    The 2.0.1 autoinstall media is based on Linux 2.2.18 and has
+	    various patches applied.  You can find this source on the
+	    SystemImager web site.
+	  </para>
+	  <para>
+	    Put the <filename>.config</filename> file in your
+	    <filename>/usr/src/linux</filename> directory
+	    as <filename>.config</filename> and run
+	    <command>make menuconfig</command> or your favourite kernel config
+	    utility.  Choose the driver for the card you need.
+	  </para>
+	  <para>
+	    However!  This will probably make the kernel too large for the
+	    floppy.  So you will want to de-select drivers for many of the
+	    cards that will not be used.  I would recommend de-selecting all of
+	    the Ethernet cards except for the ones you need.
+	  </para>
+	  <para>
+	    Do the standard:
+	  </para>
+	  <programlisting>
+	    make dep
+	    make clean
+	    make bzImage
+	  </programlisting>
+	  <para>
+	    Please refer to the
+	    <ulink url="http://www.caldera.com/LDP/HOWTO/Kernel-HOWTO.html">
+	      Kernel-HOWTO
+	    </ulink> for more information on recompiling a kernel.
+	  </para>
+	  <para>
+	    Then copy the resultant kernel over the kernel (<filename>
+	      /usr/share/systemimager/i386-boot/kernel</filename>) installed in
+	    <filename>/usr/share/systemimager/i386-boot</filename> by
+	    SystemImager.
+	  </para>
+	  <para>
+	    You should now be able to do a
+	    <command>mkautoinstalldiskette</command>,
+	    <command>mkautoinstallcd</command>, or boot off the network.
+	  </para>
+	</answer>
+      </qandaentry>
+      <qandaentry>
+	<question>
+	  <para>How do I exclude files or directories during a getimage?</para>
+	</question>
+	<answer>
+	  <para>
+	    As of 2.0.1 there is not support for this.  Look for this feature
+	    soon.
+	  </para>
+	</answer>
+      </qandaentry>
+      <qandaentry>
+	<question>
+	  <para>
+	    Do I have to do anything to prepare a client from which I will get 
+	    an image?
+	  </para>
+	</question>
+	<answer>
+	  <para>
+	    Yes.  Install the systemimager-client package.  If this package is
+	    already installed, all you have to do is run the
+	    <command>prepareclient</command> command prior to running
+	    <command>getimage</command> from the image server.
+	  </para>
+	  <para>
+	    You will also want to add any software, configure any files, and do
+	    any tweaking to make the system just how you like it!
+	  </para>
+	</answer>
+      </qandaentry>
+      <qandaentry>
+	<question>
+	  <para>
+	    Can I use the autoinstalldiskette or autoinstallcd on more than one
+	    machine?
+	  </para>
+	</question>
+	<answer>
+	  <para>
+	    Yes.  The autoinstall media is generic, and can be on any machine
+	    that you want to autoinstall.
+	  </para>
+	</answer>
+      </qandaentry>
+      <qandaentry>
+	<question><para>How do I push an image to a client?</para></question>
+	<answer>
+	  <para>
+	    Starting with version 1.5, you can use the
+	    <command>pushupdate</command> command.  It essentially logs into
+	    each client and executes the <command>updateclient</command>
+	    command.
+	  </para
+	</answer>
+      </qandaentry>
+      <qandaentry>
+	<question>
+	  <para>Ok, so how do I pull an image to a client?</para>
+	</question>
+	<answer>
+	  <para>
+	    If you ran <command>mkdhcpserver</command> to configure your dhcp 
+	    information, and if you answered all the questions you were asked
+	    when you did your <command>getimage</command>, including the
+	    hostnames and IP addresses, then all you have to do is boot your
+	    client with any one of the three forms of autoinstall media.  
+	  </para>
+	  <para>
+	    They are:
+	  </para>
+	  <orderedlist>
+	    <listitem>
+	      <para>
+		<emphasis>autoinstalldiskette</emphasis> - takes longer to boot
+		and floppies are often quite volatile
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		<emphasis>autoinstallcd</emphasis> - takes slightly less time
+		to boot and is more durable, but you have to have a CD burner
+		and clients that can read CD-R's)
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		<emphasis>network boot</emphasis> - dramatically faster boot
+		time, but requires PXE capable network cards in the clients,
+		and additional server-side configuration.
+	      </para>
+	    </listitem>
+	  </orderedlist>
+	  <para>
+	    Search this document for <command>mkautoinstallcd</command> and 
+	    <command>mkautoinstalldiskette</command> for more information.
+	  </para>
+	</answer>
+      </qandaentry>
+      <qandaentry>
+	<question>
+	  <para>
+	    How does an autoinstall client know which image to install?
+	  </para>
+	</question>
+	<answer>
+	  <para>
+	    In order to better understand the answer, let me lead up to it with
+	    the	steps the autoinstall client goes through:
+	  </para>
+	  <orderedlist>
+	    <listitem>
+	      <para>
+		Boots off the autoinstallmedia
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		Gets an IP address from DHCP
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		Determines the IP address of the image server via DHCP
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		Requests a hosts file from the image server
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		Finds its hostname in the hosts file based on its IP address
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		Requests a script from the image server based on its hostname
+		(for example: <filename>www237.sh</filename>)
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		Executes this script
+	      </para>
+	    </listitem>
+	  </orderedlist>
+	  <para>
+	    The script in question is typically a soft link pointing at the 
+	    <filename>$image.master</filename> script that was dynamically
+	    created when you ran <command>getimage</command>.  This script
+	    explicitly states which image to pull from the image server.  Open
+	    it up and take a look!
+	  </para>
+	  <para>
+	    These scripts and the <filename>$image.master</filename> script can
+	    be found in <filename>/var/lib/systemimager/scripts</filename>.
+	  </para>
+	</answer>
+      </qandaentry>
+      <qandaentry>
+	<question><para>How do I upgrade to a new version?</para></question>
+	<answer>
+	  <para>
+	    If you installed SystemImager as of 1.0 or later, you can simply 
+	    install the new version on top.  Using a packaged version (.rpm,
+	    .deb) is recommended as this will prevent cruft build-up on your
+	    system.
+	  </para>
+	  <para>
+	    If you last installed a pre-1.0 version then you can't simply
+	    install a new version on top of an old one.  Depending on the
+	    version changes, this may work for you, but it is not guaranteed.
+	    If you want to try this method, please check with the
+	    <filename>CHANGE.LOG</filename> document to find out what has
+	    changed.
+	  </para>
+	  <para>
+	    Currently the recommended method is to move your images directory
+	    out	of the systemimager directory hierarchy, back up your 
+	    <filename>/etc/rsyncd.conf</filename> file and any other
+	    configuration files you may have changed.  Then install
+	    SystemImager as if you were installing it for the first time, after
+	    which you can move your images directory and
+	    <filename>/etc/rsyncd.conf</filename> file back.
+	  </para>
+	</answer>
+      </qandaentry>
+      <qandaentry>
+	<question>
+	  <para>But I want to assign static IPs to my clients!</para>
+	</question>
+	<answer>
+	  <para>
+	    You can! <command>getimage</command> will ask you if you want to
+	    assign static IPs.
+	  </para>
+	</answer>
+      </qandaentry>
+      <qandaentry>
+	<question>
+	  <para>
+	    I want to use DHCP to assign static IPs to my clients, but I don't 
+	    want to have to manually enter my 1000 mac addresses.  What can I
+	    do?
+	  </para>
+	</question>
+	<answer>
+	  <para>
+	    SystemImager comes with the <command>mkdhcpstatic</command>
+	    utility.  As you boot your client systems, the DHCP server will
+	    assign addresses sequentially.  By initially booting your systems
+	    in the order you want them to receive their IP addresses, you can
+	    ensure that they get the IP	address you want them to have.  
+	  </para>
+	  <para>
+	    After booting your systems, run <command>mkdhcpstatic</command>.
+	    It will re-write your <filename>/etc/dhcpd.conf</filename> file
+	    associating each clients MAC address with its host name.  You
+	    should then restart your dhcpd daemon.  Subsequently, each time
+	    your clients request an IP address via DHCP, the will always be
+	    assigned their appropriate static IP address.
+	  </para>
+	  <para>
+	    Note:  The client's hostname is used, instead of an explicit IP
+	    address, so that you simply have to change the
+	    <filename>hosts</filename> file on the DHCP server (or DNS, NIS,
+	    etc.) to change the IP address that that client recieves.
+	  </para>
+	  <para>
+	    Note:  Static IP addresses, assigned by DHCP, are the author's
+	    preferred method for administering IP on a large number of systems,
+	    if static IP addresses are actually required.
+	  </para>
+	</answer>
+      </qandaentry>
+      <qandaentry>
+	<question>
+	  <para>What kind of performance can I expect?</para>
+	</question>
+	<answer>
+	  <para>
+	    Here are some unofficial numbers that I came up with.  Your
+	    experience may be quite different based on the speed of your
+	    network, the performance of your image server and clients, and the
+	    size of the image.
+	  </para>
+	  <para>
+	    If you can send me statistics from your experience, I'll add them
+	    below.
+	  </para>
+	  
+	  <table frame="all">
+	    <title>SystemImager Performance Statistics</title>
+	    <tgroup cols="4">
+	      <colspec colname="column1">
+	      <colspec colname="column2">
+	      <colspec colname="column3">
+	      <colspec colname="column4">
+	      <colspec colname="column5">
+	      <thead>
+		<row>
+		  <entry>Size of Image</entry>
+		  <entry>Clients</entry>
+		  <entry>Network Type</entry>
+		  <entry>Switched</entry>
+		  <entry>Elapsed Time</entry>
+		</row>
+	      </thead>
+	      <tbody>
+		<row>
+		  <entry>2.5 GB</entry>
+		  <entry>21</entry>
+		  <entry>100BaseTx</entry>
+		  <entry>yes</entry>
+		  <entry>1.5 Hours</entry>
+		</row>
+		<row>
+		  <entry>1.5 GB</entry>
+		  <entry>20</entry>
+		  <entry>100BaseTx</entry>
+		  <entry>yes</entry>
+		  <entry>.5 Hours</entry>
+		</row>
+	      </tbody>
+	    </tgroup>
+	  </table>
+	</answer>
+      </qandaentry>
+      <qandaentry>
+	<question>
+	  <para>How do I update an image on the image server?</para>
+	</question>
+	<answer>
+	  <para>
+	    There are two ways to update an image on the image server:
+	  </para>
+	  <orderedlist>
+	    <listitem>
+	      <para>
+		Make the changes to one of your clients and run the 
+		<command>getimage</command> again.  
+	      </para>
+	      <para>
+		- You can specify the same image name, in which case the
+		current image will be updated (only changes are pulled across).
+	      </para>
+	      <para>
+		- Or you can specify a new image name and have a form of
+		revision control.  (This is by far the recommended method)
+	      </para>
+	      <para>
+		Note:  Every time <command>getimage</command> is run, it will
+		recreate the <filename>$image.master</filename> script.  If you
+		have customized your <filename>$image.master</filename> script,
+		be sure to save it before running <command>getimage</command>
+		again.
+	      </para>
+	    </listitem>
+
+	    <listitem>
+	      <para>
+		Modify the files directly.  You can simply cd into the
+		appropriate image directory and edit the files there, or
+		(recommended) you can <command>cd </command>into the image
+		directory and run <command>'chroot . sh'</command>.  This will
+		change your working root directory to the root of the image you
+		want to manipulate.  You can then run <command>rpm</command>
+		command and other commands on the image and not have to worry
+		about getting confused and damaging the image server.  When you
+		are done, simply type <command>exit</command> and you will be
+		returned to your normal shell.
+	      </para>
+	    </listitem>
+	  </orderedlist>
+	</answer>
+      </qandaentry>
+      <qandaentry>
+	<question>
+	  <para>How do I update a client to match an image?</para>
+	</question>
+	<answer>
+	  <para>
+	    Once you have updated an image on the image server, you can then
+	    update your clients to reflect this new or modified image.  (It is
+	    not necessary to do a complete re-autoinstall.)  You will find the
+	    command, <command>updateclient</command>, on your clients.  This
+	    command takes as its parameters the name of the image server and
+	    the name of the image that you want to update the client to.  Run
+	    <command>updateclient -help</command> to get more information about
+	    this command.
+	  </para>
+	  <para>
+	    If you use the revision control method recommended in "How do I
+	    update an image on the image server?" FAQ, then you will be able to
+	    bring your production environment back to a known state (by doing
+	    an <command>updateclient</command> to the last working image) after
+	    having done an <command>updateclient</command> to a not quite so
+	    thoroughly tested image.
+	  </para>
+	  <para>
+	    The file
+	    <filename>/etc/systemimager/updateclient.local.exclude</filename>
+	    on your clients is  used to exclude files and directories from
+	    being updated by the <command>updateclient</command> command.
+	    Please take a look at this file and modify it to suit your local
+	    environment.
+	  </para>
+	</answer>
+      </qandaentry>
+      <qandaentry>
+	<question>
+	  <para>
+	    What is <filename>updateclient.local.exclude</filename> used for?
+	  </para>
+	</question>
+	<answer>
+	  <para>
+	    It is used by the <command>updateclient</command> command.  See the
+	    section, "How do I update a client to match an image?", for more 
+	    information.
+	  </para>
+	</answer>
+      </qandaentry>
+      <qandaentry>
+	<question>
+	  <para>How do I build a new "front-end" server?</para>
+	</question>
+	<answer>
+	  <para>
+	    Another way of stating the question or a slight variation may be as
+	    follows. We are in the process of building a new "front-end" server
+	    for our Linux cluster.  We'd like to try using SystemImager as our
+	    node cloning software if possible.
+	  </para>
+	  <para>
+	    I've read through the SystemImager FAQ and found the following:
+	    <blockquote> 
+	      <para>
+		All of the clients for a particular image should have an
+		identical hardware configuration.  They should at least have
+		the same hard drive(s) and the same ethernet card(s).
+	      </para>
+	    </blockquote> 
+	  </para>
+	  <para>
+	    This is a problem since our front-end which the image will be
+	    captured from has a SCSI hard drive and a Gigabit ethernet card.
+	    Our 64 compute nodes on the other hand have IDE disk drives and
+	    fast ethernet cards.
+	  </para>
+	  <para>
+	    Are we out of luck?
+	  </para>
+	  <para>
+	    Nope.  Just a little customization ahead of you...
+	  </para>
+	  <para>
+	    Once you have done your <command>getimage</command> you will need
+	    to edit the <filename>conf.modules</filename> in the image on the
+	    image server to load the appropriate module for your ethernet card.
+	  </para>
+	  <para>
+	    <command>
+	      vi /var/spool/systemimager/images/$imagename/etc/conf.modules
+	    </command>
+	  </para>
+	  <para>
+	    I believe your entry will look like this:
+	  </para>
+	  <para>
+	    <programlisting>
+	      alias eth0 tulip
+	    </programlisting>
+	  </para>
+	  <para>
+	    You will need to edit the fstab file in the image:
+	  </para>
+	  <para>
+	    <command>
+	      vi /var/spool/systemimager/images/$imagename/etc/fstab"
+	    </command>
+	  </para>
+	  <para>
+	    Be sure it says <filename>/dev/hdaN</filename> instead of 
+	    <filename>/dev/sdaN</filename>.
+	  </para>
+	  <para>
+	    You will need to specify the partition information in the
+	    <filename>$imagename.master</filename> script that was created when
+	    you did your <command>getimage</command>.
+	  </para>
+	  <para>
+	    <command>
+	      vi /var/spool/systemimager/installstuff/$imagename.master
+	    </command>
+	  </para>
+	  <para>
+	    You will find a section that looks like this:
+	  </para>
+	  <para>
+	    <programlisting>
+# Here's an example of how to customize a disk:
+# start at the beginning 0, give 20M /dev/sda1 for /boot, assume partition type 83
+# start where left off, 512M /dev/sda2 for swap, partition type 82
+# start where left off, give the rest of the disk to /dev/sda3 for /, assume partition type 83
+#sfdisk -uM /dev/sda &lt;&lt;EOF
+#0,20
+#,512,82
+#,
+#;
+#EOF
+
+Uncomment the lines from sfdisk down to EOF (EOF must be flush left)
+and change the values to specify your partitions according to the
+example.
+
+If you don't want to have to think so much, then you can simply do
+the following command on a client that is already partitioned correctly:
+
+"sfdisk -d /dev/hda" (Assuming you only have one disk and that disk is /dev/hda.)
+	    </programlisting>
+	  </para>
+	  <para>
+	    Then copy the output into the <filename>$install.master</filename>
+	    script and delete the existing entries for the SCSI disk.
+	  </para>
+	  <para>
+	    Search the <filename>$imagename.master</filename> script for all
+	    entries of your old drive <filename>/dev/sda</filename> and be sure
+	    that they are changed to the appropriate drive
+	    <filename>/dev/hda</filename>.  This will be for the
+	    <command>mke2fs</command> and <command>mkswap</command> 
+	    sections.
+	  </para>
+	  <para>
+	    Proceed as normal.
+	  </para>
+	</answer>
+      </qandaentry>
+      <qandaentry>
+	<question>
+	  <para>
+	    How do I edit the scripts so only the FIRST disk is sfdisk'ed? I
+	    MUST leave the other disks alone.
+	  </para>
+	</question>
+	<answer>
+	  <para>
+	    After you run <command>prepareclient</command>, look in the 
+	    <filename>/etc/partitionschemes</filename> directory on that
+	    client.  You will find a file that has the partition
+	    information for each of that clients disks.  Simply delete all
+	    except for the primary disk.
+	  </para>
+	  <para>
+	    Now you can do your <command>getimage</command> and everything else
+	    like normal.
+	  </para>
+	  <para>
+	    The only other thing to verify is that the
+	    <filename>fstab</filename> file in the image has no entries for the
+	    other disks.
+	  </para>
+	  <para>
+	    <command>
+	      vi /var/spool/systemimager/images/$imagename/etc/fstab
+	    </command>
+	  </para>
+	</answer>
+      </qandaentry>
+      <qandaentry>
+	<question>
+	  <para>
+	    How can I use SystemImager to update a small set of files? For 
+	    instance, I apply a security patch and I want all boxes to reflect 
+	    that change.
+	  </para>
+	</question>
+	<answer>
+	  <para>
+	    This is accomplished with the <command>updateclient</command>
+	    command on the client.
+	  </para>
+	  <para>
+	    <orderedlist>
+	      <listitem>
+		<para>
+		  Choose one of the following methods to update the image on
+		  the server:
+		  <orderedlist>
+		    <listitem>
+		      <para>
+			apply the patch to the image directly
+		      </para>
+		    </listitem>
+		    <listitem>
+		      <para>
+			apply the patch to a client and then do another
+			getimage specifying the same imagename (won't take long
+			and will update the image).
+		      </para>
+		    </listitem>
+		    <listitem>
+		      <para>
+			apply the patch to a client and then do another
+			getimage specifying a _different_ imagename.  This is
+			preferred as it allows for revision control.
+		      </para>
+		    </listitem>
+		  </orderedlist>
+		</para>
+	      </listitem>
+	      
+	      <listitem>
+		<para>
+		  Run <command>updateclient</command> on the clients that you
+		  want to update.  Execute
+		  <command>updateclient -help</command> to get the syntax.
+		</para>
+	      </listitem>
+	    </orderedlist>
+	  </para>
+	</answer>
+      </qandaentry>
+      <qandaentry>
+	<question>
+	  <para>
+	    Is there a log file where autoinstall client status is kept?
+	  </para>
+	</question>
+	<answer>
+	  <para>
+	    Yes.  SystemImager logs can be found on the image server in the
+	    directory <filename>/var/log/systemimager</filename>
+	  </para>
+	</answer>
+      </qandaentry>
+      <qandaentry>
+	<question><para>What other software is this based on?</para></question>
+	<answer>
+	  <para>
+	    SystemImager is based on <command>rsync(1)</command> and also makes
+	    use of:
+	    <ItemizedList>
+	      <ListItem>
+		<para><command>systemconfigurator(1)</command></para>
+	      </ListItem>
+	      <ListItem>
+		<para><command>busybox(1)</command></para>
+	      </ListItem>
+	      <ListItem>
+		<para><command>syslinux(2)</command></para>
+	      </ListItem>
+	      <ListItem>
+		<para><command>pxelinux(2)</command></para>
+	      </ListItem>
+	    </ItemizedList>
+	    Versions 0.23 and earlier made use of tomsrtbt(4).
+	  </para>
+	  </answer>
+      </qandaentry>
+    </qandaset>
+  </chapter>

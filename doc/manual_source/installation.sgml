@@ -1,0 +1,252 @@
+<chapter>
+  <title>SystemImager Installation</title>
+  <section>
+    <title>Obtaining SystemImager</title>
+    <para>
+      SystemImager is packaged in tarball, deb, and RPM formats.  Use of the
+      RPMs or debs is recommended over the tarball packages, if supported by
+      your distribution.  SystemImager is a part of the Debian GNU/Linux 3.0
+      distribution starting with 3.0 (woody).  For earlier releases, and
+      other distributions, packages can be downloaded from
+      <ulink url="http://systemimager.org">http://systemimager.org/</ulink>.
+    </para>
+  </section>
+  <section>
+    <title>Selecting A Machine To Use As An Image Server</title>
+    <para>
+      SystemImager makes use of other network services, such as DHCP.  An
+      existing server that provides these services often makes a good
+      choice for an image server.  Your image server needs to have enough
+      disk space to hold the images you want to deploy.  SystemImager stores
+      images as an uncompressed directory structure, so a quick analysis
+      of the disk usage on your golden client will give you a good estimate
+      of the space required on the image server.  If you plan to do multiple
+      simulataneous image updates, the processor performance on your image
+      server can become a bottleneck - keep this in mind when selecting the
+      number and speed of processors for your image server.
+    </para>
+  </section>
+  <section>
+    <title>Installing an Image Server</title>
+    <para>
+      To create a SystemImager image server, you must install the
+      systemimager-server package.
+      </para>
+    <procedure>
+      <title>Debian GNU/Linux 3.0 (woody) and later</title>
+      <step>
+	<para><command><prompt>#</prompt> apt-get update</command></para>
+      </step>
+      <step>
+	<para>
+	  <command>
+	    <prompt>#</prompt> apt-get install systemimager-server
+	  </command>
+	</para>
+      </step>
+    </procedure>
+    <note>
+      <para>
+	For Debian 2.2 (potato), you must add the following line to the file
+	<filename>/etc/apt/sources.list</filename>:
+      </para>
+      <para>
+	<computeroutput>
+	  deb http://systemimager.org/debian / 
+	</computeroutput>
+      </para>
+    </note>
+    <procedure>
+      <title>RPM based distributions</title>
+      <step>
+	<para>
+	  Download and install the systemimager-server RPM and required
+	  dependencies from
+	  <ulink url="http://systemimager.org/download/">
+	    http://systemimager.org/download/
+	  </ulink>.
+	</para>
+      </step>
+      <step>
+	<para>
+	  Install each package with the <command>rpm</command> command.
+	</para>
+	<para>
+	  <command><prompt>#</prompt> rpm -Uvh *.rpm</command>
+	</para>
+	</step>
+    </procedure>
+    <procedure>
+      <title>Other Distributions</title>
+      <para>
+	If your distribution does not support RPMs or debs, you must use
+	the tarball packages.
+      </para>
+      <step>
+	<para>
+	  Download the systemimager-server tarball and it's dependencies from
+	  <ulink url="http://systemimager.org/download/">
+	    http://systemimager.org/download/
+	  </ulink>.
+	</para>
+	<warning>
+	  <para>
+	    SystemImager depends on various other packages.  If you are using
+	    the tarball packages, you will have to make sure these dependencies
+	    are on your system before using SystemImager.
+	  </para>
+	</warning>
+      </step>
+      <step>
+	<para>
+	  Install the systemimager-server dependencies as documented in each
+	  tarball.
+	</para>
+      </step>
+      <step>
+	<para>
+	  Decompress the systemimager-server tarball.
+	</para>
+	<para>
+	  <command>
+	    <prompt>#</prompt> bzcat systemimager-server-x.y.z.tar.bz2 |
+	    tar xv
+	  </command>
+	</para>
+      </step>
+      <step>
+	<para>
+	  cd into the newly decompressed directory and run the
+	  <command>installserver</command> script.
+	</para>
+	<para>
+	  <command><prompt>#</prompt> cd systemimager-server-x.y.z</command>
+	</para>
+      </step>
+      <step>
+	<para>
+	  <command><prompt>#</prompt> ./installserver</command>
+	</para>
+      </step>
+    </procedure>
+  </section>
+  <section>
+    <title>Selecting A Machine To Use As A Golden Client</title>
+    <para>
+      A golden client is a machine from which a software image is pulled, so
+      that this image can be later deployed to other machines in the network.
+      It is important that a golden client have similar hardware to the
+      machines that will later use this image, i.e. the same network adapter
+      chipset, and the same storage adapters. Currently, deploying a
+      SCSI-based image to an IDE based-system (or vice-versa) will not work
+      without some manual editing of the master script, and various files
+      within the image. The disk size(s) of the golden client can be smaller
+      than that of the other machines that will use this image, and larger
+      within reason.
+    </para>
+    </section>
+  <section>
+    <title>Installing a Golden Client</title>
+    <para>
+      To create a golden client, you must install the	systemimager-client
+      package.
+    </para>
+    <procedure>
+      <title>Debian GNU/Linux 3.0 (woody) and later</title>
+      <step>
+	<para><command><prompt>#</prompt> apt-get update</command></para>
+      </step>
+      <step>
+	<para>
+	  <command>
+	    <prompt>#</prompt> apt-get install systemimager-client
+	  </command>
+	</para>
+      </step>
+    </procedure>
+      <note>
+      <para>
+	For Debian 2.2 (potato), you must add the following line to the file
+	<filename>/etc/apt/sources.list</filename>:
+      </para>
+      <para>
+	<computeroutput>
+	  deb http://systemimager.org/debian / 
+	</computeroutput>
+      </para>
+      </note>
+    <procedure>
+      <title>RPM based distributions</title>
+      <step>
+	<para>
+	  Download and install the systemimager-client RPM and required
+	  dependencies from
+	  <ulink url="http://systemimager.org/download/">
+	    http://systemimager.org/download/
+	  </ulink>.
+	</para>
+	</step>
+      <step>
+	<para>
+	  Install each package with the <command>rpm</command> command.
+	</para>
+	<para>
+	  <command><prompt>#</prompt> rpm -Uvh *.rpm</command>
+	</para>
+	</step>
+    </procedure>
+    <procedure>
+      <title>Other Distributions</title>
+      <para>
+	If your distribution does not support RPMs or debs, you must use
+	the tarball packages.
+	</para>
+      <step>
+	<para>
+	  Download the systemimager-client tarball and it's dependencies from
+	  <ulink url="http://systemimager.org/download/">
+	    http://systemimager.org/download/
+	  </ulink>.
+	</para>
+	<warning>
+	  <para>
+	    SystemImager depends on various other packages.  If you are using
+	    the tarball packages, you will have to make sure these dependencies
+	    are on your system before using SystemImager.
+	  </para>
+	</warning>
+      </step>
+      <step>
+	<para>
+	  Install the systemimager-client dependencies as documented in each
+	  tarball.
+	</para>
+      </step>
+      <step>
+	<para>
+	  Decompress the systemimager-client tarball.
+	</para>
+	<para>
+	  <command>
+	    <prompt>#</prompt> bzcat systemimager-client-x.y.z.tar.bz2 |
+	    tar xv
+	  </command>
+	</para>
+	</step>
+      <step>
+	<para>
+	  cd into the newly decompressed directory and run the
+	  <command>installclient</command> script.
+	</para>
+	<para>
+	  <command><prompt>#</prompt> cd systemimager-client-x.y.z</command>
+	</para>
+      </step>
+      <step>
+	<para>
+	  <command><prompt>#</prompt> ./installclient</command>
+	</para>
+      </step>
+    </procedure>
+  </section>
+</chapter>
