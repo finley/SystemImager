@@ -1,0 +1,14 @@
+diff -ur mkdosfs/mkdosfs.c~ mkdosfs/mkdosfs.c
+--- mkdosfs/mkdosfs.c~	2005-03-18 18:16:02.871634566 -0500
++++ mkdosfs/mkdosfs.c	2005-03-18 18:17:28.829873909 -0500
+@@ -62,6 +62,10 @@
+ #include <sys/ioctl.h>
+ #include <sys/stat.h>
+ #include <sys/types.h>
++/* the following is need on FC3 */
++#ifndef __u8
++#include <linux/types.h>
++#endif
+ #include <unistd.h>
+ #include <time.h>
+ 
