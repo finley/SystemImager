@@ -402,7 +402,7 @@ chmod 555 $DESTDIR${prefix}/sbin/prepareclient $DESTDIR${prefix}/sbin/updateclie
 
 ### BEGIN conf files ###
 mkdir -p $DESTDIR/etc/systemimager/
-( cd $INSTALL_DIR/tftpstuff/systemimager/ && cp -f systemimager.exclude $DESTDIR/etc/systemimager/ )
+[ ! -f $DESTDIR/etc/systemimager/systemimager.exclude ] && ( cd $INSTALL_DIR/tftpstuff/systemimager/ && cp -f systemimager.exclude $DESTDIR/etc/systemimager/ )
 [ -f $DESTDIR/etc/systemimager.exclude ] && mv -f $DESTDIR/etc/systemimager.exclude $DESTDIR/etc/systemimager/
 chown root:root $DESTDIR/etc/systemimager/systemimager.exclude
 chmod 755 $DESTDIR/etc/systemimager/systemimager.exclude
