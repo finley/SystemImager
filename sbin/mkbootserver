@@ -1,0 +1,875 @@
+#!/bin/sh
+
+#########################################################################
+# The intent of this script is to automate the configuration of a typical
+# linux PXE server.
+#########################################################################
+
+INTERACTIVE=""
+INTERFACE=""
+LOCAL_DHCP=""
+KERNEL=""
+INITRD=""
+TFTPDIR=""
+
+usage="\
+Usage: netbootconf.sh [-i] [--interface=interface] [--localdhcp=y|n] [--kernel=path]
+       [--initrd=path] [--tftpdir=dir]"
+       
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+DISTRO="unknown"
+PKGDIR="./pkgs"
+CONFIG_DIR="./configs"
+
+# packages
+PXE_DEB_URL="http://www.dannf.org/netbootconf/pkgs/pxe_0.1-2_i386.deb"
+PXE_DEB=$PKGDIR/`basename $PXE_DEB_URL`
+
+PXE_POTATO_URL="http://www.dannf.org/netbootconf/pkgs/pxe_0.1-2potato0_i386.deb"
+PXE_POTATO_DEB=$PKGDIR/`basename $PXE_POTATO_URL`
+
+PXE_RPM_3_URL="http://www.dannf.org/netbootconf/pkgs/pxe-0.1-14.i386.rpm"
+PXE_RPM_3=$PKGDIR/`basename $PXE_RPM_3_URL`
+
+PXE_RPM_4_URL="http://www.dannf.org/netbootconf/pkgs/pxe-0.1-22.i386.rpm"
+PXE_RPM_4=$PKGDIR/`basename $PXE_RPM_4_URL`
+
+TFTP_DEB_URL="http://www.dannf.org/netbootconf/pkgs/tftp-hpa_0.14-2_i386.deb"
+TFTP_DEB=$PKGDIR/`basename $TFTP_DEB_URL`
+
+TFTPD_DEB_URL="http://www.dannf.org/netbootconf/pkgs/tftpd-hpa_0.14-2_i386.deb"
+TFTPD_DEB=$PKGDIR/`basename $TFTPD_DEB_URL`
+
+TFTP_POTATO_DEB_URL="http://www.dannf.org/netbootconf/pkgs/tftp-hpa_0.14-2potato0_i386.deb"
+TFTP_POTATO_DEB=$PKGDIR/`basename $TFTP_POTATO_DEB_URL`
+
+TFTPD_POTATO_DEB_URL="http://www.dannf.org/netbootconf/pkgs/tftpd-hpa_0.14-2potato0_i386.deb"
+TFTPD_POTATO_DEB=$PKGDIR/`basename $TFTPD_POTATO_DEB_URL`
+
+TFTP_RPM_3_URL="http://www.dannf.org/netbootconf/pkgs/tftp-hpa-0.13-1.i386.rpm"
+TFTP_RPM_3=$PKGDIR/`basename $TFTP_RPM_3_URL`
+
+TFTP_RPM_4_URL="http://www.dannf.org/netbootconf/pkgs/tftp-0.17-5.i386.rpm"
+TFTP_RPM_4=$PKGDIR/`basename $TFTP_RPM_4_URL`
+
+TFTPD_RPM_4_URL="http://www.dannf.org/netbootconf/pkgs/tftp-server-0.17-5.i386.rpm"
+TFTPD_RPM_4=$PKGDIR/`basename $TFTPD_RPM_4_URL`
+
+TFTPD_PATH=""
+
+TFTP_TEST_FILE_TEXT="all your tftp test file are belong to us"
+
+program_name=`basename $0`
+
+##############################################################################
+# attempts to determine the distribution from the contents of /etc/issue
+# sets $DISTRO to either the name of a supported distribution or "unknown" 
+##############################################################################
+
+### BEGIN WGET_FILE
+# wget the file pointed to by the url $URL_TO_WGET
+wget_file() {
+    if [ ! -f $URL_TO_WGET ]; then
+	echo -n "Couldn't find `basename $URL_TO_WGET`, shall I fetch it for you? (y/[n]): "
+	if [ "$INTERACTIVE" == "no" ]; then
+	    REPLY="y"
+	    echo "Non-interactive mode, answering yes."
+	else
+	    read REPLY
+	fi
+	case $REPLY in
+	 y|Y|Yes|yes|YES ) echo "Attempting to retrieve $URL_TO_WGET..." ;;
+	 * ) echo "Ok, not retrieving." && return 1 ;;
+	esac
+	wget $URL_TO_WGET -O $PKGDIR/`basename $URL_TO_WGET`
+	if [ $? -ne 0 ]; then
+	    echo "wget returned non-zero status."
+	    return 1
+	fi
+    fi
+    return 0
+}
+
+### BEGIN CHECK_DISTRO
+check_distro() {
+    echo -n "Checking Distribution... "
+    grep -e "^Debian" /etc/issue 1> /dev/null 2> /dev/null
+    if [ $? -eq 0 ]; then
+	DISTRO="Debian"
+	DEBIAN_VERSION=`cut -d " " -f 3 /etc/issue | grep "..*"`
+    fi
+    grep -e "^Red Hat" /etc/issue 1> /dev/null 2> /dev/null
+    if [ $? -eq 0 ]; then
+	DISTRO="RedHat"
+	RPM_MAJOR_VERSION=`rpm --version | cut -d " " -f 3 | cut -d "." -f 1`
+    fi
+    if [ "$DISTRO" != "Debian" ] && [ "$DISTRO" != "RedHat" ]; then
+	DISTRO="unknown"
+    fi
+    echo "$DISTRO"
+}
+### END CHECK_DISTRO
+
+##############################################################################
+# checks for a tftp server and tries to install one if one isn't found
+##############################################################################
+
+### BEGIN CHECK_TFTPD
+check_tftpd() {
+    # check to see if a tftp server is installed
+    echo -n "Checking for a tftp server... "
+    TFTP_PATH=`which in.tftpd`
+    if [ "$TFTP_PATH" == "" ]; then
+	echo "failed."
+	echo -n "Do you want me to install a tftp server for ya? (y/[n]): "
+	if [ "$INTERACTIVE" == "no" ]; then
+	    REPLY="y"
+	    echo "Non-interactive mode, answering yes."
+	else
+	    read REPLY
+	fi
+	case $REPLY in
+	 y|Y|Yes|yes|YES ) echo "Ok, installing... " ;;
+	 * ) echo "Ok, not installing." && return 1 ;;
+	esac
+	if [ "$DISTRO" == "Debian" ]; then
+	    if [ ! -f $TFTPD_DEB ]; then
+		URL_TO_WGET=TFTPD_DEB_URL
+		wget_file
+		if [ $? -ne 0 ]; then
+		    return 1
+		fi
+	    fi
+	    dpkg -i $TFTPD_DEB
+	    if [ $? -ne 0 ]; then
+		echo "Error: dpkg returned a non-zero status."
+		return 1
+	    fi
+	elif [ "$DISTRO" == "RedHat" ]; then
+	    rpm -Uvh $TFTPD_RPM
+	    if [ $? -ne 0 ]; then
+		echo "Error: rpm returned a non-zero status."
+		return 1
+	    fi
+	else
+	    echo "I don't how to install a tftp server on this distribution."
+	    echo "Please install the a tftp server and rerun this script."
+	    return 1
+	fi
+    else
+	echo "found."
+    fi
+
+    # at this point, there should be a tftp server installed
+    TFTPD_PATH=`which in.tftpd`
+    if [ "$TFTPD_PATH" == "" ]; then
+	echo "Still can't find in.tftpd in your PATH.  Try updating your PATH."
+	return 1
+    fi
+}    
+### END CHECK_TFTPD
+
+##############################################################################
+# Check to see if the tftp server is hpa's tftp server
+##############################################################################
+
+### BEGIN CHECK_TFTPD_HPA
+check_tftpd_hpa() {
+    echo -n "Checking if tftp server is H. Peter Anvin's tftp server... "
+    
+    # suggestions for a better test welcome!
+    strings $TFTPD_PATH | grep "hpa" 1> /dev/null 2> /dev/null
+    if [ $? -eq 0 ]; then
+	echo "yup - right on!"
+	return 0
+    else
+	echo "doesn't look like it."
+	return 1
+    fi
+}
+### END CHECK_TFTPD_HPA
+
+##############################################################################
+# this installs hpa's tftp server, removing others if they exist
+##############################################################################
+
+### BEGIN INSTALL_TFTPD_HPA
+install_tftpd_hpa() {
+    ### BEGIN DEBIAN
+    if [ "$DISTRO" == "Debian" ]; then
+	### BEGIN DOES TFTPD ALREADY EXIST?
+	if [ -f /usr/sbin/in.tftpd ]; then
+	    INSTALLED_TFTPD_PKG=`dpkg -S $TFTPD_PATH | cut -d ":" -f 1`
+	    echo -n "/usr/sbin/in.tftpd exists, "
+	    if [ "$INSTALLED_TFTPD_PKG" == "" ]; then
+		echo "but isn't owned by any package."
+		echo "Please move it and run this script again."
+		return 1
+	    else
+		echo "and is owned by $INSTALLED_TFTPD_PKG."
+		echo -n "Do you want me to remove $INSTALLED_TFTPD_PKG? (y/[n])"
+		if [ "$INTERACTIVE" == "no" ]; then
+		    REPLY="y"
+		    echo "Non-interactive mode, answering yes."
+		else
+		    read REPLY
+		fi
+		case $REPLY in
+		    y|Y|Yes|yes|YES ) echo -n "Removing... " ;;
+		    * ) echo "Not removing." && return 1 ;;
+		esac
+		dpkg -r $INSTALLED_TFTPD_PKG
+		if [ $? -eq 0 ]; then
+		    echo "done."
+		else
+		    echo "failed."
+		    return 1
+		fi
+	    fi 
+	fi
+	### END DOES TFTPD ALREADY EXIST?
+	if [ "$DEBIAN_VERSION" == "2.2" ]; then
+	    dpkg -i $TFTPD_POTATO_DEB
+	else
+	    dpkg -i $TFTPD_DEB
+	fi
+	if [ $? -ne 0 ]; then
+	    echo "Install failed."
+	    return 1
+	fi
+    ### END DEBIAN
+    ### BEGIN REDHAT
+    elif [ "$DISTRO" == "RedHat" ]; then
+	### BEGIN DOES TFTPD ALREADY EXIST?
+	if [ -f /usr/sbin/in.tftpd ]; then
+	    echo -n "/usr/sbin/in.tftpd exists, "
+	    INSTALLED_TFTPD_PKG=`rpm -qf --queryformat "%{NAME}\n" /usr/sbin/in.tftpd`
+	    if [ "$INSTALLED_TFTPD_PKG" == "" ]; then
+		echo "but isn't owned by any package."
+		echo "Please move it and run this script again."
+		return 1
+	    else
+		echo "and is owned by $INSTALLED_TFTPD_PKG."
+		echo -n "Do you want me to remove $INSTALLED_TFTPD_PKG? (y/[n])"
+		if [ "$INTERACTIVE" == "no" ]; then
+		    REPLY="y"
+		    echo "Non-interactive mode, answering yes."
+		else
+		    read REPLY
+		fi
+		case $REPLY in
+		    y|Y|Yes|yes|YES ) echo -n "Removing... " ;;
+		    * ) echo "Not removing." && return 1 ;;
+		esac
+		rpm -e $INSTALLED_TFTPD_PKG
+		if [ $? -eq 0 ]; then
+		    echo "done."
+		else
+		    echo "failed."
+		    return 1
+		fi
+	    fi
+	fi
+	### END DOES TFTPD ALREADY EXIST?
+	if [ "$RPM_MAJOR_VERSION" == "3" ]; then
+	    rpm -Uvh $TFTPD_RPM_3
+	elif [ "$RPM_MAJOR_VERSION" == "4" ]; then
+	    rpm -Uvh $TFTPD_RPM_4
+	else
+	    echo "I don't have a version $RPM_MAJOR_VERSION RPM for tftpd."
+	    echo "Trying to install the most recent package..."
+	    rpm -Uvh $TFTPD_RPM_4
+	fi
+	if [ $? -ne 0 ]; then
+	    echo "Install failed."
+	    return 1
+	fi
+    ### END REDHAT
+    else
+	echo "I don't know how to install tftpd on this distribution."
+	return 1
+    fi
+}
+### END INSTALL_TFTPD_HPA
+	
+##############################################################################
+# configures inetd and xinetd for use with hpa's tftp server
+##############################################################################
+
+### BEGIN CONFIGURE INETD FOR TFTPD_HPA
+configure_inetd_for_tftpd_hpa() {
+    # Debian has a nice tool to take care of this.  Does this work for xinetd?
+    if [ "$DISTRO" == "Debian" ]; then
+	echo -n "Updating inetd.conf... "
+	update-inetd --remove "^tftp.*"
+	update-inetd --group BOOT --add \
+	    "tftp\tdgram\tudp\twait\troot\t/usr/sbin/tcpd\tin.tftpd -s -r blksize $TFTPDIR"
+	echo "done."
+    else
+	echo -n "Checking for a running inetd... "
+	inetd_pid=`ps -C inetd | grep inetd | cut -c 0-5`
+	if [ "$inetd_pid" == "" ]; then
+	    echo "Not found."
+	else
+	    echo "$inetd_pid."
+	fi
+	echo -n "Checking for a running xinetd... "
+	xinetd_pid=`ps -C xinetd | grep xinetd | cut -c 0-5`
+	if [ "$xinetd_pid" == "" ]; then
+	    echo "Not found."
+	else
+	    echo "$xinetd_pid."
+	fi
+
+	# configure inetd
+	if [ "$inetd_pid" != "" ]; then
+	    sed s/"^[[:space:]]*tftp"/"#tftp"/ < /etc/inetd.conf > /tmp/$program_name.inetd.conf
+	    mv /etc/inetd.conf /etc/inetd.conf.$program_name.bak
+	    mv /tmp/$program_name.inetd.conf /etc/inetd.conf
+	    echo -e "tftp\tdgram\tudp\twait\troot\t/usr/sbin/tcpd\tin.tftpd -s -r blksize $TFTPDIR" >> /etc/inetd.conf
+	    echo -n "Sending a SIGHUP to inetd (pid $inetd_pid)... "
+	    kill -HUP $inetd_pid
+	    if [ $? -ne 0 ]; then
+		echo "failed."
+		return 1
+	    fi
+	    echo "done."
+	    
+	# configure xinetd
+	elif [ "$xinetd_pid" != "" ]; then
+	    grep "includedir[[:space:]*]/etc/xinetd.d" /etc/xinetd.conf 1> /dev/null 2> /dev/null
+	    if [ $? -ne 0 ]; then
+		echo "xinetd does not include the /etc/xinetd.d directory"
+		echo "you are running an unsupported configuration."
+		return 1
+	    fi
+	    if [ -f /etc/xinetd.d/tftp ]; then
+		i=0
+		while /bin/true; do
+		    if [ ! -f /etc/xinetd.d/.tftp.$program_name.bak$i ]; then
+			echo "Moving /etc/xinetd.d/tftp to /etc/xinetd.d/.tftp.$program_name.bak$i..."
+			mv /etc/xinetd.d/tftp \
+			    /etc/xinetd.d/.tftp.$program_name.bak$i
+			break
+		    fi
+		    i=`expr $i + 1`
+		done
+	    fi
+	    cp -a $CONFIG_DIR/tftp /etc/xinetd.d/tftp
+	    echo "Sending SIGUSR1 to xinetd... "
+	    kill -USR1 $xinetd_pid
+	    if [ $? -eq 0 ]; then
+		echo "done."
+	    else
+		echo "failed."
+		return 1
+	    fi
+	else
+	    echo "I couldn't find a running inetd or xinetd."
+	    echo "Nothing to configure."
+	    return 1
+	fi
+    fi
+}
+### END CONFIGURE INETD FOR TFTPD_HPA
+
+### BEGIN TEST_TFTPD
+test_tftpd() {
+    echo -n "Looking for a tftp client... "
+    TFTP_CLIENT=`which tftp`
+
+    ### BEGIN TFTP CLIENT NOT FOUND
+    if [ "$TFTP_CLIENT" == "" ]; then
+	echo "not found."
+	echo -n "Shall I install a tftp client for ya? ([y]/n): "
+	if [ "$INTERACTIVE" == "no" ]; then
+	    REPLY="y"
+	    echo "Non-interactive mode, answering yes."
+	else
+	    read REPLY
+	fi
+	case $REPLY in
+	 n|N|NO|No ) echo "Fine.  Be that way." && return 1 ;;
+	 * ) echo "Ok, installing..." ;;
+	esac
+
+	if [ "$DISTRO" == "Debian" ]; then
+	    if [ "$DEBIAN_VERSION" == "2.2" ]; then
+		dpkg -i $TFTP_POTATO_DEB
+	    else
+		dpkg -i $TFTP_DEB
+	    fi
+	    if [ $? -ne 0 ]; then
+		echo "Error:  dpkg returned a non-zero status."
+		exit 1
+	    fi
+	elif [ "$DISTRO" == "RedHat" ]; then
+	    if [ "$RPM_MAJOR_VERSION" == "3" ]; then
+		rpm -Uvh $TFTP_RPM_3
+	    elif [ "$RPM_MAJOR_VERSION" == "4" ]; then
+		rpm -Uvh $TFTP_RPM_4
+	    else
+		echo "I don't have a version $RPM_MAJOR_VERSION tftp RPM."
+		echo "Trying to use the most recent version..."
+		rpm -Uvh $TFTP_RPM_4
+	    fi
+	    if [ $? -ne 0 ]; then
+		echo "Error:  rpm returned a non-zero status."
+		exit 1
+	    fi
+	else
+	    echo "I don't know how to install a tftp client on this distro."
+	    echo "You'll need to install one by hand."
+	    return 1
+	fi
+	TFTP_CLIENT=`which tftp`
+	if [ "$TFTP_CLIENT" == "" ]; then
+	    echo "I still couldn't find a tftp client in your path."
+	    echo "You probably need to modify your PATH variable."
+	    return 1
+	fi
+    else
+	echo "found."
+    fi
+    ### END TFTP CLIENT NOT FOUND
+
+    # i'm trying to test tftp by requesting a file from localhost
+    # but there's not much point if the loopback interface is down
+    echo -n "Checking for loopback interface... "
+    ifconfig | grep -e "^lo" 1> /dev/null 2> /dev/null
+    if [ $? -ne 0 ]; then
+	echo "down."
+	echo "I need the loopback interface to be up so I can test tftp, but"
+	echo "it appears to be down."
+	return 1
+    fi
+    echo "up."
+    
+    echo -n "Does tftp server work... "
+    # the TFTPDIR variable should have been set to a valid path by now
+    if [ "$TFTPDIR" == "" ]; then
+	echo "no."
+	echo "\"$TFTPDIR\" is not a valid tftp directory."
+	return 1
+    fi
+
+    TMPFILE=""
+    for i in `seq 0 9`; do
+	if [ -f "$TFTPDIR/test$i" -o -f "./test$i" ]; then
+	    continue
+	fi
+	TMPFILE="$TFTPDIR/test$i"
+    done
+    
+    if [ "$TMPFILE" == "" ]; then
+	echo "couldn't tell."
+	echo "Unable to come up with an unused filename"
+	return 1
+    fi
+
+    echo "$TFTP_TEST_FILE_TEXT" > $TMPFILE
+    if [ $? -ne 0 ]; then
+	echo "no."
+	echo "Unable to write to $TMPFILE"
+	return 1
+    fi
+    
+    chmod 644 $TMPFILE
+    if [ $? -ne 0 ]; then
+	echo "Error: chmod failed."
+	rm -f $TMPFILE
+	exit 1
+    fi
+    
+    tftp localhost 1> /dev/null 2> /dev/null <<EOF
+get `basename $TMPFILE`
+EOF
+    if [ $? -ne 0 ]; then
+	echo "Error: tftp returned a non-zero status"
+	rm -f $TMPFILE
+	exit 1
+    fi
+    
+    diff "./`basename $TMPFILE`" "$TMPFILE" 1> /dev/null 2> /dev/null
+    if [ $? -ne 0 ]; then
+	echo "no."
+	echo "I couldn't tftp a test file from localhost"
+	rm -f $TMPFILE
+	return 1
+    fi
+
+    echo "yes."
+    rm -f $TMPFILE
+    rm -f `basename $TMPFILE`
+    return 0
+}    
+### END TEST_TFTPD
+
+install_pxe_daemon() {
+    echo -n "Looking for a pxe daemon... "
+    pxe_daemon=`which pxe`
+    if [ "$pxe_daemon" != "" ]; then
+	echo "found."
+	return 0
+    fi
+    echo "Couldn't find a pxe daemon."
+    echo -n "Shall I try to install one? (y/[n])"
+    if [ "$INTERACTIVE" == "no" ]; then
+	REPLY="y"
+	echo "Non-interactive mode, answering yes."
+    else
+	read REPLY
+    fi
+    case $REPLY in
+	y|Y|Yes|yes|YES ) echo "Ok, installing..." ;;
+	* ) echo "Not installing." && return 1 ;;
+    esac
+
+    if [ "$DISTRO" == "Debian" ]; then
+	if [ "$DEBIAN_VERSION" == "2.2" ]; then
+	    dpkg -i $PXE_POTATO_DEB
+	else
+	    dpkg -i $PXE_DEB
+	fi
+	if [ $? -ne 0 ]; then
+	    echo "Error:  dpkg returned a non-zero status.  exiting."
+	    exit 1
+	fi
+    elif [ "$DISTRO" == "RedHat" ]; then
+	if [ "$RPM_MAJOR_VERSION" == "3" ]; then
+	    rpm -Uvh $PXE_RPM_3
+	elif [ "$RPM_MAJOR_VERSION" == "4" ]; then
+	    rpm -Uvh $PXE_RPM_4
+	else
+	    echo "I don't have a version $RPM_MAJOR_VERSION pxe RPM."
+	    echo "Trying to use the most recent version..."
+	    rpm -Uvh $PXE_RPM_4
+	fi
+	if [ $? -ne 0 ]; then
+	    echo "Error:  rpm returned a non-zero status.  exiting."
+	    exit 1
+	fi
+    else
+	echo "I don't know how to install a pxe daemon on this distro."
+	echo "You'll need to install one by hand."
+	return 1
+    fi
+}
+
+# the config file for pxe is pretty evil.
+# you can't go all crazy & start changing the order of things in the file.
+# and why can't the key & value be on the same line?
+configure_pxe_daemon() {
+    ### BEGIN BACK UP OLD CONFIG FILE
+    i=0
+    while /bin/true; do
+	if [ ! -f /etc/pxe.conf.$program_name.bak$i ]; then
+	    echo "Moving /etc/pxe.conf to /etc/pxe.conf.$program_name.bak$i"
+	    mv /etc/pxe.conf /etc/pxe.conf.$program_name.bak$i
+	    break
+	fi
+	i=`expr $i + 1`
+    done
+    cp -a $CONFIG_DIR/pxe.conf /etc
+    ### END BACK UP OLD CONFIG FILE
+
+    ### BEGIN edit /etc/pxe.conf
+    if [ "$INTERFACE" != "" ]; then
+	REPLY=$INTERFACE
+    else
+	echo -n "What network interface should pxe run on? ([eth0])? "
+	read REPLY
+    fi
+    if [ "$REPLY" = "" ]; then
+	interface="eth0"
+    else
+	interface=$REPLY
+    fi
+
+    echo -n "Checking to make sure $interface exists... "
+    cut -d ":" -f 1 /proc/net/dev | grep "$interface" 1> /dev/null 2> /dev/null
+    if [ $? -eq 0 ]; then
+	echo "yeah."
+    else
+	echo "no."
+	return 1
+    fi
+    
+    echo -n "Checking to make sure $interface is up... "
+    ifconfig $interface | grep "inetd addr" 1> /dev/null 2> /dev/null
+    if [ $? -ne 0 ]; then
+	echo "yup."
+    else
+        echo "nope."
+	echo "The pxe daemon won't start if the interface it's using is down."
+	return 1
+    fi
+    
+    line=`grep -n "\[Network_Interface_Name\]" /etc/pxe.conf | cut -d ":" -f 1`
+    sed -e `expr $line + 1`'c\
+'"$interface" < /etc/pxe.conf > /tmp/pxe.conf.$program_name.tmp
+    mv /tmp/pxe.conf.$program_name.tmp /etc/pxe.conf
+
+    if [ "$LOCAL_DHCP" != "" ]; then
+	REPLY="$LOCAL_DHCP"
+    else
+	echo -n "Will the DHCP server be running on this machine? ([y]/n)? "
+	read REPLY
+    fi
+    case $REPLY in
+	n|N|No|NO ) usedhcpport="1" ;;
+	* ) usedhcpport="0" ;;
+    esac
+
+    line=`grep -n "\[UseDHCPPort\]" /etc/pxe.conf | cut -d ":" -f 1`
+    sed -e `expr $line + 1`'c\
+'"$usedhcpport" < /etc/pxe.conf > /tmp/pxe.conf.$program_name.tmp
+    mv /tmp/pxe.conf.$program_name.tmp /etc/pxe.conf
+    
+    ### END edit /etc/pxe.conf
+
+    ### BEGIN restart pxe daemon
+    echo "Restarting pxe daemon... "
+    if [ -x /etc/init.d/pxe ]; then
+	/etc/init.d/pxe stop
+	/etc/init.d/pxe start
+	echo "done."
+    elif [ -x /etc/rc.d/init.d/pxe ]; then
+	/etc/rc.d/init.d/pxe stop
+	/etc/rc.d/init.d/pxe start
+	echo "done."
+    else
+	echo "failed."
+	return 1
+    fi
+
+    echo -n "Checking to see if pxe daemon exited silently... "
+    if [ "`ps -C pxe | grep pxe`" == "" ]; then
+	echo "it did."
+	echo "it looks like pxe is misconfigured."
+	return 1
+    else
+	echo "nope - still running :)"
+    fi
+    ### END restart pxe daemon
+}
+
+pxelinux_cfg() {
+    LINUX_INSTALL=$TFTPDIR/X86PC/UNDI/linux-install
+    if [ ! -d $LINUX_INSTALL/pxelinux.cfg ]; then
+	mkdir -p $LINUX_INSTALL/pxelinux.cfg
+    	
+	if [ $? -ne 0 ]; then
+	    echo "Couldn't create $LINUX_INSTALL"
+	    return 1
+	fi
+    fi
+    
+    echo -n "Copying $CONFIG_DIR/syslinux.cfg to $LINUX_INSTALL/pxelinux.cfg/..."
+    cp -a $CONFIG_DIR/default $LINUX_INSTALL/pxelinux.cfg
+    if [ $? -ne 0 ]; then
+	echo "failed."
+	return 1
+    fi
+    echo "done."
+    
+    if [ -a $LINUX_INSTALL/linux.0 ]; then
+	if [ `md5sum $LINUX_INSTALL/linux.0 ` != \
+			`md5sum $PKGDIR/pxelinux.0` ]; then
+            echo "$LINUX_INSTALL/linux.0 already exists, but doesn't match to pxelinux.0 I want to install."
+	    i=0
+	    while /bin/true; do
+		if [ ! -a $LINUX_INSTALL/linux.0.bak$i ]; then
+		    echo "Backing up $LINUX_INSTALL/linux.0 to $LINUX_INSTALL/linux.0.bak$i"
+		    mv $LINUX_INSTALL/linux.0 $LINUX_INSTALL/linux.0.bak$i
+		    break
+		fi
+		i=`expr $i + 1`
+	    done
+	    echo -n "Copying $CONFIG_DIR/pxelinux.0 to $LINUX_INSTALL/linux.0 ... "
+	    cp -a $CONFIG_DIR/pxelinux.0 $LINUX_INSTALL/linux.0
+	    if [ $? -ne 0 ]; then
+		echo "failed."
+	        return 1
+	    fi
+	    echo "done."
+	fi
+    fi
+    if [ "$KERNEL" != "" ]; then
+	REPLY=$KERNEL
+    else
+	echo -n "What is the full pathname of the kernel you want to use? "
+	read REPLY
+    fi
+    if [ ! -f "$REPLY" ]; then
+	echo "$REPLY doesn't exist, or isn't a regular file."
+	return 1
+    fi
+    if [ -a $LINUX_INSTALL/kernel ]; then
+	i=0
+	while /bin/true; do
+	    if [ ! -a $LINUX_INSTALL/kernel.bak$i ]; then
+		echo "Backing up $LINUX_INSTALL/kernel to $LINUX_INSTALL/kernel.bak$i"
+		mv $LINUX_INSTALL/kernel $LINUX_INSTALL/kernel.bak$i
+		break
+	    fi
+	    i=`expr $i + 1`
+	done
+    fi
+    echo -n "Copying $REPLY to $LINUX_INSTALL/kernel ... "
+    cp -a $REPLY $LINUX_INSTALL/kernel
+    if [ $? -ne 0 ]; then
+	echo "failed."
+	return 1
+    fi
+    echo "done."
+
+    if [ "$INITRD" != "" ]; then
+	REPLY=$INITRD
+    else
+	echo -n "What is the full pathname of the compressed ramdisk (initrd.gz) you want to use? "
+	read REPLY
+    fi
+    if [ ! -f $REPLY ]; then
+	echo "$REPLY doesn't exist, or isn't a regular file."
+	return 1
+    fi
+    if [ -a $LINUX_INSTALL/initrd.gz ]; then
+	i=0
+	while /bin/true; do
+	    if [ ! -a $LINUX_INSTALL/initrd.gz.bak$i ]; then
+		echo "Backing up $LINUX_INSTALL/initrd.gz to $LINUX_INSTALL/initrd.gz.bak$i"
+		mv $LINUX_INSTALL/initrd.gz $LINUX_INSTALL/initrd.gz.bak$i
+		break
+	    fi
+	    i=`expr $i + 1`
+	done
+    fi
+    echo -n "Copying $REPLY to $LINUX_INSTALL/initrd.gz ... "
+    cp -a $REPLY $LINUX_INSTALL/initrd.gz
+    if [ $? -ne 0 ]; then
+	echo "failed."
+	return 1
+    fi
+    echo "done."
+}    
+
+### BEGIN MAIN        
+if [ "`whoami`" != "root" ]; then
+    echo "You must be root to run this script, exiting."
+    exit 1
+fi
+    
+while [ $# -gt 0 ]; do
+    case "$1" in
+	-i )               INTERACTIVE="yes" ; shift ;;
+        --interface=* )    INTERFACE="`echo \"${1}\" | sed -e 's/^[^=]*=//'`" ; shift ;;
+	--localdhcp=* )    LOCAL_DHCP="`echo \"${1}\" | sed -e 's/^[^=]*=//'`" ; shift ;;
+	--kernel=* )       KERNEL="`echo \"${1}\" | sed -e 's/^[^=]*=//'`" ; shift ;;
+	--initrd=* )       INITRD="`echo \"${1}\" | sed -e 's/^[^=]*=//'`" ; shift ;;
+	--tftpdir=* )      TFTPDIR="`echo \"${1}\" | sed -e 's/^[^=]*=//'`" ; shift ;;
+	* ) echo "${usage}" 1>&2; exit 1 ;;
+    esac
+done
+
+echo "This script may modify the following files:"
+echo "/etc/services"
+echo "/etc/inetd.conf"
+echo "/etc/xinetd.d/tftp"
+echo "You should already have a kernel and ramdisk to use."
+echo -n "Do you wish to continue (y/[n])? "
+if [ "$INTERACTIVE" == "no" ]; then
+    REPLY="y"
+    echo "Non-interactive mode, answering yes."
+else
+    read REPLY
+fi
+case $REPLY in
+    y|Y|Yes|yes|YES ) echo "Ok, continuing..." ;;
+    * ) echo "Cancelled." && exit 1 ;;
+esac
+
+if [ "$TFTPDIR" == "" ]; then
+    echo -n "Where should tftpd serve files from ([/tftpboot]? "
+    read REPLY
+    if [ "$REPLY" == "" ]; then
+	TFTPDIR="/tftpboot"
+    else
+	TFTPDIR=$REPLY
+    fi
+fi
+
+
+if [ ! -d $TFTPDIR ]; then
+    if [ -a $TFTPDIR ]; then
+	echo "$TFTPDIR exists, but isn't a directory, exiting."
+	exit 1
+    else
+	echo -n "$TFTPDIR doesn't exist, should I create it (y/[n])? "
+	if [ "$INTERACTIVE" == "no" ]; then
+	    REPLY="y"
+	    echo "Non-interactive mode, answering yes."
+	else
+	    read REPLY
+	fi
+	case $REPLY in
+	    y|Y|Yes|yes|YES ) echo -n "Creating $TFTPDIR..." ;;
+	    * ) echo "Ok, exiting..." && exit 1 ;;
+    	esac
+	mkdir -p $TFTPDIR
+	if [ $? -ne 0 ]; then
+	    echo "mkdir returned an error, exiting..."
+	    exit 1
+	fi
+    fi
+fi
+
+check_distro
+check_tftpd
+check_tftpd_hpa
+if [ $? -ne 0 ]; then
+    echo "Didn't find tftpd-hpa, trying to install it..."
+    install_tftpd_hpa
+    if [ $? -ne 0 ]; then
+	echo "I was unable to install tftpd-hpa, exiting."
+	exit 1
+    fi
+    check_tftpd_hpa
+    if [ $? -ne 0 ]; then
+	echo "I still couldn't find tftpd-hpa, exiting."
+	exit 1
+    fi
+fi
+configure_inetd_for_tftpd_hpa
+if [ $? -ne 0 ]; then
+    echo "Attempt to configure inetd failed."
+    exit 1
+fi    
+
+test_tftpd
+if [ $? -ne 0 ]; then
+    echo "tftp server test failed."
+    exit 1
+fi
+
+install_pxe_daemon
+if [ $? -ne 0 ]; then
+    echo "pxe daemon installation failed"
+    exit 1
+fi    
+
+configure_pxe_daemon
+if [ $? -ne 0 ]; then
+    echo "pxe daemon configuration failed"
+    exit 1
+fi
+
+pxelinux_cfg
+if [ $? -ne 0 ]; then
+    echo "pxelinux configuration failed"
+    exit 1
+fi
+
+echo "Ok, configuration complete."
+echo "Once you're DHCP server is configured, you should be all set."
