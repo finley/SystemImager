@@ -24,22 +24,22 @@ EOF
 # set help information
 $help_info = $version_info . <<"EOF";
 
-Usage: updateclient [OPTION]... --imageserver HOSTNAME --image IMAGENAME
-  or   updateclient --imageserver HOSTNAME --listing
+Usage: updateclient [OPTION]... -imageserver HOSTNAME -image IMAGENAME
+  or   updateclient -imageserver HOSTNAME -listing
 
 Options: (options can be presented in any order)
- --help                    Display this output.
- --version                 Display version and copyright information.
- --imageserver HOSTNAME    Hostname or IP address of the imageserver.
- --image IMAGENAME         Image from which the client should be updated.
- --directory DIRECTORY     Absolute path of directory to be updated.
+ -help                    Display this output.
+ -version                 Display version and copyright information.
+ -imageserver HOSTNAME    Hostname or IP address of the imageserver.
+ -image IMAGENAME         Image from which the client should be updated.
+ -directory DIRECTORY     Absolute path of directory to be updated.
                            (defaults to "/")
- --listing                 List avaliable images on imageserver.
+ -listing                 List avaliable images on imageserver.
                            (supercedes and ignores all options 
                             other than --imageserver)
- --nolilo                  Don't run lilo after update completes.
+ -nolilo                  Don't run lilo after update completes.
                            (lilo is always run unless specified)
- --reboot                  Reboot client after update completes.
+ -reboot                  Reboot client after update completes.
 
 Download from http://systemimager.org/
 Report bugs or suggestions to <systemimager-bugs\@systemimager.org>
