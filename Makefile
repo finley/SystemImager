@@ -516,6 +516,12 @@ endif
 	# libdiscover
 	cp -a $(SRC_DIR)/$(DISCOVER_DIR)/lib/.libs/libdiscover.so* \
 		$(BOEL_BINARIES_DIR)/lib/
+ifeq ($(ARCH),ia64)
+	# mklibs was removing the real lib file, then choking on the symlinks that 
+	# pointed to it.  This line may be appropriate (or harmless) for all arches.
+	# -BEF-
+	find $(BOEL_BINARIES_DIR)/lib/ -name libdiscover\* -type l -exec rm -f {} \;
+endif
 	strip $(BOEL_BINARIES_DIR)/lib/*
 	#
 ifdef WITH_CTCS
