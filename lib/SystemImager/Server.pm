@@ -1063,7 +1063,7 @@ sub _write_out_mkfs_commands {
         } elsif ( $xml_config->{fsinfo}->{$line}->{fs} eq "jfs" ) {
 
             # create fs
-            $cmd = "mkfs.jfs -q $real_dev || shellout";
+            $cmd = "jfs_mkfs -q $real_dev || shellout";
             print $out qq(echo "$cmd"\n);
             print $out "$cmd\n";
 

@@ -2,7 +2,7 @@ JFSUTILS_VERSION := 1.1.3
 JFSUTILS_DIR := jfsutils-$(JFSUTILS_VERSION)
 JFSUTILS_TARBALL := $(JFSUTILS_DIR).tar.gz
 JFSUTILS_URL := http://www10.software.ibm.com/developer/opensource/jfs/project/pub/$(JFSUTILS_TARBALL)
-MKJFS_BINARY := $(SRC_DIR)/$(JFSUTILS_DIR)/mkfs/mkfs.jfs
+MKJFS_BINARY := $(SRC_DIR)/$(JFSUTILS_DIR)/mkfs/jfs_mkfs
 JFSUTILS_PATCHES := $(shell ls $(PATCH_DIR)/jfsutils.*.patch 2>/dev/null | sort)
 
 ALL_SOURCE += $(SRC_DIR)/$(JFSUTILS_TARBALL)
