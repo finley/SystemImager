@@ -15,7 +15,7 @@ DB2RTF	= /usr/bin/db2rtf
 
 NAME	= systemimager-manual
 SRC	= $(NAME).sgml
-DEST	= ..
+DEST	= ../manual
 
 HTMLDIR = html
 PSDIR   = ps
@@ -48,7 +48,7 @@ ps:	$(DB2PS) $(SRC) clean_ps
 pdf:	$(DB2PDF) $(SRC) clean_pdf
 	$(DB2PDF) $(SRC)
 	mkdir -p $(DEST)/$(PDFDIR)
-	mv $(NAME).aux $(NAME).out $(NAME).log \
+	mv $(NAME).aux $(NAME).log \
         $(NAME).tex $(NAME).pdf $(DEST)/$(PDFDIR)
 	@echo
 	@echo "You can now find the manual in `cd $(DEST); pwd`/$(PDFDIR)/"
@@ -94,4 +94,5 @@ clean_rtf:
 	rm -rf $(DEST)/$(RTFDIR)
 
 clean_all:	clean clean_html clean_ps clean_pdf clean_rtf clean_dvi
+	rm -rf $(DEST)
 
