@@ -462,7 +462,7 @@ sub remove_rsync_xinetd {
         # xinetd should ignore ~ files
         move($file,$file . '~');
         print "Signaling xinetd to restart...\n" unless($quiet);
-        killall('xinetd',1); # Send SIGHUP to all xinetd processes
+        killall('xinetd',12); # Send SIGHUP to all xinetd processes
     }
     return 1;
 }
