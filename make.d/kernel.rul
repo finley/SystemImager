@@ -102,7 +102,7 @@ $(SRC_DIR)/$(LINUX_TARBALL):
 	$(GETSOURCE) $(LINUX_URL) $(SRC_DIR)
 
 PHONY += modules
-modules:	kernel
+modules:	$(LINUX_IMAGE)
 
 $(SRC_DIR)/modules_build-stamp:	$(SRC_DIR)/patched_kernel-stamp
 	rm -fr $(TOPDIR)/tmp/kernel_modules
