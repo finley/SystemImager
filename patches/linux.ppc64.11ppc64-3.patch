@@ -1,0 +1,3421 @@
+diff -uNr -X /home/engebret/dontdiff linuxppc64_2_4_prev_patch/Makefile linuxppc64_2_4/Makefile
+--- linuxppc64_2_4_prev_patch/Makefile	Mon Sep 23 13:06:48 2002
++++ linuxppc64_2_4/Makefile	Fri Aug 23 08:44:47 2002
+@@ -311,7 +311,7 @@
+ kallsyms:
+ ifeq ($(CONFIG_KALLSYMS),y)
+ 	@echo kallsyms pass 1
+-	@if [ `/sbin/kallsyms -V  2>&1 | sed s/kallsyms\ version\ 2.4.//` -lt 17 ]; \
++	@if [ `$(KALLSYMS) -V  2>&1 | sed s/kallsyms\ version\ 2.4.//` -lt 17 ]; \
+ 	then \
+ 	  echo "WARNING! KDB requires modutils (kallsyms) version 2.4.17 or newer to work properly!"  ;\
+ 	  echo "WARNING! KDB requires modutils (kallsyms) version 2.4.17 or newer to work properly!"  ; fi 
+diff -uNr -X /home/engebret/dontdiff linuxppc64_2_4_prev_patch/arch/ppc64/boot/Makefile linuxppc64_2_4/arch/ppc64/boot/Makefile
+--- linuxppc64_2_4_prev_patch/arch/ppc64/boot/Makefile	Mon Sep 23 13:02:57 2002
++++ linuxppc64_2_4/arch/ppc64/boot/Makefile	Tue Sep 17 14:57:27 2002
+@@ -93,6 +93,8 @@
+ 	ls -l $(TOPDIR)/vmlinux | awk '{printf "/* generated -- do not edit! */\nunsigned long vmlinux_filesize = %d;\n", $$5}' > imagesize.c
+ 	$(CROSS_COMPILE)nm -n $(TOPDIR)/vmlinux | tail -1 | awk '{printf "unsigned long vmlinux_memsize = 0x%s;\n", substr($$1,8)}' >> imagesize.c
+ 
++zImage.o: $(TOPDIR)/vmlinux
++
+ vmlinux .config System.map: % : $(TOPDIR)/%
+ 	gzip -cvf9 $(TOPDIR)/$@ > kernel-$@.gz
+ 	$(OBJCOPY) zImage.o \
+diff -uNr -X /home/engebret/dontdiff linuxppc64_2_4_prev_patch/arch/ppc64/boot/README linuxppc64_2_4/arch/ppc64/boot/README
+--- linuxppc64_2_4_prev_patch/arch/ppc64/boot/README	Wed Dec 31 18:00:00 1969
++++ linuxppc64_2_4/arch/ppc64/boot/README	Tue Sep 17 14:57:27 2002
+@@ -0,0 +1,10 @@
++
++To extract the kernel vmlinux, System.map or .config from the zImage binary:
++
++objcopy -j .kernel:vmlinux -O binary zImage vmlinux.gz
++objcopy -j .kernel:System.map -O binary zImage System.map.gz
++objcopy -j .kernel:.config -O binary zImage config.gz
++
++
++	Peter
++
+diff -uNr -X /home/engebret/dontdiff linuxppc64_2_4_prev_patch/arch/ppc64/config.in linuxppc64_2_4/arch/ppc64/config.in
+--- linuxppc64_2_4_prev_patch/arch/ppc64/config.in	Mon Sep 23 13:06:48 2002
++++ linuxppc64_2_4/arch/ppc64/config.in	Fri Aug 30 08:02:55 2002
+@@ -38,6 +38,7 @@
+ else
+ bool 'MsChunks Physical to Absolute address translation support' CONFIG_MSCHUNKS
+ tristate 'Firmware flash interface' CONFIG_RTAS_FLASH
++tristate 'Scanlog Dump interface' CONFIG_SCANLOG
+ fi
+ 
+ 
+diff -uNr -X /home/engebret/dontdiff linuxppc64_2_4_prev_patch/arch/ppc64/configs/config.iseries64.suse.mod linuxppc64_2_4/arch/ppc64/configs/config.iseries64.suse.mod
+--- linuxppc64_2_4_prev_patch/arch/ppc64/configs/config.iseries64.suse.mod	Wed Dec 31 18:00:00 1969
++++ linuxppc64_2_4/arch/ppc64/configs/config.iseries64.suse.mod	Thu Aug 29 16:04:44 2002
+@@ -0,0 +1,719 @@
++#
++# Automatically generated make config: don't edit
++#
++# CONFIG_UID16 is not set
++# CONFIG_RWSEM_GENERIC_SPINLOCK is not set
++CONFIG_RWSEM_XCHGADD_ALGORITHM=y
++# CONFIG_GENERIC_BUST_SPINLOCK is not set
++CONFIG_GENERIC_ISA_DMA=y
++CONFIG_HAVE_DEC_LOCK=y
++
++#
++# Code maturity level options
++#
++CONFIG_EXPERIMENTAL=y
++
++#
++# Platform support
++#
++CONFIG_PPC=y
++CONFIG_PPC64=y
++CONFIG_SERIAL_CONSOLE=y
++# CONFIG_PPC_PSERIES is not set
++CONFIG_PPC_ISERIES=y
++CONFIG_SMP=y
++CONFIG_IRQ_ALL_CPUS=y
++CONFIG_MSCHUNKS=y
++
++#
++# Loadable module support
++#
++CONFIG_MODULES=y
++# CONFIG_MODVERSIONS is not set
++CONFIG_KMOD=y
++
++#
++# General setup
++#
++# CONFIG_ISA is not set
++# CONFIG_SBUS is not set
++# CONFIG_MCA is not set
++# CONFIG_EISA is not set
++CONFIG_PCI=y
++# CONFIG_PCMCIA is not set
++CONFIG_NET=y
++CONFIG_SYSCTL=y
++CONFIG_SYSVIPC=y
++CONFIG_BSD_PROCESS_ACCT=y
++CONFIG_KCORE_ELF=y
++CONFIG_BINFMT_ELF=y
++CONFIG_BINFMT_ELF32=y
++CONFIG_BINFMT_MISC=m
++CONFIG_PCI_NAMES=y
++CONFIG_HOTPLUG=y
++
++#
++# Parallel port support
++#
++# CONFIG_PARPORT is not set
++
++#
++# Block devices
++#
++# CONFIG_BLK_DEV_FD is not set
++# CONFIG_BLK_DEV_XD is not set
++# CONFIG_PARIDE is not set
++# CONFIG_BLK_CPQ_DA is not set
++# CONFIG_BLK_CPQ_CISS_DA is not set
++# CONFIG_CISS_SCSI_TAPE is not set
++# CONFIG_BLK_DEV_DAC960 is not set
++# CONFIG_BLK_DEV_UMEM is not set
++CONFIG_BLK_DEV_LOOP=y
++CONFIG_BLK_DEV_NBD=m
++CONFIG_BLK_DEV_RAM=y
++CONFIG_BLK_DEV_RAM_SIZE=128000
++CONFIG_BLK_DEV_INITRD=y
++
++#
++# Multi-device support (RAID and LVM)
++#
++CONFIG_MD=y
++CONFIG_BLK_DEV_MD=m
++CONFIG_MD_LINEAR=m
++CONFIG_MD_RAID0=m
++CONFIG_MD_RAID1=m
++CONFIG_MD_RAID5=m
++CONFIG_MD_MULTIPATH=m
++CONFIG_BLK_DEV_LVM=y
++
++#
++# Networking options
++#
++CONFIG_PACKET=y
++CONFIG_PACKET_MMAP=y
++CONFIG_NETLINK_DEV=y
++CONFIG_NETFILTER=y
++# CONFIG_NETFILTER_DEBUG is not set
++CONFIG_FILTER=y
++CONFIG_UNIX=y
++CONFIG_INET=y
++CONFIG_IP_MULTICAST=y
++CONFIG_IP_ADVANCED_ROUTER=y
++CONFIG_IP_MULTIPLE_TABLES=y
++CONFIG_IP_ROUTE_FWMARK=y
++CONFIG_IP_ROUTE_NAT=y
++CONFIG_IP_ROUTE_MULTIPATH=y
++CONFIG_IP_ROUTE_TOS=y
++# CONFIG_IP_ROUTE_VERBOSE is not set
++CONFIG_IP_ROUTE_LARGE_TABLES=y
++CONFIG_IP_PNP=y
++CONFIG_IP_PNP_DHCP=y
++CONFIG_IP_PNP_BOOTP=y
++CONFIG_IP_PNP_RARP=y
++CONFIG_NET_IPIP=m
++CONFIG_NET_IPGRE=m
++CONFIG_NET_IPGRE_BROADCAST=y
++CONFIG_IP_MROUTE=y
++# CONFIG_IP_PIMSM_V1 is not set
++# CONFIG_IP_PIMSM_V2 is not set
++CONFIG_ARPD=y
++CONFIG_INET_ECN=y
++CONFIG_SYN_COOKIES=y
++
++#
++#   IP: Netfilter Configuration
++#
++CONFIG_IP_NF_CONNTRACK=m
++CONFIG_IP_NF_FTP=m
++CONFIG_IP_NF_IRC=m
++CONFIG_IP_NF_QUEUE=m
++CONFIG_IP_NF_IPTABLES=m
++CONFIG_IP_NF_MATCH_LIMIT=m
++CONFIG_IP_NF_MATCH_MAC=m
++CONFIG_IP_NF_MATCH_MARK=m
++CONFIG_IP_NF_MATCH_MULTIPORT=m
++CONFIG_IP_NF_MATCH_TOS=m
++CONFIG_IP_NF_MATCH_AH_ESP=m
++CONFIG_IP_NF_MATCH_LENGTH=m
++CONFIG_IP_NF_MATCH_TTL=m
++CONFIG_IP_NF_MATCH_TCPMSS=m
++CONFIG_IP_NF_MATCH_STATE=m
++CONFIG_IP_NF_MATCH_UNCLEAN=m
++CONFIG_IP_NF_MATCH_OWNER=m
++CONFIG_IP_NF_FILTER=m
++CONFIG_IP_NF_TARGET_REJECT=m
++CONFIG_IP_NF_TARGET_MIRROR=m
++CONFIG_IP_NF_NAT=m
++CONFIG_IP_NF_NAT_NEEDED=y
++CONFIG_IP_NF_TARGET_MASQUERADE=m
++CONFIG_IP_NF_TARGET_REDIRECT=m
++CONFIG_IP_NF_NAT_LOCAL=y
++CONFIG_IP_NF_NAT_SNMP_BASIC=m
++CONFIG_IP_NF_NAT_IRC=m
++CONFIG_IP_NF_NAT_FTP=m
++CONFIG_IP_NF_MANGLE=m
++CONFIG_IP_NF_TARGET_TOS=m
++CONFIG_IP_NF_TARGET_MARK=m
++CONFIG_IP_NF_TARGET_LOG=m
++CONFIG_IP_NF_TARGET_ULOG=m
++CONFIG_IP_NF_TARGET_TCPMSS=m
++CONFIG_IP_NF_ARPTABLES=m
++CONFIG_IP_NF_ARPFILTER=m
++CONFIG_IP_NF_COMPAT_IPCHAINS=m
++CONFIG_IP_NF_NAT_NEEDED=y
++# CONFIG_IP_NF_COMPAT_IPFWADM is not set
++CONFIG_IPV6=m
++
++#
++#   IPv6: Netfilter Configuration
++#
++CONFIG_IP6_NF_QUEUE=m
++CONFIG_IP6_NF_IPTABLES=m
++CONFIG_IP6_NF_MATCH_LIMIT=m
++CONFIG_IP6_NF_MATCH_MAC=m
++CONFIG_IP6_NF_MATCH_MULTIPORT=m
++CONFIG_IP6_NF_MATCH_OWNER=m
++CONFIG_IP6_NF_MATCH_MARK=m
++CONFIG_IP6_NF_FILTER=m
++CONFIG_IP6_NF_TARGET_LOG=m
++CONFIG_IP6_NF_MANGLE=m
++CONFIG_IP6_NF_TARGET_MARK=m
++CONFIG_KHTTPD=m
++# CONFIG_ATM is not set
++# CONFIG_VLAN_8021Q is not set
++
++#
++#  
++#
++CONFIG_IPX=m
++CONFIG_IPX_INTERN=y
++CONFIG_ATALK=m
++
++#
++# Appletalk devices
++#
++CONFIG_DEV_APPLETALK=y
++# CONFIG_LTPC is not set
++# CONFIG_COPS is not set
++CONFIG_IPDDP=m
++CONFIG_IPDDP_ENCAP=y
++CONFIG_IPDDP_DECAP=y
++# CONFIG_DECNET is not set
++# CONFIG_BRIDGE is not set
++# CONFIG_X25 is not set
++# CONFIG_LAPB is not set
++# CONFIG_LLC is not set
++# CONFIG_NET_DIVERT is not set
++# CONFIG_ECONET is not set
++# CONFIG_WAN_ROUTER is not set
++# CONFIG_NET_FASTROUTE is not set
++# CONFIG_NET_HW_FLOWCONTROL is not set
++
++#
++# QoS and/or fair queueing
++#
++CONFIG_NET_SCHED=y
++CONFIG_NET_SCH_CBQ=m
++CONFIG_NET_SCH_CSZ=m
++CONFIG_NET_SCH_PRIO=m
++CONFIG_NET_SCH_RED=m
++CONFIG_NET_SCH_SFQ=m
++CONFIG_NET_SCH_TEQL=m
++CONFIG_NET_SCH_TBF=m
++CONFIG_NET_SCH_GRED=m
++CONFIG_NET_SCH_DSMARK=m
++CONFIG_NET_SCH_INGRESS=m
++CONFIG_NET_QOS=y
++CONFIG_NET_ESTIMATOR=y
++CONFIG_NET_CLS=y
++CONFIG_NET_CLS_TCINDEX=m
++CONFIG_NET_CLS_ROUTE4=m
++CONFIG_NET_CLS_ROUTE=y
++CONFIG_NET_CLS_FW=m
++CONFIG_NET_CLS_U32=m
++CONFIG_NET_CLS_RSVP=m
++CONFIG_NET_CLS_RSVP6=m
++CONFIG_NET_CLS_POLICE=y
++
++#
++# Network testing
++#
++CONFIG_NET_PKTGEN=m
++
++#
++# ATA/IDE/MFM/RLL support
++#
++# CONFIG_IDE is not set
++# CONFIG_BLK_DEV_IDE_MODES is not set
++# CONFIG_BLK_DEV_HD is not set
++
++#
++# SCSI support
++#
++CONFIG_SCSI=y
++
++#
++# SCSI support type (disk, tape, CD-ROM)
++#
++CONFIG_BLK_DEV_SD=y
++CONFIG_SD_EXTRA_DEVS=40
++CONFIG_CHR_DEV_ST=y
++# CONFIG_CHR_DEV_OSST is not set
++CONFIG_BLK_DEV_SR=y
++CONFIG_BLK_DEV_SR_VENDOR=y
++CONFIG_SR_EXTRA_DEVS=2
++CONFIG_CHR_DEV_SG=y
++
++#
++# Some SCSI devices (e.g. CD jukebox) support multiple LUNs
++#
++# CONFIG_SCSI_DEBUG_QUEUES is not set
++CONFIG_SCSI_MULTI_LUN=y
++CONFIG_SCSI_CONSTANTS=y
++# CONFIG_SCSI_LOGGING is not set
++
++#
++# SCSI low-level drivers
++#
++# CONFIG_BLK_DEV_3W_XXXX_RAID is not set
++# CONFIG_SCSI_7000FASST is not set
++# CONFIG_SCSI_ACARD is not set
++# CONFIG_SCSI_AHA152X is not set
++# CONFIG_SCSI_AHA1542 is not set
++# CONFIG_SCSI_AHA1740 is not set
++# CONFIG_SCSI_AACRAID is not set
++# CONFIG_SCSI_AIC7XXX is not set
++# CONFIG_SCSI_AIC7XXX_OLD is not set
++# CONFIG_SCSI_DPT_I2O is not set
++# CONFIG_SCSI_ADVANSYS is not set
++# CONFIG_SCSI_IN2000 is not set
++# CONFIG_SCSI_AM53C974 is not set
++# CONFIG_SCSI_MEGARAID is not set
++# CONFIG_SCSI_BUSLOGIC is not set
++# CONFIG_SCSI_CPQFCTS is not set
++# CONFIG_SCSI_DMX3191D is not set
++# CONFIG_SCSI_DTC3280 is not set
++# CONFIG_SCSI_EATA is not set
++# CONFIG_SCSI_EATA_DMA is not set
++# CONFIG_SCSI_EATA_PIO is not set
++# CONFIG_SCSI_FUTURE_DOMAIN is not set
++# CONFIG_SCSI_GDTH is not set
++# CONFIG_SCSI_GENERIC_NCR5380 is not set
++# CONFIG_SCSI_INITIO is not set
++# CONFIG_SCSI_INIA100 is not set
++# CONFIG_SCSI_NCR53C406A is not set
++# CONFIG_SCSI_NCR53C7xx is not set
++# CONFIG_SCSI_SYM53C8XX_2 is not set
++# CONFIG_SCSI_NCR53C8XX is not set
++# CONFIG_SCSI_SYM53C8XX is not set
++# CONFIG_SCSI_PAS16 is not set
++# CONFIG_SCSI_PCI2000 is not set
++# CONFIG_SCSI_PCI2220I is not set
++# CONFIG_SCSI_PSI240I is not set
++# CONFIG_SCSI_QLOGIC_FAS is not set
++# CONFIG_SCSI_QLOGIC_ISP is not set
++# CONFIG_SCSI_QLOGIC_FC is not set
++# CONFIG_SCSI_QLOGIC_1280 is not set
++# CONFIG_SCSI_SIM710 is not set
++# CONFIG_SCSI_SYM53C416 is not set
++# CONFIG_SCSI_DC390T is not set
++# CONFIG_SCSI_T128 is not set
++# CONFIG_SCSI_U14_34F is not set
++CONFIG_SCSI_DEBUG=m
++
++#
++# IEEE 1394 (FireWire) support (EXPERIMENTAL)
++#
++# CONFIG_IEEE1394 is not set
++
++#
++# Network device support
++#
++CONFIG_NETDEVICES=y
++
++#
++# ARCnet devices
++#
++# CONFIG_ARCNET is not set
++CONFIG_DUMMY=m
++# CONFIG_BONDING is not set
++# CONFIG_EQUALIZER is not set
++# CONFIG_TUN is not set
++# CONFIG_ETHERTAP is not set
++
++#
++# Ethernet (10 or 100Mbit)
++#
++CONFIG_NET_ETHERNET=y
++# CONFIG_MACE is not set
++# CONFIG_BMAC is not set
++# CONFIG_GMAC is not set
++# CONFIG_SUNLANCE is not set
++# CONFIG_HAPPYMEAL is not set
++# CONFIG_SUNBMAC is not set
++# CONFIG_SUNQE is not set
++# CONFIG_SUNGEM is not set
++# CONFIG_NET_VENDOR_3COM is not set
++# CONFIG_LANCE is not set
++# CONFIG_NET_VENDOR_SMC is not set
++# CONFIG_NET_VENDOR_RACAL is not set
++# CONFIG_HP100 is not set
++# CONFIG_NET_ISA is not set
++CONFIG_NET_PCI=y
++CONFIG_PCNET32=y
++# CONFIG_ADAPTEC_STARFIRE is not set
++# CONFIG_APRICOT is not set
++# CONFIG_CS89x0 is not set
++CONFIG_TULIP=m
++# CONFIG_TC35815 is not set
++# CONFIG_TULIP_MWI is not set
++# CONFIG_TULIP_MMIO is not set
++# CONFIG_DE4X5 is not set
++# CONFIG_DGRS is not set
++# CONFIG_DM9102 is not set
++CONFIG_EEPRO100=m
++CONFIG_E100=m
++# CONFIG_LNE390 is not set
++# CONFIG_FEALNX is not set
++# CONFIG_NATSEMI is not set
++# CONFIG_NE2K_PCI is not set
++# CONFIG_NE3210 is not set
++# CONFIG_ES3210 is not set
++# CONFIG_8139CP is not set
++# CONFIG_8139TOO is not set
++# CONFIG_8139TOO_PIO is not set
++# CONFIG_8139TOO_TUNE_TWISTER is not set
++# CONFIG_8139TOO_8129 is not set
++# CONFIG_8139_NEW_RX_RESET is not set
++# CONFIG_SIS900 is not set
++# CONFIG_EPIC100 is not set
++# CONFIG_SUNDANCE is not set
++# CONFIG_TLAN is not set
++# CONFIG_VIA_RHINE is not set
++# CONFIG_VIA_RHINE_MMIO is not set
++# CONFIG_WINBOND_840 is not set
++# CONFIG_NET_POCKET is not set
++
++#
++# Ethernet (1000 Mbit)
++#
++CONFIG_ACENIC=y
++# CONFIG_ACENIC_OMIT_TIGON_I is not set
++# CONFIG_DL2K is not set
++CONFIG_E1000=y
++# CONFIG_MYRI_SBUS is not set
++# CONFIG_NS83820 is not set
++# CONFIG_HAMACHI is not set
++# CONFIG_YELLOWFIN is not set
++# CONFIG_SK98LIN is not set
++# CONFIG_TIGON3 is not set
++# CONFIG_FDDI is not set
++# CONFIG_HIPPI is not set
++# CONFIG_PLIP is not set
++CONFIG_PPP=m
++CONFIG_PPP_MULTILINK=y
++CONFIG_PPP_FILTER=y
++CONFIG_PPP_ASYNC=m
++CONFIG_PPP_SYNC_TTY=m
++CONFIG_PPP_DEFLATE=m
++CONFIG_PPP_BSDCOMP=m
++CONFIG_PPPOE=m
++CONFIG_SLIP=m
++CONFIG_SLIP_COMPRESSED=y
++CONFIG_SLIP_SMART=y
++# CONFIG_SLIP_MODE_SLIP6 is not set
++
++#
++# Wireless LAN (non-hamradio)
++#
++# CONFIG_NET_RADIO is not set
++
++#
++# Token Ring devices
++#
++CONFIG_TR=y
++CONFIG_IBMOL=y
++# CONFIG_IBMLS is not set
++# CONFIG_3C359 is not set
++# CONFIG_TMS380TR is not set
++# CONFIG_NET_FC is not set
++# CONFIG_RCPCI is not set
++# CONFIG_SHAPER is not set
++
++#
++# Wan interfaces
++#
++# CONFIG_WAN is not set
++
++#
++# Amateur Radio support
++#
++# CONFIG_HAMRADIO is not set
++
++#
++# ISDN subsystem
++#
++# CONFIG_ISDN is not set
++
++#
++# Old CD-ROM drivers (not SCSI, not IDE)
++#
++CONFIG_CD_NO_IDESCSI=y
++# CONFIG_AZTCD is not set
++# CONFIG_GSCD is not set
++# CONFIG_SBPCD is not set
++# CONFIG_MCD is not set
++# CONFIG_MCDX is not set
++# CONFIG_OPTCD is not set
++# CONFIG_CM206 is not set
++# CONFIG_SJCD is not set
++# CONFIG_ISP16_CDI is not set
++# CONFIG_CDU31A is not set
++# CONFIG_CDU535 is not set
++
++#
++# iSeries device drivers
++#
++CONFIG_VIOCONS=y
++CONFIG_VIODASD=y
++CONFIG_VIODASD_IDE=y
++CONFIG_VIOCD=y
++# CONFIG_VIOCD_AZTECH is not set
++CONFIG_VIOTAPE=y
++CONFIG_VETH=y
++CONFIG_VIOPATH=y
++CONFIG_CD_NO_IDESCSI=y
++
++#
++# Character devices
++#
++# CONFIG_VT is not set
++# CONFIG_SERIAL is not set
++# CONFIG_SERIAL_EXTENDED is not set
++CONFIG_SERIAL_NONSTANDARD=y
++# CONFIG_COMPUTONE is not set
++# CONFIG_ROCKETPORT is not set
++# CONFIG_CYCLADES is not set
++# CONFIG_DIGIEPCA is not set
++# CONFIG_DIGI is not set
++# CONFIG_ESPSERIAL is not set
++# CONFIG_MOXA_INTELLIO is not set
++# CONFIG_MOXA_SMARTIO is not set
++# CONFIG_ISI is not set
++CONFIG_ICOM=m
++# CONFIG_SYNCLINK is not set
++# CONFIG_N_HDLC is not set
++# CONFIG_RISCOM8 is not set
++# CONFIG_SPECIALIX is not set
++# CONFIG_SX is not set
++# CONFIG_RIO is not set
++# CONFIG_STALDRV is not set
++CONFIG_UNIX98_PTYS=y
++CONFIG_UNIX98_PTY_COUNT=1024
++# CONFIG_HVC_CONSOLE is not set
++
++#
++# I2C support
++#
++# CONFIG_I2C is not set
++
++#
++# Mice
++#
++# CONFIG_BUSMOUSE is not set
++# CONFIG_MOUSE is not set
++
++#
++# Joysticks
++#
++# CONFIG_INPUT_GAMEPORT is not set
++
++#
++# Input core support is needed for gameports
++#
++
++#
++# Input core support is needed for joysticks
++#
++# CONFIG_QIC02_TAPE is not set
++
++#
++# Watchdog Cards
++#
++CONFIG_WATCHDOG=y
++# CONFIG_WATCHDOG_NOWAYOUT is not set
++# CONFIG_ACQUIRE_WDT is not set
++# CONFIG_ADVANTECH_WDT is not set
++# CONFIG_ALIM7101_WDT is not set
++# CONFIG_SC520_WDT is not set
++# CONFIG_PCWATCHDOG is not set
++# CONFIG_EUROTECH_WDT is not set
++# CONFIG_IB700_WDT is not set
++# CONFIG_WAFER_WDT is not set
++# CONFIG_I810_TCO is not set
++# CONFIG_MIXCOMWD is not set
++# CONFIG_60XX_WDT is not set
++# CONFIG_SC1200_WDT is not set
++CONFIG_SOFT_WATCHDOG=m
++# CONFIG_W83877F_WDT is not set
++# CONFIG_WDT is not set
++# CONFIG_WDTPCI is not set
++# CONFIG_MACHZ_WDT is not set
++# CONFIG_NVRAM is not set
++# CONFIG_RTC is not set
++# CONFIG_DTLK is not set
++# CONFIG_R3964 is not set
++# CONFIG_APPLICOM is not set
++
++#
++# Ftape, the floppy tape device driver
++#
++# CONFIG_FTAPE is not set
++# CONFIG_AGP is not set
++# CONFIG_DRM is not set
++
++#
++# File systems
++#
++# CONFIG_QUOTA is not set
++CONFIG_AUTOFS_FS=m
++# CONFIG_AUTOFS4_FS is not set
++CONFIG_REISERFS_FS=y
++# CONFIG_REISERFS_CHECK is not set
++CONFIG_REISERFS_PROC_INFO=y
++# CONFIG_ADFS_FS is not set
++# CONFIG_ADFS_FS_RW is not set
++# CONFIG_AFFS_FS is not set
++# CONFIG_HFS_FS is not set
++# CONFIG_BFS_FS is not set
++CONFIG_EXT3_FS=y
++CONFIG_JBD=y
++# CONFIG_JBD_DEBUG is not set
++CONFIG_FAT_FS=m
++CONFIG_MSDOS_FS=m
++# CONFIG_UMSDOS_FS is not set
++CONFIG_VFAT_FS=m
++# CONFIG_EFS_FS is not set
++# CONFIG_JFFS_FS is not set
++# CONFIG_JFFS2_FS is not set
++CONFIG_CRAMFS=y
++CONFIG_TMPFS=y
++CONFIG_RAMFS=y
++CONFIG_ISO9660_FS=y
++CONFIG_JOLIET=y
++CONFIG_ZISOFS=y
++CONFIG_JFS_FS=y
++# CONFIG_JFS_DEBUG is not set
++CONFIG_JFS_STATISTICS=y
++# CONFIG_MINIX_FS is not set
++# CONFIG_VXFS_FS is not set
++# CONFIG_NTFS_FS is not set
++# CONFIG_NTFS_RW is not set
++# CONFIG_HPFS_FS is not set
++CONFIG_PROC_FS=y
++CONFIG_PROC_CONFIG=y
++# CONFIG_DEVFS_FS is not set
++# CONFIG_DEVFS_MOUNT is not set
++# CONFIG_DEVFS_DEBUG is not set
++CONFIG_DEVPTS_FS=y
++# CONFIG_QNX4FS_FS is not set
++# CONFIG_QNX4FS_RW is not set
++# CONFIG_ROMFS_FS is not set
++CONFIG_EXT2_FS=y
++# CONFIG_SYSV_FS is not set
++# CONFIG_UDF_FS is not set
++# CONFIG_UDF_RW is not set
++# CONFIG_UFS_FS is not set
++# CONFIG_UFS_FS_WRITE is not set
++
++#
++# Network File Systems
++#
++CONFIG_CODA_FS=m
++CONFIG_INTERMEZZO_FS=m
++CONFIG_NFS_FS=y
++CONFIG_NFS_V3=y
++CONFIG_ROOT_NFS=y
++CONFIG_NFSD=m
++CONFIG_NFSD_V3=y
++CONFIG_SUNRPC=y
++CONFIG_LOCKD=y
++CONFIG_LOCKD_V4=y
++CONFIG_SMB_FS=m
++# CONFIG_SMB_NLS_DEFAULT is not set
++CONFIG_NCP_FS=m
++CONFIG_NCPFS_PACKET_SIGNING=y
++CONFIG_NCPFS_IOCTL_LOCKING=y
++CONFIG_NCPFS_STRONG=y
++CONFIG_NCPFS_NFS_NS=y
++CONFIG_NCPFS_OS2_NS=y
++CONFIG_NCPFS_SMALLDOS=y
++CONFIG_NCPFS_NLS=y
++CONFIG_NCPFS_EXTRAS=y
++CONFIG_ZISOFS_FS=y
++CONFIG_ZLIB_FS_INFLATE=y
++
++#
++# Partition Types
++#
++# CONFIG_PARTITION_ADVANCED is not set
++CONFIG_MSDOS_PARTITION=y
++CONFIG_SMB_NLS=y
++CONFIG_NLS=y
++
++#
++# Native Language Support
++#
++CONFIG_NLS_DEFAULT="iso8859-1"
++CONFIG_NLS_CODEPAGE_437=m
++CONFIG_NLS_CODEPAGE_737=m
++CONFIG_NLS_CODEPAGE_775=m
++CONFIG_NLS_CODEPAGE_850=m
++CONFIG_NLS_CODEPAGE_852=m
++CONFIG_NLS_CODEPAGE_855=m
++CONFIG_NLS_CODEPAGE_857=m
++CONFIG_NLS_CODEPAGE_860=m
++CONFIG_NLS_CODEPAGE_861=m
++CONFIG_NLS_CODEPAGE_862=m
++CONFIG_NLS_CODEPAGE_863=m
++CONFIG_NLS_CODEPAGE_864=m
++CONFIG_NLS_CODEPAGE_865=m
++CONFIG_NLS_CODEPAGE_866=m
++CONFIG_NLS_CODEPAGE_869=m
++CONFIG_NLS_CODEPAGE_936=m
++CONFIG_NLS_CODEPAGE_950=m
++CONFIG_NLS_CODEPAGE_932=m
++CONFIG_NLS_CODEPAGE_949=m
++CONFIG_NLS_CODEPAGE_874=m
++CONFIG_NLS_ISO8859_8=m
++CONFIG_NLS_CODEPAGE_1250=m
++CONFIG_NLS_CODEPAGE_1251=m
++CONFIG_NLS_ISO8859_1=m
++CONFIG_NLS_ISO8859_2=m
++CONFIG_NLS_ISO8859_3=m
++CONFIG_NLS_ISO8859_4=m
++CONFIG_NLS_ISO8859_5=m
++CONFIG_NLS_ISO8859_6=m
++CONFIG_NLS_ISO8859_7=m
++CONFIG_NLS_ISO8859_9=m
++CONFIG_NLS_ISO8859_13=m
++CONFIG_NLS_ISO8859_14=m
++CONFIG_NLS_ISO8859_15=m
++CONFIG_NLS_KOI8_R=m
++CONFIG_NLS_KOI8_U=m
++CONFIG_NLS_UTF8=m
++
++#
++# Kernel hacking
++#
++CONFIG_MAGIC_SYSRQ=y
++# CONFIG_KGDB is not set
++# CONFIG_XMON is not set
++CONFIG_KDB=y
++# CONFIG_KDB_OFF is not set
++CONFIG_KALLSYMS=y
++# CONFIG_XMON is not set
++# CONFIG_PPCDBG is not set
++CONFIG_DUMP=y
++CONFIG_DUMP_COMPRESS_RLE=y
++CONFIG_DUMP_COMPRESS_GZIP=y
+diff -uNr -X /home/engebret/dontdiff linuxppc64_2_4_prev_patch/arch/ppc64/configs/config.pseries64.suse.mod linuxppc64_2_4/arch/ppc64/configs/config.pseries64.suse.mod
+--- linuxppc64_2_4_prev_patch/arch/ppc64/configs/config.pseries64.suse.mod	Wed Dec 31 18:00:00 1969
++++ linuxppc64_2_4/arch/ppc64/configs/config.pseries64.suse.mod	Thu Aug 29 16:04:44 2002
+@@ -0,0 +1,1216 @@
++#
++# Automatically generated make config: don't edit
++#
++# CONFIG_UID16 is not set
++# CONFIG_RWSEM_GENERIC_SPINLOCK is not set
++CONFIG_RWSEM_XCHGADD_ALGORITHM=y
++# CONFIG_GENERIC_BUST_SPINLOCK is not set
++CONFIG_GENERIC_ISA_DMA=y
++CONFIG_HAVE_DEC_LOCK=y
++
++#
++# Code maturity level options
++#
++CONFIG_EXPERIMENTAL=y
++
++#
++# Platform support
++#
++CONFIG_PPC=y
++CONFIG_PPC64=y
++CONFIG_SERIAL_CONSOLE=y
++CONFIG_PPC_PSERIES=y
++# CONFIG_PPC_ISERIES is not set
++CONFIG_SMP=y
++CONFIG_IRQ_ALL_CPUS=y
++CONFIG_HMT=y
++# CONFIG_MSCHUNKS is not set
++CONFIG_RTAS_FLASH=m
++
++#
++# Loadable module support
++#
++CONFIG_MODULES=y
++# CONFIG_MODVERSIONS is not set
++CONFIG_KMOD=y
++
++#
++# General setup
++#
++# CONFIG_ISA is not set
++# CONFIG_SBUS is not set
++# CONFIG_MCA is not set
++# CONFIG_EISA is not set
++CONFIG_PCI=y
++# CONFIG_PCMCIA is not set
++CONFIG_NET=y
++CONFIG_SYSCTL=y
++CONFIG_SYSVIPC=y
++CONFIG_BSD_PROCESS_ACCT=y
++CONFIG_KCORE_ELF=y
++CONFIG_BINFMT_ELF=y
++CONFIG_BINFMT_ELF32=y
++CONFIG_BINFMT_MISC=y
++CONFIG_PCI_NAMES=y
++CONFIG_HOTPLUG=y
++
++#
++# Parallel port support
++#
++CONFIG_PARPORT=m
++CONFIG_PARPORT_PC=m
++CONFIG_PARPORT_PC_CML1=m
++# CONFIG_PARPORT_SERIAL is not set
++# CONFIG_PARPORT_PC_FIFO is not set
++# CONFIG_PARPORT_PC_SUPERIO is not set
++# CONFIG_PARPORT_AMIGA is not set
++# CONFIG_PARPORT_MFC3 is not set
++# CONFIG_PARPORT_ATARI is not set
++# CONFIG_PARPORT_GSC is not set
++# CONFIG_PARPORT_SUNBPP is not set
++# CONFIG_PARPORT_OTHER is not set
++CONFIG_PARPORT_1284=y
++# CONFIG_VGA_CONSOLE is not set
++CONFIG_FB=y
++CONFIG_PROC_DEVICETREE=y
++# CONFIG_CMDLINE_BOOL is not set
++
++#
++# Block devices
++#
++CONFIG_BLK_DEV_FD=y
++# CONFIG_BLK_DEV_XD is not set
++# CONFIG_PARIDE is not set
++# CONFIG_BLK_CPQ_DA is not set
++# CONFIG_BLK_CPQ_CISS_DA is not set
++# CONFIG_CISS_SCSI_TAPE is not set
++# CONFIG_BLK_DEV_DAC960 is not set
++# CONFIG_BLK_DEV_UMEM is not set
++CONFIG_BLK_DEV_LOOP=y
++CONFIG_BLK_DEV_NBD=m
++CONFIG_BLK_DEV_RAM=y
++CONFIG_BLK_DEV_RAM_SIZE=128000
++CONFIG_BLK_DEV_INITRD=y
++
++#
++# Multi-device support (RAID and LVM)
++#
++CONFIG_MD=y
++CONFIG_BLK_DEV_MD=m
++CONFIG_MD_LINEAR=m
++CONFIG_MD_RAID0=m
++CONFIG_MD_RAID1=m
++CONFIG_MD_RAID5=m
++CONFIG_MD_MULTIPATH=m
++CONFIG_BLK_DEV_LVM=y
++
++#
++# Networking options
++#
++CONFIG_PACKET=y
++CONFIG_PACKET_MMAP=y
++CONFIG_NETLINK_DEV=y
++CONFIG_NETFILTER=y
++# CONFIG_NETFILTER_DEBUG is not set
++CONFIG_FILTER=y
++CONFIG_UNIX=y
++CONFIG_INET=y
++CONFIG_IP_MULTICAST=y
++CONFIG_IP_ADVANCED_ROUTER=y
++CONFIG_IP_MULTIPLE_TABLES=y
++CONFIG_IP_ROUTE_FWMARK=y
++CONFIG_IP_ROUTE_NAT=y
++CONFIG_IP_ROUTE_MULTIPATH=y
++CONFIG_IP_ROUTE_TOS=y
++# CONFIG_IP_ROUTE_VERBOSE is not set
++CONFIG_IP_ROUTE_LARGE_TABLES=y
++CONFIG_IP_PNP=y
++CONFIG_IP_PNP_DHCP=y
++CONFIG_IP_PNP_BOOTP=y
++CONFIG_IP_PNP_RARP=y
++CONFIG_NET_IPIP=y
++CONFIG_NET_IPGRE=m
++CONFIG_NET_IPGRE_BROADCAST=y
++# CONFIG_IP_MROUTE is not set
++# CONFIG_ARPD is not set
++CONFIG_INET_ECN=y
++CONFIG_SYN_COOKIES=y
++
++#
++#   IP: Netfilter Configuration
++#
++CONFIG_IP_NF_CONNTRACK=m
++CONFIG_IP_NF_FTP=m
++CONFIG_IP_NF_IRC=m
++CONFIG_IP_NF_QUEUE=m
++CONFIG_IP_NF_IPTABLES=m
++CONFIG_IP_NF_MATCH_LIMIT=m
++CONFIG_IP_NF_MATCH_MAC=m
++CONFIG_IP_NF_MATCH_MARK=m
++CONFIG_IP_NF_MATCH_MULTIPORT=m
++CONFIG_IP_NF_MATCH_TOS=m
++CONFIG_IP_NF_MATCH_AH_ESP=m
++CONFIG_IP_NF_MATCH_LENGTH=m
++CONFIG_IP_NF_MATCH_TTL=m
++CONFIG_IP_NF_MATCH_TCPMSS=m
++CONFIG_IP_NF_MATCH_STATE=m
++CONFIG_IP_NF_MATCH_UNCLEAN=m
++CONFIG_IP_NF_MATCH_OWNER=m
++CONFIG_IP_NF_FILTER=m
++CONFIG_IP_NF_TARGET_REJECT=m
++CONFIG_IP_NF_TARGET_MIRROR=m
++CONFIG_IP_NF_NAT=m
++CONFIG_IP_NF_NAT_NEEDED=y
++CONFIG_IP_NF_TARGET_MASQUERADE=m
++CONFIG_IP_NF_TARGET_REDIRECT=m
++CONFIG_IP_NF_NAT_LOCAL=y
++CONFIG_IP_NF_NAT_SNMP_BASIC=m
++CONFIG_IP_NF_NAT_IRC=m
++CONFIG_IP_NF_NAT_FTP=m
++CONFIG_IP_NF_MANGLE=m
++CONFIG_IP_NF_TARGET_TOS=m
++CONFIG_IP_NF_TARGET_MARK=m
++CONFIG_IP_NF_TARGET_LOG=m
++CONFIG_IP_NF_TARGET_ULOG=m
++CONFIG_IP_NF_TARGET_TCPMSS=m
++CONFIG_IP_NF_ARPTABLES=m
++CONFIG_IP_NF_ARPFILTER=m
++CONFIG_IP_NF_COMPAT_IPCHAINS=m
++CONFIG_IP_NF_NAT_NEEDED=y
++# CONFIG_IP_NF_COMPAT_IPFWADM is not set
++CONFIG_IPV6=m
++
++#
++#   IPv6: Netfilter Configuration
++#
++CONFIG_IP6_NF_QUEUE=m
++CONFIG_IP6_NF_IPTABLES=m
++CONFIG_IP6_NF_MATCH_LIMIT=m
++CONFIG_IP6_NF_MATCH_MAC=m
++CONFIG_IP6_NF_MATCH_MULTIPORT=m
++CONFIG_IP6_NF_MATCH_OWNER=m
++CONFIG_IP6_NF_MATCH_MARK=m
++CONFIG_IP6_NF_FILTER=m
++CONFIG_IP6_NF_TARGET_LOG=m
++CONFIG_IP6_NF_MANGLE=m
++CONFIG_IP6_NF_TARGET_MARK=m
++CONFIG_KHTTPD=m
++# CONFIG_ATM is not set
++# CONFIG_VLAN_8021Q is not set
++
++#
++#  
++#
++CONFIG_IPX=m
++CONFIG_IPX_INTERN=y
++CONFIG_ATALK=m
++
++#
++# Appletalk devices
++#
++CONFIG_DEV_APPLETALK=y
++# CONFIG_LTPC is not set
++# CONFIG_COPS is not set
++CONFIG_IPDDP=m
++CONFIG_IPDDP_ENCAP=y
++CONFIG_IPDDP_DECAP=y
++CONFIG_DECNET=m
++CONFIG_DECNET_SIOCGIFCONF=y
++# CONFIG_DECNET_ROUTER is not set
++# CONFIG_BRIDGE is not set
++# CONFIG_X25 is not set
++# CONFIG_LAPB is not set
++# CONFIG_LLC is not set
++# CONFIG_NET_DIVERT is not set
++# CONFIG_ECONET is not set
++# CONFIG_WAN_ROUTER is not set
++# CONFIG_NET_FASTROUTE is not set
++# CONFIG_NET_HW_FLOWCONTROL is not set
++
++#
++# QoS and/or fair queueing
++#
++CONFIG_NET_SCHED=y
++CONFIG_NET_SCH_CBQ=m
++CONFIG_NET_SCH_CSZ=m
++CONFIG_NET_SCH_PRIO=m
++CONFIG_NET_SCH_RED=m
++CONFIG_NET_SCH_SFQ=m
++CONFIG_NET_SCH_TEQL=m
++CONFIG_NET_SCH_TBF=m
++CONFIG_NET_SCH_GRED=m
++CONFIG_NET_SCH_DSMARK=m
++CONFIG_NET_SCH_INGRESS=m
++CONFIG_NET_QOS=y
++CONFIG_NET_ESTIMATOR=y
++CONFIG_NET_CLS=y
++CONFIG_NET_CLS_TCINDEX=m
++CONFIG_NET_CLS_ROUTE4=m
++CONFIG_NET_CLS_ROUTE=y
++CONFIG_NET_CLS_FW=m
++CONFIG_NET_CLS_U32=m
++CONFIG_NET_CLS_RSVP=m
++CONFIG_NET_CLS_RSVP6=m
++CONFIG_NET_CLS_POLICE=y
++
++#
++# Network testing
++#
++CONFIG_NET_PKTGEN=m
++
++#
++# ATA/IDE/MFM/RLL support
++#
++CONFIG_IDE=y
++
++#
++# IDE, ATA and ATAPI Block devices
++#
++CONFIG_BLK_DEV_IDE=y
++
++#
++# Please see Documentation/ide.txt for help/info on IDE drives
++#
++# CONFIG_BLK_DEV_HD_IDE is not set
++# CONFIG_BLK_DEV_HD is not set
++# CONFIG_BLK_DEV_IDEDISK is not set
++# CONFIG_IDEDISK_MULTI_MODE is not set
++# CONFIG_IDEDISK_STROKE is not set
++# CONFIG_BLK_DEV_IDEDISK_VENDOR is not set
++# CONFIG_BLK_DEV_IDEDISK_FUJITSU is not set
++# CONFIG_BLK_DEV_IDEDISK_IBM is not set
++# CONFIG_BLK_DEV_IDEDISK_MAXTOR is not set
++# CONFIG_BLK_DEV_IDEDISK_QUANTUM is not set
++# CONFIG_BLK_DEV_IDEDISK_SEAGATE is not set
++# CONFIG_BLK_DEV_IDEDISK_WD is not set
++# CONFIG_BLK_DEV_COMMERIAL is not set
++# CONFIG_BLK_DEV_TIVO is not set
++# CONFIG_BLK_DEV_IDECS is not set
++CONFIG_BLK_DEV_IDECD=y
++# CONFIG_BLK_DEV_IDETAPE is not set
++# CONFIG_BLK_DEV_IDEFLOPPY is not set
++# CONFIG_BLK_DEV_IDESCSI is not set
++CONFIG_IDE_TASK_IOCTL=y
++
++#
++# IDE chipset support/bugfixes
++#
++# CONFIG_BLK_DEV_CMD640 is not set
++# CONFIG_BLK_DEV_CMD640_ENHANCED is not set
++# CONFIG_BLK_DEV_ISAPNP is not set
++# CONFIG_BLK_DEV_RZ1000 is not set
++CONFIG_BLK_DEV_IDEPCI=y
++# CONFIG_IDEPCI_SHARE_IRQ is not set
++CONFIG_BLK_DEV_IDEDMA_PCI=y
++# CONFIG_BLK_DEV_OFFBOARD is not set
++# CONFIG_BLK_DEV_IDEDMA_FORCED is not set
++# CONFIG_IDEDMA_PCI_AUTO is not set
++# CONFIG_IDEDMA_ONLYDISK is not set
++CONFIG_BLK_DEV_IDEDMA=y
++# CONFIG_IDEDMA_PCI_WIP is not set
++# CONFIG_BLK_DEV_IDEDMA_TIMEOUT is not set
++# CONFIG_IDEDMA_NEW_DRIVE_LISTINGS is not set
++CONFIG_BLK_DEV_ADMA=y
++# CONFIG_BLK_DEV_AEC62XX is not set
++# CONFIG_AEC62XX_TUNING is not set
++# CONFIG_BLK_DEV_ALI15X3 is not set
++# CONFIG_WDC_ALI15X3 is not set
++# CONFIG_BLK_DEV_AMD74XX is not set
++# CONFIG_AMD74XX_OVERRIDE is not set
++# CONFIG_BLK_DEV_CMD64X is not set
++# CONFIG_BLK_DEV_CMD680 is not set
++# CONFIG_BLK_DEV_CY82C693 is not set
++# CONFIG_BLK_DEV_CS5530 is not set
++# CONFIG_BLK_DEV_HPT34X is not set
++# CONFIG_HPT34X_AUTODMA is not set
++# CONFIG_BLK_DEV_HPT366 is not set
++# CONFIG_BLK_DEV_NS87415 is not set
++# CONFIG_BLK_DEV_OPTI621 is not set
++# CONFIG_BLK_DEV_PDC202XX is not set
++# CONFIG_PDC202XX_BURST is not set
++# CONFIG_PDC202XX_FORCE is not set
++# CONFIG_BLK_DEV_SVWKS is not set
++# CONFIG_BLK_DEV_SIS5513 is not set
++# CONFIG_BLK_DEV_SLC90E66 is not set
++# CONFIG_BLK_DEV_TRM290 is not set
++# CONFIG_BLK_DEV_VIA82CXXX is not set
++CONFIG_BLK_DEV_SL82C105=y
++# CONFIG_IDE_CHIPSETS is not set
++# CONFIG_IDEDMA_AUTO is not set
++# CONFIG_IDEDMA_IVB is not set
++# CONFIG_DMA_NONPCI is not set
++CONFIG_BLK_DEV_IDE_MODES=y
++# CONFIG_BLK_DEV_ATARAID is not set
++# CONFIG_BLK_DEV_ATARAID_PDC is not set
++# CONFIG_BLK_DEV_ATARAID_HPT is not set
++
++#
++# SCSI support
++#
++CONFIG_SCSI=y
++
++#
++# SCSI support type (disk, tape, CD-ROM)
++#
++CONFIG_BLK_DEV_SD=y
++CONFIG_SD_EXTRA_DEVS=40
++CONFIG_CHR_DEV_ST=y
++# CONFIG_CHR_DEV_OSST is not set
++CONFIG_BLK_DEV_SR=y
++CONFIG_BLK_DEV_SR_VENDOR=y
++CONFIG_SR_EXTRA_DEVS=2
++CONFIG_CHR_DEV_SG=y
++
++#
++# Some SCSI devices (e.g. CD jukebox) support multiple LUNs
++#
++# CONFIG_SCSI_DEBUG_QUEUES is not set
++CONFIG_SCSI_MULTI_LUN=y
++CONFIG_SCSI_CONSTANTS=y
++# CONFIG_SCSI_LOGGING is not set
++
++#
++# SCSI low-level drivers
++#
++# CONFIG_BLK_DEV_3W_XXXX_RAID is not set
++# CONFIG_SCSI_7000FASST is not set
++# CONFIG_SCSI_ACARD is not set
++# CONFIG_SCSI_AHA152X is not set
++# CONFIG_SCSI_AHA1542 is not set
++# CONFIG_SCSI_AHA1740 is not set
++# CONFIG_SCSI_AACRAID is not set
++CONFIG_SCSI_AIC7XXX=m
++CONFIG_AIC7XXX_CMDS_PER_DEVICE=64
++CONFIG_AIC7XXX_RESET_DELAY_MS=15000
++# CONFIG_AIC7XXX_PROBE_EISA_VL is not set
++# CONFIG_AIC7XXX_BUILD_FIRMWARE is not set
++CONFIG_SCSI_AIC7XXX_OLD=m
++# CONFIG_AIC7XXX_OLD_TCQ_ON_BY_DEFAULT is not set
++CONFIG_AIC7XXX_OLD_CMDS_PER_DEVICE=8
++# CONFIG_AIC7XXX_OLD_PROC_STATS is not set
++# CONFIG_SCSI_DPT_I2O is not set
++# CONFIG_SCSI_ADVANSYS is not set
++# CONFIG_SCSI_IN2000 is not set
++# CONFIG_SCSI_AM53C974 is not set
++# CONFIG_SCSI_MEGARAID is not set
++# CONFIG_SCSI_BUSLOGIC is not set
++# CONFIG_SCSI_CPQFCTS is not set
++# CONFIG_SCSI_DMX3191D is not set
++# CONFIG_SCSI_DTC3280 is not set
++# CONFIG_SCSI_EATA is not set
++# CONFIG_SCSI_EATA_DMA is not set
++# CONFIG_SCSI_EATA_PIO is not set
++# CONFIG_SCSI_FUTURE_DOMAIN is not set
++# CONFIG_SCSI_GDTH is not set
++# CONFIG_SCSI_GENERIC_NCR5380 is not set
++# CONFIG_SCSI_INITIO is not set
++# CONFIG_SCSI_INIA100 is not set
++# CONFIG_SCSI_PPA is not set
++CONFIG_SCSI_IMM=m
++CONFIG_SCSI_IZIP_EPP16=y
++CONFIG_SCSI_IZIP_SLOW_CTR=y
++# CONFIG_SCSI_NCR53C406A is not set
++# CONFIG_SCSI_NCR53C7xx is not set
++CONFIG_SCSI_SYM53C8XX_2=y
++CONFIG_SCSI_SYM53C8XX_DMA_ADDRESSING_MODE=0
++CONFIG_SCSI_SYM53C8XX_DEFAULT_TAGS=16
++CONFIG_SCSI_SYM53C8XX_MAX_TAGS=64
++# CONFIG_SCSI_SYM53C8XX_IOMAPPED is not set
++# CONFIG_SCSI_PAS16 is not set
++# CONFIG_SCSI_PCI2000 is not set
++# CONFIG_SCSI_PCI2220I is not set
++# CONFIG_SCSI_PSI240I is not set
++# CONFIG_SCSI_QLOGIC_FAS is not set
++# CONFIG_SCSI_QLOGIC_ISP is not set
++# CONFIG_SCSI_QLOGIC_FC is not set
++# CONFIG_SCSI_QLOGIC_1280 is not set
++# CONFIG_SCSI_SIM710 is not set
++# CONFIG_SCSI_SYM53C416 is not set
++# CONFIG_SCSI_DC390T is not set
++# CONFIG_SCSI_T128 is not set
++# CONFIG_SCSI_U14_34F is not set
++# CONFIG_SCSI_DEBUG is not set
++
++#
++# IEEE 1394 (FireWire) support (EXPERIMENTAL)
++#
++CONFIG_IEEE1394=m
++
++#
++# Device Drivers
++#
++
++#
++#   Texas Instruments PCILynx requires I2C bit-banging
++#
++CONFIG_IEEE1394_OHCI1394=m
++
++#
++# Protocol Drivers
++#
++# CONFIG_IEEE1394_VIDEO1394 is not set
++CONFIG_IEEE1394_SBP2=m
++# CONFIG_IEEE1394_SBP2_PHYS_DMA is not set
++# CONFIG_IEEE1394_ETH1394 is not set
++# CONFIG_IEEE1394_DV1394 is not set
++CONFIG_IEEE1394_RAWIO=m
++# CONFIG_IEEE1394_CMP is not set
++# CONFIG_IEEE1394_VERBOSEDEBUG is not set
++
++#
++# Network device support
++#
++CONFIG_NETDEVICES=y
++
++#
++# ARCnet devices
++#
++# CONFIG_ARCNET is not set
++CONFIG_DUMMY=m
++# CONFIG_BONDING is not set
++CONFIG_EQUALIZER=m
++CONFIG_TUN=m
++# CONFIG_ETHERTAP is not set
++
++#
++# Ethernet (10 or 100Mbit)
++#
++CONFIG_NET_ETHERNET=y
++# CONFIG_MACE is not set
++# CONFIG_BMAC is not set
++# CONFIG_GMAC is not set
++# CONFIG_SUNLANCE is not set
++# CONFIG_HAPPYMEAL is not set
++# CONFIG_SUNBMAC is not set
++# CONFIG_SUNQE is not set
++# CONFIG_SUNGEM is not set
++CONFIG_NET_VENDOR_3COM=y
++# CONFIG_EL1 is not set
++# CONFIG_EL2 is not set
++# CONFIG_ELPLUS is not set
++# CONFIG_EL16 is not set
++# CONFIG_ELMC is not set
++# CONFIG_ELMC_II is not set
++CONFIG_VORTEX=m
++# CONFIG_LANCE is not set
++# CONFIG_NET_VENDOR_SMC is not set
++# CONFIG_NET_VENDOR_RACAL is not set
++# CONFIG_HP100 is not set
++# CONFIG_NET_ISA is not set
++CONFIG_NET_PCI=y
++CONFIG_PCNET32=y
++# CONFIG_ADAPTEC_STARFIRE is not set
++# CONFIG_APRICOT is not set
++# CONFIG_CS89x0 is not set
++CONFIG_TULIP=m
++# CONFIG_TC35815 is not set
++# CONFIG_TULIP_MWI is not set
++# CONFIG_TULIP_MMIO is not set
++# CONFIG_DE4X5 is not set
++# CONFIG_DGRS is not set
++# CONFIG_DM9102 is not set
++CONFIG_EEPRO100=m
++CONFIG_E100=m
++# CONFIG_LNE390 is not set
++# CONFIG_FEALNX is not set
++# CONFIG_NATSEMI is not set
++# CONFIG_NE2K_PCI is not set
++# CONFIG_NE3210 is not set
++# CONFIG_ES3210 is not set
++# CONFIG_8139CP is not set
++# CONFIG_8139TOO is not set
++# CONFIG_8139TOO_PIO is not set
++# CONFIG_8139TOO_TUNE_TWISTER is not set
++# CONFIG_8139TOO_8129 is not set
++# CONFIG_8139_NEW_RX_RESET is not set
++# CONFIG_SIS900 is not set
++# CONFIG_EPIC100 is not set
++# CONFIG_SUNDANCE is not set
++# CONFIG_TLAN is not set
++# CONFIG_VIA_RHINE is not set
++# CONFIG_VIA_RHINE_MMIO is not set
++# CONFIG_WINBOND_840 is not set
++# CONFIG_NET_POCKET is not set
++
++#
++# Ethernet (1000 Mbit)
++#
++CONFIG_ACENIC=y
++# CONFIG_ACENIC_OMIT_TIGON_I is not set
++# CONFIG_DL2K is not set
++CONFIG_E1000=y
++# CONFIG_MYRI_SBUS is not set
++# CONFIG_NS83820 is not set
++# CONFIG_HAMACHI is not set
++# CONFIG_YELLOWFIN is not set
++# CONFIG_SK98LIN is not set
++# CONFIG_TIGON3 is not set
++CONFIG_FDDI=y
++# CONFIG_DEFXX is not set
++CONFIG_SKFP=m
++# CONFIG_HIPPI is not set
++# CONFIG_PLIP is not set
++CONFIG_PPP=m
++CONFIG_PPP_MULTILINK=y
++CONFIG_PPP_FILTER=y
++CONFIG_PPP_ASYNC=m
++CONFIG_PPP_SYNC_TTY=m
++CONFIG_PPP_DEFLATE=m
++CONFIG_PPP_BSDCOMP=m
++CONFIG_PPPOE=m
++CONFIG_SLIP=m
++CONFIG_SLIP_COMPRESSED=y
++CONFIG_SLIP_SMART=y
++CONFIG_SLIP_MODE_SLIP6=y
++
++#
++# Wireless LAN (non-hamradio)
++#
++# CONFIG_NET_RADIO is not set
++
++#
++# Token Ring devices
++#
++CONFIG_TR=y
++CONFIG_IBMOL=y
++# CONFIG_IBMLS is not set
++# CONFIG_3C359 is not set
++# CONFIG_TMS380TR is not set
++# CONFIG_NET_FC is not set
++# CONFIG_RCPCI is not set
++# CONFIG_SHAPER is not set
++
++#
++# Wan interfaces
++#
++# CONFIG_WAN is not set
++
++#
++# Amateur Radio support
++#
++# CONFIG_HAMRADIO is not set
++
++#
++# ISDN subsystem
++#
++# CONFIG_ISDN is not set
++
++#
++# Old CD-ROM drivers (not SCSI, not IDE)
++#
++# CONFIG_CD_NO_IDESCSI is not set
++
++#
++# Console drivers
++#
++
++#
++# Frame-buffer support
++#
++CONFIG_FB=y
++CONFIG_DUMMY_CONSOLE=y
++# CONFIG_FB_RIVA is not set
++# CONFIG_FB_CLGEN is not set
++# CONFIG_FB_PM2 is not set
++# CONFIG_FB_PM3 is not set
++# CONFIG_FB_CYBER2000 is not set
++CONFIG_FB_OF=y
++# CONFIG_FB_CONTROL is not set
++# CONFIG_FB_PLATINUM is not set
++# CONFIG_FB_VALKYRIE is not set
++# CONFIG_FB_CT65550 is not set
++# CONFIG_FB_IMSTT is not set
++# CONFIG_FB_S3TRIO is not set
++# CONFIG_FB_VGA16 is not set
++CONFIG_FB_MATROX=y
++CONFIG_FB_MATROX_MILLENIUM=y
++CONFIG_FB_MATROX_MYSTIQUE=y
++CONFIG_FB_MATROX_G100=y
++CONFIG_FB_MATROX_G450=y
++CONFIG_FB_MATROX_MULTIHEAD=y
++# CONFIG_FB_ATY is not set
++# CONFIG_FB_RADEON is not set
++# CONFIG_FB_ATY128 is not set
++# CONFIG_FB_SIS is not set
++# CONFIG_FB_NEOMAGIC is not set
++# CONFIG_FB_3DFX is not set
++# CONFIG_FB_VOODOO1 is not set
++# CONFIG_FB_TRIDENT is not set
++# CONFIG_FB_VIRTUAL is not set
++# CONFIG_FBCON_ADVANCED is not set
++CONFIG_FBCON_CFB8=y
++CONFIG_FBCON_CFB16=y
++CONFIG_FBCON_CFB24=y
++CONFIG_FBCON_CFB32=y
++CONFIG_FBCON_FONTWIDTH8_ONLY=y
++CONFIG_FBCON_FONTS=y
++CONFIG_FONT_8x8=y
++CONFIG_FONT_8x16=y
++# CONFIG_FONT_SUN8x16 is not set
++# CONFIG_FONT_PEARL_8x8 is not set
++# CONFIG_FONT_ACORN_8x8 is not set
++
++#
++# Input core support
++#
++CONFIG_INPUT=m
++CONFIG_INPUT_KEYBDEV=m
++CONFIG_INPUT_MOUSEDEV=m
++CONFIG_INPUT_MOUSEDEV_SCREEN_X=1024
++CONFIG_INPUT_MOUSEDEV_SCREEN_Y=768
++CONFIG_INPUT_JOYDEV=m
++CONFIG_INPUT_EVDEV=m
++CONFIG_VIOPATH=y
++
++#
++# Character devices
++#
++CONFIG_VT=y
++CONFIG_VT_CONSOLE=y
++CONFIG_SERIAL=y
++CONFIG_SERIAL_CONSOLE=y
++# CONFIG_SERIAL_EXTENDED is not set
++# CONFIG_SERIAL_NONSTANDARD is not set
++CONFIG_UNIX98_PTYS=y
++CONFIG_UNIX98_PTY_COUNT=256
++CONFIG_PRINTER=m
++# CONFIG_LP_CONSOLE is not set
++CONFIG_PPDEV=m
++CONFIG_HVC_CONSOLE=y
++
++#
++# I2C support
++#
++# CONFIG_I2C is not set
++
++#
++# Mice
++#
++# CONFIG_BUSMOUSE is not set
++CONFIG_MOUSE=y
++CONFIG_PSMOUSE=y
++# CONFIG_82C710_MOUSE is not set
++# CONFIG_PC110_PAD is not set
++# CONFIG_MK712_MOUSE is not set
++
++#
++# Joysticks
++#
++# CONFIG_INPUT_GAMEPORT is not set
++# CONFIG_INPUT_NS558 is not set
++# CONFIG_INPUT_LIGHTNING is not set
++# CONFIG_INPUT_PCIGAME is not set
++# CONFIG_INPUT_CS461X is not set
++# CONFIG_INPUT_EMU10K1 is not set
++# CONFIG_INPUT_SERIO is not set
++# CONFIG_INPUT_SERPORT is not set
++
++#
++# Joysticks
++#
++# CONFIG_INPUT_ANALOG is not set
++# CONFIG_INPUT_A3D is not set
++# CONFIG_INPUT_ADI is not set
++# CONFIG_INPUT_COBRA is not set
++# CONFIG_INPUT_GF2K is not set
++# CONFIG_INPUT_GRIP is not set
++# CONFIG_INPUT_INTERACT is not set
++# CONFIG_INPUT_TMDC is not set
++# CONFIG_INPUT_SIDEWINDER is not set
++# CONFIG_INPUT_IFORCE_USB is not set
++# CONFIG_INPUT_IFORCE_232 is not set
++# CONFIG_INPUT_WARRIOR is not set
++# CONFIG_INPUT_MAGELLAN is not set
++# CONFIG_INPUT_SPACEORB is not set
++# CONFIG_INPUT_SPACEBALL is not set
++# CONFIG_INPUT_STINGER is not set
++# CONFIG_INPUT_DB9 is not set
++# CONFIG_INPUT_GAMECON is not set
++# CONFIG_INPUT_TURBOGRAFX is not set
++# CONFIG_QIC02_TAPE is not set
++
++#
++# Watchdog Cards
++#
++CONFIG_WATCHDOG=y
++# CONFIG_WATCHDOG_NOWAYOUT is not set
++# CONFIG_ACQUIRE_WDT is not set
++# CONFIG_ADVANTECH_WDT is not set
++# CONFIG_ALIM7101_WDT is not set
++# CONFIG_SC520_WDT is not set
++# CONFIG_PCWATCHDOG is not set
++# CONFIG_EUROTECH_WDT is not set
++# CONFIG_IB700_WDT is not set
++# CONFIG_WAFER_WDT is not set
++# CONFIG_I810_TCO is not set
++# CONFIG_MIXCOMWD is not set
++# CONFIG_60XX_WDT is not set
++# CONFIG_SC1200_WDT is not set
++CONFIG_SOFT_WATCHDOG=m
++# CONFIG_W83877F_WDT is not set
++# CONFIG_WDT is not set
++# CONFIG_WDTPCI is not set
++# CONFIG_MACHZ_WDT is not set
++# CONFIG_NVRAM is not set
++# CONFIG_RTC is not set
++# CONFIG_DTLK is not set
++# CONFIG_R3964 is not set
++# CONFIG_APPLICOM is not set
++
++#
++# Ftape, the floppy tape device driver
++#
++# CONFIG_FTAPE is not set
++# CONFIG_AGP is not set
++# CONFIG_DRM is not set
++
++#
++# File systems
++#
++# CONFIG_QUOTA is not set
++CONFIG_AUTOFS_FS=m
++# CONFIG_AUTOFS4_FS is not set
++CONFIG_REISERFS_FS=y
++# CONFIG_REISERFS_CHECK is not set
++CONFIG_REISERFS_PROC_INFO=y
++# CONFIG_ADFS_FS is not set
++# CONFIG_ADFS_FS_RW is not set
++# CONFIG_AFFS_FS is not set
++# CONFIG_HFS_FS is not set
++# CONFIG_BFS_FS is not set
++CONFIG_EXT3_FS=y
++CONFIG_JBD=y
++# CONFIG_JBD_DEBUG is not set
++CONFIG_FAT_FS=m
++CONFIG_MSDOS_FS=m
++# CONFIG_UMSDOS_FS is not set
++CONFIG_VFAT_FS=m
++# CONFIG_EFS_FS is not set
++# CONFIG_JFFS_FS is not set
++# CONFIG_JFFS2_FS is not set
++CONFIG_CRAMFS=y
++CONFIG_TMPFS=y
++CONFIG_RAMFS=y
++CONFIG_ISO9660_FS=y
++CONFIG_JOLIET=y
++CONFIG_ZISOFS=y
++CONFIG_JFS_FS=y
++# CONFIG_JFS_DEBUG is not set
++CONFIG_JFS_STATISTICS=y
++# CONFIG_MINIX_FS is not set
++# CONFIG_VXFS_FS is not set
++# CONFIG_NTFS_FS is not set
++# CONFIG_NTFS_RW is not set
++# CONFIG_HPFS_FS is not set
++CONFIG_PROC_FS=y
++CONFIG_PROC_CONFIG=y
++# CONFIG_DEVFS_FS is not set
++# CONFIG_DEVFS_MOUNT is not set
++# CONFIG_DEVFS_DEBUG is not set
++CONFIG_DEVPTS_FS=y
++# CONFIG_QNX4FS_FS is not set
++# CONFIG_QNX4FS_RW is not set
++# CONFIG_ROMFS_FS is not set
++CONFIG_EXT2_FS=y
++# CONFIG_SYSV_FS is not set
++CONFIG_UDF_FS=m
++# CONFIG_UDF_RW is not set
++# CONFIG_UFS_FS is not set
++# CONFIG_UFS_FS_WRITE is not set
++
++#
++# Network File Systems
++#
++CONFIG_CODA_FS=m
++CONFIG_INTERMEZZO_FS=m
++CONFIG_NFS_FS=y
++CONFIG_NFS_V3=y
++CONFIG_ROOT_NFS=y
++CONFIG_NFSD=y
++CONFIG_NFSD_V3=y
++CONFIG_SUNRPC=y
++CONFIG_LOCKD=y
++CONFIG_LOCKD_V4=y
++CONFIG_SMB_FS=m
++# CONFIG_SMB_NLS_DEFAULT is not set
++CONFIG_NCP_FS=m
++CONFIG_NCPFS_PACKET_SIGNING=y
++CONFIG_NCPFS_IOCTL_LOCKING=y
++CONFIG_NCPFS_STRONG=y
++CONFIG_NCPFS_NFS_NS=y
++CONFIG_NCPFS_OS2_NS=y
++CONFIG_NCPFS_SMALLDOS=y
++CONFIG_NCPFS_NLS=y
++CONFIG_NCPFS_EXTRAS=y
++CONFIG_ZISOFS_FS=y
++CONFIG_ZLIB_FS_INFLATE=y
++
++#
++# Partition Types
++#
++CONFIG_PARTITION_ADVANCED=y
++# CONFIG_ACORN_PARTITION is not set
++CONFIG_OSF_PARTITION=y
++# CONFIG_AMIGA_PARTITION is not set
++# CONFIG_ATARI_PARTITION is not set
++CONFIG_MAC_PARTITION=y
++CONFIG_MSDOS_PARTITION=y
++CONFIG_BSD_DISKLABEL=y
++# CONFIG_MINIX_SUBPARTITION is not set
++CONFIG_SOLARIS_X86_PARTITION=y
++CONFIG_UNIXWARE_DISKLABEL=y
++# CONFIG_LDM_PARTITION is not set
++CONFIG_SGI_PARTITION=y
++CONFIG_ULTRIX_PARTITION=y
++CONFIG_SUN_PARTITION=y
++CONFIG_SMB_NLS=y
++CONFIG_NLS=y
++
++#
++# Native Language Support
++#
++CONFIG_NLS_DEFAULT="iso8859-1"
++CONFIG_NLS_CODEPAGE_437=m
++CONFIG_NLS_CODEPAGE_737=m
++CONFIG_NLS_CODEPAGE_775=m
++CONFIG_NLS_CODEPAGE_850=m
++CONFIG_NLS_CODEPAGE_852=m
++CONFIG_NLS_CODEPAGE_855=m
++CONFIG_NLS_CODEPAGE_857=m
++CONFIG_NLS_CODEPAGE_860=m
++CONFIG_NLS_CODEPAGE_861=m
++CONFIG_NLS_CODEPAGE_862=m
++CONFIG_NLS_CODEPAGE_863=m
++CONFIG_NLS_CODEPAGE_864=m
++CONFIG_NLS_CODEPAGE_865=m
++CONFIG_NLS_CODEPAGE_866=m
++CONFIG_NLS_CODEPAGE_869=m
++CONFIG_NLS_CODEPAGE_936=m
++CONFIG_NLS_CODEPAGE_950=m
++CONFIG_NLS_CODEPAGE_932=m
++CONFIG_NLS_CODEPAGE_949=m
++CONFIG_NLS_CODEPAGE_874=m
++CONFIG_NLS_ISO8859_8=m
++CONFIG_NLS_CODEPAGE_1250=m
++CONFIG_NLS_CODEPAGE_1251=m
++CONFIG_NLS_ISO8859_1=m
++CONFIG_NLS_ISO8859_2=m
++CONFIG_NLS_ISO8859_3=m
++CONFIG_NLS_ISO8859_4=m
++CONFIG_NLS_ISO8859_5=m
++CONFIG_NLS_ISO8859_6=m
++CONFIG_NLS_ISO8859_7=m
++CONFIG_NLS_ISO8859_9=m
++CONFIG_NLS_ISO8859_13=m
++CONFIG_NLS_ISO8859_14=m
++CONFIG_NLS_ISO8859_15=m
++CONFIG_NLS_KOI8_R=m
++CONFIG_NLS_KOI8_U=m
++CONFIG_NLS_UTF8=m
++
++#
++# Sound
++#
++CONFIG_SOUND=m
++# CONFIG_SOUND_BT878 is not set
++# CONFIG_SOUND_CMPCI is not set
++# CONFIG_SOUND_EMU10K1 is not set
++# CONFIG_MIDI_EMU10K1 is not set
++# CONFIG_SOUND_FUSION is not set
++# CONFIG_SOUND_CS4281 is not set
++# CONFIG_SOUND_ES1370 is not set
++# CONFIG_SOUND_ES1371 is not set
++# CONFIG_SOUND_ESSSOLO1 is not set
++# CONFIG_SOUND_MAESTRO is not set
++# CONFIG_SOUND_MAESTRO3 is not set
++# CONFIG_SOUND_ICH is not set
++# CONFIG_SOUND_RME96XX is not set
++# CONFIG_SOUND_SONICVIBES is not set
++# CONFIG_SOUND_TRIDENT is not set
++# CONFIG_SOUND_MSNDCLAS is not set
++# CONFIG_SOUND_MSNDPIN is not set
++# CONFIG_SOUND_VIA82CXXX is not set
++# CONFIG_MIDI_VIA82CXXX is not set
++CONFIG_SOUND_OSS=m
++CONFIG_SOUND_TRACEINIT=y
++# CONFIG_SOUND_DMAP is not set
++# CONFIG_SOUND_AD1816 is not set
++# CONFIG_SOUND_SGALAXY is not set
++# CONFIG_SOUND_ADLIB is not set
++# CONFIG_SOUND_ACI_MIXER is not set
++CONFIG_SOUND_CS4232=m
++# CONFIG_SOUND_SSCAPE is not set
++# CONFIG_SOUND_GUS is not set
++# CONFIG_SOUND_VMIDI is not set
++# CONFIG_SOUND_TRIX is not set
++# CONFIG_SOUND_MSS is not set
++# CONFIG_SOUND_MPU401 is not set
++# CONFIG_SOUND_NM256 is not set
++# CONFIG_SOUND_MAD16 is not set
++# CONFIG_SOUND_PAS is not set
++# CONFIG_PAS_JOYSTICK is not set
++# CONFIG_SOUND_PSS is not set
++# CONFIG_SOUND_SB is not set
++# CONFIG_SOUND_AWE32_SYNTH is not set
++# CONFIG_SOUND_WAVEFRONT is not set
++# CONFIG_SOUND_MAUI is not set
++# CONFIG_SOUND_YM3812 is not set
++# CONFIG_SOUND_OPL3SA1 is not set
++# CONFIG_SOUND_OPL3SA2 is not set
++# CONFIG_SOUND_YMFPCI is not set
++# CONFIG_SOUND_YMFPCI_LEGACY is not set
++# CONFIG_SOUND_UART6850 is not set
++# CONFIG_SOUND_AEDSP16 is not set
++# CONFIG_SOUND_TVMIXER is not set
++
++#
++# Advanced Linux Sound Architecture
++#
++CONFIG_SND=m
++CONFIG_SND_BIT32_EMUL=m
++CONFIG_SND_SEQUENCER=m
++CONFIG_SND_SEQ_DUMMY=m
++CONFIG_SND_OSSEMUL=y
++CONFIG_SND_MIXER_OSS=m
++CONFIG_SND_PCM_OSS=m
++CONFIG_SND_SEQUENCER_OSS=y
++CONFIG_SND_VERBOSE_PRINTK=y
++CONFIG_SND_DEBUG=y
++# CONFIG_SND_DEBUG_MEMORY is not set
++CONFIG_SND_DEBUG_DETECT=y
++
++#
++# Generic devices
++#
++CONFIG_SND_DUMMY=m
++CONFIG_SND_VIRMIDI=m
++CONFIG_SND_MTPAV=m
++CONFIG_SND_SERIAL_U16550=m
++CONFIG_SND_MPU401=m
++CONFIG_SND_SERIALMIDI=m
++
++#
++# PCI devices
++#
++# CONFIG_SND_ALI5451 is not set
++CONFIG_SND_CS46XX=m
++# CONFIG_SND_CS46XX_NEW_DSP is not set
++# CONFIG_SND_CS4281 is not set
++# CONFIG_SND_EMU10K1 is not set
++# CONFIG_SND_KORG1212 is not set
++# CONFIG_SND_NM256 is not set
++# CONFIG_SND_RME32 is not set
++# CONFIG_SND_RME96 is not set
++# CONFIG_SND_RME9652 is not set
++# CONFIG_SND_HDSP is not set
++# CONFIG_SND_TRIDENT is not set
++# CONFIG_SND_YMFPCI is not set
++# CONFIG_SND_ALS4000 is not set
++# CONFIG_SND_CMIPCI is not set
++# CONFIG_SND_ENS1370 is not set
++# CONFIG_SND_ENS1371 is not set
++# CONFIG_SND_ES1938 is not set
++# CONFIG_SND_ES1968 is not set
++# CONFIG_SND_MAESTRO3 is not set
++# CONFIG_SND_FM801 is not set
++# CONFIG_SND_ICE1712 is not set
++# CONFIG_SND_INTEL8X0 is not set
++# CONFIG_SND_SONICVIBES is not set
++# CONFIG_SND_VIA686 is not set
++# CONFIG_SND_VIA8233 is not set
++
++#
++# ALSA PowerMac devices
++#
++# CONFIG_SND_POWERMAC is not set
++
++#
++# ALSA USB devices
++#
++CONFIG_SND_USB_AUDIO=m
++CONFIG_SND_USB_MIDI=m
++
++#
++# Multimedia devices
++#
++CONFIG_VIDEO_DEV=m
++
++#
++# Video For Linux
++#
++CONFIG_VIDEO_PROC_FS=y
++# CONFIG_I2C_PARPORT is not set
++
++#
++# Video Adapters
++#
++# CONFIG_VIDEO_PMS is not set
++# CONFIG_VIDEO_BWQCAM is not set
++# CONFIG_VIDEO_CQCAM is not set
++# CONFIG_VIDEO_W9966 is not set
++# CONFIG_VIDEO_CPIA is not set
++# CONFIG_VIDEO_SAA5249 is not set
++# CONFIG_TUNER_3036 is not set
++# CONFIG_VIDEO_STRADIS is not set
++# CONFIG_VIDEO_ZORAN is not set
++# CONFIG_VIDEO_ZORAN_BUZ is not set
++# CONFIG_VIDEO_ZORAN_DC10 is not set
++# CONFIG_VIDEO_ZORAN_LML33 is not set
++# CONFIG_VIDEO_ZR36120 is not set
++# CONFIG_VIDEO_MEYE is not set
++
++#
++# Radio Adapters
++#
++# CONFIG_RADIO_CADET is not set
++# CONFIG_RADIO_RTRACK is not set
++# CONFIG_RADIO_RTRACK2 is not set
++# CONFIG_RADIO_AZTECH is not set
++# CONFIG_RADIO_GEMTEK is not set
++# CONFIG_RADIO_GEMTEK_PCI is not set
++# CONFIG_RADIO_MAXIRADIO is not set
++# CONFIG_RADIO_MAESTRO is not set
++# CONFIG_RADIO_MIROPCM20 is not set
++# CONFIG_RADIO_MIROPCM20_RDS is not set
++# CONFIG_RADIO_SF16FMI is not set
++# CONFIG_RADIO_TERRATEC is not set
++# CONFIG_RADIO_TRUST is not set
++# CONFIG_RADIO_TYPHOON is not set
++# CONFIG_RADIO_ZOLTRIX is not set
++
++#
++# USB support
++#
++CONFIG_USB=m
++CONFIG_USB_DEBUG=y
++
++#
++# Miscellaneous USB options
++#
++CONFIG_USB_DEVICEFS=y
++# CONFIG_USB_BANDWIDTH is not set
++CONFIG_USB_LONG_TIMEOUT=y
++
++#
++# USB Host Controller Drivers
++#
++# CONFIG_USB_EHCI_HCD is not set
++# CONFIG_USB_UHCI is not set
++# CONFIG_USB_UHCI_ALT is not set
++CONFIG_USB_OHCI=m
++
++#
++# USB Device Class drivers
++#
++CONFIG_USB_AUDIO=m
++# CONFIG_USB_EMI26 is not set
++# CONFIG_USB_BLUETOOTH is not set
++# CONFIG_USB_STORAGE is not set
++# CONFIG_USB_STORAGE_DEBUG is not set
++# CONFIG_USB_STORAGE_DATAFAB is not set
++# CONFIG_USB_STORAGE_FREECOM is not set
++# CONFIG_USB_STORAGE_ISD200 is not set
++# CONFIG_USB_STORAGE_DPCM is not set
++# CONFIG_USB_STORAGE_HP8200e is not set
++# CONFIG_USB_STORAGE_SDDR09 is not set
++# CONFIG_USB_STORAGE_JUMPSHOT is not set
++# CONFIG_USB_ACM is not set
++CONFIG_USB_PRINTER=m
++
++#
++# USB Human Interface Devices (HID)
++#
++CONFIG_USB_HID=m
++CONFIG_USB_HIDINPUT=y
++CONFIG_USB_HIDDEV=y
++# CONFIG_USB_KBD is not set
++# CONFIG_USB_MOUSE is not set
++CONFIG_USB_WACOM=m
++
++#
++# USB Imaging devices
++#
++CONFIG_USB_DC2XX=m
++CONFIG_USB_MDC800=m
++CONFIG_USB_SCANNER=m
++CONFIG_USB_MICROTEK=m
++CONFIG_USB_HPUSBSCSI=m
++
++#
++# USB Multimedia devices
++#
++# CONFIG_USB_IBMCAM is not set
++# CONFIG_USB_OV511 is not set
++# CONFIG_USB_PWC is not set
++# CONFIG_USB_SE401 is not set
++# CONFIG_USB_STV680 is not set
++# CONFIG_USB_VICAM is not set
++# CONFIG_USB_DSBR is not set
++# CONFIG_USB_DABUSB is not set
++
++#
++# USB Network adaptors
++#
++CONFIG_USB_PEGASUS=m
++CONFIG_USB_RTL8150=m
++CONFIG_USB_KAWETH=m
++CONFIG_USB_CATC=m
++CONFIG_USB_CDCETHER=m
++CONFIG_USB_USBNET=m
++
++#
++# USB port drivers
++#
++CONFIG_USB_USS720=m
++
++#
++# USB Serial Converter support
++#
++CONFIG_USB_SERIAL=m
++CONFIG_USB_SERIAL_GENERIC=y
++CONFIG_USB_SERIAL_BELKIN=m
++CONFIG_USB_SERIAL_WHITEHEAT=m
++CONFIG_USB_SERIAL_DIGI_ACCELEPORT=m
++CONFIG_USB_SERIAL_EMPEG=m
++CONFIG_USB_SERIAL_FTDI_SIO=m
++CONFIG_USB_SERIAL_VISOR=m
++CONFIG_USB_SERIAL_IPAQ=m
++CONFIG_USB_SERIAL_IR=m
++CONFIG_USB_SERIAL_EDGEPORT=m
++CONFIG_USB_SERIAL_KEYSPAN_PDA=m
++CONFIG_USB_SERIAL_KEYSPAN=m
++CONFIG_USB_SERIAL_KEYSPAN_USA28=y
++CONFIG_USB_SERIAL_KEYSPAN_USA28X=y
++CONFIG_USB_SERIAL_KEYSPAN_USA28XA=y
++CONFIG_USB_SERIAL_KEYSPAN_USA28XB=y
++CONFIG_USB_SERIAL_KEYSPAN_USA19=y
++CONFIG_USB_SERIAL_KEYSPAN_USA18X=y
++CONFIG_USB_SERIAL_KEYSPAN_USA19W=y
++CONFIG_USB_SERIAL_KEYSPAN_USA49W=y
++CONFIG_USB_SERIAL_MCT_U232=m
++CONFIG_USB_SERIAL_KLSI=m
++CONFIG_USB_SERIAL_PL2303=m
++CONFIG_USB_SERIAL_CYBERJACK=m
++CONFIG_USB_SERIAL_XIRCOM=m
++CONFIG_USB_SERIAL_OMNINET=m
++
++#
++# USB Miscellaneous drivers
++#
++CONFIG_USB_RIO500=m
++# CONFIG_USB_AUERSWALD is not set
++CONFIG_USB_BRLVGER=m
++
++#
++# Kernel hacking
++#
++CONFIG_MAGIC_SYSRQ=y
++# CONFIG_KGDB is not set
++CONFIG_XMON=y
++# CONFIG_KDB is not set
++# CONFIG_KDB_OFF is not set
++CONFIG_KALLSYMS=y
++# CONFIG_PPCDBG is not set
++CONFIG_DUMP=y
++CONFIG_DUMP_COMPRESS_RLE=y
++CONFIG_DUMP_COMPRESS_GZIP=y
+diff -uNr -X /home/engebret/dontdiff linuxppc64_2_4_prev_patch/arch/ppc64/configs/pSeries_defconfig linuxppc64_2_4/arch/ppc64/configs/pSeries_defconfig
+--- linuxppc64_2_4_prev_patch/arch/ppc64/configs/pSeries_defconfig	Mon Sep 23 13:06:48 2002
++++ linuxppc64_2_4/arch/ppc64/configs/pSeries_defconfig	Fri Aug 30 08:02:55 2002
+@@ -26,6 +26,7 @@
+ # CONFIG_HMT is not set
+ # CONFIG_MSCHUNKS is not set
+ CONFIG_RTAS_FLASH=m
++CONFIG_SCANLOG=m
+ 
+ #
+ # Loadable module support
+diff -uNr -X /home/engebret/dontdiff linuxppc64_2_4_prev_patch/arch/ppc64/defconfig linuxppc64_2_4/arch/ppc64/defconfig
+--- linuxppc64_2_4_prev_patch/arch/ppc64/defconfig	Mon Sep 23 13:06:48 2002
++++ linuxppc64_2_4/arch/ppc64/defconfig	Fri Aug 30 08:02:55 2002
+@@ -26,6 +26,7 @@
+ # CONFIG_HMT is not set
+ # CONFIG_MSCHUNKS is not set
+ CONFIG_RTAS_FLASH=m
++CONFIG_SCANLOG=m
+ 
+ #
+ # Loadable module support
+diff -uNr -X /home/engebret/dontdiff linuxppc64_2_4_prev_patch/arch/ppc64/kernel/Makefile linuxppc64_2_4/arch/ppc64/kernel/Makefile
+--- linuxppc64_2_4_prev_patch/arch/ppc64/kernel/Makefile	Mon Sep 23 13:06:48 2002
++++ linuxppc64_2_4/arch/ppc64/kernel/Makefile	Fri Aug 30 08:02:55 2002
+@@ -42,6 +42,8 @@
+ 
+ obj-$(CONFIG_RTAS_FLASH) += rtas_flash.o
+ 
++obj-$(CONFIG_SCANLOG) += scanlog.o
++
+ obj-$(CONFIG_KGDB) += ppc-stub.o
+ 
+ obj-$(CONFIG_SMP) += smp.o
+diff -uNr -X /home/engebret/dontdiff linuxppc64_2_4_prev_patch/arch/ppc64/kernel/eeh.c linuxppc64_2_4/arch/ppc64/kernel/eeh.c
+--- linuxppc64_2_4_prev_patch/arch/ppc64/kernel/eeh.c	Mon Sep 23 13:06:48 2002
++++ linuxppc64_2_4/arch/ppc64/kernel/eeh.c	Tue Sep 10 08:50:11 2002
+@@ -94,16 +94,13 @@
+ 
+ 		dev = pci_find_slot(bus, devfn);
+ 		if (dev) {
+-			udbg_printf("EEH:  MMIO failure (%ld) on device:\n  %s %s\n",
+-			      rets[0], dev->slot_name, dev->name);
+-			printk("EEH:  MMIO failure (%ld) on device:\n  %s %s\n",
++			printk(KERN_ERR "EEH:  MMIO failure (%ld) on device:\n  %s %s\n",
+ 			      rets[0], dev->slot_name, dev->name);
+ 			PPCDBG_ENTER_DEBUGGER();
+ 			panic("EEH:  MMIO failure (%ld) on device:\n  %s %s\n",
+ 			      rets[0], dev->slot_name, dev->name);
+ 		} else {
+-			udbg_printf("EEH:  MMIO failure (%ld) on device buid %lx, config_addr %lx\n", rets[0], phb->buid, config_addr);
+-			printk("EEH:  MMIO failure (%ld) on device buid %lx, config_addr %lx\n", rets[0], phb->buid, config_addr);
++			printk(KERN_ERR "EEH:  MMIO failure (%ld) on device buid %lx, config_addr %lx\n", rets[0], phb->buid, config_addr);
+ 			PPCDBG_ENTER_DEBUGGER();
+ 			panic("EEH:  MMIO failure (%ld) on device buid %lx, config_addr %lx\n", rets[0], phb->buid, config_addr);
+ 		}
+@@ -112,8 +109,46 @@
+ 	return val;	/* good case */
+ }
+ 
++struct eeh_early_enable_info {
++	unsigned int buid_hi;
++	unsigned int buid_lo;
++	int adapters_enabled;
++};
++
++/* Enable eeh for the given device node. */
++static void *early_enable_eeh(struct device_node *dn, void *data)
++{
++	struct eeh_early_enable_info *info = data;
++	long ret;
++
++	/* Try to enable eeh */
++	ret = rtas_call(ibm_set_eeh_option, 4, 1, NULL,
++			CONFIG_ADDR(dn->busno, dn->devfn),
++			info->buid_hi, info->buid_lo, EEH_ENABLE);
++	if (ret == 0)
++		info->adapters_enabled++;
++	return NULL; 
++}
++
++/*
++ * Initialize eeh by trying to enable it for all of the adapters in the system.
++ * As a side effect we can determine here if eeh is supported at all.
++ * Note that we leave EEH on so failed config cycles won't cause a machine
++ * check.  If a user turns off EEH for a particular adapter they are really
++ * telling Linux to ignore errors.
++ *
++ * We should probably distinguish between "ignore errors" and "turn EEH off"
++ * but for now disabling EEH for adapters is mostly to work around drivers that
++ * directly access mmio space (without using the macros).
++ *
++ * The eeh-force-off/on option does literally what it says, so if Linux must
++ * avoid enabling EEH this must be done.
++ */
+ void eeh_init(void)
+ {
++	struct device_node *phb;
++	struct eeh_early_enable_info info;
++
+ 	extern char cmd_line[];	/* Very early cmd line parse.  Cheap, but works. */
+ 	char *eeh_force_off = strstr(cmd_line, "eeh-force-off");
+ 	char *eeh_force_on = strstr(cmd_line, "eeh-force-on");
+@@ -121,13 +156,13 @@
+ 	ibm_set_eeh_option = rtas_token("ibm,set-eeh-option");
+ 	ibm_set_slot_reset = rtas_token("ibm,set-slot-reset");
+ 	ibm_read_slot_reset_state = rtas_token("ibm,read-slot-reset-state");
+-	if (ibm_set_eeh_option != RTAS_UNKNOWN_SERVICE && naca->platform == PLATFORM_PSERIES_LPAR)
++	if (ibm_set_eeh_option != RTAS_UNKNOWN_SERVICE)
+ 		eeh_implemented = 1;
+ 
+ 	if (eeh_force_off > eeh_force_on) {
+ 		/* User is forcing EEH off.  Be noisy if it is implemented. */
+ 		if (eeh_implemented)
+-			printk("EEH: WARNING: PCI Enhanced I/O Error Handling is user disabled\n");
++			printk(KERN_WARNING "EEH: WARNING: PCI Enhanced I/O Error Handling is user disabled\n");
+ 		eeh_implemented = 0;
+ 		return;
+ 	}
+@@ -135,8 +170,29 @@
+ 	if (eeh_force_on > eeh_force_off)
+ 		eeh_implemented = 1;	/* User is forcing it on. */
+ 
+-	if (eeh_implemented)
+-		printk("EEH: PCI Enhanced I/O Error Handling Enabled\n");
++	/* Enable EEH for all adapters.  Note that eeh requires buid's */
++	info.adapters_enabled = 0;
++	for (phb = find_devices("pci"); phb; phb = phb->next) {
++		int len;
++		int *buid_vals = (int *) get_property(phb, "ibm,fw-phb-id", &len);
++		if (!buid_vals)
++			continue;
++		if (len == sizeof(int)) {
++			info.buid_lo = buid_vals[0];
++			info.buid_hi = 0;
++		} else if (len == sizeof(int)*2) {
++			info.buid_hi = buid_vals[0];
++			info.buid_lo = buid_vals[1];
++		} else {
++			printk("EEH: odd ibm,fw-phb-id len returned: %d\n", len);
++			continue;
++		}
++		traverse_pci_devices(phb, early_enable_eeh, NULL, &info);
++	}
++	if (info.adapters_enabled) {
++		printk(KERN_INFO "EEH: PCI Enhanced I/O Error Handling Enabled\n");
++		eeh_implemented = 1;
++	}
+ }
+ 
+ 
+@@ -167,7 +223,7 @@
+ 
+ 	if (!eeh_check_opts_config(dev, default_state)) {
+ 		if (default_state)
+-			printk("EEH: %s %s user requested to run without EEH.\n", dev->slot_name, dev->name);
++			printk(KERN_INFO "EEH: %s %s user requested to run without EEH.\n", dev->slot_name, dev->name);
+ 		return 0;
+ 	}
+ 
+@@ -175,7 +231,6 @@
+ 			CONFIG_ADDR(dn->busno, dn->devfn),
+ 			BUID_HI(phb->buid), BUID_LO(phb->buid));
+ 	eeh_capable = (ret == 0 && rets[1] == 1);
+-	printk("EEH: %s %s is%s EEH capable.\n", dev->slot_name, dev->name, eeh_capable ? "" : " not");
+ 	return eeh_capable;
+ }
+ 
+@@ -318,7 +373,7 @@
+ 		if (*cur) {
+ 			int curlen = curend-cur;
+ 			if (eeh_opts_last + curlen > EEH_MAX_OPTS-2) {
+-				printk("EEH: sorry...too many eeh cmd line options\n");
++				printk(KERN_INFO "EEH: sorry...too many eeh cmd line options\n");
+ 				return 1;
+ 			}
+ 			eeh_opts[eeh_opts_last++] = state ? '+' : '-';
+diff -uNr -X /home/engebret/dontdiff linuxppc64_2_4_prev_patch/arch/ppc64/kernel/head.S linuxppc64_2_4/arch/ppc64/kernel/head.S
+--- linuxppc64_2_4_prev_patch/arch/ppc64/kernel/head.S	Mon Sep 23 13:06:48 2002
++++ linuxppc64_2_4/arch/ppc64/kernel/head.S	Tue Sep 17 14:59:40 2002
+@@ -80,6 +80,12 @@
+ _stext:
+ _STATIC(__start)
+ 	b .__start_initialization_pSeries
++	.long  0x0
++
++	. = 0x8
++	.globl	__zero
++__zero:
++	.llong	0
+ 
+ 	/* At offset 0x20, there is a pointer to iSeries LPAR data.
+ 	 * This is required by the hypervisor */
+@@ -1526,11 +1532,13 @@
+ copy_to_here:
+ 
+ /*
++ * load_up_fpu(unused, unused, tsk)
+  * Disable FP for the task which had the FPU previously,
+  * and save its floating-point registers in its thread_struct.
+  * Enables the FPU for use in the kernel on return.
+  * On SMP we know the fpu is free, since we give it up every
+- * switch.  -- Cort
++ * switch (ie, no lazy save of the FP registers).
++ * On entry: r13 == 'current' && last_task_used_math != 'current'
+  */
+ _STATIC(load_up_fpu)
+ 	mfmsr	r5                      /* grab the current MSR */
+@@ -1548,26 +1556,29 @@
+ 	ld	r4,last_task_used_math@l(r3)
+ 	cmpi	0,r4,0
+ 	beq	1f
+-	addi	r4,r4,THREAD	       /* want THREAD of last_task_used_math */
++	/* Save FP state to last_task_used_math's THREAD struct */
++	addi	r4,r4,THREAD
+ 	SAVE_32FPRS(0, r4)
+ 	mffs	fr0
+-	stfd	fr0,THREAD_FPSCR-4(r4)
++	stfd	fr0,THREAD_FPSCR(r4)
++	/* Disable FP for last_task_used_math */
+ 	ld	r5,PT_REGS(r4)
+ 	ld	r4,_MSR-STACK_FRAME_OVERHEAD(r5)
+ 	li	r20,MSR_FP|MSR_FE0|MSR_FE1
+-	andc	r4,r4,r20		/* disable FP for previous task */
++	andc	r4,r4,r20
+ 	std	r4,_MSR-STACK_FRAME_OVERHEAD(r5)
+ 1:
+ #endif /* CONFIG_SMP */
+ 	/* enable use of FP after return */
+ 	ori	r23,r23,MSR_FP|MSR_FE0|MSR_FE1
+-	addi	r5,r13,THREAD		/* Get THREAD */
+-	lfd	fr0,THREAD_FPSCR-4(r5)
++	/* Restore FP state from current's THREAD struct */
++	addi	r5,r13,THREAD
++	lfd	fr0,THREAD_FPSCR(r5)
+ 	mtfsf	0xff,fr0
+ 	REST_32FPRS(0, r5)
+ #ifndef CONFIG_SMP
+-	subi	r4,r5,THREAD		/* Back to 'current' */
+-	std	r4,last_task_used_math@l(r3)
++	/* Update last_task_used_math to 'current' */
++	std	r13,last_task_used_math@l(r3)
+ #endif /* CONFIG_SMP */
+ 	/* restore registers and return */
+ 	b	fast_exception_return
+@@ -1606,7 +1617,10 @@
+ 	cmpi	0,r5,0
+ 	SAVE_32FPRS(0, r3)
+ 	mffs	fr0
+-	stfd	fr0,THREAD_FPSCR-4(r3)
++	stfd	fr0,THREAD_FPSCR(r3)
++	clrrdi	r4,r13,60		/* r4 <- 0xC000000000000000 */
++	lfd	fr0,__zero@l(r4)
++	mtfsf	0xff,fr0
+ 	beq	1f
+ 	ld	r4,_MSR-STACK_FRAME_OVERHEAD(r5)
+ 	li	r3,MSR_FP|MSR_FE0|MSR_FE1
+@@ -1677,15 +1691,19 @@
+ 	sc				/* HvCall_setASR */
+ #else
+ 	/* set the ASR */
+-	addi  r3,0,0x4000     /* r3 = ptr to naca */
+-	lhz   r3,PLATFORM(r3) /* r3 = platform flags */
+-	cmpldi r3,PLATFORM_PSERIES_LPAR
+-	bne   98f
+-	li	r3,H_SET_ASR  /* hcall = H_SET_ASR */
+-	HSC     			    /* Invoking hcall */
+-	b     99f
+-98:             /* This is not a hypervisor machine */
+-	mtasr	r4			/* set the stab location            */
++	addi	r3,0,0x4000     /* r3 = ptr to naca */
++	lhz   	r3,PLATFORM(r3) /* r3 = platform flags */
++	cmpldi 	r3,PLATFORM_PSERIES_LPAR
++	bne   	98f
++	mfspr	r3,PVR
++	srwi	r3,r3,16
++	cmpwi	r3,0x37         /* SStar */
++	bne	98f
++	li	r3,H_SET_ASR    /* hcall = H_SET_ASR */
++	HSC     		/* Invoking hcall */
++	b	99f
++98:                             /* !(rpa hypervisor) || !(sstar) */
++	mtasr	r4	        /* set the stab location         */
+ 99:
+ #endif
+ 	li	r7,0
+@@ -1813,15 +1831,19 @@
+ 	mtspr	SPRG3,r6		/* PPPBBB: Temp... -Peter */
+ 	ld	r3,PACASTABREAL(r6)
+ 	ori	r4,r3,1			/* turn on valid bit                */
+-	
++
+ 	/* set the ASR */
+-	addi  r3,0,0x4000     /* r3 = ptr to naca */
+-	lhz   r3,PLATFORM(r3) /* r3 = platform flags */
+-	cmpldi r3,PLATFORM_PSERIES_LPAR
+-	bne   98f
+-	li	r3,H_SET_ASR  /* hcall = H_SET_ASR */
+-	HSC     			    /* Invoking hcall */
+-	b     99f
++	addi	r3,0,0x4000     /* r3 = ptr to naca */
++	lhz   	r3,PLATFORM(r3) /* r3 = platform flags */
++	cmpldi 	r3,PLATFORM_PSERIES_LPAR
++	bne   	98f
++	mfspr	r3,PVR
++	srwi	r3,r3,16
++	cmpwi	r3,0x37         /* SStar */
++	bne	98f
++	li	r3,H_SET_ASR    /* hcall = H_SET_ASR */
++	HSC     	        /* Invoking hcall */
++	b     	99f
+ 98:                 /* This is not a hypervisor machine */
+ 	mtasr	r4			/* set the stab location            */
+ 99:
+diff -uNr -X /home/engebret/dontdiff linuxppc64_2_4_prev_patch/arch/ppc64/kernel/htab.c linuxppc64_2_4/arch/ppc64/kernel/htab.c
+--- linuxppc64_2_4_prev_patch/arch/ppc64/kernel/htab.c	Mon Sep 23 13:06:48 2002
++++ linuxppc64_2_4/arch/ppc64/kernel/htab.c	Tue Aug 27 10:48:58 2002
+@@ -73,10 +73,17 @@
+ static long hpte_remove(unsigned long hpte_group);
+ static long rpa_lpar_hpte_remove(unsigned long hpte_group);
+ static long iSeries_hpte_remove(unsigned long hpte_group);
++inline unsigned long get_lock_slot(unsigned long vpn);
+ 
+ static spinlock_t pSeries_tlbie_lock = SPIN_LOCK_UNLOCKED;
+ static spinlock_t pSeries_lpar_tlbie_lock = SPIN_LOCK_UNLOCKED;
+-spinlock_t hash_table_lock __cacheline_aligned_in_smp = SPIN_LOCK_UNLOCKED;
++
++#define LOCK_SPLIT
++#ifdef LOCK_SPLIT
++hash_table_lock_t hash_table_lock[128] __cacheline_aligned_in_smp = { [0 ... 31] = {SPIN_LOCK_UNLOCKED}};
++#else
++hash_table_lock_t hash_table_lock[1] __cacheline_aligned_in_smp = { [0] = {SPIN_LOCK_UNLOCKED}};
++#endif
+ 
+ #define KB (1024)
+ #define MB (1024*KB)
+@@ -115,9 +122,16 @@
+ {
+ 	unsigned long table, htab_size_bytes;
+ 	unsigned long pteg_count;
+-	unsigned long mode_rw, mask;
++	unsigned long mode_rw, mask, lock_shift;
+ 
++#if 0
++	/* Can't really do the call below since it calls the normal RTAS
++	 * entry point and we're still relocate off at the moment.
++	 * Temporarily diabling until it can call through the relocate off
++	 * RTAS entry point.  -Peter
++	 */
+ 	ppc64_boot_msg(0x05, "htab init");
++#endif
+ 	/*
+ 	 * Calculate the required size of the htab.  We want the number of
+ 	 * PTEGs to equal one half the number of real pages.
+@@ -134,6 +148,14 @@
+ 	htab_data.htab_num_ptegs = pteg_count;
+ 	htab_data.htab_hash_mask = pteg_count - 1;
+ 
++	/* 
++	 * Calculate the number of bits to shift the pteg selector such that we
++	 * use the high order 8 bits to select a page table lock.
++	 */
++	asm ("cntlzd %0,%1" : "=r" (lock_shift) : 
++	     "r" (htab_data.htab_hash_mask));
++	htab_data.htab_lock_shift = (64 - lock_shift) - 8;
++
+ 	if(naca->platform == PLATFORM_PSERIES) {
+ 		/* Find storage for the HPT.  Must be contiguous in
+ 		 * the absolute address space.
+@@ -172,7 +194,14 @@
+ 				   KERNELBASE+(naca->physicalMemorySize), 
+ 				   mode_rw, mask, 0);
+ 	}
++#if 0
++	/* Can't really do the call below since it calls the normal RTAS
++	 * entry point and we're still relocate off at the moment.
++	 * Temporarily diabling until it can call through the relocate off
++	 * RTAS entry point.  -Peter
++	 */
+ 	ppc64_boot_msg(0x06, "htab done");
++#endif
+ }
+ #undef KB
+ #undef MB
+@@ -291,18 +320,19 @@
+ {
+ 	unsigned long va, vpn;
+ 	unsigned long newpp, prpn;
+-	unsigned long hpteflags;
++	unsigned long hpteflags, lock_slot;
+ 	long slot;
+ 	pte_t old_pte, new_pte;
+ 
+ 	/* Search the Linux page table for a match with va */
+ 	va = (vsid << 28) | (ea & 0x0fffffff);
+ 	vpn = va >> PAGE_SHIFT;
++	lock_slot = get_lock_slot(vpn); 
+ 
+ 	/* Acquire the hash table lock to guarantee that the linux
+ 	 * pte we fetch will not change
+ 	 */
+-	spin_lock( &hash_table_lock );
++	spin_lock(&hash_table_lock[lock_slot].lock);
+ 	
+ 	/* 
+ 	 * Check the user's access rights to the page.  If access should be
+@@ -310,7 +340,7 @@
+ 	 */
+ 	access |= _PAGE_PRESENT;
+ 	if (unlikely(access & ~(pte_val(*ptep)))) {
+-		spin_unlock( &hash_table_lock );
++		spin_unlock(&hash_table_lock[lock_slot].lock);
+ 		return 1;
+ 	}
+ 
+@@ -387,7 +417,7 @@
+ 		*ptep = new_pte;
+ 	}
+ 
+-	spin_unlock(&hash_table_lock);
++	spin_unlock(&hash_table_lock[lock_slot].lock);
+ 
+ 	return 0;
+ }
+@@ -469,7 +499,7 @@
+ 
+ void flush_hash_page(unsigned long context, unsigned long ea, pte_t *ptep)
+ {
+-	unsigned long vsid, vpn, va, hash, secondary, slot, flags;
++	unsigned long vsid, vpn, va, hash, secondary, slot, flags, lock_slot;
+ 	unsigned long large = 0, local = 0;
+ 	pte_t pte;
+ 
+@@ -483,9 +513,11 @@
+ 		vpn = va >> LARGE_PAGE_SHIFT;
+ 	else
+ 		vpn = va >> PAGE_SHIFT;
++
++	lock_slot = get_lock_slot(vpn); 
+ 	hash = hpt_hash(vpn, large);
+ 
+-	spin_lock_irqsave( &hash_table_lock, flags);
++	spin_lock_irqsave(&hash_table_lock[lock_slot].lock, flags);
+ 
+ 	pte = __pte(pte_update(ptep, _PAGE_HPTEFLAGS, 0));
+ 	secondary = (pte_val(pte) & _PAGE_SECONDARY) >> 15;
+@@ -497,7 +529,7 @@
+ 		ppc_md.hpte_invalidate(slot, secondary, va, large, local);
+ 	}
+ 
+-	spin_unlock_irqrestore( &hash_table_lock, flags );
++	spin_unlock_irqrestore(&hash_table_lock[lock_slot].lock, flags);
+ }
+ 
+ long plpar_pte_enter(unsigned long flags,
+@@ -550,6 +582,26 @@
+         : "=&r" (old), "=m" (*p)
+         : "r" (pp), "r" (p), "m" (*p)
+         : "cc");
++}
++
++/*
++ * Calculate which hash_table_lock to use, based on the pteg being used.
++ *
++ * Given a VPN, use the high order 8 bits to select one of 2^7 locks.  The
++ * highest order bit is used to indicate primary vs. secondary group.  If the
++ * secondary is selected, complement the lock select bits.  This results in
++ * both the primary and secondary groups being covered under the same lock.
++ */
++inline unsigned long get_lock_slot(unsigned long vpn)
++{
++	unsigned long lock_slot;
++#ifdef LOCK_SPLIT
++	lock_slot = (hpt_hash(vpn,0) >> htab_data.htab_lock_shift) & 0xff;
++	if(lock_slot & 0x80) lock_slot = (~lock_slot) & 0x7f;
++#else
++	lock_slot = 0;
++#endif
++	return(lock_slot);
+ }
+ 
+ /*
+diff -uNr -X /home/engebret/dontdiff linuxppc64_2_4_prev_patch/arch/ppc64/kernel/iSeries_setup.c linuxppc64_2_4/arch/ppc64/kernel/iSeries_setup.c
+--- linuxppc64_2_4_prev_patch/arch/ppc64/kernel/iSeries_setup.c	Mon Sep 23 13:06:48 2002
++++ linuxppc64_2_4/arch/ppc64/kernel/iSeries_setup.c	Tue Aug 27 10:48:58 2002
+@@ -431,7 +431,7 @@
+ 	u32 chunkBit;
+ 	u64 map;
+ 	struct MemoryBlock mb[32];
+-	unsigned long numMemoryBlocks, curBlock;
++	unsigned long numMemoryBlocks, curBlock, lock_shift;
+ 
+ 	/* Chunk size on iSeries is 256K bytes */
+ 	totalChunks = (u32)HvLpConfig_getMsChunks();
+@@ -493,6 +493,13 @@
+ 	htab_data.htab_num_ptegs = num_ptegs;
+ 	htab_data.htab_hash_mask = num_ptegs - 1;
+ 	
++	/* 
++	 * Calculate the number of bits to shift the pteg selector such that we
++	 * use the high order 8 bits to select a page table lock.
++	 */
++	asm ("cntlzd %0,%1" : "=r" (lock_shift) : "r" (htab_data.htab_hash_mask));
++	htab_data.htab_lock_shift = (64 - lock_shift) - 8;
++
+ 	/* The actual hashed page table is in the hypervisor, we have no direct access */
+ 	htab_data.htab = NULL;
+ 
+diff -uNr -X /home/engebret/dontdiff linuxppc64_2_4_prev_patch/arch/ppc64/kernel/idle.c linuxppc64_2_4/arch/ppc64/kernel/idle.c
+--- linuxppc64_2_4_prev_patch/arch/ppc64/kernel/idle.c	Mon Sep 23 13:02:57 2002
++++ linuxppc64_2_4/arch/ppc64/kernel/idle.c	Tue Aug 27 15:11:44 2002
+@@ -34,36 +34,28 @@
+ #include <asm/iSeries/HvCall.h>
+ #include <asm/iSeries/ItLpQueue.h>
+ 
+-unsigned long maxYieldTime = 0;
+-unsigned long minYieldTime = 0xffffffffffffffffUL;
+-
+ #ifdef CONFIG_PPC_ISERIES
+ static void yield_shared_processor(void)
+ {
+ 	struct paca_struct *lpaca = get_paca();
+ 	unsigned long tb;
+-	unsigned long yieldTime;
+ 
+ 	HvCall_setEnabledInterrupts( HvCall_MaskIPI |
+ 				     HvCall_MaskLpEvent |
+ 				     HvCall_MaskLpProd |
+ 				     HvCall_MaskTimeout );
+ 
+-	tb = get_tb();
+-	/* Compute future tb value when yield should expire */
+-	HvCall_yieldProcessor( HvCall_YieldTimed, tb+tb_ticks_per_jiffy );
+-
+-	yieldTime = get_tb() - tb;
+-	if ( yieldTime > maxYieldTime )
+-		maxYieldTime = yieldTime;
+-
+-	if ( yieldTime < minYieldTime )
+-		minYieldTime = yieldTime;
+-	
+-	/* The decrementer stops during the yield.  Force a fake decrementer
+-	 * here and let the timer_interrupt code sort out the actual time.
+-	 */
+-	lpaca->xLpPaca.xIntDword.xFields.xDecrInt = 1;
++	if ( ! ItLpQueue_isLpIntPending( paca->lpQueuePtr ) ) {
++	  tb = get_tb();
++	  /* Compute future tb value when yield should expire */
++	  HvCall_yieldProcessor( HvCall_YieldTimed, tb+tb_ticks_per_jiffy );
++	  
++	  /* The decrementer stops during the yield.  Force a fake decrementer
++	   * here and let the timer_interrupt code sort out the actual time.
++	   */
++	  paca->xLpPaca.xIntDword.xFields.xDecrInt = 1;
++	}
++	  
+ 	process_iSeries_events();
+ }
+ #endif /* CONFIG_PPC_ISERIES */
+diff -uNr -X /home/engebret/dontdiff linuxppc64_2_4_prev_patch/arch/ppc64/kernel/misc.S linuxppc64_2_4/arch/ppc64/kernel/misc.S
+--- linuxppc64_2_4_prev_patch/arch/ppc64/kernel/misc.S	Mon Sep 23 13:06:48 2002
++++ linuxppc64_2_4/arch/ppc64/kernel/misc.S	Tue Sep 17 14:59:40 2002
+@@ -474,21 +474,21 @@
+ 	blr
+ 
+ _GLOBAL(cvt_fd)
+-	lfd	0,-4(r5)	/* load up fpscr value */
++	lfd	0,0(r5)		/* load up fpscr value */
+ 	mtfsf	0xff,0
+ 	lfs	0,0(r3)
+ 	stfd	0,0(r4)
+ 	mffs	0		/* save new fpscr value */
+-	stfd	0,-4(r5)
++	stfd	0,0(r5)
+ 	blr
+ 
+ _GLOBAL(cvt_df)
+-	lfd	0,-4(r5)	/* load up fpscr value */
++	lfd	0,0(r5)		/* load up fpscr value */
+ 	mtfsf	0xff,0
+ 	lfd	0,0(r3)
+ 	stfs	0,0(r4)
+ 	mffs	0		/* save new fpscr value */
+-	stfd	0,-4(r5)
++	stfd	0,0(r5)
+ 	blr
+ 
+ /*
+diff -uNr -X /home/engebret/dontdiff linuxppc64_2_4_prev_patch/arch/ppc64/kernel/pSeries_pci.c linuxppc64_2_4/arch/ppc64/kernel/pSeries_pci.c
+--- linuxppc64_2_4_prev_patch/arch/ppc64/kernel/pSeries_pci.c	Mon Sep 23 13:06:48 2002
++++ linuxppc64_2_4/arch/ppc64/kernel/pSeries_pci.c	Tue Sep 10 08:49:23 2002
+@@ -78,6 +78,8 @@
+ 	 \
+ 	if (dn == NULL) { \
+ 		ret = -2; \
++	} else if (dn->status) { \
++		ret = -1; \
+ 	} else { \
+ 		addr = (dn->busno << 16) | (dn->devfn << 8) | offset; \
+ 		buid = dn->phb->buid; \
+@@ -109,6 +111,8 @@
+ 	 \
+ 	if (dn == NULL) { \
+ 		ret = -2; \
++	} else if (dn->status) { \
++		ret = -1; \
+ 	} else { \
+ 		buid = dn->phb->buid; \
+ 		addr = (dn->busno << 16) | (dn->devfn << 8) | offset; \
+@@ -357,8 +361,9 @@
+ 						/* map a page for ISA ports.  Not EEH protected. */
+ 						isa_io_base = (unsigned long)__ioremap(phb->io_base_phys, PAGE_SIZE, _PAGE_NO_CACHE);
+ 					}
+-					res->start = phb->io_base_virt = eeh_token(index, 0, 0, 0);
++					res->start = eeh_token(index, 0, 0, 0);
+ 					res->end = eeh_token(index, 0xff, 0xff, 0xffffffff);
++					phb->io_base_virt = (void *)res->start;
+ 				} else {
+ 					phb->io_base_virt = ioremap(phb->io_base_phys, range.size);
+ 					if (!pci_io_base) {
+@@ -433,6 +438,7 @@
+ 	struct pci_controller *phb;
+ 	unsigned int *ui_ptr = NULL, len;
+ 	struct reg_property64 reg_struct;
++	struct property *of_prop;
+ 	int *bus_range;
+ 	int *buid_vals;
+ 
+@@ -545,6 +551,21 @@
+ 		return NULL;
+ 	}
+ 
++	/* Add a linux,phbnum property to the device tree so user code
++	 * can translate bus numbers.
++	 */
++	of_prop = (struct property *) alloc_bootmem(sizeof(struct property) +
++						    sizeof(phb->global_number));
++	if (of_prop) {
++		memset(of_prop, 0, sizeof(struct property));
++		of_prop->name = "linux,phbnum";
++		of_prop->length = sizeof(phb->global_number);
++		of_prop->value = (unsigned char *)&of_prop[1];
++		memcpy(of_prop->value, &phb->global_number,
++		       sizeof(phb->global_number));
++		prom_add_property(dev, of_prop);
++	}
++
+ 	bus_range = (int *) get_property(dev, "bus-range", &len);
+ 	if (bus_range == NULL || len < 2 * sizeof(int)) {
+ 		PPCDBG(PPCDBG_PHBINIT, "Can't get bus-range for %s\n", dev->full_name);
+@@ -620,10 +641,12 @@
+ 	if (is_eeh_implemented()) {
+ 		if (is_eeh_configured(dev)) {
+ 			eeh_disable_bit = 0;
+-			if (eeh_set_option(dev, EEH_ENABLE) != 0) {
+-				printk("PCI: failed to enable EEH for %s %s\n", dev->slot_name, dev->name);
++			/* This is redundant with eeh_init() since EEH
++			 * has already been turned on.  However, we want to
++			 * know now if the slot supports EEH or not.
++			 */
++			if (eeh_set_option(dev, EEH_ENABLE) != 0)
+ 				eeh_disable_bit = EEH_TOKEN_DISABLED;
+-			}
+ 		} else {
+ 			/* Assume device is by default EEH_DISABLE'd */
+ 			printk("PCI: eeh NOT configured for %s %s\n", dev->slot_name, dev->name);
+diff -uNr -X /home/engebret/dontdiff linuxppc64_2_4_prev_patch/arch/ppc64/kernel/pci_dn.c linuxppc64_2_4/arch/ppc64/kernel/pci_dn.c
+--- linuxppc64_2_4_prev_patch/arch/ppc64/kernel/pci_dn.c	Mon Sep 23 13:06:48 2002
++++ linuxppc64_2_4/arch/ppc64/kernel/pci_dn.c	Tue Sep 10 08:49:42 2002
+@@ -50,6 +50,7 @@
+ 	struct pci_controller *phb = (struct pci_controller *)data;
+ 	u32 *regs;
+ 	char *device_type = get_property(dn, "device_type", 0);
++	char *status = get_property(dn, "status", 0);
+ 
+ 	dn->phb = phb;
+ 	if (device_type && strcmp(device_type, "pci") == 0 && get_property(dn, "class-code", 0) == 0) {
+@@ -64,6 +65,11 @@
+ 			dn->busno = (regs[0] >> 16) & 0xff;
+ 			dn->devfn = (regs[0] >> 8) & 0xff;
+ 		}
++	}
++	if (status && strcmp(status, "ok") != 0) {
++		char *name = get_property(dn, "name", 0);
++		printk(KERN_ERR "PCI: %04x:%02x.%x %s (%s) has bad status from firmware! (%s)", dn->busno, PCI_SLOT(dn->devfn), PCI_FUNC(dn->devfn), name ? name : "<no name>", device_type ? device_type : "<unknown type>", status);
++		dn->status = 1;
+ 	}
+ 	return NULL;
+ }
+diff -uNr -X /home/engebret/dontdiff linuxppc64_2_4_prev_patch/arch/ppc64/kernel/ppc_ksyms.c linuxppc64_2_4/arch/ppc64/kernel/ppc_ksyms.c
+--- linuxppc64_2_4_prev_patch/arch/ppc64/kernel/ppc_ksyms.c	Mon Sep 23 13:06:48 2002
++++ linuxppc64_2_4/arch/ppc64/kernel/ppc_ksyms.c	Fri Aug 30 08:02:55 2002
+@@ -252,6 +252,8 @@
+ EXPORT_SYMBOL(rtas_firmware_flash_list);
+ EXPORT_SYMBOL(rtas_token);
+ EXPORT_SYMBOL(rtas_call);
++EXPORT_SYMBOL(rtas_data_buf);
++EXPORT_SYMBOL(rtas_data_buf_lock);
+ #endif
+ 
+ #ifndef CONFIG_PPC_ISERIES
+diff -uNr -X /home/engebret/dontdiff linuxppc64_2_4_prev_patch/arch/ppc64/kernel/prom.c linuxppc64_2_4/arch/ppc64/kernel/prom.c
+--- linuxppc64_2_4_prev_patch/arch/ppc64/kernel/prom.c	Mon Sep 23 13:06:48 2002
++++ linuxppc64_2_4/arch/ppc64/kernel/prom.c	Fri Aug 30 10:51:25 2002
+@@ -1544,6 +1544,8 @@
+ 
+ 	mem = prom_bi_rec_reserve(mem);
+ 
++	mem = check_display(mem);
++
+ 	prom_instantiate_rtas();
+         
+         /* Initialize some system info into the Naca early... */
+@@ -1555,8 +1557,6 @@
+          */
+         if ( _naca->processorCount > 1 )
+ 	        prom_hold_cpus(mem);
+-
+-	mem = check_display(mem);
+ 
+ #ifdef DEBUG_PROM
+ 	prom_print(RELOC("copying OF device tree...\n"));
+diff -uNr -X /home/engebret/dontdiff linuxppc64_2_4_prev_patch/arch/ppc64/kernel/ptrace32.c linuxppc64_2_4/arch/ppc64/kernel/ptrace32.c
+--- linuxppc64_2_4_prev_patch/arch/ppc64/kernel/ptrace32.c	Mon Sep 23 13:06:48 2002
++++ linuxppc64_2_4/arch/ppc64/kernel/ptrace32.c	Tue Sep 17 14:59:40 2002
+@@ -228,9 +228,9 @@
+ 			if (child->thread.regs->msr & MSR_FP)
+ 				giveup_fpu(child);
+ 		        if (numReg == PT_FPSCR) 
+-			        tmp_reg_value = ((unsigned int *)child->thread.fpscr);
++			        tmp_reg_value = ((unsigned long *)child->thread.fpscr);
+ 		        else 
+-			        tmp_reg_value = ((unsigned long int *)child->thread.fpr)[numReg - PT_FPR0];
++			        tmp_reg_value = ((unsigned long *)child->thread.fpr)[numReg - PT_FPR0];
+ 		} else { /* register within PT_REGS struct */
+ 		    tmp_reg_value = get_reg(child, numReg);
+ 		} 
+diff -uNr -X /home/engebret/dontdiff linuxppc64_2_4_prev_patch/arch/ppc64/kernel/rtas.c linuxppc64_2_4/arch/ppc64/kernel/rtas.c
+--- linuxppc64_2_4_prev_patch/arch/ppc64/kernel/rtas.c	Mon Sep 23 13:06:48 2002
++++ linuxppc64_2_4/arch/ppc64/kernel/rtas.c	Fri Aug 30 08:02:56 2002
+@@ -58,6 +58,9 @@
+ 
+ extern unsigned long reloc_offset(void);
+ 
++spinlock_t rtas_data_buf_lock = SPIN_LOCK_UNLOCKED;
++char rtas_data_buf[RTAS_DATA_BUF_SIZE];
++
+ void
+ phys_call_rtas(int token, int nargs, int nret, ...)
+ {
+diff -uNr -X /home/engebret/dontdiff linuxppc64_2_4_prev_patch/arch/ppc64/kernel/rtasd.c linuxppc64_2_4/arch/ppc64/kernel/rtasd.c
+--- linuxppc64_2_4_prev_patch/arch/ppc64/kernel/rtasd.c	Mon Sep 23 13:06:48 2002
++++ linuxppc64_2_4/arch/ppc64/kernel/rtasd.c	Fri Aug 23 16:39:47 2002
+@@ -622,6 +622,33 @@
+ 	}
+ }
+ 
++#define MAX_LOG_DEBUG 10
++#define MAX_LOG_DEBUG_LEN 900
++/* Print log debug data.  This appears after the location code.
++ * We limit the number of debug logs in case the data is somehow corrupt.
++ */
++static void printk_log_debug(char *buf)
++{
++	unsigned char *p = (unsigned char *)_ALIGN((unsigned long)buf, 4);
++	int len, n, logged;
++
++	logged = 0;
++	while ((logged < MAX_LOG_DEBUG) && (len = ((p[0] << 8) | p[1])) >= 4) {
++		if (len > MAX_LOG_DEBUG_LEN)
++			len = MAX_LOG_DEBUG_LEN;	/* bound it */
++		printk("RTAS: Log Debug: %c%c ", p[2], p[3]);
++		for (n=4; n < len; n++)
++			printk("%02x", p[n]);
++		printk("\n");
++		p = (unsigned char *)_ALIGN((unsigned long)p+len, 4);
++		logged++;
++		if (len == MAX_LOG_DEBUG_LEN)
++			return;	/* no point continuing */
++	}
++	if (logged == 0)
++		printk("RTAS: no log debug data present\n");
++}
++
+ 
+ /* Yeah, the output here is ugly, but we want a CE to be
+  * able to grep RTAS /var/log/messages and see all the info
+@@ -635,8 +662,11 @@
+ 	if (strcmp(buf+8+40, "IBM") == 0) {
+ 		/* Location code follows */
+ 		char *loc = buf+8+40+4;
+-		if (*loc >= 'A' && *loc <= 'Z')	/* Sanity check */
++		int len = strlen(loc);
++		if (len < 64) {	/* Sanity check */
+ 			printk(RTAS_ERR "Location Code: %s\n", loc);
++			printk_log_debug(loc+len+1);
++		}
+ 	}
+ 
+ 	printk(RTAS_ERR "%s: (%s) type: %s\n",
+diff -uNr -X /home/engebret/dontdiff linuxppc64_2_4_prev_patch/arch/ppc64/kernel/signal.c linuxppc64_2_4/arch/ppc64/kernel/signal.c
+--- linuxppc64_2_4_prev_patch/arch/ppc64/kernel/signal.c	Mon Sep 23 13:06:48 2002
++++ linuxppc64_2_4/arch/ppc64/kernel/signal.c	Tue Sep 17 14:59:40 2002
+@@ -565,7 +565,7 @@
+ 		    || __put_user(&rt_sf->info, &rt_sf->pinfo)
+ 		    || __put_user(&rt_sf->uc, &rt_sf->puc)
+ 		    /* Put the siginfo */
+-		    || __copy_to_user(&rt_sf->info, info, sizeof(*info))
++		    || copy_siginfo_to_user(&rt_sf->info, info)
+ 		    /* Create the ucontext */
+ 		    || __put_user(0, &rt_sf->uc.uc_flags)
+ 		    || __put_user(0, &rt_sf->uc.uc_link)
+diff -uNr -X /home/engebret/dontdiff linuxppc64_2_4_prev_patch/arch/ppc64/kernel/signal32.c linuxppc64_2_4/arch/ppc64/kernel/signal32.c
+--- linuxppc64_2_4_prev_patch/arch/ppc64/kernel/signal32.c	Mon Sep 23 13:06:48 2002
++++ linuxppc64_2_4/arch/ppc64/kernel/signal32.c	Tue Sep 17 14:59:40 2002
+@@ -378,6 +378,7 @@
+ 		if (get_user(prevsp, &sr->gp_regs[PT_R1])
+ 		    || put_user(prevsp, (unsigned int*) regs->gpr[1]))
+ 			goto badframe;
++		current->thread.fpscr = 0;
+ 	}
+   
+ 	PPCDBG(PPCDBG_SIGNAL, "sys32_sigreturn - normal exit returning %ld - pid=%ld current=%lx comm=%s \n", ret, current->pid, current, current->comm);
+@@ -486,6 +487,7 @@
+ 
+ 	flush_icache_range((unsigned long) &frame->tramp[0],
+ 			   (unsigned long) &frame->tramp[2]);
++	current->thread.fpscr = 0;      /* turn off all fp exceptions */
+ 
+ 	newsp -= __SIGNAL_FRAMESIZE32;
+ 	if (put_user(regs->gpr[1], (u32*)(u64)newsp)
+@@ -560,10 +562,8 @@
+ 	if (copy_from_user(&sigctx, &rt_stack_frame->uc.uc_mcontext,sizeof(sigctx))
+ 	    || copy_from_user(&signal_set, &rt_stack_frame->uc.uc_sigmask,sizeof(signal_set))
+ 	    || copy_from_user(&stack,&rt_stack_frame->uc.uc_stack,sizeof(stack)))
+-	{
+ 		/* unable to copy from user storage */
+ 		goto badframe;
+-	}
+ 
+ 	/* Unblock the signal that was processed 
+ 	 *   After a signal handler runs - 
+@@ -582,18 +582,15 @@
+ 	 */
+ 	rt_stack_frame ++;
+ 
+-	if (rt_stack_frame == (struct rt_sigframe_32 *)(u64)(sigctx.regs))
+-	{
++	if (rt_stack_frame == (struct rt_sigframe_32 *)(u64)(sigctx.regs)) {
+ 		signalregs = (struct sigregs32 *) (u64)sigctx.regs;
+ 		/* If currently owning the floating point - give them up */
+ 		if (regs->msr & MSR_FP)
+-		{
+ 			giveup_fpu(current);
+-		}
++
+ 		if (copy_from_user(saved_regs,&signalregs->gp_regs,sizeof(signalregs->gp_regs))) 
+-		{
+ 			goto badframe;
+-		}
++
+ 		/**********************************************************************/
+ 		/* The saved reg structure in the frame is an elf_grepset_t32, it is  */
+ 		/*   a 32 bit register save of the registers in the pt_regs structure */
+@@ -667,6 +664,10 @@
+ 		regs->dar = 0; 
+ 		regs->dsisr = 0;
+ 		regs->result = (u64)(saved_regs[PT_RESULT]) & 0xFFFFFFFF;
++
++		if (copy_from_user(current->thread.fpr, &signalregs->fp_regs, sizeof(signalregs->fp_regs))) 
++			goto badframe;
++
+ 		ret = regs->result;
+ 	}
+ 	else  /* more signals to go  */
+@@ -696,6 +697,7 @@
+ 		{
+ 			goto badframe;
+ 		}
++		current->thread.fpscr = 0;
+ 
+ 	}
+ 
+@@ -853,7 +855,7 @@
+ 	memset (d, 0, sizeof(siginfo_t32));
+ 	d->si_signo = s->si_signo;
+ 	d->si_errno = s->si_errno;
+-	d->si_code = s->si_code;
++	d->si_code = s->si_code & 0xffff;
+ 	if (s->si_signo >= SIGRTMIN) {
+ 		d->si_pid = s->si_pid;
+ 		d->si_uid = s->si_uid;
+@@ -1143,6 +1145,7 @@
+ 
+ 	flush_icache_range((unsigned long) &frame->tramp[0],
+ 			   (unsigned long) &frame->tramp[2]);
++	current->thread.fpscr = 0;
+ 
+   
+ 	/* Retrieve rt_sigframe from stack and
+diff -uNr -X /home/engebret/dontdiff linuxppc64_2_4_prev_patch/arch/ppc64/kernel/sys_ppc32.c linuxppc64_2_4/arch/ppc64/kernel/sys_ppc32.c
+--- linuxppc64_2_4_prev_patch/arch/ppc64/kernel/sys_ppc32.c	Mon Sep 23 13:06:48 2002
++++ linuxppc64_2_4/arch/ppc64/kernel/sys_ppc32.c	Tue Sep 17 14:59:40 2002
+@@ -69,17 +69,6 @@
+ extern unsigned long wall_jiffies;
+ #define USEC_PER_SEC (1000000)
+ 
+-/* 
+- * These are the flags in the MSR that the user is allowed to change
+- * by modifying the saved value of the MSR on the stack.  SE and BE
+- * should not be in this list since gdb may want to change these.  I.e,
+- * you should be able to step out of a signal handler to see what
+- * instruction executes next after the signal handler completes.
+- * Alternately, if you stepped into a signal handler, you should be
+- * able to continue 'til the next breakpoint from within the signal
+- * handler, even if the handler returns.
+- */
+-#define MSR_USERCHANGE	(MSR_FE0 | MSR_FE1)
+ 
+ extern asmlinkage long sys_utime(char * filename, struct utimbuf * times);
+ 
+diff -uNr -X /home/engebret/dontdiff linuxppc64_2_4_prev_patch/arch/ppc64/kernel/traps.c linuxppc64_2_4/arch/ppc64/kernel/traps.c
+--- linuxppc64_2_4_prev_patch/arch/ppc64/kernel/traps.c	Mon Sep 23 13:06:48 2002
++++ linuxppc64_2_4/arch/ppc64/kernel/traps.c	Tue Sep 17 14:59:40 2002
+@@ -1,5 +1,5 @@
+ /*
+- *  linux/arch/ppc/kernel/traps.c
++ *  linux/arch/ppc64/kernel/traps.c
+  *
+  *  Copyright (C) 1995-1996  Gary Thomas (gdt@linuxppc.org)
+  *
+@@ -94,8 +94,8 @@
+  * Trap & Exception support
+  */
+ 
+-void
+-_exception(int signr, struct pt_regs *regs)
++static void
++_exception(int signr, siginfo_t *info, struct pt_regs *regs)
+ {
+ 	if (!user_mode(regs))
+ 	{
+@@ -115,7 +115,7 @@
+ 			debugger(regs);
+ #endif
+ 	}
+-	force_sig(signr, current);
++	force_sig_info(signr, info, current);
+ }
+ 
+ /* Get the error information for errors coming through the
+@@ -184,6 +184,8 @@
+ void
+ MachineCheckException(struct pt_regs *regs)
+ {
++	siginfo_t info;
++
+ 	if (fwnmi_active) {
+ 		struct rtas_error_log *errhdr = FWNMI_get_errinfo(regs);
+ 		if (errhdr) {
+@@ -191,8 +193,8 @@
+ 		}
+ 		FWNMI_release_errinfo();
+ 	}
+-	if ( !user_mode(regs) )
+-	{
++
++	if ( !user_mode(regs) ) {
+ #if defined(CONFIG_XMON) || defined(CONFIG_KGDB)
+ 		if (debugger_fault_handler) {
+ 			debugger_fault_handler(regs);
+@@ -216,7 +218,17 @@
+ 		print_backtrace((unsigned long *)regs->gpr[1]);
+ 		panic("machine check");
+ 	}
+-	_exception(SIGSEGV, regs);	
++	
++	/*
++	 * XXX we should check RI bit on exception exit and kill the
++	 * task if it was cleared
++	 */
++	info.si_signo = SIGBUS;
++	info.si_errno = 0;
++	info.si_code = BUS_ADRERR;
++	info.si_addr = (void *)regs->nip;
++	_exception(SIGSEGV, &info, regs);
++
+ }
+ 
+ void
+@@ -242,14 +254,23 @@
+ void
+ UnknownException(struct pt_regs *regs)
+ {
++	siginfo_t info;
++
+ 	printk("Bad trap at PC: %lx, SR: %lx, vector=%lx\n",
+ 	       regs->nip, regs->msr, regs->trap);
+-	_exception(SIGTRAP, regs);	
++
++	info.si_signo = SIGTRAP;
++	info.si_errno = 0;
++	info.si_code = 0;
++	info.si_addr = 0;
++	_exception(SIGTRAP, &info, regs);	
+ }
+ 
+ void
+ InstructionBreakpointException(struct pt_regs *regs)
+ {
++	siginfo_t info;
++	
+ #if defined(CONFIG_XMON) || defined(CONFIG_KGDB)
+ 	if (debugger_iabr_match(regs))
+ 		return;
+@@ -258,17 +279,73 @@
+ 	if (kdb(KDB_REASON_BREAK, 0, regs))
+ 		return ;
+ #endif
+-	_exception(SIGTRAP, regs);
++
++	info.si_signo = SIGTRAP;
++	info.si_errno = 0;
++	info.si_code = TRAP_BRKPT;
++	info.si_addr = (void *)regs->nip;
++	_exception(SIGTRAP, &info, regs);
++}
++
++static void
++parse_fpe(siginfo_t *info, struct pt_regs *regs)
++{
++	unsigned long fpscr;
++
++	if (regs->msr & MSR_FP)
++		giveup_fpu(current);
++
++	fpscr = current->thread.fpscr;
++
++	/* Invalid operation */
++	if ((fpscr & FPSCR_VE) && (fpscr & FPSCR_VX))
++		info->si_code = FPE_FLTINV;
++
++	/* Overflow */
++	else if ((fpscr & FPSCR_OE) && (fpscr & FPSCR_OX))
++		info->si_code = FPE_FLTOVF;
++
++	/* Underflow */
++	else if ((fpscr & FPSCR_UE) && (fpscr & FPSCR_UX))
++		info->si_code = FPE_FLTUND;
++
++	/* Divide by zero */
++	else if ((fpscr & FPSCR_ZE) && (fpscr & FPSCR_ZX))
++		info->si_code = FPE_FLTDIV;
++
++	/* Inexact result */
++	else if ((fpscr & FPSCR_XE) && (fpscr & FPSCR_XX))
++		info->si_code = FPE_FLTRES;
++
++	else
++		info->si_code = 0;
++
++	info->si_signo = SIGFPE;
++	info->si_errno = 0;
++	info->si_addr = (void *)regs->nip;
++	_exception(SIGFPE, info, regs);
+ }
+ 
+ void
+ ProgramCheckException(struct pt_regs *regs)
+ {
++	siginfo_t info;
++
+ 	if (regs->msr & 0x100000) {
+ 		/* IEEE FP exception */
+-		_exception(SIGFPE, regs);
++
++		parse_fpe(&info, regs);
++	} else if (regs->msr & 0x40000) {
++		/* Privileged instruction */
++
++		info.si_signo = SIGILL;
++		info.si_errno = 0;
++		info.si_code = ILL_PRVOPC;
++		info.si_addr = (void *)regs->nip;
++		_exception(SIGILL, &info, regs);
+ 	} else if (regs->msr & 0x20000) {
+ 		/* trap exception */
++
+ #if defined(CONFIG_XMON) || defined(CONFIG_KGDB)
+ 		if (debugger_bpt(regs))
+ 			return;
+@@ -277,16 +354,29 @@
+ 		if (kdb(KDB_REASON_BREAK, 0, regs))
+ 			return;
+ #endif
+-		_exception(SIGTRAP, regs);
++		info.si_signo = SIGTRAP;
++		info.si_errno = 0;
++		info.si_code = TRAP_BRKPT;
++		info.si_addr = (void *)regs->nip;
++		_exception(SIGTRAP, &info, regs);
+ 	} else {
+-		_exception(SIGILL, regs);
++		/* Illegal instruction */
++
++		info.si_signo = SIGILL;
++		info.si_errno = 0;
++		info.si_code = ILL_ILLTRP;
++		info.si_addr = (void *)regs->nip;
++		_exception(SIGILL, &info, regs);
+ 	}
+ }
+ 
+ void
+ SingleStepException(struct pt_regs *regs)
+ {
++	siginfo_t info;
++
+ 	regs->msr &= ~MSR_SE;  /* Turn off 'trace' bit */
++
+ #if defined(CONFIG_XMON) || defined(CONFIG_KGDB)
+ 	if (debugger_sstep(regs))
+ 		return;
+@@ -295,13 +385,19 @@
+ 	if (kdb(KDB_REASON_DEBUG, 0, regs))
+ 		return;
+ #endif
+-	_exception(SIGTRAP, regs);	
++
++	info.si_signo = SIGTRAP;
++	info.si_errno = 0;
++	info.si_code = TRAP_TRACE;
++	info.si_addr = (void *)regs->nip;
++	_exception(SIGTRAP, &info, regs);	
+ }
+ 
+ void
+ AlignmentException(struct pt_regs *regs)
+ {
+ 	int fixed;
++	siginfo_t info;
+ 
+ 	fixed = fix_alignment(regs);
+ 	if (fixed == 1) {
+@@ -311,15 +407,28 @@
+ 		regs->nip += 4;	/* skip over emulated instruction */
+ 		return;
+ 	}
++	
++	/* Operand address was bad */
+ 	if (fixed == -EFAULT) {
+-		/* fixed == -EFAULT means the operand address was bad */
+-		if (user_mode(regs))
+-			force_sig(SIGSEGV, current);
+-		else
++		if (user_mode(regs)) {
++			info.si_signo = SIGSEGV;
++			info.si_errno = 0;
++			info.si_code = SEGV_MAPERR;
++			info.si_addr = (void *)regs->dar;
++			force_sig_info(SIGSEGV, &info, current);
++		} else {
++			/* Search exception table */
+ 			bad_page_fault(regs, regs->dar);
++		}
++
+ 		return;
+ 	}
+-	_exception(SIGBUS, regs);	
++
++	info.si_signo = SIGBUS;
++	info.si_errno = 0;
++	info.si_code = BUS_ADRALN;
++	info.si_addr = (void *)regs->nip;
++	_exception(SIGBUS, &info, regs);
+ }
+ 
+ void __init trap_init(void)
+diff -uNr -X /home/engebret/dontdiff linuxppc64_2_4_prev_patch/arch/ppc64/xmon/xmon.c linuxppc64_2_4/arch/ppc64/xmon/xmon.c
+--- linuxppc64_2_4_prev_patch/arch/ppc64/xmon/xmon.c	Mon Sep 23 13:06:48 2002
++++ linuxppc64_2_4/arch/ppc64/xmon/xmon.c	Tue Sep 17 14:59:40 2002
+@@ -325,10 +325,10 @@
+ 	cmd = cmds(excp);
+ 	if (cmd == 's') {
+ 		xmon_trace[smp_processor_id()] = SSTEP;
+-		excp->msr |= 0x400;
++		excp->msr |= MSR_SE;
+ 	} else if (at_breakpoint(excp->nip)) {
+ 		xmon_trace[smp_processor_id()] = BRSTEP;
+-		excp->msr |= 0x400;
++		excp->msr |= MSR_SE;
+ 	} else {
+ 		xmon_trace[smp_processor_id()] = 0;
+ 		insert_bpts();
+@@ -443,7 +443,7 @@
+ 		remove_bpts();
+ 		excprint(regs);
+ 		xmon_trace[smp_processor_id()] = BRSTEP;
+-		regs->msr |= 0x400;
++		regs->msr |= MSR_SE;
+ 	} else {
+ 		printf("Stopped at breakpoint %x (%lx %s)\n", (bp - bpts)+1, bp->address, bp->funcname);
+ 		xmon(regs);
+@@ -473,7 +473,7 @@
+ 		remove_bpts();
+ 		excprint(regs);
+ 		xmon_trace[smp_processor_id()] = BRSTEP;
+-		regs->msr |= 0x400;
++		regs->msr |= MSR_SE;
+ 	} else {
+ 		dabr.instr = regs->nip;
+ 		xmon(regs);
+@@ -489,7 +489,7 @@
+ 		remove_bpts();
+ 		excprint(regs);
+ 		xmon_trace[smp_processor_id()] = BRSTEP;
+-		regs->msr |= 0x400;
++		regs->msr |= MSR_SE;
+ 	} else {
+ 		xmon(regs);
+ 	}
+diff -uNr -X /home/engebret/dontdiff linuxppc64_2_4_prev_patch/drivers/char/icom.h linuxppc64_2_4/drivers/char/icom.h
+--- linuxppc64_2_4_prev_patch/drivers/char/icom.h	Mon Sep 23 13:06:49 2002
++++ linuxppc64_2_4/drivers/char/icom.h	Tue Sep 17 11:08:25 2002
+@@ -142,7 +142,6 @@
+ #define DIAG_BIST_SAVE_CMD_REG			0xCD700530
+ #define DIAG_BIST_READ_CMD_REG_FAIL		0xCD700540
+ #define DIAG_BIST_SAVE_BAR0_REG			0xCD700550
+-#define DIAG_BIST_READ_BAR0_FAIL		0xCD700560
+ #define DIAG_BIST_HOOK_INT_LINE			0xCD700570
+ #define DIAG_BIST_HOOK_INT_HANDLER_FAIL		0xCD700580
+ #define DIAG_BIST_START_BIST			0xCD700590
+diff -uNr -X /home/engebret/dontdiff linuxppc64_2_4_prev_patch/drivers/net/pcnet32.c linuxppc64_2_4/drivers/net/pcnet32.c
+--- linuxppc64_2_4_prev_patch/drivers/net/pcnet32.c	Mon Sep 23 13:06:49 2002
++++ linuxppc64_2_4/drivers/net/pcnet32.c	Wed Sep 11 11:02:53 2002
+@@ -968,6 +968,8 @@
+ 
+     for (i = 0; i < TX_RING_SIZE; i++) {
+ 	if (lp->tx_skbuff[i]) {
++            lp->tx_ring[i].status = 0; /* Mark CPU owns buffer             */ 
++            wmb();                     /* Make sure adapter sees new owner */
+             pci_unmap_single(lp->pci_dev, lp->tx_dma_addr[i], lp->tx_skbuff[i]->len, PCI_DMA_TODEVICE);
+ 	    dev_kfree_skb_any(lp->tx_skbuff[i]); 
+ 	    lp->tx_skbuff[i] = NULL;
+@@ -1129,6 +1131,7 @@
+     lp->tx_skbuff[entry] = skb;
+     lp->tx_dma_addr[entry] = pci_map_single(lp->pci_dev, skb->data, skb->len, PCI_DMA_TODEVICE);
+     lp->tx_ring[entry].base = (u32)le32_to_cpu(lp->tx_dma_addr[entry]);
++    wmb(); /* Make sure owner change is after all other updates */
+     lp->tx_ring[entry].status = le16_to_cpu(status);
+ 
+     lp->cur_tx++;
+@@ -1372,6 +1375,7 @@
+ 
+ 		    if (i > RX_RING_SIZE -2) {
+ 			lp->stats.rx_dropped++;
++			wmb(); /* Make sure adapter sees owner change last */
+ 			lp->rx_ring[entry].status |= le16_to_cpu(0x8000);
+ 			lp->cur_rx++;
+ 		    }
+@@ -1449,6 +1453,7 @@
+     /* free all allocated skbuffs */
+     for (i = 0; i < RX_RING_SIZE; i++) {
+ 	lp->rx_ring[i].status = 0;			    
++	wmb();	                   /* Make sure adapter sees new owner */
+ 	if (lp->rx_skbuff[i]) {
+             pci_unmap_single(lp->pci_dev, lp->rx_dma_addr[i], PKT_BUF_SZ-2, PCI_DMA_FROMDEVICE);
+ 	    dev_kfree_skb(lp->rx_skbuff[i]);
+@@ -1458,6 +1463,9 @@
+     }
+     
+     for (i = 0; i < TX_RING_SIZE; i++) {
++	    lp->tx_ring[i].status = 0;  /* Mark CPU owns buffer             */ 
++	    wmb();	                /* Make sure adapter sees new owner */
++
+ 	if (lp->tx_skbuff[i]) {
+             pci_unmap_single(lp->pci_dev, lp->tx_dma_addr[i], lp->tx_skbuff[i]->len, PCI_DMA_TODEVICE);
+ 	    dev_kfree_skb(lp->tx_skbuff[i]);
+diff -uNr -X /home/engebret/dontdiff linuxppc64_2_4_prev_patch/include/asm-ppc64/mmu.h linuxppc64_2_4/include/asm-ppc64/mmu.h
+--- linuxppc64_2_4_prev_patch/include/asm-ppc64/mmu.h	Mon Sep 23 13:06:49 2002
++++ linuxppc64_2_4/include/asm-ppc64/mmu.h	Tue Aug 27 10:49:11 2002
+@@ -168,17 +168,23 @@
+ #define PP_RWRW 2	/* Supervisor read/write, User read/write */
+ #define PP_RXRX 3	/* Supervisor read,       User read */
+ 
+-
+ typedef struct {
+ 	HPTE *		htab;
+ 	unsigned long	htab_num_ptegs;
+ 	unsigned long	htab_hash_mask;
+ 	unsigned long	next_round_robin;
+ 	unsigned long   last_kernel_address;
++	unsigned long   htab_lock_shift;
+ } HTAB;
+ 
+ extern HTAB htab_data;
+ 
++#include <linux/cache.h>
++#include <asm/spinlock.h>
++typedef struct {
++	spinlock_t lock;
++} ____cacheline_aligned hash_table_lock_t;
++
+ void invalidate_hpte( unsigned long slot );
+ long select_hpte_slot( unsigned long vpn );
+ void create_valid_hpte( unsigned long slot, unsigned long vpn,
+@@ -227,7 +233,6 @@
+ 		asm volatile("clrldi	%0,%0,16\n\
+ 			      tlbie	%0,0" : : "r"(va) : "memory");
+ 	}
+-
+ 	asm volatile("eieio; tlbsync; ptesync": : :"memory");
+ }
+  
+diff -uNr -X /home/engebret/dontdiff linuxppc64_2_4_prev_patch/include/asm-ppc64/ppc32.h linuxppc64_2_4/include/asm-ppc64/ppc32.h
+--- linuxppc64_2_4_prev_patch/include/asm-ppc64/ppc32.h	Mon Sep 23 13:02:55 2002
++++ linuxppc64_2_4/include/asm-ppc64/ppc32.h	Tue Sep 17 14:59:40 2002
+@@ -87,12 +87,12 @@
+ 	int si_code;
+ 
+ 	union {
+-		int _pad[SI_PAD_SIZE];
++		int _pad[SI_PAD_SIZE32];
+ 
+ 		/* kill() */
+ 		struct {
+ 			__kernel_pid_t32 _pid;		/* sender's pid */
+-			unsigned int _uid;		/* sender's uid */
++			__kernel_uid_t32 _uid;		/* sender's uid */
+ 		} _kill;
+ 
+ 		/* POSIX.1b timers */
+@@ -104,14 +104,14 @@
+ 		/* POSIX.1b signals */
+ 		struct {
+ 			__kernel_pid_t32 _pid;		/* sender's pid */
+-			unsigned int _uid;		/* sender's uid */
++			__kernel_uid_t32 _uid;		/* sender's uid */
+ 			sigval_t32 _sigval;
+ 		} _rt;
+ 
+ 		/* SIGCHLD */
+ 		struct {
+ 			__kernel_pid_t32 _pid;		/* which child */
+-			unsigned int _uid;		/* sender's uid */
++			__kernel_uid_t32 _uid;		/* sender's uid */
+ 			int _status;			/* exit code */
+ 			__kernel_clock_t32 _utime;
+ 			__kernel_clock_t32 _stime;
+@@ -120,7 +120,6 @@
+ 		/* SIGILL, SIGFPE, SIGSEGV, SIGBUS, SIGEMT */
+ 		struct {
+ 			u32 _addr; /* faulting insn/memory ref. */
+-			int _trapno;
+ 		} _sigfault;
+ 
+ 		/* SIGPOLL */
+diff -uNr -X /home/engebret/dontdiff linuxppc64_2_4_prev_patch/include/asm-ppc64/processor.h linuxppc64_2_4/include/asm-ppc64/processor.h
+--- linuxppc64_2_4_prev_patch/include/asm-ppc64/processor.h	Mon Sep 23 13:06:49 2002
++++ linuxppc64_2_4/include/asm-ppc64/processor.h	Tue Sep 17 14:59:40 2002
+@@ -659,8 +659,7 @@
+ 	signed long     last_syscall;
+ 	unsigned long	flags;
+ 	double		fpr[32];	/* Complete floating point set */
+-	unsigned long	fpscr_pad;	/* fpr ... fpscr must be contiguous */
+-	unsigned long	fpscr;		/* Floating point status */
++	unsigned long	fpscr;		/* Floating point status (plus pad) */
+ };
+ 
+ #define PPC_FLAG_32BIT		0x01
+diff -uNr -X /home/engebret/dontdiff linuxppc64_2_4_prev_patch/include/asm-ppc64/prom.h linuxppc64_2_4/include/asm-ppc64/prom.h
+--- linuxppc64_2_4_prev_patch/include/asm-ppc64/prom.h	Mon Sep 23 13:06:49 2002
++++ linuxppc64_2_4/include/asm-ppc64/prom.h	Tue Sep 10 08:49:23 2002
+@@ -127,6 +127,7 @@
+ 	char	*full_name;
+ 	int	busno;			/* for pci devices */
+ 	int	devfn;			/* for pci devices */
++	int	status;			/* Current device status (non-zero is bad) */
+ 	struct  pci_controller *phb;	/* for pci devices */
+ 	struct	TceTable *tce_table;	/* for phb's or bridges */
+ #define DN_STATUS_BIST_FAILED (1<<0)
+@@ -194,5 +195,6 @@
+ extern int prom_n_addr_cells(struct device_node* np);
+ extern int prom_n_size_cells(struct device_node* np);
+ extern void prom_get_irq_senses(unsigned char *senses, int off, int max);
++extern void prom_add_property(struct device_node* np, struct property* prop);
+ 
+ #endif /* _PPC64_PROM_H */
+diff -uNr -X /home/engebret/dontdiff linuxppc64_2_4_prev_patch/include/asm-ppc64/rtas.h linuxppc64_2_4/include/asm-ppc64/rtas.h
+--- linuxppc64_2_4_prev_patch/include/asm-ppc64/rtas.h	Mon Sep 23 13:06:49 2002
++++ linuxppc64_2_4/include/asm-ppc64/rtas.h	Fri Aug 30 08:02:56 2002
+@@ -168,5 +168,13 @@
+ 
+ extern struct proc_dir_entry *rtas_proc_dir;
+ 
++/* Some RTAS ops require a data buffer and that buffer must be < 4G.
++ * Rather than having a memory allocator, just use this buffer
++ * (get the lock first), make the RTAS call.  Copy the data instead
++ * of holding the buffer for long.
++ */
++#define RTAS_DATA_BUF_SIZE 1024
++extern spinlock_t rtas_data_buf_lock;
++extern char rtas_data_buf[RTAS_DATA_BUF_SIZE];
+ 
+ #endif /* _PPC64_RTAS_H */
+diff -uNr -X /home/engebret/dontdiff linuxppc64_2_4_prev_patch/include/asm-ppc64/sigcontext.h linuxppc64_2_4/include/asm-ppc64/sigcontext.h
+--- linuxppc64_2_4_prev_patch/include/asm-ppc64/sigcontext.h	Mon Sep 23 13:02:55 2002
++++ linuxppc64_2_4/include/asm-ppc64/sigcontext.h	Tue Sep 17 14:59:40 2002
+@@ -13,6 +13,7 @@
+ struct sigcontext_struct {
+ 	unsigned long	_unused[4];
+ 	int		signal;
++	int		_pad0;
+ 	unsigned long	handler;
+ 	unsigned long	oldmask;
+ 	struct pt_regs 	*regs;
+diff -uNr -X /home/engebret/dontdiff linuxppc64_2_4_prev_patch/include/asm-ppc64/siginfo.h linuxppc64_2_4/include/asm-ppc64/siginfo.h
+--- linuxppc64_2_4_prev_patch/include/asm-ppc64/siginfo.h	Mon Sep 23 13:06:49 2002
++++ linuxppc64_2_4/include/asm-ppc64/siginfo.h	Tue Sep 17 14:59:40 2002
+@@ -17,7 +17,8 @@
+ } sigval_t;
+ 
+ #define SI_MAX_SIZE	128
+-#define SI_PAD_SIZE	((SI_MAX_SIZE/sizeof(int)) - 3)
++#define SI_PAD_SIZE	((SI_MAX_SIZE/sizeof(int)) - 4)
++#define SI_PAD_SIZE32	((SI_MAX_SIZE/sizeof(int)) - 3)
+ 
+ typedef struct siginfo {
+ 	int si_signo;
