@@ -11,12 +11,13 @@
 In Progress
 -----------
 Version 1.4.0 specific:
-- <brian@thefinleys.com> - migrate to golden client from master client
-- <brian@thefinleys.com> - deal with ext3 journal files differently according to Ted Ts'o
+- <brian@thefinleys.com> - run rsyncd from an init script on the imageserver with no maximum connections
+                           /etc/rc.d/init.d/rsyncd
+                           /etc/init.d/rsyncd
+- <brian@thefinleys.com> - work with either /etc/rc.d/init.d/ or /etc/init.d/
 - <brian@thefinleys.com> - Contemplate using "use chroot = yes" in /etc/rsyncd.conf
                            and how this affects --numeric-ids.
-- <brian@thefinleys.com> - see tmp/RedHat_7.0_issues.txt
-- <brian@thefinleys.com> - run rsync as a daemon from an init script with no maximum connections
+- <brian@thefinleys.com> - fix egrep test thingy on client
 - <brian@thefinleys.com> - Wes Smith's distribution specific patches
 - <brian@thefinleys.com> - support for more distributions
 - <brian@thefinleys.com> - put exclude/include stuff on imageserver by image
@@ -25,15 +26,16 @@ Version 1.4.0 specific:
 - <brian@thefinleys.com> - label autoinstallcd.iso with v1.4.x (x is literal)
 - <brian@thefinleys.com> - start using bzip2
 - <brian@thefinleys.com> - add support for 3c905 if it will fit.
+- <brian@thefinleys.com> - deal with ext3 journal files differently according to Ted Ts'o
+- <brian@thefinleys.com> - error checking and diagnostic messages on autoinstall client
+- <brian@thefinleys.com> - add a -use-same-settings option to updateclient that figures
+                           out the current values and writes them to /local.cfg
 
 
 Other stuff:
 - <brian@thefinleys.com> - contemplate using MAKEDEV instead of having pre-existing device files
 - <brian@thefinleys.com> - contemplate using hard links to busybox instead of soft links
 - <brian@thefinleys.com> - fix network booting
-- <brian@thefinleys.com> - run rsyncd from an init script on the imageserver
-                           /etc/rc.d/init.d/rsyncd
-                           /etc/init.d/rsyncd
 - <bchrisman@valinux.com> - autoinstall client to cycle through eth interfaces
                            for N in 0 1 2 3 4 5 6 7 8 9; do
                              dhcpcd eth$N
@@ -42,9 +44,6 @@ Other stuff:
 - <brian@thefinleys.com> - add -exclude option to getimage
 - <brian@thefinleys.com> - incorporate ssh
 - <brian@thefinleys.com> - put autoinstallmedia source into cvs
-- <brian@thefinleys.com> - add a -use-same-settings option to updateclient that figures
-                           out the current values and writes them to /local.cfg
-
 - <gpratt@valinux.com> - Docbookization of the FAQ-HOWTO
 
 - Cameron Meadors <cmeadors@valinux.com> and Roland Dreier <roland@valinux.com>

@@ -5,6 +5,9 @@
 #
 
 VA SystemImager-1.4.0 2000.xx.xx
+- getimage -- Added support for LABEL=/partition/label format in 
+              /etc/fstab.  This format is used in new (not upgrades) 
+              RedHat 7 installations.
 - getimage -- Improper usage statements no longer include the entire
               output from the --help option.  In earlier versions this
               would often run the usage correction statement off the 
@@ -27,6 +30,7 @@ VA SystemImager-1.4.0 2000.xx.xx
                you. ;)
 - rsyncd.conf -- Change back to using one log file: /var/log/systemimager
 - updateclient -- Now uses the --numeric-ids rsync option.
+- goldenclient -- Changed phraseology from "master client" to "golden client"
 - prepareclient -- Now defaults to using megabytes to store partition 
                    information.  Can be told to leave explicit 
                    partitioning information for getimage with the 
