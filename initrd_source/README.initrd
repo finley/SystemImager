@@ -39,3 +39,8 @@ o /dev entries are created from the contents of the dev_ls-lR file.
      and capturing the output of 'ls -lR'
 o you may also need to customize the size of your ramdisk, and the number
   of inodes available on your ramdisk.  these are options in the Makefile.
+o be sure that the binaries that will be installed from your local system
+  are actually on your local system.  make sure you have all of
+  the Build-Depends packages from debian/control installed.  you should also
+  have all of the Debian build-essential packages installed (stuff like make
+  and gcc).
