@@ -217,7 +217,13 @@ then
    # this stuff for xinetd
   [ $QUIET = "false" ] && echo -n "Signalling inetd to re-read it's configuration information: "
   PID_OF_XINETD=`pidof xinetd`
-  [ ! -z $PID_OF_XINETD ] && kill -HUP $PID_OF_XINETD
+  #
+  # Dann Frazier <daniel_frazier@hp.com> caught me sending the wrong signal to xinetd.
+  # Thanks, Dann, 
+  #
+  # -Brian
+  #
+  [ ! -z $PID_OF_XINETD ] && kill -s SIGUSR1 $PID_OF_XINETD
   [ $QUIET = "false" ] && echo "" 
 fi
 ### END inetd stuff ###
