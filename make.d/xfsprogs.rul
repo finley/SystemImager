@@ -1,3 +1,5 @@
+ifndef IS_PPC64
+
 XFSPROGS_VERSION := 2.2.2
 XFSPROGS_DIR := xfsprogs-$(XFSPROGS_VERSION)
 XFSPROGS_TARBALL := $(XFSPROGS_DIR).src.tar.gz
@@ -30,6 +32,8 @@ $(MKXFS_BINARY):	$(SRC_DIR)/$(XFSPROGS_TARBALL)
 $(SRC_DIR)/$(XFSPROGS_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
 	$(GETSOURCE) $(XFSPROGS_URL) $(SRC_DIR)
+
+endif
 
 PHONY += xfsprogs_clean
 xfsprogs_clean:
