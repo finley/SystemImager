@@ -97,6 +97,15 @@ if (! ($floppy_device_prefix =~ /^\/dev\/fd[0-7]$/)) {
     die "ERROR: Invalid -floppy argument.\n $help_info";
 }
 
+# Verify that the kernel and initrd.gz actually exist.
+# Suggested by Greg Pratt <gpratt@valinux.com>.
+@files = ( "/tftpboot/kernel", "/tftpboot/initrd.gz");
+foreach my $file ( @files ) {
+  unless ( -e "$file" ) {
+    die "FATAL:  I can't find $file!";
+  }
+}
+
 # if not run as root, this script will surely fail
 unless($< == 0) { die "Must be run as root!\n"; }
 
