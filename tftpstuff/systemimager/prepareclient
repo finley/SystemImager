@@ -22,7 +22,7 @@ if [ "$IMAGESERVER" != "" ]; then
  clear
  echo "Welcome to the SystemImager prepareclient script.  This install script"
  echo "may modify the following files to prepare your client for imaging."
- echo ""
+ echo
  echo " /etc/services    -- add rsync line if necessary"
  echo " /etc/inetd.conf  -- add rsync line if necessary"
  echo " /etc/rsyncd.conf -- create a new file with a [root] entry in it."
@@ -459,7 +459,9 @@ EOF
  chmod +x /tmp/sfdisk
  for disk in $disks
  do
-  /tmp/sfdisk -d /dev/$disk > /etc/partitionschemes/$disk
+  # Specify sectors explicitly -- this format may be used in the future
+  # for partitioning with MB.
+  /tmp/sfdisk -l -uS /dev/$disk > /etc/partitionschemes/$disk
  done
  rm -f /tmp/sfdisk
  
