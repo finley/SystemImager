@@ -248,6 +248,6 @@ fi
 # wrap up
 [ $QUIET = "false" ] && clear
 [ $QUIET = "false" ] && echo
-echo "All done!  Please read the FAQ-HOWTO before using SystemImager."
-echo "See /usr/doc/systemimager-$VERSION/ for all documentation."
+[ $QUIET = "false" ] && echo "All done!  Please read the FAQ-HOWTO before using SystemImager."
+[ $QUIET = "false" ] && echo "See /usr/doc/systemimager-$VERSION/ for all documentation."
 [ $QUIET = "false" ] && echo
