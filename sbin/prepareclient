@@ -136,14 +136,14 @@ EOF
 
 
 GetOptions(
-    "explicit"  => \my $explicit,
-    "help"      => \my $help,
-    "norsyncd"  => \my $norsyncd,
-    "quiet"     => \my $quiet,
-    "rpm"       => \my $rpm,
-    "version"   => \my $version,
-    "server=s"  => \my $server,
-    "yes"       => \my $yes
+    "explicit"             => \my $explicit,
+    "help"                 => \my $help,
+    "no-rsyncd|norsyncd"   => \my $norsyncd,
+    "quiet"                => \my $quiet,
+    "rpm"                  => \my $rpm,
+    "version"              => \my $version,
+    "server=s"             => \my $server,
+    "yes"                  => \my $yes
 ) || die "$help_info";
 
 ### BEGIN option validation ###
