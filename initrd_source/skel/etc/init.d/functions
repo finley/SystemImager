@@ -264,6 +264,7 @@ flamethrower_client() {
                 udp-receiver $UDP_RECEIVER_OPTIONS 2>${UDP_RECEIVER_STDERR_LOG} | tar ${TAR_OPTS} -C ${DIR} 2>$TAR_STDERR_LOG
                 echo "TAR_EXIT_STATUS=$?" > $TAR_EXIT_FILE
              ) &
+            echo -n "Waiting for cast to begin"
         fi    
         
 
@@ -313,7 +314,6 @@ flamethrower_client() {
 
 
         # sleep apnea
-        echo -n "Waiting for cast to begin"
         sleep_loop $FLAMETHROWER_CLIENT_SLEEP
 
     done
