@@ -140,7 +140,7 @@ stage2rd-ssh:	binary-build-stamp $(LOCAL_BINARIES_STAGE2_SSH)
 
 	# copy over files from local system
 	cp -a $(BEEP_BINARY) $(LOCAL_BINARIES_STAGE2_SSH) skel2-ssh.tmp/bin
-	mkdir skel2.tmp/sbin
+	mkdir skel2-ssh.tmp/sbin
 	cp -a $(LOCAL_SBINARIES_STAGE2_SSH) skel2-ssh.tmp/sbin
 	cd skel2-ssh.tmp && ln ./bin/ash ./bin/sh
 	mv skel2-ssh.tmp/bin/dhclient-2.2.x skel2-ssh.tmp/bin/dhclient
