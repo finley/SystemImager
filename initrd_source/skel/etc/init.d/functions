@@ -188,13 +188,7 @@ get_flamethrower_directory() {
 #
 flamethrower_client() {
 
-    [ -z $RETRY ] && RETRY=0
-    COUNT=0
-
-    echo
-    echo "flamethrower_client(${MODULE_NAME})"
-    echo '--------------------------------------------------------------------------------'
-
+    # validate
     if [ -z $PORTBASE ]; then
         . ${FLAMETHROWER_DIRECTORY_DIR}/${MODULE_NAME}
         if [ $? != 0 ]; then
@@ -203,7 +197,14 @@ flamethrower_client() {
             shellout
         fi
     fi
+    if [ -z $DIR ]; then
+        echo Must set DIR
+    else
+        mkdir -p $DIR
+    fi
+    
 
+    # build command
     UDP_RECEIVER_OPTIONS="--interface ${DEVICE} --portbase $PORTBASE"
     if [ ! -z $TTL ]; then
         UDP_RECEIVER_OPTIONS="$UDP_RECEIVER_OPTIONS --ttl $TTL"
@@ -219,40 +220,98 @@ flamethrower_client() {
     fi
 
 
-    mkdir -p ${DIR}
-    
-    { while :;
-        do
-            echo "udp-receiver $UDP_RECEIVER_OPTIONS | tar -x -C ${DIR}"
-            udp-receiver $UDP_RECEIVER_OPTIONS | tar -x -C ${DIR}
+    # set vars
+    [ -z $RETRY ] && RETRY=0
+    COUNT=0
+    FLAMETHROWER_CLIENT_SLEEP=7
+    unset TAR_EXIT_STATUS
+    TAR_EXIT_FILE=/tmp/tar_exit
+    echo TAR_EXIT_STATUS= > $TAR_EXIT_FILE
+    UDP_RECEIVER_STDERR_LOG="/tmp/udp-receiver.${MODULE_NAME}"
 
-            if [ $? = 0 ]; then
-                echo 'flamethrower_client: Success!'
-                echo '--------------------------------------------------------------------------------'
-                break
-            elif [ $COUNT -lt $RETRY ]; then
+
+    # loop
+    until [ $TAR_EXIT_STATUS = 0 ]
+    do
+        # launch udp-receiver
+        if [ -z $UDP_RECEIVER_RUNNING ]; then
+
+            UDP_RECEIVER_RUNNING=1
+
+            rm -f $UDP_RECEIVER_STDERR_LOG
+
+            echo
+            echo "flamethrower_client(${MODULE_NAME})"
+            echo '--------------------------------------------------------------------------------'
+            echo "udp-receiver $UDP_RECEIVER_OPTIONS 2>${UDP_RECEIVER_STDERR_LOG} | tar -x -C ${DIR} 2>/tmp/tar.stderr.log"
+            ( 
+                udp-receiver $UDP_RECEIVER_OPTIONS 2>${UDP_RECEIVER_STDERR_LOG} | tar -x -C ${DIR} 2>/tmp/tar.stderr.log
+                echo "TAR_EXIT_STATUS=$?" > $TAR_EXIT_FILE
+             ) &
+        fi    
+        
+
+        # test udp-receiver log file
+        if [ -e $UDP_RECEIVER_STDERR_LOG ]; then
+            grep -q '^Transfer complete' $UDP_RECEIVER_STDERR_LOG && COMPLETED=yes || COMPLETED=no
+            grep -q ^bytes $UDP_RECEIVER_STDERR_LOG && STARTED=yes || STARTED=no
+
+            if [ COMPLETED=yes ]; then
+                # Cool!  Let's proceed
+                echo "udp-receiver completed transfer"
+            elif [ "$STARTED" = "yes" ]; then
+                THIS_STAMP=`ls -l $UDP_RECEIVER_STDERR_LOG`
+                if [ "$THIS_STAMP" = "$LAST_STAMP" ]; then
+                    echo "Uh oh, no progress since we last checked, so die, die, die my darlin'"
+                    killall -9 udp-receiver
+                    sleep 1
+                fi
+                LAST_STAMP=$THIS_STAMP
+            fi
+
+        fi
+
+
+        # test exit status from tar command
+        . $TAR_EXIT_FILE
+
+        if [ $TAR_EXIT_STATUS = '' ]; then
+            # just proceed, no worries
+        elif [ $TAR_EXIT_STATUS = 0 ]; then
+            # success -- break loop, and proceed with install
+            echo 'flamethrower_client: Success!'
+            echo '--------------------------------------------------------------------------------'
+            break
+        else
+            # failure
+            unset UDP_RECEIVER_RUNNING
+            if [ $COUNT -lt $RETRY ]; then
                 COUNT=$(( $COUNT + 1 ))
                 echo "flamethrower_client: Proceeding with retry $COUNT of $RETRY"
             else
                 echo "flamethrower_client: FATAL: Initial attempt and $RETRY retries failed!"
                 shellout
             fi
-            sleep 1
-        done
-    }
+        fi
+
+
+        # sleep apnea
+        sleep $FLAMETHROWER_CLIENT_SLEEP
+
+    done
+
 
     # Unset vars, so next module (which may not have them set) won't use then unintentially
-    unset PORTBASE
     unset TTL
     unset NOSYNC
     unset ASYNC
     unset MCAST_ALL_ADDR
     unset RETRY
     unset COUNT
-    unset UDP_RECEIVER_OPTIONS
     unset DIR
-    unset PORTBASE
+
 }
+
 #
 ################################################################################
 #
