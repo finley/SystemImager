@@ -1,20 +1,34 @@
 #! /bin/sh
 #
-# skeleton	example file to build /etc/init.d/ scripts.
-#		This file should be used to construct scripts for /etc/init.d.
+#   Written 
+#       by Miquel van Smoorenburg <miquels@cistron.nl>.
+#   Modified for Debian GNU/Linux
+#       by Ian Murdock <imurdock@gnu.ai.mit.edu>.
+#   Hacked for rsync as used by SystemImager
+#       by Brian Finley <bef@bgsw.net>.
 #
-#		Written by Miquel van Smoorenburg <miquels@cistron.nl>.
-#		Modified for Debian GNU/Linux
-#		by Ian Murdock <imurdock@gnu.ai.mit.edu>.
+#   $Id$
 #
-# Version:	@(#)skeleton  1.8  03-Mar-1998  miquels@cistron.nl
 #
-# rsync         Hacked by Brian Finley <brian.finley@baldguysoftware.com>
-#               for rsync.
-#
+# Support for IRIX style chkconfig:
 # chkconfig:   2345 20 20
-# description: The rsync daemon.
+# description: The rsync daemon used by SystemImager.
 #
+#
+# Support for LSB compliant init system:
+### BEGIN INIT INFO
+# Provides: systemimager
+# Required-Start: $network $syslog
+# Required-Stop:
+# Default-Start:  3 5
+# Default-Stop:   0 1 2 6
+# Short-Description: rsync daemon used by SystemImager
+# Description: rsync daemon used by SystemImager to serve up images, 
+#              autoinstall scripts, and other data used during the 
+#              installation and management of SystemImager client 
+#              machines.
+#
+### END INIT INFO
 
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin

@@ -3,13 +3,31 @@
 # "SystemImager"
 #
 #  Copyright (C) 2002 Bald Guy Software 
-#                     Brian E. Finley <brian.finley@baldguysoftware.com>
+#                     Brian E. Finley <bef@bgsw.net>
 #
 #    $Id$
 #
-#   chkconfig:   2345 20 20
-#   description: The SystemImager netbootmond daemon.
 #
+# Support for IRIX style chkconfig:
+# chkconfig:   2345 20 20
+# description: The SystemImager netbootmond daemon.
+#
+#
+# Support for LSB compliant init system:
+### BEGIN INIT INFO
+# Provides: netbootmond
+# Required-Start: $network $syslog
+# Required-Stop:
+# Default-Start:  3 5
+# Default-Stop:   0 1 2 6
+# Short-Description: SystemImager's daemon for net boot control
+# Description: SystemImager's daemon for controlling netboot clients.
+#              If clients are configured to always boot from the network, 
+#              netbootmond can be configured to tell them to boot off their
+#              local disks each time they boot after having completed a 
+#              successful autoinstall.
+#
+### END INIT INFO
 
 
 PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin:
