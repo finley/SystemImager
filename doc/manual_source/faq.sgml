@@ -917,7 +917,7 @@
     <para>
      Also be sure to take a look at System Installation Suite (SIS), which includes
      SystemInstaller, SystemImager, and System Configurator.  SystemInstaller is a 
-     Graphical tool that allows you to install images directly to a SystemImager 
+     tool that allows you to install images directly to a SystemImager 
      image server.  System Configurator, which is also used by the standard SystemImager 
      release, performs configuration of target machine uniquenesses such as IP addresses, 
      network cards, and initial RAM disks needed to boot clients after installation.
@@ -927,61 +927,96 @@
 
   <qandaentry>
      <question>
-       <para>
-         I tried to move to software RAID by modifying my autoinstallscript.conf
-         file, and it failed.  What in the world could possibly be wrong?
-       </para>
+      <para>
+       I configured my non-software RAID image to install as a software RAID
+       image by modifying my autoinstallscript.conf file, but the install 
+       failed.  What in the world could possibly be wrong?
+      </para>
      </question>
      <answer>
-       <para>
-        There are several things that must be modified in order to make a
-        non-software RAID image install using software RAID.  These
-        modifications may be made directly to the image, or if you want to keep
-        the image virgin, these changes may be made in an override directory.
-       </para>
-       <ItemizedList>
-        <ListItem>
-         <para>
-          Device files: In order for software RAID to work, you must have the
-          proper device files in your image.  These device files have names like
-          /dev/md0, /dev/md1, etc.  If these device files do not exist, cd into 
-          the ./dev directory of your image, then copy and past the following 
-          command to create them.  If the software RAID devices are already
-          created, running this command won't hurt a thing.
-         </para>
-         <para>
-          <LiteralLayout>
-           for I in 0 1 2 3 4 5 6 7 8 9; do sudo mknod -m 660 md$I b 9 $I; done
-          </LiteralLayout>
-         </para>
-        </ListItem>
-        <ListItem>
-         <para>
-          Drivers in the kernel: You must have the software RAID drivers
-          compiled for the kernel your client will boot from when it finishes
-          installing.  The SystemImager team recommends that you compile all 
-          of the software RAID drivers you will need statically into your kernel.
-         </para>
-        </ListItem>
-        <ListItem>
-         <para>
-          /etc/raidtab: You must create this file if it does not exist.  For
-          instructions on creating this file, please see the "Software RAID
-          HOWTO" at http://www.tldp.org/HOWTO/Software-RAID-HOWTO.html.
-         </para>
-        </ListItem>
-        <ListItem>
-         <para>
-          Other files: You will also need to modify the files used by your boot
-          loader (lilo, grub, etc.).  See your boot loaders documentation for
-          more information on it's configuration file format.  Here is one quick
-          tip: in lilo.conf, instead of using /dev/md as for the boot=
-          parameter, try using the software RAID device that will hold your
-          /boot/ directory (where the kernel lives).  For example, if /boot/
-          will be mounted on /dev/md1, then specify boot=/dev/md1.
-         </para>
-        </ListItem>
-       </ItemizedList>
+      <para>
+       When you convert a non-software RAID image to a software RAID image, 
+       you must manually configure the software RAID information for your 
+       image.  These modifications may be made directly to the image, or 
+       if you want to keep the image virgin, these changes may be made in 
+       an override directory.
+      </para>
+      <para>
+       There are many things that you need to know in order to manually
+       configure a computer to use software RAID on Linux.  The following 
+       are key points, or tips, intended to remind or assist someone 
+       already familiar with this process.  If you need more information 
+       on software RAID than the pointers provided below, please refer to
+       <ulink url="http://unthought.net/Software-RAID.HOWTO/">The Software RAID HOWTO</ulink>
+       at http://unthought.net/Software-RAID.HOWTO/.
+      </para>
+      <ItemizedList>
+       <ListItem>
+        <para>
+         Drivers in the kernel: You must have the software RAID drivers
+         compiled for the kernel your client will boot from when it finishes
+         installing.  
+        </para>
+       </ListItem>
+       <ListItem>
+        <para>
+         Device files: In order for software RAID to work, you must have the
+         proper device files in your image.  These device files have names like
+         /dev/md0, /dev/md1, etc.  If these device files do not exist, cd into 
+         the ./dev directory of your image, then copy and past the following 
+         command to create them.  If the software RAID devices are already
+         created, running this command won't hurt a thing.
+        </para>
+        <para>
+         <LiteralLayout>
+          for I in 0 1 2 3 4 5 6 7 8 9; do sudo mknod -m 660 md$I b 9 $I; done
+         </LiteralLayout>
+        </para>
+       </ListItem>
+       <ListItem>
+        <para>
+         /etc/raidtab: You must create this file and/or customize it to meet
+         your needs.
+        </para>
+       </ListItem>
+       <ListItem>
+        <para>
+         Other files: You will also need to modify the files used by your boot
+         loader (lilo, grub, etc.).  See your boot loaders documentation for
+         more information on it's configuration file format.  Here is one quick
+         tip: in lilo.conf, instead of using /dev/md as for the boot=
+         parameter, try using the software RAID device that will hold your
+         /boot/ directory (where the kernel lives).  For example, if /boot/
+         will be mounted on /dev/md1, then specify boot=/dev/md1.
+        </para>
+       </ListItem>
+      </ItemizedList>
+      <para>
+       After you have manually configured your image to use software RAID,
+       then make your changes to the autoinstallscript.conf file.  Changes 
+       that you will need to make to this file may include the following.
+       See "<command>man autoinstallscript.conf</command>" for more information.
+      </para>
+      <ItemizedList>
+       <ListItem>
+        <para>
+         In the <command>&lt;disk&gt;</command> section, add 
+         <command>raid</command> to the comma seperated list of flags for
+         each partition that will participate in a RAID array.
+        </para>
+       </ListItem>
+       <ListItem>
+        <para>
+         In the <command>&lt;fsinfo&gt;</command> section, set 
+         <command>real_dev</command> to the software RAID device that will 
+         hold each filesystem.
+        </para>
+       </ListItem>
+      </ItemizedList>
+      <para>
+       Now you can run <command>mkautoinstallscript</command> to create a new,
+       software RAID enabled, autoinstallscript for your image!
+      </para>
      </answer>
   </qandaentry>
  
