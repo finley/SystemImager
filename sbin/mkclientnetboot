@@ -48,7 +48,7 @@ EOF
 # set help information
 my $help_info = $version_info . <<"EOF";
 
-Usage: $program_name [OPTION]... SOURCE_IMAGE DESTINATION_IMAGE
+Usage: $program_name [OPTION]...
 
 Options: (options can be presented in any order)
 
@@ -60,9 +60,13 @@ Options: (options can be presented in any order)
                          
  -clients "HOST1 HOST2"  A space seperated list of host names and/or dotted
                          quad IP addresses.  This server (assuming it is a 
-                         boot server) will be told to let these clients boot
-                         from the network, at least until they've completed 
-                         a successful SystemImager autoinstall.
+                         boot server) will be told to let these clients net
+                         boot from this server, at least until they've 
+                         completed a successful SystemImager autoinstall.
+
+ -all-clients            Tell this server to let any and all clients net
+                         boot from this server, at least until they've 
+                         completed a successful SystemImager autoinstall.
 
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
@@ -70,10 +74,11 @@ EOF
 
 # interpret command line options
 GetOptions( 
-    "help" => \my $help,
-    "version" => \my $version,
-    "verbose" => \my $verbose,
-    "clients=s" => \my $clients,
+    "help"              => \my $help,
+    "version"           => \my $version,
+    "verbose"           => \my $verbose,
+    "clients=s"         => \my $clients,
+    "all-clients"     => \my $all_clients,
 ) or die qq($help_info);
 
 # if requested, print help information
@@ -88,30 +93,42 @@ if($version) {
     exit 0;
 }
 
-unless($clients) {
-    print qq(FATAL: Please specify one or more clients with -clients.\n);
+unless( ($clients) or ($all_clients) ) {
+    print qq(FATAL: Please specify one or more clients with -clients or -all-clients.\n);
     print qq($get_help\n);
     exit 1;
 }
 
 SystemImager::Common->check_if_root();
 
-# Make array from -clients "hostnames and ip addresses" -BEF-
-$_ = $clients;
-my @array = split;
+if($clients) {
+    # Make array from -clients "hostnames and ip addresses" -BEF-
+    $_ = $clients;
+    my @array = split;
 
-foreach my $client (@array) {
+    foreach my $client (@array) {
 
-    # IP or Hostname?
-    if(SystemImager::Common->valid_ip_quad($client)) {
-        my $ip = $client;
-        remove_boot_file($ip);
-    } else {
-        my @ips = get_ips($client);
-        foreach my $ip ( @ips ) {
+        # IP or Hostname?
+        if(SystemImager::Common->valid_ip_quad($client)) {
+            my $ip = $client;
             remove_boot_file($ip);
+        } else {
+            my @ips = get_ips($client);
+            foreach my $ip ( @ips ) {
+                remove_boot_file($ip);
+            }
         }
     }
+} elsif($all_clients) {
+    # Remove all HEXBASED IP ADDRESS NAMED FILES in tftp_dir
+    local *DIR;
+    my @files;
+    my $dir = "$tftp_dir/pxelinux.cfg";
+    opendir(DIR, $dir) or die "Couldn't open $dir! $!";
+        while( defined(my $file = readdir(DIR)) ) {
+            remove_boot_file($file, "literal_file") if($file =~ m/^[[0-9A-F]{8}$/o);
+        }
+    close(DIR);
 }
 
 
@@ -129,13 +146,19 @@ foreach my $client (@array) {
 #
 # Usage:
 # remove_boot_file($ip_address);
+# remove_boot_file($file, "literal_file");
 sub remove_boot_file {
 
-    my $ip_address = $_[0];
+    my ($ip_address, $literal_file) = @_;
+    my $config_file;
 
-    my $ip_hex = SystemImager::Server->ip_quad_2_ip_hex($ip_address);
+    unless($literal_file) {
+        $config_file = SystemImager::Server->ip_quad_2_ip_hex($ip_address);
+    } else {
+        $config_file = $ip_address;
+    }
 
-    my $file = $tftp_dir . "/pxelinux.cfg/" . $ip_hex;
+    my $file = $tftp_dir . "/pxelinux.cfg/" . $config_file;
     if ($verbose) { print "Removing $file.\n"; }
     if(-e $file) {
         unlink($file) or die ("FATAL: Couldn't remove $file!\n");
