@@ -23,7 +23,13 @@ fi
 BASE=va-systemimager
 SUBSET=
 PACKAGE=${BASE}${SUBSET}
-VERSION=`cat VERSION`
+
+VER_MAJOR=`cat VERSION | awk -F. '{print $1'}`
+VER_CLIENT=`cat VERSION | awk -F. '{print $2'}`
+VER_SERVER=`cat VERSION | awk -F. '{print $3'}`
+
+VERSION=${VER_MAJOR}.${VER_CLIENT}.${VER_SERVER}
+
 GZIP=-9
 SHELL_FILES_TO_VERSION="tftpstuff/systemimager/prepareclient"
 PERL_FILES_TO_VERSION="tftpstuff/systemimager/updateclient sbin/addclients sbin/getimage sbin/makeautoinstallcd sbin/makeautoinstalldiskette sbin/makedhcpserver sbin/makedhcpstatic"
@@ -44,7 +50,7 @@ done
 
 # set version number on other files
 file="tftpstuff/pxelinux.cfg/message.txt"
-sed "s/v[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\./v${VERSION}./" $file  > $file.$$
+sed "s/v[0-9][0-9]*\.[0-9][0-9]*\.x*\./v${VER_MAJOR}.${VER_CLIENT}.x./" $file  > $file.$$
 cat $file.$$ > $file
 rm -f $file.$$
 
@@ -61,7 +67,6 @@ cp -a . /tmp/${PACKAGE}-${VERSION}
 (cd /tmp && tar --owner=root --group=root -zcvf ${PACKAGE}-${VERSION}.tar.gz ${PACKAGE}-${VERSION}/)
 mv /tmp/${PACKAGE}-${VERSION}.tar.gz .
 rm -rf /tmp/${PACKAGE}-${VERSION}
-
 
 # va-systemimager-client
 BASE=va-systemimager

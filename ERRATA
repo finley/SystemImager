@@ -6,8 +6,16 @@
 # version 1.4.0
 
 o ext3 support
-  o All ext3 filesystems will be autoinstalled with a 15MB journal.  To change
-    the size of the journal, edit the /tftpboot/systemimager/<image>.master
-    script.
   o Known to work well with drivers version ext3-0.0.5c and newer.  May not
     work properly with earlier drivers.
+
+  o SystemImager will use the default parameters to create an appropriately sized
+    journal (given the size of the filesystem) stored internally in the filesystem.
+
+    In the future, I hope to detect and re-create journals of an appropriate size.
+    Currently we don't deal with non-hidden journals or journals on a device other
+    than the filesystem device itself.
+
+    If you different journal options, simply make the changes here in the.
+    master autoinstall script.
+

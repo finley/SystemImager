@@ -3,7 +3,7 @@
 %define rel      1
 %define prefix   /usr
 
-Summary: Software that automates Linux installs and software distribution.
+Summary: Software that automates Linux installs and software distribution
 Name: %name
 Version: %ver
 Release: %rel

@@ -12,14 +12,9 @@
 Version 1.4.0 specific:
 -----------------------
 
-Look for newer AIC7xxxx driver
-
 Ask Ted:  Is there any reason not to use e2fsprogs-1.20-WIP-0117.tar.gz for the main mke2fs used
           to create normal ext2 filesystems?
 
-cvs -z3 commit -m "" README FAQ-HOWTO
-cvs -z3 commit -m "use the install program to install files." install
-cvs -z3 commit -m "ext3 changes based on newer mke2fs binary." sbin/getimage
 
 <brian@thefinleys.com>
 ----------------------
