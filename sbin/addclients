@@ -407,16 +407,17 @@ EOF
 } else {
 
     create_links($starting_number, $ending_number, $base_host_name, $script, $autoinstall_script_dir);
-    if (
-        ($base_host_name) and
+
+    if( ($base_host_name) and
         ($domain_name) and
         ($starting_ip) and
         ($ending_ip) and
-        ($starting_number)
-    ) { add_hosts_entries($starting_ip, $ending_ip, $starting_number,  $ending_number, $base_host_name, $domain_name); }
+        ($starting_number ne "") ) { 
+
+        add_hosts_entries($starting_ip, $ending_ip, $starting_number,  $ending_number, $base_host_name, $domain_name);
+    }
     
 } #if ($interactive)
-
 
 
 
@@ -488,6 +489,8 @@ sub create_links {
 sub add_hosts_entries { 
 
     my ($starting_ip, $ending_ip, $node_number, $ending_number, $base_host_name, $domain_name) = @_;
+print "starting_ip $starting_ip\n";
+print "ending_ip $ending_ip\n";
 
     $base_host_name = lc $base_host_name;
     $domain_name = lc $domain_name;
