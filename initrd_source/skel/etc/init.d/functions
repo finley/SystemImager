@@ -151,8 +151,8 @@ get_flamethrower_directory() {
     echo get_flamethrower_directory
 
     mkdir -p ${FLAMETHROWER_DIRECTORY_DIR}
-    echo udp-receiver --portbase ${FLAMETHROWER_DIRECTORY_PORTBASE} --pipe \"tar -C ${FLAMETHROWER_DIRECTORY_DIR} -x\"
-         udp-receiver --portbase ${FLAMETHROWER_DIRECTORY_PORTBASE} --pipe "tar -C ${FLAMETHROWER_DIRECTORY_DIR} -x"
+    echo udp-receiver --interface ${DEVICE} --portbase ${FLAMETHROWER_DIRECTORY_PORTBASE} --pipe \"tar -C ${FLAMETHROWER_DIRECTORY_DIR} -x\"
+         udp-receiver --interface ${DEVICE} --portbase ${FLAMETHROWER_DIRECTORY_PORTBASE} --pipe "tar -C ${FLAMETHROWER_DIRECTORY_DIR} -x"
     sleep 2
 
     if [ $? != 0 ]; then
@@ -187,7 +187,7 @@ flamethrower_client() {
 
     . ${FLAMETHROWER_DIRECTORY_DIR}/${MODULE_NAME}
 
-    UDP_RECEIVER_OPTIONS="--portbase $PORTBASE --ttl $TTL"
+    UDP_RECEIVER_OPTIONS="--interface ${DEVICE} --portbase $PORTBASE --ttl $TTL"
     if [ "$ASYNC" = "on" ]; then
         UDP_RECEIVER_OPTIONS="$UDP_RECEIVER_OPTIONS --async"
     fi
