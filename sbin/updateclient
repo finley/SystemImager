@@ -89,7 +89,7 @@ Options: (options can be presented in any order)
                           /local.cfg file so that the same settings
                           will be used during the autoinstall process.
 
- -ssh-user USERNAME	  Username for ssh connection from the client.
+ -ssh-user USERNAME	      Username for ssh connection from the client.
                           Only needed if a secure connection is 
                           required.
 
@@ -335,13 +335,13 @@ if ($autoinstall) {
     # find out on which partition the current root file system resides
     my $file = "/etc/mtab";
     open(MTAB, "< $file") or croak("Couldn't open $file for reading!");
-    my $lastroot = "";
+    my $rootdev = "";
     while (<MTAB>) {
         # turn tabs into spaces and gets rid of duplicates
         s/\s+/ /g;
         # find the last root device
         if(/^(\S+) \/ /){
-            $lastroot = $1;
+            $rootdev = $1;
         }
     }
     close(MTAB);
@@ -351,7 +351,7 @@ if ($autoinstall) {
     #
     # Figure out what to specify as the boot device.
     #
-    my $lastboot;
+    my $bootdev;
 
     my $boot_loader = SystemImager::Common->detect_bootloader() 
         or die "FATAL: Couldn't determine which bootloader is in use.";
@@ -365,13 +365,13 @@ if ($autoinstall) {
                 open(FILE, "<$file") or croak("Couldn't open $file for reading!");
                     while (<FILE>) {
         	        if (/^\s*boot\s*=(.*)$/) {
-        		    $lastboot = $1;
+        		    $bootdev = $1;
         	        }
         	    }
         	close(FILE);
             }
         }
-        unless ($lastboot) { die "FATAL: Couldn't determine the boot device."; }
+        unless ($bootdev) { die "FATAL: Couldn't determine the boot device."; }
 
     # Lilo
     } elsif ($boot_loader eq "Lilo") {
@@ -380,7 +380,7 @@ if ($autoinstall) {
             open(FILE, "<$file") or croak("Couldn't open $file for reading!");
                 while (<FILE>) {
                     if (/^\s*boot\s*=(.*)$/) {
-            	    $lastboot = $1;
+            	    $bootdev = $1;
                     }
                 }
             close(FILE);
@@ -389,25 +389,43 @@ if ($autoinstall) {
     # Other boot loaders
     } else {
         # Most other boot loaders just use the device that root is on, minus the device number.
-        $lastboot = $lastroot;
-        $lastboot =~ s/\d+$//;
+        $bootdev = $rootdev;
+        $bootdev =~ s/\d+$//;
     }
 
+    # If -configure-from DEVICE was specified, then do so. -BEF-
+    if ($DEVICE) {
+        create_local_cfg ($DEVICE);
+    }
+
+    # Only use LAST_ROOT if "/local.cfg" exists.
+    my $last_root;
+    if ( -f "/local.cfg" ) {
+        $last_root = $rootdev;
+    }
+
+    # Create append arguments
+    my $append;
+    if ($last_root) {
+        $append = "LAST_ROOT=$last_root root=/dev/ram0 load_ramdisk=1 prompt_ramdisk=0 vga=extended ramdisk_blocksize=4096";
+    } else {
+        $append = "root=/dev/ram0 load_ramdisk=1 prompt_ramdisk=0 vga=extended ramdisk_blocksize=4096";
+    }
 
     ### BEGIN autoinstall boot configuration ###
     $cmd = <<SC_EOF;
 systemconfigurator --configboot --runboot --stdin <<EOF
 [BOOT]
-BOOTDEV = $lastboot
-ROOTDEV = $lastroot
+BOOTDEV = $bootdev
+ROOTDEV = $rootdev
 TIMEOUT = 50
-DEFAULTBOOT = systemimager
+DEFAULTBOOT = SystemImager
 
 [KERNEL0]
-LABEL = systemimager
+LABEL = SystemImager
 PATH = ${bootdir}/kernel.systemimager
 INITRD = ${bootdir}/initrd.img.systemimager
-APPEND = LAST_ROOT=$lastroot root=/dev/ram0 load_ramdisk=1 prompt_ramdisk=0 vga=extended ramdisk_blocksize=4096
+APPEND = $append
 EOF
 
 SC_EOF
@@ -500,8 +518,75 @@ SC_EOF
 } ### END update image section ###
 
 
-### BEGIN configure-from section ###
-if($DEVICE) {
+### BEGIN graffiti ###
+if($image) {
+    my $file = "/etc/systemimager/IMAGE_LAST_SYNCED_TO";
+    open (FILE, ">$file") or croak("Couldn't open $file for writing!");
+    print FILE $image, "\n";
+    close (FILE);
+}
+### END graffiti ###
+
+# -reboot
+if($reboot) {
+    print "Rebooting...\n";
+    my $cmd = "/bin/sleep 10s; /sbin/init 6";
+    !system($cmd) or die "$cmd failed!";
+}
+
+### BEGIN Subroutines ###
+sub version {
+    print qq($version_info);
+}
+
+sub get_help {
+    print qq( Try "updateclient -help" for more information.\n);
+}
+
+sub usage {
+    print qq($help_info);
+}
+
+sub dec2bin {
+    my $str = unpack("B32", pack("N", shift));
+    return $str;
+}
+
+sub dec2bin8bit {
+    my $str = unpack("B32", pack("N", shift));
+    $str = substr($str, -8); # 32bit number -- get last 8 bits (the relevant ones)
+    return $str;
+}
+
+sub bin2dec {
+    return unpack("N", pack("B32", substr("0" x 32 . shift, -32))); # get all 32bits
+}
+
+sub ip_quad2ip_bin {
+    (my $a, my $b, my $c, my $d) = split(/\./, $_[0]);
+    my $a_bin=dec2bin8bit($a);
+    my $b_bin=dec2bin8bit($b);
+    my $c_bin=dec2bin8bit($c);
+    my $d_bin=dec2bin8bit($d);
+    return join('', $a_bin, $b_bin, $c_bin, $d_bin);
+}
+
+sub ip_bin2ip_quad {
+    my $ip_bin = $_[0];
+    my $a_dec = bin2dec(substr($ip_bin, 0, 8));
+    my $b_dec = bin2dec(substr($ip_bin, 8, 8));
+    my $c_dec = bin2dec(substr($ip_bin, 16, 8));
+    my $d_dec = bin2dec(substr($ip_bin, 24, 8));
+    return join('.', $a_dec, $b_dec, $c_dec, $d_dec);
+}
+
+
+# Usage: 
+# create_local_cfg ($DEVICE);
+sub create_local_cfg {
+
+    my $DEVICE = shift;
+
     my $hostname = hostname();
     $hostname =~ s/\..*//g;
 
@@ -625,69 +710,6 @@ EOF
         while (<FILE>) { print; }
     close(FILE);
     ### END show file to user ###
-}
-### END configure-from section ### 
-
-### BEGIN graffiti ###
-if($image) {
-    my $file = "/etc/systemimager/IMAGE_LAST_SYNCED_TO";
-    open (FILE, ">$file") or croak("Couldn't open $file for writing!");
-    print FILE $image, "\n";
-    close (FILE);
-}
-### END graffiti ###
-
-# -reboot
-if($reboot) {
-    print "\nRebooting...\n";
-    my $rc = 0xffff & system("/bin/sleep 10s; /sbin/init 6");
-    if ($rc != 0) { exit $rc >> 8; }  
-}
-
-### BEGIN Subroutines ###
-sub version {
-    print qq($version_info);
-}
-
-sub get_help {
-    print qq( Try "updateclient -help" for more information.\n);
-}
-
-sub usage {
-    print qq($help_info);
-}
-
-sub dec2bin {
-    my $str = unpack("B32", pack("N", shift));
-    return $str;
-}
-
-sub dec2bin8bit {
-    my $str = unpack("B32", pack("N", shift));
-    $str = substr($str, -8); # 32bit number -- get last 8 bits (the relevant ones)
-    return $str;
-}
-
-sub bin2dec {
-    return unpack("N", pack("B32", substr("0" x 32 . shift, -32))); # get all 32bits
-}
-
-sub ip_quad2ip_bin {
-    (my $a, my $b, my $c, my $d) = split(/\./, $_[0]);
-    my $a_bin=dec2bin8bit($a);
-    my $b_bin=dec2bin8bit($b);
-    my $c_bin=dec2bin8bit($c);
-    my $d_bin=dec2bin8bit($d);
-    return join('', $a_bin, $b_bin, $c_bin, $d_bin);
-}
-
-sub ip_bin2ip_quad {
-    my $ip_bin = $_[0];
-    my $a_dec = bin2dec(substr($ip_bin, 0, 8));
-    my $b_dec = bin2dec(substr($ip_bin, 8, 8));
-    my $c_dec = bin2dec(substr($ip_bin, 16, 8));
-    my $d_dec = bin2dec(substr($ip_bin, 24, 8));
-    return join('.', $a_dec, $b_dec, $c_dec, $d_dec);
 }
 ### END Subroutines ###
 
