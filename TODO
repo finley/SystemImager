@@ -12,8 +12,11 @@
 Version 1.4.0 specific:
 -----------------------
 
+cvs -z3 commit -m "Deal with fully qualified domain names from hostname()" sbin/updateclient
+
 <brian@thefinleys.com>
 ----------------------
+o installclient -- install manual
 o modify/verify documentation
 o test client on VA hardware
 o create and submit custom load
@@ -198,11 +201,19 @@ http://systemimager.org/
 
 Pre-Release Checklist
 ---------------------
+x- updateclient -a -s <server> -c eth0
+x- updateclient -a -s <server> -c eth0 on RAID
+- install
+- installclient
+x- pryzby's issue
+x- hello's issue
 - hardware RAID client
-- software RAID client
+- software RAID client (destroy partitions good)
 x- reiserfs client
 x- ext3 client
-- ext2 client
+x- ext2 client
+- RH7 client
+- debian client
 - ext2 client with LABEL=
 - prepareclient on debian
 - prepareclient on RH
@@ -217,7 +228,7 @@ x- repeated prepareclient/installs to see if disk partition sizes remain the sam
 - test floppy install
 x- test hard drive install
 - test explicit geometry
-- test dynamic geometry
+x- test dynamic geometry
 - test that egrep thing is fixed
 x- test that dynamically linked binaries in /tftpboot work
 - dependent packages install properly
