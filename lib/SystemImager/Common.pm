@@ -4,13 +4,16 @@
 #   Copyright (C) 2001-2004 Brian Elliott Finley
 #   Copyright (C) 2002 Dann Frazier <dannf@dannf.org>
 #
-#       $Id$
+#   $Id$
 #
 #   2004.08.10  Brian Elliott Finley
 #   - where_is_my_efi_dir: remove /boot/efi/*/ from find path, but still 
 #     include /boot/efi.  find would fail if no dir existed below /boot/efi/.
 #   - where_is_my_efi_dir: redirect stderr to /dev/null so users don't see 
 #     confusing "no such file or directory" messages.
+#   2004.10.07  Brian Elliott Finley
+#   - add support for "mac" partition types in save_partition_information()
+#
 
 package SystemImager::Common;
 
@@ -343,7 +346,7 @@ sub save_partition_information {
 
             chomp;
 
-            if (($label_type eq "gpt") || ($label_type eq "bsd")) {
+            if (($label_type eq "gpt") || ($label_type eq "bsd") || ($label_type eq "mac")) {
 
               # Unfortunately, parted doesen't produce it's output in a comma delimited
               # format, or even produce a n/a value such as "-" for fields that don't
@@ -355,22 +358,41 @@ sub save_partition_information {
               #
               # Sean Dague may have some better ideas on how to parse this output without
               # modifying parted. -BEF-
-              #
+
+              ### "gpt" sample ###
               # Disk geometry for /dev/sdb: 0.000-17366.445 megabytes
               # Disk label type: GPT
               #          10        20        30        40        50        60        70        80
               # 12345678901234567890123456789012345678901234567890123456789012345678901234567890
-              #     5           12          12          12                    22
+              #     v5          v12         v12         v12                   v22
               # 1234512345678901212345678901212345678901212345678901234567890121 -> to the end
               # |    |           |           |           |                     |
               # Minor    Start       End     Filesystem  Name                  Flags
               # 1          0.017     20.000                                    boot, lba
               # 2         21.000     40.000  FAT                               lba
               # 3         41.000  17366.429                                    lba
+              #
+              #
+              ### "mac" sample ###
+              # finley@imageserver:~/si.v3_4_x.ppc% sudo parted -s -- /dev/sda print
+              # Disk geometry for /dev/sda: 0.000-152627.835 megabytes         
+              # Disk label type: mac
+              #          10        20        30        40        50        60        70        80
+              # 12345678901234567890123456789012345678901234567890123456789012345678901234567890
+              #     v5          v12         v12         v12                   v22
+              # 1234512345678901212345678901212345678901212345678901234567890121 -> to the end
+              # |    |           |           |           |                     |
+              # Minor    Start       End     Filesystem  Name                  Flags
+              # 1          0.000      0.031              Apple                 
+              # 2          0.031      1.031  hfs         untitled              boot
+              # 3          1.031  50001.031  ext3        untitled              
+              # 4      50001.031  51001.031  ext3        untitled              
+              # 5      51001.031  52993.467  linux-swap  swap                  swap
+              # 6      52993.468 152627.835  ext3        untitled              
               ($minor, $startMB, $endMB, $fstype, $name, $flags) = unpack("A5 A12 A12 A12 A22 A*", $_);
 
-              # In the case of a gpt partition, they're all primary, and parted doesn't
-              # produce output to indicate this.
+              # In the case of a gpt, or mac partition, they're all primary, 
+              # and parted doesn't produce output to indicate this. -BEF-
               $partition_type = "primary";
 
             } elsif ($label_type eq "msdos") {
@@ -381,17 +403,19 @@ sub save_partition_information {
               # Disk label type: msdos
               #          10        20        30        40        50        60        70        80
               # 12345678901234567890123456789012345678901234567890123456789012345678901234567890
-              #     5           12          12        10          10
-              # 1234512345678901212345678901212345678901212345678901 -> to the end
+              #     v5          v12         v12       v10         v12
+              # 1234512345678901212345678901212345678901234567890121 -> to the end
               # |    |           |           |         |           |
               # Minor    Start       End     Type      Filesystem  Flags
               # 1          0.016     17.000  primary   ext2        boot
               # 2         17.000  17366.000  extended              
               # 5         17.016  15409.000  logical   ext2        
               # 6      15409.016  17366.000  logical   linux-swap  
-              ($minor, $startMB, $endMB, $partition_type, $fstype, $flags) = unpack("A5 A12 A12 A10 A10 A*", $_);
+              ($minor, $startMB, $endMB, $partition_type, $fstype, $flags) = unpack("A5 A12 A12 A10 A12 A*", $_);
 
             }
+
+
 
             # $fstype may not be set, such as in the case of an extended
             # partition.  parted will also report no fstype, even if an 
