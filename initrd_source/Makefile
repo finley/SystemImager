@@ -4,27 +4,33 @@ DESTDIR =
 # by autoinstall clients are stored
 TFTPROOT = $(DESTDIR)/usr/lib/systemimager
 
+PATCH_DIR = ../patches
+SRC_DIR = ./src
+
 TEMP_DIR = ./systemimager.initrd.temp.dir
 INITRD_SIZE = 2600      # number of 1KB blocks in ramdisk.
 
 ########## BEGIN definitions for binaries built from source ##########
+
 BEEP_VERSION = 1.2.1
-BEEP_ROOT = ./beep-$(BEEP_VERSION)
+BEEP_ROOT = $(SRC_DIR)/beep-$(BEEP_VERSION)
 BEEP_BINARY = $(BEEP_ROOT)/beep
 BEEP_TARBALL = beep-$(BEEP_VERSION).tar.gz
 BEEP_URL = http://www.johnath.com/beep/$(BEEP_TARBALL)
 
 BUSYBOX_VERSION = 0.60.0
-BUSYBOX_ROOT = ./busybox-$(BUSYBOX_VERSION)
+BUSYBOX_ROOT = $(SRC_DIR)/busybox-$(BUSYBOX_VERSION)
 BUSYBOX_BINARY = $(BUSYBOX_ROOT)/busybox
 BUSYBOX_TARBALL = busybox-$(BUSYBOX_VERSION).tar.gz
 BUSYBOX_URL = ftp://opensource.lineo.com/busybox/$(BUSYBOX_TARBALL)
 
 MASSDNS_VERSION = 1.0
-MASSDNS_ROOT = ./massdns-$(MASSDNS_VERSION)
+MASSDNS_ROOT = $(SRC_DIR)/massdns-$(MASSDNS_VERSION)
 MASSDNS_BINARY = $(MASSDNS_ROOT)/massdns
 MASSDNS_TARBALL = massdns-$(MASSDNS_VERSION).tgz
 MASSDNS_URL = http://www.mgix.com/massdns/$(MASSDNS_TARBALL)
+MASSDNS_PATCH = $(PATCH_DIR)/massdns.patch
+
 ########## END definitions for binaries built from source ##########
 
 # tools provided by busybox (i.e. hard links to create)
@@ -85,47 +91,58 @@ install:	initrd.gz
 	cp -a initrd.gz $(TFTPROOT)
 
 # binaries that we build from source
-binaries:	beep busybox massdns
+binaries:
+	$(MAKE) beep busybox massdns
 
 ########## BEGIN beep rules ##########
-beep:	$(BEEP_BINARY)
 
-$(BEEP_BINARY):	$(BEEP_TARBALL)
-	tar xvfz $(BEEP_TARBALL)
+beep:
+	$(MAKE) $(SRC_DIR)/$(BEEP_TARBALL)
+	[ -d $(BEEP_ROOT) ] || \
+		( cd $(SRC_DIR) && tar xvfz $(BEEP_TARBALL) )
 	$(MAKE) -C $(BEEP_ROOT) beep
 	strip $(BEEP_BINARY)
 
-$(BEEP_TARBALL):
-	wget $(BEEP_URL)
+$(SRC_DIR)/$(BEEP_TARBALL):
+	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
+	cd $(SRC_DIR) && wget $(BEEP_URL)
+
 ########## END beep rules ##########
 
 ########## BEGIN busybox rules ##########
-busybox:	$(BUSYBOX_BINARY)
 
-$(BUSYBOX_BINARY):	$(BUSYBOX_TARBALL)
-	tar xvfz $(BUSYBOX_TARBALL)
+busybox:
+	$(MAKE) $(SRC_DIR)/$(BUSYBOX_TARBALL)
+	[ -d $(BUSYBOX_ROOT) ] || \
+		( cd $(SRC_DIR) && tar xvfz $(BUSYBOX_TARBALL) )
 	cp -a busybox.Config.h $(BUSYBOX_ROOT)/Config.h
 	$(MAKE) -C $(BUSYBOX_ROOT) busybox
 	strip $(BUSYBOX_BINARY)
 
-$(BUSYBOX_TARBALL):
-	wget $(BUSYBOX_URL)
+$(SRC_DIR)/$(BUSYBOX_TARBALL):
+	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
+	cd $(SRC_DIR) && wget $(BUSYBOX_URL)
+
 ########## END busybox rules ##########
 
 ########## BEGIN massdns rules ##########
-massdns:	$(MASSDNS_BINARY)
 
-$(MASSDNS_BINARY):	$(MASSDNS_TARBALL)
-	tar xvfz $(MASSDNS_TARBALL)
-	patch -p0 < massdns.patch
+massdns:
+	$(MAKE) $(SRC_DIR)/$(MASSDNS_TARBALL)
+	[ -d $(MASSDNS_ROOT) ] || \
+		( cd $(SRC_DIR) && tar xvfz $(MASSDNS_TARBALL) && \
+		  [ ! -f ../$(MASSDNS_PATCH) ] || \
+		  patch -p0 < ../$(MASSDNS_PATCH) )
 	$(MAKE) -C $(MASSDNS_ROOT)
 	strip $(MASSDNS_BINARY)
 
-$(MASSDNS_TARBALL):
-	wget $(MASSDNS_URL)
+$(SRC_DIR)/$(MASSDNS_TARBALL):
+	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
+	cd $(SRC_DIR) && wget $(MASSDNS_URL)
+
 ########## END massdns rules ##########
 
-get_source:	$(BEEP_TARBALL) $(BUSYBOX_TARBALL) $(MASSDNS_TARBALL)
+get_source:	$(SRC_DIR)/$(BEEP_TARBALL) $(SRC_DIR)/$(BUSYBOX_TARBALL) $(SRC_DIR)/$(MASSDNS_TARBALL)
 
 help:
 	@echo ' This Makefile provides rules to create a ramdisk (initrd.gz) for'
@@ -173,6 +190,8 @@ help:
 	@echo ''
 	@echo ' make help               print this message'
 	@echo ''
+	@echo ' make helpless           pipe this message through less'
+	@echo ''
 	@echo ' make clean              execute the clean rule in the source'
 	@echo '                         tree for each utility, remove editor'
 	@echo '                         backup files and files that have'
@@ -184,6 +203,9 @@ help:
 	@echo ' Please read the README.initrd for more build and customization'
 	@echo ' details.'
 
+helpless:
+	$(MAKE) help | less
+
 clean:
 	-$(MAKE) -C $(BUSYBOX_ROOT) clean
 	-$(MAKE) -C $(BEEP_ROOT) clean
@@ -193,5 +215,4 @@ clean:
 	-rm -rf $(TEMP_DIR) initrd initrd.gz
 
 distclean:	clean
-	-rm -rf $(BEEP_ROOT) $(BUSYBOX_ROOT) $(MASSDNS_ROOT)
-	-rm -rf $(BEEP_TARBALL) $(BUSYBOX_TARBALL) $(MASSDNS_TARBALL)
+	-rm -rf $(SRC_DIR)
