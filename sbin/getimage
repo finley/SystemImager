@@ -911,9 +911,6 @@ if (@ext2_devices) {
 
 ### BEGIN Write out ext3 creation commands ###
 if (@ext3_devices) {
-  print MASTER_SCRIPT "# get mke2fs with journal creation support\n";
-  print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::tftpboot/systemimager/mke2fs-v1.20.WIP /tmp/\n";
-  print MASTER_SCRIPT "\n";
   print MASTER_SCRIPT "# format ext3 devices\n";
   print MASTER_SCRIPT "#   SystemImager will use the default parameters to create an appropriately sized\n";
   print MASTER_SCRIPT "#   journal (given the size of the filesystem) stored internally in the filesystem.\n";
@@ -925,7 +922,7 @@ if (@ext3_devices) {
   print MASTER_SCRIPT "#   If you different journal options, simply make the changes here in the.\n";
   print MASTER_SCRIPT "#   master autoinstall script.\n";
   foreach my $device_file (sort @ext3_devices) {
-    print MASTER_SCRIPT "/tmp/mke2fs-v1.20.WIP -j $device_file\n";
+    print MASTER_SCRIPT "mke2fs -j $device_file\n";
   }
   print MASTER_SCRIPT "\n";
 }
