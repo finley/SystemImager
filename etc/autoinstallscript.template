@@ -118,8 +118,21 @@ fi
 if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then 
     # Use multicast 
     MODULE_NAME="${IMAGENAME}"
-    DIR=/a
-    flamethrower_client
+    if [ $FLAMETHROWER_TMPFS_STAGING = "yes" ]; then 
+
+        # Deposit cast into tmpfs
+        DIR=/tmp/flamethrower_staging
+        mkdir -p ${DIR}
+        flamethrower_client
+
+        # Move from staging in tmpfs to disk
+        rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${DIR}/ /a/
+
+    else
+        DIR=/a
+        flamethrower_client
+    fi
+    
 else 
     # Use rsync 
     echo "rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ /a/" 
