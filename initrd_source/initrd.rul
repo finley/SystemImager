@@ -25,6 +25,9 @@
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
+#   2004.09.19  Brian Elliott Finley
+#   - rename initrd_install -> install_initrd
+#   - add PHONY += install_initrd
 
 INITRD_PATCH_DIR = $(INITRD_DIR)/patches
 INITRD_SRC_DIR = $(INITRD_DIR)/src
@@ -168,7 +171,8 @@ $(INITRD_DIR)/initrd:	$(INITRD_DIR)/build_dir-stamp
 ########## BEGIN initrd ##########
 # install the autoinstall ramdisk - the initial ramdisk used by autoinstall
 # clients when beginning an autoinstall
-initrd_install:	$(INITRD_DIR)/initrd.img
+PHONY += install_initrd
+install_initrd:	$(INITRD_DIR)/initrd.img
 	mkdir -p $(BOOT_BIN_DEST)
 	$(SI_INSTALL) -m 644 $(INITRD_DIR)/initrd.img \
 	    $(BOOT_BIN_DEST)/initrd.img
