@@ -737,7 +737,7 @@ foreach $disk (@disks)  {
     ### END format output for logical partitions 5+ ###
 
     # put final touch on sfdisk command
-    $sfdisk_command = "sfdisk -uM /dev/$disk <<EOF\n" . $sfdisk_command . "EOF\n";
+    $sfdisk_command = "sfdisk -L -uM /dev/$disk <<EOF\n" . $sfdisk_command . "EOF\n";
 
     # output disk partition section
     print MASTER_SCRIPT "# partition $disk\n";
@@ -751,7 +751,7 @@ foreach $disk (@disks)  {
     ### BEGIN do stuff for disks partitioned in sectors (prepareclient -explicit-geometry)
 
       ### BEGIN partitioning output ###
-      $sfdisk_command_part_one = "sfdisk -uS /dev/$disk <<EOF\n";
+      $sfdisk_command_part_one = "sfdisk -L -uS /dev/$disk <<EOF\n";
       $sfdisk_command_part_two = "";
 
       # gather up partition information
