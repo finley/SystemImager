@@ -1,0 +1,16 @@
+diff -urN raidtools-0.90/Makefile.in raidtools/Makefile.in
+--- raidtools-0.90/Makefile.in	Tue Aug 24 10:24:56 1999
++++ raidtools/Makefile.in	Mon Jul 16 18:31:04 2001
+@@ -52,10 +52,10 @@
+ 	$(CC) $(CFLAGS) -c raidlib.c
+ 
+ raidstart : raidstart.o parser.o raidlib.o popt.o version.o Makefile $(HEADERS)
+-	$(CC) -o raidstart raidstart.o raidlib.o parser.o version.o popt.o $(LDFLAGS)
++	$(CC) -static -o raidstart raidstart.o raidlib.o parser.o version.o popt.o $(LDFLAGS)
+ 
+ mkraid: mkraid.o parser.o raid_io.o raidlib.o version.o popt.o Makefile $(HEADERS)
+-	$(CC) -o mkraid mkraid.o parser.o raidlib.o version.o raid_io.o popt.o
++	$(CC) -static -o mkraid mkraid.o parser.o raidlib.o version.o raid_io.o popt.o
+ 
+ mkpv.o : $(HEADERS) version.o popt.o mkpv.c
+ 	$(CC) $(CFLAGS) -c mkpv.c

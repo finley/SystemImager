@@ -61,6 +61,7 @@ LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.2/$(LINUX_TARBALL)
 LINUX_MD5SUM = 2be6aacc7001b061de2eec51a4c89b3b
 LINUX_IMAGE = $(LINUX_SRC)/arch/i386/boot/bzImage
 LINUX_PATCH = $(PATCH_DIR)/linux.patch
+LINUX_CONFIG = $(PATCH_DIR)/autoinstall.kernel.config
 
 INITRD_DIR = initrd_source
 INITRD = $(INITRD_DIR)/initrd.gz
@@ -68,7 +69,7 @@ INITRD = $(INITRD_DIR)/initrd.gz
 RAIDTOOLS_DIR = raidtools-0.90
 RAIDTOOLS_TARBALL = raidtools-19990824-0.90.tar.bz2
 RAIDTOOLS_URL = http://www.kernel.org/pub/linux/daemons/raid/alpha/$(RAIDTOOLS_TARBALL)
-RAIDTOOLS_PATCH = $(PATCH_DIR)/raidtools-19990824-0.90.patch
+RAIDTOOLS_PATCH = $(PATCH_DIR)/raidtools.patch
 
 REISERFSPROGS_DIR = $(LINUX_SRC)/fs/reiserfs/utils
 
@@ -151,7 +152,7 @@ install_reiserfsprogs:	reiserfsprogs
 	mkdir -p $(TFTP_BIN_DEST)
 	install -m 555 $(REISERFSPROGS_DIR)/bin/mkreiserfs $(TFTP_BIN_DEST)
 
-reiserfsprogs:	patchedkernel
+reiserfsprogs:	patched_kernel
 	make -C $(REISERFSPROGS_DIR)
 
 ######### END reiserfsprogs ##########
@@ -162,14 +163,19 @@ install_kernel:	kernel
 	mkdir -p $(TFTP_ROOT)
 	cp -a $(LINUX_IMAGE) $(TFTP_ROOT)/kernel
 
-kernel:	
+kernel:	patched_kernel
+	$(MAKE) -C $(LINUX_SRC) oldconfig dep bzImage
+
+patched_kernel:	patched_kernel-stamp
+
+patched_kernel-stamp:
 	$(MAKE) $(SRC_DIR)/$(LINUX_TARBALL)
 	[ -d $(LINUX_SRC) ] || \
 		( cd $(SRC_DIR) && tar xvfz $(LINUX_TARBALL) && \
 		  [ ! -f ../$(LINUX_PATCH) ] || \
 		  patch -p0 < ../$(LINUX_PATCH) )
-	cp -a ./doc/autoinstall.kernel.config $(LINUX_SRC)/.config
-	$(MAKE) -C $(LINUX_SRC) oldconfig dep bzImage
+	cp -a $(LINUX_CONFIG) $(LINUX_SRC)/.config
+	touch patched_kernel-stamp
 
 $(SRC_DIR)/$(LINUX_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
@@ -331,11 +337,11 @@ clean:
 	-find . -name "*~" -exec rm -f {} \;
 	-find . -name "#*#" -exec rm -f {} \;
 	-rm doc/manual_source/images
-	-rm patchedkernel-stamp raidtools-stamp
 	-umount $(TEMP_DIR)
 	-rm -rf $(TEMP_DIR) ./modules $(TARBALL_BUILD_DIR)
 	-rm $(AUTOINSTALL_TARBALL)
 
 distclean:	clean
+	-rm patched_kernel-stamp
 	-rm -rf $(SRC_DIR)
 	-$(MAKE) -C $(INITRD_DIR) distclean
