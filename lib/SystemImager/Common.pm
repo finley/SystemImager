@@ -1104,7 +1104,7 @@ sub add_or_delete_conf_file_entry {
 sub is_devfs_client {
     open(FILE, "</proc/mounts");
         while(<FILE>) {
-            if(m/^devfs\s/) {
+            if(m/\bdevfs\b/) {
                 return 1;
             }
         }
