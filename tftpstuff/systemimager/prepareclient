@@ -516,7 +516,7 @@ rsync --daemon
 ide_and_scsi_disks=`
 
 # extract SCSI and IDE disk device partitions
-egrep [hs]d[a-z][0-9] /proc/partitions | gawk '{print $4}' | \
+egrep [hs]d[a-z][0-9] /proc/partitions | awk '{print $4}' | \
 
 # strip out partition numbers
 sed -e 's/[0-9]//g' | \
@@ -531,7 +531,7 @@ sort -u
 hardware_raid_disks=`
 
 # extract hardware RAID disk device partitions
-egrep c[0-9]+d[0-9]+p /proc/partitions | gawk '{print $4}' | \
+egrep c[0-9]+d[0-9]+p /proc/partitions | awk '{print $4}' | \
 
 # strip out partition numbers
 sed -e 's/p[0-9][0-9]*//' | \
