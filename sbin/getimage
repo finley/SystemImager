@@ -579,36 +579,93 @@ EOF
 ### END give a custom partitioning example ###
 
 
-### BEGIN Foreach disk, gather up the partition info for that disk and prepare an sfdisk command ###
+### BEGIN foreach disk, gather up the partition info for that disk and prepare an sfdisk command ###
 foreach $disk (@disks)  {
+    ### BEGIN get partition information ###
+    %id_by_device_file = ();
+    %megabytes_by_device_file = ();
+    $lowest_start_device = "10000000";  # some random large number
 
-    ### BEGIN partitioning output ###
-    $sfdisk_command_part_one = "sfdisk -uS /dev/$disk <<EOF\n";
-    $sfdisk_command_part_two = "";
-
-    # gather up partition information
-    open (PARTITIONS, "<$imagedir$systemimagerdir/partitionschemes/${disk}") 
+    open (PARTITIONS, "<$imagedir$systemimagerdir/partitionschemes/${disk}")
     || die "Cannot open $imagedir$systemimagerdir/partitionschemes/$disk for reading\n";
       @partitions = <PARTITIONS>;
     close(PARTITIONS);
 
     for (@partitions) {
-        if(/^\/dev/) {
-            # get rid of newline
-            chomp;
+      if(/^\/dev/) {
+        # get rid of newline
+        chomp;
 
-            # get rid of an asterisk that may be indicating a boot partition (Linux doesn't need this)
-            $_ =~ s/\*//g;
+        # get rid of an asterisk that may be indicating a boot partition (Linux doesn't need this)
+        $_ =~ s/\*//g;
 
-            # split on space(s) and assign values to variables
-            (my $dev, my $start, my $end, my $sectors, my $id) = split(/ +/);
+        # get rid of + and - signs -- we're not going to worry about those...
+        $_ =~ s/-//g;
+        $_ =~ s/\+//g;
 
-            # continue compiling sfdisk command
-            $sfdisk_command_part_one = $sfdisk_command_part_one . "$dev : start= $start, size= $sectors, Id=$id\n";
+        # split on space(s) and assign values to variables
+        (my $device_file, my $start, my $end, my $megabytes, my $blocks, my $id) = split(/ +/);
+
+        # figure out what the starting device is (probably partition 1)
+        if (($megabytes ne "0") and ($start lt $lowest_start_device)) { 
+          $lowest_start_number = $start; 
+          $start_device = $device_file; 
         }
+
+        # create the megabytes by device hash
+        $megabytes_by_device_file{$device_file} = $megabytes;
+
+        # create the Id by device hash
+        $id_by_device_file{$device_file} = $id;
+      }
     }
-    $sfdisk_command = $sfdisk_command_part_one . $sfdisk_command_part_two . "EOF\n";
-    ### END partitioning output ###
+
+    # get number of partitions
+    $number_of_partitions = (keys %id_by_device_file);
+    ### END get partition information ###
+
+
+    ### BEGIN format output for partitions 1-4 (must do these backwards) ###
+    $sfdisk_command = "";
+    my $has_a_non_null_partition_been_created = "no";
+    foreach my $partition_number (4, 3, 2, 1) {
+      my $device_file = "/dev/$disk$partition_number";
+      my $megabytes = $megabytes_by_device_file{$device_file};
+      my $id = $id_by_device_file{$device_file};
+      if ($megabytes eq "0") {
+        $sfdisk_command = "$device_file : start= 0, size= 0, Id=0\n" . $sfdisk_command;
+        next;
+      } 
+      if ($has_a_non_null_partition_been_created eq "no") { $megabytes = ""; }
+      if ($device_file eq $start_device) {
+        $sfdisk_command = "$device_file : start= $lowest_start_number, size= $megabytes, Id=$id\n" . $sfdisk_command;
+        $has_a_non_null_partition_been_created = "yes";
+      } else {
+        $sfdisk_command = "$device_file : start= , size= $megabytes, Id=$id\n" . $sfdisk_command;
+        $has_a_non_null_partition_been_created = "yes";
+      }
+    }
+    ### END format output for partitions 1-4 (must do these backwards) ###
+
+
+    ### BEGIN format output for logical partitions 5+ ###
+    my $partition_number = "5";
+    if ($number_of_partitions gt "4") {
+      until ($partition_number eq $number_of_partitions) {
+        my $device_file = "/dev/$disk$partition_number";
+        my $megabytes = $megabytes_by_device_file{$device_file};
+        my $id = $id_by_device_file{$device_file};
+        $sfdisk_command = $sfdisk_command . "$device_file : start= , size= $megabytes, Id=$id\n";
+        $partition_number++;
+      } 
+      my $device_file = "/dev/$disk$partition_number";
+      my $id = $id_by_device_file{$device_file};
+      $sfdisk_command = $sfdisk_command . "$device_file : start= , size= , Id=$id\n";
+    }
+    ### END format output for logical partitions 5+ ###
+
+    # put final touch on sfdisk command
+    $sfdisk_command = "sfdisk -uM /dev/$disk <<EOF\n" . $sfdisk_command . "EOF\n";
 
     # output disk partition section
     print MASTER_SCRIPT "# partition $disk\n";
@@ -617,7 +674,7 @@ foreach $disk (@disks)  {
     print MASTER_SCRIPT $sfdisk_command;
     print MASTER_SCRIPT "\n";
 }
-### END Foreach disk, gather up the partition info for that disk and prepare an sfdisk command ###
+### END foreach disk, gather up the partition info for that disk and prepare an sfdisk command ###
 
 
 ### BEGIN Write out software RAID device creation commands ###
