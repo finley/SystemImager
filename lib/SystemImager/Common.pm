@@ -572,7 +572,7 @@ sub _turn_sfdisk_output_into_generic_partitionschemes_file {
         } elsif ($id eq "4") {   # 4   FAT16 <32M
                                        
         } elsif ($id eq "5") {   # 5   Extended
-          $partition_type = "extended"";
+          $partition_type = "extended";
                                        
         } elsif ($id eq "6") {   # 6   FAT16
                                        
