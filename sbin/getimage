@@ -238,8 +238,8 @@ unless(
 unless(
     ($ip_assignment_method eq "")
     or ($ip_assignment_method eq "static_dhcp")
-    or ($ip_assignment_method eq "static")
     or ($ip_assignment_method eq "dynamic_dhcp")
+    or ($ip_assignment_method eq "static")
     or ($ip_assignment_method eq "replicant")
 ) { die "\n$program_name: -ip-assignment must be static, static_dhcp, or dynamic_dhcp.\n$get_help\n\n"; }
 
@@ -532,8 +532,8 @@ EOF
 
 # turn number values into useable string values
 if   ($ip_assignment_method eq "1") { $ip_assignment_method = "static_dhcp" ; }
-elsif($ip_assignment_method eq "2") { $ip_assignment_method = "static"      ; }
-elsif($ip_assignment_method eq "3") { $ip_assignment_method = "dynamic_dhcp"; }
+elsif($ip_assignment_method eq "2") { $ip_assignment_method = "dynamic_dhcp"      ; }
+elsif($ip_assignment_method eq "3") { $ip_assignment_method = "static"; }
 elsif($ip_assignment_method eq "4") { $ip_assignment_method = "replicant"   ; }
 }
 ### END IP Assignment Method ###
@@ -583,6 +583,32 @@ mount | grep c[0-9]+d[0-9]+p > /dev/null 2>&1
 # This information is passed from the linuxrc script on the autoinstall media via /tmp/variables.txt
 # Apparently the shell on the autoinstall media is not intelligent enough to take a "set -a" parameter
 . /tmp/variables.txt || shellout
+
+### BEGIN Stop RAID devices before partitioning begins ###
+# Why did they get started in the first place?  So we can pull a local.cfg
+# file off a root mounted RAID system.  We do this even if a system does not
+# use RAID, in case you are using a disk that was previously part of a RAID
+# array.
+
+# find running raid devices
+RAID_DEVICES=`cat /proc/mdstat | grep ^md | mawk '{print "/dev/" $1}'`
+
+# get raidstop utility if any raid devices exist
+if [ ! -z "${RAID_DEVICES}" ]
+then
+  rsync -av --numeric-ids $IMAGESERVER::tftpboot/systemimager/raidstop /tmp/ || shellout
+fi
+
+# raidstop will not run unless a raidtab file exists
+touch /etc/raidtab || shellout
+
+# turn dem pesky raid devices off!
+for RAID_DEVICE in ${RAID_DEVICES}
+do
+  # we don't do a shellout here because, well I forgot why, but we don't.
+  echo "raidstop ${RAID_DEVICE}" && raidstop ${RAID_DEVICE}
+done
+### END Stop RAID devices before partitioning begins ###
 
 EOF
 
