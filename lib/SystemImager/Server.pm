@@ -1494,6 +1494,12 @@ sub _remove_mount_option {
         }
     }
 
+    # We always use -o $options in the autoinstall script generation code,
+    # so we return "defaults" rather than a null value. -BEF-
+    unless($new_options) {
+        $new_options = "defaults";
+    }
+
     return $new_options;
 }
 
