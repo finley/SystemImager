@@ -82,6 +82,7 @@ write_variables() {
   echo "GATEWAY=$GATEWAY"                   >> /tmp/variables.txt
   echo "GATEWAYDEV=$GATEWAYDEV"             >> /tmp/variables.txt
 
+  echo "DHCPSIADDR=$DHCPSIADDR"       	    >> /tmp/variables.txt
   echo "IMAGESERVER=$IMAGESERVER"       	>> /tmp/variables.txt
   echo "IMAGENAME=$IMAGENAME"               >> /tmp/variables.txt
 
@@ -130,42 +131,43 @@ ifconfig lo 127.0.0.1
 ( cd /my_modules && sh ./INSMOD_COMMANDS )
 
 
-### BEGIN look for local.cfg file ###
-# This code inspired by Ian McLeod <ian@valinux.com>
+################################################################################
+#
+# Look for local.cfg file
+#   This code inspired by Ian McLeod <ian@valinux.com>
 #
 # BEGIN try hard drive
-
-# XXX we must now specify the filesystem type, therefore it must also be
-# provided as an append parameter.  This functionality is turned off until
-# we can safely mount a specific filesystem type. -BEF-
-
-##
-## this must be on two lines in order to substitute the newline
-#cat /proc/cmdline | sed "s/ /\\
-#/g" | sed -n "s/=/=/p" > /tmp/last_root.$$
-## suck in variable
 #
-#. /tmp/last_root.$$
-#if [ ! -z "$LAST_ROOT" ]; then
-#  #
-#  # Kernel must have all necessary block and filesystem drivers
-#  # compiled into the kernel (not modules) in order for this to
-#  # work properly.  -BEF-
-#  #
-#  echo "Checking for /local.cfg file on hard drive..."
-#  mkdir /last_root
-#  echo "Mounting hard drive..."
-#  mount $LAST_ROOT /last_root -o ro > /dev/null 2>&1 || echo "Couldn't mount hard drive."
-#  if [ -f /last_root/local.cfg ]; then
-#    echo "Found /local.cfg on hard drive."
-#    echo "Copying /local.cfg settings to /tmp/local.cfg."
-#    cat /last_root/local.cfg >> /tmp/local.cfg || shellout
-#  else
-#    echo "No /local.cfg on hard drive."
-#  fi
-#  echo "Unmounting hard drive..."
-#  umount /last_root || shellout
-#fi
+# this must be on two lines in order to substitute the newline
+cat /proc/cmdline | sed "s/ /\\
+/g" | sed -n "s/=/=/p" > /tmp/last_root.$$
+
+# suck in variable
+. /tmp/last_root.$$
+
+if [ ! -z "$LAST_ROOT" ]; then
+
+  echo "Your kernel must have all necessary block and filesystem drivers"
+  echo "compiled in statically (not modules) in order for a local.cfg on"
+  echo "your hard drive to work properly.  You will need to compile your"
+  echo "own kernel as the standard SystemImager kernel is modular.  See"
+  echo "the SystemImager documentation for more information on compiling"
+  echo "your own kernel for SystemImager."
+  echo
+  echo "Checking for /local.cfg file on hard drive..."
+  mkdir /last_root
+  echo "Mounting hard drive..."
+  mount $LAST_ROOT /last_root -o ro > /dev/null 2>&1 || echo "Couldn't mount hard drive."
+  if [ -f /last_root/local.cfg ]; then
+    echo "Found /local.cfg on hard drive."
+    echo "Copying /local.cfg settings to /tmp/local.cfg."
+    cat /last_root/local.cfg >> /tmp/local.cfg || shellout
+  else
+    echo "No /local.cfg on hard drive."
+  fi
+  echo "Unmounting hard drive..."
+  umount /last_root || shellout
+fi
 # END try hard drive
 
 ### BEGIN try floppy ###
@@ -330,18 +332,16 @@ fi
 ### END ping test ###
 
 ### BEGIN logging ###
-[ -z $LOG_SERVER_PORT ] && LOG_SERVER_PORT="514"
-
 if [ ! -z $LOG_SERVER ]; then
+    [ -z $LOG_SERVER_PORT ] && LOG_SERVER_PORT="514"
     syslogd -R ${LOG_SERVER}:${LOG_SERVER_PORT}
 fi
 ### END logging ###
 
 # Determine ARCH.  This takes a little bit of futzing with due to all the PPC 
 # platforms that exist.
-
+#
 ARCH=`uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/`
-
 if [ "ppc64" = $ARCH ] ; then
     if [ -d /proc/iSeries/ ] ; then
         ARCH=ppc64-iSeries
@@ -351,7 +351,6 @@ fi
 # Get other binaries, kernel module tree, and miscellaneous other stuff that
 # got put in the binaries tarball. -BEF-
 #
-
 rsync -av ${IMAGESERVER}::boot/${ARCH}/${FLAVOR}/boel_binaries.tar.gz /tmp/ || shellout
 ( cd / && tar -xvzf /tmp/boel_binaries.tar.gz ) || shellout
 
