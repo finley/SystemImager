@@ -6,8 +6,6 @@
 # This file is: makedist
 #               (Build a SystemImager distribution tarball)
 #
-# Version: 1.2
-#
 #   Written by Michael Jennings <mej@valinux.com>
 #     Others who have contributed to this code:
 #       Brian Finley <brian@valinux.com>
@@ -20,71 +18,74 @@ if [ ! -f VERSION ]; then
   exit 1
 fi
 
-BASE=va-systemimager
-SUBSET=
-PACKAGE=${BASE}${SUBSET}
+# what is the formal name for this package?
+BASE="va-systemimager"
 
+# get version numbers
 VER_MAJOR=`cat VERSION | awk -F. '{print $1'}`
 VER_CLIENT=`cat VERSION | awk -F. '{print $2'}`
 VER_SERVER=`cat VERSION | awk -F. '{print $3'}`
-
 VERSION=${VER_MAJOR}.${VER_CLIENT}.${VER_SERVER}
 
-GZIP=-9
-SHELL_FILES_TO_VERSION="tftpstuff/systemimager/prepareclient"
-PERL_FILES_TO_VERSION="tftpstuff/systemimager/updateclient sbin/addclients sbin/getimage sbin/makeautoinstallcd sbin/makeautoinstalldiskette sbin/makedhcpserver sbin/makedhcpstatic"
+# functions
+wrap_it_up() {
+  # remove stale cruft
+  rm    -rf /tmp/${PACKAGE} || exit 1
+  rm     -f /tmp/${PACKAGE}.tar.bz2 || exit 1
+  
+  # temporary housing
+  mkdir -p  /tmp/${PACKAGE} || exit 1
+
+  # copy down selected files
+  echo "Copying files from file.listing.${SUBSET} down to /tmp/${PACKAGE}..."
+  tar -cf - `cat file.listing.${SUBSET}` | tar -C /tmp/${PACKAGE} -x || exit 1
+
+  # package up
+  ( cd /tmp/ && tar --owner=root --group=root -cvf ${PACKAGE}.tar ${PACKAGE}/ ) || exit 1
+
+  # compress -- no more of this wimpy gzip stuff
+  bzip2 /tmp/${PACKAGE}.tar || exit 1
+
+  # put it back in our working directory
+  mv -i /tmp/${PACKAGE}.tar.bz2 . || exit 1
+
+  # remove fresh cruft
+  rm -rf /tmp/${PACKAGE} || exit 1
+}
 
 # set version number on shell files
-for file in $SHELL_FILES_TO_VERSION; do
-  sed "s/^version_number=.*/version_number=\"$VERSION\"/" $file > $file.$$
-  cat $file.$$ > $file
-  rm -f $file.$$
-done
+#for file in $SHELL_FILES_TO_VERSION; do
+#  sed "s/^version_number=.*/version_number=\"$VERSION\"/" $file > $file.$$
+#  cat $file.$$ > $file
+#  rm -f $file.$$
+#done
 
 # set version number on perl files
-for file in $PERL_FILES_TO_VERSION; do
-  sed "s/^\$version_number=.*/\$version_number=\"$VERSION\";/" $file > $file.$$
-  cat $file.$$ > $file
-  rm -f $file.$$
-done
+#for file in $PERL_FILES_TO_VERSION; do
+#  sed "s/^\$version_number=.*/\$version_number=\"$VERSION\";/" $file > $file.$$
+#  cat $file.$$ > $file
+#  rm -f $file.$$
+#done
 
 # set version number on other files
-file="tftpstuff/pxelinux.cfg/message.txt"
-sed "s/v[0-9][0-9]*\.[0-9][0-9]*\.x*\./v${VER_MAJOR}.${VER_CLIENT}.x./" $file  > $file.$$
-cat $file.$$ > $file
-rm -f $file.$$
+#file="tftpstuff/pxelinux.cfg/message.txt"
+#sed "s/v[0-9][0-9]*\.[0-9][0-9]*\.x*\./v${VER_MAJOR}.${VER_CLIENT}.x./" $file  > $file.$$
+#cat $file.$$ > $file
+#rm -f $file.$$
 
-cp ${BASE}.spec ${BASE}.spec.in
-sed 's/^%define ver \([ ]*\) [0-9].*$/%define ver \1 '$VERSION'/g' ${BASE}.spec.in > ${BASE}.spec
-rm -f ${BASE}.spec.in
+#cp ${BASE}.spec ${BASE}.spec.in
+#sed 's/^%define ver \([ ]*\) [0-9].*$/%define ver \1 '$VERSION'/g' ${BASE}.spec.in > ${BASE}.spec
+#rm -f ${BASE}.spec.in
 
-# va-systemimager server
-rm -rf /tmp/${PACKAGE}-${VERSION}
-mkdir -p /tmp/${PACKAGE}-${VERSION}
-cp -a . /tmp/${PACKAGE}-${VERSION}
-(cd /tmp/${PACKAGE}-${VERSION} && find . -type d -name CVS -exec rm -rf {} \; 2>/dev/null)
-(cd /tmp/${PACKAGE}-${VERSION} && rm -fr tmp ${PACKAGE}*${VERSION}*.rpm ${PACKAGE}*${VERSION}*.tar.gz )
-(cd /tmp && tar --owner=root --group=root -zcvf ${PACKAGE}-${VERSION}.tar.gz ${PACKAGE}-${VERSION}/)
-mv /tmp/${PACKAGE}-${VERSION}.tar.gz .
-rm -rf /tmp/${PACKAGE}-${VERSION}
+SUBSET="server"
+PACKAGE="${BASE}-${SUBSET}-${VERSION}"
+wrap_it_up
 
-# va-systemimager-client
-BASE=va-systemimager
-SUBSET=-client
-PACKAGE=${BASE}${SUBSET}
+SUBSET="client"
+PACKAGE="${BASE}-${SUBSET}-${VERSION}"
+wrap_it_up
 
-rm -rf /tmp/${PACKAGE}-${VERSION}
-mkdir -p /tmp/${PACKAGE}-${VERSION}
-cp -a installclient CHANGE.LOG COPYING CREDITS FAQ-HOWTO README TODO VERSION local.cfg /tmp/${PACKAGE}-${VERSION}
-mkdir -p /tmp/${PACKAGE}-${VERSION}/tftpstuff/systemimager/
-( cd ./tftpstuff/systemimager/ && cp prepareclient updateclient systemimager.exclude /tmp/${PACKAGE}-${VERSION}/tftpstuff/systemimager/ )
-( cd /tmp && tar --owner=root --group=root -zcvf ${PACKAGE}-${VERSION}.tar.gz ${PACKAGE}-${VERSION}/ )
-mv /tmp/${PACKAGE}-${VERSION}.tar.gz .
-rm -rf /tmp/${PACKAGE}-${VERSION}
-
-sudo cp -f ${BASE}*${VERSION}*.gz /usr/src/redhat/SOURCES
-sudo cp -f ${BASE}.spec /usr/src/redhat/SPECS
-sudo rpm -ba /usr/src/redhat/SPECS/${BASE}.spec && cp /usr/src/redhat/RPMS/i386/${BASE}*${VERSION}* . \
- && cp /usr/src/redhat/SRPMS/${BASE}*${VERSION}* .
-
+SUBSET="source"
+PACKAGE="${BASE}-${SUBSET}-${VERSION}"
+wrap_it_up
 
