@@ -1,7 +1,7 @@
 #
 # "VA SystemImager" - Copyright (C) 1999-2001 Brian Elliott Finley <brian@valinux.com> 
 #
-# This file: Makefile
+#   $Id$
 #
 #   Written by Dann Frazier <dannf@ldl.fc.hp.com>
 #
@@ -20,6 +20,29 @@
 #   directly shouldn't be commented with the '#@' notation - the assumption is
 #   that if you're messing with these rules, you've opened up this file anyway,
 #   so normal comments are fine.
+#
+# SystemImager file location standards:
+#   o images will be stored in: /usr/share/systemimager/images/
+#   o web gui pages:            /usr/share/systemimager/web-gui/
+#   o autoinstall kernels:      /usr/share/systemimager/`arch`/boot/
+#   o initial ram disks:        /usr/share/systemimager/`arch`/boot/
+#   o autoinstall binaries:     /usr/share/systemimager/`arch`/boot/
+#   o tftp files will be copied to the appropriate destination (as determined
+#     by the local SysAdmin when running "mkbootserver".
+#   o autoinstall scripts:      /usr/share/systemimager/scripts/
+#   o user visible commands:    /usr/bin
+#     (lsimage, mkautoinstalldiskette, mkautoinstallcd)
+#   o sysadmin commands:        /usr/sbin
+#     (all other commands)
+#   o docs:                     /usr/share/doc/systemimager-<version>
+#   o perl libraries:           /usr/share/systemimager/perl/
+#   o man pages:                /usr/share/man/man8/
+#   o log files:                /var/log/systemimager/
+#   o configuration files:      /etc/systemimager/
+#   o rsyncd.conf:              /etc/systemimager/rsyncd.conf
+#   o rsyncd init script:       /etc/init.d/systemimager
+#
+
 
 DESTDIR = 
 
