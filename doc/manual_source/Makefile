@@ -61,8 +61,17 @@ $(NAME).txt:	$(MANUAL_DEPS)
 clean:
 	find . -name "*~" -exec rm -f {} \;
 	find . -name "#*#" -exec rm -f {} \;
-	rm -rf $(NAME).aux $(NAME).dvi $(NAME).log $(NAME).out $(NAME).pdf \
-	  $(NAME).ps $(NAME).rtf $(NAME).tex $(NAME).txt $(HTMLDIR) $(NAME) \
-	  DBTOHTML_OUTPUT_DIR*
+	rm -f $(NAME).aux
+	rm -f $(NAME).dvi
+	rm -f $(NAME).log
+	rm -f $(NAME).out
+	rm -f $(NAME).pdf
+	rm -f $(NAME).ps
+	rm -f $(NAME).rtf
+	rm -f $(NAME).tex
+	rm -f $(NAME).txt
+	rm -rf $(NAME)
+	rm -rf $(HTMLDIR)
+	rm -rf DBTOHTML_OUTPUT_DIR*
 	rm -rf ./usr/
 

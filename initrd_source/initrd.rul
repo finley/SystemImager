@@ -156,7 +156,8 @@ initrd_get_source:	$(INITRD_SRC_DIR)/$(BUSYBOX_TARBALL) \
 initrd_clean:	$(subst .rul,_clean,$(shell cd $(INITRD_DIR)/make.d && ls *.rul))
 	-find . -name "*~" -exec rm -f {} \;
 	-rm -rf $(INITRD_BUILD_DIR)
-	cd $(INITRD_DIR) && rm -f initrd initrd.img
+	rm -f $(INITRD_DIR)/initrd
+	rm -f $(INITRD_DIR)/initrd.img
 	rm -f $(INITRD_DIR)/build_dir-stamp
 
 initrd_distclean:	initrd_clean

@@ -64,6 +64,7 @@ $(INITRD_SRC_DIR)/uclibc_build-stamp:	$(INITRD_SRC_DIR)/$(UCLIBC_DIR)/Config\
 PHONY += uclibc_clean
 uclibc_clean:
 	rm -rf $(INITRD_SRC_DIR)/$(UCLIBC_DIR)
-	rm -rf $(UCLIBC_RUNTIME) $(UCLIBC_DEV)
+	rm -rf $(UCLIBC_RUNTIME)
+	rm -rf $(UCLIBC_DEV)
 	rm -f $(INITRD_SRC_DIR)/uclibc_dev-stamp
 	rm -f $(INITRD_SRC_DIR)/uclibc_runtime-stamp
