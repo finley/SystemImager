@@ -22,6 +22,7 @@ BEEP_ROOT = $(SRC_DIR)/beep-$(BEEP_VERSION)
 BEEP_BINARY = $(BEEP_ROOT)/beep
 BEEP_TARBALL = beep-$(BEEP_VERSION).tar.gz
 BEEP_URL = http://www.johnath.com/beep/$(BEEP_TARBALL)
+BEEP_PATCH = $(PATCH_DIR)/beep.patch
 
 BUSYBOX_VERSION = 0.60.0
 BUSYBOX_ROOT = $(SRC_DIR)/busybox-$(BUSYBOX_VERSION)
@@ -116,7 +117,9 @@ binary-build-stamp:
 beep:
 	$(MAKE) $(SRC_DIR)/$(BEEP_TARBALL)
 	[ -d $(BEEP_ROOT) ] || \
-		( cd $(SRC_DIR) && tar xvfz $(BEEP_TARBALL) )
+		( cd $(SRC_DIR) && tar xvfz $(BEEP_TARBALL) && \
+		  [ ! -f ../$(BEEP_PATCH) ] || \
+		  patch -p0 < ../$(BEEP_PATCH) )
 	$(MAKE) -C $(BEEP_ROOT) beep
 	strip $(BEEP_BINARY)
 
