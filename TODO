@@ -60,6 +60,46 @@ Development Branch Sub Projects
 Unclaimed Sub Projects
 ----------------------
 o Documentation: how to migrate from KickStart to SystemImager.
+o X Windows GUI
+  o Run from the imageserver sending the X display back to a sysadmins
+    desktop.
+  o Distribution independent.  The two main distros to initially be
+    concerned with are debian and redhat.  Minimal dependencies are
+    preferred -- this will be run from a server which may not have lots of
+    X and GUI stuff installed.
+  o The goal is to allow for all of the commands to be run by clicking
+    buttons, filling in boxes, etc.
+  o See the "GUI Layout" section in this document for details on the 
+    proposed logical arrangement of screens, etc.
+o mvimage
+  o usage: mvimage [OPTIONS] <image> <newimage>
+  o renames /var/spool/systemimager/images/<image>
+  o renames /tftpboot/systemimager/<image>.master
+    (and re-creates any softlinks that point to it)
+  o renames entries for <image> in /etc/rsyncd.conf
+  o OPTIONS:
+    -help
+    -verbose
+    -quiet
+    -force  Don't prompt before renaming each of the following:
+                  o image directory
+                  o <image>.master autoinstall script and softlinks
+                  o image entry in /etc/rsyncd.conf
+o rmimage
+  o usage: rmimage [OPTIONS] <image>
+  o removes /var/spool/systemimager/images/<image>
+  o removes /tftpboot/systemimager/<image>.master
+    (and any softlinks that point to it)
+  o removes entry for <image> in /etc/rsyncd.conf
+  o OPTIONS:
+    -help
+    -verbose
+    -quiet
+    -force  Don't prompt before removing each of the following:
+                  o image directory
+                  o <image>.master autoinstall script and it's softlinks
+                  o image entry in /etc/rsyncd.conf
+
 
 Curtis Zinzilieta <czinzilieta@valinux.com>
 -------------------------------------------
@@ -94,7 +134,6 @@ o source for the kernel and initrd.gz and everything will be provided in
    get all the kernel patches to apply properly -- we can provide the
    actual kernel source tree with the patches pre-applied.)
 o Modify binaries to use /var/lib/systemimager/ instead of /tftpboot/
-o Austin Gonyou patch: Dual NIC Installs
 o Jose_AP_Celestino.ida.prepareclient.patch to make systemimager work
   properly with Smart Array cards.  (must get a Smart Array card first)
 o getimage -- exclude option
@@ -107,8 +146,6 @@ o updateclient - include/exclude pulled to temporary files.
 o prepareclient - no longer puts /etc/systemimager/systemimager.exclude on
   client.
 o deal with LABEL=UUID as well as LABEL=mount_point
-o next release (1.5.x), make the -imageserver option go away
-  in getimage.
 o if local.cfg and dhcp fails, have client ask for manual input
 o add -exclude option to getimage
 o incorporate ssh
@@ -132,9 +169,6 @@ o David Weenink <david.weenink@hum.uva.nl> suggests:
   o rename systemimager.exclude -> updateclient.local.exclude
   o include comments inside to indicate how the includes/excludes work
 o change option-100 -> option-207
-o add option-208 => "ssh_binaries_url"
-o Bug [ #419641 ] Install script fails 
-  (if there are spaces below the install directory)
 o Notes regarding differences between v2 and v3 of dhcpd:
   <<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
   The change from version 2 of ISC's dhcp server to version 3
@@ -157,8 +191,6 @@ o Notes regarding differences between v2 and v3 of dhcpd:
   assign the actual value, which is supposed to be an ip address in
   the case of systemimager 1.4.1 .
   <<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-o Modify rcS to do a ping loop instead of a 35s timeout.  When a ping
-  succeeds, break out of the loop and proceed.
 o Modify etc/issue in inird.gz
 o getimage: add a -check-for-bad-blocks-during-install option
 
@@ -237,47 +269,6 @@ o I am going to be playing with this.  The more input the better.  I agree
 <<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 
-Greg Smith <grs@xuma.com>
-Committed to task: Tue, 23 Jan 2001
------------------------------------
-o mvimage
-  o usage: mvimage [OPTIONS] <image> <newimage>
-  o renames /var/spool/systemimager/images/<image>
-  o renames /tftpboot/systemimager/<image>.master
-    (and re-creates any softlinks that point to it)
-  o renames entries for <image> in /etc/rsyncd.conf
-  o OPTIONS:
-    -help
-    -verbose
-    -quiet
-    -interactive  Prompt before renaming each of the following:
-                  o image directory
-                  o <image>.master autoinstall script and softlinks
-                  o image entry in /etc/rsyncd.conf
-
-
-Volunteer needed (also Greg Smith?)
------------------------------------
-o rmimage
-  o usage: rmimage [OPTIONS] <image>
-  o removes /var/spool/systemimager/images/<image>
-  o removes /tftpboot/systemimager/<image>.master
-    (and any softlinks that point to it)
-  o removes entry for <image> in /etc/rsyncd.conf
-  o OPTIONS:
-    -help
-    -verbose
-    -quiet
-    -interactive  Prompt before removing each of the following:
-                  o image directory
-                  o <image>.master autoinstall script and softlinks
-                  o image entry in /etc/rsyncd.conf
-
-  
-John Chabalko <john.chabalko@nbci.com> / <johnchabalko@hotmail.com>
-Committed to task: Thur Mar 8, 2001  
--------------------------------------------------------------------
-
 Austin Gonyou <austin@coremetrics.com> 
 Wed Mar 21 12:19:10 CST 2001  
 ----------------------------------------
@@ -333,21 +324,6 @@ o See the "GUI Layout" section in this document for details on the
   proposed logical arrangement of screens, etc.
 o command line scheduling utility
 
-
-Greg Pryzby <gjp@valinux.com>
-Committed to task: Mon, 12 Mar 2001
-----------------------------
-X Windows GUI
-o Run from the imageserver sending the X display back to a sysadmins
-  desktop.
-o Distribution independent.  The two main distros to initially be
-  concerned with are debian and redhat.  Minimal dependencies are
-  preferred -- this will be run from a server which may not have lots of
-  X and GUI stuff installed.
-o The goal is to allow for all of the commands to be run by clicking
-  buttons, filling in boxes, etc.
-o See the "GUI Layout" section in this document for details on the 
-  proposed logical arrangement of screens, etc.
 
 
 GUI Layout (applies to Web GUI and X GUI)
