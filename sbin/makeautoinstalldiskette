@@ -16,7 +16,7 @@ $ENV{PATH} = "/usr/sbin:/sbin:/usr/bin:/bin";
 
 $version_number="1.3.0";
 $program_name = "makeautoinstalldiskette";
-$floppy_device_suffix = "H1440";
+#$floppy_device_suffix = "H1440";
 $version_info = <<"EOF";
 $program_name (part of VA SystemImager) v$version_number
     
@@ -119,49 +119,42 @@ EOF
 }
 
 # create floppy device if necessary
-$floppy_device= $floppy_device_prefix . $floppy_device_suffix;
-unless (-b $floppy_device) {
-    if (!$quiet) {
-	print "Creating device file $floppy_device...\n";
-    }
+$floppy_device=$floppy_device_prefix;
+unless (-b $floppy_device) { die "Couldn't find device file $floppy_device.\n"; }
 
-    # figure out what minor number to use.  (See mknod(1) for details)
-    %lookup= ("0" => "60",
-	      "1" => "61",
-	      "2" => "62",
-	      "3" => "63",
-	      "4" => "188",
-	      "5" => "189",
-	      "6" => "190",
-	      "7" => "191");
-    $floppy_device_prefix =~ /^\/dev\/fd([0-7])$/;
-    $minor = $lookup{$1};
-    system("mknod $floppy_device b 2 $minor");
-    if($? != 0) { die "Couldn't make device file $floppy_device.\n"; }
-}
+if (-x "/usr/bin/superformat") {
+  # format floppy
+  if (!$quiet) { print "Formatting floppy as 1.44MB ...\n"; }
+  if ($quiet) {
+    system ("superformat $floppy_device hd > /dev/null 2>&1");
+  } else {
+    system ("superformat $floppy_device hd");
+  }
+  unless ($? == 0) { die "Couldn't format $floppy_device.\n"; }
 
-# format floppy
-if (!$quiet) {
-    print "Formatting floppy as 1.44MB ...\n";
-}
-if ($quiet) {
-    system ("fdformat $floppy_device > /dev/null");
-} else {
+} elsif (-x "/usr/bin/fdformat") {
+
+  # format floppy
+  if (!$quiet) { print "Formatting floppy as 1.44MB ...\n"; }
+  if ($quiet) {
+    system ("fdformat $floppy_device > /dev/null 2>&1");
+  } else {
     system ("fdformat $floppy_device");
-}
-if($? != 0) { die "Couldn't format $floppy_device.\n"; }
+  }
+  if($? != 0) { die "Couldn't format $floppy_device.\n"; }
 
 
-# create dos filesystem on floppy
-if (!$quiet) {
+  # create dos filesystem on floppy
+  if (!$quiet) {
     print "Creating DOS filesystem on floppy...\n";
-}
-if ($quiet) {
+  }
+  if ($quiet) {
     system("mkdosfs $floppy_device > /dev/null");
-} else {
+  } else {
     system("mkdosfs $floppy_device");
+  }
+  unless ($? == 0) { die "Couldn't create dos filesystem on $floppy_device.\n"; }
 }
-if($? != 0) { die "Couldn't create dos filesystem on $floppy_device.\n"; }
 
 
 # create temporary mount point
