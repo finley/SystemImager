@@ -496,7 +496,7 @@ if [ -z $HOSTNAME ]; then
     # 5: get hostname or hostname.domain.name
     # 6: strip .domain.name if necessary -- $DOMAINNAME was set earlier by dhcp
     HOSTNAME=`
-      sed 's/       / /g' /tmp/hosts \
+      sed 's/	/ /g' /tmp/hosts \
       | sed 's/#.*//g' \
       | sed 's/^/ /' \
       | grep " $IPADDR_ESCAPED " \
