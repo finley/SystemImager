@@ -40,11 +40,34 @@ beep_of_failure() {
 	done
 }
 
+beep_of_completion() {
+	echo "I don't know if I'm a success or a failure, but I'm done with the testing!"
+	ralph="sick"
+	count="1"
+	while [ $ralph="sick" ]
+	do
+		echo -n -e "\\a"
+		sleep 1
+		count=$(($count + 1))
+	done
+}
+
 
 rm /tmp/boel*
 
 #mount tmpfs / -o remount,size=384M
 
 cd /usr/src/ctcs/
-./newburn -K -n -m -z 0d4h0m0s -A SMTWUFA-0000-2359 && beep_of_success || beep_of_failure
+
+# Anyone know how to get a proper exit code from ctcs?  Or how to easily reap 
+# status info from a CTCS file?  All we're really interested in here is a zero 
+# for success (all tests succeeded), or a 1 for failure (one or more tests 
+# failed).  If you do, email <systemimager-devel@lists.sourceforge.net>.
+#
+# This is the desired format...
+#./newburn -K -n -m -z 0d4h0m0s -A SMTWUFA-0000-2359 && beep_of_success || beep_of_failure
+#
+# This is what we have to do now.
+./newburn -K -n -m -z 0d4h0m0s -A SMTWUFA-0000-2359 ; beep_of_completion
+
 exit 0
