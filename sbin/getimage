@@ -778,10 +778,14 @@ foreach $disk (@disks)  {
     foreach my $partition_number (4, 3, 2, 1) {
 
       my $device = "";
-      if ($disk =~ /c*d*/ )
-          { $device = "/dev/$disk" . "p" . "$partition_number"; }
+      if ( $disk =~ /c[0-9]+d[0-9]+/ )
+      {
+          $device = "/dev/$disk" . "p" . "$partition_number";
+      }
       else
-          { $device = "/dev/$disk" . "$partition_number"; }
+      {
+          $device = "/dev/$disk" . "$partition_number";
+      }
 
       my $megabytes = $megabytes_by_device{$device};
       my $id = $id_by_device{$device};
@@ -1292,7 +1296,7 @@ EOF
 
 # prompt to run "addclients"
 if (!$quiet) {
-    print "Would you like to run the \"addclents\" utility now? (y/[n]): ";
+    print "Would you like to run the \"addclients\" utility now? (y/[n]): ";
     $continue = get_response('n');
     ($continue ne "n") or exit 0;
     exec("addclients");
