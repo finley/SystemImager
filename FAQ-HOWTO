@@ -190,6 +190,15 @@ Run the command "makeautoinstallcd" on the imageserver.
 
 
 --------------------------------------------------------------------------------
+Question:  I made an autoinstallcd, but it didn't boot.  What's wrong?
+--------------------------------------------------------------------------------
+
+Answer:
+
+There was a problem with the following RPM:  syslinux-1.48-1.i386.rpm 
+Download and install a newer syslinux RPM from http://systemimager.org/.
+
+--------------------------------------------------------------------------------
 Question:  How do I exclude files or directories during a getimage?
 --------------------------------------------------------------------------------
 
