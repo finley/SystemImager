@@ -108,7 +108,7 @@ sub create_uyok_initrd($$) {
         # Create initrd and save copy of kernel
         #
         _create_new_initrd( $staging_dir, $boot_dir );
-        _get_copy_of_kernel( $uname_r );
+        _get_copy_of_kernel( $uname_r, $boot_dir );
 
         #
         # Remove temp dir
@@ -122,17 +122,18 @@ sub create_uyok_initrd($$) {
 
 sub _get_copy_of_kernel($) {
 
-        my $uname_r = shift;
+        my $uname_r     = shift;
+        my $boot_dir    = shift;
 
-        my $kernel_file = _identify_kernel_file( $uname_r );
+        my $kernel_file = _choose_kernel_file( $uname_r );
         unless( defined $kernel_file ) {
                 print "I couldn't identify your kernel file.  Please try --XXX.\n";
                 exit 1;
         }
 
-        print "kernel_file $kernel_file\n"; #XXX debug
-
-        # copy kernel file over
+        my $new_kernel_file = $boot_dir . "/" . basename($kernel_file);
+        copy($kernel_file, $boot_dir) or die("Couldn't copy $kernel_file to $boot_dir: $!");
+        run_cmd("ls -l $new_kernel_file", $verbose, 1) if($verbose);
 
         return 1;
 }
@@ -141,9 +142,9 @@ sub _get_copy_of_kernel($) {
 
 #
 # Usage:
-#       my $kernel_file = _identify_kernel_file( $uname_r );
+#       my $kernel_file = _choose_kernel_file( $uname_r );
 #
-sub _identify_kernel_file($) {
+sub _choose_kernel_file($) {
 
         my $uname_r = shift;
 
@@ -161,7 +162,7 @@ sub _identify_kernel_file($) {
                 foreach (@files) {
 
                         my $file = "$dir/$_";
-                        next unless( -B $file );
+                        next unless( (-B $file) and (! -d $file) );
                         my $kernel_release = _get_kernel_release($file);
                         return $file if( defined($kernel_release) and ($kernel_release eq $uname_r) );
                 }
@@ -178,15 +179,43 @@ sub _get_kernel_release($) {
 
         my $file = shift;
 
-        my $uname_r;
-        open(FILE,"$file") or die("Couldn't open $file for reading.");
-        while(<FILE>) {
-                # extract the `uname -r` string from the kernel file
-                if(m/(2\.[4|6]\.\d{1,2}.*) \(.*\) [#]\d+ \w{3} \w{3} \d+ \d+:\d+:\d+ \w{3} \d+/o) {
-                        $uname_r = $1;
-                }
+        # the default tool
+        my $cat = "cat";
+
+        my $cmd = "gzip -l $file >/dev/null 2>&1";
+        if( !system($cmd) ) {
+                # It's gzip compressed.  Let's decompress it, man.
+                $cat = "zcat";
         }
-        close(FILE);
+
+        my $uname_r;
+        $cmd = "$cat $file";
+        open(IN,"$cmd |") or die("Couldn't $cmd: $!");
+                # 
+                # Example entries like what we're trying to match against in kernels:
+                #       2.6.10bef1 (finley@mantis) #1 Tue Mar 1 00:37:55 CST 2005
+                #       2.4.21.SuSE_273.bef1 (root@tg-c025) (gcc version 3.2.2) #1 SMP Mon Jan 24 11:55:28 CST 2005
+                #       2.4.24 (root@mantis) #2 Fri Jan 16 19:51:43 CST 2004^
+                #       2.4.19-mantis-2002.11.20 (root@mantis) #6 Tue Nov 19 15:15:43 CST 2002
+                #       2.6.7-1-686 (dilinger@toaster.hq.voxel.net) #1 Thu Jul 8 05:36:53 EDT 2004
+                #
+                my $regex = '(2\.[46]\.\d.*) \(.*@.*\) [#]\d+.*\w{3} \w{3} \d{1,2} \d{2}:\d{2}:\d{2} \w{3} \d{4}';
+                while(<IN>) {
+                       # extract the `uname -r` string from the kernel file
+                       if(m/$regex/o) {
+                               $uname_r = $1;
+                       }
+               }
+        close(IN);
+
+#       open(FILE,"$file") or die("Couldn't open $file for reading.");
+#               while(<FILE>) {
+#                       # extract the `uname -r` string from the kernel file
+#                       if(m/(2\.[4|6]\.\d{1,2}.*) \(.*\) [#]\d+ \w{3} \w{3} \d+ \d+:\d+:\d+ \w{3} \d+/o) {
+#                               $uname_r = $1;
+#                       }
+#               }
+#       close(FILE);
 
         return $uname_r;
 }
