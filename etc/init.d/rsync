@@ -19,7 +19,7 @@
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 NAME=rsync
-OPTIONS="--daemon"
+OPTIONS="--daemon --config=/etc/systemimager/rsyncd.conf"
 DAEMON=`which $NAME` || exit 0
 DESC="rsync daemon"
 
