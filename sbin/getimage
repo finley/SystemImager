@@ -582,7 +582,7 @@ mount | grep c[0-9]+d[0-9]+p > /dev/null 2>&1
 # Pull in variables left behind by the linuxrc script.
 # This information is passed from the linuxrc script on the autoinstall media via /tmp/variables.txt
 # Apparently the shell on the autoinstall media is not intelligent enough to take a "set -a" parameter
-. /tmp/variables.txt
+. /tmp/variables.txt || shellout
 
 EOF
 
@@ -709,12 +709,12 @@ if (-e $file) {
 ### BEGIN stop RAID devices before partitioning ###
 if (@software_raid_devices) {
   print MASTER_SCRIPT "# Pull /etc/raidtab over to autoinstall client\n";
-  print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::$image/etc/raidtab /etc/raidtab\n";
+  print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::$image/etc/raidtab /etc/raidtab || shellout\n";
   print MASTER_SCRIPT "\n";
   print MASTER_SCRIPT "# get software RAID utilities\n";
-  print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::tftpboot/systemimager/mkraid /tmp/\n";
-  print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::tftpboot/systemimager/raidstart /tmp/\n";
-  print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::tftpboot/systemimager/raidstop /tmp/\n";
+  print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::tftpboot/systemimager/mkraid /tmp/ || shellout\n";
+  print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::tftpboot/systemimager/raidstart /tmp/ || shellout\n";
+  print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::tftpboot/systemimager/raidstop /tmp/ || shellout\n";
   print MASTER_SCRIPT "\n";
 
   print MASTER_SCRIPT << 'EOF';
@@ -871,7 +871,7 @@ foreach $disk (@disks)  {
     ### END format output for logical partitions 5+ ###
 
     # put final touch on sfdisk command
-    $sfdisk_command = "sfdisk -L -uM /dev/$disk <<EOF\n" . $sfdisk_command . "EOF\n";
+    $sfdisk_command = "sfdisk -L -uM /dev/$disk <<EOF || shellout\n" . $sfdisk_command . "EOF\n";
 
     # output disk partition section
     print MASTER_SCRIPT "# partition $disk\n";
@@ -929,7 +929,7 @@ foreach $disk (@disks)  {
 if (@software_raid_devices) {
   print MASTER_SCRIPT "# create software RAID devices\n";
   foreach my $device (sort @software_raid_devices) {
-    print MASTER_SCRIPT "mkraid --really-force $device\n";
+    print MASTER_SCRIPT "mkraid --really-force $device || shellout\n";
   }
   print MASTER_SCRIPT "\n";
 }
@@ -940,8 +940,8 @@ if (@software_raid_devices) {
 if (@swap_devices) {
   print MASTER_SCRIPT "# initialize swap devices\n";
   foreach my $device (sort @swap_devices) {
-    print MASTER_SCRIPT "mkswap -v1 $device\n";
-    print MASTER_SCRIPT "swapon $device\n";
+    print MASTER_SCRIPT "mkswap -v1 $device || shellout\n";
+    print MASTER_SCRIPT "swapon $device || shellout\n";
   }
   print MASTER_SCRIPT "\n";
 }
@@ -960,13 +960,13 @@ if (@ext2_devices) {
           my $device = $devices_by_label{$label};
           # strip out LABEL= bit so that we're left with just the actual label
           $label =~ s/LABEL=//;
-          print MASTER_SCRIPT "mke2fs -L $label $device\n";
+          print MASTER_SCRIPT "mke2fs -L $label $device || shellout\n";
         }
       }
       ### END this do for labelled devices
     } else {
       ### BEGIN this do for non-labelled devices
-      print MASTER_SCRIPT "mke2fs $device\n";
+      print MASTER_SCRIPT "mke2fs $device || shellout\n";
       ### END this do for non-labelled devices
     }
   }
@@ -998,13 +998,13 @@ if (@ext3_devices) {
           my $device = $devices_by_label{$label};
           # strip out LABEL= bit so that we're left with just the actual label
           $label =~ s/LABEL=//;
-          print MASTER_SCRIPT "mke2fs -j -L $label $device\n";
+          print MASTER_SCRIPT "mke2fs -j -L $label $device || shellout\n";
         }
       }
       ### END this do for labelled devices
     } else {
       ### BEGIN this do for non-labelled devices
-      print MASTER_SCRIPT "mke2fs -j $device\n";
+      print MASTER_SCRIPT "mke2fs -j $device || shellout\n";
       ### END this do for non-labelled devices
     }
   }
@@ -1017,12 +1017,12 @@ if (@ext3_devices) {
 ### BEGIN Write out reiserfs creation commands ###
 if (@reiserfs_devices) {
   print MASTER_SCRIPT "# get mkreiserfs utility\n";
-  print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::tftpboot/systemimager/mkreiserfs /tmp/\n";
+  print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::tftpboot/systemimager/mkreiserfs /tmp/ || shellout\n";
   print MASTER_SCRIPT "\n";
   print MASTER_SCRIPT "# format reiserfs devices\n";
   foreach my $device (sort @reiserfs_devices) {
     print MASTER_SCRIPT "# rupasov is the default, but we are explicit here anyway\n";
-    print MASTER_SCRIPT "echo \"y\" | mkreiserfs -h rupasov $device\n";
+    print MASTER_SCRIPT "echo \"y\" | mkreiserfs -h rupasov $device || shellout\n";
   }
   print MASTER_SCRIPT "\n";
 }
@@ -1034,7 +1034,7 @@ if (@reiserfs_devices) {
 print MASTER_SCRIPT "# create mount points and mount filesystems\n";
 foreach $mount_point (sort (@mount_points)) {
   my $device = $device_by_mount_point{$mount_point};
-  print MASTER_SCRIPT "mkdir -p /a$mount_point\n";
+  print MASTER_SCRIPT "mkdir -p /a$mount_point || shellout\n";
 
   ### BEGIN this do for labelled devices
   if ($device =~ /LABEL=/) {
@@ -1067,10 +1067,10 @@ foreach $mount_point (sort (@mount_points)) {
     $mount_options =~ s/,ro,/,rw,/;
 
     # add commands to master script
-    print MASTER_SCRIPT "mount $device /a$mount_point -t $filesystem_type -o $mount_options\n";
+    print MASTER_SCRIPT "mount $device /a$mount_point -t $filesystem_type -o $mount_options || shellout\n";
   } else {
     # add commands to master script
-    print MASTER_SCRIPT "mount $device /a$mount_point -t $filesystem_type\n";
+    print MASTER_SCRIPT "mount $device /a$mount_point -t $filesystem_type || shellout\n";
   }
   print MASTER_SCRIPT "\n";
 }
@@ -1079,12 +1079,12 @@ foreach $mount_point (sort (@mount_points)) {
 
 ### BEGIN pull the image down ###
 print MASTER_SCRIPT "# filler up!\n";
-print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::$image/ /a/\n\n";
+print MASTER_SCRIPT "rsync -av --numeric-ids \$IMAGESERVER::$image/ /a/ || shellout\n\n";
 ### END pull the image down ###
 
 ### BEGIN graffiti ###
 print MASTER_SCRIPT "# Leave notice of which image is installed on the client\n";
-print MASTER_SCRIPT "echo $image > /a/etc/systemimager/IMAGE_LAST_SYNCED_TO\n\n";
+print MASTER_SCRIPT "echo $image > /a/etc/systemimager/IMAGE_LAST_SYNCED_TO || shellout\n\n";
 ### END graffiti ###
 
 ### BEGIN distribution specific networking stuff ###
@@ -1094,14 +1094,14 @@ unless($ip_assignment_method eq "replicant") {
 if ("$distro" eq "red_hat_linux") { 
    print MASTER_SCRIPT << 'EOF';
 # set host specific information
-echo NETWORKING=yes > /a/etc/sysconfig/network
-echo FORWARD_IPV4=false >> /a/etc/sysconfig/network
+echo NETWORKING=yes > /a/etc/sysconfig/network || shellout
+echo FORWARD_IPV4=false >> /a/etc/sysconfig/network || shellout
 
 EOF
 
    if ($nisdomainname ne "") { 
       print MASTER_SCRIPT "# set NIS domainname and imply that we want to be an NIS client\n";
-      print MASTER_SCRIPT "echo NISDOMAIN=$nisdomainname >> /a/etc/sysconfig/network\n\n";
+      print MASTER_SCRIPT "echo NISDOMAIN=$nisdomainname >> /a/etc/sysconfig/network || shellout\n\n";
    }
 
    if ($ip_assignment_method eq "static") { 
@@ -1109,19 +1109,19 @@ EOF
 # Stuff for static IP addressing
 #
 # /etc/sysconfig/network
-echo HOSTNAME=$HOSTNAME >> /a/etc/sysconfig/network
-echo DOMAINNAME=$DOMAIN >> /a/etc/sysconfig/network
-echo GATEWAY=$GATEWAY >> /a/etc/sysconfig/network
-echo GATEWAYDEV=eth0 >> /a/etc/sysconfig/network
+echo HOSTNAME=$HOSTNAME >> /a/etc/sysconfig/network || shellout
+echo DOMAINNAME=$DOMAIN >> /a/etc/sysconfig/network || shellout
+echo GATEWAY=$GATEWAY >> /a/etc/sysconfig/network || shellout
+echo GATEWAYDEV=eth0 >> /a/etc/sysconfig/network || shellout
 #
 # /etc/sysconfig/network-scripts/ifcfg-eth0
-echo DEVICE=eth0 > /a/etc/sysconfig/network-scripts/ifcfg-eth0
-echo IPADDR=$IPADDR >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
-echo NETWORK=$NETWORK >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
-echo NETMASK=$NETMASK >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
-echo BROADCAST=$BROADCAST >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
-echo ONBOOT=yes >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
-echo BOOTPROTO=none >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
+echo DEVICE=eth0 > /a/etc/sysconfig/network-scripts/ifcfg-eth0 || shellout
+echo IPADDR=$IPADDR >> /a/etc/sysconfig/network-scripts/ifcfg-eth0 || shellout
+echo NETWORK=$NETWORK >> /a/etc/sysconfig/network-scripts/ifcfg-eth0 || shellout
+echo NETMASK=$NETMASK >> /a/etc/sysconfig/network-scripts/ifcfg-eth0 || shellout
+echo BROADCAST=$BROADCAST >> /a/etc/sysconfig/network-scripts/ifcfg-eth0 || shellout
+echo ONBOOT=yes >> /a/etc/sysconfig/network-scripts/ifcfg-eth0 || shellout
+echo BOOTPROTO=none >> /a/etc/sysconfig/network-scripts/ifcfg-eth0 || shellout
 
 EOF
 
@@ -1132,9 +1132,9 @@ EOF
 # see "(none)" as the hostname.
 #
 # /etc/sysconfig/network
-echo DEVICE=eth0 > /a/etc/sysconfig/network-scripts/ifcfg-eth0
-echo ONBOOT=yes >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
-echo BOOTPROTO=dhcp >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
+echo DEVICE=eth0 > /a/etc/sysconfig/network-scripts/ifcfg-eth0 || shellout
+echo ONBOOT=yes >> /a/etc/sysconfig/network-scripts/ifcfg-eth0 || shellout
+echo BOOTPROTO=dhcp >> /a/etc/sysconfig/network-scripts/ifcfg-eth0 || shellout
 
 EOF
 
@@ -1143,10 +1143,10 @@ EOF
 # Stuff for IP addressing via DHCP
 #
 # /etc/sysconfig/network
-echo HOSTNAME=$HOSTNAME >> /a/etc/sysconfig/network
-echo DEVICE=eth0 > /a/etc/sysconfig/network-scripts/ifcfg-eth0
-echo ONBOOT=yes >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
-echo BOOTPROTO=dhcp >> /a/etc/sysconfig/network-scripts/ifcfg-eth0
+echo HOSTNAME=$HOSTNAME >> /a/etc/sysconfig/network || shellout
+echo DEVICE=eth0 > /a/etc/sysconfig/network-scripts/ifcfg-eth0 || shellout
+echo ONBOOT=yes >> /a/etc/sysconfig/network-scripts/ifcfg-eth0 || shellout
+echo BOOTPROTO=dhcp >> /a/etc/sysconfig/network-scripts/ifcfg-eth0 || shellout
 
 EOF
 
@@ -1163,22 +1163,22 @@ if ($distro eq "debian_linux_2.2")
 # Stuff for static IP addressing
 #
 # /etc/hostname
-echo $HOSTNAME > /a/etc/hostname
+echo $HOSTNAME > /a/etc/hostname || shellout
 
 # /etc/network/interfaces
-echo '# /etc/network/interfaces -- configuration file for ifup(8), ifdown(8)'            > /a/etc/network/interfaces
-echo ''                                                                                  >> /a/etc/network/interfaces
-echo '# The loopback interface'                                                          >> /a/etc/network/interfaces
-echo 'iface lo inet loopback'                                                            >> /a/etc/network/interfaces
-echo ''                                                                                  >> /a/etc/network/interfaces
-echo '# The first network card - this entry was created during the Debian installation'  >> /a/etc/network/interfaces
-echo '# (network, broadcast and gateway are optional)'                                   >> /a/etc/network/interfaces
-echo 'iface eth0 inet static'                                                            >> /a/etc/network/interfaces
-echo "        address $IPADDR"                                                           >> /a/etc/network/interfaces
-echo "        netmask $NETMASK"                                                          >> /a/etc/network/interfaces
-echo "        network $NETWORK"                                                          >> /a/etc/network/interfaces
-echo "        broadcast $BROADCAST"                                                      >> /a/etc/network/interfaces
-echo "        gateway $GATEWAY"                                                          >> /a/etc/network/interfaces
+echo '# /etc/network/interfaces -- configuration file for ifup(8), ifdown(8)'            > /a/etc/network/interfaces || shellout
+echo ''                                                                                  >> /a/etc/network/interfaces || shellout
+echo '# The loopback interface'                                                          >> /a/etc/network/interfaces || shellout
+echo 'iface lo inet loopback'                                                            >> /a/etc/network/interfaces || shellout
+echo ''                                                                                  >> /a/etc/network/interfaces || shellout
+echo '# The first network card - this entry was created during the Debian installation'  >> /a/etc/network/interfaces || shellout
+echo '# (network, broadcast and gateway are optional)'                                   >> /a/etc/network/interfaces || shellout
+echo 'iface eth0 inet static'                                                            >> /a/etc/network/interfaces || shellout
+echo "        address $IPADDR"                                                           >> /a/etc/network/interfaces || shellout
+echo "        netmask $NETMASK"                                                          >> /a/etc/network/interfaces || shellout
+echo "        network $NETWORK"                                                          >> /a/etc/network/interfaces || shellout
+echo "        broadcast $BROADCAST"                                                      >> /a/etc/network/interfaces || shellout
+echo "        gateway $GATEWAY"                                                          >> /a/etc/network/interfaces || shellout
 
 EOF
    }
@@ -1191,14 +1191,14 @@ EOF
 echo $HOSTNAME > /a/etc/hostname
 
 # /etc/network/interfaces
-echo '# /etc/network/interfaces -- configuration file for ifup(8), ifdown(8)'            > /a/etc/network/interfaces
-echo ''                                                                                  >> /a/etc/network/interfaces
-echo '# The loopback interface'                                                          >> /a/etc/network/interfaces
-echo 'iface lo inet loopback'                                                            >> /a/etc/network/interfaces
-echo ''                                                                                  >> /a/etc/network/interfaces
-echo '# The first network card - this entry was created during the Debian installation'  >> /a/etc/network/interfaces
-echo '# (network, broadcast and gateway are optional)'                                   >> /a/etc/network/interfaces
-echo 'iface eth0 inet dhcp'                                                              >> /a/etc/network/interfaces
+echo '# /etc/network/interfaces -- configuration file for ifup(8), ifdown(8)'            > /a/etc/network/interfaces || shellout
+echo ''                                                                                  >> /a/etc/network/interfaces || shellout
+echo '# The loopback interface'                                                          >> /a/etc/network/interfaces || shellout
+echo 'iface lo inet loopback'                                                            >> /a/etc/network/interfaces || shellout
+echo ''                                                                                  >> /a/etc/network/interfaces || shellout
+echo '# The first network card - this entry was created during the Debian installation'  >> /a/etc/network/interfaces || shellout
+echo '# (network, broadcast and gateway are optional)'                                   >> /a/etc/network/interfaces || shellout
+echo 'iface eth0 inet dhcp'                                                              >> /a/etc/network/interfaces || shellout
 
 EOF
    }
@@ -1213,24 +1213,24 @@ if ($distro eq "debian_linux_2.1"){
 # Stuff for static IP addressing
 #
 # /etc/hostname
-echo $HOSTNAME > /a/etc/hostname
+echo $HOSTNAME > /a/etc/hostname || shellout
 
 # /etc/init.d/network
-echo '#! /bin/sh'                                     > /a/etc/init.d/network
-echo 'ifconfig lo 127.0.0.1'                          >> /a/etc/init.d/network
-echo 'route add -net 127.0.0.0 netmask 255.0.0.0 lo'  >> /a/etc/init.d/network
+echo '#! /bin/sh'                                     > /a/etc/init.d/network || shellout
+echo 'ifconfig lo 127.0.0.1'                          >> /a/etc/init.d/network || shellout
+echo 'route add -net 127.0.0.0 netmask 255.0.0.0 lo'  >> /a/etc/init.d/network || shellout
 
-echo IPADDR=$IPADDR        >> /a/etc/init.d/network
-echo NETMASK=$NETMASK      >> /a/etc/init.d/network
-echo NETWORK=$NETWORK      >> /a/etc/init.d/network
-echo BROADCAST=$BROADCAST  >> /a/etc/init.d/network
-echo GATEWAY=$GATEWAY      >> /a/etc/init.d/network
+echo IPADDR=$IPADDR        >> /a/etc/init.d/network || shellout
+echo NETMASK=$NETMASK      >> /a/etc/init.d/network || shellout
+echo NETWORK=$NETWORK      >> /a/etc/init.d/network || shellout
+echo BROADCAST=$BROADCAST  >> /a/etc/init.d/network || shellout
+echo GATEWAY=$GATEWAY      >> /a/etc/init.d/network || shellout
 
-echo 'ifconfig eth0 ${IPADDR} netmask ${NETMASK} broadcast ${BROADCAST}'  >> /a/etc/init.d/network
-echo 'route add -net ${NETWORK}'                                          >> /a/etc/init.d/network
-echo '[ "${GATEWAY}" ] && route add default gw ${GATEWAY} metric 1'       >> /a/etc/init.d/network
+echo 'ifconfig eth0 ${IPADDR} netmask ${NETMASK} broadcast ${BROADCAST}'  >> /a/etc/init.d/network || shellout
+echo 'route add -net ${NETWORK}'                                          >> /a/etc/init.d/network || shellout
+echo '[ "${GATEWAY}" ] && route add default gw ${GATEWAY} metric 1'       >> /a/etc/init.d/network || shellout
 
-chmod 755 /a/etc/init.d/network
+chmod 755 /a/etc/init.d/network || shellout
 
 EOF
 
@@ -1241,12 +1241,12 @@ EOF
 # Stuff for IP addressing via DHCP
 #
 # /etc/hostname
-echo $HOSTNAME > /a/etc/hostname
+echo $HOSTNAME > /a/etc/hostname || shellout
 
 # /etc/init.d/network
-echo '#! /bin/sh'                                     > /a/etc/init.d/network
-echo 'ifconfig lo 127.0.0.1'                          >> /a/etc/init.d/network
-echo 'route add -net 127.0.0.0 netmask 255.0.0.0 lo'  >> /a/etc/init.d/network
+echo '#! /bin/sh'                                     > /a/etc/init.d/network || shellout
+echo 'ifconfig lo 127.0.0.1'                          >> /a/etc/init.d/network || shellout
+echo 'route add -net 127.0.0.0 netmask 255.0.0.0 lo'  >> /a/etc/init.d/network || shellout
 
 EOF
 
@@ -1263,7 +1263,7 @@ print MASTER_SCRIPT << 'EOF';
 # (no, we can not just do a lilo -r "/a/".
 # we need to use the lilo that came with the distribution in case
 # it has special modifications such as support for hardware or software RAID)
-chroot /a/ /sbin/lilo
+chroot /a/ /sbin/lilo || shellout
 
 EOF
 
@@ -1271,7 +1271,7 @@ EOF
 print MASTER_SCRIPT "# unmount the freshly filled filesystems\n";
 foreach $mount_point (reverse sort @mount_points) {
     print MASTER_SCRIPT "echo -n umount /a$mount_point/ ... \n";
-    print MASTER_SCRIPT "umount /a$mount_point/ && echo Done!\n";
+    print MASTER_SCRIPT "umount /a$mount_point/ && echo Done! || shellout\n";
 }
 print MASTER_SCRIPT "\n";
 
@@ -1280,7 +1280,7 @@ print MASTER_SCRIPT "# in the kernel will do that for us.\n";
 print MASTER_SCRIPT "\n";
 
 print MASTER_SCRIPT "# Take network interface down\n";
-print MASTER_SCRIPT "ifconfig eth0 down\n";
+print MASTER_SCRIPT "ifconfig eth0 down || shellout\n";
 print MASTER_SCRIPT "\n";
 
 if ($post_install eq "beep") {
@@ -1291,8 +1291,8 @@ count="1"
 while [ $ralph="sick" ]
 do
   beep
-  [ $count -lt 60 ] && echo I\'ve been done for $count seconds.  Reboot me already\!
-  [ $(($count / 60 * 60)) = $count ] && echo I\'ve been done for $(($count / 60)) minutes now.  Reboot me already\!
+  [ $count -lt 60 ] && echo "I've been done for $count seconds.  Reboot me already!"
+  [ $(($count / 60 * 60)) = $count ] && echo "I've been done for $(($count / 60)) minutes now.  Reboot me already!"
   sleep 1
   count=$(($count + 1))
 done
