@@ -151,9 +151,9 @@
    <application>VA SystemImager</application> is software that makes the 
    installation of Linux to masses of similar machines relatively easy.  
    It also makes software distribution, configuration, and operating 
-   system updates easy.  You can even update from one Linux release version 
-   to another!  <application>VA SystemImager</application> can also be 
-   used for content management on web servers.  
+   system updates easy.  You can even update from one Linux release or  
+   version to another!  <application>VA SystemImager</application> can  
+   also be used for content management on web servers.  
   </para>
 
   <para>
@@ -335,7 +335,7 @@
   <title>How Does it Work? (summary)</title>
    <para>
     The basic idea behind <application>VA SystemImager</application> is 
-    to retrieve the entire system image from a "golden" client to an 
+    to retrieve the entire system image from a "golden client" to an 
     "image server".  This image can then be replicated to any number of 
     client systems.
    </para>
@@ -457,7 +457,7 @@
  <sect1 id=Overview>
   <title>Overview of SystemImager Operations</title>
   <para>
-   <itemizedlist>
+   <orderedlist>
 
     <listitem>
      <para>
@@ -468,21 +468,29 @@
 
     <listitem>
      <para>
-      Install Linux on your "golden" client, and customize as you desire.
+      Install Linux on your "golden client", and customize as you desire.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Install the VA SystemImager client software on your "golden" client and run
+      Install the VA SystemImager client software on your "golden client" and run
       the prepareclient command.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Run getimage on the image server to pull the image from the "golden" client 
+      Run getimage on the image server to pull the image from the "golden client" 
       to the image server.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Run <command>addclients</command> on the image server to tell it
+      which clients will receive which image, and to populate the 
+      image server's /etc/hosts and /tftpboot/systemimager/hosts files.
      </para>
     </listitem>
 
@@ -499,16 +507,764 @@
      </para>
     </listitem>
 
-   </itemizedlist>
+   </orderedlist>
   </para>
  </sect1>
  
- <sect1 id=TheActualHOWTO>
+ <sect1 id=TheActualStep-by-StepHOWTO>
   <title>The Actual Step-by-Step HOWTO</title>
-   <para>
-   </para>
-   <para>
-   </para>
+   <orderedlist>
+
+    <listitem>
+     <para>
+      Install the <application>VA SystemImager</application> server package on the 
+      machine you have chosen as your image server.  
+     </para>
+     <para>
+      You can find the SystemImager packages and links to some of the dependent 
+      packages that may not be a part of your Linux distribution at 
+      <ulink url="http://systemimager.org/"></ulink>.
+     </para>
+     <para>
+      The SystemImager server software is available in tar ball format and may be
+      available in other distribution specific packaged formats.  The example below
+      is for installing from a tar ball.  The software is the same regardless of 
+      the packaging format.
+     </para>
+     <example>
+      <title>
+       Often times, a machine that is already performing some kind of management 
+       function is a good choice for your image server.
+      </title>
+      <mediaobject>
+       <imageobject>
+        <imagedata format="jpg" fileref="images/si_image1.jpg">
+       </imageobject>
+       <imageobject>
+        <imagedata format="eps" fileref="images/si_image1.eps">
+       </imageobject>
+       <textobject>
+        <phrase>
+         Install the Image Server 
+        </phrase>
+       </textobject>
+      </mediaobject>
+     </example>
+     <example><title>Installing the SystemImager client software</title>
+      <programlisting>
+[root@imageserver]# bzcat va-systemimager-server-x.x.x.tar.bz2 | tar -x
+[root@imageserver]# cd va-systemimager-server-x.x.x
+[root@imageserver]# ./install
+Welcome to VA SystemImager.
+
+This install script may modify the following files and/or directories:
+
+ /tftpboot/systemimager/ -- create if necessary and add appropriate files/links
+ /tftpboot/pxelinux.cfg/ -- create if necessary and add appropriate files/links
+ /etc/services           -- add rsync and/or tftp entries if necessary
+ /etc/inetd.conf         -- remove rsync entry if necessary and
+                            add or modify tftp entry if necessary
+ /etc/rsyncd.conf        -- it is assumed that VA SystemImager will manage this
+                            file and that it will not be used for anything else
+
+ All modified files will be backed up with the .beforesystemimager extension.
+
+ See "install -help" for command line options.
+
+Install VA SystemImager? (y/[n]) y
+Ok. Installing VA SystemImager...
+
+Installing files in /usr/sbin/
+Installing files in /etc/init.d/
+Installing files in /tftpboot/
+Installing files in /tftpboot/pxelinux.cfg/
+Installing files in /tftpboot/systemimager/
+Installing files in /var/spool/systemimager/images/
+rsync entries already enabled in /etc/services...
+tftp entry already enabled in /etc/inetd.conf...
+VA SystemImager brand /etc/rsyncd.conf file already exists...
+creating soft links to rsync init script...
+running rsync init script...
+Stopping rsync daemon: rsync.
+Starting rsync daemon: rsync.
+Installing files in /usr/share/doc/va-systemimager-x.x.x/
+
+All done!  Please read the manual before using SystemImager.
+See /usr/share/doc/va-systemimager-x.x.x/ for all documentation.
+      </programlisting>
+     </example>
+    </listitem>
+
+    <listitem>
+     <para>
+      Install Linux on your "golden client", and customize as you desire.
+     </para>
+     <para>
+      Select a machine which will be the "golden client".  This machine's 
+      image is the image you will replicate to other machines.  
+     </para>
+     <para>
+      Configure this "golden client" as you normally would any machine. 
+      Install Linux on this node with the understanding that the software
+      installed will eventually constitute the image for all other nodes
+      installed with <application>VA SystemImager</application>.
+      Don't worry too much about getting it exactly right the first time, 
+      since you can easily use <application>VA SystemImager</application> 
+      to make incremental changes to your image and distribute those changes
+      without doing a complete re-install.
+     </para>
+
+     <example><title>Install the "golden client"</title>
+      <mediaobject>
+       <imageobject>
+        <imagedata format="jpg" fileref="images/si_image2.jpg">
+       </imageobject>
+       <imageobject>
+        <imagedata format="eps" fileref="images/si_image2.eps">
+       </imageobject>
+       <textobject>
+        <phrase>
+         Install the "golden client" 
+        </phrase>
+       </textobject>
+      </mediaobject>
+     </example>
+     </listitem>
+
+    <listitem>
+     <para>
+      Install the VA SystemImager client software on your "golden client" and run
+      the prepareclient command.
+     </para>
+
+     <para>
+      The SystemImager client software is available in tar ball format and may be
+      available in other distribution specific packaged formats.  The example below
+      is for installing from a tar ball.  The software is the same regardless of 
+      the packaging format.
+     </para>
+
+     <example><title>Installing the SystemImager client software</title>
+      <programlisting>
+[root@imageserver]# bzcat va-systemimager-client-x.x.x.tar.bz2 | tar -x
+[root@imageserver]# cd va-systemimager-client-x.x.x
+[root@imageserver]# ./installclient 
+Install VA SystemImager client? (y/[n]) y
+Ok. Installing VA SystemImager client...
+
+Installing files in /usr/share/doc/va-systemimager-x.x.x/
+
+All done!  Please read the manual before using SystemImager.
+See /usr/share/doc/va-systemimager-x.x.x/ for all documentation.
+
+You must run "prepareclient" before you can retrieve this clients image.
+Do you want to run "prepareclient" now? (y/[n]) n
+"prepareclient" not run.
+Be sure to run "prepareclient" before you run "getimage" on the imageserver.
+      </programlisting>
+     </example>
+
+     <example><title>Running the prepareclient command</title>
+      <programlisting>
+[root@imageserver]# <command>prepareclient</command>
+
+Welcome to the VA SystemImager prepareclient command.  This command
+may modify the following files to prepare your client for having it's
+image retrieved by the imageserver.  It will also create the 
+/etc/systemimager directory and fill it with information about your 
+golden client, such as the disk partitioning scheme(s). 
+ 
+ /etc/services    -- add rsync line if necessary
+ /etc/inetd.conf  -- comment out rsync line if necessary
+                     (rsync will run as a daemon until shutdown)
+ /tmp/rsyncd.conf -- create a temporary rsyncd.conf file with a
+                     [root] entry in it.
+ 
+All modified files will be backed up with the .beforesystemimager 
+extension.
+
+See "prepareclient -help" for command line options.
+
+Prepare client for VA SystemImager? (y/[n]): y
+Ok. Preparing client for VA SystemImager...
+
+Creating /tmp/rsyncd.conf ...
+Starting or re-starting rsync as a daemon.....done!
+
+This client is ready to have it's image retrieved.
+You must now run the "getimage" command on the imageserver.
+      </programlisting>
+     </example>
+    </listitem>
+
+    <listitem>
+     <para>
+      Run <command>getimage</command> on the image server to pull the image 
+      from the "golden client" to the image server.
+     </para>
+
+    <example><title>Pull the "golden client's" image to the image server</title>
+     <mediaobject>
+      <imageobject>
+       <imagedata format="jpg" fileref="images/si_image3.jpg">
+      </imageobject>
+      <imageobject>
+       <imagedata format="eps" fileref="images/si_image3.eps">
+      </imageobject>
+      <textobject>
+       <phrase>
+        Pull the "golden client's" image to the image server
+       </phrase>
+      </textobject>
+     </mediaobject>
+    </example>
+
+     <para>
+      The basic syntax is: "<command>getimage</command> <command>-golden-client</command> [client_hostname] <command>-image</command> [image_name]"
+     </para>
+     <para>
+      Where [client_hostname] is the hostname or IP address of the "golden client"
+      and [image_name] is the name that you want to give to this image.
+      There are many other options that can be seen with "<command>getimage -help</command>".
+     </para>
+
+     <example><title>Running the getimage command</title>
+      <programlisting>
+[root@imageserver]# getimage -g my-golden-client -image web_server_image_v1
+
+This program will get the "web_server_image_v1" system image from "my-golden-client"
+making the assumption that all filesystems considered part
+of the system image are using ext2, ext3, or reiserfs.
+
+This program will not get /proc, NFS, or other filesystems
+not mentioned above.
+
+See "getimage -help" for command line options.
+
+Continue? ([y]/n): y
+
+Retrieving /etc/systemimager/mounted_filesystems from my-golden-client to check for mounted filesystems...
+------------- my-golden-client mounted_filesystems RETRIEVAL PROGRESS -------------
+receiving file list ... done
+/var/spool/systemimager/images/web_server_image_v1/etc/systemimager/mounted_filesystems
+wrote 132 bytes  read 294 bytes  852.00 bytes/sec
+total size is 180  speedup is 0.42
+------------- my-golden-client mounted_filesystems RETRIEVAL FINISHED -------------
+
+
+Retrieving image web_server_image_v1 from my-golden-client
+------------- web_server_image_v1 IMAGE RETRIEVAL PROGRESS -------------
+receiving file list ... done
+./
+bin/
+bin/mt -> /etc/alternatives/mt
+bin/pidof -> ../sbin/killall5
+bin/rbash -> bash
+bin/sh -> bash
+boot/
+boot/lost+found/
+cdrom/
+dev/
+dev/MAKEDEV -> /sbin/MAKEDEV
+dev/agpgart
+dev/atibm
+dev/audio
+dev/audio1
+dev/audio2
+dev/audio3
+dev/audioctl
+dev/aztcd0
+dev/bpcd
+
+[ ... etc, etc, etc ... ]
+
+var/log/
+var/log/exim/
+var/log/ksymoops/
+var/log/news/
+var/run/
+var/spool/
+var/spool/cron/
+var/spool/cron/atjobs/
+var/state/
+var/state/apt/
+var/state/apt/lists/
+var/state/logrotate/
+var/tmp/
+wrote 117490 bytes  read 134577117 bytes  413808.32 bytes/sec
+total size is 134072667  speedup is 1.00
+------------- web_server_image_v1 IMAGE RETRIEVAL FINISHED -------------
+
+Press &lt;Enter> to continue...
+
+IP Address Assignment
+---------------------
+
+There are four ways to assign IP addresses to the client systems on an
+ongoing basis:
+
+1) static_dhcp -- A DHCP server will assign the
+     same static address each time to clients 
+     installed with this image.  Also see the
+     "makedhcpstatic" command.
+
+2) dynamic_dhcp -- A DHCP server will assign IP
+     addresses dynamically to clients installed
+     with this image.  They may be assigned a
+     different address each time.
+
+3) static -- The IP address the client uses
+     during autoinstall will be permanently
+     assigned to that client.
+
+4) replicant -- Don't mess with the network
+     settings in this image.  I'm using it as a
+     backup and quick restore mechanism for a 
+     single machine.
+
+Which method do you prefer? [1]: 3
+You have chosen method 3 for assigning IP addresses.
+
+Are you satisfied? ([y]/n): y
+Would you like to run the "addclients" utility now? (y/[n]): n
+      </programlisting>
+     </example>
+    </listitem>
+
+    <listitem>
+     <para>
+      Run <command>addclients</command> on the image server to tell it
+      which clients will receive which image, and to populate the 
+      image server's /etc/hosts and /tftpboot/systemimager/hosts files.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Choose and configure the method for assigning IP addresses to your 
+      autoinstall clients.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Autoinstall the "golden" image on other machines.
+     </para>
+    </listitem>
+
+   </orderedlist>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+     <para>
+      The autoinstall clients will need IP addresses in order to install
+      themselves.  There are two ways to give your autoinstall clients
+      their IP address information:
+      <itemizedlist>
+       <listitem><para>with a DHCP server</para></listitem>
+       <listitem><para>with a configuration file called "local.cfg"</para></listitem>
+      </itemizedlist>
+
+      Run the command, <command>makedhcpserver</command>, to configure 
+      your image server to be a DHCP server.  Be sure to follow the 
+      instructions it gives you at the end.
+     </para>
+
+     <example><title>Running the makedhcpserver command</title>
+      <programlisting format="linespecific">
+[root@imageserver]#  <command>makedhcpserver</command>
+
+Welcome to the VA SystemImager "makedhcpserver" command.  This
+command will prepare this computer to be a DHCP server by creating
+the following file:
+ 
+ /etc/dhcpd.conf
+ 
+If there is an existing file, it will be backed up with the
+.beforesystemimager extension.
+ 
+Continue? (y/[n]): y
+
+Type your response or hit <command>Enter</command> to accept [defaults].
+If you don't have a response, such as no first or second DNS server,
+just hit <command>Enter</command> and none will be used.
+ 
+Type your response or hit <command>Enter</command> to accept [defaults].
+If you don't have a response, such as no first or second DNS server,
+just hit <command>Enter</command> and none will be used.
+ 
+What is your domain name? [localdomain.domain]: pratt.pvt
+What is your network number? [192.168.1.0]: 10.10.10.0
+What is your netmask? [255.255.255.0]:
+What is the starting IP address for your dhcp range? [192.168.1.1]: 10.10.10.3
+What is the ending IP address for your dhcp range? [192.168.1.100]: 10.10.10.12
+What is the IP address of your first DNS server? []: 10.10.10.1
+What is the IP address of your second DNS server? []:
+What is the IP address of your default gateway? [192.168.1.254]: 10.10.10.1
+What is the air speed velocity of the common swallow? []:
+
+Ahh, but seriosly folks...
+Here are the values you have chosen:
+ 
+################################################################
+DNS Domain Name: pratt.pvt
+network number:  10.10.10.0
+netmask:         255.255.255.0
+starting IP address for your dhcp range: 10.10.10.3
+ending IP address for your dhcp range:   10.10.10.12
+first DNS server:  10.10.10.1
+second DNS server:
+third DNS server:
+default gateway: 10.10.10.1
+################################################################
+ 
+Are you satisfied? (y/[n]): y
+
+The dhcp server configuration file (/etc/dhcpd.conf) file has been created
+for you.  Please verify it for accuracy.
+ 
+If this file does not look satisfactory, you can run this command again to
+re-create it: "makedhcpserver"
+ 
+WARNING!:  If you have multiple physical network interfaces, be sure to
+edit the init script that starts dhcpd so that it looks like:
+"dhcpd $interfacename" ( ie. /sbin/dhcpd eth0 )
+ 
+Also, be sure to start or restart your dhcpd daemon.
+( ie. /etc/rc.d/init.d/dhcpd restart )
+ 
+Would you like me to restart your DHCP server software now? (y/N): y
+
+Shutting down dhcpd:                                       [FAILED]
+Starting dhcpd:                                            [  OK  ]
+Press <command>Enter</command> to continue...  
+      </programlisting>
+     </example>
+
+   <sect2 id=AutoInstall>
+    <title>Auto-install the clients</title>
+     <para>
+      There are three methods to Auto-installing the clients:
+      <itemizedlist>
+       <listitem>
+        <para>
+         Boot the system from bootable media such as a floppy diskette or 
+         bootable CD-ROM or
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         Using a network boot function, such as PXE,  if your system supports 
+         it.  This is usually enabled through a BIOS setting.
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         A client node can be told to autoinstall when it is next rebooted.
+         For this method, the client must already have Linux, 
+         <application>LILO</application>, and the 
+         <application>VA Systemimager</application> client installed.
+        </para>
+       </listitem>
+      </itemizedlist>
+     </para>
+     <sect3 id=InstallMediaBoot>
+     <title>Create the AutoInstall Media</title>
+     <para>
+     Run the command <command>makeautoinstalldiskette</command> or 
+     <command>makeautoinstallcd</command> to create your boot media.  
+     Simply boot your client off the diskette or CD and it will autoinstall 
+     itself.
+     </para>
+     </sect3>
+     <sect3 id=NetworkBoot>
+     <title>Network Booting the System</title>
+     <para>
+      If you prefer to boot off the network, change the settings in your
+      BIOS to boot off your PXE enabled network card, and reboot your
+      client system.  It *should* automatically find and boot off the
+      image server and begin to autoinstall itself.  Currently, there is no 
+      known single configuration that will work with every system.  The next 
+      sections describe some configurations that are known to work.  If you
+      are successful in repeatably configuring a system for PXE autoinstalls,
+      and it is in any way different from those already mentioned below (i.e.
+      different package versions, latest distribution, etc.), please let us
+      know so that it can be included in this document.
+     </para>
+       <sect4 id=RedHat6.2BootAgent3.x>
+       <title>RedHat 6.2 and Intel BootAgent 3.x</title>
+       <para>
+        This testing was done on HP Netservers with Intel Ether Express Pro 
+        cards.  The Netservers ran a typical RedHat 6.2 installation, while 
+        the NIC's were running a 3.x version of the Intel BootAgent firmware.
+	The relevant software was:
+        <itemizedlist>
+         <listitem>
+          <para>
+	   <filename>
+           va-systemimager-1.1-1.i386.rpm
+	   </filename>
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <filename>
+           pxe-0.1-14.i386.rpm
+	   </filename>
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <filename>
+	   dhcp-2.0-5.i386.rpm
+	   </filename>
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <filename>
+           tftp-hpa-0.13-1.i386.rpm
+	   </filename>
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <filename>
+           inetd-0.16-4.i386.rpm
+	   </filename>
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <filename>
+           syslinux-1.48-2.i386.rpm
+	   </filename>
+          </para>
+         </listitem>
+        </itemizedlist>
+	Taking the following steps should result in a working configuration:
+        <orderedlist>
+         <listitem>
+          <para>
+           Install the above packages onto the image server.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <command>
+            # mv /tftpboot/X86PC/UNDI/linux-install/linux.0 \
+                 /tftpboot/X86PC/UNDI/linux-install/linux.0.bak
+           </command>
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <command>
+            # cp /tftpboot/pxelinux.bin \
+              /tftpboot/X86PC/UNDI/linux-install/linux.0
+           </command>
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <command>
+            # cp -r /tftpboot/kernel /tftpboot/initrd.gz \
+              /tftpboot/pxelinux.cfg /tftpboot/X86PC/UNDI/linux-install/
+           </command>
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <command>
+            # cp /tftpboot/pxelinux.cfg/message.txt \
+              /tftpboot/X86PC/UNDI/linux-install
+           </command>
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <command>
+            # /etc/rc.d/init.d/pxe start
+           </command>
+          </para>
+         </listitem>
+        </orderedlist>
+       </para>
+       </sect4>
+       <sect4 id=RedHat7.0BootAgent3.x>
+       <title>RedHat 7.0 and Intel BootAgent 3.x</title>
+       <para>
+        This testing was done on HP Netservers with Intel Ether Express Pro 
+        cards.  The Netservers ran a typical RedHat 7.0 installation, while 
+        the NIC's were running a 3.x version of the Intel BootAgent firmware.
+	The relevant software was:
+        <itemizedlist>
+         <listitem>
+          <para>
+           <filename>va-systemimager-1.3.0-1.i386.rpm</filename> - This
+	   version has a few incompatiblities with RedHat 7.0.  It is unable
+	   to parse the LABEL= entries in the golden client's
+	   <filename>/etc/fstab</filename> file, and it assumes the
+           image server uses <application>inetd</application> instead of
+	   <application>xinetd</application>.  This issues have been
+           resolved in <application>VA SystemImager 1.4</application>.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <filename>
+           pxe-0.1-20.i386.rpm
+	   </filename>
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+	   <filename>
+	   dhcp-2.0-12.i386.rpm
+	   </filename>
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <filename>tftp-server-0.17-5.i386.rpm</filename> - The default
+	   <application>xinetd</application> entry for 
+	   <application>tftp-server</application> must be modified 
+	   for use with <application>VA SystemImager</application>.  This entry
+	   is stored in <filename>/etc/xinetd.d/tftp</filename>.  An example
+	   of a valid entry is:
+	   <example>
+	    <title>Sample tftp entry for xinetd</title>
+	     <literallayout>
+service tftp
+{
+        socket_type             = dgram
+        protocol                = udp
+        wait                    = yes
+        user                    = root
+        server                  = /usr/sbin/tftpd
+        server_args             = -s /tftpboot -r blksize
+        disable                 = no
+}
+	    </literallayout>
+	   </example>
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <filename>xinetd-2.1.8.9pre11-1.i386.rpm</filename> - this version
+	   has a race condition which can prevent the tftp server from
+	   responding.  this has supposedly been fixed in version
+	   2.1.8.9pre13.
+	   <application>xinetd</application> has a default limit on how many
+	   connections can be spawned in a 60 second period.  This is
+	   configurable, if necessary, by adding the -loop argument in the
+	   <filename>/etc/init.d/xinetd</filename> initscript.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <filename>
+	    syslinux-1.48-2.i386.rpm
+	   </filename>
+          </para>
+         </listitem>
+        </itemizedlist>
+	Taking the following steps should result in a working configuration:
+        <orderedlist>
+         <listitem>
+          <para>
+           Install the above packages onto the image server.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <command>
+            # mv /tftpboot/X86PC/UNDI/linux-install/linux.0 \
+                 /tftpboot/X86PC/UNDI/linux-install/linux.0.bak
+           </command>
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <command>
+            # cp /tftpboot/pxelinux.bin \
+              /tftpboot/X86PC/UNDI/linux-install/linux.0
+           </command>
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <command>
+            # cp -r /tftpboot/kernel /tftpboot/initrd.gz \
+              /tftpboot/pxelinux.cfg /tftpboot/X86PC/UNDI/linux-install/
+           </command>
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <command>
+            # cp /tftpboot/pxelinux.cfg/message.txt \
+              /tftpboot/X86PC/UNDI/linux-install
+           </command>
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <command>
+            # touch /var/lib/dhcp/dhcpd.leases
+           </command>
+           </para>
+          </listitem>
+         <listitem>
+          <para>
+           <command>
+            # /etc/init.d/pxe start
+           </command>
+          </para>
+         </listitem>
+        </orderedlist>
+       </para>
+       </sect4>
+       <sect4 id=RedHat7.0BootAgent4.x>
+       <title>RedHat 7.0 and Intel BootAgent 4.x</title>
+	<para>
+         This configuration is very similar to the section "RedHat 7.0 and 
+         Intel BootAgent 3.x".  The only noticable difference is that
+	 the pxe package is no longer required.  The entries created in
+         /etc/dhcpd.conf by <command>makedhcpserver</command> are sufficient.
+        </para>
+       </sect4>
+     </sect3>
+     <sect3 id=NextReboot>
+     <title>Autoinstall Upon Reboot</title>
+      <para>
+      This autoinstall method allows you to tell a machine to autoinstall 
+      itself the next time it is rebooted.  This eliminates the need for
+      boot media (floppy, CD, and network).  To tell a client machine to
+      autoinstall on it's next boot, execute
+      <command>/usr/sbin/updateclient -autoinstall</command>.  This tells
+      <application>LILO</application> to boot a kernel and a ramdisk provided
+      by <application>VA SystemImager</application>.
+      </para>
+     </sect3>
+   </sect2>
  </sect1>
 
  <sect1 id=DesignGoals>
@@ -854,728 +1610,7 @@
    </para>
  </sect1>
 
- <sect1 id=InstallConfigure>
-  <title>Installing and Configuring the Image Server</title>
-   <para>
-    This section describes the installation and configuration of the 
-    image server. The image server is usually the node in a cluster or farm 
-    which is used to manage other nodes in the cluster or farm or provides 
-    necessary resources to other nodes. Examples of these resources include
-    NFS, DNS, DHCP, YP, LDAP, VACM (VA Cluster Manager), Scheduling Services, 
-    etc.
-   </para>
-  <example>
-   <title>Install the VA SystemImager server package on the machine
-    you have chosen as your image server.  Often times, a machine that is
-    already performing some kind of management function is a good choice.
-   </title>
-   <mediaobject>
-    <imageobject>
-     <imagedata format="jpg" fileref="images/si_image1.jpg">
-    </imageobject>
-    <imageobject>
-     <imagedata format="eps" fileref="images/si_image1.eps">
-    </imageobject>
-    <textobject>
-     <phrase>
-      Install the Image Server 
-     </phrase>
-    </textobject>
-   </mediaobject>
-  </example>
-   <sect2 id=Install>
-    <title>Install <application>VA SystemImager</application></title>
-     <para>
-      Download and install the latest <application>VA SystemImager
-      </application>package, and any dependent packages that may be
-      required.  You can find links to the key packages at 
-      <ulink url="http://systemimager.org/"></ulink>.
-     </para>
-   </sect2>
-   <sect2 id=BuildMasterClient>
-    <title>Create the Golden Image</title>
-     <para>
-      Select a machine which will be the "golden" client.  This machine's 
-      image is the image you will eventually replicate across other machines.  
-     </para>
 
-    <example><title>Install the "golden" client</title>
-     <mediaobject>
-      <imageobject>
-       <imagedata format="jpg" fileref="images/si_image2.jpg">
-      </imageobject>
-      <imageobject>
-       <imagedata format="eps" fileref="images/si_image2.eps">
-      </imageobject>
-      <textobject>
-       <phrase>
-        Install the "golden" client 
-       </phrase>
-      </textobject>
-     </mediaobject>
-    </example>
-
-     <itemizedlist>
-      <listitem>
-       <para>
-        Configure this "golden" client as you normally would any machine. 
-        Install Linux on this node with the understanding that the software
-        installed will eventually constitute the image for all other nodes
-        installed with <application>VA SystemImager</application>.
-        Don't worry too much about getting it exactly right the first time, 
-        since you can easily use <application>VA SystemImager</application> 
-        to make incremental changes to your image.
-       </para>
-      </listitem>
-      <listitem>
-       <para>
-        Download and install the latest <filename>va-systemimager-client
-        </filename> package on the "golden" client.
-       </para>
-      </listitem>
-      <listitem>
-       <para>
-        Run the <command>prepareclient</command> command on the "golden" client.
-       </para>
-     <example><title>Running the prepare command</title>
-      <programlisting>
-[bash@imagegolden]$  <command>prepareclient</command> 
-
-Welcome to the VA SystemImager prepareclient command.  This command
-may modify the following files to prepare your client for having it's
-image retrieved by the image server.  It will also create the 
-/etc/systemimager directory and fill it with information about your 
-golden client, such as the disk partitioning scheme(s). 
- 
- /etc/services    -- add rsync line if necessary
- /etc/inetd.conf  -- comment out rsync line if necessary
-                     (rsync will run as a daemon until shutdown)
- /tmp/rsyncd.conf -- create a temporary rsyncd.conf file with a
-                     [root] entry in it.
- 
-All modified files will be backed up with the .beforesystemimager 
-extension.
-
-Prepare client for VA SystemImager? (y/[n]): y
-
-Ok. Preparing client for VA SystemImager...
-
-Creating /tmp/rsyncd.conf ...
-Starting or re-starting rsync as a daemon.....done!
-
-This client is ready to have it's image retrieved.
-You must now run the "getimage" command on the image server.
-      </programlisting>
-     </example>
-      </listitem>
-     </itemizedlist>
-   </sect2>
-   <sect2 id=PullImage>
-    <title>Pull the Golden Image from the "golden" client</title>
-     <para>
-      You are then ready to pull the image from the "golden" client onto
-      the "image server" with the <command>getimage</command> command.
-     </para>
-
-    <example><title>Pull the "golden" client's image back to the image server</title>
-     <mediaobject>
-      <imageobject>
-       <imagedata format="jpg" fileref="images/si_image3.jpg">
-      </imageobject>
-      <imageobject>
-       <imagedata format="eps" fileref="images/si_image3.eps">
-      </imageobject>
-      <textobject>
-       <phrase>
-        Pull the "golden" client's image back to the image server
-       </phrase>
-      </textobject>
-     </mediaobject>
-    </example>
-
-     <para>
-       Syntax: <command>getimage</command> <command>-golden-client</command> [client_hostname] <command>-image</command> [image_name]
-     </para>
-     <para>
-       where [client_hostname] is the hostname or IP address of the "golden"
-       client and [image_name] is the name that you want to give to this image.
-     </para>
-
-     <example><title>The getimage command syntax</title>
-      <programlisting>
-[bash@imageserver]$  <command>getimage</command> <command>-golden-client</command> computenode1 <command>-image</command> valinux6.2.1
-      </programlisting>
-     </example>
-     <para>
-     Answer all the questions that the <command>getimage</command> command 
-     asks you, and you should be ready to autoinstall your first client by 
-     simply booting it off the network, the "autoinstallcd", or the 
-     "autoinstalldiskette".
-     </para>
-
-     <example><title>Running the getimage command</title>
-      <programlisting>
-[bash@imageserver]$  <command>getimage</command> <command>-golden-client</command> vadaltst05 <command>-image</command> vadaltst6.2.3
-
-This program will get the "vadaltst6.2.3" system image from "vadaltst05"
-making the assumption that all filesystems considered part
-of the system image are using ext2, ext3, or reiserfs.
- 
-This program will not get /proc, NFS, or other filesystems
-not mentioned above.
- 
-Continue? ([y]/n): y
-
-Retrieving /etc/mtab from vadaltst05 to check for mounted filesystems...
-------------- vadaltst05 mtab RETRIEVAL PROGRESS -------------
-receiving file list ... done
-mtab
-wrote 90 bytes  read 567 bytes  1314.00 bytes/sec
-total size is 460  speedup is 0.70
-------------- vadaltst05 mtab RETRIEVAL FINISHED -------------
- 
- 
-Retrieving image vadaltst6.2.3 from vadaltst05
-------------- vadaltst6.2.3 IMAGE RETRIEVAL PROGRESS ------------- 
-...
-wrote 198580 bytes  read 168600689 bytes  3630091.81 bytes/sec
-total size is 167808426  speedup is 0.99
-------------- vadaltst6.2.3 IMAGE RETRIEVAL FINISHED -------------
- 
-Press <command>Enter</command> to continue...  
-
-IP Address Assignment
----------------------
- 
-There are three ways to assign IP addresses to the client systems on an
-ongoing basis:
- 
-1) Static IP addresses assigned by DHCP
-   (recommended if you can continue to run the DHCP server
-    on your imageserver -- use makedhcpstatic after autoinstalling
-    your clients to make the addresses permanent)
-2) Static IP addresses
-   (recommended if you can not continue to run the DHCP server
-    on your imageserver)
-3) Dynamic IP addresses assigned by DHCP
- 
-Which method do you prefer? [1]:
-You have chosen method 1 for assigning IP addresses.
- 
-Are you satisfied? ([y]/n): 
-
-Static DHCP Instructions
-------------------------
- 
-You have chosen to use "Static DHCP" for your IP addressing.  Be sure to
-run "makedhcpstatic" after autoinstalling your client systems.  You will
-need to autoinstall your client systems in the order that you want them
-to be assigned their IP addresses.  When you run "makedhcpstatic", it
-will re-write the DHCP server configuration file to permanently assign
-to each client the same IP address that client received during it's
-autoinstall process.
- 
-Press <command>Enter</command> to continue... 
-
-Would you like to add your client information now? ([y]/n): y
-
-This utility has 3 sections.
- 
- 
-"Section 1" will ask you for your hostname information.
- 
- 
-"Section 2" will allow you to create softlinks from each
-client hostname to your "master" script in the
-"/tftpboot/systemimager/" directory.
- 
-Example: www297.sh -> web_server_image_v1.master
- 
- 
-"Section 3" will ask you for IP address information that will
-be combined with the hostname information provided in Section 1
-to create entries in "/etc/hosts" for each of these same clients.
-New entries will be appended to the end of "/etc/hosts".  If you
-specify new hostnames for existing IP addresses, those entries
-will be re-written in place to reflect the new host names.
- 
- 
-Continue? ([y]/n):
-
-addclients -- Section 1 (hostname information)
-----------------------------------------------
- 
-The next series of questions will be used to create a range
-of hostnames.  You will be asked for your domain name, the
-base host name, a beginning number, and an ending number.
- 
-For example, if you answer:
-  domain name     = systemimager.org
-  base host name  = www
-  starting number = 7
-  ending number   = 11
- 
-Then the result will be a series of hostnames that looks like this:
-  www7.systemimager.org
-  www8.systemimager.org
-  www9.systemimager.org
-  www10.systemimager.org
-  www11.systemimager.org 
-
-What is your domain name? []: pratt.pvt
-What is the base host name that you want me to use? []: vadaltst0
-What number should I begin with? []: 3
-What number should I begin with? []: 3
-What number should I end with? []: 9  
- 
-I will work with hostnames:  vadaltst03 through vadaltst09
-             in the domain:  pratt.pvt
-
-Are you satisfied? (y/[n]): 
-
-addclients -- Section 2 (soft links to master script)
------------------------------------------------------
- 
-Would you like me to create soft links to a "master" script so
-that hosts:
- 
-  vadaltst03 through vadaltst09
- 
-can be autoinstalled with that image? ([y]/n): 
-
-Here is a list of available images:
- 
-vadaltst6.2.3
- 
-Which image would you like these hosts to receive? [vadaltst6.2.3]:
-
-Your soft links have been created.
- 
-Press <command>Enter</command> to continue... 
-
-addclients -- Section 3 (adding or modifying /etc/hosts entries)
-----------------------------------------------------------------
- 
-It is necessary to have an entry for each client in "/etc/hosts".
- 
-I will ask you for your clients' IP addresses one subnet at a time.
- 
-
-Would you like me to make these entries for you? ([y]/n): 
-
-addclients -- Section 3 (adding or modifying /etc/hosts entries -- continued...)
---------------------------------------------------------------------------------subnet 1
- 
-The first host in subnet 1 will be: vadaltst03
-What is the starting IP address for subnet 1? []: 10.10.10.3
-What is the ending IP address? []: 10.10.10.9
-I will work with IP addresses:  10.10.10.3 through 10.10.10.9
- 
-Are you satisfied? (y/[n]): 
-
-These entries have been added to /etc/hosts.
- 
-Press <command>Enter</command> to continue...
-      </programlisting>
-     </example>
-   </sect2>
-
-   <sect2 id=Configure>
-    <title>Configuring the Image Server</title>
-     <para>
-      The autoinstall clients will need IP addresses in order to install
-      themselves.  There are two ways to give your autoinstall clients
-      their IP address information:
-      <itemizedlist>
-       <listitem><para>with a DHCP server</para></listitem>
-       <listitem><para>with a configuration file called "local.cfg"</para></listitem>
-      </itemizedlist>
-
-      Run the command, <command>makedhcpserver</command>, to configure 
-      your image server to be a DHCP server.  Be sure to follow the 
-      instructions it gives you at the end.
-     </para>
-
-     <example><title>Running the makedhcpserver command</title>
-      <programlisting format="linespecific">
-[bash@imageserver]$  <command>makedhcpserver</command>
-
-Welcome to the VA SystemImager "makedhcpserver" command.  This
-command will prepare this computer to be a DHCP server by creating
-the following file:
- 
- /etc/dhcpd.conf
- 
-If there is an existing file, it will be backed up with the
-.beforesystemimager extension.
- 
-Continue? (y/[n]): y
-
-Type your response or hit <command>Enter</command> to accept [defaults].
-If you don't have a response, such as no first or second DNS server,
-just hit <command>Enter</command> and none will be used.
- 
-Type your response or hit <command>Enter</command> to accept [defaults].
-If you don't have a response, such as no first or second DNS server,
-just hit <command>Enter</command> and none will be used.
- 
-What is your domain name? [localdomain.domain]: pratt.pvt
-What is your network number? [192.168.1.0]: 10.10.10.0
-What is your netmask? [255.255.255.0]:
-What is the starting IP address for your dhcp range? [192.168.1.1]: 10.10.10.3
-What is the ending IP address for your dhcp range? [192.168.1.100]: 10.10.10.12
-What is the IP address of your first DNS server? []: 10.10.10.1
-What is the IP address of your second DNS server? []:
-What is the IP address of your default gateway? [192.168.1.254]: 10.10.10.1
-What is the air speed velocity of the common swallow? []:
-
-Ahh, but seriosly folks...
-Here are the values you have chosen:
- 
-################################################################
-DNS Domain Name: pratt.pvt
-network number:  10.10.10.0
-netmask:         255.255.255.0
-starting IP address for your dhcp range: 10.10.10.3
-ending IP address for your dhcp range:   10.10.10.12
-first DNS server:  10.10.10.1
-second DNS server:
-third DNS server:
-default gateway: 10.10.10.1
-################################################################
- 
-Are you satisfied? (y/[n]): y
-
-The dhcp server configuration file (/etc/dhcpd.conf) file has been created
-for you.  Please verify it for accuracy.
- 
-If this file does not look satisfactory, you can run this command again to
-re-create it: "makedhcpserver"
- 
-WARNING!:  If you have multiple physical network interfaces, be sure to
-edit the init script that starts dhcpd so that it looks like:
-"dhcpd $interfacename" ( ie. /sbin/dhcpd eth0 )
- 
-Also, be sure to start or restart your dhcpd daemon.
-( ie. /etc/rc.d/init.d/dhcpd restart )
- 
-Would you like me to restart your DHCP server software now? (y/N): y
-
-Shutting down dhcpd:                                       [FAILED]
-Starting dhcpd:                                            [  OK  ]
-Press <command>Enter</command> to continue...  
-      </programlisting>
-     </example>
-   </sect2>
-
-   <sect2 id=AutoInstall>
-    <title>Auto-install the clients</title>
-     <para>
-      There are three methods to Auto-installing the clients:
-      <itemizedlist>
-       <listitem>
-        <para>
-         Boot the system from bootable media such as a floppy diskette or 
-         bootable CD-ROM or
-        </para>
-       </listitem>
-       <listitem>
-        <para>
-         Using a network boot function, such as PXE,  if your system supports 
-         it.  This is usually enabled through a BIOS setting.
-        </para>
-       </listitem>
-       <listitem>
-        <para>
-         A client node can be told to autoinstall when it is next rebooted.
-         For this method, the client must already have Linux, 
-         <application>LILO</application>, and the 
-         <application>VA Systemimager</application> client installed.
-        </para>
-       </listitem>
-      </itemizedlist>
-     </para>
-     <sect3 id=InstallMediaBoot>
-     <title>Create the AutoInstall Media</title>
-     <para>
-     Run the command <command>makeautoinstalldiskette</command> or 
-     <command>makeautoinstallcd</command> to create your boot media.  
-     Simply boot your client off the diskette or CD and it will autoinstall 
-     itself.
-     </para>
-     </sect3>
-     <sect3 id=NetworkBoot>
-     <title>Network Booting the System</title>
-     <para>
-      If you prefer to boot off the network, change the settings in your
-      BIOS to boot off your PXE enabled network card, and reboot your
-      client system.  It *should* automatically find and boot off the
-      image server and begin to autoinstall itself.  Currently, there is no 
-      known single configuration that will work with every system.  The next 
-      sections describe some configurations that are known to work.  If you
-      are successful in repeatably configuring a system for PXE autoinstalls,
-      and it is in any way different from those already mentioned below (i.e.
-      different package versions, latest distribution, etc.), please let us
-      know so that it can be included in this document.
-     </para>
-       <sect4 id=RedHat6.2BootAgent3.x>
-       <title>RedHat 6.2 and Intel BootAgent 3.x</title>
-       <para>
-        This testing was done on HP Netservers with Intel Ether Express Pro 
-        cards.  The Netservers ran a typical RedHat 6.2 installation, while 
-        the NIC's were running a 3.x version of the Intel BootAgent firmware.
-	The relevant software was:
-        <itemizedlist>
-         <listitem>
-          <para>
-	   <filename>
-           va-systemimager-1.1-1.i386.rpm
-	   </filename>
-          </para>
-         </listitem>
-         <listitem>
-          <para>
-	   <filename>
-           pxe-0.1-14.i386.rpm
-	   </filename>
-          </para>
-         </listitem>
-         <listitem>
-          <para>
-	   <filename>
-	   dhcp-2.0-5.i386.rpm
-	   </filename>
-          </para>
-         </listitem>
-         <listitem>
-          <para>
-	   <filename>
-           tftp-hpa-0.13-1.i386.rpm
-	   </filename>
-          </para>
-         </listitem>
-         <listitem>
-          <para>
-	   <filename>
-           inetd-0.16-4.i386.rpm
-	   </filename>
-          </para>
-         </listitem>
-         <listitem>
-          <para>
-	   <filename>
-           syslinux-1.48-2.i386.rpm
-	   </filename>
-          </para>
-         </listitem>
-        </itemizedlist>
-	Taking the following steps should result in a working configuration:
-        <orderedlist>
-         <listitem>
-          <para>
-           Install the above packages onto the image server.
-          </para>
-         </listitem>
-         <listitem>
-          <para>
-           <command>
-            # mv /tftpboot/X86PC/UNDI/linux-install/linux.0 \
-                 /tftpboot/X86PC/UNDI/linux-install/linux.0.bak
-           </command>
-          </para>
-         </listitem>
-         <listitem>
-          <para>
-           <command>
-            # cp /tftpboot/pxelinux.bin \
-              /tftpboot/X86PC/UNDI/linux-install/linux.0
-           </command>
-          </para>
-         </listitem>
-         <listitem>
-          <para>
-           <command>
-            # cp -r /tftpboot/kernel /tftpboot/initrd.gz \
-              /tftpboot/pxelinux.cfg /tftpboot/X86PC/UNDI/linux-install/
-           </command>
-          </para>
-         </listitem>
-         <listitem>
-          <para>
-           <command>
-            # cp /tftpboot/pxelinux.cfg/message.txt \
-              /tftpboot/X86PC/UNDI/linux-install
-           </command>
-          </para>
-         </listitem>
-         <listitem>
-          <para>
-           <command>
-            # /etc/rc.d/init.d/pxe start
-           </command>
-          </para>
-         </listitem>
-        </orderedlist>
-       </para>
-       </sect4>
-       <sect4 id=RedHat7.0BootAgent3.x>
-       <title>RedHat 7.0 and Intel BootAgent 3.x</title>
-       <para>
-        This testing was done on HP Netservers with Intel Ether Express Pro 
-        cards.  The Netservers ran a typical RedHat 7.0 installation, while 
-        the NIC's were running a 3.x version of the Intel BootAgent firmware.
-	The relevant software was:
-        <itemizedlist>
-         <listitem>
-          <para>
-           <filename>va-systemimager-1.3.0-1.i386.rpm</filename> - This
-	   version has a few incompatiblities with RedHat 7.0.  It is unable
-	   to parse the LABEL= entries in the golden client's
-	   <filename>/etc/fstab</filename> file, and it assumes the
-           image server uses <application>inetd</application> instead of
-	   <application>xinetd</application>.  This issues have been
-           resolved in <application>VA SystemImager 1.4</application>.
-          </para>
-         </listitem>
-         <listitem>
-          <para>
-	   <filename>
-           pxe-0.1-20.i386.rpm
-	   </filename>
-          </para>
-         </listitem>
-         <listitem>
-          <para>
-	   <filename>
-	   dhcp-2.0-12.i386.rpm
-	   </filename>
-          </para>
-         </listitem>
-         <listitem>
-          <para>
-           <filename>tftp-server-0.17-5.i386.rpm</filename> - The default
-	   <application>xinetd</application> entry for 
-	   <application>tftp-server</application> must be modified 
-	   for use with <application>VA SystemImager</application>.  This entry
-	   is stored in <filename>/etc/xinetd.d/tftp</filename>.  An example
-	   of a valid entry is:
-	   <example>
-	    <title>Sample tftp entry for xinetd</title>
-	     <literallayout>
-service tftp
-{
-        socket_type             = dgram
-        protocol                = udp
-        wait                    = yes
-        user                    = root
-        server                  = /usr/sbin/tftpd
-        server_args             = -s /tftpboot -r blksize
-        disable                 = no
-}
-	    </literallayout>
-	   </example>
-          </para>
-         </listitem>
-         <listitem>
-          <para>
-           <filename>xinetd-2.1.8.9pre11-1.i386.rpm</filename> - this version
-	   has a race condition which can prevent the tftp server from
-	   responding.  this has supposedly been fixed in version
-	   2.1.8.9pre13.
-	   <application>xinetd</application> has a default limit on how many
-	   connections can be spawned in a 60 second period.  This is
-	   configurable, if necessary, by adding the -loop argument in the
-	   <filename>/etc/init.d/xinetd</filename> initscript.
-          </para>
-         </listitem>
-         <listitem>
-          <para>
-           <filename>
-	    syslinux-1.48-2.i386.rpm
-	   </filename>
-          </para>
-         </listitem>
-        </itemizedlist>
-	Taking the following steps should result in a working configuration:
-        <orderedlist>
-         <listitem>
-          <para>
-           Install the above packages onto the image server.
-          </para>
-         </listitem>
-         <listitem>
-          <para>
-           <command>
-            # mv /tftpboot/X86PC/UNDI/linux-install/linux.0 \
-                 /tftpboot/X86PC/UNDI/linux-install/linux.0.bak
-           </command>
-          </para>
-         </listitem>
-         <listitem>
-          <para>
-           <command>
-            # cp /tftpboot/pxelinux.bin \
-              /tftpboot/X86PC/UNDI/linux-install/linux.0
-           </command>
-          </para>
-         </listitem>
-         <listitem>
-          <para>
-           <command>
-            # cp -r /tftpboot/kernel /tftpboot/initrd.gz \
-              /tftpboot/pxelinux.cfg /tftpboot/X86PC/UNDI/linux-install/
-           </command>
-          </para>
-         </listitem>
-         <listitem>
-          <para>
-           <command>
-            # cp /tftpboot/pxelinux.cfg/message.txt \
-              /tftpboot/X86PC/UNDI/linux-install
-           </command>
-          </para>
-         </listitem>
-         <listitem>
-          <para>
-           <command>
-            # touch /var/lib/dhcp/dhcpd.leases
-           </command>
-           </para>
-          </listitem>
-         <listitem>
-          <para>
-           <command>
-            # /etc/init.d/pxe start
-           </command>
-          </para>
-         </listitem>
-        </orderedlist>
-       </para>
-       </sect4>
-       <sect4 id=RedHat7.0BootAgent4.x>
-       <title>RedHat 7.0 and Intel BootAgent 4.x</title>
-	<para>
-         This configuration is very similar to the section "RedHat 7.0 and 
-         Intel BootAgent 3.x".  The only noticable difference is that
-	 the pxe package is no longer required.  The entries created in
-         /etc/dhcpd.conf by <command>makedhcpserver</command> are sufficient.
-        </para>
-       </sect4>
-     </sect3>
-     <sect3 id=NextReboot>
-     <title>Autoinstall Upon Reboot</title>
-      <para>
-      This autoinstall method allows you to tell a machine to autoinstall 
-      itself the next time it is rebooted.  This eliminates the need for
-      boot media (floppy, CD, and network).  To tell a client machine to
-      autoinstall on it's next boot, execute
-      <command>/usr/sbin/updateclient -autoinstall</command>.  This tells
-      <application>LILO</application> to boot a kernel and a ramdisk provided
-      by <application>VA SystemImager</application>.
-      </para>
-     </sect3>
-   </sect2>
- </sect1>
  <sect1 id=FAQ>
   <title>Frequently Asked Questions</title>
   <para>
