@@ -534,9 +534,10 @@ SC_EOF
     }
     # Now we install the bootloader if requested
     unless($no_bootloader) {
-        print "Running bootloader...\n";
+        print "Running bootloader...";
         my $cmd = "systemconfigurator --runboot";
         !system($cmd) or die "$cmd failed!";
+        print " done!\n";
     }
 } ### END update image section ###
 
