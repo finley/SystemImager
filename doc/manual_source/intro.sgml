@@ -122,6 +122,16 @@
 	information.
       </para>
       
+      <formalpara>
+      <title>Distribution Support</title>
+      <para>
+	This is far from an exhaustive list of distributions supported
+	by SystemImager.  SystemImager is distribution agnostic in nearly
+	all areas.  With few exceptions, all distribution specific
+	knowledge exists within the SystemConfigurator tool, which
+	supports a very large range of distributions.
+      </para>
+      </formalpara>
       <table frame="all">
 	<title>Author Tested and Supported Distributions</title>
 	<tgroup cols="2">
@@ -137,7 +147,7 @@
 		<tbody>
 		  <row>
 		    <entry>Debian</entry>
-		    <entry>2.2 ('potato'), ('woody')</entry>
+		    <entry>3.0</entry>
 		  </row>
 		  <row>
 		    <entry>RedHat</entry>
@@ -167,21 +177,28 @@
 	    All clients that will use the same image should have hardware
 	    that is as similar as possible.  Most importantly they should use
 	    the same chipset on the network device(s) and the same number and
-	    kind of hard drive(s) (e.g. IDE, SCSI, Mylex Hardware RAID, etc.)  The
-	    hard drives may be of different capacities, and disks may be
+	    kind of hard drive(s) (e.g. IDE, SCSI, Mylex Hardware RAID, etc.)  
+	    The hard drives may be of different capacities, and disks may be
 	    larger with no problem and smaller within reason.
+	  </para>
+	  <para>
+	    Advanced users can modify the 
+	    <filename>/etc/systemimager/autoinstallscript.conf</filename> file
+	    within an image to make adjustments, followed by 
+	    running the <command>mkautoinstallscript</command> command, to make
+	    an enable an image to be installed on clients with varying disk 
+	    configurations.
 	  </para>
 	</listitem>
 	<listitem>
 	  <para>
 	    For PXE installations, you need a compatible TFTP server
 	    running on the boot server, which is usually the same machine as
-	    the image/DHCP server. Debian provides this server in the
-	    tftpd-hpa package, and Red Hat 7.0 and later include this server
-	    in the tftp-server package.  H. Peter Anvin maintains the
-	    <application>tftp-hpa</application> package that provides the
-	    required functionality.  The atftpd server is also reported
-	    to work.  
+	    the image/DHCP pserver. Debian provides such servers in the
+	    tftpd-hpa and atftpd packages, while Red Hat 7.0 and later include 
+	    such a server in the tftp-server package.  H. Peter Anvin maintains
+	    the <application>tftp-hpa</application> package which provides the
+	    required functionality.
 	  </para>
 	</listitem>
 	<listitem>
@@ -227,10 +244,17 @@
 	<glossterm>autoinstall script</glossterm>
 	<glossdef>
 	  <para>
-	    a unique script <command>getimage</command>
-	    creates for each image used
-	    by the autoinstall client in the autoinstall process.  The
-	    names of autoinstall scripts begin with the image name 
+	    One or more scripts associated with an image, each unique
+	    to a specific hardware/partitioning/filesystem/network 
+	    configuration.  
+	    The <command>getimage</command> command creates an initial
+	    autoinstallscript, which can be regenerated later, possibly
+	    with different options, using the 
+	    <command>mkautoinstallscript</command> command.
+	    The autoinstall script (also called the ".master script") is 
+	    downloaded and executed by the autoinstall client, and performs
+	    most of the autoinstall process.
+	    Names of autoinstall scripts begin with the image name 
 	    and end in .master.  For example:
 	    <filename>my_webserver_image_v1.master</filename>
 	  </para>
@@ -309,7 +333,7 @@
 	<glossdef>
 	  <para>
 	    A utility for configuring a network boot server.  Currently just
-	    supports configuring PXE boot servers.
+	    supports configuring PXE boot servers for i386 clients.
 	  </para>
 	</glossdef>
       </glossentry>
