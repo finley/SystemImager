@@ -72,12 +72,12 @@ if [ ! -d /tftpboot/systemimager/ ]; then
 else
   [ $QUIET = "false" ] && echo "/tftpboot/systemimager/ already exists..."
 fi
-[ $QUIET = "false" ] && echo "soft linking /tftpboot/systemimager/hosts to /etc/hosts..."
+[ $QUIET = "false" ] && echo "copying /etc/hosts to /tftpboot/systemimager/hosts..."
 cd /tftpboot/systemimager/
-ln -sf /etc/hosts hosts
+cp -f /etc/hosts hosts
 
 # gotta make sure the masses can read it...
-chmod +r /etc/hosts
+chmod +r hosts
 
 # copy tftpstuff into tftp area
 for TFTP_ITEM in `ls $INSTALL_DIR/tftpstuff/ | grep -wv CVS`
@@ -86,8 +86,9 @@ do
   chown -R root:root /tftpboot/$TFTP_ITEM
 done
 
-#cd /tftpboot/pxelinux.cfg/
-#ln -f syslinux.cfg default
+# turns out we *can* actually use the exact same config file -- Thanks, H.P. Anvin ;)
+cd /tftpboot/pxelinux.cfg/
+ln -f syslinux.cfg default
 ### END tftpboot stuff ###
 
 
