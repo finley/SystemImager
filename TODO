@@ -12,8 +12,6 @@ Version 1.4.0 specific:
 
 <brian@thefinleys.com>
 ----------------------
-- deal with UUID= in /etc/fstab
-
 - Deal with tftp support (for network booting) on xinetd systems.
   (this is actually something to deal with in the tftp-hpa package 
    install)
@@ -28,19 +26,36 @@ Version 1.4.0 specific:
   - changed files
 - label autoinstallcd.iso with v1.4.x (x is literal)
 - start using bzip2
-- move mailing list over to sourceforge
 
 -----------------------
 Version 1.4.1 specific:
 -----------------------
+
+<brian@thefinleys.com>
+----------------------
+o move mailing list over to sourceforge
+o deal with UUID= in /etc/fstab
+
+volunteers
+----------
+o lsimage
 o rmimage
 o mvimage
-o Wesley Smith <wessmith@cthulhu.engr.sgi.com> -- devfs patch
-o Wesley Smith <wessmith@cthulhu.engr.sgi.com> -- TurboLinux patch
-o Wesley Smith <wessmith@cthulhu.engr.sgi.com> -- SuSe patch
-o Fred Gray <fegray@npl.uiuc.edu> -- patch to allow exclude on golden 
+
+Wesley Smith <wessmith@cthulhu.engr.sgi.com>
+--------------------------------------------
+o devfs patch
+o TurboLinux patch
+o SuSe patch
+
+Fred Gray <fegray@npl.uiuc.edu>
+-------------------------------
+o patch to allow exclude on golden 
   client during getimage.  ~/systemimager/contrib/patches.email
-o James Morton <jmorton@viata.com> -- patch to have autoinstallclient
+
+James Morton <jmorton@viata.com>
+--------------------------------
+o patch to have autoinstallclient
   ask user for settings. ~/systemimager/contrib/IOUs.email
 
 ---------------------------------
