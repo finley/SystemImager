@@ -1,15 +1,42 @@
-#!/bin/sh
-
+#!/usr/bin/perl -w
 #
 # "SystemImager" - Copyright (C) 1999-2000 TheFinleys.com <brian@thefinleys.com> 
 #
+# This file is: makeautoinstalldiskette
+#
 
-# set path
-PATH=/bin:/usr/bin:/sbin:/usr/sbin
+# if not run as root, this script will surely fail
+unless($< == 0) { die "Must be run as root!\n"; }
 
-# if not run as root, diskette creation will surely fail
-[ `whoami` != "root" ] && echo "Must be run as root!" && exit 1
+#FIX# give warning
+#if -q then no warning
 
-clear
-cd /systemimager/autoinstalldiskette/
-./install.s
+system('clear');
+print << "EOF";
+
+This program assumes that you have a 1.44M floppy drive and that it is the
+first floppy drive on your system (/dev/fd0).
+
+It will create the device file /dev/fd0u1722 and use it to format your floppy
+to handle 1.722M of capacity.
+
+Virtually all 1.44M drives support 1.722M just fine, but it is possible for an
+extended format to break a floppy drive -- so USE THIS SCRIPT AT YOUR OWN RISK!
+
+Insert your floppy now.  This will overwrite all information on the floppy.
+
+EOF
+
+print "Continue? (y/[n]): ";
+$continue=<STDIN>;
+chomp $continue;
+$continue = lc $continue;
+($continue eq "y") or die "\nOk Mr. Sensitive, I\'ll leave your silly diskette alone!\n";
+
+test for /dev/fd0u1722 and make if not there
+fdformat /dev/fd0u1722 and die if fails
+mkdosfs /dev/fd0u1722 and die if fails
+mount /dev/fd0u1722 and die if fails
+cp initrd.gz, kernel, syslinux.cfg, message.txt to floppy
+unmount floppy
+syslinux -s /dev/fd0u1722 and die if fails
