@@ -8,9 +8,9 @@
 #  $Id$
 #
 
-#XXX o change all instances of MCAST_GROUP to PORTBASE. -BEF-
-#    o deal with --flavor
-#    o deal with --arch
+# XXX
+# o deal with --flavor
+# o deal with --arch
 
 use lib "USR_PREFIX/lib/systemimager/perl";
 use Getopt::Long;
@@ -100,7 +100,7 @@ Additional Options:
  --autostart             NUM
  --blocksize             NUM (1456)
  --broadcast             
- --fec                   STRIPESxREDUNDANCY/STRIPESIZE
+ --fec                   STRIPESxREDUNDANCY/STRIPESIZE (8x8/128)
  --full-duplex           
  --interface             NAME (eth0)
  --log                   FILE
@@ -126,6 +126,8 @@ EOF
 $opts{'cycle'} = 1;
 $opts{'portbase'} = 9000;
 $udpcast_opts{'min-clients'} = 1;
+$udpcast_opts{'fec'} = "8x8/128";
+$udpcast_opts{'log'} = "/var/log/systemimager/imagecast";
 
 # take options
 GetOptions( 
@@ -166,7 +168,6 @@ foreach(sort keys %udpcast_opts) {
         $opts{'sender-opts'} = "$opts{'sender-opts'} --$_ $udpcast_opts{$_}";
     }
 }
-#print "opts{'sender-opts'}: $opts{'sender-opts'}\n"; #XXX debug stuff
 
 ### BEGIN evaluate options ###
 # if requested, print help information
@@ -253,7 +254,7 @@ sub cast {
         print qq(Cycle:         $count\n);
         print qq(Now Casting:   BOEL binaries tarball and autoinstall scripts\n);
         print qq(Base Port:     $portbase\n);
-        print qq(cmd:           $cmd\n); #XXX
+        print qq(cmd:           $cmd\n); #XXX debug stuff -- remove
     }
     !system($cmd) or die ("$cmd failed!");
     #
