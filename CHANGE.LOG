@@ -4,7 +4,7 @@
 # This file: CHANGE.LOG
 #
 
-VA SystemImager-1.2 2000.xx.xx
+VA SystemImager-1.2 2000.09.25
 - makedist -- Only used by me really (Brian).  Now automatically sets the
               version number in each of the appropriate files.
 - prepareclient -- No longer messes with /etc/rsyncd.conf.  Now uses a
@@ -14,6 +14,11 @@ VA SystemImager-1.2 2000.xx.xx
 - afterburner -- modified to add [tftpboot] section to existing 
                  rsyncd.conf file.
 - updateclient -- Now looks for systemimager.exclude in /etc/systemimager/.
+- updateclient -- Figures out root device from /etc/fstab and appends
+                  LAST_ROOT=device to lilo.conf entry when -autoinstall is
+                  issued.  This allows for placing a local.cfg file in the 
+                  root filesystem prior to rebooting after running 
+                  updateclient -autoinstall.
 - updateclient -- added the -autoinstall option.  Courtesy of
                   Alan Lambert <alambert@epicrealm.com>.  Allows you to 
                   tell any machine that is currently running to autoinstall 
@@ -32,6 +37,9 @@ VA SystemImager-1.2 2000.xx.xx
                          - faster creation
                          - faster booting
                          - fewer floppy failures
+- autoinstallclient -- now uses rsync v2.4.6
+- autoinstallclient -- now uses smaller libraries, allowing for larger 
+                       kernels and more utilities!
 - autoinstallclient -- support for use *without* DHCP!  See the FAQ for 
                        more info.
 - autoinstallclient -- kernel includes support for software RAID and for

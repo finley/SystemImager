@@ -15,7 +15,7 @@ BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: Michael Jennings <mej@valinux.com>
 Docdir: %{prefix}/doc
 URL: http://systemimager.org/
-Requires: rsync >= 2.4.5, syslinux >= 1.48, dhcp = 2.0, fileutils, grep, util-linux, sh-utils, gawk, sed, findutils, textutils, perl, dosfstools
+Requires: rsync >= 2.4.6, syslinux >= 1.48, dhcp = 2.0, fileutils, grep, util-linux, sh-utils, gawk, sed, findutils, textutils, perl, dosfstools
 
 %description
 VA SystemImager is software that makes the installation of Linux to
@@ -33,7 +33,7 @@ workstations have the same basic hardware configuration.
 Summary: VA SystemImager "Master Client" software
 Group: Applications/System
 Conflicts: va-systemimager
-Requires: rsync >= 2.4.5, util-linux, sh-utils, fileutils, grep, gawk, sed, findutils, textutils, perl
+Requires: rsync >= 2.4.6, util-linux, sh-utils, fileutils, grep, gawk, sed, findutils, textutils, perl
 
 %description client
 This is the package you install on a VA SystemImager "master client".
@@ -99,7 +99,7 @@ cd /usr/doc/va-systemimager-%{ver}/ && ./afterburner -q -n
 
 %files client
 %defattr(-, root, root)
-%doc CHANGE.LOG COPYING CREDITS FAQ-HOWTO README TODO VERSION
+%doc CHANGE.LOG COPYING CREDITS FAQ-HOWTO README TODO VERSION local.cfg
 /usr/sbin/updateclient
 /usr/sbin/prepareclient
 /etc/systemimager/systemimager.exclude

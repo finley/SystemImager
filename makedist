@@ -48,18 +48,16 @@ sed "s/v[0-9]*\.[0-9]*\./v$VERSION./" $file  > $file.$$
 cat $file.$$ > $file
 rm -f $file.$$
 
-rm -f ${PACKAGE}-*.tar.gz
-
 cp ${BASE}.spec ${BASE}.spec.in
 sed 's/^%define ver \([ ]*\) [0-9].*$/%define ver \1 '$VERSION'/g' ${BASE}.spec.in > ${BASE}.spec
 rm -f ${BASE}.spec.in
 
-# va-systemimager-server
+# va-systemimager server
 rm -rf /tmp/${PACKAGE}-${VERSION}
 mkdir -p /tmp/${PACKAGE}-${VERSION}
 cp -a . /tmp/${PACKAGE}-${VERSION}
 (cd /tmp/${PACKAGE}-${VERSION} && find . -type d -name CVS -exec rm -rf {} \; 2>/dev/null)
-(cd /tmp/${PACKAGE}-${VERSION} && rm -fr tmp )
+(cd /tmp/${PACKAGE}-${VERSION} && rm -fr tmp ${PACKAGE}*${VERSION}*.rpm ${PACKAGE}*${VERSION}*.tar.gz )
 (cd /tmp && tar --owner=root --group=root -zcvf ${PACKAGE}-${VERSION}.tar.gz ${PACKAGE}-${VERSION}/)
 mv /tmp/${PACKAGE}-${VERSION}.tar.gz .
 rm -rf /tmp/${PACKAGE}-${VERSION}
@@ -78,5 +76,10 @@ mkdir -p /tmp/${PACKAGE}-${VERSION}/tftpstuff/systemimager/
 ( cd /tmp && tar --owner=root --group=root -zcvf ${PACKAGE}-${VERSION}.tar.gz ${PACKAGE}-${VERSION}/ )
 mv /tmp/${PACKAGE}-${VERSION}.tar.gz .
 rm -rf /tmp/${PACKAGE}-${VERSION}
+
+sudo cp -f ${BASE}*${VERSION}*.gz /usr/src/redhat/SOURCES
+sudo cp -f ${BASE}.spec /usr/src/redhat/SPECS
+sudo rpm -ba /usr/src/redhat/SPECS/${BASE}.spec && cp /usr/src/redhat/RPMS/i386/${BASE}*${VERSION}* . \
+ && cp /usr/src/redhat/SRPMS/${BASE}*${VERSION}* .
 
 

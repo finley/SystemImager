@@ -9,13 +9,10 @@
 #
 
 # set version
-version="1.2"
+version_number="1.2"
 
 # configuration directory
 systemimagerdir="/etc/systemimager"
-
-# location of rsyncd.conf file
-rsyncd_conf_file="/tmp/rsyncd.conf"
 
 # set path
 PATH=/bin:/usr/bin:/sbin:/usr/sbin
@@ -352,7 +349,7 @@ create_rsyncd_conf() {
 }
 
 show_version() {
-  echo "prepareclient (part of VA SystemImager) version $version"
+  echo "prepareclient (part of VA SystemImager) version $version_number"
   echo ""
   echo "Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com>"
   echo "This is free software; see the source for copying conditions.  There is NO"
@@ -476,7 +473,10 @@ fi
 # comment out rsync entry in inetd.conf if it exists
 
 
-# install SystemImager brand rsyncd.conf file
+# location of rsyncd.conf file
+rsyncd_conf_file="/tmp/rsyncd.conf"
+
+# install SystemImager brand rsyncd.conf file ($rsyncd_conf_file)
 [ "$QUIET" = "false" ] && echo "Creating $rsyncd_conf_file ..."
 create_rsyncd_conf
 # install SystemImager brand rsyncd.conf file
@@ -617,7 +617,19 @@ if [ $? -eq 0 ]; then
     rm -f /tmp/escaped_directory.$$
 
     # create script to find new inodes on each freshly installed client
+    echo "# set the immutable bit so that file doesn't float up into the filesystem buffer cache" \
+          >> $systemimagerdir/put_new_ext3_journal_file_inodes_in_fstab.sh
+    echo "chattr +i $journalfile" \
+          >> $systemimagerdir/put_new_ext3_journal_file_inodes_in_fstab.sh
+    echo \
+          >> $systemimagerdir/put_new_ext3_journal_file_inodes_in_fstab.sh
+    echo "# find the new inode number" \
+          >> $systemimagerdir/put_new_ext3_journal_file_inodes_in_fstab.sh
     echo "newinode=\`ls -i $journalfile | awk '{print \$1}'\`" \
+          >> $systemimagerdir/put_new_ext3_journal_file_inodes_in_fstab.sh
+    echo \
+          >> $systemimagerdir/put_new_ext3_journal_file_inodes_in_fstab.sh
+    echo "# put the new inode number into the fstab file" \
           >> $systemimagerdir/put_new_ext3_journal_file_inodes_in_fstab.sh
     echo "sed \"/[[:blank:]]$escaped_directory[[:blank:]]/s/journal=[0-9]*/journal=\$newinode/\" /etc/fstab > /tmp/fstab.\$\$" \
           >> $systemimagerdir/put_new_ext3_journal_file_inodes_in_fstab.sh
@@ -628,6 +640,8 @@ if [ $? -eq 0 ]; then
   done
   
   # remove kruft
+  echo "# remove kruft" \
+        >> $systemimagerdir/put_new_ext3_journal_file_inodes_in_fstab.sh
   echo "rm -f /tmp/fstab.\$\$" \
         >> $systemimagerdir/put_new_ext3_journal_file_inodes_in_fstab.sh
 fi
