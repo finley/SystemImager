@@ -5,15 +5,34 @@
 # (not in any specific order)
 #
 
-Developers Guidelines:
-o Only Brian Finley will do CVS tags of any kind, such as for version releases.
+--------------------
+Developer Guidelines
+--------------------
+o Current development branch is tagged "HEAD".  
+  This is the default.  Most developers will use this.  To switch to 
+  this branch from another branch use the command "cvs update -r HEAD" 
+  from the root of your development directory.
+o Current stable branch is tagged "v1_4_0-patches".
+  Use "cvs update -r TAG_NAME" to switch to the stable CVS branch.
+o Only Brian Finley will modify CVS tags of any kind, such as for versioning 
+  releases or creating development branches.
+o Always get approval from Brian Finley prior to adding any new files or 
+  directories to CVS.
 o You may modify sections in the TODO file bearing your name.
-o Do not modify anyone elses section.
 o When you finish an item in your section of the TODO file:
   o Add an appropriate line to the CHANGE.LOG file before removing the 
     item from the TODO file (so we don't forget about keen changes 
     we've made).
   o Send an email to the <systemimager-devel> list announcing completion.
+o Do not modify anyone elses section.
+o Have fun!
+
+----------------------
+CVS Reference Material
+----------------------
+o http://www.loria.fr/~molli/cvs/doc/cvs_toc.html
+ or
+o http://www.loria.fr/~molli/cvs/doc/cvs.pdf
 
 
 -----------------------
@@ -35,6 +54,7 @@ o modify RPM spec file to deal with
   o configuration files
   o additional files
   o changed files
+
 
 
 --------------------------
@@ -316,3 +336,7 @@ Bug list
 --------
 Please submit bugs via the "SystemImager Bug Tracking System" link at
 http://systemimager.org/
+
+Potential Volunteers
+--------------------
+o Duane Gustavus <duane@unt.edu>
