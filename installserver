@@ -92,7 +92,9 @@ echo "Looking for existing rsyncd.conf files..."
 for file in /etc/rsyncd.conf /etc/systemimager/rsyncd.conf.beforesystemimager$VERSION; do
   if [ -f $file ]; then
     echo "SystemImager now uses /etc/systemimager/rsyncd.conf instead of /etc/rsyncd.conf"
+    delim
     echo "Warning:  $file was found on your system."
+    delim
     echo "Shall I copy any image entries from $file to "
     echo -n "/etc/systemimager/rsyncd.conf? ([y]/n) "
     read REPLY
@@ -115,7 +117,9 @@ for file in /etc/rsyncd.conf /etc/systemimager/rsyncd.conf.beforesystemimager$VE
 		       fi
 		     done < $file
 		     if [ $start_copying == "false" ]; then
+		       delim
 		       echo "Warning:  $file doesn't look like it was created by SystemImager."
+		       delim
 		       echo "No image entries were copied over."
 		       echo "Press <Enter> to continue..."
 		       read
@@ -140,8 +144,8 @@ if [ -d /tftpboot/systemimager ]; then
   case $REPLY in
     n|N|No|NO ) echo "Ok, not copying over master scripts." ;;
             * ) echo "Copying scripts..."
-	        cp /tftpboot/systemimager/*.master /var/lib/systemimager/scripts
-	        cp -i /tftpboot/systemimager/*.sh /var/lib/systemimager/scripts
+	        cp -a /tftpboot/systemimager/*.master /var/lib/systemimager/scripts
+	        cp -a /tftpboot/systemimager/*.sh /var/lib/systemimager/scripts
 		;;
   esac
 fi
@@ -156,7 +160,9 @@ if [ "$INITDIR_PREFIX" == "" ]; then
 fi
 
 if [ -f $INITDIR_PREFIX/init.d/rsync ]; then
+  delim
   echo "Warning:  $INITDIR_PREFIX/init.d/rsync exists."
+  delim
   echo "SystemImager now uses $INITDIR_PREFIX/init.d/systemimager instead."
   echo "I can go ahead and remove the symlinks to $INITDIR_PREFIX/init.d/rsync from the various"
   echo "runlevels.  This will prevent a conflict between the new and old initscripts."
@@ -217,8 +223,12 @@ fi
 echo ""
 delim
 echo "Note:  SystemImager now uses the AppConfig perl module.  This module is"
-echo "available via CPAN and must be installed before using the SystemImager"
-echo "utilities."
+echo "available at:"
+echo "  http://www.perl.com/CPAN/authors/id/ABW/AppConfig-1.52.tar.gz"
+echo "and must be installed before using the SystemImager utilities."
+echo "AppConfig is supplied by the libappconfig-perl deb package, which is"
+echo "in the Debian archive.  The RPM package is available from:"
+echo "http://sf.net/projects/systemconfig"
 delim
 echo -n "Press <Enter> to continue..."
 read
