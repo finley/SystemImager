@@ -31,6 +31,7 @@ if [ "x$DESTDIR" = "x" ]; then
 else
   mkdir -p $DESTDIR
   [ -d $DESTDIR -a -w $DESTDIR ] || exit 2
+  mkdir -p ${DESTDIR}${prefix}/sbin
 fi
 
 # source needed functions
@@ -97,6 +98,7 @@ for TFTP_ITEM in `ls $INSTALL_DIR/tftpstuff/ | grep -wv CVS`
 do
   cp -af $INSTALL_DIR/tftpstuff/$TFTP_ITEM ${DESTDIR}/tftpboot/
   [ "x$DESTDIR" = "x" ] && chown -R root:root ${DESTDIR}/tftpboot/$TFTP_ITEM
+  (cd ${DESTDIR}/tftpboot/$TFTP_ITEM && find . -name CVS -exec rm -rf {} \;)
 done
 
 # turns out we *can* actually use the exact same config file -- Thanks, H.P. Anvin ;)
