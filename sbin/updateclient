@@ -106,7 +106,6 @@ my $DEVICE;
 
 GetOptions(
     "listing"           => \my $listing,
-    "config-from=s"     => \$DEVICE,            # alias to -configure-from
     "configure-from=s"  => \$DEVICE,
     "help"              => \my $help,
     "version"           => \my $version,
