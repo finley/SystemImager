@@ -5,6 +5,7 @@ package SystemImager::Common;
 #
 #  Copyright (C) 2001-2002 Bald Guy Software
 #                          Brian Elliott Finley <bef@bgsw.net>
+#  Copyright (C) 2002 Dann Frazier <dannf@dannf.org>
 #
 #    $Id$
 #
@@ -20,6 +21,7 @@ $VERSION = $version_number;
 # Subroutines in this module include:
 #
 #   check_if_root
+#   detect_bootloader
 #   get_response
 #   get_boot_flavors
 #   get_disk_label_type
@@ -739,3 +741,22 @@ sub valid_ip_quad {
     }
 }
 
+
+# Usage:
+# my $boot_loader = SystemImager::Common->detect_bootloader();
+# by -dannf-
+sub detect_bootloader {
+    use lib "/usr/lib/systemconfig";
+    use Boot;
+    use vars qw(@boottypes);
+
+    foreach my $boottype (@Boot::boottypes) {
+        my $boot = $boottype->new();
+        if($boot->footprint_loader() && $boot->footprint_config()) {
+            if ($boottype =~ /^Boot::(.*)$/) {
+                return $1;
+            }
+        }
+    }
+    return ""; #XXX can we simply do return? or return 0; ?
+}
