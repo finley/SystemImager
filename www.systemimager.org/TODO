@@ -5,17 +5,26 @@
 # (not in any specific order)
 #
 
+Top Requests
+------------
+- support for software RAID
+- replicate mke2fs parameters on clients to match the "master client"
+- commandline-ize the rest of the commands
+- support for use without DHCP
+
+Bug list
+--------
+- Bugs? ;)
+
 Short list (in progress by)
 ------------------------
 - <wessmith@engr.sgi.com> - GUI for SystemImager called "Rhino".
+- <wessmith@engr.sgi.com> - /etc/systemimager.conf file to hold things like domain name, nis domain, etc.
+- <ian@valinux.com> - have autoinstallclient check floppy for file and assign IP and hostname based on file, not on DHCP.
 - <ian@valinux.com> - multicast install -- Ian McLeod <ian@valinux.com> will have mftp (multicast ftp) 
   working as a drop in replacement for rsync by 5/15/2000 and we will begin testing
   in the lab.
-- <ian@valinux.com> - script that checks floppy for file and assigns IP and hostname based on file, not on DHCP.
-- <brian@valinux.com> - update FAQ-HOWTO
-- <brian@valinux.com> - add more error checking to makedhcpstatic
-- <wessmith@engr.sgi.com> - /etc/systemimager.conf file to hold things like domain name, nis domain, etc.
-
+- <brian@valinux.com> - consider inodes/block in getimage
 
 Other stuff
 -----------
@@ -42,6 +51,10 @@ getimage
   (perhaps use a virtual disk presented to a "real" fdisk to allow user partitioning? --
    or maybe just calculate partition information with the script and ask the user to specify sizes)
 
+makeautoinstalldiskette
+-----------------------
+- options to specify a particular image, imageserver, IP, hostname, domainname, etc.
+
 addclients
 ----------
 - accept command line input such as --image $imagename
@@ -55,10 +68,21 @@ systemimager.exclude
 - make systemimager.exclude and systemimager.include image specific.
   (systemimager.exclude.$image)
 
+prepareclient
+-------------
+- test for running rsync daemon before finish -- if not running, give warning
+  about having proper hostname and IP address in /etc/hosts
+
 updateclient
 -----------
 - have client pull systemimager.exclude and systemimager.include from
   imageserver before pulling image
+
+makedhcpserver 
+--------------
+- autodiscover and calculate more information 
+  (including if system has more than one network interface).
+- automatically change line in /etc/rc.d/init.d/dhcpd for you
 
 Miscellaneous and Possibilities
 -------------------------------
@@ -75,11 +99,6 @@ Miscellaneous and Possibilities
 - curses wrapper around the whole thing
 - updateclient - log what was updated and or deleted?
 - makedhcpstatic -- allow for -f "filename" option to specify dhcpd.leases file.
-
-makedhcpserver 
---------------
-- autodiscover and calculate more information 
-  (including if system has more than one network interface).
 
 systemimager.conf
 -----------------

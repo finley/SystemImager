@@ -4,6 +4,33 @@
 # This file: CHANGE.LOG
 #
 
+VA SystemImager-1.1 2000.05.26
+- updateclient -- Fixed a bug.  root --> / was not becoming the default 
+  if the -directory option was not used and updateclient was exiting 
+  quietly.  Just an if/then/else issue.
+- syslinux RPM -- Bug in the syslinux RPM prevented proper creation of 
+  bootable CD image with makeautoinstallcd.  This is fixed as of 
+  syslinux-1.48-2.i386.rpm.  (Note: this was not a bug in syslinux, just
+  a bug in the packaging)
+- FAQ-HOWTO updates and fixes.
+- makeautoinstallcd -- fixed a bug where the output file was not created
+  properly unless an absolute path was given.  Now works with an absolute
+  path, a relative path, or just a filename (to be placed in the current
+  working directory).
+- prepareclient -- (also part of the va-systemimager-client RPM)
+  Implemented a delay between killing a running rsync daemon and starting
+  up the fresh one.
+- prepareclient -- now tests for hostname in /etc/hosts for rsync.
+- autoinstallcd.iso -- autoinstallcd ISO image put up on the download 
+  site. (3 Meg)
+- prepareclient -- gave it a real usage statement.  Behavior is 
+  no longer to traipse upon the network with tftp, but to use the 
+  utilities on the client system.  Options are -help, -version, and -quiet
+- va-systemimager-client RPM -- now you *must* run prepareclient after
+  installing the client RPM.  This is so that you don't unwittingly have
+  an rsync daemon running sharing things you don't want shared.
+- added support for debian.  Let me know how it goes.
+
 VA SystemImager-1.0 2000.05.02
 - The name changed ever so slightly ;)
 - Lots of little things -- bug fixes and what not.  Ease of use stuff.
