@@ -310,7 +310,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CXX CXXFLAGS LDFLAGS CPPFLAGS ac_ct_CXX EXEEXT OBJEXT AWK YACC CC CFLAGS ac_ct_CC CPP LEX LEXLIB LEX_OUTPUT_ROOT INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LN_S SET_MAKE gcc_exec gxx_exec GCC GXX python_exec PYTHON_PATH EGREP found_docbook2man BUILD_DOCS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CXX CXXFLAGS LDFLAGS CPPFLAGS ac_ct_CXX EXEEXT OBJEXT AWK YACC CC CFLAGS ac_ct_CC CPP LEX LEXLIB LEX_OUTPUT_ROOT INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LN_S SET_MAKE gcc_exec gxx_exec GCC GXX python_exec PYTHON_PATH EGREP BUILD_LVM found_docbook2man BUILD_DOCS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -851,7 +851,8 @@ if test -n "$ac_init_help"; then
 Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
-  --enable-docs          build sgml docs default=yes if docbook2man is installed
+  --enable-lvm            include lvm support default=yes if possible
+  --enable-docs           build sgml docs default=yes if docbook2man is installed
 
 Some influential environment variables:
   CXX         C++ compiler command
@@ -4246,11 +4247,25 @@ if test `eval echo '${'$as_ac_Header'}'` = yes; then
 #define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
 _ACEOF
  have_libdevmapper=yes
-else
+fi
+
+done
+
+
+# Check whether --enable-lvm or --disable-lvm was given.
+if test "${enable_lvm+set}" = set; then
+  enableval="$enable_lvm"
+  if test "x$enableval" = "xyes"; then
+	if test "x$have_libdevmapper" = "xyes"; then
+	    BUILD_LVM=1
+
+	else
 
     SI_MSG=`echo -e "- libdevmapper not found!\n"`
-    if test "x" != "x"; then
-        SI_MSG=`echo -e "$SI_MSG\n- "`
+    if test "x" != "xlibdevmapper is required for lvm support.  You can build without
+	     lvm support by passing the --disable-lvm flag"; then
+        SI_MSG=`echo -e "$SI_MSG\n- libdevmapper is required for lvm support.  You can build without
+	     lvm support by passing the --disable-lvm flag"`
     fi
     if test "xlibdevmapper-devel" != "x"; then
         SI_MSG=`echo -e "$SI_MSG\n- Try installing the libdevmapper-devel package\n"`
@@ -4272,9 +4287,15 @@ $SI_MSG
    { (exit 1); exit 1; }; }
 
 
-fi
+	fi
+     fi
 
-done
+else
+  if test "x$have_libdevmapper" = "xyes"; then
+	BUILD_LVM=1
+
+     fi
+fi;
 
 
 # do we have docbook, if not say know
@@ -5027,6 +5048,7 @@ s,@GXX@,$GXX,;t t
 s,@python_exec@,$python_exec,;t t
 s,@PYTHON_PATH@,$PYTHON_PATH,;t t
 s,@EGREP@,$EGREP,;t t
+s,@BUILD_LVM@,$BUILD_LVM,;t t
 s,@found_docbook2man@,$found_docbook2man,;t t
 s,@BUILD_DOCS@,$BUILD_DOCS,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t

@@ -70,14 +70,30 @@ AC_PATH_PROG(python_exec,python)
 AC_SUBST(PYTHON_PATH,$python_exec)
 
 # do we have devmapper
-AC_CHECK_HEADERS([libdevmapper.h],[have_libdevmapper=yes],
-		 [SI_CHECK_FAIL(libdevmapper,libdevmapper-devel)])
+AC_CHECK_HEADERS([libdevmapper.h],[have_libdevmapper=yes])
+
+AC_ARG_ENABLE([lvm],
+    [  --enable-lvm            include lvm support [default=yes] if possible],
+    [if test "x$enableval" = "xyes"; then
+	if test "x$have_libdevmapper" = "xyes"; then
+	    AC_SUBST(BUILD_LVM,1)
+	else
+	    SI_CHECK_FAIL(libdevmapper,libdevmapper-devel,,
+	    [libdevmapper is required for lvm support.  You can build without
+	     lvm support by passing the --disable-lvm flag])
+	fi
+     fi
+    ],
+    [if test "x$have_libdevmapper" = "xyes"; then
+	AC_SUBST(BUILD_LVM,1)
+     fi])
+
 
 # do we have docbook, if not say know
 AC_CHECK_PROG(found_docbook2man,[docbook2man],[yes])
 
 AC_ARG_ENABLE([docs],
-    [  --enable-docs          build sgml docs [default=yes if docbook2man is installed]],
+    [  --enable-docs           build sgml docs [default=yes if docbook2man is installed]],
     [if test "x$enableval" = "xyes"; then
         if test "x$found_docbook2man" = "xyes"; then
             AC_SUBST(BUILD_DOCS,1)
