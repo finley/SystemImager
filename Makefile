@@ -270,14 +270,14 @@ ifeq ($(ARCH), i386)
 	@### floppy image, minus about 10k for syslinux stuff
 	@echo -n "Ramdisk + Kernel == "
 	@echo -n "`$(CHECK_FLOPPY_SIZE)`"
-	@[ `$(CHECK_FLOPPY_SIZE)` -lt `expr 1474560 - 10240` ] || \
+	@[ `$(CHECK_FLOPPY_SIZE)` -lt 1454081 ] || \
 	     (echo "" && \
 	      echo "************************************************" && \
 	      echo "Dammit.  The kernel and ramdisk are too large.  " && \
 	      echo "************************************************" && \
 	      exit 1)
 	@echo " - ok, that should fit on a floppy"
-	@echo "`expr 1474560 - 10240` is the max."
+	@echo "1454080 is the max."
 endif
 
 # install the initscript & config files for the server
