@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# systemimager < 1.5.0 had a single log file, move it to the new log directory
+if [ -f /var/log/systemimager ]; then
+	echo "Moving old log file (/var/log/systemimager) to /var/log/systemimager/rsyncd"
+	TMPFILE=`tempfile`
+	mv -f /var/log/systemimager $TMPFILE
+	install -d -m 750 /var/log/systemimager
+	mv $TMPFILE /var/log/systemimager/rsyncd
+fi
