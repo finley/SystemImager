@@ -49,10 +49,16 @@ GetOptions(
 ) || die "$help_info";
 
 # if requested, print help information
-if($help) { die "$help_info"; }
+if($help) { 
+  print "$help_info";
+  exit 0;
+}
 
 # if requested, print version and copyright information
-if($version) { die "$version_info"; }
+if($version) {
+  print "$version_info";
+  exit 0;
+}
 
 # verify that a valid filename was specified
 unless ($iso_file) { die "$help_info"; }

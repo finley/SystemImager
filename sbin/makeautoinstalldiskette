@@ -75,10 +75,16 @@ GetOptions(
 if($floppy_device_prefix) { $user_specified_floppy=1; }
 
 # if requested, print help information
-if($help) { die "$help_info"; }
+if($help) {
+  print "$help_info";
+  exit 0;
+}
 
 # if requested, print version and copyright information
-if($version) { die "$version_info"; }
+if($version) {
+  print "$version_info";
+  exit 0;
+}
 
 # be sure the user includes -floppy when doing -quiet
 if($quiet and !$user_specified_floppy) { die "Must use -floppy with -quiet! (use -help for options)\n"; }

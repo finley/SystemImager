@@ -3,10 +3,14 @@
 #
 # "VA SystemImager" - Copyright (C) 1999-2000 Brian Elliott Finley <brian@valinux.com> 
 #
+# Others who have contributed to this code (in alphabetical order):
+#   Jose AP Celestino <japc@sl.pt>
+#
 # This file: prepareclient
 #            (prepareclient is used to, well, prepare a client to have it's
 #             image retrieved by an imageserver)
 #
+
 
 # set version
 version_number="1.3.0"
@@ -104,13 +108,13 @@ done
 # show version if requested
 if [ "$SHOW_VERSION" = "true" ]; then
     show_version
-    exit 1
+    exit 0
 fi
 
 # give help if requested
 if [ "$HELP" = "true" ]; then
     show_usage
-    exit 1
+    exit 0
 fi
 
 # if not run as root, install will surely fail

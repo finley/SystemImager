@@ -133,10 +133,16 @@ $ip_assignment_method = lc $ip_assignment_method;
 $update_script = lc $update_script;
 
 #if requested, print help information
-if ($help) { die "$help_info"; }
+if ($help) { 
+  print "$help_info";
+  exit 0;
+}
 
 # if requested, print version and copyright information
-if ($version) { die "$version_info"; }
+if ($version) {
+  print "$version_info";
+  exit 0;
+}
 
 # only golden client or master client may be set
 if ($golden_client and $master_client) {
@@ -253,7 +259,8 @@ if($golden_client) {
   # get /etc/mtab from $golden_client
   if (!$quiet) {
     print "Retrieving /etc/mtab from $golden_client to check for mounted filesystems...\n";
-    open(RSYNC, "rsync -av --numeric-ids ${golden_client}::root/etc/mtab $imagedir|");
+    $command =  "rsync -av --numeric-ids ${golden_client}::root/etc/mtab $imagedir";
+    open(RSYNC, "$command|");
     print "------------- $golden_client mtab RETRIEVAL PROGRESS -------------\n";
     while (<RSYNC>) {
       print;

@@ -34,18 +34,22 @@ Options: (options can be presented in any order)
  -help                    Display this output.
  -version                 Display version and copyright information.
  -server HOSTNAME         Hostname or IP address of the imageserver.
-                           (-imageserver is a depricated option and 
-                            will go away soon.)
+                          (-imageserver is a depricated option and 
+                           will go away soon.)
  -image IMAGENAME         Image from which the client should be updated.
  -directory DIRECTORY     Absolute path of directory to be updated.
-                           (defaults to "/")
+                          (defaults to "/")
  -nolilo                  Don't run lilo after update completes.
-                           (lilo is always run unless specified)
+                          (lilo is always run unless specified)
  -autoinstall             Autoinstall this client the next time it
-                           reboots.  (can't be run with -nolilo)
+                          reboots.  (can't be run with -nolilo)
+ -configure-from DEVICE   Only used with -autoinstall.  Stores the
+                          network configuration for DEVICE in the 
+			  /local.cfg file so that the same settings 
+			  will be used during the autoinstall process.
  -listing                 List avaliable images on imageserver.
-                           (supercedes and ignores all options 
-                            other than --imageserver)
+                          (supercedes and ignores all options other
+			   than --imageserver)
  -reboot                  Reboot client after update completes.
 
 Download from http://systemimager.org/
@@ -66,10 +70,16 @@ GetOptions( "listing" => \$listing,
 ) or die qq($help_info);
 
 # if requested, print help information
-if($help) { die qq($help_info); }
+if($help) {
+  print qq($help_info);
+  exit 0;
+}
 
 # if requested, print version and copyright information
-if($version) { die qq($version_info); }
+if($version) {
+  print qq($version_info);
+  exit 0;
+}
 
 # be sure $imageserver name doesn't start with a hyphen
 if($imageserver) {
