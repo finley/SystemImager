@@ -1,5 +1,5 @@
 %define name     va-systemimager
-%define ver      1.3.0
+%define ver      1.4.0
 %define rel      1
 %define prefix   /usr
 
@@ -33,7 +33,7 @@ workstations have the same basic hardware configuration.
 Summary: VA SystemImager "Master Client" software
 Group: Applications/System
 Conflicts: va-systemimager
-Requires: rsync >= 2.4.6, util-linux, sh-utils, fileutils, grep, gawk, sed, findutils, textutils, perl
+Requires: rsync >= 2.4.6, util-linux, sh-utils, fileutils, grep, gawk, sed, findutils, textutils, perl, mtools
 
 %description client
 This is the package you install on a VA SystemImager "master client".
