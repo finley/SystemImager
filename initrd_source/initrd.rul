@@ -147,13 +147,8 @@ endif
 
 	# Clear out CVS cruft.
 	find $(INITRD_BUILD_DIR) -type d -name CVS -depth | xargs rm -rf
-
 	mkdir $(INITRD_BUILD_DIR)/new_root
 
-	# Changing the date stamps of the files helps the size of the ramdisk
-	# stay more consistent between builds.  Sean Dague figured out this
-        # optimal time stamp somehow... -BEF-
-	find $(INITRD_BUILD_DIR) -depth -exec touch -t 196912311900 {} \;
 	touch $(INITRD_DIR)/build_dir-stamp
 
 ifeq ($(INITRD_COMPRESS),yes)
