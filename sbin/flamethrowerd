@@ -7,8 +7,6 @@
 #
 #   $Id$
 #
-#   XXX Add syslogging
-#
 
 use lib "USR_PREFIX/lib/systemimager/perl";
 use strict;
@@ -40,8 +38,8 @@ if ( $ft_config->start_flamethrower_daemon() ne "yes" ) {
 
 my $file = "udp-sender";
 unless( SystemImager::Common->which($file,$ENV{PATH}) ){
-    print STDOUT ("Couldn't find $file in path: $ENV{PATH}\n");
-    print STDOUT ("Please install udp-sender, then try again.\n");
+    print ("Couldn't find $file in path: $ENV{PATH}\n");
+    print ("Please install udp-sender, then try again.\n");
     exit 1;
 }
 
@@ -258,7 +256,7 @@ sub build_udp_sender_cmd {
 # Usage: update_directory();
 sub update_directory {
 
-    print STDOUT "update_directory()\n" if ($debug);
+    print "update_directory()\n" if ($debug);
 
     # Create our directory directory, if necessary.
     my $dir = $ft_config->get("flamethrower_directory_dir");
@@ -436,7 +434,7 @@ sub update_directory {
 
 # Usage: main();
 sub main {
-    print STDOUT "main()\n" if($debug); 
+    print "main()\n" if($debug); 
     if(conf_file_updated($conf_file)) {
         read_config_file($conf_file);
     }
@@ -448,7 +446,7 @@ sub main {
                         # In case this happens to get started *immediately* 
             sleep 1;    # after the cast() function does it's unlink, give 
                         # the child time to die.
-            cast($module, $file);
+            cast($module, $dir);
         }
     }
 }
@@ -459,35 +457,53 @@ sub record_pid {
     my $file = shift;
     my $pid = shift;
 
+    print "record_pid($file, $pid)\n" if($debug);
+
     open(FILE, ">$file") or die("Couldn't open $file!");
         print FILE "$pid\n";
     close(FILE);
 }
 
-# Usage: cast($module, $file);
+# Usage: cast($module, $state_dir);
 sub cast {
 
     my $module = shift;
-    my $file = shift;
+    my $state_dir = shift;
 
-    print STDOUT "cast()\n" if($debug);
+    my $parent_file = "${state_dir}/flamethrowerd.${module}.pid";
+    my $child_file  = "${state_dir}/flamethrowerd.${module}.udp-sender.pid";
+
+    my $file;
+    my $parent_pid;
+    my $child_pid;
+
+    print "cast($module, $state_dir)\n" if($debug);
     
     # Fork and cast
-    my $pid;
-    if ($pid = fork) {
-        print "    record_pid($file, $pid)\n" if($debug);
-        record_pid($file, $pid);
-    } elsif (defined $pid) { # send the forked child off
+    if ($parent_pid = fork) {
+        record_pid($parent_file, $parent_pid);
+    } elsif (defined $parent_pid) { # send the forked child off
 
         setsid or die "Can't start a new session: $!";
 
-        print STDOUT "    casting $module\n" if($debug);
+        print "casting $module\n" if($debug);
 
         my $cmd = build_udp_sender_cmd($module);
-        print STDOUT "cmd $cmd\n" if($debug);
-        !system($cmd) or die ("FATAL:  \"$cmd\"  failed!");
+        print "cmd $cmd\n" if($debug);
 
-        print STDOUT "    unlinking $file\n" if($debug);
+        my $child_pid = open(SENDER, "$cmd|") or die "Couldn't fork: $cmd";
+            record_pid($child_file, $child_pid);
+            while(<SENDER>){
+                print $_ if($debug);
+            }
+        close(SENDER);
+
+        $file = $child_file;
+        print "    unlinking $file\n" if($debug);
+        unlink($file) or die("Couldn't remove $file!\n");
+
+        $file = $parent_file;
+        print "    unlinking $file\n" if($debug);
         unlink($file) or die("Couldn't remove $file!\n");
 
         exit 0;
@@ -495,7 +511,6 @@ sub cast {
     } else {
         die "Can't fork: $!\n";
     }
-
 }
 
 # Usage: read_config_file($file);
@@ -509,13 +524,13 @@ sub read_config_file {
 sub conf_file_updated {
 
     my $file = shift;
-    #print STDOUT "conf_file_updated($file)\n" if ($debug);
+    print "conf_file_updated($file)\n" if ($debug);
 
     my $st = stat($file);
     my $this_time = $st->ctime;
 
     if($this_time ne $last_time) {
-        print STDOUT "    $file updated\n" if($debug);
+        print "    $file updated\n" if($debug);
         $last_time = $this_time;
         return 1;
     }
@@ -538,7 +553,7 @@ sub daemonize {
     # you would expect, by automatically starting according to the --min-client, 
     # --min-wait, and --max-wait parameters.
     #
-    #open STDIN, '/dev/null'    or die "Can't read /dev/null: $!";
+    #open STDIN, '/dev/null'   or die "Can't read /dev/null: $!";
     open STDOUT, '>>/dev/null' or die "Can't write to /dev/null: $!" unless($debug);
     open STDERR, '>>/dev/null' or die "Can't write to /dev/null: $!" unless($debug);
     defined(my $pid = fork)    or die "Can't fork: $!";
