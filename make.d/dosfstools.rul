@@ -4,6 +4,7 @@ DOSFSTOOLS_TARBALL := dosfstools-$(DOSFSTOOLS_VERSION).src.tar.gz
 DOSFSTOOLS_URL := http://download.systemimager.org/pub/dosfstools/$(DOSFSTOOLS_TARBALL)
 # SOURCE_URL -> ftp://ftp.uni-erlangen.de/pub/Linux/LOCAL/dosfstools/
 MKDOSFS_BINARY := $(SRC_DIR)/$(DOSFSTOOLS_DIR)/mkdosfs/mkdosfs
+DOSFSTOOLS_PATCHES := $(shell ls $(PATCH_DIR)/dosfstools.*.patch 2>/dev/null | sort)
 
 ALL_SOURCE += $(SRC_DIR)/$(DOSFSTOOLS_TARBALL)
 
@@ -12,7 +13,8 @@ PHONY += dosfstools
 dosfstools:	$(MKDOSFS_BINARY)
 
 $(MKDOSFS_BINARY):	$(SRC_DIR)/$(DOSFSTOOLS_TARBALL)
-	[ -d $(SRC_DIR)/$(DOSFSTOOLS_DIR) ] || ( cd $(SRC_DIR) && tar -xvzf $(DOSFSTOOLS_TARBALL) )
+	[ -d $(SRC_DIR)/$(DOSFSTOOLS_DIR) ] || ( cd $(SRC_DIR) && tar -xvzf $(DOSFSTOOLS_TARBALL) \
+		&& (cd $(DOSFSTOOLS_DIR) && (cat $(DOSFSTOOLS_PATCHES) < /dev/null | patch -p0)) )
 	$(MAKE) -C $(SRC_DIR)/$(DOSFSTOOLS_DIR)
 
 # download the dosfstools tarball
