@@ -126,6 +126,17 @@
         </listitem>
       </varlistentry>
       <varlistentry>
+        <term><option>-no-listing</option></term>
+        <listitem>
+          <para>
+	  Don't show each filename as it is copied over during
+	  install.  This is useful for times when your console
+	  device is slow (e.g. serial console), and is the 
+	  bottleneck of your installation.
+	  </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
         <term><option>-directory <replaceable>PATH</replaceable></option></term>
         <listitem>
           <para>
