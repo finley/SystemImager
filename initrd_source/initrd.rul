@@ -164,7 +164,8 @@ initrd_get_source:	$(INITRD_SRC_DIR)/$(BUSYBOX_TARBALL) \
 			$(INITRD_SRC_DIR)/$(DHCLIENT_TARBALL) \
 			$(INITRD_SRC_DIR)/$(MODUTILS_TARBALL) \
 			$(INITRD_SRC_DIR)/$(RSYNC_TARBALL) \
-			$(INITRD_SRC_DIR)/$(UCLIBC_TARBALL) 
+			$(INITRD_SRC_DIR)/$(UCLIBC_TARBALL) \
+			$(INITRD_SRC_DIR)/$(UDPCAST_TARBALL)
 
 initrd_clean:	$(subst .rul,_clean,$(shell cd $(INITRD_DIR)/make.d && ls *.rul))
 	-find . -name "*~" -exec rm -f {} \;
