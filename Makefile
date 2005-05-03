@@ -388,7 +388,7 @@ install_configs:
 ########## BEGIN man pages ##########
 # build all of the manpages
 .PHONY:	manpages install_server_man install_client_man install_common_man install_docs docs
-ifeq ($(BUILD_DOCS),1)
+ifeq ($(SI_BUILD_DOCS),1)
 manpages:
 	$(MAKE) -C $(MANPAGE_DIR) TOPDIR=$(TOPDIR)
 
