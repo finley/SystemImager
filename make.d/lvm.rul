@@ -53,6 +53,8 @@ $(SRC_DIR)/$(LVM_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
 	$(GETSOURCE) $(LVM_URL) $(SRC_DIR)
 
+ALL_SOURCE += $(SRC_DIR)/$(LVM_TARBALL)
+
 PHONY += lvm_clean
 lvm_clean:
 	rm -rf $(SRC_DIR)/$(LVM_DIR)h
