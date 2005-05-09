@@ -14,16 +14,15 @@ DEVMAPPER_DIR		:= device-mapper.$(DEVMAPPER_VERSION)
 DEVMAPPER_TARBALL	:= device-mapper.$(DEVMAPPER_VERSION).tgz
 DEVMAPPER_URL		:= ftp://sources.redhat.com/pub/dm/old/device-mapper.1.00.21.tgz
 DEVMAPPER_BINARY	:= $(SRC_DIR)/$(DEVMAPPER_DIR)/lib/ioctl/libdevmapper.so
-MKLIBS += $(SRC_DIR)/$(DEVMAPPER_DIR)/lib/ioctl
-PHONY += devmapper
+MKLIBS 				+= $(SRC_DIR)/$(DEVMAPPER_DIR)/lib/ioctl
 
 LVM_VERSION	:= 2.2.00.32
 LVM_DIR		:= LVM$(LVM_VERSION)
 LVM_TARBALL	:= LVM$(LVM_VERSION).tgz
 LVM_URL		:= ftp://sources.redhat.com/pub/lvm2/old/$(LVM_TARBALL)
 LVM_BINARY	:= $(SRC_DIR)/$(LVM_DIR)/tools/lvm
-PHONY += lvm
 
+PHONY += devmapper
 devmapper: $(DEVMAPPER_BINARY)
 $(DEVMAPPER_BINARY): $(SRC_DIR)/$(DEVMAPPER_TARBALL)
 	rm -rf $(SRC_DIR)/$(DEVMAPPER_DIR)
@@ -36,8 +35,8 @@ $(SRC_DIR)/$(DEVMAPPER_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
 	$(GETSOURCE) $(DEVMAPPER_URL) $(SRC_DIR)
 
+PHONY += lvm
 lvm: $(LVM_BINARY) devmapper
-
 $(LVM_BINARY): $(SRC_DIR)/$(LVM_TARBALL) devmapper
 	rm -rf $(SRC_DIR)/$(LVM_DIR)
 	cd $(SRC_DIR) && tar -xvzf $(LVM_TARBALL)
