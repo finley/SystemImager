@@ -23,8 +23,8 @@ LVM_URL		:= ftp://sources.redhat.com/pub/lvm2/old/$(LVM_TARBALL)
 LVM_BINARY	:= $(SRC_DIR)/$(LVM_DIR)/tools/lvm
 
 PHONY += devmapper
-devmapper: $(DEVMAPPER_BINARY)
-$(DEVMAPPER_BINARY): $(SRC_DIR)/$(DEVMAPPER_TARBALL)
+devmapper:	$(DEVMAPPER_BINARY)
+$(DEVMAPPER_BINARY):	$(SRC_DIR)/$(DEVMAPPER_TARBALL)
 	rm -rf $(SRC_DIR)/$(DEVMAPPER_DIR)
 	cd $(SRC_DIR) && tar -xvzf $(DEVMAPPER_TARBALL)
 	cd $(SRC_DIR)/$(DEVMAPPER_DIR) && \
@@ -36,8 +36,8 @@ $(SRC_DIR)/$(DEVMAPPER_TARBALL):
 	$(GETSOURCE) $(DEVMAPPER_URL) $(SRC_DIR)
 
 PHONY += lvm
-lvm: $(LVM_BINARY) devmapper
-$(LVM_BINARY): $(SRC_DIR)/$(LVM_TARBALL) devmapper
+lvm:	$(LVM_BINARY) $(DEVMAPPER_BINARY)
+$(LVM_BINARY):	$(SRC_DIR)/$(LVM_TARBALL) $(DEVMAPPER_BINARY)
 	rm -rf $(SRC_DIR)/$(LVM_DIR)
 	cd $(SRC_DIR) && tar -xvzf $(LVM_TARBALL)
 	cd $(SRC_DIR)/$(LVM_DIR) && \
