@@ -17,12 +17,17 @@ OPENSSL_URL             := http://www.openssl.org/source/$(OPENSSL_TARBALL)
 OPENSSL_BINARIES        := $(SRC_DIR)/$(OPENSSL_DIR)/apps/openssl
 OPENSSL_PATCHES 		:= $(shell ls $(PATCH_DIR)/openssl.*.patch 2>/dev/null | sort)
 
+ifeq ($(ARCH),"ppc64") 
+	OPENSSL_ARCH := linux-ppc
+endif
 ALL_SOURCE += $(SRC_DIR)/$(OPENSSL_TARBALL)
 
 OPENSSL_SOURCE := $(SRC_DIR)/$(OPENSSL_TARBALL)
 
 PHONY += openssl
 openssl:	$(OPENSSL_LIBRARIES)
+
+
 
 $(OPENSSL_LIBRARIES):	$(SRC_DIR)/openssl_verify.stamp $(ZLIB_LIBRARY)
 	echo Making $(OPENSSL_LIBRARIES)
@@ -31,9 +36,7 @@ $(OPENSSL_LIBRARIES):	$(SRC_DIR)/openssl_verify.stamp $(ZLIB_LIBRARY)
 	   	 (cd $(OPENSSL_DIR) && \
 	   	   (cat $(OPENSSL_PATCHES) < /dev/null | patch -p1)))
 	cd $(SRC_DIR)/$(OPENSSL_DIR) && \
-		./Configure --prefix=/usr --openssldir=/usr/lib/ssl \
-			-I$(SRC_DIR)/$(ZLIB_DIR) -L$(SRC_DIR)/$(ZLIB_DIR) \
-				no-idea no-mdc2 no-rc5 no-krb5 no-asm no-ec fips 386 zlib shared linux-elf
+		./config
 		$(MAKE) -C $(SRC_DIR)/$(OPENSSL_DIR) RPM_OPT_FLAGS="$(RPM_OPT_FLAGS) -Wa,--noexecstack" depend
 		$(MAKE) -C $(SRC_DIR)/$(OPENSSL_DIR) RPM_OPT_FLAGS="$(RPM_OPT_FLAGS) -Wa,--noexecstack"
 
