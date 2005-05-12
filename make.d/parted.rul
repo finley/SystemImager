@@ -28,6 +28,7 @@ $(PARTED_BINARY):	$(SRC_DIR)/$(PARTED_TARBALL) $(PARTED_PATCHES)
 	cd $(SRC_DIR)/$(PARTED_DIR) && \
 	  cat $(PARTED_PATCHES) < /dev/null | patch -p1
 	( cd $(SRC_DIR)/$(PARTED_DIR) && \
+	  CPPFLAGS=-I$(SRC_DIR)/$(E2FSPROGS_DIR)/lib CFLAGS=-I$(SRC_DIR)/$(E2FSPROGS_DIR)/lib LDFLAGS=-L$(SRC_DIR)/$(E2FSPROGS_DIR)/lib \
 	  ./configure --disable-Werror --prefix= $(PARTED_CONFIGURE))
 	$(MAKE) -C $(SRC_DIR)/$(PARTED_DIR)
 
