@@ -10,13 +10,15 @@ UTIL_LINUX_DIR := util-linux-$(UTIL_LINUX_VERSION)
 UTIL_LINUX_TARBALL := util-linux-$(UTIL_LINUX_VERSION).tar.bz2
 UTIL_LINUX_URL := http://mirror.mcs.anl.gov/kernel/linux/utils/util-linux/$(UTIL_LINUX_TARBALL)
 MKSWAP_BINARY := $(SRC_DIR)/$(UTIL_LINUX_DIR)/disk-utils/mkswap
+UTIL_LINUX_PATCHES := $(shell ls $(PATCH_DIR)/util-linux.*.patch 2>/dev/null | sort)
 
 ALL_SOURCE += $(SRC_DIR)/$(UTIL_LINUX_TARBALL)
 
 PHONY += util-linux
 util-linux:	$(MKSWAP_BINARY)
 $(MKSWAP_BINARY):	$(SRC_DIR)/$(UTIL_LINUX_TARBALL)
-	[ -d $(SRC_DIR)/$(UTIL_LINUX_DIR) ] || ( cd $(SRC_DIR) && tar -xvjf $(UTIL_LINUX_TARBALL) )
+	[ -d $(SRC_DIR)/$(UTIL_LINUX_DIR) ] || ( cd $(SRC_DIR) && tar -xvjf $(UTIL_LINUX_TARBALL) \
+		&& (cd $(UTIL_LINUX_DIR) && (cat $(UTIL_LINUX_PATCHES) < /dev/null | patch -p1)) )
 	( cd $(SRC_DIR)/$(UTIL_LINUX_DIR) && ./configure )
 	$(MAKE) -C $(SRC_DIR)/$(UTIL_LINUX_DIR)
 
