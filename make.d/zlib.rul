@@ -17,8 +17,6 @@ $(ZLIB_LIBRARY):	$(SRC_DIR)/$(ZLIB_TARBALL)
 
 	# This is a little weird... zlib's configure makes static, or shared, but not both
 	# So, we just do it twice...
-	( cd $(SRC_DIR)/$(ZLIB_DIR) && ./configure)
-	$(MAKE) -C $(SRC_DIR)/$(ZLIB_DIR)
 	( cd $(SRC_DIR)/$(ZLIB_DIR) && ./configure --shared)
 	$(MAKE) -C $(SRC_DIR)/$(ZLIB_DIR)
 
