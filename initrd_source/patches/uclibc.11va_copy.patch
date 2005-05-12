@@ -1,0 +1,31 @@
+--- uClibc-0.9.27/libc/stdio/vasprintf.c.orig	Wed May  4 23:01:50 2005
++++ uClibc-0.9.27/libc/stdio/vasprintf.c	Wed May  4 23:04:02 2005
+@@ -17,6 +17,28 @@
+ #warning Skipping vasprintf since no vsnprintf!
+ #else
+ 
++/**********************************************************************/
++/* Deal with pre-C99 compilers. */
++
++#ifndef va_copy
++
++#ifdef __va_copy
++#define va_copy(A,B)	__va_copy(A,B)
++#else
++	/* TODO -- maybe create a bits/vacopy.h for arch specific versions
++	 * to ensure we get the right behavior?  Either that or fall back
++	 * on the portable (but costly in size) method of using a va_list *.
++	 * That means a pointer derefs in the va_arg() invocations... */
++#warning Neither va_copy (C99/SUSv3) or __va_copy is defined.  Using a simple copy instead.  But you should really check that this is appropriate...
++	/* the glibc manual suggests that this will usually suffice when
++        __va_copy doesn't exist.  */
++#define va_copy(A,B)	A = B
++#endif
++
++#endif /* va_copy */
++
++/**********************************************************************/
++
+ int vasprintf(char **__restrict buf, const char * __restrict format,
+ 			 va_list arg)
+ {
