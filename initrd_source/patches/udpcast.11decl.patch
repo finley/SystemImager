@@ -1,0 +1,19 @@
+--- udpcast/console.c.orig	Sat Sep 25 11:37:37 2004
++++ udpcast/console.c	Thu May  5 22:26:35 2005
+@@ -22,6 +22,8 @@
+     struct termios newtio;
+     int needClose=0;
+ 
++    console_t *c = MALLOC(console_t);
++
+     if(fd < 0) {
+ 	fd = open("/dev/tty", O_RDWR);
+ 	if(fd < 0) {
+@@ -31,7 +33,6 @@
+ 	needClose=1;
+     }
+ 
+-    console_t *c = MALLOC(console_t);
+     if(c == NULL)
+ 	return c;
+ 
