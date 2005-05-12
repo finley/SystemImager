@@ -23,8 +23,12 @@ sfdisk:		$(SFDISK_BINARY)
 $(MKSWAP_BINARY) $(SFDISK_BINARY):	$(SRC_DIR)/$(UTIL_LINUX_TARBALL)
 	[ -d $(SRC_DIR)/$(UTIL_LINUX_DIR) ] || ( cd $(SRC_DIR) && tar -xvjf $(UTIL_LINUX_TARBALL) \
 		&& (cd $(UTIL_LINUX_DIR) && (cat $(UTIL_LINUX_PATCHES) < /dev/null | patch -p1)) )
-	( cd $(SRC_DIR)/$(UTIL_LINUX_DIR) && ./configure )
-	$(MAKE) -C $(SRC_DIR)/$(UTIL_LINUX_DIR)
+	( cd $(SRC_DIR)/$(UTIL_LINUX_DIR) && \
+		CPPFLAGS="-I$(SRC_DIR)/$(E2FSPROGS_DIR)/lib -I$(SRC_DIR)/$(ZLIB_DIR)" CFLAGS="-I$(SRC_DIR)/$(E2FSPROGS_DIR)/lib -I$(SRC_DIR)/$(ZLIB_DIR)"  LDFLAGS="-L$(SRC_DIR)/$(E2FSPROGS_DIR)/lib -L$(SRC_DIR)/$(ZLIB_DIR)" \
+			./configure )
+	CPPFLAGS="-I$(SRC_DIR)/$(E2FSPROGS_DIR)/lib -I$(SRC_DIR)/$(ZLIB_DIR)" CFLAGS="-I$(SRC_DIR)/$(E2FSPROGS_DIR)/lib -I$(SRC_DIR)/$(ZLIB_DIR)"  LDFLAGS="-L$(SRC_DIR)/$(E2FSPROGS_DIR)/lib -L$(SRC_DIR)/$(ZLIB_DIR)" \
+		$(MAKE) -C $(SRC_DIR)/$(UTIL_LINUX_DIR)
+		$(MAKE) -C $(SRC_DIR)/$(UTIL_LINUX_DIR) fdisk
 
 $(SRC_DIR)/$(UTIL_LINUX_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
