@@ -14,7 +14,6 @@ DEVMAPPER_DIR		:= device-mapper.$(DEVMAPPER_VERSION)
 DEVMAPPER_TARBALL	:= device-mapper.$(DEVMAPPER_VERSION).tgz
 DEVMAPPER_URL		:= ftp://sources.redhat.com/pub/dm/old/device-mapper.1.00.21.tgz
 DEVMAPPER_BINARY	:= $(SRC_DIR)/$(DEVMAPPER_DIR)/lib/ioctl/libdevmapper.so
-MKLIBS 				+= $(SRC_DIR)/$(DEVMAPPER_DIR)/lib/ioctl
 
 LVM_VERSION	:= 2.2.00.32
 LVM_DIR		:= LVM$(LVM_VERSION)
