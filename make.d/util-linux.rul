@@ -10,32 +10,22 @@ UTIL_LINUX_DIR := util-linux-$(UTIL_LINUX_VERSION)
 UTIL_LINUX_TARBALL := util-linux-$(UTIL_LINUX_VERSION).tar.bz2
 UTIL_LINUX_URL := http://mirror.mcs.anl.gov/kernel/linux/utils/util-linux/$(UTIL_LINUX_TARBALL)
 MKSWAP_BINARY := $(SRC_DIR)/$(UTIL_LINUX_DIR)/disk-utils/mkswap
-SFDISK_BINARY := $(SRC_DIR)/$(UTIL_LINUX_DIR)/fdisk/sfdisk
-MKCRAMFS_BINARY := $(SRC_DIR)/$(UTIL_LINUX_DIR)/disk-utils/mkfs.cramfs
-UTIL_LINUX_PATCHES := $(shell ls $(PATCH_DIR)/util-linux.*.patch 2>/dev/null | sort)
 
 ALL_SOURCE += $(SRC_DIR)/$(UTIL_LINUX_TARBALL)
 
 PHONY += util-linux
-PHONY += sfdisk
 util-linux:	$(MKSWAP_BINARY)
-sfdisk:		$(SFDISK_BINARY)
-$(MKSWAP_BINARY) $(SFDISK_BINARY):	$(SRC_DIR)/$(UTIL_LINUX_TARBALL)
-	[ -d $(SRC_DIR)/$(UTIL_LINUX_DIR) ] || ( cd $(SRC_DIR) && tar -xvjf $(UTIL_LINUX_TARBALL) \
-		&& (cd $(UTIL_LINUX_DIR) && (cat $(UTIL_LINUX_PATCHES) < /dev/null | patch -p1)) )
-	( cd $(SRC_DIR)/$(UTIL_LINUX_DIR) && \
-		CPPFLAGS="-I$(SRC_DIR)/$(E2FSPROGS_DIR)/lib -I$(SRC_DIR)/$(ZLIB_DIR)" CFLAGS="-I$(SRC_DIR)/$(E2FSPROGS_DIR)/lib -I$(SRC_DIR)/$(ZLIB_DIR)"  LDFLAGS="-L$(SRC_DIR)/$(E2FSPROGS_DIR)/lib -L$(SRC_DIR)/$(ZLIB_DIR)" \
-			./configure )
-	CPPFLAGS="-I$(SRC_DIR)/$(E2FSPROGS_DIR)/lib -I$(SRC_DIR)/$(ZLIB_DIR)" CFLAGS="-I$(SRC_DIR)/$(E2FSPROGS_DIR)/lib -I$(SRC_DIR)/$(ZLIB_DIR)"  LDFLAGS="-L$(SRC_DIR)/$(E2FSPROGS_DIR)/lib -L$(SRC_DIR)/$(ZLIB_DIR)" \
-		$(MAKE) -C $(SRC_DIR)/$(UTIL_LINUX_DIR)
-		$(MAKE) -C $(SRC_DIR)/$(UTIL_LINUX_DIR) fdisk
+$(MKSWAP_BINARY):	$(SRC_DIR)/$(UTIL_LINUX_TARBALL)
+	[ -d $(SRC_DIR)/$(UTIL_LINUX_DIR) ] || ( cd $(SRC_DIR) && tar -xvjf $(UTIL_LINUX_TARBALL) )
+	( cd $(SRC_DIR)/$(UTIL_LINUX_DIR) && ./configure )
+	$(MAKE) -C $(SRC_DIR)/$(UTIL_LINUX_DIR)
 
 $(SRC_DIR)/$(UTIL_LINUX_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
 	$(GETSOURCE) $(UTIL_LINUX_URL) $(SRC_DIR)
 
-PHONY += util-linux_clean sfdisk_clean
-util-linux_clean sfdisk_clean:
+PHONY += util-linux_clean
+util-linux_clean:
 	rm -rf $(SRC_DIR)/$(UTIL_LINUX_DIR)
 
 PHONY += mkswap

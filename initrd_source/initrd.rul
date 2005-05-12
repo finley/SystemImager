@@ -58,12 +58,8 @@ INITRD_BUILD_DIR = $(INITRD_DIR)/build_dir
 SKEL_FILES = $(shell find $(INITRD_DIR)/skel -not -regex '.*/CVS.*' -and \
                                  -not -regex '.*/CVS')
 
-ifndef MKCRAMFS_BINARY
 MKCRAMFS = $(shell which mkcramfs || which mkfs.cramfs || \
              echo MKCRAMFS_WAS_NOT_FOUND_IN_YOUR_PATH)
-else
-MKCRAMFS = $(MKCRAMFS_BINARY)
-endif
 
 # Number of inodes in the build directory and number of 
 # inodes needed on the initial RAM disk -BEF-
@@ -71,10 +67,10 @@ endif
 ### BEGIN module utility decisions ###
 MODULE_UTILS=modutils
 ifeq ($(ARCH),i386)
-  MODULE_UTILS=module-init-tools
+  MODULE_UTILS=busybox
 endif
 ifeq ($(ARCH),x86_64)
-  MODULE_UTILS=module-init-tools
+  MODULE_UTILS=busybox
 endif
 ifeq ($(ARCH),ppc64)
   MODULE_UTILS=busybox

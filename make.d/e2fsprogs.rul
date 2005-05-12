@@ -14,7 +14,6 @@ ALL_SOURCE += $(SRC_DIR)/$(E2FSPROGS_TARBALL)
 ifdef IS_PPC64
 	E2FSPROGS_CONFIGURE = --host=ppc-unknown-linux
 endif
-E2FSPROGS_CONFIGURE := $(E2FSPROGS_CONFIGURE) --enable-elf-shlibs
 
 # build  e2fsprogs binaries
 PHONY += e2fsprogs

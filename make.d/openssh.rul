@@ -31,21 +31,19 @@ OPENSSH_OTHER_FILES := $(shell echo /lib/libnss_files*)
 
 OPENSSH_SOURCE := $(SRC_DIR)/$(OPENSSH_TARBALL)
 
-SSH_HOST_TYPE=i486-pc-linux-gnu
-# Use something like this for other architectures
-#ifeq ($(ARCH),i386)
-#	SSH_HOST_TYPE=i486-pc-linux-gnu
-#endif
+ifeq ($(ARCH),i386)
+    # should this be i486?  as we use an i486 kernel? -BEF-
+	SSH_HOST_TYPE=i586-pc-linux-gnu
+endif
 
 
 PHONY += openssh
 openssh:	$(OPENSSH_BINARIES)
 
-$(OPENSSH_BINARIES):	$(SRC_DIR)/openssh_verify.stamp openssl zlib
+$(OPENSSH_BINARIES):	$(SRC_DIR)/openssh_verify.stamp
 	rm -rf $(SRC_DIR)/$(OPENSSH_DIR)
 	( cd $(SRC_DIR) && tar -xvzf $(OPENSSH_TARBALL) )
-	cd $(SRC_DIR)/$(OPENSSH_DIR) && LD_LIBRARY_PATH=$(SRC_DIR)/$(OPENSSL_DIR) ./configure --prefix=/usr \
-		--with-zlib=$(SRC_DIR)/$(ZLIB_DIR) --with-ssl-dir=$(SRC_DIR)/$(OPENSSL_DIR) --without-rpath \
+	cd $(SRC_DIR)/$(OPENSSH_DIR) && ./configure --prefix=/usr \
 												--sysconfdir=/etc/ssh \
 												--disable-last-log --disable-libutil \
 												--disable-pututxline --disable-utmpx --disable-wtmpx \
@@ -53,8 +51,7 @@ $(OPENSSH_BINARIES):	$(SRC_DIR)/openssh_verify.stamp openssl zlib
 												--without-opensc --without-sectok \
 												--without-kerberos5 --without-kerberos4 \
 												--without-afs --without-md5-passwords --without-bsd-auth \
-												--with-xauth=no \
-												--build=$(SSH_HOST_TYPE)
+												--with-xauth=no
 	$(MAKE) -C $(SRC_DIR)/$(OPENSSH_DIR)
 
 $(SRC_DIR)/openssh_verify.stamp:	$(OPENSSH_TARBALL_TARGET)

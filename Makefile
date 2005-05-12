@@ -203,7 +203,7 @@ GETSOURCE = $(TOPDIR)/tools/getsource
 
 # build everything, install nothing
 .PHONY:	all
-all:	config.inc zlib openssl util-linux $(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.img manpages
+all:	config.inc $(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.img manpages
 
 .PHONY:	help
 help:  show_targets
@@ -238,18 +238,6 @@ binaries: $(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.img
 # Now include the other targets
 # This has to be right after all to make all the default target
 include $(TOPDIR)/make.d/*.rul $(INITRD_DIR)/initrd.rul
-
-BOEL_MKLIBS_LOCATIONS := "$(SRC_DIR)/$(ZLIB_DIR)"
-BOEL_MKLIBS_LOCATIONS := "$(BOEL_MKLIBS_LOCATIONS):$(SRC_DIR)/$(OPENSSL_DIR)"
-BOEL_MKLIBS_LOCATIONS := "$(BOEL_MKLIBS_LOCATIONS):$(SRC_DIR)/$(POPT_DIR)/.libs"
-BOEL_MKLIBS_LOCATIONS := "$(BOEL_MKLIBS_LOCATIONS):$(SRC_DIR)/$(PARTED_DIR)/libparted/.libs"
-BOEL_MKLIBS_LOCATIONS := "$(BOEL_MKLIBS_LOCATIONS):$(SRC_DIR)/$(DISCOVER_DIR)/lib/.libs"
-BOEL_MKLIBS_LOCATIONS := "$(BOEL_MKLIBS_LOCATIONS):$(SRC_DIR)/$(DEVMAPPER_DIR)/lib/ioctl"
-BOEL_MKLIBS_LOCATIONS := "$(BOEL_MKLIBS_LOCATIONS):$(SRC_DIR)/$(E2FSPROGS_DIR)/lib"
-
-ifeq ($(USERSPACE64),1)
-	BOEL_MKLIBS_LOCATIONS := "$(BOEL_MKLIBS_LOCATIONS):/lib64:/usr/lib64"
-endif
 
 # a complete server install
 .PHONY:	install_server_all
@@ -483,8 +471,6 @@ $(BOEL_BINARIES_TARBALL):	\
 				$(MKXFS_BINARY) \
 				$(CTCS_BINARY) \
 				$(DEPMOD_BINARY) \
-				$(INSMOD_BINARY) \
-				$(MODPROBE_BINARY) \
 				$(OPENSSH_BINARIES) \
 				$(OPENSSH_CONF_FILES) \
 				$(LVM_BINARY) \
@@ -499,9 +485,6 @@ $(BOEL_BINARIES_TARBALL):	\
 	install -m 755 --strip $(BC_BINARY) 			$(BOEL_BINARIES_DIR)/bin/
 	install -m 755 --strip $(TAR_BINARY) 			$(BOEL_BINARIES_DIR)/bin/
 	install -m 755 --strip $(GZIP_BINARY) 			$(BOEL_BINARIES_DIR)/bin/
-	install -m 755 --strip $(DEPMOD_BINARY)			$(BOEL_BINARIES_DIR)/sbin/
-	install -m 755 --strip $(INSMOD_BINARY)			$(BOEL_BINARIES_DIR)/sbin/
-	install -m 755 --strip $(MODPROBE_BINARY)		$(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(DISCOVER_BINARY) 		$(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(HFSUTILS_BINARY) 		$(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(MKDOSFS_BINARY) 		$(BOEL_BINARIES_DIR)/sbin/
@@ -580,8 +563,13 @@ ifneq ($(ARCH),i386)
 	test ! -d /lib64 || cp -a /lib64/ld* $(BOEL_BINARIES_DIR)/lib64
 endif
 
+ifeq ($(USERSPACE64),1)
 	cd $(BOEL_BINARIES_DIR) \
-		&& $(PYTHON) $(TOPDIR)/initrd_source/mklibs -L $(BOEL_MKLIBS_LOCATIONS) -v -d lib bin/* sbin/*
+		&& $(PYTHON) $(TOPDIR)/initrd_source/mklibs -L /lib64:/usr/lib64:$(SRC_DIR)/$(PARTED_DIR)/libparted/.libs:/usr/kerberos/lib:$(SRC_DIR)/$(DISCOVER_DIR)/lib/.libs -v -d lib bin/* sbin/*
+else
+	cd $(BOEL_BINARIES_DIR) \
+		&& $(PYTHON) $(TOPDIR)/initrd_source/mklibs -L /lib:/usr/lib:$(SRC_DIR)/$(PARTED_DIR)/libparted/.libs:/usr/kerberos/lib:$(SRC_DIR)/$(DISCOVER_DIR)/lib/.libs -v -d lib bin/* sbin/*
+endif
 	#
 	# Include other files required by openssh that apparently aren't 
 	# picked up by mklibs for some reason. -BEF-
@@ -591,8 +579,8 @@ endif
 	#
 	# install kernel modules. -BEF-
 	#
+	$(MAKE) -C $(LINUX_SRC) modules_install INSTALL_MOD_PATH="$(BOEL_BINARIES_DIR)"
 ifdef DEPMOD_BINARY
-	$(MAKE) -C $(LINUX_SRC) modules_install INSTALL_MOD_PATH="$(BOEL_BINARIES_DIR)" DEPMOD=$(DEPMOD_BINARY)
 	#
 	# If the build system doesn't have module-init-tools installed, and
 	# our modules need it, we need to use the depmod we built
@@ -603,8 +591,6 @@ ifdef DEPMOD_BINARY
 	  $(shell find $(BOEL_BINARIES_DIR)/lib/modules -type d -mindepth 1 \
                        -maxdepth 1 -printf "%f")
 	#
-else
-	$(MAKE) -C $(LINUX_SRC) modules_install INSTALL_MOD_PATH="$(BOEL_BINARIES_DIR)"
 endif
 	#
 	# get rid of build, which may exist as a link to the kernel source directory (won't exist in BOEL anyway). -BEF-

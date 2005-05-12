@@ -7,7 +7,6 @@ RAIDTOOLS_TARBALL := raidtools-$(RAIDTOOLS_VERSION).tar.gz
 RAIDTOOLS_URL := http://people.redhat.com/mingo/raidtools/$(RAIDTOOLS_TARBALL)
 RAIDTOOLS_PATCH := $(PATCH_DIR)/raidtools.patch
 RAIDTOOLS_BINARIES := $(SRC_DIR)/$(RAIDTOOLS_DIR)/mkraid $(SRC_DIR)/$(RAIDTOOLS_DIR)/raidstart
-
 RAIDTOOLS_PATCHES := $(shell ls $(PATCH_DIR)/raidtools.*.patch 2>/dev/null | sort)
 
 ALL_SOURCE += $(SRC_DIR)/$(RAIDTOOLS_TARBALL)
@@ -40,7 +39,7 @@ install_standard_raidtools:	$(RAIDTOOLS_BINARIES)
 	$(SI_INSTALL) -m 755 $(SRC_DIR)/$(RAIDTOOLS_DIR)/raidstart $(DESTDIR)
 	cp -a $(DESTDIR)/raidstart $(DESTDIR)/raidstop
 
-$(RAIDTOOLS_BINARIES): $(SRC_DIR)/patched_kernel-stamp $(RAIDTOOLS_PATCHES) $(POPT_LIBRARY)
+$(RAIDTOOLS_BINARIES): $(SRC_DIR)/patched_kernel-stamp $(RAIDTOOLS_PATCHES)
 	rm -rf $(SRC_DIR)/$(RAIDTOOLS_DIR)
 	$(MAKE) $(SRC_DIR)/$(RAIDTOOLS_TARBALL)
 	[ -d $(SRC_DIR)/$(RAIDTOOLS_DIR) ] || \
@@ -48,11 +47,10 @@ $(RAIDTOOLS_BINARIES): $(SRC_DIR)/patched_kernel-stamp $(RAIDTOOLS_PATCHES) $(PO
 	cd $(SRC_DIR)/$(RAIDTOOLS_DIR) && \
 		cat $(RAIDTOOLS_PATCHES) < /dev/null | patch -p1
 	( cd $(SRC_DIR)/$(RAIDTOOLS_DIR) && chmod +x ./configure && \
-	  CPPFLAGS=-I$(SRC_DIR)/$(POPT_DIR) CFLAGS=-I$(SRC_DIR)/$(POPT_DIR) LDFLAGS=-L$(SRC_DIR)/$(POPT_DIR)/.libs \
 	  ./configure )
 
 # This rule seems to hose iSeries builds, not sure why	
-	perl -pi -e 's{-O2}{-O2 -I$(LINUX_SRC)/linux/include -I$(SRC_DIR)/$(POPT_DIR)}' \
+	perl -pi -e 's{-O2}{-O2 -I$(LINUX_SRC)/linux/include}' \
 	    $(SRC_DIR)/$(RAIDTOOLS_DIR)/Makefile
 	$(MAKE) -C $(SRC_DIR)/$(RAIDTOOLS_DIR)
 

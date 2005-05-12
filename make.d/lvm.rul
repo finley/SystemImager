@@ -13,10 +13,8 @@ DEVMAPPER_VERSION	:= 1.00.21
 DEVMAPPER_DIR		:= device-mapper.$(DEVMAPPER_VERSION)
 DEVMAPPER_TARBALL	:= device-mapper.$(DEVMAPPER_VERSION).tgz
 DEVMAPPER_URL		:= ftp://sources.redhat.com/pub/dm/old/device-mapper.1.00.21.tgz
-DEVMAPPER_LIBRARY	:= $(SRC_DIR)/$(DEVMAPPER_DIR)/lib/ioctl/libdevmapper.so
-PHONY += devmapper
-ALL_SOURCE += $(SRC_DIR)/$(DEVMAPPER_TARBALL)
 DEVMAPPER_BINARY	:= $(SRC_DIR)/$(DEVMAPPER_DIR)/lib/ioctl/libdevmapper.so
+MKLIBS 				+= $(SRC_DIR)/$(DEVMAPPER_DIR)/lib/ioctl
 
 LVM_VERSION	:= 2.2.00.32
 LVM_DIR		:= LVM$(LVM_VERSION)
@@ -24,10 +22,7 @@ LVM_TARBALL	:= LVM$(LVM_VERSION).tgz
 LVM_URL		:= ftp://sources.redhat.com/pub/lvm2/old/$(LVM_TARBALL)
 LVM_BINARY	:= $(SRC_DIR)/$(LVM_DIR)/tools/lvm
 
-PHONY += lvm
-ALL_SOURCE += $(SRC_DIR)/$(LVM_TARBALL)
-devmapper: $(DEVMAPPER_LIBRARY)
-$(DEVMAPPER_LIBRARY): $(SRC_DIR)/$(DEVMAPPER_TARBALL)
+PHONY += devmapper
 devmapper:	$(DEVMAPPER_BINARY)
 $(DEVMAPPER_BINARY):	$(SRC_DIR)/$(DEVMAPPER_TARBALL)
 	rm -rf $(SRC_DIR)/$(DEVMAPPER_DIR)
@@ -35,17 +30,11 @@ $(DEVMAPPER_BINARY):	$(SRC_DIR)/$(DEVMAPPER_TARBALL)
 	cd $(SRC_DIR)/$(DEVMAPPER_DIR) && \
 		./configure --prefix=/usr --disable-nls --with-optimisation=-Os
 	$(MAKE) -C $(SRC_DIR)/$(DEVMAPPER_DIR)
-	# The build process for devmapper is broken... boel_binaries needs this link
-	(cd $(SRC_DIR)/$(DEVMAPPER_DIR)/lib/ioctl && \
-		ln -s libdevmapper.so libdevmapper.so.1.00)
 
 $(SRC_DIR)/$(DEVMAPPER_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
 	$(GETSOURCE) $(DEVMAPPER_URL) $(SRC_DIR)
 
-lvm: $(LVM_BINARY)
-
-$(LVM_BINARY): $(SRC_DIR)/$(LVM_TARBALL) $(DEVMAPPER_LIBRARY)
 PHONY += lvm
 lvm:	$(LVM_BINARY) $(DEVMAPPER_BINARY)
 $(LVM_BINARY):	$(SRC_DIR)/$(LVM_TARBALL) $(DEVMAPPER_BINARY)
