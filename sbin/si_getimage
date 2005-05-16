@@ -52,10 +52,11 @@ my $config_dir = "/etc/systemimager";
 
 ### BEGIN parse the config file ###
 #
-my $autoinstall_script_dir = $config->autoinstall_script_dir();
-my $rsync_stub_dir = $config->rsync_stub_dir();
-my $rsyncd_conf = $config->rsyncd_conf();
-my $default_image_dir = $config->default_image_dir();
+my $autoinstall_script_dir  = $config->autoinstall_script_dir();
+my $autoinstall_boot_dir    = $config->autoinstall_boot_dir();
+my $rsync_stub_dir          = $config->rsync_stub_dir();
+my $rsyncd_conf             = $config->rsyncd_conf();
+my $default_image_dir       = $config->default_image_dir();
 
 if (!$autoinstall_script_dir) {
     die "AUTOINSTALL_SCRIPT_DIR not defined in the config file.";
@@ -429,6 +430,9 @@ SystemImager::Server->create_image_stub($rsync_stub_dir, $image, $imagedir) or
 
 SystemImager::Server->gen_rsyncd_conf($rsync_stub_dir, $rsyncd_conf) or
     die "$program_name:  Cannot generate $rsyncd_conf";
+
+SystemImager::Server->copy_boot_files_from_image_to_shared_dir( $image, $imagedir, $rsync_stub_dir, $autoinstall_boot_dir ) or
+    die "$program_name:  SystemImager::Server->copy_boot_files_from_image_to_shared_dir( $image,  $imagedir, $rsync_stub_dir, $autoinstall_boot_dir ) failed.";
 
 ### END generic image retrieval stuff ###
 
