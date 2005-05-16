@@ -11,6 +11,8 @@
 #   - add record_image_retrieved_from function
 #   2004.08.10 Brian Elliott Finley
 #   - change quoting on ia64 append line
+#   2005.05.15 Brian Elliott Finley
+#   - added copy_boot_files_from_image_to_shared_dir()
 #
 
 package SystemImager::Server;
@@ -43,11 +45,11 @@ $VERSION="SYSTEMIMAGER_VERSION_STRING";
 #   _write_out_new_fstab_file 
 #   _write_out_umount_commands 
 #   add2rsyncd 
+#   copy_boot_files_from_image_to_shared_dir
 #   copy_boot_files_to_boot_media
 #   create_autoinstall_script
 #   create_image_stub 
 #   gen_rsyncd_conf 
-#   get_full_path_to_image_from_rsyncd_conf 
 #   get_image_path 
 #   ip_quad_2_ip_hex
 #   numerically 
@@ -61,6 +63,36 @@ $VERSION="SYSTEMIMAGER_VERSION_STRING";
 #   validate_post_install_option 
 #
 ################################################################################
+
+
+sub copy_boot_files_from_image_to_shared_dir {
+
+    use File::Copy;
+    use File::Path;
+
+    shift;
+    my $image                   = shift;
+    my $image_dir               = shift;
+    my $rsync_stub_dir          = shift;
+    my $autoinstall_boot_dir    = shift;
+
+    my $kernel = $image_dir . "/etc/systemimager/boot/kernel";
+    my $initrd = $image_dir . "/etc/systemimager/boot/initrd.img";
+
+    my $file = $image_dir . "/etc/systemimager/boot/ARCH";
+    open(FILE,"<$file") or die("Couldn't open $file for reading $!");
+        my $arch = (<FILE>)[0];
+    close(FILE);
+    chomp $arch;
+
+    my $dir = "$autoinstall_boot_dir/$arch/$image";
+    eval { mkpath($dir, 0, 0755) };
+    if ($@) { print "Couldn’t create $dir: $@"; }
+    copy("$kernel","$dir") or die "Copy failed: $!";
+    copy("$initrd","$dir") or die "Copy failed: $!";
+
+    return 1;
+}
 
 
 sub record_image_retrieved_from {
@@ -193,22 +225,29 @@ sub validate_ip_assignment_option {
   return 0;
 }
 
+#
+#   Usage:  my $path = get_image_path( $stub_dir, $imagename );
+#
 sub get_image_path {
-    my ($class,  $stub_dir, $imagename) = @_;
+
+    my $class       = shift;
+    my $stub_dir    = shift;
+    my $imagename   = shift;
 
     open (FILE, "<$stub_dir/40$imagename") or return undef;
     while (<FILE>) {
-	if (/^\s*path\s*=\s*(\S+)\s$/) {
-	    close FILE;
-	    return $1;
-	}
+        if (/^\s*path\s*=\s*(\S+)\s$/) {
+            close FILE;
+            return $1;
+        }
     }
     close FILE;
+
     return undef;
 }
 
 # Usage:
-# my $path = SystemImager::Server->get_image_path( $rsync_stub_dir, $image );
+# my $path = SystemImager::Server->get_image_path( $rsync_stub_dir, $image );   #XXX
 sub get_full_path_to_image_from_rsyncd_conf {
 
     print "FATAL: get_full_path_to_image_from_rsyncd_conf is depricated.\n";
@@ -2000,4 +2039,4 @@ sub _write_boel_devstyle_entry {
 }
 
 
-
+# /* vi: set filetype=perl ai et ts=4 sw=4: */
