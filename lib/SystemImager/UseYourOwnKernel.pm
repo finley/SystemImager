@@ -20,6 +20,8 @@
 #
 #       2005.02.15  Brian Elliott Finley
 #       - added create_uyok_initrd
+#       2005.05.15  Brian Elliott Finley
+#       - added _record_arch()
 #
 
 package SystemImager::UseYourOwnKernel;
@@ -109,6 +111,7 @@ sub create_uyok_initrd($$) {
         #
         _create_new_initrd( $staging_dir, $boot_dir );
         _get_copy_of_kernel( $uname_r, $boot_dir );
+        _record_arch( $boot_dir );
 
         #
         # Remove temp dir
@@ -117,6 +120,34 @@ sub create_uyok_initrd($$) {
         !system( $cmd ) or die( "Couldn't $cmd." );
 
         return 1;
+}
+
+
+sub _record_arch {
+
+        my $boot_dir = shift;
+
+        my $arch = _get_arch();
+        my $file = $boot_dir . "/ARCH";
+        open(FILE,">$file") or die("Couldn't open $file for writing $!");
+                print FILE "$arch\n";
+        close(FILE);
+
+        return 1;
+}
+
+
+#
+# Usage: my $arch = get_arch();
+#
+sub _get_arch {
+
+        use POSIX;
+
+	my $arch = (uname())[4];
+	$arch =~ s/i.86/i386/;
+
+	return $arch;
 }
 
 
@@ -131,8 +162,8 @@ sub _get_copy_of_kernel($) {
                 exit 1;
         }
 
-        my $new_kernel_file = $boot_dir . "/" . basename($kernel_file);
-        copy($kernel_file, $boot_dir) or die("Couldn't copy $kernel_file to $boot_dir: $!");
+        my $new_kernel_file = $boot_dir . "/kernel";
+        copy($kernel_file, $new_kernel_file) or die("Couldn't copy $kernel_file to $new_kernel_file: $!");
         run_cmd("ls -l $new_kernel_file", $verbose, 1) if($verbose);
 
         return 1;
