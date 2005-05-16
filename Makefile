@@ -245,7 +245,7 @@ install_server_all:	install_server install_common install_binaries
 
 # a complete client install
 .PHONY:	install_client_all
-install_client_all:	install_client install_common
+install_client_all:	install_client install_common install_initrd_template
 
 # install server-only architecture independent files
 .PHONY:	install_server
@@ -431,7 +431,8 @@ install:
 	@echo ''
 
 .PHONY:	install_binaries
-install_binaries:	install_kernel install_initrd \
+install_binaries:	install_kernel \
+			install_initrd \
 			install_boel_binaries_tarball \
 			install_initrd_template
 
