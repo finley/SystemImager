@@ -1,0 +1,28 @@
+POPT_VERSION := 1.6.2
+POPT_DIR := popt-$(POPT_VERSION)
+POPT_TARBALL := popt-$(POPT_VERSION).tar.gz
+POPT_URL := ftp://ftp.rpm.org/pub/rpm/dist/rpm-4.0.x/$(POPT_TARBALL)
+POPT_PATCHES := $(shell ls $(PATCH_DIR)/popt.*.patch 2>/dev/null | sort)
+POPT_LIBRARY := libpopt.a
+
+ALL_SOURCE += $(SRC_DIR)/$(POPT_TARBALL)
+
+# build  popt binaries
+PHONY += popt
+popt:	$(POPT_LIBRARY)
+
+$(POPT_LIBRARY):	$(SRC_DIR)/$(POPT_TARBALL)
+	[ -d $(SRC_DIR)/$(POPT_DIR) ] || ( cd $(SRC_DIR) && tar -xvzf $(POPT_TARBALL) \
+		&& (cd $(POPT_DIR) && (cat $(POPT_PATCHES) < /dev/null | patch -p0)) )
+
+	( cd $(SRC_DIR)/$(POPT_DIR) && ./configure )
+	$(MAKE) -C $(SRC_DIR)/$(POPT_DIR)
+
+# download the popt tarball
+$(SRC_DIR)/$(POPT_TARBALL):
+	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
+	$(GETSOURCE) $(POPT_URL) $(SRC_DIR)
+
+PHONY += popt_clean
+popt_clean:
+	rm -rf $(SRC_DIR)/$(POPT_DIR)

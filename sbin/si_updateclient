@@ -249,6 +249,10 @@ if($ssh_user) {
 
     # and change imageserver to point to localhost
     $server = "127.0.0.1";
+
+    # hold the ssh session open until all the transfers are done
+    socket(SOCK, PF_INET, SOCK_STREAM, 0);
+    connect(SOCK, sockaddr_in($port, inet_aton($server)));
 }
 
 ### BEGIN update image section ###
@@ -532,6 +536,9 @@ SC_EOF
             }
         }
     }
+
+    close(SOCK) if ($ssh_user);
+    
     # Now we install the bootloader if requested
     unless($no_bootloader) {
         print "Running bootloader...";

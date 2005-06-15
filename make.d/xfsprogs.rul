@@ -29,8 +29,12 @@ $(MKXFS_BINARY):	$(SRC_DIR)/$(XFSPROGS_TARBALL)
 	  ( cd $(SRC_DIR) && zcat $(XFSPROGS_TARBALL) | tar xv && \
 	    ( cd $(XFSPROGS_DIR) && cat $(XFSPROGS_PATCHES) < /dev/null | patch -p1 ) && \
 	    	( cd $(SRC_DIR)/$(XFSPROGS_DIR) && chmod +x ./configure && \
+	  	  CPPFLAGS=-I$(SRC_DIR)/$(E2FSPROGS_DIR)/lib CFLAGS=-I$(SRC_DIR)/$(E2FSPROGS_DIR)/lib LDFLAGS=-L$(SRC_DIR)/$(E2FSPROGS_DIR)/lib \
+	  	  LTLDFLAGS=-L$(SRC_DIR)/$(E2FSPROGS_DIR)/lib \
 	  	./configure ) )
-	$(MAKE) -C $(SRC_DIR)/$(XFSPROGS_DIR)
+	CPPFLAGS=-I$(SRC_DIR)/$(E2FSPROGS_DIR)/lib CFLAGS=-I$(SRC_DIR)/$(E2FSPROGS_DIR)/lib LDFLAGS=-L$(SRC_DIR)/$(E2FSPROGS_DIR)/lib LIBUUID=$(SRC_DIR)/$(E2FSPROGS_DIR)/lib \
+	LTLDFLAGS=-L$(SRC_DIR)/$(E2FSPROGS_DIR)/lib \
+		$(MAKE) -C $(SRC_DIR)/$(XFSPROGS_DIR)
 
 $(SRC_DIR)/$(XFSPROGS_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)

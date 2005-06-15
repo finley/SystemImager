@@ -32,26 +32,26 @@ OPENSSH_OTHER_FILES := $(shell echo /lib/libnss_files*)
 OPENSSH_SOURCE := $(SRC_DIR)/$(OPENSSH_TARBALL)
 
 ifeq ($(ARCH),i386)
-    # should this be i486?  as we use an i486 kernel? -BEF-
-	SSH_HOST_TYPE=i586-pc-linux-gnu
+	SSH_BUILD_CONFIG="--build=i486-pc-linux-gnu"
 endif
 
 
 PHONY += openssh
 openssh:	$(OPENSSH_BINARIES)
 
-$(OPENSSH_BINARIES):	$(SRC_DIR)/openssh_verify.stamp
+$(OPENSSH_BINARIES):	$(SRC_DIR)/openssh_verify.stamp openssl
 	rm -rf $(SRC_DIR)/$(OPENSSH_DIR)
 	( cd $(SRC_DIR) && tar -xvzf $(OPENSSH_TARBALL) )
-	cd $(SRC_DIR)/$(OPENSSH_DIR) && ./configure --prefix=/usr \
-												--sysconfdir=/etc/ssh \
-												--disable-last-log --disable-libutil \
-												--disable-pututxline --disable-utmpx --disable-wtmpx \
-												--without-pam --with-ldflags=-s --with-4in6=no \
-												--without-opensc --without-sectok \
-												--without-kerberos5 --without-kerberos4 \
-												--without-afs --without-md5-passwords --without-bsd-auth \
-												--with-xauth=no
+	cd $(SRC_DIR)/$(OPENSSH_DIR) && \
+	  LD_LIBRARY_PATH=$(SRC_DIR)/$(OPENSSL_DIR) ./configure --prefix=/usr \
+	  --with-zlib=$(SRC_DIR)/$(ZLIB_DIR) \
+	  --with-ssl-dir=$(SRC_DIR)/$(OPENSSL_DIR) --without-rpath \
+	  --disable-last-log --disable-libutil --disable-pututxline \
+	  --disable-utmpx --disable-wtmpx --without-pam \
+	  --with-ldflags=-s --with-4in6=no --without-opensc \
+	  --without-sectok --without-kerberos5 --without-kerberos4 \
+	  --without-afs --without-md5-passwords --without-bsd-auth \
+	  --with-xauth=no --sysconfdir=/etc/ssh $(SSH_BUILD_CONFIG)
 	$(MAKE) -C $(SRC_DIR)/$(OPENSSH_DIR)
 
 $(SRC_DIR)/openssh_verify.stamp:	$(OPENSSH_TARBALL_TARGET)
@@ -61,12 +61,6 @@ $(SRC_DIR)/openssh_verify.stamp:	$(OPENSSH_TARBALL_TARGET)
 $(OPENSSH_TARBALL_TARGET):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
 	$(GETSOURCE) $(OPENSSH_URL) $(SRC_DIR)
-
-PHONY += ssh_clean
-ssh_clean:  openssh_clean
-	@echo ''
-	@echo 'Next time, use "make openssh_clean" as it is the proper target.'
-	@echo ''
 
 PHONY += openssh_clean
 openssh_clean:

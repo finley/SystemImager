@@ -153,6 +153,8 @@ else
 	# Explicitly include more w/mklibs -L.  -dawild-
 	( cd $(INITRD_BUILD_DIR) && \
 		$(PYTHON) $(INITRD_DIR)/mklibs -L /lib:/usr/lib:/lib64:/usr/lib64 -v -d lib ./*bin/* )
+	# copy libnss files as they are not automatically included
+	cp -a /lib/libnss_dns* $(INITRD_BUILD_DIR)/lib
 endif
 
 	# Strip 'em. -BEF-

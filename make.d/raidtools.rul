@@ -39,7 +39,7 @@ install_standard_raidtools:	$(RAIDTOOLS_BINARIES)
 	$(SI_INSTALL) -m 755 $(SRC_DIR)/$(RAIDTOOLS_DIR)/raidstart $(DESTDIR)
 	cp -a $(DESTDIR)/raidstart $(DESTDIR)/raidstop
 
-$(RAIDTOOLS_BINARIES): $(SRC_DIR)/patched_kernel-stamp $(RAIDTOOLS_PATCHES)
+$(RAIDTOOLS_BINARIES): $(SRC_DIR)/patched_kernel-stamp $(RAIDTOOLS_PATCHES) popt
 	rm -rf $(SRC_DIR)/$(RAIDTOOLS_DIR)
 	$(MAKE) $(SRC_DIR)/$(RAIDTOOLS_TARBALL)
 	[ -d $(SRC_DIR)/$(RAIDTOOLS_DIR) ] || \
@@ -47,10 +47,11 @@ $(RAIDTOOLS_BINARIES): $(SRC_DIR)/patched_kernel-stamp $(RAIDTOOLS_PATCHES)
 	cd $(SRC_DIR)/$(RAIDTOOLS_DIR) && \
 		cat $(RAIDTOOLS_PATCHES) < /dev/null | patch -p1
 	( cd $(SRC_DIR)/$(RAIDTOOLS_DIR) && chmod +x ./configure && \
+	  CPPFLAGS=-I$(SRC_DIR)/$(POPT_DIR) CFLAGS=-I$(SRC_DIR)/$(POPT_DIR) LDFLAGS=-L$(SRC_DIR)/$(POPT_DIR)/.libs \
 	  ./configure )
 
 # This rule seems to hose iSeries builds, not sure why	
-	perl -pi -e 's{-O2}{-O2 -I$(LINUX_SRC)/linux/include}' \
+	perl -pi -e 's{-O2}{-O2 -I$(LINUX_SRC)/linux/include -I$(SRC_DIR)/$(POPT_DIR)}' \
 	    $(SRC_DIR)/$(RAIDTOOLS_DIR)/Makefile
 	$(MAKE) -C $(SRC_DIR)/$(RAIDTOOLS_DIR)
 

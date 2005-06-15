@@ -1,0 +1,32 @@
+ZLIB_VERSION := 1.1.4
+ZLIB_DIR := zlib-$(ZLIB_VERSION)
+ZLIB_TARBALL := zlib-$(ZLIB_VERSION).tar.gz
+ZLIB_URL := http://www.zlib.net/$(ZLIB_TARBALL)
+ZLIB_PATCHES := $(shell ls $(PATCH_DIR)/zlib.*.patch 2>/dev/null | sort)
+ZLIB_LIBRARY := libz.a
+
+ALL_SOURCE += $(SRC_DIR)/$(ZLIB_TARBALL)
+
+# build  zlib binaries
+PHONY += zlib
+zlib:	$(ZLIB_LIBRARY)
+
+$(ZLIB_LIBRARY):	$(SRC_DIR)/$(ZLIB_TARBALL)
+	[ -d $(SRC_DIR)/$(ZLIB_DIR) ] || ( cd $(SRC_DIR) && tar -xvzf $(ZLIB_TARBALL) \
+		&& (cd $(ZLIB_DIR) && (cat $(ZLIB_PATCHES) < /dev/null | patch -p0)) )
+
+	# This is a little weird... zlib's configure makes static, or shared, but not both
+	# So, we just do it twice...
+	( cd $(SRC_DIR)/$(ZLIB_DIR) && ./configure)
+	$(MAKE) -C $(SRC_DIR)/$(ZLIB_DIR)
+	( cd $(SRC_DIR)/$(ZLIB_DIR) && ./configure --shared)
+	$(MAKE) -C $(SRC_DIR)/$(ZLIB_DIR)
+
+# download the zlib tarball
+$(SRC_DIR)/$(ZLIB_TARBALL):
+	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
+	$(GETSOURCE) $(ZLIB_URL) $(SRC_DIR)
+
+PHONY += zlib_clean
+zlib_clean:
+	rm -rf $(SRC_DIR)/$(ZLIB_DIR)
