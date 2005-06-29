@@ -1,9 +1,15 @@
-POPT_VERSION := 1.6.2
-POPT_DIR := popt-$(POPT_VERSION)
-POPT_TARBALL := popt-$(POPT_VERSION).tar.gz
-POPT_URL := ftp://ftp.rpm.org/pub/rpm/dist/rpm-4.0.x/$(POPT_TARBALL)
-POPT_PATCHES := $(shell ls $(PATCH_DIR)/popt.*.patch 2>/dev/null | sort)
-POPT_LIBRARY := libpopt.a
+#
+#   $Id$
+#
+#   2005.06.28 Brian Elliott Finley
+#   - fix .rul file so that popt doesn't re-build every time
+
+POPT_VERSION    := 1.6.2
+POPT_DIR        := popt-$(POPT_VERSION)
+POPT_TARBALL    := popt-$(POPT_VERSION).tar.gz
+POPT_URL        := ftp://ftp.rpm.org/pub/rpm/dist/rpm-4.0.x/$(POPT_TARBALL)
+POPT_PATCHES    := $(shell ls $(PATCH_DIR)/popt.*.patch 2>/dev/null | sort)
+POPT_LIBRARY    := $(SRC_DIR)/$(POPT_DIR)/libpopt.la
 
 ALL_SOURCE += $(SRC_DIR)/$(POPT_TARBALL)
 
