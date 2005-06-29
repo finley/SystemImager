@@ -1,6 +1,10 @@
 #
-# $Id$
+#   $Id$
 #
+#   2005.06.28 Brian Elliott Finley
+#   - modify to not rebuild each time
+#
+
 RAIDTOOLS_VERSION := 1.00.3
 RAIDTOOLS_DIR := raidtools-$(RAIDTOOLS_VERSION)
 RAIDTOOLS_TARBALL := raidtools-$(RAIDTOOLS_VERSION).tar.gz
@@ -39,7 +43,7 @@ install_standard_raidtools:	$(RAIDTOOLS_BINARIES)
 	$(SI_INSTALL) -m 755 $(SRC_DIR)/$(RAIDTOOLS_DIR)/raidstart $(DESTDIR)
 	cp -a $(DESTDIR)/raidstart $(DESTDIR)/raidstop
 
-$(RAIDTOOLS_BINARIES): $(SRC_DIR)/patched_kernel-stamp $(RAIDTOOLS_PATCHES) popt
+$(RAIDTOOLS_BINARIES): $(RAIDTOOLS_PATCHES) $(POPT_LIBRARY) $(SRC_DIR)/patched_kernel-stamp  
 	rm -rf $(SRC_DIR)/$(RAIDTOOLS_DIR)
 	$(MAKE) $(SRC_DIR)/$(RAIDTOOLS_TARBALL)
 	[ -d $(SRC_DIR)/$(RAIDTOOLS_DIR) ] || \
