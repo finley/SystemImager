@@ -3,22 +3,34 @@
 #   
 #   2004.09.08  Brian Elliott Finley
 #   - start using non-busybox mkswap 
+#   2005.06.28  Brian Elliott Finley
+#   - merge sfdisk.rul into here
 #
 
-UTIL_LINUX_VERSION := 2.12q
-UTIL_LINUX_DIR := util-linux-$(UTIL_LINUX_VERSION)
-UTIL_LINUX_TARBALL := util-linux-$(UTIL_LINUX_VERSION).tar.bz2
-UTIL_LINUX_URL := http://mirror.mcs.anl.gov/kernel/linux/utils/util-linux/$(UTIL_LINUX_TARBALL)
-MKSWAP_BINARY := $(SRC_DIR)/$(UTIL_LINUX_DIR)/disk-utils/mkswap
+UTIL_LINUX_VERSION  := 2.12q
+UTIL_LINUX_DIR      := util-linux-$(UTIL_LINUX_VERSION)
+UTIL_LINUX_TARBALL  := util-linux-$(UTIL_LINUX_VERSION).tar.bz2
+UTIL_LINUX_URL      := http://mirror.mcs.anl.gov/kernel/linux/utils/util-linux/$(UTIL_LINUX_TARBALL)
+
+MKSWAP_BINARY       := $(SRC_DIR)/$(UTIL_LINUX_DIR)/disk-utils/mkswap
+SFDISK_BINARY       := $(SRC_DIR)/$(UTIL_LINUX_DIR)/fdisk/sfdisk
 
 ALL_SOURCE += $(SRC_DIR)/$(UTIL_LINUX_TARBALL)
 
 PHONY += util-linux
-util-linux:	$(MKSWAP_BINARY)
-$(MKSWAP_BINARY):	$(SRC_DIR)/$(UTIL_LINUX_TARBALL)
+util-linux:	$(MKSWAP_BINARY) $(SFDISK_BINARY)
+
+$(SFDISK_BINARY):   $(SRC_DIR)/$(UTIL_LINUX_DIR)/make_include
+	[ -d $(SRC_DIR)/$(UTIL_LINUX_DIR) ] || ( cd $(SRC_DIR) && tar -xvjf $(UTIL_LINUX_TARBALL) )
+	$(MAKE) -C $(SRC_DIR)/$(UTIL_LINUX_DIR)
+
+$(MKSWAP_BINARY):   $(SRC_DIR)/$(UTIL_LINUX_DIR)/make_include
+	[ -d $(SRC_DIR)/$(UTIL_LINUX_DIR) ] || ( cd $(SRC_DIR) && tar -xvjf $(UTIL_LINUX_TARBALL) )
+	$(MAKE) -C $(SRC_DIR)/$(UTIL_LINUX_DIR)
+
+$(SRC_DIR)/$(UTIL_LINUX_DIR)/make_include:   $(SRC_DIR)/$(UTIL_LINUX_TARBALL)
 	[ -d $(SRC_DIR)/$(UTIL_LINUX_DIR) ] || ( cd $(SRC_DIR) && tar -xvjf $(UTIL_LINUX_TARBALL) )
 	( cd $(SRC_DIR)/$(UTIL_LINUX_DIR) && ./configure )
-	$(MAKE) -C $(SRC_DIR)/$(UTIL_LINUX_DIR)
 
 $(SRC_DIR)/$(UTIL_LINUX_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
@@ -30,5 +42,10 @@ util-linux_clean:
 
 PHONY += mkswap
 mkswap:
-	@echo BUILD_SYSTEM_ERROR:  Try \"make util-linux\" instead.
+	@echo 'BUILD_SYSTEM_ERROR:  Try "make util-linux" instead.'
+	@exit 1
+
+PHONY += sfdisk
+sfdisk:
+	@echo 'BUILD_SYSTEM_ERROR:  Try "make util-linux" instead.'
 	@exit 1
