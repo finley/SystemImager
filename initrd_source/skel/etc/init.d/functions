@@ -76,7 +76,10 @@ logmsg() {
     echo $@
     # log to temporary file (which will go away when we reboot)
     # this is good for envs that have bad consoles
-    echo $@ >> /tmp/si.log
+    local FILE=/tmp/si.log
+    if [ mount | grep ' / ' | grep -q '(rw)' ]; then
+        echo $@ >> $FILE || shellout
+    fi
     
     # if syslog is running, log to it.  In order to avoid hangs we have to 
     # add the "logger: " part in case $@ is ""
@@ -502,6 +505,10 @@ get_boel_binaries_tarball() {
 #   Switch root to tmpfs
 #
 switch_root_to_tmpfs() {
+    local MODULE=tmpfs
+    logmsg
+    logmsg "Loading $MODULE... "
+    modprobe $MODULE 2>/dev/null && logmsg "done!" || logmsg "Didn't load -- assuming it's built into the kernel."
     mount_proc
     tmpfs_size=$(tr ' ' '\n' < /proc/cmdline | grep tmpfs_size\= | sed 's/.*=//')
     tmpfs_nr_blocks=$(tr ' ' '\n' < /proc/cmdline | grep tmpfs_nr_blocks\= | sed 's/.*=//')
@@ -541,8 +548,6 @@ switch_root_to_tmpfs() {
         tmpfs_opts="-o $tmpfs_opts"
     fi
 
-    logmsg
-    logmsg "switch_root_to_tmpfs"
     # Switch root over to tmpfs so we don't have to worry about the size of
     # the tarball and binaries that users may decide to copy over. -BEF-
     mkdir -p /new_root || shellout
@@ -552,6 +557,9 @@ switch_root_to_tmpfs() {
     cd /new_root || shellout
     mkdir -p old_root || shellout
     pivot_root . old_root || shellout
+
+    logmsg
+    logmsg "switch_root_to_tmpfs...done!"
 
     unset tmpfs_size
     unset tmpfs_nr_blocks
@@ -1070,6 +1078,10 @@ run_pre_install_scripts() {
         PRE_INSTALL_SCRIPTS="$PRE_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]${HOSTNAME}\..*"`"
         PRE_INSTALL_SCRIPTS="$PRE_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]all\..*"`"
 
+        # Uniquify, in case we have multiple hits for any script.  
+        # Based on bug found by Cory Lueninghoener. -BEF-
+        PRE_INSTALL_SCRIPTS=`echo $PRE_INSTALL_SCRIPTS | uniq`
+
         # Now, to get rid of those pesky newlines. -BEF-
         PRE_INSTALL_SCRIPTS=`echo $PRE_INSTALL_SCRIPTS | tr '\n' ' '`
         
@@ -1117,6 +1129,10 @@ run_post_install_scripts() {
         do
             POST_INSTALL_SCRIPTS="$POST_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]${OVERRIDE}\..*"`"
         done
+
+        # Uniquify, in case we have multiple hits for any script.  
+        # Based on bug found by Cory Lueninghoener. -BEF-
+        POST_INSTALL_SCRIPTS=`echo $POST_INSTALL_SCRIPTS | uniq`
 
         # Now, to get rid of those pesky newlines. -BEF-
         POST_INSTALL_SCRIPTS=`echo $POST_INSTALL_SCRIPTS | tr '\n' ' '`
