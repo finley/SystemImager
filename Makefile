@@ -105,10 +105,9 @@
 # To include the ctcs test suite, and associated files, do a 'make WITH_CTCS=1 all'
 #
 
-DESTDIR =
-VERSION = $(shell cat VERSION)
-CVS_TAG = $(shell cat VERSION | tr '.' '_')
-CVSROOT=$(shell cat CVS/Root)
+DESTDIR :=
+VERSION := $(shell cat VERSION)
+
 
 ## is this an unstable release?
 MINOR = $(shell echo $(VERSION) | cut -d "." -f 2)
@@ -618,11 +617,12 @@ $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2.sign:	$(TOPDIR)/tmp/systemimager-$
 
 
 $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2: systemimager.spec
+	rm -fr tmp
 	mkdir -p tmp/
-	cd tmp && cvs -d$(CVSROOT) export -r v$(CVS_TAG) systemimager
-	mv tmp/systemimager tmp/systemimager-$(VERSION)
-	$(MAKE) -C $(TOPDIR)/tmp/systemimager-$(VERSION) distclean
-	$(MAKE) -C $(TOPDIR)/tmp/systemimager-$(VERSION) get_source
+	svn export . $(TOPDIR)/tmp/systemimager-$(VERSION)
+	cd $(TOPDIR)/tmp/systemimager-$(VERSION) && ./configure
+	$(MAKE) -C   $(TOPDIR)/tmp/systemimager-$(VERSION) get_source
+	$(MAKE) -C   $(TOPDIR)/tmp/systemimager-$(VERSION) clean
 ifeq ($(UNSTABLE), 1)
 	cd $(TOPDIR)/tmp/systemimager-$(VERSION) && cp README README.tmp
 	cd $(TOPDIR)/tmp/systemimager-$(VERSION) && cp README.unstable README
@@ -668,7 +668,10 @@ clean:	$(subst .rul,_clean,$(shell cd $(TOPDIR)/make.d && ls *.rul)) initrd_clea
 	-find . -name "#*#" -exec rm -f {} \;
 	-find . -name ".#*" -exec rm -f {} \;
 
+	rm -f config.inc config.log config.status
+
 # same as clean, but also removes downloaded source, stamp files, etc.
 .PHONY:	distclean
 distclean:	clean initrd_distclean
 	-rm -rf $(SRC_DIR) $(INITRD_SRC_DIR)
+
