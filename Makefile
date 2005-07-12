@@ -143,7 +143,12 @@ endif
 # is userspace 64bit
 USERSPACE64 := 0
 ifeq ($(ARCH),ia64) 
-	USERSPACE64 :=1
+	USERSPACE64 := 1
+endif
+
+USERSPACE64 := 0
+ifeq ($(ARCH),x86_64)
+        USERSPACE64 := 1
 endif
 
 ifneq ($(BUILD_ARCH),)
@@ -203,6 +208,12 @@ GETSOURCE = $(TOPDIR)/tools/getsource
 # build everything, install nothing
 .PHONY:	all
 all:	config.inc $(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.img manpages
+
+#
+# Dannf, SDague, please modify if this is inappropriate. -BEF-
+#
+config.inc:
+	./configure
 
 .PHONY:	help
 help:  show_targets
@@ -563,13 +574,10 @@ ifneq ($(ARCH),i386)
 	test ! -d /lib64 || cp -a /lib64/ld* $(BOEL_BINARIES_DIR)/lib64
 endif
 
-ifeq ($(USERSPACE64),1)
+	TGTLIBDIR=lib ; \
+	test ! -d /lib64 || TGTLIBDIR=lib64 ; \
 	cd $(BOEL_BINARIES_DIR) \
-		&& $(PYTHON) $(TOPDIR)/initrd_source/mklibs -L /lib64:/usr/lib64:$(SRC_DIR)/$(PARTED_DIR)/libparted/.libs:/usr/kerberos/lib:$(SRC_DIR)/$(DISCOVER_DIR)/lib/.libs -v -d lib bin/* sbin/*
-else
-	cd $(BOEL_BINARIES_DIR) \
-		&& $(PYTHON) $(TOPDIR)/initrd_source/mklibs -L /lib:/usr/lib:$(SRC_DIR)/$(PARTED_DIR)/libparted/.libs:/usr/kerberos/lib:$(SRC_DIR)/$(DISCOVER_DIR)/lib/.libs -v -d lib bin/* sbin/*
-endif
+		&& $(PYTHON) $(TOPDIR)/initrd_source/mklibs -L $(SRC_DIR)/$(PARTED_DIR)/libparted/.libs:$(SRC_DIR)/$(DISCOVER_DIR)/lib/.libs:$(SRC_DIR)/$(DEVMAPPER_DIR)/lib/ioctl:$(SRC_DIR)/$(E2FSPROGS_DIR)/lib:/lib64:/usr/lib64:/usr/kerberos/lib64:/lib:/usr/lib:/usr/kerberos/lib -v -d $$TGTLIBDIR bin/* sbin/*
 	#
 	# Include other files required by openssh that apparently aren't 
 	# picked up by mklibs for some reason. -BEF-
@@ -587,9 +595,8 @@ ifdef DEPMOD_BINARY
 	#
 	# The find command is to figure out the kernel version string
 	#
-	$(DEPMOD_BINARY) -r -b $(BOEL_BINARIES_DIR) \
-	  $(shell find $(BOEL_BINARIES_DIR)/lib/modules -type d -mindepth 1 \
-                       -maxdepth 1 -printf "%f")
+	BOEL_KERNEL_VERSION=`find $(BOEL_BINARIES_DIR)/lib/modules -type d -mindepth 1 -maxdepth 1 -printf "%f"` ; \
+	$(DEPMOD_BINARY) -b $(BOEL_BINARIES_DIR) $$BOEL_KERNEL_VERSION
 	#
 endif
 	#
