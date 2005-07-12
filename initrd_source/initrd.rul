@@ -36,6 +36,8 @@
 #	- switch to busybox modutils for x86
 #   2005.02.14  Brian Elliott Finley
 #	- add install_initrd_template
+#	2005.07.12 Brian Elliott Finley
+#	- x86_64 mklibs related mods; patch from Erich Focht
 #
 
 
@@ -65,13 +67,8 @@ MKCRAMFS = $(shell which mkcramfs || which mkfs.cramfs || \
 # inodes needed on the initial RAM disk -BEF-
 
 ### BEGIN module utility decisions ###
-MODULE_UTILS=modutils
-ifeq ($(ARCH),i386)
-  MODULE_UTILS=busybox
-endif
-ifeq ($(ARCH),x86_64)
-  MODULE_UTILS=busybox
-endif
+# Need newer module-init-tools for 2.6.X kernels.
+MODULE_UTILS=module-init-tools
 ifeq ($(ARCH),ppc64)
   MODULE_UTILS=busybox
 endif
@@ -151,10 +148,17 @@ else
 	cp -a /lib/ld*   $(INITRD_BUILD_DIR)/lib
 	test ! -d /lib64 || cp -a /lib64/ld* $(INITRD_BUILD_DIR)/lib64
 	# Explicitly include more w/mklibs -L.  -dawild-
+ifeq ($(ARCH),x86_64)
+	( cd $(INITRD_BUILD_DIR) && \
+		$(PYTHON) $(INITRD_DIR)/mklibs -L /lib64:/usr/lib64:/lib:/usr/lib -v -d lib64 ./*bin/* )
+	# copy libnss files as they are not automatically included
+	cp -a /lib64/libnss_dns* $(INITRD_BUILD_DIR)/lib64
+else
 	( cd $(INITRD_BUILD_DIR) && \
 		$(PYTHON) $(INITRD_DIR)/mklibs -L /lib:/usr/lib:/lib64:/usr/lib64 -v -d lib ./*bin/* )
 	# copy libnss files as they are not automatically included
 	cp -a /lib/libnss_dns* $(INITRD_BUILD_DIR)/lib
+endif
 endif
 
 	# Strip 'em. -BEF-
