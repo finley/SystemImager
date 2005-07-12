@@ -1,34 +1,61 @@
 #
-#   $Id$
+#	$Id$
 #
-#   2005.06.28 Brian Elliott Finley
-#   - fix .rul file so that popt doesn't re-build every time
+#	2005.07.12 Brian Elliott Finley; patch by Bernard Li
+#	- significant re-write to deal with RedHat's silly no-tarball, only srpm 
+#	  release (my words, not bernards -BEF-)
+#	- up version to 1.8
+#
 
-POPT_VERSION    := 1.6.2
-POPT_DIR        := popt-$(POPT_VERSION)
-POPT_TARBALL    := popt-$(POPT_VERSION).tar.gz
-POPT_URL        := ftp://ftp.rpm.org/pub/rpm/dist/rpm-4.0.x/$(POPT_TARBALL)
-POPT_PATCHES    := $(shell ls $(PATCH_DIR)/popt.*.patch 2>/dev/null | sort)
-POPT_LIBRARY    := $(SRC_DIR)/$(POPT_DIR)/libpopt.la
+#
+#   Upstream popt is now packaged as part of the rpm source rpm (srpm), so
+#   we have to retrieve the rpm source rpm.  Confusing, huh. -BEF-
+#
+RPM_VERSION 	    := 4.2
+RPM_DIR 			:= rpm-$(RPM_VERSION)
+RPM_SRPM_VERSION 	:= $(RPM_VERSION)-1
+RPM_TARBALL 		:= rpm-$(RPM_VERSION).tar.gz
+RPM_SRPM 		    := rpm-$(RPM_SRPM_VERSION).src.rpm
+RPM_URL 			:= ftp://ftp.rpm.org/pub/rpm/dist/rpm-4.2.x/$(RPM_SRPM)
 
-ALL_SOURCE += $(SRC_DIR)/$(POPT_TARBALL)
+#
+#   Now for the popt bits
+#
+POPT_VERSION 	:= 1.8
+POPT_DIR 		:= $(RPM_DIR)/popt
+POPT_PATCHES 	:= $(shell ls $(PATCH_DIR)/popt.*.patch 2>/dev/null | sort)
+POPT_LIBRARY 	:= $(SRC_DIR)/$(POPT_DIR)/libpopt.la
+
+
+ALL_SOURCE += $(SRC_DIR)/$(RPM_SRPM)
 
 # build  popt binaries
 PHONY += popt
 popt:	$(POPT_LIBRARY)
 
-$(POPT_LIBRARY):	$(SRC_DIR)/$(POPT_TARBALL)
-	[ -d $(SRC_DIR)/$(POPT_DIR) ] || ( cd $(SRC_DIR) && tar -xvzf $(POPT_TARBALL) \
-		&& (cd $(POPT_DIR) && (cat $(POPT_PATCHES) < /dev/null | patch -p0)) )
-
+# extract the popt source (and the rpm source) from the rpm tarball and build
+$(POPT_LIBRARY):	$(SRC_DIR)/$(RPM_TARBALL)
+	[ -d $(SRC_DIR)/$(POPT_DIR) ] || \
+        ( \
+            cd $(SRC_DIR) && \
+            tar -xvzf $(RPM_TARBALL) && \
+            (cd $(POPT_DIR) && (cat $(POPT_PATCHES) < /dev/null | patch -p0)) \
+        )
 	( cd $(SRC_DIR)/$(POPT_DIR) && ./configure )
 	$(MAKE) -C $(SRC_DIR)/$(POPT_DIR)
 
-# download the popt tarball
-$(SRC_DIR)/$(POPT_TARBALL):
+# extract the rpm source tarball (which includes the popt source) from the SRPM  
+$(SRC_DIR)/$(RPM_TARBALL):	$(SRC_DIR)/$(RPM_SRPM)
+	[ -e $(SRC_DIR)/$(RPM_TARBALL) ] || \
+		( cd $(SRC_DIR) && rpm2cpio $(RPM_SRPM) | cpio --verbose --extract $(RPM_TARBALL) )
+
+# download popt (as part of the rpm SRPM)
+$(SRC_DIR)/$(RPM_SRPM):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
-	$(GETSOURCE) $(POPT_URL) $(SRC_DIR)
+	$(GETSOURCE) $(RPM_URL) $(SRC_DIR)
 
 PHONY += popt_clean
 popt_clean:
-	rm -rf $(SRC_DIR)/$(POPT_DIR)
+	rm -rf $(SRC_DIR)/$(RPM_TARBALL)
+	rm -rf $(SRC_DIR)/$(RPM_SRPM)
+	rm -rf $(SRC_DIR)/$(RPM_DIR)
