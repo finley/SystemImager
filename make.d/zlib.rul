@@ -1,13 +1,16 @@
 #
-#   $Id$
-#   
+#	$Id$
+#
+#	2005.07.12 Brian Elliott Finley
+#	- version to 1.2.2; Erich Focht patch
+#
 
-ZLIB_VERSION    := 1.1.4
-ZLIB_DIR        := zlib-$(ZLIB_VERSION)
-ZLIB_TARBALL    := zlib-$(ZLIB_VERSION).tar.gz
-ZLIB_URL        := http://www.zlib.net/$(ZLIB_TARBALL)
-ZLIB_PATCHES    := $(shell ls $(PATCH_DIR)/zlib.*.patch 2>/dev/null | sort)
-ZLIB_LIBRARY    := $(SRC_DIR)/$(ZLIB_DIR)/libz.a
+ZLIB_VERSION := 1.2.2
+ZLIB_DIR := zlib-$(ZLIB_VERSION)
+ZLIB_TARBALL := zlib-$(ZLIB_VERSION).tar.gz
+ZLIB_URL := http://www.zlib.net/$(ZLIB_TARBALL)
+ZLIB_PATCHES := $(shell ls $(PATCH_DIR)/zlib.*.patch 2>/dev/null | sort)
+ZLIB_LIBRARY := libz.a
 
 ALL_SOURCE += $(SRC_DIR)/$(ZLIB_TARBALL)
 
@@ -23,6 +26,7 @@ $(ZLIB_LIBRARY):	$(SRC_DIR)/$(ZLIB_TARBALL)
 	# So, we just do it twice...
 	( cd $(SRC_DIR)/$(ZLIB_DIR) && ./configure)
 	$(MAKE) -C $(SRC_DIR)/$(ZLIB_DIR)
+	( cd $(SRC_DIR)/$(ZLIB_DIR) && rm -f *.o)
 	( cd $(SRC_DIR)/$(ZLIB_DIR) && ./configure --shared)
 	$(MAKE) -C $(SRC_DIR)/$(ZLIB_DIR)
 
