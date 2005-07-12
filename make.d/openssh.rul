@@ -1,20 +1,23 @@
 #
 #   $Id$
 #   
-#   /* vi: set noet ts=4: */
+#   	/* vi: set noet ts=4: */
 #   
-#   2004.07.26  Brian Elliott Finley
-#   - new version of openssh
-#   2004.09.10  Brian Elliott Finley
-#   - include as part of standard boel_binaries_tarball
-#   2005.01.25  Brian Elliott Finley
-#   - add to ALL_SOURCE
+#   	2004.07.26  Brian Elliott Finley
+#   	- new version of openssh
+#   	2004.09.10  Brian Elliott Finley
+#   	- include as part of standard boel_binaries_tarball
+#   	2005.01.25  Brian Elliott Finley
+#   	- add to ALL_SOURCE
+#	2005.07.12 Brian Elliott Finley; patch by Erich Focht
+#	- up the version
 #
 
-OPENSSH_VERSION         := 3.8.1p1
+OPENSSH_VERSION         := 3.9p1
 OPENSSH_DIR             := openssh-$(OPENSSH_VERSION)
 OPENSSH_TARBALL         := openssh-$(OPENSSH_VERSION).tar.gz
-OPENSSH_MD5SUM          := 1dbfd40ae683f822ae917eebf171ca42
+#OPENSSH_MD5SUM          := 1dbfd40ae683f822ae917eebf171ca42
+OPENSSH_MD5SUM          := 8e1774d0b52aff08f817f3987442a16e
 OPENSSH_TARBALL_TARGET  := $(SRC_DIR)/$(OPENSSH_TARBALL)
 OPENSSH_URL             := http://alpaca.mcs.anl.gov/openssh/portable/$(OPENSSH_TARBALL)
 OPENSSH_BINARIES        := $(SRC_DIR)/$(OPENSSH_DIR)/ssh \
