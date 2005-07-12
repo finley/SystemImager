@@ -1,18 +1,24 @@
 #
-#   $Id$
+#   	$Id$
 #
-#   2005-01-12 Andrea Righi
-#   - provided patch for lvm support
+#	2005-01-12 Andrea Righi
+#   	- provided patch for lvm support
+#	2005.07.12 Brian Elliott Finley; patch from Erich Focht
+#	- updates devmapper to 1.01.02
+#	- creates the symbolic link libdevmapper.so.1.01 which is required when
+#	  running mklibs (for tmp/boel_binaries/lib*). Without this patch the build
+#	  fails except one builds on a system where libdevmapper of the same version
+#	  is installed. But this is not why we build devmapper, after all...
 #
-#   NOTES:
-#   - if build fails, try 'apt-get install libdevmapper-dev'
+#   	NOTES:
+#   	- if build fails, try 'apt-get install libdevmapper-dev'
 #
 
 
-DEVMAPPER_VERSION	:= 1.00.21
+DEVMAPPER_VERSION	:= 1.01.02
 DEVMAPPER_DIR		:= device-mapper.$(DEVMAPPER_VERSION)
 DEVMAPPER_TARBALL	:= device-mapper.$(DEVMAPPER_VERSION).tgz
-DEVMAPPER_URL		:= ftp://sources.redhat.com/pub/dm/old/device-mapper.1.00.21.tgz
+DEVMAPPER_URL		:= ftp://sources.redhat.com/pub/dm/old/device-mapper.$(DEVMAPPER_VERSION).tgz
 DEVMAPPER_BINARY	:= $(SRC_DIR)/$(DEVMAPPER_DIR)/lib/ioctl/libdevmapper.so
 MKLIBS 				+= $(SRC_DIR)/$(DEVMAPPER_DIR)/lib/ioctl
 
@@ -30,6 +36,7 @@ $(DEVMAPPER_BINARY):	$(SRC_DIR)/$(DEVMAPPER_TARBALL)
 	cd $(SRC_DIR)/$(DEVMAPPER_DIR) && \
 		./configure --prefix=/usr --disable-nls --with-optimisation=-Os
 	$(MAKE) -C $(SRC_DIR)/$(DEVMAPPER_DIR)
+	ln -s $(DEVMAPPER_BINARY) $(DEVMAPPER_BINARY).$(basename $(DEVMAPPER_VERSION))
 
 $(SRC_DIR)/$(DEVMAPPER_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
