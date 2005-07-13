@@ -5,6 +5,7 @@
 #	- significant re-write to deal with RedHat's silly no-tarball, only srpm 
 #	  release (my words, not bernards -BEF-)
 #	- up version to 1.8
+#   - don't keep the src.rpm around, nor depend on it
 #
 
 #
@@ -27,7 +28,7 @@ POPT_PATCHES 	:= $(shell ls $(PATCH_DIR)/popt.*.patch 2>/dev/null | sort)
 POPT_LIBRARY 	:= $(SRC_DIR)/$(POPT_DIR)/libpopt.la
 
 
-ALL_SOURCE += $(SRC_DIR)/$(RPM_SRPM)
+ALL_SOURCE += $(SRC_DIR)/$(RPM_TARBALL)
 
 # build  popt binaries
 PHONY += popt
@@ -44,15 +45,14 @@ $(POPT_LIBRARY):	$(SRC_DIR)/$(RPM_TARBALL)
 	( cd $(SRC_DIR)/$(POPT_DIR) && ./configure )
 	$(MAKE) -C $(SRC_DIR)/$(POPT_DIR)
 
-# extract the rpm source tarball (which includes the popt source) from the SRPM  
-$(SRC_DIR)/$(RPM_TARBALL):	$(SRC_DIR)/$(RPM_SRPM)
+# Download popt (as part of the rpm SRPM) and
+# extract the rpm source tarball (which includes the popt source) from the SRPM.
+$(SRC_DIR)/$(RPM_TARBALL):
+	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
+	[ -e $(SRC_DIR)/$(RPM_SRPM) ] || $(GETSOURCE) $(RPM_URL) $(SRC_DIR)
 	[ -e $(SRC_DIR)/$(RPM_TARBALL) ] || \
 		( cd $(SRC_DIR) && rpm2cpio $(RPM_SRPM) | cpio --verbose --extract $(RPM_TARBALL) )
-
-# download popt (as part of the rpm SRPM)
-$(SRC_DIR)/$(RPM_SRPM):
-	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
-	$(GETSOURCE) $(RPM_URL) $(SRC_DIR)
+	rm -f $(SRC_DIR)/$(RPM_SRPM)
 
 PHONY += popt_clean
 popt_clean:
