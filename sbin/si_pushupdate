@@ -9,6 +9,12 @@
 #   Others who have contributed to this code (in alphabetical order):
 #       Curtis Zinzilieta <czinzilieta@valinux.com>
 #
+#   2005.07.12 Brian Elliott Finley; patch from Daniel Widyono
+#   - Handle --server and --image options.  If --server provided, forward to
+#     updateclient. 
+#   - If --clients-file not provided, don't die.
+#   - Correct erroneous array variable names (hostnames -> hostnames_and_images).
+#
 
 use lib "USR_PREFIX/lib/systemimager/perl";
 
@@ -67,6 +73,8 @@ GetOptions(
     "help"                      => \my $help,
     "version"                   => \my $version,
     "client=s"                  => \my $base_host_name,
+    "server=s"			=> \my $imageserver,
+    "image=s"			=> \my $image,
     "range=s"                   => \my $range,
     "domain=s"                  => \my $domain_name,
     "clients-file=s"            => \my $clients_file,
@@ -94,6 +102,7 @@ if($version) {
 if($imageserver) {
     $_ = $imageserver;
     if(/^-/) { die "\n$program_name: Server name can\'t start with a hyphen.\n$get_help\n\n"; }
+    $updateclient_options .= " --server $imageserver";
 }
 
 # must have some specifier for processing files
@@ -129,15 +138,15 @@ if($clients_file and $image) {
 }
 
 # setup @hostname array for processing
-if (-e $clients_file) {
+if (defined $clients_file && -e $clients_file) {
     open (FH, "< $clients_file") or die "\n$program_name: Unable to open $clients_file: $!\n";
     @hostnames_and_images = <FH>;
     close (FH) or die "\n$program_name: Unable to close $hostfile: $!\n";
     my (@fields, $testline, $i);
-    for ($i = 0; $i <= $#hostnames; $i++) {
+    for ($i = 0; $i <= $#hostnames_and_images; $i++) {
         # attempt to parse each line, just to make sure there is an image or script specified
-        chomp($hostnames[$i]);
-        @fields = split(" ", $hostnames[$i]);
+        chomp($hostnames_and_images[$i]);
+        @fields = split(" ", $hostnames_and_images[$i]);
         if(!$fields[1]) {
             die "No image/script defined for $fields[0] on line $i of file $clients_file\n";
         }
@@ -179,9 +188,9 @@ if (-e $clients_file) {
         my $node_number;
         my $count = 0;
         foreach $node_number ($starting_number .. $ending_number) {
-            $hostnames[$count] = $base_host_name . $node_number;
+            $hostnames_and_images[$count] = $base_host_name . $node_number;
             if ($domain_name) {
-                $hostnames[$count] = "$hostnames[$count]." .  $domain_name .  " $image";
+                $hostnames_and_images[$count] = "$hostnames_and_images[$count]." .  $domain_name .  " $image";
             }
             $count++;
         }
