@@ -8,6 +8,9 @@
 #
 #    $Id$
 #
+#    2005.07.12 Brian Elliott Finley
+#    - apply umask patch for Daniel Widyono
+#
 
 use lib "USR_PREFIX/lib/systemimager/perl";
 use strict;
@@ -124,6 +127,7 @@ sub create_no_boot_symlink {
     #print "ip_hex: $ip_hex\n";
 
     unlink("$pxe_conf_dir/$ip_hex");
+    umask(0022);
     copy("$syslinux_cfg_localboot", "$pxe_conf_dir/$ip_hex");
     
 }
