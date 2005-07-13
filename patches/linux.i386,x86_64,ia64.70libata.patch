@@ -1,0 +1,1485 @@
+#
+#   $Id$
+#
+#   2005.07.12 Brian Elliott Finley
+#   - Provided by Erich Focht
+#
+
+BK users:
+
+	bk pull bk://gkernel.bkbits.net/libata-dev-2.6
+
+This will update the following files:
+
+ drivers/scsi/Kconfig         |    8 
+ drivers/scsi/Makefile        |    1 
+ drivers/scsi/libata-core.c   |   38 ++
+ drivers/scsi/libata-scsi.c   |  409 +++++++++++++++++++++++++
+ drivers/scsi/libata.h        |    2 
+ drivers/scsi/pata_pdc2027x.c |  694 +++++++++++++++++++++++++++++++++++++++++++
+ drivers/scsi/sata_promise.c  |   56 +++
+ include/linux/ata.h          |    1 
+ include/linux/libata.h       |    2 
+ include/scsi/scsi.h          |    3 
+ 10 files changed, 1203 insertions(+), 11 deletions(-)
+
+through these ChangeSets:
+
+<albertcc:tw.ibm.com>:
+  o [libata pdc2027x] fix incorrect pio and mwdma masks
+  o [libata pdc2027x] remove quirks and ROM enable
+  o [libata] add driver for Promise PATA 2027x
+
+<andyw:pobox.com>:
+  o [libata scsi] support 12-byte passthru CDB
+  o [libata scsi] passthru CDB check condition processing
+  o T10/04-262 ATA pass thru - patch
+
+<erikbenada:yahoo.ca>:
+  o [libata sata_promise] support PATA ports on SATA controllers
+
+Brad Campbell:
+  o libata basic detection and errata for PATA->SATA bridges
+
+Jeff Garzik:
+  o [libata pdc2027x] update for upstream struct device conversion
+  o [libata sata_promise] fix merge bugs
+  o [libata] fix build breakage
+  o [libata] fix SATA->PATA bridge detect compile breakage
+  o [libata] fix printk warning
+
+John W. Linville:
+  o libata: SMART support via ATA pass-thru
+
+Tobias Lorenz:
+  o libata-scsi: get-identity ioctl support
+
+diff -Nru a/drivers/scsi/Kconfig b/drivers/scsi/Kconfig
+--- a/drivers/scsi/Kconfig	2004-11-14 22:37:46 -05:00
++++ b/drivers/scsi/Kconfig	2004-11-14 22:37:46 -05:00
+@@ -441,6 +441,14 @@
+ 
+ 	  If unsure, say N.
+ 
++config SCSI_PATA_PDC2027X
++	tristate "Promise PATA 2027x support"
++	depends on SCSI_SATA && PCI
++	help
++	  This option enables support for Promise PATA pdc20268 to pdc20277 host adapters.
++
++	  If unsure, say N.
++
+ config SCSI_SATA_PROMISE
+ 	tristate "Promise SATA TX2/TX4 support"
+ 	depends on SCSI_SATA && PCI
+diff -Nru a/drivers/scsi/Makefile b/drivers/scsi/Makefile
+--- a/drivers/scsi/Makefile	2004-11-14 22:37:46 -05:00
++++ b/drivers/scsi/Makefile	2004-11-14 22:37:46 -05:00
+@@ -124,6 +124,7 @@
+ obj-$(CONFIG_SCSI_SATA_AHCI)	+= libata.o ahci.o
+ obj-$(CONFIG_SCSI_SATA_SVW)	+= libata.o sata_svw.o
+ obj-$(CONFIG_SCSI_ATA_PIIX)	+= libata.o ata_piix.o
++obj-$(CONFIG_SCSI_PATA_PDC2027X)+= libata.o pata_pdc2027x.o
+ obj-$(CONFIG_SCSI_SATA_PROMISE)	+= libata.o sata_promise.o
+ obj-$(CONFIG_SCSI_SATA_SIL)	+= libata.o sata_sil.o
+ obj-$(CONFIG_SCSI_SATA_VIA)	+= libata.o sata_via.o
+diff -Nru a/drivers/scsi/libata-core.c b/drivers/scsi/libata-core.c
+--- a/drivers/scsi/libata-core.c	2004-11-14 22:37:46 -05:00
++++ b/drivers/scsi/libata-core.c	2004-11-14 22:37:46 -05:00
+@@ -1165,6 +1165,37 @@
+ 	DPRINTK("EXIT, err\n");
+ }
+ 
++
++static inline u8 ata_dev_knobble(struct ata_port *ap)
++{
++	return ((ap->cbl == ATA_CBL_SATA) && (!ata_id_is_sata(ap->device->id)));
++}
++
++/**
++ * 	ata_dev_config - Run device specific handlers and check for
++ * 			 SATA->PATA bridges
++ * 	@ap: Bus 
++ * 	@i:  Device
++ *
++ * 	LOCKING:
++ */
++ 
++void ata_dev_config(struct ata_port *ap, unsigned int i)
++{
++	/* limit bridge transfers to udma5, 200 sectors */
++	if (ata_dev_knobble(ap)) {
++		printk(KERN_INFO "ata%u(%u): applying bridge limits\n",
++			ap->id, ap->device->devno);
++		ap->udma_mask &= ATA_UDMA5;
++		ap->host->max_sectors = ATA_MAX_SECTORS;
++		ap->host->hostt->max_sectors = ATA_MAX_SECTORS;
++		ap->device->flags |= ATA_DFLAG_LOCK_SECTORS;
++	}
++
++	if (ap->ops->dev_config)
++		ap->ops->dev_config(ap, &ap->device[i]);
++}
++
+ /**
+  *	ata_bus_probe - Reset and probe ATA bus
+  *	@ap: Bus to probe
+@@ -1187,8 +1218,7 @@
+ 		ata_dev_identify(ap, i);
+ 		if (ata_dev_present(&ap->device[i])) {
+ 			found = 1;
+-			if (ap->ops->dev_config)
+-				ap->ops->dev_config(ap, &ap->device[i]);
++			ata_dev_config(ap,i);
+ 		}
+ 	}
+ 
+@@ -3181,6 +3211,7 @@
+ 	ap->mwdma_mask = ent->mwdma_mask;
+ 	ap->udma_mask = ent->udma_mask;
+ 	ap->flags |= ent->host_flags;
++	ap->flags |= ent->port_flags[port_no];
+ 	ap->ops = ent->port_ops;
+ 	ap->cbl = ATA_CBL_NONE;
+ 	ap->active_tag = ATA_TAG_POISON;
+@@ -3806,6 +3837,7 @@
+ EXPORT_SYMBOL_GPL(ata_host_intr);
+ EXPORT_SYMBOL_GPL(ata_dev_classify);
+ EXPORT_SYMBOL_GPL(ata_dev_id_string);
++EXPORT_SYMBOL_GPL(ata_dev_config);
+ EXPORT_SYMBOL_GPL(ata_scsi_simulate);
+ 
+ #ifdef CONFIG_PCI
+diff -Nru a/drivers/scsi/libata-scsi.c b/drivers/scsi/libata-scsi.c
+--- a/drivers/scsi/libata-scsi.c	2004-11-14 22:37:46 -05:00
++++ b/drivers/scsi/libata-scsi.c	2004-11-14 22:37:46 -05:00
+@@ -29,10 +29,13 @@
+ #include "scsi.h"
+ #include <scsi/scsi_host.h>
+ #include <linux/libata.h>
++#include <linux/hdreg.h>
+ #include <asm/uaccess.h>
+ 
+ #include "libata.h"
+ 
++#define SECTOR_SIZE	512
++
+ typedef unsigned int (*ata_xlat_func_t)(struct ata_queued_cmd *qc, u8 *scsicmd);
+ static struct ata_device *
+ ata_scsi_find_dev(struct ata_port *ap, struct scsi_device *scsidev);
+@@ -67,11 +70,162 @@
+ 	return 0;
+ }
+ 
++/**
++ *	ata_cmd_ioctl - Handler for HDIO_DRIVE_CMD ioctl
++ *	@dev: Device to whom we are issuing command
++ *	@arg: User provided data for issuing command
++ *
++ *	LOCKING:
++ *	Defined by the SCSI layer.  We don't really care.
++ *
++ *	RETURNS:
++ *	Zero on success, negative errno on error.
++ */
++
++int ata_cmd_ioctl(struct scsi_device *scsidev, void __user *arg)
++{
++	int rc = 0;
++	u8 scsi_cmd[MAX_COMMAND_SIZE];
++	u8 args[4], *argbuf = NULL;
++	int argsize = 0;
++	struct scsi_request *sreq;
++
++	if (NULL == (void *)arg)
++		return -EINVAL;
++
++	if (copy_from_user(args, arg, sizeof(args)))
++		return -EFAULT;
++
++	sreq = scsi_allocate_request(scsidev, GFP_KERNEL);
++	if (!sreq)
++		return -EINTR;
++
++	memset(scsi_cmd, 0, sizeof(scsi_cmd));
++
++	if (args[3]) {
++		argsize = SECTOR_SIZE * args[3];
++		argbuf = kmalloc(argsize, GFP_KERNEL);
++		if (argbuf == NULL)
++			return -ENOMEM;
++
++		scsi_cmd[1]  = (4 << 1); /* PIO Data-in */
++		sreq->sr_data_direction = DMA_FROM_DEVICE;
++	} else {
++		scsi_cmd[1]  = (3 << 1); /* Non-data */
++		sreq->sr_data_direction = DMA_NONE;
++	}
++
++	scsi_cmd[0] = ATA_16;
++	scsi_cmd[2] = 0x1f;     /* no off.line or cc, yes all registers */
++
++	scsi_cmd[4] = args[2];
++	if (args[0] == WIN_SMART) { /* hack -- ide driver does this too... */
++		scsi_cmd[6]  = args[3];
++		scsi_cmd[8]  = args[1];
++		scsi_cmd[10] = 0x4f;
++		scsi_cmd[12] = 0xc2;
++	} else {
++		scsi_cmd[6]  = args[1];
++	}
++	scsi_cmd[14] = args[0];
++
++	/* Good values for timeout and retries?  Values below
++	   from scsi_ioctl_send_command() for default case... */
++	scsi_wait_req(sreq, scsi_cmd, argbuf, argsize, (10*HZ), 5);
++
++	if (sreq->sr_result) {
++		rc = -EIO;
++		goto error;
++	}
++
++	/* Need code to retrieve data from check condition? */
++
++	if ((argbuf)
++	 && copy_to_user((void *)(arg + sizeof(args)), argbuf, argsize))
++		rc = -EFAULT;
++error:
++	scsi_release_request(sreq);
++
++	if (argbuf)
++		kfree(argbuf);
++
++	return rc;
++}
++
++/**
++ *	ata_task_ioctl - Handler for HDIO_DRIVE_TASK ioctl
++ *	@dev: Device to whom we are issuing command
++ *	@arg: User provided data for issuing command
++ *
++ *	LOCKING:
++ *	Defined by the SCSI layer.  We don't really care.
++ *
++ *	RETURNS:
++ *	Zero on success, negative errno on error.
++ */
++int ata_task_ioctl(struct scsi_device *scsidev, void __user *arg)
++{
++	int rc = 0;
++	u8 scsi_cmd[MAX_COMMAND_SIZE];
++	u8 args[7];
++	struct scsi_request *sreq;
++
++	if (NULL == (void *)arg)
++		return -EINVAL;
++
++	if (copy_from_user(args, arg, sizeof(args)))
++		return -EFAULT;
++
++	memset(scsi_cmd, 0, sizeof(scsi_cmd));
++	scsi_cmd[0]  = ATA_16;
++	scsi_cmd[1]  = (3 << 1); /* Non-data */
++	scsi_cmd[2]  = 0x1f;     /* no off.line or cc, yes all registers */
++	scsi_cmd[4]  = args[1];
++	scsi_cmd[6]  = args[2];
++	scsi_cmd[8]  = args[3];
++	scsi_cmd[10] = args[4];
++	scsi_cmd[12] = args[5];
++	scsi_cmd[14] = args[0];
++
++	sreq = scsi_allocate_request(scsidev, GFP_KERNEL);
++	if (!sreq) {
++		rc = -EINTR;
++		goto error;
++	}
++
++	sreq->sr_data_direction = DMA_NONE;
++	/* Good values for timeout and retries?  Values below
++	   from scsi_ioctl_send_command() for default case... */
++	scsi_wait_req(sreq, scsi_cmd, NULL, 0, (10*HZ), 5);
++
++	if (sreq->sr_result) {
++		rc = -EIO;
++		goto error;
++	}
++
++	/* Need code to retrieve data from check condition? */
++
++error:
++	scsi_release_request(sreq);
++	return rc;
++}
++
+ int ata_scsi_ioctl(struct scsi_device *scsidev, int cmd, void __user *arg)
+ {
+ 	struct ata_port *ap;
+ 	struct ata_device *dev;
+ 	int val = -EINVAL, rc = -EINVAL;
++	struct hd_driveid drv_id = {
++		.cyls		= 0,
++		.sectors	= 0,
++		.heads		= 0,
++		.fw_rev		= "",
++		.model		= "",
++		.cur_cyls	= 0,
++		.cur_heads	= 0,
++		.cur_sectors	= 0,
++	};
++	int geom[3];
+ 
+ 	ap = (struct ata_port *) &scsidev->host->hostdata[0];
+ 	if (!ap)
+@@ -96,6 +250,27 @@
+ 			return -EINVAL;
+ 		return 0;
+ 
++	case HDIO_GET_IDENTITY:
++		ata_std_bios_param(scsidev, NULL, dev->n_sectors, geom);
++		drv_id.cur_heads	= drv_id.heads		= geom[0];
++		drv_id.cur_sectors	= drv_id.sectors	= geom[1];
++		drv_id.cur_cyls		= drv_id.cyls		= geom[2];
++		strncpy((char *) &drv_id.model, scsidev->model, sizeof(drv_id.model));
++		strncpy((char *) &drv_id.fw_rev, scsidev->rev, sizeof(drv_id.fw_rev));
++		if(copy_to_user((char *) arg, (char *) &drv_id, sizeof(drv_id)))
++			return(-EFAULT);
++		return 0;
++
++	case HDIO_DRIVE_CMD:
++		if (!capable(CAP_SYS_ADMIN) || !capable(CAP_SYS_RAWIO))
++			return -EACCES;
++		return ata_cmd_ioctl(scsidev, arg);
++
++	case HDIO_DRIVE_TASK:
++		if (!capable(CAP_SYS_ADMIN) || !capable(CAP_SYS_RAWIO))
++			return -EACCES;
++		return ata_task_ioctl(scsidev, arg);
++
+ 	default:
+ 		rc = -ENOTTY;
+ 		break;
+@@ -312,6 +487,85 @@
+ 	}
+ }
+ 
++/*
++ *	ata_pass_thru_cc - Generate check condition sense block.
++ *	@qc: Command that completed.
++ *
++ *	Regardless of whether the command errored or not, return
++ *	a sense block. Copy all controller registers into
++ *	the sense block. Clear sense key, ASC & ASCQ if
++ *	there is no error.
++ *
++ *	LOCKING:
++ *	spin_lock_irqsave(host_set lock)
++ */
++void ata_pass_thru_cc(struct ata_queued_cmd *qc, u8 drv_stat)
++{
++	struct scsi_cmnd *cmd = qc->scsicmd;
++	struct ata_taskfile *tf = &qc->tf;
++	unsigned char *sb = cmd->sense_buffer;
++	unsigned char *desc = sb + 8 ;
++
++	cmd->result = SAM_STAT_CHECK_CONDITION;
++
++	/*
++	 * Use ata_to_sense_error() to map status register bits
++	 * onto sense key, asc & ascq. We will overwrite some
++	 * (many) of the fields later.
++	 *
++	 * TODO: reorganise better, by splitting ata_to_sense_error()
++	 */
++	if (unlikely(drv_stat & (ATA_BUSY | ATA_DF | ATA_ERR | ATA_DRQ))) {
++		ata_to_sense_error(qc, drv_stat) ;
++	} else {
++		sb[3] = sb[2] = sb[1] = 0x00 ;
++	}
++
++	/*
++	 * Sense data is current and format is
++	 * descriptor.
++	 */
++	sb[0] = 0x72 ;
++
++	desc[0] = 0x8e ;	/* TODO: replace with official value. */
++
++	/*
++	 * Set length of additional sense data.
++	 * Since we only populate descriptor 0, the total
++	 * length is the same (fixed) length as descriptor 0.
++	 */
++	desc[1] = sb[7] = 14 ;
++
++	/*
++	 * Read the controller registers.
++	 */
++	qc->ap->ops->tf_read(qc->ap, tf);
++
++	/*
++	 * Copy registers into sense buffer.
++	 */
++	desc[2] = 0x00 ;
++	desc[3] = tf->feature ;	/* Note: becomes error register when read. */
++	desc[5] = tf->nsect ;
++	desc[7] = tf->lbal ;
++	desc[9] = tf->lbam ;
++	desc[11] = tf->lbah ;
++	desc[12] = tf->device ;
++	desc[13] = drv_stat ;
++
++	/*
++	 * Fill in Extend bit, and the high order bytes
++	 * if applicable.
++	 */
++	if (tf->flags & ATA_TFLAG_LBA48) {
++		desc[2] |= 0x01 ;
++		desc[4] = tf->hob_nsect ;
++		desc[6] = tf->hob_lbal ;
++		desc[8] = tf->hob_lbam ;
++		desc[10] = tf->hob_lbah ;
++	}
++}
++
+ /**
+  *	ata_scsi_slave_config - Set SCSI device attributes
+  *	@sdev: SCSI device to examine
+@@ -620,10 +874,23 @@
+ {
+ 	struct scsi_cmnd *cmd = qc->scsicmd;
+ 
+-	if (unlikely(drv_stat & (ATA_ERR | ATA_BUSY | ATA_DRQ)))
+-		ata_to_sense_error(qc, drv_stat);
+-	else
+-		cmd->result = SAM_STAT_GOOD;
++	/*
++	 * If this was a pass-thru command, and the user requested
++	 * a check condition return including register values.
++	 * Note that check condition is generated, and the ATA
++	 * register values are returned, whether the command completed
++	 * successfully or not. If there was no error, SK, ASC and
++	 * ASCQ will all be zero.
++	 */
++	if (((cmd->cmnd[0] == ATA_16) || (cmd->cmnd[0] == ATA_12)) &&
++						(cmd->cmnd[2] & 0x20)) {
++		ata_pass_thru_cc(qc, drv_stat) ;
++	} else {
++		if (unlikely(drv_stat & (ATA_ERR | ATA_BUSY | ATA_DRQ)))
++			ata_to_sense_error(qc, drv_stat);
++		else
++			cmd->result = SAM_STAT_GOOD;
++	}
+ 
+ 	qc->scsidone(cmd);
+ 
+@@ -685,7 +952,6 @@
+ 
+ 	if (xlat_func(qc, scsicmd))
+ 		goto err_out;
+-
+ 	/* select device, send command to hardware */
+ 	if (ata_qc_issue(qc))
+ 		goto err_out;
+@@ -1374,6 +1640,135 @@
+ 	return dev;
+ }
+ 
++/*
++ *	ata_scsi_map_proto - Map pass-thru protocol value to taskfile value.
++ *	@byte1: Byte 1 from pass-thru CDB.
++ *
++ *	RETURNS:
++ *	ATA_PROT_UNKNOWN if mapping failed/unimplemented, protocol otherwise.
++ */
++static u8
++ata_scsi_map_proto(u8 byte1)
++{
++	switch((byte1 & 0x1e) >> 1) {
++		case 3:		/* Non-data */
++			return ATA_PROT_NODATA;
++
++		case 6:		/* DMA */
++			return ATA_PROT_DMA;
++
++		case 4:		/* PIO Data-in */
++		case 5:		/* PIO Data-out */
++			if (byte1 & 0xe0) {
++				return ATA_PROT_PIO_MULT;
++			}
++			return ATA_PROT_PIO;
++
++		case 10:	/* Device Reset */
++		case 0:		/* Hard Reset */
++		case 1:		/* SRST */
++		case 2:		/* Bus Idle */
++		case 7:		/* Packet */
++		case 8:		/* DMA Queued */
++		case 9:		/* Device Diagnostic */
++		case 11:	/* UDMA Data-in */
++		case 12:	/* UDMA Data-Out */
++		case 13:	/* FPDMA */
++		default:	/* Reserved */
++			break;
++	}
++
++	return ATA_PROT_UNKNOWN;
++}
++
++/**
++ *	ata_scsi_pass_thru - convert ATA pass-thru CDB to taskfile
++ *	@qc: command structure to be initialized
++ *	@cmd: SCSI command to convert
++ *
++ *	Handles either 12 or 16-byte versions of the CDB.
++ *
++ *	RETURNS:
++ *	Zero on success, non-zero on failure.
++ */
++static unsigned int
++ata_scsi_pass_thru(struct ata_queued_cmd *qc, u8 *scsicmd)
++{
++	struct ata_taskfile *tf = &(qc->tf);
++	struct scsi_cmnd *cmd = qc->scsicmd;
++
++	if ((tf->protocol = ata_scsi_map_proto(scsicmd[1])) == ATA_PROT_UNKNOWN) {
++		return 1;
++	}
++
++	/*
++	 * 12 and 16 byte CDBs use different offsets to
++	 * provide the various register values.
++	 */
++	if (scsicmd[0] == ATA_16) {
++		/*
++		 * 16-byte CDB - may contain extended commands.
++		 *
++		 * If that is the case, copy the upper byte register values.
++		 */
++		if (scsicmd[1] & 0x01) {
++			tf->hob_feature = scsicmd[3];
++			tf->hob_nsect = scsicmd[5];
++			tf->hob_lbal = scsicmd[7];
++			tf->hob_lbam = scsicmd[9];
++			tf->hob_lbah = scsicmd[11];
++			tf->flags |= ATA_TFLAG_LBA48 ;
++		} else {
++			tf->flags &= ~ATA_TFLAG_LBA48 ;
++		}
++
++		/*
++		 * Always copy low byte, device and command registers.
++		 */
++		tf->feature = scsicmd[4];
++		tf->nsect = scsicmd[6];
++		tf->lbal = scsicmd[8];
++		tf->lbam = scsicmd[10];
++		tf->lbah = scsicmd[12];
++		tf->device = scsicmd[13];
++		tf->command = scsicmd[14];
++	} else {
++		/*
++		 * 12-byte CDB - incapable of extended commands.
++		 */
++		tf->flags &= ~ATA_TFLAG_LBA48 ;
++
++		tf->feature = scsicmd[3];
++		tf->nsect = scsicmd[4];
++		tf->lbal = scsicmd[5];
++		tf->lbam = scsicmd[6];
++		tf->lbah = scsicmd[7];
++		tf->device = scsicmd[8];
++		tf->command = scsicmd[9];
++	}
++
++	/*
++	 * Set flags so that all registers will be written,
++	 * and pass on write indication (used for PIO/DMA
++	 * setup.)
++	 */
++	tf->flags |= (ATA_TFLAG_ISADDR | ATA_TFLAG_DEVICE) ;
++
++	if (cmd->sc_data_direction == SCSI_DATA_WRITE) {
++		tf->flags |= ATA_TFLAG_WRITE;
++	}
++
++	/*
++	 * Set transfer length.
++	 *
++	 * TODO: find out if we need to do more here to
++	 *       cover scatter/gather case.
++	 */
++	qc->nsect = cmd->bufflen / ATA_SECT_SIZE ;
++
++	return 0;
++}
++
+ /**
+  *	ata_get_xlat_func - check if SCSI to ATA translation is possible
+  *	@dev: ATA device
+@@ -1406,6 +1801,10 @@
+ 	case VERIFY:
+ 	case VERIFY_16:
+ 		return ata_scsi_verify_xlat;
++
++	case ATA_12:
++	case ATA_16:
++		return ata_scsi_pass_thru ;
+ 	}
+ 
+ 	return NULL;
+diff -Nru a/drivers/scsi/libata.h b/drivers/scsi/libata.h
+--- a/drivers/scsi/libata.h	2004-11-14 22:37:46 -05:00
++++ b/drivers/scsi/libata.h	2004-11-14 22:37:46 -05:00
+@@ -42,6 +42,8 @@
+                            unsigned int wait, unsigned int can_sleep);
+ extern void ata_tf_to_host_nolock(struct ata_port *ap, struct ata_taskfile *tf);
+ extern void swap_buf_le16(u16 *buf, unsigned int buf_words);
++extern int ata_task_ioctl(struct scsi_device *scsidev, void __user *arg);
++extern int ata_cmd_ioctl(struct scsi_device *scsidev, void __user *arg);
+ 
+ 
+ /* libata-scsi.c */
+diff -Nru a/drivers/scsi/pata_pdc2027x.c b/drivers/scsi/pata_pdc2027x.c
+--- /dev/null	Wed Dec 31 16:00:00 196900
++++ b/drivers/scsi/pata_pdc2027x.c	2004-11-14 22:37:46 -05:00
+@@ -0,0 +1,694 @@
++/*
++ *  Promise PATA TX2/TX4/TX2000/133 IDE driver for pdc20268 to pdc20277.
++ *
++ *  This program is free software; you can redistribute it and/or
++ *  modify it under the terms of the GNU General Public License
++ *  as published by the Free Software Foundation; either version
++ *  2 of the License, or (at your option) any later version.
++ *
++ *  Ported to libata by:
++ *  Albert Lee <albertcc@tw.ibm.com> IBM Corporation 
++ *
++ *  Copyright (C) 1998-2002		Andre Hedrick <andre@linux-ide.org>
++ *  Portions Copyright (C) 1999 Promise Technology, Inc.
++ *
++ *  Author: Frank Tiernan (frankt@promise.com)
++ *  Released under terms of General Public License
++ * 
++ * 
++ */
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/pci.h>
++#include <linux/init.h>
++#include <linux/blkdev.h>
++#include <linux/delay.h>
++#include "scsi.h"
++#include <scsi/scsi_host.h>
++#include <linux/libata.h>
++#include <asm/io.h>
++
++#define DRV_NAME	"pata_pdc2027x"
++#define DRV_VERSION	"0.53"
++#undef PDC_DEBUG
++
++#ifdef PDC_DEBUG
++#define PDPRINTK(fmt, args...) printk(KERN_DEBUG "%s: " fmt, __FUNCTION__, ## args)
++#else
++#define PDPRINTK(fmt, args...)
++#endif
++
++enum {
++	PDC_UDMA_100        = 0,
++	PDC_UDMA_133        = 1,
++	
++	PDC_100_MHZ         = 100000000,
++	PDC_133_MHZ         = 133333333,
++};
++
++static int pdc2027x_init_one(struct pci_dev *pdev, const struct pci_device_id *ent);
++static void pdc2027x_remove_one(struct pci_dev *pdev);
++static void pdc2027x_phy_reset(struct ata_port *ap);
++static void pdc2027x_set_piomode(struct ata_port *ap, struct ata_device *adev);
++static void pdc2027x_set_dmamode(struct ata_port *ap, struct ata_device *adev);
++
++/* 
++ * ATA Timing Tables based on 133MHz controller clock.
++ * These tables are only used when the controller is in 133MHz clock.
++ * If the controller is in 100MHz clock, the ASIC hardware will 
++ * set the timing registers automatically when "set feature" command 
++ * is issued to the device. However, if the controller clock is 133MHz, 
++ * the following tables must be used.
++ */
++static struct pdc2027x_pio_timing {
++	u8 value0, value1, value2;
++} pdc2027x_pio_timing_tbl [] = {
++	{ 0xfb, 0x2b, 0xac }, /* PIO mode 0 */
++	{ 0x46, 0x29, 0xa4 }, /* PIO mode 1 */
++	{ 0x23, 0x26, 0x64 }, /* PIO mode 2 */
++	{ 0x27, 0x0d, 0x35 }, /* PIO mode 3, IORDY on, Prefetch off */
++	{ 0x23, 0x09, 0x25 }, /* PIO mode 4, IORDY on, Prefetch off */
++};
++
++static struct pdc2027x_mdma_timing {
++	u8 value0, value1;
++} pdc2027x_mdma_timing_tbl [] = {
++	{ 0xdf, 0x5f }, /* MDMA mode 0 */
++	{ 0x6b, 0x27 }, /* MDMA mode 1 */
++	{ 0x69, 0x25 }, /* MDMA mode 2 */
++};
++
++static struct pdc2027x_udma_timing {
++	u8 value0, value1, value2;
++} pdc2027x_udma_timing_tbl [] = {
++	{ 0x4a, 0x0f, 0xd5 }, /* UDMA mode 0 */
++	{ 0x3a, 0x0a, 0xd0 }, /* UDMA mode 1 */
++	{ 0x2a, 0x07, 0xcd }, /* UDMA mode 2 */
++	{ 0x1a, 0x05, 0xcd }, /* UDMA mode 3 */
++	{ 0x1a, 0x03, 0xcd }, /* UDMA mode 4 */
++	{ 0x1a, 0x02, 0xcb }, /* UDMA mode 5 */
++	{ 0x1a, 0x01, 0xcb }, /* UDMA mode 6 */
++};
++
++static struct pci_device_id pdc2027x_pci_tbl[] = {
++#ifdef ATA_ENABLE_PATA
++	{ PCI_VENDOR_ID_PROMISE, PCI_DEVICE_ID_PROMISE_20268, PCI_ANY_ID, PCI_ANY_ID, 0, 0, PDC_UDMA_100 },
++	{ PCI_VENDOR_ID_PROMISE, PCI_DEVICE_ID_PROMISE_20269, PCI_ANY_ID, PCI_ANY_ID, 0, 0, PDC_UDMA_133 },
++	{ PCI_VENDOR_ID_PROMISE, PCI_DEVICE_ID_PROMISE_20270, PCI_ANY_ID, PCI_ANY_ID, 0, 0, PDC_UDMA_100 },
++	{ PCI_VENDOR_ID_PROMISE, PCI_DEVICE_ID_PROMISE_20271, PCI_ANY_ID, PCI_ANY_ID, 0, 0, PDC_UDMA_133 },
++	{ PCI_VENDOR_ID_PROMISE, PCI_DEVICE_ID_PROMISE_20275, PCI_ANY_ID, PCI_ANY_ID, 0, 0, PDC_UDMA_133 },
++	{ PCI_VENDOR_ID_PROMISE, PCI_DEVICE_ID_PROMISE_20276, PCI_ANY_ID, PCI_ANY_ID, 0, 0, PDC_UDMA_133 },
++	{ PCI_VENDOR_ID_PROMISE, PCI_DEVICE_ID_PROMISE_20277, PCI_ANY_ID, PCI_ANY_ID, 0, 0, PDC_UDMA_133 },
++#endif
++	{ }	/* terminate list */
++};
++
++static struct pci_driver pdc2027x_pci_driver = {
++	.name			= DRV_NAME,
++	.id_table		= pdc2027x_pci_tbl,
++	.probe			= pdc2027x_init_one,
++	.remove			= __devexit_p(pdc2027x_remove_one),
++};
++
++static Scsi_Host_Template pdc2027x_sht = {
++	.module			= THIS_MODULE,
++	.name			= DRV_NAME,
++	.queuecommand		= ata_scsi_queuecmd,
++	.eh_strategy_handler	= ata_scsi_error,
++	.can_queue		= ATA_DEF_QUEUE,
++	.this_id		= ATA_SHT_THIS_ID,
++	.sg_tablesize		= LIBATA_MAX_PRD,
++	.max_sectors		= ATA_MAX_SECTORS,
++	.cmd_per_lun		= ATA_SHT_CMD_PER_LUN,
++	.emulated		= ATA_SHT_EMULATED,
++	.use_clustering		= ATA_SHT_USE_CLUSTERING,
++	.proc_name		= DRV_NAME,
++	.dma_boundary		= ATA_DMA_BOUNDARY,
++	.slave_configure	= ata_scsi_slave_config,
++	.bios_param		= ata_std_bios_param,
++};
++
++static struct ata_port_operations pdc2027x_pata_ops = {
++	.port_disable		= ata_port_disable,
++	.set_piomode		= pdc2027x_set_piomode,   
++	.set_dmamode		= pdc2027x_set_dmamode,  
++
++	.tf_load		= ata_tf_load,
++	.tf_read		= ata_tf_read,
++	.check_status		= ata_check_status,
++	.exec_command		= ata_exec_command,
++	.dev_select		= ata_std_dev_select,
++
++	.phy_reset		= pdc2027x_phy_reset,   
++
++	.bmdma_setup            = ata_bmdma_setup,
++	.bmdma_start            = ata_bmdma_start,
++	.qc_prep		= ata_qc_prep,
++	.qc_issue		= ata_qc_issue_prot,
++	.eng_timeout		= ata_eng_timeout,
++
++	.irq_handler		= ata_interrupt,
++	.irq_clear              = ata_bmdma_irq_clear,
++
++	.port_start		= ata_port_start,
++	.port_stop		= ata_port_stop,
++};
++
++static struct ata_port_info pdc2027x_port_info[] = {
++	/* PDC_UDMA_100 */
++	{
++		.sht		= &pdc2027x_sht,
++		.host_flags	= ATA_FLAG_NO_LEGACY | ATA_FLAG_SLAVE_POSS | 
++		                  ATA_FLAG_SRST,
++		.pio_mask	= 0x1f, /* pio0-4 */
++		.mwdma_mask	= 0x07, /* mwdma0-2 */
++		.udma_mask	= ATA_UDMA5, /* udma0-5 */
++		.port_ops	= &pdc2027x_pata_ops,
++	},
++	/* PDC_UDMA_133 */
++	{
++		.sht		= &pdc2027x_sht,
++		.host_flags	= ATA_FLAG_NO_LEGACY | ATA_FLAG_SLAVE_POSS | 
++                        	  ATA_FLAG_SRST,
++		.pio_mask	= 0x1f, /* pio0-4 */
++		.mwdma_mask	= 0x07, /* mwdma0-2 */
++		.udma_mask	= ATA_UDMA6, /* udma0-6 */
++		.port_ops	= &pdc2027x_pata_ops,
++	},
++};
++
++MODULE_AUTHOR("Andre Hedrick, Frank Tiernan, Albert Lee");
++MODULE_DESCRIPTION("libata driver module for Promise PDC20268 to PDC20277");
++MODULE_LICENSE("GPL");
++MODULE_DEVICE_TABLE(pci, pdc2027x_pci_tbl);
++
++/**
++ * pdc_get_indexed_reg - Set pdc202xx extended register
++ * @ap: Port to which the extended register is set
++ * @index: index of the extended register
++ */
++static u8 pdc_get_indexed_reg(struct ata_port *ap, u8 index)
++{
++	u8 tmp8;
++
++	outb(index, ap->ioaddr.bmdma_addr + 1); 
++	tmp8 = inb(ap->ioaddr.bmdma_addr + 3);
++
++	PDPRINTK("Get index reg%X[%X] \n", index, tmp8);
++	return tmp8;
++}
++/**
++ * pdc_set_indexed_reg - Read pdc202xx extended register
++ * @ap: Port to which the extended register is read
++ * @index: index of the extended register
++ */
++static void pdc_set_indexed_reg(struct ata_port *ap, u8 index, u8 value)
++{
++	outb(index, ap->ioaddr.bmdma_addr + 1); 
++	outb(value, ap->ioaddr.bmdma_addr + 3);
++	PDPRINTK("Set index reg%X[%X] \n", index, value);
++}
++/**
++ *	pdc2027x_pata_cbl_detect - Probe host controller cable detect info
++ *	@ap: Port for which cable detect info is desired
++ *
++ *	Read 80c cable indicator from Promise extended register.  
++ *      This register is latched when the system is reset.
++ *
++ *	LOCKING:
++ *	None (inherited from caller).
++ */
++static void pdc2027x_cbl_detect(struct ata_port *ap)
++{
++	u8 cbl40c;
++
++	/* check cable detect results */
++	cbl40c = pdc_get_indexed_reg(ap, 0x0b) & 0x04;
++
++	if (cbl40c)
++		goto cbl40;
++
++	PDPRINTK("No cable or 80-conductor cable on port %d\n", ap->port_no);
++
++	ap->cbl = ATA_CBL_PATA80;
++	return;
++
++cbl40:
++	printk(KERN_INFO DRV_NAME ": 40-conductor cable detected on port %d\n", ap->port_no);
++	ap->cbl = ATA_CBL_PATA40;
++	ap->udma_mask &= ATA_UDMA_MASK_40C;
++}
++/**
++ * pdc2027x_port_enabled - Check extended register at 0x04 to see whether the port is enabled.
++ * @ap: Port to check
++ */
++static inline int pdc2027x_port_enabled(struct ata_port *ap)
++{
++	return pdc_get_indexed_reg(ap, 0x04) & 0x02;
++}
++/**
++ *	pdc2027x_phy_reset - Probe specified port on PATA host controller
++ *	@ap: Port to probe
++ *
++ *	Probe PATA phy.
++ *
++ *	LOCKING:
++ *	None (inherited from caller).
++ */
++static void pdc2027x_phy_reset(struct ata_port *ap)
++{
++	/* Check whether port enabled */
++	if (!pdc2027x_port_enabled(ap)) {
++		ata_port_disable(ap);
++		printk(KERN_INFO "ata%u: port disabled. ignoring.\n", ap->id);
++		return;
++	}
++
++	pdc2027x_cbl_detect(ap);
++	ata_port_probe(ap);
++	ata_bus_reset(ap);
++}
++/**
++ *	pdc2027x_set_piomode - Initialize host controller PATA PIO timings
++ *	@ap: Port to configure
++ *	@adev: um
++ *	@pio: PIO mode, 0 - 4
++ *
++ *	Set PIO mode for device.
++ *
++ *	LOCKING:
++ *	None (inherited from caller).
++ */
++static void pdc2027x_set_piomode(struct ata_port *ap, struct ata_device *adev)
++{
++	unsigned int pio      = adev->pio_mode - XFER_PIO_0;
++	unsigned int drive_dn = (ap->port_no ? 2 : 0) + adev->devno;
++	u8 adj		      = (drive_dn%2) ? 0x08 : 0x00;
++	u8 tmp8;
++
++
++	PDPRINTK("adev->pio_mode[%X]\n", adev->pio_mode);
++
++	/* Sanity check */
++	if(pio > 4) {
++		printk(KERN_ERR DRV_NAME ": Unknown pio mode [%d] ignored\n", pio);
++		return;
++
++	}
++
++	/* Set the PIO timing registers using value table for 133MHz */
++	PDPRINTK("Set pio regs... \n");
++
++	pdc_set_indexed_reg(ap, 0x0c + adj, pdc2027x_pio_timing_tbl[pio].value0);
++	pdc_set_indexed_reg(ap, 0x0d + adj, pdc2027x_pio_timing_tbl[pio].value1);
++	pdc_set_indexed_reg(ap, 0x13 + adj, pdc2027x_pio_timing_tbl[pio].value2);
++
++	PDPRINTK("Set pio regs done\n");
++
++	/*
++	 *  Check whether the device supports turning off IORDY.
++	 * For PIO3 and above, the device must support IORDY and set bit 10 
++	 */
++	if (adev->id[49] & 0x400) { 
++		/* IORDY_EN & PREFETCH_EN */
++		/* Turn on Prefetch */
++		tmp8 = pdc_get_indexed_reg(ap, 0x13 + adj);
++		pdc_set_indexed_reg(ap, 0x13 + adj, tmp8 | 0x03);
++
++		PDPRINTK("Turn on prefetch\n");
++	}
++
++	printk(KERN_INFO DRV_NAME ": Set to pio mode[%u] \n", pio);
++}
++/**
++ *	pdc2027x_set_dmamode - Initialize host controller PATA UDMA timings
++ *	@ap: Port to configure
++ *	@adev: um
++ *	@udma: udma mode, XFER_UDMA_0 to XFER_UDMA_6
++ *
++ *	Set UDMA mode for device.
++ *
++ *	LOCKING:
++ *	None (inherited from caller).
++ */
++static void pdc2027x_set_dmamode(struct ata_port *ap, struct ata_device *adev)
++{
++	unsigned int dma_mode	= adev->dma_mode;
++	unsigned int drive_dn	= (ap->port_no ? 2 : 0) + adev->devno;
++	u8 adj			= (drive_dn%2) ? 0x08 : 0x00;
++	u8 tmp8;
++
++	if((dma_mode >= XFER_UDMA_0) && 
++	   (dma_mode <= XFER_UDMA_6)) {
++		/* Set the UDMA timing registers with value table for 133MHz */
++		unsigned int udma_mode = dma_mode & 0x07;
++
++		if (dma_mode == XFER_UDMA_2) {
++			/*
++			 * Turn off tHOLD.
++			 * If tHOLD is '1', the hardware will add half clock for data hold time.
++			 * This code segment seems to be no effect. tHOLD will be overwritten below.
++			 */
++			tmp8 = pdc_get_indexed_reg(ap, 0x10 + adj);
++			pdc_set_indexed_reg(ap, 0x10 + adj, tmp8 & 0x7f);
++		} 
++
++		PDPRINTK("Set udma regs... \n");
++		pdc_set_indexed_reg(ap, 0x10 + adj, pdc2027x_udma_timing_tbl[udma_mode].value0);
++		pdc_set_indexed_reg(ap, 0x11 + adj, pdc2027x_udma_timing_tbl[udma_mode].value1);
++		pdc_set_indexed_reg(ap, 0x12 + adj, pdc2027x_udma_timing_tbl[udma_mode].value2);
++		PDPRINTK("Set udma regs done\n");
++		
++		printk(KERN_INFO DRV_NAME ": Set to udma mode[%u] \n", udma_mode);
++
++	} else  if((dma_mode >= XFER_MW_DMA_0) && 
++		   (dma_mode <= XFER_MW_DMA_2)) {
++		/* Set the MDMA timing registers with value table for 133MHz */
++		unsigned int mdma_mode = dma_mode & 0x07;
++
++		PDPRINTK("Set mdma regs... \n");
++		pdc_set_indexed_reg(ap, 0x0e + adj, pdc2027x_mdma_timing_tbl[mdma_mode].value0);
++		pdc_set_indexed_reg(ap, 0x0f + adj, pdc2027x_mdma_timing_tbl[mdma_mode].value1);
++		PDPRINTK("Set mdma regs done\n");
++		
++		printk(KERN_INFO DRV_NAME ": Set to mdma mode[%u] \n", mdma_mode);
++	} else {
++		printk(KERN_ERR DRV_NAME ": Unknown dma mode [%u] ignored\n", dma_mode);
++	}
++}
++/**
++ * adjust_pll - Adjust the PLL input clock in Hz.
++ *
++ * @pdc_controller: controller specific information
++ * @probe_ent: For the port address
++ * @pll_clock: The input of PLL in HZ
++ */
++static void pdc_adjust_pll(struct ata_probe_ent *probe_ent, long pll_clock, unsigned int board_idx) 
++{
++
++	u8 pll_ctl0, pll_ctl1;
++	long pll_clock_khz = pll_clock / 1000;
++	long pout_required = board_idx? PDC_133_MHZ:PDC_100_MHZ;
++	long ratio = pout_required / pll_clock_khz;
++	int F, R;
++	
++
++	/* Sanity check */
++	if (unlikely(pll_clock_khz < 5000L || pll_clock_khz > 70000L)) {
++		printk(KERN_ERR DRV_NAME ": Invalid PLL input clock %ldkHz, give up!\n", pll_clock_khz);
++		return;
++	} 
++
++#ifdef PDC_DEBUG
++	PDPRINTK("pout_required is %ld\n", pout_required);
++
++	/* Show the current clock value of PLL control register
++	 * (maybe already configured by the firmware)
++	 */
++	outb(0x02, probe_ent->port[1].bmdma_addr + 0x01);
++	pll_ctl0 = inb(probe_ent->port[1].bmdma_addr + 0x03);
++	outb(0x03, probe_ent->port[1].bmdma_addr + 0x01);
++	pll_ctl1 = inb(probe_ent->port[1].bmdma_addr + 0x03);
++
++	PDPRINTK("pll_ctl[%X][%X]\n", pll_ctl0, pll_ctl1);
++#endif
++
++	/* 
++	 * Calculate the ratio of F, R and OD
++	 * POUT = (F + 2) / (( R + 2) * NO)
++	 */
++	if (ratio < 8600L) { // 8.6x
++		/* Using NO = 0x01, R = 0x0D */
++		R = 0x0d;
++	} else if (ratio < 12900L) { // 12.9x
++		/* Using NO = 0x01, R = 0x08 */
++		R = 0x08;
++	} else if (ratio < 16100L) { // 16.1x
++		/* Using NO = 0x01, R = 0x06 */
++		R = 0x06;
++	} else if (ratio < 64000L) { // 64x
++		R = 0x00;
++	} else {
++		/* Invalid ratio */
++		printk(KERN_ERR DRV_NAME ": Invalid ratio %ld, give up!\n", ratio);
++		return;
++	}
++
++	F = (ratio * (R+2)) / 1000 - 2;
++
++	if (unlikely(F < 0 || F > 127)) {
++		/* Invalid F */
++		printk(KERN_ERR DRV_NAME ": F[%d] invalid!\n", F);
++		return;
++	}
++
++	PDPRINTK("F[%d] R[%d] ratio*1000[%ld]\n", F, R, ratio);
++
++	pll_ctl0 = (u8) F;
++	pll_ctl1 = (u8) R;
++
++	PDPRINTK("Writing pll_ctl[%X][%X]\n", pll_ctl0, pll_ctl1);
++
++	outb(0x02,     probe_ent->port[1].bmdma_addr + 0x01);
++	outb(pll_ctl0, probe_ent->port[1].bmdma_addr + 0x03);
++	outb(0x03,     probe_ent->port[1].bmdma_addr + 0x01);
++	outb(pll_ctl1, probe_ent->port[1].bmdma_addr + 0x03);
++
++	/* Wait the PLL circuit to be stable */
++	mdelay(30);
++
++#ifdef PDC_DEBUG
++	/*
++	 *  Show the current clock value of PLL control register
++	 * (maybe configured by the firmware)
++	 */
++	outb(0x02, probe_ent->port[1].bmdma_addr + 0x01);
++	pll_ctl0 = inb(probe_ent->port[1].bmdma_addr + 0x03);
++	outb(0x03, probe_ent->port[1].bmdma_addr + 0x01);
++	pll_ctl1 = inb(probe_ent->port[1].bmdma_addr + 0x03);
++
++	PDPRINTK("pll_ctl[%X][%X]\n", pll_ctl0, pll_ctl1);
++#endif
++
++	return;
++}
++/**
++ * detect_pll_input_clock - Detect the PLL input clock in Hz.
++ * @probe_ent: for the port address
++ * Ex. 16949000 on 33MHz PCI bus for pdc20275. 
++ *     Half of the PCI clock.
++ */
++static long pdc_detect_pll_input_clock(struct ata_probe_ent *probe_ent) 
++{
++	u8 scr1;
++	unsigned long ctr0;
++	unsigned long ctr1;
++	unsigned long ctr2 = 0;
++	unsigned long ctr3 = 0;
++
++	unsigned long start_count, end_count;
++	long pll_clock;
++
++	/* Read current counter value */
++	outb(0x20, probe_ent->port[0].bmdma_addr + 0x01);
++	ctr0 = inb(probe_ent->port[0].bmdma_addr + 0x03);
++	outb(0x21, probe_ent->port[0].bmdma_addr + 0x01);
++	ctr1 = inb(probe_ent->port[0].bmdma_addr + 0x03);
++	
++	outb(0x20, probe_ent->port[1].bmdma_addr + 0x01);
++	ctr2 = inb(probe_ent->port[1].bmdma_addr + 0x03);
++	outb(0x21, probe_ent->port[1].bmdma_addr + 0x01);
++	ctr3 = inb(probe_ent->port[1].bmdma_addr + 0x03);
++
++	start_count = (ctr3 << 23 ) | (ctr2 << 15) | (ctr1 << 8) | ctr0;
++
++	PDPRINTK("ctr0[%lX] ctr1[%lX] ctr2 [%lX] ctr3 [%lX]\n", ctr0, ctr1, ctr2, ctr3);
++
++	/* Start the test mode */
++	outb(0x01, probe_ent->port[0].bmdma_addr + 0x01);
++	scr1 = inb(probe_ent->port[0].bmdma_addr + 0x03);
++	PDPRINTK("scr1[%X]\n", scr1);
++	outb(scr1 | 0x40, probe_ent->port[0].bmdma_addr + 0x03);
++
++	/* Let the counter run for 1000 us. */
++	udelay(1000);
++
++	/* Read the counter values again */
++	outb(0x20, probe_ent->port[0].bmdma_addr + 0x01);
++	ctr0 = inb(probe_ent->port[0].bmdma_addr + 0x03);
++	outb(0x21, probe_ent->port[0].bmdma_addr + 0x01);
++	ctr1 = inb(probe_ent->port[0].bmdma_addr + 0x03);
++	
++	outb(0x20, probe_ent->port[1].bmdma_addr + 0x01);
++	ctr2 = inb(probe_ent->port[1].bmdma_addr + 0x03);
++	outb(0x21, probe_ent->port[1].bmdma_addr + 0x01);
++	ctr3 = inb(probe_ent->port[1].bmdma_addr + 0x03);
++
++	end_count = (ctr3 << 23 ) | (ctr2 << 15) | (ctr1 << 8) | ctr0;
++
++	PDPRINTK("ctr0[%lX] ctr1[%lX] ctr2 [%lX] ctr3 [%lX]\n", ctr0, ctr1, ctr2, ctr3);
++
++	/* Stop the test mode */
++	outb(0x01, probe_ent->port[0].bmdma_addr + 0x01);
++	scr1 = inb(probe_ent->port[0].bmdma_addr + 0x03);
++	PDPRINTK("scr1[%X]\n", scr1);
++	outb(scr1 & 0xBF, probe_ent->port[0].bmdma_addr + 0x03);
++
++	/* calculate the input clock in Hz */
++	pll_clock = (long) ((start_count - end_count) * 1000);
++
++	PDPRINTK("start[%lu] end[%lu] \n", start_count, end_count);
++	PDPRINTK("PLL input clock[%ld]Hz\n", pll_clock);
++
++	return pll_clock;
++}
++/**
++ * pdc_hardware_init - Initialize the hardware.
++ * @pdev: instance of pci_dev found
++ * @pdc_controller: controller specific information
++ * @pe:  for the port address
++ */
++static int pdc_hardware_init(struct pci_dev *pdev, struct ata_probe_ent *pe, unsigned int board_idx)
++{
++	long pll_clock;
++
++	/*
++	 * Detect PLL input clock rate.
++	 * On some system, where PCI bus is running at non-standard clock rate.
++	 * Ex. 25MHz or 40MHz, we have to adjust the cycle_time.
++	 * The pdc20275 controller employs PLL circuit to help correct timing registers setting.
++	 */
++	pll_clock = pdc_detect_pll_input_clock(pe);
++
++	if(pll_clock < 0) /* counter overflow? Try again. */
++		pll_clock = pdc_detect_pll_input_clock(pe);
++
++	printk(KERN_INFO DRV_NAME ": PLL input clock %ld kHz\n", pll_clock/1000);
++
++	/* Adjust PLL control register */
++	pdc_adjust_pll(pe, pll_clock, board_idx);
++
++	return 0;
++}
++/**
++ * pdc2027x_init_one - PCI probe function
++ * Called when an instance of PCI adapter is inserted.
++ * This function checks whether the hardware is supported,
++ * initialize hardware and register an instance of ata_host_set to 
++ * libata by providing struct ata_probe_ent and ata_device_add().
++ * (implements struct pci_driver.probe() )
++ * 
++ * @pdev: instance of pci_dev found
++ * @ent:  matching entry in the id_tbl[]
++ */
++static int __devinit pdc2027x_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
++{
++	static int printed_version;
++	unsigned int board_idx = (unsigned int) ent->driver_data;
++
++	struct ata_probe_ent *probe_ent = NULL;
++	int rc;
++
++	if (!printed_version++)
++		printk(KERN_DEBUG DRV_NAME " version " DRV_VERSION "\n");
++
++	rc = pci_enable_device(pdev);
++	if (rc)
++		return rc;
++
++	rc = pci_request_regions(pdev, DRV_NAME);
++	if (rc)
++		goto err_out;
++
++	rc = pci_set_dma_mask(pdev, ATA_DMA_MASK);
++	if (rc)
++		goto err_out_regions;
++
++	rc = pci_set_consistent_dma_mask(pdev, ATA_DMA_MASK);
++	if (rc)
++		goto err_out_regions;
++
++	/* Prepare the probe entry */
++	probe_ent = kmalloc(sizeof(*probe_ent), GFP_KERNEL);
++	if (probe_ent == NULL) {
++		rc = -ENOMEM;
++		goto err_out_regions;
++	}
++
++	memset(probe_ent, 0, sizeof(*probe_ent));
++	probe_ent->dev = pci_dev_to_dev(pdev);
++	INIT_LIST_HEAD(&probe_ent->node);
++
++	probe_ent->sht		= pdc2027x_port_info[board_idx].sht;
++	probe_ent->host_flags	= pdc2027x_port_info[board_idx].host_flags;
++	probe_ent->pio_mask	= pdc2027x_port_info[board_idx].pio_mask;
++	probe_ent->udma_mask	= pdc2027x_port_info[board_idx].udma_mask;
++	probe_ent->port_ops	= pdc2027x_port_info[board_idx].port_ops;
++
++       	probe_ent->irq = pdev->irq;
++       	probe_ent->irq_flags = SA_SHIRQ;
++
++	probe_ent->port[0].cmd_addr = pci_resource_start(pdev, 0);
++	ata_std_ports(&probe_ent->port[0]);
++	probe_ent->port[0].altstatus_addr =
++		probe_ent->port[0].ctl_addr =
++		pci_resource_start(pdev, 1) | ATA_PCI_CTL_OFS;
++	probe_ent->port[0].bmdma_addr = pci_resource_start(pdev, 4);
++
++	probe_ent->port[1].cmd_addr = pci_resource_start(pdev, 2);
++	ata_std_ports(&probe_ent->port[1]);
++	probe_ent->port[1].altstatus_addr =
++		probe_ent->port[1].ctl_addr =
++		pci_resource_start(pdev, 3) | ATA_PCI_CTL_OFS;
++	probe_ent->port[1].bmdma_addr = pci_resource_start(pdev, 4) + 8;
++
++	probe_ent->n_ports = 2;
++
++	pci_set_master(pdev);
++	//pci_enable_intx(pdev);
++
++	/* initialize adapter */
++	if(pdc_hardware_init(pdev, probe_ent, board_idx) != 0)
++		goto err_out_free_ent;
++
++	ata_device_add(probe_ent);
++	kfree(probe_ent);
++
++	return 0;
++
++err_out_free_ent:
++	kfree(probe_ent);
++err_out_regions:
++	pci_release_regions(pdev);
++err_out:
++	pci_disable_device(pdev);
++	return rc;
++}
++/**
++ * pdc2027x_remove_one - Called to remove a single instance of the
++ * adapter.
++ *
++ * @dev: The PCI device to remove.
++ * FIXME: module load/unload not working yet
++ */
++static void __devexit pdc2027x_remove_one(struct pci_dev *pdev)
++{
++	ata_pci_remove_one(pdev);
++}
++/**
++ * pdc2027x_init - Called after this module is loaded into the kernel.
++ */
++static int __init pdc2027x_init(void)
++{
++	return pci_module_init(&pdc2027x_pci_driver);
++}
++/**
++ * pdc2027x_exit - Called before this module unloaded from the kernel
++ */
++static void __exit pdc2027x_exit(void)
++{
++	pci_unregister_driver(&pdc2027x_pci_driver);
++}
++
++module_init(pdc2027x_init);
++module_exit(pdc2027x_exit);
+diff -Nru a/drivers/scsi/sata_promise.c b/drivers/scsi/sata_promise.c
+--- a/drivers/scsi/sata_promise.c	2004-11-14 22:37:46 -05:00
++++ b/drivers/scsi/sata_promise.c	2004-11-14 22:37:46 -05:00
+@@ -79,6 +79,8 @@
+ static int pdc_port_start(struct ata_port *ap);
+ static void pdc_port_stop(struct ata_port *ap);
+ static void pdc_phy_reset(struct ata_port *ap);
++static void pdc_pata_phy_reset(struct ata_port *ap);
++static void pdc_pata_cbl_detect(struct ata_port *ap);
+ static void pdc_qc_prep(struct ata_queued_cmd *qc);
+ static void pdc_tf_load_mmio(struct ata_port *ap, struct ata_taskfile *tf);
+ static void pdc_exec_command_mmio(struct ata_port *ap, struct ata_taskfile *tf);
+@@ -127,7 +129,7 @@
+ 	/* board_2037x */
+ 	{
+ 		.sht		= &pdc_ata_sht,
+-		.host_flags	= ATA_FLAG_SATA | ATA_FLAG_NO_LEGACY |
++		.host_flags	= /* ATA_FLAG_SATA | */ ATA_FLAG_NO_LEGACY |
+ 				  ATA_FLAG_SRST | ATA_FLAG_MMIO,
+ 		.pio_mask	= 0x1f, /* pio0-4 */
+ 		.mwdma_mask	= 0x07, /* mwdma0-2 */
+@@ -244,7 +246,35 @@
+ static void pdc_phy_reset(struct ata_port *ap)
+ {
+ 	pdc_reset_port(ap);
+-	sata_phy_reset(ap);
++	if (ap->flags & ATA_FLAG_SATA)
++		sata_phy_reset(ap);
++	else
++		pdc_pata_phy_reset(ap);
++}
++
++static void pdc_pata_cbl_detect(struct ata_port *ap)
++{
++	u8 tmp;
++	void *mmio = (void *) ap->ioaddr.cmd_addr + PDC_CTLSTAT + 0x03;
++
++	tmp = readb(mmio);
++	
++	if (tmp & 0x01)
++	{
++		ap->cbl = ATA_CBL_PATA40;
++		ap->udma_mask &= ATA_UDMA_MASK_40C;
++	}
++	else
++		ap->cbl = ATA_CBL_PATA80;
++}
++		
++static void pdc_pata_phy_reset(struct ata_port *ap)
++{
++	pdc_pata_cbl_detect(ap);
++
++	ata_port_probe(ap);
++	
++	ata_bus_reset(ap);
+ }
+ 
+ static u32 pdc_sata_scr_read (struct ata_port *ap, unsigned int sc_reg)
+@@ -547,6 +577,7 @@
+ 	void *mmio_base;
+ 	unsigned int board_idx = (unsigned int) ent->driver_data;
+ 	int rc;
++	u8 tmp;
+ 
+ 	if (!printed_version++)
+ 		printk(KERN_DEBUG DRV_NAME " version " DRV_VERSION "\n");
+@@ -605,6 +636,9 @@
+ 	probe_ent->port[0].scr_addr = base + 0x400;
+ 	probe_ent->port[1].scr_addr = base + 0x500;
+ 
++	probe_ent->port_flags[0] = ATA_FLAG_SATA;
++	probe_ent->port_flags[1] = ATA_FLAG_SATA;
++	
+ 	/* notice 4-port boards */
+ 	switch (board_idx) {
+ 	case board_20319:
+@@ -615,9 +649,25 @@
+ 
+ 		probe_ent->port[2].scr_addr = base + 0x600;
+ 		probe_ent->port[3].scr_addr = base + 0x700;
++	
++		probe_ent->port_flags[2] = ATA_FLAG_SATA;
++		probe_ent->port_flags[3] = ATA_FLAG_SATA;
+ 		break;
+ 	case board_2037x:
+-       		probe_ent->n_ports = 2;
++		/* Some boards have also PATA port */
++		tmp = readb(mmio_base + PDC_FLASH_CTL+1);
++		if (!(tmp & 0x80))
++		{
++			probe_ent->n_ports = 3;
++			
++			pdc_ata_setup_port(&probe_ent->port[2], base + 0x300);
++
++			probe_ent->port_flags[2] = ATA_FLAG_SLAVE_POSS;
++			
++			printk(KERN_INFO DRV_NAME " PATA port found\n");
++		}
++		else
++       			probe_ent->n_ports = 2;
+ 		break;
+ 	default:
+ 		BUG();
+diff -Nru a/include/linux/ata.h b/include/linux/ata.h
+--- a/include/linux/ata.h	2004-11-14 22:37:46 -05:00
++++ b/include/linux/ata.h	2004-11-14 22:37:46 -05:00
+@@ -222,6 +222,7 @@
+ };
+ 
+ #define ata_id_is_ata(id)	(((id)[0] & (1 << 15)) == 0)
++#define ata_id_is_sata(id)	((id)[93] == 0)
+ #define ata_id_rahead_enabled(id) ((id)[85] & (1 << 6))
+ #define ata_id_wcache_enabled(id) ((id)[85] & (1 << 5))
+ #define ata_id_has_flush(id) ((id)[83] & (1 << 12))
+diff -Nru a/include/linux/libata.h b/include/linux/libata.h
+--- a/include/linux/libata.h	2004-11-14 22:37:46 -05:00
++++ b/include/linux/libata.h	2004-11-14 22:37:46 -05:00
+@@ -204,6 +204,7 @@
+ 	unsigned long		irq;
+ 	unsigned int		irq_flags;
+ 	unsigned long		host_flags;
++	unsigned long		port_flags[ATA_MAX_PORTS];
+ 	void __iomem		*mmio_base;
+ 	void			*private_data;
+ };
+@@ -410,6 +411,7 @@
+ extern unsigned int ata_dev_classify(struct ata_taskfile *tf);
+ extern void ata_dev_id_string(u16 *id, unsigned char *s,
+ 			      unsigned int ofs, unsigned int len);
++extern void ata_dev_config(struct ata_port *ap, unsigned int i);
+ extern void ata_bmdma_setup (struct ata_queued_cmd *qc);
+ extern void ata_bmdma_start (struct ata_queued_cmd *qc);
+ extern void ata_bmdma_irq_clear(struct ata_port *ap);
+diff -Nru a/include/scsi/scsi.h b/include/scsi/scsi.h
+--- a/include/scsi/scsi.h	2004-11-14 22:37:46 -05:00
++++ b/include/scsi/scsi.h	2004-11-14 22:37:46 -05:00
+@@ -113,6 +113,9 @@
+ /* values for service action in */
+ #define	SAI_READ_CAPACITY_16  0x10
+ 
++/* Temporary values for T10/04-262 until official values are allocated */
++#define	ATA_16		      0x85	/* 16-byte pass-thru [0x85 == unused]*/
++#define	ATA_12		      0xb3	/* 12-byte pass-thru [0xb3 == obsolete set limits command] */
+ 
+ /*
+  *  SCSI Architecture Model (SAM) Status codes. Taken from SAM-3 draft
