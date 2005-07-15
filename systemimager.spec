@@ -9,6 +9,7 @@
 #define _build_only_boot 1
 %{?_build_only_boot:%{expand: %%define _build_all 0}}
 
+%define _unpackaged_files_terminate_build 0
 
 Summary: Software that automates Linux installs, software distribution, and production deployment.
 Name: %name
@@ -475,6 +476,7 @@ fi
 %prefix/lib/systemimager/perl/SystemImager/Common.pm
 %prefix/lib/systemimager/perl/SystemImager/Config.pm
 %prefix/lib/systemimager/perl/SystemImager/Options.pm
+%prefix/lib/systemimager/perl/SystemImager/UseYourOwnKernel.pm
 
 %files server
 %defattr(-, root, root)
@@ -510,6 +512,7 @@ fi
 %prefix/sbin/si_pushupdate
 %prefix/sbin/si_rmimage
 %prefix/sbin/si_imagemanip
+%prefix/sbin/si_monitor
 %prefix/bin/si_mk*
 %prefix/lib/systemimager/perl/SystemImager/Server.pm
 %prefix/lib/systemimager/perl/SystemImager/Config.pm
