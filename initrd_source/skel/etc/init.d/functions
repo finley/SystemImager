@@ -77,7 +77,7 @@ logmsg() {
     # log to temporary file (which will go away when we reboot)
     # this is good for envs that have bad consoles
     local FILE=/tmp/si.log
-    if [ mount | grep ' / ' | grep -q '(rw)' ]; then
+    if ((`mount | grep ' / ' | grep -q '(rw)'`)); then
         echo $@ >> $FILE || shellout
     fi
     
