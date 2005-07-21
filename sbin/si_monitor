@@ -2,7 +2,7 @@
 #
 #  "SystemImager"
 #
-#  Copyright (C) 1999-2005 Brian Elliott Finley
+#  Copyright (C) 1999-2004 Andrea Righi <a.righi@cineca.it>
 
 use lib "USR_PREFIX/lib/systemimager/perl";
 use strict;
@@ -21,7 +21,7 @@ my $program_name = "si_monitor";
 my $version_info = << "EOF";
 $program_name (part of SystemImager) v$VERSION
 
-Copyright (C) 1999-2005 Brian Elliott Finley <brian\@thefinleys.com>
+Copyright (C) 1999-2001 Andrea Righi <a.righi\@cineca.it>
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 EOF
@@ -295,7 +295,7 @@ sub display_clients
 	my $header =  
 		"${program_name} is listening on port ${port}...\n" .
 		"Press 'q' to quit...\n" .
- 		"[  MAC address  ]  [   IP addr   ]  [  HostName  ]  [ Mem used ]  [  Time  ]   [ Stat ]"; 
+		"[  MAC address  ]  [   IP addr   ]  [   HostName  ]  [ Mem used ]  [  Time  ]   [  Status  ]";
 
 	# Print header.
 	system 'clear';
