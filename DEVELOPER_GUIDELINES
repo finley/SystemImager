@@ -1,4 +1,4 @@
-#
+u#
 #   "SystemImager"
 #
 #   Copyright (C) 1999-2005 Brian Elliott Finley
@@ -50,49 +50,36 @@ o   Have fun!
 
 
 --------------------------------------------------------------------------------
-CVS
+SVN
 --------------------------------------------------------------------------------
-o   The current development branch is always tagged "HEAD".  It is
+o   The current development branch is always tagged "trunk".  It is
     intended for feature additions and funky stuff.  Unless you're just
     fixing a bug, or updating the stable documentation, this is what you
     want.
 
 o   The stable branch is only to be used for fixing bugs.
 
-o   Only Brian Finley or Dann Frazier will modify CVS tags of any kind, 
-    such as for versioning releases or creating development branches.
-
-o   Always get approval from Brian Finley prior to adding any new
-    directories to CVS.
+o   Only Brian Finley, Dann Frazier, or Sean Dague will modify SVN tags 
+    of any kind, such as for versioning releases or creating development
+    branches.
 
 o   Reference Material
 
-    o   http://www.loria.fr/~molli/cvs/doc/cvs_toc.html
-    o   http://cvsbook.red-bean.com/cvsbook.html
-    o   http://www.cvshome.org/
+    o   http://wiki.sisuite.org/
+    o   http://gentoo-wiki.com/HOWTO_Subversion
+    o   http://svnbook.red-bean.com/
 
 o   Checkout Steps for Developers
     (You should be able to just copy and paste commands 2-5)
 
-    1) Set your username:
-        MY_CVS_USERNAME=your_cvs_user_name
-    
-    2) Tell cvs to operate over ssh:
-        CVS_RSH=ssh
-    
-    3) Set BRANCH_OPTS to choose your branch.
-    
-        For the development branch (HEAD), cut and paste this:
-            BRANCH="HEAD"; BRANCH_OPTS=""
-    
-        For the current stable branch, cut and paste this:
-            BRANCH="v3_2_x"; BRANCH_OPTS="-r$BRANCH"
-    
-    4) Checkout the code:
-        cvs -z3 -d:ext:$MY_CVS_USERNAME@cvs.sourceforge.net:/cvsroot/systemimager co $BRANCH_OPTS systemimager
-    
-    5) Rename the checked out source tree:
-        mv systemimager systemimager.$BRANCH
+    o  Development trunk:
+
+	svn checkout svn+ssh://username@svn.sisuite.org/var/lib/svn/systemimager/trunk/ systemimager/
+
+    o  Branch 3.4.x as an example:
+
+	svn checkout svn+ssh://username@svn.sisuite.org/var/lib/svn/systemimager/branches/3.4.x/ si-3.4.x/
+
 
 
 --------------------------------------------------------------------------------
