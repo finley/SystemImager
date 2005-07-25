@@ -15,7 +15,7 @@ Summary: Software that automates Linux installs, software distribution, and prod
 Name: %name
 Version: %ver
 Release: %rel
-Copyright: GPL
+License: GPL
 Group: Applications/System
 Source0: http://download.sourceforge.net/systemimager/%{name}-%{ver}.tar.bz2
 BuildRoot: /tmp/%{name}-%{ver}-root
@@ -35,13 +35,13 @@ This is bogus and not used anywhere
 Summary: Software that automates Linux installs, software distribution, and production deployment.
 Version: %ver
 Release: %rel
-Copyright: GPL
+License: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: dann frazier <dannf@dannf.org>
 URL: http://systemimager.org/
 Distribution: System Installation Suite
-Requires: rsync >= 2.4.6, systemimager-common = %{version}, perl-AppConfig, dosfstools, /sbin/chkconfig, perl, perl-XML-Simple
+Requires: rsync >= 2.4.6, systemimager-common = %{version}, perl-AppConfig, dosfstools, /sbin/chkconfig, perl, perl-XML-Simple >= 2.08, perl-TermReadKey
 AutoReqProv: no
 
 %description server
@@ -66,7 +66,7 @@ server.
 Summary: Software that automates Linux installs, software distribution, and production deployment.
 Version: %ver
 Release: %rel
-Copyright: GPL
+License: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: dann frazier <dannf@dannf.org>
@@ -97,7 +97,7 @@ installations over multicast.
 Summary: Software that automates Linux installs, software distribution, and production deployment.
 Version: %ver
 Release: %rel
-Copyright: GPL
+License: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: dann frazier <dannf@dannf.org>
@@ -128,7 +128,7 @@ and servers.
 Summary: Software that automates Linux installs, software distribution, and production deployment.
 Version: %ver
 Release: %rel
-Copyright: GPL
+License: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: dann frazier <dannf@dannf.org>
@@ -161,7 +161,7 @@ be imaged by a SystemImager server.
 Summary: Software that automates Linux installs, software distribution, and production deployment.
 Version: %ver
 Release: %rel
-Copyright: GPL
+License: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: dann frazier <dannf@dannf.org>
@@ -191,6 +191,11 @@ to boot and install %{_build_arch} Linux machines during the SystemImager autoin
 process.
 
 %changelog
+* Sat Jul 23 2005 Bernard Li <bli@bcgsc.ca>
+- Updated Copyright -> License (deprecated)
+- Added requirement for perl-TermReadKey
+- Updated requirement for perl-XML-Simple to >= 2.08
+
 * Sun Dec 19 2004 Josh Aas <josha@sgi.com>
 - Here is another patch for RPM building. With this patch, you should be
   able to make an srpm, install it, build from the spec file ("rpmbuild
