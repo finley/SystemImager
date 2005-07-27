@@ -191,6 +191,9 @@ to boot and install %{_build_arch} Linux machines during the SystemImager autoin
 process.
 
 %changelog
+* Mon Jul 25 2005 Bernard Li <bli@bcgsc.ca>
+- Added directory /var/lock/systemimager
+
 * Sat Jul 23 2005 Bernard Li <bli@bcgsc.ca>
 - Updated Copyright -> License (deprecated)
 - Added requirement for perl-TermReadKey
@@ -490,6 +493,7 @@ fi
 # These should move to a files doc section, because they are missing if you don't do doc
 # %doc doc/manual/systemimager* doc/manual/html doc/manual/examples
 %doc doc/man/autoinstall* doc/examples/local.cfg
+%dir /var/lock/systemimager
 %dir /var/log/systemimager
 %dir /var/lib/systemimager/images
 %dir /var/lib/systemimager/scripts/pre-install
