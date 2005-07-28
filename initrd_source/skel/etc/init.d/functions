@@ -341,13 +341,18 @@ get_flamethrower_directory() {
 #   [RETRY=7]               # Optional
 #   [PORTBASE=9000]         # Required if a sourceable file called $MODULE_NAME
 #                           #   doesn't exist
+#   [FLAMETHROWER_TARPIPE]  # If not empty, untar received data directly,
+#                           # without storing it to a temporary file
 #
 #   flamethrower_client
 #
 flamethrower_client() {
 
+    if [ ! -z $FLAMETHROWER_TARPIPE ]; then
+	$FLAMETHROWER_TARPIPE=tarpipe
+    fi
     logmsg
-    logmsg "flamethrower_client(${MODULE_NAME})"
+    logmsg "flamethrower_client(${MODULE_NAME}) $FLAMETHROWER_TARPIPE "
     logmsg ---------------------------------------------------------------------
 
     # validate
@@ -360,11 +365,11 @@ flamethrower_client() {
         fi
     fi
     if [ -z $DIR ]; then
-        logmsg Must set DIR
+        logmsg "Must set DIR !!!"
+	shellout
     else
         mkdir -p $DIR
     fi
-    
 
     # build command
     UDP_RECEIVER_OPTIONS="--interface ${DEVICE} --portbase $PORTBASE --nokbd"
@@ -400,19 +405,27 @@ flamethrower_client() {
         # receive cast
         #   example udp-receiver command:
         #   udp-receiver --interface lo --portbase 9002 --nokbd --nosync --file /tmp/multicast.tar
-        logmsg udp-receiver $UDP_RECEIVER_OPTIONS --file /tmp/multicast.tar
-        udp-receiver $UDP_RECEIVER_OPTIONS --file /tmp/multicast.tar
-        UDP_RECEIVER_EXIT_STATUS=$?
 
-        # untar it
-        if [ "$UDP_RECEIVER_EXIT_STATUS" = "0" ]; then
-            logmsg tar ${TAR_OPTS} -f /tmp/multicast.tar -C ${DIR}
-            tar ${TAR_OPTS} -f /tmp/multicast.tar -C ${DIR}
-            TAR_EXIT_STATUS=$?
-        fi
+        if [ -n $FLAMETHROWER_TARPIPE ]; then
+	    TAR_OPTS="$TAR_OPTS -f -"
+	    logmsg "udp-receiver $UDP_RECEIVER_OPTIONS | tar $TAR_OPTS -C $DIR"
+	    udp-receiver $UDP_RECEIVER_OPTIONS | tar $TAR_OPTS -C $DIR
+	    TAR_EXIT_STATUS=$?
+	    UDP_RECEIVER_STATUS=0
+	else
+	    logmsg udp-receiver $UDP_RECEIVER_OPTIONS --file /tmp/multicast.tar
+	    udp-receiver $UDP_RECEIVER_OPTIONS --file /tmp/multicast.tar
+	    UDP_RECEIVER_EXIT_STATUS=$?
 
-        # discard used tarball like an old sock (recommended by: Ramon Bastiaans <bastiaans@sara.nl>)
-        rm -f /tmp/multicast.tar
+            # untar it
+	    if [ "$UDP_RECEIVER_EXIT_STATUS" = "0" ]; then
+		logmsg tar ${TAR_OPTS} -f /tmp/multicast.tar -C ${DIR}
+		tar ${TAR_OPTS} -f /tmp/multicast.tar -C ${DIR}
+		TAR_EXIT_STATUS=$?
+	    fi
+            # discard used tarball like an old sock (recommended by: Ramon Bastiaans <bastiaans@sara.nl>)
+	    rm -f /tmp/multicast.tar
+	fi
 
         # did everything work properly
         if [ $UDP_RECEIVER_EXIT_STATUS -eq 0 ] && [ $TAR_EXIT_STATUS -eq 0 ]; then
@@ -436,7 +449,6 @@ flamethrower_client() {
     logmsg 'finished!'
     logmsg 
 
-
     # Unset vars, so next module (which may not have them set) won't use then unintentially
     unset TTL
     unset NOSYNC
@@ -451,6 +463,7 @@ flamethrower_client() {
     unset TAR_EXIT_STATUS
     unset TAR_OPTS
     unset SUCCESS
+    unset FLAMETHROWER_TARPIPE
 }
 
 #

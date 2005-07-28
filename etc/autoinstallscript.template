@@ -152,6 +152,7 @@ if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
     MODULE_NAME="${IMAGENAME}"
     DIR=/a
     RETRY=7
+    FLAMETHROWER_TARPIPE=y
     flamethrower_client
 else 
     # Use rsync 
@@ -213,6 +214,7 @@ do
         MODULE_NAME="override_${OVERRIDE}"
         DIR=/a
         RETRY=7
+	FLAMETHROWER_TARPIPE=y
         flamethrower_client
     else
         # Use rsync
