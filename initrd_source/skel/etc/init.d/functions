@@ -357,11 +357,15 @@ flamethrower_client() {
 
     # validate
     if [ -z $PORTBASE ]; then
-        . ${FLAMETHROWER_DIRECTORY_DIR}/${MODULE_NAME}
-        if [ $? != 0 ]; then
+        if [ -f ${FLAMETHROWER_DIRECTORY_DIR}/${MODULE_NAME} ]; then
+	    . ${FLAMETHROWER_DIRECTORY_DIR}/${MODULE_NAME}
+	else
+	    logmsg WARNING WARNING WARNING WARNING WARNING
             logmsg You must either set PORTBASE, or have a sourceable file called
             logmsg ${FLAMETHROWER_DIRECTORY_DIR}/MODULE_NAME
-            shellout
+	    # allow for now to continue until overrides get their modules
+	    return
+            #shellout
         fi
     fi
     if [ -z $DIR ]; then
