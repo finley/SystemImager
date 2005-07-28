@@ -406,12 +406,12 @@ flamethrower_client() {
         #   example udp-receiver command:
         #   udp-receiver --interface lo --portbase 9002 --nokbd --nosync --file /tmp/multicast.tar
 
-        if [ -n $FLAMETHROWER_TARPIPE ]; then
+        if [ ! -z $FLAMETHROWER_TARPIPE ]; then
 	    TAR_OPTS="$TAR_OPTS -f -"
 	    logmsg "udp-receiver $UDP_RECEIVER_OPTIONS | tar $TAR_OPTS -C $DIR"
 	    udp-receiver $UDP_RECEIVER_OPTIONS | tar $TAR_OPTS -C $DIR
 	    TAR_EXIT_STATUS=$?
-	    UDP_RECEIVER_STATUS=0
+	    UDP_RECEIVER_EXIT_STATUS=0
 	else
 	    logmsg udp-receiver $UDP_RECEIVER_OPTIONS --file /tmp/multicast.tar
 	    udp-receiver $UDP_RECEIVER_OPTIONS --file /tmp/multicast.tar
