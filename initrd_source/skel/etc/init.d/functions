@@ -349,7 +349,7 @@ get_flamethrower_directory() {
 flamethrower_client() {
 
     if [ ! -z $FLAMETHROWER_TARPIPE ]; then
-	$FLAMETHROWER_TARPIPE=tarpipe
+	FLAMETHROWER_TARPIPE=tarpipe
     fi
     logmsg
     logmsg "flamethrower_client(${MODULE_NAME}) $FLAMETHROWER_TARPIPE "
