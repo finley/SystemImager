@@ -126,6 +126,9 @@ install_kernel:	$(LINUX_IMAGE)
 	$(SI_INSTALL) -m 644 $(LINUX_CONFIG) \
 	    $(BOOT_BIN_DEST)/config
 
+# determine number of CPUs of current machine for parallel build
+NCPUS = $(shell grep -c ^processor /proc/cpuinfo)
+
 # build the kernel that autoinstall clients will boot from during
 # autoinstallation
 PHONY += kernel
@@ -135,11 +138,11 @@ ifdef IS_PPC64
 $(LINUX_IMAGE):	$(SRC_DIR)/patched_kernel-stamp $(INITRD_DIR)/initrd.img
 	cp $(TOPDIR)/initrd_source/initrd.img \
 	    ${LINUX_SRC}/arch/ppc64/boot/ramdisk.image.gz
-	$(MAKE) -C $(LINUX_SRC) $(LINUX_TARGET)
+	$(MAKE) -C $(LINUX_SRC) -j $(NCPUS) $(LINUX_TARGET)
 	mkdir -p $(TOPDIR)/tmp
 else 
 $(LINUX_IMAGE): $(SRC_DIR)/patched_kernel-stamp
-	$(MAKE) -C $(LINUX_SRC) $(LINUX_TARGET)
+	$(MAKE) -C $(LINUX_SRC) -j $(NCPUS) $(LINUX_TARGET)
 	mkdir -p $(TOPDIR)/tmp
 endif
 
@@ -172,7 +175,7 @@ modules:	$(SRC_DIR)/modules_build-stamp
 
 $(SRC_DIR)/modules_build-stamp: $(LINUX_IMAGE)
 	rm -fr $(TOPDIR)/tmp/kernel_modules
-	$(MAKE) -C $(LINUX_SRC) modules
+	$(MAKE) -C $(LINUX_SRC) -j $(NCPUS) modules
 	touch $(SRC_DIR)/modules_build-stamp
 
 PHONY += kernel_clean
