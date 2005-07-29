@@ -23,7 +23,7 @@ use strict;
 use File::Copy;
 use File::Path;
 use XML::Simple;
-use vars qw($VERSION @mount_points %device_by_mount_point %filesystem_type_by_mount_point);
+use vars qw($VERSION @mount_points %device_by_mount_point %filesystem_type_by_mount_point $disk_no %dev2disk);
 
 $VERSION="SYSTEMIMAGER_VERSION_STRING";
 
@@ -449,6 +449,14 @@ sub _read_partition_info_and_prepare_parted_commands {
         );
 
         my $devfs_dev = $devfs_map{$dev};
+        $dev2disk{$devfs_dev} = "DISK".$disk_no++;
+        print $out "if [ -z \$DISKORDER ] ; then\n";
+        print $out "  $dev2disk{$devfs_dev}=$devfs_dev\n";
+        print $out "elif [ -z \$$dev2disk{$devfs_dev} ] ; then\n";
+        print $out qq(  echo "Undefined: $dev2disk{$devfs_dev}"\n);
+        print $out "  shellout\n";
+        print $out "fi\n";
+        $devfs_dev = '$'.$dev2disk{$devfs_dev};
 
         print $out "### BEGIN partition $devfs_dev ###\n";
         print $out qq(logmsg "Partitioning $devfs_dev..."\n);
@@ -715,6 +723,8 @@ sub _read_partition_info_and_prepare_parted_commands {
             print $out "\n";
 	    
             $part = &get_part_name($dev, $m);
+            $part =~ /^(.*?)(p?\d+)$/;
+            $part = "\${".$dev2disk{$1}."}".$2;
             $cmd = "Creating partition $part.";
             print $out qq(logmsg "$cmd"\n);
             
@@ -1134,6 +1144,7 @@ sub _write_out_mkfs_commands {
 
     my @all_devices = get_all_devices($file);
     my %devfs_map = dev_to_devfs(@all_devices) or return undef;
+    my @d2dkeys = reverse sort keys %dev2disk;
 
 
     # Figure out if software RAID is in use. -BEF-
@@ -1159,7 +1170,7 @@ sub _write_out_mkfs_commands {
 	# file.  We should also look at the format and write functions for that 
 	# same file. -BEF-
         print $out qq(# /etc/raidtab that will be used for creating software RAID devices on client(s).\n);
-        print $out qq(cat <<'EOF' > /etc/raidtab\n);
+        print $out qq(cat <<EOF > /etc/raidtab\n);
         if (!$raidtab) {
             $raidtab = $image_dir . "/etc/raidtab";
         }
@@ -1168,6 +1179,11 @@ sub _write_out_mkfs_commands {
         }
         open(FILE,"<$raidtab") or croak("Couldn't open $raidtab for reading.");
             while (<FILE>) {
+                foreach my $key (@d2dkeys) {
+                    next unless /\Q$key/;
+                    s/\Q$key\E/\${$dev2disk{$key}}/;
+                    last;
+                }
                 print $out $_;
             }
         close(FILE);
@@ -1226,6 +1242,8 @@ sub _write_out_mkfs_commands {
         # software RAID devices (/dev/md*)
         if ($real_dev =~ /\/dev\/md/) {
             print $out qq(mkraid --really-force $real_dev || shellout\n);
+        } elsif( $real_dev =~ /^(.*?)(p?\d+)$/ ) {
+            $real_dev = "\${".$dev2disk{$1}."}".$2;
         }
 
         # swap
@@ -1607,6 +1625,22 @@ sub _write_out_umount_commands {
     }
 }
 
+sub show_disk_edits{
+    my ($out) = shift;
+    foreach (sort keys %dev2disk) {
+        print $out qq(  echo " $_ -> \$$dev2disk{$_}"\n);
+    }
+}
+sub edit_disk_names{
+    my ($out) = shift;
+    foreach (reverse sort keys %dev2disk) {
+        print $out qq(    sed s:$_:%$dev2disk{$_}%:g |\n);
+    }
+    for (my $i = 0; $i < scalar keys %dev2disk; $i++) {
+        print $out qq(    sed s:%DISK$i%:\$DISK$i:g |\n);
+    }
+}
+
 sub write_sc_command {
     my ( $out, $ip_assignment_method ) = @_;
 
@@ -1690,6 +1724,9 @@ sub create_autoinstall_script{
     my $template = "/etc/systemimager/autoinstallscript.template";
     open (my $TEMPLATE, "<$template") || die "Can't open $template for reading\n";
     open (my $MASTER_SCRIPT, ">$file") || die "Can't open $file for writing\n";
+
+    $disk_no = 0;
+    %dev2disk = ();
 
     my $delim = '##';
     while (<$TEMPLATE>) {
@@ -1791,6 +1828,16 @@ sub create_autoinstall_script{
                 }
                 last SWITCH;
 	        }
+
+			if (/^\s*${delim}SHOW_DISK_EDITS${delim}\s*$/) {
+				show_disk_edits( $MASTER_SCRIPT );
+				last SWITCH;
+			}
+			if (/^\s*${delim}EDIT_DISK_NAMES${delim}\s*$/) {
+				edit_disk_names( $MASTER_SCRIPT );
+				last SWITCH;
+			}
+
 	        ### END end of autoinstall options ###
 	        print $MASTER_SCRIPT $_;
         }

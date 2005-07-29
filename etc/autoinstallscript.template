@@ -7,6 +7,8 @@
 #   28.07.2005 Erich Focht : SCSI device detection and generation of
 #                            /a/etc/systemconfig/hardware.lst
 #
+#   David N. Lombard : Disks enumeration and disk editing
+#
 #   $Id$
 #
 
@@ -101,6 +103,83 @@ if [ -f /proc/mdstat ]; then
   done
 fi
 #
+################################################################################
+
+################################################################################
+# BEGIN disk enumeration
+#
+# Note the kludgey way to get /dev/sd* and /dev/*/c*d* to sort properly...
+#
+echo DISKORDER=${DISKORDER=sd,cciss,ida,rd,hd}
+[ -z $DISKORDER ] || {
+  echo enumerate_disks
+  order=`echo "$DISKORDER" | sed 's/ /,/g' | sed s/,,*/,/g | sed s/^,//`
+  DISKS=0
+  while : ; do
+    [ -z $order ] && break
+    type=`expr $order : '\([^,]*\),' \| $order`
+    case $type in
+    cciss | ida | rd )
+      rest=
+      [ $type = rd ] && rest="8 9 10 11 12 13 14 15"
+      for c in 0 1 2 3 4 5 6 7 $rest ; do
+        for dev in `ls /dev/$type/c${c}d[0-9] 2>/dev/null` ; do
+          echo " $dev"
+          eval DISK$DISKS=${dev}
+          DISKS=`expr $DISKS + 1`
+        done
+        for dev in `ls /dev/$type/c${c}d[0-9][0-9] 2>/dev/null` ; do
+          echo " $dev"
+          eval DISK$DISKS=${dev}
+          DISKS=`expr $DISKS + 1`
+        done
+      done
+      ;;
+    hd )
+      for dev in `ls /dev/$type[a-z] 2>/dev/null` ; do
+        echo " $dev"
+        eval DISK$DISKS=$dev
+        DISKS=`expr $DISKS + 1`
+      done
+      ;;
+    sd )
+      for dev in `ls /dev/$type[a-z] 2>/dev/null` ; do
+        echo " $dev"
+        eval DISK$DISKS=$dev
+        DISKS=`expr $DISKS + 1`
+      done
+      for dev in `ls /dev/$type[a-z][a-z] 2>/dev/null` ; do
+        echo " $dev"
+        eval DISK$DISKS=$dev
+        DISKS=`expr $DISKS + 1`
+      done
+      ;;
+    * )
+      echo "type='$type'"
+      shellout
+      ;;
+    esac
+    order=`expr $order : '[^,]*,\(.*\)'`
+  done
+  echo DISKS=$DISKS
+  [ $DISKS -eq 0 ] && {
+    beep
+    beep
+    echo ""
+    echo "NO DISK DEVICE FILES WERE FOUND.  THIS USUALLY MEANS THE KERNEL DID NOT"
+    echo "RECOGNIZE ANY OF THE ATTACHED DISKS."
+    echo ""
+    echo "The kernel boot messages, which preceded this, may indicate why."
+    echo ""
+    echo "Reverting to disk configuration specified by image master script."
+    DISKORDER=
+    echo ""
+  }
+  echo
+  beep
+}
+#
+# END disk enumeration
 ################################################################################
 
 ##PARTITION_DISKS##
@@ -229,6 +308,27 @@ done
 beep
 
 #
+################################################################################
+
+################################################################################
+# BEGIN disk edits
+#
+[ -z $DISKORDER ] || {
+  echo "Editing files for actual disk configuration..."
+##SHOW_DISK_EDITS##
+  for file in /etc/fstab /etc/raidtab /etc/systemconfig/systemconfig.conf; do
+    [ -f /a/$file ] || continue
+    echo " $file"
+    cp /a/$file /a/$file.image
+    cat /a/$file.image |
+##EDIT_DISK_NAMES##
+    cat > /a/$file
+  done
+  echo
+  beep
+}
+#
+# END disk edits
 ################################################################################
 
 
