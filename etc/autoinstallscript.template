@@ -4,6 +4,9 @@
 #
 #   Copyright (C) 1999-2004 Brian Elliott Finley
 #
+#   28.07.2005 Erich Focht : SCSI device detection and generation of
+#                            /a/etc/systemconfig/hardware.lst
+#
 #   $Id$
 #
 
@@ -249,6 +252,28 @@ beep
 #
 ################################################################################
 
+
+################################################################################
+#
+#   Detect scsi hardware and include the device IDs into the hardware.lst
+#   file used by systemconfigurator. Do nothing if the hardware.lst file
+#   already exists (which is a sign that it has been already prepared).
+#   Would be shorter if discover could return numerical device IDs...
+#
+if [ ! -f /a/etc/systemconfig/hardware.lst ]; then
+   SCSI_MODS=`discover -f "%m\n" scsi | grep -v ide-scsi | uniq`
+   for MOD in $SCSI_MODS; do
+      DEVID=`grep $MOD /proc/bus/pci/devices | cut -f 2 | sort | uniq`
+      for MYDEV in $DEVID; do
+         VENDOR=`echo $MYDEV | cut -b 1-4`
+         MODEL=`echo $MYDEV | cut -b 5-8`
+         echo "$VENDOR $MODEL scsi $MOD" >> /a/etc/systemconfig/hardware.lst
+         echo "Added SCSI device $VENDOR:$MODEL using module $MOD to hardware.lst"
+      done
+   done
+fi
+#
+################################################################################
 
 ################################################################################
 #
