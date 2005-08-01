@@ -1357,9 +1357,9 @@ start_report_task() {
         LIST=`df 2>/dev/null | sed -ne "/^\/dev/p" | sed "s/  */ /g" | sed "s/\(.*\) \(.*\) \(.*\) \(.*\) \(.*\) \(.*\)/\3+/"`0
         TOT=`echo $LIST | bc`
         status=`echo "scale=2; ($TOT - $DISKSIZE) * 100 / $IMAGESIZE" | bc`
-        if [ $status -eq 0 ]; then 
+        if [ `echo "scale=2; $status == 0" | bc` -eq 1 ]; then 
             status=1
-        elif [ $status -ge 100 ]; then
+        elif [ `echo "scale=2; $status >= 100" | bc` -eq 1 ]; then
             status=99
         fi
 
