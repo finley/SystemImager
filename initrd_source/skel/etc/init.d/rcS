@@ -73,6 +73,8 @@ ping_test
 
 start_syslogd
 
+init_monitor_server
+
 if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
     get_flamethrower_directory
 fi

@@ -1305,6 +1305,27 @@ start_ssh() {
 #
 ################################################################################
 #
+#   Initialize the monitor server
+#
+
+init_monitor_server() {
+    # Get initial information to send to the monitor server.
+    if [ ! -z $MONITOR_SERVER ]; then
+        if [ -z $MONITOR_PORT ]; then
+            MONITOR_PORT=8181
+        fi
+        mac=`ifconfig $DEVICE | sed -ne "s/.*HWaddr //p" | sed "s/ //g" | sed s/:/./g`
+        cpu=`cat /proc/cpuinfo | grep "model name" | sed "s/.*: //" | tr "\n" '|' | sed "s/|$//"`
+        mem=`cat /proc/meminfo | sed -ne "s/MemTotal: *//p" | sed "s/ kB//"`
+        tmpfs=`df | grep tmpfs | sed "s/.* \([0-9]*%\) .*/\1/"`
+        time=`expr $(cat /proc/uptime | sed "s/\..*//") / 60`
+        msg=`echo mac=$mac:ip=$IPADDR:host=$HOSTNAME:cpu=$cpu:mem=$mem:tmpfs=$tmpfs:time=$time:status=$1`
+        echo $msg | nc $MONITOR_SERVER $MONITOR_PORT
+    fi
+}
+#
+################################################################################
+#
 #   Report installation status to the monitor server
 #
 
@@ -1324,6 +1345,12 @@ start_report_task() {
     # MAC address is the primary key to identify a client -AR-
     mac=`ifconfig $DEVICE | sed -ne "s/.*HWaddr //p" | sed "s/ //g" | sed s/:/./g` 
 
+    # Collect the CPU.
+    cpu=`cat /proc/cpuinfo | grep "model name" | sed "s/.*: //" | tr "\n" '|' | sed "s/|$//"`
+
+    # Collect the amount of phyisical memory.
+    mem=`cat /proc/meminfo | sed -ne "s/MemTotal: *//p" | sed "s/ kB//"`
+
     # Spawn the report task -AR-
     {
     while :; do
@@ -1339,7 +1366,7 @@ start_report_task() {
         # Send status to the monitor server -AR-
         time=`cat /proc/uptime | sed "s/\..*//"`
         tmpfs=`df | grep tmpfs | sed "s/.* \([0-9]*%\) .*/\1/"`
-        msg=`echo mac=$mac:tmpfs=$tmpfs:time=$time:status=$status`
+   	msg=`echo mac=$mac:ip=$IPADDR:host=$HOSTNAME:cpu=$cpu:mem=$mem:tmpfs=$tmpfs:time=$time:status=$status`
         echo $msg | nc $MONITOR_SERVER $MONITOR_PORT
         
         # Wait 10 sec between each report -AR-
