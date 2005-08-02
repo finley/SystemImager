@@ -39,12 +39,11 @@ Options: (options can be presented in any order and may be abbreviated)
 
  --version              Display version and copyright information.
 
- --db DATABASENAME      Where DATABASENAME is the name of the file
-                        where clients informations will be stored.
-                        (All the data in this file will be stored in
-                        XML format).
+ --db DATABASENAME      Get clients informations from the XML file
+                        DATABASENAME. This file is generated and
+                        updated by the si_monitor daemon.
 
- --refresh              Set the refresh rate (in sec).
+ --refresh RATE         Set the refresh rate (in sec).
 
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
@@ -364,3 +363,79 @@ sub stop_refresh
 }
 
 __END__
+
+=head1 NAME
+
+si_monitortk - systemimager monitor Tk-based GUI
+
+=head1 SYNOPSIS
+
+si_monitortk [OPTIONS]... --db DATABASENAME 
+
+=head1 DESCRIPTION
+
+Report a list of all the clients with a detailed real time
+status of their installation.
+
+The B<si_monitortk> is a perl-Tk user interface. It does not collect
+directly the client informations, but simply gets that informations
+in a file generated and updated by the B<si_monitor> daemon.
+
+This file is defined by the B<--db DATABASENAME> option.
+
+=head1 OPTIONS
+
+=over 8
+
+=item B<--help>
+
+Display a short help.
+
+=item B<--version>
+
+Display version and copyright information.
+
+=item B<--db DATABASENAME>
+
+Perform a periodical polling to the B<DATABASENAME> where B<si_monitor>
+stores the clients informations and the current status of the installation
+process.
+
+This file is created and kept updated by the B<si_monitor> daemon, so
+to use this interface probably you need to start first the B<si_monitor>
+daemon.
+
+The option B<--db DATABASENAME> is mandatory.
+
+=item B<--refresh RATE>
+
+If specified this options sets a different refresh rate for the clients
+informations displayed in the GUI. This sets the period (in sec) between
+two different accesses to the B<DATABASENAME> XML file.
+
+The default value is 5 seconds.
+
+=head1 SEE ALSO
+
+systemimager(8), si_monitor(1)
+
+=head1 AUTHOR
+
+Andrea Righi <a.righi@cineca.it>.
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2003 by Andrea Righi <a.righi@cineca.it>.
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+=cut
+

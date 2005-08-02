@@ -254,4 +254,80 @@ sub update_db
 	close(LOCK);
 }
 
-# vi: set et sw=4 ts=4: #
+__END__
+
+=head1 NAME
+
+si_monitor - systemimager real time monitoring daemon
+
+=head1 SYNOPSIS
+
+si_monitor [OPTIONS]... --db DATABASENAME 
+
+=head1 DESCRIPTION
+
+B<si_monitor> is a tool to perform real-time monitoring
+of the clients installation status.
+It listen to a specific port and collects informations
+periodically sent by clients using plain TCP/IP connections.
+
+All these informations are stored in a XML database, defined with the
+options B<--db DATABASENAME>.
+
+=head1 OPTIONS
+
+=over 8
+
+=item B<--help>
+
+Display a short help.
+
+=item B<--version>
+
+Display version and copyright information.
+
+=item B<--db DATABASENAME>
+
+An XML file to store all the informations collected by the
+si_monitor daemon. If you run this command for the first time
+the file will be initialized to an empty file.
+
+The option B<--db DATABASENAME> is mandatory.
+
+=item B<--port PORT>
+
+The port used by the si_monitor daemon for listening clients
+connections.
+
+The default port is 8181.
+
+=item B<--log LOGFILE>
+
+If this option is used every kind of information will be
+reported in the file LOGFILE.
+This option can be useful to debug clients connections.
+
+=head1 SEE ALSO
+
+systemimager(8), si_monitortk(1)
+
+=head1 AUTHOR
+
+Andrea Righi <a.righi@cineca.it>.
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2003 by Andrea Righi <a.righi@cineca.it>.
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+=cut
+
