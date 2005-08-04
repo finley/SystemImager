@@ -108,7 +108,7 @@ my ($window, $tab, $timer, $status_bar);
 
 # Create the main window.
 $window = MainWindow->new();
-$window->title("si_shownodes");
+$window->title($program_name);
 $window->configure(-menu => my $menubar = $window->Menu);
 $window->gridRowconfigure(0, -weight => 1);
 $window->gridColumnconfigure(0, -weight => 1);
