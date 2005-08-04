@@ -16,7 +16,7 @@ use vars qw($config $VERSION);
 use constant DEFAULT_PORT => 8181;
 
 my $VERSION = "SYSTEMIMAGER_VERSION_STRING";
-my $program_name = "si_monitord";
+my $program_name = "si_monitor";
 my $version_info = << "EOF";
 $program_name (part of SystemImager) v$VERSION
 
@@ -110,17 +110,17 @@ if ($log_file) {
 }
 ### END evaluate command line options ###
 
+# Reaping zombie processes.
+$SIG{CHLD} = 'IGNORE';
+
 # Define lock files.
 my $lock_file = $conf{'lock_dir'} . "/db.si_monitor.lock";
 
 # Remove old locks.
 unlink("$lock_file");
 
-# Use TCP protocol;
-my $proto = getprotobyname('tcp');
-
-# Open the socket.
-socket(IN, PF_INET, SOCK_STREAM, $proto) or 
+# Open a TCP socket.
+socket(IN, PF_INET, SOCK_STREAM, getprotobyname('tcp')) or 
 	die "error: could not create the socket: $!\n";
 setsockopt(IN, SOL_SOCKET, SO_REUSEADDR, 1);
 my $client_addr = sockaddr_in($port, INADDR_ANY);
@@ -136,6 +136,12 @@ while (accept(CLIENT, IN)) {
 		close(CLIENT);
 		next;
 	}
+	defined($pid) or die "error: cannot fork: $!\n";
+
+	# Child closes unused server handle.
+	close(IN);
+
+	# Get other end identity.
 	my $other_end = getpeername(CLIENT);
 	if ($other_end) {
 		# Get client informations.
@@ -143,7 +149,7 @@ while (accept(CLIENT, IN)) {
 		my ($other_port, $other_iaddr) = unpack_sockaddr_in($other_end);
 		my $other_ip_address = inet_ntoa($other_iaddr);
 		my $other_host = gethostbyaddr($other_iaddr, AF_INET);
-
+		
 		# Report info in the log if defined.
 		print LOG gmtime() . 
 			": connection accepted for ${other_host}:${other_port}\n"
@@ -163,14 +169,17 @@ while (accept(CLIENT, IN)) {
 		# Close client connection.
 		close(CLIENT);
 	} else {
+		# Refuse the client connection.
 		close(CLIENT);
 		print LOG gmtime() . 
 			": warning: could not identify other end of a client request, ignoring.\n"
 			if ($log_file);
 	}
+	close(LOG) if ($log_file);
 	exit(0);
 }
 
+# Error accepting client connections.
 die "error: cannot accept clients connections!\n";
 
 # Usage:
