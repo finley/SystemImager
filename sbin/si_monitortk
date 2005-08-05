@@ -32,7 +32,7 @@ my $get_help = "\n       Try \"--help\" for more options.";
 
 my $help_info = $version_info . <<"EOF";
 
-Usage: $program_name [OPTION]... -db DATABASENAME
+Usage: $program_name [OPTION]...
 
 Options: (options can be presented in any order and may be abbreviated)
  --help                 Display this output.
@@ -40,8 +40,8 @@ Options: (options can be presented in any order and may be abbreviated)
  --version              Display version and copyright information.
 
  --db DATABASENAME      Get clients informations from the XML file
-                        DATABASENAME. This file is generated and
-                        updated by the si_monitor daemon.
+                        DATABASENAME. This file must be generated
+                        by the si_monitor daemon.
 
  --refresh RATE         Set the refresh rate (in sec).
 
@@ -58,10 +58,13 @@ if (-r $conffile) {
     Config::Simple->import_from($conffile, \%conf);
 }
 
-# Only lock directory is needed.
+# Get the lock directory. 
 $conf{'lock_dir'} ||= "/var/lock/systemimager";
 die "No such lock directory '$conf{'lock_dir'}'\n"
     if (! -d $conf{'lock_dir'});
+
+# Get the database file.
+$conf{'monitor_db'} ||= "/var/lib/systemimager/clients.xml";
 
 my ($help, $version, $quiet, $database, $refresh_rate); 
 GetOptions(
@@ -81,16 +84,12 @@ if ($version) {
 	exit(0);
 }
 
-# Database argument is mandatory.
-unless ($database) {
-        die "\n$program_name: --db DATABASENAME must be specified.\n$get_help\n\n";
-} else {
-        # Create the database if it doesn't exist.
-        unless (-f $database) {
-                open(DB, '>', "$database") or
-                        die "error: cannot open file \"$database\" for writing!\n";
-                close(DB);
-        }
+# Create the database if it doesn't exist.
+$database = $conf{'monitor_db'};
+unless (-f $database) {
+	open(DB, '>', "$database") or
+	die "error: cannot open file \"$database\" for writing!\n";
+	close(DB);
 }
 
 # Set the refresh rate.
@@ -175,7 +174,7 @@ display_nodes();
 
 # Define status bar messages.
 $b->attach($tab,
-	-statusmsg  => "Status of the nodes",
+	-statusmsg  => "Status of the nodes ($database)",
 );
 
 # Display command buttons.
@@ -381,8 +380,6 @@ The B<si_monitortk> is a perl-Tk user interface. It does not collect
 directly the client informations, but simply gets that informations
 in a file generated and updated by the B<si_monitor> daemon.
 
-This file is defined by the B<--db DATABASENAME> option.
-
 =head1 OPTIONS
 
 =over 8
@@ -405,7 +402,7 @@ This file is created and kept updated by the B<si_monitor> daemon, so
 to use this interface probably you need to start first the B<si_monitor>
 daemon.
 
-The option B<--db DATABASENAME> is mandatory.
+For default the file B</var/lib/systemimager/clients.xml> is taken.
 
 =item B<--refresh RATE>
 
