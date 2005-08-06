@@ -391,6 +391,7 @@ install_configs:
 	$(SI_INSTALL) -b -m 755 etc/init.d/systemimager-server-rsyncd 			$(INITD)
 	$(SI_INSTALL) -b -m 755 etc/init.d/systemimager-server-netbootmond 		$(INITD)
 	$(SI_INSTALL) -b -m 755 etc/init.d/systemimager-server-flamethrowerd 	$(INITD)
+	$(SI_INSTALL) -b -m 755 etc/init.d/systemimager-server-monitord		$(INITD)
 
 ########## END initrd ##########
 

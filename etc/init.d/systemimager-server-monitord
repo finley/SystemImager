@@ -1,0 +1,67 @@
+#!/bin/sh
+#
+#   "SystemImager"
+#
+#   Copyright (C) 2005 Andrea Righi
+#
+# Support for IRIX style chkconfig:
+# chkconfig:   2345 20 20
+# description: The SystemImager si_monitor daemon.
+#
+#
+# Support for LSB compliant init system:
+### BEGIN INIT INFO
+# Provides: si_monitor
+# Required-Start: $network
+# Required-Stop:
+# Default-Start:  3 5
+# Default-Stop:   0 1 2 6
+# Short-Description: SystemImager's daemon for real-time monitoring of client
+#                    installations.
+# Description: This daemon listen to a specific port (default is 8181) and
+#              collects informations periodically sent by clients using
+#              plain TCP/IP connections.
+#
+### END INIT INFO
+
+PNAME=si_monitor
+PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin:
+PIDFILE=/var/run/si_monitor.pid
+
+# Comment these lines if you want to disable logging
+# for this service.
+LOGFILE=/var/log/systemimager/si_monitor.log
+
+# Can be 1 (error), 2 (warning) or 3 (debug).
+# default: warning.
+LOGLEVEL=2
+
+case "$1" in
+  start)
+    echo -n "Starting SystemImager's installation monitoring: si_monitor"
+    if [ ! -z $LOGFILE ]; then
+        si_monitor --log $LOGFILE --log_level $LOGLEVEL
+    else
+        si_monitor
+    fi
+    echo "."
+    ;;
+  stop)
+    echo -n "Stopping SystemImager's installation monitoring: si_monitor"
+    [ -f $PIDFILE ] && kill `cat $PIDFILE`
+    echo "."
+    ;;
+  reload)
+    echo "Not implemented."
+    ;;
+  force-reload|restart)
+    sh $0 stop
+    sh $0 start
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart}"
+    exit 1
+    ;;
+esac
+
+exit 0

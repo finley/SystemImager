@@ -2,11 +2,12 @@
 #
 #  "SystemImager"
 #
-#  Copyright (C) 1999-2004 Andrea Righi <a.righi@cineca.it>
+#  Copyright (C) 2005 Andrea Righi <a.righi@cineca.it>
 
 use lib "USR_PREFIX/lib/systemimager/perl";
 use strict;
 use Fcntl ':flock';
+use POSIX qw(setsid);
 use Socket;
 use XML::Simple;
 use Getopt::Long;
@@ -47,6 +48,12 @@ Options: (options can be presented in any order and may be abbreviated)
  --log LOGFILE          If specified every log information will be
                         reported in the file LOGFILE.
 
+ --log_level 1|2|3      Define the verbosity of the logging:
+                            1 = errors only (low verbosity);
+                            2 = errors and warnings;
+                            3 = errors, warnings and all the debug
+                                messages (high verbosity).
+
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
 EOF
@@ -68,7 +75,7 @@ die "No such lock directory '$conf{'lock_dir'}'\n"
 # Get the database file.
 $conf{'monitor_db'} ||= "/var/lib/systemimager/clients.xml";
 
-my ($help, $version, $quiet, $port, $database, $log_file);
+my ($help, $version, $quiet, $port, $database, $log_file, $log_level);
 GetOptions(
 	"help"		=> \$help,
 	"version"	=> \$version,
@@ -76,6 +83,7 @@ GetOptions(
 	"port=s"	=> \$port,
 	"db=s"		=> \$database,
 	"log=s"		=> \$log_file,
+	"log_level=i"	=> \$log_level,
 ) or die "$help_info";
 
 ### BEGIN evaluate commad line options ###
@@ -102,15 +110,56 @@ unless ($port) {
 	$port = DEFAULT_PORT;
 }
 
+# Evaluate the logging level.
+if (defined($log_level)) {
+	if (($log_level < 1) or ($log_level > 3)) {
+		print "$program_name: $log_level: not a valid log level!\n";
+		print "$help_info";
+		exit(1);
+	}
+} else {
+	# Use the default log level.
+	$log_level = 2;
+}
+
 # Get monitor log file.
-if ($log_file) {
-	open(LOG, ">>$log_file") or 
-		die "error: cannot open log file \"$log_file\" for writing!\n";
+unless ($log_file) {
+	# Do not log anything.
+	$log_file = '/dev/null';
+	if ($log_level) {
+		print "warning: log file was not specified: ignoring log level: $log_level.\n";
+		$log_level = '';
+	}
 }
 ### END evaluate command line options ###
 
-# Reaping zombie processes.
+# Daemon stuff.
+my $pid_file = "/var/run/si_monitord.pid";
+chdir '/' or die "error: can't chdir to /: $!\n";
+open(STDIN, '/dev/null') or die "error: can't read from /dev/null: $!\n";
+open(STDOUT, '>>' . $log_file) or die "error: can't write to $log_file: $!\n";
+open(STDERR, '>>' . $log_file) or die "error: can't write to $log_file: $!\n";
+umask(0);
+
+# Reaping zombie child processes.
 $SIG{CHLD} = 'IGNORE';
+
+# Start daemon.
+my $daemon_pid;
+if ($daemon_pid = fork()) {
+	# Run in background.
+	exit(0);
+} elsif (defined($daemon_pid)) {
+	setsid or die gmtime() . ": error: can't start a new session: $!\n";
+	# Create the pid file.
+	local *FILE;
+	open(FILE, ">$pid_file") or
+		die gmtime() . ": error: cannot open file: $pid_file\n";
+	print FILE "$$\n";
+	close(FILE);
+} else {
+	die gmtime() . ": error: cannot fork daemon process!\n";
+}
 
 # Define lock files.
 my $lock_file = $conf{'lock_dir'} . "/db.si_monitor.lock";
@@ -120,13 +169,17 @@ unlink("$lock_file");
 
 # Open a TCP socket.
 socket(IN, PF_INET, SOCK_STREAM, getprotobyname('tcp')) or 
-	die "error: could not create the socket: $!\n";
+	die gmtime() . ": error: could not create the socket: $!\n";
 setsockopt(IN, SOL_SOCKET, SO_REUSEADDR, 1);
 my $client_addr = sockaddr_in($port, INADDR_ANY);
 bind(IN, $client_addr) or 
-	die "error: could not bind to port $port : $!\n";
+	die gmtime() . ": error: could not bind to port $port : $!\n";
 listen(IN, SOMAXCONN) or 
-	die "error: could not listen on port $port : $!\n";
+	die gmtime() . ": error: could not listen on port $port : $!\n";
+
+# Monitor daemon initialized.
+print gmtime() . ": $program_name daemon is listening on port $port\n"
+	if ($log_level > 2);
 
 # Begin to accept client connections.
 while (accept(CLIENT, IN)) {
@@ -135,7 +188,7 @@ while (accept(CLIENT, IN)) {
 		close(CLIENT);
 		next;
 	}
-	defined($pid) or die "error: cannot fork: $!\n";
+	defined($pid) or die gmtime() . ": error: cannot fork: $!\n";
 
 	# Child closes unused server handle.
 	close(IN);
@@ -149,18 +202,17 @@ while (accept(CLIENT, IN)) {
 		my $other_ip_address = inet_ntoa($other_iaddr);
 		my $other_host = gethostbyaddr($other_iaddr, AF_INET);
 		
-		# Report info in the log if defined.
-		print LOG gmtime() . 
+		# Report info in the log.
+		print gmtime() .
 			": connection accepted for ${other_host}:${other_port}\n"
-			if ($log_file);
+			if ($log_level > 2);
 	
 		# Get the client request.
 		$_ = <CLIENT>; chomp;
 
 		# Report the request in the log.
-		print LOG gmtime() . 
-			": ${other_host} request -> $_\n"
-			if ($log_file);
+		print gmtime() . ": ${other_host} request -> $_\n"
+			if ($log_level > 2);
 
 		# Update the database.
 		update_db($other_host, $_);
@@ -170,16 +222,15 @@ while (accept(CLIENT, IN)) {
 	} else {
 		# Refuse the client connection.
 		close(CLIENT);
-		print LOG gmtime() . 
+		print gmtime() . 
 			": warning: could not identify other end of a client request, ignoring.\n"
-			if ($log_file);
+			if ($log_level > 1);
 	}
-	close(LOG) if ($log_file);
 	exit(0);
 }
 
-# Error accepting client connections.
-die "error: cannot accept clients connections!\n";
+# Error accepting client connections (quit).
+die gmtime() . ": error: cannot accept clients connections!\n";
 
 # Usage:
 # update_db($hostname, $client_request);
@@ -214,18 +265,18 @@ sub update_db
 
 	# Check if mac address has been specified.
 	unless(defined($mac)) {
-		print LOG gmtime() . ": warning: bad request from $host (mac address not specified)!\n"
-			if ($log_file);
+		print gmtime() . ": warning: bad request from $host (mac address not specified)!\n"
+			if ($log_level > 1);
 		return;
 	}
 	
 	open(LOCK, ">", "$lock_file") or 
-		die "error: cannot open lock file \"$lock_file\"!\n";
+		die gmtime() . ":error: cannot open lock file \"$lock_file\"!\n";
 	flock(LOCK, LOCK_EX);
 	
 	# Open database in mutual exclusion.
 	open(DB, '<', $database) or 
-		die "error: cannot open \"$database\" for reading!\n";
+		die gmtime() . ": error: cannot open \"$database\" for reading!\n";
 	
 	# Parse XML database.
 	my $xml;
@@ -249,9 +300,11 @@ sub update_db
 		|| 0;
 	$xml->{'client'}->{$mac}->{'status'} = $client->{'status'}
 		|| 0;
+	# Add a server timestamp.
+	$xml->{'client'}->{$mac}->{'time'} = time();
 	
 	open(DB, '>', $database) or
-		die "error: cannot open \"$database\" for writing!\n";
+		die gmtime() . ": error: cannot open \"$database\" for writing!\n";
 	
 	# Sync the database.
 	print DB XMLout($xml); 
@@ -270,7 +323,7 @@ si_monitor - systemimager real time monitoring daemon
 
 =head1 SYNOPSIS
 
-si_monitor [OPTIONS]... --db DATABASENAME 
+si_monitor [OPTIONS]...
 
 =head1 DESCRIPTION
 
@@ -278,6 +331,9 @@ B<si_monitor> is a tool to perform real-time monitoring
 of the clients installation status.
 It listen to a specific port and collects informations
 periodically sent by clients using plain TCP/IP connections.
+
+Clients must have defined the MONITOR_SERVER (and optional
+MONITOR_PORT) as boot parameters to enable the monitoring feature.
 
 All these informations are stored in a XML database. The database
 can be defined with the options B<--db DATABASENAME>.
@@ -314,6 +370,17 @@ The default port is 8181.
 If this option is used every kind of information will be
 reported in the file LOGFILE.
 This option can be useful to debug clients connections.
+
+=item B<--log_level 1|2|3>
+
+There are 3 levels of logging. In order of verbosity they are:
+  B<1>) Error:    serious problem. Execution cannot or should
+               not continue;
+  B<2>) Warining: there is an unexpected condition. Processing
+               can continue usually correctly, but may result
+               in other problems during the future execution;
+  B<3>) Debug:    verbose output. May be used to trace execution
+               or get hints about precursors to problems.
 
 =head1 SEE ALSO
 
