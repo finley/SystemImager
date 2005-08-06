@@ -2,7 +2,7 @@
 #
 #  "SystemImager"
 #
-#  Copyright (C) 1999-2004 Andrea Righi <a.righi@cineca.it>
+#  Copyright (C) 2005 Andrea Righi <a.righi@cineca.it>
 
 # set version number
 my $VERSION = "SYSTEMIMAGER_VERSION_STRING";
@@ -40,8 +40,7 @@ Options: (options can be presented in any order and may be abbreviated)
  --version              Display version and copyright information.
 
  --db DATABASENAME      Get clients informations from the XML file
-                        DATABASENAME. This file must be generated
-                        by the si_monitor daemon.
+                        DATABASENAME.
 
  --refresh RATE         Set the refresh rate (in sec).
 
@@ -103,26 +102,45 @@ unless ($refresh_rate) {
 my $lock_file = $conf{'lock_dir'} . "/db.si_monitor.lock";
 
 # Graphic stuff.
-my ($window, $tab, $timer, $status_bar);
+my (
+	$window, $tab, $timer, $status_bar, 
+	$start_refresh_button, $stop_refresh_button, $quit_button,
+);
 
 # Create the main window.
 $window = MainWindow->new();
 $window->title($program_name);
-$window->configure(-menu => my $menubar = $window->Menu);
+$window->configure(-menu => my $menubar = $window->Menu(-border => 0));
 $window->gridRowconfigure(0, -weight => 1);
 $window->gridColumnconfigure(0, -weight => 1);
 
 # Use this font.
 my $FONT = '-*-Helvetica-Bold-R-Normal--*-120-*-*-*-*-*-*';
 
-# Create the menu bar.
-my $file_menu = $menubar->cascade(qw/-label File -underline 0 -menuitems/ => [
-	[command => '~Refresh', -command => [\&start_refresh]],
-	[command => '~Stop refresh', -command => [\&stop_refresh]],
-	'',
-	[command => '~Quit', -command => [\&exit]],
-]);
-my $help_menu = $menubar->cascade(qw/-label Help -underline 0 -menuitems/ => [
+# Generate the "File" menu bar.
+my $file_menu = $menubar->cascade(
+	-label     => 'File',
+	-underline => 0,
+	-tearoff   => 0,
+);
+my $refresh_file_menu = $file_menu->command(
+	-label    => '~Refresh',
+	-command  => \&start_refresh,
+	-state    => 'disabled',
+);
+my $stop_refresh_file_menu = $file_menu->command(
+	-label    => '~Stop refresh',
+	-command  => \&stop_refresh,
+	-state    => 'normal',
+);
+$file_menu->separator();
+my $quit_file_menu = $file_menu->command(
+	-label    => '~Quit',
+	-command  => \&exit,
+);
+
+# Generate the "About" menu bar.
+my $help_menu = $menubar->cascade(qw/-label Help -underline 0 -tearoff 0 -menuitems/ => [
 	[command => '~About'],
 ]);
 my $DIALOG_ABOUT = $window->Dialog(
@@ -195,21 +213,23 @@ sub show_command_buttons
 {
 	# Define buttons.
 	my $buttons = $window->Frame;
-	my $start_refresh_button = $buttons->Button(
+	$start_refresh_button = $buttons->Button(
 		-text      => 'Refresh',
 		-underline => 0,
 		-command   => [\&start_refresh],
 		-pady      => 5,
 		-padx      => 5,
+		-state     => 'disabled', 
 	);
-	my $stop_refresh_button = $buttons->Button(
+	$stop_refresh_button = $buttons->Button(
 		-text      => 'Stop refresh',
 		-underline => 0,
 		-command   => [\&stop_refresh],
 		-pady      => 5,
 		-padx      => 5,
+		-state     => 'normal', 
 	);
-	my $quit_button = $buttons->Button(
+	$quit_button = $buttons->Button(
 		-text      => 'Quit',
 		-command   => [\&exit],
 		-underline => 0,
@@ -231,7 +251,7 @@ sub show_command_buttons
 
 	# Define status bar messages.
 	$b->attach($start_refresh_button,
-		-statusmsg  => "Start or continue to refresh the status of the nodes",
+		-statusmsg  => "Start to refresh the status of the nodes",
 	);
 	$b->attach($stop_refresh_button,
 		-statusmsg  => "Stop to refresh the status of the nodes",
@@ -349,6 +369,14 @@ sub start_refresh
 {
 	# Refresh nodes visualization.
 	$timer = Tk::After->new($window, $refresh_rate, 'repeat', \&refresh);
+
+	# Refresh the buttons look.
+	$start_refresh_button->configure(-state => 'disabled');
+	$stop_refresh_button->configure(-state => 'normal');
+
+	# Refresh the menu look.
+	$refresh_file_menu->configure(-state => 'disabled');
+	$stop_refresh_file_menu->configure(-state => 'normal');
 }
 
 # Usage:
@@ -359,6 +387,14 @@ sub stop_refresh
 {
 	# Stop to refresh nodes view.
 	$timer->cancel();
+
+	# Refresh the interface look.
+	$start_refresh_button->configure(-state => 'normal');
+	$stop_refresh_button->configure(-state => 'disabled');
+
+	# Refresh the menu look.
+	$refresh_file_menu->configure(-state => 'normal');
+	$stop_refresh_file_menu->configure(-state => 'disabled');
 }
 
 __END__
