@@ -1318,7 +1318,7 @@ init_monitor_server() {
         cpu=`cat /proc/cpuinfo | grep "model name" | sed "s/.*: //" | tr "\n" '|' | sed "s/|$//"`
         mem=`cat /proc/meminfo | sed -ne "s/MemTotal: *//p" | sed "s/ kB//"`
         tmpfs=`df | grep tmpfs | sed "s/.* \([0-9]*%\) .*/\1/"`
-        time=`expr $(cat /proc/uptime | sed "s/\..*//") / 60`
+        time=`cat /proc/uptime | sed "s/\..*//"`
         msg=`echo mac=$mac:ip=$IPADDR:host=$HOSTNAME:cpu=$cpu:mem=$mem:tmpfs=$tmpfs:time=$time:status=0`
         echo $msg | nc $MONITOR_SERVER $MONITOR_PORT
     fi
