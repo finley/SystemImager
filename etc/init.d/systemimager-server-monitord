@@ -38,28 +38,34 @@ LOGLEVEL=2
 
 case "$1" in
   start)
-    echo -n "Starting SystemImager's installation monitoring: si_monitor"
+    echo -n "Starting SystemImager's installation monitoring: si_monitor... "
     if [ ! -z $LOGFILE ]; then
         si_monitor --log $LOGFILE --log_level $LOGLEVEL
     else
         si_monitor
     fi
-    echo "."
+    if [ $? -ne 0 ]; then
+        echo failed.
+	exit 1
+    else
+        echo ok.
+    fi
     ;;
   stop)
-    echo -n "Stopping SystemImager's installation monitoring: si_monitor"
-    [ -f $PIDFILE ] && kill `cat $PIDFILE`
-    echo "."
+    echo -n "Stopping SystemImager's installation monitoring: si_monitor... "
+    [ -f $PIDFILE ] && kill `cat $PIDFILE` >/dev/null 2>&1
+    echo "stopped."
     ;;
-  reload)
-    echo "Not implemented."
+  status)
+    echo -n "Status of SystemImager's installation monitoring: si_monitor... "
+    ([ -f $PIDFILE ] && ps -p `cat $PIDFILE` >/dev/null 2>&1 && echo running.) || echo not running.
     ;;
   force-reload|restart)
     sh $0 stop
     sh $0 start
     ;;
   *)
-    echo "Usage: $0 {start|stop|restart}"
+    echo "Usage: $0 {start|stop|status|restart}"
     exit 1
     ;;
 esac
