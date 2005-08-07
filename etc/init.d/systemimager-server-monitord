@@ -39,6 +39,10 @@ LOGLEVEL=2
 case "$1" in
   start)
     echo -n "Starting SystemImager's installation monitoring: si_monitor... "
+    if [ -e $PIDFILE ]; then
+        echo -e "failed.\nPID file $PIDFILE exists.  Must be already running."
+        exit 1
+    fi
     if [ ! -z $LOGFILE ]; then
         si_monitor --log $LOGFILE --log_level $LOGLEVEL
     else
@@ -54,6 +58,7 @@ case "$1" in
   stop)
     echo -n "Stopping SystemImager's installation monitoring: si_monitor... "
     [ -f $PIDFILE ] && kill `cat $PIDFILE` >/dev/null 2>&1
+    rm -f $PIDFILE
     echo "stopped."
     ;;
   status)
