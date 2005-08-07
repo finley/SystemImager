@@ -134,7 +134,7 @@ unless ($log_file) {
 ### END evaluate command line options ###
 
 # Daemon stuff.
-my $pid_file = "/var/run/si_monitord.pid";
+my $pid_file = "/var/run/si_monitor.pid";
 chdir '/' or die "error: can't chdir to /: $!\n";
 open(STDIN, '/dev/null') or die "error: can't read from /dev/null: $!\n";
 open(STDOUT, '>>' . $log_file) or die "error: can't write to $log_file: $!\n";
@@ -301,7 +301,7 @@ sub update_db
 	$xml->{'client'}->{$mac}->{'status'} = $client->{'status'}
 		|| 0;
 	# Add a server timestamp.
-	$xml->{'client'}->{$mac}->{'time'} = time();
+	$xml->{'client'}->{$mac}->{'timestamp'} = time();
 	
 	open(DB, '>', $database) or
 		die gmtime() . ": error: cannot open \"$database\" for writing!\n";
