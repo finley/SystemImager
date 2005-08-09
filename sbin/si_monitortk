@@ -191,7 +191,7 @@ my $b = $window->Balloon(-statusbar => $status_bar);
 $tab = $window->Scrolled(
 	'HList',
 	-header		=> 1,
-	-columns	=> 8,
+	-columns	=> 9,
 	-scrollbars	=> 'se',
 	-width		=> 100,
 	-height		=> 25,
@@ -207,7 +207,8 @@ $tab->header('create', 3, -text => 'RAM (MB)');
 $tab->header('create', 4, -text => 'RAM used'); 
 $tab->header('create', 5, -text => 'Time (min)'); 
 $tab->header('create', 6, -text => 'Status    '); 
-$tab->header('create', 7, -text => 'CPU'); 
+$tab->header('create', 7, -text => 'Image'); 
+$tab->header('create', 8, -text => 'CPU'); 
 
 # Show the body.
 display_nodes();
@@ -362,7 +363,7 @@ sub display_nodes
 			-text     => $mac,
 		);
 		# Display node attributes.
-		my @attrs = qw/ip host mem tmpfs time status cpu/;
+		my @attrs = qw/ip host mem tmpfs time status os cpu/;
 		for (0 .. $#attrs) {
 			if ($attrs[$_] eq 'status') {
 				# Display node status.

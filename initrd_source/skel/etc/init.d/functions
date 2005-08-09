@@ -1319,7 +1319,7 @@ init_monitor_server() {
         mem=`cat /proc/meminfo | sed -ne "s/MemTotal: *//p" | sed "s/ kB//"`
         tmpfs=`df | grep tmpfs | sed "s/.* \([0-9]*%\) .*/\1/"`
         time=`cat /proc/uptime | sed "s/\..*//"`
-        msg=`echo mac=$mac:ip=$IPADDR:host=$HOSTNAME:cpu=$cpu:mem=$mem:tmpfs=$tmpfs:time=$time:status=0`
+        msg=`echo mac=$mac:ip=$IPADDR:host=$HOSTNAME:cpu=$cpu:mem=$mem:os=$IMAGENAME:tmpfs=$tmpfs:time=$time:status=0`
         echo $msg | nc $MONITOR_SERVER $MONITOR_PORT
     fi
 }
@@ -1366,7 +1366,7 @@ start_report_task() {
         # Send status to the monitor server -AR-
         time=`cat /proc/uptime | sed "s/\..*//"`
         tmpfs=`df | grep tmpfs | sed "s/.* \([0-9]*%\) .*/\1/"`
-   	msg=`echo mac=$mac:ip=$IPADDR:host=$HOSTNAME:cpu=$cpu:mem=$mem:tmpfs=$tmpfs:time=$time:status=$status`
+   	msg=`echo mac=$mac:ip=$IPADDR:host=$HOSTNAME:cpu=$cpu:mem=$mem:os=$IMAGENAME:tmpfs=$tmpfs:time=$time:status=$status`
         echo $msg | nc $MONITOR_SERVER $MONITOR_PORT
         
         # Wait 10 sec between each report -AR-
@@ -1400,7 +1400,7 @@ stop_report_task() {
 
     # Send final status.
     time=`cat /proc/uptime | sed "s/\..*//"`
-    msg=`echo mac=$mac:ip=$IPADDR:host=$HOSTNAME:cpu=$cpu:mem=$mem:time=$time:status=$status`
+    msg=`echo mac=$mac:ip=$IPADDR:host=$HOSTNAME:cpu=$cpu:mem=$mem:os=$IMAGENAME:time=$time:status=$status`
     echo $msg | nc $MONITOR_SERVER $MONITOR_PORT
 }
 #

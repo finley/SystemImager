@@ -254,6 +254,8 @@ sub update_db
 			$client->{'cpu'} = $_;
 		} elsif (s/^mem=//) {
 			$client->{'mem'} = int($_ / 1024);
+		} elsif (s/^os=//) {
+			$client->{'os'} = $_;
 		} elsif (s/^tmpfs=//) {
 			$client->{'tmpfs'} = $_;
 		} elsif (s/^time=//) {
@@ -294,6 +296,8 @@ sub update_db
 		if $client->{'cpu'};
 	$xml->{'client'}->{$mac}->{'mem'} = $client->{'mem'}
 		if $client->{'mem'};
+	$xml->{'client'}->{$mac}->{'os'} = $client->{'os'}
+		if $client->{'os'};
 	$xml->{'client'}->{$mac}->{'tmpfs'} = $client->{'tmpfs'}
 		if $client->{'tmpfs'};
 	$xml->{'client'}->{$mac}->{'time'} = $client->{'time'}
