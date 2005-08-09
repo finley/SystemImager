@@ -214,6 +214,10 @@ mount sysfs /a/sys -t sysfs -o defaults || shellout
 #
 #   Lay the image down on the freshly formatted disk(s)
 #
+if [ ! -z $MONITOR_SERVER ]; then
+    start_report_task
+fi
+
 if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then 
 
     # Use multicast 
@@ -227,9 +231,6 @@ else
     if [ $NO_LISTING ]; then
         logmsg "Quietly installing image... "
         start_spinner
-    fi
-    if [ ! -z $MONITOR_SERVER ]; then
-        start_report_task
     fi
     if [ "${TMPFS_STAGING}" = "yes" ]; then 
 

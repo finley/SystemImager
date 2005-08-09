@@ -1315,7 +1315,7 @@ init_monitor_server() {
             MONITOR_PORT=8181
         fi
         mac=`ifconfig $DEVICE | sed -ne "s/.*HWaddr //p" | sed "s/ //g" | sed s/:/./g`
-        cpu=`cat /proc/cpuinfo | grep "model name" | sed "s/.*: //" | tr "\n" '|' | sed "s/|$//"`
+        cpu=$(echo `cat /proc/cpuinfo | grep "model name\|cpu MHz" | sed "s/.*: //" | sed "s/^\([0-9\.]*\)$/(\1 MHz)/"` | sed "s/\(MHz)\)/\1 |/g" | sed "s/ |$//")
         mem=`cat /proc/meminfo | sed -ne "s/MemTotal: *//p" | sed "s/ kB//"`
         tmpfs=`df | grep tmpfs | sed "s/.* \([0-9]*%\) .*/\1/"`
         time=`cat /proc/uptime | sed "s/\..*//"`
@@ -1346,7 +1346,7 @@ start_report_task() {
     mac=`ifconfig $DEVICE | sed -ne "s/.*HWaddr //p" | sed "s/ //g" | sed s/:/./g` 
 
     # Collect the CPU.
-    cpu=`cat /proc/cpuinfo | grep "model name" | sed "s/.*: //" | tr "\n" '|' | sed "s/|$//"`
+    cpu=$(echo `cat /proc/cpuinfo | grep "model name\|cpu MHz" | sed "s/.*: //" | sed "s/^\([0-9\.]*\)$/(\1 MHz)/"` | sed "s/\(MHz)\)/\1 |/g" | sed "s/ |$//")
 
     # Collect the amount of phyisical memory.
     mem=`cat /proc/meminfo | sed -ne "s/MemTotal: *//p" | sed "s/ kB//"`
@@ -1391,8 +1391,16 @@ stop_report_task() {
 
     # Try to report the error to the monitor server.
     mac=`ifconfig $DEVICE | sed -ne "s/.*HWaddr //p" | sed "s/ //g" | sed s/:/./g`  
+
+    # Collect the CPU.
+    cpu=$(echo `cat /proc/cpuinfo | grep "model name\|cpu MHz" | sed "s/.*: //" | sed "s/^\([0-9\.]*\)$/(\1 MHz)/"` | sed "s/\(MHz)\)/\1 |/g" | sed "s/ |$//")
+
+    # Collect the amount of phyisical memory.
+    mem=`cat /proc/meminfo | sed -ne "s/MemTotal: *//p" | sed "s/ kB//"`
+
+    # Send final status.
     time=`cat /proc/uptime | sed "s/\..*//"`
-    msg=`echo mac=$mac:time=$time:status=$status`
+    msg=`echo mac=$mac:ip=$IPADDR:host=$HOSTNAME:cpu=$cpu:mem=$mem:time=$time:status=$status`
     echo $msg | nc $MONITOR_SERVER $MONITOR_PORT
 }
 #

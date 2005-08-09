@@ -70,7 +70,7 @@ GetOptions(
         "help"          => \$help,
         "version"       => \$version,
         "db=s"          => \$database,
-        "refresh=i"          => \$refresh_rate,
+        "refresh=i"     => \$refresh_rate,
 ) or die "$help_info";
 
 if ($help) {
@@ -104,7 +104,9 @@ my $lock_file = $conf{'lock_dir'} . "/db.si_monitor.lock";
 # Graphic stuff.
 my (
 	$window, $tab, $timer, $status_bar, 
-	$start_refresh_button, $stop_refresh_button, $quit_button,
+	$start_refresh_button, $stop_refresh_button,
+	$clear_clients_button,
+	$quit_button,
 );
 
 # Create the main window.
@@ -133,7 +135,17 @@ my $stop_refresh_file_menu = $file_menu->command(
 	-command  => \&stop_refresh,
 	-state    => 'normal',
 );
+
 $file_menu->separator();
+
+my $clear_clients_file_menu = $file_menu->command(
+	-label    => '~Clear clients',
+	-command  => \&clear_clients,
+	-state    => 'normal',
+);
+
+$file_menu->separator();
+
 my $quit_file_menu = $file_menu->command(
 	-label    => '~Quit',
 	-command  => \&exit,
@@ -143,6 +155,16 @@ my $quit_file_menu = $file_menu->command(
 my $help_menu = $menubar->cascade(qw/-label Help -underline 0 -tearoff 0 -menuitems/ => [
 	[command => '~About'],
 ]);
+
+# Dialogs.
+my $DIALOG_CLEAR_CLIENTS = $window->Dialog(
+	-title          => "Clear all collected clients",
+	-bitmap		=> 'question',
+	-default_button => 'No',
+	-buttons        => [qw/Yes No/],
+	-text           => "Are you sure to clear all collected clients informations?",
+	-font		=> $FONT,
+);
 my $DIALOG_ABOUT = $window->Dialog(
 	-title          => "About $program_name",
 	-bitmap		=> 'info',
@@ -229,6 +251,14 @@ sub show_command_buttons
 		-padx      => 5,
 		-state     => 'normal', 
 	);
+	$clear_clients_button = $buttons->Button(
+		-text      => 'Clear clients',
+		-underline => 0,
+		-command   => [\&clear_clients],
+		-pady      => 5,
+		-padx      => 5,
+		-state     => 'normal', 
+	);
 	$quit_button = $buttons->Button(
 		-text      => 'Quit',
 		-command   => [\&exit],
@@ -240,13 +270,16 @@ sub show_command_buttons
 	$buttons->gridColumnconfigure(qw/0 -weight 1/);
 	$buttons->gridColumnconfigure(qw/1 -weight 1/);
 	$buttons->gridColumnconfigure(qw/2 -weight 1/);
+	$buttons->gridColumnconfigure(qw/3 -weight 1/);
 	$start_refresh_button->grid(qw/-row 0 -column 0/);
 	$stop_refresh_button->grid(qw/-row 0 -column 1/);
-	$quit_button->grid(qw/-row 0 -column 2/);
+	$clear_clients_button->grid(qw/-row 0 -column 2/);
+	$quit_button->grid(qw/-row 0 -column 3/);
 
 	# Bind hot-keys to buttons.
 	$window->bind("<Alt-r>", sub {$start_refresh_button->invoke;});
 	$window->bind("<Alt-s>", sub {$stop_refresh_button->invoke;});
+	$window->bind("<Alt-c>", sub {$clear_clients_button->invoke;});
 	$window->bind("<Alt-q>", sub {$quit_button->invoke;});
 
 	# Define status bar messages.
@@ -255,6 +288,9 @@ sub show_command_buttons
 	);
 	$b->attach($stop_refresh_button,
 		-statusmsg  => "Stop to refresh the status of the nodes",
+	);
+	$b->attach($clear_clients_button,
+		-statusmsg  => "Clear all collected clients",
 	);
 	$b->attach($quit_button,
 		-statusmsg  => "Quit program",
@@ -395,6 +431,49 @@ sub stop_refresh
 	# Refresh the menu look.
 	$refresh_file_menu->configure(-state => 'normal');
 	$stop_refresh_file_menu->configure(-state => 'disabled');
+}
+
+# Usage:
+# clear_clients();
+# Description:
+#	Clear all collected informations
+sub clear_clients
+{
+	# If database is empty simply quit.
+	unless (-s $database) {
+		$window->Dialog(
+			-title          => "Clear all collected clients",
+			-bitmap		=> 'warning',
+			-default_button => 'OK',
+			-buttons        => ['OK'],
+			-text           => "No clients collected.",
+			-font		=> $FONT,
+		)->Show();
+		return;
+	}
+
+	# Ask for a confirmation before deleting.
+	my $answer = $DIALOG_CLEAR_CLIENTS->Show();
+	if ($answer eq "No") {
+		return;
+	}
+
+	# Open and read lock the database.
+	open(LOCK, '>', "$lock_file") or
+		die "error: cannot open lock file \"$lock_file\"!\n";
+	flock(LOCK, LOCK_EX);
+
+	# Clear the XML database.
+	open(DB, '>', $database) or
+		die "error: cannot open \"$database\" for writing!\n";
+	close(DB);
+
+	# Close and unlock database.
+	flock(LOCK, LOCK_UN);
+	close(LOCK);
+
+	# Refresh view.
+	refresh();
 }
 
 __END__
