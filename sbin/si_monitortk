@@ -165,6 +165,14 @@ my $DIALOG_CLEAR_CLIENTS = $window->Dialog(
 	-text           => "Are you sure to clear all collected clients informations?",
 	-font		=> $FONT,
 );
+my $DIALOG_NO_CLIENTS = $window->Dialog(
+	-title          => "Clear all collected clients",
+	-bitmap		=> 'warning',
+	-default_button => 'OK',
+	-buttons        => ['OK'],
+	-text           => "No clients collected.",
+	-font		=> $FONT,
+);
 my $DIALOG_ABOUT = $window->Dialog(
 	-title          => "About $program_name",
 	-bitmap		=> 'info',
@@ -442,14 +450,7 @@ sub clear_clients
 {
 	# If database is empty simply quit.
 	unless (-s $database) {
-		$window->Dialog(
-			-title          => "Clear all collected clients",
-			-bitmap		=> 'warning',
-			-default_button => 'OK',
-			-buttons        => ['OK'],
-			-text           => "No clients collected.",
-			-font		=> $FONT,
-		)->Show();
+		$DIALOG_NO_CLIENTS->Show();
 		return;
 	}
 
