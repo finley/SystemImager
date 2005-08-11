@@ -1,5 +1,5 @@
 %define name     systemimager
-%define ver      3.5.00
+%define ver      3.5.3
 %define rel      1
 %define prefix   /usr
 %define _build_all 1
@@ -41,7 +41,7 @@ BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: dann frazier <dannf@dannf.org>
 URL: http://systemimager.org/
 Distribution: System Installation Suite
-Requires: rsync >= 2.4.6, systemimager-common = %{version}, perl-AppConfig, dosfstools, /sbin/chkconfig, perl, perl-XML-Simple >= 2.08, perl-TermReadKey
+Requires: rsync >= 2.4.6, systemimager-common = %{version}, perl-AppConfig, dosfstools, /sbin/chkconfig, perl, perl(XML::Simple) >= 2.08, perl(Term::ReadKey)
 AutoReqProv: no
 
 %description server
@@ -191,6 +191,10 @@ to boot and install %{_build_arch} Linux machines during the SystemImager autoin
 process.
 
 %changelog
+* Mon Aug 08 2005 Bernard Li <bli@bcgsc.ca>
+- Changed requirement of perl-XML-Simple to perl(XML::Simple)
+- Changed requirement of perl-TermReadKey to perl(Term::ReadKey)
+
 * Mon Jul 25 2005 Bernard Li <bli@bcgsc.ca>
 - Added directory /var/lock/systemimager
 
@@ -509,6 +513,7 @@ fi
 %config /etc/systemimager/imagemanip.perm
 /etc/init.d/systemimager-server-rsyncd
 /etc/init.d/systemimager-server-netboot*
+/etc/init.d/systemimager-server-monitord
 /var/lib/systemimager/images/*
 /var/lib/systemimager/scripts/post-install/*
 /var/lib/systemimager/scripts/pre-install/*
@@ -522,6 +527,7 @@ fi
 %prefix/sbin/si_rmimage
 %prefix/sbin/si_imagemanip
 %prefix/sbin/si_monitor
+%prefix/sbin/si_monitortk
 %prefix/bin/si_mk*
 %prefix/lib/systemimager/perl/SystemImager/Server.pm
 %prefix/lib/systemimager/perl/SystemImager/Config.pm
