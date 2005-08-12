@@ -232,6 +232,9 @@ show_targets:
 	@echo   install_server_all
 	@echo   install_boel_binaries_tarball
 	@echo   install_initrd
+	@echo   source_tarball
+	@echo   rpm
+	@echo   srpm
 	@echo
 	@echo
 	@echo All Available Targets Include:
@@ -646,11 +649,6 @@ endif
 	@echo
 	@echo "source tarball has been created in $(TOPDIR)/tmp"
 	@echo
-
-# create user-distributable tarballs for the server and the client
-.PHONY:	tarballs
-tarballs:	
-	@ echo -e "\nbinary tarballs are no longer supported\n"
 
 # make the srpms for systemimager
 .PHONY:	srpm
