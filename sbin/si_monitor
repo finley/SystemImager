@@ -262,6 +262,8 @@ sub update_db
 			$client->{'time'} = int($_ / 60);
 		} elsif (s/^status=//) {
 			$client->{'status'} = $_;
+		} elsif (s/^msg=//) {
+			$client->{'msg'} = $_;
 		}
 	}
 
@@ -295,15 +297,17 @@ sub update_db
 	$xml->{'client'}->{$mac}->{'cpu'} = $client->{'cpu'}
 		if $client->{'cpu'};
 	$xml->{'client'}->{$mac}->{'mem'} = $client->{'mem'}
-		if $client->{'mem'};
+		if defined($client->{'mem'});
 	$xml->{'client'}->{$mac}->{'os'} = $client->{'os'}
 		if $client->{'os'};
 	$xml->{'client'}->{$mac}->{'tmpfs'} = $client->{'tmpfs'}
 		if $client->{'tmpfs'};
 	$xml->{'client'}->{$mac}->{'time'} = $client->{'time'}
-		|| 0;
+		if defined($client->{'time'});
 	$xml->{'client'}->{$mac}->{'status'} = $client->{'status'}
-		|| 0;
+		if defined($client->{'status'});
+	$xml->{'client'}->{$mac}->{'msg'} = $client->{'msg'}
+		if $client->{'msg'};
 	# Add a server timestamp.
 	$xml->{'client'}->{$mac}->{'timestamp'} = time();
 	

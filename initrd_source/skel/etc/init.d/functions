@@ -86,6 +86,41 @@ logmsg() {
     if [ ! -z $USELOGGER ] ;
         then logger "logger: $@"
     fi
+
+    if [ ! -z $MONITOR_SERVER ]; then
+        if [ -z $MONITOR_PORT ]; then
+            MONITOR_PORT=8181
+        fi
+        # Check if the network is up before trying to send data to the
+        # monitor server.
+        ifconfig | grep "inet addr" | grep -v "127.0.0.1" >/dev/null 2>&1
+        if [ $? -eq 0 ]; then
+            # Get the client mac address.
+            mac=`ifconfig $DEVICE | sed -ne "s/.*HWaddr //p" | sed "s/ //g" | sed s/:/./g`
+
+            # Collect the CPU info.
+            cpu=$(echo `cat /proc/cpuinfo | grep "model name\|cpu MHz" | sed "s/.*: //" | sed "s/^\([0-9\.]*\)$/(\1 MHz)/"` | sed "s/\(MHz)\)/\1 |/g" | sed "s/ |$//")
+
+            # Collect the amount of phyisical memory.
+            mem=`cat /proc/meminfo | sed -ne "s/MemTotal: *//p" | sed "s/ kB//"`
+
+            # Evaluate the amount of available RAM.
+            tmpfs=`df | grep tmpfs | sed "s/.* \([0-9]*%\) .*/\1/"`
+
+            # Evaluate the uptime of the client.
+            time=`cat /proc/uptime | sed "s/\..*//"`
+
+            # Report the message to the monitor server.
+            log=`echo "$@" | sed "s/:/;/g"`
+            msg=`echo "mac=$mac:ip=$IPADDR:host=$HOSTNAME:cpu=$cpu:mem=$mem:os=$IMAGENAME:tmpfs=$tmpfs:time=$time:msg=$log"`
+
+            # Send data to monitor server.
+            echo "$msg" | nc $MONITOR_SERVER $MONITOR_PORT
+
+            unset mac
+            unset msg
+        fi
+    fi
 }
 
 
@@ -245,9 +280,6 @@ tmpfs_watcher() {
 #   Usage: $COMMAND || shellout
 #
 shellout() {
-    if [ ! -z $MONITOR_SERVER ]; then
-        stop_report_task -1
-    fi
     COUNT="$RETRY"
     logmsg "Killing off running processes."
     kill -9 $TMPFS_WATCHER_PID  >/dev/null 2>/dev/null
@@ -256,6 +288,10 @@ shellout() {
     cat /etc/issue
     if [ ! -z $USELOGGER ] ;
         then cat /etc/issue | logger
+    fi
+    if [ ! -z $MONITOR_SERVER ]; then
+	logmsg "Installation failed!! Stopping report task."
+        stop_report_task -1
     fi
     exec sh
 }
@@ -1319,8 +1355,18 @@ init_monitor_server() {
         mem=`cat /proc/meminfo | sed -ne "s/MemTotal: *//p" | sed "s/ kB//"`
         tmpfs=`df | grep tmpfs | sed "s/.* \([0-9]*%\) .*/\1/"`
         time=`cat /proc/uptime | sed "s/\..*//"`
-        msg=`echo mac=$mac:ip=$IPADDR:host=$HOSTNAME:cpu=$cpu:mem=$mem:os=$IMAGENAME:tmpfs=$tmpfs:time=$time:status=0`
+        msg=`echo "mac=$mac:ip=$IPADDR:host=$HOSTNAME:cpu=$cpu:mem=$mem:os=$IMAGENAME:tmpfs=$tmpfs:time=$time:status=0"`
+
+	# Send data to monitor server.
         echo $msg | nc $MONITOR_SERVER $MONITOR_PORT
+	logmsg "Client monitoring initialized."
+
+        unset mac
+        unset cpu
+        unset mem
+        unset tmpfs
+        unset time
+        unset msg
     fi
 }
 #
@@ -1331,6 +1377,7 @@ init_monitor_server() {
 
 start_report_task() {
     # Evaluate image size.
+    logmsg "Evaluating image size."
     IMAGESIZE=`rsync -av $IMAGESERVER::$IMAGENAME | grep "total size" | sed -e "s/total size is \([0-9]*\).*/\1/"`
     IMAGESIZE=`expr $IMAGESIZE / 1024`
 
@@ -1366,13 +1413,15 @@ start_report_task() {
         # Send status to the monitor server -AR-
         time=`cat /proc/uptime | sed "s/\..*//"`
         tmpfs=`df | grep tmpfs | sed "s/.* \([0-9]*%\) .*/\1/"`
-   	msg=`echo mac=$mac:ip=$IPADDR:host=$HOSTNAME:cpu=$cpu:mem=$mem:os=$IMAGENAME:tmpfs=$tmpfs:time=$time:status=$status`
+        msg=`echo "mac=$mac:ip=$IPADDR:host=$HOSTNAME:cpu=$cpu:mem=$mem:os=$IMAGENAME:tmpfs=$tmpfs:time=$time:status=$status"`
         echo $msg | nc $MONITOR_SERVER $MONITOR_PORT
         
         # Wait 10 sec between each report -AR-
         sleep 10
     done
     }&
+
+    logmsg "Report task started."
     REPORT_PID=$!
 }
 #
@@ -1400,8 +1449,10 @@ stop_report_task() {
 
     # Send final status.
     time=`cat /proc/uptime | sed "s/\..*//"`
-    msg=`echo mac=$mac:ip=$IPADDR:host=$HOSTNAME:cpu=$cpu:mem=$mem:os=$IMAGENAME:time=$time:status=$status`
+    msg=`echo "mac=$mac:ip=$IPADDR:host=$HOSTNAME:cpu=$cpu:mem=$mem:os=$IMAGENAME:time=$time:status=$status"`
     echo $msg | nc $MONITOR_SERVER $MONITOR_PORT
+
+    logmsg "Image synchronization completed. Report task stopped."
 }
 #
 ################################################################################

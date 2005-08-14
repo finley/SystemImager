@@ -15,6 +15,7 @@ use Tk::Label;
 use Tk::Balloon;
 use Tk::HList;
 use Tk::ItemStyle;
+use Tk::ROText;
 use Tk::widgets qw/Dialog ErrorDialog/;
 use Fcntl ':flock';
 use XML::Simple;
@@ -103,10 +104,15 @@ my $lock_file = $conf{'lock_dir'} . "/db.si_monitor.lock";
 
 # Graphic stuff.
 my (
-	$window, $tab, $timer, $status_bar, 
+	$window,
+	$tab, $timer, $status_bar, 
 	$start_refresh_button, $stop_refresh_button,
 	$clear_clients_button,
 	$quit_button,
+	
+	$sub_win,
+	$sub_tab,
+	$sub_title,
 );
 
 # Create the main window.
@@ -205,6 +211,7 @@ $tab = $window->Scrolled(
 	-height		=> 25,
 	-selectmode	=> 'browse',
 	-selectbackground => 'yellow',
+	-command	=> \&show_virtual_console,
 )->grid(qw/-sticky nsew/);
 
 # Create the header.
@@ -231,10 +238,114 @@ show_command_buttons();
 
 # Main loop.
 start_refresh();
-MainLoop;
+MainLoop();
 
 # Well done.
 exit(0);
+
+########################################################################
+#
+#    Functions
+#
+########################################################################
+
+# Usage:
+# show_virtual_console();
+# Description:
+#	Open the virtual console window.
+sub show_virtual_console 
+{
+	# Allow only one virtual console -AR-
+	# TODO: handle more than one console.
+	$sub_win->destroy() if Exists($sub_win);
+
+	# Get info to show in the title.
+	my $mac = $tab->itemCget($_[0], 0, 'text');
+	my $ip = $tab->itemCget($_[0], 1, 'text');
+	my $hostname  = $tab->itemCget($_[0], 2, 'text') || '';
+	my $image = $tab->itemCget($_[0], 7, 'text') || '';
+
+	# Open the console in a new window.
+	$sub_win = MainWindow->new();
+
+	# Display the hostname or the IP address in the title.
+	$sub_win->title('Client: ' . ($hostname ? "$hostname" : "$ip"));
+
+	# Define a label to keep the MAC address of the client.
+	# This label will be not shown.
+	$sub_title = $sub_win->Label(
+		-text   => "$mac", 
+	);
+
+	# Console body.
+	$sub_tab = $sub_win->Scrolled(
+		'ROText',
+		-scrollbars => 'e',
+		-wrap       => 'word',
+		-background => 'black',
+		-foreground => 'lightgrey',
+		-font       => $FONT,
+		-setgrid    => 1,
+	)->grid(qw/-sticky nsew/);
+	$sub_tab->insert('end',
+		"$hostname($ip):> virtual console started for client $mac.\n",
+		'title'
+	);
+
+	# Refresh console view (default 100ms).
+	my $cons_timer = Tk::After->new(
+			$sub_win, 
+			100,
+			'repeat', 
+			\&refresh_console
+	);
+}
+
+# Usage:
+# refresh_console();
+# Description:
+#	Refresh the virtual console view.
+sub refresh_console
+{
+	# Get mac address.
+	my $mac = $sub_title->cget('text');
+
+	# Open and read lock the database.
+	open(LOCK, ">", "$lock_file") or
+		die "error: cannot open lock file \"$lock_file\"!\n";
+	flock(LOCK, LOCK_SH);
+	
+	# Parse XML database.
+	my $xml = XMLin($database, KeyAttr => {client => 'name'}, ForceArray => 1);
+
+	# Close and unlock database.
+	flock(LOCK, LOCK_UN);
+	close(LOCK);
+
+	# Parse clients data.
+	my %client = %{$xml->{'client'}};
+
+	# Correct the host name in the title of the console.
+	if ($client{$mac}->{'host'}) {
+		$sub_win->title('Client: ' . $client{$mac}->{'host'});
+	}
+
+	# Generate the last message.
+	my $line = ($client{$mac}->{'host'} || '') . 
+		'(' . $client{$mac}->{'ip'} . ')' .
+		":> " .
+		($client{$mac}->{'msg'} || '') . "\n";
+
+	# Get previous message.
+	my $last_line = $sub_tab->get('end - 2 lines', 'end - 1 lines');
+
+	# Display the client message only if it is different from
+	# the previous one.
+	if ($last_line ne $line) {
+		$sub_tab->insert('end', $line);
+		$sub_tab->see('end');
+	}
+}
 
 # Usage:
 # show_command_buttons(); 
@@ -340,7 +451,7 @@ sub display_nodes
 		my $fg;
 		my $status = $client->{$mac}->{'status'} || 0;
 		if (!$status) {
-			$status = 'init';
+			$status = 'initializing...';
 			$fg = '#0000FF';
 		} elsif ($status < 0) {
 			$status = 'error!';
@@ -459,6 +570,9 @@ sub clear_clients
 	if ($answer eq "No") {
 		return;
 	}
+
+	# Close the virtual consoles if opened.
+	$sub_win->destroy() if Exists($sub_win);
 
 	# Open and read lock the database.
 	open(LOCK, '>', "$lock_file") or
