@@ -71,9 +71,11 @@ beep
 
 ping_test
 
-start_syslogd
+if [ ! -z $MONITOR_SERVER ]; then
+    init_monitor_server
+fi
 
-init_monitor_server
+start_syslogd
 
 if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
     get_flamethrower_directory

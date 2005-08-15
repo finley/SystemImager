@@ -77,7 +77,7 @@ logmsg() {
     # log to temporary file (which will go away when we reboot)
     # this is good for envs that have bad consoles
     local FILE=/tmp/si.log
-    if ((`mount | grep ' / ' | grep -q '(rw)'`)); then
+    if ((`mount 2>/dev/null | grep ' / ' | grep -q '(rw)'`)); then
         echo $@ >> $FILE || shellout
     fi
     
@@ -87,38 +87,12 @@ logmsg() {
         then logger "logger: $@"
     fi
 
+    # Check if the network is up before trying to send data to the
+    # monitor server.
     if [ ! -z $MONITOR_SERVER ]; then
-        if [ -z $MONITOR_PORT ]; then
-            MONITOR_PORT=8181
-        fi
-        # Check if the network is up before trying to send data to the
-        # monitor server.
-        ifconfig | grep "inet addr" | grep -v "127.0.0.1" >/dev/null 2>&1
+        ifconfig 2>&1 | grep "inet addr" | grep -v "127.0.0.1" >/dev/null 2>&1
         if [ $? -eq 0 ]; then
-            # Get the client mac address.
-            mac=`ifconfig $DEVICE | sed -ne "s/.*HWaddr //p" | sed "s/ //g" | sed s/:/./g`
-
-            # Collect the CPU info.
-            cpu=$(echo `cat /proc/cpuinfo | grep "model name\|cpu MHz" | sed "s/.*: //" | sed "s/^\([0-9\.]*\)$/(\1 MHz)/"` | sed "s/\(MHz)\)/\1 |/g" | sed "s/ |$//")
-
-            # Collect the amount of phyisical memory.
-            mem=`cat /proc/meminfo | sed -ne "s/MemTotal: *//p" | sed "s/ kB//"`
-
-            # Evaluate the amount of available RAM.
-            tmpfs=`df | grep tmpfs | sed "s/.* \([0-9]*%\) .*/\1/"`
-
-            # Evaluate the uptime of the client.
-            time=`cat /proc/uptime | sed "s/\..*//"`
-
-            # Report the message to the monitor server.
-            log=`echo "$@" | sed "s/:/;/g"`
-            msg=`echo "mac=$mac:ip=$IPADDR:host=$HOSTNAME:cpu=$cpu:mem=$mem:os=$IMAGENAME:tmpfs=$tmpfs:time=$time:msg=$log"`
-
-            # Send data to monitor server.
-            echo "$msg" | nc $MONITOR_SERVER $MONITOR_PORT
-
-            unset mac
-            unset msg
+            send_monitor_msg "log=$@"
         fi
     fi
 }
@@ -290,7 +264,7 @@ shellout() {
         then cat /etc/issue | logger
     fi
     if [ ! -z $MONITOR_SERVER ]; then
-	logmsg "Installation failed!! Stopping report task."
+    	logmsg "Installation failed!! Stopping report task."
         stop_report_task -1
     fi
     exec sh
@@ -1341,33 +1315,64 @@ start_ssh() {
 #
 ################################################################################
 #
+#  send_monitor_msg
+#
+#   Description:
+#   Redirect a message to the monitor server.
+#
+#   Usage: send_monitor_msg "var=$msg"
+#
+
+send_monitor_msg() {
+    if [ -z $MONITOR_SERVER ]; then
+        return
+    fi
+    if [ -z $MONITOR_PORT ]; then
+        MONITOR_PORT=8181
+    fi
+
+    # Remove special field separator from the message.
+    msg=`echo "$@" | sed "s/:/;/g"`
+
+    # Get the client mac address.
+    if [ -z "$mac" ]; then
+        mac=`ifconfig $DEVICE 2>/dev/null | sed -ne "s/.*HWaddr //p" | sed "s/ //g" | sed s/:/./g`
+    fi
+
+    # Collect some special info only after proc file system is mounted.
+    if [ `mount 2>/dev/null | grep proc > /dev/null; echo $?` -eq 0 ]; then
+        # Collect the CPU info.
+        if [ -z "$cpu" ]; then
+            cpu=$(echo `cat /proc/cpuinfo | grep "model name\|cpu MHz" | sed "s/.*: //" | sed "s/^\([0-9\.]*\)$/(\1 MHz)/"` | sed "s/\(MHz)\)/\1 |/g" | sed "s/ |$//")
+        fi
+
+        # Collect the amount of phyisical memory.
+        if [ -z "$mem" ]; then
+            mem=`cat /proc/meminfo | sed -ne "s/MemTotal: *//p" | sed "s/ kB//"`
+        fi
+
+        # Evaluate the amount of available RAM.
+        tmpfs=`df | grep tmpfs | sed "s/.* \([0-9]*%\) .*/\1/"`
+
+        # Evaluate the uptime of the client.
+        time=`cat /proc/uptime | sed "s/\..*//"`
+    fi
+
+    # Report the message to the monitor server.
+    send_msg=`echo "mac=$mac:ip=$IPADDR:host=$HOSTNAME:cpu=$cpu:mem=$mem:os=$IMAGENAME:tmpfs=$tmpfs:time=$time:$msg"`
+
+    # Send data to monitor server.
+    echo "$send_msg" | nc $MONITOR_SERVER $MONITOR_PORT
+}
+#
+################################################################################
+#
 #   Initialize the monitor server
 #
 
 init_monitor_server() {
-    # Get initial information to send to the monitor server.
-    if [ ! -z $MONITOR_SERVER ]; then
-        if [ -z $MONITOR_PORT ]; then
-            MONITOR_PORT=8181
-        fi
-        mac=`ifconfig $DEVICE | sed -ne "s/.*HWaddr //p" | sed "s/ //g" | sed s/:/./g`
-        cpu=$(echo `cat /proc/cpuinfo | grep "model name\|cpu MHz" | sed "s/.*: //" | sed "s/^\([0-9\.]*\)$/(\1 MHz)/"` | sed "s/\(MHz)\)/\1 |/g" | sed "s/ |$//")
-        mem=`cat /proc/meminfo | sed -ne "s/MemTotal: *//p" | sed "s/ kB//"`
-        tmpfs=`df | grep tmpfs | sed "s/.* \([0-9]*%\) .*/\1/"`
-        time=`cat /proc/uptime | sed "s/\..*//"`
-        msg=`echo "mac=$mac:ip=$IPADDR:host=$HOSTNAME:cpu=$cpu:mem=$mem:os=$IMAGENAME:tmpfs=$tmpfs:time=$time:status=0"`
-
-	# Send data to monitor server.
-        echo $msg | nc $MONITOR_SERVER $MONITOR_PORT
-	logmsg "Client monitoring initialized."
-
-        unset mac
-        unset cpu
-        unset mem
-        unset tmpfs
-        unset time
-        unset msg
-    fi
+    send_monitor_msg "status=0"
+    logmsg "Monitoring initialized."
 }
 #
 ################################################################################
@@ -1376,48 +1381,43 @@ init_monitor_server() {
 #
 
 start_report_task() {
+    # Reporting interval (in sec).
+    REPORT_INTERVAL=10
+
     # Evaluate image size.
     logmsg "Evaluating image size."
     IMAGESIZE=`rsync -av $IMAGESERVER::$IMAGENAME | grep "total size" | sed -e "s/total size is \([0-9]*\).*/\1/"`
     IMAGESIZE=`expr $IMAGESIZE / 1024`
 
-    if [ -z $MONITOR_PORT ]; then
-        MONITOR_PORT=8181
-    fi
-
     # Evaluate disks size.
-    LIST=`df 2>/dev/null | sed -ne "/^\/dev/p" | sed "s/  */ /g" | sed "s/\(.*\) \(.*\) \(.*\) \(.*\) \(.*\) \(.*\)/\3+/"`0
+    LIST=`df 2>/dev/null | grep "/" | sed "s/  */ /g" | sed "s/\(.*\) \(.*\) \(.*\) \(.*\) \(.*\) \(.*\)/\3+/"`0
     DISKSIZE=`echo $LIST | bc`
-
-    # MAC address is the primary key to identify a client -AR-
-    mac=`ifconfig $DEVICE | sed -ne "s/.*HWaddr //p" | sed "s/ //g" | sed s/:/./g` 
-
-    # Collect the CPU.
-    cpu=$(echo `cat /proc/cpuinfo | grep "model name\|cpu MHz" | sed "s/.*: //" | sed "s/^\([0-9\.]*\)$/(\1 MHz)/"` | sed "s/\(MHz)\)/\1 |/g" | sed "s/ |$//")
-
-    # Collect the amount of phyisical memory.
-    mem=`cat /proc/meminfo | sed -ne "s/MemTotal: *//p" | sed "s/ kB//"`
 
     # Spawn the report task -AR-
     {
+    TOT=0; CURR_SIZE=0
     while :; do
-        LIST=`df 2>/dev/null | sed -ne "/^\/dev/p" | sed "s/  */ /g" | sed "s/\(.*\) \(.*\) \(.*\) \(.*\) \(.*\) \(.*\)/\3+/"`0
+        LIST=`df 2>/dev/null | grep "/" | sed "s/  */ /g" | sed "s/\(.*\) \(.*\) \(.*\) \(.*\) \(.*\) \(.*\)/\3+/"`0
         TOT=`echo $LIST | bc`
-        status=`echo "scale=2; ($TOT - $DISKSIZE) * 100 / $IMAGESIZE" | bc`
+
+        # Evaluate bandwidth.
+        speed=`echo "scale=2; (($TOT - $DISKSIZE) - $CURR_SIZE) / $REPORT_INTERVAL" | bc`
+
+        # Evaluate status.
+        CURR_SIZE=$(($TOT - $DISKSIZE))
+        status=`echo "scale=2; $CURR_SIZE * 100 / $IMAGESIZE" | bc`
         if [ `echo "scale=2; $status == 0" | bc` -eq 1 ]; then 
             status=1
         elif [ `echo "scale=2; $status >= 100" | bc` -eq 1 ]; then
             status=99
         fi
 
-        # Send status to the monitor server -AR-
-        time=`cat /proc/uptime | sed "s/\..*//"`
-        tmpfs=`df | grep tmpfs | sed "s/.* \([0-9]*%\) .*/\1/"`
-        msg=`echo "mac=$mac:ip=$IPADDR:host=$HOSTNAME:cpu=$cpu:mem=$mem:os=$IMAGENAME:tmpfs=$tmpfs:time=$time:status=$status"`
-        echo $msg | nc $MONITOR_SERVER $MONITOR_PORT
+        # Send status and bandwidth to the monitor server.
+        send_monitor_msg "status=$status"
+        send_monitor_msg "speed=$speed"
         
-        # Wait 10 sec between each report -AR-
-        sleep 10
+        # Wait $REPORT_INTERVAL sec between each report -AR-
+        sleep $REPORT_INTERVAL
     done
     }&
 
@@ -1431,28 +1431,13 @@ start_report_task() {
 #
 
 stop_report_task() {
-    status=$1
-    kill -9 $REPORT_PID
-
-    if [ -z $MONITOR_PORT ]; then
-        MONITOR_PORT=8181
+    if [ ! -z $REPORT_PID ]; then
+        kill -9 $REPORT_PID
+        logmsg "Report task stopped."
     fi
 
     # Try to report the error to the monitor server.
-    mac=`ifconfig $DEVICE | sed -ne "s/.*HWaddr //p" | sed "s/ //g" | sed s/:/./g`  
-
-    # Collect the CPU.
-    cpu=$(echo `cat /proc/cpuinfo | grep "model name\|cpu MHz" | sed "s/.*: //" | sed "s/^\([0-9\.]*\)$/(\1 MHz)/"` | sed "s/\(MHz)\)/\1 |/g" | sed "s/ |$//")
-
-    # Collect the amount of phyisical memory.
-    mem=`cat /proc/meminfo | sed -ne "s/MemTotal: *//p" | sed "s/ kB//"`
-
-    # Send final status.
-    time=`cat /proc/uptime | sed "s/\..*//"`
-    msg=`echo "mac=$mac:ip=$IPADDR:host=$HOSTNAME:cpu=$cpu:mem=$mem:os=$IMAGENAME:time=$time:status=$status"`
-    echo $msg | nc $MONITOR_SERVER $MONITOR_PORT
-
-    logmsg "Image synchronization completed. Report task stopped."
+    send_monitor_msg "status=$1"
 }
 #
 ################################################################################

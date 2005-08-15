@@ -262,8 +262,10 @@ sub update_db
 			$client->{'time'} = int($_ / 60);
 		} elsif (s/^status=//) {
 			$client->{'status'} = $_;
-		} elsif (s/^msg=//) {
-			$client->{'msg'} = $_;
+		} elsif (s/^speed=//) {
+			$client->{'speed'} = int($_);
+		} elsif (s/^log=//) {
+			$client->{'log'} = $_;
 		}
 	}
 
@@ -306,8 +308,10 @@ sub update_db
 		if defined($client->{'time'});
 	$xml->{'client'}->{$mac}->{'status'} = $client->{'status'}
 		if defined($client->{'status'});
-	$xml->{'client'}->{$mac}->{'msg'} = $client->{'msg'}
-		if $client->{'msg'};
+	$xml->{'client'}->{$mac}->{'speed'} = $client->{'speed'}
+		if defined($client->{'speed'});
+	$xml->{'client'}->{$mac}->{'log'} = $client->{'log'}
+		if $client->{'log'};
 	# Add a server timestamp.
 	$xml->{'client'}->{$mac}->{'timestamp'} = time();
 	
