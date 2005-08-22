@@ -267,7 +267,7 @@ sub show_virtual_console
 	$sub_win = MainWindow->new();
 
 	# Display the hostname or the IP address in the title.
-	$sub_win->title('Client: ' . ($hostname ? "$hostname" : "$ip"));
+	$sub_win->title('Client: ' . ("$hostname" ne '-' ? "$hostname" : "$ip"));
 
 	# Define a label to keep the MAC address of the client.
 	# This label will be not shown.
