@@ -170,12 +170,9 @@ echo DISKORDER=${DISKORDER=sd,cciss,ida,rd,hd}
 
 ##PARTITION_DISKS##
 
-logmsg "Load additional filesystem drivers."
-modprobe reiserfs
-modprobe ext2
-modprobe ext3
-modprobe jfs
-modprobe xfs
+### BEGIN software-RAID initialization commands -AR- ###
+##CREATE_SOFT_RAID_DISKS##
+### END software-RAID initialization commands ###
 
 logmsg "Load device mapper driver (for LVM)."
 modprobe dm-mod
@@ -191,6 +188,13 @@ modprobe dm-mod
 ### BEGIN LVM volumes creation commands -AR- ###
 ##CREATE_LVM_VOLUMES##
 ### END LVM volumes creation commands ###
+
+logmsg "Load additional filesystem drivers."
+modprobe reiserfs
+modprobe ext2
+modprobe ext3
+modprobe jfs
+modprobe xfs
 
 ### BEGIN swap and filesystem creation commands ###
 ##CREATE_FILESYSTEMS##
@@ -267,6 +271,9 @@ echo $IMAGENAME > /a/etc/systemimager/IMAGE_LAST_SYNCED_TO || shellout
 if [ ! -z $MONITOR_SERVER ]; then
     stop_report_task 100
 fi
+
+# Copy the raidtab into the image.
+cp -f /etc/raidtab /a/etc/raidtab
 
 ### BEGIN generate new fstab file from autoinstallscript.conf ###
 ##GENERATE_FSTAB##

@@ -36,6 +36,7 @@ $VERSION="SYSTEMIMAGER_VERSION_STRING";
 #   _imageexists 
 #   _in_script_add_standard_header_stuff 
 #   _read_partition_info_and_prepare_parted_commands 
+#   _read_partition_info_and_prepare_soft_raid_devs -AR- 
 #   _read_partition_info_and_prepare_pvcreate_commands -AR-
 #   _write_lvm_groups_commands -AR-
 #   _write_lvm_volumes_commands -AR-
@@ -827,6 +828,121 @@ sub _read_partition_info_and_prepare_parted_commands {
 }
 
 # Usage:
+# _read_partition_info_and_prepare_soft_raid_devs( $out, $image_dir, $auto_install_script_conf );
+# TODO: spare disks.
+sub _read_partition_info_and_prepare_soft_raid_devs {
+    my ($out, $image_dir, $file) = @_;
+
+    my $xml_config = XMLin($file, keyattr => { lvm_group => "+name" }, forcearray => 1 );
+    unless (defined($xml_config->{raid})) {
+        return;
+    }
+
+    my $cmd;
+    
+    # Remove previous raidtab.
+    $cmd = 'rm -rf /etc/raidtab';
+    print $out qq(logmsg "$cmd"\n);
+    print $out "$cmd\n";
+
+    # Load RAID modules.
+    print $out qq(logmsg "Load software RAID modules."\n);
+    print $out qq(modprobe linear\n);
+    print $out qq(modprobe raid0\n);
+    print $out qq(modprobe raid1\n);
+    print $out qq(modprobe raid5\n);
+
+    # Get all software RAID blocks.
+    foreach my $raid (@{$xml_config->{raid}}) {
+        my @all_devices = get_all_devices($file);
+        my %devfs_map = dev_to_devfs(@all_devices) or return undef;
+
+        # Find the partitions assigned to each RAID disk. -AR-    
+        foreach my $raid_disk (@{$raid->{raid_disk}}) {
+            # Write the command to create the software RAID disk.
+            print $out "cat << EOF >> /etc/raidtab\n";
+
+            # RAID device.
+            my $raid_name = $raid_disk->{name};
+            unless ($raid_name) {
+                print "WARNING: software RAID disk without name!\n";
+                next;
+            }
+            unless ($raid_name =~ /^\/dev\/md/) {
+                print "WARNING: software RAID device name not valid: \"$raid_name\"\n";
+                next;
+            }
+            # RAID level (mandatory).
+            my $raid_level = $raid_disk->{raid_level};
+            unless (defined($raid_level)) {
+                print "WARNING: RAID disk \"$raid_disk->{name}\" doesn't have partitions assigned!\n";
+                next;
+            }
+
+            # Write raidtab details.
+            print $out "raiddev " . $raid_disk->{name} . "\n";
+            print $out "\traid-level\t" . $raid_level . "\n";
+            print $out "\tpersistent-superblock\t" . $raid_disk->{persistent_superblock} . "\n"
+                if ($raid_disk->{persistent_superblock});
+            print $out "\tchunk-size\t" . ($raid_disk->{chunk_size} || 32) . "\n";
+            if ($raid_level == 5) {
+                print $out "\tparity-algorithm\t" . $raid_disk->{parity_algorithm} . "\n"
+                    if ($raid_disk->{parity_algorithm});
+            }
+
+            # Evaluate partitions assigned to the software RAID device.
+            my @part_list;
+
+            foreach my $disk (@{$xml_config->{disk}}) {
+                my $dev = $disk->{dev};
+
+                # Figure out what the highest partition number is.
+                my $highest_part_num = 0;
+                foreach my $part ( @{$disk->{part}} ) {
+                    my $num = $part->{num};
+                    if ($num > $highest_part_num) {
+                        $highest_part_num = $num;
+                    }
+                }
+            
+                # Evaluate the partition list for the current software RAID device.
+                my $m = "0";
+                foreach my $part (@{$disk->{part}}) {
+                    $m++;
+                    unless (defined($part->{raid_dev})) { next; }
+                    if ($part->{raid_dev} eq $raid_disk->{name}) {
+                        if (defined($part->{num})) {
+                            $m = $part->{num};
+                        }
+                        my $part_name = &get_part_name($dev, $m);
+                        if ($part_name =~ /^(.*?)(p?\d+)$/) {
+                            $part_name = "\${".$dev2disk{$1}."}".$2;
+                        }
+                        push(@part_list, $part_name);
+                    }
+                }
+            }
+        
+            if (@part_list) {
+                print $out "\tnr-raid-disks\t" . ($#part_list + 1) . "\n\n";
+                for (my $i = 0; $i <= $#part_list; $i++) {
+                    print $out "\tdevice $part_list[$i]\n\traid-disk\t$i\n";
+                }
+            } else {
+                print "WARNING: RAID disk \"$raid_disk->{name}\" doesn't have partitions assigned!\n";
+            }
+            # Software RAID device defined in /etc/raidtab.
+            print $out "\nEOF\n";
+
+            $cmd = "mkraid --really-force $raid_name || shellout";
+            print $out qq(logmsg "$cmd"\n);
+            print $out "$cmd\n";
+        }
+    }
+
+}
+
+# Usage:
 # _read_partition_info_and_prepare_pvcreate_commands( $out, $image_dir, $auto_install_script_conf );
 sub _read_partition_info_and_prepare_pvcreate_commands {
     my ($out, $image_dir, $file) = @_;
@@ -835,13 +951,13 @@ sub _read_partition_info_and_prepare_pvcreate_commands {
 
     my @all_devices = get_all_devices($file);
     my %devfs_map = dev_to_devfs(@all_devices) or return undef;
+    my $cmd;
 
     foreach my $dev (sort (keys ( %{$xml_config->{disk}} ))) {
 
         my (
             $highest_part_num,
             $m,
-            $cmd,
             $part,
         );
 
@@ -912,6 +1028,36 @@ part_done:
             }
         }
     }
+
+    # Initialize software RAID volumes used for LVM (if present).
+    foreach my $raid (@{$xml_config->{raid}}) { 
+        foreach my $raid_disk (@{$raid->{raid_disk}}) {
+            my $vg_name = $raid_disk->{lvm_group};
+            unless ($vg_name) {
+                next;
+            }
+            my $raid_name = $raid_disk->{name};
+            unless ($raid_name) {
+                next;
+            }
+
+            # Get the version of the LVM metadata to use.
+            foreach my $lvm (@{$xml_config->{lvm}}) {
+                my $version = $lvm->{version};
+                unless (defined($version)) {
+                    # Default => get LVM2 metadata type.
+                    $version = 2;
+                }
+                foreach my $lvm_group_name (@{$lvm->{lvm_group}}) {
+                    if ($lvm_group_name->{name} eq $vg_name) {
+                        $cmd = "pvcreate -M${version} -ff -y $raid_name || shellout";
+                        print $out qq(logmsg "$cmd"\n);
+                        print $out "$cmd\n";
+                    }
+                }
+            }
+        }
+   }
 }
 
 # Usage:  
@@ -961,11 +1107,30 @@ sub write_lvm_groups_commands {
                             $m = $part->{num};
                         }
                         my $part_name = &get_part_name($dev, $m);
-                        $part_list = $part_list . " $part_name";
+                        if ($part_name =~ /^(.*?)(p?\d+)$/) {
+                            $part_name = "\${".$dev2disk{$1}."}".$2;
+                        }
+                        $part_list .= " $part_name";
                     }
                 }
             }
-        
+
+            # Find RAID disks assigned to the volume group.
+            foreach my $raid (@{$xml_config->{raid}}) {
+                foreach my $raid_disk (@{$raid->{raid_disk}}) {
+                    unless (defined($raid_disk->{lvm_group})) { next; }
+                    if ($raid_disk->{lvm_group} eq $group_name) {
+                        # Add RAID device to the partition list.
+                        my $raid_name = $raid_disk->{name};
+                        if ($raid_name) {
+                            $part_list .= " $raid_name";
+                        } else {
+                            print "WARNING: software RAID disk without name!\n";
+                        }
+                    }
+                }
+            }
+
             if ($part_list ne "") {
                 # Evaluate the volume group options -AR-
                 my $vg_max_log_vols = $lvm->{lvm_group}->{$group_name}->{max_log_vols};
@@ -986,6 +1151,10 @@ sub write_lvm_groups_commands {
                 } else {
                     $vg_phys_extent_size = ""; 
                 }
+                # Remove previous volume groups with $group_name if already present.
+                $cmd = "lvremove -f /dev/${group_name} >/dev/null 2>&1 && vgremove $group_name >/dev/null 2>&1";
+                print $out qq(logmsg "$cmd"\n);
+                print $out "$cmd\n";
                 # Write the command to create the volume group -AR-
                 $cmd = "vgcreate -M${version} ${vg_max_log_vols}${vg_max_phys_vols}${vg_phys_extent_size}${group_name}${part_list} || shellout";
                 print $out qq(logmsg "$cmd"\n);
@@ -1164,7 +1333,7 @@ sub _write_out_mkfs_commands {
         }
     }
 
-    if ($software_raid or $raidtab) {
+    if (($software_raid or $raidtab) and not($xml_config->{raid})) {
 
 	# XXX at some point, we want to include this in the autoinstallscript.conf
 	# file.  We should also look at the format and write functions for that 
@@ -1241,7 +1410,8 @@ sub _write_out_mkfs_commands {
 
         # software RAID devices (/dev/md*)
         if ($real_dev =~ /\/dev\/md/) {
-            print $out qq(mkraid --really-force $real_dev || shellout\n);
+            print $out qq(mkraid --really-force $real_dev || shellout\n)
+                unless (defined($xml_config->{raid}));
         } elsif( $real_dev =~ /^(.*?)(p?\d+)$/ ) {
             $real_dev = "\${".$dev2disk{$1}."}".$2;
         }
@@ -1752,6 +1922,13 @@ sub create_autoinstall_script{
 	          						$auto_install_script_conf);
 	            last SWITCH;
 	        }
+
+                if (/^\s*${delim}CREATE_SOFT_RAID_DISKS${delim}\s*$/) { 
+                _read_partition_info_and_prepare_soft_raid_devs( $MASTER_SCRIPT,
+                    $image_dir, 
+                    $auto_install_script_conf);
+                    last SWITCH;
+                }
 
                 if (/^\s*${delim}INITIALIZE_LVM_PARTITIONS${delim}\s*$/) {
  	            _read_partition_info_and_prepare_pvcreate_commands( $MASTER_SCRIPT,
