@@ -1,9 +1,10 @@
 ifndef IS_PPC64
 
-XFSPROGS_VERSION := 2.6.13
+XFSPROGS_VERSION := 2.6.36
 XFSPROGS_DIR := xfsprogs-$(XFSPROGS_VERSION)
 XFSPROGS_TARBALL := $(XFSPROGS_DIR).src.tar.gz
-XFSPROGS_URL := http://download.systemimager.org/pub/xfsprogs/$(XFSPROGS_TARBALL)
+#XFSPROGS_URL := http://download.systemimager.org/pub/xfsprogs/$(XFSPROGS_TARBALL)
+XFSPROGS_URL := ftp://oss.sgi.com/projects/xfs/download/cmd_tars/$(XFSPROGS_TARBALL)
 # SOURCE_URL -> ftp://oss.sgi.com/projects/xfs/download/cmd_tars/
 MKXFS_BINARY := $(SRC_DIR)/$(XFSPROGS_DIR)/mkfs/mkfs.xfs
 XFSPROGS_PATCHES := $(shell ls $(PATCH_DIR)/xfsprogs.*.patch 2>/dev/null | sort)
@@ -25,16 +26,13 @@ PHONY += xfsprogs
 xfsprogs:	$(MKXFS_BINARY)
 
 $(MKXFS_BINARY):	$(SRC_DIR)/$(XFSPROGS_TARBALL)
-	[ -d $(SRC_DIR)/$(XFSPROGS_DIR) ] || \
-	  ( cd $(SRC_DIR) && zcat $(XFSPROGS_TARBALL) | tar xv && \
-	    ( cd $(XFSPROGS_DIR) && cat $(XFSPROGS_PATCHES) < /dev/null | patch -p1 ) && \
-	    	( cd $(SRC_DIR)/$(XFSPROGS_DIR) && chmod +x ./configure && \
-	  	  CPPFLAGS=-I$(SRC_DIR)/$(E2FSPROGS_DIR)/lib CFLAGS=-I$(SRC_DIR)/$(E2FSPROGS_DIR)/lib LDFLAGS=-L$(SRC_DIR)/$(E2FSPROGS_DIR)/lib \
-	  	  LTLDFLAGS=-L$(SRC_DIR)/$(E2FSPROGS_DIR)/lib \
-	  	./configure ) )
-	CPPFLAGS=-I$(SRC_DIR)/$(E2FSPROGS_DIR)/lib CFLAGS=-I$(SRC_DIR)/$(E2FSPROGS_DIR)/lib LDFLAGS=-L$(SRC_DIR)/$(E2FSPROGS_DIR)/lib LIBUUID=$(SRC_DIR)/$(E2FSPROGS_DIR)/lib \
-	LTLDFLAGS=-L$(SRC_DIR)/$(E2FSPROGS_DIR)/lib \
-		$(MAKE) -C $(SRC_DIR)/$(XFSPROGS_DIR)
+	rm -rf $(SRC_DIR)/$(XFSPROGS_DIR)
+	cd $(SRC_DIR) && tar xfvz $(XFSPROGS_TARBALL) 
+	cd $(SRC_DIR)/$(XFSPROGS_DIR) && \
+	  cat $(XFSPROGS_PATCHES) < /dev/null | patch -p1
+	chmod +x $(SRC_DIR)/$(XFSPROGS_DIR)/configure
+	cd $(SRC_DIR)/$(XFSPROGS_DIR) && ./configure
+	$(MAKE) -C $(SRC_DIR)/$(XFSPROGS_DIR)
 
 $(SRC_DIR)/$(XFSPROGS_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
