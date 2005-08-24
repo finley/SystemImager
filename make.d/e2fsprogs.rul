@@ -1,9 +1,9 @@
 #
 # $Id$
 #
-E2FSPROGS_VERSION := 1.35
+E2FSPROGS_VERSION := 1.38
 E2FSPROGS_DIR := e2fsprogs-$(E2FSPROGS_VERSION)
-E2FSPROGS_TARBALL := e2fsprogs-$(E2FSPROGS_VERSION)-WIP-0131.tar.gz
+E2FSPROGS_TARBALL := e2fsprogs-$(E2FSPROGS_VERSION).tar.gz
 E2FSPROGS_URL :=  http://unc.dl.sourceforge.net/sourceforge/e2fsprogs/$(E2FSPROGS_TARBALL)
 E2FSPROGS_PATCH := $(PATCH_DIR)/e2fsprogs.patch
 MKE2FS_BINARY := $(SRC_DIR)/$(E2FSPROGS_DIR)/misc/mke2fs 
