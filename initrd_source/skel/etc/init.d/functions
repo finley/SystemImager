@@ -1438,6 +1438,9 @@ stop_report_task() {
 
     # Try to report the error to the monitor server.
     send_monitor_msg "status=$1"
+
+    # Reset speed rate.
+    send_monitor_msg "speed=0"
 }
 #
 ################################################################################

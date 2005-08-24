@@ -470,8 +470,10 @@ sub display_nodes
             $client->{$mac}->{'time'} .= 'min';
         }
 		# Format the bandwidth.
-        if (defined($client->{$mac}->{'speed'})) {
+        if ($client->{$mac}->{'speed'}) {
             $client->{$mac}->{'speed'} .= 'KB/s'; 
+        } else {
+            $client->{$mac}->{'speed'} = '-';
         }
 		# Format the total amount of RAM.
         if (defined($client->{$mac}->{'mem'})) {
