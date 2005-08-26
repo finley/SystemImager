@@ -809,7 +809,8 @@ sub save_lvm_information {
                 }
                 my $lv_dev = $lv_data[0];
                 $lv_dev =~ s/^.*\///;
-                my $lv_size = $lv_data[6];
+                # Logical volume size is doubled in the columnised output. -AR-
+                my $lv_size = $lv_data[6] / 2;
                 
                 print OUT "\t\t<lv name=\"$lv_dev\" size=\"${lv_size}K\" />\n";
             }
