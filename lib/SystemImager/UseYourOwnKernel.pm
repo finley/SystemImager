@@ -464,7 +464,15 @@ sub _create_initrd_cramfs($$) {
         my $new_initrd  = $boot_dir . "/initrd";
 
         # initrd creation
-        run_cmd("mkcramfs $staging_dir $new_initrd", $verbose, 1);
+        my $mkfs;
+        if (`which mkcramfs`) {
+            $mkfs = 'mkcramfs';
+        } elsif (`which mkfs.cramfs`) {
+            $mkfs = 'mkfs.cramfs';
+        } else {
+            die "error: cannot find a valid utility to create cramfs initrd!\n";
+        }
+        run_cmd("$mkfs $staging_dir $new_initrd", $verbose, 1);
 
         # gzip up
         run_cmd("gzip -9 -S .img $new_initrd", $verbose);
