@@ -97,7 +97,7 @@ unless ($arch) {
 }
 
 # Do we have a supported architecture? -BEF-
-if($arch !~ /^(i386|x86_64|ia64)$/) {
+if($arch !~ /^(i386|ia64|x86_64)$/) {
     message("\nI'm terribly sorry, but I don't yet know how to make an\nautoinstall CD for the \"$arch\" architecture.\n");
     exit 1;
 }
@@ -195,10 +195,10 @@ build_loopfile($temp_file) or croak("Couldn't dd the loopfile");
 mysystem("mkdosfs $temp_file","Creating DOS filesystem on temporary image...") or
   croak("Couldn't create DOS filesystem on $temp_file!");
 
-# If on i386 or x86_64, use syslinux to make the image bootable.  It is done first because with certain
+# If on i386, use syslinux to make the image bootable.  It is done first because with certain
 # versions of syslinux, if you do it last, it will overwrite parts of other files on the floppy
 # diskette or image.
-if(($arch eq "i386") || ($arch eq "x86_64")) {
+if( ($arch eq "i386") || ($arch eq "x86_64") ) {
     mysystem("syslinux -s $temp_file","Using \"syslinux\" to make CD image bootable...") or
       croak("Command 'syslinux -s $temp_file' failed!");
 }
@@ -228,9 +228,7 @@ $mkisofscmd .= " -A \"SystemImager $arch Autoinstallcd v$VERSION\"";
 $mkisofscmd .= " -V \"SystemImager $arch Boot CD\"";
 $mkisofscmd .= " -p \"Created by si_mkautoinstallcd -- part of SystemImager.  http://systemimager.org/\"";
 $mkisofscmd .= " -b boot/siboot.img -c boot/boot.catalog";
-if ("$arch" eq "ia64") {
-  $mkisofscmd .= " -no-emul-boot -boot-load-size 1";
-}
+$mkisofscmd .= " -no-emul-boot -boot-load-size 1";
 $mkisofscmd .= " -o $out_file .";
 
 mysystem($mkisofscmd,"Making the ISO image now") or
@@ -255,8 +253,8 @@ EOF
 # build_loopfile builds the right size file to mount as loop for each architecture
 sub build_loopfile {
     my $outfile = shift;
-    if(($arch eq "i386") || ($arch eq "x86_64")) {
-        return mysystem("dd if=/dev/zero of=$outfile bs=1k count=2880");
+    if( ($arch eq "i386") || ($arch eq "x86_64") ) {
+        return mysystem("dd if=/dev/zero of=$outfile bs=1k count=4320");
     } elsif ($arch eq "ia64") {
         return mysystem("dd if=/dev/zero of=$outfile bs=1024k count=10");
     }
@@ -267,7 +265,7 @@ sub build_loopfile {
 
 sub mount_loop_device {
     my ($temp_file, $mnt_dir, $msg) = @_;
-    if(($arch eq "i386") || ($arch eq "x86_64")) {
+    if( ($arch eq "i386") || ($arch eq "x86_64") ) {
         mysystem("mount -t msdos -o loop $temp_file $mnt_dir",$msg) or
           croak("Couldn't mount temporary image in loopback mode!");
     } elsif ($arch eq "ia64") {
