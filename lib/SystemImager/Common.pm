@@ -662,6 +662,8 @@ sub _turn_sfdisk_output_into_generic_partitionschemes_file {
      
         } elsif ($id eq "a0") {  # a0  IBM Thinkpad hibernation
 
+        } elsif ($id eq "db") {  # db  CP/M / CTOS / .
+
         } elsif ($id eq "de") {  # de  Dell Utility
 
         } elsif ($id eq "ef") {  # ef  EFI (FAT-12/16/32)
