@@ -97,7 +97,7 @@ unless ($arch) {
 }
 
 # Do we have a supported architecture? -BEF-
-if($arch !~ /^(i386|ia64|x86_64)$/) {
+if($arch !~ /^(i386|x86_64|ia64)$/) {
     message("\nI'm terribly sorry, but I don't yet know how to make an\nautoinstall CD for the \"$arch\" architecture.\n");
     exit 1;
 }
@@ -170,6 +170,7 @@ my $temp_dir = "/tmp/systemimager.autoinstallcd.temp.dir";
 my $temp_file = "$temp_dir/boot/siboot.img";
 my $mnt_dir = "$temp_dir/mnt";
 my $boot_dir = "$temp_dir/boot";
+my $isolinux_dir = "$temp_dir/isolinux";
 
 # if $out_file is not an absolute path, get current working directory and pre-pend
 if($out_file !~ /^\//) {
@@ -183,40 +184,56 @@ if(-e $temp_dir) {
     rmtree("$temp_dir") or croak("Couldn't remove $temp_dir");
 }
 
-mkdir $temp_dir, 0770 or croak("Couldn't create temporary working directory $mnt_dir!");
-mkdir $mnt_dir, 0770 or croak("Couldn't create temporary working directory $mnt_dir/mnt!");
-mkdir $boot_dir, 0770 or croak("Couldn't create temporary working directory $mnt_dir/boot!");
+mkdir $temp_dir, 0770 or croak("Couldn't create temporary working directory $temp_dir!");
+mkdir $isolinux_dir, 0770 or croak("Couldn't create temporary working directory $temp_dir/isolinux!");
 
-# This does the dd, and is put in another seperate function because it is arch specific
+if ($arch eq "ia64") {
+    mkdir $mnt_dir, 0770 or croak("Couldn't create temporary working directory $mnt_dir!");
+    mkdir $boot_dir, 0770 or croak("Couldn't create temporary working directory $boot_dir!");
+    # This does the dd, and is put in another seperate function because it is arch specific
+    build_loopfile($temp_file) or croak("Couldn't dd the loopfile");
 
-build_loopfile($temp_file) or croak("Couldn't dd the loopfile");
-
-# create dos filesystem on temporary image
-mysystem("mkdosfs $temp_file","Creating DOS filesystem on temporary image...") or
-  croak("Couldn't create DOS filesystem on $temp_file!");
-
-# If on i386, use syslinux to make the image bootable.  It is done first because with certain
-# versions of syslinux, if you do it last, it will overwrite parts of other files on the floppy
-# diskette or image.
-if( ($arch eq "i386") || ($arch eq "x86_64") ) {
-    mysystem("syslinux -s $temp_file","Using \"syslinux\" to make CD image bootable...") or
-      croak("Command 'syslinux -s $temp_file' failed!");
+    # create dos filesystem on temporary image
+    mysystem("mkdosfs $temp_file","Creating DOS filesystem on temporary image...") or
+      croak("Couldn't create DOS filesystem on $temp_file!");
 }
 
-# mount the loop device
-mount_loop_device($temp_file, $mnt_dir,"Mounting temporary image in loopback mode...");
-
-# copy stuff to image
 my $local_cfg = "";  # local.cfg currently not supported on CD. -BEF-
-SystemImager::Server->copy_boot_files_to_boot_media($kernel, $initrd, $local_cfg, $arch, $mnt_dir, $append_string)
-    or croak("Couldn't copy required files into the image!");
 
-# Umount the loopback device
-mysystem("umount $mnt_dir","Un-mounting temporary image...") or
-  croak("Couldn't un-mount temporary from $mnt_dir/tmp!");
+# If on i386 or x86_64, use isolinux for booting.
+if(($arch eq "i386") || ($arch eq "x86_64")) {
+    # locate isolinux.bin
+    my @isopath=("/usr/lib/syslinux", "/usr/share/syslinux");
+    my $isolinux;
+    for my $p (@isopath) {
+	if (-f "$p/isolinux.bin") {
+	    $isolinux = "$p/isolinux.bin";
+	    last;
+        }
+    }
+    croak("Couldn't find isolinux.bin in ".join(" ",@isopath)." !") if (!$isolinux);
+    mysystem("cp $isolinux $isolinux_dir");
+    SystemImager::Server->copy_boot_files_to_boot_media($kernel, $initrd, $local_cfg, $arch, $isolinux_dir, $append_string);
+    if ($arch eq "x86_64") {
+	mysystem("sed -e 's/initrd.img root=/initrd.img noexec=off root=/' /etc/systemimager/pxelinux.cfg/syslinux.cfg > $isolinux_dir/isolinux.cfg");
+    } else {
+	mysystem("cp /etc/systemimager/pxelinux.cfg/syslinux.cfg $isolinux_dir/isolinux.cfg");
+    }
 
-# and clean it up
-rmtree("$mnt_dir") or croak("Couldn't clean up $mnt_dir");
+} else {      # ia64
+
+    # mount the loop device
+    mount_loop_device($temp_file, $mnt_dir,"Mounting temporary image in loopback mode...");
+    # copy stuff to image
+    SystemImager::Server->copy_boot_files_to_boot_media($kernel, $initrd, $local_cfg, $arch, $mnt_dir, $append_string)
+      or croak("Couldn't copy required files into the image!");
+
+    # Umount the loopback device
+    mysystem("umount $mnt_dir","Un-mounting temporary image...") or
+      croak("Couldn't un-mount temporary from $mnt_dir/tmp!");
+    # and clean it up
+    rmtree("$mnt_dir") or croak("Couldn't clean up $mnt_dir");
+}
 
 my $mkisofscmd = "";
 
@@ -227,15 +244,19 @@ $mkisofscmd  = "mkisofs -J -r -T -v -pad";
 $mkisofscmd .= " -A \"SystemImager $arch Autoinstallcd v$VERSION\"";
 $mkisofscmd .= " -V \"SystemImager $arch Boot CD\"";
 $mkisofscmd .= " -p \"Created by si_mkautoinstallcd -- part of SystemImager.  http://systemimager.org/\"";
-$mkisofscmd .= " -b boot/siboot.img -c boot/boot.catalog";
-$mkisofscmd .= " -no-emul-boot -boot-load-size 1";
+if (($arch eq "i386") || ($arch eq "x86_64")) {
+    $mkisofscmd .= " -b isolinux/isolinux.bin -c isolinux/boot.catalog";
+} else {
+    $mkisofscmd .= " -b boot/siboot.img -c boot/boot.catalog";
+}
+$mkisofscmd .= " -no-emul-boot -boot-load-size 4 -boot-info-table";
 $mkisofscmd .= " -o $out_file .";
 
 mysystem($mkisofscmd,"Making the ISO image now") or
   croak("Couldn't build the ISO image!");
 chdir($olddir);
 
-print "Removing temporary mount point...\n" unless $quiet;
+print "Removing temporary directory point...\n" unless $quiet;
 rmtree("$temp_dir") or croak("Couldn't remove temporary working directory '$temp_dir'!");
 
 unless($quiet) {
@@ -253,8 +274,8 @@ EOF
 # build_loopfile builds the right size file to mount as loop for each architecture
 sub build_loopfile {
     my $outfile = shift;
-    if( ($arch eq "i386") || ($arch eq "x86_64") ) {
-        return mysystem("dd if=/dev/zero of=$outfile bs=1k count=4320");
+    if(($arch eq "i386") || ($arch eq "x86_64")) {
+        return mysystem("dd if=/dev/zero of=$outfile bs=1k count=2880");
     } elsif ($arch eq "ia64") {
         return mysystem("dd if=/dev/zero of=$outfile bs=1024k count=10");
     }
@@ -265,7 +286,7 @@ sub build_loopfile {
 
 sub mount_loop_device {
     my ($temp_file, $mnt_dir, $msg) = @_;
-    if( ($arch eq "i386") || ($arch eq "x86_64") ) {
+    if(($arch eq "i386") || ($arch eq "x86_64")) {
         mysystem("mount -t msdos -o loop $temp_file $mnt_dir",$msg) or
           croak("Couldn't mount temporary image in loopback mode!");
     } elsif ($arch eq "ia64") {
