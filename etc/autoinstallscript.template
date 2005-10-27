@@ -245,13 +245,14 @@ else
         mkdir -p ${DIR}
 
         logmsg "rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ ${DIR}/" 
-        rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ ${DIR}/ || shellout 
+        rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --exclude=/proc/* --numeric-ids \
+              ${IMAGESERVER}::${IMAGENAME}/ ${DIR}/ || shellout 
 
         # Move from staging in tmpfs to disk
         rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${DIR}/ /a/
     else
-        logmsg "rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ /a/" 
-        rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ /a/ || shellout 
+        logmsg "rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --exclude=/proc/* --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ /a/" 
+        rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --exclude=/proc/* --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ /a/ || shellout 
     fi
 fi 
 
