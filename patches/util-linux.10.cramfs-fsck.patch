@@ -1,0 +1,26 @@
+#
+#   $Id:$
+#
+#   Patch taken from Debian package for util-linux. -BEF-
+#
+
+--- util-linux-2.12p.orig/disk-utils/fsck.cramfs.c
++++ util-linux-2.12p/disk-utils/fsck.cramfs.c
+@@ -95,7 +95,7 @@
+ static unsigned long read_buffer_block = ~0UL;
+ 
+ /* Uncompressing data structures... */
+-static char outbuffer[PAGE_CACHE_SIZE*2];
++static char *outbuffer;
+ z_stream stream;
+ 
+ #endif /* INCLUDE_FS_TESTS */
+@@ -464,6 +464,8 @@
+ 	int c;			/* for getopt */
+ 	int start = 0;
+ 
++	outbuffer=(char*)malloc(PAGE_CACHE_SIZE*2);
++
+ 	if (argc)
+ 		progname = argv[0];
+ 
