@@ -72,13 +72,23 @@ o   Reference Material
 o   Checkout Steps for Developers
     (You should be able to just copy and paste commands 2-5)
 
+    MY_USERNAME=finley
+
     o  Development trunk:
 
-	svn checkout svn+ssh://username@svn.sisuite.org/var/lib/svn/systemimager/trunk/ systemimager/
+	svn checkout svn+ssh://$MY_USERNAME@svn.sisuite.org/var/lib/svn/systemimager/trunk si.trunk/
 
-    o  Branch 3.4.x as an example:
 
-	svn checkout svn+ssh://username@svn.sisuite.org/var/lib/svn/systemimager/branches/3.4.x/ si-3.4.x/
+    o  A particular revision of the development trunk:
+
+	REVISION=3256
+	svn checkout -r $REVISION svn+ssh://$MY_USERNAME@svn.sisuite.org/var/lib/svn/systemimager/trunk si.$REVISION/
+
+
+    o  A particular branch:
+
+	BRANCH=3.4.x
+	svn checkout svn+ssh://$MY_USERNAME@svn.sisuite.org/var/lib/svn/systemimager/branches/$BRANCH si.$BRANCH/
 
 
 
