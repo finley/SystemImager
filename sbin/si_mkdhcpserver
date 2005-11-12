@@ -133,7 +133,8 @@ chomp $continue;
 my $dhcpd_conf;
 my $dhcpd_version = "2";
 my $dhcpd_patch = "n";
-my $dnsdomainname = "localdomain.domain";
+my $dnsdomainname = `dnsdomainname`;
+chomp $dnsdomainname;
 my $netnumber = "192.168.1.0";
 my $netmask = "255.255.255.0";
 my $rangebegin = "192.168.1.1";
@@ -491,7 +492,7 @@ if ($dhcpd_version eq "2") {
 
 # close and chmod the new dhcpd.conf file
 close(DHCPDCONF);
-system("chmod 600 $dhcpd_conf");
+system("chmod 660 $dhcpd_conf");
 
 
 # Oh where oh where could my leases file directory be?
@@ -537,8 +538,9 @@ is connected to your DHCP clients.  Here's an example:
  Change "/usr/sbin/dhcpd" to "/usr/sbin/dhcpd eth1".
 
 Depending on your distribution, you may be able to set this with the 
-"INTERFACES" variable in either "/etc/default/dhcp" or in your dhcpd
-initialization script (usually "/etc/init.d/dhcpd").
+"INTERFACES" variable in "/etc/default/dhcp", "/etc/default/dhcp3-server",
+or similar, or in your dhcpd initialization script ("/etc/init.d/dhcpd", 
+"/etc/init.d/dhcp3-server", or similar).
 
 Also, be sure to start or restart your dhcpd daemon.  This can usually
 be done with a command like "/etc/init.d/dhcpd restart" or similar.
