@@ -67,7 +67,9 @@ STAMP_DIR = $(INITRD_SRC_DIR)
 INITRD_BUILD_DIR = $(INITRD_DIR)/build_dir
 
 SKEL_FILES = $(shell find $(INITRD_DIR)/skel -not -regex '.*/CVS.*' -and \
-                                 -not -regex '.*/CVS')
+                                 -not -regex '.*/CVS' -and \
+                                 -not -regex '.*/.svn.*' -and \
+                                 -not -regex '.*/.svn')
 
 MKCRAMFS = $(shell which mkcramfs || which mkfs.cramfs || \
              echo MKCRAMFS_WAS_NOT_FOUND_IN_YOUR_PATH)
@@ -198,6 +200,7 @@ endif
 
 	# Clear out CVS cruft.
 	find $(INITRD_BUILD_DIR) -type d -name CVS -depth | xargs rm -rf
+	find $(INITRD_BUILD_DIR) -type d -name .svn -depth | xargs rm -rf
 	mkdir $(INITRD_BUILD_DIR)/new_root
 
 	touch $(INITRD_DIR)/build_dir-stamp
