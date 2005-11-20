@@ -588,7 +588,7 @@ sub option_144 {
     my $value = shift;
 
     print DHCPDCONF qq(  # \n);
-    print DHCPDCONF qq(  # option-144 tells your autoinstallclient to spool the image into a tmpfs\n);
+    print DHCPDCONF qq(  # option-144 tells your auto-install client to spool the image into a tmpfs\n);
     print DHCPDCONF qq(  # prior to laying it down on disk.  It is not certain that this is always\n);
     print DHCPDCONF qq(  # a good thing to do.  And if you're feeling gutsy and want to try it, be\n);
     print DHCPDCONF qq(  # sure that your (memory + swap) is at least twice the size of your image\n);
