@@ -1,5 +1,5 @@
 #
-#	$Id:$
+#	$Id$
 #
 
 UCLIBC_VERSION := 0.9.28
@@ -51,20 +51,20 @@ $(INITRD_SRC_DIR)/$(UCLIBC_DIR)/.config: $(INITRD_SRC_DIR)/$(UCLIBC_TARBALL) $(U
 
 $(INITRD_SRC_DIR)/uclibc_dev-stamp:	$(INITRD_SRC_DIR)/uclibc_build-stamp
 	mkdir -p $(UCLIBC_DEV)
-	$(MAKE) -C $(INITRD_SRC_DIR)/$(UCLIBC_DIR) install_dev
-	$(MAKE) -C $(INITRD_SRC_DIR)/$(UCLIBC_DIR)/debian/gcc-uClibc
-	$(MAKE) -C $(INITRD_SRC_DIR)/$(UCLIBC_DIR)/debian/gcc-uClibc install
+	$(MAKE) -j $(NCPUS) -C $(INITRD_SRC_DIR)/$(UCLIBC_DIR) install_dev
+	$(MAKE) -j $(NCPUS) -C $(INITRD_SRC_DIR)/$(UCLIBC_DIR)/debian/gcc-uClibc
+	$(MAKE) -j $(NCPUS) -C $(INITRD_SRC_DIR)/$(UCLIBC_DIR)/debian/gcc-uClibc install
 		DEVEL_PREFIX=$(UCLIBC_DEV) TARGET_ARCH=$(ARCH)
 	touch $(INITRD_SRC_DIR)/uclibc_dev-stamp
 
 $(INITRD_SRC_DIR)/uclibc_runtime-stamp:	$(INITRD_SRC_DIR)/uclibc_build-stamp \
 	                                $(INITRD_SRC_DIR)/uclibc_dev-stamp
-	$(MAKE) -C $(INITRD_SRC_DIR)/$(UCLIBC_DIR) install_runtime
+	$(MAKE) -j $(NCPUS) -C $(INITRD_SRC_DIR)/$(UCLIBC_DIR) install_runtime
 	touch $(INITRD_SRC_DIR)/uclibc_runtime-stamp
 
 $(INITRD_SRC_DIR)/uclibc_build-stamp:	$(INITRD_SRC_DIR)/$(UCLIBC_DIR)/.config \
 					$(SRC_DIR)/patched_kernel-stamp
-	$(MAKE) -C $(INITRD_SRC_DIR)/$(UCLIBC_DIR)
+	$(MAKE) -j $(NCPUS) -C $(INITRD_SRC_DIR)/$(UCLIBC_DIR)
 	touch $(INITRD_SRC_DIR)/uclibc_build-stamp
 
 PHONY += uclibc_clean

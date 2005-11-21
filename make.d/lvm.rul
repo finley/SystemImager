@@ -35,7 +35,7 @@ $(DEVMAPPER_BINARY):	$(SRC_DIR)/$(DEVMAPPER_TARBALL)
 	cd $(SRC_DIR) && tar -xvzf $(DEVMAPPER_TARBALL)
 	cd $(SRC_DIR)/$(DEVMAPPER_DIR) && \
 		./configure --prefix=/usr --disable-nls --with-optimisation=-Os
-	$(MAKE) -C $(SRC_DIR)/$(DEVMAPPER_DIR)
+	$(MAKE) -j $(NCPUS) -C $(SRC_DIR)/$(DEVMAPPER_DIR)
 	ln -s $(DEVMAPPER_BINARY) $(DEVMAPPER_BINARY).$(basename $(DEVMAPPER_VERSION))
 
 $(SRC_DIR)/$(DEVMAPPER_TARBALL):
@@ -53,7 +53,7 @@ $(LVM_BINARY):	$(SRC_DIR)/$(LVM_TARBALL) $(DEVMAPPER_BINARY)
                 ./configure --prefix=/usr --disable-nls --with-optimisation=-Os
 	LIBRARY_PATH=$(SRC_DIR)/$(DEVMAPPER_DIR)/lib/ioctl \
             CPATH=$(SRC_DIR)/$(DEVMAPPER_DIR)/lib \
-            $(MAKE) -C $(SRC_DIR)/$(LVM_DIR)
+            $(MAKE) -j $(NCPUS) -C $(SRC_DIR)/$(LVM_DIR)
 
 $(SRC_DIR)/$(LVM_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)

@@ -1,3 +1,6 @@
+#
+#	$Id$
+#
 BC_VERSION := 1.06
 BC_DIR := bc-$(BC_VERSION)
 BC_TARBALL := bc-$(BC_VERSION).tar.gz
@@ -11,7 +14,7 @@ bc:	$(BC_BINARY)
 $(BC_BINARY):	$(SRC_DIR)/$(BC_TARBALL)
 	[ -d $(SRC_DIR)/$(BC_DIR) ] || ( cd $(SRC_DIR) && tar -xvzf $(BC_TARBALL) )
 	( cd $(SRC_DIR)/$(BC_DIR) && ./configure )
-	$(MAKE) -C $(SRC_DIR)/$(BC_DIR)
+	$(MAKE) -j $(NCPUS) -C $(SRC_DIR)/$(BC_DIR)
 
 $(SRC_DIR)/$(BC_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)

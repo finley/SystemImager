@@ -45,7 +45,7 @@ install_standard_raidtools:	$(RAIDTOOLS_BINARIES)
 
 $(RAIDTOOLS_BINARIES): $(RAIDTOOLS_PATCHES) $(POPT_LIBRARY) $(SRC_DIR)/patched_kernel-stamp  
 	rm -rf $(SRC_DIR)/$(RAIDTOOLS_DIR)
-	$(MAKE) $(SRC_DIR)/$(RAIDTOOLS_TARBALL)
+	$(MAKE) -j $(NCPUS) $(SRC_DIR)/$(RAIDTOOLS_TARBALL)
 	[ -d $(SRC_DIR)/$(RAIDTOOLS_DIR) ] || \
 	    ( cd $(SRC_DIR) && tar -xvzf $(RAIDTOOLS_TARBALL) )
 	cd $(SRC_DIR)/$(RAIDTOOLS_DIR) && \
@@ -57,7 +57,7 @@ $(RAIDTOOLS_BINARIES): $(RAIDTOOLS_PATCHES) $(POPT_LIBRARY) $(SRC_DIR)/patched_k
 # This rule seems to hose iSeries builds, not sure why	
 	perl -pi -e 's{-O2}{-O2 -I$(LINUX_SRC)/linux/include -I$(SRC_DIR)/$(POPT_DIR)}' \
 	    $(SRC_DIR)/$(RAIDTOOLS_DIR)/Makefile
-	$(MAKE) -C $(SRC_DIR)/$(RAIDTOOLS_DIR)
+	$(MAKE) -j $(NCPUS) -C $(SRC_DIR)/$(RAIDTOOLS_DIR)
 
 # download the raidtools tarball
 $(SRC_DIR)/$(RAIDTOOLS_TARBALL):

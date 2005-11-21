@@ -20,7 +20,7 @@ $(TAR_BINARY):	$(SRC_DIR)/$(TAR_TARBALL)
 	( cd $(SRC_DIR) && tar -xvzf $(TAR_TARBALL) )
 	cd $(SRC_DIR)/$(TAR_DIR) && cat $(TAR_PATCHES) < /dev/null | patch -p1
 	( cd $(SRC_DIR)/$(TAR_DIR) && ./configure )
-	$(MAKE) -C $(SRC_DIR)/$(TAR_DIR)
+	$(MAKE) -j $(NCPUS) -C $(SRC_DIR)/$(TAR_DIR)
 
 $(SRC_DIR)/$(TAR_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)

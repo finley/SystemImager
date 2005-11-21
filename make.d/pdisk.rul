@@ -27,7 +27,7 @@ pdisk:	$(PDISK_BINARY)
 $(PDISK_BINARY):	$(SRC_DIR)/$(PDISK_TARBALL)
 	[ -d $(SRC_DIR)/$(PDISK_DIR) ] || ( cd $(SRC_DIR) && tar -xvf $(PDISK_TARBALL) && \
 		(cd $(PDISK_DIR) && (cat $(PDISK_PATCHES) < /dev/null | patch -p1)))
-	$(MAKE) -C $(SRC_DIR)/$(PDISK_DIR) CFLAGS="-O2 -Wall"
+	$(MAKE) -j $(NCPUS) -C $(SRC_DIR)/$(PDISK_DIR) CFLAGS="-O2 -Wall"
 
 $(SRC_DIR)/$(PDISK_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)

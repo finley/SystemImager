@@ -21,7 +21,7 @@ $(HFSUTILS_BINARY):	$(SRC_DIR)/$(HFSUTILS_TARBALL)
 	[ -d $(SRC_DIR)/$(HFSUTILS_DIR) ] || ( cd $(SRC_DIR) && tar xvfz $(HFSUTILS_TARBALL) && \
 		(cd $(HFSUTILS_DIR) && (cat $(HFSUTILS_PATCHES) < /dev/null | patch -p1)))
 	( cd $(SRC_DIR)/$(HFSUTILS_DIR) && chmod +x ./configure && CFLAGS="-O2 -Wall" ./configure )
-	$(MAKE) -C $(SRC_DIR)/$(HFSUTILS_DIR)
+	$(MAKE) -j $(NCPUS) -C $(SRC_DIR)/$(HFSUTILS_DIR)
 
 $(SRC_DIR)/$(HFSUTILS_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)

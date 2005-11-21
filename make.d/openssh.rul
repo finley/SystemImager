@@ -55,7 +55,7 @@ $(OPENSSH_BINARIES):	$(SRC_DIR)/openssh_verify.stamp $(OPENSSL_BINARIES)
 	  --without-sectok --without-kerberos5 --without-kerberos4 \
 	  --without-afs --without-md5-passwords --without-bsd-auth \
 	  --with-xauth=no --sysconfdir=/etc/ssh $(SSH_BUILD_CONFIG)
-	$(MAKE) -C $(SRC_DIR)/$(OPENSSH_DIR)
+	$(MAKE) -j $(NCPUS) -C $(SRC_DIR)/$(OPENSSH_DIR)
 
 $(SRC_DIR)/openssh_verify.stamp:	$(OPENSSH_TARBALL_TARGET)
 	[ "$(shell md5sum $(OPENSSH_TARBALL_TARGET) | cut -d' ' -f1)" == "$(OPENSSH_MD5SUM)" ]

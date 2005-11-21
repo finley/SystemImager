@@ -28,7 +28,7 @@ $(MKREISERFS_BINARY):	$(SRC_DIR)/$(REISERFSPROGS_TARBALL)
 	      (cat $(REISERFSPROGS_PATCHES) < /dev/null | patch -p1)))
 	( cd $(SRC_DIR)/$(REISERFSPROGS_DIR) && chmod +x ./configure && \
 	  CFLAGS="-O2 -Wall" ./configure )
-	$(MAKE) -C $(SRC_DIR)/$(REISERFSPROGS_DIR)
+	$(MAKE) -j $(NCPUS) -C $(SRC_DIR)/$(REISERFSPROGS_DIR)
 
 $(SRC_DIR)/$(REISERFSPROGS_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)

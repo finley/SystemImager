@@ -31,7 +31,7 @@ $(MKJFS_BINARY):	$(SRC_DIR)/$(JFSUTILS_TARBALL)
 	    	( cd $(SRC_DIR)/$(JFSUTILS_DIR) && chmod +x ./configure && \
 	 	 CPPFLAGS=-I$(SRC_DIR)/$(E2FSPROGS_DIR)/lib CFLAGS="-O2 -Wall -I$(SRC_DIR)/$(E2FSPROGS_DIR)/lib" LDFLAGS=-L$(SRC_DIR)/$(E2FSPROGS_DIR)/lib \
 	  	./configure ) )
-	$(MAKE) -C $(SRC_DIR)/$(JFSUTILS_DIR)
+	$(MAKE) -j $(NCPUS) -C $(SRC_DIR)/$(JFSUTILS_DIR)
 
 $(SRC_DIR)/$(JFSUTILS_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)

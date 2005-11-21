@@ -24,7 +24,7 @@ $(TUNE2FS_BINARY) $(MKE2FS_BINARY):	$(SRC_DIR)/$(E2FSPROGS_TARBALL)
 	[ -d $(SRC_DIR)/$(E2FSPROGS_DIR) ] || ( cd $(SRC_DIR) && tar -xvzf $(E2FSPROGS_TARBALL) )
 	chmod -R u+rw $(SRC_DIR)/$(E2FSPROGS_DIR)
 	( cd $(SRC_DIR)/$(E2FSPROGS_DIR) && chmod +x ./configure && ./configure  $(E2FSPROGS_CONFIGURE) )
-	$(MAKE) -C $(SRC_DIR)/$(E2FSPROGS_DIR)
+	$(MAKE) -j $(NCPUS) -C $(SRC_DIR)/$(E2FSPROGS_DIR)
 
 # download the e2fsprogs tarball
 $(SRC_DIR)/$(E2FSPROGS_TARBALL):

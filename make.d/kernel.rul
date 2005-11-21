@@ -126,9 +126,6 @@ install_kernel:	$(LINUX_IMAGE)
 	$(SI_INSTALL) -m 644 $(LINUX_CONFIG) \
 	    $(BOOT_BIN_DEST)/config
 
-# determine number of CPUs of current machine for parallel build
-NCPUS = $(shell grep -c ^processor /proc/cpuinfo)
-
 # build the kernel that autoinstall clients will boot from during
 # autoinstallation
 PHONY += kernel

@@ -15,7 +15,7 @@ $(GZIP_BINARY):	$(SRC_DIR)/$(GZIP_TARBALL)
 	cd $(SRC_DIR) && tar -xvzf $(GZIP_TARBALL)
 	cd $(SRC_DIR)/$(GZIP_DIR) && cat $(GZIP_PATCHES) < /dev/null | patch -p1
 	cd $(SRC_DIR)/$(GZIP_DIR) && ./configure
-	$(MAKE) -C $(SRC_DIR)/$(GZIP_DIR)
+	$(MAKE) -j $(NCPUS) -C $(SRC_DIR)/$(GZIP_DIR)
 
 $(SRC_DIR)/$(GZIP_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)

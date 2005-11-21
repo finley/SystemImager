@@ -41,9 +41,9 @@ $(OPENSSL_BINARIES):	$(SRC_DIR)/openssl_verify.stamp $(ZLIB_LIBRARY)
 	  ./Configure --prefix=/usr --openssldir=/usr/lib/ssl \
 	  -I$(SRC_DIR)/$(ZLIB_DIR) -L$(SRC_DIR)/$(ZLIB_DIR) \
 	  no-idea no-mdc2 no-rc5 no-krb5 zlib $(OPENSSL_SYSTEM)
-	$(MAKE) -C $(SRC_DIR)/$(OPENSSL_DIR) RPM_OPT_FLAGS="$(RPM_OPT_FLAGS) \
+	$(MAKE) -j $(NCPUS) -C $(SRC_DIR)/$(OPENSSL_DIR) RPM_OPT_FLAGS="$(RPM_OPT_FLAGS) \
 	  -Wa,--noexecstack" depend
-	$(MAKE) -C $(SRC_DIR)/$(OPENSSL_DIR) RPM_OPT_FLAGS="$(RPM_OPT_FLAGS) \
+	$(MAKE) -j $(NCPUS) -C $(SRC_DIR)/$(OPENSSL_DIR) RPM_OPT_FLAGS="$(RPM_OPT_FLAGS) \
 	  -Wa,--noexecstack"
 
 $(SRC_DIR)/openssl_verify.stamp:	$(OPENSSL_TARBALL_TARGET)

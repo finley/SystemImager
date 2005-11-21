@@ -1,5 +1,5 @@
 #
-#	$Id:$
+#	$Id$
 #
 #	2005.11.06 Brian Elliott Finley
 #	- up version to 2.7.3
@@ -39,7 +39,7 @@ $(MKXFS_BINARY):	$(SRC_DIR)/$(XFSPROGS_TARBALL)
 	  cat $(XFSPROGS_PATCHES) < /dev/null | patch -p1
 	chmod +x $(SRC_DIR)/$(XFSPROGS_DIR)/configure
 	cd $(SRC_DIR)/$(XFSPROGS_DIR) && ./configure
-	$(MAKE) -C $(SRC_DIR)/$(XFSPROGS_DIR)
+	$(MAKE) -j $(NCPUS) -C $(SRC_DIR)/$(XFSPROGS_DIR)
 
 $(SRC_DIR)/$(XFSPROGS_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
