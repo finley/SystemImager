@@ -155,6 +155,10 @@ ifneq ($(BUILD_ARCH),)
 	ARCH := $(BUILD_ARCH)
 endif
 
+#
+# To be used by "make" for rules that can take it!
+NCPUS := $(shell egrep -c '^processor' /proc/cpuinfo )
+
 MANUAL_DIR = $(TOPDIR)/doc/manual_source
 MANPAGE_DIR = $(TOPDIR)/doc/man
 PATCH_DIR = $(TOPDIR)/patches
@@ -632,7 +636,7 @@ $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2: systemimager.spec
 	mkdir -p tmp/
 	svn export . $(TOPDIR)/tmp/systemimager-$(VERSION)
 	cd $(TOPDIR)/tmp/systemimager-$(VERSION) && ./configure
-	$(MAKE) -C   $(TOPDIR)/tmp/systemimager-$(VERSION) get_source
+	$(MAKE) -j $(NCPUS) -C $(TOPDIR)/tmp/systemimager-$(VERSION) get_source
 	$(MAKE) -C   $(TOPDIR)/tmp/systemimager-$(VERSION) clean
 ifeq ($(UNSTABLE), 1)
 	cd $(TOPDIR)/tmp/systemimager-$(VERSION) && cp README README.tmp
