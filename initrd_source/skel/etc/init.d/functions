@@ -68,17 +68,6 @@ FLAVOR="SYSTEMIMAGER_FLAVOR_STRING"
 #
 ################################################################################
 #
-# create_initial_device_files
-#
-# Usage: create_initial_device_files
-#
-create_initial_device_files() {
-    mknod -m 660 /dev/console c 5 1 
-    mknod -m 660 /dev/null c 1 3
-}
-
-
-#
 #  logmsg
 #
 # Usage: log a message, redirects to console / syslog depending on usage

@@ -45,8 +45,6 @@
 #		udev is properly up and running. If not applied, the kernel will die with the
 #		message:
 #			Warning: unable to open initial console.
-#	2005.11.11 Brian Elliott Finley
-#	- move mknod bits to rcS -- if we leave them in here, then you have to be root to build.
 #
 
 
@@ -125,6 +123,9 @@ $(INITRD_DIR)/build_dir-stamp:	$(SKEL_FILES) \
 	cd $(INITRD_BUILD_DIR) && \
 	  mkdir -m 755 bin dev etc lib proc root sbin usr var
 	test ! -d /lib64 || mkdir -m 755 -p $(INITRD_BUILD_DIR)/lib64
+	cd $(INITRD_BUILD_DIR)/dev && \
+	  mknod -m 660 console c 5 1 && \
+	  mknod -m 660 null c 1 3
 	cd $(INITRD_BUILD_DIR) && \
 	  mkdir -m 755 usr/bin usr/sbin etc/init.d var/run
 	cd $(INITRD_BUILD_DIR) && mkdir -m 1777 tmp
@@ -275,5 +276,6 @@ initrd_distclean:	initrd_clean
 
 .PHONY:	all build_dir install get_source help helpless clean distclean \
 	$(subst .rul,,$(shell cd make.d && ls *.rul)) uclibc_dev
+
 
 # /* vi: set ai noet ts=4: */
