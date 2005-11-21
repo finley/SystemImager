@@ -441,9 +441,6 @@ sub _create_new_initrd($$) {
         print ">>> Filesystem for new initrd:  $fs\n" if( $verbose );
         print ">>> Creating new initrd from:   $staging_dir\n" if( $verbose );
 
-        # Sean Dague's little jewel that helps keep the size down. -BEF-
-        run_cmd("find $staging_dir -depth -type f -exec touch -t 196912311900 '{}' ';'");
-
         switch ($fs) {                                             # Sizes from a sample run with the same data
                 case 'cramfs'   { _create_initrd_cramfs(   $staging_dir, $boot_dir) }       # 1107131 bytes
                 case 'ext2'     { _create_initrd_ext2(     $staging_dir, $boot_dir) }       # 1011284 bytes
