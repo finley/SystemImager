@@ -40,12 +40,13 @@
 #
 switch_root_to_tmpfs
 
-mount_dev_on_devfs
-
 mount_proc
 
+mount_dev_on_devfs
+
 # this must be here to avoid read only fs errors, or other ugly stuff. -BEF-
-check_version
+# this is no longer needed to use UYOK features. -AR-
+# check_version
 
 get_arch
 

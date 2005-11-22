@@ -580,7 +580,7 @@ switch_root_to_tmpfs() {
     mkdir -p /new_root || shellout
     mount tmpfs /new_root -t tmpfs $tmpfs_opts || shellout
     cd / || shellout
-    rsync -a --exclude='/proc' --exclude='/dev' * /new_root/ || shellout
+    rsync -a --exclude='/proc' * /new_root/ || shellout
     cd /new_root || shellout
     mkdir -p old_root || shellout
     pivot_root . old_root || shellout
@@ -597,9 +597,28 @@ switch_root_to_tmpfs() {
 #
 ################################################################################
 #
+# Now mount proc. -BEF-
+mount_proc() {
+    logmsg
+    logmsg mount_proc
+    mkdir -p proc || shellout
+    mount proc /proc -t proc || shellout
+}
+#
+################################################################################
+#
 mount_dev_on_devfs() {
     logmsg
     logmsg mount_dev_on_devfs
+
+    # Check if the kernel supports devfs.
+    if ! $(cat /proc/filesystems | sed "s/^nodev//" | sed "s/^[[:space:]]*//" | \
+            grep "^devfs$" >/dev/null 2>&1); then
+        logmsg "Filesystem devfs is not supported by the kernel."
+        logmsg "Trying to use the current /dev..."
+        return
+    fi
+
     # Re-mount /dev on devfs. -BEF-
     mkdir -p /dev || shellout
     mount devfs /dev -t devfs || shellout
@@ -608,16 +627,6 @@ mount_dev_on_devfs() {
     echo -n '>>> '
     /sbin/devfsd /dev || shellout
 
-}
-#
-################################################################################
-#
-# Now mount proc. -BEF-
-mount_proc() {
-    logmsg
-    logmsg mount_proc
-    mkdir -p proc || shellout
-    mount proc /proc -t proc || shellout
 }
 #
 ################################################################################
