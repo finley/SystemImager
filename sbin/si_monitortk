@@ -113,6 +113,7 @@ my (
 	$sub_win,
 	$sub_tab,
 	$sub_title,
+    $sub_mac_addr,
 );
 
 # Create the main window.
@@ -269,11 +270,8 @@ sub show_virtual_console
 	# Display the hostname or the IP address in the title.
 	$sub_win->title('Client: ' . ("$hostname" ne '-' ? "$hostname" : "$ip"));
 
-	# Define a label to keep the MAC address of the client.
-	# This label will be not shown.
-	$sub_title = $sub_win->Label(
-		-text   => "$mac", 
-	);
+	# Store MAC address of the selected client.
+    $sub_mac_addr = $mac;
 
 	# Console body.
 	$sub_tab = $sub_win->Scrolled(
@@ -305,8 +303,8 @@ sub show_virtual_console
 #	Refresh the virtual console view.
 sub refresh_console
 {
-	# Get mac address.
-	my $mac = $sub_title->cget('text');
+	# Get mac address of the client to monitor.
+    my $mac = $sub_mac_addr;
 
 	# Open and read lock the database.
 	open(LOCK, ">", "$lock_file") or
