@@ -539,14 +539,15 @@ sub _create_initrd_ext2($$) {
         # loopback file
         chomp(my $size = `du -ks $staging_dir`);
         $size =~ s/\s+.*$//;
-        my $breathing_room = 100;
+        my $breathing_room = 2000;
         $size = $size + $breathing_room;
         run_cmd("dd if=/dev/zero of=$new_initrd bs=1024 count=$size", $verbose, 1);
 
         # fs creation
         chomp(my $inodes = `find $staging_dir -printf "%i\n" | sort -u | wc -l`);
         $inodes = $inodes + 10;
-        run_cmd("mke2fs -m 0 -N $inodes -F $new_initrd", $verbose, 1);
+        run_cmd("mke2fs -b 1024 -m 0 -N $inodes -F $new_initrd", $verbose, 1);
+        run_cmd("tune2fs -i 0 $new_initrd", $verbose, 1);
 
         # mount
         run_cmd("mount $new_initrd $new_initrd_mount_dir -o loop -t ext2", $verbose);
@@ -558,6 +559,9 @@ sub _create_initrd_ext2($$) {
         run_cmd("umount $new_initrd_mount_dir", $verbose);
         run_cmd("gzip -9 -S .img $new_initrd", $verbose);
         run_cmd("ls -l $new_initrd.img", $verbose, 1) if($verbose);
+
+        # cleanup the temporary mount dir
+        run_cmd("rm -fr $new_initrd_mount_dir", $verbose, 1);
 
         return 1;
 }
