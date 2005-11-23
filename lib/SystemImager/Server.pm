@@ -471,7 +471,7 @@ sub _read_partition_info_and_prepare_parted_commands {
         print $out "$cmd\n\n";
 
         print $out "# Get the size of the destination disk so that we can make the partitions fit properly.\n";
-        print $out qq(DISK_SIZE=`parted -s $devfs_dev print ) . q(| grep 'Disk geometry for' | sed 's/^.*-//g' | sed 's/\..*$//' `) . qq(\n);
+        print $out qq(DISK_SIZE=`echo \$(sfdisk -s $devfs_dev) / 1024 | bc`) . qq(\n);
         print $out q([ -z $DISK_SIZE ] && shellout) . qq(\n);
 
         print $out q(if [ "$ARCH" = "alpha" ]; then) . qq(\n);	
@@ -1413,6 +1413,7 @@ sub _write_out_mkfs_commands {
             print $out qq(mkraid --really-force $real_dev || shellout\n)
                 unless (defined($xml_config->{raid}));
         } elsif( $real_dev =~ /^(.*?)(p?\d+)$/ ) {
+            unless($dev2disk{$1}) { next; }
             $real_dev = "\${".$dev2disk{$1}."}".$2;
         }
 
