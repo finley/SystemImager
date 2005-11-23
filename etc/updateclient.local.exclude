@@ -27,6 +27,11 @@
 /var/run/*
 /var/spool/*
 
+# LVM stuff: exclude metadata backups, archiving and cache.
+/etc/lvm/backup/*
+/etc/lvm/archive/*
+/etc/lvm/.cache
+
 # This is to avoid overwriting ext3 journal files.  ext3 .journal files
 # are now depricated, but may still exist on older systems.
 */.journal
