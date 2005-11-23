@@ -227,11 +227,6 @@ $tab->header('create', 9, -text => 'CPU');
 # Show the body.
 display_nodes();
 
-# Define status bar messages.
-$b->attach($tab,
-	-statusmsg  => "Status of the nodes ($database)",
-);
-
 # Display command buttons.
 show_command_buttons();
 
@@ -422,8 +417,14 @@ sub show_command_buttons
 #	Fill the main list with the status of all nodes.
 sub display_nodes
 {
+    # Statistic counters.
+    my $num_ok = 0;
+    my $num_fail = 0;
+    my $num_inst = 0;
+    my $num_unkn = 0;
+
 	# If database is empty simply quit.
-	return unless (-s $database);
+	goto status_bar_update unless (-s $database);
 
 	# Open and read lock the database.
 	open(LOCK, ">", "$lock_file") or
@@ -448,18 +449,23 @@ sub display_nodes
 		my $fg;
 		my $status = $client->{$mac}->{'status'} || 0;
 		if (!$status) {
+            $num_inst++;
 			$status = 'initializing...';
 			$fg = '#0000FF';
 		} elsif ($status < 0) {
+            $num_fail++;
 			$status = 'error!';
 			$fg = '#FF0000';
 		} elsif ($status == 100) {
+            $num_ok++;
 			$status = 'done';
 			$fg = '#009000';
 		} elsif (($status > 0) && ($status < 100)) {
+            $num_inst++;
 			$status = sprintf('%.2f%%', $status);
 			$fg = '#000000';
 		} else {
+            $num_unkn++;
 			$status = '???';
 			$fg = 'darkgrey';
 		}
@@ -523,6 +529,12 @@ sub display_nodes
 			}
 		}
 	}
+    # Update the status bar.
+status_bar_update:
+    $b->attach($tab,
+        -statusmsg  => "Managed nodes: " . ($num_ok  + $num_inst + $num_unkn + $num_fail) .
+            " ($num_ok ok, $num_inst installing, $num_unkn unknown, $num_fail error)",
+    );
 }
 
 # Usage:
