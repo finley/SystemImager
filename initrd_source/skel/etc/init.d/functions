@@ -1341,7 +1341,7 @@ send_monitor_msg() {
     fi
 
     # Remove special field separator from the message.
-    msg=`echo "$@" | sed "s/:/;/g"`
+    msg=`echo "$@" | sed 's/:/\\\x3a/g'`
 
     # Get the client mac address.
     if [ -z "$mac" ]; then

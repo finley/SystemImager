@@ -327,6 +327,9 @@ sub refresh_console
 		":> " .
 		($client{$mac}->{'log'} || '') . "\n";
 
+    # Replace escape sequences for the special field separator ':'.
+    $line =~ s/\\x3a/:/g;
+
 	# Get previous message.
 	my $last_line = $sub_tab->get('end - 2 lines', 'end - 1 lines');
 
