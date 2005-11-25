@@ -14,6 +14,13 @@
 
 ##VERSION_INFO##
 
+# Pull in variables left behind by the linuxrc script.
+# This information is passed from the linuxrc script on the autoinstall media 
+# via /tmp/variables.txt.  Apparently the shell we use in BOEL is not 
+# intelligent enough to take a "set -a" parameter.
+#
+. /tmp/variables.txt || shellout
+
 # Load functions and other variables
 . /etc/init.d/functions
 
@@ -25,13 +32,6 @@ if [ -z $NO_LISTING ]; then
 else
     VERBOSE_OPT=""
 fi
-
-# Pull in variables left behind by the linuxrc script.
-# This information is passed from the linuxrc script on the autoinstall media 
-# via /tmp/variables.txt.  Apparently the shell we use in BOEL is not 
-# intelligent enough to take a "set -a" parameter.
-#
-. /tmp/variables.txt || shellout
 
 ##SET_IMAGENAME##
 ##SET_OVERRIDES##
