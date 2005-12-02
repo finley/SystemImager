@@ -32,7 +32,7 @@ use SystemImager::Config;
 use base qw(Exporter);
 use vars qw(@EXPORT @EXPORT_OK %EXPORT_TAGS $VERSION);
 
-$VERSION = sprintf("%d.%02d", q$Revision$ =~ /(\d+)\.(\d+)/);
+$VERSION = "SYSTEMIMAGER_VERSION_STRING";
 
 @EXPORT_OK = qw(client_exists client_info addclient removeclient);
 %EXPORT_TAGS = ('all' => [@EXPORT_OK]);
