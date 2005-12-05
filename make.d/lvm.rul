@@ -63,7 +63,7 @@ ALL_SOURCE += $(SRC_DIR)/$(LVM_TARBALL)
 
 PHONY += lvm_clean
 lvm_clean:
-	rm -rf $(SRC_DIR)/$(LVM_DIR)h
+	rm -rf $(SRC_DIR)/$(LVM_DIR)
 	rm -rf $(SRC_DIR)/$(DEVMAPPER_DIR)
 
 
