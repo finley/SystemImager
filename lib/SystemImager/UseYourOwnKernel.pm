@@ -504,7 +504,7 @@ sub _create_initrd_reiserfs($$) {
         run_cmd("dd if=/dev/zero of=$new_initrd bs=1024 count=$size", $verbose, 1);
 
         # fs creation
-        run_cmd("mkreiserfs -q -s $journal_blocks $new_initrd", $verbose);
+        run_cmd("mkreiserfs -b 512 -q -s $journal_blocks $new_initrd", $verbose);
 
         # mount
         run_cmd("mount $new_initrd $new_initrd_mount_dir -o loop -t reiserfs", $verbose);
@@ -528,6 +528,18 @@ sub _create_initrd_ext2($$) {
         my $new_initrd  = $boot_dir . "/initrd";
 
         my $new_initrd_mount_dir = _mk_tmp_dir();
+
+        my $is_mounted = 0;
+
+        # cleanup routine.
+        $SIG{__DIE__} = sub {
+            my $msg = shift;
+            run_cmd("umount $new_initrd_mount_dir", $verbose, 0) if ($is_mounted);
+            unlink($new_initrd) if (-f $new_initrd);
+            run_cmd("rm -fr $staging_dir $new_initrd_mount_dir", $verbose, 1);
+            die $msg;
+        }
+
         print ">>> New initrd mount point:     $new_initrd_mount_dir\n" if($verbose);
         eval { mkpath($new_initrd_mount_dir, 0, 0755) }; 
         if ($@) { 
