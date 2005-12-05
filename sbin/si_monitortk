@@ -110,6 +110,10 @@ my (
 	$clear_clients_button,
 	$quit_button,
 	
+    # Selected node entry in the list.
+    $selected_mac_addr,
+
+    # Virtual console stuff.
 	$sub_win,
 	$sub_tab,
 	$sub_title,
@@ -155,7 +159,7 @@ $file_menu->separator();
 
 my $quit_file_menu = $file_menu->command(
 	-label    => '~Quit',
-	-command  => \&exit,
+	-command  => \&quit,
 );
 
 # Generate the "About" menu bar.
@@ -210,6 +214,7 @@ $tab = $window->Scrolled(
 	-selectmode	=> 'browse',
 	-selectbackground => 'yellow',
 	-command	=> \&show_virtual_console,
+    -browsecmd  => \&update_selected_mac,
 )->grid(qw/-sticky nsew/);
 
 # Create the header.
@@ -277,6 +282,7 @@ sub show_virtual_console
 		-foreground => 'lightgrey',
 		-font       => $FONT,
 		-setgrid    => 1,
+        -insertofftime => 0,
 	)->grid(qw/-sticky nsew/);
 	$sub_tab->insert('end',
 		"$hostname($ip):> virtual console started for client $mac.\n",
@@ -375,7 +381,7 @@ sub show_command_buttons
 	);
 	$quit_button = $buttons->Button(
 		-text      => 'Quit',
-		-command   => [\&exit],
+		-command   => [\&quit],
 		-underline => 0,
 		-pady      => 5,
 		-padx      => 5,
@@ -415,6 +421,15 @@ sub show_command_buttons
 }
 
 # Usage:
+# update_selected_mac(); 
+# Description:
+#	Set the selected client entry in the table.
+sub update_selected_mac
+{
+    $selected_mac_addr = $tab->itemCget($_[0], 0, 'text');
+}
+
+# Usage:
 # display_nodes(); 
 # Description:
 #	Fill the main list with the status of all nodes.
@@ -426,8 +441,11 @@ sub display_nodes
     my $num_inst = 0;
     my $num_unkn = 0;
 
-	# If database is empty simply quit.
-	goto status_bar_update unless (-s $database);
+    # Delete all clients.
+    $tab->delete('all');
+    unless (-s $database) {
+        goto status_bar_update;
+    }
 
 	# Open and read lock the database.
 	open(LOCK, ">", "$lock_file") or
@@ -448,7 +466,7 @@ sub display_nodes
 		# Create the entry.
 		my $row = $tab->addchild('');
 
-		# Evaluate the status.
+		# Evaluate the status and adjust the color of the entry.
 		my $fg;
 		my $status = $client->{$mac}->{'status'} || 0;
 		if (!$status) {
@@ -529,6 +547,11 @@ sub display_nodes
 					-style    => $style,
 					-text     => $val,
 				);
+                # Update selection.
+                if (defined($selected_mac_addr) && ($selected_mac_addr eq $mac)) {
+                   $tab->selectionSet($row);
+                   $tab->anchorSet($row);
+                }
 			}
 		}
 	}
@@ -538,6 +561,10 @@ status_bar_update:
         -statusmsg  => "Managed nodes: " . ($num_ok  + $num_inst + $num_unkn + $num_fail) .
             " ($num_ok ok, $num_inst installing, $num_unkn unknown, $num_fail error)",
     );
+
+    # Refresh view.
+    $tab->update();
+    $b->update();
 }
 
 # Usage:
@@ -546,7 +573,6 @@ status_bar_update:
 #	Refresh the client label.
 sub refresh
 {
-	$tab->delete('all');
 	display_nodes();
 }
 
@@ -623,6 +649,21 @@ sub clear_clients
 
 	# Refresh view.
 	refresh();
+}
+
+# Usage:
+# quit();
+# Description:
+#	Exit program.
+
+sub quit
+{
+    # Close the virtual console.
+	$sub_win->destroy() if Exists($sub_win);
+    # Close the main window.
+	$window->destroy() if Exists($window);
+    # Quit program.
+    exit(0);
 }
 
 __END__
