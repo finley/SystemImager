@@ -81,7 +81,7 @@ if(!$opt{kernel}) {
 
 if(!$opt{new_flavor}) { 
         usage();
-        print "Hint: Try the --flavor option.\n\n";
+        print "Hint: Try the --new-flavor option.\n\n";
         exit(1);
 }
 
@@ -103,8 +103,17 @@ if(!$opt{modules_dir}) {
 
         $opt{modules_dir} = "/lib/modules/$opt{uname_r}";
 }
+
+my $module_ext = "";
+if ($opt{uname_r} =~ /^2.4/) {
+	$module_ext = "o";
+} elsif ($opt{uname_r} =~ /^2.6/) {
+	$module_ext = "ko";
+}
+
 print ">>> Kernel release:             $opt{uname_r}\n" if($opt{v});
 print ">>> Using modules from:         $opt{modules_dir}\n" if($opt{v});
+print ">>> Module extension:           .$module_ext\n" if($opt{v});
 
 if(!$opt{arch}) {
         $opt{arch} = get_arch();
@@ -391,7 +400,7 @@ sub copy_new_modules
 
         # rm modules in initrd_dir
         print ">>> Removing old modules from:  $opt{staging_dir}/my_modules\n" if($opt{v});
-        unlink <$opt{staging_dir}/*.o>;
+        unlink <$opt{staging_dir}/*.$module_ext>;
 
         # read in current INSMOD_COMMANDS file
         my $file = "$opt{staging_dir}/my_modules/INSMOD_COMMANDS";
@@ -411,13 +420,13 @@ sub copy_new_modules
 
         # do copy
         foreach (@modules) {
-                run_cmd("find $opt{modules_dir} -name ${_}.o -exec cp '{}' $opt{staging_dir}/my_modules/ ';'",$opt{v},0);
+                run_cmd("find $opt{modules_dir} -name ${_}.$module_ext -exec cp '{}' $opt{staging_dir}/my_modules/ ';'",$opt{v},0);
         }
 
         # add insmod commands
         print ">>> Updating insmod commands:   $opt{staging_dir}/my_modules/INSMOD_COMMANDS\n" if($opt{v});
         foreach (@modules) {
-                push (@new_file, "insmod ${_}.o\n");
+                push (@new_file, "insmod ${_}.$module_ext\n");
         }
 
         # write out the new file
@@ -458,7 +467,7 @@ sub modify_flavor
     print FILE @new_file;
     close(FILE);
 
-    print ">> Flavor Update complete";
+    print ">> Flavor Update complete\n";
 
     system("cat $file | grep -i flavor");
 }
@@ -521,37 +530,40 @@ sub choose_file_system_for_new_initrd
         open(FILE,"<$file") or die("Couldn't open $file for reading.");
         while (<FILE>) {
                 chomp;
-                push (@filesystems, $_) if (m/(cramfs|ext2|ext3|reiserfs|xfs|jfs)/);
+                push (@filesystems, $_) if (m/(\bcramfs\b|\bext2\b|\bext3\b|\breiserfs\b|\bxfs\b|\bjfs\b)/);
         }
         close(FILE);
 
+	my $fs_list = join("", @filesystems);
+	print ">>> Filesystems:                $fs_list\n" if($opt{v});
+
         # cramfs
-        if ((grep { /cramfs/ } @filesystems) and (! -e "$opt{modules_dir}/kernel/fs/cramfs/cramfs.o")) { 
+        if ((grep { /\bcramfs\b/ } @filesystems) and (! -e "$opt{modules_dir}/kernel/fs/cramfs/cramfs.$module_ext")) { 
                 $fs = "cramfs";
         }
 
         # ext2
-        if ((grep { /ext2/ } @filesystems) and (! -e "$opt{modules_dir}/kernel/fs/ext2/ext2.o")) { 
+        if ((grep { /\bext2\b/ } @filesystems) && (! -e "$opt{modules_dir}/kernel/fs/ext2/ext2.$module_ext")) { 
                 $fs = "ext2";
         }
 
         # ext3
-        if ((grep { /ext3/ } @filesystems) and (! -e "$opt{modules_dir}/kernel/fs/ext3/ext3.o")) { 
+        if ((grep { /\bext3\b/ } @filesystems) and (! -e "$opt{modules_dir}/kernel/fs/ext3/ext3.$module_ext")) { 
                 $fs = "ext3";
         }
 
         # reiserfs
-        if ((grep { /reiserfs/ } @filesystems) and (! -e "$opt{modules_dir}/kernel/fs/reiserfs/reiserfs.o")) { 
+        if ((grep { /\breiserfs\b/ } @filesystems) and (! -e "$opt{modules_dir}/kernel/fs/reiserfs/reiserfs.$module_ext")) { 
                 $fs = "reiserfs";
         }
 
         # jfs
-        if ((grep { /jfs/ } @filesystems) and (! -e "$opt{modules_dir}/kernel/fs/jfs/jfs.o")) { 
+        if ((grep { /\bjfs\b/ } @filesystems) and (! -e "$opt{modules_dir}/kernel/fs/jfs/jfs.$module_ext")) { 
                 $fs = "jfs";
         }
 
         # xfs
-        if ((grep { /xfs/ } @filesystems) and (! -e "$opt{modules_dir}/kernel/fs/xfs/xfs.o")) { 
+        if ((grep { /\bxfs\b/ } @filesystems) and (! -e "$opt{modules_dir}/kernel/fs/xfs/xfs.$module_ext")) { 
                 $fs = "xfs";
                 print "XXX remove this warning line once xfs is tested.\n";
                 print "XXX just need to verify where the xfs module lives.\n";
