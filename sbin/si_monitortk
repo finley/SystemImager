@@ -113,12 +113,19 @@ my (
     # Selected node entry in the list.
     $selected_mac_addr,
 
+    # Field used to sort the nodes table.
+    $sort_field,
+
     # Virtual console stuff.
 	$sub_win,
 	$sub_tab,
 	$sub_title,
     $sub_mac_addr,
 );
+$sort_field = 'name';
+
+# Client attributes.
+my @attrs = qw/ip host os status time speed mem tmpfs cpu/;
 
 # Create the main window.
 $window = MainWindow->new();
@@ -162,6 +169,68 @@ my $quit_file_menu = $file_menu->command(
 	-command  => \&quit,
 );
 
+# Generate the "Edit" menu bar.
+my $edit_menu = $menubar->cascade(
+	-label     => 'Edit',
+	-underline => 0,
+	-tearoff   => 0,
+);
+my $sort_menu = $edit_menu->cascade(
+	-label     => 'Sort',
+	-underline => 0,
+	-tearoff   => 0,
+);
+$sort_menu->command(
+    -label    => '~MAC',
+    -command  => sub {$sort_field = 'name'; refresh()},
+    -state    => 'normal',
+);
+$sort_menu->command(
+    -label    => '~IP',
+    -command  => sub {$sort_field = 'ip'; refresh()},
+    -state    => 'normal',
+);
+$sort_menu->command(
+    -label    => '~Hostname',
+    -command  => sub {$sort_field = 'host'; refresh()},
+    -state    => 'normal',
+);
+$sort_menu->command(
+    -label    => '~Image',
+    -command  => sub {$sort_field = 'os'; refresh()},
+    -state    => 'normal',
+);
+$sort_menu->command(
+    -label    => '~Status',
+    -command  => sub {$sort_field = 'status'; refresh()},
+    -state    => 'normal',
+);
+$sort_menu->command(
+    -label    => '~Time',
+    -command  => sub {$sort_field = 'time'; refresh()},
+    -state    => 'normal',
+);
+$sort_menu->command(
+    -label    => '~Speed',
+    -command  => sub {$sort_field = 'speed'; refresh()},
+    -state    => 'normal',
+);
+$sort_menu->command(
+    -label    => '~RAM',
+    -command  => sub {$sort_field = 'mem'; refresh()},
+    -state    => 'normal',
+);
+$sort_menu->command(
+    -label    => '~RAM used',
+    -command  => sub {$sort_field = 'tmpfs'; refresh()},
+    -state    => 'normal',
+);
+$sort_menu->command(
+    -label    => '~CPU',
+    -command  => sub {$sort_field = 'cpu'; refresh()},
+    -state    => 'normal',
+);
+
 # Generate the "About" menu bar.
 my $help_menu = $menubar->cascade(qw/-label Help -underline 0 -tearoff 0 -menuitems/ => [
 	[command => '~About'],
@@ -201,7 +270,7 @@ $status_bar = $window->Label(
 );
 
 # Define the balloon structure.
-my $b = $window->Balloon(-statusbar => $status_bar);
+my $bal = $window->Balloon(-statusbar => $status_bar);
 
 # Create the table of nodes status.
 $tab = $window->Scrolled(
@@ -209,7 +278,7 @@ $tab = $window->Scrolled(
 	-header		=> 1,
 	-columns	=> 10,
 	-scrollbars	=> 'se',
-	-width		=> 100,
+	-width		=> 110,
 	-height		=> 25,
 	-selectmode	=> 'browse',
 	-selectbackground => 'yellow',
@@ -403,16 +472,16 @@ sub show_command_buttons
 	$window->bind("<Alt-q>", sub {$quit_button->invoke;});
 
 	# Define status bar messages.
-	$b->attach($start_refresh_button,
+	$bal->attach($start_refresh_button,
 		-statusmsg  => "Start to refresh the status of the nodes",
 	);
-	$b->attach($stop_refresh_button,
+	$bal->attach($stop_refresh_button,
 		-statusmsg  => "Stop to refresh the status of the nodes",
 	);
-	$b->attach($clear_clients_button,
+	$bal->attach($clear_clients_button,
 		-statusmsg  => "Clear all collected clients",
 	);
-	$b->attach($quit_button,
+	$bal->attach($quit_button,
 		-statusmsg  => "Quit program",
 	);
 	
@@ -461,7 +530,13 @@ sub display_nodes
 
 	# Display DB entries.
 	my $client = $xml->{'client'};
-	foreach my $mac (sort(keys(%{$client}))) {
+    my @list;
+    if ($sort_field eq 'name') {
+        @list = sort keys %{$client};
+    } else {
+        @list = sort {($client->{$a}->{$sort_field} || 0) cmp ($client->{$b}->{$sort_field} || 0)} keys %{$client};
+    }
+	foreach my $mac (@list) {
 
 		# Create the entry.
 		my $row = $tab->addchild('');
@@ -521,7 +596,6 @@ sub display_nodes
 			-text     => $mac,
 		);
 		# Display node attributes.
-		my @attrs = qw/ip host os status time speed mem tmpfs cpu/;
 		for (0 .. $#attrs) {
 			if ($attrs[$_] eq 'status') {
 				# Display node status.
@@ -557,14 +631,14 @@ sub display_nodes
 	}
     # Update the status bar.
 status_bar_update:
-    $b->attach($tab,
+    $bal->attach($tab,
         -statusmsg  => "Managed nodes: " . ($num_ok  + $num_inst + $num_unkn + $num_fail) .
             " ($num_ok ok, $num_inst installing, $num_unkn unknown, $num_fail error)",
     );
 
     # Refresh view.
     $tab->update();
-    $b->update();
+    $bal->update();
 }
 
 # Usage:
