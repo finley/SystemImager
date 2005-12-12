@@ -73,12 +73,10 @@ GetOptions(
         "db=s"          => \$database,
         "refresh=i"     => \$refresh_rate,
 ) or die "$help_info";
-
 if ($help) {
 	print "$help_info";
 	exit(0);
 }
-
 if ($version) {
 	print "$version_info";
 	exit(0);
@@ -112,9 +110,13 @@ my (
 	
     # Selected node entry in the list.
     $selected_mac_addr,
+    
+    # Check if refreshing clients.
+    $is_refreshing,
 
     # Field used to sort the nodes table.
     $sort_field,
+    $sort_order,
 
     # Virtual console stuff.
 	$sub_win,
@@ -122,10 +124,30 @@ my (
 	$sub_title,
     $sub_mac_addr,
 );
-$sort_field = 'name';
+
+# Initialize refresing status.
+$is_refreshing = 0;
+
+# Set default sort options.
+$sort_field = 'mac';
+$sort_order = 1;
 
 # Client attributes.
-my @attrs = qw/ip host os status time speed mem tmpfs cpu/;
+my $attrs_struct = {
+### KEY ###     ### NAME ###       ### LABEL ###          ### DESCRIPTION ###
+    chr(0x00) => { -name => 'mac',    -label => '~MAC',      -description => 'Network MAC address' },
+    chr(0x01) => { -name => 'ip',     -label => '~IP',       -description => 'Network IP address' },
+    chr(0x02) => { -name => 'host',   -label => '~Hostname', -description => 'Name of the client' },
+    chr(0x03) => { -name => 'os',     -label => 'I~mage',    -description => 'Image installed in the client' },
+    chr(0x04) => { -name => 'status', -label => '~Status',   -description => 'Status of installation' },
+    chr(0x05) => { -name => 'time',   -label => '~Time',     -description => 'Elapsed time for installation' },
+    chr(0x06) => { -name => 'speed',  -label => 'S~peed',    -description => 'Network bandwidth (KB/s)' },
+    chr(0x07) => { -name => 'mem',    -label => '~RAM',      -description => 'Physical RAM installed in the client' },
+    chr(0x08) => { -name => 'tmpfs',  -label => 'RAM ~used', -description => 'Allocated RAM' },
+    chr(0x09) => { -name => 'cpu',    -label => '~CPU',      -description => 'CPU model' },
+};
+# Cache attribute names.
+my @attrs = grep !/mac/, map {$attrs_struct->{$_}->{'-name'}} sort keys %{$attrs_struct};
 
 # Create the main window.
 $window = MainWindow->new();
@@ -133,6 +155,7 @@ $window->title("$program_name: client installation monitoring system");
 $window->configure(-menu => my $menubar = $window->Menu(-border => 0));
 $window->gridRowconfigure(0, -weight => 1);
 $window->gridColumnconfigure(0, -weight => 1);
+$window->protocol('WM_DELETE_WINDOW' => \&quit);
 
 # Use this font.
 my $FONT = '-*-Helvetica-Bold-R-Normal--*-120-*-*-*-*-*-*';
@@ -180,54 +203,29 @@ my $sort_menu = $edit_menu->cascade(
 	-underline => 0,
 	-tearoff   => 0,
 );
-$sort_menu->command(
-    -label    => '~MAC',
-    -command  => sub {$sort_field = 'name'; refresh()},
+# Show sort attributes.
+foreach (sort keys %{$attrs_struct}) {
+    $sort_menu->radiobutton(
+        -label    => $attrs_struct->{$_}->{'-label'},
+        -command  => \&refresh,
+        -variable => \$sort_field,
+        -value    => $attrs_struct->{$_}->{'-name'},
+        -state    => 'normal',
+    );
+}
+$sort_menu->separator();
+$sort_menu->radiobutton(
+    -label    => '~Ascending',
+    -command  => \&refresh,
+    -variable => \$sort_order,
+    -value    => 1,
     -state    => 'normal',
 );
-$sort_menu->command(
-    -label    => '~IP',
-    -command  => sub {$sort_field = 'ip'; refresh()},
-    -state    => 'normal',
-);
-$sort_menu->command(
-    -label    => '~Hostname',
-    -command  => sub {$sort_field = 'host'; refresh()},
-    -state    => 'normal',
-);
-$sort_menu->command(
-    -label    => '~Image',
-    -command  => sub {$sort_field = 'os'; refresh()},
-    -state    => 'normal',
-);
-$sort_menu->command(
-    -label    => '~Status',
-    -command  => sub {$sort_field = 'status'; refresh()},
-    -state    => 'normal',
-);
-$sort_menu->command(
-    -label    => '~Time',
-    -command  => sub {$sort_field = 'time'; refresh()},
-    -state    => 'normal',
-);
-$sort_menu->command(
-    -label    => '~Speed',
-    -command  => sub {$sort_field = 'speed'; refresh()},
-    -state    => 'normal',
-);
-$sort_menu->command(
-    -label    => '~RAM',
-    -command  => sub {$sort_field = 'mem'; refresh()},
-    -state    => 'normal',
-);
-$sort_menu->command(
-    -label    => '~RAM used',
-    -command  => sub {$sort_field = 'tmpfs'; refresh()},
-    -state    => 'normal',
-);
-$sort_menu->command(
-    -label    => '~CPU',
-    -command  => sub {$sort_field = 'cpu'; refresh()},
+$sort_menu->radiobutton(
+    -label    => '~Descending',
+    -command  => \&refresh,
+    -variable => \$sort_order,
+    -value    => 0,
     -state    => 'normal',
 );
 
@@ -239,23 +237,24 @@ my $help_menu = $menubar->cascade(qw/-label Help -underline 0 -tearoff 0 -menuit
 # Dialogs.
 my $DIALOG_CLEAR_CLIENTS = $window->Dialog(
 	-title          => "Clear all collected clients",
-	-bitmap		=> 'question',
+	-bitmap	    	=> 'question',
 	-default_button => 'No',
 	-buttons        => [qw/Yes No/],
 	-text           => "Are you sure to clear all collected clients informations?",
 );
 my $DIALOG_NO_CLIENTS = $window->Dialog(
 	-title          => "Clear all collected clients",
-	-bitmap		=> 'warning',
+	-bitmap		    => 'warning',
 	-default_button => 'OK',
 	-buttons        => ['OK'],
 	-text           => "No clients collected.",
 );
 my $DIALOG_ABOUT = $window->Dialog(
 	-title          => "About $program_name",
-	-bitmap		=> 'info',
+	-bitmap 		=> 'info',
 	-default_button => 'OK',
 	-buttons        => ['OK'],
+    -wraplength     => '4i',
 	-text           => "$version_info",
 );
 $help_menu->cget(-menu)->entryconfigure('About',
@@ -286,17 +285,50 @@ $tab = $window->Scrolled(
     -browsecmd  => \&update_selected_mac,
 )->grid(qw/-sticky nsew/);
 
-# Create the header.
-$tab->header('create', 0, -text => 'MAC address'); 
-$tab->header('create', 1, -text => 'IP address'); 
-$tab->header('create', 2, -text => 'Hostname'); 
-$tab->header('create', 3, -text => 'Image'); 
-$tab->header('create', 4, -text => 'Status'); 
-$tab->header('create', 5, -text => 'Time'); 
-$tab->header('create', 6, -text => 'Speed');
-$tab->header('create', 7, -text => 'RAM'); 
-$tab->header('create', 8, -text => 'RAM used'); 
-$tab->header('create', 9, -text => 'CPU'); 
+# Create the tab item styles.
+# Initializing.
+my $init_style = $tab->ItemStyle('text');
+$init_style->configure(
+    -foreground => '#0000FF',
+    -font       => $FONT,
+    -anchor     => 'center',
+);
+# Failed.
+my $fail_style = $tab->ItemStyle('text');
+$fail_style->configure(
+    -foreground => '#FF0000',
+    -font       => $FONT,
+    -anchor     => 'center',
+);
+# Done.
+my $done_style = $tab->ItemStyle('text');
+$done_style->configure(
+    -foreground => '#009000',
+    -font       => $FONT,
+    -anchor     => 'center',
+);
+# Installing.
+my $inst_style = $tab->ItemStyle('text');
+$inst_style->configure(
+    -foreground => '#000000',
+    -font       => $FONT,
+    -anchor     => 'center',
+);
+# Unknown.
+my $unkn_style = $tab->ItemStyle('text');
+$unkn_style->configure(
+    -foreground => 'darkgrey',
+    -font       => $FONT,
+    -anchor     => 'center',
+);
+
+# Create the table header.
+my $i = 0;
+foreach (sort keys %{$attrs_struct}) {
+    $_ = $attrs_struct->{$_}->{'-label'};
+    s/~//g;
+    $tab->header('create', $i++, -text => $_); 
+}
 
 # Show the body.
 display_nodes();
@@ -428,6 +460,7 @@ sub show_command_buttons
 		-text      => 'Refresh',
 		-underline => 0,
 		-command   => [\&start_refresh],
+		-width     => 20,
 		-pady      => 5,
 		-padx      => 5,
 		-state     => 'disabled', 
@@ -436,6 +469,7 @@ sub show_command_buttons
 		-text      => 'Stop refresh',
 		-underline => 0,
 		-command   => [\&stop_refresh],
+		-width     => 20,
 		-pady      => 5,
 		-padx      => 5,
 		-state     => 'normal', 
@@ -444,14 +478,16 @@ sub show_command_buttons
 		-text      => 'Clear clients',
 		-underline => 0,
 		-command   => [\&clear_clients],
+		-width     => 20,
 		-pady      => 5,
 		-padx      => 5,
 		-state     => 'normal', 
 	);
 	$quit_button = $buttons->Button(
 		-text      => 'Quit',
-		-command   => [\&quit],
 		-underline => 0,
+		-command   => [\&quit],
+		-width     => 20,
 		-pady      => 5,
 		-padx      => 5,
 	);
@@ -504,6 +540,11 @@ sub update_selected_mac
 #	Fill the main list with the status of all nodes.
 sub display_nodes
 {
+    ### XXX: Profiling stuff ###
+    #use Time::HiRes qw(gettimeofday tv_interval);
+    #my $t0 = [gettimeofday];
+    ### END of profiling stuff ###
+
     # Statistic counters.
     my $num_ok = 0;
     my $num_fail = 0;
@@ -530,40 +571,52 @@ sub display_nodes
 
 	# Display DB entries.
 	my $client = $xml->{'client'};
+    # Sort clients.
     my @list;
-    if ($sort_field eq 'name') {
-        @list = sort keys %{$client};
+    if ($sort_field eq 'mac') {
+        @list = sort {($sort_order) ? ($a cmp $b) : ($b cmp $a)} keys %{$client};
     } else {
-        @list = sort {($client->{$a}->{$sort_field} || 0) cmp ($client->{$b}->{$sort_field} || 0)} keys %{$client};
+        @list = sort {
+            my $x = $client->{$a}->{$sort_field} || 0;
+            my $y = $client->{$b}->{$sort_field} || 0;
+            if (($x =~ /^(\d+)%$/) && ($y =~ /^(\d+)%$/)) {
+                $x =~ s/%//;
+                $y =~ s/%//;
+            }
+            if ((($x =~ /^(\d+)$/) && ($y =~ /(\d+)$/)) || 
+                (($x =~ /^(\d+).(\d+)$/) && ($y =~ /(\d+).(\d+)$/))) {
+                ($sort_order) ? ($x <=> $y) : ($y <=> $x);
+            } else {
+                ($sort_order) ? ($x cmp $y) : ($y cmp $x);
+            }
+        } keys %{$client};
     }
 	foreach my $mac (@list) {
-
 		# Create the entry.
 		my $row = $tab->addchild('');
-
-		# Evaluate the status and adjust the color of the entry.
-		my $fg;
+		# Evaluate the status and adjust the style of the entry.
+		my $style;
 		my $status = $client->{$mac}->{'status'} || 0;
 		if (!$status) {
             $num_inst++;
-			$status = 'initializing...';
-			$fg = '#0000FF';
+			$client->{$mac}->{'status'} = 'initializing...';
+			$style = $init_style;
 		} elsif ($status < 0) {
             $num_fail++;
-			$status = 'error!';
-			$fg = '#FF0000';
+			$client->{$mac}->{'status'} = 'error!';
+			$style = $fail_style;
 		} elsif ($status == 100) {
             $num_ok++;
-			$status = 'done';
-			$fg = '#009000';
+			$client->{$mac}->{'status'} = 'done';
+			$style = $done_style;
 		} elsif (($status > 0) && ($status < 100)) {
             $num_inst++;
-			$status = sprintf('%.2f%%', $status);
-			$fg = '#000000';
+            $client->{$mac}->{'status'} = sprintf('%.2f%%', $status);
+			$style = $inst_style;
 		} else {
             $num_unkn++;
-			$status = '???';
-			$fg = 'darkgrey';
+            $client->{$mac}->{'status'} = '???';
+			$style = $unkn_style;
 		}
 		# Format the uptime.
         if (defined($client->{$mac}->{'time'})) {
@@ -579,15 +632,7 @@ sub display_nodes
         if (defined($client->{$mac}->{'mem'})) {
             $client->{$mac}->{'mem'} .= 'MB';
         }
-
-		# Define the style to display this entry.
-		my $style = $tab->ItemStyle('text');
-		$style->configure(
-			-foreground => $fg,
-			-font       => $FONT,
-			-anchor    => 'center',
-		);
-		# Display the node identity.
+		# Display the node identity (MAC address).
 		$tab->itemCreate(
 			$row,
 			0,
@@ -595,49 +640,34 @@ sub display_nodes
 			-style    => $style,
 			-text     => $mac,
 		);
-		# Display node attributes.
+		# Display other node attributes.
 		for (0 .. $#attrs) {
-			if ($attrs[$_] eq 'status') {
-				# Display node status.
-				$tab->itemCreate(
-					$row,
-					$_ + 1,
-					-itemtype => 'text',
-					-style    => $style,
-					-text     => $status,
-				);
-			} else {
-                my $val;
-                if (defined($client->{$mac}->{$attrs[$_]})) {
-                    $val = $client->{$mac}->{$attrs[$_]};
-                } else {
-                    $val = '-';
-                }
-				# Display a generic attribute.
-				$tab->itemCreate(
-					$row,
-					$_ + 1,
-					-itemtype => 'text',
-					-style    => $style,
-					-text     => $val,
-				);
-                # Update selection.
-                if (defined($selected_mac_addr) && ($selected_mac_addr eq $mac)) {
-                   $tab->selectionSet($row);
-                   $tab->anchorSet($row);
-                }
-			}
+            $tab->itemCreate(
+			    $row,
+    			$_ + 1,
+    			-itemtype => 'text',
+    			-style    => $style,
+    			-text     => $client->{$mac}->{$attrs[$_]} || '-',
+			);
 		}
+        # Update selection.
+        if (defined($selected_mac_addr) && ($selected_mac_addr eq $mac)) {
+            $tab->selectionSet($row);
+            $tab->anchorSet($row);
+        }
 	}
     # Update the status bar.
 status_bar_update:
+    ### XXX: Profiling stuff ###
+    #printf("elapsed time = %0.6f\n", tv_interval($t0, [gettimeofday]));
+    ### END of profiling stuff ###
     $bal->attach($tab,
         -statusmsg  => "Managed nodes: " . ($num_ok  + $num_inst + $num_unkn + $num_fail) .
             " ($num_ok ok, $num_inst installing, $num_unkn unknown, $num_fail error)",
     );
-
     # Refresh view.
     $tab->update();
+    # Refresh the status bar.
     $bal->update();
 }
 
@@ -647,7 +677,16 @@ status_bar_update:
 #	Refresh the client label.
 sub refresh
 {
+    # FIXME: maybe a semaphore/spinlock is needed here.
+    # This is very ugly, but it is a simple way to implement 
+    # something similar to a critical section.
+    return if ($is_refreshing);
+    $is_refreshing = 1;
+
+    # Refresh clients.
 	display_nodes();
+
+    $is_refreshing = 0;
 }
 
 # Usage:
