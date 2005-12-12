@@ -90,15 +90,19 @@ if [ -f /proc/mdstat ]; then
 fi
 #
 ################################################################################
-
-################################################################################
 # BEGIN disk enumeration
 #
 # Note the kludgey way to get /dev/sd* and /dev/*/c*d* to sort properly...
 #
+# Parse the correct file depending by the kernel release -AR-
+if [ `uname -r | sed s/^\(2\.[64]\).*/\1/` = "2.4" ]; then
+    diskfile=/proc/partitions
+else
+    diskfile=/proc/diskstats
+fi 
 echo DISKORDER=${DISKORDER=sd,cciss,ida,rd,hd}
 [ -z $DISKORDER ] || {
-  echo enumerate_disks
+  logmsg enumerate_disks
   order=`echo "$DISKORDER" | sed 's/ /,/g' | sed s/,,*/,/g | sed s/^,//`
   DISKS=0
   while : ; do
@@ -106,60 +110,39 @@ echo DISKORDER=${DISKORDER=sd,cciss,ida,rd,hd}
     type=`expr $order : '\([^,]*\),' \| $order`
     case $type in
     cciss | ida | rd )
-      rest=
-      [ $type = rd ] && rest="8 9 10 11 12 13 14 15"
-      for c in 0 1 2 3 4 5 6 7 $rest ; do
-        for dev in `ls /dev/$type/c${c}d[0-9] 2>/dev/null` ; do
-          echo " $dev"
-          eval DISK$DISKS=${dev}
-          DISKS=`expr $DISKS + 1`
-        done
-        for dev in `ls /dev/$type/c${c}d[0-9][0-9] 2>/dev/null` ; do
-          echo " $dev"
-          eval DISK$DISKS=${dev}
-          DISKS=`expr $DISKS + 1`
-        done
-      done
-      ;;
-    hd )
-      for dev in `ls /dev/$type[a-z] 2>/dev/null` ; do
-        echo " $dev"
-        eval DISK$DISKS=$dev
+      for dev in `cat $diskfile | sed -ne "s/.*\($type\\/c[0-9]d[0-9]\).*/\1/p" | sort -u` ; do
+        logmsg " $dev"
+        eval DISK$DISKS=/dev/${dev}
         DISKS=`expr $DISKS + 1`
       done
       ;;
-    sd )
-      for dev in `ls /dev/$type[a-z] 2>/dev/null` ; do
-        echo " $dev"
-        eval DISK$DISKS=$dev
-        DISKS=`expr $DISKS + 1`
-      done
-      for dev in `ls /dev/$type[a-z][a-z] 2>/dev/null` ; do
-        echo " $dev"
-        eval DISK$DISKS=$dev
+    hd | sd )
+      for dev in `cat $diskfile | sed -ne "s/.*\($type[a-z]\+\).*/\1/p" | sort -u` ; do
+        logmsg " $dev"
+        eval DISK$DISKS=/dev/${dev}
         DISKS=`expr $DISKS + 1`
       done
       ;;
     * )
-      echo "type='$type'"
+      logmsg "type='$type'"
       shellout
       ;;
     esac
     order=`expr $order : '[^,]*,\(.*\)'`
   done
-  echo DISKS=$DISKS
+  logmsg DISKS=$DISKS
   [ $DISKS -eq 0 ] && {
     beep
     beep
-    echo ""
-    echo "NO DISK DEVICE FILES WERE FOUND.  THIS USUALLY MEANS THE KERNEL DID NOT"
-    echo "RECOGNIZE ANY OF THE ATTACHED DISKS."
-    echo ""
-    echo "The kernel boot messages, which preceded this, may indicate why."
-    echo ""
-    echo "Reverting to disk configuration specified by image master script."
+    logmsg ""
+    logmsg "NO DISK DEVICE FILES WERE FOUND.  THIS USUALLY MEANS THE KERNEL DID NOT"
+    logmsg "RECOGNIZE ANY OF THE ATTACHED DISKS."
+    logmsg ""
+    logmsg "The kernel boot messages, which preceded this, may indicate why."
+    logmsg ""
+    logmsg "Reverting to disk configuration specified by image master script."
     DISKORDER=
-    echo ""
+    logmsg ""
   }
   echo
   beep
