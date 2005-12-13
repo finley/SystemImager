@@ -538,7 +538,7 @@ sub _create_initrd_ext2($$) {
             unlink($new_initrd) if (-f $new_initrd);
             run_cmd("rm -fr $staging_dir $new_initrd_mount_dir", $verbose, 1);
             die $msg;
-        }
+        };
 
         print ">>> New initrd mount point:     $new_initrd_mount_dir\n" if($verbose);
         eval { mkpath($new_initrd_mount_dir, 0, 0755) }; 
