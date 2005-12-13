@@ -384,7 +384,9 @@ sub show_virtual_console
 		-font       => $FONT,
 		-setgrid    => 1,
         -insertofftime => 0,
-	)->grid(qw/-sticky nsew/);
+	)->grid(-in => $sub_win, -row => 1, -column => 1, -sticky => 'nsew');
+    $sub_win->gridRowconfigure(1, -weight => 1);
+    $sub_win->gridColumnconfigure(1, -weight => 1);
 	$sub_tab->insert('end',
 		"$hostname($ip):> virtual console started for client $mac.\n",
 		'title'
