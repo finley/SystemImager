@@ -1,5 +1,5 @@
 %define name     systemimager
-%define ver      3.5.3
+%define ver      3.5.4
 %define rel      1
 %define prefix   /usr
 %define _build_all 1
@@ -23,11 +23,24 @@ BuildArchitectures: noarch
 Packager: dann frazier <dannf@dannf.org>
 URL: http://systemimager.org/
 Distribution: System Installation Suite
+BuildRequires: docbook-utils
 Requires: rsync >= 2.4.6, syslinux >= 1.48, libappconfig-perl, dosfstools, /usr/bin/perl
 AutoReqProv: no
 
 %description
-This is bogus and not used anywhere
+SystemImager is software that automates Linux installs, software
+distribution, and production deployment.  SystemImager makes it easy to
+do installs, software distribution, content or data distribution,
+configuration changes, and operating system updates to your network of
+Linux machines. You can even update from one Linux release version to
+another!  It can also be used to ensure safe production deployments.
+By saving your current production image before updating to your new
+production image, you have a highly reliable contingency mechanism.  If
+the new production enviroment is found to be flawed, simply roll-back
+to the last production image with a simple update command!  Some
+typical environments include: Internet server farms, database server
+farms, high performance clusters, computer labs, and corporate desktop
+environments.
 
 %if %{_build_all}
 
@@ -190,7 +203,51 @@ The %{_build_arch}boot package provides specific kernel, ramdisk, and fs utiliti
 to boot and install %{_build_arch} Linux machines during the SystemImager autoinstall
 process.
 
+%package %{_build_arch}initrd_template
+Summary: Software that automates Linux installs, software distribution, and production deployment.
+Version: %ver
+Release: %rel
+License: GPL
+Group: Applications/System
+BuildRoot: /tmp/%{name}-%{ver}-root
+Packager: dann frazier <dannf@dannf.org>
+URL: http://systemimager.org/
+Distribution: System Installation Suite
+Obsoletes: systemimager-%{_build_arch}initrd_template
+Requires: systemimager-client >= %{version}
+AutoReqProv: no
+
+%description %{_build_arch}initrd_template
+SystemImager is software that automates Linux installs, software
+distribution, and production deployment.  SystemImager makes it easy to
+do installs, software distribution, content or data distribution,
+configuration changes, and operating system updates to your network of
+Linux machines. You can even update from one Linux release version to
+another!  It can also be used to ensure safe production deployments.
+By saving your current production image before updating to your new
+production image, you have a highly reliable contingency mechanism.  If
+the new production enviroment is found to be flawed, simply roll-back
+to the last production image with a simple update command!  Some
+typical environments include: Internet server farms, database server
+farms, high performance clusters, computer labs, and corporate desktop
+environments.
+
+The %{_build_arch}initrd_template package provides initrd template files for creating custom
+ramdisk that works with a specific kernel by using UYOK (Use Your Own Kernel).  The custom
+ramdisk can then be used to boot and install %{_build_arch} Linux machines during the
+SystemImager autoinstall process.
+
 %changelog
+* Thu Dec 08 2005 Bernard Li <bli@bcgsc.ca>
+- New package - %{_build_arch}initrd_template
+
+* Thu Dec 01 2005 Bernard Li <bli@bcgsc.ca>
+- Added general description text for systemimager package as this is used by SRPM
+
+* Thu Nov 17 2005 Bernard Li <bli@bcgsc.ca>
+- Added ./configure SI_BUILD_DOCS=1 to ensure building of docs
+- Added docbook-utils to BuildRequires
+
 * Mon Aug 08 2005 Bernard Li <bli@bcgsc.ca>
 - Changed requirement of perl-XML-Simple to perl(XML::Simple)
 - Changed requirement of perl-TermReadKey to perl(Term::ReadKey)
@@ -315,31 +372,32 @@ process.
 
 make -j11 get_source
 
-# Only build everything if on x86, this helps with PPC build issues
-%if %{_build_all}
 %build
 cd $RPM_BUILD_DIR/%{name}-%{version}/
+
+# Make sure we build the docs
+./configure SI_BUILD_DOCS=1
+
+# Only build everything if on x86, this helps with PPC build issues
+%if %{_build_all}
 make all
 
 %else
-%build
-cd $RPM_BUILD_DIR/%{name}-%{version}/
 make binaries
 
 %endif
 
-%if %{_build_all}
-
 %install
 cd $RPM_BUILD_DIR/%{name}-%{version}/
+
+%if %{_build_all}
+
 make install_server_all DESTDIR=/tmp/%{name}-%{ver}-root PREFIX=%prefix
 make install_client_all DESTDIR=/tmp/%{name}-%{ver}-root PREFIX=%prefix
 (cd doc/manual_source;make html)
 
 %else
 
-%install
-cd $RPM_BUILD_DIR/%{name}-%{version}/
 make install_binaries DESTDIR=/tmp/%{name}-%{ver}-root PREFIX=%prefix
 
 %endif
@@ -566,5 +624,13 @@ fi
 %files %{_build_arch}boot-%{_boot_flavor}
 %defattr(-, root, root)
 %dir %prefix/share/systemimager/boot/%{_build_arch}
-%prefix/share/systemimager/boot/%{_build_arch}/*
+%dir %prefix/share/systemimager/boot/%{_build_arch}/standard
+%prefix/share/systemimager/boot/%{_build_arch}/standard/boel_binaries.tar.gz
+%prefix/share/systemimager/boot/%{_build_arch}/standard/config
+%prefix/share/systemimager/boot/%{_build_arch}/standard/initrd.img
+%prefix/share/systemimager/boot/%{_build_arch}/standard/kernel
 
+%files %{_build_arch}initrd_template
+%defattr(-, root, root)
+%dir %prefix/share/systemimager/boot/%{_build_arch}/standard/initrd_template
+%prefix/share/systemimager/boot/%{_build_arch}/standard/initrd_template/*
