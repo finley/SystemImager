@@ -446,7 +446,10 @@ sub save_partition_information {
 
             if($flags =~ /type=/) {
                 $id = (split(/=/,$flags))[1];
-                $flags = "";
+                # Exclude the partition type, but preserve other flags. -AR-
+                $flags =~ s/type=[0-9a-fA-F]*//;
+                $flags =~ s/^, //;
+                $flags =~ s/, $//;
             }
 
             unless($id) { $id=""; }
@@ -796,7 +799,7 @@ sub save_lvm_information {
             # Physical extent size.
             my $vg_phys_extent_size = $vg_data[12];
             
-            print OUT "\t<lvm_group name=\"$vg_name\" max_log_vols=\"$vg_max_log_vols\" max_phys_vols=\"$vg_max_phys_vols\" phys_exent_size=\"${vg_phys_extent_size}K\">\n";
+            print OUT "\t<lvm_group name=\"$vg_name\" max_log_vols=\"$vg_max_log_vols\" max_phys_vols=\"$vg_max_phys_vols\" phys_extent_size=\"${vg_phys_extent_size}K\">\n";
 
             # Print logical volumes informations for this group -AR-
             $cmd = "lvdisplay -c 2>/dev/null";
