@@ -1190,6 +1190,9 @@ run_post_install_scripts() {
         else
             logmsg "No post-install scripts found."
         fi
+
+        # Clean up post-install script directory.
+        rm -rf /a/tmp/post-install/ || shellout
     fi
 }
 #
