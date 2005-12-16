@@ -1,13 +1,15 @@
 #
 #	"SystemImager"  
 #
-#   Copyright (C) 1999-2004 Brian Elliott Finley
+#   Copyright (C) 1999-2005 Brian Elliott Finley
 #   Copyright (C) 2001-2004 Hewlett-Packard Company <dannf@hp.com>
 #   
 #   Others who have contributed to this code:
 #   	Sean Dague <sean@dague.net>
 #
 #   $Id$
+#
+# 	vi: set filetype=make:
 #
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -22,33 +24,6 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-#
-#	2004.04.13 	Brian Elliott Finley
-#	- Michael Jennings suggested permissions changes on some files.  done.
-#	2004.09.08  Brian Elliott Finley
-#	- add MKSWAP_BINARY
-#   2004.09.10  Brian Elliott Finley
-#   - include as part of standard boel_binaries_tarball
-#   - move to using gpg .sign files only.  no need for md5 too, especially
-#     if we want to be knee-jerk reactionary to the recent md5 hash collision
-#     reports. :-)
-#   2004.09.11  Brian Elliott Finley
-#   - install everything in the doc/examples directory.
-#   2004.09.19  Brian Elliott Finley
-#   - add 'show_targets' target.
-#   2004.10.13  Brian Elliott Finley
-#   - add hfsutils
-#   2004.10.24  Brian Elliott Finley
-#   - get rid of source, which may also exist as a link to the kernel source
-#     directory
-#   2004.12.13  Josh Aas
-#   - make 'make (rpm|srpm)' work again
-#   2005.01.15  Brian Elliott Finley
-#   - install UseYourOwnKernel.pm as part of 'make install_common_libs'
-# 	2005-01-12 Andrea Righi
-# 	- patches to add lvm support
-# 	2005.01.30 Brian Elliott Finley
-# 	- 'make source_tarball' -> do cvs export, instead of 'find+cp -> find+rm'
 #
 #
 # ERRORS when running make:
@@ -96,11 +71,13 @@
 #   o sysadmin binaries:        /usr/sbin
 #     (all other binaries)
 #
+#
 # Standards for pre-defined rsync modules:
 #   o boot (directory that holds architecture specific directories with
 #           boot files for clients)
 #   o overrides
 #   o scripts
+#
 #
 # To include the ctcs test suite, and associated files, do a 'make WITH_CTCS=1 all'
 #
@@ -226,21 +203,48 @@ help:  show_targets
 #
 # Show me a list of all targets in this entire build heirarchy
 .PHONY:	show_targets
-SHOW_TARGETS_ALL_MAKEFILES = $(shell find . -name 'Makefile' -or -name '*.rul')
 show_targets:
 	@echo
 	@echo Makefile targets you are probably most interested in:
 	@echo ---------------------------------------------------------------------
-	@echo   all
-	@echo   install_client_all
-	@echo   install_server_all
-	@echo   install_boel_binaries_tarball
-	@echo   install_initrd
-	@echo   source_tarball
-	@echo   rpm
-	@echo   srpm
+	@echo "all"
+	@echo "    Build everything you need for your machine's architecture."
+	@echo "	"
+	@echo "install_client_all"
+	@echo "    Install all files needed by a client."
+	@echo "	"
+	@echo "install_server_all"
+	@echo "    Install all files needed by a server."
+	@echo "	"
+	@echo "install_boel_binaries_tarball:"
+	@echo ""
+	@echo "install_initrd:"
+	@echo ""
+	@echo "source_tarball:"
+	@echo "    Make a source tarball for distribution."
+	@echo "	"
+	@echo "    Includes SystemImager source only.  Source for all"
+	@echo "    the tools SystemImager depends on will be found in /usr/src "
+	@echo "    or will be automatically downloaded at build time."
+	@echo "	"
+	@echo "complete_source_tarball:"
+	@echo "    Make a source tarball for distribution."
+	@echo "    "
+	@echo "    Includes all necessary source for building SystemImager and"
+	@echo "    all of it's supporting tools."
+	@echo "	"
+	@echo "rpm:"
+	@echo ""
+	@echo "srpm:"
+	@echo ""
+	@echo "show_all_targets"
+	@echo "    Show all available targets."
 	@echo
-	@echo
+
+
+.PHONY:	show_all_targets
+SHOW_TARGETS_ALL_MAKEFILES = $(shell find . -name 'Makefile' -or -name '*.rul')
+show_all_targets:
 	@echo All Available Targets Include:
 	@echo ---------------------------------------------------------------------
 	cat $(SHOW_TARGETS_ALL_MAKEFILES) | egrep '^[a-z_]+:' | sed 's/:.*//' | sort -u
@@ -622,22 +626,49 @@ endif
 #
 ################################################################################
 
+.PHONY:	complete_source_tarball
+complete_source_tarball:	$(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source.tar.bz2.sign
+$(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source.tar.bz2.sign:	$(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source.tar.bz2
+	cd $(TOPDIR)/tmp && gpg --detach-sign -a --output systemimager-$(VERSION)-complete_source.tar.bz2.sign systemimager-$(VERSION)-complete_source.tar.bz2
+	cd $(TOPDIR)/tmp && gpg --verify systemimager-$(VERSION)-complete_source.tar.bz2.sign 
+
+$(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source.tar.bz2: systemimager.spec
+	rm -fr tmp
+	mkdir -p tmp/
+	svn export . $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source
+	cd $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source && ./configure
+	$(MAKE) -C $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source get_source
+	#
+	# Make sure we've got all kernel source.  NOTE:  The egrep -v '-' bit is so that we don't include customized kernels (Ie: -ydl).
+	$(foreach linux_version, $(shell grep 'LINUX_VERSION =' make.d/kernel.rul | egrep -v '(^#|-)' | sort -u | perl -pi -e 's#.*= ##'), \
+		$(GETSOURCE) $(shell dirname $(LINUX_URL))/linux-$(linux_version).tar.bz2 $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source/src;)
+	$(MAKE) -C $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source clean
+ifeq ($(UNSTABLE), 1)
+	cd $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source && cp README README.tmp
+	cd $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source && cp README.unstable README
+	cd $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source && cat README.tmp >> README
+	cd $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source && rm README.tmp
+endif
+	rm $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source/README.unstable
+	perl -pi -e "s/^%define\s+ver\s+\d+\.\d+\.\d+.*/%define ver $(VERSION)/" \
+		$(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source/systemimager.spec
+	find . -type f -exec chmod ug+r  {} \;
+	find . -type d -exec chmod ug+rx {} \;
+	cd $(TOPDIR)/tmp && tar -ch systemimager-$(VERSION)-complete_source | bzip2 > systemimager-$(VERSION)-complete_source.tar.bz2
+	@echo
+	@echo "complete source tarball has been created in $(TOPDIR)/tmp"
+	@echo
 
 .PHONY:	source_tarball
 source_tarball:	$(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2.sign
-
 $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2.sign:	$(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
 	cd $(TOPDIR)/tmp && gpg --detach-sign -a --output systemimager-$(VERSION).tar.bz2.sign systemimager-$(VERSION).tar.bz2
 	cd $(TOPDIR)/tmp && gpg --verify systemimager-$(VERSION).tar.bz2.sign 
-
 
 $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2: systemimager.spec
 	rm -fr tmp
 	mkdir -p tmp/
 	svn export . $(TOPDIR)/tmp/systemimager-$(VERSION)
-	cd $(TOPDIR)/tmp/systemimager-$(VERSION) && ./configure
-	$(MAKE) -j $(NCPUS) -C $(TOPDIR)/tmp/systemimager-$(VERSION) get_source
-	$(MAKE) -C   $(TOPDIR)/tmp/systemimager-$(VERSION) clean
 ifeq ($(UNSTABLE), 1)
 	cd $(TOPDIR)/tmp/systemimager-$(VERSION) && cp README README.tmp
 	cd $(TOPDIR)/tmp/systemimager-$(VERSION) && cp README.unstable README
