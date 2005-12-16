@@ -1,0 +1,22 @@
+#!/bin/sh
+
+#
+#   $Id:$
+#
+
+SERVER=systemimager.uchicago.edu
+#EXCLUDE="--exclude some/files/*"
+BACKUP_DIR=${HOME}/Backups/
+
+# If you don't have access to all of these, just remove them.
+DIRS="/var/www/download.systemimager.org/ /var/www/websvn/ /var/lib/svn/flamethrower/ /var/lib/svn/si-build/ /var/lib/svn/systemimager/"
+
+for i in $DIRS
+do
+    DEST=${BACKUP_DIR}/${SERVER}/${i}
+    mkdir -p $DEST
+    CMD="rsync -vaSHz -e ssh --numeric-ids --delete $EXCLUDE ${SERVER}:${i}/ ${DEST}/"
+    echo $CMD
+    $CMD
+done
+
