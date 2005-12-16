@@ -2,7 +2,7 @@
 GZIP_VERSION := 1.3.5
 GZIP_DIR := gzip-$(GZIP_VERSION)
 GZIP_TARBALL := gzip-$(GZIP_VERSION).tar.gz
-GZIP_URL := ftp://alpha.gnu.org/gnu/gzip/$(GZIP_TARBALL)
+GZIP_URL := http://download.systemimager.org/pub/gzip/$(GZIP_TARBALL)
 GZIP_BINARY := $(SRC_DIR)/$(GZIP_DIR)/gzip
 GZIP_PATCHES = $(shell ls $(PATCH_DIR)/gzip.*.patch 2>/dev/null | sort)
 

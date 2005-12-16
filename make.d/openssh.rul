@@ -19,7 +19,8 @@ OPENSSH_TARBALL         := openssh-$(OPENSSH_VERSION).tar.gz
 #OPENSSH_MD5SUM          := 1dbfd40ae683f822ae917eebf171ca42
 OPENSSH_MD5SUM          := 8e1774d0b52aff08f817f3987442a16e
 OPENSSH_TARBALL_TARGET  := $(SRC_DIR)/$(OPENSSH_TARBALL)
-OPENSSH_URL             := ftp://mirror.sg.depaul.edu/pub/OpenBSD/OpenSSH/portable/$(OPENSSH_TARBALL)
+#OPENSSH_URL             := ftp://mirror.sg.depaul.edu/pub/OpenBSD/OpenSSH/portable/$(OPENSSH_TARBALL)
+OPENSSH_URL             := http://download.systemimager.org/pub/openssh/$(OPENSSH_TARBALL)
 OPENSSH_BINARIES        := $(SRC_DIR)/$(OPENSSH_DIR)/ssh \
 				$(SRC_DIR)/$(OPENSSH_DIR)/sshd \
 				$(SRC_DIR)/$(OPENSSH_DIR)/scp \

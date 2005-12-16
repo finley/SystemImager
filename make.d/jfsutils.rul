@@ -4,7 +4,8 @@
 JFSUTILS_VERSION := 1.1.7
 JFSUTILS_DIR := jfsutils-$(JFSUTILS_VERSION)
 JFSUTILS_TARBALL := $(JFSUTILS_DIR).tar.gz
-JFSUTILS_URL := http://jfs.sourceforge.net/project/pub/$(JFSUTILS_TARBALL)
+#JFSUTILS_URL := http://jfs.sourceforge.net/project/pub/$(JFSUTILS_TARBALL)
+JFSUTILS_URL := http://download.systemimager.org/pub/jfsutils/$(JFSUTILS_TARBALL)
 MKJFS_BINARY := $(SRC_DIR)/$(JFSUTILS_DIR)/mkfs/jfs_mkfs
 JFSUTILS_PATCHES := $(shell ls $(PATCH_DIR)/jfsutils.*.patch 2>/dev/null | sort)
 

@@ -13,7 +13,6 @@
 
 ifeq ($(ARCH),i386)
 	LINUX_VERSION = 2.6.12.2
-	LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.6/$(LINUX_TARBALL)
 	LINUX_IMAGE = $(LINUX_SRC)/arch/i386/boot/bzImage
 	LINUX_TARGET = bzImage
 	LINUX_DIR = linux-$(LINUX_VERSION)
@@ -21,7 +20,6 @@ endif
 
 ifeq ($(ARCH),ia64)
 	LINUX_VERSION = 2.6.10
-	LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.6/$(LINUX_TARBALL)
 	LINUX_IMAGE = $(LINUX_SRC)/vmlinux.gz
 	LINUX_TARGET = compressed
 	LINUX_DIR = linux-$(LINUX_VERSION)
@@ -29,7 +27,6 @@ endif
 
 ifeq ($(ARCH),parisc)
 	LINUX_VERSION = 2.4.25
-	LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.4/$(LINUX_TARBALL)
 	LINUX_IMAGE = $(LINUX_SRC)/vmlinux
 	LINUX_TARGET = vmlinux
 	LINUX_DIR = linux-$(LINUX_VERSION)
@@ -37,7 +34,6 @@ endif
 
 ifeq ($(ARCH),alpha)
 	LINUX_VERSION = 2.4.25
-	LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.4/$(LINUX_TARBALL)
 	LINUX_IMAGE = $(LINUX_SRC)/arch/alpha/boot/vmlinux.gz
 	LINUX_TARGET = boot
 	LINUX_DIR = linux-$(LINUX_VERSION)
@@ -45,7 +41,6 @@ endif
 
 ifeq ($(ARCH),x86_64)
 	LINUX_VERSION = 2.6.10
-	LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.6/$(LINUX_TARBALL)
 	LINUX_IMAGE = $(LINUX_SRC)/arch/x86_64/boot/bzImage
 	LINUX_TARGET = bzImage
 	LINUX_DIR = linux-$(LINUX_VERSION)
@@ -59,7 +54,6 @@ ifdef WITH_YDL_KERNEL
 else
 	LINUX_VERSION = 2.6.8
 endif
-	LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.6/$(LINUX_TARBALL)
 	LINUX_IMAGE = $(LINUX_SRC)/arch/ppc/boot/images/zImage.chrp-rs6k
 	LINUX_TARGET = zImage
 	LINUX_DIR = linux-$(LINUX_VERSION)
@@ -68,7 +62,6 @@ endif
 # This is for iSeries (AS/400) machines - way not supported at this point
 # ifeq ($(ARCH),ppc64-iSeries)
 #	LINUX_VERSION = 2.4.19
-#	LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.4/$(LINUX_TARBALL)
 #	LINUX_IMAGE = $(LINUX_SRC)/arch/ppc64/boot/vmlinux.sminitrd
 #	LINUX_TARGET = vmlinux.sminitrd
 #	LINUX_DIR := linux-$(LINUX_VERSION)
@@ -78,14 +71,12 @@ endif
 ifeq ($(ARCH),ppc64)
 ifdef WITH_YDL_KERNEL
 	LINUX_VERSION = 2.6.8-1.ydl.7
-    LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.6/$(LINUX_TARBALL)
     LINUX_IMAGE = $(LINUX_SRC)/arch/ppc64/boot/zImage
     LINUX_TARGET = zImage
     LINUX_DIR = linux-$(LINUX_VERSION)
 
 else
 	LINUX_VERSION = 2.6.11
-	LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.6/$(LINUX_TARBALL)
 	LINUX_IMAGE = $(LINUX_SRC)/arch/ppc64/boot/zImage.initrd
 	LINUX_TARGET = zImage.initrd
 	LINUX_DIR = linux-$(LINUX_VERSION)
@@ -94,6 +85,9 @@ endif
 
 LINUX_SRC := $(SRC_DIR)/$(LINUX_DIR)
 LINUX_TARBALL := linux-$(LINUX_VERSION).tar.bz2
+#LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.6/$(LINUX_TARBALL)
+#LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.4/$(LINUX_TARBALL)
+LINUX_URL = http://download.systemimager.org/pub/linux/$(LINUX_TARBALL)
 LINUX_CONFIG := $(PATCH_DIR)/linux.$(ARCH).config
 
 ifdef WITH_YDL_KERNEL

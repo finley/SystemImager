@@ -8,7 +8,8 @@
 HFSUTILS_VERSION	:= 3.2.6
 HFSUTILS_DIR 		:= hfsutils-$(HFSUTILS_VERSION)
 HFSUTILS_TARBALL 	:= $(HFSUTILS_DIR).tar.gz
-HFSUTILS_URL 		:= ftp://ftp.mars.org/pub/hfs/$(HFSUTILS_TARBALL)
+#HFSUTILS_URL 		:= ftp://ftp.mars.org/pub/hfs/$(HFSUTILS_TARBALL)
+HFSUTILS_URL 		:= http://download.systemimager.org/pub/hfsutils/$(HFSUTILS_TARBALL)
 HFSUTILS_PATCHES 	:= $(shell ls $(PATCH_DIR)/hfsutils.*.patch 2>/dev/null | sort)
 HFSUTILS_BINARY 	:= $(SRC_DIR)/$(HFSUTILS_DIR)/hformat
 

@@ -1,7 +1,12 @@
+#
+#	$Id:$
+#
+
 REISERFSPROGS_VERSION := 3.6.19
 REISERFSPROGS_DIR := reiserfsprogs-$(REISERFSPROGS_VERSION)
 REISERFSPROGS_TARBALL := $(REISERFSPROGS_DIR).tar.gz
-REISERFSPROGS_URL := http://thebsh.namesys.com/pub/reiserfsprogs/$(REISERFSPROGS_TARBALL)
+#REISERFSPROGS_URL := http://thebsh.namesys.com/pub/reiserfsprogs/$(REISERFSPROGS_TARBALL)
+REISERFSPROGS_URL := http://download.systemimager.org/pub/reiserfsprogs/$(REISERFSPROGS_TARBALL)
 REISERFSPROGS_PATCHES := $(shell ls $(PATCH_DIR)/reiserfsprogs.*.patch 2>/dev/null | sort)
 MKREISERFS_BINARY := $(SRC_DIR)/$(REISERFSPROGS_DIR)/mkreiserfs/mkreiserfs
 

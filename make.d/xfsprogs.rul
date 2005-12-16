@@ -10,9 +10,8 @@ ifndef IS_PPC64
 XFSPROGS_VERSION := 2.7.3
 XFSPROGS_DIR := xfsprogs-$(XFSPROGS_VERSION)
 XFSPROGS_TARBALL := $(XFSPROGS_DIR).src.tar.gz
-#XFSPROGS_URL := http://download.systemimager.org/pub/xfsprogs/$(XFSPROGS_TARBALL)
-XFSPROGS_URL := ftp://oss.sgi.com/projects/xfs/download/cmd_tars/$(XFSPROGS_TARBALL)
-# SOURCE_URL -> ftp://oss.sgi.com/projects/xfs/download/cmd_tars/
+#XFSPROGS_URL := ftp://oss.sgi.com/projects/xfs/download/cmd_tars/$(XFSPROGS_TARBALL)
+XFSPROGS_URL := http://download.systemimager.org/pub/xfsprogs/$(XFSPROGS_TARBALL)
 MKXFS_BINARY := $(SRC_DIR)/$(XFSPROGS_DIR)/mkfs/mkfs.xfs
 XFSPROGS_PATCHES := $(shell ls $(PATCH_DIR)/xfsprogs.*.patch 2>/dev/null | sort)
 

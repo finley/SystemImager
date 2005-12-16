@@ -7,7 +7,8 @@
 
 MODULE_INIT_TOOLS_VERSION = 3.2.1
 MODULE_INIT_TOOLS_TARBALL = module-init-tools-$(MODULE_INIT_TOOLS_VERSION).tar.bz2
-MODULE_INIT_TOOLS_URL = http://www.kernel.org/pub/linux/utils/kernel/module-init-tools/$(MODULE_INIT_TOOLS_TARBALL)
+#MODULE_INIT_TOOLS_URL = http://www.kernel.org/pub/linux/utils/kernel/module-init-tools/$(MODULE_INIT_TOOLS_TARBALL)
+MODULE_INIT_TOOLS_URL = http://download.systemimager.org/pub/module-init-tools/$(MODULE_INIT_TOOLS_TARBALL)
 MODULE_INIT_TOOLS_DIR = module-init-tools-$(MODULE_INIT_TOOLS_VERSION)
 MODULE_INIT_TOOLS_PATCHES = $(shell ls $(INITRD_PATCH_DIR)/module-init-tools.*.patch 2>/dev/null | sort)
 

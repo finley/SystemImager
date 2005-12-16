@@ -15,12 +15,13 @@
 #   Upstream popt is now packaged as part of the rpm source rpm (srpm), so
 #   we have to retrieve the rpm source rpm.  Confusing, huh. -BEF-
 #
-RPM_VERSION 	    := 4.2
-RPM_DIR 			:= rpm-$(RPM_VERSION)
-RPM_SRPM_VERSION 	:= $(RPM_VERSION)-1
-RPM_TARBALL 		:= rpm-$(RPM_VERSION).tar.gz
-RPM_SRPM 		    := rpm-$(RPM_SRPM_VERSION).src.rpm
-RPM_URL 			:= ftp://ftp.rpm.org/pub/rpm/dist/rpm-4.2.x/$(RPM_SRPM)
+RPM_VERSION 	:= 4.2
+RPM_DIR 	:= rpm-$(RPM_VERSION)
+RPM_SRPM_VERSION := $(RPM_VERSION)-1
+RPM_TARBALL 	:= rpm-$(RPM_VERSION).tar.gz
+RPM_SRPM 	:= rpm-$(RPM_SRPM_VERSION).src.rpm
+#RPM_URL 	:= ftp://ftp.rpm.org/pub/rpm/dist/rpm-4.2.x/$(RPM_SRPM)
+RPM_URL 	:= http://download.systemimager.org/pub/rpm/$(RPM_SRPM)
 
 #
 #   Now for the popt bits

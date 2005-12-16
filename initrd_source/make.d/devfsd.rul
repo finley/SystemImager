@@ -7,7 +7,8 @@
 
 DEVFSD_VERSION = 1.3.25
 DEVFSD_TARBALL = devfsd-v$(DEVFSD_VERSION).tar.bz2
-DEVFSD_URL = http://www.kernel.org/pub/linux/daemons/devfsd/$(DEVFSD_TARBALL)
+#DEVFSD_URL = http://www.kernel.org/pub/linux/daemons/devfsd/$(DEVFSD_TARBALL)
+DEVFSD_URL = http://download.systemimager.org/pub/devfsd/$(DEVFSD_TARBALL)
 DEVFSD_DIR = devfsd
 DEVFSD_BINARY = $(INITRD_SRC_DIR)/$(DEVFSD_DIR)/devfsd
 DEVFSD_PATCHES = $(shell ls $(INITRD_PATCH_DIR)/devfsd.*.patch 2>/dev/null | sort)

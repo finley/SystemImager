@@ -8,7 +8,8 @@
 ZLIB_VERSION := 1.2.3
 ZLIB_DIR := zlib-$(ZLIB_VERSION)
 ZLIB_TARBALL := zlib-$(ZLIB_VERSION).tar.gz
-ZLIB_URL := http://www.zlib.net/$(ZLIB_TARBALL)
+#ZLIB_URL := http://www.zlib.net/$(ZLIB_TARBALL)
+ZLIB_URL := http://download.systemimager.org/pub/zlib/$(ZLIB_TARBALL)
 ZLIB_PATCHES := $(shell ls $(PATCH_DIR)/zlib.*.patch 2>/dev/null | sort)
 ZLIB_LIBRARY := $(SRC_DIR)/$(ZLIB_DIR)/libz.a
 

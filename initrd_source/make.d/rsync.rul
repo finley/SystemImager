@@ -7,7 +7,8 @@
 
 RSYNC_VERSION = 2.6.6
 RSYNC_TARBALL = rsync-$(RSYNC_VERSION).tar.gz
-RSYNC_URL = http://rsync.samba.org/ftp/rsync/$(RSYNC_TARBALL)
+#RSYNC_URL = http://rsync.samba.org/ftp/rsync/$(RSYNC_TARBALL)
+RSYNC_URL = http://download.systemimager.org/pub/rsync/$(RSYNC_TARBALL)
 RSYNC_DIR = rsync-$(RSYNC_VERSION)
 RSYNC_BINARY = $(INITRD_SRC_DIR)/$(RSYNC_DIR)/rsync
 RSYNC_PATCHES = $(shell ls $(INITRD_PATCH_DIR)/rsync.*.patch 2>/dev/null | sort)

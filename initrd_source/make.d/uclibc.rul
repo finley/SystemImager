@@ -5,8 +5,8 @@
 UCLIBC_VERSION := 0.9.28
 UCLIBC_DIR := uClibc-$(UCLIBC_VERSION)
 UCLIBC_TARBALL := uClibc-$(UCLIBC_VERSION).tar.bz2
-UCLIBC_URL := http://uclibc.org/downloads/$(UCLIBC_TARBALL)
-# SOURCE_URL -> http://uclibc.org/downloads/
+#UCLIBC_URL := http://uclibc.org/downloads/$(UCLIBC_TARBALL)
+UCLIBC_URL := http://download.systemimager.org/pub/uclibc/$(UCLIBC_TARBALL)
 UCLIBC_PATCHES = $(shell ls $(INITRD_PATCH_DIR)/uclibc.*.patch 2>/dev/null | sort)
 
 UCLIBC_RUNTIME = $(INITRD_SRC_DIR)/uclibc-runtime/

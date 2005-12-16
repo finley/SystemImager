@@ -8,7 +8,8 @@
 RAIDTOOLS_VERSION := 1.00.3
 RAIDTOOLS_DIR := raidtools-$(RAIDTOOLS_VERSION)
 RAIDTOOLS_TARBALL := raidtools-$(RAIDTOOLS_VERSION).tar.gz
-RAIDTOOLS_URL := http://people.redhat.com/mingo/raidtools/$(RAIDTOOLS_TARBALL)
+#RAIDTOOLS_URL := http://people.redhat.com/mingo/raidtools/$(RAIDTOOLS_TARBALL)
+RAIDTOOLS_URL := http://download.systemimager.org/pub/raidtools/$(RAIDTOOLS_TARBALL)
 RAIDTOOLS_PATCH := $(PATCH_DIR)/raidtools.patch
 RAIDTOOLS_BINARIES := $(SRC_DIR)/$(RAIDTOOLS_DIR)/mkraid $(SRC_DIR)/$(RAIDTOOLS_DIR)/raidstart
 RAIDTOOLS_PATCHES := $(shell ls $(PATCH_DIR)/raidtools.*.patch 2>/dev/null | sort)

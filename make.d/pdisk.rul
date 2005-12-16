@@ -15,7 +15,8 @@
 PDISK_VERSION	:= 20000516
 PDISK_DIR 	:= pdisk
 PDISK_TARBALL 	:= pdisk.$(PDISK_VERSION).src.tar
-PDISK_URL 	:= http://cantaforda.com/cfcl/eryk/linux/pdisk/dist/$(PDISK_TARBALL)
+#PDISK_URL 	:= http://cantaforda.com/cfcl/eryk/linux/pdisk/dist/$(PDISK_TARBALL)
+PDISK_URL 	:= http://download.systemimager.org/pub/pdisk/$(PDISK_TARBALL)
 PDISK_PATCHES 	:= $(shell ls $(PATCH_DIR)/pdisk.*.patch 2>/dev/null | sort)
 PDISK_BINARY 	:= $(SRC_DIR)/$(PDISK_DIR)/pdisk
 
