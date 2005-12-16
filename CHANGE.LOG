@@ -6,11 +6,23 @@
 #   $Id$
 #
 
+3.6.0
+--------------------------------------------------------------------------------
+- make complete_source_tarball target for getting all source, including
+  all versions of kernels (results in ~200M tarball)
+- make source_tarball target now only produces systemimager source
+- all source URLs point to download.systemimager.org, and all necessary
+  build source will be maintained there.
+- LVM bug fixes
+- si_monitor tweaks
+- some refinements to UYOK (UseYourOwnKernel), but still considered beta
+- version revs on many supporting utilities
+
+
 3.5.4
 --------------------------------------------------------------------------------
 - installation monitoring GUI (si_monitor, si_monitortk)
 - version revs on many supporting utilities
-- some refinements to UYOK (UseYourOwnKernel), but still considered beta
 
 3.5.2
 --------------------------------------------------------------------------------
