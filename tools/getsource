@@ -1,9 +1,15 @@
 #!/bin/sh
 
+#
+# $Id:$
+#
+#   Created by Dann Frazier (I think) -BEF-
+#
+
 wget_opts="--passive-ftp"
 
 ## paths in the search path must be absolute
-search_path="$(pwd) /usr/src"
+search_path="$(pwd) /usr/src ${HOME}/src"
 
 source_found=0
 usage() {
