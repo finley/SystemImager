@@ -61,7 +61,7 @@ $(SRC_DIR)/$(LVM_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
 	$(GETSOURCE) $(LVM_URL) $(SRC_DIR)
 
-ALL_SOURCE += $(SRC_DIR)/$(LVM_TARBALL)
+ALL_SOURCE += $(SRC_DIR)/$(LVM_TARBALL) $(SRC_DIR)/$(DEVMAPPER_TARBALL)
 
 PHONY += lvm_clean
 lvm_clean:
