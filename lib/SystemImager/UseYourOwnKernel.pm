@@ -84,9 +84,7 @@ sub create_uyok_initrd($$) {
 
                 } else {
 
-                        print qq(\nWARNING: Couldn't find module "$_"!\n);
-                        print qq(  Hit <Ctrl>+<C> to cancel, or press <Enter> to ignore and continue...\n);
-                        <STDIN>;
+                        print STDERR qq(\nWARNING: Couldn't find module "$_" (skipping it)!\n);
                 }
         }
         close(FILE);
@@ -472,7 +470,7 @@ sub _create_initrd_cramfs($$) {
         run_cmd("$mkfs $staging_dir $new_initrd", $verbose, 1);
 
         # gzip up
-        run_cmd("gzip -9 -S .img $new_initrd", $verbose);
+        run_cmd("gzip -f -9 -S .img $new_initrd", $verbose);
         run_cmd("ls -l $new_initrd.img", $verbose, 1) if($verbose);
 
         return 1;
@@ -514,7 +512,7 @@ sub _create_initrd_reiserfs($$) {
 
         # umount and gzip up
         run_cmd("umount $new_initrd_mount_dir", $verbose);
-        run_cmd("gzip -9 -S .img $new_initrd", $verbose);
+        run_cmd("gzip -f -9 -S .img $new_initrd", $verbose);
         run_cmd("ls -l $new_initrd.img", $verbose, 1) if($verbose);
 
         return 1;
@@ -569,7 +567,7 @@ sub _create_initrd_ext2($$) {
 
         # umount and gzip up
         run_cmd("umount $new_initrd_mount_dir", $verbose);
-        run_cmd("gzip -9 -S .img $new_initrd", $verbose);
+        run_cmd("gzip -f -9 -S .img $new_initrd", $verbose);
         run_cmd("ls -l $new_initrd.img", $verbose, 1) if($verbose);
 
         # cleanup the temporary mount dir
@@ -638,7 +636,7 @@ sub _create_initrd_jfs($$) {
 
         # umount and gzip up
         run_cmd("umount $new_initrd_mount_dir", $verbose);
-        run_cmd("gzip -9 -S .img $new_initrd", $verbose);
+        run_cmd("gzip -f -9 -S .img $new_initrd", $verbose);
         run_cmd("ls -l $new_initrd.img", $verbose, 1) if($verbose);
 
         return 1;
