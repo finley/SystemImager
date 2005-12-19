@@ -489,6 +489,7 @@ $(BOEL_BINARIES_TARBALL):	\
 				$(SFDISK_BINARY) \
 				$(MKSWAP_BINARY) \
 				$(RAIDTOOLS_BINARIES) \
+				$(MDADM_BINARIES) \
 				$(MKREISERFS_BINARY) \
 				$(MKJFS_BINARY) \
 				$(MKXFS_BINARY) \
@@ -518,6 +519,8 @@ $(BOEL_BINARIES_TARBALL):	\
 	install -m 755 --strip $(MKSWAP_BINARY)			$(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(RAIDTOOLS_BINARIES) 		$(BOEL_BINARIES_DIR)/sbin/
 	cd $(BOEL_BINARIES_DIR)/sbin/ && ln -f raidstart raidstop
+	#EF: mdadm will replace raidtools
+	install -m 755 --strip $(MDADM_BINARIES) 		$(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(MKREISERFS_BINARY) 		$(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(MKJFS_BINARY) 			$(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(OPENSSH_BINARIES) 		$(BOEL_BINARIES_DIR)/sbin/

@@ -1,0 +1,49 @@
+#
+#   $Id$
+#
+#   2005.12.18 Erich Focht
+#
+
+MDADM_VERSION := 2.2
+MDADM_DIR := mdadm-$(MDADM_VERSION)
+MDADM_TARBALL := mdadm-$(MDADM_VERSION).tgz
+#MDADM_URL := http://people.redhat.com/mingo/raidtools/$(MDADM_TARBALL)
+MDADM_URL := http://www.cse.unsw.edu.au/~neilb/source/mdadm/$(MDADM_TARBALL)
+MDADM_BINARIES := $(SRC_DIR)/$(MDADM_DIR)/mdadm
+
+ALL_SOURCE += $(SRC_DIR)/$(MDADM_TARBALL)
+
+#
+# build  mdadm binaries
+#
+PHONY += mdadm
+mdadm:	$(MDADM_BINARIES)
+
+# install the raidtools binaries (pulled by some autoinstall clients)
+PHONY += install_mdadm
+install_mdadm:	$(MDADM_BINARIES)
+	$(SI_INSTALL) -d $(TFTP_BIN_DEST)
+	$(SI_INSTALL) -m 755 $(SRC_DIR)/$(MDADM_DIR)/mdadm \
+	    $(TFTP_BIN_DEST)/mdadm
+
+# install the mdadm binary (pulled by some autoinstall clients)
+# this rule is for building the boot tarball
+PHONY += install_standard_mdadm
+install_standard_mdadm:	$(MDADM_BINARIES)
+	$(SI_INSTALL) -m 755 $(SRC_DIR)/$(MDADM_DIR)/mdadm $(DESTDIR)
+
+$(MDADM_BINARIES): $(SRC_DIR)/patched_kernel-stamp  
+	rm -rf $(SRC_DIR)/$(MDADM_DIR)
+	$(MAKE) $(SRC_DIR)/$(MDADM_TARBALL)
+	[ -d $(SRC_DIR)/$(MDADM_DIR) ] || \
+	    ( cd $(SRC_DIR) && tar -xvzf $(MDADM_TARBALL) )
+	$(MAKE) -j $(NCPUS) -C $(SRC_DIR)/$(MDADM_DIR)
+
+# download the mdadm tarball
+$(SRC_DIR)/$(MDADM_TARBALL):
+	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
+	$(GETSOURCE) $(MDADM_URL) $(SRC_DIR)
+
+PHONY += mdadm_clean
+mdadm_clean:
+	rm -rf $(SRC_DIR)/$(MDADM_DIR)
