@@ -10,6 +10,7 @@ my $program_name = "si_monitortk";
 
 use lib "USR_PREFIX/lib/systemimager/perl";
 use strict;
+use Socket;
 use Tk;
 use Tk::Label;
 use Tk::Balloon;
@@ -363,7 +364,7 @@ sub show_virtual_console
 	my $mac = $tab->itemCget($_[0], 0, 'text');
 	my $ip = $tab->itemCget($_[0], 1, 'text');
 	my $hostname  = $tab->itemCget($_[0], 2, 'text') || '';
-	my $image = $tab->itemCget($_[0], 7, 'text') || '';
+	my $status = $tab->itemCget($_[0], 4, 'text') || '';
 
 	# Open the console in a new window.
 	$sub_win = MainWindow->new();
@@ -391,6 +392,35 @@ sub show_virtual_console
 		"$hostname($ip):> virtual console started for client $mac.\n",
 		'title'
 	);
+
+    unless ($status eq 'done') {
+        # Gather all log messages from the installing client.
+        my @old_logmsg = ();
+        socket(SOCK, PF_INET, SOCK_STREAM, getprotobyname('tcp')) or BEGIN {
+            print STDERR "error: cannot create TCP socket for client $ip!\n";
+            goto skip_old_logmsg;
+        };
+        connect(SOCK, sockaddr_in(8181, inet_aton($ip))) or BEGIN {
+            $sub_tab->insert('end',
+                "$hostname($ip):> host unreachable: cannot gather previous messages!\n",
+                'title'
+            );
+            goto skip_old_logmsg;
+        };
+        while (<SOCK>) {
+            push(@old_logmsg, $_);
+        }
+        close(SOCK);
+
+        # Fill virtual console with old log messages.
+        for (my $i = 0; $i < $#old_logmsg - 1; $i++) {
+            $sub_tab->insert('end',
+                "$hostname($ip):> " . $old_logmsg[$i],
+                'title'
+            );
+        }
+    }
+skip_old_logmsg:
 
 	# Refresh console view (default 100ms).
 	my $cons_timer = Tk::After->new(
