@@ -18,8 +18,8 @@ UTIL_LINUX_TARBALL  := util-linux-$(UTIL_LINUX_VERSION).tar.bz2
 UTIL_LINUX_URL      := http://download.systemimager.org/pub/util-linux/$(UTIL_LINUX_TARBALL)
 UTIL_LINUX_PATCHES  := $(shell ls $(PATCH_DIR)/util-linux.*.patch 2>/dev/null | sort)
 
-MKSWAP_BINARY       := $(SRC_DIR)/$(UTIL_LINUX_DIR)/disk-utils/mkswap
-SFDISK_BINARY       := $(SRC_DIR)/$(UTIL_LINUX_DIR)/fdisk/sfdisk
+UTIL_LINUX_BINARIES := $(SRC_DIR)/$(UTIL_LINUX_DIR)/disk-utils/mkswap \
+                        $(SRC_DIR)/$(UTIL_LINUX_DIR)/fdisk/sfdisk
 
 ALL_SOURCE += $(SRC_DIR)/$(UTIL_LINUX_TARBALL)
 
