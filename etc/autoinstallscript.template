@@ -19,7 +19,7 @@
 # via /tmp/variables.txt.  Apparently the shell we use in BOEL is not 
 # intelligent enough to take a "set -a" parameter.
 #
-. /tmp/variables.txt || shellout
+. /tmp/variables.txt
 
 # Load functions and other variables
 . /etc/init.d/functions
@@ -387,6 +387,7 @@ run_post_install_scripts
 #   Tell the image server we're done
 #   
 rsync $IMAGESERVER::scripts/imaging_complete > /dev/null 2>&1
+logmsg "Imaging completed"
 #
 ################################################################################
 
