@@ -26,10 +26,7 @@ ALL_SOURCE += $(SRC_DIR)/$(UTIL_LINUX_TARBALL)
 PHONY += util-linux
 util-linux:	$(MKSWAP_BINARY) $(SFDISK_BINARY)
 
-$(SFDISK_BINARY):   $(SRC_DIR)/$(UTIL_LINUX_DIR)/make_include
-	$(MAKE) -j $(NCPUS) -C $(SRC_DIR)/$(UTIL_LINUX_DIR)
-
-$(MKSWAP_BINARY):   $(SRC_DIR)/$(UTIL_LINUX_DIR)/make_include
+$(UTIL_LINUX_BINARIES):   $(SRC_DIR)/$(UTIL_LINUX_DIR)/make_include
 	$(MAKE) -j $(NCPUS) -C $(SRC_DIR)/$(UTIL_LINUX_DIR)
 
 $(SRC_DIR)/$(UTIL_LINUX_DIR)/make_include:   $(SRC_DIR)/$(UTIL_LINUX_TARBALL)
