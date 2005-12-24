@@ -470,9 +470,9 @@ EOF
 } elsif(!$quiet) {
     print <<EOF;
 
-WARNING:  The rsync daemon was not started.  You must run $progname again,
-          without the -n option, before you can pull this client's image
-          to an imageserver.
+WARNING:  The rsync daemon was not started.  You must run $progname 
+          again, without the -n option, before you can pull this 
+          client's image to an imageserver.
 EOF
 
 }
