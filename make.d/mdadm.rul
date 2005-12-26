@@ -7,9 +7,9 @@
 MDADM_VERSION := 2.2
 MDADM_DIR := mdadm-$(MDADM_VERSION)
 MDADM_TARBALL := mdadm-$(MDADM_VERSION).tgz
-#MDADM_URL := http://people.redhat.com/mingo/raidtools/$(MDADM_TARBALL)
 MDADM_URL := http://www.cse.unsw.edu.au/~neilb/source/mdadm/$(MDADM_TARBALL)
 MDADM_BINARIES := $(SRC_DIR)/$(MDADM_DIR)/mdadm
+MDADM_PATCHES := $(shell ls $(PATCH_DIR)/mdadm.*.patch 2>/dev/null | sort)
 
 ALL_SOURCE += $(SRC_DIR)/$(MDADM_TARBALL)
 
@@ -37,6 +37,8 @@ $(MDADM_BINARIES): $(SRC_DIR)/patched_kernel-stamp
 	$(MAKE) $(SRC_DIR)/$(MDADM_TARBALL)
 	[ -d $(SRC_DIR)/$(MDADM_DIR) ] || \
 	    ( cd $(SRC_DIR) && tar -xvzf $(MDADM_TARBALL) )
+	cd $(SRC_DIR)/$(MDADM_DIR) && \
+	    cat $(MDADM_PATCHES) < /dev/null | patch -p1
 	$(MAKE) -j $(NCPUS) -C $(SRC_DIR)/$(MDADM_DIR)
 
 # download the mdadm tarball
