@@ -1361,6 +1361,11 @@ send_monitor_msg() {
             cpu=$(echo `cat /proc/cpuinfo | grep "model name\|cpu MHz" | sed "s/.*: //" | sed "s/^\([0-9\.]*\)$/(\1 MHz)/"` | sed "s/\(MHz)\)/\1 |/g" | sed "s/ |$//")
         fi
 
+        # Collect the number of CPUs.     
+        if [ -z "$ncpus" ]; then
+            ncpus=$((`cat /proc/cpuinfo | grep "^processor" | sed -n '$p' | sed "s/.*: \([0-9]\)*$/\1/"` + 1))
+        fi
+
         # Collect the amount of phyisical memory.
         if [ -z "$mem" ]; then
             mem=`cat /proc/meminfo | sed -ne "s/MemTotal: *//p" | sed "s/ kB//"`
@@ -1374,7 +1379,7 @@ send_monitor_msg() {
     fi
 
     # Report the message to the monitor server.
-    send_msg=`echo "mac=$mac:ip=$IPADDR:host=$HOSTNAME:cpu=$cpu:mem=$mem:os=$IMAGENAME:tmpfs=$tmpfs:time=$time:$msg"`
+    send_msg=`echo "mac=$mac:ip=$IPADDR:host=$HOSTNAME:cpu=$cpu:ncpus=$ncpus:mem=$mem:os=$IMAGENAME:tmpfs=$tmpfs:time=$time:$msg"`
 
     # Send data to monitor server.
     echo "$send_msg" | nc $MONITOR_SERVER $MONITOR_PORT

@@ -252,6 +252,8 @@ sub update_db
 			$client->{'host'} = $_;
 		} elsif (s/^cpu=//) {
 			$client->{'cpu'} = $_;
+		} elsif (s/^ncpus=//) {
+			$client->{'ncpus'} = $_;
 		} elsif (s/^mem=//) {
 			$client->{'mem'} = int($_ / 1024);
 		} elsif (s/^os=//) {
@@ -298,6 +300,8 @@ sub update_db
 		if $client->{'host'};
 	$xml->{'client'}->{$mac}->{'cpu'} = $client->{'cpu'}
 		if $client->{'cpu'};
+	$xml->{'client'}->{$mac}->{'ncpus'} = $client->{'ncpus'}
+		if $client->{'ncpus'};
 	$xml->{'client'}->{$mac}->{'mem'} = $client->{'mem'}
 		if defined($client->{'mem'});
 	$xml->{'client'}->{$mac}->{'os'} = $client->{'os'}

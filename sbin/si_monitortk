@@ -145,7 +145,8 @@ my $attrs_struct = {
     chr(0x06) => { -name => 'speed',  -label => 'S~peed',    -description => 'Network bandwidth (KB/s)' },
     chr(0x07) => { -name => 'mem',    -label => '~RAM',      -description => 'Physical RAM installed in the client' },
     chr(0x08) => { -name => 'tmpfs',  -label => 'RAM ~used', -description => 'Allocated RAM' },
-    chr(0x09) => { -name => 'cpu',    -label => '~CPU',      -description => 'CPU model' },
+    chr(0x09) => { -name => 'ncpus',  -label => '~nCPUs',    -description => 'Number of CPUs' },
+    chr(0x10) => { -name => 'cpu',    -label => '~CPU',      -description => 'CPU model' },
 };
 # Cache attribute names.
 my @attrs = grep !/mac/, map {$attrs_struct->{$_}->{'-name'}} sort keys %{$attrs_struct};
@@ -276,7 +277,7 @@ my $bal = $window->Balloon(-statusbar => $status_bar);
 $tab = $window->Scrolled(
 	'HList',
 	-header		=> 1,
-	-columns	=> 10,
+	-columns	=> 11,
 	-scrollbars	=> 'se',
 	-width		=> 110,
 	-height		=> 25,
