@@ -90,12 +90,16 @@ logmsg() {
     # Check if the network is up before trying to send data to the
     # monitor server.
     if [ ! -z $MONITOR_SERVER ]; then
-        # Log message into the global monitor log.
-        echo $@ >> /tmp/si_monitor.log 2>/dev/null
         # Send the message to the monitor daemon.
-        ifconfig 2>&1 | grep "inet addr" | grep -v "127.0.0.1" >/dev/null 2>&1
-        if [ $? -eq 0 ]; then
-            send_monitor_msg "log=$@"
+        if [ "x$MONITOR_CONSOLE" = "xyes" ]; then
+            # Log message into the global monitor log.
+            if ((`mount 2>/dev/null | grep ' / ' | grep -q '(rw)'`)); then
+                echo $@ >> /tmp/si_monitor.log
+            fi
+            ifconfig 2>&1 | grep "inet addr" | grep -v "127.0.0.1" >/dev/null 2>&1
+            if [ $? -eq 0 ]; then
+                send_monitor_msg "log=$@"
+            fi
         fi
     fi
 }
@@ -188,6 +192,7 @@ write_variables() {
 
     echo "MONITOR_SERVER=$MONITOR_SERVER"      	>> /tmp/variables.txt
     echo "MONITOR_PORT=$MONITOR_PORT"          	>> /tmp/variables.txt
+    echo "MONITOR_CONSOLE=$MONITOR_CONSOLE"    	>> /tmp/variables.txt
 }
 #
 ################################################################################

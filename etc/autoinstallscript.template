@@ -213,6 +213,9 @@ if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
     RETRY=7
     FLAMETHROWER_TARPIPE=y
     flamethrower_client
+    if [ ! -z $MONITOR_SERVER ]; then
+        stop_report_task 100
+    fi
 else 
     # Use rsync 
     if [ $NO_LISTING ]; then
@@ -231,11 +234,18 @@ else
         rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --exclude=/proc/* --numeric-ids \
               ${IMAGESERVER}::${IMAGENAME}/ ${DIR}/ || shellout 
 
+        if [ ! -z $MONITOR_SERVER ]; then
+            stop_report_task 100
+        fi
+
         # Move from staging in tmpfs to disk
         rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${DIR}/ /a/
     else
         logmsg "rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --exclude=/proc/* --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ /a/" 
         rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --exclude=/proc/* --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ /a/ || shellout 
+        if [ ! -z $MONITOR_SERVER ]; then
+            stop_report_task 100
+        fi
     fi
 fi 
 
@@ -251,10 +261,6 @@ fi
 
 # Leave notice of which image is installed on the client
 echo $IMAGENAME > /a/etc/systemimager/IMAGE_LAST_SYNCED_TO || shellout
-
-if [ ! -z $MONITOR_SERVER ]; then
-    stop_report_task 100
-fi
 
 # Copy the raidtab into the image.
 cp -f /etc/raidtab /a/etc/raidtab
