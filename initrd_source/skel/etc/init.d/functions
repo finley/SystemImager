@@ -1402,7 +1402,9 @@ init_monitor_server() {
     # Start client log gathering server: for each connection
     # to the local client on port 8181 the full log is sent
     # to the requestor. -AR-
-    while :; do nc -p 8181 -l < /tmp/si_monitor.log; done &
+    if [ "x$MONITOR_CONSOLE" = "xyes" ]; then
+        while :; do nc -p 8181 -l < /tmp/si_monitor.log; done &
+    fi
 }
 #
 ################################################################################
