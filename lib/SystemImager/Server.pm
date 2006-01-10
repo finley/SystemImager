@@ -1413,8 +1413,9 @@ sub _write_out_mkfs_commands {
             print $out qq(mkraid --really-force $real_dev || shellout\n)
                 unless (defined($xml_config->{raid}));
         } elsif( $real_dev =~ /^(.*?)(p?\d+)$/ ) {
-            unless($dev2disk{$1}) { next; }
-            $real_dev = "\${".$dev2disk{$1}."}".$2;
+            if ($dev2disk{$1}) {
+                $real_dev = "\${".$dev2disk{$1}."}".$2;
+            }
         }
 
         # swap
