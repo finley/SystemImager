@@ -3,6 +3,7 @@
 #  "SystemImager"
 #
 #  Copyright (C) 2005 Andrea Righi <a.righi@cineca.it>
+#  Copyright (C) 2005-2006 Bernard Li <bli@bcgsc.ca>
 
 use lib "USR_PREFIX/lib/systemimager/perl";
 use strict;
@@ -22,6 +23,7 @@ my $version_info = << "EOF";
 $program_name (part of SystemImager) v$VERSION
 
 Copyright (C) 1999-2001 Andrea Righi <a.righi\@cineca.it>
+Copyright (C) 2005-2006 Bernard Li <bli\@bcgsc.ca>
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 EOF
@@ -253,7 +255,9 @@ sub update_db
 		} elsif (s/^cpu=//) {
 			$client->{'cpu'} = $_;
 		} elsif (s/^ncpus=//) {
-			$client->{'ncpus'} = $_;
+			$client->{'ncpus'} = int($_);
+		} elsif (s/^kernel=//) {
+			$client->{'kernel'} = $_;
 		} elsif (s/^mem=//) {
 			$client->{'mem'} = int($_ / 1024);
 		} elsif (s/^os=//) {
@@ -265,7 +269,7 @@ sub update_db
 		} elsif (s/^status=//) {
 			$client->{'status'} = $_;
 		} elsif (s/^speed=//) {
-			$client->{'speed'} = int($_);
+			$client->{'speed'} = $_;
 		} elsif (s/^log=//) {
 			$client->{'log'} = $_;
 		}
@@ -302,6 +306,8 @@ sub update_db
 		if $client->{'cpu'};
 	$xml->{'client'}->{$mac}->{'ncpus'} = $client->{'ncpus'}
 		if $client->{'ncpus'};
+	$xml->{'client'}->{$mac}->{'kernel'} = $client->{'kernel'}
+		if $client->{'kernel'};
 	$xml->{'client'}->{$mac}->{'mem'} = $client->{'mem'}
 		if defined($client->{'mem'});
 	$xml->{'client'}->{$mac}->{'os'} = $client->{'os'}

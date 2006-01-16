@@ -1371,6 +1371,11 @@ send_monitor_msg() {
             ncpus=$((`cat /proc/cpuinfo | grep "^processor" | sed -n '$p' | sed "s/.*: \([0-9]\)*$/\1/"` + 1))
         fi
 
+        # Collect the kernel information.
+        if [ -z "$kernel" ]; then
+            kernel=`uname -r`
+        fi
+
         # Collect the amount of phyisical memory.
         if [ -z "$mem" ]; then
             mem=`cat /proc/meminfo | sed -ne "s/MemTotal: *//p" | sed "s/ kB//"`
@@ -1384,7 +1389,7 @@ send_monitor_msg() {
     fi
 
     # Report the message to the monitor server.
-    send_msg=`echo "mac=$mac:ip=$IPADDR:host=$HOSTNAME:cpu=$cpu:ncpus=$ncpus:mem=$mem:os=$IMAGENAME:tmpfs=$tmpfs:time=$time:$msg"`
+    send_msg=`echo "mac=$mac:ip=$IPADDR:host=$HOSTNAME:cpu=$cpu:ncpus=$ncpus:kernel=$kernel:mem=$mem:os=$IMAGENAME:tmpfs=$tmpfs:time=$time:$msg"`
 
     # Send data to monitor server.
     echo "$send_msg" | nc $MONITOR_SERVER $MONITOR_PORT
@@ -1433,7 +1438,13 @@ start_report_task() {
         TOT=`echo $LIST | bc`
 
         # Evaluate bandwidth.
-        speed=`echo "scale=2; (($TOT - $DISKSIZE) - $CURR_SIZE) / $REPORT_INTERVAL" | bc`
+        speednum=`echo "scale=2; (($TOT - $DISKSIZE) - $CURR_SIZE) / $REPORT_INTERVAL" | bc`
+        if [ `echo "$speednum > 999.99" | bc` != 0 ]; then
+            speednum=`echo "scale=2; $speednum / 1000" | bc`
+            speed=$speednum"MB/s"
+        else
+            speed=$speednum"KB/s"
+        fi
 
         # Evaluate status.
         CURR_SIZE=$(($TOT - $DISKSIZE))

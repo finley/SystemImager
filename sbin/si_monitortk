@@ -3,6 +3,7 @@
 #  "SystemImager"
 #
 #  Copyright (C) 2005 Andrea Righi <a.righi@cineca.it>
+#  Copyright (C) 2005-2006 Bernard Li <bli@bcgsc.ca>
 
 # set version number
 my $VERSION = "SYSTEMIMAGER_VERSION_STRING";
@@ -26,6 +27,7 @@ my $version_info = << "EOF";
 $program_name\n(part of SystemImager) v$VERSION
 
 Copyright (C) 2005 Andrea Righi <a.righi\@cineca.it>
+Copyright (C) 2005-2006 Bernard Li <bli\@bcgsc.ca>
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 EOF
@@ -140,13 +142,14 @@ my $attrs_struct = {
     chr(0x01) => { -name => 'ip',     -label => '~IP',       -description => 'Network IP address' },
     chr(0x02) => { -name => 'host',   -label => '~Hostname', -description => 'Name of the client' },
     chr(0x03) => { -name => 'os',     -label => 'I~mage',    -description => 'Image installed in the client' },
-    chr(0x04) => { -name => 'status', -label => '~Status',   -description => 'Status of installation' },
-    chr(0x05) => { -name => 'time',   -label => '~Time',     -description => 'Elapsed time for installation' },
-    chr(0x06) => { -name => 'speed',  -label => 'S~peed',    -description => 'Network bandwidth (KB/s)' },
-    chr(0x07) => { -name => 'mem',    -label => '~RAM',      -description => 'Physical RAM installed in the client' },
-    chr(0x08) => { -name => 'tmpfs',  -label => 'RAM ~used', -description => 'Allocated RAM' },
-    chr(0x09) => { -name => 'ncpus',  -label => '~nCPUs',    -description => 'Number of CPUs' },
-    chr(0x10) => { -name => 'cpu',    -label => '~CPU',      -description => 'CPU model' },
+    chr(0x04) => { -name => 'kernel', -label => '~Kernel',   -description => 'SystemImager Kernel version' },
+    chr(0x05) => { -name => 'status', -label => '~Status',   -description => 'Status of installation' },
+    chr(0x06) => { -name => 'time',   -label => '~Time',     -description => 'Elapsed time for installation' },
+    chr(0x07) => { -name => 'speed',  -label => 'S~peed',    -description => 'Network bandwidth' },
+    chr(0x08) => { -name => 'mem',    -label => '~RAM',      -description => 'Physical RAM installed in the client' },
+    chr(0x09) => { -name => 'tmpfs',  -label => 'RAM ~used', -description => 'Allocated RAM' },
+    chr(0x10) => { -name => 'ncpus',  -label => '~nCPUs',    -description => 'Number of CPUs' },
+    chr(0x11) => { -name => 'cpu',    -label => '~CPU',      -description => 'CPU model' },
 };
 # Cache attribute names.
 my @attrs = grep !/mac/, map {$attrs_struct->{$_}->{'-name'}} sort keys %{$attrs_struct};
@@ -277,7 +280,7 @@ my $bal = $window->Balloon(-statusbar => $status_bar);
 $tab = $window->Scrolled(
 	'HList',
 	-header		=> 1,
-	-columns	=> 11,
+	-columns	=> 12,
 	-scrollbars	=> 'se',
 	-width		=> 110,
 	-height		=> 25,
@@ -656,9 +659,7 @@ sub display_nodes
             $client->{$mac}->{'time'} .= 'min';
         }
 		# Format the bandwidth.
-        if ($client->{$mac}->{'speed'}) {
-            $client->{$mac}->{'speed'} .= 'KB/s'; 
-        } else {
+        if (!$client->{$mac}->{'speed'}) {
             $client->{$mac}->{'speed'} = '-';
         }
 		# Format the total amount of RAM.
