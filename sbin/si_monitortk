@@ -587,6 +587,12 @@ sub display_nodes
     my $num_inst = 0;
     my $num_unkn = 0;
 
+    # Drop previous selection if nothing is selected.
+    if (defined($selected_mac_addr)) {
+        undef($selected_mac_addr)
+            unless (defined($tab->info('selection')));
+    }
+
     # Delete all clients.
     $tab->delete('all');
     unless (-s $database) {
