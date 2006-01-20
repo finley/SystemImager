@@ -269,7 +269,7 @@ sub update_db
 		} elsif (s/^status=//) {
 			$client->{'status'} = $_;
 		} elsif (s/^speed=//) {
-			$client->{'speed'} = $_;
+			$client->{'speed'} = int($_);
 		} elsif (s/^log=//) {
 			$client->{'log'} = $_;
 		}

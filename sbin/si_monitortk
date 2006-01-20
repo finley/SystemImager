@@ -667,6 +667,14 @@ sub display_nodes
 		# Format the bandwidth.
         if (!$client->{$mac}->{'speed'}) {
             $client->{$mac}->{'speed'} = '-';
+        } else {
+            if ($client->{$mac}->{'speed'} < 1000) {
+                $client->{$mac}->{'speed'} = 
+                    sprintf("%.3fKB/s", $client->{$mac}->{'speed'});
+            } else {
+                $client->{$mac}->{'speed'} = 
+                    sprintf("%.3fMB/s", $client->{$mac}->{'speed'} / 1000);
+            }
         }
 		# Format the total amount of RAM.
         if (defined($client->{$mac}->{'mem'})) {

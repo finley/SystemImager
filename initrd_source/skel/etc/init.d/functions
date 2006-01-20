@@ -1438,13 +1438,7 @@ start_report_task() {
         TOT=`echo $LIST | bc`
 
         # Evaluate bandwidth.
-        speednum=`echo "scale=2; (($TOT - $DISKSIZE) - $CURR_SIZE) / $REPORT_INTERVAL" | bc`
-        if [ `echo "$speednum > 999.99" | bc` != 0 ]; then
-            speednum=`echo "scale=2; $speednum / 1000" | bc`
-            speed=$speednum"MB/s"
-        else
-            speed=$speednum"KB/s"
-        fi
+        speed=`echo "scale=2; (($TOT - $DISKSIZE) - $CURR_SIZE) / $REPORT_INTERVAL" | bc`
 
         # Evaluate status.
         CURR_SIZE=$(($TOT - $DISKSIZE))
