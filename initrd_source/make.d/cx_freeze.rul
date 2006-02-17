@@ -1,0 +1,34 @@
+#
+#	2005-12-28 Andrea Righi
+#   	- Tool to freeze python script into binary
+#
+
+
+CX_FREEZE_VERSION       := 3.0.2
+CX_FREEZE_DIR           := cx_Freeze-$(CX_FREEZE_VERSION)
+CX_FREEZE_TARBALL       := cx_Freeze-$(CX_FREEZE_VERSION)-source.tgz
+CX_FREEZE_URL           := http://switch.dl.sourceforge.net/sourceforge/cx-freeze/$(CX_FREEZE_TARBALL)
+#CX_FREEZE_URL          := http://download.systemimager.org/pub/cx-freeze/$(CX_FREEZE_TARBALL)
+CX_FREEZE_BINARY        := $(INITRD_SRC_DIR)/$(CX_FREEZE_DIR)/FreezePython
+
+PHONY += cx_freeze
+
+cx_freeze:  $(CX_FREEZE_BINARY)
+
+$(CX_FREEZE_BINARY): $(INITRD_SRC_DIR)/$(CX_FREEZE_TARBALL)
+	rm -rf $(INITRD_SRC_DIR)/$(CX_FREEZE_DIR)
+	cd $(INITRD_SRC_DIR) && tar -xvzf $(CX_FREEZE_TARBALL)
+	cd $(INITRD_SRC_DIR)/$(CX_FREEZE_DIR) && $(PYTHON) MakeFrozenBases.py && \
+		$(PYTHON) FreezePython.py --no-copy-deps FreezePython.py
+
+$(INITRD_SRC_DIR)/$(CX_FREEZE_TARBALL):
+	[ -d $(INITRD_SRC_DIR) ] || mkdir -p $(INITRD_SRC_DIR)
+	$(GETSOURCE) $(CX_FREEZE_URL) $(INITRD_SRC_DIR)
+
+ALL_SOURCE += $(INITRD_SRC_DIR)/$(CX_FREEZE_TARBALL)
+
+PHONY += cx_freeze_clean
+cx_freeze_clean:
+	rm -rf $(INITRD_SRC_DIR)/$(CX_FREEZE_DIR)
+
+# /* vi: set noet ts=4: */

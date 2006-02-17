@@ -82,6 +82,8 @@ if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
     get_flamethrower_directory
 fi
 
+get_torrents_directory
+
 get_boel_binaries_tarball
 beep
 

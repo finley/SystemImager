@@ -216,6 +216,33 @@ if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
     if [ ! -z $MONITOR_SERVER ]; then
         stop_report_task 100
     fi
+elif [ ! -z $BITTORRENT_STAGING ]; then
+    # Get the right .torrent file.
+    if [ -f "${TORRENTS_DIR}/${IMAGENAME}.tar.gz.torrent" ]; then
+        bittorrent_tarball="${IMAGENAME}.tar.gz"
+        compress='z'
+    elif [ -f "${TORRENTS_DIR}/${IMAGENAME}.tar.torrent" ]; then
+        bittorrent_tarball="${IMAGENAME}.tar"
+        compress=''
+    else
+        logmsg "error: cannot find a valid torrent file for the image ${IMAGENAME}"
+        shellout
+    fi
+
+    # Download image from peers
+    logmsg "Start downloading image using torrent ${bittorrent_tarball}.torrent"
+    logmsg ""
+    logmsg "--> INFO: remember to run si_installbtimage on the image server!"
+    logmsg ""
+    bittorrent_get_file ${TORRENTS_DIR}/${bittorrent_tarball}.torrent ${BITTORRENT_STAGING}
+    if [ ! -z $MONITOR_SERVER ]; then
+        stop_report_task 100
+    fi
+    # Extract image.
+    logmsg "Extracting image from ${bittorrent_tarball} ..."
+    (cd /a/ && tar -xv${compress}f ${BITTORRENT_STAGING}/${bittorrent_tarball}) || shellout
+    rm -f ${BITTORRRENT_STAGING}/${bittorrent_tarball}
+    unset bittorrent_tarball
 else 
     # Use rsync 
     if [ $NO_LISTING ]; then

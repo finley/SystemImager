@@ -40,6 +40,7 @@
 # SystemImager file location standards:
 #   o images will be stored in: /var/lib/systemimager/images/
 #   o autoinstall scripts:      /var/lib/systemimager/scripts/
+#   o torrent files:            /var/lib/systemimager/torrents/
 #   o override directories:     /var/lib/systemimager/overrides/
 #
 #   o web gui pages:            /usr/share/systemimager/web-gui/
@@ -77,6 +78,7 @@
 #           boot files for clients)
 #   o overrides
 #   o scripts
+#   o torrents
 #
 #
 # To include the ctcs test suite, and associated files, do a 'make WITH_CTCS=1 all'
@@ -164,7 +166,7 @@ PXE_CONF_SRC      = etc/pxelinux.cfg
 PXE_CONF_DEST     = $(ETC)/systemimager/pxelinux.cfg
 
 BINARIES := si_mkautoinstallcd si_mkautoinstalldiskette si_mkbootmedia
-SBINARIES := si_addclients si_cpimage si_getimage si_mkdhcpserver si_mkdhcpstatic si_mkautoinstallscript si_mkbootserver si_mvimage si_pushupdate si_rmimage si_mkrsyncd_conf si_mkclientnetboot si_netbootmond si_imagemanip si_mkbootpackage si_monitor si_monitortk
+SBINARIES := si_addclients si_cpimage si_getimage si_mkdhcpserver si_mkdhcpstatic si_mkautoinstallscript si_mkbootserver si_mvimage si_pushupdate si_rmimage si_mkrsyncd_conf si_mkclientnetboot si_netbootmond si_imagemanip si_mkbootpackage si_monitor si_monitortk si_installbtimage
 CLIENT_SBINARIES  := si_updateclient si_prepareclient
 COMMON_BINARIES   = si_lsimage
 
@@ -172,6 +174,7 @@ IMAGESRC    = $(TOPDIR)/var/lib/systemimager/images
 IMAGEDEST   = $(DESTDIR)/var/lib/systemimager/images
 WARNING_FILES = $(IMAGESRC)/README $(IMAGESRC)/CUIDADO $(IMAGESRC)/ACHTUNG
 AUTOINSTALL_SCRIPT_DIR = $(DESTDIR)/var/lib/systemimager/scripts
+AUTOINSTALL_TORRENT_DIR = $(DESTDIR)/var/lib/systemimager/torrents
 OVERRIDES_DIR = $(DESTDIR)/var/lib/systemimager/overrides
 OVERRIDES_README = $(TOPDIR)/var/lib/systemimager/overrides/README
 FLAMETHROWER_STATE_DIR = $(DESTDIR)/var/state/systemimager/flamethrower
@@ -282,6 +285,8 @@ install_server:	install_server_man install_configs install_server_libs
 	$(SI_INSTALL) -d -m 755 $(BOOT_BIN_DEST)
 	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_SCRIPT_DIR)
 
+	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_TORRENT_DIR)
+
 	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_SCRIPT_DIR)/pre-install
 	$(SI_INSTALL) -m 644 --backup --text \
 		$(TOPDIR)/var/lib/systemimager/scripts/pre-install/99all.harmless_example_script \
@@ -313,6 +318,9 @@ install_server:	install_server_man install_configs install_server_libs
 	cp -a $(IMAGEDEST)/README $(IMAGEDEST)/DO_NOT_TOUCH_THESE_DIRECTORIES
 
 	$(SI_INSTALL) -d -m 755 $(FLAMETHROWER_STATE_DIR)
+
+	# Install server-side BitTorrent.
+	cd $(INITRD_SRC_DIR)/$(BITTORRENT_DIR) && $(PYTHON) setup.py install --prefix $(PREFIX)
 
 # install client-only files
 .PHONY:	install_client
@@ -386,6 +394,7 @@ install_configs:
 	$(SI_INSTALL) -d $(ETC)/systemimager
 	$(SI_INSTALL) -m 644 etc/systemimager.conf $(ETC)/systemimager/
 	$(SI_INSTALL) -m 644 etc/flamethrower.conf $(ETC)/systemimager/
+	$(SI_INSTALL) -m 644 etc/bittorrent.conf $(ETC)/systemimager/
 	$(SI_INSTALL) -m 644 etc/autoinstallscript.template $(ETC)/systemimager/
 	$(SI_INSTALL) -m 644 etc/imagemanip.conf $(ETC)/systemimager/
 	$(SI_INSTALL) -m 644 etc/imagemanip.perm $(ETC)/systemimager/
@@ -402,6 +411,7 @@ install_configs:
 	$(SI_INSTALL) -b -m 755 etc/init.d/systemimager-server-rsyncd 			$(INITD)
 	$(SI_INSTALL) -b -m 755 etc/init.d/systemimager-server-netbootmond 		$(INITD)
 	$(SI_INSTALL) -b -m 755 etc/init.d/systemimager-server-flamethrowerd 	$(INITD)
+	$(SI_INSTALL) -b -m 755 etc/init.d/systemimager-server-bittorrent 	$(INITD)
 	$(SI_INSTALL) -b -m 755 etc/init.d/systemimager-server-monitord		$(INITD)
 
 ########## END initrd ##########
@@ -591,6 +601,7 @@ endif
 	test ! -d /lib64 || TGTLIBDIR=lib64 ; \
 	cd $(BOEL_BINARIES_DIR) \
 		&& $(PYTHON) $(TOPDIR)/initrd_source/mklibs -L $(SRC_DIR)/$(PARTED_DIR)/libparted/.libs:$(SRC_DIR)/$(DISCOVER_DIR)/lib/.libs:$(SRC_DIR)/$(DEVMAPPER_DIR)/lib/ioctl:$(SRC_DIR)/$(E2FSPROGS_DIR)/lib:/lib64:/usr/lib64:/usr/kerberos/lib64:/lib:/usr/lib:/usr/kerberos/lib -v -d $$TGTLIBDIR bin/* sbin/*
+
 	#
 	# Include other files required by openssh that apparently aren't 
 	# picked up by mklibs for some reason. -BEF-

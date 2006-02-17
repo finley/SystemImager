@@ -1,0 +1,299 @@
+#!/usr/bin/perl -w
+#
+#  "SystemImager"
+#
+#  Copyright (C) 2005 Andrea Righi <a.righi@cineca.it>
+
+use lib "USR_PREFIX/lib/systemimager/perl";
+use strict;
+use POSIX;
+use Getopt::Long;
+use SystemImager::Config;
+use vars qw($config $VERSION);
+
+my $config_dir = "/etc/systemimager";
+
+my $VERSION = "SYSTEMIMAGER_VERSION_STRING";
+my $program_name = "si_installbtimage";
+my $version_info = << "EOF";
+$program_name (part of SystemImager) v$VERSION
+
+Copyright (C) 1999-2001 Andrea Righi <a.righi\@cineca.it>
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+EOF
+
+my $get_help = "\n       Try \"--help\" for more options.";
+
+my $help_info = $version_info . <<"EOF";
+
+Usage: $program_name --images IMAGE1,IMAGE2,...IMAGEn [OPTION]...
+
+Options: (options can be presented in any order and may be abbreviated)
+ --help                 Display this output.
+
+ --version              Display version and copyright information.
+
+ --images IMAGE1,IMAGE2,...,IMAGEn
+                        Specify a comma separated list of the images to
+                        distribute.
+
+ --update               Update bittorrent files.
+
+ --compress             Compress the image tar file with gzip.
+                        (Default: don't compress)
+
+ --quiet                Run image server seeder in background.
+
+Download, report bugs, and make suggestions at:
+http://systemimager.org/
+
+EOF
+
+my ($help, $version, $quiet, $compress, $update, $images);
+GetOptions(
+    "help"      => \$help,
+    "version"   => \$version,
+    "quiet"     => \$quiet,
+    "compress"  => \$compress,
+    "update"    => \$update,
+    "images=s"  => \$images,
+) or die "$help_info";
+
+### BEGIN evaluate commad line options ###
+if ($help) {
+    print "$help_info";
+    exit(0);
+}
+if ($version) {
+    print "$version_info";
+    exit(0);
+}
+
+# Get SystemImager directories.
+my $IMAGE_DIR = $config->default_image_dir();
+my $TORRENTS_DIR = $config->autoinstall_torrent_dir();
+
+# Get tracker port and interface from the configuration file.
+my ($tracker_port, $image_server);
+my $config_file = $config_dir . '/bittorrent.conf';
+open(IN, '<', $config_file) or
+    die "error: cannot open configuration file $config_file!\n";
+while(<IN>) {
+    if (m/BT_TRACKER_PORT=([0-9]+)/) {
+        $tracker_port = $1;
+    } elsif (m/BT_INTERFACE=(.+)/) {
+        ($image_server) = (`/sbin/ifconfig $1`)[1] =~ /inet addr:(\S+)/;
+    }
+}
+unless ($tracker_port) {
+    die "error in $config_file: BT_TRACKER_PORT not specified!\n";
+}
+unless ($image_server) {
+    die "error in $config_file: BT_INTERFACE not specified or not valid!\n";
+}
+
+# Check the status of the tracker.
+my $PIDFILE='/var/run/systemimager-server-bttracker.pid';
+system "ps -p `cat $PIDFILE 2>/dev/null` >/dev/null 2>&1";
+if ($?) {
+    print "error: systemimager tracker seems to be down...\n" .
+        "Try with:\n" .
+        "\t# /etc/init.d/systemimager-server-bittorrent restart\n";
+    exit(1);
+}
+
+# Check to use tarball or tar.gz.
+if ($compress) {
+    $compress = 'z';
+} else {
+    $compress = '';
+}
+
+# Prepare all images for seeding.
+foreach my $image_name (split(',', $images)) {
+    unless (-d "$IMAGE_DIR/$image_name") {
+        print "warning: \"$image_name\" is not a valid image!\n";
+        next;
+    }
+
+    # Create the tarball of the image.
+    my $tarball_file;
+    print "Preparing tar file for $image_name...\n";
+    if ($update) {
+        unlink("$IMAGE_DIR/$image_name.tar", "$IMAGE_DIR/$image_name.tar.gz");
+    }
+    if ($compress eq 'z') {
+        unlink ("$IMAGE_DIR/$image_name.tar")
+            if (-f "$IMAGE_DIR/$image_name.tar");
+        $tarball_file = "$IMAGE_DIR/$image_name.tar.gz"
+    } else {
+        unlink ("$IMAGE_DIR/$image_name.tar.gz")
+            if (-f "$IMAGE_DIR/$image_name.tar.gz");
+        $tarball_file = "$IMAGE_DIR/$image_name.tar"
+    }
+    unless (-f "$tarball_file") {
+        system "cd $IMAGE_DIR/$image_name && tar -c${compress}f $tarball_file .";
+        if ($?) {
+            die "error: cannot create image tar file!\n";
+        }
+    }
+    print "done.\n";
+    
+    # Prepare torrent file.
+    my $torrent_file;
+    print "Preparing torrent file for $image_name...\n";
+    if ($update) {
+        unlink("$TORRENTS_DIR/$image_name.tar.torrent", 
+            "$TORRENTS_DIR/$image_name.tar.gz.torrent");
+    }
+    if ($compress eq 'z') {
+        unlink ("$TORRENTS_DIR/$image_name.tar.torrent")
+            if (-f "$TORRENTS_DIR/$image_name.tar.torrent");
+        $torrent_file = "$TORRENTS_DIR/$image_name.tar.gz.torrent"
+    } else {
+        unlink ("$TORRENTS_DIR/$image_name.tar.gz.torrent")
+            if (-f "$TORRENTS_DIR/$image_name.tar.gz.torrent");
+        $torrent_file = "$TORRENTS_DIR/$image_name.tar.torrent"
+    }
+    unless (-f "$torrent_file") {
+        system "maketorrent-console --target $torrent_file http://$image_server:$tracker_port/announce $tarball_file";
+        if ($?) {
+            die "error: cannot create torrent file!\n";
+        }
+    }
+    print "done.\n";
+}
+
+# Prepare torrent file for the BOEL binaries.
+my $ARCH = (uname())[4];
+$ARCH =~ s/i.86/i386/;
+
+my $boel_binaries = "$IMAGE_DIR/boel_binaries.tar.gz";
+print "Preparing torrent file for BOEL binaries...\n";
+# Create the symbolic link into the image directory.
+symlink($config->autoinstall_boot_dir() . '/' . $ARCH .
+    '/standard/boel_binaries.tar.gz', $boel_binaries) 
+    if (! -e $boel_binaries);
+# Make .torrent file.
+system "maketorrent-console --target $TORRENTS_DIR/boel_binaries.tar.gz.torrent http://$image_server:$tracker_port/announce $boel_binaries";
+if ($?) {
+    die "error: cannot create torrent file!\n";
+}
+print "done.\n";
+
+# Starting first image seeder.
+print "Starting first image server seeder...\n";
+if ($quiet) {
+    system "cd $IMAGE_DIR && launchmany-console --no_start_trackerless_client --max_upload_rate 0 --rerequest_interval 1 --bind $image_server --save_in $IMAGE_DIR $TORRENTS_DIR>/dev/null 2>&1 &";
+} else {
+    # Evaluate if python-curses is installed.
+    `/usr/bin/env python << EOF
+import sys, os;
+try:
+    import curses
+except:
+    sys.exit(1)
+sys.exit(0);
+EOF
+`;
+    my $bt_ui = ($?) ? 'console' : 'curses';
+    system "cd $IMAGE_DIR && launchmany-$bt_ui --no_start_trackerless_client --max_upload_rate 0 --rerequest_interval 1 --bind $image_server --save_in $IMAGE_DIR $TORRENTS_DIR";
+}
+print "done.\n";
+
+# Well done.
+exit(0);
+
+__END__
+
+=head1 NAME
+
+si_installbtimage - systemimager bittorrent seeder
+
+=head1 SYNOPSIS
+
+si_installbtimage --images IMAGE1,IMAGE2,...IMAGEn [OPTIONS]...
+
+=head1 DESCRIPTION
+
+B<si_installbtimage> is a program that configures the image server
+to distribute an image using the bittorrent protocol as transport.
+
+Before using this program the tracker must be running on the image
+server (see B</etc/init.d/systemimager-server-bittorrent>).
+
+The program provides:
+  - to create a tarball of the whole image,
+  - to create a .torrent file associated to the tarball,
+  - to start a "first seeder" on the image server.
+
+To install a client using the bittorrent transport you must define
+in the B<BITTORRENT_STAGING=E<lt>pathE<gt>> parameter in the kernel boot
+options (see /etc/systemimager/pxelinux.cfg/syslinux.cfg for a network
+installation).
+
+If you think the clients have sufficient memory to host the whole
+image in RAM you can specify B<BITTORRENT_STAGING=/tmp> to improve
+performance.
+
+Otherwise you can choose to deploy the image tarball using the client
+disk as a staging area, for example: B<BITTORRENT_STAGING=/a/tmp>
+(where /a/ is the root of the file system of the client).
+
+=head1 OPTIONS
+
+=over 8
+
+=item B<--help>
+
+Display a short help.
+
+=item B<--version>
+
+Display version and copyright information.
+
+=item B<--images IMAGE1,IMAGE2,...,IMAGEn>
+
+Specify a comma separated list of the images to deploy.
+
+=item B<--update>
+
+Rebuild the image tarball and the .torrent file. This option is
+needed when the image has been modified (for example by the
+B<si_getimage(8)> command or by direct changes in the image chrooted
+file system).
+
+=item B<--compress>
+
+Compress the image tar file (with gzip).
+
+=item B<--quiet>
+
+Run the "first seeder" process in background. In this way you cannot
+see the upload informations during the installtion of the clients.
+
+=head1 SEE ALSO
+
+systemimager(8), si_lsimage(8), si_getimage(8)
+
+=head1 AUTHOR
+
+Andrea Righi <a.righi@cineca.it>.
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2003 by Andrea Righi <a.righi@cineca.it>.
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+=cut
+

@@ -1,0 +1,81 @@
+#!/bin/sh
+#
+#   "SystemImager"
+#
+#   Copyright (C) 2005 Andrea Righi
+#
+# Support for IRIX style chkconfig:
+# chkconfig:   2345 20 20
+# description: The SystemImager tracker daemon.
+#
+#
+# Support for LSB compliant init system:
+### BEGIN INIT INFO
+# Provides: "BitTorrent for SystemImager"
+# Required-Start: $network
+# Required-Stop:
+# Default-Start:  3 5
+# Default-Stop:   0 1 2 6
+# Short-Description: SystemImager's tracker daemon.
+# Description: This daemon is needed to image clients using the
+#              bittorrent protocol as transport.
+#
+### END INIT INFO
+
+. /etc/systemimager/bittorrent.conf
+
+PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin:
+PIDFILE=/var/run/systemimager-server-bttracker.pid
+
+# Check configuration 
+[ -z $BT_TRACKER_PORT ] &&
+    echo "error in /etc/systemimager/bittorrent.conf: BT_TRACKER_PORT not specified!" &&
+    exit 1
+[ -z $BT_TRACKER_STATE ] &&
+    echo "error in /etc/systemimager/bittorrent.conf: BT_TRACKER_STATE not specified!" &&
+    exit 1
+[ -z $BT_TRACKER_LOG ] &&
+    echo "error in /etc/systemimager/bittorrent.conf: BT_TRACKER_LOG not specified!" &&
+    exit 1
+
+case "$1" in
+  start)
+    echo -n "Starting SystemImager's tracker: systemimager-server-bttracker... "
+    if [ -e $PIDFILE ]; then
+        echo -e "failed.\nPID file $PIDFILE exists.  Must be already running."
+        exit 1
+    fi
+    # Remove the previous state file (if present).
+    rm -f $BT_TRACKER_STATE
+    # Start tracker in background.
+    bittorrent-tracker --port $BT_TRACKER_PORT --dfile $BT_TRACKER_STATE --logfile $BT_TRACKER_LOG &
+    if [ $? -ne 0 ]; then
+        echo failed.
+    	exit 1
+    else
+        echo $! > $PIDFILE
+        echo ok.
+    fi
+    ;;
+  stop)
+    echo -n "Stopping SystemImager's tracker: systemimager-server-bittorrent... "
+    [ -f $PIDFILE ] && kill -9 `cat $PIDFILE` >/dev/null 2>&1
+    rm -f $PIDFILE
+    rm -f $BT_TRACKER_STATE
+    echo "stopped."
+    ;;
+  status)
+    echo -n "Status of SystemImager's tracker: systemimager-server-bittorrent... "
+    ([ -f $PIDFILE ] && ps -p `cat $PIDFILE 2>/dev/null` >/dev/null 2>&1 && echo running.) || echo not running.
+    ;;
+  force-reload|restart)
+    sh $0 stop
+    sh $0 start
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|status|restart}"
+    exit 1
+    ;;
+esac
+
+exit 0

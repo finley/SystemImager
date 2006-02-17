@@ -116,6 +116,8 @@ $(INITRD_DIR)/build_dir-stamp:	$(SKEL_FILES) \
 								$(UCLIBC_TARGET) \
 								$(INSMOD_BINARY) \
 								$(MODPROBE_BINARY) \
+								$(BITTORRENT_BINARY) \
+								$(CX_FREEZE_BINARY) \
 								$(UDPCAST_BINARY)
 	# Create directory structure.
 	rm -fr $(INITRD_BUILD_DIR)
@@ -138,7 +140,16 @@ $(INITRD_DIR)/build_dir-stamp:	$(SKEL_FILES) \
 	cp -a $(DHCLIENT_BINARY)    $(INITRD_BUILD_DIR)/sbin
 	cp -a $(RSYNC_BINARY)       $(INITRD_BUILD_DIR)/bin
 	cp -a $(UDPCAST_BINARY)     $(INITRD_BUILD_DIR)/bin
-	
+
+	# Bittorrent installation.
+	$(CX_FREEZE_BINARY) --install-dir=$(INITRD_BUILD_DIR)/lib/bittorrent --exclude-modules=gobject,pango,gtk $(INITRD_SRC_DIR)/$(BITTORRENT_DIR)/torrentinfo-console.py
+	$(CX_FREEZE_BINARY) --install-dir=$(INITRD_BUILD_DIR)/lib/bittorrent --exclude-modules=gobject,pango,gtk $(INITRD_SRC_DIR)/$(BITTORRENT_DIR)/bittorrent-console.py
+
+	# Explicit copy shared libraries needed by bittorrent binaries.
+	( for l in $$(ldd $(INITRD_BUILD_DIR)/lib/bittorrent/* 2>/dev/null | sed -ne 's/.*=> \(.*\) (.*)/\1/p' | sort -u); do cp -pf $$l $(INITRD_BUILD_DIR)/lib; done )
+	# Make sure the dynamic linker is present.
+	(for l in $$(readelf --program-headers $(INITRD_BUILD_DIR)/lib/bittorrent/* | sed -ne 's/^.*\[Requesting program interpreter: \(.*\)\]$$/\1/p' | sort -u); do cp -pf $$l $(INITRD_BUILD_DIR)/lib; done )
+
 ifdef	INSMOD_BINARY
 	( [ ! -e $(INITRD_BUILD_DIR)/sbin/insmod ] && \
           cp -a $(INSMOD_BINARY) $(INITRD_BUILD_DIR)/sbin/insmod ) || \
@@ -179,6 +190,10 @@ endif
 	strip $(INITRD_BUILD_DIR)/usr/bin/*
 	strip $(INITRD_BUILD_DIR)/usr/sbin/*
 
+	# Create the bittorrent links.
+	cd $(INITRD_BUILD_DIR)/bin && ln -s ../lib/bittorrent/torrentinfo-console
+	cd $(INITRD_BUILD_DIR)/bin && ln -s ../lib/bittorrent/bittorrent-console
+
 	# Copy over text files from the skel directory.
 	cp -a $(INITRD_DIR)/skel/* $(INITRD_BUILD_DIR)
 
@@ -200,8 +215,8 @@ endif
 	cp -a $(INITRD_DIR)/my_modules $(INITRD_BUILD_DIR)
 
 	# Clear out CVS cruft.
-	find $(INITRD_BUILD_DIR) -type d -name CVS -depth | xargs rm -rf
-	find $(INITRD_BUILD_DIR) -type d -name .svn -depth | xargs rm -rf
+	find $(INITRD_BUILD_DIR) -depth -type d -name CVS | xargs rm -rf
+	find $(INITRD_BUILD_DIR) -depth -type d -name .svn | xargs rm -rf
 	mkdir $(INITRD_BUILD_DIR)/new_root
 
 	touch $(INITRD_DIR)/build_dir-stamp

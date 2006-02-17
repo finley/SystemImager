@@ -54,7 +54,7 @@ BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: dann frazier <dannf@dannf.org>
 URL: http://systemimager.org/
 Distribution: System Installation Suite
-Requires: rsync >= 2.4.6, systemimager-common = %{version}, perl-AppConfig, dosfstools, /sbin/chkconfig, perl, perl(XML::Simple) >= 2.08
+Requires: rsync >= 2.4.6, systemimager-common = %{version}, perl-AppConfig, dosfstools, /sbin/chkconfig, perl, perl(XML::Simple) >= 2.08, python
 AutoReqProv: no
 
 %description server
@@ -181,6 +181,7 @@ Packager: dann frazier <dannf@dannf.org>
 URL: http://systemimager.org/
 Distribution: System Installation Suite
 Obsoletes: systemimager-%{_build_arch}boot
+BuildRequires: python, python-devel, python-xml
 Requires: systemimager-server >= %{version}
 AutoReqProv: no
 
@@ -214,6 +215,7 @@ Packager: dann frazier <dannf@dannf.org>
 URL: http://systemimager.org/
 Distribution: System Installation Suite
 Obsoletes: systemimager-%{_build_arch}initrd_template
+BuildRequires: python, python-devel, python-xml
 Requires: systemimager-client >= %{version}
 AutoReqProv: no
 
