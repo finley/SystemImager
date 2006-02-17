@@ -29,20 +29,20 @@
     <cmdsynopsis>
       <command>si_updateclient</command>
 
-      <arg><option>-help</option></arg>
-      <arg><option>-version</option></arg>
-      <arg><option>-server <replaceable>HOSTNAME</replaceable></option></arg>
-      <arg><option>-image <replaceable>IMAGENAME</replaceable></option></arg>
-      <arg rep="repeat"><option>-override <replaceable>OVERRIDE</replaceable></option></arg>
-      <arg><option>-directory <replaceable>DIRECTORY</replaceable></option></arg>
-      <arg><option>-no-bootloader</option></arg>
-      <arg><option>-autoinstall</option></arg>
-    <arg><option>-flavor <replaceable>FLAVOR</replaceable></option></arg>
-      <arg><option>-configure-from <replaceable>DEVICE</replaceable></option></arg>
-      <arg><option>-ssh-user <replaceable>USERNAME</replaceable></option></arg>
-      <arg><option>-reboot</option></arg>
-      <arg><option>-dry-run</option></arg>
-      <arg><option>-log <replaceable>"STRING"</replaceable></option></arg>
+      <arg><option>--help</option></arg>
+      <arg><option>--version</option></arg>
+      <arg><option>--server <replaceable>HOSTNAME</replaceable></option></arg>
+      <arg><option>--image <replaceable>IMAGENAME</replaceable></option></arg>
+      <arg rep="repeat"><option>--override <replaceable>OVERRIDE</replaceable></option></arg>
+      <arg><option>--directory <replaceable>DIRECTORY</replaceable></option></arg>
+      <arg><option>--no-bootloader</option></arg>
+      <arg><option>--autoinstall</option></arg>
+    <arg><option>--flavor <replaceable>FLAVOR</replaceable></option></arg>
+      <arg><option>--configure-from <replaceable>DEVICE</replaceable></option></arg>
+      <arg><option>--ssh-user <replaceable>USERNAME</replaceable></option></arg>
+      <arg><option>--reboot</option></arg>
+      <arg><option>--dry-run</option></arg>
+      <arg><option>--log <replaceable>"STRING"</replaceable></option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
   <refsect1>
@@ -66,36 +66,36 @@
 
     <variablelist>
       <varlistentry>
-        <term><option>-help</option>
+        <term><option>--help</option>
         </term>
         <listitem>
           <para>Show summary of options</para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-version</option>
+        <term><option>--version</option>
         </term>
         <listitem>
           <para>Display version and copyright information</para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-server <replaceable>HOSTNAME</replaceable></option></term>
+        <term><option>--server <replaceable>HOSTNAME</replaceable></option></term>
         <listitem>
           <para>
 	    Hostname or IP address of the imageserver.  Replaces deprecated
-	    <option>-imageserver</option> option.
+	    <option>--imageserver</option> option.
 	  </para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-image <replaceable>IMAGENAME</replaceable></option></term>
+        <term><option>--image <replaceable>IMAGENAME</replaceable></option></term>
         <listitem>
           <para>Image from which the client should be updated</para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-override <replaceable>OVERRIDE</replaceable></option></term>
+        <term><option>--override <replaceable>OVERRIDE</replaceable></option></term>
         <listitem>
           <para>Override module(s) from which to copy additional files.  
             Override directories are useful when you have multiple types of
@@ -112,7 +112,7 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-directory <replaceable>DIRECTORY</replaceable></option></term>
+        <term><option>--directory <replaceable>DIRECTORY</replaceable></option></term>
         <listitem>
           <para>
 	    Absolute path of the directory to be updated (defaults to "/")
@@ -120,7 +120,7 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-nobootloader</option></term>
+        <term><option>--no-bootloader</option></term>
         <listitem>
           <para>
 	    Don't run the bootloader (lilo, elilo, grub, etc) after update
@@ -130,7 +130,7 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-autoinstall</option>
+        <term><option>--autoinstall</option>
         </term>
         <listitem>
           <para>
@@ -140,18 +140,18 @@
 	  required if the partition scheme of the image you are updating from
 	  differs from the partition scheme of the image you are currently
 	  running, as your system may be left unbootable otherwise.
-	  This option conflicts with <option>-nolilo</option>.
+	  This option conflicts with <option>--nolilo</option>.
 	</para>
 	<para>
 	  Updates that use this option cannot take advantage of rsync's
 	  efficient updating mechanism.  This process also requires two
-	  reboots.  This makes <option>-autoinstall</option> updates more
+	  reboots.  This makes <option>--autoinstall</option> updates more
 	  consuming.
 	</para>
         </listitem>
       </varlistentry>
     <varlistentry>
-      <term><option>-flavor <replaceable>FLAVOR</replaceable></option></term>
+      <term><option>--flavor <replaceable>FLAVOR</replaceable></option></term>
       <listitem>
 	<para>
 	  The boot flavor to be used for doing an autoinstall 
@@ -160,7 +160,7 @@
       </listitem>
     </varlistentry>
       <varlistentry>
-        <term><option>-configure-from <replaceable>DEVICE</replaceable></option></term>
+        <term><option>--configure-from <replaceable>DEVICE</replaceable></option></term>
         <listitem>
           <para>
 	    Only used with -autoinstall.  Stores the network configuration
@@ -170,7 +170,7 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-ssh-user <replaceable>USERNAME</replaceable></option></term>
+        <term><option>--ssh-user <replaceable>USERNAME</replaceable></option></term>
         <listitem>
           <para>
 	    Username for ssh connection from the client.  Only needed if a
@@ -179,7 +179,7 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-listing</option>
+        <term><option>--listing</option>
         </term>
         <listitem>
           <para>
@@ -189,14 +189,14 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-reboot</option>
+        <term><option>--reboot</option>
         </term>
         <listitem>
           <para>Reboot client after update completes</para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-dry-run</option>
+        <term><option>--dry-run</option>
         </term>
         <listitem>
           <para>
@@ -205,7 +205,7 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-log <replaceable>STRING</replaceable></option></term>
+	<term><option>--log <replaceable>STRING</replaceable></option></term>
 	<listitem>
 	  <para>
 	    Quoted string for log file format.  See the
