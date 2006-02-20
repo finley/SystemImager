@@ -7,8 +7,8 @@
 CX_FREEZE_VERSION       := 3.0.2
 CX_FREEZE_DIR           := cx_Freeze-$(CX_FREEZE_VERSION)
 CX_FREEZE_TARBALL       := cx_Freeze-$(CX_FREEZE_VERSION)-source.tgz
-CX_FREEZE_URL           := http://switch.dl.sourceforge.net/sourceforge/cx-freeze/$(CX_FREEZE_TARBALL)
-#CX_FREEZE_URL          := http://download.systemimager.org/pub/cx-freeze/$(CX_FREEZE_TARBALL)
+#CX_FREEZE_URL           := http://switch.dl.sourceforge.net/sourceforge/cx-freeze/$(CX_FREEZE_TARBALL)
+CX_FREEZE_URL          := http://download.systemimager.org/pub/cx-freeze/$(CX_FREEZE_TARBALL)
 CX_FREEZE_BINARY        := $(INITRD_SRC_DIR)/$(CX_FREEZE_DIR)/FreezePython
 
 PHONY += cx_freeze

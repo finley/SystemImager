@@ -40,6 +40,7 @@
 # SystemImager file location standards:
 #   o images will be stored in: /var/lib/systemimager/images/
 #   o autoinstall scripts:      /var/lib/systemimager/scripts/
+#   o tarball files for BT:     /var/lib/systemimager/tarballs/
 #   o torrent files:            /var/lib/systemimager/torrents/
 #   o override directories:     /var/lib/systemimager/overrides/
 #
@@ -175,6 +176,7 @@ IMAGEDEST   = $(DESTDIR)/var/lib/systemimager/images
 WARNING_FILES = $(IMAGESRC)/README $(IMAGESRC)/CUIDADO $(IMAGESRC)/ACHTUNG
 AUTOINSTALL_SCRIPT_DIR = $(DESTDIR)/var/lib/systemimager/scripts
 AUTOINSTALL_TORRENT_DIR = $(DESTDIR)/var/lib/systemimager/torrents
+AUTOINSTALL_TARBALL_DIR = $(DESTDIR)/var/lib/systemimager/tarballs
 OVERRIDES_DIR = $(DESTDIR)/var/lib/systemimager/overrides
 OVERRIDES_README = $(TOPDIR)/var/lib/systemimager/overrides/README
 FLAMETHROWER_STATE_DIR = $(DESTDIR)/var/state/systemimager/flamethrower
@@ -285,6 +287,7 @@ install_server:	install_server_man install_configs install_server_libs
 	$(SI_INSTALL) -d -m 755 $(BOOT_BIN_DEST)
 	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_SCRIPT_DIR)
 
+	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_TARBALL_DIR)
 	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_TORRENT_DIR)
 
 	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_SCRIPT_DIR)/pre-install
@@ -394,7 +397,7 @@ install_configs:
 	$(SI_INSTALL) -d $(ETC)/systemimager
 	$(SI_INSTALL) -m 644 etc/systemimager.conf $(ETC)/systemimager/
 	$(SI_INSTALL) -m 644 etc/flamethrower.conf $(ETC)/systemimager/
-	$(SI_INSTALL) -m 644 etc/bittorrent.conf $(ETC)/systemimager/
+	$(SI_INSTALL) -m 644 --backup etc/bittorrent.conf $(ETC)/systemimager/
 	$(SI_INSTALL) -m 644 etc/autoinstallscript.template $(ETC)/systemimager/
 	$(SI_INSTALL) -m 644 etc/imagemanip.conf $(ETC)/systemimager/
 	$(SI_INSTALL) -m 644 etc/imagemanip.perm $(ETC)/systemimager/

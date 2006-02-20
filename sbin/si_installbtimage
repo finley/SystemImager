@@ -38,6 +38,10 @@ Options: (options can be presented in any order and may be abbreviated)
                         Specify a comma separated list of the images to
                         distribute.
 
+ --overrides OVERRIDE1,OVERRIDE2,...,OVERRIDEn
+                        Specify a comma separated list of the overrides to
+                        distribute.
+
  --update               Update bittorrent files.
 
  --compress             Compress the image tar file with gzip.
@@ -50,7 +54,7 @@ http://systemimager.org/
 
 EOF
 
-my ($help, $version, $quiet, $compress, $update, $images);
+my ($help, $version, $quiet, $compress, $update, $images, $overrides);
 GetOptions(
     "help"      => \$help,
     "version"   => \$version,
@@ -58,6 +62,7 @@ GetOptions(
     "compress"  => \$compress,
     "update"    => \$update,
     "images=s"  => \$images,
+    "overrides=s"  => \$overrides,
 ) or die "$help_info";
 
 ### BEGIN evaluate commad line options ###
@@ -72,7 +77,9 @@ if ($version) {
 
 # Get SystemImager directories.
 my $IMAGE_DIR = $config->default_image_dir();
-my $TORRENTS_DIR = $config->autoinstall_torrent_dir();
+my $OVERRIDE_DIR = $config->default_override_dir();
+my $TARBALL_DIR = $config->autoinstall_tarball_dir();
+my $TORRENT_DIR = $config->autoinstall_torrent_dir();
 
 # Get tracker port and interface from the configuration file.
 my ($tracker_port, $image_server);
@@ -93,6 +100,10 @@ unless ($image_server) {
     die "error in $config_file: BT_INTERFACE not specified or not valid!\n";
 }
 
+unless ($images) {
+    die "error: at least one image must be specified!\n";
+}
+
 # Check the status of the tracker.
 my $PIDFILE='/var/run/systemimager-server-bttracker.pid';
 system "ps -p `cat $PIDFILE 2>/dev/null` >/dev/null 2>&1";
@@ -111,81 +122,32 @@ if ($compress) {
 }
 
 # Prepare all images for seeding.
-foreach my $image_name (split(',', $images)) {
-    unless (-d "$IMAGE_DIR/$image_name") {
-        print "warning: \"$image_name\" is not a valid image!\n";
-        next;
-    }
+bt_prepare($IMAGE_DIR, $images, 'image');
 
-    # Create the tarball of the image.
-    my $tarball_file;
-    print "Preparing tar file for $image_name...\n";
-    if ($update) {
-        unlink("$IMAGE_DIR/$image_name.tar", "$IMAGE_DIR/$image_name.tar.gz");
-    }
-    if ($compress eq 'z') {
-        unlink ("$IMAGE_DIR/$image_name.tar")
-            if (-f "$IMAGE_DIR/$image_name.tar");
-        $tarball_file = "$IMAGE_DIR/$image_name.tar.gz"
-    } else {
-        unlink ("$IMAGE_DIR/$image_name.tar.gz")
-            if (-f "$IMAGE_DIR/$image_name.tar.gz");
-        $tarball_file = "$IMAGE_DIR/$image_name.tar"
-    }
-    unless (-f "$tarball_file") {
-        system "cd $IMAGE_DIR/$image_name && tar -c${compress}f $tarball_file .";
-        if ($?) {
-            die "error: cannot create image tar file!\n";
-        }
-    }
-    print "done.\n";
-    
-    # Prepare torrent file.
-    my $torrent_file;
-    print "Preparing torrent file for $image_name...\n";
-    if ($update) {
-        unlink("$TORRENTS_DIR/$image_name.tar.torrent", 
-            "$TORRENTS_DIR/$image_name.tar.gz.torrent");
-    }
-    if ($compress eq 'z') {
-        unlink ("$TORRENTS_DIR/$image_name.tar.torrent")
-            if (-f "$TORRENTS_DIR/$image_name.tar.torrent");
-        $torrent_file = "$TORRENTS_DIR/$image_name.tar.gz.torrent"
-    } else {
-        unlink ("$TORRENTS_DIR/$image_name.tar.gz.torrent")
-            if (-f "$TORRENTS_DIR/$image_name.tar.gz.torrent");
-        $torrent_file = "$TORRENTS_DIR/$image_name.tar.torrent"
-    }
-    unless (-f "$torrent_file") {
-        system "maketorrent-console --target $torrent_file http://$image_server:$tracker_port/announce $tarball_file";
-        if ($?) {
-            die "error: cannot create torrent file!\n";
-        }
-    }
-    print "done.\n";
-}
+# Prepare all overrides for seeding.
+bt_prepare($OVERRIDE_DIR, $overrides, 'override');
 
 # Prepare torrent file for the BOEL binaries.
 my $ARCH = (uname())[4];
 $ARCH =~ s/i.86/i386/;
 
-my $boel_binaries = "$IMAGE_DIR/boel_binaries.tar.gz";
+my $boel_binaries = "$TARBALL_DIR/boel_binaries.tar.gz";
 print "Preparing torrent file for BOEL binaries...\n";
 # Create the symbolic link into the image directory.
 symlink($config->autoinstall_boot_dir() . '/' . $ARCH .
     '/standard/boel_binaries.tar.gz', $boel_binaries) 
     if (! -e $boel_binaries);
 # Make .torrent file.
-system "maketorrent-console --target $TORRENTS_DIR/boel_binaries.tar.gz.torrent http://$image_server:$tracker_port/announce $boel_binaries";
+system "maketorrent-console --target $TORRENT_DIR/boel_binaries.tar.gz.torrent http://$image_server:$tracker_port/announce $boel_binaries";
 if ($?) {
-    die "error: cannot create torrent file!\n";
+    die "error: cannot create BOEL binaries torrent file!\n";
 }
 print "done.\n";
 
 # Starting first image seeder.
 print "Starting first image server seeder...\n";
 if ($quiet) {
-    system "cd $IMAGE_DIR && launchmany-console --no_start_trackerless_client --max_upload_rate 0 --rerequest_interval 1 --bind $image_server --save_in $IMAGE_DIR $TORRENTS_DIR>/dev/null 2>&1 &";
+    system "launchmany-console --no_start_trackerless_client --max_upload_rate 0 --rerequest_interval 1 --bind $image_server --save_in $TARBALL_DIR $TORRENT_DIR>/dev/null 2>&1 &";
 } else {
     # Evaluate if python-curses is installed.
     `/usr/bin/env python << EOF
@@ -198,12 +160,79 @@ sys.exit(0);
 EOF
 `;
     my $bt_ui = ($?) ? 'console' : 'curses';
-    system "cd $IMAGE_DIR && launchmany-$bt_ui --no_start_trackerless_client --max_upload_rate 0 --rerequest_interval 1 --bind $image_server --save_in $IMAGE_DIR $TORRENTS_DIR";
+    system "launchmany-$bt_ui --no_start_trackerless_client --max_upload_rate 0 --rerequest_interval 1 --bind $image_server --save_in $TARBALL_DIR $TORRENT_DIR";
 }
 print "done.\n";
 
 # Well done.
 exit(0);
+
+# Description:
+#  Prepare tarballs and torrents for all the specified images 
+#  or overrides.
+#
+# Usage:
+#  bt_prepare($dir, $list, $type);
+#
+sub bt_prepare {
+    my ($dir, $list, $type) = @_;
+
+    return unless ($list);
+
+    foreach my $name (split(',', $list)) {
+        unless (-d "$dir/$name") {
+            print "warning: \"$name\" is not a valid $type!\n";
+            next;
+        }
+
+        # Create the tarball of the image.
+        my $tarball_file;
+        print "Preparing tar file for $type \"$name\"...\n";
+        if ($update) {
+            unlink("$TARBALL_DIR/$type-$name.tar", "$TARBALL_DIR/$type-$name.tar.gz");
+        }
+        if ($compress eq 'z') {
+            unlink ("$TARBALL_DIR/$type-$name.tar")
+                if (-f "$TARBALL_DIR/$type-$name.tar");
+            $tarball_file = "$TARBALL_DIR/$type-$name.tar.gz"
+        } else {
+            unlink ("$TARBALL_DIR/$type-$name.tar.gz")
+                if (-f "$TARBALL_DIR/$type-$name.tar.gz");
+            $tarball_file = "$TARBALL_DIR/$type-$name.tar"
+        }
+        unless (-f "$tarball_file") {
+            system "cd $dir/$name && tar -c${compress}f $tarball_file .";
+            if ($?) {
+                die "error: cannot create $type tarball file!\n";
+            }
+        }
+        print "done.\n";
+    
+        # Prepare torrent file.
+        my $torrent_file;
+        print "Preparing torrent file for $type \"$name\"...\n";
+        if ($update) {
+            unlink("$TORRENT_DIR/$type-$name.tar.torrent", 
+                "$TORRENT_DIR/$type-$name.tar.gz.torrent");
+        }
+        if ($compress eq 'z') {
+            unlink ("$TORRENT_DIR/$type-$name.tar.torrent")
+                if (-f "$TORRENT_DIR/$type-$name.tar.torrent");
+            $torrent_file = "$TORRENT_DIR/$type-$name.tar.gz.torrent"
+        } else {
+            unlink ("$TORRENT_DIR/$type-$name.tar.gz.torrent")
+                if (-f "$TORRENT_DIR/$type-$name.tar.gz.torrent");
+            $torrent_file = "$TORRENT_DIR/$type-$name.tar.torrent"
+        }
+        unless (-f "$torrent_file") {
+            system "maketorrent-console --target $torrent_file http://$image_server:$tracker_port/announce $tarball_file";
+            if ($?) {
+                die "error: cannot create $type torrent file!\n";
+            }
+        }
+        print "done.\n";
+    }
+}
 
 __END__
 

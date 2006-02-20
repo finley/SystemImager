@@ -217,18 +217,17 @@ if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
         stop_report_task 100
     fi
 elif [ ! -z $BITTORRENT_STAGING ]; then
-    # Get the right .torrent file.
-    if [ -f "${TORRENTS_DIR}/${IMAGENAME}.tar.gz.torrent" ]; then
-        bittorrent_tarball="${IMAGENAME}.tar.gz"
+    # Use BitTorrent
+    if [ -f "${TORRENTS_DIR}/image-${IMAGENAME}.tar.gz.torrent" ]; then
+        bittorrent_tarball="image-${IMAGENAME}.tar.gz"
         compress='z'
-    elif [ -f "${TORRENTS_DIR}/${IMAGENAME}.tar.torrent" ]; then
-        bittorrent_tarball="${IMAGENAME}.tar"
+    elif [ -f "${TORRENTS_DIR}/image-${IMAGENAME}.tar.torrent" ]; then
+        bittorrent_tarball="image-${IMAGENAME}.tar"
         compress=''
     else
         logmsg "error: cannot find a valid torrent file for the image ${IMAGENAME}"
         shellout
     fi
-
     # Download image from peers
     logmsg "Start downloading image using torrent ${bittorrent_tarball}.torrent"
     logmsg ""
@@ -307,8 +306,38 @@ do
         MODULE_NAME="override_${OVERRIDE}"
         DIR=/a
         RETRY=7
-	FLAMETHROWER_TARPIPE=y
+        FLAMETHROWER_TARPIPE=y
         flamethrower_client
+    elif [ ! -z $BITTORRENT_STAGING ]; then
+        # Use BitTorrent
+        if [ -f "${TORRENTS_DIR}/override-${OVERRIDE}.tar.gz.torrent" ]; then
+            bittorrent_tarball="override-${OVERRIDE}.tar.gz"
+            compress='z'
+        elif [ -f "${TORRENTS_DIR}/override-${OVERRIDE}.tar.torrent" ]; then
+            bittorrent_tarball="override-${OVERRIDE}.tar"
+            compress=''
+        else
+            bittorrent_tarball=""
+            logmsg "error: cannot find a valid torrent file for override ${OVERRIDE}"
+        fi
+        if [ ! -z $bittorrent_tarball ]; then
+            logmsg "Start downloading override using torrent ${bittorrent_tarball}.torrent"
+            logmsg ""
+            logmsg "--> INFO: remember to run si_installbtimage on the image server!"
+            logmsg ""
+            # Download override from peers
+            bittorrent_get_file ${TORRENTS_DIR}/${bittorrent_tarball}.torrent ${BITTORRENT_STAGING}
+            # Extract override.
+            logmsg "Extracting override from ${bittorrent_tarball} ..."
+            (cd /a/ && tar -xv${compress}f ${BITTORRENT_STAGING}/${bittorrent_tarball}) || shellout
+            rm -f ${BITTORRRENT_STAGING}/${bittorrent_tarball}
+        else
+            # Use rsync
+            logmsg "trying to download override ${OVERRIDE} with rsync..."
+            logmsg "rsync -av --numeric-ids $IMAGESERVER::overrides/$OVERRIDE/ /a/"
+            rsync -av --numeric-ids $IMAGESERVER::overrides/$OVERRIDE/ /a/ || logmsg "Override directory $OVERRIDE doesn't seem to exist, but that may be OK."
+        fi
+        unset bittorrent_tarball
     else
         # Use rsync
         logmsg "rsync -av --numeric-ids $IMAGESERVER::overrides/$OVERRIDE/ /a/"

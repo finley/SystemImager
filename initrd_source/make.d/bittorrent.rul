@@ -7,8 +7,8 @@
 BITTORRENT_VERSION      := 4.4.0
 BITTORRENT_DIR          := BitTorrent-$(BITTORRENT_VERSION)
 BITTORRENT_TARBALL      := BitTorrent-$(BITTORRENT_VERSION).tar.gz
-BITTORRENT_URL          := http://www.bittorrent.com/dl/$(BITTORRENT_TARBALL)
-#BITTORRENT_URL          := http://download.systemimager.org/pub/bittorrent/$(BITTORRENT_TARBALL)
+#BITTORRENT_URL          := http://www.bittorrent.com/dl/$(BITTORRENT_TARBALL)
+BITTORRENT_URL          := http://download.systemimager.org/pub/bittorrent/$(BITTORRENT_TARBALL)
 BITTORRENT_BINARY       := $(INITRD_SRC_DIR)/$(BITTORRENT_DIR)/bittorrent.py
 BITTORRENT_PATCHES      := $(shell ls $(PATCH_DIR)/bittorrent.*.patch 2>/dev/null | sort)
 
