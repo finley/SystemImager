@@ -1,5 +1,5 @@
 %define name     systemimager
-%define ver      3.5.4
+%define ver      3.6.0
 %define rel      1
 %define prefix   /usr
 %define _build_all 1
