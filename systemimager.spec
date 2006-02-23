@@ -1,5 +1,13 @@
+#
+# $Id$
+#
 %define name     systemimager
-%define ver      3.6.0
+#
+# "ver" below, is automatically set to the current version (as defined 
+# by the VERSION file) when "make source_tarball" is executed.
+# Therefore, it can be set to any three digit number here.
+#
+%define ver      0.0.0
 %define rel      1
 %define prefix   /usr
 %define _build_all 1
@@ -23,7 +31,7 @@ BuildArchitectures: noarch
 Packager: dann frazier <dannf@dannf.org>
 URL: http://systemimager.org/
 Distribution: System Installation Suite
-BuildRequires: docbook-utils
+BuildRequires: docbook-utils, dos2unix, e2fsprogs-devel, flex, libtool, readline-devel, /usr/bin/wget
 Requires: rsync >= 2.4.6, syslinux >= 1.48, libappconfig-perl, dosfstools, /usr/bin/perl
 AutoReqProv: no
 

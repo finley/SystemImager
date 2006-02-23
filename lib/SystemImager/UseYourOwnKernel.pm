@@ -160,6 +160,8 @@ sub _get_copy_of_kernel($) {
                 exit 1;
         }
 
+        print ">>> Using kernel from:          $kernel_file\n" if( $verbose );
+
         my $new_kernel_file = $boot_dir . "/kernel";
         copy($kernel_file, $new_kernel_file) or die("Couldn't copy $kernel_file to $new_kernel_file: $!");
         run_cmd("ls -l $new_kernel_file", $verbose, 1) if($verbose);
@@ -167,7 +169,47 @@ sub _get_copy_of_kernel($) {
         return 1;
 }
 
+#
+# Usage: my $is_this_file_a_kernel = is_kernel( $kernel );
+#
+sub is_kernel {
 
+        # The goal here is to make reasonable effort to _eliminate_
+        # files that are obviously _not_ kernels.  Any thing that passes
+        # the elimination tests we assume is a kernel.
+        #
+        # Problem with trying to positively identify files that are kernels
+        # is that different distros and different archs produce kernels that
+        # look different to "file", and we cannot comprehensively know that
+        # we've considered all possible resultant strings from kernels.
+        #
+        # Therefore, we should add elimination tests to this function whenever
+        # we get a report of something passing as a kernel, that shouldn't.
+        # -BEF-
+
+        my $file = shift;
+
+        #
+        # Make sure it's binary
+        if( ! -B $file ) { return undef; }
+        #
+        # and not a directory
+        if( -d $file )   { return undef; }
+
+        #
+        # Get output from "file" for elimination by identification tests
+        my $cmd = "file -b $file";
+        open(INPUT,"$cmd|") or die("Couldn't run $cmd to get INPUT");
+                my ($input) = (<INPUT>);
+                #
+                # eliminate vmlinux files on RH
+                if( $input =~ m/ELF 32-bit LSB executable,/ ) { return undef; }    
+        close(INPUT);
+
+        #
+        # If we've made it down to here, then we'll assume it's a kernel. -BEF-
+        return 1;
+}
 
 #
 # Usage:
@@ -176,24 +218,35 @@ sub _get_copy_of_kernel($) {
 sub _choose_kernel_file($) {
 
         my $uname_r = shift;
-
         my @dirs = ('/boot', '/');
+        my @kernels;
 
         foreach my $dir (@dirs) {
                 
                 # 
-                # Check each binary to see if it contains the uname string
+                # Check each binary to see if it is a kernel file.  Preference given to the file with
+                # the running kernel version, otherwise, the first available good kernel file is used.
                 #
                 opendir(DIR, $dir) || die("Can't opendir $dir: $!");
                         my @files = readdir(DIR);
                 closedir DIR;
 
                 foreach (@files) {
+                        my $kernel = $_;
+                        my $file = "$dir/$kernel";
+                        if ( is_kernel($file) ) {
+                                my $kernel_release = _get_kernel_release($file);
+                                if ( defined($kernel_release) and ($kernel_release eq $uname_r) ) {
+                                        return $file;
+                                } else {
+                                        push(@kernels, $file);
+                                }
+                        }
+                }
 
-                        my $file = "$dir/$_";
-                        next unless( (-B $file) and (! -d $file) );
-                        my $kernel_release = _get_kernel_release($file);
-                        return $file if( defined($kernel_release) and ($kernel_release eq $uname_r) );
+                # If cannot find kernel with name matching running version, return the first good one
+                if (@kernels) {
+                        return pop(@kernels);
                 }
         }
 

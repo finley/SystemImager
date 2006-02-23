@@ -492,8 +492,8 @@ $(BOEL_BINARIES_TARBALL):	\
 				$(BC_BINARY) \
 				$(TAR_BINARY) \
 				$(GZIP_BINARY) \
-				$(DISCOVER_BINARY) \
-				$(DISCOVER_DATA_FILES) \
+				$(DISCOVER_DIR).build \
+				$(DISCOVER_DATA_DIR).build \
 				$(HFSUTILS_BINARY) \
 				$(MKDOSFS_BINARY) \
 				$(MKE2FS_BINARY) \
@@ -603,7 +603,7 @@ endif
 	TGTLIBDIR=lib ; \
 	test ! -d /lib64 || TGTLIBDIR=lib64 ; \
 	cd $(BOEL_BINARIES_DIR) \
-		&& $(PYTHON) $(TOPDIR)/initrd_source/mklibs -L $(SRC_DIR)/$(PARTED_DIR)/libparted/.libs:$(SRC_DIR)/$(DISCOVER_DIR)/lib/.libs:$(SRC_DIR)/$(DEVMAPPER_DIR)/lib/ioctl:$(SRC_DIR)/$(E2FSPROGS_DIR)/lib:/lib64:/usr/lib64:/usr/kerberos/lib64:/lib:/usr/lib:/usr/kerberos/lib -v -d $$TGTLIBDIR bin/* sbin/*
+		&& $(PYTHON) $(TOPDIR)/initrd_source/mklibs -L $(SRC_DIR)/$(PARTED_DIR)/libparted/.libs:$(DISCOVER_DIR)/lib/.libs:$(SRC_DIR)/$(DEVMAPPER_DIR)/lib/ioctl:$(SRC_DIR)/$(E2FSPROGS_DIR)/lib:/lib64:/usr/lib64:/usr/kerberos/lib64:/lib:/usr/lib:/usr/kerberos/lib -v -d $$TGTLIBDIR bin/* sbin/*
 
 	#
 	# Include other files required by openssh that apparently aren't 

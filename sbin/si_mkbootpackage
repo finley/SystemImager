@@ -163,7 +163,7 @@ sub create_new_boel_binaries_tarball
         rmtree $d;
         eval { mkpath($d, 0, 0755) }; if ($@) { die("Couldn't mkpath $d $@"); }
 
-        run_cmd("rsync -a $opt{modules_dir} --exclude=build $d/", $opt{v});
+        run_cmd("rsync -a $opt{modules_dir} --exclude=build --exclude=source $d/", $opt{v});
         run_cmd("tar -C $opt{tmp_dir}/boel -czf $opt{tmp_dir}/boel_binaries.tar.gz .", $opt{v});
 }
 

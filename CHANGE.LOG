@@ -6,6 +6,32 @@
 #   $Id$
 #
 
+3.6.3
+--------------------------------------------------------------------------------
+- Bug: discover patch was removed that allowed support of ICH7
+       controllers.  
+  Fix: upgrade to discover1
+
+3.6.2
+--------------------------------------------------------------------------------
+- Build system fix: change $(SRC_DIR)/$(DISCOVER_DIR)/lib/.libs to
+  $(DISCOVER_DIR)/lib/.libs in libpath
+
+3.6.1
+--------------------------------------------------------------------------------
+- Broke discover and discover-data into seperate make files
+- Simplified each
+- The impetus was to fix a problem where wildcarded discover data files
+  were a target, but they didn't exist until that target had been
+    processed, resulting in a null target of "".  Fixed.
+- depend on discover and discover data build stamps instead of the
+  discover binary and data files.
+- Was using wrong assignment operator (=: instead of =) for
+  DISCOVER_DATA_FILES.  This meant that DISCOVER_DATA_FILES was being
+  evaluated _once_ at the beginning of the build -- prior to the files
+  being there.  Fixed.
+
+
 3.6.0
 --------------------------------------------------------------------------------
 - make complete_source_tarball target for getting all source, including

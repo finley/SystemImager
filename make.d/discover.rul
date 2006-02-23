@@ -1,62 +1,38 @@
 #
 # $Id$
-#
 # vi: set filetype=make:
 #
-# 	original source: http://debian.uchicago.edu/debian/pool/main/d/discover/
-#
-DISCOVER_VERSION    := 1.5
-DISCOVER_PATCH_VERSION := 2
-DISCOVER_DIR        := discover-$(DISCOVER_VERSION)
-DISCOVER_TARBALL    := discover_$(DISCOVER_VERSION)-$(DISCOVER_PATCH_VERSION).tar.gz
-DISCOVER_URL        := http://download.systemimager.org/pub/discover/$(DISCOVER_TARBALL)
-DISCOVER_BINARY     := $(SRC_DIR)/$(DISCOVER_DIR)/discover/.libs/discover
-DISCOVER_PATCHES    := $(shell ls $(PATCH_DIR)/discover.*.patch 2>/dev/null | sort)
+DISCOVER_VERSION      = 1.7.15ubuntu1
+DISCOVER_TARBALL      = discover1_$(DISCOVER_VERSION).tar.gz
+#DISCOVER_URL          = http://us.archive.ubuntu.com/ubuntu/pool/main/d/discover1/
+DISCOVER_URL          = http://download.systemimager.org/pub/discover/
+DISCOVER_DIR          = $(SRC_DIR)/discover1-$(DISCOVER_VERSION)
+DISCOVER_BINARY       = $(DISCOVER_DIR)/discover/.libs/discover
 
-DISCOVER_DATA_VERSION	:= 1.2005.11.25
-DISCOVER_DATA_DIR 		:= discover1-data-$(DISCOVER_DATA_VERSION)
-DISCOVER_DATA_TARBALL 	:= discover1-data_$(DISCOVER_DATA_VERSION).tar.gz
-DISCOVER_DATA_URL 		:= http://download.systemimager.org/pub/discover/$(DISCOVER_DATA_TARBALL)
-DISCOVER_DATA_FILES     := $(SRC_DIR)/$(DISCOVER_DATA_DIR)/*.lst
-DISCOVER_DATA_FILES_DIR	:= usr/share/discover
-DISCOVER_DATA_PATCHES 	:= $(shell ls $(PATCH_DIR)/discover1-data.*.patch 2>/dev/null | sort)
+DISCOVER_PATCHES = $(shell ls $(PATCH_DIR)/discover.*.patch 2>/dev/null | sort)
 
-ALL_SOURCE += 	$(SRC_DIR)/$(DISCOVER_TARBALL) \
-				$(SRC_DIR)/$(DISCOVER_DATA_TARBALL)
+ALL_SOURCE += $(SRC_DIR)/$(DISCOVER_TARBALL)
 
 PHONY += discover
-discover:	$(DISCOVER_BINARY) discover-data
+discover:	$(DISCOVER_DIR).build
 
-$(DISCOVER_BINARY):	$(SRC_DIR)/$(DISCOVER_TARBALL) $(DISCOVER_PATCHES)
-	rm -fr $(SRC_DIR)/$(DISCOVER_DIR)
-	cd $(SRC_DIR) && tar -xvzf $(DISCOVER_TARBALL)
-	cd $(SRC_DIR)/$(DISCOVER_DIR) && cat $(DISCOVER_PATCHES) < /dev/null | patch -p1
-	cd $(SRC_DIR)/$(DISCOVER_DIR) && ./configure --disable-nls --prefix=/usr
-	$(MAKE) -j $(NCPUS) -C $(SRC_DIR)/$(DISCOVER_DIR)
+$(DISCOVER_DIR).unpack:  $(SRC_DIR)/$(DISCOVER_TARBALL) $(DISCOVER_PATCHES)
+	rm -rf $(DISCOVER_DIR)
+	cd $(SRC_DIR) && tar -xvzf $(SRC_DIR)/$(DISCOVER_TARBALL)
+	cd $(DISCOVER_DIR) && cat $(DISCOVER_PATCHES) < /dev/null | patch -p1
+	touch $@
+
+$(DISCOVER_DIR).build:  $(DISCOVER_DIR).unpack
+	cd $(DISCOVER_DIR) && ./configure --disable-nls --prefix=/usr
+	$(MAKE) -j $(NCPUS) -C $(DISCOVER_DIR)
+	touch $@
 
 $(SRC_DIR)/$(DISCOVER_TARBALL):
-	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
-	$(GETSOURCE) $(DISCOVER_URL) $(SRC_DIR)
-
-PHONY += discover-data
-discover-data:  $(DISCOVER_DATA_FILES)
-
-$(DISCOVER_DATA_FILES): $(SRC_DIR)/$(DISCOVER_DATA_DIR)/Makefile
-
-$(SRC_DIR)/$(DISCOVER_DATA_DIR)/Makefile: $(SRC_DIR)/$(DISCOVER_DATA_TARBALL) \
-					  $(DISCOVER_DATA_PATCHES)
-	rm -rf $(SRC_DIR)/$(DISCOVER_DATA_DIR)
-	[ -d $(SRC_DIR)/$(DISCOVER_DATA_DIR) ] || \
-	  ( cd $(SRC_DIR) && tar -m -xvzf $(DISCOVER_DATA_TARBALL) )
-	cd $(SRC_DIR)/$(DISCOVER_DATA_DIR) && \
-	          cat $(DISCOVER_DATA_PATCHES) < /dev/null | patch -p1
-		  
-
-$(SRC_DIR)/$(DISCOVER_DATA_TARBALL):
-	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
-	$(GETSOURCE) $(DISCOVER_DATA_URL) $(SRC_DIR)
+	mkdir -p $(SRC_DIR)
+	$(GETSOURCE) $(DISCOVER_URL)/$(DISCOVER_TARBALL) $(SRC_DIR)
 
 PHONY += discover_clean
 discover_clean:
-	rm -rf $(SRC_DIR)/$(DISCOVER_DIR)
-	rm -rf $(SRC_DIR)/$(DISCOVER_DATA_DIR)
+	rm -rf $(DISCOVER_DIR)
+	rm -f  $(DISCOVER_DIR).unpack
+	rm -f  $(DISCOVER_DIR).build

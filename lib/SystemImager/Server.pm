@@ -1791,8 +1791,10 @@ sub _write_out_umount_commands {
 
         # umount
         my $cmd = "umount /a$mp || shellout";
+        print $out qq(if [ ! \$kernel = "2.4" ]; then\n) if ($mp eq "/sys");
         print $out qq(logmsg "$cmd"\n);
         print $out "$cmd\n";
+        print $out "fi\n" if ($mp eq "/sys");
         print $out "\n";
     }
 }

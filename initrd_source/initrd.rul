@@ -153,7 +153,7 @@ $(INITRD_DIR)/build_dir-stamp:	$(SKEL_FILES) \
 ifdef	INSMOD_BINARY
 	( [ ! -e $(INITRD_BUILD_DIR)/sbin/insmod ] && \
           cp -a $(INSMOD_BINARY) $(INITRD_BUILD_DIR)/sbin/insmod ) || \
-        ( echo "$(INITRD_BUILD_DIR)/sbin/$(INSMOD_BINARY) already exists." &&\
+        ( echo "$(INITRD_BUILD_DIR)/sbin/insmod already exists." &&\
           echo "Is insmod maybe already provided by busybox?" && exit 1 )
 endif
 ifdef	MODPROBE_BINARY
