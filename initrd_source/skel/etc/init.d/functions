@@ -1,49 +1,16 @@
 #
 # "SystemImager" 
 #
-#  Copyright (C) 1999-2004 Brian Elliott Finley
+#  Copyright (C) 1999-2005 Brian Elliott Finley
 #
 #  $Id$
+#  vi: set filetype=sh et ts=4:
 #
 #  Others who have contributed to this code:
 #   Charles C. Bennett, Jr. <ccb@acm.org>
 #   Sean Dague <japh@us.ibm.com>
 #   Dann Frazier <dannf@dannf.org>
 #   Curtis Zinzilieta <czinzilieta@valinux.com>
-#
-#   2004.03.24  Brian Elliott Finley
-#   - get entire scripts directory at once, whether using rsync or multicast
-#   - redirect output from kills in shellout() to /dev/null
-#   - create choose_autoinstall_script() function to simplify script selection
-#   - create run_post_install_scripts() function
-#   2004.03.24  Brian Elliott Finley
-#   - start spinner with 1 second delay, so we don't get a / at the start of
-#     command being run.
-#   2004.04.14  Brian Elliott Finley
-#   - add pre-install script support at Rick Bradshaw's request
-#   2004.05.12  Brian Elliott Finley
-#   - added OVERRIDES to post-install script support
-#   - changed up the way pre and post-install scripts are found
-#   2004.05.26  Brian Elliott Finley
-#   - look for "<number>all.<description>" pre and post-install scripts
-#   - source file at end of pre-install scripts (/tmp/pre-install_variables.txt)
-#   - make seperate function for variablizing kernel append parameters
-#   2004.06.03  Brian Elliott Finley
-#   - fix regex used by get_base_hostname()
-#   2004.06.04  Brian Elliott Finley
-#   - add support for SCRIPTNAME as a pre-boot variable
-#   - improve some of the "these settings override those settings logic"
-#   2004.06.05  Brian Elliott Finley
-#   - add double quotes around non-null tests in pre and post-install script functions
-#   2004.07.26  Brian Elliott Finley
-#   - check kernel version against intrd version
-#   2004.09.10  Brian Elliott Finley
-#   - remove get_ssh_tarball() -- now handled as part of get_boel_binaries_tarball()
-#   2004.10.19  Brian Elliott Finley
-#   - apparently the busybox-1.00-rc3 can't do "df -k /".  changed to just df -k.
-#   2004.10.28  Brian Elliott Finley
-#   - make variables.txt available to post-install scripts.
-#   - with SCRIPTNAME specified, accept $SCRIPTNAME, or $SCRIPTNAME.{master,sh}
 #
 
 
@@ -70,6 +37,16 @@ FLAVOR="SYSTEMIMAGER_FLAVOR_STRING"
 #
 ################################################################################
 #
+#  fs_on_tmpfs
+#
+# Usage: 
+#   if fs_on_tmpfs /my_filesystem ; then
+fs_on_tmpfs() {
+    df 2>/dev/null | egrep 'tmpfs ' | egrep -q " $1\$" 
+}
+
+################################################################################
+#
 #  logmsg
 #
 # Usage: log a message, redirects to console / syslog depending on usage
@@ -79,7 +56,7 @@ logmsg() {
     # log to temporary file (which will go away when we reboot)
     # this is good for envs that have bad consoles
     local FILE=/tmp/si.log
-    if ((`mount 2>/dev/null | grep ' / ' | grep -q '(rw)'`)); then
+    if fs_on_tmpfs / ; then
         echo $@ >> $FILE || shellout
     fi
     
@@ -163,37 +140,39 @@ write_variables() {
     logmsg
     logmsg write_variables
 
-    # pass all variables set here on to the hostname.sh script
-    rm -f /tmp/variables.txt
-  
-    echo "HOSTNAME=$HOSTNAME"                   >> /tmp/variables.txt || shellout
-    echo "DOMAINNAME=$DOMAINNAME"               >> /tmp/variables.txt
-  
-    echo "DEVICE=$DEVICE"                       >> /tmp/variables.txt
-    echo "IPADDR=$IPADDR"                       >> /tmp/variables.txt
-    echo "NETMASK=$NETMASK"                     >> /tmp/variables.txt
-    echo "NETWORK=$NETWORK"                     >> /tmp/variables.txt
-    echo "BROADCAST=$BROADCAST"                 >> /tmp/variables.txt
-  
-    echo "GATEWAY=$GATEWAY"                     >> /tmp/variables.txt
-    echo "GATEWAYDEV=$GATEWAYDEV"               >> /tmp/variables.txt
-  
-    echo "IMAGESERVER=$IMAGESERVER"             >> /tmp/variables.txt
-    echo "IMAGENAME=$IMAGENAME"                 >> /tmp/variables.txt
-  
-    echo "LOG_SERVER=$LOG_SERVER"               >> /tmp/variables.txt
-    echo "LOG_SERVER_PORT=$LOG_SERVER_PORT" 	>> /tmp/variables.txt
-    echo "USELOGGER=$USELOGGER"                 >> /tmp/variables.txt
-
-    echo "TMPFS_STAGING=$TMPFS_STAGING"         >> /tmp/variables.txt
- 
-    echo "SSH_USER=$SSH_USER"	            	>> /tmp/variables.txt
-    echo "SSH_DOWNLOAD_URL=$SSH_DOWNLOAD_URL"	>> /tmp/variables.txt
-
-    echo "FLAMETHROWER_DIRECTORY_PORTBASE=$FLAMETHROWER_DIRECTORY_PORTBASE"	>> /tmp/variables.txt
-
-    echo "MONITOR_SERVER=$MONITOR_SERVER"      	>> /tmp/variables.txt
-    echo "MONITOR_PORT=$MONITOR_PORT"          	>> /tmp/variables.txt
+    if fs_on_tmpfs / ; then
+        # pass all variables set here on to the hostname.sh script
+        rm -f /tmp/variables.txt
+        
+        echo "HOSTNAME=$HOSTNAME"                   >> /tmp/variables.txt || shellout
+        echo "DOMAINNAME=$DOMAINNAME"               >> /tmp/variables.txt
+        
+        echo "DEVICE=$DEVICE"                       >> /tmp/variables.txt
+        echo "IPADDR=$IPADDR"                       >> /tmp/variables.txt
+        echo "NETMASK=$NETMASK"                     >> /tmp/variables.txt
+        echo "NETWORK=$NETWORK"                     >> /tmp/variables.txt
+        echo "BROADCAST=$BROADCAST"                 >> /tmp/variables.txt
+        
+        echo "GATEWAY=$GATEWAY"                     >> /tmp/variables.txt
+        echo "GATEWAYDEV=$GATEWAYDEV"               >> /tmp/variables.txt
+        
+        echo "IMAGESERVER=$IMAGESERVER"             >> /tmp/variables.txt
+        echo "IMAGENAME=$IMAGENAME"                 >> /tmp/variables.txt
+        
+        echo "LOG_SERVER=$LOG_SERVER"               >> /tmp/variables.txt
+        echo "LOG_SERVER_PORT=$LOG_SERVER_PORT" 	>> /tmp/variables.txt
+        echo "USELOGGER=$USELOGGER"                 >> /tmp/variables.txt
+        
+        echo "TMPFS_STAGING=$TMPFS_STAGING"         >> /tmp/variables.txt
+        
+        echo "SSH_USER=$SSH_USER"	            	>> /tmp/variables.txt
+        echo "SSH_DOWNLOAD_URL=$SSH_DOWNLOAD_URL"	>> /tmp/variables.txt
+        
+        echo "FLAMETHROWER_DIRECTORY_PORTBASE=$FLAMETHROWER_DIRECTORY_PORTBASE"	>> /tmp/variables.txt
+        
+        echo "MONITOR_SERVER=$MONITOR_SERVER"      	>> /tmp/variables.txt
+        echo "MONITOR_PORT=$MONITOR_PORT"          	>> /tmp/variables.txt
+    fi
     echo "MONITOR_CONSOLE=$MONITOR_CONSOLE"    	>> /tmp/variables.txt
 
     echo "BITTORRENT_STAGING=$BITTORRENT_STAGING"    	>> /tmp/variables.txt
@@ -645,7 +624,6 @@ switch_root_to_tmpfs() {
     tmpfs_nr_blocks=$(tr ' ' '\n' < /proc/cmdline | grep tmpfs_nr_blocks\= | sed 's/.*=//')
     tmpfs_nr_inodes=$(tr ' ' '\n' < /proc/cmdline | grep tmpfs_nr_inodes\= | sed 's/.*=//')
     tmpfs_mode=$(tr ' ' '\n' < /proc/cmdline | grep tmpfs_mode\= | sed 's/.*=//')
-    umount /proc
 
     if [ "$tmpfs_size" != "" ]; then
         tmpfs_opts="size=$tmpfs_size"
@@ -664,7 +642,7 @@ switch_root_to_tmpfs() {
 	    tmpfs_opts="${tmpfs_opts},nr_inodes=$tmpfs_nr_inodes"
         else
             tmpfs_opts="nr_inodes=$tmpfs_nr_inodes"
-	fi
+	    fi
     fi
 
     if [ "$tmpfs_mode" != "" ]; then
@@ -683,14 +661,15 @@ switch_root_to_tmpfs() {
     # the tarball and binaries that users may decide to copy over. -BEF-
     mkdir -p /new_root || shellout
     mount tmpfs /new_root -t tmpfs $tmpfs_opts || shellout
+    umount /proc
     cd / || shellout
-    rsync -a --exclude='/proc' * /new_root/ || shellout
+    cp -a `/bin/ls | grep -v new_root` /new_root/ || shellout
     cd /new_root || shellout
     mkdir -p old_root || shellout
     pivot_root . old_root || shellout
 
     logmsg
-    logmsg "switch_root_to_tmpfs...done!"
+    logmsg "switch_root_to_tmpfs"
 
     unset tmpfs_size
     unset tmpfs_nr_blocks
@@ -705,31 +684,48 @@ switch_root_to_tmpfs() {
 mount_proc() {
     logmsg
     logmsg mount_proc
-    mkdir -p proc || shellout
+    mkdir -p /proc || shellout
     mount proc /proc -t proc || shellout
 }
 #
 ################################################################################
 #
-mount_dev_on_devfs() {
+mount_sys() {
     logmsg
-    logmsg mount_dev_on_devfs
+    logmsg mount_sys
+    mkdir -p /sys || shellout
+    mount sysfs /sys -t sysfs || shellout
+}
+#
+################################################################################
+#
+mount_pts() {
+    logmsg
+    logmsg mount_pts
+    mkdir -p /dev/pts || shellout
+    mount devpts /dev/pts -t devpts || shellout
+}
+#
+################################################################################
+#
+start_udevd() {
+    #
+    # Start udevd first, then hotplug
+    logmsg
+    logmsg start_udevd
+    /etc/init.d/udev start
 
-    # Check if the kernel supports devfs.
-    if ! $(cat /proc/filesystems | sed "s/^nodev//" | sed "s/^[[:space:]]*//" | \
-            grep "^devfs$" >/dev/null 2>&1); then
-        logmsg "Filesystem devfs is not supported by the kernel."
-        logmsg "Trying to use the current /dev..."
-        return
-    fi
-
-    # Re-mount /dev on devfs. -BEF-
-    mkdir -p /dev || shellout
-    mount devfs /dev -t devfs || shellout
-
-    # Crank up devfsd
-    echo -n '>>> '
-    /sbin/devfsd /dev || shellout
+}
+#
+################################################################################
+#
+start_hotplug() {
+    #
+    # Start udevd first, then hotplug
+    logmsg
+    logmsg start_hotplug
+    touch /etc/fstab
+    /etc/init.d/hotplug start
 
 }
 #
@@ -1662,4 +1658,3 @@ sleep_loop() {
 }
 #
 ################################################################################
-# /* vi: set et ts=4: */

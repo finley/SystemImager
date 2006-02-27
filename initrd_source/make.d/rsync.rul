@@ -1,43 +1,47 @@
 #
 #   $Id$
-#
-#   2005.06.07  Brian Elliott Finley
-#   - up version to 2.6.5, resolves bug #1214223
+#   vi: set filetype=make:
 #
 
-RSYNC_VERSION = 2.6.6
-RSYNC_TARBALL = rsync-$(RSYNC_VERSION).tar.gz
-#RSYNC_URL = http://rsync.samba.org/ftp/rsync/$(RSYNC_TARBALL)
-RSYNC_URL = http://download.systemimager.org/pub/rsync/$(RSYNC_TARBALL)
-RSYNC_DIR = rsync-$(RSYNC_VERSION)
-RSYNC_BINARY = $(INITRD_SRC_DIR)/$(RSYNC_DIR)/rsync
-RSYNC_PATCHES = $(shell ls $(INITRD_PATCH_DIR)/rsync.*.patch 2>/dev/null | sort)
-RSYNC_CONFIGURE_OPTS = --with-included-popt
-
-ifdef UCLIBC_ARCH_NAME
-	RSYNC_CONFIGURE_OPTS += --host=$(ARCH)-gnu-linux CFLAGS="-DHAVE_OFF64_T"
-endif
+RSYNC_VERSION 	= 2.6.6
+RSYNC_TARBALL 	= rsync-$(RSYNC_VERSION).tar.gz
+#RSYNC_URL 		= http://rsync.samba.org/ftp/rsync/$(RSYNC_TARBALL)
+RSYNC_URL 		= http://download.systemimager.org/pub/rsync/$(RSYNC_TARBALL)
+RSYNC_DIR 		= $(INITRD_SRC_DIR)/rsync-$(RSYNC_VERSION)
+RSYNC_PATCHES 	= $(shell ls $(INITRD_PATCH_DIR)/rsync.*.patch 2>/dev/null | sort)
 
 ALL_SOURCE += $(INITRD_SRC_DIR)/$(RSYNC_TARBALL)
 
-PHONY += rsync
-rsync:	$(RSYNC_BINARY) $(UCLIBC_TARGET)
 
-$(RSYNC_BINARY):	$(INITRD_SRC_DIR)/$(RSYNC_TARBALL) $(RSYNC_PATCHES) \
-			$(UCLIBC_TARGET)
-	rm -rf $(INITRD_SRC_DIR)/$(RSYNC_DIR)
-	cd $(INITRD_SRC_DIR) && tar -xvzf $(RSYNC_TARBALL)
-	cd $(INITRD_SRC_DIR)/$(RSYNC_DIR) && \
-	  cat $(RSYNC_PATCHES) < /dev/null | patch -p1
-	cd $(INITRD_SRC_DIR)/$(RSYNC_DIR) && \
-	    ./configure $(RSYNC_CONFIGURE_OPTS) PATH=$(INITRD_BUILD_PATH)
-	$(MAKE) -j $(NCPUS) -C $(INITRD_SRC_DIR)/$(RSYNC_DIR) rsync \
-	    PATH=$(INITRD_BUILD_PATH)
+PHONY += rsync
+rsync:	$(RSYNC_DIR).build
+$(RSYNC_DIR).build:	$(RSYNC_DIR).unpack
+	cd $(RSYNC_DIR) && ./configure --with-included-popt | $(SPACE_OUT)
+	$(MAKE) -j $(NCPUS) -C $(RSYNC_DIR) rsync | $(SPACE_OUT)
+	touch $@
+
+
+$(RSYNC_DIR).unpack:	$(INITRD_SRC_DIR)/$(RSYNC_TARBALL) \
+						$(RSYNC_PATCHES) \
+						$(INITRD_DIR)/make.d/rsync.rul
+	rm -rf $(RSYNC_DIR)
+	cd $(INITRD_SRC_DIR) && tar -xvzf $(RSYNC_TARBALL) | $(SPACE_OUT)
+	cd $(RSYNC_DIR) && cat $(RSYNC_PATCHES) < /dev/null | patch -p1 | $(SPACE_OUT)
+	touch $@
+
+
+$(RSYNC_DIR).install:	$(RSYNC_DIR).build \
+						$(INITRD_BUILD_DIR).prep
+	install -m 755 $(RSYNC_DIR)/rsync $(INITRD_BUILD_DIR)/bin
+
 
 $(INITRD_SRC_DIR)/$(RSYNC_TARBALL):
 	[ -d $(INITRD_SRC_DIR) ] || mkdir -p $(INITRD_SRC_DIR)
 	$(GETSOURCE) $(RSYNC_URL) $(INITRD_SRC_DIR)
 
+
 PHONY += rsync_clean
 rsync_clean:
-	rm -rf $(INITRD_SRC_DIR)/$(RSYNC_DIR)
+	rm -rf $(RSYNC_DIR)
+	rm -f  $(RSYNC_DIR).unpack
+	rm -f  $(RSYNC_DIR).build

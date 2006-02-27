@@ -1,25 +1,38 @@
 #
 #	$Id$
+#   vi: set filetype=make:
 #
-BC_VERSION := 1.06
-BC_DIR := bc-$(BC_VERSION)
-BC_TARBALL := bc-$(BC_VERSION).tar.gz
-BC_URL := http://download.systemimager.org/pub/bc/$(BC_TARBALL)
-BC_BINARY := $(SRC_DIR)/$(BC_DIR)/bc/bc
+
+BC_VERSION	:= 1.06
+BC_DIR 		:= $(SRC_DIR)/bc-$(BC_VERSION)
+BC_TARBALL 	:= bc-$(BC_VERSION).tar.gz
+BC_URL 		:= http://download.systemimager.org/pub/bc/$(BC_TARBALL)
+BC_BINARY 	:= $(BC_DIR)/bc/bc
 
 ALL_SOURCE += $(SRC_DIR)/$(BC_TARBALL)
 
+
 PHONY += bc
-bc:	$(BC_BINARY)
-$(BC_BINARY):	$(SRC_DIR)/$(BC_TARBALL)
-	[ -d $(SRC_DIR)/$(BC_DIR) ] || ( cd $(SRC_DIR) && tar -xvzf $(BC_TARBALL) )
-	( cd $(SRC_DIR)/$(BC_DIR) && ./configure )
-	$(MAKE) -j $(NCPUS) -C $(SRC_DIR)/$(BC_DIR)
+bc:	$(BC_DIR).build
+$(BC_DIR).build:    $(BC_DIR).unpack
+	cd $(BC_DIR) && ./configure | $(SPACE_OUT)
+	$(MAKE) -j $(NCPUS) -C $(BC_DIR) | $(SPACE_OUT)
+	touch $@
+
+
+$(BC_DIR).unpack:	$(TOPDIR)/make.d/bc.rul \
+                    $(SRC_DIR)/$(BC_TARBALL)
+	cd $(SRC_DIR) && tar -xvzf $(BC_TARBALL) | $(SPACE_OUT)
+	touch $@
+
 
 $(SRC_DIR)/$(BC_TARBALL):
-	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
-	$(GETSOURCE) $(BC_URL) $(SRC_DIR)
+	mkdir -p $(SRC_DIR)
+	$(GETSOURCE) $(BC_URL) $(SRC_DIR) | $(SPACE_OUT)
+
 
 PHONY += bc_clean
 bc_clean:
-	rm -rf $(SRC_DIR)/$(BC_DIR)
+	rm -rf $(BC_DIR)
+	rm -f  $(BC_DIR).unpack
+	rm -f  $(BC_DIR).build

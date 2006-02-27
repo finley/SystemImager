@@ -1,5 +1,6 @@
 #
 # $Id$
+# vi: set filetype=make:
 #   
 #   2004.09.08  Brian Elliott Finley
 #   - start using non-busybox mkswap 
@@ -12,41 +13,57 @@
 #
 
 UTIL_LINUX_VERSION  := 2.12r
-UTIL_LINUX_DIR      := util-linux-$(UTIL_LINUX_VERSION)
+UTIL_LINUX_DIR      := $(SRC_DIR)/util-linux-$(UTIL_LINUX_VERSION)
 UTIL_LINUX_TARBALL  := util-linux-$(UTIL_LINUX_VERSION).tar.bz2
 #UTIL_LINUX_URL      := http://www.kernel.org/pub/linux/utils/util-linux/$(UTIL_LINUX_TARBALL)
 UTIL_LINUX_URL      := http://download.systemimager.org/pub/util-linux/$(UTIL_LINUX_TARBALL)
-UTIL_LINUX_PATCHES  := $(shell ls $(PATCH_DIR)/util-linux.*.patch 2>/dev/null | sort)
-
-UTIL_LINUX_BINARIES := $(SRC_DIR)/$(UTIL_LINUX_DIR)/disk-utils/mkswap \
-                        $(SRC_DIR)/$(UTIL_LINUX_DIR)/fdisk/sfdisk
+UTIL_LINUX_PATCHES   = $(shell ls $(PATCH_DIR)/util-linux.*.patch 2>/dev/null | sort)
+UTIL_LINUX_BINARIES := $(UTIL_LINUX_DIR)/disk-utils/mkswap \
+                       $(UTIL_LINUX_DIR)/fdisk/sfdisk
 
 ALL_SOURCE += $(SRC_DIR)/$(UTIL_LINUX_TARBALL)
 
+
+PHONY += util-linux_install
+util-linux:	$(UTIL_LINUX_DIR).install
+$(UTIL_LINUX_DIR).install:   $(UTIL_LINUX_DIR).build
+	install -m 755 $(UTIL_LINUX_DIR)/mount/mount  $(INITRD_BUILD_DIR)/bin
+	install -m 755 $(UTIL_LINUX_DIR)/mount/umount $(INITRD_BUILD_DIR)/bin
+	# XXX at some point, have this install appropriate bits to boel_binaries tarball dir too
+
+
 PHONY += util-linux
-util-linux:	$(MKSWAP_BINARY) $(SFDISK_BINARY)
+util-linux:	$(UTIL_LINUX_DIR).build
+$(UTIL_LINUX_DIR).build:   $(UTIL_LINUX_DIR).unpack
+	$(MAKE) -j $(NCPUS) -C $(UTIL_LINUX_DIR) | $(SPACE_OUT)
+	touch $@
 
-$(UTIL_LINUX_BINARIES):   $(SRC_DIR)/$(UTIL_LINUX_DIR)/make_include
-	$(MAKE) -j $(NCPUS) -C $(SRC_DIR)/$(UTIL_LINUX_DIR)
 
-$(SRC_DIR)/$(UTIL_LINUX_DIR)/make_include:   $(SRC_DIR)/$(UTIL_LINUX_TARBALL)
-	rm -rf $(SRC_DIR)/$(UTIL_LINUX_DIR)
-	( cd $(SRC_DIR) && tar -xvjf $(UTIL_LINUX_TARBALL) && \
-	    (cd $(UTIL_LINUX_DIR) && \
-	      (cat $(UTIL_LINUX_PATCHES) < /dev/null | patch -p1)))
+$(UTIL_LINUX_DIR).unpack:	$(SRC_DIR)/$(UTIL_LINUX_TARBALL) \
+							$(TOPDIR)/make.d/util-linux.rul
+	rm -rf $(UTIL_LINUX_DIR)
+	cd $(SRC_DIR) && tar -xvjf $(UTIL_LINUX_TARBALL) | $(SPACE_OUT)
+	cd $(UTIL_LINUX_DIR) && cat $(UTIL_LINUX_PATCHES) < /dev/null | patch -p1 | $(SPACE_OUT)
+	touch $@
+
 
 $(SRC_DIR)/$(UTIL_LINUX_TARBALL):
-	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
-	$(GETSOURCE) $(UTIL_LINUX_URL) $(SRC_DIR)
+	mkdir -p $(SRC_DIR)
+	$(GETSOURCE) $(UTIL_LINUX_URL) $(SRC_DIR) | $(SPACE_OUT)
+
 
 PHONY += util-linux_clean
 util-linux_clean:
-	rm -rf $(SRC_DIR)/$(UTIL_LINUX_DIR)
+	rm -rf $(UTIL_LINUX_DIR)
+	rm -f  $(UTIL_LINUX_DIR).unpack
+	rm -f  $(UTIL_LINUX_DIR).build
+
 
 PHONY += mkswap
 mkswap:
 	@echo 'BUILD_SYSTEM_ERROR:  Try "make util-linux" instead.'
 	@exit 1
+
 
 PHONY += sfdisk
 sfdisk:

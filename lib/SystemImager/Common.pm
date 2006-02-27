@@ -1057,37 +1057,68 @@ sub save_filesystem_information {
                     #
                     if (($fs eq "vfat") or ($fs eq "msdos")) {
                     
-                        # Create temporary config file for mtools. -BEF-
-                        my $file2 = "/tmp/mtools.conf.$$";
-                        open(FH_OUT2,">$file2") or croak("Couldn't open $file2 for writing!");
-                            # Config file will contain a single line that looks like this:
-                            #
-                            #   drive c: file="/dev/hda1"
-                            #
-                            print FH_OUT2 qq(drive c: file="$real_dev"\n);
-                    
-                        close(FH_OUT2);
-                    
-                        # Get the fat size (12, 16, or 32). -BEF-
-                        my $cmd = "export MTOOLSRC=$file2 && minfo c:";
-                        open (FH_IN2, "$cmd|") or die("Couldn't execute $cmd to read the output.\nBe sure mtools is installed!");
-                        while (<FH_IN2>) {
-                            if (/disk type=/) {
-                                my ($junk, $fat_size) = split(/\"/);
+                        #
+                        # Need to be sure minfo is installed, and deal if it isn't. -BEF-
+                        #
+                        if( ! SystemImager::Common->which("minfo",$ENV{PATH}) ) {
+                            print << "EOF";
 
-                                # At this point, $fat_size should look something like this: "FAT16   ".  This 
-                                # strips out the alpha characters and the space. -BEF-
-                                #
-                                $fat_size =~ s/[[:alpha:]]//g;
-                                $fat_size =~ s/[[:space:]]//g;
+WARNING: $real_dev is a FAT filesystem on this machine, 
+         but the \"minfo\" tool is not installed.  I will be unable to
+         determine what FAT size to specify in your
+         \"/etc/systemimager/autoinstallscript.conf\" file.
+   
+         Please install \"minfo\" (part of the \"mtools\" package) and
+         run this command again.
+   
+         Or you can specify the FAT size you want.  One of 12, 16, or
+         32.  Anything else may break your auto-install script.
 
-                                $mkfs_opts="-F $fat_size";
+EOF
+
+                            print "         For this partition, please use a FAT size of [32]: ";
+                            $_ = <STDIN>;
+                            chomp;
+                            if( m/^\d+$/ ) {
+                                $mkfs_opts="-F $_";
+                            } else {
+                                $mkfs_opts="-F 32";
                             }
-                        }
-                        close(FH_IN2);
+
+                        } else {
+
+                            # Create temporary config file for mtools. -BEF-
+                            my $file2 = "/tmp/mtools.conf.$$";
+                            open(FH_OUT2,">$file2") or croak("Couldn't open $file2 for writing!");
+                                # Config file will contain a single line that looks like this:
+                                #
+                                #   drive c: file="/dev/hda1"
+                                #
+                                print FH_OUT2 qq(drive c: file="$real_dev"\n);
                     
-                        # Remove config file. -BEF-
-                        unlink("$file2") or print STDERR "WARNING: Couldn't remove $file2!  Proceeding...";
+                            close(FH_OUT2);
+                    
+                            # Get the fat size (12, 16, or 32). -BEF-
+                            my $cmd = "export MTOOLSRC=$file2 && minfo c:";
+                            open (FH_IN2, "$cmd|") or die("Couldn't execute $cmd to read the output.\nBe sure mtools is installed!");
+                            while (<FH_IN2>) {
+                                if (/disk type=/) {
+                                    my ($junk, $fat_size) = split(/\"/);
+
+                                    # At this point, $fat_size should look something like this: "FAT16   ".  This 
+                                    # strips out the alpha characters and the space. -BEF-
+                                    #
+                                    $fat_size =~ s/[[:alpha:]]//g;
+                                    $fat_size =~ s/[[:space:]]//g;
+
+                                    $mkfs_opts="-F $fat_size";
+                                }
+                            }
+                            close(FH_IN2);
+                    
+                            # Remove config file. -BEF-
+                            unlink("$file2") or print STDERR "WARNING: Couldn't remove $file2!  Proceeding...";
+                        }
                     }
                 
                 } else {

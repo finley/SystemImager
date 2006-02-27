@@ -1,3 +1,8 @@
+#
+#	$Id$
+#
+
+#
 # This is run first except when booting in single-user mode.
 #
 ::sysinit:/etc/init.d/rcS
@@ -6,12 +11,14 @@
 #
 # Start an "askfirst" shell on the console (whatever that may be)
 ::askfirst:-/bin/sh
-# Start an "askfirst" shell on /dev/tty2-4 (vc/<#> is devfs notation). -BEF-
-vc/2::askfirst:-/bin/sh
-vc/3::askfirst:-/bin/sh
-vc/4::askfirst:-/bin/sh
-vc/5::askfirst:-/bin/sh
-vc/6::askfirst:-/bin/sh
+
+# Start an "askfirst" shell on /dev/tty2-6
+tty2::askfirst:-/bin/sh
+tty3::askfirst:-/bin/sh
+tty4::askfirst:-/bin/sh
+tty5::askfirst:-/bin/sh
+tty6::askfirst:-/bin/sh
+
 
 # Stuff to do before rebooting
 :12345:ctrlaltdel:/usr/bin/killall rcS > /dev/null 2>&1

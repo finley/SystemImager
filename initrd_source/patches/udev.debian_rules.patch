@@ -1,0 +1,105 @@
+--- udev-0.060.orig.orig/debian/rules	2005-12-13 20:10:25.000000000 -0600
++++ udev-0.060.orig/debian/rules	2005-12-13 21:40:02.000000000 -0600
+@@ -1,7 +1,7 @@
+ #!/usr/bin/make -f
+ SHELL+= -e
+ 
+-BUILD_UDEB := 1
++# BUILD_UDEB := 1
+ # BUILD_KLIBC := 1
+ 
+ MAKE_VARIABLES := V=true udevdir=/dev
+@@ -63,8 +63,8 @@
+ $(STAMP_DIR)/build: $(STAMP_DIR)/unpack
+ 	dh_testdir
+ 	$(MAKE) -f debian/sys-build.mk source.command SOURCE_CMD=" \
+-		$(MAKE) $(MAKE_VARIABLES) OPTIMIZATION=-O2 all \
+-			USE_SELINUX=true \
++		$(MAKE) $(MAKE_VARIABLES) OPTIMIZATION=-Os all \
++			USE_SELINUX=false \
+ 	"
+ ifdef BUILD_UDEB
+ 	$(MAKE) -f debian/sys-build.mk source.command SOURCE_CMD=" \
+@@ -85,18 +85,21 @@
+ 	touch $@
+ 
+ binary-arch: $(STAMP_DIR)/build checkroot
+-	dh_testdir
+-	dh_clean -k
+-	dh_installdirs
++	#dh_testdir
++	#dh_clean -k
++	#dh_installdirs
+ 
++	mkdir -p $D/sbin/
+ 	cp $B/udev $B/udevd $B/udevsend $B/udevstart $B/udevcontrol \
+ 		$B/extras/ata_id/ata_id $B/extras/chassis_id/chassis_id \
+ 		$B/extras/scsi_id/scsi_id $B/extras/volume_id/vol_id \
+ 		$B/extras/run_directory/udev_run_devd \
+ 		$B/extras/run_directory/udev_run_hotplugd \
+ 		$D/sbin/
++	mkdir -p $D/usr/bin/
+ 	cp $B/udevinfo $B/udevtest $D/usr/bin/
+ 
++	mkdir -p $D/etc/udev/scripts/
+ 	install --mode=755 extra/scsi-devfs.sh $B/extras/cdsymlinks.sh \
+ 		$B/extras/dvb.sh $B/extras/ide-devfs.sh $B/extras/inputdev.sh \
+ 		extra/removable.sh \
+@@ -108,8 +111,8 @@
+ 	sed -e 's/^#\([^ ]\)/\1/' < extra/compat.rules > \
+ 		$D/etc/udev/compat-full.rules
+ 
+-	cp extra/reportbug.presubj $D/usr/share/bug/udev/presubj
+-	install --mode=755 extra/reportbug.script $D/usr/share/bug/udev/script
++	#cp extra/reportbug.presubj $D/usr/share/bug/udev/presubj
++	#install --mode=755 extra/reportbug.script $D/usr/share/bug/udev/script
+ 
+ ifdef BUILD_UDEB
+ 	cp $(BU)/udev $(BU)/udevd $(BU)/udevsend $(BU)/udevstart \
+@@ -133,26 +136,26 @@
+ ifdef BUILD_KLIBC
+ endif
+ 
+-	dh_installchangelogs $B/ChangeLog
+-	dh_installdocs $(addprefix $B/,$(DOCS))
+-	cp $B/extras/volume_id/README $D/usr/share/doc/udev/README.vol_id
+-	cp $B/extras/chassis_id/README $D/usr/share/doc/udev/README.chassis_id
+-	dh_installexamples $B/etc/udev/udev.rules.examples \
+-		$B/extras/name_cdrom.pl $B/extras/start_udev \
+-		$B/extras/scsi_id/scsi_id.config extra/udevtest-all
+-	dh_installman $B/*.8 $B/extras/scsi_id/scsi_id.8
+-	dh_link /usr/share/man/man8/udevd.8 /usr/share/man/man8/udevsend.8
+-	dh_installinit --no-start --update-rcd-params='start 04 S .'
+-	dh_installinit --no-start --update-rcd-params='start 36 S .' \
+-		--name=udev-mtab 
+-
+-	dh_strip
+-	dh_compress
+-	dh_fixperms
+-	dh_shlibdeps
+-	dh_installdeb
+-	dh_gencontrol $(NO_PACKAGE)
+-	dh_builddeb $(NO_PACKAGE)
++	#dh_installchangelogs $B/ChangeLog
++	#dh_installdocs $(addprefix $B/,$(DOCS))
++	#cp $B/extras/volume_id/README $D/usr/share/doc/udev/README.vol_id
++	#cp $B/extras/chassis_id/README $D/usr/share/doc/udev/README.chassis_id
++	#dh_installexamples $B/etc/udev/udev.rules.examples \
++	#	$B/extras/name_cdrom.pl $B/extras/start_udev \
++	#	$B/extras/scsi_id/scsi_id.config extra/udevtest-all
++	#dh_installman $B/*.8 $B/extras/scsi_id/scsi_id.8
++	#dh_link /usr/share/man/man8/udevd.8 /usr/share/man/man8/udevsend.8
++	#dh_installinit --no-start --update-rcd-params='start 04 S .'
++	#dh_installinit --no-start --update-rcd-params='start 36 S .' \
++	#	--name=udev-mtab 
++
++	#dh_strip
++	#dh_compress
++	#dh_fixperms
++	#dh_shlibdeps
++	#dh_installdeb
++	#dh_gencontrol $(NO_PACKAGE)
++	#dh_builddeb $(NO_PACKAGE)
+ 
+ 
+ binary:	binary-arch

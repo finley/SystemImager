@@ -1,13 +1,14 @@
 #
 #	"SystemImager"  
 #
-#	Copyright (C) 1999-2005 Brian Elliott Finley
+#   $Id$
+#    vi: set filetype=make:
+#
+#	Copyright (C) 1999-2006 Brian Elliott Finley
 #	Copyright (C) 2002-2004 dann frazier <dannf@hp.com>
 #
 #	Others who have contributed to this code:
 #		Sean Dague <sean@dague.net>
-#
-#   $Id$
 #
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -23,33 +24,17 @@
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
-#   2004.09.19  Brian Elliott Finley
-#   - rename initrd_install -> install_initrd
-#   - add PHONY += install_initrd
-#   2004.10.18  Brian Elliott Finley
-#   - add "build_dir_clean" target
-#   - add "initrd.img" target
-#   - add "initrd" target
-#   2004.10.18  David Smith
-#	- Explicitly include more w/mklibs -L.
-#   2004.10.19  Brian Elliott Finley
-#	- switch to busybox modutils for x86
-#   2005.02.14  Brian Elliott Finley
-#	- add install_initrd_template
-#	2005.07.12 Brian Elliott Finley
-#	- x86_64 mklibs related mods; patch from Erich Focht
-#	2005.07.19 Brian Elliott Finley
-#	- Erich Focht patch
-#	- the attached patch creates /dev/null and /dev/console in the intrd. These are
-#		needed on ia64 with 2.6.10 kernels, as something (init?) accesses them before
-#		udev is properly up and running. If not applied, the kernel will die with the
-#		message:
-#			Warning: unable to open initial console.
-#
-
 
 INITRD_PATCH_DIR = $(INITRD_DIR)/patches
 INITRD_SRC_DIR = $(INITRD_DIR)/src
+INITRD_BINARIES = $(shell file \
+							initrd_source/build_dir/bin/* \
+							initrd_source/build_dir/usr/bin/* \
+							initrd_source/build_dir/sbin/* \
+							initrd_source/build_dir/usr/sbin/* \
+							| grep -v text \
+							| perl -pi -e 's/:.*//')
+
 
 ## Should initrd.img be gzipped?
 INITRD_COMPRESS = yes
@@ -64,135 +49,102 @@ STAMP_DIR = $(INITRD_SRC_DIR)
 
 INITRD_BUILD_DIR = $(INITRD_DIR)/build_dir
 
-SKEL_FILES = $(shell find $(INITRD_DIR)/skel -not -regex '.*/CVS.*' -and \
-                                 -not -regex '.*/CVS' -and \
-                                 -not -regex '.*/.svn.*' -and \
-                                 -not -regex '.*/.svn')
+SKEL_FILES = $(shell find $(INITRD_DIR)/skel \
+						-not -regex '.*/.svn.*' -and \
+						-not -regex '.*/.svn')
 
 MKCRAMFS = $(shell which mkcramfs || which mkfs.cramfs || \
              echo MKCRAMFS_WAS_NOT_FOUND_IN_YOUR_PATH)
 
-# Number of inodes in the build directory and number of 
-# inodes needed on the initial RAM disk -BEF-
+#
+# Order is relevant for certain components, so re-order as is appropriate. -BEF-
+include $(INITRD_DIR)/make.d/cx_freeze.rul
+include $(INITRD_DIR)/make.d/bittorrent.rul
+include $(INITRD_DIR)/make.d/busybox.rul
+include $(INITRD_DIR)/make.d/coreutils.rul
+include $(INITRD_DIR)/make.d/dhclient.rul
+include $(INITRD_DIR)/make.d/hotplug.rul
+include $(INITRD_DIR)/make.d/lsb.rul
+include $(INITRD_DIR)/make.d/rsync.rul
+include $(INITRD_DIR)/make.d/sysvinit.rul
+include $(INITRD_DIR)/make.d/udev.rul
+include $(INITRD_DIR)/make.d/udpcast.rul
 
-### BEGIN module utility decisions ###
-# Need newer module-init-tools for 2.6.X kernels.
-MODULE_UTILS=module-init-tools
-ifeq ($(ARCH),ppc64)
-  MODULE_UTILS=busybox
-endif
-ifeq ($(ARCH),ppc64-iSeries)
-  MODULE_UTILS=busybox
-endif
-### END module utility decisions ###
-
-### BEGIN uclibc decisions ###
-# Only use UCLIBC for i386 -BEF-
-ifeq ($(ARCH),i386)
-	UCLIBC_ARCH_NAME := i386
-endif
+PHONY += build_dir 
+build_dir:	$(INITRD_BUILD_DIR).build
 
 
-ifdef UCLIBC_ARCH_NAME
-	UCLIBC_PATH = $(UCLIBC_DEV)/usr/bin
-	INITRD_BUILD_PATH = $(UCLIBC_PATH):$(PATH)
-	UCLIBC_TARGET := $(INITRD_SRC_DIR)/uclibc_runtime-stamp
-else
-	INITRD_BUILD_PATH = $(PATH)
-endif
-### END uclibc decisions ###
-
-PATH := $(INITRD_BUILD_PATH)
-
-include $(INITRD_DIR)/make.d/*.rul
-
-build_dir:	$(INITRD_DIR)/build_dir-stamp
-
-$(INITRD_DIR)/build_dir-stamp:	$(SKEL_FILES) \
-								$(BUSYBOX_BINARY) \
-								$(DEVFSD_BINARY) \
-								$(DHCLIENT_BINARY) \
-								$(RSYNC_BINARY) \
-								$(UCLIBC_TARGET) \
-								$(INSMOD_BINARY) \
-								$(MODPROBE_BINARY) \
-								$(BITTORRENT_BINARY) \
-								$(CX_FREEZE_BINARY) \
-								$(UDPCAST_BINARY)
-	# Create directory structure.
+$(INITRD_BUILD_DIR).prep:	$(INITRD_DIR)/initrd.rul
 	rm -fr $(INITRD_BUILD_DIR)
-	mkdir $(INITRD_BUILD_DIR)
-	cd $(INITRD_BUILD_DIR) && \
-	  mkdir -m 755 bin dev etc lib proc root sbin usr var
+	mkdir -p $(INITRD_BUILD_DIR)
+	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/bin
+	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/dev
+	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/etc
+	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/etc/default
+	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/etc/init.d
+	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/lib
+	# If build OS has /lib64, create it in initrd
 	test ! -d /lib64 || mkdir -m 755 -p $(INITRD_BUILD_DIR)/lib64
-	cd $(INITRD_BUILD_DIR)/dev && \
-	  mknod -m 660 console c 5 1 && \
-	  mknod -m 660 null c 1 3
-	cd $(INITRD_BUILD_DIR) && \
-	  mkdir -m 755 usr/bin usr/sbin etc/init.d var/run
-	cd $(INITRD_BUILD_DIR) && mkdir -m 1777 tmp
+	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/proc
+	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/root
+	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/sbin
+	mkdir -p -m 1777 $(INITRD_BUILD_DIR)/tmp
+	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/usr
+	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/usr/bin
+	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/usr/sbin
+	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/var
+	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/var/run
+	cd $(INITRD_BUILD_DIR)/dev && mknod -m 660 console c 5 1
+	cd $(INITRD_BUILD_DIR)/dev && mknod -m 660 null c 1 3
+	touch $@
 
-	# Copy over busybox binary and all it's hard links. -BEF-
-	cp -a $(INITRD_SRC_DIR)/$(BUSYBOX_DIR)/_install/* $(INITRD_BUILD_DIR)/
+
+#
+#XXX I want to make all of the packages install to the build_dir like 
+#    the .install targets below.  This will push the install logic out
+#    to the same place where everything else for a particular tool 
+#    happens.  -BEF-
+#
+$(INITRD_BUILD_DIR).build:  $(INITRD_BUILD_DIR).prep		\
+								$(SKEL_FILES) 				\
+								$(BUSYBOX_DIR).install		\
+								$(SYSVINIT_DIR).install		\
+								$(UTIL_LINUX_DIR).install	\
+								$(COREUTILS_DIR).install	\
+								$(UDEV_DIR).install			\
+								$(HOTPLUG_DIR).install		\
+								$(LSB_DIR).build			\
+								$(DHCLIENT_DIR).install		\
+								$(RSYNC_DIR).install		\
+								$(BITTORRENT_DIR).install 	\
+								$(CX_FREEZE_BINARY) 		\
+								$(UDPCAST_BINARY)
 
 	# Copy over other binaries.
-	cp -a $(DEVFSD_BINARY)      $(INITRD_BUILD_DIR)/sbin
-	cp -a $(DHCLIENT_BINARY)    $(INITRD_BUILD_DIR)/sbin
-	cp -a $(RSYNC_BINARY)       $(INITRD_BUILD_DIR)/bin
-	cp -a $(UDPCAST_BINARY)     $(INITRD_BUILD_DIR)/bin
+	cp -a $(UDPCAST_BINARY)    	        $(INITRD_BUILD_DIR)/bin
 
-	# Bittorrent installation.
-	$(CX_FREEZE_BINARY) --install-dir=$(INITRD_BUILD_DIR)/lib/bittorrent --exclude-modules=gobject,pango,gtk $(INITRD_SRC_DIR)/$(BITTORRENT_DIR)/torrentinfo-console.py
-	$(CX_FREEZE_BINARY) --install-dir=$(INITRD_BUILD_DIR)/lib/bittorrent --exclude-modules=gobject,pango,gtk $(INITRD_SRC_DIR)/$(BITTORRENT_DIR)/bittorrent-console.py
-
-	# Explicit copy shared libraries needed by bittorrent binaries.
-	( for l in $$(ldd $(INITRD_BUILD_DIR)/lib/bittorrent/* 2>/dev/null | sed -ne 's/.*=> \(.*\) (.*)/\1/p' | sort -u); do cp -pf $$l $(INITRD_BUILD_DIR)/lib; done )
-	# Make sure the dynamic linker is present.
-	(for l in $$(readelf --program-headers $(INITRD_BUILD_DIR)/lib/bittorrent/* | sed -ne 's/^.*\[Requesting program interpreter: \(.*\)\]$$/\1/p' | sort -u); do cp -pf $$l $(INITRD_BUILD_DIR)/lib; done )
-
-ifdef	INSMOD_BINARY
-	( [ ! -e $(INITRD_BUILD_DIR)/sbin/insmod ] && \
-          cp -a $(INSMOD_BINARY) $(INITRD_BUILD_DIR)/sbin/insmod ) || \
-        ( echo "$(INITRD_BUILD_DIR)/sbin/insmod already exists." &&\
-          echo "Is insmod maybe already provided by busybox?" && exit 1 )
-endif
-ifdef	MODPROBE_BINARY
-	( [ ! -e $(INITRD_BUILD_DIR)/sbin/modprobe ] && \
-          cp -a $(MODPROBE_BINARY) $(INITRD_BUILD_DIR)/sbin ) || \
-        ( echo "$(INITRD_BUILD_DIR)/sbin/$(MODPROBE_BINARY) already exists." &&\
-          echo "Is modprobe maybe already provided by busybox?" && exit 1 )
-endif
-
-ifdef UCLIBC_TARGET
-	cp -a $(UCLIBC_RUNTIME)/usr $(INITRD_BUILD_DIR)
-else
-	# If we're not using uclibc, then copy over the 
-	# standard libs instead. -BEF-
+	# Copy over the standard libs. -BEF-
 	cp -a /lib/ld*   $(INITRD_BUILD_DIR)/lib
 	test ! -d /lib64 || cp -a /lib64/ld* $(INITRD_BUILD_DIR)/lib64
 	# Explicitly include more w/mklibs -L.  -dawild-
 ifeq ($(ARCH),x86_64)
 	( cd $(INITRD_BUILD_DIR) && \
-		$(PYTHON) $(INITRD_DIR)/mklibs -L /lib64:/usr/lib64:/lib:/usr/lib -v -d lib64 ./*bin/* )
+		$(PYTHON) $(INITRD_DIR)/mklibs -L /lib64:/usr/lib64:/lib:/usr/lib -v -d lib64 ./*bin/* | $(SPACE_OUT) )
 	# copy libnss files as they are not automatically included
 	cp -a /lib64/libnss_dns* $(INITRD_BUILD_DIR)/lib64
 else
 	( cd $(INITRD_BUILD_DIR) && \
-		$(PYTHON) $(INITRD_DIR)/mklibs -L /lib:/usr/lib:/lib64:/usr/lib64 -v -d lib ./*bin/* )
+		$(PYTHON) $(INITRD_DIR)/mklibs -L /lib:/usr/lib:/lib64:/usr/lib64 -v -d lib ./*bin/* | $(SPACE_OUT) )
 	# copy libnss files as they are not automatically included
 	cp -a /lib/libnss_dns* $(INITRD_BUILD_DIR)/lib
 endif
-endif
 
 	# Strip 'em. -BEF-
-	strip $(INITRD_BUILD_DIR)/bin/*
-	strip $(INITRD_BUILD_DIR)/sbin/*
-	strip $(INITRD_BUILD_DIR)/usr/bin/*
-	strip $(INITRD_BUILD_DIR)/usr/sbin/*
+	strip $(INITRD_BINARIES) | $(SPACE_OUT)
 
-	# Create the bittorrent links.
-	cd $(INITRD_BUILD_DIR)/bin && ln -s ../lib/bittorrent/torrentinfo-console
-	cd $(INITRD_BUILD_DIR)/bin && ln -s ../lib/bittorrent/bittorrent-console
+	# lsb init functions needed by udev and hotplug init scripts.
+	install -m 755 -d $(INITRD_BUILD_DIR)/lib/lsb
+	install -m 644 $(LSB_DIR)/init-functions $(INITRD_BUILD_DIR)/lib/lsb
 
 	# Copy over text files from the skel directory.
 	cp -a $(INITRD_DIR)/skel/* $(INITRD_BUILD_DIR)
@@ -214,12 +166,12 @@ endif
 	# binaries tarball. -BEF-
 	cp -a $(INITRD_DIR)/my_modules $(INITRD_BUILD_DIR)
 
-	# Clear out CVS cruft.
-	find $(INITRD_BUILD_DIR) -depth -type d -name CVS | xargs rm -rf
+	# Clear out SVN cruft.
 	find $(INITRD_BUILD_DIR) -depth -type d -name .svn | xargs rm -rf
-	mkdir $(INITRD_BUILD_DIR)/new_root
+	mkdir -p $(INITRD_BUILD_DIR)/new_root
 
-	touch $(INITRD_DIR)/build_dir-stamp
+	touch $@
+
 
 PHONY += initrd.img
 initrd.img:	$(INITRD_DIR)/initrd.img
@@ -243,21 +195,23 @@ initrd:	$(INITRD_DIR)/initrd
 #		'make install_template_dir', that you don't want released as 
 #		part of the distribution. -BEF-
 #
-$(INITRD_DIR)/initrd:	$(INITRD_DIR)/build_dir-stamp
-	$(MKCRAMFS) $(INITRD_BUILD_DIR) $(INITRD_DIR)/initrd
+$(INITRD_DIR)/initrd:	$(INITRD_BUILD_DIR).build
+	$(MKCRAMFS) $(INITRD_BUILD_DIR) $(INITRD_DIR)/initrd | $(SPACE_OUT)
+
 
 PHONY += install_initrd_template
-install_initrd_template:	$(INITRD_DIR)/build_dir-stamp
+install_initrd_template:	$(INITRD_BUILD_DIR).build
 	mkdir -p $(BOOT_BIN_DEST)
 	rsync -a $(INITRD_BUILD_DIR)/ $(BOOT_BIN_DEST)/initrd_template/
 	@echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
-	@echo "XXX Dann, I'm expecting this should this be part of:"
-	@echo "XXX 	systemimager-initrd_template-$ARCH and" 
-	@echo "XXX	systemimager-client will need to depend on it."
-	@echo "XXX 	Do you agree? disagree?"
-	@echo "XXX" 
-	@echo "XXX  Still in progress, no need to answer yet..."
+	@echo "XXX"
+	@echo "XXX  The initrd_template should be packaged as a noarch"
+	@echo "XXX  package, but should include the arch in the name:"
+	@echo "XXX"
+	@echo "XXX  	systemimager-initrd_template-<arch>"
+	@echo "XXX"
 	@echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+
 
 # install the autoinstall ramdisk - the initial ramdisk used by autoinstall
 # clients when beginning an autoinstall
@@ -268,29 +222,28 @@ install_initrd:	$(INITRD_DIR)/initrd.img
 	    $(BOOT_BIN_DEST)/initrd.img
 
 initrd_get_source:	$(INITRD_SRC_DIR)/$(BUSYBOX_TARBALL) \
-			$(INITRD_SRC_DIR)/$(DEVFSD_TARBALL) \
+			$(INITRD_SRC_DIR)/$(UDEV_TARBALL) \
+			$(INITRD_SRC_DIR)/$(UDEV_DIFF) \
 			$(INITRD_SRC_DIR)/$(DHCLIENT_TARBALL) \
 			$(INITRD_SRC_DIR)/$(MODUTILS_TARBALL) \
 			$(INITRD_SRC_DIR)/$(MODULE_INIT_TOOLS_TARBALL) \
 			$(INITRD_SRC_DIR)/$(RSYNC_TARBALL) \
-			$(INITRD_SRC_DIR)/$(UCLIBC_TARBALL) \
 			$(INITRD_SRC_DIR)/$(UDPCAST_TARBALL)
 
 PHONY += build_dir_clean
 build_dir_clean:
 	rm -rf $(INITRD_BUILD_DIR)
-	rm -f $(INITRD_DIR)/build_dir-stamp
+	rm -f  $(INITRD_BUILD_DIR).build
+	rm -f  $(INITRD_BUILD_DIR).prep
 
+PHONY += initrd_clean
 initrd_clean:	build_dir_clean $(subst .rul,_clean,$(shell cd $(INITRD_DIR)/make.d && ls *.rul))
 	-find . -name "*~" -exec rm -f {} \;
 	rm -f $(INITRD_DIR)/initrd
 	rm -f $(INITRD_DIR)/initrd.img
 
+PHONY += initrd_distclean
 initrd_distclean:	initrd_clean
 	-rm -rf $(INITRD_SRC_DIR)
 
-.PHONY:	all build_dir install get_source help helpless clean distclean \
-	$(subst .rul,,$(shell cd make.d && ls *.rul)) uclibc_dev
 
-
-# /* vi: set ai noet ts=4: */

@@ -1,7 +1,8 @@
 #
 # $Id$
-# vi: set filetype=make:
+#  vi: set filetype=make:
 #
+
 DISCOVER_VERSION      = 1.7.15ubuntu1
 DISCOVER_TARBALL      = discover1_$(DISCOVER_VERSION).tar.gz
 #DISCOVER_URL          = http://us.archive.ubuntu.com/ubuntu/pool/main/d/discover1/
@@ -36,3 +37,4 @@ discover_clean:
 	rm -rf $(DISCOVER_DIR)
 	rm -f  $(DISCOVER_DIR).unpack
 	rm -f  $(DISCOVER_DIR).build
+

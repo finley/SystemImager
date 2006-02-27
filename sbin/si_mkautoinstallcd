@@ -263,10 +263,8 @@ unless($quiet) {
     print <<EOF;
 Done!
 
-You can now burn your ISO image to a CDROM with a command such as:
-   'cdrecord -v speed=2 dev=1,0,0 $out_file'
-
-See the cdrecord manual for more information. ("man cdrecord")
+You can now burn your ISO image to a CDROM and boot your auto-install 
+clients from it!
 
 EOF
 }

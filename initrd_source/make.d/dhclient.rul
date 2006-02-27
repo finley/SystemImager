@@ -1,31 +1,51 @@
 #
 # 	$Id$
+#   vi: set filetype=make:
 #
-DHCLIENT_VERSION = 2.0pl5
-DHCLIENT_TARBALL = dhcp-$(DHCLIENT_VERSION).tar.gz
+
+DHCLIENT_VERSION	= 2.0pl5
+DHCLIENT_TARBALL 	= dhcp-$(DHCLIENT_VERSION).tar.gz
 # SOURCE_URL -> ftp://ftp.epix.net/pub/isc/dhcp/
-DHCLIENT_URL = http://download.systemimager.org/pub/dhcp/$(DHCLIENT_TARBALL)
-DHCLIENT_DIR = dhcp-$(DHCLIENT_VERSION)
-DHCLIENT_BINARY = $(INITRD_SRC_DIR)/$(DHCLIENT_DIR)/client/dhclient
-DHCLIENT_PATCHES = $(shell ls $(INITRD_PATCH_DIR)/dhclient.*.patch 2>/dev/null | sort)
+DHCLIENT_URL 		= http://download.systemimager.org/pub/dhcp/$(DHCLIENT_TARBALL)
+DHCLIENT_DIR 		= $(INITRD_SRC_DIR)/dhcp-$(DHCLIENT_VERSION)
+DHCLIENT_PATCHES 	= $(shell ls $(INITRD_PATCH_DIR)/dhclient.*.patch 2>/dev/null | sort)
 
 ALL_SOURCE += $(INITRD_SRC_DIR)/$(DHCLIENT_TARBALL)
 
 PHONY += dhclient
-dhclient:	$(DHCLIENT_BINARY) $(UCLIBC_TARGET)
+dhclient:	$(DHCLIENT_DIR).build
 
-$(DHCLIENT_BINARY):	$(INITRD_SRC_DIR)/$(DHCLIENT_TARBALL) $(DHCLIENT_PATCHES)
-	rm -rf $(INITRD_SRC_DIR)/$(DHCLIENT_DIR)
+PHONY += dhclient_install
+dhclient_install:   $(DHCLIENT_DIR).install
+$(DHCLIENT_DIR).install:    $(DHCLIENT_DIR).build \
+							$(INITRD_BUILD_DIR).prep
+	install -m 755 $(DHCLIENT_DIR)/client/dhclient $(INITRD_BUILD_DIR)/sbin
+
+
+$(DHCLIENT_DIR).build:	$(DHCLIENT_DIR).unpack
+	cd $(DHCLIENT_DIR) && ./configure
+	$(MAKE) -j $(NCPUS) -C $(DHCLIENT_DIR)
+	touch $@
+
+
+$(DHCLIENT_DIR).unpack:	$(INITRD_DIR)/make.d/dhclient.rul \
+						$(INITRD_SRC_DIR)/$(DHCLIENT_TARBALL) \
+						$(DHCLIENT_PATCHES)
+	rm -rf $(DHCLIENT_DIR)
 	cd $(INITRD_SRC_DIR) && tar -xvzf $(DHCLIENT_TARBALL)
-	cd $(INITRD_SRC_DIR)/$(DHCLIENT_DIR) && \
-	  cat $(DHCLIENT_PATCHES) < /dev/null | patch -p1
-	cd $(INITRD_SRC_DIR)/$(DHCLIENT_DIR) && ./configure
-	$(MAKE) -j $(NCPUS) -C $(INITRD_SRC_DIR)/$(DHCLIENT_DIR) PATH=$(INITRD_BUILD_PATH)
+	cd $(DHCLIENT_DIR) && cat $(DHCLIENT_PATCHES) < /dev/null | patch -p1
+	touch $@
+
 
 $(INITRD_SRC_DIR)/$(DHCLIENT_TARBALL):
-	[ -d $(INITRD_SRC_DIR) ] || mkdir -p $(INITRD_SRC_DIR)
+	mkdir -p $(INITRD_SRC_DIR)
 	$(GETSOURCE) $(DHCLIENT_URL) $(INITRD_SRC_DIR)
+
 
 PHONY += dhclient_clean
 dhclient_clean:
-	rm -rf $(INITRD_SRC_DIR)/$(DHCLIENT_DIR)
+	rm -rf $(DHCLIENT_DIR)
+	rm -f  $(DHCLIENT_DIR).unpack
+	rm -f  $(DHCLIENT_DIR).build
+
+

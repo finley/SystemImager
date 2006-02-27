@@ -2,6 +2,7 @@
 #   Copyright (C) 2004-2005 Brian Elliott Finley
 #
 #   $Id$
+#   vi: set filetype=perl:
 # 
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -16,12 +17,6 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-#
-#
-#       2005.02.15  Brian Elliott Finley
-#       - added create_uyok_initrd
-#       2005.05.15  Brian Elliott Finley
-#       - added _record_arch()
 #
 
 package SystemImager::UseYourOwnKernel;
@@ -67,24 +62,28 @@ sub create_uyok_initrd($$) {
         my $uname_r = get_uname_r();
         my $module_paths = `find /lib/modules/$uname_r`;
 
+        #
+        # Copy modules
+        #
+        print ">>> Copying modules to new initrd from: /lib/modules/$uname_r...\n" if( $verbose );
+        mkdir("$staging_dir/lib/modules", 0755) or die "$!";
+        $cmd = qq(rsync -a --exclude build --exclude source /lib/modules/$uname_r $staging_dir/lib/modules/);
+        !system( $cmd ) or die( "Couldn't $cmd." );
+
+        print ">>> Appending insmod commands to ./my_modules_dir/INSMOD_COMMANDS...\n" if( $verbose );
         my @modules = get_load_ordered_list_of_running_modules();
-        foreach( @modules ) {
+        foreach my $module ( @modules ) {
 
-                $_ =~ s/[-_]/(-|_)/g;      # match against either underscores or hyphens -BEF-
+                $module =~ s/[-_]/(-|_)/g;      # match against either underscores or hyphens -BEF-
 
-                if( $module_paths =~ m#(.*/$_\.(ko|o))# ) {
+                if( $module_paths =~ m#(.*/$module\.(ko|o))# ) {
 
-                        copy( $1, $my_modules_dir )
-                                or die( "Couldn't copy $1 $my_modules_dir" );
-
-                        print "Adding: $1\n" if( $verbose );
-
-                        my $module = basename( $1 );
-                        print FILE "insmod $module\n";
+                        print " >> insmod $1\n" if( $verbose );
+                        print FILE "insmod $1\n";
 
                 } else {
 
-                        print STDERR qq(\nWARNING: Couldn't find module "$_" (skipping it)!\n);
+                        print STDERR qq(\nWARNING: Couldn't find module "$module" (skipping it)!\n);
                 }
         }
         close(FILE);
@@ -92,6 +91,7 @@ sub create_uyok_initrd($$) {
         #
         # Copy over /dev
         #
+        print ">>> Copying contents of /dev to new initrd...\n" if( $verbose );
         $cmd = qq(rsync -a /dev/ $staging_dir/dev/);
         !system( $cmd ) or die( "Couldn't $cmd." );
 
@@ -156,7 +156,7 @@ sub _get_copy_of_kernel($) {
 
         my $kernel_file = _choose_kernel_file( $uname_r );
         unless( defined $kernel_file ) {
-                print "I couldn't identify your kernel file.  Please try --XXX.\n";
+                print "I couldn't identify your kernel file.  Please try --<some-option-that-needs-to-be-added-XXX>.\n";
                 exit 1;
         }
 
@@ -489,16 +489,17 @@ sub _create_new_initrd($$) {
                 $fs = "ext2";
         }   
 
-        print ">>> Filesystem for new initrd:  $fs\n" if( $verbose );
-        print ">>> Creating new initrd from:   $staging_dir\n" if( $verbose );
+        print ">>> Choosing filesystem for new initrd:  $fs\n" if( $verbose );
+        print ">>> Creating new initrd from staging dir:  $staging_dir\n" if( $verbose );
 
-        switch ($fs) {                                                                      # Sizes from a sample run with the same data
-                case 'cramfs'   { _create_initrd_cramfs(   $staging_dir, $boot_dir) }       # 1107131 bytes
-                case 'ext2'     { _create_initrd_ext2(     $staging_dir, $boot_dir) }       # 1011284 bytes
-                case 'reiserfs' { _create_initrd_reiserfs( $staging_dir, $boot_dir) }       # 1036832 bytes
-                case 'jfs'      { _create_initrd_jfs(      $staging_dir, $boot_dir) }       # 1091684 bytes
-                case 'xfs'      { _create_initrd_xfs(      $staging_dir, $boot_dir) }       # untested XXX
-                else            { die("FATAL: Unable to create initrd using $fs") }
+        switch ($fs) {
+                case 'cramfs'   { _create_initrd_cramfs(   $staging_dir, $boot_dir) }
+                case 'ext2'     { _create_initrd_ext2(     $staging_dir, $boot_dir) }
+                case 'reiserfs' { _create_initrd_reiserfs( $staging_dir, $boot_dir) }
+                case 'jfs'      { _create_initrd_jfs(      $staging_dir, $boot_dir) }
+                case 'xfs'      { _create_initrd_xfs(      $staging_dir, $boot_dir) }
+
+                else { die("FATAL: Unable to create initrd using $fs") }
         }
 
         return 1;
@@ -717,7 +718,7 @@ sub run_cmd($$$) {
         #        $cmd .= " >/dev/null 2>/dev/null";
         #}
 
-        print ">>> $cmd\n" if($verbose);
+        print " >> $cmd\n" if($verbose);
         !system($cmd) or die("FAILED: $cmd");
         print "\n" if($add_newline and $verbose);
 
@@ -727,4 +728,3 @@ sub run_cmd($$$) {
 
 1;
 
-# /* vi: set ai et ts=8: */

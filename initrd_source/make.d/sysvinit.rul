@@ -1,0 +1,59 @@
+#
+# $Id: XXXXXXXX.rul 3266 2005-11-21 11:39:18Z finley $
+# vi: set filetype=make:
+#
+
+SYSVINIT_VERSION     	= 2.86.ds1
+SYSVINIT_DIFF_VERSION	= 1.1ubuntu6
+SYSVINIT_TARBALL     	= sysvinit_$(SYSVINIT_VERSION).orig.tar.gz
+SYSVINIT_URL         	= http://us.archive.ubuntu.com/ubuntu/pool/main/s/sysvinit/
+SYSVINIT_DIFF        	= sysvinit_$(SYSVINIT_VERSION)-$(SYSVINIT_DIFF_VERSION).diff.gz
+SYSVINIT_DIR         	= $(INITRD_SRC_DIR)/sysvinit-$(SYSVINIT_VERSION).orig
+SYSVINIT_PATCHES 		= $(shell ls $(INITRD_PATCH_DIR)/sysvinit.*.patch 2>/dev/null | sort)
+
+ALL_SOURCE += $(INITRD_SRC_DIR)/$(SYSVINIT_TARBALL) $(INITRD_SRC_DIR)/$(SYSVINIT_DIFF)
+
+PHONY += sysvinit_install
+sysvinit_install:	$(SYSVINIT_DIR).install
+$(SYSVINIT_DIR).install:	$(SYSVINIT_DIR).build \
+							$(INITRD_BUILD_DIR).prep
+	install -m 644 $(SYSVINIT_DIR)/debian/initscripts/share/default.rcS $(INITRD_BUILD_DIR)/etc/default/rcS
+	install -m 755 $(SYSVINIT_DIR)/src/mountpoint $(INITRD_BUILD_DIR)/bin/
+
+
+PHONY += sysvinit
+sysvinit:	$(SYSVINIT_DIR).build
+$(SYSVINIT_DIR).build:  $(SYSVINIT_DIR).unpack
+	cd $(SYSVINIT_DIR) && chmod +x ./debian/rules
+	cd $(SYSVINIT_DIR) && ./debian/rules clean
+	cd $(SYSVINIT_DIR) && ./debian/rules build
+	touch $@
+
+
+$(SYSVINIT_DIR).unpack:	$(INITRD_DIR)/make.d/sysvinit.rul	\
+							$(INITRD_SRC_DIR)/$(SYSVINIT_TARBALL) \
+							$(INITRD_SRC_DIR)/$(SYSVINIT_DIFF) \
+							$(SYSVINIT_PATCHES)
+	rm -rf $(SYSVINIT_DIR)
+	cd $(INITRD_SRC_DIR) && tar -xvzf $(INITRD_SRC_DIR)/$(SYSVINIT_TARBALL) | $(SPACE_OUT)
+	cd $(INITRD_SRC_DIR) && zcat $(INITRD_SRC_DIR)/$(SYSVINIT_DIFF) | patch -p0 | $(SPACE_OUT)
+	cd $(SYSVINIT_DIR) && cat $(SYSVINIT_PATCHES) < /dev/null | patch -p1 | $(SPACE_OUT)
+	touch $@
+
+
+$(INITRD_SRC_DIR)/$(SYSVINIT_TARBALL):
+	mkdir -p $(INITRD_SRC_DIR)
+	$(GETSOURCE) $(SYSVINIT_URL)/$(SYSVINIT_TARBALL) $(INITRD_SRC_DIR)
+
+$(INITRD_SRC_DIR)/$(SYSVINIT_DIFF):
+	mkdir -p $(INITRD_SRC_DIR)
+	$(GETSOURCE) $(SYSVINIT_URL)/$(SYSVINIT_DIFF) $(INITRD_SRC_DIR)
+
+
+PHONY += sysvinit_clean
+sysvinit_clean:
+	rm -rf $(SYSVINIT_DIR)
+	rm -f  $(SYSVINIT_DIR).unpack
+	rm -f  $(SYSVINIT_DIR).build
+
+
