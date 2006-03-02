@@ -40,8 +40,6 @@ $(BITTORRENT_DIR).install:	$(BITTORRENT_DIR).build \
 	# Create the bittorrent links.
 	rm -f $(INITRD_BUILD_DIR)/bin/torrentinfo-console
 	rm -f $(INITRD_BUILD_DIR)/bin/bittorrent-console
-	cd $(INITRD_BUILD_DIR)/bin && ln -s ../lib/bittorrent/torrentinfo-console
-	cd $(INITRD_BUILD_DIR)/bin && ln -s ../lib/bittorrent/bittorrent-console
 
 
 $(BITTORRENT_DIR).build:	$(BITTORRENT_DIR).unpack
