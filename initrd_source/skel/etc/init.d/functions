@@ -72,7 +72,7 @@ logmsg() {
         # Send the message to the monitor daemon.
         if [ "x$MONITOR_CONSOLE" = "xyes" ]; then
             # Log message into the global monitor log.
-            if ((`mount 2>/dev/null | grep ' / ' | grep -q '(rw)'`)); then
+            if fs_on_tmpfs / ; then
                 echo $@ >> /tmp/si_monitor.log
             fi
             ifconfig 2>&1 | grep "inet addr" | grep -v "127.0.0.1" >/dev/null 2>&1
