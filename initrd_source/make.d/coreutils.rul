@@ -23,8 +23,8 @@ $(COREUTILS_DIR).install:	$(COREUTILS_DIR).build \
 PHONY += coreutils
 coreutils:	$(COREUTILS_DIR).build
 $(COREUTILS_DIR).build:	$(COREUTILS_DIR).unpack
-	cd $(COREUTILS_DIR) && ./configure
-	$(MAKE) -j $(NCPUS) -C $(COREUTILS_DIR)
+	cd $(COREUTILS_DIR) && ./configure | $(SPACE_OUT)
+	$(MAKE) -j $(NCPUS) -C $(COREUTILS_DIR) | $(SPACE_OUT)
 	touch $@
 
 
@@ -39,7 +39,7 @@ $(COREUTILS_DIR).unpack:	$(INITRD_DIR)/make.d/coreutils.rul \
 
 $(INITRD_SRC_DIR)/$(COREUTILS_TARBALL):
 	mkdir -p $(INITRD_SRC_DIR)
-	$(GETSOURCE) $(COREUTILS_URL) $(INITRD_SRC_DIR)
+	$(GETSOURCE) $(COREUTILS_URL) $(INITRD_SRC_DIR) | $(SPACE_OUT)
 
 
 PHONY += coreutils_clean
