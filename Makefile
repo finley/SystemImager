@@ -8,8 +8,7 @@
 #   	Sean Dague <sean@dague.net>
 #
 #   $Id$
-#
-# 	vi: set filetype=make:
+# 	 vi: set filetype=make:
 #
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -373,6 +372,8 @@ install_client: install_client_man install_client_libs
 # install files common to both the server and client
 .PHONY:	install_common
 install_common:	install_common_man install_common_libs
+	mkdir -p $(ETC)/systemimager
+	$(SI_INSTALL) -b -m 644 etc/UYOK.modules_to_exclude $(ETC)/systemimager
 	mkdir -p $(BIN)
 	$(foreach binary, $(COMMON_BINARIES), \
 		$(SI_INSTALL) -m 755 $(BINARY_SRC)/$(binary) $(BIN);)
