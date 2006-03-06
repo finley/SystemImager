@@ -1,8 +1,8 @@
 #  
-#   Copyright (C) 2004-2005 Brian Elliott Finley
+#   Copyright (C) 2004-2006 Brian Elliott Finley
 #
 #   $Id$
-#   vi: set filetype=perl:
+#    vi: set filetype=perl:
 # 
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -29,10 +29,11 @@ our $verbose;
 # Usage: 
 #       SystemImager::UseYourOwnKernel->create_uyok_initrd($arch);
 #
-sub create_uyok_initrd($$) {
+sub create_uyok_initrd() {
 
         my $module      = shift;
         my $arch        = shift;
+        my $all_modules = shift;
         $verbose        = shift;
 
         use File::Copy;
@@ -53,11 +54,26 @@ sub create_uyok_initrd($$) {
         !system( $cmd ) or die( "Couldn't $cmd." );
 
         #
-        # add modules and insmod commands
+        # Determine module exclusions here.  Jeremy Siadal made the excellent
+        # suggestion of explicitly excluding, as opposed to explicitly 
+        # including, so that we don't inadvertently exclude some new fancy 
+        # module that someone needs. -BEF-
         #
-        my $my_modules_dir = "$staging_dir/my_modules";
-        my $file = "$my_modules_dir" . "/INSMOD_COMMANDS";
-        open( FILE,">>$file" ) or die( "Couldn't open $file for appending" );
+        my $modules_to_exclude = '';
+        my $file = "/etc/systemimager/UYOK.modules_to_exclude";
+        if(!$all_modules and -e $file) {
+            #
+            # Get list of exclusions from "/etc/systemimager/modules_to_exclude"
+            # (that file should live in the "systemimager-common" package)
+            #
+            open(FILE,"<$file") or die("Couldn't open $file for reading");
+                while(<FILE>) {
+                    next if(m/^(#|\s|$)/);
+                    chomp;
+                    $modules_to_exclude .= "--exclude $_ ";
+                }
+            close(FILE);
+        }
 
         my $uname_r = get_uname_r();
         my $module_paths = `find /lib/modules/$uname_r`;
@@ -67,8 +83,15 @@ sub create_uyok_initrd($$) {
         #
         print ">>> Copying modules to new initrd from: /lib/modules/$uname_r...\n" if( $verbose );
         mkdir("$staging_dir/lib/modules", 0755) or die "$!";
-        $cmd = qq(rsync -a --exclude build --exclude source /lib/modules/$uname_r $staging_dir/lib/modules/);
+        $cmd = qq(rsync -a $modules_to_exclude /lib/modules/$uname_r $staging_dir/lib/modules/);
         !system( $cmd ) or die( "Couldn't $cmd." );
+
+        #
+        # add modules and insmod commands
+        #
+        my $my_modules_dir = "$staging_dir/my_modules";
+        my $file = "$my_modules_dir" . "/INSMOD_COMMANDS";
+        open( FILE,">>$file" ) or die( "Couldn't open $file for appending" );
 
         print ">>> Appending insmod commands to ./my_modules_dir/INSMOD_COMMANDS...\n" if( $verbose );
         my @modules = get_load_ordered_list_of_running_modules();
