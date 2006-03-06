@@ -6,13 +6,7 @@
 #  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
 #
 #  $Id$
-#
-#   2004.06.02 Brian Elliott Finley
-#   - add --verbose option, and show image retrieval date
-#   2004.06.24 Brian Elliott Finley
-#   - show image retrieval time from IMAGE_RETRIEVAL_TIME if it exists, if not, 
-#     use mounted_filesystems
-#   - show client retrieved from, if it exists
+#   vi:set filetype=perl:
 #
 
 # declare modules
@@ -21,7 +15,7 @@ use Getopt::Long;
 # set some variables
 $version_number="SYSTEMIMAGER_VERSION_STRING";
 $program_name="si_lsimage";
-$get_help = "         Try \"$program_name -help\" for more options.";
+$get_help = "         Try \"$program_name --help\" for more options.";
 $imageserver="127.0.0.1";
 
 # functions
@@ -38,7 +32,7 @@ sub trim {
 $version_info = <<"EOF";
 $program_name (part of SystemImager) version $version_number
 
-Copyright (C) 1999-2004 Brian Elliott Finley
+Copyright (C) 1999-2006 Brian Elliott Finley
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 EOF
@@ -46,7 +40,7 @@ EOF
 # set help information
 $help_info = $version_info . <<"EOF";
 
-Usage: $program_name [OPTION]... -server HOSTNAME -image IMAGENAME
+Usage: $program_name [OPTION]... --server HOSTNAME --image IMAGENAME
 
 Options: (options can be presented in any order)
 
@@ -160,7 +154,7 @@ $command = "rsync rsync://${imageserver}:$port/";
 open(FILE, "$command|");
 while (<FILE>) {
     $_ = trim ($_);
-    next if( m/^(scripts|boot|overrides)$/ );
+    next if( m/^(scripts|boot|overrides|torrents)$/ );
     if($verbose) {
 
 	    print "  Image: $_"; 
