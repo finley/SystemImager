@@ -14,6 +14,7 @@ ALL_SOURCE += $(SRC_DIR)/$(DOSFSTOOLS_TARBALL)
 
 PHONY += dosfstools
 dosfstools:	$(DOSFSTOOLS_DIR).build
+$(MKDOSFS_BINARY):	$(DOSFSTOOLS_DIR).build
 $(DOSFSTOOLS_DIR).build:	$(DOSFSTOOLS_DIR).unpack
 	#
 	# These CFLAGS stolen from the src rpm in redhat 9, and go along
