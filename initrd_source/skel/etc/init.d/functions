@@ -225,8 +225,11 @@ tmpfs_watcher() {
     { 
         while :; do
             #
-            # apparently the busybox-1.00-rc3 can't do "df -k /".  changed to just df -k. -BEF-
-            DF=`df -k | grep '^tmpfs' | sed -e 's/  */ /g' -e 's/.*[0-9] //' -e 's/%.*//'`
+            # - Apparently the busybox-1.00-rc3 can't do "df -k /".  changed to just df -k. -BEF-
+            # - Now that we're using udev, we end up with two tmpfs filesystems.  Only pay 
+            #   attention to the one we're using as root. -BEF-
+            # 
+            DF=`df -k | egrep ' /$' | sed -e 's/  */ /g' -e 's/.*[0-9] //' -e 's/%.*//'`
             [ $DF -ge 95 ] && logmsg "WARNING: Your tmpfs filesystem is ${DF}% full!"
             [ $DF -ge 99 ] && logmsg "         Search the FAQ for tmpfs to learn about sizing options."
             [ $DF -ge 99 ] && shellout
