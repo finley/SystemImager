@@ -195,7 +195,7 @@ GETSOURCE = $(TOPDIR)/tools/getsource
 
 # build everything, install nothing
 .PHONY:	all
-all:	config.inc $(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.img manpages
+all:	config.inc boel_binaries_tarball kernel $(INITRD_DIR)/initrd.img manpages
 
 #
 # Dannf, SDague, please modify if this is inappropriate. -BEF-
