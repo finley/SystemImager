@@ -1,13 +1,14 @@
 #!/usr/bin/perl -w
 #
-# "SystemImager"
+#   "SystemImager"
 # 
-#   Copyright (C) 1999-2005 Brian Elliott Finley
+#   Copyright (C) 1999-2006 Brian Elliott Finley
 #   Copyright (C) 2002 Internation Business Machines
 #                      Sean Dague <sean@dague.net>
 #
 #   $Id$
-# 
+#    vi:set filetype=perl: 
+#
 #   2004.02.02 Brian Elliott Finley
 #   - add '--server' option
 #   2004.06.01 Brian Elliott Finley
@@ -154,6 +155,14 @@ Options:
  --rpm-install         
     This is only used when building an RPM.
 
+ --all-modules
+    Include every single module under /lib/modules/`uname -r`/ when
+    creating the UYOK (Use Your Own Kernel) initrd.img.
+
+    Normally, only modules essential for accessing network, block, and
+    keyboard devices are included as they are usually not needed for an
+    autoinstall, and they dramatically increase the size of the initrd.img.
+
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
 
@@ -166,7 +175,8 @@ GetOptions(
     "exclude-disk|e=s"     => \my @exclude_disk,
     "no-rsyncd|norsyncd"   => \my $norsyncd,
     "quiet"                => \my $quiet,
-    "rpm"                  => \my $rpm,
+    "rpm|rpm-install"      => \my $rpm,
+    "all-modules"          => \my $all_modules,
     "version"              => \my $version,
     "server=s"             => \my $server,
     "yes"                  => \my $yes
@@ -206,7 +216,7 @@ if($explicit) {
 which('rsync') or croak("'rsync' is required for $progname to function properly.  Please see http://systemimager.org for more details.");
 which('systemconfigurator') or croak("'systemconfigurator' is required for $progname to function properly.  Please see http://systemimager.org for more details.");
 
-# -rpm-install does the same thing as -no-rsyncd.  -BEF-
+# --rpm-install does the same thing as -no-rsyncd.  -BEF-
 if($rpm) {
     $norsyncd = "1";  # set it to true.
 }
@@ -634,7 +644,7 @@ sub create_auto_install_script_conf {
     my $arch = get_arch();
     my $verbose;
     unless($quiet) { $verbose = 1; }
-    SystemImager::UseYourOwnKernel->create_uyok_initrd( $arch, $verbose );
+    SystemImager::UseYourOwnKernel->create_uyok_initrd( $arch, $verbose, $all_modules );
 
     SystemImager::Common->write_auto_install_script_conf_footer($file);
 
