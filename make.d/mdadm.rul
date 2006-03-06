@@ -1,5 +1,6 @@
 #
 #   $Id$
+#    vi:set filetype=make:
 #
 #   2005.12.18 Erich Focht
 #
@@ -7,7 +8,8 @@
 MDADM_VERSION := 2.2
 MDADM_DIR := mdadm-$(MDADM_VERSION)
 MDADM_TARBALL := mdadm-$(MDADM_VERSION).tgz
-MDADM_URL := http://www.cse.unsw.edu.au/~neilb/source/mdadm/$(MDADM_TARBALL)
+# MDADM_URL := http://www.cse.unsw.edu.au/~neilb/source/mdadm/$(MDADM_TARBALL)
+MDADM_URL := http://download.systemimager.org/pub/mdadm/$(MDADM_TARBALL)
 MDADM_BINARIES := $(SRC_DIR)/$(MDADM_DIR)/mdadm
 MDADM_PATCHES := $(shell ls $(PATCH_DIR)/mdadm.*.patch 2>/dev/null | sort)
 

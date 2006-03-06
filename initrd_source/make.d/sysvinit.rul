@@ -1,12 +1,13 @@
 #
-# $Id: XXXXXXXX.rul 3266 2005-11-21 11:39:18Z finley $
-# vi: set filetype=make:
+# $Id$
+#  vi: set filetype=make:
 #
 
 SYSVINIT_VERSION     	= 2.86.ds1
 SYSVINIT_DIFF_VERSION	= 1.1ubuntu6
 SYSVINIT_TARBALL     	= sysvinit_$(SYSVINIT_VERSION).orig.tar.gz
-SYSVINIT_URL         	= http://us.archive.ubuntu.com/ubuntu/pool/main/s/sysvinit/
+# SYSVINIT_URL         	= http://us.archive.ubuntu.com/ubuntu/pool/main/s/sysvinit/
+SYSVINIT_URL         	= http://download.systemimager.org/pub/sysvinit/
 SYSVINIT_DIFF        	= sysvinit_$(SYSVINIT_VERSION)-$(SYSVINIT_DIFF_VERSION).diff.gz
 SYSVINIT_DIR         	= $(INITRD_SRC_DIR)/sysvinit-$(SYSVINIT_VERSION).orig
 SYSVINIT_PATCHES 		= $(shell ls $(INITRD_PATCH_DIR)/sysvinit.*.patch 2>/dev/null | sort)
