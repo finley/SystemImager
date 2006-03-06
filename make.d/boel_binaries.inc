@@ -32,7 +32,7 @@ $(BOEL_BINARIES_TARBALL):	$(BC_DIR).build \
 							$(DISCOVER_DIR).build \
 							$(DISCOVER_DATA_DIR).build \
 							$(HFSUTILS_BINARY) \
-							$(MKDOSFS_BINARY) \
+							$(DOSFSTOOLS_DIR).build \
 							$(MKE2FS_BINARY) \
 							$(TUNE2FS_BINARY) \
 							$(PARTED_BINARY) \
@@ -58,6 +58,7 @@ $(BOEL_BINARIES_TARBALL):	$(BC_DIR).build \
 	mkdir -m 755 -p $(BOEL_BINARIES_DIR)/sbin
 	install -m 755 --strip $(DISCOVER_BINARY) 		$(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(HFSUTILS_BINARY) 		$(BOEL_BINARIES_DIR)/sbin/
+	# XXX change these to be like: $(DOSFSTOOLS_DIR).install
 	install -m 755 --strip $(MKDOSFS_BINARY) 		$(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(MKE2FS_BINARY) 		$(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(TUNE2FS_BINARY) 		$(BOEL_BINARIES_DIR)/sbin/
