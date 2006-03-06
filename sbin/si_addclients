@@ -3,9 +3,10 @@
 #
 #   "SystemImager"
 #
-#   Copyright (C) 1999-2004  Brian Elliott Finley
+#   Copyright (C) 1999-2006  Brian Elliott Finley
 #
 #   $Id$
+#    vi:set filetype=perl:
 #
 #   2004.09.28  Brian Elliott Finley
 #   - change addclients to si_addclients
@@ -424,7 +425,10 @@ EOF
         ### END One Subnet at a time ###
         
         
-        if ( $etc_hosts eq "y" ) { print "\nThese entries have been added to /etc/hosts.\n"; }
+        if ( $etc_hosts eq "y" ) { 
+            print "\nThese entries have been added to /etc/hosts, and /etc/hosts has been copied\n";
+            print "to $autoinstall_script_dir for use by your auto-install clients.\n";
+        }
         print "\nPress <Enter> to continue...";
         <STDIN>;
 
