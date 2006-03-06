@@ -24,18 +24,20 @@ bittorrent_install:  $(BITTORRENT_DIR).install
 $(BITTORRENT_DIR).install:	$(BITTORRENT_DIR).build \
 							$(INITRD_BUILD_DIR).prep \
 							$(CX_FREEZE_DIR).build
-	$(CX_FREEZE_BINARY) --install-dir=$(INITRD_BUILD_DIR)/lib/bittorrent \
+	$(CX_FREEZE_BINARY) \
+		--install-dir=$(INITRD_BUILD_DIR)/lib/bittorrent \
 		--exclude-modules=gobject,pango,gtk \
-		$(BITTORRENT_DIR)/torrentinfo-console.py
-	$(CX_FREEZE_BINARY) --install-dir=$(INITRD_BUILD_DIR)/lib/bittorrent \
+		$(BITTORRENT_DIR)/torrentinfo-console.py | $(SPACE_OUT)
+	$(CX_FREEZE_BINARY) \
+		--install-dir=$(INITRD_BUILD_DIR)/lib/bittorrent \
 		--exclude-modules=gobject,pango,gtk \
-		$(BITTORRENT_DIR)/bittorrent-console.py
+		$(BITTORRENT_DIR)/bittorrent-console.py | $(SPACE_OUT)
 	#
 	# Explicit copy shared libraries needed by bittorrent binaries.
-	( for l in $$(ldd $(INITRD_BUILD_DIR)/lib/bittorrent/* 2>/dev/null | sed -ne 's/.*=> \(.*\) (.*)/\1/p' | sort -u); do cp -pf $$l $(INITRD_BUILD_DIR)/lib; done )
+	( for l in $$(ldd $(INITRD_BUILD_DIR)/lib/bittorrent/* 2>/dev/null | sed -ne 's/.*=> \(.*\) (.*)/\1/p' | sort -u); do cp -pf $$l $(INITRD_BUILD_DIR)/lib; done ) | $(SPACE_OUT)
 	#
 	# Make sure the dynamic linker is present.
-	(for l in $$(readelf --program-headers $(INITRD_BUILD_DIR)/lib/bittorrent/* | sed -ne 's/^.*\[Requesting program interpreter: \(.*\)\]$$/\1/p' | sort -u); do cp -pf $$l $(INITRD_BUILD_DIR)/lib; done )
+	(for l in $$(readelf --program-headers $(INITRD_BUILD_DIR)/lib/bittorrent/* | sed -ne 's/^.*\[Requesting program interpreter: \(.*\)\]$$/\1/p' | sort -u); do cp -pf $$l $(INITRD_BUILD_DIR)/lib; done ) | $(SPACE_OUT)
 	#
 	# Create the bittorrent links.
 	rm -f $(INITRD_BUILD_DIR)/bin/torrentinfo-console
@@ -49,13 +51,13 @@ $(BITTORRENT_DIR).unpack:	$(INITRD_DIR)/make.d/bittorrent.rul \
 						$(INITRD_SRC_DIR)/$(BITTORRENT_TARBALL) \
 						$(BITTORRENT_PATCHES)
 	rm -rf $(BITTORRENT_DIR)
-	cd $(INITRD_SRC_DIR) && tar -xvzf $(BITTORRENT_TARBALL)
-	cd $(BITTORRENT_DIR) && cat $(BITTORRENT_PATCHES) < /dev/null | patch -p1
+	cd $(INITRD_SRC_DIR) && tar -xvzf $(BITTORRENT_TARBALL) | $(SPACE_OUT)
+	cd $(BITTORRENT_DIR) && cat $(BITTORRENT_PATCHES) < /dev/null | patch -p1 | $(SPACE_OUT)
 	touch $@
 
 $(INITRD_SRC_DIR)/$(BITTORRENT_TARBALL):
 	mkdir -p $(INITRD_SRC_DIR)
-	$(GETSOURCE) $(BITTORRENT_URL) $(INITRD_SRC_DIR)
+	$(GETSOURCE) $(BITTORRENT_URL) $(INITRD_SRC_DIR) | $(SPACE_OUT)
 
 PHONY += bittorrent_clean
 bittorrent_clean:
