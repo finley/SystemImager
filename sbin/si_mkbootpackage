@@ -393,7 +393,7 @@ sub copy_new_modules
 
         # rm modules in initrd_dir
         print ">>> Removing old modules from:  $opt{staging_dir}/my_modules\n" if($opt{v});
-        unlink <$opt{staging_dir}/*.$module_ext>;
+        unlink <$opt{staging_dir}/my_modules/*.$module_ext>;
 
         # read in current INSMOD_COMMANDS file
         my $file = "$opt{staging_dir}/my_modules/INSMOD_COMMANDS";
@@ -460,7 +460,7 @@ sub modify_flavor
     print FILE @new_file;
     close(FILE);
 
-    print ">> Flavor Update complete\n";
+    print ">> Flavor update complete:\n";
 
     system("cat $file | grep -i flavor");
 }
@@ -569,11 +569,11 @@ sub get_kernel_release
 {
         my $file = $opt{kernel};
         my $uname_r;
-        open(FILE,"$file") or die("Couldn't open $file for reading.");
+        open(FILE,"strings $file|") or die("Couldn't open $file for reading.");
         while(<FILE>) {
                 # extract the `uname -r` string from the kernel file
-                if(m/(2\.[4|6]\.\d{1,2}.*) \(.*\) [#]\d+ \w{3} \w{3} \d+ \d+:\d+:\d+ \w{3} \d+/o) {
-                        $uname_r = $1;
+                if(m/(2\.[4|6]\.\d{1,2}.*) \(.*\) [#]\d+ (SMP )?\w{3} \w{3} \d+ \d+:\d+:\d+ \w{3} \d+/o) {
+                    $uname_r = $1;
                 }
         }
         close(FILE);
