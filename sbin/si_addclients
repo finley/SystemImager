@@ -8,9 +8,6 @@
 #   $Id$
 #    vi:set filetype=perl:
 #
-#   2004.09.28  Brian Elliott Finley
-#   - change addclients to si_addclients
-#
 
 # XXX Someday, we should add IP address, hostname, and domain name validation routines. -BEF-
 
@@ -29,8 +26,7 @@ my $program_name = "si_addclients";
 my $version_info = <<"EOF";
 $program_name (part of SystemImager) v$VERSION
 
-Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley\@baldguysoftware.com>
-Copyright (C) 2002 Bald Guy Software <brian.finley\@baldguysoftware.com>
+Copyright (C) 1999-2006 Brian Elliott Finley <brian\@thefinleys.com>
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 EOF
@@ -43,35 +39,47 @@ Usage: $program_name [OPTION]... REQUIRED_ARGUMENTS
 
 Options: (options can be presented in any order)
 
- -help               Display this output.
+ --help               
+    Display this output.
                      
- -version            Display version and copyright information.
+ --version            
+    Display version and copyright information.
                      
- -host NAME          Base host name.
+ --host NAME          
+    Base host name.
                      
- -domainname NAME    Domain name.
+ --domainname NAME    
+    Domain name.
                      
- -host-range N-N     Range of hosts involved.  Examples: 1-99 or 01-99.
+ --host-range N-N     
+    Range of hosts involved.  Examples: 1-99 or 01-99.
                      
- -script NAME        Master autoinstall script name.  Don't include
-                     the path or the .master extension.  Example: my_image
+ --script NAME        
+    Master autoinstall script name.  Don't include the path or the
+    '.master' extension.
+    
+    Example: my_image
                      
- -ip-range IP-IP     Range of IP addresses for clients.  Used to create an
-                     optional hosts file that clients can use for IP address
-                     to hostname resolution during install.  Not necessary if
-                     DNS reverse resolution is configured for the IP addresses
-                     in question.  If both DNS and a hosts file are used, 
-                     information in the hosts file will supercede the 
-                     information in DNS.  Example: 10.0.0.1-10.0.0.99.
+ --ip-range IP-IP     
+    Range of IP addresses for clients.  Used to create an optional hosts
+    file that clients can use for IP address to hostname resolution
+    during install.  Not necessary if DNS reverse resolution is
+    configured for the IP addresses in question.  If both DNS and a
+    hosts file are used, information in the hosts file will supercede
+    the information in DNS.  
+    
+    Example: 10.0.0.1-10.0.0.99.
 
- -interactive YES/NO This program will go interactive by default if domainname,
-                     host, host-range, and script are all specified.  
-                     
-                     If you specify YES here, then it will go interactive, even
-                     if all of these values are specified.  
-                     
-                     If you specify NO here, then it will not go interactive,
-                     even if it is missing some of the required values.
+ --interactive YES/NO 
+    This program will go interactive by default if domainname, host,
+    host-range, and script are all specified.
+
+    If you specify YES here, then it will go interactive, even if all of
+    these values are specified.
+
+    If you specify NO here, then it will not go interactive, even if it
+    is missing some of the required values.
+
 
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
@@ -140,14 +148,14 @@ if ($script) {
 if ($host_range) {
     ($starting_number, $ending_number) = split(/-/, $host_range);
     unless ( ($starting_number ne "") and ($ending_number ne "") ) {
-        print qq(FATAL:  for "-host-range X-Y", both X and Y must be specified!\n);
-        print qq(See "$program_name -help" for more information.\n);
+        print qq(FATAL:  for "--host-range X-Y", both X and Y must be specified!\n);
+        print qq(See "$program_name --help" for more information.\n);
         exit 1;
     }
 
     unless ( ($starting_number + 0) and ($ending_number + 0) ) {
-        print qq(FATAL:  for "-host-range X-Y", both X and Y must be numeric!\n);
-        print qq(See "$program_name -help" for more information.\n);
+        print qq(FATAL:  for "--host-range X-Y", both X and Y must be numeric!\n);
+        print qq(See "$program_name --help" for more information.\n);
         exit 1;
     }
 }
