@@ -118,6 +118,21 @@ sub create_uyok_initrd() {
         $cmd = qq(rsync -a /dev/ $staging_dir/dev/);
         !system( $cmd ) or die( "Couldn't $cmd." );
 
+        #
+        # Remove LVM device mapper files from $staging_dir/dev
+        #
+        $cmd = 'vgdisplay -c 2>/dev/null | grep -v ^$';
+        open(VG, "$cmd|");
+        foreach my $vg_name (<VG>) {
+                chomp $vg_name;
+                $vg_name =~ s/^\s+//;
+                $cmd = "find $staging_dir/dev/ -name \"$vg_name\" -type d -exec rm -rf {} \\;";
+                !system( $cmd ) or die( "Couldn't $cmd" );
+                $cmd = "find $staging_dir/dev/mapper -name \"$vg_name-*\" -type b -exec rm -f {} \\;";
+                !system( $cmd ) or die( "Couldn't $cmd" );
+        }
+        close(VG);
+
         # 
         # Dir in which to hold stuff.  XXX dannf where should this really go?
         #
