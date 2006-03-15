@@ -1,5 +1,6 @@
 #
 # $Id$
+#  vi:set filetype=conf tw=72:
 #
 
 1) hotplug startup is slow.  need to figure out why and speed it up.
@@ -31,5 +32,15 @@
 
 6) Add a kernel-devel tree package, like those that ship with RedHat, 
    Ubuntu, etc. There's just enough data to build boot-kernel modules 
-   against, but nothing else. Ie: kernel-headers. (Jeremy Siadal)
+   against, but nothing else. Ie: kernel-headers. (Jeremy Siadal suggestion)
+
+7) A boel_binaries_template, just like the initrd, so additional
+   drivers can be dropped into /lib/modules/<kernel_ver>/. 
+   (Jeremy Siadal suggestion)
+
+8) Standard kernel to have only modular drivers for:
+   - all network devices
+   - all storage devices
+   (Jeremy Siadal suggestion)
+
 
