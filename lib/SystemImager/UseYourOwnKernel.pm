@@ -126,9 +126,9 @@ sub create_uyok_initrd() {
         foreach my $vg_name (<VG>) {
                 chomp $vg_name;
                 $vg_name =~ s/^\s+//;
-                $cmd = "find $staging_dir/dev/ -name \"$vg_name\" -type d -exec rm -rf {} \\;";
+                $cmd = "find $staging_dir/dev/ -name \"$vg_name\" -type d | xargs rm -rf";
                 !system( $cmd ) or die( "Couldn't $cmd" );
-                $cmd = "find $staging_dir/dev/mapper -name \"$vg_name-*\" -type b -exec rm -f {} \\;";
+                $cmd = "find $staging_dir/dev/mapper -name \"$vg_name-*\" -type b | xargs rm -f";
                 !system( $cmd ) or die( "Couldn't $cmd" );
         }
         close(VG);
