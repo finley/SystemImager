@@ -579,9 +579,11 @@ fi
 %config(noreplace) /etc/systemimager/systemimager.conf
 %config /etc/systemimager/imagemanip.conf
 %config /etc/systemimager/imagemanip.perm
+%config /etc/systemimager/bittorrent.conf
 /etc/init.d/systemimager-server-rsyncd
 /etc/init.d/systemimager-server-netboot*
 /etc/init.d/systemimager-server-monitord
+/etc/init.d/systemimager-server-bittorrent
 /var/lib/systemimager/images/*
 /var/lib/systemimager/scripts/post-install/*
 /var/lib/systemimager/scripts/pre-install/*
@@ -596,6 +598,7 @@ fi
 %prefix/sbin/si_imagemanip
 %prefix/sbin/si_monitor
 %prefix/sbin/si_monitortk
+%prefix/sbin/si_installbtimage
 %prefix/bin/si_mk*
 %prefix/lib/systemimager/perl/SystemImager/Server.pm
 %prefix/lib/systemimager/perl/SystemImager/Config.pm
@@ -616,6 +619,7 @@ fi
 %dir /etc/systemimager
 %config /etc/systemimager/updateclient.local.exclude
 %config /etc/systemimager/client.conf
+%config /etc/systemimager/UYOK.modules_to_exclude
 %prefix/sbin/si_updateclient
 %prefix/sbin/si_prepareclient
 %prefix/share/man/man8/si_updateclient*
