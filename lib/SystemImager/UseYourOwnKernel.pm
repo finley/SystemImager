@@ -84,7 +84,7 @@ sub create_uyok_initrd() {
         #
         print ">>> Copying modules to new initrd from: /lib/modules/$uname_r...\n" if( $verbose );
         mkdir("$staging_dir/lib/modules", 0755) or die "$!";
-        $cmd = qq(rsync -a $modules_to_exclude /lib/modules/$uname_r $staging_dir/lib/modules/);
+        $cmd = qq(rsync -a --exclude=build --exclude=source $modules_to_exclude /lib/modules/$uname_r $staging_dir/lib/modules/);
         !system( $cmd ) or die( "Couldn't $cmd." );
 
         #
