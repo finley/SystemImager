@@ -41,6 +41,7 @@ sub create_uyok_initrd() {
         use File::Path;
 
         my $cmd;
+        my $file;
 
         #
         # Create temp dir
@@ -60,7 +61,7 @@ sub create_uyok_initrd() {
         # module that someone needs. -BEF-
         #
         my $modules_to_exclude = '';
-        my $file = "/etc/systemimager/UYOK.modules_to_exclude";
+        $file = "/etc/systemimager/UYOK.modules_to_exclude";
         if(!$all_modules and -e $file) {
             #
             # Get list of exclusions from "/etc/systemimager/modules_to_exclude"
@@ -90,7 +91,7 @@ sub create_uyok_initrd() {
         # add modules and insmod commands
         #
         my $my_modules_dir = "$staging_dir/my_modules";
-        my $file = "$my_modules_dir" . "/INSMOD_COMMANDS";
+        $file = "$my_modules_dir" . "/INSMOD_COMMANDS";
         open( FILE,">>$file" ) or die( "Couldn't open $file for appending" );
 
         print ">>> Appending insmod commands to ./my_modules_dir/INSMOD_COMMANDS...\n" if( $verbose );
