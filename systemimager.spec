@@ -557,6 +557,8 @@ fi
 %prefix/lib/systemimager/perl/SystemImager/Config.pm
 %prefix/lib/systemimager/perl/SystemImager/Options.pm
 %prefix/lib/systemimager/perl/SystemImager/UseYourOwnKernel.pm
+%dir /etc/systemimager
+%config /etc/systemimager/UYOK.modules_to_exclude
 
 %files server
 %defattr(-, root, root)
@@ -619,7 +621,6 @@ fi
 %dir /etc/systemimager
 %config /etc/systemimager/updateclient.local.exclude
 %config /etc/systemimager/client.conf
-%config /etc/systemimager/UYOK.modules_to_exclude
 %prefix/sbin/si_updateclient
 %prefix/sbin/si_prepareclient
 %prefix/share/man/man8/si_updateclient*
