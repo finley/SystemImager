@@ -1,0 +1,67 @@
+/*
+ * LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0) does not work with glibc-kernheaders-2.4-9.1.94
+ * pvrabec@redhat.com
+ */
+
+--- dosfstools-2.11/dosfsck/common.h.assumeKernel26	2005-10-12 10:49:47.000000000 -0400
++++ dosfstools-2.11/dosfsck/common.h	2005-10-12 10:51:34.000000000 -0400
+@@ -2,13 +2,8 @@
+ 
+ /* Written 1993 by Werner Almesberger */
+ 
+-#include <linux/version.h>
+-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0)
+-# define __KERNEL__
+ # include <asm/types.h>
+-# undef __KERNEL__
+ # define MSDOS_FAT12 4084 /* maximum number of clusters in a 12 bit FAT */
+-#endif
+ 
+ #ifndef _COMMON_H
+ #define _COMMON_H
+--- dosfstools-2.11/dosfsck/file.c.assumeKernel26	2005-10-12 10:49:24.000000000 -0400
++++ dosfstools-2.11/dosfsck/file.c	2005-10-12 10:50:52.000000000 -0400
+@@ -16,12 +16,7 @@
+ #define _LINUX_STRING_H_	/* hack to avoid inclusion of <linux/string.h>*/
+ #define _LINUX_FS_H             /* hack to avoid inclusion of <linux/fs.h> */
+ 
+-#include <linux/version.h>
+-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0)
+-# define __KERNEL__
+ # include <asm/types.h>
+-# undef __KERNEL__
+-#endif
+ 
+ #include <linux/msdos_fs.h>
+ 
+--- dosfstools-2.11/dosfsck/dosfsck.h.assumeKernel26	2005-10-12 10:50:02.000000000 -0400
++++ dosfstools-2.11/dosfsck/dosfsck.h	2005-10-12 10:51:52.000000000 -0400
+@@ -14,13 +14,8 @@
+ #define _LINUX_STRING_H_	/* hack to avoid inclusion of <linux/string.h>*/
+ #define _LINUX_FS_H             /* hack to avoid inclusion of <linux/fs.h> */
+ 
+-#include <linux/version.h>
+-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0)
+-# define __KERNEL__
+ # include <asm/types.h>
+ # include <asm/byteorder.h>
+-# undef __KERNEL__
+-#endif
+ 
+ #include <linux/msdos_fs.h>
+ 
+--- dosfstools-2.11/mkdosfs/mkdosfs.c.assumeKernel26	2005-10-12 10:50:12.000000000 -0400
++++ dosfstools-2.11/mkdosfs/mkdosfs.c	2005-10-12 10:52:30.000000000 -0400
+@@ -66,12 +66,7 @@
+ #include <time.h>
+ #include <errno.h>
+ 
+-#include <linux/version.h>
+-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0)
+-# define __KERNEL__
+ # include <asm/types.h>
+-# undef __KERNEL__
+-#endif
+ 
+ #if __BYTE_ORDER == __BIG_ENDIAN
+ 
