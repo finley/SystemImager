@@ -62,7 +62,7 @@ BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: dann frazier <dannf@dannf.org>
 URL: http://systemimager.org/
 Distribution: System Installation Suite
-Requires: rsync >= 2.4.6, systemimager-common = %{version}, perl-AppConfig, dosfstools, /sbin/chkconfig, perl, perl(XML::Simple) >= 2.08, python
+Requires: rsync >= 2.4.6, systemimager-common = %{version}, perl-AppConfig, dosfstools, /sbin/chkconfig, perl, perl(XML::Simple) >= 2.08, python, mkisofs
 AutoReqProv: no
 
 %description server
