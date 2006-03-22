@@ -39,6 +39,7 @@ $VERSION = $version_number;
 #   numerically
 #   save_filesystem_information
 #   save_lvm_information -AR-
+#   save_soft_raid_information -AR-
 #   save_partition_information
 #   where_is_my_efi_dir
 #   which
@@ -769,8 +770,111 @@ sub _print_to_auto_install_conf_file {
             print DISK_FILE qq( lvm_group="$vg_name");
         }
         close(PV_INFO);
+    } elsif (
+        ("$id" eq "fd") # Linux Software RAID -AR-
+        ) {
+        my $part;
+        $_ = "$disk";
+        if ((m|\S/(c[0-9]+d[0-9]+)|) or (m|\S/ar[0-9]+/|) or (m|\S/ataraid/|)) {
+            # Hardware RAID device -AR-
+            $part = $disk . 'p' . $minor;
+        } else {
+            # Standard block device -AR-
+            $part = $disk . $minor;
+        }
+        if (-f "/proc/mdstat") {
+            open (MD_INFO, "</proc/mdstat");
+            while ($_ = <MD_INFO>) {
+                if ($_ =~ /^(md[0-9]*):.*$part.*/) {
+                    print DISK_FILE qq( raid_dev="$1");
+                }
+            }
+            close(MD_INFO);
+        }
     }
     print DISK_FILE qq( />\n);
+}
+
+# Usage: 
+# save_soft_raid_information( $file );
+sub save_soft_raid_information {
+    
+    my ($file) = @_;
+
+    my $pre = "<raid>";
+    my $post = "</raid>";
+    my $md;
+    
+    return undef unless (-f "/proc/mdstat");
+
+    # Get soft-raid information from /proc/mdstat.
+    open (MD_INFO, "</proc/mdstat") or
+        die ("FATAL: Couldn't open /proc/mdstat for reading!");
+    while ($_ = <MD_INFO>) {
+        if ($_ =~ /^(md[0-9]+).*(raid[0-9]+|linear).*/) {
+            $md->{$1}->{'raid_level'} = $2;
+            $md->{$1}->{'raid_level'} =~ s/raid//;
+        }
+    }
+    close(MD_INFO);
+
+    # Try to get additional details from /etc/raidtab.
+    if (-f "/etc/raidtab") {
+        foreach (keys %{$md}) {
+            my $md_name = $_;
+            open (MD_INFO, "</etc/raidtab") or
+                die ("FATAL: Couldn't open /etc/raidtab for reading!");
+            while ($_ = <MD_INFO>) {
+                if ($_ =~ /raiddev \/dev\/$md_name/) {
+                    while ($_ = <MD_INFO>) {
+                        if ($_ =~ /chunk-size\s+([0-9]+)/) {
+                            $md->{$md_name}->{'chunk_size'} = $1;
+                        } elsif ($_ =~ /persistent-superblock\s+1$/) {
+                            $md->{$md_name}->{'persistent_superblock'} = 1;
+                        } elsif ($_ =~ /parity-algorithm\s+(.+)$/) {
+                            $md->{$md_name}->{'parity_algorithm'} = $1;
+                        }
+                    }
+		            last;
+                } 
+            }
+            close(MD_INFO);
+        }
+    }
+
+    # Get physical volume information (LVM over software-RAID).
+    foreach (keys %{$md}) {
+        my $md_name = $_;
+        my $cmd = "pvs --noheadings --separator : /dev/$md_name 2>/dev/null";
+        open (PV_INFO, "$cmd|");
+        unless (eof(PV_INFO)) {
+            my @pv_data = split(/:/, <PV_INFO>);
+            if ($pv_data[1]) {
+                $md->{$_}->{'lvm_group'} = $pv_data[1];
+            }
+        }
+        close(PV_INFO);
+    }
+
+    # Print software RAID configuration.
+    open(OUT, ">>$file") or die ("FATAL: Couldn't open $file for appending!");
+    print OUT "\n$pre\n";
+    foreach (sort keys %{$md}) {
+        my $str = "<raid_disk name=\"/dev/$_\" raid_level=\"" . $md->{$_}->{'raid_level'} . "\"";
+        $str .= " chunk_size=\"" . $md->{$_}->{'chunk_size'} . "\""
+            if ($md->{$_}->{'chunk_size'});
+        $str .= " persistent_superblock=\"" . $md->{$_}->{'persistent_superblock'} . "\""
+            if ($md->{$_}->{'persistent_superblock'});
+        $str .= " parity_algorithm=\"" . $md->{$_}->{'parity_algorithm'} . "\""
+            if ($md->{$_}->{'parity_algorithm'});
+        $str .= " lvm_group=\"" . $md->{$_}->{'lvm_group'} . "\""
+            if ($md->{$_}->{'lvm_group'});
+        $str .= '>';
+        # Print soft-RAID entry.
+        print OUT "\t$str\n";
+    }
+    print OUT "$post\n";
+    close(OUT);
 }
 
 # Usage: 

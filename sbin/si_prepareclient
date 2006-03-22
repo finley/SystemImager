@@ -625,6 +625,8 @@ sub create_auto_install_script_conf {
 
     }
 
+    SystemImager::Common::save_soft_raid_information($file);
+
     SystemImager::Common::save_lvm_information($file);
         
     SystemImager::Common->save_filesystem_information("/etc/fstab", $file);

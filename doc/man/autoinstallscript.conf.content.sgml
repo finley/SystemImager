@@ -144,6 +144,69 @@
   </refsect1>
 
   <refsect1>
+  <title>Software-RAID Section</title>
+  <para>
+    This section is used to define Linux Software-RAID arrays on each of your
+    autoinstall client's disks. This section is indicated with the "raid" tag.
+  </para>
+
+  <itemizedlist>
+    <listitem>
+      <para>raid - Soft-RAID definitions delimiter.</para>
+    </listitem>
+
+    <listitem>
+      <para>raid_disk - Define a new Soft-RAID disk.</para>
+    </listitem>
+  
+    <listitem>
+      <para>name - Define a new Soft-RAID disk.</para>
+    </listitem>
+
+    <listitem>
+      <para>raid_level - Define the level of RAID to use.</para>
+    </listitem>
+
+    <listitem>
+      <para>
+		chunk_size - Set the stripe size in kilobytes. It has to be a power
+		of 2 and has a maximum of 4M. You can tune this parameter to obtain
+		better performance with your particular system.
+      </para>
+    </listitem>
+
+    <listitem>
+      <para>
+		persistent_superblock - A persistent superblock is a small disk area
+		allocated at the end of each RAID device that helps the kernel to
+		safely detect RAID devices even	if disks have been moved between SCSI
+		controllers. Use this option if the disk naming order should change
+		in your system.
+      </para>
+    </listitem>
+
+    <listitem>
+      <para>
+		parity_algorithm - The parity algorithm to use with RAID5. It must be
+		one of left-asymmetric right-asymmetric, left-symmetric, or
+		right-symmetric.
+		You must use this option only with raid_level=5.
+      </para>
+    </listitem>
+
+    <listitem>
+      <para>
+		lvm_group - The Soft-RAID disk is used to be part of the specified volume
+		group name.
+		WARNING: LVM over Software-RAID is not yet supported by certain distibutions!
+      </para>
+    </listitem>
+
+  </itemizedlist>
+  </refsect1>
+
+
+  <refsect1>
   <title>LVM Section</title>
   <para>
     This section is used to define LVM groups and logical volumes on each of your
