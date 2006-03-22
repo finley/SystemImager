@@ -785,8 +785,8 @@ sub _print_to_auto_install_conf_file {
         if (-f "/proc/mdstat") {
             open (MD_INFO, "</proc/mdstat");
             while ($_ = <MD_INFO>) {
-                if ($_ =~ /^(md[0-9]*):.*$part.*/) {
-                    print DISK_FILE qq( raid_dev="$1");
+                if ($_ =~ /^(md[0-9]+).*$part.*/) {
+                    print DISK_FILE qq( raid_dev="/dev/$1");
                 }
             }
             close(MD_INFO);
