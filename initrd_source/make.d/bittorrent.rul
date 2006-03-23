@@ -34,8 +34,8 @@ $(BITTORRENT_DIR).install:	$(BITTORRENT_DIR).build \
 		$(BITTORRENT_DIR)/bittorrent-console.py
 	#
 	# Explicit copy shared libraries needed by bittorrent binaries.
-	(
-		for l in $$(ldd $(INITRD_BUILD_DIR)/lib/bittorrent/* 2>/dev/null | sed -ne 's/.*=> \(.*\) (.*)/\1/p' | sort -u); do cp -pf $$l $(INITRD_BUILD_DIR)/lib; done
+	( \
+		for l in $$(ldd $(INITRD_BUILD_DIR)/lib/bittorrent/* 2>/dev/null | sed -ne 's/.*=> \(.*\) (.*)/\1/p' | sort -u); do cp -pf $$l $(INITRD_BUILD_DIR)/lib; done \
 	)
 	#
 	# Make sure the dynamic linker is present.
