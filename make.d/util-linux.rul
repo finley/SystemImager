@@ -35,21 +35,21 @@ $(UTIL_LINUX_DIR).install:   $(UTIL_LINUX_DIR).build
 PHONY += util-linux
 util-linux:	$(UTIL_LINUX_DIR).build
 $(UTIL_LINUX_DIR).build:   $(UTIL_LINUX_DIR).unpack
-	$(MAKE) -j $(NCPUS) -C $(UTIL_LINUX_DIR) | $(SPACE_OUT)
+	$(MAKE) -j $(NCPUS) -C $(UTIL_LINUX_DIR)
 	touch $@
 
 
 $(UTIL_LINUX_DIR).unpack:	$(SRC_DIR)/$(UTIL_LINUX_TARBALL) \
 							$(TOPDIR)/make.d/util-linux.rul
 	rm -rf $(UTIL_LINUX_DIR)
-	cd $(SRC_DIR) && tar -xvjf $(UTIL_LINUX_TARBALL) | $(SPACE_OUT)
-	cd $(UTIL_LINUX_DIR) && cat $(UTIL_LINUX_PATCHES) < /dev/null | patch -p1 | $(SPACE_OUT)
+	cd $(SRC_DIR) && tar -xvjf $(UTIL_LINUX_TARBALL)
+	cd $(UTIL_LINUX_DIR) && cat $(UTIL_LINUX_PATCHES) < /dev/null | patch -p1
 	touch $@
 
 
 $(SRC_DIR)/$(UTIL_LINUX_TARBALL):
 	mkdir -p $(SRC_DIR)
-	$(GETSOURCE) $(UTIL_LINUX_URL) $(SRC_DIR) | $(SPACE_OUT)
+	$(GETSOURCE) $(UTIL_LINUX_URL) $(SRC_DIR)
 
 
 PHONY += util-linux_clean

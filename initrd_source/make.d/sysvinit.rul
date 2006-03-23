@@ -36,9 +36,9 @@ $(SYSVINIT_DIR).unpack:	$(INITRD_DIR)/make.d/sysvinit.rul	\
 							$(INITRD_SRC_DIR)/$(SYSVINIT_DIFF) \
 							$(SYSVINIT_PATCHES)
 	rm -rf $(SYSVINIT_DIR)
-	cd $(INITRD_SRC_DIR) && tar -xvzf $(INITRD_SRC_DIR)/$(SYSVINIT_TARBALL) | $(SPACE_OUT)
-	cd $(INITRD_SRC_DIR) && zcat $(INITRD_SRC_DIR)/$(SYSVINIT_DIFF) | patch -p0 | $(SPACE_OUT)
-	cd $(SYSVINIT_DIR) && cat $(SYSVINIT_PATCHES) < /dev/null | patch -p1 | $(SPACE_OUT)
+	cd $(INITRD_SRC_DIR) && tar -xvzf $(INITRD_SRC_DIR)/$(SYSVINIT_TARBALL)
+	cd $(INITRD_SRC_DIR) && zcat $(INITRD_SRC_DIR)/$(SYSVINIT_DIFF) | patch -p0
+	cd $(SYSVINIT_DIR) && cat $(SYSVINIT_PATCHES) < /dev/null | patch -p1
 	touch $@
 
 

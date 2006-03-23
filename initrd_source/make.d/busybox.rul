@@ -21,9 +21,9 @@ ALL_SOURCE += $(INITRD_SRC_DIR)/$(BUSYBOX_TARBALL)
 PHONY += busybox
 busybox:	$(BUSYBOX_DIR).build
 $(BUSYBOX_DIR).build:  $(BUSYBOX_DIR).unpack
-	yes '' | $(MAKE) -C $(BUSYBOX_DIR) oldconfig | $(SPACE_OUT)
-	$(MAKE) -j $(NCPUS) -C $(BUSYBOX_DIR) dep | $(SPACE_OUT)
-	$(MAKE) -j $(NCPUS) -C $(BUSYBOX_DIR) | $(SPACE_OUT)
+	yes '' | $(MAKE) -C $(BUSYBOX_DIR) oldconfig
+	$(MAKE) -j $(NCPUS) -C $(BUSYBOX_DIR) dep
+	$(MAKE) -j $(NCPUS) -C $(BUSYBOX_DIR)
 	touch $@
 
 
@@ -31,7 +31,7 @@ PHONY += busybox_install
 busybox_install:	$(BUSYBOX_DIR).install
 $(BUSYBOX_DIR).install:	$(BUSYBOX_DIR).build \
 						$(INITRD_BUILD_DIR).prep
-	$(MAKE) -j $(NCPUS) -C $(BUSYBOX_DIR) install-hardlinks PREFIX=$(INITRD_BUILD_DIR)/ | $(SPACE_OUT)
+	$(MAKE) -j $(NCPUS) -C $(BUSYBOX_DIR) install-hardlinks PREFIX=$(INITRD_BUILD_DIR)/
 
 
 $(BUSYBOX_DIR).unpack:	$(INITRD_DIR)/make.d/busybox.rul \
@@ -39,8 +39,8 @@ $(BUSYBOX_DIR).unpack:	$(INITRD_DIR)/make.d/busybox.rul \
 						$(BUSYBOX_CONFIG) \
 						$(BUSYBOX_PATCHES)
 	rm -rf $(BUSYBOX_DIR)
-	cd $(INITRD_SRC_DIR) && tar -xvjf $(BUSYBOX_TARBALL) | $(SPACE_OUT)
-	cd $(BUSYBOX_DIR) && cat $(BUSYBOX_PATCHES) < /dev/null | patch -p1 | $(SPACE_OUT)
+	cd $(INITRD_SRC_DIR) && tar -xvjf $(BUSYBOX_TARBALL)
+	cd $(BUSYBOX_DIR) && cat $(BUSYBOX_PATCHES) < /dev/null | patch -p1
 	cp -a $(BUSYBOX_CONFIG) $(BUSYBOX_DIR)/.config
 	touch $@
 

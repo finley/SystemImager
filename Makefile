@@ -138,12 +138,6 @@ endif
 # To be used by "make" for rules that can take it!
 NCPUS := $(shell egrep -c '^processor' /proc/cpuinfo )
 
-#
-# Pre-pad output of various commands.  Use by appending command with:
-# 	| $(SPACE_OUT)
-#
-SPACE_OUT =	perl -pi -e 's/^/    /'
-
 MANUAL_DIR = $(TOPDIR)/doc/manual_source
 MANPAGE_DIR = $(TOPDIR)/doc/man
 PATCH_DIR = $(TOPDIR)/patches

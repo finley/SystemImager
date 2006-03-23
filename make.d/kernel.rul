@@ -144,7 +144,7 @@ $(SRC_DIR)/patched_kernel-stamp:	$(SRC_DIR)/$(LINUX_TARBALL) \
 					$(LINUX_CONFIG) $(LINUX_PATCHES)
 	rm -rf $(LINUX_SRC)
 	@echo -n Extracting kernel source...
-	@cd $(SRC_DIR) && tar xjf $(LINUX_TARBALL) | $(SPACE_OUT)
+	@cd $(SRC_DIR) && tar xjf $(LINUX_TARBALL)
 	@echo done
 	@cd $(LINUX_SRC) && \
    	  $(foreach patch, $(LINUX_PATCHES), \

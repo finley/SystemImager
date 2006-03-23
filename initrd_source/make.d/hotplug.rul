@@ -18,16 +18,16 @@ PHONY += hotplug_install
 hotplug_install:  $(HOTPLUG_DIR).install
 $(HOTPLUG_DIR).install:  	$(HOTPLUG_DIR).build \
 							$(INITRD_BUILD_DIR).prep
-	rsync -av $(HOTPLUG_DIR)/debian/hotplug/ $(INITRD_BUILD_DIR)/ | $(SPACE_OUT)
+	rsync -av $(HOTPLUG_DIR)/debian/hotplug/ $(INITRD_BUILD_DIR)/
 	install -m 755 $(HOTPLUG_DIR)/debian/hotplug.init $(INITRD_BUILD_DIR)/etc/init.d/hotplug
 
 
 PHONY += hotplug
 hotplug:  $(HOTPLUG_DIR).build
 $(HOTPLUG_DIR).build:  $(HOTPLUG_DIR).unpack
-	cd $(HOTPLUG_DIR) && chmod +x ./debian/rules | $(SPACE_OUT)
-	cd $(HOTPLUG_DIR) && ./debian/rules clean | $(SPACE_OUT)
-	cd $(HOTPLUG_DIR) && ./debian/rules binary | $(SPACE_OUT)
+	cd $(HOTPLUG_DIR) && chmod +x ./debian/rules
+	cd $(HOTPLUG_DIR) && ./debian/rules clean
+	cd $(HOTPLUG_DIR) && ./debian/rules binary
 	touch $@
 
 
@@ -36,20 +36,20 @@ $(HOTPLUG_DIR).unpack:  $(INITRD_DIR)/make.d/hotplug.rul \
 						$(INITRD_SRC_DIR)/$(HOTPLUG_DIFF) \
 						$(HOTPLUG_PATCHES)
 	rm -rf $(HOTPLUG_DIR)
-	cd $(INITRD_SRC_DIR) && tar -xvzf $(INITRD_SRC_DIR)/$(HOTPLUG_TARBALL) | $(SPACE_OUT)
-	cd $(INITRD_SRC_DIR) && zcat $(INITRD_SRC_DIR)/$(HOTPLUG_DIFF) | patch -p0 | $(SPACE_OUT)
-	cd $(HOTPLUG_DIR) && cat $(HOTPLUG_PATCHES) < /dev/null | patch -p1 | $(SPACE_OUT)
+	cd $(INITRD_SRC_DIR) && tar -xvzf $(INITRD_SRC_DIR)/$(HOTPLUG_TARBALL)
+	cd $(INITRD_SRC_DIR) && zcat $(INITRD_SRC_DIR)/$(HOTPLUG_DIFF) | patch -p0
+	cd $(HOTPLUG_DIR) && cat $(HOTPLUG_PATCHES) < /dev/null | patch -p1
 	touch $@
 
 
 $(INITRD_SRC_DIR)/$(HOTPLUG_TARBALL):
 	mkdir -p $(INITRD_SRC_DIR)
-	$(GETSOURCE) $(HOTPLUG_URL)/$(HOTPLUG_TARBALL) $(INITRD_SRC_DIR) | $(SPACE_OUT)
+	$(GETSOURCE) $(HOTPLUG_URL)/$(HOTPLUG_TARBALL) $(INITRD_SRC_DIR)
 
 
 $(INITRD_SRC_DIR)/$(HOTPLUG_DIFF):
 	mkdir -p $(INITRD_SRC_DIR)
-	$(GETSOURCE) $(HOTPLUG_URL)/$(HOTPLUG_DIFF) $(INITRD_SRC_DIR) | $(SPACE_OUT)
+	$(GETSOURCE) $(HOTPLUG_URL)/$(HOTPLUG_DIFF) $(INITRD_SRC_DIR)
 
 
 PHONY += hotplug_clean

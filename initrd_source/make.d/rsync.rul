@@ -16,8 +16,8 @@ ALL_SOURCE += $(INITRD_SRC_DIR)/$(RSYNC_TARBALL)
 PHONY += rsync
 rsync:	$(RSYNC_DIR).build
 $(RSYNC_DIR).build:	$(RSYNC_DIR).unpack
-	cd $(RSYNC_DIR) && ./configure --with-included-popt | $(SPACE_OUT)
-	$(MAKE) -j $(NCPUS) -C $(RSYNC_DIR) rsync | $(SPACE_OUT)
+	cd $(RSYNC_DIR) && ./configure --with-included-popt
+	$(MAKE) -j $(NCPUS) -C $(RSYNC_DIR) rsync
 	touch $@
 
 
@@ -25,8 +25,8 @@ $(RSYNC_DIR).unpack:	$(INITRD_SRC_DIR)/$(RSYNC_TARBALL) \
 						$(RSYNC_PATCHES) \
 						$(INITRD_DIR)/make.d/rsync.rul
 	rm -rf $(RSYNC_DIR)
-	cd $(INITRD_SRC_DIR) && tar -xvzf $(RSYNC_TARBALL) | $(SPACE_OUT)
-	cd $(RSYNC_DIR) && cat $(RSYNC_PATCHES) < /dev/null | patch -p1 | $(SPACE_OUT)
+	cd $(INITRD_SRC_DIR) && tar -xvzf $(RSYNC_TARBALL)
+	cd $(RSYNC_DIR) && cat $(RSYNC_PATCHES) < /dev/null | patch -p1
 	touch $@
 
 

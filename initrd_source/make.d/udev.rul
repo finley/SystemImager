@@ -19,8 +19,8 @@ PHONY += udev
 udev:	$(UDEV_DIR).build
 $(UDEV_DIR).build:  $(UDEV_DIR).unpack
 	cd $(UDEV_DIR) && chmod +x ./debian/rules
-	cd $(UDEV_DIR) && ./debian/rules clean | $(SPACE_OUT)
-	cd $(UDEV_DIR) && ./debian/rules binary | $(SPACE_OUT)
+	cd $(UDEV_DIR) && ./debian/rules clean
+	cd $(UDEV_DIR) && ./debian/rules binary
 	touch $@
 
 
@@ -28,7 +28,7 @@ PHONY += udev_install
 udev_install:	$(UDEV_DIR).install
 $(UDEV_DIR).install:	$(UDEV_DIR).build \
 						$(INITRD_BUILD_DIR).prep
-	rsync -av $(UDEV_DIR)/debian/udev/ $(INITRD_BUILD_DIR)/ | $(SPACE_OUT)
+	rsync -av $(UDEV_DIR)/debian/udev/ $(INITRD_BUILD_DIR)/
 	install -m 755 $(UDEV_DIR)/debian/udev.init $(INITRD_BUILD_DIR)/etc/init.d/udev
 
 
@@ -37,20 +37,20 @@ $(UDEV_DIR).unpack:   	$(INITRD_DIR)/make.d/udev.rul	\
 			$(INITRD_SRC_DIR)/$(UDEV_DIFF) \
 			$(UDEV_PATCHES)
 	rm -rf $(UDEV_DIR)
-	cd $(INITRD_SRC_DIR) && tar -xvzf $(INITRD_SRC_DIR)/$(UDEV_TARBALL) | $(SPACE_OUT)
-	cd $(INITRD_SRC_DIR) && zcat $(INITRD_SRC_DIR)/$(UDEV_DIFF) | patch -p0 | $(SPACE_OUT)
-	cd $(UDEV_DIR) && cat $(UDEV_PATCHES) < /dev/null | patch -p1 | $(SPACE_OUT)
+	cd $(INITRD_SRC_DIR) && tar -xvzf $(INITRD_SRC_DIR)/$(UDEV_TARBALL)
+	cd $(INITRD_SRC_DIR) && zcat $(INITRD_SRC_DIR)/$(UDEV_DIFF) | patch -p0
+	cd $(UDEV_DIR) && cat $(UDEV_PATCHES) < /dev/null | patch -p1
 	touch $@
 
 
 $(INITRD_SRC_DIR)/$(UDEV_TARBALL):
 	mkdir -p $(INITRD_SRC_DIR)
-	$(GETSOURCE) $(UDEV_URL)/$(UDEV_TARBALL) $(INITRD_SRC_DIR) | $(SPACE_OUT)
+	$(GETSOURCE) $(UDEV_URL)/$(UDEV_TARBALL) $(INITRD_SRC_DIR)
 
 
 $(INITRD_SRC_DIR)/$(UDEV_DIFF):
 	mkdir -p $(INITRD_SRC_DIR)
-	$(GETSOURCE) $(UDEV_URL)/$(UDEV_DIFF) $(INITRD_SRC_DIR) | $(SPACE_OUT)
+	$(GETSOURCE) $(UDEV_URL)/$(UDEV_DIFF) $(INITRD_SRC_DIR)
 
 
 PHONY += udev_clean

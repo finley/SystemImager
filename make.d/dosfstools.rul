@@ -21,20 +21,20 @@ $(DOSFSTOOLS_DIR).build:	$(DOSFSTOOLS_DIR).unpack
 	# with dosfstools.10llseek.patch.
 	#
 	$(MAKE) -j $(NCPUS) -C $(DOSFSTOOLS_DIR)/mkdosfs \
-		'CFLAGS=-O2 -Dllseek=lseek64 -D_LARGEFILE64_SOURCE' | $(SPACE_OUT)
+		'CFLAGS=-O2 -Dllseek=lseek64 -D_LARGEFILE64_SOURCE'
 	touch $@
 
 $(DOSFSTOOLS_DIR).unpack:	$(TOPDIR)/make.d/dosfstools.rul \
 							$(SRC_DIR)/$(DOSFSTOOLS_TARBALL) \
 							$(DOSFSTOOLS_PATCHES)
 	rm -rf $(DOSFSTOOLS_DIR)
-	cd $(SRC_DIR) && tar -xvzf $(DOSFSTOOLS_TARBALL) | $(SPACE_OUT)
-	cd $(DOSFSTOOLS_DIR) && cat $(DOSFSTOOLS_PATCHES) < /dev/null | patch -p1 | $(SPACE_OUT)
+	cd $(SRC_DIR) && tar -xvzf $(DOSFSTOOLS_TARBALL)
+	cd $(DOSFSTOOLS_DIR) && cat $(DOSFSTOOLS_PATCHES) < /dev/null | patch -p1
 	touch $@
 
 $(SRC_DIR)/$(DOSFSTOOLS_TARBALL):
 	mkdir -p $(SRC_DIR)
-	$(GETSOURCE) $(DOSFSTOOLS_URL) $(SRC_DIR) | $(SPACE_OUT)
+	$(GETSOURCE) $(DOSFSTOOLS_URL) $(SRC_DIR)
 
 PHONY += dosfstools_clean
 dosfstools_clean:

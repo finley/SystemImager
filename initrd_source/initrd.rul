@@ -128,19 +128,23 @@ $(INITRD_BUILD_DIR).build:  $(INITRD_BUILD_DIR).prep		\
 	test ! -d /lib64 || cp -a /lib64/ld* $(INITRD_BUILD_DIR)/lib64
 	# Explicitly include more w/mklibs -L.  -dawild-
 ifeq ($(ARCH),x86_64)
-	( cd $(INITRD_BUILD_DIR) && \
-		$(PYTHON) $(INITRD_DIR)/mklibs -L /lib64:/usr/lib64:/lib:/usr/lib -v -d lib64 ./*bin/* | $(SPACE_OUT) )
+	(
+		cd $(INITRD_BUILD_DIR) && \
+		$(PYTHON) $(INITRD_DIR)/mklibs -L /lib64:/usr/lib64:/lib:/usr/lib -v -d lib64 ./*bin/*
+	)
 	# copy libnss files as they are not automatically included
 	cp -a /lib64/libnss_dns* $(INITRD_BUILD_DIR)/lib64
 else
-	( cd $(INITRD_BUILD_DIR) && \
-		$(PYTHON) $(INITRD_DIR)/mklibs -L /lib:/usr/lib:/lib64:/usr/lib64 -v -d lib ./*bin/* | $(SPACE_OUT) )
+	(
+		cd $(INITRD_BUILD_DIR) && \
+		$(PYTHON) $(INITRD_DIR)/mklibs -L /lib:/usr/lib:/lib64:/usr/lib64 -v -d lib ./*bin/*
+	)
 	# copy libnss files as they are not automatically included
 	cp -a /lib/libnss_dns* $(INITRD_BUILD_DIR)/lib
 endif
 
 	# Strip 'em. -BEF-
-	strip $(INITRD_BINARIES) | $(SPACE_OUT)
+	strip $(INITRD_BINARIES)
 
 	# BitTorrent binaries must not be stripped. -AR-
 	cd $(INITRD_BUILD_DIR)/bin && ln -s ../lib/bittorrent/torrentinfo-console
@@ -200,7 +204,7 @@ initrd:	$(INITRD_DIR)/initrd
 #		part of the distribution. -BEF-
 #
 $(INITRD_DIR)/initrd:	$(INITRD_BUILD_DIR).build
-	$(MKCRAMFS) $(INITRD_BUILD_DIR) $(INITRD_DIR)/initrd | $(SPACE_OUT)
+	$(MKCRAMFS) $(INITRD_BUILD_DIR) $(INITRD_DIR)/initrd
 
 
 PHONY += install_initrd_template

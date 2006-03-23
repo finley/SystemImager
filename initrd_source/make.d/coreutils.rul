@@ -24,8 +24,8 @@ $(COREUTILS_DIR).install:	$(COREUTILS_DIR).build \
 PHONY += coreutils
 coreutils:	$(COREUTILS_DIR).build
 $(COREUTILS_DIR).build:	$(COREUTILS_DIR).unpack
-	cd $(COREUTILS_DIR) && ./configure | $(SPACE_OUT)
-	$(MAKE) -j $(NCPUS) -C $(COREUTILS_DIR) | $(SPACE_OUT)
+	cd $(COREUTILS_DIR) && ./configure
+	$(MAKE) -j $(NCPUS) -C $(COREUTILS_DIR)
 	touch $@
 
 
@@ -33,14 +33,14 @@ $(COREUTILS_DIR).unpack:	$(INITRD_DIR)/make.d/coreutils.rul \
 							$(INITRD_SRC_DIR)/$(COREUTILS_TARBALL) \
 							$(COREUTILS_PATCHES)
 	rm -fr $(COREUTILS_DIR)
-	tar -C $(INITRD_SRC_DIR) -xvjf $(INITRD_SRC_DIR)/$(COREUTILS_TARBALL) | $(SPACE_OUT)
-	cd $(COREUTILS_DIR) && cat $(COREUTILS_PATCHES) < /dev/null | patch -p1 | $(SPACE_OUT)
+	tar -C $(INITRD_SRC_DIR) -xvjf $(INITRD_SRC_DIR)/$(COREUTILS_TARBALL)
+	cd $(COREUTILS_DIR) && cat $(COREUTILS_PATCHES) < /dev/null | patch -p1
 	touch $@
 
 
 $(INITRD_SRC_DIR)/$(COREUTILS_TARBALL):
 	mkdir -p $(INITRD_SRC_DIR)
-	$(GETSOURCE) $(COREUTILS_URL) $(INITRD_SRC_DIR) | $(SPACE_OUT)
+	$(GETSOURCE) $(COREUTILS_URL) $(INITRD_SRC_DIR)
 
 
 PHONY += coreutils_clean

@@ -15,20 +15,20 @@ ALL_SOURCE += $(SRC_DIR)/$(BC_TARBALL)
 PHONY += bc
 bc:	$(BC_DIR).build
 $(BC_DIR).build:    $(BC_DIR).unpack
-	cd $(BC_DIR) && ./configure | $(SPACE_OUT)
-	$(MAKE) -j $(NCPUS) -C $(BC_DIR) | $(SPACE_OUT)
+	cd $(BC_DIR) && ./configure
+	$(MAKE) -j $(NCPUS) -C $(BC_DIR)
 	touch $@
 
 
 $(BC_DIR).unpack:	$(TOPDIR)/make.d/bc.rul \
                     $(SRC_DIR)/$(BC_TARBALL)
-	cd $(SRC_DIR) && tar -xvzf $(BC_TARBALL) | $(SPACE_OUT)
+	cd $(SRC_DIR) && tar -xvzf $(BC_TARBALL)
 	touch $@
 
 
 $(SRC_DIR)/$(BC_TARBALL):
 	mkdir -p $(SRC_DIR)
-	$(GETSOURCE) $(BC_URL) $(SRC_DIR) | $(SPACE_OUT)
+	$(GETSOURCE) $(BC_URL) $(SRC_DIR)
 
 
 PHONY += bc_clean

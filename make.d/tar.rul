@@ -18,8 +18,8 @@ ALL_SOURCE += $(SRC_DIR)/$(TAR_TARBALL)
 PHONY += tar
 tar:	$(TAR_DIR).build
 $(TAR_DIR).build:	$(TAR_DIR).unpack
-	cd $(TAR_DIR) && ./configure | $(SPACE_OUT)
-	$(MAKE) -j $(NCPUS) -C $(TAR_DIR) | $(SPACE_OUT)
+	cd $(TAR_DIR) && ./configure
+	$(MAKE) -j $(NCPUS) -C $(TAR_DIR)
 	touch $@
 
 
@@ -27,14 +27,14 @@ $(TAR_DIR).unpack:	$(TOPDIR)/make.d/tar.rul \
 					$(SRC_DIR)/$(TAR_TARBALL) \
 					$(TAR_PATCHES)
 	rm -fr $(TAR_DIR)
-	cd $(SRC_DIR) && tar -xvzf $(TAR_TARBALL) | $(SPACE_OUT)
-	cd $(TAR_DIR) && cat $(TAR_PATCHES) < /dev/null | patch -p1 | $(SPACE_OUT)
+	cd $(SRC_DIR) && tar -xvzf $(TAR_TARBALL)
+	cd $(TAR_DIR) && cat $(TAR_PATCHES) < /dev/null | patch -p1
 	touch $@
 
 
 $(SRC_DIR)/$(TAR_TARBALL):
 	mkdir -p $(SRC_DIR)
-	$(GETSOURCE) $(TAR_URL) $(SRC_DIR) | $(SPACE_OUT)
+	$(GETSOURCE) $(TAR_URL) $(SRC_DIR)
 
 
 PHONY += tar_clean
