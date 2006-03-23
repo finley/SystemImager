@@ -42,6 +42,7 @@ FLAVOR="SYSTEMIMAGER_FLAVOR_STRING"
 # Usage: 
 #   if fs_on_tmpfs /my_filesystem ; then
 fs_on_tmpfs() {
+    #XXX does this still work now with udev? -BEF-
     df 2>/dev/null | egrep 'tmpfs ' | egrep -q " $1\$" 
 }
 
