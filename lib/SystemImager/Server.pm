@@ -850,7 +850,9 @@ sub _read_partition_info_and_prepare_soft_raid_devs {
     print $out qq(modprobe linear\n);
     print $out qq(modprobe raid0\n);
     print $out qq(modprobe raid1\n);
+    print $out qq(modprobe raid10\n);
     print $out qq(modprobe raid5\n);
+    print $out qq(modprobe raid6\n);
 
     # Get all software RAID blocks.
     foreach my $raid (@{$xml_config->{raid}}) {
