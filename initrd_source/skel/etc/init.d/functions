@@ -1483,7 +1483,7 @@ send_monitor_msg() {
         fi
 
         # Evaluate the amount of available RAM.
-        tmpfs=`df | grep tmpfs | sed "s/.* \([0-9]*%\) .*/\1/"`
+        tmpfs=`df | grep tmpfs | grep "/$" | sed "s/.* \([0-9]*%\) .*/\1/"`
 
         # Evaluate the uptime of the client.
         time=`cat /proc/uptime | sed "s/\..*//"`
