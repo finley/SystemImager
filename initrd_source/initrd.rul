@@ -94,7 +94,13 @@ $(INITRD_BUILD_DIR).prep:	$(INITRD_DIR)/initrd.rul
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/usr/sbin
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/var
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/var/run
-	cd $(INITRD_BUILD_DIR)/dev && mknod -m 660 console c 5 1
+	cd $(INITRD_BUILD_DIR)/dev && mknod -m 660 tty1 c 4 1
+	cd $(INITRD_BUILD_DIR)/dev && mknod -m 660 tty2 c 4 2
+	cd $(INITRD_BUILD_DIR)/dev && mknod -m 660 tty3 c 4 3
+	cd $(INITRD_BUILD_DIR)/dev && mknod -m 660 tty4 c 4 4
+	cd $(INITRD_BUILD_DIR)/dev && mknod -m 660 tty5 c 4 5
+	cd $(INITRD_BUILD_DIR)/dev && mknod -m 660 tty6 c 4 6
+	cd $(INITRD_BUILD_DIR)/dev && mknod -m 600 console c 5 1
 	cd $(INITRD_BUILD_DIR)/dev && mknod -m 660 null c 1 3
 	touch $@
 
