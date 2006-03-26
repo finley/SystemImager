@@ -1,6 +1,14 @@
---- hotplug-0.0.20040329.orig.orig/debian/rules	2005-12-14 00:30:01.000000000 -0600
-+++ hotplug-0.0.20040329.orig/debian/rules	2005-12-14 00:49:33.000000000 -0600
-@@ -35,10 +35,14 @@
+--- hotplug-0.0.20040329.orig/debian/rules	2006-03-24 22:00:05.000000000 -0800
++++ hotplug-0.0.20040329.orig/debian/rules	2006-03-24 21:58:51.000000000 -0800
+@@ -28,17 +28,21 @@
+ 
+ clean:
+ 	$(MAKE) -f debian/sys-build.mk source.clean
+-	dh_clean
++	#dh_clean
+ 
+ 
+ build:
  
  install: $(STAMP_DIR)/install
  $(STAMP_DIR)/install: $(STAMP_DIR)/unpack
