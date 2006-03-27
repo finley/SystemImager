@@ -3,13 +3,13 @@
 #  vi: set filetype=make:
 #
 
-UDEV_VERSION      = 0.060
-UDEV_DIFF_VERSION = 1ubuntu15
+UDEV_VERSION      = 079
+UDEV_DIFF_VERSION = 0ubuntu19
 UDEV_TARBALL      = udev_$(UDEV_VERSION).orig.tar.gz
 # UDEV_URL          = http://us.archive.ubuntu.com/ubuntu/pool/main/u/udev/
 UDEV_URL          = http://download.systemimager.org/pub/udev/
 UDEV_DIFF         = udev_$(UDEV_VERSION)-$(UDEV_DIFF_VERSION).diff.gz
-UDEV_DIR          = $(INITRD_SRC_DIR)/udev-$(UDEV_VERSION).orig
+UDEV_DIR          = $(INITRD_SRC_DIR)/udev-$(UDEV_VERSION)
 
 UDEV_PATCHES = $(shell ls $(INITRD_PATCH_DIR)/udev.*.patch 2>/dev/null | sort)
 
@@ -19,6 +19,7 @@ PHONY += udev
 udev:	$(UDEV_DIR).build
 $(UDEV_DIR).build:  $(UDEV_DIR).unpack
 	cd $(UDEV_DIR) && chmod +x ./debian/rules
+	cd $(UDEV_DIR) && ./debian/rules patch
 	cd $(UDEV_DIR) && ./debian/rules clean
 	cd $(UDEV_DIR) && ./debian/rules binary
 	touch $@
@@ -58,5 +59,3 @@ udev_clean:
 	rm -rf $(UDEV_DIR)
 	rm -f  $(UDEV_DIR).unpack
 	rm -f  $(UDEV_DIR).build
-
-

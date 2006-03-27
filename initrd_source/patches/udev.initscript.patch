@@ -1,37 +1,11 @@
---- udev-0.060.orig.orig/debian/udev.init	2005-12-28 00:52:56.000000000 -0600
-+++ udev-0.060.orig/debian/udev.init	2005-12-28 00:52:05.000000000 -0600
-@@ -1,6 +1,6 @@
- #!/bin/sh -e
- 
--PATH="/sbin:/bin"
-+PATH=/sbin:/usr/sbin:/bin:/usr/bin
- 
- # defaults
- tmpfs_size="10M"
-@@ -65,7 +65,7 @@
-     case "$type" in
-       L) ln -s $arg1 /dev/$name ;;
-       D) mkdir -p /dev/$name ;;
--      M) mknod --mode=600 /dev/$name $arg1 ;;
-+      M) mknod -m 600 /dev/$name $arg1 ;;
-       *) log_warning_msg "links.conf: unparseable line ($type $name $arg1)" ;;
-     esac
-   done
-@@ -205,7 +205,7 @@
-         log_warning_msg "WARNING: .udevdb already exists on the old $udev_root!"
-       fi
-     fi
--    warn_if_interactive
-+    #warn_if_interactive
-     if events_not_ordered; then
-       log_warning_msg "WARNING: kernels older than 2.6.10 are not fully supported!"
-       sleep 5
-@@ -225,7 +225,7 @@
-     log_end_msg $?
-     ;;
-   stop)
--    warn_if_interactive
-+    #warn_if_interactive
-     start-stop-daemon --stop --exec /sbin/udevd --oknodo --quiet
-     unmount_devpts
-     if [ -d /dev/.static/dev/ ]; then
+--- udev-079.orig/debian/udev.init	2006-03-24 15:14:34.000000000 -0800
++++ udev-079/debian/udev.init	2006-03-24 15:15:03.000000000 -0800
+@@ -38,7 +38,7 @@
+ 	
+ 	# Start udevd
+ 	log_begin_msg "Starting kernel event manager..."
+-	if start-stop-daemon --start --quiet --exec /sbin/udevd -- --daemon; then
++	if /sbin/udevd --daemon; then
+ 	    log_end_msg 0
+ 	else
+ 	    log_end_msg $?

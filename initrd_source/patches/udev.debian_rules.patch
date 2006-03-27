@@ -1,105 +1,144 @@
---- udev-0.060.orig.orig/debian/rules	2005-12-13 20:10:25.000000000 -0600
-+++ udev-0.060.orig/debian/rules	2005-12-13 21:40:02.000000000 -0600
-@@ -1,7 +1,7 @@
- #!/usr/bin/make -f
- SHELL+= -e
- 
--BUILD_UDEB := 1
-+# BUILD_UDEB := 1
- # BUILD_KLIBC := 1
- 
- MAKE_VARIABLES := V=true udevdir=/dev
-@@ -63,8 +63,8 @@
- $(STAMP_DIR)/build: $(STAMP_DIR)/unpack
- 	dh_testdir
- 	$(MAKE) -f debian/sys-build.mk source.command SOURCE_CMD=" \
--		$(MAKE) $(MAKE_VARIABLES) OPTIMIZATION=-O2 all \
--			USE_SELINUX=true \
-+		$(MAKE) $(MAKE_VARIABLES) OPTIMIZATION=-Os all \
-+			USE_SELINUX=false \
- 	"
- ifdef BUILD_UDEB
- 	$(MAKE) -f debian/sys-build.mk source.command SOURCE_CMD=" \
-@@ -85,18 +85,21 @@
- 	touch $@
- 
- binary-arch: $(STAMP_DIR)/build checkroot
+--- udev-079.orig/debian/rules	2006-03-24 20:41:49.000000000 -0800
++++ udev-079/debian/rules	2006-03-24 20:43:38.000000000 -0800
+@@ -26,7 +26,7 @@
+ # Apply patches to the package
+ patch: patch-stamp
+ patch-stamp:
 -	dh_testdir
++	#dh_testdir
+ 	@patches=debian/patches/*.patch; for patch in $$patches; do \
+ 		test -f $$patch || continue; \
+ 		echo "Applying $$patch"; \
+@@ -36,7 +36,7 @@
+ 
+ # Remove patches from the package
+ unpatch:
+-	dh_testdir
++	#dh_testdir
+ 	@if test -f patch-stamp; then \
+ 		patches=debian/patches/*.patch; \
+ 		for patch in $$patches; do \
+@@ -54,12 +54,12 @@
+ # Build the package
+ build: patch-stamp build-stamp
+ build-stamp:
+-	dh_testdir
++	#dh_testdir
+ 
+ 	test -d udeb || mkdir udeb
+ 	find -print0 | cpio -pdm0l udeb
+ 
+-	$(MAKE) V=true USE_SELINUX=true EXTRAS="$(EXTRAS)" \
++	$(MAKE) V=true USE_SELINUX=false EXTRAS="$(EXTRAS)" \
+ 		OPTFLAGS="$(OPTFLAGS)" STRIPCMD=
+ 
+ 	$(MAKE) -C udeb V=true USE_SELINUX=false EXTRAS="$(EXTRAS)" \
+@@ -70,11 +70,11 @@
+ # Install files into the deb
+ install-deb: DH_OPTIONS=-pudev
+ install-deb: build
+-	dh_testdir
+-	dh_testroot
+-	dh_clean -k 
+-	dh_installdirs
+-	dh_install
++	#dh_testdir
++	#dh_testroot
++	#dh_clean -k 
++	#dh_installdirs
++	#dh_install
+ 
+ 	$(MAKE) install V=true EXTRAS="$(EXTRAS)" DESTDIR=$(CURDIR)/debian/udev
+ 
+@@ -137,17 +137,20 @@
+ # Install files into the udeb
+ install-udeb: DH_OPTIONS=-pudev-udeb
+ install-udeb: install-deb
+-	dh_testdir
+-	dh_testroot
 -	dh_clean -k
 -	dh_installdirs
 +	#dh_testdir
++	#dh_testroot
 +	#dh_clean -k
 +	#dh_installdirs
  
-+	mkdir -p $D/sbin/
- 	cp $B/udev $B/udevd $B/udevsend $B/udevstart $B/udevcontrol \
- 		$B/extras/ata_id/ata_id $B/extras/chassis_id/chassis_id \
- 		$B/extras/scsi_id/scsi_id $B/extras/volume_id/vol_id \
- 		$B/extras/run_directory/udev_run_devd \
- 		$B/extras/run_directory/udev_run_hotplugd \
- 		$D/sbin/
-+	mkdir -p $D/usr/bin/
- 	cp $B/udevinfo $B/udevtest $D/usr/bin/
++	mkdir -p debian/udev-udeb/sbin
++	mkdir -p debian/udev-udeb/usr/bin
+ 	# Copy binaries that we want
+ 	cp -a udeb/udevd debian/udev-udeb/sbin
+ 	cp -a udeb/udevplug debian/udev-udeb/sbin
+ 	cp -a udeb/udevinfo debian/udev-udeb/usr/bin
+ 	cp -a udeb/udevmonitor debian/udev-udeb/usr/sbin
  
-+	mkdir -p $D/etc/udev/scripts/
- 	install --mode=755 extra/scsi-devfs.sh $B/extras/cdsymlinks.sh \
- 		$B/extras/dvb.sh $B/extras/ide-devfs.sh $B/extras/inputdev.sh \
- 		extra/removable.sh \
-@@ -108,8 +111,8 @@
- 	sed -e 's/^#\([^ ]\)/\1/' < extra/compat.rules > \
- 		$D/etc/udev/compat-full.rules
++	mkdir -p debian/udev-udeb/lib/udev
+ 	# Copy helpers that we want
+ 	cp -a udeb/extras/usb_device_name/usb_device_name debian/udev-udeb/lib/udev
+ 	cp -a udeb/extras/dvb_device_name/dvb_device_name debian/udev-udeb/lib/udev
+@@ -170,6 +173,7 @@
+ 	# Copy all of the default devices from the deb
+ 	cp -a debian/udev/lib/udev/devices debian/udev-udeb/lib/udev
  
--	cp extra/reportbug.presubj $D/usr/share/bug/udev/presubj
--	install --mode=755 extra/reportbug.script $D/usr/share/bug/udev/script
-+	#cp extra/reportbug.presubj $D/usr/share/bug/udev/presubj
-+	#install --mode=755 extra/reportbug.script $D/usr/share/bug/udev/script
++	mkdir -p debian/udev-udeb/etc/udev
+ 	# Copy across the configuration file from the deb
+ 	cp -a debian/udev/etc/udev/udev.conf debian/udev-udeb/etc/udev
  
- ifdef BUILD_UDEB
- 	cp $(BU)/udev $(BU)/udevd $(BU)/udevsend $(BU)/udevstart \
-@@ -133,26 +136,26 @@
- ifdef BUILD_KLIBC
- endif
+@@ -192,6 +196,7 @@
+ 	install -m 644 -o root -g root debian/rules.d/90-modprobe.rules \
+ 		debian/udev-udeb/etc/udev/rules.d
  
--	dh_installchangelogs $B/ChangeLog
--	dh_installdocs $(addprefix $B/,$(DOCS))
--	cp $B/extras/volume_id/README $D/usr/share/doc/udev/README.vol_id
--	cp $B/extras/chassis_id/README $D/usr/share/doc/udev/README.chassis_id
--	dh_installexamples $B/etc/udev/udev.rules.examples \
--		$B/extras/name_cdrom.pl $B/extras/start_udev \
--		$B/extras/scsi_id/scsi_id.config extra/udevtest-all
--	dh_installman $B/*.8 $B/extras/scsi_id/scsi_id.8
--	dh_link /usr/share/man/man8/udevd.8 /usr/share/man/man8/udevsend.8
--	dh_installinit --no-start --update-rcd-params='start 04 S .'
--	dh_installinit --no-start --update-rcd-params='start 36 S .' \
--		--name=udev-mtab 
--
++	mkdir -p debian/udev-udeb/lib/debian-installer-startup.d/S02udev
+ 	# Startup script
+ 	install -m 755 -o root -g root debian/udev.installer-startup \
+ 		debian/udev-udeb/lib/debian-installer-startup.d/S02udev
+@@ -205,33 +210,33 @@
+ # Build architecture-dependent files here.
+ binary-arch: DH_OPTIONS=-a
+ binary-arch: build install-deb install-udeb
+-	dh_testdir
+-	dh_testroot
+-	dh_installchangelogs ChangeLog
+-	dh_installdocs
+-	dh_installexamples
+-	dh_installinit --no-start -- start 10 S .
+-	dh_link
 -	dh_strip
 -	dh_compress
--	dh_fixperms
--	dh_shlibdeps
+-	dh_fixperms -X/lib/udev/devices/
 -	dh_installdeb
--	dh_gencontrol $(NO_PACKAGE)
--	dh_builddeb $(NO_PACKAGE)
-+	#dh_installchangelogs $B/ChangeLog
-+	#dh_installdocs $(addprefix $B/,$(DOCS))
-+	#cp $B/extras/volume_id/README $D/usr/share/doc/udev/README.vol_id
-+	#cp $B/extras/chassis_id/README $D/usr/share/doc/udev/README.chassis_id
-+	#dh_installexamples $B/etc/udev/udev.rules.examples \
-+	#	$B/extras/name_cdrom.pl $B/extras/start_udev \
-+	#	$B/extras/scsi_id/scsi_id.config extra/udevtest-all
-+	#dh_installman $B/*.8 $B/extras/scsi_id/scsi_id.8
-+	#dh_link /usr/share/man/man8/udevd.8 /usr/share/man/man8/udevsend.8
-+	#dh_installinit --no-start --update-rcd-params='start 04 S .'
-+	#dh_installinit --no-start --update-rcd-params='start 36 S .' \
-+	#	--name=udev-mtab 
-+
+-	dh_shlibdeps
+-	dh_gencontrol
+-	dh_md5sums
+-	dh_builddeb
++	#dh_testdir
++	#dh_testroot
++	#dh_installchangelogs ChangeLog
++	#dh_installdocs
++	#dh_installexamples
++	#dh_installinit --no-start -- start 10 S .
++	#dh_link
 +	#dh_strip
 +	#dh_compress
-+	#dh_fixperms
-+	#dh_shlibdeps
++	#dh_fixperms -X/lib/udev/devices/
 +	#dh_installdeb
-+	#dh_gencontrol $(NO_PACKAGE)
-+	#dh_builddeb $(NO_PACKAGE)
++	#dh_shlibdeps
++	#dh_gencontrol
++	#dh_md5sums
++	#dh_builddeb
  
  
- binary:	binary-arch
+ # Clean up the mess we made
+ clean: clean-source unpatch
+ clean-source:
+-	dh_testdir
++	#dh_testdir
+ 	rm -f build-stamp
+ 
+ 	rm -rf udeb
+ 	-$(MAKE) clean V=true EXTRAS="$(EXTRAS)"
+ 
+-	dh_clean 
++	#dh_clean 
+ 
+ 
+ .PHONY: patch unpatch build install-deb install-udeb \
