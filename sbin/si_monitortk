@@ -681,10 +681,10 @@ sub display_nodes
         } else {
             if ($client->{$mac}->{'speed'} < 1000) {
                 $client->{$mac}->{'speed'} = 
-                    sprintf("%.3fKB/s", $client->{$mac}->{'speed'});
+                    sprintf("%.0fKB/s", $client->{$mac}->{'speed'});
             } else {
                 $client->{$mac}->{'speed'} = 
-                    sprintf("%.3fMB/s", $client->{$mac}->{'speed'} / 1000);
+                    sprintf("%.2fMB/s", $client->{$mac}->{'speed'} / 1000);
             }
         }
 		# Format the total amount of RAM.
