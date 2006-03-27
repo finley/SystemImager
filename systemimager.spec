@@ -18,6 +18,7 @@
 %{?_build_only_boot:%{expand: %%define _build_all 0}}
 
 %define _unpackaged_files_terminate_build 0
+%define is_suse %(test -f /etc/SuSE-release && echo 1 || echo 0)
 
 Summary: Software that automates Linux installs, software distribution, and production deployment.
 Name: %name
@@ -32,6 +33,11 @@ Packager: dann frazier <dannf@dannf.org>
 URL: http://systemimager.org/
 Distribution: System Installation Suite
 BuildRequires: docbook-utils, dos2unix, e2fsprogs-devel, flex, libtool, readline-devel, /usr/bin/wget, openssl-devel
+%if %is_suse
+BuildRequires: python-xml
+%else
+BuildRequires: PyXML
+%endif
 Requires: rsync >= 2.4.6, syslinux >= 1.48, libappconfig-perl, dosfstools, /usr/bin/perl
 AutoReqProv: no
 
@@ -63,6 +69,11 @@ Packager: dann frazier <dannf@dannf.org>
 URL: http://systemimager.org/
 Distribution: System Installation Suite
 Requires: rsync >= 2.4.6, systemimager-common = %{version}, perl-AppConfig, dosfstools, /sbin/chkconfig, perl, perl(XML::Simple) >= 2.08, python, mkisofs
+%if %is_suse
+Requires: python-xml
+%else
+Requires: PyXML
+%endif
 AutoReqProv: no
 
 %description server
@@ -189,7 +200,7 @@ Packager: dann frazier <dannf@dannf.org>
 URL: http://systemimager.org/
 Distribution: System Installation Suite
 Obsoletes: systemimager-%{_build_arch}boot
-BuildRequires: python, python-devel, python-xml
+BuildRequires: python, python-devel
 Requires: systemimager-server >= %{version}
 AutoReqProv: no
 
@@ -223,7 +234,7 @@ Packager: dann frazier <dannf@dannf.org>
 URL: http://systemimager.org/
 Distribution: System Installation Suite
 Obsoletes: systemimager-%{_build_arch}initrd_template
-BuildRequires: python, python-devel, python-xml
+BuildRequires: python, python-devel
 Requires: systemimager-client >= %{version}
 AutoReqProv: no
 
@@ -248,6 +259,11 @@ ramdisk can then be used to boot and install %{_build_arch} Linux machines durin
 SystemImager autoinstall process.
 
 %changelog
+* Sun Mar 26 2006 Bernard Li <bli@bcgsc.ca>
+- Added new function %is_suse to test if we're building on SuSE Linux
+- Changed python-xml requires such that it is only required on SuSE Linux, otherwise,
+  require PyXML (Red Hat, Fedora, Mandriva)
+
 * Thu Dec 08 2005 Bernard Li <bli@bcgsc.ca>
 - New package - %{_build_arch}initrd_template
 
