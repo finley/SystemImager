@@ -1,0 +1,15 @@
+--- sysvinit-2.86.ds1.orig/debian/rules	2006-03-26 19:38:08.000000000 -0800
++++ sysvinit-2.86.ds1/debian/rules	2006-03-26 19:35:17.000000000 -0800
+@@ -9,9 +9,9 @@
+ SHELL	= /bin/bash
+ LC_ALL	= POSIX
+ 
+-DEB_HOST_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
+-DEB_HOST_GNU_SYSTEM ?= $(shell dpkg-architecture -qDEB_HOST_GNU_SYSTEM)
+-DEB_HOST_ARCH ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
++#DEB_HOST_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
++#DEB_HOST_GNU_SYSTEM ?= $(shell dpkg-architecture -qDEB_HOST_GNU_SYSTEM)
++#DEB_HOST_ARCH ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
+ 
+ LIBC6	= libc6
+ ifeq ($(DEB_HOST_ARCH), alpha)

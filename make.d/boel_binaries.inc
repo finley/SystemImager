@@ -120,7 +120,8 @@ ifeq ($(USERSPACE64),1)
 	#XXX trying new code below -BEF- XXX  cp -a $(sort $(wildcard /lib*/libnss_dns-*)) $(BOEL_BINARIES_DIR)/lib
 	#XXX we're not concerned about space here, why are we trying to only get the largest .so name?  why not all?
 	#XXX simplifying the code.  let's see if anything breaks. -BEF-
-	cp -a /lib/libnss_dns*   $(BOEL_BINARIES_DIR)/lib
+	output=`find /lib/ -name libnss_dns*`
+	test ! -n "$(output)" || cp -a /lib/libnss_dns*   $(BOEL_BINARIES_DIR)/lib
 	test ! -d /lib64 || cp -a /lib64/libnss_dns* $(BOEL_BINARIES_DIR)/lib64
 endif
 
@@ -133,7 +134,8 @@ ifneq ($(ARCH),i386)
 	# But copy over ld.so* files first.  for some reason these don't always 
 	# get copied by mklibs if both /lib/ld* and /lib64/ld* exist) -BEF-
 	#
-	cp -a /lib/ld*   $(BOEL_BINARIES_DIR)/lib
+	output=`find /lib/ -name ld*`
+	test ! -n "$(output)" || cp -a /lib/ld*   $(BOEL_BINARIES_DIR)/lib
 	test ! -d /lib64 || cp -a /lib64/ld* $(BOEL_BINARIES_DIR)/lib64
 endif
 
