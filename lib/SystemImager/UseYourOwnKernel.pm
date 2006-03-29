@@ -97,18 +97,8 @@ sub create_uyok_initrd() {
         print ">>> Appending insmod commands to ./my_modules_dir/INSMOD_COMMANDS...\n" if( $verbose );
         my @modules = get_load_ordered_list_of_running_modules();
         foreach my $module ( @modules ) {
-
-                $module =~ s/[-_]/(-|_)/g;      # match against either underscores or hyphens -BEF-
-
-                if( $module_paths =~ m#(.*/$module\.(ko|o))# ) {
-
-                        print " >> insmod $1\n" if( $verbose );
-                        print FILE "insmod $1\n";
-
-                } else {
-
-                        print STDERR qq(\nWARNING: Couldn't find module "$module" (skipping it)!\n);
-                }
+                print " >> insmod $module\n" if( $verbose );
+                print FILE "insmod $1\n";
         }
         close(FILE);
 
@@ -490,13 +480,18 @@ sub get_load_ordered_list_of_running_modules() {
         open(MODULES,"<$file") or die("Couldn't open $file for reading.");
         while(<MODULES>) {
                 my ($module) = split;
-                push (@modules, $module);
+                chomp($module_file = `modinfo -F filename $module 2>/dev/null`);
+                if ($?) {
+                        print STDERR qq(WARNING: Couldn't find module "$module " (skipping it)!\n);
+                        next;
+                }
+                push (@modules, $module_file);
         }
         close(MODULES);
-        
+
         # reverse order list of running modules
         @modules = reverse(@modules);
-        
+
         return @modules;
 }
 
