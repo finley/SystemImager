@@ -107,7 +107,7 @@ my $progname = basename $0;
 my $version_info = <<"EOF";
 $progname (part of SystemImager) v$VERSION
 
-Copyright (C) 1999-2005 Brian Elliott Finley
+Copyright (C) 1999-2006 Brian Elliott Finley
 
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -160,8 +160,9 @@ Options:
     creating the UYOK (Use Your Own Kernel) initrd.img.
 
     Normally, only modules essential for accessing network, block, and
-    keyboard devices are included as they are usually not needed for an
-    autoinstall, and they dramatically increase the size of the initrd.img.
+    keyboard devices are included.  Other modules are usually not needed
+    for an autoinstall, and they dramatically increase the size of the 
+    initrd.img.
 
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
@@ -655,7 +656,7 @@ sub create_auto_install_script_conf {
     my $arch = get_arch();
     my $verbose;
     unless($quiet) { $verbose = 1; }
-    SystemImager::UseYourOwnKernel->create_uyok_initrd( $arch, $verbose, $all_modules );
+    SystemImager::UseYourOwnKernel->create_uyok_initrd( $arch, $all_modules, $verbose );
 
     SystemImager::Common->write_auto_install_script_conf_footer($file);
 
