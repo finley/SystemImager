@@ -98,7 +98,7 @@ sub create_uyok_initrd() {
         my @modules = get_load_ordered_list_of_running_modules();
         foreach my $module ( @modules ) {
                 print " >> insmod $module\n" if( $verbose );
-                print FILE "insmod $1\n";
+                print FILE "insmod $module\n";
         }
         close(FILE);
 
@@ -480,7 +480,8 @@ sub get_load_ordered_list_of_running_modules() {
         open(MODULES,"<$file") or die("Couldn't open $file for reading.");
         while(<MODULES>) {
                 my ($module) = split;
-                chomp($module_file = `modinfo -F filename $module 2>/dev/null`);
+                chomp(my $module_file = `modinfo -F filename $module 2>/dev/null`);
+#print "X $module_file\n";
                 if ($?) {
                         print STDERR qq(WARNING: Couldn't find module "$module " (skipping it)!\n);
                         next;
