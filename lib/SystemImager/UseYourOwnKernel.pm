@@ -319,15 +319,6 @@ sub _get_kernel_release($) {
                }
         close(IN);
 
-#       open(FILE,"$file") or die("Couldn't open $file for reading.");
-#               while(<FILE>) {
-#                       # extract the `uname -r` string from the kernel file
-#                       if(m/(2\.[4|6]\.\d{1,2}.*) \(.*\) [#]\d+ \w{3} \w{3} \d+ \d+:\d+:\d+ \w{3} \d+/o) {
-#                               $uname_r = $1;
-#                       }
-#               }
-#       close(FILE);
-
         return $uname_r;
 }
 
@@ -348,39 +339,6 @@ sub _mk_tmp_dir() {
 
         return "${dir}${count}";
 }
-
-
-#sub capture_uyok_info_to_autoinstallscript {
-#
-#        my $module      = shift;
-#        my $file        = shift;
-#
-#        open(FILE,">>$file") or die("Couldn't open $file");
-#
-#                # initrd kernel
-#                my $uname_r = get_uname_r();
-#                print FILE qq(  <initrd kernel_version="$uname_r"/>\n) or die($!);
-#
-#                # initrd fs
-#                my $fs = choose_file_system_for_new_initrd();
-#                print FILE qq(  <initrd fs="$fs"/>\n) or die($!);
-#                print FILE qq(\n) or die($!);
-#
-#                # initrd modules
-#                my @modules = get_load_ordered_list_of_running_modules();
-#                my $line = 1;
-#                foreach( @modules ) {
-#                        print FILE qq(  <initrd load_order="$line"\tmodule="$_"/>\n) or die($!);
-#                        $line++;
-#                }
-#
-#
-#        close(FILE);
-#
-#        capture_dev();
-#
-#        return 1;
-#}
 
 
 sub choose_file_system_for_new_initrd() {
@@ -481,7 +439,6 @@ sub get_load_ordered_list_of_running_modules() {
         while(<MODULES>) {
                 my ($module) = split;
                 chomp(my $module_file = `modinfo -F filename $module 2>/dev/null`);
-#print "X $module_file\n";
                 if ($?) {
                         print STDERR qq(WARNING: Couldn't find module "$module " (skipping it)!\n);
                         next;
@@ -495,19 +452,6 @@ sub get_load_ordered_list_of_running_modules() {
 
         return @modules;
 }
-
-#sub capture_dev {
-#
-#        my $file = "/etc/systemimager/my_device_files.tar";
-#
-#        my $cmd = "tar -cpf $file /dev >/dev/null 2>&1";
-#        !system($cmd) or die("Couldn't $cmd");
-#
-#        $cmd = "gzip --force -9 $file";
-#        !system($cmd) or die("Couldn't $cmd");
-#        
-#        return 1;
-#}
 
 
 sub _create_new_initrd($$) {
