@@ -833,7 +833,7 @@ sub _read_partition_info_and_prepare_parted_commands {
 sub _read_partition_info_and_prepare_soft_raid_devs {
     my ($out, $image_dir, $file) = @_;
 
-    my $xml_config = XMLin($file, keyattr => { lvm_group => "+name" }, forcearray => 1 );
+    my $xml_config = XMLin($file, keyattr => { raid_dev => "+name" }, forcearray => 1 );
     unless (defined($xml_config->{raid})) {
         return;
     }
@@ -941,7 +941,6 @@ sub _read_partition_info_and_prepare_soft_raid_devs {
             print $out "$cmd\n";
         }
     }
-
 }
 
 # Usage:

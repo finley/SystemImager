@@ -835,7 +835,7 @@ sub save_soft_raid_information {
                             $md->{$md_name}->{'parity_algorithm'} = $1;
                         }
                     }
-		            last;
+                    last;
                 } 
             }
             close(MD_INFO);
@@ -869,7 +869,7 @@ sub save_soft_raid_information {
             if ($md->{$_}->{'parity_algorithm'});
         $str .= " lvm_group=\"" . $md->{$_}->{'lvm_group'} . "\""
             if ($md->{$_}->{'lvm_group'});
-        $str .= '>';
+        $str .= ' />';
         # Print soft-RAID entry.
         print OUT "\t$str\n";
     }

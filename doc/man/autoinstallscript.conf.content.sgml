@@ -139,6 +139,14 @@
 		group name. The attribute "flags" must contain the value 'lvm'. 
       </para>
     </listitem>
+
+    <listitem>
+      <para>
+		raid_dev - The partition is used to be part of the specified 
+		Software RAID volume (i.e. "/dev/md0").
+		The attribute "flags" must contain the value 'raid'. 
+      </para>
+    </listitem>
   
   </itemizedlist>
   </refsect1>
