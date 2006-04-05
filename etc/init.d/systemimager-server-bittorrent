@@ -40,7 +40,7 @@ PIDFILE=/var/run/systemimager-server-bttracker.pid
 
 case "$1" in
   start)
-    echo -n "Starting SystemImager's tracker: systemimager-server-bttracker... "
+    echo -n "Starting SystemImager's tracker: systemimager-server-bittorrent... "
     if [ -e $PIDFILE ]; then
         echo -e "failed.\nPID file $PIDFILE exists.  Must be already running."
         exit 1
