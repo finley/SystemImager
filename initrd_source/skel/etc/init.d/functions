@@ -1473,8 +1473,8 @@ send_monitor_msg() {
         fi
 
         # Collect the kernel information.
-        if [ -z "$kernel" ]; then
-            kernel=`uname -r`
+        if [ -z "$kernel_name" ]; then
+            kernel_name=`uname -r`
         fi
 
         # Collect the amount of phyisical memory.
@@ -1490,7 +1490,7 @@ send_monitor_msg() {
     fi
 
     # Report the message to the monitor server.
-    send_msg=`echo "mac=$mac:ip=$IPADDR:host=$HOSTNAME:cpu=$cpu:ncpus=$ncpus:kernel=$kernel:mem=$mem:os=$IMAGENAME:tmpfs=$tmpfs:time=$time:$msg"`
+    send_msg=`echo "mac=$mac:ip=$IPADDR:host=$HOSTNAME:cpu=$cpu:ncpus=$ncpus:kernel=$kernel_name:mem=$mem:os=$IMAGENAME:tmpfs=$tmpfs:time=$time:$msg"`
 
     # Send data to monitor server.
     echo "$send_msg" | nc $MONITOR_SERVER $MONITOR_PORT
