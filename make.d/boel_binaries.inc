@@ -11,8 +11,8 @@ BOEL_BINARIES_DIR 		= $(TOPDIR)/tmp/boel_binaries
 BOEL_BINARIES_TARBALL 	= $(BOEL_BINARIES_DIR).tar.gz
 
 
-PHONY += boel_binaries_tarball_install
-boel_binaries_tarball_install:	$(BOEL_BINARIES_TARBALL)
+PHONY += install_boel_binaries_tarball
+install_boel_binaries_tarball:	$(BOEL_BINARIES_TARBALL)
 	$(SI_INSTALL) -m 644 $(BOEL_BINARIES_TARBALL) $(BOOT_BIN_DEST)
 
 
