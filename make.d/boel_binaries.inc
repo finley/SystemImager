@@ -16,12 +16,6 @@ boel_binaries_tarball_install:	$(BOEL_BINARIES_TARBALL)
 	$(SI_INSTALL) -m 644 $(BOEL_BINARIES_TARBALL) $(BOOT_BIN_DEST)
 
 
-#
-# Maybe we should, like, deprecate this one at some point, eh? -BEF-
-PHONY += install_boel_binaries_tarball
-install_boel_binaries_tarball:	boel_binaries_tarball_install
-
-
 PHONY += boel_binaries_tarball
 boel_binaries_tarball:	$(BOEL_BINARIES_TARBALL)
 
