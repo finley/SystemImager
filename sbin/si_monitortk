@@ -24,10 +24,11 @@ use XML::Simple;
 use Getopt::Long qw(:config no_ignore_case bundling);
 
 my $version_info = << "EOF";
-$program_name\n(part of SystemImager) v$VERSION
+$program_name (part of SystemImager) v$VERSION
 
 Copyright (C) 2005 Andrea Righi <a.righi\@cineca.it>
 Copyright (C) 2005-2006 Bernard Li <bli\@bcgsc.ca>
+
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 EOF
@@ -249,17 +250,18 @@ my $DIALOG_CLEAR_CLIENTS = $window->Dialog(
 );
 my $DIALOG_NO_CLIENTS = $window->Dialog(
 	-title          => "Clear all collected clients",
-	-bitmap		    => 'warning',
+	-bitmap		=> 'warning',
 	-default_button => 'OK',
 	-buttons        => ['OK'],
 	-text           => "No clients collected.",
 );
 my $DIALOG_ABOUT = $window->Dialog(
 	-title          => "About $program_name",
-	-bitmap 		=> 'info',
+	-bitmap 	=> 'info',
 	-default_button => 'OK',
 	-buttons        => ['OK'],
-    -wraplength     => '4i',
+	-font		=> $FONT,
+	-wraplength     => '4i',
 	-text           => "$version_info",
 );
 $help_menu->cget(-menu)->entryconfigure('About',
@@ -279,15 +281,15 @@ my $bal = $window->Balloon(-statusbar => $status_bar);
 # Create the table of nodes status.
 $tab = $window->Scrolled(
 	'HList',
-	-header		=> 1,
-	-columns	=> 12,
-	-scrollbars	=> 'se',
-	-width		=> 110,
-	-height		=> 25,
-	-selectmode	=> 'browse',
+	-header		  => 1,
+	-columns	  => 12,
+	-scrollbars	  => 'se',
+	-width		  => 110,
+	-height		  => 25,
+	-selectmode	  => 'browse',
 	-selectbackground => 'yellow',
-	-command	=> \&show_virtual_console,
-    -browsecmd  => \&update_selected_mac,
+	-command	  => \&show_virtual_console,
+	-browsecmd  	  => \&update_selected_mac,
 )->grid(qw/-sticky nsew/);
 
 # Create the tab item styles.
