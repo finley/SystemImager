@@ -85,9 +85,9 @@ endif
 
 LINUX_SRC := $(SRC_DIR)/$(LINUX_DIR)
 LINUX_TARBALL := linux-$(LINUX_VERSION).tar.bz2
-LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.6/$(LINUX_TARBALL)
+#LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.6/$(LINUX_TARBALL)
 #LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.4/$(LINUX_TARBALL)
-#LINUX_URL = http://download.systemimager.org/pub/linux/$(LINUX_TARBALL)
+LINUX_URL = http://download.systemimager.org/pub/linux/$(LINUX_TARBALL)
 LINUX_CONFIG := $(PATCH_DIR)/linux.$(ARCH).config
 
 ifdef WITH_YDL_KERNEL
