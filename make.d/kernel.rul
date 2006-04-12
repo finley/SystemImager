@@ -40,7 +40,7 @@ ifeq ($(ARCH),alpha)
 endif
 
 ifeq ($(ARCH),x86_64)
-	LINUX_VERSION = 2.6.16
+	LINUX_VERSION = 2.6.16.4
 	LINUX_IMAGE = $(LINUX_SRC)/arch/x86_64/boot/bzImage
 	LINUX_TARGET = bzImage
 	LINUX_DIR = linux-$(LINUX_VERSION)
