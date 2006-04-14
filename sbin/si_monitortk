@@ -164,7 +164,7 @@ $window->gridColumnconfigure(0, -weight => 1);
 $window->protocol('WM_DELETE_WINDOW' => \&quit);
 
 # Use this font.
-my $FONT = '-*-Helvetica-Bold-R-Normal--*-120-*-*-*-*-*-*';
+my $FONT = '-*-helvetica-bold-r-normal-*-12-120-*-*-*-*-*-*';
 
 # Generate the "File" menu bar.
 my $file_menu = $menubar->cascade(
