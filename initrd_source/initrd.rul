@@ -217,15 +217,6 @@ PHONY += install_initrd_template
 install_initrd_template:	$(INITRD_BUILD_DIR).build
 	mkdir -p $(BOOT_BIN_DEST)
 	rsync -a $(INITRD_BUILD_DIR)/ $(BOOT_BIN_DEST)/initrd_template/
-	@echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
-	@echo "XXX"
-	@echo "XXX  The initrd_template should be packaged as a noarch"
-	@echo "XXX  package, but should include the arch in the name:"
-	@echo "XXX"
-	@echo "XXX  	systemimager-initrd_template-<arch>"
-	@echo "XXX"
-	@echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
-
 
 # install the autoinstall ramdisk - the initial ramdisk used by autoinstall
 # clients when beginning an autoinstall
@@ -259,5 +250,3 @@ initrd_clean:	build_dir_clean $(subst .rul,_clean,$(shell cd $(INITRD_DIR)/make.
 PHONY += initrd_distclean
 initrd_distclean:	initrd_clean
 	-rm -rf $(INITRD_SRC_DIR)
-
-
