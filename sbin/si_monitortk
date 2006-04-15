@@ -2,7 +2,7 @@
 #
 #  "SystemImager"
 #
-#  Copyright (C) 2005 Andrea Righi <a.righi@cineca.it>
+#  Copyright (C) 2005-2006 Andrea Righi <a.righi@cineca.it>
 #  Copyright (C) 2005-2006 Bernard Li <bli@bcgsc.ca>
 
 # set version number
@@ -26,7 +26,7 @@ use Getopt::Long qw(:config no_ignore_case bundling);
 my $version_info = << "EOF";
 $program_name (part of SystemImager) v$VERSION
 
-Copyright (C) 2005 Andrea Righi <a.righi\@cineca.it>
+Copyright (C) 2005-2006 Andrea Righi <a.righi\@cineca.it>
 Copyright (C) 2005-2006 Bernard Li <bli\@bcgsc.ca>
 
 This is free software; see the source for copying conditions.  There is NO
@@ -78,27 +78,27 @@ GetOptions(
         "refresh=i"     => \$refresh_rate,
 ) or die "$help_info";
 if ($help) {
-	print "$help_info";
-	exit(0);
+    print "$help_info";
+    exit(0);
 }
 if ($version) {
-	print "$version_info";
-	exit(0);
+    print "$version_info";
+    exit(0);
 }
 
 # Create the database if it doesn't exist.
 $database = $conf{'monitor_db'};
 unless (-f $database) {
-	open(DB, '>', "$database") or
-	die "error: cannot open file \"$database\" for writing!\n";
-	close(DB);
+    open(DB, '>', "$database") or
+    die "error: cannot open file \"$database\" for writing!\n";
+    close(DB);
 }
 
 # Set the refresh rate.
 unless ($refresh_rate) {
-	$refresh_rate = 5000;
+    $refresh_rate = 5000;
 } else {
-	$refresh_rate *= 1000;
+    $refresh_rate *= 1000;
 }
 
 # Define lock files.
@@ -106,12 +106,12 @@ my $lock_file = $conf{'lock_dir'} . "/db.si_monitor.lock";
 
 # Graphic stuff.
 my (
-	$window,
-	$tab, $timer, $status_bar, 
-	$start_refresh_button, $stop_refresh_button,
-	$clear_clients_button,
-	$quit_button,
-	
+    $window,
+    $tab, $timer, $status_bar, 
+    $start_refresh_button, $stop_refresh_button,
+    $clear_clients_button,
+    $quit_button,
+    
     # Selected node entry in the list.
     $selected_mac_addr,
     
@@ -123,9 +123,9 @@ my (
     $sort_order,
 
     # Virtual console stuff.
-	$sub_win,
-	$sub_tab,
-	$sub_title,
+    $sub_win,
+    $sub_tab,
+    $sub_title,
     $sub_mac_addr,
 );
 
@@ -149,8 +149,8 @@ my $attrs_struct = {
     chr(0x07) => { -name => 'speed',  -label => 'S~peed',    -description => 'Network bandwidth' },
     chr(0x08) => { -name => 'mem',    -label => '~RAM',      -description => 'Physical RAM installed in the client' },
     chr(0x09) => { -name => 'tmpfs',  -label => 'RAM ~used', -description => 'Allocated RAM' },
-    chr(0x10) => { -name => 'ncpus',  -label => '~nCPUs',    -description => 'Number of CPUs' },
-    chr(0x11) => { -name => 'cpu',    -label => '~CPU',      -description => 'CPU model' },
+    chr(0x0a) => { -name => 'ncpus',  -label => '~nCPUs',    -description => 'Number of CPUs' },
+    chr(0x0b) => { -name => 'cpu',    -label => '~CPU',      -description => 'CPU model' },
 };
 # Cache attribute names.
 my @attrs = grep !/mac/, map {$attrs_struct->{$_}->{'-name'}} sort keys %{$attrs_struct};
@@ -163,51 +163,57 @@ $window->gridRowconfigure(0, -weight => 1);
 $window->gridColumnconfigure(0, -weight => 1);
 $window->protocol('WM_DELETE_WINDOW' => \&quit);
 
+# Image resources.
+my $server_init_icon  = $window->Photo(-file => 'USR_PREFIX/share/systemimager/icons/serverinit.gif');
+my $server_inst_icon  = $window->Photo(-file => 'USR_PREFIX/share/systemimager/icons/serverinst.gif');
+my $server_ok_icon    = $window->Photo(-file => 'USR_PREFIX/share/systemimager/icons/serverok.gif');
+my $server_error_icon = $window->Photo(-file => 'USR_PREFIX/share/systemimager/icons/servererror.gif');
+
 # Use this font.
 my $FONT = '-*-helvetica-bold-r-normal-*-12-120-*-*-*-*-*-*';
 
 # Generate the "File" menu bar.
 my $file_menu = $menubar->cascade(
-	-label     => 'File',
-	-underline => 0,
-	-tearoff   => 0,
+    -label     => 'File',
+    -underline => 0,
+    -tearoff   => 0,
 );
 my $refresh_file_menu = $file_menu->command(
-	-label    => '~Refresh',
-	-command  => \&start_refresh,
-	-state    => 'disabled',
+    -label    => '~Refresh',
+    -command  => \&start_refresh,
+    -state    => 'disabled',
 );
 my $stop_refresh_file_menu = $file_menu->command(
-	-label    => '~Stop refresh',
-	-command  => \&stop_refresh,
-	-state    => 'normal',
+    -label    => '~Stop refresh',
+    -command  => \&stop_refresh,
+    -state    => 'normal',
 );
 
 $file_menu->separator();
 
 my $clear_clients_file_menu = $file_menu->command(
-	-label    => '~Clear clients',
-	-command  => \&clear_clients,
-	-state    => 'normal',
+    -label    => '~Clear clients',
+    -command  => \&clear_clients,
+    -state    => 'normal',
 );
 
 $file_menu->separator();
 
 my $quit_file_menu = $file_menu->command(
-	-label    => '~Quit',
-	-command  => \&quit,
+    -label    => '~Quit',
+    -command  => \&quit,
 );
 
 # Generate the "Edit" menu bar.
 my $edit_menu = $menubar->cascade(
-	-label     => 'Edit',
-	-underline => 0,
-	-tearoff   => 0,
+    -label     => 'Edit',
+    -underline => 0,
+    -tearoff   => 0,
 );
 my $sort_menu = $edit_menu->cascade(
-	-label     => 'Sort',
-	-underline => 0,
-	-tearoff   => 0,
+    -label     => 'Sort',
+    -underline => 0,
+    -tearoff   => 0,
 );
 # Show sort attributes.
 foreach (sort keys %{$attrs_struct}) {
@@ -237,42 +243,42 @@ $sort_menu->radiobutton(
 
 # Generate the "About" menu bar.
 my $help_menu = $menubar->cascade(qw/-label Help -underline 0 -tearoff 0 -menuitems/ => [
-	[command => '~About'],
+    [command => '~About'],
 ]);
 
 # Dialogs.
 my $DIALOG_CLEAR_CLIENTS = $window->Dialog(
-	-title          => "Clear all collected clients",
-	-bitmap	    	=> 'question',
-	-default_button => 'No',
-	-buttons        => [qw/Yes No/],
-	-text           => "Are you sure to clear all collected clients informations?",
+    -title          => "Clear all collected clients",
+    -bitmap         => 'question',
+    -default_button => 'No',
+    -buttons        => [qw/Yes No/],
+    -text           => "Are you sure to clear all collected clients informations?",
 );
 my $DIALOG_NO_CLIENTS = $window->Dialog(
-	-title          => "Clear all collected clients",
-	-bitmap		=> 'warning',
-	-default_button => 'OK',
-	-buttons        => ['OK'],
-	-text           => "No clients collected.",
+    -title          => "Clear all collected clients",
+    -bitmap         => 'warning',
+    -default_button => 'OK',
+    -buttons        => ['OK'],
+    -text           => "No clients collected.",
 );
 my $DIALOG_ABOUT = $window->Dialog(
-	-title          => "About $program_name",
-	-bitmap 	=> 'info',
-	-default_button => 'OK',
-	-buttons        => ['OK'],
-	-font		=> $FONT,
-	-wraplength     => '4i',
-	-text           => "$version_info",
+    -title          => "About $program_name",
+    -bitmap         => 'info',
+    -default_button => 'OK',
+    -buttons        => ['OK'],
+    -font           => $FONT,
+    -wraplength     => '4i',
+    -text           => "$version_info",
 );
 $help_menu->cget(-menu)->entryconfigure('About',
-	-command => [$DIALOG_ABOUT => 'Show'],
+    -command => [$DIALOG_ABOUT => 'Show'],
 );
 
 # Define the status bar format.
 $status_bar = $window->Label(
-	-relief => "sunken", 
-	-bd => 1, 
-	-anchor => 'sw'
+    -relief => "sunken", 
+    -bd => 1, 
+    -anchor => 'sw'
 );
 
 # Define the balloon structure.
@@ -280,16 +286,17 @@ my $bal = $window->Balloon(-statusbar => $status_bar);
 
 # Create the table of nodes status.
 $tab = $window->Scrolled(
-	'HList',
-	-header		  => 1,
-	-columns	  => 12,
-	-scrollbars	  => 'se',
-	-width		  => 110,
-	-height		  => 25,
-	-selectmode	  => 'browse',
-	-selectbackground => 'yellow',
-	-command	  => \&show_virtual_console,
-	-browsecmd  	  => \&update_selected_mac,
+    'HList',
+    -header           => 1,
+    -columns          => 13,
+    -scrollbars       => 'se',
+    -width            => 110,
+    -height           => 25,
+    -selectmode       => 'browse',
+    -selectbackground => 'yellow',
+    -background       => 'white',
+    -command          => \&show_virtual_console,
+    -browsecmd        => \&update_selected_mac,
 )->grid(qw/-sticky nsew/);
 
 # Create the tab item styles.
@@ -297,6 +304,7 @@ $tab = $window->Scrolled(
 my $init_style = $tab->ItemStyle('text');
 $init_style->configure(
     -foreground => '#0000FF',
+    -background => '#FFFFFF',
     -font       => $FONT,
     -anchor     => 'center',
 );
@@ -304,6 +312,7 @@ $init_style->configure(
 my $fail_style = $tab->ItemStyle('text');
 $fail_style->configure(
     -foreground => '#FF0000',
+    -background => '#FFFFFF',
     -font       => $FONT,
     -anchor     => 'center',
 );
@@ -311,6 +320,7 @@ $fail_style->configure(
 my $done_style = $tab->ItemStyle('text');
 $done_style->configure(
     -foreground => '#009000',
+    -background => '#FFFFFF',
     -font       => $FONT,
     -anchor     => 'center',
 );
@@ -318,6 +328,7 @@ $done_style->configure(
 my $inst_style = $tab->ItemStyle('text');
 $inst_style->configure(
     -foreground => '#000000',
+    -background => '#FFFFFF',
     -font       => $FONT,
     -anchor     => 'center',
 );
@@ -325,12 +336,21 @@ $inst_style->configure(
 my $unkn_style = $tab->ItemStyle('text');
 $unkn_style->configure(
     -foreground => 'darkgrey',
+    -background => '#FFFFFF',
+    -font       => $FONT,
+    -anchor     => 'center',
+);
+# Image style.
+my $image_style = $tab->ItemStyle('imagetext');
+$image_style->configure(
+    -background => '#FFFFFF',
     -font       => $FONT,
     -anchor     => 'center',
 );
 
 # Create the table header.
-my $i = 0;
+$tab->header('create', 0, -text => ' ');
+my $i = 1;
 foreach (sort keys %{$attrs_struct}) {
     $_ = $attrs_struct->{$_}->{'-label'};
     s/~//g;
@@ -359,45 +379,45 @@ exit(0);
 # Usage:
 # show_virtual_console();
 # Description:
-#	Open the virtual console window.
+#    Open the virtual console window.
 sub show_virtual_console 
 {
-	# Allow only one virtual console -AR-
-	# TODO: handle more than one console.
-	$sub_win->destroy() if Exists($sub_win);
+    # Allow only one virtual console -AR-
+    # TODO: handle more than one console.
+    $sub_win->destroy() if Exists($sub_win);
 
-	# Get info to show in the title.
-	my $mac = $tab->itemCget($_[0], 0, 'text');
-	my $ip = $tab->itemCget($_[0], 1, 'text');
-	my $hostname  = $tab->itemCget($_[0], 2, 'text') || '';
-	my $status = $tab->itemCget($_[0], 4, 'text') || '';
+    # Get info to show in the title.
+    my $mac = $tab->itemCget($_[0], 1, 'text');
+    my $ip = $tab->itemCget($_[0], 2, 'text');
+    my $hostname  = $tab->itemCget($_[0], 3, 'text') || '';
+    my $status = $tab->itemCget($_[0], 5, 'text') || '';
 
-	# Open the console in a new window.
-	$sub_win = MainWindow->new();
+    # Open the console in a new window.
+    $sub_win = MainWindow->new();
 
-	# Display the hostname or the IP address in the title.
-	$sub_win->title('Client: ' . ("$hostname" ne '-' ? "$hostname" : "$ip"));
+    # Display the hostname or the IP address in the title.
+    $sub_win->title('Client: ' . ("$hostname" ne '-' ? "$hostname" : "$ip"));
 
-	# Store MAC address of the selected client.
+    # Store MAC address of the selected client.
     $sub_mac_addr = $mac;
 
-	# Console body.
-	$sub_tab = $sub_win->Scrolled(
-		'ROText',
-		-scrollbars => 'e',
-		-wrap       => 'word',
-		-background => 'black',
-		-foreground => 'lightgrey',
-		-font       => $FONT,
-		-setgrid    => 1,
+    # Console body.
+    $sub_tab = $sub_win->Scrolled(
+        'ROText',
+        -scrollbars    => 'e',
+        -wrap          => 'word',
+        -background    => 'black',
+        -foreground    => 'lightgrey',
+        -font          => $FONT,
+        -setgrid       => 1,
         -insertofftime => 0,
-	)->grid(-in => $sub_win, -row => 1, -column => 1, -sticky => 'nsew');
+    )->grid(-in => $sub_win, -row => 1, -column => 1, -sticky => 'nsew');
     $sub_win->gridRowconfigure(1, -weight => 1);
     $sub_win->gridColumnconfigure(1, -weight => 1);
-	$sub_tab->insert('end',
-		"$hostname($ip):> virtual console started for client $mac.\n",
-		'title'
-	);
+    $sub_tab->insert('end',
+        "$hostname($ip):> virtual console started for client $mac.\n",
+        'title'
+    );
 
     unless ($status eq 'done') {
         # Gather all log messages from the installing client.
@@ -439,154 +459,154 @@ sub show_virtual_console
         }
     }
 
-	# Refresh console view (default 100ms).
-	my $cons_timer = Tk::After->new(
-			$sub_win, 
-			100,
-			'repeat', 
-			\&refresh_console
-	);
+    # Refresh console view (default 100ms).
+    my $cons_timer = Tk::After->new(
+            $sub_win, 
+            100,
+            'repeat', 
+            \&refresh_console
+    );
 }
 
 # Usage:
 # refresh_console();
 # Description:
-#	Refresh the virtual console view.
+#    Refresh the virtual console view.
 sub refresh_console
 {
-	# Get mac address of the client to monitor.
+    # Get mac address of the client to monitor.
     my $mac = $sub_mac_addr;
 
-	# Open and read lock the database.
-	open(LOCK, ">", "$lock_file") or
-		die "error: cannot open lock file \"$lock_file\"!\n";
-	flock(LOCK, LOCK_SH);
-	
-	# Parse XML database.
-	my $xml = XMLin($database, KeyAttr => {client => 'name'}, ForceArray => 1);
+    # Open and read lock the database.
+    open(LOCK, ">", "$lock_file") or
+        die "error: cannot open lock file \"$lock_file\"!\n";
+    flock(LOCK, LOCK_SH);
+    
+    # Parse XML database.
+    my $xml = XMLin($database, KeyAttr => {client => 'name'}, ForceArray => 1);
 
-	# Close and unlock database.
-	flock(LOCK, LOCK_UN);
-	close(LOCK);
+    # Close and unlock database.
+    flock(LOCK, LOCK_UN);
+    close(LOCK);
 
-	# Parse clients data.
-	my %client = %{$xml->{'client'}};
+    # Parse clients data.
+    my %client = %{$xml->{'client'}};
 
-	# Correct the host name in the title of the console.
-	if ($client{$mac}->{'host'}) {
-		$sub_win->title('Client: ' . $client{$mac}->{'host'});
-	}
+    # Correct the host name in the title of the console.
+    if ($client{$mac}->{'host'}) {
+        $sub_win->title('Client: ' . $client{$mac}->{'host'});
+    }
 
-	# Generate the last message.
-	my $line = ($client{$mac}->{'host'} || '') . 
-		'(' . $client{$mac}->{'ip'} . ')' .
-		":> " .
-		($client{$mac}->{'log'} || '') . "\n";
+    # Generate the last message.
+    my $line = ($client{$mac}->{'host'} || '') . 
+        '(' . $client{$mac}->{'ip'} . ')' .
+        ":> " .
+        ($client{$mac}->{'log'} || '') . "\n";
 
     # Replace escape sequences for the special field separator ':'.
     $line =~ s/\\x3a/:/g;
 
-	# Get previous message.
-	my $last_line = $sub_tab->get('end - 2 lines', 'end - 1 lines');
+    # Get previous message.
+    my $last_line = $sub_tab->get('end - 2 lines', 'end - 1 lines');
 
-	# Display the client message only if it is different from
-	# the previous one.
-	if ($last_line ne $line) {
-		$sub_tab->insert('end', $line);
-		$sub_tab->see('end');
-	}
+    # Display the client message only if it is different from
+    # the previous one.
+    if ($last_line ne $line) {
+        $sub_tab->insert('end', $line);
+        $sub_tab->see('end');
+    }
 }
 
 # Usage:
 # show_command_buttons(); 
 # Description:
-#	Display the command buttons panel.
+#    Display the command buttons panel.
 sub show_command_buttons
 {
-	# Define buttons.
-	my $buttons = $window->Frame;
-	$start_refresh_button = $buttons->Button(
-		-text      => 'Refresh',
-		-underline => 0,
-		-command   => [\&start_refresh],
-		-width     => 20,
-		-pady      => 5,
-		-padx      => 5,
-		-state     => 'disabled', 
-	);
-	$stop_refresh_button = $buttons->Button(
-		-text      => 'Stop refresh',
-		-underline => 0,
-		-command   => [\&stop_refresh],
-		-width     => 20,
-		-pady      => 5,
-		-padx      => 5,
-		-state     => 'normal', 
-	);
-	$clear_clients_button = $buttons->Button(
-		-text      => 'Clear clients',
-		-underline => 0,
-		-command   => [\&clear_clients],
-		-width     => 20,
-		-pady      => 5,
-		-padx      => 5,
-		-state     => 'normal', 
-	);
-	$quit_button = $buttons->Button(
-		-text      => 'Quit',
-		-underline => 0,
-		-command   => [\&quit],
-		-width     => 20,
-		-pady      => 5,
-		-padx      => 5,
-	);
-	$buttons->grid(qw/-pady 2m -sticky ew/);
-	$buttons->gridColumnconfigure(qw/0 -weight 1/);
-	$buttons->gridColumnconfigure(qw/1 -weight 1/);
-	$buttons->gridColumnconfigure(qw/2 -weight 1/);
-	$buttons->gridColumnconfigure(qw/3 -weight 1/);
-	$start_refresh_button->grid(qw/-row 0 -column 0/);
-	$stop_refresh_button->grid(qw/-row 0 -column 1/);
-	$clear_clients_button->grid(qw/-row 0 -column 2/);
-	$quit_button->grid(qw/-row 0 -column 3/);
+    # Define buttons.
+    my $buttons = $window->Frame;
+    $start_refresh_button = $buttons->Button(
+        -text      => 'Refresh',
+        -underline => 0,
+        -command   => [\&start_refresh],
+        -width     => 20,
+        -pady      => 5,
+        -padx      => 5,
+        -state     => 'disabled', 
+    );
+    $stop_refresh_button = $buttons->Button(
+        -text      => 'Stop refresh',
+        -underline => 0,
+        -command   => [\&stop_refresh],
+        -width     => 20,
+        -pady      => 5,
+        -padx      => 5,
+        -state     => 'normal', 
+    );
+    $clear_clients_button = $buttons->Button(
+        -text      => 'Clear clients',
+        -underline => 0,
+        -command   => [\&clear_clients],
+        -width     => 20,
+        -pady      => 5,
+        -padx      => 5,
+        -state     => 'normal', 
+    );
+    $quit_button = $buttons->Button(
+        -text      => 'Quit',
+        -underline => 0,
+        -command   => [\&quit],
+        -width     => 20,
+        -pady      => 5,
+        -padx      => 5,
+    );
+    $buttons->grid(qw/-pady 2m -sticky ew/);
+    $buttons->gridColumnconfigure(qw/0 -weight 1/);
+    $buttons->gridColumnconfigure(qw/1 -weight 1/);
+    $buttons->gridColumnconfigure(qw/2 -weight 1/);
+    $buttons->gridColumnconfigure(qw/3 -weight 1/);
+    $start_refresh_button->grid(qw/-row 0 -column 0/);
+    $stop_refresh_button->grid(qw/-row 0 -column 1/);
+    $clear_clients_button->grid(qw/-row 0 -column 2/);
+    $quit_button->grid(qw/-row 0 -column 3/);
 
-	# Bind hot-keys to buttons.
-	$window->bind("<Alt-r>", sub {$start_refresh_button->invoke;});
-	$window->bind("<Alt-s>", sub {$stop_refresh_button->invoke;});
-	$window->bind("<Alt-c>", sub {$clear_clients_button->invoke;});
-	$window->bind("<Alt-q>", sub {$quit_button->invoke;});
+    # Bind hot-keys to buttons.
+    $window->bind("<Alt-r>", sub {$start_refresh_button->invoke;});
+    $window->bind("<Alt-s>", sub {$stop_refresh_button->invoke;});
+    $window->bind("<Alt-c>", sub {$clear_clients_button->invoke;});
+    $window->bind("<Alt-q>", sub {$quit_button->invoke;});
 
-	# Define status bar messages.
-	$bal->attach($start_refresh_button,
-		-statusmsg  => "Start to refresh the status of the nodes",
-	);
-	$bal->attach($stop_refresh_button,
-		-statusmsg  => "Stop to refresh the status of the nodes",
-	);
-	$bal->attach($clear_clients_button,
-		-statusmsg  => "Clear all collected clients",
-	);
-	$bal->attach($quit_button,
-		-statusmsg  => "Quit program",
-	);
-	
-	# Draw status bar.
-	$status_bar->grid("-", "-", -sticky => "nesw");
+    # Define status bar messages.
+    $bal->attach($start_refresh_button,
+        -statusmsg  => "Start to refresh the status of the nodes",
+    );
+    $bal->attach($stop_refresh_button,
+        -statusmsg  => "Stop to refresh the status of the nodes",
+    );
+    $bal->attach($clear_clients_button,
+        -statusmsg  => "Clear all collected clients",
+    );
+    $bal->attach($quit_button,
+        -statusmsg  => "Quit program",
+    );
+    
+    # Draw status bar.
+    $status_bar->grid("-", "-", -sticky => "nesw");
 }
 
 # Usage:
 # update_selected_mac(); 
 # Description:
-#	Set the selected client entry in the table.
+#    Set the selected client entry in the table.
 sub update_selected_mac
 {
-    $selected_mac_addr = $tab->itemCget($_[0], 0, 'text');
+    $selected_mac_addr = $tab->itemCget($_[0], 1, 'text');
 }
 
 # Usage:
 # display_nodes(); 
 # Description:
-#	Fill the main list with the status of all nodes.
+#    Fill the main list with the status of all nodes.
 sub display_nodes
 {
     ### XXX: Profiling stuff ###
@@ -612,20 +632,20 @@ sub display_nodes
         goto status_bar_update;
     }
 
-	# Open and read lock the database.
-	open(LOCK, ">", "$lock_file") or
-		die "error: cannot open lock file \"$lock_file\"!\n";
-	flock(LOCK, LOCK_SH);
-	
-	# Parse XML database.
-	my $xml = XMLin($database, KeyAttr => {client => 'name'}, ForceArray => 1);
+    # Open and read lock the database.
+    open(LOCK, ">", "$lock_file") or
+        die "error: cannot open lock file \"$lock_file\"!\n";
+    flock(LOCK, LOCK_SH);
+    
+    # Parse XML database.
+    my $xml = XMLin($database, KeyAttr => {client => 'name'}, ForceArray => 1);
 
-	# Close and unlock database.
-	flock(LOCK, LOCK_UN);
-	close(LOCK);
+    # Close and unlock database.
+    flock(LOCK, LOCK_UN);
+    close(LOCK);
 
-	# Display DB entries.
-	my $client = $xml->{'client'};
+    # Display DB entries.
+    my $client = $xml->{'client'};
     # Sort clients.
     my @list;
     if ($sort_field eq 'mac') {
@@ -646,77 +666,90 @@ sub display_nodes
             }
         } keys %{$client};
     }
-	foreach my $mac (@list) {
-		# Create the entry.
-		my $row = $tab->addchild('');
-		# Evaluate the status and adjust the style of the entry.
-		my $style;
-		my $status = $client->{$mac}->{'status'} || 0;
-		if (!$status) {
+    foreach my $mac (@list) {
+        # Create the entry.
+        my $row = $tab->addchild('');
+        # Evaluate the status and adjust the style of the entry.
+        my ($style, $status_icon);
+        my $status = $client->{$mac}->{'status'} || 0;
+        if (!$status) {
             $num_inst++;
-			$client->{$mac}->{'status'} = 'initializing...';
-			$style = $init_style;
-		} elsif ($status < 0) {
+            $client->{$mac}->{'status'} = 'initializing...';
+            $style = $init_style;
+            $status_icon = $server_init_icon;
+        } elsif ($status < 0) {
             $num_fail++;
-			$client->{$mac}->{'status'} = 'error!';
-			$style = $fail_style;
-		} elsif ($status == 100) {
+            $client->{$mac}->{'status'} = 'error!';
+            $style = $fail_style;
+            $status_icon = $server_error_icon;
+        } elsif ($status == 100) {
             $num_ok++;
-			$client->{$mac}->{'status'} = 'done';
-			$style = $done_style;
-		} elsif (($status > 0) && ($status < 100)) {
+            $client->{$mac}->{'status'} = 'done';
+            $style = $done_style;
+            $status_icon = $server_ok_icon;
+        } elsif (($status > 0) && ($status < 100)) {
             $num_inst++;
             $client->{$mac}->{'status'} = sprintf('%.2f%%', $status);
-			$style = $inst_style;
-		} else {
+            $style = $inst_style;
+            $status_icon = $server_inst_icon;
+        } else {
             $num_unkn++;
             $client->{$mac}->{'status'} = '???';
-			$style = $unkn_style;
-		}
-		# Format the uptime.
+            $style = $unkn_style;
+            $status_icon = $server_error_icon;
+        }
+        # Format the uptime.
         if (defined($client->{$mac}->{'time'})) {
             $client->{$mac}->{'time'} .= 'min';
         }
-		# Format the bandwidth.
+        # Format the bandwidth.
         if (!$client->{$mac}->{'speed'}) {
             $client->{$mac}->{'speed'} = '-';
         } else {
             if ($client->{$mac}->{'speed'} < 1000) {
                 $client->{$mac}->{'speed'} = 
-                    sprintf("%.0fKB/s", $client->{$mac}->{'speed'});
+                sprintf("%.0fKB/s", $client->{$mac}->{'speed'});
             } else {
                 $client->{$mac}->{'speed'} = 
-                    sprintf("%.2fMB/s", $client->{$mac}->{'speed'} / 1000);
+                sprintf("%.2fMB/s", $client->{$mac}->{'speed'} / 1000);
             }
         }
-		# Format the total amount of RAM.
+        # Format the total amount of RAM.
         if (defined($client->{$mac}->{'mem'})) {
             $client->{$mac}->{'mem'} .= 'MB';
         }
-		# Display the node identity (MAC address).
-		$tab->itemCreate(
-			$row,
-			0,
-			-itemtype => 'text',
-			-style    => $style,
-			-text     => $mac,
-		);
-		# Display other node attributes.
-		for (0 .. $#attrs) {
+        # Display the node icon.
+        $tab->itemCreate(
+            $row,
+            0,
+            -itemtype => 'imagetext',
+            -style    => $image_style,
+            -image    => $status_icon,
+        );
+        # Display the node identity (MAC address).
+        $tab->itemCreate(
+            $row,
+            1,
+            -itemtype => 'text',
+            -style    => $style,
+            -text     => $mac,
+        );
+        # Display other node attributes.
+        for (0 .. $#attrs) {
             $tab->itemCreate(
-			    $row,
-    			$_ + 1,
-    			-itemtype => 'text',
-    			-style    => $style,
-    			-text     => $client->{$mac}->{$attrs[$_]} || '-',
-			);
-		}
+                $row,
+                $_ + 2,
+                -itemtype => 'text',
+                -style    => $style,
+                -text     => $client->{$mac}->{$attrs[$_]} || '-',
+            );
+        }
         # Update selection.
         if (defined($selected_mac_addr) && ($selected_mac_addr eq $mac)) {
             $tab->selectionSet($row);
             $tab->anchorSet($row);
         }
-	}
+    }
     # Update the status bar.
 status_bar_update:
     ### XXX: Profiling stuff ###
@@ -735,7 +768,7 @@ status_bar_update:
 # Usage:
 # refresh();
 # Description:
-#	Refresh the client label.
+#    Refresh the client label.
 sub refresh
 {
     # FIXME: maybe a semaphore/spinlock is needed here.
@@ -745,7 +778,7 @@ sub refresh
     $is_refreshing = 1;
 
     # Refresh clients.
-	display_nodes();
+    display_nodes();
 
     $is_refreshing = 0;
 }
@@ -753,89 +786,89 @@ sub refresh
 # Usage:
 # start_refresh();
 # Description:
-#	Begin to refresh the nodes view.
+#    Begin to refresh the nodes view.
 sub start_refresh
 {
-	# Refresh nodes visualization.
-	$timer = Tk::After->new($window, $refresh_rate, 'repeat', \&refresh);
+    # Refresh nodes visualization.
+    $timer = Tk::After->new($window, $refresh_rate, 'repeat', \&refresh);
 
-	# Refresh the buttons look.
-	$start_refresh_button->configure(-state => 'disabled');
-	$stop_refresh_button->configure(-state => 'normal');
+    # Refresh the buttons look.
+    $start_refresh_button->configure(-state => 'disabled');
+    $stop_refresh_button->configure(-state => 'normal');
 
-	# Refresh the menu look.
-	$refresh_file_menu->configure(-state => 'disabled');
-	$stop_refresh_file_menu->configure(-state => 'normal');
+    # Refresh the menu look.
+    $refresh_file_menu->configure(-state => 'disabled');
+    $stop_refresh_file_menu->configure(-state => 'normal');
 }
 
 # Usage:
 # stop_refresh();
 # Description:
-#	Stop to refresh the nodes view.
+#    Stop to refresh the nodes view.
 sub stop_refresh
 {
-	# Stop to refresh nodes view.
-	$timer->cancel();
+    # Stop to refresh nodes view.
+    $timer->cancel();
 
-	# Refresh the interface look.
-	$start_refresh_button->configure(-state => 'normal');
-	$stop_refresh_button->configure(-state => 'disabled');
+    # Refresh the interface look.
+    $start_refresh_button->configure(-state => 'normal');
+    $stop_refresh_button->configure(-state => 'disabled');
 
-	# Refresh the menu look.
-	$refresh_file_menu->configure(-state => 'normal');
-	$stop_refresh_file_menu->configure(-state => 'disabled');
+    # Refresh the menu look.
+    $refresh_file_menu->configure(-state => 'normal');
+    $stop_refresh_file_menu->configure(-state => 'disabled');
 }
 
 # Usage:
 # clear_clients();
 # Description:
-#	Clear all collected informations
+#    Clear all collected informations
 sub clear_clients
 {
-	# If database is empty simply quit.
-	unless (-s $database) {
-		$DIALOG_NO_CLIENTS->Show();
-		return;
-	}
+    # If database is empty simply quit.
+    unless (-s $database) {
+        $DIALOG_NO_CLIENTS->Show();
+        return;
+    }
 
-	# Ask for a confirmation before deleting.
-	my $answer = $DIALOG_CLEAR_CLIENTS->Show();
-	if ($answer eq "No") {
-		return;
-	}
+    # Ask for a confirmation before deleting.
+    my $answer = $DIALOG_CLEAR_CLIENTS->Show();
+    if ($answer eq "No") {
+        return;
+    }
 
-	# Close the virtual consoles if opened.
-	$sub_win->destroy() if Exists($sub_win);
+    # Close the virtual consoles if opened.
+    $sub_win->destroy() if Exists($sub_win);
 
-	# Open and read lock the database.
-	open(LOCK, '>', "$lock_file") or
-		die "error: cannot open lock file \"$lock_file\"!\n";
-	flock(LOCK, LOCK_EX);
+    # Open and read lock the database.
+    open(LOCK, '>', "$lock_file") or
+        die "error: cannot open lock file \"$lock_file\"!\n";
+    flock(LOCK, LOCK_EX);
 
-	# Clear the XML database.
-	open(DB, '>', $database) or
-		die "error: cannot open \"$database\" for writing!\n";
-	close(DB);
+    # Clear the XML database.
+    open(DB, '>', $database) or
+        die "error: cannot open \"$database\" for writing!\n";
+    close(DB);
 
-	# Close and unlock database.
-	flock(LOCK, LOCK_UN);
-	close(LOCK);
+    # Close and unlock database.
+    flock(LOCK, LOCK_UN);
+    close(LOCK);
 
-	# Refresh view.
-	refresh();
+    # Refresh view.
+    refresh();
 }
 
 # Usage:
 # quit();
 # Description:
-#	Exit program.
+#    Exit program.
 
 sub quit
 {
     # Close the virtual console.
-	$sub_win->destroy() if Exists($sub_win);
+    $sub_win->destroy() if Exists($sub_win);
     # Close the main window.
-	$window->destroy() if Exists($window);
+    $window->destroy() if Exists($window);
     # Quit program.
     exit(0);
 }
@@ -901,7 +934,8 @@ Andrea Righi <a.righi@cineca.it>.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2003 by Andrea Righi <a.righi@cineca.it>.
+Copyright (C) 2005-2006 Andrea Righi <a.righi@cineca.it>
+Copyright (C) 2005-2006 Bernard Li <bli@bcgsc.ca>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
