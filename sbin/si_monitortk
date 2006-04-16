@@ -252,6 +252,7 @@ my $DIALOG_CLEAR_CLIENTS = $window->Dialog(
     -bitmap         => 'question',
     -default_button => 'No',
     -buttons        => [qw/Yes No/],
+    -font           => $FONT,
     -text           => "Are you sure to clear all collected clients informations?",
 );
 my $DIALOG_NO_CLIENTS = $window->Dialog(
@@ -259,6 +260,7 @@ my $DIALOG_NO_CLIENTS = $window->Dialog(
     -bitmap         => 'warning',
     -default_button => 'OK',
     -buttons        => ['OK'],
+    -font           => $FONT,
     -text           => "No clients collected.",
 );
 my $DIALOG_ABOUT = $window->Dialog(
