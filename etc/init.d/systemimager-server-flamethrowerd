@@ -27,7 +27,7 @@
 
 kill_em_all() {
     if [ -f $PPID_FILE ]; then
-        kill `cat $PPID_FILE`
+        kill -9 `cat $PPID_FILE`
         rm -f $PPID_FILE
     fi
     if [ "`ls $STATE_DIR`" != "" ]; then
