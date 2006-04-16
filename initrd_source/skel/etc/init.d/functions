@@ -1540,14 +1540,14 @@ start_report_task() {
     IMAGESIZE=`expr $IMAGESIZE / 1024`
 
     # Evaluate disks size.
-    LIST=`df 2>/dev/null | grep "/" | sed "s/  */ /g" | sed "s/\(.*\) \(.*\) \(.*\) \(.*\) \(.*\) \(.*\)/\3+/"`0
+    LIST=`df 2>/dev/null | grep "/" | sed "s/  */ /g" | cut -d' ' -f3 | sed -ne 's/^\([0-9]*\)$/\1+/p'`0
     DISKSIZE=`echo $LIST | bc`
 
     # Spawn the report task -AR-
     {
     TOT=0; CURR_SIZE=0
     while :; do
-        LIST=`df 2>/dev/null | grep "/" | sed "s/  */ /g" | sed "s/\(.*\) \(.*\) \(.*\) \(.*\) \(.*\) \(.*\)/\3+/"`0
+        LIST=`df 2>/dev/null | grep "/" | sed "s/  */ /g" | cut -d' ' -f3 | sed -ne 's/^\([0-9]*\)$/\1+/p'`0
         TOT=`echo $LIST | bc`
 
         # Evaluate bandwidth.
