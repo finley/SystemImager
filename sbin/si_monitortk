@@ -18,6 +18,7 @@ use Tk::Balloon;
 use Tk::HList;
 use Tk::ItemStyle;
 use Tk::ROText;
+use Tk::ProgressBar;
 use Tk::widgets qw/Dialog ErrorDialog/;
 use Fcntl ':flock';
 use XML::Simple;
@@ -47,6 +48,9 @@ Options: (options can be presented in any order and may be abbreviated)
  --db DATABASENAME      Get clients informations from the XML file
                         DATABASENAME.
 
+ --progress             Display a graphical progress bar, instead of
+                        numerical percentages.
+
  --refresh RATE         Set the refresh rate (in sec).
 
 Download, report bugs, and make suggestions at:
@@ -70,11 +74,12 @@ die "No such lock directory '$conf{'lock_dir'}'\n"
 # Get the database file.
 $conf{'monitor_db'} ||= "/var/lib/systemimager/clients.xml";
 
-my ($help, $version, $quiet, $database, $refresh_rate); 
+my ($help, $version, $quiet, $database, $refresh_rate, $progress); 
 GetOptions(
         "help"          => \$help,
         "version"       => \$version,
         "db=s"          => \$database,
+        "progress"      => \$progress,
         "refresh=i"     => \$refresh_rate,
 ) or die "$help_info";
 if ($help) {
@@ -106,11 +111,13 @@ my $lock_file = $conf{'lock_dir'} . "/db.si_monitor.lock";
 
 # Graphic stuff.
 my (
+    # Main window.
     $window,
     $tab, $timer, $status_bar, 
     $start_refresh_button, $stop_refresh_button,
     $clear_clients_button,
     $quit_button,
+    $status_progress,
     
     # Selected node entry in the list.
     $selected_mac_addr,
@@ -240,6 +247,10 @@ $sort_menu->radiobutton(
     -value    => 0,
     -state    => 'normal',
 );
+$edit_menu->checkbutton(
+    -label     => '~Show progress bars',
+    -variable  => \$progress,
+);
 
 # Generate the "About" menu bar.
 my $help_menu = $menubar->cascade(qw/-label Help -underline 0 -tearoff 0 -menuitems/ => [
@@ -347,6 +358,11 @@ my $image_style = $tab->ItemStyle('imagetext');
 $image_style->configure(
     -background => '#FFFFFF',
     -font       => $FONT,
+    -anchor     => 'center',
+);
+# Window style.
+my $window_style = $tab->ItemStyle('window');
+$window_style->configure(
     -anchor     => 'center',
 );
 
@@ -700,6 +716,33 @@ sub display_nodes
             $style = $unkn_style;
             $status_icon = $server_error_icon;
         }
+        # Create the installation progress bar.
+        if ($progress) {
+            $status_progress = $tab->ProgressBar(
+                -borderwidth => 0,
+                -relief      => 'flat',
+                -padx        => 2,
+                -pady        => 8,
+                -variable    => \$status,
+                -colors      => [
+                    0  => '#0000FF', 
+                    10 => '#0000EF', 
+                    20 => '#0000DF', 
+                    30 => '#0000CF',
+                    40 => '#0000BF', 
+                    50 => '#0000AF', 
+                    60 => '#00009F', 
+                    70 => '#00008F',
+                    80 => '#00007F', 
+                    90 => '#00006F', 
+                ],
+                -troughcolor => 'white',
+                -gap         => 0,
+                -blocks      => 10,
+                -from        => 0,
+                -to          => 100,
+           );
+        }
         # Format the uptime.
         if (defined($client->{$mac}->{'time'})) {
             $client->{$mac}->{'time'} .= 'min';
@@ -738,13 +781,24 @@ sub display_nodes
         );
         # Display other node attributes.
         for (0 .. $#attrs) {
-            $tab->itemCreate(
-                $row,
-                $_ + 2,
-                -itemtype => 'text',
-                -style    => $style,
-                -text     => $client->{$mac}->{$attrs[$_]} || '-',
-            );
+            if (($progress) && ($attrs[$_] eq 'status')) {
+                # Display the status using a progress bar.
+                $tab->itemCreate(
+                    $row,
+                    $_ + 2,
+                    -itemtype => 'window',
+                    -style    => $window_style,
+                    -widget   => $status_progress,
+                );
+            } else {
+                $tab->itemCreate(
+                    $row,
+                    $_ + 2,
+                    -itemtype => 'text',
+                    -style    => $style,
+                    -text     => $client->{$mac}->{$attrs[$_]} || '-',
+                );
+            }
         }
         # Update selection.
         if (defined($selected_mac_addr) && ($selected_mac_addr eq $mac)) {
@@ -917,6 +971,11 @@ to use this interface probably you need to start first the B<si_monitor>
 daemon.
 
 For default the file B</var/lib/systemimager/clients.xml> is taken.
+
+=item B<--progress>
+
+Display progress bars instead of textual precentages for installation
+status.
 
 =item B<--refresh RATE>
 
