@@ -45,3 +45,4 @@ cx_freeze_clean:
 	rm -f  $(CX_FREEZE_DIR).unpack
 	rm -f  $(CX_FREEZE_DIR).build
 
+DEBIAN_BUILD_DEPS += python-dev
