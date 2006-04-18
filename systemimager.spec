@@ -259,6 +259,14 @@ ramdisk can then be used to boot and install %{_build_arch} Linux machines durin
 SystemImager autoinstall process.
 
 %changelog
+* Sun Apr 16 2006 Bernard Li <bli@bcgsc.ca>
+- Added %post and %preun sections for flamethrower
+
+* Sat Apr 15 2006 Bernard Li <bli@bcgsc.ca>
+- Added bits to add/remove init scripts for systemimager-server-{netbootmond
+  monitord,bittorrent}
+- Added /usr/share/systemimager/icons/* to %files
+
 * Sun Mar 26 2006 Bernard Li <bli@bcgsc.ca>
 - Added new function %is_suse to test if we're building on SuSE Linux
 - Changed python-xml requires such that it is only required on SuSE Linux, otherwise,
@@ -537,21 +545,36 @@ fi
 
 if [[ -a /usr/lib/lsb/install_initd ]]; then
     /usr/lib/lsb/install_initd /etc/init.d/systemimager-server-rsyncd
+    /usr/lib/lsb/install_initd /etc/init.d/systemimager-server-netbootmond
+    /usr/lib/lsb/install_initd /etc/init.d/systemimager-server-monitord
+    /usr/lib/lsb/install_initd /etc/init.d/systemimager-server-bittorrent
 fi
 
 if [[ -a /sbin/chkconfig ]]; then
     /sbin/chkconfig --add systemimager-server-rsyncd
+    /sbin/chkconfig --add systemimager-server-netbootmond
+    /sbin/chkconfig --add systemimager-server-monitord
+    /sbin/chkconfig --add systemimager-server-bittorrent
 fi
 
 %preun server
 /etc/init.d/systemimager-server-rsyncd stop
+/etc/init.d/systemimager-server-netbootmond stop
+/etc/init.d/systemimager-server-monitord stop
+/etc/init.d/systemimager-server-bittorrent stop
 
 if [[ -a /usr/lib/lsb/remove_initd ]]; then
     /usr/lib/lsb/remove_initd /etc/init.d/systemimager-server-rsyncd
+    /usr/lib/lsb/remove_initd /etc/init.d/systemimager-server-netbootmond
+    /usr/lib/lsb/remove_initd /etc/init.d/systemimager-server-monitord
+    /usr/lib/lsb/remove_initd /etc/init.d/systemimager-server-bittorrent
 fi
 
 if [[ -a /sbin/chkconfig ]]; then
     /sbin/chkconfig --del systemimager-server-rsyncd
+    /sbin/chkconfig --del systemimager-server-netbootmond
+    /sbin/chkconfig --del systemimager-server-monitord
+    /sbin/chkconfig --del systemimager-server-bittorrent
 fi
 
 if [[ -a /etc/xinetd.d/rsync.presis~ ]]; then
@@ -562,6 +585,25 @@ if [[ -a /etc/xinetd.d/rsync.presis~ ]]; then
     fi
 fi
 
+%post flamethrower
+if [[ -a /usr/lib/lsb/install_initd ]]; then
+    /usr/lib/lsb/install_initd /etc/init.d/systemimager-server-flamethrowerd
+fi
+
+if [[ -a /sbin/chkconfig ]]; then
+    /sbin/chkconfig --add systemimager-server-flamethrowerd
+fi
+
+%preun flamethrower
+/etc/init.d/systemimager-server-flamethrowerd stop
+
+if [[ -a /usr/lib/lsb/remove_initd ]]; then
+    /usr/lib/lsb/remove_initd /etc/init.d/systemimager-server-flamethrowerd
+fi
+
+if [[ -a /sbin/chkconfig ]]; then
+    /sbin/chkconfig --del systemimager-server-flamethrowerd
+fi
 
 %files common
 %defattr(-, root, root)
@@ -591,6 +633,8 @@ fi
 %dir /var/lib/systemimager/overrides
 /var/lib/systemimager/overrides/README
 %dir /etc/systemimager
+%dir %prefix/share/systemimager
+%dir %prefix/share/systemimager/icons
 %config /etc/systemimager/pxelinux.cfg/*
 %config /etc/systemimager/autoinstallscript.template
 %config(noreplace) /etc/systemimager/rsync_stubs/*
@@ -630,6 +674,7 @@ fi
 %prefix/share/man/man8/si_mvimage*
 %prefix/share/man/man8/si_rmimage*
 %prefix/share/man/man8/si_pushupdate*
+%prefix/share/systemimager/icons/*
 
 %files client
 %defattr(-, root, root)
