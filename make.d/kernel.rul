@@ -19,7 +19,7 @@ ifeq ($(ARCH),i386)
 endif
 
 ifeq ($(ARCH),ia64)
-	LINUX_VERSION = 2.6.10
+	LINUX_VERSION = 2.6.16.5
 	LINUX_IMAGE = $(LINUX_SRC)/vmlinux.gz
 	LINUX_TARGET = compressed
 	LINUX_DIR = linux-$(LINUX_VERSION)
