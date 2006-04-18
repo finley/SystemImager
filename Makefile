@@ -348,7 +348,7 @@ install_server:	install_server_man 	\
 	$(SI_INSTALL) -d -m 755 $(FLAMETHROWER_STATE_DIR)
 
 	# Install server-side BitTorrent.
-	cd $(BITTORRENT_DIR) && $(PYTHON) setup.py install --prefix $(PREFIX)
+	cd $(BITTORRENT_DIR) && $(PYTHON) setup.py install --prefix $(USR)
 
 # install client-only files
 .PHONY:	install_client
