@@ -197,60 +197,6 @@ all:	config.inc boel_binaries_tarball kernel $(INITRD_DIR)/initrd.img manpages
 config.inc:
 	./configure
 
-.PHONY:	help
-help:  show_targets
-
-#
-#
-# Show me a list of all targets in this entire build heirarchy
-.PHONY:	show_targets
-show_targets:
-	@echo
-	@echo Makefile targets you are probably most interested in:
-	@echo ---------------------------------------------------------------------
-	@echo "all"
-	@echo "    Build everything you need for your machine's architecture."
-	@echo "	"
-	@echo "install_client_all"
-	@echo "    Install all files needed by a client."
-	@echo "	"
-	@echo "install_server_all"
-	@echo "    Install all files needed by a server."
-	@echo "	"
-	@echo "install_boel_binaries_tarball:"
-	@echo ""
-	@echo "install_initrd:"
-	@echo ""
-	@echo "source_tarball:"
-	@echo "    Make a source tarball for distribution."
-	@echo "	"
-	@echo "    Includes SystemImager source only.  Source for all"
-	@echo "    the tools SystemImager depends on will be found in /usr/src "
-	@echo "    or will be automatically downloaded at build time."
-	@echo "	"
-	@echo "complete_source_tarball:"
-	@echo "    Make a source tarball for distribution."
-	@echo "    "
-	@echo "    Includes all necessary source for building SystemImager and"
-	@echo "    all of it's supporting tools."
-	@echo "	"
-	@echo "rpm:"
-	@echo ""
-	@echo "srpm:"
-	@echo ""
-	@echo "show_all_targets"
-	@echo "    Show all available targets."
-	@echo
-
-
-.PHONY:	show_all_targets
-SHOW_TARGETS_ALL_MAKEFILES = $(shell find . -name 'Makefile' -or -name '*.rul')
-show_all_targets:
-	@echo All Available Targets Include:
-	@echo ---------------------------------------------------------------------
-	cat $(SHOW_TARGETS_ALL_MAKEFILES) | egrep '^[a-z_]+:' | sed 's/:.*//' | sort -u
-	@echo
-
 binaries: $(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.img
 
 # All has been modified as docs don't build on non debian platforms
@@ -594,4 +540,60 @@ clean:	$(subst .rul,_clean,$(shell cd $(TOPDIR)/make.d && ls *.rul)) initrd_clea
 .PHONY:	distclean
 distclean:	clean initrd_distclean
 	-rm -rf $(SRC_DIR) $(INITRD_SRC_DIR)
+
+.PHONY:	help
+help:  show_targets
+
+#
+#
+# Show me a list of all targets in this entire build heirarchy
+.PHONY:	show_targets
+show_targets:
+	@echo
+	@echo Makefile targets you are probably most interested in:
+	@echo ---------------------------------------------------------------------
+	@echo "all"
+	@echo "    Build everything you need for your machine's architecture."
+	@echo "	"
+	@echo "install_client_all"
+	@echo "    Install all files needed by a client."
+	@echo "	"
+	@echo "install_server_all"
+	@echo "    Install all files needed by a server."
+	@echo "	"
+	@echo "install_boel_binaries_tarball:"
+	@echo ""
+	@echo "install_initrd:"
+	@echo ""
+	@echo "source_tarball:"
+	@echo "    Make a source tarball for distribution."
+	@echo "	"
+	@echo "    Includes SystemImager source only.  Source for all"
+	@echo "    the tools SystemImager depends on will be found in /usr/src "
+	@echo "    or will be automatically downloaded at build time."
+	@echo "	"
+	@echo "complete_source_tarball:"
+	@echo "    Make a source tarball for distribution."
+	@echo "    "
+	@echo "    Includes all necessary source for building SystemImager and"
+	@echo "    all of it's supporting tools."
+	@echo "	"
+	@echo "rpm:"
+	@echo ""
+	@echo "srpm:"
+	@echo ""
+	@echo "show_all_targets"
+	@echo "    Show all available targets."
+	@echo
+	@echo "Debian Build Deps:"
+	@echo "    $(DEBIAN_BUILD_DEPS)"
+
+
+.PHONY:	show_all_targets
+SHOW_TARGETS_ALL_MAKEFILES = $(shell find . -name 'Makefile' -or -name '*.rul')
+show_all_targets:
+	@echo All Available Targets Include:
+	@echo ---------------------------------------------------------------------
+	cat $(SHOW_TARGETS_ALL_MAKEFILES) | egrep '^[a-z_]+:' | sed 's/:.*//' | sort -u
+	@echo
 
