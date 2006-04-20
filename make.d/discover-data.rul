@@ -5,12 +5,12 @@
 # 	original source: http://debian.uchicago.edu/debian/pool/main/d/discover/
 #
 #
-DISCOVER_DATA_VERSION	:= 1.2005.11.25
+DISCOVER_DATA_VERSION	:= 1.2006.01.14
 DISCOVER_DATA_DIR 		:= $(SRC_DIR)/discover1-data-$(DISCOVER_DATA_VERSION)
 DISCOVER_DATA_TARBALL 	:= discover1-data_$(DISCOVER_DATA_VERSION).tar.gz
 DISCOVER_DATA_URL 		:= http://download.systemimager.org/pub/discover/$(DISCOVER_DATA_TARBALL)
 DISCOVER_DATA_FILES 	 = $(wildcard $(DISCOVER_DATA_DIR)/*.lst)
-DISCOVER_DATA_PATCHES 	 = $(shell ls $(PATCH_DIR)/discover1-data.*.patch 2>/dev/null | sort)
+DISCOVER_DATA_PATCHES 	 = $(shell ls $(PATCH_DIR)/discover-data.*.patch 2>/dev/null | sort)
 
 ALL_SOURCE += $(SRC_DIR)/$(DISCOVER_DATA_TARBALL)
 
@@ -36,5 +36,3 @@ PHONY += discover-data_clean
 discover-data_clean:
 	rm -rf $(DISCOVER_DATA_DIR)
 	rm  -f $(DISCOVER_DATA_DIR).{unpack,build}
-
-
