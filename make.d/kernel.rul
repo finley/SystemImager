@@ -76,7 +76,7 @@ ifdef WITH_YDL_KERNEL
     LINUX_DIR = linux-$(LINUX_VERSION)
 
 else
-	LINUX_VERSION = 2.6.11
+	LINUX_VERSION = 2.6.16.5
 	LINUX_IMAGE = $(LINUX_SRC)/arch/ppc64/boot/zImage.initrd
 	LINUX_TARGET = zImage.initrd
 	LINUX_DIR = linux-$(LINUX_VERSION)
