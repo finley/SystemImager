@@ -1,18 +1,10 @@
 #
 #   "SystemImager"
 #
-#   Copyright (C) 2001-2004 Brian Elliott Finley
+#   Copyright (C) 2001-2006 Brian Elliott Finley
 #   Copyright (C) 2002 Dann Frazier <dannf@dannf.org>
 #
 #   $Id$
-#
-#   2004.08.10  Brian Elliott Finley
-#   - where_is_my_efi_dir: remove /boot/efi/*/ from find path, but still 
-#     include /boot/efi.  find would fail if no dir existed below /boot/efi/.
-#   - where_is_my_efi_dir: redirect stderr to /dev/null so users don't see 
-#     confusing "no such file or directory" messages.
-#   2004.10.07  Brian Elliott Finley
-#   - add support for "mac" partition types in save_partition_information()
 #
 
 package SystemImager::Common;
@@ -267,222 +259,322 @@ sub write_auto_install_script_conf_footer {
 sub save_partition_information {
     my ($module, $disk, $partition_tool, $file, $label_type) = @_;
     my ($dev);
-
-    if ($partition_tool eq "old_sfdisk_file") {
-
-        $label_type = "msdos";
     
+    if ($partition_tool eq "old_sfdisk_file") {
+    
+        $label_type = "msdos";
+        
         $_ = "$disk";
         
         if ( m|\S/(rd/*c[0-9]+d[0-9]+)| ) { # hardware raid devices (/dev/rd/c?d?)
             $dev = "/dev/$1";
-
+        
         } elsif ( m|\S/(ida/*c[0-9]+d[0-9]+)| ) { # hardware raid devices (/dev/ida/c?d?)
             $dev = "/dev/$1";
-
+        
         } elsif ( m|\S/(cciss/*c[0-9]+d[0-9]+)| ) { # hardware raid devices (/dev/cciss/c?d?)
             $dev = "/dev/$1";
-
+        
         } elsif ( m|\S*([hs]d[a-z])| ) { # standard disk devices
             $dev = "/dev/$1";
-
+        
         } elsif ( m|\b(ide\/host\S+disc)| ) { # devfs standard for ide disk devices
             $dev = "/dev/$1";
-
+        
         } elsif ( m|\b(scsi\/host\S+disc)| ) { # devfs standard for scsi disk devices
             $dev = "/dev/$1";
         }
-
+    
     } else {
-
+    
         $dev = "/dev/$disk";
         
         # Make sure the tools we have available will work with this label type -BEF-
         _validate_label_type_and_partition_tool_combo($disk, $partition_tool, $label_type);
-  
+    
     }
- 
+    
     # Open up the file that we'll be putting our generic partition info in. -BEF-
     open (DISK_FILE, ">>$file") or die ("FATAL: Couldn't open $file for appending!"); 
-
+    
     print DISK_FILE qq(  <disk dev=\"$dev\" label_type=\"$label_type\" unit_of_measurement=\"MB\">\n);
+    
+        print DISK_FILE qq(    <!--\n);
+        print DISK_FILE qq(      This disk's output was brought to you by the partition tool "$partition_tool",\n);
+        print DISK_FILE qq(      and by the numbers 4 and 5 and the letter Q.\n);
+        print DISK_FILE qq(    -->\n);
+        
+        # Output is very different with these different tools, so we need seperate
+        # chunks of code here. -BEF-
+        if ($partition_tool eq "parted") {
 
-      print DISK_FILE qq(    <!--\n);
-      print DISK_FILE qq(      This disk's output was brought to you by the partition tool "$partition_tool",\n);
-      print DISK_FILE qq(      and by the numbers 4 and 5 and the letter Q.\n);
-      print DISK_FILE qq(    -->\n);
+            my $parted_version = _get_parted_version();
 
-      # Output is very different with these different tools, so we need seperate
-      # chunks of code here. -BEF-
-      if ($partition_tool eq "parted") {
-        my $cmd = "parted -s -- /dev/$disk print";
-        my @partition_tool_output;
+            #
+            # fs_regex arguments taken from parted on RHEL4.  Start parted 
+            # in interactive mode, and do this:
+            #
+            #   "help mkfs"
+            #
+            my $fs_regex = '(ext3|ext2|fat32|fat16|hfs|jfs|linux-swap|ntfs|reiserfs|hp-ufs|sun-ufs|xfs)\s*';
 
-        # Catch output. -BEF-
-        open (PARTITION_TOOL_OUTPUT, "$cmd|"); 
-            @partition_tool_output = <PARTITION_TOOL_OUTPUT>;
-        close (PARTITION_TOOL_OUTPUT);
+            #
+            # fs_regex arguments taken from parted on RHEL4.  Start parted 
+            # in interactive mode, and do this:
+            #
+            #   "help set"
+            #
+            my $flag_regex = '(boot|root|swap|hidden|raid|lvm|lba|hp-service|palo)';
 
-        # Find partitions that are closest to the end of the disk. -BEF-
-        my $end_of_last_partition_on_disk = 0;
-        foreach (@partition_tool_output) {
-            if (/^\d+\s+/) {
-                my $end_of_this_partition = unpack("x17 A12", $_);
-                $end_of_this_partition =~ s/\+//g;
-                $end_of_this_partition =~ s/\-//g;
-                if (! $end_of_this_partition ) { next; }    # If value was just "-", it's now blank. -BEF-
-                if ( $end_of_this_partition > $end_of_last_partition_on_disk ) {
-                    $end_of_last_partition_on_disk = $end_of_this_partition;
+            my $cmd;
+            if( $parted_version ge '1.6.23') {
+                #
+                # Specify that output should be in MB. -BEF-
+                $cmd = "parted -s -- /dev/$disk unit MB print";
+            } else {
+                #
+                # Output here is in MB by default. -BEF-
+                $cmd = "parted -s -- /dev/$disk print";
+            }
+            
+            #
+            # Catch output. -BEF-
+            #
+            my @partition_tool_output;
+            open (PARTITION_TOOL_OUTPUT, "$cmd|"); 
+                @partition_tool_output = <PARTITION_TOOL_OUTPUT>;
+            close (PARTITION_TOOL_OUTPUT);
+            
+            #
+            # Find the end of the last partition on the disk. -BEF-
+            #
+            my $end_of_last_partition_on_disk = 0;
+            foreach (@partition_tool_output) {
+                if (/^\d+\s+/) {
+            
+                    my($minor_junk, $start_junk, $end_of_this_partition) = split;
+            
+                    #
+                    # Clean up the value.
+                    $end_of_this_partition =~ s/\+//go;
+                    $end_of_this_partition =~ s/\-//go;
+                    $end_of_this_partition =~ s/MB//go;
+            
+                    #
+                    # If value of this field was "-", it is now blank, and is 
+                    # certainly not the value we want. -BEF-
+                    if( ! $end_of_this_partition ) { 
+                        next;   
+                    }    
+            
+                    #
+                    # Sort for the largest partition ending size.  -BEF-
+                    if( $end_of_this_partition > $end_of_last_partition_on_disk ) {
+                        $end_of_last_partition_on_disk = $end_of_this_partition;
+                    }
                 }
             }
-        }
-
-        # Produce output. -BEF-
-        foreach (@partition_tool_output) {
-
-          # If we're looking at a line of info for a partition, process into generic
-          # output. -BEF-
-          if (/^\d+\s+/) {
-
-            my ($minor, $startMB, $endMB, $partition_type, $fstype, $id, $flags, $name);
-
-            chomp;
-
-            if (($label_type eq "gpt") || ($label_type eq "bsd") || ($label_type eq "mac")) {
-
-              # Unfortunately, parted doesen't produce it's output in a comma delimited
-              # format, or even produce a n/a value such as "-" for fields that don't
-              # contain any info.  Parted does, however, use a fixed width printing
-              # template.  Below is a sample that I am basing the following fixed width
-              # unpack on.  Hopefully, there will be no need for these widths to change
-              # between now and the time that we have a better way of doing this.  The
-              # pipe symbols "|" indicate where I've decided to start each field. -BEF-
-              #
-              # Sean Dague may have some better ideas on how to parse this output without
-              # modifying parted. -BEF-
-
-              ### "gpt" sample ###
-              # Disk geometry for /dev/sdb: 0.000-17366.445 megabytes
-              # Disk label type: GPT
-              #          10        20        30        40        50        60        70        80
-              # 12345678901234567890123456789012345678901234567890123456789012345678901234567890
-              #     v5          v12         v12         v12                   v22
-              # 1234512345678901212345678901212345678901212345678901234567890121 -> to the end
-              # |    |           |           |           |                     |
-              # Minor    Start       End     Filesystem  Name                  Flags
-              # 1          0.017     20.000                                    boot, lba
-              # 2         21.000     40.000  FAT                               lba
-              # 3         41.000  17366.429                                    lba
-              #
-              #
-              ### "mac" sample ###
-              # finley@imageserver:~/si.v3_4_x.ppc% sudo parted -s -- /dev/sda print
-              # Disk geometry for /dev/sda: 0.000-152627.835 megabytes         
-              # Disk label type: mac
-              #          10        20        30        40        50        60        70        80
-              # 12345678901234567890123456789012345678901234567890123456789012345678901234567890
-              #     v5          v12         v12         v12                   v22
-              # 1234512345678901212345678901212345678901212345678901234567890121 -> to the end
-              # |    |           |           |           |                     |
-              # Minor    Start       End     Filesystem  Name                  Flags
-              # 1          0.000      0.031              Apple                 
-              # 2          0.031      1.031  hfs         untitled              boot
-              # 3          1.031  50001.031  ext3        untitled              
-              # 4      50001.031  51001.031  ext3        untitled              
-              # 5      51001.031  52993.467  linux-swap  swap                  swap
-              # 6      52993.468 152627.835  ext3        untitled              
-              ($minor, $startMB, $endMB, $fstype, $name, $flags) = unpack("A5 A12 A12 A12 A22 A*", $_);
-
-              # In the case of a gpt, or mac partition, they're all primary, 
-              # and parted doesn't produce output to indicate this. -BEF-
-              $partition_type = "primary";
-
-            } elsif ($label_type eq "msdos") {
-
-              # Same as above, but the output is a little different for an msdos labelled disk.
-              #
-              # Disk geometry for /dev/sda: 0.000-17366.445 megabytes
-              # Disk label type: msdos
-              #          10        20        30        40        50        60        70        80
-              # 12345678901234567890123456789012345678901234567890123456789012345678901234567890
-              #     v5          v12         v12       v10         v12
-              # 1234512345678901212345678901212345678901234567890121 -> to the end
-              # |    |           |           |         |           |
-              # Minor    Start       End     Type      Filesystem  Flags
-              # 1          0.016     17.000  primary   ext2        boot
-              # 2         17.000  17366.000  extended              
-              # 5         17.016  15409.000  logical   ext2        
-              # 6      15409.016  17366.000  logical   linux-swap  
-              ($minor, $startMB, $endMB, $partition_type, $fstype, $flags) = unpack("A5 A12 A12 A10 A12 A*", $_);
-
-            }
-
-
-
-            # $fstype may not be set, such as in the case of an extended
-            # partition.  parted will also report no fstype, even if an 
-            # fstype was chosen at partition time, if there is no filesystem
-            # on the partition.  Additionally, parted will not report the
-            # fstype specified at partition time, but rather will identify
-            # the type of fs with which the partition was formatted.  This 
-            # diatribe is with regards to parted <= parted-1.6.0-pre10. -BEF-
+            
+            
             #
-            unless ($fstype) { $fstype = "-"; }
-            $fstype = lc "$fstype";  # parted may report some fstypes in uppercase (parted 1.4.xx). -BEF-
-            if ($fstype eq "fat") {  # parted 1.4.xx apparently reports all fat partitions as simply FAT. -BEF-
-              my $device = $disk . $minor;
-              my $device_size = _get_device_size($partition_tool,$device);
-              if ($device_size < 500) {
-                $fstype = "fat16";     
-              } else {
-                $fstype = "fat32";     
-              }
-            }
+            # Add partition info to autoinstallscript.conf file. -BEF-
+            #
+            foreach (@partition_tool_output) {
+            
+                # If we're looking at a line of info for a partition, process into generic
+                # output. -BEF-
+                if (/^\d+\s+/) {
+                
+                    my $minor;
+                    my $startMB;
+                    my $endMB;
+                    my $partition_type;
+                    my $junk;
+                    my $leftovers;
+                    my $id;
+                    my $flags;
+                    my $name;
+                    
+                    chomp;
+                    
+                    if (($label_type eq "gpt") || ($label_type eq "bsd") || ($label_type eq "mac")) {
 
-            my $size = $endMB - $startMB;
+                        #
+                        # Unfortunately, parted doesen't produce it's output in a comma delimited
+                        # format, or even produce a n/a value such as "-" for fields that don't
+                        # contain any info.  So parsing the output is kinda funky, and requires a
+                        # lot of care. -BEF-
+                        #
+                        #
+                        ### "gpt" sample, parted < 1.6.23
+                        #
+                        # Disk geometry for /dev/sdb: 0.000-17366.445 megabytes
+                        # Disk label type: GPT
+                        #          10        20        30        40        50        60        70        80
+                        # 12345678901234567890123456789012345678901234567890123456789012345678901234567890
+                        #     v5          v12         v12         v12                   v22
+                        # 1234512345678901212345678901212345678901212345678901234567890121 -> to the end
+                        # |    |           |           |           |                     |
+                        # Minor    Start       End     Filesystem  Name                  Flags
+                        # 1          0.017     20.000                                    boot, lba
+                        # 2         21.000     40.000  FAT                               lba
+                        # 3         41.000  17366.429                                    lba
+                        #
+                        #
+                        ### "gpt" sample, parted >= 1.6.23  (Note the "Size" field, and "MB" after the numbers)
+                        #
+                        # finley@ia64-2:~% sudo parted -s -- /dev/sda unit MB print
+                        # Disk geometry for /dev/sda: 0MB - 73408MB
+                        # Disk label type: gpt
+                        # Number  Start   End     Size    File system  Name                  Flags
+                        # 1       0MB     100MB   100MB   fat16                              boot
+                        # 2       100MB   71359MB 71259MB ext3
+                        # 3       71359MB 73408MB 2049MB  linux-swap
+                        #
+                        #
+                        ### "mac" sample, parted < 1.6.23
+                        #
+                        # finley@imageserver:~/si.v3_4_x.ppc% sudo parted -s -- /dev/sda print
+                        # Disk geometry for /dev/sda: 0.000-152627.835 megabytes         
+                        # Disk label type: mac
+                        #          10        20        30        40        50        60        70        80
+                        # 12345678901234567890123456789012345678901234567890123456789012345678901234567890
+                        #     v5          v12         v12         v12                   v22
+                        # 1234512345678901212345678901212345678901212345678901234567890121 -> to the end
+                        # |    |           |           |           |                     |
+                        # Minor    Start       End     Filesystem  Name                  Flags
+                        # 1          0.000      0.031              Apple                 
+                        # 2          0.031      1.031  hfs         untitled              boot
+                        # 3          1.031  50001.031  ext3        untitled              
+                        # 4      50001.031  51001.031  ext3        untitled              
+                        # 5      51001.031  52993.467  linux-swap  swap                  swap
+                        # 6      52993.468 152627.835  ext3        untitled              
+                        #
+                        if( $parted_version ge '1.6.23') {
+                            ($minor, $startMB, $endMB, $junk, $leftovers) = split(/\s+/, $_, 5);
+                        } else {
+                            ($minor, $startMB, $endMB, $leftovers) = split(/\s+/, $_, 4);
+                        }
 
-            if ($endMB == $end_of_last_partition_on_disk) {
-                $size = "*";
-            }
+                        $startMB =~ s/(\d+)MB/$1/go;
+                        $endMB   =~ s/(\d+)MB/$1/go;
 
-            if($flags =~ /type=/) {
-                $id = (split(/=/,$flags))[1];
-                # Exclude the partition type, but preserve other flags. -AR-
-                $flags =~ s/type=[0-9a-fA-F]*//;
-                $flags =~ s/^, //;
-                $flags =~ s/, $//;
-            }
+                        #
+                        # Get rid of parted's fs info.  We don't use it.  But we do need 
+                        # 'name' and 'flags', and it's a pain in the but to parse this
+                        # output with no token in unused fields.  -BEF-
+                        #
+                        $leftovers =~ s/^$fs_regex//go;
 
-            unless($id) { $id=""; }
+                        #
+                        # Extract any flags, and remove them from the leftovers. -BEF-
+                        #
+                        if( $leftovers =~ s/\s*(($flag_regex)(,$flag_regex)*)\s*$//go ) {
+                            $flags = $1;
+                        } else {
+                            $flags = '';
+                        }
 
-            _print_to_auto_install_conf_file( $disk, $minor, $size, $partition_type, $id, $name, $flags );
+                        #
+                        # If anything is leftover now, it _must_ be a name. -BEF-
+                        #
+                        $name = $leftovers;
 
-          }
+                        #
+                        # In the case of a gpt, or mac partition, they're all primary, and as
+                        # it's implied, parted doesn't produce output to indicate this. -BEF-
+                        #
+                        $partition_type = 'primary';
 
-        } # while (@partition_tool_output)
+                    } elsif ($label_type eq "msdos") {
+                        # 
+                        # "msdos" sample, parted < 1.6.23
+                        #
+                        # Same as above, but the output is a little different for an msdos labelled disk.
+                        #
+                        # Disk geometry for /dev/sda: 0.000-17366.445 megabytes
+                        # Disk label type: msdos
+                        #          10        20        30        40        50        60        70        80
+                        # 12345678901234567890123456789012345678901234567890123456789012345678901234567890
+                        #     v5          v12         v12       v10         v12
+                        # 1234512345678901212345678901212345678901234567890121 -> to the end
+                        # |    |           |           |         |           |
+                        # Minor    Start       End     Type      Filesystem  Flags
+                        # 1          0.016     17.000  primary   ext2        boot
+                        # 2         17.000  17366.000  extended              
+                        # 5         17.016  15409.000  logical   ext2        
+                        # 6      15409.016  17366.000  logical   linux-swap  
 
-      } elsif ($partition_tool eq "sfdisk") {
+                        if( $parted_version ge '1.6.23') {
+                            ($minor, $startMB, $endMB, $junk, $partition_type, $leftovers) = split(/\s+/, $_, 6);
+                        } else {
+                            ($minor, $startMB, $endMB, $partition_type, $leftovers) = split(/\s+/, $_, 5);
+                        }
 
-        my $cmd = "sfdisk -l -uM /dev/$disk";
+                        $startMB =~ s/(\d+)MB/$1/go;
+                        $endMB   =~ s/(\d+)MB/$1/go;
 
-        local *PARTITION_TOOL_OUTPUT;
-        open (PARTITION_TOOL_OUTPUT, "$cmd|"); 
-          _turn_sfdisk_output_into_generic_partitionschemes_file($disk, \*PARTITION_TOOL_OUTPUT);
-        close (PARTITION_TOOL_OUTPUT);
+                        #
+                        # Get rid of parted's fs info.  We don't use it.  But we do need 
+                        # 'name' and 'flags', and it's a pain in the but to parse this
+                        # output with no token in unused fields.  -BEF-
+                        #
+                        $leftovers =~ s/^$fs_regex//go;
 
-      } elsif ($partition_tool eq "old_sfdisk_file") {
-
-        my $file = $disk;
-
-        local *PARTITION_TOOL_OUTPUT;
-        open (PARTITION_TOOL_OUTPUT, "<$file") or croak("Couldn't open $file for reading!"); 
-          _turn_sfdisk_output_into_generic_partitionschemes_file($file, \*PARTITION_TOOL_OUTPUT);
-        close (PARTITION_TOOL_OUTPUT);
-
-      }
-
+                        #
+                        # Extract any flags, and remove them from the leftovers. -BEF-
+                        #
+                        if( $leftovers =~ s/\s*(($flag_regex)(,$flag_regex)*)\s*$//go ) {
+                            $flags = $1;
+                        } else {
+                            $flags = '';
+                        }
+                    }
+                    
+                    my $size = $endMB - $startMB;
+                    
+                    if ($endMB == $end_of_last_partition_on_disk) {
+                        $size = "*";
+                    }
+                    
+                    if($flags =~ /type=/) {
+                        $id = (split(/=/,$flags))[1];
+                        # Exclude the partition type, but preserve other flags. -AR-
+                        $flags =~ s/type=[0-9a-fA-F]*//;
+                        $flags =~ s/^, //;
+                        $flags =~ s/, $//;
+                    }
+                    
+                    unless($id) { $id=""; }
+                    
+                    _print_to_auto_install_conf_file( $disk, $minor, $size, $partition_type, $id, $name, $flags );
+                
+                }
+            
+            } # while (@partition_tool_output)
+        
+        } elsif ($partition_tool eq "sfdisk") {
+        
+            my $cmd = "sfdisk -l -uM /dev/$disk";
+            
+            local *PARTITION_TOOL_OUTPUT;
+            open (PARTITION_TOOL_OUTPUT, "$cmd|"); 
+                _turn_sfdisk_output_into_generic_partitionschemes_file($disk, \*PARTITION_TOOL_OUTPUT);
+            close (PARTITION_TOOL_OUTPUT);
+        
+        } elsif ($partition_tool eq "old_sfdisk_file") {
+        
+            my $file = $disk;
+            
+            local *PARTITION_TOOL_OUTPUT;
+            open (PARTITION_TOOL_OUTPUT, "<$file") or croak("Couldn't open $file for reading!"); 
+                _turn_sfdisk_output_into_generic_partitionschemes_file($file, \*PARTITION_TOOL_OUTPUT);
+            close (PARTITION_TOOL_OUTPUT);
+        
+        }
+    
     print DISK_FILE "  </disk>\n";
-
+    
     close (DISK_FILE);
 }
 
@@ -1069,6 +1161,8 @@ sub detect_bootloader {
         }
     }
     return ""; #XXX can we simply do return? or return 0; ?
+               #
+               # Dann.  Do you want to do a 'return undef;' here?  To indicate failure to find a boot loader? -BEF-
 }
 
 
@@ -1377,5 +1471,22 @@ sub is_devfs_client {
 
     return undef;
 }
+
+
+#
+# Usage:
+#
+#   my $ver = _get_parted_version();
+#
+sub _get_parted_version {
+
+    $_ = `parted --version`;
+    if(m/(\d+\.\d+\.\d+)/) {
+        return $1;
+    }
+
+    return undef;
+}
+
 
 
