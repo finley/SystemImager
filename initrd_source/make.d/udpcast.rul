@@ -3,11 +3,11 @@
 #
 # http://udpcast.linux.lu/current/
 #
-UDPCAST_VERSION = 20050217
+UDPCAST_VERSION = 20060325
 UDPCAST_TARBALL = udpcast-$(UDPCAST_VERSION).tar.gz
-#UDPCAST_URL = http://udpcast.linux.lu/current/$(UDPCAST_TARBALL)
+#UDPCAST_URL = http://udpcast.linux.lu/download/$(UDPCAST_TARBALL)
 UDPCAST_URL = http://download.systemimager.org/pub/udpcast/$(UDPCAST_TARBALL)
-UDPCAST_DIR = udpcast
+UDPCAST_DIR = udpcast-$(UDPCAST_VERSION)
 UDPCAST_BINARY = $(INITRD_SRC_DIR)/$(UDPCAST_DIR)/udp-receiver
 UDPCAST_PATCHES = $(shell ls $(INITRD_PATCH_DIR)/udpcast.*.patch 2>/dev/null | sort)
 
