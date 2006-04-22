@@ -1,7 +1,7 @@
 #
 #	"SystemImager"  
 #
-#   Copyright (C) 1999-2005 Brian Elliott Finley
+#   Copyright (C) 1999-2006 Brian Elliott Finley
 #   Copyright (C) 2001-2004 Hewlett-Packard Company <dannf@hp.com>
 #   
 #   Others who have contributed to this code:
@@ -103,8 +103,6 @@ TOPDIR  := $(CURDIR)
 # tarballs, but aren't installed onto the destination machine by default
 RELEASE_DOCS = CHANGE.LOG COPYING CREDITS ERRATA README VERSION
 
-# This includes the file which is autoconf generated
-include config.inc
 
 # should we be messing with the user's PATH? -dannf
 # no i don't think so. -bef-
@@ -187,15 +185,14 @@ CHECK_FLOPPY_SIZE = expr \`du -b $(INITRD_DIR)/initrd.img | cut -f 1\` + \`du -b
 SI_INSTALL = $(TOPDIR)/tools/si_install --si-prefix=$(PREFIX)
 GETSOURCE = $(TOPDIR)/tools/getsource
 
+#
+# Ok, here's my best idea so far for auto-running configure. -BEF-
+CONFIG_ME := $(shell test -e config.inc || ./configure 1>&2)
+include config.inc
+
 # build everything, install nothing
 .PHONY:	all
-all:	config.inc boel_binaries_tarball kernel $(INITRD_DIR)/initrd.img manpages
-
-#
-# Dannf, SDague, please modify if this is inappropriate. -BEF-
-#
-config.inc:
-	./configure
+all:	boel_binaries_tarball kernel $(INITRD_DIR)/initrd.img manpages
 
 binaries: $(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.img
 
@@ -541,6 +538,8 @@ clean:	$(subst .rul,_clean,$(shell cd $(TOPDIR)/make.d && ls *.rul)) initrd_clea
 distclean:	clean initrd_distclean
 	-rm -rf $(SRC_DIR) $(INITRD_SRC_DIR)
 
+DEBIAN_BUILD_DEPS += flex
+
 .PHONY:	help
 help:  show_targets
 
@@ -587,7 +586,15 @@ show_targets:
 	@echo
 	@echo "Debian Build Deps:"
 	@echo "    $(DEBIAN_BUILD_DEPS)"
+	@echo
+	@echo "install_debian_build_deps:"
+	@echo "    Will install all packages necessary to build on a debian based"
+	@echo "    system."
+	@echo
 
+.PHONY: install_debian_build_deps
+install_debian_build_deps:
+	apt-get install $(DEBIAN_BUILD_DEPS)
 
 .PHONY:	show_all_targets
 SHOW_TARGETS_ALL_MAKEFILES = $(shell find . -name 'Makefile' -or -name '*.rul')
