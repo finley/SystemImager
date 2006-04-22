@@ -39,3 +39,5 @@ $(SRC_DIR)/$(PARTED_TARBALL):
 PHONY += parted_clean
 parted_clean:
 	rm -rf $(SRC_DIR)/$(PARTED_DIR)
+
+DEBIAN_BUILD_DEPS += libreadline4-dev
