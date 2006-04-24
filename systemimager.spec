@@ -122,7 +122,7 @@ typical environments include: Internet server farms, database server
 farms, high performance clusters, computer labs, and corporate desktop
 environments.
 
-The server package allows you to use the flamethrower utility to perform
+The flamethrower package allows you to use the flamethrower utility to perform
 installations over multicast.
 
 %package common
@@ -258,7 +258,42 @@ ramdisk that works with a specific kernel by using UYOK (Use Your Own Kernel).  
 ramdisk can then be used to boot and install %{_build_arch} Linux machines during the
 SystemImager autoinstall process.
 
+%package bittorrent
+Summary: Software that automates Linux installs, software distribution, and production deployment.
+Version: %ver
+Release: %rel
+License: GPL
+Group: Applications/System
+BuildRoot: /tmp/%{name}-%{ver}-root
+Packager: dann frazier <dannf@dannf.org>
+URL: http://systemimager.org/
+Distribution: System Installation Suite
+Requires: systemimager-server = %{version}, /sbin/chkconfig, perl, bittorrent
+AutoReqProv: no
+
+%description bittorrent
+SystemImager is software that automates Linux installs, software
+distribution, and production deployment.  SystemImager makes it easy to
+do installs, software distribution, content or data distribution,
+configuration changes, and operating system updates to your network of
+Linux machines. You can even update from one Linux release version to
+another!  It can also be used to ensure safe production deployments.
+By saving your current production image before updating to your new
+production image, you have a highly reliable contingency mechanism.  If
+the new production enviroment is found to be flawed, simply roll-back
+to the last production image with a simple update command!  Some
+typical environments include: Internet server farms, database server
+farms, high performance clusters, computer labs, and corporate desktop
+environments.
+
+The bittorrent package allows you to use the BitTorrent protocol to perform
+installations.
+
 %changelog
+* Fri Apr 21 2006 Bernard Li <bli@bcgsc.ca>
+- New package: systemimager-bittorrent
+- Requires bittorrent RPM
+
 * Sun Apr 16 2006 Bernard Li <bli@bcgsc.ca>
 - Added %post and %preun sections for flamethrower
 
@@ -547,34 +582,29 @@ if [[ -a /usr/lib/lsb/install_initd ]]; then
     /usr/lib/lsb/install_initd /etc/init.d/systemimager-server-rsyncd
     /usr/lib/lsb/install_initd /etc/init.d/systemimager-server-netbootmond
     /usr/lib/lsb/install_initd /etc/init.d/systemimager-server-monitord
-    /usr/lib/lsb/install_initd /etc/init.d/systemimager-server-bittorrent
 fi
 
 if [[ -a /sbin/chkconfig ]]; then
     /sbin/chkconfig --add systemimager-server-rsyncd
     /sbin/chkconfig --add systemimager-server-netbootmond
     /sbin/chkconfig --add systemimager-server-monitord
-    /sbin/chkconfig --add systemimager-server-bittorrent
 fi
 
 %preun server
 /etc/init.d/systemimager-server-rsyncd stop
 /etc/init.d/systemimager-server-netbootmond stop
 /etc/init.d/systemimager-server-monitord stop
-/etc/init.d/systemimager-server-bittorrent stop
 
 if [[ -a /usr/lib/lsb/remove_initd ]]; then
     /usr/lib/lsb/remove_initd /etc/init.d/systemimager-server-rsyncd
     /usr/lib/lsb/remove_initd /etc/init.d/systemimager-server-netbootmond
     /usr/lib/lsb/remove_initd /etc/init.d/systemimager-server-monitord
-    /usr/lib/lsb/remove_initd /etc/init.d/systemimager-server-bittorrent
 fi
 
 if [[ -a /sbin/chkconfig ]]; then
     /sbin/chkconfig --del systemimager-server-rsyncd
     /sbin/chkconfig --del systemimager-server-netbootmond
     /sbin/chkconfig --del systemimager-server-monitord
-    /sbin/chkconfig --del systemimager-server-bittorrent
 fi
 
 if [[ -a /etc/xinetd.d/rsync.presis~ ]]; then
@@ -603,6 +633,26 @@ fi
 
 if [[ -a /sbin/chkconfig ]]; then
     /sbin/chkconfig --del systemimager-server-flamethrowerd
+fi
+
+%post bittorrent
+if [[ -a /usr/lib/lsb/install_initd ]]; then
+    /usr/lib/lsb/install_initd /etc/init.d/systemimager-server-bittorrent
+fi
+
+if [[ -a /sbin/chkconfig ]]; then
+    /sbin/chkconfig --add systemimager-server-bittorrent
+fi
+
+%preun bittorrent
+/etc/init.d/systemimager-server-bittorrent stop
+
+if [[ -a /usr/lib/lsb/remove_initd ]]; then
+    /usr/lib/lsb/remove_initd /etc/init.d/systemimager-server-bittorrent
+fi
+
+if [[ -a /sbin/chkconfig ]]; then
+    /sbin/chkconfig --del systemimager-server-bittorrent
 fi
 
 %files common
@@ -641,11 +691,9 @@ fi
 %config(noreplace) /etc/systemimager/systemimager.conf
 %config /etc/systemimager/imagemanip.conf
 %config /etc/systemimager/imagemanip.perm
-%config /etc/systemimager/bittorrent.conf
 /etc/init.d/systemimager-server-rsyncd
 /etc/init.d/systemimager-server-netboot*
 /etc/init.d/systemimager-server-monitord
-/etc/init.d/systemimager-server-bittorrent
 /var/lib/systemimager/images/*
 /var/lib/systemimager/scripts/post-install/*
 /var/lib/systemimager/scripts/pre-install/*
@@ -660,7 +708,6 @@ fi
 %prefix/sbin/si_imagemanip
 %prefix/sbin/si_monitor
 %prefix/sbin/si_monitortk
-%prefix/sbin/si_installbtimage
 %prefix/bin/si_mk*
 %prefix/lib/systemimager/perl/SystemImager/Server.pm
 %prefix/lib/systemimager/perl/SystemImager/Config.pm
@@ -694,6 +741,15 @@ fi
 %dir /var/state/systemimager/flamethrower
 %config /etc/systemimager/flamethrower.conf
 /etc/init.d/systemimager-server-flamethrowerd
+
+%files bittorrent
+%defattr(-, root, root)
+%dir /etc/systemimager
+%dir /var/lib/systemimager/tarballs
+%dir /var/lib/systemimager/torrents
+%config /etc/systemimager/bittorrent.conf
+/etc/init.d/systemimager-server-bittorrent
+%prefix/sbin/si_installbtimage
 
 %endif
 
