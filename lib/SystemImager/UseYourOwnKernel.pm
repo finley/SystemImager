@@ -440,7 +440,7 @@ sub get_load_ordered_list_of_running_modules() {
                 my ($module) = split;
                 chomp(my $module_file = `modinfo -F filename $module 2>/dev/null`);
                 if ($?) {
-                        print STDERR qq(WARNING: Couldn't find module "$module " (skipping it)!\n);
+                        print STDERR qq(WARNING: Couldn't find module "$module" (skipping it)!\n);
                         next;
                 }
                 push (@modules, $module_file);
