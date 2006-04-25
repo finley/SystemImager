@@ -33,6 +33,8 @@ switch_root_to_tmpfs
 	sleep 1
 mount_proc
 	sleep 1
+monitor_save_dmesg
+	sleep 1
 mount_sys
 	sleep 1
 mount_pts
