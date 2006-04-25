@@ -5,17 +5,29 @@
 #  Copyright (C) 2005-2006 Andrea Righi <a.righi@cineca.it>
 #  Copyright (C) 2005-2006 Bernard Li <bli@bcgsc.ca>
 
+use lib "USR_PREFIX/lib/systemimager/perl";
+use strict;
+use Tk::HList;
+
+# Hack the HList object to properly handle the single click on a list
+# element.
+package Tk::MyHList;
+@Tk::MyHList::ISA = qw(Tk::HList);
+Construct Tk::Widget 'MyHList';
+
+sub ButtonRelease_1 {
+}
+
+package main;
+
 # set version number
 my $VERSION = "SYSTEMIMAGER_VERSION_STRING";
 my $program_name = "si_monitortk";
 
-use lib "USR_PREFIX/lib/systemimager/perl";
-use strict;
 use Socket;
 use Tk;
 use Tk::Label;
 use Tk::Balloon;
-use Tk::HList;
 use Tk::ItemStyle;
 use Tk::ROText;
 use Tk::ProgressBar;
@@ -25,6 +37,9 @@ use XML::Simple;
 use Getopt::Long qw(:config no_ignore_case bundling);
 
 my $version_info = << "EOF";
+perl (v$])
+Tk (v$Tk::VERSION)
+
 $program_name (part of SystemImager) v$VERSION
 
 Copyright (C) 2005-2006 Andrea Righi <a.righi\@cineca.it>
@@ -146,18 +161,19 @@ $sort_order = 1;
 # Client attributes.
 my $attrs_struct = {
 ### KEY ###     ### NAME ###       ### LABEL ###          ### DESCRIPTION ###
-    chr(0x00) => { -name => 'mac',    -label => '~MAC',      -description => 'Network MAC address' },
-    chr(0x01) => { -name => 'ip',     -label => '~IP',       -description => 'Network IP address' },
-    chr(0x02) => { -name => 'host',   -label => '~Hostname', -description => 'Name of the client' },
-    chr(0x03) => { -name => 'os',     -label => 'I~mage',    -description => 'Image installed in the client' },
-    chr(0x04) => { -name => 'kernel', -label => '~Kernel',   -description => 'SystemImager Kernel version' },
-    chr(0x05) => { -name => 'status', -label => '~Status',   -description => 'Status of installation' },
-    chr(0x06) => { -name => 'time',   -label => '~Time',     -description => 'Elapsed time for installation' },
-    chr(0x07) => { -name => 'speed',  -label => 'S~peed',    -description => 'Network bandwidth' },
-    chr(0x08) => { -name => 'mem',    -label => '~RAM',      -description => 'Physical RAM installed in the client' },
-    chr(0x09) => { -name => 'tmpfs',  -label => 'RAM ~used', -description => 'Allocated RAM' },
-    chr(0x0a) => { -name => 'ncpus',  -label => '~nCPUs',    -description => 'Number of CPUs' },
-    chr(0x0b) => { -name => 'cpu',    -label => '~CPU',      -description => 'CPU model' },
+    chr(0x00) => { -name => 'mac',       -label => '~MAC',         -description => 'Network MAC address' },
+    chr(0x01) => { -name => 'ip',        -label => '~IP',          -description => 'Network IP address' },
+    chr(0x02) => { -name => 'host',      -label => '~Hostname',    -description => 'Name of the client' },
+    chr(0x03) => { -name => 'os',        -label => 'I~mage',       -description => 'Image installed in the client' },
+    chr(0x04) => { -name => 'kernel',    -label => '~Kernel',      -description => 'SystemImager Kernel version' },
+    chr(0x05) => { -name => 'status',    -label => '~Status',      -description => 'Status of installation' },
+    chr(0x06) => { -name => 'time',      -label => '~Time',        -description => 'Elapsed time for installation' },
+    chr(0x07) => { -name => 'speed',     -label => 'S~peed',       -description => 'Network bandwidth' },
+    chr(0x08) => { -name => 'mem',       -label => '~RAM',         -description => 'Physical RAM installed in the client' },
+    chr(0x09) => { -name => 'tmpfs',     -label => 'RAM ~used',    -description => 'Allocated RAM' },
+    chr(0x0a) => { -name => 'ncpus',     -label => '~nCPUs',       -description => 'Number of CPUs' },
+    chr(0x0b) => { -name => 'cpu',       -label => '~CPU',         -description => 'CPU model' },
+    chr(0x0c) => { -name => 'timestamp', -label => '~Last update', -description => 'Timestamp of the last report' },
 };
 # Cache attribute names.
 my @attrs = grep !/mac/, map {$attrs_struct->{$_}->{'-name'}} sort keys %{$attrs_struct};
@@ -249,6 +265,7 @@ $sort_menu->radiobutton(
 );
 $edit_menu->checkbutton(
     -label     => '~Show progress bars',
+    -command   => \&refresh,
     -variable  => \$progress,
 );
 
@@ -299,12 +316,12 @@ my $bal = $window->Balloon(-statusbar => $status_bar);
 
 # Create the table of nodes status.
 $tab = $window->Scrolled(
-    'HList',
+    'MyHList',
     -header           => 1,
-    -columns          => 13,
+    -columns          => 14,
     -scrollbars       => 'se',
     -width            => 110,
-    -height           => 25,
+    -height           => 28,
     -selectmode       => 'browse',
     -selectbackground => 'yellow',
     -background       => 'white',
@@ -378,6 +395,9 @@ foreach (sort keys %{$attrs_struct}) {
 # Show the body.
 display_nodes();
 
+# Display a legend.
+show_legend();
+
 # Display command buttons.
 show_command_buttons();
 
@@ -408,10 +428,10 @@ sub show_virtual_console
     my $mac = $tab->itemCget($_[0], 1, 'text');
     my $ip = $tab->itemCget($_[0], 2, 'text');
     my $hostname  = $tab->itemCget($_[0], 3, 'text') || '';
-    my $status = $tab->itemCget($_[0], 5, 'text') || '';
 
     # Open the console in a new window.
     $sub_win = MainWindow->new();
+    $sub_win->bind('<Escape>' => sub { $sub_win->destroy() });
 
     # Display the hostname or the IP address in the title.
     $sub_win->title('Client: ' . ("$hostname" ne '-' ? "$hostname" : "$ip"));
@@ -437,43 +457,46 @@ sub show_virtual_console
         'title'
     );
 
-    unless ($status eq 'done') {
-        # Gather all log messages from the installing client.
-        my @old_logmsg = ();
-        socket(SOCK, PF_INET, SOCK_STREAM, getprotobyname('tcp')) or BEGIN {
-            print STDERR "error: cannot create TCP socket for client $ip!\n";
-            goto skip_old_logmsg;
-        };
-        eval {
-            # Set a timeout on the socket.
-            setsockopt(SOCK, SOL_SOCKET, SO_SNDTIMEO, pack('LL', 10, 0)) or 
-                die "error: cannot set SO_SNDTIMEO option to socket\n";
-            setsockopt(SOCK, SOL_SOCKET, SO_RCVTIMEO, pack('LL', 10, 0)) or
-                die "error: cannot set SO_RCVTIMEO option to socket\n";
-            # Connection to the client.
-            connect(SOCK, sockaddr_in(8181, inet_aton($ip))) or
-                die "error: connection failed\n";
-        };
-        if ($@) {
-            # Error handler.
+    # Gather all log messages from the installing client.
+    $sub_tab->insert('end',
+        "$hostname($ip):> gathering previous messages...\n",
+        'title'
+    );
+    $sub_win->update();
+    my @old_logmsg = ();
+    socket(SOCK, PF_INET, SOCK_STREAM, getprotobyname('tcp')) or BEGIN {
+        print STDERR "error: cannot create TCP socket for client $ip!\n";
+        goto skip_old_logmsg;
+    };
+    eval {
+        # Set a timeout on the socket.
+        setsockopt(SOCK, SOL_SOCKET, SO_SNDTIMEO, pack('LL', 10, 0)) or 
+            die "error: cannot set SO_SNDTIMEO option to socket\n";
+        setsockopt(SOCK, SOL_SOCKET, SO_RCVTIMEO, pack('LL', 10, 0)) or
+            die "error: cannot set SO_RCVTIMEO option to socket\n";
+        # Connection to the client.
+        connect(SOCK, sockaddr_in(8181, inet_aton($ip))) or
+            die "error: connection failed\n";
+    };
+    if ($@) {
+        # Error handler.
+        $sub_tab->insert('end',
+            "$hostname($ip):> host unreachable: cannot gather previous messages!\n",
+            'title'
+        );
+    } else {
+        # Gather all logs.
+        while (<SOCK>) {
+            push(@old_logmsg, $_);
+        }
+        close(SOCK);
+
+        # Fill virtual console with old log messages.
+        for (my $i = 0; $i < $#old_logmsg - 1; $i++) {
             $sub_tab->insert('end',
-                "$hostname($ip):> host unreachable: cannot gather previous messages!\n",
+                "$hostname($ip):> " . $old_logmsg[$i],
                 'title'
             );
-        } else {
-            # Gather all logs.
-            while (<SOCK>) {
-                push(@old_logmsg, $_);
-            }
-            close(SOCK);
-
-            # Fill virtual console with old log messages.
-            for (my $i = 0; $i < $#old_logmsg - 1; $i++) {
-                $sub_tab->insert('end',
-                    "$hostname($ip):> " . $old_logmsg[$i],
-                    'title'
-                );
-            }
         }
     }
 
@@ -533,6 +556,48 @@ sub refresh_console
         $sub_tab->insert('end', $line);
         $sub_tab->see('end');
     }
+}
+
+# Usage:
+# show_legend(); 
+# Description:
+#    Display the legend panel.
+sub show_legend
+{
+    # Define buttons.
+    my $legend = $window->Frame();
+    $legend->grid(qw/-pady 2m -sticky ew/);
+    $legend->gridColumnconfigure(qw/0 -weight 1/);
+    $legend->gridColumnconfigure(qw/1 -weight 1/);
+    $legend->gridColumnconfigure(qw/2 -weight 1/);
+    $legend->gridColumnconfigure(qw/3 -weight 1/);
+    $legend->Label(
+        -image => $server_init_icon,
+    )->grid(qw/-row 0 -column 0/);
+    $legend->Label(
+        -text => 'Initialization',
+    )->grid(qw/-row 1 -column 0/);
+    $legend->Label(
+        -image => $server_inst_icon,
+    )->grid(qw/-row 0 -column 1/);
+    $legend->Label(
+        -text => 'Installation in progress',
+    )->grid(qw/-row 1 -column 1/);
+    $legend->Label(
+        -image => $server_ok_icon,
+    )->grid(qw/-row 0 -column 2/);
+    $legend->Label(
+        -text => 'Installation completed',
+    )->grid(qw/-row 1 -column 2/);
+    $legend->Label(
+        -image => $server_error_icon,
+    )->grid(qw/-row 0 -column 3/);
+    $legend->Label(
+        -text => 'Installation failed!',
+    )->grid(qw/-row 1 -column 3/);
+
+    # Draw the legend.
+    $legend->grid("-", "-", -sticky => "nesw");
 }
 
 # Usage:
@@ -618,7 +683,13 @@ sub show_command_buttons
 #    Set the selected client entry in the table.
 sub update_selected_mac
 {
+    my $prev_sel = (defined($selected_mac_addr) ? $selected_mac_addr : '');
     $selected_mac_addr = $tab->itemCget($_[0], 1, 'text');
+    if ($prev_sel eq $selected_mac_addr) {
+        undef($selected_mac_addr);
+        $tab->selectionClear();
+        $tab->anchorClear();
+    }
 }
 
 # Usage:
@@ -737,7 +808,7 @@ sub display_nodes
                     90 => '#00006F', 
                 ],
                 -troughcolor => 'white',
-                -gap         => 0,
+                -gap         => 1,
                 -blocks      => 10,
                 -from        => 0,
                 -to          => 100,
@@ -781,6 +852,7 @@ sub display_nodes
         );
         # Display other node attributes.
         for (0 .. $#attrs) {
+            # Status.
             if (($progress) && ($attrs[$_] eq 'status')) {
                 # Display the status using a progress bar.
                 $tab->itemCreate(
@@ -790,6 +862,23 @@ sub display_nodes
                     -style    => $window_style,
                     -widget   => $status_progress,
                 );
+            # Timestamp.
+            } elsif ($attrs[$_] eq 'timestamp') {
+                my $date;
+                my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) =
+                    localtime($client->{$mac}->{$attrs[$_]});
+                $year += 1900;
+                $date = sprintf("%04d-%02d-%02d %02d:%02d:%02d",
+                    $year, $mon, $mday, $hour, $min, $sec);
+#                my $date = strftime("%Y-%m-%d %H:%M:%S", $client->{$mac}->{$attrs[$_]});
+                $tab->itemCreate(
+                    $row,
+                    $_ + 2,
+                    -itemtype => 'text',
+                    -style    => $style,
+                    -text     => $date,
+                );
+            # Others.
             } else {
                 $tab->itemCreate(
                     $row,
