@@ -560,47 +560,61 @@ show_targets:
 	@echo "install_server_all"
 	@echo "    Install all files needed by a server."
 	@echo "	"
-	@echo "install_boel_binaries_tarball:"
+	@echo "install_boel_binaries_tarball"
 	@echo ""
-	@echo "install_initrd:"
+	@echo "install_initrd"
 	@echo ""
-	@echo "source_tarball:"
+	@echo "source_tarball"
 	@echo "    Make a source tarball for distribution."
 	@echo "	"
 	@echo "    Includes SystemImager source only.  Source for all"
 	@echo "    the tools SystemImager depends on will be found in /usr/src "
 	@echo "    or will be automatically downloaded at build time."
 	@echo "	"
-	@echo "complete_source_tarball:"
+	@echo "complete_source_tarball"
 	@echo "    Make a source tarball for distribution."
 	@echo "    "
 	@echo "    Includes all necessary source for building SystemImager and"
 	@echo "    all of it's supporting tools."
 	@echo "	"
-	@echo "rpm:"
+	@echo "rpm"
+	@echo "    Build all of the RPMs that can be build on your platform."
 	@echo ""
-	@echo "srpm:"
+	@echo "srpm"
+	@echo "    Build yourself a source RPM."
 	@echo ""
 	@echo "show_all_targets"
 	@echo "    Show all available targets."
 	@echo
-	@echo "Debian Build Deps:"
-	@echo "    $(DEBIAN_BUILD_DEPS)"
+	@echo "show_debian_build_deps"
+	@echo "    Shows the list of packages necessary for building on a"
+	@echo "	   Debian based system."
 	@echo
-	@echo "install_debian_build_deps:"
-	@echo "    Will install all packages necessary to build on a debian based"
-	@echo "    system."
+	@echo "install_debian_build_deps"
+	@echo "    Install all packages necessary for building on a"
+	@echo "    Debian based system.  Yes, you can do an"
+	@echo
+	@echo '        "apt-get build-dep systemimager"'
+	@echo
+	@echo "    but that will only give you build dependencies for the most"
+	@echo "    recent version that your system can see, which may not be"
+	@echo "    complete if you're building from trunk."
 	@echo
 
 .PHONY: install_debian_build_deps
 install_debian_build_deps:
+	apt-get install build-essential
 	apt-get install $(DEBIAN_BUILD_DEPS)
 
+.PHONY: show_debian_build_deps
+show_debian_build_deps:
+	@echo $(DEBIAN_BUILD_DEPS)
+
 .PHONY:	show_all_targets
-SHOW_TARGETS_ALL_MAKEFILES = $(shell find . -name 'Makefile' -or -name '*.rul')
+SHOW_TARGETS_ALL_MAKEFILES = $(shell find . make.d/ initrd_source/ initrd_source/make.d/  -maxdepth 1 -name 'Makefile' -or -name '*.rul' )
 show_all_targets:
 	@echo All Available Targets Include:
 	@echo ---------------------------------------------------------------------
-	cat $(SHOW_TARGETS_ALL_MAKEFILES) | egrep '^[a-z_]+:' | sed 's/:.*//' | sort -u
+	@cat $(SHOW_TARGETS_ALL_MAKEFILES) | egrep '^[a-z_]+:' | sed 's/:.*//' | sort -u
 	@echo
 
