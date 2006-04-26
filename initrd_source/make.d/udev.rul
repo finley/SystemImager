@@ -29,7 +29,7 @@ PHONY += udev_install
 udev_install:	$(UDEV_DIR).install
 $(UDEV_DIR).install:	$(UDEV_DIR).build \
 						$(INITRD_BUILD_DIR).prep
-	rsync -av $(UDEV_DIR)/debian/udev/ $(INITRD_BUILD_DIR)/
+	rsync -av --exclude 'usr/share/man/' $(UDEV_DIR)/debian/udev/ $(INITRD_BUILD_DIR)/
 	install -m 755 $(UDEV_DIR)/debian/udev.init $(INITRD_BUILD_DIR)/etc/init.d/udev
 
 
