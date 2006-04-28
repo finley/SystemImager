@@ -30,6 +30,7 @@ my $rsync_stub_dir = $config->rsync_stub_dir();
 my $autoinstall_script_dir = $config->autoinstall_script_dir();
 my $rsyncd_conf = $config->rsyncd_conf();
 my $default_image_dir = $config->default_image_dir();
+my $default_override_dir = $config->default_override_dir();
 
 if (!$autoinstall_script_dir) {
     die "AUTOINSTALL_SCRIPT_DIR not defined in the config file.";
@@ -248,7 +249,7 @@ system($cmd);
 # Copy the standard override directory. -BEF-
 if ($verbose) {print "  Copying override directory $source_image to $destination_image.\n";}
 my $source_override = "rsync://$server:$port/overrides/$source_image/";
-my $destination_override = "/var/lib/systemimager/overrides/${destination_image}/";
+my $destination_override = "$default_override_dir/${destination_image}/";
 
 # Test to see if override directory exists
 my $source_override_exists = "no";
@@ -293,7 +294,7 @@ if(-e $flamethrower_conf ) {
 
     # Add override entry to flamethrower.conf file
     $entry_name = "override_" . $destination_image;
-    $new_entry_data = "[override_$destination_image]\nDIR = /var/lib/systemimager/overrides/$destination_image\n";
+    $new_entry_data = "[override_$destination_image]\nDIR = $default_override_dir/$destination_image\n";
     SystemImager::Common->add_or_delete_conf_file_entry($flamethrower_conf, $entry_name, $new_entry_data) or 
         die "$program_name: Cannot create entry in $flamethrower_conf";
 }

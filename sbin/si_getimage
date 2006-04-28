@@ -57,6 +57,7 @@ my $autoinstall_boot_dir    = $config->autoinstall_boot_dir();
 my $rsync_stub_dir          = $config->rsync_stub_dir();
 my $rsyncd_conf             = $config->rsyncd_conf();
 my $default_image_dir       = $config->default_image_dir();
+my $default_override_dir    = $config->default_override_dir();
 
 if (!$autoinstall_script_dir) {
     die "AUTOINSTALL_SCRIPT_DIR not defined in the config file.";
@@ -446,7 +447,7 @@ if(-e $flamethrower_conf) {
 
     # Add override entry to flamethrower.conf file
     $entry_name = "override_" . $image;
-    $new_entry_data = "[override_$image]\nDIR = /var/lib/systemimager/overrides/$image\n";
+    $new_entry_data = "[override_$image]\nDIR = $default_override_dir/$image\n";
     SystemImager::Common->add_or_delete_conf_file_entry($flamethrower_conf, $entry_name, $new_entry_data) or 
         die "$program_name: Cannot add entry to $flamethrower_conf";
 }
