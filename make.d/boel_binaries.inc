@@ -37,7 +37,6 @@ $(BOEL_BINARIES_TARBALL):	$(BC_DIR).build \
 							$(MKJFS_BINARY) \
 							$(MKXFS_BINARY) \
 							$(CTCS_BINARY) \
-							$(DEPMOD_BINARY) \
 							$(OPENSSH_BINARIES) \
 							$(OPENSSH_CONF_FILES) \
 							$(LVM_BINARY) \
@@ -147,17 +146,24 @@ endif
 	# install kernel modules. -BEF-
 	#
 	$(MAKE) -C $(LINUX_SRC) modules_install INSTALL_MOD_PATH="$(BOEL_BINARIES_DIR)"
-ifdef DEPMOD_BINARY
+	
 	#
 	# If the build system doesn't have module-init-tools installed, and
-	# our modules need it, we need to use the depmod we built
+	# our modules need it, we need to use the depmod we built.  For now we'll
+	# just say, you need to have module-init-tools installed for building.
+	#
+	# We could get fancy at some point, and test for it with something like this:
+	#
+	# 	depmod --version | grep -q module-init-tools
+	#
+	# and build it if it's not there.
 	#
 	# The find command is to figure out the kernel version string
 	#
 	BOEL_KERNEL_VERSION=`find $(BOEL_BINARIES_DIR)/lib/modules -type d -mindepth 1 -maxdepth 1 -printf "%f"` ; \
-	$(DEPMOD_BINARY) -b $(BOEL_BINARIES_DIR) $$BOEL_KERNEL_VERSION
+	depmod -b $(BOEL_BINARIES_DIR) $$BOEL_KERNEL_VERSION
 	#
-endif
+	
 	#
 	# get rid of build, which may exist as a link to the kernel source directory (won't exist in BOEL anyway). -BEF-
 	rm -f $(BOEL_BINARIES_DIR)/lib/modules/*/build
