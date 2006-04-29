@@ -760,7 +760,35 @@ sub display_nodes
         my $row = $tab->addchild('');
         # Evaluate the status and adjust the style of the entry.
         my ($style, $status_icon);
-        my $status = $client->{$mac}->{'status'} || 0;
+        my $status;
+        # Create the installation progress bar.
+        if ($progress) {
+            $status_progress = $tab->ProgressBar(
+                -borderwidth => 0,
+                -relief      => 'flat',
+                -padx        => 2,
+                -pady        => 8,
+                -variable    => \$status,
+                -colors      => [
+                    0  => '#0000FF',
+                    10 => '#0000EF',
+                    20 => '#0000DF',
+                    30 => '#0000CF',
+                    40 => '#0000BF',
+                    50 => '#0000AF',
+                    60 => '#00009F',
+                    70 => '#00008F',
+                    80 => '#00007F',
+                    90 => '#00006F',
+                ],
+                -troughcolor => 'white',
+                -gap         => 1,
+                -blocks      => 10,
+                -from        => 0,
+                -to          => 100,
+           );
+        }
+        $status = $client->{$mac}->{'status'} || 0;
         if (!$status) {
             $num_inst++;
             $client->{$mac}->{'status'} = 'initializing...';
@@ -786,33 +814,6 @@ sub display_nodes
             $client->{$mac}->{'status'} = '???';
             $style = $unkn_style;
             $status_icon = $server_error_icon;
-        }
-        # Create the installation progress bar.
-        if ($progress) {
-            $status_progress = $tab->ProgressBar(
-                -borderwidth => 0,
-                -relief      => 'flat',
-                -padx        => 2,
-                -pady        => 8,
-                -variable    => \$status,
-                -colors      => [
-                    0  => '#0000FF', 
-                    10 => '#0000EF', 
-                    20 => '#0000DF', 
-                    30 => '#0000CF',
-                    40 => '#0000BF', 
-                    50 => '#0000AF', 
-                    60 => '#00009F', 
-                    70 => '#00008F',
-                    80 => '#00007F', 
-                    90 => '#00006F', 
-                ],
-                -troughcolor => 'white',
-                -gap         => 1,
-                -blocks      => 10,
-                -from        => 0,
-                -to          => 100,
-           );
         }
         # Format the uptime.
         if (defined($client->{$mac}->{'time'})) {
