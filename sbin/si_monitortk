@@ -498,15 +498,14 @@ sub show_virtual_console
                 'title'
             );
         }
+        # Refresh console view (default 100ms).
+        my $cons_timer = Tk::After->new(
+                $sub_win,
+                100,
+                'repeat',
+                \&refresh_console
+        );
     }
-
-    # Refresh console view (default 100ms).
-    my $cons_timer = Tk::After->new(
-            $sub_win, 
-            100,
-            'repeat', 
-            \&refresh_console
-    );
 }
 
 # Usage:
