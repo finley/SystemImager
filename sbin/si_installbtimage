@@ -201,11 +201,13 @@ sub bt_prepare {
             $tarball_file = "$TARBALL_DIR/$type-$name.tar"
         }
         unless (-f "$tarball_file") {
-            system "cd $dir/$name && tar -c${compress}Sf $tarball_file .";
+            system "cd $dir/$name && tar -c${compress}Spf $tarball_file .";
             if ($?) {
                 die "error: cannot create $type tarball file!\n";
             }
         }
+        # Set restricted permissions on the tarball.
+        system "chmod 600 $tarball_file ";
         print "done.\n";
     
         # Prepare torrent file.

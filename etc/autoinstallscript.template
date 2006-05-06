@@ -242,7 +242,7 @@ elif [ ! -z $BITTORRENT_STAGING ]; then
     fi
     # Extract image.
     logmsg "Extracting image from ${bittorrent_tarball} ..."
-    (cd /a/ && tar -xv${compress}f ${BITTORRENT_STAGING}/${bittorrent_tarball}) || shellout
+    (cd /a/ && tar -xv${compress}Spf ${BITTORRENT_STAGING}/${bittorrent_tarball}) || shellout
     rm -f ${BITTORRRENT_STAGING}/${bittorrent_tarball}
     unset bittorrent_tarball
 else 
@@ -332,7 +332,7 @@ do
             bittorrent_get_file ${TORRENTS_DIR}/${bittorrent_tarball}.torrent ${BITTORRENT_STAGING}
             # Extract override.
             logmsg "Extracting override from ${bittorrent_tarball} ..."
-            (cd /a/ && tar -xv${compress}f ${BITTORRENT_STAGING}/${bittorrent_tarball}) || shellout
+            (cd /a/ && tar -xv${compress}Spf ${BITTORRENT_STAGING}/${bittorrent_tarball}) || shellout
             rm -f ${BITTORRRENT_STAGING}/${bittorrent_tarball}
         else
             # Use rsync
