@@ -243,6 +243,18 @@ if(-e $flamethrower_conf) {
         die "$program_name: Cannot create entry in $flamethrower_conf";
 }
 
+# remove BitTorrent files: the torrent file must be re-created
+# if the file name changes (this is done automatically by
+# si_installbtimage).
+if($verbose) {print "  Removing BitTorrent files for $source_image.\n";}
+$file = $config->autoinstall_tarball_dir . "/image-" . $source_image . ".tar.gz";
+unlink($file) if (-f $file);
+$file = $config->autoinstall_tarball_dir . "/image-" . $source_image . ".tar";
+unlink($file) if (-f $file);
+$file = $config->autoinstall_torrent_dir . "/image-" . $source_image . ".tar.gz.torrent";
+unlink($file) if (-f $file);
+$file = $config->autoinstall_torrent_dir . "/image-" . $source_image . ".tar.torrent";
+unlink($file) if (-f $file);
 
 ### BEGIN Change entries in master autoinstall script ###
 # move master autoinstall script

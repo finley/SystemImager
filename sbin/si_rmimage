@@ -141,6 +141,17 @@ if($force) {
   rmtree($file, 0, 0) or die "FATAL: Can't remove $file!\n";
 }
 
+# remove BitTorrent files
+if($verbose) {print "  Removing BitTorrent files for $image.\n";}
+$file = $config->autoinstall_tarball_dir() . "/image-" . $image . ".tar.gz";
+unlink($file) if (-f $file);
+$file = $config->autoinstall_tarball_dir() . "/image-" . $image . ".tar";
+unlink($file) if (-f $file);
+$file = $config->autoinstall_torrent_dir() . "/image-" . $image . ".tar.gz.torrent";
+unlink($file) if (-f $file);
+$file = $config->autoinstall_torrent_dir() . "/image-" . $image . ".tar.torrent";
+unlink($file) if (-f $file);
+
 # remove master autoinstall script
 if($verbose) {print "  Removing master autoinstall script $image.master.\n";}
 $file="$autoinstall_script_dir/$image.master";
