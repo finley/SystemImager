@@ -424,6 +424,14 @@ fi
 #
 # Configure the client's hardware, network interface, and boot loader.
 #
+
+# Create an /etc/mtab file with appropriate entries
+grep -v '/dev/ram' /etc/mtab | sed 's,/a/*,/,g' | sort -u > /a/etc/mtab
+
+# Ensure that /dev devices are available for boot loader installer,
+# even if client system uses udev.
+mount --bind /dev /a/dev
+
 ##SYSTEMCONFIGURATOR##
 #
 ################################################################################
@@ -442,6 +450,11 @@ run_post_install_scripts
 #
 #   Unmount filesystems
 #
+
+# We should unmount /a/dev/ first...
+umount /a/dev
+
+# ...then
 ##UMOUNT_FILESYSTEMS##
 #
 ################################################################################
