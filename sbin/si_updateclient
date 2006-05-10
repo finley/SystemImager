@@ -3,7 +3,7 @@
 #
 #   "SystemImager"
 #
-#   Copyright (C) 1999-2004 Brian Elliott Finley
+#   Copyright (C) 1999-2006 Brian Elliott Finley
 #   Copyright (C) 2002 International Business Machines
 #                      Sean Dague <sean@dague.net>
 #
@@ -112,8 +112,6 @@ GetOptions(
     "help"              => \my $help,
     "version"           => \my $version,
     "reboot"            => \my $reboot,
-    "no-lilo"           => \$no_bootloader,     # XXX Deprecated, but backwards
-                                                #     compatible -- remove in 3.2.0.
     "no-bootloader"     => \$no_bootloader,
     "autoinstall"       => \my $autoinstall,
     "dry-run"           => \my $dry_run,
@@ -153,47 +151,47 @@ if ($flavor) {
 # -server and -image must be defined
 #  or -server and -autoinstall
 unless(($server and $image) or ($server and $autoinstall)) {
-    print "You must specify -server and either -image or -autoinstall.\n";
+    print "You must specify --server and either --image or --autoinstall.\n";
     get_help();
     exit(1);
 }
 
 if ($image and $autoinstall) {
-    print "-image and -autoinstall are not compatible options.!\n\n";
+    print "--image and --autoinstall are not compatible options.!\n\n";
     get_help();
     exit(1);
 }
 
 if ($DEVICE and ! $autoinstall) {
-    print "-configure-from can only be used with -autoinstall.\n";
+    print "--configure-from can only be used with --autoinstall.\n";
     get_help();
     exit(1);
 }
 
 # IMAGENAME must not start with a hyphen
 if (($image) and ($image =~ /^-/)) {
-    print "IMAGENAME (specified with -image) can't start with a hyphen.\n";
+    print "IMAGENAME (specified with --image) can't start with a hyphen.\n";
     get_help();
     exit(1);
 }
 
 # IMAGENAME must not start with a hyphen
 if ($server =~ /^-/) {
-    print "HOSTNAME (specified with -server) can't start with a hyphen.\n";
+    print "HOSTNAME (specified with --server) can't start with a hyphen.\n";
     get_help();
     exit(1);
 }
 
 # -autoinstall and -no-bootloader conflict
 if($autoinstall and $no_bootloader) { 
-    print "-autoinstall and -no-bootloader are not compatible options!\n\n";
+    print "--autoinstall and --no-bootloader are not compatible options!\n\n";
     get_help();
     exit(1);
 }
 
 # -autoinstall and -dry-run conflict
 if($dry_run and $autoinstall) { 
-    print "-autoinstall and -dry-run are not compatible options!\n\n";
+    print "--autoinstall and --dry-run are not compatible options!\n\n";
     get_help();
     exit(1);
 }
@@ -206,6 +204,19 @@ unless($< == 0) {
     print "FATAL: Must be run as root!\n";
     exit 1;
 }
+
+
+#
+# Patch provided by Timm. (2006.05.10 -BEF-)
+if (-e "/etc/systemimager/overrides") {
+    open (FH, "/etc/systemimager/overrides");
+    while (<FH>) {
+        chomp;
+        push (@overrides, $_);
+    }
+    close (FH);
+}
+
 
 # If we're using SSH, go ahead and establish port forwarding
 if($ssh_user) {
