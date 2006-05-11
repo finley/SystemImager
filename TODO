@@ -47,7 +47,9 @@
     etc.
 
     si_mkclientnetboot
-        - generates a boot file for each client that looks like:
+        - generates a boot file for each client that looks like below,
+          and includes a nice net-boot message for the client's console
+          that explains their net-boot kernel choices:
 
             DEFAULT standard
 
