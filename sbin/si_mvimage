@@ -3,7 +3,7 @@
 #
 # "SystemImager" 
 #
-#  Copyright (C) 1999-2004 Brian Elliott Finley
+#  Copyright (C) 1999-2006 Brian Elliott Finley
 #
 #  $Id$
 #
@@ -46,8 +46,7 @@ if (!$default_image_dir) { die "DEFAULT_IMAGE_DIR not defined in the config file
 my $version_info = <<"EOF";
 $program_name (part of SystemImager) v$VERSION
 
-Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley\@baldguysoftware.com>
-Copyright (C) 2002 Bald Guy Software <brian.finley\@baldguysoftware.com>
+Copyright (C) 1999-2006 Brian Elliott Finley <brian\@thefinleys.com>
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 EOF
@@ -246,6 +245,7 @@ if(-e $flamethrower_conf) {
 # remove BitTorrent files: the torrent file must be re-created
 # if the file name changes (this is done automatically by
 # si_installbtimage).
+my $file;
 if($verbose) {print "  Removing BitTorrent files for $source_image.\n";}
 $file = $config->autoinstall_tarball_dir . "/image-" . $source_image . ".tar.gz";
 unlink($file) if (-f $file);
