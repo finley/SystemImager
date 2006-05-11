@@ -1775,10 +1775,13 @@ sub _write_out_umount_commands {
     $fs_by_mp{'/sys'} = "sysfs";
 
     #
-    # If client uses devfs, then unmount the bound /dev filesystem.
+    # If client uses devfs or udev, then unmount the bound /dev filesystem.
     #
     $xml_config = XMLin($file, keyattr => { boel => "+devstyle"} );
-    if( defined($xml_config->{boel}->{devstyle}) && ("$xml_config->{boel}->{devstyle}" eq "devfs")) {
+    if( defined($xml_config->{boel}->{devstyle}) 
+        && (    ("$xml_config->{boel}->{devstyle}" eq "udev" )
+             or ("$xml_config->{boel}->{devstyle}" eq "devfs") )
+      ) {
         $fs_by_mp{'/dev'} = "/dev";
     }
 
@@ -2235,13 +2238,13 @@ sub _write_elilo_conf {
 #
 # Description:
 #   Decide whether to "mount /dev /a/dev -o bind", and write to master
-#   autoinstall script.  Clients that use devfs should have the following
-#   entry in autoinstallscript.conf:
+#   autoinstall script.  
 #
+#   Clients should have one of the following entries in their 
+#   autoinstallscript.conf file:
+#
+#       <boel devstyle="udev"/>
 #       <boel devstyle="devfs"/>
-#
-#   Other clients should have the following entry:
-#
 #       <boel devstyle="static"/>
 #
 #   
@@ -2254,7 +2257,10 @@ sub _write_boel_devstyle_entry {
 
     my $xml_config = XMLin($file, keyattr => { boel => "+devstyle"} );
 
-    if( defined($xml_config->{boel}->{devstyle}) && ("$xml_config->{boel}->{devstyle}" eq "devfs")) {
+    if( defined($xml_config->{boel}->{devstyle}) 
+        && (    ("$xml_config->{boel}->{devstyle}" eq "devfs")
+             or ("$xml_config->{boel}->{devstyle}" eq "udev" ) )
+      ) {
 
         my $cmd = q(mount /dev /a/dev -o bind || shellout);
         print $script qq(logmsg "$cmd"\n);

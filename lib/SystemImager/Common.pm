@@ -27,7 +27,6 @@ $VERSION = $version_number;
 #   get_disk_label_type
 #   get_mounted_devs_by_mount_point_array
 #   get_response
-#   is_devfs_client
 #   numerically
 #   save_filesystem_information
 #   save_lvm_information -AR-
@@ -35,6 +34,7 @@ $VERSION = $version_number;
 #   save_partition_information
 #   where_is_my_efi_dir
 #   which
+#   which_dev_style
 #   write_auto_install_script_conf_footer
 #   write_auto_install_script_conf_header
 #   valid_ip_quad
@@ -1458,18 +1458,23 @@ sub add_or_delete_conf_file_entry {
 #
 # Usage:
 #
-#   if(SystemImager::Common->is_devfs_client()) { do stuff; }
+#   my $devstyle = SystemImager::Common->which_dev_style();
 #
-sub is_devfs_client {
+sub which_dev_style {
     open(FILE, "</proc/mounts");
         while(<FILE>) {
-            if(m/\bdevfs\b/) {
-                return 1;
+            if(m/\budev\b/) {
+                return 'udev';
+            }
+            elsif(m/\bdevfs\b/) {
+                return 'devfs';
             }
         }
     close(FILE);
 
-    return undef;
+    # If we didn't match one of the funky styles, must be the old
+    # standard -BEF-
+    return 'static';
 }
 
 
@@ -1489,4 +1494,4 @@ sub _get_parted_version {
 }
 
 
-
+return 1;

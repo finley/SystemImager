@@ -2,14 +2,15 @@
 #
 #   "SystemImager"
 #
-#   Copyright (C) 1999-2004 Brian Elliott Finley
+#   $Id$
+#    vi:set filetype=sh:
+#
+#   Copyright (C) 1999-2006 Brian Elliott Finley
 #
 #   28.07.2005 Erich Focht : SCSI device detection and generation of
 #                            /a/etc/systemconfig/hardware.lst
 #
 #   David N. Lombard : Disks enumeration and disk editing
-#
-#   $Id$
 #
 
 ##VERSION_INFO##
@@ -359,7 +360,7 @@ beep
 [ -z $DISKORDER ] || {
   echo "Editing files for actual disk configuration..."
 ##SHOW_DISK_EDITS##
-  for file in /etc/fstab /etc/raidtab /etc/systemconfig/systemconfig.conf; do
+  for file in /etc/fstab /etc/raidtab /etc/systemconfig/systemconfig.conf /boot/grub/menu.lst /etc/lilo.conf; do
     [ -f /a/$file ] || continue
     echo " $file"
     cp /a/$file /a/$file.image
@@ -426,11 +427,7 @@ fi
 #
 
 # Create an /etc/mtab file with appropriate entries
-grep -v '/dev/ram' /etc/mtab | sed 's,/a/*,/,g' | sort -u > /a/etc/mtab
-
-# Ensure that /dev devices are available for boot loader installer,
-# even if client system uses udev.
-mount --bind /dev /a/dev
+cat /etc/mtab | grep -v '/dev/ram' | grep -v -E '^\/dev\s+\/a\/dev\s' | sed 's,/a/*,/,g' | sort -u > /a/etc/mtab
 
 ##SYSTEMCONFIGURATOR##
 #
@@ -450,11 +447,6 @@ run_post_install_scripts
 #
 #   Unmount filesystems
 #
-
-# We should unmount /a/dev/ first...
-umount /a/dev
-
-# ...then
 ##UMOUNT_FILESYSTEMS##
 #
 ################################################################################
@@ -462,7 +454,7 @@ umount /a/dev
 
 ################################################################################
 #
-#   Tell the image server we're done
+#   Tell the image server we are done
 #   
 rsync $IMAGESERVER::scripts/imaging_complete > /dev/null 2>&1
 logmsg "Imaging completed"

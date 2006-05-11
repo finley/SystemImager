@@ -638,13 +638,9 @@ sub create_auto_install_script_conf {
     #
     open(FILE, ">>$file") or die("Couldn't open $file for appending.");
         print FILE qq(\n);
-        print FILE qq(  <boel devstyle=);
-        if(SystemImager::Common->is_devfs_client()) {
-            print FILE qq("devfs");
-        } else {
-            print FILE qq("static");
-        }
-        print FILE qq(/>\n);
+        print FILE qq(  <boel devstyle=");
+        print FILE SystemImager::Common->which_dev_style();
+        print FILE qq("/>\n);
         print FILE qq(\n);
     close(FILE);
     #
