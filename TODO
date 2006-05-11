@@ -38,3 +38,54 @@
 11) si_mkautoinstallcd -- deal with fs sizing more gracefully
 
 12) si_mvimage bug ($file)
+
+13) improved tftpbooting architecture
+
+    ln -s /usr/share/systemimager/boot /tftpboot
+    cp -a pxelinux.bin pxelinux.cfg/ /tftpboot
+    cp -a elilo.efi /tftpboot
+    etc.
+
+    si_mkclientnetboot
+        - generates a boot file for each client that looks like:
+
+            DEFAULT standard
+
+            #
+            # Uncomment next line to send pxelinux boot prompt over
+            # serial port 0.
+            # NOTE: Be sure your serial port speed is appropriate
+            # (57600, 9600, etc.)
+            #
+            #SERIAL 0 57600
+            DISPLAY message.txt
+            PROMPT 1
+            TIMEOUT 50
+
+            # Add the following to the append line above to use your
+            # first serial port
+            # (ttyS0) as a console in addition to your monitor (tty0).
+            # NOTE: Be sure
+            # your serial port speed is appropriate (57600, 9600, etc.)
+            #
+            #console=ttyS0,57600
+
+            # Add the following to the append line above to increase the
+            # size of your tmpfs
+            # filesystem.  About 100MB larger than your image size
+            # should suffice.
+            #
+            # Other tmpfs mount options are also supported.  See the FAQ
+            # for details.
+            #tmpfs_size=800M
+
+            LABEL standard
+            KERNEL i386/i386-dapper-server/kernel
+            APPEND vga=extended
+            initrd=i386/i386-dapper-server/initrd.img root=/dev/ram
+
+            LABEL i386-dapper-server
+            KERNEL i386/i386-dapper-server/kernel
+            APPEND vga=extended
+            initrd=i386/i386-dapper-server/initrd.img root=/dev/ram
+
