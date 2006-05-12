@@ -209,6 +209,10 @@ sub get_boot_flavors {
 sub which {
     my ($class, $file, $path) = @_;
     
+    if( ! defined($path) ) { 
+        $path = $ENV{PATH}; 
+    }
+    
     foreach my $dir (split(/:/,$path)) {
       if(-x "$dir/$file") {
         return 1;
@@ -915,6 +919,29 @@ sub save_soft_raid_information {
     }
     close(MD_INFO);
 
+#XXX  -BEF-
+# 1) get mdadm to store all necessary info in autoinstallscript.conf
+# 2) put mdadm code in boel
+# 3) modify code to use that info to create proper commands in the
+#    auto-install script.
+# 4) include code to create new /etc/mdadm/mdadm.conf to match the 
+#    config, as user may have modified it in the autoinstallscript.conf
+#    file.
+# 5) modify code that uses "raidtools" to use mdadm instead.
+# 6) if system had /etc/raidtab, then re-create /etc/raidtab _and_ 
+#    /etc/mdadm/mdadm.conf to match current config.
+#
+#    #
+#    # Get software RAID info using mdadm, if possible. -BEF-
+#    if( SystemImager::Common->which('mdadm') ) {
+#        foreach my $md_name (keys %{$md}) {
+#            my $cmd = "mdadm -D /dev/$md_name";
+#            #XXX 
+#        }
+#    } 
+#    #
+#    # If ! /etc/mdadm/mdadm.conf, get info from other places -BEF-
+#    elsif( -f "/etc/raidtab") {
     # Try to get additional details from /etc/raidtab.
     if (-f "/etc/raidtab") {
         foreach (keys %{$md}) {
