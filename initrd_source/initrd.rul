@@ -83,8 +83,10 @@ $(INITRD_BUILD_DIR).prep:	$(INITRD_DIR)/initrd.rul
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/etc/default
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/etc/init.d
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/lib
-	# If build OS has /lib64, create it in initrd
-	test ! -d /lib64 || mkdir -m 755 -p $(INITRD_BUILD_DIR)/lib64
+	## If build OS has /lib64, create it in initrd
+	#test ! -d /lib64 || mkdir -m 755 -p $(INITRD_BUILD_DIR)/lib64
+	# If build OS has /lib64, link it to /lib
+	test ! -d /lib64 || ( cd $(INITRD_BUILD_DIR) && ln -s lib lib64 )
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/proc
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/root
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/sbin
