@@ -226,6 +226,10 @@ sub write_auto_install_script_conf_header {
     # Open up the file that we'll be putting our generic partition info in. -BEF-
     open (DISK_FILE, ">$file") or die ("FATAL: Couldn't open $file for writing!"); 
         print DISK_FILE qq(<!--\n);
+        print DISK_FILE qq(  \n);
+        print DISK_FILE qq(  autoinstallscript.conf\n);
+        print DISK_FILE qq(  vi:set filetype=xml:\n);
+        print DISK_FILE qq(  \n);
         print DISK_FILE qq(  This file contains partition information about the disks on your golden\n);
         print DISK_FILE qq(  client.  It is stored here in a generic format that is used by your\n);
         print DISK_FILE qq(  SystemImager server to create an autoinstall script for cloning this\n);
@@ -233,6 +237,7 @@ sub write_auto_install_script_conf_header {
         print DISK_FILE qq(  \n);
         print DISK_FILE qq(  You can change the information in this file to affect how your target\n);
         print DISK_FILE qq(  machines are installed.  See "man autoinstallscript.conf" for details.\n);
+        print DISK_FILE qq(  \n);
         print DISK_FILE qq(-->\n);
         print DISK_FILE qq(\n);
         print DISK_FILE qq(<config>\n);
