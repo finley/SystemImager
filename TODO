@@ -46,6 +46,11 @@
     cp -a elilo.efi /tftpboot
     etc.
 
+    si_mkbootserver
+        - for now, just hardcode a softlink from /tftpboot ->
+          /usr/share/systemimager/boot
+        - later, re-write in perl and try to improve interaction
+
     si_mkclientnetboot
         - generates a boot file for each client that looks like below,
           and includes a nice net-boot message for the client's console
