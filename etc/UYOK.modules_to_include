@@ -1,0 +1,20 @@
+#
+#   $Id:$
+#    vi:filetype=conf:
+#
+#   This is a list of modules needed in the intsallation environment
+#   and always included in the initrd.img (even if they're not loaded
+#   in the golden client environment).
+#   
+#   Inclusions:
+#   - must be listed one entry per line
+#   - must be specified the module name (not the filename)
+#
+#
+#   SystemImager standard inclusions go here:
+#
+af_packet
+
+#
+#   Locally customized inclusions go here:
+#

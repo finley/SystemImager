@@ -64,7 +64,7 @@ sub create_uyok_initrd() {
         $file = "/etc/systemimager/UYOK.modules_to_exclude";
         if(!$all_modules and -e $file) {
             #
-            # Get list of exclusions from "/etc/systemimager/modules_to_exclude"
+            # Get list of exclusions from "/etc/systemimager/UYOK.modules_to_exclude"
             # (that file should live in the "systemimager-common" package)
             #
             open(FILE,"<$file") or die("Couldn't open $file for reading");
@@ -435,7 +435,30 @@ sub get_uname_r {
 sub get_load_ordered_list_of_running_modules() {
 
         my $file = "/proc/modules";
-        my @modules;
+        my $mandatory_modules_file = '/etc/systemimager/UYOK.modules_to_include';
+        my @modules = ();
+        my @mandatory_modules = ();
+
+        unless (-e $file) {
+            print STDERR qq(WARNING: running kernel doesn't support loadable modules!\n);
+            return @modules; 
+        }
+        if (-e $mandatory_modules_file) {
+            #
+            # Get list of inclusions from "/etc/systemimager/UYOK.modules_to_include"
+            # (that file should live in the "systemimager-common" package)
+            #
+            open(MODULES, "<$mandatory_modules_file") or
+                die("Couldn't open $mandatory_modules_file for reading\n");
+                while(<MODULES>) {
+                    next if(m/^(#|\s|$)/);
+                    chomp;
+                    push(@mandatory_modules, $_);
+                }
+            close(MODULES);
+        }
+
+        # get the list of the loaded module filenames.
         open(MODULES,"<$file") or die("Couldn't open $file for reading.");
         while(<MODULES>) {
                 my ($module) = split;
@@ -447,6 +470,30 @@ sub get_load_ordered_list_of_running_modules() {
                 push (@modules, $module_file);
         }
         close(MODULES);
+
+        # add not-loaded modules mandatory for the installation environment
+        foreach my $module (@mandatory_modules) {
+                chomp(my $module_file = `modinfo -F filename $module 2>/dev/null`);
+                if ($?) {
+                        print STDERR qq(WARNING: Couldn't find module "$module", assuming it's built into the kernel.\n);
+                        next;
+                }
+                push (@modules, $module_file);
+                # add module dependencies
+                chomp(my @deps = split(/,/, `modinfo -F depends $module 2>/dev/null`));
+                foreach (@deps) {
+                    next unless ($_);
+                    chomp(my $module_file = `modinfo -F filename $_ 2>/dev/null`);
+                    if ($?) {
+                        print STDERR qq(WARNING: Couldn't find module "$_", assuming it's built into the kernel.\n);
+                        next;
+                    }
+                    push (@modules, $module_file);
+                }
+        }
+        # remove duplicate modules
+        my %seen = ();
+        @modules = grep { !$seen{$_}++ } @modules;
 
         # reverse order list of running modules
         @modules = reverse(@modules);
