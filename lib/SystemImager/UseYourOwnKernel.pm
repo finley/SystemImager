@@ -23,6 +23,8 @@ package SystemImager::UseYourOwnKernel;
 
 use strict;
 our $verbose;
+our $is_mounted = 0;
+
 
 
 #
@@ -539,6 +541,14 @@ sub _create_initrd_cramfs($$) {
 
         my $new_initrd  = $boot_dir . "/initrd";
 
+        # cleanup routine.
+        $SIG{__DIE__} = sub {
+            my $msg = shift;
+            unlink($new_initrd) if (-f $new_initrd);
+            run_cmd("rm -fr $staging_dir", $verbose, 1);
+            die $msg;
+        };
+
         # initrd creation
         my $mkfs;
         if (`which mkcramfs`) {
@@ -565,6 +575,16 @@ sub _create_initrd_reiserfs($$) {
         my $new_initrd  = $boot_dir . "/initrd";
 
         my $new_initrd_mount_dir = _mk_tmp_dir();
+
+        # cleanup routine.
+        $SIG{__DIE__} = sub {
+            my $msg = shift;
+            run_cmd("umount $new_initrd_mount_dir", $verbose, 0) if ($is_mounted);
+            unlink($new_initrd) if (-f $new_initrd);
+            run_cmd("rm -fr $staging_dir $new_initrd_mount_dir", $verbose, 1);
+            die $msg;
+        };
+
         print ">>> New initrd mount point:     $new_initrd_mount_dir\n" if($verbose);
         eval { mkpath($new_initrd_mount_dir, 0, 0755) }; 
         if( $@ ) { 
@@ -587,14 +607,19 @@ sub _create_initrd_reiserfs($$) {
 
         # mount
         run_cmd("mount $new_initrd $new_initrd_mount_dir -o loop -t reiserfs", $verbose);
+        $is_mounted = 1;
 
         # copy from staging dir to new initrd
         run_cmd("tar -C $staging_dir -cf - . | tar -C $new_initrd_mount_dir -xf -", $verbose, 0);
 
         # umount and gzip up
         run_cmd("umount $new_initrd_mount_dir", $verbose);
+        $is_mounted = 0;
         run_cmd("gzip -f -9 -S .img $new_initrd", $verbose);
         run_cmd("ls -l $new_initrd.img", $verbose, 1) if($verbose);
+
+        # cleanup the temporary mount dir
+        run_cmd("rm -fr $new_initrd_mount_dir", $verbose, 1);
 
         return 1;
 }
@@ -607,8 +632,6 @@ sub _create_initrd_ext2($$) {
         my $new_initrd  = $boot_dir . "/initrd";
 
         my $new_initrd_mount_dir = _mk_tmp_dir();
-
-        my $is_mounted = 0;
 
         # cleanup routine.
         $SIG{__DIE__} = sub {
@@ -642,12 +665,14 @@ sub _create_initrd_ext2($$) {
 
         # mount
         run_cmd("mount $new_initrd $new_initrd_mount_dir -o loop -t ext2", $verbose);
+        $is_mounted = 1;
 
         # copy from staging dir to new initrd
         run_cmd("tar -C $staging_dir -cf - . | tar -C $new_initrd_mount_dir -xf -", $verbose, 0);
 
         # umount and gzip up
         run_cmd("umount $new_initrd_mount_dir", $verbose);
+        $is_mounted = 0;
         run_cmd("gzip -f -9 -S .img $new_initrd", $verbose);
         run_cmd("ls -l $new_initrd.img", $verbose, 1) if($verbose);
 
@@ -685,6 +710,16 @@ sub _create_initrd_jfs($$) {
         my $cmd;
 
         my $new_initrd_mount_dir = _mk_tmp_dir();
+
+        # cleanup routine.
+        $SIG{__DIE__} = sub {
+            my $msg = shift;
+            run_cmd("umount $new_initrd_mount_dir", $verbose, 0) if ($is_mounted);
+            unlink($new_initrd) if (-f $new_initrd);
+            run_cmd("rm -fr $staging_dir $new_initrd_mount_dir", $verbose, 1);
+            die $msg;
+        };
+
         print ">>> New initrd mount point:     $new_initrd_mount_dir\n" if($verbose);
         eval { mkpath($new_initrd_mount_dir, 0, 0755) }; 
         if ($@) { 
@@ -694,7 +729,8 @@ sub _create_initrd_jfs($$) {
         # loopback file
         chomp(my $size = `du -ks $staging_dir`);
         $size =~ s/\s+.*$//;
-        my $breathing_room = 3072;      # We may need to tweak this -- not for size(<), but for size(>). -BEF-
+#        my $breathing_room = 3072;      # We may need to tweak this -- not for size(<), but for size(>). -BEF-
+        my $breathing_room = 4072;      # We may need to tweak this -- not for size(<), but for size(>). -BEF-
         $size = $size + $breathing_room;
         #
         # jfs_mkfs farts on you with an "Partition must be at least 16 megabytes."
@@ -711,14 +747,19 @@ sub _create_initrd_jfs($$) {
 
         # mount
         run_cmd("mount $new_initrd $new_initrd_mount_dir -o loop -t jfs", $verbose);
+        $is_mounted = 1;
 
         # copy from staging dir to new initrd
         run_cmd("tar -C $staging_dir -cf - . | tar -C $new_initrd_mount_dir -xf -", $verbose, 0);
 
         # umount and gzip up
         run_cmd("umount $new_initrd_mount_dir", $verbose);
+        $is_mounted = 0;
         run_cmd("gzip -f -9 -S .img $new_initrd", $verbose);
         run_cmd("ls -l $new_initrd.img", $verbose, 1) if($verbose);
+
+        # cleanup the temporary mount dir
+        run_cmd("rm -fr $new_initrd_mount_dir", $verbose, 1);
 
         return 1;
 }
