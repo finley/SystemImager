@@ -470,9 +470,9 @@ sub show_virtual_console
     };
     eval {
         # Set a timeout on the socket.
-        setsockopt(SOCK, SOL_SOCKET, SO_SNDTIMEO, pack('LL', 10, 0)) or 
+        setsockopt(SOCK, SOL_SOCKET, SO_SNDTIMEO, pack('L!L!', 10, 0)) or 
             die "error: cannot set SO_SNDTIMEO option to socket\n";
-        setsockopt(SOCK, SOL_SOCKET, SO_RCVTIMEO, pack('LL', 10, 0)) or
+        setsockopt(SOCK, SOL_SOCKET, SO_RCVTIMEO, pack('L!L!', 10, 0)) or
             die "error: cannot set SO_RCVTIMEO option to socket\n";
         # Connection to the client.
         connect(SOCK, sockaddr_in(8181, inet_aton($ip))) or
