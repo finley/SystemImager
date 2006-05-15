@@ -29,6 +29,7 @@ $VERSION = $version_number;
 #   get_response
 #   numerically
 #   save_filesystem_information
+#   get_lvm_version -AR-
 #   save_lvm_information -AR-
 #   save_soft_raid_information -AR-
 #   save_partition_information
@@ -220,6 +221,23 @@ sub which {
     }
     return 0;
 }
+
+# Usage:
+# get_lvm_version();
+#     return the version of LVM binaries installed in the system
+#     for the supported versions 1 or 2, otherwise return -1.
+sub get_lvm_version
+{
+    my $lvm_ver = `vgdisplay --version 2>/dev/null | sed -ne '1p'`;
+    chomp($lvm_ver);
+    $lvm_ver =~ /^.*\s([12])\..*$/;
+    $lvm_ver = $1;
+    unless (defined($lvm_ver)) {
+        $lvm_ver = -1;
+    }
+    return $lvm_ver;
+}
+
 
 # Usage:
 # write_auto_install_script_conf_header($file);
@@ -862,7 +880,7 @@ sub _print_to_auto_install_conf_file {
             $part = $disk . $minor;
         }
         # Get physical volume information -AR-
-        my $cmd = "pvs --noheadings --separator : /dev/$part 2>/dev/null";
+        my $cmd = "pvdisplay -c /dev/$part 2>/dev/null";
         open (PV_INFO, "$cmd|");
         unless (eof(PV_INFO)) {
             my @pv_data = split(/:/, <PV_INFO>);
@@ -969,7 +987,7 @@ sub save_soft_raid_information {
     # Get physical volume information (LVM over software-RAID).
     foreach (keys %{$md}) {
         my $md_name = $_;
-        my $cmd = "pvs --noheadings --separator : /dev/$md_name 2>/dev/null";
+        my $cmd = "pvdisplay -c /dev/$md_name 2>/dev/null";
         open (PV_INFO, "$cmd|");
         unless (eof(PV_INFO)) {
             my @pv_data = split(/:/, <PV_INFO>);
@@ -1008,12 +1026,17 @@ sub save_lvm_information {
     my ($file) = @_;
     
     # Parse volume group informations -AR-
-    my $cmd = "vgdisplay -c 2>/dev/null";
-    
+    my $lvm_version = get_lvm_version();
+    if ($lvm_version == -1) {
+        print STDERR "WARNING: cannot find the version of LVM or LVM version is not supported!\n";
+        return;
+    }
+
+    my $cmd = 'vgdisplay -c 2>/dev/null | sed /^$/d';
     open(VG, "$cmd|") || return undef;
     unless (eof(VG)) {
         open(OUT, ">>$file") or die ("FATAL: Couldn't open $file for appending!");
-        print OUT "\n<lvm>\n";
+        print OUT "\n<lvm version=\"$lvm_version\">\n";
     
         foreach my $vg_line (<VG>) {
             $vg_line =~ s/^  //;
@@ -1030,7 +1053,11 @@ sub save_lvm_information {
             print OUT "\t<lvm_group name=\"$vg_name\" max_log_vols=\"$vg_max_log_vols\" max_phys_vols=\"$vg_max_phys_vols\" phys_extent_size=\"${vg_phys_extent_size}K\">\n";
 
             # Print logical volumes informations for this group -AR-
-            $cmd = "lvdisplay -c 2>/dev/null";
+            if ($lvm_version == 1) {
+                $cmd = 'vgdisplay -v 2>/dev/null | grep "^LV Name" | sed "s/  */ /g" | cut -d" " -f3 | xargs lvdisplay -c 2>/dev/null | sed /^$/d';
+            } elsif ($lvm_version == 2) {
+                $cmd = "lvdisplay -c 2>/dev/null";
+            }
             open(LV, "$cmd|");
             foreach my $lv_line (<LV>) {
                 $lv_line =~ s/^  //;
