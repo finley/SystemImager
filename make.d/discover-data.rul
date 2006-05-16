@@ -35,4 +35,5 @@ $(SRC_DIR)/$(DISCOVER_DATA_TARBALL):
 PHONY += discover-data_clean
 discover-data_clean:
 	rm -rf $(DISCOVER_DATA_DIR)
-	rm  -f $(DISCOVER_DATA_DIR).{unpack,build}
+	rm  -f $(DISCOVER_DATA_DIR).unpack
+	rm  -f $(DISCOVER_DATA_DIR).build
