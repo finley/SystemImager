@@ -464,6 +464,11 @@ sub _read_partition_info_and_prepare_parted_commands {
         print $out qq(logmsg "Old partition table for $devfs_dev:"\n);
         print $out "parted -s -- $devfs_dev print\n\n";
 
+        print $out "# Wipe the MBR (Master Boot Record) clean.\n";
+        $cmd = "dd if=/dev/zero of=$devfs_dev bs=512 count=1 || shellout";
+        print $out qq(logmsg "$cmd"\n);
+        print $out "$cmd\n\n";
+
         print $out "# Create disk label.  This ensures that all remnants of the old label, whatever\n";
         print $out "# type it was, are removed and that we're starting with a clean label.\n";
         $cmd = "parted -s -- $devfs_dev mklabel $label_type || shellout";
