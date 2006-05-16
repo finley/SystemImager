@@ -96,3 +96,25 @@
             APPEND vga=extended
             initrd=i386/i386-dapper-server/initrd.img root=/dev/ram
 
+14) Fix software raid
+    # 1) get mdadm to store all necessary info in
+    #    autoinstallscript.conf, if it is available on the client.
+    # 2) put mdadm code in boel
+    # 3) modify code to use that info to create proper commands in the
+    #    auto-install script.
+    # 4) include code to create new /etc/mdadm/mdadm.conf to match the
+    #    config, as user may have modified it in the
+    #    autoinstallscript.conf
+    #    file.
+    # 5) modify code that uses "raidtools" to use mdadm instead.
+    # 6) if system had /etc/raidtab, then re-create /etc/raidtab _and_
+    #    /etc/mdadm/mdadm.conf to match current config.
+
+15) Minor:
+    - parted no longer requires fstype with mkpart.  as in, we can now
+      do:
+
+        mkpart primary 0 -0
+        mkpart primary 100 160000
+        etc.
+
