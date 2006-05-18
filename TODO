@@ -41,10 +41,19 @@
 
 13) improved tftpbooting architecture
 
-    ln -s /usr/share/systemimager/boot /tftpboot
-    cp -a pxelinux.bin pxelinux.cfg/ /tftpboot
-    cp -a elilo.efi /tftpboot
-    etc.
+    Location:
+        ln -s /usr/share/systemimager/boot /tftpboot
+
+    In that location:
+        ia64/standard
+            /elilo.efi (provided as part of ia64 standard boot package)
+        i386/standard
+            /pxelinux.bin (provided as part of i386 standard boot package)
+            /pxelinux.cfg (provided as part of i386 standard boot package)
+        x86_64/standard
+              /pxelinux.bin (provided as part of x86_64 standard boot package)
+              /pxelinux.cfg (provided as part of x86_64 standard boot package)
+        etc...
 
     si_mkbootserver
         - for now, just hardcode a softlink from /tftpboot ->
@@ -52,6 +61,7 @@
         - later, re-write in perl and try to improve interaction
 
     si_mkclientnetboot
+        - Paul G. will send a sample menu enabled pxe-boot file.
         - generates a boot file for each client that looks like below,
           and includes a nice net-boot message for the client's console
           that explains their net-boot kernel choices:
