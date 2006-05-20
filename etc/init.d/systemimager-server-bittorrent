@@ -16,7 +16,7 @@
 # Required-Stop:
 # Default-Start:  3 5
 # Default-Stop:   0 1 2 6
-# Short-Description: SystemImager's tracker daemon.
+# Short-Description: SystemImager's BitTorrent daemons.
 # Description: This daemon is needed to image clients using the
 #              bittorrent protocol as transport.
 #
@@ -25,7 +25,8 @@
 . /etc/systemimager/bittorrent.conf
 
 PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin:
-PIDFILE=/var/run/systemimager-server-bttracker.pid
+PIDFILE_TRACKER=/var/run/systemimager-server-bttracker.pid
+PIDFILE_SEEDER=/var/run/systemimager-server-btseeder.pid
 
 # Check configuration 
 [ -z $BT_TRACKER_PORT ] &&
@@ -40,9 +41,13 @@ PIDFILE=/var/run/systemimager-server-bttracker.pid
 
 case "$1" in
   start)
-    echo -n "Starting SystemImager's tracker: systemimager-server-bittorrent... "
-    if [ -e $PIDFILE ]; then
-        echo -e "failed.\nPID file $PIDFILE exists.  Must be already running."
+    echo "Starting SystemImager's BitTorrent Transport: systemimager-server-bittorrent... "
+    if [ -e $PIDFILE_TRACKER ]; then
+        echo -e "failed.\nPID file $PIDFILE_TRACKER exists.  Must be already running."
+        exit 1
+    fi
+    if [ -e $PIDFILE_SEEDER ]; then
+        echo -e "failed.\nPID file $PIDFILE_SEEDER exists.  Must be already running."
         exit 1
     fi
     # Remove the previous state file (if present).
@@ -53,20 +58,43 @@ case "$1" in
         echo failed.
     	exit 1
     else
-        echo $! > $PIDFILE
-        echo ok.
+        echo $! > $PIDFILE_TRACKER
+    fi
+    # Start first seeder in background.
+    if [ -z $BT_IMAGES ]; then
+        echo -e "\n\tWARNING: BT_IMAGES is not set in /etc/systemimager/bittorrent.conf!\n"
+        echo -e "\tIf you don't set this option you must run si_installbtimage to use BitTorrent transport"
+        echo -e "\tSee 'perldoc si_installbtimage' for more details..."
+        echo done.
+        exit 0
+    else
+        BT_IMAGES="--images $BT_IMAGES"
+    fi
+    [ ! -z $BT_OVERRIDES ] && BT_OVERRIDES="--overrides $BT_OVERRIDES"
+    [ "$BT_COMPRESS" = "y" ] && BT_COMPRESS='--compress'
+    [ "$BT_UPDATE" = "y" ] && BT_UPDATE='--update'
+    si_installbtimage --quiet $BT_COMPRESS $BT_UPDATE $BT_IMAGES $BT_OVERRIDES
+    if [ $? -ne 0 ]; then
+        echo failed.
+    	exit 1
     fi
     ;;
   stop)
-    echo -n "Stopping SystemImager's tracker: systemimager-server-bittorrent... "
-    [ -f $PIDFILE ] && kill -9 `cat $PIDFILE` >/dev/null 2>&1
-    rm -f $PIDFILE
+    echo -n "Stopping SystemImager's BitTorrent Transport: systemimager-server-bittorrent... "
+    [ -f $PIDFILE_TRACKER ] && kill -9 `cat $PIDFILE_TRACKER` >/dev/null 2>&1
+    [ -f $PIDFILE_SEEDER  ] && kill -9 `cat $PIDFILE_SEEDER`  >/dev/null 2>&1
+    rm -f $PIDFILE_TRACKER $PIDFILE_SEEDER
     rm -f $BT_TRACKER_STATE
     echo "stopped."
     ;;
   status)
-    echo -n "Status of SystemImager's tracker: systemimager-server-bittorrent... "
-    ([ -f $PIDFILE ] && ps -p `cat $PIDFILE 2>/dev/null` >/dev/null 2>&1 && echo running.) || echo not running.
+    echo "Status of SystemImager's BitTorrent Transport: systemimager-server-bittorrent... "
+    ([ -f $PIDFILE_TRACKER ] && \
+        ps -p `cat $PIDFILE_TRACKER 2>/dev/null` >/dev/null 2>&1 && \
+        echo tracker running.) || echo tracker is not running.
+    ([ -f $PIDFILE_SEEDER ] && \
+        ps -p `cat $PIDFILE_SEEDER 2>/dev/null` >/dev/null 2>&1 && \
+        echo seeder running.) || echo seeder is not running.
     ;;
   force-reload|restart)
     sh $0 stop

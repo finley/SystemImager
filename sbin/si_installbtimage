@@ -85,7 +85,7 @@ my $TORRENT_DIR = $config->autoinstall_torrent_dir();
 my ($tracker_port, $image_server);
 my $config_file = $config_dir . '/bittorrent.conf';
 open(IN, '<', $config_file) or
-    die "error: cannot open configuration file $config_file!\n";
+    die "ERROR: cannot open configuration file $config_file!\n";
 while(<IN>) {
     if (m/BT_TRACKER_PORT=([0-9]+)/) {
         $tracker_port = $1;
@@ -94,21 +94,20 @@ while(<IN>) {
     }
 }
 unless ($tracker_port) {
-    die "error in $config_file: BT_TRACKER_PORT not specified!\n";
+    die "ERROR: error in $config_file: BT_TRACKER_PORT not specified!\n";
 }
 unless ($image_server) {
-    die "error in $config_file: BT_INTERFACE not specified or not valid!\n";
+    die "ERROR: error in $config_file: BT_INTERFACE not specified or not valid!\n";
 }
-
 unless ($images) {
-    die "error: at least one image must be specified!\n";
+    die "ERROR: at least one image must be specified!\n";
 }
 
 # Check the status of the tracker.
 my $PIDFILE='/var/run/systemimager-server-bttracker.pid';
 system "ps -p `cat $PIDFILE 2>/dev/null` >/dev/null 2>&1";
 if ($?) {
-    print "error: systemimager tracker seems to be down...\n" .
+    print "ERROR: systemimager tracker seems to be down...\n" .
         "Try with:\n" .
         "\t# /etc/init.d/systemimager-server-bittorrent restart\n";
     exit(1);
@@ -140,14 +139,28 @@ symlink($config->autoinstall_boot_dir() . '/' . $ARCH .
 # Make .torrent file.
 system "maketorrent-console --target $TORRENT_DIR/boel_binaries.tar.gz.torrent http://$image_server:$tracker_port/announce $boel_binaries";
 if ($?) {
-    die "error: cannot create BOEL binaries torrent file!\n";
+    die "ERROR: cannot create BOEL binaries torrent file!\n";
 }
 print "done.\n";
 
 # Starting first image seeder.
 print "Starting first image server seeder...\n";
 if ($quiet) {
-    system "launchmany-console --no_start_trackerless_client --max_upload_rate 0 --rerequest_interval 1 --bind $image_server --save_in $TARBALL_DIR $TORRENT_DIR>/dev/null 2>&1 &";
+    $PIDFILE = '/var/run/systemimager-server-btseeder.pid';
+    open(PID, "launchmany-console --no_start_trackerless_client --max_upload_rate 0 --rerequest_interval 1 --bind $image_server --save_in $TARBALL_DIR $TORRENT_DIR>/dev/null 2>&1 & echo \$!|");
+    my $pid = <PID>;
+    close(PID);
+    open(OUT, ">$PIDFILE") or die("ERROR: cannot open $PIDFILE for writing!\n");
+    print OUT $pid;
+    close(OUT);
+    # Check if the daemon is started.
+    if (! -f $PIDFILE) {
+        die("ERROR: cannot start seeder with launchmany-console!\n");
+    }
+    $_ = system "ps -p `cat $PIDFILE 2>/dev/null` >/dev/null 2>&1";
+    if ($_) {
+        die("ERROR: cannot start seeder with launchmany-console!\n");
+    }
 } else {
     # Evaluate if python-curses is installed.
     `/usr/bin/env python << EOF
@@ -181,7 +194,7 @@ sub bt_prepare {
 
     foreach my $name (split(',', $list)) {
         unless (-d "$dir/$name") {
-            print "warning: \"$name\" is not a valid $type!\n";
+            print "WARNING: \"$name\" is not a valid $type!\n";
             next;
         }
 
@@ -203,7 +216,7 @@ sub bt_prepare {
         unless (-f "$tarball_file") {
             system "cd $dir/$name && tar -c${compress}Spf $tarball_file .";
             if ($?) {
-                die "error: cannot create $type tarball file!\n";
+                die "ERROR: cannot create $type tarball file!\n";
             }
         }
         # Set restricted permissions on the tarball.
@@ -229,7 +242,7 @@ sub bt_prepare {
         unless (-f "$torrent_file") {
             system "maketorrent-console --target $torrent_file http://$image_server:$tracker_port/announce $tarball_file";
             if ($?) {
-                die "error: cannot create $type torrent file!\n";
+                die "ERROR: cannot create $type torrent file!\n";
             }
         }
         print "done.\n";

@@ -235,7 +235,7 @@ elif [ ! -z $BITTORRENT_STAGING ]; then
     # Download image from peers
     logmsg "Start downloading image using torrent ${bittorrent_tarball}.torrent"
     logmsg ""
-    logmsg "--> INFO: remember to run si_installbtimage on the image server!"
+    logmsg "--> INFO: remember to start /etc/init.d/systemimager-server-bittorrent on the image server!"
     logmsg ""
     bittorrent_get_file ${TORRENTS_DIR}/${bittorrent_tarball}.torrent ${BITTORRENT_STAGING}
     if [ ! -z $MONITOR_SERVER ]; then
@@ -327,7 +327,7 @@ do
         if [ ! -z $bittorrent_tarball ]; then
             logmsg "Start downloading override using torrent ${bittorrent_tarball}.torrent"
             logmsg ""
-            logmsg "--> INFO: remember to run si_installbtimage on the image server!"
+            logmsg "--> INFO: remember to start /etc/init.d/systemimager-server-bittorrent on the image server!"
             logmsg ""
             # Download override from peers
             bittorrent_get_file ${TORRENTS_DIR}/${bittorrent_tarball}.torrent ${BITTORRENT_STAGING}
