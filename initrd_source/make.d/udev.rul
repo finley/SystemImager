@@ -31,6 +31,7 @@ $(UDEV_DIR).install:	$(UDEV_DIR).build \
 						$(INITRD_BUILD_DIR).prep
 	rsync -av --exclude 'usr/share/man/' $(UDEV_DIR)/debian/udev/ $(INITRD_BUILD_DIR)/
 	install -m 755 $(UDEV_DIR)/debian/udev.init $(INITRD_BUILD_DIR)/etc/init.d/udev
+	install -m 755 $(UDEV_DIR)/udeb/extras/raid-devfs.sh $(INITRD_BUILD_DIR)/lib/udev/raid-devfs.sh
 
 
 $(UDEV_DIR).unpack:   	$(INITRD_DIR)/make.d/udev.rul	\

@@ -1,0 +1,17 @@
+--- udev-079.orig/debian/rules.d/20-names.rules	2006-05-21 16:10:16.000000000 +0200
++++ udev-079/debian/rules.d/20-names.rules	2006-05-21 16:10:19.000000000 +0200
+@@ -14,6 +14,14 @@
+ KERNEL=="device-mapper",		NAME="mapper/control"
+ KERNEL=="dm-[0-9]*",			NAME="dm/%n"
+ 
++# RAID controllers
++KERNEL=="cciss!*|ida!*|rd!*", PROGRAM="/lib/udev/raid-devfs.sh %k", \
++                                        NAME="%c{1}", SYMLINK+="%k"
++# other block devices
++KERNEL=="md[0-9]*",                     NAME="md/%n",
++KERNEL=="loop[0-9]*",                   NAME="loop/%n"
++KERNEL=="ram[0-9]*",                    NAME="rd/%n"
++
+ # Input devices, group under /dev/input
+ KERNEL=="event[0-9]*",			NAME="input/%k"
+ KERNEL=="mice",				NAME="input/%k"
