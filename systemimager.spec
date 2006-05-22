@@ -268,7 +268,12 @@ BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: dann frazier <dannf@dannf.org>
 URL: http://systemimager.org/
 Distribution: System Installation Suite
-Requires: systemimager-server = %{version}, /sbin/chkconfig, perl, bittorrent
+Requires: systemimager-server = %{version}, /sbin/chkconfig, perl
+%if %is_suse
+Requires: BitTorrent
+%else
+Requires: bittorrent
+%endif
 AutoReqProv: no
 
 %description bittorrent
