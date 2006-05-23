@@ -30,16 +30,19 @@ $VERSION = $version_number;
 #   numerically
 #   save_filesystem_information
 #   get_lvm_version -AR-
-#   save_lvm_information -AR-
-#   save_soft_raid_information -AR-
+#   save_lvm_information
 #   save_partition_information
+#   save_soft_raid_information
+#   valid_ip_quad
 #   where_is_my_efi_dir
 #   which
 #   which_dev_style
 #   write_auto_install_script_conf_footer
 #   write_auto_install_script_conf_header
-#   valid_ip_quad
+#   _add_raid_config_to_autoinstallscript_conf
 #   _get_device_size
+#   _get_parted_version
+#   _get_software_raid_info
 #   _print_to_auto_install_conf_file
 #   _turn_sfdisk_output_into_generic_partitionschemes_file
 #   _validate_label_type_and_partition_tool_combo
@@ -222,10 +225,13 @@ sub which {
     return 0;
 }
 
+
 # Usage:
-# get_lvm_version();
-#     return the version of LVM binaries installed in the system
-#     for the supported versions 1 or 2, otherwise return -1.
+#   get_lvm_version();
+#
+#   Return the version of LVM binaries installed in the system
+#   for the supported versions 1 or 2, otherwise return -1.
+#
 sub get_lvm_version
 {
     my $lvm_ver = `vgdisplay --version 2>/dev/null | sed -ne '1p'`;
@@ -346,8 +352,9 @@ sub save_partition_information {
             my $fs_regex = '(ext3|ext2|fat32|fat16|hfs|jfs|linux-swap|ntfs|reiserfs|hp-ufs|sun-ufs|xfs)\s*';
 
             #
-            # fs_regex arguments taken from parted on RHEL4.  Start parted 
-            # in interactive mode, and do this:
+            # fs_regex arguments taken from parted on RHEL4.  For more info on 
+            # flags that parted uses, just start parted in interactive mode, 
+            # and do this:
             #
             #   "help set"
             #
@@ -920,26 +927,15 @@ sub save_soft_raid_information {
     
     my ($file) = @_;
 
-    my $pre = "<raid>";
-    my $post = "</raid>";
-    my $md;
-    
     return undef unless (-f "/proc/mdstat");
 
-    # Get soft-raid information from /proc/mdstat.
-    open (MD_INFO, "</proc/mdstat") or
-        die ("FATAL: Couldn't open /proc/mdstat for reading!");
-    while ($_ = <MD_INFO>) {
-        if ($_ =~ /^(md[0-9]+).*(raid[0-9]+|linear).*/) {
-            $md->{$1}->{'raid_level'} = $2;
-            $md->{$1}->{'raid_level'} =~ s/raid//;
-        }
-    }
-    close(MD_INFO);
+    my $raid = _get_software_raid_info();
+    _add_raid_config_to_autoinstallscript_conf($file, $raid);
+
 
 #XXX  -BEF-
-# 1) get mdadm to store all necessary info in autoinstallscript.conf
-# 2) put mdadm code in boel
+# x1) get mdadm to store all necessary info in autoinstallscript.conf
+# x2) put mdadm code in boel
 # 3) modify code to use that info to create proper commands in the
 #    auto-install script.
 # 4) include code to create new /etc/mdadm/mdadm.conf to match the 
@@ -948,76 +944,23 @@ sub save_soft_raid_information {
 # 5) modify code that uses "raidtools" to use mdadm instead.
 # 6) if system had /etc/raidtab, then re-create /etc/raidtab _and_ 
 #    /etc/mdadm/mdadm.conf to match current config.
-#
-#    #
-#    # Get software RAID info using mdadm, if possible. -BEF-
-#    if( SystemImager::Common->which('mdadm') ) {
-#        foreach my $md_name (keys %{$md}) {
-#            my $cmd = "mdadm -D /dev/$md_name";
-#            #XXX 
-#        }
-#    } 
-#    #
-#    # If ! /etc/mdadm/mdadm.conf, get info from other places -BEF-
-#    elsif( -f "/etc/raidtab") {
-    # Try to get additional details from /etc/raidtab.
-    if (-f "/etc/raidtab") {
-        foreach (keys %{$md}) {
-            my $md_name = $_;
-            open (MD_INFO, "</etc/raidtab") or
-                die ("FATAL: Couldn't open /etc/raidtab for reading!");
-            while ($_ = <MD_INFO>) {
-                if ($_ =~ /raiddev \/dev\/$md_name/) {
-                    while ($_ = <MD_INFO>) {
-                        if ($_ =~ /chunk-size\s+([0-9]+)/) {
-                            $md->{$md_name}->{'chunk_size'} = $1;
-                        } elsif ($_ =~ /persistent-superblock\s+1$/) {
-                            $md->{$md_name}->{'persistent_superblock'} = 1;
-                        } elsif ($_ =~ /parity-algorithm\s+(.+)$/) {
-                            $md->{$md_name}->{'parity_algorithm'} = $1;
-                        }
-                    }
-                    last;
-                } 
-            }
-            close(MD_INFO);
-        }
-    }
 
     # Get physical volume information (LVM over software-RAID).
-    foreach (keys %{$md}) {
-        my $md_name = $_;
-        my $cmd = "pvdisplay -c /dev/$md_name 2>/dev/null";
+    foreach my $md (keys %{$raid}) {
+        my $cmd = "pvdisplay -c $md 2>/dev/null";
         open (PV_INFO, "$cmd|");
         unless (eof(PV_INFO)) {
             my @pv_data = split(/:/, <PV_INFO>);
             if ($pv_data[1]) {
-                $md->{$_}->{'lvm_group'} = $pv_data[1];
+                $raid->{$md}->{'lvm_group'} = $pv_data[1];
             }
         }
         close(PV_INFO);
     }
 
-    # Print software RAID configuration.
-    open(OUT, ">>$file") or die ("FATAL: Couldn't open $file for appending!");
-    print OUT "\n$pre\n";
-    foreach (sort keys %{$md}) {
-        my $str = "<raid_disk name=\"/dev/$_\" raid_level=\"" . $md->{$_}->{'raid_level'} . "\"";
-        $str .= " chunk_size=\"" . $md->{$_}->{'chunk_size'} . "\""
-            if ($md->{$_}->{'chunk_size'});
-        $str .= " persistent_superblock=\"" . $md->{$_}->{'persistent_superblock'} . "\""
-            if ($md->{$_}->{'persistent_superblock'});
-        $str .= " parity_algorithm=\"" . $md->{$_}->{'parity_algorithm'} . "\""
-            if ($md->{$_}->{'parity_algorithm'});
-        $str .= " lvm_group=\"" . $md->{$_}->{'lvm_group'} . "\""
-            if ($md->{$_}->{'lvm_group'});
-        $str .= ' />';
-        # Print soft-RAID entry.
-        print OUT "\t$str\n";
-    }
-    print OUT "$post\n";
-    close(OUT);
+    return 1;
 }
+
 
 # Usage: 
 # save_lvm_information( $file );
@@ -1027,11 +970,12 @@ sub save_lvm_information {
     
     # Parse volume group informations -AR-
     my $lvm_version = get_lvm_version();
+    
     if ($lvm_version == -1) {
         print STDERR "WARNING: cannot find the version of LVM or LVM version is not supported!\n";
         return;
     }
-
+     
     my $cmd = 'vgdisplay -c 2>/dev/null | sed /^$/d';
     open(VG, "$cmd|") || return undef;
     unless (eof(VG)) {
@@ -1054,10 +998,11 @@ sub save_lvm_information {
 
             # Print logical volumes informations for this group -AR-
             if ($lvm_version == 1) {
-                $cmd = 'vgdisplay -v 2>/dev/null | grep "^LV Name" | sed "s/  */ /g" | cut -d" " -f3 | xargs lvdisplay -c 2>/dev/null | sed /^$/d';
+                $cmd = 'vgdisplay -v 2>/dev/null | grep "^LV Name" | sed "s/ */ /g" | cut -d" " -f3 | xargs lvdisplay -c 2>/dev/null | sed /^$/d';
             } elsif ($lvm_version == 2) {
                 $cmd = "lvdisplay -c 2>/dev/null";
             }
+
             open(LV, "$cmd|");
             foreach my $lv_line (<LV>) {
                 $lv_line =~ s/^  //;
@@ -1553,4 +1498,130 @@ sub _get_parted_version {
 }
 
 
-return 1;
+#
+# Usage:
+#
+#   _add_raid_config_to_autoinstallscript_conf($file, $raid);
+#
+sub _add_raid_config_to_autoinstallscript_conf {
+
+    my ($file, $raid) = @_;
+
+    open(FILE,">>$file") or die "Couldn't open $file for appending. $!";
+
+        print FILE qq(\n);
+
+        foreach my $md (keys %{$raid}) {
+
+            print FILE qq(  <raid name="$md"\n);
+            print FILE qq(    raid_level="$raid->{$md}->{raid_level}"\n);
+            print FILE qq(    raid_devices="$raid->{$md}->{raid_devices}"\n);
+            print FILE qq(    spare_devices="$raid->{$md}->{spare_devices}"\n);
+            print FILE qq(    persistence="$raid->{$md}->{persistence}"\n);
+            print FILE qq(    rounding="$raid->{$md}->{rounding}"\n)       if($raid->{$md}->{rounding});
+            print FILE qq(    layout="$raid->{$md}->{layout}"\n)           if($raid->{$md}->{layout});
+            print FILE qq(    chunk_size="$raid->{$md}->{chunk_size}"\n)   if($raid->{$md}->{chunk_size});
+            print FILE qq(    devices="$raid->{$md}->{devices}"\n);
+            print FILE qq(  />\n);
+        }
+
+        print FILE qq(\n);
+
+    close(FILE);
+
+    return 1;
+}
+
+
+sub _get_software_raid_info {
+
+    my $raid;
+
+    # Get list of software RAID devices
+    my @array;
+    my $file = '/proc/mdstat';
+    open(FILE, "<$file") or die "FATAL: Couldn't open $file for reading. $!";
+    while (<FILE>) {
+        if(m/^(md\d+)\s/) {
+            my $md = "/dev/$1";
+            push(@array, $md);
+        }
+    }
+    close(FILE);
+
+    foreach my $md (@array) {
+        my $cmd = "mdadm -D $md";
+        open(INPUT,"$cmd|") or die "Couldn't run $cmd. $!";
+        while(<INPUT>) {
+        
+            # Raid Level : linear
+            if(m/\sRaid Level : (\S+)/) {
+                $raid->{$md}->{raid_level} = $1;
+            }
+        
+            # Raid Devices : 3
+            elsif(m/\sRaid Devices : (\d+)/) {
+                $raid->{$md}->{raid_devices} = $1;
+            }
+        
+            # Total Devices : 3
+            elsif(m/\sTotal Devices : (\d+)/) {
+                $raid->{$md}->{total_devices} = $1;
+            }
+        
+            # Persistence : Superblock is persistent
+            elsif(m/\sPersistence : (\S.*)/) {
+                if($1 =~ m/Superblock is persistent/) {
+                    $raid->{$md}->{persistence} = 'yes';
+                } else {
+                    $raid->{$md}->{persistence} = 'no';
+                }
+            }
+
+            # Layout : left-symmetric
+            elsif(m/\sLayout : (\S+)/) {
+                $raid->{$md}->{layout} = $1;
+            }
+        
+            # Chunk Size : 32K
+            elsif(m/\sChunk Size : (\S+)/) {
+                $raid->{$md}->{chunk_size} = $1;
+            }
+
+            #
+            # Number   Major   Minor   RaidDevice State
+            #    0       8       17        0      active sync   /dev/sdb1
+            #    1       8       33        1      active sync   /dev/sdc1
+            #    2       8       49        2      active sync   /dev/sdd1
+            #
+            #  --or--
+            #
+            # Number   Major   Minor   RaidDevice State
+            #    0       8       17        0      active sync   /dev/sdb1
+            #    1       8       33        1      active sync   /dev/sdc1
+            #
+            #    2       8       49        -      spare   /dev/sdd1
+            #
+            #                                   State
+            #                       RaidDevice      |
+            #                    Minor       |      |
+            #              Major     |       |      |     
+            #       Number     |     |       |      |      Device
+            #            |     |     |       |      |      |
+            #           vvv   vvv   vvv   vvvvvvv   vv    vvv
+            elsif(m/^\s+\d+\s+\d+\s+\d+\s+(\d+|-)\s+.+\s+(\S+)$/) {
+                $raid->{$md}->{devices} .= "$2 ";
+            }
+        }
+        close(INPUT);
+
+        $raid->{$md}->{spare_devices} = $raid->{$md}->{total_devices} - $raid->{$md}->{raid_devices};
+        $raid->{$md}->{devices} =~ s/\s+$//;
+    }
+    
+    return $raid;
+}
+
+
+1;
+

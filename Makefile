@@ -221,7 +221,6 @@ include $(TOPDIR)/make.d/openssl.rul
 include $(TOPDIR)/make.d/parted.rul
 include $(TOPDIR)/make.d/pdisk.rul
 include $(TOPDIR)/make.d/popt.rul
-include $(TOPDIR)/make.d/raidtools.rul
 include $(TOPDIR)/make.d/reiserfsprogs.rul
 include $(TOPDIR)/make.d/tar.rul
 include $(TOPDIR)/make.d/util-linux.rul

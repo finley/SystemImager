@@ -21,7 +21,7 @@ ALL_SOURCE += $(SRC_DIR)/$(MDADM_TARBALL)
 PHONY += mdadm
 mdadm:	$(MDADM_BINARIES)
 
-# install the raidtools binaries (pulled by some autoinstall clients)
+# install the raid tools (new style) (used by some autoinstall clients)
 PHONY += install_mdadm
 install_mdadm:	$(MDADM_BINARIES)
 	$(SI_INSTALL) -d $(TFTP_BIN_DEST)
