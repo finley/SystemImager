@@ -4,6 +4,7 @@
 #   $Id$
 #
 #   Written by Dann Frazier <daniel_frazier@hp.com>
+#   Copyright (C) 2006 Brian Elliott Finley
 #
 
 #########################################################################
@@ -311,6 +312,35 @@ starwars
 
 
 [End]"
+
+#
+# link_tftpboot()
+#
+#   XXX This is a hack right now, as I'm just hardcoding the paths in,
+#       but sometime soon, we should look at a re-write of this script
+#       in perl I believe.
+#       
+#       Anywho, the idea is, if we link /tftpboot to /usr/share/systemimager/boot
+#       by default, and modify the tools that create netboot config files, then
+#       whenever a UYOK image is pulled, the UYOK boot package is automatically
+#       available.  
+#
+#       No more forgetting to copy kernels/initrds into /tftpboot.
+#
+#       Instead, we just provide a path to the desired boot package.  Ie:
+#
+#           kernel = i386/standard/kernel
+#        or
+#           kernel = ia64/my-image/kernel
+#
+link_tftpboot() {
+    
+    if [ ! -e /tftpboot ]; then
+        cd /
+        ln -s /usr/share/systemimager/boot tftpboot
+    fi
+}
+
 
 ### BEGIN BACKUP_FILE()
 ############################################################
@@ -1135,6 +1165,8 @@ service tftp
         server_args             = --tftpd-timeout 300  --retry-timeout 5 --maxthread 100 --verbose=5 --logfile /var/log/atftpd.log $TFTPDIR
         disable                 = no
 }"
+
+link_tftpboot
 
 # check to see if the installed tftpd is one
 # of the ones that is known to support options
