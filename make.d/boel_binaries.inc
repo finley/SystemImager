@@ -31,7 +31,6 @@ $(BOEL_BINARIES_TARBALL):	$(BC_DIR).build \
 							$(TUNE2FS_BINARY) \
 							$(PARTED_BINARY) \
 							$(UTIL_LINUX_DIR).build \
-							$(RAIDTOOLS_BINARIES) \
 							$(MDADM_BINARIES) \
 							$(MKREISERFS_BINARY) \
 							$(MKJFS_BINARY) \
@@ -57,11 +56,8 @@ $(BOEL_BINARIES_TARBALL):	$(BC_DIR).build \
 	install -m 755 --strip $(TUNE2FS_BINARY) 		$(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(PARTED_BINARY)			$(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(UTIL_LINUX_BINARIES)	$(BOEL_BINARIES_DIR)/sbin/
-	install -m 755 --strip $(RAIDTOOLS_BINARIES) 		$(BOEL_BINARIES_DIR)/sbin/
-	cd $(BOEL_BINARIES_DIR)/sbin/ && ln -f raidstart raidstop
-	#EF: mdadm will replace raidtools
 	install -m 755 --strip $(MDADM_BINARIES) 		$(BOEL_BINARIES_DIR)/sbin/
-	install -m 755 --strip $(MKREISERFS_BINARY) 		$(BOEL_BINARIES_DIR)/sbin/
+	install -m 755 --strip $(MKREISERFS_BINARY) 	$(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(MKJFS_BINARY) 			$(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(OPENSSH_BINARIES) 		$(BOEL_BINARIES_DIR)/sbin/
 	mkdir -m 755 -p $(BOEL_BINARIES_DIR)/etc/ssh
