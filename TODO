@@ -136,3 +136,7 @@
         # Minimum upload rate threshold (in KB/s), if lesser stop seeding
         bittorrent_upload_min=50
 
+17) --autodetect-disks
+        Option for si_getimage and si_mkautoinstallscript
+        - if on, use David Lombard's disk independence code
+        - if off, just use disk info from ai.conf file.
