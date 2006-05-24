@@ -78,15 +78,12 @@ mount | grep c[0-9]+d[0-9]+p > /dev/null 2>&1
 if [ -f /proc/mdstat ]; then
   RAID_DEVICES=` cat /proc/mdstat | grep ^md | sed 's/ .*$//g' `
 
-  # raidstop will not run unless a raidtab file exists
-  echo "" >> /etc/raidtab || shellout
-
-  # turn dem pesky raid devices off!
+  # Turn dem pesky raid devices off!
   for RAID_DEVICE in ${RAID_DEVICES}
   do
     DEV="/dev/${RAID_DEVICE}"
-    # we don't do a shellout here because, well I forgot why, but we don't.
-    logmsg "raidstop ${DEV}" && raidstop ${DEV}
+    logmsg "mdadm --manage ${DEV} --stop"
+    mdadm --manage ${DEV} --stop
   done
 fi
 #
@@ -175,10 +172,12 @@ modprobe dm-mod
 ### END LVM volumes creation commands ###
 
 logmsg "Load additional filesystem drivers."
-modprobe reiserfs
 modprobe ext2
 modprobe ext3
+modprobe fat
 modprobe jfs
+modprobe reiserfs
+modprobe vfat
 modprobe xfs
 
 ### BEGIN swap and filesystem creation commands ###
@@ -292,9 +291,6 @@ fi
 # Leave notice of which image is installed on the client
 echo $IMAGENAME > /a/etc/systemimager/IMAGE_LAST_SYNCED_TO || shellout
 
-# Copy the raidtab into the image.
-cp -f /etc/raidtab /a/etc/raidtab
-
 ### BEGIN generate new fstab file from autoinstallscript.conf ###
 ##GENERATE_FSTAB##
 ### END generate new fstab file from autoinstallscript.conf ###
@@ -360,7 +356,7 @@ beep
 [ -z $DISKORDER ] || {
   echo "Editing files for actual disk configuration..."
 ##SHOW_DISK_EDITS##
-  for file in /etc/fstab /etc/raidtab /etc/systemconfig/systemconfig.conf /boot/grub/menu.lst /etc/lilo.conf; do
+  for file in /etc/fstab /etc/systemconfig/systemconfig.conf /boot/grub/menu.lst /etc/lilo.conf; do
     [ -f /a/$file ] || continue
     echo " $file"
     cp /a/$file /a/$file.image
