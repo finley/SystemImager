@@ -330,6 +330,7 @@ sub save_partition_information {
     # Open up the file that we'll be putting our generic partition info in. -BEF-
     open (DISK_FILE, ">>$file") or die ("FATAL: Couldn't open $file for appending!"); 
     
+    print DISK_FILE qq(\n);
     print DISK_FILE qq(  <disk dev=\"$dev\" label_type=\"$label_type\" unit_of_measurement=\"MB\">\n);
     
         print DISK_FILE qq(    <!--\n);
