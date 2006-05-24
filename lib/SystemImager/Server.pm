@@ -748,7 +748,7 @@ sub _read_partition_info_and_prepare_parted_commands {
                 # specify a filesystem type, even though it does nothing with it 
                 # with the "mkpart" command. -BEF-
                 #
-                $cmd = qq(parted -s -- $devfs_dev mkpart $p_type{$m} ext2 ) . q($START_MB $END_MB) . qq( || shellout);
+                $cmd = qq(parted -s -- $devfs_dev mkpart $p_type{$m} ) . q($START_MB $END_MB) . qq( || shellout);
 
             }
             print $out qq(logmsg "$cmd"\n);

@@ -115,14 +115,6 @@
     #    file.
     # x5) modify code that uses "raidtools" to use mdadm instead.
 
-15) Minor:
-    - parted no longer requires fstype with mkpart.  as in, we can now
-      do:
-
-        mkpart primary 0 -0
-        mkpart primary 100 160000
-        etc.
-
 16) BitTorrent:
     - the following options should be user settable, parse them in the
       kernel boot parameters (moreover tune the default values):
