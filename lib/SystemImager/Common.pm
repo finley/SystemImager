@@ -981,7 +981,8 @@ sub save_lvm_information {
     open(VG, "$cmd|") || return undef;
     unless (eof(VG)) {
         open(OUT, ">>$file") or die ("FATAL: Couldn't open $file for appending!");
-        print OUT "\n<lvm version=\"$lvm_version\">\n";
+        print OUT qq(\n);
+        print OUT qq(  <lvm version="$lvm_version">\n);
     
         foreach my $vg_line (<VG>) {
             $vg_line =~ s/^  //;
@@ -995,7 +996,7 @@ sub save_lvm_information {
             # Physical extent size.
             my $vg_phys_extent_size = $vg_data[12];
             
-            print OUT "\t<lvm_group name=\"$vg_name\" max_log_vols=\"$vg_max_log_vols\" max_phys_vols=\"$vg_max_phys_vols\" phys_extent_size=\"${vg_phys_extent_size}K\">\n";
+            print OUT qq(    <lvm_group name="$vg_name" max_log_vols="$vg_max_log_vols" max_phys_vols="$vg_max_phys_vols" phys_extent_size="${vg_phys_extent_size}K">\n);
 
             # Print logical volumes informations for this group -AR-
             if ($lvm_version == 1) {
@@ -1018,15 +1019,15 @@ sub save_lvm_information {
                 # Logical volume size is doubled in the columnised output. -AR-
                 my $lv_size = $lv_data[6] / 2;
                 
-                print OUT "\t\t<lv name=\"$lv_dev\" size=\"${lv_size}K\" />\n";
+                print OUT qq(      <lv name="$lv_dev" size="${lv_size}K" />\n);
             }
             
             close(LV);
     
-            print OUT "\t</lvm_group>\n";
+            print OUT qq(    </lvm_group>\n);
         }
         
-        print OUT "</lvm>\n";
+        print OUT qq(  </lvm>\n);
         close(OUT);
     } else {
         # print "DEBUG: No LVM groups defined on this system.\n";
@@ -1525,8 +1526,6 @@ sub _add_raid_config_to_autoinstallscript_conf {
             print FILE qq(    devices="$raid->{$md}->{devices}"\n);
             print FILE qq(  />\n);
         }
-
-        print FILE qq(\n);
 
     close(FILE);
 
