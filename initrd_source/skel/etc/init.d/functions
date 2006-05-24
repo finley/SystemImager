@@ -1568,11 +1568,12 @@ start_report_task() {
 
         # Evaluate bandwidth.
         speed=`echo "scale=2; (($TOT - $DISKSIZE) - $CURR_SIZE) / $REPORT_INTERVAL" | bc`
+        speed=`echo "scale=2; if ($speed >= 0) { print $speed; } else { print 0; }" | bc`
 
         # Evaluate status.
         CURR_SIZE=$(($TOT - $DISKSIZE))
         status=`echo "scale=2; $CURR_SIZE * 100 / $IMAGESIZE" | bc`
-        if [ `echo "scale=2; $status == 0" | bc` -eq 1 ]; then 
+        if [ `echo "scale=2; $status <= 0" | bc` -eq 1 ]; then 
             status=1
         elif [ `echo "scale=2; $status >= 100" | bc` -eq 1 ]; then
             status=99
