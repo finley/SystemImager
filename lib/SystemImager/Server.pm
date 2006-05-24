@@ -861,7 +861,7 @@ sub _read_partition_info_and_prepare_soft_raid_devs {
     foreach my $md ( sort (keys %{$xml->{raid}}) ) {
 
         my $cmd = qq(mdadm --create $md \\\n);
-        $cmd   .= qq(  --auto \\\n);
+        $cmd   .= qq(  --auto yes \\\n);
         $cmd   .= qq(  --level $xml->{raid}->{$md}->{raid_level} \\\n) if($xml->{raid}->{$md}->{raid_level});
         $cmd   .= qq(  --raid-devices $xml->{raid}->{$md}->{raid_devices} \\\n) if($xml->{raid}->{$md}->{raid_devices});
         $cmd   .= qq(  --spare-devices $xml->{raid}->{$md}->{spare_devices} \\\n) if($xml->{raid}->{$md}->{spare_devices});
