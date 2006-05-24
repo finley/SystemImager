@@ -1067,35 +1067,30 @@ part_done:
         }
     }
 
-    # Initialize software RAID volumes used for LVM (if present).
-    foreach my $raid (@{$xml_config->{raid}}) { 
-        foreach my $raid_disk (@{$raid->{raid_disk}}) {
-            my $vg_name = $raid_disk->{lvm_group};
-            unless ($vg_name) {
-                next;
-            }
-            my $raid_name = $raid_disk->{name};
-            unless ($raid_name) {
-                next;
-            }
+   # Initialize software RAID volumes used for LVM (if present).
+    my $xml = XMLin($file, keyattr => { raid => "+name" }, forcearray => 1 );
+    foreach my $md ( sort (keys %{$xml->{raid}}) ) {
+        my $vg_name = $xml->{raid}->{$md}->{lvm_group};
+        unless ($vg_name) {
+            next;
+        }
 
-            # Get the version of the LVM metadata to use.
-            foreach my $lvm (@{$xml_config->{lvm}}) {
-                my $version = $lvm->{version};
-                unless (defined($version)) {
-                    # Default => get LVM2 metadata type.
-                    $version = 2;
-                }
-                foreach my $lvm_group_name (@{$lvm->{lvm_group}}) {
-                    if ($lvm_group_name->{name} eq $vg_name) {
-                        $cmd = "pvcreate -M${version} -ff -y $raid_name || shellout";
-                        print $out qq(logmsg "$cmd"\n);
-                        print $out "$cmd\n";
-                    }
+        # Get the version of the LVM metadata to use.
+        foreach my $lvm (@{$xml_config->{lvm}}) {
+            my $version = $lvm->{version};
+            unless (defined($version)) {
+                # Default => get LVM2 metadata type.
+                $version = 2;
+            }
+            foreach my $lvm_group_name (@{$lvm->{lvm_group}}) {
+                if ($lvm_group_name->{name} eq $vg_name) {
+                    $cmd = "pvcreate -M${version} -ff -y $md || shellout";
+                    print $out qq(logmsg "$cmd"\n);
+                    print $out "$cmd\n";
                 }
             }
         }
-   }
+    }
 }
 
 # Usage:  
@@ -1153,20 +1148,17 @@ sub write_lvm_groups_commands {
                 }
             }
 
-            # Find RAID disks assigned to the volume group.
-            foreach my $raid (@{$xml_config->{raid}}) {
-                foreach my $raid_disk (@{$raid->{raid_disk}}) {
-                    unless (defined($raid_disk->{lvm_group})) { next; }
-                    if ($raid_disk->{lvm_group} eq $group_name) {
-                        # Add RAID device to the partition list.
-                        my $raid_name = $raid_disk->{name};
-                        if ($raid_name) {
-                            $part_list .= " $raid_name";
-                        } else {
-                            print "WARNING: software RAID disk without name!\n";
-                        }
-                    }
+           # Find RAID disks assigned to the volume group.
+            my $xml = XMLin($file, keyattr => { raid => "+name" }, forcearray => 1 );
+            foreach my $md ( sort (keys %{$xml->{raid}}) ) {
+                my $vg_name = $xml->{raid}->{$md}->{lvm_group};
+                unless ($vg_name) {
+                    next;
                 }
+                unless ($vg_name eq $group_name) {
+                    next;
+                }
+                $part_list .= " $md";
             }
 
             if ($part_list ne "") {
