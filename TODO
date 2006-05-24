@@ -3,9 +3,6 @@
 #  vi:set filetype=conf tw=72:
 #
 
-2) need to identify more modules that are not necessary for a typical
-   install, and add those to the etc/UYOK.modules_to_exclude file.
-
 4) need to remove discover and discover-data bits, and all references to
    them.  this functionality now provided by udev + hotplug
 
@@ -56,7 +53,7 @@
         etc...
 
     si_mkbootserver
-        - for now, just hardcode a softlink from /tftpboot ->
+        x- for now, just hardcode a softlink from /tftpboot ->
           /usr/share/systemimager/boot
         - later, re-write in perl and try to improve interaction
 
@@ -107,18 +104,16 @@
             initrd=i386/i386-dapper-server/initrd.img root=/dev/ram
 
 14) Fix software raid
-    # 1) get mdadm to store all necessary info in
+    # x1) get mdadm to store all necessary info in
     #    autoinstallscript.conf, if it is available on the client.
-    # 2) put mdadm code in boel
-    # 3) modify code to use that info to create proper commands in the
+    # x2) put mdadm code in boel
+    # x3) modify code to use that info to create proper commands in the
     #    auto-install script.
     # 4) include code to create new /etc/mdadm/mdadm.conf to match the
     #    config, as user may have modified it in the
     #    autoinstallscript.conf
     #    file.
-    # 5) modify code that uses "raidtools" to use mdadm instead.
-    # 6) if system had /etc/raidtab, then re-create /etc/raidtab _and_
-    #    /etc/mdadm/mdadm.conf to match current config.
+    # x5) modify code that uses "raidtools" to use mdadm instead.
 
 15) Minor:
     - parted no longer requires fstype with mkpart.  as in, we can now
@@ -140,3 +135,23 @@
         Option for si_getimage and si_mkautoinstallscript
         - if on, use David Lombard's disk independence code
         - if off, just use disk info from ai.conf file.
+
+18) Move all LVM info into the <lvm> section of autoinstallscript.conf.
+
+    - No longer store any lvm info in the <disk> and/or <raid> sections
+    - Collect PV info and store it in the <lvm_group> section
+        <lvm>
+          <lvm_group>
+            <pv device="/dev/sda1" />
+            <pv device="/dev/md0"  />
+            <pv device="/dev/md1"  />
+            <lv name="swap" size="524288K" />
+            <etc...>
+          </lvm_group>
+        </lvm>
+
+    - Need to modify:
+        - Server.pm
+        - Common.pm
+        - autoinstallscript.template
+
