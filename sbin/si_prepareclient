@@ -160,14 +160,17 @@ Options:
     is advantageous if you know you don't need a UYOK kernel, and you
     want this command to complete faster.
 
- --all-modules
-    Include every single module under /lib/modules/`uname -r`/ when
-    creating the UYOK (Use Your Own Kernel) initrd.img.
+ --my-modules
+    Only include the modules that are currently loaded on this machine
+    when creating the UYOK (Use Your Own Kernel) initrd.img.
 
-    Normally, only modules essential for accessing network, block, and
-    keyboard devices are included.  Other modules are usually not needed
-    for an autoinstall, and they dramatically increase the size of the 
-    initrd.img.
+    Without this option, all available modules are included whether or
+    not they are currently in use (except for those listed in the
+    /etc/systemimager/UYOK.modules_to_exclude file).
+
+    Including all modules allows your UYOK kernel and initrd.img to be
+    used with a greater variety of client hardware, but can make the
+    resultant initrd.img much larger. 
 
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
@@ -183,7 +186,7 @@ GetOptions(
     "quiet"                => \my $quiet,
     "rpm|rpm-install"      => \my $rpm,
     "no-uyok"              => \my $no_uyok,
-    "all-modules"          => \my $all_modules,
+    "my-modules"           => \my $my_modules,
     "version"              => \my $version,
     "server=s"             => \my $server,
     "yes"                  => \my $yes
@@ -206,6 +209,12 @@ if($help) {
 # bail if not root
 if ($> != 0) {
     print "Must be run as root!\n";
+    exit 1;
+}
+
+if($no_uyok and $my_modules) {
+    print "FATAL:  --no-uyok option conflicts with --my-modules!\n";
+    print qq(Try "$progname --help" for more info.\n);
     exit 1;
 }
 
@@ -651,7 +660,7 @@ sub create_auto_install_script_conf {
         my $arch = get_arch();
         my $verbose;
         unless($quiet) { $verbose = 1; }
-        SystemImager::UseYourOwnKernel->create_uyok_initrd( $arch, $all_modules, $verbose );
+        SystemImager::UseYourOwnKernel->create_uyok_initrd( $arch, $my_modules, $verbose );
     }
 
     SystemImager::Common->write_auto_install_script_conf_footer($file);

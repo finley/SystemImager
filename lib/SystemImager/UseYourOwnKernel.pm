@@ -29,13 +29,13 @@ our $is_mounted = 0;
 
 #
 # Usage: 
-#       SystemImager::UseYourOwnKernel->create_uyok_initrd($arch);
+#       SystemImager::UseYourOwnKernel->create_uyok_initrd($arch, $my_modules, $verbose);
 #
 sub create_uyok_initrd() {
 
         my $module      = shift;
         my $arch        = shift;
-        my $all_modules = shift;
+        my $my_modules  = shift;
         $verbose        = shift;
 
         use File::Copy;
@@ -64,7 +64,7 @@ sub create_uyok_initrd() {
         #
         my $modules_to_exclude = '';
         $file = "/etc/systemimager/UYOK.modules_to_exclude";
-        if(!$all_modules and -e $file) {
+        if(-e $file) {
             #
             # Get list of exclusions from "/etc/systemimager/UYOK.modules_to_exclude"
             # (that file should live in the "systemimager-common" package)
@@ -84,11 +84,22 @@ sub create_uyok_initrd() {
         #
         # Copy modules
         #
+        my @modules = get_load_ordered_list_of_running_modules();
         print ">>> Copying modules to new initrd from: /lib/modules/$uname_r...\n" if( $verbose );
         mkdir("$staging_dir/lib/modules", 0755) or die "$!";
-        $cmd = qq(rsync -a --exclude=build --exclude=source $modules_to_exclude /lib/modules/$uname_r $staging_dir/lib/modules/);
-        !system( $cmd ) or die( "Couldn't $cmd." );
-
+        unless ($my_modules) {
+            $cmd = qq(rsync -a --exclude=build --exclude=source $modules_to_exclude /lib/modules/$uname_r $staging_dir/lib/modules/);
+            !system( $cmd ) or die( "Couldn't $cmd." );
+        } else {
+            # Copy only loaded modules ignoring exclusions.
+            foreach my $module ( @modules ) {
+                $cmd = qq(rsync -aR $module $staging_dir);
+                !system( $cmd ) or die( "Couldn't $cmd." );
+            }
+            # Copy module configuration files.
+            $cmd = qq(rsync -R /lib/modules/$uname_r/* $staging_dir);
+            !system( $cmd ) or die( "Couldn't $cmd." );
+        }
         #
         # add modules and insmod commands
         #
@@ -97,7 +108,6 @@ sub create_uyok_initrd() {
         open( FILE,">>$file" ) or die( "Couldn't open $file for appending" );
 
         print ">>> Appending insmod commands to ./my_modules_dir/INSMOD_COMMANDS...\n" if( $verbose );
-        my @modules = get_load_ordered_list_of_running_modules();
         foreach my $module ( @modules ) {
                 print " >> insmod $module\n" if( $verbose );
                 print FILE "insmod $module\n";
