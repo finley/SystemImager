@@ -2,15 +2,6 @@
 #  $Id$
 #   vi: set filetype=make:
 #   
-#   2004.09.08  Brian Elliott Finley
-#   - start using non-busybox mkswap 
-#   2005.06.28  Brian Elliott Finley
-#   - merge sfdisk.rul into here
-#   2005.11.05  Brian Elliott Finley
-#   - update version to 2.12r
-#   - add patch capability
-#   - add patch for fsck.cramfs to fix build probs
-#
 
 UTIL_LINUX_VERSION  := 2.12r
 UTIL_LINUX_DIR      := $(SRC_DIR)/util-linux-$(UTIL_LINUX_VERSION)
@@ -19,7 +10,8 @@ UTIL_LINUX_TARBALL  := util-linux-$(UTIL_LINUX_VERSION).tar.bz2
 UTIL_LINUX_URL      := http://download.systemimager.org/pub/util-linux/$(UTIL_LINUX_TARBALL)
 UTIL_LINUX_PATCHES   = $(shell ls $(PATCH_DIR)/util-linux.*.patch 2>/dev/null | sort)
 UTIL_LINUX_BINARIES := $(UTIL_LINUX_DIR)/disk-utils/mkswap \
-                       $(UTIL_LINUX_DIR)/fdisk/sfdisk
+                       $(UTIL_LINUX_DIR)/fdisk/sfdisk \
+                       $(UTIL_LINUX_DIR)/disk-utils/blockdev
 
 ALL_SOURCE += $(SRC_DIR)/$(UTIL_LINUX_TARBALL)
 

@@ -469,6 +469,11 @@ sub _read_partition_info_and_prepare_parted_commands {
         print $out qq(logmsg "$cmd"\n);
         print $out "$cmd\n\n";
 
+        print $out "# Re-read the disk label.\n";
+        $cmd = "blockdev --rereadp $devfs_dev || shellout";
+        print $out qq(logmsg "$cmd"\n);
+        print $out "$cmd\n\n";
+
         print $out "# Create disk label.  This ensures that all remnants of the old label, whatever\n";
         print $out "# type it was, are removed and that we're starting with a clean label.\n";
         $cmd = "parted -s -- $devfs_dev mklabel $label_type || shellout";
