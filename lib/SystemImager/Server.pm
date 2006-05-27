@@ -881,6 +881,7 @@ sub _read_partition_info_and_prepare_soft_raid_devs {
         }
         $cmd   .= qq(  $xml->{raid}->{$md}->{devices}\n);
 
+        print $out "\nlogmsg \"$cmd\"";
         print $out "\n$cmd\n";
     }
     #XXX Do we want to 
