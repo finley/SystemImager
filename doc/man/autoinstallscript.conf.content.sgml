@@ -140,14 +140,6 @@
       </para>
     </listitem>
 
-    <listitem>
-      <para>
-		raid_dev - The partition is used to be part of the specified 
-		Software RAID volume (i.e. "/dev/md0").
-		The attribute "flags" must contain the value 'raid'. 
-      </para>
-    </listitem>
-  
   </itemizedlist>
   </refsect1>
 
@@ -160,19 +152,50 @@
 
   <itemizedlist>
     <listitem>
-      <para>raid - Soft-RAID definitions delimiter.</para>
+      <para>raid - Definition of a Soft-RAID disk</para>
     </listitem>
 
     <listitem>
-      <para>raid_disk - Define a new Soft-RAID disk.</para>
+      <para>name - The device name of the Soft-RAID disk (i.e. /dev/md0, /dev/md1, ...)</para>
     </listitem>
   
     <listitem>
-      <para>name - Define a new Soft-RAID disk.</para>
+      <para>
+		raid_level - Define the level of RAID to use.
+		Valid options are: linear, raid0, 0, stripe, raid1, 1,
+                mirror, raid4, 4, raid5, 5, raid6, 6.
+                Note that some of these values are synonymous.
+      </para>
     </listitem>
 
     <listitem>
-      <para>raid_level - Define the level of RAID to use.</para>
+      <para>
+		raid_devices - The number of disks or partitions used
+		to be part of the Software RAID volume.
+      </para>
+    </listitem>
+
+    <listitem>
+      <para>
+		spare_devices - The number of disks or partitions used
+		to be part of spare disks in the Software RAID volume.
+      </para>
+    </listitem>
+
+    <listitem>
+      <para>
+		rounding - Specify rounding factor for linear array.
+		This option is valid only when raid_level="raid1".
+      </para>
+    </listitem>
+
+    <listitem>
+      <para>
+		layout - The parity algorithm to use with RAID5. It must be
+		one of left-asymmetric, right-asymmetric, left-symmetric, or
+		right-symmetric. The default is left-symmetric.
+		This option is valid only when raid_level="raid5".
+      </para>
     </listitem>
 
     <listitem>
@@ -183,24 +206,6 @@
       </para>
     </listitem>
 
-    <listitem>
-      <para>
-		persistent_superblock - A persistent superblock is a small disk area
-		allocated at the end of each RAID device that helps the kernel to
-		safely detect RAID devices even	if disks have been moved between SCSI
-		controllers. Use this option if the disk naming order should change
-		in your system.
-      </para>
-    </listitem>
-
-    <listitem>
-      <para>
-		parity_algorithm - The parity algorithm to use with RAID5. It must be
-		one of left-asymmetric right-asymmetric, left-symmetric, or
-		right-symmetric.
-		You must use this option only with raid_level=5.
-      </para>
-    </listitem>
 
     <listitem>
       <para>
@@ -209,6 +214,15 @@
 		WARNING: LVM over Software-RAID is not yet supported by certain distibutions!
       </para>
     </listitem>
+
+    <listitem>
+      <para>
+		devices - The space separated list of disks or 
+		partitions used to be part of the Software RAID volume
+		(i.e. "/dev/sda3 /dev/sdb3 /dev/sdc3 /dev/sdd3").
+      </para>
+    </listitem>
+
 
   </itemizedlist>
   </refsect1>
