@@ -193,7 +193,8 @@ my $server_ok_icon    = $window->Photo(-file => 'USR_PREFIX/share/systemimager/i
 my $server_error_icon = $window->Photo(-file => 'USR_PREFIX/share/systemimager/icons/servererror.gif');
 
 # Use this font.
-my $FONT = '-*-helvetica-bold-r-normal-*-12-120-*-*-*-*-*-*';
+my $FONT       = '-*-helvetica-bold-r-normal-*-12-120-*-*-*-*-*-*';
+my $FIXED_FONT = '-*-monospace-bold-r-normal-*-12-120-*-*-*-*-*-*';
 
 # Generate the "File" menu bar.
 my $file_menu = $menubar->cascade(
@@ -434,7 +435,8 @@ sub show_virtual_console
     $sub_win->bind('<Escape>' => sub { $sub_win->destroy() });
 
     # Display the hostname or the IP address in the title.
-    $sub_win->title('Client: ' . ("$hostname" ne '-' ? "$hostname" : "$ip"));
+    $sub_win->title('Client: ' .
+        ("$hostname" ne '-' ? "$hostname ($ip)" : "$ip"));
 
     # Store MAC address of the selected client.
     $sub_mac_addr = $mac;
@@ -443,23 +445,25 @@ sub show_virtual_console
     $sub_tab = $sub_win->Scrolled(
         'ROText',
         -scrollbars    => 'e',
+        -width         => 80,
+        -height        => 25,
         -wrap          => 'word',
         -background    => 'black',
         -foreground    => 'lightgrey',
-        -font          => $FONT,
+        -font          => $FIXED_FONT,
         -setgrid       => 1,
         -insertofftime => 0,
     )->grid(-in => $sub_win, -row => 1, -column => 1, -sticky => 'nsew');
     $sub_win->gridRowconfigure(1, -weight => 1);
     $sub_win->gridColumnconfigure(1, -weight => 1);
     $sub_tab->insert('end',
-        "$hostname($ip):> virtual console started for client $mac.\n",
+        ">>> virtual console started for client $mac <<<\n",
         'title'
     );
 
     # Gather all log messages from the installing client.
     $sub_tab->insert('end',
-        "$hostname($ip):> gathering previous messages...\n",
+        "gathering previous messages...\n",
         'title'
     );
     $sub_win->update();
@@ -481,7 +485,7 @@ sub show_virtual_console
     if ($@) {
         # Error handler.
         $sub_tab->insert('end',
-            "$hostname($ip):> host unreachable: cannot gather previous messages!\n",
+            "host unreachable: cannot gather previous messages!\n",
             'title'
         );
     } else {
@@ -493,8 +497,7 @@ sub show_virtual_console
 
         # Fill virtual console with old log messages.
         for (my $i = 0; $i < $#old_logmsg - 1; $i++) {
-            $sub_tab->insert('end',
-                "$hostname($ip):> " . $old_logmsg[$i],
+            $sub_tab->insert('end', $old_logmsg[$i],
                 'title'
             );
         }
@@ -534,14 +537,14 @@ sub refresh_console
 
     # Correct the host name in the title of the console.
     if ($client{$mac}->{'host'}) {
-        $sub_win->title('Client: ' . $client{$mac}->{'host'});
+        my $hostname = $client{$mac}->{'host'};
+        my $ip = $client{$mac}->{'ip'};
+        $sub_win->title('Client: ' .
+            ("$hostname" ne '-' ? "$hostname ($ip)" : "$ip"));
     }
 
     # Generate the last message.
-    my $line = ($client{$mac}->{'host'} || '') . 
-        '(' . $client{$mac}->{'ip'} . ')' .
-        ":> " .
-        ($client{$mac}->{'log'} || '') . "\n";
+    my $line = ($client{$mac}->{'log'} || '') . "\n";
 
     # Replace escape sequences for the special field separator ':'.
     $line =~ s/\\x3a/:/g;
