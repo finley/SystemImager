@@ -1380,8 +1380,7 @@ sub _get_array_of_disks {
 #                           $auto_install_script_conf, $raid);
 #
 sub _write_out_mkfs_commands {
-    ## XXX remove $raidtab when it is specified in autoinstallscript.conf
-    my ($out, $image_dir, $file, $raidtab) = @_;
+    my ($out, $image_dir, $file) = @_;
 
     my $xml_config = XMLin($file, keyattr => { fsinfo => "+line" }, forcearray => 1 );
 
@@ -1406,50 +1405,6 @@ sub _write_out_mkfs_commands {
             $software_raid = "true";
         }
     }
-
-    if (($software_raid or $raidtab) and not($xml_config->{raid})) {
-
-	# XXX at some point, we want to include this in the autoinstallscript.conf
-	# file.  We should also look at the format and write functions for that 
-	# same file. -BEF-
-        print $out qq(# /etc/raidtab that will be used for creating software RAID devices on client(s).\n);
-        print $out qq(cat <<EOF > /etc/raidtab\n);
-        if (!$raidtab) {
-            $raidtab = $image_dir . "/etc/raidtab";
-        }
-        if (! -f $raidtab) {
-            croak("$file contains raid devices but the raidtab file $raidtab is not a regular file.\n");
-        }
-        open(FILE,"<$raidtab") or croak("Couldn't open $raidtab for reading.");
-            while (<FILE>) {
-                foreach my $key (@d2dkeys) {
-                    next unless /\Q$key/;
-                    s/\Q$key\E/\${$dev2disk{$key}}/;
-                    last;
-                }
-                print $out $_;
-            }
-        close(FILE);
-        print $out qq(EOF\n);
-        print $out qq(# /etc/raidtab that will be used for creating software RAID devices on client(s).\n);
-        print $out qq(\n);
-        print $out qq(if [ -e /etc/raidtab ]; then\n);
-		print $out qq(    logmsg "Ah, good.  Found an /etc/raidtab file.  Proceeding..."\n);
-		print $out qq(else\n);
-		print $out qq(    logmsg "No /etc/raidtab file.  Please verify that you have one in your image, or in an override directory."\n);
-		print $out qq(    shellout\n);
-		print $out qq(fi\n);
-        print $out "\n";
-
-        print $out "if [ ! -f /proc/mdstat ]; then\n";
-        print $out "  modprobe linear\n";
-        print $out "  modprobe raid0\n";
-        print $out "  modprobe raid1\n";
-        print $out "  modprobe raid5\n";
-        print $out "fi\n";
-        print $out "\n";
-    }
-
 
     foreach my $line (sort numerically (keys ( %{$xml_config->{fsinfo}} ))) {
         
@@ -1951,7 +1906,7 @@ sub create_autoinstall_script{
         $post_install,
         $no_listing,
         $auto_install_script_conf,
-        $raidtab
+        $autodetect_disks
     ) = @_;
 
     my $cmd;
@@ -1997,6 +1952,16 @@ sub create_autoinstall_script{
 	            last SWITCH;
 	        }
 
+	        if (/^\s*${delim}SET_DISKORDER${delim}\s*$/) {
+                    # Set or unset disk autodetection.
+                    if ($autodetect_disks) {
+                        print $MASTER_SCRIPT qq(DISKORDER=sd,cciss,ida,rd,hd\n);
+                    } else {
+                        print $MASTER_SCRIPT qq(DISKORDER=\n);
+                    }
+	            last SWITCH;
+	        }
+
 	        if (/^\s*${delim}PARTITION_DISKS${delim}\s*$/) { 
 	            _read_partition_info_and_prepare_parted_commands( $MASTER_SCRIPT,
 	          						$image_dir, 
@@ -2035,8 +2000,7 @@ sub create_autoinstall_script{
                 if (/^\s*${delim}CREATE_FILESYSTEMS${delim}\s*$/) {
 	            _write_out_mkfs_commands( $MASTER_SCRIPT, 
 	          			$image_dir, 
-	          			$auto_install_script_conf,
-	          			$raidtab );
+	          			$auto_install_script_conf);
 	            last SWITCH;
 	        }
 

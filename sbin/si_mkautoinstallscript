@@ -78,6 +78,9 @@ Options: (options can be presented in any order and may be abbreviated)
                         device is slow (e.g. serial console), and is the 
                         bottleneck of your installation.
 
+ --autodetect-disks     Try to detect available disks on the client instead
+                        of using devices from autoinstallscript.conf.
+
 The following options affect the autoinstall client after autoinstalling:
 
  --ip-assignment METHOD    Where METHOD can be DHCP, STATIC, or REPLICANT.
@@ -139,8 +142,7 @@ GetOptions(
     "update-script=s"   => \my $update_script,
     "post-install=s"    => \$post_install,
     "no-listing"        => \$no_listing,
-    "raidtab=s"         => \$raidtab  # XXX remove when raidtab 
-                                      # is in aiscript.conf
+    "autodetect-disks"  => \$autodetect_disks
 ) || die "$help_info";
 
 
@@ -180,11 +182,6 @@ my $imagedir = SystemImager::Server->get_image_path( $rsync_stub_dir, $image );
 unless ($imagedir) { 
     print qq(\nFATAL: Image "$image" doesn't appear to exist!\n\n);
     exit 1;
-}
-
-## XXX remove when raidtab is included in autoinstallscript.conf
-if (!$raidtab and -f "$imagedir/etc/raidtab") {
-    $raidtab = "$imagedir/etc/raidtab";
 }
 
 # If an autoinstallscript was specified, make sure it exists.
@@ -236,7 +233,7 @@ SystemImager::Server->create_autoinstall_script(
 	$post_install,
     $no_listing,
     $auto_install_script_conf,
-    $raidtab  ## XXX removed when raidtab is included in autoinstallscript.conf
+    $autodetect_disks,
 );
 ### END create a fresh master autoinstall script ###
 

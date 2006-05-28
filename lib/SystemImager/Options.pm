@@ -340,6 +340,10 @@ return << "EOF";
     useful for times when your console device is slow (e.g. serial console),
     and is the bottleneck of your installation.
 
+ --autodetect-disks
+    Try to detect available disks on the client when installing instead of
+    using devices specified in autoinstallscript.conf.
+
 The following options affect the autoinstall client after autoinstalling:
 
  --ip-assignment METHOD

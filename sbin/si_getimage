@@ -117,6 +117,7 @@ GetOptions(
     "update-script=s"   => \$update_script,
     "post-install=s"    => \$post_install,
     "no-listing"        => \$no_listing,
+    "autodetect-disks"  => \$autodetect_disks,
     "ssh-user=s"        => \$ssh_user,
     "log=s"             => \$log,
     "help"              => \$help,
@@ -576,7 +577,8 @@ SystemImager::Server->create_autoinstall_script(
 	$ip_assignment_method,
 	$post_install,
         $no_listing,
-    $auto_install_script_conf
+    $auto_install_script_conf,
+    $autodetect_disks,
 );
 ### END create a fresh master autoinstall script ###
 

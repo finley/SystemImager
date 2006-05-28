@@ -99,7 +99,9 @@ if [ $kernel = "2.4" ]; then
 else
     diskfile=/proc/diskstats
 fi 
-echo DISKORDER=${DISKORDER=sd,cciss,ida,rd,hd}
+
+##SET_DISKORDER##
+
 [ -z $DISKORDER ] || {
   logmsg enumerate_disks
   order=`echo "$DISKORDER" | sed 's/ /,/g' | sed s/,,*/,/g | sed s/^,//`
