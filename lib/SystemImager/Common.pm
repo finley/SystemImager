@@ -909,15 +909,6 @@ sub _print_to_auto_install_conf_file {
             # Standard block device -AR-
             $part = $disk . $minor;
         }
-        if (-f "/proc/mdstat") {
-            open (MD_INFO, "</proc/mdstat");
-            while ($_ = <MD_INFO>) {
-                if ($_ =~ /^(md[0-9]+).*$part.*/) {
-                    print DISK_FILE qq( raid_dev="/dev/$1");
-                }
-            }
-            close(MD_INFO);
-        }
     }
     print DISK_FILE qq( />\n);
 }
@@ -931,8 +922,6 @@ sub save_soft_raid_information {
     return undef unless (-f "/proc/mdstat");
 
     my $raid = _get_software_raid_info();
-    _add_raid_config_to_autoinstallscript_conf($file, $raid);
-
 
 #XXX  -BEF-
 # x1) get mdadm to store all necessary info in autoinstallscript.conf
@@ -958,6 +947,8 @@ sub save_soft_raid_information {
         }
         close(PV_INFO);
     }
+
+    _add_raid_config_to_autoinstallscript_conf($file, $raid);
 
     return 1;
 }
