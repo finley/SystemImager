@@ -172,12 +172,15 @@ write_variables() {
         
         echo "FLAMETHROWER_DIRECTORY_PORTBASE=$FLAMETHROWER_DIRECTORY_PORTBASE"	>> /tmp/variables.txt
         
-        echo "MONITOR_SERVER=$MONITOR_SERVER"      	>> /tmp/variables.txt
-        echo "MONITOR_PORT=$MONITOR_PORT"          	>> /tmp/variables.txt
-    fi
-    echo "MONITOR_CONSOLE=$MONITOR_CONSOLE"    	>> /tmp/variables.txt
+        echo "MONITOR_SERVER=$MONITOR_SERVER"           >> /tmp/variables.txt
+        echo "MONITOR_PORT=$MONITOR_PORT"               >> /tmp/variables.txt
+        echo "MONITOR_CONSOLE=$MONITOR_CONSOLE"         >> /tmp/variables.txt
 
-    echo "BITTORRENT_STAGING=$BITTORRENT_STAGING"    	>> /tmp/variables.txt
+        echo "BITTORRENT_STAGING=$BITTORRENT_STAGING"           >> /tmp/variables.txt
+        echo "BITTORRENT_POLLING_TIME=$BITTORRENT_POLLING_TIME" >> /tmp/variables.txt
+        echo "BITTORRENT_SEED_WAIT=$BITTORRENT_SEED_WAIT"       >> /tmp/variables.txt
+        echo "BITTORRENT_UPLOAD_MIN=$BITTORRENT_UPLOAD_MIN"     >> /tmp/variables.txt
+    fi
 }
 #
 ################################################################################
@@ -520,9 +523,11 @@ bittorrent_get_file() {
         # Bittorrent log file
         bittorrent_log=/tmp/bittorrent.log
         # Time to poll bittorrent events
-        bittorrent_polling_time=30
+        bittorrent_polling_time=${BITTORRENT_POLLING_TIME:-30}
+        # Wait after the download is finished to seed the other peers
+        bittorrent_seed_wait=${BITTORRENT_SEED_WAIT:-y}
         # Minimum upload rate threshold (in KB/s), if lesser stop seeding
-        bittorrent_upload_min=50
+        bittorrent_upload_min=${BITTORRENT_UPLOAD_MIN:-50}
 
         # Start downloading.
         bittorrent-console --no_start_trackerless_client --max_upload_rate 0 --display_interval 1 --rerequest_interval 1 --bind ${IPADDR} --save_in ${destination} ${torrent} > $bittorrent_log &
@@ -535,7 +540,7 @@ bittorrent_get_file() {
             logmsg "percent done: $status %"
             if [ "$status" = "100.0" ]; then
                 # Sleep until upload rate reaches the minimum threshold
-                while :; do
+                while [ "$bittorrent_seed_wait" = "y" ]; do
                     sleep $bittorrent_polling_time
                     while :; do
                         upload_rate=`grep 'upload rate:' $bittorrent_log | sed -ne '$p' | sed 's/upload rate: *\([0-9]*\)\.[0-9]* .*$/\1/' | sed -ne '/^\([0-9]*\)$/p'`
@@ -553,6 +558,7 @@ bittorrent_get_file() {
         done
 
         unset bittorrent_polling_time
+        unset bittorrent_seed_wait
         unset bittorrent_upload_min
         unset torrent
         unset destination

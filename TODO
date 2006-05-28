@@ -116,12 +116,12 @@
     # x5) modify code that uses "raidtools" to use mdadm instead.
 
 16) BitTorrent:
-    - the following options should be user settable, parse them in the
-      kernel boot parameters (moreover tune the default values):
-        # Time to poll bittorrent events
-        bittorrent_polling_time=30
-        # Minimum upload rate threshold (in KB/s), if lesser stop seeding
-        bittorrent_upload_min=50
+#    - the following options should be user settable, parse them in the
+#      kernel boot parameters (moreover tune the default values):
+#        # Time to poll bittorrent events
+#        bittorrent_polling_time=30
+#        # Minimum upload rate threshold (in KB/s), if lesser stop seeding
+#        bittorrent_upload_min=50
 
 17) --autodetect-disks
         Option for si_getimage and si_mkautoinstallscript
