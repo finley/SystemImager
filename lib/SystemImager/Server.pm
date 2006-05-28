@@ -304,6 +304,26 @@ sub get_all_devices($) {
     return @dev_list;
 }
 
+# Description:
+#  Returns a list of all disks from a given autoinstallscript.conf
+#  file.
+#
+# Usage:
+#  get_all_disks($file)
+#
+sub get_all_disks($) {
+    my ($file) = @_;
+
+    my @dev_list = ();
+    
+    my $fs_config = XMLin($file, keyattr => { disk => "+dev", part => "+num" }, forcearray => 1 );  
+    foreach my $key (keys %{$fs_config->{disk}}) {
+	push @dev_list, $key;
+    }
+    
+    return @dev_list;
+}
+
 
 # Description:
 #   A sort for raid controller device names
@@ -855,6 +875,7 @@ sub _read_partition_info_and_prepare_soft_raid_devs {
     print $out qq(modprobe raid10\n);
 
     my $xml = XMLin($file, keyattr => { raid => "+name" }, forcearray => 1 );
+    my @all_devices = reverse(get_all_disks($file));
 
     # mdadm --create $name \
     #     --chunk $chunk_size \
@@ -864,6 +885,23 @@ sub _read_partition_info_and_prepare_soft_raid_devs {
     #     $devices
 
     foreach my $md ( sort (keys %{$xml->{raid}}) ) {
+
+        my @devices = split(/ /, $xml->{raid}->{$md}->{devices});
+        my $part_list = '';
+
+        # Translate partitions in disk variables (disk autodetection compliant).
+        foreach my $part (@devices) {
+            my $i = 0;
+            foreach my $dev (@all_devices) {
+                if ($part =~ /^$dev(.+)$/) {
+                    $part_list .= ' ${DISK'.$i.'}'.$1;
+                    goto next_part;
+                }
+                $i++;
+            }
+            print "WARNING: partition $part doesn't belong to any disk!\n";
+        next_part:
+        }
 
         my $cmd = qq(mdadm --create $md \\\n);
         $cmd   .= qq(  --auto yes \\\n);
@@ -879,7 +917,7 @@ sub _read_partition_info_and_prepare_soft_raid_devs {
             $xml->{raid}->{$md}->{chunk_size} =~ s/K$//;
             $cmd   .= qq(  --chunk $xml->{raid}->{$md}->{chunk_size} \\\n);
         }
-        $cmd   .= qq(  $xml->{raid}->{$md}->{devices}\n);
+        $cmd   .= qq(  $part_list\n);
 
         print $out "\nlogmsg \"$cmd\"";
         print $out "\n$cmd\n";
