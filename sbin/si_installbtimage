@@ -193,8 +193,22 @@ sub bt_prepare {
     return unless ($list);
 
     foreach my $name (split(',', $list)) {
+        # Check if the directory exists.
         unless (-d "$dir/$name") {
             print "WARNING: \"$name\" is not a valid $type!\n";
+            next;
+        }
+
+        # Skip the directory if empty.
+        if (opendir(DIR, "$dir/$name")) {
+            my $files = grep {!/^\.$|^\.\.$/} readdir(DIR);
+            if ($files == 0) {
+                print "WARNING: $type $name is empty!!! Skpping...\n";
+                next;
+            }
+            closedir(DIR);
+        } else {
+            print "WARNING: cannot open directory $dir/$name\n";
             next;
         }
 
