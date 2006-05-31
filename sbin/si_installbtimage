@@ -203,7 +203,7 @@ sub bt_prepare {
         if (opendir(DIR, "$dir/$name")) {
             my $files = grep {!/^\.$|^\.\.$/} readdir(DIR);
             if ($files == 0) {
-                print "WARNING: $type $name is empty!!! Skpping...\n";
+                print "WARNING: $type for image $name is empty!!! Skipping...\n";
                 next;
             }
             closedir(DIR);
