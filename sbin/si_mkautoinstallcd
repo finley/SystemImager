@@ -1,15 +1,16 @@
 #!/usr/bin/perl -w
 #
 # "SystemImager"
-#  
-#  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
-#  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
-#  Copyright (C) 2001 Sean Dague <sean@dague.net>
 #
 #  $Id$
+#   vi:set filetype=perl:
+#  
+#   Copyright (C) 1999-2006 Brian Elliott Finley <brian@thefinleys.com>
+#   Copyright (C) 2002 Bald Guy Software <brian@thefinleys.com>
+#   Copyright (C) 2001 Sean Dague <sean@dague.net>
 # 
-#   Based on the original mkautoinstallcd by Brian Elliott Finley <brian.finley@baldguysoftware.com>
-#   New version by Sean Dague <sean@dague.net>
+#   Based on the original mkautoinstallcd by Brian Elliott Finley 
+#   <brian@thefinleys.com>, new version by Sean Dague <sean@dague.net>.
 # 
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -98,7 +99,7 @@ unless ($arch) {
 
 # Do we have a supported architecture? -BEF-
 if($arch !~ /^(i386|x86_64|ia64)$/) {
-    message("\nI'm terribly sorry, but I don't yet know how to make an\nautoinstall CD for the \"$arch\" architecture.\n");
+    message("\nI'm terribly sorry, but I don't yet know how to make an\nauto-install CD for the \"$arch\" architecture.\n");
     exit 1;
 }
 
@@ -365,21 +366,36 @@ sub usage {
 Usage: $progname [OPTION]... --out-file FILE
 
 Options: (options can be presented in any order and may be abbreviated)
- --help             Display this output.
- --version          Display version and copyright information.
- --out-file FILE    Name of the the ISO image file that will be produced.
-                   (Not to worry, this will only be a few MB in size.)
- --kernel FILE      Optionally specify an alternate autoinstall kernel.
- --initrd FILE      Optionally specify an alternate autoinstall ramdisk.
- --append "STRING"  A string of options that will be passed to the autoinstall
-                   kernel.
- --flavor FLAVOR    The flavor of the boot package to use.  If this option
-                   is not specified,  you will be asked to choose a flavor 
-                   from the available list interactively.
- --arch ARCH        Create a CD image for an architecture other than that of
-                   this host.
- --quiet            Don\'t print any output, just provide an appropriate 
-                   exit code.
+
+ --help             
+    Display this output.
+
+ --version          
+    Display version and copyright information.
+
+ --out-file FILE    
+    Name of the the ISO image file that will be produced.
+
+ --kernel FILE      
+    Optionally specify an alternate autoinstall kernel.
+
+ --initrd FILE      
+    Optionally specify an alternate autoinstall ramdisk.
+
+ --append "STRING"  
+    A string of options that will be passed to the autoinstall kernel.
+
+ --flavor FLAVOR    
+    The flavor of the boot package to use.  If this option is not
+    specified,  you will be asked to choose a flavor from the available
+    list interactively.
+
+ --arch ARCH        
+    Create an auto-install CD image for an architecture other than that
+    of this host.
+
+ --quiet            
+    Don\'t print any output, just provide an appropriate exit code.
 
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
