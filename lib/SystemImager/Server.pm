@@ -903,7 +903,7 @@ sub _read_partition_info_and_prepare_soft_raid_devs {
         next_part:
         }
 
-        my $cmd = qq(mdadm --create $md \\\n);
+        my $cmd = qq(yes | mdadm --create $md \\\n);
         $cmd   .= qq(  --auto yes \\\n);
         $cmd   .= qq(  --level $xml->{raid}->{$md}->{raid_level} \\\n) if($xml->{raid}->{$md}->{raid_level});
         $cmd   .= qq(  --raid-devices $xml->{raid}->{$md}->{raid_devices} \\\n) if($xml->{raid}->{$md}->{raid_devices});
@@ -934,92 +934,6 @@ sub _read_partition_info_and_prepare_soft_raid_devs {
     #       DEVICE /dev/sda1 /dev/sdb1 /dev/sdc1 etc...
 
     return 1;
-
-#   # Get all software RAID blocks.
-#   foreach my $raid (@{$xml_config->{raid}}) {
-#       my @all_devices = get_all_devices($file);
-#       my %devfs_map = dev_to_devfs(@all_devices) or return undef;
-#
-#       # Find the partitions assigned to each RAID disk. -AR-    
-#       foreach my $raid_disk (@{$raid->{raid_disk}}) {
-#
-#           # RAID device.
-#           my $raid_name = $raid_disk->{name};
-#           unless ($raid_name) {
-#               print "WARNING: software RAID disk without name!\n";
-#               next;
-#           }
-#           unless ($raid_name =~ /^\/dev\/md/) {
-#               print "WARNING: software RAID device name not valid: \"$raid_name\"\n";
-#               next;
-#           }
-#           # RAID level (mandatory).
-#           my $raid_level = $raid_disk->{raid_level};
-#           unless (defined($raid_level)) {
-#               print "WARNING: RAID disk \"$raid_disk->{name}\" doesn't have partitions assigned!\n";
-#               next;
-#           }
-#
-#           # Write raidtab details.
-#           print $out "raiddev " . $raid_disk->{name} . "\n";
-#           print $out "\traid-level\t" . $raid_level . "\n";
-#           print $out "\tpersistent-superblock\t" . $raid_disk->{persistent_superblock} . "\n"
-#               if ($raid_disk->{persistent_superblock});
-#           print $out "\tchunk-size\t" . ($raid_disk->{chunk_size} || 32) . "\n";
-#           if ($raid_level == 5) {
-#               print $out "\tparity-algorithm\t" . $raid_disk->{parity_algorithm} . "\n"
-#                   if ($raid_disk->{parity_algorithm});
-#           }
-#
-#           # Evaluate partitions assigned to the software RAID device.
-#           my @part_list;
-#
-#           foreach my $disk (@{$xml_config->{disk}}) {
-#               my $dev = $disk->{dev};
-#
-#               # Figure out what the highest partition number is.
-#               my $highest_part_num = 0;
-#               foreach my $part ( @{$disk->{part}} ) {
-#                   my $num = $part->{num};
-#                   if ($num > $highest_part_num) {
-#                       $highest_part_num = $num;
-#                   }
-#               }
-#           
-#               # Evaluate the partition list for the current software RAID device.
-#               my $m = "0";
-#               foreach my $part (@{$disk->{part}}) {
-#                   $m++;
-#                   unless (defined($part->{raid_dev})) { next; }
-#                   if ($part->{raid_dev} eq $raid_disk->{name}) {
-#                       if (defined($part->{num})) {
-#                           $m = $part->{num};
-#                       }
-#                       my $part_name = &get_part_name($dev, $m);
-#                       if ($part_name =~ /^(.*?)(p?\d+)$/) {
-#                           $part_name = "\${".$dev2disk{$1}."}".$2;
-#                       }
-#                       push(@part_list, $part_name);
-#                   }
-#               }
-#           }
-#       
-#           if (@part_list) {
-#               print $out "\tnr-raid-disks\t" . ($#part_list + 1) . "\n\n";
-#               for (my $i = 0; $i <= $#part_list; $i++) {
-#                   print $out "\tdevice $part_list[$i]\n\traid-disk\t$i\n";
-#               }
-#           } else {
-#               print "WARNING: RAID disk \"$raid_disk->{name}\" doesn't have partitions assigned!\n";
-#           }
-#           # Software RAID device defined in /etc/raidtab.
-#           print $out "\nEOF\n";
-#
-#           $cmd = "mkraid --really-force $raid_name || shellout";
-#           print $out qq(logmsg "$cmd"\n);
-#           print $out "$cmd\n";
-#        }
-#    }
 
 }
 
