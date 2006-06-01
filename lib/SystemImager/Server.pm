@@ -1,18 +1,9 @@
 #
-# "SystemImager" 
+#   "SystemImager" 
 #
-#   Copyright (C) 1999-2004 Brian Elliott Finley
+#   Copyright (C) 1999-2006 Brian Elliott Finley
 #
 #   $Id$
-#
-#   2004.06.01 Brian Elliott Finley
-#   - add record_image_retrieval_time function
-#   2004.06.24 Brian Elliott Finley
-#   - add record_image_retrieved_from function
-#   2004.08.10 Brian Elliott Finley
-#   - change quoting on ia64 append line
-#   2005.05.15 Brian Elliott Finley
-#   - added copy_boot_files_from_image_to_shared_dir()
 #
 
 package SystemImager::Server;
@@ -284,21 +275,24 @@ sub get_part_name {
 #  get_all_devices($file)
 #
 sub get_all_devices($) {
-    my ($file) = @_;
 
+    my ($file) = @_;
     
     my @dev_list = ();
     
     my $part_config = XMLin($file, keyattr => { fsinfo => "+line" }, forcearray => 1 );
     foreach my $line (keys %{$part_config->{fsinfo}}) {
-	if ($part_config->{fsinfo}->{$line}->{comment}) { next; }
-	if ($part_config->{fsinfo}->{$line}->{real_dev}) {
-	    push @dev_list, $part_config->{fsinfo}->{$line}->{real_dev};
-	}
+        if ($part_config->{fsinfo}->{$line}->{comment}) { 
+            next;
+        }
+        if ($part_config->{fsinfo}->{$line}->{real_dev}) {
+            push @dev_list, $part_config->{fsinfo}->{$line}->{real_dev};
+        }
     }
+
     my $fs_config = XMLin($file, keyattr => { disk => "+dev", part => "+num" }, forcearray => 1 );  
     foreach my $key (keys %{$fs_config->{disk}}) {
-	push @dev_list, $key;
+        push @dev_list, $key;
     }
     
     return @dev_list;
@@ -875,33 +869,38 @@ sub _read_partition_info_and_prepare_soft_raid_devs {
     print $out qq(modprobe raid10\n);
 
     my $xml = XMLin($file, keyattr => { raid => "+name" }, forcearray => 1 );
-    my @all_devices = reverse(get_all_disks($file));
+    my @all_disks = reverse(get_all_disks($file));
 
-    # mdadm --create $name \
-    #     --chunk $chunk_size \
-    #     --level $raid_level \
-    #     --raid-devices $raid_devices \
-    #     --spare-devices ($total_devices - $raid_devices) \
-    #     $devices
+    #
+    # Create a lookup hash.  Contents are like:
+    #   /dev/sda => DISK0
+    #
+    my %DISK_by_disk;
+    my $i = 0;
+    foreach my $disk (sort @all_disks) {
+        $DISK_by_disk{$disk} = "DISK$i";
+        $i++;
+    }
 
     foreach my $md ( sort (keys %{$xml->{raid}}) ) {
 
-        my @devices = split(/ /, $xml->{raid}->{$md}->{devices});
-        my $part_list = '';
+        my @md_devices = split(/ /, $xml->{raid}->{$md}->{devices});
+        my $devices;
 
         # Translate partitions in disk variables (disk autodetection compliant).
-        foreach my $part (@devices) {
-            my $i = 0;
-            foreach my $dev (@all_devices) {
-                if ($part =~ /^$dev(.+)$/) {
-                    $part_list .= ' ${DISK'.$i.'}'.$1;
-                    goto next_part;
-                }
-                $i++;
-            }
-            print "WARNING: partition $part doesn't belong to any disk!\n";
-        next_part:
+        foreach (@md_devices) {
+            m/^(.*)(p?\d+)$/;
+            my $disk = $1;
+            my $part_no = $2;
+            $devices .= '${' . $DISK_by_disk{$disk} . '}' . $part_no . ' ';
         }
+
+        # yes | mdadm --create $name \
+        #     --chunk $chunk_size \
+        #     --level $raid_level \
+        #     --raid-devices $raid_devices \
+        #     --spare-devices ($total_devices - $raid_devices) \
+        #     $devices
 
         my $cmd = qq(yes | mdadm --create $md \\\n);
         $cmd   .= qq(  --auto yes \\\n);
@@ -917,7 +916,7 @@ sub _read_partition_info_and_prepare_soft_raid_devs {
             $xml->{raid}->{$md}->{chunk_size} =~ s/K$//;
             $cmd   .= qq(  --chunk $xml->{raid}->{$md}->{chunk_size} \\\n);
         }
-        $cmd   .= qq(  $part_list\n);
+        $cmd   .= qq(  $devices\n);
 
         print $out "\nlogmsg \"$cmd\"";
         print $out "\n$cmd\n";
@@ -2158,6 +2157,7 @@ sub copy_boot_files_to_boot_media {
 
 
 
+#XXX why are we creating a new elilo.conf file?  Shouldn't we work with the one the system provides?  -BEF-
 # Description:
 # Write new elilo.conf file to boot media
 #
