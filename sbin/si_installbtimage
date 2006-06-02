@@ -120,6 +120,27 @@ if ($compress) {
     $compress = '';
 }
 
+# Find available BitTorrent binaries.
+chomp(my $maketorrent = `which maketorrent-console || which btmaketorrent`);
+unless ($maketorrent) {
+    print "ERROR: cannot find a valid binary to make torrents.\n";
+    exit(1);
+}
+chomp(my $launchmany = `which launchmany-console || which btlaunchmany`);
+chomp(my $launchmany_curses = `which launchmany-curses || which btlaunchmanycurses`);
+if ($launchmany) {
+    unless ($launchmany_curses) {
+        $launchmany_curses = $launchmany;
+    } 
+} else {
+    if ($launchmany_curses) {
+        $launchmany = $launchmany_curses;
+    } else {
+        print "ERROR: cannot find a valid binary to launch the seeder.\n";
+        exit(1);
+    }
+}
+
 # Prepare all images for seeding.
 bt_prepare($IMAGE_DIR, $images, 'image');
 
@@ -137,7 +158,7 @@ symlink($config->autoinstall_boot_dir() . '/' . $ARCH .
     '/standard/boel_binaries.tar.gz', $boel_binaries) 
     if (! -e $boel_binaries);
 # Make .torrent file.
-system "maketorrent-console --target $TORRENT_DIR/boel_binaries.tar.gz.torrent http://$image_server:$tracker_port/announce $boel_binaries";
+system "$maketorrent --target $TORRENT_DIR/boel_binaries.tar.gz.torrent http://$image_server:$tracker_port/announce $boel_binaries";
 if ($?) {
     die "ERROR: cannot create BOEL binaries torrent file!\n";
 }
@@ -147,7 +168,7 @@ print "done.\n";
 print "Starting first image server seeder...\n";
 if ($quiet) {
     $PIDFILE = '/var/run/systemimager-server-btseeder.pid';
-    open(PID, "launchmany-console --no_start_trackerless_client --max_upload_rate 0 --rerequest_interval 1 --bind $image_server --save_in $TARBALL_DIR $TORRENT_DIR>/dev/null 2>&1 & echo \$!|");
+    open(PID, "$launchmany --no_start_trackerless_client --max_upload_rate 0 --rerequest_interval 1 --bind $image_server --save_in $TARBALL_DIR $TORRENT_DIR>/dev/null 2>&1 & echo \$!|");
     my $pid = <PID>;
     close(PID);
     open(OUT, ">$PIDFILE") or die("ERROR: cannot open $PIDFILE for writing!\n");
@@ -155,11 +176,11 @@ if ($quiet) {
     close(OUT);
     # Check if the daemon is started.
     if (! -f $PIDFILE) {
-        die("ERROR: cannot start seeder with launchmany-console!\n");
+        die("ERROR: cannot start seeder with $launchmany!\n");
     }
     $_ = system "ps -p `cat $PIDFILE 2>/dev/null` >/dev/null 2>&1";
     if ($_) {
-        die("ERROR: cannot start seeder with launchmany-console!\n");
+        die("ERROR: cannot start seeder with $launchmany!\n");
     }
 } else {
     # Evaluate if python-curses is installed.
@@ -172,8 +193,8 @@ except:
 sys.exit(0);
 EOF
 `;
-    my $bt_ui = ($?) ? 'console' : 'curses';
-    system "launchmany-$bt_ui --no_start_trackerless_client --max_upload_rate 0 --rerequest_interval 1 --bind $image_server --save_in $TARBALL_DIR $TORRENT_DIR";
+    my $bt_ui = ($?) ? $launchmany : $launchmany_curses;
+    system "$bt_ui --no_start_trackerless_client --max_upload_rate 0 --rerequest_interval 1 --bind $image_server --save_in $TARBALL_DIR $TORRENT_DIR";
 }
 print "done.\n";
 
@@ -254,7 +275,7 @@ sub bt_prepare {
             $torrent_file = "$TORRENT_DIR/$type-$name.tar.torrent"
         }
         unless (-f "$torrent_file") {
-            system "maketorrent-console --target $torrent_file http://$image_server:$tracker_port/announce $tarball_file";
+            system "$maketorrent --target $torrent_file http://$image_server:$tracker_port/announce $tarball_file";
             if ($?) {
                 die "ERROR: cannot create $type torrent file!\n";
             }

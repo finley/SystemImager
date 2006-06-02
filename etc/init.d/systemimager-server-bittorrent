@@ -53,7 +53,13 @@ case "$1" in
     # Remove the previous state file (if present).
     rm -f $BT_TRACKER_STATE
     # Start tracker in background.
-    bittorrent-tracker --port $BT_TRACKER_PORT --dfile $BT_TRACKER_STATE --logfile $BT_TRACKER_LOG &
+    BT_TRACKER_BIN=`which bittorrent-tracker || which bttrack`
+    if [ -z $BT_TRACKER_BIN ]; then
+        echo failed.
+        echo Cannot find a valid tracker binary.
+        exit 1
+    fi
+    $BT_TRACKER_BIN --port $BT_TRACKER_PORT --dfile $BT_TRACKER_STATE --logfile $BT_TRACKER_LOG &
     if [ $? -ne 0 ]; then
         echo failed.
     	exit 1
