@@ -320,7 +320,7 @@ do
             compress=''
         else
             bittorrent_tarball=""
-            logmsg "error: cannot find a valid torrent file for override ${OVERRIDE}"
+            logmsg "warning: cannot find a valid torrent file for override ${OVERRIDE}"
         fi
         if [ ! -z $bittorrent_tarball ]; then
             logmsg "Start downloading override using torrent ${bittorrent_tarball}.torrent"
