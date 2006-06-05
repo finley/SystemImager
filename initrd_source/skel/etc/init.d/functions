@@ -532,6 +532,13 @@ bittorrent_get_file() {
         # Start downloading.
         bittorrent-console --no_start_trackerless_client --max_upload_rate 0 --display_interval 1 --rerequest_interval 1 --bind ${IPADDR} --save_in ${destination} ${torrent} > $bittorrent_log &
         pid=$!
+
+        # Wait for BitTorrent log to appear.
+        while [ ! -e $bittorrent_log ]; do
+            sleep 1
+        done
+
+        # Checking download...
         while :; do
             while :; do
                 status=`grep 'percent done:' $bittorrent_log | sed -ne '$p' | sed 's/percent done: *//' | sed -ne '/^[0-9]*\.[0-9]*$/p'`
@@ -551,6 +558,7 @@ bittorrent_get_file() {
                 done
                 logmsg "Stop seeding"
                 kill -9 $pid
+                rm -f $bittorrent_log
                 unset bittorrent_log pid upload_rate
                 break
             fi
