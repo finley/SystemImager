@@ -219,7 +219,7 @@ if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
     FLAMETHROWER_TARPIPE=y
     flamethrower_client
     if [ ! -z $MONITOR_SERVER ]; then
-        stop_report_task 100
+        stop_report_task 101
     fi
 elif [ ! -z $BITTORRENT_STAGING ]; then
     # Use BitTorrent
@@ -240,7 +240,7 @@ elif [ ! -z $BITTORRENT_STAGING ]; then
     logmsg ""
     bittorrent_get_file ${TORRENTS_DIR}/${bittorrent_tarball}.torrent ${BITTORRENT_STAGING}
     if [ ! -z $MONITOR_SERVER ]; then
-        stop_report_task 100
+        stop_report_task 101
     fi
     # Extract image.
     logmsg "Extracting image from ${bittorrent_tarball} ..."
@@ -266,7 +266,7 @@ else
               ${IMAGESERVER}::${IMAGENAME}/ ${DIR}/ || shellout 
 
         if [ ! -z $MONITOR_SERVER ]; then
-            stop_report_task 100
+            stop_report_task 101
         fi
 
         # Move from staging in tmpfs to disk
@@ -275,7 +275,7 @@ else
         logmsg "rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --exclude=/proc/* --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ /a/" 
         rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --exclude=/proc/* --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ /a/ || shellout 
         if [ ! -z $MONITOR_SERVER ]; then
-            stop_report_task 100
+            stop_report_task 101
         fi
     fi
 fi 
@@ -454,6 +454,7 @@ run_post_install_scripts
 #
 #   Tell the image server we are done
 #   
+[ ! -z $MONITOR_SERVER ] && send_monitor_msg "status=100"
 rsync $IMAGESERVER::scripts/imaging_complete > /dev/null 2>&1
 logmsg "Imaging completed"
 #
