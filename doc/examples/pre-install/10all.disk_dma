@@ -1,0 +1,29 @@
+#!/bin/sh
+
+#
+#   This example provided by:
+#       Ole Holm Nielsen
+#
+
+# Local addition from BvdV: speed up the hardisk
+# http://sourceforge.net/mailarchive/forum.php?thread_id=5041296&forum_id=10334
+echo "Loading ide chipset modules.."
+# Intel PIIX IDE driver (change if you have a different controller)
+modprobe piix
+#
+# echo "Original harddisk parameters"
+# cat /proc/ide/ide0/hda/settings
+# echo "sleep 5"
+# sleep 5
+# Setting harddisk speed to maximum!
+echo "Setting harddisk parameters to DMA"
+echo "io_32bit:1" > /proc/ide/ide0/hda/settings
+echo "using_dma:1" > /proc/ide/ide0/hda/settings
+echo "Updated harddisk parameters are"
+cat /proc/ide/ide0/hda/settings
+
+# Leave us time to read the display
+echo "sleep 5"
+sleep 5
+
+exit 0

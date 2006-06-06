@@ -1,0 +1,17 @@
+#!/bin/sh
+
+#
+#   This example provided by:
+#       Ole Holm Nielsen
+#
+
+# Get the Systemimager variables
+. /tmp/post-install/variables.txt
+
+# Change the Ethernet module to 3c59x (default: e1000)
+cd /etc
+cp -p modprobe.conf modprobe.conf.BAK
+sed s/e1000/3c59x/ modprobe.conf > modprobe.conf.new
+mv modprobe.conf.new modprobe.conf
+
+exit 0

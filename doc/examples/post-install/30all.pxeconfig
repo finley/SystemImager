@@ -1,0 +1,23 @@
+#!/bin/sh
+
+#
+#   This example provided by:
+#       Ole Holm Nielsen
+#
+
+# To be used with the pxeconfig tool.
+# Remove the <hex_ipaddr> file from the pxelinux.cfg directory
+# so the client will boot from disk.
+# Get pxeconfig from ftp://ftp.sara.nl/pub/outgoing/pxeconfig.tar.gz
+
+# Get the Systemimager variables
+. /tmp/post-install/variables.txt
+
+telnet $IMAGESERVER 6611
+sleep 1
+
+# For debugging
+# echo "sleep 30"
+# sleep 30
+
+exit 0
