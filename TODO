@@ -58,7 +58,71 @@
         - later, re-write in perl and try to improve interaction
 
     si_mkclientnetboot
-        - Paul G. will send a sample menu enabled pxe-boot file.
+        - Paul G.'s sample menu enabled pxe-boot file:
+
+DISPLAY pxelinux.cfg/message.txt
+PROMPT 1
+TIMEOUT 5000
+DEFAULT local
+#TIMEOUT 10 
+#DEFAULT 4
+
+LABEL 1
+  LOCALBOOT 0 
+
+LABEL local
+  LOCALBOOT 0 
+
+LABEL 2 
+  KERNEL kernel
+  APPEND vga=extended load_ramdisk=1 prompt_ramdisk=0 initrd=initrd.img root=/dev/ram rw ramdisk_blocksize=4096
+
+LABEL install 
+  KERNEL kernel
+  APPEND vga=extended load_ramdisk=1 prompt_ramdisk=0 initrd=initrd.img root=/dev/ram rw ramdisk_blocksize=4096
+
+LABEL 3
+ kernel memdisk
+ append initrd=dos.img
+
+LABEL installwin
+ kernel memdisk
+ append initrd=dos.img
+
+LABEL install-amd64
+  KERNEL kernel.amd64
+  APPEND vga=extended load_ramdisk=1 prompt_ramdisk=0 initrd=initrd.img.amd64 root=/dev/ram rw ramdisk_blocksize=4096
+LABEL 4
+  KERNEL kernel.amd64
+  APPEND vga=extended load_ramdisk=1 prompt_ramdisk=0 initrd=initrd.img.amd64 root=/dev/ram rw ramdisk_blocksize=4096
+
+
+            And include a message.txt that looks something like:
+
+
+welcome to 
+ #####   ######   ####   ######    ##    #####    ####   #    #
+ #    #  #       #       #        #  #   #    #  #    #  #    #
+ #    #  #####    ####   #####   #    #  #    #  #       ######
+ #####   #            #  #       ######  #####   #       #    #
+ #   #   #       #    #  #       #    #  #   #   #    #  #    #
+ #    #  ######   ####   ######  #    #  #    #   ####   #    #
+your choices:
+
+1.) local - This is the default action, it boots the local hard drive
+	           it will happen in 5 seconds
+	           or hit enter and it will happen now
+
+- Talk to Admin before using any of the rest of these - 
+2.) install - reinstall linux, resizes Hard drive
+	             resize may break windows
+
+3.) installwin - reinstalls the windows partition
+	                will erase C: drive
+
+4.) install-amd64 - reinstall linux on amd64 machines
+
+
         - generates a boot file for each client that looks like below,
           and includes a nice net-boot message for the client's console
           that explains their net-boot kernel choices:
@@ -146,4 +210,86 @@
         - Server.pm
         - Common.pm
         - autoinstallscript.template
+
+19) Test --dry-run option.  Email with details:
+
+    Subject: [Sisuite-users] si_updateclient: differences b/w with and without --dry-run
+
+
+
+20) Scott Jackson:  cciss disk names
+
+    SI did not name the partitions on cciss disks
+    correctly (I punted and avoided nodes with that disk type).
+
+21) Scott Jackson:  ethernet re-ordering
+
+    The most time consuming was not a SI problem per-se, but a problem
+    in the recent Ubuntu packages where the system reorders the ethernet
+    adapter names upon reboot. For instance on a node that has two
+    ethernet adapters, on the install the ethernet adapters show up as
+    eth0 and eth1, but after the reboot they are eth2 and eth3 with it
+    being more or less random which one is the one attached to the
+    network (the one with the lowest mac address). I tried several
+    things but eventually had to copy in a modified
+    /etc/network/interfaces in the post-install script which used an
+    "external mapping function" to map the lowest mac address to the
+    primary alias.  The resulting interfaces file is demonstrated below.
+
+        root@node17:~# cat /etc/network/interfaces
+        # The loopback interface
+        # Interfaces that comes with Debian Potato does not like to see
+        # "auto" option before "iface" for the first device specified.
+        iface lo inet loopback
+        auto lo
+
+        auto eth0 eth1 eth2 eth3
+        mapping eth0 eth1 eth2 eth3
+                script /etc/network/set-first-primary.pl
+
+        iface primary inet dhcp
+
+
+    The content of the "external mapping function" is as follows:
+
+        root@node17:/etc/network# cat set-first-primary.pl
+        #!/usr/bin/perl -w
+        use strict;
+
+        my @macs =3D ();
+        my %mac =3D ();
+
+        open IFCONFIG, "/sbin/ifconfig -a | grep '^eth' |" or die "Unable to run
+        ifconfig -a: $!\n";
+        foreach my $line (<IFCONFIG>)
+        {
+            my ($nic, $link, $desc, $hwaddr, $mac) =3D split /\s+/, $line;
+            $mac =3D lc $mac;
+            push @macs, $mac;
+            $mac{$nic} =3D $mac;
+        }
+
+        @macs =3D sort @macs;
+
+        if ($mac{$ARGV[0]} eq $macs[0]) { print "primary\n"; exit 0; }
+        else { exit 1; }
+
+
+    Craziness!
+
+    So, now we will begin writing support scripts around the systemimager
+    framework to dynamically provision nodes.
+
+    When I get really bold, I may try to create an image based on centos or
+    some such OS so we can actually switch OSes:)
+
+    Please let me know when there are deb packages for 3.7.3.
+
+    THANK YOU VERY MUCH for all of your knowledgeable and willing help!
+
+    Scott
+
+    Scott Jackson
+    Cluster Resources, Inc.
+
 
