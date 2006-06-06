@@ -121,13 +121,13 @@ if ($compress) {
 }
 
 # Find available BitTorrent binaries.
-chomp(my $maketorrent = `which maketorrent-console || which btmaketorrent`);
+chomp(my $maketorrent = `(which maketorrent-console || which btmaketorrent) 2>/dev/null`);
 unless ($maketorrent) {
     print "ERROR: cannot find a valid binary to make torrents.\n";
     exit(1);
 }
-chomp(my $launchmany = `which launchmany-console || which btlaunchmany`);
-chomp(my $launchmany_curses = `which launchmany-curses || which btlaunchmanycurses`);
+chomp(my $launchmany = `(which launchmany-console || which btlaunchmany) 2>/dev/null`);
+chomp(my $launchmany_curses = `(which launchmany-curses || which btlaunchmanycurses) 2>/dev/null`);
 if ($launchmany) {
     unless ($launchmany_curses) {
         $launchmany_curses = $launchmany;

@@ -53,7 +53,7 @@ case "$1" in
     # Remove the previous state file (if present).
     rm -f $BT_TRACKER_STATE
     # Start tracker in background.
-    BT_TRACKER_BIN=`which bittorrent-tracker || which bttrack`
+    BT_TRACKER_BIN=`(which bittorrent-tracker || which bttrack) 2>/dev/null`
     if [ -z $BT_TRACKER_BIN ]; then
         echo failed.
         echo Cannot find a valid tracker binary.
