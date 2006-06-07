@@ -470,11 +470,22 @@ sub get_load_ordered_list_of_running_modules() {
             close(MODULES);
         }
 
+        # Find the right way to get modules info.
+        my $uname_r = get_uname_r();
+        my $modinfo_filename;
+        if ($uname_r =~ /^2\.6/) {
+            $modinfo_filename = 'modinfo -F filename';
+        } elsif ($uname_r =~ /^2\.4/) {
+            $modinfo_filename = 'modinfo -n';
+        } else {
+            die "ERROR: unsupported kernel $uname_r!\n";
+        }
+
         # get the list of the loaded module filenames.
         open(MODULES,"<$file") or die("Couldn't open $file for reading.");
         while(<MODULES>) {
                 my ($module) = split;
-                chomp(my $module_file = `modinfo -F filename $module 2>/dev/null`);
+                chomp(my $module_file = `$modinfo_filename $module 2>/dev/null`);
                 if ($?) {
                         print STDERR qq(WARNING: Couldn't find module "$module" (skipping it)!\n);
                         next;
@@ -485,17 +496,37 @@ sub get_load_ordered_list_of_running_modules() {
 
         # add not-loaded modules mandatory for the installation environment
         foreach my $module (@mandatory_modules) {
-                chomp(my $module_file = `modinfo -F filename $module 2>/dev/null`);
+                chomp(my $module_file = `$modinfo_filename $module 2>/dev/null`);
                 if ($?) {
                         print STDERR qq(WARNING: Couldn't find module "$module", assuming it's built into the kernel.\n);
                         next;
                 }
                 push (@modules, $module_file);
                 # add module dependencies
-                chomp(my @deps = split(/,/, `modinfo -F depends $module 2>/dev/null`));
+                my @deps;
+                if ($uname_r =~ /^2\.6/) {
+                    chomp(@deps = split(/,/, `modinfo -F depends $module 2>/dev/null`));
+                } elsif ($uname_r =~ /^2\.4/) {
+                    open(MODULES_DEP, "</lib/modules/$uname_r/modules.dep") or
+                        die "ERROR: cannot open modules.dep!\n";
+                    while ($_ = <MODULES_DEP>) {
+                        if ($_ =~ m/$module_file:(.*)$/) {
+                            $_ = $1;
+                            do {
+                                last if ($_ =~ m/^$/);
+                                $_ =~ s/\s*(\S+)\s*\\*$/$1/g;
+                                push(@deps, $_);
+                            } while (chomp($_ = <MODULES_DEP>));
+                            last;
+                        }
+                    }
+                    close(MODULES_DEP);
+                } else {
+                    die "ERROR: unsupported kernel $uname_r!\n";
+                }
                 foreach (@deps) {
                     next unless ($_);
-                    chomp(my $module_file = `modinfo -F filename $_ 2>/dev/null`);
+                    chomp(my $module_file = `$modinfo_filename $_ 2>/dev/null`);
                     if ($?) {
                         print STDERR qq(WARNING: Couldn't find module "$_", assuming it's built into the kernel.\n);
                         next;
