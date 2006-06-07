@@ -26,7 +26,7 @@ send_monitor_msg() {
     send_msg=`echo "mac=$mac:ip=$IPADDR:host=$HOSTNAME:$msg"`
 
     # Find netcat binary
-    netcat=`which netcat || which nc`
+    netcat=`(which netcat || which nc) 2>/dev/null`
     [ -z $netcat ] && return
 
     cmd="echo \"$send_msg\" | $netcat -w $TIMEOUT $MONITOR_SERVER $MONITOR_PORT"
