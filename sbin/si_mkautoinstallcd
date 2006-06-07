@@ -216,9 +216,9 @@ if(($arch eq "i386") || ($arch eq "x86_64")) {
     mysystem("cp $isolinux $isolinux_dir");
     SystemImager::Server->copy_boot_files_to_boot_media($kernel, $initrd, $local_cfg, $arch, $isolinux_dir, $append_string);
     if ($arch eq "x86_64") {
-	mysystem("sed -e 's/initrd.img root=/initrd.img noexec=off root=/' /etc/systemimager/pxelinux.cfg/syslinux.cfg > $isolinux_dir/isolinux.cfg");
+	mysystem("sed -e 's/initrd.img root=/initrd.img noexec=off root=/' $isolinux_dir/syslinux.cfg > $isolinux_dir/isolinux.cfg");
     } else {
-	mysystem("cp /etc/systemimager/pxelinux.cfg/syslinux.cfg $isolinux_dir/isolinux.cfg");
+	mysystem("cp $isolinux_dir/syslinux.cfg $isolinux_dir/isolinux.cfg");
     }
 
 } else {      # ia64
