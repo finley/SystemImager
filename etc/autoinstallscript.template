@@ -358,7 +358,7 @@ beep
 [ -z $DISKORDER ] || {
   echo "Editing files for actual disk configuration..."
 ##SHOW_DISK_EDITS##
-  for file in /etc/fstab /etc/systemconfig/systemconfig.conf /boot/grub/menu.lst /etc/lilo.conf; do
+  for file in /etc/fstab /etc/systemconfig/systemconfig.conf /boot/grub/menu.lst /etc/lilo.conf /etc/grub.conf; do
     [ -f /a/$file ] || continue
     echo " $file"
     cp /a/$file /a/$file.image
