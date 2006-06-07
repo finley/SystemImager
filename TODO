@@ -58,6 +58,17 @@
         - later, re-write in perl and try to improve interaction
 
     si_mkclientnetboot
+        For a host with a name of "my-host" with a mac address that
+        derives to a boot file with a name of "92890905" produce boot
+        file that includes:
+
+        - an entry for every one of: ls /tftpboot/i386/*/kernel | perl
+          -pi -e 's#/tftpboot/##' 
+
+        - a reference to a messages file named
+          "pxelinux.cfg/92890905.my-host" that contains a boot menu with
+          menu items for each of the possible kernels from above.
+
         - Paul G.'s sample menu enabled pxe-boot file:
 
 DISPLAY pxelinux.cfg/message.txt
@@ -291,5 +302,12 @@ your choices:
 
     Scott Jackson
     Cluster Resources, Inc.
+
+22) Bernard Li: smart kernel append for ramdisk_size
+
+    ramdisk_size=80000
+
+23) systemimager-imagemanip as a seperate rpm with appropriate
+    dependencies
 
 
