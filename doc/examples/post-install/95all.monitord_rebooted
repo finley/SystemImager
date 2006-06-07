@@ -1,0 +1,43 @@
+#!/bin/sh
+#
+# Description: report the rebooted status to the monitor server.
+#
+
+# netcat timeout in seconds
+TIMEOUT=30
+
+send_monitor_msg() {
+    if [ -z $MONITOR_SERVER ]; then
+        return
+    fi
+    if [ -z $MONITOR_PORT ]; then
+        MONITOR_PORT=8181
+    fi
+
+    # Remove special field separator from the message.
+    msg=`echo "$@" | sed 's/:/\\\x3a/g'`
+
+    # Get the client mac address.
+    if [ -z "$mac" ]; then
+        mac=`ifconfig $DEVICE 2>/dev/null | sed -ne "s/.*HWaddr //p" | sed "s/ //g" | sed s/:/./g`
+    fi
+
+    # Report the message to the monitor server.
+    send_msg=`echo "mac=$mac:ip=$IPADDR:host=$HOSTNAME:$msg"`
+
+    # Find netcat binary
+    netcat=`which netcat || which nc`
+    [ -z $netcat ] && return
+
+    cmd="echo \"$send_msg\" | $netcat -w $TIMEOUT $MONITOR_SERVER $MONITOR_PORT"
+    for f in /etc/rc.local /etc/rc.d/rc.local /etc/init.d/rc.local /etc/init.d/after.local; do
+        echo $cmd >> $f
+    done
+}
+
+# Load installation variables.
+[ -e /tmp/post-install/variables.txt ] && . /tmp/post-install/variables.txt
+
+# Write commands to send status and final message to the monitord.
+send_monitor_msg "status=102"
+
