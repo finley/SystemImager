@@ -311,3 +311,10 @@ your choices:
     dependencies
 
 
+24) date > /tmp/start-time at start of install
+    date > /tmp/end-time at end of install
+
+    Then:
+    echo Your install took started at `cat /tmp/start-time` 
+    echo and completed at `cat /tmp/end-time`
+
