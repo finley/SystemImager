@@ -295,6 +295,9 @@ The bittorrent package allows you to use the BitTorrent protocol to perform
 installations.
 
 %changelog
+* Fri Jun 09 2006 Bernard Li <bli@bcgsc.ca>
+- Added file /etc/systemimager/UYOK.modules_to_include
+
 * Fri Apr 21 2006 Bernard Li <bli@bcgsc.ca>
 - New package: systemimager-bittorrent
 - Requires bittorrent RPM
@@ -672,6 +675,7 @@ fi
 %prefix/lib/systemimager/perl/SystemImager/UseYourOwnKernel.pm
 %dir /etc/systemimager
 %config /etc/systemimager/UYOK.modules_to_exclude
+%config /etc/systemimager/UYOK.modules_to_include
 
 %files server
 %defattr(-, root, root)
