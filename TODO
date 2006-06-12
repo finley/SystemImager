@@ -325,12 +325,15 @@ your choices:
 27) Enable sshd in ramdisk such that you can ssh into the nodes from the image
     server in the event of imaging failure
 
-28) si_monitortk improvements:
+28) si_monitortk improvements (thanks Bernard for the good suggestions):
     - display the full stdout and stderr of the client into the virtual
       console
+    - add a cmdline option to choose the starting clients order
     - support multiple virtual console instances at the same time
     - allow to export the content of the virtual console in an txt file
     - add a popup menu on the client entries to display detailed info
       and perform special actions (like open virtual console, check
       availability of the node, delete entry, etc)
-
+    - left click on the header to sort clients
+    - tabbed view for virtual console
+    
