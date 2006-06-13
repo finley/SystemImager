@@ -22,7 +22,7 @@
 #
 #
 #   Function: si_prepareclient is used to, well, prepare a client to have 
-#   it's image retrieved by an imageserver
+#   its image retrieved by an imageserver
 # 
 #   This is a port to Perl of the original bash script written by 
 #   Brian Elliott Finley.  Some of the bash code was contributed by 
@@ -479,7 +479,7 @@ system("mount > /etc/systemimager/mounted_filesystems");
 if(!$quiet and !$norsyncd) {
     print <<EOF;
 
-This client is ready to have it's image retrieved.  You must now run 
+This client is ready to have its image retrieved.  You must now run 
 the "si_getimage" command on your imageserver.
 EOF
 
