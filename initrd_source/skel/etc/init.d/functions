@@ -67,22 +67,6 @@ logmsg() {
     if [ ! -z $USELOGGER ] ;
         then logger "logger: $@"
     fi
-
-    # Check if the network is up before trying to send data to the
-    # monitor server.
-    if [ ! -z $MONITOR_SERVER ]; then
-        # Send the message to the monitor daemon.
-        if [ "x$MONITOR_CONSOLE" = "xyes" ]; then
-            # Log message into the global monitor log.
-            if fs_on_tmpfs / ; then
-                echo $@ >> /tmp/si_monitor.log
-            fi
-            ifconfig 2>&1 | grep "inet addr" | grep -v "127.0.0.1" >/dev/null 2>&1
-            if [ $? -eq 0 ]; then
-                send_monitor_msg "log=$@"
-            fi
-        fi
-    fi
 }
 
 
@@ -1524,6 +1508,36 @@ send_monitor_msg() {
 
     # Send data to monitor server.
     echo "$send_msg" | nc $MONITOR_SERVER $MONITOR_PORT
+}
+#
+################################################################################
+#
+#  send_monitor_stdout
+#
+#   Description:
+#   Redirect a stdout of a command to the monitor console.
+#
+#   Usage: <cmd> | send_monitor_stdout
+#
+
+send_monitor_stdout() {
+    if [ -z $MONITOR_SERVER ]; then
+        return
+    fi
+    if [ -z $MONITOR_PORT ]; then
+        MONITOR_PORT=8181
+    fi
+    while read l; do
+        # echo to the console -AR-
+        echo $l
+        # Send the message to the monitor daemon.
+        if [ "x$MONITOR_CONSOLE" = "xyes" ]; then
+            # Log message into the global monitor log.
+            if fs_on_tmpfs / ; then
+                echo $l >> /tmp/si_monitor.log
+            fi
+        fi
+    done
 }
 #
 ################################################################################

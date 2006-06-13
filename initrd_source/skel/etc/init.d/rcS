@@ -26,6 +26,8 @@
 #
 #   main
 #
+{
+
 #XXX remove all these sleeps
 	sleep 1
 switch_root_to_tmpfs
@@ -150,6 +152,9 @@ write_variables
 beep
 
 run_autoinstall_script
+
+} 2>&1 | send_monitor_stdout
+
 #
 #################################################################################
 

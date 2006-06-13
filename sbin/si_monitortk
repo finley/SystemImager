@@ -149,6 +149,10 @@ my (
     $sub_tab,
     $sub_title,
     $sub_mac_addr,
+    $sub_ip,
+    $sub_hostname,
+    $sub_cons_timer,
+    $sub_conn_failed,
 );
 
 # Initialize refresing status.
@@ -355,6 +359,14 @@ $done_style->configure(
     -font       => $FONT,
     -anchor     => 'center',
 );
+# Rebooted.
+my $rebooted_style = $tab->ItemStyle('text');
+$rebooted_style->configure(
+    -foreground => '#008000',
+    -background => '#FFFFFF',
+    -font       => $FONT,
+    -anchor     => 'center',
+);
 # Installing.
 my $inst_style = $tab->ItemStyle('text');
 $inst_style->configure(
@@ -438,8 +450,10 @@ sub show_virtual_console
     $sub_win->title('Client: ' .
         ("$hostname" ne '-' ? "$hostname ($ip)" : "$ip"));
 
-    # Store MAC address of the selected client.
+    # Store MAC address, ip and hostnames of the selected client.
     $sub_mac_addr = $mac;
+    $sub_ip = $ip;
+    $sub_hostname = $hostname;
 
     # Console body.
     $sub_tab = $sub_win->Scrolled(
@@ -467,96 +481,93 @@ sub show_virtual_console
         'title'
     );
     $sub_win->update();
-    my @old_logmsg = ();
-    socket(SOCK, PF_INET, SOCK_STREAM, getprotobyname('tcp')) or BEGIN {
-        print STDERR "error: cannot create TCP socket for client $ip!\n";
-        goto skip_old_logmsg;
-    };
-    eval {
-        # Set a timeout on the socket.
-        setsockopt(SOCK, SOL_SOCKET, SO_SNDTIMEO, pack('L!L!', 10, 0)) or 
-            die "error: cannot set SO_SNDTIMEO option to socket\n";
-        setsockopt(SOCK, SOL_SOCKET, SO_RCVTIMEO, pack('L!L!', 10, 0)) or
-            die "error: cannot set SO_RCVTIMEO option to socket\n";
-        # Connection to the client.
-        connect(SOCK, sockaddr_in(8181, inet_aton($ip))) or
-            die "error: connection failed\n";
-    };
-    if ($@) {
-        # Error handler.
+    if (refresh_console()) {
+        # Error: host unreachable. 
         $sub_tab->insert('end',
             "host unreachable: cannot gather previous messages!\n",
             'title'
         );
     } else {
-        # Gather all logs.
-        while (<SOCK>) {
-            push(@old_logmsg, $_);
-        }
-        close(SOCK);
+        # Initialize counter of connections failed.
+        $sub_conn_failed = 0;
 
-        # Fill virtual console with old log messages.
-        for (my $i = 0; $i < $#old_logmsg - 1; $i++) {
-            $sub_tab->insert('end', $old_logmsg[$i],
-                'title'
-            );
-        }
-        # Refresh console view (default 100ms).
-        my $cons_timer = Tk::After->new(
-                $sub_win,
-                100,
-                'repeat',
-                \&refresh_console
+        # Refresh console view (default 1sec).
+        $sub_cons_timer = Tk::After->new(
+            $sub_win,
+            1000,
+            'repeat',
+            \&refresh_console
         );
     }
+    $sub_win->update();
 }
 
 # Usage:
-# refresh_console();
+# $ret = refresh_console();
 # Description:
 #    Refresh the virtual console view.
 sub refresh_console
 {
     # Get mac address of the client to monitor.
     my $mac = $sub_mac_addr;
-
-    # Open and read lock the database.
-    open(LOCK, ">", "$lock_file") or
-        die "error: cannot open lock file \"$lock_file\"!\n";
-    flock(LOCK, LOCK_SH);
-    
-    # Parse XML database.
-    my $xml = XMLin($database, KeyAttr => {client => 'name'}, ForceArray => 1);
-
-    # Close and unlock database.
-    flock(LOCK, LOCK_UN);
-    close(LOCK);
-
-    # Parse clients data.
-    my %client = %{$xml->{'client'}};
+    my $ip = $sub_ip;
+    my $hostname = $sub_hostname;
 
     # Correct the host name in the title of the console.
-    if ($client{$mac}->{'host'}) {
-        my $hostname = $client{$mac}->{'host'};
-        my $ip = $client{$mac}->{'ip'};
+    if ($hostname) {
         $sub_win->title('Client: ' .
             ("$hostname" ne '-' ? "$hostname ($ip)" : "$ip"));
     }
+    $sub_win->update();
 
-    # Generate the last message.
-    my $line = ($client{$mac}->{'log'} || '') . "\n";
+    # Get previous messages.
+    my @old_logmsg = ();
+    eval {
+	# Socket timeout (sec).
+	my $TMO = 5;
+        # Create the socket.
+        socket(SOCK, PF_INET, SOCK_STREAM, getprotobyname('tcp')) or
+            die "error: cannot create TCP socket for client $ip!\n";
+        # Set a timeout on the socket.
+        setsockopt(SOCK, SOL_SOCKET, SO_SNDTIMEO, pack('L!L!', $TMO, 0)) or 
+            die "error: cannot set SO_SNDTIMEO option to socket\n";
+        setsockopt(SOCK, SOL_SOCKET, SO_RCVTIMEO, pack('L!L!', $TMO, 0)) or
+            die "error: cannot set SO_RCVTIMEO option to socket\n";
+        # Connection to the client.
+        connect(SOCK, sockaddr_in(8181, inet_aton($ip))) or
+            die "error: connection failed\n";
+    };
+    if ($@) {
+        if (++$sub_conn_failed > 10) {
+            # Stop refreshing virtual console.
+            $sub_cons_timer->cancel();
+        }
+        # Log gathering failed.
+        return -1;
+    } else {
+	$sub_conn_failed = 0;
+        # Gather all logs.
+        while (<SOCK>) {
+            push(@old_logmsg, $_);
+        }
+        close(SOCK);
 
-    # Replace escape sequences for the special field separator ':'.
-    $line =~ s/\\x3a/:/g;
+        if (@old_logmsg) {
+            # Clear old logs.
+            $sub_tab->delete('1.1', 'end');
 
-    # Get previous message.
-    my $last_line = $sub_tab->get('end - 2 lines', 'end - 1 lines');
-
-    # Display the client message only if it is different from
-    # the previous one.
-    if ($last_line ne $line) {
-        $sub_tab->insert('end', $line);
-        $sub_tab->see('end');
+            # Fill virtual console with old log messages.
+            for (my $i = 0; $i < $#old_logmsg - 1; $i++) {
+                $old_logmsg[$i] =~ s/\t/    /g;
+                $sub_tab->insert('end', $old_logmsg[$i],
+                    'title'
+                );
+            }
+            # FIXME: not end but the previous saw line!
+            $sub_tab->see('end');
+            $sub_win->update();
+        }
+        return 0;
     }
 }
 
@@ -757,14 +768,15 @@ sub display_nodes
             }
         } keys %{$client};
     }
+    my $status;
     foreach my $mac (@list) {
         # Create the entry.
         my $row = $tab->addchild('');
         # Evaluate the status and adjust the style of the entry.
         my ($style, $status_icon);
-        my $status;
+        $status = $client->{$mac}->{'status'} || 0;
         # Create the installation progress bar.
-        if ($progress) {
+        if (($progress) && ($status > 0) && ($status < 100)) {
             $status_progress = $tab->ProgressBar(
                 -borderwidth => 0,
                 -relief      => 'flat',
@@ -790,7 +802,6 @@ sub display_nodes
                 -to          => 100,
            );
         }
-        $status = $client->{$mac}->{'status'} || 0;
         if (!$status) {
             $num_inst++;
             $client->{$mac}->{'status'} = 'initializing...';
@@ -819,7 +830,7 @@ sub display_nodes
         } elsif ($status == 102) {
             $num_ok++;
             $client->{$mac}->{'status'} = 'REBOOTED';
-            $style = $done_style;
+            $style = $rebooted_style;
             $status_icon = $server_ok_icon;
         } else {
             $num_unkn++;
@@ -866,7 +877,7 @@ sub display_nodes
         # Display other node attributes.
         for (0 .. $#attrs) {
             # Status.
-            if (($progress) && ($attrs[$_] eq 'status') && (($status > 0) && ($status < 100))) {
+            if (($progress) && ($attrs[$_] eq 'status') && ($status > 0) && ($status < 100)) {
                 # Display the status using a progress bar.
                 $tab->itemCreate(
                     $row,
