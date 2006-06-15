@@ -132,7 +132,6 @@ my (
     $start_refresh_button, $stop_refresh_button,
     $clear_clients_button,
     $quit_button,
-    $status_progress,
     
     # Selected node entry in the list.
     $selected_mac_addr,
@@ -154,6 +153,9 @@ my (
     $sub_cons_timer,
     $sub_conn_failed,
 );
+
+# List to keep track of status ProgressBar objects.
+my @status_progress_list = ();
 
 # Initialize refresing status.
 $is_refreshing = 0;
@@ -730,6 +732,11 @@ sub display_nodes
 
     # Delete all clients.
     $tab->delete('all');
+    # Explicitly destroy the ProgressBar objects if present.
+    foreach (@status_progress_list) {
+        $_->destroy();
+    }
+    @status_progress_list = ();
     unless (-s $database) {
         goto status_bar_update;
     }
@@ -768,8 +775,10 @@ sub display_nodes
             }
         } keys %{$client};
     }
-    my $status;
     foreach my $mac (@list) {
+        my $status;
+        my $status_progress;
+
         # Create the entry.
         my $row = $tab->addchild('');
         # Evaluate the status and adjust the style of the entry.
@@ -801,6 +810,7 @@ sub display_nodes
                 -from        => 0,
                 -to          => 100,
            );
+           push(@status_progress_list, $status_progress);
         }
         if (!$status) {
             $num_inst++;
