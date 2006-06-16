@@ -161,7 +161,7 @@ my @status_progress_list = ();
 $is_refreshing = 0;
 
 # Set default sort options.
-$sort_field = 'mac';
+$sort_field = 'ip';
 $sort_order = 1;
 
 # Client attributes.
@@ -240,6 +240,11 @@ my $edit_menu = $menubar->cascade(
     -underline => 0,
     -tearoff   => 0,
 );
+$edit_menu->checkbutton(
+    -label     => '~Show progress bars',
+    -command   => \&refresh,
+    -variable  => \$progress,
+);
 my $sort_menu = $edit_menu->cascade(
     -label     => 'Sort',
     -underline => 0,
@@ -269,11 +274,6 @@ $sort_menu->radiobutton(
     -variable => \$sort_order,
     -value    => 0,
     -state    => 'normal',
-);
-$edit_menu->checkbutton(
-    -label     => '~Show progress bars',
-    -command   => \&refresh,
-    -variable  => \$progress,
 );
 
 # Generate the "About" menu bar.
@@ -364,8 +364,8 @@ $done_style->configure(
 # Rebooted.
 my $rebooted_style = $tab->ItemStyle('text');
 $rebooted_style->configure(
-    -foreground => '#008000',
-    -background => '#FFFFFF',
+    -foreground => '#000000',
+    -background => '#B8FFB1',
     -font       => $FONT,
     -anchor     => 'center',
 );
@@ -389,6 +389,13 @@ $unkn_style->configure(
 my $image_style = $tab->ItemStyle('imagetext');
 $image_style->configure(
     -background => '#FFFFFF',
+    -font       => $FONT,
+    -anchor     => 'center',
+);
+# Rebooted image style.
+my $rebooted_image_style = $tab->ItemStyle('imagetext');
+$rebooted_image_style->configure(
+    -background => '#B8FFB1',
     -font       => $FONT,
     -anchor     => 'center',
 );
@@ -493,10 +500,10 @@ sub show_virtual_console
         # Initialize counter of connections failed.
         $sub_conn_failed = 0;
 
-        # Refresh console view (default 1sec).
+        # Refresh console view (default 5sec).
         $sub_cons_timer = Tk::After->new(
             $sub_win,
-            1000,
+            $refresh_rate,
             'repeat',
             \&refresh_console
         );
@@ -526,7 +533,7 @@ sub refresh_console
     my @old_logmsg = ();
     eval {
 	# Socket timeout (sec).
-	my $TMO = 5;
+	my $TMO = 1;
         # Create the socket.
         socket(SOCK, PF_INET, SOCK_STREAM, getprotobyname('tcp')) or
             die "error: cannot create TCP socket for client $ip!\n";
@@ -778,6 +785,7 @@ sub display_nodes
     foreach my $mac (@list) {
         my $status;
         my $status_progress;
+        my $icon_style;
 
         # Create the entry.
         my $row = $tab->addchild('');
@@ -817,36 +825,43 @@ sub display_nodes
             $client->{$mac}->{'status'} = 'initializing...';
             $style = $init_style;
             $status_icon = $server_init_icon;
+            $icon_style = $image_style;
         } elsif ($status < 0) {
             $num_fail++;
             $client->{$mac}->{'status'} = 'error!';
             $style = $fail_style;
             $status_icon = $server_error_icon;
+            $icon_style = $image_style;
         } elsif (($status > 0) && ($status < 100)) {
             $num_inst++;
             $client->{$mac}->{'status'} = sprintf('%.2f%%', $status);
             $style = $inst_style;
             $status_icon = $server_inst_icon;
+            $icon_style = $image_style;
         } elsif ($status == 100) {
             $num_ok++;
             $client->{$mac}->{'status'} = 'imaged';
             $style = $done_style;
             $status_icon = $server_ok_icon;
+            $icon_style = $image_style;
         } elsif ($status == 101) {
             $num_inst++;
             $client->{$mac}->{'status'} = 'finalizing...';
             $style = $inst_style;
             $status_icon = $server_inst_icon;
+            $icon_style = $image_style;
         } elsif ($status == 102) {
             $num_ok++;
             $client->{$mac}->{'status'} = 'REBOOTED';
             $style = $rebooted_style;
             $status_icon = $server_ok_icon;
+            $icon_style = $rebooted_image_style;
         } else {
             $num_unkn++;
             $client->{$mac}->{'status'} = '???';
             $style = $unkn_style;
             $status_icon = $server_error_icon;
+            $icon_style = $image_style;
         }
         # Format the uptime.
         if (defined($client->{$mac}->{'time'})) {
@@ -873,7 +888,7 @@ sub display_nodes
             $row,
             0,
             -itemtype => 'imagetext',
-            -style    => $image_style,
+            -style    => $icon_style,
             -image    => $status_icon,
         );
         # Display the node identity (MAC address).
