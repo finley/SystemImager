@@ -179,7 +179,8 @@ my $attrs_struct = {
     chr(0x09) => { -name => 'tmpfs',     -label => 'RAM ~used',    -description => 'Allocated RAM' },
     chr(0x0a) => { -name => 'ncpus',     -label => '~nCPUs',       -description => 'Number of CPUs' },
     chr(0x0b) => { -name => 'cpu',       -label => '~CPU',         -description => 'CPU model' },
-    chr(0x0c) => { -name => 'timestamp', -label => '~Last update', -description => 'Timestamp of the last report' },
+    chr(0x0c) => { -name => 'first_timestamp', -label => '~Boot time', -description => 'Timestamp of the first report' },
+    chr(0x0d) => { -name => 'timestamp', -label => '~Last update', -description => 'Timestamp of the last report' },
 };
 # Cache attribute names.
 my @attrs = grep !/mac/, map {$attrs_struct->{$_}->{'-name'}} sort keys %{$attrs_struct};
@@ -241,13 +242,13 @@ my $edit_menu = $menubar->cascade(
     -tearoff   => 0,
 );
 $edit_menu->checkbutton(
-    -label     => '~Show progress bars',
+    -label     => 'Show ~progress bars',
     -command   => \&refresh,
     -variable  => \$progress,
 );
 my $sort_menu = $edit_menu->cascade(
     -label     => 'Sort',
-    -underline => 0,
+    -underline => 1,
     -tearoff   => 0,
 );
 # Show sort attributes.
@@ -325,7 +326,7 @@ my $bal = $window->Balloon(-statusbar => $status_bar);
 $tab = $window->Scrolled(
     'MyHList',
     -header           => 1,
-    -columns          => 14,
+    -columns          => $#attrs + 3, # attributes + primary key + icon
     -scrollbars       => 'se',
     -width            => 110,
     -height           => 28,
@@ -765,6 +766,7 @@ sub display_nodes
     # Sort clients.
     my @list;
     if ($sort_field eq 'mac') {
+        # Primary key.
         @list = sort {($sort_order) ? ($a cmp $b) : ($b cmp $a)} keys %{$client};
     } else {
         @list = sort {
@@ -912,7 +914,7 @@ sub display_nodes
                     -widget   => $status_progress,
                 );
             # Timestamp.
-            } elsif ($attrs[$_] eq 'timestamp') {
+            } elsif ($attrs[$_] =~ /timestamp/) {
                 my $date;
                 my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) =
                     localtime($client->{$mac}->{$attrs[$_]});

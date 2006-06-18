@@ -242,7 +242,7 @@ die gmtime() . ": error: cannot accept clients connections!\n";
 sub update_db
 {
 	my ($host, $request) = @_;
-	my ($client, $mac);
+	my ($client, $mac, $timestamp);
 
 	# Parse the client request.
 	my @args = split(/:/, $request);
@@ -275,6 +275,7 @@ sub update_db
 			$client->{'log'} = $_;
 		}
 	}
+        $timestamp = time();
 
 	# Check if mac address has been specified.
 	unless(defined($mac)) {
@@ -324,7 +325,10 @@ sub update_db
 	$xml->{'client'}->{$mac}->{'log'} = $client->{'log'}
 		if $client->{'log'};
 	# Add a server timestamp.
-	$xml->{'client'}->{$mac}->{'timestamp'} = time();
+	$xml->{'client'}->{$mac}->{'timestamp'} = $timestamp;
+	unless ($xml->{'client'}->{$mac}->{'first_timestamp'}) {
+		$xml->{'client'}->{$mac}->{'first_timestamp'} = $timestamp;
+	}
 	
 	open(DB, '>', $database) or
 		die gmtime() . ": error: cannot open \"$database\" for writing!\n";
