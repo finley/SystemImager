@@ -454,22 +454,24 @@ run_post_install_scripts
 #
 #   Tell the image server we are done
 #   
-[ ! -z $MONITOR_SERVER ] && send_monitor_msg "status=100"
 rsync $IMAGESERVER::scripts/imaging_complete > /dev/null 2>&1
 logmsg "Imaging completed"
 #
 ################################################################################
 
-# Wait some seconds to report the last messages on the monitor console.
-if [ ! -z $MONITOR_SERVER -a "x$MONITOR_CONSOLE" = "xyes" ]; then 
-    # Print some empty lines and close stdout and stderr descriptors
-    # to give time to the virtual console to get last messages.
-    # XXX: this is a dirty solution, we should find a better way to sync
-    # last messages... -AR-
-    echo; echo; echo
-    exec 1>&-
-    exec 2>&-
-    sleep 10
+if [ ! -z $MONITOR_SERVER ]; then
+    # Report the 'imaged' state to the monitor server.
+    send_monitor_msg "status=100"
+    if [ "x$MONITOR_CONSOLE" = "xyes" ]; then 
+        # Print some empty lines and sleep some seconds to give time to
+        # the virtual console to get last messages.
+        # XXX: this is a dirty solution, we should find a better way to
+        # sync last messages... -AR-
+        logmsg ""
+        logmsg ""
+        logmsg ""
+        sleep 10
+    fi
 fi
 
 # Take network interface down
