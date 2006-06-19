@@ -563,18 +563,19 @@ sub refresh_console
         close(SOCK);
 
         if (@old_logmsg) {
+            my $view = $sub_tab->index('@0,0');
+            my $view_end = $sub_tab->yview;
+
             # Clear old logs.
-            $sub_tab->delete('1.1', 'end');
+            $sub_tab->delete('1.0', 'end');
 
             # Fill virtual console with old log messages.
-            for (my $i = 0; $i < $#old_logmsg - 1; $i++) {
-                $old_logmsg[$i] =~ s/\t/    /g;
-                $sub_tab->insert('end', $old_logmsg[$i],
-                    'title'
-                );
+            $sub_tab->insert('1.0', @old_logmsg);
+            if ($view_end == 1) {
+                $sub_tab->yviewMoveto($view_end);
+            } else {
+                $sub_tab->yview($view);
             }
-            # FIXME: not end but the previous saw line!
-            $sub_tab->see('end');
             $sub_win->update();
         }
         return 0;
