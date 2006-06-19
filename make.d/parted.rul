@@ -1,5 +1,6 @@
 #
 #   $Id$
+#    vi: set filetype=make:
 #
 #   2004.12.13  Brian Elliott Finley
 #   - go to 1.6.19
@@ -40,4 +41,5 @@ PHONY += parted_clean
 parted_clean:
 	rm -rf $(SRC_DIR)/$(PARTED_DIR)
 
-DEBIAN_BUILD_DEPS += libreadline4-dev
+DEBIAN_STABLE_BUILD_DEPS += libreadline4-dev
+UBUNTU_DAPPER_BUILD_DEPS += libreadline5-dev

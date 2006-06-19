@@ -1,5 +1,6 @@
 #
 #	$Id$
+#    vi: set filetype=make:
 #
 #	2005.11.06 Brian Elliott Finley
 #	- up version to 2.7.3
@@ -55,5 +56,6 @@ xfsprogs_clean:
 endif
 
 
-DEBIAN_BUILD_DEPS += libtool uuid-dev
+DEBIAN_STABLE_BUILD_DEPS += libtool uuid-dev gettext
+UBUNTU_DAPPER_BUILD_DEPS += libtool uuid-dev gettext
 

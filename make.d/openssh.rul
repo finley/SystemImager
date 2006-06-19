@@ -1,17 +1,7 @@
 #
 #   $Id$
+#    vi: set filetype=make:
 #   
-#   	/* vi: set noet ts=4: */
-#   
-#   	2004.07.26  Brian Elliott Finley
-#   	- new version of openssh
-#   	2004.09.10  Brian Elliott Finley
-#   	- include as part of standard boel_binaries_tarball
-#   	2005.01.25  Brian Elliott Finley
-#   	- add to ALL_SOURCE
-#	2005.07.12 Brian Elliott Finley; patch by Erich Focht
-#	- up the version
-#
 
 OPENSSH_VERSION         := 3.9p1
 OPENSSH_DIR             := openssh-$(OPENSSH_VERSION)
@@ -73,4 +63,5 @@ openssh_clean:
 
 
 # include build dependencies here
-DEBIAN_BUILD_DEPS += libssl-dev zlib1g-dev
+DEBIAN_STABLE_BUILD_DEPS += libssl-dev zlib1g-dev
+UBUNTU_DAPPER_BUILD_DEPS += libssl-dev zlib1g-dev

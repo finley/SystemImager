@@ -539,7 +539,8 @@ clean:	$(subst .rul,_clean,$(shell cd $(TOPDIR)/make.d && ls *.rul)) initrd_clea
 distclean:	clean initrd_distclean
 	-rm -rf $(SRC_DIR) $(INITRD_SRC_DIR)
 
-DEBIAN_BUILD_DEPS += flex
+DEBIAN_STABLE_BUILD_DEPS += flex
+UBUNTU_DAPPER_BUILD_DEPS += flex
 
 .PHONY:	help
 help:  show_targets
@@ -587,29 +588,21 @@ show_targets:
 	@echo "show_all_targets"
 	@echo "    Show all available targets."
 	@echo
-	@echo "show_debian_build_deps"
-	@echo "    Shows the list of packages necessary for building on a"
-	@echo "	   Debian based system."
-	@echo
-	@echo "install_debian_build_deps"
-	@echo "    Install all packages necessary for building on a"
-	@echo "    Debian based system.  Yes, you can do an"
-	@echo
-	@echo '        "apt-get build-dep systemimager"'
-	@echo
-	@echo "    but that will only give you build dependencies for the most"
-	@echo "    recent version that your system can see, which may not be"
-	@echo "    complete if you're building from trunk."
+	@echo "show_build_deps"
+	@echo "    Shows the list of packages necessary for building on"
+	@echo "    various distributions and releases."
 	@echo
 
-.PHONY: install_debian_build_deps
-install_debian_build_deps:
-	apt-get install build-essential
-	apt-get install $(DEBIAN_BUILD_DEPS)
-
-.PHONY: show_debian_build_deps
-show_debian_build_deps:
-	@echo $(DEBIAN_BUILD_DEPS)
+.PHONY: show_build_deps
+show_build_deps:
+	@echo "Cut and paste the appropriate command below:"
+	@echo
+	@echo Ubuntu Dapper:
+	@echo "  apt-get install $(UBUNTU_DAPPER_BUILD_DEPS)"
+	@echo
+	@echo Debian Stable:
+	@echo "  apt-get install $(DEBIAN_STABLE_BUILD_DEPS)"
+	@echo
 
 .PHONY:	show_all_targets
 SHOW_TARGETS_ALL_MAKEFILES = $(shell find . make.d/ initrd_source/ initrd_source/make.d/  -maxdepth 1 -name 'Makefile' -or -name '*.rul' )
