@@ -294,7 +294,46 @@ environments.
 The bittorrent package allows you to use the BitTorrent protocol to perform
 installations.
 
+%package imagemanip
+Summary: Software that automates Linux installs, software distribution, and production deployment.
+Version: %ver
+Release: %rel
+License: GPL
+Group: Applications/System
+BuildRoot: /tmp/%{name}-%{ver}-root
+Packager: dann frazier <dannf@dannf.org>
+URL: http://systemimager.org/
+Distribution: System Installation Suite
+Requires: systemimager-server = %{version}, /sbin/chkconfig, perl, perl(Config::Simple), perl(LockFile::Simple)
+AutoReqProv: no
+
+%description imagemanip
+SystemImager is software that automates Linux installs, software
+distribution, and production deployment.  SystemImager makes it easy to
+do installs, software distribution, content or data distribution,
+configuration changes, and operating system updates to your network of
+Linux machines. You can even update from one Linux release version to
+another!  It can also be used to ensure safe production deployments.
+By saving your current production image before updating to your new
+production image, you have a highly reliable contingency mechanism.  If
+the new production enviroment is found to be flawed, simply roll-back
+to the last production image with a simple update command!  Some
+typical environments include: Internet server farms, database server
+farms, high performance clusters, computer labs, and corporate desktop
+environments.
+
+The imagemanip package contains an image manipulation tool for SystemImager.
+More information can be found at the website:
+http://developer.osdl.org/kees/software/imagemanip/
+
 %changelog
+* Sat Jun 17 2006 Bernard Li <bli@bcgsc.ca>
+- Added %doc README.SystemImager_DHCP_options, README.ssh_support and
+  TODO to systemimager-server package
+
+* Mon Jun 11 2006 Bernard Li <bli@bcgsc.ca>
+- New package: systemimager-imagemanip
+
 * Fri Jun 09 2006 Bernard Li <bli@bcgsc.ca>
 - Added file /etc/systemimager/UYOK.modules_to_include
 
@@ -679,7 +718,9 @@ fi
 
 %files server
 %defattr(-, root, root)
-%doc CHANGE.LOG COPYING CREDITS README VERSION
+%doc CHANGE.LOG COPYING CREDITS README TODO VERSION
+%doc README.SystemImager_DHCP_options
+%doc README.ssh_support
 %doc doc/manual_source/html
 # These should move to a files doc section, because they are missing if you don't do doc
 # %doc doc/manual/systemimager* doc/manual/html doc/manual/examples
@@ -698,8 +739,6 @@ fi
 %config /etc/systemimager/autoinstallscript.template
 %config(noreplace) /etc/systemimager/rsync_stubs/*
 %config(noreplace) /etc/systemimager/systemimager.conf
-%config /etc/systemimager/imagemanip.conf
-%config /etc/systemimager/imagemanip.perm
 /etc/init.d/systemimager-server-rsyncd
 /etc/init.d/systemimager-server-netboot*
 /etc/init.d/systemimager-server-monitord
@@ -714,7 +753,6 @@ fi
 %prefix/sbin/si_netbootmond
 %prefix/sbin/si_pushupdate
 %prefix/sbin/si_rmimage
-%prefix/sbin/si_imagemanip
 %prefix/sbin/si_monitor
 %prefix/sbin/si_monitortk
 %prefix/bin/si_mk*
@@ -759,6 +797,12 @@ fi
 %config /etc/systemimager/bittorrent.conf
 /etc/init.d/systemimager-server-bittorrent
 %prefix/sbin/si_installbtimage
+
+%files imagemanip
+%defattr(-, root, root)
+%config /etc/systemimager/imagemanip.conf
+%config /etc/systemimager/imagemanip.perm
+%prefix/sbin/si_imagemanip
 
 %endif
 
