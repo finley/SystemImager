@@ -157,6 +157,9 @@ my (
 # List to keep track of status ProgressBar objects.
 my @status_progress_list = ();
 
+# List of current messages on the virtual console.
+my @curr_logmsg = ();
+
 # Initialize refresing status.
 $is_refreshing = 0;
 
@@ -447,6 +450,8 @@ sub show_virtual_console
     # TODO: handle more than one console.
     $sub_win->destroy() if Exists($sub_win);
 
+    @curr_logmsg = ();
+
     # Get info to show in the title.
     my $mac = $tab->itemCget($_[0], 1, 'text');
     my $ip = $tab->itemCget($_[0], 2, 'text');
@@ -557,26 +562,26 @@ sub refresh_console
     } else {
 	$sub_conn_failed = 0;
         # Gather all logs.
-        while (<SOCK>) {
-            push(@old_logmsg, $_);
-        }
+        @old_logmsg = <SOCK>;
         close(SOCK);
-
-        if (@old_logmsg) {
+        if (@old_logmsg && ($#old_logmsg > $#curr_logmsg)) {
+            # Save old cursor position.
             my $view = $sub_tab->index('@0,0');
             my $view_end = $sub_tab->yview;
 
-            # Clear old logs.
-            $sub_tab->delete('1.0', 'end');
-
-            # Fill virtual console with old log messages.
-            $sub_tab->insert('1.0', @old_logmsg);
+            # Fill virtual console only with new messages.
+            for (my $i = $#curr_logmsg + 1; $i < $#old_logmsg + 1; $i++) {
+                $sub_tab->insert('end', $old_logmsg[$i]);
+            }
+            # Update cursor position.
             if ($view_end == 1) {
                 $sub_tab->yviewMoveto($view_end);
             } else {
                 $sub_tab->yview($view);
             }
-            $sub_win->update();
+
+            # Update current messages.
+            @curr_logmsg = @old_logmsg;
         }
         return 0;
     }
