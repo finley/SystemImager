@@ -446,6 +446,7 @@ run_post_install_scripts
 #
 if [ ! -z $MONITOR_SERVER ]; then
     if [ "x$MONITOR_CONSOLE" = "xyes" ]; then 
+        [ ! -d /a/root ] && mkdir -p /a/root
         cp -f /tmp/si_monitor.log /a/root/si_monitor.log
     fi
 fi
