@@ -733,10 +733,11 @@ sub display_nodes
     ### END of profiling stuff ###
 
     # Statistic counters.
-    my $num_ok = 0;
-    my $num_fail = 0;
-    my $num_inst = 0;
-    my $num_unkn = 0;
+    my $num_rebooted = 0;
+    my $num_ok       = 0;
+    my $num_fail     = 0;
+    my $num_inst     = 0;
+    my $num_unkn     = 0;
 
     # Drop previous selection if nothing is selected.
     if (defined($selected_mac_addr)) {
@@ -859,7 +860,7 @@ sub display_nodes
             $status_icon = $server_inst_icon;
             $icon_style = $image_style;
         } elsif ($status == 102) {
-            $num_ok++;
+            $num_rebooted++;
             $client->{$mac}->{'status'} = 'REBOOTED';
             $style = $rebooted_style;
             $status_icon = $server_ok_icon;
@@ -958,8 +959,8 @@ status_bar_update:
     #printf("elapsed time = %0.6f\n", tv_interval($t0, [gettimeofday]));
     ### END of profiling stuff ###
     $bal->attach($tab,
-        -statusmsg  => "Managed nodes: " . ($num_ok  + $num_inst + $num_unkn + $num_fail) .
-            " ($num_ok ok, $num_inst installing, $num_unkn unknown, $num_fail error)",
+        -statusmsg  => "Managed nodes: " . ($num_rebooted + $num_ok  + $num_inst + $num_unkn + $num_fail) .
+            " ($num_rebooted rebooted, $num_ok imaged, $num_inst installing, $num_unkn unknown, $num_fail error)",
     );
     # Refresh view.
     $tab->update();
