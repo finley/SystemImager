@@ -371,6 +371,12 @@ EOF
     }
 }
 
+# if quiet redirect all to /dev/null
+if ($quiet) {
+    open(STDERR, '>/dev/null');
+    open(STDOUT, '>/dev/null');
+}
+
 # verify that rsync entry is in /etc/services
 add_rsync_services();
 
