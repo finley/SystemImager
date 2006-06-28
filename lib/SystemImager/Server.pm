@@ -484,7 +484,7 @@ sub _read_partition_info_and_prepare_parted_commands {
         print $out "$cmd\n\n";
 
         print $out "# Re-read the disk label.\n";
-        $cmd = "blockdev --rereadpt $devfs_dev || shellout";
+        $cmd = "blockdev --rereadpt $devfs_dev";
         print $out qq(logmsg "$cmd"\n);
         print $out "$cmd\n\n";
 
