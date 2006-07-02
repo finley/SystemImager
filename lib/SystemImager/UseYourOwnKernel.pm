@@ -109,8 +109,10 @@ sub create_uyok_initrd() {
 
         print ">>> Appending insmod commands to ./my_modules_dir/INSMOD_COMMANDS...\n" if( $verbose );
         foreach my $module ( @modules ) {
+            if (-f "$staging_dir/$module") {
                 print " >> insmod $module\n" if( $verbose );
                 print FILE "insmod $module\n";
+            }
         }
         close(FILE);
 
