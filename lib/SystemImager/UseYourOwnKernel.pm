@@ -29,14 +29,16 @@ our $is_mounted = 0;
 
 #
 # Usage: 
-#       SystemImager::UseYourOwnKernel->create_uyok_initrd($arch, $my_modules, $verbose);
+#       SystemImager::UseYourOwnKernel->create_uyok_initrd($arch, $my_modules, $custom_kernel, $custom_mod_dir, $verbose);
 #
 sub create_uyok_initrd() {
 
-        my $module      = shift;
-        my $arch        = shift;
-        my $my_modules  = shift;
-        $verbose        = shift;
+        my $module         = shift;
+        my $arch           = shift;
+        my $my_modules     = shift;
+        my $custom_kernel  = shift;
+        my $custom_mod_dir = shift;
+        $verbose           = shift;
 
         use File::Copy;
         use File::Basename;
@@ -79,16 +81,25 @@ sub create_uyok_initrd() {
         }
 
         my $uname_r = get_uname_r();
-        my $module_paths = `find /lib/modules/$uname_r`;
+        my $module_dir;
+        if ($custom_mod_dir) {
+            $module_dir = $custom_mod_dir;
+        } else {
+            $module_dir = "/lib/modules/$uname_r";
+        }
+        my $module_paths = `find $module_dir`;
 
         #
         # Copy modules
         #
-        my @modules = get_load_ordered_list_of_running_modules();
-        print ">>> Copying modules to new initrd from: /lib/modules/$uname_r...\n" if( $verbose );
+        my @modules = ();
+        unless ($custom_mod_dir) {
+            @modules = get_load_ordered_list_of_running_modules();
+        }
+        print ">>> Copying modules to new initrd from: $module_dir...\n" if( $verbose );
         mkdir("$staging_dir/lib/modules", 0755) or die "$!";
         unless ($my_modules) {
-            $cmd = qq(rsync -a --exclude=build --exclude=source $modules_to_exclude /lib/modules/$uname_r $staging_dir/lib/modules/);
+            $cmd = qq(rsync -a --exclude=build --exclude=source $modules_to_exclude $module_dir $staging_dir/lib/modules/);
             !system( $cmd ) or die( "Couldn't $cmd." );
         } else {
             # Copy only loaded modules ignoring exclusions.
@@ -97,7 +108,7 @@ sub create_uyok_initrd() {
                 !system( $cmd ) or die( "Couldn't $cmd." );
             }
             # Copy module configuration files.
-            $cmd = qq(rsync -R /lib/modules/$uname_r/* $staging_dir);
+            $cmd = qq(rsync -R $module_dir/* $staging_dir);
             !system( $cmd ) or die( "Couldn't $cmd." );
         }
         #
@@ -108,10 +119,15 @@ sub create_uyok_initrd() {
         open( FILE,">>$file" ) or die( "Couldn't open $file for appending" );
 
         print ">>> Appending insmod commands to ./my_modules_dir/INSMOD_COMMANDS...\n" if( $verbose );
-        foreach my $module ( @modules ) {
-            if (-f "$staging_dir/$module") {
-                print " >> insmod $module\n" if( $verbose );
-                print FILE "insmod $module\n";
+        if ($#modules == -1) {
+            print " >> Using custom kernel: hotplug will be used to autodetect the needed modules...\n"
+                if( $verbose );
+        } else {
+            foreach my $module ( @modules ) {
+                if (-f "$staging_dir/$module") {
+                    print " >> insmod $module\n" if( $verbose );
+                    print FILE "insmod $module\n";
+                }
             }
         }
         close(FILE);
@@ -152,7 +168,7 @@ sub create_uyok_initrd() {
         # Create initrd and save copy of kernel
         #
         _create_new_initrd( $staging_dir, $boot_dir );
-        _get_copy_of_kernel( $uname_r, $boot_dir );
+        _get_copy_of_kernel( $uname_r, $boot_dir, $custom_kernel );
         _record_arch( $boot_dir );
 
         #
@@ -195,10 +211,13 @@ sub _get_arch {
 
 sub _get_copy_of_kernel($) {
 
-        my $uname_r     = shift;
-        my $boot_dir    = shift;
+        my $uname_r       = shift;
+        my $boot_dir      = shift;
+        my $kernel_file   = shift;
 
-        my $kernel_file = _choose_kernel_file( $uname_r );
+        unless ($kernel_file) {
+            $kernel_file = _choose_kernel_file( $uname_r );
+        }
         unless( defined $kernel_file ) {
                 print "I couldn't identify your kernel file.  Please try --<some-option-that-needs-to-be-added-XXX>.\n";
                 exit 1;

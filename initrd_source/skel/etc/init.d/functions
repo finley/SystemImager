@@ -938,6 +938,9 @@ start_network() {
             /etc/dhclient-script.debian-dist \
             > /etc/dhclient-script
         chmod +x /etc/dhclient-script
+
+        # be sure AF_PACKET is supported in the kernel
+        modprobe af_packet &> /dev/null
         
         # get info via dhcp
         logmsg

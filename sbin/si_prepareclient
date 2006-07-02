@@ -172,6 +172,17 @@ Options:
     used with a greater variety of client hardware, but can make the
     resultant initrd.img much larger. 
 
+ --kernel KERNEL
+    Do not detect the kernel to use with UYOK, but instead use the
+    file specified by the argument KERNEL.
+    Use this parameter only with --modules_dir and only if you use UYOK
+    feature.
+
+ --modules-dir DIR
+    Get kernel modules to use with UYOK from the DIR repository.
+    Use this parameter only with --kernel and only if you use UYOK
+    feature.
+
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
 
@@ -187,6 +198,8 @@ GetOptions(
     "rpm|rpm-install"      => \my $rpm,
     "no-uyok"              => \my $no_uyok,
     "my-modules"           => \my $my_modules,
+    "kernel=s"             => \my $custom_kernel,
+    "modules-dir=s"        => \my $modules_dir,
     "version"              => \my $version,
     "server=s"             => \my $server,
     "yes"                  => \my $yes
@@ -214,6 +227,30 @@ if ($> != 0) {
 
 if($no_uyok and $my_modules) {
     print "FATAL:  --no-uyok option conflicts with --my-modules!\n";
+    print qq(Try "$progname --help" for more info.\n);
+    exit 1;
+}
+
+if(($custom_kernel and !($modules_dir)) or (!($custom_kernel) and $modules_dir)) {
+    print "FATAL:  --kernel KERNEL option must be used in conjunction with --modules-dir DIR!\n";
+    print qq(Try "$progname --help" for more info.\n);
+    exit 1;
+}
+
+if($my_modules and $modules_dir) {
+    print "FATAL:  --my-modules option conflicts with --modules-dir DIR!\n";
+    print qq(Try "$progname --help" for more info.\n);
+    exit 1;
+}
+
+if($no_uyok and $custom_kernel) {
+    print "FATAL:  --no-uyok option conflicts with --kernel KERNEL!\n";
+    print qq(Try "$progname --help" for more info.\n);
+    exit 1;
+}
+
+if($no_uyok and $modules_dir) {
+    print "FATAL:  --no-uyok option conflicts with --modules-dir DIR!\n";
     print qq(Try "$progname --help" for more info.\n);
     exit 1;
 }
@@ -666,7 +703,7 @@ sub create_auto_install_script_conf {
         my $arch = get_arch();
         my $verbose;
         unless($quiet) { $verbose = 1; }
-        SystemImager::UseYourOwnKernel->create_uyok_initrd( $arch, $my_modules, $verbose );
+        SystemImager::UseYourOwnKernel->create_uyok_initrd( $arch, $my_modules, $custom_kernel, $modules_dir, $verbose );
     }
 
     SystemImager::Common->write_auto_install_script_conf_footer($file);
