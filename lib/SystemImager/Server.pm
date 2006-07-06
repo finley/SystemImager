@@ -257,12 +257,9 @@ sub get_full_path_to_image_from_rsyncd_conf {
 #
 sub get_part_name {
     my ($disk, $num) = @_;
-    my @array = ( "ida", "cciss", "rd" );
     
-    foreach my $dir (@array) {
-	if ($disk =~ /^\/dev\/$dir\/c\d+d\d+$/) {
-	    return $disk . "/part" . $num;
-	}
+    if ($disk =~ /^\/dev\/.*\/c\d+d\d+$/) {
+        return $disk . "p" . $num;
     }
     return $disk . $num;
 }
@@ -320,46 +317,6 @@ sub get_all_disks($) {
 
 
 # Description:
-#   A sort for raid controller device names
-#
-# Usage:
-#   sort by_raid_controller @raid_devices
-#
-sub by_raid_controller {
-    # sort by controller, then by disc, then by partition
-    ($a =~ /c(\d+)/)[0] <=> ($b =~ /c(\d+)/)[0]     ||
-	($a =~ /d(\d+)/)[0] <=> ($b =~ /d(\d+)/)[0] ||
-	(($a =~ /p(\d+)/)[0] || -1) <=> (($b =~ /p(\d+)/)[0] || -1);
-}
-
-# Description:
-#   Takes a list of devices for a single raid type (cciss, rd, etc)
-#   and returns a hash mapping them to their devfs names.
-#
-# Usage:
-#   raid_to_devfs( @raid_devices );
-#
-sub raid_to_devfs {
-    my $discnum = -1;
-    my %table = ();
-    foreach my $dev (@_) {
-	# its a disk
-	if ($dev =~ m,^/dev/(.*)/c(\d+)d(\d+)$,) {
-	    $discnum = $discnum + 1;
-	    $table{$dev} = "/dev/" . $1 . "/disc" . $discnum . "/disc";
-	}
-	# its a partition
-	elsif ($dev =~ m,^/dev/(.*)/c(\d+)d(\d+)p(\d+)$,) {
-	    $table{$dev} = "/dev/" . $1 . "/disc" . $discnum . "/part" . $4;
-	}
-	else {
-	    return undef;
-	}
-    }
-    return %table;
-}
-
-# Description:
 # Convert standard /dev names to the corresponding devfs names.
 # In most cases this is not needed.  However, there are a few cases
 # in which using devfsd symbolic links is not possible.
@@ -379,53 +336,11 @@ sub dev_to_devfs {
     my @devices = @_;
     my %table = ();
 
-    my @cciss_devs = ();
-    my @rd_devs = ();
-
     foreach my $dev (@devices) {
-	## some devices do not have a static devfs counterpart.
-	## for example, if you have two logical disks on the first
-	## controller (/dev/cciss/c0d0 and a /dev/cciss/c0d1)
-	## then the first disk on the second controller (/dev/cciss/c1d0)
-	## becomes /dev/cciss/disc2 under devfs, since it is the third
-	## cciss disk.  however, if you just have a single disk on the first
-	## controller (/dev/cciss/c0d0), then the first disk on the second
-	## controller is now /dev/cciss/disc1.
-	##
-	## we'll save these types of disks for later, where we can evaluate
-	## them as a group
-	if ($dev =~ m,^/dev/(.*)/c(\d+)d(\d+)(p(\d+))?$,) {
-	    if ($1 eq "cciss") {
-		push @cciss_devs, $dev;
-	    }
-	    elsif ($1 eq "rd") {
-		push @rd_devs, $dev;
-	    }
-	    # some raid devices do have a static mapping
-	    else {
-		## discs
-		if ($dev =~ m,^/dev/(.*)/c(\d+)d(\d+)$,) {
-		    $table{$dev} = "/dev/${1}/c${2}d${3}/disc";
-		}
-		elsif ($dev =~ m,^/dev/(.*)/c(\d+)d(\d+)p(\d+)$,) {
-		    $table{$dev} = "/dev/${1}/c${2}d${3}/part${4}";
-		}
-		else {
-		    return undef;
-		}
-	    }
-	}
-	else {
-	    # everything else should have the same name in boel's /dev
-	    $table{$dev} = $dev;
-	}
+        $table{$dev} = $dev;
     }
 
-    ## process dynamic mapped device types as a group
-    my @sorted_cciss = sort by_raid_controller @cciss_devs;
-    my @sorted_rd = sort by_raid_controller @rd_devs;
-
-    return (%table, raid_to_devfs(@sorted_cciss), raid_to_devfs(@sorted_rd));
+    return %table;
 }
 
 # Usage:  
