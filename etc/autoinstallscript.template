@@ -106,6 +106,7 @@ fi
   logmsg enumerate_disks
   order=`echo "$DISKORDER" | sed 's/ /,/g' | sed s/,,*/,/g | sed s/^,//`
   DISKS=0
+  cdroms=`cat /proc/sys/dev/cdrom/info | sed -ne "s/^drive name:[[:space:]]*//p"`
   while : ; do
     [ -z $order ] && break
     type=`expr $order : '\([^,]*\),' \| $order`
@@ -119,9 +120,18 @@ fi
       ;;
     hd | sd )
       for dev in `cat $diskfile | sed -ne "s/.*\($type[a-z]\+\).*/\1/p" | sort -u` ; do
-        logmsg " $dev"
-        eval DISK$DISKS=/dev/${dev}
-        DISKS=`expr $DISKS + 1`
+        skip=0
+        for cdrom in $cdroms; do
+            if [ "$dev" = "$cdrom" ]; then
+                skip=1
+                break
+            fi
+        done
+        if [ $skip -eq 0 ]; then
+            logmsg " $dev"
+            eval DISK$DISKS=/dev/${dev}
+            DISKS=`expr $DISKS + 1`
+        fi
       done
       ;;
     * )
