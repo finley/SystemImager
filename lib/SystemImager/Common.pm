@@ -63,6 +63,7 @@ sub get_active_swaps_by_dev {
     open (FH, "$cmd|") or croak("Couldn't execute $cmd to read the output.");
         while (<FH>) {
             my ($dev, $type, $size, $used, $priority) = split;
+            next if ($dev eq 'Filename');
             $active_swaps_by_dev{$dev}=1;
     }
     close(FH);
@@ -1232,12 +1233,32 @@ sub save_filesystem_information {
                     #
                     $real_dev = $mount_dev;
                     $mount_dev = "";
+                } else {
+                    unless ($real_dev) {
+                        # Try to identify real_dev from the LABEL or UUID value.
+                        chomp($real_dev = `blkid -t $mount_dev`);
+                        $real_dev =~ s/^(.*): .*$/$1/;
+                    }
                 }
                 
+                # Skip device if couldn't identify real_dev. -AR-
+                unless ($real_dev) {
+                    print << "EOF";
+
+WARNING: unable to identify the device with "$mount_dev" defined in
+         $file!
+
+         Manually set the "real_dev" and "format" attributes in
+         "$auto_install_script" to properly create this device
+         during the autoinstall process. 
+
+EOF
+                }
+
                 if ($mounted_devs_by_mount_point{$mp}) {
                     $mounted = "true";
-                } elsif ($active_swaps_by_dev{$real_dev}) {
-                    $mounted = "true";
+                } elsif ($real_dev) {
+                    $mounted = "true" if ($active_swaps_by_dev{$real_dev});
                 }
 
                 # Some of the info we gather can only be gathered for mounted
