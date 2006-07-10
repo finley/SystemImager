@@ -327,6 +327,10 @@ More information can be found at the website:
 http://developer.osdl.org/kees/software/imagemanip/
 
 %changelog
+* Sun Jul 02 2006 Bernard Li <bli@bcgsc.ca>
+- After a init service is added, turn it off, because we don't want the
+  service to be turned on after installation (the user should do that)
+
 * Sat Jun 17 2006 Bernard Li <bli@bcgsc.ca>
 - Added %doc README.SystemImager_DHCP_options, README.ssh_support and
   TODO to systemimager-server package
@@ -633,8 +637,11 @@ fi
 
 if [[ -a /sbin/chkconfig ]]; then
     /sbin/chkconfig --add systemimager-server-rsyncd
+    /sbin/chkconfig systemimager-server-rsyncd off
     /sbin/chkconfig --add systemimager-server-netbootmond
+    /sbin/chkconfig systemimager-server-netbootmond off
     /sbin/chkconfig --add systemimager-server-monitord
+    /sbin/chkconfig systemimager-server-monitord off
 fi
 
 %preun server
@@ -669,6 +676,7 @@ fi
 
 if [[ -a /sbin/chkconfig ]]; then
     /sbin/chkconfig --add systemimager-server-flamethrowerd
+    /sbin/chkconfig systemimager-server-flamethrowerd off
 fi
 
 %preun flamethrower
@@ -689,6 +697,7 @@ fi
 
 if [[ -a /sbin/chkconfig ]]; then
     /sbin/chkconfig --add systemimager-server-bittorrent
+    /sbin/chkconfig systemimager-server-bittorrent off
 fi
 
 %preun bittorrent
