@@ -538,8 +538,8 @@ sub refresh_console
     # Get previous messages.
     my @old_logmsg = ();
     eval {
-	# Socket timeout (sec).
-	my $TMO = 1;
+        # Socket timeout (sec).
+        my $TMO = 1;
         # Create the socket.
         socket(SOCK, PF_INET, SOCK_STREAM, getprotobyname('tcp')) or
             die "error: cannot create TCP socket for client $ip!\n";
@@ -560,14 +560,14 @@ sub refresh_console
         # Log gathering failed.
         return -1;
     } else {
-	$sub_conn_failed = 0;
+        $sub_conn_failed = 0;
         # Gather all logs.
         @old_logmsg = <SOCK>;
         close(SOCK);
         if (@old_logmsg && ($#old_logmsg > $#curr_logmsg)) {
             # Save old cursor position.
             my $view = $sub_tab->index('@0,0');
-            my $view_end = $sub_tab->yview;
+            my $view_end = ($sub_tab->yview)[1];
 
             # Fill virtual console only with new messages.
             for (my $i = $#curr_logmsg + 1; $i < $#old_logmsg + 1; $i++) {
@@ -801,34 +801,6 @@ sub display_nodes
         # Evaluate the status and adjust the style of the entry.
         my ($style, $status_icon);
         $status = $client->{$mac}->{'status'} || 0;
-        # Create the installation progress bar.
-        if (($progress) && ($status > 0) && ($status < 100)) {
-            $status_progress = $tab->ProgressBar(
-                -borderwidth => 0,
-                -relief      => 'flat',
-                -padx        => 2,
-                -pady        => 8,
-                -variable    => \$status,
-                -colors      => [
-                    0  => '#0000FF',
-                    10 => '#0000EF',
-                    20 => '#0000DF',
-                    30 => '#0000CF',
-                    40 => '#0000BF',
-                    50 => '#0000AF',
-                    60 => '#00009F',
-                    70 => '#00008F',
-                    80 => '#00007F',
-                    90 => '#00006F',
-                ],
-                -troughcolor => 'white',
-                -gap         => 1,
-                -blocks      => 10,
-                -from        => 0,
-                -to          => 100,
-           );
-           push(@status_progress_list, $status_progress);
-        }
         if (!$status) {
             $num_inst++;
             $client->{$mac}->{'status'} = 'initializing...';
@@ -912,6 +884,34 @@ sub display_nodes
         for (0 .. $#attrs) {
             # Status.
             if (($progress) && ($attrs[$_] eq 'status') && ($status > 0) && ($status < 100)) {
+                my $_progress_val;
+                $status_progress = $tab->ProgressBar(
+                    -borderwidth => 0,
+                    -relief      => 'flat',
+                    -padx        => 2,
+                    -pady        => 8,
+                    -variable    => \$_progress_val,
+                    -colors      => [
+                        0  => '#0000FF',
+                        10 => '#0000EF',
+                        20 => '#0000DF',
+                        30 => '#0000CF',
+                        40 => '#0000BF',
+                        50 => '#0000AF',
+                        60 => '#00009F',
+                        70 => '#00008F',
+                        80 => '#00007F',
+                        90 => '#00006F',
+                    ],
+                    -troughcolor => 'white',
+                    -gap         => 1,
+                    -blocks      => 10,
+                    -from        => 0,
+                    -to          => 100,
+                );
+                $_progress_val = $status;
+                push(@status_progress_list, $status_progress);
+
                 # Display the status using a progress bar.
                 $tab->itemCreate(
                     $row,
