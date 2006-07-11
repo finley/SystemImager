@@ -29,10 +29,42 @@ send_monitor_msg() {
     netcat=`(which netcat || which nc) 2>/dev/null`
     [ -z $netcat ] && return
 
-    cmd="echo \"$send_msg\" | $netcat -w $TIMEOUT $MONITOR_SERVER $MONITOR_PORT"
-    for f in /etc/rc.local /etc/rc.d/rc.local /etc/init.d/rc.local /etc/init.d/after.local; do
-        echo $cmd >> $f
-    done
+    rebooted_state_file=/etc/systemimager/si_monitor.client.rebooted
+    rm -f $rebooted_state_file
+
+    cmd="[ ! -f $rebooted_state_file ] && touch $rebooted_state_file && (echo \"$send_msg\" | $netcat -w $TIMEOUT $MONITOR_SERVER $MONITOR_PORT)"
+
+    if [ -f /etc/SuSE-release ]; then
+        # SuSE
+        echo $cmd >> /etc/init.d/after.local
+    elif [ -f /etc/redhat-release ]; then
+        # RedHat / Fedora
+        echo $cmd >> /etc/rc.local
+    elif [ -f /etc/debian_version ]; then
+        # Debian
+        init_d_file=/etc/init.d/systemimager-monitor-firstboot
+	cat << EOF > $init_d_file
+#!/bin/sh
+
+set -e
+
+case "\$1" in
+  start)
+        $cmd
+        ;;
+  stop|reload|restart|force-reload)
+        ;;
+  *)
+        exit 1
+        ;;
+esac
+exit 0
+EOF
+        ln -s $init_d_file /etc/rcS.d/S99systemimager-monitor-firstboot
+    else
+        # Unknown distribution... try with rc.local.
+        echo $cmd >> /etc/rc.local
+    fi
 }
 
 # Load installation variables.
