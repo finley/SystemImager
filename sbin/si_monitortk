@@ -182,7 +182,7 @@ my $attrs_struct = {
     chr(0x09) => { -name => 'tmpfs',     -label => 'RAM ~used',    -description => 'Allocated RAM' },
     chr(0x0a) => { -name => 'ncpus',     -label => '~nCPUs',       -description => 'Number of CPUs' },
     chr(0x0b) => { -name => 'cpu',       -label => '~CPU',         -description => 'CPU model' },
-    chr(0x0c) => { -name => 'first_timestamp', -label => '~Boot time', -description => 'Timestamp of the first report' },
+    chr(0x0c) => { -name => 'first_timestamp', -label => 'Image ~start time', -description => 'Timestamp of the first report' },
     chr(0x0d) => { -name => 'timestamp', -label => '~Last update', -description => 'Timestamp of the last report' },
 };
 # Cache attribute names.
