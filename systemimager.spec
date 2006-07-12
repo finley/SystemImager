@@ -327,6 +327,9 @@ More information can be found at the website:
 http://developer.osdl.org/kees/software/imagemanip/
 
 %changelog
+* Tue Jul 11 2006 Bernard Li <bli@bcgsc.ca>
+- Added code to cleanup buildroot etc.
+
 * Sun Jul 02 2006 Bernard Li <bli@bcgsc.ca>
 - After a init service is added, turn it off, because we don't want the
   service to be turned on after installation (the user should do that)
@@ -542,9 +545,8 @@ find /tmp/%{name}-%{ver}-root/ -name \*~ -exec rm -f '{}' \;
 #rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/updateclient.local.exclude~
 
 %clean
-#cd $RPM_BUILD_DIR/%{name}-%{version}/
-#make distclean
-#rm -rf $RPM_BUILD_ROOT
+%__rm -rf $RPM_BUILD_DIR/%{name}-%{version}/
+%__rm -rf $RPM_BUILD_ROOT
 
 %if %{_build_all}
 
