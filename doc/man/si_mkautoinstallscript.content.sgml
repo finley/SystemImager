@@ -31,6 +31,7 @@
       <arg><option>--version</option></arg>
       <arg><option>--quiet</option></arg>
       <arg><option>--no-listing</option></arg>
+      <arg><option>--autodetect-disks</option></arg>
       <arg><option>--image <replaceable>IMAGENAME</replaceable></option></arg>
       <arg><option>--script <replaceable>SCRIPTNAME</replaceable></option></arg>
       <arg><option>--force <replaceable>[YES|NO]</replaceable></option></arg>
@@ -201,6 +202,13 @@
 	      </para>
 	    </listitem>
 	  </itemizedlist>
+        </listitem>
+        <term><option>-autodetect-disks</option></term>
+        <listitem>
+          <para>
+            Try to detect available disks on the client instead
+            of using devices from autoinstallscript.conf.
+          </para>
         </listitem>
       </varlistentry>
     </variablelist>
