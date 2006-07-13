@@ -104,6 +104,7 @@ sub create_uyok_initrd() {
         } else {
             # Copy only loaded modules ignoring exclusions.
             foreach my $module ( @modules ) {
+                next unless ($module);
                 $cmd = qq(rsync -aR $module $staging_dir);
                 !system( $cmd ) or die( "Couldn't $cmd." );
             }
