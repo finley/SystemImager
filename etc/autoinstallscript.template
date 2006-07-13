@@ -254,7 +254,7 @@ elif [ ! -z $BITTORRENT_STAGING ]; then
     fi
     # Extract image.
     logmsg "Extracting image from ${bittorrent_tarball} ..."
-    (cd /a/ && tar -x${VERBOSE_OPT}${compress}Spf ${BITTORRENT_STAGING}/${bittorrent_tarball}) || shellout
+    (cd /a/ && tar -x${VERBOSE_OPT}${compress}Spf ${BITTORRENT_STAGING}/${bittorrent_tarball} > /dev/console) || shellout
     rm -f ${BITTORRENT_STAGING}/${bittorrent_tarball}
     unset bittorrent_tarball
 else 
@@ -273,17 +273,17 @@ else
 
         logmsg "rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ ${DIR}/" 
         rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --exclude=/proc/* --numeric-ids \
-              ${IMAGESERVER}::${IMAGENAME}/ ${DIR}/ || shellout 
+              ${IMAGESERVER}::${IMAGENAME}/ ${DIR}/ > /dev/console || shellout 
 
         if [ ! -z $MONITOR_SERVER ]; then
             stop_report_task 101
         fi
 
         # Move from staging in tmpfs to disk
-        rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${DIR}/ /a/
+        rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${DIR}/ /a/ > /dev/console || shellout
     else
         logmsg "rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --exclude=/proc/* --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ /a/" 
-        rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --exclude=/proc/* --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ /a/ || shellout 
+        rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --exclude=/proc/* --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ /a/ > /dev/console || shellout 
         if [ ! -z $MONITOR_SERVER ]; then
             stop_report_task 101
         fi
@@ -341,19 +341,19 @@ do
             bittorrent_get_file ${TORRENTS_DIR}/${bittorrent_tarball}.torrent ${BITTORRENT_STAGING}
             # Extract override.
             logmsg "Extracting override from ${bittorrent_tarball} ..."
-            (cd /a/ && tar -x${VERBOSE_OPT}${compress}Spf ${BITTORRENT_STAGING}/${bittorrent_tarball}) || shellout
+            (cd /a/ && tar -x${VERBOSE_OPT}${compress}Spf ${BITTORRENT_STAGING}/${bittorrent_tarball} > /dev/console) || shellout
             rm -f ${BITTORRENT_STAGING}/${bittorrent_tarball}
         else
             # Use rsync
             logmsg "trying to download override ${OVERRIDE} with rsync..."
             logmsg "rsync -av --numeric-ids $IMAGESERVER::overrides/$OVERRIDE/ /a/"
-            rsync -av --numeric-ids $IMAGESERVER::overrides/$OVERRIDE/ /a/ || logmsg "Override directory $OVERRIDE doesn't seem to exist, but that may be OK."
+            rsync -av --numeric-ids $IMAGESERVER::overrides/$OVERRIDE/ /a/ > /dev/console || logmsg "Override directory $OVERRIDE doesn't seem to exist, but that may be OK."
         fi
         unset bittorrent_tarball
     else
         # Use rsync
         logmsg "rsync -av --numeric-ids $IMAGESERVER::overrides/$OVERRIDE/ /a/"
-        rsync -av --numeric-ids $IMAGESERVER::overrides/$OVERRIDE/ /a/ || logmsg "Override directory $OVERRIDE doesn't seem to exist, but that may be OK."
+        rsync -av --numeric-ids $IMAGESERVER::overrides/$OVERRIDE/ /a/ > /dev/console || logmsg "Override directory $OVERRIDE doesn't seem to exist, but that may be OK."
     fi
 done
 
