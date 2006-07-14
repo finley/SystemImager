@@ -33,11 +33,6 @@ Packager: dann frazier <dannf@dannf.org>
 URL: http://systemimager.org/
 Distribution: System Installation Suite
 BuildRequires: docbook-utils, dos2unix, e2fsprogs-devel, flex, libtool, readline-devel, /usr/bin/wget, openssl-devel, gcc, gcc-c++
-%if %is_suse
-BuildRequires: python-xml
-%else
-BuildRequires: PyXML
-%endif
 Requires: rsync >= 2.4.6, syslinux >= 1.48, libappconfig-perl, dosfstools, /usr/bin/perl
 AutoReqProv: no
 
@@ -270,9 +265,9 @@ URL: http://systemimager.org/
 Distribution: System Installation Suite
 Requires: systemimager-server = %{version}, /sbin/chkconfig, perl
 %if %is_suse
-Requires: BitTorrent
+Requires: BitTorrent, python-xml
 %else
-Requires: bittorrent
+Requires: bittorrent, PyXML
 %endif
 AutoReqProv: no
 
