@@ -1524,12 +1524,6 @@ send_monitor_msg() {
 #
 
 send_monitor_stdout() {
-    if [ -z $MONITOR_SERVER ]; then
-        return
-    fi
-    if [ -z $MONITOR_PORT ]; then
-        MONITOR_PORT=8181
-    fi
     while read l; do
         # echo to the console -AR-
         echo $l
