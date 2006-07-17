@@ -485,6 +485,11 @@ sub show_virtual_console
     )->grid(-in => $sub_win, -row => 1, -column => 1, -sticky => 'nsew');
     $sub_win->gridRowconfigure(1, -weight => 1);
     $sub_win->gridColumnconfigure(1, -weight => 1);
+
+    # Bind mouse wheel events to the virtual console.
+    $sub_win->bind('all', '<4>', => sub{$sub_tab->yview('scroll', -3, 'units')});
+    $sub_win->bind('all', '<5>', => sub{$sub_tab->yview('scroll', +3, 'units')});
+
     $sub_tab->insert('end',
         ">>> virtual console started for client $mac <<<\n",
         'title'
