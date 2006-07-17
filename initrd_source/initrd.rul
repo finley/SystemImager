@@ -141,14 +141,14 @@ ifeq ($(ARCH),x86_64)
 		$(PYTHON) $(INITRD_DIR)/mklibs -L /lib64:/usr/lib64:/lib:/usr/lib -v -d lib64 ./*bin/* \
 	)
 	# copy libnss files as they are not automatically included
-	cp -a /lib64/libnss_dns* $(INITRD_BUILD_DIR)/lib64
+	cp -a /lib64/libnss* $(INITRD_BUILD_DIR)/lib64
 else
 	( \
 		cd $(INITRD_BUILD_DIR) && \
 		$(PYTHON) $(INITRD_DIR)/mklibs -L /lib:/usr/lib:/lib64:/usr/lib64 -v -d lib ./*bin/* \
 	)
 	# copy libnss files as they are not automatically included
-	cp -a /lib/libnss_dns* $(INITRD_BUILD_DIR)/lib
+	cp -a /lib/libnss* $(INITRD_BUILD_DIR)/lib
 endif
 	# Undo prelinking. -AR-
 	[ -x `which prelink` ] && (find $(INITRD_BUILD_DIR) -type f -exec prelink -u {} \; 2>&1 | grep -v "does not have .gnu.prelink_undo section\|is not an ELF file") || true
