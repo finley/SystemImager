@@ -491,6 +491,8 @@ while 1:
         so_file_name = os.path.basename(so_file)
         if not so_file:
             sys.exit("File not found:" + library)
+        debug(DEBUG_VERBOSE, "Undo prelinking on library: ", so_file)
+        command("[ -x `which prelink >/dev/null 2>&1` ] && (prelink", "-u", so_file, "|| true)")
         pic_file = find_pic(library)
         if not pic_file:
             # No pic file, so we have to use the .so file, no reduction
