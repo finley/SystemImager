@@ -576,7 +576,8 @@ sub refresh_console
 
             # Fill virtual console only with new messages.
             for (my $i = $#curr_logmsg + 1; $i < $#old_logmsg + 1; $i++) {
-                $old_logmsg[$i] =~ s/\x{8}//g;
+                $old_logmsg[$i] =~ s/\x{8}//g; # ignore backspaces
+                $old_logmsg[$i] =~ s/\x{7}//g; # ignore system bell
                 $sub_tab->insert('end', $old_logmsg[$i]);
             }
             # Update cursor position.
