@@ -581,7 +581,15 @@ sub save_partition_information {
                         $flags =~ s/, $//;
                     }
                     
-                    unless($id) { $id=""; }
+                    unless($id) {
+                        if ($flags =~ /lvm/) {
+                            $id = '8e';
+                        } elsif ($flags =~ /raid/) {
+                            $id = 'fd';
+                        } else {
+                            $id = '';
+                        }
+                    }
                     
                     _print_to_auto_install_conf_file( $disk, $minor, $size, $partition_type, $id, $name, $flags );
                 
