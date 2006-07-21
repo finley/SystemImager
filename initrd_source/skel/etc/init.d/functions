@@ -729,8 +729,13 @@ start_udevd() {
     logmsg start_udevd
     /etc/init.d/udev start
 
-    # Force the start of udevd if init script failed
-    [ $? -ne 0 ] && udevd --daemon
+    # If udev failed fall back to a static /dev
+    if [ $? -ne 0 ]; then
+        logmsg "failed!"
+        logmsg "Creating a static /dev (this may take few minutes)..."
+        /etc/init.d/makedevs > /dev/null
+        logmsg done
+    fi
 }
 #
 ################################################################################

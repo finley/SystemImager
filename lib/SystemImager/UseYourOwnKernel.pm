@@ -136,25 +136,25 @@ sub create_uyok_initrd() {
         #
         # Copy over /dev
         #
-        print ">>> Copying contents of /dev to new initrd...\n" if( $verbose );
-        $cmd = qq(rsync -a /dev/ $staging_dir/dev/);
-        !system( $cmd ) or die( "Couldn't $cmd." );
+        #print ">>> Copying contents of /dev to new initrd...\n" if( $verbose );
+        #$cmd = qq(rsync -a /dev/ $staging_dir/dev/);
+        #!system( $cmd ) or die( "Couldn't $cmd." );
 
         #
         # Remove LVM device mapper files from $staging_dir/dev
         #
-        $cmd = 'vgdisplay -c 2>/dev/null | grep -v ^$';
-        open(VG, "$cmd|");
-        foreach my $vg_name (<VG>) {
-                chomp $vg_name;
-                $vg_name =~ s/^\s+//;
-                $vg_name =~ s/:.*//;
-                $cmd = "find $staging_dir/dev/ -name \"$vg_name\" -type d | xargs rm -rf";
-                !system( $cmd ) or die( "Couldn't $cmd" );
-                $cmd = "find $staging_dir/dev/mapper -name \"$vg_name-*\" -type b | xargs rm -f";
-                !system( $cmd ) or die( "Couldn't $cmd" );
-        }
-        close(VG);
+        #$cmd = 'vgdisplay -c 2>/dev/null | grep -v ^$';
+        #open(VG, "$cmd|");
+        #foreach my $vg_name (<VG>) {
+        #        chomp $vg_name;
+        #        $vg_name =~ s/^\s+//;
+        #        $vg_name =~ s/:.*//;
+        #        $cmd = "find $staging_dir/dev/ -name \"$vg_name\" -type d | xargs rm -rf";
+        #        !system( $cmd ) or die( "Couldn't $cmd" );
+        #        $cmd = "find $staging_dir/dev/mapper -name \"$vg_name-*\" -type b | xargs rm -f";
+        #        !system( $cmd ) or die( "Couldn't $cmd" );
+        #}
+        #close(VG);
 
         # 
         # Dir in which to hold stuff.  XXX dannf where should this really go?
