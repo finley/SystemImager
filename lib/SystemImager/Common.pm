@@ -586,6 +586,8 @@ sub save_partition_information {
                             $id = '8e';
                         } elsif ($flags =~ /raid/) {
                             $id = 'fd';
+                        } elsif ($partition_type =~ /extended/) {
+                            $id = '85';
                         } else {
                             $id = '';
                         }
