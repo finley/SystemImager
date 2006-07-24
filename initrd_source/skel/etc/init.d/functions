@@ -250,7 +250,7 @@ shellout() {
     	logmsg "Installation failed!! Stopping report task."
         stop_report_task -1
     fi
-    exec sh
+    exec sh > /dev/console 2>&1
 }
 #
 ################################################################################
@@ -514,7 +514,7 @@ bittorrent_get_file() {
         bittorrent_upload_min=${BITTORRENT_UPLOAD_MIN:-50}
 
         # Start downloading.
-        bittorrent-console --no_start_trackerless_client --max_upload_rate 0 --display_interval 1 --rerequest_interval 1 --bind ${IPADDR} --save_in ${destination} ${torrent} > $bittorrent_log &
+        bittorrent-console --no_start_trackerless_client --max_upload_rate 0 --display_interval 1 --rerequest_interval 1 --bind ${IPADDR} --save_in ${destination} ${torrent} > $bittorrent_log || shellout &
         pid=$!
 
         # Wait for BitTorrent log to appear.
