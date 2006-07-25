@@ -53,7 +53,7 @@
         etc...
 
     si_mkbootserver
-        x- for now, just hardcode a softlink from /tftpboot ->
+        - for now, just hardcode a softlink from /tftpboot ->
           /usr/share/systemimager/boot
         - later, re-write in perl and try to improve interaction
 
@@ -307,10 +307,6 @@ your choices:
 
     ramdisk_size=80000
 
-23) systemimager-imagemanip as a seperate rpm with appropriate
-    dependencies
-
-
 24) date > /tmp/start-time at start of install
     date > /tmp/end-time at end of install
 
@@ -326,8 +322,6 @@ your choices:
     server in the event of imaging failure
 
 28) si_monitortk improvements (thanks Bernard for the good suggestions):
-    - display the full stdout and stderr of the client into the virtual
-      console
     - add a cmdline option to choose the starting clients order
     - support multiple virtual console instances at the same time
     - allow to export the content of the virtual console in an txt file
@@ -341,3 +335,10 @@ your choices:
     at home stopped working during image installation.  Paul Greidanus reported
     similiar issues with Sun Fire X2100 servers, hopefully we can track this
     down and fix
+
+30) si_monitortk - new status states:
+    - rebooting
+    - shutdown
+    - beeping
+    In the future we can also have shutting down -> shutdown but right now
+    there is no good way to determine that state 
