@@ -18,6 +18,9 @@
 %{?_build_only_boot:%{expand: %%define _build_all 0}}
 
 %define _unpackaged_files_terminate_build 0
+
+# prevent RPM from stripping files (eg. bittorrent binaries)
+%define __spec_install_post /usr/lib/rpm/brp-compress
 %define is_suse %(test -f /etc/SuSE-release && echo 1 || echo 0)
 
 Summary: Software that automates Linux installs, software distribution, and production deployment.
@@ -322,6 +325,9 @@ More information can be found at the website:
 http://developer.osdl.org/kees/software/imagemanip/
 
 %changelog
+* Wed Jul 26 2006 Bernard Li <bli@bcgsc.ca>
+- Prevent RPM from stripping binaries (eg. bittorrent)
+
 * Tue Jul 11 2006 Bernard Li <bli@bcgsc.ca>
 - Added code to cleanup buildroot etc.
 
