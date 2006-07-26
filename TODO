@@ -198,11 +198,6 @@ your choices:
 #        # Minimum upload rate threshold (in KB/s), if lesser stop seeding
 #        bittorrent_upload_min=50
 
-17) --autodetect-disks
-        Option for si_getimage and si_mkautoinstallscript
-        - if on, use David Lombard's disk independence code
-        - if off, just use disk info from ai.conf file.
-
 18) Move all LVM info into the <lvm> section of autoinstallscript.conf.
 
     - No longer store any lvm info in the <disk> and/or <raid> sections
@@ -341,4 +336,7 @@ your choices:
     - shutdown
     - beeping
     In the future we can also have shutting down -> shutdown but right now
-    there is no good way to determine that state 
+    there is no good way to determine that state
+
+31) Investigate libtorrent: http://libtorrent.rakshasa.no/ to see if it is a
+    feasible replacement for the python bittorrent libraries 
