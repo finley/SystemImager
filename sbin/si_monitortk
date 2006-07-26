@@ -287,20 +287,20 @@ my $help_menu = $menubar->cascade(qw/-label Help -underline 0 -tearoff 0 -menuit
 
 # Dialogs.
 my $DIALOG_CLEAR_CLIENTS = $window->Dialog(
-    -title          => "Clear all collected clients",
+    -title          => "Clear all collected client data",
     -bitmap         => 'question',
     -default_button => 'No',
     -buttons        => [qw/Yes No/],
     -font           => $FONT,
-    -text           => "Are you sure to clear all collected clients informations?",
+    -text           => "Are you sure you want to clear all collected client data?",
 );
 my $DIALOG_NO_CLIENTS = $window->Dialog(
-    -title          => "Clear all collected clients",
+    -title          => "Clear all collected client data",
     -bitmap         => 'warning',
     -default_button => 'OK',
     -buttons        => ['OK'],
     -font           => $FONT,
-    -text           => "No clients collected.",
+    -text           => "No client data collected.",
 );
 my $DIALOG_ABOUT = $window->Dialog(
     -title          => "About $program_name",
@@ -699,10 +699,10 @@ sub show_command_buttons
 
     # Define status bar messages.
     $bal->attach($start_refresh_button,
-        -statusmsg  => "Start to refresh the status of the nodes",
+        -statusmsg  => "Start refreshing the status of the nodes",
     );
     $bal->attach($stop_refresh_button,
-        -statusmsg  => "Stop to refresh the status of the nodes",
+        -statusmsg  => "Stop refreshing the status of the nodes",
     );
     $bal->attach($clear_clients_button,
         -statusmsg  => "Clear all collected clients",
