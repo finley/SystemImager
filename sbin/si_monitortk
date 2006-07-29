@@ -932,13 +932,17 @@ sub display_nodes
             # Timestamp.
             } elsif ($attrs[$_] =~ /timestamp/) {
                 my $date;
-                my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) =
-                    localtime($client->{$mac}->{$attrs[$_]});
-                $mon++;
-                $year += 1900;
-                $date = sprintf("%04d-%02d-%02d %02d:%02d:%02d",
-                    $year, $mon, $mday, $hour, $min, $sec);
-#                my $date = strftime("%Y-%m-%d %H:%M:%S", $client->{$mac}->{$attrs[$_]});
+                if ($client->{$mac}->{$attrs[$_]}) {
+                    my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) =
+                        localtime($client->{$mac}->{$attrs[$_]});
+                    $mon++;
+                    $year += 1900;
+                    $date = sprintf("%04d-%02d-%02d %02d:%02d:%02d",
+                        $year, $mon, $mday, $hour, $min, $sec);
+#                    my $date = strftime("%Y-%m-%d %H:%M:%S", $client->{$mac}->{$attrs[$_]});
+                } else {
+                    $date = '-';
+                }
                 $tab->itemCreate(
                     $row,
                     $_ + 2,
