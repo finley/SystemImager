@@ -341,4 +341,7 @@ your choices:
 31) Investigate libtorrent: http://libtorrent.rakshasa.no/ to see if it is a
     feasible replacement for the python bittorrent libraries
 
-32) Check if /proc/sys/kernel/hotplug exists, if so, do not run discover 
+32) Check if /proc/sys/kernel/hotplug exists, if so, do not run discover
+
+33) Using the image size information stored in the .torrent file, automagically
+    determine whether we should stage image tarball to the ramdisk or not.
