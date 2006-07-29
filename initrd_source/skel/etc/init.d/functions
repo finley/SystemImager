@@ -697,7 +697,11 @@ mount_sys() {
     logmsg
     logmsg mount_sys
     mkdir -p /sys || shellout
-    mount sysfs /sys -t sysfs || shellout
+    if grep -q '[[:space:]]\+sysfs$' /proc/filesystems 2>/dev/null; then
+        mount sysfs /sys -t sysfs || shellout
+    else
+        logmsg "sysfs is not supported by the kernel: `uname -r`"
+    fi
 }
 #
 ################################################################################
