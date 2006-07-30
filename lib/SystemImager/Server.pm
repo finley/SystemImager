@@ -70,8 +70,12 @@ sub copy_boot_files_from_image_to_shared_dir {
 
     my $kernel = $image_dir . "/etc/systemimager/boot/kernel";
     my $initrd = $image_dir . "/etc/systemimager/boot/initrd.img";
+    my $file   = $image_dir . "/etc/systemimager/boot/ARCH";
 
-    my $file = $image_dir . "/etc/systemimager/boot/ARCH";
+    unless ((-e $kernel) && (-e $initrd) && (-e $file)) {
+        return -1;
+    }
+
     open(FILE,"<$file") or die("Couldn't open $file for reading $!");
         my $arch = (<FILE>)[0];
     close(FILE);

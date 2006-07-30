@@ -437,8 +437,13 @@ SystemImager::Server->create_image_stub($rsync_stub_dir, $image, $imagedir) or
 SystemImager::Server->gen_rsyncd_conf($rsync_stub_dir, $rsyncd_conf) or
     die "$program_name:  Cannot generate $rsyncd_conf";
 
-SystemImager::Server->copy_boot_files_from_image_to_shared_dir( $image, $imagedir, $rsync_stub_dir, $autoinstall_boot_dir ) or
-    die "$program_name:  SystemImager::Server->copy_boot_files_from_image_to_shared_dir( $image,  $imagedir, $rsync_stub_dir, $autoinstall_boot_dir ) failed.";
+if (
+    SystemImager::Server->copy_boot_files_from_image_to_shared_dir(
+        $image, $imagedir, $rsync_stub_dir, $autoinstall_boot_dir
+    ) == -1
+) {
+    print "WARNING: failed to copy boot files from the image (ignore this warning if you are not using UYOK).\n";
+}
 
 ### END generic image retrieval stuff ###
 
