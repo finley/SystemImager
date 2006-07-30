@@ -231,7 +231,7 @@ if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
     if [ ! -z $MONITOR_SERVER ]; then
         stop_report_task 101
     fi
-elif [ ! -z $BITTORRENT_STAGING ]; then
+elif [ "x$BITTORRENT" = "xy" ]; then
     # Use BitTorrent
     if [ -f "${TORRENTS_DIR}/image-${IMAGENAME}.tar.gz.torrent" ]; then
         bittorrent_tarball="image-${IMAGENAME}.tar.gz"
@@ -242,6 +242,19 @@ elif [ ! -z $BITTORRENT_STAGING ]; then
     else
         logmsg "error: cannot find a valid torrent file for the image ${IMAGENAME}"
         shellout
+    fi
+    # Evaluate the staging directory
+    if [ -z $BITTORRENT_STAGING ]; then
+        logmsg bittorrent_autodetect_staging_dir
+        BITTORRENT_STAGING=`bittorrent_autodetect_staging_dir ${TORRENTS_DIR}/${bittorrent_tarball}.torrent`
+        if [ -z $BITTORRENT_STAGING ]; then
+            logmsg ""
+            logmsg "error: cannot find a staging directory to save file: $bittorrent_tarball"
+            logmsg "Try to increase the size of a partition (like /tmp) in your patitioning schema"
+            logmsg "to fit the image into a staging directory."
+            logmsg ""
+            shellout
+        fi
     fi
     # Download image from peers
     logmsg "Start downloading image using torrent ${bittorrent_tarball}.torrent"
@@ -320,7 +333,7 @@ do
         RETRY=7
         FLAMETHROWER_TARPIPE=y
         flamethrower_client
-    elif [ ! -z $BITTORRENT_STAGING ]; then
+    elif [ "x$BITTORRENT" = "xy" ]; then
         # Use BitTorrent
         if [ -f "${TORRENTS_DIR}/override-${OVERRIDE}.tar.gz.torrent" ]; then
             bittorrent_tarball="override-${OVERRIDE}.tar.gz"
@@ -332,7 +345,17 @@ do
             bittorrent_tarball=""
             logmsg "warning: cannot find a valid torrent file for override ${OVERRIDE}"
         fi
+        # Evaluate the staging directory
+        if [ ! -z $bittorrent_tarball -a -z $BITTORRENT_STAGING ]; then
+            logmsg bittorrent_autodetect_staging_dir
+            BITTORRENT_STAGING=`bittorrent_autodetect_staging_dir ${TORRENTS_DIR}/${bittorrent_tarball}.torrent`
+            if [ -z $BITTORRENT_STAGING ]; then
+                logmsg "warning: cannot find a staging directory to save file: $bittorrent_tarball"
+                bittorrent_tarball=""
+            fi
+        fi
         if [ ! -z $bittorrent_tarball ]; then
+            # Start downloading
             logmsg "Start downloading override using torrent ${bittorrent_tarball}.torrent"
             logmsg ""
             logmsg "--> INFO: remember to start /etc/init.d/systemimager-server-bittorrent on the image server!"
