@@ -519,7 +519,10 @@ if [ ! -z $MONITOR_SERVER ]; then
         logmsg ""
         sleep 10
     fi
+    # Report the post-install action.
+##MONITOR_POSTINSTALL##
 fi
+
 
 # Take network interface down
 [ -z $DEVICE ] && DEVICE=eth0

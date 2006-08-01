@@ -360,6 +360,14 @@ $fail_style->configure(
 # Done.
 my $done_style = $tab->ItemStyle('text');
 $done_style->configure(
+    -foreground => 'darkcyan',
+    -background => '#FFFFFF',
+    -font       => $FONT,
+    -anchor     => 'center',
+);
+# Done.
+my $post_install_style = $tab->ItemStyle('text');
+$post_install_style->configure(
     -foreground => '#009000',
     -background => '#FFFFFF',
     -font       => $FONT,
@@ -846,6 +854,24 @@ sub display_nodes
             $style = $rebooted_style;
             $status_icon = $server_ok_icon;
             $icon_style = $rebooted_image_style;
+        } elsif ($status == 103) {
+            $num_ok++;
+            $client->{$mac}->{'status'} = 'beeping';
+            $style = $post_install_style;
+            $status_icon = $server_ok_icon;
+            $icon_style = $image_style;
+        } elsif ($status == 104) {
+            $num_ok++;
+            $client->{$mac}->{'status'} = 'rebooting';
+            $style = $post_install_style;
+            $status_icon = $server_ok_icon;
+            $icon_style = $image_style;
+        } elsif ($status == 105) {
+            $num_ok++;
+            $client->{$mac}->{'status'} = 'shutdown';
+            $style = $post_install_style;
+            $status_icon = $server_ok_icon;
+            $icon_style = $image_style;
         } else {
             $num_unkn++;
             $client->{$mac}->{'status'} = '???';

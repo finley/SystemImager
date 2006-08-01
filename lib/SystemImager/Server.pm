@@ -1872,6 +1872,12 @@ sub create_autoinstall_script{
 	            last SWITCH;
 	        }
 
+	        if (/^\s*${delim}MONITOR_POSTINSTALL${delim}\s*/) {
+                    my $post_state = {'beep' => 103, 'reboot' => 104, 'shutdown' => 105};
+                    print $MASTER_SCRIPT "    send_monitor_msg \"status=$post_state->{$post_install}\"\n";
+                    last SWITCH;
+                }
+
 	        if (/^\s*${delim}POSTINSTALL${delim}\s*/) {
 	            
                 if ($post_install eq "beep") {
