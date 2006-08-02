@@ -594,6 +594,16 @@ sub _create_new_initrd($$) {
                 else { die("FATAL: Unable to create initrd using $fs") }
         }
 
+        # Print initrd size information.
+        print ">> Evaluating initrd size to be added in the kernel boot options\n" .
+              ">> (e.g. /etc/systemimager/pxelinux.cfg/syslinux.cfg):\n";
+        if (-f "$boot_dir/initrd.img") {
+            my $ramdisk_size = (`zcat $boot_dir/initrd.img | wc -c` + 10485760) / 1024;
+            print " >>\tsuggested value -> ramdisk_size=$ramdisk_size\n\n";
+        } else {
+            print qq(WARNING: cannot find the new boot initrd!\n);
+        }
+
         return 1;
 }
 
