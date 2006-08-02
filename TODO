@@ -331,17 +331,7 @@ your choices:
     similiar issues with Sun Fire X2100 servers, hopefully we can track this
     down and fix
 
-30) si_monitortk - new status states:
-    - rebooting
-    - shutdown
-    - beeping
-    In the future we can also have shutting down -> shutdown but right now
-    there is no good way to determine that state
-
 31) Investigate libtorrent: http://libtorrent.rakshasa.no/ to see if it is a
     feasible replacement for the python bittorrent libraries
 
-32) Check if /proc/sys/kernel/hotplug exists, if so, do not run discover
-
-33) Using the image size information stored in the .torrent file, automagically
-    determine whether we should stage image tarball to the ramdisk or not.
+34) Pre-create static dev (dev tarball?)
