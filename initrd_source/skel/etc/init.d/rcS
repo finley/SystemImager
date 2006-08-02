@@ -28,56 +28,39 @@
 #
 {
 
-#XXX remove all these sleeps
-	sleep 1
 switch_root_to_tmpfs
 
-	sleep 1
 mount_proc
-	sleep 1
-monitor_save_dmesg
-	sleep 1
-mount_sys
-	sleep 1
-mount_pts
-	sleep 1
 
-# this must be here to avoid read only fs errors, or other ugly stuff. -BEF-
-# this is no longer needed to use UYOK features. -AR-
-# check_version
+monitor_save_dmesg
+
+mount_sys
+
+mount_pts
 
 get_arch
-	sleep 1
 
 adjust_arch
-	sleep 1
 
 ifconfig_loopback
-	sleep 1
 
 load_my_modules
-	sleep 1
 
 start_udevd
-	sleep 1
 
 start_hotplug
-	sleep 1
 
 # Need to do this prior to read_local_cfg to get last_root parameter, 
 # if specified. -BEF-
 variableize_kernel_append_parameters
-	sleep 1
+
 read_kernel_append_parameters
-	sleep 1
 
 read_local_cfg
-	sleep 1
 
 # Re-read kernel append parameters -- we want them to override what's in 
 # the local.cfg files. -BEF-
 read_kernel_append_parameters
-	sleep 1
 
 start_network
 beep
