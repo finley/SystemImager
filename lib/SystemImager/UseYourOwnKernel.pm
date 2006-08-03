@@ -22,6 +22,8 @@
 package SystemImager::UseYourOwnKernel;
 
 use strict;
+use SystemImager::Config qw($config);
+
 our $verbose;
 our $is_mounted = 0;
 
@@ -29,7 +31,7 @@ our $is_mounted = 0;
 
 #
 # Usage: 
-#       SystemImager::UseYourOwnKernel->create_uyok_initrd($arch, $my_modules, $custom_kernel, $custom_mod_dir, $verbose);
+#       SystemImager::UseYourOwnKernel->create_uyok_initrd($arch, $my_modules, $custom_kernel, $custom_mod_dir, $image, $verbose);
 #
 sub create_uyok_initrd() {
 
@@ -38,6 +40,7 @@ sub create_uyok_initrd() {
         my $my_modules     = shift;
         my $custom_kernel  = shift;
         my $custom_mod_dir = shift;
+        my $image          = shift;
         $verbose           = shift;
 
         use File::Copy;
@@ -81,6 +84,21 @@ sub create_uyok_initrd() {
         }
 
         my $uname_r = get_uname_r();
+
+        if ($image) {
+            # Get SystemImager directories.
+            my $image_dir = $config->default_image_dir;
+
+            unless (-d "$image_dir/$image") {
+                die "error: $image is not a valid image! use si_lsimage to see the list of available images.\n";
+            }
+
+            # Autodetect custom kernel and modules directory in the image.
+            $custom_kernel = _choose_kernel_file( '', "$image_dir/$image" );
+            my $kernel_release = _get_kernel_release($custom_kernel);
+            $custom_mod_dir = "$image_dir/$image/lib/modules/$kernel_release";
+        }
+
         my $module_dir;
         if ($custom_mod_dir) {
             $module_dir = $custom_mod_dir;
@@ -267,7 +285,10 @@ sub is_kernel {
                 my ($input) = (<INPUT>);
                 #
                 # eliminate vmlinux files on RH
-                if( $input =~ m/ELF 32-bit LSB executable,/ ) { return undef; }    
+                if( $input =~ m/ELF 32-bit LSB executable,/ ) { return undef; }
+                #
+                # eliminate compressed data (eg. ramdisk)
+                if( $input =~ m/gzip compressed data,/ ) { return undef; }
         close(INPUT);
 
         #
@@ -277,12 +298,14 @@ sub is_kernel {
 
 #
 # Usage:
-#       my $kernel_file = _choose_kernel_file( $uname_r );
+#       my $kernel_file = _choose_kernel_file( $uname_r, $image_dir );
 #
 sub _choose_kernel_file($) {
 
         my $uname_r = shift;
-        my @dirs = ('/boot', '/');
+        my $image_dir = shift;
+        $image_dir = '' if !($image_dir);
+        my @dirs = ("$image_dir/boot", "$image_dir/");
         my @kernels;
 
         foreach my $dir (@dirs) {
@@ -307,11 +330,15 @@ sub _choose_kernel_file($) {
                                 }
                         }
                 }
-
-                # If cannot find kernel with name matching running version, return the first good one
-                if (@kernels) {
-                        return pop(@kernels);
+        }
+        # If cannot find kernel with name matching running version, return the first good one
+        if (@kernels) {
+            foreach my $file (@kernels) {
+                my $kernel_release = _get_kernel_release($file);
+                if (defined($kernel_release) and (-d "$image_dir/lib/modules/$kernel_release")) {
+                    return $file;
                 }
+            }
         }
 
         return undef;

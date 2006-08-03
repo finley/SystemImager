@@ -12,8 +12,17 @@ package SystemImager::Config;
 use strict;
 use AppConfig;
 
+BEGIN {
+    use Exporter();
 
-my $config = AppConfig->new(
+    @SystemImager::Config::ISA       = qw(Exporter);
+    @SystemImager::Config::EXPORT    = qw();
+    @SystemImager::Config::EXPORT_OK = qw($config);
+
+}
+use vars qw($config);
+
+$config = AppConfig->new(
     'default_image_dir'         => { ARGCOUNT => 1 },
     'default_override_dir'      => { ARGCOUNT => 1 },
     'autoinstall_script_dir'    => { ARGCOUNT => 1 },

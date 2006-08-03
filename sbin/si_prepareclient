@@ -183,6 +183,11 @@ Options:
     Use this parameter only with --kernel and only if you use UYOK
     feature.
 
+ --image IMAGENAME
+    Get kernel and kernel modules automatically from the image specified
+    by IMAGENAME to use with UYOK (if executed on image server).
+    Use this parameter only if you use UYOK feature.
+
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
 
@@ -200,6 +205,7 @@ GetOptions(
     "my-modules"           => \my $my_modules,
     "kernel=s"             => \my $custom_kernel,
     "modules-dir=s"        => \my $modules_dir,
+    "image=s"              => \my $image,
     "version"              => \my $version,
     "server=s"             => \my $server,
     "yes"                  => \my $yes
@@ -251,6 +257,24 @@ if($no_uyok and $custom_kernel) {
 
 if($no_uyok and $modules_dir) {
     print "FATAL:  --no-uyok option conflicts with --modules-dir DIR!\n";
+    print qq(Try "$progname --help" for more info.\n);
+    exit 1;
+}
+
+if($no_uyok and $image) {
+    print "FATAL:  --no-uyok option conflicts with --image IMAGENAME!\n";
+    print qq(Try "$progname --help" for more info.\n);
+    exit 1;
+}
+
+if($custom_kernel and $image) {
+    print "FATAL:  --kernel KERNEL option conflicts with --image IMAGENAME!\n";
+    print qq(Try "$progname --help" for more info.\n);
+    exit 1;
+}
+
+if($my_modules and $image) {
+    print "FATAL:  --my-modules option conflicts with --image IMAGENAME!\n";
     print qq(Try "$progname --help" for more info.\n);
     exit 1;
 }
@@ -703,7 +727,7 @@ sub create_auto_install_script_conf {
         my $arch = get_arch();
         my $verbose;
         unless($quiet) { $verbose = 1; }
-        SystemImager::UseYourOwnKernel->create_uyok_initrd( $arch, $my_modules, $custom_kernel, $modules_dir, $verbose );
+        SystemImager::UseYourOwnKernel->create_uyok_initrd( $arch, $my_modules, $custom_kernel, $modules_dir, $image, $verbose );
     }
 
     SystemImager::Common->write_auto_install_script_conf_footer($file);
