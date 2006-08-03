@@ -764,7 +764,7 @@ start_udevd() {
     # If udev failed fall back to a static /dev
     if [ $? -ne 0 ]; then
         logmsg "failed!"
-        logmsg "Creating a static /dev (this may take few minutes)..."
+        logmsg "Creating a static /dev (this may take a few minutes)..."
         /etc/init.d/makedevs > /dev/null
         logmsg done
     fi
