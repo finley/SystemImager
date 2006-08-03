@@ -9,6 +9,7 @@
 #
 %define ver      0.0.0
 %define rel      1
+%define packager Bernard Li <bli@bcgsc.ca>
 %define prefix   /usr
 %define _build_all 1
 %define _boot_flavor standard
@@ -32,7 +33,7 @@ Group: Applications/System
 Source0: http://download.sourceforge.net/systemimager/%{name}-%{ver}.tar.bz2
 BuildRoot: /tmp/%{name}-%{ver}-root
 BuildArchitectures: noarch
-Packager: dann frazier <dannf@dannf.org>
+Packager: %packager
 URL: http://systemimager.org/
 Distribution: System Installation Suite
 BuildRequires: docbook-utils, dos2unix, e2fsprogs-devel, flex, libtool, readline-devel, /usr/bin/wget, openssl-devel, gcc, gcc-c++
@@ -63,7 +64,7 @@ Release: %rel
 License: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
-Packager: dann frazier <dannf@dannf.org>
+Packager: %packager
 URL: http://systemimager.org/
 Distribution: System Installation Suite
 Requires: rsync >= 2.4.6, systemimager-common = %{version}, perl-AppConfig, dosfstools, /sbin/chkconfig, perl, perl(XML::Simple) >= 2.08, python, mkisofs
@@ -99,7 +100,7 @@ Release: %rel
 License: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
-Packager: dann frazier <dannf@dannf.org>
+Packager: %packager
 URL: http://systemimager.org/
 Distribution: System Installation Suite
 Requires: systemimager-server = %{version}, /sbin/chkconfig, perl, flamethrower >= 0.1.6
@@ -130,7 +131,7 @@ Release: %rel
 License: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
-Packager: dann frazier <dannf@dannf.org>
+Packager: %packager
 URL: http://systemimager.org/
 Distribution: System Installation Suite
 Requires: perl, systemconfigurator
@@ -161,7 +162,7 @@ Release: %rel
 License: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
-Packager: dann frazier <dannf@dannf.org>
+Packager: %packager
 URL: http://systemimager.org/
 Distribution: System Installation Suite
 Requires: systemimager-common = %{version}, systemconfigurator, perl-AppConfig, rsync >= 2.4.6, perl
@@ -194,7 +195,7 @@ Release: %rel
 License: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
-Packager: dann frazier <dannf@dannf.org>
+Packager: %packager
 URL: http://systemimager.org/
 Distribution: System Installation Suite
 Obsoletes: systemimager-%{_build_arch}boot
@@ -228,7 +229,7 @@ Release: %rel
 License: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
-Packager: dann frazier <dannf@dannf.org>
+Packager: %packager
 URL: http://systemimager.org/
 Distribution: System Installation Suite
 Obsoletes: systemimager-%{_build_arch}initrd_template
@@ -263,7 +264,7 @@ Release: %rel
 License: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
-Packager: dann frazier <dannf@dannf.org>
+Packager: %packager
 URL: http://systemimager.org/
 Distribution: System Installation Suite
 Requires: systemimager-server = %{version}, /sbin/chkconfig, perl
@@ -299,7 +300,7 @@ Release: %rel
 License: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
-Packager: dann frazier <dannf@dannf.org>
+Packager: %packager
 URL: http://systemimager.org/
 Distribution: System Installation Suite
 Requires: systemimager-server = %{version}, /sbin/chkconfig, perl, perl(Config::Simple), perl(LockFile::Simple)
@@ -325,6 +326,9 @@ More information can be found at the website:
 http://developer.osdl.org/kees/software/imagemanip/
 
 %changelog
+* Wed Aug 02 2006 Bernard Li <bli@bcgsc.ca>
+- Officially taking over as packager of SystemImager RPMs
+
 * Wed Jul 26 2006 Bernard Li <bli@bcgsc.ca>
 - Prevent RPM from stripping binaries (eg. bittorrent)
 
