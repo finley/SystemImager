@@ -343,8 +343,9 @@ EOF
         exit 1;
     }
     
-    system("clear");
-    print <<EOF;
+    unless ($norsyncd) {
+        system("clear");
+        print <<EOF;
 *********************************** WARNING *********************************** 
 This utility starts an rsync daemon that makes all of your files accessible
 by anyone who can connect to the rsync port of this machine.  This is the 
@@ -359,12 +360,13 @@ for a more secure method of making images available to clients.
 EOF
 
   
-  # you sure you want to install?
-    print "Continue? (y/[n]): ";
-    $answer = <>;
-    unless($answer =~ /y/i) {
-        print "Client prepartion cancelled.  No files modified.\n";
-        exit 1;
+        # you sure you want to install?
+        print "Continue? (y/[n]): ";
+        $answer = <>;
+        unless($answer =~ /y/i) {
+            print "Client prepartion cancelled.  No files modified.\n";
+            exit 1;
+        }
     }
 
     #
@@ -414,20 +416,22 @@ EOF
         }
     }
  
-    my $result;
-    $result = `ps axww|grep -v grep|grep -w rsync`;
-    if (!$result) {
-        $result = `ps axww|grep -v grep|grep -w rsyncd`;
-    }
-    if ($result) {
-        print "One or more rsync daemons appear to be running on this machine.  If you\n";
-        print "continue, those daemons will be killed.\n";
-        print "\n";
-        print "Continue? (y/[n]): ";
-        my $answer = <>;
-        unless($answer =~ /y/i) {
-            print "Client prepartion cancelled.  No files modified.\n";
-            exit 1;
+    unless ($norsyncd) {
+        my $result;
+        $result = `ps axww|grep -v grep|grep -w rsync`;
+        if (!$result) {
+            $result = `ps axww|grep -v grep|grep -w rsyncd`;
+        }
+        if ($result) {
+            print "One or more rsync daemons appear to be running on this machine.  If you\n";
+            print "continue, those daemons will be killed.\n";
+            print "\n";
+            print "Continue? (y/[n]): ";
+            my $answer = <>;
+            unless($answer =~ /y/i) {
+                print "Client prepartion cancelled.  No files modified.\n";
+                exit 1;
+            }
         }
     }
 }
