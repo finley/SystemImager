@@ -121,6 +121,11 @@ unless ($refresh_rate) {
     $refresh_rate *= 1000;
 }
 
+# Check if X is available.
+unless ($ENV{DISPLAY}) {
+    print STDERR "WARNING: this program requires an X server to run!\n";
+}
+
 # Define lock files.
 my $lock_file = $conf{'lock_dir'} . "/db.si_monitor.lock";
 
