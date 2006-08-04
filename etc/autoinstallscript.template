@@ -436,6 +436,7 @@ beep
 #   Would be shorter if discover could return numerical device IDs...
 #
 if [ ! -f /a/etc/systemconfig/hardware.lst ]; then
+   [ ! -d /a/etc/systemconfig ] && mkdir -p /a/etc/systemconfig
    SCSI_MODS=`discover -f "%m\n" scsi | grep -v ide-scsi | uniq`
    for MOD in $SCSI_MODS; do
       DEVID=`grep $MOD /proc/bus/pci/devices | cut -f 2 | sort | uniq`
