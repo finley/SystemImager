@@ -123,7 +123,7 @@ unless ($refresh_rate) {
 
 # Check if X is available.
 unless ($ENV{DISPLAY}) {
-    print STDERR "WARNING: this program requires an X server to run!\n";
+    print STDERR "WARNING: this program requires a X server to run!\n";
 }
 
 # Define lock files.
