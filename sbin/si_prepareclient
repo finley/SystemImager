@@ -367,6 +367,24 @@ EOF
             print "Client prepartion cancelled.  No files modified.\n";
             exit 1;
         }
+        # Check if a firewall is present in the client.
+        system "iptables --list 2>&1 | grep -q DROP";
+        unless ($?) {
+            print <<"EOF";
+
+*********************************** WARNING *********************************** 
+A firewall seems to be running on this host!!!
+Be sure that port 873/rsync is opened for: $hosts_allow
+*********************************** WARNING *********************************** 
+
+EOF
+            print "Continue? (y/[n]): ";
+            $answer = <>;
+            unless($answer =~ /y/i) {
+                print "Client prepartion cancelled.  No files modified.\n";
+                exit 1;
+            }
+        }
     }
 
     #
