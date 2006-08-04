@@ -59,7 +59,9 @@ case "$1" in
         echo Cannot find a valid tracker binary.
         exit 1
     fi
-    $BT_TRACKER_BIN --port $BT_TRACKER_PORT --dfile $BT_TRACKER_STATE --logfile $BT_TRACKER_LOG --twisted 0 &
+    # Check tracker to see if it supports --twisted flag
+    ($BT_TRACKER_BIN 2>&1 | grep -q twisted) && BT_TWISTED="--twisted 0"
+    $BT_TRACKER_BIN --port $BT_TRACKER_PORT --dfile $BT_TRACKER_STATE --logfile $BT_TRACKER_LOG $BT_TWISTED &
     if [ $? -ne 0 ]; then
         echo failed.
     	exit 1
