@@ -346,7 +346,7 @@ do
             logmsg "warning: cannot find a valid torrent file for override ${OVERRIDE}"
         fi
         # Evaluate the staging directory
-        if [ ! -z $bittorrent_tarball -a -z $BITTORRENT_STAGING ]; then
+        if [ ! -z $bittorrent_tarball ] && [ -z $BITTORRENT_STAGING ]; then
             logmsg bittorrent_autodetect_staging_dir
             BITTORRENT_STAGING=`bittorrent_autodetect_staging_dir ${TORRENTS_DIR}/${bittorrent_tarball}.torrent`
             if [ -z $BITTORRENT_STAGING ]; then
