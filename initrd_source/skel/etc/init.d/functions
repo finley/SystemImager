@@ -1499,8 +1499,8 @@ send_monitor_msg() {
         MONITOR_PORT=8181
     fi
 
-    # Remove special field separator from the message.
-    msg=`echo "$@" | sed 's/:/\\\x3a/g'`
+    # Message to send.
+    msg=`echo "$@"`
 
     # Get the client mac address.
     if [ -z "$mac" ]; then
@@ -1574,7 +1574,7 @@ send_monitor_stdout() {
 
 init_monitor_server() {
     # Send initialization status.
-    send_monitor_msg "status=0"
+    send_monitor_msg "status=0:first_timestamp=on"
     logmsg "Monitoring initialized."
     # Start client log gathering server: for each connection
     # to the local client on port 8181 the full log is sent
@@ -1635,8 +1635,7 @@ start_report_task() {
         fi
 
         # Send status and bandwidth to the monitor server.
-        send_monitor_msg "status=$status"
-        send_monitor_msg "speed=$speed"
+        send_monitor_msg "status=$status:speed=$speed"
         
         # Wait $REPORT_INTERVAL sec between each report -AR-
         sleep $REPORT_INTERVAL
@@ -1659,10 +1658,7 @@ stop_report_task() {
     fi
 
     # Try to report the error to the monitor server.
-    send_monitor_msg "status=$1"
-
-    # Reset speed rate.
-    send_monitor_msg "speed=0"
+    send_monitor_msg "status=$1:speed=0"
 }
 #
 ################################################################################

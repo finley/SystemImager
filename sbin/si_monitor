@@ -271,6 +271,9 @@ sub update_db
 			$client->{'status'} = $_;
 		} elsif (s/^speed=//) {
 			$client->{'speed'} = int($_);
+		} elsif (s/^first_timestamp=//) {
+			$client->{'first_timestamp'} = $_;
+                # XXX: depreacted, to be removed in future releases.
 		} elsif (s/^log=//) {
 			$client->{'log'} = $_;
 		}
@@ -324,11 +327,11 @@ sub update_db
 		if defined($client->{'speed'});
 	$xml->{'client'}->{$mac}->{'log'} = $client->{'log'}
 		if $client->{'log'};
-	# Add a server timestamp.
+
+	# Add the server timestamps.
 	$xml->{'client'}->{$mac}->{'timestamp'} = $timestamp;
-	unless ($xml->{'client'}->{$mac}->{'first_timestamp'}) {
-		$xml->{'client'}->{$mac}->{'first_timestamp'} = $timestamp;
-	}
+	$xml->{'client'}->{$mac}->{'first_timestamp'} = $timestamp
+		if $client->{'first_timestamp'};
 	
 	open(DB, '>', $database) or
 		die gmtime() . ": error: cannot open \"$database\" for writing!\n";
