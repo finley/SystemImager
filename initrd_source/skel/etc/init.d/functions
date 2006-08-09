@@ -511,8 +511,11 @@ bittorrent_autodetect_staging_dir() {
     # List of preferred staging directory (/tmp = ramdisk staging)
     preferred_dirs="/tmp /a/tmp `df 2>/dev/null | sed '1d' | sed 's/[[:space:]]\+/ /g' | cut -d' ' -f6`"
 
+    # Use a breathing room of 100MB (this should be enough for a lot of cases)
+    breathing_room=102400
+
     # Evaluate torrent size
-    torrent_size=$((`torrentinfo-console $torrent | sed -ne 's/^file size\.*: \([0-9]\+\).*$/\1/p'` / 1024 + 1))
+    torrent_size=$((`torrentinfo-console $torrent | sed -ne 's/^file size\.*: \([0-9]\+\).*$/\1/p'` / 1024 + $breathing_room))
 
     # Find a directory to host the image tarball
     for dir in $preferred_dirs; do
