@@ -6,6 +6,41 @@
 #   $Id$
 #
 
+3.7.4
+--------------------------------------------------------------------------------
+- better compatibility with 2.4 kernels
+- better support with cciss/ida/rd RAID controllers
+- added support for filesystems (and swap partitions) with LABELs
+- better support of software-RAID devices (managed by mdadm), LVM
+  (version 1 and 2) and LVM over software-RAID volumes
+- better support of x86_64 architectures
+- added Infiniband support (experimental)
+- new implementation of the BitTorrent transport
+  - autodetection of the staging directory
+  - lot of tunings to speed-up installations
+- monitoring interface improvements (si_monitortk)
+  - added new states: 'finalizing', 'beeping', 'shutdown', 'rebooting'
+    and 'REBOOTED'
+  - implemented "full log" feature in virtual console (to see full
+    stdout and stderr)
+  - store the whole installation session in /root/si_monitor.log of the
+    imaged client
+  - optimized CPU and memory utilization on the image server
+  - lots of graphics improvements
+- UYOK improvements
+  - added --kernel and --modules-dir option to si_prepareclient to choose a
+    custom kernel to perform installations
+  - implemented --image option for si_prepareclient (to prepare a
+    kernel+initrd.image package based on the kernel present in the image)
+  - UYOK initrd optimizations
+- BOEL improvements
+  - moved to kernel 2.6.16.5
+  - moved to udev+hotplug device discovery
+- added support for both /dev managed via udev and static /dev
+- added --autodetect-disks option in si_getimage and
+  si_mkautoinstallscript
+- lots of bugfixes
+
 3.6.3
 --------------------------------------------------------------------------------
 - Bug: discover patch was removed that allowed support of ICH7
