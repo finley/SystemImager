@@ -194,6 +194,7 @@ start_spinner() {
 #   Also see: start_spinner
 #
 stop_spinner() {
+    [ -z $SPINNER_PID ] && return
     logmsg
     logmsg "stop_spinner"
     kill -9 $SPINNER_PID
