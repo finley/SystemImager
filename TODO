@@ -342,3 +342,7 @@ your choices:
     that needs support can simply post the tarball to the list and we'll have
     immediately an overview of the system.
     
+36) Add USE_LOCAL_CFG boot option. Without this option don't execute
+    read_local_cfg(). This can speed up installation time in clients that
+    have not a floppy.
+
