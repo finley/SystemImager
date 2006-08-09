@@ -545,8 +545,13 @@ bittorrent_get_file() {
         bittorrent_upload_min=${BITTORRENT_UPLOAD_MIN:-50}
 
         # Start downloading.
-        bittorrent-console --no_upnp --no_start_trackerless_client --max_upload_rate 0 --display_interval 1 --rerequest_interval 1 --bind ${IPADDR} --save_in ${destination} ${torrent} > $bittorrent_log || shellout &
+        bittorrent-console --no_upnp --no_start_trackerless_client --max_upload_rate 0 --display_interval 1 --rerequest_interval 1 --bind ${IPADDR} --save_in ${destination} ${torrent} > $bittorrent_log &
         pid=$!
+        if [ ! -d /proc/$pid ]; then
+            logmsg "error: couldn't run bittorrent-console!"
+            shellout
+        fi
+        unset pid
 
         # Wait for BitTorrent log to appear.
         while [ ! -e $bittorrent_log ]; do
@@ -572,9 +577,17 @@ bittorrent_get_file() {
                     [ $upload_rate -lt $bittorrent_upload_min ] && break
                 done
                 logmsg "Stop seeding"
-                kill -9 $pid
+                # Try to kill all the BitTorrent processes
+                counter=1 
+                while ps | grep bittorrent-console | grep -qv grep; do
+                    [ $counter -ge 10 ] && logmsg "error: couldn't kill BitTorrent client!" && shellout
+                    logmsg "killing BitTorrent client..."
+                    killall -9 bittorrent-console
+                    sleep 1
+                    counter=$(($counter + 1))
+                done
                 rm -f $bittorrent_log
-                unset bittorrent_log pid upload_rate
+                unset bittorrent_log upload_rate counter
                 break
             fi
             sleep $bittorrent_polling_time
