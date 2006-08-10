@@ -39,6 +39,12 @@
 - added support for both /dev managed via udev and static /dev
 - added --autodetect-disks option in si_getimage and
   si_mkautoinstallscript
+- added FUSION_SAS support (needed for LSISAS1064 support on the Sun Fire X4100 servers)
+- added support for LSI 53c1030 storage adapter on the IBM e326 server
+- new packages: systemimager-bittorrent, systemimager-imagemanip
+- better RPM package dependencies for SUSE Linux and Red Hat/Fedora Linux
+- services (eg. /etc/init.d/systemimager-server-rsyncd) are disabled by default
+  after RPM installation
 - lots of bugfixes
 
 3.6.3
