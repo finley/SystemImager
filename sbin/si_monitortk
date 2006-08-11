@@ -755,11 +755,14 @@ sub display_nodes
     ### END of profiling stuff ###
 
     # Statistic counters.
-    my $num_rebooted = 0;
-    my $num_ok       = 0;
-    my $num_fail     = 0;
-    my $num_inst     = 0;
-    my $num_unkn     = 0;
+    my $num_rebooted  = 0;
+    my $num_shutdown  = 0;
+    my $num_rebooting = 0;
+    my $num_beeping   = 0;
+    my $num_ok        = 0;
+    my $num_fail      = 0;
+    my $num_inst      = 0;
+    my $num_unkn      = 0;
 
     # Drop previous selection if nothing is selected.
     if (defined($selected_mac_addr)) {
@@ -860,19 +863,19 @@ sub display_nodes
             $status_icon = $server_ok_icon;
             $icon_style = $rebooted_image_style;
         } elsif ($status == 103) {
-            $num_ok++;
+            $num_beeping++;
             $client->{$mac}->{'status'} = 'beeping';
             $style = $post_install_style;
             $status_icon = $server_ok_icon;
             $icon_style = $image_style;
         } elsif ($status == 104) {
-            $num_ok++;
+            $num_rebooting++;
             $client->{$mac}->{'status'} = 'rebooting';
             $style = $post_install_style;
             $status_icon = $server_ok_icon;
             $icon_style = $image_style;
         } elsif ($status == 105) {
-            $num_ok++;
+            $num_shutdown++;
             $client->{$mac}->{'status'} = 'shutdown';
             $style = $post_install_style;
             $status_icon = $server_ok_icon;
@@ -1003,9 +1006,24 @@ status_bar_update:
     ### XXX: Profiling stuff ###
     #printf("elapsed time = %0.6f\n", tv_interval($t0, [gettimeofday]));
     ### END of profiling stuff ###
+
+    # Format statistics.
+    my $stats_msg = '';
+    $stats_msg .= "$num_rebooted rebooted, "   if ($num_rebooted);
+    $stats_msg .= "$num_ok imaged, "           if ($num_ok);
+    $stats_msg .= "$num_inst installing, "     if ($num_inst);
+    $stats_msg .= "$num_beeping beeping, "     if ($num_beeping);
+    $stats_msg .= "$num_shutdown shutdown, "   if ($num_shutdown);
+    $stats_msg .= "$num_rebooting rebooting, " if ($num_rebooting);
+    $stats_msg .= "$num_fail failed, "         if ($num_fail);
+    $stats_msg .= "$num_unkn unknown, "        if ($num_unkn);
+    $stats_msg =~ s/, $//;
+    my $stats_tot = ($num_rebooted + $num_ok  + $num_inst +
+                     $num_beeping + $num_shutdown + $num_rebooting +
+                     $num_fail + $num_unkn);
+    # Show statistics in the status bar.
     $bal->attach($tab,
-        -statusmsg  => "Managed nodes: " . ($num_rebooted + $num_ok  + $num_inst + $num_unkn + $num_fail) .
-            " ($num_rebooted rebooted, $num_ok imaged, $num_inst installing, $num_unkn unknown, $num_fail error)",
+        -statusmsg  => "Managed nodes: $stats_tot ($stats_msg)",
     );
     # Refresh view.
     $tab->update();
