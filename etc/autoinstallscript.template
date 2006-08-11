@@ -509,7 +509,7 @@ logmsg "Imaging completed"
 
 if [ ! -z $MONITOR_SERVER ]; then
     # Report the 'imaged' state to the monitor server.
-    send_monitor_msg "status=100"
+    send_monitor_msg "status=100:speed=0"
     if [ "x$MONITOR_CONSOLE" = "xyes" ]; then 
         # Print some empty lines and sleep some seconds to give time to
         # the virtual console to get last messages.

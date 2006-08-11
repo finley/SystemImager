@@ -1591,7 +1591,7 @@ send_monitor_stdout() {
 
 init_monitor_server() {
     # Send initialization status.
-    send_monitor_msg "status=0:first_timestamp=on"
+    send_monitor_msg "status=0:first_timestamp=on:speed=0"
     logmsg "Monitoring initialized."
     # Start client log gathering server: for each connection
     # to the local client on port 8181 the full log is sent
