@@ -14,9 +14,6 @@ send_monitor_msg() {
         MONITOR_PORT=8181
     fi
 
-    # Remove special field separator from the message.
-    msg=`echo "$@" | sed 's/:/\\\x3a/g'`
-
     # Get the client mac address.
     if [ -z "$mac" ]; then
         mac=`ifconfig $DEVICE 2>/dev/null | sed -ne "s/.*HWaddr //p" | sed "s/ //g" | sed s/:/./g`
@@ -71,5 +68,5 @@ EOF
 [ -e /tmp/post-install/variables.txt ] && . /tmp/post-install/variables.txt
 
 # Write commands to send status and final message to the monitord.
-send_monitor_msg "status=102"
+send_monitor_msg "status=102:speed=0"
 
