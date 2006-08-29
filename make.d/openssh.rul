@@ -21,7 +21,11 @@ ALL_SOURCE += $(SRC_DIR)/$(OPENSSH_TARBALL)
 OPENSSH_CONF_FILES := $(TOPDIR)/etc/ssh/ssh_config \
 				$(TOPDIR)/etc/ssh/sshd_config
 
-OPENSSH_OTHER_FILES := $(shell echo /lib/libnss_files*)
+ifeq ($(ARCH),x86_64)
+	OPENSSH_OTHER_FILES := $(shell echo /lib64/libnss_files*)
+else
+	OPENSSH_OTHER_FILES := $(shell echo /lib/libnss_files*)
+endif
 
 OPENSSH_SOURCE := $(SRC_DIR)/$(OPENSSH_TARBALL)
 
