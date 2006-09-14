@@ -180,9 +180,6 @@ endif
 	$(SI_INSTALL) -m 755 $(INITRD_DIR)/skel/etc/init.d/functions \
 	  $(INITRD_BUILD_DIR)/etc/init.d/functions
 
-	$(SI_INSTALL) -m 755 $(INITRD_DIR)/skel/etc/init.d/makedevs \
-	  $(INITRD_BUILD_DIR)/etc/init.d/makedevs
-
 	# Copy over modules required prior to retrieving the autoinstall
 	# binaries tarball. -BEF-
 	cp -a $(INITRD_DIR)/my_modules $(INITRD_BUILD_DIR)

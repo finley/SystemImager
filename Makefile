@@ -192,7 +192,7 @@ include config.inc
 
 # build everything, install nothing
 .PHONY:	all
-all:	boel_binaries_tarball kernel $(INITRD_DIR)/initrd.img manpages
+all:	boel_binaries_tarball kernel $(INITRD_DIR)/initrd.img manpages dev_tarball
 
 binaries: $(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.img
 
@@ -235,7 +235,7 @@ install_server_all:	install_server install_common install_binaries
 
 # a complete client install
 .PHONY:	install_client_all
-install_client_all:	install_client install_common install_initrd_template
+install_client_all:	install_client install_common install_initrd_template install_dev_tarball
 
 # install server-only architecture independent files
 .PHONY:	install_server
@@ -391,6 +391,23 @@ install_configs:
 	$(SI_INSTALL) -b -m 755 etc/init.d/systemimager-server-monitord		$(INITD)
 
 ########## END initrd ##########
+
+
+########## BEGIN dev_tarball ##########
+.PHONY:	dev_tarball install_dev_tarball
+dev_tarball: $(TOPDIR)/tmp/dev.tar
+
+$(TOPDIR)/tmp/dev.tar.gz:
+	mkdir -p $(TOPDIR)/tmp
+	rm -rf $(TOPDIR)/tmp/dev
+	$(TOPDIR)/tools/makedevs $(TOPDIR)/tmp/dev
+	cd $(TOPDIR)/tmp && tar -czf $@ dev
+	rm -rf $(TOPDIR)/tmp/dev
+
+install_dev_tarball: $(TOPDIR)/tmp/dev.tar.gz
+	$(SI_INSTALL) -m 600 tmp/dev.tar.gz $(BOOT_BIN_DEST)/initrd_template/
+
+########## END dev_tarball ##########
 
 
 ########## BEGIN man pages ##########
