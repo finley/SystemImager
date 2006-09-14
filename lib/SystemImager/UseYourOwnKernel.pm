@@ -31,7 +31,7 @@ our $is_mounted = 0;
 
 #
 # Usage: 
-#       SystemImager::UseYourOwnKernel->create_uyok_initrd($arch, $my_modules, $custom_kernel, $custom_mod_dir, $image, $verbose);
+#       SystemImager::UseYourOwnKernel->create_uyok_initrd($arch, $my_modules, $custom_kernel, $custom_mod_dir, $image, $filesystem, $verbose);
 #
 sub create_uyok_initrd() {
 
@@ -41,6 +41,7 @@ sub create_uyok_initrd() {
         my $custom_kernel  = shift;
         my $custom_mod_dir = shift;
         my $image          = shift;
+        my $filesystem     = shift;
         $verbose           = shift;
 
         use File::Copy;
@@ -186,7 +187,7 @@ sub create_uyok_initrd() {
         #
         # Create initrd and save copy of kernel
         #
-        _create_new_initrd( $staging_dir, $boot_dir );
+        _create_new_initrd( $staging_dir, $boot_dir, $filesystem );
         _get_copy_of_kernel( $uname_r, $boot_dir, $custom_kernel );
         _record_arch( $boot_dir );
 
@@ -598,10 +599,16 @@ sub _create_new_initrd($$) {
 
         my $staging_dir = shift;
         my $boot_dir = shift;
+        my $filesystem = shift;
 
         use Switch; 
 
-        my $fs = choose_file_system_for_new_initrd();
+        my $fs;
+        if ($filesystem) {
+            $fs = $filesystem;
+        } else {
+            $fs = choose_file_system_for_new_initrd();
+        }
 
         if($fs eq "ext3") { 
                 # use ext2 as the filesystem (same as ext3, but no journal)

@@ -188,6 +188,12 @@ Options:
     by IMAGENAME to use with UYOK (if executed on image server).
     Use this parameter only if you use UYOK feature.
 
+ --filesystem FILESYSTEM
+    Force the use of FILESYSTEM to create the initial ramdisk. Use the
+    filesystem name as specified in /proc/filesystems.
+    Important: the filesystem must be statically compiled in the kernel
+    used to install the clients.
+
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
 
@@ -206,6 +212,7 @@ GetOptions(
     "kernel=s"             => \my $custom_kernel,
     "modules-dir=s"        => \my $modules_dir,
     "image=s"              => \my $image,
+    "filesystem=s"         => \my $filesystem,
     "version"              => \my $version,
     "server=s"             => \my $server,
     "yes"                  => \my $yes
@@ -749,7 +756,10 @@ sub create_auto_install_script_conf {
         my $arch = get_arch();
         my $verbose;
         unless($quiet) { $verbose = 1; }
-        SystemImager::UseYourOwnKernel->create_uyok_initrd( $arch, $my_modules, $custom_kernel, $modules_dir, $image, $verbose );
+        SystemImager::UseYourOwnKernel->create_uyok_initrd(
+            $arch, $my_modules, $custom_kernel, $modules_dir,
+            $image, $filesystem, $verbose
+        );
     }
 
     SystemImager::Common->write_auto_install_script_conf_footer($file);
