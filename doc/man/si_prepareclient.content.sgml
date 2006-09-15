@@ -43,6 +43,7 @@
       <arg><option>--my-modules</option></arg>
       <arg><option>--kernel <replaceable>FILE</replaceable></option><option> --modules-dir <replaceable>DIR</replaceable></option></arg>
       <arg><option>--image <replaceable>IMAGENAME</replaceable></option></arg>
+      <arg><option>--filesystem <replaceable>FILESYSTEM</replaceable></option></arg>
 
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -159,6 +160,17 @@
             Get kernel and kernel modules automatically from the image specified
             by IMAGENAME to use with UYOK (if executed on image server).
             Use this parameter only if you use UYOK feature.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>--filesystem <replaceable>FILESYSTEM</replaceable></option></term>
+        <listitem>
+          <para>
+            Force the use of FILESYSTEM to create the initial ramdisk. Use the
+            filesystem name as specified in /proc/filesystems.
+            Important: the filesystem must be statically compiled in the kernel
+            used to install the clients.
           </para>
         </listitem>
       </varlistentry>
