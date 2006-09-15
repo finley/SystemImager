@@ -395,7 +395,7 @@ install_configs:
 
 ########## BEGIN dev_tarball ##########
 .PHONY:	dev_tarball install_dev_tarball
-dev_tarball: $(TOPDIR)/tmp/dev.tar
+dev_tarball: $(TOPDIR)/tmp/dev.tar.gz
 
 $(TOPDIR)/tmp/dev.tar.gz:
 	mkdir -p $(TOPDIR)/tmp
