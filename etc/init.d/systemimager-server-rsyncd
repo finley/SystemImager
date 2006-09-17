@@ -42,7 +42,7 @@ test -f $DAEMON || exit 0
 case "$1" in
   start)
 	echo -n "Starting $DESC: "
-	PID=`pidof $NAME`
+	PID=`pgrep -f "$DAEMON $OPTIONS"`
 	[ ! -z "$PID" ] && echo "already running." && exit 0
 	$DAEMON $OPTIONS
 	echo "$NAME."
@@ -53,13 +53,19 @@ case "$1" in
 	[ ! -z "$PID" ] && kill $PID
 	echo "$NAME."
 	;;
+  status)
+	echo -n "Status of rsync daemon for systemimager: "
+	PID=`pgrep -f "$DAEMON $OPTIONS"`
+	[ ! -z "$PID" ] && echo "running." && exit 0
+	echo "not running." && exit 1
+	;;
   restart|force-reload)
 	$0 stop
 	sleep 1
 	$0 start
 	;;
   *)
-	echo "Usage: $0 {start|stop|restart|force-reload}" >&2
+	echo "Usage: $0 {start|stop|status|restart|force-reload}" >&2
 	exit 1
 	;;
 esac
