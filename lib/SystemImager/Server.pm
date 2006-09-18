@@ -1527,6 +1527,10 @@ sub _write_out_new_fstab_file {
 
     foreach my $line (sort numerically (keys ( %{$xml_config->{fsinfo}} ))) {
         my $comment   = $xml_config->{fsinfo}->{$line}->{comment};
+        if (defined($comment)) {
+            print $out qq($comment\n);
+            next;
+        }
         my $mount_dev = $xml_config->{fsinfo}->{$line}->{mount_dev};
         unless ($mount_dev) 
             { $mount_dev = $xml_config->{fsinfo}->{$line}->{real_dev}; }
@@ -1536,29 +1540,24 @@ sub _write_out_new_fstab_file {
         my $dump      = $xml_config->{fsinfo}->{$line}->{dump};
         my $pass      = $xml_config->{fsinfo}->{$line}->{pass};
 
-        if ($comment) {
-            print $out qq($comment\n);
+        print $out qq($mount_dev\t$mp\t$fs);
+        if ($options)
+            { print $out qq(\t$options); }
 
-        } else {
-            print $out qq($mount_dev\t$mp\t$fs);
-            if ($options)
-                { print $out qq(\t$options); }
+        if (defined $dump) { 
+            print $out qq(\t$dump);
 
-            if (defined $dump) { 
-                print $out qq(\t$dump);
-
-                # 
-                # If dump don't exist, we certainly don't want to print pass
-                # (it would be treated as if it were dump due to it's 
-                # position), therefore we only print pass if dump is also 
-                # defined.
-                #
-                if (defined $pass)  
-                    { print $out qq(\t$pass); }
-            }
-
-            print $out qq(\n);
+            # 
+            # If dump don't exist, we certainly don't want to print pass
+            # (it would be treated as if it were dump due to it's 
+            # position), therefore we only print pass if dump is also 
+            # defined.
+            #
+            if (defined $pass)  
+                { print $out qq(\t$pass); }
         }
+
+        print $out qq(\n);
     }
     print $out qq(EOF\n);
 }
