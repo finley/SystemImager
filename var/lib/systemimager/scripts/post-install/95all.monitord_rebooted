@@ -6,7 +6,7 @@
 # netcat timeout in seconds
 TIMEOUT=30
 
-send_monitor_msg() {
+write_monitor_msg() {
     if [ -z $MONITOR_SERVER ]; then
         return
     fi
@@ -35,10 +35,12 @@ send_monitor_msg() {
 
     if [ -f /etc/SuSE-release ]; then
         # SuSE
-        echo $cmd >> /etc/init.d/after.local
+        rc_local=/etc/init.d/after.local
+        grep -q $rebooted_state_file $rc_local 2>/dev/null || echo $cmd >> $rc_local
     elif [ -f /etc/redhat-release ]; then
         # RedHat / Fedora
-        echo $cmd >> /etc/rc.local
+        rc_local=/etc/rc.local
+        grep -q $rebooted_state_file $rc_local 2>/dev/null || echo $cmd >> $rc_local
     elif [ -f /etc/debian_version ]; then
         # Debian
         init_d_file=/etc/init.d/systemimager-monitor-firstboot
@@ -61,8 +63,9 @@ exit 0
 EOF
         ln -s $init_d_file /etc/rcS.d/S99systemimager-monitor-firstboot
     else
-        # Unknown distribution... try with rc.local.
-        echo $cmd >> /etc/rc.local
+        # Unknown distribution... try with standard rc.local.
+        rc_local=/etc/rc.local
+        grep -q $rebooted_state_file $rc_local 2>/dev/null || echo $cmd >> $rc_local
     fi
 }
 
@@ -70,5 +73,5 @@ EOF
 [ -e /tmp/post-install/variables.txt ] && . /tmp/post-install/variables.txt
 
 # Write commands to send status and final message to the monitord.
-send_monitor_msg "status=102:speed=0"
+write_monitor_msg "status=102:speed=0"
 
