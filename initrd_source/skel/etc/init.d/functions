@@ -849,6 +849,11 @@ read_local_cfg() {
     logmsg
     logmsg read_local_cfg
 
+    if [ "x$SKIP_LOCAL_CFG" = "xy" ]; then
+        logmsg "skipping local.cfg: option SKIP_LOCAL_CFG=y has been specified"
+        return
+    fi
+
     #
     # BEGIN try hard drive
     #
