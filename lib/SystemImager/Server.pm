@@ -675,9 +675,14 @@ sub _read_partition_info_and_prepare_parted_commands {
             print $out qq(START_MB=$startMB{$m}\n);
             print $out qq(END_MB=$endMB{$m}\n);
 
+            my $swap = '';
+            if ($flags{$m} =~ /swap/) {
+                $swap = 'linux-swap ';
+            }
+
             if($p_type{$m} eq "extended") {
 
-                $cmd = qq(parted -s -- $devfs_dev mkpart $p_type{$m} ) . q($START_MB $END_MB) . qq( || shellout);
+                $cmd = qq(parted -s -- $devfs_dev mkpart $p_type{$m} $swap) . q($START_MB $END_MB) . qq( || shellout);
 
             } else {
 
@@ -686,7 +691,7 @@ sub _read_partition_info_and_prepare_parted_commands {
                 # specify a filesystem type, even though it does nothing with it 
                 # with the "mkpart" command. -BEF-
                 #
-                $cmd = qq(parted -s -- $devfs_dev mkpart $p_type{$m} ) . q($START_MB $END_MB) . qq( || shellout);
+                $cmd = qq(parted -s -- $devfs_dev mkpart $p_type{$m} $swap) . q($START_MB $END_MB) . qq( || shellout);
 
             }
             print $out qq(logmsg "$cmd"\n);
@@ -744,6 +749,8 @@ sub _read_partition_info_and_prepare_parted_commands {
                 foreach my $flag (@flags) {
                     # Parted 1.6.0 doesn't seem to want to tag gpt partitions with lba.  Hmmm. -BEF-
                     if (($flag eq "lba") and ($label_type eq "gpt")) { next; }
+                    # Ignore custom flag 'swap'. -AR-
+                    if ($flag eq "swap") { next; }
                     $cmd = "parted -s -- $devfs_dev set $m $flag on || shellout\n";
                     print $out "logmsg $cmd";
                     print $out "$cmd";
