@@ -360,7 +360,7 @@ sub save_partition_information {
             #
             #   "help set"
             #
-            my $flag_regex = '(boot|root|swap|hidden|raid|lvm|lba|hp-service|palo)';
+            my $flag_regex = '(boot|root|swap|hidden|raid|lvm|lba|hp-service|palo|type=[0-9a-zA-Z]+)';
 
             my $cmd;
             if( $parted_version ge '1.6.23') {
@@ -505,11 +505,15 @@ sub save_partition_information {
                         #
                         # Extract any flags, and remove them from the leftovers. -BEF-
                         #
-                        if( $leftovers =~ s/\s*(($flag_regex)(,$flag_regex)*)\s*$//go ) {
+                        if( $leftovers =~ s/\s*(($flag_regex)(, *$flag_regex)*)\s*$//go ) {
                             $flags = $1;
                         } else {
                             $flags = '';
                         }
+                        # Strip unwanted spaces and commas.
+                        $flags =~ s/ //g;
+                        $flags =~ s/^,+//;
+                        $flags =~ s/,+$//;
 
                         #
                         # If anything is leftover now, it _must_ be a name. -BEF-
@@ -560,11 +564,15 @@ sub save_partition_information {
                         #
                         # Extract any flags, and remove them from the leftovers. -BEF-
                         #
-                        if( $leftovers =~ s/\s*(($flag_regex)(,$flag_regex)*)\s*$//go ) {
+                        if( $leftovers =~ s/\s*(($flag_regex)(, *$flag_regex)*)\s*$//go ) {
                             $flags = $1;
                         } else {
                             $flags = '';
                         }
+                        # Strip unwanted spaces and commas.
+                        $flags =~ s/ //g;
+                        $flags =~ s/^,+//;
+                        $flags =~ s/,+$//;
                     }
                     
                     my $size = $endMB - $startMB;
@@ -577,8 +585,8 @@ sub save_partition_information {
                         $id = (split(/=/,$flags))[1];
                         # Exclude the partition type, but preserve other flags. -AR-
                         $flags =~ s/type=[0-9a-fA-F]*//;
-                        $flags =~ s/^, //;
-                        $flags =~ s/, $//;
+                        $flags =~ s/^,//;
+                        $flags =~ s/,$//;
                     }
                     
                     unless($id) {
