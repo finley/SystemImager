@@ -31,6 +31,7 @@ use SystemImager::Config;
 my $autoinstall_script_dir = $config->autoinstall_script_dir();
 my $rsyncd_conf = $config->rsyncd_conf();
 my $rsync_stub_dir = $config->rsync_stub_dir();
+my $default_override_dir = $config->default_override_dir();
 
 if (!$autoinstall_script_dir) {
     die "AUTOINSTALL_SCRIPT_DIR not defined in the config file.";
@@ -135,6 +136,15 @@ unless(($imagedir) or ($force)) {
 # remove image
 if($verbose) {print "  Removing image $image.\n";}
 $file=$imagedir;
+if($force) {
+  if($file) { rmtree($file, 0, 0); }
+} else {
+  rmtree($file, 0, 0) or die "FATAL: Can't remove $file!\n";
+}
+
+# remove override
+if($verbose) {print "  Removing override $image.\n";}
+$file="$default_override_dir/$image";
 if($force) {
   if($file) { rmtree($file, 0, 0); }
 } else {
