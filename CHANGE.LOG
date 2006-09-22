@@ -45,6 +45,9 @@
 - better RPM package dependencies for SUSE Linux and Red Hat/Fedora Linux
 - services (eg. /etc/init.d/systemimager-server-rsyncd) are disabled by default
   after RPM installation
+- added SKIP_LOCAL_CFG to the kernel boot parameters for the clients (if
+  set to 'y' the check to find local.cfg will be skipped, saving a lot
+  of time with machines that don't properly support floppy controllers
 - lots of bugfixes
 
 3.6.3
