@@ -206,6 +206,49 @@ if($source_path ne $destination_path) {
   move($source, $destination) or die "FATAL: Failed to move $source to $destination $!";
 }  
 
+# Move the override
+my $source_override = "$default_override_dir/$source_image";
+my $destination_override;
+if ("$destination_path" eq "$default_image_dir") {
+    $destination_override = "$default_override_dir/$destination_image";
+} else {
+    $destination_override = "$destination_path/override-$destination_image";
+}
+
+$source_override =~ s,/$,,; # Remove trailing slash (if any). -BEF-
+$source_override =~ s,//,/,g; # Remove double slashes (if any). -BEF-
+
+$destination_override =~ s,/$,,; # Remove trailing slash (if any). -BEF-
+$destination_override =~ s,//,/,g; # Remove double slashes (if any). -BEF-
+
+# check for existence of source override
+$dir = $source_override;
+if(-e $dir) {
+    # check for existence of destination override
+    $dir = $destination_override;
+    if (-e $dir) {
+        if($force) {
+            rmtree($dir, 0, 0) or die "FATAL: Can't remove $dir!\n";
+        }
+    }
+    if (-e $dir) {
+            print STDERR "WARNING: Destination override \"$dir\" already exists! move skipped...\n";
+    } else {
+        if ("$destination_path" eq "$default_image_dir") {
+            # if source and destination directory are the same, just use move();
+            move($source_override, $destination_override) or
+                die "FATAL: Failed to move $source_override to $destination_override $!";
+        } else {
+            # move the override using rsync
+            if($verbose) { 
+                $cmd = "rsync -av --delete $source_override/ $destination_override/";
+            } else {
+                $cmd = "rsync -a --delete $source_override/ $destination_override/";
+            }
+        }
+    }
+}
+
 ### BEGIN Change entries in $rsyncd_conf ###
 if($verbose) {print "Updating rsyncd.conf entries.\n";}
 SystemImager::Server->remove_image_stub($rsync_stub_dir, $source_image);
@@ -256,6 +299,16 @@ unlink($file) if (-f $file);
 $file = $config->autoinstall_torrent_dir . "/image-" . $source_image . ".tar.torrent";
 unlink($file) if (-f $file);
 
+if($verbose) {print "  Removing BitTorrent overrides for $source_image.\n";}
+$file = $config->autoinstall_tarball_dir . "/override-" . $source_image . ".tar.gz";
+unlink($file) if (-f $file);
+$file = $config->autoinstall_tarball_dir . "/override-" . $source_image . ".tar";
+unlink($file) if (-f $file);
+$file = $config->autoinstall_torrent_dir . "/override-" . $source_image . ".tar.gz.torrent";
+unlink($file) if (-f $file);
+$file = $config->autoinstall_torrent_dir . "/override-" . $source_image . ".tar.torrent";
+unlink($file) if (-f $file);
+
 ### BEGIN Change entries in master autoinstall script ###
 # move master autoinstall script
 # (if source and destination images are named the same, we just won't touch it.)
@@ -273,7 +326,12 @@ unless($source_image eq $destination_image) {
   my $tmp_file="/tmp/tmp_file.$$";
   open (TMP_FILE, ">$tmp_file") or die "FATAL: couldn't open $tmp_file for writing!\n";
     while (<FILE>) {
-      s/IMAGENAME=${source_image}/IMAGENAME=${destination_image}/;
+      s/IMAGENAME=["']?${source_image}["']?/IMAGENAME=${destination_image}/;
+      s/OVERRIDES=${source_image}/OVERRIDES=${destination_image}/;
+      s/OVERRIDES=["']${source_image}["']/OVERRIDES="${destination_image}"/;
+      s/OVERRIDES=["']${source_image} (.*)["']/OVERRIDES="${destination_image} $1"/;
+      s/OVERRIDES=["'](.*) ${source_image}["']/OVERRIDES="$1 ${destination_image}"/;
+      s/OVERRIDES=["'](.*) ${source_image} (.*)["']/OVERRIDES="$1 ${destination_image} $2"/;
       print TMP_FILE;
     }
   close TMP_FILE or die "FATAL: Can't close $tmp_file: $!";
@@ -290,6 +348,8 @@ unless($source_image eq $destination_image) {
 }
 ### END Change entries in master autoinstall script ###
 
+# Restart systemimager-server-rsyncd
+system "/etc/init.d/systemimager-server-rsyncd restart";
 
 exit 0;
 

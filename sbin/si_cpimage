@@ -326,4 +326,7 @@ close FILE or die "FATAL: Can't close $file: $!";
 move($tmp_file, $file) or die "FATAL: Can't move $tmp_file to $file: $!";
 ### END Change entries in master autoinstall script ###
 
+# Restart systemimager-server-rsyncd
+system "/etc/init.d/systemimager-server-rsyncd restart";
+
 exit 0;

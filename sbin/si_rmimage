@@ -187,6 +187,7 @@ if(-e $flamethrower_conf) {
         die "$program_name: Cannot remove entry from $flamethrower_conf";
 }
 
-
+# Restart systemimager-server-rsyncd
+system "/etc/init.d/systemimager-server-rsyncd restart";
 
 exit 0;
