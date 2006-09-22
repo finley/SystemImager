@@ -318,6 +318,11 @@ my $tmp_file = "/tmp/tmp_file.$$";
 open (TMP_FILE, ">$tmp_file") or die "FATAL: couldn't open $tmp_file for writing!\n";
   while (<FILE>) {
     s/IMAGENAME=${source_image}/IMAGENAME=${destination_image}/;
+    s/OVERRIDES=${source_image}/OVERRIDES=${destination_image}/;
+    s/OVERRIDES=["']${source_image}["']/OVERRIDES="${destination_image}"/;
+    s/OVERRIDES=["']${source_image} (.*)["']/OVERRIDES="${destination_image} $1"/;
+    s/OVERRIDES=["'](.*) ${source_image}["']/OVERRIDES="$1 ${destination_image}"/;
+    s/OVERRIDES=["'](.*) ${source_image} (.*)["']/OVERRIDES="$1 ${destination_image} $2"/;
     print TMP_FILE;
   }
 close TMP_FILE or die "FATAL: Can't close $tmp_file: $!";
