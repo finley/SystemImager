@@ -198,6 +198,7 @@ if(-e $flamethrower_conf) {
 }
 
 # Restart systemimager-server-rsyncd
-system "/etc/init.d/systemimager-server-rsyncd restart";
+system "/etc/init.d/systemimager-server-rsyncd status >/dev/null 2>&1 && " .
+       "/etc/init.d/systemimager-server-rsyncd restart";
 
 exit 0;
