@@ -537,7 +537,7 @@ bittorrent_get_file() {
         destination=$2
 
         # Bittorrent log file
-        bittorrent_log=/tmp/bittorrent.log
+        bittorrent_log=/tmp/bittorrent-`basename ${torrent}`.log
         # Time to poll bittorrent events
         bittorrent_polling_time=${BITTORRENT_POLLING_TIME:-5}
         # Wait after the download is finished to seed the other peers
@@ -577,17 +577,7 @@ bittorrent_get_file() {
                     logmsg "upload rate: $upload_rate KB/s"
                     [ $upload_rate -lt $bittorrent_upload_min ] && break
                 done
-                logmsg "Stop seeding"
-                # Try to kill all the BitTorrent processes
-                counter=1 
-                while ps | grep bittorrent-console | grep -qv grep; do
-                    [ $counter -ge 10 ] && logmsg "error: couldn't kill BitTorrent client!" && shellout
-                    logmsg "killing BitTorrent client..."
-                    killall -9 bittorrent-console
-                    sleep 1
-                    counter=$(($counter + 1))
-                done
-                rm -f $bittorrent_log
+                logmsg "Download completed"
                 unset bittorrent_log upload_rate counter
                 break
             fi
@@ -599,6 +589,26 @@ bittorrent_get_file() {
         unset bittorrent_upload_min
         unset torrent
         unset destination
+}
+#
+################################################################################
+#
+#   Stop bittorrent client.
+#
+#   Usage: bittorrent_stop
+#
+bittorrent_stop() {
+    # Try to kill all the BitTorrent processes
+    counter=1 
+    while ps | grep bittorrent-console | grep -qv grep; do
+        [ $counter -ge 10 ] && logmsg "error: couldn't kill BitTorrent client!" && shellout
+        logmsg "killing BitTorrent client..."
+        killall -9 bittorrent-console
+        sleep 1
+        counter=$(($counter + 1))
+    done
+    # Remove bittorrent logs.
+    rm -rf /tmp/bittorrent*.log
 }
 #
 ################################################################################
