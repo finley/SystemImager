@@ -9,6 +9,8 @@ use lib "USR_PREFIX/lib/systemimager/perl";
 use strict;
 use Fcntl ':flock';
 use POSIX qw(setsid);
+use threads;
+use threads::shared;
 use Socket;
 use XML::Simple;
 use Getopt::Long;
@@ -170,6 +172,18 @@ my $lock_file = $conf{'lock_dir'} . "/db.si_monitor.lock";
 # Remove old locks.
 unlink("$lock_file");
 
+# Global XML structure.
+my $xml_data : shared = load_db();
+
+# Spawn the sync thread.
+async {
+	while (1) {
+		my $tmp = get_xml_data();
+		sync_db($tmp);
+		sleep(5);
+	}
+}->detach();
+
 # Open a TCP socket.
 socket(IN, PF_INET, SOCK_STREAM, getprotobyname('tcp')) or 
 	die gmtime() . ": error: could not create the socket: $!\n";
@@ -185,17 +199,10 @@ print gmtime() . ": $program_name daemon is listening on port $port\n"
 	if ($log_level > 2);
 
 # Begin to accept client connections.
+# XXX: perl implementation of threads is really memory consuming, so do
+# not spawn a thread per connection, otherwise a big number of clients
+# can eat all the memory in the monitor server. -AR-
 while (accept(CLIENT, IN)) {
-	my $pid = fork();
-	if ($pid) {
-		close(CLIENT);
-		next;
-	}
-	defined($pid) or die gmtime() . ": error: cannot fork: $!\n";
-
-	# Child closes unused server handle.
-	close(IN);
-
 	# Get other end identity.
 	my $other_end = getpeername(CLIENT);
 	if ($other_end) {
@@ -204,7 +211,7 @@ while (accept(CLIENT, IN)) {
 		my ($other_port, $other_iaddr) = unpack_sockaddr_in($other_end);
 		my $other_ip_address = inet_ntoa($other_iaddr);
 		my $other_host = gethostbyaddr($other_iaddr, AF_INET);
-		
+	
 		# Report info in the log.
 		print gmtime() .
 			": connection accepted for ${other_host}:${other_port}\n"
@@ -219,21 +226,82 @@ while (accept(CLIENT, IN)) {
 
 		# Update the database.
 		update_db($other_host, $_);
-
-		# Close client connection.
-		close(CLIENT);
 	} else {
 		# Refuse the client connection.
-		close(CLIENT);
 		print gmtime() . 
 			": warning: could not identify other end of a client request, ignoring.\n"
 			if ($log_level > 1);
 	}
-	exit(0);
+	close(CLIENT);
 }
 
 # Error accepting client connections (quit).
 die gmtime() . ": error: cannot accept clients connections!\n";
+
+# Usage:
+# $data = get_xml_data();
+# Description:
+#	Get shared XML structure safely (in mutual exclusion).
+sub get_xml_data
+{
+	lock($xml_data);
+	return $xml_data;
+}
+
+# Usage:
+# $data = load_db();
+# Description:
+#	Load the XML structure from file.
+sub load_db
+{
+	my $db;
+
+	open(LOCK, ">", "$lock_file") or 
+		die gmtime() . ":error: cannot open lock file \"$lock_file\"!\n";
+	flock(LOCK, LOCK_SH);
+	
+	# Open database in mutual exclusion.
+	open(DB, '<', $database) or 
+		die gmtime() . ": error: cannot open \"$database\" for reading!\n";
+	# Parse XML database.
+	if (-s $database) {
+		foreach (<DB>) {
+			$db .= $_;
+		}
+	}
+	close(DB);
+
+	flock(LOCK, LOCK_UN);
+	close(LOCK);
+
+	return $db;
+}
+
+# Usage:
+# sync_db($data);
+# Description:
+#	Synchronize the XML structure in the permanent file.
+sub sync_db
+{
+	my ($out) = @_;
+
+	return unless ($out);
+
+	open(LOCK, ">", "$lock_file") or 
+		die gmtime() . ":error: cannot open lock file \"$lock_file\"!\n";
+	flock(LOCK, LOCK_SH);
+
+	open(DB, '>', $database) or
+		die gmtime() . ": error: cannot open \"$database\" for writing!\n";
+	
+	# Sync the database.
+	print DB $out; 
+
+	# Close and unlock database.
+	close(DB);
+	flock(LOCK, LOCK_UN);
+	close(LOCK);
+}
 
 # Usage:
 # update_db($hostname, $client_request);
@@ -273,9 +341,6 @@ sub update_db
 			$client->{'speed'} = int($_);
 		} elsif (s/^first_timestamp=//) {
 			$client->{'first_timestamp'} = $_;
-                # XXX: depreacted, to be removed in future releases.
-		} elsif (s/^log=//) {
-			$client->{'log'} = $_;
 		}
 	}
         $timestamp = time();
@@ -287,22 +352,13 @@ sub update_db
 		return;
 	}
 	
-	open(LOCK, ">", "$lock_file") or 
-		die gmtime() . ":error: cannot open lock file \"$lock_file\"!\n";
-	flock(LOCK, LOCK_EX);
-	
-	# Open database in mutual exclusion.
-	open(DB, '<', $database) or 
-		die gmtime() . ": error: cannot open \"$database\" for reading!\n";
-	
-	# Parse XML database.
+	# Update the clients table in mutual exclusion.
 	my $xml;
-	if (-s $database) {
-		$xml = XMLin($database, KeyAttr => {client => 'name'}, ForceArray => 1);
+	lock($xml_data);
+	if ($xml_data) {
+		$xml = XMLin($xml_data, KeyAttr => {client => 'name'}, ForceArray => 1);
 	}
-	close(DB);
-	
-	# Update the clients table.
+
 	$xml->{'client'}->{$mac}->{'ip'} = $client->{'ip'}
 		if $client->{'ip'};
 	$xml->{'client'}->{$mac}->{'host'} = $client->{'host'}
@@ -332,17 +388,8 @@ sub update_db
 	$xml->{'client'}->{$mac}->{'timestamp'} = $timestamp;
 	$xml->{'client'}->{$mac}->{'first_timestamp'} = $timestamp
 		if $client->{'first_timestamp'};
-	
-	open(DB, '>', $database) or
-		die gmtime() . ": error: cannot open \"$database\" for writing!\n";
-	
-	# Sync the database.
-	print DB XMLout($xml); 
 
-	# Close and unlock database.
-	close(DB);
-	flock(LOCK, LOCK_UN);
-	close(LOCK);
+	$xml_data = XMLout($xml);
 }
 
 __END__

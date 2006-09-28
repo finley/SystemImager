@@ -63,7 +63,7 @@ case "$1" in
     ;;
   status)
     echo -n "Status of SystemImager's installation monitoring: si_monitor... "
-    ([ -f $PIDFILE ] && ps -p `cat $PIDFILE` >/dev/null 2>&1 && echo running.) || echo not running.
+    ([ -f $PIDFILE ] && ps -p `cat $PIDFILE` >/dev/null 2>&1 && echo "running." && exit 0) || (echo "not running." && exit 1)
     ;;
   force-reload|restart)
     sh $0 stop
@@ -75,4 +75,3 @@ case "$1" in
     ;;
 esac
 
-exit 0

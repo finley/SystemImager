@@ -1107,6 +1107,12 @@ sub clear_clients
         return;
     }
 
+    # Restart the monitor server if needed.
+    my $status = system "/etc/init.d/systemimager-server-monitord status >/dev/null 2>&1";
+    if (!$status) {
+        system "/etc/init.d/systemimager-server-monitord stop >/dev/null 2>&1";
+    }
+
     # Close the virtual consoles if opened.
     $sub_win->destroy() if Exists($sub_win);
 
@@ -1123,6 +1129,10 @@ sub clear_clients
     # Close and unlock database.
     flock(LOCK, LOCK_UN);
     close(LOCK);
+
+    if (!$status) {
+        system "/etc/init.d/systemimager-server-monitord start >/dev/null 2>&1";
+    }
 
     # Refresh view.
     refresh();
