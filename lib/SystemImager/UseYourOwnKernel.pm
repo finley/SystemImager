@@ -104,53 +104,53 @@ sub create_uyok_initrd() {
         if ($custom_mod_dir) {
             $module_dir = $custom_mod_dir;
         } else {
-            $module_dir = "/lib/modules/$uname_r";
+            $module_dir = "/lib/modules/$uname_r" unless ($custom_kernel);
         }
-        my $module_paths = `find $module_dir`;
-
-        #
-        # Copy modules
-        #
-        my @modules = ();
-        unless ($custom_mod_dir) {
-            @modules = get_load_ordered_list_of_running_modules();
-        }
-        print ">>> Copying modules to new initrd from: $module_dir...\n" if( $verbose );
-        mkdir("$staging_dir/lib/modules", 0755) or die "$!";
-        unless ($my_modules) {
-            $cmd = qq(rsync -a --exclude=build --exclude=source $modules_to_exclude $module_dir $staging_dir/lib/modules/);
-            !system( $cmd ) or die( "Couldn't $cmd." );
-        } else {
-            # Copy only loaded modules ignoring exclusions.
-            foreach my $module ( @modules ) {
-                next unless ($module);
-                $cmd = qq(rsync -aR $module $staging_dir);
+        if ($module_dir) {
+            #
+            # Copy modules
+            #
+            my @modules = ();
+            unless ($custom_mod_dir) {
+                @modules = get_load_ordered_list_of_running_modules();
+            }
+            print ">>> Copying modules to new initrd from: $module_dir...\n" if( $verbose );
+            mkdir("$staging_dir/lib/modules", 0755) or die "$!";
+            unless ($my_modules) {
+                $cmd = qq(rsync -a --exclude=build --exclude=source $modules_to_exclude $module_dir $staging_dir/lib/modules/);
+                !system( $cmd ) or die( "Couldn't $cmd." );
+            } else {
+                # Copy only loaded modules ignoring exclusions.
+                foreach my $module ( @modules ) {
+                    next unless ($module);
+                    $cmd = qq(rsync -aR $module $staging_dir);
+                    !system( $cmd ) or die( "Couldn't $cmd." );
+                }
+                # Copy module configuration files.
+                $cmd = qq(rsync -R $module_dir/* $staging_dir);
                 !system( $cmd ) or die( "Couldn't $cmd." );
             }
-            # Copy module configuration files.
-            $cmd = qq(rsync -R $module_dir/* $staging_dir);
-            !system( $cmd ) or die( "Couldn't $cmd." );
-        }
-        #
-        # add modules and insmod commands
-        #
-        my $my_modules_dir = "$staging_dir/my_modules";
-        $file = "$my_modules_dir" . "/INSMOD_COMMANDS";
-        open( FILE,">>$file" ) or die( "Couldn't open $file for appending" );
-
-        print ">>> Appending insmod commands to ./my_modules_dir/INSMOD_COMMANDS...\n" if( $verbose );
-        if ($#modules == -1) {
-            print " >> Using custom kernel: hotplug will be used to autodetect the needed modules...\n"
-                if( $verbose );
-        } else {
-            foreach my $module ( @modules ) {
-                if (-f "$staging_dir/$module") {
-                    print " >> insmod $module\n" if( $verbose );
-                    print FILE "insmod $module\n";
+            #
+            # add modules and insmod commands
+            #
+            my $my_modules_dir = "$staging_dir/my_modules";
+            $file = "$my_modules_dir" . "/INSMOD_COMMANDS";
+            open( FILE,">>$file" ) or die( "Couldn't open $file for appending" );
+    
+            print ">>> Appending insmod commands to ./my_modules_dir/INSMOD_COMMANDS...\n" if( $verbose );
+            if ($#modules == -1) {
+                print " >> Using custom kernel: hotplug will be used to autodetect the needed modules...\n"
+                    if( $verbose );
+            } else {
+                foreach my $module ( @modules ) {
+                    if (-f "$staging_dir/$module") {
+                        print " >> insmod $module\n" if( $verbose );
+                        print FILE "insmod $module\n";
+                    }
                 }
             }
+            close(FILE);
         }
-        close(FILE);
 
         #
         # Copy over /dev

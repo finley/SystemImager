@@ -244,10 +244,25 @@ if($no_uyok and $my_modules) {
     exit 1;
 }
 
-if(($custom_kernel and !($modules_dir)) or (!($custom_kernel) and $modules_dir)) {
-    print "FATAL:  --kernel KERNEL option must be used in conjunction with --modules-dir DIR!\n";
+if(!($custom_kernel) and $modules_dir) {
+    print "FATAL:  --modules-dir DIR option must be used in conjunction with --kernel KERNEL!\n";
     print qq(Try "$progname --help" for more info.\n);
     exit 1;
+}
+
+if($custom_kernel and !($modules_dir)) {
+    system('clear') unless (($quiet) or ($yes));
+    print "WARNING: --kernel KERNEL used without --modules-dir DIR option!\n";
+    print qq(You can use this option only if KERNEL is a monolithic kernel,\n) .
+          qq(or if the needed modules are already present in the initrd.img.\n\n);
+    unless (($quiet) or ($yes)) {
+        print "Continue? (y/[n]): ";
+        my $answer = <>;
+        unless($answer =~ /y/i) {
+            print "Client prepartion cancelled.  No files modified.\n";
+            exit 1;
+        }
+    }
 }
 
 if($my_modules and $modules_dir) {
@@ -397,7 +412,7 @@ EOF
     #
     # Deal with supermount module
     #
-    system("clear");
+    system("clear") unless (($quiet) or ($yes));
     my @supermounts;
     open(MOUNT, "mount |");
         while(<MOUNT>) {
@@ -674,7 +689,7 @@ sub create_auto_install_script_conf {
 
     my $disks = shift;
 
-    unless ($quiet) { 
+    unless (($quiet) or ($yes)) { 
         system("clear");
     }
 
