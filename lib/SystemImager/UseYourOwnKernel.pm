@@ -31,7 +31,7 @@ our $is_mounted = 0;
 
 #
 # Usage: 
-#       SystemImager::UseYourOwnKernel->create_uyok_initrd($arch, $my_modules, $custom_kernel, $custom_mod_dir, $image, $filesystem, $verbose);
+#       SystemImager::UseYourOwnKernel->create_uyok_initrd($arch, $my_modules, $custom_kernel, $custom_mod_dir, $image, $filesystem, $destination, $verbose);
 #
 sub create_uyok_initrd() {
 
@@ -42,6 +42,7 @@ sub create_uyok_initrd() {
         my $custom_mod_dir = shift;
         my $image          = shift;
         my $filesystem     = shift;
+        my $destination    = shift;
         $verbose           = shift;
 
         use File::Copy;
@@ -178,7 +179,12 @@ sub create_uyok_initrd() {
         # 
         # Dir in which to hold stuff.  XXX dannf where should this really go?
         #
-        my $boot_dir = "/etc/systemimager/boot";
+        my $boot_dir;
+        if ($destination) {
+            $boot_dir = $destination;
+        } else {
+            $boot_dir = '/etc/systemimager/boot';
+        }
         eval { mkpath($boot_dir, 0, 0755) };
         if ($@) {
                 print "Couldn't create $boot_dir: $@";
@@ -658,9 +664,9 @@ sub _create_initrd_cramfs($$) {
 
         # initrd creation
         my $mkfs;
-        if (`which mkcramfs`) {
+        if (`which mkcramfs 2>/dev/null`) {
             $mkfs = 'mkcramfs';
-        } elsif (`which mkfs.cramfs`) {
+        } elsif (`which mkfs.cramfs 2>/dev/null`) {
             $mkfs = 'mkfs.cramfs';
         } else {
             die "error: cannot find a valid utility to create cramfs initrd!\n";
