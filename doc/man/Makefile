@@ -31,7 +31,8 @@ SERVER_MAN = si_addclients.8 				\
 			systemimager-rsyncd.conf.5	\
 			si_mkrsyncd_conf.8				\
 			si_pushupdate.8				\
-			si_mkclientnetboot.8			
+			si_mkclientnetboot.8				\
+			si_mkbootpackage.8		
 #			si_imagemanip.8
 
 CLIENT_MAN = si_prepareclient.8 si_updateclient.8

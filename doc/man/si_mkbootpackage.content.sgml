@@ -1,0 +1,163 @@
+  <refentryinfo>
+    <address>
+      &dhemail;
+    </address>
+    <author>
+      &dhfirstname;
+      &dhsurname;
+    </author>
+    <copyright>
+      <year>2006</year>
+      <holder>&dhusername;</holder>
+    </copyright>
+    &dhdate;
+  </refentryinfo>
+  <refmeta>
+    <refentrytitle>SI_MKBOOTPACKAGE</refentrytitle>
+
+    &dhsection;
+  </refmeta>
+  <refnamediv>
+    <refname>si_mkbootpackage</refname>
+
+    <refpurpose>prepare a boot package (kernel + initrd.img) that can be used to autoinstall clients</refpurpose>
+  </refnamediv>
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>si_mkbootpackage</command>
+
+      <arg choice=req><option>--destination</option> <replaceable>DIR</replaceable></arg>
+      <arg><option>--version</option></arg>
+      <arg><option>-h</option></arg>
+      <arg><option>--help</option></arg>
+      <arg><option>-q</option></arg>
+      <arg><option>--quiet</option></arg>
+      <arg><option>--yes</option></arg>
+      <arg><option>--my-modules</option></arg>
+      <arg><option>--kernel <replaceable>FILE</replaceable></option><option> --modules-dir <replaceable>DIR</replaceable></option></arg>
+      <arg><option>--image <replaceable>IMAGENAME</replaceable></option></arg>
+      <arg><option>--filesystem <replaceable>FILESYSTEM</replaceable></option></arg>
+
+    </cmdsynopsis>
+  </refsynopsisdiv>
+  <refsect1>
+    <title>DESCRIPTION</title>
+
+    <para>This manual page documents briefly the
+      <command>si_mkbootpackage</command> command.</para>
+
+    <para>
+      <command>si_mkbootpackage</command> is a program that takes
+      the kernel specified, and necessary modules from it, and creates
+      a new boot package based on said kernel.  The resultant files include
+      a matched kernel and initrd.img that can be used as the SystemImager
+      autoinstall client software.
+    </para>
+
+  </refsect1>
+  <refsect1>
+    <title>OPTIONS</title>
+
+    <para>A summary of options is included below.</para>
+
+    <variablelist>
+      <varlistentry>
+        <term><option>--version</option></term>
+        <listitem>
+          <para>Display version and copyright information</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-h</option>, <option>--help</option></term>
+        <listitem>
+          <para>Show summary of options</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-q</option>, <option>--quiet</option></term>
+        <listitem>
+          <para>
+	    Run silently.  Return an exit status of 0 for success or a non-zero
+	    exit status for failure
+	  </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>--destination <replaceable>DIR</replaceable></option></term>
+        <listitem>
+          <para>The destination directory to deploy the kernel and initrd.img</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>--yes</option></term>
+        <listitem>
+          <para>Answer yes to all yes/no questions</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>--kernel <replaceable>FILE</replaceable></option></term>
+        <listitem>
+          <para>
+            Do not detect the kernel to use with UYOK, but instead use the
+            file specified by the argument FILE.
+            Use this parameter only with --modules_dir and only if you use UYOK
+            feature.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>--modules-dir <replaceable>DIR</replaceable></option></term>
+        <listitem>
+          <para>
+            Get kernel modules to use with UYOK from the DIR repository.
+            Use this parameter only with --kernel and only if you use UYOK
+            feature.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>--image <replaceable>IMAGENAME</replaceable></option></term>
+        <listitem>
+          <para>
+            Get kernel and kernel modules automatically from the image specified
+            by IMAGENAME to use with UYOK (if executed on image server).
+            Use this parameter only if you use UYOK feature.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>--filesystem <replaceable>FILESYSTEM</replaceable></option></term>
+        <listitem>
+          <para>
+            Force the use of FILESYSTEM to create the initial ramdisk. Use the
+            filesystem name as specified in /proc/filesystems.
+            Important: the filesystem must be statically compiled in the kernel
+            used to install the clients.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+  <refsect1>
+    <title>SEE ALSO</title>
+
+    <para><command>si_prepareclient</command>(8)</para>
+
+    <para>More details can be found in the <citetitle>SystemImager
+	manual.</citetitle>
+    </para>
+  </refsect1>
+  <refsect1>
+    <title>AUTHOR</title>
+
+    <para>This manual page was compiled by &dhusername; <&dhemail;></para>
+
+    <!-- <para>Permission is granted to copy, distribute and/or modify
+      this document under the terms of the <acronym>GNU</acronym> Free
+      Documentation License, Version 1.1 or any later version
+      published by the Free Software Foundation; with no Invariant
+      Sections, no Front-Cover Texts and no Back-Cover Texts.  A copy
+      of the license can be found under
+      <filename>/usr/share/common-licenses/FDL</filename>.</para> -->
+
+  </refsect1>
