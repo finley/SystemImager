@@ -192,7 +192,7 @@ include config.inc
 
 # build everything, install nothing
 .PHONY:	all
-all:	boel_binaries_tarball kernel $(INITRD_DIR)/initrd.img manpages dev_tarball
+all:	kernel $(INITRD_DIR)/initrd.img boel_binaries_tarball manpages dev_tarball
 
 binaries: $(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.img
 
