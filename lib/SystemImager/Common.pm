@@ -420,6 +420,7 @@ sub save_partition_information {
             # Add partition info to autoinstallscript.conf file. -BEF-
             #
             foreach (@partition_tool_output) {
+                $_ =~ s/^ +//;
             
                 # If we're looking at a line of info for a partition, process into generic
                 # output. -BEF-
@@ -1069,7 +1070,9 @@ sub get_disk_label_type {
 	  if (/Disk label type:/) {
 	    (my $Disk, my $label, my $type, $label_type) = split;
             $label_type = lc $label_type;
-	  }
+          } elsif (/^Partition Table: (.*)$/) {
+            $label_type = lc $1;
+          }
 	}
       close (TMP);
 
