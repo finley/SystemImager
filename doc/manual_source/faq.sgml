@@ -487,18 +487,18 @@ image=ia64/standard/kernel
    <question>
     <para>
       Why do installations take so much longer when done
-      using a serial console?
+      using a serial console and --listing?
     </para>
       </question>
       <answer>
         <para>
-	  The serial console itself often causes the bottleneck.  By default, 
-	  each filename is printed to the console as it is copied from the 
-	  server.  Because serial consoles typically have very low bandwidth,
-	  installations may be delayed while the system waits for the names to
-	  be printed to the console.  You can use the -no-listing option to
-	  <command>si_getimage</command> and 
-	  <command>si_mkautoinstallscript</command> to turn off verbosity.
+	  The serial console itself often causes the bottleneck.  If you
+          have a slow console never use --listing option with:
+          <command>si_getimage</command>,
+          <command>si_mkautoinstallscript</command>.
+
+          By default each filename is not printed to the console as it is
+          copied from the server.
         </para>
       </answer>
   </qandaentry>

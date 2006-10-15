@@ -73,10 +73,13 @@ Options: (options can be presented in any order and may be abbreviated)
                         ./etc/systemimager/autoinstallscript.conf file
                         in the image.
 
- --no-listing           Don't show each filename as it is copied over during
-                        install.  This is useful for times when your console
-                        device is slow (e.g. serial console), and is the 
-                        bottleneck of your installation.
+ --listing              Show each filename as it is copied over during
+                        install.  This is useful to increase the verbosity
+                        of the installation when you need more informations
+                        for debugging.  Do not use this option if your
+                        console device is too slow (e.g. serial console),
+                        otherwise it could be the bottleneck of your
+                        installation.
 
  --autodetect-disks     Try to detect available disks on the client instead
                         of using devices from autoinstallscript.conf.
@@ -141,7 +144,7 @@ GetOptions(
     "force"             => \my $force,
     "update-script=s"   => \my $update_script,
     "post-install=s"    => \$post_install,
-    "no-listing"        => \$no_listing,
+    "listing"           => \$listing,
     "autodetect-disks"  => \$autodetect_disks
 ) || die "$help_info";
 
@@ -231,7 +234,7 @@ SystemImager::Server->create_autoinstall_script(
 	$imagedir,
 	$ip_assignment_method,
 	$post_install,
-    $no_listing,
+    $listing,
     $auto_install_script_conf,
     $autodetect_disks,
 );

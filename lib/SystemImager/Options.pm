@@ -335,10 +335,12 @@ return << "EOF";
     Update the \$image.master script?  Defaults to NO if --quiet.  If not
     specified you will be prompted to confirm an update.
 
- --no-listing
-    Don't show each filename as it is copied over during install.  This is
-    useful for times when your console device is slow (e.g. serial console),
-    and is the bottleneck of your installation.
+ --listing
+    Show each filename as it is copied over during install.  This is
+    useful to increase the verbosity of the installation when you need more
+    informations for debugging.  Do not use this option if your console
+    device is too slow (e.g. serial console), otherwise it could be the
+    bottleneck of your installation. 
 
  --autodetect-disks
     Try to detect available disks on the client when installing instead of

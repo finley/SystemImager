@@ -1749,7 +1749,7 @@ sub create_autoinstall_script{
         $image_dir, 
         $ip_assignment_method, 
         $post_install,
-        $no_listing,
+        $listing,
         $auto_install_script_conf,
         $autodetect_disks
     ) = @_;
@@ -1857,7 +1857,7 @@ sub create_autoinstall_script{
 	        }
 
 	        if (/^\s*${delim}NO_LISTING${delim}\s*$/) {
-	            if ($no_listing) { print $MASTER_SCRIPT "NO_LISTING=yes\n"; }
+	            unless ($listing) { print $MASTER_SCRIPT "NO_LISTING=yes\n"; }
 	            last SWITCH;
 	        }
             
