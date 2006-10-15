@@ -64,7 +64,11 @@ sub get_active_swaps_by_dev {
         while (<FH>) {
             my ($dev, $type, $size, $used, $priority) = split;
             next if ($dev eq 'Filename');
-            $active_swaps_by_dev{$dev}=1;
+            $active_swaps_by_dev{$dev} = 1;
+            # If swap is over LVM add also the standard device name. -AR-
+            if ($dev =~ /^\/dev\/mapper\/([^-]+)-(.*)$/) {
+                $active_swaps_by_dev{"/dev/$1/$2"} = 1;
+            }
     }
     close(FH);
     return %active_swaps_by_dev;
