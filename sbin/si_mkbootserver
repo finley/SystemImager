@@ -355,14 +355,14 @@ backup_file() {
 	exit 1
     fi
     
-    if [ ! -a "$FILE_TO_BACKUP" ]; then
+    if [ ! -e "$FILE_TO_BACKUP" ]; then
 	echo "$FILE_TO_BACKUP does not already exist, so not backing it up."
 	return 0
     fi
     echo "Backing up $FILE_TO_BACKUP..."
     backup_file_i=0
     while /bin/true; do
-	if [ ! -a $FILE_TO_BACKUP.$program_name.bak$backup_file_i ]; then
+	if [ ! -e $FILE_TO_BACKUP.$program_name.bak$backup_file_i ]; then
 	    echo -n "Moving $FILE_TO_BACKUP to $FILE_TO_BACKUP.$program_name.bak$backup_file_i..."
 	    mv $FILE_TO_BACKUP $FILE_TO_BACKUP.$program_name.bak$backup_file_i
 	    if [ $? -ne 0 ]; then
@@ -676,11 +676,7 @@ install_pxe_daemon() {
     else
 	echo "not found."
 	echo "****************************************************************"
-	echo "I couldn't find a pxe daemon on your system.  For RedHat"
-	echo "systems, you can install the pxe RPM for your release.  For"
-	echo "Debian systems, you can try one of the debs i've built from the"
-	echo "RedHat package source.  These packages should be available from"
-	echo "http://dannf.org/systemimager"
+        echo "WARNING: your bootserver will be configured without a pxe daemon!"
 	echo "****************************************************************"
 	return 1
     fi
@@ -833,16 +829,20 @@ pxelinux_cfg() {
     echo "done."
 
     if [ -z "$PXELINUX" ]; then
-	echo -n "What is the path to the pxelinux bootloader [/usr/lib/syslinux/pxelinux.0]? "
+        # Try to autodetect pxelinux.0.
+        if [ -f /usr/share/syslinux/pxelinux.0 ]; then
+            PXELINUX="/usr/share/syslinux/pxelinux.0"
+        elif [ -f /usr/lib/syslinux/pxelinux.0 ]; then
+            PXELINUX=/usr/lib/syslinux/pxelinux.0
+        fi
+	echo -n "What is the path to the pxelinux bootloader [$PXELINUX]? "
 	if [ "$INTERACTIVE" == "no" ]; then
 	    REPLY=""
 	    echo "Non-interactive mode, assuming default."
 	else
 	    read REPLY
 	fi
-	if [ "$REPLY" == "" ]; then
-	    PXELINUX="/usr/lib/syslinux/pxelinux.0"
-	else
+	if [ ! "$REPLY" == "" ]; then
 	    PXELINUX=$REPLY
 	fi
     fi
@@ -856,9 +856,9 @@ pxelinux_cfg() {
     fi
 
     ### BEGIN BACKUP EXISTING PXELINUX.BIN
-    if [ -a $LINUX_INSTALL/linux.0 ]; then
-	if [ "`md5sum $LINUX_INSTALL/linux.0` != \
-			`md5sum $PXELINUX`" ]; then
+    if [ -e $LINUX_INSTALL/linux.0 ]; then
+	if [ "`md5sum $LINUX_INSTALL/linux.0 | sed 's/\( .*\)//'`" != \
+			"`md5sum $PXELINUX | sed 's/\( .*\)//'`" ]; then
             echo "$LINUX_INSTALL/linux.0 already exists, but doesn't match the pxelinux.0 I want to install."
 
 	    FILE_TO_BACKUP=$LINUX_INSTALL/linux.0
@@ -871,7 +871,7 @@ pxelinux_cfg() {
     ### END BACKUP EXISTING PXELINUX.BIN
 
     ### BEGIN COPY OVER PXELINUX.BIN
-    if [ ! -a $LINUX_INSTALL/linux.0 ]; then
+    if [ ! -e $LINUX_INSTALL/linux.0 ]; then
 	echo -n "Copying $PXELINUX to $LINUX_INSTALL/linux.0 ... "
 	cp -a $PXELINUX $LINUX_INSTALL/linux.0
 	if [ $? -ne 0 ]; then
@@ -883,9 +883,9 @@ pxelinux_cfg() {
     ### END COPY OVER PXELINUX.BIN
 	    
     ### BEGIN BACKUP EXISTING PXELINUX.BIN IN TFTPDIR
-    if [ -a $TFTPDIR/pxelinux.bin ]; then
-	if [ `md5sum $LINUX_INSTALL/linux.0` != \
-		`md5sum $TFTPDIR/pxelinux.bin` ]; then
+    if [ -e $TFTPDIR/pxelinux.bin ]; then
+	if [ "`md5sum $LINUX_INSTALL/linux.0 | sed 's/\( .*\)//'`" != \
+		"`md5sum $TFTPDIR/pxelinux.bin | sed 's/\( .*\)//'`" ]; then
 	    echo "$TFTPDIR/pxelinux.bin already exists, but doesn't match the pxelinux.0 I want to install."
 	    FILE_TO_BACKUP=$TFTPDIR/pxelinux.bin
 	    backup_file
@@ -897,7 +897,7 @@ pxelinux_cfg() {
     ### END BACKUP EXISTING PXELINUX.BIN IN TFTPDIR
 
     ### BEGIN CREATE PXELINUX.BIN LINK IN TFTPDIR
-    if [ ! -a $TFTPDIR/pxelinux.bin ]; then
+    if [ ! -e $TFTPDIR/pxelinux.bin ]; then
 	echo -n "Linking $TFTPDIR/pxelinux.bin to $LINUX_INSTALL/linux.0 ..."
 	ln $LINUX_INSTALL/linux.0 $TFTPDIR/pxelinux.bin
 	if [ $? -ne 0 ]; then
@@ -909,7 +909,8 @@ pxelinux_cfg() {
     ### END CREATE PXELINUX.BIN LINK IN TFTPDIR
 
     ### BEGIN PROMPT USER FOR KERNEL
-    KERNEL_DEFAULT="/usr/share/systemimager/boot/i386/standard/kernel"
+    ARCH=`uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/`
+    KERNEL_DEFAULT="/usr/share/systemimager/boot/$ARCH/standard/kernel"
     if [ "$KERNEL" != "" ]; then
 	REPLY=$KERNEL
     else
@@ -926,7 +927,7 @@ pxelinux_cfg() {
     ### END PROMPT USER FOR KERNEL
 
     ### BEGIN BACKUP EXISTING KERNEL
-    if [ -a $LINUX_INSTALL/kernel ]; then
+    if [ -e $LINUX_INSTALL/kernel ]; then
 	FILE_TO_BACKUP=$LINUX_INSTALL/kernel
 	backup_file
 	if [ $? -ne 0 ]; then
@@ -946,9 +947,9 @@ pxelinux_cfg() {
     ### END COPY OVER KERNEL
     
     ### BEGIN BACKUP EXISTING KERNEL IN TFTPDIR
-    if [ -a $TFTPDIR/kernel ]; then
-	if [ "`md5sum $TFTPDIR/kernel`" != \
-		"`md5sum $LINUX_INSTALL/kernel`" ]; then
+    if [ -e $TFTPDIR/kernel ]; then
+	if [ "`md5sum $TFTPDIR/kernel | sed 's/\( .*\)//'`" != \
+		"`md5sum $LINUX_INSTALL/kernel | sed 's/\( .*\)//'`" ]; then
 	    FILE_TO_BACKUP=$TFTPDIR/kernel
 	    backup_file
 	    if [ $? -ne 0 ]; then
@@ -959,7 +960,7 @@ pxelinux_cfg() {
     ### END BACKUP EXISTING KERNEL IN TFTPDIR
     
     ### BEGIN CREATE KERNEL LINK IN TFTPDIR
-    if [ ! -a $TFTPDIR/kernel ]; then
+    if [ ! -e $TFTPDIR/kernel ]; then
 	echo -n "Linking $TFTPDIR/kernel to $LINUX_INSTALL/kernel ..."
 	ln $LINUX_INSTALL/kernel $TFTPDIR/kernel
 	if [ $? -ne 0 ]; then
@@ -971,7 +972,8 @@ pxelinux_cfg() {
     ### END CREATE KERNEL LINK IN TFTPDIR
     
     ### BEGIN PROMPT USER FOR RAMDISK
-    INITRD_DEFAULT="/usr/share/systemimager/boot/i386/standard/initrd.img"
+    ARCH=`uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/`
+    INITRD_DEFAULT="/usr/share/systemimager/boot/$ARCH/standard/initrd.img"
     if [ "$INITRD" != "" ]; then
 	REPLY=$INITRD
     else
@@ -988,7 +990,7 @@ pxelinux_cfg() {
     ### END PROMPT USER FOR RAMDISK
 
     ### BEGIN BACKUP EXISTING RAMDISK
-    if [ -a $LINUX_INSTALL/initrd.img ]; then
+    if [ -e $LINUX_INSTALL/initrd.img ]; then
 	FILE_TO_BACKUP=$LINUX_INSTALL/initrd.img
 	backup_file
 	if [ $? -ne 0 ]; then
@@ -1008,9 +1010,9 @@ pxelinux_cfg() {
     ### END COPY OVER RAMDISK
 
     ### BEGIN CHECK EXISTING RAMDISK IN TFTPDIR
-    if [ -a $TFTPDIR/initrd.img ]; then
-	if [ `md5sum $LINUX_INSTALL/initrd.img` != \
-		`md5sum $TFTPDIR/initrd.img` ]; then
+    if [ -e $TFTPDIR/initrd.img ]; then
+	if [ "`md5sum $LINUX_INSTALL/initrd.img | sed 's/\( .*\)//'`" != \
+		"`md5sum $TFTPDIR/initrd.img | sed 's/\( .*\)//'`" ]; then
 	    echo "$TFTPDIR/initrd.img already exists, but doesn't match the initrd.img I want to install."
 	    FILE_TO_BACKUP=$TFTPDIR/initrd.img
 	    backup_file
@@ -1022,7 +1024,7 @@ pxelinux_cfg() {
     ### END CHECK EXISTING RAMDISK IN TFTPDIR
 
     ### BEGIN CREATE RAMDISK LINK IN TFTPDIR
-    if [ ! -a $TFTPDIR/initrd.img ]; then
+    if [ ! -e $TFTPDIR/initrd.img ]; then
 	echo -n "Linking $TFTPDIR/initrd.img to $LINUX_INSTALL/initrd.img ..."
 	ln $LINUX_INSTALL/initrd.img $TFTPDIR/initrd.img
 	if [ $? -ne 0 ]; then
@@ -1034,7 +1036,7 @@ pxelinux_cfg() {
     ### END CREATE RAMDISK LINK IN TFTPDIR
 
     ### BEGIN COPY PXELINUX.CFG
-    if [ -a $TFTPDIR/pxelinux.cfg ]; then
+    if [ -e $TFTPDIR/pxelinux.cfg ]; then
 	FILE_TO_BACKUP=$TFTPDIR/pxelinux.cfg
 	backup_file
 	if [ $? -ne 0 ]; then
@@ -1104,7 +1106,7 @@ fi
 
 
 if [ ! -d $TFTPDIR ]; then
-    if [ -a $TFTPDIR ]; then
+    if [ -e $TFTPDIR ]; then
 	echo "$TFTPDIR exists, but isn't a directory, exiting."
 	exit 1
     else
@@ -1196,16 +1198,13 @@ if [ $? -ne 0 ]; then
 fi
 
 install_pxe_daemon
-if [ $? -ne 0 ]; then
-    echo "pxe daemon installation failed"
-    exit 1
+if [ $? -eq 0 ]; then
+    configure_pxe_daemon
+    if [ $? -ne 0 ]; then
+        echo "pxe daemon configuration failed"
+        exit 1
+    fi
 fi    
-
-configure_pxe_daemon
-if [ $? -ne 0 ]; then
-    echo "pxe daemon configuration failed"
-    exit 1
-fi
 
 pxelinux_cfg
 if [ $? -ne 0 ]; then
