@@ -6,6 +6,20 @@
 #   $Id$
 #
 
+3.7.5
+--------------------------------------------------------------------------------
+- BOEL updated to kernel 2.6.18.1
+- added support of parted 1.7.x syntax
+- correctly support swap over LVM
+- correctly support TLS (Thread Local Storage) libraries
+- reimplemented si_mkbootpackage using UYOK library
+- UYOK supports monolithic kernels (and BOEL)
+- improved the monitoring scalability
+- improvents in the BitTorrent transport
+- reduced the verbosity of the imaging process by default to speed up
+  the installation time
+- some fixes in si_mkbootserver
+
 3.7.4
 --------------------------------------------------------------------------------
 - better compatibility with 2.4 kernels
