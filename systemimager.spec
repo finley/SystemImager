@@ -23,6 +23,11 @@
 # prevent RPM from stripping files (eg. bittorrent binaries)
 %define __spec_install_post /usr/lib/rpm/brp-compress
 %define is_suse %(test -f /etc/SuSE-release && echo 1 || echo 0)
+%define is_ppc64 %([ "`uname -m`" = "ppc64" ] && echo 1 || echo 0)
+
+%if %is_ppc64
+%define _build_arch ppc64
+%endif
 
 Summary: Software that automates Linux installs, software distribution, and production deployment.
 Name: %name
