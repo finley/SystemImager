@@ -39,7 +39,7 @@ Source0: http://download.sourceforge.net/systemimager/%{name}-%{ver}.tar.bz2
 BuildRoot: /tmp/%{name}-%{ver}-root
 BuildArchitectures: noarch
 Packager: %packager
-URL: http://systemimager.org/
+URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 BuildRequires: docbook-utils, dos2unix, e2fsprogs-devel, flex, libtool, readline-devel, /usr/bin/wget, openssl-devel, gcc, gcc-c++
 Requires: rsync >= 2.4.6, syslinux >= 1.48, libappconfig-perl, dosfstools, /usr/bin/perl
@@ -70,7 +70,7 @@ License: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: %packager
-URL: http://systemimager.org/
+URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Requires: rsync >= 2.4.6, systemimager-common = %{version}, perl-AppConfig, dosfstools, /sbin/chkconfig, perl, perl(XML::Simple) >= 2.08, python, mkisofs
 %if %is_suse
@@ -106,7 +106,7 @@ License: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: %packager
-URL: http://systemimager.org/
+URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Requires: systemimager-server = %{version}, /sbin/chkconfig, perl, flamethrower >= 0.1.6
 AutoReqProv: no
@@ -137,7 +137,7 @@ License: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: %packager
-URL: http://systemimager.org/
+URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Requires: perl, systemconfigurator
 AutoReqProv: no
@@ -168,7 +168,7 @@ License: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: %packager
-URL: http://systemimager.org/
+URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Requires: systemimager-common = %{version}, systemconfigurator, perl-AppConfig, rsync >= 2.4.6, perl
 AutoReqProv: no
@@ -201,7 +201,7 @@ License: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: %packager
-URL: http://systemimager.org/
+URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Obsoletes: systemimager-%{_build_arch}boot
 BuildRequires: python, python-devel
@@ -235,7 +235,7 @@ License: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: %packager
-URL: http://systemimager.org/
+URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Obsoletes: systemimager-%{_build_arch}initrd_template
 BuildRequires: python, python-devel
@@ -270,7 +270,7 @@ License: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: %packager
-URL: http://systemimager.org/
+URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Requires: systemimager-server = %{version}, /sbin/chkconfig, perl
 %if %is_suse
@@ -306,7 +306,7 @@ License: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: %packager
-URL: http://systemimager.org/
+URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Requires: systemimager-server = %{version}, /sbin/chkconfig, perl, perl(Config::Simple), perl(LockFile::Simple)
 AutoReqProv: no
@@ -331,6 +331,9 @@ More information can be found at the website:
 http://developer.osdl.org/kees/software/imagemanip/
 
 %changelog
+* Wed Aug 02 2006 Andrea Righi <a.righi@cineca.it>
+- Updated URLs to http://wiki.systemimager.org 
+
 * Wed Aug 02 2006 Bernard Li <bli@bcgsc.ca>
 - Officially taking over as packager of SystemImager RPMs
 
