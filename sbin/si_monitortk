@@ -345,6 +345,12 @@ $tab = $window->Scrolled(
     -browsecmd        => \&update_selected_mac,
 )->grid(qw/-sticky nsew/);
 
+# Bind mouse wheel events to the table of nodes.
+$window->bind('all', '<4>',   => sub { $tab->yview('scroll', -3, 'units') });
+$window->bind('all', '<5>',   => sub { $tab->yview('scroll', +3, 'units') });
+$window->bind('all', '<Home>' => sub { $tab->yviewMoveto(0) });
+$window->bind('all', '<End>'  => sub { $tab->yviewMoveto(1) });
+
 # Create the tab item styles.
 # Initializing.
 my $init_style = $tab->ItemStyle('text');
