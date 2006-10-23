@@ -60,6 +60,11 @@ sub create_uyok_initrd() {
         #
         # Copy template over
         #
+        unless (-d "/usr/share/systemimager/boot/$arch/standard/initrd_template/") {
+            rmdir($stating_dir);
+            die("FATAL: couldn't find a valid initrd template.\n" . 
+                "\tTry to install systemimager-${arch}initrd_template package!\n");
+        }
         $cmd = qq(rsync -a /usr/share/systemimager/boot/$arch/standard/initrd_template/ $staging_dir/);
         !system( $cmd ) or die( "Couldn't $cmd." );
 
