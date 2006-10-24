@@ -1507,10 +1507,9 @@ sub add_or_delete_conf_file_entry {
 sub which_dev_style {
     open(FILE, "</proc/mounts");
         while(<FILE>) {
-            if(m/\budev\b/) {
+            if ((m/\budev\b/) || (m/\/dev\stmpfs\s/)) {
                 return 'udev';
-            }
-            elsif(m/\bdevfs\b/) {
+            } elsif (m/\bdevfs\b/) {
                 return 'devfs';
             }
         }
