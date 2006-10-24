@@ -22,6 +22,9 @@
 
 # prevent RPM from stripping files (eg. bittorrent binaries)
 %define __spec_install_post /usr/lib/rpm/brp-compress
+# prevent RPM files to be changed by prelink
+%{?__prelink_undo_cmd:%undefine __prelink_undo_cmd}
+
 %define is_suse %(test -f /etc/SuSE-release && echo 1 || echo 0)
 %define is_ppc64 %([ "`uname -m`" = "ppc64" ] && echo 1 || echo 0)
 
