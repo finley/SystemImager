@@ -1,6 +1,6 @@
---- discover1-data-1.2006.01.14/pci.lst.orig	2006-04-13 13:06:27.750900321 -0700
-+++ discover1-data-1.2006.01.14/pci.lst	2006-04-13 13:09:39.101403228 -0700
-@@ -149,7 +149,7 @@
+--- discover1-data-1.2006.01.14ubuntu2/pci.lst.orig	2006-10-30 18:47:11.000000000 +0100
++++ discover1-data-1.2006.01.14ubuntu2/pci.lst	2006-10-30 18:48:57.000000000 +0100
+@@ -149,13 +149,13 @@
  	10000013	scsi	sym53c8xx_2	53c875a
  	10000020	scsi	sym53c8xx_2	53c1010 Ultra3 SCSI Adapter
  	10000021	scsi	sym53c8xx_2	53c1010 66MHz  Ultra3 SCSI Adapter
@@ -9,3 +9,10 @@
  	10000031	scsi	unknown	53c1030ZC PCI-X Fusion-MPT Dual Ultra320 SCSI
  	10000032	scsi	mptscsih	53c1035 PCI-X Fusion-MPT Dual Ultra320 SCSI
  	10000033	scsi	megaraid	1030ZC_53c1035 PCI-X Fusion-MPT Dual Ultra320 SCSI
+ 	10000040	scsi	mptscsih	53c1035 PCI-X Fusion-MPT Dual Ultra320 SCSI
+ 	10000041	scsi	unknown	53C1035ZC PCI-X Fusion-MPT Dual Ultra320 SCSI
+-	10000050	scsi	mptscsih	SAS1064 PCI-X Fusion-MPT SAS
++	10000050	scsi	mptsas		SAS1064 PCI-X Fusion-MPT SAS
+ 	10000054	scsi	mptscsih	SAS1068 PCI-X Fusion-MPT SAS
+ 	10000056	unknown	unknown	SAS1064E PCI-Express Fusion-MPT SAS
+ 	10000058	unknown	unknown	SAS1068E PCI-Express Fusion-MPT SAS
