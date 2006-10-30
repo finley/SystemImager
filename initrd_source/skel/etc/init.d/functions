@@ -1002,7 +1002,7 @@ start_network() {
         chmod +x /etc/dhclient-script
 
         # be sure AF_PACKET is supported in the kernel
-        modprobe af_packet &> /dev/null
+        [ -f /lib/modules/`uname -r`/modules.dep ] && modprobe af_packet &> /dev/null
         
         # get info via dhcp
         logmsg
