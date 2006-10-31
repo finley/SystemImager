@@ -15,7 +15,7 @@
 #
 
 
-DEVMAPPER_VERSION	:= 1.01.02
+DEVMAPPER_VERSION	:= 1.02.11
 DEVMAPPER_DIR		:= device-mapper.$(DEVMAPPER_VERSION)
 DEVMAPPER_TARBALL	:= device-mapper.$(DEVMAPPER_VERSION).tgz
 #DEVMAPPER_URL		:= ftp://sources.redhat.com/pub/dm/old/$(DEVMAPPER_TARBALL)
@@ -23,7 +23,7 @@ DEVMAPPER_URL		:= http://download.systemimager.org/pub/device-mapper/$(DEVMAPPER
 DEVMAPPER_BINARY	:= $(SRC_DIR)/$(DEVMAPPER_DIR)/lib/ioctl/libdevmapper.so
 MKLIBS 				+= $(SRC_DIR)/$(DEVMAPPER_DIR)/lib/ioctl
 
-LVM_VERSION	:= 2.2.00.32
+LVM_VERSION	:= 2.2.02.12
 LVM_DIR		:= LVM$(LVM_VERSION)
 LVM_TARBALL	:= LVM$(LVM_VERSION).tgz
 #LVM_URL	:= ftp://sources.redhat.com/pub/lvm2/old/$(LVM_TARBALL)
