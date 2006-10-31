@@ -1,0 +1,10 @@
+--- udpcast-20060929/socklib.c.orig	2006-10-31 19:37:39.000000000 +0100
++++ udpcast-20060929/socklib.c	2006-10-31 19:38:05.000000000 +0100
+@@ -37,6 +37,7 @@
+ typedef unsigned short u16;
+ typedef unsigned char u8;
+ 
++#include <linux/types.h>
+ #include <linux/ethtool.h>
+ #include <linux/sockios.h>
+ 
