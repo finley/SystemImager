@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT(SystemImager, 3.5.2, sisuite-devel@lists.sf.net)
+AC_INIT(SystemImager, 3.7.5, sisuite-devel@lists.sf.net)
 AC_CONFIG_AUX_DIR(autoconf)
 #AC_CONFIG_SRCDIR([src/bc-1.06/acconfig.h])
 #AC_CONFIG_HEADER([config.h])
@@ -15,12 +15,27 @@ AC_PROG_CC
 AC_PROG_CPP
 AC_PROG_LEX
 case $LEX in
-    :) SI_CHECK_FAIL(lex,flex,,You can't build many components without the flex parser);;
+    :) SI_CHECK_FAIL(lex,flex,,You cannot build many components without the flex parser);;
 esac
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
 #AC_PROG_RANLIB
+
+AC_PATH_PROG(RSYNC, rsync)
+if test -z "$RSYNC" ; then
+    SI_CHECK_FAIL(rsync,,,
+        [*** 'rsync' missing, please install or fix your PATH ***])
+fi
+
+AC_PATH_PROG(MKCRAMFS, mkcramfs)
+if test -z "$MKCRAMFS"; then
+    AC_PATH_PROG(MKCRAMFS, mkfs.cramfs)
+    if test -z "$MKCRAMFS"; then
+        SI_CHECK_FAIL(mkcramfs,,,
+            [*** 'mkcramfs' or 'mkfs.cramfs' not found, please install cramfs tools or fix your PATH ***])
+    fi
+fi
 
 # Checks for libraries.
 # FIXME: Replace `main' with a function in `-lcrypt':
