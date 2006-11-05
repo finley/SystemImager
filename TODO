@@ -178,26 +178,6 @@ your choices:
             APPEND vga=extended
             initrd=i386/i386-dapper-server/initrd.img root=/dev/ram
 
-14) Fix software raid
-    # x1) get mdadm to store all necessary info in
-    #    autoinstallscript.conf, if it is available on the client.
-    # x2) put mdadm code in boel
-    # x3) modify code to use that info to create proper commands in the
-    #    auto-install script.
-    # 4) include code to create new /etc/mdadm/mdadm.conf to match the
-    #    config, as user may have modified it in the
-    #    autoinstallscript.conf
-    #    file.
-    # x5) modify code that uses "raidtools" to use mdadm instead.
-
-16) BitTorrent:
-#    - the following options should be user settable, parse them in the
-#      kernel boot parameters (moreover tune the default values):
-#        # Time to poll bittorrent events
-#        bittorrent_polling_time=30
-#        # Minimum upload rate threshold (in KB/s), if lesser stop seeding
-#        bittorrent_upload_min=50
-
 18) Move all LVM info into the <lvm> section of autoinstallscript.conf.
 
     - No longer store any lvm info in the <disk> and/or <raid> sections
@@ -222,11 +202,6 @@ your choices:
     Subject: [Sisuite-users] si_updateclient: differences b/w with and without --dry-run
 
 
-
-20) Scott Jackson:  cciss disk names
-
-    SI did not name the partitions on cciss disks
-    correctly (I punted and avoided nodes with that disk type).
 
 21) Scott Jackson:  ethernet re-ordering
 
@@ -326,15 +301,8 @@ your choices:
     - left click on the header to sort clients
     - tabbed view for virtual console
 
-29) Ever since updating to the new 2.6.16 kernel (I think), my USB keyboard
-    at home stopped working during image installation.  Paul Greidanus reported
-    similiar issues with Sun Fire X2100 servers, hopefully we can track this
-    down and fix
-
 31) Investigate libtorrent: http://libtorrent.rakshasa.no/ to see if it is a
     feasible replacement for the python bittorrent libraries
-
-34) Pre-create static dev (dev tarball?)
 
 35) Implement si_getdebuginfo to generate a tar.gz containing all the system
     informations that could help to debug user problems (systemimager versions,
