@@ -251,6 +251,17 @@ sub get_xml_data
 }
 
 # Usage:
+# put_xml_data($data);
+# Description:
+#	Store shared XML structure safely (in mutual exclusion).
+sub put_xml_data
+{
+	my $data = shift;
+	lock($xml_data);
+	$xml_data = $data;
+}
+
+# Usage:
 # $data = load_db();
 # Description:
 #	Load the XML structure from file.
@@ -309,6 +320,13 @@ sub sync_db
 # update_db($hostname, $client_request);
 # Description:
 #	Update the database according to the client request.
+#
+# XXX: update_db() is not ran in mutual exclusion! This is not needed
+# because only update_db() can write the $xml_data shared structure and
+# only one instance of update_db can exist at a generic time (the socket
+# accepts only one client per time). If that implementation will be
+# changed remember to fix also this routine. -AR-
+#
 sub update_db
 {
 	my ($host, $request) = @_;
@@ -356,9 +374,9 @@ sub update_db
 	
 	# Update the clients table in mutual exclusion.
 	my $xml;
-	lock($xml_data);
-	if ($xml_data) {
-		$xml = XMLin($xml_data, KeyAttr => {client => 'name'}, ForceArray => 1);
+	my $xml_raw = get_xml_data();
+	if ($xml_raw) {
+		$xml = XMLin($xml_raw, KeyAttr => {client => 'name'}, ForceArray => 1);
 	}
 
 	$xml->{'client'}->{$mac}->{'ip'} = $client->{'ip'}
@@ -391,7 +409,8 @@ sub update_db
 	$xml->{'client'}->{$mac}->{'first_timestamp'} = $timestamp
 		if $client->{'first_timestamp'};
 
-	$xml_data = XMLout($xml);
+	$xml_raw = XMLout($xml);
+	put_xml_data($xml_raw);
 }
 
 __END__
