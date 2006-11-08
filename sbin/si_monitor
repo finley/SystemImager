@@ -151,22 +151,14 @@ umask(0);
 # Reaping zombie child processes.
 $SIG{CHLD} = 'IGNORE';
 
-# Start daemon.
-my $daemon_pid;
-if ($daemon_pid = fork()) {
-	# Run in background.
-	exit(0);
-} elsif (defined($daemon_pid)) {
-	setsid or die gmtime() . ": error: can't start a new session: $!\n";
-	# Create the pid file.
-	local *FILE;
-	open(FILE, ">$pid_file") or
-		die gmtime() . ": error: cannot open file: $pid_file\n";
-	print FILE "$$\n";
-	close(FILE);
-} else {
-	die gmtime() . ": error: cannot fork daemon process!\n";
-}
+# Create a new process session.
+setsid or die gmtime() . ": error: can't start a new session: $!\n";
+
+# Create the pid file.
+open(FILE, ">$pid_file") or
+	die gmtime() . ": error: cannot open file: $pid_file\n";
+print FILE "$$\n";
+close(FILE);
 
 # Define lock files.
 my $lock_file = $conf{'lock_dir'} . "/db.si_monitor.lock";

@@ -43,14 +43,28 @@ case "$1" in
         echo -e "failed.\nPID file $PIDFILE exists.  Must be already running."
         exit 1
     fi
-    if [ ! -z $LOGFILE ]; then
-        si_monitor --log $LOGFILE --log_level $LOGLEVEL
+    # Check if ithreads are supported.
+    if perl -e 'use Config; exit ($Config{useithreads} ne "define");'; then
+        SI_MONITOR=`which si_monitor 2>/dev/null`
     else
-        si_monitor
+        SI_MONITOR="`which perl 2>/dev/null` -Mforks -Mforks::shared `which si_monitor`"
+        cat << EOF
+
+WARNING: your version of perl doesn't support ithreads!
+
+It's strongly suggested to use a threaded perl (built with 'useithreads').
+
+Falling back to thread emulation via perl-forks...
+EOF
+    fi
+    if [ ! -z $LOGFILE ]; then
+        $SI_MONITOR --log $LOGFILE --log_level $LOGLEVEL 0>/dev/null >&0 2>&0 &
+    else
+        $SI_MONITOR 0>/dev/null >&0 2>&0 &
     fi
     if [ $? -ne 0 ]; then
         echo failed.
-	exit 1
+        exit 1
     else
         echo ok.
     fi
