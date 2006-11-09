@@ -273,6 +273,10 @@ return << "EOF";
  --dry-run
     Only shows what would have been updated.
 
+ --no-delete
+    Do not delete any file on the client, only update different files
+    and download newer.
+
  --log "STRING"
     Quoted string for log file format.  See the rsyncd.conf man page for 
     options.

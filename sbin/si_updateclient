@@ -115,6 +115,7 @@ GetOptions(
     "no-bootloader"     => \$no_bootloader,
     "autoinstall"       => \my $autoinstall,
     "dry-run"           => \my $dry_run,
+    "no-delete"         => \my $no_delete,
     "ssh-user=s"        => \my $ssh_user,
     "flavor=s"          => \my $flavor,
     "server=s"          => \my $server,
@@ -520,7 +521,7 @@ SC_EOF
         if ($imagepass) {
             ## if we're doing the rsync of the image, go ahead and delete
             ## files that aren't on the server side
-            $delete = "--delete";
+            $delete = "--delete" unless ($no_delete);
             $imagepass = 0;
         }
         else {
