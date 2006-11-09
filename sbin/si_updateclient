@@ -479,6 +479,11 @@ SC_EOF
     #
     $cmdopts .= " --exclude=lost+found/";
 
+    # Automatically exclude /dev if udev is detected. -AR-
+    if (-d '/dev/.udevdb') {
+        $cmdopts .= " --exclude=/dev/";
+    }
+
     # Get exclusions from client side exclusion file.  Only use exclusions that start with the 
     # directory specified with -directory.  
     #
