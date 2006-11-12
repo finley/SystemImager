@@ -76,11 +76,6 @@ Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Requires: rsync >= 2.4.6, systemimager-common = %{version}, perl-AppConfig, dosfstools, /sbin/chkconfig, perl, perl(XML::Simple) >= 2.08, python, mkisofs
-%if %is_suse
-Requires: python-xml
-%else
-Requires: PyXML
-%endif
 AutoReqProv: no
 
 %description server
@@ -241,7 +236,11 @@ Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Obsoletes: systemimager-%{_build_arch}initrd_template
-BuildRequires: python, python-devel
+%if %is_suse
+BuildRequires: python, python-devel, python-xml, BitTorrent
+%else
+BuildRequires: python, python-devel, PyXML, bittorrent
+%endif
 Requires: systemimager-client >= %{version}
 AutoReqProv: no
 
@@ -277,9 +276,9 @@ URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Requires: systemimager-server = %{version}, /sbin/chkconfig, perl
 %if %is_suse
-Requires: BitTorrent, python-xml
+Requires: BitTorrent
 %else
-Requires: bittorrent, PyXML
+Requires: bittorrent
 %endif
 AutoReqProv: no
 
@@ -334,6 +333,15 @@ More information can be found at the website:
 http://developer.osdl.org/kees/software/imagemanip/
 
 %changelog
+* Sun Nov 12 2006 Andrea Righi <a.righi@cineca.it>
+- Removed python-xml dependency from systemimager-server package (this
+  package is needed only by BitTorrent).
+- Added python-xml and BitTorrent dependencies for initrd_template
+  package.
+- Removed python-xml dependency from systemimager-bittorrent (this
+  package is a dependency only for BitTorrent, that is already present
+  in the list of the required packages).
+
 * Wed Aug 02 2006 Andrea Righi <a.righi@cineca.it>
 - Updated URLs to http://wiki.systemimager.org 
 
