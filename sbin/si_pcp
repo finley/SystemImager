@@ -1,0 +1,293 @@
+#!/usr/bin/perl -w
+#
+#  "SystemImager"
+#
+#  Copyright (C) 2005 Andrea Righi <a.righi@cineca.it>
+
+use strict;
+use Getopt::Long;
+
+my $VERSION = "SYSTEMIMAGER_VERSION_STRING";
+
+my $program_name = "si_pcp";
+
+my $version_info = << "EOF";
+$program_name (part of SystemImager) v$VERSION
+
+Copyright (C) 2006 Andrea Righi <a.righi\@cineca.it>
+
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+EOF
+
+my $help_info = $version_info . <<"EOF";
+
+Usage: $program_name --hosts host_range [OPTIONS]... file_src1... file_dest
+
+Options: (options can be presented in any order and can be abbreviated)
+ --help|-h              Display this output.
+
+ --version|-V           Display version and copyright information.
+
+ --verbose|-v           Display verbose informations.
+
+ --max|-m NUM           Set the maximum number of concurrent copies
+                        to NUM.
+
+ --hosts|-n HOST_LIST   List of target nodes. List can be separated by
+                        comma, spaces or new line and can include
+                        ranges (e.g. "node001-node256,node300 node400").
+
+ --hosts-file|-f FILE   File that contains the list of the target hosts
+                        (one host per line).
+
+ --timeout|-t NUM       Set the timeout of the sessions.
+
+EOF
+
+Getopt::Long::Configure("posix_default");
+Getopt::Long::Configure("no_gnu_compat");
+Getopt::Long::Configure("bundling");
+
+GetOptions(
+	"help|h"		=> \my $help,
+	"version|V"		=> \my $version,
+	"verbose|v"		=> \my $verbose,
+	"max|m=i"		=> \my $concurrents,
+	"hosts|n=s"		=> \my $hostlist,
+	"hosts-file|f=s"	=> \my $hostlist_file,
+	"timeout|t=i"		=> \my $timeout,
+	"ssh-user|l=s"		=> \my $ssh_user,
+) or die("$help_info");
+
+### BEGIN evaluate commad line options ###
+
+if ($help) {
+	print "$help_info";
+	exit(0);
+}
+
+if ($version) {
+	print "$version_info";
+	exit(0);
+}
+
+if ($verbose) {
+	$verbose = 'v';
+} else {
+	$verbose = '';
+}
+
+my $source;
+my $target;
+if (@ARGV) {
+	$target = pop(@ARGV);
+	$source = join(' ', @ARGV);
+}
+unless ($source) {
+	die("error: no source defined!\nTry \"--help\" for more options.\n");
+}
+unless ($target) {
+	die("error: undefined destination!\nTry \"--help\" for more options.\n");
+}
+
+
+my @hosts = ();
+if ($hostlist) {
+	@hosts = split(/,| |\n/, $hostlist);
+	# Expand host ranges.
+	my %expanded_hosts = ();
+	foreach my $range (@hosts) {
+		expand_range(\%expanded_hosts, $range);
+	}
+	@hosts = keys(%expanded_hosts);
+} elsif ($hostlist_file) {
+	open(IN, "<$hostlist_file") ||
+		die("error: could't read $hostlist_file!\n");
+	chomp(@hosts = <IN>);
+	close(IN);
+} elsif (!-t) {
+	chomp(@hosts = <STDIN>);
+} else {
+	die("error: no host defined!\nTry \"--help\" for more options.\n");
+}
+
+unless ($concurrents) {
+	$concurrents = 32;
+}
+
+unless ($timeout) {
+	$timeout = 15;
+}
+
+### END evaluate command line options ###
+
+# Use the following ssh options.
+my $ssh_opts = "-x -o BatchMode=yes";
+my $rsync_opts = "-aHSz$verbose --numeric-ids --timeout=$timeout --rsh='ssh $ssh_opts'";
+
+# Number of concurrent sessions.
+my $workers = 0;
+
+# Main program.
+thread_pool_spawn();
+while ($workers) {
+	thread_pool_wait();
+}
+
+# Usage:
+# thread_pool_wait();
+# Description:
+#       Wait the completion of running sessions when the maximum number
+#       of concurrent processes is reached.
+sub thread_pool_wait
+{
+	wait;
+	$workers--;
+}
+
+# Usage:
+# thread_pool_spawn();
+# Description:
+#       Spawn the pool of sessions to the target hosts.
+sub thread_pool_spawn
+{
+	foreach my $host (@hosts) {
+		do_cmd($host);
+		$workers++;
+		if ($workers >= $concurrents) {
+			thread_pool_wait();
+		}
+	}
+}
+
+# Usage:
+# do_cmd($host);
+# Description:
+#       Run a command on a single remote host.
+sub do_cmd
+{
+	my $host = shift;
+	my $pid;
+
+	if ($pid = fork) {
+		return;
+	} elsif (defined $pid) {
+		my @out = `rsync $rsync_opts $source $host:$target 2>&1`;
+		if ($?) {
+			select(STDERR);
+		}
+		$| = 1;
+		foreach (@out) {
+			print $host . ': ' . $_;
+		}
+		exit(0);
+	} else {
+		print STDERR "$host: couldn't fork a rsync session!\n";
+	}
+}
+
+# Usage:
+# expand_range(\%expanded_hosts, $range_string)
+# Description:
+#       Expand host ranges identified by the $range_string into the
+#       %expaned_hosts hash.
+sub expand_range {
+	my ($expanded_hosts, $node) = @_;
+	my ($start_root, $start_domain, $start_num, $end_root, $end_domain, $end_num);
+	if ($node =~ /-/) {
+		my ($front, $end) = split('-', $node, 2);
+
+		($start_root, $start_num, $start_domain) = ($front =~ /^(.*?)(\d+)(\..+)?$/);
+		($end_root, $end_num, $end_domain) = ($end =~ /^(.*?)(\d+)(\..+)?$/);
+		if (!defined($start_domain)) {
+			$start_domain = '';
+		}
+		if (!defined($end_domain)) {
+			$end_domain = '';
+		}
+		if (!defined($start_num) || !defined($end_num)
+			|| ($start_num >= $end_num)
+			|| ($end_root ne $start_root)
+			|| ($end_domain ne $start_domain)) {
+				$$expanded_hosts{$node}++;
+				return;
+		}
+	} else {
+		$$expanded_hosts{$node}++;
+		return;
+	}
+	foreach my $suffix ($start_num .. $end_num) {
+		my $zeros = (length($start_num) - length($suffix));
+		my $prefix = '0' x $zeros;
+		$$expanded_hosts{"$start_root$prefix$suffix$start_domain"}++;
+	}
+}
+
+__END__
+
+=head1 NAME
+
+si_pcp - SystemImager Parallel Copy
+
+=head1 SYNOPSIS
+
+si_pcp --hosts host_range [OPTIONS]... src1 src2 ... dest
+
+=head1 DESCRIPTION
+
+B<si_pcp> concurrently copies files to multiple nodes via rsync.
+
+=head1 OPTIONS
+
+=over 8
+ 
+=item B<--help | -h>
+
+Display a short help.
+
+=item B<--version | -V>
+
+Display version and copyright information.
+
+=item B<--max | -m NUM>
+
+Set the maximum number of concurrent copies to NUM.
+
+=item B<--hosts | -n HOST_LIST>
+
+Lists of target nodes. Lists can be separated by commas or spaces and can include
+ranges (e.g. "node001-node256,node300 node400").
+
+=item B<--hosts-file | -f FILE>
+
+File that contains the list of the target hosts (one host per line).
+
+=item B<--timeout | -t NUM>
+
+Set the timeout of the rsync sessions.
+
+=head1 SEE ALSO
+
+systemimager(8), perldoc si_psh
+
+=head1 AUTHOR
+
+Andrea Righi <a.righi@cineca.it>.
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2003 by Andrea Righi <a.righi@cineca.it>.
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+=cut
+
