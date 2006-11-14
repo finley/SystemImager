@@ -1,0 +1,230 @@
+#!/usr/bin/perl -w
+#
+#  "SystemImager"
+#
+#  Copyright (C) 2005 Andrea Righi <a.righi@cineca.it>
+
+use lib "USR_PREFIX/lib/systemimager/perl";
+use strict;
+use Getopt::Long;
+use POSIX qw(uname);
+use SystemImager::Config;
+use SystemImager::Common;
+use SystemImager::Server;
+use vars qw($config $VERSION);
+
+my $VERSION = "SYSTEMIMAGER_VERSION_STRING";
+
+my $program_name = "si_mkautoinstalldisk";
+
+my $version_info = << "EOF";
+$program_name (part of SystemImager) v$VERSION
+
+Copyright (C) 2006 Andrea Righi <a.righi\@cineca.it>
+
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+EOF
+
+my $help_info = $version_info . <<"EOF";
+
+Usage: $program_name --device FILE [OPTION]...
+
+Options: (options can be presented in any order and can be abbreviated)
+ --help                 Display this output.
+
+ --version              Display version and copyright information.
+
+ --quiet                Run silently and answer yes to all questions.
+
+ --yes                  Answer yes to all questions.
+
+ --device FILE          Target device that will be used for the
+                        autoinstallation.
+
+                        WARNING: ALL THE DATA IN THE DEVICE WILL BE
+                        OVERWRITTEN!
+
+ --flavor FLAVOR        Specify a flavor of boot media.
+                        (defaults to "standard").
+
+ --kernel FILE          Specify an alternate autoinstall kernel.
+
+ --initrd FILE          Specify an alternate autoinstall ramdisk.
+
+ --append STRING        A string of options that will be passed to the
+                        autoinstall kernel.
+
+ --ssh-key FILE         Where FILE is the SSH2 id_dsa or id_rsa private
+                        key of the user account that the autoinstall
+                        client will use to connect to the imageserver.
+
+ --config FILE          Where FILE contains all the settings necessary
+                        for the client to set it's hostname and
+                        configure it's networking information without
+                        DHCP.  This file is copied to /local.cfg on the
+                        autoinstall disk.
+                        See /usr/share/doc/systemimager-server-SYSTEMIMAGER_VERSION_STRING/local.cfg
+                        for a well commented example.
+
+EOF
+
+Getopt::Long::Configure("posix_default");
+Getopt::Long::Configure("no_gnu_compat");
+Getopt::Long::Configure("bundling");
+
+GetOptions(
+	"help"		=> \my $help,
+	"version"	=> \my $version,
+	"quiet"		=> \my $quiet,
+	"yes"		=> \my $yes,
+	"device=s"	=> \my $device,
+	"flavor=s"	=> \my $flavor,
+	"kernel=s"	=> \my $kernel,
+	"initrd=s"	=> \my $initrd,
+	"append=s"	=> \my $append,
+	"ssh-key=s"	=> \my $ssh_key,
+	"config=s"	=> \my $local_cfg,
+) or die("$help_info");
+
+my $arch = (uname())[4];
+$arch =~ s/i.86/i386/;
+
+# Set the shell PATH for system() calls.
+$ENV{PATH} = '/sbin:/usr/sbin:/usr/local/sbin:' . $ENV{PATH};
+
+my $autoinstall_boot_dir = $config->autoinstall_boot_dir();
+unless ($autoinstall_boot_dir) {
+	die("error: AUTOINSTALL_BOOT_DIR not defined in the config file.\n");
+}
+
+### BEGIN evaluate commad line options ###
+
+if ($help) {
+	print "$help_info";
+	exit(0);
+}
+if ($version) {
+	print "$version_info";
+	exit(0);
+}
+unless ($device) {
+	die("error: target device was not specified!\nTry \"--help\" for more options.\n");
+}
+if ($ssh_key) {
+	unless (-e $ssh_key) {
+		die("error: SSH private key \"$ssh_key\" doesn't seem to exist.\nPlease try again.\n");
+	}
+}
+unless ($kernel and $initrd) {
+	my %available_flavors =
+		SystemImager::Common->get_boot_flavors("i386", $autoinstall_boot_dir);
+	unless (%available_flavors) {
+		die("error: couldn't find any boot flavors for SystemImager on $arch.\n" .
+		    "Please install the appropriate boot files.\n");
+	}
+	$flavor = 'standard' if (!$flavor);
+	unless ($available_flavors{$flavor}) {
+		die(qq(\nerror: could't find boot files of flavor "$flavor" for the "$arch" architecture.\n));
+	}
+
+	my $bin_dir = "$autoinstall_boot_dir/$arch/$flavor";
+
+	$kernel = "$bin_dir/kernel" unless ($kernel);
+	$initrd = "$bin_dir/initrd.img" unless ($initrd);
+}
+unless ($append) {
+	$append = '';
+}
+
+### END evaluate command line options ###
+
+print STDERR "======================= WARNING =======================\n" .
+             " Using device: $device\n" .
+             " This command will overwrite the data on that device!!!\n" .
+             "======================= WARNING =======================\n" .
+             "\nAre you sure to continue? (y / N)? ";
+if ($quiet || $yes) {
+	print "y\n";
+} else {
+	chomp($_ = <STDIN>);
+	unless ($_ =~ /^y/i) {
+		print STDERR "$device has not been modified...\n";
+		exit(0);
+	}
+}
+print "\n";
+
+my ($cmd, $mnt_dir, $is_mounted);
+
+print "Creating DOS filesystem in $device...\n";
+run_cmd("mkdosfs -I $device");
+print "Using \"syslinux\" to make a bootable device...\n";
+run_cmd("syslinux $device");
+
+# Create a unique temporary mount point.
+print "Creating temporary mount point...\n";
+$mnt_dir = "/tmp/.autoinstalldiskette.$$";
+while (-e $mnt_dir) {
+	$mnt_dir .= ".$$";
+}
+mkdir($mnt_dir, 0770) or
+	die "error: couldn't create temporary mount point $mnt_dir.\n";
+
+# Cleanup routine.
+$SIG{__DIE__} = sub {
+	my $msg = shift;
+	if ($is_mounted) {
+		run_cmd("sudo umount $mnt_dir");
+	}
+	if (-d $mnt_dir) {
+		rmdir($mnt_dir) or
+		        die("error: couldn't remove temporary mount point $mnt_dir\n");
+	}
+	die $msg;
+};
+
+# Mount the filesystem.
+my $loop;
+unless (-b $device) {
+	$loop = '-o loop';
+} else {
+	$loop = '';
+}
+print "Temporary mounting device $device...\n";
+run_cmd("sudo mount -t msdos -o umask=0007 -o uid=$< $loop $device $mnt_dir");
+$is_mounted = 1;
+
+# Copy boot stuff to the device.
+SystemImager::Server->copy_boot_files_to_boot_media(
+		$kernel, $initrd, $local_cfg, $arch,
+		$mnt_dir, $append, $ssh_key) or
+	die("error: couldn't copy required files into the image!\n");
+
+# Unmount the device.
+print "Un-mounting device $device...\n";
+run_cmd("sudo umount $device");
+$is_mounted = 0;
+
+# Get rid of temporary directory.
+print "Removing temporary mount point...\n";
+rmdir($mnt_dir) or
+	die("error: couldn't remove temporary mount point $mnt_dir\n");
+
+# Well done.
+print "Done!\n";
+exit(0);
+
+# Usage:
+# run_cmd($host);
+# Description:
+#       Run a command with system() and die on error.
+sub run_cmd
+{
+	my $cmd = shift;
+	print " >> $cmd\n" unless ($quiet);
+	!system($cmd) or die("error: $cmd");
+}
+
+__END__
+

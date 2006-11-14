@@ -144,6 +144,10 @@ if ($arch ne "i386") {
     die "Autoinstall diskettes are only supported for the i386 architecture.";
 }
 
+# XXX: uncomment this if you really want to use this command. -AR-
+print "WARNING: deprecated command!!! use si_mkautoinstalldisk instead.\n";
+exit(0);
+
 # if not run as root, this script will surely fail
 unless($< == 0) { die "Must be run as root!\n"; }
 

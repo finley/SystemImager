@@ -22,6 +22,8 @@
 
     <refpurpose>
       creates a bootable floppy for autoinstalling clients
+
+      DEPRECATED: use si_mkautoinstallscript instead!
     </refpurpose>
   </refnamediv>
   <refsynopsisdiv>
@@ -179,7 +181,7 @@
   <refsect1>
     <title>SEE ALSO</title>
 
-    <para><command>si_mkautoinstallcd</command>(8)</para>
+    <para><command>si_mkautoinstallcd</command>(8), perldoc si_mkautoinstalldisk</para>
 
     <para>More details can be found in the <citetitle>SystemImager
 	manual.</citetitle>
