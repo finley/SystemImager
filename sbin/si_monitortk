@@ -63,6 +63,10 @@ Options: (options can be presented in any order and may be abbreviated)
  --db DATABASENAME      Get clients informations from the XML file
                         DATABASENAME.
 
+ --port PORT            Connect to PORT on the clients to gather
+                        messages for the virtual console
+                        (default is 8181).
+
  --progress             Display a graphical progress bar, instead of
                         numerical percentages.
 
@@ -89,11 +93,12 @@ die "No such lock directory '$conf{'lock_dir'}'\n"
 # Get the database file.
 $conf{'monitor_db'} ||= "/var/lib/systemimager/clients.xml";
 
-my ($help, $version, $quiet, $database, $refresh_rate, $progress); 
+my ($help, $version, $quiet, $database, $refresh_rate, $progress, $monitor_port); 
 GetOptions(
         "help"          => \$help,
         "version"       => \$version,
         "db=s"          => \$database,
+        "port=s"	=> \$monitor_port,
         "progress"      => \$progress,
         "refresh=i"     => \$refresh_rate,
 ) or die "$help_info";
@@ -119,6 +124,11 @@ unless ($refresh_rate) {
     $refresh_rate = 5000;
 } else {
     $refresh_rate *= 1000;
+}
+
+# Set the port on the clients to get messages for the virtual console.
+unless ($monitor_port) {
+	$monitor_port = 8181;
 }
 
 # Check if X is available.
@@ -575,7 +585,7 @@ sub refresh_console
         setsockopt(SOCK, SOL_SOCKET, SO_RCVTIMEO, pack('L!L!', $TMO, 0)) or
             die "error: cannot set SO_RCVTIMEO option to socket\n";
         # Connection to the client.
-        connect(SOCK, sockaddr_in(8181, inet_aton($ip))) or
+        connect(SOCK, sockaddr_in($monitor_port, inet_aton($ip))) or
             die "error: connection failed\n";
     };
     if ($@) {
