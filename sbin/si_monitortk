@@ -1212,6 +1212,11 @@ daemon.
 
 For default the file B</var/lib/systemimager/clients.xml> is taken.
 
+=item B<--port PORT>
+
+Use PORT to connect on the clients to gather messages for the virtual
+console (default is 8181).
+
 =item B<--progress>
 
 Display progress bars instead of textual precentages for installation
