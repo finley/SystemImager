@@ -864,6 +864,11 @@ read_local_cfg() {
         return
     fi
 
+    # Try with local.cfg directly from initrd.
+    if [ -f /local.cfg ]; then
+        cp -f /local.cfg /tmp/local.cfg
+    fi
+
     #
     # BEGIN try hard drive
     #
@@ -1392,22 +1397,29 @@ run_post_install_scripts() {
 start_ssh() {
 
     # create root's ssh dir
-    mkdir /root/.ssh
+    mkdir -p /root/.ssh
 
     ############################################################################
     #
     # If a private key exists, put it in the right place so this autoinstall
     # client can use it to authenticate itself to the imageserver.
     #
-    # (ssh2 dsa style user private key)
-    if [ -e /floppy/id_dsa ]; then
+    if [ -e /root/.ssh/id_dsa ]; then
+        # (ssh2 dsa style user private key)
+        PRIVATE_KEY=/root/.ssh/id_dsa
+        chmod 600 $PRIVATE_KEY         || shellout
+    elif [ -e /root/.ssh/id_rsa ]; then
+        # (ssh2 rsa style user private key)
+        PRIVATE_KEY=/root/.ssh/id_rsa
+        chmod 600 $PRIVATE_KEY         || shellout
+    elif [ -e /floppy/id_dsa ]; then
+        # (ssh2 dsa style user private key) from floppy
         PRIVATE_KEY=/root/.ssh/id_dsa
         cp /floppy/id_dsa $PRIVATE_KEY || shellout
         chmod 600 $PRIVATE_KEY         || shellout
-    fi
-    #
-    # (ssh2 rsa style user private key)
-    if [ -e /floppy/id_rsa ]; then
+    elif [ -e /floppy/id_rsa ]; then
+        #
+        # (ssh2 rsa style user private key) from floppy
         PRIVATE_KEY=/root/.ssh/id_rsa
         cp /floppy/id_rsa $PRIVATE_KEY || shellout
         chmod 600 $PRIVATE_KEY         || shellout
