@@ -32,6 +32,12 @@
 %define _build_arch ppc64
 %endif
 
+%if %is_suse
+%define python_xml python-xml
+%else
+%define python_xml PyXML
+%endif
+
 Summary: Software that automates Linux installs, software distribution, and production deployment.
 Name: %name
 Version: %ver
@@ -236,11 +242,7 @@ Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Obsoletes: systemimager-%{_build_arch}initrd_template
-%if %is_suse
-BuildRequires: python, python-devel, python-xml, BitTorrent
-%else
-BuildRequires: python, python-devel, PyXML, bittorrent
-%endif
+BuildRequires: python, python-devel, %{python_xml}
 Requires: systemimager-client >= %{version}
 AutoReqProv: no
 
@@ -819,6 +821,8 @@ fi
 %prefix/sbin/si_monitor
 %prefix/sbin/si_monitortk
 %prefix/bin/si_mk*
+%prefix/bin/si_psh
+%prefix/bin/si_pcp
 %prefix/lib/systemimager/perl/SystemImager/Server.pm
 %prefix/lib/systemimager/perl/SystemImager/Config.pm
 %prefix/lib/systemimager/perl/confedit
