@@ -274,12 +274,7 @@ BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
-Requires: systemimager-server = %{version}, /sbin/chkconfig, perl
-%if %is_suse
-Requires: BitTorrent
-%else
-Requires: bittorrent
-%endif
+Requires: systemimager-server = %{version}, /sbin/chkconfig, perl, perl(Getopt::Long)
 AutoReqProv: no
 
 %description bittorrent
@@ -333,6 +328,11 @@ More information can be found at the website:
 http://developer.osdl.org/kees/software/imagemanip/
 
 %changelog
+* Sun Nov 19 2006 Andrea Righi <a.righi@cineca.it>
+- Moved the BitTorrent dependency for systemimager-bittorrent in %pre
+  section. In this way we have a package compatible both for SuSE and RH
+  distributions.
+
 * Sun Nov 12 2006 Andrea Righi <a.righi@cineca.it>
 - Removed python-xml dependency from systemimager-server package (this
   package is needed only by BitTorrent).
@@ -725,6 +725,34 @@ if [[ -a /sbin/chkconfig ]]; then
     /sbin/chkconfig --add systemimager-server-bittorrent
     /sbin/chkconfig systemimager-server-bittorrent off
 fi
+
+%pre bittorrent
+echo "checking for a tracker binary..."
+BT_TRACKER_BIN=`(which bittorrent-tracker || which bttrack) 2>/dev/null`
+if [ -z $BT_TRACKER_BIN ]; then
+	echo "error: couldn't find a valid tracker binary!"
+	echo "--> Install the BitTorrent package (bittorrent for RH)."
+	exit 1
+fi
+echo done
+
+echo "checking for a maketorrent binary..."
+BT_MAKETORRENT_BIN=`(which maketorrent-console || which btmaketorrent) 2>/dev/null`
+if [ -z $BT_MAKETORRENT_BIN ]; then
+	echo "error: couldn't find a valid maketorrent binary!"
+	echo "--> Install the BitTorrent package (bittorrent for RH)."
+	exit 1
+fi
+echo done
+
+echo "checking for a bittorrent binary..."
+BT_BITTORRENT_BIN=`(which launchmany-console || which btlaunchmany) 2>/dev/null`
+if [ -z $BT_BITTORRENT_BIN ]; then
+	echo "error: couldn't find a valid bittorrent binary!"
+	echo "--> Install the BitTorrent package (bittorrent for RH)."
+	exit 1
+fi
+echo done
 
 %preun bittorrent
 /etc/init.d/systemimager-server-bittorrent stop
