@@ -132,6 +132,13 @@ endif
 	test ! -d /lib64 || TGTLIBDIR=lib64 ; \
 	cd $(BOEL_BINARIES_DIR) \
 		&& $(PYTHON) $(TOPDIR)/initrd_source/mklibs -L $(SRC_DIR)/$(PARTED_DIR)/libparted/.libs:$(DISCOVER_DIR)/lib/.libs:$(SRC_DIR)/$(DEVMAPPER_DIR)/lib/ioctl:$(SRC_DIR)/$(E2FSPROGS_DIR)/lib:/lib64:/usr/lib64:/usr/kerberos/lib64:/lib:/usr/lib:/usr/kerberos/lib:/lib/tls:`find /lib/tls /usr/lib/tls /lib64/tls /usr/lib64/tls -type d 2>/dev/null | tr '\n' :` -v -d $$TGTLIBDIR bin/* sbin/* $(INITRD_BUILD_DIR)/*bin/* $(INITRD_BUILD_DIR)/usr/*bin/*
+
+ifdef IS_PPC64
+	# Copy all the libnss*. It seems that with ppc64 these are not 
+	# correctly included. -AR-
+	[ -d /lib64 ] && cp -a /lib64/libnss* $(BOEL_BINARIES_DIR)/lib64 || true
+endif
+
 	#
 	# Include other files required by openssh that apparently aren't 
 	# picked up by mklibs for some reason. -BEF-
