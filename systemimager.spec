@@ -673,28 +673,31 @@ if [[ -a /sbin/chkconfig ]]; then
 fi
 
 %preun server
-/etc/init.d/systemimager-server-rsyncd stop
-/etc/init.d/systemimager-server-netbootmond stop
-/etc/init.d/systemimager-server-monitord stop
 
-if [[ -a /usr/lib/lsb/remove_initd ]]; then
-    /usr/lib/lsb/remove_initd /etc/init.d/systemimager-server-rsyncd
-    /usr/lib/lsb/remove_initd /etc/init.d/systemimager-server-netbootmond
-    /usr/lib/lsb/remove_initd /etc/init.d/systemimager-server-monitord
-fi
+if [ "$1" -lt 1 ]; then
+	/etc/init.d/systemimager-server-rsyncd stop
+	/etc/init.d/systemimager-server-netbootmond stop
+	/etc/init.d/systemimager-server-monitord stop
 
-if [[ -a /sbin/chkconfig ]]; then
-    /sbin/chkconfig --del systemimager-server-rsyncd
-    /sbin/chkconfig --del systemimager-server-netbootmond
-    /sbin/chkconfig --del systemimager-server-monitord
-fi
+	if [[ -a /usr/lib/lsb/remove_initd ]]; then
+	    /usr/lib/lsb/remove_initd /etc/init.d/systemimager-server-rsyncd
+	    /usr/lib/lsb/remove_initd /etc/init.d/systemimager-server-netbootmond
+	    /usr/lib/lsb/remove_initd /etc/init.d/systemimager-server-monitord
+	fi
 
-if [[ -a /etc/xinetd.d/rsync.presis~ ]]; then
-    mv /etc/xinetd.d/rsync.presis~ /etc/xinetd.d/rsync
-    `pidof xinetd > /dev/null`
-    if [[ $? == 0 ]]; then
-        /etc/init.d/xinetd restart
-    fi
+	if [[ -a /sbin/chkconfig ]]; then
+	    /sbin/chkconfig --del systemimager-server-rsyncd
+	    /sbin/chkconfig --del systemimager-server-netbootmond
+	    /sbin/chkconfig --del systemimager-server-monitord
+	fi
+
+	if [[ -a /etc/xinetd.d/rsync.presis~ ]]; then
+	    mv /etc/xinetd.d/rsync.presis~ /etc/xinetd.d/rsync
+	    `pidof xinetd > /dev/null`
+	    if [[ $? == 0 ]]; then
+	        /etc/init.d/xinetd restart
+	    fi
+	fi
 fi
 
 %post flamethrower
