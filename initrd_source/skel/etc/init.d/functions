@@ -1443,6 +1443,9 @@ start_ssh() {
             REDIRECTION_OPTIONS=""
         fi
 
+        # Default ssh user is root.
+        [ -z $SSH_USER ] && SSH_USER=root
+
         CMD="ssh -N -l $SSH_USER -n -f -L873:127.0.0.1:873 $IMAGESERVER $REDIRECTION_OPTIONS"
         logmsg $CMD
         $CMD || shellout
