@@ -22,10 +22,11 @@ gid = root
 use chroot = yes
 log file = /var/log/systemimager/rsyncd
 #
-# For additional security, modify and uncomment this line.  See
-# "man rsyncd.conf" for details.
+# For additional security, modify and uncomment the following lines.
+# See "man rsyncd.conf" for details.
 #
 #hosts allow = 127.0.0.0/24 MY_NET/NETMASK MY_CLIENT/32
+#hosts deny = 0.0.0.0/0
 
 [boot]
 path = USR_PREFIX/share/systemimager/boot
