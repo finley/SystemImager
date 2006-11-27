@@ -84,15 +84,15 @@ beep
 
 tmpfs_watcher
 
-get_scripts_directory
-
-autodetect_hardware_and_load_modules
-
 if [ ! -z $SSH_DOWNLOAD_URL ]; then
     echo
     echo start_ssh
     start_ssh
 fi
+
+get_scripts_directory
+
+autodetect_hardware_and_load_modules
 
 # HOSTNAME may already be set via local.cfg -BEF-
 if [ -z $HOSTNAME ]; then
