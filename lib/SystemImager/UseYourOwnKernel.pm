@@ -123,7 +123,9 @@ sub create_uyok_initrd() {
             print ">>> Copying modules to new initrd from: $module_dir...\n" if( $verbose );
             mkdir("$staging_dir/lib/modules", 0755) or die "$!";
             unless ($my_modules) {
-                $cmd = qq(rsync -a --exclude=build --exclude=source $modules_to_exclude $module_dir $staging_dir/lib/modules/);
+                my $kernel_release = _get_kernel_release($custom_kernel);
+                $cmd = qq(rsync -a --exclude=build --exclude=source ) .
+                       qq($modules_to_exclude $module_dir $staging_dir/lib/modules/$kernel_release);
                 !system( $cmd ) or die( "Couldn't $cmd." );
             } else {
                 # Copy only loaded modules ignoring exclusions.
