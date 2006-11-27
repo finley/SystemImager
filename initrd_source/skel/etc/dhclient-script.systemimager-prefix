@@ -18,8 +18,9 @@
 #   option-142  ->  SSH_DOWNLOAD_URL
 #   option-143  ->  FLAMETHROWER_DIRECTORY_PORTBASE
 #   option-144  ->  TMPFS_STAGING
-#   option-208  ->  SSH_DOWNLOAD_URL (depricated)
-#
+#   option-208  ->  SSH_DOWNLOAD_URL (deprecated)
+#                   disabled by JRT 2006-10-11
+#                   see dhclient.conf for commentary
 
 ### BEGIN SystemImager stuff part 0 ###
 FILE="/tmp/dhcp_info.$interface"
@@ -76,9 +77,10 @@ echo "GATEWAYDEV=$interface"                            >> $FILE
 if [ ! -z $new_option_142 ]; then
     SSH_DOWNLOAD_URL=$new_option_142
 
-elif [ ! -z $new_option_208 ]; then
-    SSH_DOWNLOAD_URL=$new_option_208
-
+#elif [ ! -z $new_option_208 ]; then
+#    SSH_DOWNLOAD_URL=$new_option_208
+#   disabled by JRT 2006-10-11 (see dhclient.conf for commentary)
+#
 fi
 echo "SSH_DOWNLOAD_URL=$SSH_DOWNLOAD_URL"               >> $FILE
 
