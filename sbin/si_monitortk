@@ -67,6 +67,14 @@ Options: (options can be presented in any order and may be abbreviated)
                         messages for the virtual console
                         (default is 8181).
 
+ --sort ATTRIBUTE       Sort the clients using ATTRIBUTE. Use 'help'
+                        to see the list of the available attributes
+                        (default is 'ip').
+
+ --sort-order 0|1       Set descending (0) or ascending order (1) when
+                        sorting the clients
+                        (default is 1).
+
  --progress             Display a graphical progress bar, instead of
                         numerical percentages.
 
@@ -93,12 +101,15 @@ die "No such lock directory '$conf{'lock_dir'}'\n"
 # Get the database file.
 $conf{'monitor_db'} ||= "/var/lib/systemimager/clients.xml";
 
-my ($help, $version, $quiet, $database, $refresh_rate, $progress, $monitor_port); 
+my ($help, $version, $quiet, $database, $refresh_rate, $progress, $monitor_port,
+    $sort_field_opt, $sort_order_opt); 
 GetOptions(
         "help"          => \$help,
         "version"       => \$version,
         "db=s"          => \$database,
-        "port=s"	=> \$monitor_port,
+        "port=i"	=> \$monitor_port,
+        "sort=s"	=> \$sort_field_opt,
+        "sort-order=i"	=> \$sort_order_opt,
         "progress"      => \$progress,
         "refresh=i"     => \$refresh_rate,
 ) or die "$help_info";
@@ -178,10 +189,6 @@ my @curr_logmsg = ();
 # Initialize refresing status.
 $is_refreshing = 0;
 
-# Set default sort options.
-$sort_field = 'ip';
-$sort_order = 1;
-
 # Client attributes.
 my $attrs_struct = {
 ### KEY ###     ### NAME ###       ### LABEL ###          ### DESCRIPTION ###
@@ -202,6 +209,31 @@ my $attrs_struct = {
 };
 # Cache attribute names.
 my @attrs = grep !/mac/, map {$attrs_struct->{$_}->{'-name'}} sort keys %{$attrs_struct};
+
+# Set default sort options.
+if ($sort_field_opt) {
+        my %all_attrs = map {$attrs_struct->{$_}->{'-name'} => 1} sort keys %{$attrs_struct};
+        unless ($all_attrs{$sort_field_opt}) {
+                print STDERR "error: \"$sort_field_opt\" is not a valid client attribute!\n\n" .
+                             "Choose one of the following attributes:\n"
+			unless ($sort_field_opt eq 'help');
+                foreach (keys %{$attrs_struct}) {
+                        my $attr_name = $attrs_struct->{$_}->{'-name'};
+                        my $attr_desc = $attrs_struct->{$_}->{'-description'};
+                        print STDERR "- $attr_name (" . $attr_desc . ")\n";
+                }
+                exit(1);
+        }
+        $sort_field = $sort_field_opt;
+} else {
+        $sort_field = 'ip';
+}
+if (defined($sort_order_opt)) {
+        $sort_order_opt = 1 if ($sort_order_opt);
+        $sort_order = $sort_order_opt;
+} else {
+        $sort_order = 1;
+}
 
 # Create the main window.
 $window = MainWindow->new();
@@ -1177,7 +1209,7 @@ si_monitortk - systemimager monitor Tk-based GUI
 
 =head1 SYNOPSIS
 
-si_monitortk [OPTIONS]... --db DATABASENAME 
+si_monitortk [OPTIONS]...
 
 =head1 DESCRIPTION
 
@@ -1216,6 +1248,26 @@ For default the file B</var/lib/systemimager/clients.xml> is taken.
 
 Use PORT to connect on the clients to gather messages for the virtual
 console (default is 8181).
+
+=item B<--sort ATTRIBUTE>
+
+Sort the clients using ATTRIBUTE. Use "help" to see the list of the
+available attributes.
+
+Example:
+
+Print the list of available attributes:
+
+# si_monitortk --sort help
+
+Sort the clients by hostname:
+
+# si_monitortk --sort host
+
+=item B<--sort-order 0|1>
+
+Set descending (0) or ascending order (1) to sort the clients
+(default is 1).
 
 =item B<--progress>
 
