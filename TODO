@@ -34,8 +34,6 @@
 
 11) si_mkautoinstallcd -- deal with fs sizing more gracefully
 
-12) si_mvimage bug ($file)
-
 13) improved tftpbooting architecture
 
     Location:
@@ -273,10 +271,6 @@ your choices:
     Scott Jackson
     Cluster Resources, Inc.
 
-22) Bernard Li: smart kernel append for ramdisk_size
-
-    ramdisk_size=80000
-
 24) date > /tmp/start-time at start of install
     date > /tmp/end-time at end of install
 
@@ -286,15 +280,12 @@ your choices:
 
 25) test fat fs creation
 
-26) retest successful autoinstall
-
 27) Enable sshd in ramdisk such that you can ssh into the nodes from the image
     server in the event of imaging failure
 
 28) si_monitortk improvements (thanks Bernard for the good suggestions):
     - add a cmdline option to choose the starting clients order
     - support multiple virtual console instances at the same time
-    - allow to export the content of the virtual console in an txt file
     - add a popup menu on the client entries to display detailed info
       and perform special actions (like open virtual console, check
       availability of the node, delete entry, etc)
@@ -310,7 +301,5 @@ your choices:
     that needs support can simply post the tarball to the list and we'll have
     immediately an overview of the system.
     
-36) Add USE_LOCAL_CFG boot option. Without this option don't execute
-    read_local_cfg(). This can speed up installation time in clients that
-    have not a floppy.
+36) Implement a GUI to perform all the common systemimager operations
 
