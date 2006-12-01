@@ -152,12 +152,6 @@ Options:
     Run silently.  Return an exit status of 0 for success or a non-zero
     exit status for failure.
 
- --unit MB | %
-    Use the specified unit of measurement to save disk informations. If
-    MB is specified the size of the partitions will be reported in
-    absolute values, otherwise with '%' all the values will be reported
-    in percentage relative to the total disk size.
-
  --rpm-install         
     This is only used when building an RPM.
 
@@ -213,7 +207,6 @@ GetOptions(
     "quiet"                => \my $quiet,
     "rpm|rpm-install"      => \my $rpm,
     "no-uyok"              => \my $no_uyok,
-    "unit=s"               => \my $unit_of_measurement,
     "my-modules"           => \my $my_modules,
     "kernel=s"             => \my $custom_kernel,
     "modules-dir=s"        => \my $modules_dir,
@@ -727,7 +720,7 @@ sub create_auto_install_script_conf {
             print qq(    /dev/$disk\n);
             print qq(\n);
         }
-        SystemImager::Common->save_partition_information($disk, $partition_tool, $file, $label_type, $unit_of_measurement);
+        SystemImager::Common->save_partition_information($disk, $partition_tool, $file, $label_type);
 
     }
 
@@ -746,7 +739,7 @@ sub create_auto_install_script_conf {
             print qq(    /dev/$disk\n);
             print qq(\n);
         }
-        SystemImager::Common->save_partition_information($disk, $partition_tool, $file, $label_type, $unit_of_measurement);
+        SystemImager::Common->save_partition_information($disk, $partition_tool, $file, $label_type);
 
     }
 

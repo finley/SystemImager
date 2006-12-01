@@ -292,10 +292,10 @@ sub write_auto_install_script_conf_footer {
 
 
 # Usage:
-# save_partition_information($old_sfdisk_file, $partition_tool, $destination_file, $label_type, $unit_of_measurement);
-# save_partition_information($disk, $partition_tool, $file, $label_type, $unit_of_measurement);
+# save_partition_information($old_sfdisk_file, $partition_tool, $destination_file, $label_type);
+# save_partition_information($disk, $partition_tool, $file, $label_type);
 sub save_partition_information {
-    my ($module, $disk, $partition_tool, $file, $label_type, $unit_of_measurement) = @_;
+    my ($module, $disk, $partition_tool, $file, $label_type) = @_;
     my ($dev);
     
     if ($partition_tool eq "old_sfdisk_file") {
@@ -331,17 +331,12 @@ sub save_partition_information {
         _validate_label_type_and_partition_tool_combo($disk, $partition_tool, $label_type);
     
     }
-
-    $unit_of_measurement = uc($unit_of_measurement);
-    unless (($unit_of_measurement eq '%') || ($unit_of_measurement eq 'MB')) {
-        die("FATAL: unsupported unit of measurement: $unit_of_measurement\n");
-    }
     
     # Open up the file that we'll be putting our generic partition info in. -BEF-
     open (DISK_FILE, ">>$file") or die ("FATAL: Couldn't open $file for appending!"); 
     
     print DISK_FILE qq(\n);
-    print DISK_FILE qq(  <disk dev=\"$dev\" label_type=\"$label_type\" unit_of_measurement=\"$unit_of_measurement\">\n);
+    print DISK_FILE qq(  <disk dev=\"$dev\" label_type=\"$label_type\" unit_of_measurement=\"MB\">\n);
     
         print DISK_FILE qq(    <!--\n);
         print DISK_FILE qq(      This disk's output was brought to you by the partition tool "$partition_tool",\n);
