@@ -123,7 +123,7 @@ sub create_uyok_initrd() {
             print ">>> Copying modules to new initrd from: $module_dir...\n" if( $verbose );
             mkdir("$staging_dir/lib/modules", 0755) or die "$!";
             unless ($my_modules) {
-                my $kernel_release = _get_kernel_release($custom_kernel);
+                my $kernel_release = ($custom_kernel) ? _get_kernel_release($custom_kernel) : $uname_r;
                 $cmd = qq(rsync -a --exclude=build --exclude=source ) .
                        qq($modules_to_exclude $module_dir $staging_dir/lib/modules/$kernel_release);
                 !system( $cmd ) or die( "Couldn't $cmd." );
@@ -252,7 +252,7 @@ sub _get_copy_of_kernel($) {
             $kernel_file = _choose_kernel_file( $uname_r );
         }
         unless( defined $kernel_file ) {
-                print "I couldn't identify your kernel file.  Please try --<some-option-that-needs-to-be-added-XXX>.\n";
+                print "I couldn't identify your kernel file.  Please try to use --kernel option.\n";
                 exit 1;
         }
 
