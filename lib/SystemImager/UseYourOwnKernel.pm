@@ -614,8 +614,6 @@ sub _create_new_initrd($$) {
         my $boot_dir = shift;
         my $filesystem = shift;
 
-        use Switch; 
-
         my $fs;
         if ($filesystem) {
             $fs = $filesystem;
@@ -631,14 +629,18 @@ sub _create_new_initrd($$) {
         print ">>> Choosing filesystem for new initrd:  $fs\n" if( $verbose );
         print ">>> Creating new initrd from staging dir:  $staging_dir\n" if( $verbose );
 
-        switch ($fs) {
-                case 'cramfs'   { _create_initrd_cramfs(   $staging_dir, $boot_dir) }
-                case 'ext2'     { _create_initrd_ext2(     $staging_dir, $boot_dir) }
-                case 'reiserfs' { _create_initrd_reiserfs( $staging_dir, $boot_dir) }
-                case 'jfs'      { _create_initrd_jfs(      $staging_dir, $boot_dir) }
-                case 'xfs'      { _create_initrd_xfs(      $staging_dir, $boot_dir) }
-
-                else { die("FATAL: Unable to create initrd using $fs") }
+        if ($fs eq 'cramfs') {
+            _create_initrd_cramfs($staging_dir, $boot_dir);
+        } elsif ($fs eq 'ext2') {
+            _create_initrd_ext2($staging_dir, $boot_dir);
+        } elsif ($fs eq 'reiserfs') {
+            _create_initrd_reiserfs($staging_dir, $boot_dir);
+        } elsif ($fs eq 'jfs') {
+            _create_initrd_jfs($staging_dir, $boot_dir);
+        } elsif ($fs eq 'xfs') {
+            _create_initrd_xfs($staging_dir, $boot_dir);
+        } else {
+            die("FATAL: Unable to create initrd using $fs\n");
         }
 
         # Print initrd size information.
