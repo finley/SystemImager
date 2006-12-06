@@ -292,10 +292,10 @@ sub write_auto_install_script_conf_footer {
 
 
 # Usage:
-# save_partition_information($old_sfdisk_file, $partition_tool, $destination_file, $label_type);
-# save_partition_information($disk, $partition_tool, $file, $label_type);
+# save_partition_information($old_sfdisk_file, $partition_tool, $destination_file, $label_type, $unit_of_measurement);
+# save_partition_information($disk, $partition_tool, $file, $label_type, $unit_of_measurement);
 sub save_partition_information {
-    my ($module, $disk, $partition_tool, $file, $label_type) = @_;
+    my ($module, $disk, $partition_tool, $file, $label_type, $unit_of_measurement) = @_;
     my ($dev);
     
     if ($partition_tool eq "old_sfdisk_file") {
@@ -331,12 +331,21 @@ sub save_partition_information {
         _validate_label_type_and_partition_tool_combo($disk, $partition_tool, $label_type);
     
     }
-    
+
+    if (defined($unit_of_measurement)) {
+        $unit_of_measurement = uc($unit_of_measurement);
+        unless (($unit_of_measurement eq '%') || ($unit_of_measurement eq 'MB')) {
+            die("FATAL: unsupported unit of measurement: $unit_of_measurement\n");
+        }
+    } else {
+        $unit_of_measurement = 'MB';
+    }
+
     # Open up the file that we'll be putting our generic partition info in. -BEF-
     open (DISK_FILE, ">>$file") or die ("FATAL: Couldn't open $file for appending!"); 
     
     print DISK_FILE qq(\n);
-    print DISK_FILE qq(  <disk dev=\"$dev\" label_type=\"$label_type\" unit_of_measurement=\"MB\">\n);
+    print DISK_FILE qq(  <disk dev=\"$dev\" label_type=\"$label_type\" unit_of_measurement=\"$unit_of_measurement\">\n);
     
         print DISK_FILE qq(    <!--\n);
         print DISK_FILE qq(      This disk's output was brought to you by the partition tool "$partition_tool",\n);
@@ -606,7 +615,8 @@ sub save_partition_information {
                         }
                     }
                     
-                    _print_to_auto_install_conf_file( $disk, $minor, $size, $partition_type, $id, $name, $flags );
+                    _print_to_auto_install_conf_file( $disk, $minor, $size, $partition_type, $id, $name, $flags,
+                        $end_of_last_partition_on_disk, $unit_of_measurement );
                 
                 }
             
@@ -618,7 +628,7 @@ sub save_partition_information {
             
             local *PARTITION_TOOL_OUTPUT;
             open (PARTITION_TOOL_OUTPUT, "$cmd|"); 
-                _turn_sfdisk_output_into_generic_partitionschemes_file($disk, \*PARTITION_TOOL_OUTPUT);
+                _turn_sfdisk_output_into_generic_partitionschemes_file($disk, $unit_of_measurement, \*PARTITION_TOOL_OUTPUT);
             close (PARTITION_TOOL_OUTPUT);
         
         } elsif ($partition_tool eq "old_sfdisk_file") {
@@ -627,7 +637,7 @@ sub save_partition_information {
             
             local *PARTITION_TOOL_OUTPUT;
             open (PARTITION_TOOL_OUTPUT, "<$file") or croak("Couldn't open $file for reading!"); 
-                _turn_sfdisk_output_into_generic_partitionschemes_file($file, \*PARTITION_TOOL_OUTPUT);
+                _turn_sfdisk_output_into_generic_partitionschemes_file($file, $unit_of_measurement, \*PARTITION_TOOL_OUTPUT);
             close (PARTITION_TOOL_OUTPUT);
         
         }
@@ -639,11 +649,11 @@ sub save_partition_information {
 
 
 # Usage:
-# _turn_sfdisk_output_into_generic_partitionschemes_file($disk);
-# _turn_sfdisk_output_into_generic_partitionschemes_file($old_sfdisk_file);
+# _turn_sfdisk_output_into_generic_partitionschemes_file($disk, $unit_of_measurement, \*PARTITION_TOOL_OUTPUT);
+# _turn_sfdisk_output_into_generic_partitionschemes_file($old_sfdisk_file, $unit_of_measurement, \*PARTITION_TOOL_OUTPUT);
 sub _turn_sfdisk_output_into_generic_partitionschemes_file {
 
-    my ($disk, $PARTITION_TOOL_OUTPUT) = @_;
+    my ($disk, $unit_of_measurement, $PARTITION_TOOL_OUTPUT) = @_;
     my $units;
 
     my @partition_tool_output = <$PARTITION_TOOL_OUTPUT>;
@@ -868,7 +878,8 @@ sub _turn_sfdisk_output_into_generic_partitionschemes_file {
             $size = "*";
         }
 
-        _print_to_auto_install_conf_file( $disk, $minor, $size, $partition_type, $id, $name, $flags );
+        _print_to_auto_install_conf_file( $disk, $minor, $size, $partition_type, $id, $name, $flags,
+            $end_of_last_partition_on_disk, $unit_of_measurement );
      
       }
     }
@@ -876,10 +887,12 @@ sub _turn_sfdisk_output_into_generic_partitionschemes_file {
 
 
 # Usage:
-# _print_to_auto_install_conf_file($disk, $minor, $startMB, $endMB, $partition_type, $id, $name, $flags);
+# _print_to_auto_install_conf_file($disk, $minor, $startMB, $endMB, $partition_type, $id, $name, $flags, 
+#                                  $end_of_last_partition_on_disk, $unit_of_measurement);
 sub _print_to_auto_install_conf_file {
 
-    my ($disk, $minor, $size, $partition_type, $id, $name, $flags) = @_;
+    my ($disk, $minor, $size, $partition_type, $id, $name, $flags,
+        $end_of_last_partition_on_disk, $unit_of_measurement) = @_;
 
     # Name may not be set in some cases.
     unless ($name) { $name = "-"; }
@@ -890,6 +903,11 @@ sub _print_to_auto_install_conf_file {
       $flags =~ s/\s+//g;
     } else {
       $flags = "-";  # Set to n/a value. -BEF-
+    }
+
+    if (($unit_of_measurement eq '%') && ($size ne '*')) {
+        $size = sprintf("%.3f", ($size / $end_of_last_partition_on_disk) * 100);
+        $size = 0.001 if ($size <= 0);
     }
     
     # Begin output for a line.
