@@ -255,6 +255,7 @@ elif [ "x$BITTORRENT" = "xy" ]; then
             logmsg ""
             shellout
         fi
+        logmsg "--> staging in: $BITTORRENT_STAGING"
     fi
     # Download image from peers
     logmsg "Start downloading image using torrent ${bittorrent_tarball}.torrent"
@@ -356,6 +357,7 @@ do
                 logmsg "warning: cannot find a staging directory to save file: $bittorrent_tarball"
                 bittorrent_tarball=""
             fi
+            logmsg "--> staging in: $BITTORRENT_STAGING"
         fi
         if [ ! -z $bittorrent_tarball ]; then
             # Start downloading
