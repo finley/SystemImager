@@ -29,29 +29,32 @@ write_monitor_msg() {
     [ -z $netcat ] && return
 
     rebooted_state_file=/etc/systemimager/si_monitor.client.rebooted
-    rm -f $rebooted_state_file
-
-    cmd="[ ! -f $rebooted_state_file ] && touch $rebooted_state_file && (echo \"$send_msg\" | $netcat -w $TIMEOUT $MONITOR_SERVER $MONITOR_PORT)"
+    cat << EOF > $rebooted_state_file
+#!/bin/bash
+echo "$send_msg" | $netcat -w $TIMEOUT $MONITOR_SERVER $MONITOR_PORT
+>$rebooted_state_file
+EOF
+    chmod 700 $rebooted_state_file
 
     if [ -f /etc/SuSE-release ]; then
         # SuSE
         rc_local=/etc/init.d/after.local
-        grep -q $rebooted_state_file $rc_local 2>/dev/null || echo $cmd >> $rc_local
+        grep -q $rebooted_state_file $rc_local 2>/dev/null || echo $rebooted_state_file >> $rc_local
     elif [ -f /etc/redhat-release ]; then
         # RedHat / Fedora
         rc_local=/etc/rc.local
-        grep -q $rebooted_state_file $rc_local 2>/dev/null || echo $cmd >> $rc_local
+        grep -q $rebooted_state_file $rc_local 2>/dev/null || echo $rebooted_state_file >> $rc_local
     elif [ -f /etc/debian_version ]; then
         # Debian
         init_d_file=/etc/init.d/systemimager-monitor-firstboot
 	cat << EOF > $init_d_file
-#!/bin/sh
+#!/bin/bash
 
 set -e
 
 case "\$1" in
   start)
-        $cmd
+        $rebooted_state_file
         ;;
   stop|reload|restart|force-reload)
         ;;
@@ -65,7 +68,7 @@ EOF
     else
         # Unknown distribution... try with standard rc.local.
         rc_local=/etc/rc.local
-        grep -q $rebooted_state_file $rc_local 2>/dev/null || echo $cmd >> $rc_local
+        grep -q $rebooted_state_file $rc_local 2>/dev/null || echo $rebooted_state_file >> $rc_local
     fi
 }
 
