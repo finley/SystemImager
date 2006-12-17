@@ -1,6 +1,6 @@
---- discover1-data-1.2006.01.14ubuntu2/pci.lst.orig	2006-10-30 18:47:11.000000000 +0100
-+++ discover1-data-1.2006.01.14ubuntu2/pci.lst	2006-10-30 18:48:57.000000000 +0100
-@@ -149,13 +149,13 @@
+--- discover-data-2.2006.10.29/pci.lst.orig	2006-10-26 01:06:27.000000000 -0700
++++ discover-data-2.2006.10.29/pci.lst	2006-12-14 12:43:26.000000000 -0800
+@@ -188,13 +188,13 @@
  	10000013	scsi	sym53c8xx_2	53c875a
  	10000020	scsi	sym53c8xx_2	53c1010 Ultra3 SCSI Adapter
  	10000021	scsi	sym53c8xx_2	53c1010 66MHz  Ultra3 SCSI Adapter
@@ -16,3 +16,12 @@
  	10000054	scsi	mptscsih	SAS1068 PCI-X Fusion-MPT SAS
  	10000056	unknown	unknown	SAS1064E PCI-Express Fusion-MPT SAS
  	10000058	unknown	unknown	SAS1068E PCI-Express Fusion-MPT SAS
+@@ -7151,7 +7151,7 @@
+ 	80861093	unknown	unknown	PRO/100 VM Network Connection
+ 	80861094	unknown	unknown	PRO/100 VE Network Connection
+ 	80861095	unknown	unknown	PRO/100 VE Network Connection
+-	80861096	unknown	unknown	80003ES2LAN Gigabit Ethernet Controller (Copper)
++	80861096	ethernet	e1000	80003ES2LAN Gigabit Ethernet Controller (Copper)
+ 	80861097	unknown	unknown	631xESB/632xESB DPT LAN Controller (Fiber)
+ 	80861098	unknown	unknown	80003ES2LAN Gigabit Ethernet Controller (Serdes)
+ 	80861099	ethernet	unknown	82546GB Gigabit Ethernet Controller (Copper)
