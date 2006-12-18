@@ -1,0 +1,20 @@
+--- discover-data-2.2006.10.29/pci-26.lst.orig	2006-12-12 17:36:24.000000000 -0800
++++ discover-data-2.2006.10.29/pci-26.lst	2006-12-14 12:44:00.000000000 -0800
+@@ -68,7 +68,7 @@
+ 	10000040	scsi	mptscsih	53c1035 PCI-X Fusion-MPT Dual Ultra320 SCSI
+ 	10000050	scsi	mptscsih	SAS1064 PCI-X Fusion-MPT SAS
+ 	10000054	scsi	mptscsih	SAS1068 PCI-X Fusion-MPT SAS
+-	10000056	unknown	mptsas	SAS1064E PCI-Express Fusion-MPT SAS
++	10000056	scsi	mptsas	SAS1064E PCI-Express Fusion-MPT SAS
+ 	10000058	unknown	mptsas	SAS1068E PCI-Express Fusion-MPT SAS
+ 	1000005a	unknown	mptsas	SAS1066E PCI-Express Fusion-MPT SAS
+ 	1000005e	unknown	mptsas	SAS1066 PCI-X Fusion-MPT SAS
+@@ -1997,7 +1997,7 @@
+ 	8086266d	modem	snd-intel8x0m	82801FB/FBM/FR/FW/FRW (ICH6 Family) AC'97 Modem Controller
+ 	8086266e	sound	snd-intel8x0	82801FB/FBM/FR/FW/FRW (ICH6 Family) AC'97 Audio Controller
+ 	8086266f	ide	piix	82801FB/FBM/FR/FW/FRW (ICH6 Family) IDE Controller
+-	80862680	unknown	ata_piix	631xESB/632xESB/3100 Chipset SATA Storage Controller IDE
++	80862680	scsi	ata_piix	631xESB/632xESB/3100 Chipset SATA Storage Controller IDE
+ 	80862681	unknown	ahci	631xESB/632xESB SATA Storage Controller AHCI
+ 	80862682	unknown	ahci	631xESB/632xESB SATA Storage Controller RAID
+ 	80862683	unknown	ahci	631xESB/632xESB SATA Storage Controller RAID
