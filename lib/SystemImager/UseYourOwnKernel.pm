@@ -436,6 +436,7 @@ sub choose_file_system_for_new_initrd() {
         if ((grep { /cramfs/ } @filesystems) 
                 and (! -e "$modules_dir/kernel/fs/cramfs/cramfs.o")
                 and (! -e "$modules_dir/kernel/fs/cramfs/cramfs.ko")
+                and (! -e "$modules_dir/kernel/fs/cramfs/cramfs.ko.gz")
                 ) { 
                 $fs = "cramfs";
         }
@@ -444,6 +445,7 @@ sub choose_file_system_for_new_initrd() {
         elsif ((grep { /ext2/ } @filesystems) 
                 and (! -e "$modules_dir/kernel/fs/ext2/ext2.o")
                 and (! -e "$modules_dir/kernel/fs/ext2/ext2.ko")
+                and (! -e "$modules_dir/kernel/fs/ext2/ext2.ko.gz")
                 ) { 
                 $fs = "ext2";
         }
@@ -452,6 +454,7 @@ sub choose_file_system_for_new_initrd() {
         elsif ((grep { /ext3/ } @filesystems) 
                 and (! -e "$modules_dir/kernel/fs/ext3/ext3.o")
                 and (! -e "$modules_dir/kernel/fs/ext3/ext3.ko")
+                and (! -e "$modules_dir/kernel/fs/ext3/ext3.ko.gz")
                 ) { 
                 $fs = "ext3";
         }
@@ -460,6 +463,7 @@ sub choose_file_system_for_new_initrd() {
         elsif ((grep { /reiserfs/ } @filesystems) 
                 and (! -e "$modules_dir/kernel/fs/reiserfs/reiserfs.o")
                 and (! -e "$modules_dir/kernel/fs/reiserfs/reiserfs.ko")
+                and (! -e "$modules_dir/kernel/fs/reiserfs/reiserfs.ko.gz")
                 ) { 
                 $fs = "reiserfs";
         }
@@ -468,6 +472,7 @@ sub choose_file_system_for_new_initrd() {
         elsif ((grep { /jfs/ } @filesystems) 
                 and (! -e "$modules_dir/kernel/fs/jfs/jfs.o")
                 and (! -e "$modules_dir/kernel/fs/jfs/jfs.ko")
+                and (! -e "$modules_dir/kernel/fs/jfs/jfs.ko.gz")
                 ) { 
                 $fs = "jfs";
         }
@@ -476,6 +481,7 @@ sub choose_file_system_for_new_initrd() {
         elsif ((grep { /xfs/ } @filesystems) 
                 and (! -e "$modules_dir/kernel/fs/xfs/xfs.o")
                 and (! -e "$modules_dir/kernel/fs/xfs/xfs.ko")
+                and (! -e "$modules_dir/kernel/fs/xfs/xfs.ko.gz")
                 ) { 
                 $fs = "xfs";
                 print "XXX remove this warning line once xfs is tested.\n";
