@@ -134,10 +134,11 @@ sub create_uyok_initrd() {
                     $cmd = qq(rsync -aR $module $staging_dir);
                     !system( $cmd ) or die( "Couldn't $cmd." );
                 }
-                # Copy module configuration files.
-                $cmd = qq(rsync -R $module_dir/* $staging_dir);
-                !system( $cmd ) or die( "Couldn't $cmd." );
             }
+            # Copy module configuration files.
+            $cmd = qq(rsync -R $module_dir/* $staging_dir);
+            !system( $cmd ) or die( "Couldn't $cmd." );
+
             #
             # add modules and insmod commands
             #
