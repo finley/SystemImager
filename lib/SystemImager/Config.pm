@@ -35,7 +35,9 @@ $config = AppConfig->new(
     'autoinstall_torrent_dir'   => { ARGCOUNT => 1 },
 );
 
-$config->file('/etc/systemimager/systemimager.conf');
+my $config_file = '/etc/systemimager/systemimager.conf';
+$config->file($config_file) if (-f $config_file);
 
 $::main::config = $config;
 
+1;
