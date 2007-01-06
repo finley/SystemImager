@@ -6,6 +6,23 @@
 #   $Id$
 #
 
+3.7.6
+--------------------------------------------------------------------------------
+- resolved some compiling problems in Debian
+- fixed perl::threads bug for Mandriva
+- built more portable RPMs between different distributions
+- added si_psh (SystemImager Parallel Shell) and si_pcp (SystemImager
+  Parallel Copy)
+- added si_mkautoinstalldisk, a tool to create autoinstall disks
+  (supports also USB devices)
+- added --no-delete option to si_updateclient
+- added --unit option to si_prepareclient
+- some fixes in the ssh transport
+- better support for ppc64 architectures
+- additional hardware support
+- updated backend packages (LVM, devmapper, discover, rsync)
+- generic bug fixes
+
 3.7.5
 --------------------------------------------------------------------------------
 - BOEL updated to kernel 2.6.18.1
