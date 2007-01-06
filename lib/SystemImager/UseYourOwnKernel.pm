@@ -127,7 +127,7 @@ sub create_uyok_initrd() {
             unless ($my_modules) {
                 my $kernel_release = ($custom_kernel) ? _get_kernel_release($custom_kernel) : $uname_r;
                 $cmd = qq(rsync -a --exclude=build --exclude=source ) .
-                       qq($modules_to_exclude $module_dir $staging_dir/lib/modules/$kernel_release);
+                       qq($modules_to_exclude $module_dir/* $staging_dir/lib/modules/$kernel_release);
                 !system( $cmd ) or die( "Couldn't $cmd." );
             } else {
                 # Copy only loaded modules ignoring exclusions.
