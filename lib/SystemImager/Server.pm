@@ -1333,7 +1333,7 @@ sub _write_out_mkfs_commands {
         } elsif ( $xml_config->{fsinfo}->{$line}->{fs} eq "ext2" ) {
 
             # create fs
-            $cmd = "mke2fs $real_dev || shellout";
+            $cmd = "mke2fs -q $real_dev || shellout";
             print $out qq(logmsg "$cmd"\n);
             print $out "$cmd\n";
 
@@ -1376,7 +1376,7 @@ sub _write_out_mkfs_commands {
         } elsif ( $xml_config->{fsinfo}->{$line}->{fs} eq "ext3" ) {
 
             # create fs
-            $cmd = "mke2fs -j $real_dev || shellout";
+            $cmd = "mke2fs -q -j $real_dev || shellout";
             print $out qq(logmsg "$cmd"\n);
             print $out "$cmd\n";
 
