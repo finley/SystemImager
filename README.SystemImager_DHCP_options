@@ -20,7 +20,7 @@ options.  The following are special DHCP options used by SystemImager.
 Files in the SystemImager source code that are affected by these options 
 include:
 
-    sbin/mkdhcpserver
+    sbin/si_mkdhcpserver
     initrd_source/skel/etc/dhclient.conf
     initrd_source/skel/etc/dhclient-script.systemimager-prefix
     initrd_source/skel/etc/init.d/functions (the write_variables function)
