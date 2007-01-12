@@ -107,6 +107,31 @@ sub numerically {
     $a <=> $b;
 }
 
+# Description:
+# Numerically compare standard version strings.
+#
+# Usage:
+# version_cmp($v1, $v2)
+#
+sub version_cmp {
+	my ($v1, $v2) = @_;
+
+	my @n1 = split(/\./, $v1);
+	my @n2 = split(/\./, $v2);
+	my $n = ($#n1 <= $#n2) ? $#n1 : $#n2;
+
+	my $i = 0;
+	while (($i < $n) and ($n1[$i] == $n2[$i])) {
+		$i++;
+	}
+	if ($#n1 > $#n2) {
+		return -1;
+	} elsif ($#n1 < $#n2) {
+		return 1;
+	} else {
+		return $n1[$i] - $n2[$i];
+	}
+}
 
 # Usage:
 # my $efi_dir = where_is_my_efi_dir()
@@ -376,7 +401,7 @@ sub save_partition_information {
             my $flag_regex = '(boot|root|swap|hidden|raid|lvm|lba|hp-service|palo|type=[0-9a-zA-Z]+)';
 
             my $cmd;
-            if( $parted_version ge '1.6.23') {
+            if (version_cmp($parted_version, '1.6.23') >= 0) {
                 #
                 # Specify that output should be in MB. -BEF-
                 $cmd = "parted -s -- /dev/$disk unit MB print";
@@ -500,7 +525,7 @@ sub save_partition_information {
                         # 5      51001.031  52993.467  linux-swap  swap                  swap
                         # 6      52993.468 152627.835  ext3        untitled              
                         #
-                        if( $parted_version ge '1.6.23') {
+                        if (version_cmp($parted_version, '1.6.23') >= 0) {
                             ($minor, $startMB, $endMB, $junk, $leftovers) = split(/\s+/, $_, 5);
                         } else {
                             ($minor, $startMB, $endMB, $leftovers) = split(/\s+/, $_, 4);
