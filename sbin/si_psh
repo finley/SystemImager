@@ -27,21 +27,21 @@ Usage: $program_name --hosts host_range [OPTION]... COMMAND
 Options: (options can be presented in any order and can be abbreviated)
  --help|-h              Display this output.
 
- --version|-v           Display version and copyright information.
+ --version, -v          Display version and copyright information.
 
- --max|-m NUM           Set the maximum number of concurrent sessions
+ --max, -m=NUM          Set the maximum number of concurrent sessions
                         to NUM.
 
- --hosts|-n HOST_LIST   List of target nodes. List can be separated by
+ --hosts, -n=HOST_LIST  List of target nodes. List can be separated by
                         comma, spaces or new line and can include
                         ranges (e.g. "node001-node256,node300 node400").
 
- --hosts-file|-f FILE   File that contains the list of the target hosts
+ --hosts-file, -f=FILE  File that contains the list of the target hosts
                         (one host per line).
 
- --timeout|-t NUM       Set the timeout of the ssh sessions.
+ --timeout, -t=NUM      Set the timeout of the ssh sessions.
 
- --ssh-user|-l USER     Run the command as user USER.
+ --ssh-user, -l=USER    Run the command as user USER.
 
 EOF
 
