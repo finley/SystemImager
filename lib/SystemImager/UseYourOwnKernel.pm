@@ -302,10 +302,14 @@ sub is_kernel {
                 my ($input) = (<INPUT>);
                 #
                 # eliminate vmlinux files on RH
-                if( $input =~ m/ELF 32-bit LSB executable,/ ) { return undef; }
+                if( $input =~ m/ELF (32|64)-bit LSB executable,/ ) { return undef; }
                 #
                 # eliminate compressed data (eg. ramdisk)
                 if( $input =~ m/gzip compressed data,/ ) { return undef; }
+                # eliminate cpio archives (eg. ramdisk)
+                if( $input =~ m/cpio archive/ ) { return undef; }
+                # eliminate cramfs files (eg. ramdisk)
+                if( $input =~ m/Linux Compressed ROM File System data,/ ) { return undef; }
         close(INPUT);
 
         #
