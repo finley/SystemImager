@@ -393,11 +393,21 @@ if($source_host) {
       $file="$exclude_file";
       open (EXCLUDE_FILE, "<$file") || die "$program_name: Couldn't open $file for reading!\n";
         while(<EXCLUDE_FILE>){
-          print FINAL_EXCLUDE_FILE "$_\n";
+          print FINAL_EXCLUDE_FILE "$_";
 	}
       close EXCLUDE_FILE;
     }
   close FINAL_EXCLUDE_FILE;
+
+  # Print all exclusions.
+  if (!$quiet) {
+    open (FINAL_EXCLUDE_FILE, "<$final_exclude_file") || 
+        die "$program_name: Couldn't open $final_exclude_file for reading!\n";
+    while (<FINAL_EXCLUDE_FILE>) {
+        print $_;
+    }
+    close FINAL_EXCLUDE_FILE;
+  }
 
   # compile rsync options
   $options = "--delete --delete-excluded --exclude-from=$final_exclude_file";
