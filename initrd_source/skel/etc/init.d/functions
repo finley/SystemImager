@@ -1488,8 +1488,12 @@ start_ssh() {
         logmsg "Using ssh-keygen to create this hosts private key"
         logmsg
         mkdir -p /var/empty || shellout
-        ssh-keygen -t dsa -N "" -f /etc/ssh/ssh_host_dsa_key || shellout
-        ssh-keygen -t rsa -N "" -f /etc/ssh/ssh_host_rsa_key || shellout
+        if [ ! -f /etc/ssh/ssh_host_dsa_key ]; then
+            ssh-keygen -t dsa -N "" -f /etc/ssh/ssh_host_dsa_key || shellout
+        fi
+        if [ ! -f /etc/ssh/ssh_host_rsa_key ]; then
+            ssh-keygen -t rsa -N "" -f /etc/ssh/ssh_host_rsa_key || shellout
+        fi
         
         # if hostname not set, try DNS
         if [ -z $HOSTNAME ]; then
