@@ -24,13 +24,12 @@ PermitRootLogin yes
 StrictModes yes
 RSAAuthentication yes
 PubkeyAuthentication yes
-RhostsAuthentication no
+AuthorizedKeysFile     .ssh/authorized_keys
 IgnoreRhosts yes
 RhostsRSAAuthentication no
 HostbasedAuthentication no
 PermitEmptyPasswords no
 PasswordAuthentication no
-PAMAuthenticationViaKbdInt no
 X11Forwarding no
 X11DisplayOffset 10
 PrintMotd no
