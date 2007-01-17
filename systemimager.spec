@@ -207,7 +207,6 @@ BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
-Obsoletes: systemimager-%{_build_arch}boot
 BuildRequires: python, python-devel
 Requires: systemimager-server >= %{version}
 AutoReqProv: no
@@ -241,7 +240,6 @@ BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
-Obsoletes: systemimager-%{_build_arch}initrd_template
 BuildRequires: python, python-devel, %{python_xml}
 Requires: systemimager-client >= %{version}
 AutoReqProv: no
@@ -330,6 +328,9 @@ More information can be found at the website:
 http://developer.osdl.org/kees/software/imagemanip/
 
 %changelog
+* Wed Jan 17 2007 Andrea Righi <a.righi@cineca.it>
+- Removed "Obsoletes" attribute from boot and initrd_template.
+
 * Sun Nov 19 2006 Andrea Righi <a.righi@cineca.it>
 - Moved the BitTorrent dependency for systemimager-bittorrent in %pre
   section. In this way we have a package compatible both for SuSE and RH
