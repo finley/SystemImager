@@ -94,13 +94,19 @@ my $backup_extension = ".before_systemimager-$VERSION";
 my $systemimagerdir = "/etc/systemimager";
 
 # location of temporary rsyncd.conf file
-my $rsyncd_conf_file = "/tmp/rsyncd.conf.$$";
+my $rsyncd_conf_file = tmpnam();
+
+# location of temporary log file
+my $rsyncd_log_file = tmpnam();
 
 # set path
 $ENV{PATH} = "/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin";
 
 # we rely on english text when parsing command output
 $ENV{"LANG"} = "C";
+
+# port used by rsync daemon
+my $RSYNC_PORT = 873;
 
 my $progname = basename $0;
 
@@ -521,6 +527,7 @@ create_auto_install_script_conf($disks);
 
 # Run the rsync daemon for getimage?
 unless($norsyncd) {
+
     # install SystemImager brand rsyncd.conf file ($rsyncd_conf_file)
     create_rsyncd_conf($rsyncd_conf_file);
     
@@ -548,38 +555,8 @@ unless($norsyncd) {
       print TMP "127.0.0.1  $hostname\n";
     close(TMP);
     
-    
-    # start up our fresh daemon
-    if(!$quiet) {
-    
-        # Give a couple of seconds for the old daemon to die.
-        print "Starting or re-starting rsync as a daemon";
-        $|++;
-        foreach (1..2) {
-             sleep 1;
-             print ".";
-        }
-    
-        # Start up the new one.
-        system("rsync --daemon --config=$rsyncd_conf_file");
-    
-        # Give a few seconds for the new daemon to start.
-        $|++;
-        foreach (3..5) {
-             sleep 1;
-             print ".";
-        }
-        print "\n";
-    
-        # Wrap up
-        print "done!\n";
-    } else {
-      # still need to sleep
-      sleep 2;
-      system("rsync --daemon --config=$rsyncd_conf_file");
-      sleep 3;
-    }
-    
+    start_rsyncd();
+
     # Put the original /etc/hosts file back (sans our temporary entry).
     $source      = "$file.before-$progname";
     $destination = $file;
@@ -621,6 +598,34 @@ location.
     EOF
 }
 
+# Set the clean-up handlers for SIGINT, SIGHUP and die.
+$SIG{INT} = $SIG{HUP} = sub {
+    stop_rsyncd();
+    exit(1);
+};
+$SIG{__DIE__} = sub {
+    my ($msg) = @_;
+    print "$msg\n";
+    stop_rsyncd();
+    exit(1);
+};
+
+# Wait for the end of the cloning process.
+unless ($norsyncd) {
+    my $pid;
+    if ($pid = fork()) {
+        # Run in background.
+        exit(0);
+    } elsif (defined($pid)) {
+        open(STDIN, '/dev/null') or die("error: can't read from /dev/null: $!\n");
+        open(STDOUT, '>>/dev/null') or die("error: can't write to /dev/null: $!\n");
+        open(STDERR, '>>/dev/null') or die("error: can't write to /dev/null: $!\n");
+        wait_for_completion();
+        stop_rsyncd();
+    } else {
+        print STDERR "WARNING: the rsync daemon will be not stopped automatically!\n";
+    }
+}
 exit(0);
 
 ### BEGIN functions
@@ -960,15 +965,102 @@ dont compress = *.gz *.tgz *.zip *.Z *.ZIP *.bz2 *.deb *.rpm *.dbf
 uid = root
 gid = root
 hosts allow = $hosts_allow
+log file = $rsyncd_log_file
 
 [root]
     path = /
+    exclude = $rsyncd_conf_file $rsyncd_log_file
 
 EOF
 
   close(OUT);
 }
 
+sub start_rsyncd {
+    # start up our fresh daemon
+    if (!$quiet) {
+        $SystemImager::UseYourOwnKernel::verbose = 0;
+
+        # Give a couple of seconds for the old daemon to die.
+        print "Starting or re-starting rsync as a daemon";
+        $|++;
+        foreach (1..2) {
+             sleep 1;
+             print ".";
+        }
+    
+        # Start up the new one.
+        SystemImager::UseYourOwnKernel::run_cmd("rsync --daemon --port=$RSYNC_PORT --config=$rsyncd_conf_file", 0, 0);
+    
+        # Give a few seconds for the new daemon to start.
+        $|++;
+        foreach (3..5) {
+             sleep 1;
+             print ".";
+        }
+        print "\n";
+    
+        # Wrap up
+        print "done!\n";
+    } else {
+      # still need to sleep
+      sleep(2);
+      SystemImager::UseYourOwnKernel::run_cmd("rsync --daemon --port=$RSYNC_PORT --config=$rsyncd_conf_file", 0, 0);
+      sleep(3);
+    }
+}
+
+sub stop_rsyncd {
+    foreach my $i (0 .. 1) {
+        chomp(my $pid = `lsof -ti tcp:$RSYNC_PORT`);
+        unless ($pid) {
+            last;
+        }
+        if (!$i) {
+            # Send -HUP to the rsync daemon first.
+            kill(1, $pid);
+        } else {
+            # Force the kill of the rsync daemon.
+            kill(9, $pid);
+        }
+        sleep(3);
+    }
+    SystemImager::UseYourOwnKernel::run_cmd("rm -f $rsyncd_conf_file $rsyncd_log_file", 0, 0);
+}
+
+sub wait_for_completion
+{
+    if ($norsyncd) {
+        return 0;
+    }
+
+    my $ret = 0;
+
+    # Look into the log file to catch the completed signal.
+    my $cmd = "tail -n 0 --follow=name $rsyncd_log_file";
+    local *LOG_FILE;
+    my $pid = open(LOG_FILE, "$cmd |");
+    if (!$pid) {
+        return 1;
+    }
+    while (my $line = <LOG_FILE>) {
+        if ($line =~ m/rsync error: received SIGUSR1 or SIGINT/) {
+            # rsync daemon was stopped or killed by an external operation.
+            $ret = 1;
+            last;
+        } else {
+            chomp(my $err = (split(/\s+/, $line))[5]);
+            if ($err eq $SystemImager::Common::rsync_magic_string) {
+                # correctly received the completed signal.
+                last;
+           }
+        }
+    }
+    kill(9, $pid);
+    close(LOG_FILE);
+
+    return $ret;
+}
 
 sub killall {
     my ($pname,$signal) = @_;

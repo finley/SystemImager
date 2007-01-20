@@ -15,6 +15,9 @@ use vars qw($version_number $VERSION);
 $version_number="SYSTEMIMAGER_VERSION_STRING";
 $VERSION = $version_number;
 
+# magic string to be requested via rsync when the cloning is completed
+our $rsync_magic_string = "'__cloning_completed__'";
+
 ################################################################################
 #
 # Subroutines in this module include:
