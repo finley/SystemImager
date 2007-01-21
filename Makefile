@@ -436,7 +436,7 @@ install_docs: docs
 	mkdir -p $(DOC)
 	cp -a $(MANUAL_DIR)/html $(DOC)
 	cp $(MANUAL_DIR)/*.ps $(MANUAL_DIR)/*.pdf $(DOC)
-	rsync -av --exclude 'CVS/' doc/examples/ $(DOC)/examples/
+	rsync -av --exclude 'CVS/' --exclude '.svn/' doc/examples/ $(DOC)/examples/
 	#XXX $(SI_INSTALL) -m 644 doc/media-api.txt $(DOC)/
 
 # builds the manual from SGML source
