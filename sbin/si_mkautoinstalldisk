@@ -48,6 +48,9 @@ Options: (options can be presented in any order and can be abbreviated)
  --flavor FLAVOR        Specify a flavor of boot media.
                         (defaults to "standard").
 
+ --arch ARCH            Create an auto-install disk image for an
+                        architecture other than that of this host.
+
  --kernel FILE          Specify an alternate autoinstall kernel.
 
  --initrd FILE          Specify an alternate autoinstall ramdisk.
@@ -80,6 +83,7 @@ GetOptions(
 	"yes"		=> \my $yes,
 	"device=s"	=> \my $device,
 	"flavor=s"	=> \my $flavor,
+	"arch=s"	=> \my $arch,
 	"kernel=s"	=> \my $kernel,
 	"initrd=s"	=> \my $initrd,
 	"append=s"	=> \my $append,
@@ -87,8 +91,10 @@ GetOptions(
 	"config=s"	=> \my $local_cfg,
 ) or die("$help_info");
 
-my $arch = (uname())[4];
-$arch =~ s/i.86/i386/;
+unless ($arch) {
+    $arch = (uname())[4];
+    $arch =~ s/i.86/i386/;
+}
 
 # Set the shell PATH for system() calls.
 $ENV{PATH} = '/sbin:/usr/sbin:/usr/local/sbin:' . $ENV{PATH};
@@ -117,11 +123,23 @@ if ($ssh_key) {
 	}
 }
 unless ($kernel and $initrd) {
-	my %available_flavors =
-		SystemImager::Common->get_boot_flavors("i386", $autoinstall_boot_dir);
-	unless (%available_flavors) {
+	# Emulate try .. catch handling mechanism.
+	my %available_flavors;
+	eval {
+		# Check if there are available flavors for the selected
+		# architecture.
+		unless (-d "$autoinstall_boot_dir/$arch") {
+			die;
+		}
+		# Get all the available flavors.
+		%available_flavors = SystemImager::Common->get_boot_flavors($arch, $autoinstall_boot_dir);
+		unless (%available_flavors) {
+			die;
+		}
+	};
+	if ($@) {
 		die("error: couldn't find any boot flavors for SystemImager on $arch.\n" .
-		    "Please install the appropriate boot files.\n");
+			"Please install the appropriate boot files.\n");
 	}
 	$flavor = 'standard' if (!$flavor);
 	unless ($available_flavors{$flavor}) {
@@ -155,6 +173,10 @@ if ($quiet || $yes) {
 }
 print "\n";
 
+print "Using kernel: $kernel\n";
+print "Using initrd: $initrd\n";
+print "\n";
+
 my ($cmd, $mnt_dir, $is_mounted);
 
 print "Creating DOS filesystem in $device...\n";
@@ -175,7 +197,7 @@ mkdir($mnt_dir, 0770) or
 $SIG{__DIE__} = sub {
 	my $msg = shift;
 	if ($is_mounted) {
-		run_cmd("sudo umount $mnt_dir");
+		run_cmd("sudo umount $mnt_dir || true");
 	}
 	if (-d $mnt_dir) {
 		rmdir($mnt_dir) or
@@ -196,10 +218,14 @@ run_cmd("sudo mount -t msdos -o umask=0007 -o uid=$< $loop $device $mnt_dir");
 $is_mounted = 1;
 
 # Copy boot stuff to the device.
-SystemImager::Server->copy_boot_files_to_boot_media(
+eval {
+	SystemImager::Server->copy_boot_files_to_boot_media(
 		$kernel, $initrd, $local_cfg, $arch,
-		$mnt_dir, $append, $ssh_key) or
+		$mnt_dir, $append, $ssh_key);
+};
+if ($@) {
 	die("error: couldn't copy required files into the image!\n");
+}
 
 # Unmount the device.
 print "Un-mounting device $device...\n";
