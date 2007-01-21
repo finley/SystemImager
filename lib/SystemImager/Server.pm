@@ -2000,35 +2000,30 @@ sub copy_boot_files_to_boot_media {
     my $cmd = "df $mnt_dir ; umount $mnt_dir";
     unless( copy($kernel, "$mnt_dir/kernel") ) {
         system($cmd);
-        print "Couldn't copy $kernel to $mnt_dir!\n";
-        exit 1;
+        die "Couldn't copy $kernel to $mnt_dir!\n";
     }
 
     unless( copy($initrd, "$mnt_dir/initrd.img") ) {
         system($cmd);
-        print "Couldn't copy $initrd to $mnt_dir!\n";
-        exit 1;
+        die "Couldn't copy $initrd to $mnt_dir!\n";
     }
 
     unless( copy($message_txt, "$mnt_dir/message.txt") ) {
         system($cmd);
-        print "Couldn't copy $message_txt to $mnt_dir!\n";
-        exit 1;
+        die "Couldn't copy $message_txt to $mnt_dir!\n";
     }
 
     if($local_cfg) {
         unless( copy($local_cfg, "$mnt_dir/local.cfg") ) {
             system($cmd);
-            print "Couldn't copy $local_cfg to $mnt_dir!\n";
-            exit 1;
+            die "Couldn't copy $local_cfg to $mnt_dir!\n";
         }
     }
 
     if($ssh_key) {
         unless( copy($ssh_key, $mnt_dir) ) {
             system($cmd);
-            print "Couldn't copy $ssh_key to $mnt_dir!\n";
-            exit 1;
+            die "Couldn't copy $ssh_key to $mnt_dir!\n";
         }
     }
 
@@ -2036,8 +2031,7 @@ sub copy_boot_files_to_boot_media {
     unless ($append_string) {
         unless( copy("$syslinux_cfg","$mnt_dir/syslinux.cfg") ) {
             system($cmd);
-            print "Couldn't copy $syslinux_cfg to $mnt_dir!\n";
-            exit 1;
+            die "Couldn't copy $syslinux_cfg to $mnt_dir!\n";
         }
     } else {
         # Append to APPEND line in config file.
@@ -2080,7 +2074,7 @@ sub copy_boot_files_to_boot_media {
             print "You can download elilo from ftp://ftp.hpl.hp.com/pub/linux-ia64/.\n";
             print "If elilo.efi is already installed on your system, please submit a bug report, including\n";
             print "the location of your elilo.efi file, at: http://systemimager.org/support/\n\n";
-            exit 1;
+            die;
         }
 
         _write_elilo_conf("$mnt_dir/elilo.conf", $append_string);
