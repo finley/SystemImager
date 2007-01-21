@@ -44,10 +44,12 @@ $(BOEL_BINARIES_TARBALL):	$(BC_DIR).build \
 	# Put binaries in the boel_binaries_tarball...
 	#
 	mkdir -m 755 -p $(BOEL_BINARIES_DIR)/bin
+	mkdir -m 755 -p $(BOEL_BINARIES_DIR)/sbin
+	mkdir -m 755 -p $(BOEL_BINARIES_DIR)/usr/bin
+	mkdir -m 755 -p $(BOEL_BINARIES_DIR)/usr/sbin
 	install -m 755 --strip $(BC_BINARY) 			$(BOEL_BINARIES_DIR)/bin/
 	install -m 755 --strip $(TAR_BINARY) 			$(BOEL_BINARIES_DIR)/bin/
 	install -m 755 --strip $(GZIP_BINARY) 			$(BOEL_BINARIES_DIR)/bin/
-	mkdir -m 755 -p $(BOEL_BINARIES_DIR)/sbin
 	install -m 755 --strip $(DISCOVER_BINARY) 		$(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(HFSUTILS_BINARY) 		$(BOEL_BINARIES_DIR)/sbin/
 	# XXX change these to be like: $(DOSFSTOOLS_DIR).install
@@ -59,7 +61,8 @@ $(BOEL_BINARIES_TARBALL):	$(BC_DIR).build \
 	install -m 755 --strip $(MDADM_BINARIES) 		$(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(MKREISERFS_BINARY) 	$(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(MKJFS_BINARY) 			$(BOEL_BINARIES_DIR)/sbin/
-	install -m 755 --strip $(OPENSSH_BINARIES) 		$(BOEL_BINARIES_DIR)/sbin/
+	install -m 755 --strip $(OPENSSH_BINARIES) 		$(BOEL_BINARIES_DIR)/usr/sbin
+	ln /usr/sbin/ssh $(BOEL_BINARIES_DIR)/usr/sbin/ssh
 	mkdir -m 755 -p $(BOEL_BINARIES_DIR)/etc/ssh
 	install -m 644 $(OPENSSH_CONF_FILES) 			$(BOEL_BINARIES_DIR)/etc/ssh
 ifdef MKXFS_BINARY
@@ -131,7 +134,7 @@ endif
 	TGTLIBDIR=lib ; \
 	test ! -d /lib64 || TGTLIBDIR=lib64 ; \
 	cd $(BOEL_BINARIES_DIR) \
-		&& $(PYTHON) $(TOPDIR)/initrd_source/mklibs -L $(SRC_DIR)/$(PARTED_DIR)/libparted/.libs:$(DISCOVER_DIR)/lib/.libs:$(SRC_DIR)/$(DEVMAPPER_DIR)/lib/ioctl:$(SRC_DIR)/$(E2FSPROGS_DIR)/lib:/lib64:/usr/lib64:/usr/kerberos/lib64:/lib:/usr/lib:/usr/kerberos/lib:/lib/tls:`find /lib/tls /usr/lib/tls /lib64/tls /usr/lib64/tls -type d 2>/dev/null | tr '\n' :` -v -d $$TGTLIBDIR bin/* sbin/* $(INITRD_BUILD_DIR)/*bin/* $(INITRD_BUILD_DIR)/usr/*bin/*
+		&& $(PYTHON) $(TOPDIR)/initrd_source/mklibs -L $(SRC_DIR)/$(PARTED_DIR)/libparted/.libs:$(DISCOVER_DIR)/lib/.libs:$(SRC_DIR)/$(DEVMAPPER_DIR)/lib/ioctl:$(SRC_DIR)/$(E2FSPROGS_DIR)/lib:/lib64:/usr/lib64:/usr/kerberos/lib64:/lib:/usr/lib:/usr/kerberos/lib:/lib/tls:`find /lib/tls /usr/lib/tls /lib64/tls /usr/lib64/tls -type d 2>/dev/null | tr '\n' :` -v -d $$TGTLIBDIR bin/* sbin/* usr/bin/* usr/sbin/* $(INITRD_BUILD_DIR)/*bin/* $(INITRD_BUILD_DIR)/usr/*bin/*
 
 ifdef IS_PPC64
 	# Copy all the libnss*. It seems that with ppc64 these are not 

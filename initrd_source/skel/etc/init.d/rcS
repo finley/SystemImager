@@ -84,9 +84,15 @@ beep
 
 tmpfs_watcher
 
+if [ "x$SSHD" = "xy" ]; then
+    logmsg
+    logmsg start_sshd
+    start_sshd
+fi
+
 if [ ! -z $SSH_DOWNLOAD_URL ]; then
-    echo
-    echo start_ssh
+    logmsg
+    logmsg start_ssh
     start_ssh
 fi
 
@@ -104,8 +110,8 @@ if [ -z $HOSTNAME ]; then
 fi
 
 if [ ! -z $HOSTNAME ]; then
-    echo
-    echo "This hosts name is: $HOSTNAME"
+    logmsg
+    logmsg "This hosts name is: $HOSTNAME"
 fi
 
 run_pre_install_scripts

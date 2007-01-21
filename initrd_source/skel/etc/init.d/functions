@@ -1394,6 +1394,56 @@ run_post_install_scripts() {
 #   Stuff for SSH installs
 #
 
+
+start_sshd() {
+    mkdir -p /root/.ssh/ || shellout
+
+    # download ssh authorized_keys if it's not present into the initrd.
+    if [ ! -f /root/.ssh/authorized_keys ]; then
+        if [ -z $SSH_DOWNLOAD_URL ]; then
+            logmsg
+            logmsg "error: SSH_DOWNLOAD_URL is not present in the installation parameters!"
+            logmsg "sshd can't be started!"
+            shellout
+        fi
+        CMD="wget ${SSH_DOWNLOAD_URL}/${ARCH}/ssh/authorized_keys"
+        logmsg
+        logmsg $CMD
+        $CMD || shellout
+    fi
+
+    # set permissions to 600 -- otherwise, sshd will refuse to use it
+    chmod 600 /root/.ssh/authorized_keys || shellout
+
+    # must be owned by root
+    chown -R 0.0 /root/
+        
+    # create a private host key for this autoinstall client
+    logmsg
+    logmsg "Using ssh-keygen to create this hosts private key"
+    logmsg
+    mkdir -p /var/empty || shellout
+    if [ ! -f /etc/ssh/ssh_host_dsa_key ]; then
+        ssh-keygen -t dsa -N "" -f /etc/ssh/ssh_host_dsa_key || shellout
+    fi
+    if [ ! -f /etc/ssh/ssh_host_rsa_key ]; then
+        ssh-keygen -t rsa -N "" -f /etc/ssh/ssh_host_rsa_key || shellout
+    fi
+
+    # try to mount devpts (sometimes it's not really necessary)
+    mkdir -p /dev/pts
+    mount -t devpts none /dev/pts >/dev/null 2>&1
+
+    # fire up sshd
+    mkdir -p /var/run/sshd || shellout
+    chmod 0755 /var/run/sshd || shellout
+    /usr/sbin/sshd || shellout
+    logmsg "sshd started"
+    touch /tmp/sshd_started
+}
+#
+################################################################################
+#
 start_ssh() {
 
     # create root's ssh dir
@@ -1455,47 +1505,12 @@ start_ssh() {
         IMAGESERVER=127.0.0.1
 
     else
-
         ########################################################################
         #
-        # Looks like we didn't get a private key from the floppy, so let's just
-        # fire up sshd and wait for someone to connect to us to initiate the
-        # next step of the autoinstall. -BEF-
+        # Looks like we didn't get a private key so let's just fire up
+        # sshd and wait for someone to connect to us to initiate the
+        # next step of the autoinstall.
         #
-        # download authorized_keys
-        # (public keys of users allowed to ssh *in* to this machine)
-        cd /root/.ssh/ || shellout
-        CMD="wget ${SSH_DOWNLOAD_URL}/${ARCH}/ssh/authorized_keys"
-        logmsg
-        logmsg $CMD
-        $CMD || shellout
-        
-        # set permissions to 600 -- otherwise, sshd will refuse to use it
-        chmod 600 /root/.ssh/authorized_keys || shellout
-
-        # must be owned by root
-        chown -R 0.0 /root/
-        
-        # Since we're using SSH, change the $IMAGESERVER variable to reflect
-        # the forwarded connection.
-        IMAGESERVER=127.0.0.1
-        
-        # save variables for autoinstall script
-        write_variables || shellout
-        
-        # create a private host key for this autoinstall client
-        logmsg
-        logmsg "Using ssh-keygen to create this hosts private key"
-        logmsg
-        mkdir -p /var/empty || shellout
-        if [ ! -f /etc/ssh/ssh_host_dsa_key ]; then
-            ssh-keygen -t dsa -N "" -f /etc/ssh/ssh_host_dsa_key || shellout
-        fi
-        if [ ! -f /etc/ssh/ssh_host_rsa_key ]; then
-            ssh-keygen -t rsa -N "" -f /etc/ssh/ssh_host_rsa_key || shellout
-        fi
-        
-        # if hostname not set, try DNS
         if [ -z $HOSTNAME ]; then
             logmsg
             logmsg "Trying to get hostname via DNS..."
@@ -1508,6 +1523,10 @@ start_ssh() {
         else
             HOST_OR_IP=$HOSTNAME
         fi
+
+        # Since we're using SSH, change the $IMAGESERVER variable to reflect
+        # the forwarded connection.
+        IMAGESERVER=127.0.0.1
         
         logmsg
         logmsg
@@ -1517,16 +1536,16 @@ start_ssh() {
         logmsg " \"si_pushupdate -continue-install -image <IMAGENAME> -client ${HOST_OR_IP}\"."
         logmsg
         logmsg
-        
-        # fire up sshd and wait
-        mkdir -p /var/run/sshd || shellout
-        chmod 0755 /var/run/sshd || shellout
-        sshd || shellout
-        
-        # Give sshd time to initialize before we yank the parent process
-        # rug out from underneath it.
-        sleep 15
-        
+        if [ ! -f /tmp/sshd_started ]; then
+            start_sshd
+            # Give sshd time to initialize before we yank the parent process
+            # rug out from underneath it.
+            sleep 15
+        fi
+
+        # save variables for autoinstall script
+        write_variables || shellout
+
         # remove rug
         exit 1
     fi
