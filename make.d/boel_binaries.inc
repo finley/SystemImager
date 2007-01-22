@@ -36,6 +36,7 @@ $(BOEL_BINARIES_TARBALL):	$(BC_DIR).build \
 							$(MKJFS_BINARY) \
 							$(MKXFS_BINARY) \
 							$(CTCS_BINARY) \
+							$(OPENSSH_SBINARIES) \
 							$(OPENSSH_BINARIES) \
 							$(OPENSSH_CONF_FILES) \
 							$(LVM_BINARY) \
@@ -61,8 +62,8 @@ $(BOEL_BINARIES_TARBALL):	$(BC_DIR).build \
 	install -m 755 --strip $(MDADM_BINARIES) 		$(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(MKREISERFS_BINARY) 	$(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(MKJFS_BINARY) 			$(BOEL_BINARIES_DIR)/sbin/
-	install -m 755 --strip $(OPENSSH_BINARIES) 		$(BOEL_BINARIES_DIR)/usr/sbin
-	ln /usr/sbin/ssh $(BOEL_BINARIES_DIR)/usr/sbin/ssh
+	install -m 755 --strip $(OPENSSH_BINARIES) 		$(BOEL_BINARIES_DIR)/usr/bin
+	install -m 755 --strip $(OPENSSH_SBINARIES) 		$(BOEL_BINARIES_DIR)/usr/sbin
 	mkdir -m 755 -p $(BOEL_BINARIES_DIR)/etc/ssh
 	install -m 644 $(OPENSSH_CONF_FILES) 			$(BOEL_BINARIES_DIR)/etc/ssh
 ifdef MKXFS_BINARY
