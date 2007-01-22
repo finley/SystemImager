@@ -205,6 +205,14 @@ Options:
     Important: the filesystem must be statically compiled in the kernel
     used to install the clients.
 
+ --ssh-key FILE
+    Where FILE is the SSH2 id_dsa or id_rsa private key of the user account
+    that the autoinstall client will use to connect to the imageserver.
+
+ --authorized-keys FILE
+    Specifies the file that contains the public keys that can be used
+    for user authentication from the image server to the imaging clients.
+
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
 
@@ -227,7 +235,9 @@ GetOptions(
     "filesystem=s"         => \my $filesystem,
     "version"              => \my $version,
     "server=s"             => \my $server,
-    "yes"                  => \my $yes
+    "yes"                  => \my $yes,
+    "ssh-key=s"            => \my $ssh_key,
+    "authorized-keys=s"    => \my $authorized_keys,
 ) || die "$help_info";
 
 
@@ -784,7 +794,8 @@ sub create_auto_install_script_conf {
         unless($quiet) { $verbose = 1; }
         SystemImager::UseYourOwnKernel->create_uyok_initrd(
             $arch, $my_modules, $custom_kernel, $modules_dir,
-            $image, $filesystem, '/etc/systemimager/boot', $verbose
+            $image, $filesystem, '/etc/systemimager/boot',
+            $ssh_key, $authorized_keys, $verbose
         );
     }
 

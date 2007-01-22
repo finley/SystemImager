@@ -35,15 +35,17 @@ our $is_mounted = 0;
 #
 sub create_uyok_initrd() {
 
-        my $module         = shift;
-        my $arch           = shift;
-        my $my_modules     = shift;
-        my $custom_kernel  = shift;
-        my $custom_mod_dir = shift;
-        my $image          = shift;
-        my $filesystem     = shift;
-        my $destination    = shift;
-        $verbose           = shift;
+        my $module          = shift;
+        my $arch            = shift;
+        my $my_modules      = shift;
+        my $custom_kernel   = shift;
+        my $custom_mod_dir  = shift;
+        my $image           = shift;
+        my $filesystem      = shift;
+        my $destination     = shift;
+        my $ssh_key         = shift;
+        my $authorized_keys = shift;
+        $verbose            = shift;
 
         use File::Copy;
         use File::Basename;
@@ -56,6 +58,17 @@ sub create_uyok_initrd() {
         # Create temp dir
         #
         my $staging_dir = _mk_tmp_dir();
+
+        # Set the cleanup handler.
+        $SIG{__DIE__} = sub {
+            my $msg = shift;
+            if ($staging_dir) {
+                if ($staging_dir =~ m/^\/tmp\/\.systemimager\.[0-9]+$/) {
+                    system("rm -rf $staging_dir");
+                }
+            }
+            die $msg;
+        };
 
         #
         # Copy template over
@@ -164,27 +177,28 @@ sub create_uyok_initrd() {
         }
 
         #
-        # Copy over /dev
+        # Copy SSH keys.
         #
-        #print ">>> Copying contents of /dev to new initrd...\n" if( $verbose );
-        #$cmd = qq(rsync -a /dev/ $staging_dir/dev/);
-        #!system( $cmd ) or die( "Couldn't $cmd." );
-
-        #
-        # Remove LVM device mapper files from $staging_dir/dev
-        #
-        #$cmd = 'vgdisplay -c 2>/dev/null | grep -v ^$';
-        #open(VG, "$cmd|");
-        #foreach my $vg_name (<VG>) {
-        #        chomp $vg_name;
-        #        $vg_name =~ s/^\s+//;
-        #        $vg_name =~ s/:.*//;
-        #        $cmd = "find $staging_dir/dev/ -name \"$vg_name\" -type d | xargs rm -rf";
-        #        !system( $cmd ) or die( "Couldn't $cmd" );
-        #        $cmd = "find $staging_dir/dev/mapper -name \"$vg_name-*\" -type b | xargs rm -f";
-        #        !system( $cmd ) or die( "Couldn't $cmd" );
-        #}
-        #close(VG);
+        if ($ssh_key) {
+            unless (-d "$staging_dir/root/.ssh/") {
+                mkdir("$staging_dir/root/.ssh/", 0700) or
+                    die("Couldn't create directory: $staging_dir/root/.ssh/!\n");
+            }
+            print ">>> Including SSH private key: $ssh_key\n" if ($verbose);
+            unless( copy($ssh_key, "$staging_dir/root/.ssh/") ) {
+                die("Couldn't copy $ssh_key to $staging_dir/root/.ssh/!\n");
+            }
+        }
+        if ($authorized_keys) {
+            unless (-d "$staging_dir/root/.ssh/") {
+                mkdir("$staging_dir/root/.ssh/", 0700) or
+                    die("Couldn't create directory: $staging_dir/root/.ssh/!\n");
+            }
+            print ">>> Including SSH authorized keys: $authorized_keys\n" if ($verbose);
+            unless( copy($authorized_keys, "$staging_dir/root/.ssh/authorized_keys") ) {
+                die("Couldn't copy $authorized_keys to $staging_dir/root/.ssh/authorized_keys!\n");
+            }
+        }
 
         # 
         # Dir in which to hold stuff.  XXX dannf where should this really go?

@@ -45,6 +45,8 @@
       <arg><option>--kernel <replaceable>FILE</replaceable></option><option> --modules-dir <replaceable>DIR</replaceable></option></arg>
       <arg><option>--image <replaceable>IMAGENAME</replaceable></option></arg>
       <arg><option>--filesystem <replaceable>FILESYSTEM</replaceable></option></arg>
+      <arg><option>--ssh-key <replaceable>FILE</replaceable></option></arg>
+      <arg><option>--authorized-keys <replaceable>FILE</replaceable></option></arg>
 
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -186,12 +188,48 @@
           </para>
         </listitem>
       </varlistentry>
+      <varlistentry>
+        <term><option>--ssh-key <replaceable>FILE</replaceable></option></term>
+        <listitem>
+          <para>
+            Where FILE is the SSH2 id_dsa or id_rsa private key of the user account
+            that the autoinstall client will use to connect to the imageserver.
+          </para>
+          <para>
+            Can be used when installing with the client-driven SSH transport (where
+            clients download the image from the image server using rsync over a SSH
+            tunnel).
+          </para>
+          <para>
+            WARNING: since the private key will be included into the initrd.img it
+            is strongly recommended to not use it to install via network PXE over
+            insecure networks, otherwise the initrd.img will be distributed
+            clear (unencrypted).
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>--authorized-keys <replaceable>FILE</replaceable></option></term>
+        <listitem>
+          <para>
+            Specifies the file that contains the public keys that can be used
+            for user authentication from the image server to the imaging clients.
+          </para>
+          <para>
+            Can be used when installing with SSH transport (and the master pushes
+            the image to the clients), or with the installation boot parameter
+            SSHD=y, to execute commands (or open a remote shell) on the imaging
+            clients.
+          </para>
+        </listitem>
+      </varlistentry>
     </variablelist>
   </refsect1>
   <refsect1>
     <title>SEE ALSO</title>
 
     <para><command>si_updateclient</command>(8)</para>
+    <para><command>si_mkbootpackage</command>(8)</para>
 
     <para>More details can be found in the <citetitle>SystemImager
 	manual.</citetitle>
