@@ -450,7 +450,7 @@ endif
 get_source:	$(ALL_SOURCE)
 
 .PHONY:	install
-install: 
+install:
 	@echo ''
 	@echo 'Read README for installation details.'
 	@echo ''
