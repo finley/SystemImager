@@ -114,7 +114,7 @@ endif
 
 # is userspace 64bit
 USERSPACE64 := 0
-ifeq ($(ARCH),ia64) 
+ifeq ($(ARCH),ia64)
 	USERSPACE64 := 1
 endif
 
