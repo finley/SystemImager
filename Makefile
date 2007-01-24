@@ -200,6 +200,11 @@ binaries: $(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.img
 # Now include the other targets.  Some of these may have order dependencies.
 # Order as appropriate. -BEF-
 #
+# Why does ordered dependencies matter? Make will read all these
+# snippets before it evaluates the rule. If there are dependencies caused
+# by setting a variable in one and using it in another, then that should be
+# abstracted out. Its much more robust to include *.rul... -dannf
+#
 include $(TOPDIR)/make.d/bc.rul
 include $(TOPDIR)/make.d/ctcs.rul
 include $(TOPDIR)/make.d/discover-data.rul
