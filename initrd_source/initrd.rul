@@ -58,6 +58,7 @@ MKCRAMFS = $(shell which mkcramfs || which mkfs.cramfs || \
 
 #
 # Order is relevant for certain components, so re-order as is appropriate. -BEF-
+#
 include $(INITRD_DIR)/make.d/cx_freeze.rul
 include $(INITRD_DIR)/make.d/bittorrent.rul
 include $(INITRD_DIR)/make.d/busybox.rul
