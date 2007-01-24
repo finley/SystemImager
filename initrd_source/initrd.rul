@@ -211,7 +211,7 @@ initrd:	$(INITRD_DIR)/initrd
 #	  NOTE:  we don't want the initrd target to use the installed template
 #		dir, as it could complicate distribution -- you might have
 #		modified files in the template_dir, that aren't removed with a
-#		'make install_template_dir', that you don't want released as 
+#		'make install_template_dir', that you don't want released as
 #		part of the distribution. -BEF-
 #
 $(INITRD_DIR)/initrd:	$(INITRD_BUILD_DIR).build
