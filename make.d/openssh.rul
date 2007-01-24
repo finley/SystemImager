@@ -37,9 +37,7 @@ endif
 PHONY += openssh
 openssh:	$(OPENSSH_BINARIES)
 
-$(OPENSSH_SBINARIES): $(OPENSSH_BINARIES)
-
-$(OPENSSH_BINARIES):	$(SRC_DIR)/openssh_verify.stamp $(OPENSSL_BINARIES)
+$(OPENSSH_BINARIES) $(OPENSSH_SBINARIES):	$(SRC_DIR)/openssh_verify.stamp $(OPENSSL_BINARIES)
 	rm -rf $(SRC_DIR)/$(OPENSSH_DIR)
 	( cd $(SRC_DIR) && tar -xvzf $(OPENSSH_TARBALL) )
 	cd $(SRC_DIR)/$(OPENSSH_DIR) && \
