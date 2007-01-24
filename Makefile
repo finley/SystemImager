@@ -87,7 +87,6 @@
 DESTDIR :=
 VERSION := $(shell cat VERSION)
 
-
 ## is this an unstable release?
 MINOR = $(shell echo $(VERSION) | cut -d "." -f 2)
 UNSTABLE = 0
