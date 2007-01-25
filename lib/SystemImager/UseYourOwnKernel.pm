@@ -399,6 +399,7 @@ sub _get_kernel_release($) {
         my $uname_r;
         $cmd = "$cat $file";
         open(IN,"$cmd |") or die("Couldn't $cmd: $!");
+        binmode(IN);
                 # 
                 # Example entries like what we're trying to match against in kernels:
                 #       2.6.10bef1 (finley@mantis) #1 Tue Mar 1 00:37:55 CST 2005
@@ -412,6 +413,7 @@ sub _get_kernel_release($) {
                        # extract the `uname -r` string from the kernel file
                        if(m/$regex/o) {
                                $uname_r = $1;
+                               last;
                        }
                }
         close(IN);
