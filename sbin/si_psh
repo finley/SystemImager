@@ -4,8 +4,10 @@
 #
 #  Copyright (C) 2005 Andrea Righi <a.righi@cineca.it>
 
+use lib "USR_PREFIX/lib/systemimager/perl";
 use strict;
 use Getopt::Long;
+use SystemImager::HostRange;
 
 my $VERSION = "SYSTEMIMAGER_VERSION_STRING";
 
@@ -82,7 +84,7 @@ if ($hostlist) {
 	# Expand host ranges.
 	my %expanded_hosts = ();
 	foreach my $range (@hosts) {
-		expand_range(\%expanded_hosts, $range);
+		SystemImager::HostRange::expand_range(\%expanded_hosts, $range);
 	}
 	@hosts = keys(%expanded_hosts);
 } elsif ($hostlist_file) {
@@ -109,7 +111,7 @@ unless ($ssh_user) {
 ### END evaluate command line options ###
 
 # Use the following ssh options.
-my $ssh_opts = "-n -x -o BatchMode=yes -o ConnectTimeout=$timeout -l $ssh_user";
+my $ssh_opts = "-x -o BatchMode=yes -o ConnectTimeout=$timeout -l $ssh_user";
 
 # Number of concurrent sessions.
 my $workers = 0;
@@ -181,43 +183,6 @@ sub do_cmd
 		exit(0);
 	} else {
 		print STDERR "$host: couldn't fork a ssh session!\n";
-	}
-}
-
-# Usage:
-# expand_range(\%expanded_hosts, $range_string)
-# Description:
-#       Expand host ranges identified by the $range_string into the
-#       %expaned_hosts hash.
-sub expand_range {
-	my ($expanded_hosts, $node) = @_;
-	my ($start_root, $start_domain, $start_num, $end_root, $end_domain, $end_num);
-	if ($node =~ /-/) {
-		my ($front, $end) = split('-', $node, 2);
-
-		($start_root, $start_num, $start_domain) = ($front =~ /^(.*?)(\d+)(\..+)?$/);
-		($end_root, $end_num, $end_domain) = ($end =~ /^(.*?)(\d+)(\..+)?$/);
-		if (!defined($start_domain)) {
-			$start_domain = '';
-		}
-		if (!defined($end_domain)) {
-			$end_domain = '';
-		}
-		if (!defined($start_num) || !defined($end_num)
-			|| ($start_num >= $end_num)
-			|| ($end_root ne $start_root)
-			|| ($end_domain ne $start_domain)) {
-				$$expanded_hosts{$node}++;
-				return;
-		}
-	} else {
-		$$expanded_hosts{$node}++;
-		return;
-	}
-	foreach my $suffix ($start_num .. $end_num) {
-		my $zeros = (length($start_num) - length($suffix));
-		my $prefix = '0' x $zeros;
-		$$expanded_hosts{"$start_root$prefix$suffix$start_domain"}++;
 	}
 }
 
