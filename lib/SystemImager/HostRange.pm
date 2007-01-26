@@ -29,35 +29,64 @@ use strict;
 #       Expand host ranges identified by the $range_string into the
 #       %expaned_hosts hash.
 sub expand_range {
-        my ($expanded_hosts, $node) = @_;
-        my ($start_root, $start_domain, $start_num, $end_root, $end_domain, $end_num);
-        if ($node =~ /-/) {
-                my ($front, $end) = split('-', $node, 2);
+	my ($expanded_hosts, $node) = @_;
+	my ($start_root, $start_domain, $start_num, $end_root, $end_domain, $end_num);
+	if ($node =~ /-/) {
+		my ($front, $end) = split('-', $node, 2);
 
-                ($start_root, $start_num, $start_domain) = ($front =~ /^(.*?)(\d+)(\..+)?$/);
-                ($end_root, $end_num, $end_domain) = ($end =~ /^(.*?)(\d+)(\..+)?$/);
-                if (!defined($start_domain)) {
-                        $start_domain = '';
-                }
-                if (!defined($end_domain)) {
-                        $end_domain = '';
-                }
-                if (!defined($start_num) || !defined($end_num)
-                        || ($start_num >= $end_num)
-                        || ($end_root ne $start_root)
-                        || ($end_domain ne $start_domain)) {
-                                $$expanded_hosts{$node}++;
-                                return;
-                }
-        } else {
-                $$expanded_hosts{$node}++;
-                return;
-        }
-        foreach my $suffix ($start_num .. $end_num) {
-                my $zeros = (length($start_num) - length($suffix));
-                my $prefix = '0' x $zeros;
-                $$expanded_hosts{"$start_root$prefix$suffix$start_domain"}++;
-        }
+		# IP range.
+		if ((my $ip_start = ip2int($front)) && (my $ip_end = ip2int($end))) {
+			for ($ip_start .. $ip_end) {
+				$$expanded_hosts{int2ip($_)}++;
+			}
+			return;
+		}
+		# Hostname range.
+		($start_root, $start_num, $start_domain) = ($front =~ /^(.*?)(\d+)(\..+)?$/);
+		($end_root, $end_num, $end_domain) = ($end =~ /^(.*?)(\d+)(\..+)?$/);
+		if (!defined($start_domain)) {
+			$start_domain = '';
+		}
+		if (!defined($end_domain)) {
+			$end_domain = '';
+		}
+		if (!defined($start_num) || !defined($end_num)
+			|| ($start_num >= $end_num)
+			|| ($end_root ne $start_root)
+			|| ($end_domain ne $start_domain)) {
+				$$expanded_hosts{$node}++;
+			return;
+		}
+	} else {
+		# Single host.
+		$$expanded_hosts{$node}++;
+		return;
+	}
+	foreach my $suffix ($start_num .. $end_num) {
+		my $zeros = (length($start_num) - length($suffix));
+		my $prefix = '0' x $zeros;
+		$$expanded_hosts{"$start_root$prefix$suffix$start_domain"}++;
+	}
+}
+
+# Usage:
+# my $int = ip2int($ip)
+# Description:
+#       Convert an IPv4 address into the equivalent integer value.
+sub ip2int {
+	my @bytes = split(/\./, $_[0]);
+
+	return 0 unless @bytes == 4 && ! grep {!(/\d+$/ && ($_ <= 255) && ($_ >= 0))} @bytes;
+
+	return unpack("N", pack("C4", @bytes));
+}
+
+# Usage:
+# my $ip = int2ip($int)
+# Description:
+#       Convert an integer into the the equivalent IPv4 address.
+sub int2ip {
+	return join('.', unpack('C4', pack("N", $_[0])));
 }
 
 1;
