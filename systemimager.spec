@@ -207,6 +207,7 @@ BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
+Obsoletes: systemimager-%{_build_arch}boot
 BuildRequires: python, python-devel
 Requires: systemimager-server >= %{version}
 AutoReqProv: no
@@ -328,6 +329,11 @@ More information can be found at the website:
 http://developer.osdl.org/kees/software/imagemanip/
 
 %changelog
+* Sat Jan 27 2007 Andrea Righi <a.righi@cineca.it>
+- Added a warning about what will remain untouched during the update of
+  the server package
+- Re-added "Obsoletes" attribute for the boot-standard package.
+
 * Wed Jan 17 2007 Andrea Righi <a.righi@cineca.it>
 - Removed "Obsoletes" attribute from boot and initrd_template.
 
