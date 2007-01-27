@@ -435,10 +435,11 @@ return << "EOF";
     boot from their local disk.
 
  --clients "HOST1 HOST2 ..."
-    A space seperated list of host names and/or dotted quad IP addresses.  This
-    server (assuming it is a boot server) will be told to let these clients net
-    boot from this server, at least until they've completed a successful
-    SystemImager autoinstall.
+    List of target clients. Clients can be separated by comma, spaces or new
+    line and can include ranges (e.g. 'node001-node256,node300 node400'), also
+    with IP addresses.  This server (assuming it is a boot server) will be
+    told to let these clients net boot from this server, at least until they've
+    completed a successful SystemImager autoinstall.
 
 EOF
 }

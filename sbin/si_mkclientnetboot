@@ -26,6 +26,7 @@ use SystemImager::Config;
 use SystemImager::Common;
 use SystemImager::Server;
 use SystemImager::Options;
+use SystemImager::HostRange;
 
 use vars qw($config $VERSION);
 
@@ -90,8 +91,7 @@ unless( ($localboot) or ($netboot) ) {
 SystemImager::Common->check_if_root();
 
 # Make array from --clients "hostnames and ip addresses" -BEF-
-$_ = $clients;
-my @array = split;
+my @array = SystemImager::HostRange::expand_range_list($clients);
 
 my $source_file;
 if($localboot) {
@@ -162,7 +162,7 @@ sub get_ips {
             push @ips, inet_ntoa($addr);
         }
     } else {
-        die "Can't find an IP address for $host!\n";
+        print STDERR "WARNING: can't find an IP address for $host! (skipping)\n";
     }
 
     return @ips;
