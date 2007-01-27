@@ -24,6 +24,25 @@ package SystemImager::HostRange;
 use strict;
 
 # Usage:
+# my @hosts = expand_range_list($range_string)
+# Description:
+#       Expand host ranges identified by the $range_string into the
+#       @hosts list.
+sub expand_range_list {
+	my $clients = shift;
+	my @hosts = split(/,| |\n/, $clients);
+
+	# Expand host or IP ranges.
+	my %expanded_hosts = ();
+	foreach my $range (@hosts) {
+	        expand_range(\%expanded_hosts, $range);
+	}
+
+	# Convert into a list.
+	return sort(keys(%expanded_hosts));
+}
+
+# Usage:
 # expand_range(\%expanded_hosts, $range_string)
 # Description:
 #       Expand host ranges identified by the $range_string into the

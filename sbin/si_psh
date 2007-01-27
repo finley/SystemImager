@@ -38,8 +38,9 @@ Options: (options can be presented in any order and can be abbreviated)
                         comma, spaces or new line and can include
                         ranges (e.g. "node001-node256,node300 node400").
 
- --hosts-file, -f=FILE  File that contains the list of the target hosts
-                        (one host per line).
+ --hosts-file, -f=FILE  File that contains the list of the target host.
+                        Every line can include one or more ranges
+                        (e.g. "node001-node256,node300 node400").
 
  --timeout, -t=NUM      Set the timeout of the ssh sessions.
 
@@ -80,18 +81,24 @@ if (@ARGV) {
 
 my @hosts = ();
 if ($hostlist) {
-	@hosts = split(/,| |\n/, $hostlist);
 	# Expand host ranges.
-	my %expanded_hosts = ();
-	foreach my $range (@hosts) {
-		SystemImager::HostRange::expand_range(\%expanded_hosts, $range);
-	}
-	@hosts = keys(%expanded_hosts);
+	@hosts = SystemImager::HostRange::expand_range_list($hostlist);
 } elsif ($hostlist_file) {
+	# Read input file.
 	open(IN, "<$hostlist_file") ||
 		die("error: could't read $hostlist_file!\n");
 	chomp(@hosts = <IN>);
 	close(IN);
+	# Expand host ranges.
+	my %expanded_hosts = ();
+	foreach my $line (@hosts) {
+		my @list = split(/,| |\n/, $line);
+		foreach my $range (@list) {
+			SystemImager::HostRange::expand_range(\%expanded_hosts, $range);
+		}
+	}
+	# Convert hosts hash into a list.
+	@hosts = sort(keys(%expanded_hosts));
 } else {
 	die("error: no host defined!\nTry \"--help\" for more options.\n");
 }
@@ -225,7 +232,8 @@ ranges (e.g. "node001-node256,node300 node400").
 
 =item B<--hosts-file | -f FILE>
 
-File that contains the list of the target hosts (one host per line).
+File that contains the list of the target hosts.
+Every line can include one or more ranges (e.g. "node001-node256,node300 node400").
 
 =item B<--timeout | -t NUM>
 
