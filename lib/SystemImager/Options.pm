@@ -303,6 +303,10 @@ return << "EOF";
     This can be either the name of a new image if you want to create a new
     image, or the name of an existing image if you want to update an image.
 
+ --overrides LIST
+    Where LIST is the comma separated list of the overrides that will be
+    transferred to the clients when they will be imaged.
+
  --ssh-user USERNAME
     Username for ssh connection to the client.  Only needed if a secure
     connection is required.

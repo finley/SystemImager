@@ -33,6 +33,7 @@
       <arg><option>--listing</option></arg>
       <arg><option>--autodetect-disks</option></arg>
       <arg><option>--image <replaceable>IMAGENAME</replaceable></option></arg>
+      <arg><option>--overrides <replaceable>LIST</replaceable></option></arg>
       <arg><option>--script <replaceable>SCRIPTNAME</replaceable></option></arg>
       <arg><option>--force <replaceable>[YES|NO]</replaceable></option></arg>
       <arg><option>--config-file <replaceable>FILE</replaceable></option></arg>
@@ -97,6 +98,16 @@
 	    create a new autoinstall script.
 	  </para>
 	</listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>--overrides <replaceable>LIST</replaceable></option></term>
+        <listitem>
+          <para>
+            Where LIST is the comma separated list of the
+            overrides that will be transferred to the clients
+            that use the autoinstall script.
+          </para>
+        </listitem>
       </varlistentry>
       <varlistentry>
 	<term><option>--script <replaceable>SCRIPTNAME</replaceable></option></term>

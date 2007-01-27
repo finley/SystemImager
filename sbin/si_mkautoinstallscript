@@ -58,7 +58,11 @@ Options: (options can be presented in any order and may be abbreviated)
 
  --image IMAGENAME      Where IMAGENAME is the name of the image for 
                         which you want to create a new autoinstall 
-			            script.
+                        script.
+
+ --overrides LIST       Where LIST is the comma separated list of the
+                        overrides that will be transferred to the clients
+                        when they will be imaged.
 
  --script SCRIPTNAME    Where SCRIPTNAME is the base name to use for the 
                         resultant autoinstall script.  If not specified,
@@ -138,6 +142,7 @@ GetOptions(
     "version"           => \$version,
     "quiet"             => \$quiet,
     "image=s"           => \$image,
+    "overrides=s"       => \$overrides,
     "script=s"          => \$script_name,
     "config-file=s"     => \$auto_install_script_conf,
     "ip-assignment=s"   => \$ip_assignment_method,
@@ -231,6 +236,7 @@ SystemImager::Server->create_autoinstall_script(
 	$autoinstall_script_dir,
 	$config_dir,
 	$image,
+	$overrides,
 	$imagedir,
 	$ip_assignment_method,
 	$post_install,

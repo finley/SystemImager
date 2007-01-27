@@ -1745,6 +1745,7 @@ sub create_autoinstall_script{
         $auto_install_script_dir, 
         $config_dir, 
         $image, 
+        $overrides, 
         $image_dir, 
         $ip_assignment_method, 
         $post_install,
@@ -1792,7 +1793,21 @@ sub create_autoinstall_script{
 	        }
 
 	        if (/^\s*${delim}SET_OVERRIDES${delim}\s*$/) {
-                print $MASTER_SCRIPT  q([ -z $OVERRIDES ] && ) . qq(OVERRIDES="$script_name"\n);
+                if ($overrides) {
+                    $overrides =~ s/,/ /g;
+                    my @list = ();
+                    foreach (split(/ /, $overrides)) {
+                        if (-d $::main::config->default_override_dir() . '/' . $_) {
+                            push(@list, $_);
+                        } else {
+                            print STDERR "WARNING: override $_ doesn't exist! (skipping)\n";
+                        }
+                    }
+                    $overrides = join(' ', @list);
+                } else {
+                    $overrides = '';
+                }
+                print $MASTER_SCRIPT  q([ -z $OVERRIDES ] && ) . qq(OVERRIDES="$script_name $overrides"\n);
 	            last SWITCH;
 	        }
 
