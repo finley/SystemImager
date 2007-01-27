@@ -699,6 +699,18 @@ if [ "$1" -lt 1 ]; then
 	        /etc/init.d/xinetd restart
 	    fi
 	fi
+else
+	echo
+	echo "WARNING: this seems to be an upgrade!"
+	echo
+	echo "Remember that this operation does not touch the following objects:"
+	echo "  - master, pre-install, post-install scripts"
+	echo "  - kernel, initrd.img in /tftpboot"
+	echo "  - images"
+	echo "  - overrides"
+	echo "  - files in /var/lib/systemimager/torrents"
+	echo "  - files in /var/lib/systemimager/tarballs"
+	echo
 fi
 
 %post flamethrower
