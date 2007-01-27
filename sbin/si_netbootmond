@@ -121,7 +121,7 @@ sub create_no_boot_symlink {
 
     my ($client_ip) = @_;
 
-    my $ip_hex = SystemImager::Server->ip_quad_2_ip_hex($client_ip);
+    my $ip_hex = SystemImager::HostRange::ip2hex($client_ip);
 
     # Diagnostic output
     #print "ip_hex: $ip_hex\n";

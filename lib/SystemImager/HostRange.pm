@@ -89,6 +89,18 @@ sub expand_range {
 }
 
 # Usage:
+# my $valid = valid_ip_quad($ip_address);
+# if (valid_ip_quad($ip_address)) { then; }
+# Description:
+#       Check if $ip_address is a valid IPv4 address.
+sub valid_ip_quad {
+        my @bytes = split(/\./, $_[0]);
+
+        return 0 unless @bytes == 4 && ! grep {!(/\d+$/ && ($_ <= 255) && ($_ >= 0))} @bytes;
+	return 1;
+}
+
+# Usage:
 # my $int = ip2int($ip)
 # Description:
 #       Convert an IPv4 address into the equivalent integer value.
@@ -106,6 +118,26 @@ sub ip2int {
 #       Convert an integer into the the equivalent IPv4 address.
 sub int2ip {
 	return join('.', unpack('C4', pack("N", $_[0])));
+}
+
+# Usage:
+# my $ip_hex = ip2hex($ip_address);
+# Description:
+#       Convert an IPv4 address into the the equivalent hex value.
+sub ip2hex {
+	my @bytes = split(/\./, $_[0]);
+
+	return 0 unless @bytes == 4 && ! grep {!(/\d+$/ && ($_ <= 255) && ($_ >= 0))} @bytes;
+
+	return sprintf("%02X%02X%02X%02X", @bytes);
+}
+
+# Usage:
+# my $ip = hex2ip($int)
+# Description:
+#       Convert a hex value into the the equivalent IPv4 address.
+sub hex2ip {
+	return join('.', unpack('C4', pack('N', hex("0x" . $_[0]))));
 }
 
 1;

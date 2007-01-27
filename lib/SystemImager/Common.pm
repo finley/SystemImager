@@ -1200,21 +1200,6 @@ sub _get_device_size {
 }
 
 # Usage:
-# my $valid = valid_ip_quad($ip_address);
-# if (valid_ip_quad($ip_address)) { then; }
-sub valid_ip_quad {
-
-    $_ = $_[1];
-
-    if (m/^\d{1,3}?\.\d{1,3}?\.\d{1,3}?\.\d{1,3}?$/) {
-        return 1;
-    } else {
-        return 0;
-    }
-}
-
-
-# Usage:
 # my $boot_loader = SystemImager::Common->detect_bootloader();
 # by -dannf-
 sub detect_bootloader {

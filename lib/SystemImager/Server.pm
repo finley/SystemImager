@@ -43,7 +43,6 @@ $VERSION="SYSTEMIMAGER_VERSION_STRING";
 #   create_image_stub 
 #   gen_rsyncd_conf 
 #   get_image_path 
-#   ip_quad_2_ip_hex
 #   numerically 
 #   record_image_retrieval_time
 #   record_image_retrieved_from
@@ -1927,22 +1926,6 @@ sub create_autoinstall_script{
     
     close($MASTER_SCRIPT);
 } # sub create_autoinstall_script 
-
-
-
-# Usage:
-# my $ip_hex = ip_quad_2_ip_hex($ip_address);
-sub ip_quad_2_ip_hex {
-
-    my ($ip_address) = $_[1];
-
-    my ($a, $b, $c, $d) = split(/\./, $ip_address);
-
-    # Figure out the hex equivalent of the IP address
-    my $ip_hex = sprintf("%02X%02X%02X%02X", $a, $b, $c, $d);
-
-    return $ip_hex;
-}
 
 
 

@@ -102,7 +102,7 @@ if($localboot) {
 
 foreach my $client (@array) {
     # IP or Hostname?
-    if(SystemImager::Common->valid_ip_quad($client)) {
+    if(SystemImager::HostRange::valid_ip_quad($client)) {
         my $ip = $client;
         cp_boot_file($ip, $source_file);
     } else {
@@ -133,7 +133,7 @@ sub cp_boot_file {
     my ($ip_dec, $source_file) = @_;
     my $ip_hex;
 
-    $ip_hex = SystemImager::Server->ip_quad_2_ip_hex($ip_dec);
+    $ip_hex = SystemImager::HostRange::ip2hex($ip_dec);
 
     my $file = $tftp_dir . "/pxelinux.cfg/" . $ip_hex;
     if ($verbose) { print "Creating $file.\n"; }
