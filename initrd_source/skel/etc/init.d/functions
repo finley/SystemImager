@@ -151,6 +151,8 @@ write_variables() {
         
         echo "TMPFS_STAGING=$TMPFS_STAGING"         >> /tmp/variables.txt
         
+        echo "SSH=$SSH"	           	 		>> /tmp/variables.txt
+        echo "SSHD=$SSHD"	            		>> /tmp/variables.txt
         echo "SSH_USER=$SSH_USER"	            	>> /tmp/variables.txt
         echo "SSH_DOWNLOAD_URL=$SSH_DOWNLOAD_URL"	>> /tmp/variables.txt
         
@@ -1402,7 +1404,7 @@ start_sshd() {
     if [ ! -f /root/.ssh/authorized_keys ]; then
         if [ -z $SSH_DOWNLOAD_URL ]; then
             logmsg
-            logmsg "error: SSH_DOWNLOAD_URL is not present in the installation parameters!"
+            logmsg "error: authorized_keys not found and SSH_DOWNLOAD_URL not defined in the installation parameters!"
             logmsg "sshd can't be started!"
             shellout
         fi

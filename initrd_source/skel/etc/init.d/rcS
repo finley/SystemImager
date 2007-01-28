@@ -91,6 +91,9 @@ if [ "x$SSHD" = "xy" ]; then
 fi
 
 if [ ! -z $SSH_DOWNLOAD_URL ]; then
+    SSH=y
+fi
+if [ "x$SSH" = "xy" ]; then
     logmsg
     logmsg start_ssh
     start_ssh

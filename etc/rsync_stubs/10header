@@ -26,10 +26,19 @@ log file = /var/log/systemimager/rsyncd
 # See "man rsyncd.conf" for details.
 #
 #hosts allow = 127.0.0.0/24 MY_NET/NETMASK MY_CLIENT/32
+#
+# If you choose to install the clients with SSH transport uncomment the
+# following lines.
+#
+#hosts allow = 127.0.0.1
 #hosts deny = 0.0.0.0/0
 
 [boot]
 path = USR_PREFIX/share/systemimager/boot
+#
+# Never restrict the access of the [boot] module.
+#
+hosts allow = 0.0.0.0/0
 
 [overrides]
 path = /var/lib/systemimager/overrides
