@@ -64,6 +64,10 @@ case "$1" in
     kill_em_all
     echo
     ;;
+  status)
+    echo -n "Status of Flamethrower daemon: flamethrowerd... "
+    ([ -f $PPID_FILE ] && ps -p `cat $PPID_FILE` >/dev/null 2>&1 && echo "running." && exit 0) || (echo "not running." && exit 1)
+    ;;
   reload)
     echo "Not implemented."
     ;;
@@ -77,4 +81,3 @@ case "$1" in
     ;;
 esac
 
-exit 0
