@@ -329,6 +329,10 @@ More information can be found at the website:
 http://developer.osdl.org/kees/software/imagemanip/
 
 %changelog
+* Sun Jan 28 2007 Andrea Righi <a.righi@cineca.it>
+- Differentiate between upgrade and uninstall operations in all the
+  %preun sections.
+
 * Sat Jan 27 2007 Andrea Righi <a.righi@cineca.it>
 - Added a warning about what will remain untouched during the update of
   the server package
@@ -681,7 +685,7 @@ fi
 
 %preun server
 
-if [ "$1" -lt 1 ]; then
+if [ $1 = 0 ]; then
 	/etc/init.d/systemimager-server-rsyncd stop
 	/etc/init.d/systemimager-server-netbootmond stop
 	/etc/init.d/systemimager-server-monitord stop
@@ -714,9 +718,16 @@ else
 	echo "  - kernel, initrd.img in /tftpboot"
 	echo "  - images"
 	echo "  - overrides"
-	echo "  - files in /var/lib/systemimager/torrents"
-	echo "  - files in /var/lib/systemimager/tarballs"
 	echo
+
+	# This is an upgrade: restart the daemons.
+	echo "Restaring services..."
+	(/etc/init.d/systemimager-server-rsyncd status >/dev/null 2>&1 && \
+		/etc/init.d/systemimager-server-rsyncd restart) || true
+	(/etc/init.d/systemimager-server-netbootmond status >/dev/null 2>&1 && \
+		/etc/init.d/systemimager-server-netbootmond restart) || true
+	(/etc/init.d/systemimager-server-rsyncd status >/dev/null 2>&1 && \
+		/etc/init.d/systemimager-server-monitord restart) || true
 fi
 
 %post flamethrower
@@ -730,14 +741,20 @@ if [[ -a /sbin/chkconfig ]]; then
 fi
 
 %preun flamethrower
-/etc/init.d/systemimager-server-flamethrowerd stop
+if [ $1 = 0 ]; then
+	/etc/init.d/systemimager-server-flamethrowerd stop
 
-if [[ -a /usr/lib/lsb/remove_initd ]]; then
-    /usr/lib/lsb/remove_initd /etc/init.d/systemimager-server-flamethrowerd
-fi
+	if [[ -a /usr/lib/lsb/remove_initd ]]; then
+	    /usr/lib/lsb/remove_initd /etc/init.d/systemimager-server-flamethrowerd
+	fi
 
-if [[ -a /sbin/chkconfig ]]; then
-    /sbin/chkconfig --del systemimager-server-flamethrowerd
+	if [[ -a /sbin/chkconfig ]]; then
+	    /sbin/chkconfig --del systemimager-server-flamethrowerd
+	fi
+else
+	# This is an upgrade: restart the daemon.
+	(/etc/init.d/systemimager-server-flamethrowerd status >/dev/null 2>&1 && \
+		/etc/init.d/systemimager-server-flamethrowerd restart) || true
 fi
 
 %post bittorrent
@@ -779,14 +796,20 @@ fi
 echo done
 
 %preun bittorrent
-/etc/init.d/systemimager-server-bittorrent stop
+if [ $1 = 0 ]; then
+	/etc/init.d/systemimager-server-bittorrent stop
 
-if [[ -a /usr/lib/lsb/remove_initd ]]; then
-    /usr/lib/lsb/remove_initd /etc/init.d/systemimager-server-bittorrent
-fi
+	if [[ -a /usr/lib/lsb/remove_initd ]]; then
+	    /usr/lib/lsb/remove_initd /etc/init.d/systemimager-server-bittorrent
+	fi
 
-if [[ -a /sbin/chkconfig ]]; then
-    /sbin/chkconfig --del systemimager-server-bittorrent
+	if [[ -a /sbin/chkconfig ]]; then
+	    /sbin/chkconfig --del systemimager-server-bittorrent
+	fi
+else
+	# This is an upgrade: restart the daemon.
+	(/etc/init.d/systemimager-server-bittorrent status >/dev/null 2>&1 && \
+		/etc/init.d/systemimager-server-bittorrent restart) || true
 fi
 
 %files common
