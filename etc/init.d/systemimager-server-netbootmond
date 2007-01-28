@@ -43,6 +43,10 @@ case "$1" in
     [ -f $PIDFILE ] && kill `cat $PIDFILE`
     echo "."
     ;;
+  status)
+    echo -n "Status of SystemImager's net boot client monitor: si_netbootmond... "
+    ([ -f $PIDFILE ] && ps -p `cat $PIDFILE` >/dev/null 2>&1 && echo "running." && exit 0) || (echo "not running." && exit 1)
+    ;;
   reload)
     echo "Not implemented."
     ;;
@@ -51,9 +55,8 @@ case "$1" in
     sh $0 start
     ;;
   *)
-    echo "Usage: $0 {start|stop|restart}"
+    echo "Usage: $0 {start|stop|status|restart}"
     exit 1
     ;;
 esac
 
-exit 0
