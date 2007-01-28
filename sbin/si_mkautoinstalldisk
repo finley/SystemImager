@@ -58,10 +58,6 @@ Options: (options can be presented in any order and can be abbreviated)
  --append STRING        A string of options that will be passed to the
                         autoinstall kernel.
 
- --ssh-key FILE         Where FILE is the SSH2 id_dsa or id_rsa private
-                        key of the user account that the autoinstall
-                        client will use to connect to the imageserver.
-
  --config FILE          Where FILE contains all the settings necessary
                         for the client to set it's hostname and
                         configure it's networking information without
@@ -87,7 +83,6 @@ GetOptions(
 	"kernel=s"	=> \my $kernel,
 	"initrd=s"	=> \my $initrd,
 	"append=s"	=> \my $append,
-	"ssh-key=s"	=> \my $ssh_key,
 	"config=s"	=> \my $local_cfg,
 ) or die("$help_info");
 
@@ -116,11 +111,6 @@ if ($version) {
 }
 unless ($device) {
 	die("error: target device was not specified!\nTry \"--help\" for more options.\n");
-}
-if ($ssh_key) {
-	unless (-e $ssh_key) {
-		die("error: SSH private key \"$ssh_key\" doesn't seem to exist.\nPlease try again.\n");
-	}
 }
 unless ($kernel and $initrd) {
 	# Emulate try .. catch handling mechanism.
@@ -221,7 +211,7 @@ $is_mounted = 1;
 eval {
 	SystemImager::Server->copy_boot_files_to_boot_media(
 		$kernel, $initrd, $local_cfg, $arch,
-		$mnt_dir, $append, $ssh_key);
+		$mnt_dir, $append);
 };
 if ($@) {
 	die("error: couldn't copy required files into the image!\n");
