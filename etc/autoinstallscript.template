@@ -531,6 +531,10 @@ if [ ! -z $MONITOR_SERVER ]; then
 ##MONITOR_POSTINSTALL##
 fi
 
+# Explicitly kill sleep processes.
+# This is needed to close the SSH tunnel on the image server when the
+# SSH transport is used).
+killall sleep >/dev/null 2>&1
 
 # Take network interface down
 [ -z $DEVICE ] && DEVICE=eth0

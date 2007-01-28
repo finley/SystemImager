@@ -360,27 +360,25 @@ sub processautoinstall {
         $logfile = "/dev/null";
     }
     
-    # copy install script out to the client
-    $command = "ssh -o \"StrictHostKeyChecking no\" -l root -R8730:127.0.0.1:873 $client \"rsync -avL rsync://127.0.0.1:8730/scripts/$param_image.master /tmp/\"";
+    # Open the SSH tunnel to the clients.
+    $command = "ssh -o \"ServerAliveInterval=60\" -l root -n -f -R873:$imageserver:873 $client sleep 100000";
     $rc = 0xffff & system($command);
     if ($rc != 0) { 
-        # get username from /etc/passwd as derived from the real user id "$>"
-        my $username = getpwuid $>;
-        my $message="FATAL: Could not copy /var/lib/systemimager/scripts/systemimager/$param_image.master to $client!\n";
-        $message = $message . "       Be sure that you have ${username}'s .ssh/identity.pub key in ssh_files/authorized_keys.\n";
+        $message = "error: could not open SSH tunnel to the client: $client\n";
         updatelogfile($message);
         die $message;
     }
     
-    # install script is ready to run, so open ssh tunnel and execute script
-    $command = "ssh -o \"StrictHostKeyChecking no\" -l root -R873:127.0.0.1:873 $client sh /tmp/$param_image.master > $logfile 2>&1";
+    # Send the completed signal to the client.
+    $command = "ssh -l root $client \"echo -n > /tmp/si_pushupdate.completed\"";
     $rc = 0xffff & system($command);
     if ($rc != 0) { 
-        my $message="FATAL: Could not connect via ssh and run autoinstall script on $client!\n";
+        $message = "error: could not connect via ssh on $client!\n";
         updatelogfile($message);
         die $message;
     } else {
-        my $message="Completed si_pushupdate autoinstall for $client from $imageserver.\n";
+        $message = "Completed si_pushupdate for $client from $imageserver.\n";
+        $message .= "Auto-installation will continue on the client.\n";
         updatelogfile($message);
     }
     

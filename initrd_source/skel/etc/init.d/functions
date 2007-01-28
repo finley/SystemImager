@@ -1535,7 +1535,7 @@ start_ssh() {
         logmsg "Starting sshd.  You must now go to your imageserver and issue"
         logmsg "the following command:"
         logmsg
-        logmsg " \"si_pushupdate -continue-install -image <IMAGENAME> -client ${HOST_OR_IP}\"."
+        logmsg " \"si_pushupdate -continue-install -image <IMAGENAME> -client ${HOST_OR_IP} --server ${IMAGESERVER}\"."
         logmsg
         logmsg
         if [ ! -f /tmp/sshd_started ]; then
@@ -1544,12 +1544,9 @@ start_ssh() {
             # rug out from underneath it.
             sleep 15
         fi
-
-        # save variables for autoinstall script
-        write_variables || shellout
-
-        # remove rug
-        exit 1
+        while [ ! -f /tmp/si_pushupdate.completed ]; do
+            sleep 5
+        done
     fi
 }
 #
