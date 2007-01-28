@@ -96,13 +96,17 @@ case "$1" in
     echo "stopped."
     ;;
   status)
+    ret=0
     echo "Status of SystemImager's BitTorrent Transport: systemimager-server-bittorrent... "
     ([ -f $PIDFILE_TRACKER ] && \
         ps -p `cat $PIDFILE_TRACKER 2>/dev/null` >/dev/null 2>&1 && \
-        echo tracker running.) || echo tracker is not running.
+        echo tracker running. && exit 0) || (echo tracker is not running. && exit 1)
+    ret=$(($ret + $?))
     ([ -f $PIDFILE_SEEDER ] && \
         ps -p `cat $PIDFILE_SEEDER 2>/dev/null` >/dev/null 2>&1 && \
-        echo seeder running.) || echo seeder is not running.
+        echo seeder running. && exit 0) || (echo seeder is not running. && exit 1)
+    ret=$(($ret + $?))
+    exit $ret
     ;;
   force-reload|restart)
     sh $0 stop
@@ -114,4 +118,3 @@ case "$1" in
     ;;
 esac
 
-exit 0
