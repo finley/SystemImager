@@ -9,7 +9,7 @@
 #
 %define ver      0.0.0
 %define rel      1
-%define packager Bernard Li <bli@bcgsc.ca>
+%define packager Bernard Li <bernard@vanhpc.org>
 %define prefix   /usr
 %define _build_all 1
 %define _boot_flavor standard
@@ -329,6 +329,9 @@ More information can be found at the website:
 http://developer.osdl.org/kees/software/imagemanip/
 
 %changelog
+* Sun Jan 28 2007 Bernard Li <bernard@vanhpc.org>
+- Added missing directories to filelist for systemimager-server
+
 * Sun Jan 28 2007 Andrea Righi <a.righi@cineca.it>
 - Differentiate between upgrade and uninstall operations in all the
   %preun sections.
@@ -837,7 +840,9 @@ fi
 %doc doc/man/autoinstall* doc/examples/local.cfg
 %dir /var/lock/systemimager
 %dir /var/log/systemimager
+%dir /var/lib/systemimager
 %dir /var/lib/systemimager/images
+%dir /var/lib/systemimager/scripts
 %dir /var/lib/systemimager/scripts/pre-install
 %dir /var/lib/systemimager/scripts/post-install
 %dir /var/lib/systemimager/overrides
