@@ -82,7 +82,7 @@ case "$1" in
     [ ! -z $BT_OVERRIDES ] && BT_OVERRIDES="--overrides $BT_OVERRIDES"
     [ "$BT_COMPRESS" = "y" ] && BT_COMPRESS='--compress'
     [ "$BT_UPDATE" = "y" ] && BT_UPDATE='--update'
-    si_installbtimage --quiet $BT_COMPRESS $BT_UPDATE $BT_IMAGES $BT_OVERRIDES 0</dev/null 1>/dev/null 2>&1
+    si_installbtimage --quiet $BT_COMPRESS $BT_UPDATE $BT_IMAGES $BT_OVERRIDES
     if [ $? -ne 0 ]; then
         echo failed.
     	exit 1
