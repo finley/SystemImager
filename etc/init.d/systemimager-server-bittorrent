@@ -61,12 +61,13 @@ case "$1" in
     fi
     # Check tracker to see if it supports --twisted flag
     ($BT_TRACKER_BIN 2>&1 | grep -q twisted) && BT_TWISTED="--twisted 0"
-    $BT_TRACKER_BIN --port $BT_TRACKER_PORT --dfile $BT_TRACKER_STATE --logfile $BT_TRACKER_LOG $BT_TWISTED &
+    $BT_TRACKER_BIN --port $BT_TRACKER_PORT --dfile $BT_TRACKER_STATE --logfile $BT_TRACKER_LOG $BT_TWISTED 0</dev/null 1>/dev/null 2>&1 &
     if [ $? -ne 0 ]; then
         echo failed.
     	exit 1
     else
         echo $! > $PIDFILE_TRACKER
+        echo tracker: ok
     fi
     # Start first seeder in background.
     if [ -z $BT_IMAGES ]; then
@@ -81,10 +82,12 @@ case "$1" in
     [ ! -z $BT_OVERRIDES ] && BT_OVERRIDES="--overrides $BT_OVERRIDES"
     [ "$BT_COMPRESS" = "y" ] && BT_COMPRESS='--compress'
     [ "$BT_UPDATE" = "y" ] && BT_UPDATE='--update'
-    si_installbtimage --quiet $BT_COMPRESS $BT_UPDATE $BT_IMAGES $BT_OVERRIDES
+    si_installbtimage --quiet $BT_COMPRESS $BT_UPDATE $BT_IMAGES $BT_OVERRIDES 0</dev/null 1>/dev/null 2>&1
     if [ $? -ne 0 ]; then
         echo failed.
     	exit 1
+    else
+        echo seeder: ok
     fi
     ;;
   stop)
