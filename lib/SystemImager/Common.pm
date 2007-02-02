@@ -1053,8 +1053,14 @@ sub save_lvm_information {
             my $vg_name = $vg_data[0];
             # Maximum number of logical volumes.
             my $vg_max_log_vols = $vg_data[4];
+            if (($lvm_version == 1) && ($vg_max_log_vols > 255)) {
+                $vg_max_log_vols = 255;
+            }
             # Maximum number of physical volumes.
             my $vg_max_phys_vols = $vg_data[8];
+            if (($lvm_version == 1) && ($vg_max_phys_vols > 255)) {
+                $vg_max_phys_vols = 255;
+            }
             # Physical extent size.
             my $vg_phys_extent_size = $vg_data[12];
             
@@ -1062,7 +1068,7 @@ sub save_lvm_information {
 
             # Print logical volumes informations for this group -AR-
             if ($lvm_version == 1) {
-                $cmd = 'vgdisplay -v 2>/dev/null | grep "^LV Name" | sed "s/ */ /g" | cut -d" " -f3 | xargs lvdisplay -c 2>/dev/null | sed /^$/d';
+                $cmd = 'vgdisplay -v 2>/dev/null | grep "^LV Name" | sed "s/  */ /g" | cut -d" " -f3 | xargs lvdisplay -c 2>/dev/null | sed /^$/d';
             } elsif ($lvm_version == 2) {
                 $cmd = "lvdisplay -c 2>/dev/null";
             }
