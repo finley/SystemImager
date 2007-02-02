@@ -774,29 +774,29 @@ fi
 echo "checking for a tracker binary..."
 BT_TRACKER_BIN=`(which bittorrent-tracker || which bttrack) 2>/dev/null`
 if [ -z $BT_TRACKER_BIN ]; then
-	echo "error: couldn't find a valid tracker binary!"
+	echo "WARNING: couldn't find a valid tracker binary!"
 	echo "--> Install the BitTorrent package (bittorrent for RH)."
-	exit 1
+else
+	echo done
 fi
-echo done
 
 echo "checking for a maketorrent binary..."
 BT_MAKETORRENT_BIN=`(which maketorrent-console || which btmaketorrent) 2>/dev/null`
 if [ -z $BT_MAKETORRENT_BIN ]; then
-	echo "error: couldn't find a valid maketorrent binary!"
+	echo "WARNING: couldn't find a valid maketorrent binary!"
 	echo "--> Install the BitTorrent package (bittorrent for RH)."
-	exit 1
+else
+	echo done
 fi
-echo done
 
 echo "checking for a bittorrent binary..."
 BT_BITTORRENT_BIN=`(which launchmany-console || which btlaunchmany) 2>/dev/null`
 if [ -z $BT_BITTORRENT_BIN ]; then
-	echo "error: couldn't find a valid bittorrent binary!"
+	echo "WARNING: couldn't find a valid bittorrent binary!"
 	echo "--> Install the BitTorrent package (bittorrent for RH)."
-	exit 1
+else
+	echo done
 fi
-echo done
 
 %preun bittorrent
 if [ $1 = 0 ]; then
