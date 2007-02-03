@@ -23,6 +23,64 @@ package SystemImager::HostRange;
 
 use strict;
 
+# Maximum number of concurrent sessions (public).
+our $concurrents = 32;
+
+# Number of active concurrent sessions.
+my $workers = 0;
+
+# Usage:
+# thread_pool_spawn($prog, $opts, $cmd, @hosts);
+# Description:
+#       Spawn the pool of sessions to the target hosts.
+sub thread_pool_spawn
+{
+	my ($prog, $opts, $cmd, @hosts) = @_;
+
+	foreach my $host (@hosts) {
+		do_cmd($prog, $opts, $cmd, $host);
+		$workers++;
+		if ($workers >= $concurrents) {
+			wait;
+			$workers--;
+		}
+	}
+
+	# Wait for children to finish.
+	while ($workers) {
+		last if (wait == -1);
+		$workers--;
+	}
+	$workers = 0;
+}
+
+# Usage:
+# do_cmd($prog, $opts, $host, $cmd);
+# Description:
+#       Run a command on a single remote host.
+sub do_cmd
+{
+	my ($prog, $opts, $cmd, $host) = @_;
+
+	my $pid;
+	if ($pid = fork) {
+		return;
+	} elsif (defined $pid) {
+		# print "$prog $opts $host $cmd\n";
+		my @out = `$prog $opts $host $cmd 2>&1`;
+		if ($?) {
+			select(STDERR);
+		}
+		$| = 1;
+		foreach (@out) {
+			print $host . ': ' . $_;
+		}
+		exit(0);
+	} else {
+		print STDERR "$host: couldn't fork session!\n";
+	}
+}
+
 # Usage:
 # my @hosts = expand_range_list($range_string)
 # Description:

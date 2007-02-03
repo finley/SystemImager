@@ -94,7 +94,6 @@ unless ($target) {
 	die("error: undefined destination!\nTry \"--help\" for more options.\n");
 }
 
-
 my @hosts = ();
 if ($hostlist) {
         # Expand host ranges.
@@ -121,12 +120,12 @@ if ($hostlist) {
 	die("error: no host defined!\nTry \"--help\" for more options.\n");
 }
 
-unless ($concurrents) {
-	$concurrents = 32;
-}
-
 unless ($timeout) {
 	$timeout = 15;
+}
+
+if ($concurrents) {
+	$SystemImager::HostRange::concurrents = $concurrents;
 }
 
 ### END evaluate command line options ###
@@ -135,66 +134,9 @@ unless ($timeout) {
 my $ssh_opts = "-x -o BatchMode=yes";
 my $rsync_opts = "-aHSz$verbose --numeric-ids --timeout=$timeout --rsh='ssh $ssh_opts'";
 
-# Number of concurrent sessions.
-my $workers = 0;
-
 # Main program.
-thread_pool_spawn();
-while ($workers) {
-	thread_pool_wait();
-}
-
-# Usage:
-# thread_pool_wait();
-# Description:
-#       Wait the completion of running sessions when the maximum number
-#       of concurrent processes is reached.
-sub thread_pool_wait
-{
-	wait;
-	$workers--;
-}
-
-# Usage:
-# thread_pool_spawn();
-# Description:
-#       Spawn the pool of sessions to the target hosts.
-sub thread_pool_spawn
-{
-	foreach my $host (@hosts) {
-		do_cmd($host);
-		$workers++;
-		if ($workers >= $concurrents) {
-			thread_pool_wait();
-		}
-	}
-}
-
-# Usage:
-# do_cmd($host);
-# Description:
-#       Run a command on a single remote host.
-sub do_cmd
-{
-	my $host = shift;
-	my $pid;
-
-	if ($pid = fork) {
-		return;
-	} elsif (defined $pid) {
-		my @out = `rsync $rsync_opts $source $host:$target 2>&1`;
-		if ($?) {
-			select(STDERR);
-		}
-		$| = 1;
-		foreach (@out) {
-			print $host . ': ' . $_;
-		}
-		exit(0);
-	} else {
-		print STDERR "$host: couldn't fork a rsync session!\n";
-	}
-}
+@hosts = map { $_ .= ":$target" } @hosts;
+SystemImager::HostRange::thread_pool_spawn('rsync', $rsync_opts . ' ' . $source, '', @hosts);
 
 __END__
 

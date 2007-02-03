@@ -103,10 +103,6 @@ if ($hostlist) {
 	die("error: no host defined!\nTry \"--help\" for more options.\n");
 }
 
-unless ($concurrents) {
-	$concurrents = 32;
-}
-
 unless ($timeout) {
 	$timeout = 15;
 }
@@ -115,82 +111,19 @@ unless ($ssh_user) {
 	$ssh_user = $ENV{'USER'};
 }
 
+if ($concurrents) {
+	$SystemImager::HostRange::concurrents = $concurrents;
+}
+
 ### END evaluate command line options ###
 
 # Use the following ssh options.
 my $ssh_opts = "-x -o BatchMode=yes -o ConnectTimeout=$timeout -l $ssh_user";
 
-# Number of concurrent sessions.
-my $workers = 0;
-
 unless ($cmd) {
 	die("error: no command defined!\nTry \"--help\" for more options.\n");
 } else {
-	psh_execute();
-}
-
-# Usage:
-# psh_execute();
-# Description:
-#       Execute the command $cmd in the target hosts.
-sub psh_execute
-{
-	thread_pool_spawn();
-	while ($workers) {
-		thread_pool_wait();
-	}
-}
-
-# Usage:
-# thread_pool_wait();
-# Description:
-#       Wait the completion of running sessions when the maximum number
-#       of concurrent processes is reached.
-sub thread_pool_wait
-{
-	wait;
-	$workers--;
-}
-
-# Usage:
-# thread_pool_spawn();
-# Description:
-#       Spawn the pool of sessions to the target hosts.
-sub thread_pool_spawn
-{
-	foreach my $host (@hosts) {
-		do_cmd($host);
-		$workers++;
-		if ($workers >= $concurrents) {
-			thread_pool_wait();
-		}
-	}
-}
-
-# Usage:
-# do_cmd($host);
-# Description:
-#       Run a command on a single remote host.
-sub do_cmd
-{
-	my $host = shift;
-	my $pid;
-
-	if ($pid = fork) {
-		return;
-	} elsif (defined $pid) {
-		my @out = `ssh $ssh_opts $host $cmd 2>&1`;
-		if ($?) {
-			select(STDERR);
-		}
-		$| = 1;
-		foreach (@out) {
-			print $host . ': ' . $_;
-		}
-		exit(0);
-	} else {
-		print STDERR "$host: couldn't fork a ssh session!\n";
-	}
+	SystemImager::HostRange::thread_pool_spawn('ssh', $ssh_opts, $cmd, @hosts);
 }
 
 __END__
