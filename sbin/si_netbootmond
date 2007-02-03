@@ -17,6 +17,7 @@ use strict;
 use File::Copy;
 use POSIX qw(setsid);
 use SystemImager::Config;
+use SystemImager::HostRange;
 use SystemImager::Server;
 use vars qw($config $VERSION);
 

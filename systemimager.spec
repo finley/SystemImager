@@ -875,6 +875,7 @@ fi
 %prefix/bin/si_pcp
 %prefix/lib/systemimager/perl/SystemImager/Server.pm
 %prefix/lib/systemimager/perl/SystemImager/Config.pm
+%prefix/lib/systemimager/perl/SystemImager/HostRange.pm
 %prefix/lib/systemimager/perl/confedit
 %prefix/lib/systemimager/perl/BootMedia/*
 %prefix/share/man/man5/systemimager*
