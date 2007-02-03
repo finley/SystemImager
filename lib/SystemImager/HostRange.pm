@@ -113,8 +113,8 @@ sub expand_range {
 
 		# IP range.
 		if ((my $ip_start = ip2int($front)) && (my $ip_end = ip2int($end))) {
-			for ($ip_start .. $ip_end) {
-				$$expanded_hosts{int2ip($_)}++;
+			for (my $i = $ip_start; $i <= $ip_end; $i++) {
+				$$expanded_hosts{int2ip($i)}++;
 			}
 			return;
 		}
