@@ -1,0 +1,202 @@
+#!/usr/bin/perl -w
+#
+#   "SystemImager" 
+#
+#   Copyright (C) 2007 Andrea Righi <a.righi@cineca.it>
+#
+#   $Id$
+
+use lib "USR_PREFIX/lib/systemimager/perl";
+
+use strict;
+use Getopt::Long;
+use SystemImager::HostRange;
+
+my $VERSION = "SYSTEMIMAGER_VERSION_STRING";
+
+my $program_name = "si_pushinstall";
+
+my $version_info = << "EOF";
+$program_name (part of SystemImager) v$VERSION
+
+Copyright (C) 2007 Andrea Righi <a.righi\@cineca.it>
+
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+EOF
+
+my $help_info = $version_info . <<"EOF";
+
+Usage: $program_name --image-server HOST --hosts HOST_RANGE [OPTION]...
+
+Options: (options can be presented in any order and can be abbreviated)
+ --help|-h              Display this output.
+
+ --version, -v          Display version and copyright information.
+
+ --image-server, -s     The image server used by the clients to download
+                        the image.
+
+ --max, -m=NUM          Set the maximum number of concurrent sessions
+                        to NUM.
+
+ --hosts, -n=HOST_LIST  List of target nodes. List can be separated by
+                        comma, spaces or new line and can include
+                        ranges (e.g. "node001-node256,node300 node400").
+
+ --hosts-file, -f=FILE  File that contains the list of the target host.
+                        Every line can include one or more ranges
+                        (e.g. "node001-node256,node300 node400").
+
+ --timeout, -t=NUM      Set the timeout of the ssh sessions.
+
+EOF
+
+Getopt::Long::Configure("posix_default");
+Getopt::Long::Configure("no_gnu_compat");
+Getopt::Long::Configure("bundling");
+
+GetOptions(
+	"help|h"                => \my $help,
+	"version|v"             => \my $version,
+	"image-server|s=s"      => \my $imageserver,
+	"max|m=i"               => \my $concurrents,
+	"hosts|n=s"             => \my $hostlist,
+	"hosts-file|f=s"        => \my $hostlist_file,
+	"timeout|t=i"           => \my $timeout,
+) or die("$help_info");
+
+### BEGIN evaluate commad line options ###
+
+if ($help) {
+        print $help_info;
+        exit(0);
+}
+
+if ($version) {
+        print $version_info;
+        exit(0);
+}
+
+unless ($imageserver) {
+	die("error: --image-server is mandatory!\nTry \"--help\".\n");
+}
+
+my @hosts = ();
+if ($hostlist) {
+        # Expand host ranges.
+        @hosts = SystemImager::HostRange::expand_range_list($hostlist);
+} elsif ($hostlist_file) {
+        # Read input file.
+        open(IN, "<$hostlist_file") ||
+                die("error: could't read $hostlist_file!\n");
+        chomp(@hosts = <IN>);
+        close(IN);
+        # Expand host ranges.
+        my %expanded_hosts = ();
+        foreach my $line (@hosts) {
+                my @list = split(/,| |\n/, $line);
+                foreach my $range (@list) {
+                        SystemImager::HostRange::expand_range(\%expanded_hosts, $range);
+                }
+        }
+        # Convert hosts hash into a list.
+        @hosts = sort(keys(%expanded_hosts));
+} else {
+        die("error: no host defined!\nTry \"--help\" for more options.\n");
+}
+
+unless ($timeout) {
+        $timeout = 15;
+}
+
+if ($concurrents) {
+        $SystemImager::HostRange::concurrents = $concurrents;
+}
+
+# Use the following ssh options.
+my $ssh_opts = "-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60 -o ConnectTimeout=$timeout -l root -n -f -R873:$imageserver:873";
+
+# Run this command on clients: send the signal to complete the
+# installation and sleep to keep open the SSH tunnel.
+my $cmd = '"sleep 100000 > /tmp/si_pushupdate.completed" >/dev/null 2>&1';
+
+# Main program.
+SystemImager::HostRange::thread_pool_spawn('ssh', $ssh_opts, $cmd, @hosts);
+
+exit(0);
+
+__END__
+
+=head1 NAME
+
+si_pushinstall - push an image from the image server to the clients
+
+=head1 SYNOPSIS
+
+si_pushinstall --image-server HOST --hosts HOST_RANGE [OPTION]...
+
+=head1 DESCRIPTION
+
+B<si_pushinstall> can be used to perform server-driven installation
+with SSH transport.
+
+The clients start a SSH daemon and wait for the image server that
+actively opens a SSH tunnel on them. After the tunnel is opened clients
+can continue the imaging as usual.
+
+See also: http://wiki.systemimager.org/index.php/SSH
+
+=head1 OPTIONS
+
+=over 8
+
+=item B<--help>
+
+Display a short help.
+
+=item B<--version>
+
+Display version and copyright information.
+
+=item B<--image-server HOST>
+
+=item B<--max | -m NUM>
+
+Set the maximum number of concurrent sessions to NUM.
+
+=item B<--hosts | -n HOST_LIST>
+
+List of target nodes.
+List can be separated by comma, spaces or new line and can include
+ranges (e.g. "node001-node256,node300 node400").
+
+=item B<--hosts-file | -f FILE>
+
+File that contains the list of the target hosts.
+Every line can include one or more ranges (e.g. "node001-node256,node300
+node400").
+
+=item B<--timeout | -t NUM>
+
+Set the timeout of the ssh sessions.
+
+=head1 SEE ALSO
+
+systemimager(8), si_mkbootpackage(8), si_prepareclient(8), perldoc si_pcp, perldoc si_psh
+
+=head1 AUTHOR
+
+Andrea Righi <a.righi@cineca.it>.
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2003 by Andrea Righi <a.righi@cineca.it>.
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+=cut
+

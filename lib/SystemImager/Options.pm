@@ -177,6 +177,10 @@ return << "EOF";
     Hosts should be treated as autoinstall clients waiting for further
     instruction.
 
+    WARNING: deprecated option!
+
+    See "perldoc si_pushinstall" for more details.
+
  --ssh-user USERNAME
     Username for ssh connection _to_ the client.  Seperate from 
     si_updateclient\'s --ssh-user option.

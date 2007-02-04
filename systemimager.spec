@@ -867,6 +867,7 @@ fi
 %prefix/sbin/si_mvimage
 %prefix/sbin/si_netbootmond
 %prefix/sbin/si_pushupdate
+%prefix/sbin/si_pushinstall
 %prefix/sbin/si_rmimage
 %prefix/sbin/si_monitor
 %prefix/sbin/si_monitortk
