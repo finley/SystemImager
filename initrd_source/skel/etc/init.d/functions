@@ -1526,9 +1526,16 @@ start_ssh() {
             HOST_OR_IP=$HOSTNAME
         fi
 
+        if [ ! -f /tmp/sshd_started ]; then
+            start_sshd
+            # Give sshd time to initialize before we yank the parent process
+            # rug out from underneath it.
+            sleep 15
+        fi
+
         logmsg
         logmsg
-        logmsg "Starting sshd.  You must now go to your imageserver and issue"
+        logmsg "Started sshd.  You must now go to your imageserver and issue"
         logmsg "the following command:"
         logmsg
         logmsg " \"si_pushinstall --image-server ${IMAGESERVER} --hosts ${HOST_OR_IP}\"."
@@ -1539,12 +1546,6 @@ start_ssh() {
         # the forwarded connection.
         IMAGESERVER=127.0.0.1
 
-        if [ ! -f /tmp/sshd_started ]; then
-            start_sshd
-            # Give sshd time to initialize before we yank the parent process
-            # rug out from underneath it.
-            sleep 15
-        fi
         while [ ! -f /tmp/si_pushupdate.completed ]; do
             sleep 5
         done
