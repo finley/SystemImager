@@ -1538,7 +1538,7 @@ start_ssh() {
         logmsg "Started sshd.  You must now go to your imageserver and issue"
         logmsg "the following command:"
         logmsg
-        logmsg " \"si_pushinstall --image-server ${IMAGESERVER} --hosts ${HOST_OR_IP}\"."
+        logmsg " \"si_pushinstall --hosts ${HOST_OR_IP}\"."
         logmsg
         logmsg
 
