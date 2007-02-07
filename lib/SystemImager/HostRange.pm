@@ -22,6 +22,7 @@
 package SystemImager::HostRange;
 
 use strict;
+use Socket;
 
 # Maximum number of concurrent sessions (public).
 our $concurrents = 32;
@@ -128,7 +129,7 @@ sub expand_range {
 			$end_domain = '';
 		}
 		if (!defined($start_num) || !defined($end_num)
-			|| ($start_num >= $end_num)
+			|| ($start_num > $end_num)
 			|| ($end_root ne $start_root)
 			|| ($end_domain ne $start_domain)) {
 				$$expanded_hosts{$node}++;
@@ -144,6 +145,32 @@ sub expand_range {
 		my $prefix = '0' x $zeros;
 		$$expanded_hosts{"$start_root$prefix$suffix$start_domain"}++;
 	}
+}
+
+# Usage:
+# my @sorted_list = sort_ip(@ip_list)
+# Description:
+#       Sort a list of IPv4 addresses.
+sub sort_ip
+{
+	return sort {
+		my @a = ($a =~ /(\d+)\.(\d+)\.(\d+)\.(\d+)/);
+		my @b = ($b =~ /(\d+)\.(\d+)\.(\d+)\.(\d+)/);
+		$a[0] <=> $b[0] ||
+		$a[1] <=> $b[1] ||
+		$a[2] <=> $b[2] ||
+		$a[3] <=> $b[3]
+	} @_;
+}
+
+# Usage:
+# my $ip = hostname2ip($hostname);
+# Description:
+#       Convert hostname into the IPv4 address.
+sub hostname2ip
+{
+       my $ip = (gethostbyname(shift))[4] || "";
+       return $ip ? inet_ntoa( $ip ) : "";
 }
 
 # Usage:

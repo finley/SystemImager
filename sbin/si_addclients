@@ -4,20 +4,18 @@
 #   "SystemImager"
 #
 #   Copyright (C) 1999-2006  Brian Elliott Finley
+#   Copyright (C) 2007 Andrea Righi <a.righi@cineca.it>
 #
 #   $Id$
 #    vi:set filetype=perl:
 #
 
-# XXX Someday, we should add IP address, hostname, and domain name validation routines. -BEF-
-
 use lib "USR_PREFIX/lib/systemimager/perl";
 use strict;
 use Getopt::Long;
 use SystemImager::Config;
+use SystemImager::HostRange;
 use vars qw($config $VERSION);
-
-
 
 ### BEGIN Program ###
 # set version information
@@ -39,38 +37,39 @@ Usage: $program_name [OPTION]... REQUIRED_ARGUMENTS
 
 Options: (options can be presented in any order)
 
- --help               
+ --help
     Display this output.
                      
- --version            
+ --version
     Display version and copyright information.
+
+ --hosts HOST_LIST
+    List of target nodes. List can be separated by
+    comma, spaces or new line and can include
+    ranges.
+
+    Example:  node001-node099,node101.
                      
- --host NAME          
-    Base host name.
-                     
- --domainname NAME    
-    Domain name.
-                     
- --host-range N-N     
-    Range of hosts involved.  Examples: 1-99 or 01-99.
-                     
- --script NAME        
-    Master autoinstall script name.  Don't include the path or the
-    '.master' extension.
-    
-    Example: my_image
-                     
- --ip-range IP-IP     
+ --ip-range IP_LIST
     Range of IP addresses for clients.  Used to create an optional hosts
     file that clients can use for IP address to hostname resolution
     during install.  Not necessary if DNS reverse resolution is
     configured for the IP addresses in question.  If both DNS and a
     hosts file are used, information in the hosts file will supercede
-    the information in DNS.  
-    
-    Example: 10.0.0.1-10.0.0.99.
+    the information in DNS.
 
- --interactive YES/NO 
+    Example: 10.0.0.1-10.0.0.99,10.0.0.101.
+
+ --domainname NAME
+    Domain name.
+
+ --script NAME
+    Master autoinstall script name.  Don't include the path or the
+    '.master' extension.
+    
+    Example: my_image
+                     
+ --interactive YES/NO
     This program will go interactive by default if domainname, host,
     host-range, and script are all specified.
 
@@ -86,25 +85,23 @@ http://systemimager.org/
 EOF
 
 # defaults
-my $script;
+my ($script, $hosts, $ip_range);
+
 my $domain_name = "";
-my $base_host_name = "";
-my $starting_number = "";
-my $ending_number = "";
-my $starting_ip = "";
-my $ending_ip = "";
 my $interactive = "";
 
+Getopt::Long::Configure("posix_default");
+Getopt::Long::Configure("no_gnu_compat");
+Getopt::Long::Configure("bundling");
 
 # interpret command line options
 GetOptions( 
   "help"            => \my $help,
   "version"         => \my $version,
-  "domainname=s"    => \$domain_name,
-  "host=s"          => \$base_host_name,
-  "host-range=s"    => \my $host_range,
   "script=s"        => \$script,
-  "ip-range=s"      => \my $ip_range,
+  "hosts=s"         => \$hosts,
+  "ip-range=s"      => \$ip_range,
+  "domainname=s"    => \$domain_name,
   "interactive=s"   => \$interactive,
 ) or die qq($help_info);
 
@@ -145,40 +142,14 @@ if ($script) {
     }
 }
 
-if ($host_range) {
-    ($starting_number, $ending_number) = split(/-/, $host_range);
-    unless ( ($starting_number ne "") and ($ending_number ne "") ) {
-        print qq(FATAL:  for "--host-range X-Y", both X and Y must be specified!\n);
-        print qq(See "$program_name --help" for more information.\n);
-        exit 1;
-    }
-
-    unless ( ($starting_number + 0) and ($ending_number + 0) ) {
-        print qq(FATAL:  for "--host-range X-Y", both X and Y must be numeric!\n);
-        print qq(See "$program_name --help" for more information.\n);
-        exit 1;
-    }
-}
-
-if ($ip_range) {
-    ($starting_ip, $ending_ip) = split(/-/, $ip_range);
-}
-
 $domain_name = lc $domain_name;
-$base_host_name = lc $base_host_name;
 
-
-my $all_parameters_set;
-if (($base_host_name) and 
-    ($script) and 
-    ($starting_number ne "") and 
-    ($ending_number ne "")) {
-
+my $all_parameters_set = 0;
+if (defined($hosts) and defined($ip_range) and defined($script)) {
     $all_parameters_set = 1;
-
 }
 
-if( ! $all_parameters_set) {
+unless ($all_parameters_set) {
 
     if($interactive eq "no") {
         print qq(FATAL: Not all required parameters were specified.  Exiting with status of 1.\n);
@@ -246,9 +217,7 @@ number, and an ending number.
 
 For example, if you answer:
   domain name     = systemimager.org
-  base host name  = www
-  starting number = 7
-  ending number   = 11
+  host range      = www7-www11,www20
 
 Then the result will be a series of hostnames that looks like this:
   www7.systemimager.org
@@ -256,27 +225,23 @@ Then the result will be a series of hostnames that looks like this:
   www9.systemimager.org
   www10.systemimager.org
   www11.systemimager.org
+  www20.systemimager.org
 
 
 EOF
 
         print "What is your domain name? [$domain_name]: ";
         $domain_name = get_response($domain_name);
-       
-        print "What is the base host name that you want me to use? [$base_host_name]: ";
-        $base_host_name = get_response($base_host_name);
-       
-        print "What number should I begin with? [$starting_number]: ";
-        $starting_number = get_response($starting_number); 
-       
-        print "What number should I end with? [$ending_number]: ";
-        $ending_number=get_response($ending_number);
-       
         $domain_name = lc $domain_name;
-        $base_host_name = lc $base_host_name;
 
+        $hosts = '' unless(defined($hosts));
+        print "What is the hosts range that you want me to use? [$hosts]: ";
+        $hosts = get_response($hosts);
+
+        next unless($hosts);
+       
         print "\n\n";
-        print "I will work with hostnames:  $base_host_name$starting_number through $base_host_name$ending_number\n"; 
+        print "I will work with hostnames:  $hosts\n"; 
         print "             in the domain:  $domain_name\n";
         print "\nAre you satisfied? (y/[n]): ";
         chomp($satisfied=<STDIN>);
@@ -292,11 +257,11 @@ si_addclients -- Section 2 (soft links to master script)
 
 Would you like me to create soft links to a "master" script so that hosts:
 
-  $base_host_name$starting_number through $base_host_name$ending_number
+  $hosts
 
 EOF
 
-    print "can be autoinstalled with that image? ([y]/n): ";
+    print "can be autoinstalled with one of the available images? ([y]/n): ";
     my $createlinks=<STDIN>;
     chomp $createlinks;
     $createlinks = lc $createlinks;
@@ -335,7 +300,7 @@ EOF
             $script=get_response($script);
             if ( -f "$autoinstall_script_dir/$script.master" ) {
           
-                create_links($starting_number, $ending_number, $base_host_name, $script, $autoinstall_script_dir);
+                create_links($hosts, $script, $autoinstall_script_dir);
           
                 print "\nYour soft links have been created.\n";
                 print "\nPress <Enter> to continue...";
@@ -393,45 +358,50 @@ EOF
     $etc_hosts = lc $etc_hosts;
     if ($etc_hosts ne "y") { $etc_hosts = "n"; }
 
-    my $node_number = $starting_number;
-
     if ($etc_hosts eq "y") {
 
-        my $subnet_count = "0";
+	my @all_hosts = SystemImager::HostRange::expand_range_list($hosts);        
         
-        ### BEGIN One Subnet at a time ###
-        #
-        my $satisfied;
-        
-        while ( $node_number <= $ending_number ) {
-            $subnet_count = $subnet_count + 1;
-        
-            ### get IP information ###
-            # ne "y" is used instead of eq "n" because the dissatisfied response may be something other than "n".
-            $satisfied="n";
+        unless (defined($ip_range)) {
+            # Try to find the correct IP range.
+            my $starting_ip = SystemImager::HostRange::hostname2ip($all_hosts[0]); 
+            my $ending_ip = SystemImager::HostRange::hostname2ip($all_hosts[$#all_hosts]); 
+            if ($starting_ip and $ending_ip) {
+                # Try with a simple list of contiguous elements... -AR-
+                $ip_range = "$starting_ip-$ending_ip";
+            } else {
+                # IP range unknown.
+                $ip_range = '';
+            }
+        }
+
+        ### get IP information ###
+        # ne "y" is used instead of eq "n" because the dissatisfied response may be something other than "n".
+        $satisfied="n";
+        while (1) {
             while ($satisfied ne "y") {
                 system("clear");
                 print "si_addclients -- Section 3 (adding or modifying /etc/hosts entries -- continued...)\n";
                 print "--------------------------------------------------------------------------------\n";
-                print "subnet $subnet_count\n\n";
-                print "The first host in subnet $subnet_count will be: $base_host_name$node_number\n";
-                print "What is the starting IP address for subnet $subnet_count? [$starting_ip]: ";
-                $starting_ip = get_response($starting_ip);
-                
-                print "What is the ending IP address? [$ending_ip]: ";
-                $ending_ip = get_response($ending_ip);
-                
-                print "I will work with IP addresses:  $starting_ip through $ending_ip\n";
+                print "\nHostnames range is: $hosts\n";
+                print "\nWhat is the IPs address range (e.g. 10.0.0.1-10.0.0.100,10.0.0.101)?\n";
+                print "[$ip_range]: ";
+                $ip_range = get_response($ip_range);
+                print "I will work with IP addresses:  $ip_range\n";
+                print "                and hostnames:  $hosts\n";
                 print "\nAre you satisfied? (y/[n]): ";
                 chomp($satisfied=<STDIN>);
             }
             ### get IP information ###
         
-            ($starting_ip, $ending_ip, $node_number) = add_hosts_entries($starting_ip, $ending_ip, $starting_number, $ending_number, $base_host_name, $domain_name);
-        
+            if (!add_hosts_entries($ip_range, $domain_name, @all_hosts)) {
+                last;
+            } else {
+                $satisfied = 'n';
+                print "\nPress <Enter> to continue...";
+                <STDIN>;
+            }
         }
-        ### END One Subnet at a time ###
-        
         
         if ( $etc_hosts eq "y" ) { 
             print "\nThese entries have been added to /etc/hosts, and /etc/hosts has been copied\n";
@@ -449,20 +419,20 @@ EOF
 
 } else {
 
-    create_links($starting_number, $ending_number, $base_host_name, $script, $autoinstall_script_dir);
+    create_links($hosts, $script, $autoinstall_script_dir);
+    print "$program_name: created links in $autoinstall_script_dir\n";
 
-    if( ($base_host_name) and
-        ($starting_ip) and
-        ($ending_ip) and
-        ($starting_number ne "") ) { 
-
-        add_hosts_entries($starting_ip, $ending_ip, $starting_number,  $ending_number, $base_host_name, $domain_name);
+    if (defined($hosts) and defined($ip_range)) { 
+        my @all_hosts = SystemImager::HostRange::expand_range_list($hosts);
+        if (add_hosts_entries($ip_range, $domain_name, @all_hosts)) {
+            die("$program_name: aborted!\n");
+        }
     }
     
 }
 
-
-
+print "\n$program_name: successfully completed.\n";
+exit(0);
 
 ### BEGIN Subroutines ###
 sub get_response {
@@ -473,70 +443,31 @@ sub get_response {
     return $garbage_out;
 }
 
-sub dec2bin {
-    my $str = unpack("B32", pack("N", shift));
-    return $str;
-}
 
-sub dec2bin8bit {
-    my $str = unpack("B32", pack("N", shift));
-    $str = substr($str, -8); # 32bit number -- get last 8 bits (the relevant ones)
-    return $str;
-}
-
-sub bin2dec {
-    return unpack("N", pack("B32", substr("0" x 32 . shift, -32))); # get all 32bits
-}
-
-sub ip_quad2ip_dec {
-    (my $a, my $b, my $c, my $d) = split(/\./, $_[0]);
-    my $a_bin=dec2bin8bit($a);
-    my $b_bin=dec2bin8bit($b);
-    my $c_bin=dec2bin8bit($c);
-    my $d_bin=dec2bin8bit($d);
-    return bin2dec(join('', $a_bin, $b_bin, $c_bin, $d_bin));
-}
-
-# Usage: my $ip_quad = ip_dec2ip_quad($ip_dec);
-sub ip_dec2ip_quad {
-    my $ip_bin = dec2bin($_[0]);
-    my $a_dec = bin2dec(substr($ip_bin, 0, 8));
-    my $b_dec = bin2dec(substr($ip_bin, 8, 8));
-    my $c_dec = bin2dec(substr($ip_bin, 16, 8));
-    my $d_dec = bin2dec(substr($ip_bin, 24, 8));
-    return join('.', $a_dec, $b_dec, $c_dec, $d_dec);
-}
-
-sub numerically { 
-    $a <=> $b;
-}
-
-
-# Usage: create_links($starting_number, $ending_number, $base_host_name, $script, $autoinstall_script_dir);
+# Usage: create_links($hostlist, $script, $autoinstall_script_dir);
 sub create_links {
 
-    my ($starting_number, $ending_number, $base_host_name, $script, $autoinstall_script_dir) = @_;
+    my ($hostlist, $script, $autoinstall_script_dir) = @_;
 
-    $base_host_name = lc $base_host_name;
-
-    foreach my $node_number ($starting_number .. $ending_number) {
-        my $cmd = "cd $autoinstall_script_dir && ln -sf $script.master $base_host_name$node_number.sh";
+    foreach my $node (SystemImager::HostRange::expand_range_list($hostlist)) {
+        my $cmd = "cd $autoinstall_script_dir && ln -sf $script.master $node.sh";
         !system($cmd) or die "Can't $cmd!";
     }
 }
 
 
-# Usage: add_hosts_entries($starting_ip, $ending_ip, $node_number, $ending_number, $base_host_name, $domain_name);
-# Usage: ($starting_ip, $ending_ip, $node_number) = add_hosts_entries($starting_ip, $ending_ip, $starting_number, $ending_number, $base_host_name, $domain_name);
+# Usage: $ret = add_hosts_entries($ip_range, $domain_name, @all_hosts);
 sub add_hosts_entries { 
+    my ($ip_range, $domain_name, @all_hosts) = @_;
 
-    my ($starting_ip, $ending_ip, $node_number, $ending_number, $base_host_name, $domain_name) = @_;
-
-    $base_host_name = lc $base_host_name;
     $domain_name = lc $domain_name;
 
-    my $starting_ip_dec = ip_quad2ip_dec($starting_ip);
-    my $ending_ip_dec = ip_quad2ip_dec($ending_ip);
+    my @all_ips = SystemImager::HostRange::expand_range_list($ip_range);
+    unless ($#all_ips == $#all_hosts) {
+        print "error: different number of IPs and hostnames!\n";
+        print 'IPs = ' . ($#all_ips + 1) . "\n" . 'Hosts = ' . ($#all_hosts + 1) . "\n";
+        return -1;
+    }
 
     ### BEGIN test to be sure /etc/hosts exists and create if it doesn't ###
     my $file = "/etc/hosts";
@@ -569,23 +500,11 @@ sub add_hosts_entries {
     ### END read in /etc/hosts and create a hash of lines by ip address and a hash of lines by number
     
     ### create a hash of new hostnames by ip address 
-    my $desired_length;
-    unless (length($starting_number) == length($starting_number + 0)) {
-        $desired_length = length($ending_number);
-    }
-
+    @all_hosts = sort(@all_hosts);
     my %new_hostnames_by_ip;
-    my $ip_dec = $starting_ip_dec;
-    until ( $ip_dec > $ending_ip_dec ) {
-        my $bitwise = $ip_dec & 255;
-        if ( $bitwise == "255" ) { $ip_dec = $ip_dec + 2; }
-        my $ip_quad = ip_dec2ip_quad($ip_dec);
-        $new_hostnames_by_ip{$ip_quad} = "$base_host_name$node_number";
-        $ip_dec = $ip_dec + 1;
-        $node_number = $node_number + 1;
-
-        if ($desired_length) { $node_number = pad_with_zeros($node_number, $desired_length); }
-        if ( $node_number > $ending_number ) { last; }
+    my $i = 0;
+    foreach (SystemImager::HostRange::sort_ip(@all_ips)) {
+        $new_hostnames_by_ip{$_} = $all_hosts[$i++];
     }
     ### create a hash of new hostnames by ip address 
 
@@ -606,7 +525,7 @@ sub add_hosts_entries {
     ### END open temporary /etc/hosts for writing
 
     ### BEGIN replace entries as necessary in numbered /etc/hosts lines and print numbered lines
-    foreach my $line_number ( sort numerically ( keys %etc_hosts_lines_by_number )) {
+    foreach my $line_number ( sort {$a <=> $b} ( keys %etc_hosts_lines_by_number )) {
         $_ = $etc_hosts_lines_by_number{$line_number};
         my @words = split;
         my $ip_quad = $words[0];
@@ -623,7 +542,7 @@ sub add_hosts_entries {
     my %etc_hosts_lines_by_ip_decimal;
     my $ip_decimal;
     foreach my $ip_quad ( keys %etc_hosts_lines_by_ip ) {
-        $ip_decimal = ip_quad2ip_dec($ip_quad);
+        $ip_decimal = SystemImager::HostRange::ip2int($ip_quad);
         $etc_hosts_lines_by_ip_decimal{$ip_decimal} = $etc_hosts_lines_by_ip{$ip_quad};
     }
     ### create hash of entries by decimal ip (for sorting purposes)
@@ -646,21 +565,7 @@ sub add_hosts_entries {
     my $cmd = "cp -f /etc/hosts $autoinstall_script_dir";
     !system($cmd) or die "Couldn't $cmd!";
 
-    $starting_ip = ip_dec2ip_quad($ip_dec);
-    $ending_ip = "";
-    return ($starting_ip, $ending_ip, $node_number);
-
+    return 0;
 }
 
-# Usage: my $result = pad_with_zeros($number, $desired_length);
-sub pad_with_zeros {
-
-    my ($number, $desired_length) = @_;
-
-    until (length($number) == $desired_length) {
-        $number = "0" . "$number";
-    }
-    
-    return $number;
-}
 ### END Subroutines ###

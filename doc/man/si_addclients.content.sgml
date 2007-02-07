@@ -27,11 +27,10 @@
     <command>si_addclients</command>
     <arg><option>-help</option></arg>
     <arg><option>-version</option></arg>
-    <arg><option>-host <replaceable>HOSTNAME</replaceable></option></arg>
+    <arg><option>-hosts <replaceable>HOST_LIST</replaceable></option></arg>
+    <arg><option>-ip-range <replaceable>IP_LIST</replaceable></option></arg>
     <arg><option>-domainname <replaceable>DOMAINNAME</replaceable></option></arg>
-    <arg><option>-host-range <replaceable>X-Y</replaceable></option></arg>
     <arg><option>-script <replaceable>SCRIPT</replaceable></option></arg>
-    <arg><option>-ip-range <replaceable>IP-IP</replaceable></option></arg>
     <arg><option>-interactive <replaceable>YES|NO</replaceable></option></arg>
   </cmdsynopsis>
   </refsynopsisdiv>
@@ -55,11 +54,11 @@
 	looks like, and define a range of hostnames that you will associate
 	with an image in the next section.  (You should already have created
 	the image for these clients to use by this point).  Hostnames are of
-	the form
+	the form:
 	<replaceable>prefix</replaceable><replaceable>number</replaceable>.<replaceable>domainname</replaceable>
-	For example, if you specify "bogus.net" as your domainname, "node" as
-	your base hostname, a starting number of 1 and an ending number of 10,
-	you will have defined the following hosts:
+	For example, if you specify "bogus.net" as your domainname,
+        "node1-node10,node20" as your hostname range, you will have
+        defined the following hosts:
       </para>
       <simplelist>
 	<member>node1.bogus.net</member>
@@ -72,20 +71,8 @@
 	<member>node8.bogus.net</member>
 	<member>node9.bogus.net</member>
 	<member>node10.bogus.net</member>
+	<member>node20.bogus.net</member>
       </simplelist>
-      <note>
-	<para>
-	  Currently, <command>si_addclients</command> does not support hostnames
-	  with leading zeros (e.g. node09.bogus.net, instead of
-	  node9.bogus.net), but this will likely be added in a future release.
-	  One reason for making the no-padded-zeros method the default
-	  behavior is flexible cluster expansion.  For example, if you had
-	  initially chosen node01 - node80 as your cluster range, and later
-	  decide to add 25 more nodes to your cluster, you will have to
-	  renumber all of your nodes to add another leading zero
-	  (i.e. node001 - node105).
-	</para>
-      </note>
     </listitem>
     <listitem>
       <para>
@@ -129,11 +116,15 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-host <replaceable>HOST</replaceable></option></term>
+	<term><option>-hosts <replaceable>HOST_LIST</replaceable></option></term>
 	<listitem>
 	  <para>
-	    Base host name of the client(s) to be autoinstalled.  Will be
-	    combined with "-host-range" to derive actual host names.
+            List of target nodes. List can be separated by
+            comma, spaces or new line and can include
+            ranges.
+          </para>
+          <para>
+            Example:  node001-node099,node101.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -147,27 +138,23 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-host-range <replaceable>X-Y</replaceable></option></term>
+	<term><option>-ip-range <replaceable>IP_LIST</replaceable></option></term>
 	<listitem>
 	  <para>
-	    Number range used to create a series of host names based on the
-	    <option>-client</option> option.  For example, "-client www -range
-	    1-3" will cause si_addclients to use www1, www2, and www3 as host
-	    names.  If leading zeros are used, then host names will be padded
-	    with zeros.  For example, "-client www -range 01-03" produces
-	    host names www01, www02, and www03.  Padding hostnames with zeros
-	    is not recommended.
+	    The range of IP addresses to assign to your autoinstall clients.
+            There must be one IP per hostname.
+	  </para>
+	  <para>
+            Example:  192.168.1.1-192.168.1.99,192.168.1.101.
 	  </para>
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-ip-range <replaceable>IP<subscript>0</subscript>-IP<subscript>1</subscript></replaceable></option></term>
+	<term><option>-domainname <replaceable>DOMAINNAME</replaceable></option></term>
 	<listitem>
 	  <para>
-	    The range of IP addresses to assign to your autoinstall clients.
-	    Where IP<subscript>0</subscript> is the first IP address in the
-	    range and IP<subscript>1</subscript> is the last ip address in the
-	    range.
+	    If this option is used, <replaceable>DOMAINNAME</replaceable> will
+	    be appended to the client host name(s).
 	  </para>
 	</listitem>
       </varlistentry>
