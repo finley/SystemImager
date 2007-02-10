@@ -1,5 +1,5 @@
 --- discover-data-2.2006.10.29/pci.lst.orig	2006-10-26 01:06:27.000000000 -0700
-+++ discover-data-2.2006.10.29/pci.lst	2007-02-08 19:49:02.000000000 -0800
++++ discover-data-2.2006.10.29/pci.lst	2007-02-09 19:52:32.000000000 -0800
 @@ -188,13 +188,13 @@
  	10000013	scsi	sym53c8xx_2	53c875a
  	10000020	scsi	sym53c8xx_2	53c1010 Ultra3 SCSI Adapter
@@ -36,3 +36,20 @@
  	80861097	unknown	unknown	631xESB/632xESB DPT LAN Controller (Fiber)
  	80861098	unknown	unknown	80003ES2LAN Gigabit Ethernet Controller (Serdes)
  	80861099	ethernet	unknown	82546GB Gigabit Ethernet Controller (Copper)
+@@ -7436,11 +7436,11 @@
+ 	80862681	unknown	unknown	631xESB/632xESB SATA Storage Controller AHCI
+ 	80862682	unknown	unknown	631xESB/632xESB SATA Storage Controller RAID
+ 	80862683	unknown	unknown	631xESB/632xESB SATA Storage Controller RAID
+-	80862688	unknown	unknown	631xESB/632xESB/3100 Chipset UHCI USB Controller #1
+-	80862689	unknown	unknown	631xESB/632xESB/3100 Chipset UHCI USB Controller #2
+-	8086268a	unknown	unknown	631xESB/632xESB/3100 Chipset UHCI USB Controller #3
+-	8086268b	unknown	unknown	631xESB/632xESB/3100 Chipset UHCI USB Controller #4
+-	8086268c	unknown	unknown	631xESB/632xESB/3100 Chipset EHCI USB2 Controller
++	80862688	usb	uhci_hcd	631xESB/632xESB/3100 Chipset UHCI USB Controller #1
++	80862689	usb	uhci_hcd	631xESB/632xESB/3100 Chipset UHCI USB Controller #2
++	8086268a	usb	uhci_hcd	631xESB/632xESB/3100 Chipset UHCI USB Controller #3
++	8086268b	usb	uhci_hcd	631xESB/632xESB/3100 Chipset UHCI USB Controller #4
++	8086268c	usb	ehci_hcd	631xESB/632xESB/3100 Chipset EHCI USB2 Controller
+ 	80862690	unknown	unknown	631xESB/632xESB/3100 Chipset PCI Express Root Port 1
+ 	80862692	unknown	unknown	631xESB/632xESB/3100 Chipset PCI Express Root Port 2
+ 	80862694	unknown	unknown	631xESB/632xESB/3100 Chipset PCI Express Root Port 3
