@@ -1311,7 +1311,7 @@ run_pre_install_scripts() {
 
         # Uniquify, in case we have multiple hits for any script.  
         # Based on bug found by Cory Lueninghoener. -BEF-
-        PRE_INSTALL_SCRIPTS=`echo $PRE_INSTALL_SCRIPTS | uniq`
+        PRE_INSTALL_SCRIPTS=`echo $PRE_INSTALL_SCRIPTS | sort -u`
 
         # Now, to get rid of those pesky newlines. -BEF-
         PRE_INSTALL_SCRIPTS=`echo $PRE_INSTALL_SCRIPTS | tr '\n' ' '`
@@ -1363,7 +1363,7 @@ run_post_install_scripts() {
 
         # Uniquify, in case we have multiple hits for any script.  
         # Based on bug found by Cory Lueninghoener. -BEF-
-        POST_INSTALL_SCRIPTS=`echo $POST_INSTALL_SCRIPTS | uniq`
+        POST_INSTALL_SCRIPTS=`echo $POST_INSTALL_SCRIPTS | sort -u`
 
         # Now, to get rid of those pesky newlines. -BEF-
         POST_INSTALL_SCRIPTS=`echo $POST_INSTALL_SCRIPTS | tr '\n' ' '`
