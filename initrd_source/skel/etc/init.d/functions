@@ -1293,6 +1293,23 @@ run_autoinstall_script() {
 #
 ################################################################################
 #
+# Description: remove duplicated elements from a list, preserving the order.
+#
+unique() {
+    ret=
+    for i in $*; do
+        flag=0
+        for j in $ret; do
+            [ "$i" = "$j" ] && flag=1 && break
+        done
+        [ $flag -eq 0 ] && ret="$ret $i"
+    done
+    echo $ret
+    unset i j flag ret
+}
+#
+################################################################################
+#
 run_pre_install_scripts() {
 
     logmsg
@@ -1309,16 +1326,12 @@ run_pre_install_scripts() {
         PRE_INSTALL_SCRIPTS="$PRE_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]${HOSTNAME}\..*"`"
         PRE_INSTALL_SCRIPTS="$PRE_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]all\..*"`"
 
-        # Uniquify, in case we have multiple hits for any script.  
-        # Based on bug found by Cory Lueninghoener. -BEF-
-        PRE_INSTALL_SCRIPTS=`echo $PRE_INSTALL_SCRIPTS | sort -u`
-
         # Now, to get rid of those pesky newlines. -BEF-
         PRE_INSTALL_SCRIPTS=`echo $PRE_INSTALL_SCRIPTS | tr '\n' ' '`
         
         if [ ! -z "`echo ${PRE_INSTALL_SCRIPTS}|sed 's/ //'`" ]; then
 
-            for PRE_INSTALL_SCRIPT in $PRE_INSTALL_SCRIPTS
+            for PRE_INSTALL_SCRIPT in `unique $PRE_INSTALL_SCRIPTS`
             do
                 logmsg ">>> $PRE_INSTALL_SCRIPT"
                 chmod +x $PRE_INSTALL_SCRIPT || shellout
@@ -1361,10 +1374,6 @@ run_post_install_scripts() {
             POST_INSTALL_SCRIPTS="$POST_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]${OVERRIDE}\..*"`"
         done
 
-        # Uniquify, in case we have multiple hits for any script.  
-        # Based on bug found by Cory Lueninghoener. -BEF-
-        POST_INSTALL_SCRIPTS=`echo $POST_INSTALL_SCRIPTS | sort -u`
-
         # Now, to get rid of those pesky newlines. -BEF-
         POST_INSTALL_SCRIPTS=`echo $POST_INSTALL_SCRIPTS | tr '\n' ' '`
         
@@ -1374,7 +1383,7 @@ run_post_install_scripts() {
 
             rsync -a ${SCRIPTS_DIR}/post-install/ /a/tmp/post-install/ || shellout
 
-            for POST_INSTALL_SCRIPT in $POST_INSTALL_SCRIPTS
+            for POST_INSTALL_SCRIPT in `unique $POST_INSTALL_SCRIPTS`
             do
                 if [ -e "$POST_INSTALL_SCRIPT" ]; then
                     logmsg ">>> $POST_INSTALL_SCRIPT"
