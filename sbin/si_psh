@@ -27,12 +27,12 @@ my $help_info = $version_info . <<"EOF";
 Usage: $program_name --hosts host_range [OPTION]... COMMAND
 
 Options: (options can be presented in any order and can be abbreviated)
- --help|-h              Display this output.
+ --help, -h             Display this output.
 
  --version, -v          Display version and copyright information.
 
  --max, -m=NUM          Set the maximum number of concurrent sessions
-                        to NUM.
+                        to NUM (default=32).
 
  --hosts, -n=HOST_LIST  List of target nodes. List can be separated by
                         comma, spaces or new line and can include
@@ -42,7 +42,7 @@ Options: (options can be presented in any order and can be abbreviated)
                         Every line can include one or more ranges
                         (e.g. "node001-node256,node300 node400").
 
- --timeout, -t=NUM      Set the timeout of the ssh sessions.
+ --timeout, -t=NUM      Set the timeout of the ssh sessions (default=15s).
 
  --ssh-user, -l=USER    Run the command as user USER.
 
@@ -155,7 +155,7 @@ Display version and copyright information.
 
 =item B<--max | -m NUM>
 
-Set the maximum number of concurrent sessions to NUM.
+Set the maximum number of concurrent sessions to NUM (default=32).
 
 =item B<--hosts | -n HOST_LIST>
 
@@ -170,7 +170,7 @@ Every line can include one or more ranges (e.g. "node001-node256,node300 node400
 
 =item B<--timeout | -t NUM>
 
-Set the timeout of the ssh sessions.
+Set the timeout of the ssh sessions (default=15s).
 
 =item B<--ssh-user | -l USER>
 
