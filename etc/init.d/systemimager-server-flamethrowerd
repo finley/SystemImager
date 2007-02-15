@@ -57,12 +57,23 @@ case "$1" in
     fi
     echo -n "Starting Flamethrower daemon: flamethrowerd"
     flamethrowerd --config-file /etc/systemimager/flamethrower.conf --pid-file $PPID_FILE
-    echo "."
+    if [ $? -eq 0 ]; then
+        echo "ok."
+    else
+        echo "failed."
+        exit 1
+    fi
     ;;
   stop)
     echo -n "Stopping Flamethrower daemon: flamethrowerd"
     kill_em_all
-    echo
+    if ps -p `cat $PPID_FILE 2>/dev/null` >/dev/null 2>&1; then
+        echo "failed."
+        exit 1
+    else
+        echo "ok."
+        exit 0
+    fi
     ;;
   status)
     echo -n "Status of Flamethrower daemon: flamethrowerd... "

@@ -34,14 +34,26 @@ PIDFILE=/var/run/si_netbootmond.pid
 
 case "$1" in
   start)
-    echo -n "Starting SystemImager's net boot client monitor: si_netbootmond"
+    echo -n "Starting SystemImager's net boot client monitor: "
     si_netbootmond
-    echo "."
+    if pgrep si_netbootmond >/dev/null 2>&1; then
+        echo "ok."
+        exit 0
+    else
+        echo "failed."
+        exit 1
+    fi
     ;;
   stop)
-    echo -n "Stopping SystemImager's net boot client monitor: si_netbootmond"
-    [ -f $PIDFILE ] && kill `cat $PIDFILE`
-    echo "."
+    echo -n "Stopping SystemImager's net boot client monitor: "
+    [ -f $PIDFILE ] && kill `cat $PIDFILE 2>/dev/null`
+    if [ $? -eq 0 ]; then
+        echo "ok."
+        exit 0
+    else
+        echo "failed."
+        exit 1
+    fi
     ;;
   status)
     echo -n "Status of SystemImager's net boot client monitor: si_netbootmond... "

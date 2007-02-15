@@ -45,13 +45,25 @@ case "$1" in
 	PID=`pgrep -f "$DAEMON $OPTIONS"`
 	[ ! -z "$PID" ] && echo "already running." && exit 0
 	$DAEMON $OPTIONS
-	echo "$NAME."
+	if ps -p $PID >/dev/null 2>&1; then
+		echo "ok."
+		exit 0
+	else
+		echo "failed."
+		exit 1
+	fi
 	;;
   stop)
 	echo -n "Stopping $DESC: "
-	PID=`pidof $NAME`
+	PID=`pgrep -f "$DAEMON $OPTIONS"`
 	[ ! -z "$PID" ] && kill $PID
-	echo "$NAME."
+	if [ $? -eq 0 ]; then
+		echo "stopped."
+		exit 0
+	else
+		echo "failed."
+		exit 1
+	fi
 	;;
   status)
 	echo -n "Status of rsync daemon for systemimager: "
@@ -70,4 +82,3 @@ case "$1" in
 	;;
 esac
 
-exit 0
