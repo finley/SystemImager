@@ -55,7 +55,7 @@ case "$1" in
         echo "PID file $PPID_FILE exists.  Must be already running."
         exit 1
     fi
-    echo -n "Starting Flamethrower daemon: flamethrowerd"
+    echo -n "Starting Flamethrower daemon: "
     flamethrowerd --config-file /etc/systemimager/flamethrower.conf --pid-file $PPID_FILE
     if [ $? -eq 0 ]; then
         echo "ok."
@@ -65,7 +65,7 @@ case "$1" in
     fi
     ;;
   stop)
-    echo -n "Stopping Flamethrower daemon: flamethrowerd"
+    echo -n "Stopping Flamethrower daemon: "
     kill_em_all
     if ps -p `cat $PPID_FILE 2>/dev/null` >/dev/null 2>&1; then
         echo "failed."
