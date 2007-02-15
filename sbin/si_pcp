@@ -33,8 +33,11 @@ Options: (options can be presented in any order and can be abbreviated)
 
  --verbose, -v          Display verbose informations.
 
+ --dry-run, -d          Only show what would have been transferred
+                        without really distributing files.
+
  --max, -m=NUM          Set the maximum number of concurrent copies
-                        to NUM.
+                        to NUM (default=32).
 
  --hosts, -n=HOST_LIST  List of target nodes. List can be separated by
                         comma, spaces or new line and can include
@@ -44,7 +47,7 @@ Options: (options can be presented in any order and can be abbreviated)
                         Every line can include one or more ranges
                         (e.g. "node001-node256,node300 node400").
 
- --timeout, -t=NUM      Set the timeout of the sessions.
+ --timeout, -t=NUM      Set the timeout of the sessions (default=15s).
 
 EOF
 
@@ -57,6 +60,7 @@ GetOptions(
 	"version|V"		=> \my $version,
 	"verbose|v"		=> \my $verbose,
 	"max|m=i"		=> \my $concurrents,
+	"dry-run|d"		=> \my $dry_run,
 	"hosts|n=s"		=> \my $hostlist,
 	"hosts-file|f=s"	=> \my $hostlist_file,
 	"timeout|t=i"		=> \my $timeout,
@@ -79,6 +83,12 @@ if ($verbose) {
 	$verbose = 'v';
 } else {
 	$verbose = '';
+}
+
+if ($dry_run) {
+	$dry_run = '--dry-run';
+} else {
+	$dry_run = '';
 }
 
 my $source;
@@ -132,7 +142,7 @@ if ($concurrents) {
 
 # Use the following ssh options.
 my $ssh_opts = "-x -o BatchMode=yes";
-my $rsync_opts = "-aHSz$verbose --numeric-ids --timeout=$timeout --rsh='ssh $ssh_opts'";
+my $rsync_opts = "-aHSz$verbose $dry_run --numeric-ids --timeout=$timeout --rsh='ssh $ssh_opts'";
 
 # Main program.
 @hosts = map { $_ .= ":$target" } @hosts;
@@ -164,9 +174,17 @@ Display a short help.
 
 Display version and copyright information.
 
+=item B<--verbose | -v>
+
+Display verbose informations.
+
+=item B<--dry-run | -d>
+
+Only show what would have been transferred without really distributing files.
+
 =item B<--max | -m NUM>
 
-Set the maximum number of concurrent copies to NUM.
+Set the maximum number of concurrent copies to NUM (default=32).
 
 =item B<--hosts | -n HOST_LIST>
 
@@ -180,7 +198,7 @@ Every line can include one or more ranges (e.g. "node001-node256,node300 node400
 
 =item B<--timeout | -t NUM>
 
-Set the timeout of the rsync sessions.
+Set the timeout of the rsync sessions (default=15s).
 
 =head1 SEE ALSO
 
