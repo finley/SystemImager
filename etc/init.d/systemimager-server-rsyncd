@@ -45,6 +45,7 @@ case "$1" in
 	PID=`pgrep -f "$DAEMON $OPTIONS"`
 	[ ! -z "$PID" ] && echo "already running." && exit 0
 	$DAEMON $OPTIONS
+	PID=`pgrep -f "$DAEMON $OPTIONS"`
 	if ps -p $PID >/dev/null 2>&1; then
 		echo "ok."
 		exit 0
