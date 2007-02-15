@@ -1,6 +1,8 @@
 #
 #   	$Id$
 #
+#	2007-02-10 Bernard Li
+#	- LVM 2.2.02.18 provides --with-dmdir in ./configure script
 #	2005-01-12 Andrea Righi
 #   	- provided patch for lvm support
 #	2005.07.12 Brian Elliott Finley; patch from Erich Focht
@@ -15,20 +17,21 @@
 #
 
 
-DEVMAPPER_VERSION	:= 1.02.11
+DEVMAPPER_VERSION	:= 1.02.17
 DEVMAPPER_DIR		:= device-mapper.$(DEVMAPPER_VERSION)
 DEVMAPPER_TARBALL	:= device-mapper.$(DEVMAPPER_VERSION).tgz
-#DEVMAPPER_URL		:= ftp://sources.redhat.com/pub/dm/old/$(DEVMAPPER_TARBALL)
+#DEVMAPPER_URL		:= ftp://sources.redhat.com/pub/dm/$(DEVMAPPER_TARBALL)
 DEVMAPPER_URL		:= http://download.systemimager.org/pub/device-mapper/$(DEVMAPPER_TARBALL)
 DEVMAPPER_BINARY	:= $(SRC_DIR)/$(DEVMAPPER_DIR)/lib/ioctl/libdevmapper.so
 MKLIBS 				+= $(SRC_DIR)/$(DEVMAPPER_DIR)/lib/ioctl
 
-LVM_VERSION	:= 2.2.02.12
+LVM_VERSION	:= 2.2.02.18
 LVM_DIR		:= LVM$(LVM_VERSION)
 LVM_TARBALL	:= LVM$(LVM_VERSION).tgz
 #LVM_URL	:= ftp://sources.redhat.com/pub/lvm2/old/$(LVM_TARBALL)
 LVM_URL		:= http://download.systemimager.org/pub/lvm/$(LVM_TARBALL)
 LVM_BINARY	:= $(SRC_DIR)/$(LVM_DIR)/tools/lvm
+LVM_PATCHES	:= $(shell ls $(PATCH_DIR)/lvm.*.patch 2>/dev/null | sort)
 
 PHONY += devmapper
 devmapper:	$(DEVMAPPER_BINARY)
@@ -50,12 +53,11 @@ $(LVM_BINARY):	$(SRC_DIR)/$(LVM_TARBALL) $(DEVMAPPER_BINARY)
 	rm -rf $(SRC_DIR)/$(LVM_DIR)
 	cd $(SRC_DIR) && tar -xvzf $(LVM_TARBALL)
 	cd $(SRC_DIR)/$(LVM_DIR) && \
-		LIBRARY_PATH=$(SRC_DIR)/$(DEVMAPPER_DIR)/lib/ioctl \
-                CPATH=$(SRC_DIR)/$(DEVMAPPER_DIR)/lib \
-                ./configure --prefix=/usr --disable-nls --with-optimisation=-Os
-	LIBRARY_PATH=$(SRC_DIR)/$(DEVMAPPER_DIR)/lib/ioctl \
-            CPATH=$(SRC_DIR)/$(DEVMAPPER_DIR)/lib \
-            $(MAKE) -j $(NCPUS) -C $(SRC_DIR)/$(LVM_DIR)
+		./configure --prefix=/usr --disable-nls --with-optimisation=-Os \
+			--with-dmdir=$(SRC_DIR)/$(DEVMAPPER_DIR)
+	cd $(SRC_DIR)/$(LVM_DIR) && \
+		cat $(LVM_PATCHES) < /dev/null | patch -p1
+	$(MAKE) -j $(NCPUS) -C $(SRC_DIR)/$(LVM_DIR)
 
 $(SRC_DIR)/$(LVM_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
