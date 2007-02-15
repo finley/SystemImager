@@ -93,9 +93,17 @@ if ($pid = fork) {
 #
 sub tail_rsync_log_file {
 
+    my $pid;
+
+    $SIG{TERM} = sub {
+        if (defined($pid)) {
+            kill(1, $pid);
+        }
+    };
+
     my $cmd = "tail -n 0 --follow=name $log_file";
     local *LOG_FILE;
-    open(LOG_FILE,"$cmd |") || die("Can't $cmd!");
+    $pid = open(LOG_FILE,"$cmd |") || die("Can't $cmd!");
         while(<LOG_FILE>) {
        
             # Get individual field values for this line
