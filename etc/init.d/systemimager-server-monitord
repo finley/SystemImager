@@ -62,7 +62,7 @@ EOF
     else
         $SI_MONITOR 0>/dev/null >&0 2>&0 &
     fi
-    if ps -p `cat $PIDFILE 2>/dev/null` >/dev/null 2>&1; then
+    if ps -p $! >/dev/null 2>&1; then
         echo "ok."
     else
         echo "failed."
