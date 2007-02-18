@@ -7,7 +7,9 @@
     </title>
    
 	<para>
-      See <ulink url="http://systemimager.org/download">http://systemimager.org/download</ulink> for details.
+      See <ulink url="http://wiki.systemimager.org/index.php/Multicast">
+      http://wiki.systemimager.org/index.php/Multicast
+      </ulink> for details.
 	</para>
   </section>
 
@@ -33,11 +35,11 @@
    
 	<para>
       Flamethrower is a stand-alone utility, but SystemImager maintains
-      a SystemImager seperate copy (/etc/systemimager/flamethrower.conf)
+      a SystemImager seperate copy (<filename>/etc/systemimager/flamethrower.conf</filename>)
       of the Flamethrower configuration file 
-      (/etc/flamethrower/flamethrower.conf).  Each of these three
-      commands (si_getimage, si_mvimage, si_cpimage) will create an appropriate
-      entry in /etc/systemimager/flamethrower.conf for the image you
+      (<filename>/etc/flamethrower/flamethrower.conf</filename>).  Each of these three
+      commands (<command>si_getimage</command>, <command>si_mvimage</command>, <command>si_cpimage</command>)
+      will create an appropriate entry in <filename>/etc/systemimager/flamethrower.conf</filename> for the image you
       specify.
 	</para>
 	<para>
@@ -58,7 +60,7 @@
     </title>
    
 	<para>
-      Edit /etc/systemimager/flamethrower.conf, and set the following:
+      Edit <filename>/etc/systemimager/flamethrower.conf</filename>, and set the following:
       <programlisting>
     START_FLAMETHROWER_DAEMON = yes
       </programlisting>
@@ -92,8 +94,10 @@ or
       </programlisting>
 	</para>
     <para>
-      If you use a local.cfg file, you can add the following to that
-      file:
+      If you use the installation parameter approach you can add the following to
+      <filename>/etc/systemimager/pxelinux.cfg/syslinux.cfg</filename>
+      (and re-run <command>si_mkclientnetboot</command>) or using the <command>--append "STRING"</command>
+      option with <command>si_mkautoinstalldisk</command> or <command>si_mkautoinstallcd</command>:
       <programlisting>
         FLAMETHROWER_DIRECTORY_PORTBASE=9000
       </programlisting>
@@ -167,7 +171,7 @@ or
           <orderedlist>
             <listitem>
               <para>
-                boel binaries (additional binaries that the autoinstall client
+                BOEL binaries (additional binaries that the autoinstall client
                 needs to continue the install)
               </para>
             </listitem>
