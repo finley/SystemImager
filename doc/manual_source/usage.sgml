@@ -120,11 +120,13 @@
 	      <para>
 		If you are not in ssh mode, all files on your
 		golden client are openly accessible to anyone on your network.  
-		Once you have pulled the image from your golden client, you can 
-	      deactivate the <command>rsync</command> daemon by killing the
-		<command>rsync</command> process or by simply rebooting the
-		golden client.  This <command>rsync</command> server will not
-		start automatically on future reboots.
+		Once you have pulled the image from your golden client, the
+                <command>rsync</command> daemon will be automatically killed by
+                <command>si_getimage</command>.
+	        In case of errors during the image retrieval be sure to manually
+                deactivate the <command>rsync</command> daemon by killing the process or by
+                simply rebooting the golden client.  This <command>rsync</command> server will
+                not start automatically on future reboots.
 	      </para>
 	    </warning>
 	  </listitem>
@@ -153,35 +155,19 @@
 	</para>
 	
 	<para>
-	  Alternately, you can put hostname, imageserver, and networking information
-	  in a configuration file on a floppy diskette. The format of the configuration 
-	  file is simply <filename>VARIABLE=value</filename> for all the appropriate 
-	  settings. The name of this file must be <filename>local.cfg</filename> and it 
-	  must exist on the root of the floppy 
-	  or hard drive.  The floppy can be formatted with either ext2 or fat.  An example local.cfg file,
-	  such as the one below, can be 
-	  found with the documentation files that are usually installed 
-	  in <filename>/usr/share/doc</filename>.</para> 
-
-<example>
-	  <title>
-	    Contents of an example <filename>local.cfg</filename> provided with SystemImager:
-	  </title>
-	  <programlisting>
-	    HOSTNAME=www1
-	    DOMAINNAME=systemimager.org
-	    DEVICE=eth0
-	    IPADDR=10.0.0.99
-	    NETMASK=255.255.255.0
-	    NETWORK=10.0.0.0
-	    BROADCAST=10.0.0.255
-	    GATEWAY=10.0.0.1
-   	    GATEWAYDEV=eth0
-	    IMAGESERVER=10.0.0.3
-	    IMAGENAME=oracle_db_server-1.0 
-	  </programlisting>
-</example>
-
+	  Alternately, you can pass hostname, imageserver, and networking information
+          via installation parameters, in the form of
+          <filename>VARIABLE=value</filename>.
+          Installation parameters can be defined in
+          <filename>/etc/systemimager/pxelinux.cfg/syslinux.cf</filename> or can be passed
+          as argument of <command>si_mkautoinstalldisk</command> or
+          <command>si_mkautoinstallcd</command> using the <command>--append "STRING"</command>
+          option.
+          For a complete list of the available installation parameters see 
+          <ulink url="http://wiki.systemimager.org/index.php/Installation_Parameters">
+            http://wiki.systemimager.org/index.php/Installation_Parameters
+          </ulink>.
+        </para>
 
 	<para>
 	  Alternatively, if you are using a running system's hard drive as the boot media, you can run 
@@ -194,16 +180,7 @@
 	</para>
 	
 	<para>
-	  A <filename>local.cfg</filename> file on a floppy will work with any
-	  of the autoinstall media.  You can even put the configuration file on
-	  the autoinstall floppy itself.  If you use a
-	  <filename>local.cfg</filename> file on a hard drive and on a floppy,
-	  the settings on the floppy will override the settings on the hard
-	  drive.
 	</para>
-
-	<para>
-	  </para>
 
 	<example>
 	  <title>Running si_mkdhcpserver</title>
@@ -214,7 +191,7 @@
 
 	<example>
 	  <title>
-	    Running updateclient with the "-autoinstall" and "-config" options
+	    Running si_updateclient with the "-autoinstall" and "-config" options
 	  </title>
 	  <para>
 	    Note that the options <parameter>-autoinstall</parameter>,
@@ -234,7 +211,7 @@
 	    <parameter>-im</parameter> and <parameter>-ip</parameter>.
 	  </para>
 	  <programlisting>
-[root@server7]# updateclient -a -s imageserver -c eth0
+[root@server7]# si_updateclient -a -s imageserver -c eth0
 Retrieving SystemImager kernel...
 Retrieving SystemImager initial ramdisk...
 Adding SystemImager entry in /etc/lilo.conf...
@@ -329,22 +306,20 @@ IMAGESERVER=192.168.1.203
 	  <listitem>
 	    <para>
 	      In the first configuration screen <command>si_addclients</command>,
-		asks you to specify the hostname pattern of your autoinstall clients.  
-		Autoinstall client hostnames are comprised
-		of [basename][number].
-		For example, if you choose "proxy" as your basename, and
-	      3-10 as your range, you will define the following
+	      asks you to specify the hostname pattern of your autoinstall clients.  
+              Autoinstall client hostnames are defined by a host-range string
+              and a domain name string.
+	      For example, if you choose "systemimager.org" as your domain name, and
+	      "www07-www11,www20" as your range, you will define the following
 	      autoinstall clients:
 	    </para>
 	    <simplelist>
-	      <member>proxy3</member>
-	      <member>proxy4</member>
-	      <member>proxy5</member>
-	      <member>proxy6</member>
-	      <member>proxy7</member>
-	      <member>proxy8</member>
-	      <member>proxy9</member>
-	      <member>proxy10</member>
+	      <member>www07.systemimager.org</member>
+	      <member>www08.systemimager.org</member>
+	      <member>www09.systemimager.org</member>
+	      <member>www10.systemimager.org</member>
+	      <member>www11.systemimager.org</member>
+	      <member>www20.systemimager.org</member>
 	    </simplelist>
 	  </listitem>
 	  <listitem>
@@ -355,8 +330,7 @@ IMAGESERVER=192.168.1.203
 	      <para>
 		Each invocation of <command>si_addclients</command> allows you
 		to map a single range of clients to an image.
-		If you want to map non-consecutive ranges of clients to an
-		image, or want to map different client ranges to different
+		If you want to map different client ranges to different
 		images, you must execute the
 		<command>si_addclients</command> command multiple times.
 	      </para>
@@ -379,8 +353,8 @@ IMAGESERVER=192.168.1.203
 	  <title>Entries in /etc/hosts created by si_addclients</title>
         <para>
           If you give <command>si_addclients</command>
-          a range of IPs from 192.168.1.1-192.168.1.99, a base
-          hostname server, and a hostname extension range of 1-99,
+          a range of IPs from "192.168.1.1-192.168.1.99", a hostname range of
+          "server1-server99" and "mydomain.com" as domain name,
           then it would generate the following <filename>/etc/hosts</filename>
           file:
 	  <programlisting>
@@ -421,14 +395,13 @@ IMAGESERVER=192.168.1.203
 	<itemizedlist>
 	  <listitem>
 	    <para>
-	      Boot the system from a floppy diskette.
+	      Boot the system from a USB disk.
 	    </para>
 	    
 	    <para>
-	      Run <command>si_mkautoinstalldiskette</command> to create an
-	      autoinstall diskette that you can use with any
-	      machine unless you add a customized
-	      <filename>/local.cfg</filename> file to the diskette.
+	      Run <command>si_mkautoinstalldisk</command> to create an
+	      autoinstall USB disk (or a generic disk) that you can use with any
+	      machine.
 	    </para>
 	  </listitem>
 	  <listitem>
@@ -459,7 +432,7 @@ IMAGESERVER=192.168.1.203
 		Booting the autoinstall media from a system's hard drive
 	      </title>
 	      <programlisting>
-		[root@server7]# updateclient -a -s imageserver -c eth0
+		[root@server7]# si_updateclient -a -s imageserver -c eth0
 	      </programlisting>
 	    </example>
 	  </listitem>
@@ -510,14 +483,15 @@ IMAGESERVER=192.168.1.203
 	  <listitem>
 	    <para>
 	    After configuring the golden client, run the <command>si_prepareclient</command> command 
-	    to create a file with the partition information from your disks and put it in the 
-	    <filename>/etc/systemimager/partitionschemes</filename> directory. 
+	    to create a file with the partition informations from your disks that
+            will be put it in <filename>/etc/systemimager/autoinstallscript.conf</filename>.
 	    </para>
 	  </listitem>
 	  
 	  <listitem>
 	    <para>
-	      <command>si_prepareclient</command> will also create an rsync(1) configuration file (/tmp/rsyncd.conf) and start 
+	      <command>si_prepareclient</command> will also create a temporary
+              rsync(1) configuration file (in <filename>/tmp</filename>  and start 
 	      rsync in server mode (rsync--daemon).  This step allows the image server to pull the image 
 	      from the client but will not cause the rsync daemon to be restarted after the golden 
 	      client is rebooted, helping avoid security concerns from sharing a golden client's root 
@@ -597,8 +571,9 @@ IMAGESERVER=192.168.1.203
 	  </listitem>
 	  <listitem>
 	    <para>
-	      File system information is taken from the <filename>/etc/fstab</filename> file in the image (i.e.: 
-	    <filename>/var/lib/systemimager/images/my_webserver_image_v1/etc/fstab)</filename> 
+	      File system information is taken from the
+             <filename>/etc/systemimager/autoinstallscript.conf</filename> file in the image (i.e.: 
+	     <filename>/var/lib/systemimager/images/my_webserver_image_v1/etc/systemimager/autoinstallscript.conf)</filename> 
 	      and used to determine the appropriate file system creation commands and to determine 
 	      mount points for the autoinstall process. Networking information is added to the 
 	      autoinstall script based on command line options passed to <command>si_getimage</command> or information it 
@@ -616,10 +591,9 @@ IMAGESERVER=192.168.1.203
 	  <listitem>
 	    <para>
 	      After running <command>si_getimage</command>, run the <command>si_addclients</command> command, 
-	      which asks you for the series of hostnames you will be installing by combining a base host name and a number 
-	      range.  For example, if your base host name is "www", and your number range is from "1" 
-	      to "3," then the resultant host names would be "www1, www2, www3". <command>si_addclients</command> 
-	      then prompts you to choose the image that will be installed to these hosts and creates soft 
+	      which asks you for the hostname range you will be installing.
+              <command>si_addclients</command> then prompts you to choose the
+              image that will be installed to these hosts and creates soft 
 	      links for each hostname that point to the master autoinstall script for that image. For 
 	      example: "www3.sh -> web_server_image_v1.master".
 	    </para>
@@ -643,15 +617,16 @@ IMAGESERVER=192.168.1.203
 	    <para>
 	      The unattended install procedure is flexible and works with almost any available hardware. 
 	      You can also easily modify it to work with new or special hardware. 
-	      A miniature Linux distribution called Brian's Own Embedded Linux (boel) is used for autoinstalls.  
+	      A miniature Linux distribution called Brian's Own Embedded Linux (BOEL) is used for autoinstalls.  
 	      It consists of a customized kernel and an initial ram disk that contains only the specific 
 	      commands and utilities necessary to perform autoinstalls. The same kernel and initial ram disk 
-	      (<filename>initrd.gz</filename>) can be used to boot from floppy disks, CDROMs, the network, or any running Linux 
+	      (<filename>initrd.img</filename>)
+              can be used to boot from USB disks, CDROMs, the network, or any running Linux 
 	      system's local hard drive.
 	    </para>
 	    <para>
-	      The <command>si_mkautoinstalldiskette</command> and <command>si_mkautoinstallcd</command> commands 
-	      use the <command>syslinux(2)</command> utility to create floppies and CDROMs that will boot the 
+	      The <command>si_mkautoinstalldisk</command> and <command>si_mkautoinstallcd</command> commands 
+	      use the <command>syslinux(2)</command> utility to create disks and CDROMs that will boot the 
 	      SystemImager kernel and initial ram disk. <command>pxelinux(2)</command>, 
 	      which is a sister tool to <command>syslinux</command>, allows the same kernel and initial ram disk to 
 	      boot PXE capable machines from the network. Both <command>syslinux</command> and <command>pxelinux</command>
@@ -662,16 +637,43 @@ IMAGESERVER=192.168.1.203
 
 	  <listitem>
 	    <para>
-	      The autoinstall kernel contains all the necessary drivers for the majority of systems.  Custom kernels 
-	      can be compiled to meet special disk and network driver requirements.  To use a custom kernel, simply 
-	      copy it to <filename>/tftpboot/kernel</filename>.  All of the autoinstall media is created from 
-	      <filename>/tftpboot/kernel</filename> and <filename>/tftpboot/initrd.gz</filename> 
-	      on the image server.
+	      The standard autoinstall kernel contains all the necessary drivers for the majority of systems.
+              Custom kernels can be generated using UYOK feature to meet special disk and network driver requirements.
 	    </para>
+            <para>
+             To use UYOK and generate <filename>kernel</filename>+<filename>initrd.img</filename>
+             goes to your golden client and run the following command:
+
+	  <programlisting>
+# si_prepareclient --server servername --no-rsyncd --my-modules
+	  </programlisting>
+
+             The initrd.img will be generated on the fly from the initrd_template package
+             (eg. systemimager-i386initrd_template). If you specify --no-rsyncd argument,
+             rsyncd will be not restarted. With --my-modules you can save a lot of space in
+             the UYOK initrd, because only the the modules that are currently loaded in your
+             golden client will be included. Without --my-modules all the available modules
+             will be added into the initrd allowing your UYOK kernel+initrd.img to be used
+             also with heterogeneous clients.
+
+             If all goes well you'll find the UYOK kernel+initrd.img in
+             /etc/systemimager/boot/ in your golden client. When you run si_getimage from
+             your image server (in this case do not specify --no-rsyncd) the UYOK kernel and
+             initrd.img will be transferred to
+             /usr/share/systemimager/boot/&lt;arch&gt;/&lt;name_of_your_image&gt; in your image server.
+
+             In general, if you have an heterogeneous environment (clients with different
+             hardware and components) it's better to use the standard BOEL
+             kernel+initrd, because the standard kernel is strongly optimized to obtain better
+             performances. In the other cases, in particular if you have
+             3rd-party or custom kernel modules it's strongly recommended to use UYOK.
+            </para>
 	</listitem>
 	<listitem>
-	  <para>Once the kernel has booted, it mounts the initial ram disk as its root filesystem. The kernel then executes 
-	  an initialization script on the ram disk that has been written to do <application>SystemImager</application>-specific
+	  <para>
+          Once the kernel has booted, it mounts the initial ram disk as its root filesystem.
+          The kernel then executes an initialization script on the ram disk that
+          has been written to do <application>SystemImager</application>-specific
 	  tasks.  This script will use either a configuration file (<filename>/local.cfg</filename>) or a combination of 
 	  DHCP and the <filename>/var/lib/systemimager/scripts</filename> file pulled from the image server to determine 
 	  the autoinstall client's IP address and hostname information.</para>
