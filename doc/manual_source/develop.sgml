@@ -107,9 +107,7 @@
       file transfer mechanisms, including <filename>rsync(1)</filename> are 
       implemented in a "pull" fashion, which is generally considered to be 
       superior to a "push," because it is much easier to monitor the state of 
-      the receiving system prior to and during the
-      file transfers.  However, multicast may be an option in the future and
-      may need to be implemented as a "push."
+      the receiving system prior to and during the file transfers.
     </para>
   </section>
 
@@ -132,11 +130,15 @@
     </para>
   </section>
   <section>
-    <title>Using CVS</title>
+    <title>Using SVN</title>
     <para>
-      SystemImager is maintained in CVS on SourceForge.  To
-      submit patches for future releases, generate them against
-      the code in CVS.  There are typically two active branches at any given
+      SystemImager is maintained in SVN at
+      <ulink url="http://svn.systemimager.org">
+      http://svn.systemimager.org
+      </ulink>.
+
+      To submit patches for future releases, generate them against
+      the code in SVN.  There are typically two active branches at any given
       time - the current stable branch and the current development branch.  If you are fixing
       a bug that exists in the current stable release, generate
       a patch against the stable branch.  If you are adding a new feature
@@ -144,20 +146,10 @@
       use the development branch.
     </para>
     <para>
-      For example, the current stable release is 3.0.0, while the current
-      stable branch is v3_0_x.  At some point, the v3_0_x branch will be tagged as
-      v3_0_1, which will be the 3.0.1 release.
-      Except for rare occasions, HEAD is the development branch.  Since the
-      current stable branch is 3.0.x, the next development releases will be 3.1.x.
-      At some point, we will put a v3_1_0 tag on HEAD, and that will be 3.1.0.
-    </para>
-    <para>
-      Instructions for accessing the CVS repository can be found at
-      <ulink url="http://sourceforge.net/cvs/?group_id=259">
-	http://sourceforge.net/cvs/?group_id=259
-      </ulink>.  There's also a Web interface that allows you to view
-      the files in the repository and look at differences between 
-      versions.
+      Instructions for accessing the SVN repository can be found at
+      <ulink url="http://svn.systemimager.org">
+      http://svn.systemimager.org
+      </ulink>.
     </para>
   </section>
   <section>
@@ -231,58 +223,16 @@
     <section>
       <title>Third Party Software</title>
       <para>
-	The SystemImager build system builds a mini Linux distribution called boel
+	The SystemImager build system builds a mini Linux distribution called BOEL
 	that runs on clients during an autoinstall  (See "Additional Installation
-	Information" in Chapter 3 for more information on boel). The <filename>initrd.img</filename> 
-	file contains a subset of boel that is small enough to fit on a 1.44MB floppy.  
+	Information" in Chapter 3 for more information on BOEL). The <filename>initrd.img</filename> 
+	file contains a subset of BOEL that is small enough to allow a fast startup of the clients
 	After the client has booted and
 	brought up networking, it receives the 
 	<filename>boel_binaries.tar.gz</filename> file and extracts it over
 	the root of the filesystem,  providing an additional set of
 	commands, libraries, and kernel modules that may be needed during the
 	installation.
-	</para>
-	<para>Most of the software in boel is built from third party source and
-	is not included in the CVS tree, although it is packaged up with
-	released source tarballs.  The build system must therefore be
-	able to access these third party source tarballs to extract
-	them and build the necessary binaries.
-      </para>
-      <para>
-	Each .rul file for a third party package contains a
-	target for the source tarball.  The rules for these targets run the 
-	<command>getsource</command> script in the toplevel tools/ directory.  
-	<command>getsource</command> will look around your
-	system for a source tarball (/usr/src, and the toplevel of the build
-	tree), or will, as a last resort, use <command>wget</command> to download the source
-	tarball from the Internet.  It is highly recommended that you copy
-	any downloaded source to one of those locations so that you only
-	download it once.  Although it may not cost
-	you anything to download source repeatedly, there is an associated cost for the
-	people running the servers from which you're downloading.  Running
-	<command>make clean</command>  attempts to 
-	remove everything except these third party tarballs, while 
-	<command>make distclean</command> removes everything including the third party
-	tarballs.
-      </para>
-    </section>
-    <section>
-      <title>Boel Libraries</title>
-      <para>
-	On i386, uClibc 
-	<ulink url="http://uclibc.org">http://uclibc.org</ulink>
-	is used within the initrd in order to keep it small enough to fit on a
-	floppy.  For the initrds for other architectures and for the binaries
-	in <filename>boel_binaries.tar.gz</filename> on every architecture, the
-	mklibs script copies over the required libraries
-	from the build system.  If appropriate pic libraries are found (e.g.,
-	the libc6-pic package in Debian), mklibs can take advantage of them
-	and reduce the libraries to only the functions needed by the binaries.
-      </para>
-      <para>
-	Binaries that will be dynamically linked against need to be built 
-	using uClibc wrappers, which is why the PATH variable gets explicitly
-	set for all the initrd binaries.
       </para>
     </section>
   </section>
