@@ -1,7 +1,11 @@
 <chapter>
   <title>Troubleshooting</title>
 
-  <para></para>
+        <para>
+            See <ulink url="http://wiki.systemimager.org/index.php/Troubleshooting">
+            http://wiki.systemimager.org/index.php/Troubleshooting
+            </ulink> for details.
+        </para>
 
   <section>
     <title>
@@ -76,32 +80,6 @@
 	</para>
       </listitem>
     </orderedlist>
-  </section>
-
-  <section id=TroubleAssignHostname>
-    <title>
-      My client fails to assign a hostname to itself, causing the autoinstall to
-      fail.
-    </title>
-    <Para>Ryan Braby reported the following problem:</Para>
-    <BlockQuote>
-      <Para>
-	[The install] fails when you have addesses like the following:
-      </Para>
-      <literallayout>
-###.###.###.2
-###.###.###.21
-###.###.###.22 
-###.###.###.23
-###.###.###.24
-etc.
-      </literallayout>
-      <Para>
-	The script tries to assign multiple hostnames for the node with the ###.###.###.2 address,
-	then fails to get any install script.
-      </Para>
-    </BlockQuote>
-    <Para>This should be fixed in the next release (1.4.2).</Para>
   </section>
 
   <section id=Troubleslowrsync>
@@ -252,27 +230,8 @@ etc.
       My autoinstallcd doesn't boot.
     </title>
     <para>
-      There was a problem with the following RPM:   
-      <filename>syslinux-1.48-1.i386.rpm</filename>.
-      Download and install a newer syslinux RPM from 
-      <ulink url="http://systemimager.org/"></ulink>
+      Download and install a newer syslinux RPM.
     </para>
-  </section>
-
-  <section id=TroubleAutoInstallError>
-    <title>When making the autoinstalldiskette, my system gives me an error 
-      involving "dd" or "mount".</title>
-    <para>
-      You are using a pre v0.19 version of SystemImager.  Please download
-      the latest version from <ulink url="http://systemimager.org/"></ulink>.
-    </para>
-    <para>
-      If you must use a pre v0.19 version for some reason, be sure that your 
-      kernel has "ramdisk" support or that you have ramdisk support with a 
-      module.  If you are using a module, be sure that it is loaded with the 
-      <command>modprobe</command> command; however it's probably easier to get the latest version.
-    </para>
-      
   </section>
 
   <section id=TroubleAutoinstallFail>
@@ -288,50 +247,12 @@ etc.
     </para>
   </section>
 
-  <section id=TroubleDHCPFailed>
-    <title>
-      My autoinstall client booted up and said "dhcp didn't work," but 
-      when I do an ifconfig eth0 it has an IP address.
-    </title>
-    <para>
-      Are you using a pre 1.0 version of SystemImager?  If so, please
-      upgrade.
-    </para>
-    <para>
-      If for some reason you can't upgrade, then check the following:
-    </para>
-    <itemizedlist>
-      <listitem>
-	<para>
-        Are you connected to a switch?  Most switches will wait a period of
-        time (usually 30 seconds) after a connected system's interface has
-        come up before transmitting on that port. Newer versions of the
-        autoinstalldiskette bring the ethernet interface up and wait 45 seconds
-        or so before making a DHCP request.  It will then wait 35 seconds or
-        so to give the system time to receive an address.  You could be using
-        an autoinstalldiskette that does not wait the proper time for your
-        switch and is giving up before it should.
-	</para>
-      </listitem>
-      <listitem>
-	<para>
-	  Be sure that you are using the latest version of SystemImager and
-	  that you are using the autoinstalldiskette image that comes with that
-	  version.  Note that the version numbers may not match.  See the 
-	  <filename>VERSION</filename> file.
-	</para>
-      </listitem>
-    </itemizedlist>
-  </section>
-
   <section>
     <title>
       My client fails with the error:
       <computeroutput>
         "chroot: cannot execute systemconfigurator: No such file or directory"
       </computeroutput>
-      My autoinstall client booted up and said "dhcp didn't work," but 
-      when I do an ifconfig eth0 it has an IP address.
     </title>
     <para>
       This failure is most commonly associated with a mismatch between the
@@ -347,8 +268,6 @@ etc.
       that were pulled from golden clients that did not have 
       SystemConfigurator installed, you can install SystemConfigurator 
       directly into the image on the imagserver.
-      Are you using a pre 1.0 version of SystemImager?  If so, please
-      upgrade.
     </para>
     <example>
       <title>
@@ -416,81 +335,10 @@ etc.
     <itemizedlist>
       <listitem>
 	<para>
-	  Are you connected to a switch?  Most switches will wait a period of
-	  time (usually 30 seconds) after a connected system's interface has
-	  come up before transmitting on that port. Newer versions of the
-	  autoinstalldiskette bring the ethernet interface up and wait 45 seconds
-	  or so before making a DHCP request.  It will then wait 35 seconds or
-	  so to give the system time to receive an address.  You could be using
-	  an autoinstalldiskette that does not wait the proper time for your
-	  switch and is giving up before it should.
-	</para>
-      </listitem>
-      <listitem>
-	<para>
 	  Be sure that you are using the latest version of SystemImager and
 	  that you are using the autoinstalldiskette image that comes with that
 	  version.  Note that the version numbers may not match.  See the 
 	  <filename>VERSION</filename> file.
-	</para>
-      </listitem>
-    </itemizedlist>
-  </section>
-
-  <section id=TftpFailure>
-    <title>
-      PXE installations work fine for a while, but eventually clients no
-      longer boot the autoinstall kernel.
-    </title>
-    <para>
-      Are you using <application>xinetd</application>?
-      <application>xinetd</application> 2.1.8.9pre11 (and presumably earlier
-      versions) had a race condition that causes the tftp server to suddenly
-      stop responding.  This was supposedly fixed in version
-      2.1.8.9pre13.  Also, <application>xinetd</application> and
-      <application>inetd</application> have default limits on how many
-      connections can be spawned in a 60 second period.  See the inetd or
-      xinetd manpage for details on increasing this limit.
-    </para>
-  </section>  
-
-  <section id=RootMountFailure>
-    <title>
-      My autoinstallclient fails with "Kernel panic: VFS: unable to mount root 
-      fs".
-    </title>
-    <para>
-      This can be caused by a variety of problems:
-    </para>
-    <itemizedlist>
-      <listitem>
-	<para>
-	  If you've built your own kernel, you may have left out some necessary
-	  patches - specifically the cramfs initrd patches.  When building a
-	  custom kernel, you should build it within the SystemImager source 
-	  tree.  If you're trying to build a newer kernel than was included
-	  in this SystemImager release, some patches may need modifications
-	  to get them to apply.  Read the comments at the top of the patch
-	  files to understand what they do, and be careful not to remove
-	  patches unless you know they do not affect you.
-	</para>
-      </listitem>
-      <listitem>
-	<para>
-	  If you've built your own kernel, you may have left some stuff out
-	  of your kernel config file.  Look for things like initial ramdisk
-	  support, compressed rom filesystem support, etc.  It is usually best 
-	  to start with the .config in the patches/ directory, and modify it
-	  as necessary.
-	</para>
-      </listitem>
-      <listitem>
-	<para>
-	  You may not be passing the appropriate options to your kernel.
-	  Take a look at the sample config file for your bootloader that
-	  was included with this release to get the list of options you 
-	  need to pass, e.g. 
-	  <filename>/etc/systemimager/pxelinux.cfg/syslinux.cfg</filename>.
 	</para>
       </listitem>
     </itemizedlist>
