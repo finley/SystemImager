@@ -276,23 +276,12 @@ IMAGESERVER=192.168.1.203
 	  Run <command>si_getimage</command> on the image server to pull the image
 	  from the golden client to the image server.
 	</para>
-	
-	<example>
-	  <title>Pull the golden client's image to the image server</title>
-	  <mediaobject>
-	    <imageobject>
-	      <imagedata format="jpg" fileref="images/si_image3.jpg">
-	    </imageobject>
-	    <imageobject>
-	      <imagedata format="eps" fileref="images/si_image3.eps">
-	    </imageobject>
-	    <textobject>
-	      <phrase>
-		Pull the "golden client's" image to the image server
-	      </phrase>
-	    </textobject>
-	  </mediaobject>
-	</example>
+
+	<para>
+	  With <command>si_getimage</command> the image server pulls all
+          the files and directories from the root of the client's filesystem back to the
+          image repository in <filename>/var/lib/systemimager/images</filename>.
+	</para>
 	
 	<para>
 	  The basic syntax is: "<command>si_getimage</command> <command>-golden-client</command> [client_hostname] <command>-image</command> [image_name]"
