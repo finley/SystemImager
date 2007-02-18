@@ -37,7 +37,7 @@
   <section>
     <title>Obtaining SystemImager</title>
     <para>
-      SystemImager is currently packaged in .deb, and RPM formats.
+      SystemImager is currently packaged in and RPM format.
       SystemImager is a part of the Debian GNU/Linux 3.0
       distribution, starting with 3.0 (woody).  For earlier releases and
       other distributions, download packages from
@@ -55,15 +55,25 @@
       quick analysis of the disk usage on your golden client will give you a 
       good estimate of the space required on the image server.  If you plan to do 
       multiple simultaneous image updates, poor processor performance on your image
-      server can cause a bottleneck.  Keep this in mind when selecting the
-      number and speed of processors for your image server.
+      server can cause a bottleneck.
+    </para>
+    <para>
+      An alternative scalable and reliable method to break the bandwidth and
+      performance limits of the image server is the BitTorrent transport.
+      With BitTorrent the upload bandwidth of the clients can be used to
+      distribute the images among the nodes exploiting the advantages of
+      the peer-to-peer networks
+      (for more informations see
+      <ulink url="http://wiki.systemimager.org/index.php/BitTorrent">
+          http://wiki.systemimager.org/index.php/BitTorrent
+      </ulink>).
     </para>
   </section>
   <section>
     <title>Installing an Image Server</title>
     <para>
-      To create a SystemImager image server, you must install a systemimager-boot 
-	package(s)and then a systemimager-server package that supports your clients.
+      To create a SystemImager image server, you must install a systemimager-&lt;ARCH&gt;boot 
+	package(s) and then a systemimager-server package that supports your clients.
     </para>
 	
     <para>
@@ -93,6 +103,25 @@
       string of the installed version of SystemImager.
     </para>
 
+    <para>
+      To create a custom flavor perfectly compatible with the distribution you
+      need to install you can exploit the UYOK (Use Your Own Kernel) feature.
+      
+      Standard flavors use a general purpose kernel that supports a lot of hardware components,
+      but obviously it can't support all the possible devices that could be present in a
+      totally generic client.
+
+      For this reason starting from 3.6.x release the UYOK (UseYourOwnKernel) was
+      introduced. This feature allows you to use the same kernel that runs in your
+      golden client to perform the installation in other clients. In this way it's
+      possible to theoretically support all the hardware/components you could have. 
+
+      For more informations see  
+      <ulink url="http://wiki.systemimager.org/index.php/UYOK">
+          http://wiki.systemimager.org/index.php/UYOK
+      </ulink>.
+    </para>
+
     <procedure>
       <title>To install an image server for Debian GNU/Linux 3.0 (woody) and later, run:</title>
       <step>
@@ -106,32 +135,14 @@
 	</para>
       </step>
     </procedure>
-    <note>
-      <para>
-	To obtain the latest systemimager release on a Debian system running
-        stable or testing, you must add the following line to the 
-        <filename>/etc/apt/sources.list</filename> file:
-      </para>
-      <para>
-	<computeroutput>
-	  deb http://download.systemimager.org/debian stable main 
-	</computeroutput>
-      </para>
-      <para>
-        These packages are synchronized with the packages in the unstable
-        distribution periodically.  Because systemimager's dependencies are
-        available in both the latest stable and unstable releases, we just 
-        copy over the binary packages - we do not rebuild them.
-      </para>
-    </note>
     <procedure>
       <title>For RPM based distributions:</title>
       <step>
 	<para>
 	  Download and install the systemimager-server RPM and required
 	  dependencies from
-	  <ulink url="http://systemimager.org/download/">
-	    http://systemimager.org/download/
+	  <ulink url="http://systemimager.org">
+	    http://systemimager.org
 	  </ulink>.
 	</para>
       </step>
@@ -178,7 +189,10 @@
 	build and install from the source tarball; binary tarball
 	installations are no longer supported.  Instructions for building
 	SystemImager can be found in the <filename>README</filename> file
-	within the source tarball.
+	within the source tarball or on the wiki site
+        (<ulink url="http://wiki.systemimager.org">
+        http://wiki.systemimager.org
+        </ulink>).
       </para>
     </formalpara>
     <formalpara>
@@ -218,25 +232,14 @@
 	</para>
       </step>
     </procedure>
-    <note>
-      <para>
-	For Debian 2.2 (potato), you must add the following line to the file
-	<filename>/etc/apt/sources.list</filename>:
-      </para>
-      <para>
-	<computeroutput>
-	  deb http://systemimager.org/debian / 
-	</computeroutput>
-      </para>
-    </note>
     <procedure>
       <title>For RPM based distributions:</title>
       <step>
 	<para>
 	  Download and install the systemimager-client RPM and required
 	  dependencies from
-	  <ulink url="http://systemimager.org/download/">
-	    http://systemimager.org/download/
+	  <ulink url="http://systemimager.org">
+	    http://systemimager.org
 	  </ulink>.
 	</para>
       </step>
@@ -256,7 +259,10 @@
 	build and install from the source tarball; binary tarball
 	installations are no longer supported.  Instructions for building
 	SystemImager can be found in the <filename>README</filename> file
-	within the source tarball.
+	within the source tarball or on the wiki site
+        (<ulink url="http://wiki.systemimager.org">
+        http://wiki.systemimager.org
+        </ulink>).
       </para>
     </formalpara>
   </section>
@@ -308,7 +314,7 @@
       <example>
         <title>Generating new autoinstallscripts</title>
         <para>
-          # /usr/sbin/mkautoinstallscript -image myimage -post-install reboot -ip-assignment dhcp
+          # si_mkautoinstallscript -image myimage -post-install reboot -ip-assignment dhcp
         </para>
         <para>
           If you require customizations to your autoinstallscript, edit the 
@@ -332,7 +338,7 @@
       <para>
         Each time you upgrade Systemimager, you must also upgrade the boot
 	media you use to boot the autoinstall system.  Use <command>si_mkautoinstallcd</command> 
-	or <command>si_mkautoinstalldiskette</command> to regenerate removable media.  
+	or <command>si_mkautoinstalldisk</command> to regenerate removable media.  
 	If you network boot, update the files in your /tftpboot directory and pass
 	all necessary options to the kernel. These options occasionally change - check 
 	/etc/systemimager/pxelinux.cfg/syslinux.cfg for examples.
