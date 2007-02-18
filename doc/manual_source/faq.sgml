@@ -4,6 +4,12 @@
 
 <chapter>
  <title>FAQ (Frequently Asked Questions)</title>
+        <para>
+            See also <ulink url="http://wiki.systemimager.org/index.php/FAQ">
+            http://wiki.systemimager.org/index.php/FAQ
+            </ulink>.
+        </para>
+
  <qandaset defaultlabel='qanda'>
 
   <qandaentry>
@@ -35,18 +41,6 @@
   </qandaentry>
  
   <qandaentry>
-   <question>
-    <para>How do I make an autoinstall diskette?</para>
-   </question>
-   <answer>
-    <para>
-     Run the <command>si_mkautoinstalldiskette</command> command on the 
-     image server.
-    </para>
-   </answer>
-  </qandaentry>
- 
-  <qandaentry>
    <question><para>How do I make an autoinstall CD?</para></question>
    <answer>
     <para>
@@ -57,96 +51,13 @@
  
   <qandaentry>
    <question>
-    <para>How do I make an autoinstall punch card?</para>
+    <para>How do I make an autoinstall USB disk?</para>
    </question>
    <answer>
     <para>
-     Run the <command>si_mkautoinstallpunchcard</command> command on the
-     image server - deprecated :)
+     Run the <command>si_mkautoinstalldisk</command> command on the
+     image server.
     </para>
-   </answer>
-  </qandaentry>
-
-  <qandaentry>
-   <question>
-    <para>
-     How does the autoinstall client software know where to get the image?
-    </para>
-   </question>
-   <answer>
-    <para>
-     When the autoinstall client software (BOEL) is booted, if the LAST_ROOT 
-     append parameter has been used, then BOEL attempts to mount and read a 
-     local.cfg file from the device specified in LAST_ROOT (Aka: the device 
-     that was root on the machine before it was rebooted).  BOEL then tries to
-     read a local.cfg file from the floppy drive (if one exists).  Finally, BOEL
-     makes a DHCP request, if it still doesn't have enough information to
-     connect to the network.  Once it knows it's IP address, it resolves this to
-     it's host name, then retrieves an autoinstall script from the image server
-     based on it's hostname (Ie: hostname.sh).
-    </para>
-   </answer>
-  </qandaentry>
-
-  <qandaentry>
-   <question>
-    <para>
-     How does the netboot system know where to get the image?
-    </para>
-   </question>
-   <answer>
-    <para>
-     See "How does the autoinstall client software know where to get the image?"
-    </para>
-   </answer>
-  </qandaentry>
- 
-  <qandaentry>
-   <question>
-    <para>
-     How do I edit files on the initial ramdisk?
-    </para>
-   </question>
-   <answer>
-    <para>
-     In SystemImager 3.0.x, the initial ramdisk is a cramfs filesystem.
-     The following example shows you how to open it, edit a file, and 
-     create a new ramdisk.  You might want to edit this file if you want
-     to change things in the process prior to the execution of the .master
-     script.
-    </para>
-    <orderedlist>
-     <listitem>
-      <para>gunzip &lt; initrd.img &gt; /tmp/initrd</para>
-     </listitem>
-     <listitem>
-      <para>mkdir /mnt/tmp</para>
-     </listitem>
-     <listitem>
-      <para>mount /tmp/initrd /mnt/tmp -o loop</para>
-     </listitem>
-     <listitem>
-      <para>mkdir /tmp/initrd.new</para>
-     </listitem>
-     <listitem>
-      <para>cp -a /mnt/tmp/* /tmp/initrd.new</para>
-     </listitem>
-     <listitem>
-      <para>umount /mnt/tmp</para>
-     </listitem>
-     <listitem>
-      <para>cd /tmp/initrd.new</para>
-     </listitem>
-     <listitem>
-      <para>make your edits here - vi etc/init.d/rcS, for example</para>
-     </listitem>
-     <listitem>
-      <para>mkcramfs /tmp/initrd.new /tmp/newinitrd</para>
-     </listitem>
-     <listitem>
-      <para>gzip -9 &lt; /tmp/newinitrd &gt; /tmp/initrd.img</para>
-     </listitem>
-    </orderedlist>
    </answer>
   </qandaentry>
 
@@ -379,182 +290,14 @@ image=ia64/standard/kernel
    </question>
    <answer>
     <para>
-    	<command>In SystemImager 2.1 and later, si_mkautoinstallcd</command> and <command>si_mkautoinstalldiskette</command>
+    	<command>si_mkautoinstallcd</command> and <command>si_mkautoinstalldisk</command>
     	support an -append option, allowing you to specify additional options for the autoinstall kernel,
     	including serial console options.  For example:  
     	<command>si_mkautoinstallcd -out-file autoinstall.iso -append "console=ttyS0"</command>
     </para>
-    <para>
-    	Early versions of SystemImager require additional changes, as cited below:
-    </para>
-    <BlockQuote>
-     <LiteralLayout>
-      Making SystemImager work with a serial console
-      Michael S. Fischer, &lt;michael@auctionwatch.com&gt;
-      Last modified: 01/04/26 19:20:27
-      
-      The current version of SystemImager as of this writing (1.4.1)
-      does not support PXE booting of clients with serial console
-      support.  This document describes how to rebuild the kernel and
-      initrd such that serial console support is possible.
-      
-      Step 1: Download the sources
-      
-      Retrieve the source tarball from
-      http://prdownloads.sourceforge.net/systemimager/va-systemimager-source-1.4.1.tar.bz2
-      Save it and unpack it to /tmp on your boot server.
-      
-      # bzcat va-systemimager-source-1.4.1.tar.bz2 | tar -C /tmp -xf -
-      
-      
-      Step 2: Prepare the kernel
-      
-      # cd /tmp/va-systemimager-source-1.4.1
-      # bzcat other_source_and_patches_used_in_this_release.tar.bz2 | tar xf -
-      # cd other_source_and_patches_used_in_this_release
-      # cd linux-2.2.18+reiserfs+raid+aic7xxx+VM
-      
-      Now edit the .config file in this directory.  Search for a line
-      that reads:
-      
-      # CONFIG_SERIAL is not set
-      
-      Change this line to read:
-      
-      CONFIG_SERIAL=y
-      CONFIG_SERIAL_CONSOLE=y
-      
-      Then build the kernel:
-      
-      # make clean && make bzImage
-      
-      
-      Step 3: Install the kernel
-      
-      Next, you'll need to place the kernel in /tftpboot and
-      /tftpboot/X86PC/UNDI/linux-install:
-      
-      # cp arch/i386/boot/bzImage /tftpboot/kernel
-      # cp arch/i386/boot/bzImage /tftpboot/X86PC/UNDI/linux-install/kernel
-      
-      
-      Step 4: Fix the initrd
-      
-      The initrd, or initial RAM disk containing the root filesystem, needs
-      to be unpacked, mounted, and have its contents edited as follows:
-      
-      # cp /tftpboot/initrd.gz /tmp
-      # cd /tmp && gunzip initrd.gz
-      # mkdir /mnt2
-      # mount /tmp/initrd /mnt2 -o loop
-      # cd /mnt2/dev
-      # rm -f console
-      # mknod -m 622 console c 5 1
-      # mknod -m 600 ttyS0 c 4 64
-      
-      You should now unmount the initrd, recompress
-      it, and return it to /tftpboot:
-      
-      # cd /tmp
-      # umount /mnt2
-      # gzip -9 initrd
-      # cp initrd.gz /tftpboot
-      # cp initrd.gz /tftpboot/X86PC/UNDI/linux-install
-      
-      
-      Step 5: Edit syslinux.cfg
-      
-      The final step is to configure pxelinux to pass the "console="
-      arguments to the kernel.  Following is a suitable syslinux.cfg
-      file:
-      
-      DEFAULT kernel
-      APPEND console=tty0 console=ttyS0,9600n8 vga=extended load_ramdisk=1
-      prompt_ramdisk=0 initrd=initrd.gz root=/dev/ram rw
-      DISPLAY message.txt
-      PROMPT 1
-      TIMEOUT 50
-      
-      Edit the contents of /tftpboot/pxelinux.cfg/syslinux.cfg to reflect
-      the changes above.  Then, copy this file to
-      /tftpboot/X86PC/UNDI/linux-install/pxelinux.cfg/syslinux.cfg.
-     </LiteralLayout>
-    </BlockQuote>
    </answer>
   </qandaentry>
       
-  <qandaentry>
-   <question>
-    <para>
-      Why do installations take so much longer when done
-      using a serial console and --listing?
-    </para>
-      </question>
-      <answer>
-        <para>
-	  The serial console itself often causes the bottleneck.  If you
-          have a slow console never use --listing option with:
-          <command>si_getimage</command>,
-          <command>si_mkautoinstallscript</command>.
-
-          By default each filename is not printed to the console as it is
-          copied from the server.
-        </para>
-      </answer>
-  </qandaentry>
- 
-  <qandaentry>
-   <question>
-    <para>
-      How can I change the mount options used for the tmpfs filesystem used by
-      BOEL during an autoinstall?
-    </para>
-      </question>
-      <answer>
-        <para>
-	  tmpfs filesystem mount options can be passed to the BOEL kernel as 
-	  append parameters by pre-pending "tmpfs_" to the mount
-	  option.  For example, adding "tmpfs_size=2G tmpfs_nr_inodes=2000" is
-	  translated by BOEL to the tmpfs mount options 
-	  "size=2G,nr_inodes=2000".  The following tmpfs mount
-	  options are supported: size, nr_inodes, nr_blocks, and mode.  See 
-	  "man mount" for details on these options.
-        </para>
-        <para>
-	  Append parameters can be added with the si_mkautoinstallcd and 
-	  si_mkautoinstalldiskette --append option.  For network boot loaders, or
-	  local disk boot loaders, you will need to edit the boot configuration
-	  file to add the appropriate append parameter(s).
-        </para>
-      </answer>
-  </qandaentry>
- 
-  <qandaentry>
-    <question>
-      <para>How do I configure my DHCP v3 server?</para>
-    </question>
-    <answer>
-      <para>
-        Luca Filipozzi provided details on configuring DHCP v3 servers:
-      </para>
-      <para>
-        If you are using DHCP v3 from ISC, you will need to use
-        the following configuration directives to make use of
-        option 140:
-      </para>
-      <para>
-        option systemimager-server code 140 = text;
-        option systemimager-server "192.168.1.1";
-      </para>
-      <para>
-        The first line defines 'systemimager-server' as the
-        name for option 140 and that it shall take as an
-        argument a text string. The second line assigns a
-        value (an IP address) to the name. 
-      </para>
-    </answer>
-  </qandaentry>
- 
   <qandaentry>
     <question>
       <para>Does the DHCP server have to be on the image server?</para>
@@ -599,125 +342,11 @@ image=ia64/standard/kernel
 	<para>
 	  If you have hardware that requires a driver that was not included
 	  in the standard flavor boot package, you can build a custom boot
-	  package.  Unlike earlier (pre-2.9) releases, you will need more than
-	  a new kernel binary.  However, also unlike earlier releases, you can
-	  have multiple boot packages installed simultaneously on your system.
+	  package with UYOK feature. See
+          <ulink url="http://wiki.systemimager.org/index.php/UYOK">
+          http://wiki.systemimager.org/index.php/UYOK
+          </ulink>).
 	</para>
-	<para>
-	  The following instructions describe how to create a new boot package.
-	  Use these steps to add a network driver or block device driver 
-	  that can either be a module or statically linked:
-        </para>
-	<warning>
-	  <para>
-	    Boot packages are tightly linked to the version of SystemImager
-	    you are using.  If you make customizations to a boot package
-	    for SystemImager 3.0.0, you must forward port
-	    those changes when you move to SystemImager 3.2.0.
-	  </para>
-	</warning>
-	<formalpara>
-	  <title>Creating a custom boot package</title>
-	  <para>
-	    If the driver you need to add can be built as a module,
-	    you can add it directly onto the autoinstall ramdisk.
-	    Use this method if you need to add a driver for the network interface 
-	    you plan to install over and the driver is only available as a module.  
-	    This is also the suggested method for adding a module for a device
-	    that failed to be discovered at install time.  In other cases, 
-	    you can drop in a patch to be added to the kernel build tree or
-	    make modifications to the <filename>.config</filename> file used to build the kernel.
-	  </para>
-	</formalpara>
-	<orderedlist>
-	  <listitem>
-	    <para>
-	      Download the source tarball for the release of SystemImager
-	      you are using from http://systemimager.org/.
-	    </para>
-	  </listitem>
-	  <listitem>
-	    <para>
-	      Extract the source tarball and cd into the top level of the
-	      source tree.
-	    </para>
-	    <informalexample>
-	      <programlisting>
-		# tar xvfj systemimager-3.0.0.tar.bz2
-		# cd systemimager-3.0.0
-	      </programlisting>
-	    </informalexample>
-	  </listitem>
-	  <listitem>
-	    <para>
-	      To add a patch to the kernel, drop your patch file in the patches subdirectory of the
-	      top level build tree.  Follow the naming convention described in the README.patches file in
-	      the patches/ subdirectory.
-	    </para>
-	  </listitem>
-	  <listitem>
-	    <para>
-	      If you need to modify the .config file for your kernel (e.g.
-	      to turn on a driver), you can find it in the patch
-	      directory named linux.&lt;arch&gt;.config.  (If you added
-	      a patch that includes a new driver, you should be prompted
-	      to turn that on in Step 9 of these instructions - the 'make binaries' step).
-	    </para>
-	  </listitem>
-	  <listitem>
-	    <para>
-	      If you are building a binary module from external source to be 
-	      included in the autoinstall ramdisk, you need the linux
-	      source tree to build against.  You can generate a source tree 
-	      in the src/linux directory by
-	      running <command>make patched_kernel-stamp</command>.  
-		Follow the instructions that came with your module
-	      source to compile your module against this tree.
-	    </para>
-	  </listitem>
-	  <listitem>
-	    <para>
-	      If you created a binary module, you can copy it into the 
-	     	initrd_source/my_modules directory. Add instructions to the 
-	      <filename>INSMOD_COMMANDS</filename> file in order to have
-	      your module loaded at install time.  See comments in that file 
-		for details.
-	    </para>
-	  </listitem>
-	  <listitem>
-	    <para>
-	      Edit the <filename>FLAVOR</filename> file in the
-	      top level of the source tree.  Choose an alphanumeric
-	      string that describes your modifications.
-	    </para>
-	    <informalexample>
-	      <programlisting>
-		echo "mygigabitnic" &gt; FLAVOR
-	      </programlisting>
-	    </informalexample>
-	  </listitem>
-	  <listitem>
-	    <para>
-	      From the toplevel of the source tree, run <command>make binaries</command>.
-	      See the README file for details on building prerequisites.
-	    </para>
-	  </listitem>
-	  <listitem>
-	    <para>
-	      Run <command>make install_binaries</command> to copy the binaries
-	      built in the previous step into the appropriate place in
-	      /usr/share/systemimager/boot directory.  You now
-	      have an additional flavor to choose from when creating
-	      autoinstall media.
-	    </para>
-	  </listitem>
-	  <listitem>
-	    <para>
-	      File a bug asking for this driver to be added to future
-	      releases.
-	    </para>
-	  </listitem>
-	</orderedlist>
       </answer>
     </qandaentry>
     	
@@ -744,7 +373,7 @@ image=ia64/standard/kernel
   <qandaentry>
     <question>
       <para>
-        Can I use the autoinstalldiskette or autoinstallcd on more than one
+        Can I use the autoinstalldisk or autoinstallcd on more than one
         machine?
       </para>
     </question>
@@ -760,11 +389,12 @@ image=ia64/standard/kernel
     <question><para>How do I push an image to a client?</para></question>
     <answer>
       <para>
-        Starting with version 1.5, you can use the
-        <command>si_pushupdate</command> command, which essentially logs into
-        each client and executes the <command>si_updateclient</command>
-        command.
-      </para
+        Starting with version 3.8.0, you can use the
+        <command>si_pushinstall</command> command, which opens an SSH tunnel
+        from the image server to the clients. Then each client downloads the
+        image using the SSH tunnel opened by the image server. This is the most
+        secure approach to install clients over insecure networks.
+      </para>
     </answer>
   </qandaentry>
 
@@ -784,15 +414,16 @@ image=ia64/standard/kernel
       <orderedlist>
         <listitem>
           <para>
-    	<emphasis>autoinstalldiskette</emphasis> - takes longer to
-             boot, and floppies are often quite volatile
+    	<emphasis>autoinstallcd</emphasis> - it takes slightly little time
+    	to boot and is more durable, but you have to have a CD burner
+    	and clients that can read CD-R's)
           </para>
         </listitem>
         <listitem>
           <para>
-    	<emphasis>autoinstallcd</emphasis> - takes slightly less time
-    	to boot and is more durable, but you have to have a CD burner
-    	and clients that can read CD-R's)
+    	<emphasis>autoinstalldisk</emphasis> - it takes slightly little time
+    	to boot, but requires that the BIOS of your clients support boot over
+        USB devices.
           </para>
         </listitem>
         <listitem>
@@ -805,7 +436,7 @@ image=ia64/standard/kernel
       </orderedlist>
       <para>
         See the entries for <command>si_mkautoinstallcd</command> and 
-        <command>si_mkautoinstalldiskette</command> in the command
+        <command>si_mkautoinstalldisk</command> in the command
 	  reference chapter in this manual for more information.
       </para>
     </answer>
@@ -870,37 +501,6 @@ image=ia64/standard/kernel
       <para>
         These scripts and the <filename>$image.master</filename> script can
         be found in <filename>/var/lib/systemimager/scripts</filename>.
-      </para>
-    </answer>
-  </qandaentry>
-
-  <qandaentry>
-    <question>
-      <para>How do I upgrade to a new version of SystemImager?</para>
-    </question>
-    <answer>
-      <para>
-        If you have SystemImager 1.0 or later, you can simply 
-        install the new version over the older one.  Using a packaged
-        version (.rpm,.deb) is recommended to prevent cruft build-up on
-        your system.
-      </para>
-      <para>
-        If you have a pre-1.0 version then you can't simply
-        install a new version on top of it.  Depending on the
-        version changes, the following may work for you, but it is not
-        guaranteed.  If you want to try this method, please check with the
-        <filename>CHANGE.LOG</filename> document to find out what has
-        changed.
-      </para>
-      <para>
-        Move your images directory
-        out of the SystemImager directory hierarchy and back up your 
-        <filename>/etc/rsyncd.conf</filename> file and any other
-        configuration files you may have changed.  Then install
-        SystemImager as if you were installing it for the first time, after
-        which you can move your images directory and
-        <filename>/etc/rsyncd.conf</filename> file back.
       </para>
     </answer>
   </qandaentry>
@@ -1080,74 +680,6 @@ image=ia64/standard/kernel
   </qandaentry>
 
   <qandaentry>
-    <question>
-      <para>How do I build a new "front-end" server?</para>
-    </question>
-    <answer>
-      <para>
-        Another way of stating the question is as
-        follows, "We are in the process of building a new 'front-end'
-        server for our Linux cluster.  We'd like to try using SystemImager
-        as our node cloning software if possible.
-      </para>
-      <para>
-        I've read through the SystemImager FAQ and found the following:
-        <blockquote> 
-          <para>
-    	All of the clients for a particular image should have an
-    	identical hardware configuration.  They should at least have
-    	the same hard drive(s) and the same ethernet card(s).
-          </para>
-        </blockquote> 
-      </para>
-      <para>
-        This is a problem because our front-end from which the image will be
-        captured has a SCSI hard drive and a Gigabit ethernet card.
-        On the other hand, our 64 compute nodes have IDE disk drives and
-        fast ethernet cards.  Is it impossible to build a new "front-end" server?
-      </para>
-      <para>
-        No.  But you will need to customize a bit.
-      </para>
-      <para>
-        Once you have run <command>si_getimage</command>, you will need
-        to edit the <filename>conf.modules</filename> in the image on the
-        image server to load the appropriate module for your ethernet card.
-      </para>
-      <para>
-        <command>
-          vi /var/lib/systemimager/images/$imagename/etc/conf.modules
-        </command>
-      </para>
-      <para>
-        Your entry should look like this:
-      </para>
-      <para>
-        <programlisting>
-          alias eth0 tulip
-        </programlisting>
-      </para>
-      <para>
-        You will need to edit the following files in your image:
-      </para>
-    <para>
-        <programlisting>
-          <filename>/var/lib/systemimager/images/$imagename/etc/fstab</filename>
-          <filename>/var/lib/systemimager/scripts/$imagename.master</filename>
-          <filename>/var/lib/systemimager/images/$imagename/etc/lilo.conf</filename>
-        </programlisting>
-      </para>
- 
-    <para>
-        Use your editor's search function to change every instance of "sda" to "hda."
-      </para>
-      <para>
-        Proceed as normal.
-      </para>
-    </answer>
-  </qandaentry>
- 
-  <qandaentry>
      <question>
        <para>
          How can I use SystemImager to update a small set of files? For 
@@ -1254,98 +786,6 @@ image=ia64/standard/kernel
   </qandaentry>
 
   <qandaentry>
-     <question>
-      <para>
-       I modified my <filename>autoinstallscript.conf</filename> file to configure my
-	 non-software RAID image to install as a software RAID image,
-	 but the install failed.  Why?
-      </para>
-     </question>
-     <answer>
-      <para>
-       When you convert a non-software RAID image to a software RAID image, 
-       you must manually configure the software RAID information.  Modify the 
-	 image directly or make the changes in an override directory
-	 if you want to maintain the original image. 
-      </para>
-      <para>
-       Following are keypoints for manually
-       configuring a computer to use software RAID on Linux.  For more
-	 detailed information, please refer to
-       <ulink url="http://unthought.net/Software-RAID.HOWTO/">The Software RAID HOWTO</ulink>
-       at http://unthought.net/Software-RAID.HOWTO/.
-      </para>
-      <ItemizedList>
-       <ListItem>
-        <para>
-         Drivers in the kernel: You must have the software RAID drivers
-         compiled for the kernel your client will boot from when it finishes
-         installing.  
-        </para>
-       </ListItem>
-       <ListItem>
-        <para>
-         Device files:  For software RAID to work, you must have the
-         proper device files in your image.  These device files have names like
-         /dev/md0, /dev/md1, etc.  If these device files do not exist, cd into 
-         the ./dev directory of your image, then copy and paste the following 
-         command to create them.  If the software RAID devices are already
-         created, running this command causes no problems.
-        </para>
-        <para>
-         <LiteralLayout>
-          for I in 0 1 2 3 4 5 6 7 8 9; do sudo mknod -m 660 md$I b 9 $I; done
-         </LiteralLayout>
-        </para>
-       </ListItem>
-       <ListItem>
-        <para>
-         /etc/raidtab: You must create this file and/or customize it to meet
-         your needs.
-        </para>
-       </ListItem>
-       <ListItem>
-        <para>
-         Other files: You must also modify the files used by your boot
-         loader (lilo, grub, etc.).  See your boot loader's documentation for
-         more information on its configuration file format.  A quick
-         tip: in lilo.conf, instead of using /dev/md as for the boot=
-         parameter, use the software RAID device that holds your
-         /boot/ directory (where the kernel lives).  For example, if /dev/md1 
-         will be mounted on /boot/, then specify boot=/dev/md1.
-        </para>
-       </ListItem>
-      </ItemizedList>
-      <para>
-       After manually configuring your image to use software RAID,
-       then make your changes to the autoinstallscript.conf file.  Changes 
-       that you need to make to this file may include the following.
-       See "<command>man autoinstallscript.conf</command>" for more information.
-      </para>
-      <ItemizedList>
-       <ListItem>
-        <para>
-         In the <command>&lt;disk&gt;</command> section, add 
-         <command>raid</command> to the comma separated list of flags for
-         each partition that will participate in a RAID array.
-        </para>
-       </ListItem>
-       <ListItem>
-        <para>
-         In the <command>&lt;fsinfo&gt;</command> section, set 
-         <command>real_dev</command> to the software RAID device that will 
-         hold each filesystem.
-        </para>
-       </ListItem>
-      </ItemizedList>
-      <para>
-       You can now run <command>si_mkautoinstallscript</command> to create a new,
-       software RAID-enabled autoinstallscript for your image.
-      </para>
-     </answer>
-  </qandaentry>
- 
-  <qandaentry>
    <question>
     <para>
      What's an override directory?
@@ -1360,13 +800,6 @@ image=ia64/standard/kernel
      permissions, and ownership.  This allows you to "over-ride" files in the
      image.  Override directories live in
      <command>/var/lib/systemimager/overrides/</command>.
-    </para>
-    <para>
-     You don't have to use an override directory, but it can often be useful.  
-     For example, you could have two different autoinstall scripts for
-     the same image: one for SCSI machines, and one for IDE machines.  You can
-     have your /etc/fstab and /etc/lilo.conf files in override directories with
-     names such as my_image-ide and my_image-scsi.
     </para>
     <para>
      Simply edit the master autoinstall script and change the overrides
@@ -1554,57 +987,15 @@ image=ia64/standard/kernel
       </listitem>
       <listitem>
        <para>
-        Open your autoinstallscript.conf file in your favorite text editor.
-       </para>
-	      <note>
-		<para>
-		  The default autoinstallscript.conf file created by
-		  <command>si_prepareclient</command> lives in the 
-		  <filename>/etc/systemimager</filename>
-		  directory in your image.
-		</para>
-	      </note>
-      </listitem>
-      <listitem>
-       <para>
-        Find the <command>&lt;disk&gt;</command> entry where
-        <command>dev</command> (disk device) is set to the disk that you 
-        want to change.
+        Run <command>si_mkautoinstallscript --autodetect-disks ...</command> to create a new 
+        autoinstall script that will be able to automatically detect disk types at
+        run-time during the imaging of your clients.
        </para>
       </listitem>
       <listitem>
        <para>
-        Change <command>dev</command> to the device file for the disk you want
-        to use.  For example, changing from SCSI to IDE can be as simple as changing
-        <command>dev="/dev/sda"</command> to <command>dev="/dev/hda"</command>.
-       </para>
-      </listitem>
-      <listitem>
-       <para>
-        Change the <command>real_dev</command> entries in the 
-        <command>&lt;fsinfo&gt;</command> section to match the new devices.
-       </para>
-      </listitem>
-      <listitem>
-       <para>
-        Run <command>si_mkautoinstallscript</command> to create a new 
-        autoinstall script using the new parameters.
-       </para>
-	      <note>
-		<para>
-		  By default, <command>si_mkautoinstallscript</command> uses the
-		  <filename>autoinstallscript.conf</filename> file located in 
-		  the <filename>/etc/systemimager</filename> directory in your
-		  image.  See <command>man si_mkautoinstallscript</command> and 
-		  <command>man autoinstallscript.conf</command> for more
-		  information.
-		</para>
-	      </note>
-      </listitem>
-      <listitem>
-       <para>
-        Modify the boot loader configuration in your image to work with your
-        target disk configuration.
+        An alternative method is to manually modify autoinstallscript.conf and
+        re-run <command>si_mkautoinstallscript</command>.
        </para>
       </listitem>
      </orderedlist>
@@ -1621,41 +1012,11 @@ image=ia64/standard/kernel
    </question>
    <answer>
     <para>
-     Yes.  Customize a separate autoinstallscript.conf file for each
-     configuration type, and use <command>si_mkautoinstallscript</command> to
-     create a seperate master autoinstallscript for each configuration.
-    </para>
-    <para>
-     If a particular configuration's boot device will be different from the boot
-     device in the image, you also need to put a customized copy of your
-     boot loader's configuration file(s) in an override directory.
-    </para>
-    <para>
-     See the following "Frequently Asked Questions" for more information:
-    </para>
-    <para>
-     <itemizedlist>
-      <listitem>
-       <para>
-        How do I change the size of a partition?
-       </para>
-      </listitem>
-      <listitem>
-       <para>
-        How do I change the filesystem(s) that my target machine(s) will use?
-       </para>
-      </listitem>
-      <listitem>
-       <para>
-        How do I change the disk type(s) that my target machine(s) will use?
-       </para>
-      </listitem>
-      <listitem>
-       <para>
-        What's an override directory?
-       </para>
-      </listitem>
-     </itemizedlist>
+     Yes. Be sure to use <command>--autodetect-disks</command> with
+     <command>si_getimage</command> or <command>si_mkautoinstallscript</command>
+     if you have different disk types in your clients and create a different
+     <filename>autoinstallscript.conf</filename> and master script for each partitioning schema you
+     want to use.
     </para>
    </answer>
   </qandaentry>
