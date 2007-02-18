@@ -6,6 +6,30 @@
 #   $Id$
 #
 
+3.8.0
+--------------------------------------------------------------------------------
+- added SSH=y|n and SSHD=y|n installation parameters
+- added si_pushinstall to perform server-driven installation with SSH
+  transport
+- added status option for all the scripts in /etc/init.d
+- support hostname and IP ranges for si_psh, si_pcp, si_mkclientnetboot,
+  si_addclients
+- added --ssh-key and --authorized-keys options to si_prepareclient and
+  si_mkbootpackage (to add SSH private key and/or SSH authorized_keys directly
+  into the initrd.img)
+- automatically kill rsync daemon on the golden client after the image is
+  correctly retrieved
+- updated LVM and device-mapper packages (now SystemImager can be
+  compiled on Yellow Dog Linux 5.0 ppc64 on PS3)
+- fixed a bug to properly load kernel modules with dashes or underscores
+  in the name
+- fixed a bug in the LVM1 logical volume discovery
+- fixed some bugs in the use of SSH transport
+- fixed a recursion bug in boot-standard RPM that causes yum to crash
+- fixed a bug when saving the partitioning schema of the golden client
+  (with some old versions of parted the partitioning schema can be
+  uncorrectly saved)
+
 3.7.6
 --------------------------------------------------------------------------------
 - resolved some compiling problems in Debian
