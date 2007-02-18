@@ -49,6 +49,9 @@ Options: (options can be presented in any order and can be abbreviated)
 
  --timeout, -t=NUM      Set the timeout of the sessions (default=15s).
 
+ --ssh-user, -l=USER    Copy the file as user USER on the target
+                        machines.
+
 EOF
 
 Getopt::Long::Configure("posix_default");
@@ -134,6 +137,10 @@ unless ($timeout) {
 	$timeout = 15;
 }
 
+unless ($ssh_user) {
+	$ssh_user = $ENV{'USER'};
+}
+
 if ($concurrents) {
 	$SystemImager::HostRange::concurrents = $concurrents;
 }
@@ -141,7 +148,7 @@ if ($concurrents) {
 ### END evaluate command line options ###
 
 # Use the following ssh options.
-my $ssh_opts = "-x -o BatchMode=yes";
+my $ssh_opts = "-x -o BatchMode=yes -l $ssh_user";
 my $rsync_opts = "-aHSz$verbose $dry_run --numeric-ids --timeout=$timeout --rsh='ssh $ssh_opts'";
 
 # Main program.
@@ -199,6 +206,10 @@ Every line can include one or more ranges (e.g. "node001-node256,node300 node400
 =item B<--timeout | -t NUM>
 
 Set the timeout of the rsync sessions (default=15s).
+
+=item B<--ssh-user | -l USER>
+
+Copy the file as user USER on the target machines.
 
 =head1 SEE ALSO
 
