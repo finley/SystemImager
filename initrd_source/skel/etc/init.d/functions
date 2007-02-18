@@ -1150,7 +1150,17 @@ autodetect_hardware_and_load_modules() {
     do
         logmsg
         logmsg "Loading $MODULE... "
-        modprobe $MODULE 2>/dev/null && logmsg "done!" || logmsg "not needed or already loaded."
+	if echo $MODULE | grep '[-_]' >/dev/null 2>&1; then
+            if modprobe `echo $MODULE | sed 's/-/_/g'` 2>/dev/null; then
+                logmsg "done!"
+            elif modprobe `echo $MODULE | sed 's/_/-/g'` 2>/dev/null; then
+                logmsg "done!"
+            else
+                logmsg "not needed or already loaded."
+            fi
+        else
+            modprobe $MODULE 2>/dev/null && logmsg "done!" || logmsg "not needed or already loaded."
+        fi
     done
 }
 #
