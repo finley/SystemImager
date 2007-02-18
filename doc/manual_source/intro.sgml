@@ -101,11 +101,6 @@
     with SystemImager, please file a bug report.
       </para>
       
-      <para>
-	NOTE: Linux kernel 2.0.x-based distributions are not supported at this time, nor
-	are there plans to add support for Linux kernel 2.0.x-based 
-	distributions.
-      </para>
     </section>
     <section>
       <title>System Requirements</title>
@@ -113,7 +108,8 @@
 	<listitem>
 	  <para>
 	    Your image server must have enough disk space to hold the images
-	    to be installed on your client systems.
+	    to be installed on your client systems (the default directory used
+            to store images is <filename>/var/lib/systemimager/images</filename>).
 	  </para>
 	</listitem>
 	<listitem>
@@ -177,7 +173,7 @@
 	<glossdef>
 	  <para>
 	    media that is used to boot an autoinstall client to
-	    begin the autoinstall process.  Autoinstall media can be a floppy, a
+	    begin the autoinstall process.  Autoinstall media can be a USB disk, a
 	    CDROM, the network, or the local hard drive of the autoinstall
 	    client.
 	  </para>
@@ -188,8 +184,7 @@
 	<glossdef>
 	  <para>
 	    One or more scripts associated with an image, each unique
-	    to a specific hardware/partitioning/filesystem/network 
-	    configuration.  
+	    to a specific partitioning/filesystem/network configuration.  
 	    The <command>si_getimage</command> command creates an initial
 	    autoinstallscript, which can be regenerated later, possibly
 	    with different options, using the 
@@ -205,7 +200,7 @@
       </glossentry>
       <glossentry>
 	<glossterm>
-	  <ulink url="http://www.tuxedo.org/~esr/jargon/html/entry/daemon.html">
+	  <ulink url="http://en.wikipedia.org/wiki/Daemon_%28computer_software%29">
 	    daemon
 	  </ulink>
 	</glossterm>
