@@ -21,26 +21,26 @@ boel_binaries_tarball:	$(BOEL_BINARIES_TARBALL)
 
 
 $(BOEL_BINARIES_TARBALL):	$(BC_DIR).build \
-							$(TAR_DIR).build \
-							$(GZIP_BINARY) \
-							$(DISCOVER_DIR).build \
-							$(DISCOVER_DATA_DIR).build \
-							$(HFSUTILS_BINARY) \
-							$(DOSFSTOOLS_DIR).build \
-							$(MKE2FS_BINARY) \
-							$(TUNE2FS_BINARY) \
-							$(PARTED_BINARY) \
-							$(UTIL_LINUX_DIR).build \
-							$(MDADM_BINARIES) \
-							$(MKREISERFS_BINARY) \
-							$(MKJFS_BINARY) \
-							$(MKXFS_BINARY) \
-							$(CTCS_BINARY) \
-							$(OPENSSH_SBINARIES) \
-							$(OPENSSH_BINARIES) \
-							$(OPENSSH_CONF_FILES) \
-							$(LVM_BINARY) \
-							$(SRC_DIR)/modules_build-stamp
+				$(TAR_DIR).build \
+				$(GZIP_BINARY) \
+				$(DISCOVER_DIR).build \
+				$(DISCOVER_DATA_DIR).build \
+				$(HFSUTILS_BINARY) \
+				$(DOSFSTOOLS_DIR).build \
+				$(MKE2FS_BINARY) \
+				$(TUNE2FS_BINARY) \
+				$(PARTED_BINARY) \
+				$(UTIL_LINUX_DIR).build \
+				$(MDADM_BINARIES) \
+				$(MKREISERFS_BINARY) \
+				$(MKJFS_BINARY) \
+				$(MKXFS_BINARY) \
+				$(CTCS_BINARY) \
+				$(OPENSSH_SBINARIES) \
+				$(OPENSSH_BINARIES) \
+				$(OPENSSH_CONF_FILES) \
+				$(LVM_BINARY) \
+				$(SRC_DIR)/modules_build-stamp
 	#
 	# Put binaries in the boel_binaries_tarball...
 	#
@@ -66,6 +66,7 @@ $(BOEL_BINARIES_TARBALL):	$(BC_DIR).build \
 	install -m 755 --strip $(OPENSSH_SBINARIES) 		$(BOEL_BINARIES_DIR)/usr/sbin
 	mkdir -m 755 -p $(BOEL_BINARIES_DIR)/etc/ssh
 	install -m 644 $(OPENSSH_CONF_FILES) 			$(BOEL_BINARIES_DIR)/etc/ssh
+	install -m 755 $(BINARY_SRC)/pci-automod 		$(BOEL_BINARIES_DIR)/usr/bin
 ifdef MKXFS_BINARY
 	install -m 755 --strip $(MKXFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
 endif
