@@ -1,0 +1,222 @@
+#!/bin/sh
+#
+# Detect modules which need to be loaded in order to get the
+# storage or ethernet drivers activated. This uses information
+# in the modules and from the PCI bus. When multiple modules are
+# available for one device, all of them will be loaded!!!
+#
+# $Id$
+#
+# Copyright 2007 (c) Erich Focht <efocht at hpce.nec.com>
+# [inspired by an article in the German Linux Magazin]
+#
+
+usage () {
+    echo
+    echo "Usage: $0 --class storage|net|serial --list|--load|--hwlist"
+    echo "Detect modules which need to be loaded in order to get the"
+    echo "storage or ethernet drivers activated. This uses information"
+    echo "in the modules and from the PCI bus. When multiple modules are"
+    echo "available for one device, all of them will be loaded!!!"
+    echo
+    echo "Options:"
+    echo "  --class storage|net|serial|graphics|multimedia|bridge"
+    echo "                             : device class filter"
+    echo "  --list                     : list modules to load"
+    echo "  --hwlist                   : produce hardware.lst compatible lines"
+    echo "                               for systemconfigurator"
+    echo "  --load                     : try to modprobe the modules"
+    echo
+    exit 1
+}
+
+while [ -n "$1" ]; do
+    case $1 in
+	--list)
+	    shift
+	    doList=1
+	    ;;
+	--load)
+	    shift
+	    doLoad=1
+	    ;;
+	--hwlist)
+	    shift
+	    doHWList=1
+	    ;;
+	--class)
+	    shift
+	    if [ "$1" = "storage" ]; then
+		sClass="$sClass 01"
+	    elif [ "$1" = "net" ]; then
+		sClass="$sClass 02"
+	    elif [ "$1" = "graphics" ]; then
+		sClass="$sClass 03"
+	    elif [ "$1" = "multimedia" ]; then
+		sClass="$sClass 04"
+	    elif [ "$1" = "bridge" ]; then
+		sClass="$sClass 06"
+	    elif [ "$1" = "serial" ]; then
+		sClass="$sClass 0c"
+	    else
+		echo "No or unknown --class option."
+		usage
+	    fi
+	    shift
+	    ;;
+	*)
+	    usage
+	    ;;
+    esac
+done
+
+# exit if nothing to be done
+if [ ! -n "$doList" -a ! -n "$doLoad" -a ! -n "$doHWList" ]; then
+    exit 0
+fi
+if [ ! -n "$sClass" ]; then
+    usage
+fi
+
+PCIMAP=/lib/modules/`uname -r`/modules.pcimap
+
+# The hack is necessary in order to get this running under ash
+# for bash one can use $'\t' and $'\n' instead.
+Tab="	"
+Newline="
+"
+
+strip_device () {
+    full=$1
+    del=$2
+    tmp=""
+    IFS="$Tab$Newline"
+    for e in $full; do
+	IFS=",$Tab$Newline"
+	set -- $e
+	if [ "$1,$2" = "$del" ]; then
+	    continue
+	fi
+	if [ ! -n "$tmp" ]; then
+	    tmp="$e"
+	else
+	    tmp="${tmp}${Newline}${e}"
+	fi
+    done
+    echo "$tmp"
+}
+
+SYSPCI=/sys/bus/pci
+if [ ! -d $SYSPCI ]; then
+   echo "Could not open $SYSPCI!"
+   exit 1
+fi
+
+# detect pci devices
+for device in $SYSPCI/devices/*:*:* ${SYSPCI}_express/devices/*:*:*; do
+    [ ! -f $device/vendor ] && continue
+    read Vendor < $device/vendor
+    Vendor=`echo $Vendor | cut -b 3-6`
+    read Device < $device/device
+    Device=`echo $Device | cut -b 3-6`
+    read Class < $device/class
+    Class=`echo $Class | cut -b 3-8`
+
+    if [ "$Vendor" = "0000" ]; then
+	continue
+    fi
+    # skip devices which belong to wrong class
+    thisClass=`echo $Class | cut -b 1-2`
+    found=""
+    for c in $sClass; do
+	if [ "$thisClass" = "$c" ]; then
+	    found="$c"
+	fi
+    done
+    if [ -n "$found" ]; then
+	if [ "$found" = "01" ]; then
+	    Type="scsi"
+	elif [ "$found" = "02" ]; then
+	    Type="ethernet"
+	elif [ "$found" = "03" ]; then
+	    Type="graphics"
+	elif [ "$found" = "04" ]; then
+	    Type="multimedia"
+	elif [ "$found" = "06" ]; then
+	    Type="bridge"
+	elif [ "$found" = "0c" ]; then
+	    Type="serial"
+	fi
+	if [ ! -n "$PCIDevs" ]; then
+	    PCIDevs="$Vendor,$Device,$Class,$Type"
+	else
+	    PCIDevs="${PCIDevs}$Newline$Vendor,$Device,$Class,$Type"
+	fi
+    fi
+done
+
+# echo $PCIDevs
+
+loadModules=""
+IFS="$Newline"
+for line in `cat $PCIMAP`; do
+    IFS=" "
+    set -- $line
+    module=$1
+    vendor=`echo $2 | cut -b 7-10`
+    device=`echo $3 | cut -b 7-10`
+    class=`echo $6 | cut -b 5-10`
+    classMatch=""
+    vendorMatch=""
+
+    #echo ">>> $vendor $device $class   $module"
+
+    if [ "$device" = "ffff" ]; then
+	if [ "$vendor" = "ffff" ]; then
+	    classMatch="y"
+	else
+	    vendorMatch="y"
+	fi
+    fi
+
+    IFS="$Tab$Newline"
+    for d in $PCIDevs; do
+	tmpModule=""
+	IFS=",$Tab$Newline"
+	set -- $d
+	type="$4"
+	# echo "${vendor}-$1 ${device}-$2"
+	if [ "$1" = "${vendor}" -a "$2" = "${device}" ]; then
+	    tmpModule="$module"
+	fi
+	if [ "$3" = "$class" ]; then
+	    if [ -n "$classMatch" -o \
+	         -n "$vendorMatch" -a "$1" = "$vendor" ]; then
+		tmpModule="$module"
+	    fi
+	fi
+	if [ -n "$tmpModule" ]; then
+	    # check if already planned to load this one
+	    for m in $loadModules; do
+		[ "$m" = "$tmpModule" ] && tmpModule=""
+	    done
+	fi
+	if [ -n "$tmpModule" ]; then
+	    if [ -n "$doHWList" ]; then
+		echo "$1   $2   $type   $tmpModule"
+	    fi
+	    loadModules="$loadModules$Tab$tmpModule"
+	    PCIDevs=`strip_device "$PCIDevs" "$1,$2"`
+	    break
+	fi
+    done
+done
+
+if [ -n "$doList" ]; then
+    echo $loadModules
+elif [ -n "$doLoad" ]; then
+    for m in $loadModules; do
+	echo ">> Attempting to load module $m"
+	modprobe $m
+    done
+fi
