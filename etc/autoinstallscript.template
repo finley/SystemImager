@@ -37,6 +37,9 @@ fi
 ##SET_IMAGENAME##
 ##SET_OVERRIDES##
 
+# try to load storage related modules
+pci-automod --load --class storage
+
 ### BEGIN Check to be sure this not run from a working machine ###
 # Test for mounted SCSI or IDE disks
 mount | grep [hs]d[a-z][1-9] > /dev/null 2>&1
@@ -440,20 +443,24 @@ beep
 #   Detect scsi hardware and include the device IDs into the hardware.lst
 #   file used by systemconfigurator. Do nothing if the hardware.lst file
 #   already exists (which is a sign that it has been already prepared).
-#   Would be shorter if discover could return numerical device IDs...
+#   Use pci-automod for 2.6 kernels, discover for 2.4 kernels.
 #
 if [ ! -f /a/etc/systemconfig/hardware.lst ]; then
    [ ! -d /a/etc/systemconfig ] && mkdir -p /a/etc/systemconfig
-   SCSI_MODS=`discover -f "%m\n" scsi | grep -v ide-scsi | uniq`
-   for MOD in $SCSI_MODS; do
-      DEVID=`grep $MOD /proc/bus/pci/devices | cut -f 2 | sort | uniq`
-      for MYDEV in $DEVID; do
-         VENDOR=`echo $MYDEV | cut -b 1-4`
-         MODEL=`echo $MYDEV | cut -b 5-8`
-         echo "$VENDOR $MODEL scsi $MOD" >> /a/etc/systemconfig/hardware.lst
-         echo "Added SCSI device $VENDOR:$MODEL using module $MOD to hardware.lst"
-      done
-   done
+   if [ -d /sys/bus/pci ]; then
+       pci-automod --hwlist --class storage --class net \
+	   >> /a/etc/systemconfig/hardware.lst
+   else
+       SCSI_MODS=`discover -f "%m\n" scsi | grep -v ide-scsi | uniq`
+       for MOD in $SCSI_MODS; do
+	   DEVID=`grep $MOD /proc/bus/pci/devices | cut -f 2 | sort | uniq`
+	   for MYDEV in $DEVID; do
+	       VENDOR=`echo $MYDEV | cut -b 1-4`
+	       MODEL=`echo $MYDEV | cut -b 5-8`
+	       echo "$VENDOR $MODEL scsi $MOD" >> /a/etc/systemconfig/hardware.lst
+	       echo "Added SCSI device $VENDOR:$MODEL using module $MOD to hardware.lst"
+	   done
+       done
 fi
 #
 ################################################################################
