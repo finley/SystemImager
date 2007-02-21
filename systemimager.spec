@@ -329,6 +329,9 @@ More information can be found at the website:
 http://developer.osdl.org/kees/software/imagemanip/
 
 %changelog
+* Wed Feb 21 2007 Andrea Righi <a.righi@cineca.it>
+- Removed deprecated file README.ssh_support
+
 * Sun Jan 28 2007 Bernard Li <bernard@vanhpc.org>
 - Added missing directories to filelist for systemimager-server
 
@@ -833,7 +836,6 @@ fi
 %defattr(-, root, root)
 %doc CHANGE.LOG COPYING CREDITS README TODO VERSION
 %doc README.SystemImager_DHCP_options
-%doc README.ssh_support
 %doc doc/manual_source/html
 # These should move to a files doc section, because they are missing if you don't do doc
 # %doc doc/manual/systemimager* doc/manual/html doc/manual/examples
