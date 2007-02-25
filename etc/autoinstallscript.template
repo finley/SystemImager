@@ -461,6 +461,7 @@ if [ ! -f /a/etc/systemconfig/hardware.lst ]; then
 	       echo "Added SCSI device $VENDOR:$MODEL using module $MOD to hardware.lst"
 	   done
        done
+   fi
 fi
 #
 ################################################################################
