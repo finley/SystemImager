@@ -211,7 +211,7 @@ sub get_boot_flavors {
     # otherwise, we look on a remote server named $where
     if (m{.*/.*}) {
         my $autoinstall_bootdir = $where;
-        opendir BOOTDIR, "$autoinstall_bootdir/$arch" or return undef;
+        opendir BOOTDIR, "$autoinstall_bootdir/$arch" or return %allflavors;
         my @dirlist = readdir BOOTDIR;
         
         for my $file (@dirlist) {
