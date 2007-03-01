@@ -81,7 +81,7 @@ BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
-Requires: rsync >= 2.4.6, systemimager-common = %{version}, perl-AppConfig, dosfstools, /sbin/chkconfig, perl, perl(XML::Simple) >= 2.08, python, mkisofs
+Requires: rsync >= 2.4.6, systemimager-common = %{version}, perl-AppConfig, dosfstools, /sbin/chkconfig, perl, perl(XML::Simple) >= 2.14, python, mkisofs
 AutoReqProv: no
 
 %description server
@@ -329,6 +329,10 @@ More information can be found at the website:
 http://developer.osdl.org/kees/software/imagemanip/
 
 %changelog
+* Wed Feb 28 2007 Bernard Li <bernard@vanhpc.org>
+- Change perl(XML::Simple) dependency to >= 2.14 since starting with that version
+  it correctly has the dependency for perl(XML::Parser) (Noted by Andrew M. Lyons)
+
 * Wed Feb 21 2007 Andrea Righi <a.righi@cineca.it>
 - Removed deprecated file README.ssh_support
 
