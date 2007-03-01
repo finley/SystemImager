@@ -68,7 +68,7 @@ sub do_cmd
 		return;
 	} elsif (defined $pid) {
 		# print "$prog $opts $host $cmd\n";
-		my @out = `$prog $opts $host $cmd 2>&1`;
+		my @out = `exec 2>&1 $prog $opts $host $cmd`;
 		if ($?) {
 			select(STDERR);
 		}

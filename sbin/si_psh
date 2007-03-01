@@ -120,10 +120,23 @@ if ($concurrents) {
 # Use the following ssh options.
 my $ssh_opts = "-x -o BatchMode=yes -o ConnectTimeout=$timeout -l $ssh_user";
 
-unless ($cmd) {
-	die("error: no command defined!\nTry \"--help\" for more options.\n");
-} else {
+if ($cmd) {
 	SystemImager::HostRange::thread_pool_spawn('ssh', $ssh_opts, $cmd, @hosts);
+} else {
+	# Run in interactive mode.
+	while (-t STDIN) {
+		select(STDOUT);
+		print "si_psh> ";
+		$_ = <STDIN>;
+		unless (defined($_)) {
+			print "\n";
+			last;
+		}
+		if ((/^\s*$/) || (/^\s*exit\s*$/)) {
+			last;
+		}
+		SystemImager::HostRange::thread_pool_spawn('ssh', $ssh_opts, $_, @hosts);
+	}
 }
 
 __END__
