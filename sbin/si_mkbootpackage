@@ -80,6 +80,9 @@ Options:
  --help                
     Display this output.
 
+ --arch ARCH
+    The CPU architecture of the resulting initrd boot image
+
  --destination DIR
     The destination directory to put the new boot package (kernel and
     initrd.img).
@@ -141,6 +144,7 @@ EOF
 
 GetOptions(
     "help"                 => \my $help,
+    "arch=s"               => \my $img_arch,
     "quiet"                => \my $quiet,
     "destination=s"        => \my $destination,
     "my-modules"           => \my $my_modules,
@@ -254,7 +258,7 @@ sub get_arch {
 # Usage:
 # create_boot_package();
 sub create_boot_package {
-    my $arch = get_arch();
+    my $arch = $img_arch ? $img_arch : get_arch();
     my $verbose = 1 unless($quiet);
 
     SystemImager::UseYourOwnKernel->create_uyok_initrd(
