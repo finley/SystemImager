@@ -10,6 +10,7 @@
 package SystemImager::Common;
 
 use strict;
+use POSIX qw/ceil/;
 use vars qw($version_number $VERSION);
 
 $version_number="SYSTEMIMAGER_VERSION_STRING";
@@ -537,6 +538,16 @@ sub save_partition_information {
                         $startMB =~ s/(\d+)MB/$1/go;
                         $endMB   =~ s/(\d+)MB/$1/go;
 
+                        # Fix partition size with old versions of parted.
+                        if (version_cmp($parted_version, '1.6.23') < 0) {
+                            if ($startMB) {
+                                $startMB = ceil($startMB * 1024 * 1024 / 1000 / 1000);
+                            }
+                            if ($endMB) {
+                                $endMB = ceil($endMB * 1024 * 1024 / 1000 / 1000);
+                            }
+                        }
+
                         #
                         # Get rid of parted's fs info.  We don't use it.  But we do need 
                         # 'name' and 'flags', and it's a pain in the but to parse this
@@ -595,6 +606,16 @@ sub save_partition_information {
 
                         $startMB =~ s/(\d+)MB/$1/go;
                         $endMB   =~ s/(\d+)MB/$1/go;
+
+                        # Fix partition size with old versions of parted.
+                        if (version_cmp($parted_version, '1.6.23') < 0) {
+                            if ($startMB) {
+                                $startMB = ceil($startMB * 1024 * 1024 / 1000 / 1000);
+                            }
+                            if ($endMB) {
+                                $endMB = ceil($endMB * 1024 * 1024 / 1000 / 1000);
+                            }
+                        }
 
                         #
                         # Get rid of parted's fs info.  We don't use it.  But we do need 
