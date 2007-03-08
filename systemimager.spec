@@ -329,6 +329,9 @@ More information can be found at the website:
 http://developer.osdl.org/kees/software/imagemanip/
 
 %changelog
+* Thu Mar 08 2007 Andrea Righi <a.righi@cineca.it>
+- Added si_pushoverrides command.
+
 * Wed Feb 28 2007 Bernard Li <bernard@vanhpc.org>
 - Change perl(XML::Simple) dependency to >= 2.14 since starting with that version
   it correctly has the dependency for perl(XML::Parser) (Noted by Andrew M. Lyons)
@@ -860,6 +863,7 @@ fi
 %config /etc/systemimager/autoinstallscript.template
 %config(noreplace) /etc/systemimager/rsync_stubs/*
 %config(noreplace) /etc/systemimager/systemimager.conf
+%config(noreplace) /etc/systemimager/cluster.xml
 /etc/init.d/systemimager-server-rsyncd
 /etc/init.d/systemimager-server-netboot*
 /etc/init.d/systemimager-server-monitord
@@ -880,6 +884,7 @@ fi
 %prefix/bin/si_mk*
 %prefix/bin/si_psh
 %prefix/bin/si_pcp
+%prefix/bin/si_pushoverrides
 %prefix/lib/systemimager/perl/SystemImager/Server.pm
 %prefix/lib/systemimager/perl/SystemImager/Config.pm
 %prefix/lib/systemimager/perl/SystemImager/HostRange.pm

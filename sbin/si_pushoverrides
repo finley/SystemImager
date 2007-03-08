@@ -1,0 +1,255 @@
+#!/usr/bin/perl -w
+#
+#  Copyright (C) 2005 Andrea Righi <a.righi@cineca.it>
+#
+
+use lib "USR_PREFIX/lib/systemimager/perl";
+use strict;
+use Getopt::Long;
+use File::Basename;
+use XML::Simple;
+use SystemImager::Config;
+use SystemImager::HostRange;
+use vars qw($config $VERSION);
+
+my $program_name = basename($0);
+
+my $VERSION = "SYSTEMIMAGER_VERSION_STRING";
+
+my $version_info = << "EOF";
+$program_name (part of SystemImager) v$VERSION
+
+Copyright (C) 2006 Andrea Righi <a.righi\@cineca.it>
+
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+EOF
+
+my $help_info = $version_info . << "EOF";
+Usage: $program_name [OPTIONS] ... GROUP_NAME | NODE_NAME ...
+
+Options:
+ --help, -h             Display this output.
+
+ --version, -V          Display version and copyright information.
+
+ --verbose, -v          Display verbose informations.
+
+ --dry-run, -d          Only show what would have been transferred
+                        without really distributing files.
+
+ --max, -m=NUM          Set the maximum number of concurrent copies
+                        to NUM (default=32).
+
+ --timeout, -t=NUM      Set the timeout of the sessions (default=15s).
+
+EOF
+
+Getopt::Long::Configure("posix_default");
+Getopt::Long::Configure("no_gnu_compat");
+Getopt::Long::Configure("bundling");
+
+GetOptions(
+	"help|h"	=> \my $help,
+	"version|V"	=> \my $version,
+	"verbose|v"	=> \my $verbose,
+	"dry-run|d"	=> \my $dry_run,
+	"max|m=i"	=> \my $concurrents,
+	"timeout|t=i"	=> \my $timeout,
+) or die($help_info);
+
+### BEGIN evaluate commad line options ###
+
+if ($help) {
+        print "$help_info";
+        exit(0);
+}
+
+if ($version) {
+        print "$version_info";
+        exit(0);
+}
+
+if ($verbose) {
+        $verbose = '-v';
+} else {
+        $verbose = '';
+}
+
+if ($dry_run) {
+        $dry_run = '-d';
+} else {
+	$dry_run = '';
+}
+
+if ($concurrents) {
+	$concurrents = "-m $concurrents";
+} else {
+	$concurrents = '';
+}
+
+if ($timeout) {
+	$timeout = "-t $timeout";
+} else {
+	$timeout = '';
+}
+
+# Parse arguments.
+unless (@ARGV) {
+	print $help_info;
+	exit(1);
+}
+
+### END evaluate command line options ###
+
+my $database = "/etc/systemimager/cluster.xml";
+my $overrides = $config->default_override_dir();
+
+# Parse XML database.
+my $xml = XMLin($database, ForceArray => 1);
+
+my $global_image = $xml->{'base_image'}[0];
+unless (defined($global_image)) {
+	die("ERROR: global base image undefined in cluster.xml!\n");
+}
+
+# Execute updates.
+foreach my $in (@ARGV) {
+	my $found = 0;
+	foreach my $group (@{$xml->{'group'}}) {
+		if (($group->{'name'}[0] eq $in) or ($in eq $global_image)) {
+			print "*"x25 . " " . $group->{'name'}[0] . " " . "*"x25 . "\n";
+			update_nodes(
+				$global_image,
+				$group->{'base_image'}[0],
+				@{$group->{'node'}},
+			);
+			$found = 1;
+		} else {
+			foreach my $node (@{$group->{'node'}}) {
+				if ($node eq $in) {
+					print "*"x25 . " $in " . "*"x25 . "\n";
+					update_nodes(
+						$global_image,
+						$group->{'base_image'}[0],
+						$node,
+					);
+					$found = 1;
+					last;
+				}
+			}
+		}
+	}
+	unless ($found) {
+		print STDERR "WARNING: \"$in\" is not a valid group or node name!\n";
+	}
+}
+
+exit(0);
+
+# Description:
+#  Wrapper to si_pcp command to push files from the overrides to the
+#  target nodes.
+#
+# Usage:
+#  update_nodes($global_image_name, $group_image_name, @list_of_nodes);
+#
+sub update_nodes
+{
+	my ($global_image, $group_image, @nodes) = @_;
+
+	my $node_list = join(',', @nodes);
+	my $base_cmd = "si_pcp $verbose $dry_run $concurrents $timeout";
+
+	if (-d "$overrides/$global_image/") {
+		print "--- $global_image ---\n";
+		system("$base_cmd -n $node_list $overrides/$global_image/ /");
+	}
+	if (-d "$overrides/$group_image/") {
+		print "--- $group_image ---\n";
+		system("$base_cmd -n $node_list $overrides/$group_image/ /");
+	}
+	foreach my $node (@nodes) {
+		if (-d "$overrides/$node/") {
+			print "--- $node ---\n";
+ 			system("$base_cmd -n $node $overrides/$node/ /");
+		}
+	}
+}
+
+__END__
+
+=head1 NAME
+
+si_pushoverrides - push the overrides from the image server to the clients
+
+=head1 SYNOPSIS
+
+si_pushoverrides [OPTIONS] ... GROUP_NAME | NODE_NAME ...
+
+=head1 DESCRIPTION
+
+B<si_pushoverrides> is a tool to distribute configuration files from
+the image server to the clients or group of them, using the SystemImager
+overrides.
+
+B<si_pushoverrides> accepts a list of group or node names as arguments
+and concurrently synchronizes the content of the associated overrides to
+them, using a server-drien approach.
+
+The topology of the cluster can be defined in the configuration file
+B</etc/systemimager/cluster.xml>.
+
+B<si_pushoverrides> transmits only the differences of the files to be
+distributed. It uses rsync over SSH based backend to exploit both the
+advantages of bandwidth optimization and security.
+
+=head1 OPTIONS
+
+=over 8
+
+=item B<--help, -h>
+
+Display a short help.
+
+=item B<--version, -V>
+
+Display version and copyright information.
+
+=item B<--dry-run, -d>
+
+Only show what would have been transferred without really distributing files.
+
+=item B<--max, -m NUM>
+
+Set the maximum number of concurrent sessions to NUM (default=32).
+
+=item B<--timeout, -t NUM>
+
+Set the timeout of the sessions (default=15s).
+
+=head1 SEE ALSO
+
+systemimager(8), perldoc si_psh, perldoc si_pcp, /etc/systemimager/cluster.xml
+
+=head1 AUTHOR
+
+Andrea Righi <a.righi@cineca.it>.
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2003 by Andrea Righi <a.righi@cineca.it>.
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+=cut
+

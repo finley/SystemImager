@@ -1,0 +1,78 @@
+<?xml version='1.0' standalone='yes'?>
+<!--
+	This is the main configuration file to describe the topology of
+	your clients and your image server informations.
+
+	This file will be used by the following tools:
+		- si_psh (SystemImager distributed shell)
+		- si_pcp (program to distribute files to the clients)
+		- si_pushoverrides (SystemImager program to transfer and keep
+		  synchronized files to the clients via overrides)
+-->
+<xml>
+	<!-- The image server hostname. -->
+        <master>master1</master>
+	<!--
+		This is the global override: all the files stored into this
+		override will be pushed to all the clients.
+	-->
+        <base_image>all</base_image>
+	<!--
+		Following there is an example of a "fake" group. The group
+		name is "Local", it uses the override in
+		/var/lib/systemimager/overrides/Local and it contains only
+		the localhost server.
+	-->
+        <group>
+                <name>Local</name>
+                <base_image>Local</base_image>
+                <node>localhost</node>
+        </group>
+	<!--
+		This is a group that contains two nodes: node001 and
+		node002. The group is called "Login" and it uses the
+		override:
+		/var/lib/systemimager/overrides/RHEL4_frontend
+
+		All the files present in this overrides will be
+		distributed to node001 and node002 only using
+		si_pushoverrides.
+	-->
+        <group>
+                <name>Login</name>
+                <base_image>SuSE10_frontend</base_image>
+                <node>node001</node>
+                <node>node002</node>
+        </group>
+	<!--
+		Another example. The group Storage contains 16 nodes and
+		use the override:
+		/var/lib/systemimager/overrides/RHEL4_Storage
+	-->
+	<group>
+                <name>Storage</name>
+                <base_image>RHEL4_Storage</base_image>
+                <node>node1293</node>
+                <node>node1294</node>
+                <node>node1295</node>
+                <node>node1296</node>
+                <node>node1297</node>
+                <node>node1298</node>
+                <node>node1299</node>
+                <node>node1300</node>
+                <node>node1301</node>
+                <node>node1302</node>
+                <node>node1303</node>
+                <node>node1304</node>
+                <node>node1305</node>
+                <node>node1306</node>
+                <node>node1307</node>
+                <node>node1308</node>
+	</group>
+	<!--
+		Define your custom groups here (and remember to remove
+		or comment the previouses if you don't want use them).
+
+		...
+	-->
+</xml>
