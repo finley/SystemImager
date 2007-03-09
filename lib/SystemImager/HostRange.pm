@@ -164,6 +164,18 @@ sub sort_ip
 }
 
 # Usage:
+# my @sorted_unique_list = sort_unique(@redundand_unsorted_list);
+# Description:
+#       Sort and extract unique elements from an array.
+sub sort_unique
+{
+	my @in = @_;
+	my %saw;
+	@saw{@_} = ();
+	return sort keys %saw;
+}
+
+# Usage:
 # my $ip = hostname2ip($hostname);
 # Description:
 #       Convert hostname into the IPv4 address.

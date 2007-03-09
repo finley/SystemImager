@@ -159,23 +159,74 @@ sub update_nodes
 {
 	my ($global_image, $group_image, @nodes) = @_;
 
-	my $node_list = join(',', @nodes);
 	my $base_cmd = "si_pcp $verbose $dry_run $concurrents $timeout";
+	@nodes = SystemImager::HostRange::sort_unique(@nodes);
 
-	if (-d "$overrides/$global_image/") {
-		print "--- $global_image ---\n";
-		system("$base_cmd -n $node_list $overrides/$global_image/ /");
-	}
-	if (-d "$overrides/$group_image/") {
-		print "--- $group_image ---\n";
-		system("$base_cmd -n $node_list $overrides/$group_image/ /");
-	}
+	# Rsync uses a reverse order preference in case of file
+	# conflicts.
+	#
+	# If we need to copy different source file to the same
+	# destination file it copies the first occurence only.
+	#
+	# Grouping overrides sorted in order of importance allow to
+	# correctly handle file conflicts between overrides at
+	# different hierarchical levels.
+	#
+	# The hierarchical levels are, in order of importance:
+	#    - hostname (overwrite group and all)
+	#    - group (overwrite all)
+	#    - all
+	my @node_group = ();
+	my @file_list = ();
 	foreach my $node (@nodes) {
 		if (-d "$overrides/$node/") {
+			# Serialize nodes that have a private override.
+			push(@file_list, "$overrides/$node/");
+			if (-d "$overrides/$group_image/") {
+				push(@file_list, "$overrides/$group_image/");
+			}
+			if (-d "$overrides/$global_image/") {
+				push(@file_list, "$overrides/$global_image/");
+			}
 			print "--- $node ---\n";
- 			system("$base_cmd -n $node $overrides/$node/ /");
+			my $file_str = join(' ', @file_list);
+			run_cmd("$base_cmd -n $node $file_str /");
+			@file_list = ();
+		} else {
+			# Group nodes that needs the same overrides.
+			push(@node_group, $node);
 		}
 	}
+	unless (@node_group) {
+		return;
+	}
+	if (-d "$overrides/$group_image/") {
+		push(@file_list, "$overrides/$group_image/");
+	}
+	if (-d "$overrides/$global_image/") {
+		push(@file_list, "$overrides/$global_image/");
+	}
+	unless (@file_list) {
+		return;
+	}
+	# Update nodes that needs the same overrides.
+	print "--- $group_image ---\n";
+	my $file_str = join(' ', @file_list);
+	my $node_list = join(',', @node_group);
+	run_cmd("$base_cmd -n $node_list $file_str /");
+}
+
+# Description:
+#  Execute a command using system().
+#
+# Usage:
+#  run_cmd($command);
+#
+sub run_cmd
+{
+	my $cmd = shift;
+	print " >> $cmd\n" if($verbose);
+	!system($cmd) or print STDERR "ERROR: couldn't execute $cmd!\n";
 }
 
 __END__
