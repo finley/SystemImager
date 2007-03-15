@@ -1014,7 +1014,7 @@ start_network() {
         # get info via dhcp
         logmsg
         logmsg "dhclient"
-        dhclient
+        dhclient $DEVICE
         if [ ! -s ${DHCLIENT_DIR}/dhclient.leases ]; then
             logmsg
             logmsg "I couldn't configure the network interface using DHCP."
