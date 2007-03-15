@@ -1287,16 +1287,15 @@ sub _write_out_mkfs_commands {
 
         # swap
         if ( $xml_config->{fsinfo}->{$line}->{fs} eq "swap" ) {
-            my $label = '';
-            if ($mount_dev) {
-                # add LABEL if necessary
-                if ($mount_dev =~ /LABEL=(.*)/) {
-                    $label = "-L $1";
-                }
-            }
-
             # create swap
-            $cmd = "mkswap -v1 $label $real_dev || shellout";
+            $cmd = "mkswap -v1 $real_dev";
+
+            # add swap label if necessary
+            if( $mount_dev =~ /^LABEL=(.*)/ ){
+                $cmd .= " -L $1";
+            }
+            $cmd .= " || shellout";
+
             print $out qq(logmsg "$cmd"\n);
             print $out "$cmd\n";
 

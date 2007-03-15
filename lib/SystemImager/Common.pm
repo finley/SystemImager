@@ -13,6 +13,8 @@ use strict;
 use POSIX qw/ceil/;
 use vars qw($version_number $VERSION);
 
+use POSIX qw(sysconf _SC_PAGESIZE);
+
 $version_number="SYSTEMIMAGER_VERSION_STRING";
 $VERSION = $version_number;
 
@@ -27,6 +29,7 @@ our $rsync_magic_string = "'__cloning_completed__'";
 #   check_if_root
 #   detect_bootloader
 #   get_active_swaps_by_dev
+#   get_swap_devs_by_label
 #   get_boot_flavors
 #   get_disk_label_type
 #   get_mounted_devs_by_mount_point_array
@@ -78,6 +81,37 @@ sub get_active_swaps_by_dev {
     return %active_swaps_by_dev;
 }
 
+# Usage:
+# my $swap_devs_by_label = get_swap_devs_by_label();
+sub get_swap_devs_by_label {
+    my $buf = "";
+    my %swaps;
+
+    my $page_size = POSIX::sysconf(_SC_PAGESIZE) || die "Error getting sysconf _SC_PAGESIZE!";
+
+    open(SWAPS, '<', '/proc/swaps') || die "Could not open /proc/swaps for read: $!";
+    my @swaps = <SWAPS>;
+    close SWAPS;
+    shift @swaps;   # remove header...
+
+    for my $line ( @swaps ){
+        chomp $line;
+        my($dev) = (split(/\s+/, $line))[0];
+
+        open(SWAPDEV, '<', $dev) or die "Could not open $dev for read: $!";
+        my $bytes_read = sysread(SWAPDEV, $buf, $page_size, 0);
+        close SWAPDEV;
+
+        unless( $bytes_read == $page_size ){
+            die "sysread returned only $bytes_read reading $dev, _SC_PAGESIZE = [$page_size]\n";
+        }
+
+        my $label = (unpack('a1024IIIA16A16I117I', $buf))[5];  # v1 swap header structure found in swapheader.h from util-linux pkg
+        $swaps{$label} = $dev;
+    }
+
+    return wantarray ? %swaps : \%swaps;
+}
 
 # Usage:
 # %array = get_mounted_devs_by_mount_point_array();
@@ -1262,6 +1296,7 @@ sub save_filesystem_information {
 
     my %mounted_devs_by_mount_point = get_mounted_devs_by_mount_point_array();
     my %active_swaps_by_dev = get_active_swaps_by_dev();
+    my %swap_devs_by_label = get_swap_devs_by_label();
 
     # Read in fstab file and output fstab stanza. -BEF-
     #
@@ -1317,11 +1352,14 @@ sub save_filesystem_information {
                     #
                     $real_dev = $mount_dev;
                     $mount_dev = "";
-                } else {
-                    unless ($real_dev) {
-                        # Try to identify real_dev from the LABEL or UUID value.
-                        chomp($real_dev = `blkid -t $mount_dev`);
-                        $real_dev =~ s/^(.*): .*$/$1/;
+                }
+
+                # if this swap device happens be setup in fstab via a label (RHEL4 and clones),
+                # reslove that label to the actual device name here
+                if( $fs eq "swap" && $mount_dev =~ /^LABEL=(.*)/ ){
+                    if( defined $1 && exists $swap_devs_by_label{$1} ){
+                        $real_dev = $swap_devs_by_label{$1};
+                        #print STDERR "DEBUG: swap label [$1] resolves to device [$real_dev]\n";
                     }
                 }
                 
