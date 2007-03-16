@@ -152,8 +152,7 @@ else
 	cp -a /lib/libnss* $(INITRD_BUILD_DIR)/lib
 endif
 	# Undo prelinking. -AR-
-	which prelink
-	[ $? -eq 0 ] && (find $(INITRD_BUILD_DIR) -type f -exec prelink -u {} \; 2>&1 | grep -v "does not have .gnu.prelink_undo section\|is not an ELF file") || true
+	[ -x `which prelink` ] && (find $(INITRD_BUILD_DIR) -type f -exec prelink -u {} \; 2>&1 | grep -v "does not have .gnu.prelink_undo section\|is not an ELF file") || true
 
 	# Strip 'em. -BEF-
 	strip $(INITRD_BINARIES)
