@@ -31,7 +31,7 @@ PHONY += busybox_install
 busybox_install:	$(BUSYBOX_DIR).install
 $(BUSYBOX_DIR).install:	$(BUSYBOX_DIR).build \
 						$(INITRD_BUILD_DIR).prep
-	$(MAKE) -j $(NCPUS) -C $(BUSYBOX_DIR) install PREFIX=$(INITRD_BUILD_DIR)/
+	$(MAKE) -j $(NCPUS) -C $(BUSYBOX_DIR) install CONFIG_PREFIX=$(INITRD_BUILD_DIR)/
 
 
 $(BUSYBOX_DIR).unpack:	$(INITRD_DIR)/make.d/busybox.rul \
