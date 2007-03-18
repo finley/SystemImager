@@ -6,6 +6,22 @@
 #   $Id$
 #
 
+3.8.1
+--------------------------------------------------------------------------------
+- added the support of cpio initramfs for UYOK
+- added interactive mode in si_psh
+- added support for Intel S5000PAL based mainboard
+- now the installation parameter DEVICE can be used to bind the
+  execution of the DHCP client on a single interface (instead of
+  requesting an IP for all the available interfaces on the client)
+- fixed a potential problem in si_getimage: now some dangerous patterns
+  are automatically excluded during the image retrieval (i.e. /selinux
+  files, LVM caches and backups, NFS stuff, etc)
+- fixed a problem in the detection of swap labels in RHEL distributions
+- fixed a potential partition size problem with old versions of parted
+  (< 1.6.23)
+- fixed a dependency problem with perl(XML::Simple) and perl(XML::Parser)
+
 3.8.0
 --------------------------------------------------------------------------------
 - added SSH=y|n and SSHD=y|n installation parameters
