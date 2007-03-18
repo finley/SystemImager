@@ -1,0 +1,16 @@
+#!/bin/sh
+#
+# Script to move the root to a known tmpfs initrd.
+
+. /etc/init.d/functions
+
+echo "initramfs detected: init called"
+
+mkdir -p /new_root || shellout
+mount tmpfs /new_root -t tmpfs $tmpfs_opts || shellout
+cd / || shellout
+cp -a `/bin/ls | grep -v new_root` /new_root/ || shellout
+cd /new_root || shellout
+mkdir -p old_root || shellout
+
+mount --move .  / && exec chroot . /linuxrc

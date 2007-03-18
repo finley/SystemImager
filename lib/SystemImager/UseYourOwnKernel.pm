@@ -511,9 +511,10 @@ sub choose_file_system_for_new_initrd() {
                 print "XXX just need to verify where the xfs module lives.\n";
         }
 
+        # cpio
         unless(defined $fs) {
-
-                die("Can't determine the appropriate filesystem to use for an initrd.");
+            # Couldn't determine an appropriate filesystem: fallback to cpio initramfs. -AR-
+            $fs = 'cpio';
         }
 
         return $fs;
@@ -668,6 +669,8 @@ sub _create_new_initrd($$) {
             _create_initrd_jfs($staging_dir, $boot_dir);
         } elsif ($fs eq 'xfs') {
             _create_initrd_xfs($staging_dir, $boot_dir);
+        } elsif ($fs eq 'cpio') {
+            _create_initrd_cpio($staging_dir, $boot_dir);
         } else {
             die("FATAL: Unable to create initrd using $fs\n");
         }
@@ -681,6 +684,28 @@ sub _create_new_initrd($$) {
         } else {
             print qq(WARNING: cannot find the new boot initrd!\n);
         }
+
+        return 1;
+}
+
+sub _create_initrd_cpio($$) {
+
+        my $staging_dir = shift;
+        my $boot_dir    = shift;
+
+        my $new_initrd  = $boot_dir . "/initrd";
+
+        # cleanup routine.
+        $SIG{__DIE__} = sub {
+            my $msg = shift;
+            unlink($new_initrd) if (-f $new_initrd);
+            run_cmd("rm -fr $staging_dir", $verbose, 1);
+            die $msg;
+        };
+
+        # initrd creation
+        run_cmd("cd $staging_dir && find . ! -name \"*~\" | cpio -H newc --create | gzip -9 > $new_initrd.img");
+        run_cmd("ls -l $new_initrd.img", $verbose, 1) if($verbose);
 
         return 1;
 }

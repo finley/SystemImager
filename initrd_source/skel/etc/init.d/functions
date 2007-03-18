@@ -518,7 +518,7 @@ bittorrent_autodetect_staging_dir() {
     breathing_room=102400
 
     # Evaluate torrent size
-    torrent_size=$((`torrentinfo-console $torrent | sed -ne 's/^file size\.*: \([0-9]\+\).*$/\1/p'` / 1024 + $breathing_room))
+    torrent_size=$((`/bin/torrentinfo-console $torrent | sed -ne 's/^file size\.*: \([0-9]\+\).*$/\1/p'` / 1024 + $breathing_room))
 
     # Find a directory to host the image tarball
     for dir in $preferred_dirs; do
@@ -548,7 +548,7 @@ bittorrent_get_file() {
         bittorrent_upload_min=${BITTORRENT_UPLOAD_MIN:-50}
 
         # Start downloading.
-        bittorrent-console --no_upnp --no_start_trackerless_client --max_upload_rate 0 --display_interval 1 --rerequest_interval 1 --bind ${IPADDR} --save_in ${destination} ${torrent} > $bittorrent_log &
+        /bin/bittorrent-console --no_upnp --no_start_trackerless_client --max_upload_rate 0 --display_interval 1 --rerequest_interval 1 --bind ${IPADDR} --save_in ${destination} ${torrent} > $bittorrent_log &
         pid=$!
         if [ ! -d /proc/$pid ]; then
             logmsg "error: couldn't run bittorrent-console!"
@@ -719,17 +719,23 @@ switch_root_to_tmpfs() {
 
     # Switch root over to tmpfs so we don't have to worry about the size of
     # the tarball and binaries that users may decide to copy over. -BEF-
-    mkdir -p /new_root || shellout
-    mount tmpfs /new_root -t tmpfs $tmpfs_opts || shellout
-    umount /proc
-    cd / || shellout
-    cp -a `/bin/ls | grep -v new_root` /new_root/ || shellout
-    cd /new_root || shellout
-    mkdir -p old_root || shellout
-    pivot_root . old_root || shellout
+    if [ -d /old_root ]; then
+        logmsg
+        logmsg "already switched to tmpfs..."
+        umount /proc
+    else
+        logmsg
+        logmsg "switch_root_to_tmpfs"
 
-    logmsg
-    logmsg "switch_root_to_tmpfs"
+        mkdir -p /new_root || shellout
+        mount tmpfs /new_root -t tmpfs $tmpfs_opts || shellout
+        umount /proc
+        cd / || shellout
+        cp -a `/bin/ls | grep -v new_root` /new_root/ || shellout
+        cd /new_root || shellout
+        mkdir -p old_root || shellout
+        pivot_root . old_root || switch_root
+    fi
 
     unset tmpfs_size
     unset tmpfs_nr_blocks
@@ -1696,7 +1702,7 @@ start_report_task() {
             logmsg "error: cannot find a valid torrent file for image ${IMAGENAME}"
             shellout
         fi
-        IMAGESIZE=`torrentinfo-console $torrent_file | sed -ne "s/file size\.*: \([0-9]*\) .*$/\1/p"`
+        IMAGESIZE=`/bin/torrentinfo-console $torrent_file | sed -ne "s/file size\.*: \([0-9]*\) .*$/\1/p"`
     fi
     IMAGESIZE=`expr $IMAGESIZE / 1024`
 
