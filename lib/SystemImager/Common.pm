@@ -1352,14 +1352,20 @@ sub save_filesystem_information {
                     #
                     $real_dev = $mount_dev;
                     $mount_dev = "";
-                }
-
-                # if this swap device happens be setup in fstab via a label (RHEL4 and clones),
-                # reslove that label to the actual device name here
-                if( $fs eq "swap" && $mount_dev =~ /^LABEL=(.*)/ ){
-                    if( defined $1 && exists $swap_devs_by_label{$1} ){
+                } elsif (($fs eq "swap") && ($mount_dev =~ /^LABEL=(.*)/)) {
+                    # if this swap device happens be setup in fstab via a label (RHEL4 and clones),
+                    # reslove that label to the actual device name here
+                    if ((defined $1) && (exists $swap_devs_by_label{$1})) {
                         $real_dev = $swap_devs_by_label{$1};
                         #print STDERR "DEBUG: swap label [$1] resolves to device [$real_dev]\n";
+                    }
+                } else {
+                    # To identify the LABEL of all the other filesystems use
+                    # the output of the command blkid.
+                    unless ($real_dev) {
+                        # Try to identify real_dev from the LABEL or UUID value.
+                        chomp($real_dev = `blkid -t $mount_dev`);
+                        $real_dev =~ s/^(.*): .*$/$1/;
                     }
                 }
                 
