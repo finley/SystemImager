@@ -7,7 +7,7 @@
 #	- upgrade to bb 1.x
 #
 
-BUSYBOX_VERSION	= 1.4.1
+BUSYBOX_VERSION	= 1.1.1
 BUSYBOX_DIR 	= $(INITRD_SRC_DIR)/busybox-$(BUSYBOX_VERSION)
 BUSYBOX_TARBALL = busybox-$(BUSYBOX_VERSION).tar.bz2
 #BUSYBOX_URL 	= http://www.busybox.net/downloads/$(BUSYBOX_TARBALL)
@@ -31,7 +31,7 @@ PHONY += busybox_install
 busybox_install:	$(BUSYBOX_DIR).install
 $(BUSYBOX_DIR).install:	$(BUSYBOX_DIR).build \
 						$(INITRD_BUILD_DIR).prep
-	$(MAKE) -j $(NCPUS) -C $(BUSYBOX_DIR) install CONFIG_PREFIX=$(INITRD_BUILD_DIR)/
+	$(MAKE) -j $(NCPUS) -C $(BUSYBOX_DIR) install PREFIX=$(INITRD_BUILD_DIR)/
 
 
 $(BUSYBOX_DIR).unpack:	$(INITRD_DIR)/make.d/busybox.rul \
