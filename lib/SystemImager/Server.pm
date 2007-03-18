@@ -1291,8 +1291,10 @@ sub _write_out_mkfs_commands {
             $cmd = "mkswap -v1 $real_dev";
 
             # add swap label if necessary
-            if( $mount_dev =~ /^LABEL=(.*)/ ){
-                $cmd .= " -L $1";
+            if ($mount_dev) {
+                if( $mount_dev =~ /^LABEL=(.*)/ ){
+                    $cmd .= " -L $1";
+                }
             }
             $cmd .= " || shellout";
 
