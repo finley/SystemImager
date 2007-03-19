@@ -589,6 +589,9 @@ sub save_partition_information {
                         #
                         $leftovers =~ s/^$fs_regex//go;
 
+                        # Get rid of empty elements in the flags output. -AR-
+                        $leftovers = join(',', grep /\S/, (split(/,/, $leftovers)));
+
                         #
                         # Extract any flags, and remove them from the leftovers. -BEF-
                         #
@@ -657,6 +660,9 @@ sub save_partition_information {
                         # output with no token in unused fields.  -BEF-
                         #
                         $leftovers =~ s/^$fs_regex//go;
+
+                        # Get rid of empty elements in the flags output. -AR-
+                        $leftovers = join(',', grep /\S/, (split(/,/, $leftovers)));
 
                         #
                         # Extract any flags, and remove them from the leftovers. -BEF-
