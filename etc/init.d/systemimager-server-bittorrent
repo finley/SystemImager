@@ -68,7 +68,7 @@ case "$1" in
         echo AUTOINSTALL_TORRENT_DIR is not defined in /etc/systemimager/systemimager.conf
         exit 1
     fi
-    $BT_TRACKER_BIN --allowed_dir $torrent_dir --port $BT_TRACKER_PORT --dfile $BT_TRACKER_STATE --logfile $BT_TRACKER_LOG $BT_TWISTED 0</dev/null 1>/dev/null 2>&1 &
+    $BT_TRACKER_BIN --allowed_dir $torrent_dir --allow_get 1 --port $BT_TRACKER_PORT --dfile $BT_TRACKER_STATE --logfile $BT_TRACKER_LOG $BT_TWISTED 0</dev/null 1>/dev/null 2>&1 &
     if [ $? -ne 0 ]; then
         echo failed.
     	exit 1
