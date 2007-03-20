@@ -348,10 +348,6 @@ unless($source_image eq $destination_image) {
 }
 ### END Change entries in master autoinstall script ###
 
-# Restart systemimager-server-rsyncd
-system "/etc/init.d/systemimager-server-rsyncd status >/dev/null 2>&1 && " .
-       "/etc/init.d/systemimager-server-rsyncd restart";
-
 exit 0;
 
 
