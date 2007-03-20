@@ -61,7 +61,14 @@ case "$1" in
     fi
     # Check tracker to see if it supports --twisted flag
     ($BT_TRACKER_BIN 2>&1 | grep -q twisted) && BT_TWISTED="--twisted 0"
-    $BT_TRACKER_BIN --port $BT_TRACKER_PORT --dfile $BT_TRACKER_STATE --logfile $BT_TRACKER_LOG $BT_TWISTED 0</dev/null 1>/dev/null 2>&1 &
+    # Allow to download .torrent files directly via web.
+    torrent_dir=`cat /etc/systemimager/systemimager.conf | sed -ne 's/\s*AUTOINSTALL_TORRENT_DIR\s*=\s*\(.*\)\s*/\1/p'`
+    if [ ! -d $torrent_dir ]; then
+        echo failed.
+        echo AUTOINSTALL_TORRENT_DIR is not defined in /etc/systemimager/systemimager.conf
+        exit 1
+    fi
+    $BT_TRACKER_BIN --allowed_dir $torrent_dir --port $BT_TRACKER_PORT --dfile $BT_TRACKER_STATE --logfile $BT_TRACKER_LOG $BT_TWISTED 0</dev/null 1>/dev/null 2>&1 &
     if [ $? -ne 0 ]; then
         echo failed.
     	exit 1
