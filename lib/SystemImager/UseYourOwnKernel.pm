@@ -582,6 +582,9 @@ sub get_load_ordered_list_of_running_modules() {
                 if ($?) {
                         print STDERR qq(WARNING: Couldn't find module "$module" (skipping it)!\n);
                         next;
+                } elsif ($module_file eq '') {
+                    # try to get the filename using "modprobe -l".
+                   chomp($module_file = `modprobe -l $module`);
                 }
                 push (@modules, $module_file);
         }
