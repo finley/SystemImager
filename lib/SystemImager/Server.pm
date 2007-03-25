@@ -201,8 +201,8 @@ sub _imageexists {
 sub validate_post_install_option {
   my $post_install=$_[1];
 
-  unless(($post_install eq "beep") or ($post_install eq "reboot") or ($post_install eq "shutdown")) { 
-    die qq(\nERROR: -post-install must be beep, reboot, or shutdown.\n\n       Try "-help" for more options.\n);
+  unless(($post_install eq "beep") or ($post_install eq "reboot") or ($post_install eq "shutdown") or ($post_install eq "kexec")) { 
+    die qq(\nERROR: -post-install must be beep, reboot, shutdown, or kexec.\n\n       Try "-help" for more options.\n);
   }
   return 0;
 }
@@ -1692,6 +1692,19 @@ sub edit_disk_names{
     }
 }
 
+# Prep the client for kexec
+sub setup_kexec {
+    my ($out) = shift;
+    print $out "cmd=`chroot /a /usr/bin/scconf_bootinfo`\n";
+    print $out "kexec_kernel=`echo \$cmd | cut -d' ' -f1`\n";
+    print $out "kexec_initrd=`echo \$cmd | cut -d' ' -f3`\n";
+    print $out "kexec_append=`echo \$cmd | cut -d' ' -f4-`\n";
+    print $out "cp /a/\$kexec_kernel /tmp\n";
+    print $out "cp /a/\$kexec_initrd /tmp\n";
+    print $out "kexec_kernel=`basename \$kexec_kernel`\n";
+    print $out "kexec_initrd=`basename \$kexec_initrd`\n";
+}
+
 sub write_sc_command {
     my ( $out, $ip_assignment_method ) = @_;
 
@@ -1913,6 +1926,10 @@ sub create_autoinstall_script{
                     print $MASTER_SCRIPT "# shutdown the autoinstall client\n";
                     print $MASTER_SCRIPT "shutdown\n";
                     print $MASTER_SCRIPT "\n";
+                } elsif ($post_install eq "kexec") {
+                    # kexec imaged kernel
+                    print $MASTER_SCRIPT "# kexec the autoinstall client\n";
+                    print $MASTER_SCRIPT "kexec --force --append=\"\$kexec_append\" --initrd=/tmp/\$kexec_initrd --reset-vga /tmp/\$kexec_kernel\n";
                 }
                 last SWITCH;
 	        }
@@ -1925,6 +1942,15 @@ sub create_autoinstall_script{
 				edit_disk_names( $MASTER_SCRIPT );
 				last SWITCH;
 			}
+
+			if (/^\s*${delim}SETUP_KEXEC${delim}\s*$/) {
+                if ($post_install eq "kexec") {
+                    setup_kexec( $MASTER_SCRIPT );
+                } else {
+                    print $MASTER_SCRIPT "# Not needed for this post-install action\n";
+                }
+                last SWITCH;
+            }
 
 	        ### END end of autoinstall options ###
 	        print $MASTER_SCRIPT $_;

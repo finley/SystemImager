@@ -25,6 +25,7 @@ $(BOEL_BINARIES_TARBALL):	$(BC_DIR).build \
 				$(GZIP_BINARY) \
 				$(DISCOVER_DIR).build \
 				$(DISCOVER_DATA_DIR).build \
+				$(KEXEC_DIR).build \
 				$(HFSUTILS_BINARY) \
 				$(DOSFSTOOLS_DIR).build \
 				$(MKE2FS_BINARY) \
@@ -52,6 +53,7 @@ $(BOEL_BINARIES_TARBALL):	$(BC_DIR).build \
 	install -m 755 --strip $(TAR_BINARY) 			$(BOEL_BINARIES_DIR)/bin/
 	install -m 755 --strip $(GZIP_BINARY) 			$(BOEL_BINARIES_DIR)/bin/
 	install -m 755 --strip $(DISCOVER_BINARY) 		$(BOEL_BINARIES_DIR)/sbin/
+	install -m 755 --strip $(KEXEC_BINARY)			$(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(HFSUTILS_BINARY) 		$(BOEL_BINARIES_DIR)/sbin/
 	# XXX change these to be like: $(DOSFSTOOLS_DIR).install
 	install -m 755 --strip $(MKDOSFS_BINARY) 		$(BOEL_BINARIES_DIR)/sbin/

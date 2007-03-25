@@ -1,0 +1,38 @@
+#
+# $Id$
+#  vi: set filetype=make:
+#
+
+KEXEC_VERSION	= 20061214
+KEXEC_TARBALL	= kexec-tools-testing-$(KEXEC_VERSION).tar.bz2
+#KEXEC_URL	= http://www.kernel.org/pub/linux/kernel/people/horms/kexec-tools/
+KEXEC_URL	= http://download.systemimager.org/pub/kexec
+KEXEC_DIR	= $(SRC_DIR)/kexec-tools-testing-$(KEXEC_VERSION)
+KEXEC_BINARY	= $(KEXEC_DIR)/objdir/build/sbin/kexec
+KEXEC_PATCHES	= $(shell ls $(PATCH_DIR)/kexec.*.patch 2>/dev/null | sort)
+
+ALL_SOURCE += $(SRC_DIR)/$(KEXEC_TARBALL)
+
+PHONY += kexec
+kexec:	$(KEXEC_DIR).build
+
+$(KEXEC_DIR).unpack:  $(SRC_DIR)/$(KEXEC_TARBALL) $(KEXEC_PATCHES)
+	rm -rf $(KEXEC_DIR)
+	cd $(SRC_DIR) && tar -xvjf $(SRC_DIR)/$(KEXEC_TARBALL)
+	cd $(KEXEC_DIR) && cat $(KEXEC_PATCHES) < /dev/null | patch -p1
+	touch $@
+
+$(KEXEC_DIR).build:  $(KEXEC_DIR).unpack
+	cd $(KEXEC_DIR) && ./configure
+	$(MAKE) -j $(NCPUS) -C $(KEXEC_DIR)
+	touch $@
+
+$(SRC_DIR)/$(KEXEC_TARBALL):
+	mkdir -p $(SRC_DIR)
+	$(GETSOURCE) $(KEXEC_URL)/$(KEXEC_TARBALL) $(SRC_DIR)
+
+PHONY += kexec_clean
+kexec_clean:
+	rm -rf $(KEXEC_DIR)
+	rm -f  $(KEXEC_DIR).unpack
+	rm -f  $(KEXEC_DIR).build

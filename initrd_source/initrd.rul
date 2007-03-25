@@ -115,14 +115,14 @@ $(INITRD_BUILD_DIR).prep:	$(INITRD_DIR)/initrd.rul
 #    happens.  -BEF-
 #
 $(INITRD_BUILD_DIR).build:  $(INITRD_BUILD_DIR).prep		\
-								$(SKEL_FILES) 				\
+								$(SKEL_FILES) 			\
 								$(BUSYBOX_DIR).install		\
 								$(SYSVINIT_DIR).install		\
 								$(UTIL_LINUX_DIR).install	\
 								$(COREUTILS_DIR).install	\
-								$(UDEV_DIR).install			\
+								$(UDEV_DIR).install		\
 								$(HOTPLUG_DIR).install		\
-								$(LSB_DIR).build			\
+								$(LSB_DIR).build		\
 								$(DHCLIENT_DIR).install		\
 								$(RSYNC_DIR).install		\
 								$(BITTORRENT_DIR).install 	\

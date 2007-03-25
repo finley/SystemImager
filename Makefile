@@ -214,6 +214,7 @@ include $(TOPDIR)/make.d/gzip.rul
 include $(TOPDIR)/make.d/hfsutils.rul
 include $(TOPDIR)/make.d/jfsutils.rul
 include $(TOPDIR)/make.d/kernel.rul
+include $(TOPDIR)/make.d/kexec.rul
 include $(TOPDIR)/make.d/lvm.rul
 include $(TOPDIR)/make.d/mdadm.rul
 include $(TOPDIR)/make.d/openssh.rul
