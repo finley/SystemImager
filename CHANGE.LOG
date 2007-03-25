@@ -10,16 +10,24 @@
 --------------------------------------------------------------------------------
 - added the support of cpio initramfs for UYOK
 - added interactive mode in si_psh
+- added --arch option to si_mkbootpackage
 - added support for Intel S5000PAL based mainboard
 - now the installation parameter DEVICE can be used to bind the
   execution of the DHCP client on a single interface (instead of
   requesting an IP for all the available interfaces on the client)
 - fixed a potential problem in si_getimage: now some dangerous patterns
   are automatically excluded during the image retrieval (i.e. /selinux
-  files, LVM caches and backups, NFS stuff, etc)
+  files, LVM caches and backups, NFS stuff, etc.)
 - fixed a problem in the detection of swap labels in RHEL distributions
 - fixed a potential partition size problem with old versions of parted
   (< 1.6.23)
+- fixed a bug that occurs when parted prints empty flags (now all the
+  patition flags are correctly retrieved)
+- now rsync is not restarted after si_mvimage, si_rmimage and si_cpimage
+  (the restart could break the installation if these command were
+  executed during the imaging)
+- fixed a bug in SLES9 for UYOK (the --my-modules option was not able to
+  correctly detect the filename of the loaded kernel modules)
 - fixed a dependency problem with perl(XML::Simple) and perl(XML::Parser)
 
 3.8.0
