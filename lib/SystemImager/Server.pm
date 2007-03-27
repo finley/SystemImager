@@ -1695,7 +1695,7 @@ sub edit_disk_names{
 # Prep the client for kexec
 sub setup_kexec {
     my ($out) = shift;
-    print $out "cmd=`chroot /a /usr/bin/scconf_bootinfo`\n";
+    print $out "cmd=`chroot /a /usr/bin/scconf-bootinfo`\n";
     print $out "kexec_kernel=`echo \$cmd | cut -d' ' -f1`\n";
     print $out "kexec_initrd=`echo \$cmd | cut -d' ' -f3`\n";
     print $out "kexec_append=`echo \$cmd | cut -d' ' -f4-`\n";
