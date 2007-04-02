@@ -331,6 +331,7 @@ sub is_kernel {
         return 1;
 }
 
+
 #
 # Usage:
 #       my $kernel_file = _choose_kernel_file( $uname_r, $image_dir );
@@ -421,6 +422,84 @@ sub _get_kernel_release($) {
         return $uname_r;
 }
 
+#
+# Usage:
+#    my $is_this_file_a_initrd = is_initrd( $file, $kernel_release );
+#
+sub is_initrd
+{
+        # Try to detect if a file is a valid initrd that can be used to
+        # boot the image - used by kexec stuff to generate a valid
+        # configuration file for systemconfigurator
+        # (/etc/systemconfig/systemconfig.conf).
+
+        my $file = shift;
+        my $kernel_release = shift;
+
+        #
+        # explicitly skip /boot/message
+        if ( $file eq '/boot/message' ) { return undef; }
+        #
+        # Make sure it's binary
+        if( ! -B $file ) { return undef; }
+        #
+        # and not a directory
+        if( -d $file )   { return undef; }
+        #
+        # skip symlinks
+        if( -l $file )   { return undef; }
+
+        # Get output from "file" for elimination by identification tests
+        my $cmd = "file -zb $file";
+        open(INPUT,"$cmd|") or die("Couldn't run $cmd to get INPUT");
+                my ($input) = (<INPUT>);
+                # eliminate vmlinux files
+                if( $input =~ m/ELF (32|64)-bit LSB executable,/ ) { return undef; }
+                # eliminate kernels
+                if( $input =~ m/kernel/i ) { return undef; }
+                # eliminate boot sectors
+                if( $input =~ m/x86 boot sector/i ) { return undef; }
+        close(INPUT);
+
+        if ($kernel_release) {
+            # Look for the kernel release into the initrd.
+            foreach $cmd ('grep', 'zgrep') {
+                chomp(my $rel_check = `$cmd -l "$kernel_release" $file 2>/dev/null`);
+                if ($rel_check eq $file) {
+                    return 1;
+                }
+            }
+        }
+
+        return undef;
+}
+
+
+#
+# Usage:
+#       my $initrd_file = _choose_initrd_file( $boot_dir, $kernel_release );
+#
+sub _choose_initrd_file
+{
+        # Try to detect a valid initrd that can be used together with a
+        # kernel release - this function is used by kexec stuff to
+        # generate a configuration file for systemconfigurator
+        # (/etc/systemconfig/systemconfig.conf)
+ 
+        my $dir = shift;
+        my $kernel_release = shift;
+
+        opendir(DIR, $dir) || die("Can't opendir $dir: $!");
+        my @files = readdir(DIR);
+        closedir DIR;
+
+        foreach (@files) {
+                my $file = "$dir/$_";
+                if (is_initrd($file, $kernel_release)) {
+                        return $file;
+                }
+        }
+}
 
 
 #
