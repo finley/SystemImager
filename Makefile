@@ -377,6 +377,7 @@ install_configs:
 	$(SI_INSTALL) -m 644 etc/autoinstallscript.template $(ETC)/systemimager/
 	$(SI_INSTALL) -m 644 etc/imagemanip.conf $(ETC)/systemimager/
 	$(SI_INSTALL) -m 644 etc/imagemanip.perm $(ETC)/systemimager/
+	$(SI_INSTALL) -m 644 etc/getimage.exclude $(ETC)/systemimager/
 
 	mkdir -p $(RSYNC_STUB_DIR)
 	$(SI_INSTALL) -b -m 644 etc/rsync_stubs/10header $(RSYNC_STUB_DIR)

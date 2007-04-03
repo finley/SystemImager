@@ -383,21 +383,15 @@ if($source_host) {
       my $mount_point=$1;
       print FINAL_EXCLUDE_FILE "$mount_point/*\n";
     }
-    # Add common patterns that could be always excluded.
-    print FINAL_EXCLUDE_FILE << 'EOF';
-# SELinux stuff
-/selinux/*
-# eventfs in SuSE
-/lib/klibc/events/*
-# mounted media devices not reported by mount
-/media/*
-# NFS stuff
-/var/lib/nfs/*
-# LVM caches and backups (automatically re-created at the first boot)
-/etc/lvm/.cache
-/etc/lvm/backup/*
-/etc/lvm/archive/*
-EOF
+    # Add common patterns that should be always excluded.
+    if (open(COMMON_EXCLUDE_FILE, "</etc/systemimager/getimage.exclude")) {
+        while (<COMMON_EXCLUDE_FILE>) {
+            print FINAL_EXCLUDE_FILE "$_";
+        }
+        close(COMMON_EXCLUDE_FILE);
+    } else {
+        print STDERR "WARNING: couldn't open /etc/systemimager/getimage.exclude, skipping common exclusions...\n";
+    }
     if(@excludes) { 
      print FINAL_EXCLUDE_FILE "\n# Exclusions from --exclude on the command line.\n";
       foreach $exclude (@excludes) {

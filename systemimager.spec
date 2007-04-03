@@ -329,6 +329,9 @@ More information can be found at the website:
 http://developer.osdl.org/kees/software/imagemanip/
 
 %changelog
+* Tue Apr 03 2007 Andrea Righi <a.righi@cineca.it>
+- added pattern exclusions for si_getimage in /etc/systemimager/getimage.exclude
+
 * Thu Mar 08 2007 Andrea Righi <a.righi@cineca.it>
 - Added si_pushoverrides command.
 
@@ -864,6 +867,7 @@ fi
 %config(noreplace) /etc/systemimager/rsync_stubs/*
 %config(noreplace) /etc/systemimager/systemimager.conf
 %config(noreplace) /etc/systemimager/cluster.xml
+%config(noreplace) /etc/systemimager/getimage.exclude
 /etc/init.d/systemimager-server-rsyncd
 /etc/init.d/systemimager-server-netboot*
 /etc/init.d/systemimager-server-monitord

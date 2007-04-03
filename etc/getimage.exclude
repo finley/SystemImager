@@ -1,0 +1,16 @@
+# SELinux stuff
+/selinux/*
+
+# eventfs in SuSE
+/lib/klibc/events/*
+
+# mounted media devices not reported by mount
+/media/*
+
+# NFS stuff
+/var/lib/nfs/*
+
+# LVM caches and backups (automatically re-created at the first boot)
+/etc/lvm/.cache
+/etc/lvm/backup/*
+/etc/lvm/archive/*
