@@ -142,7 +142,7 @@ $(SRC_DIR)/patched_kernel-stamp:	$(SRC_DIR)/$(LINUX_TARBALL) \
    	  $(foreach patch, $(LINUX_PATCHES), \
   	    echo -n Applying `basename $(patch)`... && cat $(patch) | patch -s -p1 && echo done. &&) /bin/true
 	cp -a $(LINUX_CONFIG) $(LINUX_SRC)/.config
-	perl -pi -e "s/^EXTRAVERSION =.*/EXTRAVERSION = -boel_v$(VERSION)/" $(LINUX_SRC)/Makefile
+	perl -pi -e "s/^EXTRAVERSION = ([^ ]*).*\n/EXTRAVERSION = \1-boel_v$(VERSION)\n/" $(LINUX_SRC)/Makefile
 	$(MAKE) -C $(LINUX_SRC) oldconfig dep
 	touch $(SRC_DIR)/patched_kernel-stamp
 
