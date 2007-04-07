@@ -1146,8 +1146,9 @@ autodetect_hardware_and_load_modules() {
     logmsg
     logmsg autodetect_hardware_and_load_modules
     if [ -d /sys/bus -a -e /lib/modules/`uname -r`/modules.pcimap ]; then
-        logmsg "Detecting hardware using pci-automod: "
-        MODULES=`pci-automod --list --class storage --class net --class serial --class bridge`
+        logmsg "Detecting hardware using pci-automod (this may take a long time): "
+        pci-automod --hwlist --class storage --class net --class serial --class bridge > /tmp/hardware.lst
+        MODULES=`cat /tmp/hardware.lst | sed 's/  */ /g' | cut -d' ' -f4`
     else
         logmsg "Detecting hardware using discover: "
         MODULES=`discover --module bridge ethernet ide scsi usb`

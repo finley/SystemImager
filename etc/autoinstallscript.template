@@ -37,9 +37,6 @@ fi
 ##SET_IMAGENAME##
 ##SET_OVERRIDES##
 
-# try to load storage related modules
-pci-automod --load --class storage
-
 ### BEGIN Check to be sure this not run from a working machine ###
 # Test for mounted SCSI or IDE disks
 mount | grep [hs]d[a-z][1-9] > /dev/null 2>&1
@@ -447,9 +444,8 @@ beep
 #
 if [ ! -f /a/etc/systemconfig/hardware.lst ]; then
    [ ! -d /a/etc/systemconfig ] && mkdir -p /a/etc/systemconfig
-   if [ -d /sys/bus/pci ]; then
-       pci-automod --hwlist --class storage --class net \
-	   >> /a/etc/systemconfig/hardware.lst
+   if [ -e /tmp/hardware.lst ]; then
+	   cat /tmp/hardware.lst >> /a/etc/systemconfig/hardware.lst
    else
        SCSI_MODS=`discover -f "%m\n" scsi | grep -v ide-scsi | uniq`
        for MOD in $SCSI_MODS; do
