@@ -530,7 +530,7 @@ sub choose_file_system_for_new_initrd() {
         open(FILESYSTEMS,"<$file") or die("Couldn't open $file for reading.");
         while (<FILESYSTEMS>) {
                 chomp;
-                push (@filesystems, $_) if (m/(cramfs|ext2|ext3|reiserfs|xfs|jfs)/);
+                push (@filesystems, $_) if (m/(cramfs|ext2|ext3|reiserfs|xfs|jfs|minix)/);
         }
         close(FILESYSTEMS);
 
@@ -541,6 +541,15 @@ sub choose_file_system_for_new_initrd() {
                 and (! -e "$modules_dir/kernel/fs/cramfs/cramfs.ko.gz")
                 ) { 
                 $fs = "cramfs";
+        }
+
+        # minix
+        elsif ((grep { /minix/ } @filesystems) 
+                and (! -e "$modules_dir/kernel/fs/minix/minix.o")
+                and (! -e "$modules_dir/kernel/fs/minix/minix.ko")
+                and (! -e "$modules_dir/kernel/fs/minix/minix.ko.gz")
+                ) { 
+                $fs = "minix";
         }
 
         # ext2
@@ -751,6 +760,8 @@ sub _create_new_initrd($$) {
             _create_initrd_jfs($staging_dir, $boot_dir);
         } elsif ($fs eq 'xfs') {
             _create_initrd_xfs($staging_dir, $boot_dir);
+        } elsif ($fs eq 'minix') {
+            _create_initrd_minix($staging_dir, $boot_dir);
         } elsif ($fs eq 'cpio') {
             _create_initrd_cpio($staging_dir, $boot_dir);
         } else {
@@ -865,6 +876,63 @@ sub _create_initrd_reiserfs($$) {
 
         # mount
         run_cmd("mount $new_initrd $new_initrd_mount_dir -o loop -t reiserfs", $verbose);
+        $is_mounted = 1;
+
+        # copy from staging dir to new initrd
+        run_cmd("tar -C $staging_dir -cf - . | tar -C $new_initrd_mount_dir -xf -", $verbose, 0);
+
+        # umount and gzip up
+        run_cmd("umount $new_initrd_mount_dir", $verbose);
+        $is_mounted = 0;
+        run_cmd("gzip -f -9 -S .img $new_initrd", $verbose);
+        run_cmd("ls -l $new_initrd.img", $verbose, 1) if($verbose);
+
+        # cleanup the temporary mount dir
+        run_cmd("rm -fr $new_initrd_mount_dir", $verbose, 1);
+
+        return 1;
+}
+
+sub _create_initrd_minix($$) {
+
+        my $staging_dir = shift;
+        my $boot_dir    = shift;
+
+        my $new_initrd  = $boot_dir . "/initrd";
+
+        my $new_initrd_mount_dir = _mk_tmp_dir();
+
+        # cleanup routine.
+        $SIG{__DIE__} = sub {
+            my $msg = shift;
+            run_cmd("umount $new_initrd_mount_dir", $verbose, 0) if ($is_mounted);
+            unlink($new_initrd) if (-f $new_initrd);
+            run_cmd("rm -fr $staging_dir $new_initrd_mount_dir", $verbose, 1);
+            die $msg;
+        };
+
+        print ">>> New initrd mount point:     $new_initrd_mount_dir\n" if($verbose);
+        eval { mkpath($new_initrd_mount_dir, 0, 0755) }; 
+        if ($@) { 
+                die "Couldn't mkpath $new_initrd_mount_dir $@";
+        }
+
+        my $cmd;
+
+        # loopback file
+        chomp(my $size = `du -ks $staging_dir`);
+        $size =~ s/\s+.*$//;
+        my $breathing_room = 2000;
+        $size = $size + $breathing_room;
+        run_cmd("dd if=/dev/zero of=$new_initrd bs=1024 count=$size", $verbose, 1);
+
+        # fs creation
+        chomp(my $inodes = `find $staging_dir -printf "%i\n" | sort -u | wc -l`);
+        $inodes = $inodes + 10;
+        run_cmd("mkfs -t minix -i $inodes $new_initrd", $verbose, 1);
+
+        # mount
+        run_cmd("mount $new_initrd $new_initrd_mount_dir -o loop -t minix", $verbose);
         $is_mounted = 1;
 
         # copy from staging dir to new initrd

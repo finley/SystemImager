@@ -1009,7 +1009,7 @@ start_network() {
         
         # combine systemimager code to the stock debian dhclient-script
         # and make executable
-        cat /etc/dhclient-script.systemimager-prefix \
+        cat /etc/dhclient-script.si-prefix \
             /etc/dhclient-script.debian-dist \
             > /etc/dhclient-script
         chmod +x /etc/dhclient-script
