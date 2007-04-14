@@ -543,15 +543,6 @@ sub choose_file_system_for_new_initrd() {
                 $fs = "cramfs";
         }
 
-        # minix
-        elsif ((grep { /minix/ } @filesystems) 
-                and (! -e "$modules_dir/kernel/fs/minix/minix.o")
-                and (! -e "$modules_dir/kernel/fs/minix/minix.ko")
-                and (! -e "$modules_dir/kernel/fs/minix/minix.ko.gz")
-                ) { 
-                $fs = "minix";
-        }
-
         # ext2
         elsif ((grep { /ext2/ } @filesystems) 
                 and (! -e "$modules_dir/kernel/fs/ext2/ext2.o")
@@ -597,6 +588,15 @@ sub choose_file_system_for_new_initrd() {
                 $fs = "xfs";
                 print "XXX remove this warning line once xfs is tested.\n";
                 print "XXX just need to verify where the xfs module lives.\n";
+        }
+
+        # minix
+        elsif ((grep { /minix/ } @filesystems) 
+                and (! -e "$modules_dir/kernel/fs/minix/minix.o")
+                and (! -e "$modules_dir/kernel/fs/minix/minix.ko")
+                and (! -e "$modules_dir/kernel/fs/minix/minix.ko.gz")
+                ) { 
+                $fs = "minix";
         }
 
         # cpio
