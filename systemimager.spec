@@ -143,7 +143,7 @@ BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
-Requires: perl, systemconfigurator
+Requires: perl, systemconfigurator >= 2.2.9
 AutoReqProv: no
 
 %description common
@@ -174,7 +174,7 @@ BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
-Requires: systemimager-common = %{version}, systemconfigurator, perl-AppConfig, rsync >= 2.4.6, perl
+Requires: systemimager-common = %{version}, systemconfigurator >= 2.2.9, perl-AppConfig, rsync >= 2.4.6, perl
 AutoReqProv: no
 
 %description client
@@ -329,6 +329,9 @@ More information can be found at the website:
 http://developer.osdl.org/kees/software/imagemanip/
 
 %changelog
+* Tue Apr 17 2007 Andrea Righi <a.righi@cineca.it>
+- added systemconfigurator >= 2.2.9 dependency
+
 * Tue Apr 03 2007 Andrea Righi <a.righi@cineca.it>
 - added pattern exclusions for si_getimage in /etc/systemimager/getimage.exclude
 
