@@ -58,14 +58,6 @@ Options: (options can be presented in any order and can be abbreviated)
  --append STRING        A string of options that will be passed to the
                         autoinstall kernel.
 
- --config FILE          Where FILE contains all the settings necessary
-                        for the client to set it's hostname and
-                        configure it's networking information without
-                        DHCP.  This file is copied to /local.cfg on the
-                        autoinstall disk.
-                        See /usr/share/doc/systemimager-server-SYSTEMIMAGER_VERSION_STRING/local.cfg
-                        for a well commented example.
-
 EOF
 
 Getopt::Long::Configure("posix_default");
@@ -83,7 +75,6 @@ GetOptions(
 	"kernel=s"	=> \my $kernel,
 	"initrd=s"	=> \my $initrd,
 	"append=s"	=> \my $append,
-	"config=s"	=> \my $local_cfg,
 ) or die("$help_info");
 
 unless ($arch) {

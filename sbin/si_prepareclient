@@ -213,6 +213,13 @@ Options:
     Specifies the file that contains the public keys that can be used
     for user authentication from the image server to the imaging clients.
 
+ --config FILE
+    Where FILE contains all the settings necessary for the client to set
+    its hostname and configure its networking information without DHCP.
+    This file is copied to /local.cfg into the initrd.img.  See
+    /usr/share/doc/systemimager-server-SYSTEMIMAGER_VERSION_STRING/local.cfg
+    for a well commented example.
+
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
 
@@ -238,6 +245,7 @@ GetOptions(
     "yes"                  => \my $yes,
     "ssh-key=s"            => \my $ssh_key,
     "authorized-keys=s"    => \my $authorized_keys,
+    "config=s"             => \my $local_cfg,
 ) || die "$help_info";
 
 
@@ -894,7 +902,7 @@ sub create_auto_install_script_conf {
         SystemImager::UseYourOwnKernel->create_uyok_initrd(
             $arch, $my_modules, $custom_kernel, $modules_dir,
             $image, $filesystem, '/etc/systemimager/boot',
-            $ssh_key, $authorized_keys, $verbose
+            $ssh_key, $authorized_keys, $local_cfg, $verbose
         );
     }
 

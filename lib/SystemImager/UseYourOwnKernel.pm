@@ -31,7 +31,10 @@ our $is_mounted = 0;
 
 #
 # Usage: 
-#       SystemImager::UseYourOwnKernel->create_uyok_initrd($arch, $my_modules, $custom_kernel, $custom_mod_dir, $image, $filesystem, $destination, $verbose);
+#       SystemImager::UseYourOwnKernel->create_uyok_initrd(
+#           $arch, $my_modules, $custom_kernel, $custom_mod_dir,
+#           $image, $filesystem, $destination, $ssh_key,
+#           $authorized_keys, $local_cfg, $verbose);
 #
 sub create_uyok_initrd() {
 
@@ -45,6 +48,7 @@ sub create_uyok_initrd() {
         my $destination     = shift;
         my $ssh_key         = shift;
         my $authorized_keys = shift;
+        my $local_cfg       = shift;
         $verbose            = shift;
 
         use File::Copy;
@@ -197,6 +201,16 @@ sub create_uyok_initrd() {
             print ">>> Including SSH authorized keys: $authorized_keys\n" if ($verbose);
             unless( copy($authorized_keys, "$staging_dir/root/.ssh/authorized_keys") ) {
                 die("Couldn't copy $authorized_keys to $staging_dir/root/.ssh/authorized_keys!\n");
+            }
+        }
+
+        #
+        # Copy local.cfg
+        #
+        if ($local_cfg) {
+            print ">>> Including local.cfg into the initrd.img: $local_cfg\n" if ($verbose);
+            unless (copy($local_cfg, "$staging_dir/local.cfg")) {
+                die("Couldn't copy $local_cfg to $staging_dir/local.cfg!\n");
             }
         }
 
