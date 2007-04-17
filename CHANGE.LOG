@@ -6,6 +6,23 @@
 #   $Id$
 #
 
+3.9.0
+--------------------------------------------------------------------------------
+- added pci-automod autodetection: this allows to detect all the
+  required device drivers supported by the kernel without the need of an
+  external DB (it is fully based on sysfs and modules.pcimap, shipped with
+  kernel modules)
+- added fast-reboot post install action (based on kexec): this allows to
+  execute the imaged kernel without the need of an additional reboot
+  through the BIOS
+- added si_pushoverride command (a tool to synchronize overrides from
+  the image server to the clients, defining cluster topologies and host
+  groups)
+- added support for minix UYOK initrd.img
+- updated BOEL kernel to 2.6.20.4 (for i386 and x86_64)
+- added systemconfigurator >= 2.2.9 dependency (required for by kexec
+  stuff)
+
 3.8.1
 --------------------------------------------------------------------------------
 - added the support of cpio initramfs for UYOK
