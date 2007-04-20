@@ -740,7 +740,7 @@ else
 	echo
 
 	# This is an upgrade: restart the daemons.
-	echo "Restaring services..."
+	echo "Restarting services..."
 	(/etc/init.d/systemimager-server-rsyncd status >/dev/null 2>&1 && \
 		/etc/init.d/systemimager-server-rsyncd restart) || true
 	(/etc/init.d/systemimager-server-netbootmond status >/dev/null 2>&1 && \
