@@ -26,8 +26,7 @@ use SystemImager::Config qw($config);
 
 our $verbose;
 our $is_mounted = 0;
-
-
+our $fs_regexp = "(cramfs|ext2|ext3|reiserfs|xfs|jfs)";
 
 #
 # Usage: 
@@ -544,7 +543,7 @@ sub choose_file_system_for_new_initrd() {
         open(FILESYSTEMS,"<$file") or die("Couldn't open $file for reading.");
         while (<FILESYSTEMS>) {
                 chomp;
-                push (@filesystems, $_) if (m/(cramfs|ext2|ext3|reiserfs|xfs|jfs)/);
+                push (@filesystems, $_) if (m/$fs_regexp/);
         }
         close(FILESYSTEMS);
 

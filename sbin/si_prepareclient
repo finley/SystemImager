@@ -331,6 +331,12 @@ if($my_modules and $image) {
     exit 1;
 }
 
+if (($filesystem) &&
+    ($filesystem !~ m/$SystemImager::UseYourOwnKernel::fs_regexp/)) {
+    print "FATAL:  unsupported filesystem: $filesystem!\n";
+    exit 1;
+}
+
 # Make sure we have certain tools that we need.
 which('rsync') or croak("'rsync' is required for $progname to function properly.  Please see http://systemimager.org for more details.");
 which('systemconfigurator') or croak("'systemconfigurator' is required for $progname to function properly.  Please see http://systemimager.org for more details.");

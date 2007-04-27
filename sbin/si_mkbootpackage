@@ -231,6 +231,12 @@ if($my_modules and $image) {
     exit 1;
 }
 
+if (($filesystem) &&
+    ($filesystem !~ m/$SystemImager::UseYourOwnKernel::fs_regexp/)) {
+    print "FATAL:  unsupported filesystem: $filesystem!\n";
+    exit 1;
+}
+
 # if quiet redirect all to /dev/null
 if ($quiet) {
     open(STDERR, '>/dev/null');
