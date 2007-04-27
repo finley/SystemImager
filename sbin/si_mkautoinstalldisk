@@ -201,7 +201,7 @@ $is_mounted = 1;
 # Copy boot stuff to the device.
 eval {
 	SystemImager::Server->copy_boot_files_to_boot_media(
-		$kernel, $initrd, $local_cfg, $arch,
+		$kernel, $initrd, undef, $arch,
 		$mnt_dir, $append);
 };
 if ($@) {
