@@ -6,11 +6,16 @@
 
 echo "initramfs detected: init called"
 
+delete_rootfs_files() {
+   sleep 10
+   rm -rf /
+}
+
 mkdir -p /new_root || shellout
 mount tmpfs /new_root -t tmpfs $tmpfs_opts || shellout
 cd / || shellout
 cp -a `/bin/ls | grep -v new_root` /new_root/ || shellout
 cd /new_root || shellout
 mkdir -p old_root || shellout
-
+delete_rootfs_files >/dev/null </dev/null 2>&1 &
 mount --move .  / && exec chroot . /linuxrc
