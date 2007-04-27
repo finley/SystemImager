@@ -169,7 +169,7 @@ endif
 	#
 	# The find command is to figure out the kernel version string
 	#
-	BOEL_KERNEL_VERSION=`find $(BOEL_BINARIES_DIR)/lib/modules -type d -mindepth 1 -maxdepth 1 -printf "%f"` ; \
+	BOEL_KERNEL_VERSION=`find $(BOEL_BINARIES_DIR)/lib/modules -mindepth 1 -maxdepth 1 -type d -printf "%f"` ; \
 	depmod -b $(BOEL_BINARIES_DIR) $$BOEL_KERNEL_VERSION
 	#
 	
