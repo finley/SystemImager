@@ -1,9 +1,15 @@
---- udev-079.orig/debian/rules.d/20-names.rules	2006-05-21 16:10:16.000000000 +0200
-+++ udev-079/debian/rules.d/20-names.rules	2006-05-21 16:10:19.000000000 +0200
-@@ -14,6 +14,26 @@
- KERNEL=="device-mapper",		NAME="mapper/control"
- KERNEL=="dm-[0-9]*",			NAME="dm/%n"
+diff -urN udev-108.orig/debian/rules.d/20-names.rules udev-108/debian/rules.d/20-names.rules
+--- udev-108.orig/debian/rules.d/20-names.rules	2007-04-29 11:48:56.000000000 +0200
++++ udev-108/debian/rules.d/20-names.rules	2007-04-29 12:01:07.000000000 +0200
+@@ -12,10 +12,27 @@
  
+ # Device mapper targets
+ KERNEL=="device-mapper",		NAME="mapper/control"
++KERNEL=="dm-[0-9]*",                    NAME="dm/%n"
+ 
+-# IEEE1394 devices, group under their own directories
+-KERNEL=="dv1394-[0-9]*",		NAME="dv1394/%n"
+-KERNEL=="video1394-[0-9]*",		NAME="video1394/%n"
 +# RAID controllers
 +KERNEL=="cciss!*|ida!*|rd!*", PROGRAM="/lib/udev/raid-devfs.sh %k", \
 +                                        NAME="%c{1}", SYMLINK+="%k"
@@ -23,7 +29,62 @@
 +KERNEL=="sd*[!0-9]|sr*", ENV{ID_SERIAL}=="", IMPORT{program}="/sbin/scsi_id -g -x -a -s %p"
 +KERNEL=="dasd*[!0-9]", IMPORT{program}="/sbin/dasd_id --export $tempnode"
 +KERNEL=="sd*[!0-9]|sr*|dasd*[!0-9]", ENV{ID_SERIAL}=="?*", SYMLINK+="disk/by-id/$env{ID_BUS}-$env{ID_SERIAL}"
-+
+ 
  # Input devices, group under /dev/input
  KERNEL=="event[0-9]*",			NAME="input/%k"
- KERNEL=="mice",				NAME="input/%k"
+@@ -25,22 +42,6 @@
+ KERNEL=="ts[0-9]*",			NAME="input/%k"
+ KERNEL=="uinput",			NAME="input/%k"
+ 
+-# ISDN devices, group under /dev/capi
+-KERNEL=="capi",				NAME="capi20"
+-KERNEL=="capi[0-9]*",			NAME="capi/%n"
+-
+-# Packet CD devices, group under /dev/pktcdvd
+-KERNEL=="pktcdvd",			NAME="pktcdvd/control"
+-KERNEL=="pktcdvd[0-9]*",		NAME="pktcdvd/%k"
+-
+-# Sound devices, group under /dev/snd
+-KERNEL=="controlC[0-9]*",		NAME="snd/%k"
+-KERNEL=="hwC[D0-9]*",			NAME="snd/%k"
+-KERNEL=="midiC[D0-9]*",			NAME="snd/%k"
+-KERNEL=="pcmC[D0-9cp]*",		NAME="snd/%k"
+-KERNEL=="seq",				NAME="snd/%k"
+-KERNEL=="timer",			NAME="snd/%k"
+-
+ # USB devices (usbfs replacement), group under /dev/bus/usb
+ SUBSYSTEM!="usb_device", GOTO="usb_device_end"
+ IMPORT{program}="usb_device_name --export %k"
+@@ -48,29 +49,13 @@
+ 	NAME="bus/usb/$env{USB_BUS}/$env{USB_DEV}"
+ LABEL="usb_device_end"
+ 
+-# Video devices, group dvb devices under /dev/dvb
+-SUBSYSTEM!="dvb", GOTO="dvb_end"
+-IMPORT{program}="dvb_device_name --export %k"
+-ENV{DVB_ADAPTER}=="?*", ENV{DVB_DEV}=="?*", \
+-	NAME="dvb/adapter$env{DVB_ADAPTER}/$env{DVB_NAME}"
+-LABEL="dvb_end"
+-
+-# Video devices, group cards under /dev/dri
+-KERNEL=="card[0-9]*",			NAME="dri/%k"
+-
+-# Zaptel devices, group under /dev/zap
+-KERNEL=="zapctl",			NAME="zap/ctl"
+-KERNEL=="zaptimer",			NAME="zap/timer"
+-KERNEL=="zapchannel",			NAME="zap/channel"
+-KERNEL=="zappseudo",			NAME="zap/pseudo"
+-KERNEL=="zap[0-9]*",			NAME="zap/%n"
++# Work-around for IDE devices that don't report media changes
++BUS=="ide", KERNEL=="hd[a-z]", SYSFS{removable}=="1", \
++        ENV{ID_MODEL}=="IOMEGA_ZIP*",   NAME{all_partitions}="%k"
+ 
+ # SCSI CD-ROM devices use /dev/scdN now
+ SUBSYSTEMS=="scsi", KERNEL=="sr[0-9]*",	NAME="scd%n"
+ 
+-# USB printers need to be /dev/usb*
+-SUBSYSTEMS=="usb", KERNEL=="lp[0-9]*",	NAME="usb%k"
+-
+ # Other devices
+ KERNEL=="hw_random",			NAME="hwrng"
+ KERNEL=="tun",				NAME="net/%k"
