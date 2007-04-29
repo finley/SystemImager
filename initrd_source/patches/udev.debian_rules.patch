@@ -1,5 +1,5 @@
---- udev-108.orig/debian/rules	2007-04-29 12:21:15.000000000 +0200
-+++ udev-108/debian/rules	2007-04-29 12:22:02.000000000 +0200
+--- udev-108.orig/debian/rules	2007-04-29 15:22:09.000000000 +0200
++++ udev-108/debian/rules	2007-04-29 15:40:10.000000000 +0200
 @@ -18,15 +18,13 @@
  # Extra tools that come with udev that we want to build
  EXTRAS = extras/ata_id extras/cdrom_id extras/edd_id \
@@ -60,7 +60,15 @@
  
  	$(MAKE) install V=true EXTRAS="$(EXTRAS)" DESTDIR=$(CURDIR)/debian/udev
  
-@@ -123,10 +122,10 @@
+@@ -99,6 +98,7 @@
+ 		debian/udev/usr/share/initramfs-tools/scripts/init-bottom/udev
+ 
+ 	# Copy across all of our rules
++	rm -f debian/rules.d/40-permissions.rules
+ 	@rules=debian/rules.d/*.rules; set -x; for rule in $$rules; do \
+ 		install -m 644 -o root -g root $$rule \
+ 			debian/udev/etc/udev/rules.d || exit 1; \
+@@ -123,10 +123,10 @@
  # Install files into the udeb
  install-udeb: DH_OPTIONS=-pudev-udeb
  install-udeb: install-deb
@@ -75,7 +83,7 @@
  
  	# Copy binaries that we want
  	cp -a udeb/udevd debian/udev-udeb/sbin
-@@ -137,11 +136,7 @@
+@@ -137,11 +137,7 @@
  
  	# Copy helpers that we want
  	cp -a udeb/extras/usb_device_name/usb_device_name debian/udev-udeb/lib/udev
@@ -87,7 +95,7 @@
  	cp -a udeb/extras/ata_id/ata_id debian/udev-udeb/lib/udev
  	cp -a udeb/extras/edd_id/edd_id debian/udev-udeb/lib/udev
  	cp -a udeb/extras/usb_id/usb_id debian/udev-udeb/lib/udev
-@@ -178,34 +173,34 @@
+@@ -178,34 +174,34 @@
  # Build architecture-dependent files here.
  binary-arch: DH_OPTIONS=-a
  binary-arch: build install-deb install-udeb
