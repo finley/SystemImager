@@ -62,9 +62,9 @@ dirname=$(echo $tarball | sed s/'\.tar\.\(\(gz\)\|\(bz2\)\)'//)
 extension=$(echo $tarball | sed s/$dirname//)
 
 zip=""
-if [ "$extension" == ".tar.bz2" ]; then
+if [ "$extension" = ".tar.bz2" ]; then
     zip="bzip2"
-elif [ "$extension" == ".tar.gz" ]; then
+elif [ "$extension" = ".tar.gz" ]; then
     zip="gzip -9"
 fi
 
