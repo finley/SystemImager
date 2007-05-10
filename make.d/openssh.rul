@@ -53,7 +53,7 @@ $(OPENSSH_BINARIES) $(OPENSSH_SBINARIES):	$(SRC_DIR)/openssh_verify.stamp $(OPEN
 	$(MAKE) -j $(NCPUS) -C $(SRC_DIR)/$(OPENSSH_DIR)
 
 $(SRC_DIR)/openssh_verify.stamp:	$(OPENSSH_TARBALL_TARGET)
-	[ "$(shell md5sum $(OPENSSH_TARBALL_TARGET) | cut -d' ' -f1)" == "$(OPENSSH_MD5SUM)" ]
+	[ "$(shell md5sum $(OPENSSH_TARBALL_TARGET) | cut -d' ' -f1)" = "$(OPENSSH_MD5SUM)" ]
 	touch $(SRC_DIR)/openssh_verify.stamp
 
 $(OPENSSH_TARBALL_TARGET):
