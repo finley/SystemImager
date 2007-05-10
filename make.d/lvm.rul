@@ -1,5 +1,6 @@
 #
-#   	$Id$
+#	$Id$
+#    vi: set filetype=make:
 #
 #	2007-02-10 Bernard Li
 #	- LVM 2.2.02.18 provides --with-dmdir in ./configure script
@@ -70,5 +71,6 @@ lvm_clean:
 	rm -rf $(SRC_DIR)/$(LVM_DIR)
 	rm -rf $(SRC_DIR)/$(DEVMAPPER_DIR)
 
+DEBIAN_STABLE_BUILD_DEPS += 
+UBUNTU_DAPPER_BUILD_DEPS += libdevmapper-dev
 
-# /* vi: set noet ts=4: */
