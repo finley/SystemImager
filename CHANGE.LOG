@@ -6,6 +6,16 @@
 #   $Id$
 #
 
+3.9.2
+--------------------------------------------------------------------------------
+- updated BOEL kernel to 2.6.21 (for i386 and x86_64)
+- fixed a bug that broke si_mkautoinstalldisk
+- free unused RAM of the initramfs (only with cpio initrd.img) after switching
+  to tmpfs
+- updated udev to udev_108-0ubuntu4
+- updated coreutils to 5.97
+- updated reiserfsprogs to 3.6.20
+
 3.9.0
 --------------------------------------------------------------------------------
 - added pci-automod autodetection: this allows to detect all the
