@@ -1244,239 +1244,249 @@ sub _write_out_mkfs_commands {
         }
     }
 
-    foreach my $line (sort numerically (keys ( %{$xml_config->{fsinfo}} ))) {
-        
-        my $cmd = "";
-        # If this line is a comment, skip over. -BEF-
-        if ( $xml_config->{fsinfo}->{$line}->{comment} ) { next; }
+    # The $part_type here is used to find and create all the swap partitions
+    # before the other filesystems. This reduces the probability to have a OOM
+    # condition during the filesystem creation.
+    foreach my $part_type (0, 1) {
+        foreach my $line (sort numerically (keys (%{$xml_config->{fsinfo}}))) {
 
-        # If real_dev isn't set, move on. -BEF-
-        unless ($xml_config->{fsinfo}->{$line}->{real_dev}) { next; }
+            my $cmd = "";
+            # If this line is a comment, skip over. -BEF-
+            if ( $xml_config->{fsinfo}->{$line}->{comment} ) { next; }
 
-        # If format="no" is set, then skip over this one. -BEF-
-        my $format = $xml_config->{fsinfo}->{$line}->{format};
-        if (($format) and ( "$format" eq "no")) { next; }
+            # If real_dev isn't set, move on. -BEF-
+            unless ($xml_config->{fsinfo}->{$line}->{real_dev}) { next; }
 
-        # mount_dev should contain fs LABEL or UUID information. -BEF-
-        my $mount_dev = $xml_config->{fsinfo}->{$line}->{mount_dev};
+            # If format="no" is set, then skip over this one. -BEF-
+            my $format = $xml_config->{fsinfo}->{$line}->{format};
+            if (($format) and ( "$format" eq "no")) { next; }
 
-        my $real_dev = $devfs_map{$xml_config->{fsinfo}->{$line}->{real_dev}};
-        my $mp = $xml_config->{fsinfo}->{$line}->{mp};
-        my $fs = $xml_config->{fsinfo}->{$line}->{fs};
-        my $options = $xml_config->{fsinfo}->{$line}->{options};
-        my $mkfs_opts = $xml_config->{fsinfo}->{$line}->{mkfs_opts};
-        unless ($mkfs_opts) { $mkfs_opts = ""; }
+            # mount_dev should contain fs LABEL or UUID information. -BEF-
+            my $mount_dev = $xml_config->{fsinfo}->{$line}->{mount_dev};
 
-        # Remove options that may cause problems and are unnecessary during the install.
-        $options = _remove_mount_option($options, "errors=remount-ro");
+            my $real_dev = $devfs_map{$xml_config->{fsinfo}->{$line}->{real_dev}};
+            my $mp = $xml_config->{fsinfo}->{$line}->{mp};
+            my $fs = $xml_config->{fsinfo}->{$line}->{fs};
+            my $options = $xml_config->{fsinfo}->{$line}->{options};
+            my $mkfs_opts = $xml_config->{fsinfo}->{$line}->{mkfs_opts};
+            unless ($mkfs_opts) { $mkfs_opts = ""; }
 
-        # Deal with filesystems to be mounted read only (ro) after install.  We 
-        # still need to write to them to install them. ;)
-        $options =~ s/\bro\b/rw/g;
-        $options =~ s/\bnoauto\b/defaults/g;
+            # Remove options that may cause problems and are unnecessary during
+            # the install.
+            $options = _remove_mount_option($options, "errors=remount-ro");
 
-        # software RAID devices (/dev/md*)
-        if ($real_dev =~ /\/dev\/md/) {
-            print $out qq(mkraid --really-force $real_dev || shellout\n)
-                unless (defined($xml_config->{raid}));
-        } elsif( $real_dev =~ /^(.*?)(p?\d+)$/ ) {
-            if ($dev2disk{$1}) {
-                $real_dev = "\${".$dev2disk{$1}."}".$2;
-            }
-        }
+            # Deal with filesystems to be mounted read only (ro) after install.
+            # We still need to write to them to install them. ;)
+            $options =~ s/\bro\b/rw/g;
+            $options =~ s/\bnoauto\b/defaults/g;
 
-        # swap
-        if ( $xml_config->{fsinfo}->{$line}->{fs} eq "swap" ) {
-            # create swap
-            $cmd = "mkswap -v1 $real_dev";
-
-            # add swap label if necessary
-            if ($mount_dev) {
-                if( $mount_dev =~ /^LABEL=(.*)/ ){
-                    $cmd .= " -L $1";
-                }
-            }
-            $cmd .= " || shellout";
-
-            print $out qq(logmsg "$cmd"\n);
-            print $out "$cmd\n";
-
-            # swapon
-            $cmd = "swapon $real_dev || shellout";
-            print $out qq(logmsg "$cmd"\n);
-            print $out "$cmd\n";
-
-            print $out "\n";
-
-        # msdos or vfat
-        } elsif (( $xml_config->{fsinfo}->{$line}->{fs} eq "vfat" ) or ( $xml_config->{fsinfo}->{$line}->{fs} eq "msdos" )){
-
-            # create fs
-            $cmd = "mkdosfs $mkfs_opts -v $real_dev || shellout";
-            print $out qq(logmsg "$cmd"\n);
-            print $out "$cmd\n";
-
-            # mkdir
-            $cmd = "mkdir -p /a$mp || shellout";
-            print $out qq(logmsg "$cmd"\n);
-            print $out "$cmd\n";
-
-            # mount
-            $cmd = "mount $real_dev /a$mp -t $fs -o $options || shellout";
-            print $out qq(logmsg "$cmd"\n);
-            print $out "$cmd\n";
-            
-            print $out "\n";
-
-
-        # ext2
-        } elsif ( $xml_config->{fsinfo}->{$line}->{fs} eq "ext2" ) {
-
-            # create fs
-            $cmd = "mke2fs -q $real_dev || shellout";
-            print $out qq(logmsg "$cmd"\n);
-            print $out "$cmd\n";
-
-            if ($mount_dev) {
-                # add LABEL if necessary
-                if ($mount_dev =~ /LABEL=/) {
-                    my $label = $mount_dev;
-                    $label =~ s/LABEL=//;
-                
-                    $cmd = "tune2fs -L $label $real_dev";
-                    print $out qq(logmsg "$cmd"\n);
-                    print $out "$cmd\n";
-                }
-                
-                # add UUID if necessary
-                if ($mount_dev =~ /UUID=/) {
-                    my $uuid = $mount_dev;
-                    $uuid =~ s/UUID=//;
-                
-                    $cmd = "tune2fs -U $uuid $real_dev";
-                    print $out qq(logmsg "$cmd"\n);
-                    print $out "$cmd\n";
+            # software RAID devices (/dev/md*)
+            if ($real_dev =~ /\/dev\/md/) {
+                print $out qq(mkraid --really-force $real_dev || shellout\n)
+                    unless (defined($xml_config->{raid}));
+            } elsif( $real_dev =~ /^(.*?)(p?\d+)$/ ) {
+                if ($dev2disk{$1}) {
+                    $real_dev = "\${".$dev2disk{$1}."}".$2;
                 }
             }
 
-            # mkdir
-            $cmd = "mkdir -p /a$mp || shellout";
-            print $out qq(logmsg "$cmd"\n);
-            print $out "$cmd\n";
+            # First of all look for swap partitions only.
+            if ($part_type == 0) {
+                # swap
+                if ( $xml_config->{fsinfo}->{$line}->{fs} eq "swap" ) {
+                    # create swap
+                    $cmd = "mkswap -v1 $real_dev";
 
-            # mount
-            $cmd = "mount $real_dev /a$mp -t $fs -o $options || shellout";
-            print $out qq(logmsg "$cmd"\n);
-            print $out "$cmd\n";
-            
-            print $out "\n";
+                    # add swap label if necessary
+                    if ($mount_dev) {
+                        if( $mount_dev =~ /^LABEL=(.*)/ ){
+                            $cmd .= " -L $1";
+                        }
+                    }
+                    $cmd .= " || shellout";
 
-
-        # ext3
-        } elsif ( $xml_config->{fsinfo}->{$line}->{fs} eq "ext3" ) {
-
-            # create fs
-            $cmd = "mke2fs -q -j $real_dev || shellout";
-            print $out qq(logmsg "$cmd"\n);
-            print $out "$cmd\n";
-
-            if ($mount_dev) {
-                # add LABEL if necessary
-                if ($mount_dev =~ /LABEL=/) {
-                    my $label = $mount_dev;
-                    $label =~ s/LABEL=//;
-                
-                    $cmd = "tune2fs -L $label $real_dev";
                     print $out qq(logmsg "$cmd"\n);
                     print $out "$cmd\n";
-                }
-                
-                # add UUID if necessary
-                if ($mount_dev =~ /UUID=/) {
-                    my $uuid = $mount_dev;
-                    $uuid =~ s/UUID=//;
-                
-                    $cmd = "tune2fs -U $uuid $real_dev";
+
+                    # swapon
+                    $cmd = "swapon $real_dev || shellout";
                     print $out qq(logmsg "$cmd"\n);
                     print $out "$cmd\n";
+
+                    print $out "\n";
                 }
+                next;
             }
 
-            # mkdir
-            $cmd = "mkdir -p /a$mp || shellout";
-            print $out qq(logmsg "$cmd"\n);
-            print $out "$cmd\n";
+            # OK, now that swap partitions commands have been written to the
+            # autoinstall script, proceed with the other filesystems.
 
-            # mount
-            $cmd = "mount $real_dev /a$mp -t $fs -o $options || shellout";
-            print $out qq(logmsg "$cmd"\n);
-            print $out "$cmd\n";
-            
-            print $out "\n";
+            # msdos or vfat
+            if (($xml_config->{fsinfo}->{$line}->{fs} eq "vfat") or
+                    ($xml_config->{fsinfo}->{$line}->{fs} eq "msdos")) {
 
+                # create fs
+                $cmd = "mkdosfs $mkfs_opts -v $real_dev || shellout";
+                print $out qq(logmsg "$cmd"\n);
+                print $out "$cmd\n";
 
-        # reiserfs
-        } elsif ( $xml_config->{fsinfo}->{$line}->{fs} eq "reiserfs" ) {
+                # mkdir
+                $cmd = "mkdir -p /a$mp || shellout";
+                print $out qq(logmsg "$cmd"\n);
+                print $out "$cmd\n";
 
-            # create fs
-            $cmd = "mkreiserfs -q $real_dev || shellout";
-            print $out qq(logmsg "$cmd"\n);
-            print $out "$cmd\n";
+                # mount
+                $cmd = "mount $real_dev /a$mp -t $fs -o $options || shellout";
+                print $out qq(logmsg "$cmd"\n);
+                print $out "$cmd\n";
 
-            # mkdir
-            $cmd = "mkdir -p /a$mp || shellout";
-            print $out qq(logmsg "$cmd"\n);
-            print $out "$cmd\n";
+                print $out "\n";
 
-            # mount
-            $cmd = "mount $real_dev /a$mp -t $fs -o $options || shellout";
-            print $out qq(logmsg "$cmd"\n);
-            print $out "$cmd\n";
-            
-            print $out "\n";
+            # ext2
+            } elsif ( $xml_config->{fsinfo}->{$line}->{fs} eq "ext2" ) {
 
-        # jfs
-        } elsif ( $xml_config->{fsinfo}->{$line}->{fs} eq "jfs" ) {
+                # create fs
+                $cmd = "mke2fs -q $real_dev || shellout";
+                print $out qq(logmsg "$cmd"\n);
+                print $out "$cmd\n";
 
-            # create fs
-            $cmd = "jfs_mkfs -q $real_dev || shellout";
-            print $out qq(logmsg "$cmd"\n);
-            print $out "$cmd\n";
+                if ($mount_dev) {
+                    # add LABEL if necessary
+                    if ($mount_dev =~ /LABEL=/) {
+                        my $label = $mount_dev;
+                        $label =~ s/LABEL=//;
 
-            # mkdir
-            $cmd = "mkdir -p /a$mp || shellout";
-            print $out qq(logmsg "$cmd"\n);
-            print $out "$cmd\n";
+                        $cmd = "tune2fs -L $label $real_dev";
+                        print $out qq(logmsg "$cmd"\n);
+                        print $out "$cmd\n";
+                    }
 
-            # mount
-            $cmd = "mount $real_dev /a$mp -t $fs -o $options || shellout";
-            print $out qq(logmsg "$cmd"\n);
-            print $out "$cmd\n";
-            
-            print $out "\n";
+                    # add UUID if necessary
+                    if ($mount_dev =~ /UUID=/) {
+                        my $uuid = $mount_dev;
+                        $uuid =~ s/UUID=//;
+
+                        $cmd = "tune2fs -U $uuid $real_dev";
+                        print $out qq(logmsg "$cmd"\n);
+                        print $out "$cmd\n";
+                    }
+                }
+
+                # mkdir
+                $cmd = "mkdir -p /a$mp || shellout";
+                print $out qq(logmsg "$cmd"\n);
+                print $out "$cmd\n";
+
+                # mount
+                $cmd = "mount $real_dev /a$mp -t $fs -o $options || shellout";
+                print $out qq(logmsg "$cmd"\n);
+                print $out "$cmd\n";
+
+                print $out "\n";
+
+            # ext3
+            } elsif ( $xml_config->{fsinfo}->{$line}->{fs} eq "ext3" ) {
+
+                # create fs
+                $cmd = "mke2fs -q -j $real_dev || shellout";
+                print $out qq(logmsg "$cmd"\n);
+                print $out "$cmd\n";
+
+                if ($mount_dev) {
+                    # add LABEL if necessary
+                    if ($mount_dev =~ /LABEL=/) {
+                        my $label = $mount_dev;
+                        $label =~ s/LABEL=//;
+
+                        $cmd = "tune2fs -L $label $real_dev";
+                        print $out qq(logmsg "$cmd"\n);
+                        print $out "$cmd\n";
+                    }
+
+                    # add UUID if necessary
+                    if ($mount_dev =~ /UUID=/) {
+                        my $uuid = $mount_dev;
+                        $uuid =~ s/UUID=//;
+
+                        $cmd = "tune2fs -U $uuid $real_dev";
+                        print $out qq(logmsg "$cmd"\n);
+                        print $out "$cmd\n";
+                    }
+                }
+
+                # mkdir
+                $cmd = "mkdir -p /a$mp || shellout";
+                print $out qq(logmsg "$cmd"\n);
+                print $out "$cmd\n";
+
+                # mount
+                $cmd = "mount $real_dev /a$mp -t $fs -o $options || shellout";
+                print $out qq(logmsg "$cmd"\n);
+                print $out "$cmd\n";
+
+                print $out "\n";
+
+            # reiserfs
+            } elsif ( $xml_config->{fsinfo}->{$line}->{fs} eq "reiserfs" ) {
+
+                # create fs
+                $cmd = "mkreiserfs -q $real_dev || shellout";
+                print $out qq(logmsg "$cmd"\n);
+                print $out "$cmd\n";
+
+                # mkdir
+                $cmd = "mkdir -p /a$mp || shellout";
+                print $out qq(logmsg "$cmd"\n);
+                print $out "$cmd\n";
+
+                # mount
+                $cmd = "mount $real_dev /a$mp -t $fs -o $options || shellout";
+                print $out qq(logmsg "$cmd"\n);
+                print $out "$cmd\n";
+
+                print $out "\n";
+
+            # jfs
+            } elsif ( $xml_config->{fsinfo}->{$line}->{fs} eq "jfs" ) {
+
+                # create fs
+                $cmd = "jfs_mkfs -q $real_dev || shellout";
+                print $out qq(logmsg "$cmd"\n);
+                print $out "$cmd\n";
+
+                # mkdir
+                $cmd = "mkdir -p /a$mp || shellout";
+                print $out qq(logmsg "$cmd"\n);
+                print $out "$cmd\n";
+
+                # mount
+                $cmd = "mount $real_dev /a$mp -t $fs -o $options || shellout";
+                print $out qq(logmsg "$cmd"\n);
+                print $out "$cmd\n";
+
+                print $out "\n";
 	    
-        # xfs
-        } elsif ( $xml_config->{fsinfo}->{$line}->{fs} eq "xfs" ) {
+            # xfs
+            } elsif ( $xml_config->{fsinfo}->{$line}->{fs} eq "xfs" ) {
 
-            # create fs
-            $cmd = "mkfs.xfs -f -q $real_dev || shellout";
-            print $out qq(logmsg "$cmd"\n);
-            print $out "$cmd\n";
+                # create fs
+                $cmd = "mkfs.xfs -f -q $real_dev || shellout";
+                print $out qq(logmsg "$cmd"\n);
+                print $out "$cmd\n";
 
-            # mkdir
-            $cmd = "mkdir -p /a$mp || shellout";
-            print $out qq(logmsg "$cmd"\n);
-            print $out "$cmd\n";
+                # mkdir
+                $cmd = "mkdir -p /a$mp || shellout";
+                print $out qq(logmsg "$cmd"\n);
+                print $out "$cmd\n";
 
-            # mount
-            $cmd = "mount $real_dev /a$mp -t $fs -o $options || shellout";
-            print $out qq(logmsg "$cmd"\n);
-            print $out "$cmd\n";
-            
-            print $out "\n";
+                # mount
+                $cmd = "mount $real_dev /a$mp -t $fs -o $options || shellout";
+                print $out qq(logmsg "$cmd"\n);
+                print $out "$cmd\n";
 
+                print $out "\n";
+            }
         }
-
     }
 }
 
