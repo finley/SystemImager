@@ -1,0 +1,58 @@
+#
+#	$Id$
+#    vi: set filetype=make:
+#
+#	2007-05-14 Andrea Righi
+#   	- rtorrent binaries
+#
+
+RTORRENT_VERSION      := 0.7.1
+RTORRENT_DIR          := $(INITRD_SRC_DIR)/rtorrent-$(RTORRENT_VERSION)
+RTORRENT_TARBALL      := rtorrent-$(RTORRENT_VERSION).tar.gz
+#RTORRENT_URL          := http://libtorrent.rakshasa.no/downloads/$(RTORRENT_TARBALL)
+RTORRENT_URL          := http://download.systemimager.org/pub/bittorrent/$(RTORRENT_TARBALL)
+RTORRENT_PATCHES      := $(shell ls $(INITRD_PATCH_DIR)/rtorrent.*.patch 2>/dev/null | sort)
+
+ALL_SOURCE += $(INITRD_SRC_DIR)/$(RTORRENT_TARBALL)
+
+PHONY += rtorrent
+rtorrent:  $(RTORRENT_DIR).build
+
+PHONY += rtorrent_install
+rtorrent_install:  $(RTORRENT_DIR).install
+$(RTORRENT_DIR).install:	$(RTORRENT_DIR).build \
+				$(INITRD_BUILD_DIR).prep
+	install -m 755 $(RTORRENT_DIR)/src/rtorrent $(INITRD_BUILD_DIR)/bin
+
+
+$(RTORRENT_DIR).build:	$(RTORRENT_DIR).unpack
+	# enforce PKG_CONFIG_PATH: needed to build it on a RHEL4 -AR-
+ifeq ($(ARCH),x86_64)
+	cd $(RTORRENT_DIR) && ./configure --without-ncursesw --disable-debug \
+		PKG_CONFIG_PATH=/usr/lib64/pkgconfig:/usr/lib/pkgconfig:$$PKG_CONFIG_PATH
+else
+	cd $(RTORRENT_DIR) && ./configure --without-ncursesw --disable-debug \
+		PKG_CONFIG_PATH=/usr/lib/pkgconfig:$$PKG_CONFIG_PATH
+endif
+	cd $(RTORRENT_DIR) && make
+	touch $@
+
+$(RTORRENT_DIR).unpack:	$(INITRD_DIR)/make.d/rtorrent.rul \
+						$(INITRD_SRC_DIR)/$(RTORRENT_TARBALL) \
+						$(RTORRENT_PATCHES)
+	rm -rf $(RTORRENT_DIR)
+	cd $(INITRD_SRC_DIR) && tar -xvzf $(RTORRENT_TARBALL)
+	cd $(RTORRENT_DIR) && cat $(RTORRENT_PATCHES) < /dev/null | patch -p1
+	touch $@
+
+$(INITRD_SRC_DIR)/$(RTORRENT_TARBALL):
+	mkdir -p $(INITRD_SRC_DIR)
+	$(GETSOURCE) $(RTORRENT_URL) $(INITRD_SRC_DIR)
+
+PHONY += rtorrent_clean
+rtorrent_clean:
+	rm -rf $(RTORRENT_DIR)
+	rm -f  $(RTORRENT_DIR).unpack
+	rm -f  $(RTORRENT_DIR).build
+	rm -f  $(RTORRENT_DIR).install
+

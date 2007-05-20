@@ -167,6 +167,7 @@ write_variables() {
         echo "BITTORRENT_POLLING_TIME=$BITTORRENT_POLLING_TIME" >> /tmp/variables.txt
         echo "BITTORRENT_SEED_WAIT=$BITTORRENT_SEED_WAIT"       >> /tmp/variables.txt
         echo "BITTORRENT_UPLOAD_MIN=$BITTORRENT_UPLOAD_MIN"     >> /tmp/variables.txt
+        echo "RTORRENT=$RTORRENT"                       >> /tmp/variables.txt
     fi
 }
 #
@@ -548,10 +549,29 @@ bittorrent_get_file() {
         bittorrent_upload_min=${BITTORRENT_UPLOAD_MIN:-50}
 
         # Start downloading.
-        /bin/bittorrent-console --no_upnp --no_start_trackerless_client --max_upload_rate 0 --display_interval 1 --rerequest_interval 1 --bind ${IPADDR} --save_in ${destination} ${torrent} > $bittorrent_log &
+        if [ "x$RTORRENT" = "xy" ]; then
+            # dtach requires devpts: be sure it's properly mounted.
+            # XXX: honestly, I don't know why the additional remount is needed
+            # here... -AR-
+            mount -t devpts none /dev/pts >/dev/null 2>&1
+
+            # Start rtorrent in the dtach-ed console.
+            dtach -n /tmp/socket-`basename ${torrent}` \
+                /bin/rtorrent -d ${destination} \
+                -o tracker_dump=${bittorrent_log},download_rate=0,upload_rate=0 \
+                ${torrent} </dev/console >/dev/console 2>&1 &
+            btclient="rtorrent"
+        else
+            # Start the standard BitTorrent client.
+	    /bin/bittorrent-console --no_upnp --no_start_trackerless_client \
+                --max_upload_rate 0 --display_interval 1 \
+                --rerequest_interval 1 --bind ${IPADDR} \
+                --save_in ${destination} ${torrent} > $bittorrent_log &
+            btclient="bittorrent-console"
+        fi
         pid=$!
         if [ ! -d /proc/$pid ]; then
-            logmsg "error: couldn't run bittorrent-console!"
+            logmsg "error: couldn't run BitTorrent client ($btclient)!"
             shellout
         fi
         unset pid
@@ -562,30 +582,39 @@ bittorrent_get_file() {
         done
 
         # Checking download...
-        while :; do
+	logmsg "download started (using client: $btclient)..."
+        if [ "x$RTORRENT" = "xy" ]; then
             while :; do
-                status=`grep 'percent done:' $bittorrent_log | sed -ne '$p' | sed 's/percent done: *//' | sed -ne '/^[0-9]*\.[0-9]*$/p'`
-                [ ! -z "$status" ] && break
+                grep "event=completed" ${bittorrent_log} && break
+                sleep $bittorrent_polling_time
             done
-            logmsg "percent done: $status %"
-            if [ "$status" = "100.0" ]; then
-                # Sleep until upload rate reaches the minimum threshold
-                while [ "$bittorrent_seed_wait" = "y" ]; do
-                    sleep $bittorrent_polling_time
-                    while :; do
-                        upload_rate=`grep 'upload rate:' $bittorrent_log | sed -ne '$p' | sed 's/upload rate: *\([0-9]*\)\.[0-9]* .*$/\1/' | sed -ne '/^\([0-9]*\)$/p'`
-                        [ ! -z $upload_rate ] && break
-                    done
-                    logmsg "upload rate: $upload_rate KB/s"
-                    [ $upload_rate -lt $bittorrent_upload_min ] && break
+        else
+            while :; do
+                while :; do
+                    status=`grep 'percent done:' $bittorrent_log | sed -ne '$p' | sed 's/percent done: *//' | sed -ne '/^[0-9]*\.[0-9]*$/p'`
+                    [ ! -z "$status" ] && break
                 done
-                logmsg "Download completed"
-                unset bittorrent_log upload_rate counter
-                break
-            fi
-            sleep $bittorrent_polling_time
-        done
+                logmsg "percent done: $status %"
+                if [ "$status" = "100.0" ]; then
+                    # Sleep until upload rate reaches the minimum threshold
+                    while [ "$bittorrent_seed_wait" = "y" ]; do
+                        sleep $bittorrent_polling_time
+                        while :; do
+                            upload_rate=`grep 'upload rate:' $bittorrent_log | sed -ne '$p' | sed 's/upload rate: *\([0-9]*\)\.[0-9]* .*$/\1/' | sed -ne '/^\([0-9]*\)$/p'`
+                            [ ! -z $upload_rate ] && break
+                        done
+                        logmsg "upload rate: $upload_rate KB/s"
+                        [ $upload_rate -lt $bittorrent_upload_min ] && break
+                    done
+                    logmsg "Download completed"
+                    unset bittorrent_log upload_rate counter
+                    break
+                 fi
+                 sleep $bittorrent_polling_time
+            done
+        fi
 
+	unset btclient
         unset bittorrent_polling_time
         unset bittorrent_seed_wait
         unset bittorrent_upload_min
@@ -600,15 +629,21 @@ bittorrent_get_file() {
 #   Usage: bittorrent_stop
 #
 bittorrent_stop() {
+    if [ "x$RTORRENT" = "xy" ]; then
+        btclient="rtorrent"
+    else
+        btclient="bittorrent-console"
+    fi
     # Try to kill all the BitTorrent processes
     counter=1 
-    while ps | grep bittorrent-console | grep -qv grep; do
+    while ps | grep $btclient | grep -qv grep; do
         [ $counter -ge 10 ] && logmsg "error: couldn't kill BitTorrent client!" && shellout
         logmsg "killing BitTorrent client..."
-        killall -9 bittorrent-console
+        killall -9 dtach $btclient >/dev/null 2>&1
         sleep 1
         counter=$(($counter + 1))
     done
+    unset btclient
     # Remove bittorrent logs.
     rm -rf /tmp/bittorrent*.log
 }

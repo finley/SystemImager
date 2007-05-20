@@ -310,7 +310,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CXX CXXFLAGS LDFLAGS CPPFLAGS ac_ct_CXX EXEEXT OBJEXT AWK YACC CC CFLAGS ac_ct_CC CPP LEX LEXLIB LEX_OUTPUT_ROOT INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LN_S SET_MAKE RSYNC MKCRAMFS gcc_exec gxx_exec GCC GXX python_exec PYTHON_PATH EGREP BUILD_LVM found_docbook2man BUILD_DOCS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CXX CXXFLAGS LDFLAGS CPPFLAGS ac_ct_CXX EXEEXT OBJEXT AWK YACC CC CFLAGS ac_ct_CC CPP LEX LEXLIB LEX_OUTPUT_ROOT INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LN_S SET_MAKE RSYNC MKCRAMFS gcc_exec gxx_exec GCC GXX python_exec PYTHON_PATH EGREP BUILD_LVM PKG_CONFIG ac_pt_PKG_CONFIG libtorrent_CFLAGS libtorrent_LIBS found_docbook2man BUILD_DOCS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -779,6 +779,18 @@ ac_env_CPP_set=${CPP+set}
 ac_env_CPP_value=$CPP
 ac_cv_env_CPP_set=${CPP+set}
 ac_cv_env_CPP_value=$CPP
+ac_env_PKG_CONFIG_set=${PKG_CONFIG+set}
+ac_env_PKG_CONFIG_value=$PKG_CONFIG
+ac_cv_env_PKG_CONFIG_set=${PKG_CONFIG+set}
+ac_cv_env_PKG_CONFIG_value=$PKG_CONFIG
+ac_env_libtorrent_CFLAGS_set=${libtorrent_CFLAGS+set}
+ac_env_libtorrent_CFLAGS_value=$libtorrent_CFLAGS
+ac_cv_env_libtorrent_CFLAGS_set=${libtorrent_CFLAGS+set}
+ac_cv_env_libtorrent_CFLAGS_value=$libtorrent_CFLAGS
+ac_env_libtorrent_LIBS_set=${libtorrent_LIBS+set}
+ac_env_libtorrent_LIBS_value=$libtorrent_LIBS
+ac_cv_env_libtorrent_LIBS_set=${libtorrent_LIBS+set}
+ac_cv_env_libtorrent_LIBS_value=$libtorrent_LIBS
 
 #
 # Report the --help message.
@@ -864,6 +876,11 @@ Some influential environment variables:
   CC          C compiler command
   CFLAGS      C compiler flags
   CPP         C preprocessor
+  PKG_CONFIG  path to pkg-config utility
+  libtorrent_CFLAGS
+              C compiler flags for libtorrent, overriding pkg-config
+  libtorrent_LIBS
+              linker flags for libtorrent, overriding pkg-config
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -3723,7 +3740,7 @@ else
         SI_MSG=`echo -e "$SI_MSG\n- "`
     fi
     if test "xe2fsprogs-devel" != "x"; then
-        SI_MSG=`echo -e "$SI_MSG\n- Try installing the e2fsprogs-devel package (RPM) or uuid-dev (Deb)\n"`
+        SI_MSG=`echo -e "$SI_MSG\n- Try installing the e2fsprogs-devel package\n"`
     fi
     if test "x" != "x"; then
         SI_MSG=`echo -e "$SI_MSG\n- or get the latest software from \n"`
@@ -4472,6 +4489,195 @@ else
      fi
 fi;
 
+# rtorrent needs libtorrent
+
+
+if test "x$ac_cv_env_PKG_CONFIG_set" != "xset"; then
+	if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}pkg-config", so it can be a program name with args.
+set dummy ${ac_tool_prefix}pkg-config; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_PKG_CONFIG+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $PKG_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PKG_CONFIG="$PKG_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  ;;
+esac
+fi
+PKG_CONFIG=$ac_cv_path_PKG_CONFIG
+
+if test -n "$PKG_CONFIG"; then
+  echo "$as_me:$LINENO: result: $PKG_CONFIG" >&5
+echo "${ECHO_T}$PKG_CONFIG" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+fi
+if test -z "$ac_cv_path_PKG_CONFIG"; then
+  ac_pt_PKG_CONFIG=$PKG_CONFIG
+  # Extract the first word of "pkg-config", so it can be a program name with args.
+set dummy pkg-config; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_ac_pt_PKG_CONFIG+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $ac_pt_PKG_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_ac_pt_PKG_CONFIG="$ac_pt_PKG_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_ac_pt_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  ;;
+esac
+fi
+ac_pt_PKG_CONFIG=$ac_cv_path_ac_pt_PKG_CONFIG
+
+if test -n "$ac_pt_PKG_CONFIG"; then
+  echo "$as_me:$LINENO: result: $ac_pt_PKG_CONFIG" >&5
+echo "${ECHO_T}$ac_pt_PKG_CONFIG" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+  PKG_CONFIG=$ac_pt_PKG_CONFIG
+else
+  PKG_CONFIG="$ac_cv_path_PKG_CONFIG"
+fi
+
+fi
+if test -n "$PKG_CONFIG"; then
+	_pkg_min_version=0.9.0
+	echo "$as_me:$LINENO: checking pkg-config is at least version $_pkg_min_version" >&5
+echo $ECHO_N "checking pkg-config is at least version $_pkg_min_version... $ECHO_C" >&6
+	if $PKG_CONFIG --atleast-pkgconfig-version $_pkg_min_version; then
+		echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+	else
+		echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+		PKG_CONFIG=""
+	fi
+
+fi
+
+pkg_failed=no
+echo "$as_me:$LINENO: checking for libtorrent" >&5
+echo $ECHO_N "checking for libtorrent... $ECHO_C" >&6
+
+if test -n "$PKG_CONFIG"; then
+        if test -n "$PKG_CONFIG" && \
+    { (echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"sigc++-2.0 libtorrent >= 0.11.1\"") >&5
+  ($PKG_CONFIG --exists --print-errors "sigc++-2.0 libtorrent >= 0.11.1") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; then
+  pkg_cv_libtorrent_CFLAGS=`$PKG_CONFIG --cflags "sigc++-2.0 libtorrent >= 0.11.1" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+else
+	pkg_failed=untried
+fi
+if test -n "$PKG_CONFIG"; then
+        if test -n "$PKG_CONFIG" && \
+    { (echo "$as_me:$LINENO: \$PKG_CONFIG --exists --print-errors \"sigc++-2.0 libtorrent >= 0.11.1\"") >&5
+  ($PKG_CONFIG --exists --print-errors "sigc++-2.0 libtorrent >= 0.11.1") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; then
+  pkg_cv_libtorrent_LIBS=`$PKG_CONFIG --libs "sigc++-2.0 libtorrent >= 0.11.1" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+else
+	pkg_failed=untried
+fi
+
+if test $pkg_failed = yes; then
+	libtorrent_PKG_ERRORS=`$PKG_CONFIG --errors-to-stdout --print-errors "sigc++-2.0 libtorrent >= 0.11.1"`
+	# Put the nasty error message in config.log where it belongs
+	echo "$libtorrent_PKG_ERRORS" 1>&5
+
+	{ { echo "$as_me:$LINENO: error: Package requirements (sigc++-2.0 libtorrent >= 0.11.1) were not met.
+Consider adjusting the PKG_CONFIG_PATH environment variable if you
+installed software in a non-standard prefix.
+
+Alternatively you may set the libtorrent_CFLAGS and libtorrent_LIBS environment variables
+to avoid the need to call pkg-config.  See the pkg-config man page for
+more details." >&5
+echo "$as_me: error: Package requirements (sigc++-2.0 libtorrent >= 0.11.1) were not met.
+Consider adjusting the PKG_CONFIG_PATH environment variable if you
+installed software in a non-standard prefix.
+
+Alternatively you may set the libtorrent_CFLAGS and libtorrent_LIBS environment variables
+to avoid the need to call pkg-config.  See the pkg-config man page for
+more details." >&2;}
+   { (exit 1); exit 1; }; }
+elif test $pkg_failed = untried; then
+	{ { echo "$as_me:$LINENO: error: The pkg-config script could not be found or is too old.  Make sure it
+is in your PATH or set the PKG_CONFIG environment variable to the full
+path to pkg-config.
+
+Alternatively you may set the libtorrent_CFLAGS and libtorrent_LIBS environment variables
+to avoid the need to call pkg-config.  See the pkg-config man page for
+more details.
+
+To get pkg-config, see <http://www.freedesktop.org/software/pkgconfig>.
+See \`config.log' for more details." >&5
+echo "$as_me: error: The pkg-config script could not be found or is too old.  Make sure it
+is in your PATH or set the PKG_CONFIG environment variable to the full
+path to pkg-config.
+
+Alternatively you may set the libtorrent_CFLAGS and libtorrent_LIBS environment variables
+to avoid the need to call pkg-config.  See the pkg-config man page for
+more details.
+
+To get pkg-config, see <http://www.freedesktop.org/software/pkgconfig>.
+See \`config.log' for more details." >&2;}
+   { (exit 1); exit 1; }; }
+else
+	libtorrent_CFLAGS=$pkg_cv_libtorrent_CFLAGS
+	libtorrent_LIBS=$pkg_cv_libtorrent_LIBS
+        echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+	:
+fi
 
 # do we have docbook, if not say know
 # Extract the first word of "docbook2man", so it can be a program name with args.
@@ -5226,6 +5432,10 @@ s,@python_exec@,$python_exec,;t t
 s,@PYTHON_PATH@,$PYTHON_PATH,;t t
 s,@EGREP@,$EGREP,;t t
 s,@BUILD_LVM@,$BUILD_LVM,;t t
+s,@PKG_CONFIG@,$PKG_CONFIG,;t t
+s,@ac_pt_PKG_CONFIG@,$ac_pt_PKG_CONFIG,;t t
+s,@libtorrent_CFLAGS@,$libtorrent_CFLAGS,;t t
+s,@libtorrent_LIBS@,$libtorrent_LIBS,;t t
 s,@found_docbook2man@,$found_docbook2man,;t t
 s,@BUILD_DOCS@,$BUILD_DOCS,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t

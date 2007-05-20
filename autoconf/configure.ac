@@ -103,6 +103,8 @@ AC_ARG_ENABLE([lvm],
 	AC_SUBST(BUILD_LVM,1)
      fi])
 
+# rtorrent needs libtorrent
+PKG_CHECK_MODULES(libtorrent, sigc++-2.0 libtorrent >= 0.11.1)
 
 # do we have docbook, if not say know
 AC_CHECK_PROG(found_docbook2man,[docbook2man],[yes])
