@@ -329,6 +329,9 @@ More information can be found at the website:
 http://developer.osdl.org/kees/software/imagemanip/
 
 %changelog
+* Tue May 22 2007 Bernard Li <bernard@vanhpc.org>
+- Fixed typo: systemimager-server-rsyncd -> systemimager-server-monitord for upgrade service restart
+
 * Tue Apr 17 2007 Andrea Righi <a.righi@cineca.it>
 - added systemconfigurator >= 2.2.9 dependency
 
@@ -745,7 +748,7 @@ else
 		/etc/init.d/systemimager-server-rsyncd restart) || true
 	(/etc/init.d/systemimager-server-netbootmond status >/dev/null 2>&1 && \
 		/etc/init.d/systemimager-server-netbootmond restart) || true
-	(/etc/init.d/systemimager-server-rsyncd status >/dev/null 2>&1 && \
+	(/etc/init.d/systemimager-server-monitord status >/dev/null 2>&1 && \
 		/etc/init.d/systemimager-server-monitord restart) || true
 fi
 
