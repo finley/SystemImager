@@ -1677,7 +1677,7 @@ sub _write_out_umount_commands {
         my $fs = $fs_by_mp{$mp};
 
         # umount
-        my $cmd = "umount /a$mp || shellout";
+        my $cmd = "umount /a$mp || mount -no remount,ro /a/$mp || shellout";
         print $out qq(if [ ! \$kernel = "2.4" ]; then\n) if ($mp eq "/sys");
         print $out qq(logmsg "$cmd"\n);
         print $out "$cmd\n";
