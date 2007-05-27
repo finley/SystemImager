@@ -64,7 +64,6 @@ include $(INITRD_DIR)/make.d/bittorrent.rul
 include $(INITRD_DIR)/make.d/dtach.rul
 include $(INITRD_DIR)/make.d/rtorrent.rul
 include $(INITRD_DIR)/make.d/busybox.rul
-include $(INITRD_DIR)/make.d/coreutils.rul
 include $(INITRD_DIR)/make.d/dhclient.rul
 include $(INITRD_DIR)/make.d/hotplug.rul
 include $(INITRD_DIR)/make.d/lsb.rul
@@ -121,7 +120,6 @@ $(INITRD_BUILD_DIR).build:  $(INITRD_BUILD_DIR).prep		\
 								$(BUSYBOX_DIR).install		\
 								$(SYSVINIT_DIR).install		\
 								$(UTIL_LINUX_DIR).install	\
-								$(COREUTILS_DIR).install	\
 								$(UDEV_DIR).install		\
 								$(HOTPLUG_DIR).install		\
 								$(LSB_DIR).build		\
