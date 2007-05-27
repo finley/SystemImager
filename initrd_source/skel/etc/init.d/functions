@@ -630,20 +630,19 @@ bittorrent_get_file() {
 #
 bittorrent_stop() {
     if [ "x$RTORRENT" = "xy" ]; then
-        btclient="rtorrent"
+        btclient="dtach rtorrent"
     else
         btclient="bittorrent-console"
     fi
+
     # Try to kill all the BitTorrent processes
-    counter=1 
-    while ps | grep $btclient | grep -qv grep; do
-        [ $counter -ge 10 ] && logmsg "error: couldn't kill BitTorrent client!" && shellout
-        logmsg "killing BitTorrent client..."
-        killall -9 dtach $btclient >/dev/null 2>&1
-        sleep 1
-        counter=$(($counter + 1))
-    done
-    unset btclient
+    logmsg "killing BitTorrent client..."
+    killall -15 $btclient >/dev/null 2>&1
+
+    # Forced kill after 5 secs.
+    sleep 5
+    killall -9 $btclient >/dev/null 2>&1
+
     # Remove bittorrent logs.
     rm -rf /tmp/bittorrent*.log
 }
