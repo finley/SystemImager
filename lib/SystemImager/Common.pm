@@ -635,7 +635,7 @@ sub save_partition_information {
                         # 5         17.016  15409.000  logical   ext2        
                         # 6      15409.016  17366.000  logical   linux-swap  
 
-                        if( $parted_version ge '1.6.23') {
+                        if( version_cmp($parted_version, '1.6.23') >= 0 ) {
                             ($minor, $startMB, $endMB, $junk, $partition_type, $leftovers) = split(/\s+/, $_, 6);
                         } else {
                             ($minor, $startMB, $endMB, $partition_type, $leftovers) = split(/\s+/, $_, 5);
