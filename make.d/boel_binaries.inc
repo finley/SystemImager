@@ -25,7 +25,7 @@ $(BOEL_BINARIES_TARBALL):	$(BC_DIR).build \
 				$(GZIP_BINARY) \
 				$(DISCOVER_DIR).build \
 				$(DISCOVER_DATA_DIR).build \
-				$(KEXEC_DIR).build \
+				$(KEXEC_BINARY) \
 				$(HFSUTILS_BINARY) \
 				$(DOSFSTOOLS_DIR).build \
 				$(MKE2FS_BINARY) \
@@ -191,7 +191,3 @@ boel_binaries_clean:
 	rm -rf $(BOEL_BINARIES_DIR)
 	rm -f  $(BOEL_BINARIES_DIR).prep
 	rm -f  $(BOEL_BINARIES_TARBALL)
-	
-
-
-

@@ -14,18 +14,14 @@ KEXEC_PATCHES	= $(shell ls $(PATCH_DIR)/kexec.*.patch 2>/dev/null | sort)
 ALL_SOURCE += $(SRC_DIR)/$(KEXEC_TARBALL)
 
 PHONY += kexec
-kexec:	$(KEXEC_DIR).build
+kexec:	$(KEXEC_BINARY)
 
-$(KEXEC_DIR).unpack:  $(SRC_DIR)/$(KEXEC_TARBALL) $(KEXEC_PATCHES)
+$(KEXEC_BINARY):  $(SRC_DIR)/$(KEXEC_TARBALL) $(KEXEC_PATCHES)
 	rm -rf $(KEXEC_DIR)
-	cd $(SRC_DIR) && tar -xvjf $(SRC_DIR)/$(KEXEC_TARBALL)
+	cd $(SRC_DIR) && tar -xvjf $(KEXEC_TARBALL)
 	cd $(KEXEC_DIR) && cat $(KEXEC_PATCHES) < /dev/null | patch -p1
-	touch $@
-
-$(KEXEC_DIR).build:  $(KEXEC_DIR).unpack
 	cd $(KEXEC_DIR) && ./configure
 	$(MAKE) -j $(NCPUS) -C $(KEXEC_DIR)
-	touch $@
 
 $(SRC_DIR)/$(KEXEC_TARBALL):
 	mkdir -p $(SRC_DIR)
@@ -34,5 +30,3 @@ $(SRC_DIR)/$(KEXEC_TARBALL):
 PHONY += kexec_clean
 kexec_clean:
 	rm -rf $(KEXEC_DIR)
-	rm -f  $(KEXEC_DIR).unpack
-	rm -f  $(KEXEC_DIR).build
