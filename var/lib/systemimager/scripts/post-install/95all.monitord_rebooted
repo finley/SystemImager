@@ -25,7 +25,7 @@ write_monitor_msg() {
     send_msg=`echo "mac=$mac:ip=$IPADDR:host=$HOSTNAME:$msg"`
 
     # Find netcat binary
-    netcat=`(which netcat || which nc) 2>/dev/null`
+    netcat=`(type -p netcat || type -p nc) 2>/dev/null`
     [ -z $netcat ] && return
 
     rebooted_state_file=/etc/systemimager/si_monitor.client.rebooted
