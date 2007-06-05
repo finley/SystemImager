@@ -7,7 +7,7 @@
 # 	$(TOPDIR)/tmp/$(ARCH)/ instead of just $(TOPDIR)/tmp/. -BEF-
 #
 
-BOEL_BINARIES_DIR 		= $(TOPDIR)/tmp/boel_binaries
+BOEL_BINARIES_DIR	= $(TOPDIR)/tmp/boel_binaries
 BOEL_BINARIES_TARBALL 	= $(BOEL_BINARIES_DIR).tar.gz
 
 
@@ -103,7 +103,7 @@ endif
 ifeq ($(USERSPACE64),1)
 	## there maybe older compat versions that we don't want, but
 	## they have names like libnss1_dns so this shouldn't copy them.
-	## we do the sort so that filse from /lib64 files will be copied over
+	## we do the sort so that files from /lib64 files will be copied over
 	## identically named files from /lib
 	#cp -a $(sort $(wildcard /lib*/libnss_dns-*)) $(BOEL_BINARIES_DIR)/lib
 	## if multiple libnss_dns.so.* symlinks exist, only grab the one with
