@@ -3,13 +3,13 @@
 #   vi: set filetype=make:
 #
 
-REISERFSPROGS_VERSION := 3.6.20
+REISERFSPROGS_VERSION := 3.6.19
 REISERFSPROGS_DIR := reiserfsprogs-$(REISERFSPROGS_VERSION)
 REISERFSPROGS_TARBALL := $(REISERFSPROGS_DIR).tar.gz
 #REISERFSPROGS_URL := http://thebsh.namesys.com/pub/reiserfsprogs/$(REISERFSPROGS_TARBALL)
 REISERFSPROGS_URL := http://download.systemimager.org/pub/reiserfsprogs/$(REISERFSPROGS_TARBALL)
 REISERFSPROGS_PATCHES := $(shell ls $(PATCH_DIR)/reiserfsprogs.*.patch 2>/dev/null | sort)
-MKREISERFS_BINARY := $(SRC_DIR)/$(REISERFSPROGS_DIR)/utils/mkfs/mkfs.reiserfs
+MKREISERFS_BINARY := $(SRC_DIR)/$(REISERFSPROGS_DIR)/mkreiserfs/mkreiserfs
 
 ALL_SOURCE += $(SRC_DIR)/$(REISERFSPROGS_TARBALL)
 
@@ -17,12 +17,12 @@ PHONY += install_reiserfsprogs
 install_reiserfsprogs:	reiserfsprogs
 	mkdir -p $(TFTP_BIN_DEST)
 	$(SI_INSTALL) -m 755 \
-	  $(SRC_DIR)/$(REISERFSPROGS_DIR)/utils/mkfs/mkfs.reiserfs $(TFTP_BIN_DEST)/mkreiserfs
+	  $(SRC_DIR)/$(REISERFSPROGS_DIR)/mkreiserfs/mkreiserfs $(TFTP_BIN_DEST)
 
 PHONY += install_standard_reiserfsprogs
 install_standard_reiserfsprogs:	reiserfsprogs
 	$(SI_INSTALL) -m 755 \
-	  $(SRC_DIR)/$(REISERFSPROGS_DIR)/utils/mkfs/mkfs.reiserfs $(DESTDIR)/mkreiserfs
+	  $(SRC_DIR)/$(REISERFSPROGS_DIR)/mkreiserfs/mkreiserfs $(DESTDIR)
 
 PHONY += reiserfsprogs
 reiserfsprogs:	$(MKREISERFS_BINARY)
