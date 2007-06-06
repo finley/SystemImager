@@ -81,7 +81,6 @@ endif
 	cd $(BOEL_BINARIES_DIR)/sbin && $(foreach binary,$(shell cat $(SRC_DIR)/$(LVM_DIR)/tools/.commands),ln -s -f lvm $(binary) && ) /bin/true
 
 	mkdir -m 755 -p $(BOEL_BINARIES_DIR)/lib
-	test ! -d /lib64 || mkdir -m 755 -p $(BOEL_BINARIES_DIR)/lib64
 
 	#
 ifdef WITH_CTCS
@@ -117,6 +116,7 @@ ifeq ($(USERSPACE64),1)
 	#XXX simplifying the code.  let's see if anything breaks. -BEF-
 	output=`find /lib/ -name libnss_dns*`
 	test ! -n "$(output)" || cp -a /lib/libnss_dns*   $(BOEL_BINARIES_DIR)/lib
+	mkdir -m 755 -p $(BOEL_BINARIES_DIR)/lib64
 	test ! -d /lib64 || cp -a /lib64/libnss_dns* $(BOEL_BINARIES_DIR)/lib64
 endif
 
@@ -125,7 +125,7 @@ endif
 	# any soft links.  Note: This does not require PIC libraries -- it will
 	# copy standard libraries if it can't find a PIC equivalent.  -BEF-
 	#
-ifneq ($(ARCH),i386)
+ifeq ($(USERSPACE64),1)
 	# But copy over ld.so* files first.  for some reason these don't always 
 	# get copied by mklibs if both /lib/ld* and /lib64/ld* exist) -BEF-
 	#
@@ -134,10 +134,13 @@ ifneq ($(ARCH),i386)
 	test ! -d /lib64 || cp -a /lib64/ld* $(BOEL_BINARIES_DIR)/lib64
 endif
 
-	TGTLIBDIR=lib ; \
-	test ! -d /lib64 || TGTLIBDIR=lib64 ; \
+ifeq ($(USERSPACE64),1)
 	cd $(BOEL_BINARIES_DIR) \
-		&& $(PYTHON) $(TOPDIR)/initrd_source/mklibs -L $(SRC_DIR)/$(PARTED_DIR)/libparted/.libs:$(DISCOVER_DIR)/lib/.libs:$(SRC_DIR)/$(DEVMAPPER_DIR)/lib/ioctl:$(SRC_DIR)/$(E2FSPROGS_DIR)/lib:/lib64:/usr/lib64:/usr/kerberos/lib64:/lib:/usr/lib:/usr/kerberos/lib:/usr/local/lib:/opt/gnome/lib:/lib/tls:`find /lib/tls /usr/lib/tls /lib64/tls /usr/lib64/tls -type d 2>/dev/null | tr '\n' :` -v -d $$TGTLIBDIR bin/* sbin/* usr/bin/* usr/sbin/* $(INITRD_BUILD_DIR)/*bin/* $(INITRD_BUILD_DIR)/usr/*bin/*
+		&& $(PYTHON) $(TOPDIR)/initrd_source/mklibs -L $(SRC_DIR)/$(PARTED_DIR)/libparted/.libs:$(DISCOVER_DIR)/lib/.libs:$(SRC_DIR)/$(DEVMAPPER_DIR)/lib/ioctl:$(SRC_DIR)/$(E2FSPROGS_DIR)/lib:/lib64:/usr/lib64:/usr/kerberos/lib64:/lib:/usr/lib:/usr/kerberos/lib:/usr/local/lib:/opt/gnome/lib:/lib/tls:`find /lib/tls /usr/lib/tls /lib64/tls /usr/lib64/tls -type d 2>/dev/null | tr '\n' :` -v -d lib64 bin/* sbin/* usr/bin/* usr/sbin/* $(INITRD_BUILD_DIR)/*bin/* $(INITRD_BUILD_DIR)/usr/*bin/*
+else
+	cd $(BOEL_BINARIES_DIR) \
+		&& $(PYTHON) $(TOPDIR)/initrd_source/mklibs -L $(SRC_DIR)/$(PARTED_DIR)/libparted/.libs:$(DISCOVER_DIR)/lib/.libs:$(SRC_DIR)/$(DEVMAPPER_DIR)/lib/ioctl:$(SRC_DIR)/$(E2FSPROGS_DIR)/lib:/lib:/usr/lib:/usr/kerberos/lib:/usr/local/lib:/opt/gnome/lib:/lib/tls:`find /lib/tls /usr/lib/tls -type d 2>/dev/null | tr '\n' :` -v -d lib bin/* sbin/* usr/bin/* usr/sbin/* $(INITRD_BUILD_DIR)/*bin/* $(INITRD_BUILD_DIR)/usr/*bin/*
+endif
 
 ifdef IS_PPC64
 	# Copy all the libnss*. It seems that with ppc64 these are not 
