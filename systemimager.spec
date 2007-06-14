@@ -208,7 +208,7 @@ Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Obsoletes: systemimager-%{_build_arch}boot
-BuildRequires: python, python-devel
+BuildRequires: python, python-devel, curl-devel
 Requires: systemimager-server >= %{version}
 AutoReqProv: no
 
@@ -241,7 +241,7 @@ BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
-BuildRequires: python, python-devel, %{python_xml}
+BuildRequires: python, python-devel, %{python_xml}, curl-devel
 Requires: systemimager-client >= %{version}
 AutoReqProv: no
 
@@ -329,6 +329,9 @@ More information can be found at the website:
 http://developer.osdl.org/kees/software/imagemanip/
 
 %changelog
+* Wed Jun 13 2007 Bernard Li <bernard@vanhpc.org>
+- rtorrent requires curl-devel, added it to bootstandard and initrd_template subpackages' BuildRequires
+
 * Tue May 22 2007 Bernard Li <bernard@vanhpc.org>
 - Fixed typo: systemimager-server-rsyncd -> systemimager-server-monitord for upgrade service restart
 
