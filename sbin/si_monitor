@@ -74,10 +74,12 @@ if (-r $conffile) {
     Config::Simple->import_from($conffile, \%conf);
 }
 
-# Only lock directory is needed.
+# Lock directory is needed.
 $conf{'lock_dir'} ||= "/var/lock/systemimager";
-die "No such lock directory '$conf{'lock_dir'}'\n"
-    if (! -d $conf{'lock_dir'});
+if (! -d $conf{'lock_dir'}) {
+    mkdir($conf{'lock_dir'}, 0700) or
+        die "error: couldn't create lock directory: '$conf{'lock_dir'}'\n";
+}
 
 # Get the database file.
 $conf{'monitor_db'} ||= "/var/lib/systemimager/clients.xml";
