@@ -61,8 +61,6 @@ MKCRAMFS = $(shell which mkcramfs || which mkfs.cramfs || \
 #
 include $(INITRD_DIR)/make.d/cx_freeze.rul
 include $(INITRD_DIR)/make.d/bittorrent.rul
-include $(INITRD_DIR)/make.d/dtach.rul
-include $(INITRD_DIR)/make.d/rtorrent.rul
 include $(INITRD_DIR)/make.d/busybox.rul
 include $(INITRD_DIR)/make.d/dhclient.rul
 include $(INITRD_DIR)/make.d/hotplug.rul
@@ -126,8 +124,6 @@ $(INITRD_BUILD_DIR).build:  $(INITRD_BUILD_DIR).prep		\
 								$(DHCLIENT_DIR).install		\
 								$(RSYNC_DIR).install		\
 								$(BITTORRENT_DIR).install 	\
-								$(DTACH_DIR).install 		\
-								$(RTORRENT_DIR).install 	\
 								$(CX_FREEZE_BINARY) 		\
 								$(UDPCAST_BINARY)
 
@@ -141,14 +137,14 @@ $(INITRD_BUILD_DIR).build:  $(INITRD_BUILD_DIR).prep		\
 ifeq ($(ARCH),x86_64)
 	( \
 		cd $(INITRD_BUILD_DIR) && \
-		$(PYTHON) $(INITRD_DIR)/mklibs -L /lib64:/usr/lib64:/lib:/usr/lib:/usr/local/lib:/opt/gnome/lib -v -d lib64 ./*bin/* \
+		$(PYTHON) $(INITRD_DIR)/mklibs -L /lib64:/usr/lib64:/lib:/usr/lib -v -d lib64 ./*bin/* \
 	)
 	# copy libnss files as they are not automatically included
 	cp -a /lib64/libnss* $(INITRD_BUILD_DIR)/lib64
 else
 	( \
 		cd $(INITRD_BUILD_DIR) && \
-		$(PYTHON) $(INITRD_DIR)/mklibs -L /lib:/usr/lib:/lib64:/usr/lib64:/usr/local/lib:/opt/gnome/lib -v -d lib ./*bin/* \
+		$(PYTHON) $(INITRD_DIR)/mklibs -L /lib:/usr/lib:/lib64:/usr/lib64 -v -d lib ./*bin/* \
 	)
 	# copy libnss files as they are not automatically included
 	cp -a /lib/libnss* $(INITRD_BUILD_DIR)/lib
