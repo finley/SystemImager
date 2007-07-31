@@ -13,8 +13,17 @@
 - free unused RAM of the initramfs (only with cpio initrd.img) after switching
   to tmpfs
 - updated udev to udev_108-0ubuntu4
-- updated coreutils to 5.97
-- updated reiserfsprogs to 3.6.20
+- support old versions of the BitTorrent client (better compatibilty
+  with *Ubuntu)
+- fixed a lib/lib64 bug with ppc64
+- fixed a bug in si_monitor daemon that didn't start correctly when the
+  directory /var/lock/systemimager was not present
+- removed unused coreutils package from initrd.img
+- remount the filesystems in read-only before giving-up when the umount
+  fails at the end of the installation
+- create all the swap partitions before the other filesystems in the autoinstall
+  script: this avoids potential OOM conditions that could occur during the
+  filesystem creation
 
 3.9.0
 --------------------------------------------------------------------------------
