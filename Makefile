@@ -106,9 +106,15 @@ ARCH = $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm
 
 # Follows is a set of arch manipulations to distinguish between ppc types
 ifeq ($(ARCH),ppc64)
-IS_PPC64 := 1
-ifneq ($(shell ls /proc/iSeries 2>/dev/null),)
-        ARCH := ppc64-iSeries
+# Check if machine is Playstation 3
+ifeq ($(shell grep machine /proc/cpuinfo  | cut -d " " -f 2),PS3PF)
+	IS_PS3 := 1
+	ARCH := ppc64-ps3
+else
+	IS_PPC64 := 1
+	ifneq ($(shell ls /proc/iSeries 2>/dev/null),)
+        	ARCH := ppc64-iSeries
+	endif
 endif
 endif
 
@@ -118,7 +124,6 @@ ifeq ($(ARCH),ia64)
 	USERSPACE64 := 1
 endif
 
-USERSPACE64 := 0
 ifeq ($(ARCH),x86_64)
         USERSPACE64 := 1
 endif
@@ -157,6 +162,9 @@ BOOT_BIN_DEST     = $(USR)/share/systemimager/boot/$(ARCH)/$(FLAVOR)
 
 PXE_CONF_SRC      = etc/pxelinux.cfg
 PXE_CONF_DEST     = $(ETC)/systemimager/pxelinux.cfg
+
+KBOOT_CONF_SRC    = etc/kboot.cfg
+KBOOT_CONF_DEST   = $(ETC)/systemimager/kboot.cfg
 
 BINARIES := si_mkautoinstallcd si_mkautoinstalldiskette si_mkautoinstalldisk si_mkbootmedia si_psh si_pcp si_pushoverrides
 SBINARIES := si_addclients si_cpimage si_getimage si_mkdhcpserver si_mkdhcpstatic si_mkautoinstallscript si_mkbootserver si_mvimage si_pushupdate si_pushinstall si_rmimage si_mkrsyncd_conf si_mkclientnetboot si_netbootmond si_imagemanip si_mkbootpackage si_monitor si_monitortk si_installbtimage
@@ -284,6 +292,14 @@ install_server:	install_server_man 	\
 		$(PXE_CONF_DEST)/syslinux.cfg.localboot
 	$(SI_INSTALL) -m 644 --backup $(PXE_CONF_SRC)/syslinux.cfg.localboot \
 		$(PXE_CONF_DEST)/default
+
+	$(SI_INSTALL) -d -m 755 $(KBOOT_CONF_DEST)
+#	$(SI_INSTALL) -m 644 --backup --text $(KBOOT_CONF_SRC)/message.txt \
+#		$(KBOOT_CONF_DEST)/message.txt
+	$(SI_INSTALL) -m 644 --backup $(KBOOT_CONF_SRC)/localboot \
+		$(KBOOT_CONF_DEST)/
+	$(SI_INSTALL) -m 644 --backup $(KBOOT_CONF_SRC)/default \
+		$(KBOOT_CONF_DEST)/
 
 	$(SI_INSTALL) -d -m 755 $(IMAGEDEST)
 	$(SI_INSTALL) -m 644 $(WARNING_FILES) $(IMAGEDEST)

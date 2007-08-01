@@ -1,0 +1,16 @@
+default=systemimager
+timeout=5
+
+# udhcpc stores the tftp-server ip via the $siaddr variable
+script=/sbin/udhcpc.script
+
+# busybox does not have chmod, so use this hack to create a executable script
+cp $script tmp
+script=tmp/udhcpc.script
+
+echo '#!/bin/sh' > $script
+echo 'echo $siaddr' >> $script
+
+imageserver=`udhcpc -s $script | tail -n 1`
+
+systemimager="tftp://$imageserver/kernel root=/dev/ram0 initrd=tftp://$imageserver/initrd.img SKIP_LOCAL_CONFIG=y ramdisk_size=80000 tmpfs_size=160M"
