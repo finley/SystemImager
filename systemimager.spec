@@ -27,9 +27,14 @@
 
 %define is_suse %(test -f /etc/SuSE-release && echo 1 || echo 0)
 %define is_ppc64 %([ "`uname -m`" = "ppc64" ] && echo 1 || echo 0)
+%define is_ps3 %([ "`grep machine /proc/cpuinfo | awk {'print $3'}`" = "PS3PF" ] && echo 1 || echo 0) 
 
 %if %is_ppc64
 %define _build_arch ppc64
+%endif
+
+%if %is_ps3
+%define _build_arch ppc64-ps3
 %endif
 
 %if %is_suse
@@ -329,6 +334,10 @@ More information can be found at the website:
 http://developer.osdl.org/kees/software/imagemanip/
 
 %changelog
+* Wed Aug 01 2007 Bernard Li <bernard@vanhpc.org>
+- Add support for ppc64-ps3/kboot
+- Include dir /etc/systemimager/kboot.cfg
+
 * Tue May 22 2007 Bernard Li <bernard@vanhpc.org>
 - Fixed typo: systemimager-server-rsyncd -> systemimager-server-monitord for upgrade service restart
 
@@ -869,6 +878,7 @@ fi
 %dir %prefix/share/systemimager
 %dir %prefix/share/systemimager/icons
 %config /etc/systemimager/pxelinux.cfg/*
+%config /etc/systemimager/kboot.cfg/*
 %config /etc/systemimager/autoinstallscript.template
 %config(noreplace) /etc/systemimager/rsync_stubs/*
 %config(noreplace) /etc/systemimager/systemimager.conf
