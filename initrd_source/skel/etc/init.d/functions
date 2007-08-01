@@ -113,6 +113,9 @@ adjust_arch() {
             ARCH=ppc64-iSeries
             logmsg "Detected ppc64 is really an iSeries partition..."
         fi
+        if [ "`grep machine /proc/cpuinfo | cut -d ' ' -f 2`" = "PS3PF" ]; then
+            ARCH=ppc64-ps3
+        fi
     fi
 }
 #
@@ -1616,7 +1619,7 @@ send_monitor_msg() {
     if [ `mount 2>/dev/null | grep proc > /dev/null; echo $?` -eq 0 ]; then
         # Collect the CPU info.
         if [ -z "$cpu" ]; then
-            cpu=$(echo `cat /proc/cpuinfo | grep "model name\|cpu MHz" | sed -ne '1,2p' | sed "s/.*: //" | sed "s/^\([0-9\.]*\)$/(\1 MHz)/"` | sed "s/\(MHz)\)/\1 |/g" | sed "s/ |$//")
+            cpu=$(echo `cat /proc/cpuinfo | grep "cpu\|clock\|model name\|cpu MHz" | grep -v "cpu family" | sed -ne '1,2p' | sed "s/.*: //" | sed "s/^\([0-9\.]*\)MHz$/(\1 MHz)/" | sed "s/^\([0-9\.]*\)$/(\1 MHz)/"` | sed "s/\(MHz)\)/\1 |/g" | sed "s/ |$//")
         fi
 
         # Collect the number of CPUs.     
