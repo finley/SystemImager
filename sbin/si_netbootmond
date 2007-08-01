@@ -32,14 +32,17 @@ if("$net_boot_default" eq "net") {
 
 my $tftp_dir = $config->tftp_dir();
 my $pxe_conf_dir;
+my $kboot_conf_dir;
 
 unless($tftp_dir) {
     die "TFTP_DIR not specified in systemimager.conf file!";
 } else {
     $pxe_conf_dir = "$tftp_dir" . "/pxelinux.cfg";
+    $kboot_conf_dir = "$tftp_dir" . "/kboot.cfg";
 }
 
 my $syslinux_cfg_localboot = "/etc/systemimager/pxelinux.cfg/syslinux.cfg.localboot";
+my $kboot_cfg_localboot = "/etc/systemimager/kboot.cfg/localboot";
 my $pid_file = "/var/run/si_netbootmond.pid";
 my $log_file = "/var/log/systemimager/rsyncd";
 
@@ -131,17 +134,26 @@ sub create_no_boot_symlink {
     my ($client_ip) = @_;
 
     my $ip_hex = SystemImager::HostRange::ip2hex($client_ip);
+    my $conf_dir;
+    my $localboot_file;
+
+    if (-d $kboot_conf_dir) {
+        $conf_dir = $kboot_conf_dir;
+        $localboot_file = $kboot_cfg_localboot;
+    } else {
+        $conf_dir = $pxe_conf_dir;
+        $localboot_file = $syslinux_cfg_localboot;
+    }
 
     # Diagnostic output
     #print "ip_hex: $ip_hex\n";
 
-    unlink("$pxe_conf_dir/$ip_hex");
+    unlink("$conf_dir/$ip_hex");
     umask(0022);
-    copy("$syslinux_cfg_localboot", "$pxe_conf_dir/$ip_hex");
+    copy("$localboot_file", "$conf_dir/$ip_hex");
     
 }
 #
 # END subroutines
 #
 ################################################################################
-
