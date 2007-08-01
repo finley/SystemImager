@@ -154,11 +154,11 @@ umask(0);
 $SIG{CHLD} = 'IGNORE';
 
 # Create a new process session.
-setsid or die gmtime() . ": error: can't start a new session: $!\n";
+setsid or die localtime() . ": error: can't start a new session: $!\n";
 
 # Create the pid file.
 open(FILE, ">$pid_file") or
-	die gmtime() . ": error: cannot open file: $pid_file\n";
+	die localtime() . ": error: cannot open file: $pid_file\n";
 print FILE "$$\n";
 close(FILE);
 
@@ -182,16 +182,16 @@ async {
 
 # Open a TCP socket.
 socket(IN, PF_INET, SOCK_STREAM, getprotobyname('tcp')) or 
-	die gmtime() . ": error: could not create the socket: $!\n";
+	die localtime() . ": error: could not create the socket: $!\n";
 setsockopt(IN, SOL_SOCKET, SO_REUSEADDR, 1);
 my $client_addr = sockaddr_in($port, INADDR_ANY);
 bind(IN, $client_addr) or 
-	die gmtime() . ": error: could not bind to port $port : $!\n";
+	die localtime() . ": error: could not bind to port $port : $!\n";
 listen(IN, SOMAXCONN) or 
-	die gmtime() . ": error: could not listen on port $port : $!\n";
+	die localtime() . ": error: could not listen on port $port : $!\n";
 
 # Monitor daemon initialized.
-print gmtime() . ": $program_name daemon is listening on port $port\n"
+print localtime() . ": $program_name daemon is listening on port $port\n"
 	if ($log_level > 2);
 
 # Begin to accept client connections.
@@ -209,7 +209,7 @@ while (accept(CLIENT, IN)) {
 		my $other_host = gethostbyaddr($other_iaddr, AF_INET);
 	
 		# Report info in the log.
-		print gmtime() .
+		print localtime() .
 			": connection accepted for ${other_host}:${other_port}\n"
 			if ($log_level > 2);
 	
@@ -217,14 +217,14 @@ while (accept(CLIENT, IN)) {
 		$_ = <CLIENT>; chomp;
 
 		# Report the request in the log.
-		print gmtime() . ": ${other_host} request -> $_\n"
+		print localtime() . ": ${other_host} request -> $_\n"
 			if ($log_level > 2);
 
 		# Update the database.
 		update_db($other_host, $_);
 	} else {
 		# Refuse the client connection.
-		print gmtime() . 
+		print localtime() . 
 			": warning: could not identify other end of a client request, ignoring.\n"
 			if ($log_level > 1);
 	}
@@ -232,7 +232,7 @@ while (accept(CLIENT, IN)) {
 }
 
 # Error accepting client connections (quit).
-die gmtime() . ": error: cannot accept clients connections!\n";
+die localtime() . ": error: cannot accept clients connections!\n";
 
 # Usage:
 # $data = get_xml_data();
@@ -264,12 +264,12 @@ sub load_db
 	my $db;
 
 	open(LOCK, ">", "$lock_file") or 
-		die gmtime() . ":error: cannot open lock file \"$lock_file\"!\n";
+		die localtime() . ":error: cannot open lock file \"$lock_file\"!\n";
 	flock(LOCK, LOCK_SH);
 	
 	# Open database in mutual exclusion.
 	open(DB, '<', $database) or 
-		die gmtime() . ": error: cannot open \"$database\" for reading!\n";
+		die localtime() . ": error: cannot open \"$database\" for reading!\n";
 	# Parse XML database.
 	if (-s $database) {
 		foreach (<DB>) {
@@ -295,11 +295,11 @@ sub sync_db
 	return unless ($out);
 
 	open(LOCK, ">", "$lock_file") or 
-		die gmtime() . ":error: cannot open lock file \"$lock_file\"!\n";
+		die localtime() . ":error: cannot open lock file \"$lock_file\"!\n";
 	flock(LOCK, LOCK_SH);
 
 	open(DB, '>', $database) or
-		die gmtime() . ": error: cannot open \"$database\" for writing!\n";
+		die localtime() . ": error: cannot open \"$database\" for writing!\n";
 	
 	# Sync the database.
 	print DB $out; 
@@ -361,7 +361,7 @@ sub update_db
 
 	# Check if mac address has been specified.
 	unless(defined($mac)) {
-		print gmtime() . ": warning: bad request from $host (mac address not specified)!\n"
+		print localtime() . ": warning: bad request from $host (mac address not specified)!\n"
 			if ($log_level > 1);
 		return;
 	}
