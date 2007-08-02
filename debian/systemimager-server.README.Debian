@@ -1,0 +1,43 @@
+Upgrading
+---------
+When upgrading, please follow the directions in the "Upgrading" chapter
+of the manual.  The manual is available in the systemimager-doc package.
+Not following these instructions will usually result in failed installations.
+
+Quick Start Guide
+-----------------
+  For more detailed information, please read the systemimager manual, which
+is available in the systemimager-doc package.  The intent of this file is
+to get you through a simple install process.
+
+ 1) Get some machines together.  You will need one machine to act as your image
+    server, one machine to act as your golden client, and one machine to act
+    as an autoinstall client.  The image server needs to have enough disk space
+    to hold the entire contents of the golden client's filesystems, and the
+    golden client and autoinstall client should be as identical as possible.
+ 2) On your golden client, apt-get install systemimager-client.
+ 3) On your image server, apt-get install systemimager-server
+ -- dann frazier <dannf@dannf.org>, Thu Mar  4 00:17:19 2004
+ 4) On your golden client, run the command "prepareclient".  prepareclient
+    will ask you some questions, then leave your golden client ready to have
+    it's image pulled.
+ 5) On the image server, run the command:
+      getimage -golden-client <golden_client> -image <image_name>
+    where <golden_client> is the ip or hostname of your golden client, and 
+    <image_name> is the name you would like to use to refer to this image,
+    e.g. web_server, woody_2001_10_05, debian2.2r4_lp1000r, etc.
+    You should see filenames fly by on the screen as getimage rsyncs over
+    the contents of your golden client.
+ -- Assign clients to an image --
+ 6) On the image server, run the 'addclients' command to assign clients to 
+    your image.
+ -- Create autoinstall media --
+ 7) You must create autoinstall media for booting your autoinstall client(s).
+    There are currently 4 supported types of media (floppy, cd, pxe, & hard
+    drive).  Since this is the Quick Start guide, we'll go with the floppy.
+    Run the command 'mkautoinstalldiskette' to generate a bootable autoinstall
+    floppy.
+ 8) Configure your dhcp server using the 'mkdhcpserver' command.
+ -- Autoinstall --
+ 9) Boot your autoinstall client from the autoinstall floppy disk - your 
+    client should begin to autoinstall itself.

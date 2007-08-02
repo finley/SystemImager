@@ -1,0 +1,205 @@
+#!/usr/bin/make -f
+# Sample debian/rules that uses debhelper.
+# GNU copyright 1997 to 1999 by Joey Hess.
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+PKG = systemimager
+VERSION = $(shell dpkg-parsechangelog | grep ^Version: | \
+                  cut -d " " -f 2)
+BUILD_DIR = .
+UPSTREAM_TARBALL = $(PKG)_$(VERSION).tar.gz
+
+ARCH = $(shell dpkg --print-architecture)
+BOOTPKG = $(PKG)-boot-$(ARCH)-standard
+
+# for debhelper; we can't just say -N$(BOOTPKG) because that'd cause us to
+# build empty boot packages for the other archs
+NON_BOOT_PKGS := -p $(PKG)-client \
+                 -p $(PKG)-common \
+                 -p $(PKG)-doc \
+                 -p $(PKG)-server \
+                 -p $(PKG)-server-flamethrowerd \
+                 -p $(PKG)-bittorrent
+
+BOOTARCHS = i386 ia64 amd64
+
+PATCHES=$(sort $(shell find $(CURDIR)/patches -name "*.patch"))
+
+configure: configure-stamp
+configure-stamp:
+	dh_testdir
+	# Add here commands to configure the package.
+	#@echo -n "Extracting upstream tarball..."
+	#@tar xfj $(UPSTREAM_TARBALL)
+	#@echo "done."
+	#@cd $(BUILD_DIR) && \
+        #  $(foreach patch, $(PATCHES), \
+        #    echo -n Applying `basename $(patch)`... && cat $(patch) | \
+	#    patch -s -p1 && echo done. &&) /bin/true
+	touch configure-stamp
+
+copy_changelog:	$(BUILD_DIR)/changelog
+
+$(BUILD_DIR)/changelog:	$(BUILD_DIR)/CHANGE.LOG
+	cd $(BUILD_DIR) && cp CHANGE.LOG changelog
+
+build:	build-arch build-indep
+
+build-indep:	cleandeb configure-stamp build-indep-stamp copy_changelog
+
+build-indep-stamp:
+	# the pdf build reports a failure, but the result looks fine...
+	-$(MAKE) -C $(BUILD_DIR) docs USE_SGMLTOOLS=1
+	touch build-indep-stamp
+
+build-arch:	cleandeb configure-stamp build-arch-stamp copy_changelog
+
+build-arch-stamp:
+	dh_testdir
+
+	$(MAKE) -C $(BUILD_DIR) binaries MKCRAMFS=/usr/sbin/mkcramfs
+
+	touch build-arch-stamp
+
+test:	build-arch-stamp
+
+debian/control:	debian/control.in debian/control.arch.in
+	# generate control file suitable for the boot package
+	# substvars don't seem to work, so we hack around it with sed.
+	sed -e 's/$${misc\:Package\-Arch}/$(ARCH)/g' \
+	  < debian/control.in > debian/control
+	for arch in $(BOOTARCHS); do \
+	  sed -e "s/\$${misc\:Package\-Arch}/$$arch/g" \
+	         debian/control.arch.in >> debian/control; \
+        done
+
+clean:
+	dh_testdir
+	dh_testroot
+	rm -f build-indep-stamp build-arch-stamp configure-stamp
+
+	# Add here commands to clean up after the build process.
+	#rm -rf $(BUILD_DIR)
+	cd $(CURDIR)/debian && rm -rf $(PKG)-client $(PKG)-server \
+	  $(PKG)-common $(PKG)-doc $(BOOTPKG) $(PKG)-boot \
+	  $(PKG)-server-flamethrowerd
+	rm -f debian/$(PKG)-server.init
+	rm -f debian/$(PKG)-server-flamethrowerd.init
+	rm -f debian/$(PKG)-bittorrent.init
+	dh_clean
+
+install-arch:	build-arch
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+	dh_installdirs
+
+	cd $(CURDIR)/debian && mkdir -p $(BOOTPKG)
+
+	# Add here commands to install the packages
+	$(MAKE) -C $(BUILD_DIR) install_binaries \
+	  DESTDIR=$(CURDIR)/debian/$(BOOTPKG)
+
+install-indep:	build-indep
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+	dh_installdirs
+
+	cd $(CURDIR)/debian && mkdir -p $(PKG)-client \
+	  $(PKG)-server $(PKG)-common $(PKG)-doc
+
+	# Add here commands to install the packages
+	$(MAKE) -C $(BUILD_DIR) install_client \
+	  DESTDIR=$(CURDIR)/debian/$(PKG)-client
+	$(MAKE) -C $(BUILD_DIR) install_server \
+	  DESTDIR=$(CURDIR)/debian/$(PKG)-server
+
+	# these are installed properly by dh_installinit later
+	rm -rf $(CURDIR)/debian/$(PKG)-server/etc/init.d
+
+	$(MAKE) -C $(BUILD_DIR) install_common \
+	  DESTDIR=$(CURDIR)/debian/$(PKG)-common
+
+	# the pdf build reports a failure, but the result looks fine...
+	-$(MAKE) -C $(BUILD_DIR) install_docs \
+	  DESTDIR=$(CURDIR)/debian/$(PKG)-doc USE_SGMLTOOLS=1
+
+	mkdir -p $(CURDIR)/debian/$(PKG)-server-flamethrowerd/etc/systemimager
+	mv $(CURDIR)/debian/$(PKG)-server/etc/systemimager/flamethrower.conf \
+	  $(CURDIR)/debian/$(PKG)-server-flamethrowerd/etc/systemimager/
+	
+	# prepare the bittorrent package
+	mkdir -p $(CURDIR)/debian/$(PKG)-bittorrent/etc/init.d
+	mkdir -p $(CURDIR)/debian/$(PKG)-bittorrent/etc/systemimager
+	mkdir -p $(CURDIR)/debian/$(PKG)-bittorrent/usr/sbin
+	mkdir -p $(CURDIR)/debian/$(PKG)-bittorrent/var/lib/systemimager/tarballs
+	mkdir -p $(CURDIR)/debian/$(PKG)-bittorrent/var/lib/systemimager/torrents
+	mv $(CURDIR)/debian/$(PKG)-server/etc/systemimager/bittorrent.conf \
+		$(CURDIR)/debian/$(PKG)-bittorrent/etc/systemimager
+	mv $(CURDIR)/debian/$(PKG)-server/usr/sbin/si_installbtimage \
+		$(CURDIR)/debian/$(PKG)-bittorrent/usr/sbin
+
+# Build architecture-dependent files here.
+binary-arch: build-arch install-arch
+	dh_testdir -p$(BOOTPKG)
+	dh_testroot -p$(BOOTPKG)
+	dh_installdocs -p$(BOOTPKG)
+	dh_installchangelogs -p$(BOOTPKG)
+	dh_link -p$(BOOTPKG)
+	dh_strip -p$(BOOTPKG)
+	dh_compress -p$(BOOTPKG)
+	dh_fixperms -p$(BOOTPKG)
+	dh_installdeb -p$(BOOTPKG)
+	dh_perl -p$(BOOTPKG)
+	dh_shlibdeps -p$(BOOTPKG)
+	dh_gencontrol -p$(BOOTPKG)
+	dh_md5sums  -p$(BOOTPKG)
+	dh_builddeb -p$(BOOTPKG)
+
+# Build architecture-independent files here.
+binary-indep: build-indep install-indep
+	dh_testdir $(NON_BOOT_PKGS)
+	dh_testroot $(NON_BOOT_PKGS)
+#	dh_installdebconf
+	dh_installdocs $(NON_BOOT_PKGS)
+	dh_installexamples -p$(PKG)-server $(BUILD_DIR)/doc/examples/*
+
+	cp $(BUILD_DIR)/etc/init.d/$(PKG)-server-rsyncd \
+	  ./debian/$(PKG)-server.init
+	dh_installinit -p$(PKG)-server --init-script=$(PKG)-server
+
+	cp $(BUILD_DIR)/etc/init.d/$(PKG)-server-netbootmond \
+	  ./debian/$(PKG)-server.init
+	## This isn't exactly FHS compliant - systemimager-server shouldn't
+	## be installing an initscript called "netbootmond"  However,
+	## netbootmond isn't really a systemimager-specific utility,
+	## so maybe it should probably be its own package.
+	dh_installinit -p$(PKG)-server --init-script=netbootmond
+
+	cp $(BUILD_DIR)/etc/init.d/$(PKG)-server-flamethrowerd \
+	  ./debian/$(PKG)-server-flamethrowerd.init
+	dh_installinit -p$(PKG)-server-flamethrowerd \
+	  --init-script=$(PKG)-server-flamethrowerd
+
+	cp $(BUILD_DIR)/etc/init.d/$(PKG)-server-bittorrent \
+		./debian/$(PKG)-bittorrent.init
+	dh_installinit -p$(PKG)-bittorrent \
+		--init-script=$(PKG)-server-bittorrent
+
+	dh_installchangelogs $(NON_BOOT_PKGS)
+	dh_link $(NON_BOOT_PKGS)
+	dh_strip $(NON_BOOT_PKGS)
+	dh_compress $(NON_BOOT_PKGS)
+	dh_fixperms $(NON_BOOT_PKGS)
+	dh_installdeb $(NON_BOOT_PKGS)
+	dh_perl $(NON_BOOT_PKGS)
+	dh_shlibdeps $(NON_BOOT_PKGS)
+	dh_gencontrol $(NON_BOOT_PKGS)
+	dh_md5sums  $(NON_BOOT_PKGS)
+	dh_builddeb $(NON_BOOT_PKGS)
+
+binary: binary-indep binary-arch
+.PHONY: build cleandeb clean binary-indep binary-arch binary install configure

@@ -552,6 +552,16 @@ srpm: $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
 rpm: $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
 	rpmbuild -tb $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
 
+# make the debs for systemimager
+.PHONY: deb
+deb: $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
+	@cd $(TOPDIR)/tmp && tar xvjf systemimager-$(VERSION).tar.bz2
+	@cd $(TOPDIR)/tmp/systemimager-$(VERSION) && make -f debian/rules debian/control
+	@PATH=/sbin:/usr/sbin:$(PATH) cd $(TOPDIR)/tmp/systemimager-$(VERSION) && fakeroot dpkg-buildpackage -uc -us
+	@echo "=== deb packages for systemimager ==="
+	@ls -l $(TOPDIR)/tmp/*.deb
+	@echo "====================================="
+
 # removes object files, docs, editor backup files, etc.
 .PHONY:	clean
 clean:	$(subst .rul,_clean,$(shell cd $(TOPDIR)/make.d && ls *.rul)) initrd_clean
@@ -618,6 +628,9 @@ show_targets:
 	@echo ""
 	@echo "srpm"
 	@echo "    Build yourself a source RPM."
+	@echo ""
+	@echo "deb"
+	@echo "    Build all of the debs that can be build on your platform."
 	@echo ""
 	@echo "show_all_targets"
 	@echo "    Show all available targets."

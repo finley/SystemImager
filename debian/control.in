@@ -1,0 +1,85 @@
+Source: systemimager
+Section: admin
+Priority: optional
+Maintainer: dann frazier <dannf@debian.org>
+Build-Depends: bc, bzip2, cramfsprogs (>= 1.1-4), debhelper (>= 4.0.0), flex, gettext, groff-base, libdevmapper-dev, libpopt-dev, libtool, libreadline5-dev, libssl-dev, module-init-tools, rsync, texinfo, uuid-dev, zlib1g-dev, tofrodos | sysutils (<= 2.0.0-1)
+Build-Conflicts: libc-pic
+Build-Depends-Indep: bc, bzip2, debhelper (>= 4.0.0), docbook-to-man
+Standards-Version: 3.7.2
+
+Package: systemimager-server
+Architecture: all
+Depends: ${perl:Depends}, binutils, debianutils (>= 1.7), dosfstools, libappconfig-perl, libxml-parser-perl, libxml-simple-perl, mkisofs, mtools, rsync, systemconfigurator (>= 2.0.1), systemimager-boot-amd64-standard | systemimager-boot-i386-standard | systemimager-boot-ia64-standard, systemimager-common (= ${source:Version})
+Recommends: dhcp3-server | dhcp, syslinux
+Description: Automate GNU/Linux installs and upgrades over a network
+ SystemImager is a set of utilities for installing GNU/Linux software images to
+ clients machines over the network.  Images are stored in flat files on the
+ server, making updates easy.  The rsync protocol is used for transfers,
+ making updates efficient.
+ .
+ The syslinux package should be installed on servers that will be creating
+ bootable media for x86 clients.
+
+Package: systemimager-client
+Architecture: all
+Depends: ${perl:Depends}, file, rsync, systemimager-boot-amd64-standard | systemimager-boot-i386-standard | systemimager-boot-ia64-standard, systemimager-common (= ${source:Version}), systemconfigurator (>= 2.2.9)
+Description: Utilities for creating an image and upgrading client machines
+ SystemImager is a set of utilities for installing GNU/Linux software images to
+ clients machines over the network.  Images are stored in flat files on the
+ server, making updates easy.  The rsync protocol is used for transfers, making
+ updates efficient.
+ .
+ This package contains utilities for updating a client's image from the
+ server, and preparing a client for having its image fetched by the server.
+
+Package: systemimager-common
+Architecture: all
+Depends: ${perl:Depends}, rsync
+Description: Utilities and libraries common to both the server and client
+ SystemImager is a set of utilities for installing GNU/Linux software images to
+ clients machines over the network.  Images are stored in flat files on the
+ server, making updates easy.  The rsync protocol is used for transfers, making
+ updates efficient.
+ .
+ This package contains files common to both the systemimager client and server.
+
+Package: systemimager-doc
+Section: doc
+Architecture: all
+Suggests: systemimager-server
+Description: Manual and other documentation
+ SystemImager is a set of utilities for installing GNU/Linux software images to
+ clients machines over the network.  Images are stored in flat files on the
+ server, making updates easy.  The rsync protocol is used for transfers,
+ making updates efficient.
+ .
+ This package contains documentation for SystemImager.
+
+Package: systemimager-server-flamethrowerd
+Architecture: all
+Depends: systemimager-server (>=3.6.3), flamethrower
+Description: SystemImager boot binaries for ${misc:Package-Arch} client nodes
+ SystemImager is a set of utilities for installing GNU/Linux software images to
+ client machines over the network.  Images are stored in flat files on the
+ server, making updates easy.  The rsync protocol is used for transfers,
+ making updates efficient.
+ .
+ This package adds support for doing multicast installations.  Multicast
+ scales very well, allowing for the installation of hundreds of clients
+ at the same time.  Some tuning is required for optimal performance.
+ .
+ This release requires that your client has enough memory to hold a copy
+ of the system image.
+
+Package: systemimager-bittorrent
+Architecture: all
+Depends: systemimager-server (>=3.8.0-1)
+Description: 
+ Utilities and libraries common to both the server and client
+ SystemImager is a set of utilities for installing GNU/Linux software images to
+ clients machines over the network.  Images are stored in flat files on the
+ server, making updates easy.  The rsync protocol is used for transfers, making
+ updates efficient.
+ .
+ The bittorrent package allows you to use the BitTorrent protocol to perform
+ installations.

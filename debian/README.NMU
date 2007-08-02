@@ -1,0 +1,79 @@
+SystemImager Requires a Custom Upload Procedure
+
+Why it is different
+-------------------
+Systemimager clients and servers do not have to be of the same architecture.
+An ia64 server can interact with i386 clients.  However, for this to work,
+the server must be capable of serving binaries that boot its clients.  This
+means that ia64 servers must be able to install a package that contains
+i386 binaries.
+
+This is accomplished with boot packages - the packages themselves are
+architecture all, but they contain an architecture in the package name -
+the architecture of the clients they are intended to serve.
+
+  systemimager-boot-i386-standard_1.2.3_all.deb
+  systemimager-boot-ia64-standard_1.2.3_all.deb
+
+This is a corner case that is not handled well by Debian's infrastructure,
+and makes SystemImager uploads complicated.  The systemimager source package
+currently only creates Arch: all packages - but, the Arch: all packages it
+builds change depending on the architecture doing the build.  If you build
+on ia64, you'll get the systemimager-boot-ia64-standard deb.  If you build
+on i386, you'll get the systemimager-boot-i386-standard deb instead.  Buildds
+won't deal with this, so the maintainer gets to build on all architectures
+by hand.  All files need to be uploaded as one build, so the .changes and
+.dsc files have to be tweaked by hand.
+
+How to Build/Upload
+-------------------
+The process I use is to do full builds on each architecture, and perform
+a merge at the end.  All packages should be the same on all archs except
+for the -boot packages, so in theory you could just build those.  However,
+the other packages take an insignificant amount of time to build.
+
+1) Go ahead and do a full dpkg-buildpackage -uc -us on one arch
+2) Copy the resultant source package to each other arch, run dpkg-source -x
+   on each .dsc & dpkg-buildpackage in each resultant directory.
+3) Collect the full set of files from each arch on to one machine, and
+   place each set of files in a directory whose name is the arch on which
+   it was built:
+
+./i386/systemimager_3.2.3-4.tar.gz
+./i386/systemimager_3.2.3-4.dsc
+./i386/systemimager-server_3.2.3-4_all.deb
+./i386/systemimager-client_3.2.3-4_all.deb
+./i386/systemimager-common_3.2.3-4_all.deb
+./i386/systemimager-doc_3.2.3-4_all.deb
+./i386/systemimager-server-flamethrowerd_3.2.3-4_all.deb
+./i386/systemimager-boot-i386-standard_3.2.3-4_all.deb
+./i386/systemimager_3.2.3-4_i386.changes
+./i386/systemimager_3.2.3-4.dsc.asc
+./ia64/systemimager-boot-ia64-standard_3.2.3-4_all.deb
+./ia64/systemimager-client_3.2.3-4_all.deb
+./ia64/systemimager-common_3.2.3-4_all.deb
+./ia64/systemimager-doc_3.2.3-4_all.deb
+./ia64/systemimager-server-flamethrowerd_3.2.3-4_all.deb
+./ia64/systemimager-server_3.2.3-4_all.deb
+./ia64/systemimager_3.2.3-4.dsc
+./ia64/systemimager_3.2.3-4.dsc.asc
+./ia64/systemimager_3.2.3-4.tar.gz
+./ia64/systemimager_3.2.3-4_ia64.changes
+
+4) Copy all of the above files into one directory.
+   $ cp i386/* ia64/* all/
+
+5) Merge changes & dsc file - in the debian/ directory, you should find a
+   tool called mergechanges.py (and the deb822.py lib).
+
+   $ mergechanges.py i386/ ia64/
+
+   This will look for .changes & .dsc files in the i386 and ia64
+   subdirectories, and create merged copies in the current working directory:
+     systemimager_3.2.3-4.dsc.new
+     systemimager_3.2.3-4_i386+ia64.changes
+
+   Copy these files into your all/ directory, and rename the .dsc file to
+   remove the '.new' extension.
+
+6) debsign the combined .changes and upload it.

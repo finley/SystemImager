@@ -1,0 +1,31 @@
+#!/bin/sh
+
+# systemimager < 1.5.0 had a single log file, move it to the new log directory
+if [ -f /var/log/systemimager ]; then
+	echo "Moving old log file (/var/log/systemimager) to /var/log/systemimager/rsyncd"
+	TMPFILE=`tempfile`
+	mv -f /var/log/systemimager $TMPFILE
+	install -d -m 750 /var/log/systemimager
+	mv $TMPFILE /var/log/systemimager/rsyncd
+fi
+
+# /etc/systemimager/rsyncd.conf is now generated from stubs stored
+# in /etc/systemimager/rsync_stubs.  if upgrading from an early
+# version, we need to create stub files for all image entries
+if [ -f /etc/systemimager/rsyncd.conf -a \
+    ! -d /etc/systemimager/rsync_stubs ]; then
+    echo "You appear to be upgrading from a pre-rsync stubs release."
+    echo "/etc/systemimager/rsyncd.conf is now auto-generated from stub"
+    echo "files stored in /etc/systemimager/rsync_stubs."
+    echo "Backing up /etc/systemimager/rsyncd.conf to:"
+    echo -n "  /etc/systemimager/rsyncd.conf-before-rsync-stubs... "
+    mv /etc/systemimager/rsyncd.conf \
+      /etc/systemimager/rsyncd.conf-before-rsync-stubs
+
+    ## leave an extra copy around so the postinst knows to make stub files from it
+    cp /etc/systemimager/rsyncd.conf-before-rsync-stubs \
+      /etc/systemimager/rsyncd.conf-before-rsync-stubs.tmp
+    echo "done."
+fi    
+
+#DEBHELPER#

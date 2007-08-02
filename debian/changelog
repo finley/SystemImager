@@ -1,0 +1,596 @@
+systemimager (3.9.2) feisty; urgency=low
+
+  * NMU: new upstream release (based on 3.9.2 vanilla).
+
+ -- Andrea Righi <a.righi@cineca.it>  Wed,  1 Aug 2007 11:41:55 +0200
+
+systemimager (3.8.0-1) UNRELEASED; urgency=low
+
+  * New upstream release, thanks to Geoffroy Vallee for his help
+  * Update Standards-Version to 3.7.2
+  * mkisofs is now a transition package that installs genisoimage.
+    Depend upon genisoimage | mkisofs so that the transition package
+    doesn't have to be installed if genisoimage is available, but still
+    allow mkisofs to simplify backporting. (Closes: #410232)
+  * Let older sysutils versions also satisfy the tofrodos build-dep to
+    make sarge backports easier. Thanks to Geoffroy Vallee for the patch.
+  * Update LVM2 tarball, suggested by Geoffroy.
+  * Drop 17_genisofs-support.patch, merged upstream
+  * Add build-dep on libdevmapper-dev to fix LVM2 build, thanks to Geoffroy
+    Vallee
+  * Update boot package conflicts to require a 3.8.0-X server
+  * Add systemimager-bittorrent package, thanks to Geoffroy Vallee
+  * Remove deprecated ia64 linux patches
+  * Merge rebased patches/02_use-pruned-kernel.patch from gvallee-3.8 branch
+  * Merge rebased patches/08_dhclient-dfsg.patch from gvallee-3.8 branch
+  * Merge updated i386 config for Debian's 2.6.20 from gvallee-3.8 branch
+  * Merge updated patches/10_disable-mkbootmedia.patch from gvallee-3.8 branch
+  * Merge removal of deprecated patches/13_no_uclibc.patch from gvallee-3.8
+    branch
+  * Update ia64 config for 2.6.20
+  * Merge updated patches/15_getimage-custom-boot-in-var.patch from gvallee-3.8
+    branch
+  * Drop no longer necessary 11_util-linux-buildfix.patch now that upstream
+    is including something similar
+  * Merge patches/17_coreutils-tee.patch from gvallee-3.8 branch
+  * Add build-dep on python2.4-dev, needed by cx_Freeze build
+  * Merge amd64 support from gvallee-3.8 branch
+
+ -- dann frazier <dannf@debian.org>  Tue, 29 May 2007 22:27:22 -0600
+
+systemimager (3.6.3dfsg1-2) unstable; urgency=medium
+
+  * Add missing build-dep on rsync. (Closes: #400069)
+  * si_prepareclient execs file, so add a systemimager-client dependency
+    on the file package
+  * If the client is using udev, fetch /dev/.static as /dev during
+    si_getimage so that device files will be created during install.
+    Otherwise, things like bootloader install won't work. (Closes: #398219)
+  * Fix an FHS violation by placing custom boot files in /var instead
+    of /usr. si_mkautoinstall* don't automatically detect and use these
+    flavors yet. Users will need to pass explicit -kernel and -initrd
+    parameters to make use of them until this is fixed. (Closes: #398147)
+  * si_updateclient -autoinstall should configure the bootloader to use
+    /dev/ram0 as root instead of /dev/ram. (Closes: #398225)
+
+ -- dann frazier <dannf@debian.org>  Thu, 23 Nov 2006 21:38:14 -0700
+
+systemimager (3.6.3dfsg1-1) unstable; urgency=low
+
+  * Remove non-free docs from dhcp source. Thanks to Simon Josefsson.
+    (Closes: #395021)
+  * sysutils was split up, so depend upon tofrodos instead.
+    Thanks to Matej Vela (Closes: #382176)
+  * Long description improvements from Filip Van Raemdonck - sorry
+    it took so long. (Closes: #176973)
+  * Explain why syslinux is recommended in the systemimager-server
+    description (Closes: #295734)
+  * Make systemimager-client depend upon a boot package. This is ugly;
+    prepareclient should really pull these files from the server.
+    Workaround for #359354.
+  * Fix a bug in si_pushupdate that causes it to fail when range and
+    client are specified and hostname is not. Thanks to lumen for the
+    patch. (Closes: #369012)
+  * Disable mkbootmedia - I never finished this work, and probably
+    never will. Its a shame, I still think its a great idea.
+    Users should continue using the mkautoinstall* scripts for now.
+    Thanks to Ryan Nowakowski for pointing out that it was being installed.
+    (Closes: #354880)
+  * Fix a FTBFS issues in raidtools and util-linux. (Closes: #395514)
+  * Drop uclibc on i386, we don't fit on floppies anymore anyway.
+    (Closes: #393631)
+
+ -- dann frazier <dannf@debian.org>  Mon, 30 Oct 2006 00:41:14 -0700
+
+systemimager (3.6.3-2) unstable; urgency=low
+
+  * Fix ia64 build:
+    - Update 60_ia64-linux-config-update.patch
+    - Add 70_remove-old-ia64-patches.patch
+
+ -- dann frazier <dannf@debian.org>  Mon,  8 May 2006 22:22:44 -0600
+
+systemimager (3.6.3-1) unstable; urgency=low
+
+  * New upstream release
+  * Drop patches that have already gone upstream:
+    - 30_manual_syntax.patch
+    - 40_drop-unneeded-kernel-patches.patch
+  * Build-Dep on module-init-tools instead of modutils
+
+ -- dann frazier <dannf@debian.org>  Tue, 18 Apr 2006 09:41:45 -0600
+
+systemimager (3.6.2-2) unstable; urgency=low
+
+  * Upload to unstable, now that its had some user testing.
+    Thanks to Rick Bradshaw.
+
+ -- dann frazier <dannf@debian.org>  Wed,  1 Feb 2006 01:03:13 -0700
+
+systemimager (3.6.2-1) experimental; urgency=low
+
+  * New upstream release, fixes a FTBFS bug.  Closes: #337455
+  * Generate a control file with all packages instead of having a different
+    control file per architecture.
+  * Build-dep on libreadline5-dev instead of libreadline4-dev
+  * Mention http://systemimager.org in the long descriptions.  Closes: #309521
+  * Remove old e2fsprogs licensing text from debian/copyright.  This has been
+    changed from a requirement to just a request.  Thanks to Francesco Poli for
+    noticing this.  Closes: #324197
+  * Patch getsource so that it will search in the top level for tarballs,
+    and not fallback to fetching source from the web.  All source should
+    be included in this source package.
+  * Use Debian's non-free-pruned kernel source.
+
+ -- dann frazier <dannf@debian.org>  Wed, 18 Jan 2006 23:28:16 -0700
+
+systemimager (3.5.3-1) systemimager; urgency=low
+
+  * New upstream development release
+
+ -- dann frazier <dannf@debian.org>  Tue, 23 Aug 2005 19:11:26 -0600
+
+systemimager (3.4.1-1) unstable; urgency=low
+
+  * New upstream release
+  * The following patches have been included upstream:
+      - ia64_host_type.patch
+      - nogpgverify.patch
+
+ -- dann frazier <dannf@debian.org>  Fri, 10 Jun 2005 07:56:36 -0600
+
+systemimager (3.4.0-2) unstable; urgency=low
+
+  * Call si_mkrsyncd_conf instead of mkrsyncd_conf in postinst
+  * enable tg3
+
+ -- dann frazier <dannf@dannf.org>  Tue, 22 Feb 2005 23:17:20 -0700
+
+systemimager (3.4.0-1) unstable; urgency=low
+
+  * New upstream release
+  * systemimager-ssh is no longer a separate package.
+
+ -- dann frazier <dannf@debian.org>  Fri, 04 Feb 2005 01:12:20 -0700
+
+systemimager (3.2.3-4) unstable; urgency=low
+
+  * Turn on CONFIG_NLS_CODEPAGE_437 on ia64 to work with new elilo.
+    Closes: #280545
+
+ -- dann frazier <dannf@debian.org>  Sun, 05 Dec 2004 18:58:49 -0700
+
+systemimager (3.2.3-3) unstable; urgency=low
+
+  * The Valentin Vidic release.
+  * fix updateclient excludes file transform - thanks vvidic.  Closes: #277420
+  * fix typo in systemimager-client description - thanks to Florian Zumbiehl.
+    Closes: #277256
+  * Pass the vga boot parameter to systemconfigurator under the VGA option
+    instead of specifying it in the APPEND; a requirement for newer LILOs.
+    Thanks again vvidic.  Closes: #277413
+  * Move to 2.4.27, removing the kernel.org tarball from this distribution
+    and instead adding a build-dep on Debian's kernel-source.  The enclosed
+    systemimager tarball is therefore no longer pristine upstream.
+  * Remove the bcm5700 driver; it contains non-DFSG firmware
+  * Fix a bug in the ssh port forwarding setup in updateclient.  And,
+    again, thanks vvidic.  Closes: #277415
+  * updateclient should hold open the ssh tunnel to give the rsync
+    transactions a longer time to execute - thanks vvidic.  Closes: #277416
+  * Force LANG=C in prepareclient, since we only know how to parse sfdisk
+    output in english.
+
+ -- dann frazier <dannf@debian.org>  Mon, 08 Nov 2004 00:47:28 -0700
+
+systemimager (3.2.3-2) unstable; urgency=low
+
+  * fix boot packages installability by up'ing the versions of -server
+    they conflict with
+
+ -- dann frazier <dannf@debian.org>  Thu, 15 Jul 2004 16:17:24 -0600
+
+systemimager (3.2.3-1) unstable; urgency=low
+
+  * New upstream release.
+  * Make mkisofs & mtools dependencies instead of recommends
+
+ -- dann frazier <dannf@debian.org>  Sun, 20 Jun 2004 23:37:57 -0600
+
+systemimager (3.2.2-3) unstable; urgency=low
+
+  * Include patch from Ian Wienand that fixes DNS lookups on ia64.
+    Closes: #252207
+
+ -- dann frazier <dannf@debian.org>  Sun, 13 Jun 2004 21:17:45 -0600
+
+systemimager (3.2.2-2) unstable; urgency=low
+
+  * remove ia64 build-dep on gcc-3.2
+
+ -- dann frazier <dannf@debian.org>  Sat, 17 Apr 2004 15:13:47 -0600
+
+systemimager (3.2.2-1) unstable; urgency=low
+
+  * new upstream release
+  * we can now build w/ gcc 3.3.  Closes: #236459
+  * add sysutils as a build-dep.  Closes: #241970
+  * depend on dosfstools.  Closes: #226891
+
+ -- dann frazier <dannf@debian.org>  Wed, 14 Apr 2004 00:04:17 -0600
+
+systemimager (3.2.0-2) unstable; urgency=low
+
+  * fix systemimager-boot conflicts, which were making it uninstallable.
+
+ -- dann frazier <dannf@debian.org>  Mon, 15 Mar 2004 09:51:30 -0700
+
+systemimager (3.2.0-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- dann frazier <dannf@debian.org>  Tue, 02 Mar 2004 22:30:46 -0700
+
+systemimager (3.1.8-1) unstable; urgency=low
+
+  * New upstream devel release
+
+ -- dann frazier <dannf@debian.org>  Wed, 26 Nov 2003 22:42:01 -0700
+
+systemimager (3.0.1-9) unstable; urgency=low
+
+  * split out binary-arch & binary-indep.
+    Note that the split is somewhat abnormal - the binary-arch target will
+    build an arch: all package - however, the package it creates is determined
+    by the build-arch.  For example, on i386 it will build
+    systemimager-boot-i386-standard, and on ia64 it will build
+    systemimager-boot-ia64-standard.  I think this fits the spirit of the
+    split (binary-arch should build the packages that can only be built on
+    this architecture), although it differs from how it is defined.
+    I also realize that this won't make the buildd's happy - they don't 
+    expect binary-all packages to pop out during a binary-arch build.
+    However, the buildd's can't help with systemimager builds anyway,
+    so I'll need to revert to P-a-S status anyway.  Closes: #208724
+  * added bison as a build-dep.  Closes: #208715
+  * added gettext as a build-dep.  Closes: #209302
+  * add gcc-3.2 as a build-dep for ia64 (gcc 3.3 won't build the kernel)
+  
+ -- dann frazier <dannf@dannf.org>  Mon, 01 Sep 2003 22:54:24 -0600
+
+systemimager (3.0.1-8) unstable; urgency=low
+
+  * patch modutils to build w/ new lex (patch stolen from modutils pkg).
+  * force gcc-3.2 to be used when building the ia64 kernel - thanks bdale. 
+    Closes: #205315
+  * added groff-base as a build-dep - thanks Daniel Schepler. Closes: #203998
+  * install example elilo.conf - thanks taggart.  Closes: #206493
+  * include libnss_dns in boel_binaries for non-x86 (non-uclibc) arches (ia64)
+    so dns can be used to determine hostname
+
+ -- dann frazier <dannf@dannf.org>  Mon, 01 Sep 2003 22:54:24 -0600
+
+systemimager (3.0.1-7) unstable; urgency=low
+
+  * fixes creation of autoinstallcds on ia64.
+  * Fixed some getimage typos.  Closes: #198237
+
+ -- dann frazier <dannf@dannf.org>  Sat, 21 Jun 2003 15:59:14 -0600
+
+systemimager (3.0.1-6) unstable; urgency=low
+
+  * added missing build-dep on groff.  Closes: #197941
+
+ -- dann frazier <dannf@debian.org>  Thu, 19 Jun 2003 00:10:15 -0600 
+	
+systemimager (3.0.1-5) unstable; urgency=low
+
+  * add support for multiple -exclude options to getimage.  Closes: #179995
+  * add some more files to the default updateclient.local.exclude file
+    thanks to Mark Ferlatte for pointing them out.  Closes: 188091
+	
+ -- dann frazier <dannf@debian.org>  Sun, 15 Jun 2003 17:33:15 -0600
+	
+systemimager (3.0.1-4) unstable; urgency=low
+
+  * add patches for discover & parted so we can build w/ gcc 3.3
+  * remerged the boot packages build goo into the systemimager source
+    package - thanks to John Morton for the patch.  Closes: #194721
+  * explicity unset $PREFIX when installing uclibc.  Closes: #191492
+  * don't ignore failures when executing the binaries rule.  Closes: #195999
+  * add texinfo (needed by e2fsprogs) and modutils to Build-Depends.
+    Closes: #195996.  Thanks to Daniel Schepler for reporting these.
+	
+ -- dann frazier <dannf@debian.org>  Sat, 07 Jun 2003 14:14:13 -0600
+	
+systemimager (3.0.1-3) unstable; urgency=low
+
+  * deal w/ new sfdisk printing mebibytes instead of megabytes.
+    thanks to Jose Celestino.  Closes: #187397
+	
+ -- dann frazier <dannf@debian.org>  Sun, 06 Apr 2003 23:32:18 -0600
+	
+systemimager (3.0.1-2) unstable; urgency=low
+
+  * Cleanup of the description and synopsis.  Closes: #186932
+	
+ -- dann frazier <dannf@debian.org>  Mon, 31 Mar 2003 21:51:45 -0700
+	
+systemimager (3.0.1-1) unstable; urgency=low
+
+  * new upstream release
+	
+ -- dann frazier <dannf@debian.org>  Sun, 30 Mar 2003 12:34:05 -0700
+	
+systemimager (3.0.0-3) unstable; urgency=low
+
+  * removed Bugs: entry from control
+  * added dhcp3-server as an or'd recommend w/ dhcp.  Closes: #179305
+  * versioned the dependency on systemconfigurator. Closes: #178930
+  * added bug fixes stolen from stable cvs branch
+  * added bc build-dep
+	
+ -- dann frazier <dannf@debian.org>  Sun,  2 Feb 2003 19:05:19 -0700
+	
+systemimager (3.0.0-2) unstable; urgency=low
+
+  * The remember to run lintian this time release
+  * add rsync security warning to addclients and getimage
+  * update debian/copyright
+  * stop building ps version of manual - sgml tools are broken in unstable
+  * removed duplicate conffiles entries
+  * moved systemimager-doc into section doc
+
+ -- dann frazier <dannf@debian.org>  Sun, 15 Dec 2002 01:16:58 -0700
+
+systemimager (3.0.0-1) unstable; urgency=low
+
+  * new upstream release
+
+ -- dann frazier <dannf@debian.org>  Sun, 08 Dec 2002 22:50:36 -0700
+
+systemimager (2.9.5-1) experimental; urgency=low
+
+  * new upstream release
+
+ -- dann frazier <dannf@hp.com>  Mon, 18 Nov 2002 18:23:00 -0700
+
+systemimager (2.9.4-2) experimental; urgency=low
+
+  * made '/etc/init.d/netbootmond stop' exit non-zero if it never started
+
+ -- dann frazier <dannf@debian.org>  Sat, 02 Nov 2002 12:00:16 -0700
+	
+systemimager (2.9.4-1) experimental; urgency=low
+  
+  * new upstream release
+
+ -- dann frazier <dannf@debian.org>  Sun, 27 Oct 2002 20:44:49 -0700
+  
+systemimager (2.9.3-2) experimental; urgency=low
+
+  * The "I SHOULD BE DRINKING BEER NOT WORKING ON DEBIAN" release
+  * added code to preinst/postinst to migrate image entries from
+    /etc/systemimager/rsyncd.conf to rsync stub files
+  * removed syslinux | elilo dependency
+  * removed version depends on boot packages - those will be handled
+    by the boot pakages themselves.
+  * fixed netbootmond initscript
+  * renamed systemimager initscript to systemimager-server
+  
+ -- dann frazier <dannf@debian.org>  Sat,  5 Oct 2002 17:53:35 -0600
+
+systemimager (2.9.3-1) experimental; urgency=low
+
+  * new upstream release
+  
+ -- dann frazier <dannf@debian.org>  Wed,  2 Oct 2002 20:45:36 -0600
+
+systemimager (2.9.2-2) experimental; urgency=low
+
+  * stop installing common bits in -server & -client
+  
+ -- dann frazier <dannf@debian.org>  Wed, 02 Oct 2002 19:18:03 -0600
+
+systemimager (2.9.2-1) experimental; urgency=low
+
+  * new upstream release
+  
+ -- dann frazier <dannf@debian.org>  Sat, 28 Sep 2002 17:04:13 -0600
+
+systemimager (2.9.1) experimental; urgency=low
+
+  * new upstream release
+  
+ -- dann frazier <dannf@debian.org>  Sun, 22 Sep 2002 15:44:18 -0600
+
+systemimager (2.1.1.hp.20020614cvs-2) unstable; urgency=low
+
+  * the 10header rsync stub still used /usr/local instead of /usr
+  
+ -- dann frazier <dannf@debian.org>  Sun, 16 Jun 2002 23:03:28 -0600
+
+systemimager (2.1.1.hp.20020614cvs-1) unstable; urgency=low
+
+  * new upstream snapshot
+  * can now deal with GPT partitions
+  * uses parted instead of sfdisk for partitioning
+  * /etc/systemimager/rsyncd.conf is now generated by stub files
+  
+ -- dann frazier <dannf@debian.org>  Wed, 12 Jun 2002 18:46:27 -0600
+
+systemimager (2.1.1-2) unstable; urgency=low
+
+  * fix for ia64 kernel build
+
+ -- dann frazier <dannf@debian.org>  Sat,  9 Feb 2002 22:33:35 -0700
+
+systemimager (2.1.1-1) unstable; urgency=low
+
+  * new upstream development release
+
+ -- dann frazier <dannf@debian.org>  Sat,  9 Feb 2002 20:23:04 -0700
+
+systemimager (2.1.0-1) unstable; urgency=low
+  
+  * new upstream development release
+
+ -- dann frazier <dannf@debian.org>  Sun, 20 Jan 2002 21:53:24 -0700
+
+systemimager (2.0.1-2) unstable; urgency=low
+  
+  * devfs support added to prepareclient (thanks sean@dague.net)
+  * explicitly tell mount which filesystem to mount the /tmp ramdisk
+    as during autoinstallation - works better w/ 2.4 kernels (thanks to
+    malf@tfz.net)
+  * updateclient tftpboot->i386-boot fix
+
+ -- dann frazier <dannf@debian.org>  Sun, 13 Jan 2002 19:18:53 -0700
+
+systemimager (2.0.1-1) unstable; urgency=low
+  
+  * new upstream release
+  * updated README.Debian w/ quick start info.  Closes: #123980
+  * de-contracted "autoinstallation" in the control file.  Closes: #125411
+
+ -- dann frazier <dannf@debian.org>  Sun, 16 Dec 2001 23:22:18 -0700
+
+systemimager (2.0.0-6) unstable; urgency=low
+  
+  * /usr -> /usr/local in systemimager.conf
+  * replaced a lost literal tab in rcS
+
+ -- dann frazier <dannf@debian.org>  Sun,  9 Dec 2001 13:32:28 -0700
+
+systemimager (2.0.0-5) unstable; urgency=low
+  
+  * updated package descriptions - recommended by taggart
+  * make kernel build fail nicely on non-i386 systems.  
+
+ -- dann frazier <dannf@dannf.org>  Thu, 15 Nov 2001 16:22:01 -0700
+
+systemimager (2.0.0-4) unstable; urgency=low
+  
+  * the 2.2.19 kernel was too large for a floppy - rebuilt it
+    with -Os and removed the Adapted RAID support
+  * -client and -server now depend on a matching version of -common
+
+ -- dann frazier <dannf@dannf.org>  Sun, 11 Nov 2001 22:58:52 -0700
+
+systemimager (2.0.0-3) unstable; urgency=low
+  
+  * use sgmtools-lite instead of cygnus-stylesheets
+  * removed wget build-dep
+  * added build-depend on busybox-source-0.60.0
+  * beep/reiserfsprogs/raidtools source is now included in the diff
+  * syslinux is now recommended instead of being a hard dependency
+  * corrected client/common package descriptions
+
+ -- dann frazier <dannf@dannf.org>  Sat, 10 Nov 2001 20:29:02 -0700
+
+systemimager (2.0.0-2) unstable; urgency=low
+  
+  * moved from linux-2.2.18 to linux-2.2.19
+  * added kernel-source-2.2.19 as a build dep - no longer wget kernel source
+  * put correct version in message.txt
+  * corrected AUTOINSTALL_BOOT_DIR default in /etc/systemimager.conf
+
+ -- dann <dannf@dannf.org>  Sun, 28 Oct 2001 19:25:21 -0700
+
+systemimager (2.0.0-1) unstable; urgency=low
+  
+  * new upstream release
+
+ -- dann <dannf@dannf.org>  Thu, 18 Oct 2001 20:47:24 -0600
+
+systemimager (1.6.0-0.2) unstable; urgency=low
+  
+  * added mk* tools (replace make* tools)
+
+ -- dann <dannf@dannf.org>  Sun, 16 Sep 2001 23:51:01 -0600
+
+systemimager (1.6.0-0.1) unstable; urgency=low
+  
+  * new upstream release
+
+ -- dann <dannf@dannf.org>  Wed, 12 Sep 2001 01:00:47 -0600
+
+systemimager (1.5.0-4) unstable; urgency=low
+  
+  * changed initscript description to mention systemimager
+  * fixed obsolete depends entries in systemimager-server package
+
+ -- dann <dannf@dannf.org>  Wed, 27 Jun 2001 21:23:19 -0600
+
+systemimager (1.5.0-3) unstable; urgency=low
+  
+  * moved /tftpboot files to /usr/lib/systemimager
+
+ -- dann <dannf@dannf.org>  Tue, 26 Jun 2001 23:50:04 -0600
+
+systemimager (1.5.0-2) unstable; urgency=low
+  
+  * created a systemimager-common package to prevent conflicts
+    between the server & client packages
+
+ -- dann <dannf@dannf.org>  Tue, 26 Jun 2001 21:37:01 -0600
+
+systemimager (1.5.0-1) unstable; urgency=low
+  
+  * new upstream release
+  * no longer builds binaries that are already available in other debian
+    packages for the initrd.  now build depends on those packages & copies
+    them over.
+
+ -- dann <dannf@dannf.org>  Tue, 12 Jun 2001 20:46:58 -0600
+
+systemimager (1.4.1-5) unstable; urgency=low
+  
+  * docs are now only installed by systemimager-server, preventing
+    a conflict between systemimager-server and systemimager-client
+  * systemimager-server now depends on systemimager-[initrd|kernel|bin]-i386
+
+ -- dann <dannf@dannf.org>  Sun, 27 May 2001 10:46:24 -0600
+
+systemimager (1.4.1-4) unstable; urgency=low
+  
+  * va-systemimager-* have become systemimager-*
+
+ -- dann <dannf@dannf.org>  Mon, 30 Apr 2001 21:26:46 -0600
+
+va-systemimager (1.4.1-3) unstable; urgency=low
+
+  * va-systemimager-raidtools2 and va-systemimager-reiserfsprogs
+    have now merged into va-systemimager-bin-i386
+  * the va-systemimager package is now called va-systemimager-server
+
+ -- dann <dannf@dannf.org>  Sat, 21 Apr 2001 20:34:36 -0600
+
+va-systemimager (1.4.1-2) unstable; urgency=low
+
+  * what was va-systemimager-initrd is now va-systemimager-initrd-dkf
+  * va-systemimager-initrd now contains the initrd.gz distributed with
+    upstream source.
+
+ -- dann <dannf@dannf.org>  Sat, 21 Apr 2001 20:34:36 -0600
+
+va-systemimager (1.4.1-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- dann <dannf@dannf.org>  Fri, 20 Apr 2001 20:48:56 -0600
+  
+va-systemimager (1.4.0-2) unstable; urgency=low
+
+  * Now recommends what it used to suggest
+  * Recommends mkisofs (needed by makeautoinstallcd).  makeautoinstalldiskette
+    and makeautoinstallcd should work now.  
+
+ -- dann <dannf@dannf.org>  Thu, 19 Apr 2001 21:10:29 -0600
+
+va-systemimager (1.4.0-1) unstable; urgency=low
+
+  * Initial Release.
+  * Added a Makefile
+
+ -- dann <dannf@dannf.org>  Sun,  4 Mar 2001 17:42:48 -0700
+
+
