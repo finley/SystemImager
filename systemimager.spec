@@ -334,6 +334,9 @@ More information can be found at the website:
 http://developer.osdl.org/kees/software/imagemanip/
 
 %changelog
+* Fri Aug 03 2007 Andrea Righi <a.righi@cineca.it>
+- Include missing manpages in the server package
+
 * Wed Aug 01 2007 Bernard Li <bernard@vanhpc.org>
 - Add support for ppc64-ps3/kboot
 - Include dir /etc/systemimager/kboot.cfg
@@ -911,13 +914,7 @@ fi
 %prefix/lib/systemimager/perl/confedit
 %prefix/lib/systemimager/perl/BootMedia/*
 %prefix/share/man/man5/systemimager*
-%prefix/share/man/man8/si_addclients*
-%prefix/share/man/man8/si_cpimage*
-%prefix/share/man/man8/si_getimage*
-%prefix/share/man/man8/si_mk*
-%prefix/share/man/man8/si_mvimage*
-%prefix/share/man/man8/si_rmimage*
-%prefix/share/man/man8/si_pushupdate*
+%prefix/share/man/man8/si_*
 %prefix/share/systemimager/icons/*
 
 %files client
