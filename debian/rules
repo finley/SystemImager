@@ -21,7 +21,7 @@ NON_BOOT_PKGS := -p $(PKG)-client \
                  -p $(PKG)-doc \
                  -p $(PKG)-server \
                  -p $(PKG)-server-flamethrowerd \
-                 -p $(PKG)-bittorrent
+                 -p $(PKG)-server-bittorrent
 
 BOOTARCHS = i386 ia64 amd64
 
@@ -87,7 +87,7 @@ clean:
 	  $(PKG)-server-flamethrowerd
 	rm -f debian/$(PKG)-server.init
 	rm -f debian/$(PKG)-server-flamethrowerd.init
-	rm -f debian/$(PKG)-bittorrent.init
+	rm -f debian/$(PKG)-server-bittorrent.init
 	dh_clean
 
 install-arch:	build-arch
@@ -132,15 +132,15 @@ install-indep:	build-indep
 	  $(CURDIR)/debian/$(PKG)-server-flamethrowerd/etc/systemimager/
 	
 	# prepare the bittorrent package
-	mkdir -p $(CURDIR)/debian/$(PKG)-bittorrent/etc/init.d
-	mkdir -p $(CURDIR)/debian/$(PKG)-bittorrent/etc/systemimager
-	mkdir -p $(CURDIR)/debian/$(PKG)-bittorrent/usr/sbin
-	mkdir -p $(CURDIR)/debian/$(PKG)-bittorrent/var/lib/systemimager/tarballs
-	mkdir -p $(CURDIR)/debian/$(PKG)-bittorrent/var/lib/systemimager/torrents
+	mkdir -p $(CURDIR)/debian/$(PKG)-server-bittorrent/etc/init.d
+	mkdir -p $(CURDIR)/debian/$(PKG)-server-bittorrent/etc/systemimager
+	mkdir -p $(CURDIR)/debian/$(PKG)-server-bittorrent/usr/sbin
+	mkdir -p $(CURDIR)/debian/$(PKG)-server-bittorrent/var/lib/systemimager/tarballs
+	mkdir -p $(CURDIR)/debian/$(PKG)-server-bittorrent/var/lib/systemimager/torrents
 	mv $(CURDIR)/debian/$(PKG)-server/etc/systemimager/bittorrent.conf \
-		$(CURDIR)/debian/$(PKG)-bittorrent/etc/systemimager
+		$(CURDIR)/debian/$(PKG)-server-bittorrent/etc/systemimager
 	mv $(CURDIR)/debian/$(PKG)-server/usr/sbin/si_installbtimage \
-		$(CURDIR)/debian/$(PKG)-bittorrent/usr/sbin
+		$(CURDIR)/debian/$(PKG)-server-bittorrent/usr/sbin
 
 # Build architecture-dependent files here.
 binary-arch: build-arch install-arch
@@ -169,24 +169,24 @@ binary-indep: build-indep install-indep
 
 	cp $(BUILD_DIR)/etc/init.d/$(PKG)-server-rsyncd \
 	  ./debian/$(PKG)-server.init
-	dh_installinit -p$(PKG)-server --init-script=$(PKG)-server
+	dh_installinit --no-start -p$(PKG)-server --init-script=$(PKG)-server-rsyncd
 
 	cp $(BUILD_DIR)/etc/init.d/$(PKG)-server-netbootmond \
 	  ./debian/$(PKG)-server.init
-	## This isn't exactly FHS compliant - systemimager-server shouldn't
-	## be installing an initscript called "netbootmond"  However,
-	## netbootmond isn't really a systemimager-specific utility,
-	## so maybe it should probably be its own package.
-	dh_installinit -p$(PKG)-server --init-script=netbootmond
+	dh_installinit --no-start -p$(PKG)-server --init-script=$(PKG)-server-netbootmond
+
+	cp $(BUILD_DIR)/etc/init.d/$(PKG)-server-monitord \
+	  ./debian/$(PKG)-server.init
+	dh_installinit --no-start -p$(PKG)-server --init-script=$(PKG)-server-monitord
 
 	cp $(BUILD_DIR)/etc/init.d/$(PKG)-server-flamethrowerd \
 	  ./debian/$(PKG)-server-flamethrowerd.init
-	dh_installinit -p$(PKG)-server-flamethrowerd \
+	dh_installinit --no-start -p$(PKG)-server-flamethrowerd \
 	  --init-script=$(PKG)-server-flamethrowerd
 
 	cp $(BUILD_DIR)/etc/init.d/$(PKG)-server-bittorrent \
-		./debian/$(PKG)-bittorrent.init
-	dh_installinit -p$(PKG)-bittorrent \
+		./debian/$(PKG)-server-bittorrent.init
+	dh_installinit --no-start -p$(PKG)-server-bittorrent \
 		--init-script=$(PKG)-server-bittorrent
 
 	dh_installchangelogs $(NON_BOOT_PKGS)

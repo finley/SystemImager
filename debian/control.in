@@ -71,11 +71,12 @@ Description: SystemImager boot binaries for ${misc:Package-Arch} client nodes
  This release requires that your client has enough memory to hold a copy
  of the system image.
 
-Package: systemimager-bittorrent
+Package: systemimager-server-bittorrent
 Architecture: all
 Depends: systemimager-server (>=3.8.0-1)
 Description: 
- Utilities and libraries common to both the server and client
+ Utilities and libraries to use the BitTorrent transport to distribute
+ SystemImager images.
  SystemImager is a set of utilities for installing GNU/Linux software images to
  clients machines over the network.  Images are stored in flat files on the
  server, making updates easy.  The rsync protocol is used for transfers, making
