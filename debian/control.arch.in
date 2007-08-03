@@ -2,7 +2,7 @@
 Package: systemimager-boot-${misc:Package-Arch}-standard
 Architecture: all
 Recommends: systemimager-server
-Conflicts: systemimager-bin-${misc:Package-Arch}, systemimager-kernel-${misc:Package-Arch}, systemimager-initrd-${misc:Package-Arch}, systemimager-boot-standard-${misc:Package-Arch}, systemimager-ssh-${misc:Package-Arch}, systemimager-server (<< 3.8.0), systemimager-server (>= 3.8.1)
+Conflicts: systemimager-bin-${misc:Package-Arch}, systemimager-kernel-${misc:Package-Arch}, systemimager-initrd-${misc:Package-Arch}, systemimager-boot-standard-${misc:Package-Arch}, systemimager-ssh-${misc:Package-Arch}, systemimager-server (<< 3.8.0)
 Replaces: systemimager-bin-${misc:Package-Arch}, systemimager-kernel-${misc:Package-Arch}, systemimager-initrd-${misc:Package-Arch}, systemimager-boot-standard-${misc:Package-Arch}, systemimager-ssh-${misc:Package-Arch}
 Description: SystemImager boot binaries for ${misc:Package-Arch} client nodes
  SystemImager is a set of utilities for installing GNU/Linux software images to
