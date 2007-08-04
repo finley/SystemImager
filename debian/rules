@@ -75,6 +75,9 @@ debian/control:	debian/control.in debian/control.arch.in
 	         debian/control.arch.in >> debian/control; \
         done
 
+debian/systemimager-boot-$(ARCH)-standard.postinst: debian/systemimager-boot-arch-standard.postinst.in
+	cat $< > $@
+
 clean:
 	dh_testdir
 	dh_testroot
@@ -101,6 +104,21 @@ install-arch:	build-arch
 	# Add here commands to install the packages
 	$(MAKE) -C $(BUILD_DIR) install_binaries \
 	  DESTDIR=$(CURDIR)/debian/$(BOOTPKG)
+
+	# Remove forbidden special files from $(BOOTPKG). This files will be
+	# added using the post-install deb script:
+	#
+	# systemimager-boot-$(ARCH)-standard.postinst
+	#
+	cd $(CURDIR)/debian/$(BOOTPKG)/usr/share/systemimager/boot/$(ARCH)/standard/initrd_template/dev && \
+		rm -f tty1 && \
+		rm -f tty2 && \
+		rm -f tty3 && \
+		rm -f tty4 && \
+		rm -f tty5 && \
+		rm -f tty6 && \
+		rm -f console && \
+		rm -f null
 
 install-indep:	build-indep
 	dh_testdir
@@ -157,7 +175,7 @@ binary-arch: build-arch install-arch
 	dh_fixperms -p$(BOOTPKG)
 	dh_installdeb -p$(BOOTPKG)
 	dh_perl -p$(BOOTPKG)
-	dh_shlibdeps -p$(BOOTPKG)
+	#dh_shlibdeps -p$(BOOTPKG)
 	dh_gencontrol -p$(BOOTPKG)
 	dh_md5sums  -p$(BOOTPKG)
 	dh_builddeb -p$(BOOTPKG)
