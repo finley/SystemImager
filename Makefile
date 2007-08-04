@@ -166,7 +166,7 @@ PXE_CONF_DEST     = $(ETC)/systemimager/pxelinux.cfg
 KBOOT_CONF_SRC    = etc/kboot.cfg
 KBOOT_CONF_DEST   = $(ETC)/systemimager/kboot.cfg
 
-BINARIES := si_mkautoinstallcd si_mkautoinstalldiskette si_mkautoinstalldisk si_mkbootmedia si_psh si_pcp si_pushoverrides
+BINARIES := si_mkautoinstallcd si_mkautoinstalldiskette si_mkautoinstalldisk si_psh si_pcp si_pushoverrides
 SBINARIES := si_addclients si_cpimage si_getimage si_mkdhcpserver si_mkdhcpstatic si_mkautoinstallscript si_mkbootserver si_mvimage si_pushupdate si_pushinstall si_rmimage si_mkrsyncd_conf si_mkclientnetboot si_netbootmond si_mkbootpackage si_monitor si_monitortk si_installbtimage
 CLIENT_SBINARIES  := si_updateclient si_prepareclient
 COMMON_BINARIES   = si_lsimage
