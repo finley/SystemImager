@@ -157,3 +157,55 @@ sub create_no_boot_symlink {
 # END subroutines
 #
 ################################################################################
+
+__END__
+
+=head1 NAME
+
+si_netbootmond - SystemImager's daemon for controlling netboot clients.
+
+=head1 SYNOPSIS
+
+/etc/init.d/systemimager-server-netbootmond start|stop|status|restart
+
+=head1 DESCRIPTION
+
+If clients are configured to always boot from the network, B<si_netbootmond> can
+be configured to tell them to boot off their local disks each time they boot
+after having completed a successful autoinstall.
+
+This allows to always set network booting as default from the BIOS of the
+clients and boot from local disk after a successfull auto-installation.
+
+To enable this feature the parameter B<NET_BOOT_DEFAULT> must be set to B<net>
+in B</etc/systemimager/systemimager.conf> and si_netbootmond must be started via
+the init script B</etc/init.d/systemimager-server-netbootmond>.
+
+To disable this feature set B<NET_BOOT_DEFAULT> to B<local> in
+B</etc/systemimager/systemimager.conf> or just stop B<si_netbootmond> via the
+init script B</etc/init.d/systemimager-server-netbootmond>.
+
+=head1 SEE ALSO
+
+systemimager(8), si_mkclientnetboot(8), /etc/init.d/systemimager-server-netbootmond
+
+=head1 AUTHOR
+
+Brian E. Finley <finley@mcs.anl.gov>.
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2002-2003 by Brian E. Finley <finley@mcs.anl.gov>.
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+=cut
+
