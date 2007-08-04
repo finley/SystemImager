@@ -137,10 +137,13 @@ install-indep:	build-indep
 	mkdir -p $(CURDIR)/debian/$(PKG)-server-bittorrent/usr/sbin
 	mkdir -p $(CURDIR)/debian/$(PKG)-server-bittorrent/var/lib/systemimager/tarballs
 	mkdir -p $(CURDIR)/debian/$(PKG)-server-bittorrent/var/lib/systemimager/torrents
+	mkdir -p $(CURDIR)/debian/$(PKG)-server-bittorrent/usr/share/man/man8
 	mv $(CURDIR)/debian/$(PKG)-server/etc/systemimager/bittorrent.conf \
 		$(CURDIR)/debian/$(PKG)-server-bittorrent/etc/systemimager
 	mv $(CURDIR)/debian/$(PKG)-server/usr/sbin/si_installbtimage \
 		$(CURDIR)/debian/$(PKG)-server-bittorrent/usr/sbin
+	mv $(CURDIR)/debian/$(PKG)-server/usr/share/man/man8/si_installbtimage.8.gz \
+		$(CURDIR)/debian/$(PKG)-server-bittorrent/usr/share/man/man8
 
 # Build architecture-dependent files here.
 binary-arch: build-arch install-arch
