@@ -167,7 +167,7 @@ KBOOT_CONF_SRC    = etc/kboot.cfg
 KBOOT_CONF_DEST   = $(ETC)/systemimager/kboot.cfg
 
 BINARIES := si_mkautoinstallcd si_mkautoinstalldiskette si_mkautoinstalldisk si_mkbootmedia si_psh si_pcp si_pushoverrides
-SBINARIES := si_addclients si_cpimage si_getimage si_mkdhcpserver si_mkdhcpstatic si_mkautoinstallscript si_mkbootserver si_mvimage si_pushupdate si_pushinstall si_rmimage si_mkrsyncd_conf si_mkclientnetboot si_netbootmond si_imagemanip si_mkbootpackage si_monitor si_monitortk si_installbtimage
+SBINARIES := si_addclients si_cpimage si_getimage si_mkdhcpserver si_mkdhcpstatic si_mkautoinstallscript si_mkbootserver si_mvimage si_pushupdate si_pushinstall si_rmimage si_mkrsyncd_conf si_mkclientnetboot si_netbootmond si_mkbootpackage si_monitor si_monitortk si_installbtimage
 CLIENT_SBINARIES  := si_updateclient si_prepareclient
 COMMON_BINARIES   = si_lsimage
 
@@ -391,8 +391,6 @@ install_configs:
 	$(SI_INSTALL) -m 644 --backup etc/bittorrent.conf $(ETC)/systemimager/
 	$(SI_INSTALL) -m 644 --backup etc/cluster.xml $(ETC)/systemimager/
 	$(SI_INSTALL) -m 644 etc/autoinstallscript.template $(ETC)/systemimager/
-	$(SI_INSTALL) -m 644 etc/imagemanip.conf $(ETC)/systemimager/
-	$(SI_INSTALL) -m 644 etc/imagemanip.perm $(ETC)/systemimager/
 	$(SI_INSTALL) -m 644 etc/getimage.exclude $(ETC)/systemimager/
 
 	mkdir -p $(RSYNC_STUB_DIR)

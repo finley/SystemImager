@@ -301,39 +301,10 @@ environments.
 The bittorrent package allows you to use the BitTorrent protocol to perform
 installations.
 
-%package imagemanip
-Summary: Software that automates Linux installs, software distribution, and production deployment.
-Version: %ver
-Release: %rel
-License: GPL
-Group: Applications/System
-BuildRoot: /tmp/%{name}-%{ver}-root
-Packager: %packager
-URL: http://wiki.systemimager.org/
-Distribution: System Installation Suite
-Requires: systemimager-server = %{version}, /sbin/chkconfig, perl, perl(Config::Simple), perl(LockFile::Simple)
-AutoReqProv: no
-
-%description imagemanip
-SystemImager is software that automates Linux installs, software
-distribution, and production deployment.  SystemImager makes it easy to
-do installs, software distribution, content or data distribution,
-configuration changes, and operating system updates to your network of
-Linux machines. You can even update from one Linux release version to
-another!  It can also be used to ensure safe production deployments.
-By saving your current production image before updating to your new
-production image, you have a highly reliable contingency mechanism.  If
-the new production enviroment is found to be flawed, simply roll-back
-to the last production image with a simple update command!  Some
-typical environments include: Internet server farms, database server
-farms, high performance clusters, computer labs, and corporate desktop
-environments.
-
-The imagemanip package contains an image manipulation tool for SystemImager.
-More information can be found at the website:
-http://developer.osdl.org/kees/software/imagemanip/
-
 %changelog
+* Sat Aug 04 2007 Andrea Righi <a.righi@cineca.it>
+- Removed unmaintained package imagemanip
+
 * Fri Aug 03 2007 Andrea Righi <a.righi@cineca.it>
 - Include missing manpages in the server package
 
@@ -944,12 +915,6 @@ fi
 %config /etc/systemimager/bittorrent.conf
 /etc/init.d/systemimager-server-bittorrent
 %prefix/sbin/si_installbtimage
-
-%files imagemanip
-%defattr(-, root, root)
-%config /etc/systemimager/imagemanip.conf
-%config /etc/systemimager/imagemanip.perm
-%prefix/sbin/si_imagemanip
 
 %endif
 

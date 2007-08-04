@@ -59,9 +59,6 @@ systemimager.conf.5:	systemimager.conf.pod
 systemimager-rsyncd.conf.5:	systemimager-rsyncd.conf.pod
 	pod2man --release=$(SYSTEMIMAGER_VERSION) -s 5 -c "SystemImager" $< $@
 
-si_imagemanip.8:	$(TOPDIR)/sbin/si_imagemanip
-	pod2man --release=$(SYSTEMIMAGER_VERSION) -s 8 -c "SystemImager" $< $@
-
 si_installbtimage.8: $(TOPDIR)/sbin/si_installbtimage
 	pod2man --release=$(SYSTEMIMAGER_VERSION) -s 8 -c "SystemImager" $< $@
 
