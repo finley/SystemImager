@@ -16,10 +16,9 @@
 # Required-Stop:
 # Default-Start:  3 5
 # Default-Stop:   0 1 2 6
-# Short-Description: SystemImager's BitTorrent daemons.
+# Short-Description: SystemImager's BitTorrent daemons
 # Description: This daemon is needed to image clients using the
 #              bittorrent protocol as transport.
-#
 ### END INIT INFO
 
 . /etc/systemimager/bittorrent.conf

@@ -16,12 +16,10 @@
 # Required-Stop:
 # Default-Start:  3 5
 # Default-Stop:   0 1 2 6
-# Short-Description: SystemImager's daemon for real-time monitoring of client
-#                    installations.
+# Short-Description: SystemImager's daemon for real-time monitoring of client installations
 # Description: This daemon listen to a specific port (default is 8181) and
 #              collects informations periodically sent by clients using
 #              plain TCP/IP connections.
-#
 ### END INIT INFO
 
 PNAME=si_monitor
