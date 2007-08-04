@@ -8,6 +8,9 @@
 
 3.9.2
 --------------------------------------------------------------------------------
+- Added support for the PS3 architecture
+- Improved support and compatibility with Debian (now deb packages can be
+  automatically built from source using the new target "make deb")
 - updated BOEL kernel to 2.6.21 (for i386 and x86_64)
 - fixed a bug that broke si_mkautoinstalldisk
 - free unused RAM of the initramfs (only with cpio initrd.img) after switching
@@ -18,12 +21,15 @@
 - fixed a lib/lib64 bug with ppc64
 - fixed a bug in si_monitor daemon that didn't start correctly when the
   directory /var/lock/systemimager was not present
-- removed unused coreutils package from initrd.img
+- added missing manpages
 - remount the filesystems in read-only before giving-up when the umount
   fails at the end of the installation
 - create all the swap partitions before the other filesystems in the autoinstall
   script: this avoids potential OOM conditions that could occur during the
   filesystem creation
+- removed unused coreutils package from initrd.img
+- removed unmaintained package imagemanip
+- removed deprecated command si_mkbootmedia
 
 3.9.0
 --------------------------------------------------------------------------------
