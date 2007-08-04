@@ -40,7 +40,8 @@ SERVER_MAN = si_addclients.8 				\
 			si_pcp.8			\
 			si_psh.8			\
 			si_pushinstall.8		\
-			si_pushoverrides.8
+			si_pushoverrides.8		\
+			si_mkautoinstalldisk.8
 
 CLIENT_MAN = si_prepareclient.8 si_updateclient.8
 
@@ -78,6 +79,9 @@ si_pushinstall.8: $(TOPDIR)/sbin/si_pushinstall
 	pod2man --release=$(SYSTEMIMAGER_VERSION) -s 8 -c "SystemImager" $< $@
 
 si_pushoverrides.8: $(TOPDIR)/sbin/si_pushoverrides
+	pod2man --release=$(SYSTEMIMAGER_VERSION) -s 8 -c "SystemImager" $< $@
+
+si_mkautoinstalldisk.8: $(TOPDIR)/sbin/si_mkautoinstalldisk
 	pod2man --release=$(SYSTEMIMAGER_VERSION) -s 8 -c "SystemImager" $< $@
 
 %.5 %.8:	%.sgml %.content.sgml

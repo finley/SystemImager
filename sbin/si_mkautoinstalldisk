@@ -235,3 +235,101 @@ sub run_cmd
 
 __END__
 
+=head1 NAME
+
+si_mkautoinstalldisk - generate a bootable disk (typically USB disk) for
+autoinstalling clients
+
+=head1 SYNOPSIS
+
+si_mkautoinstalldisk --device FILE [OPTION] ...
+
+=head1 DESCRIPTION
+
+B<si_mkautoinstalldisk> creates a bootable disk (even a USB disk) that can be
+used to boot one or more autoinstall clients to initiate the auto-installation
+process.
+
+B<si_mkautoinstalldisk> is able to generate an image of the bootable device
+using a regular file. This is pretty useful when you have to play with virtual
+machines that are able to map devices into regular files or to make the cloning
+of the autoinstall disks easier (you can simply create a regular file and use
+dd(1) to perform the raw copy of the file into the real autoinstall devices.
+
+=head1 OPTIONS
+
+=over 8
+ 
+=item B<--help>
+
+Display a short help.
+
+=item B<--version>
+
+Display version and copyright information.
+
+=item B<--quiet>
+
+Run silently and answer yes to all questions.
+
+=item B<--yes>
+
+Answer yes to all questions.
+
+=item B<--device FILE>
+
+Target device that will be used to create the autoinstall device. It can be even
+a regular file.
+
+WARNING: ALL THE DATA IN THE DEVICE WILL BE OVERWRITTEN!!!
+
+=item B<--flavor FLAVOR>
+
+Specify a flavor of boot media (default to "standard").
+See also /usr/share/systemimager/boot/B<arch>/*.
+
+=item B<--arch ARCH>
+
+Create an auto-install disk image for an architecture other than that of this
+host.
+
+=item B<--kernel FILE>
+
+Specify an alternate autoinstall kernel. Default is
+/usr/share/systemimager/boot/B<arch>/B<flavor>/kernel
+
+=item B<--initrd FILE>
+
+Specify an alternate autoinstall initrd.img. Default is
+/usr/share/systemimager/boot/B<arch>/B<flavor>/initrd.img
+
+=item B<--append STRING>
+
+A string of options appended to the autoinstall kernel boot options. For a list
+of all the valid installation parameters see:
+http://wiki.systemimager.org/index.php/Installation_Parameters.
+
+=head1 SEE ALSO
+
+systemimager(8), si_mkautoinstallcd(8), si_mkbootpackage(8), si_prepareclient(8)
+
+=head1 AUTHOR
+
+Andrea Righi <a.righi@cineca.it>.
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2003 by Andrea Righi <a.righi@cineca.it>.
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+=cut
+
