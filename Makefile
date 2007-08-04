@@ -556,11 +556,13 @@ rpm: $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
 .PHONY: deb
 deb: $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
 	# Check package version.
-	@([ ! "`dpkg-parsechangelog | grep ^Version: | \
-        	cut -d ' ' -f 2`" = $(VERSION) ] && \
-		(echo "ERROR: versions in debian/changelog doesn't match with version specified into the file VERSION" && \
-		echo "Please fix it." && \
-		exit 1) || exit 0)
+	@(if [ ! "`dpkg-parsechangelog | grep ^Version: | cut -d ' ' -f 2`" = $(VERSION) ]; then \
+		echo "ERROR: versions in debian/changelog doesn't match with version specified into the file VERSION"; \
+		echo "Please fix it."; \
+		exit 1; \
+	else \
+		exit 0; \
+	fi)
 	@cd $(TOPDIR)/tmp && tar xvjf systemimager-$(VERSION).tar.bz2
 	@cd $(TOPDIR)/tmp/systemimager-$(VERSION) && make -f debian/rules debian/control
 	@PATH=/sbin:/usr/sbin:$(PATH) cd $(TOPDIR)/tmp/systemimager-$(VERSION) && fakeroot dpkg-buildpackage -uc -us
