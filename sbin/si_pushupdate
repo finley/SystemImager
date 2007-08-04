@@ -101,7 +101,7 @@ if($version) {
 if($continue_install) {
 	print STDERR "error: deprecated use of si_pushupdate!\n";
 	print STDERR "Use \"si_pushinstall\" to perform server-driven installation with SSH transport.\n";
-	print STDERR "For more details try: perldoc si_pushinstall\n";
+	print STDERR "For more details see: man 8 si_pushinstall\n";
 	exit(1);
 }
 
