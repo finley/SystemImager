@@ -20,7 +20,7 @@ and makes SystemImager uploads complicated.  The systemimager source package
 currently only creates Arch: all packages - but, the Arch: all packages it
 builds change depending on the architecture doing the build.  If you build
 on ia64, you'll get the systemimager-boot-ia64-standard deb.  If you build
-on i386, you'll get the systemimager-boot-i386-standard deb instead.  Buildds
+on i386, you'll get the systemimager-boot-i386-standard deb instead.  Builds
 won't deal with this, so the maintainer gets to build on all architectures
 by hand.  All files need to be uploaded as one build, so the .changes and
 .dsc files have to be tweaked by hand.
