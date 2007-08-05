@@ -444,7 +444,7 @@ if (!$quiet) {
 }
 
 # Send the completion signal to the remote rsync daemon.
-system('rsync ' . $source_host . '::' . $SystemImager::Common::rsync_magic_string . '>/dev/null 2>&1');
+system('rsync ' . "rsync://${source_host}:${port}/" . $SystemImager::Common::rsync_magic_string . '/ >/dev/null 2>&1');
 
 if(!$quiet) {
     print "\nPress <Enter> to continue...";
