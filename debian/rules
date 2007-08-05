@@ -75,9 +75,6 @@ debian/control:	debian/control.in debian/control.arch.in
 	         debian/control.arch.in >> debian/control; \
         done
 
-debian/systemimager-boot-$(ARCH)-standard.postinst: debian/systemimager-boot-arch-standard.postinst.in
-	cat $< > $@
-
 clean:
 	dh_testdir
 	dh_testroot
