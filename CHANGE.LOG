@@ -48,6 +48,18 @@
 - added systemconfigurator >= 2.2.9 dependency (required for by kexec
   stuff)
 
+3.8.2
+--------------------------------------------------------------------------------
+- fixed a bug in the monitoring: REBOOTED state was not properly
+  reported in some minimal image (without the command which)
+- added "--config FILE" option to si_prepareclient and si_mkbootpackage
+  (and removed from si_mkautoinstalldisk: the option must be used in
+  commands that explicitly create an initrd.img from initrd_template) 
+- do not hard-code common patterns of exclusion in si_getimage (created
+  the configuration file /etc/systemimager/getimage.exclude)
+- si_getimage didn't stop correctly the rsync daemon in the golden
+  client, using rsync over ssh for the image retrieval
+
 3.8.1
 --------------------------------------------------------------------------------
 - added the support of cpio initramfs for UYOK
