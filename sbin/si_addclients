@@ -145,7 +145,7 @@ if ($script) {
 $domain_name = lc $domain_name;
 
 my $all_parameters_set = 0;
-if (defined($hosts) and defined($ip_range) and defined($script)) {
+if (defined($hosts) and defined($script)) {
     $all_parameters_set = 1;
 }
 
