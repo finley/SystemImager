@@ -675,8 +675,10 @@ sub _read_partition_info_and_prepare_parted_commands {
             print $out qq(END_MB=$endMB{$m}\n);
 
             my $swap = '';
-            if ($flags{$m} =~ /swap/) {
-                $swap = 'linux-swap ';
+            if ($flags{$m}) {
+                if ($flags{$m} =~ /swap/) {
+                    $swap = 'linux-swap ';
+                }
             }
 
             if($p_type{$m} eq "extended") {
