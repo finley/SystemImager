@@ -507,8 +507,8 @@ endif
 	rm $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source/README.unstable
 	perl -pi -e "s/^%define\s+ver\s+\d+\.\d+\.\d+.*/%define ver $(VERSION)/" \
 		$(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source/systemimager.spec
-	find . -type f -exec chmod ug+r  {} \;
-	find . -type d -exec chmod ug+rx {} \;
+	find $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source -type f -exec chmod ug+r  {} \;
+	find $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source -type d -exec chmod ug+rx {} \;
 	cd $(TOPDIR)/tmp && tar -ch systemimager-$(VERSION)-complete_source | bzip2 > systemimager-$(VERSION)-complete_source.tar.bz2
 	@echo
 	@echo "complete source tarball has been created in $(TOPDIR)/tmp"
@@ -533,8 +533,8 @@ endif
 	rm $(TOPDIR)/tmp/systemimager-$(VERSION)/README.unstable
 	perl -pi -e "s/^%define\s+ver\s+\d+\.\d+\.\d+.*/%define ver $(VERSION)/" \
 		$(TOPDIR)/tmp/systemimager-$(VERSION)/systemimager.spec
-	find . -type f -exec chmod ug+r  {} \;
-	find . -type d -exec chmod ug+rx {} \;
+	find $(TOPDIR)/tmp/systemimager-$(VERSION) -type f -exec chmod ug+r  {} \;
+	find $(TOPDIR)/tmp/systemimager-$(VERSION) -type d -exec chmod ug+rx {} \;
 	cd $(TOPDIR)/tmp && tar -ch systemimager-$(VERSION) | bzip2 > systemimager-$(VERSION).tar.bz2
 	@echo
 	@echo "source tarball has been created in $(TOPDIR)/tmp"
