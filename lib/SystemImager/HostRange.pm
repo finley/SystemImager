@@ -23,12 +23,16 @@ package SystemImager::HostRange;
 
 use strict;
 use Socket;
+use XML::Simple;
 
 # Maximum number of concurrent sessions (public).
 our $concurrents = 32;
 
 # Number of active concurrent sessions.
 my $workers = 0;
+
+# Cluster topology.
+our $database = "/etc/systemimager/cluster.xml";
 
 # Usage:
 # thread_pool_spawn($prog, $opts, $cmd, @hosts);
@@ -145,6 +149,35 @@ sub expand_range {
 		my $prefix = '0' x $zeros;
 		$$expanded_hosts{"$start_root$prefix$suffix$start_domain"}++;
 	}
+}
+
+# Usage:
+# my @hosts = expand_groups($host_groups_string)
+# Description:
+#       Expand host groups into hostnames identified by the $host_groups_string
+#       and the group definitions in /etc/systemimager/cluster.xml.
+sub expand_groups
+{
+	my $grouplist = shift;
+
+	# Parse XML database.
+	my $xml = XMLin($database, ForceArray => 1);
+
+	my $global_image = $xml->{'base_image'}[0];
+	unless (defined($global_image)) {
+		die("ERROR: global base image undefined in cluster.xml!\n");
+	}
+
+        # Resolve the list of groups or nodenames.
+	my @ret = ();
+	foreach my $in (split(/,| |\n/, $grouplist)) {
+	        foreach my $group (@{$xml->{'group'}}) {
+			if (($group->{'name'}[0] eq $in) or ($in eq $global_image)) {
+				push(@ret, @{$group->{'node'}});
+			}
+		}
+	}
+	return @ret;
 }
 
 # Usage:

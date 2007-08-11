@@ -28,6 +28,7 @@
     <arg><option>-help</option></arg>
     <arg><option>-version</option></arg>
     <arg><option>-hosts <replaceable>HOST_LIST</replaceable></option></arg>
+    <arg><option>-groups <replaceable>GROUP_LIST</replaceable></option></arg>
     <arg><option>-ip-range <replaceable>IP_LIST</replaceable></option></arg>
     <arg><option>-domainname <replaceable>DOMAINNAME</replaceable></option></arg>
     <arg><option>-script <replaceable>SCRIPT</replaceable></option></arg>
@@ -129,6 +130,19 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
+	<term><option>-groups <replaceable>GROUP_LIST</replaceable></option></term>
+	<listitem>
+	  <para>
+            List of target groups (defined in B</etc/systemimager/cluster.xml>).
+	    List can be separated by comma, spaces or new line and can include
+            ranges.
+          </para>
+          <para>
+            Example:  Login,Storage,Compute
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
 	<term><option>-domainname <replaceable>DOMAINNAME</replaceable></option></term>
 	<listitem>
 	  <para>
@@ -192,7 +206,7 @@
 
     <para>
       <command>si_getimage</command>(8), <command>si_mkdhcpserver</command>(8),
-      <command>si_mkdhcpstatic</command>(8)
+      <command>si_mkdhcpstatic</command>(8), /etc/systemimager/cluster.xml
     </para>
 
     <para>More details can be found in the <citetitle>SystemImager

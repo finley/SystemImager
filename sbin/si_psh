@@ -42,6 +42,10 @@ Options: (options can be presented in any order and can be abbreviated)
                         Every line can include one or more ranges
                         (e.g. "node001-node256,node300 node400").
 
+ --groups, -g=LIST      List of target groups (defined in
+                        /etc/systemimager/cluster.xml). List can be
+                        separated by comma, spaces or new line.
+
  --timeout, -t=NUM      Set the timeout of the ssh sessions (default=15s).
 
  --ssh-user, -l=USER    Run the command as user USER.
@@ -58,6 +62,7 @@ GetOptions(
 	"max|m=i"		=> \my $concurrents,
 	"hosts|n=s"		=> \my $hostlist,
 	"hosts-file|f=s"	=> \my $hostlist_file,
+	"groups|g=s"		=> \my $grouplist,
 	"timeout|t=i"		=> \my $timeout,
 	"ssh-user|l=s"		=> \my $ssh_user,
 ) or die("$help_info");
@@ -79,11 +84,17 @@ if (@ARGV) {
 	$cmd = join(' ', @ARGV)
 }
 
+# Evaluate target hosts.
 my @hosts = ();
 if ($hostlist) {
 	# Expand host ranges.
-	@hosts = SystemImager::HostRange::expand_range_list($hostlist);
-} elsif ($hostlist_file) {
+	push(@hosts, SystemImager::HostRange::expand_range_list($hostlist));
+}
+if ($grouplist) {
+	# EXpand host groups.
+	push(@hosts, SystemImager::HostRange::expand_groups($grouplist));
+}
+if ($hostlist_file) {
 	# Read input file.
 	open(IN, "<$hostlist_file") ||
 		die("error: could't read $hostlist_file!\n");
@@ -98,8 +109,9 @@ if ($hostlist) {
 		}
 	}
 	# Convert hosts hash into a list.
-	@hosts = sort(keys(%expanded_hosts));
-} else {
+	push(@hosts, sort(keys(%expanded_hosts)));
+}
+unless (@hosts) {
 	die("error: no host defined!\nTry \"--help\" for more options.\n");
 }
 
@@ -181,6 +193,11 @@ ranges (e.g. "node001-node256,node300 node400").
 File that contains the list of the target hosts.
 Every line can include one or more ranges (e.g. "node001-node256,node300 node400").
 
+=item B<--groups, -g LIST>
+
+List of target groups (defined in B</etc/systemimager/cluster.xml>). List can be
+separated by comma, spaces or new line.
+
 =item B<--timeout | -t NUM>
 
 Set the timeout of the ssh sessions (default=15s).
@@ -191,7 +208,7 @@ Run the command as user USER.
 
 =head1 SEE ALSO
 
-systemimager(8), si_pcp(8), si_pushinstall(8)
+systemimager(8), si_pcp(8), si_pushinstall(8), /etc/systemimager/cluster.xml
 
 =head1 AUTHOR
 
