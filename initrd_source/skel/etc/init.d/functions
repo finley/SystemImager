@@ -1294,7 +1294,15 @@ choose_autoinstall_script() {
 
     # Did we really find one, or just exit the loop without a 'break'
     if [ ! -e $SCRIPTNAME ]; then
-        logmsg "FATAL: I can't find ${SCRIPTNAME}!"
+        logmsg "FATAL: couldn't find any of the following autoinstall scripts!"
+        logmsg "---"
+        logmsg ${SCRIPTNAMES}
+        logmsg "---"
+	logmsg "Be sure that at least one of the scripts above exists in"
+        logmsg "the autoinstall scripts directory on your image server."
+        logmsg
+        logmsg "See also: si_mkautoinstallscript(8)."
+        shellout
     fi
     logmsg "Using autoinstall script: ${SCRIPTNAME}"
 }
@@ -1307,17 +1315,9 @@ run_autoinstall_script() {
     logmsg run_autoinstall_script
 
     # Run the autoinstall script.
-    if [ -f $SCRIPTNAME ]; then
-        chmod 755 $SCRIPTNAME || shellout
-        logmsg ">>> $SCRIPTNAME"
-        $SCRIPTNAME || shellout
-    else
-        logmsg
-        logmsg "FATAL: Your autoinstall script doesn't appear to exist: $SCRIPTNAME"
-        logmsg "       Be sure this script exists in the autoinstall scripts directory"
-        logmsg "       on your image server."
-        shellout
-    fi
+    chmod 755 $SCRIPTNAME || shellout
+    logmsg ">>> $SCRIPTNAME"
+    $SCRIPTNAME || shellout
 }
 #
 ################################################################################
