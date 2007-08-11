@@ -473,6 +473,11 @@ fi
 cat /etc/mtab | grep -v '/dev/ram' | grep -v -E '^\/dev\s+\/a\/dev\s' | sed 's,/a/*,/,g' | sort -u > /a/etc/mtab
 
 export PATH=/usr/local/sbin:/usr/local/bin:$PATH
+logmsg "Detecting systemconfigurator:"
+logmsg "---"
+chroot /a/ systemconfigurator --version || \
+    logmsg "WARNING: systemconfigurator was not found in the image $IMAGENAME"
+logmsg "---"
 ##SYSTEMCONFIGURATOR##
 #
 ################################################################################

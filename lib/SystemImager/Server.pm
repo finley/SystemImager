@@ -1724,7 +1724,7 @@ sub write_sc_command {
     print $out "[ -z \$DEVICE ] && DEVICE=eth0\n";
     
     my $sc_excludes_to = "/etc/systemimager/systemconfig.local.exclude";
-    my $sc_cmd = "chroot /a/ systemconfigurator --excludesto=$sc_excludes_to";
+    my $sc_cmd = "chroot /a/ systemconfigurator --verbose --excludesto=$sc_excludes_to";
     if ($ip_assignment_method eq "replicant") {
 	$sc_cmd .= " --runboot";
     }
