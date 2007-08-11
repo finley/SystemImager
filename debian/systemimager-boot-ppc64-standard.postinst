@@ -1,8 +1,8 @@
 #!/bin/sh
-
-ARCH=`uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/`
-INITRD_TEMPLATE_DIR=/usr/share/systemimager/boot/${ARCH}/standard/initrd_template
-
-cd ${INITRD_TEMPLATE_DIR}/dev && MAKEDEV std tty1 tty2 tty3 tty4 tty5 tty6
+if [ -e /tftpboot/kernel -o -e /tftpboot/initrd.img ]; then
+	echo
+	echo "WARNING: remember to update the kernel and initrd.img in /tftpboot!"
+	echo
+fi
 
 #DEBHELPER#
