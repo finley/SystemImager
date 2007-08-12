@@ -36,7 +36,6 @@ How pre-install scripts are processed
   - $BASE_HOSTNAME  (Ie: compute)
   - $HOSTNAME       (Ie: compute07)
   - all
-  - $OVERRIDE
   
   Scripts are ordered and executed first by class, then by number within 
   a class.  If you have multiple $OVERRIDE directories, they will be 
