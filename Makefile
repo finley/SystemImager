@@ -270,6 +270,9 @@ install_server:	install_server_man 	\
 	$(SI_INSTALL) -m 644 --backup --text \
 		$(TOPDIR)/var/lib/systemimager/scripts/pre-install/99all.harmless_example_script \
 		$(AUTOINSTALL_SCRIPT_DIR)/pre-install/
+	$(SI_INSTALL) -m 644 --backup --text \
+		$(TOPDIR)/var/lib/systemimager/scripts/pre-install/README \
+		$(AUTOINSTALL_SCRIPT_DIR)/pre-install/
 
 	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_SCRIPT_DIR)/post-install
 	$(SI_INSTALL) -m 644 --backup --text \

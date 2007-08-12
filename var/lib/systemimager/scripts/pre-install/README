@@ -1,0 +1,46 @@
+#
+# $Id$
+#
+
+Quick Start
+------------------------------------------------------------------------------
+A script named like this one (99all.harmless_example_script) -- that 
+is, two digits followed by "all", then a period ".", then a 
+description "harmless_example_script" -- will run for _all_ of your 
+clients and images. 
+
+
+How pre-install scripts are processed
+------------------------------------------------------------------------------
+- They are run before the auto-install script (that means before the
+  partitioning and the imaging) and they can perform any pre-imaging
+  configurations. 
+
+
+- Each script is tested for non-zero exit status, and the install will
+  "shellout" if any of the scripts exits with non-zero status.
+
+
+- Scripts should be named in this way:
+  
+  Two digit number to indicate order within a class.
+  | Class name.
+  | |  Period, followed by your description of the script.
+  | |  |
+  | |  |
+  v v  v
+  99all.harmless_example_script
+
+  Classes include: 
+  - $IMAGENAME      (Ie: my_compute_image)
+  - $BASE_HOSTNAME  (Ie: compute)
+  - $HOSTNAME       (Ie: compute07)
+  - all
+  - $OVERRIDE
+  
+  Scripts are ordered and executed first by class, then by number within 
+  a class.  If you have multiple $OVERRIDE directories, they will be 
+  executed in the order specified in your auto-install script.
+
+
+# /* vi: set et ts=2 tw=72: */
