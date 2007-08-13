@@ -42,7 +42,8 @@ SERVER_MAN = si_addclients.8 				\
 			si_pushinstall.8		\
 			si_pushoverrides.8		\
 			si_mkautoinstalldisk.8		\
-			si_netbootmond.8
+			si_netbootmond.8		\
+			si_clusterconfig.8
 
 CLIENT_MAN = si_prepareclient.8 si_updateclient.8
 
@@ -86,6 +87,9 @@ si_mkautoinstalldisk.8: $(TOPDIR)/sbin/si_mkautoinstalldisk
 	pod2man --release=$(SYSTEMIMAGER_VERSION) -s 8 -c "SystemImager" $< $@
 
 si_netbootmond.8: $(TOPDIR)/sbin/si_netbootmond
+	pod2man --release=$(SYSTEMIMAGER_VERSION) -s 8 -c "SystemImager" $< $@
+
+si_clusterconfig.8: $(TOPDIR)/sbin/si_clusterconfig
 	pod2man --release=$(SYSTEMIMAGER_VERSION) -s 8 -c "SystemImager" $< $@
 
 %.5 %.8:	%.sgml %.content.sgml

@@ -452,7 +452,9 @@ EOF
     if ($hosts) {
         create_links($hosts, $script, $autoinstall_script_dir);
     } elsif ($groups) {
-        create_links_group($groups, $script, $autoinstall_script_dir);
+	foreach my $g (split(/,| |\n/, $groups)) {
+	        create_links($g, $script, $autoinstall_script_dir);
+	}
     } else {
         die "ERROR: something unexpected... groups or hosts were not defined!\n";
     }
@@ -496,17 +498,6 @@ sub create_links {
     }
 }
 
-
-# Usage: create_links_group($grouplist, $script, $autoinstall_script_dir);
-sub create_links_group {
-
-    my ($grouplist, $script, $autoinstall_script_dir) = @_;
-
-    foreach my $node (SystemImager::HostRange::expand_groups($grouplist)) {
-        my $cmd = "cd $autoinstall_script_dir && ln -sf $script.master $node.sh";
-        !system($cmd) or die "Can't $cmd!";
-    }
-}
 
 # Usage: $ret = add_hosts_entries($ip_range, $domain_name, @all_hosts);
 sub add_hosts_entries { 

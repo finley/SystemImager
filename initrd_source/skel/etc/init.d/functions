@@ -171,6 +171,8 @@ write_variables() {
         echo "BITTORRENT_POLLING_TIME=$BITTORRENT_POLLING_TIME" >> /tmp/variables.txt
         echo "BITTORRENT_SEED_WAIT=$BITTORRENT_SEED_WAIT"       >> /tmp/variables.txt
         echo "BITTORRENT_UPLOAD_MIN=$BITTORRENT_UPLOAD_MIN"     >> /tmp/variables.txt
+
+        echo "GROUPNAMES=\"$GROUPNAMES\""     >> /tmp/variables.txt
     fi
 }
 #
@@ -1248,6 +1250,13 @@ get_base_hostname() {
 #
 ################################################################################
 #
+get_group_name() {
+    [ -f ${SCRIPTS_DIR}/cluster.txt ] && \
+        GROUPNAMES=`grep ${HOSTNAME} ${SCRIPTS_DIR}/cluster.txt | cut -d: -f2 | tr "\n" ' '` 
+}
+#
+################################################################################
+#
 choose_autoinstall_script() {
 
     logmsg
@@ -1259,6 +1268,10 @@ choose_autoinstall_script() {
     # compute.master. -BEF-
     #
     get_base_hostname
+
+    # Get group name (defined in /etc/systemimager/cluster.xml on the image
+    # server). -AR-
+    get_group_name
 
     # 
     # If SCRIPTNAME is specified as a kernel append, or via local.cfg, then use that script.
@@ -1273,15 +1286,21 @@ choose_autoinstall_script() {
         # 
         # If SCRIPTNAME was not specified, choose one, in order of preference.  First hit wins.
         # Order of preference is:
-        #   IMAGENAME               oscar_image.master  (if this is specified, then the user _really_ wants it)
-        #   HOSTNAME.sh             oscar_node187.sh    (then most specific -- the node)
-        #   BASE_HOSTNAME.master    oscar_node.sh       (to least specific -- the class)
+        #   HOSTNAME                (i.e. node001.sh)
+        #   GROUPNAMES              (i.e. Login.sh) - see /etc/systemimager/cluster.xml on the image server
+        #   BASE_HOSTNAME           (i.e. node.sh)
+        #   IMAGENAME               (i.e. ubuntu7_04.sh)
         #
-        if [ ! -z $IMAGENAME ]; then
-            SCRIPTNAMES="${SCRIPTS_DIR}/${IMAGENAME}.master ${SCRIPTS_DIR}/${HOSTNAME}.sh ${SCRIPTS_DIR}/${BASE_HOSTNAME}.master"
-        else
-            SCRIPTNAMES="${SCRIPTS_DIR}/${HOSTNAME}.sh ${SCRIPTS_DIR}/${BASE_HOSTNAME}.master"
-        fi
+        [ ! -z $HOSTNAME ] && \
+            SCRIPTNAMES="${SCRIPTNAMES} ${SCRIPTS_DIR}/${HOSTNAME}.sh ${SCRIPTS_DIR}/${HOSTNAME}.master"
+        for GROUPNAME in $GROUPNAMES; do
+            SCRIPTNAMES="${SCRIPTNAMES} ${SCRIPTS_DIR}/${GROUPNAME}.sh ${SCRIPTS_DIR}/${GROUPNAME}.master"
+        done
+        unset GROUPNAME
+        [ ! -z $BASE_HOSTNAME ] && \
+            SCRIPTNAMES="${SCRIPTNAMES} ${SCRIPTS_DIR}/${BASE_HOSTNAME}.sh ${SCRIPTS_DIR}/${BASE_HOSTNAME}.master"
+        [ ! -z $IMAGENAME ] && \
+            SCRIPTNAMES="${SCRIPTNAMES} ${SCRIPTS_DIR}/${IMAGENAME}.sh ${SCRIPTS_DIR}/${IMAGENAME}.master"
     fi
 
     #
@@ -1346,14 +1365,22 @@ run_pre_install_scripts() {
 
     get_base_hostname
 
+    # Get group name (defined in /etc/systemimager/cluster.xml on the image
+    # server). -AR-
+    get_group_name
+
     if [ -e "${SCRIPTS_DIR}/pre-install/" ]; then
 
         cd ${SCRIPTS_DIR}/pre-install/
 
+        PRE_INSTALL_SCRIPTS="$PRE_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]all\..*"`"
         PRE_INSTALL_SCRIPTS="$PRE_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]${IMAGENAME}\..*"`"
         PRE_INSTALL_SCRIPTS="$PRE_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]${BASE_HOSTNAME}\..*"`"
+        for GROUPNAME in ${GROUPNAMES}; do
+            PRE_INSTALL_SCRIPTS="$PRE_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]${GROUPNAME}\..*"`"
+        done
+        unset GROUPNAME
         PRE_INSTALL_SCRIPTS="$PRE_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]${HOSTNAME}\..*"`"
-        PRE_INSTALL_SCRIPTS="$PRE_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]all\..*"`"
 
         # Now, to get rid of those pesky newlines. -BEF-
         PRE_INSTALL_SCRIPTS=`echo $PRE_INSTALL_SCRIPTS | tr '\n' ' '`
@@ -1386,6 +1413,10 @@ run_post_install_scripts() {
 
     get_base_hostname
 
+    # Get group name (defined in /etc/systemimager/cluster.xml on the image
+    # server). -AR-
+    get_group_name
+
     if [ -e "${SCRIPTS_DIR}/post-install/" ]; then
 
         # make a copy of variables.txt available to post-install scripts -BEF-
@@ -1393,15 +1424,13 @@ run_post_install_scripts() {
 
         cd ${SCRIPTS_DIR}/post-install/
 
+        POST_INSTALL_SCRIPTS="$POST_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]all\..*"`"
         POST_INSTALL_SCRIPTS="$POST_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]${IMAGENAME}\..*"`"
         POST_INSTALL_SCRIPTS="$POST_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]${BASE_HOSTNAME}\..*"`"
-        POST_INSTALL_SCRIPTS="$POST_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]${HOSTNAME}\..*"`"
-        POST_INSTALL_SCRIPTS="$POST_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]all\..*"`"
-
-        for OVERRIDE in $OVERRIDES
-        do
-            POST_INSTALL_SCRIPTS="$POST_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]${OVERRIDE}\..*"`"
+        for GROUPNAME in ${GROUPNAMES}; do
+            POST_INSTALL_SCRIPTS="$POST_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]${GROUPNAME}\..*"`"
         done
+        POST_INSTALL_SCRIPTS="$POST_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]${HOSTNAME}\..*"`"
 
         # Now, to get rid of those pesky newlines. -BEF-
         POST_INSTALL_SCRIPTS=`echo $POST_INSTALL_SCRIPTS | tr '\n' ' '`

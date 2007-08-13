@@ -1,0 +1,222 @@
+#!/usr/bin/perl -w
+#
+#  "SystemImager"
+#
+#  Copyright (C) 2007 Andrea Righi <a.righi@cineca.it>
+
+use lib "USR_PREFIX//lib/systemimager/perl";
+use strict;
+use Getopt::Long;
+use File::Copy;
+use XML::Simple;
+use SystemImager::Config;
+use SystemImager::HostRange;
+use vars qw($config);
+
+my $VERSION = "SYSTEMIMAGER_VERSION_STRING";
+
+my $program_name = "si_clusterconfig";
+
+my $version_info = << "EOF";
+$program_name (part of SystemImager) v$VERSION
+
+Copyright (C) 2007 Andrea Righi <a.righi\@cineca.it>
+
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+EOF
+
+my $help_info = $version_info . <<"EOF";
+
+Usage: $program_name [OPTION]...
+
+Options: (options can be presented in any order and can be abbreviated)
+ --help, -h             Display this output.
+
+ --version, -v          Display version and copyright information.
+
+EOF
+
+Getopt::Long::Configure("posix_default");
+Getopt::Long::Configure("no_gnu_compat");
+Getopt::Long::Configure("bundling");
+
+GetOptions(
+	"help|h"		=> \my $help,
+	"version|v"		=> \my $version,
+) or die("$help_info");
+
+select(STDERR);
+$| = 1;
+select(STDOUT);
+$| = 1;
+
+### BEGIN evaluate commad line options ###
+
+if ($help) {
+	print "$help_info";
+	exit(0);
+}
+
+if ($version) {
+	print "$version_info";
+	exit(0);
+}
+
+### END evaluate commad line options ###
+
+# This program must be run as root.
+unless ($< == 0) {
+	die("FATAL: $program_name requires root privileges.\n");
+}
+
+# Get cluster configuration file.
+my $database = $SystemImager::HostRange::database;
+
+# Get a valid system editor.
+my $editor = '';
+if (defined($ENV{'EDITOR'})) {
+	$editor = $ENV{'EDITOR'};
+} else {
+	chomp($editor = `(type -p vim || type -p vi || type -p nano || type -p nano-tiny) 2>/dev/null`);
+}
+
+while (1) {
+	# Edit the configuration file.
+	system "$editor $database";
+
+	# Check syntax after editing.
+	eval { XMLin($database, ForceArray => 1) };
+	if ($@) {
+		print STDERR "ERROR: syntax error in $database!\n";
+		print STDERR "$@\n";
+		print "Edit again? (y | n) ";
+		chomp(my $ans = <STDIN>);
+		if (lc($ans) eq 'y') {
+			next;
+		} else {
+			print STDERR "WARNING: $database still contains errors! Please fix it.\n";
+			exit(1);
+		}
+	}
+	last;
+}
+
+my $script_dir = $config->autoinstall_script_dir();
+my $output_file;
+
+# Cache XML info into a plain text file. This is needed to easily parse this
+# file in the busybox environment when the clients are imaging.
+$output_file = $script_dir . '/cluster.txt';
+print "Caching XML configuration to $output_file... ";
+if (!XML_info_to_plain_file($output_file)) {
+	print "[  OK  ]\n";
+} else {
+	die("\nERROR: couldn't cache XML info to $output_file!\n");
+}
+
+# Synchronize /etc/hosts to the hosts file read by the imaging clients.
+# XXX: not really dependent on cluster.xml, but it's better to synchronize
+# /etc/hosts with the hosts known by SystemImager sometimes... -AR-
+$output_file = $script_dir . '/hosts';
+print "Synchronizing /etc/hosts to $output_file... ";
+if (!sync_etc_hosts($output_file)) {
+	print "[  OK  ]\n";
+} else {
+	die("\nERROR: couldn't synchronize /etc/hosts to $output_file!\n");
+}
+
+# Well done.
+exit(0);
+
+# Usage: XML_info_to_plain_file($output_file)
+# Description:
+#   Convert the cluster configuration defined from the XML file
+#   /etc/systemimager/cluster.xml into a plain txt file given as argument.
+sub XML_info_to_plain_file
+{
+	my $dest = shift;
+
+	my $xml = XMLin($database, ForceArray => 1);
+
+	open(OUT, ">$dest") or return -1;
+
+	# Resolve the list of groups in nodenames.
+	foreach my $group (@{$xml->{'group'}}) {
+		foreach my $node (@{$group->{'node'}}) {
+			print OUT $node . ':' . $group->{'name'}[0] . "\n";
+		}
+	}
+	close(OUT);
+
+	return 0;
+}
+
+# Usage: sync_etc_hosts($destination_file)
+# Description:
+#   Copy /etc/hosts to $destination_file if they differ.
+sub sync_etc_hosts
+{
+	my $dest = shift;
+
+	system "diff /etc/hosts $dest >/dev/null 2>&1";
+	if ($?) {
+		copy('/etc/hosts', $dest) or return -1;
+	}
+	return 0;
+}
+
+__END__
+
+=head1 NAME
+
+si_clusterconfig - Configure SystemImager cluster topology
+
+=head1 SYNOPSIS
+
+si_clusterconfig [OPTION]...
+
+=head1 DESCRIPTION
+
+B<si_clusterconfig> is a wrapper to edit the configuration of the cluster
+topology, defined in the XML file B</etc/systemimager/cluster.xml>.
+
+After the editing this command provides to automatically update all the required
+informations, that depends on the cluster configuration (groups, hosts, etc).
+
+=head1 OPTIONS
+
+=over 8
+ 
+=item B<--help | -h>
+
+Display a short help.
+
+=item B<--version | -V>
+
+Display version and copyright information.
+
+=head1 SEE ALSO
+
+systemimager(8), si_pcp(8), si_psh(8), /etc/systemimager/cluster.xml
+
+=head1 AUTHOR
+
+Andrea Righi <a.righi@cineca.it>.
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2003 by Andrea Righi <a.righi@cineca.it>.
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+=cut
+

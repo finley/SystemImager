@@ -32,14 +32,13 @@ How pre-install scripts are processed
   99all.harmless_example_script
 
   Classes include: 
-  - $IMAGENAME      (Ie: my_compute_image)
-  - $BASE_HOSTNAME  (Ie: compute)
-  - $HOSTNAME       (Ie: compute07)
-  - all
+  - all             (all clients)
+  - $IMAGENAME      (i.e. ubuntu7_04)
+  - $GROUPNAMES     (i.e. Login)
+  - $BASE_HOSTNAME  (i.e. node)
+  - $HOSTNAME       (i.e. node07)
   
   Scripts are ordered and executed first by class, then by number within 
-  a class.  If you have multiple $OVERRIDE directories, they will be 
-  executed in the order specified in your auto-install script.
-
+  a class.
 
 # /* vi: set et ts=2 tw=72: */
