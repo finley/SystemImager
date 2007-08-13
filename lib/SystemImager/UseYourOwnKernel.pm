@@ -113,7 +113,9 @@ sub create_uyok_initrd() {
             my $image_dir = $config->default_image_dir;
 
             unless (-d "$image_dir/$image") {
-                die "error: $image is not a valid image! use si_lsimage to see the list of available images.\n";
+                print STDERR "error: $image is not a valid image! use si_lsimage to see the list of available images.\n";
+                print STDERR "Remember: the option --image can be used only on the image server.\n";
+                exit(1);
             }
 
             # Autodetect custom kernel and modules directory in the image.
