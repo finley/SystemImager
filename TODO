@@ -1,40 +1,72 @@
 #
 # $Id$
-#  vi:set filetype=conf tw=72:
+#  vi:set filetype=conf tw=80:
 #
 
-4) need to remove discover and discover-data bits, and all references to
-   them.  this functionality now provided by udev + hotplug
+Priority classification:
+(9)  next minor release
+(8)  next release
+(7)  as soon as possible
+(6)  soon
+(5)  should be included
+(4)  nice to have
+(3)  consider including
+(2)  maybe not
+(1)  probably not
+(-)  unclassified
 
-   (postponed -- don't think having discover there hurts anything, and
-    it may help -BEF-)
+TODO list for SystemImager
+==========================
 
-5) consider using modprobe instead of insmod for re-loading modules
+(9) Introduce the concept of host group.
 
-    (non-critical, just something to contemplate -BEF-)
+(7) Include mkrecoveryISO in the standard release.
 
-6) Add a kernel-devel tree package, like those that ship with RedHat, 
-   Ubuntu, etc. There's just enough data to build boot-kernel modules 
-   against, but nothing else. 
-   
-   Ie: kernel-headers. (Jeremy Siadal suggestion)
+(5) Implement si_getdebuginfo to generate a tar.gz containing all the system
+    informations that could help to debug user problems (systemimager versions,
+    partitioning schema, kernel, distribution used, etc). In this way a user
+    that needs support can simply post the tarball to the list and we'll have
+    immediately an overview of the system.
 
-7) A boel_binaries_template, just like the initrd, so additional
-   drivers can be dropped into /lib/modules/<kernel_ver>/. 
-   (Jeremy Siadal suggestion)
+(4) Move all LVM info into the <lvm> section of autoinstallscript.conf.
 
-8) Standard kernel to have only modular drivers for:
-   - all network devices
-   - all storage devices
-   (Jeremy Siadal suggestion)
+    - No longer store any lvm info in the <disk> and/or <raid> sections
+    - Collect PV info and store it in the <lvm_group> section
+        <lvm>
+          <lvm_group>
+            <pv device="/dev/sda1" />
+            <pv device="/dev/md0"  />
+            <pv device="/dev/md1"  />
+            <lv name="swap" size="524288K" />
+            <etc...>
+          </lvm_group>
+        </lvm>
 
-9) Include mkrecoveryISO in the standard release.
+    - Need to modify:
+        - Server.pm
+        - Common.pm
+        - autoinstallscript.template
 
-10) si_mkbootmedia.  Status?
+(4) date > /tmp/start-time at start of install
+    date > /tmp/end-time at end of install
 
-11) si_mkautoinstallcd -- deal with fs sizing more gracefully
+    Then:
+    echo Your install took started at `cat /tmp/start-time` 
+    echo and completed at `cat /tmp/end-time`
 
-13) improved tftpbooting architecture
+(4) si_monitortk improvements (thanks Bernard for the good suggestions):
+    - support multiple virtual console instances at the same time
+    - add a popup menu on the client entries to display detailed info
+      and perform special actions (like open virtual console, check
+      availability of the node, delete entry, etc)
+    - left click on the header to sort clients
+    - tabbed view for virtual console
+
+(4) Implement a GUI to perform all the common systemimager operations
+
+(4) Implement pre/post-update scripts (to be ran with si_updateclient)
+
+(4) Improved tftpbooting architecture
 
     Location:
         ln -s /usr/share/systemimager/boot /tftpboot
@@ -176,128 +208,9 @@ your choices:
             APPEND vga=extended
             initrd=i386/i386-dapper-server/initrd.img root=/dev/ram
 
-18) Move all LVM info into the <lvm> section of autoinstallscript.conf.
+(2) Add a kernel-devel tree package, like those that ship with RedHat, 
+    Ubuntu, etc. There's just enough data to build boot-kernel modules 
+    against, but nothing else. 
 
-    - No longer store any lvm info in the <disk> and/or <raid> sections
-    - Collect PV info and store it in the <lvm_group> section
-        <lvm>
-          <lvm_group>
-            <pv device="/dev/sda1" />
-            <pv device="/dev/md0"  />
-            <pv device="/dev/md1"  />
-            <lv name="swap" size="524288K" />
-            <etc...>
-          </lvm_group>
-        </lvm>
-
-    - Need to modify:
-        - Server.pm
-        - Common.pm
-        - autoinstallscript.template
-
-19) Test --dry-run option.  Email with details:
-
-    Subject: [Sisuite-users] si_updateclient: differences b/w with and without --dry-run
-
-
-
-21) Scott Jackson:  ethernet re-ordering
-
-    The most time consuming was not a SI problem per-se, but a problem
-    in the recent Ubuntu packages where the system reorders the ethernet
-    adapter names upon reboot. For instance on a node that has two
-    ethernet adapters, on the install the ethernet adapters show up as
-    eth0 and eth1, but after the reboot they are eth2 and eth3 with it
-    being more or less random which one is the one attached to the
-    network (the one with the lowest mac address). I tried several
-    things but eventually had to copy in a modified
-    /etc/network/interfaces in the post-install script which used an
-    "external mapping function" to map the lowest mac address to the
-    primary alias.  The resulting interfaces file is demonstrated below.
-
-        root@node17:~# cat /etc/network/interfaces
-        # The loopback interface
-        # Interfaces that comes with Debian Potato does not like to see
-        # "auto" option before "iface" for the first device specified.
-        iface lo inet loopback
-        auto lo
-
-        auto eth0 eth1 eth2 eth3
-        mapping eth0 eth1 eth2 eth3
-                script /etc/network/set-first-primary.pl
-
-        iface primary inet dhcp
-
-
-    The content of the "external mapping function" is as follows:
-
-        root@node17:/etc/network# cat set-first-primary.pl
-        #!/usr/bin/perl -w
-        use strict;
-
-        my @macs =3D ();
-        my %mac =3D ();
-
-        open IFCONFIG, "/sbin/ifconfig -a | grep '^eth' |" or die "Unable to run
-        ifconfig -a: $!\n";
-        foreach my $line (<IFCONFIG>)
-        {
-            my ($nic, $link, $desc, $hwaddr, $mac) =3D split /\s+/, $line;
-            $mac =3D lc $mac;
-            push @macs, $mac;
-            $mac{$nic} =3D $mac;
-        }
-
-        @macs =3D sort @macs;
-
-        if ($mac{$ARGV[0]} eq $macs[0]) { print "primary\n"; exit 0; }
-        else { exit 1; }
-
-
-    Craziness!
-
-    So, now we will begin writing support scripts around the systemimager
-    framework to dynamically provision nodes.
-
-    When I get really bold, I may try to create an image based on centos or
-    some such OS so we can actually switch OSes:)
-
-    Please let me know when there are deb packages for 3.7.3.
-
-    THANK YOU VERY MUCH for all of your knowledgeable and willing help!
-
-    Scott
-
-    Scott Jackson
-    Cluster Resources, Inc.
-
-24) date > /tmp/start-time at start of install
-    date > /tmp/end-time at end of install
-
-    Then:
-    echo Your install took started at `cat /tmp/start-time` 
-    echo and completed at `cat /tmp/end-time`
-
-25) test fat fs creation
-
-28) si_monitortk improvements (thanks Bernard for the good suggestions):
-    - support multiple virtual console instances at the same time
-    - add a popup menu on the client entries to display detailed info
-      and perform special actions (like open virtual console, check
-      availability of the node, delete entry, etc)
-    - left click on the header to sort clients
-    - tabbed view for virtual console
-
-31) Investigate libtorrent: http://libtorrent.rakshasa.no/ to see if it is a
-    feasible replacement for the python bittorrent libraries
-
-35) Implement si_getdebuginfo to generate a tar.gz containing all the system
-    informations that could help to debug user problems (systemimager versions,
-    partitioning schema, kernel, distribution used, etc). In this way a user
-    that needs support can simply post the tarball to the list and we'll have
-    immediately an overview of the system.
-    
-36) Implement a GUI to perform all the common systemimager operations
-
-37) Implement pre/post-update scripts (to be ran with si_updateclient)
+    Ie: kernel-headers. (Jeremy Siadal suggestion)
 
