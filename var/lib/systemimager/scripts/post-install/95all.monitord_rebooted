@@ -54,6 +54,16 @@ EOF
         init_d_file=/etc/init.d/systemimager-monitor-firstboot
 	cat << EOF > $init_d_file
 #!/bin/bash
+### BEGIN INIT INFO
+# Provides: systemimager-monitor-firstboot
+# Required-Start: $network $local_fs $syslog
+# Required-Stop:
+# Default-Start:  3 5
+# Default-Stop:
+# Short-Description: Report the REBOOTED state to the image server
+# Description: Send the informations to the si_monitor daemon on the image
+#              to set the REBOOTED state for this correctly installed client.
+### END INIT INFO
 
 set -e
 
