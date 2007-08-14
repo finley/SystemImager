@@ -28,6 +28,11 @@ write_monitor_msg() {
     netcat=`(type -p netcat || type -p nc) 2>/dev/null`
     [ -z $netcat ] && return
 
+    # Create /etc/systemimager if it doesn't exist.
+    if [ ! -d /etc/systemimager ]; then
+        mkdir -p /etc/systemimager
+    fi
+
     rebooted_state_file=/etc/systemimager/si_monitor.client.rebooted
     cat << EOF > $rebooted_state_file
 #!/bin/bash
