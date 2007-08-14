@@ -170,24 +170,36 @@ bt_prepare($OVERRIDE_DIR, $overrides, 'override');
 my $ARCH = (uname())[4];
 $ARCH =~ s/i.86/i386/;
 
-my $boel_binaries = "$TARBALL_DIR/boel_binaries.tar.gz";
-print "Preparing torrent file for BOEL binaries...\n";
-# Create the symbolic link into the image directory.
-symlink($config->autoinstall_boot_dir() . '/' . $ARCH .
-    '/standard/boel_binaries.tar.gz', $boel_binaries) 
-    if (! -e $boel_binaries);
-# Make .torrent file.
-if ($maketorrent =~ "btmakemetafile") {
-    system "$maketorrent $boel_binaries http://$image_server:$tracker_port/announce --target $TORRENT_DIR/boel_binaries.tar.gz.torrent";
+# Get all the available boel_binaries (for all the supported architectures).
+my @archs_dir;
+if (opendir(DIR, $config->autoinstall_boot_dir())) {
+     @archs_dir = grep {!/^\.$|^\.\.$/} readdir(DIR);
 } else {
-    system "$maketorrent http://$image_server:$tracker_port/announce $boel_binaries --target $TORRENT_DIR/boel_binaries.tar.gz.torrent";
+    die("error: couldn't open " . $config->autoinstall_boot_dir() . "\n");
 }
-if ($?) {
-    die "ERROR: cannot create BOEL binaries torrent file!\n";
+foreach my $arch (@archs_dir) {
+    print "Preparing torrent file for BOEL binaries for $arch...\n";
+    my $boel_binaries = $config->autoinstall_boot_dir() . '/' . $arch .
+                        '/standard/boel_binaries.tar.gz';
+    my $boel_binaries_link = "${TARBALL_DIR}/${arch}-boel_binaries.tar.gz";
+    # Create a symlink into the image directory.
+    if ((-e $boel_binaries) && (! -e $boel_binaries_link)) {
+        symlink($boel_binaries, $boel_binaries_link);
+    }
+    # Make .torrent file.
+    if ($maketorrent =~ "btmakemetafile") {
+        system "$maketorrent $boel_binaries_link http://$image_server:$tracker_port/announce --target $TORRENT_DIR/$arch-boel_binaries.tar.gz.torrent";
+    } else {
+        system "$maketorrent http://$image_server:$tracker_port/announce $boel_binaries_link --target $TORRENT_DIR/$arch-boel_binaries.tar.gz.torrent";
+    }
+    if ($?) {
+        print STDERR "ERROR: cannot create BOEL binaries torrent file for $arch! skipping it.\n";
+        next;
+    }
+    # symlink is required by old versions of BitTorrent.
+    symlink($boel_binaries_link, $TORRENT_DIR . "/" . basename($boel_binaries_link));
+    print "done.\n";
 }
-# symlink is required by old versions of BitTorrent.
-symlink($boel_binaries, $TORRENT_DIR . "/" . basename($boel_binaries));
-print "done.\n";
 
 # Starting first image seeder.
 print "Starting first image server seeder...\n";
