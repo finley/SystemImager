@@ -234,7 +234,7 @@ sub create_uyok_initrd() {
         }
 
         unless ($filesystem) {
-            $filesystem = choose_file_system_for_new_initrd($uname_r);
+            $filesystem = choose_file_system_for_new_initrd($uname_r, $custom_kernel);
         }
 
         #
@@ -545,16 +545,24 @@ sub _mk_tmp_dir() {
 sub choose_file_system_for_new_initrd() {
 
         my $uname_r = shift;
+        my $custom_kernel = shift;
 
         # Always use cpio initramfs with 2.6 kernels.
         if ($uname_r =~ /^2\.6/) {
             return "cpio";
         }
 
+        # 2.4 world...
+
+        # The auto-detection of a valid filesystem works only on the golden
+        # client and when a custom kernel is not specified.
+        if ($custom_kernel) {
+            goto OUT;
+        }
+
+        # Try to detect a valid filesystem to be used for the initrd.img.
         my @filesystems;
         my $fs;
-
-        # Try to detect a valid filesystem to be used fo the initrd.img.
         my $modules_dir = "/lib/modules/$uname_r";
 
         my $file = "/proc/filesystems";
@@ -624,10 +632,14 @@ sub choose_file_system_for_new_initrd() {
         # cpio
         unless(defined $fs) {
             # Couldn't determine an appropriate filesystem: fallback to cpio initramfs. -AR-
-            $fs = 'cpio';
+            goto OUT;
         }
 
         return $fs;
+OUT:
+        print STDERR "WARNING: couldn't find a valid filesystem for initrd.img!\n";
+        print STDERR "WARNING: trying with cpio initramfs...\n";
+        return 'cpio';
 }
 
 
