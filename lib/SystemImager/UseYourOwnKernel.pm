@@ -546,6 +546,11 @@ sub choose_file_system_for_new_initrd() {
 
         my $uname_r = shift;
 
+        # Always use cpio initramfs with 2.6 kernels.
+        if ($uname_r =~ /^2\.6/) {
+            return "cpio";
+        }
+
         my @filesystems;
         my $fs;
 
