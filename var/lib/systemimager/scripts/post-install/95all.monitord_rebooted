@@ -36,8 +36,7 @@ write_monitor_msg() {
     rebooted_state_file=/etc/systemimager/si_monitor.client.rebooted
     cat << EOF > $rebooted_state_file
 #!/bin/bash
-echo "$send_msg" | $netcat -w $TIMEOUT $MONITOR_SERVER $MONITOR_PORT
->$rebooted_state_file
+(echo "$send_msg" | $netcat -w $TIMEOUT $MONITOR_SERVER $MONITOR_PORT) && >$rebooted_state_file
 EOF
     chmod 700 $rebooted_state_file
 
