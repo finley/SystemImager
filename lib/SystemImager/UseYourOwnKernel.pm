@@ -106,9 +106,11 @@ sub create_uyok_initrd() {
             close(FILE);
         }
 
-        my $uname_r = get_uname_r();
-
-        if ($image) {
+        # Detect the kernel release.
+        my $uname_r;
+        if ($custom_kernel) {
+            $uname_r = _get_kernel_release($custom_kernel);
+        } elsif ($image) {
             # Get SystemImager directories.
             my $image_dir = $config->default_image_dir;
 
@@ -120,8 +122,10 @@ sub create_uyok_initrd() {
 
             # Autodetect custom kernel and modules directory in the image.
             $custom_kernel = _choose_kernel_file( '', "$image_dir/$image" );
-            my $kernel_release = _get_kernel_release($custom_kernel);
-            $custom_mod_dir = "$image_dir/$image/lib/modules/$kernel_release";
+            $uname_r = _get_kernel_release($custom_kernel);
+            $custom_mod_dir = "$image_dir/$image/lib/modules/$uname_r";
+        } else {
+            $uname_r = get_uname_r();
         }
 
         my $module_dir;
@@ -227,6 +231,10 @@ sub create_uyok_initrd() {
         eval { mkpath($boot_dir, 0, 0755) };
         if ($@) {
                 print "Couldn't create $boot_dir: $@";
+        }
+
+        unless ($filesystem) {
+            $filesystem = choose_file_system_for_new_initrd($uname_r);
         }
 
         #
@@ -536,9 +544,12 @@ sub _mk_tmp_dir() {
 
 sub choose_file_system_for_new_initrd() {
 
+        my $uname_r = shift;
+
         my @filesystems;
         my $fs;
-        my $uname_r = get_uname_r();
+
+        # Try to detect a valid filesystem to be used fo the initrd.img.
         my $modules_dir = "/lib/modules/$uname_r";
 
         my $file = "/proc/filesystems";
@@ -739,14 +750,7 @@ sub _create_new_initrd($$) {
 
         my $staging_dir = shift;
         my $boot_dir = shift;
-        my $filesystem = shift;
-
-        my $fs;
-        if ($filesystem) {
-            $fs = $filesystem;
-        } else {
-            $fs = choose_file_system_for_new_initrd();
-        }
+        my $fs = shift;
 
         if($fs eq "ext3") { 
                 # use ext2 as the filesystem (same as ext3, but no journal)
@@ -769,7 +773,7 @@ sub _create_new_initrd($$) {
         } elsif ($fs eq 'cpio') {
             _create_initrd_cpio($staging_dir, $boot_dir);
         } else {
-            die("FATAL: Unable to create initrd using $fs\n");
+            die("FATAL: Unable to create initrd using filesystem: $fs\n");
         }
 
         # Print initrd size information.
