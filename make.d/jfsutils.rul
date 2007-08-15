@@ -1,13 +1,16 @@
 #
 # $Id$
+#   vi: set filetype=make:
 #
+
 JFSUTILS_VERSION := 1.1.7
 JFSUTILS_DIR := jfsutils-$(JFSUTILS_VERSION)
 JFSUTILS_TARBALL := $(JFSUTILS_DIR).tar.gz
 #JFSUTILS_URL := http://jfs.sourceforge.net/project/pub/$(JFSUTILS_TARBALL)
 JFSUTILS_URL := http://download.systemimager.org/pub/jfsutils/$(JFSUTILS_TARBALL)
-MKJFS_BINARY := $(SRC_DIR)/$(JFSUTILS_DIR)/mkfs/jfs_mkfs
 JFSUTILS_PATCHES := $(shell ls $(PATCH_DIR)/jfsutils.*.patch 2>/dev/null | sort)
+MKJFS_BINARY := $(SRC_DIR)/$(JFSUTILS_DIR)/mkfs/jfs_mkfs
+JFS_TUNE_BINARY := $(SRC_DIR)/$(JFSUTILS_DIR)/tune/jfs_tune
 
 ALL_SOURCE += $(SRC_DIR)/$(JFSUTILS_TARBALL)
 
@@ -25,7 +28,7 @@ install_standard_jfsutils:	jfsutils
 PHONY += jfsutils
 jfsutils:	$(MKJFS_BINARY)
 
-$(MKJFS_BINARY):	$(SRC_DIR)/$(JFSUTILS_TARBALL)
+$(MKJFS_BINARY) $(JFS_TUNE_BINARY):	$(SRC_DIR)/$(JFSUTILS_TARBALL)
 	[ -d $(SRC_DIR)/$(JFSUTILS_DIR) ] || \
 	  ( cd $(SRC_DIR) && zcat $(JFSUTILS_TARBALL) | tar xv && \
 		( cd $(JFSUTILS_DIR) && cat $(JFSUTILS_PATCHES) < /dev/null | patch -p1 ) && \
