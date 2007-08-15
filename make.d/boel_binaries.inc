@@ -38,6 +38,7 @@ $(BOEL_BINARIES_TARBALL):	$(BC_DIR).build \
 				$(MKJFS_BINARY) \
 				$(JFS_TUNE_BINARY) \
 				$(MKXFS_BINARY) \
+				$(XFS_DB_BINARY) \
 				$(CTCS_BINARY) \
 				$(OPENSSH_SBINARIES) \
 				$(OPENSSH_BINARIES) \
@@ -74,6 +75,7 @@ $(BOEL_BINARIES_TARBALL):	$(BC_DIR).build \
 	install -m 644 $(OPENSSH_CONF_FILES) 			$(BOEL_BINARIES_DIR)/etc/ssh
 ifdef MKXFS_BINARY
 	install -m 755 --strip $(MKXFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
+	install -m 755 --strip $(XFS_DB_BINARY) $(BOEL_BINARIES_DIR)/sbin/
 endif
 	#
 	# 2005-01-18 Andrea Righi
