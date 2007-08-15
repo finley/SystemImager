@@ -278,6 +278,7 @@ install_server:	install_server_man 	\
 	$(SI_INSTALL) -m 644 --backup --text \
 		$(TOPDIR)/var/lib/systemimager/scripts/post-install/99all.harmless_example_script \
 		$(TOPDIR)/var/lib/systemimager/scripts/post-install/95all.monitord_rebooted \
+		$(TOPDIR)/var/lib/systemimager/scripts/post-install/10all.fix_swap_uuids\
 		$(AUTOINSTALL_SCRIPT_DIR)/post-install/
 	$(SI_INSTALL) -m 644 --backup --text \
 		$(TOPDIR)/var/lib/systemimager/scripts/post-install/README \

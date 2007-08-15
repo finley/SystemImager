@@ -1,0 +1,113 @@
+#!/usr/bin/perl -w
+#
+#  "SystemImager"
+#
+#  Copyright (C) 2007 Andrea Righi <a.righi@cineca.it>
+
+use strict;
+
+select(STDERR);
+$| = 1;
+select(STDOUT);
+$| = 1;
+
+# Data structures for swap partitions.
+my $swap_struct = 'a1024IIIa16a16';
+my $swap_struct_size = length(pack($swap_struct));
+my $hex_regexp = "(\\w\\w)" x 16;
+my $uuid_regexp = "\\w" x 8 . '-' . ("\\w" x 4 . '-') x 3 . "\\w" x 12;
+
+# Look in /etc/fstab for swap partitions with UUID to be fixed.
+open(FSTAB, '<', '/etc/fstab') or
+	die("error: couldn't open /etc/fstab for reading!\n");
+foreach (<FSTAB>) {
+	chomp;
+	# Remove initial space separators.
+	$_ =~ s/^\s*//;
+	# Remove final space separators.
+	$_ =~ s/\s*$//;
+	# Remove comments.
+	$_ =~ s/^#.*//;
+	# Skipping empty lines.
+	next if ($_ =~ m/^\s*$/);
+
+	if (/^UUID=($uuid_regexp).*swap.*# (.*)$/) {
+		print "setting UUID=$1 for swap device $2...\n";
+		set_swap_uuid($2, $1);
+	}
+}
+close(FSTAB);
+
+# Well done.
+exit(0);
+
+# Usage:
+#     set_swap_uuid($dev, $uuid_string)
+# Description:
+#     Set the $uuid_string as UUID for swap device $dev.
+sub set_swap_uuid 
+{
+	my $dev = shift;
+	my $UUID = shift;
+
+	my $buf = "";
+	my $bytes;
+
+	# Convert UUID in hex.
+	$UUID =~ s/-//g;
+	$UUID = pack('H*', join('', ($UUID =~ /$hex_regexp/)));
+
+	# Read swap header.
+	open(SWAPDEV, '<', $dev) or die "error: could not open $dev for reading: $!\n";
+	$bytes = sysread(SWAPDEV, $buf, $swap_struct_size, 0);
+	close(SWAPDEV);
+
+	if ($bytes != $swap_struct_size) {
+		die "error: couldn't read swap header from $dev.\n";
+	}
+
+	my @swap_header = unpack($swap_struct, $buf);
+
+	# Skip if we're using an old style swap area.
+	if ($swap_header[1] < 1) {
+		print STDERR "WARNING: old style swap area (no changes have been made).\n";
+		return;
+	}
+
+	# Replace UUID.
+	$swap_header[4] = $UUID;
+	$buf = pack($swap_struct, @swap_header);
+
+	# Write swap header.
+	open(SWAPDEV, '+<', $dev) or die "error: could not open $dev for reading: $!\n";
+	binmode(SWAPDEV);
+	my $bytes_written = syswrite(SWAPDEV, $buf, $swap_struct_size, 0);
+	close(SWAPDEV);
+
+	if ($bytes != $swap_struct_size) {
+		die "error: couldn't write swap header to $dev.\n";
+	}
+
+	# Dump swap header.
+	print "=== $dev ===\n";
+	dump_swap_header(@swap_header);
+	print "\n";
+}
+
+# Usage:
+#     dump_swap_header($dev)
+# Description:
+#     Print to STDOUT the swap header of the device $dev.
+sub dump_swap_header
+{
+	my @swap_header = @_;
+
+	print "version = " . sprintf("%d", $swap_header[1]) . "\n";
+	print "last_page = " . sprintf("%u", $swap_header[2]) . "\n";
+	print "nr_badpages = " . sprintf("%u", $swap_header[3]) . "\n";
+	print "uuid = " . sprintf("%02x"x4 . "-%02x%02x"x3 . "-" . "%02x"x6, unpack('C16', $swap_header[4])) . "\n";
+	print "volume_name = " . $swap_header[5] . "\n";
+}
+
+__END__
+

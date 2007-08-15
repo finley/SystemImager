@@ -1551,8 +1551,10 @@ sub _write_out_new_fstab_file {
             next;
         }
         my $mount_dev = $xml_config->{fsinfo}->{$line}->{mount_dev};
-        unless ($mount_dev) 
-            { $mount_dev = $xml_config->{fsinfo}->{$line}->{real_dev}; }
+        my $real_dev = $xml_config->{fsinfo}->{$line}->{real_dev};
+        unless ($mount_dev) {
+            $mount_dev = $real_dev;
+        }
         my $mp        = $xml_config->{fsinfo}->{$line}->{mp};
         my $options   = $xml_config->{fsinfo}->{$line}->{options};
         my $fs        = $xml_config->{fsinfo}->{$line}->{fs};
@@ -1574,6 +1576,15 @@ sub _write_out_new_fstab_file {
             #
             if (defined $pass)  
                 { print $out qq(\t$pass); }
+        }
+
+        # Store the real device as a comment.
+        if ($real_dev) {
+            if ($real_dev ne $mount_dev) {
+                print $out qq(\t# $real_dev);
+            }
+        } else {
+            print STDERR "WARNING: real_dev is not defined for $mount_dev!\n";
         }
 
         print $out qq(\n);
