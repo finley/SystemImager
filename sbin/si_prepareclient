@@ -1171,7 +1171,7 @@ sub wait_for_completion
         return 1;
     }
     while (my $line = <LOG_FILE>) {
-        if ($line =~ m/rsync error: received SIGUSR1 or SIGINT/) {
+        if ($line =~ m/rsync error: received SIG/) {
             # rsync daemon was stopped or killed by an external operation.
             $ret = 1;
             last;
