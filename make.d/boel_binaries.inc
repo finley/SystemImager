@@ -34,6 +34,7 @@ $(BOEL_BINARIES_TARBALL):	$(BC_DIR).build \
 				$(UTIL_LINUX_DIR).build \
 				$(MDADM_BINARIES) \
 				$(MKREISERFS_BINARY) \
+				$(REISERFSTUNE_BINARY) \
 				$(MKJFS_BINARY) \
 				$(MKXFS_BINARY) \
 				$(CTCS_BINARY) \
@@ -63,6 +64,7 @@ $(BOEL_BINARIES_TARBALL):	$(BC_DIR).build \
 	install -m 755 --strip $(UTIL_LINUX_BINARIES)	$(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(MDADM_BINARIES) 		$(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(MKREISERFS_BINARY) 	$(BOEL_BINARIES_DIR)/sbin/mkreiserfs
+	install -m 755 --strip $(REISERFSTUNE_BINARY) 	$(BOEL_BINARIES_DIR)/sbin/reiserfstune
 	install -m 755 --strip $(MKJFS_BINARY) 			$(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(OPENSSH_BINARIES) 		$(BOEL_BINARIES_DIR)/usr/bin
 	install -m 755 --strip $(OPENSSH_SBINARIES) 		$(BOEL_BINARIES_DIR)/usr/sbin

@@ -1436,6 +1436,28 @@ sub _write_out_mkfs_commands {
                 print $out qq(logmsg "$cmd"\n);
                 print $out "$cmd\n";
 
+                if ($mount_dev) {
+                    # add LABEL if necessary
+                    if ($mount_dev =~ /LABEL=/) {
+                        my $label = $mount_dev;
+                        $label =~ s/LABEL=//;
+
+                        $cmd = "reiserfstune -l $label $real_dev";
+                        print $out qq(logmsg "$cmd"\n);
+                        print $out "$cmd\n";
+                    }
+
+                    # add UUID if necessary
+                    if ($mount_dev =~ /UUID=/) {
+                        my $uuid = $mount_dev;
+                        $uuid =~ s/UUID=//;
+
+                        $cmd = "reiserfstune -u $uuid $real_dev";
+                        print $out qq(logmsg "$cmd"\n);
+                        print $out "$cmd\n";
+                    }
+                }
+
                 # mkdir
                 $cmd = "mkdir -p /a$mp || shellout";
                 print $out qq(logmsg "$cmd"\n);
