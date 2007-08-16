@@ -492,9 +492,14 @@ $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source.tar.bz2.sign:	$(TOPDIR)/tm
 	cd $(TOPDIR)/tmp && gpg --verify systemimager-$(VERSION)-complete_source.tar.bz2.sign 
 
 $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source.tar.bz2: systemimager.spec
-	rm -fr tmp
-	mkdir -p tmp/
-	svn export . $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source
+	rm -fr $(TOPDIR)/tmp
+	if [ -d $(TOPDIR)/.svn ]; then \
+		mkdir -p $(TOPDIR)/tmp; \
+		svn export . $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source; \
+	else \
+		make distclean && mkdir -p $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source; \
+		(cd $(TOPDIR) && tar --exclude=tmp -cvf - .) | (cd $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source && tar -xvf -); \
+	fi
 	cd $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source && ./configure
 	$(MAKE) -C $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source get_source
 	#
@@ -525,9 +530,14 @@ $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2.sign:	$(TOPDIR)/tmp/systemimager-$
 	cd $(TOPDIR)/tmp && gpg --verify systemimager-$(VERSION).tar.bz2.sign 
 
 $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2: systemimager.spec
-	rm -fr tmp
-	mkdir -p tmp/
-	svn export . $(TOPDIR)/tmp/systemimager-$(VERSION)
+	rm -fr $(TOPDIR)/tmp
+	if [ -d $(TOPDIR)/.svn ]; then \
+		mkdir -p $(TOPDIR)/tmp; \
+		svn export . $(TOPDIR)/tmp/systemimager-$(VERSION); \
+	else \
+		make distclean && mkdir -p $(TOPDIR)/tmp/systemimager-$(VERSION); \
+		(cd $(TOPDIR) && tar --exclude=tmp -cvf - .) | (cd $(TOPDIR)/tmp/systemimager-$(VERSION) && tar -xvf -); \
+	fi
 ifeq ($(UNSTABLE), 1)
 	cd $(TOPDIR)/tmp/systemimager-$(VERSION) && cp README README.tmp
 	cd $(TOPDIR)/tmp/systemimager-$(VERSION) && cp README.unstable README
