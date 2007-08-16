@@ -42,6 +42,7 @@ $nisdomain="";
 # use the long options module to allow us to use, well, long options ;)
 use lib "USR_PREFIX/lib/systemimager/perl";
 use Getopt::Long;
+use Socket;
 use SystemImager::Server;
 use SystemImager::Common;
 use SystemImager::Config;
@@ -309,6 +310,10 @@ if($ssh_user) {
 
   # and change the source host to point to localhost so we can use the port forwarding
   $source_host="127.0.0.1";
+
+  # Hold the ssh session open until all the transfers are done.
+  socket(SOCK, PF_INET, SOCK_STREAM, 0);
+  connect(SOCK, sockaddr_in($port, inet_aton($source_host)));
 }
 
 
@@ -445,6 +450,8 @@ if (!$quiet) {
 
 # Send the completion signal to the remote rsync daemon.
 system('rsync ' . "rsync://${source_host}:${port}/" . $SystemImager::Common::rsync_magic_string . '/ >/dev/null 2>&1');
+# Close ssh tunnel.
+close(SOCK) if ($ssh_user); 
 
 if(!$quiet) {
     print "\nPress <Enter> to continue...";
