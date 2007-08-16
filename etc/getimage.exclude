@@ -14,3 +14,6 @@
 /etc/lvm/.cache
 /etc/lvm/backup/*
 /etc/lvm/archive/*
+
+# Skip persistent names associated to the network interfaces (Ubuntu).
+/etc/iftab
