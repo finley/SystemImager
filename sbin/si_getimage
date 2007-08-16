@@ -600,6 +600,9 @@ elsif($ip_assignment_method == "3") { $ip_assignment_method = "replicant"; }
 unless ($auto_install_script_conf) {
     $auto_install_script_conf = "${imagedir}/etc/systemimager/autoinstallscript.conf";
 }
+unless (-f $auto_install_script_conf) {
+    die "ERROR: I can't find the autoinstallscript.conf file. See autoinstallscript.conf(8) for details.\n";
+}
 
 SystemImager::Server->validate_auto_install_script_conf( $auto_install_script_conf );
 

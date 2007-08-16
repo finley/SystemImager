@@ -204,23 +204,10 @@ if ($auto_install_script_conf) {
         die   "$auto_install_script_conf.\n$get_help\n\n";
     }
 } else {
-
     # If an autoinstallscript was not specified, use default for autoinstallscript.conf. -BEF-
     $auto_install_script_conf = "${imagedir}/etc/systemimager/autoinstallscript.conf";
-
-    # If an autoinstallscript conf file already exists, use it.  This is to prevent us from
-    # perpetually updating from partitionschemes in an image.
     unless (-f $auto_install_script_conf) {
-        # Test for a partitionschemes dir, and update if needed.
-        if (-d "${imagedir}/etc/systemimager/partitionschemes") {
-            SystemImager::Common->write_auto_install_script_conf_header($auto_install_script_conf);
-            SystemImager::Server->upgrade_partition_schemes_to_generic_style($imagedir, "etc/systemimager");
-            SystemImager::Common->save_filesystem_information("${imagedir}/etc/fstab", $auto_install_script_conf);
-            SystemImager::Common->write_auto_install_script_conf_footer($auto_install_script_conf);
-        } else {
-            die "I can't find an autoinstallscript.conf file, or a partitionschemes directory!\n";
-        }
-
+        die "ERROR: I can't find the autoinstallscript.conf file. See autoinstallscript.conf(8) for details.\n";
     }
 }
 
