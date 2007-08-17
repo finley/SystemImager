@@ -22,7 +22,7 @@ Description: Automate GNU/Linux installs and upgrades over a network
 
 Package: systemimager-client
 Architecture: all
-Depends: ${perl:Depends}, file, rsync, netcat, systemimager-initrd-template-alpha | systemimager-initrd-template-i386 | systemimager-initrd-template-ia64 | systemimager-initrd-template-parisc | systemimager-initrd-template-ppc64-iSeries | systemimager-initrd-template-ppc64-ps3 | systemimager-initrd-template-ppc64 | systemimager-initrd-template-ppc64ydl | systemimager-initrd-template-ppc | systemimager-initrd-template-x86_64, systemimager-common (= ${source:Version}), systemconfigurator (>= 2.2.9)
+Depends: ${perl:Depends}, file, rsync, netcat, systemimager-initrd-template-alpha | systemimager-initrd-template-i386 | systemimager-initrd-template-ia64 | systemimager-initrd-template-parisc | systemimager-initrd-template-ppc64-iSeries | systemimager-initrd-template-ppc64-ps3 | systemimager-initrd-template-ppc64 | systemimager-initrd-template-ppc64ydl | systemimager-initrd-template-ppc | systemimager-initrd-template-amd64, systemimager-common (= ${source:Version}), systemconfigurator (>= 2.2.9)
 Description: Utilities for creating an image and upgrading client machines
  SystemImager is a set of utilities for installing GNU/Linux software images to
  clients machines over the network.  Images are stored in flat files on the

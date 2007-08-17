@@ -12,6 +12,8 @@ BUILD_DIR = .
 UPSTREAM_TARBALL = $(PKG)_$(VERSION).tar.gz
 
 ARCH = $(shell dpkg --print-architecture)
+UNAME_ARCH = $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/)
+
 BOOTPKG = $(PKG)-boot-$(ARCH)-standard
 INITRD_TEMPLATE_PKG = $(PKG)-initrd-template-$(ARCH)
 
@@ -24,7 +26,7 @@ NON_BOOT_PKGS := -p $(PKG)-client \
                  -p $(PKG)-server-flamethrowerd \
                  -p $(PKG)-server-bittorrent
 
-BOOTARCHS = alpha i386 ia64 parisc ppc64-iSeries ppc64-ps3 ppc64 ppc64ydl ppc x86_64
+BOOTARCHS = alpha i386 ia64 parisc ppc64-iSeries ppc64-ps3 ppc64 ppc64ydl ppc amd64 
 
 PATCHES=$(sort $(shell find $(CURDIR)/patches -name "*.patch"))
 
@@ -109,7 +111,7 @@ install-arch:	build-arch
 	#
 	# systemimager-boot-$(ARCH)-standard.postinst
 	#
-	cd $(CURDIR)/debian/$(BOOTPKG)/usr/share/systemimager/boot/$(ARCH)/standard/initrd_template/dev && \
+	cd $(CURDIR)/debian/$(BOOTPKG)/usr/share/systemimager/boot/$(UNAME_ARCH)/standard/initrd_template/dev && \
 		rm -f tty1 && \
 		rm -f tty2 && \
 		rm -f tty3 && \
@@ -120,9 +122,9 @@ install-arch:	build-arch
 		rm -f null
 
 	# Copy the needed files into the initrd_template package.
-	mkdir -p $(CURDIR)/debian/$(INITRD_TEMPLATE_PKG)/usr/share/systemimager/boot/$(ARCH)/standard
-	mv $(CURDIR)/debian/$(BOOTPKG)/usr/share/systemimager/boot/$(ARCH)/standard/initrd_template \
-	   $(CURDIR)/debian/$(INITRD_TEMPLATE_PKG)/usr/share/systemimager/boot/$(ARCH)/standard
+	mkdir -p $(CURDIR)/debian/$(INITRD_TEMPLATE_PKG)/usr/share/systemimager/boot/$(UNAME_ARCH)/standard
+	mv $(CURDIR)/debian/$(BOOTPKG)/usr/share/systemimager/boot/$(UNAME_ARCH)/standard/initrd_template \
+	   $(CURDIR)/debian/$(INITRD_TEMPLATE_PKG)/usr/share/systemimager/boot/$(UNAME_ARCH)/standard
 
 install-indep:	build-indep
 	dh_testdir
