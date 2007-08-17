@@ -1253,7 +1253,7 @@ get_base_hostname() {
 #
 get_group_name() {
     [ -f ${SCRIPTS_DIR}/cluster.txt ] && \
-        GROUPNAMES=`grep ${HOSTNAME} ${SCRIPTS_DIR}/cluster.txt | cut -d: -f2 | sort -u | tr "\n" ' '` 
+        GROUPNAMES=`grep ${HOSTNAME} ${SCRIPTS_DIR}/cluster.txt | cut -d: -f2 | sort -ru | tr "\n" ' '` 
 }
 #
 ################################################################################
