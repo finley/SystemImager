@@ -27,7 +27,7 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 EOF
 
 my $help_info = $version_info . << "EOF";
-Usage: $program_name [OPTIONS] ... GROUP_NAME | NODE_NAME ...
+Usage: $program_name [OPTIONS] ... GROUP_NAME | NODE_NAME | NODE_RANGE ...
 
 Options:
  --help, -h             Display this output.
@@ -168,7 +168,15 @@ foreach my $node (keys %{$single_nodes}) {
 	# If a node belongs to more groups, sort the groups alphabetically
 	# (this means that the most important is the first in alphabetical
 	# order).
-	foreach my $group (sort {$a->{'name'}[0] cmp $b->{'name'}[0]} @{($single_nodes->{$node})}) {
+	my @groups = sort {$a->{'name'}[0] cmp $b->{'name'}[0]} @{($single_nodes->{$node})};
+	if (($#groups > 0) && ($verbose)) {
+		print STDERR "WARNING: client \"$node\" belongs to many host groups: " .
+			     join(',', map {$_->{'name'}[0]} @groups) . "\n";
+		print STDERR "WARNING: in case of file overlaps only the files from group " .
+			     "\"" . $groups[0]->{'name'}[0] . "\"" .
+			     " will be distributed.\n";
+	}
+	foreach my $group (@groups) {
 		my $override =  $overrides . '/' . $group->{'base_image'}[0];
 		if (-d $override) {
 			$group_list .= $override . '/ ';
