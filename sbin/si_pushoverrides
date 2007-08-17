@@ -114,36 +114,78 @@ unless (defined($global_image)) {
 	die("ERROR: global base image undefined in cluster.xml!\n");
 }
 
-# Execute updates.
-foreach my $in (@ARGV) {
+# Get unique arguments.
+my @arg_list = SystemImager::HostRange::sort_unique(
+	split(/ |\n|,/, join(' ', @ARGV))
+);
+
+# For each single node get the list of groups the node belongs to.
+my $single_nodes = {};
+foreach my $arg (@arg_list) {
 	my $found = 0;
-	foreach my $group (@{$xml->{'group'}}) {
-		if (($group->{'name'}[0] eq $in) or ($in eq $global_image)) {
-			print "*"x25 . " " . $group->{'name'}[0] . " " . "*"x25 . "\n";
-			update_nodes(
-				$global_image,
-				$group->{'base_image'}[0],
-				@{$group->{'node'}},
-			);
-			$found = 1;
-		} else {
+	my @nodes = SystemImager::HostRange::expand_groups($arg);
+	unless (@nodes) {
+		@nodes = SystemImager::HostRange::expand_range_list($arg);
+	}
+	foreach my $in (@nodes) {
+		foreach my $group (@{$xml->{'group'}}) {
 			foreach my $node (@{$group->{'node'}}) {
 				if ($node eq $in) {
-					print "*"x25 . " $in " . "*"x25 . "\n";
-					update_nodes(
-						$global_image,
-						$group->{'base_image'}[0],
-						$node,
-					);
 					$found = 1;
+					push(@{$single_nodes->{$node}}, $group);
 					last;
 				}
 			}
 		}
 	}
 	unless ($found) {
-		print STDERR "WARNING: \"$in\" is not a valid group or node name!\n";
+		print STDERR "WARNING: \"$arg\" is not a valid group or node name! skipping it.\n";
 	}
+}
+
+# Group the nodes by the same list of overrides, in order to distribute these
+# overrides in parallel to the whole pool of nodes that need them.
+my $grouped_by_overrides;
+foreach my $node (keys %{$single_nodes}) {
+	my $group_list = '';
+
+	# Rsync uses a reverse order preference in case of file overlaps.
+	#
+	# If we need to copy different source file to the same destination file
+	# (overlap) it copies the first occurence only.
+	#
+	# Grouping overrides sorted in order of importance allows to correctly
+	# handle file overlaps between overrides at different hierarchical
+	# levels.
+	#
+	# The hierarchical levels are, in order of importance:
+	#    - hostname (overwrite group and all)
+	#    - group (overwrite all)
+	#    - global image
+	if (-d "$overrides/$node") {
+		$group_list .= "$overrides/$node ";
+	}
+	# If a node belongs to more groups, sort the groups alphabetically
+	# (this means that the most important is the first in alphabetical
+	# order).
+	foreach my $group (sort {$a->{'name'}[0] cmp $b->{'name'}[0]} @{($single_nodes->{$node})}) {
+		my $override =  $overrides . '/' . $group->{'name'}[0];
+		if (-d $override) {
+			$group_list .= $override . ' ';
+		}
+	}
+	# global image is the least important.
+	if (-d  "$overrides/$global_image") {
+		$group_list .= "$overrides/$global_image ";
+	}
+
+	# Add the node to the override group.
+	push(@{$grouped_by_overrides->{$group_list}}, $node)
+}
+
+# Perform the updates (optimally).
+foreach my $group (keys %{$grouped_by_overrides}) {
+	update_nodes($group, @{$grouped_by_overrides->{$group}});
 }
 
 exit(0);
@@ -153,66 +195,17 @@ exit(0);
 #  target nodes.
 #
 # Usage:
-#  update_nodes($global_image_name, $group_image_name, @list_of_nodes);
+#  update_nodes($list_of_file_string, @list_of_nodes);
 #
 sub update_nodes
 {
-	my ($global_image, $group_image, @nodes) = @_;
+	my ($file_str, @nodes) = @_;
 
 	my $base_cmd = "si_pcp $verbose $dry_run $concurrents $timeout";
 	@nodes = SystemImager::HostRange::sort_unique(@nodes);
 
-	# Rsync uses a reverse order preference in case of file
-	# conflicts.
-	#
-	# If we need to copy different source file to the same
-	# destination file it copies the first occurence only.
-	#
-	# Grouping overrides sorted in order of importance allow to
-	# correctly handle file conflicts between overrides at
-	# different hierarchical levels.
-	#
-	# The hierarchical levels are, in order of importance:
-	#    - hostname (overwrite group and all)
-	#    - group (overwrite all)
-	#    - all
-	my @node_group = ();
-	my @file_list = ();
-	foreach my $node (@nodes) {
-		if (-d "$overrides/$node/") {
-			# Serialize nodes that have a private override.
-			push(@file_list, "$overrides/$node/");
-			if (-d "$overrides/$group_image/") {
-				push(@file_list, "$overrides/$group_image/");
-			}
-			if (-d "$overrides/$global_image/") {
-				push(@file_list, "$overrides/$global_image/");
-			}
-			print "--- $node ---\n";
-			my $file_str = join(' ', @file_list);
-			run_cmd("$base_cmd -n $node $file_str /");
-			@file_list = ();
-		} else {
-			# Group nodes that needs the same overrides.
-			push(@node_group, $node);
-		}
-	}
-	unless (@node_group) {
-		return;
-	}
-	if (-d "$overrides/$group_image/") {
-		push(@file_list, "$overrides/$group_image/");
-	}
-	if (-d "$overrides/$global_image/") {
-		push(@file_list, "$overrides/$global_image/");
-	}
-	unless (@file_list) {
-		return;
-	}
 	# Update nodes that needs the same overrides.
-	print "--- $group_image ---\n";
-	my $file_str = join(' ', @file_list);
-	my $node_list = join(',', @node_group);
+	my $node_list = join(',', @nodes);
 	run_cmd("$base_cmd -n $node_list $file_str /");
 }
 
