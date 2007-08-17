@@ -163,20 +163,20 @@ foreach my $node (keys %{$single_nodes}) {
 	#    - group (overwrite all)
 	#    - global image
 	if (-d "$overrides/$node") {
-		$group_list .= "$overrides/$node ";
+		$group_list .= "$overrides/$node/ ";
 	}
 	# If a node belongs to more groups, sort the groups alphabetically
 	# (this means that the most important is the first in alphabetical
 	# order).
 	foreach my $group (sort {$a->{'name'}[0] cmp $b->{'name'}[0]} @{($single_nodes->{$node})}) {
-		my $override =  $overrides . '/' . $group->{'name'}[0];
+		my $override =  $overrides . '/' . $group->{'base_image'}[0];
 		if (-d $override) {
-			$group_list .= $override . ' ';
+			$group_list .= $override . '/ ';
 		}
 	}
 	# global image is the least important.
 	if (-d  "$overrides/$global_image") {
-		$group_list .= "$overrides/$global_image ";
+		$group_list .= "$overrides/$global_image/ ";
 	}
 
 	# Add the node to the override group.

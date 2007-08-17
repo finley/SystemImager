@@ -144,7 +144,7 @@ sub XML_info_to_plain_file
 	# Resolve the list of groups in nodenames.
 	foreach my $group (@{$xml->{'group'}}) {
 		foreach my $node (@{$group->{'node'}}) {
-			print OUT $node . ':' . $group->{'name'}[0] . "\n";
+			print OUT $node . ':' . $group->{'base_image'}[0] . "\n";
 		}
 	}
 	close(OUT);
