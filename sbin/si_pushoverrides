@@ -248,7 +248,7 @@ overrides.
 
 B<si_pushoverrides> accepts a list of group or node names as arguments
 and concurrently synchronizes the content of the associated overrides to
-them, using a server-drien approach.
+them, using a server-driven approach.
 
 The topology of the cluster can be defined in the configuration file
 B</etc/systemimager/cluster.xml>.
@@ -280,6 +280,51 @@ Set the maximum number of concurrent sessions to NUM (default=32).
 =item B<--timeout, -t NUM>
 
 Set the timeout of the sessions (default=15s).
+
+=head1 NOTES
+
+If a node belongs to more groups (defined by si_clusterconfig) sort the groups
+by name in alphabetical order to distribute the overrides. This means that in
+case of file overlaps the first hit wins: the node will receive the file that is
+in the first group.
+
+All the files that do not overlap will be distributed as a union of the groups.
+
+Example:
+
+B<group: Login   = node001,node002 (override Login)>
+
+B<group: Storage = node001,node003 (override RHEL4_Storage)>
+
+Suppose to have the following files into the overrides "Login" and
+"RH4_Storage":
+
+B</var/lib/systemimager/overrides/Login/etc/hosts>
+
+B</var/lib/systemimager/overrides/Login/etc/passwd>
+
+B</var/lib/systemimager/overrides/Login/etc/group>
+
+B</var/lib/systemimager/overrides/Login/etc/shadow>
+
+B</var/lib/systemimager/overrides/RH4_Storage/etc/hosts>
+
+B</var/lib/systemimager/overrides/RH4_Storage/etc/profile>
+
+During the overrides distribution (at the end of the imaging) node001 will
+receive the following files:
+
+B</var/lib/systemimager/overrides/Login/etc/hosts> -E<gt> B</etc/hosts>
+
+B</var/lib/systemimager/overrides/Login/etc/passwd> -E<gt> B</etc/passwd>
+
+B</var/lib/systemimager/overrides/Login/etc/group> -E<gt> B</etc/group>
+
+B</var/lib/systemimager/overrides/Login/etc/shadow> -E<gt> B</etc/shadow>
+
+B</var/lib/systemimager/overrides/RH4_Storage/etc/hosts> (B<skipped!>)
+
+B</var/lib/systemimager/overrides/RH4_Storage/etc/profile> -E<gt> B</etc/profile>
 
 =head1 SEE ALSO
 
