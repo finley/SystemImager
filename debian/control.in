@@ -9,8 +9,8 @@ Standards-Version: 3.7.2
 
 Package: systemimager-server
 Architecture: all
-Depends: ${perl:Depends}, binutils, debianutils (>= 1.7), dosfstools, libappconfig-perl, libxml-parser-perl, libxml-simple-perl, mkisofs, mtools, rsync, systemconfigurator (>= 2.0.1), systemimager-boot-amd64-standard | systemimager-boot-i386-standard | systemimager-boot-ia64-standard, systemimager-common (= ${source:Version})
-Recommends: dhcp3-server | dhcp, syslinux
+Depends: ${perl:Depends}, binutils, debianutils (>= 1.7), dosfstools, libappconfig-perl, libxml-parser-perl, libxml-simple-perl, mkisofs, mtools, rsync, systemconfigurator (>= 2.0.1), systemimager-boot-alpha-standard | systemimager-boot-i386-standard | systemimager-boot-ia64-standard | systemimager-boot-parisc-standard | systemimager-boot-ppc64-iSeries-standard | systemimager-boot-ppc64-ps3-standard | systemimager-boot-ppc64-standard | systemimager-boot-ppc64ydl-standard | systemimager-boot-ppc-standard | systemimager-boot-amd64-standard, systemimager-common (= ${source:Version})
+Recommends: dhcp3-server | dhcp, syslinux, tftp-hpa | atftp, tftpd-hpa | atftpd, openbsd-inetd | xinetd, update-inetd
 Description: Automate GNU/Linux installs and upgrades over a network
  SystemImager is a set of utilities for installing GNU/Linux software images to
  clients machines over the network.  Images are stored in flat files on the
