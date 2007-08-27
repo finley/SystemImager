@@ -1910,7 +1910,8 @@ sub create_autoinstall_script{
                 } else {
                     $overrides = '';
                 }
-                print $MASTER_SCRIPT  q([ -z $OVERRIDES ] && ) . qq(OVERRIDES="$script_name \$GROUPNAMES \$HOSTNAME $overrides"\n);
+                print $MASTER_SCRIPT  q([ -z $OVERRIDES ] && ) .
+                                      qq(OVERRIDES="$script_name \$GROUP_OVERRIDES \$HOSTNAME $overrides"\n);
 	            last SWITCH;
 	        }
 

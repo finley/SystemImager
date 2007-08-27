@@ -173,6 +173,7 @@ write_variables() {
         echo "BITTORRENT_UPLOAD_MIN=$BITTORRENT_UPLOAD_MIN"     >> /tmp/variables.txt
 
         echo "GROUPNAMES=\"$GROUPNAMES\""     >> /tmp/variables.txt
+        echo "GROUP_OVERRIDES=\"$GROUP_OVERRIDES\""     >> /tmp/variables.txt
     fi
 }
 #
@@ -1252,8 +1253,10 @@ get_base_hostname() {
 ################################################################################
 #
 get_group_name() {
-    [ -f ${SCRIPTS_DIR}/cluster.txt ] && \
-        GROUPNAMES=`grep ${HOSTNAME} ${SCRIPTS_DIR}/cluster.txt | cut -d: -f2 | sort -ru | tr "\n" ' '` 
+    if [ -f ${SCRIPTS_DIR}/cluster.txt ]; then
+        [ -z $GROUPNAMES ] && GROUPNAMES=`grep ${HOSTNAME} ${SCRIPTS_DIR}/cluster.txt | cut -d: -f2 | sort -ru | tr "\n" ' '`
+        [ -z $GROUP_OVERRIDES ] && GROUP_OVERRIDES=`grep ${HOSTNAME} ${SCRIPTS_DIR}/cluster.txt | cut -d: -f3 | sort -ru | tr "\n" ' '`
+    fi
 }
 #
 ################################################################################
