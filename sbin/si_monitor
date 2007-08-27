@@ -194,6 +194,9 @@ async {
 			if ($xml) {
 				my $xml_raw = XMLout($xml);
 				sync_db($xml_raw);
+				# Do not sync more than once in 10sec, otherwise
+				# we could hog the machine...
+				sleep(10);
 			}
 		}
 		$wakeup_sync_thread->dequeue();
@@ -246,10 +249,6 @@ while (1) {
 	$_ = <$client>;
 	if ($_) {
 		chomp;
-		if ($log_level > 2) {
-			# Report the request in the log.
-			print localtime() . ": $clientaddr request -> $_\n";
-		}
 		# Update the database.
 		update_db($clientaddr, $_);
 	}
@@ -349,6 +348,11 @@ sub update_db
 	my ($host, $request) = @_;
 	my ($client, $mac, $timestamp);
 
+	if ($log_level > 2) {
+		# Report the request in the log.
+		print localtime() . ": $host request -> $_\n";
+	}
+
 	# Parse the client request.
 	my @args = split(/:/, $request);
 	foreach (@args) {
@@ -383,9 +387,11 @@ sub update_db
         $timestamp = time();
 
 	# Check if mac address has been specified.
-	unless(defined($mac)) {
-		print localtime() . ": warning: bad request from $host (mac address not specified)!\n"
-			if ($log_level > 1);
+	unless (defined($mac)) {
+		if ($log_level > 1) {
+			print localtime() .
+				": warning: bad request from $host (mac address not specified)!\n";
+		}
 		return;
 	}
 	
