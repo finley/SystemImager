@@ -25,6 +25,10 @@ my $VERSION = "SYSTEMIMAGER_VERSION_STRING";
 my $program_name = "si_monitortk";
 
 use Socket;
+use Storable qw(freeze thaw);
+use threads;
+use threads::shared;
+use Thread::Queue;
 use Tk;
 use Tk::Label;
 use Tk::Balloon;
@@ -132,7 +136,7 @@ unless (-f $database) {
 
 # Set the refresh rate.
 unless ($refresh_rate) {
-    $refresh_rate = 5000;
+    $refresh_rate = 10000;
 } else {
     $refresh_rate *= 1000;
 }
@@ -188,6 +192,40 @@ my @curr_logmsg = ();
 
 # Initialize refresing status.
 $is_refreshing = 0;
+
+# Initialize global (frozen) XML structure.
+my $xml_data : shared;
+print "Loading XML data from $database... ";
+fill_xml_data();
+print "done\n";
+
+# Data queue to wake-up and shutdown the XML loader thread.
+my $wakeup_xml_loader = Thread::Queue->new();
+
+# Spawn the XML loader thread. This thread periodically load the XML data
+# structure from file in memory. The main thread will use this shared and
+# "cached" structure to quickly redraw the GUI.
+async {
+    # Use the file mtime to know when we really need to update the XML
+    # data structure in memory.
+    my $last_timestamp = my $timestamp = (stat($database))[9];
+    while (1) {
+        # Get the last mtime of the XML database.
+        $timestamp = (stat($database))[9];
+        if ($last_timestamp != $timestamp) {
+	    # Database changed: update the XML struct in memory.
+	    fill_xml_data();
+            # And also update the timestamp.
+            $last_timestamp = $timestamp;
+        }
+	# Wait for a wake-up signal from the main program (interrupt-driven).
+	my $msg = $wakeup_xml_loader->dequeue();
+        if (defined($msg)) {
+            # Non-null message: a shutdown has been requested.
+            last;
+        }
+    }
+};
 
 # Client attributes.
 my $attrs_struct = {
@@ -574,7 +612,7 @@ sub show_virtual_console
         # Initialize counter of connections failed.
         $sub_conn_failed = 0;
 
-        # Refresh console view (default 5sec).
+        # Refresh console view.
         $sub_cons_timer = Tk::After->new(
             $sub_win,
             $refresh_rate,
@@ -792,6 +830,86 @@ sub update_selected_mac
 }
 
 # Usage:
+# clean_nodes_tab(); 
+# Description:
+#    Clean all the entries of the clients tab.
+sub clean_nodes_tab
+{
+    # Delete all clients.
+    $tab->delete('all');
+    # Explicitly destroy the ProgressBar objects if present.
+    foreach (@status_progress_list) {
+        $_->destroy();
+    }
+    @status_progress_list = ();
+}
+
+# Usage:
+# get_xml_data()
+# Description:
+#       Get the frozen XML data structure in mutual exclusion.
+sub get_xml_data
+{
+    lock($xml_data);
+    return $xml_data;
+}
+
+# Usage:
+# clear_xml_data()
+# Description:
+#       Clear the XML data structure in memory.
+sub clear_xml_data
+{
+    lock($xml_data);
+    $xml_data = 0;
+}
+
+# Usage:
+# fill_xml_data()
+# Description:
+#       Fill the frozen XML data structure in memory.
+sub fill_xml_data
+{
+    my $xml_db = load_db();
+    my $xml;
+    if ($xml_db) {
+        $xml = XMLin($xml_db, KeyAttr => {client => 'name'}, ForceArray => 1);
+        lock($xml_data);
+        $xml_data = freeze(\$xml);
+    } else {
+        lock($xml_data);
+        $xml_data = 0;
+    }
+}
+
+# Usage:
+# $data = load_db();
+# Description:
+#       Load the XML structure from file.
+sub load_db
+{
+        my $db;
+
+        open(LOCK, ">", "$lock_file") or
+                die localtime() . ":error: cannot open lock file \"$lock_file\"!\n";
+        flock(LOCK, LOCK_SH);
+
+        # Open database in mutual exclusion.
+        open(DB, '<', $database) or
+                die localtime() . ": error: cannot open \"$database\" for reading!\n";
+        # Parse XML database.
+        if (-s $database) {
+            $db = join('', <DB>);
+        }
+        close(DB);
+
+        flock(LOCK, LOCK_UN);
+        close(LOCK);
+
+        return $db;
+}
+
+# Usage:
 # display_nodes(); 
 # Description:
 #    Fill the main list with the status of all nodes.
@@ -818,28 +936,16 @@ sub display_nodes
             unless (defined($tab->info('selection')));
     }
 
-    # Delete all clients.
-    $tab->delete('all');
-    # Explicitly destroy the ProgressBar objects if present.
-    foreach (@status_progress_list) {
-        $_->destroy();
-    }
-    @status_progress_list = ();
-    unless (-s $database) {
+    # Thaw the XML data structure.
+    my $xml;
+    my $xml_frozen = get_xml_data();
+    if ($xml_frozen) {
+        $xml = ${thaw($xml_frozen)};
+    } else {
+        # No client found.
+        clean_nodes_tab();
         goto status_bar_update;
     }
-
-    # Open and read lock the database.
-    open(LOCK, ">", "$lock_file") or
-        die "error: cannot open lock file \"$lock_file\"!\n";
-    flock(LOCK, LOCK_SH);
-    
-    # Parse XML database.
-    my $xml = XMLin($database, KeyAttr => {client => 'name'}, ForceArray => 1);
-
-    # Close and unlock database.
-    flock(LOCK, LOCK_UN);
-    close(LOCK);
 
     # Display DB entries.
     my $client = $xml->{'client'};
@@ -868,6 +974,9 @@ sub display_nodes
             }
         } keys %{$client};
     }
+
+    # Refresh all clients.
+    clean_nodes_tab();
     foreach my $mac (@list) {
         my $status;
         my $status_progress;
@@ -1110,6 +1219,10 @@ sub start_refresh
     # Refresh nodes visualization.
     $timer = Tk::After->new($window, $refresh_rate, 'repeat', \&refresh);
 
+    # Refresh rate to wakeup the XML loader thread.
+    $timer = Tk::After->new($window, $refresh_rate, 'repeat',
+                            \&wakeup_xml_loader_thread);
+
     # Refresh the buttons look.
     $start_refresh_button->configure(-state => 'disabled');
     $stop_refresh_button->configure(-state => 'normal');
@@ -1183,20 +1296,52 @@ sub clear_clients
     }
 
     # Refresh view.
+    clear_xml_data();
     refresh();
+}
+
+# Usage:
+# wakeup_xml_loader_thread();
+# Description:
+#    Wake-up the XML loader thread.
+sub wakeup_xml_loader_thread
+{
+    # Send an empty element to the XML loader thread to force the wake-up (only
+    # if there are not other pending requests in the queue).
+    if (!$wakeup_xml_loader->pending()) {
+        $wakeup_xml_loader->enqueue(undef);
+    }
+}
+
+# Usage:
+# shutdown_xml_loader_thread();
+# Description:
+#    Kill the XML loader thread.
+sub shutdown_xml_loader_thread
+{
+    # Send a non-null element to the XML loader thread to request the shutdown.
+    $wakeup_xml_loader->enqueue(1);
 }
 
 # Usage:
 # quit();
 # Description:
 #    Exit program.
-
 sub quit
 {
     # Close the virtual console.
     $sub_win->destroy() if Exists($sub_win);
     # Close the main window.
     $window->destroy() if Exists($window);
+    # Clean-up all threads.
+    print "Cleaning-up threads... ";
+    shutdown_xml_loader_thread();
+    foreach my $thr (threads->list()) {
+        if ($thr->tid && !threads::equal($thr, threads->self)) {
+            $thr->join();
+        }
+    }
+    print "done\n";
     # Quit program.
     exit(0);
 }
