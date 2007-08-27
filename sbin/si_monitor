@@ -315,7 +315,7 @@ sub sync_db
 
 	open(LOCK, ">", "$lock_file") or 
 		die localtime() . ":error: cannot open lock file \"$lock_file\"!\n";
-	flock(LOCK, LOCK_SH);
+	flock(LOCK, LOCK_EX);
 
 	open(DB, '>', $database) or
 		die localtime() . ": error: cannot open \"$database\" for writing!\n";
