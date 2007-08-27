@@ -1254,8 +1254,10 @@ get_base_hostname() {
 #
 get_group_name() {
     if [ -f ${SCRIPTS_DIR}/cluster.txt ]; then
-        [ -z $GROUPNAMES ] && GROUPNAMES=`grep ${HOSTNAME} ${SCRIPTS_DIR}/cluster.txt | cut -d: -f2 | sort -ru | tr "\n" ' '`
-        [ -z $GROUP_OVERRIDES ] && GROUP_OVERRIDES=`grep ${HOSTNAME} ${SCRIPTS_DIR}/cluster.txt | cut -d: -f3 | sort -ru | tr "\n" ' '`
+        [ -z $GROUPNAMES ] && \
+            GROUPNAMES=`unique $(grep "^${HOSTNAME}:" ${SCRIPTS_DIR}/cluster.txt | cut -d: -f2 | tr "\n" ' ')`
+        [ -z $GROUP_OVERRIDES ] && \
+            GROUP_OVERRIDES=`reverse $(unique $(grep "^${HOSTNAME}:" ${SCRIPTS_DIR}/cluster.txt | cut -d: -f3 | tr "\n" ' '))`
     fi
 }
 #
@@ -1358,6 +1360,19 @@ unique() {
     done
     echo $ret
     unset i j flag ret
+}
+#
+################################################################################
+#
+# Description: reverse a list
+#
+reverse() {
+    ret=
+    for i in $*; do
+        ret="$i $ret"
+    done
+    echo $ret
+    unset i
 }
 #
 ################################################################################

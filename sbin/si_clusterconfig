@@ -167,16 +167,30 @@ sub XML_info_to_plain_file
 
 	my $xml = XMLin($database, ForceArray => 1);
 
+	# Cache groups in a hash struct.
+	my $groups;
+	map { $groups->{$_->{'name'}[0]} = $_ } @{$xml->{'group'}};
+
+	# Write the plain text file (cache).
 	open(OUT, ">$dest") or return -1;
 
-	# Resolve the list of groups in nodenames.
-	foreach my $group (@{$xml->{'group'}}) {
-		foreach my $node (
-			SystemImager::HostRange::expand_groups($group->{'name'}[0])) {
-				print OUT $node . ':' . $group->{'name'}[0] .
-						  ':' . $group->{'override'}[0] .
-						  "\n";
+	# Print header (this is only for debugging purpose).
+	print OUT "#\n# hostname:group:override(group)\n#\n";
+
+	# Resolve the groups in lists of nodenames.
+	#
+	# Sort the groups in alphabetical order by their name to expand them and
+	# translate into the hostnames list. This allows to correctly handle the
+	# overlaps. In case of overlaps (when a node that belongs to more host
+	# groups) the first hit in alphabetical order wins.
+	#
+	foreach my $name (sort keys %{$groups}) {
+		foreach my $node (SystemImager::HostRange::expand_groups($name)) {
+			print OUT $node . ':' . $name .
+					  ':' . $groups->{$name}->{'override'}[0] .
+					  "\n";
 		}
+
 	}
 	close(OUT);
 
