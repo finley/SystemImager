@@ -21,6 +21,7 @@
 use lib "USR_PREFIX/lib/systemimager/perl";
 use strict;
 use SystemImager::Common;
+use SystemImager::HostRange;
 use vars qw($VERSION);
 
 # set some variables
@@ -129,23 +130,24 @@ my $continue=<STDIN>;
 chomp $continue;
 ($continue eq "y") or die "\n$program_name No files were modified.\n";
 
+
 # set some default values
-my $dhcpd_conf;
-my $dhcpd_version = "2";
-my $dhcpd_patch = "n";
+my $dhcpd_conf = "/etc/dhcpd.conf";
+my $dhcpd_version = "3";
+print "Trying to probe your DNS domain. Please wait...";
 my $dnsdomainname = `dnsdomainname`;
 chomp $dnsdomainname;
 my $netnumber = "192.168.1.0";
-my $netmask = "255.255.255.0";
-my $rangebegin = "192.168.1.1";
-my $rangeend = "192.168.1.100";
+my $netmask = "";
+my $rangebegin = "";
+my $rangeend = "";
 my $dnsserver1 = "";
 my $dnsserver2 = "";
 my $dnsserver3 = "";
 my $log_server = "";
 my $log_server_port = "";
-my $router = "192.168.1.254";
-my $imageserver = "192.168.1.254";
+my $router = "";
+my $imageserver = "";
 my $boot_server = "";
 my $ssh_download_url = "";
 my $flamethrower_directory_portbase = "";
@@ -166,9 +168,6 @@ foreach my $file (@dhcpd_conf_file_locations_du_jour) {
     }
 }
 
-if("$dhcpd_conf" eq "/etc/dhcp3/dhcpd.conf") { $dhcpd_version = "3"; }
-
-
 ### Begin questionnaire ###
 my $satisfied = "n";
 while ($satisfied ne "y") {
@@ -183,12 +182,6 @@ EOF
     print "What is your DHCP daemon major version number (2 or 3)? [$dhcpd_version]: ";
     $dhcpd_version = get_response($dhcpd_version);
 
-    if ("$dhcpd_version" eq "3") {
-      print "Are you using the fixed-address patch (Y or N)? [$dhcpd_patch]: ";
-      $dhcpd_patch = get_response($dhcpd_patch);
-      $dhcpd_patch = uc $dhcpd_patch;
-    }
-   
     print "What is the name of your DHCP daemon config file? [$dhcpd_conf]: ";
     $dhcpd_conf = get_response($dhcpd_conf);
    
@@ -197,9 +190,39 @@ EOF
    
     print "What is your network number? [$netnumber]: ";
     $netnumber = get_response($netnumber);
-   
+    my $hex_netnumber = hex(SystemImager::HostRange::ip2hex($netnumber));
+
+    # Propose a valid netmask.
+    if ($hex_netnumber < hex(SystemImager::HostRange::ip2hex('128.0.0.0'))) {
+        # Class A #
+        $netmask = '255.0.0.0';
+    } elsif ($hex_netnumber < hex(SystemImager::HostRange::ip2hex('192.0.0.0'))) {
+        # Class B #
+        $netmask = '255.255.0.0';
+    } elsif ($hex_netnumber < hex(SystemImager::HostRange::ip2hex('224.0.0.0'))) {
+        # Class C #
+        $netmask = '255.255.255.0';
+    } else {
+        # Class E and invalid => propose a class C netmask.
+        $netmask = '255.255.255.0';
+    }
+
     print "What is your netmask? [$netmask]: ";
     $netmask = get_response($netmask);
+    my $hex_netmask = hex(SystemImager::HostRange::ip2hex($netmask));
+
+    # Try to auto-detect host min and host max.
+    $rangebegin = SystemImager::HostRange::hex2ip(
+                      sprintf("%08X", (($hex_netnumber & $hex_netmask) + 1))
+                  );
+    $router =
+    $imageserver = 
+    $boot_server = 
+    $rangeend = SystemImager::HostRange::hex2ip(
+                    sprintf("%08X",
+                        (($hex_netnumber & $hex_netmask) | (~$hex_netmask)) - 1
+                    )
+                );
    
     print "What is the starting IP address for your dhcp range? [$rangebegin]: ";
     $rangebegin = get_response($rangebegin);
@@ -250,16 +273,6 @@ EOF
         if ($flamethrower_directory_portbase eq "") { $flamethrower_directory_portbase="9000"; }
         print "On which port is your Flamethrower directory? [$flamethrower_directory_portbase]: ";
         $flamethrower_directory_portbase = get_response($flamethrower_directory_portbase);
-
-    } else {
-        print "Do you want your clients installed over SSH? (y/[n]): ";
-        my $ssh_install=<STDIN>;
-        chomp $ssh_install;
-        if ($ssh_install eq "y") {
-          if ($ssh_download_url eq "") { $ssh_download_url="http://$imageserver/systemimager/boot/"; }
-          print "What is the base URL to use for ssh installs? [$ssh_download_url]: ";
-          $ssh_download_url=get_response($ssh_download_url);
-        }
     }
    
     # see http://www.armory.com/swallowscenes.html for details
@@ -281,7 +294,6 @@ EOF
     print "Here are the values you have chosen:\n\n";
     print "#######################################################################\n";
     print "ISC DHCP daemon version:                  $dhcpd_version\n";
-    print "DHCP daemon using fixed-address patch:    $dhcpd_patch\n";
     print "ISC DHCP daemon config file:              $dhcpd_conf\n";
     print "DNS domain name:                          $dnsdomainname\n";
     print "Network number:                           $netnumber\n";
@@ -390,23 +402,6 @@ if ($dhcpd_version eq "2") {
     # version 3, at least for now
     print DHCPDCONF $dhcpd_conf_v3_part1;
   
-    print DHCPDCONF qq(\n# The "host-checking" option is only used by Curtis Zinzilieta's DHCP patch.\n);
-    print DHCPDCONF qq(# The patch adds functionality to the server for removing specified host\n);
-    print DHCPDCONF qq(# addresses from ranges of available ip addresses at startup.  This addresses\n);
-    print DHCPDCONF qq(# the issue where a fixed-address reserved for a specific machine gets\n);
-    print DHCPDCONF qq(# assigned to a different machine.\n);
-    print DHCPDCONF qq(#\n);
-    print DHCPDCONF qq(# If you are running a version of dhcpd with this patch, then you will want\n);
-    print DHCPDCONF qq(# the "host-checking" option below to be uncommented.  If you are not running\n);
-    print DHCPDCONF qq(# the patched dhcpd, you should leave it commented out.  You can find the patch\n);
-    print DHCPDCONF qq(# and the matched DHCP v3.0 source code here:  http://systemimager.org/download/\n);
-
-    if("$dhcpd_patch" eq "Y") { 
-        print DHCPDCONF qq(host-checking true;\n);
-    } else {
-        print DHCPDCONF qq(#host-checking true;\n);
-    }
-
     print DHCPDCONF qq(# Imageserver\n);
     print DHCPDCONF qq(option option-140 code 140 = text;\n);
     print DHCPDCONF qq(\n);

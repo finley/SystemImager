@@ -26,7 +26,7 @@ $0 = "si_netbootmond";
 my $net_boot_default = lc $config->net_boot_default();
 if("$net_boot_default" eq "net") {
     print STDERR qq(\nNET_BOOT_DEFAULT set to "$net_boot_default" in /etc/systemimager/systemimager.conf.\n);
-    print STDERR qq(No need for me here, so I'm exiting.\n);
+    print STDERR qq(No need for me here, so I'm exiting. See si_netbootmond\(8\) for details.\n);
     exit 0;
 }
 

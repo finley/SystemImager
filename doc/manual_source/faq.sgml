@@ -115,7 +115,7 @@
           <filename>/etc/inetd.conf</filename> and change it to: 
          </para>
          <para>
-tftp            dgram   udp     wait    root    /usr/sbin/in.tftpd -v -v -v -s /tftpboot
+tftp            dgram   udp     wait    root    /usr/sbin/in.tftpd -v -v -v -s /var/lib/tftpboot
          </para>
          <para>
           Change "/usr/sbin/in.tftpd" to be the full path to your tftp server,
@@ -155,7 +155,7 @@ service tftp
         wait                    = yes
         user                    = root
         server                  = /usr/sbin/in.tftpd
-        server_args             = -s /tftpboot -r blksize
+        server_args             = -s /var/lib/tftpboot -r blksize
         disable                 = no
 }
          </programlisting>
@@ -203,7 +203,7 @@ host mcmuffin {
       </listitem>
       <listitem>
        <para>
-        Edit /tftpboot/elilo.conf:
+        Edit /var/lib/tftpboot/elilo.conf:
        </para> 
        <programlisting>
 #

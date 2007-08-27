@@ -434,6 +434,9 @@ EOF
 sub mkclientnetboot_options_body {
 
 return << "EOF";
+ --verbose
+    Display verbose informations.
+
  --netboot
     Configure the network bootloader for the specified clients, so that it boots
     them from the network.
@@ -448,6 +451,13 @@ return << "EOF";
     with IP addresses.  This server (assuming it is a boot server) will be
     told to let these clients net boot from this server, at least until they've
     completed a successful SystemImager autoinstall.
+
+ --flavor FLAVOR
+    The boot flavor to used for doing an autoinstall.
+
+ --arch ARCH
+    The CPU architecture of the resulting kernel and initrd used for doing
+    autoinstall
 
 EOF
 }

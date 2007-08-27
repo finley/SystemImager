@@ -27,13 +27,21 @@ use SystemImager::Common;
 use SystemImager::Server;
 use SystemImager::Options;
 use SystemImager::HostRange;
+use SystemImager::UseYourOwnKernel;
 
 use vars qw($config $VERSION);
 
 ### BEGIN parse the config file ###
 
 my $tftp_dir = $config->tftp_dir();
-if (!$tftp_dir) { die "TFTP_DIR not defined in the config file."; }
+if (!$tftp_dir) {
+    die "ERROR: TFTP_DIR not defined in the config file.\n";
+}
+
+my $boot_dir = $config->autoinstall_boot_dir();
+if (!$boot_dir) {
+    die "ERROR: AUTOINSTALL_BOOT_DIR not defined in the config file.\n";
+}
 
 my $localboot_file = "/etc/systemimager/pxelinux.cfg/syslinux.cfg.localboot";
 my $netboot_file = "/etc/systemimager/pxelinux.cfg/syslinux.cfg";
@@ -62,6 +70,8 @@ GetOptions(
     "localboot"         => \my $localboot,
     "netboot"           => \my $netboot,
     "clients=s"         => \my $clients,
+    "arch=s"            => \my $arch,
+    "flavor=s"          => \my $flavor,
 ) or die qq($help_info);
 
 # if requested, print help information
@@ -76,6 +86,8 @@ if($version) {
     exit 0;
 }
 
+SystemImager::Common->check_if_root();
+
 unless($clients) {
     print qq(FATAL: Please specify one or more clients with --clients.\n);
     print qq($get_help\n);
@@ -88,10 +100,29 @@ unless( ($localboot) or ($netboot) ) {
     exit 1;
 }
 
-SystemImager::Common->check_if_root();
+if ($netboot) {
+    unless ($arch) {
+        $arch = SystemImager::UseYourOwnKernel::_get_arch();
+    }
+    print "[netboot] using the kernel and initrd.img for architecture: $arch\n";
+    unless ($flavor) {
+        $flavor = 'standard';
+    }
+    print "[netboot] using the flavor: $flavor\n";
+
+    # Check if the boot package exists.
+    if (! -d "$boot_dir/$arch/$flavor") {
+        die "ERROR: boot package for architecture \"$arch\", flavor \"$flavor\" doesn't exist!\n";
+    }
+} elsif (($localboot) and (($arch) or ($flavor))) {
+    print "WARNING: ignoring options --arch and --flavor with localboot\n";
+}
 
 # Make array from --clients "hostnames and ip addresses" -BEF-
-my @array = SystemImager::HostRange::expand_range_list($clients);
+my @array = SystemImager::HostRange::expand_groups($clients);
+unless (@array) {
+    @array = SystemImager::HostRange::expand_range_list($clients);
+}
 
 my $source_file;
 if($localboot) {
@@ -100,15 +131,31 @@ if($localboot) {
     $source_file = $netboot_file;
 }
 
+open(IN, '<', $source_file) or
+    die "ERROR: couldn't open $source_file for reading!\n";
+my @bootcfg = <IN>;
+close(IN);
+
+if ($netboot) {
+    # Replace kernel and initrd.img using the boot package specified by command
+    # line.
+    for (my $i = 0; $i <= $#bootcfg; $i++) {
+        if ($bootcfg[$i] =~ s/^\s*KERNEL\s+.*$/KERNEL \/$arch\/$flavor\/kernel/) {
+            next;
+        }
+        $bootcfg[$i] =~ s/\s+initrd=initrd.img\s+/ initrd=\/$arch\/$flavor\/initrd.img /;
+    }
+}
+
 foreach my $client (@array) {
     # IP or Hostname?
-    if(SystemImager::HostRange::valid_ip_quad($client)) {
+    if (SystemImager::HostRange::valid_ip_quad($client)) {
         my $ip = $client;
-        cp_boot_file($ip, $source_file);
+        create_boot_file($ip, @bootcfg);
     } else {
         my @ips = get_ips($client);
-        foreach my $ip ( @ips ) {
-            cp_boot_file($ip, $source_file);
+        foreach my $ip (@ips) {
+            create_boot_file($ip, @bootcfg);
         }
     }
 }
@@ -127,10 +174,11 @@ foreach my $client (@array) {
 # Creates a boot file for a node.
 #
 # Usage:
-# cp_boot_file($ip_dec, $source_file);
-sub cp_boot_file {
+# create_boot_file($ip_dec, @boot_config);
+sub create_boot_file {
 
-    my ($ip_dec, $source_file) = @_;
+    my $ip_dec = shift;
+    my @boot_config = @_;
     my $ip_hex;
 
     $ip_hex = SystemImager::HostRange::ip2hex($ip_dec);
@@ -139,7 +187,15 @@ sub cp_boot_file {
     if ($verbose) { print "Creating $file.\n"; }
 
     # copy file over
-    copy("$source_file","$file") or die "Copy failed: $!";
+    if (-d $tftp_dir . "/pxelinux.cfg/") {
+        #copy("$source_file", "$file") or die "ERROR: copy failed: $!\n";
+        open(OUT, '>', $file) or
+            die "ERROR: couldn't write to $file!\n";
+        print OUT @boot_config;
+        close(OUT);
+    } else {
+        die "ERROR: $tftp_dir/pxelinux.cfg/ doesn't exist (try to run si_mkbooserver before)!\n";
+    }
 
     return 1;
 }

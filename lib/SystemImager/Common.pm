@@ -218,7 +218,7 @@ sub where_is_my_efi_dir {
     #
     # find all elilo.efi locations
     #
-    my $cmd = "find /usr/lib/elilo /tftpboot /boot/efi -name elilo.efi 2>/dev/null";
+    my $cmd = "find /usr/lib/elilo /tftpboot /var/lib/tftpboot /boot/efi -name elilo.efi 2>/dev/null";
     open(CMD, "$cmd |") or die qq(Couldn't $cmd. $!\n);
         while (<CMD>) {
             chomp;

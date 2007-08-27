@@ -1,7 +1,8 @@
 #!/bin/sh
 if [ -e /tftpboot/kernel -o -e /tftpboot/initrd.img ]; then
 	echo
-	echo "WARNING: remember to update the kernel and initrd.img in /tftpboot!"
+	echo "WARNING: default tftpboot directory has been moved to /var/lib/tftpboot!"
+        echo "If you don't like it, change /etc/systemimager/systemimager.conf"
 	echo
 fi
 

@@ -17,12 +17,14 @@
 #
 #########################################################################
 
+CONFIG_FILE=/etc/systemimager/systemimager.conf
 INTERACTIVE="yes"
 INTERFACE=""
 LOCAL_DHCP=""
 KERNEL=""
 INITRD=""
-TFTPDIR=""
+TFTPDIR=`sed -ne "s/^[[:space:]]*[^#]*[[:space:]]*TFTP_DIR[[:space:]]*=[[:space:]]*\\([^#]*\\).*$/\1/p" $CONFIG_FILE`
+BOOTDIR=`sed -ne "s/^[[:space:]]*[^#]*[[:space:]]*AUTOINSTALL_BOOT_DIR[[:space:]]*=[[:space:]]*\\([^#]*\\).*$/\1/p" $CONFIG_FILE`
 PXELINUX=""
 
 program_name=$(basename $0)
@@ -32,6 +34,15 @@ Usage:  $program_name [-f] [--interface=interface] [--localdhcp=y|n]
 	[--kernel=path] [--initrd=path] [--tftpdir=dir] [--pxelinux=path]"
        
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+if [ -z "$TFTPDIR" ]; then
+    echo "ERROR: TFTP_DIR not defined in $CONFIG_FILE"
+    exit 1
+fi
+if [ -z "$BOOTDIR" ]; then
+    echo "ERROR: AUTOINSTALL_BOOT_DIR not defined in $CONFIG_FILE"
+    exit 1
+fi
 
 TFTPD_PATH=""
 TFTP_TEST_FILE_TEXT="all your tftp test file are belong to us"
@@ -74,7 +85,7 @@ eth0
 # be used as the start up argument to the mtftpd daemon.
 
 [Mtftpd_Root_Directory]
-/tftpboot
+/var/lib/tftpboot
 
 
 # Set the following entry to 0 if you have a DHCP server running on this 
@@ -316,29 +327,64 @@ starwars
 #
 # link_tftpboot()
 #
-#   XXX This is a hack right now, as I'm just hardcoding the paths in,
-#       but sometime soon, we should look at a re-write of this script
-#       in perl I believe.
-#       
-#       Anywho, the idea is, if we link /tftpboot to /usr/share/systemimager/boot
-#       by default, and modify the tools that create netboot config files, then
-#       whenever a UYOK image is pulled, the UYOK boot package is automatically
-#       available.  
-#
-#       No more forgetting to copy kernels/initrds into /tftpboot.
-#
-#       Instead, we just provide a path to the desired boot package.  Ie:
-#
-#           kernel = i386/standard/kernel
-#        or
-#           kernel = ia64/my-image/kernel
-#
 link_tftpboot() {
     
-    if [ ! -e /tftpboot ]; then
-        cd /
-        ln -s /usr/share/systemimager/boot tftpboot
+    if [ "$TFTPDIR" == "" ]; then
+        echo -n "Where should tftpd serve files from ([/var/lib/tftpboot]? "
+        if [ "$INTERACTIVE" == "no" ]; then
+            REPLY=""
+            echo "Non-interactive mode, taking the default."
+        else
+            read REPLY
+        fi
+        if [ "$REPLY" == "" ]; then
+            TFTPDIR="/var/lib/tftpboot"
+        else
+            TFTPDIR=$REPLY
+        fi
     fi
+
+    if [ -L "$TFTPDIR" ]; then
+        echo "$TFTPDIR exists and is a symlink to `readlink $TFTPDIR`."
+        return 0
+    fi
+
+    if [ -e "$TFTPDIR" ]; then
+        if [ ! -e "${TFTPDIR}.orig" ]; then
+            echo "WARNING: ${TFTPDIR} exists, moving to ${TFTPDIR}.orig"
+            mv $TFTPDIR ${TFTPDIR}.orig
+            if [ $? -ne 0 ]; then
+                echo "ERROR: couldn't move ${TFTPDIR} to ${TFTPDIR}.orig"
+                return 1
+            fi
+        else
+            done=0
+            for i in $(seq 1 100); do
+                if [ ! -e "${TFTPDIR}.orig-${i}" ]; then
+                    echo "WARNING: ${TFTPDIR} exists, moving to ${TFTPDIR}.orig-${i}"
+                    mv $TFTPDIR ${TFTPDIR}.orig-${i}
+                    if [ $? -ne 0 ]; then
+                        echo "ERROR: couldn't move ${TFTPDIR} to ${TFTPDIR}.orig-${i}"
+                        return 1
+                    fi
+                    done=1
+                    break
+                fi
+            done
+            if [ $done -eq 0 ]; then
+                echo "ERROR: please clean some of your ${TFTPDIR}.* directories."
+                return 1
+            fi
+        fi
+    fi
+
+    # Create the symlink.
+    cd / && ln -s $BOOTDIR $TFTPDIR
+    if [ $? -ne 0 ]; then
+        echo "ERROR: couldn't create the symlink $TFTPDIR -> $BOOTDIR"
+        return 1
+    fi
+
 }
 
 
@@ -475,6 +521,18 @@ check_atftpd() {
 
 ### BEGIN CONFIGURE INETD FOR TFTPD_HPA
 configure_inetd_for_tftpd_hpa() {
+
+    if [ -e /etc/init.d/openbsd-inetd ]; then
+        INETD_SERVICE=openbsd-inetd
+    elif [ -e /etc/init.d/xinetd ]; then
+        INETD_SERVICE=xinetd
+    elif [ -e /etc/init.d/inetd ]; then
+        INETD_SERVICE=inetd
+    else
+        echo "No inetd service found. Try to install: inetd, openbsd-inetd, xinted."
+        exit 1
+    fi
+
     if [ "$TFTP_DAEMON" == "tftpd-hpa" ]; then
 	inetd_entry="tftp\tdgram\tudp\twait.100\troot\t/usr/sbin/tcpd\tin.tftpd -s -r blksize $TFTPDIR"
 	tftp_xinetd="$TFTP_HPA_XINETD"
@@ -487,19 +545,20 @@ configure_inetd_for_tftpd_hpa() {
 
     ### BEGIN LOOK FOR SUPERSERVER
     echo -n "Checking for a running inetd... "
-    inetd_pid=`ps -C inetd | grep inetd | cut -c 0-5`
+    inetd_pid=`pidof $(type -p inetd)`
     if [ "$inetd_pid" == "" ]; then
-	echo "Not found."
+        echo "Not found."
     else
-	echo "$inetd_pid."
+        echo "$inetd_pid."
     fi
     echo -n "Checking for a running xinetd... "
-    xinetd_pid=`ps -C xinetd | grep xinetd | cut -c 0-5`
+    xinetd_pid=`pidof $(type -p xinetd)`
     if [ "$xinetd_pid" == "" ]; then
-	echo "Not found."
+        echo "Not found."
     else
-	echo "$xinetd_pid."
+        echo "$xinetd_pid."
     fi
+
     ### END LOOK FOR SUPERSERVER
 
     echo -n "Looking for update-inetd... "
@@ -546,28 +605,39 @@ configure_inetd_for_tftpd_hpa() {
     fi
 
     ### BEGIN RELOAD SUPERSERVER
-    if [ "$inetd_pid" != "" ]; then
-	echo -n "Sending a SIGHUP to inetd (pid $inetd_pid)... "
-	kill -HUP $inetd_pid
-	if [ $? -ne 0 ]; then
-	    echo "failed."
-	    return 1
-	fi
-	echo "done."
-    elif [ "$xinetd_pid" != "" ]; then
-	echo "Sending SIGUSR2 to xinetd... "
-	kill -USR2 $xinetd_pid
-	if [ $? -eq 0 ]; then
-	    echo "done."
-	else
-	    echo "failed."
-	    return 1
-	fi
+    if [ "$inetd_pid" != "" -o "$xinetd_pid" != "" ]; then
+	echo "Restaring ${INETD_SERVICE} ..."
+        /etc/init.d/${INETD_SERVICE} restart
+        if [ $? -eq 0 ]; then
+            echo "done."
+        else
+            echo "failed."
+            exit 1
+        fi
     else
-	echo "No superserver found, so nothing to reload"
-    	return 1
-    fi
-    ### END RELOAD SUPERSERVER
+        echo "No superserver found."
+        echo -n "Checking for a running standalone tftp server... "
+        tftpd_pid=`pidof $(type -p in.tftpd)`
+        if [ "$tftpd_pid" != "" ]; then
+            echo "$tftp_pid."
+            ### BEGIN CONFIGURE TFTP SERVER ###
+            # TODO: implement tftpd auto-configuration.
+            echo
+            echo "WARNING: please configure your tftpd service to distribute files from $TFTPDIR"
+            echo "         or disable tftpd to work as a standalone server, in order to use"
+            echo "         inetd/xinetd as a superserver."
+            echo
+            return 1
+            ### END CONFIGURE TFTP SERVER ###
+        else
+            echo
+            echo "No standalone server found."
+            echo "Try to restart /etc/init.d/$INETD_SERVICE manually and re-run si_mkbootserver."
+            return 1
+        fi
+     fi
+     ### END RELOAD SUPERSERVER
+
 }
 ### END CONFIGURE INETD FOR TFTPD_HPA
 
@@ -617,7 +687,7 @@ test_tftpd() {
 
     TMPFILE=""
     for i in `seq 0 9`; do
-	if [ -f "$TFTPDIR/test$i" -o -f "./test$i" ]; then
+	if [ -f "$TFTPDIR/test$i" ]; then
 	    continue
 	fi
 	TMPFILE="$TFTPDIR/test$i"
@@ -675,9 +745,8 @@ install_pxe_daemon() {
 	return 0
     else
 	echo "not found."
-	echo "****************************************************************"
-        echo "WARNING: your bootserver will be configured without a pxe daemon!"
-	echo "****************************************************************"
+        echo "WARNING: your bootserver will be configured without a pxe daemon!" 
+        echo "         (ignore this warning if you're using a recent distro)"
 	return 1
     fi
 }
@@ -908,133 +977,6 @@ pxelinux_cfg() {
     fi
     ### END CREATE PXELINUX.BIN LINK IN TFTPDIR
 
-    ### BEGIN PROMPT USER FOR KERNEL
-    ARCH=`uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/`
-    KERNEL_DEFAULT="/usr/share/systemimager/boot/$ARCH/standard/kernel"
-    if [ "$KERNEL" != "" ]; then
-	REPLY=$KERNEL
-    else
-	echo -n "What is the full pathname of the kernel you want to use? [(${KERNEL_DEFAULT})] "
-	read REPLY
-    fi
-    if [ -z $REPLY ]; then
-        REPLY=$KERNEL_DEFAULT
-    fi
-    if [ ! -f "$REPLY" ]; then
-	echo "$REPLY doesn't exist, or isn't a regular file."
-	return 1
-    fi
-    ### END PROMPT USER FOR KERNEL
-
-    ### BEGIN BACKUP EXISTING KERNEL
-    if [ -e $LINUX_INSTALL/kernel ]; then
-	FILE_TO_BACKUP=$LINUX_INSTALL/kernel
-	backup_file
-	if [ $? -ne 0 ]; then
-	    return 1
-	fi
-    fi
-    ### END BACKUP EXISTING KERNEL
-    
-    ### BEGIN COPY OVER KERNEL
-    echo -n "Copying $REPLY to $LINUX_INSTALL/kernel ... "
-    cp -a $REPLY $LINUX_INSTALL/kernel
-    if [ $? -ne 0 ]; then
-	echo "failed."
-	return 1
-    fi
-    echo "done."
-    ### END COPY OVER KERNEL
-    
-    ### BEGIN BACKUP EXISTING KERNEL IN TFTPDIR
-    if [ -e $TFTPDIR/kernel ]; then
-	if [ "`md5sum $TFTPDIR/kernel | sed 's/\( .*\)//'`" != \
-		"`md5sum $LINUX_INSTALL/kernel | sed 's/\( .*\)//'`" ]; then
-	    FILE_TO_BACKUP=$TFTPDIR/kernel
-	    backup_file
-	    if [ $? -ne 0 ]; then
-		return 1
-	    fi
-	fi
-    fi
-    ### END BACKUP EXISTING KERNEL IN TFTPDIR
-    
-    ### BEGIN CREATE KERNEL LINK IN TFTPDIR
-    if [ ! -e $TFTPDIR/kernel ]; then
-	echo -n "Linking $TFTPDIR/kernel to $LINUX_INSTALL/kernel ..."
-	ln $LINUX_INSTALL/kernel $TFTPDIR/kernel
-	if [ $? -ne 0 ]; then
-	    echo "failed."
-	    return 1
-	fi
-	echo "done."
-    fi
-    ### END CREATE KERNEL LINK IN TFTPDIR
-    
-    ### BEGIN PROMPT USER FOR RAMDISK
-    ARCH=`uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/`
-    INITRD_DEFAULT="/usr/share/systemimager/boot/$ARCH/standard/initrd.img"
-    if [ "$INITRD" != "" ]; then
-	REPLY=$INITRD
-    else
-	echo -n "What is the full pathname of the compressed ramdisk (initrd.img) you want to use? [(${INITRD_DEFAULT})]"
-	read REPLY
-    fi
-    if [ -z $REPLY ]; then
-        REPLY=$INITRD_DEFAULT
-    fi        
-    if [ ! -f $REPLY ]; then
-	echo "$REPLY doesn't exist, or isn't a regular file."
-	return 1
-    fi
-    ### END PROMPT USER FOR RAMDISK
-
-    ### BEGIN BACKUP EXISTING RAMDISK
-    if [ -e $LINUX_INSTALL/initrd.img ]; then
-	FILE_TO_BACKUP=$LINUX_INSTALL/initrd.img
-	backup_file
-	if [ $? -ne 0 ]; then
-	    return 1
-	fi
-    fi
-    ### END BACKUP EXISTING RAMDISK
-    
-    ### BEGIN COPY OVER RAMDISK
-    echo -n "Copying $REPLY to $LINUX_INSTALL/initrd.img ... "
-    cp -a $REPLY $LINUX_INSTALL/initrd.img
-    if [ $? -ne 0 ]; then
-	echo "failed."
-	return 1
-    fi
-    echo "done."
-    ### END COPY OVER RAMDISK
-
-    ### BEGIN CHECK EXISTING RAMDISK IN TFTPDIR
-    if [ -e $TFTPDIR/initrd.img ]; then
-	if [ "`md5sum $LINUX_INSTALL/initrd.img | sed 's/\( .*\)//'`" != \
-		"`md5sum $TFTPDIR/initrd.img | sed 's/\( .*\)//'`" ]; then
-	    echo "$TFTPDIR/initrd.img already exists, but doesn't match the initrd.img I want to install."
-	    FILE_TO_BACKUP=$TFTPDIR/initrd.img
-	    backup_file
-	    if [ $? -ne 0 ]; then
-		return 1
-	    fi
-	fi
-    fi
-    ### END CHECK EXISTING RAMDISK IN TFTPDIR
-
-    ### BEGIN CREATE RAMDISK LINK IN TFTPDIR
-    if [ ! -e $TFTPDIR/initrd.img ]; then
-	echo -n "Linking $TFTPDIR/initrd.img to $LINUX_INSTALL/initrd.img ..."
-	ln $LINUX_INSTALL/initrd.img $TFTPDIR/initrd.img
-	if [ $? -ne 0 ]; then
-	    echo "failed."
-	    return 1
-	fi
-	echo "done."
-    fi
-    ### END CREATE RAMDISK LINK IN TFTPDIR
-
     ### BEGIN COPY PXELINUX.CFG
     if [ -e $TFTPDIR/pxelinux.cfg ]; then
 	FILE_TO_BACKUP=$TFTPDIR/pxelinux.cfg
@@ -1072,11 +1014,11 @@ while [ $# -gt 0 ]; do
     esac
 done
 
-echo "This script may modify the following files:"
-echo "/etc/services"
-echo "/etc/inetd.conf"
-echo "/etc/xinetd.d/tftp"
-echo "You should already have a kernel and ramdisk to use."
+echo "WARNING: this script may modify the following files:"
+echo "  --> /etc/services"
+echo "  --> /etc/inetd.conf"
+echo "  --> /etc/xinetd.d/tftp"
+echo "And can restart inetd, xinetd or tftp servers."
 echo -n "Do you wish to continue (y/[n])? "
 if [ "$INTERACTIVE" == "no" ]; then
     REPLY="y"
@@ -1090,7 +1032,7 @@ case $REPLY in
 esac
 
 if [ "$TFTPDIR" == "" ]; then
-    echo -n "Where should tftpd serve files from ([/tftpboot]? "
+    echo -n "Where should tftpd serve files from ([/var/lib/tftpboot]? "
     if [ "$INTERACTIVE" == "no" ]; then
 	REPLY=""
 	echo "Non-interactive mode, taking the default."
@@ -1098,35 +1040,15 @@ if [ "$TFTPDIR" == "" ]; then
 	read REPLY
     fi
     if [ "$REPLY" == "" ]; then
-	TFTPDIR="/tftpboot"
+	TFTPDIR="/var/lib/tftpboot"
     else
 	TFTPDIR=$REPLY
     fi
 fi
 
-
-if [ ! -d $TFTPDIR ]; then
-    if [ -e $TFTPDIR ]; then
-	echo "$TFTPDIR exists, but isn't a directory, exiting."
-	exit 1
-    else
-	echo -n "$TFTPDIR doesn't exist, should I create it (y/[n])? "
-	if [ "$INTERACTIVE" == "no" ]; then
-	    REPLY="y"
-	    echo "Non-interactive mode, answering yes."
-	else
-	    read REPLY
-	fi
-	case $REPLY in
-	    y|Y|Yes|yes|YES ) echo -n "Creating $TFTPDIR..." ;;
-	    * ) echo "Ok, exiting..." && exit 1 ;;
-    	esac
-	mkdir -p $TFTPDIR
-	if [ $? -ne 0 ]; then
-	    echo "mkdir returned an error, exiting..."
-	    exit 1
-	fi
-    fi
+link_tftpboot
+if [ $? -ne 0 ]; then
+    exit 1
 fi
 
 check_tftpd
@@ -1168,8 +1090,6 @@ service tftp
         disable                 = no
 }"
 
-link_tftpboot
-
 # check to see if the installed tftpd is one
 # of the ones that is known to support options
 # necessary for PXE booting.
@@ -1187,13 +1107,13 @@ fi
 
 configure_inetd_for_tftpd_hpa
 if [ $? -ne 0 ]; then
-    echo "Attempt to configure inetd failed."
+    echo "ERROR: tftp server configuration failed."
     exit 1
-fi    
+fi
 
 test_tftpd
 if [ $? -ne 0 ]; then
-    echo "tftp server test failed."
+    echo "ERROR: tftp server test failed."
     exit 1
 fi
 
@@ -1201,14 +1121,14 @@ install_pxe_daemon
 if [ $? -eq 0 ]; then
     configure_pxe_daemon
     if [ $? -ne 0 ]; then
-        echo "pxe daemon configuration failed"
+        echo "ERROR: pxe daemon configuration failed"
         exit 1
     fi
 fi    
 
 pxelinux_cfg
 if [ $? -ne 0 ]; then
-    echo "pxelinux configuration failed"
+    echo "ERROR: pxelinux configuration failed"
     exit 1
 fi
 

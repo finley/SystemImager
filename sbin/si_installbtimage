@@ -178,9 +178,13 @@ if (opendir(DIR, $config->autoinstall_boot_dir())) {
     die("error: couldn't open " . $config->autoinstall_boot_dir() . "\n");
 }
 foreach my $arch (@archs_dir) {
-    print "Preparing torrent file for BOEL binaries for $arch...\n";
     my $boel_binaries = $config->autoinstall_boot_dir() . '/' . $arch .
                         '/standard/boel_binaries.tar.gz';
+    unless (-f $boel_binaries) {
+        # Probably a pxelinux or config dir. Skip it. -AR-
+        next;
+    }
+    print "Preparing torrent file for BOEL binaries for $arch...\n";
     my $boel_binaries_link = "${TARBALL_DIR}/${arch}-boel_binaries.tar.gz";
     # Create a symlink into the image directory.
     if ((-e $boel_binaries) && (! -e $boel_binaries_link)) {

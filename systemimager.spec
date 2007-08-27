@@ -720,7 +720,6 @@ else
 	echo
 	echo "Remember that this operation does not touch the following objects:"
 	echo "  - master, pre-install, post-install scripts"
-	echo "  - kernel, initrd.img in /tftpboot"
 	echo "  - images"
 	echo "  - overrides"
 	echo

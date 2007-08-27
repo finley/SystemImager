@@ -339,9 +339,6 @@
         Each time you upgrade Systemimager, you must also upgrade the boot
 	media you use to boot the autoinstall system.  Use <command>si_mkautoinstallcd</command> 
 	or <command>si_mkautoinstalldisk</command> to regenerate removable media.  
-	If you network boot, update the files in your /tftpboot directory and pass
-	all necessary options to the kernel. These options occasionally change - check 
-	/etc/systemimager/pxelinux.cfg/syslinux.cfg for examples.
       </para>
     </section>
     <section>
