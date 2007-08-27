@@ -15,6 +15,7 @@ use threads;
 use threads::shared;
 use IO::Socket;
 use XML::Simple;
+use Storable qw(freeze thaw);
 use Getopt::Long;
 use SystemImager::Options;
 use SystemImager::Config;
@@ -172,14 +173,25 @@ my $lock_file = $conf{'lock_dir'} . "/db.si_monitor.lock";
 # Remove old locks.
 unlink("$lock_file");
 
-# Global XML structure.
-my $xml_data : shared = load_db();
+# Initialize global (frozen) XML structure.
+my $xml_data : shared;
+my $xml_db = load_db();
+if ($xml_db) {
+	my $xml = XMLin($xml_db, KeyAttr => {client => 'name'}, ForceArray => 1);
+	$xml_data = freeze($xml);
+}
 
 # Spawn the sync thread.
 async {
 	while (1) {
-		my $tmp = get_xml_data();
-		sync_db($tmp);
+		my $xml_frozen = get_xml_data();
+		if ($xml_frozen) {
+			my $xml = thaw($xml_frozen);
+			if ($xml) {
+				my $xml_raw = XMLout($xml);
+				sync_db($xml_raw);
+			}
+		}
 		sleep(5);
 	}
 }->detach();
@@ -375,9 +387,9 @@ sub update_db
 	
 	# Update the clients table in mutual exclusion.
 	my $xml;
-	my $xml_raw = get_xml_data();
-	if ($xml_raw) {
-		$xml = XMLin($xml_raw, KeyAttr => {client => 'name'}, ForceArray => 1);
+	my $xml_frozen = get_xml_data();
+	if ($xml_frozen) {
+		$xml = thaw($xml_frozen);
 	}
 
 	$xml->{'client'}->{$mac}->{'ip'} = $client->{'ip'}
@@ -410,8 +422,8 @@ sub update_db
 	$xml->{'client'}->{$mac}->{'first_timestamp'} = $timestamp
 		if $client->{'first_timestamp'};
 
-	$xml_raw = XMLout($xml);
-	put_xml_data($xml_raw);
+	$xml_frozen = freeze($xml);
+	put_xml_data($xml_frozen);
 }
 
 __END__
