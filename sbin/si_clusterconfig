@@ -146,7 +146,7 @@ sub XML_info_to_plain_file
 		foreach my $node (
 			SystemImager::HostRange::expand_groups($group->{'name'}[0])) {
 				print OUT $node . ':' . $group->{'name'}[0] .
-						  ':' . $group->{'base_image'}[0] .
+						  ':' . $group->{'override'}[0] .
 						  "\n";
 		}
 	}

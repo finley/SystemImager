@@ -99,7 +99,7 @@ sub expand_groups
 	# Parse XML database.
 	my $xml = XMLin($database, ForceArray => 1);
 
-	my $global_image = $xml->{'base_image'}[0];
+	my $global_image = $xml->{'override'}[0];
 	unless (defined($global_image)) {
 		die("ERROR: global base image undefined in cluster.xml!\n");
 	}
