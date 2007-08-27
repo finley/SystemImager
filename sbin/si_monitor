@@ -13,6 +13,7 @@ use Fcntl ':flock';
 use POSIX qw(setsid);
 use threads;
 use threads::shared;
+use Thread::Queue;
 use IO::Socket;
 use XML::Simple;
 use Storable qw(freeze thaw);
@@ -181,6 +182,9 @@ if ($xml_db) {
 	$xml_data = freeze($xml);
 }
 
+# Data queue to wake-up and shutdown the XML loader thread.
+my $wakeup_sync_thread = Thread::Queue->new();
+
 # Spawn the sync thread.
 async {
 	while (1) {
@@ -192,7 +196,7 @@ async {
 				sync_db($xml_raw);
 			}
 		}
-		sleep(5);
+		$wakeup_sync_thread->dequeue();
 	}
 }->detach();
 
@@ -424,6 +428,11 @@ sub update_db
 
 	$xml_frozen = freeze($xml);
 	put_xml_data($xml_frozen);
+
+	# Wake-up the sync thread.
+	if (!$wakeup_sync_thread->pending()) {
+		$wakeup_sync_thread->enqueue(undef);
+	}
 }
 
 __END__
