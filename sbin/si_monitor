@@ -13,7 +13,7 @@ use Fcntl ':flock';
 use POSIX qw(setsid);
 use threads;
 use threads::shared;
-use Socket;
+use IO::Socket;
 use XML::Simple;
 use Getopt::Long;
 use SystemImager::Options;
@@ -150,6 +150,10 @@ open(STDOUT, '>>' . $log_file) or die "error: can't write to $log_file: $!\n";
 open(STDERR, '>>' . $log_file) or die "error: can't write to $log_file: $!\n";
 umask(0);
 
+# Autoflush on.
+select(STDOUT);
+$| = 1;
+
 # Reaping zombie child processes.
 $SIG{CHLD} = 'IGNORE';
 
@@ -181,61 +185,61 @@ async {
 }->detach();
 
 # Open a TCP socket.
-socket(IN, PF_INET, SOCK_STREAM, getprotobyname('tcp')) or 
-	die localtime() . ": error: could not create the socket: $!\n";
-setsockopt(IN, SOL_SOCKET, SO_REUSEADDR, 1);
-my $client_addr = sockaddr_in($port, INADDR_ANY);
-bind(IN, $client_addr) or 
-	die localtime() . ": error: could not bind to port $port : $!\n";
-listen(IN, SOMAXCONN) or 
-	die localtime() . ": error: could not listen on port $port : $!\n";
+my $server = new IO::Socket::INET(
+			Proto           => 'tcp',
+			Type		=> SOCK_STREAM,
+			Listen          => SOMAXCONN,
+			LocalPort       => $port,
+			ReuseAddr       => 1,
+		) or
+	die(localtime() .
+		": error: couldn't create a TCP socket to listen on port $port: $!\n");
 
 # Monitor daemon initialized.
-print localtime() . ": $program_name daemon is listening on port $port\n"
-	if ($log_level > 2);
+if ($log_level > 2) {
+	print localtime() .
+	      ": $program_name daemon is listening on port $port\n";
+}
 
 # Begin to accept client connections.
-# XXX: perl implementation of threads is really memory consuming, so do
-# not spawn a thread per connection, otherwise a big number of clients
-# can eat all the memory in the monitor server. -AR-
-while (accept(CLIENT, IN)) {
-	# Get other end identity.
-	my $other_end = getpeername(CLIENT);
-	if ($other_end) {
-		# Get client informations.
-		# TODO allow only authorized hosts... -AR-
-		my ($other_port, $other_iaddr) = unpack_sockaddr_in($other_end);
-		my $other_ip_address = inet_ntoa($other_iaddr);
-	
-		# Report info in the log.
-		if ($log_level > 2) {
-			print localtime() .
-			      ": connection accepted for ${other_ip_address}:${other_port}\n";
-		}
-	
-		# Get the client request.
-		$_ = <CLIENT>;
-		if ($_) {
-			chomp;
-			if ($log_level > 2) {
-				# Report the request in the log.
-				print localtime() . ": ${other_ip_address} request -> $_\n";
-			}
-			# Update the database.
-			update_db($other_ip_address, $_);
-		}
-	} else {
+while (1) {
+	my $client = $server->accept();
+	unless ($client) {
+		print localtime() .
+			": error: couldn't accept client connection!\n";
+		next;
+	}
+	# Get the other peer identity.
+	my $clientaddr = $client->peerhost();
+	unless ($clientaddr) {
 		# Refuse the client connection.
 		print localtime() . 
 			": warning: could not identify other end of a client request, ignoring.\n"
 			if ($log_level > 1);
+		close($client);
+		next;
 	}
-	close(CLIENT);
+	# TODO allow only authorized hosts... -AR-
+	if ($log_level > 2) {
+		# Report info in the log.
+		my $clientport = $client->peerport();
+		print localtime() .
+		      ": connection accepted for $clientaddr:$clientport.\n";
+	}
+	# Get the client request.
+	$_ = <$client>;
+	if ($_) {
+		chomp;
+		if ($log_level > 2) {
+			# Report the request in the log.
+			print localtime() . ": $clientaddr request -> $_\n";
+		}
+		# Update the database.
+		update_db($clientaddr, $_);
+	}
+	# Close client socket;
+	close($client);
 }
-
-# Error accepting client connections (quit).
-print localtime() . ": error: cannot accept clients connections!\n";
-exit(1);
 
 # Usage:
 # $data = get_xml_data();
