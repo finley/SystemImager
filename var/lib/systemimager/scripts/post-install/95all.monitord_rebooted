@@ -79,8 +79,9 @@ esac
 exit 0
 EOF
         chmod a+x $init_d_file
-        [ ! -e /etc/rcS.d/S99systemimager-monitor-firstboot ] && \
+        if [ ! -e /etc/rcS.d/S99systemimager-monitor-firstboot ]; then
             ln -s $init_d_file /etc/rcS.d/S99systemimager-monitor-firstboot
+        fi
     else
         # Unknown distribution... try with standard rc.local.
         rc_local=/etc/rc.local
