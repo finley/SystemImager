@@ -111,30 +111,19 @@ my $xml = XMLin($database, ForceArray => 1);
 
 my $global_image = $xml->{'base_image'}[0];
 unless (defined($global_image)) {
-	die("ERROR: global base image undefined in cluster.xml!\n");
+	die("ERROR: global base image undefined in cluster.xml! See si_clusterconfig(8).\n");
 }
-
-# Get unique arguments.
-my @arg_list = SystemImager::HostRange::sort_unique(
-	split(/ |\n|,/, join(' ', @ARGV))
-);
 
 # For each single node get the list of groups the node belongs to.
 my $single_nodes = {};
-foreach my $arg (@arg_list) {
+foreach my $arg (SystemImager::HostRange::expand_groups(join(' ', @ARGV))) {
 	my $found = 0;
-	my @nodes = SystemImager::HostRange::expand_groups($arg);
-	unless (@nodes) {
-		@nodes = SystemImager::HostRange::expand_range_list($arg);
-	}
-	foreach my $in (@nodes) {
-		foreach my $group (@{$xml->{'group'}}) {
-			foreach my $node (@{$group->{'node'}}) {
-				if ($node eq $in) {
-					$found = 1;
-					push(@{$single_nodes->{$node}}, $group);
-					last;
-				}
+	foreach my $group (@{$xml->{'group'}}) {
+		foreach my $node (SystemImager::HostRange::expand_groups(join(' ', @{$group->{'node'}}))) {
+			if ($node eq $arg) {
+				$found = 1;
+				push(@{$single_nodes->{$node}}, $group);
+				last;
 			}
 		}
 	}
@@ -250,8 +239,8 @@ B<si_pushoverrides> accepts a list of group or node names as arguments
 and concurrently synchronizes the content of the associated overrides to
 them, using a server-driven approach.
 
-The topology of the cluster can be defined in the configuration file
-B</etc/systemimager/cluster.xml>.
+The topology of the cluster can be defined in the cluster configuration by
+the command si_clusterconfig(8).
 
 B<si_pushoverrides> transmits only the differences of the files to be
 distributed. It uses rsync over SSH based backend to exploit both the
@@ -328,7 +317,7 @@ B</var/lib/systemimager/overrides/RH4_Storage/etc/profile> -E<gt> B</etc/profile
 
 =head1 SEE ALSO
 
-systemimager(8), si_psh(8), si_pcp(8), /etc/systemimager/cluster.xml
+systemimager(8), si_psh(8), si_pcp(8), si_clusterconfig(8)
 
 =head1 AUTHOR
 

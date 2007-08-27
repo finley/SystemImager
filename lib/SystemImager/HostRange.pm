@@ -87,6 +87,43 @@ sub do_cmd
 }
 
 # Usage:
+# my @hosts = expand_gruops($host_groups_string)
+# Description:
+#       Expand host groups and host ranges into the list of hostnames identified
+#       by the $host_groups_string and the group definitions in
+#       /etc/systemimager/cluster.xml.
+sub expand_groups
+{
+	my $grouplist = shift;
+
+	# Parse XML database.
+	my $xml = XMLin($database, ForceArray => 1);
+
+	my $global_image = $xml->{'base_image'}[0];
+	unless (defined($global_image)) {
+		die("ERROR: global base image undefined in cluster.xml!\n");
+	}
+
+        # Resolve the list of groups or nodenames.
+	my @ret = ();
+	foreach my $in (split(/,| |\n/, $grouplist)) {
+		my $found = 0;
+	        foreach my $group (@{$xml->{'group'}}) {
+			if (($group->{'name'}[0] eq $in) or ($in eq $global_image)) {
+				$found = 1;
+				push(@ret, expand_range_list(join(' ', @{$group->{'node'}})));
+			}
+		}
+		unless ($found) {
+			# Group not found, probably it's a single host or a host
+			# range.
+			push(@ret, expand_range_list(join(' ', $in)));
+		}
+	}
+	return sort_unique(@ret);
+}
+
+# Usage:
 # my @hosts = expand_range_list($range_string)
 # Description:
 #       Expand host ranges identified by the $range_string into the
@@ -162,35 +199,6 @@ sub expand_range {
 		my $prefix = '0' x $zeros;
 		$$expanded_hosts{"$start_root$prefix$suffix$start_domain"}++;
 	}
-}
-
-# Usage:
-# my @hosts = expand_groups($host_groups_string)
-# Description:
-#       Expand host groups into hostnames identified by the $host_groups_string
-#       and the group definitions in /etc/systemimager/cluster.xml.
-sub expand_groups
-{
-	my $grouplist = shift;
-
-	# Parse XML database.
-	my $xml = XMLin($database, ForceArray => 1);
-
-	my $global_image = $xml->{'base_image'}[0];
-	unless (defined($global_image)) {
-		die("ERROR: global base image undefined in cluster.xml!\n");
-	}
-
-        # Resolve the list of groups or nodenames.
-	my @ret = ();
-	foreach my $in (split(/,| |\n/, $grouplist)) {
-	        foreach my $group (@{$xml->{'group'}}) {
-			if (($group->{'name'}[0] eq $in) or ($in eq $global_image)) {
-				push(@ret, @{$group->{'node'}});
-			}
-		}
-	}
-	return @ret;
 }
 
 # Usage:

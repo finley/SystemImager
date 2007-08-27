@@ -46,16 +46,10 @@ Options: (options can be presented in any order)
  --hosts HOST_LIST
     List of target nodes. List can be separated by
     comma, spaces or new line and can include
-    ranges.
+    ranges or host groups.
 
-    Example:  node001-node099,node101.
+    Example:  "node001-node099,node101 Login,Storage".
                      
- --groups GROUP_LIST
-    List of target groups (defined in /etc/systemimager/cluster.xml).
-    List can be separated by comma, spaces or new line.
-
-    Example:  Storage,Login,Compute
-
  --ip-range IP_LIST
     Range of IP addresses for clients.  Used to create an optional hosts
     file that clients can use for IP address to hostname resolution
@@ -107,7 +101,6 @@ GetOptions(
   "script=s"        => \$script,
   "hosts=s"         => \$hosts,
   "ip-range=s"      => \$ip_range,
-  "groups=s"        => \$groups,
   "domainname=s"    => \$domain_name,
   "interactive=s"   => \$interactive,
 ) or die qq($help_info);
@@ -241,20 +234,13 @@ EOF
         $domain_name = get_response($domain_name);
         $domain_name = lc $domain_name;
 
-        if ($groups) {
-            print "What is the groups of hosts that you want me to use? [$groups]: ";
-            $groups = get_response($groups);
-        } else {
-            $hosts = '' unless(defined($hosts));
-            print "What is the hosts range that you want me to use? [$hosts]: ";
-            $hosts = get_response($hosts);
-        }
+        $hosts = '' unless(defined($hosts));
+        print "What is the hosts range that you want me to use? [$hosts]: ";
+        $hosts = get_response($hosts);
 
         print "\n\n";
         if ($hosts) {
             print "I will work with hostnames:  $hosts\n"; 
-        } elsif ($groups) {
-            print "I will work with groups:  $groups\n"; 
         } else {
             next;
         }
@@ -268,19 +254,13 @@ EOF
 
     ### BEGIN links questionaire ###
     system("clear");
-    my $target;
-    if ($hosts) {
-        $target = $hosts;
-    } else {
-        $target = $groups
-    }
     print <<"EOF";
 si_addclients -- Section 2 (soft links to master script)
 --------------------------------------------------------------------------------
 
 Would you like me to create soft links to a "master" script so that hosts:
 
-  $target
+  $hosts
 
 EOF
 
@@ -385,9 +365,7 @@ EOF
 
         my @all_hosts;
         if ($hosts) {
-            @all_hosts = SystemImager::HostRange::expand_range_list($hosts);
-        } elsif ($groups) {
-            @all_hosts = SystemImager::HostRange::expand_groups($groups);
+            @all_hosts = SystemImager::HostRange::expand_groups($hosts);
         } else {
             die "ERROR: something unexpected... groups or hosts were not defined!\n";
         }
@@ -451,22 +429,13 @@ EOF
 
     if ($hosts) {
         create_links($hosts, $script, $autoinstall_script_dir);
-    } elsif ($groups) {
-	foreach my $g (split(/,| |\n/, $groups)) {
-	        create_links($g, $script, $autoinstall_script_dir);
-	}
     } else {
         die "ERROR: something unexpected... groups or hosts were not defined!\n";
     }
     print "$program_name: created links in $autoinstall_script_dir\n";
 
     if (defined($hosts) and defined($ip_range)) { 
-        my @all_hosts = SystemImager::HostRange::expand_range_list($hosts);
-        if (add_hosts_entries($ip_range, $domain_name, @all_hosts)) {
-            die("$program_name: aborted!\n");
-        }
-    } elsif (defined($groups) and defined($ip_range)) { 
-        my @all_hosts = SystemImager::HostRange::expand_groups($groups);
+        my @all_hosts = SystemImager::HostRange::expand_groups($hosts);
         if (add_hosts_entries($ip_range, $domain_name, @all_hosts)) {
             die("$program_name: aborted!\n");
         }

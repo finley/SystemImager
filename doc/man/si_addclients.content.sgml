@@ -133,7 +133,7 @@
 	<term><option>-groups <replaceable>GROUP_LIST</replaceable></option></term>
 	<listitem>
 	  <para>
-            List of target groups (defined in /etc/systemimager/cluster.xml).
+            List of target groups defined by si_clusterconfig(8).
 	    List can be separated by comma, spaces or new line and can include
             ranges.
           </para>
@@ -206,7 +206,7 @@
 
     <para>
       <command>si_getimage</command>(8), <command>si_mkdhcpserver</command>(8),
-      <command>si_mkdhcpstatic</command>(8), /etc/systemimager/cluster.xml
+      <command>si_mkdhcpstatic</command>(8), <command>si_clusterconfig</command>(8)
     </para>
 
     <para>More details can be found in the <citetitle>SystemImager

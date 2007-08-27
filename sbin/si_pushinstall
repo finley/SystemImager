@@ -45,10 +45,6 @@ Options: (options can be presented in any order and can be abbreviated)
                         Every line can include one or more ranges
                         (e.g. "node001-node256,node300 node400").
 
- --groups, -g=LIST      List of target groups (defined in
-                        /etc/systemimager/cluster.xml). List can be
-                        separated by comma, spaces or new line.
-
  --timeout, -t=NUM      Set the timeout of the ssh sessions.
 
 EOF
@@ -63,7 +59,6 @@ GetOptions(
 	"max|m=i"               => \my $concurrents,
 	"hosts|n=s"             => \my $hostlist,
 	"hosts-file|f=s"        => \my $hostlist_file,
-	"groups|g=s"            => \my $grouplist,
 	"timeout|t=i"           => \my $timeout,
 ) or die("$help_info");
 
@@ -81,30 +76,16 @@ if ($version) {
 
 # Evaluate target hosts.
 my @hosts = ();
-if ($hostlist) {
-	# Expand host ranges.
-	push(@hosts, SystemImager::HostRange::expand_range_list($hostlist));
-}
-if ($grouplist) {
-	# EXpand host groups.
-	push(@hosts, SystemImager::HostRange::expand_groups($grouplist));
-}
 if ($hostlist_file) {
 	# Read input file.
-	open(IN, "<$hostlist_file") ||
+	open(IN, '<', $hostlist_file) ||
 		die("error: could't read $hostlist_file!\n");
-	chomp(@hosts = <IN>);
+	$hostlist .= ' ' . join(' ', <IN>);
 	close(IN);
-	# Expand host ranges.
-	my %expanded_hosts = ();
-	foreach my $line (@hosts) {
-		my @list = split(/,| |\n/, $line);
-		foreach my $range (@list) {
-			SystemImager::HostRange::expand_range(\%expanded_hosts, $range);
-		}
-	}
-	# Convert hosts hash into a list.
-	push(@hosts, sort(keys(%expanded_hosts)));
+}
+if ($hostlist) {
+	# Expand host groups and host ranges.
+	@hosts = SystemImager::HostRange::expand_groups($hostlist);
 }
 unless (@hosts) {
 	die("error: no host defined!\nTry \"--help\" for more options.\n");
@@ -181,7 +162,7 @@ node400").
 
 =item B<--groups, -g LIST>
 
-List of target groups (defined in B</etc/systemimager/cluster.xml>). List can be
+List of target groups defined by si_clusterconfig(8). List can be
 separated by comma, spaces or new line.
 
 =item B<--timeout | -t NUM>
@@ -191,7 +172,7 @@ Set the timeout of the ssh sessions.
 =head1 SEE ALSO
 
 systemimager(8), si_mkbootpackage(8), si_prepareclient(8), si_pcp(8), si_psh(8),
-/etc/systemimager/cluster.xml
+si_clusterconfig(8)
 
 =head1 AUTHOR
 

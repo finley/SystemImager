@@ -108,7 +108,7 @@ my $output_file;
 # Cache XML info into a plain text file. This is needed to easily parse this
 # file in the busybox environment when the clients are imaging.
 $output_file = $script_dir . '/cluster.txt';
-print "Caching XML configuration to $output_file... ";
+print "Caching XML configuration to $output_file ... ";
 if (!XML_info_to_plain_file($output_file)) {
 	print "[  OK  ]\n";
 } else {
@@ -119,7 +119,7 @@ if (!XML_info_to_plain_file($output_file)) {
 # XXX: not really dependent on cluster.xml, but it's better to synchronize
 # /etc/hosts with the hosts known by SystemImager sometimes... -AR-
 $output_file = $script_dir . '/hosts';
-print "Synchronizing /etc/hosts to $output_file... ";
+print "Synchronizing /etc/hosts to $output_file ... ";
 if (!sync_etc_hosts($output_file)) {
 	print "[  OK  ]\n";
 } else {
@@ -143,10 +143,11 @@ sub XML_info_to_plain_file
 
 	# Resolve the list of groups in nodenames.
 	foreach my $group (@{$xml->{'group'}}) {
-		foreach my $node (@{$group->{'node'}}) {
-			print OUT $node . ':' . $group->{'name'}[0] .
-					  ':' . $group->{'base_image'}[0] .
-					  "\n";
+		foreach my $node (
+			SystemImager::HostRange::expand_groups($group->{'name'}[0])) {
+				print OUT $node . ':' . $group->{'name'}[0] .
+						  ':' . $group->{'base_image'}[0] .
+						  "\n";
 		}
 	}
 	close(OUT);

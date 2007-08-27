@@ -120,9 +120,6 @@ if ($netboot) {
 
 # Make array from --clients "hostnames and ip addresses" -BEF-
 my @array = SystemImager::HostRange::expand_groups($clients);
-unless (@array) {
-    @array = SystemImager::HostRange::expand_range_list($clients);
-}
 
 my $source_file;
 if($localboot) {
