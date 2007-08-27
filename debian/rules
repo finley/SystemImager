@@ -109,7 +109,7 @@ install-arch:	build-arch
 	# Remove forbidden special files from $(BOOTPKG). This files will be
 	# added using the post-install deb script:
 	#
-	# systemimager-boot-$(ARCH)-standard.postinst
+	# systemimager-initrd-template-$(ARCH).postinst
 	#
 	cd $(CURDIR)/debian/$(BOOTPKG)/usr/share/systemimager/boot/$(UNAME_ARCH)/standard/initrd_template/dev && \
 		rm -f tty1 && \
@@ -175,12 +175,12 @@ binary-arch: build-arch install-arch
 	dh_testroot -p$(BOOTPKG) -p$(INITRD_TEMPLATE_PKG)
 	dh_installdocs -p$(BOOTPKG) -p$(INITRD_TEMPLATE_PKG)
 	dh_installchangelogs -p$(BOOTPKG) -p$(INITRD_TEMPLATE_PKG)
-	dh_link -p$(BOOTPKG) -p$(INITRD_TEMPLATE_PKG)
-	dh_strip -p$(BOOTPKG) -p$(INITRD_TEMPLATE_PKG)
-	dh_compress -p$(BOOTPKG) -p$(INITRD_TEMPLATE_PKG)
-	dh_fixperms -p$(BOOTPKG) -p$(INITRD_TEMPLATE_PKG)
+	#dh_link -p$(BOOTPKG) -p$(INITRD_TEMPLATE_PKG)
+	#dh_strip -p$(BOOTPKG) -p$(INITRD_TEMPLATE_PKG)
+	#dh_compress -p$(BOOTPKG) -p$(INITRD_TEMPLATE_PKG)
+	#dh_fixperms -p$(BOOTPKG) -p$(INITRD_TEMPLATE_PKG)
 	dh_installdeb -p$(BOOTPKG) -p$(INITRD_TEMPLATE_PKG)
-	dh_perl -p$(BOOTPKG) -p$(INITRD_TEMPLATE_PKG)
+	#dh_perl -p$(BOOTPKG) -p$(INITRD_TEMPLATE_PKG)
 	dh_gencontrol -p$(BOOTPKG) -p$(INITRD_TEMPLATE_PKG)
 	dh_md5sums  -p$(BOOTPKG) -p$(INITRD_TEMPLATE_PKG)
 	dh_builddeb -p$(BOOTPKG) -p$(INITRD_TEMPLATE_PKG)
