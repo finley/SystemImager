@@ -206,22 +206,24 @@ while (accept(CLIENT, IN)) {
 		# TODO allow only authorized hosts... -AR-
 		my ($other_port, $other_iaddr) = unpack_sockaddr_in($other_end);
 		my $other_ip_address = inet_ntoa($other_iaddr);
-		my $other_host = gethostbyaddr($other_iaddr, AF_INET);
 	
 		# Report info in the log.
-		print localtime() .
-			": connection accepted for ${other_host}:${other_port}\n"
-			if ($log_level > 2);
+		if ($log_level > 2) {
+			print localtime() .
+			      ": connection accepted for ${other_ip_address}:${other_port}\n";
+		}
 	
 		# Get the client request.
-		$_ = <CLIENT>; chomp;
-
-		# Report the request in the log.
-		print localtime() . ": ${other_host} request -> $_\n"
-			if ($log_level > 2);
-
-		# Update the database.
-		update_db($other_host, $_);
+		$_ = <CLIENT>;
+		if ($_) {
+			chomp;
+			if ($log_level > 2) {
+				# Report the request in the log.
+				print localtime() . ": ${other_ip_address} request -> $_\n";
+			}
+			# Update the database.
+			update_db($other_ip_address, $_);
+		}
 	} else {
 		# Refuse the client connection.
 		print localtime() . 
@@ -232,7 +234,8 @@ while (accept(CLIENT, IN)) {
 }
 
 # Error accepting client connections (quit).
-die localtime() . ": error: cannot accept clients connections!\n";
+print localtime() . ": error: cannot accept clients connections!\n";
+exit(1);
 
 # Usage:
 # $data = get_xml_data();
