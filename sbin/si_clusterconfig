@@ -175,7 +175,10 @@ sub XML_info_to_plain_file
 	open(OUT, ">$dest") or return -1;
 
 	# Print header (this is only for debugging purpose).
-	print OUT "#\n# hostname:group:override(group)\n#\n";
+	print OUT "#\n# hostname:group:imagename(group):override(group)\n#\n";
+
+	# First entry is reserved to store the global override.
+	print OUT '# global_override=:' . ($xml->{override}[0] or '') . ":\n#\n";
 
 	# Resolve the groups in lists of nodenames.
 	#
@@ -186,9 +189,11 @@ sub XML_info_to_plain_file
 	#
 	foreach my $name (sort keys %{$groups}) {
 		foreach my $node (SystemImager::HostRange::expand_groups($name)) {
-			print OUT $node . ':' . $name .
-					  ':' . $groups->{$name}->{'override'}[0] .
-					  "\n";
+			print OUT $node . 
+				':' . $name .
+				':' . ($groups->{$name}->{'image'}[0] or '') .
+				':' . ($groups->{$name}->{'override'}[0] or '') .
+				"\n";
 		}
 
 	}

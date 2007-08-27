@@ -99,8 +99,8 @@ sub expand_groups
 	# Parse XML database.
 	my $xml = XMLin($database, ForceArray => 1);
 
-	my $global_image = $xml->{'override'}[0];
-	unless (defined($global_image)) {
+	my $global_override = $xml->{'override'}[0];
+	unless (defined($global_override)) {
 		die("ERROR: global base image undefined in cluster.xml!\n");
 	}
 
@@ -109,7 +109,7 @@ sub expand_groups
 	foreach my $in (split(/,| |\n/, $grouplist)) {
 		my $found = 0;
 	        foreach my $group (@{$xml->{'group'}}) {
-			if (($group->{'name'}[0] eq $in) or ($in eq $global_image)) {
+			if (($group->{'name'}[0] eq $in) or ($in eq $global_override)) {
 				$found = 1;
 				push(@ret, expand_range_list(join(' ', @{$group->{'node'}})));
 			}

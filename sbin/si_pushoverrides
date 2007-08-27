@@ -109,9 +109,9 @@ my $overrides = $config->default_override_dir();
 # Parse XML database.
 my $xml = XMLin($database, ForceArray => 1);
 
-my $global_image = $xml->{'override'}[0];
-unless (defined($global_image)) {
-	die("ERROR: global base image undefined in cluster.xml! See si_clusterconfig(8).\n");
+my $global_override = $xml->{'override'}[0];
+unless (defined($global_override)) {
+	die("ERROR: global override undefined in cluster.xml! See si_clusterconfig(8).\n");
 }
 
 # For each single node get the list of groups the node belongs to.
@@ -172,8 +172,8 @@ foreach my $node (keys %{$single_nodes}) {
 		}
 	}
 	# global image is the least important.
-	if (-d  "$overrides/$global_image") {
-		$group_list .= "$overrides/$global_image/ ";
+	if (-d  "$overrides/$global_override") {
+		$group_list .= "$overrides/$global_override/ ";
 	}
 
 	# Add the node to the override group.
