@@ -15,6 +15,7 @@ use threads;
 use threads::shared;
 use Thread::Queue;
 use IO::Socket;
+use IO::Select;
 use XML::Simple;
 use Storable qw(freeze thaw);
 use Getopt::Long;
@@ -221,6 +222,7 @@ if ($log_level > 2) {
 }
 
 # Begin to accept client connections.
+my $events = new IO::Select();
 while (1) {
 	my $client = $server->accept();
 	unless ($client) {
@@ -245,15 +247,23 @@ while (1) {
 		print localtime() .
 		      ": connection accepted for $clientaddr:$clientport.\n";
 	}
-	# Get the client request.
-	$_ = <$client>;
-	if ($_) {
-		chomp;
-		# Update the database.
-		update_db($clientaddr, $_);
+	# Get the client request (set a 30sec timeout to wait the info sent by
+	# the client).
+	$events->add($client);
+	if ($events->can_read(30)) {
+		$_ = <$client>;
+		if ($_) {
+			chomp;
+			# Update the database.
+			update_db($clientaddr, $_);
+		}
+	} else {
+		print localtime() .
+		      ": warning: connection from $clientaddr timed out.\n";
 	}
 	# Close client socket;
-	close($client);
+	$events->remove($client);
+	$client->close();
 }
 
 # Usage:
