@@ -21,8 +21,6 @@ CONFIG_FILE=/etc/systemimager/systemimager.conf
 INTERACTIVE="yes"
 INTERFACE=""
 LOCAL_DHCP=""
-KERNEL=""
-INITRD=""
 TFTPDIR=`sed -ne "s/^[[:space:]]*[^#]*[[:space:]]*TFTP_DIR[[:space:]]*=[[:space:]]*\\([^#]*\\).*$/\1/p" $CONFIG_FILE`
 BOOTDIR=`sed -ne "s/^[[:space:]]*[^#]*[[:space:]]*AUTOINSTALL_BOOT_DIR[[:space:]]*=[[:space:]]*\\([^#]*\\).*$/\1/p" $CONFIG_FILE`
 PXELINUX=""
@@ -30,8 +28,8 @@ PXELINUX=""
 program_name=$(basename $0)
 
 usage="\
-Usage:  $program_name [-f] [--interface=interface] [--localdhcp=y|n] 
-	[--kernel=path] [--initrd=path] [--tftpdir=dir] [--pxelinux=path]"
+Usage:  $program_name [-f] [--interface=interface] [--localdhcp=y|n]
+	[--pxelinux=path]"
        
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
@@ -1005,9 +1003,6 @@ while [ $# -gt 0 ]; do
 	-f )               INTERACTIVE="no" ; shift ;;
         --interface=* )    INTERFACE="`echo \"${1}\" | sed -e 's/^[^=]*=//'`" ; shift ;;
 	--localdhcp=* )    LOCAL_DHCP="`echo \"${1}\" | sed -e 's/^[^=]*=//'`" ; shift ;;
-	--kernel=* )       KERNEL="`echo \"${1}\" | sed -e 's/^[^=]*=//'`" ; shift ;;
-	--initrd=* )       INITRD="`echo \"${1}\" | sed -e 's/^[^=]*=//'`" ; shift ;;
-	--tftpdir=* )      TFTPDIR="`echo \"${1}\" | sed -e 's/^[^=]*=//'`" ; shift ;;
 	--pxelinux=* )     PXELINUX="`echo \"${1}\" | sed -e 's/^[^=]*=//'`" ; shift ;;
 	
 	* ) echo "${usage}" 1>&2; exit 1 ;;

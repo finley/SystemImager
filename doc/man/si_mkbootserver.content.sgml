@@ -32,9 +32,6 @@
       <arg><option>-f</option></arg>
       <arg><option>--interface=<replaceable>INTERFACE</replaceable></option></arg>
       <arg><option>--localdhcp=<replaceable>[y|n]</replaceable></option></arg>
-      <arg><option>--kernel=<replaceable>PATH</replaceable></option></arg>
-      <arg><option>--initrd=<replaceable>PATH</replaceable></option></arg>
-      <arg><option>--tftpdir=<replaceable>PATH</replaceable></option></arg>
       <arg><option>--pxelinux=<replaceable>PATH</replaceable></option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -78,29 +75,6 @@
 	  <para>
 	    This specifies whether or not the DHCP server will run locally
 	    or on another machine.
-	  </para>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
-	<term><option>--kernel=<replaceable>PATH</replaceable></option></term>
-	<listitem>
-	  <para>The full path to the kernel that clients should boot.</para>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
-	<term><option>--initrd=<replaceable>PATH</replaceable></option></term>
-	<listitem>
-	  <para>
-	    The full path to the initial ramdisk that clients should use.
-	  </para>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
-	<term><option>--tftpdir=<replaceable>PATH</replaceable></option></term>
-	<listitem>
-	  <para>
-	    The full path to the directory from which the tftp server will
-	    serve files.
 	  </para>
 	</listitem>
       </varlistentry>
