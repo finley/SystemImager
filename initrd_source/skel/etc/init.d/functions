@@ -1254,11 +1254,11 @@ get_base_hostname() {
 #
 get_group_name() {
     if [ -f ${SCRIPTS_DIR}/cluster.txt ]; then
-        [ -z $GROUPNAMES ] && \
+        [ -z "$GROUPNAMES" ] && \
             GROUPNAMES=`unique $(grep "^${HOSTNAME}:" ${SCRIPTS_DIR}/cluster.txt | cut -d: -f2 | tr "\n" ' ')`
-        [ -z $IMAGENAME ] && \
-            IMAGENAME=`unique $(grep "^${HOSTNAME}:" ${SCRIPTS_DIR}/cluster.txt | cut -d: -f3 | tr "\n" ' ')`
-        if [ -z $GROUP_OVERRIDES ]; then
+        [ -z "$IMAGENAME" ] && \
+            IMAGENAME=`grep "^${HOSTNAME}:" ${SCRIPTS_DIR}/cluster.txt | cut -d: -f3 | head -1`
+        if [ -z "$GROUP_OVERRIDES" ]; then
             GROUP_OVERRIDES=`reverse $(unique $(grep "^${HOSTNAME}:" ${SCRIPTS_DIR}/cluster.txt | cut -d: -f4 | tr "\n" ' '))`
             # Add the global override on top (least important).
             GROUP_OVERRIDES="`sed -ne 's/^# global_override=:\([^:]*\):$/\1/p' ${SCRIPTS_DIR}/cluster.txt` $GROUP_OVERRIDES"
