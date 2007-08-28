@@ -508,13 +508,33 @@ $window_style->configure(
     -anchor     => 'center',
 );
 
-# Create the table header.
+# Create the clickable table header.
 $tab->header('create', 0, -text => ' ');
 my $i = 1;
 foreach (sort keys %{$attrs_struct}) {
-    $_ = $attrs_struct->{$_}->{'-label'};
-    s/~//g;
-    $tab->header('create', $i++, -text => $_); 
+    my $label_str = $attrs_struct->{$_}->{'-label'};
+    my $name_str = $attrs_struct->{$_}->{'-name'};
+    $label_str =~ s/~//g;
+    my $b = $tab->Button(
+        -background => 'grey',
+        -anchor => 'center',
+        -text => $label_str,
+        -command => sub {
+            if ("$sort_field" ne "$name_str") {
+                $sort_field = $name_str;
+            } else {
+                $sort_order = int(!$sort_order);
+            }
+            refresh();
+        }
+    );
+    $tab->headerCreate(
+        $i++,
+        -itemtype => 'window',
+        -borderwidth => -2,
+        -headerbackground => 'grey',
+        -widget => $b
+    );
 }
 
 # Show the body.
