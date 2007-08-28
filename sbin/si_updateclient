@@ -479,8 +479,8 @@ SC_EOF
     #
     $cmdopts .= " --exclude=lost+found/";
 
-    # Automatically exclude /dev if udev is detected. -AR-
-    if (-d '/dev/.udevdb') {
+    # Automatically exclude /dev if udev or devfs is detected. -AR-
+    if (SystemImager::Common->which_dev_style() ne 'static') {
         $cmdopts .= " --exclude=/dev/";
     }
 
