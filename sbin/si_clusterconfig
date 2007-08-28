@@ -35,6 +35,9 @@ Options: (options can be presented in any order and can be abbreviated)
 
  --version, -v          Display version and copyright information.
 
+ --update, -u           Force a non-interactive update of all the configuration
+                        files.
+
 EOF
 
 Getopt::Long::Configure("posix_default");
@@ -44,6 +47,7 @@ Getopt::Long::Configure("bundling");
 GetOptions(
 	"help|h"		=> \my $help,
 	"version|v"		=> \my $version,
+	"update|u"		=> \my $update,
 ) or die("$help_info");
 
 select(STDERR);
@@ -75,22 +79,34 @@ my $database = $SystemImager::HostRange::database;
 
 # Get a valid system editor.
 my $editor = '';
-if (defined($ENV{'EDITOR'})) {
-	$editor = $ENV{'EDITOR'};
-} else {
-	chomp($editor = `(type -p vim || type -p vi || type -p nano || type -p nano-tiny) 2>/dev/null`);
+unless ($update) {
+	if (defined($ENV{'EDITOR'})) {
+		$editor = $ENV{'EDITOR'};
+	} else {
+		chomp($editor = `(type -p vim || type -p vi || type -p nano || type -p nano-tiny) 2>/dev/null`);
+	}
+	unless ($editor) {
+		die("FATAL: couldn't find a valid editor (vi, vim, nano or nano-tiny)!\n");
+	}
 }
 
 while (1) {
 	# Edit the configuration file.
-	system "$editor $database";
+	unless ($update) {
+		system "$editor $database";
+	}
 
 	# Check syntax after editing.
 	if (XML_check_syntax()) {
 		print STDERR "ERROR: syntax error in $database!\n";
 		print STDERR "$@\n";
-		print "Edit again? (y | n) ";
-		chomp(my $ans = <STDIN>);
+		my $ans;
+		unless ($update) {
+			print "Edit again? (y | n) ";
+			chomp($ans = <STDIN>);
+		} else {
+			$ans = 'n';
+		}
 		if (lc($ans) eq 'y') {
 			next;
 		} else {
@@ -134,11 +150,10 @@ exit(0);
 #   /etc/systemimager/cluster.xml. Return 0 in case of success.
 sub XML_check_syntax
 {
-	eval { XMLin($database, ForceArray => 1) };
+	my $xml = eval { XMLin($database, ForceArray => 1) };
 	if (@_) {
 		return -1;
 	}
-	my $xml = XMLin($database, ForceArray => 1);
 	# Check if a base override has been defined.
 	unless (defined($xml->{'override'}[0])) {
 		print "WARNING: the global override is undefined! " . 
@@ -245,6 +260,10 @@ Display a short help.
 =item B<--version | -V>
 
 Display version and copyright information.
+
+=item B<--update | -u>
+
+Force a non-interactive update of all the configuration files.
 
 =head1 SEE ALSO
 
