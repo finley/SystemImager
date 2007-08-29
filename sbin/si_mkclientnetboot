@@ -72,6 +72,7 @@ GetOptions(
     "clients=s"         => \my $clients,
     "arch=s"            => \my $arch,
     "flavor=s"          => \my $flavor,
+    "append=s"          => \my $append,
 ) or die qq($help_info);
 
 # if requested, print help information
@@ -135,12 +136,17 @@ close(IN);
 
 if ($netboot) {
     # Replace kernel and initrd.img using the boot package specified by command
-    # line.
+    # line (and append the kernel command line string if specified).
     for (my $i = 0; $i <= $#bootcfg; $i++) {
         if ($bootcfg[$i] =~ s/^\s*KERNEL\s+.*$/KERNEL \/$arch\/$flavor\/kernel/) {
             next;
         }
         $bootcfg[$i] =~ s/\s+initrd=initrd.img\s+/ initrd=\/$arch\/$flavor\/initrd.img /;
+        if ($append) {
+            if ($bootcfg[$i] =~ /^\s*APPEND\s+([^#\n]*)(.*)$/) {
+                $bootcfg[$i] = 'APPEND ' . ($1 or '') . " $append " . ($2 or '') . "\n";
+            }
+        }
     }
 }
 

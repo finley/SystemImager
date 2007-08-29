@@ -33,6 +33,9 @@
       <arg><option>--netboot</option></arg>
       <arg><option>--localboot</option></arg>
       <arg><option>--clients "<replaceable>HOST1 HOST2 ...</replaceable>"</option></arg>
+      <arg><option>--arch "<replaceable>ARCH</replaceable>"</option></arg>
+      <arg><option>--flavor "<replaceable>FLAVOR</replaceable>"</option></arg>
+      <arg><option>--append "<replaceable>STRING</replaceable>"</option></arg>
 
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -93,6 +96,36 @@
             told to let these clients net boot from this server, at least until they've
             completed a successful SystemImager autoinstall.
           </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>--arch "<replaceable>ARCH</replaceable>"</option></term>
+        <listitem>
+          <para>
+	    The CPU architecture of the resulting kernel and initrd used for doing
+	    autoinstall (see /usr/share/systemimager/boot).
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>--flavor "<replaceable>FLAVOR</replaceable>"</option></term>
+        <listitem>
+          <para>
+	    The boot flavor to used for doing an autoinstall (see
+            /usr/share/systemimager/boot/ARCH/).
+	  </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>--append "<replaceable>STRING</replaceable>"</option></term>
+        <listitem>
+          <para>
+	    Append STRING to the kernel boot options (useful to define installation
+	    parameters).
+	  </para>
         </listitem>
       </varlistentry>
 

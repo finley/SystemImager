@@ -459,6 +459,10 @@ return << "EOF";
     The CPU architecture of the resulting kernel and initrd used for doing
     autoinstall
 
+ --append STRING
+    Append STRING to the kernel boot options (useful to define installation
+    parameters).
+
 EOF
 }
 
