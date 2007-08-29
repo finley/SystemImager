@@ -38,6 +38,7 @@ use Tk::ProgressBar;
 use Tk::widgets qw/Dialog ErrorDialog/;
 use Fcntl ':flock';
 use XML::Simple;
+use Time::HiRes qw(gettimeofday tv_interval);
 use Getopt::Long qw(:config no_ignore_case bundling);
 
 my $version_info = << "EOF";
@@ -99,8 +100,11 @@ if (-r $conffile) {
 
 # Get the lock directory. 
 $conf{'lock_dir'} ||= "/var/lock/systemimager";
-die "No such lock directory '$conf{'lock_dir'}'\n"
-    if (! -d $conf{'lock_dir'});
+if (! -d $conf{'lock_dir'}) {
+    # Create the lock directory.
+    mkdir($conf{'lock_dir'}) or 
+        die "error: couldn't create lock directory '$conf{'lock_dir'}'\n";
+}
 
 # Get the database file.
 $conf{'monitor_db'} ||= "/var/lib/systemimager/clients.xml";
@@ -421,9 +425,23 @@ $tab = $window->Scrolled(
     -selectmode       => 'browse',
     -selectbackground => 'yellow',
     -background       => 'white',
-    -command          => \&show_virtual_console,
+#
+# XXX: Do not use the -command property. The Tk::HList object is totally buggy
+# and it's not able to properly handle the double-click events. This means that
+# under ceratin conditions the double-click handler will never be called.
+#
+# The double-click event is managed inside the single-click handler, directly
+# looking the click-rate, evaluated by the Time::HiRes features.
+#
+#    -command          => \&show_virtual_console,
+#
+    -command          => \&update_selected_mac,
     -browsecmd        => \&update_selected_mac,
 )->grid(qw/-sticky nsew/);
+
+# Variable to correctly handle the Tk::HList double click events.
+my $last_time_clicked = [gettimeofday];
+my $last_entry_clicked = '';
 
 # Bind mouse wheel events to the table of nodes.
 $window->bind('all', '<4>',   => sub { $tab->yview('scroll', -3, 'units') });
@@ -565,6 +583,8 @@ exit(0);
 #    Open the virtual console window.
 sub show_virtual_console 
 {
+    my $entry = shift;
+
     # Allow only one virtual console -AR-
     # TODO: handle more than one console.
     $sub_win->destroy() if Exists($sub_win);
@@ -572,9 +592,9 @@ sub show_virtual_console
     @curr_logmsg = ();
 
     # Get info to show in the title.
-    my $mac = $tab->itemCget($_[0], 1, 'text');
-    my $ip = $tab->itemCget($_[0], 2, 'text');
-    my $hostname  = $tab->itemCget($_[0], 3, 'text') || '';
+    my $mac = $tab->itemCget($entry, 1, 'text');
+    my $ip = $tab->itemCget($entry, 2, 'text');
+    my $hostname  = $tab->itemCget($entry, 3, 'text') || '';
 
     # Open the console in a new window.
     $sub_win = MainWindow->new();
@@ -681,7 +701,9 @@ sub refresh_console
     if ($@) {
         if (++$sub_conn_failed > 10) {
             # Stop refreshing virtual console.
-            $sub_cons_timer->cancel();
+            if ($sub_cons_timer) {
+                $sub_cons_timer->cancel();
+            }
         }
         # Log gathering failed.
         return -1;
@@ -840,13 +862,31 @@ sub show_command_buttons
 #    Set the selected client entry in the table.
 sub update_selected_mac
 {
+    my $entry = shift;
+    my $item = $tab->itemCget($entry, 1, 'text');
+
+    # Evaluate the click-rate to see if this single-click can be considered a
+    # double-click instead.
+    my $t0 = [gettimeofday];
+    my $interval = tv_interval($last_time_clicked, $t0);
+    if (defined($item)) {
+        if (($interval < 0.3) && ($item eq $last_entry_clicked)) {
+            # This is probably a double click... open the virtual console.
+            show_virtual_console($entry);
+            return;
+        }
+    }
+
+    # Single click event (browsing).
     my $prev_sel = (defined($selected_mac_addr) ? $selected_mac_addr : '');
-    $selected_mac_addr = $tab->itemCget($_[0], 1, 'text');
+    $selected_mac_addr = $item;
     if ($prev_sel eq $selected_mac_addr) {
         undef($selected_mac_addr);
         $tab->selectionClear();
         $tab->anchorClear();
     }
+    $last_entry_clicked = $item;
+    $last_time_clicked = $t0;
 }
 
 # Usage:
