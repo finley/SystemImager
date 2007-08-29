@@ -26,7 +26,7 @@
     <cmdsynopsis>
       <command>si_mkbootpackage</command>
 
-      <arg choice=req><option>--destination</option> <replaceable>DIR</replaceable></arg>
+      <arg choice=req><option>--destination</option> <replaceable>DIR</replaceable> | <option>--flavor</option> <replaceable>FLAVOR</replaceable></arg>
       <arg><option>--version</option></arg>
       <arg><option>-h</option></arg>
       <arg><option>--help</option></arg>
@@ -89,6 +89,17 @@
         <term><option>--destination <replaceable>DIR</replaceable></option></term>
         <listitem>
           <para>The destination directory to deploy the kernel and initrd.img</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>--flavor <replaceable>FLAVOR</replaceable></option></term>
+        <listitem>
+          <para>
+	    The destination flavor to deploy the new boot package (kernel and
+	    initrd.img).  This option will create or overwrite a new boot flavor in the
+	    /usr/share/systemimager/boot, or in the directory defined by the
+	    parameter AUTOINSTALL_BOOT_DIR in /etc/systemimager/systemimager.conf.
+	  </para>
         </listitem>
       </varlistentry>
       <varlistentry>

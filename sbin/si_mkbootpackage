@@ -30,6 +30,7 @@ use File::Path;
 use File::Basename;
 use Getopt::Long;
 use vars qw($VERSION);
+use SystemImager::Config qw($config);
 use SystemImager::Common;
 use SystemImager::UseYourOwnKernel;
 
@@ -53,6 +54,9 @@ $ENV{"LANG"} = "C";
 
 my $progname = basename $0;
 
+my $ARCH = SystemImager::UseYourOwnKernel::_get_arch();
+my $autoinstall_boot_dir = $config->autoinstall_boot_dir;
+
 my $version_info = <<"EOF";
 $progname (part of SystemImager) v$VERSION
 
@@ -65,7 +69,7 @@ EOF
 
 my $help_info = $version_info . <<"EOF";
 
-Usage: $progname --destination DIR [OPTION]...
+Usage: $progname --destination DIR | --flavor FLAVOR [OPTION]...
 
 Description:
         Takes the kernel specified, and necessary modules from it, and creates
@@ -81,13 +85,17 @@ Options:
     Display this output.
 
  --arch ARCH
-    The CPU architecture of the resulting initrd boot image
+    The CPU architecture of the resulting initrd boot image (if not specified
+    it is used the same architecture of the image server: $ARCH).
+
+ --flavor FLAVOR
+    The destination flavor to put the new boot package (kernel and
+    initrd.img). This will create or overwrite a new boot flavor in 
+    $autoinstall_boot_dir.
 
  --destination DIR
     The destination directory to put the new boot package (kernel and
     initrd.img).
-
-    Required.
 
   --yes                 
     Answer yes to all yes/no questions.
@@ -152,6 +160,7 @@ EOF
 GetOptions(
     "help"                 => \my $help,
     "arch=s"               => \my $img_arch,
+    "flavor=s"             => \my $flavor,
     "quiet"                => \my $quiet,
     "destination=s"        => \my $destination,
     "my-modules"           => \my $my_modules,
@@ -186,19 +195,25 @@ if ($> != 0) {
     exit 1;
 }
 
-unless($destination) {
-    print "FATAL: missing --destination DIR option!\n";
+unless (($destination) or ($flavor)) {
+    print "FATAL: missing --destination DIR, or --flavor FLAVOR option!\n";
     print qq(Try "$progname --help" for more info.\n);
     exit 1;
 }
 
-if(!($custom_kernel) and $modules_dir) {
+if (($destination) and ($flavor)) {
+    print "FATAL: couldn't specify both --destination DIR and --flavor FLAVOR options!\n";
+    print qq(Try "$progname --help" for more info.\n);
+    exit 1;
+}
+
+if (!($custom_kernel) and $modules_dir) {
     print "FATAL:  --modules-dir DIR option must be used in conjunction with --kernel KERNEL!\n";
     print qq(Try "$progname --help" for more info.\n);
     exit 1;
 }
 
-if($custom_kernel and !($modules_dir)) {
+if ($custom_kernel and !($modules_dir)) {
     print "WARNING: --kernel KERNEL used without --modules-dir DIR option!\n";
     print qq(You can use this option only if KERNEL is a monolithic kernel,\n) .
           qq(or if the needed modules are already present in the initrd\n) .
@@ -213,19 +228,19 @@ if($custom_kernel and !($modules_dir)) {
     }
 }
 
-if($my_modules and $modules_dir) {
+if ($my_modules and $modules_dir) {
     print "FATAL:  --my-modules option conflicts with --modules-dir DIR!\n";
     print qq(Try "$progname --help" for more info.\n);
     exit 1;
 }
 
-if($custom_kernel and $image) {
+if ($custom_kernel and $image) {
     print "FATAL:  --kernel KERNEL option conflicts with --image IMAGENAME!\n";
     print qq(Try "$progname --help" for more info.\n);
     exit 1;
 }
 
-if($my_modules and $image) {
+if ($my_modules and $image) {
     print "FATAL:  --my-modules option conflicts with --image IMAGENAME!\n";
     print qq(Try "$progname --help" for more info.\n);
     exit 1;
@@ -259,20 +274,30 @@ exit(0);
 ### BEGIN functions
 # SystemImager specific functions
 
-#
-# Usage: my $arch = get_arch();
-#
-sub get_arch {
-	my $arch = (uname())[4];
-	$arch =~ s/i.86/i386/;
-	return $arch;
-}
-
 # Usage:
 # create_boot_package();
 sub create_boot_package {
-    my $arch = $img_arch ? $img_arch : get_arch();
+    my $arch = $img_arch ? $img_arch : $ARCH;
     my $verbose = 1 unless($quiet);
+
+    unless ($destination) {
+        $destination = "$autoinstall_boot_dir/$arch/$flavor";
+    }
+    print "Creating the boot package in: $destination\n";
+
+    # Check if the boot package already exists.
+    if ((-e "$destination/kernel") or (-e "$destination/initrd.img")) {
+        print "WARNING: a boot package (kernel + initrd.img) already exists in $destination!\n";
+        print "If you choose to continue the old boot package will be overwritten!!!\n";
+        unless (($quiet) or ($yes)) {
+            print "Continue? (y/[n]): ";
+            my $answer = <>;
+            unless($answer =~ /y/i) {
+                print "Boot package build cancelled.  No files modified.\n";
+                exit 1;
+            }
+        }
+    }
 
     SystemImager::UseYourOwnKernel->create_uyok_initrd(
         $arch, $my_modules, $custom_kernel, $modules_dir,
