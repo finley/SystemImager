@@ -18,8 +18,6 @@ Priority classification:
 TODO list for SystemImager
 ==========================
 
-(9) Introduce the concept of host group.
-
 (7) Include mkrecoveryISO in the standard release.
 
 (5) Implement si_getdebuginfo to generate a tar.gz containing all the system
@@ -47,13 +45,6 @@ TODO list for SystemImager
         - Common.pm
         - autoinstallscript.template
 
-(4) date > /tmp/start-time at start of install
-    date > /tmp/end-time at end of install
-
-    Then:
-    echo Your install took started at `cat /tmp/start-time` 
-    echo and completed at `cat /tmp/end-time`
-
 (4) si_monitortk improvements (thanks Bernard for the good suggestions):
     - support multiple virtual console instances at the same time
     - add a popup menu on the client entries to display detailed info
@@ -64,148 +55,6 @@ TODO list for SystemImager
 (4) Implement a GUI to perform all the common systemimager operations
 
 (4) Implement pre/post-update scripts (to be ran with si_updateclient)
-
-(4) Improved tftpbooting architecture
-
-    Location:
-        ln -s /usr/share/systemimager/boot /tftpboot
-
-    In that location:
-        ia64/standard
-            /elilo.efi (provided as part of ia64 standard boot package)
-        i386/standard
-            /pxelinux.bin (provided as part of i386 standard boot package)
-            /pxelinux.cfg (provided as part of i386 standard boot package)
-        x86_64/standard
-              /pxelinux.bin (provided as part of x86_64 standard boot package)
-              /pxelinux.cfg (provided as part of x86_64 standard boot package)
-        etc...
-
-    si_mkbootserver
-        - for now, just hardcode a softlink from /tftpboot ->
-          /usr/share/systemimager/boot
-        - later, re-write in perl and try to improve interaction
-
-    si_mkclientnetboot
-        For a host with a name of "my-host" with a mac address that
-        derives to a boot file with a name of "92890905" produce boot
-        file that includes:
-
-        - an entry for every one of: ls /tftpboot/i386/*/kernel | perl
-          -pi -e 's#/tftpboot/##' 
-
-        - a reference to a messages file named
-          "pxelinux.cfg/92890905.my-host" that contains a boot menu with
-          menu items for each of the possible kernels from above.
-
-        - Paul G.'s sample menu enabled pxe-boot file:
-
-DISPLAY pxelinux.cfg/message.txt
-PROMPT 1
-TIMEOUT 5000
-DEFAULT local
-#TIMEOUT 10 
-#DEFAULT 4
-
-LABEL 1
-  LOCALBOOT 0 
-
-LABEL local
-  LOCALBOOT 0 
-
-LABEL 2 
-  KERNEL kernel
-  APPEND vga=extended load_ramdisk=1 prompt_ramdisk=0 initrd=initrd.img root=/dev/ram rw ramdisk_blocksize=4096
-
-LABEL install 
-  KERNEL kernel
-  APPEND vga=extended load_ramdisk=1 prompt_ramdisk=0 initrd=initrd.img root=/dev/ram rw ramdisk_blocksize=4096
-
-LABEL 3
- kernel memdisk
- append initrd=dos.img
-
-LABEL installwin
- kernel memdisk
- append initrd=dos.img
-
-LABEL install-amd64
-  KERNEL kernel.amd64
-  APPEND vga=extended load_ramdisk=1 prompt_ramdisk=0 initrd=initrd.img.amd64 root=/dev/ram rw ramdisk_blocksize=4096
-LABEL 4
-  KERNEL kernel.amd64
-  APPEND vga=extended load_ramdisk=1 prompt_ramdisk=0 initrd=initrd.img.amd64 root=/dev/ram rw ramdisk_blocksize=4096
-
-
-            And include a message.txt that looks something like:
-
-
-welcome to 
- #####   ######   ####   ######    ##    #####    ####   #    #
- #    #  #       #       #        #  #   #    #  #    #  #    #
- #    #  #####    ####   #####   #    #  #    #  #       ######
- #####   #            #  #       ######  #####   #       #    #
- #   #   #       #    #  #       #    #  #   #   #    #  #    #
- #    #  ######   ####   ######  #    #  #    #   ####   #    #
-your choices:
-
-1.) local - This is the default action, it boots the local hard drive
-	           it will happen in 5 seconds
-	           or hit enter and it will happen now
-
-- Talk to Admin before using any of the rest of these - 
-2.) install - reinstall linux, resizes Hard drive
-	             resize may break windows
-
-3.) installwin - reinstalls the windows partition
-	                will erase C: drive
-
-4.) install-amd64 - reinstall linux on amd64 machines
-
-
-        - generates a boot file for each client that looks like below,
-          and includes a nice net-boot message for the client's console
-          that explains their net-boot kernel choices:
-
-            DEFAULT standard
-
-            #
-            # Uncomment next line to send pxelinux boot prompt over
-            # serial port 0.
-            # NOTE: Be sure your serial port speed is appropriate
-            # (57600, 9600, etc.)
-            #
-            #SERIAL 0 57600
-            DISPLAY message.txt
-            PROMPT 1
-            TIMEOUT 50
-
-            # Add the following to the append line above to use your
-            # first serial port
-            # (ttyS0) as a console in addition to your monitor (tty0).
-            # NOTE: Be sure
-            # your serial port speed is appropriate (57600, 9600, etc.)
-            #
-            #console=ttyS0,57600
-
-            # Add the following to the append line above to increase the
-            # size of your tmpfs
-            # filesystem.  About 100MB larger than your image size
-            # should suffice.
-            #
-            # Other tmpfs mount options are also supported.  See the FAQ
-            # for details.
-            #tmpfs_size=800M
-
-            LABEL standard
-            KERNEL i386/i386-dapper-server/kernel
-            APPEND vga=extended
-            initrd=i386/i386-dapper-server/initrd.img root=/dev/ram
-
-            LABEL i386-dapper-server
-            KERNEL i386/i386-dapper-server/kernel
-            APPEND vga=extended
-            initrd=i386/i386-dapper-server/initrd.img root=/dev/ram
 
 (2) Add a kernel-devel tree package, like those that ship with RedHat, 
     Ubuntu, etc. There's just enough data to build boot-kernel modules 
