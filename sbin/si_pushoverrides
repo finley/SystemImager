@@ -203,7 +203,11 @@ sub update_nodes
 
 	# Update nodes that needs the same overrides.
 	my $node_list = join(',', @nodes);
-	run_cmd("$base_cmd -n $node_list $file_str /");
+	if ($file_str) {
+		run_cmd("$base_cmd -n $node_list $file_str /");
+	} else {
+		print STDERR "WARNING: no override found for $node_list! skipping them.\n";
+	}
 }
 
 # Description:
