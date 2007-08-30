@@ -496,6 +496,9 @@ run_post_install_scripts
 #   Save virtual console session in the imaged client
 #
 if [ ! -z $MONITOR_SERVER ]; then
+    if [ "x$MONITOR_CONSOLE" = "xy" ]; then
+        MONITOR_CONSOLE=yes
+    fi
     if [ "x$MONITOR_CONSOLE" = "xyes" ]; then 
         [ ! -d /a/root ] && mkdir -p /a/root
         cp -f /tmp/si_monitor.log /a/root/si_monitor.log
@@ -536,6 +539,9 @@ logmsg "Imaging completed"
 if [ ! -z $MONITOR_SERVER ]; then
     # Report the 'imaged' state to the monitor server.
     send_monitor_msg "status=100:speed=0"
+    if [ "x$MONITOR_CONSOLE" = "xy" ]; then
+        MONITOR_CONSOLE=yes
+    fi
     if [ "x$MONITOR_CONSOLE" = "xyes" ]; then 
         # Print some empty lines and sleep some seconds to give time to
         # the virtual console to get last messages.

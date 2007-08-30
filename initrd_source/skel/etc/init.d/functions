@@ -1720,6 +1720,9 @@ send_monitor_stdout() {
         # echo to the console -AR-
         echo $l
         # Send the message to the monitor daemon.
+        if [ "x$MONITOR_CONSOLE" = "xy" ]; then
+            MONITOR_CONSOLE=yes
+        fi
         if [ "x$MONITOR_CONSOLE" = "xyes" ]; then
             # Log message into the global monitor log.
             if fs_on_tmpfs / ; then
@@ -1741,6 +1744,9 @@ init_monitor_server() {
     # Start client log gathering server: for each connection
     # to the local client on port 8181 the full log is sent
     # to the requestor. -AR-
+    if [ "x$MONITOR_CONSOLE" = "xy" ]; then
+        MONITOR_CONSOLE=yes
+    fi
     if [ "x$MONITOR_CONSOLE" = "xyes" ]; then
         while :; do nc -p 8181 -l < /tmp/si_monitor.log; done &
     fi
