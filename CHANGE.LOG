@@ -6,6 +6,40 @@
 #   $Id$
 #
 
+3.9.4
+--------------------------------------------------------------------------------
+- introduced the concept of host group: groups can be listed or
+  modified by the command si_clusterconfig(8)
+- improved tftpbooting architecture: the default /tftpboot root has been
+  moved to /var/lib/tftpboot (more LSB compliant) and it is a symlink to
+  /usr/share/systemimager/boot. In this way there is no need to keep in
+  sync kernel and initrd.img in /tftpboot anymore and we can support
+  multiple boot packages (kernel + initrd.img) at the same time
+- a lot of improvements in the monitoring engine: now it is possible
+  keep monitored thousands of imaging clients with a low overhead of the
+  monitoring daemon
+- improved the si_monitortk GUI responsiveness
+- added a clickable header on top of the clients table in si_monitortk
+  GUI to sort the monitored clients with a single click
+- added full support to filesystem LABELs and UUIDs
+- added --flavor option to si_mkbootpackage: this allows to directly
+  create a boot package into a new flavor
+- added the --append option to si_mkclientnetboot: this allows to define
+  installation parameters for the target clients by si_mkclientnetboot
+  (without the need to manually edit the syslinux.cfg file)
+- at the end of the imaging systemconfigurator now configures the same
+  interface used to perform the auto-installation and not always eth0
+- now at the end of the auto-installation systemconfigurator will
+  automatically configure the same network device used to perform the
+  installation (and not always and only eth0)
+- more verbosity for systemconfigurator (useful for troubleshooting
+  activities)
+- systemimager-boot-<arch>-standard deb package has been splitted in
+  systemimager-boot-<arch>-standard and systemimager-initrd-template-<arch>
+- added priority classification of the entries in the TODO list
+- a lot of bug fixes
+- a new SystemImager boot screen ;-)
+
 3.9.2
 --------------------------------------------------------------------------------
 - Added support for the PS3 architecture
