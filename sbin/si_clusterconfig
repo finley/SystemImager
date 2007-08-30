@@ -28,7 +28,8 @@ EOF
 
 my $help_info = $version_info . <<"EOF";
 
-Usage: $program_name [OPTION]...
+Usage (show-mode): $program_name hostname|host-range|host-group... [OPTION]...
+Usage (edit-mode): $program_name -e|-u [OPTION]...
 
 Options: (options can be presented in any order and can be abbreviated)
  --help, -h             Display this output.
@@ -37,6 +38,12 @@ Options: (options can be presented in any order and can be abbreviated)
 
  --update, -u           Force a non-interactive update of all the configuration
                         files.
+
+ --edit, -e             Edit the cluster topology configuration in interactive
+                        mode.
+
+ --groups, -g           Show group associations for each node (this option
+                        works only in show-mode).
 
 EOF
 
@@ -48,6 +55,8 @@ GetOptions(
 	"help|h"		=> \my $help,
 	"version|v"		=> \my $version,
 	"update|u"		=> \my $update,
+	"edit|e"		=> \my $edit,
+	"groups|g"		=> \my $show_groups,
 ) or die("$help_info");
 
 select(STDERR);
@@ -69,80 +78,125 @@ if ($version) {
 
 ### END evaluate commad line options ###
 
-# This program must be run as root.
-unless ($< == 0) {
-	die("FATAL: $program_name requires root privileges.\n");
-}
-
 # Get cluster configuration file.
 my $database = $SystemImager::HostRange::database;
 
-# Get a valid system editor.
-my $editor = '';
-unless ($update) {
-	if (defined($ENV{'EDITOR'})) {
-		$editor = $ENV{'EDITOR'};
-	} else {
-		chomp($editor = `(type -p vim || type -p vi || type -p nano || type -p nano-tiny) 2>/dev/null`);
-	}
-	unless ($editor) {
-		die("FATAL: couldn't find a valid editor (vi, vim, nano or nano-tiny)!\n");
-	}
-}
-
-while (1) {
-	# Edit the configuration file.
-	unless ($update) {
-		system "$editor $database";
-	}
-
-	# Check syntax after editing.
-	if (XML_check_syntax()) {
-		print STDERR "ERROR: syntax error in $database!\n";
-		print STDERR "$@\n";
-		my $ans;
-		unless ($update) {
-			print "Edit again? (y | n) ";
-			chomp($ans = <STDIN>);
-		} else {
-			$ans = 'n';
-		}
-		if (lc($ans) eq 'y') {
-			next;
-		} else {
-			print STDERR "WARNING: $database still contains errors! Please fix it.\n";
-			exit(1);
-		}
-	}
-	last;
-}
-
-my $script_dir = $config->autoinstall_script_dir();
-my $output_file;
-
-# Cache XML info into a plain text file. This is needed to easily parse this
-# file in the busybox environment when the clients are imaging.
-$output_file = $script_dir . '/cluster.txt';
-print "Caching XML configuration to $output_file ... ";
-if (!XML_info_to_plain_file($output_file)) {
-	print "[  OK  ]\n";
+# Choose the action to do.
+if (($edit) or ($update)) {
+	edit();
 } else {
-	die("\nERROR: couldn't cache XML info to $output_file!\n");
-}
-
-# Synchronize /etc/hosts to the hosts file read by the imaging clients.
-# XXX: not really dependent on cluster.xml, but it's better to synchronize
-# /etc/hosts with the hosts known by SystemImager sometimes... -AR-
-$output_file = $script_dir . '/hosts';
-print "Synchronizing /etc/hosts to $output_file ... ";
-if (!sync_etc_hosts($output_file)) {
-	print "[  OK  ]\n";
-} else {
-	die("\nERROR: couldn't synchronize /etc/hosts to $output_file!\n");
+	show();
 }
 
 # Well done.
 exit(0);
+
+# Usage: show()
+# Description:
+#     Show cluster configuration.
+sub show
+{
+	# Cache hosts/groups associations in a single memory hash.
+	my $groups;
+	if ($show_groups) {
+	        my $xml = XMLin($database, ForceArray => 1);
+	        foreach my $group (
+	                        sort {$a->{'name'}[0] cmp $b->{'name'}[0]} @{($xml->{'group'})}) {
+	                my $name = $group->{'name'}[0];
+	                map { push(@{$groups->{$_}}, $name) }
+	                        SystemImager::HostRange::expand_groups($name);
+	        }
+	}
+	# Print group/host/host-range info.
+	unless (@ARGV) {
+		print "$help_info";
+		exit(1);
+	}
+	foreach (SystemImager::HostRange::expand_groups(join(' ', @ARGV))) {
+	        print "$_";
+	        if ($show_groups) {
+	                if (defined($groups->{$_})) {
+	                        print ':' . join(',', @{$groups->{$_}});
+	                } else {
+	                        print ': does not belong to any group!';
+	                }
+	        }
+	        print "\n";
+	}
+}
+
+# Usage: show()
+# Description:
+#     Change cluster configuration.
+sub edit
+{
+	# This program must be run as root.
+	unless ($< == 0) {
+		die("FATAL: $program_name requires root privileges to run in edit-mode.\n");
+	}
+
+	# Get a valid system editor (only if in interactive mode).
+	my $editor = '';
+	if ($edit) {
+		if (defined($ENV{'EDITOR'})) {
+			$editor = $ENV{'EDITOR'};
+		} else {
+			chomp($editor = `(type -p vim || type -p vi || type -p nano || type -p nano-tiny) 2>/dev/null`);
+		}
+		unless ($editor) {
+			die("FATAL: couldn't find a valid editor (vi, vim, nano or nano-tiny)!\n");
+		}
+	}
+	while (1) {
+		# Edit the configuration file.
+		unless ($update) {
+			system "$editor $database";
+		}
+		# Check syntax after editing.
+		if (XML_check_syntax()) {
+			print STDERR "ERROR: syntax error in $database!\n";
+			print STDERR "$@\n";
+			my $ans;
+			unless ($update) {
+				print "Edit again? (y | n) ";
+				chomp($ans = <STDIN>);
+			} else {
+				$ans = 'n';
+			}
+			if (lc($ans) eq 'y') {
+				next;
+			} else {
+				print STDERR "WARNING: $database still contains errors! Please fix it.\n";
+				exit(1);
+			}
+		}
+		last;
+	}
+
+	my $script_dir = $config->autoinstall_script_dir();
+	my $output_file;
+
+	# Cache XML info into a plain text file. This is needed to easily parse this
+	# file in the busybox environment when the clients are imaging.
+	$output_file = $script_dir . '/cluster.txt';
+	print "Caching XML configuration to $output_file ... ";
+	if (!XML_info_to_plain_file($output_file)) {
+		print "[  OK  ]\n";
+	} else {
+		die("\nERROR: couldn't cache XML info to $output_file!\n");
+	}
+
+	# Synchronize /etc/hosts to the hosts file read by the imaging clients.
+	# XXX: not really dependent on cluster.xml, but it's better to synchronize
+	# /etc/hosts with the hosts known by SystemImager sometimes... -AR-
+	$output_file = $script_dir . '/hosts';
+	print "Synchronizing /etc/hosts to $output_file ... ";
+	if (!sync_etc_hosts($output_file)) {
+		print "[  OK  ]\n";
+	} else {
+		die("\nERROR: couldn't synchronize /etc/hosts to $output_file!\n");
+	}
+}
 
 # Usage: XML_check_syntax()
 # Description:
@@ -235,19 +289,31 @@ __END__
 
 =head1 NAME
 
-si_clusterconfig - Configure SystemImager cluster topology
+si_clusterconfig - Manage or show the SystemImager cluster topology
 
 =head1 SYNOPSIS
 
-si_clusterconfig [OPTION]...
+(show-mode): si_clusterconfig hostname|host-range|host-group... [OPTION]...
+
+(edit-mode): si_clusterconfig -e|-u [OPTION]...
 
 =head1 DESCRIPTION
 
-B<si_clusterconfig> is a wrapper to edit the configuration of the cluster
-topology, defined in the XML file B</etc/systemimager/cluster.xml>.
+B<si_clusterconfig> is a tool to manage and show the group definitions of
+your cluster in the SystemImager database.
 
-After the editing this command provides to automatically update all the required
-informations, that depends on the cluster configuration (groups, hosts, etc).
+B<si_clusterconfig> can be used both to list (show-mode) or update (edit-mode)
+the node groups.
+
+In show-mode the command accepts as argument a list of hostnames, host-ranges
+and/or host-group, it resolves them in the equivalent list of hostnames and
+prints them to stdout.
+
+The edit-mode can be interactive (option -e) or batch (option -u).  In
+interactive edit-mode B<si_clusterconfig> opens an editor in your terminal that
+allows to modify the client group definitions and their properties using a XML
+syntax.  In batch edit-mode it only parses the pre-defined XML configuration and
+refresh the opportune SystemImager internal configuration files.
 
 =head1 OPTIONS
 
@@ -257,7 +323,7 @@ informations, that depends on the cluster configuration (groups, hosts, etc).
 
 Display a short help.
 
-=item B<--version | -V>
+=item B<--version | -v>
 
 Display version and copyright information.
 
@@ -265,9 +331,18 @@ Display version and copyright information.
 
 Force a non-interactive update of all the configuration files.
 
+=item B<--edit | -e>
+
+Edit the cluster topology configuration in interactive mode.
+
+=item B<--groups | -g>
+
+Show groups associations for each node (this option works only in show-mode).
+
 =head1 SEE ALSO
 
-systemimager(8), si_pcp(8), si_psh(8), /etc/systemimager/cluster.xml
+systemimager(8), si_pcp(8), si_psh(8), si_pushoverrides(8),
+si_mkclientnetboot(8), si_pushinstall(8), si_mkdhcpserver(8)
 
 =head1 AUTHOR
 
