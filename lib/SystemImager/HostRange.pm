@@ -106,7 +106,7 @@ sub expand_groups
 
         # Resolve the list of groups or nodenames.
 	my @ret = ();
-	foreach my $in (split(/,| |\n/, $grouplist)) {
+	foreach my $in (expand_range_list($grouplist)) {
 		my $found = 0;
 	        foreach my $group (@{$xml->{'group'}}) {
 			if (($group->{'name'}[0] eq $in) or ($in eq $global_override)) {
