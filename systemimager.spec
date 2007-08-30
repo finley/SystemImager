@@ -874,7 +874,7 @@ fi
 %prefix/sbin/si_rmimage
 %prefix/sbin/si_monitor
 %prefix/sbin/si_monitortk
-%prefix/sbin/si_clusterconfig
+%prefix/bin/si_clusterconfig
 %prefix/bin/si_mk*
 %prefix/bin/si_psh
 %prefix/bin/si_pcp
