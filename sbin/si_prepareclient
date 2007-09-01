@@ -903,7 +903,7 @@ sub create_auto_install_script_conf {
         #
         #   Do UYOK stuff
         #
-        my $arch = get_arch();
+        my $arch = SystemImager::UseYourOwnKernel::_get_arch();
         my $verbose;
         unless($quiet) { $verbose = 1; }
         SystemImager::UseYourOwnKernel->create_uyok_initrd(
@@ -921,15 +921,6 @@ sub create_auto_install_script_conf {
     return 1;
 }
 
-#
-# Usage: my $arch = get_arch();
-#
-sub get_arch {
-	my $arch = (uname())[4];
-	$arch =~ s/i.86/i386/;
-	return $arch;
-}
-
 
 # Usage:
 # my $partition_tool = which_partition_tool();
@@ -942,7 +933,7 @@ sub which_partition_tool {
         # 
         # We prefer sfdisk on x86, for everything else we prefer parted. -BEF-
         #
-        my $arch = get_arch();
+        my $arch = SystemImager::UseYourOwnKernel::_get_arch();
         if($arch eq "i386") {
                 $preferred_tool = 'sfdisk';
         }
