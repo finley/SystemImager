@@ -378,7 +378,7 @@ The following options affect the autoinstall client after autoinstalling:
         backup and quick restore mechanism for a single machine.
 
  --post-install ACTION
-    Where ACTION can be beep, reboot, or shutdown.
+    Where ACTION can be beep, reboot, shutdown, or kexec.
 
     beep 
         Clients will beep incessantly after succussful completion of an
@@ -391,6 +391,10 @@ The following options affect the autoinstall client after autoinstalling:
     shutdown 
         Clients will halt themselves after successful completion of an
         autoinstall.
+
+    kexec
+        Clients will boot the kernels via kexec that were just installed
+        after successful completion of an autoinstall.
 
 EOF
 }
