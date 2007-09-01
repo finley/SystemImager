@@ -278,6 +278,20 @@ sub _get_arch {
 	my $arch = (uname())[4];
 	$arch =~ s/i.86/i386/;
 
+        my $cpuinfo = "/proc/cpuinfo";
+
+        #
+        # On the PS3, /proc/cpuinfo has a line which reads (depending on kernel version):
+        # platform        : PS3(PF)
+        #
+        open(CPUINFO,"<$cpuinfo") or die("Couldn't open $cpuinfo for reading");
+        while(<CPUINFO>) {
+            if ( m/PS3/ ) {
+                $arch = "ppc64-ps3";
+            }
+        }
+        close(CPUINFO);
+
 	return $arch;
 }
 
