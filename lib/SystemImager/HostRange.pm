@@ -99,9 +99,9 @@ sub expand_groups
 	# Parse XML database.
 	my $xml = XMLin($database, ForceArray => 1);
 
-	my $global_override = $xml->{'override'}[0];
-	unless (defined($global_override)) {
-		die("ERROR: global base image undefined in cluster.xml!\n");
+	my $global_name = $xml->{'name'}[0];
+	unless (defined($global_name)) {
+		die("ERROR: no global name defined in cluster.xml!\n");
 	}
 
         # Resolve the list of groups or nodenames.
@@ -109,7 +109,7 @@ sub expand_groups
 	foreach my $in (expand_range_list($grouplist)) {
 		my $found = 0;
 	        foreach my $group (@{$xml->{'group'}}) {
-			if (($group->{'name'}[0] eq $in) or ($in eq $global_override)) {
+			if (($group->{'name'}[0] eq $in) or ($in eq $global_name)) {
 				$found = 1;
 				push(@ret, expand_range_list(join(' ', @{$group->{'node'}})));
 			}

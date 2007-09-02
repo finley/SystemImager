@@ -208,9 +208,17 @@ sub XML_check_syntax
 	if (@_) {
 		return -1;
 	}
+
+	# Check if a global name has been defined.
+	unless ($xml->{'name'}[0]) {
+		print "WARNING: the global name is undefined! " .
+		      "Please add a <name>...</name> tag to identify all your clients.\n"; 
+		return -1;
+	}
+
 	# Check if a base override has been defined.
 	unless ($xml->{'override'}) {
-		print "WARNING: the global override is undefined! " . 
+		print "WARNING: a global override was not defined! " . 
 		      "Please define it (even empty if you don't need it).\n";
 		return -1;
 	}

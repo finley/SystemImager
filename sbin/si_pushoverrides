@@ -114,7 +114,7 @@ my $overrides = $config->default_override_dir();
 # Parse XML database.
 my $xml = XMLin($database, ForceArray => 1);
 
-my @global_overrides = $xml->{'override'};
+my @global_overrides = @{$xml->{'override'}};
 unless (@global_overrides) {
 	die("ERROR: global override undefined in cluster.xml! See si_clusterconfig(8).\n");
 }
@@ -158,7 +158,7 @@ foreach my $node (keys %{$single_nodes}) {
 	# The hierarchical levels are, in order of importance:
 	#    - hostname (overwrite group and all)
 	#    - group (overwrite all)
-	#    - global image
+	#    - global overrides
 	if (-d "$overrides/$node") {
 		$group_list .= "$overrides/$node/ ";
 	}
