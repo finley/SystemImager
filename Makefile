@@ -100,7 +100,7 @@ TOPDIR  := $(CURDIR)
 
 # RELEASE_DOCS are toplevel files that should be included with all posted
 # tarballs, but aren't installed onto the destination machine by default
-RELEASE_DOCS = CHANGE.LOG COPYING CREDITS ERRATA README VERSION
+RELEASE_DOCS = CHANGE.LOG COPYING CREDITS README VERSION
 
 ARCH = $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/)
 
