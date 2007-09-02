@@ -737,7 +737,7 @@ switch_root_to_tmpfs() {
         umount /proc
     else
         logmsg
-        logmsg "switch_root_to_tmpfs"
+        logmsg "switching root to tmpfs..."
 
         mkdir -p /new_root || shellout
         mount tmpfs /new_root -t tmpfs $tmpfs_opts || shellout
