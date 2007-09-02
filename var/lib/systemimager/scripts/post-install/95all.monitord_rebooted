@@ -46,7 +46,11 @@ EOF
         grep -q $rebooted_state_file $rc_local 2>/dev/null || echo $rebooted_state_file >> $rc_local
     elif [ -f /etc/redhat-release ]; then
         # RedHat / Fedora
-        rc_local=/etc/rc.local
+        if [ -e /etc/rc.d/rc.local ]; then
+            rc_local=/etc/rc.d/rc.local
+        else
+            rc_local=/etc/rc.local
+        fi
         grep -q $rebooted_state_file $rc_local 2>/dev/null || echo $rebooted_state_file >> $rc_local
     elif [ -f /etc/debian_version ]; then
         # Debian
@@ -84,7 +88,11 @@ EOF
         fi
     else
         # Unknown distribution... try with standard rc.local.
-        rc_local=/etc/rc.local
+        if [ -e /etc/rc.d/rc.local ]; then
+            rc_local=/etc/rc.d/rc.local
+        else
+            rc_local=/etc/rc.local
+        fi
         grep -q $rebooted_state_file $rc_local 2>/dev/null || echo $rebooted_state_file >> $rc_local
     fi
 }
