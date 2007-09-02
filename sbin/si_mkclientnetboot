@@ -187,7 +187,7 @@ sub create_boot_file {
     $ip_hex = SystemImager::HostRange::ip2hex($ip_dec);
 
     my $file = $tftp_dir . "/pxelinux.cfg/" . $ip_hex;
-    if ($verbose) { print "Creating $file.\n"; }
+    if ($verbose) { print "Creating $file\n"; }
 
     # copy file over
     if (-d $tftp_dir . "/pxelinux.cfg/") {
