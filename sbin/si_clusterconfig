@@ -209,7 +209,7 @@ sub XML_check_syntax
 		return -1;
 	}
 	# Check if a base override has been defined.
-	unless (defined($xml->{'override'}[0])) {
+	unless ($xml->{'override'}) {
 		print "WARNING: the global override is undefined! " . 
 		      "Please define it (even empty if you don't need it).\n";
 		return -1;
@@ -247,7 +247,7 @@ sub XML_info_to_plain_file
 	print OUT "#\n# hostname:group:imagename(group):override(group)\n#\n";
 
 	# First entry is reserved to store the global override.
-	print OUT '# global_override=:' . ($xml->{override}[0] or '') . ":\n#\n";
+	print OUT '# global_override=:' . (join(' ', reverse @{$xml->{override}}) or '') . ":\n#\n";
 
 	# Resolve the groups in lists of nodenames.
 	#
@@ -258,11 +258,20 @@ sub XML_info_to_plain_file
 	#
 	foreach my $name (sort keys %{$groups}) {
 		foreach my $node (SystemImager::HostRange::expand_groups($name)) {
-			print OUT $node . 
-				':' . $name .
-				':' . ($groups->{$name}->{'image'}[0] or '') .
-				':' . ($groups->{$name}->{'override'}[0] or '') .
-				"\n";
+			unless ($groups->{$name}->{'override'}) {
+				print OUT $node . 
+					':' . $name .
+					':' . ($groups->{$name}->{'image'}[0] or '') .
+					":\n";
+				next;
+			}
+			foreach (@{$groups->{$name}->{'override'}}) {
+				print OUT $node . 
+					':' . $name .
+					':' . ($groups->{$name}->{'image'}[0] or '') .
+					':' . ($_) .
+					"\n";
+			}
 		}
 
 	}
