@@ -687,6 +687,8 @@ get_boel_binaries_tarball() {
 switch_root_to_tmpfs() {
     local MODULE=tmpfs
     logmsg
+    logmsg switch_root_to_tmpfs
+    logmsg
     logmsg "Loading $MODULE... "
     modprobe $MODULE 2>/dev/null && logmsg "done!" || logmsg "Didn't load -- assuming it's built into the kernel."
     mount_proc
