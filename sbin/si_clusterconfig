@@ -135,6 +135,11 @@ sub edit
 		die("FATAL: $program_name requires root privileges to run in edit-mode.\n");
 	}
 
+	my $script_dir = $config->autoinstall_script_dir();
+	unless ($script_dir) {
+		die "FATAL: parameter AUTOINSTALL_SCRIPT_DIR is not defined in /etc/systemimager/systemimager.conf\n";
+	}
+
 	# Get a valid system editor (only if in interactive mode).
 	my $editor = '';
 	if ($edit) {
@@ -173,7 +178,6 @@ sub edit
 		last;
 	}
 
-	my $script_dir = $config->autoinstall_script_dir();
 	my $output_file;
 
 	# Cache XML info into a plain text file. This is needed to easily parse this

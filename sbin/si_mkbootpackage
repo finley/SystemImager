@@ -56,6 +56,9 @@ my $progname = basename $0;
 
 my $ARCH = SystemImager::UseYourOwnKernel::_get_arch();
 my $autoinstall_boot_dir = $config->autoinstall_boot_dir;
+unless ($autoinstall_boot_dir) {
+    die "FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in /etc/systemimager/systemimager.conf\n";
+}
 
 my $version_info = <<"EOF";
 $progname (part of SystemImager) v$VERSION

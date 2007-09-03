@@ -29,8 +29,14 @@ use SystemImager::Server;
 use SystemImager::Common;
 use SystemImager::Config;
 
-my $rsyncd_conf = $config->rsyncd_conf();
 my $rsync_stub_dir = $config->rsync_stub_dir();
+unless ($rsync_stub_dir) {
+    die "FATAL: parameter RSYNC_STUB_DIR is not defined in /etc/systemimager/systemimager.conf\n";
+}
+my $rsyncd_conf = $config->rsyncd_conf();
+unless ($rsyncd_conf) {
+    die "FATAL: parameter RSYNCD_CONF is not defined in /etc/systemimager/systemimager.conf\n";
+}
 
 SystemImager::Common->check_if_root();
 SystemImager::Server->gen_rsyncd_conf($rsync_stub_dir, $rsyncd_conf);

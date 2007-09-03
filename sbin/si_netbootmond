@@ -35,7 +35,7 @@ my $pxe_conf_dir;
 my $kboot_conf_dir;
 
 unless($tftp_dir) {
-    die "TFTP_DIR not specified in systemimager.conf file!";
+    die "FATAL: parameter TFTP_DIR is not defined in /etc/systemimager/systemimager.conf\n";
 } else {
     $pxe_conf_dir = "$tftp_dir" . "/pxelinux.cfg";
     $kboot_conf_dir = "$tftp_dir" . "/kboot.cfg";

@@ -21,15 +21,18 @@ use vars qw($config $VERSION);
 my $config_dir = "/etc/systemimager";
 
 ### BEGIN parse the config file ###
-my $autoinstall_script_dir = $config->autoinstall_script_dir();
-my $rsyncd_conf = $config->rsyncd_conf();
 my $rsync_stub_dir = $config->rsync_stub_dir();
-
-if (!$autoinstall_script_dir) {
-    die "AUTOINSTALL_SCRIPT_DIR not defined in the config file.";
+unless ($rsync_stub_dir) {
+    die "FATAL: parameter RSYNC_STUB_DIR is not defined in /etc/systemimager/systemimager.conf\n";
 }
-if (!$rsyncd_conf) { die "RSYNCD_CONF not defined in the config file."; }
-if (!$rsync_stub_dir) { die "RSYNC_STUB_DIR not defined in the config file."; }
+my $autoinstall_script_dir = $config->autoinstall_script_dir();
+unless ($autoinstall_script_dir) {
+    die "FATAL: parameter AUTOINSTALL_SCRIPT_DIR is not defined in /etc/systemimager/systemimager.conf\n";
+}
+my $rsyncd_conf = $config->rsyncd_conf();
+unless ($rsyncd_conf) {
+    die "FATAL: parameter RSYNCD_CONF is not defined in /etc/systemimager/systemimager.conf\n";
+}
 ### END parse the config file ###
 
 $VERSION="SYSTEMIMAGER_VERSION_STRING";

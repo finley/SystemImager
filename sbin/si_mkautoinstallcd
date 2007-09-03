@@ -50,9 +50,8 @@ $VERSION = "SYSTEMIMAGER_VERSION_STRING";
 $ENV{PATH} = "/usr/local/sbin:/usr/sbin:/sbin:/usr/local/bin:/usr/bin:/bin";
 
 my $autoinstall_boot_dir = $config->autoinstall_boot_dir;
-if (!$autoinstall_boot_dir) {
-  print "Fatal: AUTOINSTALL_BOOT_DIR not specified in the systemimager.conf file.";
-  exit 1;
+unless ($autoinstall_boot_dir) {
+    die "FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in /etc/systemimager/systemimager.conf\n";
 }
 
 my ($kernel, $initrd, $flavor, $arch, $append_string, $bin_dir);

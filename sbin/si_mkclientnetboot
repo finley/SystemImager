@@ -35,12 +35,12 @@ use vars qw($config $VERSION);
 
 my $tftp_dir = $config->tftp_dir();
 if (!$tftp_dir) {
-    die "ERROR: TFTP_DIR not defined in the config file.\n";
+    die "FATAL: parameter TFTP_DIR is not defined in /etc/systemimager/systemimager.conf\n";
 }
 
 my $boot_dir = $config->autoinstall_boot_dir();
 if (!$boot_dir) {
-    die "ERROR: AUTOINSTALL_BOOT_DIR not defined in the config file.\n";
+    die "FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in /etc/systemimager/systemimager.conf\n";
 }
 
 my $localboot_file = "/etc/systemimager/pxelinux.cfg/syslinux.cfg.localboot";
