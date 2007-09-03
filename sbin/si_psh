@@ -118,6 +118,8 @@ if ($concurrents) {
 my $ssh_opts = "-x -o BatchMode=yes -o ConnectTimeout=$timeout -l $ssh_user";
 
 if ($cmd) {
+	$cmd =~ s/"/\\"/g;
+	$cmd = "\"$cmd\"";
 	SystemImager::HostRange::thread_pool_spawn('ssh', $ssh_opts, $cmd, @hosts);
 } else {
 	# Run in interactive mode.
@@ -132,6 +134,8 @@ if ($cmd) {
 		if ((/^\s*$/) || (/^\s*exit\s*$/)) {
 			last;
 		}
+		$_ =~ s/"/\\"/g;
+		$_ = "\"$_\"";
 		SystemImager::HostRange::thread_pool_spawn('ssh', $ssh_opts, $_, @hosts);
 	}
 }
