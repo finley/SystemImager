@@ -18,26 +18,24 @@ to get you through a simple install process.
  2) On your golden client, apt-get install systemimager-client.
  3) On your image server, apt-get install systemimager-server
  -- dann frazier <dannf@dannf.org>, Thu Mar  4 00:17:19 2004
- 4) On your golden client, run the command "prepareclient".  prepareclient
+ 4) On your golden client, run the command "si_prepareclient". si_prepareclient
     will ask you some questions, then leave your golden client ready to have
     it's image pulled.
  5) On the image server, run the command:
-      getimage -golden-client <golden_client> -image <image_name>
+      si_getimage -golden-client <golden_client> -image <image_name>
     where <golden_client> is the ip or hostname of your golden client, and 
     <image_name> is the name you would like to use to refer to this image,
     e.g. web_server, woody_2001_10_05, debian2.2r4_lp1000r, etc.
     You should see filenames fly by on the screen as getimage rsyncs over
     the contents of your golden client.
  -- Assign clients to an image --
- 6) On the image server, run the 'addclients' command to assign clients to 
+ 6) On the image server, run the 'si_addclients' command to assign clients to 
     your image.
  -- Create autoinstall media --
- 7) You must create autoinstall media for booting your autoinstall client(s).
-    There are currently 4 supported types of media (floppy, cd, pxe, & hard
-    drive).  Since this is the Quick Start guide, we'll go with the floppy.
-    Run the command 'mkautoinstalldiskette' to generate a bootable autoinstall
-    floppy.
- 8) Configure your dhcp server using the 'mkdhcpserver' command.
+ 8) Configure your dhcp server using the 'si_mkdhcpserver' command.
+ 7) You can also create autoinstall media for booting your autoinstall client(s).
+    There are currently 4 supported types of media (cd, pxe, usb drive & hard
+    drive).
  -- Autoinstall --
- 9) Boot your autoinstall client from the autoinstall floppy disk - your 
-    client should begin to autoinstall itself.
+ 9) Boot your autoinstall client from the autoinstall media - your client should
+    begin to autoinstall itself.
