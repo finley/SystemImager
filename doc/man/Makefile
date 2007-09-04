@@ -19,7 +19,6 @@ MANPAGES = $(SERVER_MAN) $(SERVER_POD_MAN) $(CLIENT_MAN) $(COMMON_MAN)
 SERVER_MAN = si_addclients.8 				\
 			si_getimage.8					\
 			si_mkautoinstallcd.8			\
-			si_mkautoinstalldiskette.8		\
 			si_mkautoinstallscript.8		\
 			si_mkdhcpserver.8				\
 			si_mkdhcpstatic.8				\
