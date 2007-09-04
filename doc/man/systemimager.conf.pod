@@ -20,17 +20,26 @@ The follow stanzas exist in the systemimager.conf file
 The directory where images are stored.  The default set in the
 file is I</var/lib/systemimager/images>.  If your image repository
 exists else where you can set this variable to change that.  This
-variable is used by I<getimage> and I<mksimachine> to determine where
-to put the created image.
+variable is used by I<si_getimage> to determine where to put the created
+images.
+
+=item B<DEFAULT_OVERRIDE_DIR>
+
+The directory where overrides are stored.  The default set in the
+file is I</var/lib/systemimager/overrides>.  Overrides can be used to
+manage differences from images. A typical use is to customize a
+"vanilla" image adding some additional packages, but they are commonly
+used to store and distribute configuration files by I<si_pushoverrides>.
+See also I<si_clusterconfig>.
 
 =item B<AUTOINSTALL_SCRIPT_DIR>
 
 The directory where autoinstall scripts are stored.  The default set
 in the file is I</var/lib/systemimager/scripts>.  This is use by
-I<mkautoinstallscript> to determine where the autoinstall script for
-an image should be created.  It is also used by I<addclients>, and
-I<mksimachine>, and I<mksirange> to determine where the client scripts
-should be created.
+I<si_mkautoinstallscript> to determine where the autoinstall script for
+an image should be created.  It is also used by I<si_addclients>, and
+I<si_clusterconfig>to determine where the client scripts should be
+created.
 
 =item B<AUTOINSTALL_BOOT_DIR>
 
@@ -40,12 +49,48 @@ is I<$PREFIX/share/systemimager>, where $PREFIX is the installed
 prefix for all the SystemImager tools.  In this directory will exist a
 number of architecture specific directories of the format $ARCH-boot
 (e.g. i386-boot, ia64-boot, etc.).  The variable is used by
-I<mkautoinstallcd>, I<mkautoinstalldiskette> and I<mkbootserver>.
+I<si_mkautoinstallcd>, I<si_mkautoinstalldisk> and I<si_mkbootserver>.
 
 =item B<RSYNCD_CONF>
 
 The local of the I<rsyncd.conf> file associated with SystemImager.
-The installed default is I</etc/systemimager/rsyncd.conf>.
+The installed default is I</etc/systemimager/rsyncd.conf>.  The variable
+is used by I<si_mkrsyncd_conf> that can be used to automatically create
+a valid I</etc/systemimager/rsyncd.conf> for SystemImager.
+
+=item B<RSYNCD_STUB_DIR>
+
+The path to the directory where rsync stub files are stored. There is a
+stub for each image plus an header and a footer stub.  Stubs are used by
+I<si_mkrsyncd_conf> to create the file I</etc/systemimager/rsyncd.conf>.
+Usually you shouldn't care about this file, it's only used internally by
+SystemImager.
+
+=item B<TFTP_DIR>
+
+The directory where tftp and net-boot files are stored. The default path
+is I</var/lib/tftpboot>.
+
+=item B<NET_BOOT_DEFAULT>
+
+This setting affects systemimager-server-netbootmond.  If set to "local",
+then after successful completion of an install, a client's net boot
+configuration is modified to ensure future boots will happen from the
+client's local disk.  NET_BOOT_DEFAULT can be set to local or net.  Be
+sure to restart systemimager-server-netbootmond after changing this
+setting (I</etc/init.d/systemimager-server-netbootmond restart>).
+
+See I<si_netbootmond(8)> for more details.
+
+=item B<AUTOINSTALL_TARBALL_DIR>
+
+The directory to store temporary tarball files distributed via BitTorrent.
+The default is I</var/lib/systemimager/tarballs>.
+
+=item B<AUTOINSTALL_TORRENT_DIR>
+
+The directory to store temporary torrent files distributed via BitTorrent.
+The default is I</var/lib/systemimager/torrents>.
 
 =item B<CONFIG_DIR>
 
