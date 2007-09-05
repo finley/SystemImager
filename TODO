@@ -38,7 +38,7 @@ TODO list for SystemImager
 
     A workaround is to execute ssh from the image server with the following options:
 
-    ssh -o StrictHostKeyChecking -o UserKnownHostsFile=/dev/null <target_host>
+    ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null <target_host>
 
     Another approach could be to implement a --imaging option in si_psh, to
     execute remote commands on the imaging clients. This would be also
