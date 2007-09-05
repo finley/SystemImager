@@ -50,6 +50,12 @@ Options: (options can be presented in any order and can be abbreviated)
 
  --ssh-user, -l=USER    Run the command as user USER.
 
+ --imaging, -i          Run the command on imaging clients (that have a ssh
+			deamon enabled - add SSHD=y in the installation boot
+                        parameters and include a valid authorized_keys into
+			the initrd.img). See si_mkbootpackage(8) or
+                        si_prepareclient(8) for more details.
+
 EOF
 
 Getopt::Long::Configure("posix_default");
@@ -64,6 +70,7 @@ GetOptions(
 	"hosts-file|f=s"	=> \my $hostlist_file,
 	"timeout|t=i"		=> \my $timeout,
 	"ssh-user|l=s"		=> \my $ssh_user,
+	"imaging|i"		=> \my $imaging,
 ) or die("$help_info");
 
 ### BEGIN evaluate commad line options ###
@@ -112,10 +119,13 @@ if ($concurrents) {
 	$SystemImager::HostRange::concurrents = $concurrents;
 }
 
-### END evaluate command line options ###
-
 # Use the following ssh options.
 my $ssh_opts = "-x -o BatchMode=yes -o ConnectTimeout=$timeout -l $ssh_user";
+if ($imaging) {
+	$ssh_opts .= ' -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null';
+}
+
+### END evaluate command line options ###
 
 if ($cmd) {
 	$cmd =~ s/"/\\"/g;
@@ -190,6 +200,13 @@ Set the timeout of the ssh sessions (default=15s).
 =item B<--ssh-user | -l USER>
 
 Run the command as user USER.
+
+=item B<--imaging | -i>
+
+Run the command on imaging clients (that have a ssh deamon enabled - add SSHD=y
+in the installation boot parameters and include a valid authorized_keys into
+the initrd.img). See si_mkbootpackage(8) or si_prepareclient(8) for more
+details.
 
 =head1 SEE ALSO
 
