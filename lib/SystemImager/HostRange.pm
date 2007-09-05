@@ -111,7 +111,17 @@ sub expand_groups
 	        foreach my $group (@{$xml->{'group'}}) {
 			if (($group->{'name'}[0] eq $in) or ($in eq $global_name)) {
 				$found = 1;
-				push(@ret, expand_range_list(join(' ', @{$group->{'node'}})));
+				if ($group->{'node'}) {
+					push(@ret, expand_range_list(join(' ', @{$group->{'node'}})));
+				}
+				foreach (@{$group->{'dynamic_node'}}) {
+					unless (open(IN, "$_|")) {
+						next;
+					}
+					chomp(my @dyn_list = <IN>);
+					close(IN);
+					push(@ret, expand_range_list(join(' ', @dyn_list)));
+				}
 			}
 		}
 		unless ($found) {
