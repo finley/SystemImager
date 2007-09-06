@@ -87,7 +87,7 @@ sub do_cmd
 }
 
 # Usage:
-# my @hosts = expand_gruops($host_groups_string)
+# my @hosts = expand_groups($host_groups_string)
 # Description:
 #       Expand host groups and host ranges into the list of hostnames identified
 #       by the $host_groups_string and the group definitions in
@@ -98,6 +98,19 @@ sub expand_groups
 
 	# Parse XML database.
 	my $xml = XMLin($database, ForceArray => 1);
+	return expand_groups_xml($xml, $grouplist);
+}
+
+# Usage:
+# my @hosts = expand_groups_xml($xml, $host_groups_string)
+# Description:
+#       Expand host groups and host ranges into the list of hostnames identified
+#       by the $host_groups_string and the group definitions in the $xml
+#       structure.
+sub expand_groups_xml
+{
+	my $xml = shift;
+	my $grouplist = shift;
 
 	my $global_name = $xml->{'name'}[0];
 	unless (defined($global_name)) {

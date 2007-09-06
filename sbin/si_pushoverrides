@@ -130,10 +130,10 @@ foreach my $group (
 	sort {$a->{'name'}[0] cmp $b->{'name'}[0]} @{($xml->{'group'})}) {
 		my $name = $group->{'name'}[0];
 		map { push(@{$all_nodes->{$_}}, $group) }
-			SystemImager::HostRange::expand_groups($name);
+			SystemImager::HostRange::expand_groups_xml($xml, $name);
 }
 my $single_nodes;
-foreach my $arg (SystemImager::HostRange::expand_groups(join(' ', @ARGV))) {
+foreach my $arg (SystemImager::HostRange::expand_groups_xml($xml, join(' ', @ARGV))) {
 	if (defined($all_nodes->{$arg})) {
 		push(@{$single_nodes->{$arg}}, @{$all_nodes->{$arg}});
 	} else {

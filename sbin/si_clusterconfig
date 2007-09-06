@@ -80,6 +80,7 @@ if ($version) {
 
 # Get cluster configuration file.
 my $database = $SystemImager::HostRange::database;
+my $xml = XMLin($database, ForceArray => 1);
 
 # Choose the action to do.
 if (($edit) or ($update)) {
@@ -99,12 +100,11 @@ sub show
 	# Cache hosts/groups associations in a single memory hash.
 	my $groups;
 	if ($show_groups) {
-	        my $xml = XMLin($database, ForceArray => 1);
 	        foreach my $group (
 	                        sort {$a->{'name'}[0] cmp $b->{'name'}[0]} @{($xml->{'group'})}) {
 	                my $name = $group->{'name'}[0];
 	                map { push(@{$groups->{$_}}, $name) }
-	                        SystemImager::HostRange::expand_groups($name);
+	                        SystemImager::HostRange::expand_groups_xml($xml, $name);
 	        }
 	}
 	# Print group/host/host-range info.
@@ -112,7 +112,7 @@ sub show
 		print "$help_info";
 		exit(1);
 	}
-	foreach (SystemImager::HostRange::expand_groups(join(' ', @ARGV))) {
+	foreach (SystemImager::HostRange::expand_groups_xml($xml, join(' ', @ARGV))) {
 	        print "$_";
 	        if ($show_groups) {
 	                if (defined($groups->{$_})) {
@@ -208,7 +208,8 @@ sub edit
 #   /etc/systemimager/cluster.xml. Return 0 in case of success.
 sub XML_check_syntax
 {
-	my $xml = eval { XMLin($database, ForceArray => 1) };
+	# Refresh XML structure.
+	$xml = eval { XMLin($database, ForceArray => 1) };
 	if (@_) {
 		return -1;
 	}
@@ -246,8 +247,6 @@ sub XML_info_to_plain_file
 {
 	my $dest = shift;
 
-	my $xml = XMLin($database, ForceArray => 1);
-
 	# Cache groups in a hash struct.
 	my $groups;
 	map { $groups->{$_->{'name'}[0]} = $_ } @{$xml->{'group'}};
@@ -269,7 +268,7 @@ sub XML_info_to_plain_file
 	# groups) the first hit in alphabetical order wins.
 	#
 	foreach my $name (sort keys %{$groups}) {
-		foreach my $node (SystemImager::HostRange::expand_groups($name)) {
+		foreach my $node (SystemImager::HostRange::expand_groups_xml($xml, $name)) {
 			unless ($groups->{$name}->{'override'}) {
 				print OUT $node . 
 					':' . $name .
