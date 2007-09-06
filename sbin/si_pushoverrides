@@ -126,12 +126,12 @@ unless (@global_overrides) {
 print "Building clients list...\n" if ($verbose);
 # Cache hosts/groups associations in a single memory hash.
 my $all_nodes;
-foreach my $group (
-	sort {$a->{'name'}[0] cmp $b->{'name'}[0]} @{($xml->{'group'})}) {
-		my $name = $group->{'name'}[0];
-		map { push(@{$all_nodes->{$_}}, $group) }
-			SystemImager::HostRange::expand_groups_xml($xml, $name);
+foreach my $group (SystemImager::HostRange::sort_group(@{($xml->{'group'})})) {
+	my $name = $group->{'name'}[0];
+	map { push(@{$all_nodes->{$_}}, $group) }
+		SystemImager::HostRange::expand_groups_xml($xml, $name);
 }
+# Create a hash of groups per node for the entries passed by command line.
 my $single_nodes;
 foreach my $arg (SystemImager::HostRange::expand_groups_xml($xml, join(' ', @ARGV))) {
 	if (defined($all_nodes->{$arg})) {
@@ -168,7 +168,7 @@ foreach my $node (keys %{$single_nodes}) {
 	# If a node belongs to more groups, sort the groups alphabetically
 	# (this means that the most important is the first in alphabetical
 	# order).
-	my @groups = sort {$a->{'name'}[0] cmp $b->{'name'}[0]} @{($single_nodes->{$node})};
+	my @groups = @{($single_nodes->{$node})};
 	if (($#groups > 0) && ($verbose)) {
 		print STDERR "WARNING: client \"$node\" belongs to many host groups: " .
 			     join(',', map {$_->{'name'}[0]} @groups) . "\n";

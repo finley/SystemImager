@@ -225,6 +225,24 @@ sub expand_range {
 }
 
 # Usage:
+# my @sorted_list = sort_group(@group_list);
+# Description:
+#       Sort a list of host group entries. Try to sort groups by priority, if
+#       undefined or if two groups have the same value of priority use the
+#       group name (alphabetical order).
+sub sort_group
+{
+	return sort {
+		if ((($a->{'priority'}) and ($b->{'priority'})) &&
+			($a->{'priority'}[0]) <=> ($b->{'priority'}[0])) {
+				$a->{'priority'}[0] <=> $b->{'priority'}[0];
+		} else {
+			$a->{'name'}[0] cmp $b->{'name'}[0];
+		}
+	} @_;
+}
+
+# Usage:
 # my @sorted_list = sort_ip(@ip_list)
 # Description:
 #       Sort a list of IPv4 addresses.

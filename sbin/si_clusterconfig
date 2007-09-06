@@ -100,8 +100,7 @@ sub show
 	# Cache hosts/groups associations in a single memory hash.
 	my $groups;
 	if ($show_groups) {
-	        foreach my $group (
-	                        sort {$a->{'name'}[0] cmp $b->{'name'}[0]} @{($xml->{'group'})}) {
+	        foreach my $group (SystemImager::HostRange::sort_group(@{($xml->{'group'})})) {
 	                my $name = $group->{'name'}[0];
 	                map { push(@{$groups->{$_}}, $name) }
 	                        SystemImager::HostRange::expand_groups_xml($xml, $name);
@@ -261,21 +260,19 @@ sub XML_info_to_plain_file
 	print OUT '# global_override=:' . (join(' ', reverse @{$xml->{override}}) or '') . ":\n#\n";
 
 	# Resolve the groups in lists of nodenames.
-	#
-	# Sort the groups in alphabetical order by their name to expand them and
-	# translate into the hostnames list. This allows to correctly handle the
-	# overlaps. In case of overlaps (when a node that belongs to more host
-	# groups) the first hit in alphabetical order wins.
-	#
-	foreach my $name (sort keys %{$groups}) {
+	foreach my $group (SystemImager::HostRange::sort_group(@{$xml->{'group'}})) {
+		my $name = $group->{'name'}[0];
 		foreach my $node (SystemImager::HostRange::expand_groups_xml($xml, $name)) {
 			unless ($groups->{$name}->{'override'}) {
+				# If no override is defined, simply print the image.
 				print OUT $node . 
 					':' . $name .
 					':' . ($groups->{$name}->{'image'}[0] or '') .
 					":\n";
 				next;
 			}
+			# Print an entry for each override (reporting also the
+			# image in all the entries).
 			foreach (@{$groups->{$name}->{'override'}}) {
 				print OUT $node . 
 					':' . $name .
