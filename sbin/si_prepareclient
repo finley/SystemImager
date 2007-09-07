@@ -248,6 +248,12 @@ GetOptions(
     "config=s"             => \my $local_cfg,
 ) || die "$help_info";
 
+my $arch = SystemImager::UseYourOwnKernel::_get_arch();
+
+# Force --my-modules option when on PS3 because there is no point to include other modules
+if ( $arch eq "ppc64-ps3" ) {
+    $my_modules = 1;
+}
 
 ### BEGIN option validation ###
 # show version if requested
@@ -721,8 +727,8 @@ sub create_systemconfig_conf
     my @boots = grep(/ \/boot /, reverse @_);
     my $boot_dev = (split(/ /, $boots[0]))[0] if (@boots);
     if ($boot_dev) {
-        if ($boot_dev =~ /^\/dev\/[hs]d/) {
-            # Standard disk naming (hd*, sd*).
+        if ($boot_dev =~ /^\/dev\/[hsps3]d/) {
+            # Standard disk naming (hd*, sd*, ps3d*).
             $boot_dev =~ s/[0-9]+$//;
         } else {
             # Hardware RAID device.
@@ -784,7 +790,7 @@ sub collect_disks {
                 $disks->{HWRAID}->{$disk}++;
             }
 
-        } elsif (/(\S*[hs]d[a-z])[0-9]/) { # standard disk devices
+        } elsif (/(\S*[hsps3]d[a-z])[0-9]/) { # standard disk devices
             my $disk = $1;
             unless(defined $excluded_disks{$disk}) {
                 $disks->{IDESCSI}->{$disk}++;
@@ -903,7 +909,6 @@ sub create_auto_install_script_conf {
         #
         #   Do UYOK stuff
         #
-        my $arch = SystemImager::UseYourOwnKernel::_get_arch();
         my $verbose;
         unless($quiet) { $verbose = 1; }
         SystemImager::UseYourOwnKernel->create_uyok_initrd(
@@ -933,7 +938,6 @@ sub which_partition_tool {
         # 
         # We prefer sfdisk on x86, for everything else we prefer parted. -BEF-
         #
-        my $arch = SystemImager::UseYourOwnKernel::_get_arch();
         if($arch eq "i386") {
                 $preferred_tool = 'sfdisk';
         }
