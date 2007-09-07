@@ -27,7 +27,7 @@
 
 %define is_suse %(test -f /etc/SuSE-release && echo 1 || echo 0)
 %define is_ppc64 %([ "`uname -m`" = "ppc64" ] && echo 1 || echo 0)
-%define is_ps3 %([ "`grep machine /proc/cpuinfo | awk {'print $3'}`" = "PS3PF" ] && echo 1 || echo 0) 
+%define is_ps3 %([ `grep PS3 /proc/cpuinfo >& /dev/null; echo $?` -eq 0 ] && echo 1 || echo 0) 
 
 %if %is_ppc64
 %define _build_arch ppc64
@@ -302,6 +302,9 @@ The bittorrent package allows you to use the BitTorrent protocol to perform
 installations.
 
 %changelog
+* Sun Sep 02 2007 Bernard Li <bernard@vanhpc.org>
+- Make function is_ps3 work with different formats of /proc/cpuinfo on the PS3
+
 * Sat Aug 04 2007 Andrea Righi <a.righi@cineca.it>
 - Removed unmaintained package imagemanip
 
