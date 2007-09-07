@@ -4,7 +4,9 @@
 
 . /etc/init.d/functions
 
-echo "initramfs detected: init called"
+parse_tmpfs_opts
+
+logmsg "initramfs detected: init called"
 
 mkdir -p /new_root || shellout
 mount tmpfs /new_root -t tmpfs $tmpfs_opts || shellout
@@ -15,5 +17,5 @@ mkdir -p old_root || shellout
 
 exec switch_root . /linuxrc
 
-echo "error: switch_root failed."
+logmsg "error: switch_root failed."
 shellout

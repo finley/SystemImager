@@ -114,7 +114,7 @@ adjust_arch() {
             ARCH=ppc64-iSeries
             logmsg "Detected ppc64 is really an iSeries partition..."
         fi
-        if [ "`grep machine /proc/cpuinfo | cut -d ' ' -f 2`" = "PS3PF" ]; then
+        if grep -qs PS3 /proc/cpuinfo; then
             ARCH=ppc64-ps3
         fi
     fi
@@ -682,6 +682,58 @@ get_boel_binaries_tarball() {
 #
 ################################################################################
 #
+# Parse tmpfs options from /proc/cpuinfo
+# 
+parse_tmpfs_opts() {
+    logmsg
+    logmsg parse_tmpfs_opts
+    mount_proc
+    tmpfs_size=$(tr ' ' '\n' < /proc/cmdline | grep tmpfs_size\= | sed 's/.*=//')
+    tmpfs_nr_blocks=$(tr ' ' '\n' < /proc/cmdline | grep tmpfs_nr_blocks\= | sed 's/.*=//')
+    tmpfs_nr_inodes=$(tr ' ' '\n' < /proc/cmdline | grep tmpfs_nr_inodes\= | sed 's/.*=//')
+    tmpfs_mode=$(tr ' ' '\n' < /proc/cmdline | grep tmpfs_mode\= | sed 's/.*=//')
+    umount /proc
+
+    if [ "$tmpfs_size" != "" ]; then
+        tmpfs_opts="size=$tmpfs_size"
+    fi
+
+    if [ "$tmpfs_nr_blocks" != "" ]; then
+        if [ "$tmpfs_opts" != "" ]; then
+            tmpfs_opts="${tmpfs_opts},nr_blocks=$tmpfs_nr_blocks"
+        else
+            tmpfs_opts="nr_blocks=$tmpfs_nr_blocks"
+        fi
+    fi
+
+    if [ "$tmpfs_nr_inodes" != "" ]; then
+        if [ "$tmpfs_opts" != "" ]; then
+            tmpfs_opts="${tmpfs_opts},nr_inodes=$tmpfs_nr_inodes"
+        else
+            tmpfs_opts="nr_inodes=$tmpfs_nr_inodes"
+            fi
+    fi
+
+    if [ "$tmpfs_mode" != "" ]; then
+        if [ "$tmpfs_opts" != "" ]; then
+            tmpfs_opts="${tmpfs_opts},mode=$tmpfs_mode"
+        else
+            tmpfs_opts="mode=$tmpfs_mode"
+        fi
+    fi
+
+    if [ "$tmpfs_opts" != "" ]; then
+        tmpfs_opts="-o $tmpfs_opts"
+    fi
+
+    unset tmpfs_size
+    unset tmpfs_nr_blocks
+    unset tmpfs_nr_inodes
+    unset tmpfs_mode
+}
+#
+################################################################################
+#
 #   Switch root to tmpfs
 #
 switch_root_to_tmpfs() {
@@ -691,57 +743,19 @@ switch_root_to_tmpfs() {
     logmsg
     logmsg "Loading $MODULE... "
     modprobe $MODULE 2>/dev/null && logmsg "done!" || logmsg "Didn't load -- assuming it's built into the kernel."
-    mount_proc
-    tmpfs_size=$(tr ' ' '\n' < /proc/cmdline | grep tmpfs_size\= | sed 's/.*=//')
-    tmpfs_nr_blocks=$(tr ' ' '\n' < /proc/cmdline | grep tmpfs_nr_blocks\= | sed 's/.*=//')
-    tmpfs_nr_inodes=$(tr ' ' '\n' < /proc/cmdline | grep tmpfs_nr_inodes\= | sed 's/.*=//')
-    tmpfs_mode=$(tr ' ' '\n' < /proc/cmdline | grep tmpfs_mode\= | sed 's/.*=//')
-
-    if [ "$tmpfs_size" != "" ]; then
-        tmpfs_opts="size=$tmpfs_size"
-    fi
-
-    if [ "$tmpfs_nr_blocks" != "" ]; then
-        if [ "$tmpfs_opts" != "" ]; then
-	    tmpfs_opts="${tmpfs_opts},nr_blocks=$tmpfs_nr_blocks"
-        else
-            tmpfs_opts="nr_blocks=$tmpfs_nr_blocks"
-	fi
-    fi
-
-    if [ "$tmpfs_nr_inodes" != "" ]; then
-        if [ "$tmpfs_opts" != "" ]; then
-	    tmpfs_opts="${tmpfs_opts},nr_inodes=$tmpfs_nr_inodes"
-        else
-            tmpfs_opts="nr_inodes=$tmpfs_nr_inodes"
-	    fi
-    fi
-
-    if [ "$tmpfs_mode" != "" ]; then
-        if [ "$tmpfs_opts" != "" ]; then
-	    tmpfs_opts="${tmpfs_opts},mode=$tmpfs_mode"
-        else
-            tmpfs_opts="mode=$tmpfs_mode"
-	fi
-    fi
-
-    if [ "$tmpfs_opts" != "" ]; then
-        tmpfs_opts="-o $tmpfs_opts"
-    fi
+    parse_tmpfs_opts
 
     # Switch root over to tmpfs so we don't have to worry about the size of
     # the tarball and binaries that users may decide to copy over. -BEF-
     if [ -d /old_root ]; then
         logmsg
         logmsg "already switched to tmpfs..."
-        umount /proc
     else
         logmsg
         logmsg "switching root to tmpfs..."
 
         mkdir -p /new_root || shellout
         mount tmpfs /new_root -t tmpfs $tmpfs_opts || shellout
-        umount /proc
         cd / || shellout
         cp -a `/bin/ls | grep -v new_root` /new_root/ || shellout
         cd /new_root || shellout
@@ -749,10 +763,6 @@ switch_root_to_tmpfs() {
         pivot_root . old_root || switch_root
     fi
 
-    unset tmpfs_size
-    unset tmpfs_nr_blocks
-    unset tmpfs_nr_inodes
-    unset tmpfs_mode
     unset tmpfs_opts
 }
 #
