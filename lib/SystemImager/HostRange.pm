@@ -34,6 +34,9 @@ my $workers = 0;
 # Cluster topology.
 our $database = "/etc/systemimager/cluster.xml";
 
+# Evaluate the maximum integer for this architecture.
+my $MAXINT = unpack("I", pack("I", -1));
+
 # Usage:
 # thread_pool_spawn($prog, $opts, $cmd, @hosts);
 # Description:
@@ -233,12 +236,8 @@ sub expand_range {
 sub sort_group
 {
 	return sort {
-		if ((($a->{'priority'}) and ($b->{'priority'})) &&
-			($a->{'priority'}[0]) <=> ($b->{'priority'}[0])) {
-				$a->{'priority'}[0] <=> $b->{'priority'}[0];
-		} else {
-			$a->{'name'}[0] cmp $b->{'name'}[0];
-		}
+		($a->{'priority'}[0] or $MAXINT) <=> ($b->{'priority'}[0] or $MAXINT) ||
+		lc($a->{'name'}[0]) cmp lc($b->{'name'}[0])
 	} @_;
 }
 

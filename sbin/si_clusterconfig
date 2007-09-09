@@ -227,12 +227,19 @@ sub XML_check_syntax
 		return -1;
 	}
 	
-	# Check for deprecated tags.
 	foreach my $group (@{$xml->{'group'}}) {
+		# Check for deprecated tags.
 		if (defined($group->{'base_image'}[0])) {
 			print "WARNING: the tag <base_image> used in the group " .
 			      "\"$group->{'name'}[0]\" is deprecated, use <override> instead!\n";
 			return -1;
+		}
+		# Check non-numeric values for priority.
+		if (defined($group->{'priority'}[0])) {
+			if ($group->{'priority'}[0] !~ /^\s*[0-9]+\s*$/) {
+				print "WARNING: the group \"$group->{'name'}[0]\" doesn't have a numeric value of <priority>!\n";
+				return -1;
+			}
 		}
 	}
 	return 0;
