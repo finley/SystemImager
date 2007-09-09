@@ -100,7 +100,7 @@ EOF
 sub updateclient_options_header {
 
 return << "EOF";
-Usage: si_updateclient [OPTION]... --server HOSTNAME --image IMAGENAME
+Usage: si_updateclient [OPTION]... --server HOSTNAME
 
 EOF
 }
@@ -241,11 +241,14 @@ return << "EOF";
     Hostname or IP address of the imageserver.
 
  --image IMAGENAME
-    Image from which the client should be updated.
+    Image from which the client should be updated. If not specified it will be
+    used the image defined on the image server by si_clusterconfig(8).
 
  --override OVERRIDE
     Override directory to use.  Multiple overrides can be specified.
     (Ie: -override THIS -override THAT)
+    If not specified it will be used the list of overrides defined on the image
+    server by si_clusterconfig(8).
 
  --directory "DIRECTORY"
     Absolute path of directory to be updated.  
@@ -260,7 +263,7 @@ return << "EOF";
 
  --flavor FLAVOR
     The boot flavor to used for doing an autoinstall.  
-    (assumes -autoinstall).
+    (only valid with -autoinstall).
 
  --configure-from DEVICE   
     Only used with -autoinstall.  Stores the network configuration for DEVICE

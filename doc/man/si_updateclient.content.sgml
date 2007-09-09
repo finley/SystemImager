@@ -91,7 +91,11 @@
       <varlistentry>
         <term><option>--image <replaceable>IMAGENAME</replaceable></option></term>
         <listitem>
-          <para>Image from which the client should be updated</para>
+	  <para>
+		Image from which the client should be updated. If not specified
+		it will be used the image defined on the image server by
+		<command>si_clusterconfig(8)</command>.
+	  </para>
         </listitem>
       </varlistentry>
       <varlistentry>
@@ -108,6 +112,10 @@
           <para>
 	    You can specify multiple override modules.  They will be copied 
             over in the same order the are specified on the command line.
+          </para>
+          <para>
+	    If not specified it will be used the list of overrides defined on
+            the image server by <command>si_clusterconfig(8)</command>.
           </para>
         </listitem>
       </varlistentry>
@@ -155,7 +163,7 @@
       <listitem>
 	<para>
 	  The boot flavor to be used for doing an autoinstall 
-	  (assumes -autoinstall).
+	  (only valid with -autoinstall).
 	</para>
       </listitem>
     </varlistentry>
@@ -179,20 +187,10 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>--listing</option>
-        </term>
-        <listitem>
-          <para>
-	    List available images on imageserver.  This option is now
-	    deprecated in favor of <command>si_lsimage</command>.
-	  </para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
         <term><option>--reboot</option>
         </term>
         <listitem>
-          <para>Reboot client after update completes</para>
+          <para>Reboot client after update completes.</para>
         </listitem>
       </varlistentry>
       <varlistentry>
@@ -230,7 +228,9 @@
 
     <para>
       <command>si_pushupdate</command>(8),
-      <command>si_lsimage</command>(8)
+      <command>si_lsimage</command>(8),
+      <command>si_clusterconfig</command>(8),
+      <command>si_pushoverrides</command>(8)
     </para>
 
     <para>More details can be found in the <citetitle>SystemImager

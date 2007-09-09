@@ -44,6 +44,7 @@ use Getopt::Long;
 use Sys::Hostname;
 use SystemImager::Common;
 use SystemImager::Options;
+use SystemImager::UseYourOwnKernel;
 use vars qw($config $VERSION);
 
 # set version number
@@ -66,8 +67,7 @@ $help_info = $help_info . SystemImager::Options->generic_options_help_version();
 $help_info = $help_info . SystemImager::Options->updateclient_options_body();
 $help_info = $help_info . SystemImager::Options->generic_footer();
 
-my $ARCH = (uname())[4];
-$ARCH =~ s/i.86/i386/;
+my $ARCH = SystemImager::UseYourOwnKernel::_get_arch();
 
 # Get settings using AppConfig.
 my $config = new AppConfig(
@@ -107,13 +107,13 @@ my $no_bootloader;
 my $DEVICE;
 
 GetOptions(
-    "listing"           => \my $listing,
     "configure-from=s"  => \$DEVICE,
     "help"              => \my $help,
     "version"           => \my $version,
     "reboot"            => \my $reboot,
     "no-bootloader"     => \$no_bootloader,
     "autoinstall"       => \my $autoinstall,
+    "append"            => \my $append_string,
     "dry-run"           => \my $dry_run,
     "no-delete"         => \my $no_delete,
     "ssh-user=s"        => \my $ssh_user,
@@ -123,6 +123,7 @@ GetOptions(
     "override=s"        => \my @overrides,
     "directory=s"       => \$directory,
     "log=s"             => \my $log,
+    "yes"               => \my $yes,
 ) or die qq($help_info);
 
 # if requested, print version information
@@ -137,22 +138,11 @@ if($help) {
     exit 0;
 }
 
-# listing is deprecated.  si_lsimage should now be used.
-if($listing) {
-    print qq('--listing' is deprecated.  Use 'si_lsimage' instead.\n);
-    exit(1);
-}
-
 ### Now we do option validation testing ###
-# -flavor assumes -autoinstall
-if ($flavor) { 
-    $autoinstall = 1;
-}
-
 # -server and -image must be defined
 #  or -server and -autoinstall
-unless(($server and $image) or ($server and $autoinstall)) {
-    print "You must specify --server and either --image or --autoinstall.\n";
+unless ($server) {
+    print "You must specify --server.\n";
     get_help();
     exit(1);
 }
@@ -197,6 +187,20 @@ if($dry_run and $autoinstall) {
     exit(1);
 }
 
+# -append not allowed without -autoinstall
+if($append_string and not ($autoinstall)) { 
+    print "--append can be used only with --autoinstall!\n\n";
+    get_help();
+    exit(1);
+}
+
+# -flavor not allowed without -autoinstall
+if($flavor and not ($autoinstall)) { 
+    print "--flavor can be used only with --autoinstall!\n\n";
+    get_help();
+    exit(1);
+}
+
 # -dry-run implies -no-bootloader
 if($dry_run) { $no_bootloader="true"; }
 
@@ -210,6 +214,7 @@ unless($< == 0) {
 #
 # Patch provided by Timm. (2006.05.10 -BEF-)
 if (-e "/etc/systemimager/overrides") {
+    print "WARNING: taking overrides from /etc/systemimager/overrides!\n";
     open (FH, "/etc/systemimager/overrides");
     while (<FH>) {
         chomp;
@@ -269,14 +274,30 @@ if($ssh_user) {
 
 ### BEGIN update image section ###
 if ($autoinstall) {
-    my %available_flavors = SystemImager::Common->get_boot_flavors($ARCH, $server);
+    print
+        "======================= WARNING =================================\n" .
+        " This command will configure this host to be auto re-installed by\n" .
+        " SystemImager at the next reboot!!!\n" .
+        "======================= WARNING =================================\n" .
+        "\nAre you sure to continue? (y / N)? ";
+    if ($yes) {
+        print "y\n";
+    } else {
+        chomp($_ = <STDIN>);
+        unless ($_ =~ /^y/i) {
+		print "Noting has not been modified...\n";
+		exit(0);
+	}
+    }
+    print "\n";
 
+    my %available_flavors = SystemImager::Common->get_boot_flavors($ARCH, $server);
     unless (%available_flavors) {
         print "\nI couldn't find any boot flavors for SystemImager on $ARCH.\n";
         print "Please install the appropriate boot files on $server.\n\n";
-        exit 1;
+        exit(1);
     }
-    
+
     unless ($flavor) {
         print "Here is a list of available flavors:\n\n";
         foreach (sort (keys %available_flavors)) {
@@ -285,24 +306,29 @@ if ($autoinstall) {
         }
 
         # If "standard" is one of the available flavours, default to it. -BEF-
-        if ($available_flavors{"standard"}) { $flavor = "standard"; }
-        
+        if ($available_flavors{"standard"}) {
+            $flavor = "standard";
+        }
         print "\nWhich flavor would you like to use? [$flavor]: ";
-        $flavor = SystemImager::Common->get_response($flavor);
+        if ($yes) {
+            print "\n>> Using flavor: $flavor\n";
+        } else {
+            $flavor = SystemImager::Common->get_response($flavor);
+        }
     }
-    
+
     # make sure the specified flavor is available
     unless ($available_flavors{$flavor}) {
         print "\nI can't find boot files of the flavor and architecture specified.\n";
         print "The files you specified would come from a SystemImager package named:\n\n";
         print qq( "systemimager-boot-${ARCH}-${flavor}-${VERSION}"\n\n); 
-        exit 1;
+        exit(1);
     }
 
-    #     If ia64          and  this is *not* a Debian based system, find bootdir using function. -BEF-
+    # If ia64 and this is *not* a Debian based system, find bootdir using function. -BEF-
     my $bootdir;
     my $relative_bootdir;
-    
+
     if ( ($ARCH eq "ia64") and (( ! -x "/usr/sbin/elilo") and (! -e "/etc/elilo.conf")) ) {
         $bootdir = SystemImager::Common->where_is_my_efi_dir();
         ## $relative_bootdir is the relative path the bootloader uses to
@@ -417,11 +443,9 @@ if ($autoinstall) {
     }
 
     # Create append arguments
-    my $append;
+    my $append = "root=/dev/ram ramdisk_blocksize=1024 " . ($append_string or '');
     if ($last_root) {
-        $append = "LAST_ROOT=$last_root root=/dev/ram0 load_ramdisk=1 prompt_ramdisk=0 ramdisk_blocksize=4096";
-    } else {
-        $append = "root=/dev/ram0 load_ramdisk=1 prompt_ramdisk=0 ramdisk_blocksize=4096";
+        $append .= " LAST_ROOT=$last_root";
     }
 
     ### BEGIN autoinstall boot configuration ###
@@ -451,7 +475,7 @@ SC_EOF
 } else {
 
     # go ahead and do that update thing you do
-    
+
     # In case directory doesn't already have one, add a trailing slash
     # (We could easily test to see if it does, but we've got to normalize multiple
     #  slashes into one down below anyway...  Same number of functions to execute.)
@@ -463,6 +487,62 @@ SC_EOF
     #  any output that might include the multiple slashes.)
     $directory =~ s(/+)(/)g;
 
+
+    # Try to detect the image and the overrides to retrieve, according to the
+    # cluster configuration defined by si_clusterconfig(8) on the image server.
+    my $hostname = hostname();
+    $hostname =~ s/\..*//g;
+    unless ($hostname) {
+        print STDERR "error: couldn't get hostname to evaluate a target image!\n";
+        print STDERR "Try to specify --image and/or --override from command line.\n";
+        exit(1);
+    }
+    unless ($image) {
+        my $tmpfile = tmpnam();
+        my $cmd = "rsync rsync://${server}:${port}/scripts/cluster.txt $tmpfile";
+        unless (!system($cmd)) {
+            print STDERR "error: couldn't retrieve rsync://${server}:${port}/scripts/cluster.txt from the image server!\n";
+            print STDERR "Remember to start systemimager-server-rsyncd on your image server ($server).\n";
+            unlink($tmpfile);
+            exit(1);
+        }
+        chomp($image = `grep "^$hostname:" $tmpfile | cut -d: -f3 | grep -v '^[[:space:]]*\$' | sed -ne '1p'`);
+        unless ($image) {
+            print STDERR "error: couldn't find a valid image for: $hostname!\n";
+            print STDERR "Try to specify --image and/or --override from command line.\n";
+            unlink($tmpfile);
+            exit(1);
+        }
+        unless (@overrides) {
+            push(@overrides, split(/\s+/, `sed -ne 's/^# global_override=:\\([^:]*\\):\$/\\1/p' $tmpfile`));
+            push(@overrides, reverse split(/\s+/, `grep "^$hostname:" $tmpfile | cut -d: -f4 | tr "\n" ' '`));
+        }
+        unlink($tmpfile);
+    }
+
+    print
+        "======================= WARNING =================================\n" .
+        " This command will update this host with the image: $image \n" .
+        " and overrides (in order of importance):\n\n" .
+	" " . join(', ', reverse @overrides) . "\n\n";
+    print
+        " Some files could be " . ($no_delete ? '' : "deleted or ") . "overwritten, so probably it is a\n" .
+        " good idea to run this command with --dry-run before and stop the\n" .
+        " production on this host.\n" unless ($dry_run);
+    print
+        "======================= WARNING =================================\n" .
+        "\nAre you sure to continue? (y / N)? ";
+    if ($yes) {
+        print "y\n";
+    } else {
+        chomp($_ = <STDIN>);
+        unless ($_ =~ /^y/i) {
+            print "Noting has not been modified...\n";
+            exit(0);
+        }
+    }
+    print "\n";
+    
     # start with base command
     my $cmdopts  = "";
 
@@ -536,9 +616,9 @@ SC_EOF
 
         # execute command
         if ($dry_run) {
-            print "Performing a dry run -- no files will be modified...\n";
+            print ">> Performing a dry run -- no files will be modified...\n";
         }
-        print "Updating image from module ${module}...\n";
+        print ">> Updating image from module ${module}...\n";
 
         # Run the command. -BEF-
         unless (!system($cmd)) {
