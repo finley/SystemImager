@@ -119,7 +119,8 @@ install-arch:	build-arch
 		rm -f tty5 && \
 		rm -f tty6 && \
 		rm -f console && \
-		rm -f null
+		rm -f null && \
+		rm -f zero 
 
 	# Copy the needed files into the initrd_template package.
 	mkdir -p $(CURDIR)/debian/$(INITRD_TEMPLATE_PKG)/usr/share/systemimager/boot/$(UNAME_ARCH)/standard
