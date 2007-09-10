@@ -43,6 +43,7 @@
       <arg><option>--reboot</option></arg>
       <arg><option>--dry-run</option></arg>
       <arg><option>--log <replaceable>"STRING"</replaceable></option></arg>
+      <arg><option>--yes</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
   <refsect1>
@@ -218,6 +219,14 @@
 	  <para>
 	    Quoted string for log file format.  See the
 	    <filename>rsyncd.conf</filename>(5) man page for options.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>--yes</option></term>
+	<listitem>
+	  <para>
+	    Answer yes to all questions.
 	  </para>
 	</listitem>
       </varlistentry>

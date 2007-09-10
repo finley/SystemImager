@@ -288,6 +288,9 @@ return << "EOF";
     Quoted string for log file format.  See the rsyncd.conf man page for 
     options.
 
+ --yes
+    Answer yes to all questions.
+
 Tip: Use \"si_lsimage --server HOSTNAME\" to get a list of available images.
 
 EOF
