@@ -15,7 +15,7 @@ use File::Copy;
 use File::Path;
 use XML::Simple;
 use SystemImager::Config qw($config);
-use vars qw($VERSION @mount_points %device_by_mount_point %filesystem_type_by_mount_point $disk_no %dev2disk);
+use vars qw($VERSION @mount_points %device_by_mount_point %filesystem_type_by_mount_point $disk_no %dev2disk $bootdev $rootdev);
 
 $VERSION="SYSTEMIMAGER_VERSION_STRING";
 
@@ -1628,6 +1628,15 @@ sub _write_out_new_fstab_file {
         my $dump      = $xml_config->{fsinfo}->{$line}->{dump};
         my $pass      = $xml_config->{fsinfo}->{$line}->{pass};
 
+
+        # Update the root device. This will be used by systemconfigurator
+        # (see below).
+        if ($mp eq '/') {
+            $rootdev = $mount_dev;
+        } elsif ($mp eq '/boot') {
+            $bootdev = $mount_dev;
+        }
+
         print $out qq($mount_dev\t$mp\t$fs);
         if ($options)
             { print $out qq(\t$options); }
@@ -1798,21 +1807,38 @@ sub setup_kexec {
 sub write_sc_command {
     my ( $out, $ip_assignment_method ) = @_;
 
+    # Fix device names in systemconfigurator config.
+    my $sc_conf_file = '/a/etc/systemconfig/systemconfig.conf';
+    print $out "\n# Fix device names in boot-loader configuration.\n";
+    print $out "if [ -e $sc_conf_file ]; then\n";
+    unless ($bootdev) {
+        $bootdev = $rootdev;
+        print $out "    sed -i 's:/boot::g' $sc_conf_file\n";
+    }
+    print $out "    sed -i 's:[[:space:]]*BOOTDEV[[:space:]]*=.*:BOOTDEV = $bootdev:g' $sc_conf_file\n";
+    print $out "    sed -i 's:[[:space:]]*ROOTDEV[[:space:]]*=.*:ROOTDEV = $rootdev:g' $sc_conf_file\n";
+    print $out "    sed -i 's:[[:space:]]*root=[^ \\t]*: root=$rootdev :g' $sc_conf_file\n";
+    print $out "    sed -i \"s:DEFAULTBOOT = systemimager:DEFAULTBOOT = \$IMAGENAME:g\" $sc_conf_file\n";
+    print $out "    sed -i \"s:LABEL = systemimager:LABEL = \$IMAGENAME:g\" $sc_conf_file\n";
+    print $out "fi\n";
+
     # Configure the network device used to contact the image-server -AR-
+    print $out "\n# Configure the network interface used during the auto-installation.\n";
     print $out "[ -z \$DEVICE ] && DEVICE=eth0\n";
     
     my $sc_excludes_to = "/etc/systemimager/systemconfig.local.exclude";
     my $sc_cmd = "chroot /a/ systemconfigurator --verbose --excludesto=$sc_excludes_to";
     if ($ip_assignment_method eq "replicant") {
-	$sc_cmd .= " --runboot";
+	    $sc_cmd .= " --runboot";
     }
     else {
-	## FIXME - is --excludesto only for the static method? 
-	## currently, 
-	$sc_cmd .= " --configsi --stdin << EOL";
+        ## FIXME - is --excludesto only for the static method? 
+        ## currently, 
+        $sc_cmd .= " --confighw --confignet --configboot --runboot --stdin << EOL";
     }
     $sc_cmd .= " || shellout";
 
+    print $out "\n# Run systemconfigurator.\n";
     print $out "$sc_cmd\n";
 
     unless ($ip_assignment_method eq "replicant") {
@@ -1836,6 +1862,8 @@ sub write_sc_command {
 	print $out "IPADDR = \$IPADDR\n";
 	print $out "NETMASK = \$NETMASK\n";
     }
+
+	print $out "\n\$(test -e $sc_conf_file && cat $sc_conf_file)\n";
 
     print $out "EOL\n";
 }

@@ -472,6 +472,15 @@ fi
 # Create an /etc/mtab file with appropriate entries
 cat /etc/mtab | grep -v '/dev/ram' | grep -v -E '^\/dev\s+\/a\/dev\s' | sed 's,/a/*,/,g' | sort -u > /a/etc/mtab
 
+# Save original boot-loader configurations before running systemconfigurator
+for file in /boot/grub/menu.lst /etc/lilo.conf /etc/grub.conf; do
+    if [ -e ${file} ]; then
+        if [ ! -e ${file}.pre-systemimager ]; then
+            cp -f ${file} ${file}.pre-systemimager
+        fi
+    fi
+done
+
 export PATH=/usr/local/sbin:/usr/local/bin:$PATH
 logmsg "Detecting systemconfigurator:"
 logmsg "---"
