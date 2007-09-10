@@ -113,7 +113,7 @@ GetOptions(
     "reboot"            => \my $reboot,
     "no-bootloader"     => \$no_bootloader,
     "autoinstall"       => \my $autoinstall,
-    "append"            => \my $append_string,
+    "append=s"          => \my $append_string,
     "dry-run"           => \my $dry_run,
     "no-delete"         => \my $no_delete,
     "ssh-user=s"        => \my $ssh_user,
@@ -331,12 +331,8 @@ if ($autoinstall) {
 
     if ( ($ARCH eq "ia64") and (( ! -x "/usr/sbin/elilo") and (! -e "/etc/elilo.conf")) ) {
         $bootdir = SystemImager::Common->where_is_my_efi_dir();
-        ## $relative_bootdir is the relative path the bootloader uses to
-        ## access boot files.
-        $relative_bootdir = "";
     } else {
         $bootdir = "/boot";
-        $relative_bootdir = $bootdir . "/";
     }
     my $bootmodule = "boot/$ARCH/$flavor";
 
@@ -356,6 +352,7 @@ if ($autoinstall) {
     my $file = "/etc/mtab";
     open(MTAB, "< $file") or croak("Couldn't open $file for reading!");
     my $rootdev = "";
+    my $bootdev = "";
     while (<MTAB>) {
         # turn tabs into spaces and gets rid of duplicates
         s/\s+/ /g;
@@ -363,64 +360,25 @@ if ($autoinstall) {
         if(/^(\S+) \/ /){
             $rootdev = $1;
         }
+        # find the last boot device
+        if(/^(\S+) $bootdir /){
+            $bootdev = $1;
+        }
     }
     close(MTAB);
 
-
-    ############################################################################
-    #
-    # Figure out what to specify as the boot device.
-    #
-    my $bootdev;
-
-    my $boot_loader = SystemImager::Common->detect_bootloader() 
-        or die "FATAL: Couldn't determine which bootloader is in use.";
-
-    # Elilo
-    if ($boot_loader eq "Elilo") {
-
-        # Let's just get what's currently specified. -BEF-
-        my @eliloconf_locations = (
-                "$bootdir/elilo.conf",
-                "/etc/elilo.conf"
-        );
-
-        foreach my $file (@eliloconf_locations) {
-            if (-f $file) {
-                open(FILE, "<$file") or croak("Couldn't open $file for reading!");
-                    while (<FILE>) {
-                        if (/^\s*boot\s*=(.*)$/) {
-                            $bootdev = $1;
-                        }
-                    }
-                close(FILE);
-            }
-        }
-        unless ($bootdev) { die "FATAL: Couldn't determine the boot device."; }
-
-    # Lilo
-    } elsif ($boot_loader eq "Lilo") {
-        my $file = "/etc/lilo.conf";
-        if (-f $file) {
-            open(FILE, "<$file") or croak("Couldn't open $file for reading!");
-                while (<FILE>) {
-                    if (/^\s*boot\s*=(.*)$/) {
-                        $bootdev = $1;
-                    }
-                }
-            close(FILE);
-        }
-
-    # Other boot loaders
-    } else {
-        # Most other boot loaders just use the device that root is on, minus the device number.
+    unless ($bootdev) {
         $bootdev = $rootdev;
-        $bootdev =~ s/\d+$//;
+    }
+    if ($bootdev ne $rootdev) {
+        $relative_bootdir = "";
+    } else {
+        $relative_bootdir = $bootdir . '/';
     }
 
     # If -configure-from DEVICE was specified, then do so. -BEF-
     if ($DEVICE) {
-        create_local_cfg ($DEVICE);
+        create_local_cfg($DEVICE);
     }
 
     # Only use LAST_ROOT if "/local.cfg" exists.
@@ -443,9 +401,18 @@ if ($autoinstall) {
     }
 
     # Create append arguments
-    my $append = "root=/dev/ram ramdisk_blocksize=1024 " . ($append_string or '');
-    if ($last_root) {
+    my $append = '';
+    if ($append_string) {
+        $append .= $append_string;
+    }
+    if ($append !~ /ramdisk_blocksize/) {
+        $append .= " ramdisk_blocksize=1024";
+    }
+    if (($last_root) and ($append !~ /LAST_ROOT/)) {
         $append .= " LAST_ROOT=$last_root";
+    }
+    unless (($last_root) or ($DEVICE) or ($append =~ /LAST_ROOT/)) {
+        $append .= " SKIP_LOCAL_CFG=y";
     }
 
     ### BEGIN autoinstall boot configuration ###
@@ -456,7 +423,6 @@ BOOTDEV = $bootdev
 ROOTDEV = /dev/ram
 TIMEOUT = 50
 DEFAULTBOOT = SystemImager
-VGA = extended
 
 [KERNEL0]
 LABEL = SystemImager
