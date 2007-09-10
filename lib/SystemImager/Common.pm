@@ -13,8 +13,6 @@ use strict;
 use POSIX qw/ceil/;
 use vars qw($version_number $VERSION);
 
-use POSIX qw(sysconf _SC_PAGESIZE);
-
 $version_number="SYSTEMIMAGER_VERSION_STRING";
 $VERSION = $version_number;
 
@@ -82,33 +80,40 @@ sub get_active_swaps_by_dev {
     return %active_swaps_by_dev;
 }
 
+# v1 swap header structure found in swapheader.h from util-linux pkg
+my $swap_struct = 'a1024IIIa16a16';
+my $swap_struct_size = length(pack($swap_struct));
+
 # Usage:
 # my $swap_devs_by_label = get_swap_devs_by_label();
 sub get_swap_devs_by_label {
     my $buf = "";
     my %swaps;
 
-    my $page_size = POSIX::sysconf(_SC_PAGESIZE) || die "Error getting sysconf _SC_PAGESIZE!";
-
-    open(SWAPS, '<', '/proc/swaps') || die "Could not open /proc/swaps for read: $!";
+    open(SWAPS, '<', '/proc/swaps') || die "Could not open /proc/swaps for read: $!\n";
     my @swaps = <SWAPS>;
     close SWAPS;
-    shift @swaps;   # remove header...
 
-    for my $line ( @swaps ){
+    # Remove header.
+    shift @swaps;
+
+    for my $line (@swaps) {
         chomp $line;
         my($dev) = (split(/\s+/, $line))[0];
 
-        open(SWAPDEV, '<', $dev) or die "Could not open $dev for read: $!";
-        my $bytes_read = sysread(SWAPDEV, $buf, $page_size, 0);
-        close SWAPDEV;
+        open(SWAPDEV, '<', $dev) or die "Could not open $dev for read: $!\n";
+        my $bytes_read = sysread(SWAPDEV, $buf, $swap_struct_size, 0);
+        close(SWAPDEV);
 
-        unless( $bytes_read == $page_size ){
-            die "sysread returned only $bytes_read reading $dev, _SC_PAGESIZE = [$page_size]\n";
+        if ($bytes_read != $swap_struct_size) {
+            die "error: couldn't read swap header from $dev.\n";
         }
 
-        my $label = (unpack('a1024IIIA16A16I117I', $buf))[5];  # v1 swap header structure found in swapheader.h from util-linux pkg
-        $swaps{$label} = $dev;
+        # Get swap LABEL.
+        my $label = (unpack($swap_struct, $buf))[5];
+        if ($label) {
+            $swaps{$label} = $dev;
+        }
     }
 
     return wantarray ? %swaps : \%swaps;
@@ -120,28 +125,31 @@ sub get_swap_devs_by_uuid {
     my $buf = "";
     my %swaps;
 
-    my $page_size = POSIX::sysconf(_SC_PAGESIZE) || die "Error getting sysconf _SC_PAGESIZE!";
-
-    open(SWAPS, '<', '/proc/swaps') || die "Could not open /proc/swaps for read: $!";
+    open(SWAPS, '<', '/proc/swaps') || die "Could not open /proc/swaps for read: $!\n";
     my @swaps = <SWAPS>;
-    close SWAPS;
-    shift @swaps;   # remove header...
+    close(SWAPS);
 
-    for my $line ( @swaps ){
+    # Remove header.
+    shift @swaps;
+
+    for my $line (@swaps) {
         chomp $line;
         my($dev) = (split(/\s+/, $line))[0];
 
-        open(SWAPDEV, '<', $dev) or die "Could not open $dev for read: $!";
-        my $bytes_read = sysread(SWAPDEV, $buf, $page_size, 0);
-        close SWAPDEV;
+        open(SWAPDEV, '<', $dev) or die "Could not open $dev for read: $!\n";
+        my $bytes_read = sysread(SWAPDEV, $buf, $swap_struct_size, 0);
+        close(SWAPDEV);
 
-        unless( $bytes_read == $page_size ){
-            die "sysread returned only $bytes_read reading $dev, _SC_PAGESIZE = [$page_size]\n";
+        if ($bytes_read != $swap_struct_size) {
+            die "error: couldn't read swap header from $dev.\n";
         }
 
-        # v1 swap header structure found in swapheader.h from udev pkg
-        my $uuid = unpack('C16', (unpack('a1024IIIA16A16I117I', $buf))[4]);
-        $swaps{$uuid} = $dev;
+        # Get UUID in hex format.
+        my $uuid = sprintf("%02x"x4 . "-%02x%02x"x3 . "-" . "%02x"x6,
+                       unpack('C16', (unpack($swap_struct, $buf))[4]));
+        if ($uuid) {
+            $swaps{$uuid} = $dev;
+        }
     }
 
     return wantarray ? %swaps : \%swaps;
