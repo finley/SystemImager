@@ -331,8 +331,12 @@ if ($autoinstall) {
 
     if ( ($ARCH eq "ia64") and (( ! -x "/usr/sbin/elilo") and (! -e "/etc/elilo.conf")) ) {
         $bootdir = SystemImager::Common->where_is_my_efi_dir();
+        ## $relative_bootdir is the relative path the bootloader uses to
+        ## access boot files.
+        $relative_bootdir = "";
     } else {
         $bootdir = "/boot";
+        $relative_bootdir = $bootdir . "/";
     }
     my $bootmodule = "boot/$ARCH/$flavor";
 
@@ -369,11 +373,6 @@ if ($autoinstall) {
 
     unless ($bootdev) {
         $bootdev = $rootdev;
-    }
-    if ($bootdev ne $rootdev) {
-        $relative_bootdir = "";
-    } else {
-        $relative_bootdir = $bootdir . '/';
     }
 
     # If -configure-from DEVICE was specified, then do so. -BEF-
