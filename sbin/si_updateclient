@@ -557,10 +557,12 @@ SC_EOF
     # image may be used on clients with different partition schemes, and 
     # therefore mount points. -BEF-
     #
+    print "Excluding (automatically): lost+found/\n";
     $cmdopts .= " --exclude=lost+found/";
 
     # Automatically exclude /dev if udev or devfs is detected. -AR-
     if (SystemImager::Common->which_dev_style() ne 'static') {
+        print "Excluding (automatically): /dev/\n";
         $cmdopts .= " --exclude=/dev/";
     }
 
@@ -575,12 +577,13 @@ SC_EOF
       if (m|^\s*$directory|) {  # match non commented explicit path
         chomp;
         s|^$directory|/|;
+        print "Excluding (from $exclude_file): $_\n";
         $cmdopts .= " --exclude=$_";
       }
     }
     close(SYSTEMIMAGER_EXCLUDE);
 
-    # Append currently mounted non ext2 filesystems to exclusions list.
+    # Append currently mounted non supported filesystems to exclusions list.
     # ( $config-fstype() returns a reference to an array.  We store that in
     #   $fstypes, and get at the array by using @$fstypes. )
     my $fstypes = $config->fstype();
@@ -590,6 +593,7 @@ SC_EOF
     while (<ETC_MTAB>) {
         my ($device, $mount, $fstype, $garbage) = split(/\s+/,$_);
         if($fstype !~ /$fsregex/o) { # The /o makes the regex compile once. This is for performance
+            print "Excluding (filesystem $fstype): $mount\n";
             $cmdopts .= " --exclude=$mount";
         }
     }
