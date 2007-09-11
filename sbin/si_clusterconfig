@@ -228,6 +228,11 @@ sub XML_check_syntax
 	}
 	
 	foreach my $group (@{$xml->{'group'}}) {
+		# Every group must have a name.
+		unless (defined($group->{'name'}[0])) {
+			print "WARNING: there is a group withtout name! Please define a name for that group.\n";
+			return -1;
+		}
 		# Check for deprecated tags.
 		if (defined($group->{'base_image'}[0])) {
 			print "WARNING: the tag <base_image> used in the group " .
