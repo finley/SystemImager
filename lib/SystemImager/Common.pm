@@ -81,7 +81,7 @@ sub get_active_swaps_by_dev {
 }
 
 # v1 swap header structure found in swapheader.h from util-linux pkg
-my $swap_struct = 'a1024IIIa16a16';
+my $swap_struct = 'a1024IIIa16A16';
 my $swap_struct_size = length(pack($swap_struct));
 
 # Usage:

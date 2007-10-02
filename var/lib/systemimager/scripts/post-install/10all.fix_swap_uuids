@@ -12,7 +12,7 @@ select(STDOUT);
 $| = 1;
 
 # Data structures for swap partitions.
-my $swap_struct = 'a1024IIIa16a16';
+my $swap_struct = 'a1024IIIa16A16';
 my $swap_struct_size = length(pack($swap_struct));
 my $hex_regexp = "(\\w\\w)" x 16;
 my $uuid_regexp = "\\w" x 8 . '-' . ("\\w" x 4 . '-') x 3 . "\\w" x 12;
