@@ -17,3 +17,7 @@
 
 # Skip persistent names associated to the network interfaces (Ubuntu).
 /etc/iftab
+
+# udev network persistent naming rules (Debian).
+/etc/udev/rules.d/z25_persistent-net.rules
+/etc/udev/rules.d/z45_persistent-net-generator.rules
