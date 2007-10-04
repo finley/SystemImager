@@ -247,7 +247,6 @@ Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 BuildRequires: python, python-devel, %{python_xml}
-Requires: systemimager-client >= %{version}
 AutoReqProv: no
 
 %description %{_build_arch}initrd_template
@@ -302,6 +301,9 @@ The bittorrent package allows you to use the BitTorrent protocol to perform
 installations.
 
 %changelog
+* Thu Oct 04 2007 Andrea Righi <a.righi@cineca.it>
+- Removed systemimager-client dependency from systemimager-initrd-template
+
 * Sun Sep 02 2007 Bernard Li <bernard@vanhpc.org>
 - Make function is_ps3 work with different formats of /proc/cpuinfo on the PS3
 
