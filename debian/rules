@@ -148,9 +148,8 @@ install-indep:	build-indep
 	$(MAKE) -C $(BUILD_DIR) install_common \
 	  DESTDIR=$(CURDIR)/debian/$(PKG)-common
 
-	# the pdf build reports a failure, but the result looks fine...
-	-$(MAKE) -C $(BUILD_DIR) install_docs \
-	  DESTDIR=$(CURDIR)/debian/$(PKG)-doc USE_SGMLTOOLS=1
+	$(MAKE) -C $(BUILD_DIR) install_docs \
+	  DESTDIR=$(CURDIR)/debian/$(PKG)-doc
 
 	mkdir -p $(CURDIR)/debian/$(PKG)-server-flamethrowerd/etc/systemimager
 	mv $(CURDIR)/debian/$(PKG)-server/etc/systemimager/flamethrower.conf \
