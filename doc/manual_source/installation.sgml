@@ -3,14 +3,14 @@
   <section>
     <title>How Does it Work?</title>
     <para>
-      The <application>SystemImager</application> concept is 
-      that an image server retrieves a golden client's entire system image 
-      and deploys it to any number of client systems. A golden client is a 
-      system you have customized to work exactly the way you want.  You can 
-      re-compile the kernel, install custom software, and do any 
-      configuration file tweaking you like.
-      The <command>si_getimage</command> command pulls the golden image to the
-      image server for deployment to other systems.
+      <application>SystemImager</application> uses a centralized server, called
+      <emphasis>image server</emphasis> that retrieves a golden client's entire
+      system image and deploys it to any number of different client systems.
+      A golden client is a system you have customized to work exactly the way
+      you want.  You can re-compile the kernel, install custom software, and
+      do any configuration file tweaking you like.
+      The <command>si_getimage(8)</command> command pulls the golden image to
+      the image server for deployment to other systems.
     </para>
     <para>
       Once you have deployed the initial image to your client systems,
@@ -24,7 +24,8 @@
 	Tools other than SystemImager are available for doing automatic
 	installations, such as Red Hat's <application>Kickstart</application>, 
 	which installs systems based on a list of pre-defined
-	packages.  However, such
+	packages or <application>debootstrap</application>, used to create
+	a Debian base system from scratch. However, such
 	package-based installs can be very limiting because they don't
 	have an automated way to deal with non-packaged files.  If you
 	re-compile your kernel, add a piece of non-packaged software, or
@@ -37,11 +38,9 @@
   <section>
     <title>Obtaining SystemImager</title>
     <para>
-      SystemImager is currently packaged in and RPM format.
-      SystemImager is a part of the Debian GNU/Linux 3.0
-      distribution, starting with 3.0 (woody).  For earlier releases and
-      other distributions, download packages from
-      <ulink url="http://systemimager.org">http://systemimager.org/</ulink>.
+      SystemImager is currently packaged in RPM and DEB format.
+      Official packages can be downloaded from
+      <ulink url="http://systemimager.org">http://www.systemimager.org/</ulink>.
     </para>
   </section>
   <section>
@@ -72,200 +71,161 @@
   <section>
     <title>Installing an Image Server</title>
     <para>
-      To create a SystemImager image server, you must install a systemimager-&lt;ARCH&gt;boot 
-	package(s) and then a systemimager-server package that supports your clients.
+      The official packages of SystemImager are distributed in the file release
+      system on SourceForge.net at this link:
+      <ulink url="https://sourceforge.net/project/platformdownload.php?group_id=259">
+          https://sourceforge.net/project/platformdownload.php?group_id=259
+      </ulink>).
     </para>
-	
-    <para>
-	The boot packages support multiple configurations.  Because different client 
-	configurations require different drivers, kernel
-	versions, etc., SystemImager allows you to install different boot packages, which
-	are known as "boot flavors."
-    </para>
-
-    <para>Each SystemImager release provides the "standard" flavors for each
-      supported	architecture.  For example, the 3.0.0 release should have these 
-      packages: systemimager-boot-i386-standard_3.0.0-1_all.deb,
-      systemimager-boot-ia64-standard_3.0.0-1_all.deb,
-      systemimager-i386boot-standard.noarch.rpm, and
-      systemimager-ia64boot-standard.noarch.rpm</para>
 
     <para>
-	SystemImager and its standard boot flavors support most common hardware configurations.
-	The <filename>.config</filename> files list the options for this kernel.
+      SystemImager depends on the System Configurator package that is also
+      available on SourceForge:
+      <ulink url="https://sourceforge.net/project/showfiles.php?group_id=24006">
+          https://sourceforge.net/project/showfiles.php?group_id=24006  
+      </ulink>).
     </para>
 
-    <para>You can use other flavors at any time to support alternate
-	client configurations, and mulitple boot flavors can be installed
-      simultaneously.  However, boot packages are strongly coupled to the
-      version of SystemImager for which they were created.  The SystemImager
-      boot package version strings should match the version
-      string of the installed version of SystemImager.
+    <para>
+      A quick way to download all the required packages is to run the
+      sis-install script (replacing i386 with the architecture of your clients):
+    </para>
+
+    <para>
+      <computeroutput>
+        $ mkdir systemimager
+        $ cd systemimager
+        $ wget http://download.systemimager.org/pub/sis-install/install
+        $ chmod u+x install
+        $ ./install -v --download-only --tag stable --directory . \ 
+        > systemconfigurator \
+        > systemimager-client systemimager-common \
+        > systemimager-i386boot-standard systemimager-i386initrd_template \
+        > systemimager-server \
+        > systemimager-bittorrent systemimager-flamethrower
+      </computeroutput>
+    </para>
+
+    <para>
+      Use <computeroutput>./install --help</computeroutput> for more informations.
+    </para>
+    
+    <para>
+      Install all the base packages in the image server.
+      In RPM-based distributions run:
+      <computeroutput>
+      # rpm -ivh systemconfigurator-*.rpm \
+      > systemimager-common-*.rpm systemimager-server-*.rpm \
+      > systemimager-*initrd_template-*.rpm systemimager-*boot-standard-*.rpm
+      </computeroutput>
+      In Debian or Debian-like distributions run:
+      <computeroutput>
+      # dpkg -i systemconfigurator-*.deb \
+      > systemimager-common-*.deb systemimager-server-*.deb \
+      > systemimager-initrd_template-*.deb systemimager-boot-*-standard-*.deb \
+      </computeroutput>
+    </para>
+
+    <para>
+      If you want to use the <emphasis>BitTorrent</emphasis> transport install
+      also the systemimager-bittorrent package.
+      Install the RPM package:
+      <computeroutput>
+      # rpm -i systemimager-bittorrent-*.rpm
+      </computeroutput>
+      Or the DEB package:
+      <computeroutput>
+      # dpkg -i systemimager-bittorrent-*.deb
+      </computeroutput>
+    </para>
+
+    <para>
+      If you want to use the <emphasis>Multicast</emphasis> transport install
+      also the systemimager-flamethrower package.
+      Install the RPM:
+      <computeroutput>
+      # rpm -i systemimager-flamethrower-*.rpm
+      </computeroutput>
+      Or the DEB package:
+      <computeroutput>
+      # dpkg -i systemimager-flamethrower-*.deb
+      </computeroutput>
+      This package requires udpcast (
+      <ulink url="http://udpcast.linux.lu/source.html">
+          http://udpcast.linux.lu/source.html
+      </ulink>) and Flamethrower (
+      <ulink url="http://freshmeat.net/projects/flamethrower">
+          http://freshmeat.net/projects/flamethrower
+      </ulink>
+      ), usually included in the common distributions.
+    </para>
+    
+    <para>
+      If your clients have multiple architectures download also the appropriate
+      systemimager-<computeroutput>ARCH</computeroutput>boot-standard and
+      systemimager-<computeroutput>ARCH</computeroutput>initrd_template in your
+      image server. 
+    </para>
+
+    <para>
+      The boot packages support multiple configurations.  Because different
+      client configurations require different drivers, kernel versions, etc.,
+      SystemImager allows you to install different boot packages, which
+      are known as "boot flavors."
+    </para>
+
+    <para>
+      Each SystemImager release provides the "standard" flavors for each
+      supported	architecture. For example, the 3.9.6 release should have these 
+      packages:
+      <itemizedlist>
+	  <listitem><para>systemimager-boot-i386-standard_3.9.6-1_all.deb,</para></listitem>
+  	  <listitem><para>systemimager-boot-x86_64-standard_3.9.6-1_all.deb,</para></listitem>
+  	  <listitem><para>systemimager-boot-ppc64-ps3-standard_3.9.6-1_all.deb,</para></listitem>
+  	  <listitem><para>...</para></listitem>
+      </itemizedlist>
+    </para>
+    <para>
+      SystemImager and its standard boot flavors support most common hardware
+      configurations.
+      The <filename>.config</filename> files list the options for this kernel.
+    </para>
+
+    <para>
+      You can use other flavors at any time to support alternate
+      client configurations, and multiple boot flavors can be installed
+      simultaneously.
     </para>
 
     <para>
       To create a custom flavor perfectly compatible with the distribution you
-      need to install you can exploit the UYOK (Use Your Own Kernel) feature.
-      
-      Standard flavors use a general purpose kernel that supports a lot of hardware components,
-      but obviously it can't support all the possible devices that could be present in a
-      totally generic client.
-
-      For this reason starting from 3.6.x release the UYOK (UseYourOwnKernel) was
-      introduced. This feature allows you to use the same kernel that runs in your
-      golden client to perform the installation in other clients. In this way it's
-      possible to theoretically support all the hardware/components you could have. 
-
-      For more informations see  
+      can exploit the UYOK (Use Your Own Kernel) feature.
+      Standard flavors use a general purpose kernel that supports a lot of
+      hardware components, but obviously they can't be able to support all
+      the possible devices that could be present in a totally generic client
+      (see also hardware with proprietary drivers).
+      For this reason starting from 3.6.x the UYOK (UseYourOwnKernel) feature
+      has been introduced.
+      This feature allows you to use the same kernel that runs in your golden
+      client to perform the installation in other clients. In this way it's
+      possible to theoretically support all the hardware/components you could
+      have. Simply if the kernel of your distribution is working well with your
+      clients, it works well too to install them.
+      For more informations see 
       <ulink url="http://wiki.systemimager.org/index.php/UYOK">
           http://wiki.systemimager.org/index.php/UYOK
       </ulink>.
     </para>
-
-    <procedure>
-      <title>To install an image server for Debian GNU/Linux 3.0 (woody) and later, run:</title>
-      <step>
-	<para><command><prompt>#</prompt> apt-get update</command></para>
-      </step>
-      <step>
-	<para>
-	  <command>
-	    <prompt>#</prompt> apt-get install systemimager-server
-	  </command>
-	</para>
-      </step>
-    </procedure>
-    <procedure>
-      <title>For RPM based distributions:</title>
-      <step>
-	<para>
-	  Download and install the systemimager-server RPM and required
-	  dependencies from
-	  <ulink url="http://systemimager.org">
-	    http://systemimager.org
-	  </ulink>.
-	</para>
-      </step>
-      <step>
-	<para>
-	  Install each package with the <command>rpm</command> command.
-	</para>
-	<para>
-	  <command><prompt>#</prompt> rpm -Uvh *.rpm</command>
-	</para>
-      </step>
-      <step>
-        <para>
-          The rpms leave the systemimager service disabled by default, so you  
-          will need to start the systemimager service in order to make
-          images available to your clients via rsync.
-        </para>
-        <para>
-          To make systemimager automatically start each time you boot your
-          system, run:
-        </para>
-        <para>
-          <command>chkconfig --add systemimager</command>
-        </para>
-        <para>
-          You can list the set of runlevels where systemimager will be
-          automatically started by running:
-        </para>
-        <para>
-          <command>chkconfig --list systemimager</command>
-        </para>
-        <para>
-          To start systemimager by hand, run:
-        </para>
-        <para>
-          <command>service systemimager start</command>
-        </para>
-      </step>
-    </procedure>
-    <formalpara>
-      <title>For other distributions:</title>
-      <para>
-	If your distribution does not support RPMs or .debs, you must
-	build and install from the source tarball; binary tarball
-	installations are no longer supported.  Instructions for building
-	SystemImager can be found in the <filename>README</filename> file
-	within the source tarball or on the wiki site
-        (<ulink url="http://wiki.systemimager.org">
-        http://wiki.systemimager.org
-        </ulink>).
-      </para>
-    </formalpara>
-    <formalpara>
-      <title>Installing Flamethrower for multicast installations</title>
-      <para>See Chapter 4, HOWTO Use Flamethrower for Multicast Installs</para>
-    </formalpara>
   </section>
+
   <section>
     <title>Selecting A Machine To Use As A Golden Client</title>
     <para>
-      A golden client must have similar hardware to the
-      machines that will later use its image (i.e. the same network adapter
-      chipset and the same storage adapters). You cannot currently deploy a
-      SCSI-based image to an IDE based-system (or vice-versa)
-      without manually editing the master script and various files
-      within the image. The disk size(s) of the golden client can be smaller
-      than the other machines that will use its image and larger
-      within reason.
+      A golden client is a system manually installed and customized of which
+      you want to make an image (clone).
     </para>
   </section>
-  <section>
-    <title>Installing SystemImager Client Software on a Golden Client</title>
-    <para>
-      To create a golden client, you must install the	systemimager-client
-      package.
-    </para>
-    <procedure>
-      <title>For Debian GNU/Linux 3.0 (woody) and later, run:</title>
-      <step>
-	<para><command><prompt>#</prompt> apt-get update</command></para>
-      </step>
-      <step>
-	<para>
-	  <command>
-	    <prompt>#</prompt> apt-get install systemimager-client
-	  </command>
-	</para>
-      </step>
-    </procedure>
-    <procedure>
-      <title>For RPM based distributions:</title>
-      <step>
-	<para>
-	  Download and install the systemimager-client RPM and required
-	  dependencies from
-	  <ulink url="http://systemimager.org">
-	    http://systemimager.org
-	  </ulink>.
-	</para>
-      </step>
-      <step>
-	<para>
-	  Install each package with the <command>rpm</command> command.
-	</para>
-	<para>
-	  <command><prompt>#</prompt> rpm -Uvh *.rpm</command>
-	</para>
-      </step>
-    </procedure>
-    <formalpara>
-      <title>For other distributions:</title>
-      <para>
-	If your distribution does not support RPMs or .debs, you must use
-	build and install from the source tarball; binary tarball
-	installations are no longer supported.  Instructions for building
-	SystemImager can be found in the <filename>README</filename> file
-	within the source tarball or on the wiki site
-        (<ulink url="http://wiki.systemimager.org">
-        http://wiki.systemimager.org
-        </ulink>).
-      </para>
-    </formalpara>
-  </section>
+
   <section>
     <title>Creating an Image on the Golden Client</title>
     <para>
@@ -275,32 +235,95 @@
       client. You will deploy the image of that system (or golden client)
       onto other machines.
     </para>
+  </section>
+
+  <section>
+    <title>Installing SystemImager Client Software on a Golden Client</title>
+    <para>
+      To create a golden client, you must install the systemimager-client
+      package on it.
+    </para>
+    <procedure>
+      <step>
+        <para>
+          Download and install the systemimager-client package.
+        </para>
+        <para>
+          <computeroutput>
+          $ mkdir systemimager
+          $ cd systemimager
+          $ wget http://download.systemimager.org/pub/sis-install/install
+          $ chmod u+x install
+          $ ./install -v --download-only --tag stable --directory . \ 
+          > systemconfigurator \
+          > systemimager-client systemimager-common \
+          > systemimager-i386initrd_template
+          </computeroutput>
+        </para>
+
+        <para>
+          Use <computeroutput>./install --help</computeroutput> for more informations.
+        </para>
+    
+        <para>
+          Install all the base packages in the image server.
+          In RPM-based distributions run:
+          <computeroutput>
+          # rpm -ivh systemconfigurator-*.rpm \
+          > systemimager-common-*.rpm systemimager-client-*.rpm \
+          > systemimager-*initrd_template-*.rpm
+          </computeroutput>
+          In Debian or Debian-like distributions run:
+          <computeroutput>
+          # dpkg -i systemconfigurator-*.deb \
+          > systemimager-common-*.deb systemimager-client-*.deb \
+          > systemimager-initrd_template-*.deb
+          </computeroutput>
+        </para>
+      </step>
+    </procedure>
+  </section>
+
+  <section>
+    <title>Creating an Image from scratch</title>
+    <para>
+      An alternative approach to create images is to install all the needed
+      packages into a directory. 
+    </para>
     <para>
       <application>System Installer</application>, a component of the System 
-	Installation Suite to which SystemImager belongs, allows you to install 
-	Linux directly to an image, bypassing the golden client step.  <application>System Installer</application> 
-	packages and documentation can be found at
+      Installation Suite to which SystemImager belongs, allows you to install 
+      Linux directly to an image, bypassing the golden client step.
+      <application>System Installer</application> 
+      packages and documentation can be found at
       <ulink url="http://systeminstaller.sourceforge.net">
 	http://systeminstaller.sourceforge.net
       </ulink>
       Images created with SystemInstaller are interchangeable with those
       created using the SystemImager tools.
     </para>
+    <para>
+      You can even create an image using one of the common tools shipped with
+      your distribution, instead of using SystemInstaller.
+      The tool must be able to install a distribution into a directory (ex.
+      Debootstrap for Debian, kickstart or yum for Red Hat, YaST for SuSE, etc.) 
+    </para>
   </section>
+
   <section>
     <title>Upgrading SystemImager</title>
     <para>
       Although SystemImager upgrades are automated in most ways, you must
-	perform some upgrade processes manually to prevent losing user
+      perform some upgrade processes manually to prevent losing user
       customizations.
     </para>
     <section>
       <title>Regenerating autoinstallscripts</title>
       <para>
         With each release of SystemImager, use the <command>si_mkautoinstallscript</command> 
-	  command to update the autoinstall scripts stored in 
-	  <filename>/var/lib/systemimager/scripts</filename>.  Installations using 
-	  older scripts may fail.
+	command to update the autoinstall scripts stored in 
+	<filename>/var/lib/systemimager/scripts</filename>.  Installations using 
+	older scripts may fail.
       </para>
       <warning>
         <para>
@@ -348,8 +371,8 @@
         introduces the boot packages feature, which requires that various
         components of the SystemImager system have some sort of version 
         control.  Without relying on a package management system, version
-	  control requires significant effort, so SystemImager 3.0.0 does not
-	  support unpackaged bits. 
+        control requires significant effort, so SystemImager 3.0.0 does not
+        support unpackaged bits. 
       </para>
       <para>
         However, with the build system based on make, you can run commands
