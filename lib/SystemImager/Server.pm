@@ -1818,6 +1818,7 @@ sub write_sc_command {
     print $out "if [ -e $sc_conf_file ]; then\n";
     unless ($bootdev) {
         $bootdev = $rootdev;
+    } else {
         print $out "    sed -i 's:/boot::g' $sc_conf_file\n";
     }
     print $out "    sed -i 's:[[:space:]]*BOOTDEV[[:space:]]*=.*:BOOTDEV = $bootdev:g' $sc_conf_file\n";
