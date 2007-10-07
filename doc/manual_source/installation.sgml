@@ -39,8 +39,8 @@
     <title>Obtaining SystemImager</title>
     <para>
       SystemImager is currently packaged in RPM and DEB format.
-      Official packages can be downloaded from
-      <ulink url="http://systemimager.org">http://www.systemimager.org/</ulink>.
+      Official packages can be downloaded at
+      <ulink url="http://www.systemimager.org">http://www.systemimager.org/</ulink>.
     </para>
   </section>
   <section>
@@ -61,11 +61,10 @@
       performance limits of the image server is the BitTorrent transport.
       With BitTorrent the upload bandwidth of the clients can be used to
       distribute the images among the nodes exploiting the advantages of
-      the peer-to-peer networks
-      (for more informations see
+      the peer-to-peer networks. For more informations see
       <ulink url="http://wiki.systemimager.org/index.php/BitTorrent">
           http://wiki.systemimager.org/index.php/BitTorrent
-      </ulink>).
+      </ulink>.
     </para>
   </section>
   <section>
@@ -92,7 +91,7 @@
     </para>
 
     <para>
-      <computeroutput>
+      <programlisting>
         $ mkdir systemimager
         $ cd systemimager
         $ wget http://download.systemimager.org/pub/sis-install/install
@@ -103,7 +102,7 @@
         > systemimager-i386boot-standard systemimager-i386initrd_template \
         > systemimager-server \
         > systemimager-bittorrent systemimager-flamethrower
-      </computeroutput>
+      </programlisting>
     </para>
 
     <para>
@@ -113,58 +112,55 @@
     <para>
       Install all the base packages in the image server.
       In RPM-based distributions run:
-      <computeroutput>
+      <programlisting>
       # rpm -ivh systemconfigurator-*.rpm \
       > systemimager-common-*.rpm systemimager-server-*.rpm \
       > systemimager-*initrd_template-*.rpm systemimager-*boot-standard-*.rpm
-      </computeroutput>
+      </programlisting>
       In Debian or Debian-like distributions run:
-      <computeroutput>
+      <programlisting>
       # dpkg -i systemconfigurator-*.deb \
       > systemimager-common-*.deb systemimager-server-*.deb \
       > systemimager-initrd_template-*.deb systemimager-boot-*-standard-*.deb \
-      </computeroutput>
+      </programlisting>
     </para>
 
     <para>
       If you want to use the <emphasis>BitTorrent</emphasis> transport install
       also the systemimager-bittorrent package.
-      Install the RPM package:
-      <computeroutput>
+      RPM package:
+      <programlisting>
       # rpm -i systemimager-bittorrent-*.rpm
-      </computeroutput>
-      Or the DEB package:
-      <computeroutput>
+      </programlisting>
+      DEB package:
+      <programlisting>
       # dpkg -i systemimager-bittorrent-*.deb
-      </computeroutput>
+      </programlisting>
     </para>
 
     <para>
       If you want to use the <emphasis>Multicast</emphasis> transport install
       also the systemimager-flamethrower package.
-      Install the RPM:
-      <computeroutput>
+      RPM package:
+      <programlisting>
       # rpm -i systemimager-flamethrower-*.rpm
-      </computeroutput>
-      Or the DEB package:
-      <computeroutput>
+      </programlisting>
+      DEB package:
+      <programlisting>
       # dpkg -i systemimager-flamethrower-*.deb
-      </computeroutput>
-      This package requires udpcast (
-      <ulink url="http://udpcast.linux.lu/source.html">
-          http://udpcast.linux.lu/source.html
-      </ulink>) and Flamethrower (
-      <ulink url="http://freshmeat.net/projects/flamethrower">
-          http://freshmeat.net/projects/flamethrower
-      </ulink>
-      ), usually included in the common distributions.
+      </programlisting>
+      This package requires udpcast
+      (<ulink url="http://udpcast.linux.lu/source.html">http://udpcast.linux.lu/source.html</ulink>)
+      and Flamethrower
+      (<ulink url="http://freshmeat.net/projects/flamethrower">http://freshmeat.net/projects/flamethrower</ulink>),
+      usually included in the common distributions.
     </para>
     
     <para>
       If your clients have multiple architectures download also the appropriate
       systemimager-<computeroutput>ARCH</computeroutput>boot-standard and
       systemimager-<computeroutput>ARCH</computeroutput>initrd_template in your
-      image server. 
+      image server.
     </para>
 
     <para>
@@ -212,9 +208,7 @@
       have. Simply if the kernel of your distribution is working well with your
       clients, it works well too to install them.
       For more informations see 
-      <ulink url="http://wiki.systemimager.org/index.php/UYOK">
-          http://wiki.systemimager.org/index.php/UYOK
-      </ulink>.
+      <ulink url="http://wiki.systemimager.org/index.php/UYOK">http://wiki.systemimager.org/index.php/UYOK</ulink>.
     </para>
   </section>
 
@@ -249,7 +243,7 @@
           Download and install the systemimager-client package.
         </para>
         <para>
-          <computeroutput>
+          <programlisting>
           $ mkdir systemimager
           $ cd systemimager
           $ wget http://download.systemimager.org/pub/sis-install/install
@@ -258,7 +252,7 @@
           > systemconfigurator \
           > systemimager-client systemimager-common \
           > systemimager-i386initrd_template
-          </computeroutput>
+          </programlisting>
         </para>
 
         <para>
@@ -268,17 +262,17 @@
         <para>
           Install all the base packages in the image server.
           In RPM-based distributions run:
-          <computeroutput>
+          <programlisting>
           # rpm -ivh systemconfigurator-*.rpm \
           > systemimager-common-*.rpm systemimager-client-*.rpm \
           > systemimager-*initrd_template-*.rpm
-          </computeroutput>
+          </programlisting>
           In Debian or Debian-like distributions run:
-          <computeroutput>
+          <programlisting>
           # dpkg -i systemconfigurator-*.deb \
           > systemimager-common-*.deb systemimager-client-*.deb \
           > systemimager-initrd_template-*.deb
-          </computeroutput>
+          </programlisting>
         </para>
       </step>
     </procedure>
@@ -296,9 +290,7 @@
       Linux directly to an image, bypassing the golden client step.
       <application>System Installer</application> 
       packages and documentation can be found at
-      <ulink url="http://systeminstaller.sourceforge.net">
-	http://systeminstaller.sourceforge.net
-      </ulink>
+      <ulink url="http://systeminstaller.sourceforge.net">http://systeminstaller.sourceforge.net</ulink>
       Images created with SystemInstaller are interchangeable with those
       created using the SystemImager tools.
     </para>
@@ -337,7 +329,9 @@
       <example>
         <title>Generating new autoinstallscripts</title>
         <para>
+        <programlisting>
           # si_mkautoinstallscript -image myimage -post-install reboot -ip-assignment dhcp
+        </programlisting>
         </para>
         <para>
           If you require customizations to your autoinstallscript, edit the 
