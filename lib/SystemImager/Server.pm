@@ -1111,6 +1111,11 @@ sub write_lvm_volumes_commands {
                 print "WARNING: undefined logical volume size! skipping volume creation.\n";
                 next;
             }
+            if ($lv_size eq '*') {
+                $lv_size = '-l100%FREE';
+            } else {
+                $lv_size = '-L' . $lv_size;
+            }
             # Get additional options (expressed in lvcreate format) -AR-
             my $lv_options = $lv->{lv_options};
             unless (defined($lv_options)) {
@@ -1118,7 +1123,7 @@ sub write_lvm_volumes_commands {
             }
 
             # Create the logical volume -AR-
-            $cmd = "lvcreate $lv_options -L${lv_size} -n $lv_name $group_name || shellout";
+            $cmd = "lvcreate $lv_options $lv_size -n $lv_name $group_name || shellout";
             print $out qq(logmsg "$cmd"\n);
             print $out "$cmd\n";
             
