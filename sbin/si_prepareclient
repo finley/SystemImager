@@ -784,7 +784,20 @@ sub collect_disks {
     open(IN,"</proc/partitions") or croak("Couldn't open /proc/partitions for reading.");
     while(<IN>) {
 
-        if(/(\S*c[0-9]+d[0-9]+)p[0-9]+/) { # hardware raid devices (/dev/rd/c?d?, /dev/ida/c?d?, /dev/cciss/c?d?)
+        # Try to translate devfs disk names to the standard /dev names for
+        # hardware RAID disks with a non-standard naming schema.
+        # XXX: this works only with disks installed in the first hardware-RAID
+        #      controller. It seems that the only way to find the right
+        #      controller number is to look the major device number, that
+        #      unfortunately is different for all the hardware-RAID disks of
+        #      the different vendors that don't use a standard SCSI naming
+        #      schema (/dev/sd*).
+        if (/(\S*)\/disc([0-9]+)\/part([0-9]+)/) {
+            $_ = "${1}/c0d${2}p${3}";
+        }
+
+        if (/(\S*c[0-9]+d[0-9]+)p[0-9]+/) {
+            # hardware raid devices (/dev/rd/c?d?, /dev/ida/c?d?, /dev/cciss/c?d?)
             my $disk = $1;
             unless(defined $excluded_disks{$disk}) {
                 $disks->{HWRAID}->{$disk}++;
