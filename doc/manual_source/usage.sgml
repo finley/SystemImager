@@ -16,7 +16,7 @@
 
 	<listitem>
 	<para>
-	Install Linux on your golden client and customize as desired.
+	Install GNU/Linux on your golden client and customize as desired.
 	</para>
 	</listitem>
 
@@ -51,17 +51,62 @@
 
 	<listitem>
 	<para>
-	Run <command>si_addclients</command> on the image server to tell it which clients will
-	receive what image and to populate the image server's <filename>/etc/hosts</filename>
-	and <filename>/var/lib/systemimager/scripts/hosts</filename> file.
+	Run <command>si_clusterconfig -e</command> to define the groups of
+	clients and to associate images and overrides to groups. The command
+	<command>si_clusterconfig</command> is available only in SystemImager
+	3.9.4 or later. Otherwise you can always use the command
+	<command>si_addclients</command> (see the next point) to associate the
+	images to your clients.
 	</para>
 	</listitem>
 
-
+	<listitem>
+	<para>
+	This point can be skipped if <command>si_clusterconfig</command> has
+	been used. Otherwise run <command>si_addclients</command> on the image
+	server to tell it which clients will receive what image and to populate
+	the image server's <filename>/etc/hosts</filename> and
+	<filename>/var/lib/systemimager/scripts/hosts</filename> file.
+	</para>
+	</listitem>
 
 	<listitem>
 	<para>
-	Autoinstall the golden image on other machines.
+	Generate a boot media for your clients. There are four ways to boot
+	the clients for auto-installation:
+	<itemizedlist>
+	  <listitem>
+	    <para>
+	    boot from network (PXE) - see
+	    <command>si_mkclientnetboot(8)</command>
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	    boot from an auto-install CD - see
+	    <command>si_mkautoinstallcd(8)</command>
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	    boot from an auto-install disk (USB drive or internal disk) -
+	    see <command>si_mkautoinstalldisk(8)</command>
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	    boot from a running system - see
+	    <command>si_updateclient(8)</command>
+	    </para>
+	  </listitem>
+	</itemizedlist> 
+	</para>
+	</listitem>
+
+	<listitem>
+	<para>
+	Autoinstall the golden image on other machines using one (or more)
+	generated boot media.
 	</para>
 	</listitem>
 
@@ -127,6 +172,12 @@
                 deactivate the <command>rsync</command> daemon by killing the process or by
                 simply rebooting the golden client.  This <command>rsync</command> server will
                 not start automatically on future reboots.
+                In case of a successful image retrieval the
+                <command>rsync</command> daemon in the golden client is
+                automatically stopped.
+                In <command>rsync over SSH</command> mode the
+                <command>rsync</command> communication is performed opening a
+                SSH tunnel from the image server to the golden client.
 	      </para>
 	    </warning>
 	  </listitem>
@@ -159,10 +210,10 @@
           via installation parameters, in the form of
           <filename>VARIABLE=value</filename>.
           Installation parameters can be defined in
-          <filename>/etc/systemimager/pxelinux.cfg/syslinux.cf</filename> or can be passed
-          as argument of <command>si_mkautoinstalldisk</command> or
-          <command>si_mkautoinstallcd</command> using the <command>--append "STRING"</command>
-          option.
+          <filename>/etc/systemimager/pxelinux.cfg/syslinux.cfg</filename> or can be passed
+          as argument of <command>si_mkautoinstalldisk</command>,
+          <command>si_mkautoinstallcd</command>, or <command>si_mkclientnetboot</command>
+          using the <command>--append "STRING"</command> option.
           For a complete list of the available installation parameters see 
           <ulink url="http://wiki.systemimager.org/index.php/Installation_Parameters">
             http://wiki.systemimager.org/index.php/Installation_Parameters
@@ -171,8 +222,8 @@
 
 	<para>
 	  Alternatively, if you are using a running system's hard drive as the boot media, you can run 
-	  <command>si_updateclient -autoinstall -server &lt;imageserver&gt; -configure-from eth0
-	  </command>, which will create a <filename>local.cfg</filename> file at the root of the client's hard
+	  <command>si_updateclient -autoinstall -server &lt;imageserver&gt; -configure-from eth0</command>,
+	  which will create a <filename>local.cfg</filename> file at the root of the client's hard
 	  drive containing the existing live network settings. When the autoinstall client 
 	  boots, it will look for this file and use the provided values instead of getting 
 	  them from DHCP and the <filename>/var/lib/systemimager/scripts/hosts</filename> file on the
@@ -282,10 +333,198 @@ IMAGESERVER=192.168.1.203
 	  which contains the list of mounted filesystems and their mount
 	  points.  <command>si_getimage</command> pulls out the mount points for the filesystems that
 	  are unsupported and creates an exclusion list.  The filesystems
-	  SystemImager currently supports are ext2, ext3 and reiserfs.
-	  All other filesytems will be ignored, including proc, nfs,
+	  SystemImager currently supports ext2, ext3, reiserfs, xfs, jfs and
+	  vfat. All other filesytems will be ignored, including proc, nfs,
 	  devpts, iso9660, etc.
 	</para>
+      </listitem>
+
+      <listitem>
+        <para>
+          <command>si_clusterconfig</command> allows to manage the group
+          definitions of your cluster in the SystemImager database.
+        </para>
+        <para>
+          <command>si_clusterconfig</command> can be used also to show the
+          defined groups with the list of clients that belong to each group.
+          In show-mode the command accepts as argument a list of hostnames,
+          host-ranges and/or host-group, it resolves them in the equivalent
+          list of hostnames and prints them to stdout. The edit-mode can be
+          interactive (option -e) or batch (option -u).
+          In interactive edit-mode si_clusterconfig opens an editor in your
+          terminal that allows to modify the client group definitions and
+          their properties using a XML syntax. In batch edit-mode it only
+          parses the pre-defined XML configuration
+          (<filename>/etc/systemimager/cluster.xml</filename>) and refresh the
+          opportune SystemImager internal configuration files.
+        </para>
+        <warning>
+          <para>
+          Do not edit <filename>/etc/systemimager/cluster.xml</filename> directly.
+          Always use <command>si_clusterconfig -e</command> to be sure that
+          all the files needed by the installations process will be properly
+          synchronized.
+          </para>
+        </warning>
+        <para>
+          Here is a well-commented example of a simple cluster configuration:
+          <programlisting>
+&lt;?xml version='1.0' standalone='yes'?&gt;
+&lt;!--
+
+********************************* WARNING **************************************
+
+This file has been generated by si_clusterconfig(8), do not edit manually!
+
+********************************* WARNING **************************************
+
+        This is the main configuration file to describe the topology of
+        your clients and your image server informations.
+
+        This file will be used by all the SystemImager commands to identify the
+        logical groups of your clients and their specific configurations.
+
+        See comments below for more details.
+--&gt;
+&lt;xml&gt;
+        &lt;!-- The image server hostname. --&gt;
+        &lt;master&gt;master1&lt;/master&gt;
+
+        &lt;!--
+                This is the global name:  this name will be used to identify
+                all the hosts defined in this file (the global supergroup).
+
+                IMPORTANT: this is a mandatory entry!!!
+        --&gt;
+        &lt;name&gt;all&lt;/name&gt;
+
+        &lt;!--
+                This is the global override: all the files stored in this
+                overrides will be pushed to all the clients.
+
+                IMPORTANT: this is a mandatory entry!!! If you don't want to use
+                it do not create the global override in
+                /var/lib/systemimager/overrides/
+
+                Multiple overrides can be specified as a list of multiple XML tags:
+
+                &lt;override&gt;OVERRIDE_NAME_1&lt;/override&gt;
+                &lt;override&gt;OVERRIDE_NAME_2&lt;/override&gt;
+                ...
+                &lt;override&gt;OVERRIDE_NAME_N&lt;/override&gt;
+
+                The OVERRIDE_NAME_1 ... OVERRIDE_NAME_N will be distributed
+                preserving the same order as they appear in the XML file. This
+                means that in case of file overlaps (more files in multiple
+                overrides that should be distributed to the same target
+                filename) the first hit wins. In this case OVERRIDE_NAME_1 is
+                the most important and OVERRIDE_NAME_N is the least important.
+        --&gt;
+        &lt;override&gt;all&lt;/override&gt;
+
+        &lt;!--
+                Following there is an example of a &quot;fake&quot; group. The group
+                name is &quot;Local&quot;, it uses the image &quot;Local&quot;, the override in
+                /var/lib/systemimager/overrides/Local and it contains only
+                the localhost server. Totally useless, but it's there to
+                explain how it works... ;-)
+        --&gt;
+        &lt;group&gt;
+                &lt;name&gt;Local&lt;/name&gt;
+                &lt;image&gt;Local&lt;/image&gt;
+                &lt;override&gt;Local&lt;/override&gt;
+                &lt;node&gt;localhost&lt;/node&gt;
+        &lt;/group&gt;
+
+        &lt;!--
+                This is a group that contains two nodes: node001 and
+                node002. The group is called &quot;Login&quot; and it uses the
+                override:
+
+                The clients node001 and node002 will be auto-installed using the
+                image:
+
+                /var/lib/systemimager/images/SuSE10
+
+                And the override:
+
+                /var/lib/systemimager/overrides/SuSE10_frontend
+
+                After the initial installation it will be possible to keep in
+                sync the common files for the Login group creating them into the
+                &quot;SuSE10_frontend&quot; override and using the command
+                si_pushoverride(8).
+
+                It will be even possible to define host-only files creating an
+                override using the hostname of the target client. For example
+                all the files in /var/lib/systemimager/overrides/node001 will be
+                distributed only to node001 (and in case of overlaps these files
+                will replace the files that come from the group override and
+                from the global override).
+        --&gt;
+        &lt;group&gt;
+                &lt;name&gt;Login&lt;/name&gt;
+                &lt;!--
+                        If a client belongs to multiple groups, the group with
+                        the higher priority will be used to choose the image
+                        for that client; for the overrides the groups will be
+                        sorted by group priority: in case of file overlaps
+                        first hit wins.
+
+                        In this example node001, that belongs to the group
+                        Login and Storage, will be auto-installed with the
+                        image SuSE10 and it'll receive the overrides in the
+                        following order (remember that in case of file overlaps
+                        first hit wins):
+
+                          SuSE10_frontend, SuSE10, Storage
+
+                --&gt;
+                &lt;priority&gt;10&lt;/priority&gt;
+                &lt;image&gt;SuSE10&lt;/image&gt;
+                &lt;!--
+                        Also a group can have multiple overrides. The same
+                        rules for multiple values of the global overrides are
+                        valid also here.
+                --&gt;
+                &lt;override&gt;SuSE10_frontend&lt;/override&gt;
+                &lt;override&gt;SuSE10&lt;/override&gt;
+                &lt;node&gt;node001,node002&lt;/node&gt;
+        &lt;/group&gt;
+
+        &lt;!--
+                Another example. The group Storage contains 16 nodes (from
+                node1293 up to node1308). They will be auto-installed using the
+                image:
+
+                /var/lib/systemimager/images/RHEL4
+
+                And the override:
+
+                /var/lib/systemimager/overrides/Storage
+
+                In general the best practice is to use the same name for the
+                override and the group name (like this group).
+        --&gt;
+        &lt;group&gt;
+                &lt;name&gt;Storage&lt;/name&gt;
+                &lt;priority&gt;20&lt;/priority&gt;
+                &lt;image&gt;RHEL4&lt;/image&gt;
+                &lt;override&gt;Storage&lt;/override&gt;
+                &lt;node&gt;node001,node1293-node1308&lt;/node&gt;
+        &lt;/group&gt;
+
+        &lt;!--
+                Define your custom groups below (and remember to remove
+                or comment the previous entries if you don't want to use
+                them).
+
+                ...
+        --&gt;
+
+&lt;/xml&gt;
+          </programlisting>
+        </para>
       </listitem>
       
       <listitem>
@@ -297,6 +536,13 @@ IMAGESERVER=192.168.1.203
 	  <filename>/var/lib/systemimager/scripts/hosts</filename> files.  The
 	  hosts file provides the default mechanism used by autoinstall clients
 	  to look up their hostnames.
+	  <warning>
+	  <para>
+	    You can skip <command>si_addclients</command> if you've used
+	    <command>si_clusterconfig</command> as specified in the previous
+	    point.
+	  </para>
+	  </warning>
 	</para>
 	<para>
 	  When <command>si_addclients</command> is run without arguments, it 
@@ -386,7 +632,7 @@ IMAGESERVER=192.168.1.203
       
       <listitem>
 	<para>
-	  Autoinstall the golden image on other machines.
+	  Create a boot media to auto-install your clients.
 	</para>
 	
 	<para>
@@ -395,7 +641,7 @@ IMAGESERVER=192.168.1.203
 	<itemizedlist>
 	  <listitem>
 	    <para>
-	      Boot the system from a USB disk.
+	      Boot the system from a USB disk or an internal disk.
 	    </para>
 	    
 	    <para>
@@ -418,18 +664,17 @@ IMAGESERVER=192.168.1.203
 	  
 	  <listitem>
 	    <para>
-	      Boot the system from its own hard drive.
+	      Auto-install the images from a running system.
 	    </para>
 	    
 	    <para>
-	      If your client is already running Linux and uses LILO as its
-	      boot loader, you can simply copy the
-	      <command>si_updateclient</command> command and run it with the
-	      <parameter>-autoinstall</parameter> option.
+	      If your client is already running GNU/Linux you can simply
+	      execute the <command>si_updateclient</command> command and
+	      run it with the <parameter>-autoinstall</parameter> option.
 	    </para>
 	    <example>
 	      <title>
-		Booting the autoinstall media from a system's hard drive
+		Booting the autoinstall media from a running system's hard drive
 	      </title>
 	      <programlisting>
 		[root@server7]# si_updateclient -a -s imageserver -c eth0
@@ -440,17 +685,14 @@ IMAGESERVER=192.168.1.203
 	  <listitem>
 	    <para>
 	      Boot the system from the network. If your systems are network-boot
-		capable, using PXE for example, you can start an autoinstall without
-		using local media.    
+              capable, using PXE for example, you can start an autoinstall without
+              using local media.    
 	    </para>
 	    
 	    <para>
 	      PXE is usually enabled through a BIOS setting.  Booting can be 
-		unstable and client side firmware is not
-	      consistent.  If you must boot without physically touching
-	      your machines, try the
-	      <parameter>-autoinstall</parameter> option to
-	      <command>si_updateclient</command> first.
+              unstable and client side firmware is not
+	      consistent.
 	    </para>
 	    
 	    <para>
@@ -465,10 +707,17 @@ IMAGESERVER=192.168.1.203
 	      re-execute <command>si_mkbootserver</command>, and repeat until it exits successfully.
 	      <command>si_mkbootserver</command> will probably not work with all PXE
 	      clients.  If it fails to work with your configuration, please
-	      submit a bug report to http://sourceforge.net/tracker/?group_id=259&amp;atid=100259.
+	      send a mail to
+	      <ulink url="mailto:sisuite-users@lists.sourceforge.net">sisuite-users@lists.sourceforge.net</ulink>.
 	    </para>
 	  </listitem>
-	  
+	  <listitem>
+            <para>
+            Now it's time to install the images on your clients simply
+            booting them with the generated boot media and waiting for the
+            full auto-installation.
+            </para>
+	  </listitem>
 	</itemizedlist>
 	
       </listitem>
@@ -533,20 +782,42 @@ IMAGESERVER=192.168.1.203
 	  </listitem>
 	  <listitem>
 	    <para>
-	      You can also use <command>si_getimage</command> to update an existing image by simply specifying an 
-	      existing image name, for example,
+	      You can also use <command>si_getimage</command> to update an
+	      existing image by simply specifying an existing image name, for
+	      example,
 	      <command>si_getimage -golden-client 192.168.1.1. -image &lt;imagename&gt;.</command>
-	      <command> si_getimage</command> then updates the image to match the files on your golden client. 
-	      When you do this, only the parts of files that are different will be copied over.  Files that exist 
-	      in the old image but not on the golden client will be deleted, and files that exist in both places but have 
-	      changed will be updated.  <command>si_getimage</command> is one way to update an image when new 
-	      security patches or other system updates come out. However, this method is revision control on an 
-	      image-by-image basis, and not true revision control where individual file revisions are 
-	      tracked on a line-by-line basis. The recommended method is never to overwrite a known 
-	      working image. Revision control on an image-by-image basis also ties in to the <command>si_updateclient</command>
-	      command.  By default, all images are stored in the parent directory of 
-	      <filename>/var/lib/systemimager/images/</filename> in a directory that bears the 
-	      image name. For example: <filename>/var/lib/systemimager/images/my_webserver_image_v1/</filename>
+	      <command> si_getimage</command> then updates the image to match
+	      the files on your golden client. When you do this, only the parts
+	      of files that are different will be copied over. Files that exist 
+	      in the old image but not on the golden client will be
+	      <emphasis>deleted</emphasis>, and files that exist in both places but have 
+	      changed will be <emphasis>updated</emphasis>.
+	      <command>si_getimage</command> is one way to update an image when
+	      new security patches or other system updates come out. However,
+	      this method is revision control on an image-by-image basis, and
+	      not true revision control where individual file revisions are 
+	      tracked on a line-by-line basis. The recommended method is never
+	      to overwrite a known working image. Revision control on an
+	      image-by-image basis also ties in to the
+	      <command>si_updateclient</command> command.
+	      By default, all images are stored in the parent directory of 
+	      <filename>/var/lib/systemimager/images/</filename> in a directory
+	      that bears the image name.
+	      For example:
+	      <itemizedlist>
+	      <listitem>
+	      <para><filename>/var/lib/systemimager/images/my_webserver_image_v1/</filename></para>
+	      </listitem>
+	      <listitem>
+	      <para><filename>/var/lib/systemimager/images/my_webserver_image_v2/</filename></para>
+	      </listitem>
+	      <listitem>
+	      <para><filename>/var/lib/systemimager/images/my_webserver_image_HEAD/</filename></para>
+	      </listitem>
+	      <listitem>
+	      <para><filename>...</filename></para>
+	      </listitem>
+	      </itemizedlist>
 	    </para>
 	  </listitem>
 	</itemizedlist>
@@ -557,28 +828,34 @@ IMAGESERVER=192.168.1.203
 	<itemizedlist>
 	  <listitem>
 	    <para>
-	      After <command>si_getimage</command> has pulled the files to the image directory on the imageserver, it creates 
-	      a customized autoinstall script.  The autoinstall script in this example is named 
-	      "my_webserver_image_v1.master".  All autoinstall scripts are placed in the 
+	      After <command>si_getimage</command> has pulled the files to the
+	      image directory on the imageserver, it creates an auto-install
+	      script customized for the image. The auto-install script in this
+	      example is named "my_webserver_image_v1.master". All auto-install
+	      scripts are placed in the
 	      <filename>/var/lib/systemimager/scripts</filename> directory.
 	    </para>
 	  </listitem>
 	  <listitem>
 	    <para>
-	      The disk partitioning information left behind by the <command>si_prepareclient</command> command adds 
-	      the necessary commands to re-partition the disk(s) on the autoinstall clients.
+	      The disk partitioning information left behind by the
+	      <command>si_prepareclient</command> command adds the necessary
+	      commands to re-partition the disk(s) on the autoinstall clients.
 	      </para>
 	  </listitem>
 	  <listitem>
 	    <para>
-	      File system information is taken from the
-             <filename>/etc/systemimager/autoinstallscript.conf</filename> file in the image (i.e.: 
+	      Filesystem informations are taken from the
+             <filename>/etc/systemimager/autoinstallscript.conf</filename> file
+             in the image (i.e.: 
 	     <filename>/var/lib/systemimager/images/my_webserver_image_v1/etc/systemimager/autoinstallscript.conf)</filename> 
-	      and used to determine the appropriate file system creation commands and to determine 
-	      mount points for the autoinstall process. Networking information is added to the 
-	      autoinstall script based on command line options passed to <command>si_getimage</command> or information it 
-	      prompts you for.  This information is added in variable form as the autoinstall client will 
-	      determine the values for things such as its hostname and IP address during the autoinstall 
+	      and used to determine the appropriate filesystem creation commands
+	      and to determine mount points for the autoinstall process.
+	      Networking informations are added to the autoinstall script based
+	      on command line options passed to <command>si_getimage</command>
+	      or information it prompts you for. This information is added in
+	      variable form as the autoinstall client will determine the values
+	      for things such as its hostname and IP address during the autoinstall 
 	      process.
 	    </para>
 	  </listitem>
@@ -586,26 +863,53 @@ IMAGESERVER=192.168.1.203
       </section>
       
       <section>
-	<title>The <command>si_addclients</command> Command</title>
+	<title>The <command>si_addclients</command> and <command>si_clusterconfig</command> commands</title>
 	<itemizedlist>
 	  <listitem>
 	    <para>
-	      After running <command>si_getimage</command>, run the <command>si_addclients</command> command, 
-	      which asks you for the hostname range you will be installing.
-              <command>si_addclients</command> then prompts you to choose the
-              image that will be installed to these hosts and creates soft 
-	      links for each hostname that point to the master autoinstall script for that image. For 
-	      example: "www3.sh -> web_server_image_v1.master".
+	      After running <command>si_getimage</command>, run the
+	      <command>si_clusterconfig</command> command, which opens an
+	      interactive editor where you can define the bindings of your
+	      images with your groups of clients.
 	    </para>
-	  </listitem>
-	  <listitem>
 	    <para>
-	      If the image is updated and you allow <command>si_getimage</command> to update the master autoinstall script 
-	      also, then each of the associated soft links will point to the updated autoinstall script.  If 
-	      individual host configuration is necessary, the soft link for that host can be removed and 
-	      replaced with a copy of the master autoinstall script that can then be customized for that 
-	      host.  This customization is a manual process and is up to the system administrator.
+	      The same operation can be done by
+	      <command>si_addclients</command>, which asks you for the
+	      hostname range you will be installing, but it doesn't have
+	      the concept of host groups, so you can specify only host
+	      ranges or single hostnames (the same can be done by
+	      <command>si_clusterconfig</command>).
+	      <command>si_addclients</command> prompts you to choose the
+              image that will be installed to these hosts and creates symbolic 
+	      links for each hostname that point to the master autoinstall
+	      script for that image. For example:
+	      "www3.sh -> web_server_image_v1.master".
 	    </para>
+	    <para>
+	      If the image is updated and you allow
+	      <command>si_getimage</command> to update the master autoinstall
+	      script also, then each of the associated soft links will point to
+	      the updated autoinstall script. If individual host configuration
+	      is necessary, the soft link for that host can be removed and
+	      replaced with a copy of the master autoinstall script that can
+	      then be customized for that host.
+	      This customization is a manual process and is up to the system
+	      administrator, but it is stronly suggested to limit these
+	      manual customizations and to always double check them before
+	      opening a new bug.
+	    </para>
+	    <warning>
+	      <para>
+	        The configurations made by <command>si_addclients</command>
+	        can ovverride the configurations made by
+	        <command>si_clusterconfig</command>.
+	        In order to exclude unexpected problems it is strongly
+	        suggested to always use only the
+	        <command>si_clusterconfig</command> command,
+	        obviously when it is available (that means you're using
+	        SystemImager 3.9.4 or greater).
+	      </para>
+	    </warning>
 	  </listitem>
 	</itemizedlist>
       </section>
@@ -615,30 +919,39 @@ IMAGESERVER=192.168.1.203
 	<itemizedlist>
 	<listitem>
 	    <para>
-	      The unattended install procedure is flexible and works with almost any available hardware. 
-	      You can also easily modify it to work with new or special hardware. 
-	      A miniature Linux distribution called Brian's Own Embedded Linux (BOEL) is used for autoinstalls.  
-	      It consists of a customized kernel and an initial ram disk that contains only the specific 
-	      commands and utilities necessary to perform autoinstalls. The same kernel and initial ram disk 
-	      (<filename>initrd.img</filename>)
-              can be used to boot from USB disks, CDROMs, the network, or any running Linux 
-	      system's local hard drive.
+	      The unattended install procedure is flexible and works with
+	      almost any available hardware. You can also easily modify it to
+	      work with new or special hardware.
+	    </para>
+	    <para> 
+	      A miniature Linux distribution called Brian's Own Embedded Linux
+	      (BOEL) is used for autoinstalls. It consists of a customized
+	      kernel and an initial ram disk that contains only the specific 
+	      commands and utilities necessary to perform autoinstalls. The
+	      same kernel and initial ram disk (<filename>initrd.img</filename>)
+              can be used to boot from USB disks, CDROMs, the network, or any
+              running Linux system's local hard drive.
 	    </para>
 	    <para>
-	      The <command>si_mkautoinstalldisk</command> and <command>si_mkautoinstallcd</command> commands 
-	      use the <command>syslinux(2)</command> utility to create disks and CDROMs that will boot the 
-	      SystemImager kernel and initial ram disk. <command>pxelinux(2)</command>, 
-	      which is a sister tool to <command>syslinux</command>, allows the same kernel and initial ram disk to 
-	      boot PXE capable machines from the network. Both <command>syslinux</command> and <command>pxelinux</command>
-	      need a configuraton file, but the two tools can use the same one and <application>SystemImager</application>
-	      handles this for you.
+	      The <command>si_mkautoinstalldisk</command> and
+	      <command>si_mkautoinstallcd</command> commands use the
+	      <command>syslinux(2)</command> utility to create disks and CDROMs
+	      that will boot the SystemImager kernel and initial ram disk.
+	      <command>pxelinux(2)</command>, which is a sister tool to
+	      <command>syslinux</command>, allows the same kernel and initial
+	      ram disk to boot PXE capable machines from the network. Both
+	      <command>syslinux</command> and <command>pxelinux</command>
+	      need a configuraton file, but the two tools can use the same one
+	      and <application>SystemImager</application> handles this for you.
 	    </para>
 	</listitem>
 
 	  <listitem>
 	    <para>
-	      The standard autoinstall kernel contains all the necessary drivers for the majority of systems.
-              Custom kernels can be generated using UYOK feature to meet special disk and network driver requirements.
+	      The standard autoinstall kernel contains all the necessary
+	      drivers for the majority of systems. Custom kernels can be
+	      generated using UYOK feature to meet special disk and network
+	      driver requirements.
 	    </para>
             <para>
              To use UYOK and generate <filename>kernel</filename>+<filename>initrd.img</filename>
@@ -671,12 +984,20 @@ IMAGESERVER=192.168.1.203
 	</listitem>
 	<listitem>
 	  <para>
-          Once the kernel has booted, it mounts the initial ram disk as its root filesystem.
-          The kernel then executes an initialization script on the ram disk that
-          has been written to do <application>SystemImager</application>-specific
-	  tasks.  This script will use either a configuration file (<filename>/local.cfg</filename>) or a combination of 
-	  DHCP and the <filename>/var/lib/systemimager/scripts</filename> file pulled from the image server to determine 
-	  the autoinstall client's IP address and hostname information.</para>
+          Once the kernel has booted, it mounts the initial ram disk as its
+          root filesystem. The kernel then executes an initialization script
+          on the ram disk that has been written to do
+          <application>SystemImager</application>-specific tasks. This script
+          will use either a configuration file
+          (<filename>/local.cfg</filename>), installation parameters (passed
+          by the kernel boot options, see
+          <ulink url="http://wiki.systemimager.org/index.php/Installation_Parameters">http://wiki.systemimager.org/index.php/Installation_Parameters</ulink>
+          for a complete and up to date list of installation parameters), or a
+          combination of DHCP and the
+          <filename>/var/lib/systemimager/scripts</filename> file pulled from
+          the image server to determine the autoinstall client's IP address
+          and hostname information.
+          </para>
 
 	  <para>
             If DHCP is used, the client parses the hosts file which was 
@@ -697,53 +1018,82 @@ IMAGESERVER=192.168.1.203
 	<itemizedlist>
 	  <listitem>
 	    <para>
-	      If you want to update an image on your image server, you can use one of the two following methods:
+	      If you want to update an image on your image server, you can use
+	      one of the two following methods:
 	    </para>
 	    <orderedlist>
 	      <listitem>
 		<para>
-		  Directly edit the files in the image directory.  The best way to do this is to <command>chroot</command>
-		  into the image directory. You can then work with the image as if it were a running machine.  You 
-		  can even install packages with <command>apt-get</command> or <command>RPM</command>, for example.
+		  Directly edit the files in the image directory.  The best way
+		  to do this is to <command>chroot</command> into the image
+		  directory. You can then work with the image as if it were a
+		  running machine. You can even install packages with
+		  <command>apt-get</command>, <command>aptitude</command> or
+		  <command>RPM</command> and <command>yum</command> for
+		  example.
 		</para>
 	      </listitem>
 	      <listitem>
 		<para>
-		  Run the <command>si_getimage</command> command again, specifying a golden client that has been modified 
-		  in the desired way.  Again, only the parts of the files that have changed will be pulled across.  
-		  Files that have been deleted on the golden client will also be deleted in the image. You have the 
-		  option to update the master autoinstall script for the image or leave it alone.  The advantages of running the 
-		  <command>si_getimage</command> command are that you can verify that your new configuration works on the golden client 
-		  and that the master autoinstall script is updated.
+		  Run the <command>si_getimage</command> command again,
+		  specifying a golden client that has been modified in the
+		  desired way.  Again, only the parts of the files that have
+		  changed will be pulled across. Files that have been deleted
+		  on the golden client will also be deleted in the image. You
+		  have the option to update the master autoinstall script for
+		  the image (suggested) or leave it alone. The advantages of
+		  running the <command>si_getimage</command> command are that
+		  you can verify that your new configuration works on the
+		  golden client and that the master autoinstall script is
+		  updated.
 		</para>
               </listitem>
             </orderedlist>
 	  </listitem>
 	    <listitem>
 	      <para>
-		Once a system has been autoinstalled, you can use the <command>si_updateclient</command> 
-		  command to update a client system to match a new or updated image on the image server. So, for 
-		  example, if you've installed your company's 300 web servers and a security patch comes 
-		  out the next day, you can simply update the image on the image server and run 
-		  <command>si_updateclient</command> on each of your web servers.  Only the modified files are pulled over, 
-		  so your site is patched very quickly. You should create an entirely new image with a new 
-		  version number so that you have some form of revision control.  This way, if you find out 
-		  that the patch you applied corrupted your entire web farm, you can simply do an 
-		  <command>si_updateclient</command> back to the last known working image.
+		Once a system has been autoinstalled, you can use the
+		<command>si_updateclient</command> command to update a client
+		system to match a new or updated image on the image server. So,
+		for example, if you've installed your company's 300 web servers
+		and a security patch comes out the next day, you can simply
+		update the image on the image server and run
+		<command>si_updateclient</command> on each of your web servers.
+		Only the modified files are pulled over, so your site is
+		patched very quickly. You should create an entirely new image
+		with a new version number so that you have some form of
+		revision control. This way, if you find out that the patch you
+		applied corrupted your entire web farm, you can simply do a
+		<command>si_updateclient</command> back to the last known
+		working image.
 	      </para>
+	      <warning>
+	      <para>
+	        In any case it is always suggested to stop the production in
+	        the machines before running the update via
+	        <command>si_updateclient</command>, since some files used by
+	        the running applications could be potentially updated or
+	        removed while the applications are using them.
+	      </para>
+	      </warning>
 	    </listitem>
 	    <listitem>
 	      <para>
-		  By incorporating some modifications submitted by A. L. Lambert of epicRealm, you can 
-		  use the <command>si_updateclient</command> command with the <option>-autoinstall</option> option to copy the 
-		  autoinstall kernel and initial ram disk to the local hard drive of an autoinstall client that is 
-		  currently running but needs to be re-deployed. <command>si_updateclient</command> then modifies the 
-		  <filename>/etc/lilo.conf</filename> file to include an appropriate entry for the new kernel and initial 
-		  ram disk and makes this new kernel the default.  The next time the client system boots, it 
-		  loads the SystemImager kernel and initial ram disk, which begins the autoinstall process. 
-		  You can therefore remotely redeploy any running Linux machine without feeding the 
-		  machine a floppy or CD and without having to reconfigure the BIOS to boot off the 
-		  network, which can be quite problematic with some BIOSes.
+		  You can also use the <command>si_updateclient</command>
+		  command with the <option>-autoinstall</option> option to
+		  copy the autoinstall kernel and initial ram disk to the local
+		  hard drive of an autoinstall client that is currently
+		  running, but in this way the image needs to be re-deployed.
+		  <command>si_updateclient</command> then modifies the
+		  boot-loader configuration to include an appropriate entry for
+		  the new kernel and initial ram disk and makes this new kernel
+		  the default. The next time the client system boots, it loads
+		  the SystemImager kernel and initial ram disk, which begins
+		  the autoinstall process. 
+		  You can therefore remotely re-deploy any running Linux
+		  machine without feeding the machine any external CD or USB
+		  disk and without having to reconfigure the BIOS to boot off
+		  the network, which can be quite problematic with some BIOSes.
 	      </para>
 	    </listitem>
 	</itemizedlist>
