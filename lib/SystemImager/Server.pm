@@ -1869,8 +1869,6 @@ sub write_sc_command {
 	print $out "NETMASK = \$NETMASK\n";
     }
 
-	print $out "\n\$(test -e $sc_conf_file && cat $sc_conf_file)\n";
-
     print $out "EOL\n";
 }
 
