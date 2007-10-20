@@ -2088,6 +2088,17 @@ sub create_autoinstall_script{
     my $dir = "$override_dir/$script_name";
     if (! -d "$dir")  {
       mkdir("$dir", 0755) or die "FATAL: Can't make directory $dir\n";
+      # Be sure to properly set the correct permissions bitmask in the
+      # overrides, in fact according to MKDIR(2):
+      #
+      # [...] the permissions of the created directory are (mode & ~umask & 0777).
+      #
+      # A non-standard permission mask in the root of the clients can lead to
+      # serious problems, so it's better to enforce the right bitmask directly
+      # using a chmod() after the mkdir().
+      #
+      # The best solution here is to use the same permission mask of the image.
+      chmod(((stat($image_dir))[2] & 07777), "$dir");
     }  
     
     close($MASTER_SCRIPT);
