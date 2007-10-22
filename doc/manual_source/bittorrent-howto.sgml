@@ -1,0 +1,230 @@
+<chapter>
+  <title>HOWTO Use BitTorrent for peer-to-peer Installs</title>
+  
+  <section>
+    <title>
+      Install SystemImager v3.7.4 or higher.
+    </title>
+    <para>
+    Follow the steps described in the
+    <link linkend="installation">installing section</link> for details.
+    </para>
+  </section>
+
+  <section>
+    <title>
+      Configure the BitTorrent transport on the image server.
+    </title>
+    <para>
+    Open the file <filename>/etc/systemimager/bittorrent.conf</filename> to
+    validate the configuration; in particular check the following parameters:
+    <itemizedlist>
+	<listitem>
+	<para>
+	  <computeroutput>BT_INTERFACE=eth<subscript>i</subscript></computeroutput>
+	  must be the correct interface to reach the client nodes,
+	</para>
+	</listitem>
+
+	<listitem>
+	<para>
+	  <computeroutput>BT_IMAGES=image1,image2,...,imageN</computeroutput>
+          must contain a comma separated list of the images to be distributed
+          via BitTorrent,
+	</para>
+	</listitem>
+
+	<listitem>
+	<para>
+	  <computeroutput>BT_OVERRIDES=override1,override2,...,overrideM</computeroutput>
+	  must contain a comma separated list of the overrides to be
+	  distributed via BitTorrent (you can always decide to distribute an
+	  image by BitTorrent and an override by rsync or vice-versa),
+	</para>
+	</listitem>
+
+	<listitem>
+	<para>
+	  <computeroutput>BT_UPDATE=y|n</computeroutput> set to y to force the
+	  synchronization of the BitTorrent data with the images and overrides
+	  content every time the daemon on the image server is restart,
+	</para>
+	</listitem>
+
+	<listitem>
+	<para>
+	  <computeroutput>BT_COMPRESS=y|n</computeroutput> set to y to compress
+	  the images and overrides (with gzip) before the deployment
+	  (use this option only if your image server is a powerful machine, in
+	  particular with a quite recent CPU).
+	</para>
+	</listitem>
+    </itemizedlist>
+    </para>
+
+    <para>
+    Following there is a typical configuration to deploy 2 images (suse10
+    and suse10_frontend) with their overrides:
+    </para>
+    <para>
+    <programlisting>
+ #
+ # "SystemImager"
+ #
+ #  Copyright (C) 2006 Andrea Righi &lt;a.righi@cineca.it&gt;
+ #
+ #  $Id: bittorrent.conf 3533 2006-04-24 20:25:59Z bli $
+ #
+ 
+ # The bittorrent tracker port.
+ BT_TRACKER_PORT=6969
+ 
+ # Tracker state file.
+ BT_TRACKER_STATE=/tmp/dstate
+ 
+ # Tracker log file.
+ BT_TRACKER_LOG=/var/log/systemimager/bittorrent-tracker.log
+ 
+ # Interface used to seed files with bittorrent.
+ BT_INTERFACE=eth0
+ 
+ # Set to yes if you want to compress the images before distributing
+ # them via BitTorrent. Set to 'n' if the image server has an old CPU or
+ # is not powerful in computations.
+ #
+ # Allowed values: y|n
+ BT_COMPRESS=y
+ 
+ # Set to yes if you want to always synchronize the BitTorrent images
+ # with the chrootable images on /var/lib/systemimager/images when the
+ # SystemImager BitTorrent daemon starts.
+ #
+ # Allowed values: y|n
+ BT_UPDATE=n
+ 
+ # Comma separated list of images to distribute with BitTorrent
+ # (ex. BT_IMAGES=RHEL4_base,suse10,frontend,backend...)
+ # IMPORTANT: no spaces between images!!!
+ BT_IMAGES=suse10,suse10_frontend
+ 
+ # Comma separated list of overrides to distribute with BitTorrent
+ # (ex. BT_OVERRIDES=RHEL4_base,suse10,frontend,backend...)
+ # IMPORTANT: no spaces between overrides!!!
+ BT_OVERRIDES=suse10,suse10_frontend
+    </programlisting>
+    </para>
+  </section>
+
+  <section>
+    <title>
+      Configure the clients to use the BitTorrent transport.
+    </title>
+    <para>
+    To enable the clients to use the BitTorrent transport you need to specify
+    the boot parameter <computeroutput>BITTORRENT=y</computeroutput>.
+    Typically this can be done appending this option at the end of the kernel
+    boot string in
+    <filename>/etc/systemimager/pxelinux.cfg/syslinux.cfg</filename> or passing
+    it via the <computeroutput>--append</computeroutput> option in the commands
+    that allow it (<computeroutput>si_mkclientnetboot</computeroutput>,
+    <computeroutput>si_mkautoinstallcd</computeroutput>,
+    <computeroutput>si_mkautoinstalldisk</computeroutput>).
+    </para>
+    <para>
+    Here is a typical <filename>syslinux.cfg</filename> configured to enable
+    all your clients to use auto-installation with the BitTorrent transport:
+    </para>
+    <para>
+    <programlisting>
+ DEFAULT systemimager
+ 
+ #
+ # Uncomment next line to send pxelinux boot prompt over serial port 0.
+ # NOTE: Be sure your serial port speed is appropriate (57600, 9600, etc.)
+ #
+ #SERIAL 0 57600
+ DISPLAY message.txt
+ PROMPT 1
+ TIMEOUT 50
+ 
+ # Add the following to the append line above to use your first serial port
+ # (ttyS0) as a console in addition to your monitor (tty0).  NOTE: Be sure
+ # your serial port speed is appropriate (57600, 9600, etc.)
+ #
+ #console=ttyS0,57600
+ 
+ # Add the following to the append line above to increase the size of your tmpfs
+ # filesystem.  About 100MB larger than your image size should suffice.
+ #
+ # Other tmpfs mount options are also supported.  See the FAQ for details.
+ #tmpfs_size=800M
+ 
+ LABEL systemimager
+ KERNEL kernel
+ APPEND vga=extended initrd=initrd.img root=/dev/ram BITTORRENT=y MONITOR_SERVER=172.16.36.1 MONITOR_CONSOLE=yes    
+    </programlisting> 
+    </para>
+    <para>
+    Last step consists to boot your clients with the proper auto-install boot
+    media and enjoy the auto-installation with BitTorrent.
+    </para>
+  </section>
+
+  <section>
+  <title>Important notes</title>
+  <warning>
+  <para>
+  When you perform any change into an image that is deployed via BitTorrent
+  remember to force a synchronization of the BitTorrent repository.
+  </para>
+  </warning>
+  <para>  
+  To do so, simply change the value
+  <computeroutput>BT_UPDATE=y</computeroutput> in
+  <filename>/etc/systemimager/bittorrent.conf</filename> and restart the
+  BitTorrent deamon:
+  <programlisting>
+  # /etc/init.d/systemimager-server-bittorrent restart
+  </programlisting>
+  </para>
+  <para>
+  Then if you don't want to re-create the repository at each restart of the
+  daemon change it to <computeroutput>BT_UPDATE=n</computeroutput>.
+  </para>
+  <para>
+  You can also explicitly remove the tarball and the torrent of the image
+  that you have modified to speed-up the server-side process, instead of
+  setting <computeroutput>BT_UPDATE=y</computeroutput> in the configuration
+  file. In this case a restart of the BitTorrent daemon will re-create only
+  the tarball and the torrent of the single image that you touched.
+  </para>
+  </section>
+    
+  <section>
+  <title>See also</title>
+  <para>
+      See <ulink url="http://wiki.systemimager.org/index.php/BitTorrent">
+      http://wiki.systemimager.org/index.php/BitTorrent
+      </ulink> for details.
+  </para>
+  </section>
+
+</chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-namecase-general:t
+sgml-general-insert-case:lower
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:2
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+-->
