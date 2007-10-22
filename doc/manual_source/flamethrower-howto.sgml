@@ -5,12 +5,10 @@
     <title>
       Install SystemImager v3.2.x or higher
     </title>
-   
-	<para>
-      See <ulink url="http://wiki.systemimager.org/index.php/Multicast">
-      http://wiki.systemimager.org/index.php/Multicast
-      </ulink> for details.
-	</para>
+    <para>
+    Follow the steps described in the
+    <link linkend="installation">installing section</link> for details.
+    </para>
   </section>
 
   <section>
@@ -49,7 +47,7 @@
       go at the very bottom of the file).  However, it's much easier to
       just do a:
       <programlisting>
-    "si_mvimage my_image-v1 tmp_name && si_mvimage tmp_name my_image-v1"
+      si_mvimage my_image-v1 tmp_name &amp;&amp; si_mvimage tmp_name my_image-v1
       </programlisting>
 	</para>
   </section>
@@ -210,6 +208,14 @@ or
 	</orderedlist>
   </section>
 
+  <section>
+  <title>See also</title>
+      <para>
+      See <ulink url="http://wiki.systemimager.org/index.php/Multicast">
+      http://wiki.systemimager.org/index.php/Multicast
+      </ulink> for details.
+      </para>
+  </section>
 </chapter>
 
 <!-- Keep this comment at the end of the file
