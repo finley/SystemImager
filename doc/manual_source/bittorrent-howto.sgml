@@ -174,8 +174,8 @@
   <title>Important notes</title>
   <warning>
   <para>
-  When you perform any change into an image that is deployed via BitTorrent
-  remember to force a synchronization of the BitTorrent repository.
+  When you perform any change into an image or override that is deployed via
+  BitTorrent remember to force a synchronization of the BitTorrent repository.
   </para>
   </warning>
   <para>  
@@ -200,6 +200,108 @@
   </para>
   </section>
     
+  <section>
+  <title>A Detailed Walk Through the Process</title>
+  <orderedlist>
+    <listitem>
+      <para>
+      The BitTorrent tracker is started on the image server by the command
+      <filename>/etc/init.d/systemimager-server-bittorrent start</filename>.
+      The tracker allows the distribution of all the torrents that are in
+      the directory <filename>/var/lib/systemimager/torrents</filename>.
+      Torrents needed for the imaging will be generated in the next step.
+      </para>
+    </listitem>
+
+    <listitem>
+      <para>
+      The BitTorrent protocol has been designed to transfer only regular
+      files and directories, but it's not natively able to transfer all the
+      UNIX metadata and special files (like your /dev/ for example). For this
+      reason is necessary to "map" all the files in a image to a single regular
+      file. During the <filename>systemimager-server-bittorrent</filename>
+      startup, SystemImager provides to generate a tarball and a ".torrent"
+      file for each image and override to be distributed by this transport.
+      Tarballs are stored in
+      <filename>/var/lib/systemimager/tarballs</filename> and ".torrent"s in
+      <filename>/var/lib/systemimager/torrents</filename>.
+      </para>
+    </listitem>
+
+    <listitem>
+      <para>
+      After the tarballs and torrents generation, the first seeder is started
+      on the image server (after the tracker) by the script
+      <filename>/etc/init.d/systemimager-server-bittorrent</filename>.
+      The first seeder is the only peer that owns all the chunks of the files
+      to be distributed to the other peers from the beginning.
+      During the first phase of the imaging process it constitutes the only
+      bottleneck (like in the client-server approach), but when the first
+      chunks of data are distributed to some peers (peer set) they begin to
+      talk together, exploiting the advantages of the peer-to-peer network
+      and freeing the image server from the load. In this way, after this
+      transition phase, the image server becomes like another peer in the swarm
+      and it does not constitute a bottleneck anymore.
+      </para>
+    </listitem>
+
+    <listitem>
+      <para>
+      Clients start with a boot package (<filename>kernel + initrd.img</filename>)
+      that includes the BitTorrent client. The first step for a client is to
+      download the needed torrents. This is done using the <application>rsync</application>
+      protocol (torrents are really small compared to the whole image and this
+      doesn't represent a problem in terms of scalability, also with a huge
+      number of clients downloading them at the same time).
+      </para>
+    </listitem>
+
+    <listitem>
+      <para>
+      When the clients have the needed torrents they can start to use the
+      BitTorrent protocol to download anything they need. The first files
+      downloaded via BitTorrent are the BOEL binaries (distributed in a
+      tarball and extracted in the client after the download).
+      The clients continue to seed (upload) the BOEL binaries tarball during
+      the whole auto-installation process, also when they have extracted it,
+      giving their upload band availability to the newer approaching clients. 
+      </para>
+    </listitem>
+
+    <listitem>
+      <para>
+      After the download of the BOEL binaries tarball and a first system
+      initialization (module autodetection, disk partitioning, filesystem
+      creation, etc.) it's time to download the image tarball via BitTorrent.
+      This operation works in the same way as the BOEL binaries distribution.
+      </para>
+    </listitem>
+
+    <listitem>
+      <para>
+      The image tarball is extracted in the client's filesystem. During
+      the extraction the client continues to act as a seeder (uploader)
+      for the image tarball. After the extraction the image tarball is
+      removed from the client host and the BitTorrent client is stopped.
+      </para>
+    </listitem>
+
+    <listitem>
+      <para>
+      The overrides are downloaded in the same way.
+      </para>
+    </listitem>
+
+    <listitem>
+      <para>
+      The client is rebooted/kexec-ed/powered-off or starts to beep, according
+      to the post-install action.
+      </para>
+    </listitem>
+
+  </orderedlist>
+  </section>
+
   <section>
   <title>See also</title>
   <para>
