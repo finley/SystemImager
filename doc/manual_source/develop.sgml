@@ -110,40 +110,238 @@
       the receiving system prior to and during the file transfers.
     </para>
   </section>
-
   
   <section>
-    <title>Version Strings</title>
+    <title>Versioning</title>
     <para>
-      SystemImager releases use an X.Y.Z numbering scheme similar to that
-	used by the Linux kernel.  X is a major
-      feature release revision incremented to show significant architecture 
-      changes.  Y is a minor release revision, incremented to show the
-      addition of new features.  Z is a bug-fix revision.  If Y is an
-      odd number, the release is a development release.  If Y is even, it is a
-      stable release.
+    SystemImager releases use an "A.B.C.D" numbering scheme similar to that
+    used by the Linux kernel.
     </para>
-    <para>
-      Using this scheme, you can see that 2.1.3 is a development release
-      because 1 is odd.  You can assume that the only changes between 2.0.3
-      and 2.0.4 were bug fixes, because only the last digit was incremented.
-    </para>
+    <section>
+      <title>Synopsis</title>
+      <para>
+      VERSION.MAJOR.MINOR[.EXTRAVERSION]
+      </para>
+    </section>
+    <section>
+      <title>Official release</title>
+      <para>
+          <itemizedlist>
+	    <listitem>
+	      <para>
+	      SystemImager official releases are denoted using a standard
+	      triplet of integers: <emphasis>VERSION.MAJOR.MINOR</emphasis>.
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+	      The basic intent is that a <emphasis>VERSION</emphasis> increment
+	      indicates a major architectural change, a
+	      <emphasis>MAJOR</emphasis> increment indicates major improvements
+	      and a <emphasis>MINOR</emphasis> increment indicates a bug fix
+	      release or a release with minor improvements.
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+              An odd <emphasis>MAJOR</emphasis> number indicates an unstable
+              release, an even number indicates a stable release.
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+              An odd <emphasis>MINOR</emphasis> number indicates a pre-release
+              or a release candidate (see  below) of the
+              <emphasis>VERSION.MAJOR.(MINOR + 1)</emphasis>, an even number
+              always indicates an official release (stable or unstable,
+              depening on the <emphasis>MAJOR</emphasis> number).
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+	      A pre-release is always considered unstable, even if
+	      <emphasis>MAJOR</emphasis> is a even number.
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+              Official releases are always distributed uploading the files
+              and packages via the
+              <ulink url="http://sourceforge.net/project/showfiles.php?group_id=259">SourceForge file release system</ulink>. 
+	      </para>
+	    </listitem>
+          </itemizedlist>
+      </para>
+    </section>
+    <section>
+      <title>Development pre-release</title>
+      <para>
+          <itemizedlist>
+	    <listitem>
+	      <para>
+              Development pre-release or release candidate versions use an
+              additional integer at the end of the version string:
+              <emphasis>VERSION.MAJOR.MINOR.EXTRAVERSION</emphasis>. By
+              definition the <emphasis>EXTRAVERSION</emphasis> number can
+              be appended only if the <emphasis>MINOR</emphasis> number is
+              odd (pre-release or releaes candidate).
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+              The first 3 numbers (<emphasis>VERSION</emphasis>,
+              <emphasis>MAJOR</emphasis> and <emphasis>MINOR</emphasis>)
+              define the version of the next official release, that will be
+              called: <emphasis>VERSION.MAJOR.(MINOR + 1)</emphasis>.
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+              <emphasis>EXTRAVERSION</emphasis> should always contain the
+              string <emphasis>svnNUMBER</emphasis>, where
+              <emphasis>NUMBER</emphasis> is a reference to the original SVN
+              version (checked into http://svn.systemimager.org). By default
+              a pre-release is always based on the exact content of the SVN
+              branch <emphasis>MAJOR.MINOR.x</emphasis>. Otherwise an
+              additional comment, string, abbreviation, etc. must be appended,
+              that can identify for example:
+              <itemizedlist>
+	        <listitem>
+	          <para>
+                  the name of the developer (i.e.
+                  <emphasis>.svn4040arighi</emphasis>),
+	          </para>
+	        </listitem>
+	        <listitem>
+	          <para>
+                  an explicative name of a new feature present only in the
+                  local repository of a developer (i.e.
+                  <emphasis>svn3636bittorrent</emphasis>),
+ 	          </para>
+	        </listitem>
+	        <listitem>
+	          <para>
+                  a name that identify the origin of the source repository
+                  (i.e. <emphasis>.svn3636trunk</emphasis>,
+                  <emphasis>.svn3636udevbranch</emphasis>, etc.).
+ 	          </para>
+	        </listitem>
+	      </itemizedlist>
+	      </para>
+	    </listitem>
+          </itemizedlist>
+      </para>
+    </section>
+    <section>
+      <title>Examples</title>
+      <para>
+          <itemizedlist>
+	    <listitem>
+	      <para>
+	      Stable mainline:
+              <itemizedlist>
+	        <listitem>
+	          <para>
+	          <emphasis>3.8.0</emphasis>
+	          </para>
+	        </listitem>
+	        <listitem>
+	          <para>
+	          <emphasis>3.8.2</emphasis>
+	          </para>
+	        </listitem>
+	        <listitem>
+	          <para>
+	          <emphasis>3.8.4</emphasis>
+	          </para>
+	        </listitem>
+	        <listitem>
+	          <para>
+	          ...
+	          </para>
+	        </listitem>
+	      </itemizedlist>
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+	      Unstable:
+              <itemizedlist>
+	        <listitem>
+	          <para>
+	          <emphasis>3.9.0</emphasis>
+	          </para>
+	        </listitem>
+	        <listitem>
+	          <para>
+	          <emphasis>3.9.2</emphasis>
+	          </para>
+	        </listitem>
+	        <listitem>
+	          <para>
+	          <emphasis>3.9.4</emphasis>
+	          </para>
+	        </listitem>
+	        <listitem>
+	          <para>
+	          ...
+	          </para>
+	        </listitem>
+	      </itemizedlist>
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+	      Pre-release:
+              <itemizedlist>
+	        <listitem>
+	          <para>
+	          <emphasis>3.9.1.svn4100</emphasis> = pre-release of 3.9.2
+	          (based on SVN version 4100)
+	          </para>
+	        </listitem>
+	        <listitem>
+	          <para>
+	          <emphasis>3.8.3.svn4300</emphasis> = pre-release of 3.8.4
+	          (based on SVN version 4300)
+	          </para>
+	        </listitem>
+	        <listitem>
+	          <para>
+	          <emphasis>3.9.5.svn5136veryexperimentalfeature</emphasis> =
+	          pre-release of 3.9.6 (based on SVN version 5136 + adds the
+	          new cool "veryexperimentalfeature" that is not yet checked in
+	          the svn repository)
+	          </para>
+	        </listitem>
+	        <listitem>
+	          <para>
+                  <emphasis>3.8.5.svn5050arighi</emphasis> = pre-release of
+                  3.8.6 (based on SVN version 5050 + customizations added by
+                  the developer arighi, not yet checked in the svn repository)
+	          </para>
+	        </listitem>
+	      </itemizedlist>
+	      </para>
+	    </listitem>
+	  </itemizedlist>
+      </para>
+    </section>
   </section>
+
   <section>
     <title>Using SVN</title>
     <para>
       SystemImager is maintained in SVN at
-      <ulink url="http://svn.systemimager.org">
-      http://svn.systemimager.org
-      </ulink>.
-
-      To submit patches for future releases, generate them against
-      the code in SVN.  There are typically two active branches at any given
-      time - the current stable branch and the current development branch.  If you are fixing
-      a bug that exists in the current stable release, generate
-      a patch against the stable branch.  If you are adding a new feature
-      or fixing a bug that is only in the development branch,
-      use the development branch.
+      <ulink url="http://svn.systemimager.org">http://svn.systemimager.org</ulink>.
+      To easily submit patches for future releases, it's strongly suggested
+      to generate them against the code in SVN (see also the submitting patches
+      section below). There are typically three active branches at any given
+      time: the current stable branch, the current unstable branch and the
+      development branch (called <emphasis>trunk</emphasis>). If you are
+      fixing a bug that exists in the current stable release, generate a patch
+      against the stable branch. If you are adding a new feature or fixing a
+      bug that is only in the unstable or development branch, use the trunk.
     </para>
     <para>
       Instructions for accessing the SVN repository can be found at
@@ -152,57 +350,155 @@
       </ulink>.
     </para>
   </section>
+
   <section>
     <title>Submitting Patches</title>
     <para>
       Following are suggested guidelines for submitting packages for a future
-	release that make it easier to incorporate the changes.
+      release that make it easier to incorporate the changes.
     </para>
-    <itemizedlist>
-      <listitem>
-	<para>
-	  Patches should be in unified diff form.  If your changes are 
-	  localized to one file, you can create a patch using a command such as:
-	</para>
-	<para><command>diff -u si_getimage.orig si_getimage</command></para>
-	<para>
-	  If your changes are in multiple files, you can create a patch using
-	  a command such as:
-	</para>
-	<para>
-	  <command>diff -urN systemimager.orig/ systemimager/</command>
-	</para>
-      </listitem>
-      <listitem>
-	<para>
-	  Review your patches to make sure you aren't changing other
-	  things.  Even if the additional changes are just whitespace changes,
-	  they can make the patch more difficult to review and reduce the
-	  chances it can cleanly apply against a slightly different tree.
-	</para>
-      </listitem>
-      <listitem>
-	<para>
-	  It's easiest if patches are against the code in an up-to-date tree of 
-	  the code branch you're changing.  For example, if you've fixed a bug
-	  in 3.0.0, check out the v3_0_x branch and create your diff against
-	  that tree to prevent you from fixing a bug that has already
-	  been fixed and committed or from creating a patch against a version that
-	  is different enough that it won't apply cleanly to the current code.
-	</para>
-      </listitem>
-      <listitem>
-	<para>
-	  Please submit patches to SystemImager code that do not affect
-	  other components of the System Installation suite to
-	  systemimager-devel@lists.sourceforge.net.  For patches relevant 
-	  to the rest of the System Installation
-	  Suite, submit to sisuite-devel@lists.sourceforge.net.  Use the latter if unsure 
-	  which one to use.
-	</para>
-      </listitem>
-    </itemizedlist>
+    <section>
+      <title>Select e-mail destination</title>
+      <para>
+      Always send your patches to
+      <ulink url="mailto:sisuite-devel@lists.sourceforge.net">sisuite-devel@lists.sourceforge.net</ulink>.
+      </para>
+    </section>
+    <section>
+      <title>Separate logical changes</title>
+      <para>
+      If your changes include multiple bug fixes and performance enhancements,
+      separate those changes into two or more patches. On the other hand, if
+      you make a single change to numerous files, group those changes into a
+      single patch. Thus a single logical change is contained within a single
+      patch. If one patch depends on another patch in order for a change to be
+      complete, that is OK. Simply note "this patch depends on patch X" in your
+      patch description. If you cannot condense your patch set into a smaller
+      set of patches, then only post say 15 or so at a time and wait for review
+      and integration. 
+      </para>
+    </section>
+    <section>
+      <title>Email subject format</title>
+      <para>
+      Use the following template for the subject of your email with a patch:
+      <programlisting>
+      [PATCH] one-line summary
+      </programlisting>
+      Where "one-line summary" summarizes the change the patch makes. This
+      summary is copied directly into the svn changelog, so make sure that
+      your summary is descriptive. "update to latest SVN" or "fix bug" is not
+      specific enough about what portion of the code is being modified.
+      </para>
+      <para>
+      Keep your overall subject line under 65 characters or so. 
+      </para>
+    </section>
+    <section>
+      <title>Email body contents: description</title>
+      <para>
+      At the beginning of your email, use as many lines as you wish to describe
+      the patch. This text is copied directly into the SVN changelog. Be as
+      specific as possible. The <emphasis>WORST</emphasis> descriptions possible
+      include things like "update Server.pm", "bug fix for Server.pm", or
+      "this patch includes updates for the server side. Please apply."
+      </para>
+      <para>
+      If your description starts to get too long, that's a sign that you
+      probably need to split up your patch. Include comments you don't wish to
+      be in the SVN changelog following a "---" terminator line. The terminator
+      must be on a line by itself. 
+      </para>
+    </section>
+    <section>
+      <title>Name your SystemImager version</title>
+      <para>
+      It is important to note, either in the subject line or in the patch
+      description, the SystemImager version to which this patch applies.
+      If the patch does not apply cleanly to the latest SystemImager version,
+      it will reduce the chances of your change being accepted. 
+      </para>
+    </section>
+    <section>
+      <title>Email body contents: patch</title>
+      <para>
+      Always uses "diff -urN" to create patches. When creating your patch,
+      make sure to create it in "unified diff" format, as supplied by the '-u'
+      argument to diff(1).
+      </para>
+      <para>
+      Patches should be based in the root SystemImager source directory, not in
+      any lower subdirectory.
+      </para>
+      <para>
+      To create a patch for a single file, it is often sufficient to do:
+      <programlisting>
+       SRCTREE=systemimager-3.9.6
+       MYFILE=lib/SystemImager/Server.pm
+       cd $SRCTREE
+       cp $MYFILE $MYFILE.orig
+       vi $MYFILE      # make your change
+       cd ..
+       diff -u $SRCTREE/$MYFILE{.orig,} > /tmp/patch
+      </programlisting>      
+      </para>
+      <para>
+      To create a patch for multiple files, you should unpack a "vanilla", or
+      unmodified SystemImager source tree, and generate a diff against your own
+      source tree. For example:
+      <programlisting>
+       MYSRC=/devel/systemimager-3.9.6
+
+       tar xvjf systemimager-3.9.6.tar.bz2
+       mv systemimager-3.9.6 systemimager-3.9.6-vanilla
+       diff -urN systemimager-3.9.6-vanilla $MYSRC > /tmp/patch
+      </programlisting>
+      </para>
+      <para>
+      Make sure your patch does not include any extra files which do not belong
+      in a patch submission. Make sure to review your patch
+      <emphasis>after</emphasis> generated it with diff(1), to ensure accuracy.
+      </para>
+      <para>
+      The format of the patches made by SVN is compliant with these rules.
+      </para>
+      <para>
+      If your changes produce a lot of deltas, you may want to look into
+      splitting them into individual patches which modify things in logical
+      stages. This will facilitate easier reviewing by other SystemImager
+      developers, very important if you want your patch accepted.
+      </para>
+    </section>
+    <section>
+      <title>E-mail size</title>
+      <para>
+      Large changes are not appropriate for mailing lists, and some
+      maintainers. If your patch, uncompressed, exceeds 40 kB in size, it is
+      preferred that you store your patch on an Internet-accessible server, and
+      provide instead a URL (link) pointing to your patch.      
+      </para>
+    </section>
+    <section>
+      <title> No MIME, no links, no compression, no attachments: just plain text</title>
+      <para>
+      It is important to be able to "quote" your changes, using standard e-mail
+      tools, so that they may comment on specific portions of your code. For
+      this reason, all patches should be submitting e-mail "inline".
+      </para>
+      <warning>
+        <para>
+        Be wary of your editor's word-wrap corrupting your patch, if you choose
+        to cut-n-paste your patch.
+        </para>
+      </warning>
+      <para>
+      Do not attach the patch as a MIME attachment, compressed or not. Many
+      popular e-mail applications will not always transmit a MIME attachment as
+      plain text, making it impossible to comment on your code. 
+      </para>
+    </section>
   </section>
+      
   <section>
     <title>Tour of the Source Tree</title>
     <section>
