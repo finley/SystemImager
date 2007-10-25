@@ -1,0 +1,174 @@
+<chapter>
+  <title>Monitoring clients installation with SystemImager</title>
+  
+  <section>
+    <title>Overview</title>
+    <para>
+    This document shows how to use the monitoring features of SystemImager.
+    Monitoring allows to watch the details of the installation phases for all your clients.
+    Monitoring is organized in two main components:
+    <itemizedlist>
+      <listitem>
+        <para>
+        <emphasis>si_monitor</emphasis>: a process that runs on the monitor
+        server and collect clients data
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <emphasis>si_monitortk</emphasis>: the perl-Tk based monitoring GUI.
+        </para>
+      </listitem>
+    </itemizedlist>
+    </para>
+  </section>
+
+  <section>
+    <title>Setting up the monitor server</title>
+    <para>
+    On the monitor server (typically is the same machine of the image server)
+    simply run:
+    <programlisting>
+# /etc/init.d/systemimager-server-monitord start
+    </programlisting>
+    </para>
+    <para>
+    This will start the <application>si_monitor</application> daemon. The data
+    sent by the clients will be collected by
+    <application>si_monitor</application> and stored in the XML
+    <filename>/var/lib/systemimager/clients.xml</filename>. If you cannot
+    execute X applications in your monitor server you can simply periodically
+    look at that file to monitor the installations.
+    </para>
+    <warning>
+      <para>
+      Never run si_monitor manually! Always use systemimager-server-monitord script!
+      </para>
+    </warning>
+    <para>
+    Then simply run <application>si_monitortk</application> to launch the
+    monitoring GUI.     
+    </para>
+  </section>
+
+  <section>
+    <title>Enabling clients to send monitoring data</title>
+    <para>
+    Define the following parameters to the kernel boot options of the clients:
+    </para>
+    <itemizedlist>
+      <listitem>
+        <para>
+        <emphasis>MONITOR_SERVER=IP|HOSTNAME</emphasis>: IP address or hostname
+        of the monitor server
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <emphasis>MONITOR_CONSOLE=yes|no</emphasis>: enable or disable full
+        console view, if enabled it's possible to follow all the installation
+        session of the clients (stdout and stderr) in the monitoring interface
+        (default is <emphasis>no</emphasis>)
+        </para>
+      </listitem>
+    </itemizedlist>
+    <para>
+    Usually you need to define the parameters in
+    <filename>/etc/systemimager/pxelinux.cfg/syslinux.cfg</filename>. This
+    works both if you are installing via network boot or by an autoinstall boot
+    media (CD, USB disk, etc.). For example a monitoring-enabled configuration
+    can be the following:
+    <programlisting>
+LABEL systemimager
+KERNEL kernel
+APPEND vga=extended initrd=initrd.img root=/dev/ram MONITOR_SERVER=192.168.1.1 MONITOR_CONSOLE=yes
+    </programlisting>
+    </para>
+    <para>
+    Remember to re-run si_<application>mkclientnetboot</application> (for PXE
+    booting), <application>si_mkautoinstallcd</application> (for autoinstall CD
+    booting) or <application>si_mkautoinstalldisk</application> (for
+    autoinstall USB drive booting) to rebuild the configuration files or boot
+    media to accept the new parameters defined above. 
+    </para>
+  </section>
+
+  <section>
+    <title>Troubleshooting</title>
+    <section>
+      <title>Clients do not appear</title>
+      <para>
+      If you don't see the clients in the monitoring interface when they
+      boot-up check the following issues:
+      </para>
+      <itemizedlist>
+        <listitem>
+          <para>
+          Do you have a firewall in your image server that filter the port
+          8181? The clients use that port to contact the image server.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+          Try to use the IP address of the monitor server instead of the hostname.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+          Are you sure the clients are using the correct boot parameters?
+          (remember that you can check the parameters directly from the clients
+          if you have the access to the real console looking in
+          <filename>/proc/cmdline</filename>)          
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+          Try to increase the verbosity of the si_monitor log changing the
+          value <emphasis>LOGLEVEL=2</emphasis> into
+          <emphasis>LOGLEVEL=3</emphasis> in
+          <filename>/etc/init.d/systemimager-server-monitord</filename> and
+          restart the monitor daemon
+          (<filename>/etc/init.d/systemimager-server-monitord restart</filename>);
+          all the logs are stored in
+          <filename>/var/log/systemimager/si_monitor.log</filename>). 
+          </para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section>
+      <title>I've not a X server to see si_monitortk interface...</title>
+      <para>
+      Clients can be monitored also if an X server is not available, for
+      example if you're connected remotely via ssh on the image server and
+      you've not enabled the X11 forwarding. In this case simply look at the
+      file <filename>/var/lib/systemimager/clients.xml</filename>. It's an
+      XML, but the clients and the attribute names are quite nmemonic. You can
+      periodically cat the file or write your own console monitoring scripts.
+      If you wrote a nice ncurses or a console interface feel free to post the
+      patch to the
+      <ulink url="mailto:sisuite-devel@lists.sourceforge.net">sisuite-devel</ulink>
+      list. 
+      </para>
+    </section>
+  </section>
+
+</chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-namecase-general:t
+sgml-general-insert-case:lower
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:2
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+-->
