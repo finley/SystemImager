@@ -1,0 +1,225 @@
+<chapter>
+  <title>HOWTO Distribute configuration file across a SystemImager cluster</title>
+  
+  <section>
+    <title>
+      Install SystemImager v3.9.4 or higher.
+    </title>
+    <para>
+    Follow the steps described in the
+    <link linkend="installation">installing section</link> for details.
+    </para>
+  </section>
+
+  <section>
+    <title>
+      Overview
+    </title>
+    <para>
+    <emphasis>si_pushoverrides</emphasis> is a tool to distribute configuration
+    files from the image server to the clients or group of them, using the
+    SystemImager overrides. The command accepts a list of group or node names
+    as arguments and concurrently synchronizes the content of the associated
+    overrides to them using a server-drien approach (the image server copies
+    the files to the clients using rsync over ssh to exploit the advantages of
+    bandwidth optimization and security).
+    </para>
+    <para>
+    <emphasis>si_clusterconfig</emphasis> is a tool to manage and show the
+    cluster topolgy. In show-mode the command accepts as argument a list of
+    hostnames, host-ranges and/or host-group, it resolves them in the
+    equivalent list of hostnames and prints them to stdout. The edit-mode can
+    be interactive (option -e) or batch (option -u). In interactive edit-mode
+    si_clusterconfig opens an editor in your terminal that allows to modify the
+    client group definitions and their properties using a XML syntax. In batch
+    edit-mode it only parses the pre-defined XML configuration and refresh the
+    opportune SystemImager internal configuration files.
+    </para>
+  </section>
+
+  <section>
+    <title>
+    Define the cluster topology
+    </title>
+    <para>
+    Run the command <emphasis>si_clusterconfig -e</emphasis> as root. There are
+    3 levels of hierarchy for the overrides: 
+    <itemizedlist>
+        <listitem>
+            <para>
+            <emphasis>global override</emphasis>: to be distributed to all the
+            nodes,
+            </para>
+        </listitem>
+        <listitem>
+            <para>
+            <emphasis>group override</emphasis>: to be distributed only in a
+            group of nodes,
+            </para>
+        </listitem>
+        <listitem>
+            <para>
+            <emphasis>node override</emphasis>: to be distributed in a single
+            node.
+            </para>
+        </listitem>
+    </itemizedlist>
+    </para>
+    <important>
+      <para>
+      The files in the global override are distributed to all the nodes. If
+      there is a file with the same path and the same name in a group override,
+      the group override wins. If there is a file with same path and same name
+      in a node override and a group override, then the node override wins.
+      </para>
+    </important>
+    <para>
+    The required elements are:
+      <itemizedlist>
+	  <listitem>
+	    <para>
+	    the name of your image server: &lt;master&gt;&lt;/master&gt;
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	    the name of the global group (that identify all the clients):
+	    &lt;name&gt;&lt;/name&gt;
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	    the name of the global override (to be distributed in all the
+	    clients): &lt;override&gt;&lt;/override&gt;
+	    </para>
+	  </listitem>
+      </itemizedlist>
+    </para>
+  </section>
+
+  <section>
+  <title>A simple example</title>
+  <para>
+  <programlisting>
+ &lt;xml&gt;
+       &lt;master&gt;master1&lt;/master&gt;
+       &lt;name&gt;all&lt;/name&gt;
+       &lt;override&gt;all&lt;/override&gt;
+       &lt;group&gt;
+               &lt;name&gt;Login&lt;/name&gt;
+               &lt;image&gt;RHEL5&lt;/image&gt;
+               &lt;override&gt;Login&lt;/override&gt;
+               &lt;node&gt;node001&lt;/node&gt;
+               &lt;node&gt;node002&lt;/node&gt;
+       &lt;/group&gt;
+       &lt;group&gt;
+               &lt;name&gt;Compute&lt;/name&gt;
+               &lt;image&gt;Ubuntu_gutsy&lt;/image&gt;               
+               &lt;override&gt;Compute&lt;/override&gt;
+               &lt;node&gt;node003-node010&lt;/node&gt;
+       &lt;/group&gt;
+ &lt;/xml&gt;
+  </programlisting>
+  </para>
+  <para>
+  This is a 10-nodes cluster definition. The hostname of the image server is
+  master1; the cluster has 2 login nodes (node001 and node002) that use the
+  override called Login and 8 compute nodes (node003, node004, node005,
+  node006, node007, node008, node009 and node010), that use the override
+  called Compute.
+  </para>
+
+  <example>
+  <title>Example 1: distribute the passwd, shadow and group to all the nodes</title>
+  <para>
+  Create the files:
+  <programlisting>
+ # cp -p /etc/passwd /var/lib/systemimager/overrides/all/etc/passwd
+ # cp -p /etc/shadow /var/lib/systemimager/overrides/all/etc/shadow
+ # cp -p /etc/group /var/lib/systemimager/overrides/all/etc/group
+  </programlisting>
+  </para>
+  <para>
+  From master1 run the command:
+  <programlisting>
+ # si_pushoverrides -v all
+  </programlisting>
+  </para>
+  <para>
+  Basically when you specify the global override all the nodes defined in
+  <filename>cluster.xml</filename> are updated accordingly to the hierarcy of
+  the overrides.
+  </para>
+  </example>
+
+  <example>
+  <title>Example 2: distribute different access.conf to Login and Compute nodes</title>
+  <para>
+  Allow root to login on "Login" nodes only from the local domain,
+  <filename>/var/lib/systemimager/overrides/Login/etc/security/access.conf</filename>:
+  <programlisting>
+  -:root:ALL EXCEPT LOCAL .localcluster.domain.org
+  </programlisting> 
+  </para>
+  <para>
+  Disallow direct login on "Compute" nodes for non-privileged users,
+  <filename>/var/lib/systemimager/overrides/Compute/etc/security/access.conf</filename>:
+  <programlisting>
+  -:ALL EXCEPT root wheel:ALL
+  </programlisting>
+  </para>
+  <para>
+  From master1 run the command:
+  <programlisting>
+  # si_pushoverrides -v Compute Login
+  </programlisting>
+  </para>
+  </example>
+
+  <example>
+  <title>Example 3: close the second login node (node002) to non-privileged users</title>
+  <para>
+  <filename>/var/lib/systemimager/overrides/node002/etc/security/access.conf</filename>:
+  <programlisting>
+ -:ALL EXCEPT root:ALL
+ -:root:ALL EXCEPT LOCAL .localcluster.domain.org
+  </programlisting>
+  </para>
+  <para>
+  From master1 run the command:
+  <programlisting>
+  # si_pushoverrides -v node002
+  </programlisting>
+  </para>
+  </example>
+
+  </section>
+
+  <section>
+  <title>See also</title>
+  <para>
+      See <ulink url="http://wiki.systemimager.org/index.php/File_distribution">
+      http://wiki.systemimager.org/index.php/File_distribution
+      </ulink> for details.
+  </para>
+  </section>
+
+</chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-namecase-general:t
+sgml-general-insert-case:lower
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:2
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+-->
