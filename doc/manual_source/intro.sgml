@@ -11,14 +11,14 @@
     <para>
 	One key feature of SystemImager is that it is distribution-agnostic and
 	is able to support heterogeneous hardware. This allows the deployment of any
-	kind of Linux distribution (standard or even customized) to any kind of target
+	kind of GNU/Linux distribution (standard or even customized) to any kind of target
 	machine. The main goal of the project is to make deployment of large numbers of
 	computers easy. Typical environments include computer labs and render farms,
 	but it has proven particularly popular in clustered computing environments,
 	such as grid and high performance computing.
     </para>
     <para>
-	Another design feature that facilitates Linux distribution and hardware
+	Another design feature that facilitates GNU/Linux distribution and hardware
 	independence is that <application>SystemImager</application> works with
 	file based (rather than block based) system images. An image is stored as a
 	directory hierarchy of files representing a comprehensive snapshot of a
@@ -105,16 +105,16 @@
       <title>Supported Distributions</title>
       <para>
 	<application>SystemImager</application> uses 
-	<ulink url="http://wiki.systemimager.org/index.php/System_Configurator">System Configurator</ulink>
+	<ulink url="http://wiki.systemimager.org/index.php/System_Configurator">SystemConfigurator</ulink>
 	to custom configure autoinstall clients for specific distributions.
-	Through <application>System Configurator</application>,
+	Through <application>SystemConfigurator</application>,
 	<application>SystemImager</application> supports all
 	major <application>GNU/Linux</application> distributions and most
 	others, including custom or in-house distributions. Using "footprints",
-	System Configurator works with distributions based on their system
+	SystemConfigurator works with distributions based on their system
 	configuration style rather than needing to know the name of the
 	distribution. To determine a system's footprint,
-	<application>System Configurator</application> identifies the
+	<application>SystemConfigurator</application> identifies the
 	configuration files in use and associates that footprint with a
 	configuration style. It then correctly makes settings, such as hostname
 	or IP address, without needing to know the name of the distribution.
@@ -126,7 +126,7 @@
 	specific knowledge exists within the SystemConfigurator tool, which
 	supports a very large range of distributions. If you find a
 	distribution that does not work with
-	<application>SystemImager</application>,please file a bug report.
+	<application>SystemImager</application>, please file a bug report.
       </para>
       
     </section>
@@ -160,7 +160,7 @@
 	  <para>
 	    For PXE installations, you need a compatible TFTP server
 	    running on the boot server, which is usually the same machine as
-	    the image/DHCP serverv. Debian provides such servers in the
+	    the image/DHCP server. Debian provides such servers in the
 	    <application>tftpd-hpa</application> and <application>atftpd</application>
 	    packages, while Red Hat 7.0 and later include such a server in the
 	    <application>tftp-server</application> package. H. Peter Anvin
@@ -351,7 +351,7 @@
 	<glossdef>
 	  <para>
 	    A tool to manage and show the SystemImager cluster topology.
-	    By this command is possible to that tells your image server which
+	    By this command is possible to tells your image server which
 	    image and overrides to install on the auto-install clients.
 	  </para>
 	</glossdef>
@@ -383,9 +383,8 @@
 	<glossterm>si_mkbootserver(8)</glossterm>
 	<glossdef>
 	  <para>
-	    A utility that help to setup and configure a network boot server for
+	    A utility that helps to setup and configure a network boot server for
 	    <application>SystemImager</application>.
-	    Currently just supports configuring PXE boot servers for i386 clients.
 	  </para>
 	</glossdef>
       </glossentry>
