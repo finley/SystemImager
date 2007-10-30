@@ -18,6 +18,22 @@ UPSTREAM_TARBALL = $(PKG)_$(VERSION).tar.gz
 ARCH = $(shell dpkg --print-architecture)
 UNAME_ARCH = $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/)
 
+# Follows is a set of arch manipulations to distinguish between ppc types
+ifeq ($(UNAME_ARCH),ppc64)
+# Check if machine is Playstation 3
+IS_PS3 = $(shell grep -q PS3 /proc/cpuinfo && echo 1)
+ifeq ($(IS_PS3),1)
+        ARCH = ppc64-ps3
+	UNAME_ARCH = ppc64-ps3
+else
+        IS_PPC64 := 1
+        ifneq ($(shell ls /proc/iSeries 2>/dev/null),)
+                ARCH = ppc64-iSeries
+		UNAME_ARCH = ppc64-iSeries
+        endif
+endif
+endif
+
 BOOTPKG = $(PKG)-boot-$(ARCH)-standard
 INITRD_TEMPLATE_PKG = $(PKG)-initrd-template-$(ARCH)
 
@@ -66,6 +82,7 @@ build-arch:	cleandeb configure-stamp build-arch-stamp copy_changelog
 build-arch-stamp:
 	dh_testdir
 
+	cd $(BUILD_DIR) && ./configure CFLAGS="-O2 -fno-stack-protector"
 	$(MAKE) -C $(BUILD_DIR) binaries MKCRAMFS=/usr/sbin/mkcramfs
 
 	touch build-arch-stamp
