@@ -630,12 +630,12 @@ SystemImager::Server->create_autoinstall_script(
 );
 ### END create a fresh master autoinstall script ###
 
-# prompt to run "si_addclients"
+# prompt to run "si_clusterconfig"
 if (!$quiet) {
-    print "Would you like to run the \"si_addclients\" utility now? (y/[n]): ";
+    print "Would you like to run the \"si_clusterconfig\" utility now? (y/[n]): ";
     $continue = SystemImager::Common->get_response('n');
     ($continue ne "n") or exit 0;
-    my $cmd = "si_addclients --script $image";
+    my $cmd = "si_clusterconfig -e";
     exec($cmd);
 }
 
