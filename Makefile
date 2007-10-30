@@ -106,16 +106,18 @@ ARCH = $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm
 
 # Follows is a set of arch manipulations to distinguish between ppc types
 ifeq ($(ARCH),ppc64)
+
 # Check if machine is Playstation 3
-ifeq ($(shell grep machine /proc/cpuinfo  | cut -d " " -f 2),PS3PF)
-	IS_PS3 := 1
-	ARCH := ppc64-ps3
+IS_PS3 = $(shell grep -q PS3 /proc/cpuinfo && echo 1)
+ifeq ($(IS_PS3),1)
+        ARCH = ppc64-ps3
 else
-	IS_PPC64 := 1
-	ifneq ($(shell ls /proc/iSeries 2>/dev/null),)
-        	ARCH := ppc64-iSeries
-	endif
+        IS_PPC64 := 1
+        ifneq ($(shell ls /proc/iSeries 2>/dev/null),)
+                ARCH = ppc64-iSeries
+        endif
 endif
+
 endif
 
 # is userspace 64bit
