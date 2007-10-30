@@ -145,7 +145,7 @@ if ($concurrents) {
 
 # Use the following ssh options.
 my $ssh_opts = "-x -o BatchMode=yes -l $ssh_user";
-my $rsync_opts = "-aHSz$verbose $dry_run --numeric-ids --timeout=$timeout --rsh='ssh $ssh_opts'";
+my $rsync_opts = "-aHISz$verbose $dry_run --numeric-ids --timeout=$timeout --rsh='ssh $ssh_opts'";
 
 # Main program.
 @hosts = map { $_ .= ":$target" } @hosts;

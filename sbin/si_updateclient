@@ -581,7 +581,7 @@ SC_EOF
         else {
             $module = "overrides/$module";
         }
-        $cmd = "rsync -av --numeric-ids $delete $cmdopts rsync://${server}:${port}/${module}${directory} ${directory}";
+        $cmd = "rsync -aIv --numeric-ids $delete $cmdopts rsync://${server}:${port}/${module}${directory} ${directory}";
 
         # execute command
         if ($dry_run) {

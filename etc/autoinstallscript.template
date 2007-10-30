@@ -376,7 +376,7 @@ do
         else
             # Use rsync
             logmsg "trying to download override ${OVERRIDE} with rsync..."
-            logmsg "rsync -av --numeric-ids $IMAGESERVER::overrides/$OVERRIDE/ /a/"
+            logmsg "rsync -aIv --numeric-ids $IMAGESERVER::overrides/$OVERRIDE/ /a/"
             rsync -av --numeric-ids $IMAGESERVER::overrides/$OVERRIDE/ /a/ > /dev/console || logmsg "Override directory $OVERRIDE doesn't seem to exist, but that may be OK."
         fi
         unset bittorrent_tarball
