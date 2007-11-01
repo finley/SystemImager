@@ -686,12 +686,17 @@ sub create_systemconfig_conf
             die("FATAL: failed to copy $sc_config_file to $sc_config_file.save!\n");
     }
 
-    # Detect kernel.
-    my $uname_r = SystemImager::UseYourOwnKernel::get_uname_r();
-    my $kernel_file = SystemImager::UseYourOwnKernel::_choose_kernel_file($uname_r);
-    unless ($kernel_file) {
-        print STDERR "WARNING: unable to auto-detect kernel file!\n";
-        return -1;
+    # Detect kernel release and kernel file.
+    my $kernel_file;
+    if ($custom_kernel) {
+        $kernel_file = $custom_kernel;
+    } else {
+        my $uname_r = SystemImager::UseYourOwnKernel::get_uname_r();
+        $kernel_file = SystemImager::UseYourOwnKernel::_choose_kernel_file($uname_r);
+        unless ($kernel_file) {
+            print STDERR "WARNING: unable to auto-detect kernel file!\n";
+            return -1;
+        }
     }
     my $kernel_release = SystemImager::UseYourOwnKernel::_get_kernel_release($kernel_file);
     unless ($kernel_release) {
