@@ -446,7 +446,7 @@ sub _get_kernel_release($) {
                 #       2.4.19-mantis-2002.11.20 (root@mantis) #6 Tue Nov 19 15:15:43 CST 2002
                 #       2.6.7-1-686 (dilinger@toaster.hq.voxel.net) #1 Thu Jul 8 05:36:53 EDT 2004
                 #
-                my $regex = '(2\.[46]\.\d.*?) \(.*@.*\) [#]\d+.*\w{3} \w{3} \d{1,2} \d{2}:\d{2}:\d{2} \w{3,4} \d{4}';
+                my $regex = '(2\.[46]\.\d[^\/]*?) \(.*@.*\) [#]\d+.*\w{3} \w{3} \d{1,2} \d{2}:\d{2}:\d{2} \w{3,4} \d{4}';
                 while(<IN>) {
                        # extract the `uname -r` string from the kernel file
                        if(m/$regex/o) {
@@ -485,6 +485,9 @@ sub is_initrd
         #
         # skip symlinks
         if( -l $file )   { return undef; }
+        #
+        # skip .bak files
+        if( $file =~ /\.bak$/ )   { return undef; }
 
         # Get output from "file" for elimination by identification tests
         my $cmd = "file -zb $file";
