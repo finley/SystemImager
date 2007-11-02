@@ -82,7 +82,7 @@ build-arch:	cleandeb configure-stamp build-arch-stamp copy_changelog
 build-arch-stamp:
 	dh_testdir
 
-	cd $(BUILD_DIR) && ./configure CFLAGS="-O2 -fno-stack-protector"
+	cd $(BUILD_DIR) && ./configure
 	$(MAKE) -C $(BUILD_DIR) binaries MKCRAMFS=/usr/sbin/mkcramfs
 
 	touch build-arch-stamp
