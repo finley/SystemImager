@@ -190,9 +190,13 @@ CHECK_FLOPPY_SIZE = expr \`du -b $(INITRD_DIR)/initrd.img | cut -f 1\` + \`du -b
 SI_INSTALL = $(TOPDIR)/tools/si_install --si-prefix=$(PREFIX)
 GETSOURCE = $(TOPDIR)/tools/getsource
 
+# Some root tools are probably needed to build SystemImager packages, so
+# explicitly add the right paths here. -AR-
+PATH := $(PATH):/sbin:/usr/sbin:/usr/local/sbin
+
 #
 # Ok, here's my best idea so far for auto-running configure. -BEF-
-CONFIG_ME := $(shell test -e config.inc || ./configure 1>&2)
+CONFIG_ME := $(shell test -e config.inc || PATH=$(PATH) ./configure 1>&2)
 include config.inc
 
 # build everything, install nothing
