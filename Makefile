@@ -580,7 +580,7 @@ deb: $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
 	fi)
 	@cd $(TOPDIR)/tmp && tar xvjf systemimager-$(VERSION).tar.bz2
 	@cd $(TOPDIR)/tmp/systemimager-$(VERSION) && make -f debian/rules debian/control
-	@PATH=/sbin:/usr/sbin:$(PATH) cd $(TOPDIR)/tmp/systemimager-$(VERSION) && fakeroot dpkg-buildpackage -uc -us
+	@cd $(TOPDIR)/tmp/systemimager-$(VERSION) && dpkg-buildpackage -rfakeroot -uc -us
 	@echo "=== deb packages for systemimager ==="
 	@ls -l $(TOPDIR)/tmp/*.deb
 	@echo "====================================="

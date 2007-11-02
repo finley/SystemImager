@@ -53,14 +53,7 @@ PATCHES=$(sort $(shell find $(CURDIR)/patches -name "*.patch"))
 configure: configure-stamp
 configure-stamp:
 	dh_testdir
-	# Add here commands to configure the package.
-	#@echo -n "Extracting upstream tarball..."
-	#@tar xfj $(UPSTREAM_TARBALL)
-	#@echo "done."
-	#@cd $(BUILD_DIR) && \
-        #  $(foreach patch, $(PATCHES), \
-        #    echo -n Applying `basename $(patch)`... && cat $(patch) | \
-	#    patch -s -p1 && echo done. &&) /bin/true
+	cd $(BUILD_DIR) && ./configure
 	touch configure-stamp
 
 copy_changelog:	$(BUILD_DIR)/changelog
@@ -68,7 +61,7 @@ copy_changelog:	$(BUILD_DIR)/changelog
 $(BUILD_DIR)/changelog:	$(BUILD_DIR)/CHANGE.LOG
 	cd $(BUILD_DIR) && cp CHANGE.LOG changelog
 
-build:	build-arch build-indep
+build: build-indep
 
 build-indep:	cleandeb configure-stamp build-indep-stamp copy_changelog
 
@@ -81,8 +74,8 @@ build-arch:	cleandeb configure-stamp build-arch-stamp copy_changelog
 
 build-arch-stamp:
 	dh_testdir
+	dh_testroot
 
-	cd $(BUILD_DIR) && ./configure
 	$(MAKE) -C $(BUILD_DIR) binaries MKCRAMFS=/usr/sbin/mkcramfs
 
 	touch build-arch-stamp
