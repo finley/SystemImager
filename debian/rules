@@ -5,6 +5,10 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
+# Some root tools are probably needed to build SystemImager packages, so
+# explicitly add the right paths here.
+export PATH += :/sbin:/usr/sbin:/usr/local/sbin
+
 PKG = systemimager
 VERSION = $(shell dpkg-parsechangelog | grep ^Version: | \
                   cut -d " " -f 2)
