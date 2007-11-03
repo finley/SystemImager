@@ -1,3 +1,15 @@
+systemimager (4.0.0) gutsy; urgency=low
+
+  * NMU: new upstream stable release 4.0.0
+  * Automatically append /sbin, /usr/sbin and /usr/local/sbin to the PATH in the
+    debian/rules file
+  * Added missing build dependencies: python-dev, docbook-utils, wget (this last
+    one should be probably removed in the future, due to Debian restrictions)
+  * [PS3] fix: always use the "ppc64-ps3" architecture name for Debian packages
+  * fix: include all the documentation in the systemimager-doc deb package
+
+ -- Andrea Righi <a.righi@cineca.it>  Sat, 03 Nov 2007 11:31:40 +0100
+
 systemimager (3.9.6) feisty; urgency=low
 
   * NMU: new upstream release (based on 3.9.6 vanilla).

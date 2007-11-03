@@ -6,6 +6,31 @@
 #   $Id$
 #
 
+4.0.0
+--------------------------------------------------------------------------------
+- updated the manual including the documentation of all the recent features
+- some fixes to build SystemImager deb packages for Sony PS3
+- added some missing dependencies to build .deb packages
+- allow to specify size="*" in the LVM logical volumes definitions (in
+  autoinstallscript.conf)
+- now after a successful interactive image retrieval, si_getimage proposes to
+  execute si_clusterconfig instead of si_addclients to define the groups of
+  clients and assign images to them
+- fixed a bug to correctly distribute files in the overrides that have the same
+  size and timestamp of the files in the target client, but a different content
+- fixed a bug to properly set the permission bitmask of the override root
+  directory when the umask of the super-user in the image server doesn't use
+  the standard value 0022
+- fixed a bug with 2.4 kernels without udev to properly translate devfs disk
+  names into the standard /dev names for hardware RAID disks that are using a
+  non-standard naming schema (cciss, ida, rd, ...)
+- fixed a bug to automatically skip udev network persistent naming rules in
+  Debian or Debian-like distributions
+- fixed a bug to properly recognize LABELs and UUIDs in swap partitions
+- fixed a bug to not auto-detect a kernel for systemconfigurator when
+  si_prepareclient is executed with the --kernel option
+- permanently added ramdisk_size=80000 to the boot parameters
+
 3.9.6
 --------------------------------------------------------------------------------
 - allow to specify multiple overrides per group
