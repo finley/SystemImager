@@ -1,0 +1,27 @@
+#
+# $Id$
+#  vi:set filetype=conf tw=80:
+#
+
+- Increment version string in:
+  - VERSION
+  - debian/changelog (using dch -i)
+  - autoconf/configure.ac 
+  - re-generate configure by:
+    $ cd autoconf && ./bootstrap && rm -rf autom4te.cache aclocal.m4
+- Build packages:
+    $ make source_tarball && make deb && make rpm && make docs
+- Upload packages, source tarball and PDF manual to SourceForge.net
+- Submit a news:
+  http://sourceforge.net/news/?group_id=259
+- Update the download informations in the homepage:
+  http://wiki.systemimager.org/index.php/Main_Page
+- Update the sis-install script:
+  http://svn.systemimager.org/listing.php?repname=sis-install&path=%2Ftrunk%2F&rev=0&sc=0
+- Update the freshmeat page http://freshmeat.net/projects/systemimager/
+- Send a mail to:
+  sisuite-users@lists.sourceforge.net,
+  sisuite-devel@lists.sourceforge.net,
+  oscar-devel@lists.sourceforge.net
+
+See also: http://wiki.systemimager.org/index.php/Developer_Guidelines
