@@ -509,6 +509,14 @@ sub is_initrd
                     return 1;
                 }
             }
+            # The kernel version string couldn't be found in the initrd, but if
+            # the filename contains the kernel version probably it's the right
+            # initrd to be used; i.e. if the kernel is statically built (no
+            # loadable module support) the version string can't be found into
+            # the initrd. -AR-
+            if (((index($file, $kernel_release)) > 0) && ($file =~ /initrd/)) {
+                return 1;
+            }
         }
 
         return undef;
