@@ -1834,18 +1834,27 @@ sub write_sc_command {
     
     my $sc_excludes_to = "/etc/systemimager/systemconfig.local.exclude";
     my $sc_cmd = "chroot /a/ systemconfigurator --verbose --excludesto=$sc_excludes_to";
+    my $sc_options = '';
+    my $sc_ps3_options = '';
     if ($ip_assignment_method eq "replicant") {
-	    $sc_cmd .= " --runboot";
-    }
-    else {
+        $sc_options = " --runboot";
+        $sc_ps3_options = '';
+    } else {
         ## FIXME - is --excludesto only for the static method? 
         ## currently, 
-        $sc_cmd .= " --confighw --confignet --configboot --runboot --stdin << EOL";
+        $sc_options = '--confighw --confignet --configboot --runboot';
+        # PS3 doesn't need hardware and boot-loader configuration.
+        $sc_ps3_options = '--confignet';
     }
-    $sc_cmd .= " || shellout";
 
-    print $out "\n# Run systemconfigurator.\n";
-    print $out "$sc_cmd\n";
+    print $out "\n";
+    print $out "# Run systemconfigurator.\n";
+    print $out "if grep -q PS3 /proc/cpuinfo; then\n";
+    print $out "    sc_options=\"$sc_ps3_options\"\n";
+    print $out "else\n";
+    print $out "    sc_options=\"$sc_options\"\n";
+    print $out "fi\n";
+    print $out "$sc_cmd \${sc_options} --stdin << EOL || shellout\n";
 
     unless ($ip_assignment_method eq "replicant") {
 	print $out "[NETWORK]\n";
