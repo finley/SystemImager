@@ -1818,10 +1818,19 @@ sub write_sc_command {
     print $out "if [ -e $sc_conf_file ]; then\n";
     unless ($bootdev) {
         $bootdev = $rootdev;
-    } else {
-        print $out "    sed -i 's:/boot::g' $sc_conf_file\n";
     }
-    print $out "    sed -i 's:[[:space:]]*BOOTDEV[[:space:]]*=.*:BOOTDEV = $bootdev:g' $sc_conf_file\n";
+    my $bootdev_disk = $bootdev;
+    if ($bootdev_disk =~ /^\/dev\/([hs]|ps3)d/) {
+        # Standard disk naming (hd*, sd*, ps3d*).
+        $bootdev_disk =~ s/[0-9]+$//;
+    } elsif ($bootdev_disk =~ /^UUID|^LABEL/) {
+        # XXX: Boot device in UUID or LABEL form: do nothing,
+        # systemconfigurator will do everything is needed.
+    } else {
+        # Hardware RAID device.
+        $bootdev_disk =~ s/p[0-9]+$//;
+    }
+    print $out "    sed -i 's:[[:space:]]*BOOTDEV[[:space:]]*=.*:BOOTDEV = $bootdev_disk:g' $sc_conf_file\n";
     print $out "    sed -i 's:[[:space:]]*ROOTDEV[[:space:]]*=.*:ROOTDEV = $rootdev:g' $sc_conf_file\n";
     print $out "    sed -i 's:[[:space:]]*root=[^ \\t]*: root=$rootdev :g' $sc_conf_file\n";
     print $out "    sed -i \"s:DEFAULTBOOT = systemimager:DEFAULTBOOT = \$IMAGENAME:g\" $sc_conf_file\n";

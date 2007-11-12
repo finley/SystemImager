@@ -731,18 +731,16 @@ sub create_systemconfig_conf
     }
     my @boots = grep(/ \/boot /, reverse @_);
     my $boot_dev = (split(/ /, $boots[0]))[0] if (@boots);
-    if ($boot_dev) {
-        if ($boot_dev =~ /^\/dev\/([hs]|ps3)d/) {
-            # Standard disk naming (hd*, sd*, ps3d*).
-            $boot_dev =~ s/[0-9]+$//;
-        } else {
-            # Hardware RAID device.
-            $boot_dev =~ s/p[0-9]+$//;
-        }
-    }
     unless ($boot_dev) {
-        print STDERR "WARNING: unable to detect boot device (using the root device)!\n";
+        # Unable to detect boot device (using the root device)
         $boot_dev = $root_dev;
+    }
+    if ($boot_dev =~ /^\/dev\/([hs]|ps3)d/) {
+        # Standard disk naming (hd*, sd*, ps3d*).
+        $boot_dev =~ s/[0-9]+$//;
+    } else {
+        # Hardware RAID device.
+        $boot_dev =~ s/p[0-9]+$//;
     }
 
     # OK, we've all the info needed by systemconfigurator! Write the
