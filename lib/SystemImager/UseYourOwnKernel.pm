@@ -494,7 +494,7 @@ sub is_initrd
         open(INPUT,"$cmd|") or die("Couldn't run $cmd to get INPUT");
                 my ($input) = (<INPUT>);
                 # eliminate vmlinux files
-                if( $input =~ m/ELF (32|64)-bit LSB executable,/ ) { return undef; }
+                if( $input =~ m/ELF (32|64)-bit [ML]SB/ ) { return undef; }
                 # eliminate kernels
                 if( $input =~ m/kernel/i ) { return undef; }
                 # eliminate boot sectors
