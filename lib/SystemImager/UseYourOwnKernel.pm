@@ -474,8 +474,8 @@ sub is_initrd
         my $kernel_release = shift;
 
         #
-        # explicitly skip /boot/message
-        if ( $file eq '/boot/message' ) { return undef; }
+        # explicitly skip files without "initrd" in the filename
+        unless ( $file =~ /initrd/ ) { return undef; }
         #
         # Make sure it's binary
         if( ! -B $file ) { return undef; }
