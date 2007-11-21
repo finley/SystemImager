@@ -148,7 +148,7 @@ BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
-Requires: perl, systemconfigurator >= 2.2.9
+Requires: perl, systemconfigurator >= 2.2.11
 AutoReqProv: no
 
 %description common
@@ -179,7 +179,7 @@ BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
-Requires: systemimager-common = %{version}, systemconfigurator >= 2.2.9, perl-AppConfig, rsync >= 2.4.6, perl
+Requires: systemimager-common = %{version}, systemconfigurator >= 2.2.11, perl-AppConfig, rsync >= 2.4.6, perl
 AutoReqProv: no
 
 %description client
@@ -301,6 +301,9 @@ The bittorrent package allows you to use the BitTorrent protocol to perform
 installations.
 
 %changelog
+* Wed Nov 21 2007 Andrea Righi <a.righi@cineca.it>
+- added systemconfigurator >= 2.2.11 dependency
+
 * Thu Oct 04 2007 Andrea Righi <a.righi@cineca.it>
 - Removed systemimager-client dependency from systemimager-initrd-template
 
