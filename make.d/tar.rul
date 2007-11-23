@@ -3,9 +3,9 @@
 # vi: set filetype=make:
 #
 
-TAR_VERSION = 1.15.1
+TAR_VERSION = 1.19
 TAR_DIR     = $(SRC_DIR)/tar-$(TAR_VERSION)
-TAR_TARBALL = tar-$(TAR_VERSION).tar.gz
+TAR_TARBALL = tar-$(TAR_VERSION).tar.bz2
 TAR_URL     = http://download.systemimager.org/pub/tar/$(TAR_TARBALL)
 #TAR_URL     = http://ftp.gnu.org/gnu/tar/$(TAR_TARBALL)
 TAR_BINARY  = $(TAR_DIR)/src/tar
@@ -25,7 +25,7 @@ $(TAR_DIR).unpack:	$(TOPDIR)/make.d/tar.rul \
 					$(SRC_DIR)/$(TAR_TARBALL) \
 					$(TAR_PATCHES)
 	rm -fr $(TAR_DIR)
-	cd $(SRC_DIR) && tar -xvzf $(TAR_TARBALL)
+	cd $(SRC_DIR) && tar -xvjf $(TAR_TARBALL)
 	cd $(TAR_DIR) && cat $(TAR_PATCHES) < /dev/null | patch -p1
 	touch $@
 
