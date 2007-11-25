@@ -75,8 +75,8 @@ endif
 endif
 
 ifeq ($(ARCH),ppc64-ps3)
-	LINUX_VERSION = 2.6.16-20070425
-	LINUX_IMAGE = $(LINUX_SRC)/vmlinux.strip
+	LINUX_VERSION = 2.6.23-20071023
+	LINUX_IMAGE = $(LINUX_SRC)/vmlinux
 	LINUX_TARGET = zImage
 	LINUX_DIR = linux-$(LINUX_VERSION)
 endif
