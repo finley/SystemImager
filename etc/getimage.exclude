@@ -8,7 +8,9 @@
 /media/*
 
 # NFS stuff
-/var/lib/nfs/*
+/var/lib/nfs/state
+/var/lib/nfs/*tab
+/var/lib/nfs/*/*
 
 # LVM caches and backups (automatically re-created at the first boot)
 /etc/lvm/.cache
