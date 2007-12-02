@@ -214,6 +214,9 @@ URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Obsoletes: systemimager-%{_build_arch}boot
 BuildRequires: python, python-devel
+%if %is_ps3
+BuildRequires: dtc
+%endif
 Requires: systemimager-server >= %{version}
 AutoReqProv: no
 
@@ -301,6 +304,10 @@ The bittorrent package allows you to use the BitTorrent protocol to perform
 installations.
 
 %changelog
+* Sun Dec 02 2007 Bernard Li <bernard@vanhpc.org>
+- Added dtc to BuildRequires for building ps3-ppc64boot-standard package
+  (new PS3 kernel requires it)
+
 * Wed Nov 21 2007 Andrea Righi <a.righi@cineca.it>
 - added systemconfigurator >= 2.2.11 dependency
 
