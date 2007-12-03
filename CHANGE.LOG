@@ -6,6 +6,21 @@
 #   $Id$
 #
 
+4.0.2
+--------------------------------------------------------------------------------
+- fixed a bug in the rsync transport to correctly set the atime/mtime of
+  symlinks with kernels < 2.6.22
+- fixed a bug to automatically detect a valid initrd also for statically built
+  UYOK kernels (without loadable modules support)
+- fixed a bug to properly run systemconfigurator at the end of the imaging
+  process of the PS3 clients
+- fixed a but in systemconfig.conf creation (BOOTDEV parameter was not
+  correctly used)
+- fixed a bug with kexec fast-reboot to support relocatable kernels from RHEL5
+- fixed a bug in CentOS distribution to correctly detect an initrd for UYOK
+- improvements in initrd detection for UYOK
+- added systemconfigurator >= 2.2.11 dependency
+
 4.0.0
 --------------------------------------------------------------------------------
 - updated the manual including the documentation of all the recent features
