@@ -85,7 +85,7 @@ test:	build-arch-stamp
 debian/control:	debian/control.in debian/control.arch.in
 	# generate control file suitable for the boot package
 	# substvars don't seem to work, so we hack around it with sed.
-	sed -e 's/$${misc\:Package\-Arch}/$(ARCH)/g' \
+	sed -e 's/$${misc\:Package\-Arch}/$(ARCH)/g' -e 's/$${source\:Version}/$(VERSION)/g' \
 	  < debian/control.in > debian/control
 	for arch in $(BOOTARCHS); do \
 	  sed -e "s/\$${misc\:Package\-Arch}/$$arch/g" \
