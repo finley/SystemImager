@@ -112,11 +112,17 @@ sub tail_rsync_log_file {
             # Get individual field values for this line
             my @array = split(/\s+/);
 
-            if ("$array[5]" eq "scripts/imaging_complete") {
+            if ($array[5] =~ /scripts\/imaging_complete_?([\.0-9]+)?/) {
 
-                my $client_ip = $array[8];
-                $client_ip =~ s/\(//g;
-                $client_ip =~ s/\)//g;
+                my $client_ip;
+
+                if (defined($1)) {
+                    $client_ip = $1;
+                } else {
+                    $client_ip = $array[8];
+                    $client_ip =~ s/\(//g;
+                    $client_ip =~ s/\)//g;
+                }
 
                 # diagnostic output
                 #print "Configuring $client_ip for local booting.\n";

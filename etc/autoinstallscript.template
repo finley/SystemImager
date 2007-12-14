@@ -540,7 +540,7 @@ fi
 #
 #   Tell the image server we are done
 #   
-rsync $IMAGESERVER::scripts/imaging_complete > /dev/null 2>&1
+rsync $IMAGESERVER::scripts/imaging_complete_$IPADDR > /dev/null 2>&1
 logmsg "Imaging completed"
 #
 ################################################################################
