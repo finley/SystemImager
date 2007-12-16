@@ -1,6 +1,6 @@
 #!/bin/sh
 
-ARCH=`uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/`
+ARCH=x86_64
 INITRD_TEMPLATE_DIR=/usr/share/systemimager/boot/${ARCH}/standard/initrd_template
 
 cd ${INITRD_TEMPLATE_DIR}/dev && MAKEDEV std tty1 tty2 tty3 tty4 tty5 tty6
@@ -8,7 +8,7 @@ cd ${INITRD_TEMPLATE_DIR}/dev && MAKEDEV std tty1 tty2 tty3 tty4 tty5 tty6
 #DEBHELPER#
 #!/bin/sh
 
-ARCH=`uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/`
+ARCH=x86_64
 INITRD_TEMPLATE_DIR=/usr/share/systemimager/boot/${ARCH}/standard/initrd_template
 
 cd ${INITRD_TEMPLATE_DIR}/dev && MAKEDEV std tty1 tty2 tty3 tty4 tty5 tty6
