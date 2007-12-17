@@ -108,8 +108,8 @@ sub show
 	}
 	# Print group/host/host-range info.
 	unless (@ARGV) {
-		print "$help_info";
-		exit(1);
+		# If no argument are passed show all clients.
+		push(@ARGV, $xml->{'name'}[0]);
 	}
 	foreach (SystemImager::HostRange::expand_groups_xml($xml, join(' ', @ARGV))) {
 	        print "$_";
