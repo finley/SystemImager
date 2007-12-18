@@ -518,8 +518,9 @@ bittorrent_autodetect_staging_dir() {
         return
     fi
 
-    # List of preferred staging directory (/tmp = ramdisk staging)
-    preferred_dirs="/tmp /a/tmp `df 2>/dev/null | sed '1d' | sed 's/[[:space:]]\+/ /g' | cut -d' ' -f6`"
+    # List of preferred staging directory (first entry is / that means we're trying to stage in tmpfs)
+    preferred_dirs=`df -k 2>/dev/null | grep -v "^\/\|dev" | sed '1d' | sed 's/[[:space:]]\+/ /g' | cut -d' ' -f6`
+    fs_space=`df -k 2>/dev/null | grep -v "^\/\|dev" | sed '1d' | sed 's/[[:space:]]\+/ /g' | cut -d' ' -f4`
 
     # Use a breathing room of 100MB (this should be enough for a lot of cases)
     breathing_room=102400
@@ -528,8 +529,10 @@ bittorrent_autodetect_staging_dir() {
     torrent_size=$((`/bin/torrentinfo-console $torrent | sed -ne 's/^file size\.*: \([0-9]\+\).*$/\1/p'` / 1024 + $breathing_room))
 
     # Find a directory to host the image tarball
+    i=1
     for dir in $preferred_dirs; do
-        dir_space=`df $dir 2>/dev/null | sed '1d' | sed 's/[[:space:]]\+/ /g' | cut -d' ' -f4`
+        dir_space=`echo $fs_space | cut -d' ' -f$i`
+	i=$(($i + 1))
         [ -z $dir_space ] && continue
         [ $torrent_size -lt $dir_space ] && echo $dir && return
     done
