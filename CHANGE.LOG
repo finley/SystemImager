@@ -6,6 +6,24 @@
 #   $Id$
 #
 
+4.1.1
+--------------------------------------------------------------------------------
+- updated BOEL to 2.6.24 (for i386 and x86_64)
+- updated LVM to 2.2.02.26 and devmapper to 1.02.22
+- updated e2fsprogs to 1.40.2
+- updated tar to 1.19
+- updated BusyBox to 1.8.1
+- reimplemented si_pushupdate to work over si_psh
+- si_clusterconfig with no option now returns the list of all the clients
+- fixed a bug in autoinstall script to correctly save original versions of
+  /etc/grub.conf, /etc/lilo.conf and /boot/grub/menu.lst
+- fixed a bug that did not allow to install multiple initrd_template deb
+  packages of different architectures
+- fixed a bug in si_netbootmond that generated a wrong localboot file when
+  deploying over a ssh tunnel
+- now si_clusterconfig executed with no argument returns the whole list of
+  clients
+
 4.0.2
 --------------------------------------------------------------------------------
 - fixed a bug in the rsync transport to correctly set the atime/mtime of
