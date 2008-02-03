@@ -211,7 +211,7 @@ You can use also host ranges with si_pushinstall to open all the SSH tunnels in
 a single shot. For example if you have to image from node01 up to node20 run:
 
 <programlisting>
-  # si_pushupdate --hosts node01-node020
+  # si_pushinstall --hosts node01-node20
 </programlisting>
 
 Then boot the clients with the autoinstall CD / USB drive or via PXE and enjoy

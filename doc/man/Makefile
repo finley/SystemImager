@@ -29,7 +29,6 @@ SERVER_MAN = si_addclients.8 				\
 			systemimager.conf.5			\
 			systemimager-rsyncd.conf.5	\
 			si_mkrsyncd_conf.8				\
-			si_pushupdate.8				\
 			si_mkclientnetboot.8				\
 			si_mkbootpackage.8		\
 			\
@@ -42,7 +41,8 @@ SERVER_MAN = si_addclients.8 				\
 			si_pushoverrides.8		\
 			si_mkautoinstalldisk.8		\
 			si_netbootmond.8		\
-			si_clusterconfig.8
+			si_clusterconfig.8		\
+			si_pushupdate.8
 
 CLIENT_MAN = si_prepareclient.8 si_updateclient.8
 
@@ -89,6 +89,9 @@ si_netbootmond.8: $(TOPDIR)/sbin/si_netbootmond
 	pod2man --release=$(SYSTEMIMAGER_VERSION) -s 8 -c "SystemImager" $< $@
 
 si_clusterconfig.8: $(TOPDIR)/sbin/si_clusterconfig
+	pod2man --release=$(SYSTEMIMAGER_VERSION) -s 8 -c "SystemImager" $< $@
+
+si_pushupdate.8: $(TOPDIR)/sbin/si_pushupdate
 	pod2man --release=$(SYSTEMIMAGER_VERSION) -s 8 -c "SystemImager" $< $@
 
 %.5 %.8:	%.sgml %.content.sgml

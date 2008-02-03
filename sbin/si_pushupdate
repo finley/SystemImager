@@ -1,469 +1,320 @@
 #!/usr/bin/perl -w
 #
-#   "SystemImager" 
+#  "SystemImager"
 #
-#   Copyright (C) 1999-2003 Brian Elliott Finley <brian@bgsw.net>
-#
-#   $Id$
-#
-#   Others who have contributed to this code (in alphabetical order):
-#       Curtis Zinzilieta <czinzilieta@valinux.com>
-#
-#   2005.07.12 Brian Elliott Finley; patch from Daniel Widyono
-#   - Handle --server and --image options.  If --server provided, forward to
-#     updateclient. 
-#   - If --clients-file not provided, don't die.
-#   - Correct erroneous array variable names (hostnames -> hostnames_and_images).
-#
+#  Copyright (C) 2008 Andrea Righi <a.righi@cineca.it>
 
 use lib "USR_PREFIX/lib/systemimager/perl";
-
-use Socket;
-use IO::Handle;
-use FileHandle;
-use Time::Local;
+use strict;
 use Getopt::Long;
-use SystemImager::Options;
-use POSIX qw(strftime);
+use Sys::Hostname;
+use SystemImager::HostRange;
 
-### BEGIN Parameters to be read from /etc/systemimager/systemimager.conf
-$si_logdir = "/var/log/systemimager";
-$si_log_format = "%t %o %f";
-### END Parameters ###
+my $VERSION = "SYSTEMIMAGER_VERSION_STRING";
 
-$program_name="si_pushupdate";
+my $program_name = "si_pushupdate";
 
+my $version_info = << "EOF";
+$program_name (part of SystemImager) v$VERSION
 
+Copyright (C) 2008 Andrea Righi <a.righi\@cineca.it>
 
-### BEGIN Program ###
-# set version information
-$version_number = "SYSTEMIMAGER_VERSION_STRING";
-$version_info = <<"EOF";
-si_pushupdate (part of SystemImager) version $version_number
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+EOF
+
+my $help_info = $version_info . <<"EOF";
+
+Usage: $program_name --hosts host_range [OPTION]...
+
+Options: (options can be presented in any order and can be abbreviated)
+ --help, -h             Display this output.
+
+ --version, -v          Display version and copyright information.
+
+ --max, -m=NUM          Set the maximum number of concurrent sessions
+                        to NUM (default=32).
+
+ --hosts, -n=HOST_LIST  List of target nodes. List can be separated by
+                        comma, spaces or new line and can include
+                        ranges or host groups
+                        (e.g. "node001-node256 node300,Login,Storage").
+                        Host groups must be defined by si_clusterconfig(8).
+
+ --hosts-file, -f=FILE  File that contains the list of the target host.
+                        Every line can include one or more ranges or
+                        host groups
+                        (e.g. "node001-node256 node300,Login,Storage").
+                        Host groups must be defined by si_clusterconfig(8).
+
+ --timeout, -t=NUM      Set the timeout of the ssh sessions (default=15s).
+
+ --ssh-user, -l=USER    Run the command as user USER.
+
+ --image, -i=IMAGE	Image from which the client should be updated (if not
+			specified use the si_clusterconfig(8) settings).
+
+ --override, -o=OVERRIDES
+			Override module(s) from which to copy additional files
+			(if not specified use the si_clusterconfig(8) settings).
+
+ --server, -s=HOST	Hostname or IP address of the imageserver (if not
+			specified use the image server's hostname).
+
+ --directory DIR, -D=DIR
+			Absolute path of the directory to be updated (if not
+			specified use "/").
+
+ --no-bootloader, -b	Don't  run  the bootloader (lilo, elilo, grub, etc)
+			after update completes.
+
+ --autoinstall, -a	Autoinstall this client the next time it reboots.
+
+ --flavor , -F=FLAVOR	The boot flavor to be used for doing an autoinstall
+			(only valid with -autoinstall).
+
+ --configure-from, -c=DEVICE
+			Stores the network configuration for DEVICE in the
+			/local.cfg file so that the same settings will be used
+			during the autoinstall process (only valid with
+			-autoinstall).
+
+ --reboot, -r		Reboot client after update completes.
+
+ --dry-run, -d		Don't actually modify anything, just show what would be
+			done.
 
 EOF
 
-$version_info .= SystemImager::Options->copyright();
+Getopt::Long::Configure("posix_default");
+Getopt::Long::Configure("no_gnu_compat");
+Getopt::Long::Configure("bundling");
 
-
-# set help information
-$get_help = "   Try \"si_pushupdate --help\" for more options.";
-$help_info = $version_info .  SystemImager::Options->pushupdate_options_header();
-$help_info = $help_info .  SystemImager::Options->generic_options_help_version();
-$help_info = $help_info .  SystemImager::Options->pushupdate_options_body();
-$help_info = $help_info .  SystemImager::Options->updateclient_options_body();
-$help_info = $help_info .  SystemImager::Options->generic_footer();
-
-# setup generic logging info message for detail client logs if needed
-$logging_blurb = <<"EOF";
-
-Check out the --log option with the command si_pushupdate --help
-to get information for capturing detailed file transfer logging
-from each client si_pushupdate targets.
-EOF
-
-#
-# default values
-#
-my $concurrent=1;
-
-# interpret command line options
 GetOptions(
+	"help|h"		=> \my $help,
+	"version|v"		=> \my $version,
+	"max|m=i"		=> \my $concurrents,
+	"hosts|n=s"		=> \my $hostlist,
+	"hosts-file|f=s"	=> \my $hostlist_file,
+	"timeout|t=i"		=> \my $timeout,
+	"ssh-user|l=s"		=> \my $ssh_user,
+	"image|i=s"		=> \my $image,
+	"override|o=s"		=> \my $override,
+	"server|s=s"		=> \my $server,
+	"directory|D=s"		=> \my $directory,
+	"no-bootloader|b"	=> \my $no_bootloader,
+	"autoinstall|a"		=> \my $autoinstall,
+	"flavor|F=s"		=> \my $flavor,
+	"configure-from|c=s"	=> \my $configure_from,
+	"reboot|r"		=> \my $reboot,
+	"dry-run|d"		=> \my $dry_run,
+) or die("$help_info");
 
-    "help"                      => \my $help,
-    "version"                   => \my $version,
-    "client=s"                  => \my $base_host_name,
-    "server=s"			=> \my $imageserver,
-    "image=s"			=> \my $image,
-    "range=s"                   => \my $range,
-    "domain=s"                  => \my $domain_name,
-    "clients-file=s"            => \my $clients_file,
-    "concurrent-processes=s"    => \$concurrent,
-    "continue-install"          => \my $continue_install,
-    "ssh-user=s"                => \my $ssh_user,
-    "log=s"                     => \my $log_format,
-    "updateclient-options=s"    => \my $updateclient_options,
+### BEGIN evaluate commad line options ###
 
-) or die qq($help_info);
-
-# if requested, print help information
-if($help) {
-    print qq($help_info);
-    exit 0;
+if ($help) {
+	print "$help_info";
+	exit(0);
 }
 
-# if requested, print version and copyright information
-if($version) {
-    print qq($version_info);
-    exit 0;
+if ($version) {
+	print "$version_info";
+	exit(0);
 }
 
-if($continue_install) {
-	print STDERR "error: deprecated use of si_pushupdate!\n";
-	print STDERR "Use \"si_pushinstall\" to perform server-driven installation with SSH transport.\n";
-	print STDERR "For more details see: man 8 si_pushinstall\n";
-	exit(1);
+# Evaluate target hosts.
+my @hosts = ();
+if ($hostlist_file) {
+	# Read input file.
+	open(IN, '<', $hostlist_file) ||
+		die("error: could't read $hostlist_file!\n");
+	$hostlist .= ' ' . join(' ', <IN>);
+	close(IN);
+}
+if ($hostlist) {
+	# Expand host groups and host ranges.
+	@hosts = SystemImager::HostRange::expand_groups($hostlist);
+}
+unless (@hosts) {
+	die("error: no host defined!\nTry \"--help\" for more options.\n");
 }
 
-# be sure $imageserver name doesn't start with a hyphen
-if($imageserver) {
-    $_ = $imageserver;
-    if(/^-/) { die "\n$program_name: Server name can\'t start with a hyphen.\n$get_help\n\n"; }
-    $updateclient_options .= " --server $imageserver";
+unless ($timeout) {
+	$timeout = 15;
 }
 
-# must have some specifier for processing files
-if((!$clients_file) and (!$base_host_name)) {
-    die "\n$program_name: Must specify -client or -clients-file.\n$get_help\n\n";
+unless ($ssh_user) {
+	$ssh_user = $ENV{'USER'};
 }
 
-# if name usage is bad, print help information
-if ((!$imageserver) and (!$continue_install)) {
-    print "\n$program_name: Must specify -server if doing an update.\n";
-    die     "            Must specify -continue-install if doing an install.\n$get_help\n\n";
+if ($concurrents) {
+	$SystemImager::HostRange::concurrents = $concurrents;
 }
 
-# -clients-file doesn't exist
-if(($clients_file) and ( ! -e $clients_file )) {
-    die "\n$program_name: Unable to find $hostfile.\n$get_help\n\n";
-}
+# Use the following ssh options.
+my $ssh_opts = "-x -o BatchMode=yes -o ConnectTimeout=$timeout -l $ssh_user";
 
-# -clients-file and -client conflict
-if($clients_file and $base_host_name) {
-    die "\n$program_name: Must select either -clients-file or -client.\n$get_help\n\n";
-}
+### END evaluate command line options ###
 
-# if -client, must have -image
-if($base_host_name and !$image) {
-    die "\n$program_name: Must also specify -image.\n$get_help\n\n";
+### BEGIN build si_updateclient command line ###
+my $updateclient_opts = "--yes";
+if ($image) {
+	$updateclient_opts .= " --image $image";
 }
-
-# if -clients-file, cannot have -image
-if($clients_file and $image) {
-    print "\n$program_name: -clients-file and -image conflict.";
-    die   "\n               Images should be specified in the clients file.\n$get_help\n\n";
+if ($override) {
+	$updateclient_opts .= " --override $override";
 }
-
-# setup @hostname array for processing
-if (defined $clients_file && -e $clients_file) {
-    open (FH, "< $clients_file") or die "\n$program_name: Unable to open $clients_file: $!\n";
-    @hostnames_and_images = <FH>;
-    close (FH) or die "\n$program_name: Unable to close $hostfile: $!\n";
-    my (@fields, $testline, $i);
-    for ($i = 0; $i <= $#hostnames_and_images; $i++) {
-        # attempt to parse each line, just to make sure there is an image or script specified
-        chomp($hostnames_and_images[$i]);
-        @fields = split(" ", $hostnames_and_images[$i]);
-        if(!$fields[1]) {
-            die "No image/script defined for $fields[0] on line $i of file $clients_file\n";
-        }
-        
-        # if we are running as autoinstall, find and verify the autoinstall script exists
-        # assume that the entry lists only a filename...add the
-        # /var/lib/systemimager/scripts and ".master" in the path/filename.
-        if ($continue_install) {
-            my $installscript = "/var/lib/systemimager/scripts/" . $fields[1] . ".master";
-            if (! -e $installscript) {
-        die "Master install script not found for $fields[0] on line $i of file $clients_file\n";
-            }
-        }
-    }
+if ($server) {
+	$updateclient_opts .= " --server $server";
 } else {
-    # prepare needed variables
-    if ($domain_name) { $domain_name = lc $domain_name; } 
-    
-    # verify the script to install, if relevant
-    if ($continue_install) {
-        my $installscript = "/var/lib/systemimager/scripts/" . $image . ".master";
-        if (! -e $installscript) {
-            die "\n$program_name: $installscript not found!\n";
-        }
-    }
-    
-    # must have a hostname then...put it into the array for processing
-    if ($range) {
-        # decide if there is a range, and extract it
-        my ($starting_number, $ending_number);
-        $range =~ /\-/;
-        $starting_number = trim($`);
-        $ending_number = trim($');
-        if ((!starting_number) || (!ending_number)) {
-            die "Invalid range specifier.\n$get_help\n\n";
-        }
-        
-        # given a good range, build the hostnames array
-        my $node_number;
-        my $count = 0;
-        foreach $node_number ($starting_number .. $ending_number) {
-            $hostnames_and_images[$count] = $base_host_name . $node_number;
-            if ($domain_name) {
-                $hostnames_and_images[$count] = "$hostnames_and_images[$count]." .  $domain_name .  " $image";
-            }
-            $count++;
-        }
-    } else {
-        my $hostname = $base_host_name;
-        if ($domain_name) {
-            $hostname = "$hostname." . $domain_name;
-        }
-        $hostname = $hostname . " $image";
-        @hostnames_and_images = $hostname;
-    }
+	$updateclient_opts .= ' --server ' . hostname();
 }
-
-
-# Begin main program loop, processing each push as needed
-$CONCURRENT_RUNNING_PROCESSES = 0;
-my $element;
-foreach $element (@hostnames_and_images) {
-    if ($CONCURRENT_RUNNING_PROCESSES >= $concurrent) {
-        wait;
-        $CONCURRENT_RUNNING_PROCESSES--;
-    }
-
-    # fork a new process with the command to execute
-    if ($pid = fork) {
-        $CONCURRENT_RUNNING_PROCESSES++;
-        sleep 1;
-    } elsif (defined $pid) {
-        # this is the newly forked process
-        if ($continue_install) {
-	        processautoinstall($element);
-        } else {
-            processupdate($element);
-        }
-        exit(0);
-    } else {
-        die "error forking: $!\n";
-    }
+if ($directory) {
+	$updateclient_opts .= " --directory $directory";
 }
-
-# wait for children to finish
-while (wait != -1) { ; } ;
-
-exit 0;
-
-
-
-################################################################################
-#
-#   Subroutines
-#
-sub check_if_root{
-    unless($< == 0) { die "$program_name: Must be run as root!\n"; }
+if ($no_bootloader) {
+	$updateclient_opts .= " --no-bootloader";
 }
-
-
-sub get_response {
-    my $garbage_out=$_[0];
-    my $garbage_in=<STDIN>;
-    chomp $garbage_in;
-    unless($garbage_in eq "") { $garbage_out = $garbage_in; }
-    return $garbage_out;
+if ($autoinstall) {
+	$updateclient_opts .= " --autoinstall";
 }
-
-
-sub dec2bin {
-    my $str = unpack("B32", pack("N", shift));
-    return $str;
+if ($flavor) {
+	$updateclient_opts .= " --flavor $flavor";
 }
-
-
-sub dec2bin8bit {
-    my $str = unpack("B32", pack("N", shift));
-    $str = substr($str, -8); # 32bit number -- get last 8 bits (the relevant ones)
-    return $str;
+if ($configure_from) {
+	$updateclient_opts .= " --configure-from $configure_from";
 }
-
-
-sub bin2dec {
-    return unpack("N", pack("B32", substr("0" x 32 . shift, -32))); # get all 32bits
+if ($reboot) {
+	$updateclient_opts .= " --reboot";
 }
-
-
-sub ip_quad2ip_dec {
-    (my $a, my $b, my $c, my $d) = split(/\./, $_[0]);
-    my $a_bin=dec2bin8bit($a);
-    my $b_bin=dec2bin8bit($b);
-    my $c_bin=dec2bin8bit($c);
-    my $d_bin=dec2bin8bit($d);
-    return bin2dec(join('', $a_bin, $b_bin, $c_bin, $d_bin));
+if ($dry_run) {
+	$updateclient_opts .= " --dry-run";
 }
+### END build si_updateclient command line ###
 
+# Run si_updateclient on the target clients.
+SystemImager::HostRange::thread_pool_spawn('ssh', $ssh_opts,
+			"\"si_updateclient $updateclient_opts\"",
+			@hosts);
 
-sub ip_dec2ip_quad {
-    my $ip_bin = dec2bin($_[0]);
-    my $a_dec = bin2dec(substr($ip_bin, 0, 8));
-    my $b_dec = bin2dec(substr($ip_bin, 8, 8));
-    my $c_dec = bin2dec(substr($ip_bin, 16, 8));
-    my $d_dec = bin2dec(substr($ip_bin, 24, 8));
-    return join('.', $a_dec, $b_dec, $c_dec, $d_dec);
-}
+__END__
 
+=head1 NAME
 
-# trim leading/trailing spaces and return result
-sub trim {
-  my @converts = @_;
-  for (@converts) {
-    s/^\s+//;
-    s/\s+$//;
-  }
-  return wantarray ? @converts : $converts[0];
-}
+si_pushupdate - update the image of one or more remote clients
 
+=head1 SYNOPSIS
 
-# write a record to si_pushupdate command log
-sub updatelogfile {
-  my ($logmessage) = @_;
-  my $fh=0;
-  open ($fh,">> $si_logdir/si_pushupdate");
-  my $datetime = strftime("%Y/%m/%d %H:%M:%S", localtime(time()));
-  print $fh "$datetime  $logmessage\n";
-  close ($fh);
-}
+si_pushupdate --hosts host_range [OPTION]...
 
-# start a new install from within each fork
-sub processautoinstall {
-    my ($param_input) = @_;
-    my ($logfile, $local_log_format, $status, $rc, $command);
-    
-    # if -pre is specified, run it here, burying all results
-    if ($pre) {
-        $rc = `$pre > /dev/null 2>&1`;
-        if ($rc) { 
-            die "unusual error code from -pre script $pre of:$rc $!\n";
-        }
-    }
-    
-    # split param-target, to pickup the target address & image/script
-    chomp($param_input);
-    my @fields = split(" ", $param_input);
-    my $param_target = trim($fields[0]);
-    my $param_image  = trim($fields[1]);
-    
-    # output the command to the log
-    updatelogfile("si_pushupdate autoinstall started for $param_target");
-    
-    # extract ip address and lookup client hostname
-    # if ip address given, just returns same value back
-    my $client = gethostbyaddr(inet_aton($param_target), AF_INET) 
-        or die "Cant resolve $param_target: $!\n";
-    
-    # set the machine specific logfile name
-    $logfile = "$si_logdir/si_pushupdate.$param_target";
-    if (defined($log_format)) {
-        if ($log_format) {
-            $local_log_format = $log_format;
-        } else {
-            $local_log_format = $si_log_format;
-        }
-    } else {
-        my $datetime = strftime("%Y/%m/%d %H:%M:%S", localtime(time()));
-        my $fh=0;
-        open ($fh,"> $logfile");
-            print $fh "client $param_target was autoinstalled $datetime.\n";
-            print $fh $logging_blurb;
-        close ($fh);
-        $logfile = "/dev/null";
-    }
-    
-    # Open the SSH tunnel to the clients.
-    $command = "ssh -o \"ServerAliveInterval=60\" -l root -n -f -R873:$imageserver:873 $client sleep 100000";
-    $rc = 0xffff & system($command);
-    if ($rc != 0) { 
-        $message = "error: could not open SSH tunnel to the client: $client\n";
-        updatelogfile($message);
-        die $message;
-    }
-    
-    # Send the completed signal to the client.
-    $command = "ssh -l root $client \"echo -n > /tmp/si_pushupdate.completed\"";
-    $rc = 0xffff & system($command);
-    if ($rc != 0) { 
-        $message = "error: could not connect via ssh on $client!\n";
-        updatelogfile($message);
-        die $message;
-    } else {
-        $message = "Completed si_pushupdate for $client from $imageserver.\n";
-        $message .= "Auto-installation will continue on the client.\n";
-        updatelogfile($message);
-    }
-    
-    # if -post is specified, run it here, burying all results
-    if ($post) {
-      $rc = `$post > /dev/null 2>&1`;
-      if ($rc) {
-        die "unusual error code from -post script $post of:$rc $!\n";
-      }
-    }
-}
+=head1 DESCRIPTION
 
+B<si_pushupdate> is a tool for updating the image on one or more client nodes.
+It relies on the availability of ssh as a transport layer for communicating
+with client nodes.
 
-# run si_updateclient from within each fork
-sub processupdate {
-    my ($param_input) = @_;
-    my ($logfile, $local_log_format, $status, $rc, $command);
-    
-    # if -pre is specified, run it here, burying all results
-    if ($pre) {
-      $command = "$pre > /dev/null 2>&1";
-      $rc = 0xffff & system($command);
-      if ($rc) { 
-        die "unusual error code from -pre script $pre of:$rc $!\n";
-      }
-    }
-    
-    # split param-target, to pickup the target address & image
-    chomp($param_input);
-    my @fields = split(" ", $param_input);
-    my $param_target = trim($fields[0]);
-    my $param_image  = trim($fields[1]);
-    
-    # output the command to the log
-    updatelogfile("si_pushupdate started for $param_target");
-    
-    # extract ip address and lookup client hostname
-    # if ip address given, just returns same value back
-    my $client = gethostbyaddr(inet_aton($param_target), AF_INET) 
-        or die "Cant resolve $param_target: $!\n";
-    
-    # set the machine specific logfile name
-    $logfile = "$si_logdir/si_pushupdate.$param_target";
-    if (defined($log_format)) {
-        if ($log_format) {
-            $local_log_format = $log_format;
-        } else {
-            $local_log_format = $si_log_format;
-        }
-    } else {
-        my $datetime = strftime("%Y/%m/%d %H:%M:%S", localtime(time()));
-        my $fh=0;
-        open ($fh,"> $logfile");
-        print $fh "client $param_target was last updated $datetime.\n";
-        print $fh $logging_blurb;
-        close ($fh);
-        $logfile = "/dev/null";
-    }
-    
-    #
-    # build command line
-    #
-    $command = "ssh -l $ssh_user $client sudo si_updateclient $updateclient_options --image $param_image";
-    
-    # run command to start si_updateclient on the remote workstation
-    $rc = 0xffff & system($command);
-    if (!$rc) {
-        updatelogfile("completed si_pushupdate for $client from $imageserver");
-    } else {
-        updatelogfile("unsuccessful si_pushupdate for $client from $imageserver");
-    }
-    
-    # if -post is specified, run it here, burying all results
-    if ($post) {
-        $command = "$post > /dev/null 2>&1";
-        $rc = 0xffff & system($command);
-        if ($rc) {
-            die "unusual error code from -post script $post of:$rc $!\n";
-        }
-    }
-}
+=head1 OPTIONS
+
+=over 8
+
+=item B<--help | -h>
+
+Display a short help.
+
+=item B<--version | -V>
+
+Display version and copyright information.
+
+=item B<--max | -m NUM>
+
+Set the maximum number of concurrent sessions to NUM (default=32).
+
+=item B<--hosts | -n HOST_LIST>
+
+List of target nodes. List can be separated by comma, spaces or new line and can
+include ranges or host groups (e.g. "node001-node256 node300,Login,Storage").
+Host groups must be defined by si_clusterconfig(8).
+
+=item B<--hosts-file | -f FILE>
+
+File that contains the list of the target hosts. Every line can include one or
+more ranges or host groups (e.g. "node001-node256 node300,Login,Storage").
+Host groups must be defined in si_clusterconfig(8).
+
+=item B<--timeout | -t NUM>
+
+Set the timeout of the ssh sessions (default=15s).
+
+=item B<--ssh-user | -l USER>
+
+Run the command as user USER.
+
+=item B<--image | -i IMAGE>
+
+Image from which the client should be updated (if not specified use the
+si_clusterconfig(8) settings).
+
+=item B<--override | -o OVERRIDES>
+
+Override module(s) from which to copy additional files (if not specified use
+the si_clusterconfig(8) settings).
+
+=item B<--server | -s HOST>
+
+Hostname or IP address of the imageserver (if not specified use the image
+server's hostname).
+
+=item B<--directory | -D HOST>
+
+Absolute path of the directory to be updated (if not specified use "/").
+
+=item B<--no-bootloader | -b>
+
+Don't  run  the bootloader (lilo, elilo, grub, etc) after update completes.
+
+=item B<--autoinstall | -a>
+
+Autoinstall this client the next time it reboots.
+
+=item B<--flavor | -F FLAVOR>
+
+The boot flavor to be used for doing an autoinstall (only valid with
+-autoinstall).
+
+=item B<--configure-from | -c DEVICE>
+
+Stores the network configuration for DEVICE in the /local.cfg file so that the
+same settings will be used during the autoinstall process (only valid with
+-autoinstall)
+
+=item B<--reboot | -r>
+
+Reboot client after update completes.
+
+=item B<--dry-run | -d>
+
+Don't actually modify anything, just show what would be done.
+
+=head1 SEE ALSO
+
+systemimager(8), si_psh(8), si_pcp(8), si_pushinstall(8), si_clusterconfig(8)
+
+=head1 AUTHOR
+
+Andrea Righi <a.righi@cineca.it>.
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2008 by Andrea Righi <a.righi@cineca.it>.
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+=cut
