@@ -507,7 +507,7 @@ flamethrower_client() {
 #
 ################################################################################
 #
-#   Autodetect a stagin directory for the bittorrent tarball
+#   Autodetect a staging directory for the bittorrent tarball
 #
 #   Usage: bittorrent_autodetect_staging_dir torrent
 #
@@ -519,8 +519,8 @@ bittorrent_autodetect_staging_dir() {
     fi
 
     # List of preferred staging directory (first entry is / that means we're trying to stage in tmpfs)
-    preferred_dirs=`df -k 2>/dev/null | grep -v "^\/\|dev" | sed '1d' | sed 's/[[:space:]]\+/ /g' | cut -d' ' -f6`
-    fs_space=`df -k 2>/dev/null | grep -v "^\/\|dev" | sed '1d' | sed 's/[[:space:]]\+/ /g' | cut -d' ' -f4`
+    preferred_dirs=`df -k 2>/dev/null | grep "^\/dev\/\|^tmpfs" | sed '1d' | sed 's/[[:space:]]\+/ /g' | cut -d' ' -f6`
+          fs_space=`df -k 2>/dev/null | grep "^\/dev\/\|^tmpfs" | sed '1d' | sed 's/[[:space:]]\+/ /g' | cut -d' ' -f4`
 
     # Use a breathing room of 100MB (this should be enough for a lot of cases)
     breathing_room=102400
