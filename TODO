@@ -18,6 +18,9 @@ Priority classification:
 TODO list for SystemImager
 ==========================
 
+(8) Introduce a new command (si_power) to control the power of the clients
+    (turn on/off/reboot, etc.), see also: ipmitool, BMC.
+
 (8) Create a new module called SystemImager::Monitor to implement all the common
     monitoring functions.
 
@@ -28,21 +31,6 @@ TODO list for SystemImager
       txt format)
     - si_monitorcurses: ncurses-based interface
     - si_monitortk: perl-Tk interface
-
-(8) Implement a wrapper (i.e. si_ssh) to start an ssh session on a imaging
-    client (to be used with SSHD=y installation parameter).
-
-    When a client is imaging and the ssh daemon is started a temporary host key
-    is generated and the fingerprint of this key must be not included in the
-    known_hosts file of the image server.
-
-    A workaround is to execute ssh from the image server with the following options:
-
-    ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null <target_host>
-
-    Another approach could be to implement a --imaging option in si_psh, to
-    execute remote commands on the imaging clients. This would be also
-    host-groups, host-ranges, group-ranges, etc compliant.
 
 (7) Split boel_binaries.tar.gz in:
 
