@@ -222,14 +222,9 @@ tmpfs_watcher() {
     logmsg tmpfs_watcher
 
     # Note: Transfer to staging area can fail if tmpfs runs out of inodes.
-    { 
+    {
         while :; do
-            #
-            # - Apparently the busybox-1.00-rc3 can't do "df -k /".  changed to just df -k. -BEF-
-            # - Now that we're using udev, we end up with two tmpfs filesystems.  Only pay 
-            #   attention to the one we're using as root. -BEF-
-            # 
-            DF=`df -k | egrep ' /$' | sed -e 's/  */ /g' -e 's/.*[0-9] //' -e 's/%.*//'`
+            DF=`df -k / | egrep ' /$' | sed -e 's/  */ /g' -e 's/.*[0-9] //' -e 's/%.*//'`
             [ $DF -ge 95 ] && logmsg "WARNING: Your tmpfs filesystem is ${DF}% full!"
             [ $DF -ge 99 ] && logmsg "         Search the FAQ for tmpfs to learn about sizing options."
             [ $DF -ge 99 ] && shellout
@@ -518,9 +513,8 @@ bittorrent_autodetect_staging_dir() {
         return
     fi
 
-    # List of preferred staging directory (first entry is / that means we're trying to stage in tmpfs)
-    preferred_dirs=`df -k 2>/dev/null | grep "^\/dev\/\|^tmpfs" | sed '1d' | sed 's/[[:space:]]\+/ /g' | cut -d' ' -f6`
-          fs_space=`df -k 2>/dev/null | grep "^\/dev\/\|^tmpfs" | sed '1d' | sed 's/[[:space:]]\+/ /g' | cut -d' ' -f4`
+    # List of preferred staging directory (/tmp = ramdisk staging)
+    preferred_dirs="/tmp /a/tmp `df 2>/dev/null | sed '1d' | sed 's/[[:space:]]\+/ /g' | cut -d' ' -f6`"
 
     # Use a breathing room of 100MB (this should be enough for a lot of cases)
     breathing_room=102400
@@ -529,10 +523,9 @@ bittorrent_autodetect_staging_dir() {
     torrent_size=$((`/bin/torrentinfo-console $torrent | sed -ne 's/^file size\.*: \([0-9]\+\).*$/\1/p'` / 1024 + $breathing_room))
 
     # Find a directory to host the image tarball
-    i=1
     for dir in $preferred_dirs; do
-        dir_space=`echo $fs_space | cut -d' ' -f$i`
-	i=$(($i + 1))
+        [ ! -d $dir ] && continue;
+        dir_space=`df $dir 2>/dev/null | sed '1d' | sed 's/[[:space:]]\+/ /g' | cut -d' ' -f4 | sed -ne '$p'`
         [ -z $dir_space ] && continue
         [ $torrent_size -lt $dir_space ] && echo $dir && return
     done
