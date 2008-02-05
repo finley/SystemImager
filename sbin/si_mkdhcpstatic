@@ -28,7 +28,8 @@ my @lease_files_du_jour = (
     "/var/state/dhcp/dhcpd.leases",
     "/var/lib/dhcp/dhcpd.leases",
     "/var/lib/dhcp/db/dhcpd.leases",
-    "/etc/dhcpd.leases"
+    "/etc/dhcpd.leases",
+    "/var/lib/dhcpd/dhcpd.leases",
 );
 
 foreach my $file (@lease_files_du_jour) {
