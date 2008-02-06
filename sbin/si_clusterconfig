@@ -145,7 +145,13 @@ sub edit
 		if (defined($ENV{'EDITOR'})) {
 			$editor = $ENV{'EDITOR'};
 		} else {
-			chomp($editor = `(type -p vim || type -p vi || type -p nano || type -p nano-tiny) 2>/dev/null`);
+			my @ed_list = ('vim', 'vi', 'nano', 'nano-tiny');
+			foreach my $e (@ed_list) {
+				if (system("$e --version &>/dev/null") == 0) {
+					$editor = $e;
+					last;
+				}
+			}
 		}
 		unless ($editor) {
 			die("FATAL: couldn't find a valid editor (vi, vim, nano or nano-tiny)!\n");
