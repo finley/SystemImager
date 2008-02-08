@@ -75,7 +75,7 @@ endif
 endif
 
 ifeq ($(ARCH),ppc64-ps3)
-	LINUX_VERSION = 2.6.24-20080131
+	LINUX_VERSION = 2.6.23-20071023
 	LINUX_IMAGE = $(LINUX_SRC)/vmlinux.strip
 	LINUX_TARGET = zImage
 	LINUX_DIR = linux-$(LINUX_VERSION)
@@ -85,7 +85,7 @@ LINUX_SRC := $(SRC_DIR)/$(LINUX_DIR)
 LINUX_TARBALL := linux-$(LINUX_VERSION).tar.bz2
 #LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.6/$(LINUX_TARBALL)
 #LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.4/$(LINUX_TARBALL)
-#LINUX_URL = http://www.kernel.org/pub/linux/kernel/people/geoff/cell/CELL-Linux-CL_20080201-ADDON/src/$(LINUX_TARBALL)
+#LINUX_URL = http://www.kernel.org/pub/linux/kernel/people/geoff/cell/CELL-Linux-CL_20071023-ADDON/src/$(LINUX_TARBALL)
 LINUX_URL = http://download.systemimager.org/pub/linux/$(LINUX_TARBALL)
 LINUX_CONFIG := $(PATCH_DIR)/linux.$(ARCH).config
 
