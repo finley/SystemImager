@@ -46,13 +46,18 @@ NON_BOOT_PKGS := -p $(PKG)-client \
                  -p $(PKG)-server-flamethrowerd \
                  -p $(PKG)-server-bittorrent
 
-BOOTARCHS = alpha i386 ia64 parisc ppc64-iSeries ppc64-ps3 ppc64 ppc64ydl ppc amd64 
+BOOTARCHS = alpha i386 ia64 parisc ppc64-iSeries ppc64-ps3 ppc64 ppc64ydl ppc amd64
 
-PATCHES=$(sort $(shell find $(CURDIR)/patches -name "*.patch"))
+PATCHES=$(sort $(shell find $(CURDIR)/debian/patches -name "*.patch"))
 
 configure: configure-stamp
 configure-stamp:
 	dh_testdir
+	@cd $(BUILD_DIR) && \
+	    $(foreach patch, $(PATCHES), \
+	      echo -n Applying `basename $(patch)`... && cat $(patch) | \
+	      patch -s -p1 && echo done. &&) /bin/true
+
 	cd $(BUILD_DIR) && ./configure
 	touch configure-stamp
 
