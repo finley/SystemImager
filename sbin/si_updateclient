@@ -570,6 +570,7 @@ SC_EOF
     foreach my $module ($image, @overrides) {
         ## leave this off unless we're doing the image
         my $delete = "";
+        my $rsyncopt = "-aIv";
 
         # finalize command
         if ($imagepass) {
@@ -577,11 +578,12 @@ SC_EOF
             ## files that aren't on the server side
             $delete = "--delete" unless ($no_delete);
             $imagepass = 0;
+            $rsyncopt = "-av";
         }
         else {
             $module = "overrides/$module";
         }
-        $cmd = "rsync -aIv --numeric-ids $delete $cmdopts rsync://${server}:${port}/${module}${directory} ${directory}";
+        $cmd = "rsync $rsyncopt --numeric-ids $delete $cmdopts rsync://${server}:${port}/${module}${directory} ${directory}";
 
         # execute command
         if ($dry_run) {
