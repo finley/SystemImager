@@ -5,7 +5,7 @@
 #
 # This is run first except when booting in single-user mode.
 #
-::sysinit:/etc/init.d/rcS
+tty1::sysinit:/etc/init.d/rcS
 
 # /bin/sh invocations on selected ttys
 #
