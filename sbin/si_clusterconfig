@@ -45,6 +45,9 @@ Options: (options can be presented in any order and can be abbreviated)
  --groups, -g           Show group associations for each node (this option
                         works only in show-mode).
 
+ --image, -i            Show image associations for each node (this option
+                        works only in show-mode).
+
 EOF
 
 Getopt::Long::Configure("posix_default");
@@ -57,6 +60,7 @@ GetOptions(
 	"update|u"		=> \my $update,
 	"edit|e"		=> \my $edit,
 	"groups|g"		=> \my $show_groups,
+	"image|i"		=> \my $show_image,
 ) or die("$help_info");
 
 select(STDERR);
@@ -99,13 +103,21 @@ sub show
 {
 	# Cache hosts/groups associations in a single memory hash.
 	my $groups;
-	if ($show_groups) {
+	if ($show_groups || $show_image) {
 	        foreach my $group (SystemImager::HostRange::sort_group(@{($xml->{'group'})})) {
 	                my $name = $group->{'name'}[0];
-	                map { push(@{$groups->{$_}}, $name) }
-	                        SystemImager::HostRange::expand_groups_xml($xml, $name);
+			if ($show_groups) {
+		                map { push(@{$groups->{'name'}->{$_}}, $name) }
+		                        SystemImager::HostRange::expand_groups_xml($xml, $name);
+			}
+	                my $image = $group->{'image'}[0];
+			if (defined($image) && $show_image) {
+		                map { push(@{$groups->{'image'}->{$_}}, $image) }
+		                        SystemImager::HostRange::expand_groups_xml($xml, $name);
+			}
 	        }
 	}
+
 	# Print group/host/host-range info.
 	unless (@ARGV) {
 		# If no argument are passed show all clients.
@@ -113,13 +125,16 @@ sub show
 	}
 	foreach (SystemImager::HostRange::expand_groups_xml($xml, join(' ', @ARGV))) {
 	        print "$_";
+	        if ($show_image) {
+                        print ':image=' . ($groups->{'image'}->{$_}[0] || '<NULL>');
+		}
 	        if ($show_groups) {
-	                if (defined($groups->{$_})) {
-	                        print ':' . join(',', @{$groups->{$_}});
+	                if (defined($groups->{'name'}->{$_})) {
+	                        print ':groups=' . join(',', @{$groups->{'name'}->{$_}});
 	                } else {
 	                        print ': does not belong to any group!';
 	                }
-	        }
+		}
 	        print "\n";
 	}
 }
@@ -222,17 +237,17 @@ sub XML_check_syntax
 	# Check if a global name has been defined.
 	unless ($xml->{'name'}[0]) {
 		print "WARNING: the global name is undefined! " .
-		      "Please add a <name>...</name> tag to identify all your clients.\n"; 
+		      "Please add a <name>...</name> tag to identify all your clients.\n";
 		return -1;
 	}
 
 	# Check if a base override has been defined.
 	unless ($xml->{'override'}) {
-		print "WARNING: a global override was not defined! " . 
+		print "WARNING: a global override was not defined! " .
 		      "Please define it (even empty if you don't need it).\n";
 		return -1;
 	}
-	
+
 	foreach my $group (@{$xml->{'group'}}) {
 		# Every group must have a name.
 		unless (defined($group->{'name'}[0])) {
@@ -283,7 +298,7 @@ sub XML_info_to_plain_file
 		foreach my $node (SystemImager::HostRange::expand_groups_xml($xml, $name)) {
 			unless ($groups->{$name}->{'override'}) {
 				# If no override is defined, simply print the image.
-				print OUT $node . 
+				print OUT $node .
 					':' . $name .
 					':' . ($groups->{$name}->{'image'}[0] or '') .
 					":\n";
@@ -292,7 +307,7 @@ sub XML_info_to_plain_file
 			# Print an entry for each override (reporting also the
 			# image in all the entries).
 			foreach (@{$groups->{$name}->{'override'}}) {
-				print OUT $node . 
+				print OUT $node .
 					':' . $name .
 					':' . ($groups->{$name}->{'image'}[0] or '') .
 					':' . ($_) .
@@ -353,7 +368,7 @@ refresh the opportune SystemImager internal configuration files.
 =head1 OPTIONS
 
 =over 8
- 
+
 =item B<--help | -h>
 
 Display a short help.
@@ -373,6 +388,10 @@ Edit the cluster topology configuration in interactive mode.
 =item B<--groups | -g>
 
 Show groups associations for each node (this option works only in show-mode).
+
+=item B<--image | -i>
+
+Show image associations for each node (this option works only in show-mode).
 
 =head1 SEE ALSO
 
@@ -398,4 +417,3 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 =cut
-

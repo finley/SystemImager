@@ -343,7 +343,8 @@ IMAGESERVER=192.168.1.203
         </para>
         <para>
           <command>si_clusterconfig</command> can be used also to show the
-          defined groups with the list of clients that belong to each group.
+          defined groups with the list of clients that belong to each group
+          and/or the image associated to each client or group of clients.
           In show-mode the command accepts as argument a list of hostnames,
           host-ranges and/or host-group, it resolves them in the equivalent
           list of hostnames and prints them to stdout. The edit-mode can be
