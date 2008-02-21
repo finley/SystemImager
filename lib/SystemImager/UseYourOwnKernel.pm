@@ -345,18 +345,30 @@ sub is_kernel {
         #
         # and not a directory
         if( -d $file )   { return undef; }
+        #
+        # skip symlinks
+        if( -l $file )   { return undef; }
+        #
+        # skip .bak files
+        if( $file =~ /\.bak$/ )   { return undef; }
+        #
+        # eliminate vmlinux files on RH
+        if( $file =~ m/^vmlinux$/ ) { return undef; }
+        #
+        # eliminate ramdisks
+        if( $file =~ m/initrd/ ) { return undef; }
+        #
+        # eliminate memtest
+        if( $file =~ m/^memtest/ ) { return undef; }
+        #
+        # eliminate message
+        if( $file =~ m/^message/ ) { return undef; }
 
         #
         # Get output from "file" for elimination by identification tests
-        my $cmd = "file -b $file";
+        my $cmd = "file -bz $file";
         open(INPUT,"$cmd|") or die("Couldn't run $cmd to get INPUT");
                 my ($input) = (<INPUT>);
-                #
-                # eliminate vmlinux files on RH
-                if( $input =~ m/ELF (32|64)-bit LSB executable,/ ) { return undef; }
-                #
-                # eliminate compressed data (eg. ramdisk)
-                if( $input =~ m/gzip compressed data,/ ) { return undef; }
                 # eliminate cpio archives (eg. ramdisk)
                 if( $input =~ m/cpio archive/ ) { return undef; }
                 # eliminate cramfs files (eg. ramdisk)
