@@ -1969,7 +1969,7 @@ sub create_autoinstall_script{
 	        if (/^\s*${delim}SET_DISKORDER${delim}\s*$/) {
                     # Set or unset disk autodetection.
                     if ($autodetect_disks) {
-                        print $MASTER_SCRIPT qq(DISKORDER=sd,cciss,ida,rd,hd\n);
+                        print $MASTER_SCRIPT qq(DISKORDER=sd,cciss,ida,rd,hd,xvd\n);
                     } else {
                         print $MASTER_SCRIPT qq(DISKORDER=\n);
                     }
