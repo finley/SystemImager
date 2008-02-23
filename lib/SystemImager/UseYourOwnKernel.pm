@@ -22,6 +22,7 @@
 package SystemImager::UseYourOwnKernel;
 
 use strict;
+use File::Basename;
 use SystemImager::Config qw($config);
 
 our $verbose;
@@ -338,6 +339,7 @@ sub is_kernel {
         # -BEF-
 
         my $file = shift;
+        my $filename = basename($file);
 
         #
         # Make sure it's binary
@@ -350,19 +352,19 @@ sub is_kernel {
         if( -l $file )   { return undef; }
         #
         # skip .bak files
-        if( $file =~ /\.bak$/ )   { return undef; }
-        #
-        # eliminate vmlinux files on RH
-        if( $file =~ m/^vmlinux$/ ) { return undef; }
+        if( $filename =~ /\.bak$/ )   { return undef; }
         #
         # eliminate ramdisks
-        if( $file =~ m/initrd/ ) { return undef; }
+        if( $filename =~ m/initrd/ ) { return undef; }
+        #
+        # eliminate vmlinux files
+        if( $filename =~ m/^vmlinux/ ) { return undef; }
         #
         # eliminate memtest
-        if( $file =~ m/^memtest/ ) { return undef; }
+        if( $filename =~ m/^memtest/ ) { return undef; }
         #
         # eliminate message
-        if( $file =~ m/^message/ ) { return undef; }
+        if( $filename =~ m/^message/ ) { return undef; }
 
         #
         # Get output from "file" for elimination by identification tests
@@ -385,7 +387,7 @@ sub is_kernel {
 # Usage:
 #       my $kernel_file = _choose_kernel_file( $uname_r, $image_dir );
 #
-sub _choose_kernel_file($) {
+sub _choose_kernel_file {
 
         my $uname_r = shift;
         my $image_dir = shift;
