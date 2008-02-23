@@ -118,7 +118,7 @@ fi
         DISKS=`expr $DISKS + 1`
       done
       ;;
-    hd | sd )
+    hd | sd | xvd )
       for dev in `cat $diskfile | sed -ne "s/.*\($type[a-z]\+\).*/\1/p" | sort -u` ; do
         skip=0
         for cdrom in $cdroms; do
