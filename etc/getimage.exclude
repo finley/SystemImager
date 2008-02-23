@@ -25,3 +25,9 @@
 # udev network persistent naming rules (Debian).
 /etc/udev/rules.d/z25_persistent-net.rules
 /etc/udev/rules.d/z45_persistent-net-generator.rules
+
+# remove blkid mappings: this allows to use images cloned from golden clients
+# with raid, lvm, etc. block devices and image other clients that use different
+# block device types (non-raid, non-lvm, etc.) or vice versa.
+/etc/blkid/blkid.tab
+/etc/blkid.tab
