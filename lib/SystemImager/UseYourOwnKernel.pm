@@ -457,8 +457,20 @@ sub _get_kernel_release($) {
                 #       2.4.24 (root@mantis) #2 Fri Jan 16 19:51:43 CST 2004^
                 #       2.4.19-mantis-2002.11.20 (root@mantis) #6 Tue Nov 19 15:15:43 CST 2002
                 #       2.6.7-1-686 (dilinger@toaster.hq.voxel.net) #1 Thu Jul 8 05:36:53 EDT 2004
+                #       2.6.22.5-31-default (geeko@buildhost) #1 SMP 2007/09/21 22:29:00 UTC
                 #
-                my $regex = '(2\.[46]\.\d[^\/]*?) \(.*@.*\) [#]\d+.*\w{3} \w{3} \d{1,2} \d{2}:\d{2}:\d{2} \w{3,4} \d{4}';
+                my $regex =
+                #           | kernel version + build machine
+                #           `---------------------------------------
+                            '(2\.[46]\.\d[^\/]*?) \(.*@.*\) [#]\d+.*' .
+                #
+                #           | build date
+                #           `---------------------------------------
+                            '(\w{3} \w{3} \d{1,2}|\d{4}\/\d{2}\/\d{2}) '.
+                #
+                #           | build time
+                #           `---------------------------------------
+                            '\d{2}:\d{2}:\d{2} \w{3,4}( \d{4})?';
                 while(<IN>) {
                        # extract the `uname -r` string from the kernel file
                        if(m/$regex/o) {
