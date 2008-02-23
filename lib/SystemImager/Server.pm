@@ -1789,10 +1789,7 @@ sub show_disk_edits{
 sub edit_disk_names{
     my ($out) = shift;
     foreach (reverse sort keys %dev2disk) {
-        print $out qq(    sed s:$_:%$dev2disk{$_}%:g |\n);
-    }
-    for (my $i = 0; $i < scalar keys %dev2disk; $i++) {
-        print $out qq(    sed s:%DISK$i%:\$DISK$i:g |\n);
+        print $out qq(    sed -i s:$_:\$$dev2disk{$_}:g /a/\$file\n);
     }
 }
 
@@ -1809,7 +1806,7 @@ sub setup_kexec {
     print $out "kexec_initrd=`basename \$kexec_initrd`\n";
 }
 
-sub write_sc_command {
+sub write_sc_command_pre {
     my ( $out, $ip_assignment_method ) = @_;
 
     # Fix device names in systemconfigurator config.
@@ -1820,8 +1817,8 @@ sub write_sc_command {
         $bootdev = $rootdev;
     }
     my $bootdev_disk = $bootdev;
-    if ($bootdev_disk =~ /^\/dev\/([hs]|ps3)d/) {
-        # Standard disk naming (hd*, sd*, ps3d*).
+    if ($bootdev_disk =~ /^\/dev\/([hs]|ps3|xv)d/) {
+        # Standard disk naming (hd*, sd*, xvd*, ps3d*).
         $bootdev_disk =~ s/[0-9]+$//;
     } elsif ($bootdev_disk =~ /^UUID|^LABEL/) {
         # XXX: Boot device in UUID or LABEL form: do nothing,
@@ -1836,11 +1833,15 @@ sub write_sc_command {
     print $out "    sed -i \"s:DEFAULTBOOT = systemimager:DEFAULTBOOT = \$IMAGENAME:g\" $sc_conf_file\n";
     print $out "    sed -i \"s:LABEL = systemimager:LABEL = \$IMAGENAME:g\" $sc_conf_file\n";
     print $out "fi\n";
+}
+
+sub write_sc_command_post {
+    my ( $out, $ip_assignment_method ) = @_;
 
     # Configure the network device used to contact the image-server -AR-
     print $out "\n# Configure the network interface used during the auto-installation.\n";
     print $out "[ -z \$DEVICE ] && DEVICE=eth0\n";
-    
+
     my $sc_excludes_to = "/etc/systemimager/systemconfig.local.exclude";
     my $sc_cmd = "chroot /a/ systemconfigurator --verbose --excludesto=$sc_excludes_to";
     my $sc_options = '';
@@ -1849,8 +1850,7 @@ sub write_sc_command {
         $sc_options = " --runboot";
         $sc_ps3_options = '';
     } else {
-        ## FIXME - is --excludesto only for the static method? 
-        ## currently, 
+        ## FIXME - is --excludesto only for the static method?
         $sc_options = '--confighw --confignet --configboot --runboot';
         # PS3 doesn't need hardware and boot-loader configuration.
         $sc_ps3_options = '--confignet';
@@ -1889,6 +1889,8 @@ sub write_sc_command {
 
     print $out "EOL\n";
 }
+
+
 
 
 sub create_autoinstall_script{
@@ -2035,8 +2037,13 @@ sub create_autoinstall_script{
 	            last SWITCH;
 	        }
 
-	        if (/^\s*${delim}SYSTEMCONFIGURATOR${delim}\s*$/) {
-	            write_sc_command($MASTER_SCRIPT, $ip_assignment_method);
+	        if (/^\s*${delim}SYSTEMCONFIGURATOR_PRE${delim}\s*$/) {
+	            write_sc_command_pre($MASTER_SCRIPT, $ip_assignment_method);
+	            last SWITCH;
+	        }
+
+	        if (/^\s*${delim}SYSTEMCONFIGURATOR_POST${delim}\s*$/) {
+	            write_sc_command_post($MASTER_SCRIPT, $ip_assignment_method);
 	            last SWITCH;
 	        }
 

@@ -389,31 +389,6 @@ done
 
 beep
 
-#
-################################################################################
-
-################################################################################
-# BEGIN disk edits
-#
-[ -z $DISKORDER ] || {
-  echo "Editing files for actual disk configuration..."
-##SHOW_DISK_EDITS##
-  for file in /etc/fstab /etc/systemconfig/systemconfig.conf /boot/grub/menu.lst /etc/lilo.conf /etc/grub.conf /boot/grub/device.map; do
-    [ -f /a/$file ] || continue
-    echo " $file"
-    cp /a/$file /a/$file.image
-    cat /a/$file.image |
-##EDIT_DISK_NAMES##
-    cat > /a/$file
-  done
-  echo
-  beep
-}
-#
-# END disk edits
-################################################################################
-
-
 ##################################################################
 #
 # Uncomment the line below to leave your hostname blank.
@@ -481,13 +456,36 @@ for file in /a/boot/grub/menu.lst /a/etc/lilo.conf /a/etc/grub.conf; do
     fi
 done
 
+##SYSTEMCONFIGURATOR_PRE##
+
+################################################################################
+# BEGIN disk edits
+#
+[ -z $DISKORDER ] || {
+  echo "Editing files for actual disk configuration..."
+##SHOW_DISK_EDITS##
+  for file in /etc/fstab /etc/systemconfig/systemconfig.conf /boot/grub/menu.lst /etc/lilo.conf /etc/grub.conf /boot/grub/device.map; do
+    [ -f /a/$file ] || continue
+    echo " $file"
+    cp /a/$file /a/$file.image
+##EDIT_DISK_NAMES##
+  done
+  echo
+  beep
+}
+#
+# END disk edits
+################################################################################
+
 export PATH=/usr/local/sbin:/usr/local/bin:$PATH
 logmsg "Detecting systemconfigurator:"
 logmsg "---"
 chroot /a/ systemconfigurator --version || \
     logmsg "WARNING: systemconfigurator was not found in the image $IMAGENAME"
 logmsg "---"
-##SYSTEMCONFIGURATOR##
+
+##SYSTEMCONFIGURATOR_POST##
+
 #
 ################################################################################
 
