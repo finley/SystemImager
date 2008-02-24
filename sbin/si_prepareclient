@@ -716,6 +716,12 @@ sub create_systemconfig_conf
         die("FATAL: couldn't open /proc/cmdline for reading (is /proc mounted?)\n");
     chomp(my $append_string = <IN>);
     close(IN);
+    # remove old root from append string (it'll be added later)
+    $append_string =~ s/root=\S+//;
+    # sort unique elements of append string
+    my %saw_params;
+    @saw_params{split(/\s/, $append_string)} = ();
+    $append_string = join(' ', sort keys %saw_params);
 
     # Get mounted devices.
     open(IN, 'mount |') or
