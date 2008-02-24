@@ -1770,7 +1770,7 @@ start_report_task() {
     REPORT_INTERVAL=10
 
     # Evaluate image size.
-    logmsg "Evaluating image size."
+    logmsg "Evaluating image size..."
     if [ ! "x$BITTORRENT" = "xy" ]; then
         IMAGESIZE=`rsync -av $IMAGESERVER::$IMAGENAME | grep "total size" | sed -e "s/total size is \([0-9]*\).*/\1/"`
     else
@@ -1785,6 +1785,7 @@ start_report_task() {
         IMAGESIZE=`/bin/torrentinfo-console $torrent_file | sed -ne "s/file size\.*: \([0-9]*\) .*$/\1/p"`
     fi
     IMAGESIZE=`expr $IMAGESIZE / 1024`
+    logmsg "  --> Image size = `expr $IMAGESIZE / 1024`MiB"
 
     # Evaluate disks size.
     LIST=`df 2>/dev/null | grep "/" | sed "s/  */ /g" | cut -d' ' -f3 | sed -ne 's/^\([0-9]*\)$/\1+/p'`0
