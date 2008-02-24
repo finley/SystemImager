@@ -172,6 +172,7 @@ sub edit
 			die("FATAL: couldn't find a valid editor (vi, vim, nano or nano-tiny)!\n");
 		}
 	}
+	my $mtime = (stat($database))[9];
 	while (1) {
 		# Edit the configuration file.
 		unless ($update) {
@@ -200,14 +201,16 @@ sub edit
 
 	my $output_file;
 
-	# Cache XML info into a plain text file. This is needed to easily parse this
-	# file in the busybox environment when the clients are imaging.
-	$output_file = $script_dir . '/cluster.txt';
-	print "Caching XML configuration to $output_file ... ";
-	if (!XML_info_to_plain_file($output_file)) {
-		print "[  OK  ]\n";
-	} else {
-		die("\nERROR: couldn't cache XML info to $output_file!\n");
+	if (($update) || ($mtime != (stat($database))[9])) {
+		# Cache XML info into a plain text file. This is needed to easily parse this
+		# file in the busybox environment when the clients are imaging.
+		$output_file = $script_dir . '/cluster.txt';
+		print "Caching XML configuration to $output_file ... ";
+		if (!XML_info_to_plain_file($output_file)) {
+			print "[  OK  ]\n";
+		} else {
+			die("\nERROR: couldn't cache XML info to $output_file!\n");
+		}
 	}
 
 	# Synchronize /etc/hosts to the hosts file read by the imaging clients.
