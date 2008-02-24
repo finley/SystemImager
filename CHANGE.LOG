@@ -6,6 +6,35 @@
 #   $Id$
 #
 
+4.1.4
+--------------------------------------------------------------------------------
+- turn on rsync quick checks (based on size and modification timestamp) for
+  files in the image and turn off quick checks for files in the overrides
+- allow CTRL+C to break the init script (/etc/init.d/rcS)
+- fix disk names in /boot/grub/device.map if it exists in the image
+- updated BOEL kernel to 2.6.24.2 (for i386 and x86_64)
+- allow si_clusterconfig to show the image associated to each client
+- properly detect UYOK kernel version also when the build string contains the
+  the build date in the yyyy/mm/dd format
+- fix: automaticaly exclude blkid.tab from images
+- allow to auto-detect disks when imaging Xen VMs (experimental)
+- fix: correctly skip non-kernel files in UYOK kernel detection
+- fix: set correct disk names for systemconfigurator
+- any change in autoinstallscript.conf now automatically fixes the boot-loader
+  configuration, so the warning in si_mkautoinstallscript is no more needed,
+  just remove it
+- updated rsync to 3.0.0pre10
+- print image size on the console before starting imaging
+- update the cluster configuration cache only when si_clusterconfig changes
+  something
+- do not clean-up si_monitortk threads on exit
+- print a note about cluster-register/cluster-map website
+  (http://www.systemimager.org/cluster-register) when a image is successfully
+  cloned and configured by si_getimage
+- synchronize /etc/hosts with /var/lib/systemimager/scripts/hosts (the hosts
+  file used during imaging) by si_clusterconfig only when /etc/hosts changes
+- remove redundant boot parameters in systemconfig.conf
+
 4.1.2
 --------------------------------------------------------------------------------
 - updated BOEL to 2.6.24 (for i386 and x86_64)

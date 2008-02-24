@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT(SystemImager, 4.1.2, sisuite-devel@lists.sourceforge.net)
+AC_INIT(SystemImager, 4.1.4, sisuite-devel@lists.sourceforge.net)
 AC_CONFIG_AUX_DIR(autoconf)
 #AC_CONFIG_SRCDIR([src/bc-1.06/acconfig.h])
 #AC_CONFIG_HEADER([config.h])
