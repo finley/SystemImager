@@ -1393,15 +1393,6 @@ sub quit
     $sub_win->destroy() if Exists($sub_win);
     # Close the main window.
     $window->destroy() if Exists($window);
-    # Clean-up all threads.
-    print "Cleaning-up threads... ";
-    shutdown_xml_loader_thread();
-    foreach my $thr (threads->list()) {
-        if ($thr->tid && !threads::equal($thr, threads->self)) {
-            $thr->join();
-        }
-    }
-    print "done\n";
     # Quit program.
     exit(0);
 }
