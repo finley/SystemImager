@@ -639,5 +639,9 @@ if (!$quiet) {
     exec($cmd);
 }
 
+print  <<"EOF";
+The image \"$image\" has been successfully configured.
 
-
+Remember to register your cluster(s) at:
+   http://www.systemimager.org/cluster-register
+EOF
