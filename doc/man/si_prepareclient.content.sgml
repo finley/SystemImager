@@ -36,7 +36,6 @@
       <arg><option>--quiet</option></arg>
       <arg><option>-r</option></arg>
       <arg><option>--unit MB | %</option></arg>
-      <arg><option>--rpm-install</option></arg>
       <arg><option>--yes</option></arg>
       <arg rep=repeat><option>--exclude <replaceable>DISK</replaceable></option></arg>
       <arg rep=repeat><option>-e <replaceable>DISK</replaceable></option></arg>
@@ -112,12 +111,6 @@
             base directory of /dev/ will be assumed.
             Example: -e /dev/sdb -e sdc -e /dev/ida/c0d0 -e ida/c0d1
           </para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-        <term><option>-r</option>, <option>--rpm-install</option></term>
-        <listitem>
-          <para>This is only used when building an RPM</para>
         </listitem>
       </varlistentry>
       <varlistentry>
