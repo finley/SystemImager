@@ -515,12 +515,14 @@ $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source.tar.bz2: systemimager.spec
 		$(GETSOURCE) $(shell dirname $(LINUX_URL))/linux-$(linux_version).tar.bz2 $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source/src;)
 	$(MAKE) -C $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source clean
 ifeq ($(UNSTABLE), 1)
-	cd $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source && cp README README.tmp
-	cd $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source && cp README.unstable README
-	cd $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source && cat README.tmp >> README
-	cd $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source && rm README.tmp
+	if [ -f README.unstable ]; then \
+		cd $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source && cp README README.tmp; \
+		cd $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source && cp README.unstable README; \
+		cd $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source && cat README.tmp >> README; \
+		cd $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source && rm README.tmp; \
+	fi
 endif
-	rm $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source/README.unstable
+	rm -f $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source/README.unstable
 	perl -pi -e "s/^%define\s+ver\s+\d+\.\d+\.\d+.*/%define ver $(VERSION)/" \
 		$(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source/systemimager.spec
 	find $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source -type f -exec chmod ug+r  {} \;
@@ -546,12 +548,14 @@ $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2: systemimager.spec
 		(cd $(TOPDIR) && tar --exclude=tmp -cvf - .) | (cd $(TOPDIR)/tmp/systemimager-$(VERSION) && tar -xvf -); \
 	fi
 ifeq ($(UNSTABLE), 1)
-	cd $(TOPDIR)/tmp/systemimager-$(VERSION) && cp README README.tmp
-	cd $(TOPDIR)/tmp/systemimager-$(VERSION) && cp README.unstable README
-	cd $(TOPDIR)/tmp/systemimager-$(VERSION) && cat README.tmp >> README
-	cd $(TOPDIR)/tmp/systemimager-$(VERSION) && rm README.tmp
+	if [ -f README.unstable ]; then \
+		cd $(TOPDIR)/tmp/systemimager-$(VERSION) && cp README README.tmp; \
+		cd $(TOPDIR)/tmp/systemimager-$(VERSION) && cp README.unstable README; \
+		cd $(TOPDIR)/tmp/systemimager-$(VERSION) && cat README.tmp >> README; \
+		cd $(TOPDIR)/tmp/systemimager-$(VERSION) && rm README.tmp; \
+	fi
 endif
-	rm $(TOPDIR)/tmp/systemimager-$(VERSION)/README.unstable
+	rm -f $(TOPDIR)/tmp/systemimager-$(VERSION)/README.unstable
 	perl -pi -e "s/^%define\s+ver\s+\d+\.\d+\.\d+.*/%define ver $(VERSION)/" \
 		$(TOPDIR)/tmp/systemimager-$(VERSION)/systemimager.spec
 	find $(TOPDIR)/tmp/systemimager-$(VERSION) -type f -exec chmod ug+r  {} \;
