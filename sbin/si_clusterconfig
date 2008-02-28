@@ -216,7 +216,8 @@ sub edit
 	# XXX: not really dependent on cluster.xml, but it's better to synchronize
 	# /etc/hosts with the hosts known by SystemImager sometimes... -AR-
 	$output_file = $script_dir . '/hosts';
-	if (($update) || ((stat('/etc/hosts'))[9] != (stat($output_file))[9])) {
+	if (($update) || !(-e $output_file) ||
+	    ((stat('/etc/hosts'))[9] != (stat($output_file))[9])) {
 		print "Synchronizing /etc/hosts to $output_file ... ";
 		if (!sync_etc_hosts($output_file)) {
 			print "[  OK  ]\n";
