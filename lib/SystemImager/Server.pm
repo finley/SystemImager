@@ -795,6 +795,7 @@ sub _read_partition_info_and_prepare_soft_raid_devs {
     print $out qq(modprobe raid5\n);
     print $out qq(modprobe raid6\n);
     print $out qq(modprobe raid10\n);
+    print $out qq(modprobe raid456\n);
 
     my $xml = XMLin($file, keyattr => { raid => "+name" }, forcearray => 1 );
     my @all_disks = reverse(get_all_disks($file));
