@@ -75,6 +75,7 @@
 use lib "USR_PREFIX/lib/systemimager/perl";
 use strict;
 use Carp;
+use Cwd 'abs_path';
 use POSIX;
 use File::Copy;
 use File::Path;
@@ -744,6 +745,14 @@ sub create_systemconfig_conf
     } else {
         # Hardware RAID device.
         $boot_dev =~ s/p[0-9]+$//;
+    }
+
+    # Resolve non-standard symlink names created by udev.
+    if (-l $boot_dev) {
+        $boot_dev = abs_path(readlink($boot_dev));
+    }
+    if (-l $root_dev) {
+        $root_dev = abs_path(readlink($root_dev));
     }
 
     # OK, we've all the info needed by systemconfigurator! Write the
