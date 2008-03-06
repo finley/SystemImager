@@ -1,15 +1,17 @@
 #!/usr/bin/perl -w
 #
-# "SystemImager" 
+# "SystemImager"
 #
 #  Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
 #  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
+#  Copyright (C) 2008 Andrea Righi <a.righi@cineca.it>
 #
-#  $Id$
 #   vi:set filetype=perl:
 #
 
 # declare modules
+use POSIX;
+use Fcntl ':flock';
 use Getopt::Long;
 
 # set some variables
@@ -40,7 +42,7 @@ EOF
 # set help information
 $help_info = $version_info . <<"EOF";
 
-Usage: $program_name [OPTION]... --server HOSTNAME --image IMAGENAME
+Usage: $program_name [OPTION]... [IMAGENAME]...
 
 Options: (options can be presented in any order)
 
@@ -68,7 +70,12 @@ EOF
 my $verbose;
 
 # interpret command line options
-GetOptions( 
+
+Getopt::Long::Configure("posix_default");
+Getopt::Long::Configure("no_gnu_compat");
+Getopt::Long::Configure("bundling");
+
+GetOptions(
   "help"        => \$help,
   "version"     => \$version,
   "verbose|v"   => \$verbose,
@@ -90,7 +97,7 @@ if($version) {
 
 # be sure $imageserver name doesn't start with a hyphen
 if($imageserver) {
-  if($imageserver =~ /^-/) { 
+  if($imageserver =~ /^-/) {
     die "\n$program_name: Imageserver name can\'t start with a hyphen.\n\n$get_help";
   }
 }
@@ -113,20 +120,20 @@ if (($ssh_user) and ("$imageserver" ne "127.0.0.1") and ("$imageserver" ne "loca
     $file="/etc/services";
     open (FILE, "<$file") || die ("$0: Couldn't open $file for reading\n");
       while (<FILE>) {
-        if (/$port/) { 
+        if (/$port/) {
           $port_in_use="yes";
           next;
         }
       }
     close FILE;
-  
+
     # Be sure port isn't in use
     open (NETSTAT, "netstat -tn |");
     while (<NETSTAT>) {
       (my $junk, my $port_and_junk) = split (/:/);
-      if ($port_and_junk) { 
+      if ($port_and_junk) {
         (my $netstat_port, my $other_junk) = split (/ +/, $port_and_junk);
-        if ($netstat_port = /$port/) { 
+        if ($netstat_port = /$port/) {
           $port_in_use="yes";
           next;
         }
@@ -137,7 +144,7 @@ if (($ssh_user) and ("$imageserver" ne "127.0.0.1") and ("$imageserver" ne "loca
   # Setup the port forwarding
   $command="ssh -f -l $ssh_user -L $port:$imageserver:873 $imageserver sleep 5";
   $rc = 0xffff & system($command);
-  if ($rc != 0) { 
+  if ($rc != 0) {
     print "FATAL: Failed to establish secure port forwarding to $imageserver!\n";
     die   "       Be sure that you can run \"ssh -l $ssh_user $imageserver\" successfully.\n";
   }
@@ -146,70 +153,114 @@ if (($ssh_user) and ("$imageserver" ne "127.0.0.1") and ("$imageserver" ne "loca
   $imageserver="127.0.0.1";
 }
 
+my %seen = ();
+my @images_list = sort(grep { ! $seen{$_} ++ } @ARGV);
+my @tmp_list = @images_list;
+my $images_regexp = join('|', map { $_ = "^$_\$" } @tmp_list);
+my %images = ();
+
 # get listing
+my $workers = 0;
+my $stdout_lockfile = tmpnam();
+open(LOCK, '>', $stdout_lockfile) or
+	die("ERROR: couldn't open: $stdout_lockfile\n");
+
 print "--------------------------------------------------------------------------------\n";
 print "Available image(s):\n";
 print "--------------------------------------------------------------------------------\n";
+
 $command = "rsync rsync://${imageserver}:$port/";
 open(FILE, "$command|");
 while (<FILE>) {
-    $_ = trim ($_);
-    next if( m/^(scripts|boot|overrides|torrents)$/ );
-    if($verbose) {
+    $_ = trim($_);
+    next if (m/^(scripts|boot|overrides|torrents)$/);
+    if ($images_regexp) {
+        next if not (m/$images_regexp/);
+        $images{$_} = 1;
+    }
 
-	    print "  Image: $_"; 
+    my $pid;
+    if ($pid = fork) {
+        $workers++;
+        next;
+    } elsif (!(defined $pid)) {
+        die("WARNING: couldn't fork!\n");
+    }
 
-        my $file = "/tmp/tmp_file.$$";
+    select(STDOUT);
+    $| = 1;
+    my $line;
+
+    if ($verbose) {
+
+        $line = "  Image: $_";
+
+        my $file = tmpnam();
 
         # display time stamp
         my $cmd1 = "rsync -a rsync://${imageserver}:$port/$_/etc/systemimager/IMAGE_RETRIEVAL_TIME $file 1>/dev/null 2>/dev/null";
         my $cmd2 = "rsync -a rsync://${imageserver}:$port/$_/etc/systemimager/mounted_filesystems  $file 1>/dev/null 2>/dev/null";
-        if( !system($cmd1) ) {
+        if (!system($cmd1)) {
 
-            open(IMAGE_RETRIEVAL_TIME,"<$file") or die("Couldn't open $file! $!");
-                my $time = <IMAGE_RETRIEVAL_TIME>;
-                chomp($time);
-                print "\tTime: $time";
+            open(IMAGE_RETRIEVAL_TIME,"<$file") or
+                die("ERROR: couldn't open $file! $!\n");
+            my $time = <IMAGE_RETRIEVAL_TIME>;
+            chomp($time);
+            $line .= "\tTime: $time";
             close(IMAGE_RETRIEVAL_TIME);
 
-        } elsif( !system($cmd2) ) {
-
+        } elsif (!system($cmd2)) {
             my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,$blksize,$blocks) = stat($file);
             my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($mtime);
             $mon++;
             $year += 1900;
-            printf("\tTime: %04d.%02d.%02d %02d:%02d", $year,$mon,$mday,$hour,$min);
-
+            $line .= sprintf("\tTime: %04d.%02d.%02d %02d:%02d", $year,$mon,$mday,$hour,$min);
         } else {
-
-            print "\tTime: N/A";
+            $line .= "\tTime: N/A";
         }
-        
 
         # display golden client
         my $cmd = "rsync -a rsync://${imageserver}:$port/$_/etc/systemimager/IMAGE_RETRIEVED_FROM $file 1>/dev/null 2>/dev/null";
         my $golden_client;
-        if( !system($cmd) ) {
-
-            open(IMAGE_RETRIEVED_FROM,"<$file") or die("Couldn't open $file! $!");
-                $golden_client = <IMAGE_RETRIEVED_FROM>;
-                chomp($golden_client);
+        if (!system($cmd)) {
+            open(IMAGE_RETRIEVED_FROM,"<$file") or
+                die("ERROR: couldn't open $file! $!\n");
+            $golden_client = <IMAGE_RETRIEVED_FROM>;
+            chomp($golden_client);
             close(IMAGE_RETRIEVED_FROM);
         } else {
-            
             $golden_client = "N/A";
         }
         unlink($file);
 
-        print "\tGolden Client: $golden_client"; 
+        $line .= "\tGolden Client: $golden_client";
 
     } else {
 
-	    print "  $_"; 
+	    $line = "  $_";
     }
-    print "\n";
+    flock(LOCK, LOCK_EX);
+    print "$line\n";
+    flock(LOCK, LOCK_UN);
+    exit(0);
 }
 close(FILE);
+
+while ($workers) {
+	last if (wait == -1);
+	$workers--;
+}
+
+close(LOCK);
+unlink($stdout_lockfile);
 print "\n";
 
-exit 0;
+if ($images_regexp) {
+    foreach (@images_list) {
+        unless (defined($images{$_})) {
+            print "WARNING: image '$_' not found!\n";
+        }
+    }
+}
+
+exit(0);
