@@ -1249,7 +1249,7 @@ get_hostname_by_dns() {
     logmsg get_hostname_by_dns
 
     # Get base hostname.  For example, www7.domain.com will become www7. -BEF-
-    HOSTNAME=`nslookup $IPADDR | grep "^Name:" | sed -e 's/Name:[[:space:]]*//' -e 's/\..*$//g'`
+    HOSTNAME=`nslookup $IPADDR | sed -ne "s/^Address 1:[[:space:]]\+$IPADDR[[:space:]]\+\([^\.]\+\).*$/\1/p"`
 }
 #
 ################################################################################
