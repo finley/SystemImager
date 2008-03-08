@@ -32,16 +32,6 @@ TODO list for SystemImager
     - si_monitorcurses: ncurses-based interface
     - si_monitortk: perl-Tk interface
 
-(7) Split boel_binaries.tar.gz in:
-
-    - boel_modules.tar.gz: that contains only the default BOEL modules
-    - boel_binaries.tar.gz: that contains all the available binaries
-
-    When imaging with BOEL download boel_modules and boel_binaries, otherwise
-    download boel_binaries only.
-
-    This allows to save time and a lot of RAM space when using UYOK.
-
 (7) Include mkrecoveryISO in the standard release.
 
 (5) Implement si_getdebuginfo to generate a tar.gz containing all the system
