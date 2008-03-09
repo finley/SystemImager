@@ -5,7 +5,7 @@
 #   2005.12.18 Erich Focht
 #
 
-MDADM_VERSION := 2.2
+MDADM_VERSION := 2.6.4
 MDADM_DIR := mdadm-$(MDADM_VERSION)
 MDADM_TARBALL := mdadm-$(MDADM_VERSION).tgz
 # MDADM_URL := http://www.cse.unsw.edu.au/~neilb/source/mdadm/$(MDADM_TARBALL)
@@ -34,7 +34,7 @@ PHONY += install_standard_mdadm
 install_standard_mdadm:	$(MDADM_BINARIES)
 	$(SI_INSTALL) -m 755 $(SRC_DIR)/$(MDADM_DIR)/mdadm $(DESTDIR)
 
-$(MDADM_BINARIES): $(SRC_DIR)/patched_kernel-stamp  
+$(MDADM_BINARIES): $(SRC_DIR)/patched_kernel-stamp
 	rm -rf $(SRC_DIR)/$(MDADM_DIR)
 	$(MAKE) $(SRC_DIR)/$(MDADM_TARBALL)
 	[ -d $(SRC_DIR)/$(MDADM_DIR) ] || \
