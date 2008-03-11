@@ -161,7 +161,7 @@ sub create_uyok_initrd() {
                 }
             }
             # Copy module configuration files.
-            $cmd = qq(rsync -R $module_dir/* $staging_dir);
+            $cmd = qq(rsync -LR $module_dir/* $staging_dir);
             !system( $cmd ) or die( "Couldn't $cmd." );
 
             #
