@@ -885,7 +885,7 @@ sub _read_partition_info_and_prepare_pvcreate_commands {
             $part,
         );
 
-        my $devfs_dev = $devfs_map{$dev};
+        my $devfs_dev = '$' . $dev2disk{$devfs_map{$dev}};
 
         ### BEGIN Populate the simple hashes. -BEF- ###
         my (
@@ -912,6 +912,8 @@ sub _read_partition_info_and_prepare_pvcreate_commands {
             unless (defined($p_type{$m})) { next; }
 
             $part = &get_part_name($dev, $m);
+            $part =~ /^(.*?)(p?\d+)$/;
+            $part = "\${".$dev2disk{$1}."}".$2;
 
             # Extended partitions can't be used by LVM. -AR-
             if ("$p_type{$m}" eq "extended") { next; }
