@@ -413,26 +413,29 @@ beep
 ################################################################################
 #
 #   Detect scsi hardware and include the device IDs into the hardware.lst
-#   file used by systemconfigurator. Do nothing if the hardware.lst file
-#   already exists (which is a sign that it has been already prepared).
+#   file used by systemconfigurator.
 #   Use pci-automod for 2.6 kernels, discover for 2.4 kernels.
 #
-if [ ! -f /a/etc/systemconfig/hardware.lst ]; then
-   [ ! -d /a/etc/systemconfig ] && mkdir -p /a/etc/systemconfig
-   if [ -e /tmp/hardware.lst ]; then
-	   cat /tmp/hardware.lst >> /a/etc/systemconfig/hardware.lst
-   else
-       SCSI_MODS=`discover -f "%m\n" scsi | grep -v ide-scsi | uniq`
-       for MOD in $SCSI_MODS; do
-	   DEVID=`grep $MOD /proc/bus/pci/devices | cut -f 2 | sort | uniq`
-	   for MYDEV in $DEVID; do
-	       VENDOR=`echo $MYDEV | cut -b 1-4`
-	       MODEL=`echo $MYDEV | cut -b 5-8`
-	       echo "$VENDOR $MODEL scsi $MOD" >> /a/etc/systemconfig/hardware.lst
-	       echo "Added SCSI device $VENDOR:$MODEL using module $MOD to hardware.lst"
-	   done
-       done
-   fi
+[ ! -d /a/etc/systemconfig ] && mkdir -p /a/etc/systemconfig
+if [ -e /tmp/hardware.lst ]; then
+    # use previously generated hardware.lst
+    cat /tmp/hardware.lst >> /a/etc/systemconfig/hardware.lst
+elif [ -d /sys/bus -a -e /lib/modules/`uname -r`/modules.pcimap ]; then
+    # use pci-automod to generate hardware.lst
+    logmsg "Using pci-automod to generate hardware.lst (this may take a long time):"
+    pci-automod --hwlist --class storage --class net --class serial --class bridge > /a/etc/systemconfig/hardware.lst
+    logmsg "done"
+else
+    SCSI_MODS=`discover -f "%m\n" scsi | grep -v ide-scsi | uniq`
+    for MOD in $SCSI_MODS; do
+        DEVID=`grep $MOD /proc/bus/pci/devices | cut -f 2 | sort | uniq`
+        for MYDEV in $DEVID; do
+            VENDOR=`echo $MYDEV | cut -b 1-4`
+            MODEL=`echo $MYDEV | cut -b 5-8`
+            echo "$VENDOR $MODEL scsi $MOD" >> /a/etc/systemconfig/hardware.lst
+            logmsg "Added SCSI device $VENDOR:$MODEL using module $MOD to hardware.lst"
+        done
+    done
 fi
 #
 ################################################################################
@@ -506,7 +509,7 @@ if [ ! -z $MONITOR_SERVER ]; then
     if [ "x$MONITOR_CONSOLE" = "xy" ]; then
         MONITOR_CONSOLE=yes
     fi
-    if [ "x$MONITOR_CONSOLE" = "xyes" ]; then 
+    if [ "x$MONITOR_CONSOLE" = "xyes" ]; then
         [ ! -d /a/root ] && mkdir -p /a/root
         cp -f /tmp/si_monitor.log /a/root/si_monitor.log
     fi
@@ -537,7 +540,7 @@ fi
 ################################################################################
 #
 #   Tell the image server we are done
-#   
+#
 rsync $IMAGESERVER::scripts/imaging_complete_$IPADDR > /dev/null 2>&1
 logmsg "Imaging completed"
 #
@@ -549,7 +552,7 @@ if [ ! -z $MONITOR_SERVER ]; then
     if [ "x$MONITOR_CONSOLE" = "xy" ]; then
         MONITOR_CONSOLE=yes
     fi
-    if [ "x$MONITOR_CONSOLE" = "xyes" ]; then 
+    if [ "x$MONITOR_CONSOLE" = "xyes" ]; then
         # Print some empty lines and sleep some seconds to give time to
         # the virtual console to get last messages.
         # XXX: this is a dirty solution, we should find a better way to
