@@ -147,8 +147,8 @@ sub create_uyok_initrd() {
             unless (-d "$staging_dir/lib/modules") {
                 mkdir("$staging_dir/lib/modules", 0755) or die "$!";
             }
+            my $kernel_release = ($custom_kernel) ? _get_kernel_release($custom_kernel) : $uname_r;
             unless ($my_modules) {
-                my $kernel_release = ($custom_kernel) ? _get_kernel_release($custom_kernel) : $uname_r;
                 $cmd = qq(rsync -a --exclude=build --exclude=source ) .
                        qq($modules_to_exclude $module_dir/* $staging_dir/lib/modules/$kernel_release);
                 !system( $cmd ) or die( "Couldn't $cmd." );
@@ -161,7 +161,8 @@ sub create_uyok_initrd() {
                 }
             }
             # Copy module configuration files.
-            $cmd = qq(rsync -LR $module_dir/* $staging_dir);
+            print ">>> Copying modules configuration from: $module_dir...\n" if( $verbose );
+            $cmd = qq(cd $module_dir && rsync --exclude=build --exclude=source -R * $staging_dir/lib/modules/$kernel_release);
             !system( $cmd ) or die( "Couldn't $cmd." );
 
             #
@@ -170,7 +171,6 @@ sub create_uyok_initrd() {
             my $my_modules_dir = "$staging_dir/my_modules";
             $file = "$my_modules_dir" . "/INSMOD_COMMANDS";
             open( FILE,">>$file" ) or die( "Couldn't open $file for appending" );
-    
             print ">>> Appending insmod commands to ./my_modules_dir/INSMOD_COMMANDS...\n" if( $verbose );
             if ($#modules == -1) {
                 print " >> Using custom kernel: hotplug will be used to autodetect the needed modules...\n"
