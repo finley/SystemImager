@@ -1167,7 +1167,7 @@ autodetect_hardware_and_load_modules() {
         logmsg "Detecting hardware using hotplug (this may take a long time): "
         /etc/init.d/hotplug stop
         /etc/init.d/hotplug start
-    else if [ -d /sys/bus -a -e /lib/modules/`uname -r`/modules.pcimap ]; then
+    elif [ -d /sys/bus -a -e /lib/modules/`uname -r`/modules.pcimap ]; then
         logmsg "Hardware already detected by hotplug"
     else
         logmsg "Detecting hardware using discover: "
