@@ -278,7 +278,6 @@ else
     # Use rsync 
     if [ $NO_LISTING ]; then
         logmsg "Quietly installing image... "
-        start_spinner
     fi
     if [ "${TMPFS_STAGING}" = "yes" ]; then 
 
@@ -312,10 +311,6 @@ beep
 #
 ################################################################################
 
-
-if [ $NO_LISTING ]; then
-    stop_spinner
-fi
 
 # Leave notice of which image is installed on the client
 echo $IMAGENAME > /a/etc/systemimager/IMAGE_LAST_SYNCED_TO || shellout

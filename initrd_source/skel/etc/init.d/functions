@@ -180,38 +180,6 @@ write_variables() {
 ################################################################################
 #
 #   Description:
-#   Dann's spinner
-#
-#   Usage: start_spinner
-#   Also see: stop_spinner
-#
-start_spinner() {
-    sleep 1
-    { while :; do
-            echo -ne "\b/";  sleep 1;
-            echo -ne "\b-";  sleep 1;
-            echo -ne "\b\\"; sleep 1;
-            echo -ne "\b|";  sleep 1;
-      done
-    }&
-    SPINNER_PID=$!
-}
-#
-################################################################################
-#
-#   Usage: stop_spinner
-#   Also see: start_spinner
-#
-stop_spinner() {
-    [ -z $SPINNER_PID ] && return
-    logmsg
-    logmsg "stop_spinner"
-    kill -9 $SPINNER_PID
-}
-#
-################################################################################
-#
-#   Description:
 #   watches the tmpfs filesystem (/) and gives warnings and/or does a shellout
 #
 #   Usage: tmpfs_watcher
