@@ -1163,6 +1163,12 @@ autodetect_hardware_and_load_modules() {
             modprobe $MODULE 2>/dev/null && logmsg "done!" || logmsg "not needed or already loaded."
         fi
     done
+
+    # Show loaded modules
+    logmsg ">> Loaded kernel modules:"
+    for m in `cut -d' ' -f1 /proc/modules`; do
+        logmsg "$m"
+    done
 }
 #
 ################################################################################
