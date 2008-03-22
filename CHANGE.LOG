@@ -2,9 +2,39 @@
 #   "SystemImager" 
 #
 #   Copyright (C) 1999-2005 Brian Elliott Finley
+#   Copyright (C) 2007-2008 Andrea Righi
 #
 #   $Id$
 #
+
+4.1.6
+--------------------------------------------------------------------------------
+- use hotplug to automatically load kernel modules in
+  autodetect_hardware_and_load_modules() with BOEL
+- print a list of loaded kernel modules at the end of
+  autodetect_hardware_and_load_modules()
+- remove spinner when quietly installing image: this removes dirty characters
+  in the virtual console of si_monitortk
+- use a more reliable way to copy module configuration files for UYOK
+- removed 94all.update_initrd post-install script: the same feature is
+  provieded by systemconfigurator adding CONFIGRD = yes in systemconfig.conf
+- fixed a bug in disks/partitions auto-detection routine to initialize LVM
+  devices when --autodetect-disks option is used
+- resolve symlinks when copying module configuration files for UYOK (this fixes
+  disk-by-id naming problems with openSuSE 10.3)
+- added a workaround to not touch /dev/null on a build host with old versions
+  of gcc
+- updated BusyBox to 1.9.1
+- updated rsync to 3.0.0
+- updated mdadm to 2.6.4 (this also fixed a bug with 256K chunk size and RAID5
+  devices)
+- various improvements in si_lsimage (completely rewritten to show images
+  details in parallel)
+- fixed a bug with recent kernels and RAID-4/5/6 modules (now all the
+  RAID-4/5/6 functions have been merged in the raid456.ko kernel module)
+- some optimizations in si_clusterconfig
+- now the option --server must be not mandatory for si_prepareclient if
+  --no-rsyncd is specified
 
 4.1.4
 --------------------------------------------------------------------------------
