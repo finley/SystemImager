@@ -17,6 +17,8 @@ Priority classification:
 
 TODO list for SystemImager
 ==========================
+(9) Move the code to add entries in /etc/hosts from si_addclients to
+    si_clusterconfig (or maybe integrate this feature in HostRange.pm)
 
 (8) Introduce a new command (si_power) to control the power of the clients
     (turn on/off/reboot, etc.), see also: ipmitool, BMC.
