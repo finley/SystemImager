@@ -646,7 +646,7 @@ test_tftpd() {
 
     ### BEGIN TFTP CLIENT NOT FOUND
     if [ "$TFTP_CLIENT" == "" ]; then
-	echo "in.tftpd not found in your PATH."
+	echo "tftp client not found in your PATH."
 	echo ""
 	echo "A tftp client is required to test the functionality of your"
 	echo "tftp server.  Please install an appropriate tftp client package"
