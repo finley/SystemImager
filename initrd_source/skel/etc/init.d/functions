@@ -1748,7 +1748,7 @@ start_report_task() {
     # Evaluate image size.
     logmsg "Evaluating image size..."
     if [ ! "x$BITTORRENT" = "xy" ]; then
-        IMAGESIZE=`rsync -av $IMAGESERVER::$IMAGENAME | grep "total size" | sed -e "s/total size is \([0-9]*\).*/\1/"`
+        IMAGESIZE=`rsync -av --numeric-ids $IMAGESERVER::$IMAGENAME | grep "total size" | sed -e "s/total size is \([0-9]*\).*/\1/"`
     else
         if [ -f "${TORRENTS_DIR}/image-${IMAGENAME}.tar.torrent" ]; then
             torrent_file="${TORRENTS_DIR}/image-${IMAGENAME}.tar.torrent"
