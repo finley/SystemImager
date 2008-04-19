@@ -32,14 +32,14 @@ EOF
 # set help information
 my $help_info = $version_info . <<"EOF";
 
-Usage: $program_name [OPTION]... REQUIRED_ARGUMENTS
+Usage: $program_name [OPTION]...
    or: $program_name
 
 Options: (options can be presented in any order)
 
  --help
     Display this output.
-                     
+
  --version
     Display version and copyright information.
 
@@ -49,7 +49,7 @@ Options: (options can be presented in any order)
     ranges or host groups.
 
     Example:  "node001-node099,node101 Login,Storage".
-                     
+
  --ip-range IP_LIST
     Range of IP addresses for clients.  Used to create an optional hosts
     file that clients can use for IP address to hostname resolution
@@ -66,9 +66,9 @@ Options: (options can be presented in any order)
  --script NAME
     Master autoinstall script name.  Don't include the path or the
     '.master' extension.
-    
+
     Example: my_image
-                     
+
  --interactive YES/NO
     This program will go interactive by default if domainname, host,
     host-range, and script are all specified.
@@ -145,7 +145,7 @@ if ($script) {
 $domain_name = lc $domain_name;
 
 my $all_parameters_set = 0;
-if ((defined($hosts) || defined($groups)) and defined($script)) {
+if (defined($hosts) || defined($groups)) {
     $all_parameters_set = 1;
 }
 
@@ -275,7 +275,7 @@ EOF
     unless($createlinks eq "n") {
         $satisfied="n";
         while ($satisfied eq "n") {
-        
+
             # gather a list of available images
             my (@files, $newest_script);
             # ------------------------------------> sort by timestamp -- oldest to newest
@@ -289,9 +289,9 @@ EOF
                 $newest_script = $_;
             }
             close(LS);
-          
+
             unless($script) { $script = $newest_script; }
-          
+
             # display the list of available images
             unless(@files) { die "There are no available autoinstall scripts.  Please use si_getimage to retrieve an\nimage first.   -The Mgmt\n"; }
             print qq(\nHere is a list of available autoinstall scripts:\n);
@@ -300,22 +300,22 @@ EOF
                 print "$_ \n";
             }
             print "\n";
-          
+
             print "Which script would you like these hosts to be installed with?\n";
             print "[$script]: ";
             $script=get_response($script);
             if ( -f "$autoinstall_script_dir/$script.master" ) {
-          
+
                 create_links($hosts, $script, $autoinstall_script_dir);
-          
+
                 print "\nYour soft links have been created.\n";
                 print "\nPress <Enter> to continue...";
                 $satisfied="y";
                 <STDIN>;
                 system("clear");
-          
+
             } else {
-          
+
                 print qq(\nMaster script \"$script\" does not exist...\n);
                 print qq(Let's try again, shall we?\n);
                 print qq(\nPress <Enter> to continue...);
@@ -372,7 +372,7 @@ EOF
         } else {
             die "ERROR: something unexpected... groups or hosts were not defined!\n";
         }
-        
+
         unless (defined($ip_range)) {
             # Try to find the correct IP range.
             my $starting_ip = SystemImager::HostRange::hostname2ip($all_hosts[0]); 
@@ -404,7 +404,7 @@ EOF
                 chomp($satisfied=<STDIN>);
             }
             ### get IP information ###
-        
+
             if (!add_hosts_entries($ip_range, $domain_name, @all_hosts)) {
                 last;
             } else {
@@ -413,8 +413,8 @@ EOF
                 <STDIN>;
             }
         }
-        
-        if ( $etc_hosts eq "y" ) { 
+
+        if ( $etc_hosts eq "y" ) {
             print "\nThese entries have been added to /etc/hosts, and /etc/hosts has been copied\n";
             print "to $autoinstall_script_dir for use by your auto-install clients.\n";
         }
@@ -429,21 +429,26 @@ EOF
     ### END hosts questionaire ###
 
 } else {
-
-    if ($hosts) {
-        create_links($hosts, $script, $autoinstall_script_dir);
-    } else {
+    unless (defined($hosts)) {
         die "ERROR: something unexpected... groups or hosts were not defined!\n";
     }
-    print "$program_name: created links in $autoinstall_script_dir\n";
-
-    if (defined($hosts) and defined($ip_range)) { 
+    my $done = 0;
+    if (defined($ip_range)) {
         my @all_hosts = SystemImager::HostRange::expand_groups($hosts);
         if (add_hosts_entries($ip_range, $domain_name, @all_hosts)) {
             die("$program_name: aborted!\n");
         }
+        print "$program_name: hosts defined in /etc/hosts\n";
+        $done = 1;
     }
-   
+    if (defined($script)) {
+        create_links($hosts, $script, $autoinstall_script_dir);
+        print "$program_name: created links in $autoinstall_script_dir\n";
+        $done = 1;
+    }
+    if (!$done) {
+        print "WARNING: no changes have been made!\n";
+    }
 }
 
 print "\n$program_name: successfully completed.\n";
@@ -472,7 +477,7 @@ sub create_links {
 
 
 # Usage: $ret = add_hosts_entries($ip_range, $domain_name, @all_hosts);
-sub add_hosts_entries { 
+sub add_hosts_entries {
     my ($ip_range, $domain_name, @all_hosts) = @_;
 
     $domain_name = lc $domain_name;
@@ -513,15 +518,15 @@ sub add_hosts_entries {
     }
     close(ETC_HOSTS);
     ### END read in /etc/hosts and create a hash of lines by ip address and a hash of lines by number
-    
-    ### create a hash of new hostnames by ip address 
+
+    ### create a hash of new hostnames by ip address
     @all_hosts = sort(@all_hosts);
     my %new_hostnames_by_ip;
     my $i = 0;
     foreach (SystemImager::HostRange::sort_ip(@all_ips)) {
         $new_hostnames_by_ip{$_} = $all_hosts[$i++];
     }
-    ### create a hash of new hostnames by ip address 
+    ### create a hash of new hostnames by ip address
 
     ### munge new ips and hostname info into %etc_hosts_lines_by_ip
     my @new_ip_addresses = sort (keys %new_hostnames_by_ip);
@@ -567,16 +572,16 @@ sub add_hosts_entries {
         print NEW_ETC_HOSTS "$etc_hosts_lines_by_ip_decimal{$ip_decimal}\n";
     }
     ### print remaining entries
-    
+
     ### close temporary /etc/hosts after writing
     close(NEW_ETC_HOSTS);
     ### close temporary /etc/hosts after writing
-    
+
     ### move new hosts file in to place
     system('mv', '-f', $temp_file, '/etc/hosts');
     if($? != 0) { die "Couldn't move $temp_file to /etc/hosts!\n", "Is the filesystem that contains /etc/ full?"; }
     ### move new hosts file in to place
-    
+
     my $cmd = "cp -f /etc/hosts $autoinstall_script_dir";
     !system($cmd) or die "Couldn't $cmd!";
 
