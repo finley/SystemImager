@@ -10,6 +10,7 @@ use POSIX;
 use File::Basename;
 use Getopt::Long;
 use SystemImager::Config;
+use Socket qw/PF_INET SOCK_DGRAM inet_ntoa sockaddr_in/;
 use vars qw($config $VERSION);
 
 my $config_dir = "/etc/systemimager";
@@ -107,7 +108,20 @@ while(<IN>) {
     if (m/BT_TRACKER_PORT=([0-9]+)/) {
         $tracker_port = $1;
     } elsif (m/BT_INTERFACE=(.+)/) {
-        ($image_server) = (`/sbin/ifconfig $1`)[1] =~ /inet addr:(\S+)/;
+	# Get IP address of the specified interface.
+	# This is quite tricky but more portable than retrieving the IP address
+	# from ifconfig output (see language issue).
+	socket(SOCKET, PF_INET, SOCK_DGRAM, getprotobyname('ip'))
+            or die("ERROR: couldn't create socket!\n");
+
+        # use ioctl() interface with SIOCGIFADDR.
+        my $ifreq = pack('a32', $1);
+        ioctl(SOCKET, 0x8915, $ifreq) or
+            die("ERROR: ioctl failed: $!\n");
+
+        # Format the IP address from the output of ioctl().
+        $image_server = inet_ntoa((sockaddr_in((unpack('a16 a16', $ifreq))[1]))[1]) or
+            die("ERROR: couldn't retrieve IP address from: $ifreq\n");
     }
 }
 unless ($tracker_port) {
