@@ -416,7 +416,7 @@ if ($autoinstall) {
 
     ### BEGIN autoinstall boot configuration ###
     $cmd = <<SC_EOF;
-systemconfigurator --configboot --runboot --stdin <<EOF
+systemconfigurator --verbose --configboot --runboot --stdin <<EOF
 [BOOT]
 BOOTDEV = $bootdev
 ROOTDEV = /dev/ram
