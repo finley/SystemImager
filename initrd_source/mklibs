@@ -335,6 +335,8 @@ if ldlib == "LDLIB":
 
 objects = {}  # map from inode to filename
 for prog in proglist:
+    if not os.path.exists(prog):
+        continue
     inode = os.stat(prog)[ST_INO]
     if objects.has_key(inode):
         debug(DEBUG_SPAM, prog, "is a hardlink to", objects[inode])
