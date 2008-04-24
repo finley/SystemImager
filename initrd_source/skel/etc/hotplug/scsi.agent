@@ -1,0 +1,69 @@
+#!/bin/sh
+#
+# SCSI hotplug agent for 2.5 kernels 
+#
+#	ACTION=add
+#	DEVPATH=devices/scsi0/0:0:0:0
+#
+
+cd /etc/hotplug
+. ./hotplug.functions
+
+case $ACTION in
+
+add)
+    TYPE_ATTR=/sys$DEVPATH/type
+
+    # Possibly sleep here to try and avoid races with scsi attributes and block
+    # devices
+    count=10
+    while [ ! -f $TYPE_ATTR -a $count -gt 0 ]
+    do
+	# We seem to always hit this now, so don't output any message.
+	debug_mesg "waiting for $TYPE_ATTR"
+	sleep 1
+	count=$(($count-1))
+    done
+
+    if [ ! -f $TYPE_ATTR ]
+    then
+    	mesg "Attribute $TYPE_ATTR does not exist"
+	exit 1
+    fi
+
+    read TYPE < $TYPE_ATTR
+    case "$TYPE" in
+    # 2.5.51 style attributes; <scsi/scsi.h> TYPE_* constants
+    0)		TYPE=disk ;	MODULES=sd_mod ;;
+    # FIXME some tapes use 'osst' not 'st'
+    1)		TYPE=tape ;	MODULES=st ;;
+    2)		TYPE=printer ;;
+    3)		TYPE=processor ;;
+    4)		TYPE=worm ;	MODULES=sr_mod ;;
+    5)		TYPE=cdrom ;	MODULES="sr_mod sg" ;;
+    6)		TYPE=scanner ;	MODULES=sg ;;
+    7)		TYPE=mod ;	MODULES=sd_mod ;;
+    8)		TYPE=changer ;;
+    9)		TYPE=comm ;;
+    14)		TYPE=enclosure ;;
+    esac
+    for MODULE in $MODULES; do
+	if is_blacklisted $MODULE; then
+	    mesg "     $MODULE: blacklisted (for $TYPE)"
+	elif modprobe --quiet $MODULE; then
+	    mesg "     $MODULE: loaded sucessfully (for $TYPE)"
+	else
+	    mesg "     $MODULE: can't be loaded (for $TYPE)"
+	fi
+    done
+    ;;
+
+remove)
+    ;;
+
+*)
+    debug_mesg SCSI $ACTION event not supported
+    exit 1
+    ;;
+
+esac

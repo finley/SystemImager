@@ -36,8 +36,6 @@ monitor_save_dmesg
 
 mount_sys
 
-mount_pts
-
 get_arch
 
 adjust_arch
@@ -49,6 +47,8 @@ load_my_modules
 start_udevd
 
 start_hotplug
+
+mount_pts
 
 # Need to do this prior to read_local_cfg to get last_root parameter, 
 # if specified. -BEF-

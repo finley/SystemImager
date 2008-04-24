@@ -1,0 +1,19 @@
+# This file establishes user-friendly symlinks to devices according to
+# Ubuntu policy.  See udev(7) for syntax.
+#
+# The names of the actual devices themselves must not be set here, but
+# in 20-names.rules; the permissions and ownership of those devices
+# should be set in 40-permissions.rules.
+
+# Compatibility symlinks for /dev/scd* devices
+SUBSYSTEMS=="scsi", KERNEL=="sr[0-9]*",	SYMLINK+="%k"
+
+# Create /dev/cdrom* symlinks for CD-ROM devices
+ENV{ID_CDROM}=="?*",			SYMLINK+="cdrom"
+ENV{ID_CDROM_CD_RW}=="?*",		SYMLINK+="cdrw"
+ENV{ID_CDROM_DVD}=="?*",		SYMLINK+="dvd"
+ENV{ID_CDROM_DVD_R}=="?*",		SYMLINK+="dvdrw"
+
+# Create /dev/pilot symlink for Palm Pilots
+KERNEL=="ttyUSB*", ATTRS{product}=="Palm Handheld*|Handspring *|palmOne Handheld", \
+					SYMLINK+="pilot"

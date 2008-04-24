@@ -1,0 +1,155 @@
+#!/bin/sh -e
+#
+# description:	Starts and stops each hotpluggable subsystem.
+#		On startup, may simulate hotplug events for devices
+#		that were present at boot time, before filesystems
+#		used by /sbin/hotplug became available.
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+
+[ -x /sbin/hotplug ] || exit 0
+
+. /lib/lsb/init-functions
+. /etc/default/rcS
+if [ "x$VERBOSE" = "xno" ]; then
+	MODPROBE_OPTIONS="$MODPROBE_OPTIONS -Q"
+	export MODPROBE_OPTIONS
+
+        # default to quiet in normal boot, be verbose in recovery mode
+        if [ -e /proc/cmdline ] && ! grep -q '\<single\>' /proc/cmdline; then
+            QUIET=yes
+        fi
+fi
+
+if [ ! -f /proc/sys/kernel/hotplug ]; then
+   log_warning_msg "Kernel hotplug support not enabled."
+   exit 0
+fi
+
+# execution order of the *.rc scripts
+RC_ORDER="pci usb isapnp"
+
+[ -e /etc/default/hotplug ] && . /etc/default/hotplug
+
+# Takes two parameters: list to sort through and list of elements
+# that should be removed from it. As a side effect it modifies
+# $prune_output (the list with the elements removed) and $prune_discard
+# (the list of the elements discarded).
+prune() {
+    unset prune_output prune_discard
+    local discard
+
+    for x in $1; do
+	unset discard
+	for y in $2; do
+	    [ $x = $y ] && discard=yes
+	done
+	if [ "$discard" ]; then
+	    prune_discard="$prune_discard $x"
+	else
+	    prune_output="$prune_output $x"
+	fi
+    done
+}
+
+# Prints the elements from the first argument, in the order in which they
+# appear in the second argument.
+sort_with_deps() {
+    local unordered
+
+    # Get the list of elements that have no ordering requirement.
+    prune "$1" "$2"
+    unordered=$prune_output
+
+    # Reverse psychology here. Throw away all items of the DEPLIST that
+    # we actually want. prune_discard will have them in the right order.
+    prune "$2" "$prune_discard"
+
+    # Append the elements with no ordering to the sorted list.
+    echo "$prune_discard $unordered"
+
+    unset prune_output prune_discard
+}
+
+quiet_printk() {
+    [ -w /proc/sys/kernel/printk -a "$QUIET" ] || return 0
+    SAVED_LOGLEVEL=$(cat /proc/sys/kernel/printk)
+    echo "1 4 1 7" > /proc/sys/kernel/printk
+}
+
+restore_printk() {
+    [ "$SAVED_LOGLEVEL" ] || return 0
+    echo "$SAVED_LOGLEVEL" > /proc/sys/kernel/printk
+}
+
+run_rcs() {
+    for RC in /etc/hotplug/*.rc; do
+	local basename=${RC#/etc/hotplug/}
+	SUBSYSTEMS="$SUBSYSTEMS ${basename%.rc}"
+    done
+
+    SUBSYSTEMS=$(sort_with_deps "$SUBSYSTEMS" "$RC_ORDER")
+
+    log_begin_msg "$2..."
+
+    for name in $SUBSYSTEMS; do
+        if which usplash_write >/dev/null; then
+            usplash_write "PING" || true
+        fi
+	if [ "$(eval echo \$HOTPLUG_RC_$name)" = no \
+		-o ! -x /etc/hotplug/$name.rc ]; then
+	    [ "$QUIET" ] || log_warning_msg "   $name [disabled]"
+	    continue
+	fi
+
+	if   [ "$1" = status ]; then
+	    /etc/hotplug/$name.rc $1 || true
+	    continue
+	elif [ "$QUIET" ]; then
+	    /etc/hotplug/$name.rc $1 > /dev/null 2>&1
+	else
+	    log_begin_msg "   $name"
+	    /etc/hotplug/$name.rc $1
+	    log_end_msg $?
+	fi
+    done
+
+    if [ "$QUIET" ]; then
+	log_end_msg 0
+    else
+	log_begin_msg "done."
+    fi
+}
+
+case "$1" in
+start)
+    quiet_printk
+    run_rcs $1 "Starting hotplug subsystem"
+    restore_printk
+    ;;
+
+stop)
+    quiet_printk
+    run_rcs $1 "Stopping hotplug subsystem"
+    restore_printk
+    ;;
+
+restart|force-reload)
+    quiet_printk
+    run_rcs stop  "Stopping hotplug subsystem"
+    run_rcs start "Starting hotplug subsystem"
+    restore_printk
+    ;;
+
+status)
+    unset QUIET
+    run_rcs $1 "Hotplug status"
+    ;;
+
+*)
+    echo "Usage: $0 {start|stop|restart|status|force-reload}"
+    exit 1
+    ;;
+esac
+
+exit 0

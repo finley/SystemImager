@@ -1,0 +1,3 @@
+# firmware class requests
+SUBSYSTEM=="firmware", ACTION=="add", RUN+="/lib/udev/firmware.sh"
+

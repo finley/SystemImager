@@ -1,0 +1,63 @@
+#!/bin/sh
+# vim: syntax=sh
+#
+# net.rc	recover lost boot-time network hotplug events;
+#		this deals with the case where network drivers
+#		are statically linked or loaded before hotplug
+#		(e.g. by initramfs) but marked as hotplug in
+#		/etc/network/interfaces
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+
+cd /etc/hotplug
+. ./hotplug.functions
+
+net_boot_events ()
+{
+    # make sure the net agent will run
+    ACTION=add
+    export ACTION INTERFACE
+
+    if [ -d /sys/class/net ]; then
+    	# 2.6 kernels
+	for NET_DEVICE in /sys/class/net/*; do
+	    INTERFACE=`basename $NET_DEVICE`
+	    ./net.agent
+	done
+    fi
+
+    return 0
+}
+
+# See how we were called.
+case "$1" in
+  start)
+	rm -f /etc/hotplug/.run/net.busy
+	net_boot_events
+        ;;
+  stop)
+	# echo "net stop -- ignored"
+        ;;
+  status)
+	echo "NET Status for kernel: "  `uname -srm`
+	echo ''
+
+	if [ -d /sys/class/net ]; then
+	    echo "NET devices:"
+	    for NET_DEVICE in /sys/class/net/*; do
+	    	echo "    "`basename $NET_DEVICE`
+	    done
+	else
+	    echo "no /sys/class/net support?"
+	fi
+	echo ''
+
+	;;
+  restart)
+	# always invoke by absolute path, else PATH=$PATH:
+	$0 stop && $0 start
+	;;
+  *)
+        echo "Usage: $0 {start|stop|status|restart}"
+        exit 1
+esac

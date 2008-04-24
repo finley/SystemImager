@@ -1,61 +1,41 @@
 #
-# $Id$
 #  vi: set filetype=make:
 #
 
-HOTPLUG_VERSION     	= 0.0.20040329
-HOTPLUG_DIFF_VERSION	= 22ubuntu13
-HOTPLUG_TARBALL     	= hotplug_$(HOTPLUG_VERSION).orig.tar.gz
-# HOTPLUG_URL         	= http://us.archive.ubuntu.com/ubuntu/pool/main/h/hotplug/
+HOTPLUG_VERSION     	= 002
+HOTPLUG_TARBALL     	= hotplug-ng-$(HOTPLUG_VERSION).tar.bz2
+# HOTPLUG_URL         	= http://www.us.kernel.org/pub/linux/utils/kernel/hotplug/
 HOTPLUG_URL         	= http://download.systemimager.org/pub/hotplug/
-HOTPLUG_DIFF        	= hotplug_$(HOTPLUG_VERSION)-$(HOTPLUG_DIFF_VERSION).diff.gz
-HOTPLUG_DIR         	= $(INITRD_SRC_DIR)/hotplug-$(HOTPLUG_VERSION).orig
-HOTPLUG_PATCHES 		= $(shell ls $(INITRD_PATCH_DIR)/hotplug.*.patch 2>/dev/null | sort)
+HOTPLUG_DIR         	= $(INITRD_SRC_DIR)/hotplug-ng-$(HOTPLUG_VERSION)
+HOTPLUG_PATCHES 	= $(shell ls $(INITRD_PATCH_DIR)/hotplug.*.patch 2>/dev/null | sort)
 
-ALL_SOURCE += $(INITRD_SRC_DIR)/$(HOTPLUG_TARBALL) $(INITRD_SRC_DIR)/$(HOTPLUG_DIFF)
-
-PHONY += hotplug_install
-hotplug_install:  $(HOTPLUG_DIR).install
-$(HOTPLUG_DIR).install:  	$(HOTPLUG_DIR).build \
-							$(INITRD_BUILD_DIR).prep
-	rsync -av $(HOTPLUG_DIR)/debian/hotplug/ $(INITRD_BUILD_DIR)/
-	install -m 755 $(HOTPLUG_DIR)/debian/hotplug.init $(INITRD_BUILD_DIR)/etc/init.d/hotplug
-
+ALL_SOURCE += $(INITRD_SRC_DIR)/$(HOTPLUG_TARBALL)
 
 PHONY += hotplug
 hotplug:  $(HOTPLUG_DIR).build
+
 $(HOTPLUG_DIR).build:  $(HOTPLUG_DIR).unpack
-	cd $(HOTPLUG_DIR) && chmod +x ./debian/rules
-	cd $(HOTPLUG_DIR) && ./debian/rules clean
-	cd $(HOTPLUG_DIR) && ./debian/rules binary
+	cd $(HOTPLUG_DIR) && make
 	touch $@
 
+PHONY += hotplug_install
+hotplug_install:  $(HOTPLUG_DIR).install
+$(HOTPLUG_DIR).install:  	$(HOTPLUG_DIR).build
+	cd $(HOTPLUG_DIR) && make install DESTDIR=$(INITRD_BUILD_DIR)
+	cd $(HOTPLUG_DIR) && make uninstall-man DESTDIR=$(INITRD_BUILD_DIR)
 
 $(HOTPLUG_DIR).unpack:  $(INITRD_DIR)/make.d/hotplug.rul \
-						$(INITRD_SRC_DIR)/$(HOTPLUG_TARBALL) \
-						$(INITRD_SRC_DIR)/$(HOTPLUG_DIFF) \
-						$(HOTPLUG_PATCHES)
+			$(INITRD_SRC_DIR)/$(HOTPLUG_TARBALL)
 	rm -rf $(HOTPLUG_DIR)
-	cd $(INITRD_SRC_DIR) && tar -xvzf $(INITRD_SRC_DIR)/$(HOTPLUG_TARBALL)
-	cd $(INITRD_SRC_DIR) && zcat $(INITRD_SRC_DIR)/$(HOTPLUG_DIFF) | patch -p0
+	cd $(INITRD_SRC_DIR) && tar -xvjf $(INITRD_SRC_DIR)/$(HOTPLUG_TARBALL)
 	cd $(HOTPLUG_DIR) && cat $(HOTPLUG_PATCHES) < /dev/null | patch -p1
 	touch $@
-
 
 $(INITRD_SRC_DIR)/$(HOTPLUG_TARBALL):
 	mkdir -p $(INITRD_SRC_DIR)
 	$(GETSOURCE) $(HOTPLUG_URL)/$(HOTPLUG_TARBALL) $(INITRD_SRC_DIR)
 
-
-$(INITRD_SRC_DIR)/$(HOTPLUG_DIFF):
-	mkdir -p $(INITRD_SRC_DIR)
-	$(GETSOURCE) $(HOTPLUG_URL)/$(HOTPLUG_DIFF) $(INITRD_SRC_DIR)
-
-
 PHONY += hotplug_clean
 hotplug_clean:
 	rm -rf $(HOTPLUG_DIR)
-	rm -f  $(HOTPLUG_DIR).unpack
-	rm -f  $(HOTPLUG_DIR).build
-
-
+	rm -f $(HOTPLUG_DIR).unpack $(HOTPLUG_DIR).build $(HOTPLUG_DIR).install

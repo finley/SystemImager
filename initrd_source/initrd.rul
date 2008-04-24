@@ -32,7 +32,8 @@ INITRD_BINARIES = $(shell file \
 							initrd_source/build_dir/usr/bin/* \
 							initrd_source/build_dir/sbin/* \
 							initrd_source/build_dir/usr/sbin/* \
-							| grep -v text \
+							initrd_source/build_dir/lib/udev/* \
+							| grep -v "text\|symbolic link" \
 							| perl -pi -e 's/:.*//')
 
 

@@ -1,0 +1,96 @@
+#!/bin/sh
+
+# Check the package is still installed
+[ -x /sbin/udevd ] || exit 0
+
+case "$1" in
+    start)
+	# We need the uevent support introduced in 2.6.15, bail out if we
+	# don't have it and fall back to a static /dev
+	if [ ! -f /sys/class/mem/null/uevent ]; then
+	    if mountpoint -q /dev; then
+		# uh-oh, initramfs made some kind of /dev, get rid of it
+		umount -l /dev/.static/dev
+		umount -l /dev
+	    fi
+	    exit 1
+	fi
+
+	if ! mountpoint -q /dev; then
+	    # initramfs didn't mount /dev, so we'll need to do that
+	    mount -n --bind /dev /etc/udev
+	    mount -n -t tmpfs -o mode=0755 udev /dev
+	    mkdir -m 0700 -p /dev/.static/dev
+	    mount -n --move /etc/udev /dev/.static/dev
+	fi
+
+	# Create /dev/null
+	mknod /dev/null c 1 3
+
+	# It's all over netlink now
+	if [ -e /proc/sys/kernel/hotplug ]; then
+	    echo "" > /proc/sys/kernel/hotplug
+	fi
+
+	# Start udevd
+	echo "Starting kernel event manager..."
+	if /sbin/udevd --daemon; then
+	    echo OK
+	else
+	    echo ERROR: $?
+	fi
+
+	# This next bit can take a while
+	if type usplash_write >/dev/null 2>&1; then
+	    usplash_write "TIMEOUT 360" ||:
+	    trap "usplash_write 'TIMEOUT 15' ||:" 0
+	fi
+
+	# Log things that udevtrigger does (won't work on seb's machine)
+	if [ -x /usr/sbin/udevmonitor ]; then
+		/usr/sbin/udevmonitor -e >/dev/.udev.log &
+		UDEV_MONITOR_PID=$!
+	fi
+
+	# Fix permissions and missing symlinks/programs for devices made in
+	# initramfs, and catch up on everything we missed
+	echo "Loading hardware drivers..."
+	/sbin/udevtrigger
+	if /sbin/udevsettle; then
+	    echo OK
+	else
+	    echo ERROR: $?
+	fi
+
+	# Kill the udevmonitor again
+	if [ -n "$UDEV_MONITOR_PID" ]; then
+		kill $UDEV_MONITOR_PID
+	fi
+	;;
+    stop)
+	echo "Stopping kernel event manager..."
+	pid=`ps | sed -ne "s/ *\([0-9]*\).*udevd --daemon.*/\1/p"`
+	if [ ! -z $pid ] && kill -9 $pid; then
+	    echo OK
+	else
+	    echo ERROR: $?
+	fi
+	umount -l /dev/.static/dev
+	umount -l /dev
+	;;
+    restart)
+	echo "Loading additional hardware drivers..."
+	/sbin/udevtrigger
+	if /sbin/udevsettle; then
+	    echo OK
+	else
+	    echo ERROR: $?
+	fi
+	;;
+*)
+	echo "Usage: /etc/init.d/udev {start|stop|restart}"
+	exit 1
+	;;
+esac
+
+exit 0

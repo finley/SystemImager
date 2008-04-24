@@ -1,0 +1,30 @@
+#!/bin/bash
+#
+# Copyright (c) 2002 SuSE Linux AG, Nuremberg
+#
+# Author:  Susanne Oberhauser <froh@suse.de>, 2002
+#
+# the GNU Public License applies
+#
+
+# modify this function at your heart's:
+function dasd_permissions
+{
+
+    case "$NODE-$MAJOR-$MINOR-$MISC" in
+	# add your special ownership handling here, e.g.
+	#
+	# this feature is experimental, which means it's neither
+	# supported nor maintained: you're on your own.
+	#
+	# /dev/dasd*-*-*-*-ORA*) OWNER=ora.ora; PERMISSIONS="ug=rw,o=";;
+	#
+	/dev/dasd*-*)
+	    # default:
+	    OWNER=root.disk
+	    PERMISSIONS="ug=rw,o="
+	    ;;
+	*)
+	    die "dasd_permissions: don't know what permissions to give $NODE-$MAJOR-$MINOR-$MISC"
+    esac
+}

@@ -1,0 +1,127 @@
+#!/bin/sh
+#
+# Network hotplug policy agent for Linux 2.4 kernels
+#
+# Kernel NET hotplug params include:
+#	
+#	ACTION=%s [register or unregister]
+#	INTERFACE=%s
+#
+# HISTORY:
+#
+# 25-Feb-2001	Special case ppp and similar (redhat)
+# 23-Jan-2001	Log invocation of "ifup" if debugging
+# 04-Jan-2001	Initial version of "new" hotplug agent.
+#
+# $Id: net.agent,v 1.18 2004/03/29 22:23:31 kroah Exp $
+#
+
+# Debian-specific note:
+# NET_AGENT_POLICY (in /etc/default/hotplug)
+#  all - ALL network interfaces will be ifupped
+#  auto - only network interfaces marked as "auto" in /etc/network/interfaces
+#        will be ifupped.
+#  hotplug - hotplug brings up network interfaces with '=hotplug', so
+#        you need "mapping hotplug" stanzas in /etc/network/interfaces.
+# See /usr/share/doc/hotplug/README.Debian for more details.
+#
+
+cd /etc/hotplug
+. ./hotplug.functions
+# DEBUG=yes export DEBUG
+
+if [ "$INTERFACE" = "" ]; then
+    mesg Bad NET invocation: \$INTERFACE is not set
+    exit 1
+fi
+
+if [ "$NET_AGENT_POLICY" = "hotplug" ]; then
+    LIFACE='=hotplug'
+fi
+
+case $ACTION in
+add|register)
+    case $INTERFACE in
+	# interfaces that are registered after being "up" (?)
+	ppp*|ippp*|isdn*|plip*|lo*|irda*|dummy*|ipsec*|tun*|tap*)
+	    debug_mesg assuming $INTERFACE is already up
+	    exit 0
+	    ;;
+	# interfaces that are registered then brought up
+	*)
+	    # Run ifrename as needed - Jean II
+	    # Remap interface names based on MAC address. This workaround
+	    # the dreaded configuration problem "all my cards are 'eth0'"...
+	    # This needs to be done before ifup otherwise ifup will get
+	    # confused by the name changed and because iface need to be
+	    # down to change its name.
+	    if [ -x /sbin/ifrename ] && [ -r /etc/iftab ]; then
+		debug_mesg invoke ifrename for $INTERFACE
+		NEWNAME=`/sbin/ifrename -t -i $INTERFACE`
+		if [ -n "$NEWNAME" ]; then
+		    debug_mesg iface $INTERFACE is remapped to $NEWNAME
+		    INTERFACE=$NEWNAME
+		fi;
+	    fi
+
+	    if [ -x /sbin/ifup ]; then
+		if grep -q '^auto[[:space:]].*\<'"$INTERFACE"'\>' \
+			/etc/network/interfaces; then
+		    # this $INTERFACE is marked as "auto"
+		    autoif=true
+		fi
+		if [ "$NET_AGENT_POLICY" = "auto" -a "$autoif" != "true" ]; then
+		    debug_mesg "iface $INTERFACE is not marked as 'auto'"
+		    exit 0
+		fi
+		IFUPARG="$INTERFACE"
+		if [ "$autoif" = "true" ]; then
+		    IFUPARG='\('$INTERFACE'\|-a\|--all\)'
+		fi
+		if ps -C ifup ho args | grep -q "$IFUPARG"; then
+		    debug_mesg "Already ifup-ing that interface"
+		else
+		    touch /etc/hotplug/.run/net.busy
+		    start-stop-daemon --start --background \
+			--pidfile /var/run/hotplug.net.ifup.bogus \
+			--startas /etc/hotplug/net.ifup -- "$INTERFACE$LIFACE"
+		fi
+		exit 0
+	    else
+		mesg "E: /sbin/ifup not found. You need to install the ifupdown package."
+	    fi
+	    ;;
+    esac
+    mesg $1 $ACTION event not handled
+    ;;
+
+remove|unregister)
+    # the pppd persist option may have been used, so it should not be killed
+    case $INTERFACE in
+    ppp[0-9]*)
+	exit 0
+	;;
+    esac
+    # Run ifdown because it is not going to remove the data from the
+    # ifstate database otherwise.
+    if [ -x /sbin/ifdown ]; then
+	if ps -C ifdown ho args | grep -q $INTERFACE; then
+	    debug_mesg "Already ifdown-ing interface $INTERFACE"
+	elif [ ! -e /etc/hotplug/.run/net.enable ]; then
+	    debug_mesg "The net.enable flag does not exist, $INTERFACE not removed"
+	else
+	    debug_mesg "Invoking ifdown $INTERFACE"
+	    ifdown "$INTERFACE"
+	fi
+	exit 0
+    else
+	mesg "E: /sbin/ifdown not found. You need to install the ifupdown package"
+    fi
+    mesg "$1 $ACTION event not handled"
+    ;;
+
+*)
+    debug_mesg NET $ACTION event not supported
+    exit 1 ;;
+
+esac

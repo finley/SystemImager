@@ -1,0 +1,40 @@
+#!/bin/sh -e
+#
+# scsi.rc	loads the modules for SCSI devices at boot time, if needed
+#		it requires a 2.6 kernel
+#
+# Copyright (C) Canonical Software Ltd. 2004
+# Written by Jeff Bailey <jbailey@ubuntu.com>
+#
+
+# only 2.6 kernels are supported
+[ -d /sys/block/ ] || exit 0
+
+cd /etc/hotplug
+. ./hotplug.functions
+
+scsi_boot_events() {
+    export ACTION DEVPATH
+
+    [ "$(echo /sys/bus/scsi/devices/*)" = "/sys/bus/scsi/devices/*" ] && return
+
+    ACTION=add
+    for device in /sys/bus/scsi/devices/*; do
+	DEVPATH=${device#/sys}
+	./scsi.agent
+    done
+}
+
+# See how we were called.
+case "$1" in
+    start|restart)
+	scsi_boot_events
+	;;
+    stop)
+	;;
+    status)
+	;;
+    *)
+	echo "Usage: $0 {start|stop|status|restart}"
+	exit 1
+esac

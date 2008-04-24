@@ -1,0 +1,22 @@
+#!/bin/sh
+
+IFUP_TIMEOUT=120
+
+cd /etc/hotplug
+. ./hotplug.functions
+
+[ -e /etc/hotplug/.run/net.enable ] || debug_mesg "Waiting for the net.enable flag"
+while [ $IFUP_TIMEOUT != 0 ]; do
+    if [ -e /etc/hotplug/.run/net.enable ]; then
+	debug_mesg "Invoking ifup $1"
+	ifup "$1"
+	rm -f /etc/hotplug/.run/net.busy
+	exit
+    fi
+    sleep 1
+    IFUP_TIMEOUT=$(($IFUP_TIMEOUT - 1))
+done
+
+debug_mesg "Failed to see the net.enable flag"
+exit 1
+

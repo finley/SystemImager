@@ -1,0 +1,55 @@
+#!/bin/sh -e
+#
+# ide.rc	loads the modules for IDE devices at boot time, if needed
+#		it requires a 2.6 kernel
+#
+# Copyright (C) 2004, 2005 Marco d'Itri <md@linux.it>
+#
+
+# only 2.6 kernels are supported
+[ -d /sys/block/ ] || exit 0
+
+cd /etc/hotplug
+. ./hotplug.functions
+
+ide_boot_events() {
+    [ "$(echo /proc/ide/*/media)" = "/proc/ide/*/media" ] && return
+
+    for drive in /proc/ide/*/media; do
+	# nothing to do if the device has already been took in charge
+	unit=${drive#/proc/ide/}; unit=${unit%/media}
+	[ -d /sys/block/$unit ] && continue
+
+	read media < $drive
+	case "$media" in
+	    disk)     MODULE=ide-disk ;;
+	    cdrom)    MODULE=ide-cd ;;
+	    tape)     MODULE=ide-tape ;;
+	    floppy)   MODULE=ide-floppy ;;
+	    *)        MODULE=ide-generic ;;
+	esac
+
+	if is_blacklisted $MODULE; then
+	    mesg "     $MODULE: blacklisted"
+	elif modprobe --quiet $MODULE; then
+	    mesg "     $MODULE: loaded sucessfully"
+	else
+	    mesg "     $MODULE: can't be loaded"
+	fi
+    done
+}   
+
+# See how we were called.
+case "$1" in
+    start|restart)
+        ide_boot_events
+        ;;
+    stop)
+        ;;
+    status)
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|status|restart}"
+        exit 1
+esac
+

@@ -1,0 +1,53 @@
+# This file causes modules to be loaded for inserted devices.
+# See udev(7) for syntax.
+#
+# This file should only specify rules that cause modprobe to be called,
+# programs that configure or activate hardware should be called in
+# 80-programs.rules
+
+ACTION!="add", GOTO="modprobe_end"
+
+# Load IDE class modules based on the media type
+SUBSYSTEM!="ide", GOTO="ide_end"
+ENV{IDE_MEDIA}=="cdrom",		RUN+="modprobe ide-cd"
+ENV{IDE_MEDIA}=="disk",			RUN+="modprobe ide-disk"
+ENV{IDE_MEDIA}=="floppy",		RUN+="modprobe ide-floppy"
+ENV{IDE_MEDIA}=="tape",			RUN+="modprobe ide-tape"
+LABEL="ide_end"
+
+# Load i2o class modules unequivocably until we know more about them
+SUBSYSTEM=="i2o",			RUN+="modprobe i2o-block"
+
+# Load MMC class modules unequivocably until we know more about them
+SUBSYSTEM=="mmc",			RUN+="modprobe mmc-block"
+
+# Load SCSI class modules based on the device class
+SUBSYSTEM!="scsi", GOTO="scsi_end"
+ATTR{type}=="0|7|14",   		RUN+="modprobe sd_mod"
+ATTR{type}=="1",        		RUN+="modprobe st"
+ATTR{type}=="[345]",    		RUN+="modprobe sr_mod"
+RUN+="modprobe sg"
+LABEL="scsi_end"
+
+# Load VIO modules based on the device type
+# (modules that lack modalias support)
+SUBSYSTEM!="vio", GOTO="vio_end"
+ENV{VIO_TYPE}=="serial",		RUN+="modprobe hvc_console"
+ENV{VIO_TYPE}=="serial-server",		RUN+="modprobe hvcs"
+ENV{VIO_TYPE}=="network",		RUN+="modprobe ibmveth"
+ENV{VIO_TYPE}=="vscsi",			RUN+="modprobe ibmvscsic"
+ENV{VIO_TYPE}=="vlan",			RUN+="modprobe iseries_veth"
+ENV{VIO_TYPE}=="viodasd",		RUN+="modprobe viodasd"
+ENV{VIO_TYPE}=="viocd",			RUN+="modprobe viocd"
+LABEL="vio_end"
+
+# Hack to load ti flashmedia subsystem drivers
+SUBSYSTEM!="tifm", GOTO="tifm_end"
+RUN+="modprobe tifm_sd"
+RUN+="modprobe tifm_ms"
+LABEL="tifm_end"
+
+# Load drivers that match kernel-supplied alias
+ENV{MODALIAS}=="?*",			RUN+="modprobe $env{MODALIAS}"
+
+LABEL="modprobe_end"
