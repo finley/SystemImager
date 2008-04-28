@@ -1,0 +1,847 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+
+<title>Systemimager Monitor</title>
+
+<style type="text/css">
+  
+  body
+  {
+    font-family: Verdana;
+    font-size: small;
+  }
+
+  table
+  {
+    width: 100%;
+    border: 1px solid gray;
+    border-collapse: collapse;  
+  }
+  
+  #notification
+  {
+    position: fixed;
+    top: 0;
+    right: 0;
+    background: #efe;
+    padding: 0.4em;
+    color: gray;
+  }
+  
+  #navigation
+  {
+    display: table;
+    width: 100%;
+  }
+
+  #navigation div
+  {
+    display: table-row;
+  }
+
+  #navigation div *
+  {
+    padding: 0.2em;
+    display: table-cell;
+  }
+
+  #filter
+  {
+    text-align: right;
+  }
+
+  td
+  {
+    padding: 0.2em;
+    margin: 0;
+    border-left: 1px solid gray;
+    border-right: 1px solid gray;
+  }
+  
+  .numeric
+  {
+    text-align: right;
+  }
+  
+  th, tfoot td
+  {
+    background: #eee;
+    border: 1px solid gray;
+  }
+  
+  /* Clickable column header */
+  .sort_link
+  {
+    display: block;
+    width: 100%;
+    color: black;
+    text-decoration: none;
+  }
+  
+
+  /*Progress-Bar Styles*/
+  td.progress
+  {
+    padding-left: 0.2em;
+    padding-top: 0.2em;
+
+    padding-right: 0.4em;
+    padding-bottom: 0.4em;
+  }
+  
+  .progress_container
+  {
+    margin: 0;
+    padding: 0;
+    position: relative;
+    
+    z-index: 0;
+  }
+
+  .progress_label_container
+  {
+    text-align: center;
+    margin: 0.1em;
+    position: relative;    
+    font-weight: bold;
+    background: none;
+    
+    z-index: 10;
+  }
+  
+  .bar_progress
+  {
+    border: 1px solid #34f;  
+    background: #9af;
+  }
+
+  .bar_ready
+  {
+    border: 1px solid #484;
+    background: #beb;
+  }
+
+  /* progress bar for low and medium memory usage */
+  .bar_mem_med, .bar_mem_low
+  {
+    border: 1px solid #34d;  
+    background: #9af;
+  }
+  
+  /* progress bar for critical memory usage */
+  .bar_mem_high
+  {
+    border: 1px solid #844;
+    background: #ebb;
+  }
+    
+  .progress_box
+  {
+    background: none;
+    width: 100%;
+    
+    position: absolute;
+  }
+  
+  .bar_neutral
+  {
+    border: 1px solid gray;
+    background: #eee;
+  }
+  
+  .bar_error
+  {
+    border: 1px solid #844;
+    background: #ebb;
+  }
+    
+  .progress_bar
+  {
+    border: none;    
+    position: static;
+  }
+  
+</style>
+
+<script type="text/javascript">
+<!--
+var clients_file = "clients.xml";
+var updateRequest;
+var lastModified = new Date(0);
+var updateTimeout;
+var currentClients;
+var sortColumn = null;
+var sortDirection = 1;
+var filter = null;
+
+var paging_start = 0;
+var paging_length = 25;
+
+/* ----------------------------- AJAX magic ----------------------------- */
+/* Simple AJAX functions to query the clients.xml periodically.           */
+function createXMLHttpRequest()
+{  
+  if (window.XMLHttpRequest)
+  {
+    var request = new XMLHttpRequest();
+    if (request.overrideMimeType) request.overrideMimeType('application/xml');
+
+    return request;
+  }
+
+  alert("No XMLHttpRequest functionality found! Get a decent browser...");
+  
+  return null;
+}
+
+function requestPageUpdate()
+{
+    showNotification("loading");
+    if(updateTimeout) window.clearTimeout(updateTimeout);
+    updateTimeout = window.setTimeout("requestPageUpdate()", 5000);
+    
+    if (updateRequest != null) return; //previous request not finished yet
+    
+    updateRequest = createXMLHttpRequest();  
+    if (updateRequest == null ) return;
+
+    updateRequest.onreadystatechange = processPageUpdate;
+    updateRequest.open("GET", clients_file, true);
+    //avoid caching in IE
+    updateRequest.setRequestHeader("If-Modified-Since", lastModified);
+    updateRequest.send(null);
+}
+
+function processPageUpdate()
+{    
+    if (updateRequest == null || updateRequest.readyState != 4) return;
+
+    try
+    {
+      //needed for IE caching workarround (see above)
+      lastModified = updateRequest.getResponseHeader("Last-Modified");
+      lastModified = (lastModified) ? lastModified : new Date(0); // January 1, 1970
+      
+      //file unchanged, no update needed
+      if(updateRequest.status == 304) return;
+      
+      var table = document.getElementById("client_data");
+      
+      var clientNodes = updateRequest.responseXML.getElementsByTagName("client");
+      currentClients = new Array(clientNodes.length);
+      for(var i=0; i<clientNodes.length; i++)
+      {
+        currentClients[i] = clientNodes.item(i);
+      }
+      
+      resort(currentClients);
+      renderAll(currentClients);
+    }
+    finally
+    {
+      updateRequest = null;
+      hideNotification();
+    }
+}
+/* ---------------------------------------------------------------------- */
+
+
+
+/* -------------------------- Table rendering --------------------------- */
+/* The actual rendering of the table cells is happening here.             */
+function renderAll(clients)
+{
+    showNotification("updating");
+
+    //create a new empty table as a rendering surface
+    var display = createDisplay();
+    
+    //render the header of the table
+    renderHeader(display);
+
+    var id = 0;
+    var summary_data = new Object();
+    for(var i=0; i<clients.length; i++)
+    {
+      //render a single row in the table, returns false if client is filtered
+      if(renderClient(display, id, clients[i], summary_data)) id++;
+    }
+    
+    //render the table footer
+    renderFooter(display, summary_data);
+    
+    //Replace the old table with the new one
+    show(display);
+    
+    hideNotification();
+}
+
+
+function createDisplay()
+{
+  return document.createElement("table");
+}
+
+function renderHeader(display)
+{
+  var row = display.createTHead().insertRow(0);
+  for(var i = 0; i < columnDefinition.length; i++)
+  {
+    var col = columnDefinition[i];
+    var th = document.createElement("th");
+    var sortLink = document.createElement("a");
+    sortLink.href = "#";
+    sortLink.onclick = columnHeader_click;
+    sortLink.className = "sort_link";
+    sortLink.id = "sort_" + i;
+    sortLink.appendChild(defaultRenderer("", col.Caption));
+    th.appendChild(sortLink);
+    row.appendChild(th);
+  }
+}
+
+function renderClient(display, id, client, summary_data)
+{ 
+  var filter_matched = 0;
+  if(filter)
+  {
+    //apply filters first, so that the summary data shows the summary for the filtered clients only
+    for(var i = 0; i < columnDefinition.length; i++)
+    {  
+      var col = columnDefinition[i];
+      var value = col.ValueConverter(col.AttributeName == "id" ? id : client.getAttribute(col.AttributeName));
+      var text = String(valueOrDefault(col.Formatter(value), ""));
+      
+      if(!filter || text.toLowerCase().indexOf(filter) >= 0)
+      {
+        filter_matched = 1;
+        break;
+      }
+    }
+    
+    if(!filter_matched) return false;
+  }
+  
+  //Summary data for footer
+  var speed = parseSpeed(client.getAttribute("speed"));
+  if(!summary_data.total_speed) summary_data.total_speed = 0;
+  
+  if(speed) summary_data.total_speed += speed;
+  
+  if(!summary_data.client_count) summary_data.client_count = 1;
+  else summary_data.client_count++;
+
+  //skip everything not in this page
+  //returns true, because even if the client is not shown
+  //it is still part of the result set
+  if(id < paging_start) return true;
+  if(id >= paging_start + paging_length) return true;
+
+  //HACK: Firefox bug, no implicit tbody
+  if(display.tBodies.length == 0)
+    display.appendChild(document.createElement("tbody"));
+  
+  //Render
+  var row = display.tBodies[0].insertRow(display.tBodies[0].rows.length);
+  for(var i = 0; i < columnDefinition.length; i++)
+  {
+    var col = columnDefinition[i];
+    var value = col.ValueConverter(col.AttributeName == "id" ? id : client.getAttribute(col.AttributeName));
+    var text = String(valueOrDefault(col.Formatter(value), ""));
+    
+    var td = document.createElement("td");
+    
+    td.appendChild(col.Renderer(value, text));
+    td.className = col.CssClass;
+    row.appendChild(td);
+  }
+  
+  return true;
+}
+
+function renderFooter(display, summary_data)
+{
+  if(!summary_data.total_speed) summary_data.total_speed = 0;
+  if(!summary_data.client_count) summary_data.client_count = 0;
+
+  var row = display.createTFoot().insertRow(0);
+  
+  var td = document.createElement("td");
+  
+  var total = summary_data.client_count;
+  var from = Math.min(paging_start + 1, total);
+  var to = Math.min(paging_start + paging_length, total);
+  
+  var bps = formatInBits(summary_data.total_speed);
+  
+  td.appendChild(defaultRenderer("", "Showing " + from + " - " + to + " of " + total + " clients , total speed: " + bps + "/s"));
+  td.colSpan = columnDefinition.length;
+  
+  row.appendChild(td);
+}
+
+function show(display)
+{
+  var div = document.getElementById("client_data");
+  div.innerHTML = "";
+  
+  div.appendChild(display);
+}
+/* ---------------------------------------------------------------------- */
+
+
+
+/* -------------------------- Status indicator -------------------------- */
+/* Show/Hide status indicator in the upper right corner.                  */
+function showNotification(text)
+{
+  document.getElementById('notification').innerHTML=text;
+  //document.getElementById('notification').style.display = "auto";
+}
+
+function hideNotification(text)
+{
+  document.getElementById('notification').innerHTML="";
+}
+/* ---------------------------------------------------------------------- */
+
+
+
+/* --------------------------- Paging support --------------------------- */
+/* Support for the prev/next, first/last links at the bottom.             */
+function prevPage()
+{
+  if(paging_start <= 0) return;
+  paging_start -= paging_length;
+  
+  renderAll(currentClients);
+}
+
+function nextPage()
+{
+  if(!currentClients) return;
+  
+  if(paging_start + paging_length >= currentClients.length) return;
+  
+  paging_start += paging_length;
+
+  renderAll(currentClients);
+}
+
+function firstPage()
+{
+  if(!currentClients) return;
+  
+  paging_start = 0;
+  
+  renderAll(currentClients);
+}
+
+function lastPage()
+{
+  if(!currentClients) return;
+
+  paging_start = Math.floor((currentClients.length-1) / paging_length) * paging_length;
+  
+  renderAll(currentClients);
+}
+/* ---------------------------------------------------------------------- */
+
+
+
+/* --------------------------- Column sorting --------------------------- */
+/* Enables support to order by specific columns in the client table.      */
+function columnHeader_click(event)
+{
+  if (event && event.preventDefault) event.preventDefault();
+
+  sortBy(columnDefinition[this.id.substr(5)]);
+  
+  return false;
+}
+
+function sortBy(column)
+{
+  if(column.AttributeName == "id") return;
+  
+  if(sortColumn == column) sortDirection = -sortDirection;
+  else
+  {
+    sortColumn = column;
+    sortDirection = 1;
+  }
+  
+  resort(currentClients);
+  firstPage();
+}
+
+function resort(clients)
+{
+  clients.sort(compareClients);
+}
+
+function compareClients(a, b)
+{
+  if(!sortColumn) return 0;
+  
+  a = sortColumn.ValueConverter(a.getAttribute(sortColumn.AttributeName));
+  b = sortColumn.ValueConverter(b.getAttribute(sortColumn.AttributeName));
+  
+  //strange IE
+  if(String(typeof(a)) == "unknown") a = null;
+  if(String(typeof(b)) == "unknown") b = null;
+  
+  //null is smaller than everything
+  if(a == null) return (b == null) ? 0 : -sortDirection;
+  if(b == null) return (a == null) ? 0 : sortDirection;
+  
+  //If the values are dates, convert them to numbers
+  if(a.getTime) a = a.getTime();
+  if(b.getTime) b = b.getTime();
+  
+  if(a > b) return sortDirection;
+  else if(a < b) return -sortDirection;
+  
+  if(!(a==b))
+  {
+    alert(typeof(a));
+    alert(typeof(b));
+  }
+  return 0;
+}
+/* ---------------------------------------------------------------------- */
+
+
+/* -------------------------- Filter functions -------------------------- */
+var filter_timeout;
+function filter_changed(new_filter)
+{
+  if(new_filter == filter) return;
+  
+  filter = new_filter;
+  if(filter == "") filter = null;
+  
+  if(filter != null) filter = filter.toLowerCase();
+  
+  if(filter_timeout) window.clearTimeout(filter_timeout);
+  filter_timeout = window.setTimeout("firstPage()", 200);
+}
+/* ---------------------------------------------------------------------- */
+
+
+/* ------------------------ Formatting functions ------------------------ */
+/* These functions are used to convert a value in a text representation,  */
+/* that is used for filtering and is passed to the renderer associated    */
+/* with the column                                                        */
+
+//var dateFormat = "YYYY/MM/DD hh:mm:ss";
+var dateFormat = "hh:mm:ss";
+function formatDate(date)
+{
+  if(!date) return null;
+
+  var format = dateFormat;
+  
+  //Date
+  format = format.replace(/YYYY/g, date.getUTCFullYear());
+  format = format.replace(/YY/g, date.getUTCFullYear() % 100);
+  format = format.replace(/MM/g, padLeft(date.getUTCMonth() + 1, 2, '0'));
+  format = format.replace(/DD/g, padLeft(date.getUTCDate(), 2, '0'));
+  
+  format = format.replace(/M/g, date.getUTCMonth() + 1);
+  format = format.replace(/D/g, date.getUTCDate());
+  
+  //Time
+  format = format.replace(/hh/g, padLeft(date.getUTCHours(), 2, '0'));
+  format = format.replace(/mm/g, padLeft(date.getUTCMinutes(), 2, '0'));
+  format = format.replace(/ss/g, padLeft(date.getUTCSeconds(), 2, '0'));
+  
+  format = format.replace(/h/g, date.getUTCHours());
+  format = format.replace(/m/g, date.getUTCMinutes());
+  format = format.replace(/s/g, date.getUTCSeconds());
+  
+  return format;
+}
+
+//append chars (chr) to the left of "str" until the specified length (len) is reached
+function padLeft(str, len, chr)
+{
+  str = String(str);
+  while(str.length < len) str = String(chr) + str;
+  
+  return str;
+}
+
+function formatInBytes(bytes)
+{
+  if(bytes == null) return null;
+  
+  var units = new Array("Byte", "KB", "MB", "GB", "TB");
+  while(bytes > 1024 && units.length > 1) { bytes /= 1024; units.shift(); }
+  
+  return bytes.toFixed(0) + " " + units[0];
+}
+
+function formatInBits(bytes)
+{
+  if(bytes == null) return null;
+  var bits = bytes * 8;
+  
+  var units = new Array("Bit", "Kbit", "Mbit", "Gbit", "Tbit");
+  while(bits > 1000 && units.length > 1) { bits /= 1000; units.shift(); }
+  
+  return bits.toFixed(1) + " " + units[0];
+}
+
+function formatStatus(status)
+{
+  if(status == 0) return "initalizing...";
+  if(status < 0) return "failed";
+  if(status < 100) return "" + status + "%";
+  if(status == 100) return "imaged";
+  if(status == 101) return "finalizing...";
+  if(status == 102) return "rebooted";
+  if(status == 103) return "beeping";
+  if(status == 104) return "rebooted";
+  if(status == 105) return "shutdown";
+
+  return "unknown";
+}
+
+function formatIP(ip)
+{
+  var str = "";
+  for(var i=0; i<4; i++)
+  {    
+    var octet = ip % 256;
+    ip = ip >> 8;
+    
+    str = String(octet) + str;
+    
+    if(i<3) str = "." + str;
+  }
+  
+  return str;
+}
+
+//Returns a new formatting function, that appends the given string to the value.
+//If a function is given, the function will be first applied
+function suffix(s, func)
+{
+  if(func == null) func = original;
+  
+  return function(val)
+  {
+    val = func(val);
+    if(val == null) return null;
+    
+    return String(val) + s;
+  };
+}
+
+//Returns a new formatting function, that returns null when the value is 0,
+//and applies the given function otherwise. This has the effect of hiding
+//the value in the output when it is 0. (e.g. transfer speed)
+function hideZero(func)
+{
+  return function(val)
+  {
+    if(val == 0) return null;
+    
+    return func(val);
+  };
+}
+
+/* ---------------------------------------------------------------------- */
+
+
+
+/* --------------------------- Value converter -------------------------- */
+/* These functions are used to convert the original SI attribute values   */
+/* from the clients.xml into native JS objects and common units.          */
+/* The output is used for sorting and is passed to the Formatter          */
+/* associated with the column.                                            */
+
+//TODO: check if 1024 or 1000 is correct here
+function parseRam(mb) {  return mb ? parseInt(mb) * 1024 * 1024 : null; }
+function parseSpeed(kbytes) {  return kbytes ? parseInt(kbytes) * 1000 : null; }
+function parseDate(val) { return val ? new Date(parseInt(val) * 1000) : null; }
+function parsePercent(percent) { return percent ? parseInt(percent.replace(/%/g, "")) : null; }
+function parseMac(mac) { return mac ? mac.replace(/\./g, ":") : null; }
+function original(val) { return val; }
+
+function parseIP(str)
+{
+  var parts = str.split(".");
+  var val = 0;
+  for(var i=0; i<parts.length; i++)
+  {
+    val = val << 8;
+    val += parseInt(parts[i]);
+  }
+  return val;
+}
+
+/* ---------------------------------------------------------------------- */
+
+
+
+/* ------------------------------ Renderer ------------------------------ */
+/* These functions are used to render a single table cell.                */
+/* They get the native value for a specific attribute of a client,        */
+/* which is obtained from the associated value converter and the text     */
+/* representation from the associated Formatter.                          */
+
+function defaultRenderer(data, text) {  return document.createTextNode(text ? text : ""); }
+
+function statusRenderer(status, text)
+{
+  var status_class;
+  
+  //get css class for status
+  if(!status || status == 0) status_class = "bar_neutral";
+  else if(status < 0) status_class = "bar_error";
+  else if(status < 100) status_class = "bar_progress";
+  else status_class = "bar_ready";
+  
+  return createProgressBar(status_class, status, text);
+}
+
+function percentUsedRenderer(percent, text)
+{
+  var status_class;
+  
+  //get css class
+  if(percent < 60) status_class = "bar_mem_low";
+  else if(percent < 80) status_class = "bar_mem_med";
+  else status_class = "bar_mem_high";
+
+  return createProgressBar(status_class, percent, text);
+}
+
+function createProgressBar(status, progress, text)
+{
+  text = text ? text : "";
+  
+  var frag = document.createDocumentFragment();
+  
+  //outer container, needed for right padding, etc...
+  var container = document.createElement("div");
+  container.className = "progress_container";
+  
+  //the "border" arround the progress bar
+  var box = document.createElement("div");
+  box.className = "progress_box " + status;
+  
+  //the progress itself
+  var bar = document.createElement("div");
+  bar.className = "progress_bar " + status;
+  bar.style.width = Math.min(100,Math.max(0,progress)) + "%"; //set width to current progress
+  bar.appendChild(document.createTextNode("\u00A0")); //nbsp
+  
+  container.appendChild(box);
+  box.appendChild(bar);
+
+
+  var labelContainer = document.createElement("div")
+  labelContainer.className = "progress_label_container";
+  
+  //div that contains the status label
+  var label = document.createElement("div")
+  label.className = "progress_label";
+  
+  labelContainer.appendChild(label);  
+  label.appendChild(document.createTextNode(text));
+
+  frag.appendChild(container);
+  frag.appendChild(labelContainer);
+  return frag;
+}
+/* ---------------------------------------------------------------------- */
+
+
+
+/* -------------------------- Utility functions ------------------------- */
+function valueOrDefault(value, def) { return (value == null ? def : value); }
+/* ---------------------------------------------------------------------- */
+
+
+
+/* ------------------------- Column definitions ------------------------- */
+/* You can change the order of the columns in the output by simply        */
+/* changing the order here.                                               */
+
+function Column(caption, attribute, css_class, value_converter, formatter, renderer)
+{
+  this.Caption = caption;
+  this.AttributeName = attribute;
+  
+  this.CssClass = valueOrDefault(css_class, "");
+  this.ValueConverter = valueOrDefault(value_converter, original);
+  this.Formatter = valueOrDefault(formatter, original);
+  this.Renderer = valueOrDefault(renderer, defaultRenderer);
+}
+
+var columnDefinition = new Array();
+
+columnDefinition.push(new Column("Nr", "id", "numeric", function(id) { return id+1; }));
+
+columnDefinition.push(new Column("Host", "host"));
+columnDefinition.push(new Column("IP", "ip", "", parseIP, formatIP));
+columnDefinition.push(new Column("Mac", "name", "", parseMac));
+columnDefinition.push(new Column("#", "ncpus", "numeric", parseInt, suffix("x")));
+columnDefinition.push(new Column("CPU model", "cpu", ""));
+
+columnDefinition.push(new Column("Image", "os"));
+columnDefinition.push(new Column("Status", "status", "progress", parseInt, formatStatus, statusRenderer));
+columnDefinition.push(new Column("Kernel", "kernel"));
+columnDefinition.push(new Column("Speed", "speed", "numeric", parseSpeed, suffix("/s", hideZero(formatInBits))));
+columnDefinition.push(new Column("RAM", "mem", "numeric", parseRam, hideZero(formatInBytes)));
+
+columnDefinition.push(new Column("% used", "tmpfs", "progress", parsePercent, suffix("%"), percentUsedRenderer));
+columnDefinition.push(new Column("Started", "first_timestamp", "date", parseDate, formatDate));
+columnDefinition.push(new Column("Updated", "timestamp", "date", parseDate, formatDate));
+columnDefinition.push(new Column("Uptime", "time", "numeric", parseInt, suffix(" min")));
+
+/* ---------------------------------------------------------------------- */
+
+
+function init()
+{
+  document.getElementById('client_data').innerHTML='Retrieving data...';
+  
+  requestPageUpdate();
+}
+
+-->
+</script>
+</head>
+
+<body onload="init()">  
+  <h1>Systemimager client status:</h1>
+
+  <form action="" id="filter">
+    <p><label for="filterbox">Filter:</label> <input name="vorname" type="text" size="30" onchange="filter_changed(this.value)" onload="filter_changed(this.value)" onkeyup="filter_changed(this.value)" /></p>
+  </form>
+
+  <div id="client_data">
+    Your browser doesn't support JavaScript, or JavaScript is disabled. You need to enable JavaScript to view this page.
+  </div>
+  
+  <div id="navigation">
+    <div>
+      <a href="javascript:firstPage()" style="text-align: left">First Page</a>
+      <a href="javascript:prevPage()" style="text-align: right">&lt;&lt; Previous</a>
+      <a href="javascript:nextPage()" style="text-align: left">Next >></a>
+      <a href="javascript:lastPage()" style="text-align: right">Last Page</a>
+    </div>
+  </div>
+  
+    <p id="notification">initalizing</p>
+</body>
+
+</html>
+
