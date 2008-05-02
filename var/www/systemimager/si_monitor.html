@@ -168,7 +168,7 @@
 </style>
 
 <script type="text/javascript">
-<!--
+//<![CDATA[
 var clients_file = "clients.xml";
 var updateRequest;
 var lastModified = new Date(0);
@@ -817,7 +817,7 @@ function init()
   requestPageUpdate();
 }
 
--->
+//]]>
 </script>
 </head>
 
@@ -825,7 +825,7 @@ function init()
   <h1>Systemimager client status:</h1>
 
   <form action="" id="filter">
-    <p><label for="filterbox">Filter:</label> <input name="vorname" type="text" size="30" onchange="filter_changed(this.value)" onload="filter_changed(this.value)" onkeyup="filter_changed(this.value)" /></p>
+    <p><label for="filterbox">Filter:</label> <input id="filterbox" type="text" size="30" onchange="filter_changed(this.value)" onkeyup="filter_changed(this.value)" /></p>
   </form>
 
   <div class="navigation">
