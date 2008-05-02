@@ -31,18 +31,19 @@
     color: gray;
   }
   
-  #navigation
+  .navigation
   {
+    margin: 0.2em;
     display: table;
     width: 100%;
   }
 
-  #navigation div
+  .navigation div
   {
     display: table-row;
   }
 
-  #navigation div *
+  .navigation div *
   {
     padding: 0.2em;
     display: table-cell;
@@ -827,11 +828,20 @@ function init()
     <p><label for="filterbox">Filter:</label> <input name="vorname" type="text" size="30" onchange="filter_changed(this.value)" onload="filter_changed(this.value)" onkeyup="filter_changed(this.value)" /></p>
   </form>
 
+  <div class="navigation">
+    <div>
+      <a href="javascript:firstPage()" style="text-align: left">First Page</a>
+      <a href="javascript:prevPage()" style="text-align: right">&lt;&lt; Previous</a>
+      <a href="javascript:nextPage()" style="text-align: left">Next >></a>
+      <a href="javascript:lastPage()" style="text-align: right">Last Page</a>
+    </div>
+  </div>
+
   <div id="client_data">
     Your browser doesn't support JavaScript, or JavaScript is disabled. You need to enable JavaScript to view this page.
   </div>
   
-  <div id="navigation">
+  <div class="navigation">
     <div>
       <a href="javascript:firstPage()" style="text-align: left">First Page</a>
       <a href="javascript:prevPage()" style="text-align: right">&lt;&lt; Previous</a>
