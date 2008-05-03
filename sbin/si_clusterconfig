@@ -204,17 +204,15 @@ sub edit
 	# file in the busybox environment when the clients are imaging.
 	$output_file = $script_dir . '/cluster.txt';
 	if (($update) || ($mtime != (stat($database))[9])) {
-		print "Caching XML configuration to $output_file ... ";
+		print "Caching XML configuration... ";
 		if (!XML_info_to_plain_file($output_file)) {
 			print "[  OK  ]\n";
 		} else {
-			die("\nERROR: couldn't cache XML info to $output_file!\n");
+			die("\nERROR: failed to cache XML informations!\n");
 		}
 	}
 
 	# Synchronize /etc/hosts to the hosts file read by the imaging clients.
-	# XXX: not really dependent on cluster.xml, but it's better to synchronize
-	# /etc/hosts with the hosts known by SystemImager sometimes... -AR-
 	$output_file = $script_dir . '/hosts';
 	if (($update) || !(-e $output_file) ||
 	    ((stat('/etc/hosts'))[9] != (stat($output_file))[9])) {
@@ -300,7 +298,24 @@ sub XML_info_to_plain_file
 	# Resolve the groups in lists of nodenames.
 	foreach my $group (SystemImager::HostRange::sort_group(@{$xml->{'group'}})) {
 		my $name = $group->{'name'}[0];
-		foreach my $node (SystemImager::HostRange::expand_groups_xml($xml, $name)) {
+		my @all_hosts = SystemImager::HostRange::expand_groups_xml($xml, $name);
+
+		# Add entries in /etc/hosts.
+		my $ip_range = $group->{'ip-range'}[0];
+		my $domain_name = $group->{'domain'}[0];
+		if ($ip_range) {
+			if (SystemImager::HostRange::add_hosts_entries(
+				$ip_range, $domain_name, @all_hosts) < 0) {
+					print STDERR
+					      "ERROR: couldn't add entries " .
+					      "for group \"$name\" in " .
+					      "/etc/hosts\n";
+					return -1;
+			}
+            	}
+
+		# Cache all group informations in a simple text file.
+		foreach my $node (@all_hosts) {
 			unless ($groups->{$name}->{'override'}) {
 				# If no override is defined, simply print the image.
 				print OUT $node .

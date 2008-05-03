@@ -24,6 +24,7 @@ package SystemImager::HostRange;
 use strict;
 use Socket;
 use XML::Simple;
+use SystemImager::Config qw($config);
 
 # Maximum number of concurrent sessions (public).
 our $concurrents = 32;
@@ -255,6 +256,128 @@ sub sort_ip
 		$a[2] <=> $b[2] ||
 		$a[3] <=> $b[3]
 	} @_;
+}
+
+# Usage:
+# my $ret = add_hosts_entries($ip_range, $domain_name, @all_hosts);
+# Description:
+#       Add host definitions in /etc/hosts.
+sub add_hosts_entries {
+    my ($ip_range, $domain_name, @all_hosts) = @_;
+
+    $domain_name = lc $domain_name;
+
+    my $autoinstall_script_dir = $config->autoinstall_script_dir();
+    unless ($autoinstall_script_dir) {
+        die "FATAL: parameter AUTOINSTALL_SCRIPT_DIR is not defined in /etc/systemimager/systemimager.conf\n";
+    }
+
+    my @all_ips = expand_range_list($ip_range);
+    unless ($#all_ips == $#all_hosts) {
+        print "error: different number of IPs and hostnames!\n";
+        print 'IPs = ' . ($#all_ips + 1) . "\n" . 'Hosts = ' . ($#all_hosts + 1) . "\n";
+        return -1;
+    }
+
+    ### BEGIN test to be sure /etc/hosts exists and create if it doesn't ###
+    my $file = "/etc/hosts";
+    if ( ! -f "$file" ) {
+        open(ETC_HOSTS, ">> $file") or die "Couldn't open $file for writing: $!\n";
+        print ETC_HOSTS "127.0.0.1  localhost\n";
+        close(ETC_HOSTS);
+        system('chmod 644 /etc/hosts');
+    }
+    ### END test to be sure /etc/hosts exists and create if it doesn't ###
+
+    ### BEGIN read in /etc/hosts and create a hash of lines by ip address and a hash of lines by number
+    my %etc_hosts_lines_by_ip = ();
+    my %etc_hosts_lines_by_number = ();
+    my $line_number = "1";
+
+    open(ETC_HOSTS, "< /etc/hosts") or die "Couldn't open /etc/hosts for reading: $!\n";
+    while (<ETC_HOSTS>) {
+        chomp;
+        my @fields = split;
+        my $ip_quad = $fields[0];
+        my $line = $_;
+        if ($ip_quad) {
+            $etc_hosts_lines_by_ip{$ip_quad} = $line;
+        }
+        $etc_hosts_lines_by_number{$line_number} = $line;
+        $line_number = $line_number + 1;
+    }
+    close(ETC_HOSTS);
+    ### END read in /etc/hosts and create a hash of lines by ip address and a hash of lines by number
+
+    ### create a hash of new hostnames by ip address
+    @all_hosts = sort(@all_hosts);
+    my %new_hostnames_by_ip;
+    my $i = 0;
+    foreach (sort_ip(@all_ips)) {
+        $new_hostnames_by_ip{$_} = $all_hosts[$i++];
+    }
+    ### create a hash of new hostnames by ip address
+
+    ### munge new ips and hostname info into %etc_hosts_lines_by_ip
+    my @new_ip_addresses = sort (keys %new_hostnames_by_ip);
+    foreach my $new_ip_address (@new_ip_addresses) {
+        if ($domain_name) {
+            $etc_hosts_lines_by_ip{$new_ip_address} =
+                "$new_ip_address\t" .
+                "$new_hostnames_by_ip{$new_ip_address}.$domain_name\t".
+                "$new_hostnames_by_ip{$new_ip_address}";
+        } else {
+            $etc_hosts_lines_by_ip{$new_ip_address} =
+                "$new_ip_address\t" .
+                "$new_hostnames_by_ip{$new_ip_address}";
+        }
+    }
+    ### munge new ips and hostname info into %etc_hosts_lines_by_ip
+
+    ### BEGIN open temporary /etc/hosts for writing
+    my $temp_file = "/tmp/.hosts.systemimager";
+    open(NEW_ETC_HOSTS, "> $temp_file") or die "Couldn't open $temp_file for writing: $!\n";
+    ### END open temporary /etc/hosts for writing
+
+    ### BEGIN replace entries as necessary in numbered /etc/hosts lines and print numbered lines
+    foreach my $line_number ( sort {$a <=> $b} ( keys %etc_hosts_lines_by_number )) {
+        $_ = $etc_hosts_lines_by_number{$line_number};
+        my @words = split;
+        my $ip_quad = $words[0];
+        if ($ip_quad) {
+            $etc_hosts_lines_by_number{$line_number} = $etc_hosts_lines_by_ip{$ip_quad};
+            delete $etc_hosts_lines_by_ip{$ip_quad};
+        }
+        # print numbered hosts entries
+        print NEW_ETC_HOSTS "$etc_hosts_lines_by_number{$line_number}\n";
+    }
+    ### END replace entries as necessary in numbered /etc/hosts lines and print numbered lines
+
+    ### create hash of entries by decimal ip (for sorting purposes)
+    my %etc_hosts_lines_by_ip_decimal;
+    my $ip_decimal;
+    foreach my $ip_quad ( keys %etc_hosts_lines_by_ip ) {
+        $ip_decimal = ip2int($ip_quad);
+        $etc_hosts_lines_by_ip_decimal{$ip_decimal} = $etc_hosts_lines_by_ip{$ip_quad};
+    }
+    ### create hash of entries by decimal ip (for sorting purposes)
+
+    ### print remaining entries
+    foreach my $ip_decimal ( sort( keys %etc_hosts_lines_by_ip_decimal )) {
+        print NEW_ETC_HOSTS "$etc_hosts_lines_by_ip_decimal{$ip_decimal}\n";
+    }
+    ### print remaining entries
+
+    ### close temporary /etc/hosts after writing
+    close(NEW_ETC_HOSTS);
+    ### close temporary /etc/hosts after writing
+
+    ### move new hosts file in to place
+    system('mv', '-f', $temp_file, '/etc/hosts');
+    if($? != 0) { die "Couldn't move $temp_file to /etc/hosts!\n", "Is the filesystem that contains /etc/ full?"; }
+    ### move new hosts file in to place
+
+    return 0;
 }
 
 # Usage:
