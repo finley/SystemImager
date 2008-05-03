@@ -1,16 +1,10 @@
-#
-#	$Id$
 #    vi: set filetype=make:
-#
-#	2005.11.06 Brian Elliott Finley
-#	- up version to 2.7.3
-#
 
 ifndef IS_PPC64
 
-XFSPROGS_VERSION := 2.7.3
+XFSPROGS_VERSION := 2.9.8
 XFSPROGS_DIR := xfsprogs-$(XFSPROGS_VERSION)
-XFSPROGS_TARBALL := $(XFSPROGS_DIR).src.tar.gz
+XFSPROGS_TARBALL := xfsprogs_$(XFSPROGS_VERSION)-1.tar.gz
 #XFSPROGS_URL := ftp://oss.sgi.com/projects/xfs/download/cmd_tars/$(XFSPROGS_TARBALL)
 XFSPROGS_URL := http://download.systemimager.org/pub/xfsprogs/$(XFSPROGS_TARBALL)
 XFSPROGS_PATCHES := $(shell ls $(PATCH_DIR)/xfsprogs.*.patch 2>/dev/null | sort)
@@ -35,12 +29,12 @@ xfsprogs:	$(MKXFS_BINARY)
 
 $(MKXFS_BINARY):	$(SRC_DIR)/$(XFSPROGS_TARBALL)
 	rm -rf $(SRC_DIR)/$(XFSPROGS_DIR)
-	cd $(SRC_DIR) && tar xfvz $(XFSPROGS_TARBALL) 
+	cd $(SRC_DIR) && tar xfvz $(XFSPROGS_TARBALL)
 	cd $(SRC_DIR)/$(XFSPROGS_DIR) && \
 	  cat $(XFSPROGS_PATCHES) < /dev/null | patch -p1
 	chmod +x $(SRC_DIR)/$(XFSPROGS_DIR)/configure
 	cd $(SRC_DIR)/$(XFSPROGS_DIR) && ./configure
-	$(MAKE) -j $(NCPUS) -C $(SRC_DIR)/$(XFSPROGS_DIR)
+	$(MAKE) -C $(SRC_DIR)/$(XFSPROGS_DIR) DEBUG=-DNDEBUG
 
 $(SRC_DIR)/$(XFSPROGS_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
@@ -56,7 +50,5 @@ xfsprogs_clean:
 
 endif
 
-
 DEBIAN_STABLE_BUILD_DEPS += libtool uuid-dev gettext
 UBUNTU_DAPPER_BUILD_DEPS += libtool uuid-dev gettext
-
