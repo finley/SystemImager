@@ -1,0 +1,31 @@
+diff -ru tmp/busybox/util-linux/mount.c busybox-1.9.1/util-linux/mount.c
+--- tmp/busybox/util-linux/mount.c	2008-02-12 17:03:13.000000000 +0100
++++ busybox-1.9.1/util-linux/mount.c	2008-03-11 15:10:12.000000000 +0100
+@@ -33,6 +33,9 @@
+ #ifndef MS_SILENT
+ #define MS_SILENT	(1 << 15)
+ #endif
++#ifndef MS_RELATIME
++#define MS_RELATIME	(1 << 21)
++#endif
+ 
+ #if defined(__dietlibc__)
+ /* 16.12.2006, Sampo Kellomaki (sampo@iki.fi)
+@@ -97,6 +100,8 @@
+ 		/* "noatime"     */ MS_NOATIME,
+ 		/* "diratime"    */ ~MS_NODIRATIME,
+ 		/* "nodiratime"  */ MS_NODIRATIME,
++		/* "relatime"    */ MS_RELATIME,
++		/* "norelatime"  */ ~MS_RELATIME,
+ 		/* "loud"        */ ~MS_SILENT,
+ 
+ 		// action flags
+@@ -145,6 +150,8 @@
+ 		"noatime" "\0"
+ 		"diratime" "\0"
+ 		"nodiratime" "\0"
++		"relatime" "\0"
++		"norelatime" "\0"
+ 		"loud" "\0"
+ 
+ 		// action flags
