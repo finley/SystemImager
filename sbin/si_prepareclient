@@ -1138,7 +1138,7 @@ sub start_rsyncd {
         }
     
         # Start up the new one.
-        SystemImager::UseYourOwnKernel::run_cmd("rsync --daemon --port=$RSYNC_PORT --config=$rsyncd_conf_file", 0, 0);
+        SystemImager::UseYourOwnKernel::run_cmd("rsync --daemon --port=$RSYNC_PORT --config=$rsyncd_conf_file </dev/null", 0, 0);
     
         # Give a few seconds for the new daemon to start.
         $|++;
@@ -1153,7 +1153,7 @@ sub start_rsyncd {
     } else {
       # still need to sleep
       sleep(2);
-      SystemImager::UseYourOwnKernel::run_cmd("rsync --daemon --port=$RSYNC_PORT --config=$rsyncd_conf_file", 0, 0);
+      SystemImager::UseYourOwnKernel::run_cmd("rsync --daemon --port=$RSYNC_PORT --config=$rsyncd_conf_file </dev/null", 0, 0);
       sleep(3);
     }
 }
