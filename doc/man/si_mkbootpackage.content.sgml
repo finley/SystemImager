@@ -198,8 +198,9 @@
         <term><option>--config <replaceable>FILE</replaceable></option></term>
         <listitem>
           <para>
-	    Where FILE contains all the settings necessary for the client to set
-	    its hostname and configure its networking information without DHCP.
+	    FILE can contain all the installation parameters necessary for
+	    the client (i.e. hostname, network configuration, image server
+	    address, log server, etc.).
           </para>
           <para>
 	    This file is copied to /local.cfg into the initrd.img.  See
@@ -207,6 +208,10 @@
 	    (or <filename>/usr/share/doc/systemimager-server/examples/local.cfg</filename> in Debian-like
 	    distributions) for a well commented example.
           </para>
+	  <para>
+	    In general any installation parameter passed via DHCP can be
+	    defined in <filename>local.cfg</filename> as well.
+	  </para>
         </listitem>
       </varlistentry>
     </variablelist>
