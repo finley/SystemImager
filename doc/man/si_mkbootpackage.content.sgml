@@ -40,6 +40,7 @@
       <arg><option>--filesystem <replaceable>FILESYSTEM</replaceable></option></arg>
       <arg><option>--ssh-key <replaceable>FILE</replaceable></option></arg>
       <arg><option>--authorized-keys <replaceable>FILE</replaceable></option></arg>
+      <arg><option>--config <replaceable>FILE</replaceable></option></arg>
 
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -190,6 +191,21 @@
             the image to the clients), or with the installation boot parameter
             SSHD=y, to execute commands (or open a remote shell) on the imaging
             clients.
+          </para>
+        </listitem>
+      </varlistentry>
+     <varlistentry>
+        <term><option>--config <replaceable>FILE</replaceable></option></term>
+        <listitem>
+          <para>
+	    Where FILE contains all the settings necessary for the client to set
+	    its hostname and configure its networking information without DHCP.
+          </para>
+          <para>
+	    This file is copied to /local.cfg into the initrd.img.  See
+	    <filename>/usr/share/doc/systemimager-server-SYSTEMIMAGER_VERSION_STRING/local.cfg</filename>
+	    (or <filename>/usr/share/doc/systemimager-server/examples/local.cfg</filename> in Debian-like
+	    distributions) for a well commented example.
           </para>
         </listitem>
       </varlistentry>
