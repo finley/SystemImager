@@ -792,6 +792,7 @@ BT_TRACKER_BIN=`(which bittorrent-tracker || which bttrack) 2>/dev/null`
 if [ -z $BT_TRACKER_BIN ]; then
 	echo "WARNING: couldn't find a valid tracker binary!"
 	echo "--> Install the BitTorrent package (bittorrent for RH)."
+	echo "--> For details, please see http://wiki.systemimager.org/index.php/Quick_Start_HOWTO"
 else
 	echo done
 fi
@@ -801,6 +802,7 @@ BT_MAKETORRENT_BIN=`(which maketorrent-console || which btmaketorrent) 2>/dev/nu
 if [ -z $BT_MAKETORRENT_BIN ]; then
 	echo "WARNING: couldn't find a valid maketorrent binary!"
 	echo "--> Install the BitTorrent package (bittorrent for RH)."
+	echo "--> For details, please see http://wiki.systemimager.org/index.php/Quick_Start_HOWTO"
 else
 	echo done
 fi
@@ -810,6 +812,7 @@ BT_BITTORRENT_BIN=`(which launchmany-console || which btlaunchmany) 2>/dev/null`
 if [ -z $BT_BITTORRENT_BIN ]; then
 	echo "WARNING: couldn't find a valid bittorrent binary!"
 	echo "--> Install the BitTorrent package (bittorrent for RH)."
+	echo "--> For details, please see http://wiki.systemimager.org/index.php/Quick_Start_HOWTO"
 else
 	echo done
 fi
