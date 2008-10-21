@@ -36,6 +36,10 @@ Options: (options can be presented in any order and can be abbreviated)
  --dry-run, -d          Only show what would have been transferred
                         without really distributing files.
 
+ --checksum, -c         Update only files with changed content. Mostly
+                        useful with -d to see which file will be altered
+                        because it's often slower than default.
+
  --max, -m=NUM          Set the maximum number of concurrent copies
                         to NUM (default=32).
 
@@ -69,6 +73,7 @@ GetOptions(
 	"verbose|v"		=> \my $verbose,
 	"max|m=i"		=> \my $concurrents,
 	"dry-run|d"		=> \my $dry_run,
+	"checksum|c"		=> \my $checksum,
 	"hosts|n=s"		=> \my $hostlist,
 	"hosts-file|f=s"	=> \my $hostlist_file,
 	"timeout|t=i"		=> \my $timeout,
@@ -98,6 +103,13 @@ if ($dry_run) {
 } else {
 	$dry_run = '';
 }
+
+if ($checksum) {
+	$checksum = '--checksum';
+} else {
+	$checksum = '';
+}
+
 
 my $source;
 my $target;
@@ -145,7 +157,7 @@ if ($concurrents) {
 
 # Use the following ssh options.
 my $ssh_opts = "-x -o BatchMode=yes -l $ssh_user";
-my $rsync_opts = "-aHISz$verbose $dry_run --numeric-ids --timeout=$timeout --rsh='ssh $ssh_opts'";
+my $rsync_opts = "-aHISz$verbose $dry_run $checksum --numeric-ids --timeout=$timeout --rsh='ssh $ssh_opts'";
 
 # Main program.
 @hosts = map { $_ .= ":$target" } @hosts;
@@ -184,6 +196,14 @@ Display verbose informations.
 =item B<--dry-run | -d>
 
 Only show what would have been transferred without really distributing files.
+
+=item B<--checksum | -c>
+
+Update only files with changed content (force checksum usage for all the
+files on the sender). Receiver compares the checksums of each file (if
+it exists and has the same size as the sender counterpart). Mostly
+useful with -d to see which file will be altered because it's often slower
+than default.
 
 =item B<--max | -m NUM>
 

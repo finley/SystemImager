@@ -39,6 +39,10 @@ Options:
  --dry-run, -d          Only show what would have been transferred
                         without really distributing files.
 
+ --checksum, -c         Update only files with changed content. Mostly
+                        useful with -d to see which file will be altered
+                        because it's often slower than default.
+
  --max, -m=NUM          Set the maximum number of concurrent copies
                         to NUM (default=32).
 
@@ -55,6 +59,7 @@ GetOptions(
 	"version|V"	=> \my $version,
 	"verbose|v"	=> \my $verbose,
 	"dry-run|d"	=> \my $dry_run,
+	"checksum|c"	=> \my $checksum,
 	"max|m=i"	=> \my $concurrents,
 	"timeout|t=i"	=> \my $timeout,
 ) or die($help_info);
@@ -81,6 +86,12 @@ if ($dry_run) {
         $dry_run = '-d';
 } else {
 	$dry_run = '';
+}
+
+if ($checksum) {
+        $checksum = '-c';
+} else {
+	$checksum = '';
 }
 
 if ($concurrents) {
@@ -221,7 +232,7 @@ sub update_nodes
 {
 	my ($file_str, @nodes) = @_;
 
-	my $base_cmd = "si_pcp $verbose $dry_run $concurrents $timeout";
+	my $base_cmd = "si_pcp $verbose $dry_run $checksum $concurrents $timeout";
 	@nodes = SystemImager::HostRange::sort_unique(@nodes);
 
 	# Update nodes that needs the same overrides.
@@ -288,6 +299,14 @@ Display version and copyright information.
 =item B<--dry-run, -d>
 
 Only show what would have been transferred without really distributing files.
+
+=item B<--checksum | -c>
+
+Update only files with changed content (force checksum usage for all the 
+files on the sender). Receiver compares the checksums of each file (if 
+it exists and has the same size as the sender counterpart). Mostly 
+useful with -d to see which file will be altered because it's often slower 
+than default.
 
 =item B<--max, -m NUM>
 
