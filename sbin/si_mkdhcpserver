@@ -220,7 +220,8 @@ EOF
     $boot_server = 
     $rangeend = SystemImager::HostRange::hex2ip(
                     sprintf("%08X",
-                        (($hex_netnumber & $hex_netmask) | (~$hex_netmask)) - 1
+                        (($hex_netnumber & $hex_netmask) |
+			 (~$hex_netmask) & 0xffffffff) - 1
                     )
                 );
    
