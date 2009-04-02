@@ -131,7 +131,9 @@ if ($version) {
 }
 
 # Create the database if it doesn't exist.
-$database = $conf{'monitor_db'};
+unless (defined($database)) {
+	$database = $conf{'monitor_db'};
+}
 unless (-f $database) {
     open(DB, '>', "$database") or
     die "error: cannot open file \"$database\" for writing!\n";
