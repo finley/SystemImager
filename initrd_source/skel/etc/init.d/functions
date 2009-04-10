@@ -1702,7 +1702,7 @@ send_monitor_msg() {
 send_monitor_stdout() {
     while read l; do
         # echo to the console -AR-
-        echo $l
+        echo "$l"
         # Send the message to the monitor daemon.
         if [ "x$MONITOR_CONSOLE" = "xy" ]; then
             MONITOR_CONSOLE=yes
@@ -1710,7 +1710,7 @@ send_monitor_stdout() {
         if [ "x$MONITOR_CONSOLE" = "xyes" ]; then
             # Log message into the global monitor log.
             if fs_on_tmpfs / ; then
-                echo $l >> /tmp/si_monitor.log
+                echo "$l" >> /tmp/si_monitor.log
             fi
         fi
     done
