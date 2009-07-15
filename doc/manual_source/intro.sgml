@@ -4,7 +4,7 @@
     <title>SystemImager Overview</title>
     <para>
 	<application>SystemImager</application>, a component of the
-	<application>System Installation Suite</application> is software
+	<application>System Installation Suite</application>, is software
 	that automates <application>GNU/Linux</application> installs,
 	software distribution, and production deployment.
     </para>
@@ -14,7 +14,7 @@
 	kind of GNU/Linux distribution (standard or even customized) to any kind of target
 	machine. The main goal of the project is to make deployment of large numbers of
 	computers easy. Typical environments include computer labs and render farms,
-	but it has proven particularly popular in clustered computing environments,
+	but SystemImager has proven particularly popular in clustered computing environments,
 	such as grid and high performance computing.
     </para>
     <para>
@@ -53,7 +53,7 @@
     <itemizedlist>
       <listitem>
 	<para>
-	  Organizations that have Internet server farms
+	  Organizations with Internet server farms
 	</para>
       </listitem>
       <listitem>
@@ -97,9 +97,9 @@
     </para>
     <para>
       After initial image deployment, you can update the client systems by
-      syncing them to an updated image on the image server.  Updates are fast
+      syncing them from an updated image on the image server.  Updates are fast
       and efficient because only the modified parts of files are pulled to
-      the client.
+      the clients.
     </para>
     <section>
       <title>Supported Distributions</title>
@@ -116,8 +116,8 @@
 	distribution. To determine a system's footprint,
 	<application>SystemConfigurator</application> identifies the
 	configuration files in use and associates that footprint with a
-	configuration style. It then correctly makes settings, such as hostname
-	or IP address, without needing to know the name of the distribution.
+	configuration style. It then correctly manages settings, such as hostname
+	and IP address, without needing to know the name of the distribution.
       </para>
       
       <para>
@@ -164,7 +164,7 @@
 	    <application>tftpd-hpa</application> and <application>atftpd</application>
 	    packages, while Red Hat 7.0 and later include such a server in the
 	    <application>tftp-server</application> package. H. Peter Anvin
-	    maintains the <application>tftp-hpa</application> package that
+	    maintains the <application>tftp-hpa</application> package, which
 	    provides the required functionality.
 	  </para>
 	</listitem>
@@ -173,17 +173,18 @@
 	    In addition to a compatible TFTP server, PXE network-based
 	    installations may also require a PXE daemon to run on your
 	    image server.  This requirement depends on the firmware used on
-	    the client side and the capabilities of your DHCP server.
+	    the clients and the capabilities of your DHCP server.
 	    Usually a running PXE daemon is not necessary if the image server
-	    uses a quite recent distributions, since all the recent versions
-	    of the DHCP daemon include the PXE functionalities. 
+	    uses a recent distribution, since all recent versions
+	    of the DHCP daemon include PXE functionality. 
 	  </para>
 	</listitem>
 	<listitem>
 	  <para>
-	    To properly setup a boot server it is strongly suggested
-	    the usage of the <command>si_mkbootserver(8)</command>
-	    tool, included in <application>SystemImager</application>.
+	    We strongly recommend usage of the
+	    <command>si_mkbootserver(8)</command> tool, included in
+	    <application>SystemImager</application>, to properly set up
+	    a boot server.
 	  </para>
 	</listitem>
       </itemizedlist>
@@ -221,7 +222,7 @@
 	<glossdef>
 	  <para>
 	    Overrides can be used to manage differences from images. A typical
-	    use is to customize a "vanilla" image adding some additional
+	    use is to customize a "vanilla" image by adding additional
 	    packages, but they are commonly used to store and distribute
 	    configuration files by <command>si_pushoverrides(8)</command>.
 	  </para>
@@ -230,8 +231,8 @@
 	    (this directory can be changed in the configuration file
 	    <command>/etc/systemimager.conf</command>).
 	    All the files and directories defined inside an override are
-	    distributed exactly as they are, that means preserving
-	    <emphasis>all</emphasis> the data and also metadata: permissions,
+	    distributed exactly as-is, which means preserving
+	    <emphasis>all</emphasis> data and metadata: permissions,
 	    ownership, timestamps, etc.
 	  </para>
 	  <para>
@@ -351,7 +352,7 @@
 	<glossdef>
 	  <para>
 	    A tool to manage and show the SystemImager cluster topology.
-	    By this command is possible to tells your image server which
+	    Using this command, it is possible to tell your image server which
 	    image and overrides to install on the auto-install clients.
 	  </para>
 	</glossdef>
@@ -414,4 +415,3 @@
     </glosslist>
   </section>
 </chapter>
-  
