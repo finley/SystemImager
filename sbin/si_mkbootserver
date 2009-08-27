@@ -587,12 +587,6 @@ configure_inetd_for_tftpd_hpa() {
 		echo "you are running an unsupported configuration."
 		return 1
 	    fi
-	    FILE_TO_BACKUP=/etc/xinetd.d/tftp
-	    backup_file
-	    if [ $? -ne 0 ]; then
-		return 1
-	    fi
-
 	    echo "${tftp_xinetd}" > /etc/xinetd.d/tftp
 	### END CONFIGURE XINETD
 	else
