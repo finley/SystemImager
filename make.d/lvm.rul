@@ -13,20 +13,9 @@
 #	  fails except one builds on a system where libdevmapper of the same version
 #	  is installed. But this is not why we build devmapper, after all...
 #
-#   	NOTES:
-#   	- if build fails, try 'apt-get install libdevmapper-dev'
-#
 
 
-DEVMAPPER_VERSION	:= 1.02.22
-DEVMAPPER_DIR		:= device-mapper.$(DEVMAPPER_VERSION)
-DEVMAPPER_TARBALL	:= device-mapper.$(DEVMAPPER_VERSION).tgz
-#DEVMAPPER_URL		:= ftp://sources.redhat.com/pub/dm/$(DEVMAPPER_TARBALL)
-DEVMAPPER_URL		:= http://download.systemimager.org/pub/device-mapper/$(DEVMAPPER_TARBALL)
-DEVMAPPER_BINARY	:= $(SRC_DIR)/$(DEVMAPPER_DIR)/lib/ioctl/libdevmapper.so
-MKLIBS 				+= $(SRC_DIR)/$(DEVMAPPER_DIR)/lib/ioctl
-
-LVM_VERSION	:= 2.2.02.26
+LVM_VERSION	:= 2.2.02.53
 LVM_DIR		:= LVM$(LVM_VERSION)
 LVM_TARBALL	:= LVM$(LVM_VERSION).tgz
 #LVM_URL	:= ftp://sources.redhat.com/pub/lvm2/old/$(LVM_TARBALL)
@@ -34,28 +23,13 @@ LVM_URL		:= http://download.systemimager.org/pub/lvm/$(LVM_TARBALL)
 LVM_BINARY	:= $(SRC_DIR)/$(LVM_DIR)/tools/lvm
 LVM_PATCHES	:= $(shell ls $(PATCH_DIR)/lvm.*.patch 2>/dev/null | sort)
 
-PHONY += devmapper
-devmapper:	$(DEVMAPPER_BINARY)
-$(DEVMAPPER_BINARY):	$(SRC_DIR)/$(DEVMAPPER_TARBALL)
-	rm -rf $(SRC_DIR)/$(DEVMAPPER_DIR)
-	cd $(SRC_DIR) && tar -xvzf $(DEVMAPPER_TARBALL)
-	cd $(SRC_DIR)/$(DEVMAPPER_DIR) && \
-		./configure --prefix=/usr --disable-nls --with-optimisation=-Os
-	$(MAKE) -j $(NCPUS) -C $(SRC_DIR)/$(DEVMAPPER_DIR)
-	ln -s $(DEVMAPPER_BINARY) $(DEVMAPPER_BINARY).$(basename $(DEVMAPPER_VERSION))
-
-$(SRC_DIR)/$(DEVMAPPER_TARBALL):
-	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
-	$(GETSOURCE) $(DEVMAPPER_URL) $(SRC_DIR)
-
 PHONY += lvm
-lvm:	$(LVM_BINARY) $(DEVMAPPER_BINARY)
-$(LVM_BINARY):	$(SRC_DIR)/$(LVM_TARBALL) $(DEVMAPPER_BINARY)
+lvm:	$(LVM_BINARY)
+$(LVM_BINARY):	$(SRC_DIR)/$(LVM_TARBALL)
 	rm -rf $(SRC_DIR)/$(LVM_DIR)
 	cd $(SRC_DIR) && tar -xvzf $(LVM_TARBALL)
 	cd $(SRC_DIR)/$(LVM_DIR) && \
 		./configure --prefix=/usr --disable-nls --with-optimisation=-Os \
-			--with-dmdir=$(SRC_DIR)/$(DEVMAPPER_DIR)
 	cd $(SRC_DIR)/$(LVM_DIR) && \
 		cat $(LVM_PATCHES) < /dev/null | patch -p1
 	$(MAKE) -j $(NCPUS) -C $(SRC_DIR)/$(LVM_DIR)
@@ -64,13 +38,8 @@ $(SRC_DIR)/$(LVM_TARBALL):
 	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
 	$(GETSOURCE) $(LVM_URL) $(SRC_DIR)
 
-ALL_SOURCE += $(SRC_DIR)/$(LVM_TARBALL) $(SRC_DIR)/$(DEVMAPPER_TARBALL)
+ALL_SOURCE += $(SRC_DIR)/$(LVM_TARBALL)
 
 PHONY += lvm_clean
 lvm_clean:
 	rm -rf $(SRC_DIR)/$(LVM_DIR)
-	rm -rf $(SRC_DIR)/$(DEVMAPPER_DIR)
-
-DEBIAN_STABLE_BUILD_DEPS += 
-UBUNTU_DAPPER_BUILD_DEPS += libdevmapper-dev
-

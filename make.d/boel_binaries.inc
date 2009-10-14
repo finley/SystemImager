@@ -142,10 +142,10 @@ endif
 
 ifeq ($(USERSPACE64),1)
 	cd $(BOEL_BINARIES_DIR) \
-		&& $(PYTHON) $(TOPDIR)/initrd_source/mklibs -L $(SRC_DIR)/$(PARTED_DIR)/libparted/.libs:$(DISCOVER_DIR)/lib/.libs:$(SRC_DIR)/$(DEVMAPPER_DIR)/lib/ioctl:$(SRC_DIR)/$(E2FSPROGS_DIR)/lib:/lib64:/usr/lib64:/usr/kerberos/lib64:/lib:/usr/lib:/usr/kerberos/lib:/usr/local/lib:/opt/gnome/lib:/lib/tls:`find /lib/tls /usr/lib/tls /lib64/tls /usr/lib64/tls -type d 2>/dev/null | tr '\n' :` -v -d lib64 bin/* sbin/* usr/bin/* usr/sbin/* $(INITRD_BUILD_DIR)/*bin/* $(INITRD_BUILD_DIR)/usr/*bin/*
+		&& $(PYTHON) $(TOPDIR)/initrd_source/mklibs -L $(SRC_DIR)/$(PARTED_DIR)/libparted/.libs:$(DISCOVER_DIR)/lib/.libs:$(SRC_DIR)/$(LVM_DIR)/libdm:$(SRC_DIR)/$(E2FSPROGS_DIR)/lib:/lib64:/usr/lib64:/usr/kerberos/lib64:/lib:/usr/lib:/usr/kerberos/lib:/usr/local/lib:/opt/gnome/lib:/lib/tls:`find /lib/tls /usr/lib/tls /lib64/tls /usr/lib64/tls -type d 2>/dev/null | tr '\n' :` -v -d lib64 bin/* sbin/* usr/bin/* usr/sbin/* $(INITRD_BUILD_DIR)/*bin/* $(INITRD_BUILD_DIR)/usr/*bin/*
 else
 	cd $(BOEL_BINARIES_DIR) \
-		&& $(PYTHON) $(TOPDIR)/initrd_source/mklibs -L $(SRC_DIR)/$(PARTED_DIR)/libparted/.libs:$(DISCOVER_DIR)/lib/.libs:$(SRC_DIR)/$(DEVMAPPER_DIR)/lib/ioctl:$(SRC_DIR)/$(E2FSPROGS_DIR)/lib:/lib:/usr/lib:/usr/kerberos/lib:/usr/local/lib:/opt/gnome/lib:/lib/tls:`find /lib/tls /usr/lib/tls -type d 2>/dev/null | tr '\n' :` -v -d lib bin/* sbin/* usr/bin/* usr/sbin/* $(INITRD_BUILD_DIR)/*bin/* $(INITRD_BUILD_DIR)/usr/*bin/*
+		&& $(PYTHON) $(TOPDIR)/initrd_source/mklibs -L $(SRC_DIR)/$(PARTED_DIR)/libparted/.libs:$(DISCOVER_DIR)/lib/.libs:$(SRC_DIR)/$(LVM_DIR)/libdm:$(SRC_DIR)/$(E2FSPROGS_DIR)/lib:/lib:/usr/lib:/usr/kerberos/lib:/usr/local/lib:/opt/gnome/lib:/lib/tls:`find /lib/tls /usr/lib/tls -type d 2>/dev/null | tr '\n' :` -v -d lib bin/* sbin/* usr/bin/* usr/sbin/* $(INITRD_BUILD_DIR)/*bin/* $(INITRD_BUILD_DIR)/usr/*bin/*
 endif
 
 ifdef IS_PPC64
