@@ -3,11 +3,11 @@
 #  vi: set filetype=make:
 #
 
-KEXEC_VERSION	= 20080324
-KEXEC_TARBALL	= kexec-tools-testing-$(KEXEC_VERSION).tar.bz2
+KEXEC_VERSION	= 2.0.1
+KEXEC_TARBALL	= kexec-tools-$(KEXEC_VERSION).tar.bz2
 #KEXEC_URL	= http://www.kernel.org/pub/linux/kernel/people/horms/kexec-tools/
 KEXEC_URL	= http://download.systemimager.org/pub/kexec
-KEXEC_DIR	= $(SRC_DIR)/kexec-tools-testing-$(KEXEC_VERSION)
+KEXEC_DIR	= $(SRC_DIR)/kexec-tools-$(KEXEC_VERSION)
 KEXEC_BINARY	= $(KEXEC_DIR)/build/sbin/kexec
 KEXEC_PATCHES	= $(shell ls $(PATCH_DIR)/kexec.*.patch 2>/dev/null | sort)
 

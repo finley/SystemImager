@@ -29,7 +29,7 @@ $(LVM_BINARY):	$(SRC_DIR)/$(LVM_TARBALL)
 	rm -rf $(SRC_DIR)/$(LVM_DIR)
 	cd $(SRC_DIR) && tar -xvzf $(LVM_TARBALL)
 	cd $(SRC_DIR)/$(LVM_DIR) && \
-		./configure --prefix=/usr --disable-nls --with-optimisation=-Os \
+		./configure --prefix=/usr --disable-nls --with-optimisation=-Os
 	cd $(SRC_DIR)/$(LVM_DIR) && \
 		cat $(LVM_PATCHES) < /dev/null | patch -p1
 	$(MAKE) -j $(NCPUS) -C $(SRC_DIR)/$(LVM_DIR)
