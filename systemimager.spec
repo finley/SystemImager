@@ -55,7 +55,7 @@ BuildArchitectures: noarch
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
-BuildRequires: docbook-utils, dos2unix, e2fsprogs-devel, flex, libtool, readline-devel, /usr/bin/wget, openssl-devel, gcc, gcc-c++
+BuildRequires: docbook-utils, dos2unix, e2fsprogs-devel, flex, libtool, readline-devel, /usr/bin/wget, openssl-devel, gcc, gcc-c++, ncurses-devel
 Requires: rsync >= 2.4.6, syslinux >= 1.48, libappconfig-perl, dosfstools, /usr/bin/perl
 AutoReqProv: no
 
@@ -304,6 +304,9 @@ The bittorrent package allows you to use the BitTorrent protocol to perform
 installations.
 
 %changelog
+* Tue Nov 10 2009 Bernard Li <bernard@vanhpc.org>
+- Added ncurses-devel to BuildRequires
+
 * Sun Dec 02 2007 Bernard Li <bernard@vanhpc.org>
 - Added dtc to BuildRequires for building ps3-ppc64boot-standard package
   (new PS3 kernel requires it)
