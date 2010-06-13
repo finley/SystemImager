@@ -173,7 +173,7 @@ sub create_uyok_initrd() {
             open( FILE,">>$file" ) or die( "Couldn't open $file for appending" );
             print ">>> Appending insmod commands to ./my_modules_dir/INSMOD_COMMANDS...\n" if( $verbose );
             if ($#modules == -1) {
-                print " >> Using custom kernel: hotplug will be used to autodetect the needed modules...\n"
+                print " >> Using custom kernel: udev will be used to autodetect the needed modules...\n"
                     if( $verbose );
             } else {
                 foreach my $module ( @modules ) {

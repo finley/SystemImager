@@ -408,8 +408,9 @@ beep
 ################################################################################
 #
 #   Detect scsi hardware and include the device IDs into the hardware.lst
-#   file used by systemconfigurator.
-#   Use pci-automod for 2.6 kernels, discover for 2.4 kernels.
+#   file used by systemconfigurator.  Use pci-automod for 2.6 kernels.
+#
+#   (no longer support 2.4 kernels -BEF-)
 #
 [ ! -d /a/etc/systemconfig ] && mkdir -p /a/etc/systemconfig
 if [ -e /tmp/hardware.lst ]; then
@@ -420,17 +421,6 @@ elif [ -d /sys/bus -a -e /lib/modules/`uname -r`/modules.pcimap ]; then
     logmsg "Using pci-automod to generate hardware.lst (this may take a long time):"
     pci-automod --hwlist --class storage --class net --class serial --class bridge > /a/etc/systemconfig/hardware.lst
     logmsg "done"
-else
-    SCSI_MODS=`discover -f "%m\n" scsi | grep -v ide-scsi | uniq`
-    for MOD in $SCSI_MODS; do
-        DEVID=`grep $MOD /proc/bus/pci/devices | cut -f 2 | sort | uniq`
-        for MYDEV in $DEVID; do
-            VENDOR=`echo $MYDEV | cut -b 1-4`
-            MODEL=`echo $MYDEV | cut -b 5-8`
-            echo "$VENDOR $MODEL scsi $MOD" >> /a/etc/systemconfig/hardware.lst
-            logmsg "Added SCSI device $VENDOR:$MODEL using module $MOD to hardware.lst"
-        done
-    done
 fi
 #
 ################################################################################

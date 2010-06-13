@@ -1,7 +1,7 @@
 #
 #	"SystemImager"  
 #
-#   Copyright (C) 1999-2006 Brian Elliott Finley
+#   Copyright (C) 1999-2010 Brian Elliott Finley
 #   Copyright (C) 2001-2004 Hewlett-Packard Company <dannf@hp.com>
 #   
 #   Others who have contributed to this code:
@@ -220,8 +220,6 @@ binaries: $(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.img
 #
 include $(TOPDIR)/make.d/bc.rul
 include $(TOPDIR)/make.d/ctcs.rul
-include $(TOPDIR)/make.d/discover-data.rul
-include $(TOPDIR)/make.d/discover.rul
 include $(TOPDIR)/make.d/dosfstools.rul
 include $(TOPDIR)/make.d/e2fsprogs.rul
 include $(TOPDIR)/make.d/gzip.rul

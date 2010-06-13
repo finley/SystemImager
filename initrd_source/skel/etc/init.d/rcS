@@ -2,7 +2,7 @@
 #
 #   "SystemImager" 
 #
-#   Copyright (C) 1999-2004 Brian Elliott Finley 
+#   Copyright (C) 1999-2010 Brian Elliott Finley 
 #
 #   $Id$
 #
@@ -45,8 +45,6 @@ ifconfig_loopback
 load_my_modules
 
 start_udevd
-
-start_hotplug
 
 mount_pts
 
@@ -101,7 +99,7 @@ fi
 
 get_scripts_directory
 
-autodetect_hardware_and_load_modules
+show_loaded_modules
 
 # HOSTNAME may already be set via local.cfg -BEF-
 if [ -z $HOSTNAME ]; then

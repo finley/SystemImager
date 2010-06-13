@@ -6,6 +6,8 @@
 # 	a single source directory, but we'll deal with that later...  Perhaps use
 # 	$(TOPDIR)/tmp/$(ARCH)/ instead of just $(TOPDIR)/tmp/. -BEF-
 #
+#   2010.06.13  Brian Elliott Finley
+#   * remove discover related bits
 
 BOEL_BINARIES_DIR	= $(TOPDIR)/tmp/boel_binaries
 BOEL_BINARIES_TARBALL 	= $(BOEL_BINARIES_DIR).tar.gz
@@ -97,11 +99,6 @@ ifdef WITH_CTCS
 	tar -cv $(CTCS_OTHER_FILES) | tar -C $(BOEL_BINARIES_DIR) -xv
 	cd /usr/include && h2ph -d $(BOEL_BINARIES_DIR)/usr/lib/perl/5.6.1 asm/*
 endif
-	#
-	# Copy over miscellaneous other files...
-	#
-	mkdir -m 755 -p $(BOEL_BINARIES_DIR)/usr/share/discover
-	install -m 644 $(DISCOVER_DATA_FILES) $(BOEL_BINARIES_DIR)/usr/share/discover
 
 	# copy over libnss files for non-uclibc arches
 	# (mklibs doesn't automatically pull these in)

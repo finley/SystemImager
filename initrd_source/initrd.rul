@@ -64,7 +64,6 @@ include $(INITRD_DIR)/make.d/cx_freeze.rul
 include $(INITRD_DIR)/make.d/bittorrent.rul
 include $(INITRD_DIR)/make.d/busybox.rul
 include $(INITRD_DIR)/make.d/dhclient.rul
-include $(INITRD_DIR)/make.d/hotplug.rul
 include $(INITRD_DIR)/make.d/lsb.rul
 include $(INITRD_DIR)/make.d/rsync.rul
 include $(INITRD_DIR)/make.d/sysvinit.rul
@@ -161,7 +160,7 @@ endif
 	cd $(INITRD_BUILD_DIR)/bin && ln -s ../lib/bittorrent/torrentinfo-console
 	cd $(INITRD_BUILD_DIR)/bin && ln -s ../lib/bittorrent/bittorrent-console
 
-	# lsb init functions needed by udev and hotplug init scripts.
+	# lsb init functions needed by udev init script
 	install -m 755 -d $(INITRD_BUILD_DIR)/lib/lsb
 	install -m 644 $(LSB_DIR)/init-functions $(INITRD_BUILD_DIR)/lib/lsb
 

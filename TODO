@@ -15,12 +15,48 @@ Priority classification:
 (1)  probably not
 (-)  unclassified
 
-TODO list for SystemImager
-==========================
-(1)     Fix source so that it builds on Ubuntu Lucid
-(1.1)   Support grub2
-(1.2)   Support ext4
+Finley's new TODO list for SystemImager
+---------------------------------------
+(1) Fix source so that it builds on Ubuntu Lucid
+    (1.1) Busybox latest (done)
+(2) Support grub2 (and other improvements)
 
+    * Thanks to Dennis Stam and Bas van der Vlies of SARA for their
+      notes (below w/my modifications) to help me along here
+
+        - Make sure init scripts for updated binaries come from the
+          binaries' packages
+        - xbusybox 1.16.1
+        - xparted 2.2+ needed for grub 2 so we can set the grub2 partition
+          flag
+        - xudev 157. So we could remove the hotplug software.
+          Autodetecting of hardware is better. 
+        - yNo insmod and my_modules anymore?  I'm thinking we should keep
+          this feature around in the mainstream SystemImager code for now.
+        - kernel support with gpt labels needed for grub2 and upgrade to
+          2.6.33.3 and switch to cpio for initrd instead of cramfs. The
+          systemimager standard kernel use a lot of deprecated options.
+        - changed bittorent client to aria2. Can handle more protocols:
+           * http://aria2.sourceforge.net/ and is completely written in
+             C++
+        - all filesystem tools are upgrade to a newer version.
+        - switched to udhcpc instead of dhclient. The former is included
+          standard in busybox.
+        - Further we completely removed the boel_binaries.tar.gz rsync
+          setup.  Our modules and utilities are all included in the
+          initrd.img. It is easier to upgrade to a new kernel.
+        - /etc/init.d/functions. A lot is removed or has been rewritten.
+        - the grub2 installations is handled in our post install script
+          for now
+
+
+(3) Support ext4
+(4) switch to udhcp
+
+----
+
+The prior TODO list for SystemImager
+------------------------------------
 (8) Introduce a new command (si_power) to control the power of the clients
     (turn on/off/reboot, etc.), see also: ipmitool, BMC.
 
