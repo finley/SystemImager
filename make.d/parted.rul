@@ -4,11 +4,12 @@
 #
 #   2004.12.13  Brian Elliott Finley
 #   - go to 1.6.19
-#
+#   2010.06.13  Brian Elliott Filney
+#   - go to 2.3
 
-PARTED_VERSION := 1.6.25.1
+PARTED_VERSION := 2.3
 PARTED_DIR := parted-$(PARTED_VERSION)
-PARTED_TARBALL := parted-$(PARTED_VERSION).tar.gz
+PARTED_TARBALL := parted-$(PARTED_VERSION).tar.xz
 #PARTED_URL := http://ftp.gnu.org/gnu/parted/$(PARTED_TARBALL)
 PARTED_URL := http://download.systemimager.org/pub/parted/$(PARTED_TARBALL)
 PARTED_BINARY := $(SRC_DIR)/$(PARTED_DIR)/parted/.libs/parted
@@ -25,7 +26,7 @@ parted:	$(PARTED_BINARY)
 
 $(PARTED_BINARY):	$(SRC_DIR)/$(PARTED_TARBALL) $(PARTED_PATCHES)
 	rm -rf $(SRC_DIR)/$(PARTED_DIR)
-	cd $(SRC_DIR) && tar -xvzf $(PARTED_TARBALL)
+	cd $(SRC_DIR) && tar -xvJf $(PARTED_TARBALL)
 	cd $(SRC_DIR)/$(PARTED_DIR) && \
 	  cat $(PARTED_PATCHES) < /dev/null | patch -p1
 	( cd $(SRC_DIR)/$(PARTED_DIR) && \
