@@ -1,8 +1,11 @@
 #
 #  vi: set filetype=make:
 #
+#   2010.06.13  Brian Elliott Finley
+#   * Upgrade from v120 to v157
+#
 
-UDEV_VERSION	= 120
+UDEV_VERSION	= 157
 UDEV_TARBALL	= udev-$(UDEV_VERSION).tar.bz2
 #UDEV_URL	= http://www.us.kernel.org/pub/linux/utils/kernel/hotplug/
 UDEV_URL	= http://download.systemimager.org/pub/udev/
@@ -16,7 +19,14 @@ PHONY += udev
 udev:	$(UDEV_DIR).build
 
 $(UDEV_DIR).build:  $(UDEV_DIR).unpack
-	cd $(UDEV_DIR) && make EXTRAS="`ls -c1 extras/ | sed 's:\(.*\):extras/\1:' | tr '\n' ' '`"
+	cd $(UDEV_DIR) && ./configure \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--sbindir=/sbin \
+		--libdir=/usr/lib64 \
+		--with-rootlibdir=/lib64 \
+		--libexecdir=/lib/udev
+	cd $(UDEV_DIR) && make
 	touch $@
 
 PHONY += udev_install
