@@ -1,10 +1,13 @@
 #    vi: set filetype=make:
 
+#   2010.06.15 Brian Elliott Finley
+#   * Upgrade from v2.9.8 to v3.1.2
+
 ifndef IS_PPC64
 
-XFSPROGS_VERSION := 2.9.8
+XFSPROGS_VERSION := 3.1.2
 XFSPROGS_DIR := xfsprogs-$(XFSPROGS_VERSION)
-XFSPROGS_TARBALL := xfsprogs_$(XFSPROGS_VERSION)-1.tar.gz
+XFSPROGS_TARBALL := xfsprogs-$(XFSPROGS_VERSION).tar.gz
 #XFSPROGS_URL := ftp://oss.sgi.com/projects/xfs/download/cmd_tars/$(XFSPROGS_TARBALL)
 XFSPROGS_URL := http://download.systemimager.org/pub/xfsprogs/$(XFSPROGS_TARBALL)
 XFSPROGS_PATCHES := $(shell ls $(PATCH_DIR)/xfsprogs.*.patch 2>/dev/null | sort)
