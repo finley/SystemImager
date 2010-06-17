@@ -25,8 +25,6 @@ boel_binaries_tarball:	$(BOEL_BINARIES_TARBALL)
 $(BOEL_BINARIES_TARBALL):	$(BC_DIR).build \
 				$(TAR_DIR).build \
 				$(GZIP_BINARY) \
-				$(DISCOVER_DIR).build \
-				$(DISCOVER_DATA_DIR).build \
 				$(KEXEC_BINARY) \
 				$(HFSUTILS_BINARY) \
 				$(DOSFSTOOLS_DIR).build \
@@ -57,7 +55,6 @@ $(BOEL_BINARIES_TARBALL):	$(BC_DIR).build \
 	install -m 755 --strip $(BC_BINARY) 			$(BOEL_BINARIES_DIR)/bin/
 	install -m 755 --strip $(TAR_BINARY) 			$(BOEL_BINARIES_DIR)/bin/
 	install -m 755 --strip $(GZIP_BINARY) 			$(BOEL_BINARIES_DIR)/bin/
-	install -m 755 --strip $(DISCOVER_BINARY) 		$(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(KEXEC_BINARY)			$(BOEL_BINARIES_DIR)/sbin/
 	install -m 755 --strip $(HFSUTILS_BINARY) 		$(BOEL_BINARIES_DIR)/sbin/
 	# XXX change these to be like: $(DOSFSTOOLS_DIR).install
@@ -139,10 +136,10 @@ endif
 
 ifeq ($(USERSPACE64),1)
 	cd $(BOEL_BINARIES_DIR) \
-		&& $(PYTHON) $(TOPDIR)/initrd_source/mklibs -L $(SRC_DIR)/$(PARTED_DIR)/libparted/.libs:$(DISCOVER_DIR)/lib/.libs:$(SRC_DIR)/$(LVM_DIR)/libdm:$(SRC_DIR)/$(E2FSPROGS_DIR)/lib:/lib64:/usr/lib64:/usr/kerberos/lib64:/lib:/usr/lib:/usr/kerberos/lib:/usr/local/lib:/opt/gnome/lib:/lib/tls:`find /lib/tls /usr/lib/tls /lib64/tls /usr/lib64/tls -type d 2>/dev/null | tr '\n' :` -v -d lib64 bin/* sbin/* usr/bin/* usr/sbin/* $(INITRD_BUILD_DIR)/*bin/* $(INITRD_BUILD_DIR)/usr/*bin/*
+		&& $(PYTHON) $(TOPDIR)/initrd_source/mklibs -L $(SRC_DIR)/$(PARTED_DIR)/libparted/.libs:$(SRC_DIR)/$(LVM_DIR)/libdm:$(SRC_DIR)/$(E2FSPROGS_DIR)/lib:/lib64:/usr/lib64:/usr/kerberos/lib64:/lib:/usr/lib:/usr/kerberos/lib:/usr/local/lib:/opt/gnome/lib:/lib/tls:`find /lib/tls /usr/lib/tls /lib64/tls /usr/lib64/tls -type d 2>/dev/null | tr '\n' :` -v -d lib64 bin/* sbin/* usr/bin/* usr/sbin/* $(INITRD_BUILD_DIR)/*bin/* $(INITRD_BUILD_DIR)/usr/*bin/*
 else
 	cd $(BOEL_BINARIES_DIR) \
-		&& $(PYTHON) $(TOPDIR)/initrd_source/mklibs -L $(SRC_DIR)/$(PARTED_DIR)/libparted/.libs:$(DISCOVER_DIR)/lib/.libs:$(SRC_DIR)/$(LVM_DIR)/libdm:$(SRC_DIR)/$(E2FSPROGS_DIR)/lib:/lib:/usr/lib:/usr/kerberos/lib:/usr/local/lib:/opt/gnome/lib:/lib/tls:`find /lib/tls /usr/lib/tls -type d 2>/dev/null | tr '\n' :` -v -d lib bin/* sbin/* usr/bin/* usr/sbin/* $(INITRD_BUILD_DIR)/*bin/* $(INITRD_BUILD_DIR)/usr/*bin/*
+		&& $(PYTHON) $(TOPDIR)/initrd_source/mklibs -L $(SRC_DIR)/$(PARTED_DIR)/libparted/.libs:$(SRC_DIR)/$(LVM_DIR)/libdm:$(SRC_DIR)/$(E2FSPROGS_DIR)/lib:/lib:/usr/lib:/usr/kerberos/lib:/usr/local/lib:/opt/gnome/lib:/lib/tls:`find /lib/tls /usr/lib/tls -type d 2>/dev/null | tr '\n' :` -v -d lib bin/* sbin/* usr/bin/* usr/sbin/* $(INITRD_BUILD_DIR)/*bin/* $(INITRD_BUILD_DIR)/usr/*bin/*
 endif
 
 ifdef IS_PPC64
