@@ -33,9 +33,8 @@ INITRD_BINARIES = $(shell file \
 							initrd_source/build_dir/sbin/* \
 							initrd_source/build_dir/usr/sbin/* \
 							initrd_source/build_dir/lib/udev/* \
-							| grep -v "text\|symbolic link" \
+							| egrep ':.*ELF ' \
 							| perl -pi -e 's/:.*//')
-
 
 ## Should initrd.img be gzipped?
 INITRD_COMPRESS = yes
@@ -120,7 +119,6 @@ $(INITRD_BUILD_DIR).build:  $(INITRD_BUILD_DIR).prep		\
 								$(SYSVINIT_DIR).install		\
 								$(UTIL_LINUX_DIR).install	\
 								$(UDEV_DIR).install		\
-								$(HOTPLUG_DIR).install		\
 								$(LSB_DIR).build		\
 								$(DHCLIENT_DIR).install		\
 								$(RSYNC_DIR).install		\
@@ -150,8 +148,9 @@ else
 	# copy libnss files as they are not automatically included
 	cp -a /lib/libnss* $(INITRD_BUILD_DIR)/lib
 endif
-	# Undo prelinking. -AR-
-	[ -x `which prelink` ] && (find $(INITRD_BUILD_DIR) -type f -exec prelink -u {} \; 2>&1 | grep -v "does not have .gnu.prelink_undo section\|is not an ELF file") || true
+    # Do we still need to undo prelinking? -BEF-
+	## Undo prelinking. -AR-
+	#[ -x `which prelink` ] && (find $(INITRD_BUILD_DIR) -type f -exec prelink -u {} \; 2>&1 | grep -v "does not have .gnu.prelink_undo section\|is not an ELF file") || true
 
 	# Strip 'em. -BEF-
 	strip $(INITRD_BINARIES)
