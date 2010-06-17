@@ -3,9 +3,12 @@
 #   vi: set filetype=make:
 #
 
-REISERFSPROGS_VERSION := 3.6.19
+#   2010.06.15 Brian Elliott Finley
+#   * Upgrade reiserfsprogs from v3.6.19 to v3.6.21
+
+REISERFSPROGS_VERSION := 3.6.21
 REISERFSPROGS_DIR := reiserfsprogs-$(REISERFSPROGS_VERSION)
-REISERFSPROGS_TARBALL := $(REISERFSPROGS_DIR).tar.gz
+REISERFSPROGS_TARBALL := $(REISERFSPROGS_DIR).tar.bz2
 #REISERFSPROGS_URL := http://thebsh.namesys.com/pub/reiserfsprogs/$(REISERFSPROGS_TARBALL)
 REISERFSPROGS_URL := http://download.systemimager.org/pub/reiserfsprogs/$(REISERFSPROGS_TARBALL)
 REISERFSPROGS_PATCHES := $(shell ls $(PATCH_DIR)/reiserfsprogs.*.patch 2>/dev/null | sort)
@@ -30,7 +33,7 @@ reiserfsprogs:	$(MKREISERFS_BINARY)
 
 $(MKREISERFS_BINARY) $(REISERFSTUNE_BINARY):	$(SRC_DIR)/$(REISERFSPROGS_TARBALL)
 	[ -d $(SRC_DIR)/$(REISERFSPROGS_DIR) ] || \
-	  ( cd $(SRC_DIR) && tar xvfz $(REISERFSPROGS_TARBALL) && \
+	  ( cd $(SRC_DIR) && tar xvfj $(REISERFSPROGS_TARBALL) && \
 	    (cd $(REISERFSPROGS_DIR) && \
 	      (cat $(REISERFSPROGS_PATCHES) < /dev/null | patch -p1)))
 	( cd $(SRC_DIR)/$(REISERFSPROGS_DIR) && chmod +x ./configure && \
