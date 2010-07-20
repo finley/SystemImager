@@ -1,0 +1,83 @@
+#!/usr/bin/perl -w
+
+#
+# Copyright (C) 2010 Brian Elliott Finley
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; version 2 of the License.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+#
+
+use strict;
+use Getopt::Long;
+use File::Copy;
+use File::Path qw(make_path);
+
+$ENV{PATH} = "/usr/local/sbin:/usr/sbin:/sbin:/usr/local/bin:/usr/bin:/bin";
+
+
+my $L;
+my $v;
+my $d;
+my $help_info = "Usage: mklibs.bef -L LIBRARY_PATH -d DEST_LIB_DIR BINARY [BINARY...]";
+
+GetOptions(
+    "L=s"   => \$L,
+    "v"     => \$v,
+    "d=s"   => \$d,
+) || die "$help_info";
+
+unless( (defined $L) and (defined $d) ) {
+    print "$help_info\n";
+    exit 1;
+}
+
+my @binaries = @ARGV;
+
+if(defined $v) {
+    print "mklibs.bef:\n";
+    print "------------------------------------------------------------------------\n";
+    print "> library path (-L):\n";
+    my @array = split(/:/, $L);
+    foreach(@array) {
+        print ">  $_\n";
+    }
+    print ">\n> verbose (-v) /* 1=yes, 0=no */:\n>  $v\n";
+    print ">\n> destination (-d):\n>  $d\n";
+    print ">\n> binaries:\n";
+}
+
+my %keepers;
+make_path("$d");
+foreach $b (@binaries) {
+    print ">  $b\n" if(defined $v);
+    my $cmd = "ldd $b";
+    open(INPUT,"$cmd|") or die;
+    while(<INPUT>) {
+        if(m# => /#) {
+            my($junk_a, $junk_b, $junk_c, $lib) = split(/\s+/, $_);
+            $keepers{$lib} = 1;
+        }
+    }
+    close(INPUT);
+}
+
+print ">\n> libs to be copied to destination:\n" if(defined $v);
+foreach my $lib (sort (keys %keepers)) {
+    print ">  $lib\n" if(defined $v);
+    copy("$lib","$d/") or die "Copy failed: $!";
+}
+print ">\n" if(defined $v);
+
+exit 0;
+
+
