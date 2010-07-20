@@ -136,14 +136,14 @@ $(INITRD_BUILD_DIR).build:  $(INITRD_BUILD_DIR).prep		\
 ifeq ($(ARCH),x86_64)
 	( \
 		cd $(INITRD_BUILD_DIR) && \
-		$(PYTHON) $(INITRD_DIR)/mklibs -L /lib64:/usr/lib64:/lib:/usr/lib -v -d lib64 ./*bin/* \
+		$(INITRD_DIR)/mklibs.bef -L /lib64:/usr/lib64:/lib:/usr/lib -v -d lib64 ./*bin/* \
 	)
 	# copy libnss files as they are not automatically included
 	cp -a /lib64/libnss* $(INITRD_BUILD_DIR)/lib64
 else
 	( \
 		cd $(INITRD_BUILD_DIR) && \
-		$(PYTHON) $(INITRD_DIR)/mklibs -L /lib:/usr/lib:/lib64:/usr/lib64 -v -d lib ./*bin/* \
+		$(INITRD_DIR)/mklibs.bef -L /lib:/usr/lib:/lib64:/usr/lib64 -v -d lib ./*bin/* \
 	)
 	# copy libnss files as they are not automatically included
 	cp -a /lib/libnss* $(INITRD_BUILD_DIR)/lib
