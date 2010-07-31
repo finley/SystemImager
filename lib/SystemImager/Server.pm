@@ -1,7 +1,7 @@
 #
 #   "SystemImager" 
 #
-#   Copyright (C) 1999-2006 Brian Elliott Finley
+#   Copyright (C) 1999-2010 Brian Elliott Finley
 #
 #   $Id$
 #
@@ -1353,53 +1353,14 @@ sub _write_out_mkfs_commands {
 
                 print $out "\n";
 
-            # ext2
-            } elsif ( $xml_config->{fsinfo}->{$line}->{fs} eq "ext2" ) {
-
+            # ext2,ext3,ext4
+            } elsif (
+                       ( $xml_config->{fsinfo}->{$line}->{fs} eq "ext2" ) 
+                    or ( $xml_config->{fsinfo}->{$line}->{fs} eq "ext3" )
+                    or ( $xml_config->{fsinfo}->{$line}->{fs} eq "ext4" )
+                    ) {
                 # create fs
-                $cmd = "mke2fs -q $real_dev || shellout";
-                print $out qq(logmsg "$cmd"\n);
-                print $out "$cmd\n";
-
-                if ($mount_dev) {
-                    # add LABEL if necessary
-                    if ($mount_dev =~ /LABEL=/) {
-                        my $label = $mount_dev;
-                        $label =~ s/LABEL=//;
-
-                        $cmd = "tune2fs -L $label $real_dev";
-                        print $out qq(logmsg "$cmd"\n);
-                        print $out "$cmd\n";
-                    }
-
-                    # add UUID if necessary
-                    if ($mount_dev =~ /UUID=/) {
-                        my $uuid = $mount_dev;
-                        $uuid =~ s/UUID=//;
-
-                        $cmd = "tune2fs -U $uuid $real_dev";
-                        print $out qq(logmsg "$cmd"\n);
-                        print $out "$cmd\n";
-                    }
-                }
-
-                # mkdir
-                $cmd = "mkdir -p /a$mp || shellout";
-                print $out qq(logmsg "$cmd"\n);
-                print $out "$cmd\n";
-
-                # mount
-                $cmd = "mount $real_dev /a$mp -t $fs -o $options || shellout";
-                print $out qq(logmsg "$cmd"\n);
-                print $out "$cmd\n";
-
-                print $out "\n";
-
-            # ext3
-            } elsif ( $xml_config->{fsinfo}->{$line}->{fs} eq "ext3" ) {
-
-                # create fs
-                $cmd = "mke2fs -q -j $real_dev || shellout";
+                $cmd = "mke2fs -q -t $xml_config->{fsinfo}->{$line}->{fs} $real_dev || shellout";
                 print $out qq(logmsg "$cmd"\n);
                 print $out "$cmd\n";
 
@@ -1728,8 +1689,9 @@ sub _write_out_umount_commands {
             # Don't include in hash below unless it's a supported filesystem. -BEF-
             #
             unless( 
-                   ($fs eq "ext2") 
+                      ($fs eq "ext2") 
                    or ($fs eq "ext3") 
+                   or ($fs eq "ext4") 
                    or ($fs eq "reiserfs")
                    or ($fs eq "msdos")
                    or ($fs eq "vfat")

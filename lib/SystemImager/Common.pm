@@ -469,10 +469,10 @@ sub save_partition_information {
             #
             #   "help mkfs"
             #
-            my $fs_regex = '(ext3|ext2|fat32|fat16|hfs|jfs|linux-swap|ntfs|reiserfs|hp-ufs|sun-ufs|xfs)\s*';
+            my $fs_regex = '(ext4|ext3|ext2|fat32|fat16|hfs|jfs|linux-swap|ntfs|reiserfs|hp-ufs|sun-ufs|xfs)\s*';
 
             #
-            # fs_regex arguments taken from parted on RHEL4.  For more info on 
+            # flag_regex arguments taken from parted on RHEL4.  For more info on 
             # flags that parted uses, just start parted in interactive mode, 
             # and do this:
             #
