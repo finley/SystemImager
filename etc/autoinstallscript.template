@@ -5,7 +5,7 @@
 #   $Id$
 #    vi:set filetype=sh:
 #
-#   Copyright (C) 1999-2006 Brian Elliott Finley
+#   Copyright (C) 1999-2010 Brian Elliott Finley
 #
 #   28.07.2005 Erich Focht : SCSI device detection and generation of
 #                            /a/etc/systemconfig/hardware.lst
@@ -186,6 +186,7 @@ modprobe dm-mod
 logmsg "Load additional filesystem drivers."
 modprobe ext2
 modprobe ext3
+modprobe ext4
 modprobe fat
 modprobe jfs
 modprobe reiserfs
