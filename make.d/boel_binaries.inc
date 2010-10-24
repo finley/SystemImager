@@ -88,14 +88,6 @@ endif
 	mkdir -m 755 -p $(BOEL_BINARIES_DIR)/lib
 
 	#
-ifdef WITH_CTCS
-	mkdir -p $(BOEL_BINARIES_DIR)/usr/src
-	cp -a $(LINUX_SRC)/ $(BOEL_BINARIES_DIR)/usr/src/linux/
-	$(MAKE) -sw -C $(BOEL_BINARIES_DIR)/usr/src/linux/ clean
-	cp -a $(SRC_DIR)/$(CTCS_DIR)/ $(BOEL_BINARIES_DIR)/usr/src/ctcs/
-	tar -cv $(CTCS_OTHER_FILES) | tar -C $(BOEL_BINARIES_DIR) -xv
-	cd /usr/include && h2ph -d $(BOEL_BINARIES_DIR)/usr/lib/perl/5.6.1 asm/*
-endif
 
 	# copy over libnss files for non-uclibc arches
 	# (mklibs doesn't automatically pull these in)

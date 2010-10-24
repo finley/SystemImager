@@ -81,8 +81,6 @@
 #   o torrents
 #
 #
-# To include the ctcs test suite, and associated files, do a 'make WITH_CTCS=1 all'
-#
 
 DESTDIR :=
 VERSION := $(shell cat VERSION)
