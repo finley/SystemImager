@@ -1,0 +1,44 @@
+#
+#	$Id$
+#   vi: set filetype=make:
+#
+
+POPT_VERSION	= 1.14
+POPT_TARBALL 	= popt-$(POPT_VERSION).tar.gz
+#POPT_URL 		= http://rpm5.org/files/popt/popt-1.14.tar.gz
+POPT_URL 		= http://download.systemimager.org/pub/popt/$(POPT_TARBALL)
+POPT_DIR 		= $(INITRD_SRC_DIR)/popt-$(POPT_VERSION)
+POPT_PATCHES 	= $(shell ls $(INITRD_PATCH_DIR)/popt.*.patch 2>/dev/null | sort)
+
+ALL_SOURCE += $(INITRD_SRC_DIR)/$(POPT_TARBALL)
+
+$(POPT_DIR).unpack:	$(INITRD_SRC_DIR)/$(POPT_TARBALL) \
+						$(POPT_PATCHES) \
+						$(INITRD_DIR)/make.d/popt.rul
+	rm -rf $(POPT_DIR)
+	cd $(INITRD_SRC_DIR) && tar -xvzf $(POPT_TARBALL)
+	cd $(POPT_DIR) && cat $(POPT_PATCHES) < /dev/null | patch -p1
+	touch $@
+
+PHONY += popt
+popt:	$(POPT_DIR).build
+$(POPT_DIR).build:	$(POPT_DIR).unpack
+	cd $(POPT_DIR) && ./configure
+	$(MAKE) -j $(NCPUS) -C $(POPT_DIR)
+	touch $@
+
+
+$(POPT_DIR).install:	$(POPT_DIR).build \
+						$(INITRD_BUILD_DIR).prep
+	install -m 755 $(POPT_DIR)/popt/popt $(INITRD_BUILD_DIR)/bin
+
+
+$(INITRD_SRC_DIR)/$(POPT_TARBALL):
+	[ -d $(INITRD_SRC_DIR) ] || mkdir -p $(INITRD_SRC_DIR)
+	$(GETSOURCE) $(POPT_URL) $(INITRD_SRC_DIR)
+
+
+PHONY += popt_clean
+popt_clean:
+	rm -rf $(POPT_DIR)
+
