@@ -6,31 +6,33 @@
 #   	- Bittorrent binaries
 #
 
-BITTORRENT_VERSION      := 4.4.0
-BITTORRENT_DIR          := $(INITRD_SRC_DIR)/BitTorrent-$(BITTORRENT_VERSION)
-BITTORRENT_TARBALL      := BitTorrent-$(BITTORRENT_VERSION).tar.gz
-# BITTORRENT_URL          := http://www.bittorrent.com/dl/$(BITTORRENT_TARBALL)
-BITTORRENT_URL          := http://download.systemimager.org/pub/bittorrent/$(BITTORRENT_TARBALL)
-#XXX BITTORRENT_BINARY       := $(BITTORRENT_DIR)/bittorrent.py
-BITTORRENT_PATCHES      := $(shell ls $(INITRD_PATCH_DIR)/bittorrent.*.patch 2>/dev/null | sort)
+BITTORRENT_VERSION	= 4.4.0
+BITTORRENT_TARBALL 	= BitTorrent-$(BITTORRENT_VERSION).tar.gz
+# BITTORRENT_URL      = http://www.bittorrent.com/dl/$(BITTORRENT_TARBALL)
+BITTORRENT_URL 		= http://download.systemimager.org/pub/bittorrent/$(BITTORRENT_TARBALL)
+BITTORRENT_DIR 		= $(INITRD_SRC_DIR)/BitTorrent-$(BITTORRENT_VERSION)
+BITTORRENT_PATCHES 	= $(shell ls $(INITRD_PATCH_DIR)/bittorrent.*.patch 2>/dev/null | sort)
 
 ALL_SOURCE += $(INITRD_SRC_DIR)/$(BITTORRENT_TARBALL)
 
-PHONY += bittorrent
-bittorrent:  $(BITTORRENT_DIR).build
+$(BITTORRENT_DIR).unpack:	$(INITRD_SRC_DIR)/$(BITTORRENT_TARBALL) \
+						$(BITTORRENT_PATCHES) \
+						$(INITRD_DIR)/make.d/bittorrent.rul
+	rm -rf $(BITTORRENT_DIR)
+	cd $(INITRD_SRC_DIR) && tar -xvzf $(BITTORRENT_TARBALL)
+	cd $(BITTORRENT_DIR) && cat $(BITTORRENT_PATCHES) < /dev/null | patch -p1
+	touch $@
 
-PHONY += bittorrent_install
-bittorrent_install:  $(BITTORRENT_DIR).install
+PHONY += bittorrent
+bittorrent:	$(BITTORRENT_DIR).build
+$(BITTORRENT_DIR).build:	$(BITTORRENT_DIR).unpack $(CX_FREEZE_DIR).build
+	touch $@
+
 $(BITTORRENT_DIR).install:	$(BITTORRENT_DIR).build \
-							$(INITRD_BUILD_DIR).prep \
-							$(CX_FREEZE_DIR).build
-	$(CX_FREEZE_BINARY) \
-		--install-dir=$(INITRD_BUILD_DIR)/lib/bittorrent \
-		--exclude-modules=gobject,pango,gtk \
+						$(INITRD_BUILD_DIR).prep
+	$(CX_FREEZE_DIR)/FreezePython --install-dir=$(INITRD_BUILD_DIR)/lib/bittorrent --exclude-modules=gobject,pango,gtk \
 		$(BITTORRENT_DIR)/torrentinfo-console.py
-	$(CX_FREEZE_BINARY) \
-		--install-dir=$(INITRD_BUILD_DIR)/lib/bittorrent \
-		--exclude-modules=gobject,pango,gtk \
+	$(CX_FREEZE_DIR)/FreezePython --install-dir=$(INITRD_BUILD_DIR)/lib/bittorrent --exclude-modules=gobject,pango,gtk \
 		$(BITTORRENT_DIR)/bittorrent-console.py
 	#
 	# Explicit copy shared libraries needed by bittorrent binaries.
@@ -45,25 +47,14 @@ $(BITTORRENT_DIR).install:	$(BITTORRENT_DIR).build \
 	rm -f $(INITRD_BUILD_DIR)/bin/torrentinfo-console
 	rm -f $(INITRD_BUILD_DIR)/bin/bittorrent-console
 
-
-$(BITTORRENT_DIR).build:	$(BITTORRENT_DIR).unpack
-	touch $@
-
-$(BITTORRENT_DIR).unpack:	$(INITRD_DIR)/make.d/bittorrent.rul \
-						$(INITRD_SRC_DIR)/$(BITTORRENT_TARBALL) \
-						$(BITTORRENT_PATCHES)
-	rm -rf $(BITTORRENT_DIR)
-	cd $(INITRD_SRC_DIR) && tar -xvzf $(BITTORRENT_TARBALL)
-	cd $(BITTORRENT_DIR) && cat $(BITTORRENT_PATCHES) < /dev/null | patch -p1
-	touch $@
-
 $(INITRD_SRC_DIR)/$(BITTORRENT_TARBALL):
-	mkdir -p $(INITRD_SRC_DIR)
+	[ -d $(INITRD_SRC_DIR) ] || mkdir -p $(INITRD_SRC_DIR)
 	$(GETSOURCE) $(BITTORRENT_URL) $(INITRD_SRC_DIR)
 
 PHONY += bittorrent_clean
 bittorrent_clean:
 	rm -rf $(BITTORRENT_DIR)
-	rm -f  $(BITTORRENT_DIR).unpack
-	rm -f  $(BITTORRENT_DIR).build
+	rm -f $(BITTORRENT_DIR).unpack
+	rm -f $(BITTORRENT_DIR).build
+	rm -f $(BITTORRENT_DIR).install
 

@@ -1,29 +1,38 @@
 #
 # $Id$
 #
-# http://udpcast.linux.lu/current/
+# http://udpcast.linux.lu/source.html
 #
-UDPCAST_VERSION = 20060325
+#	2010.10.27 Brian Elliott Finley
+#	* Upgrade from v20060325 to v20100130
+#
+
+UDPCAST_VERSION = 20100130
 UDPCAST_TARBALL = udpcast-$(UDPCAST_VERSION).tar.gz
-#UDPCAST_URL = http://udpcast.linux.lu/download/$(UDPCAST_TARBALL)
-UDPCAST_URL = http://download.systemimager.org/pub/udpcast/$(UDPCAST_TARBALL)
-UDPCAST_DIR = udpcast-$(UDPCAST_VERSION)
-UDPCAST_BINARY = $(INITRD_SRC_DIR)/$(UDPCAST_DIR)/udp-receiver
-UDPCAST_PATCHES = $(shell ls $(INITRD_PATCH_DIR)/udpcast.*.patch 2>/dev/null | sort)
+UDPCAST_URL 		= http://download.systemimager.org/pub/udpcast/$(UDPCAST_TARBALL)
+UDPCAST_DIR 		= $(INITRD_SRC_DIR)/udpcast-$(UDPCAST_VERSION)
+UDPCAST_PATCHES 	= $(shell ls $(INITRD_PATCH_DIR)/udpcast.*.patch 2>/dev/null | sort)
 
 ALL_SOURCE += $(INITRD_SRC_DIR)/$(UDPCAST_TARBALL)
 
-PHONY += udpcast
-udpcast:    $(UDPCAST_BINARY)
-
-$(UDPCAST_BINARY):	$(INITRD_SRC_DIR)/$(UDPCAST_TARBALL) $(UDPCAST_PATCHES)
-	rm -rf $(INITRD_SRC_DIR)/$(UDPCAST_DIR)
+$(UDPCAST_DIR).unpack:	$(INITRD_SRC_DIR)/$(UDPCAST_TARBALL) \
+						$(UDPCAST_PATCHES) \
+						$(INITRD_DIR)/make.d/udpcast.rul
+	rm -rf $(UDPCAST_DIR)
 	cd $(INITRD_SRC_DIR) && tar -xvzf $(UDPCAST_TARBALL)
-	
-	cd $(INITRD_SRC_DIR)/$(UDPCAST_DIR) && \
-		cat $(UDPCAST_PATCHES) < /dev/null | patch -p1
+	cd $(UDPCAST_DIR) && cat $(UDPCAST_PATCHES) < /dev/null | patch -p1
+	touch $@
 
-	$(MAKE) -C $(INITRD_SRC_DIR)/$(UDPCAST_DIR) udp-receiver
+PHONY += udpcast
+udpcast:	$(UDPCAST_DIR).build
+$(UDPCAST_DIR).build:	$(UDPCAST_DIR).unpack
+	cd $(UDPCAST_DIR) && ./configure
+	$(MAKE) -j $(NCPUS) -C $(UDPCAST_DIR) udp-receiver
+	touch $@
+
+$(UDPCAST_DIR).install:	$(UDPCAST_DIR).build \
+						$(INITRD_BUILD_DIR).prep
+	install -m 755 $(UDPCAST_DIR)/udp-receiver $(INITRD_BUILD_DIR)/bin
 
 $(INITRD_SRC_DIR)/$(UDPCAST_TARBALL):
 	[ -d $(INITRD_SRC_DIR) ] || mkdir -p $(INITRD_SRC_DIR)
@@ -31,5 +40,8 @@ $(INITRD_SRC_DIR)/$(UDPCAST_TARBALL):
 
 PHONY += udpcast_clean
 udpcast_clean:
-	rm -rf $(INITRD_SRC_DIR)/$(UDPCAST_DIR)
+	rm -rf $(UDPCAST_DIR)
+	rm -f  $(UDPCAST_DIR).unpack
+	rm -f  $(UDPCAST_DIR).build
+	rm -f  $(UDPCAST_DIR).install
 

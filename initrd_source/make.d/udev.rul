@@ -49,4 +49,7 @@ $(INITRD_SRC_DIR)/$(UDEV_TARBALL):
 PHONY += udev_clean
 udev_clean:
 	rm -rf $(UDEV_DIR)
-	rm -f  $(UDEV_DIR).build $(UDEV_DIR).unpack $(UDEV_DIR).install
+	rm -f  $(UDEV_DIR).unpack
+	rm -f  $(UDEV_DIR).build
+	rm -f  $(UDEV_DIR).install
+

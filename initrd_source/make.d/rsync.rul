@@ -45,3 +45,5 @@ rsync_clean:
 	rm -rf $(RSYNC_DIR)
 	rm -f  $(RSYNC_DIR).unpack
 	rm -f  $(RSYNC_DIR).build
+	rm -f  $(RSYNC_DIR).install
+

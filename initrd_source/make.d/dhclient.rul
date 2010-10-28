@@ -47,5 +47,5 @@ dhclient_clean:
 	rm -rf $(DHCLIENT_DIR)
 	rm -f  $(DHCLIENT_DIR).unpack
 	rm -f  $(DHCLIENT_DIR).build
-
+	rm -f  $(DHCLIENT_DIR).install
 

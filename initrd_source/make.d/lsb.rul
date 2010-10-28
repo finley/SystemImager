@@ -35,6 +35,7 @@ $(INITRD_SRC_DIR)/$(LSB_TARBALL):
 PHONY += lsb_clean
 lsb_clean:
 	rm -rf $(LSB_DIR)
-	rm -f  $(LSB_DIR).unpack
-	rm -f  $(LSB_DIR).build
+	rm -f $(LSB_DIR).unpack
+	rm -f $(LSB_DIR).build
+	rm -f $(LSB_DIR).install
 

@@ -22,28 +22,7 @@ PHONY += boel_binaries_tarball
 boel_binaries_tarball:	$(BOEL_BINARIES_TARBALL)
 
 
-$(BOEL_BINARIES_TARBALL):	$(BC_DIR).build \
-				$(TAR_DIR).build \
-				$(GZIP_BINARY) \
-				$(KEXEC_BINARY) \
-				$(HFSUTILS_BINARY) \
-				$(DOSFSTOOLS_DIR).build \
-				$(MKE2FS_BINARY) \
-				$(TUNE2FS_BINARY) \
-				$(PARTED_BINARY) \
-				$(UTIL_LINUX_DIR).build \
-				$(MDADM_BINARIES) \
-				$(MKREISERFS_BINARY) \
-				$(REISERFSTUNE_BINARY) \
-				$(MKJFS_BINARY) \
-				$(JFS_TUNE_BINARY) \
-				$(MKXFS_BINARY) \
-				$(XFS_DB_BINARY) \
-				$(CTCS_BINARY) \
-				$(OPENSSH_SBINARIES) \
-				$(OPENSSH_BINARIES) \
-				$(OPENSSH_CONF_FILES) \
-				$(LVM_BINARY) \
+$(BOEL_BINARIES_TARBALL):	\
 				$(SRC_DIR)/modules_build-stamp
 	#
 	# Put binaries in the boel_binaries_tarball...
@@ -52,38 +31,10 @@ $(BOEL_BINARIES_TARBALL):	$(BC_DIR).build \
 	mkdir -m 755 -p $(BOEL_BINARIES_DIR)/sbin
 	mkdir -m 755 -p $(BOEL_BINARIES_DIR)/usr/bin
 	mkdir -m 755 -p $(BOEL_BINARIES_DIR)/usr/sbin
-	install -m 755 --strip $(BC_BINARY) 			$(BOEL_BINARIES_DIR)/bin/
 	install -m 755 --strip $(TAR_BINARY) 			$(BOEL_BINARIES_DIR)/bin/
-	install -m 755 --strip $(GZIP_BINARY) 			$(BOEL_BINARIES_DIR)/bin/
-	install -m 755 --strip $(KEXEC_BINARY)			$(BOEL_BINARIES_DIR)/sbin/
-	install -m 755 --strip $(HFSUTILS_BINARY) 		$(BOEL_BINARIES_DIR)/sbin/
-	# XXX change these to be like: $(DOSFSTOOLS_DIR).install
-	install -m 755 --strip $(MKDOSFS_BINARY) 		$(BOEL_BINARIES_DIR)/sbin/
-	install -m 755 --strip $(MKE2FS_BINARY) 		$(BOEL_BINARIES_DIR)/sbin/
-	install -m 755 --strip $(TUNE2FS_BINARY) 		$(BOEL_BINARIES_DIR)/sbin/
-	install -m 755 --strip $(PARTED_BINARY)			$(BOEL_BINARIES_DIR)/sbin/
-	install -m 755 --strip $(UTIL_LINUX_BINARIES)	$(BOEL_BINARIES_DIR)/sbin/
-	install -m 755 --strip $(MDADM_BINARIES) 		$(BOEL_BINARIES_DIR)/sbin/
-	install -m 755 --strip $(MKREISERFS_BINARY) 	$(BOEL_BINARIES_DIR)/sbin/mkreiserfs
-	install -m 755 --strip $(REISERFSTUNE_BINARY) 	$(BOEL_BINARIES_DIR)/sbin/reiserfstune
-	install -m 755 --strip $(MKJFS_BINARY) 			$(BOEL_BINARIES_DIR)/sbin/
-	install -m 755 --strip $(JFS_TUNE_BINARY) 		$(BOEL_BINARIES_DIR)/sbin/
-	install -m 755 --strip $(OPENSSH_BINARIES) 		$(BOEL_BINARIES_DIR)/usr/bin
-	install -m 755 --strip $(OPENSSH_SBINARIES) 		$(BOEL_BINARIES_DIR)/usr/sbin
 	mkdir -m 755 -p $(BOEL_BINARIES_DIR)/etc/ssh
-	install -m 644 $(OPENSSH_CONF_FILES) 			$(BOEL_BINARIES_DIR)/etc/ssh
-ifdef MKXFS_BINARY
-	install -m 755 --strip $(MKXFS_BINARY) $(BOEL_BINARIES_DIR)/sbin/
-	install -m 755 --strip $(XFS_DB_BINARY) $(BOEL_BINARIES_DIR)/sbin/
-endif
 	#
-	# 2005-01-18 Andrea Righi
-	# 
-	install -m 755 --strip $(LVM_BINARY)			$(BOEL_BINARIES_DIR)/sbin/
 	#
-	# Create LVM symlinks to lvm binary
-	#
-	cd $(BOEL_BINARIES_DIR)/sbin && $(foreach binary,$(shell cat $(SRC_DIR)/$(LVM_DIR)/tools/.commands),ln -s -f lvm $(binary) && ) /bin/true
 
 	mkdir -m 755 -p $(BOEL_BINARIES_DIR)/lib
 
@@ -140,11 +91,6 @@ ifdef IS_PPC64
 	[ -d /lib64 ] && cp -a /lib64/libnss* $(BOEL_BINARIES_DIR)/lib64 || true
 endif
 
-	#
-	# Include other files required by openssh that apparently aren't 
-	# picked up by mklibs for some reason. -BEF-
-	#
-	tar -cv $(OPENSSH_OTHER_FILES) | tar -C $(BOEL_BINARIES_DIR) -xv
 	#
 	#
 	# install kernel modules. -BEF-

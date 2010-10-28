@@ -44,6 +44,8 @@ cx_freeze_clean:
 	rm -rf $(CX_FREEZE_DIR)
 	rm -f  $(CX_FREEZE_DIR).unpack
 	rm -f  $(CX_FREEZE_DIR).build
+	rm -f  $(CX_FREEZE_DIR).install
 
 DEBIAN_STABLE_BUILD_DEPS += python-dev
 UBUNTU_DAPPER_BUILD_DEPS += python-dev
+

@@ -216,28 +216,7 @@ binaries: $(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.img
 # by setting a variable in one and using it in another, then that should be
 # abstracted out. Its much more robust to include *.rul... -dannf
 #
-include $(TOPDIR)/make.d/bc.rul
-include $(TOPDIR)/make.d/ctcs.rul
-include $(TOPDIR)/make.d/dosfstools.rul
-include $(TOPDIR)/make.d/e2fsprogs.rul
-include $(TOPDIR)/make.d/gzip.rul
-include $(TOPDIR)/make.d/hfsutils.rul
-include $(TOPDIR)/make.d/jfsutils.rul
 include $(TOPDIR)/make.d/kernel.rul
-include $(TOPDIR)/make.d/kexec.rul
-include $(TOPDIR)/make.d/lvm.rul
-include $(TOPDIR)/make.d/mdadm.rul
-include $(TOPDIR)/make.d/openssh.rul
-include $(TOPDIR)/make.d/openssl.rul
-include $(TOPDIR)/make.d/parted.rul
-include $(TOPDIR)/make.d/pdisk.rul
-include $(TOPDIR)/make.d/popt.rul
-include $(TOPDIR)/make.d/reiserfsprogs.rul
-include $(TOPDIR)/make.d/tar.rul
-include $(TOPDIR)/make.d/util-linux.rul
-include $(TOPDIR)/make.d/xfsprogs.rul
-include $(TOPDIR)/make.d/zlib.rul
-
 include $(TOPDIR)/initrd_source/initrd.rul
 
 # a complete server install

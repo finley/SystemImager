@@ -1,0 +1,55 @@
+#    vi: set filetype=make:
+
+#   2010.06.15 Brian Elliott Finley
+#   * Upgrade from v2.9.8 to v3.1.2
+#   2010.10.24 Brian Elliott Finley
+#   * Upgrade from v3.1.2 to v3.1.3
+
+ifndef IS_PPC64
+
+XFSPROGS_VERSION 	= 3.1.3
+XFSPROGS_TARBALL 	= xfsprogs-$(XFSPROGS_VERSION).tar.gz
+#XFSPROGS_URL 		 = ftp://oss.sgi.com/projects/xfs/download/cmd_tars/$(XFSPROGS_TARBALL)
+XFSPROGS_URL 		= http://download.systemimager.org/pub/xfsprogs/$(XFSPROGS_TARBALL)
+XFSPROGS_DIR 		= $(INITRD_SRC_DIR)/xfsprogs-$(XFSPROGS_VERSION)
+XFSPROGS_PATCHES 	= $(shell ls $(INITRD_PATCH_DIR)/xfsprogs.*.patch 2>/dev/null | sort)
+
+ALL_SOURCE += $(INITRD_SRC_DIR)/$(XFSPROGS_TARBALL)
+
+$(XFSPROGS_DIR).unpack:	$(INITRD_SRC_DIR)/$(XFSPROGS_TARBALL) \
+						$(XFSPROGS_PATCHES) \
+						$(INITRD_DIR)/make.d/xfsprogs.rul
+	rm -rf $(XFSPROGS_DIR)
+	cd $(INITRD_SRC_DIR) && tar -xvzf $(XFSPROGS_TARBALL)
+	cd $(XFSPROGS_DIR) && cat $(XFSPROGS_PATCHES) < /dev/null | patch -p1
+	touch $@
+
+PHONY += xfsprogs
+xfsprogs:	$(XFSPROGS_DIR).build
+$(XFSPROGS_DIR).build:	$(XFSPROGS_DIR).unpack
+	cd $(XFSPROGS_DIR) && ./configure
+	$(MAKE) -j $(NCPUS) -C $(XFSPROGS_DIR) DEBUG=-DNDEBUG
+	touch $@
+
+$(XFSPROGS_DIR).install:	$(XFSPROGS_DIR).build \
+						$(INITRD_BUILD_DIR).prep
+	install -m 755 $(XFSPROGS_DIR)/mkfs/mkfs.xfs $(INITRD_BUILD_DIR)/sbin
+	install -m 755 $(XFSPROGS_DIR)/db/xfs_db     $(INITRD_BUILD_DIR)/sbin
+
+$(INITRD_SRC_DIR)/$(XFSPROGS_TARBALL):
+	[ -d $(INITRD_SRC_DIR) ] || mkdir -p $(INITRD_SRC_DIR)
+	$(GETSOURCE) $(XFSPROGS_URL) $(INITRD_SRC_DIR)
+
+PHONY += xfsprogs_clean
+xfsprogs_clean:
+	rm -rf $(XFSPROGS_DIR)
+	rm -f  $(XFSPROGS_DIR).unpack
+	rm -f  $(XFSPROGS_DIR).build
+	rm -f  $(XFSPROGS_DIR).install
+
+endif
+
+DEBIAN_STABLE_BUILD_DEPS += libtool uuid-dev gettext
+UBUNTU_DAPPER_BUILD_DEPS += libtool uuid-dev gettext
+
+

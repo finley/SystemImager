@@ -1,0 +1,82 @@
+#
+#   $Id$
+#    vi: set filetype=make:
+#   
+
+OPENSSH_VERSION		= 5.6p1
+OPENSSH_MD5SUM		= e6ee52e47c768bf0ec42a232b5d18fb0
+OPENSSH_TARBALL 	= openssh-$(OPENSSH_VERSION).tar.gz
+#OPENSSH_URL		 = ftp://mirror.sg.depaul.edu/pub/OpenBSD/OpenSSH/portable/$(OPENSSH_TARBALL)
+OPENSSH_URL 		= http://download.systemimager.org/pub/openssh/$(OPENSSH_TARBALL)
+OPENSSH_DIR 		= $(INITRD_SRC_DIR)/openssh-$(OPENSSH_VERSION)
+OPENSSH_PATCHES 	= $(shell ls $(INITRD_PATCH_DIR)/openssh.*.patch 2>/dev/null | sort)
+
+ALL_SOURCE += $(INITRD_SRC_DIR)/$(OPENSSH_TARBALL)
+
+
+PHONY += openssh
+openssh:	$(OPENSSH_DIR).build
+$(OPENSSH_DIR).build:	$(OPENSSH_DIR).unpack $(OPENSSL_DIR).build
+	cd $(OPENSSH_DIR) && LD_LIBRARY_PATH=$(OPENSSL_DIR) ./configure --prefix=/usr \
+	  --with-zlib=$(ZLIB_DIR) --with-ssl-dir=$(OPENSSL_DIR) --without-rpath --disable-last-log \
+	  --disable-libutil --disable-pututxline --disable-utmpx --disable-wtmpx --without-pam \
+	  --with-ldflags=-s --with-4in6=no --without-kerberos5 --without-md5-passwords \
+	  --without-bsd-auth --with-xauth=no --sysconfdir=/etc/ssh
+	$(MAKE) -j $(NCPUS) -C $(OPENSSH_DIR)
+	touch $@
+
+
+$(OPENSSH_DIR).unpack:	$(INITRD_SRC_DIR)/$(OPENSSH_TARBALL) \
+						$(OPENSSH_PATCHES) \
+						$(INITRD_DIR)/make.d/openssh.rul
+	echo "$(OPENSSH_MD5SUM)  $(INITRD_SRC_DIR)/$(OPENSSH_TARBALL)" > $(INITRD_SRC_DIR)/$(OPENSSH_TARBALL).md5
+	md5sum -c $(INITRD_SRC_DIR)/$(OPENSSH_TARBALL).md5
+	rm -rf $(OPENSSH_DIR)
+	cd $(INITRD_SRC_DIR) && tar -xvzf $(OPENSSH_TARBALL)
+	cd $(OPENSSH_DIR) && cat $(OPENSSH_PATCHES) < /dev/null | patch -p1
+	touch $@
+
+
+$(OPENSSH_DIR).install:	$(OPENSSH_DIR).build \
+						$(INITRD_BUILD_DIR).prep
+	install -m 755 $(OPENSSH_DIR)/ssh        $(INITRD_BUILD_DIR)/bin
+	install -m 755 $(OPENSSH_DIR)/scp        $(INITRD_BUILD_DIR)/bin
+	install -m 755 $(OPENSSH_DIR)/ssh-keygen $(INITRD_BUILD_DIR)/bin
+	install -m 755 $(OPENSSH_DIR)/sshd       $(INITRD_BUILD_DIR)/sbin
+	#
+	install -m 644 $(TOPDIR)/etc/ssh/ssh_config  $(INITRD_BUILD_DIR)/etc/ssh
+	install -m 644 $(TOPDIR)/etc/ssh/sshd_config $(INITRD_BUILD_DIR)/etc/ssh
+	#
+	# Include other files required by openssh that apparently aren't 
+	# picked up by mklibs for some reason. -BEF-
+	#
+	#tar -cv $(OPENSSH_OTHER_FILES) | tar -C $(BOEL_BINARIES_DIR) -xv
+
+
+$(INITRD_SRC_DIR)/$(OPENSSH_TARBALL):
+	[ -d $(INITRD_SRC_DIR) ] || mkdir -p $(INITRD_SRC_DIR)
+	$(GETSOURCE) $(OPENSSH_URL) $(INITRD_SRC_DIR)
+
+
+PHONY += openssh_clean
+openssh_clean:
+	rm -rf $(OPENSSH_DIR)
+	rm -f  $(OPENSSH_DIR).unpack
+	rm -f  $(OPENSSH_DIR).build
+	rm -f  $(OPENSSH_DIR).install
+
+
+# include build dependencies here
+DEBIAN_STABLE_BUILD_DEPS += libssl-dev zlib1g-dev
+UBUNTU_DAPPER_BUILD_DEPS += libssl-dev zlib1g-dev
+
+
+
+#ifeq ($(ARCH),x86_64)
+#	OPENSSH_OTHER_FILES := $(shell echo /lib64/libnss_files*)
+#else
+#	OPENSSH_OTHER_FILES := $(shell echo /lib/libnss_files*)
+#endif
+
+
+

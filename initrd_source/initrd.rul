@@ -59,19 +59,35 @@ MKCRAMFS = $(shell which mkcramfs || which mkfs.cramfs || \
 #
 # Order is relevant for certain components, so re-order as is appropriate. -BEF-
 #
+include $(INITRD_DIR)/make.d/e2fsprogs.rul
+include $(INITRD_DIR)/make.d/dosfstools.rul
+include $(INITRD_DIR)/make.d/hfsutils.rul
+include $(INITRD_DIR)/make.d/jfsutils.rul
+include $(INITRD_DIR)/make.d/reiserfsprogs.rul
+include $(INITRD_DIR)/make.d/xfsprogs.rul
+include $(INITRD_DIR)/make.d/lvm.rul
+include $(INITRD_DIR)/make.d/bc.rul
 include $(INITRD_DIR)/make.d/cx_freeze.rul
 include $(INITRD_DIR)/make.d/bittorrent.rul
 include $(INITRD_DIR)/make.d/busybox.rul
 include $(INITRD_DIR)/make.d/dhclient.rul
 include $(INITRD_DIR)/make.d/lsb.rul
 include $(INITRD_DIR)/make.d/rsync.rul
+include $(INITRD_DIR)/make.d/tar.rul
 include $(INITRD_DIR)/make.d/sysvinit.rul
 include $(INITRD_DIR)/make.d/udev.rul
 include $(INITRD_DIR)/make.d/udpcast.rul
+include $(INITRD_DIR)/make.d/parted.rul
+include $(INITRD_DIR)/make.d/zlib.rul
+include $(INITRD_DIR)/make.d/gzip.rul
+include $(INITRD_DIR)/make.d/mdadm.rul
+include $(INITRD_DIR)/make.d/openssl.rul
+include $(INITRD_DIR)/make.d/openssh.rul
+include $(INITRD_DIR)/make.d/util-linux.rul
+include $(INITRD_DIR)/make.d/kexec-tools.rul
 
 PHONY += build_dir 
 build_dir:	$(INITRD_BUILD_DIR).build
-
 
 $(INITRD_BUILD_DIR).prep:	$(INITRD_DIR)/initrd.rul
 	rm -fr $(INITRD_BUILD_DIR)
@@ -79,11 +95,10 @@ $(INITRD_BUILD_DIR).prep:	$(INITRD_DIR)/initrd.rul
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/bin
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/dev
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/etc
+	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/etc/ssh
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/etc/default
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/etc/init.d
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/lib
-	## If build OS has /lib64, create it in initrd
-	#test ! -d /lib64 || mkdir -m 755 -p $(INITRD_BUILD_DIR)/lib64
 	# If build OS has /lib64, link it to /lib
 	test ! -d /lib64 || ( cd $(INITRD_BUILD_DIR) && ln -s lib lib64 )
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/proc
@@ -107,27 +122,34 @@ $(INITRD_BUILD_DIR).prep:	$(INITRD_DIR)/initrd.rul
 	touch $@
 
 
-#
-#XXX I want to make all of the packages install to the build_dir like
-#    the .install targets below.  This will push the install logic out
-#    to the same place where everything else for a particular tool 
-#    happens.  -BEF-
-#
 $(INITRD_BUILD_DIR).build:  $(INITRD_BUILD_DIR).prep		\
-								$(SKEL_FILES) 			\
-								$(BUSYBOX_DIR).install		\
-								$(SYSVINIT_DIR).install		\
-								$(UTIL_LINUX_DIR).install	\
-								$(UDEV_DIR).install		\
-								$(LSB_DIR).build		\
-								$(DHCLIENT_DIR).install		\
-								$(RSYNC_DIR).install		\
+								$(SKEL_FILES) 				\
+								$(LSB_DIR).build			\
+								$(CX_FREEZE_DIR).build 		\
+								$(BC_DIR).install			\
 								$(BITTORRENT_DIR).install 	\
-								$(CX_FREEZE_BINARY) 		\
-								$(UDPCAST_BINARY)
-
-	# Copy over other binaries.
-	cp -a $(UDPCAST_BINARY)    	        $(INITRD_BUILD_DIR)/bin
+								$(BUSYBOX_DIR).install		\
+								$(DHCLIENT_DIR).install		\
+								$(DOSFSTOOLS_DIR).install	\
+								$(E2FSPROGS_DIR).install	\
+								$(GZIP_DIR).install			\
+								$(HFSUTILS_DIR).install		\
+								$(JFSUTILS_DIR).install		\
+								$(KEXEC_TOOLS_DIR).install	\
+								$(LVM_DIR).install			\
+								$(MDADM_DIR).install		\
+								$(OPENSSH_DIR).install		\
+								$(OPENSSL_DIR).install		\
+								$(PARTED_DIR).install		\
+								$(REISERFSPROGS_DIR).install	\
+								$(RSYNC_DIR).install		\
+								$(SYSVINIT_DIR).install		\
+								$(TAR_DIR).install			\
+								$(UDEV_DIR).install			\
+								$(UDPCAST_DIR).install		\
+								$(UTIL_LINUX_DIR).install	\
+								$(XFSPROGS_DIR).install		\
+								$(ZLIB_DIR).install
 
 	# Copy over the standard libs. -BEF-
 	cp -a /lib/ld*   $(INITRD_BUILD_DIR)/lib

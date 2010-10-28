@@ -55,6 +55,7 @@ $(INITRD_SRC_DIR)/$(BUSYBOX_TARBALL):
 PHONY += busybox_clean
 busybox_clean:
 	rm -rf $(BUSYBOX_DIR)
-	rm  -f $(BUSYBOX_DIR).unpack
-	rm  -f $(BUSYBOX_DIR).build
+	rm -f  $(BUSYBOX_DIR).unpack
+	rm -f  $(BUSYBOX_DIR).build
+	rm -f  $(BUSYBOX_DIR).install
 

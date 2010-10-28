@@ -1,0 +1,57 @@
+#
+# $Id$
+#
+#   2010.06.14 Brian Elliott Finley
+#   * Upgrade from v1.40.2 to v1.41.12
+#
+
+E2FSPROGS_VERSION   = 1.41.12
+E2FSPROGS_TARBALL   = e2fsprogs-$(E2FSPROGS_VERSION).tar.gz
+#E2FSPROGS_URL       = http://prdownloads.sourceforge.net/e2fsprogs/$(E2FSPROGS_TARBALL)
+E2FSPROGS_URL       = http://download.systemimager.org/pub/e2fsprogs/$(E2FSPROGS_TARBALL)
+E2FSPROGS_DIR       = $(INITRD_SRC_DIR)/e2fsprogs-$(E2FSPROGS_VERSION)
+E2FSPROGS_PATCHES 	= $(shell ls $(INITRD_PATCH_DIR)/e2fsprogs.*.patch 2>/dev/null | sort)
+
+ALL_SOURCE += $(INITRD_SRC_DIR)/$(E2FSPROGS_TARBALL)
+
+ifdef IS_PPC64
+	E2FSPROGS_CONFIGURE = --host=ppc-unknown-linux --enable-elf-shlibs
+else
+	E2FSPROGS_CONFIGURE = --enable-elf-shlibs
+endif
+
+PHONY += e2fsprogs
+e2fsprogs:	$(E2FSPROGS_DIR).build
+$(E2FSPROGS_DIR).build:	$(E2FSPROGS_DIR).unpack
+	cd $(E2FSPROGS_DIR) && ./configure $(E2FSPROGS_CONFIGURE)
+	$(MAKE) -j $(NCPUS) -C $(E2FSPROGS_DIR)
+	touch $@
+
+
+$(E2FSPROGS_DIR).unpack:	$(INITRD_SRC_DIR)/$(E2FSPROGS_TARBALL) \
+						$(E2FSPROGS_PATCHES) \
+						$(INITRD_DIR)/make.d/e2fsprogs.rul
+	rm -rf $(E2FSPROGS_DIR)
+	cd $(INITRD_SRC_DIR) && tar -xvzf $(E2FSPROGS_TARBALL)
+	cd $(E2FSPROGS_DIR) && cat $(E2FSPROGS_PATCHES) < /dev/null | patch -p1
+	touch $@
+
+
+$(E2FSPROGS_DIR).install:	$(E2FSPROGS_DIR).build \
+						$(INITRD_BUILD_DIR).prep
+	install -m 755 $(E2FSPROGS_DIR)/misc/mke2fs  $(INITRD_BUILD_DIR)/sbin
+	install -m 755 $(E2FSPROGS_DIR)/misc/tune2fs $(INITRD_BUILD_DIR)/sbin
+
+
+$(INITRD_SRC_DIR)/$(E2FSPROGS_TARBALL):
+	[ -d $(INITRD_SRC_DIR) ] || mkdir -p $(INITRD_SRC_DIR)
+	$(GETSOURCE) $(E2FSPROGS_URL) $(INITRD_SRC_DIR)
+
+
+PHONY += e2fsprogs_clean
+e2fsprogs_clean:
+	rm -rf $(E2FSPROGS_DIR)
+	rm -f  $(E2FSPROGS_DIR).unpack
+	rm -f  $(E2FSPROGS_DIR).build
+	rm -f  $(E2FSPROGS_DIR).install
+
