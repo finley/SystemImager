@@ -21,7 +21,10 @@ ifeq ($(ARCH),x86_64)
 endif
 
 ifeq ($(ARCH),i386)
-	LINUX_VERSION = 2.6.34.1
+	# http://packages.ubuntu.com/lucid-updates/linux-image-2.6.32-22-generic
+	# 	http://archive.ubuntu.com/ubuntu/pool/main/l/linux/linux_2.6.32.orig.tar.gz
+	#	http://archive.ubuntu.com/ubuntu/pool/main/l/linux/linux_2.6.32-25.45.diff.gz
+	LINUX_VERSION = 2.6.32
 	LINUX_IMAGE = $(LINUX_SRC)/arch/i386/boot/bzImage
 	LINUX_TARGET = bzImage
 	LINUX_DIR = linux-$(LINUX_VERSION)
@@ -84,10 +87,7 @@ ifeq ($(ARCH),ppc64-ps3)
 endif
 
 LINUX_SRC := $(SRC_DIR)/$(LINUX_DIR)
-LINUX_TARBALL := linux-$(LINUX_VERSION).tar.bz2
-#LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.6/$(LINUX_TARBALL)
-#LINUX_URL = http://www.kernel.org/pub/linux/kernel/v2.4/$(LINUX_TARBALL)
-#LINUX_URL = http://www.kernel.org/pub/linux/kernel/people/geoff/cell/CELL-Linux-CL_20071023-ADDON/src/$(LINUX_TARBALL)
+LINUX_TARBALL := linux_$(LINUX_VERSION).orig.tar.gz
 LINUX_URL = http://download.systemimager.org/pub/linux/$(LINUX_TARBALL)
 LINUX_CONFIG := $(PATCH_DIR)/linux.$(ARCH).config
 
@@ -150,14 +150,14 @@ $(SRC_DIR)/patched_kernel-stamp:	$(SRC_DIR)/$(LINUX_TARBALL) \
 					$(LINUX_CONFIG) $(LINUX_PATCHES)
 	rm -rf $(LINUX_SRC)
 	@echo -n Extracting kernel source...
-	@cd $(SRC_DIR) && tar xjf $(LINUX_TARBALL)
+	@cd $(SRC_DIR) && tar xzf $(LINUX_TARBALL)
 	@echo done
 	@cd $(LINUX_SRC) && \
    	  $(foreach patch, $(LINUX_PATCHES), \
   	    echo -n Applying `basename $(patch)`... && cat $(patch) | patch -s -p1 && echo done. &&) /bin/true
 	cp -a $(LINUX_CONFIG) $(LINUX_SRC)/.config
 	perl -pi -e "s/^EXTRAVERSION =\s*(\S*)\s*\n/EXTRAVERSION = \1-boel_v$(VERSION)\n/" $(LINUX_SRC)/Makefile
-	$(MAKE) -C $(LINUX_SRC) oldconfig dep
+	$(MAKE) -C $(LINUX_SRC) oldconfig
 	touch $(SRC_DIR)/patched_kernel-stamp
 
 PHONY += get_kernel_source
