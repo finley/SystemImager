@@ -4,7 +4,7 @@
 #   $Id$
 #    vi: set filetype=make:
 #
-#	Copyright (C) 1999-2006 Brian Elliott Finley
+#	Copyright (C) 1999-2011 Brian Elliott Finley
 #	Copyright (C) 2002-2004 dann frazier <dannf@hp.com>
 #
 #	Others who have contributed to this code:
@@ -85,6 +85,7 @@ include $(INITRD_DIR)/make.d/openssl.rul
 include $(INITRD_DIR)/make.d/openssh.rul
 include $(INITRD_DIR)/make.d/util-linux.rul
 include $(INITRD_DIR)/make.d/kexec-tools.rul
+include $(INITRD_DIR)/make.d/coreutils.rul
 
 PHONY += build_dir 
 build_dir:	$(INITRD_BUILD_DIR).build
@@ -99,8 +100,10 @@ $(INITRD_BUILD_DIR).prep:	$(INITRD_DIR)/initrd.rul
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/etc/default
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/etc/init.d
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/lib
+	
 	# If build OS has /lib64, link it to /lib
 	test ! -d /lib64 || ( cd $(INITRD_BUILD_DIR) && ln -s lib lib64 )
+	
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/proc
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/root
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/sbin
@@ -110,20 +113,22 @@ $(INITRD_BUILD_DIR).prep:	$(INITRD_DIR)/initrd.rul
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/usr/sbin
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/var
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/var/run
-	cd $(INITRD_BUILD_DIR)/dev && mknod -m 660 tty1 c 4 1
-	cd $(INITRD_BUILD_DIR)/dev && mknod -m 660 tty2 c 4 2
-	cd $(INITRD_BUILD_DIR)/dev && mknod -m 660 tty3 c 4 3
-	cd $(INITRD_BUILD_DIR)/dev && mknod -m 660 tty4 c 4 4
-	cd $(INITRD_BUILD_DIR)/dev && mknod -m 660 tty5 c 4 5
-	cd $(INITRD_BUILD_DIR)/dev && mknod -m 660 tty6 c 4 6
-	cd $(INITRD_BUILD_DIR)/dev && mknod -m 600 console c 5 1
-	cd $(INITRD_BUILD_DIR)/dev && mknod -m 660 null c 1 3
-	cd $(INITRD_BUILD_DIR)/dev && mknod -m 660 zero c 1 5
+	
+	#XXX# Need to find some way to do these outside of the build. -BEF-
+	mknod -m 0660 $(INITRD_BUILD_DIR)/dev/tty0 c 4 0
+	mknod -m 0660 $(INITRD_BUILD_DIR)/dev/tty1 c 4 1
+	mknod -m 0660 $(INITRD_BUILD_DIR)/dev/tty2 c 4 2
+	mknod -m 0660 $(INITRD_BUILD_DIR)/dev/tty3 c 4 3
+	mknod -m 0660 $(INITRD_BUILD_DIR)/dev/tty4 c 4 4
+	mknod -m 0660 $(INITRD_BUILD_DIR)/dev/tty5 c 4 5
+	mknod -m 0660 $(INITRD_BUILD_DIR)/dev/tty6 c 4 6
+	
 	touch $@
 
 
 $(INITRD_BUILD_DIR).build:  $(INITRD_BUILD_DIR).prep		\
 								$(SKEL_FILES) 				\
+								modules						\
 								$(LSB_DIR).build			\
 								$(CX_FREEZE_DIR).build 		\
 								$(BC_DIR).install			\
@@ -149,6 +154,7 @@ $(INITRD_BUILD_DIR).build:  $(INITRD_BUILD_DIR).prep		\
 								$(UDPCAST_DIR).install		\
 								$(UTIL_LINUX_DIR).install	\
 								$(XFSPROGS_DIR).install		\
+								$(COREUTILS_DIR).install	\
 								$(ZLIB_DIR).install
 
 	# Copy over the standard libs. -BEF-
@@ -158,14 +164,14 @@ $(INITRD_BUILD_DIR).build:  $(INITRD_BUILD_DIR).prep		\
 ifeq ($(ARCH),x86_64)
 	( \
 		cd $(INITRD_BUILD_DIR) && \
-		$(INITRD_DIR)/mklibs.bef -L /lib64:/usr/lib64:/lib:/usr/lib -v -d lib64 ./*bin/* \
+		$(INITRD_DIR)/mklibs.bef -L $(SRC_DIR)/$(E2FSPROGS_DIR)/lib:/lib64:/usr/lib64:/lib:/usr/lib -v -d lib64 ./*bin/* \
 	)
 	# copy libnss files as they are not automatically included
 	cp -a /lib64/libnss* $(INITRD_BUILD_DIR)/lib64
 else
 	( \
 		cd $(INITRD_BUILD_DIR) && \
-		$(INITRD_DIR)/mklibs.bef -L /lib:/usr/lib:/lib64:/usr/lib64 -v -d lib ./*bin/* \
+		$(INITRD_DIR)/mklibs.bef -L $(SRC_DIR)/$(E2FSPROGS_DIR)/lib:/lib:/usr/lib:/lib64:/usr/lib64 -v -d lib ./*bin/* \
 	)
 	# copy libnss files as they are not automatically included
 	cp -a /lib/libnss* $(INITRD_BUILD_DIR)/lib
@@ -200,11 +206,41 @@ endif
 
 	$(SI_INSTALL) -m 755 $(INITRD_DIR)/skel/etc/init.d/functions \
 	  $(INITRD_BUILD_DIR)/etc/init.d/functions
-
+	#
+	#
+	# install kernel modules. -BEF-
+	#
+	$(MAKE) -C $(LINUX_SRC) modules_install INSTALL_MOD_PATH="$(INITRD_BUILD_DIR)"
+	
 	# Copy over modules required prior to retrieving the autoinstall
 	# binaries tarball. -BEF-
 	cp -a $(INITRD_DIR)/my_modules $(INITRD_BUILD_DIR)
+	
+	#
+	# If the build system doesn't have module-init-tools installed, and
+	# our modules need it, we need to use the depmod we built.  For now we'll
+	# just say, you need to have module-init-tools installed for building.
+	#
+	# We could get fancy at some point, and test for it with something like this:
+	#
+	# 	depmod --version | grep -q module-init-tools
+	#
+	# and build it if it's not there.
+	#
+	# The find command is to figure out the kernel version string
+	#
+	KERNEL_VERSION=`find $(INITRD_BUILD_DIR)/lib/modules -mindepth 1 -maxdepth 1 -type d -printf "%f"` ; \
+	depmod -b $(INITRD_BUILD_DIR) $$KERNEL_VERSION
+	
+	#
+	# get rid of build, which may exist as a link to the kernel source directory (won't exist in the BOEL initrd anyway). -BEF-
+	rm -f "$(INITRD_BUILD_DIR)/lib/modules/*/build"
 
+	#
+	# get rid of source, which may also exist as a link to the kernel source directory (won't exist in the BOEL initrd anyway). -BEF-
+	rm -f "$(INITRD_BUILD_DIR)/lib/modules/*/source"
+	
+	#
 	# Clear out SVN cruft.
 	find $(INITRD_BUILD_DIR) -depth -type d -name .svn | xargs rm -rf
 	mkdir -p $(INITRD_BUILD_DIR)/new_root
@@ -217,7 +253,7 @@ initrd.img:	$(INITRD_DIR)/initrd.img
 
 ifeq ($(INITRD_COMPRESS),yes)
 $(INITRD_DIR)/initrd.img:	$(INITRD_DIR)/initrd
-	gzip -9 < $(INITRD_DIR)/initrd > $(INITRD_DIR)/initrd.img
+	gzip -9 -n < $(INITRD_DIR)/initrd > $(INITRD_DIR)/initrd.img
 else
 $(INITRD_DIR)/initrd.img:       $(INITRD_DIR)/initrd
 	cp -a $(INITRD_DIR)/initrd $(INITRD_DIR)/initrd.img
@@ -235,7 +271,8 @@ initrd:	$(INITRD_DIR)/initrd
 #		part of the distribution. -BEF-
 #
 $(INITRD_DIR)/initrd:	$(INITRD_BUILD_DIR).build
-	$(MKCRAMFS) $(INITRD_BUILD_DIR) $(INITRD_DIR)/initrd
+	#XXX -BEF- No more cramfs -- now initramfs. :-)
+	cd $(INITRD_BUILD_DIR) && find . | cpio --quiet -H newc -o -n > $(INITRD_DIR)/initrd
 
 
 PHONY += install_initrd_template
