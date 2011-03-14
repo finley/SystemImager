@@ -3,6 +3,10 @@
 #  vi:set filetype=conf tw=80:
 #
 
+Verify we have an "*_install" target for all initrd packages
+
+Move ./initrd_dir/make.d/*.rul files into ./make.d/
+
 Find some way to add color to logmsg, so that function names can be a different color from the output they produce...
 
 mklibs.bef -- review output and re-direct -L towards locally built libs
