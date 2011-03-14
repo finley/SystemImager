@@ -199,7 +199,7 @@ include config.inc
 
 # build everything, install nothing
 .PHONY:	all
-all:	kernel $(INITRD_DIR)/initrd.img boel_binaries_tarball manpages dev_tarball
+all:	kernel $(INITRD_DIR)/initrd.img manpages
 
 binaries: $(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.img
 
@@ -397,19 +397,7 @@ install_configs:
 
 
 ########## BEGIN dev_tarball ##########
-.PHONY:	dev_tarball install_dev_tarball
-dev_tarball: $(TOPDIR)/tmp/dev.tar.gz
-
-$(TOPDIR)/tmp/dev.tar.gz:
-	mkdir -p $(TOPDIR)/tmp
-	rm -rf $(TOPDIR)/tmp/dev
-	$(TOPDIR)/tools/makedevs $(TOPDIR)/tmp/dev
-	cd $(TOPDIR)/tmp && tar -czf $@ dev
-	rm -rf $(TOPDIR)/tmp/dev
-
-install_dev_tarball: $(TOPDIR)/tmp/dev.tar.gz
-	$(SI_INSTALL) -m 600 tmp/dev.tar.gz $(BOOT_BIN_DEST)/initrd_template/
-
+# XXX deprecated -- no longer needed with udev. -BEF- 2011.02.15
 ########## END dev_tarball ##########
 
 
@@ -455,17 +443,13 @@ get_source:	$(ALL_SOURCE)
 .PHONY:	install
 install:
 	@echo ''
-	@echo 'Read README for installation details.'
+	@echo 'Try "make help", and/or read README for installation details.'
 	@echo ''
 
 .PHONY:	install_binaries
 install_binaries:	install_kernel \
 			install_initrd \
-			install_boel_binaries_tarball \
-			install_initrd_template \
-			install_dev_tarball
-
-include make.d/boel_binaries.inc
+			install_initrd_template
 
 .PHONY:	complete_source_tarball
 complete_source_tarball:	$(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source.tar.bz2.sign
@@ -612,8 +596,6 @@ show_targets:
 	@echo "install_server_all"
 	@echo "    Install all files needed by a server."
 	@echo "	"
-	@echo "install_boel_binaries_tarball"
-	@echo ""
 	@echo "install_initrd"
 	@echo ""
 	@echo "source_tarball"
