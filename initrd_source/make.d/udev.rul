@@ -1,11 +1,13 @@
 #
 #  vi: set filetype=make:
 #
+#   2011.02.04  Brian Elliott Finley
+#   * Upgrade from v157 to v165
 #   2010.06.13  Brian Elliott Finley
 #   * Upgrade from v120 to v157
 #
 
-UDEV_VERSION	= 157
+UDEV_VERSION	= 165
 UDEV_TARBALL	= udev-$(UDEV_VERSION).tar.bz2
 #UDEV_URL	= http://www.us.kernel.org/pub/linux/utils/kernel/hotplug/
 UDEV_URL	= http://download.systemimager.org/pub/udev/
@@ -23,15 +25,16 @@ $(UDEV_DIR).build:  $(UDEV_DIR).unpack
 		--prefix=/usr \
 		--sysconfdir=/etc \
 		--sbindir=/sbin \
-		--libdir=/usr/lib64 \
-		--with-rootlibdir=/lib64 \
-		--libexecdir=/lib/udev
+		--libdir=/usr/lib \
+		--with-rootlibdir=/lib \
+		--libexecdir=/lib/udev \
+        --disable-extras \
+        --disable-introspection
 	cd $(UDEV_DIR) && make
 	touch $@
 
 PHONY += udev_install
 udev_install:	$(UDEV_DIR).install
-
 $(UDEV_DIR).install:	$(UDEV_DIR).build
 	cd $(UDEV_DIR) && make install DESTDIR=$(INITRD_BUILD_DIR)
 
