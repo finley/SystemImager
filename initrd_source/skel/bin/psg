@@ -1,0 +1,5 @@
+#!/bin/sh
+for i in $@
+do
+        ps -Af | grep -v grep | grep -v psg | egrep -i -- $i
+done
