@@ -28,13 +28,9 @@
 #
 {
 
-switch_root_to_tmpfs
-
-mount_proc
+mount_initial_filesystems
 
 monitor_save_dmesg
-
-mount_sys
 
 get_arch
 
@@ -45,8 +41,6 @@ ifconfig_loopback
 load_my_modules
 
 start_udevd
-
-mount_pts
 
 # Need to do this prior to read_local_cfg to get last_root parameter, 
 # if specified. -BEF-
@@ -79,7 +73,9 @@ get_torrents_directory
 
 beep
 
-tmpfs_watcher
+if [ "$TMPFS_STAGING" = "yes" ]; then
+    tmpfs_watcher
+fi
 
 if [ "x$SSHD" = "xy" ]; then
     logmsg

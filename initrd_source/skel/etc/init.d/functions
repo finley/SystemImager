@@ -2,7 +2,7 @@
 #
 # "SystemImager" 
 #
-#  Copyright (C) 1999-2005 Brian Elliott Finley
+#  Copyright (C) 1999-2010 Brian Elliott Finley
 #
 #  $Id$
 #  vi: set filetype=sh et ts=4:
@@ -651,12 +651,10 @@ get_boel_binaries_tarball() {
 parse_tmpfs_opts() {
     logmsg
     logmsg parse_tmpfs_opts
-    mount_proc
     tmpfs_size=$(tr ' ' '\n' < /proc/cmdline | grep tmpfs_size\= | sed 's/.*=//')
     tmpfs_nr_blocks=$(tr ' ' '\n' < /proc/cmdline | grep tmpfs_nr_blocks\= | sed 's/.*=//')
     tmpfs_nr_inodes=$(tr ' ' '\n' < /proc/cmdline | grep tmpfs_nr_inodes\= | sed 's/.*=//')
     tmpfs_mode=$(tr ' ' '\n' < /proc/cmdline | grep tmpfs_mode\= | sed 's/.*=//')
-    umount /proc
 
     if [ "$tmpfs_size" != "" ]; then
         tmpfs_opts="size=$tmpfs_size"
@@ -700,68 +698,75 @@ parse_tmpfs_opts() {
 #
 #   Switch root to tmpfs
 #
-switch_root_to_tmpfs() {
-    local MODULE=tmpfs
-    logmsg
-    logmsg switch_root_to_tmpfs
-    logmsg
-    logmsg "Loading $MODULE... "
-    modprobe $MODULE 2>/dev/null && logmsg "done!" || logmsg "Didn't load -- assuming it's built into the kernel."
-    parse_tmpfs_opts
+#switch_root_to_tmpfs() {
+#    local MODULE=tmpfs
+#    logmsg
+#    logmsg switch_root_to_tmpfs
+#    logmsg "Loading $MODULE... "
+#    modprobe $MODULE 2>/dev/null && logmsg "done!" || logmsg "Didn't load -- assuming it's built into the kernel."
+#    parse_tmpfs_opts
+#
+#    # Switch root over to tmpfs so we don't have to worry about the size of
+#    # the tarball and binaries that users may decide to copy over. -BEF-
+#    if [ -d /old_root ]; then
+#        logmsg
+#        logmsg "already switched to tmpfs..."
+#    else
+#        logmsg
+#        logmsg "switching root to tmpfs..."
+#
+#        mkdir -p /new_root || shellout
+#        mount tmpfs /new_root -t tmpfs $tmpfs_opts || shellout
+#
+#        cd / || shellout
+#        cp -a `/bin/ls | grep -v -E '^(new_root|dev)$'` /new_root/ || shellout
+#
+#		mkdir -p /new_root/dev || shellout
+#		mount -t devtmpfs -o mode=0755 none /new_root/dev || shellout
+#
+#        cd /new_root || shellout
+#        mkdir -p old_root || shellout
+#        pivot_root . old_root || switch_root
+#    fi
+#
+#    unset tmpfs_opts
+#}
+#
+################################################################################
+################################################################################
+#
+mount_initial_filesystems() {
 
-    # Switch root over to tmpfs so we don't have to worry about the size of
-    # the tarball and binaries that users may decide to copy over. -BEF-
-    if [ -d /old_root ]; then
-        logmsg
-        logmsg "already switched to tmpfs..."
-    else
-        logmsg
-        logmsg "switching root to tmpfs..."
+    # Much of this taken from "init" from an Ubuntu Lucid initrd.img
+    logmsg
+    logmsg mount_initial_filesystems
 
-        mkdir -p /new_root || shellout
-        mount tmpfs /new_root -t tmpfs $tmpfs_opts || shellout
-        cd / || shellout
-        cp -a `/bin/ls | grep -v new_root` /new_root/ || shellout
-        cd /new_root || shellout
-        mkdir -p old_root || shellout
-        pivot_root . old_root || switch_root
+    [ -d /dev ]  || mkdir -m 0755 /dev
+    [ -d /root ] || mkdir -m 0700 /root
+    [ -d /sys ]  || mkdir /sys
+    [ -d /proc ] || mkdir /proc
+    [ -d /tmp ]  || mkdir /tmp
+
+    mkdir -p /var/lock
+
+    mount -t sysfs -o nodev,noexec,nosuid none /sys
+    mount -t proc  -o nodev,noexec,nosuid none /proc
+
+    # Note that this only becomes /dev on the real filesystem if udev's scripts
+    # are used; which they will be, but it's worth pointing out
+    if ! mount -t devtmpfs -o mode=0755 none /dev; then
+        mount -t tmpfs -o mode=0755 none /dev
+        mknod -m 0600 /dev/console c 5 1
+        mknod -m 0666 /dev/null c 1 3
+        mknod -m 0660 /dev/kmsg c 1 11
     fi
 
-    unset tmpfs_opts
+    mkdir /dev/pts
+    mount -t devpts -o noexec,nosuid,gid=5,mode=0620 none /dev/pts || true
+
 }
 #
 ################################################################################
-#
-# Now mount proc. -BEF-
-mount_proc() {
-    logmsg
-    logmsg mount_proc
-    mkdir -p /proc || shellout
-    mount proc /proc -t proc || shellout
-}
-#
-################################################################################
-#
-mount_sys() {
-    logmsg
-    logmsg mount_sys
-    mkdir -p /sys || shellout
-    if grep -q '[[:space:]]\+sysfs$' /proc/filesystems 2>/dev/null; then
-        mount sysfs /sys -t sysfs || shellout
-    else
-        logmsg "sysfs is not supported by the kernel: `uname -r`"
-    fi
-}
-#
-################################################################################
-#
-mount_pts() {
-    logmsg
-    logmsg mount_pts
-    mkdir -p /dev/pts || shellout
-    mount devpts /dev/pts -t devpts || shellout
-}
-#
 ################################################################################
 #
 monitor_save_dmesg() {
@@ -778,13 +783,14 @@ monitor_save_dmesg() {
 start_udevd() {
     logmsg
     logmsg start_udevd
+    echo -n "  "
     /etc/init.d/udev start
 
     # If udev failed fall back to a static /dev
     if [ $? -ne 0 ]; then
         logmsg "failed!"
-        logmsg "Creating a static /dev..."
-        cd / && tar -xzf dev.tar.gz || shellout
+#XXX -delete me -BEF- -        logmsg "Creating a static /dev..."
+#        cd / && tar -xzf dev.tar.gz || shellout
         logmsg done
     fi
 }
@@ -840,7 +846,7 @@ read_local_cfg() {
     logmsg read_local_cfg
 
     if [ "x$SKIP_LOCAL_CFG" = "xy" ]; then
-        logmsg "skipping local.cfg: option SKIP_LOCAL_CFG=y has been specified"
+        logmsg "Skipping local.cfg: option SKIP_LOCAL_CFG=y has been specified"
         return
     fi
 
