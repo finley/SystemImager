@@ -17,10 +17,16 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #
 
+
+#   2011.03.23  Brian Elliott Finley
+#   * Handle preferred library selection when multiple versions are
+#     available.
+
 use strict;
 use Getopt::Long;
 use File::Copy;
 use File::Path qw(make_path);
+use File::Basename;
 
 $ENV{PATH} = "/usr/local/sbin:/usr/sbin:/sbin:/usr/local/bin:/usr/bin:/bin";
 
@@ -28,7 +34,10 @@ $ENV{PATH} = "/usr/local/sbin:/usr/sbin:/sbin:/usr/local/bin:/usr/bin:/bin";
 my $L;
 my $v;
 my $d;
-my $help_info = "Usage: mklibs.bef -L LIBRARY_PATH -d DEST_LIB_DIR BINARY [BINARY...]";
+my $help_info = "
+Usage: mklibs.bef -L LIBRARY_PATH -d DEST_LIB_DIR BINARY [BINARY...]
+        (library path is searched in order specified with -L)
+";
 
 GetOptions(
     "L=s"   => \$L,
@@ -42,13 +51,13 @@ unless( (defined $L) and (defined $d) ) {
 }
 
 my @binaries = @ARGV;
+my @paths = split(/:/, $L);
 
 if(defined $v) {
     print "mklibs.bef:\n";
     print "------------------------------------------------------------------------\n";
     print "> library path (-L):\n";
-    my @array = split(/:/, $L);
-    foreach(@array) {
+    foreach(@paths) {
         print ">  $_\n";
     }
     print ">\n> verbose (-v) /* 1=yes, 0=no */:\n>  $v\n";
@@ -56,7 +65,7 @@ if(defined $v) {
     print ">\n> binaries:\n";
 }
 
-my %keepers;
+my %finders;
 make_path("$d");
 foreach $b (@binaries) {
     print ">  $b\n" if(defined $v);
@@ -64,17 +73,39 @@ foreach $b (@binaries) {
     open(INPUT,"$cmd|") or die;
     while(<INPUT>) {
         if(m# => /#) {
-            my($junk_a, $junk_b, $junk_c, $lib) = split(/\s+/, $_);
-            $keepers{$lib} = 1;
+            my($junk_a, $lib, $junk_c, $lib_target_name) = split(/\s+/, $_);
+            $finders{$lib} = $lib_target_name;
         }
     }
     close(INPUT);
 }
 
-print ">\n> libs to be copied to destination:\n" if(defined $v);
-foreach my $lib (sort (keys %keepers)) {
-    print ">  $lib\n" if(defined $v);
-    copy("$lib","$d/") or die "Copy failed: $!";
+my %keepers;
+print ">\n> Selecting preferred library when multiple versions available:\n" if(defined $v);
+foreach my $lib (sort (keys %finders)) {
+    foreach my $path (@paths) {
+        if ( -e "$path/$lib" ) {
+            my $source_lib = "$path/$lib";
+            $source_lib =~ s|/+|/|g;
+            print ">  Using $source_lib\n";
+            $keepers{$finders{$lib}} = "$source_lib";
+            last;
+        }
+    }
+}
+print ">\n" if(defined $v);
+
+print "> Copy libs to their destination:\n" if(defined $v);
+foreach my $target_lib (sort keys %keepers) {
+    my $source_lib = $keepers{$target_lib};
+
+    my $target_dir = "$d" . (dirname $target_lib);
+    # Remove duplicate slashes for prettiness. -BEF-
+    $target_dir =~ s|/+|/|g;
+    make_path("$target_dir");
+
+    print ">  copy $source_lib $target_dir\n" if(defined $v);
+    copy("$source_lib","$target_dir") or die "Copy failed: $!";
 }
 print ">\n" if(defined $v);
 
