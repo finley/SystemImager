@@ -3,6 +3,12 @@
 #  vi:set filetype=conf tw=80:
 #
 
+Have a single init script.  Start services based on their settings in /etc/default/systemimager or /etc/systemimager/initscript.conf
+
+Move _all_ source code into si.trunk/src
+
+move _all_ *.rul files into make.d
+
 Verify we have an "*_install" target for all initrd packages
 
 Move ./initrd_dir/make.d/*.rul files into ./make.d/
