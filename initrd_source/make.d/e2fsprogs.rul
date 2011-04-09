@@ -15,9 +15,7 @@ E2FSPROGS_PATCHES 	= $(shell ls $(INITRD_PATCH_DIR)/e2fsprogs.*.patch 2>/dev/nul
 ALL_SOURCE += $(INITRD_SRC_DIR)/$(E2FSPROGS_TARBALL)
 
 ifdef IS_PPC64
-	E2FSPROGS_CONFIGURE = --host=ppc-unknown-linux --enable-elf-shlibs
-else
-	E2FSPROGS_CONFIGURE = --enable-elf-shlibs
+	E2FSPROGS_CONFIGURE = --host=ppc-unknown-linux
 endif
 
 PHONY += e2fsprogs
