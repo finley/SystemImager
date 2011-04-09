@@ -162,19 +162,17 @@ $(INITRD_BUILD_DIR).build:  $(INITRD_BUILD_DIR).prep		\
 	test ! -d /lib64 || cp -a /lib64/ld* $(INITRD_BUILD_DIR)/lib64
 	# Explicitly include more w/mklibs -L.  -dawild-
 ifeq ($(ARCH),x86_64)
-	( \
-		cd $(INITRD_BUILD_DIR) && \
-		$(INITRD_DIR)/mklibs.bef -L $(SRC_DIR)/$(E2FSPROGS_DIR)/lib:/lib64:/usr/lib64:/lib:/usr/lib -v -d lib64 ./*bin/* \
-	)
+	( cd $(INITRD_BUILD_DIR) && \
+		$(INITRD_DIR)/mklibs.bef -L $(INITRD_SRC_DIR)/$(E2FSPROGS_DIR)/lib:/lib64:/usr/lib64:/lib:/usr/lib -v -d lib64 ./*bin/* )
 	# copy libnss files as they are not automatically included
 	cp -a /lib64/libnss* $(INITRD_BUILD_DIR)/lib64
+
 else
-	( \
-		cd $(INITRD_BUILD_DIR) && \
-		$(INITRD_DIR)/mklibs.bef -L $(SRC_DIR)/$(E2FSPROGS_DIR)/lib:/lib:/usr/lib:/lib64:/usr/lib64 -v -d lib ./*bin/* \
-	)
+	( cd $(INITRD_BUILD_DIR) && \
+		$(INITRD_DIR)/mklibs.bef -L $(INITRD_SRC_DIR)/$(E2FSPROGS_DIR)/lib:/lib:/usr/lib -v -d lib ./*bin/* )
 	# copy libnss files as they are not automatically included
 	cp -a /lib/libnss* $(INITRD_BUILD_DIR)/lib
+
 endif
     # Do we still need to undo prelinking? -BEF-
 	## Undo prelinking. -AR-
