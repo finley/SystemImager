@@ -39,17 +39,6 @@ FLAVOR="SYSTEMIMAGER_FLAVOR_STRING"
 #
 ################################################################################
 #
-#  fs_on_tmpfs
-#
-# Usage: 
-#   if fs_on_tmpfs /my_filesystem ; then
-fs_on_tmpfs() {
-    #XXX does this still work now with udev? -BEF-
-    df 2>/dev/null | egrep 'tmpfs ' | egrep -q " $1\$" 
-}
-
-################################################################################
-#
 #  logmsg
 #
 # Usage: log a message, redirects to console / syslog depending on usage
@@ -59,9 +48,7 @@ logmsg() {
     # log to temporary file (which will go away when we reboot)
     # this is good for envs that have bad consoles
     local FILE=/tmp/si.log
-    if fs_on_tmpfs / ; then
-        echo $@ >> $FILE || shellout
-    fi
+    echo $@ >> $FILE || shellout
     
     # if syslog is running, log to it.  In order to avoid hangs we have to 
     # add the "logger: " part in case $@ is ""
@@ -130,51 +117,49 @@ write_variables() {
     logmsg
     logmsg write_variables
 
-    if fs_on_tmpfs / ; then
-        # pass all variables set here on to the hostname.sh script
-        rm -f /tmp/variables.txt
-        
-        echo "HOSTNAME=$HOSTNAME"                   >> /tmp/variables.txt || shellout
-        echo "DOMAINNAME=$DOMAINNAME"               >> /tmp/variables.txt
-        
-        echo "DEVICE=$DEVICE"                       >> /tmp/variables.txt
-        echo "IPADDR=$IPADDR"                       >> /tmp/variables.txt
-        echo "NETMASK=$NETMASK"                     >> /tmp/variables.txt
-        echo "NETWORK=$NETWORK"                     >> /tmp/variables.txt
-        echo "BROADCAST=$BROADCAST"                 >> /tmp/variables.txt
-        
-        echo "GATEWAY=$GATEWAY"                     >> /tmp/variables.txt
-        echo "GATEWAYDEV=$GATEWAYDEV"               >> /tmp/variables.txt
-        
-        echo "IMAGESERVER=$IMAGESERVER"             >> /tmp/variables.txt
-        echo "IMAGENAME=$IMAGENAME"                 >> /tmp/variables.txt
-        
-        echo "LOG_SERVER=$LOG_SERVER"               >> /tmp/variables.txt
-        echo "LOG_SERVER_PORT=$LOG_SERVER_PORT" 	>> /tmp/variables.txt
-        echo "USELOGGER=$USELOGGER"                 >> /tmp/variables.txt
-        
-        echo "TMPFS_STAGING=$TMPFS_STAGING"         >> /tmp/variables.txt
-        
-        echo "SSH=$SSH"	           	 		>> /tmp/variables.txt
-        echo "SSHD=$SSHD"	            		>> /tmp/variables.txt
-        echo "SSH_USER=$SSH_USER"	            	>> /tmp/variables.txt
-        echo "SSH_DOWNLOAD_URL=$SSH_DOWNLOAD_URL"	>> /tmp/variables.txt
-        
-        echo "FLAMETHROWER_DIRECTORY_PORTBASE=$FLAMETHROWER_DIRECTORY_PORTBASE"	>> /tmp/variables.txt
-        
-        echo "MONITOR_SERVER=$MONITOR_SERVER"           >> /tmp/variables.txt
-        echo "MONITOR_PORT=$MONITOR_PORT"               >> /tmp/variables.txt
-        echo "MONITOR_CONSOLE=$MONITOR_CONSOLE"         >> /tmp/variables.txt
-
-        echo "BITTORRENT=$BITTORRENT"                   >> /tmp/variables.txt
-        echo "BITTORRENT_STAGING=$BITTORRENT_STAGING"   >> /tmp/variables.txt
-        echo "BITTORRENT_POLLING_TIME=$BITTORRENT_POLLING_TIME" >> /tmp/variables.txt
-        echo "BITTORRENT_SEED_WAIT=$BITTORRENT_SEED_WAIT"       >> /tmp/variables.txt
-        echo "BITTORRENT_UPLOAD_MIN=$BITTORRENT_UPLOAD_MIN"     >> /tmp/variables.txt
-
-        echo "GROUPNAMES=\"$GROUPNAMES\""     >> /tmp/variables.txt
-        echo "GROUP_OVERRIDES=\"$GROUP_OVERRIDES\""     >> /tmp/variables.txt
-    fi
+    # pass all variables set here on to the hostname.sh script
+    rm -f /tmp/variables.txt
+    
+    echo "HOSTNAME=$HOSTNAME"                   >> /tmp/variables.txt || shellout
+    echo "DOMAINNAME=$DOMAINNAME"               >> /tmp/variables.txt
+    
+    echo "DEVICE=$DEVICE"                       >> /tmp/variables.txt
+    echo "IPADDR=$IPADDR"                       >> /tmp/variables.txt
+    echo "NETMASK=$NETMASK"                     >> /tmp/variables.txt
+    echo "NETWORK=$NETWORK"                     >> /tmp/variables.txt
+    echo "BROADCAST=$BROADCAST"                 >> /tmp/variables.txt
+    
+    echo "GATEWAY=$GATEWAY"                     >> /tmp/variables.txt
+    echo "GATEWAYDEV=$GATEWAYDEV"               >> /tmp/variables.txt
+    
+    echo "IMAGESERVER=$IMAGESERVER"             >> /tmp/variables.txt
+    echo "IMAGENAME=$IMAGENAME"                 >> /tmp/variables.txt
+    
+    echo "LOG_SERVER=$LOG_SERVER"               >> /tmp/variables.txt
+    echo "LOG_SERVER_PORT=$LOG_SERVER_PORT" 	>> /tmp/variables.txt
+    echo "USELOGGER=$USELOGGER"                 >> /tmp/variables.txt
+    
+    echo "TMPFS_STAGING=$TMPFS_STAGING"         >> /tmp/variables.txt
+    
+    echo "SSH=$SSH"	           	 		        >> /tmp/variables.txt
+    echo "SSHD=$SSHD"	            		    >> /tmp/variables.txt
+    echo "SSH_USER=$SSH_USER"	            	>> /tmp/variables.txt
+    echo "SSH_DOWNLOAD_URL=$SSH_DOWNLOAD_URL"	>> /tmp/variables.txt
+    
+    echo "FLAMETHROWER_DIRECTORY_PORTBASE=$FLAMETHROWER_DIRECTORY_PORTBASE"	>> /tmp/variables.txt
+    
+    echo "MONITOR_SERVER=$MONITOR_SERVER"       >> /tmp/variables.txt
+    echo "MONITOR_PORT=$MONITOR_PORT"           >> /tmp/variables.txt
+    echo "MONITOR_CONSOLE=$MONITOR_CONSOLE"     >> /tmp/variables.txt
+    
+    echo "BITTORRENT=$BITTORRENT"                           >> /tmp/variables.txt
+    echo "BITTORRENT_STAGING=$BITTORRENT_STAGING"           >> /tmp/variables.txt
+    echo "BITTORRENT_POLLING_TIME=$BITTORRENT_POLLING_TIME" >> /tmp/variables.txt
+    echo "BITTORRENT_SEED_WAIT=$BITTORRENT_SEED_WAIT"       >> /tmp/variables.txt
+    echo "BITTORRENT_UPLOAD_MIN=$BITTORRENT_UPLOAD_MIN"     >> /tmp/variables.txt
+    
+    echo "GROUPNAMES=\"$GROUPNAMES\""               >> /tmp/variables.txt
+    echo "GROUP_OVERRIDES=\"$GROUP_OVERRIDES\""     >> /tmp/variables.txt
 }
 #
 ################################################################################
@@ -211,6 +196,8 @@ tmpfs_watcher() {
 #   Usage: $COMMAND || shellout
 #
 shellout() {
+
+    logmsg "Last command exited with $?"
     COUNT="$RETRY"
     logmsg "Killing off running processes."
     kill -9 $TMPFS_WATCHER_PID  >/dev/null 2>/dev/null
@@ -310,7 +297,7 @@ get_scripts_directory() {
         mkdir -p ${SCRIPTS_DIR}
         CMD="rsync -a ${IMAGESERVER}::${SCRIPTS}/ ${SCRIPTS_DIR}/"
         logmsg "$CMD"
-        $CMD
+        $CMD || shellout
     fi
 }
 #
@@ -1661,9 +1648,7 @@ send_monitor_stdout() {
         fi
         if [ "x$MONITOR_CONSOLE" = "xyes" ]; then
             # Log message into the global monitor log.
-            if fs_on_tmpfs / ; then
-                echo "$l" >> /tmp/si_monitor.log
-            fi
+            echo "$l" >> /tmp/si_monitor.log
         fi
     done
 }
