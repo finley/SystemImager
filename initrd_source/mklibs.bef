@@ -66,8 +66,7 @@ if(defined $v) {
 }
 
 my %finders;
-make_path("$d");
-foreach $b (@binaries) {
+foreach my $b (@binaries) {
     print ">  $b\n" if(defined $v);
     my $cmd = "ldd $b";
     open(INPUT,"$cmd|") or die;
@@ -97,15 +96,20 @@ print ">\n" if(defined $v);
 
 print "> Copy libs to their destination:\n" if(defined $v);
 foreach my $target_lib (sort keys %keepers) {
+
     my $source_lib = $keepers{$target_lib};
 
-    my $target_dir = "$d" . (dirname $target_lib);
-    # Remove duplicate slashes for prettiness. -BEF-
-    $target_dir =~ s|/+|/|g;
-    make_path("$target_dir");
+    # Strip off the leading '/lib/' from the target lib name
+    $target_lib =~ s|^/lib/||;
 
-    print ">  copy $source_lib $target_dir\n" if(defined $v);
-    copy("$source_lib","$target_dir") or die "Copy failed: $!";
+    my $dest_dir = "$d/" . (dirname $target_lib);
+
+    # Remove duplicate slashes for prettiness. -BEF-
+    $dest_dir =~ s|/+|/|g;
+    make_path("$dest_dir");
+
+    print ">  copy $source_lib  $dest_dir\n" if(defined $v);
+    copy("$source_lib","$dest_dir") or die "Copy failed: $!";
 }
 print ">\n" if(defined $v);
 
