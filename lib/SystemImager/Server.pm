@@ -818,7 +818,16 @@ sub _read_partition_info_and_prepare_soft_raid_devs {
 
         # Translate partitions in disk variables (disk autodetection compliant).
         foreach (@md_devices) {
-            m/^(.*)(p?\d+)$/;
+            # m/^(.*)(p?\d+)$/;
+            # 
+            # New regex from patch provided by Thomas Zeiser <thomas.zeiser@rrze.uni-erlangen.de>
+            #   Hi,
+            #   
+            #   here is a small bug fix to get HP's cciss/cXdYpZ correctly
+            #   detected in
+            #   Server.pm (relativ to 4.1.99.svn4556_bli-1):
+            #
+            m/^(.*[^p])(p?\d+)$/;
             my $disk = $1;
             my $part_no = $2;
             $devices .= '${' . $DISK_by_disk{$disk} . '}' . $part_no . ' ';
