@@ -399,51 +399,53 @@ beep
 
 ################################################################################
 #
-# mount /dev /a/dev -o bind if needed
+# Always do a bind mount, as we're using udev for device files. -BEF-
 #
-##BOEL_DEVSTYLE##
-#
-################################################################################
+mount /dev /a/dev -o bind
 
 
 ################################################################################
 #
+#XXX use of SystemConfigurator is deprecated
 #   Detect scsi hardware and include the device IDs into the hardware.lst
 #   file used by systemconfigurator.  Use pci-automod for 2.6 kernels.
 #
 #   (no longer support 2.4 kernels -BEF-)
 #
-[ ! -d /a/etc/systemconfig ] && mkdir -p /a/etc/systemconfig
-if [ -e /tmp/hardware.lst ]; then
-    # use previously generated hardware.lst
-    cat /tmp/hardware.lst >> /a/etc/systemconfig/hardware.lst
-elif [ -d /sys/bus -a -e /lib/modules/`uname -r`/modules.pcimap ]; then
-    # use pci-automod to generate hardware.lst
-    logmsg "Using pci-automod to generate hardware.lst (this may take a long time):"
-    pci-automod --hwlist --class storage --class net --class serial --class bridge > /a/etc/systemconfig/hardware.lst
-    logmsg "done"
-fi
+#[ ! -d /a/etc/systemconfig ] && mkdir -p /a/etc/systemconfig
+#if [ -e /tmp/hardware.lst ]; then
+#    # use previously generated hardware.lst
+#    cat /tmp/hardware.lst >> /a/etc/systemconfig/hardware.lst
+#elif [ -d /sys/bus -a -e /lib/modules/`uname -r`/modules.pcimap ]; then
+#    # use pci-automod to generate hardware.lst
+#    logmsg "Using pci-automod to generate hardware.lst (this may take a long time):"
+#    pci-automod --hwlist --class storage --class net --class serial --class bridge > /a/etc/systemconfig/hardware.lst
+#    logmsg "done"
+#fi
 #
 ################################################################################
 
 ################################################################################
 #
+#XXX use of SystemConfigurator is deprecated
 #   System Configurator
 #
 # Configure the client's hardware, network interface, and boot loader.
 #
 
+#XXX Even without SystemConfigurator, is this bit needed for boot loader
+#install perhaps?
 # Create an /etc/mtab file with appropriate entries
-cat /etc/mtab | grep -v '/dev/ram' | grep -v -E '^\/dev\s+\/a\/dev\s' | sed 's,/a/*,/,g' | sort -u > /a/etc/mtab
+#cat /etc/mtab | grep -v '/dev/ram' | grep -v -E '^\/dev\s+\/a\/dev\s' | sed 's,/a/*,/,g' | sort -u > /a/etc/mtab
 
-# Save original boot-loader configurations before running systemconfigurator
-for file in /a/boot/grub/menu.lst /a/etc/lilo.conf /a/etc/grub.conf; do
-    if [ -e ${file} ]; then
-        if [ ! -e ${file}.pre-systemimager ]; then
-            cp -f ${file} ${file}.pre-systemimager
-        fi
-    fi
-done
+## Save original boot-loader configurations before running systemconfigurator
+#for file in /a/boot/grub/menu.lst /a/etc/lilo.conf /a/etc/grub.conf; do
+#    if [ -e ${file} ]; then
+#        if [ ! -e ${file}.pre-systemimager ]; then
+#            cp -f ${file} ${file}.pre-systemimager
+#        fi
+#    fi
+#done
 
 ##SYSTEMCONFIGURATOR_PRE##
 
@@ -466,12 +468,12 @@ done
 # END disk edits
 ################################################################################
 
-export PATH=/usr/local/sbin:/usr/local/bin:$PATH
-logmsg "Detecting systemconfigurator:"
-logmsg "---"
-chroot /a/ systemconfigurator --version || \
-    logmsg "WARNING: systemconfigurator was not found in the image $IMAGENAME"
-logmsg "---"
+#export PATH=/usr/local/sbin:/usr/local/bin:$PATH
+#logmsg "Detecting systemconfigurator:"
+#logmsg "---"
+#chroot /a/ systemconfigurator --version || \
+#    logmsg "WARNING: systemconfigurator was not found in the image $IMAGENAME"
+#logmsg "---"
 
 ##SYSTEMCONFIGURATOR_POST##
 
