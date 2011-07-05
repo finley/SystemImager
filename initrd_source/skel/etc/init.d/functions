@@ -2,7 +2,7 @@
 #
 # "SystemImager" 
 #
-#  Copyright (C) 1999-2010 Brian Elliott Finley
+#  Copyright (C) 1999-2011 Brian Elliott Finley <brian@thefinleys.com>
 #
 #  $Id$
 #  vi: set filetype=sh et ts=4:
@@ -1371,13 +1371,13 @@ run_post_install_scripts() {
 
         cd ${SCRIPTS_DIR}/post-install/
 
-        POST_INSTALL_SCRIPTS="$POST_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]all\..*"`"
-        POST_INSTALL_SCRIPTS="$POST_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]${IMAGENAME}\..*"`"
-        POST_INSTALL_SCRIPTS="$POST_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]${BASE_HOSTNAME}\..*"`"
+        POST_INSTALL_SCRIPTS="$POST_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]all\..*" | grep -v "~$" `"
+        POST_INSTALL_SCRIPTS="$POST_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]${IMAGENAME}\..*" | grep -v "~$" `"
+        POST_INSTALL_SCRIPTS="$POST_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]${BASE_HOSTNAME}\..*" | grep -v "~$" `"
         for GROUPNAME in ${GROUPNAMES}; do
-            POST_INSTALL_SCRIPTS="$POST_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]${GROUPNAME}\..*"`"
+            POST_INSTALL_SCRIPTS="$POST_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]${GROUPNAME}\..*" | grep -v "~$" `"
         done
-        POST_INSTALL_SCRIPTS="$POST_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]${HOSTNAME}\..*"`"
+        POST_INSTALL_SCRIPTS="$POST_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]${HOSTNAME}\..*" | grep -v "~$" `"
 
         # Now, to get rid of those pesky newlines. -BEF-
         POST_INSTALL_SCRIPTS=`echo $POST_INSTALL_SCRIPTS | tr '\n' ' '`
