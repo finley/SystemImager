@@ -40,7 +40,7 @@ $program_name = "si_mkautoinstallscript";
 $version_info = <<"EOF";
 $program_name (part of SystemImager) v$VERSION
     
-Copyright (C) 1999-2001 Brian Elliott Finley <brian\@systemimager.org>
+Copyright (C) 1999-2011 Brian Elliott Finley <brian\@thefinleys.com>
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 EOF
@@ -81,12 +81,13 @@ Options: (options can be presented in any order and may be abbreviated)
                         in the image.
 
  --listing              Show each filename as it is copied over during
-                        install.  This is useful to increase the verbosity
-                        of the installation when you need more informations
-                        for debugging.  Do not use this option if your
-                        console device is too slow (e.g. serial console),
-                        otherwise it could be the bottleneck of your
-                        installation.
+                        install.  This setting increases the verbosity
+                        of the installation, and can be useful for
+                        debugging.
+
+                        WARNING:  This setting can dramatically slow
+                        down your auto-installs if you are using a slow
+                        console device (e.g. serial console).
 
  --autodetect-disks     Try to detect available disks on the client instead
                         of using devices from autoinstallscript.conf.
