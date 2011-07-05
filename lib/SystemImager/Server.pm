@@ -1771,89 +1771,90 @@ sub setup_kexec {
     print $out "kexec_initrd=`basename \$kexec_initrd`\n";
 }
 
-sub write_sc_command_pre {
-    my ( $out, $ip_assignment_method ) = @_;
+#XXX use of SystemConfigurator is deprecated
+#sub write_sc_command_pre {
+#    my ( $out, $ip_assignment_method ) = @_;
+#
+#    # Fix device names in systemconfigurator config.
+#    my $sc_conf_file = '/a/etc/systemconfig/systemconfig.conf';
+#    print $out "\n# Fix device names in boot-loader configuration.\n";
+#    print $out "if [ -e $sc_conf_file ]; then\n";
+#    unless ($bootdev) {
+#        $bootdev = $rootdev;
+#    }
+#    my $bootdev_disk = $bootdev;
+#    if ($bootdev_disk =~ /^\/dev\/([hs]|ps3|xv)d/) {
+#        # Standard disk naming (hd*, sd*, xvd*, ps3d*).
+#        $bootdev_disk =~ s/[0-9]+$//;
+#    } elsif ($bootdev_disk =~ /^UUID|^LABEL/) {
+#        # XXX: Boot device in UUID or LABEL form: do nothing,
+#        # systemconfigurator will do everything is needed.
+#    } else {
+#        # Hardware RAID device.
+#        $bootdev_disk =~ s/p[0-9]+$//;
+#    }
+#    print $out "    sed -i 's:[[:space:]]*BOOTDEV[[:space:]]*=.*:BOOTDEV = $bootdev_disk:g' $sc_conf_file\n";
+#    print $out "    sed -i 's:[[:space:]]*ROOTDEV[[:space:]]*=.*:ROOTDEV = $rootdev:g' $sc_conf_file\n";
+#    print $out "    sed -i 's:[[:space:]]*root=[^ \\t]*: root=$rootdev :g' $sc_conf_file\n";
+#    print $out "    sed -i \"s:DEFAULTBOOT = systemimager:DEFAULTBOOT = \$IMAGENAME:g\" $sc_conf_file\n";
+#    print $out "    sed -i \"s:LABEL = systemimager:LABEL = \$IMAGENAME:g\" $sc_conf_file\n";
+#    print $out "fi\n";
+#}
 
-    # Fix device names in systemconfigurator config.
-    my $sc_conf_file = '/a/etc/systemconfig/systemconfig.conf';
-    print $out "\n# Fix device names in boot-loader configuration.\n";
-    print $out "if [ -e $sc_conf_file ]; then\n";
-    unless ($bootdev) {
-        $bootdev = $rootdev;
-    }
-    my $bootdev_disk = $bootdev;
-    if ($bootdev_disk =~ /^\/dev\/([hs]|ps3|xv)d/) {
-        # Standard disk naming (hd*, sd*, xvd*, ps3d*).
-        $bootdev_disk =~ s/[0-9]+$//;
-    } elsif ($bootdev_disk =~ /^UUID|^LABEL/) {
-        # XXX: Boot device in UUID or LABEL form: do nothing,
-        # systemconfigurator will do everything is needed.
-    } else {
-        # Hardware RAID device.
-        $bootdev_disk =~ s/p[0-9]+$//;
-    }
-    print $out "    sed -i 's:[[:space:]]*BOOTDEV[[:space:]]*=.*:BOOTDEV = $bootdev_disk:g' $sc_conf_file\n";
-    print $out "    sed -i 's:[[:space:]]*ROOTDEV[[:space:]]*=.*:ROOTDEV = $rootdev:g' $sc_conf_file\n";
-    print $out "    sed -i 's:[[:space:]]*root=[^ \\t]*: root=$rootdev :g' $sc_conf_file\n";
-    print $out "    sed -i \"s:DEFAULTBOOT = systemimager:DEFAULTBOOT = \$IMAGENAME:g\" $sc_conf_file\n";
-    print $out "    sed -i \"s:LABEL = systemimager:LABEL = \$IMAGENAME:g\" $sc_conf_file\n";
-    print $out "fi\n";
-}
-
-sub write_sc_command_post {
-    my ( $out, $ip_assignment_method ) = @_;
-
-    # Configure the network device used to contact the image-server -AR-
-    print $out "\n# Configure the network interface used during the auto-installation.\n";
-    print $out "[ -z \$DEVICE ] && DEVICE=eth0\n";
-
-    my $sc_excludes_to = "/etc/systemimager/systemconfig.local.exclude";
-    my $sc_cmd = "chroot /a/ systemconfigurator --verbose --excludesto=$sc_excludes_to";
-    my $sc_options = '';
-    my $sc_ps3_options = '';
-    if ($ip_assignment_method eq "replicant") {
-        $sc_options = " --runboot";
-        $sc_ps3_options = '';
-    } else {
-        ## FIXME - is --excludesto only for the static method?
-        $sc_options = '--confighw --confignet --configboot --runboot';
-        # PS3 doesn't need hardware and boot-loader configuration.
-        $sc_ps3_options = '--confignet';
-    }
-
-    print $out "\n";
-    print $out "# Run systemconfigurator.\n";
-    print $out "if grep -q PS3 /proc/cpuinfo; then\n";
-    print $out "    sc_options=\"$sc_ps3_options\"\n";
-    print $out "else\n";
-    print $out "    sc_options=\"$sc_options\"\n";
-    print $out "fi\n";
-    print $out "$sc_cmd \${sc_options} --stdin << EOL || shellout\n";
-
-    unless ($ip_assignment_method eq "replicant") {
-	print $out "[NETWORK]\n";
-	print $out "HOSTNAME = \$HOSTNAME\n";
-	print $out "DOMAINNAME = \$DOMAINNAME\n";
-    }
-    if ($ip_assignment_method eq "static") {
-	print $out "GATEWAY = \$GATEWAY\n";
-    }
-    print $out "\n";
-
-    print $out "[INTERFACE0]\n";
-    print $out "DEVICE = \$DEVICE\n";
-
-    if ($ip_assignment_method eq "dhcp") {
-	print $out "TYPE = dhcp\n";
-    }
-    elsif ($ip_assignment_method eq "static") {
-	print $out "TYPE = static\n";
-	print $out "IPADDR = \$IPADDR\n";
-	print $out "NETMASK = \$NETMASK\n";
-    }
-
-    print $out "EOL\n";
-}
+#sub write_sc_command_post {
+#    my ( $out, $ip_assignment_method ) = @_;
+#
+#    # Configure the network device used to contact the image-server -AR-
+#    print $out "\n# Configure the network interface used during the auto-installation.\n";
+#    print $out "[ -z \$DEVICE ] && DEVICE=eth0\n";
+#
+#    my $sc_excludes_to = "/etc/systemimager/systemconfig.local.exclude";
+#    my $sc_cmd = "chroot /a/ systemconfigurator --verbose --excludesto=$sc_excludes_to";
+#    my $sc_options = '';
+#    my $sc_ps3_options = '';
+#    if ($ip_assignment_method eq "replicant") {
+#        $sc_options = " --runboot";
+#        $sc_ps3_options = '';
+#    } else {
+#        ## FIXME - is --excludesto only for the static method?
+#        $sc_options = '--confighw --confignet --configboot --runboot';
+#        # PS3 doesn't need hardware and boot-loader configuration.
+#        $sc_ps3_options = '--confignet';
+#    }
+#
+#    print $out "\n";
+#    print $out "# Run systemconfigurator.\n";
+#    print $out "if grep -q PS3 /proc/cpuinfo; then\n";
+#    print $out "    sc_options=\"$sc_ps3_options\"\n";
+#    print $out "else\n";
+#    print $out "    sc_options=\"$sc_options\"\n";
+#    print $out "fi\n";
+#    print $out "$sc_cmd \${sc_options} --stdin << EOL || shellout\n";
+#
+#    unless ($ip_assignment_method eq "replicant") {
+#	print $out "[NETWORK]\n";
+#	print $out "HOSTNAME = \$HOSTNAME\n";
+#	print $out "DOMAINNAME = \$DOMAINNAME\n";
+#    }
+#    if ($ip_assignment_method eq "static") {
+#	print $out "GATEWAY = \$GATEWAY\n";
+#    }
+#    print $out "\n";
+#
+#    print $out "[INTERFACE0]\n";
+#    print $out "DEVICE = \$DEVICE\n";
+#
+#    if ($ip_assignment_method eq "dhcp") {
+#	print $out "TYPE = dhcp\n";
+#    }
+#    elsif ($ip_assignment_method eq "static") {
+#	print $out "TYPE = static\n";
+#	print $out "IPADDR = \$IPADDR\n";
+#	print $out "NETMASK = \$NETMASK\n";
+#    }
+#
+#    print $out "EOL\n";
+#}
 
 
 
@@ -1997,20 +1998,20 @@ sub create_autoinstall_script{
 	            last SWITCH;
 	        }
             
-	        if (/^\s*${delim}BOEL_DEVSTYLE${delim}\s*$/) {
-	            _write_boel_devstyle_entry($MASTER_SCRIPT, $auto_install_script_conf);
-	            last SWITCH;
-	        }
+            #if (/^\s*${delim}BOEL_DEVSTYLE${delim}\s*$/) {
+            #_write_boel_devstyle_entry($MASTER_SCRIPT, $auto_install_script_conf);
+            #    #    last SWITCH;
+            #}
 
-	        if (/^\s*${delim}SYSTEMCONFIGURATOR_PRE${delim}\s*$/) {
-	            write_sc_command_pre($MASTER_SCRIPT, $ip_assignment_method);
-	            last SWITCH;
-	        }
+            #if (/^\s*${delim}SYSTEMCONFIGURATOR_PRE${delim}\s*$/) {
+            #    write_sc_command_pre($MASTER_SCRIPT, $ip_assignment_method);
+            #    last SWITCH;
+            #}
 
-	        if (/^\s*${delim}SYSTEMCONFIGURATOR_POST${delim}\s*$/) {
-	            write_sc_command_post($MASTER_SCRIPT, $ip_assignment_method);
-	            last SWITCH;
-	        }
+            #if (/^\s*${delim}SYSTEMCONFIGURATOR_POST${delim}\s*$/) {
+            #    write_sc_command_post($MASTER_SCRIPT, $ip_assignment_method);
+            #    last SWITCH;
+            #}
 
 	        if (/^\s*${delim}UMOUNT_FILESYSTEMS${delim}\s*$/) {
 	            _write_out_umount_commands( $MASTER_SCRIPT,
@@ -2286,27 +2287,28 @@ sub _write_elilo_conf {
 # Usage:
 #   _write_boel_devstyle_entry($MASTER_SCRIPT, $auto_install_script_conf);
 #
-sub _write_boel_devstyle_entry {
-
-    my ($script, $file) = @_;
-
-    my $xml_config = XMLin($file, keyattr => { boel => "+devstyle"} );
-
-    if( defined($xml_config->{boel}->{devstyle}) 
-        && (    ("$xml_config->{boel}->{devstyle}" eq "devfs")
-             or ("$xml_config->{boel}->{devstyle}" eq "udev" ) )
-      ) {
-
-        my $cmd = q(mount /dev /a/dev -o bind || shellout);
-        print $script qq(logmsg "$cmd"\n);
-        print $script qq($cmd\n);
-        
-    } else {
-
-        print $script qq(#not needed for this image\n);
-        
-    }
-}
+#XXX no longer needed
+#sub _write_boel_devstyle_entry {
+#
+#    my ($script, $file) = @_;
+#
+#    my $xml_config = XMLin($file, keyattr => { boel => "+devstyle"} );
+#
+#    if( defined($xml_config->{boel}->{devstyle}) 
+#        && (    ("$xml_config->{boel}->{devstyle}" eq "devfs")
+#             or ("$xml_config->{boel}->{devstyle}" eq "udev" ) )
+#      ) {
+#
+#        my $cmd = q(mount /dev /a/dev -o bind || shellout);
+#        print $script qq(logmsg "$cmd"\n);
+#        print $script qq($cmd\n);
+#        
+#    } else {
+#
+#        print $script qq(#not needed for this image\n);
+#        
+#    }
+#}
 
 
 # /* vi: set filetype=perl ai et ts=4 sw=4: */
