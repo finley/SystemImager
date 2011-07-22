@@ -3,7 +3,7 @@
 #
 #   "SystemImager" 
 #
-#   Copyright (C) 1999-2004 Brian Elliott Finley
+#   Copyright (C) 1999-2011 Brian Elliott Finley
 #   
 #   $Id$
 #
@@ -11,6 +11,14 @@
 #   2004.09.27  Brian Elliott Finley
 #   - allow -v as unique option for --verbose
 #   - tweak --help formatting
+#
+#   2011.07.18  Brian Elliott Finley
+#   - patch provided by Thomas Zeiser:
+#
+#       si_rmimage currently does not remove the UYOK boot files from
+#       (usually) /usr/share/systemimager/boot/ARCH/IMAGE. The patch
+#       will try to remove them, too. Path and architecutre are
+#       determined as in other systemimager tools/libs.
 #
 
 # set some variables
@@ -31,6 +39,10 @@ use SystemImager::Config;
 my $autoinstall_script_dir = $config->autoinstall_script_dir();
 unless ($autoinstall_script_dir) {
     die "FATAL: parameter AUTOINSTALL_SCRIPT_DIR is not defined in /etc/systemimager/systemimager.conf\n";
+}
+my $autoinstall_boot_dir = $config->autoinstall_boot_dir();
+unless ($autoinstall_boot_dir) {
+    die "FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in /etc/systemimager/systemimager.conf\n";
 }
 my $rsyncd_conf = $config->rsyncd_conf();
 unless ($rsyncd_conf) {
@@ -134,6 +146,13 @@ unless(($imagedir) or ($force)) {
   exit 1;
 }
 
+# get architecture of the image (for removing UYOK boot files later on)
+$file=$imagedir . "/etc/systemimager/boot/ARCH";
+open(FILE,"<$file") or die("Couldn't open $file for reading $!");
+  my $arch = (<FILE>)[0];
+close(FILE);
+chomp $arch;
+
 # remove image
 if($verbose) {print "  Removing image $image.\n";}
 $file=$imagedir;
@@ -196,6 +215,15 @@ if(-e $flamethrower_conf) {
     $entry_name = "override_" . $image;
     SystemImager::Common->add_or_delete_conf_file_entry($flamethrower_conf, $entry_name) or
         die "$program_name: Cannot remove entry from $flamethrower_conf";
+}
+
+# remove UYOK boot files
+if($verbose) {print "  Removing UYOK files associated with $image.\n";}
+$file="$autoinstall_boot_dir/$arch/$image";
+if($force) {
+  if($file) { rmtree($file, 0, 0); }
+} else {
+  rmtree($file, 0, 0) or print "WARNING: failed to remove UYOK boot files in $file\n   (ignore this warning if you are not using UYOK).\n";
 }
 
 exit 0;
