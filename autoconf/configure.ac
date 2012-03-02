@@ -1,3 +1,7 @@
+#
+# Brian Elliott Finley <brian@thefinleys.com>
+# - Comment out a few things for now to get it to work.  Fix later (maybe)
+#
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
@@ -14,9 +18,10 @@ AC_PROG_YACC
 AC_PROG_CC
 AC_PROG_CPP
 AC_PROG_LEX
-case $LEX in
-    :) SI_CHECK_FAIL(lex,flex,,You cannot build many components without the flex parser);;
-esac
+#case $LEX in
+#    :) SI_CHECK_FAIL(lex,flex,,
+#      You cannot build many components without the flex parser);;
+#esac
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
@@ -67,9 +72,9 @@ AC_SUBST(GCC,$gcc_exec)
 AC_SUBST(GXX,$gxx_exec)
 
 # parted needs uuid
-AC_CHECK_LIB([uuid], [uuid_generate], [have_uuid=yes], [
-	SI_CHECK_FAIL(libuuid,e2fsprogs-devel)
-	])
+#AC_CHECK_LIB([uuid], [uuid_generate], [have_uuid=yes], [
+#	SI_CHECK_FAIL(libuuid,e2fsprogs-devel)
+#	])
 
 # parted needs readline 
 
