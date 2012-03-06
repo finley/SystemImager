@@ -195,6 +195,7 @@ PATH := $(PATH):/sbin:/usr/sbin:/usr/local/sbin
 #
 # Ok, here's my best idea so far for auto-running configure. -BEF-
 CONFIG_ME := $(shell test -e config.inc || PATH=$(PATH) ./configure 1>&2)
+# Fix this some day so that it gives a nicer error message... -BEF-
 include config.inc
 
 # build everything, install nothing
