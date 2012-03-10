@@ -77,13 +77,13 @@ include $(INITRD_DIR)/make.d/tar.rul
 include $(INITRD_DIR)/make.d/sysvinit.rul
 include $(INITRD_DIR)/make.d/udev.rul
 include $(INITRD_DIR)/make.d/udpcast.rul
+include $(INITRD_DIR)/make.d/util-linux.rul 		# must be before parted to build parted against the uuid libs
 include $(INITRD_DIR)/make.d/parted.rul
 include $(INITRD_DIR)/make.d/zlib.rul
 include $(INITRD_DIR)/make.d/gzip.rul
 include $(INITRD_DIR)/make.d/mdadm.rul
 include $(INITRD_DIR)/make.d/openssl.rul
 include $(INITRD_DIR)/make.d/openssh.rul
-include $(INITRD_DIR)/make.d/util-linux.rul
 include $(INITRD_DIR)/make.d/kexec-tools.rul
 include $(INITRD_DIR)/make.d/coreutils.rul
 
