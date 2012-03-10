@@ -1,7 +1,7 @@
 #
 #	"SystemImager"  
 #
-#   Copyright (C) 1999-2010 Brian Elliott Finley
+#   Copyright (C) 1999-2012 Brian Elliott Finley
 #   Copyright (C) 2001-2004 Hewlett-Packard Company <dannf@hp.com>
 #   
 #   Others who have contributed to this code:
@@ -9,6 +9,10 @@
 #
 #   $Id$
 # 	 vi: set filetype=make:
+#
+#   2012.03.09  Brian Elliott Finley
+#   * Fix egrep regex so that e2fsprogs targets show with 'make show_all_targets'
+#
 #
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -645,5 +649,5 @@ SHOW_TARGETS_ALL_MAKEFILES = $(shell find . make.d/ initrd_source/ initrd_source
 show_all_targets:
 	@echo All Available Targets Include:
 	@echo ---------------------------------------------------------------------
-	@cat $(SHOW_TARGETS_ALL_MAKEFILES) | egrep '^[a-z_]+:' | sed 's/:.*//' | sort -u
+	@cat $(SHOW_TARGETS_ALL_MAKEFILES) | egrep '^[a-zA-Z0-9_]+:' | sed 's/:.*//' | sort -u
 	@echo
