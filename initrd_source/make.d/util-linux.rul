@@ -3,8 +3,8 @@
 #   vi: set filetype=make:
 #   
 
-UTIL_LINUX_VERSION	= 2.12r
-UTIL_LINUX_TARBALL 	= util-linux-$(UTIL_LINUX_VERSION).tar.bz2
+UTIL_LINUX_VERSION	= 2.21
+UTIL_LINUX_TARBALL 	= util-linux-$(UTIL_LINUX_VERSION).tar.xz
 #UTIL_LINUX_URL      := http://www.kernel.org/pub/linux/utils/util-linux/$(UTIL_LINUX_TARBALL)
 UTIL_LINUX_URL 		= http://download.systemimager.org/pub/util-linux/$(UTIL_LINUX_TARBALL)
 UTIL_LINUX_DIR 		= $(INITRD_SRC_DIR)/util-linux-$(UTIL_LINUX_VERSION)
@@ -16,7 +16,7 @@ $(UTIL_LINUX_DIR).unpack:	$(INITRD_SRC_DIR)/$(UTIL_LINUX_TARBALL) \
 						$(UTIL_LINUX_PATCHES) \
 						$(INITRD_DIR)/make.d/util-linux.rul
 	rm -rf $(UTIL_LINUX_DIR)
-	cd $(INITRD_SRC_DIR) && tar -xvjf $(UTIL_LINUX_TARBALL)
+	cd $(INITRD_SRC_DIR) && tar -xvaf $(UTIL_LINUX_TARBALL)
 	cd $(UTIL_LINUX_DIR) && cat $(UTIL_LINUX_PATCHES) < /dev/null | patch -p1
 	touch $@
 
