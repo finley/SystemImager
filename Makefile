@@ -509,7 +509,7 @@ $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2: systemimager.spec
 		svn export . $(TOPDIR)/tmp/systemimager-$(VERSION); \
 	else \
 		make distclean && mkdir -p $(TOPDIR)/tmp/systemimager-$(VERSION); \
-		(cd $(TOPDIR) && tar --exclude=tmp -cvf - .) | (cd $(TOPDIR)/tmp/systemimager-$(VERSION) && tar -xvf -); \
+		(cd $(TOPDIR) && tar --exclude=tmp --exclude=.git -cvf - .) | (cd $(TOPDIR)/tmp/systemimager-$(VERSION) && tar -xvf -); \
 	fi
 ifeq ($(UNSTABLE), 1)
 	if [ -f README.unstable ]; then \
