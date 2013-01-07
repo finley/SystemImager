@@ -1,61 +1,123 @@
 #!/bin/bash
 #
-# Description: report the rebooted status to the monitor server.
+#  "SystemImager"
+#
+#  Copyright (C) 2012 Olivier Lahaye <olivier.lahaye@cea.fr>
+#
+# Description: Installs an init script that will report the rebooted status
+#              to the monitor server.
 #
 
 # netcat timeout in seconds
 TIMEOUT=30
 
-write_monitor_msg() {
+# File created after reboot if rebooted state was successuflly reported to the server.
+rebooted_state_file=/etc/systemimager/si_monitor.client.rebooted
+rebooted_message="status=102:speed=0"
+
+send_message_cmd() {
     if [ -z $MONITOR_SERVER ]; then
+        # OL: Need to do something here...(log error)
+	echo "false"
         return
     fi
     if [ -z $MONITOR_PORT ]; then
         MONITOR_PORT=8181
     fi
 
-    msg=`echo "$@"`
-
-    # Get the client mac address.
-    if [ -z "$mac" ]; then
-        mac=`ifconfig $DEVICE 2>/dev/null | sed -ne "s/.*HWaddr //p" | sed "s/ //g" | sed s/:/./g`
-    fi
-
-    # Report the message to the monitor server.
-    send_msg=`echo "mac=$mac:ip=$IPADDR:host=$HOSTNAME:$msg"`
+    mac=$(LC_ALL=C ifconfig $DEVICE 2>/dev/null | sed -ne "s/.*HWaddr //p" | sed "s/ //g" | sed s/:/./g)
+    message="mac=$mac:ip=$IPADDR:host=$HOSTNAME:$rebooted_message"
 
     # Find netcat binary
-    netcat=`(type -p netcat || type -p nc) 2>/dev/null`
-    [ -z $netcat ] && return
+    netcat=$((type -p netcat || type -p nc) 2>/dev/null)
 
+    if test -z "$netcat"
+    then # try to use /dev/tcp
+        echo "TMOUT=$TIMEOUT exec 3<>/dev/tcp/$MONITOR_SERVER/$MONITOR_PORT; echo \"$message\" >&3"
+    else # use netcat
+        echo "echo \"$message\" | $netcat -w $TIMEOUT $MONITOR_SERVER $MONITOR_PORT"
+    fi
+ }
+
+# Detect the system init technology and create init files accordingly.
+
+create_InitFile() {
     # Create /etc/systemimager if it doesn't exist.
     if [ ! -d /etc/systemimager ]; then
         mkdir -p /etc/systemimager
     fi
 
-    rebooted_state_file=/etc/systemimager/si_monitor.client.rebooted
-    cat << EOF > $rebooted_state_file
-#!/bin/bash
-(echo "$send_msg" | $netcat -w $TIMEOUT $MONITOR_SERVER $MONITOR_PORT) && >$rebooted_state_file
+    # Redhat like (RHEL / old Fedora / Mandrake / ...)
+    if test -d /etc/rc.d/init.d && test ! -d /lib/systemd/system; then
+        write_SysVInitFile /etc/rc.d/init.d/systemimager-monitor-firstboot
+    # SuSE or debian like like (SuSE, OpenSuSE, ...)
+    elif test -d /etc/init.d && test ! -d /lib/systemd/system; then
+        write_SysVInitFile /etc/init.d/systemimager-monitor-firstboot
+    # Modern distro with systemd like Fedora, Mandriva, ...
+    # NOTE: debian has this directory even if systemd is not used, thus we need to check for systemd after init scripts...
+    elif test -d /lib/systemd/system; then
+        write_systemdInitFile
+    # Unknown script boot system. default to rc.local.
+    else
+        cat <<EOF >> /etc/rc.local
+$(send_message_cmd) || sed -i -e /etc/rc.local 's/^(echo ".*$//g'
 EOF
-    chmod 700 $rebooted_state_file
+    fi
 
-    if [ -f /etc/SuSE-release ]; then
-        # SuSE
-        rc_local=/etc/init.d/after.local
-        grep -q $rebooted_state_file $rc_local 2>/dev/null || echo $rebooted_state_file >> $rc_local
-    elif [ -f /etc/redhat-release ]; then
-        # RedHat / Fedora
-        if [ -e /etc/rc.d/rc.local ]; then
-            rc_local=/etc/rc.d/rc.local
-        else
-            rc_local=/etc/rc.local
-        fi
-        grep -q $rebooted_state_file $rc_local 2>/dev/null || echo $rebooted_state_file >> $rc_local
-    elif [ -f /etc/debian_version ]; then
-        # Debian
-        init_d_file=/etc/init.d/systemimager-monitor-firstboot
-	cat << EOF > $init_d_file
+}
+
+# write_systemdVInitFile()
+#
+write_systemdInitFile() {
+
+# Create the systemd service file
+    cat << EOF > /lib/systemd/system/systemimager-monitor-firstboot.service
+# systemd service description file for systemimager
+# (c) Olivier Lahaye 2012
+
+[Unit]
+Description=Report the REBOOTED state to the image server
+After=syslog.target network.target
+Before=sysinit.target final.target
+
+[Service]
+Type=oneshot
+ExecStart=/lib/systemd/systemimager-monitor-firstboot
+RemainAfterExit=no
+
+[Install]
+WantedBy=default.target
+EOF
+
+# Create the script that will run
+    cat <<EOF > /lib/systemd/systemimager-monitor-firstboot
+#!/bin/bash
+# systemd service script for systemimager
+# (c) Olivier Lahaye 2012
+
+if ($(send_message_cmd))
+then
+    touch $rebooted_state_file
+    # Self disable if success.
+    systemctl disable systemimager-monitor-firstboot.service
+else
+    echo "Error, cannot report rebooted status to server $MONITOR_SERVER"
+    echo "Check that systemimager-monitord is running on the server"
+    exit 1
+fi
+EOF
+
+    chmod +x /lib/systemd/systemimager-monitor-firstboot
+    # --no-reload avoid systemd to immediately start the service (before reboot).
+    systemctl --no-reload enable systemimager-monitor-firstboot.service
+}
+
+#
+# write_SysVInitFile()
+# $1 name of the init script with full path.
+#
+write_SysVInitFile() {
+    cat << EOF > $1
 #!/bin/bash
 ### BEGIN INIT INFO
 # Provides: systemimager-monitor-firstboot
@@ -72,7 +134,18 @@ set -e
 
 case "\$1" in
   start)
-        $rebooted_state_file
+        if ($(send_message_cmd))
+        then
+            if [ -x /sbin/chkconfig ]; then
+                /sbin/chkconfig --del systemimager-monitor-firstboot
+            elif [ -e /etc/rcS.d/S99systemimager-monitor-firstboot ]; then
+                rm -f /etc/rcS.d/S99systemimager-monitor-firstboot
+            fi
+            touch $rebooted_state_file
+        else
+            echo "Error, cannot report rebooted status to server $MONITOR_SERVER"
+            echo "Check that systemimager-monitord is running on the server"
+        fi
         ;;
   stop|reload|restart|force-reload)
         ;;
@@ -82,24 +155,17 @@ case "\$1" in
 esac
 exit 0
 EOF
-        chmod a+x $init_d_file
-        if [ ! -e /etc/rcS.d/S99systemimager-monitor-firstboot ]; then
-            ln -s $init_d_file /etc/rcS.d/S99systemimager-monitor-firstboot
-        fi
-    else
-        # Unknown distribution... try with standard rc.local.
-        if [ -e /etc/rc.d/rc.local ]; then
-            rc_local=/etc/rc.d/rc.local
-        else
-            rc_local=/etc/rc.local
-        fi
-        grep -q $rebooted_state_file $rc_local 2>/dev/null || echo $rebooted_state_file >> $rc_local
+
+    chmod a+x $1
+    if [ -x /sbin/chkconfig ]; then
+        chkconfig --add systemimager-monitor-firstboot
+    elif [ ! -e /etc/rcS.d/S99systemimager-monitor-firstboot ]; then
+        ln -s $init_file /etc/rcS.d/S99systemimager-monitor-firstboot
     fi
 }
 
 # Load installation variables.
 [ -e /tmp/post-install/variables.txt ] && . /tmp/post-install/variables.txt
 
-# Write commands to send status and final message to the monitord.
-write_monitor_msg "status=102:speed=0"
-
+# Create the init file that will report the rebooted states at first boot.
+create_InitFile
