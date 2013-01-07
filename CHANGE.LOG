@@ -3,9 +3,29 @@
 #
 #   Copyright (C) 1999-2005 Brian Elliott Finley
 #   Copyright (C) 2007-2008 Andrea Righi
+##  Copyright (C) 2012      Olivier Lahaye
 #
-#   $Id$
+#   $Id: CHANGE.LOG 4579 2012-12-18 14:24:43Z olahaye74 $
 #
+
+4.3.0 [ Not yet released ]
+- added rpm directory (similar to debian one) to permit non-debian build
+  (includes patches that should only be used on non-debian systems)
+- Updated spec file (comments, cleanup and use of rpm directory stuffs)
+- Enabled ext4 module in kernel
+- Fix for new parted in Server.pm (avoid grepping "Disk Flags").
+- Upgrade parted to v3.1
+- Full rewrite of 95all.monitord_rebooted to have correct rebooted status
+  on RHEL like distros. Try to comply with SysVInitScripts and systemd.
+- Fixed mklib.bef so newer already installed libs aren't overwriten
+- Fixed initrd_source/make.d/{udev,coreutils,util-linux}.rul
+  using make install-exec so libtool is used to install binaries
+  and thus avoiding copying the libtool wrapper instead of the
+  real binaries.
+- Added "BuildRequires: gperf" for udev build
+- Added "BuildRequires: device-mapper-devel"
+- Added "BuildRequires: quilt" is needed for building sysvinit-2.87dsf
+- Kernel upgrade to 2.6.34.1
 
 4.1.8
 --------------------------------------------------------------------------------
