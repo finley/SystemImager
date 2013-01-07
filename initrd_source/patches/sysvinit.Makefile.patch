@@ -1,0 +1,11 @@
+--- /root/sysvinit.Makefile.orig	2006-03-26 19:39:20.000000000 -0800
++++ ../src/Makefile	2006-03-26 19:33:33.000000000 -0800
+@@ -50,7 +50,7 @@
+ MANDIR		= /usr/share/man
+ 
+ # Additional libs for GNU libc.
+-ifneq ($(wildcard /usr/lib/libcrypt.a),)
++ifneq ($(wildcard /usr/lib/libcrypt.a /usr/lib64/libcrypt.a),)
+ LCRYPT		= -lcrypt
+ endif
+ 
