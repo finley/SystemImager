@@ -1,7 +1,7 @@
 #
 #	"SystemImager"
 #
-#   $Id$
+#   $Id: initrd.rul 4573 2012-12-18 12:42:42Z olahaye74 $
 #    vi: set filetype=make:
 #
 #	Copyright (C) 1999-2011 Brian Elliott Finley
@@ -158,18 +158,18 @@ $(INITRD_BUILD_DIR).build:  $(INITRD_BUILD_DIR).prep		\
 								$(ZLIB_DIR).install
 
 	# Copy over the standard libs. -BEF-
-	cp -a /lib/ld*   $(INITRD_BUILD_DIR)/lib
+	test -z "$(echo /lib/ld*)" || cp -a /lib/ld*   $(INITRD_BUILD_DIR)/lib
 	test ! -d /lib64 || cp -a /lib64/ld* $(INITRD_BUILD_DIR)/lib64
 	# Explicitly include more w/mklibs -L.  -dawild-
 ifeq ($(ARCH),x86_64)
 	( cd $(INITRD_BUILD_DIR) && \
-		$(INITRD_DIR)/mklibs.bef -L $(INITRD_SRC_DIR)/$(E2FSPROGS_DIR)/lib:/lib64:/usr/lib64:/lib:/usr/lib -v -d lib64 ./*bin/* )
+		$(INITRD_DIR)/mklibs.bef -L $(INITRD_SRC_DIR)/$(E2FSPROGS_DIR)/lib:/lib64:/usr/lib64:/lib:/usr/lib -v -d . ./*bin/* )
 	# copy libnss files as they are not automatically included
 	cp -a /lib64/libnss* $(INITRD_BUILD_DIR)/lib64
 
 else
 	( cd $(INITRD_BUILD_DIR) && \
-		$(INITRD_DIR)/mklibs.bef -L $(INITRD_SRC_DIR)/$(E2FSPROGS_DIR)/lib:/lib:/usr/lib -v -d lib ./*bin/* )
+		$(INITRD_DIR)/mklibs.bef -L $(INITRD_SRC_DIR)/$(E2FSPROGS_DIR)/lib:/lib:/usr/lib -v -d . ./*bin/* )
 	# copy libnss files as they are not automatically included
 	cp -a /lib/libnss* $(INITRD_BUILD_DIR)/lib
 
