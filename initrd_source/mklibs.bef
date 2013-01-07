@@ -86,9 +86,13 @@ foreach my $lib (sort (keys %finders)) {
         if ( -e "$path/$lib" ) {
             my $source_lib = "$path/$lib";
             $source_lib =~ s|/+|/|g;
-            print ">  Using $source_lib\n";
-            $keepers{$finders{$lib}} = "$source_lib";
-            last;
+            my $dest_lib = "$d$finders{$lib}";
+            $dest_lib =~ s|/+|/|g;
+            if ( ! -e "$dest_lib" ) {
+                print ">  Using $source_lib\n";
+                $keepers{$finders{$lib}} = "$source_lib";
+                last;
+            }
         }
     }
 }
