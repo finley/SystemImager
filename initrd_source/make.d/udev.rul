@@ -25,18 +25,19 @@ $(UDEV_DIR).build:  $(UDEV_DIR).unpack
 		--prefix=/usr \
 		--sysconfdir=/etc \
 		--sbindir=/sbin \
-		--libdir=/usr/lib \
+		--libdir=/lib \
 		--with-rootlibdir=/lib \
+		--with-systemdsystemunitdir=no \
 		--libexecdir=/lib/udev \
-        --disable-extras \
-        --disable-introspection
-	cd $(UDEV_DIR) && make
+		--disable-extras \
+		--disable-introspection
+	$(MAKE) -j $(NCPUS) -C $(UDEV_DIR)
 	touch $@
 
 PHONY += udev_install
 udev_install:	$(UDEV_DIR).install
 $(UDEV_DIR).install:	$(UDEV_DIR).build
-	cd $(UDEV_DIR) && make install DESTDIR=$(INITRD_BUILD_DIR)
+	cd $(UDEV_DIR) && $(MAKE) install-exec DESTDIR=$(INITRD_BUILD_DIR)
 
 $(UDEV_DIR).unpack:   	$(INITRD_DIR)/make.d/udev.rul	\
 			$(INITRD_SRC_DIR)/$(UDEV_TARBALL)
