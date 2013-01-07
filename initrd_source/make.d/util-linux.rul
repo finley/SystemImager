@@ -1,5 +1,5 @@
 #
-#  $Id$
+#  $Id: util-linux.rul 4572 2012-12-18 12:36:58Z olahaye74 $
 #   vi: set filetype=make:
 #   
 
@@ -23,17 +23,19 @@ $(UTIL_LINUX_DIR).unpack:	$(INITRD_SRC_DIR)/$(UTIL_LINUX_TARBALL) \
 PHONY += util-linux
 util-linux:	$(UTIL_LINUX_DIR).build
 $(UTIL_LINUX_DIR).build:	$(UTIL_LINUX_DIR).unpack
-	cd $(UTIL_LINUX_DIR) && ./configure
+	cd $(UTIL_LINUX_DIR) && ./configure \
+			--prefix=/ \
+			--sysconfdir=/etc \
+			--libexecdir=/lib/udev \
+			--with-sysroot=$(INITRD_SRC_DIR)
 	$(MAKE) -j $(NCPUS) -C $(UTIL_LINUX_DIR)
 	touch $@
 
+PHONY += util-linux_install
+util-linux_install: $(UTIL_LINUX_DIR).install
 $(UTIL_LINUX_DIR).install:	$(UTIL_LINUX_DIR).build \
 						$(INITRD_BUILD_DIR).prep
-	install -m 755 $(UTIL_LINUX_DIR)/disk-utils/mkswap   $(INITRD_BUILD_DIR)/sbin
-	install -m 755 $(UTIL_LINUX_DIR)/disk-utils/blockdev $(INITRD_BUILD_DIR)/sbin
-	install -m 755 $(UTIL_LINUX_DIR)/fdisk/sfdisk        $(INITRD_BUILD_DIR)/sbin
-	install -m 755 $(UTIL_LINUX_DIR)/mount/mount         $(INITRD_BUILD_DIR)/bin
-	install -m 755 $(UTIL_LINUX_DIR)/mount/umount        $(INITRD_BUILD_DIR)/bin
+	$(MAKE) -j $(NCPUS) -C $(UTIL_LINUX_DIR) install-exec DESTDIR=$(INITRD_BUILD_DIR)
 
 $(INITRD_SRC_DIR)/$(UTIL_LINUX_TARBALL):
 	[ -d $(INITRD_SRC_DIR) ] || mkdir -p $(INITRD_SRC_DIR)
