@@ -8,7 +8,9 @@
 # Therefore, it can be set to any three digit number here.
 #
 %define ver      0.0.0
-%define rel      1
+# Set rel to 1 when is is a final release otherwise, set it to a 0.x number
+# This is convenient when final release need to upgrade "beta" releases.
+%define rel      0.2%{?dist}
 %define packager Bernard Li <bernard@vanhpc.org>
 %define prefix   /usr
 %define _build_all 1
@@ -55,7 +57,8 @@ BuildArchitectures: noarch
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
-BuildRequires: docbook-utils, dos2unix, e2fsprogs-devel, flex, libtool, readline-devel, /usr/bin/wget, openssl-devel, gcc, gcc-c++, ncurses-devel
+BuildRequires: docbook-utils, dos2unix, flex, libtool, readline-devel, /usr/bin/wget, openssl-devel, gcc, gcc-c++, ncurses-devel, bc, rsync >= 2.4.6
+BuildRequires: libuuid-devel, device-mapper-devel, gperf
 Requires: rsync >= 2.4.6, syslinux >= 1.48, libappconfig-perl, dosfstools, /usr/bin/perl
 AutoReqProv: no
 
@@ -213,7 +216,7 @@ Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Obsoletes: systemimager-%{_build_arch}boot
-BuildRequires: python, python-devel
+BuildRequires: python, python-devel, gettext
 %if %is_ps3
 BuildRequires: dtc
 %endif
@@ -249,7 +252,7 @@ BuildRoot: /tmp/%{name}-%{ver}-root
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
-BuildRequires: python, python-devel, %{python_xml}
+BuildRequires: python, python-devel, %{python_xml}, %{_libdir}/libcrypt.a
 AutoReqProv: no
 
 %description %{_build_arch}initrd_template
@@ -304,6 +307,61 @@ The bittorrent package allows you to use the BitTorrent protocol to perform
 installations.
 
 %changelog
+* Mon Jan  7 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.2
+- Commited all generic patches into Git.
+- Use specific rpm/ directory to store patch used only when building on
+  rpm distro. The rpm can be built with "rpm -tb" command.
+
+* Tue Dec 18 2012 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.1
+- Removed all spec patches
+- New devel branch 4.3.0
+- Add optional %dist tag to the release
+
+* Fri Nov 23 2012 Olivier Lahaye <olivier.lahaye@cea.fr> 4.2.0-0.91svn4568
+- Enabled ext4 module in kernel
+- Updated systemimager_server_pm.patch (use $(()) for arithmetics)
+
+* Fri Nov 23 2012 Olivier Lahaye <olivier.lahaye@cea.fr> 4.2.0-0.9svn4568
+- Fix for new parted in Server.pm (avoid grepping "Disk Flags").
+
+* Thu Nov  8 2012 Olivier Lahaye <olivier.lahaye@cea.fr> 4.2.0-0.8svn4568
+- Full rewrite of 95all.monitord_rebooted to have correct rebooted status
+  on RHEL like distros. Try to comply with SysVInitScripts and systemd.
+
+* Wed Nov  7 2012 Olivier Lahaye <olivier.lahaye@cea.fr> 4.2.0-0.7svn4568
+- Upgrade parted to v3.1
+
+* Tue Jul 24 2012 Olivier Lahaye <olivier.lahaye@cea.fr> 4.2.0-0.6svn4568
+- Fixed mklib.bef so newer already installed libs aren't overwriten
+
+* Wed Jul  4 2012 Olivier Lahaye <olivier.lahaye@cea.fr> 4.2.0-0.5svn4568
+- Fixed initrd_source/make.d/{udev,coreutils,util-linux}.rul
+  using make install-exec so libtool is used to install binaries
+  and thus avoiding copying the libtool wrapper instead of the
+  real binaries.
+- Added "BuildRequires: gperf" for udev build
+
+* Tue Apr 24 2012 Olivier Lahaye <olivier.lahaye@cea.fr>
+- New svn snapshot 4568
+- device-mapper-devel is needed
+- quilt is needed for building sysvinit-2.87dsf
+- Patch to sysvinit-2.87dsf to avoid debian specific stuffs
+- Patch for new kernel config
+
+* Mon Feb 13 2012 Olivier Lahaye <olivier.lahaye@cea.fr>
+- New svn snapshot 4555_bli
+
+* Thu Apr 07 2011 Bernard Li <bernard@vanhpc.org>
+- Added bc to BuildRequires as Makefile needs it
+- Added rsync >= 2.4.6 to BuildRequires
+
+* Thu Mar 24 2011 Bernard Li <bernard@vanhpc.org>
+- libuuid.so is provided by libuuid-devel in RHEL6 instead of e2fsprogs-devel
+- libcrypt.a is provided by glibc-static in RHEL6 instead of glibc-devel
+- gettext is needed for building xfsprogs included in boel_binaries
+- Use $RPM_BUILD_ROOT for DESTDIR
+- Cleanup some commented commands
+
 * Tue Nov 10 2009 Bernard Li <bernard@vanhpc.org>
 - Added ncurses-devel to BuildRequires
 
@@ -551,22 +609,34 @@ installations.
 - Based on work by Ken Segura <ksegura@5o7.org>
 
 %prep
+
+# Prepare source tree
 %setup -q
 
-make -j11 get_source
+# Add patches so it can build on non-debian systems.
+%__cp rpm/*.patch initrd_source/patches/
+
+# Download external sources
+%{__make} %{?_smp_mflags} get_source
 
 %build
 cd $RPM_BUILD_DIR/%{name}-%{version}/
+
+# Make sure we can fin system utils like mkfs.cramfs (when building as non-root)
+export PATH=/sbin:/usr/sbin:$PATH
+
+# Build against installed libs, not our system lib which may not be the same version.
+export LD_FLAGS=-L$RPM_BUILD_DIR/%{name}-%{version}/initrd_source/build_dir/lib
 
 # Make sure we build the docs
 ./configure SI_BUILD_DOCS=1
 
 # Only build everything if on x86, this helps with PPC build issues
 %if %{_build_all}
-make all
+%{__make} %{?_smp_mflags} all
 
 %else
-make binaries
+%{__make} binaries
 
 %endif
 
@@ -575,37 +645,22 @@ cd $RPM_BUILD_DIR/%{name}-%{version}/
 
 %if %{_build_all}
 
-make install_server_all DESTDIR=/tmp/%{name}-%{ver}-root PREFIX=%prefix
-make install_client_all DESTDIR=/tmp/%{name}-%{ver}-root PREFIX=%prefix
-(cd doc/manual_source;make html)
+make install_server_all DESTDIR=$RPM_BUILD_ROOT PREFIX=%prefix
+make install_client_all DESTDIR=$RPM_BUILD_ROOT PREFIX=%prefix
+(cd doc/manual_source;%{__make} html)
 
 %else
 
-make install_binaries DESTDIR=/tmp/%{name}-%{ver}-root PREFIX=%prefix
+%{__make} install_binaries DESTDIR=$RPM_BUILD_ROOT PREFIX=%prefix
 
 %endif
 
 # Some things that get duplicated because there are multiple calls to
 # the make install_* phases.
-find /tmp/%{name}-%{ver}-root/ -name \*~ -exec rm -f '{}' \;
-#rm -f /tmp/%{name}-%{ver}-root/etc/init.d/systemimager-server-flamethrowerd~
-#rm -f /tmp/%{name}-%{ver}-root/etc/init.d/systemimager-server-netbootmond~
-#rm -f /tmp/%{name}-%{ver}-root/etc/init.d/systemimager-server-rsyncd~
-#rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/client.conf~
-#rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/pxelinux.cfg/default~
-#rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/pxelinux.cfg/message.txt~
-#rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/pxelinux.cfg/syslinux.cfg~
-#rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/pxelinux.cfg/syslinux.cfg.localboot~
-#rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/rsync_stubs/10header~
-# Should I do this?
-#rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/rsync_stubs/99local.dist~
-#rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/rsync_stubs/99local.dist~~
-#
-#rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/rsync_stubs/README~
-#rm -f /tmp/%{name}-%{ver}-root/etc/systemimager/updateclient.local.exclude~
+find $RPM_BUILD_ROOT -name \*~ -exec rm -f '{}' \;
 
 %clean
-%__rm -rf $RPM_BUILD_DIR/%{name}-%{version}/
+#__rm -rf $RPM_BUILD_DIR/%{name}-%{version}/
 %__rm -rf $RPM_BUILD_ROOT
 
 %if %{_build_all}
@@ -943,10 +998,10 @@ fi
 %defattr(-, root, root)
 %dir %prefix/share/systemimager/boot/%{_build_arch}
 %dir %prefix/share/systemimager/boot/%{_build_arch}/standard
-%prefix/share/systemimager/boot/%{_build_arch}/standard/boel_binaries.tar.gz
 %prefix/share/systemimager/boot/%{_build_arch}/standard/config
 %prefix/share/systemimager/boot/%{_build_arch}/standard/initrd.img
 %prefix/share/systemimager/boot/%{_build_arch}/standard/kernel
+#prefix/share/systemimager/boot/%{_build_arch}/standard/boel_binaries.tar.gz
 
 %files %{_build_arch}initrd_template
 %defattr(-, root, root)
