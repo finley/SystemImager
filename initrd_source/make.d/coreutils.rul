@@ -23,7 +23,9 @@ $(COREUTILS_DIR).unpack:	$(INITRD_SRC_DIR)/$(COREUTILS_TARBALL) \
 PHONY += coreutils
 coreutils:	$(COREUTILS_DIR).build
 $(COREUTILS_DIR).build:	$(COREUTILS_DIR).unpack
-	cd $(COREUTILS_DIR) && ./configure --without-selinux --prefix=/
+	cd $(COREUTILS_DIR) && ./configure \
+		--prefix=/ \
+		--without-selinux
 	$(MAKE) -j $(NCPUS) -C $(COREUTILS_DIR)
 	touch $@
 
@@ -31,7 +33,7 @@ PHONY += coreutils_install
 coreutils_install: $(COREUTILS_DIR).install
 $(COREUTILS_DIR).install:	$(COREUTILS_DIR).build \
 						$(INITRD_BUILD_DIR).prep
-	cd $(COREUTILS_DIR) && make install DESTDIR=$(INITRD_BUILD_DIR)
+	$(MAKE) -j $(NCPUS) -C $(COREUTILS_DIR) install-exec DESTDIR=$(INITRD_BUILD_DIR)
 
 $(INITRD_SRC_DIR)/$(COREUTILS_TARBALL):
 	[ -d $(INITRD_SRC_DIR) ] || mkdir -p $(INITRD_SRC_DIR)
