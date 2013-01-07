@@ -1,13 +1,15 @@
 #
-#   $Id$
+#   $Id: parted.rul 4576 2012-12-18 12:55:11Z olahaye74 $
 #    vi: set filetype=make:
 #
 #   2004.12.13  Brian Elliott Finley
 #   - go to 1.6.19
 #   2010.06.13  Brian Elliott Filney
 #   - go to 2.3
+#   2012.11.06  Olivier Lahaye
+#   - go to 3.1 (needed to avoid redhat bug 441244)
 
-PARTED_VERSION := 2.3
+PARTED_VERSION := 3.1
 PARTED_TARBALL := parted-$(PARTED_VERSION).tar.xz
 #PARTED_URL := http://ftp.gnu.org/gnu/parted/$(PARTED_TARBALL)
 PARTED_URL := http://download.systemimager.org/pub/parted/$(PARTED_TARBALL)
