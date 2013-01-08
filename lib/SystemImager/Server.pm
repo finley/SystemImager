@@ -395,7 +395,7 @@ sub _read_partition_info_and_prepare_parted_commands {
         print $out "### BEGIN partition $devfs_dev ###\n";
         print $out qq(logmsg "Partitioning $devfs_dev..."\n);
         print $out qq(logmsg "Old partition table for $devfs_dev:"\n);
-        print $out "parted -s -- $devfs_dev print\n\n";
+        print $out "LC_ALL=C parted -s -- $devfs_dev print\n\n";
 
         print $out "# Wipe the MBR (Master Boot Record) clean.\n";
         $cmd = "dd if=/dev/zero of=$devfs_dev bs=512 count=1 || shellout";
@@ -411,10 +411,10 @@ sub _read_partition_info_and_prepare_parted_commands {
         print $out "# type it was, are removed and that we're starting with a clean label.\n";
         $cmd = "parted -s -- $devfs_dev mklabel $label_type || shellout";
         print $out qq(logmsg "$cmd"\n);
-        print $out "$cmd\n\n";
+        print $out "LC_ALL=C $cmd\n\n";
 
         print $out "# Get the size of the destination disk so that we can make the partitions fit properly.\n";
-        print $out q(DISK_SIZE=`parted -s ) . $devfs_dev . q( unit MB print | egrep '^Disk ' | awk '{print $NF}' | sed 's/MB//' `) . qq(\n);
+        print $out q(DISK_SIZE=`LC_ALL=C parted -s ) . $devfs_dev . q( unit MB print | egrep ") . $devfs_dev . q(" | awk '{print $NF}' | sed 's/MB//' `) . qq(\n);
         print $out q([ -z $DISK_SIZE ] && shellout) . qq(\n);
 
         print $out q(if [ "$ARCH" = "alpha" ]; then) . qq(\n);	
@@ -578,7 +578,12 @@ sub _read_partition_info_and_prepare_parted_commands {
                 $startMB{$m} = q($END_OF_LAST_PRIMARY);
             
             } elsif ("$p_type{$m}" eq "logical") {
-                $startMB{$m} = q($END_OF_LAST_LOGICAL);
+                # $startMB{$m} = q($END_OF_LAST_LOGICAL);
+                # Fix parted extended partition table kernel reload error: -OL-
+                # "Warning: The kernel was unable to re-read the partition table..."
+                # Maybe related to bug https://bugzilla.redhat.com/show_bug.cgi?id=441244
+                # => TEMPORARY FIX until parted get fixed.
+                $startMB{$m} = q#$(( $END_OF_LAST_LOGICAL + 1 ))#;
             }
 
             if (("$unit_of_measurement" eq "mb") 
