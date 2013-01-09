@@ -1,14 +1,14 @@
 #
-#  $Id: util-linux.rul 4572 2012-12-18 12:36:58Z olahaye74 $
+#  $Id:$
 #   vi: set filetype=make:
 #   
 
-UTIL_LINUX_VERSION	= 2.21
-UTIL_LINUX_TARBALL 	= util-linux-$(UTIL_LINUX_VERSION).tar.xz
-#UTIL_LINUX_URL      := http://www.kernel.org/pub/linux/utils/util-linux/$(UTIL_LINUX_TARBALL)
-UTIL_LINUX_URL 		= http://download.systemimager.org/pub/util-linux/$(UTIL_LINUX_TARBALL)
-UTIL_LINUX_DIR 		= $(INITRD_SRC_DIR)/util-linux-$(UTIL_LINUX_VERSION)
-UTIL_LINUX_PATCHES 	= $(shell ls $(INITRD_PATCH_DIR)/util-linux.*.patch 2>/dev/null | sort)
+UTIL_LINUX_VERSION      = 2.22.2
+UTIL_LINUX_TARBALL      = util-linux-$(UTIL_LINUX_VERSION).tar.xz
+UTIL_LINUX_URL          = http://www.kernel.org/pub/linux/utils/util-linux/v2.22/$(UTIL_LINUX_TARBALL)
+#UTIL_LINUX_URL          = http://download.systemimager.org/pub/util-linux/$(UTIL_LINUX_TARBALL)
+UTIL_LINUX_DIR          = $(INITRD_SRC_DIR)/util-linux-$(UTIL_LINUX_VERSION)
+UTIL_LINUX_PATCHES      = $(shell ls $(INITRD_PATCH_DIR)/util-linux.*.patch 2>/dev/null | sort)
 
 ALL_SOURCE += $(INITRD_SRC_DIR)/$(UTIL_LINUX_TARBALL)
 
