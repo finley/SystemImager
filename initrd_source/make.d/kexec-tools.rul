@@ -3,8 +3,8 @@
 #  vi: set filetype=make:
 #
 
-KEXEC_TOOLS_VERSION		= 2.0.2
-KEXEC_TOOLS_TARBALL 	= kexec-tools-$(KEXEC_TOOLS_VERSION).tar.bz2
+KEXEC_TOOLS_VERSION		= 2.0.3
+KEXEC_TOOLS_TARBALL 	= kexec-tools-$(KEXEC_TOOLS_VERSION).tar.xz
 #KEXEC_TOOLS_URL		 = http://www.kernel.org/pub/linux/kernel/people/horms/kexec-tools/
 KEXEC_TOOLS_URL 		= http://download.systemimager.org/pub/kexec-tools/$(KEXEC_TOOLS_TARBALL)
 KEXEC_TOOLS_DIR 		= $(INITRD_SRC_DIR)/kexec-tools-$(KEXEC_TOOLS_VERSION)
@@ -16,7 +16,7 @@ $(KEXEC_TOOLS_DIR).unpack:	$(INITRD_SRC_DIR)/$(KEXEC_TOOLS_TARBALL) \
 						$(KEXEC_TOOLS_PATCHES) \
 						$(INITRD_DIR)/make.d/kexec-tools.rul
 	rm -rf $(KEXEC_TOOLS_DIR)
-	cd $(INITRD_SRC_DIR) && tar -xvjf $(KEXEC_TOOLS_TARBALL)
+	cd $(INITRD_SRC_DIR) && tar -xvJf $(KEXEC_TOOLS_TARBALL)
 	cd $(KEXEC_TOOLS_DIR) && cat $(KEXEC_TOOLS_PATCHES) < /dev/null | patch -p1
 	touch $@
 
