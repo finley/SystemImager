@@ -9,11 +9,11 @@
 #	- upgrade to bb 1.16.1
 #
 
-BUSYBOX_VERSION	= 1.16.1
+BUSYBOX_VERSION	= 1.20.2
 BUSYBOX_DIR 	= $(INITRD_SRC_DIR)/busybox-$(BUSYBOX_VERSION)
 BUSYBOX_TARBALL = busybox-$(BUSYBOX_VERSION).tar.bz2
-#BUSYBOX_URL 	= http://www.busybox.net/downloads/$(BUSYBOX_TARBALL)
-BUSYBOX_URL 	= http://download.systemimager.org/pub/busybox/$(BUSYBOX_TARBALL)
+BUSYBOX_URL 	= http://www.busybox.net/downloads/$(BUSYBOX_TARBALL)
+#BUSYBOX_URL 	= http://download.systemimager.org/pub/busybox/$(BUSYBOX_TARBALL)
 BUSYBOX_PATCHES = $(shell ls $(INITRD_PATCH_DIR)/busybox.*.patch 2>/dev/null | sort)
 BUSYBOX_CONFIG 	= $(INITRD_PATCH_DIR)/busybox.standard.config
 
