@@ -7,8 +7,8 @@
 
 
 
-MDADM_VERSION   = 2.6.4
-MDADM_TARBALL 	= mdadm-$(MDADM_VERSION).tgz
+MDADM_VERSION   = 3.2.5
+MDADM_TARBALL 	= mdadm-$(MDADM_VERSION).tar.xz
 #MDADM_URL       = http://www.cse.unsw.edu.au/~neilb/source/mdadm/$(MDADM_TARBALL)
 MDADM_URL 		= http://download.systemimager.org/pub/mdadm/$(MDADM_TARBALL)
 MDADM_DIR 		= $(INITRD_SRC_DIR)/mdadm-$(MDADM_VERSION)
@@ -28,7 +28,7 @@ $(MDADM_DIR).unpack:	$(INITRD_SRC_DIR)/$(MDADM_TARBALL) \
 						$(MDADM_PATCHES) \
 						$(INITRD_DIR)/make.d/mdadm.rul
 	rm -rf $(MDADM_DIR)
-	cd $(INITRD_SRC_DIR) && tar -xvzf $(MDADM_TARBALL)
+	cd $(INITRD_SRC_DIR) && tar -xvJf $(MDADM_TARBALL)
 	cd $(MDADM_DIR) && cat $(MDADM_PATCHES) < /dev/null | patch -p1
 	touch $@
 
