@@ -160,6 +160,8 @@ $(INITRD_BUILD_DIR).build:  $(INITRD_BUILD_DIR).prep		\
 	# Copy over the standard libs. -BEF-
 	test -z "$(echo /lib/ld*)" || cp -a /lib/ld*   $(INITRD_BUILD_DIR)/lib
 	test ! -d /lib64 || cp -a /lib64/ld* $(INITRD_BUILD_DIR)/lib64
+	# Remove useless stuffs (man, translation, includes, ...)
+	( cd $(INITRD_BUILD_DIR) && /bin/rm -rf usr/share usr/include )
 	# Explicitly include more w/mklibs -L.  -dawild-
 ifeq ($(ARCH),x86_64)
 	( cd $(INITRD_BUILD_DIR) && \
