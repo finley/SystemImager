@@ -12,12 +12,14 @@
 #	  running mklibs (for tmp/boel_binaries/lib*). Without this patch the build
 #	  fails except one builds on a system where libdevmapper of the same version
 #	  is installed. But this is not why we build devmapper, after all...
+#       2013.01.11 Olivier Lahaye
+#       - upgrade to 2.2.02.98
 #
 
-LVM_VERSION	    = 2.2.02.53
-LVM_TARBALL 	= LVM$(LVM_VERSION).tgz
-#LVM_URL	     = ftp://sources.redhat.com/pub/lvm2/old/$(LVM_TARBALL)
-LVM_URL 		= http://download.systemimager.org/pub/lvm/$(LVM_TARBALL)
+LVM_VERSION		= 2.2.02.98
+LVM_TARBALL		= LVM$(LVM_VERSION).tgz
+LVM_URL			= ftp://sources.redhat.com/pub/lvm2/$(LVM_TARBALL)
+#LVM_URL 		= http://download.systemimager.org/pub/lvm/$(LVM_TARBALL)
 LVM_DIR 		= $(INITRD_SRC_DIR)/LVM$(LVM_VERSION)
 LVM_PATCHES 	= $(shell ls $(INITRD_PATCH_DIR)/lvm.*.patch 2>/dev/null | sort)
 
@@ -43,10 +45,11 @@ $(LVM_DIR).unpack:	$(INITRD_SRC_DIR)/$(LVM_TARBALL) \
 
 $(LVM_DIR).install:	$(LVM_DIR).build \
 						$(INITRD_BUILD_DIR).prep
-	install -m 755 $(LVM_DIR)/tools/lvm $(INITRD_BUILD_DIR)/sbin
+	$(MAKE) install -C $(LVM_DIR) DESTDIR=$(INITRD_BUILD_DIR)
+	# install -m 755 $(LVM_DIR)/tools/lvm $(INITRD_BUILD_DIR)/sbin
 	# Create LVM symlinks to lvm binary
 	#
-	cd $(INITRD_BUILD_DIR)/sbin && $(foreach binary,$(shell cat $(SRC_DIR)/$(LVM_DIR)/tools/.commands),ln -s -f lvm $(binary) && ) /bin/true
+	# cd $(INITRD_BUILD_DIR)/sbin && $(foreach binary,$(shell cat $(SRC_DIR)/$(LVM_DIR)/tools/.commands),ln -s -f lvm $(binary) && ) /bin/true
 
 
 $(INITRD_SRC_DIR)/$(LVM_TARBALL):
