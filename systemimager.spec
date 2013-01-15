@@ -58,7 +58,7 @@ Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 BuildRequires: docbook-utils, dos2unix, flex, libtool, readline-devel, /usr/bin/wget, openssl-devel, gcc, gcc-c++, ncurses-devel, bc, rsync >= 2.4.6
-BuildRequires: libuuid-devel, device-mapper-devel, gperf
+BuildRequires: libuuid-devel, device-mapper-devel, gperf, binutils-devel, pam-devel
 Requires: rsync >= 2.4.6, syslinux >= 1.48, libappconfig-perl, dosfstools, /usr/bin/perl
 AutoReqProv: no
 
@@ -307,6 +307,10 @@ The bittorrent package allows you to use the BitTorrent protocol to perform
 installations.
 
 %changelog
+* Mon Jan 14 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.3
+- Added binutils-devel required to build mdadm (ansidecl.h)
+- Added pam-devel required to build util-linux
+
 * Mon Jan  7 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.2
 - Commited all generic patches into Git.
 - Use specific rpm/ directory to store patch used only when building on
