@@ -3,12 +3,14 @@
 #
 #   2010.06.14 Brian Elliott Finley
 #   * Upgrade from v1.40.2 to v1.41.12
+#   2012.01.10 Olivier Lahaye
+#   * Upgrade from v1.41.12 to v1.42.6
 #
 
-E2FSPROGS_VERSION   = 1.41.12
+E2FSPROGS_VERSION   = 1.42.6
 E2FSPROGS_TARBALL   = e2fsprogs-$(E2FSPROGS_VERSION).tar.gz
-#E2FSPROGS_URL       = http://prdownloads.sourceforge.net/e2fsprogs/$(E2FSPROGS_TARBALL)
-E2FSPROGS_URL       = http://download.systemimager.org/pub/e2fsprogs/$(E2FSPROGS_TARBALL)
+E2FSPROGS_URL       = http://downloads.sourceforge.net/project/e2fsprogs/e2fsprogs/v$(E2FSPROGS_VERSION)/$(E2FSPROGS_TARBALL)
+#E2FSPROGS_URL       = http://download.systemimager.org/pub/e2fsprogs/$(E2FSPROGS_TARBALL)
 E2FSPROGS_DIR       = $(INITRD_SRC_DIR)/e2fsprogs-$(E2FSPROGS_VERSION)
 E2FSPROGS_PATCHES 	= $(shell ls $(INITRD_PATCH_DIR)/e2fsprogs.*.patch 2>/dev/null | sort)
 
@@ -37,8 +39,7 @@ $(E2FSPROGS_DIR).unpack:	$(INITRD_SRC_DIR)/$(E2FSPROGS_TARBALL) \
 
 $(E2FSPROGS_DIR).install:	$(E2FSPROGS_DIR).build \
 						$(INITRD_BUILD_DIR).prep
-	install -m 755 $(E2FSPROGS_DIR)/misc/mke2fs  $(INITRD_BUILD_DIR)/sbin
-	install -m 755 $(E2FSPROGS_DIR)/misc/tune2fs $(INITRD_BUILD_DIR)/sbin
+	$(MAKE) -j $(NCPUS) -C $(E2FSPROGS_DIR) install DESTDIR=$(INITRD_BUILD_DIR)
 
 
 $(INITRD_SRC_DIR)/$(E2FSPROGS_TARBALL):
