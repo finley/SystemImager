@@ -464,7 +464,7 @@ sub _get_kernel_release($) {
                 my $regex =
                 #           | kernel version + build machine
                 #           `---------------------------------------
-                            '(2\.[46]\.\d[^\/]*?) \(.*@.*\) [#]\d+.*' .
+                            '((2\.[46])|(3\.[0-2])\.\d[^\/]*?) \(.*@.*\) [#]\d+.*' .
                 #
                 #           | build date
                 #           `---------------------------------------
@@ -599,7 +599,7 @@ sub choose_file_system_for_new_initrd() {
         my $custom_kernel = shift;
 
         # Always use cpio initramfs with 2.6 kernels.
-        if ($uname_r =~ /^2\.6/) {
+        if ($uname_r =~ /(^2\.6)|(^3\.[0-2])/) {
             return "cpio";
         }
 
@@ -739,7 +739,7 @@ sub get_load_ordered_list_of_running_modules() {
         # Find the right way to get modules info.
         my $uname_r = get_uname_r();
         my $modinfo_filename;
-        if ($uname_r =~ /^2\.6/) {
+        if ($uname_r =~ /(^2\.6)|(^3\.[0-2])/) {
             $modinfo_filename = 'modinfo -F filename';
         } elsif ($uname_r =~ /^2\.4/) {
             $modinfo_filename = 'modinfo -n';
@@ -773,7 +773,7 @@ sub get_load_ordered_list_of_running_modules() {
                 push (@modules, $module_file);
                 # add module dependencies
                 my @deps;
-                if ($uname_r =~ /^2\.6/) {
+                if ($uname_r =~ /(^2\.6)|(^3\.[0-2])/) {
                     chomp(@deps = split(/,/, `modinfo -F depends $module 2>/dev/null`));
                 } elsif ($uname_r =~ /^2\.4/) {
                     open(MODULES_DEP, "</lib/modules/$uname_r/modules.dep") or
