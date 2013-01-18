@@ -1,5 +1,5 @@
 #
-#   $Id: kernel.rul 4578 2012-12-18 13:18:46Z olahaye74 $
+#   $Id: $
 #   vi: filetype=make:
 #
 #   2004.07.26  Brian Elliott Finley
@@ -11,10 +11,12 @@
 #	  patch submitted by Erich Focht
 #   2010.07.19  Brian Elliott Finley
 #	- upgrade kernel version for x86_64 and i386 to 2.6.34.1
+#   2013.01.16  Olivier Lahaye
+#       - upgrade kernel version for x86_64 and i386 to 3.7
 #
 
 ifeq ($(ARCH),x86_64)
-	LINUX_VERSION = 2.6.34.1
+	LINUX_VERSION = 3.7.2
 	LINUX_IMAGE = $(LINUX_SRC)/arch/x86_64/boot/bzImage
 	LINUX_TARGET = bzImage
 	LINUX_DIR = linux-$(LINUX_VERSION)
@@ -24,7 +26,7 @@ ifeq ($(ARCH),i386)
 	# http://packages.ubuntu.com/lucid-updates/linux-image-2.6.32-22-generic
 	# 	http://archive.ubuntu.com/ubuntu/pool/main/l/linux/linux_2.6.32.orig.tar.gz
 	#	http://archive.ubuntu.com/ubuntu/pool/main/l/linux/linux_2.6.32-25.45.diff.gz
-	LINUX_VERSION = 2.6.34.1
+	LINUX_VERSION = 3.7.2
 	LINUX_IMAGE = $(LINUX_SRC)/arch/i386/boot/bzImage
 	LINUX_TARGET = bzImage
 	LINUX_DIR = linux-$(LINUX_VERSION)
@@ -87,8 +89,10 @@ ifeq ($(ARCH),ppc64-ps3)
 endif
 
 LINUX_SRC := $(SRC_DIR)/$(LINUX_DIR)
-LINUX_TARBALL := linux_$(LINUX_VERSION).orig.tar.gz
-LINUX_URL = http://download.systemimager.org/pub/linux/$(LINUX_TARBALL)
+#LINUX_TARBALL := linux_$(LINUX_VERSION).orig.tar.gz
+#LINUX_URL = http://download.systemimager.org/pub/linux/$(LINUX_TARBALL)
+LINUX_TARBALL := linux-$(LINUX_VERSION).tar.xz
+LINUX_URL = ftp://ftp.kernel.org/pub/linux/kernel/v3.x/$(LINUX_TARBALL)
 LINUX_CONFIG := $(PATCH_DIR)/linux.$(ARCH).config
 
 ifdef WITH_YDL_KERNEL
@@ -150,7 +154,7 @@ $(SRC_DIR)/patched_kernel-stamp:	$(SRC_DIR)/$(LINUX_TARBALL) \
 					$(LINUX_CONFIG) $(LINUX_PATCHES)
 	rm -rf $(LINUX_SRC)
 	@echo -n Extracting kernel source...
-	@cd $(SRC_DIR) && tar xzf $(LINUX_TARBALL)
+	@cd $(SRC_DIR) && tar xJf $(LINUX_TARBALL)
 	@echo done
 	@cd $(LINUX_SRC) && \
    	  $(foreach patch, $(LINUX_PATCHES), \
