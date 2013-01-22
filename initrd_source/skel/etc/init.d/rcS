@@ -38,9 +38,10 @@ adjust_arch
 
 ifconfig_loopback
 
-load_my_modules
-
+# Start udev BEFORE load_my_modules so the modules can load firmware if needed.
 start_udevd
+
+load_my_modules
 
 # Need to do this prior to read_local_cfg to get last_root parameter, 
 # if specified. -BEF-
