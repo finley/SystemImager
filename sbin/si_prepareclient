@@ -965,10 +965,10 @@ sub which_partition_tool {
         
         # 
         # We prefer sfdisk on x86, for everything else we prefer parted. -BEF-
-        #
-        if($arch eq "i386") {
-                $preferred_tool = 'sfdisk';
-        }
+        # David Livingstone: sfdisk doesn't handle GPT partitions so we can't force the use of sfdisk.
+        #if($arch eq "i386") {
+        #        $preferred_tool = 'sfdisk';
+        #}
         
         # Check to see if preferred tool is available.
         if ( ($preferred_tool) and (which("$preferred_tool")) ) {
@@ -976,7 +976,7 @@ sub which_partition_tool {
         
         } else {
         
-                # Determine which partition tool is available.  Preference is sfdisk. -BEF-
+                # Determine which partition tool is available.  Preference is parted. -BEF-
                 if (which('parted')) { 
                         $partition_tool="parted";
 
