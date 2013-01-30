@@ -1,0 +1,59 @@
+#
+#  vi: set filetype=make:
+#
+#   2013.01.29 Olivier Lahaye
+#   * Initial packaging
+#
+
+KMOD_VERSION	= 12
+KMOD_TARBALL	= kmod-$(KMOD_VERSION).tar.xz
+KMOD_URL	= http://www.kernel.org/pub/linux/utils/kernel/kmod
+#KMOD_URL	= http://download.systemimager.org/pub/kmod
+KMOD_DIR	= $(INITRD_SRC_DIR)/kmod-$(KMOD_VERSION)
+
+KMOD_PATCHES = $(shell ls $(INITRD_PATCH_DIR)/kmod.*.patch 2>/dev/null | sort)
+
+ALL_SOURCE += $(INITRD_SRC_DIR)/$(KMOD_TARBALL)
+
+PHONY += kmod
+kmod:	$(KMOD_DIR).build
+
+$(KMOD_DIR).build:  $(KMOD_DIR).unpack
+	export BLKID_LIBS=$(INITRD_BUILD_DIR)/lib
+	export BLKID_CFLAGS=$(INITRD_BUILD_DIR)/include
+	cd $(KMOD_DIR) && ./configure \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--sbindir=/sbin \
+		--libdir=/lib \
+		--with-rootlibdir=/lib \
+		--with-systemdsystemunitdir=no \
+		--libexecdir=/lib/udev
+		--disable-extras \
+		--disable-introspection
+	$(MAKE) -j $(NCPUS) -C $(KMOD_DIR)
+	touch $@
+
+PHONY += kmod_install
+kmod_install:	$(KMOD_DIR).install
+$(KMOD_DIR).install:	$(KMOD_DIR).build
+	cd $(KMOD_DIR) && $(MAKE) install DESTDIR=$(INITRD_BUILD_DIR)
+
+$(KMOD_DIR).unpack:   	$(INITRD_DIR)/make.d/kmod.rul	\
+			$(INITRD_SRC_DIR)/$(KMOD_TARBALL)
+	rm -rf $(KMOD_DIR)
+	cd $(INITRD_SRC_DIR) && tar -xvJf $(INITRD_SRC_DIR)/$(KMOD_TARBALL)
+	cd $(KMOD_DIR) && cat $(KMOD_PATCHES) < /dev/null | patch -p1
+	touch $@
+
+$(INITRD_SRC_DIR)/$(KMOD_TARBALL):
+	mkdir -p $(INITRD_SRC_DIR)
+	$(GETSOURCE) $(KMOD_URL)/$(KMOD_TARBALL) $(INITRD_SRC_DIR)
+
+PHONY += kmod_clean
+kmod_clean:
+	rm -rf $(KMOD_DIR)
+	rm -f  $(KMOD_DIR).unpack
+	rm -f  $(KMOD_DIR).build
+	rm -f  $(KMOD_DIR).install
+

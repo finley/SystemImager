@@ -75,9 +75,10 @@ include $(INITRD_DIR)/make.d/lsb.rul
 include $(INITRD_DIR)/make.d/rsync.rul
 include $(INITRD_DIR)/make.d/tar.rul
 include $(INITRD_DIR)/make.d/sysvinit.rul
-include $(INITRD_DIR)/make.d/udev.rul
-include $(INITRD_DIR)/make.d/udpcast.rul
 include $(INITRD_DIR)/make.d/util-linux.rul 		# must be before parted to build parted against the uuid libs
+include $(INITRD_DIR)/make.d/kmod.rul			# Needed by udev
+include $(INITRD_DIR)/make.d/udev.rul			# must be after util-linux (need libblkid)
+include $(INITRD_DIR)/make.d/udpcast.rul
 include $(INITRD_DIR)/make.d/parted.rul
 include $(INITRD_DIR)/make.d/zlib.rul
 include $(INITRD_DIR)/make.d/gzip.rul
@@ -150,6 +151,7 @@ $(INITRD_BUILD_DIR).build:  $(INITRD_BUILD_DIR).prep		\
 								$(RSYNC_DIR).install		\
 								$(SYSVINIT_DIR).install		\
 								$(TAR_DIR).install			\
+								$(KMOD_DIR).install			\
 								$(UDEV_DIR).install			\
 								$(UDPCAST_DIR).install		\
 								$(UTIL_LINUX_DIR).install	\
