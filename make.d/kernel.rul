@@ -18,7 +18,7 @@
 #
 
 ifeq ($(ARCH),x86_64)
-	LINUX_VERSION = 3.7.2
+	LINUX_VERSION = 3.7.5
 	LINUX_IMAGE = $(LINUX_SRC)/arch/x86_64/boot/bzImage
 	LINUX_TARGET = bzImage
 	LINUX_DIR = linux-$(LINUX_VERSION)
