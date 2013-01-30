@@ -12,7 +12,9 @@
 #   2010.07.19  Brian Elliott Finley
 #	- upgrade kernel version for x86_64 and i386 to 2.6.34.1
 #   2013.01.16  Olivier Lahaye
-#       - upgrade kernel version for x86_64 and i386 to 3.7
+#       - upgrade kernel version for x86_64 and i386 to 3.7.2
+#   2013.01.29  Olivier Lahaye
+#       - upgrade kernel version for x86_64 and i386 to 3.7.5
 #
 
 ifeq ($(ARCH),x86_64)
@@ -26,7 +28,7 @@ ifeq ($(ARCH),i386)
 	# http://packages.ubuntu.com/lucid-updates/linux-image-2.6.32-22-generic
 	# 	http://archive.ubuntu.com/ubuntu/pool/main/l/linux/linux_2.6.32.orig.tar.gz
 	#	http://archive.ubuntu.com/ubuntu/pool/main/l/linux/linux_2.6.32-25.45.diff.gz
-	LINUX_VERSION = 3.7.2
+	LINUX_VERSION = 3.7.5
 	LINUX_IMAGE = $(LINUX_SRC)/arch/i386/boot/bzImage
 	LINUX_TARGET = bzImage
 	LINUX_DIR = linux-$(LINUX_VERSION)
