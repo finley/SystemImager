@@ -87,6 +87,7 @@ include $(INITRD_DIR)/make.d/openssl.rul
 include $(INITRD_DIR)/make.d/openssh.rul
 include $(INITRD_DIR)/make.d/kexec-tools.rul
 include $(INITRD_DIR)/make.d/coreutils.rul
+include $(INITRD_DIR)/make.d/module-init-tools.rul	# Must be after busybox to overwrite incompatible modprobe
 
 PHONY += build_dir 
 build_dir:	$(INITRD_BUILD_DIR).build
@@ -146,8 +147,8 @@ $(INITRD_BUILD_DIR).build:  $(INITRD_BUILD_DIR).prep		\
 								$(MDADM_DIR).install		\
 								$(OPENSSH_DIR).install		\
 								$(OPENSSL_DIR).install		\
-								$(PARTED_DIR).install		\
 								$(REISERFSPROGS_DIR).install	\
+								$(MODULE_INIT_TOOLS_DIR).install	\
 								$(RSYNC_DIR).install		\
 								$(SYSVINIT_DIR).install		\
 								$(TAR_DIR).install			\
@@ -155,6 +156,7 @@ $(INITRD_BUILD_DIR).build:  $(INITRD_BUILD_DIR).prep		\
 								$(UDEV_DIR).install			\
 								$(UDPCAST_DIR).install		\
 								$(UTIL_LINUX_DIR).install	\
+								$(PARTED_DIR).install		\
 								$(XFSPROGS_DIR).install		\
 								$(COREUTILS_DIR).install	\
 								$(ZLIB_DIR).install
