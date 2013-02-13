@@ -1,0 +1,59 @@
+#
+#  vi: set filetype=make:
+#
+#   2013.01.29 Olivier Lahaye
+#   * Initial packaging
+#
+
+MODULE_INIT_TOOLS_VERSION	= 3.12
+MODULE_INIT_TOOLS_TARBALL	= module-init-tools-$(MODULE_INIT_TOOLS_VERSION).tar.bz2
+MODULE_INIT_TOOLS_URL	= http://kernel.org/pub/linux/utils/kernel/module-init-tools
+#MODULE_INIT_TOOLS_URL	= http://download.systemimager.org/pub/module-init-tools
+MODULE_INIT_TOOLS_DIR	= $(INITRD_SRC_DIR)/module-init-tools-$(MODULE_INIT_TOOLS_VERSION)
+
+MODULE_INIT_TOOLS_PATCHES = $(shell ls $(INITRD_PATCH_DIR)/module-init-tools.*.patch 2>/dev/null | sort)
+
+ALL_SOURCE += $(INITRD_SRC_DIR)/$(MODULE_INIT_TOOLS_TARBALL)
+
+PHONY += module-init-tools
+module-init-tools:	$(MODULE_INIT_TOOLS_DIR).build
+
+$(MODULE_INIT_TOOLS_DIR).build:  $(MODULE_INIT_TOOLS_DIR).unpack
+	export BLKID_LIBS=$(INITRD_BUILD_DIR)/lib
+	export BLKID_CFLAGS=$(INITRD_BUILD_DIR)/include
+	cd $(MODULE_INIT_TOOLS_DIR) && ./configure \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--sbindir=/sbin \
+		--libdir=/lib \
+		--with-rootlibdir=/lib \
+		--with-systemdsystemunitdir=no \
+		--libexecdir=/lib/udev
+		--disable-extras \
+		--disable-introspection
+	$(MAKE) -j $(NCPUS) -C $(MODULE_INIT_TOOLS_DIR)
+	touch $@
+
+PHONY += module-init-tools_install
+module-init-tools_install:	$(MODULE_INIT_TOOLS_DIR).install
+$(MODULE_INIT_TOOLS_DIR).install:	$(MODULE_INIT_TOOLS_DIR).build
+	cd $(MODULE_INIT_TOOLS_DIR) && $(MAKE) install DESTDIR=$(INITRD_BUILD_DIR)
+
+$(MODULE_INIT_TOOLS_DIR).unpack:   	$(INITRD_DIR)/make.d/module-init-tools.rul	\
+			$(INITRD_SRC_DIR)/$(MODULE_INIT_TOOLS_TARBALL)
+	rm -rf $(MODULE_INIT_TOOLS_DIR)
+	cd $(INITRD_SRC_DIR) && tar -xvjf $(INITRD_SRC_DIR)/$(MODULE_INIT_TOOLS_TARBALL)
+	cd $(MODULE_INIT_TOOLS_DIR) && cat $(MODULE_INIT_TOOLS_PATCHES) < /dev/null | patch -p1
+	touch $@
+
+$(INITRD_SRC_DIR)/$(MODULE_INIT_TOOLS_TARBALL):
+	mkdir -p $(INITRD_SRC_DIR)
+	$(GETSOURCE) $(MODULE_INIT_TOOLS_URL)/$(MODULE_INIT_TOOLS_TARBALL) $(INITRD_SRC_DIR)
+
+PHONY += module-init-tools_clean
+module-init-tools_clean:
+	rm -rf $(MODULE_INIT_TOOLS_DIR)
+	rm -f  $(MODULE_INIT_TOOLS_DIR).unpack
+	rm -f  $(MODULE_INIT_TOOLS_DIR).build
+	rm -f  $(MODULE_INIT_TOOLS_DIR).install
+
