@@ -30,6 +30,8 @@ $(UDPCAST_DIR).build:	$(UDPCAST_DIR).unpack
 	$(MAKE) -j $(NCPUS) -C $(UDPCAST_DIR) udp-receiver
 	touch $@
 
+PHONY += udpcast_install
+udpcast_install:        $(UDPCAST_DIR).install
 $(UDPCAST_DIR).install:	$(UDPCAST_DIR).build \
 						$(INITRD_BUILD_DIR).prep
 	install -m 755 $(UDPCAST_DIR)/udp-receiver $(INITRD_BUILD_DIR)/bin

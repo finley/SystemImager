@@ -42,6 +42,8 @@ $(ZLIB_DIR).unpack:	$(INITRD_SRC_DIR)/$(ZLIB_TARBALL) \
 	touch $@
 
 
+PHONY += zlib_install
+zlib_install:        $(ZLIB_DIR).install
 $(ZLIB_DIR).install:	$(ZLIB_DIR).build \
 						$(INITRD_BUILD_DIR).prep
 	touch $@

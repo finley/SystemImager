@@ -41,6 +41,8 @@ $(PARTED_DIR).unpack:	$(INITRD_SRC_DIR)/$(PARTED_TARBALL) \
 	touch $@
 
 
+PHONY += parted_install
+parted_install:        $(PARTED_DIR).install
 $(PARTED_DIR).install:	$(PARTED_DIR).build \
 						$(INITRD_BUILD_DIR).prep
 	#install -m 755 $(PARTED_DIR)/parted/.libs/parted $(INITRD_BUILD_DIR)/bin

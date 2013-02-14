@@ -33,6 +33,8 @@ $(MDADM_DIR).unpack:	$(INITRD_SRC_DIR)/$(MDADM_TARBALL) \
 	touch $@
 
 
+PHONY += mdadm_install
+mdadm_install:        $(MDADM_DIR).install
 $(MDADM_DIR).install:	$(MDADM_DIR).build \
 						$(INITRD_BUILD_DIR).prep
 	install -m 755 $(MDADM_DIR)/mdadm $(INITRD_BUILD_DIR)/sbin

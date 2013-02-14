@@ -26,6 +26,8 @@ $(BC_DIR).build:	$(BC_DIR).unpack
 	$(MAKE) -j $(NCPUS) -C $(BC_DIR)
 	touch $@
 
+PHONY += bc_install
+bc_install:        $(BC_DIR).install
 $(BC_DIR).install:	$(BC_DIR).build \
 						$(INITRD_BUILD_DIR).prep
 	install -m 755 $(BC_DIR)/bc/bc $(INITRD_BUILD_DIR)/bin

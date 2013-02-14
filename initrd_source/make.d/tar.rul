@@ -32,6 +32,8 @@ $(TAR_DIR).build:	$(TAR_DIR).unpack
 	$(MAKE) -j $(NCPUS) -C $(TAR_DIR)
 	touch $@
 
+PHONY += tar_install
+tar_install:        $(TAR_DIR).install
 $(TAR_DIR).install:	$(TAR_DIR).build \
 						$(INITRD_BUILD_DIR).prep
 	install -m 755 $(TAR_DIR)/src/tar $(INITRD_BUILD_DIR)/bin

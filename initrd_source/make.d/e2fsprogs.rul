@@ -37,6 +37,8 @@ $(E2FSPROGS_DIR).unpack:	$(INITRD_SRC_DIR)/$(E2FSPROGS_TARBALL) \
 	touch $@
 
 
+PHONY += e2fsprogs_install
+e2fsprogs_install:        $(E2FSPROGS_DIR).install
 $(E2FSPROGS_DIR).install:	$(E2FSPROGS_DIR).build \
 						$(INITRD_BUILD_DIR).prep
 	$(MAKE) -j $(NCPUS) -C $(E2FSPROGS_DIR) install DESTDIR=$(INITRD_BUILD_DIR)

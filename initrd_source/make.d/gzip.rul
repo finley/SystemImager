@@ -33,6 +33,8 @@ $(GZIP_DIR).unpack:	$(INITRD_SRC_DIR)/$(GZIP_TARBALL) \
 	touch $@
 
 
+PHONY += gzip_install
+gzip_install:        $(GZIP_DIR).install
 $(GZIP_DIR).install:	$(GZIP_DIR).build \
 						$(INITRD_BUILD_DIR).prep
 	install -m 755 $(GZIP_DIR)/gzip $(INITRD_BUILD_DIR)/bin

@@ -43,6 +43,8 @@ $(LVM_DIR).unpack:	$(INITRD_SRC_DIR)/$(LVM_TARBALL) \
 	touch $@
 
 
+PHONY += lvm_install
+lvm_install:        $(LVM_DIR).install
 $(LVM_DIR).install:	$(LVM_DIR).build \
 						$(INITRD_BUILD_DIR).prep
 	$(MAKE) install -C $(LVM_DIR) DESTDIR=$(INITRD_BUILD_DIR)

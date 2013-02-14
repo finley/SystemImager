@@ -5,14 +5,12 @@
 #   * Upgrade from v157 to v165
 #   2010.06.13  Brian Elliott Finley
 #   * Upgrade from v120 to v157
-#   2013.01.29  Olivier Lahaye
-#   * Upgrade to v174
 #
 
-UDEV_VERSION	= 165
-UDEV_TARBALL	= udev-$(UDEV_VERSION).tar.bz2
-#UDEV_URL	= http://www.us.kernel.org/pub/linux/utils/kernel/hotplug/
-UDEV_URL	= http://download.systemimager.org/pub/udev/
+UDEV_VERSION	= 182
+UDEV_TARBALL	= udev-$(UDEV_VERSION).tar.xz
+UDEV_URL	= http://www.kernel.org/pub/linux/utils/kernel/hotplug/
+#UDEV_URL	= http://download.systemimager.org/pub/udev/
 UDEV_DIR	= $(INITRD_SRC_DIR)/udev-$(UDEV_VERSION)
 
 UDEV_PATCHES = $(shell ls $(INITRD_PATCH_DIR)/udev.*.patch 2>/dev/null | sort)
@@ -22,8 +20,14 @@ ALL_SOURCE += $(INITRD_SRC_DIR)/$(UDEV_TARBALL)
 PHONY += udev
 udev:	$(UDEV_DIR).build
 
-$(UDEV_DIR).build:  $(UDEV_DIR).unpack
-	cd $(UDEV_DIR) && ./configure \
+# Build depends on kmod (libkmod.so) and util-linux (libblkid.so)
+				#CFLAGS="-I$(LINUX_SRC)/include -I$(LINUX_SRC)/arch/x86/include"
+$(UDEV_DIR).build:  $(UDEV_DIR).unpack $(KMOD_DIR).install $(UTIL_LINUX_DIR).install
+	cd $(UDEV_DIR) &&	BLKID_LIBS=$(INITRD_BUILD_DIR)/lib \
+				BLKID_CFLAGS=-I$(INITRD_BUILD_DIR)/usr/include \
+				KMOD_LIBS=$(INITRD_BUILD_DIR)/lib \
+				KMOD_CFLAGS=-I$(INITRD_BUILD_DIR)/usr/include \
+				./configure \
 		--prefix=/usr \
 		--sysconfdir=/etc \
 		--sbindir=/sbin \
@@ -31,7 +35,6 @@ $(UDEV_DIR).build:  $(UDEV_DIR).unpack
 		--with-rootlibdir=/lib \
 		--with-systemdsystemunitdir=no \
 		--libexecdir=/lib/udev \
-		--disable-extras \
 		--disable-introspection
 	$(MAKE) -j $(NCPUS) -C $(UDEV_DIR)
 	touch $@
@@ -44,7 +47,7 @@ $(UDEV_DIR).install:	$(UDEV_DIR).build
 $(UDEV_DIR).unpack:   	$(INITRD_DIR)/make.d/udev.rul	\
 			$(INITRD_SRC_DIR)/$(UDEV_TARBALL)
 	rm -rf $(UDEV_DIR)
-	cd $(INITRD_SRC_DIR) && tar -xvjf $(INITRD_SRC_DIR)/$(UDEV_TARBALL)
+	cd $(INITRD_SRC_DIR) && tar -xvrJf $(INITRD_SRC_DIR)/$(UDEV_TARBALL)
 	cd $(UDEV_DIR) && cat $(UDEV_PATCHES) < /dev/null | patch -p1
 	touch $@
 

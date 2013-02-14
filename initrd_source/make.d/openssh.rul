@@ -37,6 +37,8 @@ $(OPENSSH_DIR).unpack:	$(INITRD_SRC_DIR)/$(OPENSSH_TARBALL) \
 	touch $@
 
 
+PHONY += openssh_install
+openssh_install:        $(OPENSSH_DIR).install
 $(OPENSSH_DIR).install:	$(OPENSSH_DIR).build \
 						$(INITRD_BUILD_DIR).prep
 	install -m 755 $(OPENSSH_DIR)/ssh        $(INITRD_BUILD_DIR)/bin

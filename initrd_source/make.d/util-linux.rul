@@ -26,6 +26,8 @@ $(UTIL_LINUX_DIR).build:	$(UTIL_LINUX_DIR).unpack
 	cd $(UTIL_LINUX_DIR) && ./configure \
 			--prefix=/ \
 			--sysconfdir=/etc \
+			--includedir=/usr/include \
+			--libdir=/lib \
 			--libexecdir=/lib/udev \
 			--with-sysroot=$(INITRD_SRC_DIR)
 	$(MAKE) -j $(NCPUS) -C $(UTIL_LINUX_DIR)
@@ -35,7 +37,7 @@ PHONY += util-linux_install
 util-linux_install: $(UTIL_LINUX_DIR).install
 $(UTIL_LINUX_DIR).install:	$(UTIL_LINUX_DIR).build \
 						$(INITRD_BUILD_DIR).prep
-	$(MAKE) -j $(NCPUS) -C $(UTIL_LINUX_DIR) install-exec DESTDIR=$(INITRD_BUILD_DIR)
+	$(MAKE) -j $(NCPUS) -C $(UTIL_LINUX_DIR) install DESTDIR=$(INITRD_BUILD_DIR)
 
 $(INITRD_SRC_DIR)/$(UTIL_LINUX_TARBALL):
 	[ -d $(INITRD_SRC_DIR) ] || mkdir -p $(INITRD_SRC_DIR)

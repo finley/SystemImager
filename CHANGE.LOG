@@ -16,6 +16,8 @@
   - Updated BuildRequires:
 - Enabled ext4 module in kernel
 - Fix for new parted in Server.pm (avoid grepping "Disk Flags").
+- Added:
+  - Module init tools v3.12 (native modprobe required by udev)
 - Upgraded:
   - parted to v3.1
   - xfsprogs to v3.1.8
@@ -39,6 +41,7 @@
 - rpm: Added "BuildRequires: quilt" is needed for building sysvinit-2.87dsf
 - rpm: added rpm directory (similar to debian one) to permit non-debian build
   (includes patches that should only be used on non-debian systems)
+- build: added <package>_build: rule in initrd_source/make.d/*.rul when missing
 
 4.1.8
 --------------------------------------------------------------------------------
