@@ -29,7 +29,7 @@ $(XFSPROGS_DIR).unpack:	$(INITRD_SRC_DIR)/$(XFSPROGS_TARBALL) \
 PHONY += xfsprogs
 xfsprogs:	$(XFSPROGS_DIR).build
 $(XFSPROGS_DIR).build:	$(XFSPROGS_DIR).unpack
-	cd $(XFSPROGS_DIR) && ./configure
+	cd $(XFSPROGS_DIR)
 	$(MAKE) -j $(NCPUS) -C $(XFSPROGS_DIR) DEBUG=-DNDEBUG
 	touch $@
 
