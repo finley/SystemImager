@@ -59,7 +59,7 @@ URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 BuildRequires: docbook-utils, dos2unix, flex, libtool, readline-devel, /usr/bin/wget, openssl-devel, gcc, gcc-c++, ncurses-devel, bc, rsync >= 2.4.6
 BuildRequires: libuuid-devel, device-mapper-devel, gperf, binutils-devel, pam-devel
-BuildRequires: lzop
+BuildRequires: lzop, glib2-devel >= 2.22.0
 Requires: rsync >= 2.4.6, syslinux >= 1.48, libappconfig-perl, dosfstools, /usr/bin/perl
 AutoReqProv: no
 
@@ -308,6 +308,9 @@ The bittorrent package allows you to use the BitTorrent protocol to perform
 installations.
 
 %changelog
+* Thu Mar  7 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.5
+- Added glib2-devel >= 2.22.0 BuildRequires (needed by udev-182) 
+
 * Tue Feb 26 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.4
 - Added lzop BuildRequires (needed in kernel build process).
 
