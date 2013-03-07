@@ -47,7 +47,7 @@ $(UDEV_DIR).install:	$(UDEV_DIR).build
 $(UDEV_DIR).unpack:   	$(INITRD_DIR)/make.d/udev.rul	\
 			$(INITRD_SRC_DIR)/$(UDEV_TARBALL)
 	rm -rf $(UDEV_DIR)
-	cd $(INITRD_SRC_DIR) && tar -xvrJf $(INITRD_SRC_DIR)/$(UDEV_TARBALL)
+	cd $(INITRD_SRC_DIR) && tar -xvJf $(INITRD_SRC_DIR)/$(UDEV_TARBALL)
 	cd $(UDEV_DIR) && cat $(UDEV_PATCHES) < /dev/null | patch -p1
 	touch $@
 
