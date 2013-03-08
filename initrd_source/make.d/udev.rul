@@ -23,10 +23,10 @@ udev:	$(UDEV_DIR).build
 # Build depends on kmod (libkmod.so) and util-linux (libblkid.so)
 				#CFLAGS="-I$(LINUX_SRC)/include -I$(LINUX_SRC)/arch/x86/include"
 $(UDEV_DIR).build:  $(UDEV_DIR).unpack $(KMOD_DIR).install $(UTIL_LINUX_DIR).install
-	cd $(UDEV_DIR) &&	BLKID_LIBS=$(INITRD_BUILD_DIR)/lib \
-				BLKID_CFLAGS=-I$(INITRD_BUILD_DIR)/usr/include \
-				KMOD_LIBS=$(INITRD_BUILD_DIR)/lib \
-				KMOD_CFLAGS=-I$(INITRD_BUILD_DIR)/usr/include \
+	cd $(UDEV_DIR) &&	BLKID_LIBS="-L$(INITRD_BUILD_DIR)/lib -lblkid" \
+				BLKID_CFLAGS="-I$(INITRD_BUILD_DIR)/usr/include" \
+				KMOD_LIBS="-L$(INITRD_BUILD_DIR)/lib -lkmod" \
+				KMOD_CFLAGS="-I$(INITRD_BUILD_DIR)/usr/include" \
 				./configure \
 		--prefix=/usr \
 		--sysconfdir=/etc \
@@ -34,7 +34,7 @@ $(UDEV_DIR).build:  $(UDEV_DIR).unpack $(KMOD_DIR).install $(UTIL_LINUX_DIR).ins
 		--libdir=/lib \
 		--with-rootlibdir=/lib \
 		--with-systemdsystemunitdir=no \
-		--libexecdir=/lib/udev \
+		--libexecdir=/lib \
 		--disable-introspection
 	$(MAKE) -j $(NCPUS) -C $(UDEV_DIR)
 	touch $@
@@ -43,6 +43,7 @@ PHONY += udev_install
 udev_install:	$(UDEV_DIR).install
 $(UDEV_DIR).install:	$(UDEV_DIR).build
 	cd $(UDEV_DIR) && $(MAKE) install-exec DESTDIR=$(INITRD_BUILD_DIR)
+	/bin/rm $(INITRD_BUILD_DIR)/lib/*.la
 
 $(UDEV_DIR).unpack:   	$(INITRD_DIR)/make.d/udev.rul	\
 			$(INITRD_SRC_DIR)/$(UDEV_TARBALL)

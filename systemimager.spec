@@ -10,7 +10,7 @@
 %define ver      0.0.0
 # Set rel to 1 when is is a final release otherwise, set it to a 0.x number
 # This is convenient when final release need to upgrade "beta" releases.
-%define rel      0.3%{?dist}
+%define rel      0.5%{?dist}
 %define packager Bernard Li <bernard@vanhpc.org>
 %define prefix   /usr
 %define _build_all 1
@@ -310,6 +310,12 @@ installations.
 %changelog
 * Thu Mar  7 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.5
 - Added glib2-devel >= 2.22.0 BuildRequires (needed by udev-182) 
+- removed --libdir=/lib in util-linux (so links are wrongly generated)
+- removed .la in util-linux and udev install as they are not usable at
+  this location
+- Fixed udev build by using our own libblkid and libkmod
+- Fixed initrd.rul (more initrd cleanup (*.a *.la ...)
+  Fixed so links in initrd (nss libs and a few other libs
 
 * Tue Feb 26 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.4
 - Added lzop BuildRequires (needed in kernel build process).

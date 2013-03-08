@@ -130,56 +130,70 @@ $(INITRD_BUILD_DIR).prep:	$(INITRD_DIR)/initrd.rul
 
 $(INITRD_BUILD_DIR).build:  $(INITRD_BUILD_DIR).prep		\
 								$(SKEL_FILES) 				\
-								modules						\
+								modules					\
 								$(LSB_DIR).build			\
-								$(CX_FREEZE_DIR).build 		\
+								$(CX_FREEZE_DIR).build 			\
 								$(BC_DIR).install			\
-								$(BITTORRENT_DIR).install 	\
-								$(BUSYBOX_DIR).install		\
-								$(DHCLIENT_DIR).install		\
-								$(DOSFSTOOLS_DIR).install	\
-								$(E2FSPROGS_DIR).install	\
+								$(BITTORRENT_DIR).install 		\
+								$(BUSYBOX_DIR).install			\
+								$(DHCLIENT_DIR).install			\
+								$(DOSFSTOOLS_DIR).install		\
+								$(E2FSPROGS_DIR).install		\
 								$(GZIP_DIR).install			\
-								$(HFSUTILS_DIR).install		\
-								$(JFSUTILS_DIR).install		\
-								$(KEXEC_TOOLS_DIR).install	\
+								$(HFSUTILS_DIR).install			\
+								$(JFSUTILS_DIR).install			\
+								$(KEXEC_TOOLS_DIR).install		\
 								$(LVM_DIR).install			\
-								$(MDADM_DIR).install		\
-								$(OPENSSH_DIR).install		\
-								$(OPENSSL_DIR).install		\
-								$(REISERFSPROGS_DIR).install	\
+								$(MDADM_DIR).install			\
+								$(OPENSSH_DIR).install			\
+								$(OPENSSL_DIR).install			\
+								$(REISERFSPROGS_DIR).install		\
 								$(MODULE_INIT_TOOLS_DIR).install	\
-								$(RSYNC_DIR).install		\
-								$(SYSVINIT_DIR).install		\
+								$(RSYNC_DIR).install			\
+								$(SYSVINIT_DIR).install			\
 								$(TAR_DIR).install			\
 								$(KMOD_DIR).install			\
 								$(UDEV_DIR).install			\
-								$(UDPCAST_DIR).install		\
-								$(UTIL_LINUX_DIR).install	\
-								$(PARTED_DIR).install		\
-								$(XFSPROGS_DIR).install		\
-								$(COREUTILS_DIR).install	\
+								$(UDPCAST_DIR).install			\
+								$(UTIL_LINUX_DIR).install		\
+								$(PARTED_DIR).install			\
+								$(XFSPROGS_DIR).install			\
+								$(COREUTILS_DIR).install		\
 								$(ZLIB_DIR).install
 
 	# Copy over the standard libs. -BEF-
 	test -z "$(echo /lib/ld*)" || cp -a /lib/ld*   $(INITRD_BUILD_DIR)/lib
 	test ! -d /lib64 || cp -a /lib64/ld* $(INITRD_BUILD_DIR)/lib64
 	# Remove useless stuffs (man, translation, includes, ...)
-	( cd $(INITRD_BUILD_DIR) && /bin/rm -rf usr/share usr/include )
+	( cd $(INITRD_BUILD_DIR) && /bin/rm -rf usr/share usr/include lib/*.a )
 	# Explicitly include more w/mklibs -L.  -dawild-
+	echo "Copying /lib*/libnss* to $(INITRD_BUILD_DIR)/lib*"
 ifeq ($(ARCH),x86_64)
 	( cd $(INITRD_BUILD_DIR) && \
 		$(INITRD_DIR)/mklibs.bef -L $(INITRD_SRC_DIR)/$(E2FSPROGS_DIR)/lib:/lib64:/usr/lib64:/lib:/usr/lib -v -d . ./*bin/* )
 	# copy libnss files as they are not automatically included
-	cp -a /lib64/libnss* $(INITRD_BUILD_DIR)/lib64
-
+	#cp -a /lib64/libnss* $(INITRD_BUILD_DIR)/lib64
+	for lib in /lib64/libnss* ; do \
+		if test ! -L $$lib ; then \
+			cp -a $$lib $(INITRD_BUILD_DIR)/lib64/ ;\
+			echo "Copying $$lib from system to initrd" ;\
+		fi ;\
+	done
 else
 	( cd $(INITRD_BUILD_DIR) && \
 		$(INITRD_DIR)/mklibs.bef -L $(INITRD_SRC_DIR)/$(E2FSPROGS_DIR)/lib:/lib:/usr/lib -v -d . ./*bin/* )
 	# copy libnss files as they are not automatically included
-	cp -a /lib/libnss* $(INITRD_BUILD_DIR)/lib
-
+	#cp -a /lib/libnss* $(INITRD_BUILD_DIR)/lib
+	for lib in /lib/libnss* ; do \
+		if test ! -L $$lib ; then \
+			cp -a $$lib $(INITRD_BUILD_DIR)/lib ;\
+			echo "Copying $$lib from system to initrd" ;\
+		fi ;\
+	done
 endif
+	# Recompute the links for dynamic libs.
+	echo /lib > $(INITRD_BUILD_DIR)/etc/ld.so.conf
+	ldconfig -r $(INITRD_BUILD_DIR)
     # Do we still need to undo prelinking? -BEF-
 	## Undo prelinking. -AR-
 	#[ -x `which prelink` ] && (find $(INITRD_BUILD_DIR) -type f -exec prelink -u {} \; 2>&1 | grep -v "does not have .gnu.prelink_undo section\|is not an ELF file") || true

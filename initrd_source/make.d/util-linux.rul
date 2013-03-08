@@ -27,7 +27,6 @@ $(UTIL_LINUX_DIR).build:	$(UTIL_LINUX_DIR).unpack
 			--prefix=/ \
 			--sysconfdir=/etc \
 			--includedir=/usr/include \
-			--libdir=/lib \
 			--libexecdir=/lib/udev \
 			--with-sysroot=$(INITRD_SRC_DIR)
 	$(MAKE) -j $(NCPUS) -C $(UTIL_LINUX_DIR)
@@ -38,6 +37,9 @@ util-linux_install: $(UTIL_LINUX_DIR).install
 $(UTIL_LINUX_DIR).install:	$(UTIL_LINUX_DIR).build \
 						$(INITRD_BUILD_DIR).prep
 	$(MAKE) -j $(NCPUS) -C $(UTIL_LINUX_DIR) install DESTDIR=$(INITRD_BUILD_DIR)
+	# Remove  libtool files that can't be used in this temporary build dir.
+	/bin/rm $(INITRD_BUILD_DIR)/lib/*.la
+
 
 $(INITRD_SRC_DIR)/$(UTIL_LINUX_TARBALL):
 	[ -d $(INITRD_SRC_DIR) ] || mkdir -p $(INITRD_SRC_DIR)
