@@ -28,7 +28,7 @@ $(MODULE_INIT_TOOLS_DIR).build:  $(MODULE_INIT_TOOLS_DIR).unpack
 		--libdir=/lib \
 		--with-rootlibdir=/lib \
 		--with-systemdsystemunitdir=no \
-		--libexecdir=/lib/udev
+		--libexecdir=/lib/udev \
 		--disable-extras \
 		--disable-introspection
 	$(MAKE) -j $(NCPUS) -C $(MODULE_INIT_TOOLS_DIR)
