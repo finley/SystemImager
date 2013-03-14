@@ -25,18 +25,21 @@ $(TAR_DIR).unpack:	$(INITRD_SRC_DIR)/$(TAR_TARBALL) \
 
 PHONY += tar
 tar:	$(TAR_DIR).build
-$(TAR_DIR).build:	$(TAR_DIR).unpack
+$(TAR_DIR).build:	$(TAR_DIR).unpack $(INITRD_BUILD_DIR).prep
 	# the FORCE_UNSAFE_CONFIGURE bit is to allow building as root, if 
 	# that's your style (not recommended). -BEF-
-	cd $(TAR_DIR) && FORCE_UNSAFE_CONFIGURE=1 ./configure
+	cd $(TAR_DIR) && FORCE_UNSAFE_CONFIGURE=1 \
+			 CFLAGS="-I$(INITRD_BUILD_DIR)/usr/include" \
+			 LDFLAGS="-L$(INITRD_BUILD_DIR)/lib" \
+			 ./configure
 	$(MAKE) -j $(NCPUS) -C $(TAR_DIR)
 	touch $@
 
 PHONY += tar_install
 tar_install:        $(TAR_DIR).install
-$(TAR_DIR).install:	$(TAR_DIR).build \
-						$(INITRD_BUILD_DIR).prep
+$(TAR_DIR).install:	$(TAR_DIR).build
 	install -m 755 $(TAR_DIR)/src/tar $(INITRD_BUILD_DIR)/bin
+	touch $@
 
 $(INITRD_SRC_DIR)/$(TAR_TARBALL):
 	[ -d $(INITRD_SRC_DIR) ] || mkdir -p $(INITRD_SRC_DIR)

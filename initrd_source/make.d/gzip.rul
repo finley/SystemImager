@@ -18,8 +18,10 @@ ALL_SOURCE += $(INITRD_SRC_DIR)/$(GZIP_TARBALL)
 
 PHONY += gzip
 gzip:	$(GZIP_DIR).build
-$(GZIP_DIR).build:	$(GZIP_DIR).unpack
-	cd $(GZIP_DIR) && ./configure
+$(GZIP_DIR).build:	$(GZIP_DIR).unpack $(INITRD_BUILD_DIR).prep
+	cd $(GZIP_DIR) &&       CFLAGS="-I$(INITRD_BUILD_DIR)/usr/include" \
+				LDFLAGS="-L$(INITRD_BUILD_DIR)/lib" \
+				./configure
 	$(MAKE) -j $(NCPUS) -C $(GZIP_DIR)
 	touch $@
 
@@ -35,10 +37,9 @@ $(GZIP_DIR).unpack:	$(INITRD_SRC_DIR)/$(GZIP_TARBALL) \
 
 PHONY += gzip_install
 gzip_install:        $(GZIP_DIR).install
-$(GZIP_DIR).install:	$(GZIP_DIR).build \
-						$(INITRD_BUILD_DIR).prep
+$(GZIP_DIR).install:	$(GZIP_DIR).build
 	install -m 755 $(GZIP_DIR)/gzip $(INITRD_BUILD_DIR)/bin
-
+	touch $@
 
 $(INITRD_SRC_DIR)/$(GZIP_TARBALL):
 	[ -d $(INITRD_SRC_DIR) ] || mkdir -p $(INITRD_SRC_DIR)

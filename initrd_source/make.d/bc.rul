@@ -21,16 +21,18 @@ $(BC_DIR).unpack:	$(INITRD_SRC_DIR)/$(BC_TARBALL) \
 
 PHONY += bc
 bc:	$(BC_DIR).build
-$(BC_DIR).build:	$(BC_DIR).unpack
-	cd $(BC_DIR) && ./configure
+$(BC_DIR).build:	$(BC_DIR).unpack $(INITRD_BUILD_DIR).prep
+	cd $(BC_DIR) && CFLAGS="-I$(INITRD_BUILD_DIR)/usr/include" \
+			LDFLAGS="-L$(INITRD_BUILD_DIR)/lib" \
+			./configure
 	$(MAKE) -j $(NCPUS) -C $(BC_DIR)
 	touch $@
 
 PHONY += bc_install
 bc_install:        $(BC_DIR).install
-$(BC_DIR).install:	$(BC_DIR).build \
-						$(INITRD_BUILD_DIR).prep
+$(BC_DIR).install:	$(BC_DIR).build
 	install -m 755 $(BC_DIR)/bc/bc $(INITRD_BUILD_DIR)/bin
+	touch $@
 
 $(INITRD_SRC_DIR)/$(BC_TARBALL):
 	[ -d $(INITRD_SRC_DIR) ] || mkdir -p $(INITRD_SRC_DIR)

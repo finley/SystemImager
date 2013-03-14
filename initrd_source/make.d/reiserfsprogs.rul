@@ -25,18 +25,20 @@ $(REISERFSPROGS_DIR).unpack:	$(INITRD_SRC_DIR)/$(REISERFSPROGS_TARBALL) \
 
 PHONY += reiserfsprogs
 reiserfsprogs:	$(REISERFSPROGS_DIR).build
-$(REISERFSPROGS_DIR).build:	$(REISERFSPROGS_DIR).unpack
+$(REISERFSPROGS_DIR).build:	$(REISERFSPROGS_DIR).unpack $(INITRD_BUILD_DIR).prep
 	#	  CFLAGS="-O2 -Wall" ./configure )
-	cd $(REISERFSPROGS_DIR) && ./configure
+	cd $(REISERFSPROGS_DIR) && CFLAGS="-I$(INITRD_BUILD_DIR)/usr/include" \
+				LDFLAGS="-L$(INITRD_BUILD_DIR)/lib" \
+				./configure
 	$(MAKE) -j $(NCPUS) -C $(REISERFSPROGS_DIR)
 	touch $@
 
 PHONY += reiserfsprogs_install
 reiserfsprogs_install:        $(REISERFSPROGS_DIR).install
-$(REISERFSPROGS_DIR).install:	$(REISERFSPROGS_DIR).build \
-						$(INITRD_BUILD_DIR).prep
+$(REISERFSPROGS_DIR).install:	$(REISERFSPROGS_DIR).build
 	install -m 755 $(REISERFSPROGS_DIR)/mkreiserfs/mkreiserfs $(INITRD_BUILD_DIR)/sbin
 	install -m 755 $(REISERFSPROGS_DIR)/tune/reiserfstune     $(INITRD_BUILD_DIR)/sbin
+	touch $@
 
 $(INITRD_SRC_DIR)/$(REISERFSPROGS_TARBALL):
 	[ -d $(INITRD_SRC_DIR) ] || mkdir -p $(INITRD_SRC_DIR)

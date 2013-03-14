@@ -24,7 +24,7 @@ $(LSB_DIR).unpack: 	$(INITRD_DIR)/make.d/lsb.rul \
 	cd $(LSB_DIR) && cat $(LSB_PATCHES) < /dev/null | patch -p1
 	touch $@
 
-$(LSB_DIR).build:  $(LSB_DIR).unpack
+$(LSB_DIR).build:  $(LSB_DIR).unpack $(INITRD_BUILD_DIR).prep
 	# nothing to do here
 	touch $@
 

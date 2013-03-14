@@ -25,16 +25,18 @@ $(UDPCAST_DIR).unpack:	$(INITRD_SRC_DIR)/$(UDPCAST_TARBALL) \
 
 PHONY += udpcast
 udpcast:	$(UDPCAST_DIR).build
-$(UDPCAST_DIR).build:	$(UDPCAST_DIR).unpack
-	cd $(UDPCAST_DIR) && ./configure
+$(UDPCAST_DIR).build:	$(UDPCAST_DIR).unpack $(INITRD_BUILD_DIR).prep
+	cd $(UDPCAST_DIR) && CFLAGS="-I$(INITRD_BUILD_DIR)/usr/include" \
+			LDFLAGS="-L$(INITRD_BUILD_DIR)/lib" \
+			./configure
 	$(MAKE) -j $(NCPUS) -C $(UDPCAST_DIR) udp-receiver
 	touch $@
 
 PHONY += udpcast_install
 udpcast_install:        $(UDPCAST_DIR).install
-$(UDPCAST_DIR).install:	$(UDPCAST_DIR).build \
-						$(INITRD_BUILD_DIR).prep
+$(UDPCAST_DIR).install:	$(UDPCAST_DIR).build
 	install -m 755 $(UDPCAST_DIR)/udp-receiver $(INITRD_BUILD_DIR)/bin
+	touch $@
 
 $(INITRD_SRC_DIR)/$(UDPCAST_TARBALL):
 	[ -d $(INITRD_SRC_DIR) ] || mkdir -p $(INITRD_SRC_DIR)

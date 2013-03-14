@@ -18,10 +18,12 @@ ALL_SOURCE += $(INITRD_SRC_DIR)/$(MODULE_INIT_TOOLS_TARBALL)
 PHONY += module-init-tools
 module-init-tools:	$(MODULE_INIT_TOOLS_DIR).build
 
-$(MODULE_INIT_TOOLS_DIR).build:  $(MODULE_INIT_TOOLS_DIR).unpack
+$(MODULE_INIT_TOOLS_DIR).build:  $(MODULE_INIT_TOOLS_DIR).unpack $(INITRD_BUILD_DIR).prep
 	export BLKID_LIBS=$(INITRD_BUILD_DIR)/lib
 	export BLKID_CFLAGS=$(INITRD_BUILD_DIR)/include
-	cd $(MODULE_INIT_TOOLS_DIR) && ./configure \
+	cd $(MODULE_INIT_TOOLS_DIR) &&  CFLAGS="-I$(INITRD_BUILD_DIR)/usr/include" \
+					LDFLAGS="-L$(INITRD_BUILD_DIR)/lib" \
+					./configure \
 		--prefix=/usr \
 		--sysconfdir=/etc \
 		--sbindir=/sbin \
@@ -38,6 +40,7 @@ PHONY += module-init-tools_install
 module-init-tools_install:	$(MODULE_INIT_TOOLS_DIR).install
 $(MODULE_INIT_TOOLS_DIR).install:	$(MODULE_INIT_TOOLS_DIR).build
 	cd $(MODULE_INIT_TOOLS_DIR) && $(MAKE) install DESTDIR=$(INITRD_BUILD_DIR)
+	touch $@
 
 $(MODULE_INIT_TOOLS_DIR).unpack:   	$(INITRD_DIR)/make.d/module-init-tools.rul	\
 			$(INITRD_SRC_DIR)/$(MODULE_INIT_TOOLS_TARBALL)

@@ -3,11 +3,13 @@
 #
 #   2010.06.14 Brian Elliott Finley
 #   * Upgrade from v1.40.2 to v1.41.12
-#   2012.01.10 Olivier Lahaye
+#   2013.01.10 Olivier Lahaye
 #   * Upgrade from v1.41.12 to v1.42.6
+#   2013.03.12 Olivier Lahaye
+#   * Upgrade from v1.42.6 to v1.42.7
 #
 
-E2FSPROGS_VERSION   = 1.42.6
+E2FSPROGS_VERSION   = 1.42.7
 E2FSPROGS_TARBALL   = e2fsprogs-$(E2FSPROGS_VERSION).tar.gz
 E2FSPROGS_URL       = http://downloads.sourceforge.net/project/e2fsprogs/e2fsprogs/v$(E2FSPROGS_VERSION)/$(E2FSPROGS_TARBALL)
 #E2FSPROGS_URL       = http://download.systemimager.org/pub/e2fsprogs/$(E2FSPROGS_TARBALL)
@@ -22,8 +24,10 @@ endif
 
 PHONY += e2fsprogs
 e2fsprogs:	$(E2FSPROGS_DIR).build
-$(E2FSPROGS_DIR).build:	$(E2FSPROGS_DIR).unpack
-	cd $(E2FSPROGS_DIR) && ./configure $(E2FSPROGS_CONFIGURE)
+$(E2FSPROGS_DIR).build:	$(E2FSPROGS_DIR).unpack $(INITRD_BUILD_DIR).prep
+	cd $(E2FSPROGS_DIR) &&	CFLAGS="-I. -I$(INITRD_BUILD_DIR)/usr/include" \
+				LDFLAGS="-L$(INITRD_BUILD_DIR)/lib" \
+				./configure $(E2FSPROGS_CONFIGURE)
 	$(MAKE) -j $(NCPUS) -C $(E2FSPROGS_DIR)
 	touch $@
 
@@ -39,9 +43,9 @@ $(E2FSPROGS_DIR).unpack:	$(INITRD_SRC_DIR)/$(E2FSPROGS_TARBALL) \
 
 PHONY += e2fsprogs_install
 e2fsprogs_install:        $(E2FSPROGS_DIR).install
-$(E2FSPROGS_DIR).install:	$(E2FSPROGS_DIR).build \
-						$(INITRD_BUILD_DIR).prep
+$(E2FSPROGS_DIR).install:	$(E2FSPROGS_DIR).build
 	$(MAKE) -j $(NCPUS) -C $(E2FSPROGS_DIR) install DESTDIR=$(INITRD_BUILD_DIR)
+	touch $@
 
 
 $(INITRD_SRC_DIR)/$(E2FSPROGS_TARBALL):

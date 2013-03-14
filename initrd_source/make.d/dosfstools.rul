@@ -15,10 +15,12 @@ ALL_SOURCE += $(INITRD_SRC_DIR)/$(DOSFSTOOLS_TARBALL)
 
 PHONY += dosfstools
 dosfstools:	$(DOSFSTOOLS_DIR).build
-$(DOSFSTOOLS_DIR).build:	$(DOSFSTOOLS_DIR).unpack
+$(DOSFSTOOLS_DIR).build:	$(DOSFSTOOLS_DIR).unpack $(INITRD_BUILD_DIR).prep
 	# These CFLAGS stolen from the src rpm in redhat 9, and go along
 	# with dosfstools.10llseek.patch.
-	$(MAKE) -j $(NCPUS) -C $(DOSFSTOOLS_DIR) 'CFLAGS=-O2 -Dllseek=lseek64 -D_LARGEFILE64_SOURCE'
+	$(MAKE) -j $(NCPUS) -C $(DOSFSTOOLS_DIR) \
+		CFLAGS="-O2 -Dllseek=lseek64 -D_LARGEFILE64_SOURCE -I$(INITRD_BUILD_DIR)/usr/include" \
+		LDFLAGS="-L$(INITRD_BUILD_DIR)/lib"
 	touch $@
 
 
@@ -33,10 +35,9 @@ $(DOSFSTOOLS_DIR).unpack:	$(INITRD_SRC_DIR)/$(DOSFSTOOLS_TARBALL) \
 
 PHONY += dosfstools_install
 dosfstools_install:        $(DOSFSTOOLS_DIR).install
-$(DOSFSTOOLS_DIR).install:	$(DOSFSTOOLS_DIR).build \
-						$(INITRD_BUILD_DIR).prep
+$(DOSFSTOOLS_DIR).install:	$(DOSFSTOOLS_DIR).build
 	install -m 755 $(DOSFSTOOLS_DIR)/mkdosfs/mkdosfs $(INITRD_BUILD_DIR)/bin
-
+	touch $@
 
 $(INITRD_SRC_DIR)/$(DOSFSTOOLS_TARBALL):
 	[ -d $(INITRD_SRC_DIR) ] || mkdir -p $(INITRD_SRC_DIR)

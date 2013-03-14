@@ -25,13 +25,12 @@ $(BITTORRENT_DIR).unpack:	$(INITRD_SRC_DIR)/$(BITTORRENT_TARBALL) \
 
 PHONY += bittorrent
 bittorrent:	$(BITTORRENT_DIR).build
-$(BITTORRENT_DIR).build:	$(BITTORRENT_DIR).unpack $(CX_FREEZE_DIR).build
+$(BITTORRENT_DIR).build:	$(BITTORRENT_DIR).unpack $(CX_FREEZE_DIR).build $(INITRD_BUILD_DIR).prep
 	touch $@
 
 PHONY += bittorrent_install
 bittorrent_install:        $(BITTORRENT_DIR).install
-$(BITTORRENT_DIR).install:	$(BITTORRENT_DIR).build \
-						$(INITRD_BUILD_DIR).prep
+$(BITTORRENT_DIR).install:	$(BITTORRENT_DIR).build
 	$(CX_FREEZE_DIR)/FreezePython --install-dir=$(INITRD_BUILD_DIR)/lib/bittorrent --exclude-modules=gobject,pango,gtk \
 		$(BITTORRENT_DIR)/torrentinfo-console.py
 	$(CX_FREEZE_DIR)/FreezePython --install-dir=$(INITRD_BUILD_DIR)/lib/bittorrent --exclude-modules=gobject,pango,gtk \
@@ -48,6 +47,7 @@ $(BITTORRENT_DIR).install:	$(BITTORRENT_DIR).build \
 	# Create the bittorrent links.
 	rm -f $(INITRD_BUILD_DIR)/bin/torrentinfo-console
 	rm -f $(INITRD_BUILD_DIR)/bin/bittorrent-console
+	touch $@
 
 $(INITRD_SRC_DIR)/$(BITTORRENT_TARBALL):
 	[ -d $(INITRD_SRC_DIR) ] || mkdir -p $(INITRD_SRC_DIR)

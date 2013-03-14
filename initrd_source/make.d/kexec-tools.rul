@@ -22,16 +22,18 @@ $(KEXEC_TOOLS_DIR).unpack:	$(INITRD_SRC_DIR)/$(KEXEC_TOOLS_TARBALL) \
 
 PHONY += kexec-tools
 kexec-tools:	$(KEXEC_TOOLS_DIR).build
-$(KEXEC_TOOLS_DIR).build:	$(KEXEC_TOOLS_DIR).unpack
-	cd $(KEXEC_TOOLS_DIR) && ./configure
+$(KEXEC_TOOLS_DIR).build:	$(KEXEC_TOOLS_DIR).unpack $(INITRD_BUILD_DIR).prep
+	cd $(KEXEC_TOOLS_DIR) && CFLAGS="-I. -I./include -I./purgatory/include -I$(INITRD_BUILD_DIR)/usr/include" \
+				LDFLAGS="-L$(INITRD_BUILD_DIR)/lib" \
+				./configure
 	$(MAKE) -j $(NCPUS) -C $(KEXEC_TOOLS_DIR)
 	touch $@
 
 PHONY += kexec_tools_install
 kexec_tools_install:        $(KEXEC_TOOLS_DIR).install
-$(KEXEC_TOOLS_DIR).install:	$(KEXEC_TOOLS_DIR).build \
-						$(INITRD_BUILD_DIR).prep
+$(KEXEC_TOOLS_DIR).install:	$(KEXEC_TOOLS_DIR).build
 	install -m 755 $(KEXEC_TOOLS_DIR)/build/sbin/kexec $(INITRD_BUILD_DIR)/sbin
+	touch $@
 
 $(INITRD_SRC_DIR)/$(KEXEC_TOOLS_TARBALL):
 	[ -d $(INITRD_SRC_DIR) ] || mkdir -p $(INITRD_SRC_DIR)

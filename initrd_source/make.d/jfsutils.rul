@@ -18,8 +18,11 @@ ALL_SOURCE += $(INITRD_SRC_DIR)/$(JFSUTILS_TARBALL)
 
 PHONY += jfsutils
 jfsutils:	$(JFSUTILS_DIR).build
-$(JFSUTILS_DIR).build:	$(JFSUTILS_DIR).unpack $(E2FSPROGS_DIR).build
-	cd $(JFSUTILS_DIR) && CPPFLAGS=-I$(E2FSPROGS_DIR)/lib CFLAGS="-O2 -Wall -I$(E2FSPROGS_DIR)/lib" LDFLAGS=-L$(E2FSPROGS_DIR)/lib  ./configure
+$(JFSUTILS_DIR).build:	$(JFSUTILS_DIR).unpack $(E2FSPROGS_DIR).build $(INITRD_BUILD_DIR).prep
+	cd $(JFSUTILS_DIR) &&   CPPFLAGS=-I$(E2FSPROGS_DIR)/lib \
+				CFLAGS="-O2 -Wall -I$(E2FSPROGS_DIR)/lib -I$(INITRD_BUILD_DIR)/usr/include" \
+				LDFLAGS="-L$(E2FSPROGS_DIR)/lib -L$(INITRD_BUILD_DIR)/lib" \
+				./configure
 	$(MAKE) -j $(NCPUS) -C $(JFSUTILS_DIR)
 	touch $@
 
@@ -35,10 +38,10 @@ $(JFSUTILS_DIR).unpack:	$(INITRD_SRC_DIR)/$(JFSUTILS_TARBALL) \
 
 PHONY += jfsutils_install
 jfsutils_install:        $(JFSUTILS_DIR).install
-$(JFSUTILS_DIR).install:	$(JFSUTILS_DIR).build \
-						$(INITRD_BUILD_DIR).prep
+$(JFSUTILS_DIR).install:	$(JFSUTILS_DIR).build
 	install -m 755 $(JFSUTILS_DIR)/mkfs/jfs_mkfs $(INITRD_BUILD_DIR)/sbin
 	install -m 755 $(JFSUTILS_DIR)/tune/jfs_tune $(INITRD_BUILD_DIR)/sbin
+	touch $@
 
 
 $(INITRD_SRC_DIR)/$(JFSUTILS_TARBALL):

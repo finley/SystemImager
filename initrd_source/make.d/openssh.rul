@@ -16,8 +16,11 @@ ALL_SOURCE += $(INITRD_SRC_DIR)/$(OPENSSH_TARBALL)
 
 PHONY += openssh
 openssh:	$(OPENSSH_DIR).build
-$(OPENSSH_DIR).build:	$(OPENSSH_DIR).unpack $(OPENSSL_DIR).build
-	cd $(OPENSSH_DIR) && LD_LIBRARY_PATH=$(OPENSSL_DIR) ./configure --prefix=/usr \
+$(OPENSSH_DIR).build:	$(OPENSSH_DIR).unpack $(OPENSSL_DIR).install $(INITRD_BUILD_DIR).prep
+	cd $(OPENSSH_DIR) &&    LD_LIBRARY_PATH=$(OPENSSL_DIR) \
+				CFLAGS="-I$(INITRD_BUILD_DIR)/usr/include" \
+				LDFLAGS="-L$(INITRD_BUILD_DIR)/lib" \
+				./configure --prefix=/usr \
 	  --with-zlib=$(ZLIB_DIR) --with-ssl-dir=$(OPENSSL_DIR) --without-rpath --disable-last-log \
 	  --disable-libutil --disable-pututxline --disable-utmpx --disable-wtmpx --without-pam \
 	  --with-ldflags=-s --with-4in6=no --without-kerberos5 --without-md5-passwords \
@@ -39,8 +42,7 @@ $(OPENSSH_DIR).unpack:	$(INITRD_SRC_DIR)/$(OPENSSH_TARBALL) \
 
 PHONY += openssh_install
 openssh_install:        $(OPENSSH_DIR).install
-$(OPENSSH_DIR).install:	$(OPENSSH_DIR).build \
-						$(INITRD_BUILD_DIR).prep
+$(OPENSSH_DIR).install:	$(OPENSSH_DIR).build
 	install -m 755 $(OPENSSH_DIR)/ssh        $(INITRD_BUILD_DIR)/bin
 	install -m 755 $(OPENSSH_DIR)/scp        $(INITRD_BUILD_DIR)/bin
 	install -m 755 $(OPENSSH_DIR)/ssh-keygen $(INITRD_BUILD_DIR)/bin
@@ -53,6 +55,7 @@ $(OPENSSH_DIR).install:	$(OPENSSH_DIR).build \
 	# picked up by mklibs for some reason. -BEF-
 	#
 	#tar -cv $(OPENSSH_OTHER_FILES) | tar -C $(BOEL_BINARIES_DIR) -xv
+	touch $@
 
 
 $(INITRD_SRC_DIR)/$(OPENSSH_TARBALL):

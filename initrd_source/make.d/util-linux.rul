@@ -22,8 +22,13 @@ $(UTIL_LINUX_DIR).unpack:	$(INITRD_SRC_DIR)/$(UTIL_LINUX_TARBALL) \
 
 PHONY += util-linux
 util-linux:	$(UTIL_LINUX_DIR).build
-$(UTIL_LINUX_DIR).build:	$(UTIL_LINUX_DIR).unpack
-	cd $(UTIL_LINUX_DIR) && ./configure \
+# OL: should depend on udev, but that would make a circular reference.
+# Need a better solution than assuming we can link to system udev instead of the
+# systemimager udev build.
+$(UTIL_LINUX_DIR).build:	$(UTIL_LINUX_DIR).unpack $(INITRD_BUILD_DIR).prep
+	cd $(UTIL_LINUX_DIR) && CFLAGS="-I$(INITRD_BUILD_DIR)/usr/include" \
+				LDFLAGS="-L$(INITRD_BUILD_DIR)/lib" \
+				./configure \
 			--prefix=/ \
 			--sysconfdir=/etc \
 			--includedir=/usr/include \
@@ -34,12 +39,11 @@ $(UTIL_LINUX_DIR).build:	$(UTIL_LINUX_DIR).unpack
 
 PHONY += util-linux_install
 util-linux_install: $(UTIL_LINUX_DIR).install
-$(UTIL_LINUX_DIR).install:	$(UTIL_LINUX_DIR).build \
-						$(INITRD_BUILD_DIR).prep
+$(UTIL_LINUX_DIR).install:	$(UTIL_LINUX_DIR).build
 	$(MAKE) -j $(NCPUS) -C $(UTIL_LINUX_DIR) install DESTDIR=$(INITRD_BUILD_DIR)
 	# Remove  libtool files that can't be used in this temporary build dir.
-	/bin/rm $(INITRD_BUILD_DIR)/lib/*.la
-
+	#/bin/rm $(INITRD_BUILD_DIR)/lib/*.la
+	touch $@
 
 $(INITRD_SRC_DIR)/$(UTIL_LINUX_TARBALL):
 	[ -d $(INITRD_SRC_DIR) ] || mkdir -p $(INITRD_SRC_DIR)

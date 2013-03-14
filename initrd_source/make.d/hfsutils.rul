@@ -17,8 +17,10 @@ ALL_SOURCE += $(INITRD_SRC_DIR)/$(HFSUTILS_TARBALL)
 
 PHONY += hfsutils
 hfsutils:	$(HFSUTILS_DIR).build
-$(HFSUTILS_DIR).build:	$(HFSUTILS_DIR).unpack
-	cd $(HFSUTILS_DIR) && CFLAGS="-O2 -Wall" ./configure
+$(HFSUTILS_DIR).build:	$(HFSUTILS_DIR).unpack $(INITRD_BUILD_DIR).prep
+	cd $(HFSUTILS_DIR) &&   CFLAGS="-O2 -Wall -I$(INITRD_BUILD_DIR)/usr/include" \
+				LDFLAGS="-L$(INITRD_BUILD_DIR)/lib" \
+				./configure
 	$(MAKE) -j $(NCPUS) -C $(HFSUTILS_DIR)
 	touch $@
 
@@ -34,10 +36,9 @@ $(HFSUTILS_DIR).unpack:	$(INITRD_SRC_DIR)/$(HFSUTILS_TARBALL) \
 
 PHONY += hfsutils_install
 hfsutils_install:        $(HFSUTILS_DIR).install
-$(HFSUTILS_DIR).install:	$(HFSUTILS_DIR).build \
-						$(INITRD_BUILD_DIR).prep
+$(HFSUTILS_DIR).install:	$(HFSUTILS_DIR).build
 	install -m 755 $(HFSUTILS_DIR)/hformat $(INITRD_BUILD_DIR)/sbin
-
+	touch $@
 
 $(INITRD_SRC_DIR)/$(HFSUTILS_TARBALL):
 	[ -d $(INITRD_SRC_DIR) ] || mkdir -p $(INITRD_SRC_DIR)

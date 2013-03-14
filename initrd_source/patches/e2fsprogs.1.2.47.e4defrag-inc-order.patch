@@ -1,0 +1,14 @@
+diff -ru e2fsprogs-1.42.7.orig/misc/e4defrag.c e2fsprogs-1.42.7/misc/e4defrag.c
+--- e2fsprogs-1.42.7.orig/misc/e4defrag.c	2012-08-14 23:29:06.000000000 +0200
++++ e2fsprogs-1.42.7/misc/e4defrag.c	2013-03-12 10:36:52.122024141 +0100
+@@ -32,9 +32,9 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <unistd.h>
++#include <linux/fs.h>
+ #include <ext2fs/ext2_types.h>
+ #include <ext2fs/ext2fs.h>
+-#include <linux/fs.h>
+ #include <sys/ioctl.h>
+ #include <ext2fs/fiemap.h>
+ #include <sys/mman.h>

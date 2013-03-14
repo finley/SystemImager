@@ -161,6 +161,7 @@ LOG_DIR = $(DESTDIR)/var/log/systemimager
 LOCK_DIR = $(DESTDIR)/var/lock/systemimager
 
 INITRD_DIR = $(TOPDIR)/initrd_source
+INITRD_BUILD_DIR = $(INITRD_DIR)/build_dir
 
 BOOT_BIN_DEST     = $(USR)/share/systemimager/boot/$(ARCH)/$(FLAVOR)
 

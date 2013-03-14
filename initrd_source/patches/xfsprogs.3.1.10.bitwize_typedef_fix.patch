@@ -1,0 +1,13 @@
+--- xfsprogs-3.1.10/include/platform_defs.h.in.orig	2013-03-12 15:21:56.950025776 +0100
++++ xfsprogs-3.1.10/include/platform_defs.h.in	2013-03-12 15:22:03.715082550 +0100
+@@ -57,10 +57,6 @@
+ #define __force
+ #endif
+ 
+-typedef __u16	__bitwise	__be16;
+-typedef __u32	__bitwise	__be32;
+-typedef __u64	__bitwise	__be64;
+-
+ typedef struct filldir		filldir_t;
+ 
+ #if defined(__linux__)

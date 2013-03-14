@@ -22,8 +22,11 @@ $(COREUTILS_DIR).unpack:	$(INITRD_SRC_DIR)/$(COREUTILS_TARBALL) \
 
 PHONY += coreutils
 coreutils:	$(COREUTILS_DIR).build
-$(COREUTILS_DIR).build:	$(COREUTILS_DIR).unpack
-	cd $(COREUTILS_DIR) && FORCE_UNSAFE_CONFIGURE=1 ./configure \
+$(COREUTILS_DIR).build:	$(COREUTILS_DIR).unpack $(INITRD_BUILD_DIR).prep
+	cd $(COREUTILS_DIR) &&  CFLAGS="-I$(INITRD_BUILD_DIR)/usr/include" \
+				LDFLAGS="-L$(INITRD_BUILD_DIR)/lib" \
+				FORCE_UNSAFE_CONFIGURE=1 \
+				./configure \
 		--prefix=/ \
 		--without-selinux
 	$(MAKE) -j $(NCPUS) -C $(COREUTILS_DIR)
@@ -31,9 +34,9 @@ $(COREUTILS_DIR).build:	$(COREUTILS_DIR).unpack
 
 PHONY += coreutils_install
 coreutils_install: $(COREUTILS_DIR).install
-$(COREUTILS_DIR).install:	$(COREUTILS_DIR).build \
-						$(INITRD_BUILD_DIR).prep
+$(COREUTILS_DIR).install:	$(COREUTILS_DIR).build
 	$(MAKE) -j $(NCPUS) -C $(COREUTILS_DIR) install-exec DESTDIR=$(INITRD_BUILD_DIR)
+	touch $@
 
 $(INITRD_SRC_DIR)/$(COREUTILS_TARBALL):
 	[ -d $(INITRD_SRC_DIR) ] || mkdir -p $(INITRD_SRC_DIR)

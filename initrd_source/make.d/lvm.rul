@@ -28,8 +28,13 @@ ALL_SOURCE += $(INITRD_SRC_DIR)/$(LVM_TARBALL)
 
 PHONY += lvm
 lvm:	$(LVM_DIR).build
-$(LVM_DIR).build:	$(LVM_DIR).unpack
-	cd $(LVM_DIR) && ./configure --prefix=/usr --disable-nls --with-optimisation=-Os
+$(LVM_DIR).build:	$(LVM_DIR).unpack $(INITRD_BUILD_DIR).prep
+	cd $(LVM_DIR) && CFLAGS="-I$(INITRD_BUILD_DIR)/usr/include" \
+			LDFLAGS="-L$(INITRD_BUILD_DIR)/lib" \
+			./configure \
+				--prefix=/usr \
+				--disable-nls \
+				--with-optimisation=-Os
 	$(MAKE) -j $(NCPUS) -C $(LVM_DIR)
 	touch $@
 
@@ -45,13 +50,13 @@ $(LVM_DIR).unpack:	$(INITRD_SRC_DIR)/$(LVM_TARBALL) \
 
 PHONY += lvm_install
 lvm_install:        $(LVM_DIR).install
-$(LVM_DIR).install:	$(LVM_DIR).build \
-						$(INITRD_BUILD_DIR).prep
+$(LVM_DIR).install:	$(LVM_DIR).build
 	$(MAKE) install -C $(LVM_DIR) DESTDIR=$(INITRD_BUILD_DIR)
 	# install -m 755 $(LVM_DIR)/tools/lvm $(INITRD_BUILD_DIR)/sbin
 	# Create LVM symlinks to lvm binary
 	#
 	# cd $(INITRD_BUILD_DIR)/sbin && $(foreach binary,$(shell cat $(SRC_DIR)/$(LVM_DIR)/tools/.commands),ln -s -f lvm $(binary) && ) /bin/true
+	touch $@
 
 
 $(INITRD_SRC_DIR)/$(LVM_TARBALL):

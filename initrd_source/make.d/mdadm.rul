@@ -19,8 +19,8 @@ ALL_SOURCE += $(INITRD_SRC_DIR)/$(MDADM_TARBALL)
 
 PHONY += mdadm
 mdadm:	$(MDADM_DIR).build
-$(MDADM_DIR).build:	$(MDADM_DIR).unpack
-	$(MAKE) -j $(NCPUS) -C $(MDADM_DIR)
+$(MDADM_DIR).build:	$(MDADM_DIR).unpack $(INITRD_BUILD_DIR).prep
+	$(MAKE) -j $(NCPUS) -C $(MDADM_DIR) CFLAGS="-I$(INITRD_BUILD_DIR)/usr/include" LDFLAGS="-L$(INITRD_BUILD_DIR)/lib"
 	touch $@
 
 
@@ -35,9 +35,9 @@ $(MDADM_DIR).unpack:	$(INITRD_SRC_DIR)/$(MDADM_TARBALL) \
 
 PHONY += mdadm_install
 mdadm_install:        $(MDADM_DIR).install
-$(MDADM_DIR).install:	$(MDADM_DIR).build \
-						$(INITRD_BUILD_DIR).prep
+$(MDADM_DIR).install:	$(MDADM_DIR).build
 	install -m 755 $(MDADM_DIR)/mdadm $(INITRD_BUILD_DIR)/sbin
+	touch $@
 
 
 $(INITRD_SRC_DIR)/$(MDADM_TARBALL):

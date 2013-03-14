@@ -21,14 +21,14 @@ ALL_SOURCE += $(INITRD_SRC_DIR)/$(SYSVINIT_TARBALL) $(INITRD_SRC_DIR)/$(SYSVINIT
 
 PHONY += sysvinit_install
 sysvinit_install:	$(SYSVINIT_DIR).install
-$(SYSVINIT_DIR).install:	$(SYSVINIT_DIR).build \
-							$(INITRD_BUILD_DIR).prep
+$(SYSVINIT_DIR).install:	$(SYSVINIT_DIR).build
 	install -m 644 $(SYSVINIT_DIR)/debian/src/initscripts/share/default.rcS $(INITRD_BUILD_DIR)/etc/default/rcS
 	install -m 755 $(SYSVINIT_DIR)/src/mountpoint $(INITRD_BUILD_DIR)/bin/
+	touch $@
 
 
 PHONY += sysvinit
-sysvinit:	$(SYSVINIT_DIR).build
+sysvinit:	$(SYSVINIT_DIR).build $(INITRD_BUILD_DIR).prep
 $(SYSVINIT_DIR).build:  $(SYSVINIT_DIR).unpack
 	cd $(SYSVINIT_DIR) && chmod +x ./debian/rules
 	cd $(SYSVINIT_DIR) && ./debian/rules clean

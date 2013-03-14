@@ -132,12 +132,22 @@ install_kernel:	$(LINUX_IMAGE)
 	$(SI_INSTALL) -m 644 $(LINUX_CONFIG) \
 	    $(BOOT_BIN_DEST)/config
 
+# install the kernel headers to temporary include dir so udev and the like
+# can be built agains the kernel they will run under.
+#PHONY += install_kernel_headers
+#install_kernel_headers: $(INITRD_DIR)/kernel_headers.prep
+
+$(INITRD_DIR)/kernel_headers.prep: $(LINUX_IMAGE) $(INITRD_BUILD_DIR).skel
+	$(MAKE) -C $(LINUX_SRC) -j $(NCPUS) ARCH=$(ARCH) INSTALL_HDR_PATH=$(INITRD_BUILD_DIR)/usr headers_install
+	touch $(INITRD_DIR)/kernel_headers.prep
+
 # build the kernel that autoinstall clients will boot from during
 # autoinstallation
 PHONY += kernel
 kernel:	$(LINUX_IMAGE)
 
 ifdef IS_PPC64
+# OL: circular reference: initrd.img needs kernel_headers which needs kernel built...
 $(LINUX_IMAGE):	$(SRC_DIR)/patched_kernel-stamp $(INITRD_DIR)/initrd.img
 	cp $(TOPDIR)/initrd_source/initrd.img \
 	    ${LINUX_SRC}/arch/powerpc/boot/ramdisk.image.gz

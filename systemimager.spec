@@ -10,7 +10,7 @@
 %define ver      0.0.0
 # Set rel to 1 when is is a final release otherwise, set it to a 0.x number
 # This is convenient when final release need to upgrade "beta" releases.
-%define rel      0.5%{?dist}
+%define rel      0.6%{?dist}
 %define packager Bernard Li <bernard@vanhpc.org>
 %define prefix   /usr
 %define _build_all 1
@@ -308,6 +308,8 @@ The bittorrent package allows you to use the BitTorrent protocol to perform
 installations.
 
 %changelog
+* Thu Mar 14 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.6
+- New beta version that includes new kernel, latest udev and fixed build system
 * Thu Mar  7 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.5
 - Added glib2-devel >= 2.22.0 BuildRequires (needed by udev-182) 
 - removed --libdir=/lib in util-linux (so links are wrongly generated)
@@ -650,7 +652,8 @@ export LD_FLAGS=-L$RPM_BUILD_DIR/%{name}-%{version}/initrd_source/build_dir/lib
 
 # Only build everything if on x86, this helps with PPC build issues
 %if %{_build_all}
-%{__make} %{?_smp_mflags} all
+#%{__make} %{?_smp_mflags} all
+%{__make} -j1 all
 
 %else
 %{__make} binaries

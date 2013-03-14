@@ -17,13 +17,14 @@ dhclient:	$(DHCLIENT_DIR).build
 
 PHONY += dhclient_install
 dhclient_install:   $(DHCLIENT_DIR).install
-$(DHCLIENT_DIR).install:    $(DHCLIENT_DIR).build \
-							$(INITRD_BUILD_DIR).prep
+$(DHCLIENT_DIR).install:    $(DHCLIENT_DIR).build
 	install -m 755 $(DHCLIENT_DIR)/client/dhclient $(INITRD_BUILD_DIR)/sbin
+	touch $@
 
-
-$(DHCLIENT_DIR).build:	$(DHCLIENT_DIR).unpack
-	cd $(DHCLIENT_DIR) && ./configure
+$(DHCLIENT_DIR).build:	$(DHCLIENT_DIR).unpack $(INITRD_BUILD_DIR).prep
+	cd $(DHCLIENT_DIR) &&   CFLAGS="-I$(INITRD_BUILD_DIR)/usr/include" \
+				LDFLAGS="-L$(INITRD_BUILD_DIR)/lib" \
+				./configure
 	$(MAKE) -j $(NCPUS) -C $(DHCLIENT_DIR)
 	touch $@
 

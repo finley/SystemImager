@@ -18,10 +18,12 @@ ALL_SOURCE += $(INITRD_SRC_DIR)/$(KMOD_TARBALL)
 PHONY += kmod
 kmod:	$(KMOD_DIR).build
 
-$(KMOD_DIR).build:  $(KMOD_DIR).unpack
+$(KMOD_DIR).build:  $(KMOD_DIR).unpack $(INITRD_BUILD_DIR).prep
 	export BLKID_LIBS=$(INITRD_BUILD_DIR)/lib
 	export BLKID_CFLAGS=$(INITRD_BUILD_DIR)/include
-	cd $(KMOD_DIR) && ./configure \
+	cd $(KMOD_DIR) && CFLAGS="-I$(INITRD_BUILD_DIR)/usr/include" \
+			LDFLAGS="-L$(INITRD_BUILD_DIR)/lib" \
+			./configure \
 		--prefix=/usr \
 		--sysconfdir=/etc \
 		--sbindir=/sbin \
@@ -38,6 +40,7 @@ PHONY += kmod_install
 kmod_install:	$(KMOD_DIR).install
 $(KMOD_DIR).install:	$(KMOD_DIR).build
 	cd $(KMOD_DIR) && $(MAKE) install DESTDIR=$(INITRD_BUILD_DIR)
+	touch $@
 
 $(KMOD_DIR).unpack:   	$(INITRD_DIR)/make.d/kmod.rul	\
 			$(INITRD_SRC_DIR)/$(KMOD_TARBALL)

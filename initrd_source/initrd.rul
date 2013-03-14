@@ -47,7 +47,7 @@ endif
 
 STAMP_DIR = $(INITRD_SRC_DIR)
 
-INITRD_BUILD_DIR = $(INITRD_DIR)/build_dir
+#INITRD_BUILD_DIR = $(INITRD_DIR)/build_dir
 
 SKEL_FILES = $(shell find $(INITRD_DIR)/skel \
 						-not -regex '.*/.svn.*' -and \
@@ -92,7 +92,7 @@ include $(INITRD_DIR)/make.d/module-init-tools.rul	# Must be after busybox to ov
 PHONY += build_dir 
 build_dir:	$(INITRD_BUILD_DIR).build
 
-$(INITRD_BUILD_DIR).prep:	$(INITRD_DIR)/initrd.rul
+$(INITRD_BUILD_DIR).skel:	$(INITRD_DIR)/initrd.rul
 	rm -fr $(INITRD_BUILD_DIR)
 	mkdir -p $(INITRD_BUILD_DIR)
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/bin
@@ -125,12 +125,18 @@ $(INITRD_BUILD_DIR).prep:	$(INITRD_DIR)/initrd.rul
 	mknod -m 0660 $(INITRD_BUILD_DIR)/dev/tty5 c 4 5
 	mknod -m 0660 $(INITRD_BUILD_DIR)/dev/tty6 c 4 6
 	
+	# Ugly hack to have our own includes.(needed for udev that includes linux includes).
+	# kernel headers and components includes will be installed in there.
+	# build of utils will use this include dir to match kernel they will be running on
+	# Once the build is finished, this include dir will be removed before creating the initrd.img
+	(cd /usr; tar cpf - include) | (cd $(INITRD_BUILD_DIR)/usr; tar xpvf -)
+	touch $@
+
+$(INITRD_BUILD_DIR).prep: $(INITRD_BUILD_DIR).skel $(SKEL_FILES) $(SRC_DIR)/modules_build-stamp $(INITRD_DIR)/kernel_headers.prep
 	touch $@
 
 
 $(INITRD_BUILD_DIR).build:  $(INITRD_BUILD_DIR).prep		\
-								$(SKEL_FILES) 				\
-								modules					\
 								$(LSB_DIR).build			\
 								$(CX_FREEZE_DIR).build 			\
 								$(BC_DIR).install			\
@@ -165,7 +171,7 @@ $(INITRD_BUILD_DIR).build:  $(INITRD_BUILD_DIR).prep		\
 	test -z "$(echo /lib/ld*)" || cp -a /lib/ld*   $(INITRD_BUILD_DIR)/lib
 	test ! -d /lib64 || cp -a /lib64/ld* $(INITRD_BUILD_DIR)/lib64
 	# Remove useless stuffs (man, translation, includes, ...)
-	( cd $(INITRD_BUILD_DIR) && /bin/rm -rf usr/share usr/include lib/*.a )
+	( cd $(INITRD_BUILD_DIR) && /bin/rm -rf share usr/share usr/include lib/*.a )
 	# Explicitly include more w/mklibs -L.  -dawild-
 	echo "Copying /lib*/libnss* to $(INITRD_BUILD_DIR)/lib*"
 ifeq ($(ARCH),x86_64)
@@ -194,7 +200,7 @@ endif
 	# Recompute the links for dynamic libs.
 	echo /lib > $(INITRD_BUILD_DIR)/etc/ld.so.conf
 	ldconfig -r $(INITRD_BUILD_DIR)
-    # Do we still need to undo prelinking? -BEF-
+	# Do we still need to undo prelinking? -BEF-
 	## Undo prelinking. -AR-
 	#[ -x `which prelink` ] && (find $(INITRD_BUILD_DIR) -type f -exec prelink -u {} \; 2>&1 | grep -v "does not have .gnu.prelink_undo section\|is not an ELF file") || true
 
@@ -288,7 +294,7 @@ initrd:	$(INITRD_DIR)/initrd
 #		'make install_template_dir', that you don't want released as
 #		part of the distribution. -BEF-
 #
-$(INITRD_DIR)/initrd:	$(INITRD_BUILD_DIR).build
+$(INITRD_DIR)/initrd:	$(INITRD_BUILD_DIR).build 
 	#XXX -BEF- No more cramfs -- now initramfs. :-)
 	cd $(INITRD_BUILD_DIR) && find . | cpio --quiet -H newc -o -n > $(INITRD_DIR)/initrd
 
@@ -320,6 +326,8 @@ build_dir_clean:
 	rm -rf $(INITRD_BUILD_DIR)
 	rm -f  $(INITRD_BUILD_DIR).build
 	rm -f  $(INITRD_BUILD_DIR).prep
+	rm -f  $(INITRD_BUILD_DIR).skel
+	rm -f  $(INITRD_DIR)/kernel_headers.prep
 
 PHONY += initrd_clean
 initrd_clean:	build_dir_clean $(subst .rul,_clean,$(shell cd $(INITRD_DIR)/make.d && ls *.rul))

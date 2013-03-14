@@ -9,6 +9,14 @@
 #
 
 4.3.0 [ Not yet released ]
+- build: Updated the build system by enforcing dependancies
+- build use make install instead of make install-exec in order
+  to install devel files in the initrd_build_dir.
+  This permit things like compiling udev using the new kernel
+  headers. Thus, it is possible to have latest udev that can't
+  build on old system like CentOS-6 (kernel headers too old)
+- build: remove useless and devel files before generating the
+  intird.img (/usr/share/* /share/* /lib/*.la ...)
 - Updated spec file:
   - Comments
   - Cleanup

@@ -1,0 +1,11 @@
+--- xfsprogs-3.1.10/include/xfs_arch.h.orig	2012-12-13 22:29:24.000000000 +0100
++++ xfsprogs-3.1.10/include/xfs_arch.h	2013-03-12 15:28:39.963026839 +0100
+@@ -22,6 +22,8 @@
+ # error XFS_BIG_INUMS must be defined true or false
+ #endif
+ 
++#include <linux/types.h>
++
+ #ifdef __KERNEL__
+ 
+ #include <asm/byteorder.h>

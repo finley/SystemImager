@@ -19,16 +19,20 @@ ALL_SOURCE += $(INITRD_SRC_DIR)/$(ZLIB_TARBALL)
 
 PHONY += zlib
 zlib:	$(ZLIB_DIR).build
-$(ZLIB_DIR).build:	$(ZLIB_DIR).unpack
+$(ZLIB_DIR).build:	$(ZLIB_DIR).unpack $(INITRD_BUILD_DIR).prep
 	# This is a little weird... zlib's configure makes static, or shared, but not both
 	# So, we just do it twice...
 	#
 	# Once for static
-	cd $(ZLIB_DIR) && ./configure
+	cd $(ZLIB_DIR) && CFLAGS="-I$(INITRD_BUILD_DIR)/usr/include" \
+			LDFLAGS="-L$(INITRD_BUILD_DIR)/lib" \
+			./configure
 	$(MAKE) -j $(NCPUS) -C $(ZLIB_DIR)
 	( cd $(ZLIB_DIR) && rm -f *.o)
 	# And once for shared.  (Why do we do this again? -BEF-)
-	cd $(ZLIB_DIR) && ./configure --shared
+	cd $(ZLIB_DIR) && CFLAGS="-I$(INITRD_BUILD_DIR)/usr/include" \
+			LDFLAGS="-L$(INITRD_BUILD_DIR)/lib" \
+			./configure --shared
 	$(MAKE) -j $(NCPUS) -C $(ZLIB_DIR)
 	touch $@
 
@@ -44,8 +48,7 @@ $(ZLIB_DIR).unpack:	$(INITRD_SRC_DIR)/$(ZLIB_TARBALL) \
 
 PHONY += zlib_install
 zlib_install:        $(ZLIB_DIR).install
-$(ZLIB_DIR).install:	$(ZLIB_DIR).build \
-						$(INITRD_BUILD_DIR).prep
+$(ZLIB_DIR).install:	$(ZLIB_DIR).build
 	touch $@
 
 

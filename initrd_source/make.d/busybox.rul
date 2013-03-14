@@ -22,7 +22,7 @@ ALL_SOURCE += $(INITRD_SRC_DIR)/$(BUSYBOX_TARBALL)
 
 PHONY += busybox
 busybox:	$(BUSYBOX_DIR).build
-$(BUSYBOX_DIR).build:  $(BUSYBOX_DIR).unpack
+$(BUSYBOX_DIR).build:  $(BUSYBOX_DIR).unpack $(INITRD_BUILD_DIR).prep
 	yes '' | $(MAKE) -C $(BUSYBOX_DIR) oldconfig
 	$(MAKE) -j $(NCPUS) -C $(BUSYBOX_DIR) dep
 	$(MAKE) -j $(NCPUS) -C $(BUSYBOX_DIR)
@@ -31,12 +31,11 @@ $(BUSYBOX_DIR).build:  $(BUSYBOX_DIR).unpack
 
 PHONY += busybox_install
 busybox_install:	$(BUSYBOX_DIR).install
-$(BUSYBOX_DIR).install:	$(BUSYBOX_DIR).build \
-						$(INITRD_BUILD_DIR).prep
+$(BUSYBOX_DIR).install:	$(BUSYBOX_DIR).build
 	$(MAKE) -j $(NCPUS) -C $(BUSYBOX_DIR) install CONFIG_PREFIX=$(INITRD_BUILD_DIR)/
 	rm -f $(INITRD_BUILD_DIR)/init
 	cd $(INITRD_BUILD_DIR) && ln sbin/init init
-
+	touch $@
 
 $(BUSYBOX_DIR).unpack:	$(INITRD_DIR)/make.d/busybox.rul \
 						$(INITRD_SRC_DIR)/$(BUSYBOX_TARBALL) \
