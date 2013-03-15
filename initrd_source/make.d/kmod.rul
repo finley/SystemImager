@@ -29,10 +29,8 @@ $(KMOD_DIR).build:  $(KMOD_DIR).unpack $(INITRD_BUILD_DIR).prep
 		--sbindir=/sbin \
 		--libdir=/lib \
 		--with-rootlibdir=/lib \
-		--with-systemdsystemunitdir=no \
-		--libexecdir=/lib/udev
-		--disable-extras \
-		--disable-introspection
+		--libexecdir=/libexec \
+		--disable-manpages
 	$(MAKE) -j $(NCPUS) -C $(KMOD_DIR)
 	touch $@
 
