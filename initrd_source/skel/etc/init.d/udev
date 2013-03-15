@@ -11,7 +11,7 @@
 # The udev daemon receives events from the kernel about changes in the
 # /sys filesystem and manages the /dev filesystem.
 #
-/sbin/udevd --daemon
+/lib/udev/udevd --daemon
 # -BEF: Use for debug- /sbin/udevd --daemon --debug >/tmp/udevd.log 2>&1
 
 # udevtrigger - cold plug devices
@@ -20,7 +20,7 @@
 # the devices populated in /sys.  This task causes the kernel to resend
 # them.
 #
-/sbin/udevadm trigger
+/usr/bin/udevadm trigger
 
 # udevmonitor - log initial device creation
 #
@@ -28,7 +28,7 @@
 # useful for debugging, so we monitor this and create a log file
 # from that.
 #
-/sbin/udevadm monitor -e >/dev/.udev.log &
+/usr/bin/udevadm monitor -e >/dev/.udev.log &
 
 # udev-finish - save udev log and update rules
 #

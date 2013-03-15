@@ -733,6 +733,8 @@ mount_initial_filesystems() {
     [ -d /sys ]  || mkdir /sys
     [ -d /proc ] || mkdir /proc
     [ -d /tmp ]  || mkdir /tmp
+    [ -d /run ]  || mkdir /run
+    [ -d /var/log ]  || mkdir -p /var/log
 
     mkdir -p /var/lock
 
@@ -750,6 +752,8 @@ mount_initial_filesystems() {
 
     mkdir /dev/pts
     mount -t devpts -o noexec,nosuid,gid=5,mode=0620 none /dev/pts || true
+    mount -t tmpfs -o mode=0755,rw,nosuid,nodev none /run
+    mount -t tmpfs -o mode=0755,rw,nosuid,nodev none /var/log
 
 }
 #
@@ -972,12 +976,16 @@ start_network() {
         DHCLIENT_DIR="/var/state/dhcp"
         mkdir -p $DHCLIENT_DIR
         
-        # combine systemimager code to the stock debian dhclient-script
+        # New dhclient uses /sbin/dhclient-script that triggers /etc/dhcp/dhclient-exit-hooks
+	# /etc/dhclient-script.debian-dist => /sbin/dhclient-script
+	# /etc/dhclient-script.si-prefix => /etc/dhcp/dhclient-exit-hooks
+	#
+	# combine systemimager code to the stock debian dhclient-script
         # and make executable
-        cat /etc/dhclient-script.si-prefix \
-            /etc/dhclient-script.debian-dist \
-            > /etc/dhclient-script
-        chmod +x /etc/dhclient-script
+        #cat /etc/dhclient-script.si-prefix \
+        #    /etc/dhclient-script.debian-dist \
+        #    > /etc/dhclient-script
+        #chmod +x /etc/dhclient-script
 
         # be sure AF_PACKET is supported in the kernel
         [ -f /lib/modules/`uname -r`/modules.dep ] && modprobe af_packet &> /dev/null

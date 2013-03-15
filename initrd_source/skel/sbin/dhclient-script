@@ -25,8 +25,8 @@
 # Must be used on exit.   Invokes the local dhcp client exit hooks, if any.
 exit_with_hooks() {
   exit_status=$1
-  if [ -x /etc/dhclient-exit-hooks ]; then
-    . /etc/dhclient-exit-hooks
+  if [ -x /etc/dhcp/dhclient-exit-hooks ]; then
+    . /etc/dhcp/dhclient-exit-hooks
   fi
 # probably should do something with exit status of the local script
   exit $exit_status
