@@ -76,7 +76,7 @@ include $(INITRD_DIR)/make.d/rsync.rul
 include $(INITRD_DIR)/make.d/tar.rul
 include $(INITRD_DIR)/make.d/sysvinit.rul
 include $(INITRD_DIR)/make.d/util-linux.rul 		# must be before parted to build parted against the uuid libs
-include $(INITRD_DIR)/make.d/kmod.rul			# Needed by udev
+include $(INITRD_DIR)/make.d/kmod.rul			# Needed by udev; replaces module-init-tools
 include $(INITRD_DIR)/make.d/udev.rul			# must be after util-linux (need libblkid)
 include $(INITRD_DIR)/make.d/udpcast.rul
 include $(INITRD_DIR)/make.d/parted.rul
@@ -87,7 +87,8 @@ include $(INITRD_DIR)/make.d/openssl.rul
 include $(INITRD_DIR)/make.d/openssh.rul
 include $(INITRD_DIR)/make.d/kexec-tools.rul
 include $(INITRD_DIR)/make.d/coreutils.rul
-include $(INITRD_DIR)/make.d/module-init-tools.rul	# Must be after busybox to overwrite incompatible modprobe
+# OL: Module-init-tools is obsolete.
+# include $(INITRD_DIR)/make.d/module-init-tools.rul	# Must be after busybox to overwrite incompatible modprobe
 
 PHONY += build_dir 
 build_dir:	$(INITRD_BUILD_DIR).build
@@ -114,8 +115,12 @@ $(INITRD_BUILD_DIR).skel:	$(INITRD_DIR)/initrd.rul
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/usr/bin
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/usr/sbin
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/var
-	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/var/run
-	
+	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/var/db	# For dhclient leases.
+	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/var/log	# For udev log (tmpfs mountpoint)
+	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/run	# For udev
+	#mkdir -p -m 0755 $(INITRD_BUILD_DIR)/var/run	# Fur udev (tmpfs mountpoint)
+	( cd $(INITRD_BUILD_DIR)/var && ln -s /run . )
+
 	#XXX# Need to find some way to do these outside of the build. -BEF-
 	mknod -m 0660 $(INITRD_BUILD_DIR)/dev/tty0 c 4 0
 	mknod -m 0660 $(INITRD_BUILD_DIR)/dev/tty1 c 4 1
@@ -154,7 +159,6 @@ $(INITRD_BUILD_DIR).build:  $(INITRD_BUILD_DIR).prep		\
 								$(OPENSSH_DIR).install			\
 								$(OPENSSL_DIR).install			\
 								$(REISERFSPROGS_DIR).install		\
-								$(MODULE_INIT_TOOLS_DIR).install	\
 								$(RSYNC_DIR).install			\
 								$(SYSVINIT_DIR).install			\
 								$(TAR_DIR).install			\
@@ -311,15 +315,6 @@ install_initrd:	$(INITRD_DIR)/initrd.img
 	mkdir -p $(BOOT_BIN_DEST)
 	$(SI_INSTALL) -m 644 $(INITRD_DIR)/initrd.img \
 	    $(BOOT_BIN_DEST)/initrd.img
-
-initrd_get_source:	$(INITRD_SRC_DIR)/$(BUSYBOX_TARBALL) \
-			$(INITRD_SRC_DIR)/$(UDEV_TARBALL) \
-			$(INITRD_SRC_DIR)/$(UDEV_DIFF) \
-			$(INITRD_SRC_DIR)/$(DHCLIENT_TARBALL) \
-			$(INITRD_SRC_DIR)/$(MODUTILS_TARBALL) \
-			$(INITRD_SRC_DIR)/$(MODULE_INIT_TOOLS_TARBALL) \
-			$(INITRD_SRC_DIR)/$(RSYNC_TARBALL) \
-			$(INITRD_SRC_DIR)/$(UDPCAST_TARBALL)
 
 PHONY += build_dir_clean
 build_dir_clean:
