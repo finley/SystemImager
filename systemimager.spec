@@ -59,7 +59,7 @@ URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 BuildRequires: docbook-utils, dos2unix, flex, libtool, readline-devel, /usr/bin/wget, openssl-devel, gcc, gcc-c++, ncurses-devel, bc, rsync >= 2.4.6
 BuildRequires: libuuid-devel, device-mapper-devel, gperf, binutils-devel, pam-devel
-BuildRequires: lzop, glib2-devel >= 2.22.0
+BuildRequires: lzop, glib2-devel >= 2.22.0, quilt
 Requires: rsync >= 2.4.6, syslinux >= 1.48, libappconfig-perl, dosfstools, /usr/bin/perl
 AutoReqProv: no
 
