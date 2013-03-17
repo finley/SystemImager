@@ -310,6 +310,7 @@ installations.
 %changelog
 * Thu Mar 14 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.6
 - New beta version that includes new kernel, latest udev and fixed build system
+- Added BuildRequires: quilt to build sysvinit.
 * Thu Mar  7 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.5
 - Added glib2-devel >= 2.22.0 BuildRequires (needed by udev-182) 
 - removed --libdir=/lib in util-linux (so links are wrongly generated)
