@@ -10,7 +10,7 @@
 %define ver      0.0.0
 # Set rel to 1 when is is a final release otherwise, set it to a 0.x number
 # This is convenient when final release need to upgrade "beta" releases.
-%define rel      0.7%{?dist}
+%define rel      0.6%{?dist}
 %define packager Bernard Li <bernard@vanhpc.org>
 %define prefix   /usr
 %define _build_all 1
@@ -308,13 +308,8 @@ The bittorrent package allows you to use the BitTorrent protocol to perform
 installations.
 
 %changelog
-* Wed Mar 20 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.7
-- New beta version with dhcp reverted back to v3.1.3 (V4.* at least up to v4.2.5
-  Fail to initialize nics that have flag 1002 (Bug ISC #32935))
-
 * Thu Mar 14 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.6
 - New beta version that includes new kernel, latest udev and fixed build system
-
 * Thu Mar  7 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.5
 - Added glib2-devel >= 2.22.0 BuildRequires (needed by udev-182) 
 - removed --libdir=/lib in util-linux (so links are wrongly generated)
