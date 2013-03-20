@@ -9,14 +9,21 @@
 #
 
 4.3.0 [ Not yet released ]
-- build: Updated the build system by enforcing dependancies
+- dhcp: Updated and moved dhclient-script and /etc/dhcp/dhclient-exit-hooks
+- dhcp: Add a patch so configure script can detect linux running kernel >= V3
+- dhcp: reverted to V3.1.3 becasue V4+ have bug that makes dhclient ignore
+  unconfigured interfaces that are down if not specified on the command line
+  Bug tracked and reported upstream as: ICS#32935
+- Enabled all network drivers, firmware, disck controlers, filesystems as modules.
+- Replaced modules-init-tools (obsolete) with kmod-12
+- build: Updated the build system by enforcing dependancies.
 - build use make install instead of make install-exec in order
   to install devel files in the initrd_build_dir.
   This permit things like compiling udev using the new kernel
   headers. Thus, it is possible to have latest udev that can't
   build on old system like CentOS-6 (kernel headers too old)
 - build: remove useless and devel files before generating the
-  intird.img (/usr/share/* /share/* /lib/*.la ...)
+  intird.img (/usr/share/* /share/* /lib/*.la /lib/*.a ...)
 - Updated spec file:
   - Comments
   - Cleanup
