@@ -67,7 +67,7 @@ parted_clean:
 	rm -f  $(PARTED_DIR).build
 	rm -f  $(PARTED_DIR).install
 
-UBUNTU_DAPPER_BUILD_DEPS += libreadline5-dev
+UBUNTU_DAPPER_BUILD_DEPS += libreadline-dev
 
 #-------------------
 #

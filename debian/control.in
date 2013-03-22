@@ -2,7 +2,7 @@ Source: systemimager
 Section: admin
 Priority: optional
 Maintainer: dann frazier <dannf@debian.org>
-Build-Depends: bc, bzip2, cramfsprogs (>= 1.1-4), debhelper (>= 4.0.0), flex, gettext, groff-base, libdevmapper-dev, libpopt-dev, libtool, libreadline5-dev, libssl-dev, module-init-tools, python-dev, rsync, texinfo, uuid-dev, wget, zlib1g-dev, tofrodos | sysutils (<= 2.0.0-1)
+Build-Depends: bc, bzip2, cramfsprogs (>= 1.1-4), debhelper (>= 4.0.0), flex, gettext, groff-base, libdevmapper-dev, libpopt-dev, libtool, libreadline-dev, libssl-dev, module-init-tools, python-dev, rsync, texinfo, uuid-dev, wget, zlib1g-dev, tofrodos | sysutils (<= 2.0.0-1), ncurses-dev, dos2unix, binutils-dev, quilt, libpam-dev, pkg-config, libglib2.0-dev, gperf
 Build-Conflicts: libc-pic
 Build-Depends-Indep: docbook-to-man, docbook-utils
 Standards-Version: 3.7.2
