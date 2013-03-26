@@ -3,6 +3,48 @@
 #  vi:set filetype=conf tw=80:
 #
 
+Add a "Features" section to the website:
+
+    - Image based provisioning of Linux for sites with a single machine or
+      thousands of machines.
+    - Supported distributions include: all
+    - Supported architectures include:
+        - x86_64
+        - i386
+        - ia64
+        - parisc
+        - alpha
+        - ppc
+        - ppc64
+        - ppc64-iSeries
+        - ppc64-ps3 (Sony PS3)
+    - Un-Supported architectures on which is has been reported to run include:
+        - s390x
+    - Disk label types supported include:
+        - GPT
+        - msdos
+    - Software RAID support
+    - LVM support
+        - including LVM on top of Software RAID
+    - Filesystems supported include:
+        - msdos, vfat
+        - ext2, ext3, ext4
+        - reiserfs
+        - jfs
+        - xfs
+        - swap
+    - Transport protocols include:
+        - rsync
+            - default and simplest
+        - bittorrent
+            - best choice at scale
+        - rsync over SSH 
+            - fully encrypted operation supported
+        - multicast
+            - no longer recommended -- see bittorrent
+
+
+
 Have a single init script.  Start services based on their settings in /etc/default/systemimager or /etc/systemimager/initscript.conf
 
 Move _all_ source code into si.trunk/src
