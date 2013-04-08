@@ -360,6 +360,9 @@ sub is_kernel {
         # eliminate vmlinux files
         if( $filename =~ m/^vmlinux/ ) { return undef; }
         #
+        # eliminate symvers files
+        if( $filename =~ m/^symvers/ ) { return undef; }
+        #
         # eliminate memtest
         if( $filename =~ m/^memtest/ ) { return undef; }
         #
