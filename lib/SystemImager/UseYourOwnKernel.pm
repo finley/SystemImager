@@ -507,7 +507,7 @@ sub is_initrd
 
         #
         # explicitly skip files without "initrd" in the filename
-        unless ( $file =~ /initrd/ ) { return undef; }
+        unless ( $file =~ /initrd|initramfs/ ) { return undef; }
         #
         # Make sure it's binary
         if( ! -B $file ) { return undef; }
