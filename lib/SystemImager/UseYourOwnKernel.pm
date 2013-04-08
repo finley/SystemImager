@@ -351,7 +351,10 @@ sub is_kernel {
         # skip symlinks
         if( -l $file )   { return undef; }
         #
-        # skip .bak files
+        # skip dot files
+        if( $filename =~ /^\..*$/ )   { return undef; }
+        #
+        # skip *.bak files
         if( $filename =~ /\.bak$/ )   { return undef; }
         #
         # eliminate ramdisks
@@ -467,11 +470,11 @@ sub _get_kernel_release($) {
                 my $regex =
                 #           | kernel version + build machine
                 #           `---------------------------------------
-                            '((2\.[46])|(3\.[0-9])\.\d[^\/]*?) \(.*@.*\) [#]\d+.*' .
+                            '(((2\.[46])|(3\.\d{1,2}))\.\d{1,2}[\w.-]*) *\(.*@.*\) [#]\d+.*' .
                 #
                 #           | build date
                 #           `---------------------------------------
-                            '(\w{3} \w{3} \d{1,2}|\d{4}\/\d{2}\/\d{2}) '.
+                            '(\w{3} \w{3} \d{1,2})|(\d{4}\/\d{2}\/\d{2}) '.
                 #
                 #           | build time
                 #           `---------------------------------------
