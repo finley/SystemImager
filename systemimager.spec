@@ -10,7 +10,7 @@
 %define ver      0.0.0
 # Set rel to 1 when is is a final release otherwise, set it to a 0.x number
 # This is convenient when final release need to upgrade "beta" releases.
-%define rel      0.7%{?dist}
+%define rel      0.8%{?dist}
 %define packager Bernard Li <bernard@vanhpc.org>
 %define prefix   /usr
 %define _build_all 1
@@ -308,6 +308,10 @@ The bittorrent package allows you to use the BitTorrent protocol to perform
 installations.
 
 %changelog
+* Mon Apr 08 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.8
+- New beta version:
+  - Fix for parted version detection
+  - Fix for "Unable to auto-detect kernel file (rhel-6.4)
 * Thu Mar 14 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.7
 - New beta version which revet dhclient to v3.1.3 as all V4 are affected by
   bug ISC#32935 which prevent unitialized interface to be set up.
