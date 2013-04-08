@@ -533,7 +533,7 @@ endif
 # make the srpms for systemimager
 .PHONY:	srpm
 srpm: $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
-	rpmbuild -ts $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
+	rpmbuild --define '%dist %{nil}' -ts $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
 
 # make the rpms for systemimager
 .PHONY:	rpm
