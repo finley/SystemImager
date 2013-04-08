@@ -1686,8 +1686,8 @@ sub which_dev_style {
 #
 sub _get_parted_version {
 
-    $_ = `parted --version`;
-    if(m/(\d+\.\d+\.\d+)/) {
+    $_ = `parted --version|grep ^parted`;
+    if(m/(\d+\.\d+(\.\d+){0,1})/) {
         return $1;
     }
 
