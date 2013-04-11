@@ -309,7 +309,7 @@ installations.
 
 %changelog
 * Mon Apr 08 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.9
-- New beta version (updated gzip to 1.5)
+- New beta version: updated gzip to 1.5 and tar to 1.26 (gets undefined)
 
 * Mon Apr 08 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.8
 - New beta version:
