@@ -1,0 +1,15 @@
+--- tar-1.26/gnu/stdio.in.h.orig	2013-04-11 14:27:33.174049841 +0200
++++ tar-1.26/gnu/stdio.in.h	2013-04-11 14:28:41.001050009 +0200
+@@ -160,12 +160,6 @@
+                  "use gnulib module fflush for portable POSIX compliance");
+ #endif
+ 
+-/* It is very rare that the developer ever has full control of stdin,
+-   so any use of gets warrants an unconditional warning.  Assume it is
+-   always declared, since it is required by C89.  */
+-#undef gets
+-_GL_WARN_ON_USE (gets, "gets is a security hole - use fgets instead");
+-
+ #if @GNULIB_FOPEN@
+ # if @REPLACE_FOPEN@
+ #  if !(defined __cplusplus && defined GNULIB_NAMESPACE)
