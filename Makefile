@@ -503,7 +503,7 @@ $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2.sign:	$(TOPDIR)/tmp/systemimager-$
 	cd $(TOPDIR)/tmp && gpg --detach-sign -a --output systemimager-$(VERSION).tar.bz2.sign systemimager-$(VERSION).tar.bz2
 	cd $(TOPDIR)/tmp && gpg --verify systemimager-$(VERSION).tar.bz2.sign 
 
-$(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2: systemimager.spec
+$(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2: $(TOPDIR)/systemimager.spec
 	rm -fr $(TOPDIR)/tmp
 	if [ -d $(TOPDIR)/.svn ]; then \
 		mkdir -p $(TOPDIR)/tmp; \
@@ -532,12 +532,12 @@ endif
 
 # make the srpms for systemimager
 .PHONY:	srpm
-srpm: $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
+srpm: $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2 $(TOPDIR)/systemimager.spec
 	rpmbuild --define '%dist %{nil}' -ts $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
 
 # make the rpms for systemimager
 .PHONY:	rpm
-rpm: $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
+rpm: $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2 $(TOPDIR)/systemimager.spec
 	rpmbuild -tb $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
 
 # make the debs for systemimager
