@@ -9,6 +9,8 @@
 #
 
 4.3.0 [ Not yet released ]
+- Fix "unable to auto-detect kernel file" in si_prepareclient.
+  (Thanks to David Livingstone for reporting this problem)
 - Updated missing build dependancies (ubuntu 12.10)
 - dhcp: Updated and moved dhclient-script and /etc/dhcp/dhclient-exit-hooks
 - dhcp: Add a patch so configure script can detect linux running kernel >= V3
@@ -29,7 +31,7 @@
   - Comments
   - Cleanup
   - Use of rpm directory for rpm specific patches
-  - Updated BuildRequires:
+  - Updated BuildRequires: (quilt, ...)
 - Enabled ext4 module in kernel
 - Fix for new parted in Server.pm (avoid grepping "Disk Flags").
 - Added:
@@ -44,6 +46,8 @@
   - busybox to 1.20.2
   - kernel to 2.6.34.1
   - LVM to 2.2.02.98
+  - gzip to 1.5
+  - tar to 1.26
 - Use make install in LVM instead of manual copy (installs all binaries)
 - Full rewrite of 95all.monitord_rebooted to have correct rebooted status
   on RHEL like distros. Try to comply with SysVInitScripts and systemd.

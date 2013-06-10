@@ -6,10 +6,10 @@
 #   * Upgrade from v1.3.5 to v1.4
 #
 
-GZIP_VERSION	= 1.4
+GZIP_VERSION	= 1.5
 GZIP_TARBALL 	= gzip-$(GZIP_VERSION).tar.xz
-#GZIP_URL        = http://mirror.anl.gov/gnu/gzip/$(GZIP_TARBALL)
-GZIP_URL 		= http://download.systemimager.org/pub/gzip/$(GZIP_TARBALL)
+GZIP_URL        = http://mirror.anl.gov/gnu/gzip/$(GZIP_TARBALL)
+#GZIP_URL 		= http://download.systemimager.org/pub/gzip/$(GZIP_TARBALL)
 GZIP_DIR 		= $(INITRD_SRC_DIR)/gzip-$(GZIP_VERSION)
 GZIP_PATCHES 	= $(shell ls $(INITRD_PATCH_DIR)/gzip.*.patch 2>/dev/null | sort)
 

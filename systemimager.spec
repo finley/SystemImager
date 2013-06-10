@@ -10,7 +10,7 @@
 %define ver      0.0.0
 # Set rel to 1 when is is a final release otherwise, set it to a 0.x number
 # This is convenient when final release need to upgrade "beta" releases.
-%define rel      0.7%{?dist}
+%define rel      0.10%{?dist}
 %define packager Bernard Li <bernard@vanhpc.org>
 %define prefix   /usr
 %define _build_all 1
@@ -45,6 +45,12 @@
 %define python_xml PyXML
 %endif
 
+# Still use the correct lib even on fc-18+ where --target noarch sets %_libdir to /usr/lib even on x86_64 arch.
+%define static_libcrypt_a /usr/lib/libcrypt.a
+%if "%(arch)" == "x86_64"
+%define static_libcrypt_a /usr/lib64/libcrypt.a
+%endif
+
 Summary: Software that automates Linux installs, software distribution, and production deployment.
 Name: %name
 Version: %ver
@@ -53,12 +59,12 @@ License: GPL
 Group: Applications/System
 Source0: http://download.sourceforge.net/systemimager/%{name}-%{ver}.tar.bz2
 BuildRoot: /tmp/%{name}-%{ver}-root
-BuildArchitectures: noarch
+BuildArch: noarch
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 BuildRequires: docbook-utils, dos2unix, flex, libtool, readline-devel, /usr/bin/wget, openssl-devel, gcc, gcc-c++, ncurses-devel, bc, rsync >= 2.4.6
-BuildRequires: libuuid-devel, device-mapper-devel, gperf, binutils-devel, pam-devel
+BuildRequires: libuuid-devel, device-mapper-devel, gperf, binutils-devel, pam-devel, quilt
 BuildRequires: lzop, glib2-devel >= 2.22.0
 Requires: rsync >= 2.4.6, syslinux >= 1.48, libappconfig-perl, dosfstools, /usr/bin/perl
 AutoReqProv: no
@@ -87,6 +93,7 @@ Release: %rel
 License: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
+BuildArch: noarch
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
@@ -118,6 +125,7 @@ Release: %rel
 License: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
+BuildArch: noarch
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
@@ -149,6 +157,7 @@ Release: %rel
 License: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
+BuildArch: noarch
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
@@ -180,6 +189,7 @@ Release: %rel
 License: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
+BuildArch: noarch
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
@@ -213,6 +223,7 @@ Release: %rel
 License: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
+BuildArch: noarch
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
@@ -250,10 +261,11 @@ Release: %rel
 License: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
+BuildArch: noarch
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
-BuildRequires: python, python-devel, %{python_xml}, %{_libdir}/libcrypt.a
+BuildRequires: python, python-devel, %{python_xml}, %{static_libcrypt_a}
 AutoReqProv: no
 
 %description %{_build_arch}initrd_template
@@ -283,6 +295,7 @@ Release: %rel
 License: GPL
 Group: Applications/System
 BuildRoot: /tmp/%{name}-%{ver}-root
+BuildArch: noarch
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
@@ -308,6 +321,14 @@ The bittorrent package allows you to use the BitTorrent protocol to perform
 installations.
 
 %changelog
+* Mon Apr 08 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.9
+- New beta version: updated gzip to 1.5 and tar to 1.26 (gets undefined)
+
+* Mon Apr 08 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.8
+- New beta version:
+  - Fix for parted version detection
+  - Fix for "Unable to auto-detect kernel file (rhel-6.4)
+
 * Thu Mar 14 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.7
 - New beta version which revet dhclient to v3.1.3 as all V4 are affected by
   bug ISC#32935 which prevent unitialized interface to be set up.
