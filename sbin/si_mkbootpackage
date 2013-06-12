@@ -178,6 +178,8 @@ GetOptions(
     "ssh-key=s"            => \my $ssh_key,
     "authorized-keys=s"    => \my $authorized_keys,
     "config=s"             => \my $local_cfg,
+    "include-system-firmware" => \my $system_firmware,
+    "firmware-dir=s"       => \my $firmware_dir,
 ) || die "$help_info";
 
 
@@ -257,6 +259,27 @@ if (($filesystem) &&
     exit 1;
 }
 
+if($firmware_dir and !($system_firmware)) {
+    print "FATAL:  --firmware-dir option used without --include-system-firmware !\n";
+    print qq(Try "$progname --help" for more info.\n);
+    exit 1;
+}
+
+$firmware_dir="/lib/firmware" if(!$firmware_dir);
+
+if(!($system_firmware)) {
+    if($firmware_dir) {
+        print "FATAL:  --firmware-dir option used without --include-system-firmware !\n";
+        print qq(Try "$progname --help" for more info.\n);
+        exit 1;
+    }
+} else {
+    if( ! -d $firmware_dir) {
+        print "FATAL:  firmware dir $firmware_dir not found!\n";
+        exit 1;
+    }
+}
+
 # if quiet redirect all to /dev/null
 if ($quiet) {
     open(STDERR, '>/dev/null');
@@ -307,7 +330,8 @@ sub create_boot_package {
     SystemImager::UseYourOwnKernel->create_uyok_initrd(
         $arch, $my_modules, $custom_kernel, $modules_dir,
         $image, $filesystem, $destination,
-        $ssh_key, $authorized_keys, $local_cfg, $verbose
+        $ssh_key, $authorized_keys, $local_cfg,
+        $system_firmware, $firmware_dir, $verbose
     );
 
     return 1;
