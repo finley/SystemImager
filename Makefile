@@ -197,15 +197,30 @@ GETSOURCE = $(TOPDIR)/tools/getsource
 # explicitly add the right paths here. -AR-
 PATH := $(PATH):/sbin:/usr/sbin:/usr/local/sbin
 
+########################################################################
 #
-# Ok, here's my best idea so far for auto-running configure. -BEF-
-CONFIG_ME := $(shell test -e config.inc || PATH=$(PATH) ./configure 1>&2)
-# Fix this some day so that it gives a nicer error message... -BEF-
-include config.inc
+#  BEGIN Give friendly config and packages help. -BEF-
+#
+IS_CONFIGURED = $(shell test -e config.inc && echo 1 || echo 0)
+ifeq ($(IS_CONFIGURED),0)
 
+.PHONY:	all
+all:	show_build_deps
+
+else
+
+	include config.inc
 # build everything, install nothing
 .PHONY:	all
 all:	kernel $(INITRD_DIR)/initrd.img manpages
+
+
+endif
+#
+#  END Give friendly config and packages help. -BEF-
+#
+########################################################################
+
 
 binaries: $(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.img
 
@@ -536,12 +551,21 @@ srpm: $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2 $(TOPDIR)/systemimager.spec
 	rpmbuild --define '%dist %{nil}' -ts $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
 
 # make the rpms for systemimager
-.PHONY:	rpm
+.PHONY:	rpm rpms
+rpms: rpm
 rpm: $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2 $(TOPDIR)/systemimager.spec
 	rpmbuild -tb $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
 
 # make the debs for systemimager
-.PHONY: deb
+#
+# I wonder if installing libpam-dev would eliminate the need for
+# "--disable-login --disable-su" in  initrd_source/make.d/util-linux.rul
+# ?? -BEF-  If so, we should add libpam-dev to UBUNTU_PRECISE_BUILD_DEPS
+# in initrd_source/make.d/util-linux.rul.
+#
+UBUNTU_PRECISE_BUILD_DEPS += dos2unix docbook-utils libncurses-dev
+.PHONY: deb debs
+debs: deb
 deb: $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
 	# Check package version.
 	@(if [ ! "`dpkg-parsechangelog | grep ^Version: | cut -d ' ' -f 2`" = $(VERSION) ]; then \
@@ -579,11 +603,8 @@ clean:	$(subst .rul,_clean,$(shell cd $(TOPDIR)/make.d && ls *.rul)) initrd_clea
 distclean:	clean initrd_distclean
 	-rm -rf $(SRC_DIR) $(INITRD_SRC_DIR)
 
-DEBIAN_STABLE_BUILD_DEPS += flex
-UBUNTU_DAPPER_BUILD_DEPS += flex
-
 .PHONY:	help
-help:  show_targets
+help:  show_build_deps
 
 #
 #
@@ -626,23 +647,39 @@ show_targets:
 	@echo "deb"
 	@echo "    Build all of the debs that can be build on your platform."
 	@echo ""
-	@echo "show_all_targets"
-	@echo "    Show all available targets."
-	@echo
 	@echo "show_build_deps"
 	@echo "    Shows the list of packages necessary for building on"
 	@echo "    various distributions and releases."
 	@echo
+	@echo "show_all_targets"
+	@echo "    Show all available targets."
+	@echo
+
 
 .PHONY: show_build_deps
 show_build_deps:
-	@echo "Cut and paste the appropriate command below:"
+	@echo "Before you can build SystemImager, you'll need to do the following:"
 	@echo
-	@echo Ubuntu Dapper:
-	@echo "  apt-get install $(UBUNTU_DAPPER_BUILD_DEPS)"
+	@echo "1) Install the appropriate build dependencies for your distribution."
+	@echo "   The easiest path is to cut and paste the command below that is"
+	@echo "   appropriate for your distribution."
 	@echo
-	@echo Debian Stable:
-	@echo "  apt-get install $(DEBIAN_STABLE_BUILD_DEPS)"
+	@echo "   Ubuntu Precise (12.04):"
+	@echo "     apt-get install build-essential rpm flex $(UBUNTU_PRECISE_BUILD_DEPS)"
+	@echo
+	@echo "   Ubuntu Dapper:"
+	@echo "     apt-get install build-essential flex $(UBUNTU_DAPPER_BUILD_DEPS)"
+	@echo
+	@echo "   RHEL6, CentOS6, and friends:"
+	@echo "     yum install rpm-build patch wget flex bc docbook-utils dos2unix device-mapper-devel gperf pam-devel quilt lzop glib2-devel PyXML glibc-static $(RHEL6_BUILD_DEPS)"
+	@echo
+	@echo "   Debian Stable:"
+	@echo "     apt-get install build-essential flex $(DEBIAN_STABLE_BUILD_DEPS)"
+	@echo
+	@echo "2) Run './configure'"
+	@echo
+	@echo "3) Run 'make show_targets' to see a list of make targets from which you can"
+	@echo "   choose."
 	@echo
 
 .PHONY:	show_all_targets

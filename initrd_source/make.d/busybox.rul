@@ -24,7 +24,6 @@ PHONY += busybox
 busybox:	$(BUSYBOX_DIR).build
 $(BUSYBOX_DIR).build:  $(BUSYBOX_DIR).unpack $(INITRD_BUILD_DIR).prep
 	yes '' | $(MAKE) -C $(BUSYBOX_DIR) oldconfig
-	$(MAKE) -j $(NCPUS) -C $(BUSYBOX_DIR) dep
 	$(MAKE) -j $(NCPUS) -C $(BUSYBOX_DIR)
 	touch $@
 

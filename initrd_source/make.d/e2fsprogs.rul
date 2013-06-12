@@ -60,3 +60,5 @@ e2fsprogs_clean:
 	rm -f  $(E2FSPROGS_DIR).build
 	rm -f  $(E2FSPROGS_DIR).install
 
+RHEL6_BUILD_DEPS          += e2fsprogs-devel
+

@@ -72,16 +72,9 @@ openssh_clean:
 
 
 # include build dependencies here
-DEBIAN_STABLE_BUILD_DEPS += libssl-dev zlib1g-dev
-UBUNTU_DAPPER_BUILD_DEPS += libssl-dev zlib1g-dev
-
-
-
-#ifeq ($(ARCH),x86_64)
-#	OPENSSH_OTHER_FILES := $(shell echo /lib64/libnss_files*)
-#else
-#	OPENSSH_OTHER_FILES := $(shell echo /lib/libnss_files*)
-#endif
-
+DEBIAN_STABLE_BUILD_DEPS  += libssl-dev zlib1g-dev
+UBUNTU_DAPPER_BUILD_DEPS  += libssl-dev zlib1g-dev
+UBUNTU_PRECISE_BUILD_DEPS += libssl-dev libz-dev
+RHEL6_BUILD_DEPS          += openssl-devel
 
 

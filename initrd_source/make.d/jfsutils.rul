@@ -31,7 +31,7 @@ $(JFSUTILS_DIR).unpack:	$(INITRD_SRC_DIR)/$(JFSUTILS_TARBALL) \
 						$(JFSUTILS_PATCHES) \
 						$(INITRD_DIR)/make.d/jfsutils.rul
 	rm -rf $(JFSUTILS_DIR)
-	cd $(INITRD_SRC_DIR) && tar -xvzf $(JFSUTILS_TARBALL)
+	cd $(INITRD_SRC_DIR) && tar -xvaf $(JFSUTILS_TARBALL)
 	cd $(JFSUTILS_DIR) && cat $(JFSUTILS_PATCHES) < /dev/null | patch -p1
 	touch $@
 

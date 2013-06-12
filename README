@@ -12,9 +12,9 @@ o Read at _least_ the HOWTO section of the manual:
   1)  "cd /usr/share/doc/systemimager-*/manual/"
   2)  "lynx html/index.html"
     or
-      "mozilla html/index.html &"
+      "mozilla html/index.html"
     or
-      "xpdf systemimager-manual.pdf"
+      "evince systemimager-manual.pdf"
     or
       "acroread systemimager-manual.pdf"
 
@@ -34,20 +34,9 @@ SystemImager packages for Debian or RPM based distributions:
 
 Building and/or Installing SystemImager from Source
 --------------------------------------------------------------------------------
-SystemImager should now build on most any distribution, as well as work on any
-distribution.  If you must build SystemImager yourself, here are a few tips:
+SystemImager should build and operate on most any distribution.  If you
+must build SystemImager yourself, start by reviewing the make help.
 
-    o Refer to the Makefile for details.
-    o Makefile targets you are probably most interested in:
-
-        all
-        install_client_all
-        install_server_all
-        install_boel_binaries_tarball
-        install_initrd
-
-    o For a list of all possible Makefile targets, you can try this command:
-
-        make show_targets
+Literally -- just type it in and hit enter:  "make help"
 
 

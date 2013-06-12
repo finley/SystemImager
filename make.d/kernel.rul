@@ -196,3 +196,6 @@ kernel_clean:
 	rm -rf $(LINUX_SRC)
 	rm -f $(SRC_DIR)/patched_kernel-stamp
 	rm -f $(SRC_DIR)/modules_build-stamp
+
+RHEL6_BUILD_DEPS += xz
+

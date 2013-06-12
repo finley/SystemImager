@@ -5,8 +5,8 @@
 
 COREUTILS_VERSION	= 8.20
 COREUTILS_TARBALL 	= coreutils-$(COREUTILS_VERSION).tar.xz
-COREUTILS_URL 		= http://ftp.gnu.org/gnu/coreutils/$(COREUTILS_TARBALL)
-#COREUTILS_URL 		= http://download.systemimager.org/pub/coreutils/$(COREUTILS_TARBALL)
+#COREUTILS_URL 		= http://ftp.gnu.org/gnu/coreutils/$(COREUTILS_TARBALL)
+COREUTILS_URL 		= http://download.systemimager.org/pub/coreutils/$(COREUTILS_TARBALL)
 COREUTILS_DIR 		= $(INITRD_SRC_DIR)/coreutils-$(COREUTILS_VERSION)
 COREUTILS_PATCHES 	= $(shell ls $(INITRD_PATCH_DIR)/coreutils.*.patch 2>/dev/null | sort)
 

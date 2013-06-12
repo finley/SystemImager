@@ -3,6 +3,8 @@
 #    vi:set filetype=make:
 #
 #   2005.12.18 Erich Focht
+#   2013.06.10 Brian Elliott Finley
+#   - Added UBUNTU deps
 #
 
 
@@ -51,4 +53,7 @@ mdadm_clean:
 	rm -f  $(MDADM_DIR).unpack
 	rm -f  $(MDADM_DIR).build
 	rm -f  $(MDADM_DIR).install
+
+UBUNTU_PRECISE_BUILD_DEPS += binutils-dev
+RHEL6_BUILD_DEPS          += binutils-devel
 

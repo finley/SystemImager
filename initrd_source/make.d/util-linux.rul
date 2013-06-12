@@ -1,5 +1,6 @@
 #
-#  $Id:$
+#   2013.06.10 Brian Elliott Finley
+#
 #   vi: set filetype=make:
 #   
 
@@ -26,14 +27,14 @@ util-linux:	$(UTIL_LINUX_DIR).build
 # Need a better solution than assuming we can link to system udev instead of the
 # systemimager udev build.
 $(UTIL_LINUX_DIR).build:	$(UTIL_LINUX_DIR).unpack $(INITRD_BUILD_DIR).prep
-	cd $(UTIL_LINUX_DIR) && CFLAGS="-I$(INITRD_BUILD_DIR)/usr/include" \
-				LDFLAGS="-L$(INITRD_BUILD_DIR)/lib" \
-				./configure \
-			--prefix=/ \
-			--sysconfdir=/etc \
-			--includedir=/usr/include \
-			--libexecdir=/lib/udev \
-			--with-sysroot=$(INITRD_SRC_DIR)
+	cd $(UTIL_LINUX_DIR) && \
+        CFLAGS="-I$(INITRD_BUILD_DIR)/usr/include" LDFLAGS="-L$(INITRD_BUILD_DIR)/lib" \
+            ./configure \
+		        --prefix=/ \
+		        --sysconfdir=/etc \
+		        --includedir=/usr/include \
+		        --libexecdir=/lib/udev \
+		        --with-sysroot=$(INITRD_SRC_DIR)
 	$(MAKE) -j $(NCPUS) -C $(UTIL_LINUX_DIR)
 	touch $@
 
@@ -55,4 +56,6 @@ util-linux_clean:
 	rm -f  $(UTIL_LINUX_DIR).unpack
 	rm -f  $(UTIL_LINUX_DIR).build
 	rm -f  $(UTIL_LINUX_DIR).install
+
+UBUNTU_PRECISE_BUILD_DEPS += libpam-dev
 

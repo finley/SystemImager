@@ -29,7 +29,7 @@ $(HFSUTILS_DIR).unpack:	$(INITRD_SRC_DIR)/$(HFSUTILS_TARBALL) \
 						$(HFSUTILS_PATCHES) \
 						$(INITRD_DIR)/make.d/hfsutils.rul
 	rm -rf $(HFSUTILS_DIR)
-	cd $(INITRD_SRC_DIR) && tar -xvzf $(HFSUTILS_TARBALL)
+	cd $(INITRD_SRC_DIR) && tar -xvaf $(HFSUTILS_TARBALL)
 	cd $(HFSUTILS_DIR) && cat $(HFSUTILS_PATCHES) < /dev/null | patch -p1
 	touch $@
 

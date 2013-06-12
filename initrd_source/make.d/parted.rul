@@ -68,22 +68,7 @@ parted_clean:
 	rm -f  $(PARTED_DIR).install
 
 UBUNTU_DAPPER_BUILD_DEPS += libreadline-dev
+UBUNTU_PRECISE_BUILD_DEPS += libreadline-dev
+RHEL6_BUILD_DEPS += readline-devel
 
-#-------------------
-#
-#	( cd $(SRC_DIR)/$(PARTED_DIR) && \
-#	  CPPFLAGS=-I$(SRC_DIR)/$(E2FSPROGS_DIR)/lib CFLAGS=-I$(SRC_DIR)/$(E2FSPROGS_DIR)/lib LDFLAGS=-L$(SRC_DIR)/$(E2FSPROGS_DIR)/lib \
-#	  ./configure --disable-Werror --prefix= $(PARTED_CONFIGURE))
-#	$(MAKE) -j $(NCPUS) -C $(SRC_DIR)/$(PARTED_DIR)
-#
-#$(SRC_DIR)/$(PARTED_TARBALL):
-#	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
-#	$(GETSOURCE) $(PARTED_URL) $(SRC_DIR)
-#
-#PHONY += parted_clean
-#parted_clean:
-#	rm -rf $(SRC_DIR)/$(PARTED_DIR)
-#
-#DEBIAN_STABLE_BUILD_DEPS += libreadline4-dev
-#UBUNTU_DAPPER_BUILD_DEPS += libreadline5-dev
 
