@@ -182,6 +182,14 @@ Options:
     used with a greater variety of client hardware, but can make the
     resultant initrd.img much larger.
 
+ --include-system-firmware
+    Include the firmwares that are currently installed on this machine
+    when creating the initrd.img.
+
+    Including all installed firmwares allors you initrd.img to be used
+    with a greater variety of client hardware, but can make the resultant
+    initrd.img larger.
+
  --kernel KERNEL
     Do not detect the kernel to use with UYOK, but instead use the
     file specified by the argument KERNEL.
@@ -191,6 +199,10 @@ Options:
     Get kernel modules to use with UYOK from the DIR repository.
     Use this parameter only with --kernel and only if you use UYOK
     feature.
+
+ --firmware-dir DIR
+    Get the firmwares to use from the DIR repository.
+    Use this parameter only with --with-system-firmware.
 
  --image IMAGENAME
     Get kernel and kernel modules automatically from the image specified
@@ -243,6 +255,8 @@ GetOptions(
     "ssh-key=s"            => \my $ssh_key,
     "authorized-keys=s"    => \my $authorized_keys,
     "config=s"             => \my $local_cfg,
+    "include-system-firmware" => \my $system_firmware,
+    "firmware-dir=s"       => \my $firmware_dir,
 ) || die "$help_info";
 
 my $arch = SystemImager::UseYourOwnKernel::_get_arch();
@@ -344,6 +358,21 @@ if (($server) && ($norsyncd)) {
     print "FATAL:  --server option conflicts with --no-rsyncd!\n";
     print qq(Try "$progname --help" for more info.\n);
     exit 1;
+}
+
+$firmware_dir="/lib/firmware" if(!$firmware_dir);
+
+if(!($system_firmware)) {
+    if($firmware_dir) {
+        print "FATAL:  --firmware-dir option used without --include-system-firmware !\n";
+        print qq(Try "$progname --help" for more info.\n);
+        exit 1;
+    }
+} else {
+    if( ! -d $firmware_dir) {
+        print "FATAL:  firmware dir $firmware_dir not found!\n";
+        exit 1;
+    }
 }
 
 # Make sure we have certain tools that we need.
@@ -942,7 +971,8 @@ sub create_auto_install_script_conf {
         SystemImager::UseYourOwnKernel->create_uyok_initrd(
             $arch, $my_modules, $custom_kernel, $modules_dir,
             $image, $filesystem, '/etc/systemimager/boot',
-            $ssh_key, $authorized_keys, $local_cfg, $verbose
+            $ssh_key, $authorized_keys, $local_cfg,
+            $system_firmware, $firmware_dir, $verbose
         );
     }
 

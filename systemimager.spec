@@ -10,7 +10,7 @@
 %define ver      0.0.0
 # Set rel to 1 when is is a final release otherwise, set it to a 0.x number
 # This is convenient when final release need to upgrade "beta" releases.
-%define rel      0.10%{?dist}
+%define rel      0.11%{?dist}
 %define packager Bernard Li <bernard@vanhpc.org>
 %define prefix   /usr
 %define _build_all 1
@@ -321,6 +321,14 @@ The bittorrent package allows you to use the BitTorrent protocol to perform
 installations.
 
 %changelog
+* Wed Jun 12 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.11
+- New beta version. (Add options to include system installed firmwares
+  into intird.img)
+
+* Fri Apr 19 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.10
+- Fix libcrypt dependancies even on fc-18 when --target noarch is used.
+  Replace BuildArchitecture: (obsolete syntax) with BuildArch:
+
 * Mon Apr 08 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.9
 - New beta version: updated gzip to 1.5 and tar to 1.26 (gets undefined)
 

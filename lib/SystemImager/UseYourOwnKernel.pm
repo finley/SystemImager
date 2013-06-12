@@ -49,6 +49,8 @@ sub create_uyok_initrd() {
         my $ssh_key         = shift;
         my $authorized_keys = shift;
         my $local_cfg       = shift;
+        my $system_firmware = shift;
+        my $firmware_dir    = shift;
         $verbose            = shift;
 
         use File::Copy;
@@ -149,7 +151,11 @@ sub create_uyok_initrd() {
             }
             my $kernel_release = ($custom_kernel) ? _get_kernel_release($custom_kernel) : $uname_r;
             unless ($my_modules) {
-                $cmd = qq(rsync -a --exclude=build --exclude=source ) .
+                # FIXME: option L is required in order to copy all modules, even ones that are outside the
+                # /lib/modules tree (some proprietary modules are stored elswhere and a link is created there after).
+                # this could pose problem when circular links are encountered.
+                # Need to find a better way to handle this.
+                $cmd = qq(rsync -aL --exclude=build --exclude=source ) .
                        qq($modules_to_exclude $module_dir/* $staging_dir/lib/modules/$kernel_release);
                 !system( $cmd ) or die( "Couldn't $cmd." );
             } else {
@@ -217,6 +223,17 @@ sub create_uyok_initrd() {
             print ">>> Including local.cfg into the initrd.img: $local_cfg\n" if ($verbose);
             unless (copy($local_cfg, "$staging_dir/local.cfg")) {
                 die("Couldn't copy $local_cfg to $staging_dir/local.cfg!\n");
+            }
+        }
+
+        #
+        # Copy /lib/firmware files to initrd if option --with-system-firmware is used
+        #
+        if($system_firmware) {
+            $firmware_dir="/lib/firmware" if(!$firmware_dir);
+            if ( -d $firmware_dir ) {
+                $cmd = qq(rsync -aLR /lib/firmware $staging_dir);
+                !system( $cmd ) or die( "Couldn't $cmd." );
             }
         }
 
