@@ -28,19 +28,15 @@
 
       <arg choice=req><option>--server</option> <replaceable>HOSTNAME</replaceable></arg>
       <arg><option>--version</option></arg>
-      <arg><option>-h</option></arg>
       <arg><option>--help</option></arg>
-      <arg><option>-n</option></arg>
       <arg><option>--no-rsyncd</option></arg>
-      <arg><option>-q</option></arg>
       <arg><option>--quiet</option></arg>
-      <arg><option>-r</option></arg>
       <arg><option>--unit MB | %</option></arg>
       <arg><option>--yes</option></arg>
       <arg rep=repeat><option>--exclude <replaceable>DISK</replaceable></option></arg>
-      <arg rep=repeat><option>-e <replaceable>DISK</replaceable></option></arg>
       <arg><option>--no-uyok</option></arg>
       <arg><option>--my-modules</option></arg>
+      <arg><option>--include-system-firmware</option><option>--firmware-dir <replaceable>DIR</replaceable></option></arg>
       <arg><option>--kernel <replaceable>FILE</replaceable></option><option> --modules-dir <replaceable>DIR</replaceable></option></arg>
       <arg><option>--image <replaceable>IMAGENAME</replaceable></option></arg>
       <arg><option>--filesystem <replaceable>FILESYSTEM</replaceable></option></arg>
@@ -80,7 +76,7 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-n, </option><option>--no-rsyncd</option></term>
+        <term><option>-n</option>, <option>--no-rsyncd</option>, <option>--norsyncd</option></term>
         <listitem>
           <para>Do not start the rsync daemon</para>
         </listitem>
@@ -95,13 +91,13 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>--server <replaceable>HOSTNAME</replaceable></option></term>
+        <term><option>--server <replaceable>HOSTNAME</replaceable></option>, <option>-s <replaceable>HOSTNAME</replaceable></option></term>
         <listitem>
           <para>Hostname or IP address of the image server</para>
         </listitem>
       </varlistentry>
     <varlistentry>
-        <term><option>--exclude <replaceable>DISK</replaceable></option>, <option>-e <replaceable>DISK</replaceable></option></term>
+        <term><option>--exclude-disk <replaceable>DISK</replaceable></option>, <option>-e <replaceable>DISK</replaceable></option></term>
         <listitem>
           <para>
             Do not gather partition information for DISK(s).  The result of
@@ -125,7 +121,7 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>--yes</option></term>
+        <term><option>-y</option>, <option>--yes</option></term>
         <listitem>
           <para>Answer yes to all yes/no questions</para>
         </listitem>
@@ -137,6 +133,39 @@
             Don't create a UYOK (Use Your Own Kernel) boot package.  This option
             is advantageous if you know you don't need a UYOK kernel, and you
             want this command to complete faster.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>--my-modules</option></term>
+        <listitem>
+          <para>
+            Only include the modules that are currently loaded on this machine
+            when creating the UYOK (Use Your Own Kernel) initrd.img.
+          </para>
+          <para>
+            Without this option, all available modules are included whether or
+            not they are currently in use (except for those listed in the
+            /etc/systemimager/UYOK.modules_to_exclude file).
+          </para>
+          <para>
+            Including all modules allows your UYOK kernel and initrd.img to be
+            used with a greater variety of client hardware, but can make the
+            resultant initrd.img much larger.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>--include-system-firmware</option></term>
+        <listitem>
+          <para>
+            Include the firmwares that are currently installed on this machine
+            when creating the initrd.img.
+          </para>
+          <para>
+            Including all installed firmwares allors you initrd.img to be used
+            with a greater variety of client hardware, but can make the resultant
+            initrd.img larger.
           </para>
         </listitem>
       </varlistentry>
@@ -158,6 +187,15 @@
             Get kernel modules to use with UYOK from the DIR repository.
             Use this parameter only with --kernel and only if you use UYOK
             feature.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>--firmware-dir <replaceable>DIR</replaceable></option></term>
+        <listitem>
+          <para>
+            Get the firmwares to use from the DIR repository.
+            Use this parameter only with --with-system-firmware.
           </para>
         </listitem>
       </varlistentry>
@@ -218,7 +256,7 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-config <replaceable>FILE</replaceable></option></term>
+        <term><option>--config <replaceable>FILE</replaceable></option></term>
         <listitem>
           <para>
             Where <replaceable>FILE</replaceable> contains all the settings

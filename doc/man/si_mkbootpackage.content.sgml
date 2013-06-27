@@ -28,12 +28,11 @@
 
       <arg choice=req><option>--destination</option> <replaceable>DIR</replaceable> | <option>--flavor</option> <replaceable>FLAVOR</replaceable></arg>
       <arg><option>--version</option></arg>
-      <arg><option>-h</option></arg>
       <arg><option>--help</option></arg>
-      <arg><option>-q</option></arg>
       <arg><option>--quiet</option></arg>
       <arg><option>--yes</option></arg>
       <arg><option>--my-modules</option></arg>
+      <arg><option>--include-system-firmware</option><option>--firmware-dir <replaceable>DIR</replaceable></option></arg>
       <arg><option>--kernel <replaceable>FILE</replaceable></option><option> --modules-dir <replaceable>DIR</replaceable></option></arg>
       <arg><option>--image <replaceable>IMAGENAME</replaceable></option></arg>
       <arg><option>--arch <replaceable>ARCH</replaceable></option></arg>
@@ -110,6 +109,20 @@
         </listitem>
       </varlistentry>
       <varlistentry>
+        <term><option>--include-system-firmware</option></term>
+        <listitem>
+          <para>
+            Include the firmwares that are currently installed on this machine
+            when creating the initrd.img.
+          </para>
+          <para>
+            Including all installed firmwares allors you initrd.img to be used
+            with a greater variety of client hardware, but can make the resultant
+            initrd.img larger.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
         <term><option>--kernel <replaceable>FILE</replaceable></option></term>
         <listitem>
           <para>
@@ -127,6 +140,15 @@
             Get kernel modules to use with UYOK from the DIR repository.
             Use this parameter only with --kernel and only if you use UYOK
             feature.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>--firmware-dir <replaceable>DIR</replaceable></option></term>
+        <listitem>
+          <para>
+            Get the firmwares to use from the DIR repository.
+            Use this parameter only with --with-system-firmware.
           </para>
         </listitem>
       </varlistentry>
