@@ -128,10 +128,10 @@ Options:
  --version
     Display version and copyright information.
 
- --help
+ -h, --help
     Display this output.
 
- --server IMAGESERVER
+ -s IMAGESERVER, --server IMAGESERVER
     Where IMAGESERVER is either the IP address or host name of your
     SystemImager server.  Prepareclient makes your golden client's root
     filesystem readable to other rsync capable machines.  While this
@@ -139,13 +139,13 @@ Options:
     option limits access so that only your SystemImager server can read
     your golden client's root filesystem.
 
- --no-rsyncd
+ -n, --no-rsyncd, --norsyncd
     Do not start the rsync daemon.
 
- --yes
+ -y, --yes
     Answer yes to all yes/no questions.
 
- --exclude, -e DISK [-e DISK...]
+ -e DISK, --exclude-disk [-e DISK...]
     Do not gather partition information for DISK(s).  The result of
     using this option, is that DISK(s) will not be partitioned during
     the auto-install process.
@@ -155,7 +155,7 @@ Options:
 
     Example: -e /dev/sdb -e sdc -e /dev/ida/c0d0 -e ida/c0d1
 
- --quiet
+ -q, --quiet
     Run silently.  Return an exit status of 0 for success or a non-zero
     exit status for failure.
 
@@ -202,7 +202,7 @@ Options:
 
  --firmware-dir DIR
     Get the firmwares to use from the DIR repository.
-    Use this parameter only with --with-system-firmware.
+    Use this parameter only with --include-system-firmware.
 
  --image IMAGENAME
     Get kernel and kernel modules automatically from the image specified
@@ -240,8 +240,8 @@ GetOptions(
     "explicit"             => \my $explicit,
     "help"                 => \my $help,
     "exclude-disk|e=s"     => \my @exclude_disk,
-    "no-rsyncd|norsyncd"   => \my $norsyncd,
-    "quiet"                => \my $quiet,
+    "no-rsyncd|norsyncd|n" => \my $norsyncd,
+    "quiet|q"              => \my $quiet,
     "no-uyok"              => \my $no_uyok,
     "unit=s"               => \my $unit_of_measurement,
     "my-modules"           => \my $my_modules,
@@ -250,8 +250,8 @@ GetOptions(
     "image=s"              => \my $image,
     "filesystem=s"         => \my $filesystem,
     "version"              => \my $version,
-    "server=s"             => \my $server,
-    "yes"                  => \my $yes,
+    "server|s=s"           => \my $server,
+    "yes|y"                => \my $yes,
     "ssh-key=s"            => \my $ssh_key,
     "authorized-keys=s"    => \my $authorized_keys,
     "config=s"             => \my $local_cfg,
@@ -360,20 +360,21 @@ if (($server) && ($norsyncd)) {
     exit 1;
 }
 
-$firmware_dir="/lib/firmware" if(!$firmware_dir);
-
-if(!($system_firmware)) {
-    if($firmware_dir) {
+if($firmware_dir) {
+    # If firmware_dir is defined: --firmware-dir option is used.
+    # 1: Check that --firmware-dir is not used without --include-system-firmware (no sens)
+    if(!($system_firmware)) {
         print "FATAL:  --firmware-dir option used without --include-system-firmware !\n";
         print qq(Try "$progname --help" for more info.\n);
         exit 1;
     }
-} else {
+    # 2: Check that firmware_dir value points to a directory.
     if( ! -d $firmware_dir) {
         print "FATAL:  firmware dir $firmware_dir not found!\n";
         exit 1;
     }
 }
+# If firmware_dir is undefined, leave it undefined, the case is handeled in UseYourOwnKernel.pm
 
 # Make sure we have certain tools that we need.
 which('rsync') or croak("'rsync' is required for $progname to function properly.  Please see http://systemimager.org for more details.");
