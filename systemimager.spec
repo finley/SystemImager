@@ -10,7 +10,7 @@
 %define ver      0.0.0
 # Set rel to 1 when is is a final release otherwise, set it to a 0.x number
 # This is convenient when final release need to upgrade "beta" releases.
-%define rel      0.12%{?dist}
+%define rel      0.13%{?dist}
 %define packager Bernard Li <bernard@vanhpc.org>
 %define prefix   /usr
 %define _build_all 1
@@ -321,6 +321,9 @@ The bittorrent package allows you to use the BitTorrent protocol to perform
 installations.
 
 %changelog
+* Thu Jun 27 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.13
+- New beta version. (Update release to match debian side)
+
 * Thu Jun 27 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.12
 - New beta version. (Fix option parsing + update manuals)
 
