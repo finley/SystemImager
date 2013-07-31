@@ -664,7 +664,7 @@ show_build_deps:
 	@echo "   The easiest path is to cut and paste the command below that is"
 	@echo "   appropriate for your distribution."
 	@echo
-	@echo "   Ubuntu Precise (12.04):"
+	@echo "   Ubuntu 12.04 LTS (Precise Pangolin):"
 	@echo "     apt-get install build-essential rpm flex $(UBUNTU_PRECISE_BUILD_DEPS)"
 	@echo
 	@echo "   Ubuntu Dapper:"
