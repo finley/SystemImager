@@ -3,6 +3,9 @@
 #  "SystemImager"
 #
 #  Copyright (C) 2007 Andrea Righi <a.righi@cineca.it>
+#  Copyright (C) 2013 Brian Finley <brian@thefinleys.com>
+#   - fix POD error
+#
 
 use lib "USR_PREFIX//lib/systemimager/perl";
 use strict;
@@ -412,6 +415,8 @@ Show groups associations for each node (this option works only in show-mode).
 =item B<--image | -i>
 
 Show image associations for each node (this option works only in show-mode).
+
+=back
 
 =head1 SEE ALSO
 
