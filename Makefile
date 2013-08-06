@@ -664,10 +664,10 @@ show_build_deps:
 	@echo "   The easiest path is to cut and paste the command below that is"
 	@echo "   appropriate for your distribution."
 	@echo
-	@echo "   Ubuntu 12.04 LTS (Precise Pangolin):"
+	@echo "   Ubuntu 12.04, 12.10:"
 	@echo "     apt-get install build-essential rpm flex $(UBUNTU_PRECISE_BUILD_DEPS)"
 	@echo
-	@echo "   Ubuntu Dapper:"
+	@echo "   Ubuntu 6.06:"
 	@echo "     apt-get install build-essential flex $(UBUNTU_DAPPER_BUILD_DEPS)"
 	@echo
 	@echo "   RHEL6, CentOS6, and friends:"
@@ -675,6 +675,9 @@ show_build_deps:
 	@echo
 	@echo "   Debian Stable:"
 	@echo "     apt-get install build-essential flex $(DEBIAN_STABLE_BUILD_DEPS)"
+	@echo     
+	@echo "   NOTE: Other distro versions may build fine, and are simply untested by"
+	@echo "         the SystemImage dev team."
 	@echo
 	@echo "2) Run './configure'"
 	@echo
