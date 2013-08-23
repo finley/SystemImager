@@ -583,6 +583,9 @@ my $disks = collect_disks();
 # Create /etc/systemimager/autoinstallscript.conf
 create_auto_install_script_conf($disks);
 
+# Create /etc/systemimage/byid_real_map.conf
+create_byid_real_map_conf();
+
 # Run the rsync daemon for getimage?
 unless($norsyncd) {
 
@@ -985,6 +988,99 @@ sub create_auto_install_script_conf {
     return 1;
 }
 
+#Usage:
+# create_byid_real_map_conf()
+# the contant of the file is the used device name and real device name mapping
+# only works for suse
+sub create_byid_real_map_conf {
+    my %used_real_hash;
+    my $real_dev;
+    my $map_file = "/etc/systemimager/byid_real_map.conf";
+    if ( -e $map_file ) {
+        unlink $map_file;
+    }
+    if ( -f "/etc/fstab" ) {
+        open(FH_IN, "</etc/fstab");
+        while(<FH_IN>) {
+            if ((/^\s*#/) or (/^\s*$/)) {
+                next;
+            }
+            my ($device_name, $temp_str) = split(/\s+/, $_, 2);
+            chomp $device_name;
+            $used_real_hash{$device_name} = 1;
+        }
+        close(FH_IN);
+    }
+
+    if ( -e "/boot/grub/device.map" ){
+        open(FH_IN, "</boot/grub/device.map");
+        while(<FH_IN>) {
+            if ((/^\s*#/) or (/^\s*$/)) {
+                next;
+            }
+
+            my ($temp_str, $device_name) = split(/\s+/, $_, 2);
+            chomp $device_name;
+            $used_real_hash{$device_name} = 1;
+        }
+        close(FH_IN);
+    }
+
+    if ( -e "/etc/grub.conf" ) {
+        my $device_name = '';
+        open(FH_IN, "</etc/grub.conf");
+        while(<FH_IN>) {
+            if ((/^\s*#/) or (/^\s*$/)) {
+                next;
+            }
+
+            if ( /root=([^\s]+)\s/ ) {
+                $device_name = $1;
+            }
+
+            if ( /resume=([^\s]+)\s+/) {
+                $device_name = $1;
+                $used_real_hash{$device_name} = 1;
+            }
+
+            $used_real_hash{$device_name} = 1;
+        }
+        close(FH_IN);
+    }
+
+    if ( -e "/boot/grub/menu.lst" ) {
+        my $device_name = '';
+        open(FH_IN, "</boot/grub/menu.lst");
+        while(<FH_IN>) {
+            if ((/^\s*#/) or (/^\s*$/)) {
+                next;
+            }
+
+            if ( /root=([^\s]+)\s+/ ) {
+                $device_name = $1;
+                $used_real_hash{$device_name} = 1;
+            }
+
+            if ( /resume=([^\s]+)\s+/) {
+                $device_name = $1;
+                $used_real_hash{$device_name} = 1;
+            }
+        }
+        close(FH_IN);
+    }
+
+    open(FH_OUT, ">$map_file");
+    my @temp_array = keys %used_real_hash;
+    my @reverse_sort_dev = sort {(length $b) <=> (length $a)} @temp_array;
+    foreach my $dev_name (@reverse_sort_dev) {
+        if ( $dev_name =~ /by-id/ ){
+            $real_dev = `readlink -f $dev_name`;
+            chomp $real_dev;
+            print FH_OUT "${dev_name}:${real_dev}\n";
+        }
+    }
+    close(FH_OUT);
+}
 
 # Usage:
 # my $partition_tool = which_partition_tool();

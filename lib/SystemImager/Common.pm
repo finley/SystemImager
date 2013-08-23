@@ -1439,6 +1439,11 @@ WARNING: unable to identify the device with "$mount_dev" defined in
 EOF
                 }
 
+                if ( -l $real_dev ){
+                    $real_dev = `readlink -f $real_dev`;
+                    chomp $real_dev;
+                }
+
                 if ($mounted_devs_by_mount_point{$mp}) {
                     $mounted = "true";
                 } elsif ($real_dev) {
