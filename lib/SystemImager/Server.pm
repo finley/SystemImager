@@ -743,7 +743,7 @@ sub _read_partition_info_and_prepare_parted_commands {
               ) {  # We're kinda assuming no one names their partitions "-". -BEF-
             
               $cmd = "parted -s -- $devfs_dev name $m $p_name{$m} || shellout\n";
-              print $out "logmsg $cmd";
+              print $out qq(logmsg "$cmd");
               print $out "$cmd";
             }
             
@@ -759,7 +759,7 @@ sub _read_partition_info_and_prepare_parted_commands {
                     # Ignore custom flag 'swap'. -AR-
                     if ($flag eq "swap") { next; }
                     $cmd = "parted -s -- $devfs_dev set $m $flag on || shellout\n";
-                    print $out "logmsg $cmd";
+                    print $out qq(logmsg "$cmd");
                     print $out "$cmd";
                 }
             }

@@ -22,7 +22,7 @@ do
     fi
     str_new_dev="/dev/disk/by-id/"$str_new_dev
 
-    for str_file_name in /etc/fstab /boot/grub/menu.lst /etc/grub.conf /boot/grub/device.map
+    for str_file_name in /etc/fstab /boot/grub/menu.lst /etc/grub.conf /boot/grub/device.map /boot/efi/efi/SuSE/elilo.conf /boot/efi/EFI/redhat/grub.conf /etc/elilo.conf
     do
         if [ -f $str_file_name ];then
             sed -i s:$str_old_dev:$str_new_dev:g $str_file_name
