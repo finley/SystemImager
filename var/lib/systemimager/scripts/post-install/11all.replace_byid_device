@@ -16,7 +16,7 @@ do
     str_dev_prefix=`basename $str_old_dev | awk -F'-' '{print $1}'`
     
     #find out the new by-id name
-    str_new_dev=`ls -l /dev/disk/by-id/ | grep $str_dev_prefix | grep -E "$str_real\$" | awk '{print $9}'`
+    str_new_dev=`ls -l --time-style=iso /dev/disk/by-id/ | grep $str_dev_prefix | grep -E "$str_real\$" | awk '{print $8}'`
     if [ -z "$str_new_dev" ];then
         continue
     fi
