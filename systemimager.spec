@@ -10,9 +10,9 @@
 %define ver      0.0.0
 # Set rel to 1 when is is a final release otherwise, set it to a 0.x number
 # This is convenient when final release need to upgrade "beta" releases.
-%define rel      0.13%{?dist}
+%define rel      0.15%{?dist}
 %define packager Bernard Li <bernard@vanhpc.org>
-%define prefix   /usr
+#define prefix   /usr
 %define _build_all 1
 %define _boot_flavor standard
 # Set this to 1 to build only the boot rpm
@@ -67,7 +67,7 @@ BuildRequires: docbook-utils, dos2unix, flex, libtool, readline-devel, /usr/bin/
 BuildRequires: libuuid-devel, device-mapper-devel, gperf, binutils-devel, pam-devel, quilt
 BuildRequires: lzop, glib2-devel >= 2.22.0
 Requires: rsync >= 2.4.6, syslinux >= 1.48, libappconfig-perl, dosfstools, /usr/bin/perl
-AutoReqProv: no
+#AutoReqProv: no
 
 %description
 SystemImager is software that automates Linux installs, software
@@ -98,7 +98,7 @@ Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Requires: rsync >= 2.4.6, systemimager-common = %{version}, perl-AppConfig, dosfstools, /sbin/chkconfig, perl, perl(XML::Simple) >= 2.14, python, mkisofs
-AutoReqProv: no
+#AutoReqProv: no
 
 %description server
 SystemImager is software that automates Linux installs, software 
@@ -130,7 +130,7 @@ Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Requires: systemimager-server = %{version}, /sbin/chkconfig, perl, flamethrower >= 0.1.6
-AutoReqProv: no
+#AutoReqProv: no
 
 %description flamethrower
 SystemImager is software that automates Linux installs, software 
@@ -162,7 +162,7 @@ Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Requires: perl, systemconfigurator >= 2.2.11
-AutoReqProv: no
+#AutoReqProv: no
 
 %description common
 SystemImager is software that automates Linux installs, software 
@@ -194,7 +194,7 @@ Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Requires: systemimager-common = %{version}, systemconfigurator >= 2.2.11, perl-AppConfig, rsync >= 2.4.6, perl
-AutoReqProv: no
+#AutoReqProv: no
 
 %description client
 SystemImager is software that automates Linux installs, software
@@ -233,6 +233,8 @@ BuildRequires: python, python-devel, gettext
 BuildRequires: dtc
 %endif
 Requires: systemimager-server >= %{version}
+Requires: %{name}-initrd_template = %{version}
+Provides: %{name}-boot-%{_boot_flavor} = %{version}
 AutoReqProv: no
 
 %description %{_build_arch}boot-%{_boot_flavor}
@@ -266,6 +268,8 @@ Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 BuildRequires: python, python-devel, %{python_xml}, %{static_libcrypt_a}
+Requires: %{name}-%{_build_arch}boot-%{_boot_flavor} = %{version}
+Provides: %{name}-initrd_template = %{version}
 AutoReqProv: no
 
 %description %{_build_arch}initrd_template
@@ -300,7 +304,7 @@ Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Requires: systemimager-server = %{version}, /sbin/chkconfig, perl, perl(Getopt::Long)
-AutoReqProv: no
+#AutoReqProv: no
 
 %description bittorrent
 SystemImager is software that automates Linux installs, software
@@ -705,13 +709,13 @@ cd $RPM_BUILD_DIR/%{name}-%{version}/
 
 %if %{_build_all}
 
-make install_server_all DESTDIR=$RPM_BUILD_ROOT PREFIX=%prefix
-make install_client_all DESTDIR=$RPM_BUILD_ROOT PREFIX=%prefix
+make install_server_all DESTDIR=$RPM_BUILD_ROOT PREFIX=%_prefix
+make install_client_all DESTDIR=$RPM_BUILD_ROOT PREFIX=%_prefix
 (cd doc/manual_source;%{__make} html)
 
 %else
 
-%{__make} install_binaries DESTDIR=$RPM_BUILD_ROOT PREFIX=%prefix
+%{__make} install_binaries DESTDIR=$RPM_BUILD_ROOT PREFIX=%_prefix
 
 %endif
 
@@ -729,19 +733,19 @@ find $RPM_BUILD_ROOT -name \*~ -exec rm -f '{}' \;
 # /etc/systemimager/rsyncd.conf is now generated from stubs stored
 # in /etc/systemimager/rsync_stubs.  if upgrading from an early
 # version, we need to create stub files for all image entries
-if [ -f /etc/systemimager/rsyncd.conf -a \
-    ! -d /etc/systemimager/rsync_stubs ]; then
+if [ -f %{_sysconfdir}/systemimager/rsyncd.conf -a \
+    ! -d %{_sysconfdir}/systemimager/rsync_stubs ]; then
     echo "You appear to be upgrading from a pre-rsync stubs release."
-    echo "/etc/systemimager/rsyncd.conf is now auto-generated from stub"
-    echo "files stored in /etc/systemimager/rsync_stubs."
-    echo "Backing up /etc/systemimager/rsyncd.conf to:"
-    echo -n "  /etc/systemimager/rsyncd.conf-before-rsync-stubs... "
-    mv /etc/systemimager/rsyncd.conf \
-      /etc/systemimager/rsyncd.conf-before-rsync-stubs
+    echo "%{_sysconfdir}/systemimager/rsyncd.conf is now auto-generated from stub"
+    echo "files stored in %{_sysconfdir}/systemimager/rsync_stubs."
+    echo "Backing up %{_sysconfdir}/systemimager/rsyncd.conf to:"
+    echo -n "  %{_sysconfdir}/systemimager/rsyncd.conf-before-rsync-stubs... "
+    mv %{_sysconfdir}/systemimager/rsyncd.conf \
+      %{_sysconfdir}/systemimager/rsyncd.conf-before-rsync-stubs
 
     ## leave an extra copy around so the postinst knows to make stub files from it
-    cp /etc/systemimager/rsyncd.conf-before-rsync-stubs \
-      /etc/systemimager/rsyncd.conf-before-rsync-stubs.tmp
+    cp %{_sysconfdir}/systemimager/rsyncd.conf-before-rsync-stubs \
+      %{_sysconfdir}/systemimager/rsyncd.conf-before-rsync-stubs.tmp
     echo "done."
 fi    
 
@@ -751,12 +755,12 @@ fi
 # also note the use of DURING_INSTALL, which is used to
 # support using this package in Image building without affecting
 # processes running on the parrent
-if [[ -a /etc/xinetd.d/rsync ]]; then
-    mv /etc/xinetd.d/rsync /etc/xinetd.d/rsync.presis~
+if [[ -a %{_sysconfdir}/xinetd.d/rsync ]]; then
+    mv %{_sysconfdir}/xinetd.d/rsync %{_sysconfdir}/xinetd.d/rsync.presis~
     `pidof xinetd > /dev/null`
     if [[ $? == 0 ]]; then
         if [ -z $DURING_INSTALL ]; then
-            /etc/init.d/xinetd restart
+            %{_sysconfdir}/init.d/xinetd restart
         fi
     fi
 fi
@@ -771,9 +775,9 @@ fi
 
 in_image_section=0
 current_image=""
-if [ -f /etc/systemimager/rsyncd.conf-before-rsync-stubs.tmp ]; then
-    echo "Migrating image entries from existing /etc/systemimager/rsyncd.conf to"
-    echo "individual files in the /etc/systemimager/rsync_stubs/ directory..."
+if [ -f %{_sysconfdir}/systemimager/rsyncd.conf-before-rsync-stubs.tmp ]; then
+    echo "Migrating image entries from existing %{_sysconfdir}/systemimager/rsyncd.conf to"
+    echo "individual files in the %{_sysconfdir}/systemimager/rsync_stubs/ directory..."
     while read line; do
 	## Ignore all lines until we get to the image section
 	if [ $in_image_section -eq 0 ]; then
@@ -786,30 +790,30 @@ if [ -f /etc/systemimager/rsyncd.conf-before-rsync-stubs.tmp ]; then
 	    if [ $? -eq 0 ]; then
 		current_image=$(echo $line | sed 's/^\[//' | sed 's/\]$//')
 		echo -e "\tMigrating entry for $current_image"
-		if [ -e "/etc/systemimager/rsync_stubs/40$current_image" ]; then
-		    echo -e "\t/etc/systemimager/rsync_stubs/40$current_image already exists."
+		if [ -e "%{_sysconfdir}/systemimager/rsync_stubs/40$current_image" ]; then
+		    echo -e "\t%{_sysconfdir}/systemimager/rsync_stubs/40$current_image already exists."
 		    echo -e "\tI'm not going to overwrite it with the value from"
-		    echo -e "\t/etc/systemimager/rsyncd.conf-before-rsync-stubs.tmp"
+		    echo -e "\t%{_sysconfdir}/systemimager/rsyncd.conf-before-rsync-stubs.tmp"
 		    current_image=""
 		fi
 	    fi
 	    if [ "$current_image" != "" ]; then
-		echo "$line" >> /etc/systemimager/rsync_stubs/40$current_image
+		echo "$line" >> %{_sysconfdir}/systemimager/rsync_stubs/40$current_image
 	    fi
 	fi
-    done < /etc/systemimager/rsyncd.conf-before-rsync-stubs.tmp
-    rm -f /etc/systemimager/rsyncd.conf-before-rsync-stubs.tmp
+    done < %{_sysconfdir}/systemimager/rsyncd.conf-before-rsync-stubs.tmp
+    rm -f %{_sysconfdir}/systemimager/rsyncd.conf-before-rsync-stubs.tmp
     echo "Migration complete - please make sure to migrate any configuration you have"
-    echo "    made in /etc/systemimager/rsyncd.conf outside of the image section."
+    echo "    made in %{_sysconfdir}/systemimager/rsyncd.conf outside of the image section."
 fi
-## END make stubs from pre-stub /etc/systemimager/rsyncd.conf file
+## END make stubs from pre-stub %{_sysconfdir}/systemimager/rsyncd.conf file
 
 /usr/sbin/si_mkrsyncd_conf
 
 if [[ -a /usr/lib/lsb/install_initd ]]; then
-    /usr/lib/lsb/install_initd /etc/init.d/systemimager-server-rsyncd
-    /usr/lib/lsb/install_initd /etc/init.d/systemimager-server-netbootmond
-    /usr/lib/lsb/install_initd /etc/init.d/systemimager-server-monitord
+    /usr/lib/lsb/install_initd %{_sysconfdir}/init.d/systemimager-server-rsyncd
+    /usr/lib/lsb/install_initd %{_sysconfdir}/init.d/systemimager-server-netbootmond
+    /usr/lib/lsb/install_initd %{_sysconfdir}/init.d/systemimager-server-monitord
 fi
 
 if [[ -a /sbin/chkconfig ]]; then
@@ -824,14 +828,14 @@ fi
 %preun server
 
 if [ $1 = 0 ]; then
-	/etc/init.d/systemimager-server-rsyncd stop
-	/etc/init.d/systemimager-server-netbootmond stop
-	/etc/init.d/systemimager-server-monitord stop
+	%{_sysconfdir}/init.d/systemimager-server-rsyncd stop
+	%{_sysconfdir}/init.d/systemimager-server-netbootmond stop
+	%{_sysconfdir}/init.d/systemimager-server-monitord stop
 
 	if [[ -a /usr/lib/lsb/remove_initd ]]; then
-	    /usr/lib/lsb/remove_initd /etc/init.d/systemimager-server-rsyncd
-	    /usr/lib/lsb/remove_initd /etc/init.d/systemimager-server-netbootmond
-	    /usr/lib/lsb/remove_initd /etc/init.d/systemimager-server-monitord
+	    /usr/lib/lsb/remove_initd %{_sysconfdir}/init.d/systemimager-server-rsyncd
+	    /usr/lib/lsb/remove_initd %{_sysconfdir}/init.d/systemimager-server-netbootmond
+	    /usr/lib/lsb/remove_initd %{_sysconfdir}/init.d/systemimager-server-monitord
 	fi
 
 	if [[ -a /sbin/chkconfig ]]; then
@@ -840,11 +844,11 @@ if [ $1 = 0 ]; then
 	    /sbin/chkconfig --del systemimager-server-monitord
 	fi
 
-	if [[ -a /etc/xinetd.d/rsync.presis~ ]]; then
-	    mv /etc/xinetd.d/rsync.presis~ /etc/xinetd.d/rsync
+	if [[ -a %{_sysconfdir}/xinetd.d/rsync.presis~ ]]; then
+	    mv %{_sysconfdir}/xinetd.d/rsync.presis~ %{_sysconfdir}/xinetd.d/rsync
 	    `pidof xinetd > /dev/null`
 	    if [[ $? == 0 ]]; then
-	        /etc/init.d/xinetd restart
+	        %{_sysconfdir}/init.d/xinetd restart
 	    fi
 	fi
 else
@@ -859,17 +863,17 @@ else
 
 	# This is an upgrade: restart the daemons.
 	echo "Restarting services..."
-	(/etc/init.d/systemimager-server-rsyncd status >/dev/null 2>&1 && \
-		/etc/init.d/systemimager-server-rsyncd restart) || true
-	(/etc/init.d/systemimager-server-netbootmond status >/dev/null 2>&1 && \
-		/etc/init.d/systemimager-server-netbootmond restart) || true
-	(/etc/init.d/systemimager-server-monitord status >/dev/null 2>&1 && \
-		/etc/init.d/systemimager-server-monitord restart) || true
+	(%{_sysconfdir}/init.d/systemimager-server-rsyncd status >/dev/null 2>&1 && \
+		%{_sysconfdir}/init.d/systemimager-server-rsyncd restart) || true
+	(%{_sysconfdir}/init.d/systemimager-server-netbootmond status >/dev/null 2>&1 && \
+		%{_sysconfdir}/init.d/systemimager-server-netbootmond restart) || true
+	(%{_sysconfdir}/init.d/systemimager-server-monitord status >/dev/null 2>&1 && \
+		%{_sysconfdir}/init.d/systemimager-server-monitord restart) || true
 fi
 
 %post flamethrower
 if [[ -a /usr/lib/lsb/install_initd ]]; then
-    /usr/lib/lsb/install_initd /etc/init.d/systemimager-server-flamethrowerd
+    /usr/lib/lsb/install_initd %{_sysconfdir}/init.d/systemimager-server-flamethrowerd
 fi
 
 if [[ -a /sbin/chkconfig ]]; then
@@ -879,10 +883,10 @@ fi
 
 %preun flamethrower
 if [ $1 = 0 ]; then
-	/etc/init.d/systemimager-server-flamethrowerd stop
+	%{_sysconfdir}/init.d/systemimager-server-flamethrowerd stop
 
 	if [[ -a /usr/lib/lsb/remove_initd ]]; then
-	    /usr/lib/lsb/remove_initd /etc/init.d/systemimager-server-flamethrowerd
+	    /usr/lib/lsb/remove_initd %{_sysconfdir}/init.d/systemimager-server-flamethrowerd
 	fi
 
 	if [[ -a /sbin/chkconfig ]]; then
@@ -890,13 +894,13 @@ if [ $1 = 0 ]; then
 	fi
 else
 	# This is an upgrade: restart the daemon.
-	(/etc/init.d/systemimager-server-flamethrowerd status >/dev/null 2>&1 && \
-		/etc/init.d/systemimager-server-flamethrowerd restart) || true
+	(%{_sysconfdir}/init.d/systemimager-server-flamethrowerd status >/dev/null 2>&1 && \
+		%{_sysconfdir}/init.d/systemimager-server-flamethrowerd restart) || true
 fi
 
 %post bittorrent
 if [[ -a /usr/lib/lsb/install_initd ]]; then
-    /usr/lib/lsb/install_initd /etc/init.d/systemimager-server-bittorrent
+    /usr/lib/lsb/install_initd %{_sysconfdir}/init.d/systemimager-server-bittorrent
 fi
 
 if [[ -a /sbin/chkconfig ]]; then
@@ -937,10 +941,10 @@ fi
 
 %preun bittorrent
 if [ $1 = 0 ]; then
-	/etc/init.d/systemimager-server-bittorrent stop
+	%{_sysconfdir}/init.d/systemimager-server-bittorrent stop
 
 	if [[ -a /usr/lib/lsb/remove_initd ]]; then
-	    /usr/lib/lsb/remove_initd /etc/init.d/systemimager-server-bittorrent
+	    /usr/lib/lsb/remove_initd %{_sysconfdir}/init.d/systemimager-server-bittorrent
 	fi
 
 	if [[ -a /sbin/chkconfig ]]; then
@@ -948,23 +952,23 @@ if [ $1 = 0 ]; then
 	fi
 else
 	# This is an upgrade: restart the daemon.
-	(/etc/init.d/systemimager-server-bittorrent status >/dev/null 2>&1 && \
-		/etc/init.d/systemimager-server-bittorrent restart) || true
+	(%{_sysconfdir}/init.d/systemimager-server-bittorrent status >/dev/null 2>&1 && \
+		%{_sysconfdir}/init.d/systemimager-server-bittorrent restart) || true
 fi
 
 %files common
 %defattr(-, root, root)
-%prefix/bin/si_lsimage
-%prefix/share/man/man8/si_lsimage*
-%prefix/share/man/man5/autoinstall*
-%dir %prefix/lib/systemimager
-%prefix/lib/systemimager/perl/SystemImager/Common.pm
-%prefix/lib/systemimager/perl/SystemImager/Config.pm
-%prefix/lib/systemimager/perl/SystemImager/Options.pm
-%prefix/lib/systemimager/perl/SystemImager/UseYourOwnKernel.pm
-%dir /etc/systemimager
-%config /etc/systemimager/UYOK.modules_to_exclude
-%config /etc/systemimager/UYOK.modules_to_include
+%{_bindir}/si_lsimage
+%{_mandir}/man8/si_lsimage*
+%{_mandir}/man5/autoinstall*
+%dir %{perl_vendorlib}/SystemImager
+%{perl_vendorlib}/SystemImager/Common.pm
+%{perl_vendorlib}/SystemImager/Config.pm
+%{perl_vendorlib}/SystemImager/Options.pm
+%{perl_vendorlib}/SystemImager/UseYourOwnKernel.pm
+%dir %{_sysconfdir}/systemimager
+%config %{_sysconfdir}/systemimager/UYOK.modules_to_exclude
+%config %{_sysconfdir}/systemimager/UYOK.modules_to_include
 
 %files server
 %defattr(-, root, root)
@@ -976,94 +980,92 @@ fi
 %doc doc/man/autoinstall* doc/examples/local.cfg
 %dir /var/lock/systemimager
 %dir /var/log/systemimager
-%dir /var/lib/systemimager
-%dir /var/lib/systemimager/images
-%dir /var/lib/systemimager/scripts
-%dir /var/lib/systemimager/scripts/pre-install
-%dir /var/lib/systemimager/scripts/post-install
-%dir /var/lib/systemimager/overrides
-/var/lib/systemimager/overrides/README
-%dir /etc/systemimager
-%dir %prefix/share/systemimager
-%dir %prefix/share/systemimager/icons
-%config /etc/systemimager/pxelinux.cfg/*
-%config /etc/systemimager/kboot.cfg/*
-%config /etc/systemimager/autoinstallscript.template
-%config(noreplace) /etc/systemimager/rsync_stubs/*
-%config(noreplace) /etc/systemimager/systemimager.conf
-%config(noreplace) /etc/systemimager/cluster.xml
-%config(noreplace) /etc/systemimager/getimage.exclude
-/etc/init.d/systemimager-server-rsyncd
-/etc/init.d/systemimager-server-netboot*
-/etc/init.d/systemimager-server-monitord
-/var/lib/systemimager/images/*
-/var/lib/systemimager/scripts/post-install/*
-/var/lib/systemimager/scripts/pre-install/*
-%prefix/sbin/si_addclients
-%prefix/sbin/si_cpimage
-%prefix/sbin/si_getimage
-%prefix/sbin/si_mk*
-%prefix/sbin/si_mvimage
-%prefix/sbin/si_netbootmond
-%prefix/sbin/si_pushupdate
-%prefix/sbin/si_pushinstall
-%prefix/sbin/si_rmimage
-%prefix/sbin/si_monitor
-%prefix/sbin/si_monitortk
-%prefix/bin/si_clusterconfig
-%prefix/bin/si_mk*
-%prefix/bin/si_psh
-%prefix/bin/si_pcp
-%prefix/bin/si_pushoverrides
-%prefix/lib/systemimager/perl/SystemImager/Server.pm
-%prefix/lib/systemimager/perl/SystemImager/Config.pm
-%prefix/lib/systemimager/perl/SystemImager/HostRange.pm
-%prefix/lib/systemimager/perl/confedit
-%prefix/lib/systemimager/perl/BootMedia/*
-%prefix/share/man/man5/systemimager*
-%prefix/share/man/man8/si_*
-%prefix/share/systemimager/icons/*
+%dir %{_sharedstatedir}/systemimager
+%dir %{_sharedstatedir}/systemimager/images
+%dir %{_sharedstatedir}/systemimager/scripts
+%dir %{_sharedstatedir}/systemimager/scripts/pre-install
+%dir %{_sharedstatedir}/systemimager/scripts/post-install
+%dir %{_sharedstatedir}/systemimager/overrides
+%{_sharedstatedir}/systemimager/overrides/README
+%dir %{_datarootdir}/systemimager
+%dir %{_datarootdir}/systemimager/icons
+%config %{_sysconfdir}/systemimager/pxelinux.cfg/*
+%config %{_sysconfdir}/systemimager/kboot.cfg/*
+%config %{_sysconfdir}/systemimager/autoinstallscript.template
+%config(noreplace) %{_sysconfdir}/systemimager/rsync_stubs/*
+%config(noreplace) %{_sysconfdir}/systemimager/systemimager.conf
+%config(noreplace) %{_sysconfdir}/systemimager/cluster.xml
+%config(noreplace) %{_sysconfdir}/systemimager/getimage.exclude
+%{_sysconfdir}/init.d/systemimager-server-rsyncd
+%{_sysconfdir}/init.d/systemimager-server-netboot*
+%{_sysconfdir}/init.d/systemimager-server-monitord
+%{_sharedstatedir}/systemimager/images/*
+%{_sharedstatedir}/systemimager/scripts/post-install/*
+%{_sharedstatedir}/systemimager/scripts/pre-install/*
+%{_sbindir}/si_addclients
+%{_sbindir}/si_cpimage
+%{_sbindir}/si_getimage
+%{_sbindir}/si_mk*
+%{_sbindir}/si_mvimage
+%{_sbindir}/si_netbootmond
+%{_sbindir}/si_pushupdate
+%{_sbindir}/si_pushinstall
+%{_sbindir}/si_rmimage
+%{_sbindir}/si_monitor
+%{_sbindir}/si_monitortk
+%{_bindir}/si_clusterconfig
+%{_bindir}/si_mk*
+%{_bindir}/si_psh
+%{_bindir}/si_pcp
+%{_bindir}/si_pushoverrides
+%{perl_vendorlib}/SystemImager/Server.pm
+%{perl_vendorlib}/SystemImager/Config.pm
+%{perl_vendorlib}/SystemImager/HostRange.pm
+%{_prefix}/lib/systemimager/confedit
+%{perl_vendorlib}/BootMedia
+%{perl_vendorlib}/BootGen
+%{_mandir}/man5/systemimager*
+%{_mandir}/man8/si_*
+%{_datarootdir}/systemimager/icons/*
 
 %files client
 %defattr(-, root, root)
 %doc CHANGE.LOG COPYING CREDITS README VERSION
-%dir /etc/systemimager
-%config /etc/systemimager/updateclient.local.exclude
-%config /etc/systemimager/client.conf
-%prefix/sbin/si_updateclient
-%prefix/sbin/si_prepareclient
-%prefix/share/man/man8/si_updateclient*
-%prefix/share/man/man8/si_prepareclient*
-%prefix/lib/systemimager/perl/SystemImager/Client.pm
+%config %{_sysconfdir}/systemimager/updateclient.local.exclude
+%config %{_sysconfdir}/systemimager/client.conf
+%{_sbindir}/si_updateclient
+%{_sbindir}/si_prepareclient
+%{_mandir}/man8/si_updateclient*
+%{_mandir}/man8/si_prepareclient*
+%{perl_vendorlib}/SystemImager/Client.pm
 
 %files flamethrower
 %defattr(-, root, root)
 %doc CHANGE.LOG COPYING CREDITS README VERSION
 %dir /var/state/systemimager/flamethrower
-%config /etc/systemimager/flamethrower.conf
-/etc/init.d/systemimager-server-flamethrowerd
+%config %{_sysconfdir}/systemimager/flamethrower.conf
+%{_sysconfdir}/init.d/systemimager-server-flamethrowerd
 
 %files bittorrent
 %defattr(-, root, root)
-%dir /etc/systemimager
-%dir /var/lib/systemimager/tarballs
-%dir /var/lib/systemimager/torrents
-%config /etc/systemimager/bittorrent.conf
-/etc/init.d/systemimager-server-bittorrent
-%prefix/sbin/si_installbtimage
+%dir %{_sharedstatedir}/systemimager/tarballs
+%dir %{_sharedstatedir}/systemimager/torrents
+%config %{_sysconfdir}/systemimager/bittorrent.conf
+%{_sysconfdir}/init.d/systemimager-server-bittorrent
+%{_sbindir}/si_installbtimage
 
 %endif
 
 %files %{_build_arch}boot-%{_boot_flavor}
 %defattr(-, root, root)
-%dir %prefix/share/systemimager/boot/%{_build_arch}
-%dir %prefix/share/systemimager/boot/%{_build_arch}/standard
-%prefix/share/systemimager/boot/%{_build_arch}/standard/config
-%prefix/share/systemimager/boot/%{_build_arch}/standard/initrd.img
-%prefix/share/systemimager/boot/%{_build_arch}/standard/kernel
+%dir %{_datarootdir}/systemimager/boot/%{_build_arch}
+%dir %{_datarootdir}/systemimager/boot/%{_build_arch}/standard
+%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/config
+%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/initrd.img
+%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/kernel
 #prefix/share/systemimager/boot/%{_build_arch}/standard/boel_binaries.tar.gz
 
 %files %{_build_arch}initrd_template
 %defattr(-, root, root)
-%dir %prefix/share/systemimager/boot/%{_build_arch}/standard/initrd_template
-%prefix/share/systemimager/boot/%{_build_arch}/standard/initrd_template/*
+%dir %{_datarootdir}/systemimager/boot/%{_build_arch}/standard/initrd_template
+%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/initrd_template/*

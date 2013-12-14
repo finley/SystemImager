@@ -28,8 +28,8 @@ use BootGen::InitrdFS::Ext2;
 
 use vars qw(@fstypes);
 
-use Util::Log qw(:all);
-use Util::Cmd; # for which()
+use SystemConfig::Util::Log qw(:all);
+use SystemConfig::Util::Cmd; # for which()
 
 sub footprint {
     my $config = shift;

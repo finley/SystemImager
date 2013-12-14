@@ -8,7 +8,7 @@
 
 package SystemImager::Server;
 
-use lib "USR_PREFIX/lib/systemimager/perl";
+#use lib "USR_PREFIX/lib/systemimager/perl";
 use Carp;
 use strict;
 use File::Copy;

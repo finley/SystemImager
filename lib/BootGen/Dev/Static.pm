@@ -23,8 +23,8 @@ use strict;
 use Carp;
 
 use lib qw(/usr/lib/systemconfig);
-use Util::Log qw(:all);
-use Util::Cmd; # for which()
+use SystemConfig::Util::Log qw(:all);
+use SystemConfig::Util::Cmd; # for which()
 
 use vars qw ($VERBOSE);
 

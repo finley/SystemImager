@@ -53,7 +53,7 @@
 #   o initrd.img:               /usr/share/systemimager/boot/`arch`/flavor/
 #   o boel_binaries.tar.gz:     /usr/share/systemimager/boot/`arch`/flavor/
 #
-#   o perl libraries:           /usr/lib/systemimager/perl/
+#   o perl libraries:           /%{perl_vendorlib}
 #
 #   o docs:                     Use distribution appropriate location.
 #                               Defaults to /usr/share/doc/systemimager/ 
@@ -156,7 +156,9 @@ DOC  = $(USR)/share/doc/systemimager-doc
 BIN = $(USR)/bin
 SBIN = $(USR)/sbin
 MAN8 = $(USR)/share/man/man8
-LIB_DEST = $(USR)/lib/systemimager/perl
+LIBEXEC_DEST = $(USR)/lib/systemimager
+LIB_DEST = $(DESTDIR)$(shell perl -V:vendorlib | sed s/vendorlib=\'// | sed s/\'\;//)
+#LIB_DEST = $(USR)/lib/systemimager/perl
 LOG_DIR = $(DESTDIR)/var/log/systemimager
 LOCK_DIR = $(DESTDIR)/var/lock/systemimager
 
@@ -342,12 +344,20 @@ install_common:	install_common_man install_common_libs
 install_server_libs:
 	mkdir -p $(LIB_DEST)/SystemImager
 	mkdir -p $(LIB_DEST)/BootMedia
+	mkdir -p $(LIB_DEST)/BootGen/Dev
+	mkdir -p $(LIB_DEST)/BootGen/InitrdFS
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/Server.pm  $(LIB_DEST)/SystemImager
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/HostRange.pm  $(LIB_DEST)/SystemImager
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/BootMedia/BootMedia.pm 	$(LIB_DEST)/BootMedia
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/BootMedia/MediaLib.pm 	$(LIB_DEST)/BootMedia
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/BootMedia/alpha.pm 	$(LIB_DEST)/BootMedia
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/BootMedia/i386.pm 	$(LIB_DEST)/BootMedia
+	$(SI_INSTALL) -m 644 $(LIB_SRC)/BootGen/Dev.pm 		$(LIB_DEST)/BootGen/
+	$(SI_INSTALL) -m 644 $(LIB_SRC)/BootGen/Dev/Devfs.pm 	$(LIB_DEST)/BootGen/Dev/
+	$(SI_INSTALL) -m 644 $(LIB_SRC)/BootGen/Dev/Static.pm 	$(LIB_DEST)/BootGen/Dev/
+	$(SI_INSTALL) -m 644 $(LIB_SRC)/BootGen/InitrdFS.pm 	$(LIB_DEST)/BootGen/
+	$(SI_INSTALL) -m 644 $(LIB_SRC)/BootGen/InitrdFS/Cramfs.pm 	$(LIB_DEST)/BootGen/InitrdFS/
+	$(SI_INSTALL) -m 644 $(LIB_SRC)/BootGen/InitrdFS/Ext2.pm 	$(LIB_DEST)/BootGen/InitrdFS/
 	mkdir -p $(USR)/share/systemimager/icons
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/icons/serverinit.gif	$(USR)/share/systemimager/icons
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/icons/serverinst.gif 	$(USR)/share/systemimager/icons
@@ -368,7 +378,8 @@ install_common_libs:
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/Options.pm $(LIB_DEST)/SystemImager
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/Config.pm $(LIB_DEST)/SystemImager
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/UseYourOwnKernel.pm $(LIB_DEST)/SystemImager
-	$(SI_INSTALL) -m 755 $(LIB_SRC)/confedit $(LIB_DEST)
+	mkdir -p $(LIBEXEC_DEST)
+	$(SI_INSTALL) -m 755 $(LIB_SRC)/confedit $(LIBEXEC_DEST)
 
 # checks the sized of the i386 kernel and initrd to make sure they'll fit 
 # on an autoinstall diskette

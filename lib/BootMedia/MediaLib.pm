@@ -32,8 +32,8 @@ use strict;
 use Carp;
 use File::Temp;
 
-use lib qw(/usr/lib/systemconfig);
-use Util::Log qw(:all);
+#use lib qw(/usr/lib/systemconfig);
+use SystemConfig::Util::Log qw(:all);
 
 use vars qw($VERBOSE);
 

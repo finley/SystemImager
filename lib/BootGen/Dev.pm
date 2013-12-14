@@ -28,8 +28,8 @@ use BootGen::Dev::Static;
 
 use vars qw(@devstyles);
 
-use Util::Log qw(:all);
-use Util::Cmd; # for which()
+use SystemConfig::Util::Log qw(:all);
+use SystemConfig::Util::Cmd; # for which()
 
 sub footprint {
     foreach my $devstyle (@devstyles) {

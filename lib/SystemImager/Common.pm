@@ -1312,8 +1312,8 @@ sub _get_device_size {
 # my $boot_loader = SystemImager::Common->detect_bootloader();
 # by -dannf-
 sub detect_bootloader {
-    use lib "/usr/lib/systemconfig";
-    use Boot;
+    # use lib "/usr/lib/systemconfig";
+    use SystemConfig::Boot;
     use vars qw(@boottypes);
 
     foreach my $boottype (@Boot::boottypes) {
