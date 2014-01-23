@@ -190,6 +190,9 @@ my (
     $sub_conn_failed,
 );
 
+# Async thread
+my $async_thread;
+
 # List to keep track of status ProgressBar objects.
 my @status_progress_list = ();
 
@@ -211,7 +214,7 @@ my $wakeup_xml_loader = Thread::Queue->new();
 # Spawn the XML loader thread. This thread periodically load the XML data
 # structure from file in memory. The main thread will use this shared and
 # "cached" structure to quickly redraw the GUI.
-async {
+$async_thread = async {
     # Use the file mtime to know when we really need to update the XML
     # data structure in memory.
     my $last_timestamp = my $timestamp = (stat($database))[9];
@@ -1395,6 +1398,18 @@ sub quit
     $sub_win->destroy() if Exists($sub_win);
     # Close the main window.
     $window->destroy() if Exists($window);
+
+    # Stop running thread.
+    shutdown_xml_loader_thread();
+
+    # Join thread;
+    $async_thread->join();
+
+    # Check if there were errors.
+    if (my $thread_error = $async_thread->error()) {
+        warn("Thread error: $thread_error\n");
+    }
+
     # Quit program.
     exit(0);
 }
