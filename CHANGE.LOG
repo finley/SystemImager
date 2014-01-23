@@ -9,6 +9,7 @@
 #
 
 4.3.0 [ Not yet released ]
+- Fixed thread not finished warning when exitting si_monitortk
 - Add option --include-system-firmware and --firmware-dir to si_prepareclient
   and si_mkbootpackage.
 - Fix "unable to auto-detect kernel file" in si_prepareclient.
@@ -20,7 +21,7 @@
   unconfigured interfaces that are down if not specified on the command line
   Bug tracked and reported upstream as: ICS#32935
 - Enabled all network drivers, firmware, disck controlers, filesystems as modules.
-- Replaced modules-init-tools (obsolete) with kmod-12
+- Replaced modules-init-tools (obsolete) with kmod-13
 - build: Updated the build system by enforcing dependancies.
 - build use make install instead of make install-exec in order
   to install devel files in the initrd_build_dir.
@@ -40,16 +41,18 @@
   - Module init tools v3.12 (native modprobe required by udev)
 - Upgraded:
   - parted to v3.1
-  - xfsprogs to v3.1.8
+  - dhcpd to v3.1.3
+  - xfsprogs to v3.1.10
   - util-linux to v2.22.2
   - mdadm to 3.2.5
   - kexec-tools to 2.0.3
   - dhclient to 4.2.4-P2
   - busybox to 1.20.2
-  - kernel to 2.6.34.1
+  - kernel to 3.7.5
   - LVM to 2.2.02.98
   - gzip to 1.5
   - tar to 1.26
+  - zlib to v1.2.5
 - Use make install in LVM instead of manual copy (installs all binaries)
 - Full rewrite of 95all.monitord_rebooted to have correct rebooted status
   on RHEL like distros. Try to comply with SysVInitScripts and systemd.
