@@ -762,7 +762,7 @@ sub get_load_ordered_list_of_running_modules() {
         # Find the right way to get modules info.
         my $uname_r = get_uname_r();
         my $modinfo_filename;
-        if ($uname_r =~ /(^2\.6)|(^3\.[0-9])/) {
+        if ($uname_r =~ /(^2\.6)|(^3\.[0-9]+)/) {
             $modinfo_filename = 'modinfo -F filename';
         } elsif ($uname_r =~ /^2\.4/) {
             $modinfo_filename = 'modinfo -n';
