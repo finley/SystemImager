@@ -584,8 +584,8 @@ sub _read_partition_info_and_prepare_parted_commands {
                 # Maybe related to bug https://bugzilla.redhat.com/show_bug.cgi?id=441244
                 # => TEMPORARY FIX until parted get fixed.
                 #$startMB{$m} = q#$(( $END_OF_LAST_LOGICAL + 1 ))#;
-				# Fix floating-point numbers calculation problem in master file
-	            $startMB{$m} = q#$(echo "scale=3; ($END_OF_LAST_LOGICAL + 1)" | bc)#;
+		# Fix floating-point numbers calculation problem in master file
+	        $startMB{$m} = q#$(echo "scale=3; ($END_OF_LAST_LOGICAL + 1)" | bc)#;
             }
 
             if (("$unit_of_measurement" eq "mb") 
@@ -709,7 +709,7 @@ sub _read_partition_info_and_prepare_parted_commands {
             # Leave info behind for the next partition. -BEF-
             if ("$p_type{$m}" eq "primary") {
                 print $out q(END_OF_LAST_PRIMARY=$END_MB) . qq(\n);
-				# Fix parted primary partition failed error:
+	        # Fix parted primary partition failed error:
                 # if the interval of running two parted commannds is too short, 
                 # it will result in error when master file runs on target node.
                 print $out q(sleep 1) . qq(\n);
@@ -717,7 +717,7 @@ sub _read_partition_info_and_prepare_parted_commands {
             } elsif ("$p_type{$m}" eq "extended") {
                 print $out q(END_OF_LAST_PRIMARY=$END_MB) . qq(\n);
                 print $out q(END_OF_LAST_LOGICAL=$START_MB) . qq(\n);
-				# Fix parted extended partition failed error:
+	        # Fix parted extended partition failed error:
                 # if the interval of running two parted commannds is too short, 
                 # it will result in error when master file runs on target node.
                 print $out q(sleep 1) . qq(\n);
