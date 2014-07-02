@@ -402,11 +402,11 @@ if ($dhcpd_version eq "2") {
     print DHCPDCONF $dhcpd_conf_v3_part1;
   
     print DHCPDCONF qq(# Imageserver\n);
-    print DHCPDCONF qq(option option-140 code 140 = text;\n);
+    print DHCPDCONF qq(option option-140 code 140 = ip-address;\n);
     print DHCPDCONF qq(\n);
 
     print DHCPDCONF qq(# log_server_port\n);
-    print DHCPDCONF qq(option option-141 code 141 = unsigned integer 32;\n);
+    print DHCPDCONF qq(option option-141 code 141 = unsigned integer 16;\n);
     print DHCPDCONF qq(\n);
 
     print DHCPDCONF qq(# ssh_download_url\n);
@@ -414,7 +414,7 @@ if ($dhcpd_version eq "2") {
     print DHCPDCONF qq(\n);
 
     print DHCPDCONF qq(# flamethrower_directory_portbase\n);
-    print DHCPDCONF qq(option option-143 code 143 = string;\n);
+    print DHCPDCONF qq(option option-143 code 143 = unsigned integer 16;\n);
     print DHCPDCONF qq(\n);
 
     print DHCPDCONF qq(# tmpfs_staging\n);
