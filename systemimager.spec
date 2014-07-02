@@ -10,7 +10,7 @@
 %define ver      0.0.0
 # Set rel to 1 when is is a final release otherwise, set it to a 0.x number
 # This is convenient when final release need to upgrade "beta" releases.
-%define rel      0.16%{?dist}
+%define rel      0.17%{?dist}
 %define packager Bernard Li <bernard@vanhpc.org>
 #define prefix   /usr
 %define _build_all 1
@@ -325,6 +325,13 @@ The bittorrent package allows you to use the BitTorrent protocol to perform
 installations.
 
 %changelog
+* Wed Jul 02 2014 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.17
+- Fix /etc/dhclient.conf options descriptions in initrd.imp.
+  option option-140 code 140 = ip-address;          # Image server.
+  option option-141 code 141 = unsigned integer 16; # Log server port.
+  option option-142 code 142 = string;              # SSH download URL.
+  option option-143 code 143 = unsigned integer 16; # Flamethrower port base.
+
 * Thu Jan 23 2014 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.16
 - New beta version. (fix si_monitortk thread warning)
 

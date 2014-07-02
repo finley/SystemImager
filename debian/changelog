@@ -1,9 +1,14 @@
-systemimager (4.3.0-0.16) UNRELEASED; urgency=low
+systemimager (4.3.0-0.17) UNRELEASED; urgency=low
 
   * New development release 4.3.0 (beta 16) See changelog for more infos.
   * Added missing build dependancies.
   * Updated dependancies (mkisofs => genisoimage , dhcp3-server =>
     isc-dhcp-server)
+  * Fix /etc/dhclient.conf options descriptions in initrd.imp.
+    option option-140 code 140 = ip-address;          # Image server.
+    option option-141 code 141 = unsigned integer 16; # Log server port.
+    option option-142 code 142 = string;              # SSH download URL.
+    option option-143 code 143 = unsigned integer 16; # Flamethrower port base.
 
  -- Olivier LAHAYE <ol222822@ubuntu>  Mon, 08 Jul 2013 09:51:47 +0200
 
