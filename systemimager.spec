@@ -834,11 +834,8 @@ fi
 
 if [[ -a /sbin/chkconfig ]]; then
     /sbin/chkconfig --add systemimager-server-rsyncd
-    /sbin/chkconfig systemimager-server-rsyncd off
     /sbin/chkconfig --add systemimager-server-netbootmond
-    /sbin/chkconfig systemimager-server-netbootmond off
     /sbin/chkconfig --add systemimager-server-monitord
-    /sbin/chkconfig systemimager-server-monitord off
 fi
 
 %preun server
