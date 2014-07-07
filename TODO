@@ -1,7 +1,40 @@
 #
-# $Id$
 #  vi:set filetype=conf tw=80:
 #
+
+- create sbin/si_lsclient
+
+    Concept: List names of clients and the images that they are targeted to
+    install.
+
+- find all systemconfigurator bits and update to postscript or other
+
+
+- When trying to complete the imaging, the SI master script needs to stop klogd
+  so that /a/proc and /a/ will umount cleanly (right now they get the device
+  busy msg)
+
+  - add entry to end of master script
+
+
+- When it's time to update the bittorrent client/server:
+    http://www.rahul.net/dholmes/ctorrent/ 
+
+- Ideas on initrd
+    - Use initrd on client system or server system as base
+        - Let the distros muck about with the auto-detect details and what not
+          -- they do a good job of that now
+        - Augment distro initrd with SystemImager specific init scripts
+        - Capture binaries from well known distros and package
+            - Start with Ubuntu Quantal (what I'm running)
+            - Simply modify existing make scripts
+
+    - Dracut or mkinitramfs or (rhel5 tool)
+        - target as alternate location
+
+    - Dracut has an option to include an overlay directory in the initrd:
+        http://people.redhat.com/harald/dracut-rhel6.html
+
 
 Add a "Features" section to the website:
 
@@ -43,7 +76,7 @@ Add a "Features" section to the website:
         - multicast
             - no longer recommended -- see bittorrent
 
-
+Handle firmware (include like modules) if needed
 
 Have a single init script.  Start services based on their settings in /etc/default/systemimager or /etc/systemimager/initscript.conf
 
