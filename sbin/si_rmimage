@@ -147,11 +147,14 @@ unless(($imagedir) or ($force)) {
 }
 
 # get architecture of the image (for removing UYOK boot files later on)
+my $arch;
 $file=$imagedir . "/etc/systemimager/boot/ARCH";
-open(FILE,"<$file") or die("Couldn't open $file for reading $!");
-  my $arch = (<FILE>)[0];
-close(FILE);
-chomp $arch;
+if( -e $file ) {
+    open(FILE,"<$file") or die("Couldn't open $file for reading $!");
+      $arch = (<FILE>)[0];
+    close(FILE);
+    chomp $arch;
+}
 
 # remove image
 if($verbose) {print "  Removing image $image.\n";}
@@ -218,12 +221,16 @@ if(-e $flamethrower_conf) {
 }
 
 # remove UYOK boot files
-if($verbose) {print "  Removing UYOK files associated with $image.\n";}
-$file="$autoinstall_boot_dir/$arch/$image";
-if($force) {
-  if($file) { rmtree($file, 0, 0); }
+if(defined $arch) {
+    if($verbose) {print "  Removing UYOK files associated with $image.\n";}
+    $file="$autoinstall_boot_dir/$arch/$image";
+    if($force) {
+      if($file) { rmtree($file, 0, 0); }
+    } else {
+      rmtree($file, 0, 0) or print "WARNING: failed to remove UYOK boot files in $file\n   (ignore this warning if you are not using UYOK).\n";
+    }
 } else {
-  rmtree($file, 0, 0) or print "WARNING: failed to remove UYOK boot files in $file\n   (ignore this warning if you are not using UYOK).\n";
+    if($verbose) {print "  Architecture not defined, so NOT removing UYOK files associated with $image.\n";}
 }
 
 exit 0;
