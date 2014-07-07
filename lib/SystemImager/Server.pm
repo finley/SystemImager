@@ -1,9 +1,8 @@
 #
 #   "SystemImager" 
 #
-#   Copyright (C) 1999-2010 Brian Elliott Finley
+#   Copyright (C) 1999-2014 Brian Elliott Finley
 #
-#   $Id$
 #
 
 package SystemImager::Server;
@@ -583,9 +582,7 @@ sub _read_partition_info_and_prepare_parted_commands {
                 # "Warning: The kernel was unable to re-read the partition table..."
                 # Maybe related to bug https://bugzilla.redhat.com/show_bug.cgi?id=441244
                 # => TEMPORARY FIX until parted get fixed.
-                #$startMB{$m} = q#$(( $END_OF_LAST_LOGICAL + 1 ))#;
-		# Fix floating-point numbers calculation problem in master file
-	        $startMB{$m} = q#$(echo "scale=3; ($END_OF_LAST_LOGICAL + 1)" | bc)#;
+                $startMB{$m} = q#$(( $END_OF_LAST_LOGICAL + 1 ))#;
             }
 
             if (("$unit_of_measurement" eq "mb") 
@@ -709,25 +706,14 @@ sub _read_partition_info_and_prepare_parted_commands {
             # Leave info behind for the next partition. -BEF-
             if ("$p_type{$m}" eq "primary") {
                 print $out q(END_OF_LAST_PRIMARY=$END_MB) . qq(\n);
-	        # Fix parted primary partition failed error:
-                # if the interval of running two parted commannds is too short, 
-                # it will result in error when master file runs on target node.
                 print $out q(sleep 1) . qq(\n);
             
             } elsif ("$p_type{$m}" eq "extended") {
                 print $out q(END_OF_LAST_PRIMARY=$END_MB) . qq(\n);
                 print $out q(END_OF_LAST_LOGICAL=$START_MB) . qq(\n);
-	        # Fix parted extended partition failed error:
-                # if the interval of running two parted commannds is too short, 
-                # it will result in error when master file runs on target node.
-                print $out q(sleep 1) . qq(\n);
             
             } elsif ("$p_type{$m}" eq "logical") {
                 print $out q(END_OF_LAST_LOGICAL=$END_MB) . qq(\n);
-                # Fix parted logical partition failed error:
-                # if the interval of running two parted commannds is too short, 
-                # it will result in error when master file runs on target node.
-                print $out q(sleep 1) . qq(\n);
             }
             
             #
@@ -1885,6 +1871,71 @@ sub setup_kexec {
 #}
 
 
+sub append_variables_txt_with_ip_assignment_method {
+    my ( $out, $ip_assignment_method ) = @_;
+
+    # 
+    # Potential values include:
+    #   replicant
+    #   static
+    #   dhcp
+    #
+    print $out "echo IP_ASSIGNMENT_METHOD=$ip_assignment_method >> /tmp/post-install/variables.txt\n\n";
+}
+
+#    my ( $out, $ip_assignment_method ) = @_;
+#
+#    # Configure the network device used to contact the image-server -AR-
+#    print $out "\n# Configure the network interface used during the auto-installation.\n";
+#    print $out "[ -z \$DEVICE ] && DEVICE=eth0\n";
+#
+#    my $sc_excludes_to = "/etc/systemimager/systemconfig.local.exclude";
+#    my $sc_cmd = "chroot /a/ systemconfigurator --verbose --excludesto=$sc_excludes_to";
+#    my $sc_options = '';
+#    my $sc_ps3_options = '';
+#    if ($ip_assignment_method eq "replicant") {
+#        $sc_options = " --runboot";
+#        $sc_ps3_options = '';
+#    } else {
+#        ## FIXME - is --excludesto only for the static method?
+#        $sc_options = '--confighw --confignet --configboot --runboot';
+#        # PS3 doesn't need hardware and boot-loader configuration.
+#        $sc_ps3_options = '--confignet';
+#    }
+#
+#    print $out "\n";
+#    print $out "# Run systemconfigurator.\n";
+#    print $out "if grep -q PS3 /proc/cpuinfo; then\n";
+#    print $out "    sc_options=\"$sc_ps3_options\"\n";
+#    print $out "else\n";
+#    print $out "    sc_options=\"$sc_options\"\n";
+#    print $out "fi\n";
+#    print $out "$sc_cmd \${sc_options} --stdin << EOL || shellout\n";
+#
+#    unless ($ip_assignment_method eq "replicant") {
+#	print $out "[NETWORK]\n";
+#	print $out "HOSTNAME = \$HOSTNAME\n";
+#	print $out "DOMAINNAME = \$DOMAINNAME\n";
+#    }
+#    if ($ip_assignment_method eq "static") {
+#	print $out "GATEWAY = \$GATEWAY\n";
+#    }
+#    print $out "\n";
+#
+#    print $out "[INTERFACE0]\n";
+#    print $out "DEVICE = \$DEVICE\n";
+#
+#    if ($ip_assignment_method eq "dhcp") {
+#	print $out "TYPE = dhcp\n";
+#    }
+#    elsif ($ip_assignment_method eq "static") {
+#	print $out "TYPE = static\n";
+#	print $out "IPADDR = \$IPADDR\n";
+#	print $out "NETMASK = \$NETMASK\n";
+#    }
+#
+#    print $out "EOL\n";
+#}
 
 
 sub create_autoinstall_script{
@@ -2015,6 +2066,7 @@ sub create_autoinstall_script{
 	        }
 
 	        if (/^\s*${delim}GENERATE_FSTAB${delim}\s*$/) {
+                append_variables_txt_with_ip_assignment_method( $MASTER_SCRIPT, $ip_assignment_method );
 	            _write_out_new_fstab_file( $MASTER_SCRIPT, 
 	          			 $image_dir, 
 	          			 $auto_install_script_conf );
