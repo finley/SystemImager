@@ -326,7 +326,7 @@ installations.
 
 %changelog
 * Wed Jul 02 2014 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.17
-- Fix /etc/dhclient.conf options descriptions in initrd.imp.
+- Fix /etc/dhclient.conf options descriptions in initrd.img.
   option option-140 code 140 = ip-address;          # Image server.
   option option-141 code 141 = unsigned integer 16; # Log server port.
   option option-142 code 142 = string;              # SSH download URL.
