@@ -9,6 +9,9 @@
 #
 
 4.3.0 [ Not yet released ]
+- Disabled SystemConfigurator in client script (systemconfigurator doesn't support
+  new technologies like systemd, NetworkManager or grub/grub2)
+- fixed si_netbootmond refusing to start when NET_BOOT_DEFAULT was set to "net".
 - Fixed thread not finished warning when exitting si_monitortk
 - Add option --include-system-firmware and --firmware-dir to si_prepareclient
   and si_mkbootpackage.
