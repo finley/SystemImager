@@ -3,11 +3,8 @@ package SystemImager::Client;
 #
 # "SystemImager"
 #
-#  Copyright (C) 2001-2003 Brian E. Finley <finley@mcs.anl.gov>
+#  Copyright (C) 2001-2014 Brian E. Finley <brian@thefinleys.com>
 #  Copyright (C) 2001-2002 Sean Dague <sean@dague.net>
-#
-#   $Id$
-#
 #
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by

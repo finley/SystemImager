@@ -1,9 +1,7 @@
 #
 #   "SystemImager"
 #
-#   Copyright (C) 2003 Brian Elliott Finley <finley@mcs.anl.gov>
-#
-#       $Id$
+#   Copyright (C) 2003-2014 Brian Elliott Finley <brian@thefinleys.com>
 #
 
 package SystemImager::Options;
@@ -39,7 +37,7 @@ use strict;
 sub copyright {
 
 return << "EOF";
-Copyright (C) 1999-2013 Brian Elliott Finley <brian\@thefinleys.com>
+Copyright (C) 1999-2014 Brian Elliott Finley <brian\@thefinleys.com>
 Please see CREDITS for a full list of contributors.
 
 This is free software; see the source for copying conditions.  There is NO
