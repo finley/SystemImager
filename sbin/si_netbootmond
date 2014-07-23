@@ -24,7 +24,7 @@ use vars qw($config $VERSION);
 $0 = "si_netbootmond";
 
 my $net_boot_default = lc $config->net_boot_default();
-if("$net_boot_default" ne "net") {
+if("$net_boot_default" eq "net") {
     print STDERR qq(\nNET_BOOT_DEFAULT set to "$net_boot_default" in /etc/systemimager/systemimager.conf.\n);
     print STDERR qq(No need for me here, so I'm exiting. See si_netbootmond\(8\) for details.\n);
     exit 0;
@@ -183,11 +183,11 @@ after having completed a successful autoinstall.
 This allows to always set network booting as default from the BIOS of the
 clients and boot from local disk after a successfull auto-installation.
 
-To enable this feature the parameter B<NET_BOOT_DEFAULT> must be set to B<net>
+To enable this feature the parameter B<NET_BOOT_DEFAULT> must be set to B<local>
 in B</etc/systemimager/systemimager.conf> and si_netbootmond must be started via
 the init script B</etc/init.d/systemimager-server-netbootmond>.
 
-To disable this feature set B<NET_BOOT_DEFAULT> to B<local> in
+To disable this feature set B<NET_BOOT_DEFAULT> to B<net> in
 B</etc/systemimager/systemimager.conf> or just stop B<si_netbootmond> via the
 init script B</etc/init.d/systemimager-server-netbootmond>.
 
