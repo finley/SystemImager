@@ -70,6 +70,7 @@
 - rpm: added rpm directory (similar to debian one) to permit non-debian build
   (includes patches that should only be used on non-debian systems)
 - build: added <package>_build: rule in initrd_source/make.d/*.rul when missing
+- Leave sufficient space before 1st partition so grub2 has enought room there.
 
 4.1.8
 --------------------------------------------------------------------------------
