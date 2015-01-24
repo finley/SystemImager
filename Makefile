@@ -470,6 +470,9 @@ endif
 
 # pre-download the source to other packages that are needed by 
 # the build system
+.PHONY:	pre_download_source
+pre_download_source:	$(ALL_SOURCE)
+
 .PHONY:	get_source
 get_source:	$(ALL_SOURCE)
 
@@ -636,6 +639,10 @@ show_targets:
 	@echo "    Install all files needed by a server."
 	@echo "	"
 	@echo "install_initrd"
+	@echo ""
+	@echo "pre_download_source"
+	@echo "    Download source tarballs, but don't build anything."
+	@echo "    Useful to prep for offline builds."
 	@echo ""
 	@echo "source_tarball"
 	@echo "    Make a source tarball for distribution."
