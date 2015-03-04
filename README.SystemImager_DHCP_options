@@ -1,10 +1,7 @@
 #
 # "SystemImager"
 #
-#  Copyright (C) 2002-2003 Bald Guy Software 
-#                          Brian E. Finley <brian@bgsw.net>
-#
-#    $Id$
+#  Copyright (C) 2002-2015 Brian E. Finley <brian@thefinleys.com>
 #
 
 See http://www.iana.org/assignments/bootp-dhcp-parameters for details on DHCP
@@ -16,7 +13,6 @@ options.  The following are special DHCP options used by SystemImager.
     option-143  ->  FLAMETHROWER_DIRECTORY_PORTBASE
     option-144  ->  TMPFS_STAGING
 
-
 Files in the SystemImager source code that are affected by these options 
 include:
 
@@ -26,4 +22,18 @@ include:
     initrd_source/skel/etc/init.d/functions (the write_variables function)
     doc/examples/local.cfg
     README.SystemImager_DHCP_options
+
+
+NOTE:  
+
+    These options were not in use as per IANA when they were originally
+    chosen by the SystemImager dev team, but now have official
+    designations for other purposes.  It is likely that most sites will
+    not experience any conflict, and the current values will work just
+    fine.  At some point, we will either register official numbers for
+    SystemImager use or switch to using the "Reserved (Private Use)"
+    range.  In either case, we will retain backwards compatibility for
+    existing configurations.
+
+        -Brian
 
