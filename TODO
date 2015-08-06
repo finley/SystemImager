@@ -2,6 +2,12 @@
 #  vi:set filetype=conf tw=80:
 #
 
+- Handle this error:
+
+  ERROR: unsupported kernel 3.13.0-32-generic!
+  root@redmine:~/.ssh# 
+
+
 - create sbin/si_lsclient
 
     Concept: List names of clients and the images that they are targeted to
@@ -26,8 +32,11 @@
           -- they do a good job of that now
         - Augment distro initrd with SystemImager specific init scripts
         - Capture binaries from well known distros and package
-            - Start with Ubuntu Quantal (what I'm running)
+            - Start with Ubuntu (what I'm running)
             - Simply modify existing make scripts
+
+    - Do build in a Dokker container?  Provide container for anyone who wants to
+      use it?
 
     - Dracut or mkinitramfs or (rhel5 tool)
         - target as alternate location
