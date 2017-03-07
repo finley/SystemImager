@@ -116,8 +116,8 @@
 	Here's a hack that seems to work for Chris Black.  Add "--bwlimit=10000" 
 	right after "rsync" in each rsync command in the &lt;image&gt;.master script.
 	<ProgramListing>
-	  Change: "rsync -av --numeric-ids $IMAGESERVER::web_server_image_v1/ /a/"
-	  To:     "rsync --bwlimit=10000 -av --numeric-ids $IMAGESERVER::web_server_image_v1/ /a/"
+	  Change: "rsync -av --numeric-ids $IMAGESERVER::web_server_image_v1/ /sysroot/"
+	  To:     "rsync --bwlimit=10000 -av --numeric-ids $IMAGESERVER::web_server_image_v1/ /sysroot/"
 	</ProgramListing>
       </Para>
       <Para>

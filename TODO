@@ -17,7 +17,7 @@
 
 
 - When trying to complete the imaging, the SI master script needs to stop klogd
-  so that /a/proc and /a/ will umount cleanly (right now they get the device
+  so that /sysroot/proc and /sysroot/ will umount cleanly (right now they get the device
   busy msg)
 
   - add entry to end of master script

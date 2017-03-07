@@ -469,7 +469,7 @@ bittorrent_autodetect_staging_dir() {
     fi
 
     # List of preferred staging directory (/tmp = ramdisk staging)
-    preferred_dirs="/tmp /a/tmp `df 2>/dev/null | sed '1d' | sed 's/[[:space:]]\+/ /g' | cut -d' ' -f6`"
+    preferred_dirs="/tmp /sysroot/tmp `df 2>/dev/null | sed '1d' | sed 's/[[:space:]]\+/ /g' | cut -d' ' -f6`"
 
     # Use a breathing room of 100MB (this should be enough for a lot of cases)
     breathing_room=102400
@@ -1392,16 +1392,16 @@ run_post_install_scripts() {
         
         if [ ! -z "`echo ${POST_INSTALL_SCRIPTS}|sed 's/ //'`" ]; then
 
-            mkdir -p /a/tmp/post-install/ || shellout
+            mkdir -p /sysroot/tmp/post-install/ || shellout
 
-            rsync -a ${SCRIPTS_DIR}/post-install/ /a/tmp/post-install/ || shellout
+            rsync -a ${SCRIPTS_DIR}/post-install/ /sysroot/tmp/post-install/ || shellout
 
             for POST_INSTALL_SCRIPT in `unique $POST_INSTALL_SCRIPTS`
             do
                 if [ -e "$POST_INSTALL_SCRIPT" ]; then
                     logmsg ">>> $POST_INSTALL_SCRIPT"
-                    chmod +x /a/tmp/post-install/$POST_INSTALL_SCRIPT || shellout
-                    chroot /a/ /tmp/post-install/$POST_INSTALL_SCRIPT || shellout
+                    chmod +x /sysroot/tmp/post-install/$POST_INSTALL_SCRIPT || shellout
+                    chroot /sysroot/ /tmp/post-install/$POST_INSTALL_SCRIPT || shellout
                 fi
             done
         else
@@ -1409,7 +1409,7 @@ run_post_install_scripts() {
         fi
 
         # Clean up post-install script directory.
-        rm -rf /a/tmp/post-install/ || shellout
+        rm -rf /sysroot/tmp/post-install/ || shellout
     fi
 }
 #

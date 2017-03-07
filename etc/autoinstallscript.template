@@ -8,7 +8,7 @@
 #   Copyright (C) 1999-2010 Brian Elliott Finley
 #
 #   28.07.2005 Erich Focht : SCSI device detection and generation of
-#                            /a/etc/systemconfig/hardware.lst
+#                            /sysroot/etc/systemconfig/hardware.lst
 #
 #   David N. Lombard : Disks enumeration and disk editing
 #
@@ -198,18 +198,18 @@ modprobe xfs
 ### END swap and filesystem creation commands ###
 
 ### BEGIN mount proc in image for tools like System Configurator ###
-logmsg "mkdir -p /a/proc || shellout"
-mkdir -p /a/proc || shellout
-logmsg "mount proc /a/proc -t proc -o defaults || shellout"
-mount proc /a/proc -t proc -o defaults || shellout
+logmsg "mkdir -p /sysroot/proc || shellout"
+mkdir -p /sysroot/proc || shellout
+logmsg "mount proc /sysroot/proc -t proc -o defaults || shellout"
+mount proc /sysroot/proc -t proc -o defaults || shellout
 ### END mount proc in image for tools like System Configurator ###
 
 if [ ! $kernel = "2.4" ]; then
 ### BEGIN mount sysfs in image for tools that might be run during chroot ###
-logmsg "mkdir -p /a/sys || shellout"
-mkdir -p /a/sys || shellout
-logmsg "mount sysfs /a/sys -t sysfs -o defaults || shellout"
-mount sysfs /a/sys -t sysfs -o defaults || shellout
+logmsg "mkdir -p /sysroot/sys || shellout"
+mkdir -p /sysroot/sys || shellout
+logmsg "mount sysfs /sysroot/sys -t sysfs -o defaults || shellout"
+mount sysfs /sysroot/sys -t sysfs -o defaults || shellout
 ### END mount sysfs in image for tools that might be run during chroot ###
 fi
 
@@ -269,7 +269,7 @@ elif [ "x$BITTORRENT" = "xy" ]; then
     fi
     # Extract image.
     logmsg "Extracting image from ${bittorrent_tarball} ..."
-    (cd /a/ && tar -x${VERBOSE_OPT}${compress}Spf ${BITTORRENT_STAGING}/${bittorrent_tarball} > /dev/console) || shellout
+    (cd /sysroot/ && tar -x${VERBOSE_OPT}${compress}Spf ${BITTORRENT_STAGING}/${bittorrent_tarball} > /dev/console) || shellout
 
     # Stop BitTorrent client.
     bittorrent_stop
@@ -297,10 +297,10 @@ else
         fi
 
         # Move from staging in tmpfs to disk
-        rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${DIR}/ /a/ > /dev/console || shellout
+        rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${DIR}/ /sysroot/ > /dev/console || shellout
     else
-        logmsg "rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --exclude=/proc/* --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ /a/" 
-        rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --exclude=/proc/* --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ /a/ > /dev/console || shellout 
+        logmsg "rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --exclude=/proc/* --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ /sysroot/" 
+        rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --exclude=/proc/* --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ /sysroot/ > /dev/console || shellout 
         if [ ! -z $MONITOR_SERVER ]; then
             stop_report_task 101
         fi
@@ -314,7 +314,7 @@ beep
 
 
 # Leave notice of which image is installed on the client
-echo $IMAGENAME > /a/etc/systemimager/IMAGE_LAST_SYNCED_TO || shellout
+echo $IMAGENAME > /sysroot/etc/systemimager/IMAGE_LAST_SYNCED_TO || shellout
 
 ### BEGIN generate new fstab file from autoinstallscript.conf ###
 ##GENERATE_FSTAB##
@@ -365,21 +365,21 @@ do
             bittorrent_get_file ${TORRENTS_DIR}/${bittorrent_tarball}.torrent ${BITTORRENT_STAGING}
             # Extract override.
             logmsg "Extracting override from ${bittorrent_tarball} ..."
-            (cd /a/ && tar -x${VERBOSE_OPT}${compress}Spf ${BITTORRENT_STAGING}/${bittorrent_tarball} > /dev/console) || shellout
+            (cd /sysroot/ && tar -x${VERBOSE_OPT}${compress}Spf ${BITTORRENT_STAGING}/${bittorrent_tarball} > /dev/console) || shellout
             # Stop BitTorrent client.
             bittorrent_stop
             rm -f ${BITTORRENT_STAGING}/${bittorrent_tarball}
         else
             # Use rsync
             logmsg "trying to download override ${OVERRIDE} with rsync..."
-            logmsg "rsync -aIv --numeric-ids $IMAGESERVER::overrides/$OVERRIDE/ /a/"
-            rsync -av --numeric-ids $IMAGESERVER::overrides/$OVERRIDE/ /a/ > /dev/console || logmsg "Override directory $OVERRIDE doesn't seem to exist, but that may be OK."
+            logmsg "rsync -aIv --numeric-ids $IMAGESERVER::overrides/$OVERRIDE/ /sysroot/"
+            rsync -av --numeric-ids $IMAGESERVER::overrides/$OVERRIDE/ /sysroot/ > /dev/console || logmsg "Override directory $OVERRIDE doesn't seem to exist, but that may be OK."
         fi
         unset bittorrent_tarball
     else
         # Use rsync
-        logmsg "rsync -av --numeric-ids $IMAGESERVER::overrides/$OVERRIDE/ /a/"
-        rsync -av --numeric-ids $IMAGESERVER::overrides/$OVERRIDE/ /a/ > /dev/console || logmsg "Override directory $OVERRIDE doesn't seem to exist, but that may be OK."
+        logmsg "rsync -av --numeric-ids $IMAGESERVER::overrides/$OVERRIDE/ /sysroot/"
+        rsync -av --numeric-ids $IMAGESERVER::overrides/$OVERRIDE/ /sysroot/ > /dev/console || logmsg "Override directory $OVERRIDE doesn't seem to exist, but that may be OK."
     fi
 done
 
@@ -401,7 +401,7 @@ beep
 #
 # Always do a bind mount, as we're using udev for device files. -BEF-
 #
-mount /dev /a/dev -o bind
+mount /dev /sysroot/dev -o bind
 
 
 ################################################################################
@@ -412,14 +412,14 @@ mount /dev /a/dev -o bind
 #
 #   (no longer support 2.4 kernels -BEF-)
 #
-#[ ! -d /a/etc/systemconfig ] && mkdir -p /a/etc/systemconfig
+#[ ! -d /sysroot/etc/systemconfig ] && mkdir -p /sysroot/etc/systemconfig
 #if [ -e /tmp/hardware.lst ]; then
 #    # use previously generated hardware.lst
-#    cat /tmp/hardware.lst >> /a/etc/systemconfig/hardware.lst
+#    cat /tmp/hardware.lst >> /sysroot/etc/systemconfig/hardware.lst
 #elif [ -d /sys/bus -a -e /lib/modules/`uname -r`/modules.pcimap ]; then
 #    # use pci-automod to generate hardware.lst
 #    logmsg "Using pci-automod to generate hardware.lst (this may take a long time):"
-#    pci-automod --hwlist --class storage --class net --class serial --class bridge > /a/etc/systemconfig/hardware.lst
+#    pci-automod --hwlist --class storage --class net --class serial --class bridge > /sysroot/etc/systemconfig/hardware.lst
 #    logmsg "done"
 #fi
 #
@@ -436,10 +436,10 @@ mount /dev /a/dev -o bind
 #XXX Even without SystemConfigurator, is this bit needed for boot loader
 #install perhaps?
 # Create an /etc/mtab file with appropriate entries
-#cat /etc/mtab | grep -v '/dev/ram' | grep -v -E '^\/dev\s+\/a\/dev\s' | sed 's,/a/*,/,g' | sort -u > /a/etc/mtab
+#cat /etc/mtab | grep -v '/dev/ram' | grep -v -E '^\/dev\s+\/a\/dev\s' | sed 's,/sysroot/*,/,g' | sort -u > /sysroot/etc/mtab
 
 ## Save original boot-loader configurations before running systemconfigurator
-#for file in /a/boot/grub/menu.lst /a/etc/lilo.conf /a/etc/grub.conf; do
+#for file in /sysroot/boot/grub/menu.lst /sysroot/etc/lilo.conf /sysroot/etc/grub.conf; do
 #    if [ -e ${file} ]; then
 #        if [ ! -e ${file}.pre-systemimager ]; then
 #            cp -f ${file} ${file}.pre-systemimager
@@ -456,9 +456,9 @@ mount /dev /a/dev -o bind
   echo "Editing files for actual disk configuration..."
 ##SHOW_DISK_EDITS##
   for file in /etc/fstab /etc/systemconfig/systemconfig.conf /boot/grub/menu.lst /etc/lilo.conf /etc/grub.conf /boot/grub/device.map; do
-    [ -f /a/$file ] || continue
+    [ -f /sysroot/$file ] || continue
     echo " $file"
-    cp /a/$file /a/$file.image
+    cp /sysroot/$file /sysroot/$file.image
 ##EDIT_DISK_NAMES##
   done
   echo
@@ -471,7 +471,7 @@ mount /dev /a/dev -o bind
 #export PATH=/usr/local/sbin:/usr/local/bin:$PATH
 #logmsg "Detecting systemconfigurator:"
 #logmsg "---"
-#chroot /a/ systemconfigurator --version || \
+#chroot /sysroot/ systemconfigurator --version || \
 #    logmsg "WARNING: systemconfigurator was not found in the image $IMAGENAME"
 #logmsg "---"
 
@@ -498,8 +498,8 @@ if [ ! -z $MONITOR_SERVER ]; then
         MONITOR_CONSOLE=yes
     fi
     if [ "x$MONITOR_CONSOLE" = "xyes" ]; then
-        [ ! -d /a/root ] && mkdir -p /a/root
-        cp -f /tmp/si_monitor.log /a/root/si_monitor.log
+        [ ! -d /sysroot/root ] && mkdir -p /sysroot/root
+        cp -f /tmp/si_monitor.log /sysroot/root/si_monitor.log
     fi
 fi
 

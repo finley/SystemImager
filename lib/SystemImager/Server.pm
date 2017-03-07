@@ -1592,7 +1592,7 @@ sub _write_out_new_fstab_file {
 
     my $xml_config = XMLin($file, keyattr => { fsinfo => "+line" }, forcearray => 1 );
 
-    print $out qq(cat <<'EOF' > /a/etc/fstab\n);
+    print $out qq(cat <<'EOF' > /sysroot/etc/fstab\n);
 
     foreach my $line (sort numerically (keys ( %{$xml_config->{fsinfo}} ))) {
         my $comment   = $xml_config->{fsinfo}->{$line}->{comment};
@@ -1750,7 +1750,7 @@ sub _write_out_umount_commands {
         my $fs = $fs_by_mp{$mp};
 
         # umount
-        my $cmd = "umount /a$mp || mount -no remount,ro /a/$mp || shellout";
+        my $cmd = "umount /a$mp || mount -no remount,ro /sysroot/$mp || shellout";
         print $out qq(if [ ! \$kernel = "2.4" ]; then\n) if ($mp eq "/sys");
         print $out qq(logmsg "$cmd"\n);
         print $out "$cmd\n";
@@ -1768,7 +1768,7 @@ sub show_disk_edits{
 sub edit_disk_names{
     my ($out) = shift;
     foreach (reverse sort keys %dev2disk) {
-        print $out qq(    sed -i s:$_:\$$dev2disk{$_}:g /a/\$file\n);
+        print $out qq(    sed -i s:$_:\$$dev2disk{$_}:g /sysroot/\$file\n);
     }
 }
 
@@ -1779,8 +1779,8 @@ sub setup_kexec {
     print $out "kexec_kernel=`echo \$cmd | cut -d' ' -f1`\n";
     print $out "kexec_initrd=`echo \$cmd | cut -d' ' -f3`\n";
     print $out "kexec_append=`echo \$cmd | cut -d' ' -f4-`\n";
-    print $out "cp /a/\$kexec_kernel /tmp\n";
-    print $out "cp /a/\$kexec_initrd /tmp\n";
+    print $out "cp /sysroot/\$kexec_kernel /tmp\n";
+    print $out "cp /sysroot/\$kexec_initrd /tmp\n";
     print $out "kexec_kernel=`basename \$kexec_kernel`\n";
     print $out "kexec_initrd=`basename \$kexec_initrd`\n";
 }
@@ -1790,7 +1790,7 @@ sub setup_kexec {
 #    my ( $out, $ip_assignment_method ) = @_;
 #
 #    # Fix device names in systemconfigurator config.
-#    my $sc_conf_file = '/a/etc/systemconfig/systemconfig.conf';
+#    my $sc_conf_file = '/sysroot/etc/systemconfig/systemconfig.conf';
 #    print $out "\n# Fix device names in boot-loader configuration.\n";
 #    print $out "if [ -e $sc_conf_file ]; then\n";
 #    unless ($bootdev) {
@@ -1823,7 +1823,7 @@ sub setup_kexec {
 #    print $out "[ -z \$DEVICE ] && DEVICE=eth0\n";
 #
 #    my $sc_excludes_to = "/etc/systemimager/systemconfig.local.exclude";
-#    my $sc_cmd = "chroot /a/ systemconfigurator --verbose --excludesto=$sc_excludes_to";
+#    my $sc_cmd = "chroot /sysroot/ systemconfigurator --verbose --excludesto=$sc_excludes_to";
 #    my $sc_options = '';
 #    my $sc_ps3_options = '';
 #    if ($ip_assignment_method eq "replicant") {
@@ -1890,7 +1890,7 @@ sub append_variables_txt_with_ip_assignment_method {
 #    print $out "[ -z \$DEVICE ] && DEVICE=eth0\n";
 #
 #    my $sc_excludes_to = "/etc/systemimager/systemconfig.local.exclude";
-#    my $sc_cmd = "chroot /a/ systemconfigurator --verbose --excludesto=$sc_excludes_to";
+#    my $sc_cmd = "chroot /sysroot/ systemconfigurator --verbose --excludesto=$sc_excludes_to";
 #    my $sc_options = '';
 #    my $sc_ps3_options = '';
 #    if ($ip_assignment_method eq "replicant") {
@@ -2353,7 +2353,7 @@ sub _write_elilo_conf {
 
 #
 # Description:
-#   Decide whether to "mount /dev /a/dev -o bind", and write to master
+#   Decide whether to "mount /dev /sysroot/dev -o bind", and write to master
 #   autoinstall script.  
 #
 #   Clients should have one of the following entries in their 
@@ -2379,7 +2379,7 @@ sub _write_elilo_conf {
 #             or ("$xml_config->{boel}->{devstyle}" eq "udev" ) )
 #      ) {
 #
-#        my $cmd = q(mount /dev /a/dev -o bind || shellout);
+#        my $cmd = q(mount /dev /sysroot/dev -o bind || shellout);
 #        print $script qq(logmsg "$cmd"\n);
 #        print $script qq($cmd\n);
 #        
