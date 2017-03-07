@@ -19,7 +19,8 @@
 #
 #   Variables
 #
-PATH=/sbin:/bin:/usr/bin:/usr/sbin:/tmp
+PATH=/sbin:/bin:/usr/sbin:/usr/bin:/tmp
+export PATH
 LD_LIBRARY_PATH=/lib
 SCRIPTS=scripts
 SCRIPTS_DIR=/scripts
@@ -32,6 +33,7 @@ FLAVOR="SYSTEMIMAGER_FLAVOR_STRING"
 #
 ################################################################################
 
+type getarg >/dev/null 2>&1 || . /lib/dracut-lib.sh
 
 ################################################################################
 #
@@ -44,7 +46,7 @@ FLAVOR="SYSTEMIMAGER_FLAVOR_STRING"
 # Usage: log a message, redirects to console / syslog depending on usage
 logmsg() {
     # log to console
-    echo $@
+    info $@
     # log to temporary file (which will go away when we reboot)
     # this is good for envs that have bad consoles
     local FILE=/tmp/si.log
@@ -141,8 +143,8 @@ write_variables() {
     
     echo "TMPFS_STAGING=$TMPFS_STAGING"         >> /tmp/variables.txt
     
-    echo "SSH=$SSH"	           	 		        >> /tmp/variables.txt
-    echo "SSHD=$SSHD"	            		    >> /tmp/variables.txt
+    echo "SSH=$SSH"	           	        >> /tmp/variables.txt
+    echo "SSHD=$SSHD"	                        >> /tmp/variables.txt
     echo "SSH_USER=$SSH_USER"	            	>> /tmp/variables.txt
     echo "SSH_DOWNLOAD_URL=$SSH_DOWNLOAD_URL"	>> /tmp/variables.txt
     
@@ -200,18 +202,22 @@ shellout() {
     logmsg "Last command exited with $?"
     COUNT="$RETRY"
     logmsg "Killing off running processes."
-    kill -9 $TMPFS_WATCHER_PID  >/dev/null 2>/dev/null
+    if [ -n "$TMPFS_WATCHER_PID" ]; then
+        kill -9 $TMPFS_WATCHER_PID  >/dev/null 2>/dev/null
+    fi
     killall -9 udp-receiver rsync  >/dev/null 2>/dev/null
     write_variables
     cat /etc/issue
-    if [ ! -z $USELOGGER ] ;
+    if [ ! -z "$USELOGGER" ] ;
         then cat /etc/issue | logger
     fi
-    if [ ! -z $MONITOR_SERVER ]; then
+    if [ ! -z "$MONITOR_SERVER" ]; then
     	logmsg "Installation failed!! Stopping report task."
         stop_report_task -1
     fi
-    exec sh > /dev/console 2>&1
+    # Need to trigger emergency shell    
+    /bin/dracut-emergency
+    # exec sh > /dev/console 2>&1
 }
 #
 ################################################################################
@@ -238,7 +244,7 @@ count_loop() {
     sleep 1
   done
 
-  trap INT
+  #trap INT
 
   logmsg
 }
@@ -722,77 +728,51 @@ parse_tmpfs_opts() {
 ################################################################################
 ################################################################################
 #
-mount_initial_filesystems() {
-
-    # Much of this taken from "init" from an Ubuntu Lucid initrd.img
-    logmsg
-    logmsg mount_initial_filesystems
-
-    [ -d /dev ]  || mkdir -m 0755 /dev
-    [ -d /root ] || mkdir -m 0700 /root
-    [ -d /sys ]  || mkdir /sys
-    [ -d /proc ] || mkdir /proc
-    [ -d /tmp ]  || mkdir /tmp
-    [ -d /run ]  || mkdir /run
-    [ -d /var/log ]  || mkdir -p /var/log
-
-    mkdir -p /var/lock
-
-    mount -t sysfs -o nodev,noexec,nosuid none /sys
-    mount -t proc  -o nodev,noexec,nosuid none /proc
-
-    # Note that this only becomes /dev on the real filesystem if udev's scripts
-    # are used; which they will be, but it's worth pointing out
-    if ! mount -t devtmpfs -o mode=0755 none /dev; then
-        mount -t tmpfs -o mode=0755 none /dev
-        mknod -m 0600 /dev/console c 5 1
-        mknod -m 0666 /dev/null c 1 3
-        mknod -m 0660 /dev/kmsg c 1 11
-    fi
-
-    mkdir /dev/pts
-    mount -t devpts -o noexec,nosuid,gid=5,mode=0620 none /dev/pts || true
-    mount -t tmpfs -o mode=0755,rw,nosuid,nodev none /run
-    mount -t tmpfs -o mode=0755,rw,nosuid,nodev none /var/log
-
-}
+#mount_initial_filesystems() {
+#
+#    # Much of this taken from "init" from an Ubuntu Lucid initrd.img
+#    logmsg
+#    logmsg mount_initial_filesystems
+#
+#    [ -d /dev ]  || mkdir -m 0755 /dev
+#    [ -d /root ] || mkdir -m 0700 /root
+#    [ -d /sys ]  || mkdir /sys
+#    [ -d /proc ] || mkdir /proc
+#    [ -d /tmp ]  || mkdir /tmp
+#    [ -d /run ]  || mkdir /run
+#    [ -d /var/log ]  || mkdir -p /var/log
+#
+#    mkdir -p /var/lock
+#
+#    mount -t sysfs -o nodev,noexec,nosuid none /sys
+#    mount -t proc  -o nodev,noexec,nosuid none /proc
+#
+#    # Note that this only becomes /dev on the real filesystem if udev's scripts
+#    # are used; which they will be, but it's worth pointing out
+#    if ! mount -t devtmpfs -o mode=0755 none /dev; then
+#        mount -t tmpfs -o mode=0755 none /dev
+#        mknod -m 0600 /dev/console c 5 1
+#        mknod -m 0666 /dev/null c 1 3
+#        mknod -m 0660 /dev/kmsg c 1 11
+#    fi
+#
+#    mkdir /dev/pts
+#    mount -t devpts -o noexec,nosuid,gid=5,mode=0620 none /dev/pts || true
+#    mount -t tmpfs -o mode=0755,rw,nosuid,nodev none /run
+#    mount -t tmpfs -o mode=0755,rw,nosuid,nodev none /var/log
+#
+#}
 #
 ################################################################################
 ################################################################################
 #
 monitor_save_dmesg() {
-    if [ -z $MONITOR_SERVER ]; then
-        return
-    fi
+#    if [ -z $MONITOR_SERVER ]; then
+#        return
+#    fi
     logmsg
     logmsg monitor_save_dmesg
     dmesg -s 16392 > /tmp/si_monitor.log
-}
-#
-################################################################################
-#
-start_udevd() {
-    logmsg
-    logmsg start_udevd
-    echo -n "  "
-    /etc/init.d/udev start
-
-    # If udev failed fall back to a static /dev
-    if [ $? -ne 0 ]; then
-        logmsg "failed!"
-#XXX -delete me -BEF- -        logmsg "Creating a static /dev..."
-#        cd / && tar -xzf dev.tar.gz || shellout
-        logmsg done
-    fi
-}
-#
-################################################################################
-#
-# Configure loopback interface (may as well)
-ifconfig_loopback() {
-    logmsg
-    logmsg ifconfig_loopback
-    ifconfig lo 127.0.0.1
 }
 #
 ################################################################################
@@ -824,7 +804,7 @@ read_kernel_append_parameters() {
 variableize_kernel_append_parameters() {
     logmsg
     logmsg variableize_kernel_append_parameters
-    cat /proc/cmdline | tr ' ' '\n' | grep '=' > /tmp/kernel_append_parameter_variables.txt
+    cat /proc/cmdline | tr ' ' '\n' | grep -E '[A-Z_]+=' > /tmp/kernel_append_parameter_variables.txt
 }
 #
 ################################################################################
@@ -973,7 +953,7 @@ start_network() {
         ### END ether sleep ###
         
         # create directory to catch dhcp information
-        DHCLIENT_DIR="/var/state/dhcp"
+        DHCLIENT_DIR="/var/lib/dhclient"
         mkdir -p $DHCLIENT_DIR
         
         # New dhclient uses /sbin/dhclient-script that triggers /etc/dhcp/dhclient-exit-hooks
@@ -992,7 +972,7 @@ start_network() {
         
         # get info via dhcp
         logmsg
-        logmsg "dhclient"
+        logmsg "dhclient $DEVICE"
         dhclient $DEVICE
         if [ ! -s ${DHCLIENT_DIR}/dhclient.leases ]; then
             logmsg
@@ -1597,7 +1577,8 @@ send_monitor_msg() {
 
     # Get the client mac address.
     if [ -z "$mac" ]; then
-        mac=`ifconfig $DEVICE 2>/dev/null | sed -ne "s/.*HWaddr //p" | sed "s/ //g" | sed s/:/./g`
+        #mac=`ifconfig $DEVICE 2>/dev/null | sed -ne "s/.*HWaddr //p" | sed "s/ //g" | sed s/:/./g`
+        mac=`ip -o link show $DEVICE 2>/dev/null | grep -o -E '([[:xdigit:]]{2}:){5}[[:xdigit:]]{2}' -m 1|grep -vi 'FF:FF:FF:FF:FF:FF' | sed -e 's/:/./g' -e 's/\(.*\)/\U\1/'`
     fi
 
     # Collect some special info only after proc file system is mounted.
@@ -1633,7 +1614,7 @@ send_monitor_msg() {
     send_msg=`echo "mac=$mac:ip=$IPADDR:host=$HOSTNAME:cpu=$cpu:ncpus=$ncpus:kernel=$kernel_name:mem=$mem:os=$IMAGENAME:tmpfs=$tmpfs:time=$time:$msg"`
 
     # Send data to monitor server.
-    echo "$send_msg" | nc $MONITOR_SERVER $MONITOR_PORT
+    echo "$send_msg" | ncat $MONITOR_SERVER $MONITOR_PORT
 }
 #
 ################################################################################
@@ -1677,7 +1658,7 @@ init_monitor_server() {
         MONITOR_CONSOLE=yes
     fi
     if [ "x$MONITOR_CONSOLE" = "xyes" ]; then
-        while :; do nc -p 8181 -l < /tmp/si_monitor.log; done &
+        while :; do ncat -p 8181 -l < /tmp/si_monitor.log; done &
     fi
 }
 #
