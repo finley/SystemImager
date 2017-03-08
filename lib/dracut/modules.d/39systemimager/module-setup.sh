@@ -17,8 +17,7 @@ depends() {
 install() {
     arch=$(uname -m)
     # Copy systemimager template
-    #(cd /usr/share/systemimager/boot/${arch}/standard/initrd_template/; tar cpf - .)|(cd $initdir; tar xpf -)
-    (cd /root/initrd_SIS/; tar cpf - .)|(cd $initdir; tar xpf -)
+    (cd /usr/share/systemimager/boot/${arch}/standard/initrd_template/; tar cpf - .)|(cd $initdir; tar xpf -)
     # binaries we want in initramfs
     inst_multiple mke2fs mkfs.ext2 mkfs.ext3 mkfs.ext4 mklost+found resize2fs tune2fs e2fsck mkfs.xfs
     inst_multiple dosfsck dosfslabel fatlabel fsck.fat fsck.msdos fsck.vfat mkdosfs mkfs.fat mkfs.msdos mkfs.vfat

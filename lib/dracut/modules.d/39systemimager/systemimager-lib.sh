@@ -35,6 +35,8 @@ FLAVOR="SYSTEMIMAGER_FLAVOR_STRING"
 
 type getarg >/dev/null 2>&1 || . /lib/dracut-lib.sh
 
+test -f /tmp/variables.txt && . /tmp/variables.txt
+
 ################################################################################
 #
 #   Subroutines
@@ -1684,7 +1686,7 @@ start_report_task() {
             logmsg "error: cannot find a valid torrent file for image ${IMAGENAME}"
             shellout
         fi
-        IMAGESIZE=`/bin/torrentinfo-console $torrent_file | sed -ne "s/file size\.*: \([0-9]*\) .*$/\1/p"`
+        IMAGESIZE=`/usr/bin/torrentinfo-console $torrent_file | sed -ne "s/file size\.*: \([0-9]*\) .*$/\1/p"`
     fi
     IMAGESIZE=`expr $IMAGESIZE / 1024`
     logmsg "  --> Image size = `expr $IMAGESIZE / 1024`MiB"
