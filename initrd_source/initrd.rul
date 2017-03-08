@@ -36,59 +36,21 @@ INITRD_BINARIES = $(shell file \
 							| egrep ':.*ELF ' \
 							| perl -pi -e 's/:.*//')
 
-## Should initrd.img be gzipped?
-INITRD_COMPRESS = yes
-ifdef IS_PPC64
-INITRD_COMPRESS = no
-endif
-ifeq ($(ARCH),alpha)
-INITRD_COMPRESS = no
-endif
-
 STAMP_DIR = $(INITRD_SRC_DIR)
 
-#INITRD_BUILD_DIR = $(INITRD_DIR)/build_dir
+INITRD_BUILD_DIR = $(INITRD_DIR)/build_dir
 
 SKEL_FILES = $(shell find $(INITRD_DIR)/skel \
 						-not -regex '.*/.svn.*' -and \
 						-not -regex '.*/.svn')
 
-MKCRAMFS = $(shell which mkcramfs || which mkfs.cramfs || \
-             echo MKCRAMFS_WAS_NOT_FOUND_IN_YOUR_PATH)
-
 #
 # Order is relevant for certain components, so re-order as is appropriate. -BEF-
 #
-include $(INITRD_DIR)/make.d/e2fsprogs.rul
-include $(INITRD_DIR)/make.d/dosfstools.rul
-include $(INITRD_DIR)/make.d/hfsutils.rul
-include $(INITRD_DIR)/make.d/jfsutils.rul
-include $(INITRD_DIR)/make.d/reiserfsprogs.rul
-include $(INITRD_DIR)/make.d/xfsprogs.rul
-include $(INITRD_DIR)/make.d/lvm.rul
-include $(INITRD_DIR)/make.d/bc.rul
-include $(INITRD_DIR)/make.d/cx_freeze.rul
+#include $(INITRD_DIR)/make.d/cx_freeze.rul
 include $(INITRD_DIR)/make.d/bittorrent.rul
-include $(INITRD_DIR)/make.d/busybox.rul
-include $(INITRD_DIR)/make.d/dhclient.rul
-include $(INITRD_DIR)/make.d/lsb.rul
-include $(INITRD_DIR)/make.d/rsync.rul
-include $(INITRD_DIR)/make.d/tar.rul
-include $(INITRD_DIR)/make.d/sysvinit.rul
-include $(INITRD_DIR)/make.d/util-linux.rul 		# must be before parted to build parted against the uuid libs
-include $(INITRD_DIR)/make.d/kmod.rul			# Needed by udev; replaces module-init-tools
-include $(INITRD_DIR)/make.d/udev.rul			# must be after util-linux (need libblkid)
 include $(INITRD_DIR)/make.d/udpcast.rul
-include $(INITRD_DIR)/make.d/parted.rul
-include $(INITRD_DIR)/make.d/zlib.rul
-include $(INITRD_DIR)/make.d/gzip.rul
-include $(INITRD_DIR)/make.d/mdadm.rul
-include $(INITRD_DIR)/make.d/openssl.rul
-include $(INITRD_DIR)/make.d/openssh.rul
-include $(INITRD_DIR)/make.d/kexec-tools.rul
-include $(INITRD_DIR)/make.d/coreutils.rul
-# OL: Module-init-tools is obsolete.
-# include $(INITRD_DIR)/make.d/module-init-tools.rul	# Must be after busybox to overwrite incompatible modprobe
+#include $(INITRD_DIR)/make.d/busybox.rul
 
 PHONY += build_dir 
 build_dir:	$(INITRD_BUILD_DIR).build
@@ -96,212 +58,92 @@ build_dir:	$(INITRD_BUILD_DIR).build
 $(INITRD_BUILD_DIR).skel:	$(INITRD_DIR)/initrd.rul
 	rm -fr $(INITRD_BUILD_DIR)
 	mkdir -p $(INITRD_BUILD_DIR)
-	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/bin
-	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/dev
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/etc
-	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/etc/ssh
-	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/etc/default
-	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/etc/init.d
-	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/lib
-	
-	# If build OS has /lib64, link it to /lib
-	test ! -d /lib64 || ( cd $(INITRD_BUILD_DIR) && ln -s lib lib64 )
-	
-	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/proc
-	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/root
-	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/sbin
-	mkdir -p -m 1777 $(INITRD_BUILD_DIR)/tmp
-	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/usr
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/usr/bin
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/usr/sbin
-	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/var
-	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/var/db	# For dhclient leases.
-	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/var/log	# For udev log (tmpfs mountpoint)
-	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/run	# For udev
-	#mkdir -p -m 0755 $(INITRD_BUILD_DIR)/var/run	# Fur udev (tmpfs mountpoint)
-	( cd $(INITRD_BUILD_DIR)/var && ln -s /run . )
-
-	#XXX# Need to find some way to do these outside of the build. -BEF-
-	mknod -m 0660 $(INITRD_BUILD_DIR)/dev/tty0 c 4 0
-	mknod -m 0660 $(INITRD_BUILD_DIR)/dev/tty1 c 4 1
-	mknod -m 0660 $(INITRD_BUILD_DIR)/dev/tty2 c 4 2
-	mknod -m 0660 $(INITRD_BUILD_DIR)/dev/tty3 c 4 3
-	mknod -m 0660 $(INITRD_BUILD_DIR)/dev/tty4 c 4 4
-	mknod -m 0660 $(INITRD_BUILD_DIR)/dev/tty5 c 4 5
-	mknod -m 0660 $(INITRD_BUILD_DIR)/dev/tty6 c 4 6
-	
-	# Ugly hack to have our own includes.(needed for udev that includes linux includes).
-	# kernel headers and components includes will be installed in there.
-	# build of utils will use this include dir to match kernel they will be running on
-	# Once the build is finished, this include dir will be removed before creating the initrd.img
-	(cd /usr; tar cpf - include) | (cd $(INITRD_BUILD_DIR)/usr; tar xpvf -)
+	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/usr/lib
+	test -e /lib64 && mkdir -p -m 0755 $(INITRD_BUILD_DIR)/usr/lib64
+	# Create /bin, /sbin, /lib and /lib64 links
+	cd $(INITRD_BUILD_DIR) && ln -s usr/bin ./bin
+	cd $(INITRD_BUILD_DIR) && ln -s usr/sbin ./sbin
+	cd $(INITRD_BUILD_DIR) && ln -s usr/lib ./lib
+	test -e /lib64 && cd $(INITRD_BUILD_DIR) && ln -s usr/lib64 ./lib64
 	touch $@
 
-$(INITRD_BUILD_DIR).prep: $(INITRD_BUILD_DIR).skel $(SKEL_FILES) $(SRC_DIR)/modules_build-stamp $(INITRD_DIR)/kernel_headers.prep
+$(INITRD_BUILD_DIR).prep: $(INITRD_BUILD_DIR).skel $(SKEL_FILES)
 	touch $@
 
 
-$(INITRD_BUILD_DIR).build:  $(INITRD_BUILD_DIR).prep		\
-								$(LSB_DIR).build			\
-								$(CX_FREEZE_DIR).build 			\
-								$(BC_DIR).install			\
-								$(BITTORRENT_DIR).install 		\
-								$(BUSYBOX_DIR).install			\
-								$(DHCLIENT_DIR).install			\
-								$(DOSFSTOOLS_DIR).install		\
-								$(E2FSPROGS_DIR).install		\
-								$(GZIP_DIR).install			\
-								$(HFSUTILS_DIR).install			\
-								$(JFSUTILS_DIR).install			\
-								$(KEXEC_TOOLS_DIR).install		\
-								$(LVM_DIR).install			\
-								$(MDADM_DIR).install			\
-								$(OPENSSH_DIR).install			\
-								$(OPENSSL_DIR).install			\
-								$(REISERFSPROGS_DIR).install		\
-								$(RSYNC_DIR).install			\
-								$(SYSVINIT_DIR).install			\
-								$(TAR_DIR).install			\
-								$(KMOD_DIR).install			\
-								$(UDEV_DIR).install			\
-								$(UDPCAST_DIR).install			\
-								$(UTIL_LINUX_DIR).install		\
-								$(PARTED_DIR).install			\
-								$(XFSPROGS_DIR).install			\
-								$(COREUTILS_DIR).install		\
-								$(ZLIB_DIR).install
 
-	# Copy over the standard libs. -BEF-
-	test -z "$(echo /lib/ld*)" || cp -a /lib/ld*   $(INITRD_BUILD_DIR)/lib
-	test ! -d /lib64 || cp -a /lib64/ld* $(INITRD_BUILD_DIR)/lib64
-	# Remove useless stuffs (man, translation, includes, ...)
-	( cd $(INITRD_BUILD_DIR) && /bin/rm -rf share usr/share usr/include lib/*.a )
-	# Explicitly include more w/mklibs -L.  -dawild-
-	echo "Copying /lib*/libnss* to $(INITRD_BUILD_DIR)/lib*"
-ifeq ($(ARCH),x86_64)
-	( cd $(INITRD_BUILD_DIR) && \
-		$(INITRD_DIR)/mklibs.bef -L $(INITRD_SRC_DIR)/$(E2FSPROGS_DIR)/lib:/lib64:/usr/lib64:/lib:/usr/lib -v -d . ./*bin/* )
-	# copy libnss files as they are not automatically included
-	#cp -a /lib64/libnss* $(INITRD_BUILD_DIR)/lib64
-	for lib in /lib64/libnss* ; do \
-		if test ! -L $$lib ; then \
-			cp -a $$lib $(INITRD_BUILD_DIR)/lib64/ ;\
-			echo "Copying $$lib from system to initrd" ;\
-		fi ;\
-	done
-else
-	( cd $(INITRD_BUILD_DIR) && \
-		$(INITRD_DIR)/mklibs.bef -L $(INITRD_SRC_DIR)/$(E2FSPROGS_DIR)/lib:/lib:/usr/lib -v -d . ./*bin/* )
-	# copy libnss files as they are not automatically included
-	#cp -a /lib/libnss* $(INITRD_BUILD_DIR)/lib
-	for lib in /lib/libnss* ; do \
-		if test ! -L $$lib ; then \
-			cp -a $$lib $(INITRD_BUILD_DIR)/lib ;\
-			echo "Copying $$lib from system to initrd" ;\
-		fi ;\
-	done
-endif
-	# Recompute the links for dynamic libs.
-	echo /lib > $(INITRD_BUILD_DIR)/etc/ld.so.conf
-	ldconfig -r $(INITRD_BUILD_DIR)
-	# Do we still need to undo prelinking? -BEF-
-	## Undo prelinking. -AR-
-	#[ -x `which prelink` ] && (find $(INITRD_BUILD_DIR) -type f -exec prelink -u {} \; 2>&1 | grep -v "does not have .gnu.prelink_undo section\|is not an ELF file") || true
-
-	# Strip 'em. -BEF-
-	strip $(INITRD_BINARIES)
+$(INITRD_BUILD_DIR).build:  $(INITRD_BUILD_DIR).prep \
+			$(BITTORRENT_DIR).install \
+			$(UDPCAST_DIR).install
 
 	# BitTorrent binaries must not be stripped. -AR-
-	cd $(INITRD_BUILD_DIR)/bin && ln -s ../lib/bittorrent/torrentinfo-console
-	cd $(INITRD_BUILD_DIR)/bin && ln -s ../lib/bittorrent/bittorrent-console
+	cd $(INITRD_BUILD_DIR)/usr/bin && ln -s ../lib/bittorrent/torrentinfo-console
+	cd $(INITRD_BUILD_DIR)/usr/bin && ln -s ../lib/bittorrent/bittorrent-console
 
 	# lsb init functions needed by udev init script
-	install -m 755 -d $(INITRD_BUILD_DIR)/lib/lsb
-	install -m 644 $(LSB_DIR)/init-functions $(INITRD_BUILD_DIR)/lib/lsb
-
 	# Copy over text files from the skel directory.
 	cp -a $(INITRD_DIR)/skel/* $(INITRD_BUILD_DIR)
 
-	# The following rule gets rid of virtual consoles on 
-	# platforms that don't have them.
-ifeq ($(ARCH),ppc64-iSeries)
-	cat $(INITRD_DIR)/skel/etc/inittab | grep -v ^vc\/ > \
-		$(INITRD_BUILD_DIR)/etc/inittab
-endif
-
-	$(SI_INSTALL) -m 755 $(INITRD_DIR)/skel/etc/init.d/rcS \
-	  $(INITRD_BUILD_DIR)/etc/init.d/rcS
-
-	$(SI_INSTALL) -m 755 $(INITRD_DIR)/skel/etc/init.d/functions \
-	  $(INITRD_BUILD_DIR)/etc/init.d/functions
-	#
-	#
-	# install kernel modules. -BEF-
-	#
-	$(MAKE) -C $(LINUX_SRC) modules_install INSTALL_MOD_PATH="$(INITRD_BUILD_DIR)"
-	
 	# Copy over modules required prior to retrieving the autoinstall
 	# binaries tarball. -BEF-
 	cp -a $(INITRD_DIR)/my_modules $(INITRD_BUILD_DIR)
 	
-	#
-	# If the build system doesn't have module-init-tools installed, and
-	# our modules need it, we need to use the depmod we built.  For now we'll
-	# just say, you need to have module-init-tools installed for building.
-	#
-	# We could get fancy at some point, and test for it with something like this:
-	#
-	# 	depmod --version | grep -q module-init-tools
-	#
-	# and build it if it's not there.
-	#
-	# The find command is to figure out the kernel version string
-	#
-	KERNEL_VERSION=`find $(INITRD_BUILD_DIR)/lib/modules -mindepth 1 -maxdepth 1 -type d -printf "%f"` ; \
-	depmod -b $(INITRD_BUILD_DIR) $$KERNEL_VERSION
-	
-	#
-	# get rid of build, which may exist as a link to the kernel source directory (won't exist in the BOEL initrd anyway). -BEF-
-	rm -f "$(INITRD_BUILD_DIR)/lib/modules/*/build"
+	# Add firmwares, keymaps and a few config files
+	#mkdir -p $(INITRD_BUILD_DIR)/lib/firmware
+	#rsync -av /lib/firmware $(INITRD_BUILD_DIR)/lib/firmware
+	mkdir -p $(INITRD_BUILD_DIR)/lib/kbd/keymaps
+	rsync -av /lib/kbd/keymaps $(INITRD_BUILD_DIR)/lib/kbd/keymaps
+	cp -av /etc/inputrc $(INITRD_BUILD_DIR)/etc/inputrc
+	cp -av /etc/printcap $(INITRD_BUILD_DIR)/etc/printcap
+	cp -av /etc/localtime $(INITRD_BUILD_DIR)/etc/localtime
 
-	#
-	# get rid of source, which may also exist as a link to the kernel source directory (won't exist in the BOEL initrd anyway). -BEF-
-	rm -f "$(INITRD_BUILD_DIR)/lib/modules/*/source"
-	
-	#
-	# Clear out SVN cruft.
-	find $(INITRD_BUILD_DIR) -depth -type d -name .svn | xargs rm -rf
-	mkdir -p $(INITRD_BUILD_DIR)/new_root
-
+	# On non systemd based system, set /init
+	# if test ! -d /usr/lib/systemd; then cd $(INITRD_BUILD_DIR) && ln -sf etc/init.d/rcS init; fi
 	touch $@
 
 
-PHONY += initrd.img
-initrd.img:	$(INITRD_DIR)/initrd.img
-
-ifeq ($(INITRD_COMPRESS),yes)
-$(INITRD_DIR)/initrd.img:	$(INITRD_DIR)/initrd
-	gzip -9 -n < $(INITRD_DIR)/initrd > $(INITRD_DIR)/initrd.img
-else
-$(INITRD_DIR)/initrd.img:       $(INITRD_DIR)/initrd
-	cp -a $(INITRD_DIR)/initrd $(INITRD_DIR)/initrd.img
-endif
-
-
-PHONY += initrd
-initrd:	$(INITRD_DIR)/initrd
-
+#PHONY += initrd.img
+#initrd.img:	$(INITRD_DIR)/initrd.img
 #
-#	  NOTE:  we don't want the initrd target to use the installed template
-#		dir, as it could complicate distribution -- you might have
-#		modified files in the template_dir, that aren't removed with a
-#		'make install_template_dir', that you don't want released as
-#		part of the distribution. -BEF-
+#E2FSPROGS = mke2fs mkfs.ext2 mkfs.ext3 mkfs.ext4 mklost+found resize2fs tune2fs e2fsck mkfs.xfs
+#DOSFSTOOLS = dosfsck dosfslabel fatlabel fsck.fat fsck.msdos fsck.vfat mkdosfs mkfs.fat mkfs.msdos mkfs.vfat
+#HFSUTILS = fsck.hfs hattrib hcd hcopy hdel hdir hformat hfs hfsck hls hmkdir hmount hpwd hrename hrmdir humount hvol
+#BTRFSUTILS = btrfs btrfsck btrfstune fsck.btrfs mkfs.btrfs
+#COREUTILS = cut date echo env sort test false true [ expr head install tail tee tr uniq wc 
+#OTHERUTILS = bc gzip bzip2 rsync parted loadkeys blockdev awk clear reset ncat stty tty killall kexec ipcalc
+#SYSTEMDUTILS = systemd-cat
+#OPTUTILS = depmod find strace
 #
-$(INITRD_DIR)/initrd:	$(INITRD_BUILD_DIR).build 
-	#XXX -BEF- No more cramfs -- now initramfs. :-)
-	cd $(INITRD_BUILD_DIR) && find . | cpio --quiet -H newc -o -n > $(INITRD_DIR)/initrd
+# List of buzybox utils.
+#BUSYBOX = chmod chown cp dd df dmesg echo egrep fdisk fgrep grep halt hostname ifconfig init insmod kill ln ls lsmod mkdir mknod mkswap modprobe more mv ping poweroff ps reboot rm rmdir rmmod route sed sh sleep swapoff swapon sync syslogd tar touch uname vi
+#
+# Busybox not included here as it is alredy installed in build_dir from busybox.rul.
+#INITRD_BINARIES = $(E2FSPROGS) $(HFSUTILS) $(BTRFSUTILS) $(DOSFSTOOLS) $(OTHERUTILS) $(COREUTILS) $(SYSTEMDUTILS) $(OPTUTILS) $(BUSYBOX)
+#
+# Filter binaries that are not found. For example fsck.fat is not present on all distros.
+#FOUND_INITRD_BINARIES = $(shell which --skip-alias $(INITRD_BINARIES))
+#
+#KVER = $(shell cat /proc/version |cut -d' ' -f3)
+#
+#KMODS = $(shell find /lib/modules/$(KVER)/ -name \*.ko |sed -e 's|.*/||' -e 's|\.ko||' |tr '\n' ' ')
 
+#$(INITRD_DIR)/initrd.img:	$(INITRD_BUILD_DIR).build 
+#	# multiple instance of --include not supported on old dracut versions.
+#	# Thus, we do the job ourselves.
+#	dracut --force \
+#		--install "$(FOUND_INITRD_BINARIES)" \
+#		--filesystems "ext2 ext3 ext4 xfs jfs hfs reiserfs nfs" \
+#		--include $(INITRD_BUILD_DIR) / \
+#		--no-hostonly --no-hostonly-cmdline \
+#		--add network \
+#		--add syslog \
+#		--add debug \
+#		--omit usrmount \
+#		$(INITRD_DIR)/initrd.img $(KVER)
+#		#--add-drivers "$(KMODS)" \
 
 PHONY += install_initrd_template
 install_initrd_template:	$(INITRD_BUILD_DIR).build
@@ -310,11 +152,11 @@ install_initrd_template:	$(INITRD_BUILD_DIR).build
 
 # install the autoinstall ramdisk - the initial ramdisk used by autoinstall
 # clients when beginning an autoinstall
-PHONY += install_initrd
-install_initrd:	$(INITRD_DIR)/initrd.img
-	mkdir -p $(BOOT_BIN_DEST)
-	$(SI_INSTALL) -m 644 $(INITRD_DIR)/initrd.img \
-	    $(BOOT_BIN_DEST)/initrd.img
+#PHONY += install_initrd
+#install_initrd:	$(INITRD_DIR)/initrd.img
+#	mkdir -p $(BOOT_BIN_DEST)
+#	$(SI_INSTALL) -m 644 $(INITRD_DIR)/initrd.img \
+#	    $(BOOT_BIN_DEST)/initrd.img
 
 PHONY += build_dir_clean
 build_dir_clean:
@@ -325,9 +167,9 @@ build_dir_clean:
 	rm -f  $(INITRD_DIR)/kernel_headers.prep
 
 PHONY += initrd_clean
-initrd_clean:	build_dir_clean $(subst .rul,_clean,$(shell cd $(INITRD_DIR)/make.d && ls *.rul))
+#initrd_clean:	build_dir_clean $(subst .rul,_clean,$(shell cd $(INITRD_DIR)/make.d && ls *.rul))
+initrd_clean:	build_dir_clean bittorrent_clean udpcast_clean
 	-find . -name "*~" -exec rm -f {} \;
-	rm -f $(INITRD_DIR)/initrd
 	rm -f $(INITRD_DIR)/initrd.img
 
 PHONY += initrd_distclean

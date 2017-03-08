@@ -25,24 +25,24 @@ $(BITTORRENT_DIR).unpack:	$(INITRD_SRC_DIR)/$(BITTORRENT_TARBALL) \
 
 PHONY += bittorrent
 bittorrent:	$(BITTORRENT_DIR).build
-$(BITTORRENT_DIR).build:	$(BITTORRENT_DIR).unpack $(CX_FREEZE_DIR).build $(INITRD_BUILD_DIR).prep
+$(BITTORRENT_DIR).build:	$(BITTORRENT_DIR).unpack $(INITRD_BUILD_DIR).prep
 	touch $@
 
 PHONY += bittorrent_install
 bittorrent_install:        $(BITTORRENT_DIR).install
 $(BITTORRENT_DIR).install:	$(BITTORRENT_DIR).build
-	$(CX_FREEZE_DIR)/FreezePython --install-dir=$(INITRD_BUILD_DIR)/lib/bittorrent --exclude-modules=gobject,pango,gtk \
+	cxfreeze --install-dir=$(INITRD_BUILD_DIR)/usr/lib/bittorrent --exclude-modules=gobject,pango,gtk \
 		$(BITTORRENT_DIR)/torrentinfo-console.py
-	$(CX_FREEZE_DIR)/FreezePython --install-dir=$(INITRD_BUILD_DIR)/lib/bittorrent --exclude-modules=gobject,pango,gtk \
+	cxfreeze --install-dir=$(INITRD_BUILD_DIR)/usr/lib/bittorrent --exclude-modules=gobject,pango,gtk \
 		$(BITTORRENT_DIR)/bittorrent-console.py
 	#
 	# Explicit copy shared libraries needed by bittorrent binaries.
 	( \
-		for l in $$(ldd $(INITRD_BUILD_DIR)/lib/bittorrent/* 2>/dev/null | sed -ne 's/.*=> \(.*\) (.*)/\1/p' | sort -u); do cp -pf $$l $(INITRD_BUILD_DIR)/lib; done \
+		for l in $$(ldd $(INITRD_BUILD_DIR)/usr/lib/bittorrent/* 2>/dev/null | sed -ne 's/.*=> \(.*\) (.*)/\1/p' | sort -u); do cp -pf $$l $(INITRD_BUILD_DIR)/usr/lib; done \
 	)
 	#
 	# Make sure the dynamic linker is present.
-	(for l in $$(readelf --program-headers $(INITRD_BUILD_DIR)/lib/bittorrent/* | sed -ne 's/^.*\[Requesting program interpreter: \(.*\)\]$$/\1/p' | sort -u); do cp -pf $$l $(INITRD_BUILD_DIR)/lib; done )
+	(for l in $$(readelf --program-headers $(INITRD_BUILD_DIR)/usr/lib/bittorrent/* | sed -ne 's/^.*\[Requesting program interpreter: \(.*\)\]$$/\1/p' | sort -u); do cp -pf $$l $(INITRD_BUILD_DIR)/usr/lib; done )
 	#
 	# Create the bittorrent links.
 	rm -f $(INITRD_BUILD_DIR)/bin/torrentinfo-console

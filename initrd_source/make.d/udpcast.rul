@@ -3,12 +3,15 @@
 #
 # http://udpcast.linux.lu/source.html
 #
+#	2014.01.21 Olivier Lahaye
+#	* Upgrade from v20100130 to v20130424
+#
 #	2010.10.27 Brian Elliott Finley
 #	* Upgrade from v20060325 to v20100130
 #
 
-UDPCAST_VERSION = 20100130
-UDPCAST_TARBALL = udpcast-$(UDPCAST_VERSION).tar.gz
+UDPCAST_VERSION = 20120424
+UDPCAST_TARBALL = udpcast-$(UDPCAST_VERSION).tar.bz2
 UDPCAST_URL 		= http://download.systemimager.org/pub/udpcast/$(UDPCAST_TARBALL)
 UDPCAST_DIR 		= $(INITRD_SRC_DIR)/udpcast-$(UDPCAST_VERSION)
 UDPCAST_PATCHES 	= $(shell ls $(INITRD_PATCH_DIR)/udpcast.*.patch 2>/dev/null | sort)
@@ -19,7 +22,7 @@ $(UDPCAST_DIR).unpack:	$(INITRD_SRC_DIR)/$(UDPCAST_TARBALL) \
 						$(UDPCAST_PATCHES) \
 						$(INITRD_DIR)/make.d/udpcast.rul
 	rm -rf $(UDPCAST_DIR)
-	cd $(INITRD_SRC_DIR) && tar -xvzf $(UDPCAST_TARBALL)
+	cd $(INITRD_SRC_DIR) && tar -xvjf $(UDPCAST_TARBALL)
 	cd $(UDPCAST_DIR) && cat $(UDPCAST_PATCHES) < /dev/null | patch -p1
 	touch $@
 

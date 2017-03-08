@@ -6,14 +6,15 @@
 #   	- Tool to freeze python script into binary
 #
 
-CX_FREEZE_VERSION       = 3.0.3
+CX_FREEZE_VERSION       = 5.0.1
 CX_FREEZE_DIR           = $(INITRD_SRC_DIR)/cx_Freeze-$(CX_FREEZE_VERSION)
-CX_FREEZE_TARBALL       = cx_Freeze-$(CX_FREEZE_VERSION)-source.tgz
+CX_FREEZE_TARBALL       = cx_Freeze-$(CX_FREEZE_VERSION).tar.gz
 # CX_FREEZE_URL           = http://switch.dl.sourceforge.net/sourceforge/cx-freeze/$(CX_FREEZE_TARBALL)
-CX_FREEZE_URL           = http://download.systemimager.org/pub/cx-freeze/$(CX_FREEZE_TARBALL)
+#CX_FREEZE_URL           = http://download.systemimager.org/pub/cx-freeze/$(CX_FREEZE_TARBALL)
+CX_FREEZE_URL           = https://pypi.python.org/packages/d0/6d/9492644452727094543575de9846af5a2b9c764f760e2d414af7c876618c/cx_Freeze-5.0.1.tar.gz#md5=e2fe0559a4f7464b3a6ea4cd3ca62022
 #
 # Used by bittorrent.rul
-CX_FREEZE_BINARY        = $(CX_FREEZE_DIR)/FreezePython
+CX_FREEZE_BINARY        = $(CX_FREEZE_DIR)/cxfreeze
 
 CX_FREEZE_PATCHES       = $(shell ls $(INITRD_PATCH_DIR)/cx_freeze.*.patch 2>/dev/null | sort)
 

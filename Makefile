@@ -164,6 +164,7 @@ LOCK_DIR = $(DESTDIR)/var/lock/systemimager
 
 INITRD_DIR = $(TOPDIR)/initrd_source
 INITRD_BUILD_DIR = $(INITRD_DIR)/build_dir
+DRACUT_MODULES = $(USR)/lib/dracut/modules.d
 
 BOOT_BIN_DEST     = $(USR)/share/systemimager/boot/$(ARCH)/$(FLAVOR)
 
@@ -190,7 +191,7 @@ FLAMETHROWER_STATE_DIR = $(DESTDIR)/var/state/systemimager/flamethrower
 
 RSYNC_STUB_DIR = $(ETC)/systemimager/rsync_stubs
 
-CHECK_FLOPPY_SIZE = expr \`du -b $(INITRD_DIR)/initrd.img | cut -f 1\` + \`du -b $(LINUX_IMAGE) | cut -f 1\`
+#CHECK_FLOPPY_SIZE = expr \`du -b $(INITRD_DIR)/initrd.img | cut -f 1\` + \`du -b $(LINUX_IMAGE) | cut -f 1\`
 
 SI_INSTALL = $(TOPDIR)/tools/si_install --si-prefix=$(PREFIX)
 GETSOURCE = $(TOPDIR)/tools/getsource
@@ -214,7 +215,8 @@ else
 	include config.inc
 # build everything, install nothing
 .PHONY:	all
-all:	kernel $(INITRD_DIR)/initrd.img manpages
+#all:	kernel $(INITRD_DIR)/initrd.img manpages
+all:	install_initrd_template manpages
 
 
 endif
@@ -239,12 +241,12 @@ binaries: $(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.img
 # by setting a variable in one and using it in another, then that should be
 # abstracted out. Its much more robust to include *.rul... -dannf
 #
-include $(TOPDIR)/make.d/kernel.rul
+#include $(TOPDIR)/make.d/kernel.rul
 include $(TOPDIR)/initrd_source/initrd.rul
 
 # a complete server install
 .PHONY:	install_server_all
-install_server_all:	install_server install_common install_binaries
+install_server_all:	install_server install_common install_binaries install_dracut
 
 # a complete client install
 .PHONY:	install_client_all
@@ -338,6 +340,20 @@ install_common:	install_common_man install_common_libs
 	mkdir -p $(BIN)
 	$(foreach binary, $(COMMON_BINARIES), \
 		$(SI_INSTALL) -m 755 $(BINARY_SRC)/$(binary) $(BIN);)
+
+# install files for dracut-systemimager module.
+.PHONY:	install_dracut
+install_dracut:
+	mkdir -p $(DRACUT_MODULES)/39systemimager/
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/dhclient-script.sh $(DRACUT_MODULES)/39systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/parse-sis-options.sh $(DRACUT_MODULES)/39systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-monitor-server.sh $(DRACUT_MODULES)/39systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-save-dmesg.sh $(DRACUT_MODULES)/39systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/module-setup.sh $(DRACUT_MODULES)/39systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-ifcfg.sh $(DRACUT_MODULES)/39systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-lib.sh $(DRACUT_MODULES)/39systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-deploy-client.sh $(DRACUT_MODULES)/39systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-wait-imaging.sh $(DRACUT_MODULES)/39systemimager
 
 # install server-only libraries
 .PHONY:	install_server_libs
@@ -483,9 +499,11 @@ install:
 	@echo ''
 
 .PHONY:	install_binaries
-install_binaries:	install_kernel \
-			install_initrd \
-			install_initrd_template
+install_binaries:	install_initrd_template
+
+#install_binaries:	install_kernel \
+#			install_initrd \
+#			install_initrd_template
 
 .PHONY:	complete_source_tarball
 complete_source_tarball:	$(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source.tar.bz2.sign
@@ -599,7 +617,8 @@ deb: $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
 
 # removes object files, docs, editor backup files, etc.
 .PHONY:	clean
-clean:	$(subst .rul,_clean,$(shell cd $(TOPDIR)/make.d && ls *.rul)) initrd_clean
+#clean:	$(subst .rul,_clean,$(shell cd $(TOPDIR)/make.d && ls *.rul)) initrd_clean
+clean:	initrd_clean
 	-$(MAKE) -C $(MANPAGE_DIR) clean
 	-$(MAKE) -C $(MANUAL_DIR) clean
 

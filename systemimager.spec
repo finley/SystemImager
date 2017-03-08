@@ -21,6 +21,10 @@
 %{?_build_only_boot:%{expand: %%define _build_all 0}}
 
 %define _unpackaged_files_terminate_build 0
+# Allow initrd_template binaries ion a noarch package.
+# indeed, x86_64 initrd template should be installable on another arch as "data"
+# in order to generate initrd for this arch.
+%define _binaries_in_noarch_packages_terminate_build   0
 
 # prevent RPM from stripping files (eg. bittorrent binaries)
 %define __spec_install_post /usr/lib/rpm/brp-compress
@@ -267,7 +271,7 @@ BuildArch: noarch
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
-BuildRequires: python, python-devel, %{python_xml}, %{static_libcrypt_a}
+BuildRequires: python, python-devel
 Requires: %{name}-%{_build_arch}boot-%{_boot_flavor} = %{version}
 Provides: %{name}-initrd_template = %{version}
 AutoReqProv: no
@@ -324,14 +328,30 @@ environments.
 The bittorrent package allows you to use the BitTorrent protocol to perform
 installations.
 
+%package -n dracut-%{name}
+Summary: dracut modules to build a dracut initramfs with systemimager support
+Version: %ver
+Release: %rel
+License: GPL
+Group: Applications/System
+BuildRoot: /tmp/%{name}-%{ver}-root
+BuildArch: noarch
+Packager: %packager
+URL: http://wiki.systemimager.org/
+Distribution: System Installation Suite
+Requires: systemimager-server = %{version}, dracut-network
+#AutoReqProv: no
+%description -n dracut-%{name}
+This package is a dracut modules that automates the systeimager initramfs creation.
+
 %changelog
 * Wed Jul 30 2014 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.20
 - Fixed script that reports rebooted status.
 
-* Wed Jul 18 2014 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.19
+* Fri Jul 18 2014 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.19
 - Reverted si_netbootmond wrong fix and fixed the man instead.
 
-* Tue Jul 17 2014 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.18
+* Thu Jul 17 2014 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.18
 - Fix si_netbootmond that refused to do its job.
 - SystemConfigurator disabled (currently broken)
 
@@ -545,7 +565,7 @@ installations.
 - Added %doc README.SystemImager_DHCP_options, README.ssh_support and
   TODO to systemimager-server package
 
-* Mon Jun 11 2006 Bernard Li <bli@bcgsc.ca>
+* Sun Jun 11 2006 Bernard Li <bli@bcgsc.ca>
 - New package: systemimager-imagemanip
 
 * Fri Jun 09 2006 Bernard Li <bli@bcgsc.ca>
@@ -614,10 +634,10 @@ installations.
 * Tue Aug 19 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.1.5-1
 - new upstream release
 
-* Tue Jul 14 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.1.4-1
+* Mon Jul 14 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.1.4-1
 - new upstream release
 
-* Tue Jul 09 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.1.3-1
+* Wed Jul 09 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.1.3-1
 - new upstream release
 
 * Tue Jul 08 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.1.2-5
@@ -636,35 +656,35 @@ installations.
 * Tue Jul 01 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.1.2-1
 - new upstream development release
 
-* Tue Apr 02 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.0.1-4
+* Wed Apr 02 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.0.1-4
 - fix mkautoinstallcd on ia64 - 751740
 
-* Tue Apr 02 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.0.1-3
+* Wed Apr 02 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.0.1-3
 - added a patch from bef that no longer sorts module names - 755463
 
-* Tue Apr 02 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.0.1-2
+* Wed Apr 02 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.0.1-2
 - remove eepro100 (but keep e100) so boel will fit on a floppy again
 
 * Sun Mar 30 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.0.1-1
 - new upstream bug-fix release
 
-* Sun Jan 08 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.0.0-2
+* Wed Jan 08 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.0.0-2
 - various ia64 fixes
 - stop attempting to build ps manual
 
 * Sun Dec 08 2002 sis devel <sisuite-devel@lists.sourceforge.net> 3.0.0-1
 - new upstream release
 
-* Sun Nov 18 2002 dann frazier <dannf@dannf.org> 2.9.5-1
+* Mon Nov 18 2002 dann frazier <dannf@dannf.org> 2.9.5-1
 - new upstream release
 
 * Sun Oct 27 2002 dann frazier <dannf@dannf.org> 2.9.4-1
 - new upstream release
 
-* Thu Oct 13 2002 dann frazier <dannf@dannf.org> 2.9.3-2
+* Sun Oct 13 2002 dann frazier <dannf@dannf.org> 2.9.3-2
 - added code to migrate users to rsync stubs
 
-* Thu Oct 02 2002 dann frazier <dannf@dannf.org> 2.9.3-1
+* Wed Oct 02 2002 dann frazier <dannf@dannf.org> 2.9.3-1
 - new upstream release
 
 * Thu Sep 19 2002 Sean Dague <sean@dague.net> 2.9.1-1
@@ -687,7 +707,7 @@ installations.
 * Mon Nov  5 2001 Sean Dague <sean@dague.net> 2.0.0-4
 - Added build section for true SRPM ability
 
-* Mon Oct  28 2001 Sean Dague <sean@dague.net> 2.0.0-3
+* Sun Oct 28 2001 Sean Dague <sean@dague.net> 2.0.0-3
 - Added common package
 
 * Sat Oct 20 2001  Sean Dague <sean@dague.net> 2.0.0-2
@@ -723,10 +743,10 @@ export LD_FLAGS=-L$RPM_BUILD_DIR/%{name}-%{version}/initrd_source/build_dir/lib
 # Only build everything if on x86, this helps with PPC build issues
 %if %{_build_all}
 #%{__make} %{?_smp_mflags} all
-%{__make} -j1 all
+%{__make} -j1 all DESTDIR=$RPM_BUILD_ROOT PREFIX=%_prefix
 
 %else
-%{__make} binaries
+%{__make} binaries DESTDIR=$RPM_BUILD_ROOT PREFIX=%_prefix
 
 %endif
 
@@ -1083,12 +1103,16 @@ fi
 %defattr(-, root, root)
 %dir %{_datarootdir}/systemimager/boot/%{_build_arch}
 %dir %{_datarootdir}/systemimager/boot/%{_build_arch}/standard
-%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/config
-%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/initrd.img
-%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/kernel
+#%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/config
+#%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/initrd.img
+#%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/kernel
 #prefix/share/systemimager/boot/%{_build_arch}/standard/boel_binaries.tar.gz
 
 %files %{_build_arch}initrd_template
 %defattr(-, root, root)
 %dir %{_datarootdir}/systemimager/boot/%{_build_arch}/standard/initrd_template
 %{_datarootdir}/systemimager/boot/%{_build_arch}/standard/initrd_template/*
+
+%files -n dracut-%{name}
+%defattr(-, root, root)
+%{_prefix}/lib/dracut/modules.d/*

@@ -15,112 +15,13 @@
 #       - upgrade kernel version for x86_64 and i386 to 3.7.2
 #   2013.01.29  Olivier Lahaye
 #       - upgrade kernel version for x86_64 and i386 to 3.7.5
+#   2015.01.28  Olivier Lahaye
+#       - Do not build kernel. Instead use the build host distro one.
 #
 
-ifeq ($(ARCH),x86_64)
-	LINUX_VERSION = 3.7.5
-	LINUX_IMAGE = $(LINUX_SRC)/arch/x86_64/boot/bzImage
-	LINUX_TARGET = bzImage
-	LINUX_DIR = linux-$(LINUX_VERSION)
-endif
-
-ifeq ($(ARCH),i386)
-	# http://packages.ubuntu.com/lucid-updates/linux-image-2.6.32-22-generic
-	# 	http://archive.ubuntu.com/ubuntu/pool/main/l/linux/linux_2.6.32.orig.tar.gz
-	#	http://archive.ubuntu.com/ubuntu/pool/main/l/linux/linux_2.6.32-25.45.diff.gz
-	LINUX_VERSION = 3.7.5
-	LINUX_IMAGE = $(LINUX_SRC)/arch/i386/boot/bzImage
-	LINUX_TARGET = bzImage
-	LINUX_DIR = linux-$(LINUX_VERSION)
-endif
-
-ifeq ($(ARCH),ia64)
-	LINUX_VERSION = 2.6.16.5
-	LINUX_IMAGE = $(LINUX_SRC)/vmlinux.gz
-	LINUX_TARGET = compressed
-	LINUX_DIR = linux-$(LINUX_VERSION)
-endif
-
-ifeq ($(ARCH),parisc)
-	LINUX_VERSION = 2.4.25
-	LINUX_IMAGE = $(LINUX_SRC)/vmlinux
-	LINUX_TARGET = vmlinux
-	LINUX_DIR = linux-$(LINUX_VERSION)
-endif
-
-ifeq ($(ARCH),alpha)
-	LINUX_VERSION = 2.4.25
-	LINUX_IMAGE = $(LINUX_SRC)/arch/alpha/boot/vmlinux.gz
-	LINUX_TARGET = boot
-	LINUX_DIR = linux-$(LINUX_VERSION)
-endif
-
-# currently ppc only supports rs6k machines.  Help is welcome to
-# make this support other machines.  This is 32bit kernel only.
-ifeq ($(ARCH),ppc)
-ifdef WITH_YDL_KERNEL
-	LINUX_VERSION = 2.6.8-1.ydl.7
-else
-	LINUX_VERSION = 2.6.8
-endif
-	LINUX_IMAGE = $(LINUX_SRC)/arch/ppc/boot/images/zImage.chrp-rs6k
-	LINUX_TARGET = zImage
-	LINUX_DIR = linux-$(LINUX_VERSION)
-endif
-
-# This will be for pSeries (ppc64 IBM machines)
-ifeq ($(ARCH),ppc64)
-ifdef WITH_YDL_KERNEL
-	LINUX_VERSION = 2.6.8-1.ydl.7
-    LINUX_IMAGE = $(LINUX_SRC)/arch/ppc64/boot/zImage
-    LINUX_TARGET = zImage
-    LINUX_DIR = linux-$(LINUX_VERSION)
-else
-	LINUX_VERSION = 2.6.16.5
-	LINUX_IMAGE = $(LINUX_SRC)/arch/powerpc/boot/zImage.initrd
-	LINUX_TARGET = zImage.initrd
-	LINUX_DIR = linux-$(LINUX_VERSION)
-endif
-endif
-
-ifeq ($(ARCH),ppc64-ps3)
-	LINUX_VERSION = 2.6.23-20071023
-	LINUX_IMAGE = $(LINUX_SRC)/vmlinux.strip
-	LINUX_TARGET = zImage
-	LINUX_DIR = linux-$(LINUX_VERSION)
-endif
-
-LINUX_SRC := $(SRC_DIR)/$(LINUX_DIR)
-#LINUX_TARBALL := linux_$(LINUX_VERSION).orig.tar.gz
-#LINUX_URL = http://download.systemimager.org/pub/linux/$(LINUX_TARBALL)
-LINUX_TARBALL := linux-$(LINUX_VERSION).tar.xz
-LINUX_URL = ftp://ftp.kernel.org/pub/linux/kernel/v3.x/$(LINUX_TARBALL)
-LINUX_CONFIG := $(PATCH_DIR)/linux.$(ARCH).config
-
-ifdef WITH_YDL_KERNEL
-	LINUX_CONFIG := $(PATCH_DIR)/linux.$(ARCH)ydl.config
-endif
-
-ifdef IS_PS3
-    LINUX_CONFIG := $(PATCH_DIR)/linux.$(ARCH).config
-endif
-
-## names for kernel patch files can be of 2 forms:
-##  1) patches that apply to all architectures
-##       linux.all.XX<name>.patch
-##  2) patch applies to a subset of arches
-##    linux.<arch1>,<arch2>,...,<archN>.XX<name>.patch
-LINUX_PATCHES = $(sort $(shell find $(PATCH_DIR) \
-                                    -name "linux.$(ARCH).*.patch" -o \
-                                    -name "linux.all.*.patch" -o \
-                                    -name "linux.$(ARCH),*.*.patch" -o \
-                                    -name "linux.*,$(ARCH),*.*.patch" -o \
-                                    -name "linux.*,$(ARCH).*.patch"))
-ALL_SOURCE += $(SRC_DIR)/$(LINUX_TARBALL)
-
-PHONY += kernel_list_patches
-kernel_list_patches:
-	@echo $(LINUX_PATCHES)
+LINUX_VERSION = $(shell cat /proc/version |cut -d" " -f3)
+LINUX_IMAGE = /boot/vmlinuz-$(LINUX_VERSION)
+LINUX_TARGET = vmlinuz-$(LINUX_VERSION)
 
 # install the kernel that autoinstall clients will boot from during
 # autoinstallation
@@ -129,73 +30,5 @@ install_kernel:	$(LINUX_IMAGE)
 	mkdir -p $(BOOT_BIN_DEST)
 	$(SI_INSTALL) -m 644 $(LINUX_IMAGE) \
 	    $(BOOT_BIN_DEST)/kernel
-	$(SI_INSTALL) -m 644 $(LINUX_CONFIG) \
-	    $(BOOT_BIN_DEST)/config
-
-# install the kernel headers to temporary include dir so udev and the like
-# can be built agains the kernel they will run under.
-#PHONY += install_kernel_headers
-#install_kernel_headers: $(INITRD_DIR)/kernel_headers.prep
-
-$(INITRD_DIR)/kernel_headers.prep: $(LINUX_IMAGE) $(INITRD_BUILD_DIR).skel
-	$(MAKE) -C $(LINUX_SRC) -j $(NCPUS) ARCH=$(ARCH) INSTALL_HDR_PATH=$(INITRD_BUILD_DIR)/usr headers_install
-	touch $(INITRD_DIR)/kernel_headers.prep
-
-# build the kernel that autoinstall clients will boot from during
-# autoinstallation
-PHONY += kernel
-kernel:	$(LINUX_IMAGE)
-
-ifdef IS_PPC64
-# OL: circular reference: initrd.img needs kernel_headers which needs kernel built...
-$(LINUX_IMAGE):	$(SRC_DIR)/patched_kernel-stamp $(INITRD_DIR)/initrd.img
-	cp $(TOPDIR)/initrd_source/initrd.img \
-	    ${LINUX_SRC}/arch/powerpc/boot/ramdisk.image.gz
-	$(MAKE) -C $(LINUX_SRC) -j $(NCPUS) $(LINUX_TARGET)
-	mkdir -p $(TOPDIR)/tmp
-else 
-$(LINUX_IMAGE): $(SRC_DIR)/patched_kernel-stamp
-	$(MAKE) -C $(LINUX_SRC) -j $(NCPUS) $(LINUX_TARGET)
-	mkdir -p $(TOPDIR)/tmp
-endif
-
-PHONY += patched_kernel-stamp
-patched_kernel-stamp:	$(SRC_DIR)/patched_kernel-stamp
-
-$(SRC_DIR)/patched_kernel-stamp:	$(SRC_DIR)/$(LINUX_TARBALL) \
-					$(LINUX_CONFIG) $(LINUX_PATCHES)
-	rm -rf $(LINUX_SRC)
-	@echo -n Extracting kernel source...
-	@cd $(SRC_DIR) && tar xJf $(LINUX_TARBALL)
-	@echo done
-	@cd $(LINUX_SRC) && \
-   	  $(foreach patch, $(LINUX_PATCHES), \
-  	    echo -n Applying `basename $(patch)`... && cat $(patch) | patch -s -p1 && echo done. &&) /bin/true
-	cp -a $(LINUX_CONFIG) $(LINUX_SRC)/.config
-	perl -pi -e "s/^EXTRAVERSION =\s*(\S*)\s*\n/EXTRAVERSION = \1-boel_v$(VERSION)\n/" $(LINUX_SRC)/Makefile
-	$(MAKE) -C $(LINUX_SRC) oldconfig
-	touch $(SRC_DIR)/patched_kernel-stamp
-
-PHONY += get_kernel_source
-get_kernel_source:	$(SRC_DIR)/$(LINUX_TARBALL)
-
-$(SRC_DIR)/$(LINUX_TARBALL):
-	[ -d $(SRC_DIR) ] || mkdir -p $(SRC_DIR)
-	$(GETSOURCE) $(LINUX_URL) $(SRC_DIR)
-
-PHONY += modules
-modules:	$(SRC_DIR)/modules_build-stamp
-
-$(SRC_DIR)/modules_build-stamp: $(LINUX_IMAGE)
-	rm -fr $(TOPDIR)/tmp/kernel_modules
-	$(MAKE) -C $(LINUX_SRC) -j $(NCPUS) modules
-	touch $(SRC_DIR)/modules_build-stamp
-
-PHONY += kernel_clean
-kernel_clean:
-	rm -rf $(LINUX_SRC)
-	rm -f $(SRC_DIR)/patched_kernel-stamp
-	rm -f $(SRC_DIR)/modules_build-stamp
-
-RHEL6_BUILD_DEPS += xz
+	cat /proc/version |cut -d' ' -f3 > $(BOOT_BIN_DEST)/version.txt
 
