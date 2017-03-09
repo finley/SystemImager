@@ -13,4 +13,10 @@ then
 	shellout
 fi
 
-# 2nd: Unknown timeout
+# 2nd: check if we were able to retreive the imaging scripts
+
+
+# 3rd: check that we were able to rsync something
+
+# 4th: check that /sysroot and /sysroot/boot are not full.
+
