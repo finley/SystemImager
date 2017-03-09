@@ -3,12 +3,23 @@
 #
 #   Copyright (C) 1999-2005 Brian Elliott Finley
 #   Copyright (C) 2007-2008 Andrea Righi
-##  Copyright (C) 2012      Olivier Lahaye
+##  Copyright (C) 2012-2017 Olivier Lahaye
 #
 #   $Id$
 #
 
-4.3.0 [ Not yet released ]
+4.5.0 [ Not yet released ]
+--------------------------------------------------------------------------------
+- Major rework of how initrd and kernel are provided.
+  No more kernel build or initrd binaries build (except a few ones)
+  Now kernel is taken from running distro
+  Now initrd is built using dracut and a systemimager dracut module
+- pod doc fixes (missing =back)
+- rpm spec file dates fixes
+- rpm spec file major rework and add for dracut-systemimager (dracut module)
+
+4.3.0 [ Never released ]
+--------------------------------------------------------------------------------
 - Disabled SystemConfigurator in client script (systemconfigurator doesn't support
   new technologies like systemd, NetworkManager or grub/grub2)
 - fixed si_netbootmond refusing to start when NET_BOOT_DEFAULT was set to "net".
