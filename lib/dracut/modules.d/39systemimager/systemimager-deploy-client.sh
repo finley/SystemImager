@@ -71,4 +71,7 @@ write_variables
 
 run_autoinstall_script
 
-touch /tmp/finished
+# Everything is finished. Tell initqueue/finished that we are done.
+# BUG, /tmp/SIS_action can contain reboot, shutdown or emergency
+echo reboot > /tmp/SIS_action
+

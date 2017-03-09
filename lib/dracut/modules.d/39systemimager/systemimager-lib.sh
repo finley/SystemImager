@@ -28,8 +28,8 @@ TORRENTS=torrents
 TORRENTS_DIR=/torrents
 FLAMETHROWER_DIRECTORY_DIR=/var/lib/systemimager/flamethrower
 BOEL_BINARIES_DIR=/tmp/boel_binaries
-VERSION="SYSTEMIMAGER_VERSION_STRING"
-FLAVOR="SYSTEMIMAGER_FLAVOR_STRING"
+VERSION="4.5.0"
+FLAVOR="standard"
 #
 ################################################################################
 
@@ -218,6 +218,7 @@ shellout() {
         stop_report_task -1
     fi
     # Need to trigger emergency shell    
+    echo emergency > /tmp/SIS_action
     /bin/dracut-emergency
     # exec sh > /dev/console 2>&1
 }
@@ -1816,3 +1817,24 @@ sleep_loop() {
 }
 #
 ################################################################################
+#
+#   Save the SIS imaging relevant logs to /root/SIS_Install_logs/ on the imaged
+#   computer.
+#
+#
+#
+save_logs_to_sysroot() {
+	info "Saving logs to /sysroot/root..."
+	if test -d /sysroot/root
+	then
+		mkdir -p /sysroot/root/SIS_Install_logs/
+		cp /tmp/variables.txt /sysroot/root/SIS_Install_logs/
+		cp /tmp/dhcp_info.txt /sysroot/root/SIS_Install_logs/
+		cp si_monitor.log /sysroot/root/SIS_Install_logs/
+		cp si.log /sysroot/root/SIS_Install_logs/
+		sleep 10
+	else
+		warn "/sysroot/root does not exists"
+		shellout
+	fi
+}

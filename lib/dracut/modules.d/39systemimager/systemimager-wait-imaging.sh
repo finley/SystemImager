@@ -8,12 +8,24 @@
 
 #exit 0
 
-if test -f /tmp/finished
+if test -f /tmp/SIS_action
 then
-	info "IMAGING Finished...."
-	sleep 10
-#	reboot
+	case $(cat /tmp/SIS_action) in
+		"emergency")
+			/bin/dracut-emergency
+			;;
+		"reboot")
+			save_logs_to_sysroot
+			sleep 10
+			/sbin/reboot
+			;;
+		"shutdown")
+			save_logs_to_sysroot
+			sleep 10
+			/sbin/shutdown
+			;;
 	exit 0
 else
 	exit 1
 fi
+
