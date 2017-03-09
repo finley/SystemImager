@@ -41,6 +41,7 @@ install() {
     inst_hook initqueue/online 00 "$moddir/systemimager-ifcfg.sh" # creates /tmp/variables.txt
     inst_hook initqueue/online 50 "$moddir/systemimager-monitor-server.sh" 
     inst_hook initqueue/online 90 "$moddir/systemimager-deploy-client.sh"
+    inst_hook initqueue/timeout 10 "$moddir/systemimager-timeout.sh"
 #    inst_hook pre-pivot 50 "$moddir/systemimager-save-inst-logs.sh"
 
     dracut_need_initqueue
