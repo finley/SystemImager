@@ -24,6 +24,7 @@ then
 			sleep 10
 			/sbin/shutdown
 			;;
+	esac
 	exit 0
 else
 	exit 1
