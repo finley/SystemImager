@@ -1,18 +1,28 @@
-#!/bin/bash
-. /lib/dracut-lib.sh
+#!/bin/sh
+#
+# "SystemImager" 
+#
+#  Copyright (C) 1999-2017 Brian Elliott Finley <brian@thefinleys.com>
+#
+#  $Id$
+#  vi: set filetype=sh et ts=4:
+#
+#  Code written by Olivier LAHAYE.
+#
+# This file is run by initqueue/finished hook from dracut-initqueue service
+# It is called every seconds until it returns 0
+# IF a file /tmp/SIS_action is found it acts according to content:
+# reboot: imaging is finished and reboot was the default action
+# shutdown: imaging is finished and shutdown was the default action
+# emergency: a problem occured => trigger emergency shell.
 
-# Wait that systemimager kernel cmdline parameters are dumped
-#test -f /tmp/kernel_append_parameter_variables.txt || exit 1
-
-#info "SYSTEMIMAGER: initqueue finished."
-
-#exit 0
+type shellout >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 
 if test -f /tmp/SIS_action
 then
 	case $(cat /tmp/SIS_action) in
 		"emergency")
-			/bin/dracut-emergency
+			shellout
 			;;
 		"reboot")
 			save_logs_to_sysroot

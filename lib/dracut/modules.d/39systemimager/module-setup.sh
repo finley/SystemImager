@@ -36,12 +36,12 @@ install() {
     # We need to overwrite 40network dhclient-script with our version that handles /etc/dhcp/dhclient-exit-hooks
     inst_script "$moddir/dhclient-script.sh" "/sbin/dhclient-script"
     inst_hook cmdline 90 "$moddir/parse-sis-options.sh" # Creates /tmp/kernel_append_parameter_variables.txt
-    inst_hook initqueue/settled 90 "$moddir/systemimager-save-dmesg.sh" # creates /tmp/si_monitor.log
-    inst_hook initqueue/finished 90 "$moddir/systemimager-wait-imaging.sh" # Waits for file /tmp/finished
+    inst_hook initqueue/finished 90 "$moddir/systemimager-wait-imaging.sh" # Waits for file /tmp/SIS_action
+    inst_hook initqueue/timeout 10 "$moddir/systemimager-timeout.sh" # In case of timeout (DHCP failure, ....)
     inst_hook initqueue/online 00 "$moddir/systemimager-ifcfg.sh" # creates /tmp/variables.txt
-    inst_hook initqueue/online 50 "$moddir/systemimager-monitor-server.sh" 
-    inst_hook initqueue/online 90 "$moddir/systemimager-deploy-client.sh"
-    inst_hook initqueue/timeout 10 "$moddir/systemimager-timeout.sh"
+    inst_hook initqueue/online 10 "$moddir/systemimager-pingtest.sh" # do a ping_test()
+    inst_hook initqueue/online 50 "$moddir/systemimager-monitor-server.sh" # Start the log monitor server
+    inst_hook initqueue/online 90 "$moddir/systemimager-deploy-client.sh" # Imaging occures here
 #    inst_hook pre-pivot 50 "$moddir/systemimager-save-inst-logs.sh"
 
     dracut_need_initqueue

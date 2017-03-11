@@ -43,12 +43,27 @@ test -f /tmp/variables.txt && . /tmp/variables.txt
 #
 ################################################################################
 #
-#  logmsg
+#  logwarn, loginfo, logmsg
 #
 # Usage: log a message, redirects to console / syslog depending on usage
+# logwarn outputs to stderr
+# loginfo outputs to stdout
+# logmsg (same as loginfo: for compatibility)
+logwarn() {
+	warn $@
+	logmessage $@
+}
+loginfo() {
+	info $@
+	logmessage $@
+}
 logmsg() {
-    # log to console
-    info $@
+	info $@
+	logmessage $@
+}
+
+logmessage() {
+    echo "DEBUG: $@" >&2
     # log to temporary file (which will go away when we reboot)
     # this is good for envs that have bad consoles
     local FILE=/tmp/si.log
@@ -68,25 +83,28 @@ logmsg() {
 #
 # Usage: check_version
 check_version() {
-    logmsg
-    logmsg check_version
+    loginfo "========================="
+    loginfo "Checking Kernel version initrd modules version compatibility...."
     INITRD_VERSION=$VERSION
     KERNEL_VERSION=`uname -r | sed -e s/.*boel_v//`
     if [ "$INITRD_VERSION" != "$KERNEL_VERSION" ] ; then
-        logmsg "FATAL: Kernel version ($KERNEL_VERSION) doesn't match initrd version ($INITRD_VERSION)!"
+        logwarn "FATAL: Kernel version ($KERNEL_VERSION) doesn't match initrd version ($INITRD_VERSION)!"
         shellout
+    else
+	loginfo "Ok."
     fi
 }
-#
+
+
 ################################################################################
 #
 #  get_arch
 #
 # Usage: get_arch; echo $ARCH
 get_arch() {
-    logmsg
-    logmsg get_arch
+    loginfo "========================="
     ARCH=`uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/`
+    loginfo "Detected ARCH=$ARCH"
 }
 #
 ################################################################################
@@ -97,18 +115,19 @@ get_arch() {
 #  after proc is mounted.
 #
 adjust_arch() {
-    logmsg
-    logmsg adjust_arch
+    loginfo "========================="
     if [ "ppc64" = "$ARCH" ] ; then
         # This takes a little bit of futzing with due to all the PPC platforms that exist.
         if [ -d /proc/iSeries ] ; then
             ARCH=ppc64-iSeries
-            logmsg "Detected ppc64 is really an iSeries partition..."
+            loginfo "Detected ppc64 is really an iSeries partition..."
         fi
         if grep -qs PS3 /proc/cpuinfo; then
             ARCH=ppc64-ps3
+            loginfo "Detected ppc64 in a PS3..."
         fi
     fi
+    loginfo "Adjusting arch if needed ARCH=$ARCH"
 }
 #
 ################################################################################
@@ -118,52 +137,54 @@ adjust_arch() {
 # Usage: write_variables
 write_variables() {
 
-    logmsg
-    logmsg write_variables
+    loginfo "========================="
+    loginfo "Saving variables to /tmp/variables.txt"
 
     # pass all variables set here on to the hostname.sh script
     rm -f /tmp/variables.txt
-    
-    echo "HOSTNAME=$HOSTNAME"                   >> /tmp/variables.txt || shellout
-    echo "DOMAINNAME=$DOMAINNAME"               >> /tmp/variables.txt
-    
-    echo "DEVICE=$DEVICE"                       >> /tmp/variables.txt
-    echo "IPADDR=$IPADDR"                       >> /tmp/variables.txt
-    echo "NETMASK=$NETMASK"                     >> /tmp/variables.txt
-    echo "NETWORK=$NETWORK"                     >> /tmp/variables.txt
-    echo "BROADCAST=$BROADCAST"                 >> /tmp/variables.txt
-    
-    echo "GATEWAY=$GATEWAY"                     >> /tmp/variables.txt
-    echo "GATEWAYDEV=$GATEWAYDEV"               >> /tmp/variables.txt
-    
-    echo "IMAGESERVER=$IMAGESERVER"             >> /tmp/variables.txt
-    echo "IMAGENAME=$IMAGENAME"                 >> /tmp/variables.txt
-    
-    echo "LOG_SERVER=$LOG_SERVER"               >> /tmp/variables.txt
-    echo "LOG_SERVER_PORT=$LOG_SERVER_PORT" 	>> /tmp/variables.txt
-    echo "USELOGGER=$USELOGGER"                 >> /tmp/variables.txt
-    
-    echo "TMPFS_STAGING=$TMPFS_STAGING"         >> /tmp/variables.txt
-    
-    echo "SSH=$SSH"	           	        >> /tmp/variables.txt
-    echo "SSHD=$SSHD"	                        >> /tmp/variables.txt
-    echo "SSH_USER=$SSH_USER"	            	>> /tmp/variables.txt
-    echo "SSH_DOWNLOAD_URL=$SSH_DOWNLOAD_URL"	>> /tmp/variables.txt
-    
-    echo "FLAMETHROWER_DIRECTORY_PORTBASE=$FLAMETHROWER_DIRECTORY_PORTBASE"	>> /tmp/variables.txt
-    
-    echo "MONITOR_SERVER=$MONITOR_SERVER"       >> /tmp/variables.txt
-    echo "MONITOR_PORT=$MONITOR_PORT"           >> /tmp/variables.txt
-    echo "MONITOR_CONSOLE=$MONITOR_CONSOLE"     >> /tmp/variables.txt
-    
-    echo "BITTORRENT=$BITTORRENT"                           >> /tmp/variables.txt
-    echo "BITTORRENT_STAGING=$BITTORRENT_STAGING"           >> /tmp/variables.txt
-    echo "BITTORRENT_POLLING_TIME=$BITTORRENT_POLLING_TIME" >> /tmp/variables.txt
-    echo "BITTORRENT_SEED_WAIT=$BITTORRENT_SEED_WAIT"       >> /tmp/variables.txt
-    echo "BITTORRENT_UPLOAD_MIN=$BITTORRENT_UPLOAD_MIN"     >> /tmp/variables.txt
-    
-    echo "GROUPNAMES=\"$GROUPNAMES\""               >> /tmp/variables.txt
-    echo "GROUP_OVERRIDES=\"$GROUP_OVERRIDES\""     >> /tmp/variables.txt
+
+cat > /tmp/variables.txt <<EOF || shellout
+HOSTNAME=$HOSTNAME
+DOMAINNAME=$DOMAINNAME
+
+DEVICE=$DEVICE
+IPADDR=$IPADDR
+NETMASK=$NETMASK
+NETWORK=$NETWORK
+BROADCAST=$BROADCAST
+
+GATEWAY=$GATEWAY
+GATEWAYDEV=$GATEWAYDEV
+
+IMAGESERVER=$IMAGESERVER
+IMAGENAME=$IMAGENAME
+
+LOG_SERVER=$LOG_SERVER
+LOG_SERVER_PORT=$LOG_SERVER_PORT
+USELOGGER=$USELOGGER
+
+TMPFS_STAGING=$TMPFS_STAGING
+
+SSH=$SSH
+SSHD=$SSHD
+SSH_USER=$SSH_USER
+SSH_DOWNLOAD_URL=$SSH_DOWNLOAD_URL
+
+FLAMETHROWER_DIRECTORY_PORTBASE=$FLAMETHROWER_DIRECTORY_PORTBASE
+
+MONITOR_SERVER=$MONITOR_SERVER
+MONITOR_PORT=$MONITOR_PORT
+MONITOR_CONSOLE=$MONITOR_CONSOLE
+
+BITTORRENT=$BITTORRENT
+BITTORRENT_STAGING=$BITTORRENT_STAGING
+BITTORRENT_POLLING_TIME=$BITTORRENT_POLLING_TIME
+BITTORRENT_SEED_WAIT=$BITTORRENT_SEED_WAIT
+BITTORRENT_UPLOAD_MIN=$BITTORRENT_UPLOAD_MIN
+
+GROUPNAMES="$GROUPNAMES
+GROUP_OVERRIDES="$GROUP_OVERRIDES
+EOF
 }
 #
 ################################################################################
@@ -175,21 +196,23 @@ write_variables() {
 #
 tmpfs_watcher() {
 
-    logmsg
-    logmsg tmpfs_watcher
+    loginfo "========================="
+    loginfo "Starting tmpfs watcher..."
 
     # Note: Transfer to staging area can fail if tmpfs runs out of inodes.
     {
         while :; do
             DF=`df -k / | egrep ' /$' | sed -e 's/  */ /g' -e 's/.*[0-9] //' -e 's/%.*//'`
-            [ $DF -ge 95 ] && logmsg "WARNING: Your tmpfs filesystem is ${DF}% full!"
-            [ $DF -ge 99 ] && logmsg "         Search the FAQ for tmpfs to learn about sizing options."
+            [ $DF -ge 95 ] && logwarn "WARNING: Your tmpfs filesystem is ${DF}% full!"
+            [ $DF -ge 99 ] && logwarn "         Search the FAQ for tmpfs to learn about sizing options."
             [ $DF -ge 99 ] && shellout
             sleep 1
         done
         unset DF
     }&
     TMPFS_WATCHER_PID=$!
+    loginfo "tmpfs watcher PID: $TMPFS_WATCHER_PID"
+    echo $TMPFS_WATCHER_PID > /run/systemimager/tmpfs_watcher.pid
 }
 #
 ################################################################################
@@ -201,26 +224,29 @@ tmpfs_watcher() {
 #
 shellout() {
 
-    logmsg "Last command exited with $?"
+    logwarn "Last command exited with $?"
     COUNT="$RETRY"
-    logmsg "Killing off running processes."
+    logwarn "Killing off running processes."
+    if test -s /run/systemimager/tmpfs_watcher.pid; then
+	$TMPFS_WATCHER_PID=$(cat /run/systemimager/tmpfs_watcher.pid)
+    fi
+    # BUG: make sure it's a PID
     if [ -n "$TMPFS_WATCHER_PID" ]; then
         kill -9 $TMPFS_WATCHER_PID  >/dev/null 2>/dev/null
     fi
     killall -9 udp-receiver rsync  >/dev/null 2>/dev/null
     write_variables
-    cat /etc/issue
+    cat /etc/issue >&2
     if [ ! -z "$USELOGGER" ] ;
         then cat /etc/issue | logger
     fi
     if [ ! -z "$MONITOR_SERVER" ]; then
-    	logmsg "Installation failed!! Stopping report task."
+    	logwarn "Installation failed!! Stopping report task."
         stop_report_task -1
     fi
     # Need to trigger emergency shell    
     echo emergency > /tmp/SIS_action
-    /bin/dracut-emergency
-    # exec sh > /dev/console 2>&1
+    exec /bin/dracut-emergency
 }
 #
 ################################################################################
@@ -243,13 +269,11 @@ count_loop() {
   I=0
   while [ $I -lt $COUNT ]; do
     I=$(( $I + 1 ))
-    logmsg -n "$I "
+    echo -n "$I "
     sleep 1
   done
-
+  echo
   #trap INT
-
-  logmsg
 }
 #
 ################################################################################
@@ -261,8 +285,8 @@ get_torrents_directory() {
         return
     fi
 
-    logmsg
-    logmsg get_torrents_directory
+    loginfo "========================="
+    loginfo "Retrieving ${TORRENTS_DIR} directory..."
 
     if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
         #
@@ -274,12 +298,11 @@ get_torrents_directory() {
         DIR="${SCRIPTS_DIR}"
         RETRY=7
         flamethrower_client
-
     else
         mkdir -p ${TORRENTS_DIR}
         CMD="rsync -a ${IMAGESERVER}::${TORRENTS}/ ${TORRENTS_DIR}/"
-        logmsg "$CMD"
-        $CMD
+        loginfo "$CMD"
+        $CMD || shellout
     fi
 }
 #
@@ -288,8 +311,8 @@ get_torrents_directory() {
 # Usage: get_scripts_directory
 #
 get_scripts_directory() {
-    logmsg
-    logmsg get_scripts_directory
+    loginfo "========================="
+    loginfo "Retrieving ${SCRIPTS_DIR} directory..."
 
     if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
         #
@@ -301,11 +324,10 @@ get_scripts_directory() {
         DIR="${SCRIPTS_DIR}"
         RETRY=7
         flamethrower_client
-
     else
         mkdir -p ${SCRIPTS_DIR}
         CMD="rsync -a ${IMAGESERVER}::${SCRIPTS}/ ${SCRIPTS_DIR}/"
-        logmsg "$CMD"
+        loginfo "$CMD"
         $CMD || shellout
     fi
 }
@@ -315,9 +337,9 @@ get_scripts_directory() {
 # Usage: get_flamethrower_directory
 #
 get_flamethrower_directory() {
-    logmsg
-    logmsg Using multicast...
-    logmsg get_flamethrower_directory
+    loginfo "========================="
+    loginfo "Using multicast..."
+    loginfo "get_flamethrower_directory"
 
     MODULE_NAME=flamethrower_directory
     DIR=${FLAMETHROWER_DIRECTORY_DIR}
@@ -773,9 +795,15 @@ monitor_save_dmesg() {
 #    if [ -z $MONITOR_SERVER ]; then
 #        return
 #    fi
-    logmsg
-    logmsg monitor_save_dmesg
+# OL: Note: this function ins called in the initqueue mainloop at each loop.
+#     We just need to do that once.
+# OL: In fact this is deprecated on systemd systems as journalctl can dump everything.
+if test ! -f /tmp/si_monitor.log
+then
+    loginfo "========================="
+    loginfo "Saving dmesg to /tmp/si_monitor.log"
     dmesg -s 16392 > /tmp/si_monitor.log
+fi
 }
 #
 ################################################################################
@@ -783,8 +811,8 @@ monitor_save_dmesg() {
 # Load any modules that were placed in the my_modules directory prior to
 # running "make initrd.gz".  -BEF-
 load_my_modules() {
-    logmsg
-    logmsg load_my_modules
+    loginfo "========================="
+    loginfo "Trying to load my_modules..."
     cd /my_modules || shellout
     sh ./INSMOD_COMMANDS
 }
@@ -794,8 +822,8 @@ load_my_modules() {
 # read in varibles obtained from kernel appends
 #
 read_kernel_append_parameters() {
-    logmsg
-    logmsg read_kernel_append_parameters
+    loginfo "========================="
+    loginfo "reading /tmp/kernel_append_parameter_variables.txt"
 
     . /tmp/kernel_append_parameter_variables.txt
 }
@@ -805,8 +833,8 @@ read_kernel_append_parameters() {
 # Variable-ize /proc/cmdline arguments
 #
 variableize_kernel_append_parameters() {
-    logmsg
-    logmsg variableize_kernel_append_parameters
+    loginfo "========================="
+    loginfo "Saving /proc/cmdline SIS relevants parameters to /tmp/kernel_append_parameter_variables.txt"
     cat /proc/cmdline | tr ' ' '\n' | grep -E '[A-Z_]+=' > /tmp/kernel_append_parameter_variables.txt
 }
 #
@@ -816,7 +844,7 @@ variableize_kernel_append_parameters() {
 #   This code inspired by Ian McLeod <ian@valinux.com>
 #
 read_local_cfg() {
-    logmsg
+    loginfo "========================="
     logmsg read_local_cfg
 
     if [ "x$SKIP_LOCAL_CFG" = "xy" ]; then
@@ -900,6 +928,7 @@ read_local_cfg() {
 #   Configure network interface using local.cfg settings if possible, else
 #   use DHCP. -BEF-
 #
+# OL: Obsolete: should use cmdline dracut parameters (ip=dhcp or the like)
 start_network() {
     logmsg
     logmsg start_network
@@ -1016,65 +1045,63 @@ start_network() {
 ################################################################################
 #
 #   Ping test
-ping_test() {
-    logmsg
-    logmsg ping_test
-
-    # The reason we don't ping the IMAGESERVER if FLAMETHROWER_DIRECTORY_PORTBASE
-    # is set, is that the client may never be given, know, or need to know, the 
-    # IP address of the imageserver because the client is receiving _all_ of it's
-    # data via multicast, which is more like listening to a channel, as compared 
-    # with connecting directly to a server.  -BEF-
-    #
-    if [ ! -z "$FLAMETHROWER_DIRECTORY_PORTBASE" ]; then
-        PING_DESTINATION=$GATEWAY
-        HOST_TYPE="default gateway"
-    else
-        PING_DESTINATION=$IMAGESERVER
-        HOST_TYPE="SystemImager server"
-    fi 
-    logmsg
-    logmsg "Pinging your $HOST_TYPE to ensure we have network connectivity."
-    logmsg
-
-
-    # Ping test code submitted by Grant Noruschat <grant@eigen.ee.ualberta.ca>
-    # modified slightly by Brian Finley.
-    PING_COUNT=1
-    PING_EXIT_STATUS=1
-    while [ "$PING_EXIT_STATUS" != "0" ]
-    do
-        logmsg "PING ATTEMPT $PING_COUNT: "
-        ping -c 1 $PING_DESTINATION
-        PING_EXIT_STATUS=$?
-
-        if [ "$PING_EXIT_STATUS" = "0" ]; then
-            logmsg
-            logmsg "  We have connectivity to your $HOST_TYPE!"
-        fi
-
-        PING_COUNT=$(( $PING_COUNT + 1 ))
-        if [ "$PING_COUNT" = "4" ]; then
-            logmsg
-            logmsg "  WARNING:  Failed ping test."
-            logmsg "            Despite this seemingly depressing result, I will attempt"
-            logmsg "            to proceed with the install.  Your $HOST_TYPE may be"
-            logmsg "            configured to not respond to pings, but it wouldn't hurt"
-            logmsg "            to double check that your networking equipment is"
-            logmsg "            working properly!"
-            logmsg
-            sleep 5
-            PING_EXIT_STATUS=0
-        fi
-    done
-
-    unset PING_DESTINATION
-    unset HOST_TYPE
-
-}
+#ping_test() {
+#    loginfo "========================="
+#    loginfo "Checking network connectivity via a ping test..."
+#
+#    # The reason we don't ping the IMAGESERVER if FLAMETHROWER_DIRECTORY_PORTBASE
+#    # is set, is that the client may never be given, know, or need to know, the 
+#    # IP address of the imageserver because the client is receiving _all_ of it's
+#    # data via multicast, which is more like listening to a channel, as compared 
+#    # with connecting directly to a server.  -BEF-
+#    #
+#    if [ ! -z "$FLAMETHROWER_DIRECTORY_PORTBASE" ]; then
+#        PING_DESTINATION=$GATEWAY
+#        HOST_TYPE="default gateway"
+#    else
+#        PING_DESTINATION=$IMAGESERVER
+#        HOST_TYPE="SystemImager server"
+#    fi 
+#    loginfo "Pinging your $HOST_TYPE to ensure we have network connectivity."
+#
+#
+#    # Ping test code submitted by Grant Noruschat <grant@eigen.ee.ualberta.ca>
+#    # modified slightly by Brian Finley.
+#    PING_COUNT=1
+#    PING_EXIT_STATUS=1
+#    while [ "$PING_EXIT_STATUS" != "0" ]
+#    do
+#        loginfo "PING ATTEMPT $PING_COUNT: "
+#        ping -c 1 $PING_DESTINATION
+#        PING_EXIT_STATUS=$?
+#
+#        if [ "$PING_EXIT_STATUS" = "0" ]; then
+#            loginfo "  We have connectivity to your $HOST_TYPE!"
+#        fi
+#
+#        PING_COUNT=$(( $PING_COUNT + 1 ))
+#        if [ "$PING_COUNT" = "4" ]; then
+#            logwarn <<EOF
+#Failed ping test.
+#	Despite this seemingly depressing result, I will attempt
+#	to proceed with the install.  Your $HOST_TYPE may be
+#	configured to not respond to pings, but it wouldn't hurt
+#	to double check that your networking equipment is
+#	working properly!"
+#EOF
+#            sleep 5
+#            PING_EXIT_STATUS=0
+#        fi
+#    done
+#
+#    unset PING_DESTINATION
+#    unset HOST_TYPE
+#
+#}
 #
 ################################################################################
 #
+# OL: deprecated (syslogd is started with dracut syslog module.
 start_syslogd() {
     logmsg
     logmsg start_syslogd
@@ -1095,9 +1122,10 @@ start_syslogd() {
 #
 show_loaded_modules() {
     # Show loaded modules
-    logmsg ">> Loaded kernel modules:"
+    loginfo "========================="
+    loginfo "Loaded kernel modules:"
     for m in `cut -d' ' -f1 /proc/modules`; do
-        logmsg "$m"
+        loginfo "$m"
     done
 }
 #
@@ -1184,8 +1212,8 @@ get_group_name() {
 #
 choose_autoinstall_script() {
 
-    logmsg
-    logmsg choose_autoinstall_script
+    loginfo "========================="
+    loginfo "Choosing autoinstall script..."
 
     #
     # Get the base hostname for the last attempt at choosing an autoinstall
@@ -1238,29 +1266,27 @@ choose_autoinstall_script() {
 
     # Did we really find one, or just exit the loop without a 'break'
     if [ ! -e $SCRIPTNAME ]; then
-        logmsg "FATAL: couldn't find any of the following autoinstall scripts!"
-        logmsg "---"
-        logmsg ${SCRIPTNAMES}
-        logmsg "---"
-	logmsg "Be sure that at least one of the scripts above exists in"
-        logmsg "the autoinstall scripts directory on your image server."
-        logmsg
-        logmsg "See also: si_mkautoinstallscript(8)."
-        shellout
+        logwarn <<EOF
+FATAL: couldn't find any of the following autoinstall scripts:
+${SCRIPTNAMES}
+Be sure that at least one of the scripts above exists in
+the autoinstall scripts directory on your image server.
+See also: si_mkautoinstallscript(8).
+EOF
+	shellout
     fi
-    logmsg "Using autoinstall script: ${SCRIPTNAME}"
+    loginfo "Using autoinstall script: ${SCRIPTNAME}"
 }
 #
 ################################################################################
 #
 run_autoinstall_script() {
 
-    logmsg
-    logmsg run_autoinstall_script
+    loginfo "========================="
+    loginfo "Running autoinstall script $SCRIPTNAME"
 
     # Run the autoinstall script.
     chmod 755 $SCRIPTNAME || shellout
-    logmsg ">>> $SCRIPTNAME"
     $SCRIPTNAME || shellout
 }
 #
@@ -1298,8 +1324,8 @@ reverse() {
 #
 run_pre_install_scripts() {
 
-    logmsg
-    logmsg run_pre_install_scripts
+    loginfo "========================="
+    loginfo "Running pre-install scripts"
 
     get_base_hostname
 
@@ -1327,12 +1353,12 @@ run_pre_install_scripts() {
 
             for PRE_INSTALL_SCRIPT in `unique $PRE_INSTALL_SCRIPTS`
             do
-                logmsg ">>> $PRE_INSTALL_SCRIPT"
+                loginfo "Running script: $PRE_INSTALL_SCRIPT"
                 chmod +x $PRE_INSTALL_SCRIPT || shellout
                 ./$PRE_INSTALL_SCRIPT || shellout
             done
         else
-            logmsg "No pre-install scripts found."
+            loginfo "No pre-install scripts found."
         fi
 
         if [ -e "/tmp/pre-install_variables.txt" ]; then
@@ -1346,8 +1372,8 @@ run_pre_install_scripts() {
 #
 run_post_install_scripts() {
 
-    logmsg
-    logmsg run_post_install_scripts
+    loginfo "========================="
+    loginfo "Running post-install scripts"
 
     get_base_hostname
 
@@ -1382,13 +1408,13 @@ run_post_install_scripts() {
             for POST_INSTALL_SCRIPT in `unique $POST_INSTALL_SCRIPTS`
             do
                 if [ -e "$POST_INSTALL_SCRIPT" ]; then
-                    logmsg ">>> $POST_INSTALL_SCRIPT"
+                    loginfo "Running script: $POST_INSTALL_SCRIPT"
                     chmod +x /sysroot/tmp/post-install/$POST_INSTALL_SCRIPT || shellout
                     chroot /sysroot/ /tmp/post-install/$POST_INSTALL_SCRIPT || shellout
                 fi
             done
         else
-            logmsg "No post-install scripts found."
+            loginfo "No post-install scripts found."
         fi
 
         # Clean up post-install script directory.
@@ -1400,7 +1426,7 @@ run_post_install_scripts() {
 #
 #   Stuff for SSH installs
 #
-
+# OL: obsolete. need rework.
 
 start_sshd() {
     mkdir -p /root/.ssh/ || shellout
@@ -1455,6 +1481,7 @@ start_ssh() {
 
     # create root's ssh dir
     mkdir -p /root/.ssh
+    chmod 700 /root/.ssh
 
     ############################################################################
     #
@@ -1504,7 +1531,7 @@ start_ssh() {
         [ -z $SSH_USER ] && SSH_USER=root
 
         CMD="ssh -N -l $SSH_USER -n -f -L873:127.0.0.1:873 $IMAGESERVER $REDIRECTION_OPTIONS"
-        logmsg $CMD
+        loginfo "Running: $CMD"
         $CMD || shellout
         
         # Since we're using SSH, change the $IMAGESERVER variable to reflect
@@ -1569,6 +1596,7 @@ start_ssh() {
 
 send_monitor_msg() {
     if [ -z $MONITOR_SERVER ]; then
+	logwarn "Trying to send monitor msg without MONITOR_SERVER empty variable. Ignoring..."
         return
     fi
     if [ -z $MONITOR_PORT ]; then
@@ -1649,21 +1677,23 @@ send_monitor_stdout() {
 #
 #   Initialize the monitor server
 #
-
-init_monitor_server() {
-    # Send initialization status.
-    send_monitor_msg "status=0:first_timestamp=on:speed=0"
-    logmsg "Monitoring initialized."
-    # Start client log gathering server: for each connection
-    # to the local client on port 8181 the full log is sent
-    # to the requestor. -AR-
-    if [ "x$MONITOR_CONSOLE" = "xy" ]; then
-        MONITOR_CONSOLE=yes
-    fi
-    if [ "x$MONITOR_CONSOLE" = "xyes" ]; then
-        while :; do ncat -p 8181 -l < /tmp/si_monitor.log; done &
-    fi
-}
+#
+#init_monitor_server() {
+#    # Send initialization status.
+#    send_monitor_msg "status=0:first_timestamp=on:speed=0"
+#    loginfo "Monitoring initialized."
+#    # Start client log gathering server: for each connection
+#    # to the local client on port 8181 the full log is sent
+#    # to the requestor. -AR-
+#    if [ "x$MONITOR_CONSOLE" = "xy" ]; then
+#        MONITOR_CONSOLE=yes
+#    fi
+#    if [ "x$MONITOR_CONSOLE" = "xyes" ]; then
+#        while :; do ncat -p 8181 -l < /tmp/si_monitor.log; done &
+#	MONITOR_PID=$!
+#        logmsg "Logs monitor forwarding task started: PID=$MONITOR_PID ."
+#    fi
+#}
 #
 ################################################################################
 #
@@ -1724,8 +1754,9 @@ start_report_task() {
     done
     }&
 
-    logmsg "Report task started."
     REPORT_PID=$!
+    logmsg "Progress report task started PID=$REPORT_PID ."
+    echo $REPORT_PID > /run/systemimager/report_task.pid
 }
 #
 ################################################################################
@@ -1734,9 +1765,13 @@ start_report_task() {
 #
 
 stop_report_task() {
-    if [ ! -z $REPORT_PID ]; then
+    if test -s /run/systemimager/report_task.pid; then
+        $REPORT_PID=$(cat /run/systemimager/report_task.pid)
+    fi
+    # BUG: Need to make sure it is an integer
+    if [ ! -z "$REPORT_PID" ]; then
         kill -9 $REPORT_PID
-        logmsg "Report task stopped."
+        loginfo "Progress report task stopped."
     fi
 
     # Try to report the error to the monitor server.
@@ -1824,17 +1859,19 @@ sleep_loop() {
 #
 #
 save_logs_to_sysroot() {
-	info "Saving logs to /sysroot/root..."
-	if test -d /sysroot/root
-	then
-		mkdir -p /sysroot/root/SIS_Install_logs/
-		cp /tmp/variables.txt /sysroot/root/SIS_Install_logs/
-		cp /tmp/dhcp_info.txt /sysroot/root/SIS_Install_logs/
-		cp si_monitor.log /sysroot/root/SIS_Install_logs/
-		cp si.log /sysroot/root/SIS_Install_logs/
-		sleep 10
-	else
-		warn "/sysroot/root does not exists"
-		shellout
-	fi
+    loginfo "========================="
+    loginfo "Saving logs to /sysroot/root..."
+    if test -d /sysroot/root
+    then
+        mkdir -p /sysroot/root/SIS_Install_logs/
+        cp /tmp/variables.txt /sysroot/root/SIS_Install_logs/
+        cp /tmp/dhcp_info.txt /sysroot/root/SIS_Install_logs/
+        cp si_monitor.log /sysroot/root/SIS_Install_logs/
+        cp si.log /sysroot/root/SIS_Install_logs/
+        test -f /run/initramfs/rdsoreport.txt && cp /run/initramfs/rdsoreport.txt /sysroot/root/SIS_Install_logs/
+        sleep 10
+    else
+        logwarn "/sysroot/root does not exists"
+        shellout
+    fi
 }
