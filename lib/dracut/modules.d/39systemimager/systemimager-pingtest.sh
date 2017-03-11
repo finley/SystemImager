@@ -13,7 +13,7 @@
 # if network was successfully set up.
 # It's task is to check that we ca reach systemimager server.
 
-. /lib/systemimager-lib.sh
+type shellout >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 
 loginfo "========================="
 loginfo "Checking network connectivity via a ping test..."
@@ -65,5 +65,3 @@ done
 
 unset PING_DESTINATION
 unset HOST_TYPE
-
-exit 0
