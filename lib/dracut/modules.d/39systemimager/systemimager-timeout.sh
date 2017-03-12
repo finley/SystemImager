@@ -25,7 +25,7 @@ type shellout >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 IFACE_WITH_LINK=`find_iface_with_link`
 
 # 1st: try to gather all infos
-for file in kernel_append_parameter_variables.txt dhcp_info.${IFACE_WITH_LINK} variables.txt
+for file in variables.txt cmdline.txt dhcp_info.${IFACE_WITH_LINK}
 do
 	test -r $file && . /tmp/$file
 done
@@ -36,9 +36,7 @@ if test -z "$CONFIGURED_IFACE"
 then
 	logwarn "Failed to get an IP address"
 	shellout
-	exit 1
 fi
 
 logwarn "Unknown timeout. [$CONFIGURED_IFACE]"
 shellout
-exit 1

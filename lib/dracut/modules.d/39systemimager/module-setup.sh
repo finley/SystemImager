@@ -36,6 +36,7 @@ install() {
     # We need to overwrite 40network dhclient-script with our version that handles /etc/dhcp/dhclient-exit-hooks
     inst_script "$moddir/dhclient-script.sh" "/sbin/dhclient-script"
     inst_hook cmdline 90 "$moddir/parse-sis-options.sh" # Creates /tmp/kernel_append_parameter_variables.txt
+    inst_hook initqueue/settled 50 "$moddir/systemimager-init.sh" # Creates /run/systemimager
     inst_hook initqueue/finished 90 "$moddir/systemimager-wait-imaging.sh" # Waits for file /tmp/SIS_action
     inst_hook initqueue/timeout 10 "$moddir/systemimager-timeout.sh" # In case of timeout (DHCP failure, ....)
     inst_hook initqueue/online 00 "$moddir/systemimager-ifcfg.sh" # creates /tmp/variables.txt

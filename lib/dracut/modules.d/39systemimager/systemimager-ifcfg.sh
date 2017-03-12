@@ -50,18 +50,19 @@ fi
 # Read the DHCLIENT variables
 . /tmp/dhcp_info.${netif} || shellout
 
+
 # Re-read configuration information from local.cfg to over-ride
 # DHCP settings, if necessary. -BEF-
 loginfo "========================="
 if [ -f /tmp/local.cfg ]; then
-    loginfo "Overriding any DHCP settings with pre-boot local.cfg settings."
+    loginfo "Overriding any DHCP or cmdline settings with pre-boot local.cfg settings."
     . /tmp/local.cfg || shellout
 fi
 
+# Read the cmdline variables overriding any local.cfg or DHCP parameters
 loginfo "Overriding any DHCP settings with pre-boot settings from kernel append parameters."
-read_kernel_append_parameters
+. $CMDLINE_VARIABLES
 
 # Save all needed variables to /tmp/variables.txt
-IMAGESERVER=10.0.238.84 # BUG OL: ugly hack to be removed (override missing dhcp fields from qemu)
 write_variables
 

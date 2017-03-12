@@ -28,6 +28,7 @@ TORRENTS=torrents
 TORRENTS_DIR=/torrents
 FLAMETHROWER_DIRECTORY_DIR=/var/lib/systemimager/flamethrower
 BOEL_BINARIES_DIR=/tmp/boel_binaries
+CMDLINE_VARIABLES=/tmp/cmdline.txt
 VERSION="4.5.0"
 FLAVOR="standard"
 #
@@ -63,7 +64,6 @@ logmsg() {
 }
 
 logmessage() {
-    echo "DEBUG: $@" >&2
     # log to temporary file (which will go away when we reboot)
     # this is good for envs that have bad consoles
     local FILE=/tmp/si.log
@@ -246,7 +246,7 @@ shellout() {
     fi
     # Need to trigger emergency shell    
     echo emergency > /tmp/SIS_action
-    exec /bin/dracut-emergency
+    die # From /lib/dracut-lib.sh => drop a shell is rd.shell is on
 }
 #
 ################################################################################
@@ -819,27 +819,6 @@ load_my_modules() {
 #
 ################################################################################
 #
-# read in varibles obtained from kernel appends
-#
-read_kernel_append_parameters() {
-    loginfo "========================="
-    loginfo "reading /tmp/kernel_append_parameter_variables.txt"
-
-    . /tmp/kernel_append_parameter_variables.txt
-}
-#
-################################################################################
-#
-# Variable-ize /proc/cmdline arguments
-#
-variableize_kernel_append_parameters() {
-    loginfo "========================="
-    loginfo "Saving /proc/cmdline SIS relevants parameters to /tmp/kernel_append_parameter_variables.txt"
-    cat /proc/cmdline | tr ' ' '\n' | grep -E '[A-Z_]+=' > /tmp/kernel_append_parameter_variables.txt
-}
-#
-################################################################################
-#
 # Look for local.cfg file
 #   This code inspired by Ian McLeod <ian@valinux.com>
 #
@@ -1038,7 +1017,7 @@ start_network() {
         logmsg
         logmsg "Overriding any DHCP settings with pre-boot settings from kernel append"
         logmsg "parameters."
-        read_kernel_append_parameters
+	. $CMDLINE_VARIABLES
     fi
 }
 #

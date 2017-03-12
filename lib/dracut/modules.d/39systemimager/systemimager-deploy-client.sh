@@ -16,7 +16,7 @@ if [ "x$SSHD" = "xy" ]; then
     start_sshd
 fi
 
-if [ ! -z $SSH_DOWNLOAD_URL ]; then
+if [ ! -z "$SSH_DOWNLOAD_URL" ]; then
     SSH=y
 fi
 if [ "x$SSH" = "xy" ]; then
@@ -30,15 +30,15 @@ get_scripts_directory
 show_loaded_modules
 
 # HOSTNAME may already be set via local.cfg -BEF-
-if [ -z $HOSTNAME ]; then
+if [ -z "$HOSTNAME" ]; then
     get_hostname_by_hosts_file
 fi
 
-if [ -z $HOSTNAME ]; then
+if [ -z "$HOSTNAME" ]; then
     get_hostname_by_dns
 fi
 
-if [ ! -z $HOSTNAME ]; then
+if [ ! -z "$HOSTNAME" ]; then
     logmsg
     logmsg "This hosts name is: $HOSTNAME"
 fi
@@ -48,19 +48,21 @@ run_pre_install_scripts
 # If none of SCRIPTNAME, HOSTNAME, or IMAGENAME is set, then we cannot proceed.
 # (IMAGENAME may have been set by local.cfg).  -BEF-
 if [ -z $SCRIPTNAME ] && [ -z $IMAGENAME ] && [ -z $HOSTNAME ]; then
-    logmsg
-    logmsg "FATAL:  None of SCRIPTNAME, IMAGENAME, or HOSTNAME were set, and I"
-    logmsg "can no proceed!  (Scottish accent -- think Groundskeeper Willie)"
-    logmsg
-    logmsg "HOSTNAME is what most people use, and I try to determine it automatically"
-    logmsg "from this hosts IP address ($IPADDR) in the following order:"
-    logmsg
-    logmsg "  1)  /var/lib/systemimager/scripts/hosts on your imageserver"
-    logmsg "  2)  DNS"
-    logmsg
-    logmsg "Finally, you can explicitly set many variables pre-boot, including SCRIPTNAME,"
-    logmsg "IMAGENAME, and HOSTNAME, as kernel append parameters or with a local.cfg file."
-    logmsg
+    logwarn <<EOF
+
+FATAL:  None of SCRIPTNAME, IMAGENAME, or HOSTNAME were set, and I
+can no proceed!  (Scottish accent -- think Groundskeeper Willie)
+
+HOSTNAME is what most people use, and I try to determine it automatically
+from this hosts IP address ($IPADDR) in the following order:
+
+  1)  /var/lib/systemimager/scripts/hosts on your imageserver
+  2)  DNS
+
+Finally, you can explicitly set many variables pre-boot, including SCRIPTNAME,
+IMAGENAME, and HOSTNAME, as kernel append parameters or with a local.cfg file.
+
+EOF
     shellout
 fi
 
