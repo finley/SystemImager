@@ -346,15 +346,16 @@ install_common:	install_common_man install_common_libs
 install_dracut:
 	mkdir -p $(DRACUT_MODULES)/39systemimager/
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/dhclient-script.sh $(DRACUT_MODULES)/39systemimager
-	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/parse-sis-options.sh $(DRACUT_MODULES)/39systemimager
-	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-monitor-server.sh $(DRACUT_MODULES)/39systemimager
-	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-save-dmesg.sh $(DRACUT_MODULES)/39systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/module-setup.sh $(DRACUT_MODULES)/39systemimager
-	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-ifcfg.sh $(DRACUT_MODULES)/39systemimager
-	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-lib.sh $(DRACUT_MODULES)/39systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/parse-sis-options.sh $(DRACUT_MODULES)/39systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-deploy-client.sh $(DRACUT_MODULES)/39systemimager
-	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-wait-imaging.sh $(DRACUT_MODULES)/39systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-ifcfg.sh $(DRACUT_MODULES)/39systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-init.sh $(DRACUT_MODULES)/39systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-lib.sh $(DRACUT_MODULES)/39systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-monitor-server.sh $(DRACUT_MODULES)/39systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-pingtest.sh $(DRACUT_MODULES)/39systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-timeout.sh $(DRACUT_MODULES)/39systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-wait-imaging.sh $(DRACUT_MODULES)/39systemimager
 
 # install server-only libraries
 .PHONY:	install_server_libs
