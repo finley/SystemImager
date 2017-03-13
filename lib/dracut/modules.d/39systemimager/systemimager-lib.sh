@@ -52,15 +52,15 @@ test -f /tmp/variables.txt && . /tmp/variables.txt
 # logmsg (same as loginfo: for compatibility)
 logwarn() {
 	warn $@
-	logmessage $@
+	logmessage "warn: $@"
 }
 loginfo() {
 	info $@
-	logmessage $@
+	logmessage "info: $@"
 }
 logmsg() {
 	info $@
-	logmessage $@
+	logmessage "info: $@"
 }
 
 logmessage() {
@@ -68,7 +68,8 @@ logmessage() {
     # this is good for envs that have bad consoles
     local FILE=/tmp/si.log
     echo $@ >> $FILE || shellout
-    
+    test -w /dev/kmsg && echo $@ > /dev/kmsg
+
     # if syslog is running, log to it.  In order to avoid hangs we have to 
     # add the "logger: " part in case $@ is ""
     if [ ! -z $USELOGGER ] ;
@@ -236,7 +237,7 @@ shellout() {
     fi
     killall -9 udp-receiver rsync  >/dev/null 2>/dev/null
     write_variables
-    cat /etc/issue >&2
+    #cat /etc/issue >&2
     if [ ! -z "$USELOGGER" ] ;
         then cat /etc/issue | logger
     fi
@@ -1726,6 +1727,8 @@ start_report_task() {
         elif [ `echo "scale=2; $status >= 100" | bc` -eq 1 ]; then
             status=99
         fi
+
+	/bin/echo -en "Progress: ${status}%   \r" >/dev/kmsg
 
         # Send status and bandwidth to the monitor server.
         send_monitor_msg "status=$status:speed=$speed"

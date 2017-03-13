@@ -201,8 +201,8 @@ sub _imageexists {
 sub validate_post_install_option {
   my $post_install=$_[1];
 
-  unless(($post_install eq "beep") or ($post_install eq "reboot") or ($post_install eq "shutdown") or ($post_install eq "kexec")) { 
-    die qq(\nERROR: -post-install must be beep, reboot, shutdown, or kexec.\n\n       Try "-help" for more options.\n);
+  unless(($post_install eq "beep") or ($post_install eq "reboot") or ($post_install eq "shutdown") or ($post_install eq "shell") or ($post_install eq "kexec")) { 
+    die qq(\nERROR: --post-install must be beep, reboot, shutdown, shell or kexec.\n\n       Try "--help" for more options.\n);
   }
   return 0;
 }
@@ -1356,12 +1356,12 @@ sub _write_out_mkfs_commands {
                 print $out "$cmd\n";
 
                 # mkdir
-                $cmd = "mkdir -p /a$mp || shellout";
+                $cmd = "mkdir -p /sysroot$mp || shellout";
                 print $out qq(logmsg "$cmd"\n);
                 print $out "$cmd\n";
 
                 # mount
-                $cmd = "mount $real_dev /a$mp -t $fs -o $options || shellout";
+                $cmd = "mount $real_dev /sysroot$mp -t $fs -o $options || shellout";
                 print $out qq(logmsg "$cmd"\n);
                 print $out "$cmd\n";
 
@@ -1401,12 +1401,12 @@ sub _write_out_mkfs_commands {
                 }
 
                 # mkdir
-                $cmd = "mkdir -p /a$mp || shellout";
+                $cmd = "mkdir -p /sysroot$mp || shellout";
                 print $out qq(logmsg "$cmd"\n);
                 print $out "$cmd\n";
 
                 # mount
-                $cmd = "mount $real_dev /a$mp -t $fs -o $options || shellout";
+                $cmd = "mount $real_dev /sysroot$mp -t $fs -o $options || shellout";
                 print $out qq(logmsg "$cmd"\n);
                 print $out "$cmd\n";
 
@@ -1443,12 +1443,12 @@ sub _write_out_mkfs_commands {
                 }
 
                 # mkdir
-                $cmd = "mkdir -p /a$mp || shellout";
+                $cmd = "mkdir -p /sysroot$mp || shellout";
                 print $out qq(logmsg "$cmd"\n);
                 print $out "$cmd\n";
 
                 # mount
-                $cmd = "mount $real_dev /a$mp -t $fs -o $options || shellout";
+                $cmd = "mount $real_dev /sysroot$mp -t $fs -o $options || shellout";
                 print $out qq(logmsg "$cmd"\n);
                 print $out "$cmd\n";
 
@@ -1485,12 +1485,12 @@ sub _write_out_mkfs_commands {
                 }
 
                 # mkdir
-                $cmd = "mkdir -p /a$mp || shellout";
+                $cmd = "mkdir -p /sysroot$mp || shellout";
                 print $out qq(logmsg "$cmd"\n);
                 print $out "$cmd\n";
 
                 # mount
-                $cmd = "mount $real_dev /a$mp -t $fs -o $options || shellout";
+                $cmd = "mount $real_dev /sysroot$mp -t $fs -o $options || shellout";
                 print $out qq(logmsg "$cmd"\n);
                 print $out "$cmd\n";
 
@@ -1527,12 +1527,12 @@ sub _write_out_mkfs_commands {
                 }
 
                 # mkdir
-                $cmd = "mkdir -p /a$mp || shellout";
+                $cmd = "mkdir -p /sysroot$mp || shellout";
                 print $out qq(logmsg "$cmd"\n);
                 print $out "$cmd\n";
 
                 # mount
-                $cmd = "mount $real_dev /a$mp -t $fs -o $options || shellout";
+                $cmd = "mount $real_dev /sysroot$mp -t $fs -o $options || shellout";
                 print $out qq(logmsg "$cmd"\n);
                 print $out "$cmd\n";
 
@@ -1750,7 +1750,7 @@ sub _write_out_umount_commands {
         my $fs = $fs_by_mp{$mp};
 
         # umount
-        my $cmd = "umount /a$mp || mount -no remount,ro /sysroot/$mp || shellout";
+        my $cmd = "umount /sysroot$mp || mount -no remount,ro /sysroot/$mp || shellout";
         print $out qq(if [ ! \$kernel = "2.4" ]; then\n) if ($mp eq "/sys");
         print $out qq(logmsg "$cmd"\n);
         print $out "$cmd\n";
@@ -1775,7 +1775,7 @@ sub edit_disk_names{
 # Prep the client for kexec
 sub setup_kexec {
     my ($out) = shift;
-    print $out "cmd=`chroot /a scconf-bootinfo`\n";
+    print $out "cmd=`chroot /sysroot scconf-bootinfo`\n";
     print $out "kexec_kernel=`echo \$cmd | cut -d' ' -f1`\n";
     print $out "kexec_initrd=`echo \$cmd | cut -d' ' -f3`\n";
     print $out "kexec_append=`echo \$cmd | cut -d' ' -f4-`\n";
@@ -1952,7 +1952,8 @@ sub create_autoinstall_script{
         $post_install,
         $listing,
         $auto_install_script_conf,
-        $autodetect_disks
+        $autodetect_disks,
+        $cmdline
     ) = @_;
 
     my $cmd;
@@ -1983,6 +1984,10 @@ sub create_autoinstall_script{
     my $delim = '##';
     while (<$TEMPLATE>) {
         SWITCH: {
+            if (/^\s*${delim}SI_CREATE_AUTOINSTALL_SCRIPT_CMD${delim}\s*$/) {
+                print $MASTER_SCRIPT "# $cmdline\n";
+                last SWITCH;
+            }
 	        if (/^\s*${delim}VERSION_INFO${delim}\s*$/) {
 	            print $MASTER_SCRIPT "# This master autoinstall script was created with SystemImager v${VERSION}\n";
 	            last SWITCH;
@@ -2114,14 +2119,22 @@ sub create_autoinstall_script{
                 } elsif ($post_install eq "reboot") {
                     # reboot stuff
                     print $MASTER_SCRIPT "# reboot the autoinstall client\n";
-                    print $MASTER_SCRIPT "shutdown -r now\n";
+                    #print $MASTER_SCRIPT "shutdown -r now\n";
+                    print $MASTER_SCRIPT "echo reboot > /tmp/SIS_action\n";
                 } elsif ($post_install eq "shutdown") {
                     # shutdown stuff
                     print $MASTER_SCRIPT "# shutdown the autoinstall client\n";
-                    print $MASTER_SCRIPT "shutdown\n";
+                    #print $MASTER_SCRIPT "shutdown\n";
+                    print $MASTER_SCRIPT "echo shutdown > /tmp/SIS_action\n";
+                    print $MASTER_SCRIPT "\n";
+                } elsif ($post_install eq "shell") {
+                    # shell stuff
+                    print $MASTER_SCRIPT "# Drop to emergency shell\n";
+                    print $MASTER_SCRIPT "echo emergency > /tmp/SIS_action\n";
                     print $MASTER_SCRIPT "\n";
                 } elsif ($post_install eq "kexec") {
                     # kexec imaged kernel
+                    # BUG: OL: what does it mean within a dracut environment? is it still relevant?
                     print $MASTER_SCRIPT "# kexec the autoinstall client\n";
                     print $MASTER_SCRIPT "# this is executed twice to support relocatable kernels from RHEL5\n";
                     print $MASTER_SCRIPT "kexec --force --append=\"\$kexec_append\" --initrd=/tmp/\$kexec_initrd --reset-vga /tmp/\$kexec_kernel\n";

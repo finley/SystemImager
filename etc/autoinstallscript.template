@@ -12,8 +12,9 @@
 #
 #   David N. Lombard : Disks enumeration and disk editing
 #
-
 ##VERSION_INFO##
+# Using the following command:
+##SI_CREATE_AUTOINSTALL_SCRIPT_CMD##
 
 # Pull in variables left behind by the linuxrc script.
 # This information is passed from the linuxrc script on the autoinstall media 
@@ -23,7 +24,7 @@
 . /tmp/variables.txt
 
 # Load functions and other variables
-. /etc/init.d/functions
+. /lib/systemimager-lib.sh
 
 get_arch
 
@@ -225,7 +226,7 @@ if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
 
     # Use multicast 
     MODULE_NAME="${IMAGENAME}"
-    DIR=/a
+    DIR=/sysroot
     RETRY=7
     FLAMETHROWER_TARPIPE=y
     flamethrower_client
@@ -329,7 +330,7 @@ do
     if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
         # Use multicast
         MODULE_NAME="override_${OVERRIDE}"
-        DIR=/a
+        DIR=/sysroot
         RETRY=7
         FLAMETHROWER_TARPIPE=y
         flamethrower_client
@@ -436,7 +437,7 @@ mount /dev /sysroot/dev -o bind
 #XXX Even without SystemConfigurator, is this bit needed for boot loader
 #install perhaps?
 # Create an /etc/mtab file with appropriate entries
-#cat /etc/mtab | grep -v '/dev/ram' | grep -v -E '^\/dev\s+\/a\/dev\s' | sed 's,/sysroot/*,/,g' | sort -u > /sysroot/etc/mtab
+#cat /etc/mtab | grep -v '/dev/ram' | grep -v -E '^\/dev\s+\/sysroot\/dev\s' | sed 's,/sysroot/*,/,g' | sort -u > /sysroot/etc/mtab
 
 ## Save original boot-loader configurations before running systemconfigurator
 #for file in /sysroot/boot/grub/menu.lst /sysroot/etc/lilo.conf /sysroot/etc/grub.conf; do
@@ -499,7 +500,7 @@ if [ ! -z $MONITOR_SERVER ]; then
     fi
     if [ "x$MONITOR_CONSOLE" = "xyes" ]; then
         [ ! -d /sysroot/root ] && mkdir -p /sysroot/root
-        cp -f /tmp/si_monitor.log /sysroot/root/si_monitor.log
+	save_logs_to_sysroot # Saves /tmp/relevant install infos to /root/SIS_Install/
     fi
 fi
 

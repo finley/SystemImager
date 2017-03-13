@@ -50,7 +50,11 @@ use SystemImager::Options;
 use vars qw($config $VERSION);
 
 my $config_dir = "/etc/systemimager";
+#
+# Save how we were called so it can be reported as comment in the header of the generated script
+my $cmdline = $0." ".join(" ",@ARGV);
 
+#
 ### BEGIN parse the config file ###
 #
 my $rsync_stub_dir = $config->rsync_stub_dir();
@@ -617,17 +621,18 @@ unless (-f $auto_install_script_conf) {
 SystemImager::Server->validate_auto_install_script_conf( $auto_install_script_conf );
 
 SystemImager::Server->create_autoinstall_script(
-	$script_name,
-	$autoinstall_script_dir,
-	$config_dir,
-	$image,
-	$overrides,
-	$imagedir,
-	$ip_assignment_method,
-	$post_install,
-        $listing,
+    $script_name,
+    $autoinstall_script_dir,
+    $config_dir,
+    $image,
+    $overrides,
+    $imagedir,
+    $ip_assignment_method,
+    $post_install,
+    $listing,
     $auto_install_script_conf,
     $autodetect_disks,
+    $cmdline
 );
 ### END create a fresh master autoinstall script ###
 

@@ -25,12 +25,10 @@ then
 			shellout
 			;;
 		"reboot")
-			save_logs_to_sysroot
 			sleep 10
 			/sbin/reboot
 			;;
 		"shutdown")
-			save_logs_to_sysroot
 			sleep 10
 			/sbin/shutdown
 			;;

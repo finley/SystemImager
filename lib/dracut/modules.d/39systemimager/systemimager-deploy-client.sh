@@ -75,5 +75,5 @@ run_autoinstall_script
 
 # Everything is finished. Tell initqueue/finished that we are done.
 # BUG, /tmp/SIS_action can contain reboot, shutdown or emergency
-echo reboot > /tmp/SIS_action
+#echo reboot > /tmp/SIS_action
 
