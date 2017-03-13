@@ -202,7 +202,7 @@ sub validate_post_install_option {
   my $post_install=$_[1];
 
   unless(($post_install eq "beep") or ($post_install eq "reboot") or ($post_install eq "shutdown") or ($post_install eq "shell") or ($post_install eq "kexec")) { 
-    die qq(\nERROR: --post-install must be beep, reboot, shutdown, shell or kexec.\n\n       Try "--help" for more options.\n);
+    die qq(\nERROR: -post-install must be beep, reboot, shutdown, shell or kexec.\n\n       Try "--help" for more options.\n);
   }
   return 0;
 }
@@ -2106,7 +2106,7 @@ sub create_autoinstall_script{
 	        }
 
 	        if (/^\s*${delim}MONITOR_POSTINSTALL${delim}\s*/) {
-                    my $post_state = {'beep' => 103, 'reboot' => 104, 'kexec' => 104, 'shutdown' => 105};
+                    my $post_state = {'beep' => 103, 'reboot' => 104, 'kexec' => 104, 'shutdown' => 105, 'shell' => 106 };
                     print $MASTER_SCRIPT "    send_monitor_msg \"status=$post_state->{$post_install}:speed=0\"\n";
                     last SWITCH;
                 }
