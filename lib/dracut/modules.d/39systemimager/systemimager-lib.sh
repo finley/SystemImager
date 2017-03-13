@@ -1686,7 +1686,7 @@ start_report_task() {
     # Evaluate image size.
     logmsg "Evaluating image size..."
     if [ ! "x$BITTORRENT" = "xy" ]; then
-        IMAGESIZE=`rsync -av --numeric-ids $IMAGESERVER::$IMAGENAME | grep "total size" | sed -e "s/total size is \([0-9,]*\).*/\1/" -e "s/,//g"`
+        IMAGESIZE=`rsync -av --numeric-ids $IMAGESERVER::$IMAGENAME | grep "total size" | sed -e "s/total size is \([0-9,]*\).*/\1/"`
     else
         if [ -f "${TORRENTS_DIR}/image-${IMAGENAME}.tar.torrent" ]; then
             torrent_file="${TORRENTS_DIR}/image-${IMAGENAME}.tar.torrent"
@@ -1698,6 +1698,8 @@ start_report_task() {
         fi
         IMAGESIZE=`/usr/bin/torrentinfo-console $torrent_file | sed -ne "s/file size\.*: \([0-9]*\) .*$/\1/p"`
     fi
+    # Clean up IMAGEZISE from non numeric chars (comma, dots, ...)
+    IMAGESIZE=${IMAGESIZE//[!0-9]/} # same as IMAGESIZE=$(echo $IMAGESIZE|sed 's/[^0-9]*//g')
     IMAGESIZE=`expr $IMAGESIZE / 1024`
     logmsg "  --> Image size = `expr $IMAGESIZE / 1024`MiB"
 
