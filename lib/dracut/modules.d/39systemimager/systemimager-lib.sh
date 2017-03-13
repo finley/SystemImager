@@ -29,8 +29,8 @@ TORRENTS_DIR=/torrents
 FLAMETHROWER_DIRECTORY_DIR=/var/lib/systemimager/flamethrower
 BOEL_BINARIES_DIR=/tmp/boel_binaries
 CMDLINE_VARIABLES=/tmp/cmdline.txt
-VERSION="4.5.0"
-FLAVOR="standard"
+VERSION="SYSTEMIMAGER_VERSION_STRING"
+FLAVOR="SYSTEMIMAGER_FLAVOR_STRING"
 #
 ################################################################################
 
