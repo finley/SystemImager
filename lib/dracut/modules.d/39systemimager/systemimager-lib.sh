@@ -1749,26 +1749,27 @@ start_report_task() {
     logmsg "Progress report task started PID=$REPORT_PID ."
     echo $REPORT_PID > /run/systemimager/report_task.pid
 }
-#
+
 ################################################################################
 #
 #   Stop to report installation status to the monitor server
 #
 
 stop_report_task() {
-    if test -s /run/systemimager/report_task.pid; then
-        REPORT_PID=$(cat /run/systemimager/report_task.pid)
-    fi
-    # BUG: Need to make sure it is an integer
-    if [ ! -z "$REPORT_PID" ]; then
-        kill -9 $REPORT_PID
-        loginfo "Progress report task stopped."
-    fi
-
     # Try to report the error to the monitor server.
     send_monitor_msg "status=$1:speed=0"
+
+    if test -s /run/systemimager/report_task.pid; then
+        REPORT_PID=$(cat /run/systemimager/report_task.pid)
+        # BUG: Need to make sure it is an integer
+        if [ ! -z "$REPORT_PID" ]; then
+            kill -9 $REPORT_PID
+	    rm /run/systemimager/report_task.pid
+            loginfo "Progress report task stopped."
+        fi
+    fi
 }
-#
+
 ################################################################################
 #
 #   Beep incessantly
