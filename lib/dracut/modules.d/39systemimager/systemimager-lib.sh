@@ -876,18 +876,18 @@ read_local_cfg() {
     ### BEGIN try floppy ###
     logmsg "Checking for floppy diskette."
     logmsg 'YOU MAY SEE SOME "wrong magic" ERRORS HERE, AND THAT IS NORMAL.'
-    mkdir -p /floppy
-    mount /dev/fd0 /floppy -o ro > /dev/null 2>&1
+    mkdir -p /run/media/floppy
+    mount /dev/fd0 /run/media/floppy -o ro > /dev/null 2>&1
     if [ $? = 0 ]; then
         logmsg "Found floppy diskette."
-        if [ -f /floppy/local.cfg ]; then
+        if [ -f /run/media/floppy/local.cfg ]; then
             logmsg "Found /local.cfg on floppy."
             logmsg "Copying /local.cfg settings to /tmp/local.cfg."
             logmsg "NOTE: local.cfg settings from a floppy will override settings from"
             logmsg "      a local.cfg file on your hard drive and DHCP."
             # We use cat instead of copy, so that floppy settings can
             # override hard disk settings. -BEF-
-            cat /floppy/local.cfg >> /tmp/local.cfg || shellout
+            cat /run/media/floppy/local.cfg >> /tmp/local.cfg || shellout
         else
             logmsg "No /local.cfg on floppy diskette."
         fi
@@ -901,6 +901,12 @@ read_local_cfg() {
     if [ -f /tmp/local.cfg ]; then
         logmsg "Reading configuration from /tmp/local.cfg"
         . /tmp/local.cfg || shellout
+        # Comvert /tmp/local.cfg to /etc/cmdline.d/00-network.conf
+	logmsg "creating /etc/cmdline.d/00-network.conf with following content:"
+	logmsg "ip=$IPADDR:$GATEWAY:$NETMASK:$HOSTNAME:$DEVICE:on"
+        cat > /etc/cmdline.d/00-network.conf <<EOF
+ip=$IPADDR:$GATEWAY:$NETMASK:$HOSTNAME:$DEVICE:on
+EOF
     fi
 }
 #
