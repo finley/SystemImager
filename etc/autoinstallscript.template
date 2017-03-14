@@ -541,10 +541,6 @@ fi
 # SSH transport is used).
 killall sleep >/dev/null 2>&1
 
-# Take network interface down
-[ -z $DEVICE ] && DEVICE=eth0
-ifconfig $DEVICE down || shellout
-
 # Announce completion (even for non beep-incessantly --post-install options)
 beep 3
 
