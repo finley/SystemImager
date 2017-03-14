@@ -352,6 +352,7 @@ install_dracut:
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-ifcfg.sh $(DRACUT_MODULES)/39systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-init.sh $(DRACUT_MODULES)/39systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-lib.sh $(DRACUT_MODULES)/39systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/autoinstall-lib.sh $(DRACUT_MODULES)/39systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-monitor-server.sh $(DRACUT_MODULES)/39systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-pingtest.sh $(DRACUT_MODULES)/39systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-timeout.sh $(DRACUT_MODULES)/39systemimager
