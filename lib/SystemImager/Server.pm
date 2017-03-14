@@ -1727,19 +1727,19 @@ sub _write_out_umount_commands {
     # Add this so that /proc gets umounted -- even if there is no proc entry in
     # the <fsinfo> section of the autoinstallscript.conf file.
     #
-    $fs_by_mp{'/proc'} = "proc";
-    $fs_by_mp{'/sys'} = "sysfs";
+    #$fs_by_mp{'/proc'} = "proc";
+    #$fs_by_mp{'/sys'} = "sysfs";
 
     #
     # If client uses devfs or udev, then unmount the bound /dev filesystem.
     #
-    $xml_config = XMLin($file, keyattr => { boel => "+devstyle"} );
-    if( defined($xml_config->{boel}->{devstyle}) 
-        && (    ("$xml_config->{boel}->{devstyle}" eq "udev" )
-             or ("$xml_config->{boel}->{devstyle}" eq "devfs") )
-      ) {
-        $fs_by_mp{'/dev'} = "/dev";
-    }
+    #$xml_config = XMLin($file, keyattr => { boel => "+devstyle"} );
+    #if( defined($xml_config->{boel}->{devstyle}) 
+    #    && (    ("$xml_config->{boel}->{devstyle}" eq "udev" )
+    #         or ("$xml_config->{boel}->{devstyle}" eq "devfs") )
+    #  ) {
+    #    $fs_by_mp{'/dev'} = "/dev";
+    #}
 
     #
     # Cycle through the mount points in reverse and umount those filesystems.
