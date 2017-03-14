@@ -994,6 +994,7 @@ sub display_nodes
     my $num_fail      = 0;
     my $num_inst      = 0;
     my $num_unkn      = 0;
+    my $num_shell     = 0;
 
     # Drop previous selection if nothing is selected.
     if (defined($selected_mac_addr)) {
@@ -1103,6 +1104,12 @@ sub display_nodes
         } elsif ($status == 105) {
             $num_shutdown++;
             $client->{$mac}->{'status'} = 'shutdown';
+            $style = $post_install_style;
+            $status_icon = $server_ok_icon;
+            $icon_style = $image_style;
+        } elsif ($status == 106) {
+            $num_shell++;
+            $client->{$mac}->{'status'} = 'shell';
             $style = $post_install_style;
             $status_icon = $server_ok_icon;
             $icon_style = $image_style;
