@@ -38,17 +38,35 @@ save_logs_to_sysroot() {
 
 ################################################################################
 #
+# Find system filesystems and store them in /tmp/system_mounts.txt
+# This file will be used to bind mount and unmount those filesystems in the image
+# so the postinstall will work.
+#
+find_os_mounts() {
+    loginfo "System specific mounted filesystems enumeration"
+    findmnt -o target --raw|grep -v /sysroot |grep -v '^/$'|tail -n +2 > /tmp/system_mounts.txt
+    loginfo "Found:"
+    loginfo "$(cat /tmp/system_mounts.txt)"
+    test -s "/tmp/system_mounts.txt" || shellout
+}
+
+################################################################################
+#
 # Mount OS virtual filesystems for /sysroot so chrooted cmd can work.
 #
 #
-
 mount_os_filesystems_to_sysroot() {
-    for mountpoint in /dev /proc /run /sys
+    # 1st, we enumerates what filesystems to bindmount
+    find_os_mounts
+    # 2nd, then we do the binds.
+    loginfo "bindin OS filesystems to image"
+    test -s /tmp/system_mounts.txt || shellout
+    for filesystem in $(cat /tmp/system_mounts.txt)
     do
-        if test -d $mountpoint
+        if test -d $filesystem
         then
             loginfo "Binding mount point ${mountpoint} to /sysroot${mountpoint} ."
-            mkdir -p /sysroot${mountpoint} || shellout
+            test -d /sysroot${filesystem} || mkdir -p /sysroot${filesystem} || shellout
             # In case of failure, we die as next steps will fail.
             mount -o bind ${mountpoint} /sysroot${mountpoint} || shellout
         fi
@@ -63,7 +81,9 @@ mount_os_filesystems_to_sysroot() {
 
 umount_os_filesystems_from_sysroot()
 {
-    for mountpoint in /dev /proc /run /sys
+    loginfo "Unmounting OS filesystems from image"
+    test -s /tmp/system_mounts.txt || shellout
+    for mountpoint in $(cat /tmp/system_mounts.txt)
     do
         if test -d $mountpoint
         then
