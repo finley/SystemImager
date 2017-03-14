@@ -1750,7 +1750,7 @@ start_report_task() {
 
 stop_report_task() {
     if test -s /run/systemimager/report_task.pid; then
-        $REPORT_PID=$(cat /run/systemimager/report_task.pid)
+        REPORT_PID=$(cat /run/systemimager/report_task.pid)
     fi
     # BUG: Need to make sure it is an integer
     if [ ! -z "$REPORT_PID" ]; then
