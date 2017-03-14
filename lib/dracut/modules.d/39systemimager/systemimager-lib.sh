@@ -1,6 +1,7 @@
 #!/bin/sh
 #
 # "SystemImager" 
+# functions related to dracut-initqueue logic. Also used by imaging script.
 #
 #  Copyright (C) 1999-2011 Brian Elliott Finley <brian@thefinleys.com>
 #
@@ -1835,27 +1836,3 @@ sleep_loop() {
     done
 }
 #
-################################################################################
-#
-#   Save the SIS imaging relevant logs to /root/SIS_Install_logs/ on the imaged
-#   computer.
-#
-#
-#
-save_logs_to_sysroot() {
-    loginfo "========================="
-    loginfo "Saving logs to /sysroot/root..."
-    if test -d /sysroot/root
-    then
-        mkdir -p /sysroot/root/SIS_Install_logs/
-        cp /tmp/variables.txt /sysroot/root/SIS_Install_logs/
-        cp /tmp/dhcp_info.txt /sysroot/root/SIS_Install_logs/
-        cp si_monitor.log /sysroot/root/SIS_Install_logs/
-        cp si.log /sysroot/root/SIS_Install_logs/
-        test -f /run/initramfs/rdsoreport.txt && cp /run/initramfs/rdsoreport.txt /sysroot/root/SIS_Install_logs/
-        sleep 10
-    else
-        logwarn "/sysroot/root does not exists"
-        shellout
-    fi
-}

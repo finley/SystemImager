@@ -198,21 +198,8 @@ modprobe xfs
 ##CREATE_FILESYSTEMS##
 ### END swap and filesystem creation commands ###
 
-### BEGIN mount proc in image for tools like System Configurator ###
-logmsg "mkdir -p /sysroot/proc || shellout"
-mkdir -p /sysroot/proc || shellout
-logmsg "mount proc /sysroot/proc -t proc -o defaults || shellout"
-mount proc /sysroot/proc -t proc -o defaults || shellout
-### END mount proc in image for tools like System Configurator ###
-
-if [ ! $kernel = "2.4" ]; then
-### BEGIN mount sysfs in image for tools that might be run during chroot ###
-logmsg "mkdir -p /sysroot/sys || shellout"
-mkdir -p /sysroot/sys || shellout
-logmsg "mount sysfs /sysroot/sys -t sysfs -o defaults || shellout"
-mount sysfs /sysroot/sys -t sysfs -o defaults || shellout
-### END mount sysfs in image for tools that might be run during chroot ###
-fi
+# Mount os filesystems to /sysroot (will shellout in case of failure)
+mount_os_filesystems_to_sysroot
 
 ################################################################################
 #
@@ -400,13 +387,6 @@ beep
 
 ################################################################################
 #
-# Always do a bind mount, as we're using udev for device files. -BEF-
-#
-mount /dev /sysroot/dev -o bind
-
-
-################################################################################
-#
 #XXX use of SystemConfigurator is deprecated
 #   Detect scsi hardware and include the device IDs into the hardware.lst
 #   file used by systemconfigurator.  Use pci-automod for 2.6 kernels.
@@ -521,6 +501,7 @@ fi
 #
 #   Unmount filesystems
 #
+umount_os_filesystems_from_sysroot
 ##UMOUNT_FILESYSTEMS##
 #
 ################################################################################

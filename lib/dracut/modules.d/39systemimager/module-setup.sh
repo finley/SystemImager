@@ -33,6 +33,7 @@ install() {
     #inst_binary /usr/libexec/anaconda/dd_extract /bin/dd_extract
 
     inst "$moddir/systemimager-lib.sh" "/lib/systemimager-lib.sh"
+    inst "$moddir/autoinstall-lib.sh" "/lib/autoinstall-lib.sh"
     # We need to overwrite 40network dhclient-script with our version that handles /etc/dhcp/dhclient-exit-hooks
     inst_script "$moddir/dhclient-script.sh" "/sbin/dhclient-script"
     inst_hook cmdline 90 "$moddir/parse-sis-options.sh" # Creates /tmp/kernel_append_parameter_variables.txt
