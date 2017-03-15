@@ -78,6 +78,7 @@ mount_os_filesystems_to_sysroot() {
 
 umount_os_filesystems_from_sysroot()
 {
+    UMOUNT_ERR=0
     loginfo "Unmounting OS filesystems from image"
     test -s /tmp/system_mounts.txt || shellout
     # using tac (reverse cat) to unmount in the correct umount order.
@@ -88,13 +89,13 @@ umount_os_filesystems_from_sysroot()
             if umount /sysroot${mountpoint}
             then
                 loginfo "unmounted /sysroot${mountpoint}"
-                return 0
             else
                 # In case of failure we just report the issue. (imaging is finished in theory)".
                 logwarn " failed to umount /sysroot${mountpoint}"
-                return 1
+                UMOUNT_ERR=1
             fi
         fi
     done
+    return $UMOUNT_ERR
 }
 
