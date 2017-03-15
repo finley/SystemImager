@@ -2129,8 +2129,8 @@ sub create_autoinstall_script{
                     print $MASTER_SCRIPT "\n";
                 } elsif ($post_install eq "shell") {
                     # shell stuff
-                    print $MASTER_SCRIPT "# Drop to emergency shell\n";
-                    print $MASTER_SCRIPT "echo emergency > /tmp/SIS_action\n";
+                    print $MASTER_SCRIPT "# Drop to debug shell\n";
+                    print $MASTER_SCRIPT "echo shell > /tmp/SIS_action\n";
                     print $MASTER_SCRIPT "\n";
                 } elsif ($post_install eq "kexec") {
                     # kexec imaged kernel

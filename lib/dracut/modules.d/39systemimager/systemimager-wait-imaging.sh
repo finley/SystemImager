@@ -21,14 +21,26 @@ type shellout >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 if test -f /tmp/SIS_action
 then
 	case $(cat /tmp/SIS_action) in
+		"shell")
+			warn
+			warn "========================================================"
+			warn "Installation successfull. Dropping to shell as requested"
+			die
+			;;
 		"emergency")
 			shellout
 			;;
 		"reboot")
+			warn
+			warn "========================================================"
+			warn "Installation successfull. Rebooting as requested"
 			sleep 10
 			/sbin/reboot
 			;;
 		"shutdown")
+			warn
+			warn "========================================================"
+			warn "Installation successfull. shutting down as requested"
 			sleep 10
 			/sbin/shutdown
 			;;
