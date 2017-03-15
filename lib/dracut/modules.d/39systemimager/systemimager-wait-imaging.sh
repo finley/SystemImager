@@ -25,7 +25,7 @@ then
 			warn
 			warn "========================================================"
 			warn "Installation successfull. Dropping to shell as requested"
-			die
+			emergency_shell -n "Installation successfull"
 			;;
 		"emergency")
 			shellout
