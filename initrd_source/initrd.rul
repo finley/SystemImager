@@ -94,8 +94,8 @@ $(INITRD_BUILD_DIR).build:  $(INITRD_BUILD_DIR).prep \
 	# Add firmwares, keymaps and a few config files
 	#mkdir -p $(INITRD_BUILD_DIR)/lib/firmware
 	#rsync -av /lib/firmware $(INITRD_BUILD_DIR)/lib/firmware
-	mkdir -p $(INITRD_BUILD_DIR)/lib/kbd/keymaps
-	rsync -av /lib/kbd/keymaps $(INITRD_BUILD_DIR)/lib/kbd/keymaps
+	#mkdir -p $(INITRD_BUILD_DIR)/lib/kbd/keymaps
+	#rsync -av /lib/kbd/keymaps $(INITRD_BUILD_DIR)/lib/kbd/keymaps
 	cp -av /etc/inputrc $(INITRD_BUILD_DIR)/etc/inputrc
 	cp -av /etc/printcap $(INITRD_BUILD_DIR)/etc/printcap
 	cp -av /etc/localtime $(INITRD_BUILD_DIR)/etc/localtime
