@@ -80,7 +80,8 @@ umount_os_filesystems_from_sysroot()
 {
     loginfo "Unmounting OS filesystems from image"
     test -s /tmp/system_mounts.txt || shellout
-    for mountpoint in $(cat /tmp/system_mounts.txt)
+    # using tac (reverse cat) to unmount in the correct umount order.
+    for mountpoint in $(tac /tmp/system_mounts.txt)
     do
         if test -d $mountpoint
         then

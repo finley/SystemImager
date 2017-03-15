@@ -23,7 +23,7 @@ install() {
     inst_multiple dosfsck dosfslabel fatlabel fsck.fat fsck.msdos fsck.vfat mkdosfs mkfs.fat mkfs.msdos mkfs.vfat
     #inst_multiple fsck.hfs hattrib hcd hcopy hdel hdir hformat hfs hfsck hls hmkdir hmount hpwd hrename hrmdir humount hvol
     inst_multiple btrfs btrfsck btrfstune fsck.btrfs mkfs.btrfs
-    inst_multiple cut date echo env sort test false true [ expr head install tail tee tr uniq wc
+    inst_multiple cut date echo env sort test false true [ expr head install tail tee tr uniq wc tac
     inst_multiple bc gzip bzip2 rsync parted loadkeys blockdev awk clear reset ncat stty tty killall kexec ipcalc
     inst_multiple systemd-cat
     inst_multiple depmod blkid
