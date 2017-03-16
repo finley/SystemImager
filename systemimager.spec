@@ -340,11 +340,15 @@ Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Requires: systemimager-server = %{version}, dracut-network
+Requires: %{_build_arch}initrd_template
 #AutoReqProv: no
 %description -n dracut-%{name}
 This package is a dracut modules that automates the systeimager initramfs creation.
 
 %changelog
+* Thu Mar 16 2017 Olivier Lahaye <olivier.lahaye@cea.fr> 4.5.0-0.21
+- added dracut-systemimager package.
+
 * Wed Jul 30 2014 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.20
 - Fixed script that reports rebooted status.
 
@@ -1111,6 +1115,7 @@ fi
 %files %{_build_arch}initrd_template
 %defattr(-, root, root)
 %dir %{_datarootdir}/systemimager/boot/%{_build_arch}/standard/initrd_template
+%config(noreplace)  %{_datarootdir}/systemimager/boot/%{_build_arch}/standard/initrd_template/etc/persistent-cmdline.d/*.conf
 %{_datarootdir}/systemimager/boot/%{_build_arch}/standard/initrd_template/*
 
 %files -n dracut-%{name}
