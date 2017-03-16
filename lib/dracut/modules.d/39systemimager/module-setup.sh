@@ -7,7 +7,7 @@ check() {
 }
 
 depends() {
-    echo network syslog shutdown ssh-client
+    echo network syslog shutdown ssh-client i18n
     case "$(uname -m)" in
         s390*) echo cms ;;
     esac
@@ -24,7 +24,8 @@ install() {
     #inst_multiple fsck.hfs hattrib hcd hcopy hdel hdir hformat hfs hfsck hls hmkdir hmount hpwd hrename hrmdir humount hvol
     inst_multiple btrfs btrfsck btrfstune fsck.btrfs mkfs.btrfs
     inst_multiple cut date echo env sort test false true [ expr head install tail tee tr uniq wc tac
-    inst_multiple bc gzip bzip2 rsync parted loadkeys blockdev awk clear reset ncat stty tty killall kexec ipcalc
+    # inst_multiple setfont loadkeys kbd_mode stty # i18n module
+    inst_multiple bc gzip bzip2 rsync parted blockdev awk clear reset ncat tty killall kexec ipcalc
     inst_multiple systemd-cat
     inst_multiple depmod blkid
     inst_multiple find strace
@@ -37,6 +38,7 @@ install() {
     # We need to overwrite 40network dhclient-script with our version that handles /etc/dhcp/dhclient-exit-hooks
     inst_script "$moddir/dhclient-script.sh" "/sbin/dhclient-script"
     inst_hook cmdline 10 "$moddir/restore-persistent-cmdline.d.sh" # copy /etc/persistent-cmdline.d to /etc/cmdline.d/
+    inst_hook cmdline 20 "${moddir}/parse-i18n.sh" # rd.vconsole.* parameters are not parsed if dracut uses systemd (upstream BUG)
     inst_hook cmdline 90 "$moddir/parse-sis-options.sh" # Creates /tmp/kernel_append_parameter_variables.txt
     inst_hook initqueue/settled 50 "$moddir/systemimager-init.sh" # Creates /run/systemimager
     inst_hook initqueue/finished 90 "$moddir/systemimager-wait-imaging.sh" # Waits for file /tmp/SIS_action
