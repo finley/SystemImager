@@ -36,6 +36,7 @@ install() {
     inst "$moddir/autoinstall-lib.sh" "/lib/autoinstall-lib.sh"
     # We need to overwrite 40network dhclient-script with our version that handles /etc/dhcp/dhclient-exit-hooks
     inst_script "$moddir/dhclient-script.sh" "/sbin/dhclient-script"
+    inst_hook cmdline 10 "$moddir/restore-persistent-cmdline.d.sh" # copy /etc/persistent-cmdline.d to /etc/cmdline.d/
     inst_hook cmdline 90 "$moddir/parse-sis-options.sh" # Creates /tmp/kernel_append_parameter_variables.txt
     inst_hook initqueue/settled 50 "$moddir/systemimager-init.sh" # Creates /run/systemimager
     inst_hook initqueue/finished 90 "$moddir/systemimager-wait-imaging.sh" # Waits for file /tmp/SIS_action
