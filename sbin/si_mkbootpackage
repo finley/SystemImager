@@ -145,14 +145,14 @@ Options:
     FILE can contain all the installation parameters necessary for the client
     (i.e. hostname, network configuration, image server address, log server,
     etc.).  This file is copied to /local.cfg into the initrd.img.  See
-    /usr/share/doc/systemimager-server-SYSTEMIMAGER_VERSION_STRING/local.cfg
-    (or /usr/share/doc/systemimager-server/examples/local.cfg in Debian-like
-    distributions) for a well commented example.  In general any installation
-    parameter passed via DHCP can be defined in local.cfg as well.
+    SYSTEMIMAGER_DOC_DIR/local.cfg for a well commented example.
+    In general any installation parameter passed via DHCP can be defined
+    in local.cfg as well.
 
  --dracut-opts="options to add to dracut"
-    this is the wway to add somme parameters to the dracut command that will
+    this is the way to add somme parameters to the dracut command that will
     generate the image. e.g. --mdadmconf --strip --xz --uefi
+
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
 
