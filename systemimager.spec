@@ -20,6 +20,13 @@
 #define _build_only_boot 1
 %{?_build_only_boot:%{expand: %%define _build_all 0}}
 
+# Since Fedora 20, %doc macro will store doc in unversionned directory.
+# If this macro doesn't exists, then we have to define it to versionned
+# directory. If it's defined, it's correct (F18 and 19 uses versionned dirs
+# and Fedora 20 and upward will use unversionned version.
+# Source: http://fedoraproject.org/wiki/Changes/UnversionedDocdirs
+%{!?_pkgdocdir: %global _pkgdocdir %{_docdir}/%{name}-%{version}}
+
 %define _unpackaged_files_terminate_build 0
 # Allow initrd_template binaries ion a noarch package.
 # indeed, x86_64 initrd template should be installable on another arch as "data"
@@ -340,7 +347,7 @@ Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Requires: systemimager-server = %{version}, dracut-network
-Requires: %{_build_arch}initrd_template
+Requires: systemimager-%{_build_arch}initrd_template
 #AutoReqProv: no
 %description -n dracut-%{name}
 This package is a dracut modules that automates the systeimager initramfs creation.
@@ -472,7 +479,7 @@ This package is a dracut modules that automates the systeimager initramfs creati
 - libuuid.so is provided by libuuid-devel in RHEL6 instead of e2fsprogs-devel
 - libcrypt.a is provided by glibc-static in RHEL6 instead of glibc-devel
 - gettext is needed for building xfsprogs included in boel_binaries
-- Use $RPM_BUILD_ROOT for DESTDIR
+- Use %{buildroot} for DESTDIR
 - Cleanup some commented commands
 
 * Tue Nov 10 2009 Bernard Li <bernard@vanhpc.org>
@@ -747,35 +754,71 @@ export LD_FLAGS=-L$RPM_BUILD_DIR/%{name}-%{version}/initrd_source/build_dir/lib
 # Only build everything if on x86, this helps with PPC build issues
 %if %{_build_all}
 #%{__make} %{?_smp_mflags} all
-%{__make} -j1 all DESTDIR=$RPM_BUILD_ROOT PREFIX=%_prefix
+%{__make} -j1 all DESTDIR=%{buildroot} PREFIX=%_prefix
 
 %else
-%{__make} binaries DESTDIR=$RPM_BUILD_ROOT PREFIX=%_prefix
+%{__make} binaries DESTDIR=%{buildroot} PREFIX=%_prefix
 
 %endif
+
+# Fix docdir in ./sbin/si_* commands when usage() will refere to this path.
+for FILE in ./sbin/si_mkbootpackage ./README
+do
+	sed -i -e 's|SYSTEMIMAGER_DOC_DIR|%{_pkgdocdir}|g' $FILE
+done
+
+# Build an initrd.img for current kernel.
+# 1st: create a local module dir for dracut.
+for mod in /usr/lib/dracut/modules.d/*
+do
+	if test "${mod##*/}" != "39systemimager"
+	then
+		ln -s $mod ./lib/dracut/modules.d/
+	fi
+done
+
+# move to local modules dir so we can use --local
+cd ./lib/dracut/modules.d
+dracut --force --local --add systemimager --no-hostonly --no-hostonly-cmdline --no-hostonly-i18n ../../../initrd.img $(uname -r)
 
 %install
 cd $RPM_BUILD_DIR/%{name}-%{version}/
 
 %if %{_build_all}
 
-make install_server_all DESTDIR=$RPM_BUILD_ROOT PREFIX=%_prefix
-make install_client_all DESTDIR=$RPM_BUILD_ROOT PREFIX=%_prefix
+make install_server_all DESTDIR=%{buildroot} PREFIX=%_prefix
+make install_client_all DESTDIR=%{buildroot} PREFIX=%_prefix
 (cd doc/manual_source;%{__make} html)
+
+cp ./initrd.img %{buildroot}/%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/initrd.img
+# copy the matching kernel
+cp /boot/vmlinuz-$(uname -r) %{buildroot}/%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/kernel
+# try to put kernel config aside above binaries.
+if test -r /boot/config-$(uname -r)
+then
+	cp /boot/config-$(uname -r) %{buildroot}/%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/config
+elif test -r /proc/config.gz
+then
+	cp /proc/config.gz %{buildroot}/%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/
+else
+	echo "uname_r=$(uname -r)" > %{buildroot}/%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/config.txt
+fi
+
+
 
 %else
 
-%{__make} install_binaries DESTDIR=$RPM_BUILD_ROOT PREFIX=%_prefix
+%{__make} install_binaries DESTDIR=%{buildroot} PREFIX=%_prefix
 
 %endif
 
 # Some things that get duplicated because there are multiple calls to
 # the make install_* phases.
-find $RPM_BUILD_ROOT -name \*~ -exec rm -f '{}' \;
+find %{buildroot} -name \*~ -exec rm -f '{}' \;
 
 %clean
 #__rm -rf $RPM_BUILD_DIR/%{name}-%{version}/
-%__rm -rf $RPM_BUILD_ROOT
+%__rm -rf %{buildroot}
 
 %if %{_build_all}
 
@@ -1107,9 +1150,9 @@ fi
 %defattr(-, root, root)
 %dir %{_datarootdir}/systemimager/boot/%{_build_arch}
 %dir %{_datarootdir}/systemimager/boot/%{_build_arch}/standard
-#%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/config
-#%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/initrd.img
-#%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/kernel
+%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/config*
+%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/initrd.img
+%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/kernel
 #prefix/share/systemimager/boot/%{_build_arch}/standard/boel_binaries.tar.gz
 
 %files %{_build_arch}initrd_template
@@ -1120,4 +1163,5 @@ fi
 
 %files -n dracut-%{name}
 %defattr(-, root, root)
-%{_prefix}/lib/dracut/modules.d/*
+%dir %{_prefix}/lib/dracut/modules.d/39systemimager
+%{_prefix}/lib/dracut/modules.d/39systemimager/*
