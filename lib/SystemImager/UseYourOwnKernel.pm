@@ -57,6 +57,11 @@ sub create_uyok_initrd() {
         my $cmd;
         my $file;
 
+        #
+        # Create temp dir
+        #
+        my $staging_dir = _mk_tmp_dir();
+
         # Set the cleanup handler.
         $SIG{__DIE__} = sub {
             my $msg = shift;
@@ -103,7 +108,7 @@ sub create_uyok_initrd() {
 	#
 	#
 	#
-	my $extra_firmwares=""
+	my $extra_firmwares="";
 	if ($firmware_dir) {
 	    $extra_firmwares=" --fwdir $firmware_dir";
 	}
@@ -191,7 +196,7 @@ sub create_uyok_initrd() {
         #
         print ">>> Creating new initrd addind staging dir:  $staging_dir\n" if( $verbose );
 
-	my $cmd="dracut --add systemimager $hostonly_opt $extra_firmwares $modules_to_exclude $dracut_opts $boot_dir/initrd.img $uname_r"
+	my $cmd="dracut --add systemimager $hostonly_opt $extra_firmwares $modules_to_exclude $dracut_opts $boot_dir/initrd.img $uname_r";
         !system($cmd) or die("FAILED: $cmd");
 
         # Print initrd size information.
