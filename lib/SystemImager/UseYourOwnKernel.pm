@@ -27,30 +27,27 @@ use SystemImager::Config qw($config);
 
 our $verbose;
 our $is_mounted = 0;
-our $fs_regexp = "(cramfs|ext2|ext3|reiserfs|xfs|jfs|cpio)";
 
 #
 # Usage: 
 #       SystemImager::UseYourOwnKernel->create_uyok_initrd(
-#           $arch, $my_modules, $custom_kernel, $custom_mod_dir,
-#           $image, $filesystem, $destination, $ssh_key,
-#           $authorized_keys, $local_cfg, $verbose);
+#           $my_modules, $custom_kernel, $custom_mod_dir,
+#           $image, $destination, $ssh_key,
+#           $authorized_keys, $local_cfg,
+#           $firmware_dir, $dracut_opts, $verbose);
 #
 sub create_uyok_initrd() {
 
-        my $module          = shift;
-        my $arch            = shift;
         my $my_modules      = shift;
         my $custom_kernel   = shift;
         my $custom_mod_dir  = shift;
         my $image           = shift;
-        my $filesystem      = shift;
         my $destination     = shift;
         my $ssh_key         = shift;
         my $authorized_keys = shift;
         my $local_cfg       = shift;
-        my $system_firmware = shift;
         my $firmware_dir    = shift;
+	my $dracut_opts     = shift;
         $verbose            = shift;
 
         use File::Copy;
@@ -59,11 +56,6 @@ sub create_uyok_initrd() {
 
         my $cmd;
         my $file;
-
-        #
-        # Create temp dir
-        #
-        my $staging_dir = _mk_tmp_dir();
 
         # Set the cleanup handler.
         $SIG{__DIE__} = sub {
@@ -75,39 +67,6 @@ sub create_uyok_initrd() {
             }
             die $msg;
         };
-
-        #
-        # Copy template over
-        #
-        unless (-d "/usr/share/systemimager/boot/$arch/standard/initrd_template/") {
-            rmdir($staging_dir);
-            die("FATAL: couldn't find a valid initrd template.\n" . 
-                "\tTry to install systemimager-${arch}initrd_template package!\n");
-        }
-        $cmd = qq(rsync -a /usr/share/systemimager/boot/$arch/standard/initrd_template/ $staging_dir/);
-        !system( $cmd ) or die( "Couldn't $cmd." );
-
-        #
-        # Determine module exclusions here.  Jeremy Siadal made the excellent
-        # suggestion of explicitly excluding, as opposed to explicitly 
-        # including, so that we don't inadvertently exclude some new fancy 
-        # module that someone needs. -BEF-
-        #
-        my $modules_to_exclude = '';
-        $file = "/etc/systemimager/UYOK.modules_to_exclude";
-        if(-e $file) {
-            #
-            # Get list of exclusions from "/etc/systemimager/UYOK.modules_to_exclude"
-            # (that file should live in the "systemimager-common" package)
-            #
-            open(FILE,"<$file") or die("Couldn't open $file for reading");
-                while(<FILE>) {
-                    next if(m/^(#|\s|$)/);
-                    chomp;
-                    $modules_to_exclude .= "--exclude $_ ";
-                }
-            close(FILE);
-        }
 
         # Detect the kernel release.
         my $uname_r;
@@ -131,64 +90,43 @@ sub create_uyok_initrd() {
             $uname_r = get_uname_r();
         }
 
+	#
+	# Handle the --my-modules options (only use modules necesssary to boot this host)
+	#
         my $module_dir;
         if ($custom_mod_dir) {
             $module_dir = $custom_mod_dir;
         } else {
             $module_dir = "/lib/modules/$uname_r" unless ($custom_kernel);
         }
-        if ($module_dir) {
-            #
-            # Copy modules
-            #
-            my @modules = ();
-            unless ($custom_mod_dir) {
-                @modules = get_load_ordered_list_of_running_modules();
-            }
-            print ">>> Copying modules to new initrd from: $module_dir...\n" if( $verbose );
-            unless (-d "$staging_dir/lib/modules") {
-                mkdir("$staging_dir/lib/modules", 0755) or die "$!";
-            }
-            my $kernel_release = ($custom_kernel) ? _get_kernel_release($custom_kernel) : $uname_r;
-            unless ($my_modules) {
-                # FIXME: option L is required in order to copy all modules, even ones that are outside the
-                # /lib/modules tree (some proprietary modules are stored elswhere and a link is created there after).
-                # this could pose problem when circular links are encountered.
-                # Need to find a better way to handle this.
-                $cmd = qq(rsync -aL --exclude=build --exclude=source ) .
-                       qq($modules_to_exclude $module_dir/* $staging_dir/lib/modules/$kernel_release);
-                !system( $cmd ) or die( "Couldn't $cmd." );
-            } else {
-                # Copy only loaded modules ignoring exclusions.
-                foreach my $module ( @modules ) {
-                    next unless ($module);
-                    $cmd = qq(rsync -aR $module $staging_dir);
-                    !system( $cmd ) or die( "Couldn't $cmd." );
-                }
-            }
-            # Copy module configuration files.
-            print ">>> Copying modules configuration from: $module_dir...\n" if( $verbose );
-            $cmd = qq(cd $module_dir && rsync --exclude=build --exclude=source -R * $staging_dir/lib/modules/$kernel_release);
-            !system( $cmd ) or die( "Couldn't $cmd." );
 
+	#
+	#
+	#
+	my $extra_firmwares=""
+	if ($firmware_dir) {
+	    $extra_firmwares=" --fwdir $firmware_dir";
+	}
+        #
+        # Determine module exclusions here.  Jeremy Siadal made the excellent
+        # suggestion of explicitly excluding, as opposed to explicitly 
+        # including, so that we don't inadvertently exclude some new fancy 
+        # module that someone needs. -BEF-
+        #
+        my $modules_to_exclude = '';
+        $file = "/etc/systemimager/UYOK.modules_to_exclude";
+        if(-e $file) {
             #
-            # add modules and insmod commands
+            # Get list of exclusions from "/etc/systemimager/UYOK.modules_to_exclude"
+            # (that file should live in the "systemimager-common" package)
             #
-            my $my_modules_dir = "$staging_dir/my_modules";
-            $file = "$my_modules_dir" . "/INSMOD_COMMANDS";
-            open( FILE,">>$file" ) or die( "Couldn't open $file for appending" );
-            print ">>> Appending insmod commands to ./my_modules_dir/INSMOD_COMMANDS...\n" if( $verbose );
-            if ($#modules == -1) {
-                print " >> Using custom kernel: udev will be used to autodetect the needed modules...\n"
-                    if( $verbose );
-            } else {
-                foreach my $module ( @modules ) {
-                    if (-f "$staging_dir/$module") {
-                        print " >> insmod $module\n" if( $verbose );
-                        print FILE "insmod $module\n";
-                    }
+            open(FILE,"<$file") or die("Couldn't open $file for reading");
+                while(<FILE>) {
+                    next if(m/^(#|\s|$)/);
+                    chomp;
+		    my $cmd = "basename -a $(find $module_dir/$_ -type f)|cut -d'.' -f1| tr'\n' ' '";
+                    $modules_to_exclude .= " --omit-drivers \"".`$cmd`."\"";
                 }
-            }
             close(FILE);
         }
 
@@ -226,39 +164,46 @@ sub create_uyok_initrd() {
             }
         }
 
-        #
-        # Copy /lib/firmware files to initrd if option --with-system-firmware is used
-        #
-        if($system_firmware) {
-            $firmware_dir="/lib/firmware" if(!$firmware_dir);
-            if ( -d $firmware_dir ) {
-                $cmd = qq(rsync -aLR /lib/firmware $staging_dir);
-                !system( $cmd ) or die( "Couldn't $cmd." );
-            }
-        }
-
         # 
         # Dir in which to hold stuff.  XXX dannf where should this really go?
-        #
+        # OL: The correct location is /usr/share/systemimager/boot/${ARCH}/
         my $boot_dir;
         if ($destination) {
             $boot_dir = $destination;
         } else {
-            $boot_dir = '/etc/systemimager/boot';
+	    # Should not end here....
+            $boot_dir = "/usr/share/systemimager/boot/".get_arch()."/standard";
         }
         eval { mkpath($boot_dir, 0, 0755) };
         if ($@) {
                 print "Couldn't create $boot_dir: $@";
         }
 
-        unless ($filesystem) {
-            $filesystem = choose_file_system_for_new_initrd($uname_r, $custom_kernel);
-        }
-
+	#
+	#
+	#
+	my $hostonly_opt=" --no-hostonly --no-hostonly-cmdline --no-hostonly-i18n";
+	if($my_modules) {
+	    $hostonly_opt="--hostonly --hostonly-cmdline --hostonly-i18n";
+	}
         #
         # Create initrd and save copy of kernel
         #
-        _create_new_initrd( $staging_dir, $boot_dir, $filesystem );
+        print ">>> Creating new initrd addind staging dir:  $staging_dir\n" if( $verbose );
+
+	my $cmd="dracut --add systemimager $hostonly_opt $extra_firmwares $modules_to_exclude $dracut_opts $boot_dir/initrd.img $uname_r"
+        !system($cmd) or die("FAILED: $cmd");
+
+        # Print initrd size information.
+        print ">> Evaluating initrd size to be added in the kernel boot options\n" .
+              ">> (e.g. /etc/systemimager/pxelinux.cfg/syslinux.cfg):\n";
+        if (-f "$boot_dir/initrd.img") {
+            my $ramdisk_size = (`zcat $boot_dir/initrd.img | wc -c` + 10485760) / 1024;
+            print " >>\tsuggested value -> ramdisk_size=$ramdisk_size\n\n";
+        } else {
+            print qq(WARNING: cannot find the new boot initrd!\n);
+        }
+
         _get_copy_of_kernel( $uname_r, $boot_dir, $custom_kernel );
         _record_arch( $boot_dir );
 
@@ -615,108 +560,6 @@ sub _mk_tmp_dir() {
         return "${dir}${count}";
 }
 
-
-sub choose_file_system_for_new_initrd() {
-
-        my $uname_r = shift;
-        my $custom_kernel = shift;
-
-        # Always use cpio initramfs with 2.6 kernels.
-        if ($uname_r =~ /(^2\.6)|(^3\.[0-9])/) {
-            return "cpio";
-        }
-
-        # 2.4 world...
-
-        # The auto-detection of a valid filesystem works only on the golden
-        # client and when a custom kernel is not specified.
-        if ($custom_kernel) {
-            goto OUT;
-        }
-
-        # Try to detect a valid filesystem to be used for the initrd.img.
-        my @filesystems;
-        my $fs;
-        my $modules_dir = "/lib/modules/$uname_r";
-
-        my $file = "/proc/filesystems";
-        open(FILESYSTEMS,"<$file") or die("Couldn't open $file for reading.");
-        while (<FILESYSTEMS>) {
-                chomp;
-                push (@filesystems, $_) if (m/$fs_regexp/);
-        }
-        close(FILESYSTEMS);
-
-        # cramfs
-        if ((grep { /cramfs/ } @filesystems) 
-                and (! -e "$modules_dir/kernel/fs/cramfs/cramfs.o")
-                and (! -e "$modules_dir/kernel/fs/cramfs/cramfs.ko")
-                and (! -e "$modules_dir/kernel/fs/cramfs/cramfs.ko.gz")
-                ) { 
-                $fs = "cramfs";
-        }
-
-        # ext2
-        elsif ((grep { /ext2/ } @filesystems) 
-                and (! -e "$modules_dir/kernel/fs/ext2/ext2.o")
-                and (! -e "$modules_dir/kernel/fs/ext2/ext2.ko")
-                and (! -e "$modules_dir/kernel/fs/ext2/ext2.ko.gz")
-                ) { 
-                $fs = "ext2";
-        }
-
-        # ext3
-        elsif ((grep { /ext3/ } @filesystems) 
-                and (! -e "$modules_dir/kernel/fs/ext3/ext3.o")
-                and (! -e "$modules_dir/kernel/fs/ext3/ext3.ko")
-                and (! -e "$modules_dir/kernel/fs/ext3/ext3.ko.gz")
-                ) { 
-                $fs = "ext3";
-        }
-
-        # reiserfs
-        elsif ((grep { /reiserfs/ } @filesystems) 
-                and (! -e "$modules_dir/kernel/fs/reiserfs/reiserfs.o")
-                and (! -e "$modules_dir/kernel/fs/reiserfs/reiserfs.ko")
-                and (! -e "$modules_dir/kernel/fs/reiserfs/reiserfs.ko.gz")
-                ) { 
-                $fs = "reiserfs";
-        }
-
-        # jfs
-        elsif ((grep { /jfs/ } @filesystems) 
-                and (! -e "$modules_dir/kernel/fs/jfs/jfs.o")
-                and (! -e "$modules_dir/kernel/fs/jfs/jfs.ko")
-                and (! -e "$modules_dir/kernel/fs/jfs/jfs.ko.gz")
-                ) { 
-                $fs = "jfs";
-        }
-
-        # xfs
-        elsif ((grep { /xfs/ } @filesystems) 
-                and (! -e "$modules_dir/kernel/fs/xfs/xfs.o")
-                and (! -e "$modules_dir/kernel/fs/xfs/xfs.ko")
-                and (! -e "$modules_dir/kernel/fs/xfs/xfs.ko.gz")
-                ) { 
-                $fs = "xfs";
-                print "XXX remove this warning line once xfs is tested.\n";
-                print "XXX just need to verify where the xfs module lives.\n";
-        }
-
-        # cpio
-        unless(defined $fs) {
-            # Couldn't determine an appropriate filesystem: fallback to cpio initramfs. -AR-
-            goto OUT;
-        }
-
-        return $fs;
-OUT:
-        print STDERR "WARNING: couldn't find a valid filesystem for initrd.img!\n";
-        print STDERR "WARNING: trying with cpio initramfs...\n";
-        return 'cpio';
-}
-
-
 sub get_uname_r {
 
         #
@@ -834,302 +677,6 @@ sub get_load_ordered_list_of_running_modules() {
         @modules = reverse(@modules);
 
         return @modules;
-}
-
-
-sub _create_new_initrd($$) {
-
-        my $staging_dir = shift;
-        my $boot_dir = shift;
-        my $fs = shift;
-
-        if($fs eq "ext3") { 
-                # use ext2 as the filesystem (same as ext3, but no journal)
-                $fs = "ext2";
-        }   
-
-        print ">>> Choosing filesystem for new initrd:  $fs\n" if( $verbose );
-        print ">>> Creating new initrd from staging dir:  $staging_dir\n" if( $verbose );
-
-        if ($fs eq 'cramfs') {
-            _create_initrd_cramfs($staging_dir, $boot_dir);
-        } elsif ($fs eq 'ext2') {
-            _create_initrd_ext2($staging_dir, $boot_dir);
-        } elsif ($fs eq 'reiserfs') {
-            _create_initrd_reiserfs($staging_dir, $boot_dir);
-        } elsif ($fs eq 'jfs') {
-            _create_initrd_jfs($staging_dir, $boot_dir);
-        } elsif ($fs eq 'xfs') {
-            _create_initrd_xfs($staging_dir, $boot_dir);
-        } elsif ($fs eq 'cpio') {
-            _create_initrd_cpio($staging_dir, $boot_dir);
-        } else {
-            die("FATAL: Unable to create initrd using filesystem: $fs\n");
-        }
-
-        # Print initrd size information.
-        print ">> Evaluating initrd size to be added in the kernel boot options\n" .
-              ">> (e.g. /etc/systemimager/pxelinux.cfg/syslinux.cfg):\n";
-        if (-f "$boot_dir/initrd.img") {
-            my $ramdisk_size = (`zcat $boot_dir/initrd.img | wc -c` + 10485760) / 1024;
-            print " >>\tsuggested value -> ramdisk_size=$ramdisk_size\n\n";
-        } else {
-            print qq(WARNING: cannot find the new boot initrd!\n);
-        }
-
-        return 1;
-}
-
-sub _create_initrd_cpio($$) {
-
-        my $staging_dir = shift;
-        my $boot_dir    = shift;
-
-        my $new_initrd  = $boot_dir . "/initrd";
-
-        # cleanup routine.
-        $SIG{__DIE__} = sub {
-            my $msg = shift;
-            unlink($new_initrd) if (-f $new_initrd);
-            run_cmd("rm -fr $staging_dir", $verbose, 1);
-            die $msg;
-        };
-
-        # initrd creation
-        run_cmd("cd $staging_dir && find . ! -name \"*~\" | cpio -H newc --create | gzip -9 > $new_initrd.img");
-        run_cmd("ls -l $new_initrd.img", $verbose, 1) if($verbose);
-
-        return 1;
-}
-
-sub _create_initrd_cramfs($$) {
-
-        my $staging_dir = shift;
-        my $boot_dir    = shift;
-
-        my $new_initrd  = $boot_dir . "/initrd";
-
-        # cleanup routine.
-        $SIG{__DIE__} = sub {
-            my $msg = shift;
-            unlink($new_initrd) if (-f $new_initrd);
-            run_cmd("rm -fr $staging_dir", $verbose, 1);
-            die $msg;
-        };
-
-        # initrd creation
-        my $mkfs;
-        if (`which mkcramfs 2>/dev/null`) {
-            $mkfs = 'mkcramfs';
-        } elsif (`which mkfs.cramfs 2>/dev/null`) {
-            $mkfs = 'mkfs.cramfs';
-        } else {
-            die "error: cannot find a valid utility to create cramfs initrd!\n";
-        }
-        run_cmd("$mkfs $staging_dir $new_initrd", $verbose, 1);
-
-        # gzip up
-        run_cmd("gzip -f -9 -S .img $new_initrd", $verbose);
-        run_cmd("ls -l $new_initrd.img", $verbose, 1) if($verbose);
-
-        return 1;
-}
-
-sub _create_initrd_reiserfs($$) {
-
-        my $staging_dir = shift;
-        my $boot_dir    = shift;
-
-        my $new_initrd  = $boot_dir . "/initrd";
-
-        my $new_initrd_mount_dir = _mk_tmp_dir();
-
-        # cleanup routine.
-        $SIG{__DIE__} = sub {
-            my $msg = shift;
-            run_cmd("umount $new_initrd_mount_dir", $verbose, 0) if ($is_mounted);
-            unlink($new_initrd) if (-f $new_initrd);
-            run_cmd("rm -fr $staging_dir $new_initrd_mount_dir", $verbose, 1);
-            die $msg;
-        };
-
-        print ">>> New initrd mount point:     $new_initrd_mount_dir\n" if($verbose);
-        eval { mkpath($new_initrd_mount_dir, 0, 0755) }; 
-        if( $@ ) { 
-                die "Couldn't mkpath $new_initrd_mount_dir $@";
-        }
-
-        my $cmd;
-
-        # loopback file
-        chomp(my $size = `du -ks $staging_dir`);
-        $size =~ s/\s+.*$//;
-        my $journal_blocks = 513;               # minimum journal size in blocks
-        my $journal_size = $journal_blocks * 4; # journal size in blocks * block size in kilobytes
-        my $breathing_room = 100;
-        $size = $size + $journal_size + $breathing_room;
-        run_cmd("dd if=/dev/zero of=$new_initrd bs=1024 count=$size", $verbose, 1);
-
-        # fs creation
-        run_cmd("mkreiserfs -b 512 -q -s $journal_blocks $new_initrd", $verbose);
-
-        # mount
-        run_cmd("mount $new_initrd $new_initrd_mount_dir -o loop -t reiserfs", $verbose);
-        $is_mounted = 1;
-
-        # copy from staging dir to new initrd
-        run_cmd("tar -C $staging_dir -cf - . | tar -C $new_initrd_mount_dir -xf -", $verbose, 0);
-
-        # umount and gzip up
-        run_cmd("umount $new_initrd_mount_dir", $verbose);
-        $is_mounted = 0;
-        run_cmd("gzip -f -9 -S .img $new_initrd", $verbose);
-        run_cmd("ls -l $new_initrd.img", $verbose, 1) if($verbose);
-
-        # cleanup the temporary mount dir
-        run_cmd("rm -fr $new_initrd_mount_dir", $verbose, 1);
-
-        return 1;
-}
-
-sub _create_initrd_ext2($$) {
-
-        my $staging_dir = shift;
-        my $boot_dir    = shift;
-
-        my $new_initrd  = $boot_dir . "/initrd";
-
-        my $new_initrd_mount_dir = _mk_tmp_dir();
-
-        # cleanup routine.
-        $SIG{__DIE__} = sub {
-            my $msg = shift;
-            run_cmd("umount $new_initrd_mount_dir", $verbose, 0) if ($is_mounted);
-            unlink($new_initrd) if (-f $new_initrd);
-            run_cmd("rm -fr $staging_dir $new_initrd_mount_dir", $verbose, 1);
-            die $msg;
-        };
-
-        print ">>> New initrd mount point:     $new_initrd_mount_dir\n" if($verbose);
-        eval { mkpath($new_initrd_mount_dir, 0, 0755) }; 
-        if ($@) { 
-                die "Couldn't mkpath $new_initrd_mount_dir $@";
-        }
-
-        my $cmd;
-
-        # loopback file
-        chomp(my $size = `du -ks $staging_dir`);
-        $size =~ s/\s+.*$//;
-        my $breathing_room = 2000;
-        $size = $size + $breathing_room;
-        run_cmd("dd if=/dev/zero of=$new_initrd bs=1024 count=$size", $verbose, 1);
-
-        # fs creation
-        chomp(my $inodes = `find $staging_dir -printf "%i\n" | sort -u | wc -l`);
-        $inodes = $inodes + 10;
-        run_cmd("mke2fs -b 1024 -m 0 -N $inodes -F $new_initrd", $verbose, 1);
-        run_cmd("tune2fs -i 0 $new_initrd", $verbose, 1);
-
-        # mount
-        run_cmd("mount $new_initrd $new_initrd_mount_dir -o loop -t ext2", $verbose);
-        $is_mounted = 1;
-
-        # copy from staging dir to new initrd
-        run_cmd("tar -C $staging_dir -cf - . | tar -C $new_initrd_mount_dir -xf -", $verbose, 0);
-
-        # umount and gzip up
-        run_cmd("umount $new_initrd_mount_dir", $verbose);
-        $is_mounted = 0;
-        run_cmd("gzip -f -9 -S .img $new_initrd", $verbose);
-        run_cmd("ls -l $new_initrd.img", $verbose, 1) if($verbose);
-
-        # cleanup the temporary mount dir
-        run_cmd("rm -fr $new_initrd_mount_dir", $verbose, 1);
-
-        return 1;
-}
-
-sub _create_initrd_xfs($$) {
-
-        my $staging_dir = shift;
-        my $boot_dir    = shift;
-
-        my $new_initrd  = $boot_dir . "/initrd";
-
-        my $new_initrd_mount_dir = _mk_tmp_dir();
-        print ">>> New initrd mount point:     $new_initrd_mount_dir\n" if($verbose);
-        eval { mkpath($new_initrd_mount_dir, 0, 0755) }; 
-        if ($@) { 
-                die "Couldn't mkpath $new_initrd_mount_dir $@";
-        }
-
-        print "\nPlease fill in this subroutine, _create_initrd_xfs(), and email the patch!\n\n";
-        exit 1;
-}
-
-sub _create_initrd_jfs($$) {
-
-        my $staging_dir = shift;
-        my $boot_dir    = shift;
-
-        my $new_initrd  = $boot_dir . "/initrd";
-
-        my $cmd;
-
-        my $new_initrd_mount_dir = _mk_tmp_dir();
-
-        # cleanup routine.
-        $SIG{__DIE__} = sub {
-            my $msg = shift;
-            run_cmd("umount $new_initrd_mount_dir", $verbose, 0) if ($is_mounted);
-            unlink($new_initrd) if (-f $new_initrd);
-            run_cmd("rm -fr $staging_dir $new_initrd_mount_dir", $verbose, 1);
-            die $msg;
-        };
-
-        print ">>> New initrd mount point:     $new_initrd_mount_dir\n" if($verbose);
-        eval { mkpath($new_initrd_mount_dir, 0, 0755) }; 
-        if ($@) { 
-                die "Couldn't mkpath $new_initrd_mount_dir $@";
-        }
-
-        # loopback file
-        chomp(my $size = `du -ks $staging_dir`);
-        $size =~ s/\s+.*$//;
-#        my $breathing_room = 3072;      # We may need to tweak this -- not for size(<), but for size(>). -BEF-
-        my $breathing_room = 4072;      # We may need to tweak this -- not for size(<), but for size(>). -BEF-
-        $size = $size + $breathing_room;
-        #
-        # jfs_mkfs farts on you with an "Partition must be at least 16 megabytes."
-        # if you try to use anything smaller.  However, because this is before we
-        # compress the initrd, it results in suprisingly little increase in the 
-        # size of the resultant initrd.
-        #
-        my $min_jfs_fs_size = 16384;    
-        if($size < $min_jfs_fs_size) { $size = $min_jfs_fs_size; }
-        run_cmd("dd if=/dev/zero of=$new_initrd bs=1024 count=$size", $verbose, 1);
-
-        # fs creation
-        run_cmd("jfs_mkfs -q $new_initrd", $verbose);
-
-        # mount
-        run_cmd("mount $new_initrd $new_initrd_mount_dir -o loop -t jfs", $verbose);
-        $is_mounted = 1;
-
-        # copy from staging dir to new initrd
-        run_cmd("tar -C $staging_dir -cf - . | tar -C $new_initrd_mount_dir -xf -", $verbose, 0);
-
-        # umount and gzip up
-        run_cmd("umount $new_initrd_mount_dir", $verbose);
-        $is_mounted = 0;
-        run_cmd("gzip -f -9 -S .img $new_initrd", $verbose);
-        run_cmd("ls -l $new_initrd.img", $verbose, 1) if($verbose);
-
-        # cleanup the temporary mount dir
-        run_cmd("rm -fr $new_initrd_mount_dir", $verbose, 1);
-
-        return 1;
 }
 
 #

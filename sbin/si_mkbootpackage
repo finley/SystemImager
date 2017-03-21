@@ -54,7 +54,7 @@ $ENV{"LANG"} = "C";
 
 my $progname = basename $0;
 
-my $ARCH = SystemImager::UseYourOwnKernel::_get_arch();
+my $arch = SystemImager::UseYourOwnKernel::_get_arch();
 my $autoinstall_boot_dir = $config->autoinstall_boot_dir;
 unless ($autoinstall_boot_dir) {
     die "FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in /etc/systemimager/systemimager.conf\n";
@@ -87,10 +87,6 @@ Options:
  -h, --help                
     Display this output.
 
- --arch ARCH
-    The CPU architecture of the resulting initrd boot image (if not specified
-    it is used the same architecture of the image server: $ARCH).
-
  --flavor FLAVOR
     The destination flavor to put the new boot package (kernel and
     initrd.img). This will create or overwrite a new boot flavor in 
@@ -119,14 +115,6 @@ Options:
     used with a greater variety of client hardware, but can make the
     resultant initrd.img much larger. 
 
- --include-system-firmwar
-    Include the firmwares that are currently installed on this machine
-    when creating the initrd.img.
-
-    Including all installed firmwares allors you initrd.img to be used
-    with a greater variety of client hardware, but can make the resultant
-    initrd.img larger.
-
  --kernel KERNEL
     Do not detect the kernel to use with UYOK, but instead use the
     file specified by the argument KERNEL.
@@ -138,19 +126,12 @@ Options:
     feature.
 
  --firmware-dir DIR
-    Get the firmwares to use from the DIR repository.
-    Use this parameter only with --with-system-firmware.
+    Add the firmwares to use from the DIR repository.
 
  --image IMAGENAME
     Get kernel and kernel modules automatically from the image specified
     by IMAGENAME to use with UYOK (if executed on image server).
     Use this parameter only if you use UYOK feature.
-
- --filesystem FILESYSTEM
-    Force the use of FILESYSTEM to create the initial ramdisk. Use the
-    filesystem name as specified in /proc/filesystems.
-    Important: the filesystem must be statically compiled in the kernel
-    used to install the clients.
 
  --ssh-key FILE
     Where FILE is the SSH2 id_dsa or id_rsa private key of the user account
@@ -169,6 +150,9 @@ Options:
     distributions) for a well commented example.  In general any installation
     parameter passed via DHCP can be defined in local.cfg as well.
 
+ --dracut-opts="options to add to dracut"
+    this is the wway to add somme parameters to the dracut command that will
+    generate the image. e.g. --mdadmconf --strip --xz --uefi
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
 
@@ -176,7 +160,6 @@ EOF
 
 GetOptions(
     "help|h"                 => \my $help,
-    "arch=s"               => \my $img_arch,
     "flavor=s"             => \my $flavor,
     "quiet"                => \my $quiet,
     "destination=s"        => \my $destination,
@@ -184,14 +167,13 @@ GetOptions(
     "kernel=s"             => \my $custom_kernel,
     "modules-dir=s"        => \my $modules_dir,
     "image=s"              => \my $image,
-    "filesystem=s"         => \my $filesystem,
     "version"              => \my $version,
     "yes"                  => \my $yes,
     "ssh-key=s"            => \my $ssh_key,
     "authorized-keys=s"    => \my $authorized_keys,
     "config=s"             => \my $local_cfg,
-    "include-system-firmware" => \my $system_firmware,
     "firmware-dir=s"       => \my $firmware_dir,
+    "dracut-opts="         => \my $dracut_opts,
 ) || die "$help_info";
 
 
@@ -265,21 +247,10 @@ if ($my_modules and $image) {
     exit 1;
 }
 
-if (($filesystem) &&
-    ($filesystem !~ m/$SystemImager::UseYourOwnKernel::fs_regexp/)) {
-    print "FATAL:  unsupported filesystem: $filesystem!\n";
-    exit 1;
-}
-
 if($firmware_dir) {
-    # If firmware_dir is defined: --firmware-dir option is used.
-    # 1: Check that --firmware-dir is not used without --include-system-firmware (no sens)
-    if(!($system_firmware)) {
-        print "FATAL:  --firmware-dir option used without --include-system-firmware !\n";
-        print qq(Try "$progname --help" for more info.\n);
-        exit 1;
-    }
-    # 2: Check that firmware_dir value points to a directory.
+    # System firmwares are loaded by default by dracut.
+    # This options adds additionnal firmwares if needed.
+    # Check that firmware_dir value points to a directory.
     if( ! -d $firmware_dir) {
         print "FATAL:  firmware dir $firmware_dir not found!\n";
         exit 1;
@@ -312,7 +283,6 @@ exit(0);
 # Usage:
 # create_boot_package();
 sub create_boot_package {
-    my $arch = $img_arch ? $img_arch : $ARCH;
     my $verbose = 1 unless($quiet);
 
     unless ($destination) {
@@ -333,12 +303,12 @@ sub create_boot_package {
             }
         }
     }
-
+    # Removed: $filesystem system_firmware
     SystemImager::UseYourOwnKernel->create_uyok_initrd(
-        $arch, $my_modules, $custom_kernel, $modules_dir,
-        $image, $filesystem, $destination,
+        $my_modules, $custom_kernel, $modules_dir,
+        $image, $destination,
         $ssh_key, $authorized_keys, $local_cfg,
-        $system_firmware, $firmware_dir, $verbose
+        $firmware_dir, $dracut_opts, $verbose
     );
 
     return 1;
