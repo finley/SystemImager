@@ -173,7 +173,7 @@ GetOptions(
     "authorized-keys=s"    => \my $authorized_keys,
     "config=s"             => \my $local_cfg,
     "firmware-dir=s"       => \my $firmware_dir,
-    "dracut-opts="         => \my $dracut_opts,
+    "dracut-opts=s"        => \my $dracut_opts,
 ) || die "$help_info";
 
 

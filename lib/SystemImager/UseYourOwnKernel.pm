@@ -38,6 +38,7 @@ our $is_mounted = 0;
 #
 sub create_uyok_initrd() {
 
+	my $perl_package    = shift;
         my $my_modules      = shift;
         my $custom_kernel   = shift;
         my $custom_mod_dir  = shift;
@@ -129,8 +130,14 @@ sub create_uyok_initrd() {
                 while(<FILE>) {
                     next if(m/^(#|\s|$)/);
                     chomp;
-		    my $cmd = "basename -a $(find $module_dir/$_ -type f)|cut -d'.' -f1| tr'\n' ' '";
-                    $modules_to_exclude .= " --omit-drivers \"".`$cmd`."\"";
+                    my $cmd = "find $module_dir/$_ -name '*.ko*' -type f -printf '%f '";
+		    my $found=`$cmd`;
+		    chomp($found);
+		    if ($found ne "") {
+		        # Remove modules extentions whatever they are (compressed or not)
+		        $found =~ s/\.ko(\.\S+)*(\s|$)/ /g;
+                        $modules_to_exclude .= " --omit-drivers \"$found\"";
+	            }
                 }
             close(FILE);
         }
@@ -139,6 +146,10 @@ sub create_uyok_initrd() {
         # Copy SSH keys.
         #
         if ($ssh_key) {
+            unless (-d "$staging_dir/root/") {
+                mkdir("$staging_dir/root/", 0700) or
+                    die("Couldn't create directory: $staging_dir/root/!\n");
+            }
             unless (-d "$staging_dir/root/.ssh/") {
                 mkdir("$staging_dir/root/.ssh/", 0700) or
                     die("Couldn't create directory: $staging_dir/root/.ssh/!\n");
@@ -196,8 +207,10 @@ sub create_uyok_initrd() {
         #
         print ">>> Creating new initrd addind staging dir:  $staging_dir\n" if( $verbose );
 
-	my $cmd="dracut --add systemimager $hostonly_opt $extra_firmwares $modules_to_exclude $dracut_opts $boot_dir/initrd.img $uname_r";
-        !system($cmd) or die("FAILED: $cmd");
+	unless ($dracut_opts) { $dracut_opts = ""; }
+
+	my $dracut_cmd="dracut --force --add systemimager $hostonly_opt $extra_firmwares --include $staging_dir / $modules_to_exclude $dracut_opts $boot_dir/initrd.img $uname_r";
+        !system($dracut_cmd) or die("FAILED: $dracut_cmd");
 
         # Print initrd size information.
         print ">> Evaluating initrd size to be added in the kernel boot options\n" .
@@ -381,26 +394,13 @@ sub _choose_kernel_file {
                 foreach (@files) {
                         my $kernel = $_;
                         my $file = "$dir/$kernel";
-                        if ( is_kernel($file) ) {
-                                my $kernel_release = _get_kernel_release($file);
-                                if ( defined($kernel_release) and ($kernel_release eq $uname_r) ) {
-                                        return $file;
-                                } else {
-                                        push(@kernels, $file);
-                                }
+                        my $kernel_release = _get_kernel_release($file);
+                        if ( defined($kernel_release) and ($kernel_release eq $uname_r) ) {
+                                return $file;
                         }
                 }
         }
-        # If cannot find kernel with name matching running version, return the first good one
-        if (@kernels) {
-            foreach my $file (@kernels) {
-                my $kernel_release = _get_kernel_release($file);
-                if (defined($kernel_release) and (-d "$image_dir/lib/modules/$kernel_release")) {
-                    return $file;
-                }
-            }
-        }
-
+        # If cannot find kernel with name matching running version, return undef.
         return undef;
 }
 
@@ -409,22 +409,38 @@ sub _choose_kernel_file {
 # Usage:
 #       my $uname_r = _get_kernel_release( '/path/to/kernel/file' );
 sub _get_kernel_release($) {
+	my $file = shift;
+	my $cmd = "file $file|grep 'Linux kernel'";
+	my $result = `$cmd`;
+	$result =~ s/.*version (\S*) .*$/\1/g;
+	chomp($result);
+	if ($result ne "") {
+		return $result;
+	} else {
+		return undef;
+	}
+}
 
-        my $file = shift;
-
-        # the default tool
-        my $cat = "cat";
-
-        my $cmd = "gzip -l $file >/dev/null 2>&1";
-        if( !system($cmd) ) {
-                # It's gzip compressed.  Let's decompress it, man.
-                $cat = "zcat";
-        }
-
-        my $uname_r;
-        $cmd = "$cat $file";
-        open(IN,"$cmd |") or die("Couldn't $cmd: $!");
-        binmode(IN);
+#
+# Usage:
+#       my $uname_r = _get_kernel_release( '/path/to/kernel/file' );
+#sub _get_kernel_release($) {
+#
+#        my $file = shift;
+#
+#        # the default tool
+#        my $cat = "cat";
+#
+#        my $cmd = "gzip -l $file >/dev/null 2>&1";
+#        if( !system($cmd) ) {
+#                # It's gzip compressed.  Let's decompress it, man.
+#                $cat = "zcat";
+#        }
+#
+#        my $uname_r;
+#        $cmd = "$cat $file";
+#        open(IN,"$cmd |") or die("Couldn't $cmd: $!");
+#        binmode(IN);
                 # 
                 # Example entries like what we're trying to match against in kernels:
                 #       2.6.10bef1 (finley@mantis) #1 Tue Mar 1 00:37:55 CST 2005
@@ -434,29 +450,29 @@ sub _get_kernel_release($) {
                 #       2.6.7-1-686 (dilinger@toaster.hq.voxel.net) #1 Thu Jul 8 05:36:53 EDT 2004
                 #       2.6.22.5-31-default (geeko@buildhost) #1 SMP 2007/09/21 22:29:00 UTC
                 #
-                my $regex =
+#                my $regex =
                 #           | kernel version + build machine
                 #           `---------------------------------------
-                            '(((2\.[46])|(3\.\d{1,2}))\.\d{1,2}[\w.-]*) *\(.*@.*\) [#]\d+.*' .
+#                            '(((2\.[46])|(3\.\d{1,2}))\.\d{1,2}[\w.-]*) *\(.*@.*\) [#]\d+.*' .
                 #
                 #           | build date
                 #           `---------------------------------------
-                            '(\w{3} \w{3} \d{1,2})|(\d{4}\/\d{2}\/\d{2}) '.
+#                            '(\w{3} \w{3} \d{1,2})|(\d{4}\/\d{2}\/\d{2}) '.
                 #
                 #           | build time
                 #           `---------------------------------------
-                            '\d{2}:\d{2}:\d{2} \w{3,4}( \d{4})?';
-                while(<IN>) {
+#                            '\d{2}:\d{2}:\d{2} \w{3,4}( \d{4})?';
+#                while(<IN>) {
                        # extract the `uname -r` string from the kernel file
-                       if(m/$regex/o) {
-                               $uname_r = $1;
-                               last;
-                       }
-               }
-        close(IN);
+#                       if(m/$regex/o) {
+#                               $uname_r = $1;
+#                               last;
+#                       }
+#               }
+#        close(IN);
 
-        return $uname_r;
-}
+#        return $uname_r;
+#}
 
 #
 # Usage:
