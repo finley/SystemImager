@@ -25,6 +25,7 @@
 # directory. If it's defined, it's correct (F18 and 19 uses versionned dirs
 # and Fedora 20 and upward will use unversionned version.
 # Source: http://fedoraproject.org/wiki/Changes/UnversionedDocdirs
+# OL: BUG => Missing "-server" before version
 %{!?_pkgdocdir: %global _pkgdocdir %{_docdir}/%{name}-%{version}}
 
 %define _unpackaged_files_terminate_build 0
