@@ -785,7 +785,7 @@ done
 cd ./lib/dracut/modules.d
 
 
-perl -I ../../ ../../../sbin/si_mkbootpackage --dracut-opts="--local" --destination ../../../initrd.img
+perl -I ../../ ../../../sbin/si_mkbootpackage --dracut-opts="--local" --destination ../../../
 #dracut --force --local --add systemimager --no-hostonly --no-hostonly-cmdline --no-hostonly-i18n ../../../initrd.img $(uname -r)
 
 %install
