@@ -198,9 +198,15 @@ sub create_uyok_initrd() {
 	#
 	#
 	#
-	my $hostonly_opt=" --no-hostonly --no-hostonly-cmdline --no-hostonly-i18n";
-	if($my_modules) {
-	    $hostonly_opt="--hostonly --hostonly-cmdline --hostonly-i18n";
+	my @opts = ("--no-hostonly","--no-hostonly-cmdline","--no-hostonly-i18n");
+	# If --my-modules, it is a host only image: we overwrite @opts.
+	@opts = ("--hostonly","--hostonly-cmdline","--hostonly-i18n") if($my_modules);
+	my $hostonly_opt = "";
+	my $cmd = "";
+	# Check dracut available options and keep available ones.
+	for my $opt ( @opts ) {
+		$cmd = "dracut --help |grep -c -- $opt";
+		$hostonly_opt .= " $opt" if ( `$cmd` ne "0" );
 	}
         #
         # Create initrd and save copy of kernel
@@ -209,7 +215,7 @@ sub create_uyok_initrd() {
 
 	unless ($dracut_opts) { $dracut_opts = ""; }
 
-	my $dracut_cmd="dracut --force --add systemimager $hostonly_opt $extra_firmwares --include $staging_dir / $modules_to_exclude $dracut_opts $boot_dir/initrd.img $uname_r";
+	my $dracut_cmd="dracut --force --add systemimager$hostonly_opt $extra_firmwares --include $staging_dir / $modules_to_exclude $dracut_opts $boot_dir/initrd.img $uname_r";
         !system($dracut_cmd) or die("FAILED: $dracut_cmd");
 
         # Print initrd size information.
@@ -303,7 +309,7 @@ sub _get_copy_of_kernel($) {
 #
 # Usage: my $is_this_file_a_kernel = is_kernel( $kernel );
 #
-sub is_kernel {
+#sub is_kernel {
 
         # The goal here is to make reasonable effort to _eliminate_
         # files that are obviously _not_ kernels.  Any thing that passes
@@ -318,55 +324,55 @@ sub is_kernel {
         # we get a report of something passing as a kernel, that shouldn't.
         # -BEF-
 
-        my $file = shift;
-        my $filename = basename($file);
+#        my $file = shift;
+#        my $filename = basename($file);
 
         #
         # Make sure it's binary
-        if( ! -B $file ) { return undef; }
+#        if( ! -B $file ) { return undef; }
         #
         # and not a directory
-        if( -d $file )   { return undef; }
+#        if( -d $file )   { return undef; }
         #
         # skip symlinks
-        if( -l $file )   { return undef; }
+#        if( -l $file )   { return undef; }
         #
         # skip dot files
-        if( $filename =~ /^\..*$/ )   { return undef; }
+#        if( $filename =~ /^\..*$/ )   { return undef; }
         #
         # skip *.bak files
-        if( $filename =~ /\.bak$/ )   { return undef; }
+#        if( $filename =~ /\.bak$/ )   { return undef; }
         #
         # eliminate ramdisks
-        if( $filename =~ m/initrd/ ) { return undef; }
+#        if( $filename =~ m/initrd/ ) { return undef; }
         #
         # eliminate vmlinux files
-        if( $filename =~ m/^vmlinux/ ) { return undef; }
+#        if( $filename =~ m/^vmlinux/ ) { return undef; }
         #
         # eliminate symvers files
-        if( $filename =~ m/^symvers/ ) { return undef; }
+#        if( $filename =~ m/^symvers/ ) { return undef; }
         #
         # eliminate memtest
-        if( $filename =~ m/^memtest/ ) { return undef; }
+#        if( $filename =~ m/^memtest/ ) { return undef; }
         #
         # eliminate message
-        if( $filename =~ m/^message/ ) { return undef; }
+#        if( $filename =~ m/^message/ ) { return undef; }
 
         #
         # Get output from "file" for elimination by identification tests
-        my $cmd = "file -bz $file";
-        open(INPUT,"$cmd|") or die("Couldn't run $cmd to get INPUT");
-                my ($input) = (<INPUT>);
+#        my $cmd = "file -bz $file";
+#        open(INPUT,"$cmd|") or die("Couldn't run $cmd to get INPUT");
+#                my ($input) = (<INPUT>);
                 # eliminate cpio archives (eg. ramdisk)
-                if( $input =~ m/cpio archive/ ) { return undef; }
+#                if( $input =~ m/cpio archive/ ) { return undef; }
                 # eliminate cramfs files (eg. ramdisk)
-                if( $input =~ m/Linux Compressed ROM File System data,/ ) { return undef; }
-        close(INPUT);
+#                if( $input =~ m/Linux Compressed ROM File System data,/ ) { return undef; }
+#        close(INPUT);
 
         #
         # If we've made it down to here, then we'll assume it's a kernel. -BEF-
-        return 1;
-}
+#        return 1;
+#}
 
 
 #
@@ -412,7 +418,7 @@ sub _get_kernel_release($) {
 	my $file = shift;
 	my $cmd = "file $file|grep 'Linux kernel'";
 	my $result = `$cmd`;
-	$result =~ s/.*version (\S*) .*$/\1/g;
+	$result =~ s/.*version (\S*) .*$/$1/g;
 	chomp($result);
 	if ($result ne "") {
 		return $result;
