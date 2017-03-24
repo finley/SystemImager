@@ -202,11 +202,11 @@ sub create_uyok_initrd() {
 	# If --my-modules, it is a host only image: we overwrite @opts.
 	@opts = ("--hostonly","--hostonly-cmdline","--hostonly-i18n") if($my_modules);
 	my $hostonly_opt = "";
-	my $cmd = "";
+	my $test_cmd = "";
 	# Check dracut available options and keep available ones.
 	for my $opt ( @opts ) {
-		$cmd = "dracut --help |grep -c -- $opt";
-		$hostonly_opt .= " $opt" if ( `$cmd` ne "0" );
+		$test_cmd = "dracut --help |grep -c -- $opt";
+		$hostonly_opt .= " $opt" if ( `$test_cmd` ne "0" );
 	}
         #
         # Create initrd and save copy of kernel
