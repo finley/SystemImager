@@ -203,10 +203,13 @@ sub create_uyok_initrd() {
 	@opts = ("--hostonly","--hostonly-cmdline","--hostonly-i18n") if($my_modules);
 	my $hostonly_opt = "";
 	my $test_cmd = "";
+	my $result = "";
 	# Check dracut available options and keep available ones.
 	for my $opt ( @opts ) {
 		$test_cmd = "dracut --help |grep -c -- $opt";
-		$hostonly_opt .= " $opt" if ( `$test_cmd` ne "0" );
+                $result = `$test_cmd`;
+		chomp($result);
+		$hostonly_opt .= " $opt" if ( $result != 0 );
 	}
         #
         # Create initrd and save copy of kernel
