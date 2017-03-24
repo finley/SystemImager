@@ -39,6 +39,9 @@
 # prevent RPM files to be changed by prelink
 %{?__prelink_undo_cmd:%undefine __prelink_undo_cmd}
 
+# define _dracutbase
+%define _dracutbase %(test -d /usr/lib/dracut && echo '/lib/dracut' || echo '/share/dracut')
+
 %define is_suse %(test -f /etc/SuSE-release && echo 1 || echo 0)
 %define is_ppc64 %([ "`uname -m`" = "ppc64" ] && echo 1 || echo 0)
 %define is_ps3 %([ `grep PS3 /proc/cpuinfo >& /dev/null; echo $?` -eq 0 ] && echo 1 || echo 0) 
@@ -755,10 +758,10 @@ export LD_FLAGS=-L$RPM_BUILD_DIR/%{name}-%{version}/initrd_source/build_dir/lib
 # Only build everything if on x86, this helps with PPC build issues
 %if %{_build_all}
 #%{__make} %{?_smp_mflags} all
-%{__make} -j1 all DESTDIR=%{buildroot} PREFIX=%_prefix
+%{__make} -j1 all DESTDIR=%{buildroot} PREFIX=%_prefix DRACUT_BASEDIR=%_dracutbase
 
 %else
-%{__make} binaries DESTDIR=%{buildroot} PREFIX=%_prefix
+%{__make} binaries DESTDIR=%{buildroot} PREFIX=%_prefix RACUT_BASEDIR=%_dracutbase
 
 %endif
 
@@ -778,17 +781,20 @@ do
 	fi
 done
 
-# move to local modules dir so we can use --local
+# move to local modules dir so we can use dracut --local
 cd ./lib/dracut/modules.d
-dracut --force --local --add systemimager --no-hostonly --no-hostonly-cmdline --no-hostonly-i18n ../../../initrd.img $(uname -r)
+
+
+perl -I ../../ ../../../sbin/si_mkbootpackage --dracut-opts="--local" --destination ../../../initrd.img
+#dracut --force --local --add systemimager --no-hostonly --no-hostonly-cmdline --no-hostonly-i18n ../../../initrd.img $(uname -r)
 
 %install
 cd $RPM_BUILD_DIR/%{name}-%{version}/
 
 %if %{_build_all}
 
-make install_server_all DESTDIR=%{buildroot} PREFIX=%_prefix
-make install_client_all DESTDIR=%{buildroot} PREFIX=%_prefix
+make install_server_all DESTDIR=%{buildroot} PREFIX=%_prefix DRACUT_BASEDIR=%_dracutbase
+make install_client_all DESTDIR=%{buildroot} PREFIX=%_prefix DRACUT_BASEDIR=%_dracutbase
 (cd doc/manual_source;%{__make} html)
 
 cp ./initrd.img %{buildroot}/%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/initrd.img
@@ -809,7 +815,7 @@ fi
 
 %else
 
-%{__make} install_binaries DESTDIR=%{buildroot} PREFIX=%_prefix
+%{__make} install_binaries DESTDIR=%{buildroot} PREFIX=%_prefix DRACUT_BASEDIR=%_dracutbase
 
 %endif
 
@@ -1164,5 +1170,5 @@ fi
 
 %files -n dracut-%{name}
 %defattr(-, root, root)
-%dir %{_prefix}/lib/dracut/modules.d/39systemimager
-%{_prefix}/lib/dracut/modules.d/39systemimager/*
+%dir %{_prefix}%{_dracutbase}/modules.d/39systemimager
+%{_prefix}%{_dracutbase}/modules.d/39systemimager/*
