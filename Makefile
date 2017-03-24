@@ -164,7 +164,10 @@ LOCK_DIR = $(DESTDIR)/var/lock/systemimager
 
 INITRD_DIR = $(TOPDIR)/initrd_source
 INITRD_BUILD_DIR = $(INITRD_DIR)/build_dir
-DRACUT_MODULES = $(USR)/lib/dracut/modules.d
+DRACUT_BASEDIR = $(shell test -d /usr/lib/dracut && echo "/lib/dracut" || echo "/share/dracut")
+DRACUT_MODULES = $(USR)$(DRACUT_BASEDIR)/modules.d
+
+
 
 BOOT_BIN_DEST     = $(USR)/share/systemimager/boot/$(ARCH)/$(FLAVOR)
 
