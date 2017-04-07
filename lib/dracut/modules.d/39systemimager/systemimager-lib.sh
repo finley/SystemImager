@@ -52,29 +52,26 @@ test -f /tmp/variables.txt && . /tmp/variables.txt
 # loginfo outputs to stdout
 # logmsg (same as loginfo: for compatibility)
 logwarn() {
-	warn $@
-	logmessage "warn: $@"
+	logmessage warning "$@"
 }
 loginfo() {
-	info $@
-	logmessage "info: $@"
+	logmessage info "$@"
 }
 logmsg() {
-	info $@
-	logmessage "info: $@"
+	logmessage notice "$@"
 }
 
 logmessage() {
     # log to temporary file (which will go away when we reboot)
     # this is good for envs that have bad consoles
-    local FILE=/tmp/si.log
-    echo $@ >> $FILE || shellout
+    local FILE=/tmp/si_monitor.log
+    echo $@ >> $FILE
     test -w /dev/kmsg && echo $@ > /dev/kmsg
 
     # if syslog is running, log to it.  In order to avoid hangs we have to 
-    # add the "logger: " part in case $@ is ""
-    if [ ! -z $USELOGGER ] ;
-        then logger "logger: $@"
+    # add the "sis: " part in case $@ is ""
+    if [ ! -z "$USELOGGER" ] ;
+        then logger -p user.$1 "sis: $@"
     fi
 }
 
@@ -85,7 +82,6 @@ logmessage() {
 #
 # Usage: check_version
 check_version() {
-    loginfo "========================="
     loginfo "Checking Kernel version initrd modules version compatibility...."
     INITRD_VERSION=$VERSION
     KERNEL_VERSION=`uname -r | sed -e s/.*boel_v//`
@@ -104,7 +100,6 @@ check_version() {
 #
 # Usage: get_arch; echo $ARCH
 get_arch() {
-    loginfo "========================="
     ARCH=`uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/`
     loginfo "Detected ARCH=$ARCH"
 }
@@ -117,7 +112,6 @@ get_arch() {
 #  after proc is mounted.
 #
 adjust_arch() {
-    loginfo "========================="
     if [ "ppc64" = "$ARCH" ] ; then
         # This takes a little bit of futzing with due to all the PPC platforms that exist.
         if [ -d /proc/iSeries ] ; then
@@ -138,55 +132,55 @@ adjust_arch() {
 #
 # Usage: write_variables
 write_variables() {
-
-    loginfo "========================="
     loginfo "Saving variables to /tmp/variables.txt"
 
-    # pass all variables set here on to the hostname.sh script
-    rm -f /tmp/variables.txt
+    touch /tmp/variables.txt
+    mv -f /tmp/variables.txt /tmp/variables.txt~
 
 cat > /tmp/variables.txt <<EOF || shellout
-HOSTNAME=$HOSTNAME
-DOMAINNAME=$DOMAINNAME
+HOSTNAME="$HOSTNAME"
+DOMAINNAME="$DOMAINNAME"
 
-DEVICE=$DEVICE
-IPADDR=$IPADDR
-NETMASK=$NETMASK
-NETWORK=$NETWORK
-BROADCAST=$BROADCAST
+DEVICE="$DEVICE"
+IPADDR="$IPADDR"
+NETMASK="$NETMASK"
+NETWORK="$NETWORK"
+BROADCAST="$BROADCAST"
 
-GATEWAY=$GATEWAY
-GATEWAYDEV=$GATEWAYDEV
+GATEWAY="$GATEWAY"
+GATEWAYDEV="$GATEWAYDEV"
 
-IMAGESERVER=$IMAGESERVER
-IMAGENAME=$IMAGENAME
+IMAGESERVER="$IMAGESERVER"
+IMAGENAME="$IMAGENAME"
 
-LOG_SERVER=$LOG_SERVER
-LOG_SERVER_PORT=$LOG_SERVER_PORT
-USELOGGER=$USELOGGER
+LOG_SERVER="$LOG_SERVER"
+LOG_SERVER_PORT="$LOG_SERVER_PORT"
+USELOGGER="$USELOGGER"
 
-TMPFS_STAGING=$TMPFS_STAGING
+TMPFS_STAGING="$TMPFS_STAGING"
 
-SSH=$SSH
-SSHD=$SSHD
-SSH_USER=$SSH_USER
-SSH_DOWNLOAD_URL=$SSH_DOWNLOAD_URL
+SSH="$SSH"
+SSHD="$SSHD"
+SSH_USER="$SSH_USER"
+SSH_DOWNLOAD_URL="$SSH_DOWNLOAD_URL"
 
-FLAMETHROWER_DIRECTORY_PORTBASE=$FLAMETHROWER_DIRECTORY_PORTBASE
+FLAMETHROWER_DIRECTORY_PORTBASE="$FLAMETHROWER_DIRECTORY_PORTBASE"
 
-MONITOR_SERVER=$MONITOR_SERVER
-MONITOR_PORT=$MONITOR_PORT
-MONITOR_CONSOLE=$MONITOR_CONSOLE
+MONITOR_SERVER="$MONITOR_SERVER"
+MONITOR_PORT="$MONITOR_PORT"
+MONITOR_CONSOLE="$MONITOR_CONSOLE"
 
-BITTORRENT=$BITTORRENT
-BITTORRENT_STAGING=$BITTORRENT_STAGING
-BITTORRENT_POLLING_TIME=$BITTORRENT_POLLING_TIME
-BITTORRENT_SEED_WAIT=$BITTORRENT_SEED_WAIT
-BITTORRENT_UPLOAD_MIN=$BITTORRENT_UPLOAD_MIN
+BITTORRENT="$BITTORRENT"
+BITTORRENT_STAGING="$BITTORRENT_STAGING"
+BITTORRENT_POLLING_TIME="$BITTORRENT_POLLING_TIME"
+BITTORRENT_SEED_WAIT="$BITTORRENT_SEED_WAIT"
+BITTORRENT_UPLOAD_MIN="$BITTORRENT_UPLOAD_MIN"
 
-GROUPNAMES="$GROUPNAMES
-GROUP_OVERRIDES="$GROUP_OVERRIDES
+GROUPNAMES="$GROUPNAMES"
+GROUP_OVERRIDES="$GROUP_OVERRIDES"
 EOF
+
+rm -f /tmp/variables.txt~
 }
 #
 ################################################################################
@@ -198,7 +192,6 @@ EOF
 #
 tmpfs_watcher() {
 
-    loginfo "========================="
     loginfo "Starting tmpfs watcher..."
 
     # Note: Transfer to staging area can fail if tmpfs runs out of inodes.
@@ -226,11 +219,14 @@ tmpfs_watcher() {
 #
 shellout() {
 
-    logwarn "Last command exited with $?"
+    # Display error code if relevant.
+    LAST_ERR=$?
+    test "$LAST_ERR" -ne 0 && logwarn "Last command exited with $LAST_ERR"
+
     COUNT="$RETRY"
     logwarn "Killing off running processes."
     if test -s /run/systemimager/tmpfs_watcher.pid; then
-	$TMPFS_WATCHER_PID=$(cat /run/systemimager/tmpfs_watcher.pid)
+	$TMPFS_WATCHER_PID=`cat /run/systemimager/tmpfs_watcher.pid`
     fi
     # BUG: make sure it's a PID
     if [ -n "$TMPFS_WATCHER_PID" ]; then
@@ -248,7 +244,9 @@ shellout() {
     fi
     # Need to trigger emergency shell    
     echo emergency > /tmp/SIS_action
-    die # From /lib/dracut-lib.sh => drop a shell is rd.shell is on
+    # OL: Uncomment next line for easy debugging
+    # exec bash
+    die # From /lib/dracut-lib.sh => drop a shell if rd.shell is on
 }
 #
 ################################################################################
@@ -287,7 +285,6 @@ get_torrents_directory() {
         return
     fi
 
-    loginfo "========================="
     loginfo "Retrieving ${TORRENTS_DIR} directory..."
 
     if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
@@ -313,7 +310,6 @@ get_torrents_directory() {
 # Usage: get_scripts_directory
 #
 get_scripts_directory() {
-    loginfo "========================="
     loginfo "Retrieving ${SCRIPTS_DIR} directory..."
 
     if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
@@ -339,7 +335,6 @@ get_scripts_directory() {
 # Usage: get_flamethrower_directory
 #
 get_flamethrower_directory() {
-    loginfo "========================="
     loginfo "Using multicast..."
     loginfo "get_flamethrower_directory"
 
@@ -802,7 +797,6 @@ monitor_save_dmesg() {
 # OL: In fact this is deprecated on systemd systems as journalctl can dump everything.
 if test ! -f /tmp/si_monitor.log
 then
-    loginfo "========================="
     loginfo "Saving dmesg to /tmp/si_monitor.log"
     dmesg -s 16392 > /tmp/si_monitor.log
 fi
@@ -813,7 +807,6 @@ fi
 # Load any modules that were placed in the my_modules directory prior to
 # running "make initrd.gz".  -BEF-
 load_my_modules() {
-    loginfo "========================="
     loginfo "Trying to load my_modules..."
     cd /my_modules || shellout
     sh ./INSMOD_COMMANDS
@@ -825,7 +818,6 @@ load_my_modules() {
 #   This code inspired by Ian McLeod <ian@valinux.com>
 #
 read_local_cfg() {
-    loginfo "========================="
     logmsg read_local_cfg
 
     if [ "x$SKIP_LOCAL_CFG" = "xy" ]; then
@@ -902,9 +894,14 @@ read_local_cfg() {
         logmsg "Reading configuration from /tmp/local.cfg"
         . /tmp/local.cfg || shellout
         # Comvert /tmp/local.cfg to /etc/cmdline.d/00-network.conf
-	logmsg "creating /etc/cmdline.d/00-network.conf with following content:"
-	logmsg "ip=$IPADDR:$GATEWAY:$NETMASK:$HOSTNAME:$DEVICE:on"
-        cat > /etc/cmdline.d/00-network.conf <<EOF
+        CMDLINECONF=/etc/cmdline.d/00-network.conf
+        if test ! -d /etc/cmdline.d
+        then
+             CMDLINECONF=/etc/cmdline
+        fi
+        loginfo "Adding following content to ${CMDLINECONF}"
+        loginfo "ip=$IPADDR:$GATEWAY:$NETMASK:$HOSTNAME:$DEVICE:on"
+        cat >> $CMDLINECONF <<EOF
 ip=$IPADDR:$GATEWAY:$NETMASK:$HOSTNAME:$DEVICE:on
 EOF
     fi
@@ -1109,7 +1106,6 @@ start_syslogd() {
 #
 show_loaded_modules() {
     # Show loaded modules
-    loginfo "========================="
     loginfo "Loaded kernel modules:"
     for m in `cut -d' ' -f1 /proc/modules`; do
         loginfo "$m"
@@ -1199,7 +1195,6 @@ get_group_name() {
 #
 choose_autoinstall_script() {
 
-    loginfo "========================="
     loginfo "Choosing autoinstall script..."
 
     #
@@ -1269,7 +1264,6 @@ EOF
 #
 run_autoinstall_script() {
 
-    loginfo "========================="
     loginfo "Running autoinstall script $SCRIPTNAME"
 
     # Run the autoinstall script.
@@ -1311,7 +1305,6 @@ reverse() {
 #
 run_pre_install_scripts() {
 
-    loginfo "========================="
     loginfo "Running pre-install scripts"
 
     get_base_hostname
@@ -1359,7 +1352,6 @@ run_pre_install_scripts() {
 #
 run_post_install_scripts() {
 
-    loginfo "========================="
     loginfo "Running post-install scripts"
 
     get_base_hostname
@@ -1583,7 +1575,7 @@ start_ssh() {
 
 send_monitor_msg() {
     if [ -z $MONITOR_SERVER ]; then
-	logwarn "Trying to send monitor msg without MONITOR_SERVER empty variable. Ignoring..."
+	warn "Trying to send monitor msg without MONITOR_SERVER empty variable. Ignoring..."
         return
     fi
     if [ -z $MONITOR_PORT ]; then
@@ -1692,7 +1684,7 @@ start_report_task() {
     REPORT_INTERVAL=10
 
     # Evaluate image size.
-    logmsg "Evaluating image size..."
+    loginfo "Evaluating image size..."
     if [ ! "x$BITTORRENT" = "xy" ]; then
         IMAGESIZE=`rsync -av --numeric-ids $IMAGESERVER::$IMAGENAME | grep "total size" | sed -e "s/total size is \([0-9,]*\).*/\1/"`
     else
@@ -1709,7 +1701,7 @@ start_report_task() {
     # Clean up IMAGEZISE from non numeric chars (comma, dots, ...)
     IMAGESIZE=${IMAGESIZE//[!0-9]/} # same as IMAGESIZE=$(echo $IMAGESIZE|sed 's/[^0-9]*//g')
     IMAGESIZE=`expr $IMAGESIZE / 1024`
-    logmsg "  --> Image size = `expr $IMAGESIZE / 1024`MiB"
+    loginfo "  --> Image size = `expr $IMAGESIZE / 1024`MiB"
 
     # Evaluate disks size.
     LIST=`df 2>/dev/null | grep "/" | sed "s/  */ /g" | cut -d' ' -f3 | sed -ne 's/^\([0-9]*\)$/\1+/p'`0
@@ -1746,7 +1738,7 @@ start_report_task() {
     }&
 
     REPORT_PID=$!
-    logmsg "Progress report task started PID=$REPORT_PID ."
+    loginfo "Progress report task started PID=$REPORT_PID ."
     echo $REPORT_PID > /run/systemimager/report_task.pid
 }
 
@@ -1758,14 +1750,15 @@ start_report_task() {
 stop_report_task() {
     # Try to report the error to the monitor server.
     send_monitor_msg "status=$1:speed=0"
+    loginfo "Stopping progress report task."
 
     if test -s /run/systemimager/report_task.pid; then
-        REPORT_PID=$(cat /run/systemimager/report_task.pid)
+        REPORT_PID=`cat /run/systemimager/report_task.pid`
         # BUG: Need to make sure it is an integer
         if [ ! -z "$REPORT_PID" ]; then
             kill -9 $REPORT_PID
 	    rm /run/systemimager/report_task.pid
-            loginfo "Progress report task stopped."
+            info "Progress report task stopped"
         fi
     fi
 }
@@ -1841,5 +1834,36 @@ sleep_loop() {
         sleep $INTERVAL
         COUNTED=$(( $COUNTED + 1 ))
     done
+}
+
+
+get_1st_iface_with_link() {
+    if test -n "$DEVICE"
+    then # DEVICE= already setup by system. keep this choice.
+        echo $DEVICE
+        return 0
+    fi
+    if test -d /sys/class/net/
+    then
+        for IFACE in /sys/class/net/*
+        do
+            DETAIL=`ls -l $IFACE 2>/dev/null |grep -v virtual`
+            if test -n "$DETAIL"
+            then # We found an interface that is not virtual.
+                LINK=`cat $IFACE/carrier 2>/dev/null`
+                if test -n "$LINK"
+                then
+                    DEVICE="${IFACE##*/}"
+                    echo "${DEVICE}"
+                    return 0 # Found!
+                fi
+            fi
+        done
+        echo "" # No physiscal interface found that has a link
+        return 1
+    else
+        echo "" # No way to check interface.
+        return 1
+    fi
 }
 #
