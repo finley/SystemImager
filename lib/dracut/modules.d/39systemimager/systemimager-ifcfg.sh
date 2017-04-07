@@ -15,20 +15,23 @@
 # It is called with net interface as $1 argument.
 
 type getarg >/dev/null 2>&1 || . /lib/dracut-lib.sh
-type save_netinfo >/dev/null 2>&1 || . /lib/net-lib.sh
+type save_netinfo >/dev/null 2>&1 || test -f /lib/net-lib.sh && . /lib/net-lib.sh
 type shellout >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 
+loginfo "==== systemimager-ifcfg ===="
 
 # initqueue/online hook passes interface name as $1
 netif="$1"
 
 # make sure we get ifcfg for every interface that comes up
-save_netinfo $netif
-
-echo "DEBUG: Network interface: [$netif]" >> /tmp/debug.txt
-ifconfig -a >> /tmp/debug.txt
+type save_netinfo >/dev/null 2>&1 && save_netinfo $netif
 
 loginfo "USING net interface: [$netif]"
+if test -n "$netif"
+then
+    IF_CONFIG=`ip -o addr show $netif`
+    loginfo "$IF_CONFIG"
+fi
 
 DHCLIENT_DIR="/tmp"
 
@@ -43,7 +46,7 @@ fi
 # dhclient.
 
 if [ ! -f /tmp/dhcp_info.${netif} ] ; then
-    logwarn "/tmp/dhcp_info.${netif} does not exists"
+    logwarn "/tmp/dhcp_info.${netif} does not exists. Can't continue"
     shellout
 fi
 
@@ -53,7 +56,6 @@ fi
 
 # Re-read configuration information from local.cfg to over-ride
 # DHCP settings, if necessary. -BEF-
-loginfo "========================="
 if [ -f /tmp/local.cfg ]; then
     loginfo "Overriding any DHCP or cmdline settings with pre-boot local.cfg settings."
     . /tmp/local.cfg || shellout
@@ -61,7 +63,7 @@ fi
 
 # Read the cmdline variables overriding any local.cfg or DHCP parameters
 loginfo "Overriding any DHCP settings with pre-boot settings from kernel append parameters."
-. $CMDLINE_VARIABLES
+test -f "$CMDLINE_VARIABLES" && . $CMDLINE_VARIABLES
 
 # Save all needed variables to /tmp/variables.txt
 write_variables
