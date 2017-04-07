@@ -15,7 +15,7 @@
 
 type shellout >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 
-loginfo "========================="
+loginfo "==== systemimager-pingtest ===="
 loginfo "Checking network connectivity via a ping test..."
 
 # The reason we don't ping the IMAGESERVER if FLAMETHROWER_DIRECTORY_PORTBASE
@@ -40,24 +40,23 @@ PING_COUNT=1
 PING_EXIT_STATUS=1
 while [ "$PING_EXIT_STATUS" != "0" ]
 do
-    loginfo "PING ATTEMPT $PING_COUNT: "
+    loginfo "Ping attempt $PING_COUNT."
     ping -c 1 $PING_DESTINATION
     PING_EXIT_STATUS=$?
 
     if [ "$PING_EXIT_STATUS" = "0" ]; then
-        loginfo "  We have connectivity to your $HOST_TYPE!"
+        loginfo "We have connectivity to your $HOST_TYPE!"
+        exit 0
     fi
 
     PING_COUNT=$(( $PING_COUNT + 1 ))
     if [ "$PING_COUNT" = "4" ]; then
-        logwarn <<EOF
-Failed ping test.
-	Despite this seemingly depressing result, I will attempt
-	to proceed with the install.  Your $HOST_TYPE may be
-	configured to not respond to pings, but it wouldn't hurt
-	to double check that your networking equipment is
-	working properly!"
-EOF
+        logwarn "Failed ping test."
+	logwarn "Despite this seemingly depressing result, I will attempt"
+	logwarn "to proceed with the install. Your $HOST_TYPE may be"
+	logwarn "configured to not respond to pings, but it wouldn't hurt"
+	logwarn "to double check that your networking equipment is"
+	logwarn "working properly!"
         sleep 5
         PING_EXIT_STATUS=0
     fi
@@ -65,3 +64,5 @@ done
 
 unset PING_DESTINATION
 unset HOST_TYPE
+
+exit 0
