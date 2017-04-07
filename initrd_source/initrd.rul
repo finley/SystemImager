@@ -63,7 +63,7 @@ $(INITRD_BUILD_DIR).skel:	$(INITRD_DIR)/initrd.rul
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/usr/sbin
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/usr/lib
 	test -e /lib64 && mkdir -p -m 0755 $(INITRD_BUILD_DIR)/usr/lib64
-	# Create /bin, /sbin, /lib and /lib64 links
+	# Create /bin, /sbin, /lib and /lib64 links so nothing we build goest to old /bin, /sbin, /lib and so.
 	cd $(INITRD_BUILD_DIR) && ln -s usr/bin ./bin
 	cd $(INITRD_BUILD_DIR) && ln -s usr/sbin ./sbin
 	cd $(INITRD_BUILD_DIR) && ln -s usr/lib ./lib
@@ -148,7 +148,8 @@ $(INITRD_BUILD_DIR).build:  $(INITRD_BUILD_DIR).prep \
 PHONY += install_initrd_template
 install_initrd_template:	$(INITRD_BUILD_DIR).build
 	mkdir -p $(BOOT_BIN_DEST)
-	rsync -a $(INITRD_BUILD_DIR)/ $(BOOT_BIN_DEST)/initrd_template/
+	# Specify explicitely etc and usr. do not install links. they'll conflict with dracut skel
+	rsync -a $(INITRD_BUILD_DIR)/etc $(INITRD_BUILD_DIR)/usr $(BOOT_BIN_DEST)/initrd_template/
 
 # install the autoinstall ramdisk - the initial ramdisk used by autoinstall
 # clients when beginning an autoinstall
