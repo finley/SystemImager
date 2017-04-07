@@ -3,9 +3,15 @@
 type getarg >/dev/null 2>&1 || . /lib/dracut-lib.sh
 type shellout >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 
+loginfo "==== systemimager-monitor-server ===="
+
 . /tmp/variables.txt
 
 if [ ! -z "$MONITOR_SERVER" ]; then
+    if test -f /tmp/si_monitor.log
+    then
+        mv -f /tmp/si_monitor.log /tmp/si_monitor_pre.log
+    fi
     # 1st, load previous messages in log file.
     if test ! -f /tmp/si_monitor.log
     then
@@ -15,6 +21,11 @@ if [ ! -z "$MONITOR_SERVER" ]; then
         else
             dmesg >/tmp/si_monitor.log
         fi
+    fi
+    if test -f /tmp/si_monitor_pre.log
+    then
+        cat /tmp/si_monitor_pre.log >> /tmp/si_monitor.log
+        rm -f /tmp/si_monitor_pre.log
     fi
 
     # Then, Send initialization status.
@@ -27,10 +38,18 @@ if [ ! -z "$MONITOR_SERVER" ]; then
         MONITOR_CONSOLE=yes
     fi
     if [ "x$MONITOR_CONSOLE" = "xyes" ]; then
-        while :; do ncat -p 8181 -l < /tmp/si_monitor.log; done &
+        if [ -z $MONITOR_PORT ]; then
+            MONITOR_PORT=8181
+        fi
+        while :
+        do
+            # OL: BUG: Maybe we need to differentiate MONITOR_PORT on server
+            # and CONSOLE_PORT on client being imager.
+            ncat -p $MONITOR_PORT -l < /tmp/si_monitor.log || exit 1
+        done &
 	MONITOR_PID=$!
-        logmsg "Logs monitor forwarding task started: PID=$MONITOR_PID ."
 	echo $MONITOR_PID > /run/systemimager/si_monitor.pid
+        loginfo "Logs monitor forwarding task started: PID=$MONITOR_PID ."
     fi
     loginfo "si monitor started"
 fi
