@@ -348,9 +348,19 @@ install_common:	install_common_man install_common_libs
 .PHONY:	install_dracut
 install_dracut:
 	mkdir -p $(DRACUT_MODULES)/39systemimager/
-	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/dhclient-script.sh $(DRACUT_MODULES)/39systemimager
-	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/module-setup.sh $(DRACUT_MODULES)/39systemimager
-	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/parse-sis-options.sh $(DRACUT_MODULES)/39systemimager
+	if test -f /usr/$(DRACUT_BASEDIR)/modules.d/99base/install
+	then # Old dracut (check and install files)
+		$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/check $(DRACUT_MODULES)/39systemimager
+		$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/dhclient-script-old.sh $(DRACUT_MODULES)/39systemimager
+		$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/install $(DRACUT_MODULES)/39systemimager
+		$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/parse-sis-options-old.sh $(DRACUT_MODULES)/39systemimager
+		$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-genrules.sh $(DRACUT_MODULES)/39systemimager
+		$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-start.sh $(DRACUT_MODULES)/39systemimager
+	else # New dracut (module-setup.sh)
+		$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/dhclient-script.sh $(DRACUT_MODULES)/39systemimager
+		$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/module-setup.sh $(DRACUT_MODULES)/39systemimager
+		$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/parse-sis-options.sh $(DRACUT_MODULES)/39systemimager
+	fi
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/parse-i18n.sh $(DRACUT_MODULES)/39systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/restore-persistent-cmdline.d.sh $(DRACUT_MODULES)/39systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-deploy-client.sh $(DRACUT_MODULES)/39systemimager
@@ -362,6 +372,14 @@ install_dracut:
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-pingtest.sh $(DRACUT_MODULES)/39systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-timeout.sh $(DRACUT_MODULES)/39systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-wait-imaging.sh $(DRACUT_MODULES)/39systemimager
+
+#        old-dracut files.
+#        check
+#        dhclient-script-old.sh
+#        install
+#        parse-sis-options-old.sh
+#        systemimager-genrules.sh
+#        systemimager-start.sh
 
 # install server-only libraries
 .PHONY:	install_server_libs
