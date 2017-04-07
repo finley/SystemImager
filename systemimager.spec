@@ -761,7 +761,7 @@ export LD_FLAGS=-L$RPM_BUILD_DIR/%{name}-%{version}/initrd_source/build_dir/lib
 %{__make} -j1 all DESTDIR=%{buildroot} PREFIX=%_prefix DRACUT_BASEDIR=%_dracutbase
 
 %else
-%{__make} binaries DESTDIR=%{buildroot} PREFIX=%_prefix RACUT_BASEDIR=%_dracutbase
+%{__make} binaries DESTDIR=%{buildroot} PREFIX=%_prefix DRACUT_BASEDIR=%_dracutbase
 
 %endif
 
@@ -772,20 +772,19 @@ do
 done
 
 # Build an initrd.img for current kernel.
-# 1st: create a local module dir for dracut.
-for mod in /usr/lib/dracut/modules.d/*
-do
-	if test "${mod##*/}" != "39systemimager"
-	then
-		ln -s $mod ./lib/dracut/modules.d/
-	fi
-done
+# 1st: recreate a full dracut local basedir so --local option can be used.
+echo "Creating local dracut environment"
+LOCAL_DRACUT_BASEDIR=./tmp/dracutbase
+test -d $LOCAL_DRACUT_BASEDIR && /bin/rm -rf $LOCAL_DRACUT_BASEDIR
+mkdir -p $LOCAL_DRACUT_BASEDIR
+test -d $LOCAL_DRACUT_BASEDIR || exit 1
+cp -r %_usr%_dracutbase/* $LOCAL_DRACUT_BASEDIR/
+cp -r ./lib/dracut/modules.d/39systemimager $LOCAL_DRACUT_BASEDIR/modules.d/
 
 # move to local modules dir so we can use dracut --local
-cd ./lib/dracut/modules.d
+cd $LOCAL_DRACUT_BASEDIR/
 
-
-perl -I ../../ ../../../sbin/si_mkbootpackage --dracut-opts="--local" --destination ../../../
+perl -I ../../lib ../../sbin/si_mkbootpackage --dracut-opts="--local" --destination ../..
 #dracut --force --local --add systemimager --no-hostonly --no-hostonly-cmdline --no-hostonly-i18n ../../../initrd.img $(uname -r)
 
 %install
