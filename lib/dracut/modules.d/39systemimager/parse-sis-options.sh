@@ -8,7 +8,7 @@ type shellout >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 # Variable-ize /proc/cmdline arguments
 # Save cmdline SIS relevant parameters
 
-loginfo "========================="
+loginfo "==== parse-sis-options ===="
 loginfo "Reading SIS relevants parameters from cmdline"
 
 #####################################
@@ -22,10 +22,10 @@ test -z "$MONITOR_PORT" && MONITOR_PORT=$(getargnum 8181 100 32000 rd.sis.monito
 test -n "$MONITOR_PORT" && echo "MONITOR_PORT=$MONITOR_PORT		# rd.sis.monitor-port" >> $CMDLINE_VARIABLES
 
 ############################################
-# rd.sis.monotor-console=(bolean 0|1|yes|no)
+# rd.sis.monitor-console=(bolean 0|1|yes|no)
 test -z "$MONITOR_CONSOLE" && MONITOR_CONSOLE=$(getargbool 0 MONITOR_CONSOLE)
-test -z "$MONITOR_CONSOLE" && MONITOR_CONSOLE=$(getargbool 0 rd.sis.monotor-console)
-test -n "$MONITOR_CONSOLE" && echo "MONITOR_CONSOLE=$MONITOR_CONSOLE	# rd.sis.monotor-console" >> $CMDLINE_VARIABLES
+test -z "$MONITOR_CONSOLE" && MONITOR_CONSOLE=$(getargbool 0 rd.sis.monitor-console)
+test -n "$MONITOR_CONSOLE" && echo "MONITOR_CONSOLE=$MONITOR_CONSOLE	# rd.sis.monitor-console" >> $CMDLINE_VARIABLES
 
 ###########################################
 # rd.sis.skip-local-cfg=(bolean 0|1|yes|no)
@@ -34,6 +34,9 @@ test -z "$SKIP_LOCAL_CFG" && SKIP_LOCAL_CFG=$(getargbool 0 rd.sis.skip-local-cfg
 test -n "$SKIP_LOCAL_CFG" && echo  "SKIP_LOCAL_CFG=$SKIP_LOCAL_CFG		# rd.sis.skip-local-cfg" >> $CMDLINE_VARIABLES
 # read network settings from local.cfg if required and store config in cmdline.d before network is setup by dracut initqueue logic.
 read_local_cfg
+
+# Force rootok=1
+export rootok=1
 
 ###################################
 # rd.sis.image-server=<hostname|ip>

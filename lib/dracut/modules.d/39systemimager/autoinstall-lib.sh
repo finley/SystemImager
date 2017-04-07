@@ -24,11 +24,10 @@ save_logs_to_sysroot() {
     if test -d /sysroot/root
     then
         mkdir -p /sysroot/root/SIS_Install_logs/
-        cp /tmp/variables.txt /sysroot/root/SIS_Install_logs/
+        cp /tmp/variables.txt       /sysroot/root/SIS_Install_logs/
         cp /tmp/dhcp_info.${DEVICE} /sysroot/root/SIS_Install_logs/
-        cp /tmp/si_monitor.log /sysroot/root/SIS_Install_logs/
-        cp /tmp/si.log /sysroot/root/SIS_Install_logs/
-	echo ${IMAGENAME} > /sysroot/root/SIS_Install_logs/image.txt
+        cp /tmp/si_monitor.log      /sysroot/root/SIS_Install_logs/
+        echo ${IMAGENAME} >         /sysroot/root/SIS_Install_logs/image.txt
         test -f /run/initramfs/rdsoreport.txt && cp /run/initramfs/rdsoreport.txt /sysroot/root/SIS_Install_logs/
     else
         logwarn "/sysroot/root does not exists"
