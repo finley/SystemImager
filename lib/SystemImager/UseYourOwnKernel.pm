@@ -222,6 +222,7 @@ sub create_uyok_initrd() {
         !system($dracut_cmd) or die("FAILED: $dracut_cmd");
 
         # Print initrd size information.
+	# OL: BUG: this code is obsolete and not compatible with what dracut produces.
         print ">> Evaluating initrd size to be added in the kernel boot options\n" .
               ">> (e.g. /etc/systemimager/pxelinux.cfg/syslinux.cfg):\n";
         if (-f "$boot_dir/initrd.img") {
