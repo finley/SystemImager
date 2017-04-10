@@ -46,7 +46,7 @@ do
 
     if [ "$PING_EXIT_STATUS" = "0" ]; then
         loginfo "We have connectivity to your $HOST_TYPE!"
-        exit 0
+        return 0
     fi
 
     PING_COUNT=$(( $PING_COUNT + 1 ))
@@ -65,4 +65,4 @@ done
 unset PING_DESTINATION
 unset HOST_TYPE
 
-exit 0
+return 0
