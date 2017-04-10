@@ -223,15 +223,19 @@ shellout() {
     LAST_ERR=$?
     test "$LAST_ERR" -ne 0 && logwarn "Last command exited with $LAST_ERR"
 
-    COUNT="$RETRY"
-    logwarn "Killing off running processes."
+    # OL: Uncomment next line for easy debugging
+    setdebug
+
     if test -s /run/systemimager/tmpfs_watcher.pid; then
 	$TMPFS_WATCHER_PID=`cat /run/systemimager/tmpfs_watcher.pid`
+        # BUG: make sure it's a PID
+        if [ -n "$TMPFS_WATCHER_PID" ]; then
+            logwarn "Killing off tmpfs watcher [pid:$TMPFS_WATCHER_PID]."
+            kill -9 $TMPFS_WATCHER_PID  >/dev/null 2>/dev/null
+            rm -f /run/systemimager/tmpfs_watcher.pid
+        fi
     fi
-    # BUG: make sure it's a PID
-    if [ -n "$TMPFS_WATCHER_PID" ]; then
-        kill -9 $TMPFS_WATCHER_PID  >/dev/null 2>/dev/null
-    fi
+    logwarn "Killing off udp-receiver and rsync processes."
     killall -9 udp-receiver rsync  >/dev/null 2>/dev/null
     write_variables
     #cat /etc/issue >&2
@@ -1757,8 +1761,8 @@ stop_report_task() {
         # BUG: Need to make sure it is an integer
         if [ ! -z "$REPORT_PID" ]; then
             kill -9 $REPORT_PID
-	    rm /run/systemimager/report_task.pid
-            info "Progress report task stopped"
+	    rm -f /run/systemimager/report_task.pid
+            loginfo "Progress report task stopped"
         fi
     fi
 }
