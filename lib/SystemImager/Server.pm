@@ -2134,11 +2134,12 @@ sub create_autoinstall_script{
                     print $MASTER_SCRIPT "\n";
                 } elsif ($post_install eq "kexec") {
                     # kexec imaged kernel
-                    # BUG: OL: what does it mean within a dracut environment? is it still relevant?
                     print $MASTER_SCRIPT "# kexec the autoinstall client\n";
-                    print $MASTER_SCRIPT "# this is executed twice to support relocatable kernels from RHEL5\n";
-                    print $MASTER_SCRIPT "kexec --force --append=\"\$kexec_append\" --initrd=/tmp/\$kexec_initrd --reset-vga /tmp/\$kexec_kernel\n";
-                    print $MASTER_SCRIPT "kexec --force --append=\"\$kexec_append\" --initrd=/tmp/\$kexec_initrd --reset-vga --args-linux /tmp/\$kexec_kernel\n";
+                    print $MASTER_SCRIPT "echo skexec > /tmp/SIS_action\n";
+                    # BUG: OL: Need full rework. kexec_append was computed using systemconfigurator scconf-bootinfo which is no longer supported
+                    #print $MASTER_SCRIPT "# this is executed twice to support relocatable kernels from RHEL5\n";
+                    #print $MASTER_SCRIPT "kexec --force --append=\"\$kexec_append\" --initrd=/tmp/\$kexec_initrd --reset-vga /tmp/\$kexec_kernel\n";
+                    #print $MASTER_SCRIPT "kexec --force --append=\"\$kexec_append\" --initrd=/tmp/\$kexec_initrd --reset-vga --args-linux /tmp/\$kexec_kernel\n";
                 }
                 last SWITCH;
 	        }
