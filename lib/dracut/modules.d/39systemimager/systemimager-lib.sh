@@ -137,7 +137,7 @@ write_variables() {
     touch /tmp/variables.txt
     mv -f /tmp/variables.txt /tmp/variables.txt~
 
-cat > /tmp/variables.txt <<EOF || shellout
+cat > /tmp/variables.txt <<EOF || shellout "Failed to write /tmp/variables.txt"
 HOSTNAME="$HOSTNAME"
 DOMAINNAME="$DOMAINNAME"
 
@@ -200,7 +200,7 @@ tmpfs_watcher() {
             DF=`df -k / | egrep ' /$' | sed -e 's/  */ /g' -e 's/.*[0-9] //' -e 's/%.*//'`
             [ $DF -ge 95 ] && logwarn "WARNING: Your tmpfs filesystem is ${DF}% full!"
             [ $DF -ge 99 ] && logwarn "         Search the FAQ for tmpfs to learn about sizing options."
-            [ $DF -ge 99 ] && shellout
+            [ $DF -ge 99 ] && shellout "tmpfs filesystem is ${DF}% full!"
             sleep 1
         done
         unset DF
@@ -215,6 +215,91 @@ tmpfs_watcher() {
 #   Description:
 #   Exit with the message stored in /etc/issue.
 #
+#   Usage: sis_postimaging reboot|halt|poweroff|shell|kexec
+#   - reboot will reboot the host
+#   - halt will halt the host without powering it off
+#   - shell will leave the host whith an interactive shell (for debugging purposes)
+#   - kexec will directly load the imaged kernel and boot the host without going thru
+#     the bios enumeration (very usefull sometimes to avoid counting 2TB of RAM)
+#
+sis_postimaging() {
+ACTION=$1
+
+# If kexec action is chosen, we load the new kernel.
+if test $ACTION = "kexec"
+then
+    # OL: Not tested; need many improvement!
+    KERNEL=/sysroot/boot/vmlinuz* # Need to get the real kernel: no place for guess here
+    INITRD=/sysroot/boot/init*img # Same as above (must match version).
+    ROOTFSDEV=`mount | grep sysroot | cut -d' ' -f3` # Same as above. We have the info elsewhere.
+    if test -f /sysroot/boot/vmlinuz* && test -f /sysroot/boot/init*img && test -n "$ROOTFSDEV"
+    then
+        kexec -l $KERNEL --append=root=$ROOTDEV --initrd=$INITRD
+    else
+        ACTION="reboot" # Force reboot going thru bios+grub as we are unable to boot directyl
+    fi
+fi
+
+if [ -n "$DRACUT_SYSTEMD" ]
+then
+    case "$ACTION" in
+        reboot|poweroff|halt|kexec)
+            # TODO: OL: use kexec -l to specify installed kernel if found
+            systemctl --no-block --force $ACTION
+            warn "$ACTION failed!"
+            ;;
+        *)
+            warn "sis_postimaging called with invalid argument '$ACTION'. Rebooting!"
+            systemctl --no-block --force reboot
+            ;;
+    esac
+else
+    case "$ACTION" in
+        reboot|poweroff|halt)
+            $ACTION -f -d -n
+            warn "$ACTION failed!"
+            ;;
+        kexec)
+            # TODO: OL: use kexec -l to specify installed kernel if found
+            kexec -e
+            warn "$ACTION failed!"
+            reboot -f -d -n
+            ;;
+        *)
+            warn "sis_postimaging called with invalid argument '$ACTION'. Rebooting!"
+            reboot -f -d -n
+            ;;
+    esac
+fi
+}
+
+#
+################################################################################
+#
+#   Description:
+#   Exit with the message stored in /etc/issue.
+#
+#   Usage: $COMMAND || shellout
+#
+interactive_shell() {
+    if type emergency_shell >/dev/null 2>&1
+    then
+        emergency_shell -n "$1"
+    else
+        type plymouth >/dev/null 2>&1 && plymouth --hide-splash
+        export PS1="SIS:\${PWD}# "
+        [ -e /.profile ] || echo "exec 0<>/dev/console 1<>/dev/console 2<>/dev/console" > /.profile
+        echo $1
+        sh -i -l
+    fi
+    sis_postimaging poweroff
+}
+#
+################################################################################
+#
+#   Description:
+#   Exit with the message stored in /etc/issue.
+#
 #   Usage: $COMMAND || shellout
 #
 shellout() {
@@ -222,9 +307,6 @@ shellout() {
     # Display error code if relevant.
     LAST_ERR=$?
     test "$LAST_ERR" -ne 0 && logwarn "Last command exited with $LAST_ERR"
-
-    # OL: Uncomment next line for easy debugging
-    setdebug
 
     if test -s /run/systemimager/tmpfs_watcher.pid; then
 	$TMPFS_WATCHER_PID=`cat /run/systemimager/tmpfs_watcher.pid`
@@ -248,9 +330,7 @@ shellout() {
     fi
     # Need to trigger emergency shell    
     echo emergency > /tmp/SIS_action
-    # OL: Uncomment next line for easy debugging
-    # exec bash
-    die # From /lib/dracut-lib.sh => drop a shell if rd.shell is on
+    interactive_shell "Installation failed!"
 }
 #
 ################################################################################
@@ -305,7 +385,7 @@ get_torrents_directory() {
         mkdir -p ${TORRENTS_DIR}
         CMD="rsync -a ${IMAGESERVER}::${TORRENTS}/ ${TORRENTS_DIR}/"
         loginfo "$CMD"
-        $CMD || shellout
+        $CMD || shellout "Failed to retreive ${TORRENTS_DIR} directory..."
     fi
 }
 #
@@ -330,7 +410,7 @@ get_scripts_directory() {
         mkdir -p ${SCRIPTS_DIR}
         CMD="rsync -a ${IMAGESERVER}::${SCRIPTS}/ ${SCRIPTS_DIR}/"
         loginfo "$CMD"
-        $CMD || shellout
+        $CMD || shellout "Failed to retrieve ${SCRIPTS_DIR} directory..."
     fi
 }
 #

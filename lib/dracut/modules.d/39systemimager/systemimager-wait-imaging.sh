@@ -18,31 +18,28 @@
 
 type shellout >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 
+loginfo "==== systemimager-wait-imaging ===="
+
 if test -f /tmp/SIS_action
 then
 	case $(cat /tmp/SIS_action) in
 		"shell")
-			warn
-			warn "========================================================"
-			warn "Installation successfull. Dropping to shell as requested"
-			emergency_shell -n "Installation successfull"
+			loginfo "Installation successfull. Dropping to interactive shell as requested."
+			interactive_shell "Installation successfull."
 			;;
 		"emergency")
-			shellout
+			logwarn "Installation Failed!"
+			interactive_shell "Installation failed........"
 			;;
-		"reboot")
-			warn
-			warn "========================================================"
-			warn "Installation successfull. Rebooting as requested"
+		"reboot"|"kexec")
+			logwarn "Installation successfull. Rebooting as requested"
 			sleep 10
-			/sbin/reboot
+			sis_postimaging reboot
 			;;
-		"shutdown")
-			warn
-			warn "========================================================"
+		"shutdown"|"poweroff")
 			warn "Installation successfull. shutting down as requested"
 			sleep 10
-			/sbin/shutdown
+			sis_postimaging poweroff
 			;;
 	esac
 	exit 0
