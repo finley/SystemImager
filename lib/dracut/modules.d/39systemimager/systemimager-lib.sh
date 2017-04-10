@@ -308,6 +308,10 @@ shellout() {
     LAST_ERR=$?
     test "$LAST_ERR" -ne 0 && logwarn "Last command exited with $LAST_ERR"
 
+    logwarn "$1"
+    logwarn "Installation failed!"
+    logwarn "can no proceed!  (Scottish accent -- think Groundskeeper Willie)"
+
     if test -s /run/systemimager/tmpfs_watcher.pid; then
 	$TMPFS_WATCHER_PID=`cat /run/systemimager/tmpfs_watcher.pid`
         # BUG: make sure it's a PID
