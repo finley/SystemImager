@@ -1,7 +1,7 @@
 #!/bin/bash
 
 type getarg >/dev/null 2>&1 || . /lib/dracut-lib.sh
-type shellout >/dev/null 2>&1 || . /lib/systemimager-lib.sh
+type send_monitor_msg >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 
 loginfo "==== systemimager-monitor-server ===="
 
