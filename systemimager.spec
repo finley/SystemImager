@@ -10,7 +10,7 @@
 %define ver      0.0.0
 # Set rel to 1 when is is a final release otherwise, set it to a 0.x number
 # This is convenient when final release need to upgrade "beta" releases.
-%define rel      0.21%{?dist}
+%define rel      ##PKG_REL##%{?dist}
 %define packager Bernard Li <bernard@vanhpc.org>
 #define prefix   /usr
 %define _build_all 1
