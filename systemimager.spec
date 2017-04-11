@@ -112,7 +112,7 @@ BuildArch: noarch
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
-Requires: rsync >= 2.4.6, systemimager-common = %{version}, perl-AppConfig, dosfstools, /sbin/chkconfig, perl, perl(XML::Simple) >= 2.14, python, mkisofs
+Requires: rsync >= 2.4.6, systemimager-common = %{version}, dracut-systemimager = %{version}, perl-AppConfig, dosfstools, /sbin/chkconfig, perl, perl(XML::Simple) >= 2.14, python, mkisofs
 #AutoReqProv: no
 
 %description server
@@ -243,7 +243,7 @@ Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Obsoletes: systemimager-%{_build_arch}boot
-BuildRequires: python, python-devel, gettext
+BuildRequires: python, python-devel, gettext, dracut
 %if %is_ps3
 BuildRequires: dtc
 %endif
@@ -1157,7 +1157,7 @@ fi
 %endif
 
 %files %{_build_arch}boot-%{_boot_flavor}
-%defattr(-, root, root)
+%defattr(0744, root, root, 0755)
 %dir %{_datarootdir}/systemimager/boot/%{_build_arch}
 %dir %{_datarootdir}/systemimager/boot/%{_build_arch}/standard
 %{_datarootdir}/systemimager/boot/%{_build_arch}/standard/config*
