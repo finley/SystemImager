@@ -2119,19 +2119,15 @@ sub create_autoinstall_script{
                 } elsif ($post_install eq "reboot") {
                     # reboot stuff
                     print $MASTER_SCRIPT "# reboot the autoinstall client\n";
-                    #print $MASTER_SCRIPT "shutdown -r now\n";
                     print $MASTER_SCRIPT "echo reboot > /tmp/SIS_action\n";
                 } elsif ($post_install eq "shutdown") {
                     # shutdown stuff
                     print $MASTER_SCRIPT "# shutdown the autoinstall client\n";
-                    #print $MASTER_SCRIPT "shutdown\n";
                     print $MASTER_SCRIPT "echo shutdown > /tmp/SIS_action\n";
-                    print $MASTER_SCRIPT "\n";
                 } elsif ($post_install eq "shell") {
                     # shell stuff
                     print $MASTER_SCRIPT "# Drop to debug shell\n";
                     print $MASTER_SCRIPT "echo shell > /tmp/SIS_action\n";
-                    print $MASTER_SCRIPT "\n";
                 } elsif ($post_install eq "kexec") {
                     # kexec imaged kernel
                     print $MASTER_SCRIPT "# kexec the autoinstall client\n";
