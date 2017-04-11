@@ -2135,7 +2135,7 @@ sub create_autoinstall_script{
                 } elsif ($post_install eq "kexec") {
                     # kexec imaged kernel
                     print $MASTER_SCRIPT "# kexec the autoinstall client\n";
-                    print $MASTER_SCRIPT "echo skexec > /tmp/SIS_action\n";
+                    print $MASTER_SCRIPT "echo kexec > /tmp/SIS_action\n";
                     # BUG: OL: Need full rework. kexec_append was computed using systemconfigurator scconf-bootinfo which is no longer supported
                     #print $MASTER_SCRIPT "# this is executed twice to support relocatable kernels from RHEL5\n";
                     #print $MASTER_SCRIPT "kexec --force --append=\"\$kexec_append\" --initrd=/tmp/\$kexec_initrd --reset-vga /tmp/\$kexec_kernel\n";
