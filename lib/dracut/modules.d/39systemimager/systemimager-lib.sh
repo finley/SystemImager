@@ -152,6 +152,7 @@ GATEWAYDEV="$GATEWAYDEV"
 
 IMAGESERVER="$IMAGESERVER"
 IMAGENAME="$IMAGENAME"
+SCRIPTNAME="$SCRIPTNAME"
 
 LOG_SERVER="$LOG_SERVER"
 LOG_SERVER_PORT="$LOG_SERVER_PORT"
@@ -244,7 +245,6 @@ if [ -n "$DRACUT_SYSTEMD" ]
 then
     case "$ACTION" in
         reboot|poweroff|halt|kexec)
-            # TODO: OL: use kexec -l to specify installed kernel if found
             systemctl --no-block --force $ACTION
             warn "$ACTION failed!"
             ;;
@@ -260,10 +260,9 @@ else
             warn "$ACTION failed!"
             ;;
         kexec)
-            # TODO: OL: use kexec -l to specify installed kernel if found
-            kexec -e
+            kexec -e # Will load kernel+initrd.img specified by above kexec -l ...
             warn "$ACTION failed!"
-            reboot -f -d -n
+            reboot -f -d -n # If kexec fails, reboot using bios as failover.
             ;;
         *)
             warn "sis_postimaging called with invalid argument '$ACTION'. Rebooting!"
@@ -292,7 +291,7 @@ interactive_shell() {
         echo $1
         sh -i -l
     fi
-    sis_postimaging poweroff
+    sis_postimaging poweroff # Upon exit (from shell), we poweroff.
 }
 #
 ################################################################################
@@ -1336,13 +1335,11 @@ choose_autoinstall_script() {
 
     # Did we really find one, or just exit the loop without a 'break'
     if [ ! -e $SCRIPTNAME ]; then
-        logwarn <<EOF
-FATAL: couldn't find any of the following autoinstall scripts:
-${SCRIPTNAMES}
-Be sure that at least one of the scripts above exists in
-the autoinstall scripts directory on your image server.
-See also: si_mkautoinstallscript(8).
-EOF
+        logwarn "FATAL: couldn't find any of the following autoinstall scripts:"
+        logwarn "${SCRIPTNAMES}"
+        logwarn "Be sure that at least one of the scripts above exists in"
+        logwarn "the autoinstall scripts directory on your image server."
+        logwarn "See also: si_mkautoinstallscript(8)."
 	shellout
     fi
     loginfo "Using autoinstall script: ${SCRIPTNAME}"
@@ -1355,8 +1352,8 @@ run_autoinstall_script() {
     loginfo "Running autoinstall script $SCRIPTNAME"
 
     # Run the autoinstall script.
-    chmod 755 $SCRIPTNAME || shellout
-    $SCRIPTNAME || shellout
+    chmod 755 $SCRIPTNAME || shellout "Can't chmod 755 $SCRIPTNAME"
+    $SCRIPTNAME || shellout "Failed to run $SCRIPTNAME"
 }
 #
 ################################################################################
