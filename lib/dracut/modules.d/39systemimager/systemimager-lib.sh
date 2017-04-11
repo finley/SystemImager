@@ -93,16 +93,6 @@ check_version() {
     fi
 }
 
-
-################################################################################
-#
-#  get_arch
-#
-# Usage: get_arch; echo $ARCH
-get_arch() {
-    ARCH=`uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/`
-    loginfo "Detected ARCH=$ARCH"
-}
 #
 ################################################################################
 #

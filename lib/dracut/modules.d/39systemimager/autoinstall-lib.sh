@@ -98,3 +98,32 @@ umount_os_filesystems_from_sysroot()
     return $UMOUNT_ERR
 }
 
+################################################################################
+#
+#  get_arch
+#
+# Usage: get_arch; echo $ARCH
+get_arch() {
+    ARCH=`uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/`
+    loginfo "Detected ARCH=$ARCH"
+}
+
+################################################################################
+#
+# refuse_to_run_on_a woring machine.
+
+fail_if_run_from_working_machine() {
+	ERR_MSG="Sorry.  Must not run on a working machine..."
+
+	# Test for mounted SCSI or IDE disks
+	mount | grep [hs]d[a-z][1-9] > /dev/null 2>&1
+	[ $? -eq 0 ] &&  shellout "$ERR_MSG"
+
+	# Test for mounted software RAID devices
+	mount | grep md[0-9] > /dev/null 2>&1
+	[ $? -eq 0 ] &&  shellout "$ERR_MSG"
+
+	# Test for mounted hardware RAID disks
+	mount | grep c[0-9]+d[0-9]+p > /dev/null 2>&1
+	[ $? -eq 0 ] &&  shellout "$ERR_MSG"
+}

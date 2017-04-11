@@ -38,20 +38,8 @@ fi
 ##SET_IMAGENAME##
 ##SET_OVERRIDES##
 
-### BEGIN Check to be sure this not run from a working machine ###
-# Test for mounted SCSI or IDE disks
-mount | grep [hs]d[a-z][1-9] > /dev/null 2>&1
-[ $? -eq 0 ] &&  logmsg Sorry.  Must not run on a working machine... && shellout
-
-# Test for mounted software RAID devices
-mount | grep md[0-9] > /dev/null 2>&1
-[ $? -eq 0 ] &&  logmsg Sorry.  Must not run on a working machine... && shellout
-
-# Test for mounted hardware RAID disks
-mount | grep c[0-9]+d[0-9]+p > /dev/null 2>&1
-[ $? -eq 0 ] &&  logmsg Sorry.  Must not run on a working machine... && shellout
-### END Check to be sure this not run from a working machine ###
-
+# Check to be sure this not run from a working machine
+fail_if_run_from_working_machine
 
 ################################################################################
 #
@@ -76,6 +64,8 @@ mount | grep c[0-9]+d[0-9]+p > /dev/null 2>&1
 # A3) Compile an autoinstall kernel with software RAID, and any other drivers 
 #     you might need built in (filesystem, SCSI drivers, etc.).
 #
+# OL: BUG: FAQ obsolete. Need complete re-testing
+
 if [ -f /proc/mdstat ]; then
   RAID_DEVICES=` cat /proc/mdstat | grep ^md | sed 's/ .*$//g' `
 
@@ -205,11 +195,11 @@ mount_os_filesystems_to_sysroot
 #
 #   Lay the image down on the freshly formatted disk(s)
 #
-if [ ! -z $MONITOR_SERVER ]; then
+if [ ! -z "$MONITOR_SERVER" ]; then
     start_report_task
 fi
 
-if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then 
+if [ ! -z "$FLAMETHROWER_DIRECTORY_PORTBASE" ]; then 
 
     # Use multicast 
     MODULE_NAME="${IMAGENAME}"
@@ -218,7 +208,7 @@ if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
     FLAMETHROWER_TARPIPE=y
     flamethrower_client
     if [ ! -z $MONITOR_SERVER ]; then
-        stop_report_task 101
+        stop_report_task 101 # 101: status=finalizing...
     fi
 elif [ "x$BITTORRENT" = "xy" ]; then
     # Use BitTorrent
@@ -233,7 +223,7 @@ elif [ "x$BITTORRENT" = "xy" ]; then
         shellout
     fi
     # Evaluate the staging directory
-    if [ -z $BITTORRENT_STAGING ]; then
+    if [ -z "$BITTORRENT_STAGING" ]; then
         logmsg bittorrent_autodetect_staging_dir
         BITTORRENT_STAGING=`bittorrent_autodetect_staging_dir ${TORRENTS_DIR}/${bittorrent_tarball}.torrent`
         if [ -z $BITTORRENT_STAGING ]; then
@@ -252,8 +242,8 @@ elif [ "x$BITTORRENT" = "xy" ]; then
     logmsg "--> INFO: remember to start /etc/init.d/systemimager-server-bittorrent on the image server!"
     logmsg ""
     bittorrent_get_file ${TORRENTS_DIR}/${bittorrent_tarball}.torrent ${BITTORRENT_STAGING}
-    if [ ! -z $MONITOR_SERVER ]; then
-        stop_report_task 101
+    if [ ! -z "$MONITOR_SERVER" ]; then
+        stop_report_task 101 # 101: status=finalizing...
     fi
     # Extract image.
     logmsg "Extracting image from ${bittorrent_tarball} ..."
@@ -281,7 +271,7 @@ else
               ${IMAGESERVER}::${IMAGENAME}/ ${DIR}/ > /dev/console || shellout 
 
         if [ ! -z $MONITOR_SERVER ]; then
-            stop_report_task 101
+            stop_report_task 101 # 101: status=finalizing...
         fi
 
         # Move from staging in tmpfs to disk
@@ -290,7 +280,7 @@ else
         logmsg "rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --exclude=/proc/* --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ /sysroot/" 
         rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --exclude=/proc/* --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ /sysroot/ > /dev/console || shellout 
         if [ ! -z $MONITOR_SERVER ]; then
-            stop_report_task 101
+            stop_report_task 101 # 101: status=finalizing...
         fi
     fi
 fi 
