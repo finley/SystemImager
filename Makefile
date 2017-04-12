@@ -558,6 +558,8 @@ ifeq ($(UNSTABLE), 1)
 	fi
 	PKG_REL=`test -d .git && git show --pretty='format:%ci'|head -1|sed -e 's/ .*//g' -e 's/-//g' -e 's/$$/git/' -e 's/^/0./'|| echo 1`; \
 		cd $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source && sed -i -e "s/##PKG_REL##/$${PKG_REL}/g" systemimager.spec
+else
+	cd $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source && sed -i -e "s/##PKG_REL##/1/g" systemimager.spec
 endif
 	rm -f $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source/README.unstable
 	perl -pi -e "s/^%define\s+ver\s+\d+\.\d+\.\d+.*/%define ver $(VERSION)/" \
@@ -593,6 +595,8 @@ ifeq ($(UNSTABLE), 1)
 	fi
 	PKG_REL=`test -d .git && git show --pretty='format:%ci'|head -1|sed -e 's/ .*//g' -e 's/-//g' -e 's/$$/git/' -e 's/^/0./' || echo 1`; \
 		cd $(TOPDIR)/tmp/systemimager-$(VERSION) && sed -i -e "s/##PKG_REL##/$${PKG_REL}/g" systemimager.spec
+else
+	cd $(TOPDIR)/tmp/systemimager-$(VERSION) && sed -i -e "s/##PKG_REL##/1/g" systemimager.spec
 endif
 	rm -f $(TOPDIR)/tmp/systemimager-$(VERSION)/README.unstable
 	perl -pi -e "s/^%define\s+ver\s+\d+\.\d+\.\d+.*/%define ver $(VERSION)/" \
