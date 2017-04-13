@@ -273,10 +273,10 @@ fi
 interactive_shell() {
     if type emergency_shell >/dev/null 2>&1
     then
-        emergency_shell -n "$1"
+        loginfo "$@"
+        emergency_shell -n "SIS"
     else
         type plymouth >/dev/null 2>&1 && plymouth --hide-splash
-        export PS1="SIS:\${PWD}# "
         [ -e /.profile ] || echo "exec 0<>/dev/console 1<>/dev/console 2<>/dev/console" > /.profile
         echo $1
         sh -i -l
