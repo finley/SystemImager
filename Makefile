@@ -170,6 +170,7 @@ DRACUT_MODULES = $(USR)$(DRACUT_BASEDIR)/modules.d
 
 
 BOOT_BIN_DEST     = $(USR)/share/systemimager/boot/$(ARCH)/$(FLAVOR)
+BOOT_BIN_PATH     = $(PREFIX)/share/systemimager/boot/$(ARCH)/$(FLAVOR)
 
 PXE_CONF_SRC      = etc/pxelinux.cfg
 PXE_CONF_DEST     = $(ETC)/systemimager/pxelinux.cfg
@@ -356,13 +357,13 @@ ifneq (,$(wildcard /usr$(DRACUT_BASEDIR)/modules.d/99base/install))
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-genrules.sh $(DRACUT_MODULES)/39systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-start.sh $(DRACUT_MODULES)/39systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/install $(DRACUT_MODULES)/39systemimager
-	sed -i -e "s|@@SIS_INITRD_TEMPLATE@@|$(BOOT_BIN_DEST)/initrd_template/|g" $(DRACUT_MODULES)/39systemimager/install
+	sed -i -e "s|@@SIS_INITRD_TEMPLATE@@|$(BOOT_BIN_PATH)/initrd_template/|g" $(DRACUT_MODULES)/39systemimager/install
 else
        	# New dracut ('module-setup.sh' in charge of module install)
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/dhclient-script.sh $(DRACUT_MODULES)/39systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/parse-sis-options.sh $(DRACUT_MODULES)/39systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/module-setup.sh $(DRACUT_MODULES)/39systemimager
-	sed -i -e "s|@@SIS_INITRD_TEMPLATE@@|$(BOOT_BIN_DEST)/initrd_template/|g" $(DRACUT_MODULES)/39systemimager/module-setup.sh
+	sed -i -e "s|@@SIS_INITRD_TEMPLATE@@|$(BOOT_BIN_PATH)/initrd_template/|g" $(DRACUT_MODULES)/39systemimager/module-setup.sh
 endif
 	# Files common to all dracut versions
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/parse-i18n.sh $(DRACUT_MODULES)/39systemimager
