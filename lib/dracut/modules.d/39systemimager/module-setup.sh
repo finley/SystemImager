@@ -27,7 +27,7 @@ install() {
     inst_multiple bc gzip bzip2 rsync parted blockdev awk clear reset ncat tty killall kexec ipcalc
 #    inst_multiple -o systemd-cat
     inst_multiple depmod blkid
-    inst_multiple find strace
+    inst_multiple find strace sysctl
     inst_multiple chmod chown cp dd df dmesg echo egrep fdisk fgrep grep halt hostname ifconfig init insmod kill ln ls lsmod mkdir mknod mkswap modprobe more mv ping poweroff ps reboot shutdown rm rmdir rmmod route sed sh sleep swapoff swapon sync tar touch uname vi
     # inst_multiple -o syslogd
     #inst_binary /usr/libexec/anaconda/dd_extract /bin/dd_extract
