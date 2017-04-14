@@ -352,24 +352,23 @@ install_dracut:
 ifneq (,$(wildcard /usr$(DRACUT_BASEDIR)/modules.d/99base/install))
 	# Old dracut ('check' and 'install' in charge of module install)
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/check $(DRACUT_MODULES)/39systemimager
-	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/dhclient-script-old.sh $(DRACUT_MODULES)/39systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/parse-sis-options-old.sh $(DRACUT_MODULES)/39systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-genrules.sh $(DRACUT_MODULES)/39systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-start.sh $(DRACUT_MODULES)/39systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-netstart-old.sh $(DRACUT_MODULES)/39systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/install $(DRACUT_MODULES)/39systemimager
 	sed -i -e "s|@@SIS_INITRD_TEMPLATE@@|$(BOOT_BIN_PATH)/initrd_template/|g" $(DRACUT_MODULES)/39systemimager/install
 else
        	# New dracut ('module-setup.sh' in charge of module install)
-	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/dhclient-script.sh $(DRACUT_MODULES)/39systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/parse-sis-options.sh $(DRACUT_MODULES)/39systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/module-setup.sh $(DRACUT_MODULES)/39systemimager
 	sed -i -e "s|@@SIS_INITRD_TEMPLATE@@|$(BOOT_BIN_PATH)/initrd_template/|g" $(DRACUT_MODULES)/39systemimager/module-setup.sh
 endif
 	# Files common to all dracut versions
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/parse-i18n.sh $(DRACUT_MODULES)/39systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/parse-local-cfg.sh $(DRACUT_MODULES)/39systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/restore-persistent-cmdline.d.sh $(DRACUT_MODULES)/39systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-deploy-client.sh $(DRACUT_MODULES)/39systemimager
-	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-ifcfg.sh $(DRACUT_MODULES)/39systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-init.sh $(DRACUT_MODULES)/39systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-lib.sh $(DRACUT_MODULES)/39systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/autoinstall-lib.sh $(DRACUT_MODULES)/39systemimager
@@ -377,6 +376,7 @@ endif
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-pingtest.sh $(DRACUT_MODULES)/39systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-timeout.sh $(DRACUT_MODULES)/39systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-wait-imaging.sh $(DRACUT_MODULES)/39systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-load-dhcpopts.sh $(DRACUT_MODULES)/39systemimager
 
 # install server-only libraries
 .PHONY:	install_server_libs

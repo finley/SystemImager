@@ -353,6 +353,7 @@ URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Requires: systemimager-server = %{version}, dracut-network
 Requires: systemimager-%{_build_arch}initrd_template
+Requires: xfsprogs, e2fsprogs, btrfs-progs
 #AutoReqProv: no
 %description -n dracut-%{name}
 This package is a dracut modules that automates the systeimager initramfs creation.

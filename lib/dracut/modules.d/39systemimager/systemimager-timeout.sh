@@ -14,7 +14,6 @@
 # One possible reason is that DHCP failed to get an IP address.
 
 type getarg >/dev/null 2>&1 || . /lib/dracut-lib.sh
-#type save_netinfo >/dev/null 2>&1 || . /lib/net-lib.sh
 type shellout >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 
 loginfo "==== systemimager-timeout ===="
@@ -27,27 +26,18 @@ loginfo "==== systemimager-timeout ===="
 IFACE_WITH_LINK=`get_1st_iface_with_link`
 if test -z "$IFACE_WITH_LINK"
 then
-    logwarn "No physical network interface found. How did we get here????"
-    shellout
+    shellout "No physical network interface found. How did we get here????"
 else
     DEVICE=$IFACE_WITH_LINK
     loginfo "Found physical network interface $DEVICE. Updating /tmp/variables.txt"
     write_variables
 fi
 
-# 1st: try to gather all infos
-for file in variables.txt cmdline.txt dhcp_info.${IFACE_WITH_LINK}
-do
-	test -r $file && . /tmp/$file
-done
-
 CONFIGURED_IFACE=`ip -o -4 addr show ${IFACE_WITH_LINK}`
 echo "$CONFIGURED_IFACE" > /tmp/configured.iface
 if test -z "$CONFIGURED_IFACE"
 then
-	logwarn "Failed to get an IP address for iface:${IFACE_WITH_LINK}"
-	shellout
+	shellout "Failed to get an IP address for iface:${IFACE_WITH_LINK}"
 fi
 
-logwarn "Unknown timeout. [$CONFIGURED_IFACE]"
-shellout
+shellout "Unknown timeout. [$CONFIGURED_IFACE]"

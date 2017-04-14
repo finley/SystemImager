@@ -1,7 +1,10 @@
 #!/bin/bash
 
 # Require network.
-echo network
+[ "$1" = "-d" ] && echo network syslog shutdown ssh-client i18n
 
-# Module not enabled by default
-exit 1
+# hostonly check: does not work in host only mode.
+[ "$1" = "-h" ] && exit 1
+
+# do not add this module by default
+exit 255

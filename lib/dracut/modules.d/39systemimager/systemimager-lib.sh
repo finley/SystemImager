@@ -29,7 +29,7 @@ TORRENTS=torrents
 TORRENTS_DIR=/torrents
 FLAMETHROWER_DIRECTORY_DIR=/var/lib/systemimager/flamethrower
 BOEL_BINARIES_DIR=/tmp/boel_binaries
-CMDLINE_VARIABLES=/tmp/cmdline.txt
+#CMDLINE_VARIABLES=/tmp/cmdline.txt
 VERSION="SYSTEMIMAGER_VERSION_STRING"
 FLAVOR="SYSTEMIMAGER_FLAVOR_STRING"
 #
@@ -52,13 +52,13 @@ test -f /tmp/variables.txt && . /tmp/variables.txt
 # loginfo outputs to stdout
 # logmsg (same as loginfo: for compatibility)
 logwarn() {
-	logmessage warning "$@"
+	logmessage "warning: $@"
 }
 loginfo() {
-	logmessage info "$@"
+	logmessage "info: $@"
 }
 logmsg() {
-	logmessage notice "$@"
+	logmessage "notice: $@"
 }
 
 logmessage() {
@@ -140,26 +140,27 @@ BROADCAST="$BROADCAST"
 GATEWAY="$GATEWAY"
 GATEWAYDEV="$GATEWAYDEV"
 
-IMAGESERVER="$IMAGESERVER"
+IMAGESERVER="$IMAGESERVER"	# rd.sis.image-server
 IMAGENAME="$IMAGENAME"
 SCRIPTNAME="$SCRIPTNAME"
 
 LOG_SERVER="$LOG_SERVER"
-LOG_SERVER_PORT="$LOG_SERVER_PORT"
+LOG_SERVER_PORT="$LOG_SERVER_PORT"		# rd.sis.log-server-port
 USELOGGER="$USELOGGER"
 
-TMPFS_STAGING="$TMPFS_STAGING"
+TMPFS_STAGING="$TMPFS_STAGING"		# rd.sis.tmpfs-staging
 
 SSH="$SSH"
 SSHD="$SSHD"
 SSH_USER="$SSH_USER"
-SSH_DOWNLOAD_URL="$SSH_DOWNLOAD_URL"
+SSH_DOWNLOAD_URL="$SSH_DOWNLOAD_URL"		# rd.sis.ssh-download-url"
 
-FLAMETHROWER_DIRECTORY_PORTBASE="$FLAMETHROWER_DIRECTORY_PORTBASE"
+FLAMETHROWER_DIRECTORY_PORTBASE="$FLAMETHROWER_DIRECTORY_PORTBASE" # rd.sis.flamethrower-directory-portbase
 
-MONITOR_SERVER="$MONITOR_SERVER"
-MONITOR_PORT="$MONITOR_PORT"
-MONITOR_CONSOLE="$MONITOR_CONSOLE"
+MONITOR_SERVER="$MONITOR_SERVER"	# rd.sis.monitor-server
+MONITOR_PORT="$MONITOR_PORT"		# rd.sis.monitor-port
+MONITOR_CONSOLE="$MONITOR_CONSOLE"		# rd.sis.monitor-console
+SKIP_LOCAL_CFG="$SKIP_LOCAL_CFG"		# rd.sis.skip-local-cfg
 
 BITTORRENT="$BITTORRENT"
 BITTORRENT_STAGING="$BITTORRENT_STAGING"
@@ -1085,99 +1086,42 @@ start_network() {
         # read dhcp info in as variables -- this file will be created by 
         # the /etc/dhclient-start script that is run automatically by
         # dhclient.
-        . /tmp/dhcp_info.${DEVICE} || shellout
+        #. /tmp/dhcp_info.${DEVICE} || shellout
         ### END dhcp ###
         
         # Re-read configuration information from local.cfg to over-ride
         # DHCP settings, if necessary. -BEF-
-        if [ -f /tmp/local.cfg ]; then
-            logmsg
-            logmsg "Overriding any DHCP settings with pre-boot local.cfg settings."
-            . /tmp/local.cfg || shellout
-        fi
+        #if [ -f /tmp/local.cfg ]; then
+        #    logmsg
+        #    logmsg "Overriding any DHCP settings with pre-boot local.cfg settings."
+        #    . /tmp/local.cfg || shellout
+        #fi
 
-        logmsg
-        logmsg "Overriding any DHCP settings with pre-boot settings from kernel append"
-        logmsg "parameters."
-	. $CMDLINE_VARIABLES
+        #logmsg
+        #logmsg "Overriding any DHCP settings with pre-boot settings from kernel append"
+        #logmsg "parameters."
+	#. $CMDLINE_VARIABLES
     fi
 }
-#
-################################################################################
-#
-#   Ping test
-#ping_test() {
-#    loginfo "========================="
-#    loginfo "Checking network connectivity via a ping test..."
-#
-#    # The reason we don't ping the IMAGESERVER if FLAMETHROWER_DIRECTORY_PORTBASE
-#    # is set, is that the client may never be given, know, or need to know, the 
-#    # IP address of the imageserver because the client is receiving _all_ of it's
-#    # data via multicast, which is more like listening to a channel, as compared 
-#    # with connecting directly to a server.  -BEF-
-#    #
-#    if [ ! -z "$FLAMETHROWER_DIRECTORY_PORTBASE" ]; then
-#        PING_DESTINATION=$GATEWAY
-#        HOST_TYPE="default gateway"
-#    else
-#        PING_DESTINATION=$IMAGESERVER
-#        HOST_TYPE="SystemImager server"
-#    fi 
-#    loginfo "Pinging your $HOST_TYPE to ensure we have network connectivity."
-#
-#
-#    # Ping test code submitted by Grant Noruschat <grant@eigen.ee.ualberta.ca>
-#    # modified slightly by Brian Finley.
-#    PING_COUNT=1
-#    PING_EXIT_STATUS=1
-#    while [ "$PING_EXIT_STATUS" != "0" ]
-#    do
-#        loginfo "PING ATTEMPT $PING_COUNT: "
-#        ping -c 1 $PING_DESTINATION
-#        PING_EXIT_STATUS=$?
-#
-#        if [ "$PING_EXIT_STATUS" = "0" ]; then
-#            loginfo "  We have connectivity to your $HOST_TYPE!"
-#        fi
-#
-#        PING_COUNT=$(( $PING_COUNT + 1 ))
-#        if [ "$PING_COUNT" = "4" ]; then
-#            logwarn <<EOF
-#Failed ping test.
-#	Despite this seemingly depressing result, I will attempt
-#	to proceed with the install.  Your $HOST_TYPE may be
-#	configured to not respond to pings, but it wouldn't hurt
-#	to double check that your networking equipment is
-#	working properly!"
-#EOF
-#            sleep 5
-#            PING_EXIT_STATUS=0
-#        fi
-#    done
-#
-#    unset PING_DESTINATION
-#    unset HOST_TYPE
-#
-#}
 #
 ################################################################################
 #
 # OL: deprecated (syslogd is started with dracut syslog module.
-start_syslogd() {
-    logmsg
-    logmsg start_syslogd
-    if [ ! -z $LOG_SERVER ]; then
-        logmsg "Starting syslogd..."
-        [ -z $LOG_SERVER_PORT ] && LOG_SERVER_PORT="514"
-        syslogd -R ${LOG_SERVER}:${LOG_SERVER_PORT}
-        # as long as we are starting syslogd, start klogd as well, in case
-        # there is a kernel issue that happens
-        klogd
-        # set USELOGGER=1 so logmsg knows to do the right thing
-        USELOGGER=1
-        logmsg "Successfully started syslogd!"
-    fi
-}
+#start_syslogd() {
+#    logmsg
+#    logmsg start_syslogd
+#    if [ ! -z $LOG_SERVER ]; then
+#        logmsg "Starting syslogd..."
+#        [ -z $LOG_SERVER_PORT ] && LOG_SERVER_PORT="514"
+#        syslogd -R ${LOG_SERVER}:${LOG_SERVER_PORT}
+#        # as long as we are starting syslogd, start klogd as well, in case
+#        # there is a kernel issue that happens
+#        klogd
+#        # set USELOGGER=1 so logmsg knows to do the right thing
+#        USELOGGER=1
+#        logmsg "Successfully started syslogd!"
+#    fi
+#}
 #
 ################################################################################
 #
@@ -1761,7 +1705,7 @@ start_report_task() {
     # Evaluate image size.
     loginfo "Evaluating image size..."
     if [ ! "x$BITTORRENT" = "xy" ]; then
-        IMAGESIZE=`rsync -av --numeric-ids $IMAGESERVER::$IMAGENAME | grep "total size" | sed -e "s/total size is \([0-9,]*\).*/\1/"`
+        IMAGESIZE=`rsync -av --numeric-ids "${IMAGESERVER}::${IMAGENAME}" | grep "total size" | sed -e "s/total size is \([0-9,]*\).*/\1/"`
     else
         if [ -f "${TORRENTS_DIR}/image-${IMAGENAME}.tar.torrent" ]; then
             torrent_file="${TORRENTS_DIR}/image-${IMAGENAME}.tar.torrent"
@@ -1774,7 +1718,7 @@ start_report_task() {
         IMAGESIZE=`/usr/bin/torrentinfo-console $torrent_file | sed -ne "s/file size\.*: \([0-9]*\) .*$/\1/p"`
     fi
     # Clean up IMAGEZISE from non numeric chars (comma, dots, ...)
-    IMAGESIZE=${IMAGESIZE//[!0-9]/} # same as IMAGESIZE=$(echo $IMAGESIZE|sed 's/[^0-9]*//g')
+    IMAGESIZE=$(echo $IMAGESIZE|sed 's/[^0-9]*//g') # IMAGESIZE=${IMAGESIZE//[!0-9]/}} # Not supported by dash
     IMAGESIZE=`expr $IMAGESIZE / 1024`
     loginfo "  --> Image size = `expr $IMAGESIZE / 1024`MiB"
 

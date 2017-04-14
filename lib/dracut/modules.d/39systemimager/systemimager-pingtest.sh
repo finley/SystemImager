@@ -41,7 +41,7 @@ PING_EXIT_STATUS=1
 while [ "$PING_EXIT_STATUS" != "0" ]
 do
     loginfo "Ping attempt $PING_COUNT."
-    ping -c 1 $PING_DESTINATION
+    ping -c 1 $PING_DESTINATION -W 1 # Wait only 1 second. worst case is a warning.
     PING_EXIT_STATUS=$?
 
     if [ "$PING_EXIT_STATUS" = "0" ]; then
@@ -57,7 +57,6 @@ do
 	logwarn "configured to not respond to pings, but it wouldn't hurt"
 	logwarn "to double check that your networking equipment is"
 	logwarn "working properly!"
-        sleep 5
         PING_EXIT_STATUS=0
     fi
 done

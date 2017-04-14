@@ -31,7 +31,7 @@ get_scripts_directory
 
 show_loaded_modules
 
-# HOSTNAME may already be set via local.cfg -BEF-
+# HOSTNAME may already be set via cmdline, dhcp or local.cfg
 if [ -z "$HOSTNAME" ]; then
     get_hostname_by_hosts_file
 fi
@@ -41,8 +41,8 @@ if [ -z "$HOSTNAME" ]; then
 fi
 
 if [ ! -z "$HOSTNAME" ]; then
-    logmsg
-    logmsg "This hosts name is: $HOSTNAME"
+    loginfo
+    loginfo "This hosts name is: $HOSTNAME"
 fi
 
 run_pre_install_scripts
