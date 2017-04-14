@@ -112,7 +112,8 @@ BuildArch: noarch
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
-Requires: rsync >= 2.4.6, systemimager-common = %{version}, dracut-systemimager = %{version}, perl-AppConfig, dosfstools, /sbin/chkconfig, perl, perl(XML::Simple) >= 2.14, python, mkisofs
+Requires: rsync >= 2.4.6, systemimager-common = %{version}, dracut-systemimager = %{version}, perl-AppConfig, /sbin/chkconfig, perl, perl(XML::Simple) >= 2.14, python
+Requires: dosfstools, mkisofs, xfsprogs
 #AutoReqProv: no
 
 %description server
