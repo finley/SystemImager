@@ -33,7 +33,7 @@ DEVICE=$1
 
 . /tmp/dhclient.$DEVICE.dhcpopts || shellout "Failed to run /tmp/dhclient.$DEVICE.dhcpopts"
 
-[ -z "$HOSTNAME" ] && HOSTNAME="$new_host_name"
+[ -z "$HOSTNAME" ] || [ "$HOSTNAME" == "localhost" ] && HOSTNAME="$new_host_name"
 [ -z "$DOMAINNAME" ] && DOMAINNAME="$new_domain_name"
 
 ################################################################################
