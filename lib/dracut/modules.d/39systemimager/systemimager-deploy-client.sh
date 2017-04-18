@@ -41,8 +41,7 @@ if [ -z "$HOSTNAME" ]; then
 fi
 
 if [ ! -z "$HOSTNAME" ]; then
-    loginfo
-    loginfo "This hosts name is: $HOSTNAME"
+    loginfo "This hostname is: $HOSTNAME"
 fi
 
 run_pre_install_scripts
