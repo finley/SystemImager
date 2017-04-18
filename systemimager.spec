@@ -320,6 +320,7 @@ Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Requires: systemimager-server = %{version}, /sbin/chkconfig, perl, perl(Getopt::Long)
+BuildRequires: cx_Freeze
 #AutoReqProv: no
 
 %description bittorrent
