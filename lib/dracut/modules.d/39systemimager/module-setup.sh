@@ -40,7 +40,7 @@ install() {
     inst_multiple depmod blkid
     # Some helpfull commands in case of problem
     inst_multiple find strace sysctl vi clear reset
-    inst_multiple chmod chown cp dd df dmesg echo egrep fdisk fgrep grep hostname ifconfig init insmod kill ln ls lsmod mkdir mknod mkswap modprobe more mv ping ps rm rmdir rmmod route sed sh sleep swapoff swapon sync tar touch uname
+    inst_multiple chmod chown cp dd df dmesg echo egrep fdisk fgrep grep host hostname ifconfig init insmod kill ln ls lsmod mkdir mknod mkswap modprobe more mv ping ps rm rmdir rmmod route sed sh sleep swapoff swapon sync tar touch uname
 
     inst "$moddir/systemimager-lib.sh" "/lib/systemimager-lib.sh"
     inst "$moddir/autoinstall-lib.sh" "/lib/autoinstall-lib.sh"

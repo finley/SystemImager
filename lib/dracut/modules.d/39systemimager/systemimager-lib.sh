@@ -1128,17 +1128,14 @@ start_network() {
 show_loaded_modules() {
     # Show loaded modules
     loginfo "Loaded kernel modules:"
-    for m in `cut -d' ' -f1 /proc/modules`; do
-        loginfo "$m"
-    done
+    loginfo `cut -d' ' -f1 /proc/modules|sort|tr '\n' ' '`
 }
 #
 ################################################################################
 #
 get_hostname_by_hosts_file() {
 
-    logmsg
-    logmsg get_hostname_by_hosts_file
+    loginfo get_hostname_by_hosts_file
 
     #
     # Look in $FILE for that magic joy.
@@ -1146,13 +1143,13 @@ get_hostname_by_hosts_file() {
     FILE=${SCRIPTS_DIR}/hosts
     if [ -e $FILE ]; then
 
-        logmsg "Hosts file exists..."
+        loginfo "Hosts file exists..."
 
         # add escape characters to IPADDR so that it can be used to find HOSTNAME below
         IPADDR_ESCAPED=`echo "$IPADDR" | sed -e 's/\./\\\./g'`
         
         # get HOSTNAME by parsing hosts file
-        logmsg "Searching for this machine's hostname in $FILE by IP: $IPADDR"
+        loginfo "Searching for this machine's hostname in $FILE by IP: $IPADDR"
         
         # Command summary by line:
         # 1: convert tabs to spaces -- contains a literal tab: <ctrl>+<v> then <tab>
@@ -1175,7 +1172,7 @@ get_hostname_by_hosts_file() {
             sed 's/\..*$//g'
         `
     else
-        logmsg "No hosts file."
+        loginfo "No hosts file."
     fi
 }
 #
@@ -1183,11 +1180,13 @@ get_hostname_by_hosts_file() {
 #
 get_hostname_by_dns() {
 
-    logmsg
-    logmsg get_hostname_by_dns
+    loginfo "Trying to get hostname using DNS..."
 
     # Get base hostname.  For example, www7.domain.com will become www7. -BEF-
-    HOSTNAME=`nslookup $IPADDR | sed -ne "s/^Address 1:[[:space:]]\+$IPADDR[[:space:]]\+\([^\.]\+\).*$/\1/p"`
+    HOSTNAME=`LC_ALL=C host $IPADDR|sed -E -ne 's/.*pointer[[:space:]]+(([a-z][a-z0-9]+\.)+)$/\1/p'`
+    # We need non FQDN name ( We need ${HOSTNAME%%.*} but dash is poor in variable substitution
+    HOSTNAME=`echo $HOSTNAME|cut -d'.' -f1`
+    loginfo "Got hostname: [$HOSTNAME]"
 }
 #
 ################################################################################
