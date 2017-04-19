@@ -40,9 +40,6 @@ $VERSION = "SYSTEMIMAGER_VERSION_STRING";
 # set extension to use when backing up config files
 my $backup_extension = ".before_systemimager-$VERSION";
 
-# configuration directory
-my $systemimagerdir = "/etc/systemimager";
-
 # location of temporary rsyncd.conf file
 my $rsyncd_conf_file = "/tmp/rsyncd.conf.$$";
 
@@ -57,7 +54,7 @@ my $progname = basename $0;
 my $arch = SystemImager::UseYourOwnKernel::_get_arch();
 my $autoinstall_boot_dir = $config->autoinstall_boot_dir;
 unless ($autoinstall_boot_dir) {
-    die "FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in /etc/systemimager/systemimager.conf\n";
+    die "FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in $config->systemimager_dir/systemimager.conf\n";
 }
 
 my $version_info = <<"EOF";

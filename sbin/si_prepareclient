@@ -92,9 +92,6 @@ $VERSION = "SYSTEMIMAGER_VERSION_STRING";
 # set extension to use when backing up config files
 my $backup_extension = ".before_systemimager-$VERSION";
 
-# configuration directory
-my $systemimagerdir = "/etc/systemimager";
-
 # location of temporary rsyncd.conf file
 my $rsyncd_conf_file = tmpnam();
 
@@ -256,7 +253,7 @@ my $arch = SystemImager::UseYourOwnKernel::_get_arch();
 my $flavor = "default";
 my $initrd_destination = "$config->autoinstall_boot_dir/$arch/$flavor";
 unless ($config->autoinstall_boot_dir) {
-            die "FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in /etc/systemimager/systemimager.conf\n";
+            die "FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in $config->systemimager_dir/systemimager.conf\n";
     }
 
 # Force --my-modules option when on PS3 because there is no point to include other modules
@@ -886,10 +883,10 @@ sub create_auto_install_script_conf {
     }
 
     # Remove old-style partitionschemes directory if it exists. -BEF-
-    rmtree("$systemimagerdir/partitionschemes");
+    rmtree("$config->systemimager_dir/partitionschemes");
 
     # Where the configuration information be stored. -BEF-
-    my $file = "$systemimagerdir/autoinstallscript.conf";
+    my $file = "$config->systemimager_dir/autoinstallscript.conf";
 
     # Determine which partition tool is available.  Preference is sfdisk -- 
     # it provides more information. -BEF-
@@ -985,7 +982,7 @@ sub create_auto_install_script_conf {
 sub create_byid_real_map_conf {
     my %used_real_hash;
     my $real_dev;
-    my $map_file = "/etc/systemimager/byid_real_map.conf";
+    my $map_file = "$config->systemimager_dir/byid_real_map.conf";
     if ( -e $map_file ) {
         unlink $map_file;
     }

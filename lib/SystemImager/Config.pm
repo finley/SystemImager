@@ -3,6 +3,7 @@
 #
 #  Copyright (C) 2002 Bald Guy Software 
 #                     Brian E. Finley <brian.finley@baldguysoftware.com>
+#                2017 Olivier Lahaye <olivier.lahaye@cea.fr>
 #
 #    $Id$
 #
@@ -33,9 +34,19 @@ $config = AppConfig->new(
     'net_boot_default'          => { ARGCOUNT => 1 },
     'autoinstall_tarball_dir'   => { ARGCOUNT => 1 },
     'autoinstall_torrent_dir'   => { ARGCOUNT => 1 },
+    'systemimager_dir'          => { ARGCOUNT => 1,
+				     ARGS => "=s",
+				     DEFAULT => "/etc/systemimager" },
 );
 
-my $config_file = '/etc/systemimager/systemimager.conf';
+# If SIS_CONFDIR is defined use this instead of default /etc/systemimager.
+# This is usefull when run from build environment where /etc/systemimager doesn't
+# exists yet.
+if ( -e "$ENV{'SIS_CONFDIR'}/systemimager.conf" ) {
+        $config->set("systemimager_dir","$ENV{'SIS_CONFDIR'}");
+}
+
+my $config_file = $config->get("systemimager_dir")."/systemimager.conf";
 $config->file($config_file) if (-f $config_file);
 
 $::main::config = $config;

@@ -87,7 +87,7 @@ $ENV{PATH} = '/sbin:/usr/sbin:/usr/local/sbin:' . $ENV{PATH};
 
 my $autoinstall_boot_dir = $config->autoinstall_boot_dir();
 unless ($autoinstall_boot_dir) {
-    die "FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in /etc/systemimager/systemimager.conf\n";
+    die "FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in $config->systemimager_dir/systemimager.conf\n";
 }
 
 ### BEGIN evaluate commad line options ###

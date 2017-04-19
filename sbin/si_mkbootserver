@@ -17,7 +17,7 @@
 #
 #########################################################################
 
-CONFIG_FILE=/etc/systemimager/systemimager.conf
+CONFIG_FILE=${SIS_CONFDIR:=/etc/systemimager}/systemimager.conf
 INTERACTIVE="yes"
 INTERFACE=""
 LOCAL_DHCP=""
@@ -46,7 +46,7 @@ TFTPD_PATH=""
 TFTP_TEST_FILE_TEXT="all your tftp test file are belong to us"
 TFTP_DAEMON=""
 
-CONFIG_DIR="/etc/systemimager"
+CONFIG_DIR="$SIS_CONFDIR"
 
 #SYSLINUX_DEFAULT="\
 #DEFAULT kernel

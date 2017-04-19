@@ -51,7 +51,7 @@ $ENV{PATH} = "/usr/local/sbin:/usr/sbin:/sbin:/usr/local/bin:/usr/bin:/bin";
 
 my $autoinstall_boot_dir = $config->autoinstall_boot_dir;
 unless ($autoinstall_boot_dir) {
-    die "FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in /etc/systemimager/systemimager.conf\n";
+    die "FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in $config->systemimager_dir/systemimager.conf\n";
 }
 
 my ($kernel, $initrd, $flavor, $arch, $append_string, $bin_dir);

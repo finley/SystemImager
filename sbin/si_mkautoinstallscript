@@ -18,23 +18,21 @@ use SystemImager::Common;
 use SystemImager::Config;
 use vars qw($config $VERSION);
 
-my $config_dir = "/etc/systemimager";
-
 # Save how we were called so it can be reported as comment in the header of the generated script
 my $cmdline = $0." ".join(" ",@ARGV);
 
 ### BEGIN parse the config file ###
 my $rsync_stub_dir = $config->rsync_stub_dir();
 unless ($rsync_stub_dir) {
-    die "FATAL: parameter RSYNC_STUB_DIR is not defined in /etc/systemimager/systemimager.conf\n";
+    die "FATAL: parameter RSYNC_STUB_DIR is not defined in $config->systemimager_dir/systemimager.conf\n";
 }
 my $autoinstall_script_dir = $config->autoinstall_script_dir();
 unless ($autoinstall_script_dir) {
-    die "FATAL: parameter AUTOINSTALL_SCRIPT_DIR is not defined in /etc/systemimager/systemimager.conf\n";
+    die "FATAL: parameter AUTOINSTALL_SCRIPT_DIR is not defined in $config->systemimager_dir/systemimager.conf\n";
 }
 my $rsyncd_conf = $config->rsyncd_conf();
 unless ($rsyncd_conf) {
-    die "FATAL: parameter RSYNCD_CONF is not defined in /etc/systemimager/systemimager.conf\n";
+    die "FATAL: parameter RSYNCD_CONF is not defined in $config->systemimager_dir/systemimager.conf\n";
 }
 ### END parse the config file ###
 
@@ -233,7 +231,7 @@ SystemImager::Server->validate_auto_install_script_conf( $auto_install_script_co
 SystemImager::Server->create_autoinstall_script(
 	$script_name,
 	$autoinstall_script_dir,
-	$config_dir,
+	$config->systemimager_dir,
 	$image,
 	$overrides,
 	$imagedir,

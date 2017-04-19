@@ -791,7 +791,7 @@ cd $LOCAL_DRACUT_BASEDIR/
 # Fix install and module-setup.sh in fake local dracut install so initrd_template files are correctly found.
 sed -i -e "s|@@SIS_INITRD_TEMPLATE@@|%{buildroot}%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/initrd_template/|g" modules.d/39systemimager/install modules.d/39systemimager/module-setup.sh
 
-dracutbasedir=$(pwd) perl -I ../../lib ../../sbin/si_mkbootpackage --dracut-opts="--local" --destination ../..
+SIS_CONFDIR=$RPM_BUILD_DIR/%{name}-%{version}/etc dracutbasedir=$(pwd) perl -I ../../lib ../../sbin/si_mkbootpackage --dracut-opts="--local" --destination ../..
 #dracut --force --local --add systemimager --no-hostonly --no-hostonly-cmdline --no-hostonly-i18n ../../../initrd.img $(uname -r)
 
 %install

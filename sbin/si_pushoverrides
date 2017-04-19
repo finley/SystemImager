@@ -122,7 +122,7 @@ $| = 1;
 my $database =  $SystemImager::HostRange::database;
 my $overrides = $config->default_override_dir();
 unless ($overrides) {
-	die "FATAL: parameter DEFAULT_OVERRIDE_DIR is not defined in /etc/systemimager/systemimager.conf\n";
+	die "FATAL: parameter DEFAULT_OVERRIDE_DIR is not defined in $config->systemimager_dir/systemimager.conf\n";
 }
 
 # Parse XML database.

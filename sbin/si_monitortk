@@ -89,7 +89,7 @@ Download, report bugs, and make suggestions at:
 http://systemimager.org/
 EOF
 
-my $CONFDIR = '/etc/systemimager';
+my $CONFDIR = $config->systemimager_dir;
 
 # load resources
 my %conf;

@@ -153,7 +153,7 @@ sub edit
 
 	my $script_dir = $config->autoinstall_script_dir();
 	unless ($script_dir) {
-		die "FATAL: parameter AUTOINSTALL_SCRIPT_DIR is not defined in /etc/systemimager/systemimager.conf\n";
+		die "FATAL: parameter AUTOINSTALL_SCRIPT_DIR is not defined in $config->systemimager_dir/systemimager.conf\n";
 	}
 
 	# Get a valid system editor (only if in interactive mode).
