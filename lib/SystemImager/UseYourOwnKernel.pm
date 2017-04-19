@@ -142,6 +142,7 @@ sub create_uyok_initrd() {
             close(FILE);
         }
 
+	my $modules_to_include = get_mandatory_modules();
         #
         # Copy SSH keys.
         #
@@ -218,7 +219,7 @@ sub create_uyok_initrd() {
 
 	unless ($dracut_opts) { $dracut_opts = ""; }
 
-	my $dracut_cmd="dracut --force --add systemimager$hostonly_opt $extra_firmwares --include $staging_dir / $modules_to_exclude $dracut_opts $boot_dir/initrd.img $uname_r";
+	my $dracut_cmd="dracut --force --add systemimager$hostonly_opt $extra_firmwares --include $staging_dir / $modules_to_exclude $modules_to_include $dracut_opts $boot_dir/initrd.img $uname_r";
         !system($dracut_cmd) or die("FAILED: $dracut_cmd");
 
         # Print initrd size information.
@@ -607,6 +608,38 @@ sub get_uname_r {
         return $kernel_version;
 }
 
+# Create --add-drivers dracut command line option to add mandatory modules listed in /etc/systemimager/UYOK.modules_to_include.
+sub get_mandatory_modules() {
+	my $mandatory_modules_file = '/etc/systemimager/UYOK.modules_to_include';
+	my $mandatory_modules_option="";
+	if (-e $mandatory_modules_file) {
+            #
+            # Get list of inclusions from "/etc/systemimager/UYOK.modules_to_include"
+            # (that file should live in the "systemimager-common" package)
+            #
+            open(MODULES, "<$mandatory_modules_file") or
+                die("Couldn't open $mandatory_modules_file for reading\n");
+                while(<MODULES>) {
+                    next if(m/^(#|\s|$)/);
+                    chomp;
+                    $mandatory_modules_option.=$_." ";
+                }
+            close(MODULES);
+ 
+	}
+	# If string is non empty, we add the command line switch
+	# Else we leave the empty string.
+	if(length $mandatory_modules_option ) {
+		# Trim right end of the module list
+		$mandatory_modules_option =~ s/\s+$//;
+		$mandatory_modules_option = '--add-drivers "'.$mandatory_modules_option.'"';
+	}
+	return $mandatory_modules_option;
+
+}
+
+# The function below seems unused and tries to add running modules (dracut does handle that).
+# BUG: delete?
 sub get_load_ordered_list_of_running_modules() {
 
         my $file = "/proc/modules";
