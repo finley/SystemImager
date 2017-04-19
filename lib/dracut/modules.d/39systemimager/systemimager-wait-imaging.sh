@@ -22,14 +22,15 @@ loginfo "==== systemimager-wait-imaging ===="
 
 if test -f /tmp/SIS_action
 then
-	case $(cat /tmp/SIS_action) in
+	ACTION=`cat /tmp/SIS_action`
+	case "$ACTION" in
 		"shell")
-			loginfo "Installation successfull. Dropping to interactive shell as requested."
-			interactive_shell "Installation successfull."
+			logwarn "Installation successfull. Dropping to interactive shell as requested."
+			sis_postimaging shell
 			;;
 		"emergency")
 			logwarn "Installation Failed!"
-			interactive_shell "Installation failed........"
+			sis_postimaging emergency
 			;;
 		"reboot"|"kexec")
 			logwarn "Installation successfull. Rebooting as requested"
@@ -42,8 +43,9 @@ then
 			sis_postimaging poweroff
 			;;
 	esac
-	exit 0
+	return 0
 else
-	exit 1
+	logwarn "Imaging not yet finished.... $main_loop/$RDRETRY"
+	return 1
 fi
 
