@@ -239,6 +239,9 @@ then
             systemctl --no-block --force $ACTION
             warn "$ACTION failed!"
             ;;
+        shell|emergency)
+            interactive_shell "$ACTION"
+	    ;;
         *)
             warn "sis_postimaging called with invalid argument '$ACTION'. Rebooting!"
             systemctl --no-block --force reboot
@@ -255,6 +258,9 @@ else
             warn "$ACTION failed!"
             reboot -f -d -n # If kexec fails, reboot using bios as failover.
             ;;
+        shell|emergency)
+            interactive_shell "$ACTION"
+	    ;;
         *)
             warn "sis_postimaging called with invalid argument '$ACTION'. Rebooting!"
             reboot -f -d -n
@@ -276,13 +282,14 @@ interactive_shell() {
     then
         loginfo "$@"
         emergency_shell -n "SIS"
+	systemctl --no-block --force poweroff
     else
         type plymouth >/dev/null 2>&1 && plymouth --hide-splash
         [ -e /.profile ] || echo "exec 0<>/dev/console 1<>/dev/console 2<>/dev/console" > /.profile
         echo $1
         sh -i -l
+        sis_postimaging poweroff # Upon exit (from shell), we poweroff.
     fi
-    sis_postimaging poweroff # Upon exit (from shell), we poweroff.
 }
 #
 ################################################################################
@@ -1745,7 +1752,8 @@ start_report_task() {
             status=99
         fi
 
-	/bin/echo -en "Progress: ${status}%   \r" >/dev/kmsg
+	#/bin/echo -en "Progress: ${status}%   \r" >/dev/kmsg
+	/bin/echo -en "Progress: ${status}%   \r" >/dev/console
 
         # Send status and bandwidth to the monitor server.
         send_monitor_msg "status=$status:speed=$speed"
