@@ -44,8 +44,6 @@ install() {
 
     inst "$moddir/systemimager-lib.sh" "/lib/systemimager-lib.sh"
     inst "$moddir/autoinstall-lib.sh" "/lib/autoinstall-lib.sh"
-    # We need to overwrite 40network dhclient-script with our version that handles /etc/dhcp/dhclient-exit-hooks
-    # inst_script "$moddir/dhclient-script.sh" "/sbin/dhclient-script"
     inst_hook cmdline 10 "$moddir/restore-persistent-cmdline.d.sh" # copy /etc/persistent-cmdline.d to /etc/cmdline.d/
     inst_hook cmdline 20 "${moddir}/parse-i18n.sh" # rd.vconsole.* parameters are not parsed if dracut uses systemd (upstream BUG)
     inst_hook cmdline 50 "$moddir/parse-sis-options.sh" # read cmdline parameters

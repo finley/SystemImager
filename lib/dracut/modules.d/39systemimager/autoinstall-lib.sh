@@ -62,10 +62,10 @@ mount_os_filesystems_to_sysroot() {
     test -s /tmp/system_mounts.txt || shellout
     for filesystem in $(cat /tmp/system_mounts.txt)
     do
-        loginfo "Binding mount point ${filesystem} to /sysroot${filesystem} ."
+        loginfo "Bind-mount ${filesystem} to /sysroot${filesystem}"
         test -d "/sysroot${filesystem}" || mkdir -p "/sysroot${filesystem}" || shellout
         # In case of failure, we die as next steps will fail.
-        mount -o bind "${filesystem}" "/sysroot${filesystem}" || shellout
+        mount -o bind "${filesystem}" "/sysroot${filesystem}" || shellout "Failed to bind-mount ${filesystem} to /sysroot${filesystem} ."
     done
 }
 
