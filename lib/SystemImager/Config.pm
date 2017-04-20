@@ -42,8 +42,11 @@ $config = AppConfig->new(
 # If SIS_CONFDIR is defined use this instead of default /etc/systemimager.
 # This is usefull when run from build environment where /etc/systemimager doesn't
 # exists yet.
-if ( -e "$ENV{'SIS_CONFDIR'}/systemimager.conf" ) {
-        $config->set("systemimager_dir","$ENV{'SIS_CONFDIR'}");
+my $env_sis_confdir="$ENV{'SIS_CONFDIR'}";
+$env_sis_confdir =~ s/\/+$//; # Remove useless trailing slashes
+
+if ( -e "$env_sis_confdir/systemimager.conf" ) {
+        $config->set("systemimager_dir","$env_sis_confdir");
 }
 
 my $config_file = $config->get("systemimager_dir")."/systemimager.conf";
