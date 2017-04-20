@@ -25,7 +25,7 @@ then
 	ACTION=`cat /tmp/SIS_action`
 	case "$ACTION" in
 		"shell")
-			logwarn "Installation successfull. Dropping to interactive shell as requested."
+			loginfo "Installation successfull. Dropping to interactive shell as requested."
 			sis_postimaging shell
 			;;
 		"emergency")
