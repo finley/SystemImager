@@ -26,12 +26,13 @@ save_logs_to_sysroot() {
         mkdir -p /sysroot/root/SIS_Install_logs/
         cp /tmp/variables.txt       /sysroot/root/SIS_Install_logs/
         cp /tmp/dhcp_info.${DEVICE} /sysroot/root/SIS_Install_logs/
+	cp /tmp/dhclient.${DEVICE}.dhcpopts /sysroot/root/SIS_Install_logs/
         cp /tmp/si_monitor.log      /sysroot/root/SIS_Install_logs/
         echo "${IMAGENAME}" >         /sysroot/root/SIS_Install_logs/image.txt
-        test -f /run/initramfs/rdsoreport.txt && cp /run/initramfs/rdsoreport.txt /sysroot/root/SIS_Install_logs/
+        test -f /run/initramfs/rdsosreport.txt && cp /run/initramfs/rdsosreport.txt /sysroot/root/SIS_Install_logs/
     else
         logwarn "/sysroot/root does not exists"
-        shellout
+        shellout "/sysroot/root does not exists"
     fi
 }
 
@@ -46,7 +47,7 @@ find_os_mounts() {
     findmnt -o target --raw|grep -v /sysroot |grep -v '^/$'|tail -n +2 > /tmp/system_mounts.txt
     loginfo "Found:"
     loginfo "$(cat /tmp/system_mounts.txt)"
-    test -s "/tmp/system_mounts.txt" || shellout
+    test -s "/tmp/system_mounts.txt" || shellout "No OS specific special filesystems found"
 }
 
 ################################################################################
@@ -95,6 +96,8 @@ umount_os_filesystems_from_sysroot()
             fi
         fi
     done
+    # If no error, we can remove the list of mount points.
+    [ "$UMOUNT_ERR" -eq 0 ] && rm -f /tmp/system_mounts.txt
     return $UMOUNT_ERR
 }
 

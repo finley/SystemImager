@@ -86,8 +86,7 @@ check_version() {
     INITRD_VERSION=$VERSION
     KERNEL_VERSION=`uname -r | sed -e s/.*boel_v//`
     if [ "$INITRD_VERSION" != "$KERNEL_VERSION" ] ; then
-        logwarn "FATAL: Kernel version ($KERNEL_VERSION) doesn't match initrd version ($INITRD_VERSION)!"
-        shellout
+        shellout "FATAL: Kernel version ($KERNEL_VERSION) doesn't match initrd version ($INITRD_VERSION)!"
     else
 	loginfo "Ok."
     fi
@@ -207,7 +206,7 @@ tmpfs_watcher() {
 #   Description:
 #   Exit with the message stored in /etc/issue.
 #
-#   Usage: sis_postimaging reboot|halt|poweroff|shell|kexec
+#   Usage: sis_postimaging reboot|halt|poweroff|shell|emergency|kexec
 #   - reboot will reboot the host
 #   - halt will halt the host without powering it off
 #   - shell will leave the host whith an interactive shell (for debugging purposes)
@@ -218,6 +217,7 @@ sis_postimaging() {
 ACTION=$1
 
 # If kexec action is chosen, we load the new kernel.
+# OL: BUG: at this point, /sysroot is unmounted.....
 if test $ACTION = "kexec"
 then
     # OL: Not tested; need many improvement!
@@ -239,14 +239,20 @@ then
             systemctl --no-block --force $ACTION
             warn "$ACTION failed!"
             ;;
-        shell|emergency)
-            interactive_shell "$ACTION"
+        shell)
+	    ln -sf /etc/motd /tmp/message.txt
+	    ;;    
+        emergency)
+            ln -sf /etc/issue /tmp/message.txt
 	    ;;
         *)
             warn "sis_postimaging called with invalid argument '$ACTION'. Rebooting!"
+	    sleep 10 # leave time to read.
             systemctl --no-block --force reboot
             ;;
     esac
+    interactive_shell
+    sis_postimaging poweroff # Upon exit (from shell), we poweroff.
 else
     case "$ACTION" in
         reboot|poweroff|halt)
@@ -258,14 +264,19 @@ else
             warn "$ACTION failed!"
             reboot -f -d -n # If kexec fails, reboot using bios as failover.
             ;;
-        shell|emergency)
-            interactive_shell "$ACTION"
+        shell)
+            ln -sf /etc/motd /tmp/message.txt
+	    ;;
+	emergency)
+	    ln -sf /etc/issue /tmp/message.txt
 	    ;;
         *)
             warn "sis_postimaging called with invalid argument '$ACTION'. Rebooting!"
             reboot -f -d -n
             ;;
     esac
+    interactive_shell
+    sis_postimaging poweroff # Upon exit (from shell), we poweroff.
 fi
 }
 
@@ -275,20 +286,27 @@ fi
 #   Description:
 #   Exit with the message stored in /etc/issue.
 #
-#   Usage: $COMMAND || shellout
+#   Usage: $COMMAND
 #
 interactive_shell() {
+    if test -f /tmp/message.txt
+    then
+	    sed -i -e "s/##HOSTNAME##/${HOSTNAME}/g" /etc/motd /etc/issue
+	    cat >> /.profile <<EOF
+cat /tmp/message.txt
+echo
+PS1="SIS:\${PWD}# "
+alias reboot="reboot -f"
+alias shutdown="shutdown -f"
+EOF
+    fi
     if type emergency_shell >/dev/null 2>&1
     then
-        loginfo "$@"
         emergency_shell -n "SIS"
-	systemctl --no-block --force poweroff
     else
         type plymouth >/dev/null 2>&1 && plymouth --hide-splash
-        [ -e /.profile ] || echo "exec 0<>/dev/console 1<>/dev/console 2<>/dev/console" > /.profile
-        echo $1
+        echo "exec 0<>/dev/console 1<>/dev/console 2<>/dev/console" >> /.profile
         sh -i -l
-        sis_postimaging poweroff # Upon exit (from shell), we poweroff.
     fi
 }
 #
@@ -297,7 +315,7 @@ interactive_shell() {
 #   Description:
 #   Exit with the message stored in /etc/issue.
 #
-#   Usage: $COMMAND || shellout
+#   Usage: $COMMAND || shellout "Error message"
 #
 shellout() {
 
@@ -305,9 +323,9 @@ shellout() {
     LAST_ERR=$?
     test "$LAST_ERR" -ne 0 && logwarn "Last command exited with $LAST_ERR"
 
-    logwarn "$1"
+    logwarn "$0: $1"
     logwarn "Installation failed!"
-    logwarn "can no proceed!  (Scottish accent -- think Groundskeeper Willie)"
+    logwarn "Can not proceed!  (Scottish accent -- think Groundskeeper Willie)"
 
     if test -s /run/systemimager/tmpfs_watcher.pid; then
 	$TMPFS_WATCHER_PID=`cat /run/systemimager/tmpfs_watcher.pid`
@@ -321,7 +339,6 @@ shellout() {
     logwarn "Killing off udp-receiver and rsync processes."
     killall -9 udp-receiver rsync  >/dev/null 2>/dev/null
     write_variables
-    #cat /etc/issue >&2
     if [ ! -z "$USELOGGER" ] ;
         then cat /etc/issue | logger
     fi
@@ -329,9 +346,9 @@ shellout() {
     	logwarn "Installation failed!! Stopping report task."
         stop_report_task -1
     fi
-    # Need to trigger emergency shell    
+    # Need to trigger emergency shell
     echo emergency > /tmp/SIS_action
-    interactive_shell "Installation failed!"
+    sis_postimaging emergency # Set the correct link for /tmp/message.txt and call interactive_shell
 }
 #
 ################################################################################
@@ -1752,7 +1769,6 @@ start_report_task() {
             status=99
         fi
 
-	#/bin/echo -en "Progress: ${status}%   \r" >/dev/kmsg
 	/bin/echo -en "Progress: ${status}%   \r" >/dev/console
 
         # Send status and bandwidth to the monitor server.
