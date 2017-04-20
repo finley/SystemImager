@@ -1,9 +1,0 @@
-TERM=linux
-PS1="SIS:\${PWD}# "
-ulimit -c 0
-umask 022
-
-ls() {
-/bin/ls -F "$@"
-}
-
