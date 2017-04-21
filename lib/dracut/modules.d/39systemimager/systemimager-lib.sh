@@ -289,12 +289,20 @@ fi
 #   Usage: $COMMAND
 #
 interactive_shell() {
+    # 1st, we need to make sure HOSTNAME has a value. In some circumstances,
+    # We are called while variables.txt have been read long ago.
+    # e.g.: systemimager-wait-imaging.sh loads systemimager-lib.sh early which
+    # in turns has loaded /tmp/variables.txt and this was done before HOSTNAME=
+    # was set in network init.
+    [ -z "${HOSTNAME}" ] && HOSTNAME=`hostname`
+
+    # Then, if the /tmp/message.txt exists (it should always be the case)
+    # Update /.profile so the message is displayed when shell is run.
     if test -f /tmp/message.txt
     then
 	    sed -i -e "s/##HOSTNAME##/${HOSTNAME}/g" /etc/motd /etc/issue
 	    cat >> /.profile <<EOF
 cat /tmp/message.txt
-echo
 PS1="SIS:\${PWD}# "
 alias reboot="reboot -f"
 alias shutdown="shutdown -f"
