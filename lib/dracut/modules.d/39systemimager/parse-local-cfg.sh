@@ -8,7 +8,7 @@ type write_variables >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 # Look for local.cfg file
 #   This code inspired by Ian McLeod <ian@valinux.com>
 
-loginfo "==== parse-local-cfg ===="
+lognotice "==== parse-local-cfg ===="
 
 # Make dracut init.sh happy.
 root="none"

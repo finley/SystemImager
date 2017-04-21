@@ -39,6 +39,19 @@ type getarg >/dev/null 2>&1 || . /lib/dracut-lib.sh
 
 test -f /tmp/variables.txt && . /tmp/variables.txt
 
+# Some usefull values
+COLORS=`tput colors`
+if test "0${COLORS}" -gt 1
+then
+	FG_GREEN=`tput setaf 2`
+	FG_RED=`tput setaf 1`
+	FG_WHITE=`tput setaf 7`
+	FG_AMBER=`tput setaf 3`
+	BG_BLACK=`tput setab 0`
+	BG_RED=`tput setab 1`
+	BG_BLUE=`tput setab 4`
+fi
+
 ################################################################################
 #
 #   Subroutines
@@ -52,13 +65,13 @@ test -f /tmp/variables.txt && . /tmp/variables.txt
 # loginfo outputs to stdout
 # logmsg (same as loginfo: for compatibility)
 logwarn() {
-	logmessage "warning: $@"
+	logmessage "${FG_RED}warning:${FG_WHITE} $@"
 }
 loginfo() {
-	logmessage "info: $@"
+	logmessage "${FG_GREEN}    info:${FG_WHITE} $@"
 }
 logmsg() {
-	logmessage "notice: $@"
+	logmessage "${FG_AMBER}  notice:${FG_WHITE} $@"
 }
 
 logmessage() {
@@ -66,7 +79,7 @@ logmessage() {
     # this is good for envs that have bad consoles
     local FILE=/tmp/si_monitor.log
     echo $@ >> $FILE
-    test -w /dev/kmsg && echo $@ > /dev/kmsg
+    test -w /dev/console && echo $@ > /dev/console
 
     # if syslog is running, log to it.  In order to avoid hangs we have to 
     # add the "sis: " part in case $@ is ""
@@ -169,6 +182,8 @@ BITTORRENT_UPLOAD_MIN="$BITTORRENT_UPLOAD_MIN"
 
 GROUPNAMES="$GROUPNAMES"
 GROUP_OVERRIDES="$GROUP_OVERRIDES"
+
+export TERM="${TERM}"
 EOF
 
 rm -f /tmp/variables.txt~
@@ -215,6 +230,11 @@ tmpfs_watcher() {
 #
 sis_postimaging() {
 ACTION=$1
+
+# Fix /etc/issue and /etc/motd with background coloring (at this point we have a valid TERM)
+# this cannot be done in initrd itself as it depends on TERM (which may depend of rd.sis.term)
+sed -i -e "1i${BG_BLUE}" -e "\$a${BG_BLACK}" /etc/motd
+sed -i -e "1i${BG_RED}" -e "\$a${BG_BLACK}" /etc/issue
 
 # If kexec action is chosen, we load the new kernel.
 # OL: BUG: at this point, /sysroot is unmounted.....
@@ -303,7 +323,9 @@ interactive_shell() {
 	    sed -i -e "s/##HOSTNAME##/${HOSTNAME}/g" /etc/motd /etc/issue
 	    cat >> /.profile <<EOF
 cat /tmp/message.txt
-PS1="SIS:\${PWD}# "
+tput setab 0
+tput setaf 7
+PS1="${FG_GREEN}SIS:\${PWD}#${FG_WHITE} "
 alias reboot="reboot -f"
 alias shutdown="shutdown -f"
 EOF
@@ -1777,7 +1799,8 @@ start_report_task() {
             status=99
         fi
 
-	/bin/echo -en "Progress: ${status}%   \r" >/dev/console
+	# Update progress bar.
+	ProgressBar ${status}
 
         # Send status and bandwidth to the monitor server.
         send_monitor_msg "status=$status:speed=$speed"
@@ -1808,6 +1831,7 @@ stop_report_task() {
         if [ ! -z "$REPORT_PID" ]; then
             kill -9 $REPORT_PID
 	    rm -f /run/systemimager/report_task.pid
+	    test -w /dev/console && echo "${BG_BLACK}" > /dev/console
             loginfo "Progress report task stopped"
         fi
     fi
@@ -1917,3 +1941,25 @@ get_1st_iface_with_link() {
     fi
 }
 #
+#################################################################################
+# Inspired from progress bar from Teddy Skarin
+# Available here: https://github.com/fearside/ProgressBar/
+#
+# USAGE: ProgressBar currentState($1)
+#
+function ProgressBar {
+    _console_width=`tput cols`
+    [ "${_console_width}" -lt 80 ] && _console_width=80
+    let _bar_width=(${_console_width}-21)
+    let _ipart=`echo ${1}|cut -d. -f1`
+    let _done=(${_ipart}*$_bar_width)/100
+    let _left=${_bar_width}-$_done
+    # Build progressbar string lengths
+    _fill=$(printf "%${_done}s")
+    _empty=$(printf "%${_left}s")
+
+    # Build progressbar strings and print the ProgressBar line
+    printf "\rProgress : ${BG_BLUE}[${_fill// /#}${_empty// /-}]${BG_BLACK} ${1}%%" > /dev/console
+}
+
+# END

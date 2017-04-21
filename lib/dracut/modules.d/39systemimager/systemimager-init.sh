@@ -4,7 +4,7 @@
 [ -e "$job" ] && rm "$job"
 
 . /lib/systemimager-lib.sh
-loginfo "==== systemimager-init ===="
+lognotice "==== systemimager-init ===="
 # Init /run/systemimager directory
 test ! -d /run/systemimager && mkdir -p /run/systemimager
 

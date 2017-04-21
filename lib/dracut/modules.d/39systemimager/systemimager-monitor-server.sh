@@ -3,7 +3,7 @@
 type getarg >/dev/null 2>&1 || . /lib/dracut-lib.sh
 type send_monitor_msg >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 
-loginfo "==== systemimager-monitor-server ===="
+lognotice "==== systemimager-monitor-server ===="
 
 . /tmp/variables.txt
 

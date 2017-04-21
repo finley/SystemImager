@@ -36,10 +36,10 @@ install() {
     inst_multiple -o btrfs btrfsck btrfstune fsck.btrfs mkfs.btrfs
     inst_multiple cut date echo env sort test false true [ expr head install tail tee tr uniq wc tac
     # inst_multiple setfont loadkeys kbd_mode stty # i18n module
-    inst_multiple bc gzip bzip2 rsync parted blockdev awk ncat tty killall kexec ipcalc findmnt
+    inst_multiple bc gzip bzip2 rsync parted blockdev awk ncat tty killall kexec ipcalc findmnt tput
     inst_multiple depmod blkid
     # Some helpfull commands in case of problem
-    inst_multiple find strace sysctl vi clear reset
+    inst_multiple find strace sysctl vi clear reset lsof fuser
     inst_multiple chmod chown cp dd df dmesg echo egrep fdisk fgrep grep host hostname ifconfig init insmod kill ln ls lsmod mkdir mknod mkswap modprobe more mv ping ps rm rmdir rmmod route sed sh sleep swapoff swapon sync tar touch uname
 
     inst "$moddir/systemimager-lib.sh" "/lib/systemimager-lib.sh"

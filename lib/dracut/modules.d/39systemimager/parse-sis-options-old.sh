@@ -7,7 +7,7 @@ type write_variables >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 #
 # Save cmdline SIS relevant parameters
 
-loginfo "==== parse-sis-options-old ===="
+lognotice "==== parse-sis-options-old ===="
 loginfo "Reading SIS relevants parameters from cmdline"
 
 #####################################
@@ -52,6 +52,14 @@ test -z "$FLAMETHROWER_DIRECTORY_PORTBASE" && FLAMETHROWER_DIRECTORY_PORTBASE=`g
 #########################
 # rd.sis.tmpfs-staging=""
 test -z "$TMPFS_STAGING" && TMPFS_STAGING=`getarg rd.sis.tmpfs-staging`
+
+#########################
+# rd.sis.term (Defaults to what system has defined or "linux" at last)
+# priority: rd.sis.term then system-default then "linux"
+OLD_TERM=${TERM}
+TERM=`getarg rd.sis.term`
+test -z "${TERM}" && TERM=${OLD_TERM}
+test -z "${TERM}" -o "${TERM}" = "dumb" && TERM=linux
 
 # Register what we read.
 write_variables
