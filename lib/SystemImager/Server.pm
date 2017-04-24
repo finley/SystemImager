@@ -392,25 +392,25 @@ sub _read_partition_info_and_prepare_parted_commands {
         $devfs_dev = '$'.$dev2disk{$devfs_dev};
 
         print $out "### BEGIN partition $devfs_dev ###\n";
-        print $out qq(logmsg "Partitioning $devfs_dev..."\n);
-        print $out qq(logmsg "Old partition table for $devfs_dev:"\n);
+        print $out qq(loginfo "Partitioning $devfs_dev..."\n);
+        print $out qq(loginfo "Old partition table for $devfs_dev:"\n);
         print $out "LC_ALL=C parted -s -- $devfs_dev print\n\n";
 
         print $out "# Wipe the MBR (Master Boot Record) clean.\n";
-        $cmd = "dd if=/dev/zero of=$devfs_dev bs=512 count=1 || shellout";
-        print $out qq(logmsg "$cmd"\n);
-        print $out "$cmd\n\n";
+        $cmd = "dd if=/dev/zero of=$devfs_dev bs=512 count=1";
+        print $out qq(logaction "$cmd"\n);
+        print $out qq($cmd || shellout "dd if=/dev/zero of=$devfs_dev failed"\n\n);
 
         print $out "# Re-read the disk label.\n";
         $cmd = "blockdev --rereadpt $devfs_dev";
-        print $out qq(logmsg "$cmd"\n);
-        print $out "$cmd\n\n";
+        print $out qq(loginfo "$cmd"\n);
+        print $out qq($cmd || shellout "Failed to re-read partition table!" \n\n);
 
         print $out "# Create disk label.  This ensures that all remnants of the old label, whatever\n";
         print $out "# type it was, are removed and that we're starting with a clean label.\n";
-        $cmd = "parted -s -- $devfs_dev mklabel $label_type || shellout";
-        print $out qq(logmsg "$cmd"\n);
-        print $out "LC_ALL=C $cmd\n\n";
+        $cmd = "parted -s -- $devfs_dev mklabel $label_type";
+        print $out qq(logaction "$cmd"\n);
+        print $out qq(LC_ALL=C $cmd || shellout "parted failed!"\n\n);
 
         print $out "# Get the size of the destination disk so that we can make the partitions fit properly.\n";
         print $out q(DISK_SIZE=`LC_ALL=C parted -s ) . $devfs_dev . q( unit MB print | egrep ") . $devfs_dev . q(" | awk '{print $NF}' | sed 's/MB//' `) . qq(\n);
@@ -674,7 +674,7 @@ sub _read_partition_info_and_prepare_parted_commands {
             $part =~ /^(.*?)(p?\d+)$/;
             $part = "\${".$dev2disk{$1}."}".$2;
             $cmd = "Creating partition $part.";
-            print $out qq(logmsg "$cmd"\n);
+            print $out qq(loginfo "$cmd"\n);
             
             print $out qq(START_MB=$startMB{$m}\n);
             print $out qq(END_MB=$endMB{$m}\n);
@@ -688,7 +688,7 @@ sub _read_partition_info_and_prepare_parted_commands {
 
             if($p_type{$m} eq "extended") {
 
-                $cmd = qq(parted -s -- $devfs_dev mkpart $p_type{$m} $swap) . q($START_MB $END_MB) . qq( || shellout);
+                $cmd = qq(parted -s -- $devfs_dev mkpart $p_type{$m} $swap) . q($START_MB $END_MB);
 
             } else {
 
@@ -697,11 +697,11 @@ sub _read_partition_info_and_prepare_parted_commands {
                 # specify a filesystem type, even though it does nothing with it 
                 # with the "mkpart" command. -BEF-
                 #
-                $cmd = qq(parted -s -- $devfs_dev mkpart $p_type{$m} $swap) . q($START_MB $END_MB) . qq( || shellout);
+                $cmd = qq(parted -s -- $devfs_dev mkpart $p_type{$m} $swap) . q($START_MB $END_MB);
 
             }
-            print $out qq(logmsg "$cmd"\n);
-            print $out "$cmd\n";
+            print $out qq(logaction "$cmd"\n);
+            print $out qq($cmd || shellout "parted failed!"\n);
             
             # Leave info behind for the next partition. -BEF-
             if ("$p_type{$m}" eq "primary") {
@@ -742,9 +742,9 @@ sub _read_partition_info_and_prepare_parted_commands {
                   and ($p_name{$m} ne "-")
               ) {  # We're kinda assuming no one names their partitions "-". -BEF-
             
-              $cmd = "parted -s -- $devfs_dev name $m $p_name{$m} || shellout\n";
-              print $out qq(logmsg "$cmd");
-              print $out "$cmd";
+              $cmd = "parted -s -- $devfs_dev name $m $p_name{$m}";
+              print $out qq(logaction "$cmd"\n);
+              print $out qq($cmd || shellout "parted failed!"\n);
             }
             
             ### Deal with flags for each partition. -BEF-
@@ -758,9 +758,9 @@ sub _read_partition_info_and_prepare_parted_commands {
                     if (($flag eq "lba") and ($label_type eq "gpt")) { next; }
                     # Ignore custom flag 'swap'. -AR-
                     if ($flag eq "swap") { next; }
-                    $cmd = "parted -s -- $devfs_dev set $m $flag on || shellout\n";
-                    print $out qq(logmsg "$cmd");
-                    print $out "$cmd";
+                    $cmd = "parted -s -- $devfs_dev set $m $flag on";
+                    print $out qq(logaction "$cmd"\n);
+                    print $out qq($cmd || shellout "parted failed!"\n);
                 }
             }
         }
@@ -768,16 +768,16 @@ sub _read_partition_info_and_prepare_parted_commands {
         # Kick the minors out.  (remove temporary partitions) -BEF-
         foreach $m (keys %minors_to_remove) {
           print $out "\n# Gotta lose this one (${dev}${m}) to make the disk look right.\n";
-          $cmd = "parted -s -- $devfs_dev rm $m  || shellout";
-          print $out qq(logmsg "$cmd"\n);
-          print $out "$cmd\n";
+          $cmd = "parted -s -- $devfs_dev rm $m";
+          print $out qq(logaction "$cmd"\n);
+          print $out qq($cmd || shellout "parted failed!"\n);
         }
 
         print $out "\n";
-        print $out qq(logmsg "New partition table for $devfs_dev:"\n);
+        print $out qq(loginfo "New partition table for $devfs_dev:"\n);
         $cmd = "parted -s -- $devfs_dev print";
-        print $out qq(logmsg "$cmd"\n);
-        print $out "$cmd\n";
+        print $out qq(loginfo "$cmd"\n);
+        print $out qq($cmd || shellout "Failed to read partition table!"\n);
         print $out "### END partition $devfs_dev ###\n";
         print $out "\n";
         print $out "\n";
@@ -793,7 +793,7 @@ sub _read_partition_info_and_prepare_soft_raid_devs {
     my ($out, $image_dir, $file) = @_;
 
     # Load RAID modules.
-    print $out qq(logmsg "Load software RAID modules."\n);
+    print $out qq(loginfo "Load software RAID modules."\n);
     print $out qq(modprobe linear\n);
     print $out qq(modprobe raid0\n);
     print $out qq(modprobe raid1\n);
@@ -861,7 +861,7 @@ sub _read_partition_info_and_prepare_soft_raid_devs {
         }
         $cmd   .= qq(  $devices\n);
 
-        print $out "\nlogmsg \"$cmd\"";
+        print $out "\nlogaction \"$cmd\"";
         print $out "\n$cmd\n";
     }
     #XXX Do we want to 
@@ -953,11 +953,11 @@ sub _read_partition_info_and_prepare_pvcreate_commands {
                             foreach my $lvm_group_name (@{$lvm->{lvm_group}}) {
                                 if ($lvm_group_name->{name} eq $vg_name) {
                                     $cmd = "Initializing partition $part for use by LVM.";
-                                    print $out qq(logmsg "$cmd"\n);
+                                    print $out qq(loginfo "$cmd"\n);
 
-                                    $cmd = "pvcreate -M${version} -ff -y $part || shellout";
-                                    print $out qq(logmsg "$cmd"\n);
-                                    print $out "$cmd\n";
+                                    $cmd = "pvcreate -M${version} -ff -y $part";
+                                    print $out qq(logaction "$cmd"\n);
+                                    print $out qq($cmd || shellout "pvcreate failed!"\n);
                                     goto part_done;
                                 }
                             }
@@ -986,9 +986,9 @@ part_done:
             }
             foreach my $lvm_group_name (@{$lvm->{lvm_group}}) {
                 if ($lvm_group_name->{name} eq $vg_name) {
-                    $cmd = "pvcreate -M${version} -ff -y $md || shellout";
-                    print $out qq(logmsg "$cmd"\n);
-                    print $out "$cmd\n";
+                    $cmd = "pvcreate -M${version} -ff -y $md";
+                    print $out qq(logaction "$cmd"\n);
+                    print $out qq($cmd || shellout "pvcreate falied!"\n);
                 }
             }
         }
@@ -1085,12 +1085,12 @@ sub write_lvm_groups_commands {
                 }
                 # Remove previous volume groups with $group_name if already present.
                 $cmd = "lvremove -f /dev/${group_name} >/dev/null 2>&1 && vgremove $group_name >/dev/null 2>&1";
-                print $out qq(logmsg "$cmd"\n);
+                print $out qq(logaction "$cmd"\n);
                 print $out "$cmd\n";
                 # Write the command to create the volume group -AR-
-                $cmd = "vgcreate -M${version} ${vg_max_log_vols}${vg_max_phys_vols}${vg_phys_extent_size}${group_name}${part_list} || shellout";
-                print $out qq(logmsg "$cmd"\n);
-                print $out "$cmd\n";
+                $cmd = "vgcreate -M${version} ${vg_max_log_vols}${vg_max_phys_vols}${vg_phys_extent_size}${group_name}${part_list}";
+                print $out qq(logaction "$cmd"\n);
+                print $out qq($cmd || shellout "vgcreate failed!"\n);
             } else {
                 print "WARNING: LVM group \"$group_name\" doesn't have partitions!\n";
             }
@@ -1140,14 +1140,14 @@ sub write_lvm_volumes_commands {
             }
 
             # Create the logical volume -AR-
-            $cmd = "lvcreate $lv_options $lv_size -n $lv_name $group_name || shellout";
-            print $out qq(logmsg "$cmd"\n);
-            print $out "$cmd\n";
+            $cmd = "lvcreate $lv_options $lv_size -n $lv_name $group_name";
+            print $out qq(logaction "$cmd"\n);
+            print $out qq($cmd || shellout "lvcreate failed!"\n);
             
             # Enable the logical volume -AR-
-            $cmd = "lvscan > /dev/null; lvchange -a y /dev/$group_name/$lv_name || shellout";
-            print $out qq(logmsg "$cmd"\n);
-            print $out "$cmd\n";
+            $cmd = "lvscan > /dev/null; lvchange -a y /dev/$group_name/$lv_name";
+            print $out qq(logaction "$cmd"\n);
+            print $out qq($cmd || shellout "lvchange failed!"\n);
         }
     }
 }
@@ -1328,15 +1328,15 @@ sub _write_out_mkfs_commands {
                             $cmd .= " -L $1";
                         }
                     }
-                    $cmd .= " || shellout";
 
-                    print $out qq(logmsg "$cmd"\n);
-                    print $out "$cmd\n";
+                    print $out qq(logaction "$cmd"\n);
+                    print $out qq($cmd || shellout "mkswap failed!"\n);
 
                     # swapon
-                    $cmd = "swapon $real_dev || shellout";
-                    print $out qq(logmsg "$cmd"\n);
-                    print $out "$cmd\n";
+                    $cmd = "swapon $real_dev";
+                    print $out qq(loginfo "Enabling swap space."\n);
+                    print $out qq(logaction "$cmd"\n);
+                    print $out qq($cmd || shellout "swapon failed!"\n);
 
                     print $out "\n";
                 }
@@ -1351,19 +1351,19 @@ sub _write_out_mkfs_commands {
                     ($xml_config->{fsinfo}->{$line}->{fs} eq "msdos")) {
 
                 # create fs
-                $cmd = "mkdosfs $mkfs_opts -v $real_dev || shellout";
-                print $out qq(logmsg "$cmd"\n);
-                print $out "$cmd\n";
+                $cmd = "mkdosfs $mkfs_opts -v $real_dev";
+                print $out qq(logaction "$cmd"\n);
+                print $out qq($cmd || shellout "mkdosfs failed!"\n);
 
                 # mkdir
-                $cmd = "mkdir -p /sysroot$mp || shellout";
-                print $out qq(logmsg "$cmd"\n);
-                print $out "$cmd\n";
+                $cmd = "mkdir -p /sysroot$mp";
+                print $out qq(logaction "$cmd"\n);
+                print $out qq($cmd || shellout "mkdir failed!"\n);
 
                 # mount
-                $cmd = "mount $real_dev /sysroot$mp -t $fs -o $options || shellout";
-                print $out qq(logmsg "$cmd"\n);
-                print $out "$cmd\n";
+                $cmd = "mount $real_dev /sysroot$mp -t $fs -o $options";
+                print $out qq(loginfo "$cmd"\n);
+                print $out qq($cmd || shellout "mount failed!"\n);
 
                 print $out "\n";
 
@@ -1374,9 +1374,9 @@ sub _write_out_mkfs_commands {
                     or ( $xml_config->{fsinfo}->{$line}->{fs} eq "ext4" )
                     ) {
                 # create fs
-                $cmd = "mke2fs -q -t $xml_config->{fsinfo}->{$line}->{fs} $real_dev || shellout";
-                print $out qq(logmsg "$cmd"\n);
-                print $out "$cmd\n";
+                $cmd = "mke2fs -q -t $xml_config->{fsinfo}->{$line}->{fs} $real_dev";
+                print $out qq(logaction "$cmd"\n);
+                print $out qq($cmd || shellout "mke2fs failed!"\n);
 
                 if ($mount_dev) {
                     # add LABEL if necessary
@@ -1385,8 +1385,8 @@ sub _write_out_mkfs_commands {
                         $label =~ s/LABEL=//;
 
                         $cmd = "tune2fs -L $label $real_dev";
-                        print $out qq(logmsg "$cmd"\n);
-                        print $out "$cmd\n";
+                        print $out qq(logaction "$cmd"\n);
+                        print $out qq($cmd || shellout "tune2fs failed"\n);
                     }
 
                     # add UUID if necessary
@@ -1395,30 +1395,28 @@ sub _write_out_mkfs_commands {
                         $uuid =~ s/UUID=//;
 
                         $cmd = "tune2fs -U $uuid $real_dev";
-                        print $out qq(logmsg "$cmd"\n);
-                        print $out "$cmd\n";
+                        print $out qq(logaction "$cmd"\n);
+                        print $out qq($cmd || shellout "tune2fs failed"\n);
                     }
                 }
 
                 # mkdir
-                $cmd = "mkdir -p /sysroot$mp || shellout";
-                print $out qq(logmsg "$cmd"\n);
-                print $out "$cmd\n";
+                $cmd = "mkdir -p /sysroot$mp";
+                print $out qq(logaction "$cmd"\n);
+                print $out qq($cmd || shellout "mkdir failed!"\n);
 
                 # mount
-                $cmd = "mount $real_dev /sysroot$mp -t $fs -o $options || shellout";
-                print $out qq(logmsg "$cmd"\n);
-                print $out "$cmd\n";
-
-                print $out "\n";
+                $cmd = "mount $real_dev /sysroot$mp -t $fs -o $options";
+                print $out qq(loginfo "$cmd"\n);
+                print $out qq($cmd || shellout "mount failed!"\n\n);
 
             # reiserfs
             } elsif ( $xml_config->{fsinfo}->{$line}->{fs} eq "reiserfs" ) {
 
                 # create fs
-                $cmd = "mkreiserfs -q $real_dev || shellout";
-                print $out qq(logmsg "$cmd"\n);
-                print $out "$cmd\n";
+                $cmd = "mkreiserfs -q $real_dev";
+                print $out qq(logaction "$cmd"\n);
+                print $out qq($cmd || shellout "mkreiserfs failed!"\n);
 
                 if ($mount_dev) {
                     # add LABEL if necessary
@@ -1427,8 +1425,8 @@ sub _write_out_mkfs_commands {
                         $label =~ s/LABEL=//;
 
                         $cmd = "reiserfstune -l $label $real_dev";
-                        print $out qq(logmsg "$cmd"\n);
-                        print $out "$cmd\n";
+                        print $out qq(logaction "$cmd"\n);
+                        print $out qq($cmd || shellout "reiserfstune failed!"\n);
                     }
 
                     # add UUID if necessary
@@ -1437,30 +1435,28 @@ sub _write_out_mkfs_commands {
                         $uuid =~ s/UUID=//;
 
                         $cmd = "reiserfstune -u $uuid $real_dev";
-                        print $out qq(logmsg "$cmd"\n);
-                        print $out "$cmd\n";
+                        print $out qq(logaction "$cmd"\n);
+                        print $out qq($cmd || shellout "reiserfstune failed!"\n);
                     }
                 }
 
                 # mkdir
-                $cmd = "mkdir -p /sysroot$mp || shellout";
-                print $out qq(logmsg "$cmd"\n);
-                print $out "$cmd\n";
+                $cmd = "mkdir -p /sysroot$mp";
+                print $out qq(logaction "$cmd"\n);
+                print $out qq($cmd || shellout "mkdir failed!"\n);
 
                 # mount
-                $cmd = "mount $real_dev /sysroot$mp -t $fs -o $options || shellout";
-                print $out qq(logmsg "$cmd"\n);
-                print $out "$cmd\n";
-
-                print $out "\n";
+                $cmd = "mount $real_dev /sysroot$mp -t $fs -o $options";
+                print $out qq(loginfo "$cmd"\n);
+                print $out qq($cmd || shellout "mount failed!"\n\n);
 
             # jfs
             } elsif ( $xml_config->{fsinfo}->{$line}->{fs} eq "jfs" ) {
 
                 # create fs
-                $cmd = "jfs_mkfs -q $real_dev || shellout";
-                print $out qq(logmsg "$cmd"\n);
-                print $out "$cmd\n";
+                $cmd = "jfs_mkfs -q $real_dev";
+                print $out qq(logaction "$cmd"\n);
+                print $out qq($cmd || shellout "jfs_mkfs failed!"\n);
 
                 if ($mount_dev) {
                     # add LABEL if necessary
@@ -1469,8 +1465,8 @@ sub _write_out_mkfs_commands {
                         $label =~ s/LABEL=//;
 
                         $cmd = "jfs_tune -L $label $real_dev";
-                        print $out qq(logmsg "$cmd"\n);
-                        print $out "$cmd\n";
+                        print $out qq(logaction "$cmd"\n);
+                        print $out qq($cmd || shellout "jfs_tune failed!"\n);
                     }
 
                     # add UUID if necessary
@@ -1479,20 +1475,20 @@ sub _write_out_mkfs_commands {
                         $uuid =~ s/UUID=//;
 
                         $cmd = "jfs_tune -U $uuid $real_dev";
-                        print $out qq(logmsg "$cmd"\n);
-                        print $out "$cmd\n";
+                        print $out qq(logaction "$cmd"\n);
+                        print $out qq($cmd || shellout "jfs_tune failed!"\n);
                     }
                 }
 
                 # mkdir
-                $cmd = "mkdir -p /sysroot$mp || shellout";
-                print $out qq(logmsg "$cmd"\n);
-                print $out "$cmd\n";
+                $cmd = "mkdir -p /sysroot$mp";
+                print $out qq(logaction "$cmd" \n);
+                print $out qq($cmd || shellout "mkdir failed" \n);
 
                 # mount
                 $cmd = "mount $real_dev /sysroot$mp -t $fs -o $options || shellout";
-                print $out qq(logmsg "$cmd"\n);
-                print $out "$cmd\n";
+                print $out qq(loginfo "$cmd"\n);
+                print $out qq($cmd || shellout "mount failed!" \n);
 
                 print $out "\n";
 	    
@@ -1500,9 +1496,9 @@ sub _write_out_mkfs_commands {
             } elsif ( $xml_config->{fsinfo}->{$line}->{fs} eq "xfs" ) {
 
                 # create fs
-                $cmd = "mkfs.xfs -f -q $real_dev || shellout";
-                print $out qq(logmsg "$cmd"\n);
-                print $out "$cmd\n";
+                $cmd = "mkfs.xfs -f -q $real_dev";
+                print $out qq(logaction "$cmd"\n);
+                print $out qq($cmd || shellout "mkfs.xfs failed!" \n);
 
                 if ($mount_dev) {
                     # add LABEL if necessary
@@ -1511,8 +1507,8 @@ sub _write_out_mkfs_commands {
                         $label =~ s/LABEL=//;
 
                         $cmd = "xfs_db -x -p xfs_admin -c 'label $label' $real_dev";
-                        print $out qq(logmsg "$cmd"\n);
-                        print $out "$cmd\n";
+                        print $out qq(logaction "$cmd"\n);
+                        print $out qq($cmd || shellout "xfs_db failed!"\n);
                     }
 
                     # add UUID if necessary
@@ -1521,20 +1517,20 @@ sub _write_out_mkfs_commands {
                         $uuid =~ s/UUID=//;
 
                         $cmd = "xfs_db -x -p xfs_admin -c 'uuid $uuid' $real_dev";
-                        print $out qq(logmsg "$cmd"\n);
-                        print $out "$cmd\n";
+                        print $out qq(logaction "$cmd"\n);
+                        print $out qq($cmd || shellout "xfs_db failed!"\n);
                     }
                 }
 
                 # mkdir
-                $cmd = "mkdir -p /sysroot$mp || shellout";
-                print $out qq(logmsg "$cmd"\n);
-                print $out "$cmd\n";
+                $cmd = "mkdir -p /sysroot$mp";
+                print $out qq(logaction "$cmd"\n);
+                print $out qq($cmd || shellout "mkdir failed!"\n);
 
                 # mount
-                $cmd = "mount $real_dev /sysroot$mp -t $fs -o $options || shellout";
-                print $out qq(logmsg "$cmd"\n);
-                print $out "$cmd\n";
+                $cmd = "mount $real_dev /sysroot$mp -t $fs -o $options";
+                print $out qq(loginfo "$cmd"\n);
+                print $out qq($cmd || shellout "mount failed!"\n);
 
                 print $out "\n";
             }
@@ -1750,10 +1746,10 @@ sub _write_out_umount_commands {
         my $fs = $fs_by_mp{$mp};
 
         # umount
-        my $cmd = "umount /sysroot$mp || mount -no remount,ro /sysroot/$mp || shellout";
+        my $cmd = "umount /sysroot$mp || mount -no remount,ro /sysroot/$mp";
         print $out qq(if [ ! \$kernel = "2.4" ]; then\n) if ($mp eq "/sys");
-        print $out qq(logmsg "$cmd"\n);
-        print $out "$cmd\n";
+        print $out qq(loginfo "$cmd"\n);
+        print $out qq($cmd || shellout "umount failed!"\n);
         print $out "fi\n" if ($mp eq "/sys");
         print $out "\n";
     }
