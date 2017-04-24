@@ -1947,7 +1947,7 @@ get_1st_iface_with_link() {
 #
 # USAGE: ProgressBar currentState($1)
 #
-function ProgressBar {
+ProgressBar() {
     _console_width=`tput cols`
     [ "${_console_width}" -lt 80 ] && _console_width=80
     let _bar_width=(${_console_width}-21)
