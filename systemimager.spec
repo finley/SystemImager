@@ -782,7 +782,12 @@ test -d $LOCAL_DRACUT_BASEDIR && /bin/rm -rf $LOCAL_DRACUT_BASEDIR
 mkdir -p $LOCAL_DRACUT_BASEDIR
 test -d $LOCAL_DRACUT_BASEDIR || exit 1
 cp -r %_usr%_dracutbase/* $LOCAL_DRACUT_BASEDIR/
-cp -r ./lib/dracut/modules.d/39systemimager $LOCAL_DRACUT_BASEDIR/modules.d/
+# Copy our module locally while doing correct STRINGS replacement.
+mkdir -p $LOCAL_DRACUT_BASEDIR/modules.d/39systemimager
+for FILE in ./lib/dracut/modules.d/39systemimager/*
+do
+    ./tools/si_install  -b -m 755 $FILE $LOCAL_DRACUT_BASEDIR/modules.d/39systemimager/
+done
 test -x /usr/bin/lsinitrd && ln -s /usr/bin/lsinitrd $LOCAL_DRACUT_BASEDIR/lsinitrd.sh # only required in newer dracut versions.
 
 # move to local modules dir so we can use dracut --local
