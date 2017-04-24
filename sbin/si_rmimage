@@ -39,23 +39,23 @@ use vars qw($config);
 ### BEGIN parse the config file ###
 my $autoinstall_script_dir = $config->autoinstall_script_dir();
 unless ($autoinstall_script_dir) {
-    die "FATAL: parameter AUTOINSTALL_SCRIPT_DIR is not defined in $config->systemimager_dir/systemimager.conf\n";
+    die "FATAL: parameter AUTOINSTALL_SCRIPT_DIR is not defined in ".$config->systemimager_dir."/systemimager.conf\n";
 }
 my $autoinstall_boot_dir = $config->autoinstall_boot_dir();
 unless ($autoinstall_boot_dir) {
-    die "FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in $config->systemimager_dir/systemimager.conf\n";
+    die "FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in ".$config->systemimager_dir."/systemimager.conf\n";
 }
 my $rsyncd_conf = $config->rsyncd_conf();
 unless ($rsyncd_conf) {
-    die "FATAL: parameter RSYNCD_CONF is not defined in $config->systemimager_dir/systemimager.conf\n";
+    die "FATAL: parameter RSYNCD_CONF is not defined in ".$config->systemimager_dir."/systemimager.conf\n";
 }
 my $rsync_stub_dir = $config->rsync_stub_dir();
 unless ($rsync_stub_dir) {
-    die "FATAL: parameter RSYNC_STUB_DIR is not defined in $config->systemimager_dir/systemimager.conf\n";
+    die "FATAL: parameter RSYNC_STUB_DIR is not defined in ".$config->systemimager_dir."/systemimager.conf\n";
 }
 my $default_override_dir = $config->default_override_dir();
 unless ($default_override_dir) {
-    die "FATAL: parameter DEFAULT_OVERRIDE_DIR is not defined in $config->systemimager_dir/systemimager.conf\n";
+    die "FATAL: parameter DEFAULT_OVERRIDE_DIR is not defined in ".$config->systemimager_dir."/systemimager.conf\n";
 }
 ### END parse the config file ###
 
@@ -149,7 +149,7 @@ unless(($imagedir) or ($force)) {
 
 # get architecture of the image (for removing UYOK boot files later on)
 my $arch;
-$file=$imagedir . "$config->systemimager_dir/boot/ARCH";
+$file=$imagedir . $config->systemimager_dir . "/boot/ARCH";
 if( -e $file ) {
     open(FILE,"<$file") or die("Couldn't open $file for reading $!");
       $arch = (<FILE>)[0];
@@ -210,7 +210,7 @@ SystemImager::Server->gen_rsyncd_conf($rsync_stub_dir, $rsyncd_conf);
 
 # remove image from flamethrower.conf file
 my $entry_name = $image;
-my $flamethrower_conf = "$config->systemimager_dir/flamethrower.conf";
+my $flamethrower_conf = $config->systemimager_dir . "/flamethrower.conf";
 if(-e $flamethrower_conf) {
     SystemImager::Common->add_or_delete_conf_file_entry($flamethrower_conf, $entry_name) or
         die "$program_name: Cannot remove entry from $flamethrower_conf";

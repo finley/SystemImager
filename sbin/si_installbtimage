@@ -78,28 +78,28 @@ if ($version) {
 # Get SystemImager directories.
 my $IMAGE_DIR = $config->default_image_dir();
 unless ($IMAGE_DIR) {
-    die "FATAL: parameter DEFAULT_IMAGE_DIR is not defined in $config->systemimager_dir/systemimager.conf\n";
+    die "FATAL: parameter DEFAULT_IMAGE_DIR is not defined in ".$config->systemimager_dir."/systemimager.conf\n";
 }
 my $OVERRIDE_DIR = $config->default_override_dir();
 unless ($OVERRIDE_DIR) {
-    die "FATAL: parameter DEFAULT_OVERRIDE_DIR is not defined in $config->systemimager_dir/systemimager.conf\n";
+    die "FATAL: parameter DEFAULT_OVERRIDE_DIR is not defined in ".$config->systemimager_dir."/systemimager.conf\n";
 }
 my $TARBALL_DIR = $config->autoinstall_tarball_dir();
 unless ($TARBALL_DIR) {
-    die "FATAL: parameter AUTOINSTALL_TARBALL_DIR is not defined in $config->systemimager_dir/systemimager.conf\n";
+    die "FATAL: parameter AUTOINSTALL_TARBALL_DIR is not defined in ".$config->systemimager_dir."/systemimager.conf\n";
 }
 my $TORRENT_DIR = $config->autoinstall_torrent_dir();
 unless ($TORRENT_DIR) {
-    die "FATAL: parameter AUTOINSTALL_TORRENT_DIR is not defined in $config->systemimager_dir/systemimager.conf\n";
+    die "FATAL: parameter AUTOINSTALL_TORRENT_DIR is not defined in ".$config->systemimager_dir/."systemimager.conf\n";
 }
 my $autoinstall_boot_dir = $config->autoinstall_boot_dir();
 unless ($autoinstall_boot_dir) {
-    die "FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in $config->systemimager_dir/systemimager.conf\n";
+    die "FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in ".$config->systemimager_dir."/systemimager.conf\n";
 }
 
 # Get tracker port and interface from the configuration file.
 my ($tracker_port, $image_server);
-my $config_file = "$config->systemimager_dir/bittorrent.conf;
+my $config_file = $config->systemimager_dir."/bittorrent.conf";
 open(IN, '<', $config_file) or
     die "ERROR: cannot open configuration file $config_file!\n";
 while(<IN>) {

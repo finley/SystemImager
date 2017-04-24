@@ -54,7 +54,7 @@ my $progname = basename $0;
 my $arch = SystemImager::UseYourOwnKernel::_get_arch();
 my $autoinstall_boot_dir = $config->autoinstall_boot_dir;
 unless ($autoinstall_boot_dir) {
-    die "FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in $config->systemimager_dir/systemimager.conf\n";
+    die "FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in ".$config->systemimager_dir."/systemimager.conf\n";
 }
 
 my $version_info = <<"EOF";

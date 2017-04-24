@@ -22,7 +22,8 @@ $0 = "si_netbootmond";
 
 my $net_boot_default = lc $config->net_boot_default();
 if("$net_boot_default" eq "net") {
-    print STDERR qq(\nNET_BOOT_DEFAULT set to "$net_boot_default" in $config->systemimager_dir/systemimager.conf.\n);
+    my $sis_dir=$config->systemimager_dir;
+    print STDERR qq(\nNET_BOOT_DEFAULT set to "$net_boot_default" in $sis_dir/systemimager.conf.\n);
     print STDERR qq(No need for me here, so I'm exiting. See si_netbootmond\(8\) for details.\n);
     exit 0;
 }
@@ -32,14 +33,14 @@ my $pxe_conf_dir;
 my $kboot_conf_dir;
 
 unless($tftp_dir) {
-    die "FATAL: parameter TFTP_DIR is not defined in $config->systemimager_dir/systemimager.conf\n";
+    die "FATAL: parameter TFTP_DIR is not defined in ".$config->systemimager_dir."/systemimager.conf\n";
 } else {
     $pxe_conf_dir = "$tftp_dir" . "/pxelinux.cfg";
     $kboot_conf_dir = "$tftp_dir" . "/kboot.cfg";
 }
 
-my $syslinux_cfg_localboot = "$config->systemimager_dir/pxelinux.cfg/syslinux.cfg.localboot";
-my $kboot_cfg_localboot = "$config->systemimager_dir/kboot.cfg/localboot";
+my $syslinux_cfg_localboot = $config->systemimager_dir."/pxelinux.cfg/syslinux.cfg.localboot";
+my $kboot_cfg_localboot = $config->systemimager_dir."/kboot.cfg/localboot";
 my $pid_file = "/var/run/si_netbootmond.pid";
 my $log_file = "/var/log/systemimager/rsyncd";
 

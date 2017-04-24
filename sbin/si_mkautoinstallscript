@@ -24,15 +24,15 @@ my $cmdline = $0." ".join(" ",@ARGV);
 ### BEGIN parse the config file ###
 my $rsync_stub_dir = $config->rsync_stub_dir();
 unless ($rsync_stub_dir) {
-    die "FATAL: parameter RSYNC_STUB_DIR is not defined in $config->systemimager_dir/systemimager.conf\n";
+    die "FATAL: parameter RSYNC_STUB_DIR is not defined in ".$config->systemimager_dir."/systemimager.conf\n";
 }
 my $autoinstall_script_dir = $config->autoinstall_script_dir();
 unless ($autoinstall_script_dir) {
-    die "FATAL: parameter AUTOINSTALL_SCRIPT_DIR is not defined in $config->systemimager_dir/systemimager.conf\n";
+    die "FATAL: parameter AUTOINSTALL_SCRIPT_DIR is not defined in ".$config->systemimager_dir."/systemimager.conf\n";
 }
 my $rsyncd_conf = $config->rsyncd_conf();
 unless ($rsyncd_conf) {
-    die "FATAL: parameter RSYNCD_CONF is not defined in $config->systemimager_dir/systemimager.conf\n";
+    die "FATAL: parameter RSYNCD_CONF is not defined in ".$config->systemimager_dir."/systemimager.conf\n";
 }
 ### END parse the config file ###
 

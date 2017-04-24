@@ -163,7 +163,7 @@ unless ($all_parameters_set) {
 
 my $autoinstall_script_dir = $config->autoinstall_script_dir();
 unless ($autoinstall_script_dir) {
-    die "FATAL: parameter AUTOINSTALL_SCRIPT_DIR is not defined in $config->systemimager_dir/systemimager.conf\n";
+    die "FATAL: parameter AUTOINSTALL_SCRIPT_DIR is not defined in ".$config->systemimager_dir."/systemimager.conf\n";
 }
 
 if($interactive eq "yes") {

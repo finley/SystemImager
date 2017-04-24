@@ -251,9 +251,9 @@ GetOptions(
 # OL: Need to handle destination (like si_mkbootpackage)
 my $arch = SystemImager::UseYourOwnKernel::_get_arch();
 my $flavor = "default";
-my $initrd_destination = "$config->autoinstall_boot_dir/$arch/$flavor";
+my $initrd_destination = $config->autoinstall_boot_dir."/".$arch."/".$flavor;
 unless ($config->autoinstall_boot_dir) {
-            die "FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in $config->systemimager_dir/systemimager.conf\n";
+            die "FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in ".$config->systemimager_dir."/systemimager.conf\n";
     }
 
 # Force --my-modules option when on PS3 because there is no point to include other modules
@@ -883,10 +883,10 @@ sub create_auto_install_script_conf {
     }
 
     # Remove old-style partitionschemes directory if it exists. -BEF-
-    rmtree("$config->systemimager_dir/partitionschemes");
+    rmtree($config->systemimager_dir."/partitionschemes");
 
     # Where the configuration information be stored. -BEF-
-    my $file = "$config->systemimager_dir/autoinstallscript.conf";
+    my $file = $config->systemimager_dir."/autoinstallscript.conf";
 
     # Determine which partition tool is available.  Preference is sfdisk -- 
     # it provides more information. -BEF-
@@ -982,7 +982,7 @@ sub create_auto_install_script_conf {
 sub create_byid_real_map_conf {
     my %used_real_hash;
     my $real_dev;
-    my $map_file = "$config->systemimager_dir/byid_real_map.conf";
+    my $map_file = $config->systemimager_dir."/byid_real_map.conf";
     if ( -e $map_file ) {
         unlink $map_file;
     }

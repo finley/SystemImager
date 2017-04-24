@@ -120,7 +120,7 @@ sub create_uyok_initrd() {
         # module that someone needs. -BEF-
         #
         my $modules_to_exclude = '';
-        $file = "$config->systemimager_dir/UYOK.modules_to_exclude";
+        $file = $config->systemimager_dir."/UYOK.modules_to_exclude";
         if(-e $file) {
             #
             # Get list of exclusions from "/etc/systemimager/UYOK.modules_to_exclude"
@@ -225,7 +225,7 @@ sub create_uyok_initrd() {
         # Print initrd size information.
 	# OL: BUG: this code is obsolete and not compatible with what dracut produces.
         print ">> Evaluating initrd size to be added in the kernel boot options\n" .
-              ">> (e.g. $config->systemimager_dir/pxelinux.cfg/syslinux.cfg):\n";
+              ">> (e.g. ".$config->systemimager_dir."/pxelinux.cfg/syslinux.cfg):\n";
         if (-f "$boot_dir/initrd.img") {
             my $ramdisk_size = (`zcat $boot_dir/initrd.img | wc -c` + 10485760) / 1024;
             print " >>\tsuggested value -> ramdisk_size=$ramdisk_size\n\n";
@@ -610,7 +610,7 @@ sub get_uname_r {
 
 # Create --add-drivers dracut command line option to add mandatory modules listed in /etc/systemimager/UYOK.modules_to_include.
 sub get_mandatory_modules() {
-	my $mandatory_modules_file = "$config->systemimager_dir/UYOK.modules_to_include";
+	my $mandatory_modules_file = $config->systemimager_dir."/UYOK.modules_to_include";
 	my $mandatory_modules_option="";
 	if (-e $mandatory_modules_file) {
             #
