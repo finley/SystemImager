@@ -47,6 +47,8 @@ then
 	FG_RED=`tput setaf 1`
 	FG_WHITE=`tput setaf 7`
 	FG_AMBER=`tput setaf 3`
+	FG_BLUE=`tput setaf 4`
+	FG_CYAN=`tput setaf 6`
 	BG_BLACK=`tput setab 0`
 	BG_RED=`tput setab 1`
 	BG_BLUE=`tput setab 4`
@@ -64,14 +66,29 @@ fi
 # logwarn outputs to stderr
 # loginfo outputs to stdout
 # logmsg (same as loginfo: for compatibility)
+
+logerror() {
+	logmessage "${BG_RED}  ERROR:${BG_BLACK} $@"
+}
+
 logwarn() {
 	logmessage "${FG_RED}warning:${FG_WHITE} $@"
 }
+
 loginfo() {
 	logmessage "${FG_GREEN}    info:${FG_WHITE} $@"
 }
+
+logaction() {
+	logmessage "${FG_AMBER}  action:${FG_WHITE} $@"
+}
+
+lognotice() {
+	logmessage "${FG_BLUE}  notice:${FG_WHITE} $@"
+}
+
 logmsg() {
-	logmessage "${FG_AMBER}  notice:${FG_WHITE} $@"
+	logmessage "${FG_CYAN} message:${FG_WHITE} $@"
 }
 
 logmessage() {
@@ -85,23 +102,6 @@ logmessage() {
     # add the "sis: " part in case $@ is ""
     if [ ! -z "$USELOGGER" ] ;
         then logger -p user.$1 "sis: $@"
-    fi
-}
-
-
-################################################################################
-#
-#  check_version
-#
-# Usage: check_version
-check_version() {
-    loginfo "Checking Kernel version initrd modules version compatibility...."
-    INITRD_VERSION=$VERSION
-    KERNEL_VERSION=`uname -r | sed -e s/.*boel_v//`
-    if [ "$INITRD_VERSION" != "$KERNEL_VERSION" ] ; then
-        shellout "FATAL: Kernel version ($KERNEL_VERSION) doesn't match initrd version ($INITRD_VERSION)!"
-    else
-	loginfo "Ok."
     fi
 }
 
@@ -353,9 +353,8 @@ shellout() {
     LAST_ERR=$?
     test "$LAST_ERR" -ne 0 && logwarn "Last command exited with $LAST_ERR"
 
-    logwarn "$0: $1"
-    logwarn "Installation failed!"
-    logwarn "Can not proceed!  (Scottish accent -- think Groundskeeper Willie)"
+    logerror "Installation failed!                                             "
+    logerror "Can not proceed!  (Scottish accent -- think Groundskeeper Willie)"
 
     if test -s /run/systemimager/tmpfs_watcher.pid; then
 	$TMPFS_WATCHER_PID=`cat /run/systemimager/tmpfs_watcher.pid`
@@ -366,14 +365,14 @@ shellout() {
             rm -f /run/systemimager/tmpfs_watcher.pid
         fi
     fi
-    logwarn "Killing off udp-receiver and rsync processes."
+    logwarn "Killing off any udp-receiver and rsync processes."
     killall -9 udp-receiver rsync  >/dev/null 2>/dev/null
     write_variables
     if [ ! -z "$USELOGGER" ] ;
         then cat /etc/issue | logger
     fi
     if [ ! -z "$MONITOR_SERVER" ]; then
-    	logwarn "Installation failed!! Stopping report task."
+    	logerror "Installation failed!! Stopping report task."
         stop_report_task -1
     fi
     # Need to trigger emergency shell
@@ -1944,22 +1943,23 @@ get_1st_iface_with_link() {
 #################################################################################
 # Inspired from progress bar from Teddy Skarin
 # Available here: https://github.com/fearside/ProgressBar/
+# Modified for /bin/dash compatibility and systemimager needs.
 #
-# USAGE: ProgressBar currentState($1)
+# USAGE: ProgressBar <progress percentage>
 #
 ProgressBar() {
     _console_width=`tput cols`
     [ "${_console_width}" -lt 80 ] && _console_width=80
-    let _bar_width=(${_console_width}-21)
-    let _ipart=`echo ${1}|cut -d. -f1`
-    let _done=(${_ipart}*$_bar_width)/100
-    let _left=${_bar_width}-$_done
+    _bar_width=$((${_console_width}-21))
+    _ipart=`echo ${1}|cut -d. -f1`
+    _done=$(((${_ipart}*$_bar_width)/100))
+    _left=$((${_bar_width}-$_done))
     # Build progressbar string lengths
-    _fill=$(printf "%${_done}s")
-    _empty=$(printf "%${_left}s")
+    _fill=$(printf "%${_done}s"|tr ' ' '#')
+    _empty=$(printf "%${_left}s"|tr ' ' '-')
 
     # Build progressbar strings and print the ProgressBar line
-    printf "\rProgress : ${BG_BLUE}[${_fill// /#}${_empty// /-}]${BG_BLACK} ${1}%%" > /dev/console
+    printf "\rProgress : ${BG_BLUE}[${_fill}${_empty}]${BG_BLACK} ${1}%%" > /dev/console
 }
 
 # END
