@@ -399,8 +399,9 @@ sub _read_partition_info_and_prepare_parted_commands {
         print $out "# Wipe the MBR (Master Boot Record) clean.\n";
         $cmd = "dd if=/dev/zero of=$devfs_dev bs=512 count=1";
         print $out qq(logaction "$cmd"\n);
-        print $out qq($cmd || shellout "dd if=/dev/zero of=$devfs_dev failed"\n\n);
+        print $out qq($cmd || shellout "dd if=/dev/zero of=$devfs_dev failed"\n);
 
+        print $out "sleep 1\n\n"; # Give dime for disk to flush buffer
         print $out "# Re-read the disk label.\n";
         $cmd = "blockdev --rereadpt $devfs_dev";
         print $out qq(loginfo "$cmd"\n);
