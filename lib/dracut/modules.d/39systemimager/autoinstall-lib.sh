@@ -19,7 +19,6 @@ type logmessage >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 #
 #
 save_logs_to_sysroot() {
-    loginfo "========================="
     loginfo "Saving logs to /sysroot/root..."
     if test -d /sysroot/root
     then
@@ -31,7 +30,6 @@ save_logs_to_sysroot() {
         echo "${IMAGENAME}" >         /sysroot/root/SIS_Install_logs/image.txt
         test -f /run/initramfs/rdsosreport.txt && cp /run/initramfs/rdsosreport.txt /sysroot/root/SIS_Install_logs/
     else
-        logwarn "/sysroot/root does not exists"
         shellout "/sysroot/root does not exists"
     fi
 }
