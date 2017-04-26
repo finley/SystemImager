@@ -183,6 +183,8 @@ BITTORRENT_UPLOAD_MIN="$BITTORRENT_UPLOAD_MIN"
 GROUPNAMES="$GROUPNAMES"
 GROUP_OVERRIDES="$GROUP_OVERRIDES"
 
+SEL_RELABEL="$SEL_RELABEL"			# rd.sis.selinux-relabel
+
 export TERM="${TERM}"
 EOF
 
@@ -1968,4 +1970,26 @@ ProgressBar() {
     printf "\rProgress : ${BG_BLUE}[${_fill}${_empty}]${BG_BLACK} ${1}%%" > /dev/console
 }
 
+#################################################################################
+# Handle SE_Linux files.
+#
+# USAGE: SEL_Fixfiles
+#
+SEL_FixFiles() {
+if [ "$SEL_RELABEL" -eq 1 ]
+then
+    loginfo "Making sure files have correct selinux label"
+    if [ -x /sysroot/sbin/fixfiles ] ; then
+	    logaction "/sbin/fixfiles -f relabel"
+	    chroot /sysroot /sbin/fixfiles -f relabel
+    elif [ -x /sysroot/usr/sbin/fixfiles ] ; then
+	    logaction "/usr/sbin/fixfiles -f relabel"
+	    chroot /sysroot /usr/sbin/fixfiles -f relabel
+    else
+	    logwarn "no fixfiles binary found. Telling the OS to do that at next boot"
+	    logaction "touch /.autorelabel"
+	    touch /sysroot/.autorelabel
+    fi
+fi
+}
 # END

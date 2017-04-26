@@ -61,5 +61,12 @@ TERM=`getarg rd.sis.term`
 test -z "${TERM}" && TERM=${OLD_TERM}
 test -z "${TERM}" -o "${TERM}" = "dumb" && TERM=linux
 
+#########################
+# rd.sis.selinux-relabel=(bolean 0|1|yes|no) => default to yes
+test -z "$SEL_RELABEL" && SEL_RELABEL=`getarg rd.sis.selinux-relabel`
+test -z "$SEL_RELABEL" && SEL_RELABEL=1 # default to true!
+SEL_RELABEL=`echo $SEL_RELABEL | head -c 1 | tr 'Y' 'y'`
+[ $SEL_RELABEL = 'y' ] && SEL_RELABEL=1
+
 # Register what we read.
 write_variables
