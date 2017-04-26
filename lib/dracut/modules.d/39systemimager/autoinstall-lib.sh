@@ -26,7 +26,7 @@ save_logs_to_sysroot() {
         cp /tmp/variables.txt       /sysroot/root/SIS_Install_logs/
         cp /tmp/dhcp_info.${DEVICE} /sysroot/root/SIS_Install_logs/
 	cp /tmp/dhclient.${DEVICE}.dhcpopts /sysroot/root/SIS_Install_logs/
-        cp /tmp/si_monitor.log      /sysroot/root/SIS_Install_logs/
+        cat /tmp/si_monitor.log | sed -E 's/\[[0-9]{2}m//g' > /sysroot/root/SIS_Install_logs/si_monitor.log
         echo "${IMAGENAME}" >         /sysroot/root/SIS_Install_logs/image.txt
         test -f /run/initramfs/rdsosreport.txt && cp /run/initramfs/rdsosreport.txt /sysroot/root/SIS_Install_logs/
     else
