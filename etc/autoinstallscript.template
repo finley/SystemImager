@@ -195,9 +195,7 @@ mount_os_filesystems_to_sysroot
 #
 #   Lay the image down on the freshly formatted disk(s)
 #
-if [ ! -z "$MONITOR_SERVER" ]; then
-    start_report_task
-fi
+start_report_task
 
 if [ ! -z "$FLAMETHROWER_DIRECTORY_PORTBASE" ]; then 
 
@@ -207,9 +205,7 @@ if [ ! -z "$FLAMETHROWER_DIRECTORY_PORTBASE" ]; then
     RETRY=7
     FLAMETHROWER_TARPIPE=y
     flamethrower_client
-    if [ ! -z $MONITOR_SERVER ]; then
-        stop_report_task 101 # 101: status=finalizing...
-    fi
+    stop_report_task 101 # 101: status=finalizing...
 elif [ "x$BITTORRENT" = "xy" ]; then
     # Use BitTorrent
     if [ -f "${TORRENTS_DIR}/image-${IMAGENAME}.tar.gz.torrent" ]; then
@@ -238,9 +234,7 @@ elif [ "x$BITTORRENT" = "xy" ]; then
     loginfo "Start downloading image using torrent ${bittorrent_tarball}.torrent"
     loginfo "--> INFO: remember to start /etc/init.d/systemimager-server-bittorrent on the image server!"
     bittorrent_get_file ${TORRENTS_DIR}/${bittorrent_tarball}.torrent ${BITTORRENT_STAGING}
-    if [ ! -z "$MONITOR_SERVER" ]; then
-        stop_report_task 101 # 101: status=finalizing...
-    fi
+    stop_report_task 101 # 101: status=finalizing...
     # Extract image.
     logaction "Extracting image from ${bittorrent_tarball} ..."
     (cd /sysroot/ && tar -x${VERBOSE_OPT}${compress}Spf ${BITTORRENT_STAGING}/${bittorrent_tarball} > /dev/console) || shellout "Failed to extract image from bittorrent tarball."
@@ -265,18 +259,14 @@ else
         rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --exclude=/proc/* --numeric-ids \
               ${IMAGESERVER}::${IMAGENAME}/ ${DIR}/ > /dev/console || shellout 
 
-        if [ ! -z $MONITOR_SERVER ]; then
-            stop_report_task 101 # 101: status=finalizing...
-        fi
+        stop_report_task 101 # 101: status=finalizing...
 
         # Move from staging in tmpfs to disk
         rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${DIR}/ /sysroot/ > /dev/console || shellout
     else
         logaction "rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --exclude=/proc/* --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ /sysroot/" 
         rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --exclude=/proc/* --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ /sysroot/ > /dev/console || shellout 
-        if [ ! -z $MONITOR_SERVER ]; then
-            stop_report_task 101 # 101: status=finalizing...
-        fi
+        stop_report_task 101 # 101: status=finalizing...
     fi
 fi 
 

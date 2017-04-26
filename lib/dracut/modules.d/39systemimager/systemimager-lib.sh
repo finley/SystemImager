@@ -1747,7 +1747,7 @@ send_monitor_stdout() {
 #
 ################################################################################
 #
-#   Report installation status to the monitor server
+#   Report installation progress in the console and to the monitor server
 #
 
 start_report_task() {
@@ -1801,8 +1801,10 @@ start_report_task() {
 	# Update progress bar.
 	ProgressBar ${status}
 
-        # Send status and bandwidth to the monitor server.
-        send_monitor_msg "status=$status:speed=$speed"
+	if [ ! -z "$MONITOR_SERVER" ]; then
+            # Send status and bandwidth to the monitor server.
+            send_monitor_msg "status=$status:speed=$speed"
+	fi
         
         # Wait $REPORT_INTERVAL sec between each report -AR-
         sleep $REPORT_INTERVAL
@@ -1816,15 +1818,19 @@ start_report_task() {
 
 ################################################################################
 #
-#   Stop to report installation status to the monitor server
+#   Stop to report installation progress/status in the console and to the monitor server
 #
 
 stop_report_task() {
     # Try to report the error to the monitor server.
-    send_monitor_msg "status=$1:speed=0"
-    loginfo "Stopping progress report task."
+    if [ ! -z "$MONITOR_SERVER" ]; then
+        send_monitor_msg "status=$1:speed=0"
+    fi
 
     if test -s /run/systemimager/report_task.pid; then
+	[ "$1" -eq 101 ] && ProgressBar 100 # Fake 100% if status = "Finalizing"
+	echo > /dev/console # Make sure we're on a new line
+        loginfo "Stopping progress report task."
         REPORT_PID=`cat /run/systemimager/report_task.pid`
         # BUG: Need to make sure it is an integer
         if [ ! -z "$REPORT_PID" ]; then
