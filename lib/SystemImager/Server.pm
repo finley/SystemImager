@@ -386,8 +386,7 @@ sub _read_partition_info_and_prepare_parted_commands {
         print $out "if [ -z \$DISKORDER ] ; then\n";
         print $out "  $dev2disk{$devfs_dev}=$devfs_dev\n";
         print $out "elif [ -z \$$dev2disk{$devfs_dev} ] ; then\n";
-        print $out qq(  echo "Undefined: $dev2disk{$devfs_dev}"\n);
-        print $out "  shellout\n";
+        print $out qq(  shellout "Undefined: $dev2disk{$devfs_dev}"\n);
         print $out "fi\n";
         $devfs_dev = '$'.$dev2disk{$devfs_dev};
 
