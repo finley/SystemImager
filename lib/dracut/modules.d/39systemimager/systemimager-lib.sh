@@ -1855,7 +1855,7 @@ beep_incessantly() {
     local MINUTES_X_SIXTY
     { while :;
         do
-            /bin/echo -ne '\a'
+            /bin/echo -ne '\a' > /dev/console
             if [ $SECONDS -lt 60 ]; then 
                 logmsg "I have been done for $SECONDS seconds.  Reboot me already!"
             else
@@ -1888,7 +1888,7 @@ beep() {
     local COUNTED=0
     until [ "$COUNTED" = "$COUNT" ]
     do
-        /bin/echo -ne '\a'
+        /bin/echo -ne '\a' > /dev/console
         sleep $INTERVAL
         COUNTED=$(( $COUNTED + 1 ))
     done
