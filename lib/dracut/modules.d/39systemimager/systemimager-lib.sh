@@ -1831,7 +1831,7 @@ stop_report_task() {
 
     if test -s /run/systemimager/report_task.pid; then
 	[ "$1" -eq 101 ] && ProgressBar 100 # Fake 100% if status = "Finalizing"
-	echo > /dev/console # Make sure we're on a new line
+	echo "  " > /dev/console # Make sure we're on a new line (and clean glitches)
         loginfo "Stopping progress report task."
         REPORT_PID=`cat /run/systemimager/report_task.pid`
         # BUG: Need to make sure it is an integer
@@ -1992,4 +1992,69 @@ then
     fi
 fi
 }
+
+#################################################################################
+# Install bootloader on all disk specified as argument.
+# (Only supports grub2 and grub)
+#
+# USAGE: install_boot_loader <disk device> [<disk device> <disk device> ... ]
+
+install_boot_loader() {
+	test -z "$@" && shellout "No disks to install bootloader to!"
+	loginfo "Now trying to install a boot loader on"
+        loginfo "the following disk(s): [$@]..."
+
+	loginfo "Detecting bootloader flavor..."
+	[ -x /sysroot/usr/sbin/grub2-install ] || [ -x /sysroot/sbin/grub2-install ] && BOOT_LOADER="grub2"
+	[ -x /sysroot/sbin/grub-install ] && BOOT_LOADER="grub"
+	if test -z "${BOOT_LOADER}"
+	then
+		logwarn "Can't find a supported bootloader technology. Assuming post install"
+		logwarn "scripts will do the job!"
+		return
+	else
+		loginfo "Using the following boot loader: ${BOOT_LOADER}"
+	fi
+
+	case "${BOOT_LOADER}" in
+		"grub2")
+			# Generate grub2 config file from OS already installed 10_linux cfg.
+			logaction "creating /boot/grub2/grub.cfg"
+			chroot /sysroot /sbin/grub2-mkconfig --output=/boot/grub2/grub.cfg
+
+			# Install bootloader
+			for disk in $@
+			do
+				[ ! -b "$disk" ] && shellout "Can't install bootloader: [$disk] is not a block device!"
+				logaction "chroot /sysroot /sbin/grub2-install $disk"
+				chroot /sysroot /sbin/grub2-install --force $disk
+			done
+			;;
+		"grub")
+			ROOT=`mount |grep " / "|cut -d" " -f1`
+			OS_NAME=`cat /etc/system-release`
+			# BUG: (hd0,0) is hardcoded: need to fix that.
+			logaction "Creating /boot/grub/menu.lst"
+			cat > /boot/grub/menu.lst <<EOF
+default=0
+timeout=5
+title ${OS_NAME}
+	root (hd0,0)
+	kernel /$(cd /boot; ls -rS vmli*|grep -v debug|tail -1) ro root=$ROOT rhgb quiet
+	initrd /$(cd /boot; ls -rS init*|grep -v debug|tail -1)
+EOF
+			# Install bootloader
+			for disk in $@
+			do
+				[ ! -b "$disk" ] && shellout "Can't install bootloader: [$disk] is not a block device!"
+				logaction "chroot /sysroot /sbin/grub-install $disk"
+				chroot /sysroot /sbin/grub-install $1
+			done
+			;;
+		*)
+			logwarn "Unsupported bootloader"
+			;;
+	esac
+}
+
 # END
