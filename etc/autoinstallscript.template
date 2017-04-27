@@ -136,17 +136,16 @@ fi
   [ $DISKS -eq 0 ] && {
     beep
     beep
-    logwarn ""
-    logwarn "NO DISK DEVICE FILES WERE FOUND.  THIS USUALLY MEANS THE KERNEL DID NOT"
-    logwarn "RECOGNIZE ANY OF THE ATTACHED DISKS."
-    logwarn ""
-    logwarn "The kernel boot messages, which preceded this, may indicate why."
-    logwarn ""
-    logwarn "Reverting to disk configuration specified by image master script."
+    logerror ""
+    logerror "NO DISK DEVICE FILES WERE FOUND.  THIS USUALLY MEANS THE KERNEL DID NOT"
+    logerror "RECOGNIZE ANY OF THE ATTACHED DISKS."
+    logerror ""
+    logerror "The kernel boot messages, which preceded this, may indicate why."
+    logerror ""
+    logerror "Reverting to disk configuration specified by image master script."
     DISKORDER=
-    logwarn ""
+    logerror ""
   }
-  echo
   beep
 }
 #
@@ -434,12 +433,38 @@ beep
 #
 ################################################################################
 
+################################################################################
+#
+# Install the boot loader on all used disks.
+#
+# DISKS have already been loaded into $DISK{0..n} variables.
+# Trying to enumerate them. At least, DISK0 exists otherwise we would have
+# shellout() at disk partitionning attempt.
+D=0
+DEV_LIST=""
+while test -n "`eval 'echo $DISK'$D`"
+do
+	DEV="DISK$D="`eval 'echo $DISK'$D`
+	DEV_LIST="$DEV_LIST $DEV"
+	D=$(($D + 1))
+done
+install_boot_loader $DEV_LIST
+#
+################################################################################
 
 ################################################################################
 #
 #   Post Install Scripts
 #
 run_post_install_scripts
+#
+################################################################################
+
+################################################################################
+#
+#   SE Linux relabel
+#
+SEL_FixFiles
 #
 ################################################################################
 
