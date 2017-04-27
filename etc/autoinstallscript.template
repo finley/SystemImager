@@ -406,15 +406,14 @@ beep
 # BEGIN disk edits
 #
 [ -z $DISKORDER ] || {
-  echo "Editing files for actual disk configuration..."
+  loginfo "Editing files for actual disk configuration..."
 ##SHOW_DISK_EDITS##
   for file in /etc/fstab /etc/systemconfig/systemconfig.conf /boot/grub/menu.lst /etc/lilo.conf /etc/grub.conf /boot/grub/device.map; do
     [ -f /sysroot/$file ] || continue
-    echo " $file"
+    loginfo " $file"
     cp /sysroot/$file /sysroot/$file.image
 ##EDIT_DISK_NAMES##
   done
-  echo
   beep
 }
 #
