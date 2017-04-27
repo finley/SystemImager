@@ -1849,12 +1849,13 @@ stop_report_task() {
 #   Beep incessantly
 #
 beep_incessantly() {
+    modprobe pcspkr # Make sure pcspkr module is loaded
     local SECONDS=1
     local MINUTES
     local MINUTES_X_SIXTY
     { while :;
         do
-            echo -n -e "\\a"
+            /bin/echo -ne '\a'
             if [ $SECONDS -lt 60 ]; then 
                 logmsg "I have been done for $SECONDS seconds.  Reboot me already!"
             else
@@ -1877,6 +1878,7 @@ beep_incessantly() {
 # Usage: beep [$COUNT [$INTERVAL]]
 # Usage: beep
 beep() {
+    modprobe pcspkr # Make sure pcspkr module is loaded
     local COUNT=$1
     local INTERVAL=$2
 
@@ -1886,7 +1888,7 @@ beep() {
     local COUNTED=0
     until [ "$COUNTED" = "$COUNT" ]
     do
-        echo -n -e "\\a"
+        /bin/echo -ne '\a'
         sleep $INTERVAL
         COUNTED=$(( $COUNTED + 1 ))
     done
@@ -1986,7 +1988,7 @@ then
     if [ "$SE_POLICY" != "Permissive" ] # Disabled  or Enforcing
     then
 	    logwarn "Cannot fix SE Linux file label. (need SELINUX=permissive)"
-	    logwarn "current SELinux status: $SE_POLICY")
+	    logwarn "current SELinux status: ${SE_POLICY}"
 	    logwarn "Setting autorelabel for next reboot."
 	    logaction "touch /.autorelabel"
 	    touch /sysroot/.autorelabel
