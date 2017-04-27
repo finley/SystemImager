@@ -1985,8 +1985,9 @@ then
     fi
     if [ "$SE_POLICY" != "Permissive" ] # Disabled  or Enforcing
     then
-	    logwarn "Cannot fix SE Linux file label."
-	    logwarn "Setting autorelabel for next reboot"
+	    logwarn "Cannot fix SE Linux file label. (need SELINUX=permissive)"
+	    logwarn "current SELinux status: $SE_POLICY")
+	    logwarn "Setting autorelabel for next reboot."
 	    logaction "touch /.autorelabel"
 	    touch /sysroot/.autorelabel
 	    return
