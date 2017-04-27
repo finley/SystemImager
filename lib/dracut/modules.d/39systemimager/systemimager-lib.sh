@@ -1979,12 +1979,22 @@ SEL_FixFiles() {
 if [ "$SEL_RELABEL" -eq 1 ]
 then
     loginfo "Making sure files have correct selinux label"
-    if [ -x /sysroot/sbin/fixfiles ] ; then
+    if [ -x /sysroot/sbin/getenforce -o -x /sysroot/usr/sbin/getenforce ]
+    then
+	    SE_POLICY=`/sysroot/sbin/getenforce`
+    fi
+    if [ "$SE_POLICY" != "Permissive" ] # Disabled  or Enforcing
+    then
+	    logwarn "Cannot fix SE Linux file label."
+	    logwarn "Setting autorelabel for next reboot"
+	    logaction "touch /.autorelabel"
+	    touch /sysroot/.autorelabel
+	    return
+    fi
+    # SE_POLICY is set to Permissive, so we should be able to relabel now.
+    if [ -x /sysroot/sbin/fixfiles -o -x /sysroot/usr/sbin/fixfiles] ; then
 	    logaction "/sbin/fixfiles -f relabel"
 	    chroot /sysroot /sbin/fixfiles -f relabel
-    elif [ -x /sysroot/usr/sbin/fixfiles ] ; then
-	    logaction "/usr/sbin/fixfiles -f relabel"
-	    chroot /sysroot /usr/sbin/fixfiles -f relabel
     else
 	    logwarn "no fixfiles binary found. Telling the OS to do that at next boot"
 	    logaction "touch /.autorelabel"
