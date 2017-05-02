@@ -20,15 +20,15 @@ test -z "$MONITOR_PORT" && MONITOR_PORT=$(getargnum 8181 100 32000 rd.sis.monito
 
 ############################################
 # rd.sis.monitor-console=(bolean 0|1|yes|no)
-MONITOR_CONSOLE=0
-getargbool 0 MONITOR_CONSOLE && MONITOR_CONSOLE=1
-getargbool 0 rd.sis.monitor-console && MONITOR_CONSOLE=1
+MONITOR_CONSOLE="n"
+getargbool 0 MONITOR_CONSOLE && MONITOR_CONSOLE="y"
+getargbool 0 rd.sis.monitor-console && MONITOR_CONSOLE="y"
 
 ###########################################
 # rd.sis.skip-local-cfg=(bolean 0|1|yes|no)
-SKIP_LOCAL_CFG=0
-getargbool 0 SKIP_LOCAL_CFG && SKIP_LOCAL_CFG=1
-getargbool 0 rd.sis.skip-local-cfg && SKIP_LOCAL_CFG=1
+SKIP_LOCAL_CFG="n"
+getargbool 0 SKIP_LOCAL_CFG && SKIP_LOCAL_CFG="y"
+getargbool 0 rd.sis.skip-local-cfg && SKIP_LOCAL_CFG="y"
 
 ###################################
 # rd.sis.image-server=<hostname|ip>
@@ -59,9 +59,9 @@ test -z "${TERM}" && TERM=${OLD_TERM}
 test -z "${TERM}" -o "${TERM}" = "dumb" && TERM=linux
 
 #########################
-# rd.sis.selinux-relabel=(bolean 0|1|yes|no) => default to yes
-SEL_RELABEL=1
-getargbool 1 rd.sis.selinux-relabel && SEL_RELABEL=0)
+# rd.sis.selinux-relabel=(bolean 0|1|yes|no|y|n) => default to yes
+SEL_RELABEL="y"
+getargbool 1 rd.sis.selinux-relabel && SEL_RELABEL="y"
 
 # Register what we read.
 write_variables

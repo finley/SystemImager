@@ -1978,7 +1978,7 @@ ProgressBar() {
 # USAGE: SEL_Fixfiles
 #
 SEL_FixFiles() {
-if [ "$SEL_RELABEL" -eq 1 ]
+if [ "x$SEL_RELABEL" = "xy" ]
 then
     loginfo "Making sure files have correct selinux label"
     if [ -x /sysroot/sbin/getenforce -o -x /sysroot/usr/sbin/getenforce ]

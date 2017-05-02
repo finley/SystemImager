@@ -23,13 +23,13 @@ test -z "$MONITOR_PORT" && MONITOR_PORT=8181 # default value
 # rd.sis.monitor-console=(bolean 0|1|yes|no)
 test -z "$MONITOR_CONSOLE" && MONITOR_CONSOLE=`getarg MONITOR_CONSOLE`
 test -z "$MONITOR_CONSOLE" && MONITOR_CONSOLE=`getarg rd.sis.monitor-console`
-test -z "$MONITOR_CONSOLE" && MONITOR_CONSOLE=0
+test -z "$MONITOR_CONSOLE" && MONITOR_CONSOLE="n"
 
 ###########################################
 # rd.sis.skip-local-cfg=(bolean 0|1|yes|no)
 test -z "$SKIP_LOCAL_CFG" && SKIP_LOCAL_CFG=`getarg SKIP_LOCAL_CFG`
 test -z "$SKIP_LOCAL_CFG" && SKIP_LOCAL_CFG=`getarg rd.sis.skip-local-cfg`
-test -z "$SKIP_LOCAL_CFG" && SKIP_LOCAL_CFG=0
+test -z "$SKIP_LOCAL_CFG" && SKIP_LOCAL_CFG="n"
 
 ###################################
 # rd.sis.image-server=<hostname|ip>
@@ -64,9 +64,9 @@ test -z "${TERM}" -o "${TERM}" = "dumb" && TERM=linux
 #########################
 # rd.sis.selinux-relabel=(bolean 0|1|yes|no) => default to yes
 test -z "$SEL_RELABEL" && SEL_RELABEL=`getarg rd.sis.selinux-relabel`
-test -z "$SEL_RELABEL" && SEL_RELABEL=1 # default to true!
 SEL_RELABEL=`echo $SEL_RELABEL | head -c 1 | tr 'Y' 'y'`
-[ $SEL_RELABEL = 'y' ] && SEL_RELABEL=1
+test -z "$SEL_RELABEL" && SEL_RELABEL="y" # default to true!
+[ $SEL_RELABEL = '1' ] && SEL_RELABEL="y"
 
 # Register what we read.
 write_variables
