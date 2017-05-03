@@ -7,7 +7,7 @@ check() {
 }
 
 depends() {
-    echo network syslog shutdown ssh-client i18n
+    echo network syslog shutdown i18n
     case "$(uname -m)" in
         s390*) echo cms ;;
     esac
@@ -19,7 +19,6 @@ depends() {
 # Some binaries are already installed from modules
 #
 # 99shutdown:   umount poweroff reboot halt losetup stat
-# 95ssh-client: ssh scp
 # 40network:    ip arping dhclient sed ping ping6 brctl teamd teamdctl teamnl 
 # 10i18n:       setfont loadkeys kbd_mode stty
 ################################################################################
@@ -30,6 +29,10 @@ install() {
     # binaries we want in initramfs
     inst_multiple -o mke2fs mkfs.ext2 mkfs.ext3 mkfs.ext4 mklost+found resize2fs tune2fs e2fsck mkfs.xfs
     inst_multiple -o dosfsck dosfslabel fatlabel fsck.fat fsck.msdos fsck.vfat mkdosfs mkfs.fat mkfs.msdos mkfs.vfat
+    # Install ssh client
+    install_ssh
+    # Install sshd server
+    install_sshd
     # Install hfs if available.
     inst_multiple -o fsck.hfs hattrib hcd hcopy hdel hdir hformat hfs hfsck hls hmkdir hmount hpwd hrename hrmdir humount hvol
     # Install btrfs is available
@@ -60,4 +63,24 @@ install() {
 #    inst_hook pre/pivot 50 "$moddir/systemimager-save-inst-logs.sh"
 
     dracut_need_initqueue
+}
+
+################################################################################
+# sub routine that installs ssh clients.
+#
+install_ssh() {
+    # Install ssh clients binaries
+    inst_multiple -o ssh scp
+    # Install ssh clients config
+    (cd /etc; tar cpf - ssh/ssh_config*)|(cd $initdir/etc; tar xpf -)
+}
+
+################################################################################
+# sub routine that installs sshd clients.
+#
+install_sshd() {
+    # Install ssh clients binaries
+    inst_multiple -o sshd
+    # Install sshd configuration files
+    (cd /etc; tar cpf - ssh/sshd_config ssh/moduli)|(cd $initdir/etc; tar xpf -)
 }
