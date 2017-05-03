@@ -1481,6 +1481,7 @@ run_post_install_scripts() {
 # OL: obsolete. need rework.
 
 start_sshd() {
+    export HOME=/root # We're running as root.
     mkdir -p /root/.ssh/ || shellout "Failed to create /root/.ssh/"
     chmod 700 /root/.ssh || shellout "Failed to set permissions on /root/.ssh/"
 
@@ -1528,7 +1529,7 @@ start_sshd() {
 ################################################################################
 #
 start_ssh() {
-
+    export HOME=/root # We're running as root.
     # create root's ssh dir
     mkdir -p /root/.ssh/ || shellout "Failed to create /root/.ssh/"
     chmod 700 /root/.ssh || shellout "Failed to set permissions on /root/.ssh/"
