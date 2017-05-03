@@ -1481,49 +1481,47 @@ run_post_install_scripts() {
 # OL: obsolete. need rework.
 
 start_sshd() {
-    mkdir -p /root/.ssh/ || shellout
+    mkdir -p /root/.ssh/ || shellout "Failed to create /root/.ssh/"
+    chmod 700 /root/.ssh || shellout "Failed to set permissions on /root/.ssh/"
 
-    # download ssh authorized_keys if it's not present into the initrd.
+    # Download ssh authorized_keys if it's not present into the initrd.
     if [ ! -f /root/.ssh/authorized_keys ]; then
         if [ -z $SSH_DOWNLOAD_URL ]; then
-            logmsg
-            logmsg "error: authorized_keys not found and SSH_DOWNLOAD_URL not defined in the installation parameters!"
-            logmsg "sshd can't be started!"
-            shellout
+            logerror "authorized_keys not found and SSH_DOWNLOAD_URL not defined in the installation parameters!"
+            shellout "sshd can't be started!"
         fi
         CMD="wget ${SSH_DOWNLOAD_URL}/${ARCH}/ssh/authorized_keys"
-        logmsg
-        logmsg $CMD
-        $CMD || shellout
+        loginfo "$CMD"
+        $CMD || shellout "Failed to download ${SSH_DOWNLOAD_URL}/${ARCH}/ssh/authorized_keys"
     fi
 
     # set permissions to 600 -- otherwise, sshd will refuse to use it
-    chmod 600 /root/.ssh/authorized_keys || shellout
+    loginfo "Setting correct permissions for /root/.ssh/authorized_keys"
+    chmod 600 /root/.ssh/authorized_keys || shellout "Failed to chmod 600 authorized_keys"
 
     # must be owned by root
+    loginfo "Setting correct ownership for /root/*"
     chown -R 0.0 /root/
         
     # create a private host key for this autoinstall client
-    logmsg
-    logmsg "Using ssh-keygen to create this hosts private key"
-    logmsg
-    mkdir -p /var/empty || shellout
+    loginfo "Using ssh-keygen to create this hosts private key"
+    mkdir -p /var/empty || shellout "Failed to create /var/empty"
     if [ ! -f /etc/ssh/ssh_host_dsa_key ]; then
-        ssh-keygen -t dsa -N "" -f /etc/ssh/ssh_host_dsa_key || shellout
+        ssh-keygen -t dsa -N "" -f /etc/ssh/ssh_host_dsa_key || shellout "Failed to create DSA key"
     fi
     if [ ! -f /etc/ssh/ssh_host_rsa_key ]; then
-        ssh-keygen -t rsa -N "" -f /etc/ssh/ssh_host_rsa_key || shellout
+        ssh-keygen -t rsa -N "" -f /etc/ssh/ssh_host_rsa_key || shellout "Failed to create RSA key"
     fi
 
     # try to mount devpts (sometimes it's not really necessary)
-    mkdir -p /dev/pts
-    mount -t devpts none /dev/pts >/dev/null 2>&1
+    # mkdir -p /dev/pts
+    # mount -t devpts none /dev/pts >/dev/null 2>&1
 
     # fire up sshd
-    mkdir -p /var/run/sshd || shellout
-    chmod 0755 /var/run/sshd || shellout
-    /usr/sbin/sshd || shellout
-    logmsg "sshd started"
+    mkdir -p /var/run/sshd || shellout "Failed to create /var/run/sshd/"
+    chmod 0755 /var/run/sshd || shellout "Failed to set permissions on /var/run/sshd"
+    /usr/sbin/sshd || shellout "Failed to start ssh daemon."
+    loginfo "ssh daemon started"
     touch /tmp/sshd_started
 }
 #
@@ -1532,8 +1530,8 @@ start_sshd() {
 start_ssh() {
 
     # create root's ssh dir
-    mkdir -p /root/.ssh
-    chmod 700 /root/.ssh
+    mkdir -p /root/.ssh/ || shellout "Failed to create /root/.ssh/"
+    chmod 700 /root/.ssh || shellout "Failed to set permissions on /root/.ssh/"
 
     ############################################################################
     #
@@ -1543,22 +1541,22 @@ start_ssh() {
     if [ -e /root/.ssh/id_dsa ]; then
         # (ssh2 dsa style user private key)
         PRIVATE_KEY=/root/.ssh/id_dsa
-        chmod 600 $PRIVATE_KEY         || shellout
+        chmod 600 $PRIVATE_KEY         || shellout "Failed to chmod 600 $PRIVATE_KEY"
     elif [ -e /root/.ssh/id_rsa ]; then
         # (ssh2 rsa style user private key)
         PRIVATE_KEY=/root/.ssh/id_rsa
-        chmod 600 $PRIVATE_KEY         || shellout
+        chmod 600 $PRIVATE_KEY         || shellout "Failed to chmod 600 $PRIVATE_KEY"
     elif [ -e /floppy/id_dsa ]; then
         # (ssh2 dsa style user private key) from floppy
         PRIVATE_KEY=/root/.ssh/id_dsa
-        cp /floppy/id_dsa $PRIVATE_KEY || shellout
-        chmod 600 $PRIVATE_KEY         || shellout
+        cp /floppy/id_dsa $PRIVATE_KEY || shellout "Failed to cp /floppy/id_dsa $PRIVATE_KEY"
+        chmod 600 $PRIVATE_KEY         || shellout "Failed to chmod 600 $PRIVATE_KEY"
     elif [ -e /floppy/id_rsa ]; then
         #
         # (ssh2 rsa style user private key) from floppy
         PRIVATE_KEY=/root/.ssh/id_rsa
-        cp /floppy/id_rsa $PRIVATE_KEY || shellout
-        chmod 600 $PRIVATE_KEY         || shellout
+        cp /floppy/id_rsa $PRIVATE_KEY || shellout "Failed to cp /floppy/id_rsa $PRIVATE_KEY"
+        chmod 600 $PRIVATE_KEY         || shellout "Failed to chmod 600 $PRIVATE_KEY"
     fi
     #
     ############################################################################
@@ -1583,13 +1581,13 @@ start_ssh() {
         [ -z $SSH_USER ] && SSH_USER=root
 
         CMD="ssh -N -l $SSH_USER -n -f -L873:127.0.0.1:873 $IMAGESERVER $REDIRECTION_OPTIONS"
-        loginfo "Running: $CMD"
-        $CMD || shellout
+        loginfo "Starting: $CMD"
+        $CMD || shellout "Failed to start ssh client".
         
         # Since we're using SSH, change the $IMAGESERVER variable to reflect
         # the forwarded connection.
         IMAGESERVER=127.0.0.1
-
+        write_variables # Make IMAGESERVER change persistent.
     else
         ########################################################################
         #
@@ -1598,9 +1596,7 @@ start_ssh() {
         # next step of the autoinstall.
         #
         if [ -z $HOSTNAME ]; then
-            logmsg
-            logmsg "Trying to get hostname via DNS..."
-            logmsg
+            loginfo "Trying to get hostname via DNS..."
             get_hostname_by_dns
         fi
         
@@ -1614,17 +1610,15 @@ start_ssh() {
             start_sshd
             # Give sshd time to initialize before we yank the parent process
             # rug out from underneath it.
-            sleep 15
+            sleep 5
         fi
 
-        logmsg
-        logmsg
-        logmsg "Started sshd.  You must now go to your imageserver and issue"
-        logmsg "the following command:"
-        logmsg
-        logmsg " \"si_pushinstall --hosts ${HOST_OR_IP}\"."
-        logmsg
-        logmsg
+        loginfo "************************************************************"
+        loginfo "Started sshd.  You must now go to your imageserver and issue"
+        loginfo "the following command:"
+        loginfo ""
+        loginfo " \"si_pushinstall --hosts ${HOST_OR_IP}\"."
+        loginfo "************************************************************"
 
         # Since we're using SSH, change the $IMAGESERVER variable to reflect
         # the forwarded connection.
@@ -1958,7 +1952,8 @@ get_1st_iface_with_link() {
 # USAGE: ProgressBar <progress percentage>
 #
 ProgressBar() {
-    _console_width=`tput cols`
+    #_console_width=`tput cols`
+    _console_width=`stty -F /dev/console size|cut -d' ' -f2`
     [ "${_console_width}" -lt 80 ] && _console_width=80
     _bar_width=$((${_console_width}-21))
     _ipart=`echo ${1}|cut -d. -f1`

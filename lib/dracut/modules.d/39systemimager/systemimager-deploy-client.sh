@@ -13,8 +13,7 @@ if [ "$TMPFS_STAGING" = "yes" ]; then
 fi
 
 if [ "x$SSHD" = "xy" ]; then
-    logmsg
-    logmsg start_sshd
+    loginfo "SSHD=y => start_sshd"
     start_sshd
 fi
 
@@ -22,8 +21,7 @@ if [ ! -z "$SSH_DOWNLOAD_URL" ]; then
     SSH=y
 fi
 if [ "x$SSH" = "xy" ]; then
-    logmsg
-    logmsg start_ssh
+    loginfo "SSH=y => start_ssh"
     start_ssh
 fi
 
