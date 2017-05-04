@@ -1620,19 +1620,24 @@ start_ssh() {
             sleep 5
         fi
 	loginfo "Started sshd."
-        loginfo "${BG_BLUE}=================================================${BG_BLACK}"
-        loginfo "${BG_BLUE}= You must now go to your imageserver and issue =${BG_BLACK}"
-        loginfo "${BG_BLUE}= the following command:                        =${BG_BLACK}"
-        loginfo "${BG_BLUE}=                                               =${BG_BLACK}"
-        loginfo "${BG_BLUE}=  \"${FG_AMBER}si_pushinstall --hosts ${HOST_OR_IP}\"${FG_WHITE}.    =${BG_BLACK}"
-        loginfo "${BG_BLUE}=================================================${BG_BLACK}"
-
+	cat > /dev/console <<EOF
+${BG_BLUE}================================================================================
+      You must now go to your imageserver and issue the following command:
+          "${FG_AMBER}si_pushinstall --hosts ${HOST_OR_IP}"${FG_WHITE}
+================================================================================${BG_BLACK}
+EOF
+	loginfo "Wainting for si_pushupdate to complete..."
         # Since we're using SSH, change the $IMAGESERVER variable to reflect
         # the forwarded connection.
         IMAGESERVER=127.0.0.1
+        write_variables # Keep track of IMAGESERVER
 
         while [ ! -f /tmp/si_pushupdate.completed ]; do
-            sleep 5
+		for spin in '/' '-' '\\' '|'
+		do
+			/bin/echo -ne "$spin\r" > /dev/console
+			sleep 0.5
+		done
         done
     fi
 }
