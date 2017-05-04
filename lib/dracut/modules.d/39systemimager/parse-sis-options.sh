@@ -11,6 +11,14 @@ lognotice "==== parse-sis-options ===="
 loginfo "Reading SIS relevants parameters from cmdline and store them in /tmp/variables.txt"
 
 #####################################
+# rd.sis.image-name="imagename|imagename.sh|imagename.master"
+test -z "$IMAGENAME" && IMAGENAME=$(getarg -d IMAGENAME -n rd.sis.image-name)
+
+#####################################
+# rd.sis.script-name="scriptname|scriptname.sh|scriptname.master"
+test -z "$SCRIPTNAME" && SCRIPTNAME=$(getarg -d SCRIPTNAME -n rd.sis.script-name)
+
+#####################################
 # rd.sis.monitor-server=<hostname|ip>
 test -z "$MONITOR_SERVER" && MONITOR_SERVER=$(getarg -d MONITOR_SERVER -n rd.sis.monitor-server)
 

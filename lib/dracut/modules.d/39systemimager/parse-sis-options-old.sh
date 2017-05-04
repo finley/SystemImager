@@ -11,6 +11,16 @@ lognotice "==== parse-sis-options-old ===="
 loginfo "Reading SIS relevants parameters from cmdline"
 
 #####################################
+# rd.sis.image-name="imagename|imagename.sh|imagename.master"
+test -z "$IMAGENAME" && IMAGENAME=`getarg IMAGENAME`
+test -z "$IMAGENAME" && IMAGENAME=`getarg rd.sis.image-name`
+
+#####################################
+# rd.sis.script-name="scriptname|scriptname.sh|scriptname.master"
+test -z "$SCRIPTNAME" && SCRIPTNAME=`getarg SCRIPTNAME`
+test -z "$SCRIPTNAME" && SCRIPTNAME=`getarg rd.sis.script-name`
+
+#####################################
 # rd.sis.monitor-server=<hostname|ip>
 test -z "$MONITOR_SERVER" && MONITOR_SERVER=`getarg MONITOR_SERVER`
 test -z "$MONITOR_SERVER" && MONITOR_SERVER=`getarg rd.sis.monitor-server`
