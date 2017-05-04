@@ -33,13 +33,15 @@ use Tk;
 use Tk::Label;
 use Tk::Balloon;
 use Tk::ItemStyle;
-use Tk::ROText;
+use Tk::ROTextANSIColor;
 use Tk::ProgressBar;
 use Tk::widgets qw/Dialog ErrorDialog/;
 use Fcntl ':flock';
 use XML::Simple;
 use Time::HiRes qw(gettimeofday tv_interval);
 use Getopt::Long qw(:config no_ignore_case bundling);
+use SystemImager::Config;
+use vars qw($config $VERSION);
 
 my $version_info = << "EOF";
 perl (v$])
@@ -616,7 +618,7 @@ sub show_virtual_console
 
     # Console body.
     $sub_tab = $sub_win->Scrolled(
-        'ROText',
+        'ROTextANSIColor',
         -scrollbars    => 'e',
         -width         => 80,
         -height        => 25,
