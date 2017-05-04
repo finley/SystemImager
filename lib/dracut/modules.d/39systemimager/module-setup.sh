@@ -29,7 +29,7 @@ install() {
     # binaries we want in initramfs
     inst_multiple -o mke2fs mkfs.ext2 mkfs.ext3 mkfs.ext4 mklost+found resize2fs tune2fs e2fsck mkfs.xfs
     inst_multiple -o dosfsck dosfslabel fatlabel fsck.fat fsck.msdos fsck.vfat mkdosfs mkfs.fat mkfs.msdos mkfs.vfat
-    # Install ssh
+    # Install ssh and its requirements
     install_ssh
     # Install hfs if available.
     inst_multiple -o fsck.hfs hattrib hcd hcopy hdel hdir hformat hfs hfsck hls hmkdir hmount hpwd hrename hrmdir humount hvol
@@ -68,7 +68,7 @@ install() {
 #
 install_ssh() {
     # Install binaries
-    inst_multiple -o ssh scp ssh-keygen sshd
+    inst_multiple -o ssh scp ssh-keygen sshd wget
     # Install clients config
     (cd /etc; tar cpf - ssh/ssh_config*)|(cd $initdir/etc; tar xpf -)
     # Install server config

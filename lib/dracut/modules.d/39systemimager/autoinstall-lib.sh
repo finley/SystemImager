@@ -100,16 +100,6 @@ umount_os_filesystems_from_sysroot()
 
 ################################################################################
 #
-#  get_arch
-#
-# Usage: get_arch; echo $ARCH
-get_arch() {
-    ARCH=`uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/`
-    loginfo "Detected ARCH=$ARCH"
-}
-
-################################################################################
-#
 # refuse_to_run_on_a woring machine.
 
 fail_if_run_from_working_machine() {

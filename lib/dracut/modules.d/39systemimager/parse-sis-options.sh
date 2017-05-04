@@ -39,8 +39,24 @@ test -z "$IMAGESERVER" && IMAGESERVER=$(getarg -d IMAGESERVER -n rd.sis.image-se
 test -z "$LOG_SERVER_PORT" && LOG_SERVER_PORT=$(getargnum 514 100 32000 rd.sis.log-server-port)
 
 ###############################
+# rd.sis.ssh-client=(bolean 0|1|yes|no|not present) Defaults to "n"
+SSH="n"
+getargbool 0 SSH && SSH="y"
+getargbool 0 rd.sis.ssh-client && SSH="y"
+
+###############################
 # rd.sis.ssh-download-url="URL"
-test -z "$SSH_DOWNLOAD_URL" && SSH_DOWNLOAD_URL=$(getarg rd.sis.ssh-download-url)
+test -z "$SSH_DOWNLOAD_URL" && SSH_DOWNLOAD_URL=$(getarg -d SSH_DOWNLOAD_URL -n rd.sis.ssh-download-url)
+test -n "$SSH_DOWNLOAD_URL" && SSH="y" # SSH=y if we have a download url.
+
+###############################
+# rd.sis.ssh-server=(bolean 0|1|yes|no|not present) => defaults to no
+test -z "$SSHD" && SSHD=$(getarg -d SSHD -n rd.sis.ssh-server)
+
+###############################
+# rd.sis.ssh-user=<user used to initiate tunner on server>
+test -z "$SSH_USER" && SSH_USER=$(getarg -d SSH_USER -n rd.sis.ssh-user)
+[ "$SSH" = "y" ] && [ -z "$SSH_USER" ] && SSH_USER="root"
 
 ###############################################
 # rd.sis.flamethrower-directory-portbase="path"

@@ -12,3 +12,8 @@ test ! -d /run/systemimager && mkdir -p /run/systemimager
 # If /sysroot/proc is present, it quits with exit status "ok" (sort of rootok)
 test ! -d /sysroot/proc && mkdir -p /sysroot/proc
 
+ARCH=`uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/`
+loginfo "Detected ARCH=$ARCH"
+
+# Keep track of ARCH
+write_variables

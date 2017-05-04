@@ -162,6 +162,7 @@ USELOGGER="$USELOGGER"
 
 TMPFS_STAGING="$TMPFS_STAGING"		# rd.sis.tmpfs-staging
 
+ARCH="$ARCH"
 SSH="$SSH"
 SSHD="$SSHD"
 SSH_USER="$SSH_USER"
@@ -1493,7 +1494,9 @@ start_sshd() {
         fi
         CMD="wget ${SSH_DOWNLOAD_URL}/${ARCH}/ssh/authorized_keys"
         loginfo "$CMD"
+	cd /root/.ssh/
         $CMD || shellout "Failed to download ${SSH_DOWNLOAD_URL}/${ARCH}/ssh/authorized_keys"
+	cd /tmp
     fi
 
     # set permissions to 600 -- otherwise, sshd will refuse to use it
@@ -1506,7 +1509,7 @@ start_sshd() {
         
     # create a private host key for this autoinstall client
     loginfo "Using ssh-keygen to create this hosts private key"
-    mkdir -p /var/empty || shellout "Failed to create /var/empty"
+    mkdir -p /var/empty/sshd || shellout "Failed to createi ssh privilege separation directory (/var/empty/sshd)"
     if [ ! -f /etc/ssh/ssh_host_dsa_key ]; then
         ssh-keygen -t dsa -N "" -f /etc/ssh/ssh_host_dsa_key || shellout "Failed to create DSA key"
     fi
@@ -1564,13 +1567,14 @@ start_ssh() {
 
     # If we have a private key from the media above, go ahead and open secure tunnel
     # to the imageserver and continue with the autoinstall like normal.
-    if [ ! -z $PRIVATE_KEY ]; then
+    if [ ! -z "$PRIVATE_KEY" ]; then
 
+	loginfo "We have a private key. Trying to open a tunnel to the imaging server."
         # With the prep ready, start the ssh tunnel connection.
         #
         # Determine if we should run interactive and set redirection options appropriately.
         # So if the key is blank, go interactive. (Suggested by Don Stocks <don_stocks@leaseloan.com>)
-        if [ -s $PRIVATE_KEY ]; then
+        if [ -s "$PRIVATE_KEY" ]; then
             # key is *not* blank
             REDIRECTION_OPTIONS="> /dev/null 2>&1"
         else
@@ -1578,12 +1582,13 @@ start_ssh() {
             REDIRECTION_OPTIONS=""
         fi
 
+	# OL: Obsolete => SSH_USER has always a value (defaults to root in parse-sis-options*.sh)
         # Default ssh user is root.
-        [ -z $SSH_USER ] && SSH_USER=root
+        # [ -z $SSH_USER ] && SSH_USER=root
 
         CMD="ssh -N -l $SSH_USER -n -f -L873:127.0.0.1:873 $IMAGESERVER $REDIRECTION_OPTIONS"
         loginfo "Starting: $CMD"
-        $CMD || shellout "Failed to start ssh client".
+        $CMD || shellout "Failed to start ssh tunnel".
         
         # Since we're using SSH, change the $IMAGESERVER variable to reflect
         # the forwarded connection.
@@ -1596,6 +1601,7 @@ start_ssh() {
         # sshd and wait for someone to connect to us to initiate the
         # next step of the autoinstall.
         #
+	loginfo "No private key available. Trying to start a ssh server..."
         if [ -z $HOSTNAME ]; then
             loginfo "Trying to get hostname via DNS..."
             get_hostname_by_dns
@@ -1613,13 +1619,13 @@ start_ssh() {
             # rug out from underneath it.
             sleep 5
         fi
-
-        loginfo "************************************************************"
-        loginfo "Started sshd.  You must now go to your imageserver and issue"
-        loginfo "the following command:"
-        loginfo ""
-        loginfo " \"si_pushinstall --hosts ${HOST_OR_IP}\"."
-        loginfo "************************************************************"
+	loginfo "Started sshd."
+        loginfo "${BG_BLUE}=================================================${BG_BLACK}"
+        loginfo "${BG_BLUE}= You must now go to your imageserver and issue =${BG_BLACK}"
+        loginfo "${BG_BLUE}= the following command:                        =${BG_BLACK}"
+        loginfo "${BG_BLUE}=                                               =${BG_BLACK}"
+        loginfo "${BG_BLUE}=  \"${FG_AMBER}si_pushinstall --hosts ${HOST_OR_IP}\"${FG_WHITE}.    =${BG_BLACK}"
+        loginfo "${BG_BLUE}=================================================${BG_BLACK}"
 
         # Since we're using SSH, change the $IMAGESERVER variable to reflect
         # the forwarded connection.
@@ -2065,5 +2071,15 @@ EOF
 			;;
 	esac
 }
+
+################################################################################
+#
+#  get_arch
+#
+# Usage: get_arch; echo $ARCH
+#get_arch() {
+#    ARCH=`uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/`
+#    loginfo "Detected ARCH=$ARCH"
+#}
 
 # END
