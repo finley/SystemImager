@@ -232,75 +232,75 @@ tmpfs_watcher() {
 #     the bios enumeration (very usefull sometimes to avoid counting 2TB of RAM)
 #
 sis_postimaging() {
-ACTION=$1
+	ACTION=$1
 
-# Fix /etc/issue and /etc/motd with background coloring (at this point we have a valid TERM)
-# this cannot be done in initrd itself as it depends on TERM (which may depend of rd.sis.term)
-sed -i -e "1i${BG_BLUE}" -e "\$a${BG_BLACK}" /etc/motd
-sed -i -e "1i${BG_RED}" -e "\$a${BG_BLACK}" /etc/issue
+	# Fix /etc/issue and /etc/motd with background coloring (at this point we have a valid TERM)
+	# this cannot be done in initrd itself as it depends on TERM (which may depend of rd.sis.term)
+	sed -i -e "1i${BG_BLUE}" -e "\$a${BG_BLACK}" /etc/motd
+	sed -i -e "1i${BG_RED}" -e "\$a${BG_BLACK}" /etc/issue
 
-# If kexec action is chosen, we load the new kernel.
-# OL: BUG: at this point, /sysroot is unmounted.....
-if test $ACTION = "kexec"
-then
-    # OL: Not tested; need many improvement!
-    KERNEL=/sysroot/boot/vmlinuz* # Need to get the real kernel: no place for guess here
-    INITRD=/sysroot/boot/init*img # Same as above (must match version).
-    ROOTFSDEV=`mount | grep sysroot | cut -d' ' -f3` # Same as above. We have the info elsewhere.
-    if test -f /sysroot/boot/vmlinuz* && test -f /sysroot/boot/init*img && test -n "$ROOTFSDEV"
-    then
-        kexec -l $KERNEL --append=root=$ROOTDEV --initrd=$INITRD
-    else
-        ACTION="reboot" # Force reboot going thru bios+grub as we are unable to boot directyl
-    fi
-fi
+	# If kexec action is chosen, we load the new kernel.
+	# OL: BUG: at this point, /sysroot is unmounted.....
+	if test $ACTION = "kexec"
+	then
+	    # OL: Not tested; need many improvement!
+	    KERNEL=/sysroot/boot/vmlinuz* # Need to get the real kernel: no place for guess here
+	    INITRD=/sysroot/boot/init*img # Same as above (must match version).
+	    ROOTFSDEV=`mount | grep sysroot | cut -d' ' -f3` # Same as above. We have the info elsewhere.
+	    if test -f /sysroot/boot/vmlinuz* && test -f /sysroot/boot/init*img && test -n "$ROOTFSDEV"
+	    then
+	        kexec -l $KERNEL --append=root=$ROOTDEV --initrd=$INITRD
+	    else
+	        ACTION="reboot" # Force reboot going thru bios+grub as we are unable to boot directyl
+	    fi
+	fi
 
-if [ -n "$DRACUT_SYSTEMD" ]
-then
-    case "$ACTION" in
-        reboot|poweroff|halt|kexec)
-            systemctl --no-block --force $ACTION
-            warn "$ACTION failed!"
-            ;;
-        shell)
-	    ln -sf /etc/motd /tmp/message.txt
-	    ;;    
-        emergency)
-            ln -sf /etc/issue /tmp/message.txt
-	    ;;
-        *)
-            warn "sis_postimaging called with invalid argument '$ACTION'. Rebooting!"
-	    sleep 10 # leave time to read.
-            systemctl --no-block --force reboot
-            ;;
-    esac
-    interactive_shell
-    sis_postimaging poweroff # Upon exit (from shell), we poweroff.
-else
-    case "$ACTION" in
-        reboot|poweroff|halt)
-            $ACTION -f -d -n
-            warn "$ACTION failed!"
-            ;;
-        kexec)
-            kexec -e # Will load kernel+initrd.img specified by above kexec -l ...
-            warn "$ACTION failed!"
-            reboot -f -d -n # If kexec fails, reboot using bios as failover.
-            ;;
-        shell)
-            ln -sf /etc/motd /tmp/message.txt
-	    ;;
-	emergency)
-	    ln -sf /etc/issue /tmp/message.txt
-	    ;;
-        *)
-            warn "sis_postimaging called with invalid argument '$ACTION'. Rebooting!"
-            reboot -f -d -n
-            ;;
-    esac
-    interactive_shell
-    sis_postimaging poweroff # Upon exit (from shell), we poweroff.
-fi
+	if [ -n "$DRACUT_SYSTEMD" ]
+	then
+	    case "$ACTION" in
+	        reboot|poweroff|halt|kexec)
+	            systemctl --no-block --force $ACTION
+	            warn "$ACTION failed!"
+	            ;;
+	        shell)
+		    ln -sf /etc/motd /tmp/message.txt
+		    ;;    
+	        emergency)
+	            ln -sf /etc/issue /tmp/message.txt
+		    ;;
+	        *)
+	            warn "sis_postimaging called with invalid argument '$ACTION'. Rebooting!"
+		    sleep 10 # leave time to read.
+	            systemctl --no-block --force reboot
+	            ;;
+	    esac
+	    interactive_shell
+	    sis_postimaging poweroff # Upon exit (from shell), we poweroff.
+	else
+	    case "$ACTION" in
+	        reboot|poweroff|halt)
+	            $ACTION -f -d -n
+	            warn "$ACTION failed!"
+	            ;;
+	        kexec)
+	            kexec -e # Will load kernel+initrd.img specified by above kexec -l ...
+	            warn "$ACTION failed!"
+	            reboot -f -d -n # If kexec fails, reboot using bios as failover.
+	            ;;
+	        shell)
+	            ln -sf /etc/motd /tmp/message.txt
+		    ;;
+		emergency)
+		    ln -sf /etc/issue /tmp/message.txt
+		    ;;
+	        *)
+	            warn "sis_postimaging called with invalid argument '$ACTION'. Rebooting!"
+	            reboot -f -d -n
+	            ;;
+	    esac
+	    interactive_shell
+	    sis_postimaging poweroff # Upon exit (from shell), we poweroff.
+	fi
 }
 
 #
@@ -795,133 +795,6 @@ get_boel_binaries_tarball() {
 #
 ################################################################################
 #
-# Parse tmpfs options from /proc/cpuinfo
-# 
-parse_tmpfs_opts() {
-    logmsg
-    logmsg parse_tmpfs_opts
-    tmpfs_size=$(tr ' ' '\n' < /proc/cmdline | grep tmpfs_size\= | sed 's/.*=//')
-    tmpfs_nr_blocks=$(tr ' ' '\n' < /proc/cmdline | grep tmpfs_nr_blocks\= | sed 's/.*=//')
-    tmpfs_nr_inodes=$(tr ' ' '\n' < /proc/cmdline | grep tmpfs_nr_inodes\= | sed 's/.*=//')
-    tmpfs_mode=$(tr ' ' '\n' < /proc/cmdline | grep tmpfs_mode\= | sed 's/.*=//')
-
-    if [ "$tmpfs_size" != "" ]; then
-        tmpfs_opts="size=$tmpfs_size"
-    fi
-
-    if [ "$tmpfs_nr_blocks" != "" ]; then
-        if [ "$tmpfs_opts" != "" ]; then
-            tmpfs_opts="${tmpfs_opts},nr_blocks=$tmpfs_nr_blocks"
-        else
-            tmpfs_opts="nr_blocks=$tmpfs_nr_blocks"
-        fi
-    fi
-
-    if [ "$tmpfs_nr_inodes" != "" ]; then
-        if [ "$tmpfs_opts" != "" ]; then
-            tmpfs_opts="${tmpfs_opts},nr_inodes=$tmpfs_nr_inodes"
-        else
-            tmpfs_opts="nr_inodes=$tmpfs_nr_inodes"
-            fi
-    fi
-
-    if [ "$tmpfs_mode" != "" ]; then
-        if [ "$tmpfs_opts" != "" ]; then
-            tmpfs_opts="${tmpfs_opts},mode=$tmpfs_mode"
-        else
-            tmpfs_opts="mode=$tmpfs_mode"
-        fi
-    fi
-
-    if [ "$tmpfs_opts" != "" ]; then
-        tmpfs_opts="-o $tmpfs_opts"
-    fi
-
-    unset tmpfs_size
-    unset tmpfs_nr_blocks
-    unset tmpfs_nr_inodes
-    unset tmpfs_mode
-}
-#
-################################################################################
-#
-#   Switch root to tmpfs
-#
-#switch_root_to_tmpfs() {
-#    local MODULE=tmpfs
-#    logmsg
-#    logmsg switch_root_to_tmpfs
-#    logmsg "Loading $MODULE... "
-#    modprobe $MODULE 2>/dev/null && logmsg "done!" || logmsg "Didn't load -- assuming it's built into the kernel."
-#    parse_tmpfs_opts
-#
-#    # Switch root over to tmpfs so we don't have to worry about the size of
-#    # the tarball and binaries that users may decide to copy over. -BEF-
-#    if [ -d /old_root ]; then
-#        logmsg
-#        logmsg "already switched to tmpfs..."
-#    else
-#        logmsg
-#        logmsg "switching root to tmpfs..."
-#
-#        mkdir -p /new_root || shellout
-#        mount tmpfs /new_root -t tmpfs $tmpfs_opts || shellout
-#
-#        cd / || shellout
-#        cp -a `/bin/ls | grep -v -E '^(new_root|dev)$'` /new_root/ || shellout
-#
-#		mkdir -p /new_root/dev || shellout
-#		mount -t devtmpfs -o mode=0755 none /new_root/dev || shellout
-#
-#        cd /new_root || shellout
-#        mkdir -p old_root || shellout
-#        pivot_root . old_root || switch_root
-#    fi
-#
-#    unset tmpfs_opts
-#}
-#
-################################################################################
-################################################################################
-#
-#mount_initial_filesystems() {
-#
-#    # Much of this taken from "init" from an Ubuntu Lucid initrd.img
-#    logmsg
-#    logmsg mount_initial_filesystems
-#
-#    [ -d /dev ]  || mkdir -m 0755 /dev
-#    [ -d /root ] || mkdir -m 0700 /root
-#    [ -d /sys ]  || mkdir /sys
-#    [ -d /proc ] || mkdir /proc
-#    [ -d /tmp ]  || mkdir /tmp
-#    [ -d /run ]  || mkdir /run
-#    [ -d /var/log ]  || mkdir -p /var/log
-#
-#    mkdir -p /var/lock
-#
-#    mount -t sysfs -o nodev,noexec,nosuid none /sys
-#    mount -t proc  -o nodev,noexec,nosuid none /proc
-#
-#    # Note that this only becomes /dev on the real filesystem if udev's scripts
-#    # are used; which they will be, but it's worth pointing out
-#    if ! mount -t devtmpfs -o mode=0755 none /dev; then
-#        mount -t tmpfs -o mode=0755 none /dev
-#        mknod -m 0600 /dev/console c 5 1
-#        mknod -m 0666 /dev/null c 1 3
-#        mknod -m 0660 /dev/kmsg c 1 11
-#    fi
-#
-#    mkdir /dev/pts
-#    mount -t devpts -o noexec,nosuid,gid=5,mode=0620 none /dev/pts || true
-#    mount -t tmpfs -o mode=0755,rw,nosuid,nodev none /run
-#    mount -t tmpfs -o mode=0755,rw,nosuid,nodev none /var/log
-#
-#}
-#
-################################################################################
-################################################################################
-#
 monitor_save_dmesg() {
 #    if [ -z $MONITOR_SERVER ]; then
 #        return
@@ -1040,144 +913,6 @@ ip=$IPADDR:$GATEWAY:$NETMASK:$HOSTNAME:$DEVICE:on
 EOF
     fi
 }
-#
-################################################################################
-#
-#   Configure network interface using local.cfg settings if possible, else
-#   use DHCP. -BEF-
-#
-# OL: Obsolete: should use cmdline dracut parameters (ip=dhcp or the like)
-start_network() {
-    logmsg
-    logmsg start_network
-    if [ ! -z $IPADDR ]; then
-
-        # configure interface and add default gateway
-        ifconfig $DEVICE $IPADDR  netmask $NETMASK  broadcast $BROADCAST
-        if [ $? != 0 ]; then
-            logmsg
-            logmsg "I couldn't configure the network interface using your pre-boot settings:"
-            logmsg "  DEVICE:     $DEVICE"
-            logmsg "  IPADDR:     $IPADDR"
-            logmsg "  NETMASK:    $NETMASK"
-            logmsg "  BROADCAST:  $BROADCAST"
-            logmsg
-            shellout
-        fi
-
-        if [ ! -z $GATEWAY ]; then
-            route add default gw $GATEWAY
-            if [ $? != 0 ]; then
-                logmsg
-                logmsg "The command \"route add default gw $GATEWAY\" failed."
-                logmsg "Check your pre-boot network settings."
-                logmsg
-                shellout
-            fi
-        fi
-
-    else
-
-        ### try dhcp ###
-        logmsg "IP Address not set with pre-boot settings."
-        
-        ### BEGIN ether sleep ###
-        # Give the switch time to start passing packets.  Some switches won't
-        # forward packets until 30 seconds or so after an interface comes up.
-        # This means the dhcp server won't even get the request for 30 seconds.
-        # Many ethernet cards aren't considered "up" by the switch until the
-        # driver is loaded.  Because the driver is compiled directly into the
-        # kernel here, the driver is definitely loaded at this point. 
-        # 
-        # Default is 0.  The recommended setting of ETHER_SLEEP=35 can be set 
-        # with a local.cfg file. -BEF-
-        #
-        [ -z $ETHER_SLEEP ] && ETHER_SLEEP=0
-        logmsg
-        logmsg "sleep $ETHER_SLEEP:  This is to give your switch (if you're using one) time to"
-        logmsg "           recognize your ethernet card before we try the network."
-        logmsg "           Tip: You can use <ctrl>+<c> to pass the time (pun intended)."
-        logmsg
-        count_loop $ETHER_SLEEP
-        logmsg
-        ### END ether sleep ###
-        
-        # create directory to catch dhcp information
-        DHCLIENT_DIR="/var/lib/dhclient"
-        mkdir -p $DHCLIENT_DIR
-        
-        # New dhclient uses /sbin/dhclient-script that triggers /etc/dhcp/dhclient-exit-hooks
-	# /etc/dhclient-script.debian-dist => /sbin/dhclient-script
-	# /etc/dhclient-script.si-prefix => /etc/dhcp/dhclient-exit-hooks
-	#
-	# combine systemimager code to the stock debian dhclient-script
-        # and make executable
-        #cat /etc/dhclient-script.si-prefix \
-        #    /etc/dhclient-script.debian-dist \
-        #    > /etc/dhclient-script
-        #chmod +x /etc/dhclient-script
-
-        # be sure AF_PACKET is supported in the kernel
-        [ -f /lib/modules/`uname -r`/modules.dep ] && modprobe af_packet &> /dev/null
-        
-        # get info via dhcp
-        logmsg
-        logmsg "dhclient $DEVICE"
-        dhclient $DEVICE
-        if [ ! -s ${DHCLIENT_DIR}/dhclient.leases ]; then
-            logmsg
-            logmsg "I couldn't configure the network interface using DHCP."
-            logmsg
-            shellout
-        fi
-        
-        if [ -z ${DEVICE} ]; then
-            # Figure out which interface actually got configured.
-            # Suggested by James Oakley.
-            #
-            DEVICE=`grep interface ${DHCLIENT_DIR}/dhclient.leases | \
-                sed -e 's/^.*interface "//' -e 's/";//'`
-        fi
-        
-        # read dhcp info in as variables -- this file will be created by 
-        # the /etc/dhclient-start script that is run automatically by
-        # dhclient.
-        #. /tmp/dhcp_info.${DEVICE} || shellout
-        ### END dhcp ###
-        
-        # Re-read configuration information from local.cfg to over-ride
-        # DHCP settings, if necessary. -BEF-
-        #if [ -f /tmp/local.cfg ]; then
-        #    logmsg
-        #    logmsg "Overriding any DHCP settings with pre-boot local.cfg settings."
-        #    . /tmp/local.cfg || shellout
-        #fi
-
-        #logmsg
-        #logmsg "Overriding any DHCP settings with pre-boot settings from kernel append"
-        #logmsg "parameters."
-	#. $CMDLINE_VARIABLES
-    fi
-}
-#
-################################################################################
-#
-# OL: deprecated (syslogd is started with dracut syslog module.
-#start_syslogd() {
-#    logmsg
-#    logmsg start_syslogd
-#    if [ ! -z $LOG_SERVER ]; then
-#        logmsg "Starting syslogd..."
-#        [ -z $LOG_SERVER_PORT ] && LOG_SERVER_PORT="514"
-#        syslogd -R ${LOG_SERVER}:${LOG_SERVER_PORT}
-#        # as long as we are starting syslogd, start klogd as well, in case
-#        # there is a kernel issue that happens
-#        klogd
-#        # set USELOGGER=1 so logmsg knows to do the right thing
-#        USELOGGER=1
-#        logmsg "Successfully started syslogd!"
-#    fi
-#}
 #
 ################################################################################
 #
@@ -1523,10 +1258,6 @@ start_sshd() {
 	    fi
     done
 
-    # try to mount devpts (sometimes it's not really necessary)
-    # mkdir -p /dev/pts
-    # mount -t devpts none /dev/pts >/dev/null 2>&1
-
     # fire up sshd
     mkdir -p /var/run/sshd || shellout "Failed to create /var/run/sshd/"
     chmod 0755 /var/run/sshd || shellout "Failed to set permissions on /var/run/sshd"
@@ -1739,28 +1470,6 @@ send_monitor_stdout() {
 #
 ################################################################################
 #
-#   Initialize the monitor server
-#
-#
-#init_monitor_server() {
-#    # Send initialization status.
-#    send_monitor_msg "status=0:first_timestamp=on:speed=0"
-#    loginfo "Monitoring initialized."
-#    # Start client log gathering server: for each connection
-#    # to the local client on port 8181 the full log is sent
-#    # to the requestor. -AR-
-#    if [ "x$MONITOR_CONSOLE" = "xy" ]; then
-#        MONITOR_CONSOLE=yes
-#    fi
-#    if [ "x$MONITOR_CONSOLE" = "xyes" ]; then
-#        while :; do ncat -p 8181 -l < /tmp/si_monitor.log; done &
-#	MONITOR_PID=$!
-#        logmsg "Logs monitor forwarding task started: PID=$MONITOR_PID ."
-#    fi
-#}
-#
-################################################################################
-#
 #   Report installation progress in the console and to the monitor server
 #
 
@@ -1930,8 +1639,12 @@ sleep_loop() {
         COUNTED=$(( $COUNTED + 1 ))
     done
 }
-
-
+#
+#################################################################################
+# Try to guess which iface to use.
+# Will use $DEVICE if it was set before. This allows for cmdline parameters to
+# set a specific device to use.
+#
 get_1st_iface_with_link() {
     if test -n "$DEVICE"
     then # DEVICE= already setup by system. keep this choice.
