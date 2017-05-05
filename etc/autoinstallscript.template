@@ -245,7 +245,7 @@ elif [ "x$BITTORRENT" = "xy" ]; then
 else 
     # Use rsync 
     if [ $NO_LISTING ]; then
-        logaction "Quietly installing image... "
+        loginfo "Quietly installing image... "
     fi
     if [ "${TMPFS_STAGING}" = "yes" ]; then 
 
