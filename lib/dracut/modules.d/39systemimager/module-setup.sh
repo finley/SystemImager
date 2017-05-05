@@ -73,5 +73,7 @@ install_ssh() {
     (cd /etc; tar cpf - ssh/ssh_config*)|(cd $initdir/etc; tar xpf -)
     # Install server config
     (cd /etc; tar cpf - ssh/sshd_config ssh/moduli)|(cd $initdir/etc; tar xpf -)
+    # Disable PAM authentication.
+    sed -i -e 's/^UsePAM\syes/UsePAM no/g' $initdir/etc/ssh/sshd_config
 }
 

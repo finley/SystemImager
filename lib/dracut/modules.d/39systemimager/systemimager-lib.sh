@@ -1508,14 +1508,20 @@ start_sshd() {
     chown -R 0.0 /root/
         
     # create a private host key for this autoinstall client
-    loginfo "Using ssh-keygen to create this hosts private key"
-    mkdir -p /var/empty/sshd || shellout "Failed to createi ssh privilege separation directory (/var/empty/sshd)"
-    if [ ! -f /etc/ssh/ssh_host_dsa_key ]; then
-        ssh-keygen -t dsa -N "" -f /etc/ssh/ssh_host_dsa_key || shellout "Failed to create DSA key"
-    fi
-    if [ ! -f /etc/ssh/ssh_host_rsa_key ]; then
-        ssh-keygen -t rsa -N "" -f /etc/ssh/ssh_host_rsa_key || shellout "Failed to create RSA key"
-    fi
+    loginfo "Using ssh-keygen to create this host private keys"
+    mkdir -p /var/empty/sshd || shellout "Failed to create ssh privilege separation directory (/var/empty/sshd)"
+
+    # Now generate hosts keys required in /etc/ssh/sshd_config
+    for key in `grep '^HostKey' /etc/ssh/sshd_config|cut -d' ' -f2`
+    do
+	    if [ ! -f $key ]; then
+		    key_type=`echo $key|sed -r 's/^.*host_([0-9a-z]+)_key/\1/i'`
+		    loginfo "Generating $key_type key $key"
+		    ssh-keygen -t $key_type -N "" -f $key || shellout "Failed to create $key_type key"
+	    else
+		    loginfo "$key_type key $key already exists. Keeping it."
+	    fi
+    done
 
     # try to mount devpts (sometimes it's not really necessary)
     # mkdir -p /dev/pts
