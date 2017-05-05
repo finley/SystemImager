@@ -393,7 +393,7 @@ sub _read_partition_info_and_prepare_parted_commands {
         print $out "### BEGIN partition $devfs_dev ###\n";
         print $out qq(loginfo "Partitioning $devfs_dev..."\n);
         print $out qq(loginfo "Old partition table for $devfs_dev:"\n);
-        print $out "LC_ALL=C parted -s -- $devfs_dev print\n\n";
+        print $out "LC_ALL=C parted -s -- $devfs_dev print > /dev/console\n\n";
 
         print $out "# Wipe the MBR (Master Boot Record) clean.\n";
         $cmd = "dd if=/dev/zero of=$devfs_dev bs=512 count=1";
