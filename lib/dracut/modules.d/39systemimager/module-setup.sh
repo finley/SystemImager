@@ -24,25 +24,29 @@ depends() {
 ################################################################################
 
 install() {
-    # Copy systemimager template
+    # 1/ Copy systemimager template
     (cd @@SIS_INITRD_TEMPLATE@@; tar cpf - .)|(cd $initdir; tar xpf -)
-    # binaries we want in initramfs
-    inst_multiple -o mke2fs mkfs.ext2 mkfs.ext3 mkfs.ext4 mklost+found resize2fs tune2fs e2fsck mkfs.xfs
-    inst_multiple -o dosfsck dosfslabel fatlabel fsck.fat fsck.msdos fsck.vfat mkdosfs mkfs.fat mkfs.msdos mkfs.vfat
+
+    # 2/ Install binaries we need.
+    # Filesystems we want to be able to handle
+    inst_multiple -o mkfs.xfs
+    inst_multiple -o mkfs.ext4 mkfs.ext3 mkfs.ext2 mke2fs tune2fs resize2fs
+    inst_multiple -o mkfs.fat mkfs.msdos mkfs.vfat mkfs.ntfs mkdosfs dosfslabel fatlabel
+    inst_multiple -o mkfs.btrfs btrfs btrfstune
+    inst_multiple -o mkfs.reiserfs mkreiserfs reiserfstune resize_reiserfs tunefs.reiserfs
+    inst_multiple -o mkfs.jfs jfs_mkfs jfs_tune
+    inst_multiple -o mklost+found # Do we need that?
     # Install ssh and its requirements
     install_ssh
-    # Install hfs if available.
-    inst_multiple -o fsck.hfs hattrib hcd hcopy hdel hdir hformat hfs hfsck hls hmkdir hmount hpwd hrename hrmdir humount hvol
-    # Install btrfs is available
-    inst_multiple -o btrfs btrfsck btrfstune fsck.btrfs mkfs.btrfs
     inst_multiple cut date echo env sort test false true [ expr head install tail tee tr uniq wc tac
     # inst_multiple setfont loadkeys kbd_mode stty # i18n module
     inst_multiple bc gzip bzip2 rsync parted blockdev awk ncat tty killall kexec ipcalc findmnt tput stty
+    inst_multiple chmod chown cp dd df dmesg echo egrep fdisk fgrep grep halt host hostname ifconfig init insmod kill ln ls lsmod mkdir mknod mkswap modprobe more mv ping poweroff ps reboot shutdown rm rmdir rmmod route sed sh sleep swapoff swapon sync tar touch uname
     inst_multiple depmod blkid
-    # Some helpfull commands in case of problem
+    # Some helpfull command in case of problem
     inst_multiple find strace sysctl vi clear reset lsof fuser
-    inst_multiple chmod chown cp dd df dmesg echo egrep fdisk fgrep grep host hostname ifconfig init insmod kill ln ls lsmod mkdir mknod mkswap modprobe more mv ping ps rm rmdir rmmod route sed sh sleep swapoff swapon sync tar touch uname
 
+    # 3/ Install dracut logic
     inst "$moddir/systemimager-lib.sh" "/lib/systemimager-lib.sh"
     inst "$moddir/autoinstall-lib.sh" "/lib/autoinstall-lib.sh"
     inst_hook cmdline 10 "$moddir/restore-persistent-cmdline.d.sh" # copy /etc/persistent-cmdline.d to /etc/cmdline.d/
