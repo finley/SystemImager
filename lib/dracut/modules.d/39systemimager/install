@@ -20,7 +20,7 @@ install() {
     inst_multiple -o mklost+found # Do we need that?
     # Install ssh and its requirements
     install_ssh
-    inst_multiple cut date echo env sort test false true [ expr head install tail tee tr uniq wc tac
+    inst_multiple cut date echo env sort test false true [ expr head install tail tee tr uniq wc tac mktemp
     # inst_multiple setfont loadkeys kbd_mode stty # i18n module
     inst_multiple bc gzip bzip2 rsync parted blockdev awk ncat tty killall kexec ipcalc findmnt tput stty
     inst_multiple chmod chown cp dd df dmesg echo egrep fdisk fgrep grep halt host hostname ifconfig init insmod kill ln ls lsmod mkdir mknod mkswap modprobe more mv ping poweroff ps reboot shutdown rm rmdir rmmod route sed sh sleep swapoff swapon sync tar touch uname
@@ -31,6 +31,7 @@ install() {
     # 3/ Install dracut logic
     inst "$moddir/systemimager-lib.sh" "/lib/systemimager-lib.sh"
     inst "$moddir/autoinstall-lib.sh" "/lib/autoinstall-lib.sh"
+    inst "$moddir/si_inspect_client.sh" "/sbin/si_inspect_client"
     inst_script "$moddir/systemimager-load-dhcpopts.sh" "/sbin/systemimager-load-dhcpopts"
     inst_script "$moddir/systemimager-netstart-old.sh" "/sbin/systemimager-netstart"
     inst_script "$moddir/systemimager-start.sh" "/sbin/systemimager-start"
