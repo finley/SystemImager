@@ -441,10 +441,9 @@ beep
 # shellout() at disk partitionning attempt.
 D=0
 DEV_LIST=""
-while test -n "`eval 'echo $DISK'$D`"
+while test -n ""`eval 'echo $DISK'$D`
 do
-	DEV="DISK$D="`eval 'echo $DISK'$D`
-	DEV_LIST="$DEV_LIST $DEV"
+	DEV_LIST="$DEV_LIST "`eval 'echo $DISK'$D`
 	D=$(($D + 1))
 done
 install_boot_loader $DEV_LIST
