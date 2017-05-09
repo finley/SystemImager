@@ -9,6 +9,9 @@ package SystemImager::Server;
 
 #use lib "USR_PREFIX/lib/systemimager/perl";
 use Carp;
+use v5.10; # given/when (use feature "switch")
+# Avoid smartmatch warnings when using given
+no if $] >= 5.017011, warnings => 'experimental::smartmatch';
 use strict;
 use File::Copy;
 use File::Path;
@@ -1272,6 +1275,8 @@ sub _write_out_mkfs_commands {
     # The $part_type here is used to find and create all the swap partitions
     # before the other filesystems. This reduces the probability to have a OOM
     # condition during the filesystem creation.
+    # part_type == 0 => We only treat swap partitions
+    # part_type == 1 => we treat all non swap partitions
     foreach my $part_type (0, 1) {
         foreach my $line (sort numerically (keys (%{$xml_config->{fsinfo}}))) {
 
@@ -1290,6 +1295,9 @@ sub _write_out_mkfs_commands {
             my $mount_dev = $xml_config->{fsinfo}->{$line}->{mount_dev};
 
             my $real_dev = $devfs_map{$xml_config->{fsinfo}->{$line}->{real_dev}};
+            # If mount_dev is undefined, the use real_dev
+            $mount_dev = $real_dev if (! defined($mount_dev));
+
             my $mp = $xml_config->{fsinfo}->{$line}->{mp};
             my $fs = $xml_config->{fsinfo}->{$line}->{fs};
             my $options = $xml_config->{fsinfo}->{$line}->{options};
@@ -1323,10 +1331,8 @@ sub _write_out_mkfs_commands {
                     $cmd = "mkswap -v1 $real_dev";
 
                     # add swap label if necessary
-                    if ($mount_dev) {
-                        if( $mount_dev =~ /^LABEL=(.*)/ ){
-                            $cmd .= " -L $1";
-                        }
+                    if( $mount_dev =~ /^LABEL=(.*)/ ){
+                        $cmd .= " -L $1";
                     }
 
                     print $out qq(logaction "$cmd"\n);
@@ -1345,195 +1351,79 @@ sub _write_out_mkfs_commands {
 
             # OK, now that swap partitions commands have been written to the
             # autoinstall script, proceed with the other filesystems.
-
-            # msdos or vfat
-            if (($xml_config->{fsinfo}->{$line}->{fs} eq "vfat") or
-                    ($xml_config->{fsinfo}->{$line}->{fs} eq "msdos")) {
-
-                # create fs
-                $cmd = "mkdosfs $mkfs_opts -v $real_dev";
-                print $out qq(logaction "$cmd"\n);
-                print $out qq($cmd || shellout "mkdosfs failed!"\n);
-
-                # mkdir
-                $cmd = "mkdir -p /sysroot$mp";
-                print $out qq(logaction "$cmd"\n);
-                print $out qq($cmd || shellout "mkdir failed!"\n);
-
-                # mount
-                $cmd = "mount $real_dev /sysroot$mp -t $fs -o $options";
-                print $out qq(loginfo "$cmd"\n);
-                print $out qq($cmd || shellout "mount failed!"\n);
-
-                print $out "\n";
-
-            # ext2,ext3,ext4
-            } elsif (
-                       ( $xml_config->{fsinfo}->{$line}->{fs} eq "ext2" ) 
-                    or ( $xml_config->{fsinfo}->{$line}->{fs} eq "ext3" )
-                    or ( $xml_config->{fsinfo}->{$line}->{fs} eq "ext4" )
-                    ) {
-                # create fs
-                $cmd = "mke2fs -q -t $xml_config->{fsinfo}->{$line}->{fs} $real_dev";
-                print $out qq(logaction "$cmd"\n);
-                print $out qq($cmd || shellout "mke2fs failed!"\n);
-
-                if ($mount_dev) {
-                    # add LABEL if necessary
-                    if ($mount_dev =~ /LABEL=/) {
-                        my $label = $mount_dev;
-                        $label =~ s/LABEL=//;
-
-                        $cmd = "tune2fs -L $label $real_dev";
-                        print $out qq(logaction "$cmd"\n);
-                        print $out qq($cmd || shellout "tune2fs failed"\n);
-                    }
-
-                    # add UUID if necessary
-                    if ($mount_dev =~ /UUID=/) {
-                        my $uuid = $mount_dev;
-                        $uuid =~ s/UUID=//;
-
-                        $cmd = "tune2fs -U $uuid $real_dev";
-                        print $out qq(logaction "$cmd"\n);
-                        print $out qq($cmd || shellout "tune2fs failed"\n);
-                    }
+## BEGIN NEW CODE
+            my $label_switch = "";
+            my $set_UUID_cmd = "";
+            given ($fs) {
+                when ( /^xfs$/ ) {
+                    $label_switch = "-L";
+                    $set_UUID_cmd = "xfs_admin -U ";
+                    $mkfs_opts .= " -q -f";
+                }
+                when ( /^(?:ext2|ext3|ext4)$/ ) {
+                    $label_switch = "-L";
+                    $set_UUID_cmd = "tune2fs -U ";
+                    $mkfs_opts .= " -q";
+                }
+                when ( /^jfs$/ ) {
+                    $label_switch = "-L";
+                    $set_UUID_cmd = "jfs_tune -U ";
+                    $mkfs_opts .= " -q";
+                }
+                when ( /^reiserfs$/ ) {
+                    $label_switch = "-l";
+                    $set_UUID_cmd = "reiserfstune -u ";
+                    $mkfs_opts .= " -q";
+                }
+                when ( /^(?:vfat|msdos|fat|ntfs)$/ ) {
+                    $label_switch = "-n";
+                    $set_UUID_cmd = "";
+                }
+                default {
+                    # Skipp NFS, SWAP, auto, unknown filesystems.
+                    next;
                 }
 
-                # mkdir
-                $cmd = "mkdir -p /sysroot$mp";
-                print $out qq(logaction "$cmd"\n);
-                print $out qq($cmd || shellout "mkdir failed!"\n);
-
-                # mount
-                $cmd = "mount $real_dev /sysroot$mp -t $fs -o $options";
-                print $out qq(loginfo "$cmd"\n);
-                print $out qq($cmd || shellout "mount failed!"\n\n);
-
-            # reiserfs
-            } elsif ( $xml_config->{fsinfo}->{$line}->{fs} eq "reiserfs" ) {
-
-                # create fs
-                $cmd = "mkreiserfs -q $real_dev";
-                print $out qq(logaction "$cmd"\n);
-                print $out qq($cmd || shellout "mkreiserfs failed!"\n);
-
-                if ($mount_dev) {
-                    # add LABEL if necessary
-                    if ($mount_dev =~ /LABEL=/) {
-                        my $label = $mount_dev;
-                        $label =~ s/LABEL=//;
-
-                        $cmd = "reiserfstune -l $label $real_dev";
-                        print $out qq(logaction "$cmd"\n);
-                        print $out qq($cmd || shellout "reiserfstune failed!"\n);
-                    }
-
-                    # add UUID if necessary
-                    if ($mount_dev =~ /UUID=/) {
-                        my $uuid = $mount_dev;
-                        $uuid =~ s/UUID=//;
-
-                        $cmd = "reiserfstune -u $uuid $real_dev";
-                        print $out qq(logaction "$cmd"\n);
-                        print $out qq($cmd || shellout "reiserfstune failed!"\n);
-                    }
-                }
-
-                # mkdir
-                $cmd = "mkdir -p /sysroot$mp";
-                print $out qq(logaction "$cmd"\n);
-                print $out qq($cmd || shellout "mkdir failed!"\n);
-
-                # mount
-                $cmd = "mount $real_dev /sysroot$mp -t $fs -o $options";
-                print $out qq(loginfo "$cmd"\n);
-                print $out qq($cmd || shellout "mount failed!"\n\n);
-
-            # jfs
-            } elsif ( $xml_config->{fsinfo}->{$line}->{fs} eq "jfs" ) {
-
-                # create fs
-                $cmd = "jfs_mkfs -q $real_dev";
-                print $out qq(logaction "$cmd"\n);
-                print $out qq($cmd || shellout "jfs_mkfs failed!"\n);
-
-                if ($mount_dev) {
-                    # add LABEL if necessary
-                    if ($mount_dev =~ /LABEL=/) {
-                        my $label = $mount_dev;
-                        $label =~ s/LABEL=//;
-
-                        $cmd = "jfs_tune -L $label $real_dev";
-                        print $out qq(logaction "$cmd"\n);
-                        print $out qq($cmd || shellout "jfs_tune failed!"\n);
-                    }
-
-                    # add UUID if necessary
-                    if ($mount_dev =~ /UUID=/) {
-                        my $uuid = $mount_dev;
-                        $uuid =~ s/UUID=//;
-
-                        $cmd = "jfs_tune -U $uuid $real_dev";
-                        print $out qq(logaction "$cmd"\n);
-                        print $out qq($cmd || shellout "jfs_tune failed!"\n);
-                    }
-                }
-
-                # mkdir
-                $cmd = "mkdir -p /sysroot$mp";
-                print $out qq(logaction "$cmd" \n);
-                print $out qq($cmd || shellout "mkdir failed" \n);
-
-                # mount
-                $cmd = "mount $real_dev /sysroot$mp -t $fs -o $options || shellout";
-                print $out qq(loginfo "$cmd"\n);
-                print $out qq($cmd || shellout "mount failed!" \n);
-
-                print $out "\n";
-	    
-            # xfs
-            } elsif ( $xml_config->{fsinfo}->{$line}->{fs} eq "xfs" ) {
-
-                # create fs
-                $cmd = "mkfs.xfs -f -q $real_dev";
-                print $out qq(logaction "$cmd"\n);
-                print $out qq($cmd || shellout "mkfs.xfs failed!" \n);
-
-                if ($mount_dev) {
-                    # add LABEL if necessary
-                    if ($mount_dev =~ /LABEL=/) {
-                        my $label = $mount_dev;
-                        $label =~ s/LABEL=//;
-
-                        $cmd = "xfs_db -x -p xfs_admin -c 'label $label' $real_dev";
-                        print $out qq(logaction "$cmd"\n);
-                        print $out qq($cmd || shellout "xfs_db failed!"\n);
-                    }
-
-                    # add UUID if necessary
-                    if ($mount_dev =~ /UUID=/) {
-                        my $uuid = $mount_dev;
-                        $uuid =~ s/UUID=//;
-
-                        $cmd = "xfs_db -x -p xfs_admin -c 'uuid $uuid' $real_dev";
-                        print $out qq(logaction "$cmd"\n);
-                        print $out qq($cmd || shellout "xfs_db failed!"\n);
-                    }
-                }
-
-                # mkdir
-                $cmd = "mkdir -p /sysroot$mp";
-                print $out qq(logaction "$cmd"\n);
-                print $out qq($cmd || shellout "mkdir failed!"\n);
-
-                # mount
-                $cmd = "mount $real_dev /sysroot$mp -t $fs -o $options";
-                print $out qq(loginfo "$cmd"\n);
-                print $out qq($cmd || shellout "mount failed!"\n);
-
-                print $out "\n";
             }
+            my $label_option = "";
+            if ($mount_dev =~ /LABEL=/) {
+                my $label = $mount_dev;
+                $label =~ s/LABEL=//;
+                $label_option = "$label_switch $label";
+            }
+
+            $cmd = "mkfs." . $xml_config->{fsinfo}->{$line}->{fs} . " $mkfs_opts $label_option $real_dev";
+            # Now write out code in script
+
+            # 1/ mkfs command (with label)
+            print $out qq(logaction "$cmd"\n);
+            print $out qq($cmd || shellout "$cmd"\n);
+
+            # 2/ set UUID if needed
+            if ($mount_dev =~ /UUID=/) {
+                my $uuid = $mount_dev;
+                $uuid =~ s/UUID=//;
+                $set_UUID_cmd .= " $uuid $real_dev";
+                print $out qq(logaction "$set_UUID_cmd"\n);
+                print $out qq($set_UUID_cmd || shellout "$cmd"\n);
+            }
+
+            # 3/ create mountpoint
+            $cmd = "mkdir -p /sysroot$mp";
+            print $out qq(logaction "$cmd"\n);
+            print $out qq($cmd || shellout "mkdir failed!"\n);
+
+            # 4/ create inird:/etc/fstab entry
+            print $out qq(loginfo "Adding $mp to /etc/fstab"\n);
+            my $fstab_options = $options;
+            $fstab_options =~ s/^\s+|\s+$//g; # trim
+            $fstab_options =~ s/\s+/,/g;
+            print $out qq(echo "$mount_dev\t/sysroot$mp\t$fs\t$fstab_options\t0 0" >> /etc/fstab\n);
+
+            # 5/ Mount filesystem
+            print $out qq(loginfo "Mounting $mount_dev to /sysroot$mp"\n);
+            print $out qq(mount /sysroot$mp\n); # Mount using local fstab
+            print $out qq(\n);
         }
     }
 }
