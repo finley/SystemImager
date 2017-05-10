@@ -1365,12 +1365,17 @@ sub _write_out_mkfs_commands {
                     $set_UUID_cmd = "tune2fs -U ";
                     $mkfs_opts .= " -q";
                 }
+                when ( /^btrfs$/ ) {
+                    $label_switch = "-L";
+                    $set_UUID_cmd = "btrfstune -U ";
+                    $mkfs_opts .= " -q -f";
+                }
                 when ( /^jfs$/ ) {
                     $label_switch = "-L";
                     $set_UUID_cmd = "jfs_tune -U ";
                     $mkfs_opts .= " -q";
                 }
-                when ( /^reiserfs$/ ) {
+                 when ( /^reiserfs$/ ) {
                     $label_switch = "-l";
                     $set_UUID_cmd = "reiserfstune -u ";
                     $mkfs_opts .= " -q";
