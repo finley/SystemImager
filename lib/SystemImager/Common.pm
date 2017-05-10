@@ -469,7 +469,7 @@ sub save_partition_information {
             #
             #   "help mkfs"
             #
-            my $fs_regex = '(ext4|ext3|ext2|fat32|fat16|hfs|jfs|linux-swap\(.*\)|linux-swap|ntfs|reiserfs|hp-ufs|sun-ufs|xfs)\s*';
+            my $fs_regex = '(ext4|ext3|ext2|fat32|fat16|hfs|jfs|linux-swap\(.*\)|linux-swap|ntfs|reiserfs|hp-ufs|sun-ufs|xfs|btrfs)\s*';
 
             #
             # flag_regex arguments taken from parted on RHEL4.  For more info on 
@@ -888,7 +888,7 @@ sub _turn_sfdisk_output_into_generic_partitionschemes_file {
      
         # Figure out what the fstype is based on sfdisk's Id tag.  As far as parted (the tool 
         # will be used to re-create this info) is concerned, the following fstypes are valid:
-        # ext3, ext2, fat32, fat16, hfs, jfs, linux-swap, ntfs, reiserfs, hp-ufs, sun-ufs, xfs
+        # ext3, ext2, fat32, fat16, hfs, jfs, linux-swap, ntfs, reiserfs, hp-ufs, sun-ufs, xfs, btrfs
         #
         # Also figure out what the partition type is (primary, extended, or logical), and any
         # other flags that may be set.  Valid flags from parted's perspective are:
