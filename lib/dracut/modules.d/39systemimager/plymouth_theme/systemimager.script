@@ -1,0 +1,56 @@
+NUM_SCROLL_LINES=15;
+LINE_WIDTH=55;
+ 
+wallpaper_image = Image("Background.png");
+banner_image = Image("SystemImagerBanner.png");
+screen_width = Window.GetWidth();
+screen_height = Window.GetHeight();
+resized_wallpaper_image = wallpaper_image.Scale(screen_width,screen_height);
+wallpaper_sprite = Sprite(resized_wallpaper_image);
+wallpaper_sprite.SetZ(-100);
+banner_sprite = Sprite(banner_image);
+banner_sprite.SetX(20);
+banner_sprite.SetY(20);
+banner_sprite.SetZ(-99);
+banner_sprite.SetOpacity(1.0);
+ 
+// Initialising text images and their positions
+// 20 is the height (including line spacing) of each line
+for (i=0; i < NUM_SCROLL_LINES; i++) {
+  lines[i]= Image.Text("", 0, 0, 0);
+  message_sprite[i] = Sprite();
+  message_sprite[i].SetPosition(screen_width * 0.2, (screen_height * 0.6) + (i * 20), 10000);
+}
+ 
+// From ubuntu-logo
+fun StringLength(string) {
+ 
+  index = 0;
+  str = String(string);
+  while(str.CharAt(index)) index++;
+  return index;
+}
+ 
+fun scroll_message_callback(text) {
+ 
+   // Truncate the message if too long
+   if (StringLength(text) > LINE_WIDTH) {
+     text = text.SubString(0, LINE_WIDTH - 3);
+     text += "...";
+   }
+ 
+   // Shift message one up
+   for (i = 0; i < NUM_SCROLL_LINES - 1; i++) {
+     lines[i] = lines[i+1];
+   }
+ 
+   // Create the image for the latest message
+   lines[i] = Image.Text(text, 0, 0, 0);
+ 
+   // Re-positioning the text images
+   for (i = 0; i < NUM_SCROLL_LINES; i++) {
+     message_sprite[i].SetImage(lines[i]);
+   }
+}
+ 
+Plymouth.SetUpdateStatusFunction(scroll_message_callback);

@@ -378,6 +378,16 @@ endif
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-timeout.sh $(DRACUT_MODULES)/39systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-wait-imaging.sh $(DRACUT_MODULES)/39systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/systemimager-load-dhcpopts.sh $(DRACUT_MODULES)/39systemimager
+	mkdir -p $(DRACUT_MODULES)/39systemimager/plymouth_theme
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/plymouth_theme/progress_bar.png $(DRACUT_MODULES)/39systemimager/plymouth_theme
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/plymouth_theme/entry.png $(DRACUT_MODULES)/39systemimager/plymouth_theme
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/plymouth_theme/systemimager.plymouth $(DRACUT_MODULES)/39systemimager/plymouth_theme
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/plymouth_theme/systemimager.script $(DRACUT_MODULES)/39systemimager/plymouth_theme
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/plymouth_theme/Background.png $(DRACUT_MODULES)/39systemimager/plymouth_theme
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/plymouth_theme/SystemImagerBanner.png $(DRACUT_MODULES)/39systemimager/plymouth_theme
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/plymouth_theme/lock.png $(DRACUT_MODULES)/39systemimager/plymouth_theme
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/plymouth_theme/box.png $(DRACUT_MODULES)/39systemimager/plymouth_theme
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/39systemimager/plymouth_theme/progress_box.png $(DRACUT_MODULES)/39systemimager/plymouth_theme
 
 # install server-only libraries
 .PHONY:	install_server_libs

@@ -38,6 +38,8 @@ install() {
     inst_multiple -o mklost+found # Do we need that?
     # Install ssh and its requirements
     install_ssh
+    # Install plymouth theme and its requirements
+    install_plymouth_theme
     inst_multiple cut date echo env sort test false true [ expr head install tail tee tr uniq wc tac mktemp
     # inst_multiple setfont loadkeys kbd_mode stty # i18n module
     inst_multiple bc gzip bzip2 rsync parted blockdev awk ncat tty killall kexec ipcalc findmnt tput stty
@@ -82,3 +84,21 @@ install_ssh() {
     sed -i -e 's/^UsePAM\syes/UsePAM no/g' $initdir/etc/ssh/sshd_config
 }
 
+################################################################################
+# sub routine that installs plymouth theme
+#
+install_plymouth_theme() {
+    PLUGINDIR=`plymouth --get-splash-plugin-path`
+    inst $PLUGINDIR/script.so $initdir
+    rm -rf $initdir/usr/share/plymouth/themes/* # Remove any other themes.
+    mkdir -p $initdir/usr/share/plymouth/themes/systemimager
+    cp $moddir/plymouth_theme/{*.png,systemimager.plymouth,systemimager.script} $initdir/usr/share/plymouth/themes/systemimager
+    ( cd ${initdir}/usr/share/plymouth/themes; ln -sf systemimager/systemimager.plymouth default.plymouth 2>&1 )
+    cat >> ${initdir}/usr/share/plymouth/plymouthd.defaults <<EOF
+# SystemImager is the default theme
+[Daemon]
+Theme=systemimager
+ShowDelay=5
+DeviceTimeout=5
+EOF
+}

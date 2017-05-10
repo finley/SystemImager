@@ -355,6 +355,7 @@ Distribution: System Installation Suite
 Requires: systemimager-server = %{version}, dracut-network
 Requires: systemimager-%{_build_arch}initrd_template
 Requires: xfsprogs, e2fsprogs, btrfs-progs, ncurses
+Requires: plymouth-plugin-script
 #AutoReqProv: no
 %description -n dracut-%{name}
 This package is a dracut modules that automates the systeimager initramfs creation.
@@ -784,10 +785,11 @@ test -d $LOCAL_DRACUT_BASEDIR || exit 1
 cp -r %_usr%_dracutbase/* $LOCAL_DRACUT_BASEDIR/
 # Copy our module locally while doing correct STRINGS replacement.
 mkdir -p $LOCAL_DRACUT_BASEDIR/modules.d/39systemimager
-for FILE in ./lib/dracut/modules.d/39systemimager/*
+for FILE in ./lib/dracut/modules.d/39systemimager/{check,install,*.sh}
 do
     ./tools/si_install  -b -m 755 $FILE $LOCAL_DRACUT_BASEDIR/modules.d/39systemimager/
 done
+cp -r ./lib/dracut/modules.d/39systemimager/plymouth_theme $LOCAL_DRACUT_BASEDIR/modules.d/39systemimager/
 test -x /usr/bin/lsinitrd && ln -s /usr/bin/lsinitrd $LOCAL_DRACUT_BASEDIR/lsinitrd.sh # only required in newer dracut versions.
 
 # move to local modules dir so we can use dracut --local
