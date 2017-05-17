@@ -69,26 +69,32 @@ fi
 
 logerror() {
 	logmessage "${BG_RED}  ERROR:${BG_BLACK} $@"
+	plymouth --ping && plymouth message --text="E:$@"
 }
 
 logwarn() {
 	logmessage "${FG_RED}warning:${FG_WHITE} $@"
+	plymouth --ping && plymouth message --text="W:$@"
 }
 
 loginfo() {
 	logmessage "${FG_GREEN}    info:${FG_WHITE} $@"
+	plymouth --ping && plymouth message --text="I:$@"
 }
 
 logaction() {
 	logmessage "${FG_AMBER}  action:${FG_WHITE} $@"
+	plymouth --ping && plymouth message --text="A:$@"
 }
 
 lognotice() {
 	logmessage "${FG_BLUE}  notice:${FG_WHITE} $@"
+	plymouth --ping && plymouth message --text="N:$@"
 }
 
 logmsg() {
 	logmessage "${FG_CYAN} message:${FG_WHITE} $@"
+	# Old messages => No plymouth.
 }
 
 logmessage() {
@@ -103,6 +109,20 @@ logmessage() {
     if [ ! -z "$USELOGGER" ] ;
         then logger -p user.$1 "sis: $@"
     fi
+}
+
+################################################################################
+#
+# sis_update_step:
+# - arg 1: <step>
+# - arg 2: <3 digits completion (000-max)>
+# - arg 3: <3 digits max value> | 000 (000 = do not display bar)
+#
+# Tels plymouth which step icon to highlight and if the percentage is defined,
+#               what the progressbar should display. (nothing hides the progress bar)
+#
+sis_update_step() {
+	plymouth --ping && plymouth update --status="$1:$2:$3"
 }
 
 #

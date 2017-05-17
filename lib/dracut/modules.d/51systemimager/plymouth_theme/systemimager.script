@@ -1,0 +1,337 @@
+// vi: set filetype=C et ts=4:
+//
+// Systemimager
+// Copyright (C) 2017 Olivier Lahaye <olivier(dot)lahaye1(at)free(dot)fr>
+//
+// Thanks to Charlie Brej <brejc8(at)gmail(dot)com for his help undestanding
+// script module behaviors and tricks.
+//
+// $Id$
+//
+// This file is the logic for SystemImager plymouth frontend.
+// It reacts to 2 plymouth commands:
+//
+// 1/ Display some log information on screen
+// plymouth message --text="X:Some text message"
+//     where X letter = (E)rror | (W)arning | (I)nfo | (A)ction | (N)otice
+//
+// 2/ Light step icon ad draw a progress bar for the current step if needed
+// plymout update --status="STEP:VAL:MAX"
+//     where STEP = init|part|frmt|prei|imag|boot|post
+//     where VAL is a 3 digit number (0 is noted 000)
+//     where MAX is the maximum value (000 means do not display progress bar; only icon)
+//
+
+// Max chars in a log line (TODO: need to compute that according to font and swreen width)
+LINE_WIDTH=120;
+// Margin between 2 elements or around screen (TODO: need to compute that)
+margins_width=20;
+
+screen_width = Window.GetWidth();
+screen_height = Window.GetHeight();
+
+// Setup wallpaper.
+wallpaper_image = Image("Background.png");
+resized_wallpaper_image = wallpaper_image.Scale(screen_width,screen_height);
+wallpaper_sprite = Sprite(resized_wallpaper_image);
+wallpaper_sprite.SetZ( -100 ); // Wall paper is behind everything.
+
+// Setup SystemImager logo.
+banner.image = Image("SystemImagerBanner.png");
+banner.sprite = Sprite(banner.image);
+banner.sprite.SetPosition( margins_width, margins_width, 100 );
+banner.sprite.SetOpacity(1.0);
+banner.height = banner.image.GetHeight();
+
+// Load step icons.
+step_init.image        = Image("icon_init.png");
+step_partition.image   = Image("icon_partition.png");
+step_format.image      = Image("icon_init.png");      // TODO
+step_preinstall.image  = Image("icon_init.png");      // TODO
+step_imaging.image     = Image("icon_writeimage.png");
+step_bootloader.image  = Image("icon_init.png");      // TODO
+step_postinstall.image = Image("icon_init.png");      // TODO
+
+// Compute icons scale suited for screen width
+// we want size 64 for a 1024 pixel wide screen.
+step_icon.size = screen_width * 64 / 1024; // We want 64 pix wid icons on 1024pix wide screen.
+
+// Initialise step icons onn screen
+step_Y = ( screen_height - margins_width - step_icon.size );
+step_Z = 101;
+step_icon.anchor = ( ( screen_width - margins_width - margins_width ) / 8 ) ; // 7 steps => 8 spacers
+
+step_init.sprite = Sprite(step_init.image.Scale(step_icon.size,step_icon.size));
+step_X = ( margins_width + step_icon.anchor - ( step_icon.size / 2 ) );
+step_init.sprite.SetPosition( step_X, step_Y, step_Z );
+step_init.sprite.SetOpacity(0.0);
+
+step_partition.sprite = Sprite(step_partition.image.Scale(step_icon.size,step_icon.size));
+step_X = ( margins_width + step_icon.anchor * 2 - ( step_icon.size / 2 ) );
+step_partition.sprite.SetPosition( step_X, step_Y, step_Z );
+step_partition.sprite.SetOpacity(0.0);
+ 
+step_format.sprite = Sprite(step_format.image.Scale(step_icon.size,step_icon.size));
+step_X = ( margins_width + step_icon.anchor * 3 - ( step_icon.size / 2 ) );
+step_format.sprite.SetPosition( step_X, step_Y, step_Z );
+step_format.sprite.SetOpacity(0.0);
+
+step_preinstall.sprite = Sprite(step_preinstall.image.Scale(step_icon.size,step_icon.size));
+step_X = ( margins_width + step_icon.anchor * 4 - ( step_icon.size / 2 ) );
+step_preinstall.sprite.SetPosition( step_X, step_Y, step_Z );
+step_preinstall.sprite.SetOpacity(0.0);
+
+step_imaging.sprite = Sprite(step_imaging.image.Scale(step_icon.size,step_icon.size));
+step_X = ( margins_width + step_icon.anchor * 5 - ( step_icon.size / 2 ) );
+step_imaging.sprite.SetPosition( step_X, step_Y, step_Z );
+step_imaging.sprite.SetOpacity(0.0);
+
+step_bootloader.sprite = Sprite(step_bootloader.image.Scale(step_icon.size,step_icon.size));
+step_X = ( margins_width + step_icon.anchor * 6 - ( step_icon.size / 2 ) );
+step_bootloader.sprite.SetPosition( step_X, step_Y, step_Z );
+step_bootloader.sprite.SetOpacity(0.0);
+
+step_postinstall.sprite = Sprite(step_postinstall.image.Scale(step_icon.size,step_icon.size));
+step_X = ( margins_width + step_icon.anchor * 7 - ( step_icon.size / 2 ) );
+step_postinstall.sprite.SetPosition( step_X, step_Y, step_Z );
+step_postinstall.sprite.SetOpacity(0.0);
+
+// Init progress bar.
+// 1st: Load the pixel art.
+progress_box.image   = Image("progress_box.png");   // 40px height - 1px wide
+progress_gauge.image = Image("progress_gauge.png"); // 36px height - 128px wide
+progress_hide.image  = Image("hide_box.png");       // 36px height - 1px wide
+
+// 2nd: Compute progress bar dimentions.
+//      We want 20px height for 768 height screen.
+progress_unit.width   = 50; // Includes margin to end of screen
+progress_bar.height   = Math.Int((screen_height * 20) / 768); // 20px on 768 height screen
+progress_bar.Y        = screen_height - margins_width - step_icon.size - margins_width - progress_bar.height;
+progress_bar.X        = 130;   // Could be aligned with log
+progress_bar.width    = screen_width - progress_bar.X - progress_unit.width - margins_width; // room for title and units.
+progress_gauge.height = Math.Int((screen_height * 16) / 768); // 16px on 768 height screen
+progress_gauge.margin = Math.Int(( progress_bar.height - progress_gauge.height ) / 2);
+progress_gauge.width  = progress_bar.width - ( 2 * progress_gauge.margin );
+
+// This sprite holds the progress bar label like "Progress: "
+progress_title.image  = Image.Text("", 1.0, 1.0, 1.0); // title at left of progress bar
+progress_title.sprite = Sprite(progress_title.image);
+progress_title.sprite.SetOpacity(0); // Hidden by default
+progress_title.sprite.SetX( margins_width );
+progress_title.sprite.SetY( progress_bar.Y );
+progress_title.sprite.SetZ( 100 );
+
+// Unit label
+progress_unit.image  = Image.Text("", 1.0, 1.0, 1.0); // Units at end of bar (after value)
+progress_unit.sprite = Sprite(progress_unit.image);
+progress_unit.sprite.SetOpacity(0); // Hidden by default
+progress_unit.sprite.SetX( screen_width - progress_unit.width );
+progress_unit.sprite.SetY( progress_bar.Y );
+progress_unit.sprite.SetZ( 100 );
+
+// This sprite holds the border (backgroud) of the progress bar
+progress_box.sprite = Sprite(progress_box.image.Scale(progress_bar.width,progress_bar.height)); // The box of the gauge
+progress_box.sprite.SetOpacity(0); // Hidden by default
+progress_box.sprite.SetX( progress_bar.X );
+progress_box.sprite.SetY( progress_bar.Y );
+progress_box.sprite.SetZ( 90 );
+
+// This sprite holds the progress bar content.
+progress_gauge.sprite = Sprite(progress_gauge.image.Scale(progress_gauge.width, progress_gauge.height)); // The content of the gauge
+progress_gauge.sprite.SetOpacity(0); // Hidden by default
+progress_gauge.sprite.SetX( progress_bar.X + progress_gauge.margin );
+progress_gauge.sprite.SetY( progress_bar.Y + progress_gauge.margin );
+progress_gauge.sprite.SetZ( 95 ); // Over box
+
+progress_hide.sprite  = Sprite(progress_hide.image.Scale(progress_gauge.width, progress_gauge.height)); // Hides upper content of gauge
+progress_hide.sprite.SetOpacity(0); // Hidden by default
+progress_hide.sprite.SetX( progress_bar.X + progress_gauge.margin);
+progress_hide.sprite.SetY( progress_bar.Y + progress_gauge.margin );
+progress_hide.sprite.SetZ( 100 ); // Over gauge.
+
+// Compute space left for logs.
+// margins_width banner margins_width LOGLINES margins_width progress_bar margins_width step_icons margins_width
+// num_scroll_lines = (screen_width - all the above except LOGLINES) / font-height
+num_scroll_lines = ( screen_height - banner.height - progress_bar.height - step_icon.size - ( 5 * margins_width ) ) / 20; // 20 => font height. (TODO: try not to hardcode that)
+
+// Initialising text images and their positions
+// 20 is the height (including line spacing) of each line
+for (i=0; i < num_scroll_lines; i++) {
+  status[i] = Image.Text("", 0, 0, 0);
+  lines[i]  = Image.Text("", 0, 0, 0);
+  status_sprite[i] = Sprite();
+  message_sprite[i] = Sprite();
+  status_sprite[i].SetPosition( margins_width , (margins_width + banner.height + margins_width) + (i * 20), 100 );
+  message_sprite[i].SetPosition( 100 , (margins_width + banner.height + margins_width) + (i * 20), 100 );
+}
+ 
+// String.GetLength(string) doesn't exists is API.
+fun StringLength(string) {
+  index = 0;
+  str = String(string);
+  while(str.CharAt(index)) index++;
+  return index;
+}
+ 
+fun scroll_message_callback(text) {
+   // 1st: Get message status (Warning, Error, Info, ....)
+   //      stored in 1st letter.
+   msg_status = text.SubString(0,1);
+   msg_text   = text.SubString(2,256); // Assumes that messages won't exceed 256.
+
+   // 2nd: Truncate the message if too long
+   if (StringLength(msg_text) > LINE_WIDTH) {
+     msg_text = msg_text.SubString(0, LINE_WIDTH - 3);
+     msg_text += "...";
+   }
+ 
+   // 3rd: Shift message one up
+   for (i = 0; i < num_scroll_lines - 1; i++) {
+     lines[i] = lines[i+1];
+     status[i] = status[i+1];
+   }
+ 
+   // 4th: Create the image for the latest message
+   R=0.0; G=0.0; B=0.0;
+   status_text = "";
+   lines[i] = Image.Text(msg_text, 1.0, 1.0, 1.0, 1.0, "Fixed");
+   if (msg_status == "E") {         // ERROR
+      R=0.0; G=1.0; B=0.0;
+      status_text = "Error";
+   } else if (msg_status == "W") {  // WARNING
+      status_text = "Warning";
+      R=1.0; G=0.2; B=0.0;
+   } else if (msg_status == "I") {  // INFO
+      R=0.0; G=1.0; B=0.0;
+      status_text = "Info";
+   } else if (msg_status == "A") {  // ACTION
+      R=1.0; G=1.0; B=0.0;
+      status_text = "Action";
+   } else if (msg_status == "N") {  // NOTICE
+      R=0.0; G=1.0; B=1.0;
+      status_text = "Notice";
+   }
+   status[i] = Image.Text(status_text, R, G, B, "Fixed");
+ 
+   // 5th: Re-positioning the text images
+   for (i = 0; i < num_scroll_lines; i++) {
+     message_sprite[i].SetImage(lines[i]);
+     status_sprite[i].SetImage(status[i]);
+   }
+}
+ 
+//
+// ProgressBar(title, progress, max, unit)
+// Draw or Hide the progress bar.
+//
+// - title: the label to display at left.
+// - progress: the gauge value
+// - max: the max value or 0 to hide the progress bar.
+// - unit: text to display at right of the bar.
+//
+fun ProgressBar(title, progress, max, unit) {
+   // Display or update progress bar.
+   if( max == 0 ) { // We don't want a progress bar.
+      // Hide ProgressBar
+      progress_title.sprite.SetOpacity(0);
+      progress_box.sprite.SetOpacity(0);
+      progress_gauge.sprite.SetOpacity(0);
+      progress_hide.sprite.SetOpacity(0);
+      progress_unit.sprite.SetOpacity(0);
+   } else { // We assume we have a value...
+      title = Image.Text(title, 1.0, 1.0, 1.0);
+      progress_title.sprite.SetImage(title);
+      unit = Image.Text("" + progress + unit, 1.0, 1.0, 1.0);
+      progress_unit.sprite.SetImage(unit);
+      shrink_factor = 1 - (progress / max);
+      hide_bar.width = Math.Int(shrink_factor * (progress_bar.width - 2 * progress_gauge.margin));
+      hide_bar_posX = screen_width - progress_unit.width - progress_gauge.margin - hide_bar.width - margins_width;
+      progress_hide.sprite.SetX( hide_bar_posX );
+      progress_hide.sprite.SetImage(progress_hide.image.Scale(hide_bar.width, progress_gauge.height));
+      progress_title.sprite.SetOpacity(1);
+      progress_box.sprite.SetOpacity(1);
+      progress_gauge.sprite.SetOpacity(1);
+      progress_hide.sprite.SetOpacity(0.8);
+      progress_unit.sprite.SetOpacity(1);
+   }
+}
+
+// This functions takes a string containing an integer as input. It returns the integer read or "#NaN" or "#Overflow"
+// Author: Olivier LAHAYE
+// Licence: GPL
+// Input: string to convert.
+// Output: numerical value or "#NaN" or "#Overflow"
+// Examples:
+// "" => 0
+// " " => "#NaN"
+// "_" => "#NaN"
+// "000965" => 965
+// "1.0" => "#NaN"
+// "foo" => "#NaN"
+fun StringToInteger(number_string) {
+    ref = "0123456789";
+    overflow_limit = 16; // Double: around 16 digits max.
+    // load the number string
+    number_length = 0;
+    while (char[number_length] = number_string.CharAt(number_length)) {
+        digit[number_length] = 0;
+        number_length++;
+        if (number_length > overflow_limit) return ("#Overflow");
+    }
+    index=0;
+    found=0;
+    while ( index < 10 ) { // For each base 10 digit
+        for(c=0; c<number_length; c++) { // for each number_string digit
+            if ( char[c] == ref.CharAt(index) ) { 
+                digit[c] = index; // Found digit #c
+                found++;
+            }
+            // Check if all digits have been found.
+            if (found == number_length)
+                index = 10; // Leave early the loop.
+        }
+        index++;
+    }
+    if (found < number_length) return ( "#NaN" ); // This is not a number
+    return_val = 0;
+    factor = 1;
+    while (number_length > 0) {
+        number_length--;
+        return_val += ( digit[number_length] * factor );
+        factor *= 10;
+    }
+    return( return_val );
+}
+
+fun display_step_callback(text) {
+   // text format: 4 letters (step):progress_val(3 digits):max(3 digits)
+   step  = text.SubString( 0 , 4 ); // step name (4 chars)
+   progress_arg = StringToInteger(text.SubString(5,8)); // 3 digits
+   progress_max = StringToInteger(text.SubString(9,12)); // 3 digits
+   if(step == "init") {
+      step_init.sprite.SetOpacity(1.0);
+      ProgressBar("Initialising...", "", 0, "");
+   } else if (step == "part") {
+      step_partition.sprite.SetOpacity(1.0);
+      ProgressBar("Partitionning...", "", 0, "");
+   } else if (step == "frmt") {
+      step_format.sprite.SetOpacity(1.0);
+      ProgressBar("Formatting...", "", 0, "");
+   } else if (step == "prei") {
+      step_preinstall.sprite.SetOpacity(1.0);
+      ProgressBar("Pre-install...", progress_arg, progress_max, "/" + progress_max);
+   } else if (step == "imag") {
+      step_imaging.sprite.SetOpacity(1.0);
+      ProgressBar("Imaging...", progress_arg, progress_max, "%");
+   } else if (step == "boot") {
+      step_bootloader.sprite.SetOpacity(1.0);
+      ProgressBar("Bootloader...", "", 0, "");
+   } else if (step == "post") {
+      step_postinstall.sprite.SetOpacity(1.0);
+      ProgressBar("Post-install...", progress_arg, progress_max, "/" + progress_max);
+   }
+}
+
+Plymouth.SetDisplayMessageFunction(scroll_message_callback);
+Plymouth.SetUpdateStatusFunction(display_step_callback);
+
