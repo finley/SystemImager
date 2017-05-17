@@ -40,10 +40,10 @@ save_logs_to_sysroot() {
 # so the postinstall will work.
 #
 find_os_mounts() {
-    loginfo "System specific mounted filesystems enumeration"
+    loginfo "Looking for system specific mounted filesystems..."
     findmnt -o target --raw|grep -v /sysroot |grep -v '^/$'|tail -n +2 > /tmp/system_mounts.txt
-    loginfo "Found:"
-    loginfo "$(cat /tmp/system_mounts.txt)"
+    logdetails "Found:"
+    logdetails "$(cat /tmp/system_mounts.txt)"
     test -s "/tmp/system_mounts.txt" || shellout "No OS specific special filesystems found"
 }
 
@@ -56,11 +56,11 @@ mount_os_filesystems_to_sysroot() {
     # 1st, we enumerates what filesystems to bindmount
     find_os_mounts
     # 2nd, then we do the binds.
-    loginfo "bindin OS filesystems to image"
+    loginfo "Bindin OS filesystems to image"
     test -s /tmp/system_mounts.txt || shellout
     for filesystem in $(cat /tmp/system_mounts.txt)
     do
-        loginfo "Bind-mount ${filesystem} to /sysroot${filesystem}"
+        logdetails "Bind-mount ${filesystem} to /sysroot${filesystem}"
         test -d "/sysroot${filesystem}" || mkdir -p "/sysroot${filesystem}" || shellout
         # In case of failure, we die as next steps will fail.
         mount -o bind "${filesystem}" "/sysroot${filesystem}" || shellout "Failed to bind-mount ${filesystem} to /sysroot${filesystem} ."
@@ -85,7 +85,7 @@ umount_os_filesystems_from_sysroot()
         then
             if umount /sysroot${mountpoint}
             then
-                loginfo "unmounted /sysroot${mountpoint}"
+                logdetails "unmounted /sysroot${mountpoint}"
             else
                 # In case of failure we just report the issue. (imaging is finished in theory)".
                 logwarn " failed to umount /sysroot${mountpoint}"

@@ -142,6 +142,7 @@ logmessage() {
 #         - post (small letters) (VAL=script being run; MAX=number of scripts to run)#
 # - val: completion (0-max) (integer part must be 3 digits maximum. Floats are rounded)
 # - max: max value | 0 (0 = do not display bar) (integer must be 3 digits maximum. No float)
+#  Note: val and max can be ommited. Default to "000".
 #
 # Tells plymouth which step icon to highlight and if the percentage is defined,
 #               what the progressbar should display. (max="000" hides the progress bar)
@@ -152,18 +153,18 @@ sis_update_step() {
 	return
     fi
     # convert val from float to integer if needed
-    val = `LC_NUMERIC="C" printf "%3.0f" "$2"`
+    VAL=`LC_NUMERIC="C" printf "%3.0f" "$2"`
     # set output format to 3 digits
-    val = `LC_NUMERIC="C" printf "%.3d" "$val"
-    max = `LC_NUMERIC="C" printf "%.3d" "$3"
+    VAL=`LC_NUMERIC="C" printf "%.3d" "${VAL}"
+    MAX=`LC_NUMERIC="C" printf "%.3d" "$3"
 
-    if test ${#val} -gt 3 -o ${#max} -gt 3
+    if test ${#VAL} -gt 3 -o ${#MAX} -gt 3
     then
-	logwarn "sis_update_step called with invalid values: $val/$max (> 3 digits)"
+	logwarn "sis_update_step called with invalid values: ${VAL}/${MAX} (> 3 digits)"
 	return
     fi
 
-    plymouth --ping && plymouth update --status="$1:$val:$max"
+    plymouth --ping && plymouth update --status="$1:${VAL}:${MAX}"
 }
 
 #
@@ -276,7 +277,7 @@ tmpfs_watcher() {
         unset DF
     }&
     TMPFS_WATCHER_PID=$!
-    loginfo "tmpfs watcher PID: $TMPFS_WATCHER_PID"
+    logdetails "tmpfs watcher PID: $TMPFS_WATCHER_PID"
     echo $TMPFS_WATCHER_PID > /run/systemimager/tmpfs_watcher.pid
 }
 #
@@ -495,7 +496,7 @@ get_torrents_directory() {
     else
         mkdir -p ${TORRENTS_DIR}
         CMD="rsync -a ${IMAGESERVER}::${TORRENTS}/ ${TORRENTS_DIR}/"
-        loginfo "$CMD"
+        logdetails "$CMD"
         $CMD || shellout "Failed to retreive ${TORRENTS_DIR} directory..."
     fi
 }
@@ -520,7 +521,7 @@ get_scripts_directory() {
     else
         mkdir -p ${SCRIPTS_DIR}
         CMD="rsync -a ${IMAGESERVER}::${SCRIPTS}/ ${SCRIPTS_DIR}/"
-        loginfo "$CMD"
+        logdetails "$CMD"
         $CMD || shellout "Failed to retrieve ${SCRIPTS_DIR} directory..."
     fi
 }
@@ -1177,6 +1178,7 @@ run_pre_install_scripts() {
 
     loginfo "Running pre-install scripts"
 
+    sis_update_step prei # Plymouth: Light on PreInstall icon
     get_base_hostname
 
     # Get group name (defined in /etc/systemimager/cluster.xml on the image
@@ -1196,16 +1198,22 @@ run_pre_install_scripts() {
         unset GROUPNAME
         PRE_INSTALL_SCRIPTS="$PRE_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]${HOSTNAME}\..*"`"
 
+
         # Now, to get rid of those pesky newlines. -BEF-
+	# BUG: assuming no script has a space in its name. -OL-
         PRE_INSTALL_SCRIPTS=`echo $PRE_INSTALL_SCRIPTS | tr '\n' ' '`
-        
         if [ ! -z "`echo ${PRE_INSTALL_SCRIPTS}|sed 's/ //'`" ]; then
 
-            for PRE_INSTALL_SCRIPT in `unique $PRE_INSTALL_SCRIPTS`
+	    PRE_SCRIPTS=`unique "$PRE_INSTALL_SCRIPTS"`
+	    NUM_SCRIPTS=`echo "$PRE_SCRIPTS"|wc -w`
+            SCRIPT_INDEX=1
+            for PRE_INSTALL_SCRIPT in ${PRE_SCRIPTS}
             do
-                loginfo "Running script: $PRE_INSTALL_SCRIPT"
+                sis_update_step prei ${SCRIPT_INDEX} ${NUM_SCRIPTS}
+                loginfo "Running script ${SCRIPT_INDEX}/${NUM_SCRIPTS}: $PRE_INSTALL_SCRIPT"
                 chmod +x $PRE_INSTALL_SCRIPT || shellout
                 ./$PRE_INSTALL_SCRIPT || shellout
+		SCRIPT_INDEX=$((${SCRIPT_INDEX} + 1))
             done
         else
             loginfo "No pre-install scripts found."
@@ -1223,6 +1231,7 @@ run_pre_install_scripts() {
 run_post_install_scripts() {
 
     loginfo "Running post-install scripts"
+    sis_update_step post
 
     get_base_hostname
 
@@ -1254,12 +1263,18 @@ run_post_install_scripts() {
 
             rsync -a ${SCRIPTS_DIR}/post-install/ /sysroot/tmp/post-install/ || shellout
 
-            for POST_INSTALL_SCRIPT in `unique $POST_INSTALL_SCRIPTS`
+	    POST_SCRIPTS=`unique "$POST_INSTALL_SCRIPTS"`
+	    NUM_SCRIPTS=`echo "$POST_SCRIPTS"|wc -w`
+            SCRIPT_INDEX=1
+
+            for POST_INSTALL_SCRIPT in ${POST_SCRIPTS}
             do
                 if [ -e "$POST_INSTALL_SCRIPT" ]; then
-                    loginfo "Running script: $POST_INSTALL_SCRIPT"
+                    sis_update_step post ${SCRIPT_INDEX} ${NUM_SCRIPTS}
+                    loginfo "Running script ${SCRIPT_INDEX}/${NUM_SCRIPTS}: $POST_INSTALL_SCRIPT"
                     chmod +x /sysroot/tmp/post-install/$POST_INSTALL_SCRIPT || shellout
                     chroot /sysroot/ /tmp/post-install/$POST_INSTALL_SCRIPT || shellout
+		    SCRIPT_INDEX=$(( ${SCRIPT_INDEX} + 1))
                 fi
             done
         else
@@ -1275,7 +1290,6 @@ run_post_install_scripts() {
 #
 #   Stuff for SSH installs
 #
-# OL: obsolete. need rework.
 
 start_sshd() {
     export HOME=/root # We're running as root.
@@ -1585,6 +1599,9 @@ start_report_task() {
 	# Update progress bar.
 	ProgressBar ${status}
 
+	# Update Plymouth progress bar.
+	sis_update_step imag ${status} 100
+
 	if [ ! -z "$MONITOR_SERVER" ]; then
             # Send status and bandwidth to the monitor server.
             send_monitor_msg "status=$status:speed=$speed"
@@ -1596,7 +1613,8 @@ start_report_task() {
     }&
 
     REPORT_PID=$!
-    loginfo "Progress report task started PID=$REPORT_PID ."
+    loginfo "Progress report task started."
+    logdetails "PID=$REPORT_PID"
     echo $REPORT_PID > /run/systemimager/report_task.pid
 }
 
@@ -1616,7 +1634,8 @@ stop_report_task() {
 	echo "  " > /dev/console # Make sure we're on a new line (and clean glitches)
         loginfo "Stopping progress report task."
         REPORT_PID=`cat /run/systemimager/report_task.pid`
-        # BUG: Need to make sure it is an integer
+        # Making sure it is an integer.
+	test -n "`echo ${REPORT_PID}|sed -r 's/[0-9]*//g'`" && shellout "Cant kill report task: /run/systemimager/report_task.pid is not a pid."
         if [ ! -z "$REPORT_PID" ]; then
             kill -9 $REPORT_PID
 	    rm -f /run/systemimager/report_task.pid
@@ -1800,6 +1819,7 @@ fi
 # USAGE: install_boot_loader <disk device> [<disk device> <disk device> ... ]
 
 install_boot_loader() {
+	sis_update_step boot 0 0
 	test -z "$@" && shellout "No disks to install bootloader to!"
 	loginfo "Now trying to install a boot loader on"
         loginfo "the following disk(s): [$@]..."
