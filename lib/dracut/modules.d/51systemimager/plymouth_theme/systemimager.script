@@ -1,4 +1,4 @@
-// vi: set filetype=C et ts=4:
+// vi: set filetype=cpp et ts=4:
 //
 // Systemimager
 // Copyright (C) 2017 Olivier Lahaye <olivier(dot)lahaye1(at)free(dot)fr>
@@ -120,7 +120,7 @@ progress_gauge.width  = progress_bar.width - ( 2 * progress_gauge.margin );
 // This sprite holds the progress bar label like "Progress: "
 progress_title.image  = Image.Text("", 1.0, 1.0, 1.0); // title at left of progress bar
 progress_title.sprite = Sprite(progress_title.image);
-progress_title.sprite.SetOpacity(0); // Hidden by default
+progress_title.sprite.SetOpacity( 0.0 ); // Hidden by default
 progress_title.sprite.SetX( margins_width );
 progress_title.sprite.SetY( progress_bar.Y );
 progress_title.sprite.SetZ( 100 );
@@ -128,27 +128,27 @@ progress_title.sprite.SetZ( 100 );
 // Unit label
 progress_unit.image  = Image.Text("", 1.0, 1.0, 1.0); // Units at end of bar (after value)
 progress_unit.sprite = Sprite(progress_unit.image);
-progress_unit.sprite.SetOpacity(0); // Hidden by default
+progress_unit.sprite.SetOpacity( 0.0 ); // Hidden by default
 progress_unit.sprite.SetX( screen_width - progress_unit.width );
 progress_unit.sprite.SetY( progress_bar.Y );
 progress_unit.sprite.SetZ( 100 );
 
 // This sprite holds the border (backgroud) of the progress bar
 progress_box.sprite = Sprite(progress_box.image.Scale(progress_bar.width,progress_bar.height)); // The box of the gauge
-progress_box.sprite.SetOpacity(0); // Hidden by default
+progress_box.sprite.SetOpacity (0.0); // Hidden by default
 progress_box.sprite.SetX( progress_bar.X );
 progress_box.sprite.SetY( progress_bar.Y );
 progress_box.sprite.SetZ( 90 );
 
 // This sprite holds the progress bar content.
 progress_gauge.sprite = Sprite(progress_gauge.image.Scale(progress_gauge.width, progress_gauge.height)); // The content of the gauge
-progress_gauge.sprite.SetOpacity(0); // Hidden by default
+progress_gauge.sprite.SetOpacity( 0.0 ); // Hidden by default
 progress_gauge.sprite.SetX( progress_bar.X + progress_gauge.margin );
 progress_gauge.sprite.SetY( progress_bar.Y + progress_gauge.margin );
 progress_gauge.sprite.SetZ( 95 ); // Over box
 
 progress_hide.sprite  = Sprite(progress_hide.image.Scale(progress_gauge.width, progress_gauge.height)); // Hides upper content of gauge
-progress_hide.sprite.SetOpacity(0); // Hidden by default
+progress_hide.sprite.SetOpacity( 0.0 ); // Hidden by default
 progress_hide.sprite.SetX( progress_bar.X + progress_gauge.margin);
 progress_hide.sprite.SetY( progress_bar.Y + progress_gauge.margin );
 progress_hide.sprite.SetZ( 100 ); // Over gauge.
@@ -237,11 +237,11 @@ fun ProgressBar(title, progress, max, unit) {
    // Display or update progress bar.
    if( max == 0 ) { // We don't want a progress bar.
       // Hide ProgressBar
-      progress_title.sprite.SetOpacity(0);
-      progress_box.sprite.SetOpacity(0);
-      progress_gauge.sprite.SetOpacity(0);
-      progress_hide.sprite.SetOpacity(0);
-      progress_unit.sprite.SetOpacity(0);
+      progress_title.sprite.SetOpacity( 0.0 );
+      progress_box.sprite.SetOpacity( 0.0 );
+      progress_gauge.sprite.SetOpacity( 0.0 );
+      progress_hide.sprite.SetOpacity( 0.0 );
+      progress_unit.sprite.SetOpacity( 0.0 );
    } else { // We assume we have a value...
       title = Image.Text(title, 1.0, 1.0, 1.0);
       progress_title.sprite.SetImage(title);
@@ -252,11 +252,11 @@ fun ProgressBar(title, progress, max, unit) {
       hide_bar_posX = screen_width - progress_unit.width - progress_gauge.margin - hide_bar.width - margins_width;
       progress_hide.sprite.SetX( hide_bar_posX );
       progress_hide.sprite.SetImage(progress_hide.image.Scale(hide_bar.width, progress_gauge.height));
-      progress_title.sprite.SetOpacity(1);
-      progress_box.sprite.SetOpacity(1);
-      progress_gauge.sprite.SetOpacity(1);
-      progress_hide.sprite.SetOpacity(0.8);
-      progress_unit.sprite.SetOpacity(1);
+      progress_title.sprite.SetOpacity( 1.0 );
+      progress_box.sprite.SetOpacity( 1.0 );
+      progress_gauge.sprite.SetOpacity( 1.0 );
+      progress_hide.sprite.SetOpacity( 0.8 );
+      progress_unit.sprite.SetOpacity( 1.0 );
    }
 }
 
