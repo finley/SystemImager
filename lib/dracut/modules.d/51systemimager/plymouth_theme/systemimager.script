@@ -70,20 +70,20 @@ step_X = ( margins_width + step_icon.anchor - ( step_icon.size / 2 ) );
 step_init.sprite.SetPosition( step_X, step_Y, step_Z );
 step_init.sprite.SetOpacity(0.0);
 
-step_partition.sprite = Sprite(step_partition.image.Scale(step_icon.size,step_icon.size));
+step_preinstall.sprite = Sprite(step_preinstall.image.Scale(step_icon.size,step_icon.size));
 step_X = ( margins_width + step_icon.anchor * 2 - ( step_icon.size / 2 ) );
+step_preinstall.sprite.SetPosition( step_X, step_Y, step_Z );
+step_preinstall.sprite.SetOpacity(0.0);
+
+step_partition.sprite = Sprite(step_partition.image.Scale(step_icon.size,step_icon.size));
+step_X = ( margins_width + step_icon.anchor * 3 - ( step_icon.size / 2 ) );
 step_partition.sprite.SetPosition( step_X, step_Y, step_Z );
 step_partition.sprite.SetOpacity(0.0);
  
 step_format.sprite = Sprite(step_format.image.Scale(step_icon.size,step_icon.size));
-step_X = ( margins_width + step_icon.anchor * 3 - ( step_icon.size / 2 ) );
+step_X = ( margins_width + step_icon.anchor * 4 - ( step_icon.size / 2 ) );
 step_format.sprite.SetPosition( step_X, step_Y, step_Z );
 step_format.sprite.SetOpacity(0.0);
-
-step_preinstall.sprite = Sprite(step_preinstall.image.Scale(step_icon.size,step_icon.size));
-step_X = ( margins_width + step_icon.anchor * 4 - ( step_icon.size / 2 ) );
-step_preinstall.sprite.SetPosition( step_X, step_Y, step_Z );
-step_preinstall.sprite.SetOpacity(0.0);
 
 step_imaging.sprite = Sprite(step_imaging.image.Scale(step_icon.size,step_icon.size));
 step_X = ( margins_width + step_icon.anchor * 5 - ( step_icon.size / 2 ) );
