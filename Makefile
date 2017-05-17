@@ -380,16 +380,26 @@ endif
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-wait-imaging.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-load-dhcpopts.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	mkdir -p $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
+
+
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/Background.png $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/COPYRIGHTS $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/hide_box.png $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/icon_bootloader.png $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/icon_format.png $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/icon_init.png $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/icon_partition.png $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/icon_postinstall.png $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/icon_preinstall.png $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/icon_writeimage.png $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/no.png $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/progress_box.png $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/progress_gauge.png $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/README $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/SystemImagerBanner.png $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/systemimager.plymouth $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/systemimager.script $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/yes.png $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
 
 # install server-only libraries
 .PHONY:	install_server_libs
