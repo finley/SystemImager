@@ -155,10 +155,10 @@ sis_update_step() {
     # convert val from float to integer if needed
     VAL=`LC_NUMERIC="C" printf "%3.0f" "$2"`
     # set output format to 3 digits
-    VAL=`LC_NUMERIC="C" printf "%.3d" "${VAL}"
-    MAX=`LC_NUMERIC="C" printf "%.3d" "$3"
+    VAL=`LC_NUMERIC="C" printf "%.3d" "${VAL}"`
+    MAX=`LC_NUMERIC="C" printf "%.3d" "$3"`
 
-    if test ${#VAL} -gt 3 -o ${#MAX} -gt 3
+    if test \( ${#VAL} -gt 3 \) -o \( ${#MAX} -gt 3 \)
     then
 	logwarn "sis_update_step called with invalid values: ${VAL}/${MAX} (> 3 digits)"
 	return
