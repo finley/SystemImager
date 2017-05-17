@@ -46,11 +46,15 @@ banner.height = banner.image.GetHeight();
 // Load step icons.
 step_init.image        = Image("icon_init.png");
 step_partition.image   = Image("icon_partition.png");
-step_format.image      = Image("icon_init.png");      // TODO
-step_preinstall.image  = Image("icon_init.png");      // TODO
+step_format.image      = Image("icon_format.png");
+step_preinstall.image  = Image("icon_preinstall.png");
 step_imaging.image     = Image("icon_writeimage.png");
-step_bootloader.image  = Image("icon_init.png");      // TODO
-step_postinstall.image = Image("icon_init.png");      // TODO
+step_bootloader.image  = Image("icon_bootloader.png");
+step_postinstall.image = Image("icon_postinstall.png");
+
+// For future use.
+// yes.image = Image("yes.png");
+// no.image  = Image("no.png");
 
 // Compute icons scale suited for screen width
 // we want size 64 for a 1024 pixel wide screen.
