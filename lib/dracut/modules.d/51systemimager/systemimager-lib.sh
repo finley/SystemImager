@@ -56,46 +56,63 @@ fi
 
 ################################################################################
 #
-#   Subroutines
+#   Output log Subroutines
 #
 ################################################################################
 #
-#  logwarn, loginfo, logmsg
+#  logerror, logwarn, loginfo, logaction, lognotice
+#  - helper functions to log a message depending of its nature.
+#    output is done as text and gfx if plymouth is active.
 #
-# Usage: log a message, redirects to console / syslog depending on usage
-# logwarn outputs to stderr
-# loginfo outputs to stdout
-# logmsg (same as loginfo: for compatibility)
+#  logdetails, logmsg
+#  - helper functions to log a message depending of its nature.
+#    output is done as text ONLY.
+#
 
+# Log an error.
 logerror() {
 	logmessage "${BG_RED}  ERROR:${BG_BLACK} $@"
 	plymouth --ping && plymouth message --text="E:$@"
 }
 
+# Log a warning
 logwarn() {
 	logmessage "${FG_RED}warning:${FG_WHITE} $@"
 	plymouth --ping && plymouth message --text="W:$@"
 }
 
+# Log a simple information
 loginfo() {
 	logmessage "${FG_GREEN}    info:${FG_WHITE} $@"
 	plymouth --ping && plymouth message --text="I:$@"
 }
 
+# Log a detailed information
+logdetail() {
+	logmessage "${FG_GREEN}    info:${FG_WHITE} $@"
+}
+
+# Log an action being done to client
 logaction() {
 	logmessage "${FG_AMBER}  action:${FG_WHITE} $@"
 	plymouth --ping && plymouth message --text="A:$@"
 }
 
+# Log things that dont fit above cathegories
 lognotice() {
 	logmessage "${FG_BLUE}  notice:${FG_WHITE} $@"
 	plymouth --ping && plymouth message --text="N:$@"
 }
 
+# Compatibility function with older scripts.
 logmsg() {
 	logmessage "${FG_CYAN} message:${FG_WHITE} $@"
 	# Old messages => No plymouth.
 }
+
+#
+# logmessage <message>
+# Usage: log a message to console ( + syslog $USELOGGER is set )
 
 logmessage() {
     # log to temporary file (which will go away when we reboot)
@@ -113,16 +130,40 @@ logmessage() {
 
 ################################################################################
 #
-# sis_update_step:
-# - arg 1: <step>
-# - arg 2: <3 digits completion (000-max)>
-# - arg 3: <3 digits max value> | 000 (000 = do not display bar)
+# sis_update_step step val max
+# - step: step name
+#         where step is one of:
+#         - init (small letters) (VAL and MAX ignored)
+#         - part (small letters) (VAL and MAX ignored)
+#         - frmt (small letters) (VAL and MAX ignored)
+#         - prei (small letters) (VAL=script being run; MAX=number of scripts to run)
+#         - imag (small letters) (VAL=percent progress; MAX=100)
+#         - boot (small letters) (VAL and MAX ignored)
+#         - post (small letters) (VAL=script being run; MAX=number of scripts to run)#
+# - val: completion (0-max) (integer part must be 3 digits maximum. Floats are rounded)
+# - max: max value | 0 (0 = do not display bar) (integer must be 3 digits maximum. No float)
 #
-# Tels plymouth which step icon to highlight and if the percentage is defined,
-#               what the progressbar should display. (nothing hides the progress bar)
-#
+# Tells plymouth which step icon to highlight and if the percentage is defined,
+#               what the progressbar should display. (max="000" hides the progress bar)
 sis_update_step() {
-	plymouth --ping && plymouth update --status="$1:$2:$3"
+    if test -n "`echo $1 |sed -E 's/init|part|frmt|prei|imag|boot|post//g'`"
+    then
+        logwarn "sis_update_step called with invalid step"
+	return
+    fi
+    # convert val from float to integer if needed
+    val = `LC_NUMERIC="C" printf "%3.0f" "$2"`
+    # set output format to 3 digits
+    val = `LC_NUMERIC="C" printf "%.3d" "$val"
+    max = `LC_NUMERIC="C" printf "%.3d" "$3"
+
+    if test ${#val} -gt 3 -o ${#max} -gt 3
+    then
+	logwarn "sis_update_step called with invalid values: $val/$max (> 3 digits)"
+	return
+    fi
+
+    plymouth --ping && plymouth update --status="$1:$val:$max"
 }
 
 #
