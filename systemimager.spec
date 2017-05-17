@@ -11,6 +11,7 @@
 # Set rel to 1 when is is a final release otherwise, set it to a 0.x number
 # This is convenient when final release need to upgrade "beta" releases.
 %define rel      ##PKG_REL##%{?dist}
+%define dracut_module_index 51
 %define packager Bernard Li <bernard@vanhpc.org>
 #define prefix   /usr
 %define _build_all 1
@@ -784,19 +785,19 @@ mkdir -p $LOCAL_DRACUT_BASEDIR
 test -d $LOCAL_DRACUT_BASEDIR || exit 1
 cp -r %_usr%_dracutbase/* $LOCAL_DRACUT_BASEDIR/
 # Copy our module locally while doing correct STRINGS replacement.
-mkdir -p $LOCAL_DRACUT_BASEDIR/modules.d/39systemimager
-for FILE in ./lib/dracut/modules.d/39systemimager/{check,install,*.sh}
+mkdir -p $LOCAL_DRACUT_BASEDIR/modules.d/%{dracut_module_index}systemimager
+for FILE in ./lib/dracut/modules.d/%{dracut_module_index}systemimager/{check,install,*.sh}
 do
-    ./tools/si_install  -b -m 755 $FILE $LOCAL_DRACUT_BASEDIR/modules.d/39systemimager/
+    ./tools/si_install  -b -m 755 $FILE $LOCAL_DRACUT_BASEDIR/modules.d/%{dracut_module_index}systemimager/
 done
-cp -r ./lib/dracut/modules.d/39systemimager/plymouth_theme $LOCAL_DRACUT_BASEDIR/modules.d/39systemimager/
+cp -r ./lib/dracut/modules.d/%{dracut_module_index}systemimager/plymouth_theme $LOCAL_DRACUT_BASEDIR/modules.d/%{dracut_module_index}systemimager/
 test -x /usr/bin/lsinitrd && ln -s /usr/bin/lsinitrd $LOCAL_DRACUT_BASEDIR/lsinitrd.sh # only required in newer dracut versions.
 
 # move to local modules dir so we can use dracut --local
 cd $LOCAL_DRACUT_BASEDIR/
 
 # Fix install and module-setup.sh in fake local dracut install so initrd_template files are correctly found.
-sed -i -e "s|@@SIS_INITRD_TEMPLATE@@|%{buildroot}%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/initrd_template/|g" modules.d/39systemimager/install modules.d/39systemimager/module-setup.sh
+sed -i -e "s|@@SIS_INITRD_TEMPLATE@@|%{buildroot}%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/initrd_template/|g" modules.d/%{dracut_module_index}systemimager/install modules.d/%{dracut_module_index}systemimager/module-setup.sh
 
 SIS_CONFDIR=$RPM_BUILD_DIR/%{name}-%{version}/etc dracutbasedir=$(pwd) perl -I ../../lib ../../sbin/si_mkbootpackage --dracut-opts="--local" --destination ../..
 #dracut --force --local --add systemimager --no-hostonly --no-hostonly-cmdline --no-hostonly-i18n ../../../initrd.img $(uname -r)
@@ -1183,5 +1184,5 @@ fi
 
 %files -n dracut-%{name}
 %defattr(-, root, root)
-%dir %{_prefix}%{_dracutbase}/modules.d/39systemimager
-%{_prefix}%{_dracutbase}/modules.d/39systemimager/*
+%dir %{_prefix}%{_dracutbase}/modules.d/%{dracut_module_index}systemimager
+%{_prefix}%{_dracutbase}/modules.d/%{dracut_module_index}systemimager/*
