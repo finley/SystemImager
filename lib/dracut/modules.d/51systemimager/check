@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Require network.
-[ "$1" = "-d" ] && echo network syslog shutdown ssh-client i18n
+[ "$1" = "-d" ] && echo network syslog shutdown i18n
 
 # hostonly check: does not work in host only mode.
 [ "$1" = "-h" ] && exit 1
