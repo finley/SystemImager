@@ -5,6 +5,10 @@
 
 . /lib/systemimager-lib.sh
 lognotice "==== systemimager-init ===="
+
+# Highlight plymouth init icon.
+sis_update_step init
+
 # Init /run/systemimager directory
 test ! -d /run/systemimager && mkdir -p /run/systemimager
 
