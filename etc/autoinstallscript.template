@@ -78,6 +78,10 @@ if [ -f /proc/mdstat ]; then
   done
 fi
 #
+
+# Light on disk partition icon.
+sis_update_step part
+
 ################################################################################
 # BEGIN disk enumeration
 #
@@ -172,6 +176,9 @@ modprobe dm-mod
 ### BEGIN LVM volumes creation commands -AR- ###
 ##CREATE_LVM_VOLUMES##
 ### END LVM volumes creation commands ###
+
+# Light on format partitions icon
+sis_update_step frmt
 
 loginfo "Load additional filesystem drivers."
 modprobe ext2
