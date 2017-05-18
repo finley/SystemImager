@@ -26,6 +26,8 @@
 LINE_WIDTH=120;
 // Margin between 2 elements or around screen (TODO: need to compute that)
 margins_width=20;
+display_system_messages=0; // Do not display system messages by default.
+                           // Can be unable by plymouth message --text="conf:000:001"
 
 screen_width = Window.GetWidth();
 screen_height = Window.GetHeight();
@@ -214,6 +216,9 @@ fun scroll_message_callback(text) {
    } else if (msg_status == "N") {  // NOTICE
       R=0.0; G=1.0; B=1.0;
       status_text = "Notice";
+   } else if (msg_status == "S") {  // SYSTEM (internal use)
+      R=0.5; G=0.5; B=0.5;
+      status_text = "System";
    }
    status[i] = Image.Text(status_text, R, G, B, "Fixed");
  
@@ -333,7 +338,14 @@ fun display_step_callback(text) {
    } else if (step == "post") {
       step_postinstall.sprite.SetOpacity(1.0);
       ProgressBar("Post-install...", progress_arg, progress_max, "/" + progress_max);
-   }
+   } else if (step == "conf") {
+      if (progress_max == "001") {
+         display_system_messages=1;
+      } else {
+         display_system_messages=0;
+      }
+   } else
+      scroll_message_callback("S:" + text);
 }
 
 Plymouth.SetDisplayMessageFunction(scroll_message_callback);

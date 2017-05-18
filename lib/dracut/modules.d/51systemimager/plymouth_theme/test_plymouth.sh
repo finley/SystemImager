@@ -22,6 +22,8 @@ plymouth update --status="part:000:000" # Highlight the partition disk icon
 sleep 0.5
 plymouth update --status="frmt:000:000" # Highlight the format partition icon
 sleep 0.5
+plymouth update --status="syst:000:001" # Enable system message display
+sleep 0.5
 plymouth message --text="A: Started imaging simulation."
 for i in 0{0..9}0 100 # Highlight Imaging icon and show its progress percent
 do

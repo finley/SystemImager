@@ -64,7 +64,7 @@ fi
 #  - helper functions to log a message depending of its nature.
 #    output is done as text and gfx if plymouth is active.
 #
-#  logdetails, logmsg
+#  logdetail, logmsg
 #  - helper functions to log a message depending of its nature.
 #    output is done as text ONLY.
 #
@@ -167,6 +167,11 @@ sis_update_step() {
     plymouth --ping && plymouth update --status="$1:${VAL}:${MAX}"
 }
 
+# Tell plymouth theme to display system messages (not only SystemImager ones))
+# (sets parameter 0 to 1)
+sis_enable_system_msg() {
+	plymouth --ping && plymouth update --status="conf:000:001"
+}
 #
 ################################################################################
 #
@@ -277,7 +282,7 @@ tmpfs_watcher() {
         unset DF
     }&
     TMPFS_WATCHER_PID=$!
-    logdetails "tmpfs watcher PID: $TMPFS_WATCHER_PID"
+    logdetail "tmpfs watcher PID: $TMPFS_WATCHER_PID"
     echo $TMPFS_WATCHER_PID > /run/systemimager/tmpfs_watcher.pid
 }
 #
@@ -496,7 +501,7 @@ get_torrents_directory() {
     else
         mkdir -p ${TORRENTS_DIR}
         CMD="rsync -a ${IMAGESERVER}::${TORRENTS}/ ${TORRENTS_DIR}/"
-        logdetails "$CMD"
+        logdetail "$CMD"
         $CMD || shellout "Failed to retreive ${TORRENTS_DIR} directory..."
     fi
 }
@@ -521,7 +526,7 @@ get_scripts_directory() {
     else
         mkdir -p ${SCRIPTS_DIR}
         CMD="rsync -a ${IMAGESERVER}::${SCRIPTS}/ ${SCRIPTS_DIR}/"
-        logdetails "$CMD"
+        logdetail "$CMD"
         $CMD || shellout "Failed to retrieve ${SCRIPTS_DIR} directory..."
     fi
 }
@@ -1614,7 +1619,7 @@ start_report_task() {
 
     REPORT_PID=$!
     loginfo "Progress report task started."
-    logdetails "PID=$REPORT_PID"
+    logdetail "PID=$REPORT_PID"
     echo $REPORT_PID > /run/systemimager/report_task.pid
 }
 
