@@ -72,8 +72,8 @@ install_ssh() {
 #
 install_plymouth_theme() {
     PLUGINDIR=`plymouth --get-splash-plugin-path`
-    inst $PLUGINDIR/script.so $initdir
-    inst $PLUGINDIR/label.so $initdir
+    inst ${PLUGINDIR}/script.so $initdir
+    inst ${PLUGINDIR}/label.so $initdir
     # Cleanup unwanted themes
     ( cd $initdir/usr/share/plymouth/themes/
         for THEME in `echo *|sed -r 's/\stext|\sdetails//g'`
@@ -87,12 +87,12 @@ install_plymouth_theme() {
     # Install systemimager plymouth theme
     mkdir -p $initdir/usr/share/plymouth/themes/systemimager
     cp $moddir/plymouth_theme/{*.png,systemimager.plymouth,systemimager.script} $initdir/usr/share/plymouth/themes/systemimager
-    cd ${initdir}/usr/share/plymouth/themes; ln -sf systemimager/systemimager.plymouth default.plymouth 2>&1 )
+    ( cd ${initdir}/usr/share/plymouth/themes; ln -sf systemimager/systemimager.plymouth default.plymouth 2>&1 )
     cat > ${initdir}/etc/plymouth/plymouthd.conf <<EOF
 # SystemImager is the default theme
 [Daemon]
 Theme=systemimager
-ShowDelay=5
+ShowDelay=0
 DeviceTimeout=5
 EOF
 }

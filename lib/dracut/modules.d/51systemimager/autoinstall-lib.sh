@@ -42,8 +42,8 @@ save_logs_to_sysroot() {
 find_os_mounts() {
     loginfo "Looking for system specific mounted filesystems..."
     findmnt -o target --raw|grep -v /sysroot |grep -v '^/$'|tail -n +2 > /tmp/system_mounts.txt
-    logdetails "Found:"
-    logdetails "$(cat /tmp/system_mounts.txt)"
+    logdetail "Found:"
+    logdetail "$(cat /tmp/system_mounts.txt)"
     test -s "/tmp/system_mounts.txt" || shellout "No OS specific special filesystems found"
 }
 
@@ -60,7 +60,7 @@ mount_os_filesystems_to_sysroot() {
     test -s /tmp/system_mounts.txt || shellout
     for filesystem in $(cat /tmp/system_mounts.txt)
     do
-        logdetails "Bind-mount ${filesystem} to /sysroot${filesystem}"
+        logdetail "Bind-mount ${filesystem} to /sysroot${filesystem}"
         test -d "/sysroot${filesystem}" || mkdir -p "/sysroot${filesystem}" || shellout
         # In case of failure, we die as next steps will fail.
         mount -o bind "${filesystem}" "/sysroot${filesystem}" || shellout "Failed to bind-mount ${filesystem} to /sysroot${filesystem} ."
@@ -85,7 +85,7 @@ umount_os_filesystems_from_sysroot()
         then
             if umount /sysroot${mountpoint}
             then
-                logdetails "unmounted /sysroot${mountpoint}"
+                logdetail "unmounted /sysroot${mountpoint}"
             else
                 # In case of failure we just report the issue. (imaging is finished in theory)".
                 logwarn " failed to umount /sysroot${mountpoint}"

@@ -109,7 +109,7 @@ install_plymouth_theme() {
 # SystemImager is the default theme
 [Daemon]
 Theme=systemimager
-ShowDelay=5
+ShowDelay=0
 DeviceTimeout=5
 EOF
 }
