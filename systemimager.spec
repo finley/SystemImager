@@ -245,7 +245,7 @@ Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Obsoletes: systemimager-%{_build_arch}boot
-BuildRequires: python, python-devel, gettext, dracut
+BuildRequires: python, python-devel, gettext, dracut, plymouth-plugin-script
 %if %is_ps3
 BuildRequires: dtc
 %endif
