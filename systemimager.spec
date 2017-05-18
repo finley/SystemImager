@@ -784,6 +784,8 @@ test -d $LOCAL_DRACUT_BASEDIR && /bin/rm -rf $LOCAL_DRACUT_BASEDIR
 mkdir -p $LOCAL_DRACUT_BASEDIR
 test -d $LOCAL_DRACUT_BASEDIR || exit 1
 cp -r %_usr%_dracutbase/* $LOCAL_DRACUT_BASEDIR/
+# Remove old systemimager parasit version that we could have copied.
+rm -rf $LOCAL_DRACUT_BASEDIR/modules.d/*systemimager
 # Copy our module locally while doing correct STRINGS replacement.
 mkdir -p $LOCAL_DRACUT_BASEDIR/modules.d/%{dracut_module_index}systemimager
 for FILE in ./lib/dracut/modules.d/%{dracut_module_index}systemimager/{check,install,*.sh}
