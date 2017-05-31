@@ -3,7 +3,7 @@
 // Systemimager
 // Copyright (C) 2017 Olivier Lahaye <olivier(dot)lahaye1(at)free(dot)fr>
 //
-// Thanks to Charlie Brej <brejc8(at)gmail(dot)com for his help undestanding
+// Thanks to Charlie Brej <brejc8(at)gmail(dot)com> for his help undestanding
 // script module behaviors and tricks.
 //
 // $Id$
@@ -180,24 +180,32 @@ fun StringLength(string) {
 }
  
 fun scroll_message_callback(text) {
-   // 1st: Get message status (Warning, Error, Info, ....)
+   // 1st: Check message format.
+   msg_separator = text.SubString(1,2); // Read the separator (":")
+   if (msg_separator != ":") { // System message (not formatted)
+       if (display_system_messages == 1)
+           text = "S:" + text;
+       else
+           return; // We do not display system messages
+   }
+   // 2nd: Get message status (Warning, Error, Info, ....)
    //      stored in 1st letter.
    msg_status = text.SubString(0,1);
    msg_text   = text.SubString(2,256); // Assumes that messages won't exceed 256.
 
-   // 2nd: Truncate the message if too long
+   // 3rd: Truncate the message if too long
    if (StringLength(msg_text) > LINE_WIDTH) {
      msg_text = msg_text.SubString(0, LINE_WIDTH - 3);
      msg_text += "...";
    }
  
-   // 3rd: Shift message one up
+   // 4th: Shift message one up
    for (i = 0; i < num_scroll_lines - 1; i++) {
      lines[i] = lines[i+1];
      status[i] = status[i+1];
    }
  
-   // 4th: Create the image for the latest message
+   // 5th: Create the image for the latest message
    R=0.0; G=0.0; B=0.0;
    status_text = "";
    lines[i] = Image.Text(msg_text, 1.0, 1.0, 1.0, 1.0, "Fixed");
@@ -222,7 +230,7 @@ fun scroll_message_callback(text) {
    }
    status[i] = Image.Text(status_text, R, G, B, "Fixed");
  
-   // 5th: Re-positioning the text images
+   // 6th: Re-positioning the text images
    for (i = 0; i < num_scroll_lines; i++) {
      message_sprite[i].SetImage(lines[i]);
      status_sprite[i].SetImage(status[i]);
@@ -339,7 +347,7 @@ fun display_step_callback(text) {
       step_postinstall.sprite.SetOpacity(1.0);
       ProgressBar("Post-install...", progress_arg, progress_max, "/" + progress_max);
    } else if (step == "conf") {
-      if (progress_max == "001") {
+      if (progress_max == 1) {
          display_system_messages=1;
       } else {
          display_system_messages=0;
@@ -348,6 +356,6 @@ fun display_step_callback(text) {
       scroll_message_callback("S:" + text);
 }
 
-Plymouth.SetDisplayMessageFunction(scroll_message_callback);
+Plymouth.SetMessageFunction(scroll_message_callback); // SetDisplayMessageFunction not available in 0.8.4 (CentOS-6)
 Plymouth.SetUpdateStatusFunction(display_step_callback);
 
