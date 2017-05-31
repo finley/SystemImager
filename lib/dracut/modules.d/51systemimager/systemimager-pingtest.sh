@@ -15,7 +15,7 @@
 
 type shellout >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 
-lognotice "==== systemimager-pingtest ===="
+logdebug "==== systemimager-pingtest ===="
 loginfo "Checking network connectivity via a ping test..."
 
 # The reason we don't ping the IMAGESERVER if FLAMETHROWER_DIRECTORY_PORTBASE

@@ -2,7 +2,7 @@
 # Creates the systemimager udev rules to be triggered when interface becomes online.
 . /lib/dracut-lib.sh
 
-lognotice "==== systemimager-genrules ===="
+logdebug "==== systemimager-genrules ===="
 
 if [ -e "/sbin/systemimager-start" ]; then
         printf 'ACTION=="online", SUBSYSTEM=="net", RUN+="/sbin/initqueue --onetime /sbin/systemimager-start $env{INTERFACE}"\n' > /etc/udev/rules.d/70-systemimager.rules

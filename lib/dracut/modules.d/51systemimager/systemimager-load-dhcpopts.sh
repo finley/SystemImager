@@ -27,7 +27,7 @@
 # systemimager-load-dhcpopts will read /tmp/dhclient.$DEVICE.dhcpopts and update /tmp/variables.txt accordingly. (priority is givent to local.cfg, then cmdline, then DHCP at last)
 
 . /lib/systemimager-lib.sh # Load /tmp/variables.txt and some macros
-lognotice "==== systemimager-load-dhcpopts ===="
+logdebug "==== systemimager-load-dhcpopts ===="
 
 DEVICE=$1
 

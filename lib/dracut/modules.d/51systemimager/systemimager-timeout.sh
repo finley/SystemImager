@@ -16,7 +16,7 @@
 type getarg >/dev/null 2>&1 || . /lib/dracut-lib.sh
 type shellout >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 
-lognotice "==== systemimager-timeout ===="
+logdebug "==== systemimager-timeout ===="
 
 # 1st: check if we got an IP address.
 # We check that find_iface_with_link form net-lib.sh which returns 1st ethernet device with link

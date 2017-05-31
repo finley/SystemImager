@@ -2,7 +2,7 @@
 
 . /lib/systemimager-lib.sh
 
-lognotice "==== systemimager-start ===="
+logdebug "==== systemimager-start ===="
 
 DEVICE=$1
 

@@ -18,7 +18,7 @@
 
 type shellout >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 
-lognotice "==== systemimager-wait-imaging ===="
+logdebug "==== systemimager-wait-imaging ===="
 
 if test -f /tmp/SIS_action
 then
@@ -45,7 +45,7 @@ then
 	esac
 	return 0
 else
-	lognotice "Imaging not yet finished.... $main_loop/$RDRETRY"
+	logdebug "Imaging not yet finished.... (main loop: $main_loop/$RDRETRY)"
 	return 1
 fi
 

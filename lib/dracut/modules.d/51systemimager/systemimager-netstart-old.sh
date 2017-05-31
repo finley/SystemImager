@@ -1,4 +1,4 @@
-#!/bin/bash
+logdebugbin/bash
 
 # Network environment (hostname, gateway, resolv.conf) is setup in /sbin/netroot script.
 # As we don't have a netroot, we need to do that ourselves.

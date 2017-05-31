@@ -98,6 +98,12 @@ logaction() {
 	plymouth --ping && plymouth message --text="A:$@"
 }
 
+# Log debug / system stuffs
+logdebug() {
+	logmessage "${FG_BLUE}   debug:${FG_WHITE} $@"
+	plymouth --ping && plymouth message --text="$@"
+}
+
 # Log things that dont fit above cathegories
 lognotice() {
 	logmessage "${FG_BLUE}  notice:${FG_WHITE} $@"

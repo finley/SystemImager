@@ -40,6 +40,6 @@ check_kernel() {
     fi
 }
 
-lognotice "==== systemimager-check-kernel ===="
+logdebug "==== systemimager-check-kernel ===="
 
 check_kernel

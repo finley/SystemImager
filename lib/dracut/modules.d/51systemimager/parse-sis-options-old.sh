@@ -7,7 +7,7 @@ type write_variables >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 #
 # Save cmdline SIS relevant parameters
 
-lognotice "==== parse-sis-options-old ===="
+logdebug "==== parse-sis-options-old ===="
 loginfo "Reading SIS relevants parameters from cmdline"
 
 #####################################

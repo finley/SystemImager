@@ -4,7 +4,7 @@
 [ -e "$job" ] && rm "$job"
 
 . /lib/systemimager-lib.sh
-lognotice "==== systemimager-init ===="
+logdebug "==== systemimager-init ===="
 
 # Highlight plymouth init icon.
 sis_update_step init
