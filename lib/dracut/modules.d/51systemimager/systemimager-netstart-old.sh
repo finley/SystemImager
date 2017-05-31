@@ -6,7 +6,7 @@
 # Code inspired from /sbin/netroot
 
 . /lib/systemimager-lib.sh
-lognotice "==== systemimager-netstart ===="
+logdebug "==== systemimager-netstart ===="
 
 netif=$1
 
