@@ -81,9 +81,11 @@ install_plymouth_theme() {
             rm -rf $initdir/usr/share/plymouth/themes/$THEME # Remove unwanted themes
         done
     )
-    # Install required fonts
+    # Install required fonts and coonfig file.
     inst /usr/share/fonts/dejavu/DejaVuSerif.ttf $initdir
     inst /usr/share/fonts/dejavu/DejaVuSans.ttf $initdir
+    inst /etc/fonts/fonts.conf $initdir # fontconfig lib used by plymouth requires it.
+
     # Install systemimager plymouth theme
     mkdir -p $initdir/usr/share/plymouth/themes/systemimager
     cp $moddir/plymouth_theme/{*.png,systemimager.plymouth,systemimager.script} $initdir/usr/share/plymouth/themes/systemimager
