@@ -3,8 +3,10 @@
 # SystemImager plymouth theme test suite.
 #
 
-rm -rf /tmp/plymouth.log
+test -z "${SYSTEMIMAGER_LIB}" && SYSTEMIMAGER_LIB=/lib/systemimager-lib.sh
 . ${SYSTEMIMAGER_LIB}
+
+rm -rf /tmp/plymouth.log
 plymouthd --debug --debug-file=/tmp/plymouth.log
 plymouth show-splash
 sleep 5  # Wait for splash to appear otherwize we miss some refreshes.
