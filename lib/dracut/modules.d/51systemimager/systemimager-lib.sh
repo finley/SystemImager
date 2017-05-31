@@ -165,6 +165,7 @@ sis_update_step() {
     fi
 
     plymouth --ping && plymouth update --status="$1:${VAL}:${MAX}"
+    return 0 # Hide plymouth return code. If plymouth is not active of fails, not dramatic.
 }
 
 # Tell plymouth theme to display system messages (not only SystemImager ones))
@@ -1560,21 +1561,24 @@ start_report_task() {
     # Evaluate image size.
     loginfo "Evaluating image size..."
     if [ ! "x$BITTORRENT" = "xy" ]; then
-        IMAGESIZE=`rsync -av --numeric-ids "${IMAGESERVER}::${IMAGENAME}" | grep "total size" | sed -e "s/total size is \([0-9,]*\).*/\1/"`
+        IMAGESIZE=`LC_ALL=C rsync -av --numeric-ids "${IMAGESERVER}::${IMAGENAME}" | grep "total size" | sed -e "s/total size is \([0-9,]*\).*/\1/"`
     else
         if [ -f "${TORRENTS_DIR}/image-${IMAGENAME}.tar.torrent" ]; then
             torrent_file="${TORRENTS_DIR}/image-${IMAGENAME}.tar.torrent"
         elif [ -f "${TORRENTS_DIR}/image-${IMAGENAME}.tar.gz.torrent" ]; then
             torrent_file="${TORRENTS_DIR}/image-${IMAGENAME}.tar.gz.torrent"
         else
-            logmsg "error: cannot find a valid torrent file for image ${IMAGENAME}"
-            shellout
+            shellout "Cannot find a valid torrent file for image ${IMAGENAME}"
         fi
         IMAGESIZE=`/usr/bin/torrentinfo-console $torrent_file | sed -ne "s/file size\.*: \([0-9]*\) .*$/\1/p"`
     fi
     # Clean up IMAGEZISE from non numeric chars (comma, dots, ...)
     IMAGESIZE=$(echo $IMAGESIZE|sed 's/[^0-9]*//g') # IMAGESIZE=${IMAGESIZE//[!0-9]/}} # Not supported by dash
     IMAGESIZE=`expr $IMAGESIZE / 1024`
+
+    # Check that IMAGESIZE is not empty (rsync or torrentinfo-console could have failed)
+    test -z "${IMAGESIZE}" && shellout "Unable to compute image size"
+
     loginfo "  --> Image size = `expr $IMAGESIZE / 1024`MiB"
 
     # Evaluate disks size.
@@ -1583,6 +1587,9 @@ start_report_task() {
 
     # Spawn the report task -AR-
     {
+
+    sleep 1s # Give time for caller to print its messages before we start refreshing the progressbar.
+
     TOT=0; CURR_SIZE=0
     while :; do
         LIST=`df 2>/dev/null | grep "/" | sed "s/  */ /g" | cut -d' ' -f3 | sed -ne 's/^\([0-9]*\)$/\1+/p'`0
@@ -1601,7 +1608,7 @@ start_report_task() {
             status=99
         fi
 
-	# Update progress bar.
+	# Update text progress bar.
 	ProgressBar ${status}
 
 	# Update Plymouth progress bar.
@@ -1612,8 +1619,8 @@ start_report_task() {
             send_monitor_msg "status=$status:speed=$speed"
 	fi
         
-        # Wait $REPORT_INTERVAL sec between each report -AR-
-        sleep $REPORT_INTERVAL
+        # Wait $REPORT_INTERVAL sec between each report.
+        sleep ${REPORT_INTERVAL}s
     done
     }&
 
@@ -1772,7 +1779,7 @@ ProgressBar() {
     _console_width=`stty -F /dev/console size|cut -d' ' -f2`
     [ "${_console_width}" -lt 80 ] && _console_width=80
     _bar_width=$((${_console_width}-21))
-    _ipart=`echo ${1}|cut -d. -f1`
+    _ipart=`printf "%.0f" "${1}"`
     _done=$(((${_ipart}*$_bar_width)/100))
     _left=$((${_bar_width}-$_done))
     # Build progressbar string lengths
