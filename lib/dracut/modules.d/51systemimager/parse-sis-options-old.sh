@@ -102,5 +102,10 @@ test -z "$SEL_RELABEL" && SEL_RELABEL=`getarg rd.sis.selinux-relabel`
 SEL_RELABEL=`echo $SEL_RELABEL | head -c 1 | tr 'YN10' 'ynyn'`
 test -z "$SEL_RELABEL" && SEL_RELABEL="y" # default to true!
 
+#########################
+# rd.sis.post-action=(shell, reboot, shutdown) => default to reboot
+SIS_POST_ACTION=`getarg rd.sis.post-action`
+test -z "${SIS_POST_ACTION}" && SIS_POST_ACTION="reboot"
+
 # Register what we read.
 write_variables

@@ -115,17 +115,17 @@ The following options affect the autoinstall client after autoinstalling:
                 it as a backup and quick restore mechanism for a single machine.
 
 
- --post-install ACTION     Where ACTION can be BEEP, REBOOT, SHUTDOWN, or KEXEC.
+ --post-install ACTION     Where ACTION can be BEEP, REBOOT, SHUTDOWN, KEXEC or CMDLINE
 
                 BEEP 
                 ----------------------------------------------------------------
                 Clients will beep incessantly after succussful completion of an
-                autoinstall.  (default)
+                autoinstall.
 
                 REBOOT 
                 ----------------------------------------------------------------
                 Clients will reboot themselves after successful completion of 
-                an autoinstall.
+                an autoinstall. (default)
 
                 SHUTDOWN 
                 ----------------------------------------------------------------
@@ -137,13 +137,19 @@ The following options affect the autoinstall client after autoinstalling:
                 Clients will boot the kernels via kexec that were just installed
                 after successful completion of an autoinstall.
 
+		CMDLINE
+                ----------------------------------------------------------------
+		Client will read action from rd.sis.post-action= cmdline parameter
+		that was set in PXE config. Default is to reboot if parametter is
+		not set
+
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
 EOF
 
 # Set some defaults. -BEF-
 my $ip_assignment_method = "dhcp";
-my $post_install = "beep";
+my $post_install = "reboot";
 my $auto_install_script_conf;
 my $script_name;
 

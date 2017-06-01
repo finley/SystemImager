@@ -42,6 +42,11 @@ then
 			sleep 10
 			sis_postimaging poweroff
 			;;
+		*)
+			logwarn "Installation successfull. Invalid post action. Rebooting"
+			sleep 10
+			sis_postimaging reboot
+			;;
 	esac
 	return 0
 else

@@ -87,5 +87,10 @@ test -z "${TERM}" -o "${TERM}" = "dumb" && TERM=linux
 SEL_RELABEL="y"
 getargbool 1 rd.sis.selinux-relabel && SEL_RELABEL="y"
 
+#########################
+# rd.sis.post-action=(shell, reboot, shutdown) => default to reboot
+SIS_POST_ACTION=$(getarg rd.sis.post-action)
+test -z "${SIS_POST_ACTION}" && SIS_POST_ACTION="reboot"
+
 # Register what we read.
 write_variables

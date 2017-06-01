@@ -37,6 +37,7 @@ FLAVOR="SYSTEMIMAGER_FLAVOR_STRING"
 
 type getarg >/dev/null 2>&1 || . /lib/dracut-lib.sh
 
+# Read varaibles.txt if present.
 test -f /tmp/variables.txt && . /tmp/variables.txt
 
 # Some usefull values
@@ -226,7 +227,7 @@ BROADCAST="$BROADCAST"
 GATEWAY="$GATEWAY"
 GATEWAYDEV="$GATEWAYDEV"
 
-IMAGESERVER="$IMAGESERVER"	# rd.sis.image-server
+IMAGESERVER="$IMAGESERVER"			# rd.sis.image-server
 IMAGENAME="$IMAGENAME"
 SCRIPTNAME="$SCRIPTNAME"
 
@@ -234,7 +235,7 @@ LOG_SERVER="$LOG_SERVER"
 LOG_SERVER_PORT="$LOG_SERVER_PORT"		# rd.sis.log-server-port
 USELOGGER="$USELOGGER"
 
-TMPFS_STAGING="$TMPFS_STAGING"		# rd.sis.tmpfs-staging
+TMPFS_STAGING="$TMPFS_STAGING"			# rd.sis.tmpfs-staging
 
 ARCH="$ARCH"
 SSH="$SSH"
@@ -244,8 +245,8 @@ SSH_DOWNLOAD_URL="$SSH_DOWNLOAD_URL"		# rd.sis.ssh-download-url"
 
 FLAMETHROWER_DIRECTORY_PORTBASE="$FLAMETHROWER_DIRECTORY_PORTBASE" # rd.sis.flamethrower-directory-portbase
 
-MONITOR_SERVER="$MONITOR_SERVER"	# rd.sis.monitor-server
-MONITOR_PORT="$MONITOR_PORT"		# rd.sis.monitor-port
+MONITOR_SERVER="$MONITOR_SERVER"		# rd.sis.monitor-server
+MONITOR_PORT="$MONITOR_PORT"			# rd.sis.monitor-port
 MONITOR_CONSOLE="$MONITOR_CONSOLE"		# rd.sis.monitor-console
 SKIP_LOCAL_CFG="$SKIP_LOCAL_CFG"		# rd.sis.skip-local-cfg
 
@@ -259,6 +260,8 @@ GROUPNAMES="$GROUPNAMES"
 GROUP_OVERRIDES="$GROUP_OVERRIDES"
 
 SEL_RELABEL="$SEL_RELABEL"			# rd.sis.selinux-relabel
+
+SIS_POST_ACTION="$SIS_POST_ACTION"		# rd.sis.post-action
 
 export TERM="${TERM}"
 EOF
@@ -428,6 +431,10 @@ shellout() {
 
     # Display error code if relevant.
     LAST_ERR=$?
+
+    # Print error message if any.
+    test -n "$1" && logerror "$@"
+
     test "$LAST_ERR" -ne 0 && logwarn "Last command exited with $LAST_ERR"
 
     logerror "Installation failed!                                             "
@@ -455,33 +462,6 @@ shellout() {
     # Need to trigger emergency shell
     echo emergency > /tmp/SIS_action
     sis_postimaging emergency # Set the correct link for /tmp/message.txt and call interactive_shell
-}
-#
-################################################################################
-#
-#   Description:  
-#   Count the specified number, printing each number, and exit only the count
-#   loop when <ctrl>+<c> is hit (SIGINT, or Signal 2).  Thanks to 
-#   CCB <ccb@acm.org> for this chunk of code.  -BEF-
-#
-#   Usage: 
-#   count_loop 35
-#   count_loop $ETHER_SLEEP
-#
-count_loop() {
-
-  COUNT=$1
-
-  trap 'echo ; echo "Skipping ETHER_SLEEP -> Caught <ctrl>+<c>" ; I=$COUNT' INT
-
-  I=0
-  while [ $I -lt $COUNT ]; do
-    I=$(( $I + 1 ))
-    echo -n "$I "
-    sleep 1
-  done
-  echo
-  #trap INT
 }
 #
 ################################################################################

@@ -2027,6 +2027,10 @@ sub create_autoinstall_script{
                     #print $MASTER_SCRIPT "# this is executed twice to support relocatable kernels from RHEL5\n";
                     #print $MASTER_SCRIPT "kexec --force --append=\"\$kexec_append\" --initrd=/tmp/\$kexec_initrd --reset-vga /tmp/\$kexec_kernel\n";
                     #print $MASTER_SCRIPT "kexec --force --append=\"\$kexec_append\" --initrd=/tmp/\$kexec_initrd --reset-vga --args-linux /tmp/\$kexec_kernel\n";
+                } elsif ($post_install eq "cmdline") {
+                    print $MASTER_SCRIPT "# post imaging action is read from cmdline"
+                    print $MASTER_SCRIPT "# don't forget to set rd.sis.post-action= parameter in PXE cmdline"
+                    print $MASTER_SCRIPT "# if missing, default behavior is 'reboot'."
                 }
                 last SWITCH;
 	        }

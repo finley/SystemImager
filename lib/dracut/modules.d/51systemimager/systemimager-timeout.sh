@@ -13,15 +13,11 @@
 # if a timeout occures in initqueue mainloop.
 # One possible reason is that DHCP failed to get an IP address.
 
-type getarg >/dev/null 2>&1 || . /lib/dracut-lib.sh
 type shellout >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 
 logdebug "==== systemimager-timeout ===="
 
 # 1st: check if we got an IP address.
-# We check that find_iface_with_link form net-lib.sh which returns 1st ethernet device with link
-# was able to get an IPv4.
-# BUG: We should test that we can ping $IMAGESERVER <OL>
 
 IFACE_WITH_LINK=`get_1st_iface_with_link`
 if test -z "$IFACE_WITH_LINK"

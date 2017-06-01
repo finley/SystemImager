@@ -1,7 +1,6 @@
 #!/bin/bash
 
 type getarg >/dev/null 2>&1 || . /lib/dracut-lib.sh
-#type save_netinfo >/dev/null 2>&1 || . /lib/net-lib.sh
 type shellout >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 
 logdebug "==== systemimager-deploy-client ===="
@@ -70,6 +69,9 @@ write_variables
 run_autoinstall_script
 
 # Everything is finished. Tell initqueue/finished that we are done.
-# BUG, /tmp/SIS_action can contain reboot, shutdown or emergency
-#echo reboot > /tmp/SIS_action
+# $SIS_POST_ACTION can contain: shell, reboot, shutdown, (emergency is reserved)
+# It is set as PXE cmdline parameter rd.sis.post-action
+# default value is "reboot".
+# This action can be overrided in /tmp/SIS_action by imaging script
+test ! -e /tmp/SIS_action && echo "${SIS_POST_ACTION}" > /tmp/SIS_action
 
