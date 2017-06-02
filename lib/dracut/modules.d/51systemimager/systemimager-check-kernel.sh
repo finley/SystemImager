@@ -43,3 +43,4 @@ check_kernel() {
 logdebug "==== systemimager-check-kernel ===="
 
 check_kernel
+
