@@ -1,4 +1,5 @@
 #!/bin/sh
+# vi: set filetype=sh et ts=4:
 
 type getarg >/dev/null 2>&1 || . /lib/dracut-lib.sh
 type write_variables >/dev/null 2>&1 || . /lib/systemimager-lib.sh

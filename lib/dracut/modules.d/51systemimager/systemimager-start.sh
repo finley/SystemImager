@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# This file is used in old dracut versions where initqueue/online hook doesn't exists.
+
 . /lib/systemimager-lib.sh
 
 logdebug "==== systemimager-start ===="

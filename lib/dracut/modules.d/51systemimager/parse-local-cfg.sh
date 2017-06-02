@@ -1,4 +1,5 @@
 #!/bin/sh
+# vi: set filetype=sh et ts=4:
 
 ################################################################################
 # read settings from local.cfg if required and store config in cmdline.d before network is setup by dracut initqueue logic.
