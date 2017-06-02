@@ -396,14 +396,14 @@ sub _read_partition_info_and_prepare_parted_commands {
         print $out "### BEGIN partition $devfs_dev ###\n";
         print $out qq(loginfo "Partitioning $devfs_dev..."\n);
         print $out qq(loginfo "Old partition table for $devfs_dev:"\n);
-        print $out "LC_ALL=C parted -s -- $devfs_dev print > /dev/console\n\n";
+        print $out "LC_ALL=C parted -s -- $devfs_dev print > /dev/console\n";
 
         print $out "# Wipe the MBR (Master Boot Record) clean.\n";
         $cmd = "dd if=/dev/zero of=$devfs_dev bs=512 count=1";
         print $out qq(logaction "$cmd"\n);
         print $out qq($cmd || shellout "dd if=/dev/zero of=$devfs_dev failed"\n);
+        print $out "sleep 0.5s\n\n # Avoid disk driver being buzy later";
 
-        print $out "sleep 1\n\n"; # Give dime for disk to flush buffer
         print $out "# Re-read the disk label.\n";
         $cmd = "blockdev --rereadpt $devfs_dev";
         print $out qq(loginfo "$cmd"\n);
@@ -413,7 +413,8 @@ sub _read_partition_info_and_prepare_parted_commands {
         print $out "# type it was, are removed and that we're starting with a clean label.\n";
         $cmd = "parted -s -- $devfs_dev mklabel $label_type";
         print $out qq(logaction "$cmd"\n);
-        print $out qq(LC_ALL=C $cmd || shellout "parted failed!"\n\n);
+        print $out qq(LC_ALL=C $cmd || shellout "parted failed!"\n);
+        print $out "sleep 0.5s\n\n # Avoid disk driver being buzy later";
 
         print $out "# Get the size of the destination disk so that we can make the partitions fit properly.\n";
         print $out q(DISK_SIZE=`LC_ALL=C parted -s ) . $devfs_dev . q( unit MB print | egrep ") . $devfs_dev . q(" | awk '{print $NF}' | sed 's/MB//' `) . qq(\n);
@@ -705,6 +706,7 @@ sub _read_partition_info_and_prepare_parted_commands {
             }
             print $out qq(logaction "$cmd"\n);
             print $out qq($cmd || shellout "parted failed!"\n);
+            print $out "sleep 0.5s\n\n # Avoid disk driver being buzy later";
             
             # Leave info behind for the next partition. -BEF-
             if ("$p_type{$m}" eq "primary") {
@@ -748,6 +750,7 @@ sub _read_partition_info_and_prepare_parted_commands {
               $cmd = "parted -s -- $devfs_dev name $m $p_name{$m}";
               print $out qq(logaction "$cmd"\n);
               print $out qq($cmd || shellout "parted failed!"\n);
+              print $out "sleep 0.5s\n\n # Avoid disk driver being buzy later";
             }
             
             ### Deal with flags for each partition. -BEF-
@@ -764,6 +767,7 @@ sub _read_partition_info_and_prepare_parted_commands {
                     $cmd = "parted -s -- $devfs_dev set $m $flag on";
                     print $out qq(logaction "$cmd"\n);
                     print $out qq($cmd || shellout "parted failed!"\n);
+                    print $out "sleep 0.5s\n\n # Avoid disk driver being buzy later";
                 }
             }
         }
@@ -774,6 +778,7 @@ sub _read_partition_info_and_prepare_parted_commands {
           $cmd = "parted -s -- $devfs_dev rm $m";
           print $out qq(logaction "$cmd"\n);
           print $out qq($cmd || shellout "parted failed!"\n);
+          print $out "sleep 0.5s\n\n # Avoid disk driver being buzy later";
         }
 
         print $out "\n";
@@ -781,6 +786,7 @@ sub _read_partition_info_and_prepare_parted_commands {
         $cmd = "parted -s -- $devfs_dev print";
         print $out qq(loginfo "$cmd"\n);
         print $out qq($cmd || shellout "Failed to read partition table!"\n);
+        print $out "sleep 0.5s\n\n # Avoid disk driver being buzy later";
         print $out "### END partition $devfs_dev ###\n";
         print $out "\n";
         print $out "\n";
