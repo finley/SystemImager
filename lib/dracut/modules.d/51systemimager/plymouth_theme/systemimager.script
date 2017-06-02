@@ -353,7 +353,7 @@ fun display_step_callback(text) {
          display_system_messages=0;
       }
    } else
-      scroll_message_callback("S:" + text);
+      scroll_message_callback(text); // pass non formatter messages (system) to the scroll_message_callback that knows how to handle it.
 }
 
 Plymouth.SetMessageFunction(scroll_message_callback); // SetDisplayMessageFunction not available in 0.8.4 (CentOS-6)
