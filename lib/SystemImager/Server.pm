@@ -1771,7 +1771,8 @@ sub append_variables_txt_with_ip_assignment_method {
     #   static
     #   dhcp
     #
-    print $out "echo IP_ASSIGNMENT_METHOD=$ip_assignment_method >> /tmp/variables.txt\n\n";
+    #print $out "echo IP_ASSIGNMENT_METHOD=$ip_assignment_method >> /tmp/variables.txt\n\n";
+    print $out "set_ip_assignment_method $ip_assignment_method\n\n";
 }
 
 #    my ( $out, $ip_assignment_method ) = @_;

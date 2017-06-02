@@ -100,6 +100,22 @@ umount_os_filesystems_from_sysroot()
 
 ################################################################################
 #
+# set_ip_assignment_method replicant|static|dhcp
+# OL: BUG: Not sure it is still relevant.
+
+set_ip_assignment_method() {
+	case "$1" in
+		replicant|static|dhcp)
+			IP_ASSIGNMENT_METHOD=$1
+			write_variables
+			;;
+		*)
+			shellout "Invalid IP assignment method: [$IP_ASSIGNMENT_METHOD]"
+			;;
+	esac
+}
+################################################################################
+#
 # refuse_to_run_on_a woring machine.
 
 fail_if_run_from_working_machine() {
