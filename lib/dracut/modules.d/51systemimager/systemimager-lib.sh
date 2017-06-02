@@ -37,22 +37,25 @@ FLAVOR="SYSTEMIMAGER_FLAVOR_STRING"
 
 type getarg >/dev/null 2>&1 || . /lib/dracut-lib.sh
 
+# Make sure we have a TERM variable set.
+test -z "${TERM}" -o "${TERM}" = "dumb" && TERM=linux
+
 # Read varaibles.txt if present.
 test -f /tmp/variables.txt && . /tmp/variables.txt
 
 # Some usefull values
-COLORS=`tput colors`
+COLORS=`tput -T${TERM} colors`
 if test "0${COLORS}" -gt 1
 then
-	FG_GREEN=`tput setaf 2`
-	FG_RED=`tput setaf 1`
-	FG_WHITE=`tput setaf 7`
-	FG_AMBER=`tput setaf 3`
-	FG_BLUE=`tput setaf 4`
-	FG_CYAN=`tput setaf 6`
-	BG_BLACK=`tput setab 0`
-	BG_RED=`tput setab 1`
-	BG_BLUE=`tput setab 4`
+	FG_GREEN=`tput -T${TERM} setaf 2`
+	FG_RED=`tput -T${TERM} setaf 1`
+	FG_WHITE=`tput -T${TERM} setaf 7`
+	FG_AMBER=`tput -T${TERM} setaf 3`
+	FG_BLUE=`tput -T${TERM} setaf 4`
+	FG_CYAN=`tput -T${TERM} setaf 6`
+	BG_BLACK=`tput -T${TERM} setab 0`
+	BG_RED=`tput -T${TERM} setab 1`
+	BG_BLUE=`tput -T${TERM} setab 4`
 fi
 
 ################################################################################
@@ -73,42 +76,42 @@ fi
 # Log an error.
 logerror() {
 	logmessage "${BG_RED}  ERROR:${BG_BLACK} $@"
-	plymouth --ping && plymouth message --text="E:$@"
+	plymouth --ping && plymouth message --text="E:$@" > /dev/null 2>&1
 }
 
 # Log a warning
 logwarn() {
 	logmessage "${FG_RED}warning:${FG_WHITE} $@"
-	plymouth --ping && plymouth message --text="W:$@"
+	plymouth --ping && plymouth message --text="W:$@" > /dev/null 2>&1
 }
 
 # Log a simple information
 loginfo() {
 	logmessage "${FG_GREEN}    info:${FG_WHITE} $@"
-	plymouth --ping && plymouth message --text="I:$@"
+	plymouth --ping && plymouth message --text="I:$@" > /dev/null 2>&1
 }
 
 # Log a detailed information
 logdetail() {
-	logmessage "${FG_GREEN}    info:${FG_WHITE} $@"
+	logmessage "${FG_GREEN}    info:${FG_WHITE} $@" > /dev/null 2>&1
 }
 
 # Log an action being done to client
 logaction() {
 	logmessage "${FG_AMBER}  action:${FG_WHITE} $@"
-	plymouth --ping && plymouth message --text="A:$@"
+	plymouth --ping && plymouth message --text="A:$@" > /dev/null 2>&1
 }
 
 # Log debug / system stuffs
 logdebug() {
 	logmessage "${FG_BLUE}   debug:${FG_WHITE} $@"
-	plymouth --ping && plymouth message --text="$@"
+	plymouth --ping && plymouth message --text="$@" > /dev/null 2>&1
 }
 
 # Log things that dont fit above cathegories
 lognotice() {
 	logmessage "${FG_BLUE}  notice:${FG_WHITE} $@"
-	plymouth --ping && plymouth message --text="N:$@"
+	plymouth --ping && plymouth message --text="N:$@" > /dev/null 2>&1
 }
 
 # Compatibility function with older scripts.
