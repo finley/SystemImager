@@ -27,7 +27,7 @@ LINE_WIDTH=120;
 // Margin between 2 elements or around screen (TODO: need to compute that)
 margins_width=20;
 display_system_messages=0; // Do not display system messages by default.
-                           // Can be unable by plymouth message --text="conf:000:001"
+                           // Can be unable by plymouth update --status="conf:sys:Y"
 
 screen_width = Window.GetWidth();
 screen_height = Window.GetHeight();
@@ -178,59 +178,58 @@ fun StringLength(string) {
   while(str.CharAt(index)) index++;
   return index;
 }
- 
-fun scroll_message_callback(text) {
-   // 1st: Check message format.
-   msg_separator = text.SubString(1,2); // Read the separator (":")
-   if (msg_separator != ":") { // System message (not formatted)
-       if (display_system_messages == 1)
-           text = "S:" + text;
-       else
-           return; // We do not display system messages
-   }
-   // 2nd: Get message status (Warning, Error, Info, ....)
-   //      stored in 1st letter.
-   msg_status = text.SubString(0,1);
-   msg_text   = text.SubString(2,256); // Assumes that messages won't exceed 256.
 
-   // 3rd: Truncate the message if too long
-   if (StringLength(msg_text) > LINE_WIDTH) {
-     msg_text = msg_text.SubString(0, LINE_WIDTH - 3);
-     msg_text += "...";
-   }
- 
-   // 4th: Shift message one up
+// Handle messages using our scroll_message function.
+// Theses are system messages or messages from "plymouth message --text="
+// used in postinstall scripts.
+fun scroll_message_callback(text) {
+   scroll_message("S", text);
+}
+
+// Scroll old messages and add new one at bottom.
+// status: single letter string.
+//         E: Error
+//         I: Information
+//         W: Warning
+//         A: Action
+//         N: Notice
+//         S: System
+// text: text to display.
+fun scroll_message(status_flag, text) {
+   if ( status_flag == "S" && display_system_messages != 1 )
+           return; // Do not display system messages if display_system_messages != 1
+  // 1st: Shift message one up
    for (i = 0; i < num_scroll_lines - 1; i++) {
      lines[i] = lines[i+1];
      status[i] = status[i+1];
    }
  
-   // 5th: Create the image for the latest message
+   // 2nd: Create the image for the latest message
    R=0.0; G=0.0; B=0.0;
    status_text = "";
-   lines[i] = Image.Text(msg_text, 1.0, 1.0, 1.0, 1.0, "Fixed");
-   if (msg_status == "E") {         // ERROR
+   lines[i] = Image.Text(text, 1.0, 1.0, 1.0, 1.0, "Fixed");
+   if (status_flag == "E") {         // ERROR
       R=0.0; G=1.0; B=0.0;
       status_text = "Error";
-   } else if (msg_status == "W") {  // WARNING
+   } else if (status_flag == "W") {  // WARNING
       status_text = "Warning";
       R=1.0; G=0.2; B=0.0;
-   } else if (msg_status == "I") {  // INFO
+   } else if (status_flag == "I") {  // INFO
       R=0.0; G=1.0; B=0.0;
       status_text = "Info";
-   } else if (msg_status == "A") {  // ACTION
+   } else if (status_flag == "A") {  // ACTION
       R=1.0; G=1.0; B=0.0;
       status_text = "Action";
-   } else if (msg_status == "N") {  // NOTICE
+   } else if (status_flag == "N") {  // NOTICE
       R=0.0; G=1.0; B=1.0;
       status_text = "Notice";
-   } else if (msg_status == "S") {  // SYSTEM (internal use)
+   } else if (status_flag == "S") {  // SYSTEM (internal use)
       R=0.5; G=0.5; B=0.5;
       status_text = "System";
    }
    status[i] = Image.Text(status_text, R, G, B, "Fixed");
  
-   // 6th: Re-positioning the text images
+   // 3rd: Re-positioning the text images
    for (i = 0; i < num_scroll_lines; i++) {
      message_sprite[i].SetImage(lines[i]);
      status_sprite[i].SetImage(status[i]);
@@ -320,42 +319,100 @@ fun StringToInteger(number_string) {
     return( return_val );
 }
 
-fun display_step_callback(text) {
-   // text format: 4 letters (step):progress_val(3 digits):max(3 digits)
-   step  = text.SubString( 0 , 4 ); // step name (4 chars)
-   progress_arg = StringToInteger(text.SubString(5,8)); // 3 digits
-   progress_max = StringToInteger(text.SubString(9,12)); // 3 digits
-   if(step == "init") {
+// This function will update stuffs on screen and is triggered by the use of
+// plymout update --status="specially crafted message"
+// Message structure:
+// fields are separated by ":" (not tested)
+// 1st field: 4 letters: the "command"
+//     - mesg => displays a log message scrolling previous lines one up.
+//            - 2nd field => Message to display (see format in scroll_message() )
+//     - init => Displays init icon
+//     - part => Displays partition disk icon
+//     - frmt => Displays format partition icon
+//     - prei => displays pre install scripts icon AND
+//            - field 2: (3 digits): script # being run
+//            - Field 3: number of scripts to run
+//     - imag => Displays imaging icon AND a progress bar
+//            - field 2: (3 digits): percentage progress
+//            - field 3: (3 digits; aulways 100): max percentage.
+//     - boot => Displays bootloader install icon
+//     - post => Displays post install scripts icon AND
+//            - field 2: (3 digits): script # being run
+//            - Field 3: number of scripts to run
+//     - conf => Configure theme
+//            - field 2: (3 letters): parameter to set
+//                    - "sys": enable/disable displays system messages as well.
+//                    - field 3: (1 letter): "Y" or "N".
+//            - field 3: (3 digits): value to set.
+
+fun update_status_callback(text) {
+   // Check we get a formatted message.
+   separator = text.SubString(4, 5);
+   if (separator != ":")
+      scroll_message("S", text); // not an SIS message.
+
+   // We have a SIS message: Get order to handle.
+   command  = text.SubString( 0 , 4 );
+
+   if(command == "mesg") {
+      // Get message status (Warning, Error, Info, ....)
+      //      stored in as a single letter in second field.
+      msg_status = text.SubString(5,6);
+      // text.SubString(6,7); // is another separator (ignored)
+      msg_text   = text.SubString(7,260); // Assumes that messages won't exceed 255.
+
+      // 3rd: Truncate the message if too long
+      if (StringLength(msg_text) > LINE_WIDTH) {
+        msg_text = msg_text.SubString(0, LINE_WIDTH - 3);
+        msg_text += "...";
+      }
+      scroll_message(msg_status, msg_text);
+   } else if(command == "init") {
       step_init.sprite.SetOpacity(1.0);
       ProgressBar("Initialising...", "", 0, "");
-   } else if (step == "part") {
+   } else if (command == "part") {
       step_partition.sprite.SetOpacity(1.0);
       ProgressBar("Partitionning...", "", 0, "");
-   } else if (step == "frmt") {
+   } else if (command == "frmt") {
       step_format.sprite.SetOpacity(1.0);
       ProgressBar("Formatting...", "", 0, "");
-   } else if (step == "prei") {
+   } else if (command == "prei") {
       step_preinstall.sprite.SetOpacity(1.0);
-      ProgressBar("Pre-install...", progress_arg, progress_max, "/" + progress_max);
-   } else if (step == "imag") {
+      script_number = StringToInteger(text.SubString(5,8)); // 3 digits
+      scripts_count = StringToInteger(text.SubString(9,12)); // 3 digits
+      ProgressBar("Pre-install...", script_number, scripts_count, "/" + scripts_count);
+   } else if (command == "imag") {
       step_imaging.sprite.SetOpacity(1.0);
+      progress_arg = StringToInteger(text.SubString(5,8)); // 3 digits
+      progress_max = StringToInteger(text.SubString(9,12)); // 3 digits
       ProgressBar("Imaging...", progress_arg, progress_max, "%");
-   } else if (step == "boot") {
+   } else if (command == "boot") {
       step_bootloader.sprite.SetOpacity(1.0);
       ProgressBar("Bootloader...", "", 0, "");
-   } else if (step == "post") {
+   } else if (command == "post") {
       step_postinstall.sprite.SetOpacity(1.0);
-      ProgressBar("Post-install...", progress_arg, progress_max, "/" + progress_max);
-   } else if (step == "conf") {
-      if (progress_max == 1) {
-         display_system_messages=1;
-      } else {
-         display_system_messages=0;
-      }
+      script_number = StringToInteger(text.SubString(5,8)); // 3 digits
+      scripts_count = StringToInteger(text.SubString(9,12)); // 3 digits
+      ProgressBar("Post-install...", script_number, scripts_count, "/" + scripts_count);
+   } else if (command == "conf") {
+      var = text.SubString(5,8);
+      if ( var == "sys" ) {
+          val = text.SubString(9,10);
+          if (val == "Y") {
+             display_system_messages=1;
+          } else {
+             display_system_messages=0;
+          }
+      } else
+          scroll_message("W", "Unkown config parameter: [" + var + "]");
    } else
-      scroll_message_callback(text); // pass non formatter messages (system) to the scroll_message_callback that knows how to handle it.
+      scroll_message("S", text); // pass non formatted messages (system) to the
+      // scroll_message that knows how to handle it (is handled at the beginnig
+      // of this function, but in case we have a messages with ":" in 5th place
+      // that is not an SIS message, we'll end here. so we trap everything
+      // unhandled here.
 }
 
 Plymouth.SetMessageFunction(scroll_message_callback); // SetDisplayMessageFunction not available in 0.8.4 (CentOS-6)
-Plymouth.SetUpdateStatusFunction(display_step_callback);
+Plymouth.SetUpdateStatusFunction(update_status_callback);
 

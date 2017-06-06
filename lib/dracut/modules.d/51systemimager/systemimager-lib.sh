@@ -76,19 +76,19 @@ fi
 # Log an error.
 logerror() {
 	logmessage "${BG_RED}  ERROR:${BG_BLACK} $@"
-	plymouth --ping && plymouth message --text="E:$@" > /dev/null 2>&1
+	plymouth --ping && plymouth update --status="mesg:E:$@" > /dev/null 2>&1
 }
 
 # Log a warning
 logwarn() {
 	logmessage "${FG_RED}warning:${FG_WHITE} $@"
-	plymouth --ping && plymouth message --text="W:$@" > /dev/null 2>&1
+	plymouth --ping && plymouth update --status="mesg:W:$@" > /dev/null 2>&1
 }
 
 # Log a simple information
 loginfo() {
 	logmessage "${FG_GREEN}    info:${FG_WHITE} $@"
-	plymouth --ping && plymouth message --text="I:$@" > /dev/null 2>&1
+	plymouth --ping && plymouth update --status="mesg:I:$@" > /dev/null 2>&1
 }
 
 # Log a detailed information
@@ -99,19 +99,19 @@ logdetail() {
 # Log an action being done to client
 logaction() {
 	logmessage "${FG_AMBER}  action:${FG_WHITE} $@"
-	plymouth --ping && plymouth message --text="A:$@" > /dev/null 2>&1
+	plymouth --ping && plymouth update --status="mesg:A:$@" > /dev/null 2>&1
 }
 
 # Log debug / system stuffs
 logdebug() {
 	logmessage "${FG_BLUE}   debug:${FG_WHITE} $@"
-	plymouth --ping && plymouth message --text="$@" > /dev/null 2>&1
+	plymouth --ping && plymouth update --status="mesg:$@" > /dev/null 2>&1
 }
 
 # Log things that dont fit above cathegories
 lognotice() {
 	logmessage "${FG_BLUE}  notice:${FG_WHITE} $@"
-	plymouth --ping && plymouth message --text="N:$@" > /dev/null 2>&1
+	plymouth --ping && plymouth update --status="mesg:N:$@" > /dev/null 2>&1
 }
 
 # Compatibility function with older scripts.
@@ -143,12 +143,12 @@ logmessage() {
 # sis_update_step step val max
 # - step: step name
 #         where step is one of:
-#         - init (small letters) (VAL and MAX ignored)
-#         - part (small letters) (VAL and MAX ignored)
-#         - frmt (small letters) (VAL and MAX ignored)
+#         - init (small letters)
+#         - part (small letters)
+#         - frmt (small letters)
 #         - prei (small letters) (VAL=script being run; MAX=number of scripts to run)
 #         - imag (small letters) (VAL=percent progress; MAX=100)
-#         - boot (small letters) (VAL and MAX ignored)
+#         - boot (small letters)
 #         - post (small letters) (VAL=script being run; MAX=number of scripts to run)#
 # - val: completion (0-max) (integer part must be 3 digits maximum. Floats are rounded)
 # - max: max value | 0 (0 = do not display bar) (integer must be 3 digits maximum. No float)
@@ -178,10 +178,13 @@ sis_update_step() {
     return 0 # Hide plymouth return code. If plymouth is not active of fails, not dramatic.
 }
 
-# Tell plymouth theme to display system messages (not only SystemImager ones))
-# (sets parameter 0 to 1)
+################################################################################
+#
+# Tells plymouth theme to display system messages (not only SystemImager ones))
+# (sets parameter "sys" to Y)
+# Default: sys=N
 sis_enable_system_msg() {
-	plymouth --ping && plymouth update --status="conf:000:001"
+	plymouth --ping && plymouth update --status="conf:sys:Y"
 }
 #
 ################################################################################

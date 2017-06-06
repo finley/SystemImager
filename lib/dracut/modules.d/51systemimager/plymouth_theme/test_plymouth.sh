@@ -12,36 +12,38 @@ plymouth show-splash
 sleep 5  # Wait for splash to appear otherwize we miss some refreshes.
 
 # Now testing.
-plymouth message --text="I:SystemImager plymouth theme test suite."
+plymouth update --status="mesg:I:SystemImager plymouth theme test suite."
 sleep 0.5
-plymouth message --text="W: TEST: This is a warning message."
+plymouth update --status="mesg:W: TEST: This is a warning message."
 sleep 0.5
-plymouth update --status="prei:000:000" # Highlight the preinstall script icon (0 scripts)
+plymouth update --status="prei:" # Highlight the preinstall script icon (0 scripts)
 sleep 0.5
-plymouth update --status="init:000:000" # Highlight the init icon
+plymouth update --status="init:" # Highlight the init icon
 sleep 0.5
-plymouth update --status="part:000:000" # Highlight the partition disk icon
+plymouth update --status="part:" # Highlight the partition disk icon
 sleep 0.5
-plymouth update --status="frmt:000:000" # Highlight the format partition icon
+plymouth update --status="frmt:" # Highlight the format partition icon
 sleep 0.5
-plymouth update --status="syst:000:001" # Enable system message display
+plymouth message --text="This is an unhandled message. (should *NOT* be displayed)"
+plymouth update --status="conf:sys:Y" # Enable system message display
+plymouth message --text="This is an unhandled message. (should *BE* displayed)"
 sleep 0.5
-plymouth message --text="A: Started imaging simulation."
+plymouth update --status="mesg:A: Started imaging simulation."
 for i in 0{0..9}0 100 # Highlight Imaging icon and show its progress percent
 do
-    plymouth message --text="I:Progress: ${i}%"
+    plymouth update --status="mesg:I:Progress: ${i}%"
     plymouth update --status="imag:${i}:100"
     sleep 0.5
 done
-plymouth update --status="boot:000:000" # Highlight the install bootloader icon
+plymouth update --status="boot:" # Highlight the install bootloader icon
 sleep 0.5
 for i in 00{1..4} # Highlight the post install script icon and simulate 4 executions
 do
-    plymouth message --text="I:Running script ${i}/4"
+    plymouth update --status="mesg:I:Running script ${i}/4"
     plymouth update --status="post:$i:004"
     sleep 0.5
 done
-plymouth message --text="N:This is the last message"
+plymouth update --status="mesg:N:This is the last message"
 sleep 5
 
 # Finish.
