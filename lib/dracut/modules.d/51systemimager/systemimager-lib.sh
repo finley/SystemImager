@@ -105,7 +105,7 @@ logaction() {
 # Log debug / system stuffs
 logdebug() {
 	logmessage "${FG_BLUE}   debug:${FG_WHITE} $@"
-	plymouth --ping && plymouth update --status="mesg:$@" > /dev/null 2>&1
+	plymouth --ping && plymouth update --status="mesg:S:$@" > /dev/null 2>&1
 }
 
 # Log things that dont fit above cathegories
@@ -136,6 +136,15 @@ logmessage() {
     if [ ! -z "$USELOGGER" ] ;
         then logger -p user.$1 "sis: $@"
     fi
+}
+
+################################################################################
+#
+# Tells plymouth theme to display system messages (not only SystemImager ones))
+# (sets parameter "sys" to Y)
+# Default: sys=N
+sis_enable_system_msg() {
+	plymouth --ping && plymouth update --status="conf:sys:Y"
 }
 
 ################################################################################
@@ -178,14 +187,6 @@ sis_update_step() {
     return 0 # Hide plymouth return code. If plymouth is not active of fails, not dramatic.
 }
 
-################################################################################
-#
-# Tells plymouth theme to display system messages (not only SystemImager ones))
-# (sets parameter "sys" to Y)
-# Default: sys=N
-sis_enable_system_msg() {
-	plymouth --ping && plymouth update --status="conf:sys:Y"
-}
 #
 ################################################################################
 #
