@@ -3,9 +3,6 @@
 # SystemImager plymouth theme test suite.
 #
 
-test -z "${SYSTEMIMAGER_LIB}" && SYSTEMIMAGER_LIB=/lib/systemimager-lib.sh
-. ${SYSTEMIMAGER_LIB}
-
 rm -rf /tmp/plymouth.log
 plymouthd --debug --debug-file=/tmp/plymouth.log
 plymouth show-splash
@@ -16,9 +13,9 @@ plymouth update --status="mesg:I:SystemImager plymouth theme test suite."
 sleep 0.5
 plymouth update --status="mesg:W: TEST: This is a warning message."
 sleep 0.5
-plymouth update --status="prei:" # Highlight the preinstall script icon (0 scripts)
-sleep 0.5
 plymouth update --status="init:" # Highlight the init icon
+sleep 0.5
+plymouth update --status="prei:" # Highlight the preinstall script icon (0 scripts)
 sleep 0.5
 plymouth update --status="part:" # Highlight the partition disk icon
 sleep 0.5
