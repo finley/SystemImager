@@ -104,8 +104,10 @@ logaction() {
 
 # Log debug / system stuffs
 logdebug() {
+	[ "${DEBUG}" != "y" ] && return # Debug output not enabled => ignore
 	logmessage "${FG_BLUE}   debug:${FG_WHITE} $@"
-	plymouth --ping && plymouth update --status="mesg:S:$@" > /dev/null 2>&1
+	sis_enable_system_msg # In debug mode, we also display system messages.
+	plymouth --ping && plymouth update --status="mesg:D:$@" > /dev/null 2>&1
 }
 
 # Log things that dont fit above cathegories
@@ -138,6 +140,15 @@ logmessage() {
     fi
 }
 
+################################################################################
+#
+# Tells systemimager to display debug message
+# This enables plymouth system messages as well
+# Default: don't display debug messages
+sis_enable_debug_msg() {
+    DEBUG="y"
+    write_variables
+}
 ################################################################################
 #
 # Tells plymouth theme to display system messages (not only SystemImager ones))
@@ -271,6 +282,7 @@ SEL_RELABEL="$SEL_RELABEL"			# rd.sis.selinux-relabel
 
 SIS_POST_ACTION="$SIS_POST_ACTION"		# rd.sis.post-action
 
+DEBUG=${DEBUG}					# rd.sis.debug
 export TERM="${TERM}"
 EOF
 

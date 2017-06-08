@@ -35,6 +35,7 @@ test -z "$MONITOR_PORT" && MONITOR_PORT=8181 # default value
 # rd.sis.monitor-console=(bolean 0|1|yes|no)
 test -z "$MONITOR_CONSOLE" && MONITOR_CONSOLE=`getarg MONITOR_CONSOLE`
 test -z "$MONITOR_CONSOLE" && MONITOR_CONSOLE=`getarg rd.sis.monitor-console`
+[ $? -eq 0 ] && [ -z "${MONITOR_CONSOLE}" ] && MONITOR_CONSOLE="y" # true if parameter present with no value.
 MONITOR_CONSOLE=`echo $MONITOR_CONSOLE | head -c 1| tr 'YN10' 'ynyn'` # Cleann up to end with one letter y/n
 test -z "$MONITOR_CONSOLE" && MONITOR_CONSOLE="n"
 
@@ -59,6 +60,7 @@ test -z "$LOG_SERVER_PORT" && LOG_SERVER_PORT=514
 # rd.sis.ssh=(bolean 0|1|yes|no|not present) => defaults to "n"
 test -z "$SSH" && SSH=`getarg SSH`
 test -z "$SSH" && SSH=`getarg rd.sis.ssh-client`
+[ $? -eq 0 ] && [ -z "${SSH}" ] && SSH="y" # true if parameter present with no value.
 SSH=`echo $SSH | head -c 1| tr 'YN10' 'ynyn'` # Cleann up to end with one letter y/n
 test -z "$SSH" && SSH="n" # Defaults to no.
 
@@ -107,6 +109,13 @@ test -z "$SEL_RELABEL" && SEL_RELABEL="y" # default to true!
 # rd.sis.post-action=(shell, reboot, shutdown) => default to reboot
 SIS_POST_ACTION=`getarg rd.sis.post-action`
 test -z "${SIS_POST_ACTION}" && SIS_POST_ACTION="reboot"
+
+#########################
+# rd.sis.debug (defaults:N)
+test -z "$DEBUG" && DEBUG=`getarg rd.sis.debug`
+[ $? -eq 0 ] && [ -z "${DEBUG}" ] && DEBUG="y" # true if parameter present with no value.
+DEBUG=`echo $DEBUG | head -c 1| tr 'YN10' 'ynyn'` # Cleann up to end with one letter y/n
+test -z "$DEBUG" && DEBUG="n" # Defaults to no.
 
 # Register what we read.
 write_variables

@@ -93,5 +93,10 @@ getargbool 1 rd.sis.selinux-relabel && SEL_RELABEL="y"
 SIS_POST_ACTION=$(getarg rd.sis.post-action)
 test -z "${SIS_POST_ACTION}" && SIS_POST_ACTION="reboot"
 
+#########################
+# rd.sis.debug (defaults:N)
+DEBUG="n"
+getargbool 0 rd.sis.debug && DEBUG="y"
+
 # Register what we read.
 write_variables

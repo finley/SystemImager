@@ -226,6 +226,9 @@ fun scroll_message(status_flag, text) {
    } else if (status_flag == "S") {  // SYSTEM (internal use)
       R=0.5; G=0.5; B=0.5;
       status_text = "System";
+   } else if (status_flag == "D") { // DEBUG (internal use)
+      R=0.5; G=0.5; B=1.0;
+      status_text = "Debug";
    }
    status[i] = Image.Text(status_text, R, G, B, "Fixed");
  
