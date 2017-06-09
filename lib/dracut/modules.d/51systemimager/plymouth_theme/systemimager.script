@@ -54,9 +54,6 @@ step_imaging.image     = Image("icon_writeimage.png");
 step_bootloader.image  = Image("icon_bootloader.png");
 step_postinstall.image = Image("icon_postinstall.png");
 
-// For future use.
-// yes.image = Image("yes.png");
-// no.image  = Image("no.png");
 
 // Compute icons scale suited for screen width
 // we want size 64 for a 1024 pixel wide screen.
@@ -104,7 +101,8 @@ step_postinstall.sprite.SetOpacity(0.0);
 
 // Init progress bar.
 // 1st: Load the pixel art.
-progress_box.image   = Image("progress_box.png");   // 40px height - 1px wide
+box.image   = Image("box.png");   // 40px height - 1px wide
+progress_box.image   = box.image;
 progress_gauge.image = Image("progress_gauge.png"); // 36px height - 128px wide
 progress_hide.image  = Image("hide_box.png");       // 36px height - 1px wide
 
@@ -126,6 +124,37 @@ progress_title.sprite.SetOpacity( 0.0 ); // Hidden by default
 progress_title.sprite.SetX( margins_width );
 progress_title.sprite.SetY( progress_bar.Y );
 progress_title.sprite.SetZ( 100 );
+
+// Init message box.
+// 1st: reuse an oversized progressbox.
+
+dlgb_box.width=(screen_width-2*margins_width)*(50/100);
+dlgb_box.height=(screen_height-2*margins_width)*(50/100);
+dlgb_box.X=(screen_width-dlgb_box.width)/2;
+dlgb_box.Y=(screen_height-dlgb_box.height)/2;
+
+dlgb_box.border_image     = box.image;
+dlgb_box.background_image = Image("dialog_bgnd.png");
+dlgb_box.yes_image = Image("yes.png");
+dlgb_box.no_image  = Image("no.png");
+dlgb_box.text_image = Image.Text("",1.0, 1.0, 1.0, "Fixed");
+
+dlgb_box.border_sprite     = Sprite(dlgb_box.border_image.Scale(dlgb_box.width+margins_width,dlgb_box.height+margins_width));
+dlgb_box.background_sprite = Sprite(dlgb_box.background_image.Scale(dlgb_box.width,dlgb_box.height));
+dlgb_box.yes_sprite        = Sprite(dlgb_box.yes_image.Scale(step_icon.size,step_icon.size));
+dlgb_box.no_sprite         = Sprite(dlgb_box.no_image.Scale(step_icon.size,step_icon.size));
+dlgb_box.text_sprite= Sprite();
+
+dlgb_box.border_sprite.SetPosition(dlgb_box.X-margins_width/2,dlgb_box.Y-margins_width/2,200);
+dlgb_box.border_sprite.SetOpacity( 0.0 ); // Hidden by default
+dlgb_box.background_sprite.SetPosition(dlgb_box.X,dlgb_box.Y,201);
+dlgb_box.background_sprite.SetOpacity( 0.0 ); // Hidden by default
+dlgb_box.yes_sprite.SetPosition(dlgb_box.X+margins_width/2,dlgb_box.Y+margins_width/2,202);
+dlgb_box.yes_sprite.SetOpacity( 0.0 ); // Hidden by default
+dlgb_box.no_sprite.SetPosition(dlgb_box.X+margins_width/2,dlgb_box.Y+margins_width/2,203);
+dlgb_box.no_sprite.SetOpacity( 0.0 ); // Hidden by default
+dlgb_box.text_sprite.SetPosition(dlgb_box.X+margins_width+step_icon.size,dlgb_box.Y+margins_width+step_icon.size,204);
+dlgb_box.text_sprite.SetOpacity( 0.0 ); // Hidden by default
 
 // Unit label
 progress_unit.image  = Image.Text("", 1.0, 1.0, 1.0); // Units at end of bar (after value)
@@ -238,7 +267,35 @@ fun scroll_message(status_flag, text) {
      status_sprite[i].SetImage(status[i]);
    }
 }
- 
+
+//
+// DialogBox(dlgb_type, dlgb_text)
+// Display (or hide) a dialog box.
+// dlgb_type: "yes" or " no" or "zzz" or "off"
+// dlgb_text: "Messsage to display
+fun DialogBox(dlgb_type, dlgb_text) {
+
+    if (dlgb_type == "off") {
+        dlgb_box.border_sprite.SetOpacity( 0.0 );
+        dlgb_box.background_sprite.SetOpacity( 0.0 );
+        dlgb_box.yes_sprite.SetOpacity( 0.0 );
+        dlgb_box.no_sprite.SetOpacity( 0.0 );
+        dlgb_box.text_sprite.SetOpacity( 0.0 );
+        return;
+    } else if(dlgb_type == "yes") {
+        dlgb_box.yes_sprite.SetOpacity( 1.0 );
+        dlgb_box.no_sprite.SetOpacity( 0.0 );
+    } else if(dlgb_type == " no") {
+        dlgb_box.no_sprite.SetOpacity( 1.0 );
+        dlgb_box.yes_sprite.SetOpacity( 0.0 );
+    } else if(dlgb_type == "zzz") {
+    }
+    dlgb_box.border_sprite.SetOpacity( 0.9 );
+    dlgb_box.background_sprite.SetOpacity( 1.0 );
+    dlgb_box.text_image = Image.Text(dlgb_text, 1.0, 1.0, 1.0, "Fixed");
+    dlgb_box.text_sprite.SetImage(dlgb_box.text_image);
+    dlgb_box.text_sprite.SetOpacity( 1.0 );
+}
 //
 // ProgressBar(title, progress, max, unit)
 // Draw or Hide the progress bar.
@@ -397,6 +454,11 @@ fun update_status_callback(text) {
       script_number = StringToInteger(text.SubString(5,8)); // 3 digits
       scripts_count = StringToInteger(text.SubString(9,12)); // 3 digits
       ProgressBar("Post-install...", script_number, scripts_count, "/" + scripts_count);
+   } else if (command == "dlgb") {
+      // Dialog box
+      dlgb_type = text.SubString(5,8); // "yes" or " no" or "zzz" or "off"
+      dlgb_text = text.SubString(9, 256); // Message to display
+      DialogBox(dlgb_type, dlgb_text);
    } else if (command == "conf") {
       var = text.SubString(5,8);
       if ( var == "sys" ) {

@@ -38,8 +38,11 @@ for i in 00{1..4} # Highlight the post install script icon and simulate 4 execut
 do
     plymouth update --status="mesg:I:Running script ${i}/4"
     plymouth update --status="post:$i:004"
+    [ $i -eq 2 ] && plymouth update --status="dlgb:yes:Script 1 ran successfully!" && sleep 1
+    [ $i -eq 4 ] && plymouth update --status="dlgb: no:Script 4 failed!!!!" && sleep 1
     sleep 0.5
 done
+plymouth update --status="dlgb:off"
 plymouth update --status="mesg:N:This is the last message"
 sleep 5
 
