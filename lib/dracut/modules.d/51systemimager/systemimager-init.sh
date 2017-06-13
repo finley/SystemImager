@@ -6,6 +6,13 @@
 . /lib/systemimager-lib.sh
 logdebug "==== systemimager-init ===="
 
+# Wait for plymouth to be ready.
+#while ! plymouth --ping
+#do
+#	sleep 1
+#done
+sleep 4
+
 # Highlight plymouth init icon.
 sis_update_step init
 

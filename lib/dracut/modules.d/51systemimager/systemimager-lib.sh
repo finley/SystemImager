@@ -40,9 +40,6 @@ type getarg >/dev/null 2>&1 || . /lib/dracut-lib.sh
 # Make sure we have a TERM variable set.
 test -z "${TERM}" -o "${TERM}" = "dumb" && TERM=linux
 
-# Read varaibles.txt if present.
-test -f /tmp/variables.txt && . /tmp/variables.txt
-
 # Some usefull values
 COLORS=`tput -T${TERM} colors`
 if test "0${COLORS}" -gt 1
@@ -140,6 +137,9 @@ logmessage() {
     fi
 }
 
+# Read varaibles.txt if present.
+test -f /tmp/variables.txt && logdebug "Reading /tmp/variables.txt" && . /tmp/variables.txt
+
 ################################################################################
 #
 # Tells systemimager to display debug message
@@ -148,6 +148,7 @@ logmessage() {
 sis_enable_debug_msg() {
     DEBUG="y"
     write_variables
+    logdebug "Debug messages enabled."
 }
 ################################################################################
 #
@@ -156,7 +157,39 @@ sis_enable_debug_msg() {
 # Default: sys=N
 sis_enable_system_msg() {
 	plymouth --ping && plymouth update --status="conf:sys:Y"
+	logdebug "System messages displayed in plymouth enabled."
 }
+
+################################################################################
+#
+# sis_dialog_box type "message"
+# type can be:
+#      - "yes": => Green checkmark
+#      - "no":  => Red cross
+#      - "zzz": => wait gear wheel
+#      - "off": => Close the doalog box
+sis_dialog_box() {
+	TYPE=$1
+	[ ${TYPE} == "no" ] && TYPE=" no" # TYPE must be 3 letters.
+	shift
+	case "${TYPE}" in
+		"yes"|" no"|"zzz")
+			if test -z "$1" # $1 is the 1st word of the message.
+			then
+				logwarn "sis_dialog_box(): empty message"
+				return # Ignore empty messages
+			fi
+			;;
+		"off")
+			;;
+		*)
+			logwarn "sis_dialog_box(): unknown dialog type: [${TYPE}]"
+			;;
+	esac
+	plymouth --ping && plymouth update --status="dlgb:${TYPE}:$*"
+
+}
+
 
 ################################################################################
 #
@@ -227,7 +260,7 @@ adjust_arch() {
 #
 # Usage: write_variables
 write_variables() {
-    loginfo "Saving variables to /tmp/variables.txt"
+    logdebug "Saving variables to /tmp/variables.txt"
 
     touch /tmp/variables.txt
     mv -f /tmp/variables.txt /tmp/variables.txt~
@@ -1451,6 +1484,13 @@ ${BG_BLUE}======================================================================
 ================================================================================${BG_BLACK}
 EOF
 	loginfo "Wainting for si_pushupdate to complete..."
+	# Now the plymouth equivalent.
+        sis_dialog_box zzz "You must now go to your imageserver"
+        sis_dialog_box zzz "and issue the following command:"
+	sis_dialog_box zzz " "
+	sis_dialog_box zzz "si_pushinstall --hosts ${HOST_OR_IP}"
+	sis_dialog_box zzz " "
+	sis_dialog_box zzz "(Wainting for si_pushupdate to complete...)"
         # Since we're using SSH, change the $IMAGESERVER variable to reflect
         # the forwarded connection.
         IMAGESERVER=127.0.0.1
@@ -1463,6 +1503,7 @@ EOF
 			sleep 0.5
 		done
         done
+	sis_dialog_box off # Close the plymouth dialog box
     fi
 }
 #

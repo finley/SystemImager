@@ -393,6 +393,7 @@ endif
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/icon_preinstall.png $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/icon_writeimage.png $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/no.png $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/action.png $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/dialog_bgnd.png $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/box.png $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/progress_gauge.png $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme

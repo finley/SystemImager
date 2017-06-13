@@ -27,7 +27,7 @@ LINE_WIDTH=120;
 // Margin between 2 elements or around screen (TODO: need to compute that)
 margins_width=20;
 // how many lines in a dialog box:
-dlgb_box_max_lines = 5;
+dlgb_box_max_lines = 6;
 
 display_system_messages=0; // Do not display system messages by default.
                            // Can be unable by plymouth update --status="conf:sys:Y"
@@ -140,11 +140,13 @@ dlgb_box.border_image     = box.image;
 dlgb_box.background_image = Image("dialog_bgnd.png");
 dlgb_box.yes_image = Image("yes.png");
 dlgb_box.no_image  = Image("no.png");
+dlgb_box.zzz_image = Image("action.png");
 
 dlgb_box.border_sprite     = Sprite(dlgb_box.border_image.Scale(dlgb_box.width+margins_width,dlgb_box.height+margins_width));
 dlgb_box.background_sprite = Sprite(dlgb_box.background_image.Scale(dlgb_box.width,dlgb_box.height));
 dlgb_box.yes_sprite        = Sprite(dlgb_box.yes_image.Scale(step_icon.size,step_icon.size));
 dlgb_box.no_sprite         = Sprite(dlgb_box.no_image.Scale(step_icon.size,step_icon.size));
+dlgb_box.zzz_sprite         = Sprite(dlgb_box.zzz_image.Scale(step_icon.size,step_icon.size));
 
 dlgb_box.border_sprite.SetPosition(dlgb_box.X-margins_width/2,dlgb_box.Y-margins_width/2,200);
 dlgb_box.border_sprite.SetOpacity( 0.0 ); // Hidden by default
@@ -154,6 +156,8 @@ dlgb_box.yes_sprite.SetPosition(dlgb_box.X+margins_width/2,dlgb_box.Y+margins_wi
 dlgb_box.yes_sprite.SetOpacity( 0.0 ); // Hidden by default
 dlgb_box.no_sprite.SetPosition(dlgb_box.X+margins_width/2,dlgb_box.Y+margins_width/2,203);
 dlgb_box.no_sprite.SetOpacity( 0.0 ); // Hidden by default
+dlgb_box.zzz_sprite.SetPosition(dlgb_box.X+margins_width/2,dlgb_box.Y+margins_width/2,203);
+dlgb_box.zzz_sprite.SetOpacity( 0.0 ); // Hidden by default
 
 // Initialise dialog box text lines text lines.
 for (dlgb_box_text.line=0; dlgb_box_text.line < dlgb_box_max_lines; dlgb_box_text.line++) {
@@ -289,9 +293,10 @@ fun DialogBox(dlgb_type, dlgb_text) {
         dlgb_box.background_sprite.SetOpacity( 0.0 );
         dlgb_box.yes_sprite.SetOpacity( 0.0 );
         dlgb_box.no_sprite.SetOpacity( 0.0 );
+        dlgb_box.zzz_sprite.SetOpacity( 0.0 );
         dlgb_box.text_sprite.SetOpacity( 0.0 );
 
-        for (dlgb_box_text.line=0; dlgb_box_text.line < 5; dlgb_box_text.line++) {
+        for (dlgb_box_text.line=0; dlgb_box_text.line < dlgb_box_max_lines; dlgb_box_text.line++) {
             dlgb_box_text_image[dlgb_box_text.line] = Image.Text("",1.0, 1.0, 1.0, "Fixed");
             dlgb_box_text_sprite[dlgb_box_text.line].SetImage(dlgb_box_text_image[dlgb_box_text.line]);
             dlgb_box_text_sprite[dlgb_box_text.line].SetPosition(dlgb_box.X+margins_width+step_icon.size,dlgb_box.Y+margins_width+step_icon.size+20*dlgb_box_text.line,204);
@@ -302,10 +307,15 @@ fun DialogBox(dlgb_type, dlgb_text) {
     } else if(dlgb_type == "yes") {
         dlgb_box.yes_sprite.SetOpacity( 1.0 );
         dlgb_box.no_sprite.SetOpacity( 0.0 );
+        dlgb_box.zzz_sprite.SetOpacity( 0.0 );
     } else if(dlgb_type == " no") {
         dlgb_box.no_sprite.SetOpacity( 1.0 );
         dlgb_box.yes_sprite.SetOpacity( 0.0 );
+        dlgb_box.zzz_sprite.SetOpacity( 0.0 );
     } else if(dlgb_type == "zzz") {
+        dlgb_box.no_sprite.SetOpacity( 0.0 );
+        dlgb_box.yes_sprite.SetOpacity( 0.0 );
+        dlgb_box.zzz_sprite.SetOpacity( 1.0 ); // TODO: Make it spin // TODO: Make it spin
     }
     dlgb_box.border_sprite.SetOpacity( 0.9 );
     dlgb_box.background_sprite.SetOpacity( 1.0 );
