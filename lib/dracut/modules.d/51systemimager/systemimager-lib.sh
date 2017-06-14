@@ -190,6 +190,9 @@ sis_dialog_box() {
 
 }
 
+sis_plymouth_wait_keypress() {
+	plymouth --ping && plymouth watch-keystroke
+}
 
 ################################################################################
 #
@@ -389,17 +392,35 @@ sis_postimaging() {
 	then
 	    case "$ACTION" in
 	        reboot|poweroff|halt|kexec)
+		    sis_dialog_box yes "Installation successfull."
+		    sis_dialog_box yes " "
+		    sis_dialog_box yes "Now going to ${ACTION}"
+		    sleep 5
 	            systemctl --no-block --force $ACTION
-	            warn "$ACTION failed!"
+	            logwarn "$ACTION failed!"
 	            ;;
 	        shell)
+		    sis_dialog_box yes "Installation successfull."
+		    sis_dialog_box yes " "
+		    sis_dialog_box yes "Press any key to get a debug shell."
+		    sis_plymouth_wait_keypress
 		    ln -sf /etc/motd /tmp/message.txt
 		    ;;    
 	        emergency)
-	            ln -sf /etc/issue /tmp/message.txt
+		    sis_dialog_box no "INSTALLATION FAILED!"
+		    sis_dialog_box no " "
+		    sis_dialog_box no "Can not proceed!  (Scottish accent"
+		    sis_dialog_box no "    -- think Groundskeeper Willie)"
+		    sis_dialog_box no " "
+		    sis_dialog_box no "Press any key to get a debug shell."
+		    sis_plymouth_wait_keypress
+		    ln -sf /etc/issue /tmp/message.txt
 		    ;;
 	        *)
-	            warn "sis_postimaging called with invalid argument '$ACTION'. Rebooting!"
+		    sis_dialog_box yes "sis_postimaging called with invalid"
+		    sis_dialog_box yes "argument '$ACTION'. Rebooting!"
+		    sis_dialog_box yes " "
+	            logwarn "sis_postimaging called with invalid argument '$ACTION'. Rebooting!"
 		    sleep 10 # leave time to read.
 	            systemctl --no-block --force reboot
 	            ;;
@@ -409,22 +430,44 @@ sis_postimaging() {
 	else
 	    case "$ACTION" in
 	        reboot|poweroff|halt)
+		    sis_dialog_box yes "Installation successfull."
+		    sis_dialog_box yes " "
+		    sis_dialog_box yes "Now going to ${ACTION}"
+		    sleep 5
 	            $ACTION -f -d -n
-	            warn "$ACTION failed!"
+	            logwarn "$ACTION failed!"
 	            ;;
 	        kexec)
+		    sis_dialog_box yes "Installation successfull."
+		    sis_dialog_box yes " "
+		    sis_dialog_box yes "Now going to ${ACTION}"
+		    sleep 5
 	            kexec -e # Will load kernel+initrd.img specified by above kexec -l ...
-	            warn "$ACTION failed!"
+	            logwarn "$ACTION failed!"
 	            reboot -f -d -n # If kexec fails, reboot using bios as failover.
 	            ;;
 	        shell)
+		    sis_dialog_box yes "Installation successfull."
+		    sis_dialog_box yes " "
+		    sis_dialog_box yes "Press any key to get a debug shell."
+		    sis_plymouth_wait_keypress
 	            ln -sf /etc/motd /tmp/message.txt
 		    ;;
 		emergency)
+		    sis_dialog_box no "INSTALLATION FAILED!"
+		    sis_dialog_box no " "
+		    sis_dialog_box no "Can not proceed!  (Scottish accent"
+		    sis_dialog_box no "    -- think Groundskeeper Willie)"
+		    sis_dialog_box no " "
+		    sis_dialog_box no "Press any key to get a debug shell."
+		    sis_plymouth_wait_keypress
 		    ln -sf /etc/issue /tmp/message.txt
 		    ;;
 	        *)
-	            warn "sis_postimaging called with invalid argument '$ACTION'. Rebooting!"
+		    sis_dialog_box yes "sis_postimaging called with invalid"
+		    sis_dialog_box yes "argument '$ACTION'. Rebooting!"
+		    sis_dialog_box yes " "
+	            logwarn "sis_postimaging called with invalid argument '$ACTION'. Rebooting!"
 	            reboot -f -d -n
 	            ;;
 	    esac
