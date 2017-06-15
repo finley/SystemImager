@@ -37,6 +37,11 @@ FLAVOR="SYSTEMIMAGER_FLAVOR_STRING"
 
 type getarg >/dev/null 2>&1 || . /lib/dracut-lib.sh
 
+# On old distros like CentOS-6, the shell interpreter is "dash" (not "bash")
+# it lacks the "disown command" we need to avoid ukly message when background
+# shell processes get killed. In dash, we just ignore this lack.
+type disown > /dev/null 2>&1 || alias disown="echo > /dev/null"
+
 # Make sure we have a TERM variable set.
 test -z "${TERM}" -o "${TERM}" = "dumb" && TERM=linux
 
@@ -347,7 +352,9 @@ tmpfs_watcher() {
         done
         unset DF
     }&
+
     TMPFS_WATCHER_PID=$!
+    disown # Remove this task from shell job list so no debug output will be written when killed.
     logdetail "tmpfs watcher PID: $TMPFS_WATCHER_PID"
     echo $TMPFS_WATCHER_PID > /run/systemimager/tmpfs_watcher.pid
 }
@@ -1715,6 +1722,7 @@ start_report_task() {
     }&
 
     REPORT_PID=$!
+    disown # Remove this task from shell job list so no debug output will be written when killed.
     loginfo "Progress report task started."
     logdetail "PID=$REPORT_PID"
     echo $REPORT_PID > /run/systemimager/report_task.pid
@@ -1740,6 +1748,7 @@ stop_report_task() {
 	test -n "`echo ${REPORT_PID}|sed -r 's/[0-9]*//g'`" && shellout "Cant kill report task: /run/systemimager/report_task.pid is not a pid."
         if [ ! -z "$REPORT_PID" ]; then
             kill -9 $REPORT_PID
+	    wait $REPORT_PID # Make sure process is killed before continuing.
 	    rm -f /run/systemimager/report_task.pid
 	    test -w /dev/console && echo "${BG_BLACK}" > /dev/console
             loginfo "Progress report task stopped"
