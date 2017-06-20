@@ -108,7 +108,13 @@ logaction() {
 logdebug() {
 	[ "${DEBUG}" != "y" ] && return # Debug output not enabled => ignore
 	logmessage "${FG_BLUE}   debug:${FG_WHITE} $@"
-	sis_enable_system_msg # In debug mode, we also display system messages.
+	if [ "${SIS_SYSMSG_ENABLED}" != "y" ]
+	then
+		sis_enable_system_msg
+		export SIS_SYSMSG_ENABLED="y" # In debug mode, we also display system messages.
+		write_variables
+		logdebug "System messages displayed in plymouth enabled."
+	fi
 	plymouth --ping && plymouth update --status="mesg:D:$@" > /dev/null 2>&1
 }
 
@@ -162,7 +168,6 @@ sis_enable_debug_msg() {
 # Default: sys=N
 sis_enable_system_msg() {
 	plymouth --ping && plymouth update --status="conf:sys:Y"
-	logdebug "System messages displayed in plymouth enabled."
 }
 
 ################################################################################
@@ -196,7 +201,7 @@ sis_dialog_box() {
 }
 
 sis_plymouth_wait_keypress() {
-	plymouth --ping && plymouth watch-keystroke
+	plymouth --ping && lognotice "Press any key to continue...." && plymouth watch-keystroke
 }
 
 ################################################################################
@@ -323,8 +328,10 @@ SEL_RELABEL="$SEL_RELABEL"			# rd.sis.selinux-relabel
 
 SIS_POST_ACTION="$SIS_POST_ACTION"		# rd.sis.post-action
 
-DEBUG=${DEBUG}					# rd.sis.debug
+DEBUG="${DEBUG}"					# rd.sis.debug
+SIS_SYSMSG_ENABLED="$SIS_SYSMSG_ENABLED"
 export TERM="${TERM}"
+
 EOF
 
 rm -f /tmp/variables.txt~

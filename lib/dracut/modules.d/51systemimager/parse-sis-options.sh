@@ -60,7 +60,7 @@ getargbool 0 rd.sis.ssh-client && SSH="y" && logdebug "Got SSH=${SSH}"
 
 ###############################
 # rd.sis.ssh-download-url="URL"
-test -z "$SSH_DOWNLOAD_URL" && SSH_DOWNLOAD_URL=$(getarg rd.sis.ssh-download-url -d SSH_DOWNLOAD_URL) logdebug "Got SSH_DOWNLOAD_URL=${SSH_DOWNLOAD_URL}"
+test -z "$SSH_DOWNLOAD_URL" && SSH_DOWNLOAD_URL=$(getarg rd.sis.ssh-download-url -d SSH_DOWNLOAD_URL) && logdebug "Got SSH_DOWNLOAD_URL=${SSH_DOWNLOAD_URL}"
 test -n "$SSH_DOWNLOAD_URL" && SSH="y" && loginfo "Forced SSH=y becasue SSH_DOWNLOAD_URL is set" # SSH=y if we have a download url.
 
 ###############################
@@ -85,7 +85,7 @@ test -z "$TMPFS_STAGING" && TMPFS_STAGING=$(getarg rd.sis.tmpfs-staging) && logd
 # priority: rd.sis.term then system-default then "linux"
 OLD_TERM=${TERM}
 TERM=$(getarg rd.sis.term) && logdebug "Got TERM=${TERM}"
-test -z "${TERM}" && TERM=${OLD_TERM} && loginfo "rd.sis.term is empty. Using default value ($OLD_TERM)"
+test -z "${TERM}" && TERM=${OLD_TERM} && loginfo "rd.sis.term is empty or not set. Using default value [$OLD_TERM]."
 test -z "${TERM}" -o "${TERM}" = "dumb" && TERM=linux && loginfo "No suitable TERM value. Using TERM=linux"
 
 #########################

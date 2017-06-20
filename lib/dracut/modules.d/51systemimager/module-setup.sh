@@ -40,7 +40,7 @@ install() {
     install_ssh
     # Install plymouth theme and its requirements
     install_plymouth_theme
-    inst_multiple cut date echo env sort test false true [ expr head install tail tee tr uniq wc tac mktemp
+    inst_multiple cut date echo env sort test false true [ expr head install tail tee tr uniq wc tac mktemp yes
     # inst_multiple setfont loadkeys kbd_mode stty # i18n module
     inst_multiple bc gzip bzip2 rsync parted blockdev partprobe awk ncat tty killall kexec ipcalc findmnt tput stty
     inst_multiple chmod chown cp dd df dmesg echo egrep fdisk fgrep grep halt host hostname ifconfig init insmod kill ln ls lsmod mkdir mknod mkswap modprobe more mv ping poweroff ps reboot shutdown rm rmdir rmmod route sed sh sleep swapoff swapon sync tar touch uname
