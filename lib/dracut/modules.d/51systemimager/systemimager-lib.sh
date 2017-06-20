@@ -535,13 +535,21 @@ shellout() {
     # Display error code if relevant.
     LAST_ERR=$?
 
+    test -s /run/systemimager/report_task.pid && echo > /dev/console # if report task is running, go to next line.
     # Print error message if any.
     test -n "$1" && logerror "$@"
 
-    test "$LAST_ERR" -ne 0 && logwarn "Last command exited with $LAST_ERR"
+    test "$LAST_ERR" -ne 0 && logerror "Last command exited with $LAST_ERR"
 
     logerror "Installation failed!                                             "
     logerror "Can not proceed!  (Scottish accent -- think Groundskeeper Willie)"
+
+    # Kill the text progress bar ASAP to avoid it to reappear below itself
+    # In therory, race condition may exists between the "go to next line" above and now.
+    if [ ! -z "$MONITOR_SERVER" ]; then
+    	logerror "Installation failed!! Stopping report task."
+        stop_report_task -1
+    fi
 
     if test -s /run/systemimager/tmpfs_watcher.pid; then
 	$TMPFS_WATCHER_PID=`cat /run/systemimager/tmpfs_watcher.pid`
@@ -558,11 +566,7 @@ shellout() {
     if [ ! -z "$USELOGGER" ] ;
         then cat /etc/issue | logger
     fi
-    if [ ! -z "$MONITOR_SERVER" ]; then
-    	logerror "Installation failed!! Stopping report task."
-        stop_report_task -1
-    fi
-    # Need to trigger emergency shell
+   # Need to trigger emergency shell
     echo emergency > /tmp/SIS_action
     sis_postimaging emergency # Set the correct link for /tmp/message.txt and call interactive_shell
 }
@@ -617,7 +621,7 @@ get_scripts_directory() {
         mkdir -p ${SCRIPTS_DIR}
         CMD="rsync -a ${IMAGESERVER}::${SCRIPTS}/ ${SCRIPTS_DIR}/"
         logdetail "$CMD"
-        $CMD || shellout "Failed to retrieve ${SCRIPTS_DIR} directory..."
+        $CMD >/dev/null 2>&1 || shellout "Failed to retrieve ${SCRIPTS_DIR} directory..."
     fi
 }
 #
@@ -1356,7 +1360,9 @@ run_post_install_scripts() {
 
             mkdir -p /sysroot/tmp/post-install/ || shellout
 
-            rsync -a ${SCRIPTS_DIR}/post-install/ /sysroot/tmp/post-install/ || shellout
+            CMD="rsync -a ${SCRIPTS_DIR}/post-install/ /sysroot/tmp/post-install/"
+	    logdetail "$CMD"
+	    $CMD > /dev/null 2>&1 || logwarn "Failed to retrieve ${SCRIPTS_DIR}/post-install directory..."
 
 	    POST_SCRIPTS=`unique "$POST_INSTALL_SCRIPTS"`
 	    NUM_SCRIPTS=`echo "$POST_SCRIPTS"|wc -w`
@@ -1741,16 +1747,16 @@ stop_report_task() {
 
     if test -s /run/systemimager/report_task.pid; then
 	[ "$1" -eq 101 ] && ProgressBar 100 # Fake 100% if status = "Finalizing"
-	echo "  " > /dev/console # Make sure we're on a new line (and clean glitches)
+	#echo "  " > /dev/console # Make sure we're on a new line (and clean glitches)
         loginfo "Stopping progress report task."
         REPORT_PID=`cat /run/systemimager/report_task.pid`
+	rm -f /run/systemimager/report_task.pid
         # Making sure it is an integer.
 	test -n "`echo ${REPORT_PID}|sed -r 's/[0-9]*//g'`" && shellout "Cant kill report task: /run/systemimager/report_task.pid is not a pid."
         if [ ! -z "$REPORT_PID" ]; then
             kill -9 $REPORT_PID
 	    wait $REPORT_PID # Make sure process is killed before continuing.
-	    rm -f /run/systemimager/report_task.pid
-	    test -w /dev/console && echo "${BG_BLACK}" > /dev/console
+	    #test -w /dev/console && echo "${BG_BLACK}" > /dev/console
             loginfo "Progress report task stopped"
         fi
     fi
