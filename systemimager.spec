@@ -245,10 +245,14 @@ Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Obsoletes: systemimager-%{_build_arch}boot
-BuildRequires: python, python-devel, gettext, dracut, dracut-network, plymouth-plugin-script
+BuildRequires: python, python-devel, gettext
 BuildRequires: systemconfigurator
+BuildRequires: dracut, dracut-network, kbd
+BuildRequires: plymouth-plugin-script, plymouth-plugin-label, dejavu-serif-fonts, dejavu-sans-fonts
+BuildRequires: parted, psmisc, /usr/bin/ncat, kexec-tools, bind-utils, net-tools 
+BuildRequires: systemimager-%{_build_arch}initrd_template
 BuildRequires: xfsprogs, e2fsprogs, btrfs-progs, ncurses
-%if %is_ps3
+#%if %is_ps3
 BuildRequires: dtc
 %endif
 Requires: systemimager-server >= %{version}
@@ -355,10 +359,12 @@ BuildArch: noarch
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
-Requires: systemimager-server = %{version}, dracut-network
+Requires: systemimager-server = %{version}
+Requires: dracut, dracut-network, kbd
+Requires: plymouth-plugin-script, plymouth-plugin-label, dejavu-serif-fonts, dejavu-sans-fonts
+Requires: parted, psmisc, /usr/bin/ncat, kexec-tools, bind-utils, net-tools 
 Requires: systemimager-%{_build_arch}initrd_template
 Requires: xfsprogs, e2fsprogs, btrfs-progs, ncurses
-Requires: plymouth-plugin-script
 #AutoReqProv: no
 %description -n dracut-%{name}
 This package is a dracut modules that automates the systeimager initramfs creation.
