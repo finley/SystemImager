@@ -46,7 +46,7 @@ install() {
     inst_multiple chmod chown cp dd df dmesg echo egrep fdisk fgrep grep halt host hostname ifconfig init insmod kill ln ls lsmod mkdir mknod mkswap modprobe more mv ping poweroff ps reboot shutdown rm rmdir rmmod route sed sh sleep swapoff swapon sync tar touch uname
     inst_multiple depmod blkid
     # Some helpfull command in case of problem
-    inst_multiple find strace sysctl vi clear reset lsof fuser
+    inst_multiple -o find strace sysctl vi clear reset lsof fuser
 
     # 3/ Install dracut logic
     inst "$moddir/systemimager-lib.sh" "/lib/systemimager-lib.sh"
