@@ -253,7 +253,7 @@ BuildRequires: plymouth-plugin-script, plymouth-plugin-label, dejavu-serif-fonts
 BuildRequires: parted, psmisc, /usr/bin/ncat, kexec-tools, bind-utils, net-tools 
 BuildRequires: systemimager-%{_build_arch}initrd_template
 BuildRequires: xfsprogs, e2fsprogs, btrfs-progs, ncurses
-#%if %is_ps3
+%if %is_ps3
 BuildRequires: dtc
 %endif
 Requires: systemimager-server >= %{version}
