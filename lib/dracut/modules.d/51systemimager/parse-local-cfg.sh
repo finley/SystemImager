@@ -1,8 +1,17 @@
 #!/bin/sh
 # vi: set filetype=sh et ts=4:
-
-################################################################################
-# read settings from local.cfg if required and store config in cmdline.d before network is setup by dracut initqueue logic.
+#
+# "SystemImager"
+#
+#  Copyright (C) 1999-2017 Brian Elliott Finley <brian@thefinleys.com>
+#
+#  $Id$
+#  vi: set filetype=sh et ts=4:
+#
+#  Code written by Olivier LAHAYE.
+#
+# This file reads settings from local.cfg if required and store config in
+# cmdline.d before network is setup by dracut initqueue logic.
 
 type write_variables >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 

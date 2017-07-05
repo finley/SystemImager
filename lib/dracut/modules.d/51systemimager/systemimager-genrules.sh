@@ -1,5 +1,18 @@
 #!/bin/sh
-# Creates the systemimager udev rules to be triggered when interface becomes online.
+#
+# "SystemImager"
+#
+#  Copyright (C) 1999-2017 Brian Elliott Finley <brian@thefinleys.com>
+#
+#  $Id$
+#  vi: set filetype=sh et ts=4:
+#
+#  Code written by Olivier LAHAYE.
+#
+# This file is part of the old systemimager dracut module (version that lack
+# online hook). It creates the systemimager udev rules to be triggered when
+# network interface becomes online.
+
 . /lib/dracut-lib.sh
 
 logdebug "==== systemimager-genrules ===="

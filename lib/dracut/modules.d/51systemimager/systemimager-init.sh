@@ -1,4 +1,16 @@
 #!/bin/sh
+#
+# "SystemImager"
+#
+#  Copyright (C) 1999-2017 Brian Elliott Finley <brian@thefinleys.com>
+#
+#  $Id$
+#  vi: set filetype=sh et ts=4:
+#
+#  Code written by Olivier LAHAYE.
+#
+# This file is responsible to initialize the systemimager dracut environment.
+# (waits for plymouth to initialise and creates some important filesystem paths)
 
 # Make sure we're not called multiple time (even if it's harmless)
 [ -e "$job" ] && rm "$job"

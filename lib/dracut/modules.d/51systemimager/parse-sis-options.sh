@@ -1,5 +1,17 @@
 #!/bin/sh
 # vi: set filetype=sh et ts=4:
+#
+# "SystemImager"
+#
+#  Copyright (C) 1999-2017 Brian Elliott Finley <brian@thefinleys.com>
+#
+#  $Id$
+#  vi: set filetype=sh et ts=4:
+#
+#  Code written by Olivier LAHAYE.
+#
+# This file is the cmdline option parser hook. It stores the parsed options ini
+# /tmp/variables.txt for systemimager dracut module logic use.
 
 type getarg >/dev/null 2>&1 || . /lib/dracut-lib.sh
 type write_variables >/dev/null 2>&1 || . /lib/systemimager-lib.sh

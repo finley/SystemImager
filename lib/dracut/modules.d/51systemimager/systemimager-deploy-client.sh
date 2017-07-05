@@ -1,4 +1,17 @@
 #!/bin/bash
+#
+# "SystemImager" 
+#
+#  Copyright (C) 1999-2017 Brian Elliott Finley <brian@thefinleys.com>
+#
+#  $Id$
+#  vi: set filetype=sh et ts=4:
+#
+#  Code written by Olivier LAHAYE.
+#
+# This file is the main systemimager dracut module logic. It is responsible for
+# deploying the image on the client (it downloads, choses and run the
+# deployment scripts).
 
 type getarg >/dev/null 2>&1 || . /lib/dracut-lib.sh
 type shellout >/dev/null 2>&1 || . /lib/systemimager-lib.sh

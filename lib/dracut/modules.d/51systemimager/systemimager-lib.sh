@@ -1,12 +1,13 @@
 #!/bin/sh
 #
 # "SystemImager" 
-# functions related to dracut-initqueue logic. Also used by imaging script.
 #
-#  Copyright (C) 1999-2011 Brian Elliott Finley <brian@thefinleys.com>
+#  Copyright (C) 1999-2017 Brian Elliott Finley <brian@thefinleys.com>
 #
 #  $Id$
 #  vi: set filetype=sh et ts=4:
+#
+#  Code mainly reworked or written by Olivier LAHAYE.
 #
 #  Others who have contributed to this code:
 #   Charles C. Bennett, Jr. <ccb@acm.org>
@@ -14,7 +15,8 @@
 #   Dann Frazier <dannf@dannf.org>
 #   Curtis Zinzilieta <czinzilieta@valinux.com>
 #
-
+# this file hosts functions related to dracut-initqueue logic.
+# It is also used by imaging script.
 
 ################################################################################
 #

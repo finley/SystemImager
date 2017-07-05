@@ -1,4 +1,16 @@
 #!/bin/bash
+#
+# "SystemImager"
+#
+#  Copyright (C) 1999-2017 Brian Elliott Finley <brian@thefinleys.com>
+#
+#  $Id$
+#  vi: set filetype=sh et ts=4:
+#
+#  Code written by Olivier LAHAYE.
+#
+# This file is part of the systemimager old dracut logic that lacks online hook.
+# This file is called by udev rule when network is setup.
 
 # Network environment (hostname, gateway, resolv.conf) is setup in /sbin/netroot script.
 # As we don't have a netroot, we need to do that ourselves.

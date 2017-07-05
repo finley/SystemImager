@@ -1,5 +1,15 @@
 #!/bin/bash
-# module-setup.sh for systemimager
+#
+# "SystemImager"
+#
+#  Copyright (C) 1999-2017 Brian Elliott Finley <brian@thefinleys.com>
+#
+#  $Id$
+#  vi: set filetype=sh et ts=4:
+#
+#  Code written by Olivier LAHAYE.
+#
+# This file is the main systemimager dracut module setup file.
 
 check() {
     [[ $hostonly ]] && return 1
@@ -7,7 +17,7 @@ check() {
 }
 
 depends() {
-    echo network syslog shutdown i18n
+    echo network shutdown i18n
     case "$(uname -m)" in
         s390*) echo cms ;;
     esac
@@ -43,7 +53,7 @@ install() {
     inst_multiple cut date echo env sort test false true [ expr head install tail tee tr uniq wc tac mktemp yes
     # inst_multiple setfont loadkeys kbd_mode stty # i18n module
     inst_multiple bc gzip bzip2 rsync parted blockdev partprobe awk ncat tty killall kexec ipcalc findmnt tput stty
-    inst_multiple chmod chown cp dd df dmesg echo egrep fdisk fgrep grep halt host hostname ifconfig init insmod kill ln ls lsmod mkdir mknod mkswap modprobe more mv ping poweroff ps reboot shutdown rm rmdir rmmod route sed sh sleep swapoff swapon sync tar touch uname
+    inst_multiple chmod chown cp dd df dmesg echo egrep fdisk fgrep grep halt host hostname ifconfig init insmod kill ln ls lsmod mkdir mknod mkswap modprobe more mv ping poweroff ps reboot shutdown rm rmdir rmmod route sed sh sleep swapoff swapon sync tar touch uname logger
     inst_multiple depmod blkid
     # Some helpfull command in case of problem
     inst_multiple -o find strace sysctl vi clear reset lsof fuser
