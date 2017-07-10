@@ -592,6 +592,16 @@ sub _mk_tmp_dir() {
         return "${dir}${count}";
 }
 
+################################################################################
+# get_uname_r
+#
+# Return the most suitable kernel version
+# 1st, we try uname -r version and check that modules are available. (in docker
+# context, uname -r returns the host kernel version which often has no matching
+# modules in guest environment).
+# Then we look in /boot trying higher release 1st until we find matching modules.
+# In case of failure (no kernel with matching modules), we return 0 as version.
+################################################################################
 sub get_uname_r {
 
         #
@@ -604,8 +614,19 @@ sub get_uname_r {
         #
         my $kernel_version = `uname -r`;
         chomp $kernel_version;
+        return $kernel_version if (-f "/lib/modules/$kernel_version/modules.dep");
 
-        return $kernel_version;
+	# Uname -r kernel version has no matching modules, we need to find another kernel in /boot
+	opendir(DIR, "/boot");
+	my @files = grep(/^vmlinuz/,readdir(DIR)); # read available kernel files in /boot.
+	closedir(DIR);
+	@files = sort { $b <=> $a } @files; # Revers sort (highest version is the 1st)
+	my $k; # Dummy variable.
+	foreach $file (@files) {
+            ($k,$kernel_version) = split(/-/,$file,2);
+            return $kernel_version if (-f "/lib/modules/$kernel_version/modules.dep");
+        }
+	return "0"; # We did not find any suitable kernel. return a dummy version.
 }
 
 # Create --add-drivers dracut command line option to add mandatory modules listed in /etc/systemimager/UYOK.modules_to_include.
@@ -669,7 +690,7 @@ sub get_load_ordered_list_of_running_modules() {
         # Find the right way to get modules info.
         my $uname_r = get_uname_r();
         my $modinfo_filename;
-        if ($uname_r =~ /(^2\.6)|(^3\.[0-9]+)/) {
+        if ($uname_r =~ /(^2\.6)|(^[3-4]\.[0-9]+)/) {
             $modinfo_filename = 'modinfo -F filename';
         } elsif ($uname_r =~ /^2\.4/) {
             $modinfo_filename = 'modinfo -n';
