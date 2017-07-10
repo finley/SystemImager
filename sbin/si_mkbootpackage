@@ -115,7 +115,9 @@ Options:
  --kernel KERNEL
     Do not detect the kernel to use with UYOK, but instead use the
     file specified by the argument KERNEL.
-    If --kernel is not specified, the running kernel will be used.
+    If --kernel is not specified, the running kernel will be used if
+    its modules are available. Otherwise, the hight version in /boot
+    will be used.
 
  --modules-dir DIR
     Get kernel modules to use with UYOK from the DIR repository.

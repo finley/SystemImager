@@ -823,20 +823,9 @@ make install_client_all DESTDIR=%{buildroot} PREFIX=%_prefix DRACUT_BASEDIR=%_dr
 (cd doc/manual_source;%{__make} html)
 
 cp ./initrd.img %{buildroot}/%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/initrd.img
-# copy the matching kernel
-cp /boot/vmlinuz-$(uname -r) %{buildroot}/%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/kernel
-# try to put kernel config aside above binaries.
-if test -r /boot/config-$(uname -r)
-then
-	cp /boot/config-$(uname -r) %{buildroot}/%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/config
-elif test -r /proc/config.gz
-then
-	cp /proc/config.gz %{buildroot}/%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/
-else
-	echo "uname_r=$(uname -r)" > %{buildroot}/%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/config.txt
-fi
-
-
+cp ./kernel     %{buildroot}/%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/kernel
+test -f ./config && cp ./config     %{buildroot}/%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/config
+cp version.txt %{buildroot}/%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/version.txt
 
 %else
 
@@ -1185,6 +1174,7 @@ fi
 %{_datarootdir}/systemimager/boot/%{_build_arch}/standard/config*
 %{_datarootdir}/systemimager/boot/%{_build_arch}/standard/initrd.img
 %{_datarootdir}/systemimager/boot/%{_build_arch}/standard/kernel
+%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/version.txt
 #prefix/share/systemimager/boot/%{_build_arch}/standard/boel_binaries.tar.gz
 
 %files %{_build_arch}initrd_template

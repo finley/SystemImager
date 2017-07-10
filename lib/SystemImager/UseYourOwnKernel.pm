@@ -76,6 +76,7 @@ sub create_uyok_initrd() {
 
         # Detect the kernel release.
         my $uname_r;
+	my $config_r;
         if ($custom_kernel) {
             $uname_r = _get_kernel_release($custom_kernel);
         } elsif ($image) {
@@ -304,10 +305,24 @@ sub _get_copy_of_kernel($) {
 
         print ">>> Using kernel from:          $kernel_file\n" if( $verbose );
 
-        my $new_kernel_file = $boot_dir . "/kernel";
+        my $new_kernel_file = "$boot_dir/kernel";
         copy($kernel_file, $new_kernel_file) or die("Couldn't copy $kernel_file to $new_kernel_file: $!");
         run_cmd("ls -l $new_kernel_file", $verbose, 1) if($verbose);
 
+	# Now try to add the matching config file if possible.
+	my $kernel_release = _get_kernel_release($kernel_file);
+	my $kernel_path = dirname($kernel_file);
+	if(-f "$kernel_path/config-$uname_r") {
+		copy("$kernel_path/config-$uname_r","$boot_dir/config");
+		run_cmd("ls -l $boot_dir/config", $verbose, 1) if($verbose);
+	}
+
+	# Now write the version.txt file
+	my $version_filename = "$boot_dir/version.txt";
+	open my $FH, ">", $version_filename or die("Can't open file: $version_filename: $!\n");
+        print $FH "$uname_r";
+        close $FH;
+	run_cmd("ls -l $boot_dir/version.txt", $verbose, 1) if($verbose);
         return 1;
 }
 
@@ -618,11 +633,11 @@ sub get_uname_r {
 
 	# Uname -r kernel version has no matching modules, we need to find another kernel in /boot
 	opendir(DIR, "/boot");
-	my @files = grep(/^vmlinuz/,readdir(DIR)); # read available kernel files in /boot.
+	my @files = sort { $b cmp $a } grep(/^vmlinuz/,readdir(DIR)); # read available kernel files in /boot.
 	closedir(DIR);
-	@files = sort { $b <=> $a } @files; # Revers sort (highest version is the 1st)
+#	@files = sort { $b <=> $a } @files; # Revers sort (highest version is the 1st)
 	my $k; # Dummy variable.
-	foreach $file (@files) {
+	foreach my $file (@files) {
             ($k,$kernel_version) = split(/-/,$file,2);
             return $kernel_version if (-f "/lib/modules/$kernel_version/modules.dep");
         }
