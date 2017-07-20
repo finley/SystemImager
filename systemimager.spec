@@ -254,7 +254,7 @@ BuildRequires: parted, psmisc, /usr/bin/ncat, kexec-tools, bind-utils, net-tools
 BuildRequires: openssh-server
 BuildRequires: xfsprogs, e2fsprogs, btrfs-progs, ncurses
 BuildRequires: kernel
-if %{?fedora}%{!?fedora:0} >= 18
+%if %{?fedora}%{!?fedora:0} >= 18
 BuildRequires:  systemd
 %else
 %if %{?rhel}%{!?rhel:0} >= 7
@@ -378,7 +378,7 @@ Requires: parted, psmisc, /usr/bin/ncat, kexec-tools, bind-utils, net-tools, ope
 Requires: kernel
 Requires: systemimager-%{_build_arch}initrd_template
 Requires: xfsprogs, e2fsprogs, btrfs-progs, ncurses
-if %{?fedora}%{!?fedora:0} >= 18
+%if %{?fedora}%{!?fedora:0} >= 18
 Requires:  systemd
 %else
 %if %{?rhel}%{!?rhel:0} >= 7
