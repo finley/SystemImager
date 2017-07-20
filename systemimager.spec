@@ -252,8 +252,18 @@ BuildRequires: dracut, dracut-network, kbd
 BuildRequires: plymouth-plugin-script, plymouth-plugin-label, dejavu-serif-fonts, dejavu-sans-fonts
 BuildRequires: parted, psmisc, /usr/bin/ncat, kexec-tools, bind-utils, net-tools 
 BuildRequires: openssh-server
-BuildRequires: xfsprogs, e2fsprogs, btrfs-progs, ncurses, /usr/bin/udevadm
+BuildRequires: xfsprogs, e2fsprogs, btrfs-progs, ncurses
 BuildRequires: kernel
+if %{?fedora}%{!?fedora:0} >= 18
+BuildRequires:  systemd
+%else
+%if %{?rhel}%{!?rhel:0} >= 7
+BuildRequires:  systemd
+%else
+BuildRequires:  udev
+%endif
+%endif
+
 %if %is_ps3
 BuildRequires: dtc
 %endif
@@ -365,9 +375,19 @@ Requires: systemimager-server = %{version}
 Requires: dracut, dracut-network, kbd
 Requires: plymouth-plugin-script, plymouth-plugin-label, dejavu-serif-fonts, dejavu-sans-fonts
 Requires: parted, psmisc, /usr/bin/ncat, kexec-tools, bind-utils, net-tools, openssh-server
-Requires: kernel, /usr/bin/udevadm
+Requires: kernel
 Requires: systemimager-%{_build_arch}initrd_template
 Requires: xfsprogs, e2fsprogs, btrfs-progs, ncurses
+if %{?fedora}%{!?fedora:0} >= 18
+Requires:  systemd
+%else
+%if %{?rhel}%{!?rhel:0} >= 7
+Requires:  systemd
+%else
+Requires:  udev
+%endif
+%endif
+
 #AutoReqProv: no
 %description -n dracut-%{name}
 This package is a dracut modules that automates the systeimager initramfs creation.
