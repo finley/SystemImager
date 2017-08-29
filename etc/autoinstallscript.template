@@ -16,14 +16,11 @@
 # Using the following command:
 ##SI_CREATE_AUTOINSTALL_SCRIPT_CMD##
 
-# Pull in variables left behind by the linuxrc script.
-# This information is passed from the linuxrc script on the autoinstall media 
-# via /tmp/variables.txt.  Apparently the shell we use in BOEL is not 
-# intelligent enough to take a "set -a" parameter.
-#
-. /tmp/variables.txt
-
-# Load functions and other variables
+# Load functions and variables left behind by the dracut logic scripts.
+# autoinstall-lib loads systemimager-lib which loads /tmp/variables.txt.
+# autoinstall-lib hosts funtions needed for imaging
+# systemimager-lib hosts function needed for dracut logic (they are also usefull here)
+# /tmp/variables.txt hosts all relevant variables we need to keep track.
 . /lib/autoinstall-lib.sh
 
 # Uncomment the following line if you want system messages in GUI as well
@@ -78,7 +75,6 @@ if [ -f /proc/mdstat ]; then
     mdadm --manage ${DEV} --stop
   done
 fi
-#
 
 # Light on disk partition icon.
 sis_update_step part
@@ -262,17 +258,18 @@ else
         loginfo "TMPFS_STAGING=${TMPFS_STAGING} -- Staging in ${DIR}"
         mkdir -p ${DIR}
 
-        logaction "rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ ${DIR}/" 
+        loginfo "rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ ${DIR}/" 
         rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --exclude=/proc/* --numeric-ids \
-              ${IMAGESERVER}::${IMAGENAME}/ ${DIR}/ > /dev/console || shellout 
+              ${IMAGESERVER}::${IMAGENAME}/ ${DIR}/ > /dev/null 2>&1 || shellout "Image download to staging dir failed!"
 
         stop_report_task 101 # 101: status=finalizing...
 
         # Move from staging in tmpfs to disk
-        rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${DIR}/ /sysroot/ > /dev/console || shellout
+        logaction "rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${DIR}/ /sysroot/"
+        rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${DIR}/ /sysroot/ > /dev/null 2>&1 || shellout "Move from staging dir to disk failed"
     else
         logaction "rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --exclude=/proc/* --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ /sysroot/" 
-        rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --exclude=/proc/* --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ /sysroot/ > /dev/console || shellout 
+        rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --exclude=/proc/* --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ /sysroot/ > /dev/null 2>&1 || shellout "Failed to deploy image using rsync!"
         stop_report_task 101 # 101: status=finalizing...
     fi
 fi 
