@@ -62,6 +62,9 @@ then
 	BG_BLUE=`tput -T${TERM} setab 4`
 fi
 
+# Read varaibles.txt if present.
+test -f /tmp/variables.txt && logdebug "Reading /tmp/variables.txt" && . /tmp/variables.txt
+
 ################################################################################
 #
 #   Output log Subroutines
@@ -149,9 +152,6 @@ logmessage() {
         then logger -p user.$1 "sis: $@"
     fi
 }
-
-# Read varaibles.txt if present.
-test -f /tmp/variables.txt && logdebug "Reading /tmp/variables.txt" && . /tmp/variables.txt
 
 ################################################################################
 #
