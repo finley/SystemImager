@@ -16,7 +16,7 @@
 
 MOUNTS=`mktemp -u`
 cat /etc/fstab|awk '{print $1}' | sort > $MOUNTS
-for MOUNT_POINT in `cat $MOUNTS tr '\n' ' '`
+for MOUNT_POINT in `cat $MOUNTS | tr '\n' ' '`
 do
 	echo "mountng $MOUNT_POINT"
 	mount $MOUNT_POINT
