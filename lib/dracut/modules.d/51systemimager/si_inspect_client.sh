@@ -1,22 +1,10 @@
 #!/bin/bash
-#
-# "SystemImager" 
-#
-#  Copyright (C) 1999-2017 Brian Elliott Finley <brian@thefinleys.com>
-#
-#  $Id$
-#  vi: set filetype=sh et ts=4:
-#
-#  Code written by Olivier LAHAYE.
-#
-# This file can be used from emergency shell to mount and chroot to freshly
-# installed client.
 
 . /lib/autoinstall-lib.sh
 
 MOUNTS=`mktemp -u`
-cat /etc/fstab|awk '{print $1}' | sort > $MOUNTS
-for MOUNT_POINT in `cat $MOUNTS | tr '\n' ' '`
+cat /etc/fstab|sort -b -k2 |awk '{print $1}' > $MOUNTS
+for MOUNT_POINT in `cat $MOUNTS |tr '\n' ' '`
 do
 	echo "mountng $MOUNT_POINT"
 	mount $MOUNT_POINT
@@ -34,4 +22,5 @@ do
 	echo "umounting $MOUNT_POINT"
 	umount $MOUNT_POINT
 done
+/bin/rm -f $MOUNTS
 
