@@ -90,7 +90,7 @@ unless ($TARBALL_DIR) {
 }
 my $TORRENT_DIR = $config->autoinstall_torrent_dir();
 unless ($TORRENT_DIR) {
-    die "FATAL: parameter AUTOINSTALL_TORRENT_DIR is not defined in ".$config->systemimager_dir/."systemimager.conf\n";
+    die "FATAL: parameter AUTOINSTALL_TORRENT_DIR is not defined in ".$config->systemimager_dir."/systemimager.conf\n";
 }
 my $autoinstall_boot_dir = $config->autoinstall_boot_dir();
 unless ($autoinstall_boot_dir) {
@@ -113,6 +113,7 @@ while(<IN>) {
             or die("ERROR: couldn't create socket!\n");
 
         # use ioctl() interface with SIOCGIFADDR.
+	# => This will get the IP address associated with network insterface $1
         my $ifreq = pack('a32', $1);
         ioctl(SOCKET, 0x8915, $ifreq) or
             die("ERROR: ioctl failed: $!\n");
