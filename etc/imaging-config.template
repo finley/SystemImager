@@ -1,0 +1,52 @@
+#
+
+# Image name
+IMAGENAME=oscarimage_sda
+
+# Monitoring server name or address
+MONITOR_SERVER=10.0.238.84
+
+# Monitoring server port (optional; default to 8181)
+#MONITOR_PORT=8181
+
+# Do we have a monitor console (si_monitortk)?
+MONITOR_CONSOLE=yes
+
+# Should we ignore local cfg?
+SKIP_LOCAL_CFG=y
+
+# Do we want debug messages?
+DEBUG=yes
+
+# script to run (optional; default to IMAGENAME or ...)
+#SCRIPTNAME=
+
+# Download protocol (optional; default to rsync)
+# (rsync|torrent|ssh|flamethrower|...)
+#DL_PROTOCOL=rsync
+
+# Log server port (deprecated? optional; default to 514)
+#LOG_SERVER_PORT=514
+
+# Connect to server using ssh? (optional; values: 0|1|no|yes; defaults to "no")
+# SSH=yes
+
+# Image source ssh url. DL_PROTOCOL is set to ssh if non empty.
+#SSH_DOWNLOAD_URL=
+
+# SSHD (optional; 0|1|yes|no; defaults to "no")
+# If enable, imaging process will wait for server to create an ssh tunnel
+# using si_pushinstall on server.
+# SSHD=yes
+
+# specify a staging dir where image is stored before being extrated/moved in its final filesystem
+# TMPFS_STAGING=/path/to/staging/dir
+
+# whet terminal escape codes do we need? (defaults to "linux")
+# TERM=
+
+# SE Linux force relabel at end of imaging? (optional; 0|1|no|yes; defaults to "y")
+#SEL_RELABEL="y"
+
+# what we should we do after imaging (optional; shell|reboot|poweroff| ...; defaults to "reboot")
+SIS_POST_ACTION=shell
