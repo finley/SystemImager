@@ -30,9 +30,9 @@ function init_transfer() {
     # create the staging dir if needed
     mkdir -p ${STAGING_DIR} || shellout "Failed to create ${STAGING_DIR}"
     # get image size to download
-    IMAGE_SIZE=`get_image_size`
-    write_variables # keep track of $STAGING_DIR and $IMAGE_SIZE variable accross dracut scripts logic
-    loginfo "Image size: $IMAGE_SIZE"
+    IMAGESIZE=`get_image_size`
+    write_variables # keep track of $STAGING_DIR and $IMAGESIZE variable accross dracut scripts logic
+    loginfo "Image size: $IMAGESIZE"
     # check it fits in destination (staging dir or system)
 }
 

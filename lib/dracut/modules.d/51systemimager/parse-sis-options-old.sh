@@ -20,8 +20,20 @@ type write_variables >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 #
 # Save cmdline SIS relevant parameters
 
+#########################
+# rd.sis.debug (defaults:N)
+test -z "$DEBUG" && DEBUG=`getarg rd.sis.debug`
+[ $? -eq 0 ] && [ -z "${DEBUG}" ] && DEBUG="y" # true if parameter present with no value.
+DEBUG=`echo $DEBUG | head -c 1| tr 'YN10' 'ynyn'` # Cleann up to end with one letter y/n
+test -z "$DEBUG" && DEBUG="n" # Defaults to no.
+
 logdebug "==== parse-sis-options-old ===="
 loginfo "Reading SIS relevants parameters from cmdline"
+
+#####################################
+# imaging config file (retreived using rync) Will overwrite cmdline variables.
+# rd.sis.config="imagename.conf"
+test -z "$SIS_CONFIG" && SIS_CONFIG=`getarg rd.sis.config`
 
 #####################################
 # rd.sis.image-name="imagename|imagename.sh|imagename.master"
@@ -32,6 +44,10 @@ test -z "$IMAGENAME" && IMAGENAME=`getarg rd.sis.image-name`
 # rd.sis.script-name="scriptname|scriptname.sh|scriptname.master"
 test -z "$SCRIPTNAME" && SCRIPTNAME=`getarg SCRIPTNAME`
 test -z "$SCRIPTNAME" && SCRIPTNAME=`getarg rd.sis.script-name`
+
+#####################################
+# rd.sis.dl-protocol="torrent|rsync|ssh|..."
+test -z "$DL_PROTOCOL" && DL_PROTOCOL=`getarg rd.sis.dl-protocol`
 
 #####################################
 # rd.sis.monitor-server=<hostname|ip>
@@ -81,6 +97,7 @@ test -z "$SSH" && SSH="n" # Defaults to no.
 test -z "$SSH_DOWNLOAD_URL" && SSH_DOWNLOAD_URL=`getarg SSH_DOWNLOAD_URL`
 test -z "$SSH_DOWNLOAD_URL" && SSH_DOWNLOAD_URL=`getarg rd.sis.ssh-download-url`
 test -n "$SSH_DOWNLOAD_URL" && SSH="y" # SSH=y if we have a download url.
+test -n "$SSH_DOWNLOAD_URL" && test -z "${DL_PROTOCOL}" && DL_PROTOCOL="ssh"
 
 ###############################
 # rd.sis.ssh-server=(bolean 0|1|yes|no|not present) => defaults to no
@@ -98,6 +115,7 @@ test -z "$SSH_USER" && SSH_USER=`getarg rd.sis.ssh-user`
 ###############################################
 # rd.sis.flamethrower-directory-portbase="path"
 test -z "$FLAMETHROWER_DIRECTORY_PORTBASE" && FLAMETHROWER_DIRECTORY_PORTBASE=`getarg rd.sis.flamethrower-directory-portbase`
+test -n "$FLAMETHROWER_DIRECTORY_PORTBASE" && test -z "${DL_PROTOCOL}" && DL_PROTOCOL="flamethrower"
 
 #########################
 # rd.sis.tmpfs-staging=""
@@ -122,12 +140,9 @@ test -z "$SEL_RELABEL" && SEL_RELABEL="y" # default to true!
 SIS_POST_ACTION=`getarg rd.sis.post-action`
 test -z "${SIS_POST_ACTION}" && SIS_POST_ACTION="reboot"
 
-#########################
-# rd.sis.debug (defaults:N)
-test -z "$DEBUG" && DEBUG=`getarg rd.sis.debug`
-[ $? -eq 0 ] && [ -z "${DEBUG}" ] && DEBUG="y" # true if parameter present with no value.
-DEBUG=`echo $DEBUG | head -c 1| tr 'YN10' 'ynyn'` # Cleann up to end with one letter y/n
-test -z "$DEBUG" && DEBUG="n" # Defaults to no.
+# Set a default value for protocol if it's still empty at this time.
+test -z "${DL_PROTOCOL}" && DL_PROTOCOL="rsync" && loginfo "DL_PROTOCOL is empty. Default to 'rsync'"
+# OL: Nothing about bittorrent?!?!
 
 # Register what we read.
 write_variables

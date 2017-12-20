@@ -35,7 +35,7 @@ install() {
     install_plymouth_theme
     inst_multiple cut date echo env sort test false true [ expr head install tail tee tr uniq wc tac mktemp yes
     # inst_multiple setfont loadkeys kbd_mode stty # i18n module
-    inst_multiple bc gzip bzip2 rsync parted blockdev partprobe awk ncat tty killall kexec ipcalc findmnt tput stty
+    inst_multiple bc gzip bzip2 rsync parted blockdev lsblk partprobe awk ncat tty killall kexec ipcalc findmnt tput stty
     inst_multiple chmod chown cp dd df dmesg echo egrep fdisk fgrep grep halt host hostname ifconfig init insmod kill ln ls lsmod mkdir mknod mkswap modprobe more mv ping poweroff ps reboot shutdown rm rmdir rmmod route sed sh sleep swapoff swapon sync tar touch uname logger
     inst_multiple depmod blkid
     # Some helpfull command in case of problem
@@ -45,7 +45,12 @@ install() {
     inst "$moddir/systemimager-lib.sh" "/lib/systemimager-lib.sh"
     inst "$moddir/autoinstall-lib.sh" "/lib/autoinstall-lib.sh"
     inst "$moddir/si_inspect_client.sh" "/sbin/si_inspect_client"
+    for protocol_plugin in $moddir/systemimager-xmit-*.sh
+    do
+        inst "$protocol_plugin" "/lib/${protocol_plugin##*/}"
+    done
     inst_script "$moddir/systemimager-load-dhcpopts.sh" "/sbin/systemimager-load-dhcpopts"
+    inst_script "$moddir/systemimager-load-config.sh" "/sbin/systemimager-load-config"
     inst_script "$moddir/systemimager-netstart-old.sh" "/sbin/systemimager-netstart"
     inst_script "$moddir/systemimager-start.sh" "/sbin/systemimager-start"
     inst_script "$moddir/systemimager-pingtest.sh" "/sbin/systemimager-pingtest"

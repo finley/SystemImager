@@ -29,12 +29,22 @@ logdebug "==== parse-sis-options ===="
 loginfo "Reading SIS relevants parameters from cmdline and store them in /tmp/variables.txt"
 
 #####################################
+# imaging config file (retreived using rync) Will overwrite cmdline variables.
+# rd.sis.config="imagename.conf"
+test -z "$SIS_CONFIG" && SIS_CONFIG=$(getarg rd.sis.config) && logdebug "Got SIS_CONFIG=${SIS_CONFIG}"
+
+#####################################
+# Name of image.
 # rd.sis.image-name="imagename|imagename.sh|imagename.master"
 test -z "$IMAGENAME" && IMAGENAME=$(getarg rd.sis.image-name -d IMAGENAME) && logdebug "Got IMAGENAME=${IMAGENAME}"
 
 #####################################
 # rd.sis.script-name="scriptname|scriptname.sh|scriptname.master"
 test -z "$SCRIPTNAME" && SCRIPTNAME=$(getarg rd.sis.script-name -d SCRIPTNAME) && logdebug "Got SCRIPTNAME=${SCRIPTNAME}"
+
+#####################################
+# rd.sis.dl-protocol="torrent|rsync|ssh|..."
+test -z "$DL_PROTOCOL" && DL_PROTOCOL=$(getarg rd.sis.dl-protocol) && logdebug "Got DL_PROTOCOL=${DL_PROTOCOL}"
 
 #####################################
 # rd.sis.monitor-server=<hostname|ip>
@@ -74,6 +84,7 @@ getargbool 0 rd.sis.ssh-client && SSH="y" && logdebug "Got SSH=${SSH}"
 # rd.sis.ssh-download-url="URL"
 test -z "$SSH_DOWNLOAD_URL" && SSH_DOWNLOAD_URL=$(getarg rd.sis.ssh-download-url -d SSH_DOWNLOAD_URL) && logdebug "Got SSH_DOWNLOAD_URL=${SSH_DOWNLOAD_URL}"
 test -n "$SSH_DOWNLOAD_URL" && SSH="y" && loginfo "Forced SSH=y becasue SSH_DOWNLOAD_URL is set" # SSH=y if we have a download url.
+test -n "${SSH_DOWNLOAD_URL}" && test -z "${DL_PROTOCOL}" && DL_PROTOCOL="ssh" && loginfo "DL_PROTOCOL is empty. Default to 'ssh' beacause SSH_DOWNLOAD_URL is set."
 
 ###############################
 # rd.sis.ssh-server=(bolean 0|1|yes|no|not present) => defaults to no
@@ -87,6 +98,7 @@ test -z "$SSH_USER" && SSH_USER=$(getarg rd.sis.ssh-user -d SSH_USER) && logdebu
 ###############################################
 # rd.sis.flamethrower-directory-portbase="path"
 test -z "$FLAMETHROWER_DIRECTORY_PORTBASE" && FLAMETHROWER_DIRECTORY_PORTBASE=$(getarg rd.sis.flamethrower-directory-portbase) && logdebug "Got FLAMETHROWER_DIRECTORY_PORTBASE=${FLAMETHROWER_DIRECTORY_PORTBASE}"
+test -n "$FLAMETHROWER_DIRECTORY_PORTBASE" && test -z "${DL_PROTOCOL}" && DL_PROTOCOL="flamethrower" && loginfo "DL_PROTOCOL is empty. Default to 'flamethrower' beacause FLAMETHROWER_DIRECTORY_PORTBSE is set to 'yes'"
 
 #########################
 # rd.sis.tmpfs-staging=""
@@ -109,6 +121,10 @@ getargbool 1 rd.sis.selinux-relabel && SEL_RELABEL="y" && logdebug "Got SEL_RELA
 # rd.sis.post-action=(shell, reboot, shutdown) => default to reboot
 SIS_POST_ACTION=$(getarg rd.sis.post-action) && logdebug "Got SIS_POST_ACTION=${SIS_POST_ACTION}"
 test -z "${SIS_POST_ACTION}" && SIS_POST_ACTION="reboot" && loginfo "SIS_POST_ACTION is empty. Default to 'reboot'"
+
+# Set a default value for protocol if it's still empty at this time.
+test -z "${DL_PROTOCOL}" && DL_PROTOCOL="rsync" && loginfo "DL_PROTOCOL is empty. Default to 'rsync'"
+# OL: Nothing about bittorrent?!?!
 
 # Register what we read.
 write_variables

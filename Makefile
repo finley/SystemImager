@@ -46,6 +46,7 @@
 #   o tarball files for BT:     /var/lib/systemimager/tarballs/
 #   o torrent files:            /var/lib/systemimager/torrents/
 #   o override directories:     /var/lib/systemimager/overrides/
+#   o images config files       /var/lib/systemimager/configs/
 #
 #   o web gui pages:            /usr/share/systemimager/web-gui/
 #
@@ -190,6 +191,7 @@ WARNING_FILES = $(IMAGESRC)/README $(IMAGESRC)/CUIDADO $(IMAGESRC)/ACHTUNG
 AUTOINSTALL_SCRIPT_DIR = $(DESTDIR)/var/lib/systemimager/scripts
 AUTOINSTALL_TORRENT_DIR = $(DESTDIR)/var/lib/systemimager/torrents
 AUTOINSTALL_TARBALL_DIR = $(DESTDIR)/var/lib/systemimager/tarballs
+AUTOINSTALL_CONFIG_DIR = $(DESTDIR)/var/lib/systemimager/configs
 OVERRIDES_DIR = $(DESTDIR)/var/lib/systemimager/overrides
 OVERRIDES_README = $(TOPDIR)/var/lib/systemimager/overrides/README
 FLAMETHROWER_STATE_DIR = $(DESTDIR)/var/state/systemimager/flamethrower
@@ -273,6 +275,7 @@ install_server:	install_server_man 	\
 	$(SI_INSTALL) -d -m 755 $(LOCK_DIR)
 	$(SI_INSTALL) -d -m 755 $(BOOT_BIN_DEST)
 	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_SCRIPT_DIR)
+	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_CONFIG_DIR)
 
 	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_TARBALL_DIR)
 	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_TORRENT_DIR)
@@ -351,7 +354,7 @@ install_common:	install_common_man install_common_libs
 install_dracut:
 	mkdir -p $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/
 ifneq (,$(wildcard /usr$(DRACUT_BASEDIR)/modules.d/99base/install))
-	# Old dracut ('check' and 'install' in charge of module install)
+	########## Old dracut ('check' and 'install' in charge of module install)
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/check $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/parse-sis-options-old.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-genrules.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
@@ -360,28 +363,31 @@ ifneq (,$(wildcard /usr$(DRACUT_BASEDIR)/modules.d/99base/install))
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/install $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	sed -i -e "s|@@SIS_INITRD_TEMPLATE@@|$(BOOT_BIN_PATH)/initrd_template/|g" $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/install
 else
-       	# New dracut ('module-setup.sh' in charge of module install)
+       	########## New dracut ('module-setup.sh' in charge of module install)
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/parse-sis-options.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/module-setup.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	sed -i -e "s|@@SIS_INITRD_TEMPLATE@@|$(BOOT_BIN_PATH)/initrd_template/|g" $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/module-setup.sh
 endif
-	# Files common to all dracut versions
+	########## Files common to all dracut versions
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/autoinstall-lib.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/init-cmdline.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/parse-i18n.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/parse-local-cfg.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/si_inspect_client.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-check-kernel.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
-	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/init-cmdline.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-deploy-client.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-init.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-lib.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
-	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/autoinstall-lib.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-load-dhcpopts.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-load-config.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-monitor-server.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-pingtest.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-timeout.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-wait-imaging.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
-	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-load-dhcpopts.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-xmit-rsync.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-xmit-template.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-xmit-torrent.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	mkdir -p $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
-
-
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/Background.png $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/COPYRIGHTS $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/hide_box.png $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme

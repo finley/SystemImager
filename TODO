@@ -3,28 +3,32 @@
 #
 
 ============= TODO for the dracut change before release is possible ===========
-- rewrite si_mkbootpackage so it uses dracut.
-  Right now in order to build an initramfs package you need to issue the following command:
-  sudo dracut --force --add systemimager -no-hostonly --no-hostonly-cmdline --no-hostonly-i18n /path_to_image/image_name.img $(uname -r)
-
-  Example: to generate the systemimager-x86_64boot-standard-4.5.0-1.el7.noarch.rpm package content, you just have to issue the 2 commands:
-  sudo dracut --force \
-              --add systemimager \
-              --no-hostonly --no-hostonly-cmdline --no-hostonly-i18n \
-              /usr/share/systemimager/boot/x86_64/standard/initrd.img $(uname -r)
-  sudo cp /boot/vmlinuz-$(uname -r) /usr/share/systemimager/boot/x86_64/standard/kernel
-
-  Note: if you're using qemu to thest, you need to add the 2 following options to dracut command:
-  --add qemu --add qemu-net
+#- rewrite si_mkbootpackage so it uses dracut.
+#  Right now in order to build an initramfs package you need to issue the following command:
+#  sudo dracut --force --add systemimager -no-hostonly --no-hostonly-cmdline --no-hostonly-i18n /path_to_image/image_name.img $(uname -r)
+#
+#  Example: to generate the systemimager-x86_64boot-standard-4.5.0-1.el7.noarch.rpm package content, you just have to issue the 2 commands:
+#  sudo dracut --force \
+#              --add systemimager \
+#              --no-hostonly --no-hostonly-cmdline --no-hostonly-i18n \
+#              /usr/share/systemimager/boot/x86_64/standard/initrd.img $(uname -r)
+#  sudo cp /boot/vmlinuz-$(uname -r) /usr/share/systemimager/boot/x86_64/standard/kernel
+#
+#  Note: if you're using qemu to test, you need to add the 2 following options to dracut command:
+#  --add qemu --add qemu-net
+=> DONE. Fully working
 
 - review all sbin/si_* commands.
   => For now, only si_mkautoinstallscript is working.
   => make sure that the $IMAGE_ROOT/etc/systemimager/etc/systemimager/autoinstallscript.conf doesn't contain any reference to system filesystems like (/proc, /dev, /dev/shm or so). Only filesystems that are not handled by systemd or udev like real filesystems, nfs mountpoints, ...
 
-- si_monitortk should work and handle the new status "shell". At the end of the imaging, aside reboot halt, shutdown, you can add shell so the system drops an emergency shell. Usefulle for debugging.
-  => Need to test the retrieving of logs from the nodes being imaged (can't test for now on a NAT VM)
+#- si_monitortk should work and handle the new status "shell". At the end of the imaging, aside reboot halt, shutdown, you can add shell so the system drops an emergency shell. Usefulle for debugging.
+#  => Need to test the retrieving of logs from the nodes being imaged (can't test for now on a NAT VM)
+=> DONE: Fully working
 
-- need to cleanup the loginfo, logwarn, logmsg functions in /lib/systemimager-lib.sh
+#- need to cleanup the loginfo, logwarn, logmsg functions in /lib/systemimager-lib.sh
+=> DONE: Fully working
+
 - need to comment /lib/autoinstall-lib.sh
 - need to review and update all headers with authors and copyrights
 - need to remove/cleanup useless stuffs in the source_tarball (kernel.rul and such).
@@ -32,11 +36,11 @@
 - need to find a way to provide systemimager-x86_64boot-standard-4.5.0-1.el7.noarch.rpm without installing dracut-systemimager (does a dracut option allows to specify an alternative dracut directory))
 
 ============= TODO before use of dracut. Needs reviewing ======================
-- Handle this error:
-
-  ERROR: unsupported kernel 3.13.0-32-generic!
-  root@redmine:~/.ssh# 
-
+#- Handle this error:
+#
+#  ERROR: unsupported kernel 3.13.0-32-generic!
+#  root@redmine:~/.ssh# 
+=> OBSOLETE.
 
 - create sbin/si_lsclient
 
@@ -46,12 +50,12 @@
 - find all systemconfigurator bits and update to postscript or other
 
 
-- When trying to complete the imaging, the SI master script needs to stop klogd
-  so that /sysroot/proc and /sysroot/ will umount cleanly (right now they get the device
-  busy msg)
-
-  - add entry to end of master script
-
+#- When trying to complete the imaging, the SI master script needs to stop klogd
+#  so that /sysroot/proc and /sysroot/ will umount cleanly (right now they get the device
+#  busy msg)
+#
+#  - add entry to end of master script
+=> OBSOLETE
 
 - When it's time to update the bittorrent client/server:
     http://www.rahul.net/dholmes/ctorrent/ 

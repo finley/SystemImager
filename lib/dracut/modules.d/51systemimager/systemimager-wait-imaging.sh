@@ -26,24 +26,29 @@ then
 	case "$ACTION" in
 		"shell")
 			loginfo "Installation successfull. Dropping to interactive shell as requested."
+			send_monitor_msg "status=106:speed=0" # 106=shell
 			sis_postimaging shell
 			;;
 		"emergency")
 			logwarn "Installation Failed!"
+			send_monitor_msg "status=-1:speed=0" # -1: error
 			sis_postimaging emergency
 			;;
 		"reboot"|"kexec")
 			logwarn "Installation successfull. Rebooting as requested"
+			send_monitor_msg "status=104:speed=0" # 104: rebooting
 			sleep 10
 			sis_postimaging reboot
 			;;
 		"shutdown"|"poweroff")
 			warn "Installation successfull. shutting down as requested"
+			send_monitor_msg "status=105:speed=0" # 105: shutdown/poweroff
 			sleep 10
 			sis_postimaging poweroff
 			;;
 		*)
 			logwarn "Installation successfull. Invalid post action. Rebooting"
+			send_monitor_msg "status=104:speed=0" # 104: rebooting
 			sleep 10
 			sis_postimaging reboot
 			;;

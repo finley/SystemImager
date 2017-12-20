@@ -27,9 +27,9 @@ function init_transfer() {
     loginfo "Initializing image transfer. Using RSYNC protocol"
     [ -z "${STAGING_DIR}" ] && STAGING_DIR=/tmp/tmpfs_staging
     mkdir -p ${STAGING_DIR} || shellout "Failed to create ${STAGING_DIR}"
-    IMAGE_SIZE=`get_image_size`
-    write_variables # keep track of $STAGING_DIR and $IMAGE_SIZE variable accross dracut scripts logic
-    loginfo "Image size: $IMAGE_SIZE"
+    IMAGESIZE=`get_image_size`
+    write_variables # keep track of $STAGING_DIR and $IMAGESIZE variable accross dracut scripts logic
+    loginfo "Image size: $IMAGESIZE"
 }
   
 ################################################################################
@@ -52,6 +52,10 @@ function get_image_size() {
 ################################################################################
 #
 function download_image() {
+    # Start si_monitor progress and status report.
+    loginfo "Starting monitor progress report task..."
+    start_report_task
+
     if [ $NO_LISTING ]; then
         loginfo "Quietly installing image... "
     fi
@@ -66,7 +70,7 @@ function download_image() {
 
     # Check that destination has enough space to save the image.
     DEST_SPACE=`get_free_space ${IMAGE_DEST}`
-    [ $IMAGE_SIZE -lt $DEST_SPACE ] || logwarn "Not enought space on ${IMAGE_DEST} ($IMAGE_SIZE > $DEST_SPACE)"
+    [ $IMAGESIZE -lt $DEST_SPACE ] || logwarn "Not enought space on ${IMAGE_DEST} ($IMAGESIZE > $DEST_SPACE)"
 
     # Effectively download the image into ${IMAGE_DEST}
     loginfo "rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --exclude=/proc/* --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ ${IMAGE_DEST}/"
@@ -86,14 +90,15 @@ function download_image() {
 ################################################################################
 #
 function extract_image() {
+    send_monitor_msg "status=107:speed=0" # 107=extracting
     if [ "${TMPFS_STAGING}" = "yes" ]; then
         # Need to move the image into /sysroot from staging dir.
 	loginfo "Moving image from ${STAGING_DIR} to /sysroot"
 
 	# Check that there is enought space on destination.
-	IMAGE_SIZE=`du -sk ${STAGING_DIR}`
+	IMAGESIZE=`du -sk ${STAGING_DIR}`
 	DEST_SPACE=`get_free_space /sysroot`
-	[ $IMAGE_SIZE -gt $DEST_SPACE ] || logwarn "Not enought space on /sysroot ($IMAGE_SIZE > $DEST_SPACE)"
+	[ $IMAGESIZE -gt $DEST_SPACE ] || logwarn "Not enought space on /sysroot ($IMAGESIZE > $DEST_SPACE)"
 
 	# Continue anyway (we cannot know truly if we will fail. df / will ommit /usr if filesystems are different)
 	logaction "rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${STAGING_DIR}/ /sysroot/"

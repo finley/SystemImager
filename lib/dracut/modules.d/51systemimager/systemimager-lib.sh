@@ -40,7 +40,7 @@ FLAVOR="SYSTEMIMAGER_FLAVOR_STRING"
 type getarg >/dev/null 2>&1 || . /lib/dracut-lib.sh
 
 # On old distros like CentOS-6, the shell interpreter is "dash" (not "bash")
-# it lacks the "disown command" we need to avoid ukly message when background
+# it lacks the "disown command" we need to avoid ugly message when background
 # shell processes get killed. In dash, we just ignore this lack.
 type disown > /dev/null 2>&1 || alias disown="echo > /dev/null"
 
@@ -61,9 +61,6 @@ then
 	BG_RED=`tput -T${TERM} setab 1`
 	BG_BLUE=`tput -T${TERM} setab 4`
 fi
-
-# Read varaibles.txt if present.
-test -f /tmp/variables.txt && logdebug "Reading /tmp/variables.txt" && . /tmp/variables.txt
 
 ################################################################################
 #
@@ -152,6 +149,12 @@ logmessage() {
         then logger -p user.$1 "sis: $@"
     fi
 }
+
+# Read varaibles.txt if present.
+test -f /tmp/variables.txt && logdebug "Reading /tmp/variables.txt" && . /tmp/variables.txt
+
+# If protocol is set, we load its dedicated API.
+test -n "${DL_PROTOCOL}" && test -r /lib/systemimager-xmit-${DL_PROTOCOL}.sh && . /lib/systemimager-xmit-${DL_PROTOCOL}.sh
 
 ################################################################################
 #
@@ -296,6 +299,9 @@ GATEWAYDEV="$GATEWAYDEV"
 IMAGESERVER="$IMAGESERVER"			# rd.sis.image-server
 IMAGENAME="$IMAGENAME"
 SCRIPTNAME="$SCRIPTNAME"
+SIS_CONFIG="$SIS_CONFIG"			# rd.sis.config
+
+DL_PROTOCOL="$DL_PROTOCOL"			# rd.sis.dl-protocol
 
 LOG_SERVER="$LOG_SERVER"
 LOG_SERVER_PORT="$LOG_SERVER_PORT"		# rd.sis.log-server-port
@@ -303,6 +309,9 @@ USELOGGER="$USELOGGER"
 
 IP_ASSIGNMENT_METHOD="$IP_ASSIGNMENT_METHOD"
 TMPFS_STAGING="$TMPFS_STAGING"			# rd.sis.tmpfs-staging
+STAGING_DIR="$STAGING_DIR"		
+IMAGESIZE="$IMAGESIZE"
+DISKS=( ${DISKS[@]} )
 
 ARCH="$ARCH"
 SSH="$SSH"
@@ -337,6 +346,21 @@ export TERM="${TERM}"
 EOF
 
 rm -f /tmp/variables.txt~
+}
+#
+################################################################################
+#
+#   Description:
+#   return the free space in bytes in directory (filesystems) given as argument
+#
+#   Usage: get_free_space /sysroot
+#   BUG: doesn't take into account sub filesystems.
+#        example: /sysrout + /sysroot/boot => only returns top filesystem free space.
+#                 if /sysroot/boot is too small, problem will not raise untile parts of the image is written to /boot
+#        => When using this function, error should only issue a warning, not a shellout().
+#
+get_free_space() {
+	df $1 2>/dev/null | sed '1d' | sed 's/[[:space:]]\+/ /g' | cut -d' ' -f4 | sed -ne '$p'
 }
 #
 ################################################################################
@@ -582,31 +606,32 @@ shellout() {
 #
 ################################################################################
 #
-# Usage: get_torrents_directory
+# Description: remove duplicated elements from a list, preserving the order.
 #
-get_torrents_directory() {
-    if [ ! "x$BITTORRENT" = "xy" ]; then
-        return
-    fi
-
-    loginfo "Retrieving ${TORRENTS_DIR} directory..."
-
-    if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
-        #
-        # We're using Multicast, so we should already have a directory 
-        # full of scripts.  Break out here, so that we don't try to pull
-        # the scripts dir again (that would be redundant).
-        #
-        MODULE_NAME="autoinstall_torrents"
-        DIR="${SCRIPTS_DIR}"
-        RETRY=7
-        flamethrower_client
-    else
-        mkdir -p ${TORRENTS_DIR}
-        CMD="rsync -a ${IMAGESERVER}::${TORRENTS}/ ${TORRENTS_DIR}/"
-        logdetail "$CMD"
-        $CMD || shellout "Failed to retreive ${TORRENTS_DIR} directory..."
-    fi
+unique() {
+    ret=
+    for i in $*; do
+        flag=0
+        for j in $ret; do
+            [ "$i" = "$j" ] && flag=1 && break
+        done
+        [ $flag -eq 0 ] && ret="$ret $i"
+    done
+    echo $ret
+    unset i j flag ret
+}
+#
+################################################################################
+#
+# Description: reverse a list
+#
+reverse() {
+    ret=
+    for i in $*; do
+        ret="$i $ret"
+    done
+    echo $ret
+    unset i
 }
 #
 ################################################################################
@@ -786,125 +811,7 @@ flamethrower_client() {
     unset SUCCESS
     unset FLAMETHROWER_TARPIPE
 }
-#
-################################################################################
-#
-#   Autodetect a staging directory for the bittorrent tarball
-#
-#   Usage: bittorrent_autodetect_staging_dir torrent
-#
-bittorrent_autodetect_staging_dir() {
-    torrent=$1
-    if [ ! -f $torrent ]; then
-        logmsg "warning: torrent file $torrent does not exist!"
-        return
-    fi
 
-    # List of preferred staging directory (/tmp = ramdisk staging)
-    preferred_dirs="/tmp /sysroot/tmp `df 2>/dev/null | sed '1d' | sed 's/[[:space:]]\+/ /g' | cut -d' ' -f6`"
-
-    # Use a breathing room of 100MB (this should be enough for a lot of cases)
-    breathing_room=102400
-
-    # Evaluate torrent size
-    torrent_size=$((`/bin/torrentinfo-console $torrent | sed -ne 's/^file size\.*: \([0-9]\+\).*$/\1/p'` / 1024 + $breathing_room))
-
-    # Find a directory to host the image tarball
-    for dir in $preferred_dirs; do
-        [ ! -d $dir ] && continue;
-        dir_space=`df $dir 2>/dev/null | sed '1d' | sed 's/[[:space:]]\+/ /g' | cut -d' ' -f4 | sed -ne '$p'`
-        [ -z $dir_space ] && continue
-        [ $torrent_size -lt $dir_space ] && echo $dir && return
-    done
-}
-#
-################################################################################
-#
-#   Download a file using bittorrent.
-#
-#   Usage: bittorrent_get_file torrent destination
-#
-bittorrent_get_file() {
-        torrent=$1
-        destination=$2
-
-        # Bittorrent log file
-        bittorrent_log=/tmp/bittorrent-`basename ${torrent}`.log
-        # Time to poll bittorrent events
-        bittorrent_polling_time=${BITTORRENT_POLLING_TIME:-5}
-        # Wait after the download is finished to seed the other peers
-        bittorrent_seed_wait=${BITTORRENT_SEED_WAIT:-n}
-        # Minimum upload rate threshold (in KB/s), if lesser stop seeding
-        bittorrent_upload_min=${BITTORRENT_UPLOAD_MIN:-50}
-
-        # Start downloading.
-        /bin/bittorrent-console --no_upnp --no_start_trackerless_client --max_upload_rate 0 --display_interval 1 --rerequest_interval 1 --bind ${IPADDR} --save_in ${destination} ${torrent} > $bittorrent_log &
-        pid=$!
-        if [ ! -d /proc/$pid ]; then
-            logmsg "error: couldn't run bittorrent-console!"
-            shellout
-        fi
-        unset pid
-
-        # Wait for BitTorrent log to appear.
-        while [ ! -e $bittorrent_log ]; do
-            sleep 1
-        done
-
-        # Checking download...
-        while :; do
-            while :; do
-                status=`grep 'percent done:' $bittorrent_log | sed -ne '$p' | sed 's/percent done: *//' | sed -ne '/^[0-9]*\.[0-9]*$/p'`
-                [ ! -z "$status" ] && break
-            done
-            logmsg "percent done: $status %"
-            if [ "$status" = "100.0" ]; then
-                # Sleep until upload rate reaches the minimum threshold
-                while [ "$bittorrent_seed_wait" = "y" ]; do
-                    sleep $bittorrent_polling_time
-                    while :; do
-                        upload_rate=`grep 'upload rate:' $bittorrent_log | sed -ne '$p' | sed 's/upload rate: *\([0-9]*\)\.[0-9]* .*$/\1/' | sed -ne '/^\([0-9]*\)$/p'`
-                        [ ! -z $upload_rate ] && break
-                    done
-                    logmsg "upload rate: $upload_rate KB/s"
-                    [ $upload_rate -lt $bittorrent_upload_min ] && break
-                done
-                logmsg "Download completed"
-                unset bittorrent_log upload_rate counter
-                break
-            fi
-            sleep $bittorrent_polling_time
-        done
-
-        unset bittorrent_polling_time
-        unset bittorrent_seed_wait
-        unset bittorrent_upload_min
-        unset torrent
-        unset destination
-}
-#
-################################################################################
-#
-#   Stop bittorrent client.
-#
-#   Usage: bittorrent_stop
-#
-bittorrent_stop() {
-    # Try to kill all the BitTorrent processes
-    btclient="bittorrent-console"
-
-    logmsg "killing BitTorrent client..."
-    killall -15 $btclient >/dev/null 2>&1
-
-    # Forced kill after 5 secs.
-    sleep 5
-    killall -9 $btclient >/dev/null 2>&1
-
-    # Remove bittorrent logs.
-    rm -rf /tmp/bittorrent*.log
-    unset btclient
-}
-#
 ################################################################################
 #
 #   Get other binaries, kernel module tree, and miscellaneous other stuff that
@@ -1237,49 +1144,8 @@ choose_autoinstall_script() {
 	shellout
     fi
     loginfo "Using autoinstall script: ${SCRIPTNAME}"
+    write_variables # Save selected SCRIPTNAME
 }
-#
-################################################################################
-#
-run_autoinstall_script() {
-
-    loginfo "Running autoinstall script $SCRIPTNAME"
-
-    # Run the autoinstall script.
-    chmod 755 $SCRIPTNAME || shellout "Can't chmod 755 $SCRIPTNAME"
-    $SCRIPTNAME || shellout "Failed to run $SCRIPTNAME"
-}
-#
-################################################################################
-#
-# Description: remove duplicated elements from a list, preserving the order.
-#
-unique() {
-    ret=
-    for i in $*; do
-        flag=0
-        for j in $ret; do
-            [ "$i" = "$j" ] && flag=1 && break
-        done
-        [ $flag -eq 0 ] && ret="$ret $i"
-    done
-    echo $ret
-    unset i j flag ret
-}
-#
-################################################################################
-#
-# Description: reverse a list
-#
-reverse() {
-    ret=
-    for i in $*; do
-        ret="$i $ret"
-    done
-    echo $ret
-    unset i
-}
-#
 ################################################################################
 #
 run_pre_install_scripts() {
@@ -1319,6 +1185,7 @@ run_pre_install_scripts() {
             do
                 sis_update_step prei ${SCRIPT_INDEX} ${NUM_SCRIPTS}
                 loginfo "Running script ${SCRIPT_INDEX}/${NUM_SCRIPTS}: $PRE_INSTALL_SCRIPT"
+		send_monitor_msg "status=108:speed=${SCRIPT_INDEX}" # 108=preinstall speed=script_num
                 chmod +x $PRE_INSTALL_SCRIPT || shellout
                 ./$PRE_INSTALL_SCRIPT || shellout
 		SCRIPT_INDEX=$((${SCRIPT_INDEX} + 1))
@@ -1332,6 +1199,20 @@ run_pre_install_scripts() {
         fi
 
     fi
+}
+#
+################################################################################
+#
+run_autoinstall_script() {
+
+    # 1st, determine which script to run.
+    choose_autoinstall_script
+
+    loginfo "Running autoinstall script $SCRIPTNAME"
+
+    # Run the autoinstall script.
+    chmod 755 $SCRIPTNAME || shellout "Can't chmod 755 $SCRIPTNAME"
+    $SCRIPTNAME || shellout "Failed to run $SCRIPTNAME"
 }
 #
 ################################################################################
@@ -1382,6 +1263,7 @@ run_post_install_scripts() {
                 if [ -e "$POST_INSTALL_SCRIPT" ]; then
                     sis_update_step post ${SCRIPT_INDEX} ${NUM_SCRIPTS}
                     loginfo "Running script ${SCRIPT_INDEX}/${NUM_SCRIPTS}: $POST_INSTALL_SCRIPT"
+		    send_monitor_msg "status=109:speed=${SCRIPT_INDEX}" # 109=postinstall speed=script_num
                     chmod +x /sysroot/tmp/post-install/$POST_INSTALL_SCRIPT || shellout
                     chroot /sysroot/ /tmp/post-install/$POST_INSTALL_SCRIPT || shellout
 		    SCRIPT_INDEX=$(( ${SCRIPT_INDEX} + 1))
@@ -1584,7 +1466,7 @@ EOF
 
 send_monitor_msg() {
     if [ -z $MONITOR_SERVER ]; then
-	warn "Trying to send monitor msg without MONITOR_SERVER empty variable. Ignoring..."
+	logdebug "Trying to send monitor msg without MONITOR_SERVER empty variable. Ignoring..."
         return
     fi
     if [ -z $MONITOR_PORT ]; then
@@ -1670,26 +1552,8 @@ start_report_task() {
     # Reporting interval (in sec).
     REPORT_INTERVAL=10
 
-    # Evaluate image size.
-    loginfo "Evaluating image size..."
-    if [ ! "x$BITTORRENT" = "xy" ]; then
-        IMAGESIZE=`LC_ALL=C rsync -av --numeric-ids "${IMAGESERVER}::${IMAGENAME}" | grep "total size" | sed -e "s/total size is \([0-9,]*\).*/\1/"`
-    else
-        if [ -f "${TORRENTS_DIR}/image-${IMAGENAME}.tar.torrent" ]; then
-            torrent_file="${TORRENTS_DIR}/image-${IMAGENAME}.tar.torrent"
-        elif [ -f "${TORRENTS_DIR}/image-${IMAGENAME}.tar.gz.torrent" ]; then
-            torrent_file="${TORRENTS_DIR}/image-${IMAGENAME}.tar.gz.torrent"
-        else
-            shellout "Cannot find a valid torrent file for image ${IMAGENAME}"
-        fi
-        IMAGESIZE=`/usr/bin/torrentinfo-console $torrent_file | sed -ne "s/file size\.*: \([0-9]*\) .*$/\1/p"`
-    fi
-    # Clean up IMAGEZISE from non numeric chars (comma, dots, ...)
-    IMAGESIZE=$(echo $IMAGESIZE|sed 's/[^0-9]*//g') # IMAGESIZE=${IMAGESIZE//[!0-9]/}} # Not supported by dash
-    IMAGESIZE=`expr $IMAGESIZE / 1024`
-
     # Check that IMAGESIZE is not empty (rsync or torrentinfo-console could have failed)
-    test -z "${IMAGESIZE}" && shellout "Unable to compute image size"
+    test -z "${IMAGESIZE}" && shellout "BUG? IMAGESIZE not initialized. init_transfer() not ran?"
 
     loginfo "  --> Image size = `expr $IMAGESIZE / 1024`MiB"
 
@@ -1776,6 +1640,7 @@ stop_report_task() {
 #   Beep incessantly
 #
 beep_incessantly() {
+    send_monitor_msg "status=103:speed=0" # 103: beeping
     modprobe pcspkr # Make sure pcspkr module is loaded
     local SECONDS=1
     local MINUTES

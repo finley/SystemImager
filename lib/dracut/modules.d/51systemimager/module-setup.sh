@@ -52,7 +52,7 @@ install() {
     install_plymouth_theme
     inst_multiple cut date echo env sort test false true [ expr head install tail tee tr uniq wc tac mktemp yes
     # inst_multiple setfont loadkeys kbd_mode stty # i18n module
-    inst_multiple bc gzip bzip2 rsync parted blockdev partprobe awk ncat tty killall kexec ipcalc findmnt tput stty
+    inst_multiple bc gzip bzip2 rsync parted blockdev lsblk partprobe awk ncat tty killall kexec ipcalc findmnt tput stty
     inst_multiple chmod chown cp dd df dmesg echo egrep fdisk fgrep grep halt host hostname ifconfig init insmod kill ln ls lsmod mkdir mknod mkswap modprobe more mv ping poweroff ps reboot shutdown rm rmdir rmmod route sed sh sleep swapoff swapon sync tar touch uname logger
     inst_multiple depmod blkid
     # Some helpfull command in case of problem
@@ -62,6 +62,10 @@ install() {
     inst "$moddir/systemimager-lib.sh" "/lib/systemimager-lib.sh"
     inst "$moddir/autoinstall-lib.sh" "/lib/autoinstall-lib.sh"
     inst "$moddir/si_inspect_client.sh" "/sbin/si_inspect_client"
+    for protocol_plugin in $moddir/systemimager-xmit-*.sh
+    do
+        inst "$protocol_plugin" "/lib/${protocol_plugin##*/}"
+    done
     inst_hook cmdline 01 "$moddir/init-cmdline.sh" # copy /etc/persistent-cmdline.d to /etc/cmdline.d/
     inst_hook cmdline 20 "${moddir}/parse-i18n.sh" # rd.vconsole.* parameters are not parsed if dracut uses systemd (upstream BUG)
     inst_hook cmdline 30 "$moddir/systemimager-check-kernel.sh" # Check that kernel & initrd match.
@@ -73,6 +77,7 @@ install() {
     inst_hook initqueue/online 00 "$moddir/systemimager-load-dhcpopts.sh" # read DHCP SIS special options
     #inst_hook initqueue/online 10 "$moddir/systemimager-ifcfg.sh" # creates /tmp/variables.txt
     inst_hook initqueue/online 20 "$moddir/systemimager-pingtest.sh" # do a ping_test()
+    inst_hook initqueue/online 30 "$moddir/systemimager-load-config.sh" # read $SIS_CONFIG from server
     inst_hook initqueue/online 50 "$moddir/systemimager-monitor-server.sh" # Start the log monitor server
     inst_hook initqueue/online 90 "$moddir/systemimager-deploy-client.sh" # Imaging occures here
 #    inst_hook pre/pivot 50 "$moddir/systemimager-save-inst-logs.sh"

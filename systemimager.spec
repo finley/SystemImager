@@ -1115,6 +1115,7 @@ fi
 %dir /var/log/systemimager
 %dir %{_sharedstatedir}/systemimager
 %dir %{_sharedstatedir}/systemimager/images
+%dir %{_sharedstatedir}/systemimager/configs
 %dir %{_sharedstatedir}/systemimager/scripts
 %dir %{_sharedstatedir}/systemimager/scripts/pre-install
 %dir %{_sharedstatedir}/systemimager/scripts/post-install

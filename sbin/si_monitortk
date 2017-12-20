@@ -988,15 +988,16 @@ sub display_nodes
     ### END of profiling stuff ###
 
     # Statistic counters.
-    my $num_rebooted  = 0;
-    my $num_shutdown  = 0;
-    my $num_rebooting = 0;
-    my $num_beeping   = 0;
-    my $num_ok        = 0;
-    my $num_fail      = 0;
-    my $num_inst      = 0;
-    my $num_unkn      = 0;
-    my $num_shell     = 0;
+    my $num_rebooted   = 0;
+    my $num_shutdown   = 0;
+    my $num_rebooting  = 0;
+    my $num_beeping    = 0;
+    my $num_ok         = 0;
+    my $num_fail       = 0;
+    my $num_inst       = 0;
+    my $num_unkn       = 0;
+    my $num_shell      = 0;
+    my $num_extracting = 0;
 
     # Drop previous selection if nothing is selected.
     if (defined($selected_mac_addr)) {
@@ -1114,6 +1115,24 @@ sub display_nodes
             $client->{$mac}->{'status'} = 'shell';
             $style = $post_install_style;
             $status_icon = $server_ok_icon;
+            $icon_style = $image_style;
+        } elsif ($status == 107) {
+            $num_extracting++;
+            $client->{$mac}->{'status'} = 'extracting';
+	    $style = $inst_style;
+            $status_icon = $server_inst_icon;
+            $icon_style = $image_style;
+        } elsif ($status == 108) {
+            $num_extracting++;
+            $client->{$mac}->{'status'} = 'preinstall';
+	    $style = $inst_style;
+            $status_icon = $server_inst_icon;
+            $icon_style = $image_style;
+        } elsif ($status == 109) {
+            $num_extracting++;
+            $client->{$mac}->{'status'} = 'postinstall';
+	    $style = $inst_style;
+            $status_icon = $server_inst_icon;
             $icon_style = $image_style;
         } else {
             $num_unkn++;
