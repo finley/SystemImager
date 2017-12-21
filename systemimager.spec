@@ -1126,6 +1126,7 @@ fi
 %config %{_sysconfdir}/systemimager/pxelinux.cfg/*
 %config %{_sysconfdir}/systemimager/kboot.cfg/*
 %config %{_sysconfdir}/systemimager/autoinstallscript.template
+%config %{_sysconfdir}/systemimager/autoinstallconf.template
 %config(noreplace) %{_sysconfdir}/systemimager/rsync_stubs/*
 %config(noreplace) %{_sysconfdir}/systemimager/systemimager.conf
 %config(noreplace) %{_sysconfdir}/systemimager/cluster.xml

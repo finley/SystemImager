@@ -479,6 +479,7 @@ install_configs:
 	$(SI_INSTALL) -m 644 --backup etc/bittorrent.conf $(ETC)/systemimager/
 	$(SI_INSTALL) -m 644 --backup etc/cluster.xml $(ETC)/systemimager/
 	$(SI_INSTALL) -m 644 etc/autoinstallscript.template $(ETC)/systemimager/
+	$(SI_INSTALL) -m 644 etc/autoinstallconf.template $(ETC)/systemimager/
 	$(SI_INSTALL) -m 644 etc/getimage.exclude $(ETC)/systemimager/
 
 	mkdir -p $(RSYNC_STUB_DIR)

@@ -98,7 +98,7 @@ test -z "$SSH_USER" && SSH_USER=$(getarg rd.sis.ssh-user -d SSH_USER) && logdebu
 ###############################################
 # rd.sis.flamethrower-directory-portbase="path"
 test -z "$FLAMETHROWER_DIRECTORY_PORTBASE" && FLAMETHROWER_DIRECTORY_PORTBASE=$(getarg rd.sis.flamethrower-directory-portbase) && logdebug "Got FLAMETHROWER_DIRECTORY_PORTBASE=${FLAMETHROWER_DIRECTORY_PORTBASE}"
-test -n "$FLAMETHROWER_DIRECTORY_PORTBASE" && test -z "${DL_PROTOCOL}" && DL_PROTOCOL="flamethrower" && loginfo "DL_PROTOCOL is empty. Default to 'flamethrower' beacause FLAMETHROWER_DIRECTORY_PORTBSE is set to 'yes'"
+test -n "$FLAMETHROWER_DIRECTORY_PORTBASE" && test -z "${DL_PROTOCOL}" && DL_PROTOCOL="flamethrower" && loginfo "DL_PROTOCOL is empty. Default to 'flamethrower' beacause FLAMETHROWER_DIRECTORY_PORTBSE is set."
 
 #########################
 # rd.sis.tmpfs-staging=""

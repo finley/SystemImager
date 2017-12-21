@@ -1,0 +1,89 @@
+#
+#   "SystemImager"
+#
+#   $Id$
+#    vi: set filetype=sh et ts=4:
+#
+#   Copyright (C) 1999-2017 Brian Elliott Finley
+#                      2017 Olivier Lahaye
+#
+# Autoinstall configuration file.
+# This file will host imaging parameters. Same as cmdline parameters except
+# it's in a configuration file. Sometimes its easier to modify this file
+# than edit PXE entries.
+# Parameters stored in this file have priority over cmdline parameters.
+# Usage:
+# 1: set rd.sis.conf=<filename> in PXE cmdline parameters
+# 2: set values to parameters you need and save file to /var/lib/systemimager/configs/<filename>
+# 3: make sure service systemimager-rsyncd service is started
+
+# name of image (mandatory either in this file or in cmdline parameters)
+# cmdline: rd.sis.image-name
+#IMAGENAME=
+
+# Monitoring server name or address
+# cmdline: rd.sis.monitor-server
+#MONITOR_SERVER=
+
+# Monitoring server port (optional; defaults to 8181)
+# cmdline: rd.sis.monitor-port
+#MONITOR_PORT=
+
+# Do we have a monitor console (si_monitortk)? (optional; defaults to n)
+# cmdline: rd.sis.monitor-console
+#MONITOR_CONSOLE=
+
+# Should we ignore local cfg? (optional; defaults to n)
+# cmdline: rd.sis.skip-local-cfg
+#SKIP_LOCAL_CFG=
+
+# Do we want debug messages? (optional; defaults to n)
+# cmdline: rd.sis.debug
+#DEBUG=yes
+
+# script to run (optional; default to IMAGENAME or ...)
+# cmdline: rd.sis.script-name
+#SCRIPTNAME=
+
+# Download protocol (optional; default to rsync)
+# (rsync|torrent|ssh|flamethrower|...)
+# cmdline: rd.sis.dl-protocol
+#DL_PROTOCOL=
+
+# Log server port (deprecated? optional; default to 514; min=100; max=32000)
+# cmdline: rd.sis.log-server-port
+#LOG_SERVER_PORT=
+
+# Connect to server using ssh? (optional; values: 0|1|no|yes; defaults to "no")
+# cmdline: rd.sis.ssh-client
+#SSH=
+
+# Image source ssh url. DL_PROTOCOL is set to ssh if non empty.
+# cmdline: rd.sis.ssh-download-url
+#SSH_DOWNLOAD_URL=
+
+# ssh server waiting for tunnel (optional; 0|1|yes|no; defaults to "no")
+# If enabled, imaging process will wait for server to create an ssh tunnel
+# using si_pushinstall on server.
+# cmdline: rd.sis.ssh-server
+# SSHD=
+
+# FLAMETHROWER_DIRECTORY_PORTBASE (optional);
+# cmdline: rd.sis.flamethrower-directory-portbase
+#FLAMETHROWER_DIRECTORY_PORTBASE=
+
+# specify a staging dir where image is stored before being extrated/moved in its final filesystem.
+# cmdline: rd.sis.tmpfs-staging
+#TMPFS_STAGING=/path/to/staging/dir
+
+# what terminal escape codes do we need? (defaults to "linux")
+# cmdline: rd.sis.term
+#TERM=
+
+# SE Linux force relabel at end of imaging? (optional; 0|1|no|yes; defaults to "y")
+# cmdline: rd.sis.selinux-relabel
+#SEL_RELABEL=
+
+# what we should we do after imaging (optional; shell|reboot|poweroff| ...; defaults to "reboot")
+# cmdline: rd.sis.post-action
+#SIS_POST_ACTION=
