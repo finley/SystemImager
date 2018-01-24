@@ -37,12 +37,14 @@ $(BITTORRENT_DIR).install:	$(BITTORRENT_DIR).build
 		$(BITTORRENT_DIR)/bittorrent-console.py
 	#
 	# Explicit copy shared libraries needed by bittorrent binaries.
+	# OL: BUG! initrd template shouls *NOT* contain any thing copied from system. If system is upgraded, then template is used, the old versions of files will be used. Keep it for now, but need to remove this sooner or later.
 	( \
-		for l in $$(ldd $(INITRD_BUILD_DIR)/usr/lib/bittorrent/* 2>/dev/null | sed -ne 's/.*=> \(.*\) (.*)/\1/p' | sort -u); do cp -pf $$l $(INITRD_BUILD_DIR)/usr/lib; done \
+		for l in $$(ldd $(INITRD_BUILD_DIR)/usr/lib/bittorrent/* 2>/dev/null | sed -ne 's/.*=> \(.*\) (.*)/\1/p' | sort -u); do cp -pf $$l $(INITRD_BUILD_DIR)$$1; done \
 	)
 	#
+	# OL: below code is obsolete (dynamic linker IS present in initramfs)
 	# Make sure the dynamic linker is present.
-	(for l in $$(readelf --program-headers $(INITRD_BUILD_DIR)/usr/lib/bittorrent/* | sed -ne 's/^.*\[Requesting program interpreter: \(.*\)\]$$/\1/p' | sort -u); do cp -pf $$l $(INITRD_BUILD_DIR)/usr/lib; done )
+	#	(for l in $$(readelf --program-headers $(INITRD_BUILD_DIR)/usr/lib/bittorrent/* | sed -ne 's/^.*\[Requesting program interpreter: \(.*\)\]$$/\1/p' | sort -u); do cp -pf $$l $(INITRD_BUILD_DIR)/usr/lib; done )
 	#
 	# Create the bittorrent links.
 	rm -f $(INITRD_BUILD_DIR)/bin/torrentinfo-console
