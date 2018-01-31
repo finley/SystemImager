@@ -160,7 +160,7 @@ detect_storage_devices() {
     loginfo "Detecting disks..."
     DISKS=( `lsblk -d -r -o NAME,TYPE|grep -i disk|sed -e 's/^/\/dev\//g' -e 's/!/\//g'|cut -d' ' -f1` )
 
-    if test "${#DISKS[@]}" -eq 0
+    if test ${#DISKS[@]} -eq 0
     then
         beep
         beep
@@ -173,7 +173,7 @@ detect_storage_devices() {
         logerror "Reverting to disk configuration specified by image master script."
         logerror ""
     else
-        loginfo "Found ${#DISKS[@]} disk(s): ${DISKS[@]}"
+        loginfo "Found ${#DISKS[*]} disk(s): ${DISKS[*]}"
 	write_variables
         beep
     fi
@@ -318,4 +318,5 @@ _reread_partition_table() {
     # Avoid disk driver being buzy later
     sleep 0.5s
 }
+
 
