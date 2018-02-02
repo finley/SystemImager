@@ -36,7 +36,7 @@
 </raid>
 
 <lvm>
-        <lvm_group name="systemvg" max_log_vols="0" max_phys_vols="0" phys_exent_size="4096K">
+        <lvm_group name="systemvg" max_log_vols="0" max_phys_vols="0" phys_extent_size="4096K">
                 <lv name="optlv" size="2097152K" />
                 <lv name="rootlv" size="2097152K" />
                 <lv name="tmplv" size="2097152K" />
