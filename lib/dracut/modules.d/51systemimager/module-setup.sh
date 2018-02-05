@@ -39,8 +39,8 @@ install() {
 
     # 2/ Install binaries we need.
     # Filesystems we want to be able to handle
-    inst_multiple -o mkfs.xfs
-    inst_multiple -o mkfs.ext4 mkfs.ext3 mkfs.ext2 mke2fs tune2fs resize2fs
+    inst_multiple -o mkfs.xfs xfs_admin xfs_repair
+    inst_multiple -o mkfs.ext4 mkfs.ext3 mkfs.ext2 mke2fs tune2fs resize2fs tune2fs
     inst_multiple -o mkfs.fat mkfs.msdos mkfs.vfat mkfs.ntfs mkdosfs dosfslabel fatlabel
     inst_multiple -o mkfs.btrfs btrfs btrfstune
     inst_multiple -o mkfs.reiserfs mkreiserfs reiserfstune resize_reiserfs tunefs.reiserfs
@@ -53,7 +53,7 @@ install() {
     inst_multiple cut date echo env sort test false true [ expr head install tail tee tr uniq wc tac mktemp yes xmlstarlet
     # inst_multiple setfont loadkeys kbd_mode stty # i18n module
     inst_multiple bc gzip bzip2 rsync mkfs parted blockdev lsblk partprobe awk ncat tty killall kexec ipcalc findmnt tput stty
-    inst_multiple lvm lvm_scan pvcreate pvdisplay pvremove pvscan lvcreate lvdisplay lvremove lvscan lvmconf lvmdump vgcreate vgdisplay vgremove vgscan fsadm
+    inst_multiple lvm pvcreate pvdisplay pvremove pvscan lvcreate lvdisplay lvremove lvscan lvmconf lvmdump lvchange vgcreate vgdisplay vgremove vgscan fsadm
     inst_multiple chmod chown cp dd df dmesg echo egrep fdisk fgrep grep halt host hostname ifconfig init insmod kill ln ls lsmod mkdir mknod mkswap modprobe more mv ping poweroff ps reboot shutdown rm rmdir rmmod route sed sh sleep swapoff swapon sync tar touch uname logger
     inst_multiple depmod blkid
     # Some helpfull command in case of problem
