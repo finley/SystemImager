@@ -43,6 +43,10 @@ test -z "$IMAGENAME" && IMAGENAME=$(getarg rd.sis.image-name -d IMAGENAME) && lo
 test -z "$SCRIPTNAME" && SCRIPTNAME=$(getarg rd.sis.script-name -d SCRIPTNAME) && logdebug "Got SCRIPTNAME=${SCRIPTNAME}"
 
 #####################################
+# rd.sis.disk-layout="disklayout|disklayout.xml"
+test -z "$DISK_LAYOUT" && DISK_LAYOUT=$(getarg rd.sis.disk-layout -d DISK_LAYOUT) && logdebug "Got DISK_LAYOUT=${DISK_LAYOUT}"
+
+#####################################
 # rd.sis.dl-protocol="torrent|rsync|ssh|..."
 test -z "$DL_PROTOCOL" && DL_PROTOCOL=$(getarg rd.sis.dl-protocol) && logdebug "Got DL_PROTOCOL=${DL_PROTOCOL}"
 
