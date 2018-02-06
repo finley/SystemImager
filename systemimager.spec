@@ -372,12 +372,12 @@ Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Requires: systemimager-server = %{version}
-Requires: dracut, dracut-network, kbd
+Requires: dracut, dracut-network
 Requires: plymouth-plugin-script, plymouth-plugin-label, dejavu-serif-fonts, dejavu-sans-fonts
 Requires: psmisc, /usr/bin/ncat, kexec-tools, bind-utils, net-tools, openssh-server
 Requires: xmlstarlet, parted, mdadm, util-linux, lvm2
 Requires: xfsprogs, e2fsprogs, btrfs-progs, ntfsprogs, dosfstools, jfsutils, reiserfs-utils
-Requires: ncurses
+Requires: ncurses, /usr/bin/awk, kbd
 Requires: kernel
 Requires: systemimager-%{_build_arch}initrd_template
 %if %{?fedora}%{!?fedora:0} >= 18
