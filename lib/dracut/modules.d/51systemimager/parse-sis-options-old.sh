@@ -46,9 +46,9 @@ test -z "$SCRIPTNAME" && SCRIPTNAME=`getarg SCRIPTNAME`
 test -z "$SCRIPTNAME" && SCRIPTNAME=`getarg rd.sis.script-name`
 
 #####################################
-# rd.sis.disk-layout="disklayout|disklayout.xml"
-test -z "$DISK_LAYOUT" && DISK_LAYOUT=`getarg DISK_LAYOUT`
-test -z "$DISK_LAYOUT" && DISK_LAYOUT=`getarg rd.sis.disk-layout`
+# rd.sis.disks-layout="diskslayout|diskslayout.xml"
+test -z "$DISKS_LAYOUT" && DISKS_LAYOUT=`getarg DISKS_LAYOUT`
+test -z "$DISKS_LAYOUT" && DISKS_LAYOUT=`getarg rd.sis.disks-layout`
 
 #####################################
 # rd.sis.dl-protocol="torrent|rsync|ssh|..."

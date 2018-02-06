@@ -302,6 +302,7 @@ IMAGESERVER="$IMAGESERVER"			# rd.sis.image-server
 IMAGENAME="$IMAGENAME"
 SCRIPTNAME="$SCRIPTNAME"
 SIS_CONFIG="$SIS_CONFIG"			# rd.sis.config
+DISKS_LAYOUT="$DISKS_LAYOUT"			# rd.sis.disks-layout
 
 DL_PROTOCOL="$DL_PROTOCOL"			# rd.sis.dl-protocol
 

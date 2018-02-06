@@ -16,6 +16,7 @@
 type getarg >/dev/null 2>&1 || . /lib/dracut-lib.sh
 type shellout >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 type save_logs_to_sysroot >/dev/null 2>&1 || . /lib/autoinstall-lib.sh
+type sis_prepare_disks >/dev/null 2>&1 || . /lib/disksmgt-lib.sh
 
 logdebug "==== systemimager-deploy-client ===="
 
@@ -60,11 +61,9 @@ if [ "x$SSH" = "xy" ]; then
     start_ssh
 fi
 
-# Download install scripts
+# Download install scripts and disk layouts.
+# TODO: move this function in protocol plugins.
 get_scripts_directory
-
-# OL still relevant???
-# show_loaded_modules
 
 # HOSTNAME may already be set via cmdline, dhcp or local.cfg
 if [ -z "$HOSTNAME" ]; then
@@ -100,7 +99,10 @@ if [ -z $SCRIPTNAME ] && [ -z $IMAGENAME ] && [ -z $HOSTNAME ]; then
     shellout
 fi
 
-# Run the autoinstall script (disk initialisation and image installation)
+# Prepare disks and mount them as described in disk layour file (autoinstallscript.conf xml file)
+sis_prepare_disks
+
+# Run the autoinstall script (image installation)
 run_autoinstall_script
 
 # Now install bootloader (before post_install scripts to give a chance to scripts to modify this)

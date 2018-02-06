@@ -137,23 +137,6 @@ fail_if_run_from_working_machine() {
 
 ################################################################################
 #
-# stop_software_raid_devices
-stop_software_raid_devices() {
-    if [ -f /proc/mdstat ]; then
-        RAID_DEVICES=` cat /proc/mdstat | grep ^md | sed 's/ .*$//g' `
-
-        # Turn dem pesky raid devices off!
-        for RAID_DEVICE in ${RAID_DEVICES}
-        do
-            DEV="/dev/${RAID_DEVICE}"
-            loginfo "mdadm --manage ${DEV} --stop"
-            mdadm --manage ${DEV} --stop
-        done
-    fi
-}
-
-################################################################################
-#
 # detect_storage_devices => returns a list of attached mass storage devices (disks / flash / ... excluding cdroms)
 #
 detect_storage_devices() {
