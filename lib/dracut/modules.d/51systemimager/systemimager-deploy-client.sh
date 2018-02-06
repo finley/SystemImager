@@ -102,6 +102,9 @@ fi
 # Prepare disks and mount them as described in disk layour file (autoinstallscript.conf xml file)
 sis_prepare_disks
 
+# Mount os filesystems to /sysroot (will shellout in case of failure)
+mount_os_filesystems_to_sysroot
+
 # Run the autoinstall script (image installation)
 run_autoinstall_script
 

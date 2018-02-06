@@ -485,33 +485,39 @@ EOF
 #		  If it is a virtual filesystem, a warning is issued.
 #		  Now virtual filesystems are not listed in fstab anymore.
 #		- Mount physical filesystems so they can receive the image
+#		- Save mounted filesystems to initramfs:/etc/fstab
 ################################################################################
 _do_fstab() {
 	# Process fstab to create moutpoints
 	# Now process fstab to create mount points and effectively mout filesystems.
-	# We sort it by mount point (we need to create /var before
-	# /var/tmp even if user wants /var/tmp before /var in /etc/fstab for example)
+	# We sort it by mount point (we need to create /var before /var/tmp
+	# even if user wants /var/tmp before /var in /etc/fstab for example)
+	# We also populate initramfs:/etc/fstab with mounted filesystems in sorted
+        # order	so it's easier later to umount them.
 	loginfo "Processing fstab: Creating mount points and mounting physical filesystems."
 	unset IFS
 	cat /tmp/fstab.temp |sed -e 's/#.*//' -e '/^$/d' | sort -k2,2 |\
 		while read M_DEV M_MP M_FS M_OPTS
 		do
 			# If mountpoint is a PATH, AND filesystem is not virtual, create the path and mount filesystem to sysroot.
-			if test "${M_MP:0:1}" = "/" -a -n "`echo "ext2|ext3|ext4|xfs|jfs|reiserfs|btrfs|ntfs|msdos|vfat|fat" |grep \"${M_FS/ /}\"`"
+			if test "${M_MP:0:1}" = "/" -a -n "`echo "ext2|ext3|ext4|xfs|jfs|reiserfs|btrfs|ntfs|msdos|vfat|fat" |grep \"${M_FS}\"`"
 			then
-				loginfo "Creating mountpoint ${M_MP/ /}"
-				logaction "mkdir -p /sysroot${M_MP/ /}"
-				mkdir -p /sysroot${M_MP/ /} || shellout "Failed to create ${M_MP/ /}"
+				loginfo "Creating mountpoint ${M_MP}"
+				logaction "mkdir -p /sysroot${M_MP}"
+				mkdir -p /sysroot${M_MP} || shellout "Failed to create ${M_MP}"
 				loginfo "Mounting ${M_DEV} to /sysroot${M_MP}"
-				mount -t ${M_FS/ /} ${M_DEV/ /} /sysroot${M_MP/ /} || shellout "Failed to mount ${M_DEV/ /} to /sysroot${M_MP/ /}"
+				mount -t ${M_FS} -o ${M_OPTS} ${M_DEV} /sysroot${M_MP} || shellout "Failed to mount ${M_DEV} to /sysroot${M_MP}"
+				# Add filesystem to initramfs:/etc/fstab (needed when we'll need to unmount them)
+				# Set 0 for dump and 0 for pass (not needed in initramfs).
+				echo -e "${M_DEV}\t/sysroot${M_MP}\t${M_FS}\t${M_OPTS}\t0 0" >> /etc/fstab
 			elif [ "${M_MP:0:4}" != "swap" ] # filesystem is not a disk filesystem.
 			then
 				logwarn "Virtual filesystems are now handled by systemd."
-				logwarn "${M_FS/ /} filesystem shouldn't be put in fstab!"
+				logwarn "${M_FS} filesystem shouldn't be put in fstab!"
 				logwarn "Creating mount point, but it may be hidden by systemd mount!"
 				logwarn "For example /dev/pts may be hidden by /dev virtual filesystem."
-				logaction "mkdir -p /sysroot${M_MP/ /}"
-				mkdir -p /sysroot${M_MP/ /} || shellout "Failed to create ${M_MP/ /}"
+				logaction "mkdir -p /sysroot${M_MP}"
+				mkdir -p /sysroot${M_MP} || shellout "Failed to create ${M_MP}"
 			fi
 		done
 }
