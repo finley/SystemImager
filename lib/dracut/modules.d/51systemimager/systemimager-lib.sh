@@ -1146,6 +1146,11 @@ choose_autoinstall_script() {
         logwarn "See also: si_mkautoinstallscript(8)."
 	shellout
     fi
+
+    # check that script version is sufficient.
+    SCRIPT_VERSION=`grep -E '#\s*script_version:[0-9]+\s*$' ${SCRIPTNAME}|cut -d: -f2`
+    [ -z "${SCRIPT_VERSION}" ] && SCRIPT_VERSION=1
+    [ ${SCRIPT_VERSION} -lt 2 ] && shellout "Script ${SCRIPTNAME} is too old and incompatible with this version of systemimager. Please uptate is with si_mkautoinstallscript"
     loginfo "Using autoinstall script: ${SCRIPTNAME}"
     write_variables # Save selected SCRIPTNAME
 }
