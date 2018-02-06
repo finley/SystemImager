@@ -114,7 +114,8 @@ function extract_image() {
 ################################################################################
 #
 function install_overrides() {
-    loginfo "rsync -av --numeric-ids $IMAGESERVER::overrides/$OVERRIDE/ /sysroot/"
+    loginfo "Installing overrides"
+    logaction "rsync -av --numeric-ids $IMAGESERVER::overrides/$OVERRIDE/ /sysroot/"
     rsync -av --numeric-ids $IMAGESERVER::overrides/$OVERRIDE/ /sysroot/ > /dev/console || logwarn "Override directory $OVERRIDE doesn't seem to exist, but that may be OK."
 }
 

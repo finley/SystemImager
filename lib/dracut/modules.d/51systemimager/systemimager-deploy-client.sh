@@ -108,10 +108,16 @@ mount_os_filesystems_to_sysroot
 # Run the autoinstall script (image installation)
 run_autoinstall_script
 
+# Download and install the image
+download_image
+extract_image
+install_overrides
+
 # Now install bootloader (before post_install scripts to give a chance to scripts to modify this)
-# OL: BUG: We should be smarter here. We should install bootloader only on the dick containing the /boot partition.
+# OL: BUG: We should be smarter here. We should install bootloader only on the disk containing the /boot partition.
 install_boot_loader ${DISKS[@]}
 
+# Now run post install scripts.
 run_post_install_scripts
 
 # SE Linux relabel
@@ -131,7 +137,7 @@ umount_os_filesystems_from_sysroot
 # We can't use /sysroot/etc/fstab as it also contain swap and other stuffs
 # like some nfs mountpoints added by postinstall scripts
 loginfo "Unmounting imaged OS filesystems"
-for mount_point in `cat /etc/fstab|grep sysroot|awk '{print $2}'|sort -r`
+for mount_point in `cat /etc/fstab|grep sysroot|awk '{print $2}'|sort -r -k2,2`
 do
 	logdebug "Unmounting $mount_point"
 	umount $mount_point || logerror "Failed to umount $mount_point" # don't fail here, image is on disk.

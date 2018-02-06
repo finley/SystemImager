@@ -43,7 +43,8 @@ fail_if_run_from_working_machine
 #
 #   Lay the image down on the freshly formatted disk(s)
 #
-start_report_task
+#start_report_task
+# OL: Obsolete, need to be removed once moved to correct systemimager-xmit-<protocol>.sh plugin.
 
 if [ ! -z "$FLAMETHROWER_DIRECTORY_PORTBASE" ]; then 
 
