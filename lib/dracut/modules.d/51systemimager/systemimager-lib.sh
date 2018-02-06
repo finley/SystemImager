@@ -256,6 +256,7 @@ sis_update_step() {
 #
 #  based on info in /proc adjust the ARCH variable.  This needs to run
 #  after proc is mounted.
+#  TODO: Is it still needed?
 #
 adjust_arch() {
     if [ "ppc64" = "$ARCH" ] ; then
@@ -270,6 +271,7 @@ adjust_arch() {
         fi
     fi
     loginfo "Adjusting arch if needed ARCH=$ARCH"
+    write_variables # Save ARCH
 }
 #
 ################################################################################
