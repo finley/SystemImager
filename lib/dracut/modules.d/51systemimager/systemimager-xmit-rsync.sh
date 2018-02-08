@@ -52,6 +52,7 @@ function get_image_size() {
 ################################################################################
 #
 function download_image() {
+    loginfo "Downloading image"
     # Start si_monitor progress and status report.
     loginfo "Starting monitor progress report task..."
     start_report_task
@@ -61,10 +62,12 @@ function download_image() {
     fi
 
     if [ "${TMPFS_STAGING}" = "yes" ]; then
+	loginfo "in staging dir: ${STAGING_DIR}"
         # Deposit image into tmpfs
         IMAGE_DEST=${STAGING_DIR}
         loginfo "TMPFS_STAGING=${TMPFS_STAGING} -- Staging in ${IMAGE_DEST}"
     else
+	loginfo in "/sysroot"
         IMAGE_DEST=/sysroot
     fi
 
@@ -90,6 +93,7 @@ function download_image() {
 ################################################################################
 #
 function extract_image() {
+    loginfo "Extracting image to /sysroot"
     send_monitor_msg "status=107:speed=0" # 107=extracting
     if [ "${TMPFS_STAGING}" = "yes" ]; then
         # Need to move the image into /sysroot from staging dir.
@@ -126,6 +130,7 @@ function install_overrides() {
 #
 ################################################################################
 function terminate_transfer() {
+	loginfo "Terminating transfer processes."
 }
 
 ################################################################################

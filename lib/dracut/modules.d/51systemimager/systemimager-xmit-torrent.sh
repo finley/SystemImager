@@ -54,6 +54,7 @@ function get_image_size() {
 #
 ################################################################################
 download_image() {
+	loginfo "Downloading image"
         torrent=${TORRENTS_DIR}/$1.torrent
         destination=$2
 
@@ -119,6 +120,8 @@ download_image() {
 ################################################################################
 #
 function extract_image() {
+	loginfo "Extracting image to /sysroot"
+	send_monitor_msg "status=107:speed=0" # 107=extracting
 }
 
 ################################################################################
@@ -128,7 +131,8 @@ function extract_image() {
 ################################################################################
 #
 function install_overrides() {
-
+	loginfo "Installing overrides"
+	loginfo "Installing overrides"
 }
 
 ################################################################################
@@ -138,6 +142,7 @@ function install_overrides() {
 #
 ################################################################################
 function terminate_transfer() {
+	loginfo "Terminating transfer processes."
 }
 
 ###############################################################################
