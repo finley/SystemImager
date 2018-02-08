@@ -109,12 +109,13 @@ mount_os_filesystems_to_sysroot
 run_autoinstall_script
 
 # Download and install the image
-download_image
-extract_image
-install_overrides
+download_image # Download and extract image if no staging dir is used
+extract_image  # Extract image to /sysroot if staging dir was used, else do noting
+install_overrides # download and install override files
 
 # Now install bootloader (before post_install scripts to give a chance to scripts to modify this)
-# OL: BUG: We should be smarter here. We should install bootloader only on the disk containing the /boot partition.
+# OL: TODO: We should be smarter here. We should install bootloader only on the disk containing the /boot partition.
+# OL: TODO: We should handle software raid.
 install_boot_loader ${DISKS[@]}
 
 # Now run post install scripts.
@@ -167,10 +168,8 @@ if [ -n "$MONITOR_SERVER" ]; then
     send_monitor_msg "status=106:speed=0"
 fi
 
-# Explicitly kill sleep processes.
-# This is needed to close the SSH tunnel on the image server when the
-# SSH transport is used).
-killall sleep >/dev/null 2>&1
+# Stops any remaining transfer processes (ssh tunnel, torrent seeder, ...
+terminate_transfer
 
 # Announce completion (even for non beep-incessantly --post-install options)
 beep 3

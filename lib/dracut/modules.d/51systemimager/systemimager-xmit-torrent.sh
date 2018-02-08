@@ -37,6 +37,17 @@ function init_transfer() {
 }
 
 ################################################################################
+#
+# get_image_size
+#    => Returns the image size to be downloaded using torrent protocol.
+#
+################################################################################
+#
+function get_image_size() {
+	echo $((`grep -aEo ':lengthi[0-9]+e' ${TORRENTS_DIR}/${IMAGENAME}.torrent |grep -Eo '[0-9]+'` / 1024))
+}
+
+#################################################################################
 # download_image <image_name> <dest_dir>
 #    => Download the image into destination directory
 #    => example: download_image oscarimage_sda /tmp/staging/
@@ -121,17 +132,15 @@ function install_overrides() {
 }
 
 ################################################################################
-#
-# get_image_size
-#    => Returns the image size to be downloaded using torrent protocol.
+# terminate_transfer()
+#    => stops any remaining processes related to transfert
+#       (ssh tunnels, torrent seeding processes, ...)
 #
 ################################################################################
-#
-function get_image_size() {
-	echo $((`grep -aEo ':lengthi[0-9]+e' ${TORRENTS_DIR}/${IMAGENAME}.torrent |grep -Eo '[0-9]+'` / 1024))
+function terminate_transfer() {
 }
 
-################################################################################
+###############################################################################
 #
 # INTERNAL functions below. will be prefixed with _
 #

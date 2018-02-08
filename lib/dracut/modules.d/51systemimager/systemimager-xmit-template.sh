@@ -47,7 +47,7 @@ function get_image_size() {
 function download_image() {
 }
 
-#################################################################################
+################################################################################
 # extract_image
 #    => extract image in destination
 #    => example: extract_image
@@ -57,13 +57,22 @@ function download_image() {
 function extract_image() {
 }
 
-#################################################################################
+################################################################################
 # install_overrides()
 #    => extract overrides in /sysroot
 #
 ################################################################################
 #
 function install_overrides() {
+}
+
+################################################################################
+# terminate_transfer()
+#    => stops any remaining processes related to transfert
+#       (ssh tunnels, torrent seeding processes, ...)
+#
+################################################################################
+function terminate_transfer() {
 }
 
 ################################################################################

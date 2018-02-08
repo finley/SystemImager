@@ -120,6 +120,15 @@ function install_overrides() {
 }
 
 ################################################################################
+# terminate_transfer()
+#    => stops any remaining processes related to transfert
+#       (ssh tunnels, torrent seeding processes, ...)
+#
+################################################################################
+function terminate_transfer() {
+}
+
+################################################################################
 #
 # INTERNAL functions below. will be prefixed with _
 #

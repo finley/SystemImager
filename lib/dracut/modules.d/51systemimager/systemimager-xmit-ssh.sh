@@ -66,6 +66,19 @@ function install_overrides() {
 }
 
 ################################################################################
+# terminate_transfer()
+#    => stops any remaining processes related to transfert
+#       (ssh tunnels, torrent seeding processes, ...)
+#
+################################################################################
+function terminate_transfer() {
+	# Explicitly kill sleep processes.
+	# This is needed to close the SSH tunnel on the image server when the
+	# SSH transport is used).
+	killall sleep >/dev/null 2>&1
+}
+
+################################################################################
 #
 # INTERNAL functions below. will be prefixed with _
 #
