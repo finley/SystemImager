@@ -41,9 +41,11 @@ get_disk_layout_config_file() {
 		logerror "image server ${IMAGESERVER}"
 		shellout "Can't initilize disks. No layout found."
 	elif test -n "${HOSTNAME}"
+	then
 		[ -r "/scripts/disks-layouts/${HOSTNAME}" ] && echo "/scripts/disks-layouts/${HOSTNAME}" && return
 		[ -r "/scripts/disks-layouts/${HOSTNAME}.xml" ] && echo "/scripts/disks-layouts/${HOSTNAME}.xml" && return
 	elif test -n "${IMAGENAME}"
+	then
 		[ -r "/scripts/disks-layouts/${IMAGENAME}" ] && echo "/scripts/disks-layouts/${IMAGENAME}" && return
 		[ -r "/scripts/disks-layouts/${IMAGENAME}.xml" ] && echo "/scripts/disks-layouts/${IMAGENAME}.xml" && return
 	fi
