@@ -45,6 +45,7 @@ install() {
     # 3/ Install dracut logic
     inst "$moddir/systemimager-lib.sh" "/lib/systemimager-lib.sh"
     inst "$moddir/autoinstall-lib.sh" "/lib/autoinstall-lib.sh"
+    inst "$moddir/disksmgt-lib.sh" "/lib/disksmgt-lib.sh"
     inst "$moddir/si_inspect_client.sh" "/sbin/si_inspect_client"
     for protocol_plugin in $moddir/systemimager-xmit-*.sh
     do
