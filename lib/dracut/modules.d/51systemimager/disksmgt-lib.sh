@@ -56,12 +56,6 @@ get_disk_layout_config_file() {
 	shellout "Can't initilize disks. No layout found."
 }
 
-DISKS_LAYOUT_FILE=`get_disk_layout_config_file`
-loginfo "Got Disk layout file: ${DISKS_LAYOUT_FILE}"
-
-# Initialisae / check LVM version to use. (defaults to v2).
-LVM_VERSION=`xmlstarlet sel -t -m "config/lvm" -if "@version" -v "@version" --else -o "2" -b ${DISKS_LAYOUT_FILE}`
-
 ################################################################################
 #
 # get_disks_from_autoinstall_conf()
@@ -83,6 +77,12 @@ get_disks_from_autoinstall_conf() {
 ################################################################################
 #		
 sis_prepare_disks() {
+	DISKS_LAYOUT_FILE=`get_disk_layout_config_file`
+	loginfo "Got Disk layout file: ${DISKS_LAYOUT_FILE}"
+
+	# Initialisae / check LVM version to use. (defaults to v2).
+	LVM_VERSION=`xmlstarlet sel -t -m "config/lvm" -if "@version" -v "@version" --else -o "2" -b ${DISKS_LAYOUT_FILE}`
+
 	_stop_software_raid_devices
 	_do_partitions
 	_do_raids
@@ -105,7 +105,8 @@ _stop_software_raid_devices() {
         for RAID_DEVICE in ${RAID_DEVICES}
         do
             DEV="/dev/${RAID_DEVICE}"
-            loginfo "mdadm --manage ${DEV} --stop"
+	    loginfo "stopping ${DEV} raid device"
+            logdebug "mdadm --manage ${DEV} --stop"
             mdadm --manage ${DEV} --stop
         done
     fi
@@ -342,7 +343,7 @@ _do_lvms() {
 				do
 					# TODO: Add @lv_options to man autoinstallscript.conf
 					loginfo "Creating logical volume ${LV_NAME} for volume groupe ${VG_NAME}."
-					CMD="lvcreate ${LVM_LOCK_1} ${LV_OPTIONS}"
+					CMD="lvcreate -y ${LVM_LOCK_1} ${LV_OPTIONS}"
 					if test "${LV_SIZE/ /}" = "*"
 					then
 						CMD="${CMD} -l100%FREE"
@@ -499,7 +500,7 @@ _do_fstab() {
 	loginfo "Processing fstab: Creating mount points and mounting physical filesystems."
 	unset IFS
 	cat /tmp/fstab.temp |sed -e 's/#.*//' -e '/^$/d' | sort -k2,2 |\
-		while read M_DEV M_MP M_FS M_OPTS
+		while read M_DEV M_MP M_FS M_OPTS M_DUMP M_PASS
 		do
 			# If mountpoint is a PATH, AND filesystem is not virtual, create the path and mount filesystem to sysroot.
 			if test "${M_MP:0:1}" = "/" -a -n "`echo "ext2|ext3|ext4|xfs|jfs|reiserfs|btrfs|ntfs|msdos|vfat|fat" |grep \"${M_FS}\"`"
@@ -508,7 +509,10 @@ _do_fstab() {
 				logaction "mkdir -p /sysroot${M_MP}"
 				mkdir -p /sysroot${M_MP} || shellout "Failed to create ${M_MP}"
 				loginfo "Mounting ${M_DEV} to /sysroot${M_MP}"
-				mount -t ${M_FS} -o ${M_OPTS} ${M_DEV} /sysroot${M_MP} || shellout "Failed to mount ${M_DEV} to /sysroot${M_MP}"
+				[ -n "${M_OPTS}" ] && MOUNT_OPT="-o ${M_OPTS}"
+				CMD="mount -t ${M_FS} ${MOUNT_OPT} ${M_DEV} /sysroot${M_MP}"
+				logdebug "$CMD"
+				eval "$CMD" || shellout "Failed to mount ${M_DEV} to /sysroot${M_MP}"
 				# Add filesystem to initramfs:/etc/fstab (needed when we'll need to unmount them)
 				# Set 0 for dump and 0 for pass (not needed in initramfs).
 				echo -e "${M_DEV}\t/sysroot${M_MP}\t${M_FS}\t${M_OPTS}\t0 0" >> /etc/fstab
