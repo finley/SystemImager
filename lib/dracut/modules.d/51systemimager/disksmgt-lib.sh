@@ -92,6 +92,55 @@ sis_prepare_disks() {
 }
 
 ################################################################################
+# sis_install_configs()
+#		Must be run after image deployment and overrides install
+#		Installs in /sysroot
+#		- /etc/fstab
+#		- /etc/mdadm/mdadm.conf if needed
+#		- /etc/lvm/lvm.conf if needed
+#		- re-run chrooted dracut so initramfs is aware for raid and lvm
+################################################################################
+#
+sis_install_configs() {
+	# 1/ Install fstab
+	loginfo "Installing /etc/fstab"
+	cp /tmp/fstab.temp /sysroot/etc/fstab || shellout "Failed to copy /tmp/fstab.temp as /sysroot/etc/fstab"
+
+	# 2/ Install mdadm.conf if needed
+	if [ -f /tmp/mdadm.conf.temp ]
+	then
+		# Check that imaged system has mdadm command so it can reboot
+		[ ! -e /sbin/mdadm -a ! -e /usr/sbin/mdadm ] && logwarn "mdadm seems missing in imaged system. System may fail to boot"
+
+		# Install the config file
+		loginfo "Installing /etc/mdadm/mdadm.conf"
+		[ -f /sysroot/etc/mdadm/mdadm.conf ] && mv -f /sysroot/etc/mdadm/mdadm.conf /sysroot/etc/mdadm/mdadm.conf.bak || shellout "Failed to backup default mdadm.conf"
+		mkdir -p /sysroot/etc/mdadm || shellout "Failed to create /sysroot/etc/mdadm/"
+		cp /tmp/mdadm.conf.temp /sysroot/etc/mdadm/mdadm.conf || shellout "Failed to copy /tmp/mdadm.conf.temp as /sysroot/etc/mdadm/mdadm.conf"
+	fi
+
+	# 3/ Install lvm.conf if needed
+	if [ -f /tmp/lvm.conf.temp ]
+	then
+		loginfo "Installing /etc/lvm/lvm.conf"
+		[ -f /sysroot/etc/lvm/lvm.conf ] && mv -f /sysroot/etc/lvm/lvm.conf /sysroot/etc/lvm/lvm.conf.bak || shellout "Failed to backup default lvm.conf"
+		mkdir -p /sysroot/etc/lvm || shellout "Failed to create /sysroot/etc/lvm/"
+		cp /tmp/lvm.conf.temp /sysroot/etc/lvm/lvm.conf || shellout "Failed to copy /tmp/lvm.conf.temp as /sysroot/etc/mdadm/mdadm.conf"
+
+		# Also create /etc/lvm/cache/.cache
+		loginfo "Updating lvm cache file on imaged system"
+		chroot /sysroot vgscan
+	fi
+
+	# 4/ Regenerate initramfs for all deployed kernels
+	for KERNEL in `ls /sysroot/boot|grep vmlinuz`
+	do
+		loginfo "Generating initramfs for kernel: ${KERNEL}"
+		chroot /sysroot dracut --force --kver "${KERNEL#*-}" --hostonly --fstab
+	done
+}
+
+################################################################################
 #
 # _stop_software_raid()
 #		stops all software raid volumes so we can initialise disks
@@ -289,6 +338,31 @@ _do_raids() {
 			logaction "${CMD}"
 			eval "yes | LC_ALL=C ${CMD}"
 		done
+	# Now check if we need to create a mdadm.conf
+	if [ -n "${CMD}" ] # We created at least one raid volume.
+	then
+		loginfo "Generating mdadm.conf"
+		cat > /tmp/mdadm.conf.temp <<EOF
+# mdadm.conf
+#
+# Please refer to mdadm.conf(5) for information about this file.
+#
+
+DEVICE partitions
+
+# auto-create devices with Debian standard permissions
+CREATE owner=root group=disk mode=0660 auto=yes
+
+# automatically tag new arrays as belonging to the local system
+HOMEHOST <system>
+
+# instruct the monitoring daemon where to send mail alerts
+MAILADDR root
+
+# definitions of existing MD arrays
+EOF
+		mdadm --detail --scan >> /tmp/mdadm.conf.temp
+	fi
 
 }
 
@@ -360,6 +434,13 @@ _do_lvms() {
 					eval "${CMD}" || shellout "lvchange -a y /dev/${VG_NAME}/${LV_NAME} failed!"
 				done
 		done
+		if test -n "$CMD"
+		then
+			loginfo "Creating lvm cache directory"
+			mkdir -p /sysroot/etc/lvm/cache/ || shellout "Failed to create /sysroot/etc/lvm/cache/"
+			loginfo "Generating lvm.conf"
+			lvm dumpconfig > /tmp/lvm.conf.temp
+		fi
 }
 
 ################################################################################

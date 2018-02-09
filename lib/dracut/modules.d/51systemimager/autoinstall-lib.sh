@@ -115,10 +115,13 @@ set_ip_assignment_method() {
 			;;
 	esac
 }
+
 ################################################################################
 #
 # refuse_to_run_on_a woring machine.
-
+# Note: this function is now obsolete and is here for compatibility.
+# It will prevent old scripts to be run on a running host.
+#
 fail_if_run_from_working_machine() {
 	ERR_MSG="Sorry.  Must not run on a working machine..."
 

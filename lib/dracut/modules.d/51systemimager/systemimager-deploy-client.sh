@@ -113,6 +113,9 @@ download_image # Download and extract image if no staging dir is used
 extract_image  # Extract image to /sysroot if staging dir was used, else do noting
 install_overrides # download and install override files
 
+# Install fstab, mdadm.conf, lvm.conf and update initramfs so it is aware of raid or lvm
+sis_install_configs
+
 # Now install bootloader (before post_install scripts to give a chance to scripts to modify this)
 # OL: TODO: We should be smarter here. We should install bootloader only on the disk containing the /boot partition.
 # OL: TODO: We should handle software raid.
