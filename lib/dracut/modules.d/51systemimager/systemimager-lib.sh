@@ -1102,12 +1102,14 @@ choose_autoinstall_script() {
     # 
     # If SCRIPTNAME is specified as a kernel append, or via local.cfg, then use that script.
     #
-    if [ ! -z $SCRIPTNAME ]; then
+    if [ -n "${SCRIPTNAME}" ]; then
         #
         # SCRIPTNAME was specified, but let's be flexible.  Try explicit first, then .master, .sh. -BEF-
         #
         SCRIPTNAMES="${SCRIPTS_DIR}/${SCRIPTNAME} ${SCRIPTS_DIR}/${SCRIPTNAME}.sh ${SCRIPTS_DIR}/${SCRIPTNAME}.master"
 
+	# Script name was specified, so it MUST be available. If not, we must fail.
+        [ ! -e ${SCRIPTS_DIR}/${SCRIPTNAME} -a ! -e ${SCRIPTS_DIR}/${SCRIPTNAME}.sh -a !-e ${SCRIPTS_DIR}/${SCRIPTNAME}.master ] || shellout "Cant find requested main autoinstall script: ${SCRIPTNAME}{,.sh,.master}"
     else
         # 
         # If SCRIPTNAME was not specified, choose one, in order of preference.  First hit wins.
@@ -1138,22 +1140,23 @@ choose_autoinstall_script() {
     done
 
     # Did we really find one, or just exit the loop without a 'break'
-    if [ ! -e $SCRIPTNAME ]; then
-        logwarn "FATAL: couldn't find any of the following autoinstall scripts:"
+    if [ ! -e "${SCRIPTNAME}" ]; then
+        logwarn "No main autoinstall script defined. Looked for:"
         logwarn "${SCRIPTNAMES}"
-        logwarn "Be sure that at least one of the scripts above exists in"
-        logwarn "the autoinstall scripts directory on your image server."
+        logwarn "If you need a main install script, check that one of the above scipts"
+        logwarn "exists in the autoinstall scripts directory on your image server."
         logwarn "See also: si_mkautoinstallscript(8)."
-	shellout
+	SCRIPTNAME=""
+    else
+        # check that script version is sufficient.
+        SCRIPT_VERSION=`grep -E '#\s*script_version:[0-9]+\s*$' ${SCRIPTNAME}|cut -d: -f2`
+        [ -z "${SCRIPT_VERSION}" ] && SCRIPT_VERSION=1
+        [ ${SCRIPT_VERSION} -lt 2 ] && shellout "Script ${SCRIPTNAME} is too old and incompatible with this version of systemimager. Please uptate is with si_mkautoinstallscript"
+        loginfo "Using autoinstall script: ${SCRIPTNAME}"
     fi
-
-    # check that script version is sufficient.
-    SCRIPT_VERSION=`grep -E '#\s*script_version:[0-9]+\s*$' ${SCRIPTNAME}|cut -d: -f2`
-    [ -z "${SCRIPT_VERSION}" ] && SCRIPT_VERSION=1
-    [ ${SCRIPT_VERSION} -lt 2 ] && shellout "Script ${SCRIPTNAME} is too old and incompatible with this version of systemimager. Please uptate is with si_mkautoinstallscript"
-    loginfo "Using autoinstall script: ${SCRIPTNAME}"
     write_variables # Save selected SCRIPTNAME
 }
+
 ################################################################################
 #
 run_pre_install_scripts() {
@@ -1216,11 +1219,16 @@ run_autoinstall_script() {
     # 1st, determine which script to run.
     choose_autoinstall_script
 
-    loginfo "Running autoinstall script $SCRIPTNAME"
+    if [ -n "${SCRIPTNAME}" ]
+    then
+        loginfo "Running autoinstall script $SCRIPTNAME"
 
-    # Run the autoinstall script.
-    chmod 755 $SCRIPTNAME || shellout "Can't chmod 755 $SCRIPTNAME"
-    $SCRIPTNAME || shellout "Failed to run $SCRIPTNAME"
+        # Run the autoinstall script.
+        chmod 755 $SCRIPTNAME || shellout "Can't chmod 755 $SCRIPTNAME"
+        $SCRIPTNAME || shellout "Failed to run $SCRIPTNAME"
+    else
+	loginfo "Imaging without main install script."
+    fi
 }
 #
 ################################################################################
