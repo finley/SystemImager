@@ -107,6 +107,7 @@ mount_os_filesystems_to_sysroot
 
 # Run the autoinstall script (image installation)
 run_autoinstall_script
+. /tmp/variables.txt # Read varaibles that could have been updated in autoinstall script like IMAGENAME
 
 # Download and install the image
 download_image # Download and extract image if no staging dir is used
