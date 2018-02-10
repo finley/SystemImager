@@ -19,7 +19,7 @@
 => DONE. Fully working
 
 - review all sbin/si_* commands.
-  => For now, only si_mkautoinstallscript is working.
+  => For now, only si_mkautoinstallscript is working but needs major cleaning (including System.pm)
   => make sure that the $IMAGE_ROOT/etc/systemimager/etc/systemimager/autoinstallscript.conf doesn't contain any reference to system filesystems like (/proc, /dev, /dev/shm or so). Only filesystems that are not handled by systemd or udev like real filesystems, nfs mountpoints, ...
 
 #- si_monitortk should work and handle the new status "shell". At the end of the imaging, aside reboot halt, shutdown, you can add shell so the system drops an emergency shell. Usefulle for debugging.
@@ -32,7 +32,7 @@
 - need to comment /lib/autoinstall-lib.sh
 - need to review and update all headers with authors and copyrights
 - need to remove/cleanup useless stuffs in the source_tarball (kernel.rul and such).
-- need to update deb packaing
+- need to update deb packaging
 - need to find a way to provide systemimager-x86_64boot-standard-4.5.0-1.el7.noarch.rpm without installing dracut-systemimager (does a dracut option allows to specify an alternative dracut directory))
 
 ============= TODO before use of dracut. Needs reviewing ======================
@@ -68,16 +68,17 @@
         - Capture binaries from well known distros and package
             - Start with Ubuntu (what I'm running)
             - Simply modify existing make scripts
+=> DONE.
 
     - Do build in a Dokker container?  Provide container for anyone who wants to
       use it?
+=> DONE.
 
     - Dracut or mkinitramfs or (rhel5 tool)
         - target as alternate location
-
     - Dracut has an option to include an overlay directory in the initrd:
         http://people.redhat.com/harald/dracut-rhel6.html
-
+=> OBSOLETE. dracut was chosen for all dristros
 
 Add a "Features" section to the website:
 
@@ -106,6 +107,7 @@ Add a "Features" section to the website:
         - msdos, vfat
         - ext2, ext3, ext4
         - reiserfs
+        - btrfs
         - jfs
         - xfs
         - swap
@@ -132,10 +134,11 @@ Verify we have an "*_install" target for all initrd packages
 Move ./initrd_dir/make.d/*.rul files into ./make.d/
 
 Find some way to add color to logmsg, so that function names can be a different color from the output they produce...
+=> DONE. (in text console AND in new plymouth based GUI.
 
 mklibs.bef -- review output and re-direct -L towards locally built libs
 mknods -- review this and see if we can remove now that we're using udev
-
+=> OBSOLETE
 
 Finley's new TODO list for SystemImager
 ---------------------------------------
@@ -168,11 +171,11 @@ Finley's new TODO list for SystemImager
         - /etc/init.d/functions. A lot is removed or has been rewritten.
         - the grub2 installations is handled in our post install script
           for now
-
+=> OBSOLETE: handled by dracut
 
 (3.5) Make sure built libs are used and included, and not libs from the
 build system.  mklibs.bef invokations.
-
+=> OBSOLETE: handled by dracut
 (4) switch to udhcp
 
 ----
@@ -228,12 +231,13 @@ The prior TODO list for SystemImager
     - tabbed view for virtual console
 
 (4) Implement a GUI to perform all the common systemimager operations
+    - Suggests http GUI. (OL)
 
 (4) Implement pre/post-update scripts (to be ran with si_updateclient)
 
 (2) Add a kernel-devel tree package, like those that ship with RedHat, 
     Ubuntu, etc. There's just enough data to build boot-kernel modules 
     against, but nothing else. 
-
     Ie: kernel-headers. (Jeremy Siadal suggestion)
+=> OBSOLETE: we now use dracut.
 

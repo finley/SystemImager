@@ -8,9 +8,36 @@
 #   $Id$
 #
 
-4.5.0 [ Not yet released ]
+5.0.0 [ Not yet released ]
+- Plymouth GUI
+- Put transfert protocols in plugins API instead of being hardcodded into imaging script
+- Created an API for scripts (pre, main, post install) for:
+  - Disk editting (partition, raid, lvm, mount points)
+  - GUI messages
+  - transfert
+  - other
+- removed old bittorrent client and replaced it with distro supported components
+  - rtorrent for transfert
+  - opentracker for the tracker
+  - mktorrent to create torrent files
+  - scripts for torrent info
+- Added many cmdline parameters
+- Added sis_config_dir in systemimager.conf (stores imagename.conf)
+  This file is downloaded by dracut logic and read just like local.cfg
+  It hosts similar things as local.cfg so kernel cmdline is liter. See docs for all parameters
+- scripts dir reorganized
+  /var/lib/systemimager/scripts/
+                               pre-install
+                               main-install
+                               post-install
+                               disks-layouts
+                               install-conf
+- scripts are now optional. Mandatory are disk-layout and image name.
+
+4.5.0 [ Never released ]
 --------------------------------------------------------------------------------
 - Major rework of how initrd and kernel are provided.
+  Now, all the initramfs creation process is handled by dracut.
   No more kernel build or initrd binaries build (except a few ones)
   Now kernel is taken from running distro
   Now initrd is built using dracut and a systemimager dracut module
