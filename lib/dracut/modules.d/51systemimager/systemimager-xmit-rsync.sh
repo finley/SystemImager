@@ -57,17 +57,13 @@ function download_image() {
     loginfo "Starting monitor progress report task..."
     start_report_task
 
-    if [ $NO_LISTING ]; then
-        loginfo "Quietly installing image... "
-    fi
-
     if [ "${TMPFS_STAGING}" = "yes" ]; then
-	loginfo "in staging dir: ${STAGING_DIR}"
+	[ -n "${NO_LISTING}" ] && loginfo "Quietly downloading image in staging dir: ${STAGING_DIR}"
         # Deposit image into tmpfs
         IMAGE_DEST=${STAGING_DIR}
         loginfo "TMPFS_STAGING=${TMPFS_STAGING} -- Staging in ${IMAGE_DEST}"
     else
-	loginfo in "/sysroot"
+	[ -n "${NO_LISTING}" ] && loginfo "Quietly installing image in /sysroot"
         IMAGE_DEST=/sysroot
     fi
 

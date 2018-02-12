@@ -110,25 +110,40 @@ sis_install_configs() {
 	if [ -f /tmp/mdadm.conf.temp ]
 	then
 		# Check that imaged system has mdadm command so it can reboot
-		[ ! -e /sbin/mdadm -a ! -e /usr/sbin/mdadm ] && logwarn "mdadm seems missing in imaged system. System may fail to boot"
+		[ ! -e /sysroot/sbin/mdadm -a ! -e /sysroot/usr/sbin/mdadm ] && logwarn "mdadm seems missing in imaged system. System may fail to boot"
 
 		# Install the config file
 		loginfo "Installing /etc/mdadm/mdadm.conf"
-		[ -f /sysroot/etc/mdadm/mdadm.conf ] && mv -f /sysroot/etc/mdadm/mdadm.conf /sysroot/etc/mdadm/mdadm.conf.bak || shellout "Failed to backup default mdadm.conf"
 		mkdir -p /sysroot/etc/mdadm || shellout "Failed to create /sysroot/etc/mdadm/"
+		[ -f /sysroot/etc/mdadm/mdadm.conf ] && ( mv -f /sysroot/etc/mdadm/mdadm.conf /sysroot/etc/mdadm/mdadm.conf.bak || shellout "Failed to backup default mdadm.conf" )
+		[ -f /sysroot/etc/mdadm.conf ] && ( mv -f /sysroot/etc/mdadm.conf /sysroot/etc/mdadm/mdadm.conf.old.bak || shellout "Failed to backup obsolete mdadm.conf" )
 		cp /tmp/mdadm.conf.temp /sysroot/etc/mdadm/mdadm.conf || shellout "Failed to copy /tmp/mdadm.conf.temp as /sysroot/etc/mdadm/mdadm.conf"
 	fi
 
 	# 3/ Install lvm.conf if needed
-	if [ -f /tmp/lvm.conf.temp ]
+	if test -n "${WANT_LVM}"
 	then
-		loginfo "Installing /etc/lvm/lvm.conf"
-		[ -f /sysroot/etc/lvm/lvm.conf ] && mv -f /sysroot/etc/lvm/lvm.conf /sysroot/etc/lvm/lvm.conf.bak || shellout "Failed to backup default lvm.conf"
-		mkdir -p /sysroot/etc/lvm || shellout "Failed to create /sysroot/etc/lvm/"
-		cp /tmp/lvm.conf.temp /sysroot/etc/lvm/lvm.conf || shellout "Failed to copy /tmp/lvm.conf.temp as /sysroot/etc/mdadm/mdadm.conf"
+		# Check that imaged system has lvm command so it can reboot
+		[ ! -e /sysroot/sbin/lvm -a ! -e /sysroot/usr/sbin/lvm ] && logwarn "lvm seems missing in imaged system. System may fail to boot"
 
-		# Also create /etc/lvm/cache/.cache
-		loginfo "Updating lvm cache file on imaged system"
+		if test ! -f /sysroot/etc/lvm/lvm.conf
+		then
+			loginfo "Installing /etc/lvm/lvm.conf"
+			mkdir -p /sysroot/etc/lvm || shellout "Failed to create /sysroot/etc/lvm/"
+			lvm config --type default --withcomments > /sysroot/etc/lvm/lvm.conf
+
+		else
+			loginfo "Using /etc/lvm/lvm.conf from image"
+			if test -f /sysroot/etc/lvm.conf
+			then
+				# /etc/lvm.conf is oboslete. should be /etc/lvm/lvm.conf
+				loginfo "Backing up obsolete /etc/lvm.conf file as /etc/lvm/lvm.conf.old.bak"
+				mv -f /sysroot/etc/lvm.conf /sysroot/etc/lvm/lvm.conf.old.bak || shellout "Failed to backup obsolete lvm.conf"
+			fi
+		fi
+
+		# Also create /etc/lvm/{archive,backup}
+		loginfo "Creating lvm archive and backup dirs with lvm config"
 		chroot /sysroot vgscan
 	fi
 
@@ -228,7 +243,7 @@ _do_partitions() {
 					# 1/ Create the partition
 					CMD="parted -s -- ${DISK_DEV} unit ${P_UNIT} mkpart ${P_TYPE} ${P_FS} `_find_free_space ${DISK_DEV} ${P_UNIT} ${P_TYPE} ${P_SIZE}`"
 					logaction "$CMD"
-					eval "LC_ALL=C $CMD" || shellout "Failed to create partition ${DISK_DEV}${P_NUM}"
+					eval "$CMD" || shellout "Failed to create partition ${DISK_DEV}${P_NUM}"
 
 					# 2/ Set partition number ($partition) using sfdisk
 					# Do nothing; assuming xml file use partition in order just like parted.
@@ -238,7 +253,7 @@ _do_partitions() {
 					do
 						CMD="parted -s -- ${DISK_DEV} set ${P_NUM} ${flag} on"
 						logaction "$CMD"
-						eval "LC_ALL=C $CMD" || shellout "Failed to set flag ${flag}=on for partition ${DISK_DEV}${P_NUM}"
+						eval "$CMD" || shellout "Failed to set flag ${flag}=on for partition ${DISK_DEV}${P_NUM}"
 					done
 
 					# Testing that lvm flag is set if lvm group is defined.
@@ -336,7 +351,7 @@ _do_raids() {
 			[ -n "${R_DEVICES}" ] && CMD="${CMD} ${R_DEVICES}" # Add disk devices if any are defines for this raid volume.
 
 			logaction "${CMD}"
-			eval "yes | LC_ALL=C ${CMD}"
+			eval "yes | ${CMD}"
 		done
 	# Now check if we need to create a mdadm.conf
 	if [ -n "${CMD}" ] # We created at least one raid volume.
@@ -373,10 +388,12 @@ EOF
 ################################################################################
 _do_lvms() {
 	IFS=";"
-	# Note: in dracut, locking_type is set to 4 (readonly) for lvm (/etc/lnm/lvm.conf) to prevent any lvm modification during early boot.
+	# Note: in dracut, locking_type is set to 4 (readonly) for lvm (/etc/lvm/lvm.conf) to prevent any lvm modification during early boot.
 	# We need to get raound this default config.
 	# See https://bugzilla.redhat.com/show_bug.cgi?id=865015 (not a bug)
-	LVM_LOCK_1="--config 'global {locking_type=1}'"
+	# LVM_DEFAULT_CONFIG="--config 'global {locking_type=1}'" # At least we need this config.
+	# We chose to replace the inapropriate lvm.conf with a generic one that fits our needs.
+	lvmconfig --type default --withcomments > /etc/lvm/lvm.conf || shellout "Failed to overwrite initramfs:/etc/lvm/lvm.conf with default lvm.conf that permits lvm creation/modification/removal."
 
 	loginfo "Creating volume groups"
 
@@ -394,16 +411,16 @@ _do_lvms() {
 			# Getting specific params for volume group ${VG_NAME}
 			xmlstarlet sel -t -m "config/lvm/lvm_group[name=\"${VG_NAME}\"]" -v "concat(@max_log_vols,';',@max_phys_vols,';',@phys_extent_size)" -n ${DISKS_LAYOUT_FILE} | read L_MAX_LOG_VOLS L_MAX_PHYS_VOLS L_PHYS_EXTENT_SIZE
 
-			CMD="pvcreate ${LVM_LOCK_1} -M${LVM_VERSION} -ff -y ${VG_PARTS}${VG_RAIDS}"
+			CMD="pvcreate ${LVM_DEFAULT_CONFIG} -M${LVM_VERSION} -ff -y ${VG_PARTS}${VG_RAIDS}"
 			logaction $CMD
 			eval "$CMD" || shellout "Failed to prepare devices for being part of a LVM"
 
 			# Now we cleanup any previous volume groups.
 			loginfo "Cleaning up any previous volume groups named [${VG_NAME}]"
-			lvremove -f /dev/${VG_NAME} >/dev/null 2>&1 && vgremove ${VG_NAME} >/dev/null 2>&1
+			lvremove ${LVM_DEFAULT_CONFIG} -f /dev/${VG_NAME} >/dev/null 2>&1 && vgremove ${VG_NAME} >/dev/null 2>&1
 
 			# Now we create the volume group.
-			CMD="vgcreate ${LVM_LOCK_1} -M${LVM_VERSION}"
+			CMD="vgcreate ${LVM_DEFAULT_CONFIG} -M${LVM_VERSION}"
 			[ -n "${VG_MAX_LOG_VOLS/ /}" ] && CMD="${CMD} -l ${VG_MAX_LOG_VOLS/ /}"
 			[ -n "${VG_MAX_PHYS_VOLS/ /}" ] && CMD="${CMD} -p ${VG_MAX_PHYS_VOLS/ /}"
 			[ -n "${VG_PHYS_EXTENT_SIZE/ /}" ] && CMD="${CMD} -s ${VG_PHYS_EXTENT_SIZE/ /}"
@@ -417,7 +434,7 @@ _do_lvms() {
 				do
 					# TODO: Add @lv_options to man autoinstallscript.conf
 					loginfo "Creating logical volume ${LV_NAME} for volume groupe ${VG_NAME}."
-					CMD="lvcreate -y ${LVM_LOCK_1} ${LV_OPTIONS}"
+					CMD="lvcreate -y ${LVM_DEFAULT_CONFIG} ${LV_OPTIONS}"
 					if test "${LV_SIZE/ /}" = "*"
 					then
 						CMD="${CMD} -l100%FREE"
@@ -426,7 +443,7 @@ _do_lvms() {
 					fi
 					CMD="${CMD} -n ${LV_NAME} ${VG_NAME}"
 					logaction "${CMD}"
-					eval "LC_ALL=C ${CMD}" || shellout "Failed to create logical volume ${LV_NAME}"
+					eval "${CMD}" || shellout "Failed to create logical volume ${LV_NAME}"
 
 					loginfo "Enabling logical volume ${LV_NAME}"
 					CMD="lvscan > /dev/null; lvchange -a y /dev/${VG_NAME}/${LV_NAME}"
@@ -436,10 +453,7 @@ _do_lvms() {
 		done
 		if test -n "$CMD"
 		then
-			loginfo "Creating lvm cache directory"
-			mkdir -p /sysroot/etc/lvm/cache/ || shellout "Failed to create /sysroot/etc/lvm/cache/"
-			loginfo "Generating lvm.conf"
-			lvm dumpconfig > /tmp/lvm.conf.temp
+			WANT_LVM="y"
 		fi
 }
 
