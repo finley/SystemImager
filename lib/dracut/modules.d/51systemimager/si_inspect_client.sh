@@ -13,7 +13,7 @@ done
 mount_os_filesystems_to_sysroot
 
 echo "Client ready. Quit using CTRL-D or exit"
-chroot /sysroot
+PS1="Inspecting \h \W #" chroot /sysroot
 
 umount_os_filesystems_from_sysroot
 
