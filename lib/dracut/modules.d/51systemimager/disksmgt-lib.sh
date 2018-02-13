@@ -151,7 +151,7 @@ sis_install_configs() {
 	for KERNEL in `ls /sysroot/boot|grep vmlinuz`
 	do
 		loginfo "Generating initramfs for kernel: ${KERNEL}"
-		chroot /sysroot dracut --force --kver "${KERNEL#*-}" --hostonly --fstab
+		chroot /sysroot dracut --force --kver "${KERNEL#*-}" --hostonly --fstab --add-fstab /etc/fstab
 	done
 }
 
