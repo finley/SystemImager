@@ -1853,8 +1853,8 @@ install_boot_loader() {
 			for disk in $@
 			do
 				[ ! -b "$disk" ] && shellout "Can't install bootloader: [$disk] is not a block device!"
-				logaction "chroot /sysroot /sbin/grub2-install $disk"
-				chroot /sysroot /sbin/grub2-install --force $disk
+				logaction "chroot /sysroot /sbin/grub2-install --force $disk"
+				chroot /sysroot /sbin/grub2-install --force $disk || shellout "Failed to install grub2 bootloader on ${disk}"
 			done
 			;;
 		"grub")
@@ -1875,7 +1875,7 @@ EOF
 			do
 				[ ! -b "$disk" ] && shellout "Can't install bootloader: [$disk] is not a block device!"
 				logaction "chroot /sysroot /sbin/grub-install $disk"
-				chroot /sysroot /sbin/grub-install $1
+				chroot /sysroot /sbin/grub-install $1 || shellout "Failed to install grub1 bootloader on ${disk}"
 			done
 			;;
 		*)
