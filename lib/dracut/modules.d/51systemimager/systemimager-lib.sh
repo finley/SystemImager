@@ -1846,8 +1846,17 @@ install_boot_loader() {
 
 	case "${BOOT_LOADER}" in
 		"grub2")
+			# if a grub2 specific config exists, we need to install it before generating grub.cfg
+			# Typically, this file is used to force raid reassembly in initramfs
+			if test -f /tmp/grub_default.cfg
+			then
+				# Make sure /etc/default exists in /sysroot
+				mkdir -p /sysroot/etc/default || shellout "Cannot create /etc/default on imaged system."
+				cp -f /tmp/grub_default.cfg /sysroot/etc/default/grub || shellout "Cannot install /etc/default/grub"
+			fi
+
 			# Generate grub2 config file from OS already installed 10_linux cfg.
-			logaction "creating /boot/grub2/grub.cfg"
+			logaction "Creating /boot/grub2/grub.cfg"
 			chroot /sysroot /sbin/grub2-mkconfig --output=/boot/grub2/grub.cfg
 
 			# Install bootloader

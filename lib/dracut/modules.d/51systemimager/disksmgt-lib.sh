@@ -353,7 +353,14 @@ _do_raids() {
 			[ -n "${R_DEVICES}" ] && CMD="${CMD} ${R_DEVICES}" # Add disk devices if any are defines for this raid volume.
 
 			logaction "${CMD}"
-			eval "yes | ${CMD}"
+			eval "yes | ${CMD}" || shellout "Failed to create raid${R_LEVEL} with ${R_DEVICES}"
+
+			# Create the grub2 config the force raid assembling in initramfs.
+			# GRUB_CMDLINE_LINUX_DEFAULT is use in normal operation but not in failsafe
+			# GRUB_CMDLINE_LINUX is use in al circumstances. We do not want to try to assemble raid in failsafe.
+			cat > /tmp/grub_default.cfg <<EOF
+GRUB_CMDLINE_LINUX_DEFAULT="${GRUB_CMDLINE_LINUX_DEFAULT} rd.auto"
+EOF
 		done
 	# Now check if we need to create a mdadm.conf
 	if [ -n "${CMD}" ] # We created at least one raid volume.
