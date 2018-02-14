@@ -775,12 +775,6 @@ This package is a dracut modules that automates the systeimager initramfs creati
 # Prepare source tree
 %setup -q
 
-# Add patches so it can build on non-debian systems.
-%__cp rpm/*.patch initrd_source/patches/
-
-# Download external sources
-%{__make} %{?_smp_mflags} get_source
-
 %build
 cd $RPM_BUILD_DIR/%{name}-%{version}/
 

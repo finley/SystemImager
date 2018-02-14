@@ -25,7 +25,6 @@
 #   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-INITRD_PATCH_DIR = $(INITRD_DIR)/patches
 INITRD_SRC_DIR = $(INITRD_DIR)/src
 INITRD_BINARIES = $(shell file \
 							initrd_source/build_dir/bin/* \
@@ -43,14 +42,6 @@ INITRD_BUILD_DIR = $(INITRD_DIR)/build_dir
 SKEL_FILES = $(shell find $(INITRD_DIR)/skel \
 						-not -regex '.*/.svn.*' -and \
 						-not -regex '.*/.svn')
-
-#
-# Order is relevant for certain components, so re-order as is appropriate. -BEF-
-#
-#include $(INITRD_DIR)/make.d/cx_freeze.rul
-include $(INITRD_DIR)/make.d/bittorrent.rul
-include $(INITRD_DIR)/make.d/udpcast.rul
-#include $(INITRD_DIR)/make.d/busybox.rul
 
 PHONY += build_dir 
 build_dir:	$(INITRD_BUILD_DIR).build
@@ -75,13 +66,7 @@ $(INITRD_BUILD_DIR).prep: $(INITRD_BUILD_DIR).skel $(SKEL_FILES)
 
 
 
-$(INITRD_BUILD_DIR).build:  $(INITRD_BUILD_DIR).prep \
-			$(BITTORRENT_DIR).install \
-			$(UDPCAST_DIR).install
-
-	# BitTorrent binaries must not be stripped. -AR-
-	cd $(INITRD_BUILD_DIR)/usr/bin && ln -s ../lib/bittorrent/torrentinfo-console
-	cd $(INITRD_BUILD_DIR)/usr/bin && ln -s ../lib/bittorrent/bittorrent-console
+$(INITRD_BUILD_DIR).build:  $(INITRD_BUILD_DIR).prep
 
 	# lsb init functions needed by udev init script
 	# Copy over text files from the skel directory.
@@ -91,11 +76,7 @@ $(INITRD_BUILD_DIR).build:  $(INITRD_BUILD_DIR).prep \
 	# binaries tarball. -BEF-
 	cp -a $(INITRD_DIR)/my_modules $(INITRD_BUILD_DIR)
 	
-	# Add firmwares, keymaps and a few config files
-	#mkdir -p $(INITRD_BUILD_DIR)/lib/firmware
-	#rsync -av /lib/firmware $(INITRD_BUILD_DIR)/lib/firmware
-	#mkdir -p $(INITRD_BUILD_DIR)/lib/kbd/keymaps
-	#rsync -av /lib/kbd/keymaps $(INITRD_BUILD_DIR)/lib/kbd/keymaps
+	# Add a few config files
 	cp -av /etc/inputrc $(INITRD_BUILD_DIR)/etc/inputrc
 	cp -av /etc/printcap $(INITRD_BUILD_DIR)/etc/printcap
 	cp -av /etc/localtime $(INITRD_BUILD_DIR)/etc/localtime
@@ -105,59 +86,11 @@ $(INITRD_BUILD_DIR).build:  $(INITRD_BUILD_DIR).prep \
 	touch $@
 
 
-#PHONY += initrd.img
-#initrd.img:	$(INITRD_DIR)/initrd.img
-#
-#E2FSPROGS = mke2fs mkfs.ext2 mkfs.ext3 mkfs.ext4 mklost+found resize2fs tune2fs e2fsck mkfs.xfs
-#DOSFSTOOLS = dosfsck dosfslabel fatlabel fsck.fat fsck.msdos fsck.vfat mkdosfs mkfs.fat mkfs.msdos mkfs.vfat
-#HFSUTILS = fsck.hfs hattrib hcd hcopy hdel hdir hformat hfs hfsck hls hmkdir hmount hpwd hrename hrmdir humount hvol
-#BTRFSUTILS = btrfs btrfsck btrfstune fsck.btrfs mkfs.btrfs
-#COREUTILS = cut date echo env sort test false true [ expr head install tail tee tr uniq wc 
-#OTHERUTILS = bc gzip bzip2 rsync parted loadkeys blockdev awk clear reset ncat stty tty killall kexec ipcalc
-#SYSTEMDUTILS = systemd-cat
-#OPTUTILS = depmod find strace
-#
-# List of buzybox utils.
-#BUSYBOX = chmod chown cp dd df dmesg echo egrep fdisk fgrep grep halt hostname ifconfig init insmod kill ln ls lsmod mkdir mknod mkswap modprobe more mv ping poweroff ps reboot rm rmdir rmmod route sed sh sleep swapoff swapon sync syslogd tar touch uname vi
-#
-# Busybox not included here as it is alredy installed in build_dir from busybox.rul.
-#INITRD_BINARIES = $(E2FSPROGS) $(HFSUTILS) $(BTRFSUTILS) $(DOSFSTOOLS) $(OTHERUTILS) $(COREUTILS) $(SYSTEMDUTILS) $(OPTUTILS) $(BUSYBOX)
-#
-# Filter binaries that are not found. For example fsck.fat is not present on all distros.
-#FOUND_INITRD_BINARIES = $(shell which --skip-alias $(INITRD_BINARIES))
-#
-#KVER = $(shell cat /proc/version |cut -d' ' -f3)
-#
-#KMODS = $(shell find /lib/modules/$(KVER)/ -name \*.ko |sed -e 's|.*/||' -e 's|\.ko||' |tr '\n' ' ')
-
-#$(INITRD_DIR)/initrd.img:	$(INITRD_BUILD_DIR).build 
-#	# multiple instance of --include not supported on old dracut versions.
-#	# Thus, we do the job ourselves.
-#	dracut --force \
-#		--install "$(FOUND_INITRD_BINARIES)" \
-#		--filesystems "ext2 ext3 ext4 xfs jfs hfs reiserfs nfs" \
-#		--include $(INITRD_BUILD_DIR) / \
-#		--no-hostonly --no-hostonly-cmdline \
-#		--add network \
-#		--add syslog \
-#		--add debug \
-#		--omit usrmount \
-#		$(INITRD_DIR)/initrd.img $(KVER)
-#		#--add-drivers "$(KMODS)" \
-
 PHONY += install_initrd_template
 install_initrd_template:	$(INITRD_BUILD_DIR).build
 	mkdir -p $(BOOT_BIN_DEST)
 	# Specify explicitely etc and usr. do not install links. they'll conflict with dracut skel
 	rsync -a $(INITRD_BUILD_DIR)/etc $(INITRD_BUILD_DIR)/usr $(BOOT_BIN_DEST)/initrd_template/
-
-# install the autoinstall ramdisk - the initial ramdisk used by autoinstall
-# clients when beginning an autoinstall
-#PHONY += install_initrd
-#install_initrd:	$(INITRD_DIR)/initrd.img
-#	mkdir -p $(BOOT_BIN_DEST)
-#	$(SI_INSTALL) -m 644 $(INITRD_DIR)/initrd.img \
-#	    $(BOOT_BIN_DEST)/initrd.img
 
 PHONY += build_dir_clean
 build_dir_clean:
@@ -168,8 +101,7 @@ build_dir_clean:
 	rm -f  $(INITRD_DIR)/kernel_headers.prep
 
 PHONY += initrd_clean
-#initrd_clean:	build_dir_clean $(subst .rul,_clean,$(shell cd $(INITRD_DIR)/make.d && ls *.rul))
-initrd_clean:	build_dir_clean bittorrent_clean udpcast_clean
+initrd_clean:	build_dir_clean
 	-find . -name "*~" -exec rm -f {} \;
 	rm -f $(INITRD_DIR)/initrd.img
 

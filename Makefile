@@ -144,7 +144,6 @@ NCPUS := $(shell egrep -c '^processor' /proc/cpuinfo )
 
 MANUAL_DIR = $(TOPDIR)/doc/manual_source
 MANPAGE_DIR = $(TOPDIR)/doc/man
-PATCH_DIR = $(TOPDIR)/patches
 LIB_SRC = $(TOPDIR)/lib
 SRC_DIR = $(TOPDIR)/src
 BINARY_SRC = $(TOPDIR)/sbin
@@ -198,8 +197,6 @@ FLAMETHROWER_STATE_DIR = $(DESTDIR)/var/state/systemimager/flamethrower
 
 RSYNC_STUB_DIR = $(ETC)/systemimager/rsync_stubs
 
-#CHECK_FLOPPY_SIZE = expr \`du -b $(INITRD_DIR)/initrd.img | cut -f 1\` + \`du -b $(LINUX_IMAGE) | cut -f 1\`
-
 SI_INSTALL = $(TOPDIR)/tools/si_install --si-prefix=$(PREFIX)
 GETSOURCE = $(TOPDIR)/tools/getsource
 
@@ -222,7 +219,6 @@ else
 	include config.inc
 # build everything, install nothing
 .PHONY:	all
-#all:	kernel $(INITRD_DIR)/initrd.img manpages
 all:	install_initrd_template manpages
 
 
@@ -235,20 +231,6 @@ endif
 
 binaries: $(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.img
 
-# All has been modified as docs don't build on non debian platforms
-#
-#all:	$(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.img docs manpages
-
-#
-# Now include the other targets.  Some of these may have order dependencies.
-# Order as appropriate. -BEF-
-#
-# Why does ordered dependencies matter? Make will read all these
-# snippets before it evaluates the rule. If there are dependencies caused
-# by setting a variable in one and using it in another, then that should be
-# abstracted out. Its much more robust to include *.rul... -dannf
-#
-#include $(TOPDIR)/make.d/kernel.rul
 include $(TOPDIR)/initrd_source/initrd.rul
 
 # a complete server install
@@ -263,8 +245,7 @@ install_client_all:	install_client install_common install_initrd_template
 .PHONY:	install_server
 install_server:	install_server_man 	\
 				install_configs 	\
-				install_server_libs \
-				$(BITTORRENT_DIR).build
+				install_server_libs
 	$(SI_INSTALL) -d $(BIN)
 	$(SI_INSTALL) -d $(SBIN)
 	$(foreach binary, $(BINARIES), \
@@ -452,25 +433,6 @@ install_common_libs:
 	mkdir -p $(LIBEXEC_DEST)
 	$(SI_INSTALL) -m 755 $(LIB_SRC)/confedit $(LIBEXEC_DEST)
 
-# checks the sized of the i386 kernel and initrd to make sure they'll fit 
-# on an autoinstall diskette
-.PHONY:	check_floppy_size
-check_floppy_size:	$(LINUX_IMAGE) $(INITRD_DIR)/initrd.img
-ifeq ($(ARCH), i386)
-	@### see if the kernel and ramdisk are larger than the size of a 1.44MB
-	@### floppy image, minus about 10k for syslinux stuff
-	@echo -n "Ramdisk + Kernel == "
-	@echo "`$(CHECK_FLOPPY_SIZE)`"
-	@echo "                    1454080 is the max that will fit."
-	@[ `$(CHECK_FLOPPY_SIZE)` -lt 1454081 ] || \
-	     (echo "" && \
-	      echo "************************************************" && \
-	      echo "Dammit.  The kernel and ramdisk are too large.  " && \
-	      echo "************************************************" && \
-	      exit 1)
-	@echo " - ok, that should fit on a floppy"
-endif
-
 # install the initscript & config files for the server
 .PHONY:	install_configs
 install_configs:
@@ -499,11 +461,6 @@ install_configs:
 	$(SI_INSTALL) -b -m 755 etc/init.d/systemimager-server-monitord		$(INITD)
 
 ########## END initrd ##########
-
-
-########## BEGIN dev_tarball ##########
-# XXX deprecated -- no longer needed with udev. -BEF- 2011.02.15
-########## END dev_tarball ##########
 
 
 ########## BEGIN man pages ##########
@@ -540,14 +497,6 @@ docs:
 	$(MAKE) -C $(MANUAL_DIR) html ps pdf
 endif
 
-# pre-download the source to other packages that are needed by 
-# the build system
-.PHONY:	pre_download_source
-pre_download_source:	$(ALL_SOURCE)
-
-.PHONY:	get_source
-get_source:	$(ALL_SOURCE)
-
 .PHONY:	install
 install:
 	@echo ''
@@ -556,10 +505,6 @@ install:
 
 .PHONY:	install_binaries
 install_binaries:	install_initrd_template
-
-#install_binaries:	install_kernel \
-#			install_initrd \
-#			install_initrd_template
 
 .PHONY:	complete_source_tarball
 complete_source_tarball:	$(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source.tar.bz2.sign
@@ -681,7 +626,6 @@ deb: $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
 
 # removes object files, docs, editor backup files, etc.
 .PHONY:	clean
-#clean:	$(subst .rul,_clean,$(shell cd $(TOPDIR)/make.d && ls *.rul)) initrd_clean
 clean:	initrd_clean
 	-$(MAKE) -C $(MANPAGE_DIR) clean
 	-$(MAKE) -C $(MANUAL_DIR) clean
@@ -722,10 +666,6 @@ show_targets:
 	@echo "    Install all files needed by a server."
 	@echo "	"
 	@echo "install_initrd"
-	@echo ""
-	@echo "pre_download_source"
-	@echo "    Download source tarballs, but don't build anything."
-	@echo "    Useful to prep for offline builds."
 	@echo ""
 	@echo "source_tarball"
 	@echo "    Make a source tarball for distribution."
