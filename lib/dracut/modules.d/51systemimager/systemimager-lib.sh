@@ -1827,9 +1827,10 @@ fi
 
 install_boot_loader() {
 	sis_update_step boot 0 0
-	test -z "$@" && shellout "No disks to install bootloader to!"
+	IFS=" "
+	test -z "$*" && shellout "No disks to install bootloader to!"
 	loginfo "Now trying to install a boot loader on"
-        loginfo "the following disk(s): [$@]..."
+        loginfo "the following disk(s): [$*]..."
 
 	loginfo "Detecting bootloader flavor..."
 	[ -x /sysroot/usr/sbin/grub2-install ] || [ -x /sysroot/sbin/grub2-install ] && BOOT_LOADER="grub2"
