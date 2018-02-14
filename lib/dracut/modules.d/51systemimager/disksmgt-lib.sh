@@ -302,6 +302,7 @@ _find_free_space() {
 	($1>=min) && (($1<(min+ext_size)) || ext_size==0) && (required==0) { print $1 " " $2 ; exit 0 }
 	($1>=min) && ($1+required)<=$2 && (required!=0) { print $1 " " $1+required ; exit 0 }
 ' ` ) || shellout "Failed to find free space for a $3 partition of size $4$2"
+	[ "${BEGIN_END[0]}" = "0.00" ] && BEGIN_END[0]="1MiB" # Make sure we start at aligned position and that there is room for grub.
 	echo ${BEGIN_END[@]}
 }
 
