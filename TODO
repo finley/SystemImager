@@ -35,6 +35,13 @@
 
 - udpcast support
 
+- deploy a docker image on a physical node
+
+-/ create systemimager-xmit-docker.sh install a docker image from a docker server if possible. 
+   (cleaner to store image in docker container on a docker server than in an image server directory no?)
+   => update mksiimage ( add "--docker" switch )
+
+
 #- rewrite si_mkbootpackage so it uses dracut.
 #  Right now in order to build an initramfs package you need to issue the following command:
 #  sudo dracut --force --add systemimager -no-hostonly --no-hostonly-cmdline --no-hostonly-i18n /path_to_image/image_name.img $(uname -r)
