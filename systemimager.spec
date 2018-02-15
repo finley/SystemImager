@@ -379,6 +379,7 @@ Requires: xmlstarlet, parted, mdadm, util-linux, lvm2
 Requires: xfsprogs, e2fsprogs, btrfs-progs, ntfsprogs, dosfstools, jfsutils, reiserfs-utils
 Requires: ncurses, /usr/bin/awk, kbd
 Requires: kernel
+Requires: rtorrent
 Requires: systemimager-%{_build_arch}initrd_template
 %if %{?fedora}%{!?fedora:0} >= 18
 Requires:  systemd

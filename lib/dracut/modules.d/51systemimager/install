@@ -41,6 +41,8 @@ install() {
     inst_multiple depmod blkid
     # Some helpfull command in case of problem
     inst_multiple -o find strace sysctl vi clear reset lsof fuser
+    # bittorent client needed when using bittorrent deployment method.
+    inst_multiple rtorrent
 
     # 3/ Install dracut logic
     inst "$moddir/systemimager-lib.sh" "/lib/systemimager-lib.sh"
