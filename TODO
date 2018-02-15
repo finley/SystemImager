@@ -3,6 +3,26 @@
 #
 
 ============= TODO for the dracut change before release is possible ===========
+- create /var/lib/systeimager/images-infos/
+  move /var/lib/systeimager/configs into /var/lib/systeimager/images-infos/
+  create /var/lib/systeimager/images-infos/scripts/{pre-install,main-install,post-install}
+  move /var/lib/systeimager/scripts/*{sh,master} /var/lib/systeimager/images-infos/scripts/main-install
+  move /var/lib/systeimager/images-infos/scripts/{pre,post}-install /var/lib/systeimager/images-infos/scripts/
+  move /var/lib/systeimager/scripts/disks-layouts /var/lib/systeimager/images-infos/
+  Result for find /var/lib/systeimager/:
+  /var/lib/systemimager/clients.xml
+  /var/lib/systemimager/images/
+  /var/lib/systemimager/images-infos/configs/
+  /var/lib/systemimager/images-infos/disks-layouts/
+  /var/lib/systemimager/images-infos/scripts/pre-install/
+  /var/lib/systemimager/images-infos/scripts/main-install/
+  /var/lib/systemimager/images-infos/scripts/post-install/
+  /var/lib/systemimager/overrides/
+  /var/lib/systemimager/tarballs/
+  /var/lib/systemimager/torrents/
+  /var/lib/systemimager/dokers/ # To be brainstormed
+  => dowload image-server:/var/lib/systemimager/images-infos/ to initramfs:/tmp/images-infos/ at early dracut stage (just when network is ok, in place of downloading configs)
+
 - Partition are aligned to 1MiB so it fits all disks aligments.
   Enhancement: use http://people.redhat.com/msnitzer/docs/io-limits.txt if possible for optimal aligment.
                fallback to 1MiB aligment only if not supported/reported by disk.
