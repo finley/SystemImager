@@ -27,7 +27,6 @@ type logmessage >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 # get_disk_layout_config_file()
 #		return the full path name for disk layout config file if it exists
 #		if no layout is available, we fail (don't know how to initialize disks)
-# TODO: Add variable to avoid disk init (set from pre-install script for example)
 # TODO: Enhance filename guess and make it concistant across all things we guess
 #       (IMAGENAME, SCRIPTNAME, SIS_CONFIG, DISK_LAYOUT)
 ################################################################################
@@ -151,7 +150,8 @@ sis_install_configs() {
 	for KERNEL in `ls /sysroot/boot|grep vmlinuz`
 	do
 		loginfo "Generating initramfs for kernel: ${KERNEL}"
-		chroot /sysroot dracut --force --kver "${KERNEL#*-}" --hostonly --fstab --add-fstab /etc/fstab
+		logaction "dracut --force --kver "${KERNEL#*-}" --hostonly"
+		chroot /sysroot dracut --force --kver "${KERNEL#*-}" --hostonly
 	done
 }
 
@@ -230,7 +230,6 @@ _do_partitions() {
 			xmlstarlet sel -t -m "config/disk[@dev=\"${DISK_DEV}\"]/part" -v "concat(@num,';',@size,';',@p_type,';',@id,';',@p_name,';',@flags,';',@lvm_group,';',@raid_dev)" -n ${DISKS_LAYOUT_FILE}|\
 				while read P_NUM P_SIZE P_TYPE P_ID P_NAME P_FLAGS P_LVM_GROUP P_RAID_DEV
 				do
-					# TODO: Add missing @raid_dev in man autoinstallscript.conf
 					if test "$P_SIZE" = "*"
 					then
 						P_SIZE="0" # 0 means 100% for parted
@@ -310,10 +309,6 @@ _find_free_space() {
 ################################################################################
 # _do_raids()
 #		Create software raid devices if any are defined.
-#
-# TODO: Save software raid device config to config file.
-# TODO: at end of imaging, dracut must regenerate the initramfs with this config
-#       in place, otherwise, main filesystem won't be able to be mounted.
 #
 ################################################################################
 _do_raids() {
@@ -437,11 +432,9 @@ _do_lvms() {
 			logaction "${CMD}"
 			eval "${CMD}" || shellout "Failed to create volume group [${VG_NAME}]"
 
-			# TODO: Add missing @lv_options doc in man autoinstallscript.conf
 			xmlstarlet sel -t -m "config/lvm/lvm_group[@name=\"${VG_NAME}\"]/lv" -v "concat(@name,';',@size,';',@lv_options)" -n ${DISKS_LAYOUT_FILE} |\
 				while read LV_NAME LV_SIZE LV_OPTIONS
 				do
-					# TODO: Add @lv_options to man autoinstallscript.conf
 					loginfo "Creating logical volume ${LV_NAME} for volume groupe ${VG_NAME}."
 					CMD="lvcreate -y ${LVM_DEFAULT_CONFIG} ${LV_OPTIONS}"
 					if test "${LV_SIZE/ /}" = "*"
@@ -499,7 +492,7 @@ EOF
 			# 1/ Get the label if any.
 			[ "${FS_MOUNT_DEV%=*}"="LABEL" ] && FS_LABEL="${FS_MOUNT_DEV##*=}"
 
-			# Get the UUID, will be usefull for fastab later.
+			# Get the UUID, will be usefull for fstab later.
 			[ "${FS_MOUNT_DEV%=*}"="UUID" ] && FS_UUID="${FS_MOUNT_DEV##*=}"
 
 			# 2/ Format filesystem
