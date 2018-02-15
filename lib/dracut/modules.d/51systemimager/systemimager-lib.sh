@@ -1872,7 +1872,7 @@ install_boot_loader() {
 			OS_NAME=`cat /etc/system-release`
 			# BUG: (hd0,0) is hardcoded: need to fix that.
 			logaction "Creating /boot/grub/menu.lst"
-			cat > /boot/grub/menu.lst <<EOF
+			cat > /sysroot/boot/grub/menu.lst <<EOF
 default=0
 timeout=5
 title ${OS_NAME}
