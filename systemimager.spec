@@ -94,7 +94,7 @@ Linux machines. You can even update from one Linux release version to
 another!  It can also be used to ensure safe production deployments.
 By saving your current production image before updating to your new
 production image, you have a highly reliable contingency mechanism.  If
-the new production enviroment is found to be flawed, simply roll-back
+the new production environment is found to be flawed, simply roll-back
 to the last production image with a simple update command!  Some
 typical environments include: Internet server farms, database server
 farms, high performance clusters, computer labs, and corporate desktop
@@ -253,6 +253,7 @@ BuildRequires: plymouth-plugin-script, plymouth-plugin-label, dejavu-serif-fonts
 BuildRequires: parted, psmisc, /usr/bin/ncat, kexec-tools, bind-utils, net-tools 
 BuildRequires: openssh-server
 BuildRequires: xfsprogs, e2fsprogs, btrfs-progs, ncurses
+BuildRequires: rtorrent
 BuildRequires: kernel
 %if %{?fedora}%{!?fedora:0} >= 18
 BuildRequires:  systemd
