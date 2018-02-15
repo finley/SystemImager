@@ -1835,6 +1835,8 @@ install_boot_loader() {
 	loginfo "Detecting bootloader flavor..."
 	[ -x /sysroot/usr/sbin/grub2-install ] || [ -x /sysroot/sbin/grub2-install ] && BOOT_LOADER="grub2"
 	[ -x /sysroot/sbin/grub-install ] && BOOT_LOADER="grub"
+	[ -x /tmp/EFI.conf ] && BOOT_LOADER="EFI"
+
 	if test -z "${BOOT_LOADER}"
 	then
 		logwarn "Can't find a supported bootloader technology. Assuming post install"
@@ -1845,6 +1847,13 @@ install_boot_loader() {
 	fi
 
 	case "${BOOT_LOADER}" in
+		"EFI")
+			[ -z "`findmnt -o target,fstype --raw|grep -e '/boot/efi\svfat'`" ] && shellout "No EFI filesystem mounted (/sysroot/boot/efi not a vfat partition)."
+			[ ! -d /sysroot/boot/efi/EFI/BOOT ] && shellout "Missing /boot/efi/EFI/BOOT (EFI BOOT directory)."
+			# TODO: configure boot manager (either grub2-efi or any other)
+			. /tmp/EFI.conf # read requested EFI configuration (boot manager, kernel name, ...)
+			shellout "Not yet supported. Sorry"
+			;;
 		"grub2")
 			# if a grub2 specific config exists, we need to install it before generating grub.cfg
 			# Typically, this file is used to force raid reassembly in initramfs
