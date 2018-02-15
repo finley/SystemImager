@@ -31,6 +31,10 @@
 
 - network configuration.
 
+- bittorrent protocol: use rtorrent, opentracker?, mktorrent, ...
+
+- udpcast support
+
 #- rewrite si_mkbootpackage so it uses dracut.
 #  Right now in order to build an initramfs package you need to issue the following command:
 #  sudo dracut --force --add systemimager -no-hostonly --no-hostonly-cmdline --no-hostonly-i18n /path_to_image/image_name.img $(uname -r)
