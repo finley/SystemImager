@@ -393,38 +393,11 @@ sub _read_partition_info_and_prepare_parted_commands {
         print $out "fi\n";
         $devfs_dev = '$'.$dev2disk{$devfs_dev};
 
-        print $out "### BEGIN partition $devfs_dev ###\n";
-        print $out qq(loginfo "Partitioning $devfs_dev..."\n);
-        print $out qq(logdetail "Old partition table for $devfs_dev:"\n);
-        print $out "LC_ALL=C parted -s -- $devfs_dev print > /dev/console\n";
-
-        print $out "# Wipe the MBR (Master Boot Record) clean.\n";
-        $cmd = "dd if=/dev/zero of=$devfs_dev bs=512 count=1";
-        print $out qq(logaction "$cmd"\n);
-        print $out qq($cmd || shellout "dd if=/dev/zero of=$devfs_dev failed"\n);
-        print $out "# Avoid disk driver being buzy later\nsleep 0.5s\n\n";
-
-        print $out "# Re-read the disk label.\n";
-        $cmd = "blockdev --rereadpt $devfs_dev";
-        print $out qq(loginfo "$cmd"\n);
-        print $out qq($cmd || shellout "Failed to re-read partition table!" \n\n);
-
         print $out "# Create disk label.  This ensures that all remnants of the old label, whatever\n";
         print $out "# type it was, are removed and that we're starting with a clean label.\n";
-        $cmd = "parted -s -- $devfs_dev mklabel $label_type";
+        $cmd = "wipe_out_partition_table $devfs_dev $label_type";
         print $out qq(logaction "$cmd"\n);
-        print $out qq(LC_ALL=C $cmd || shellout "parted failed!"\n);
-        print $out "# Avoid disk driver being buzy later\nsleep 0.5s\n\n";
-
-        print $out "# Get the size of the destination disk so that we can make the partitions fit properly.\n";
-        print $out q(DISK_SIZE=`LC_ALL=C parted -s ) . $devfs_dev . q( unit MB print | egrep ") . $devfs_dev . q(" | awk '{print $NF}' | sed 's/MB//' `) . qq(\n);
-        print $out q([ -z $DISK_SIZE ] && shellout) . qq(\n);
-
-        print $out q(if [ "$ARCH" = "alpha" ]; then) . qq(\n);	
-        print $out q(    END_OF_LAST_PRIMARY=1) . qq(\n);
-        print $out q(else) . qq(\n);
-        print $out q(    END_OF_LAST_PRIMARY=1 # 1: room for grub2) . qq(\n);
-        print $out q(fi) . qq(\n\n);
+        print $out qq($cmd\n);
 
         ### BEGIN Populate the simple hashes. -BEF- ###
         my (
