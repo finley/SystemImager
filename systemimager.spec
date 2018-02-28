@@ -12,7 +12,7 @@
 # This is convenient when final release need to upgrade "beta" releases.
 %define rel      ##PKG_REL##%{?dist}
 %define dracut_module_index 51
-%define packager Bernard Li <bernard@vanhpc.org>
+%define packager Olivier Lahaye <olivier.lahaye@cea.fr>
 #define prefix   /usr
 %define _build_all 1
 %define _boot_flavor standard
