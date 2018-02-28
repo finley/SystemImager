@@ -188,7 +188,7 @@ convert2MB() {
 			echo (( $1 / 1000000 ))
 			;;
 		KB)
-			echo (( $1 / 1000 ))
+			echo (( $1 / 1000 )) # should be ($1+500)/1000 for propper rounding. Do we need this?
 			;;
 		MB)
 			echo $1
