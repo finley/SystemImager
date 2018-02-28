@@ -31,6 +31,8 @@ install() {
     inst_multiple -o mklost+found # Do we need that?
     # Install ssh and its requirements
     install_ssh
+    # Install docker and its requirements
+    install_docker
     # Install plymouth theme and its requirements
     install_plymouth_theme
     inst_multiple cut date echo env sort test false true [ expr head install tail tee tr uniq wc tac mktemp yes xmlstarlet
@@ -89,6 +91,19 @@ install_ssh() {
     (cd /etc; tar cpf - ssh/sshd_config ssh/moduli)|(cd $initdir/etc; tar xpf -)
     # Disable PAM authentication.
     sed -i -e 's/^UsePAM\syes/UsePAM no/g' $initdir/etc/ssh/sshd_config
+}
+
+################################################################################
+# sub routine that installs docker client
+#
+install_docker() {
+    # Install binaries
+    inst_multiple -o docker docker-current
+    # Install clients config
+    (cd /etc; tar cpf - docker/seccomp.json)|(cd $initdir/etc; tar xpf -)
+    # Install system docker config.
+    [ -f /etc/sysconfig/docker ] && mkdir -p $initdir/etc/sysconfig && cp /etc/sysconfig/docker $initdir/etc/sysconfig
+    [ -f /etc/default/docker ] && mkdir -p $initdir/etc/default && c /etc/default/docker $initdir/etc/default
 }
 
 ################################################################################
