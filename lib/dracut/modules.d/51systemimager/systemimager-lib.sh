@@ -166,6 +166,7 @@ sis_enable_debug_msg() {
     write_variables
     logdebug "Debug messages enabled."
 }
+
 ################################################################################
 #
 # Tells plymouth theme to display system messages (not only SystemImager ones))
@@ -173,6 +174,38 @@ sis_enable_debug_msg() {
 # Default: sys=N
 sis_enable_system_msg() {
 	plymouth --ping && plymouth update --status="conf:sys:Y"
+}
+
+################################################################################
+#
+# Convert value to MB
+# $1: value
+# $2: value unit (MB, MiB, GB, GiB, B)
+# output: value in MB
+convert2MB() {
+	case $2 in
+		B)
+			echo (( $1 / 1000000 ))
+			;;
+		KB)
+			echo (( $1 / 1000 ))
+			;;
+		MB)
+			echo $1
+			;;
+		GB)
+			echo (( $1 * 1000 ))
+			;;
+		TB)
+			echo (( $1 * 1000000 ))
+			;;
+		KiB|MiB|GiB|TiB)
+			# BUG: TODO
+			shellout "$2 unit not yet supported"
+			;;
+		*)
+			shellout "Unknown unit $2"
+	esac
 }
 
 ################################################################################
@@ -714,7 +747,7 @@ flamethrower_client() {
         fi
     fi
     if [ -z $DIR ]; then
-        logmsg "Must set DIR !!!"
+        logerror "Must set DIR !!!"
 	shellout
     else
         mkdir -p $DIR
