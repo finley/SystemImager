@@ -251,11 +251,11 @@ fun scroll_message(status_flag, text) {
    status_text = "";
    lines[i] = Image.Text(text, 1.0, 1.0, 1.0, 1.0, "Fixed");
    if (status_flag == "E") {         // ERROR
-      R=0.0; G=1.0; B=0.0;
+      R=1.0; G=0.0; B=0.0;
       status_text = "Error";
    } else if (status_flag == "W") {  // WARNING
       status_text = "Warning";
-      R=1.0; G=0.2; B=0.0;
+      R=1.0; G=0.7; B=0.0;
    } else if (status_flag == "I") {  // INFO
       R=0.0; G=1.0; B=0.0;
       status_text = "Info";
