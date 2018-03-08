@@ -185,19 +185,19 @@ sis_enable_system_msg() {
 convert2MB() {
 	case $2 in
 		B)
-			echo (( $1 / 1000000 ))
+			echo $(( $1 / 1000000 ))
 			;;
 		KB)
-			echo (( $1 / 1000 )) # should be ($1+500)/1000 for propper rounding. Do we need this?
+			echo $(( $1 / 1000 )) # should be ($1+500)/1000 for propper rounding. Do we need this?
 			;;
 		MB)
 			echo $1
 			;;
 		GB)
-			echo (( $1 * 1000 ))
+			echo $(( $1 * 1000 ))
 			;;
 		TB)
-			echo (( $1 * 1000000 ))
+			echo $(( $1 * 1000000 ))
 			;;
 		KiB|MiB|GiB|TiB)
 			# BUG: TODO
@@ -334,6 +334,8 @@ GATEWAYDEV="$GATEWAYDEV"
 IMAGESERVER="$IMAGESERVER"			# rd.sis.image-server
 IMAGENAME="$IMAGENAME"
 SCRIPTNAME="$SCRIPTNAME"
+GROUPNAMES="$GROUPNAMES"			# /scripts/cluster.txt
+GROUP_OVERRIDES="$GROUP_OVERRIDES"
 SIS_CONFIG="$SIS_CONFIG"			# rd.sis.config
 DISKS_LAYOUT="$DISKS_LAYOUT"			# rd.sis.disks-layout
 
@@ -368,9 +370,6 @@ BITTORRENT_POLLING_TIME="$BITTORRENT_POLLING_TIME"
 BITTORRENT_SEED_WAIT="$BITTORRENT_SEED_WAIT"
 BITTORRENT_UPLOAD_MIN="$BITTORRENT_UPLOAD_MIN"
 
-GROUPNAMES="$GROUPNAMES"
-GROUP_OVERRIDES="$GROUP_OVERRIDES"
-
 SEL_RELABEL="$SEL_RELABEL"			# rd.sis.selinux-relabel
 
 SIS_POST_ACTION="$SIS_POST_ACTION"		# rd.sis.post-action
@@ -383,7 +382,20 @@ EOF
 
 rm -f /tmp/variables.txt~
 }
+
+
+################################################################################
 #
+# get_config_filename(): return the guessed name for a specific config/script
+#			 in order of priority:
+#			 1:varaible 2:hostname 3:imagename 4:scriptname
+# $1: type (IMAGENAME, SCRIPTNAME, DISK_LAYOUT, CMDLINE_CONF, ...)
+# return the chosen name.
+#
+get_config_filename() {
+	echo TODO get_config_filename
+}
+
 ################################################################################
 #
 #   Description:
@@ -669,31 +681,21 @@ reverse() {
     echo $ret
     unset i
 }
-#
+
 ################################################################################
 #
-# Usage: get_scripts_directory
+# Description: remove leading and trailing spaces from a shell variable.
+# Source: https://stackoverflow.com/questions/369758/how-to-trim-whitespace-from-a-bash-variable#answer-3352015
 #
-get_scripts_directory() {
-    loginfo "Retrieving ${SCRIPTS_DIR} directory..."
-
-    if [ ! -z $FLAMETHROWER_DIRECTORY_PORTBASE ]; then
-        #
-        # We're using Multicast, so we should already have a directory 
-        # full of scripts.  Break out here, so that we don't try to pull
-        # the scripts dir again (that would be redundant).
-        #
-        MODULE_NAME="autoinstall_scripts"
-        DIR="${SCRIPTS_DIR}"
-        RETRY=7
-        flamethrower_client
-    else
-        mkdir -p ${SCRIPTS_DIR}
-        CMD="rsync -a ${IMAGESERVER}::${SCRIPTS}/ ${SCRIPTS_DIR}/"
-        logdetail "$CMD"
-        $CMD >/dev/null 2>&1 || shellout "Failed to retrieve ${SCRIPTS_DIR} directory..."
-    fi
+trim() {
+    local var="$*"
+    # remove leading whitespace characters
+    var="${var#"${var%%[![:space:]]*}"}"
+    # remove trailing whitespace characters
+    var="${var%"${var##*[![:space:]]}"}"
+    echo -n "$var"
 }
+
 #
 ################################################################################
 #
@@ -931,102 +933,7 @@ load_my_modules() {
     cd /my_modules || shellout
     sh ./INSMOD_COMMANDS
 }
-#
-################################################################################
-#
-# Look for local.cfg file
-#   This code inspired by Ian McLeod <ian@valinux.com>
-#
-read_local_cfg() {
-    logmsg read_local_cfg
 
-    if [ "x$SKIP_LOCAL_CFG" = "xy" ]; then
-        logmsg "Skipping local.cfg: option SKIP_LOCAL_CFG=y has been specified"
-        return
-    fi
-
-    # Try with local.cfg directly from initrd.
-    if [ -f /local.cfg ]; then
-        cp -f /local.cfg /tmp/local.cfg
-    fi
-
-    #
-    # BEGIN try hard drive
-    #
-    if [ ! -z "$LAST_ROOT" ]; then
-
-        logmsg
-        logmsg "Checking for /local.cfg file on hard drive..."
-        mkdir /last_root
-        logmsg "Mounting hard drive..."
-        mount $LAST_ROOT /last_root -o ro > /dev/null 2>&1
-        if [ $? != 0 ]; then
-            logmsg "FATAL: Couldn't mount hard drive!"
-            logmsg "Your kernel must have all necessary block and filesystem drivers compiled in"
-            logmsg "statically (not modules) in order to use a local.cfg on your hard drive.  The"
-            logmsg "standard SystemImager kernel is modular, so you will need to compile your own"
-            logmsg "kernel.  See the SystemImager documentation for details.  To proceed at this"
-            logmsg "point, you will need to unset the LAST_ROOT append parameter by typing"
-            logmsg ""systemimager LAST_ROOT=", or similar, at your boot prompt.  This will not use"
-            logmsg "the local.cfg file on your hard drive, but will still use one on a floppy."
-            shellout
-        fi
-
-        if [ -f /last_root/local.cfg ]; then
-            logmsg "Found /local.cfg on hard drive."
-            logmsg "Copying /local.cfg settings to /tmp/local.cfg."
-            cat /last_root/local.cfg >> /tmp/local.cfg || shellout
-        else
-            logmsg "No /local.cfg on hard drive."
-        fi
-        logmsg "Unmounting hard drive..."
-        umount /last_root || shellout
-        logmsg
-    fi
-    # END try hard drive
-
-    ### BEGIN try floppy ###
-    logmsg "Checking for floppy diskette."
-    logmsg 'YOU MAY SEE SOME "wrong magic" ERRORS HERE, AND THAT IS NORMAL.'
-    mkdir -p /run/media/floppy
-    mount /dev/fd0 /run/media/floppy -o ro > /dev/null 2>&1
-    if [ $? = 0 ]; then
-        logmsg "Found floppy diskette."
-        if [ -f /run/media/floppy/local.cfg ]; then
-            logmsg "Found /local.cfg on floppy."
-            logmsg "Copying /local.cfg settings to /tmp/local.cfg."
-            logmsg "NOTE: local.cfg settings from a floppy will override settings from"
-            logmsg "      a local.cfg file on your hard drive and DHCP."
-            # We use cat instead of copy, so that floppy settings can
-            # override hard disk settings. -BEF-
-            cat /run/media/floppy/local.cfg >> /tmp/local.cfg || shellout
-        else
-            logmsg "No /local.cfg on floppy diskette."
-        fi
-    else
-        logmsg "No floppy diskette in drive."
-    fi
-    ### END try floppy ###
-
-    # /tmp/local.cfg may be created from a local.cfg file on the hard drive, or a
-    # floppy.  If both are used, settings on the floppy take precedence. -BEF-
-    if [ -f /tmp/local.cfg ]; then
-        logmsg "Reading configuration from /tmp/local.cfg"
-        . /tmp/local.cfg || shellout
-        # Comvert /tmp/local.cfg to /etc/cmdline.d/00-network.conf
-        CMDLINECONF=/etc/cmdline.d/00-network.conf
-        if test ! -d /etc/cmdline.d
-        then
-             CMDLINECONF=/etc/cmdline
-        fi
-        loginfo "Adding following content to ${CMDLINECONF}"
-        loginfo "ip=$IPADDR:$GATEWAY:$NETMASK:$HOSTNAME:$DEVICE:on"
-        cat >> $CMDLINECONF <<EOF
-ip=$IPADDR:$GATEWAY:$NETMASK:$HOSTNAME:$DEVICE:on
-EOF
-    fi
-}
-#
 ################################################################################
 #
 show_loaded_modules() {
@@ -1113,26 +1020,58 @@ get_group_name() {
             GROUP_OVERRIDES="`sed -ne 's/^# global_override=:\([^:]*\):$/\1/p' ${SCRIPTS_DIR}/cluster.txt` $GROUP_OVERRIDES"
         fi
     fi
+    write_variables # Save GROUPNAMES and GROUP_OVERRIDES to variables.txt
 }
+
+################################################################################
 #
+# choose_filename()
+# $1: PATH to search for
+# $*: extentions to search for
+#
+# Choose one file, in order of preference.  First hit wins.
+# Order of preference is:
+#   HOSTNAME                (i.e. node001.<ext>)
+#   GROUPNAMES              (i.e. Login.<ext>) - see /etc/systemimager/cluster.xml on the image server
+#   BASE_HOSTNAME           (i.e. node.<ext>)
+#   IMAGENAME               (i.e. ubuntu7_04.<ext>)
+#   "default"               (i.e. default.<ext>)
+#
+# return: full path of 1st occurence found.
+#
+# example: choose_filename /scripts/main-install "" ".sh" ".master"
+#
+choose_filename() {
+	logdebug "choose_filename $*"
+	get_base_hostname
+	DIR=$1
+	shift
+	for FILE in ${HOSTNAME} ${GROUPNAMES} ${BASE_HOSTNAME} ${IMAGENAME} default
+	do
+		for EXT in $*
+		do
+			FOUND=${DIR}/${FILE}${EXT}
+			logdebug "Trying ${FOUND}"
+			test -e ${FOUND} && break 2
+		done
+	done
+	# Check we went out thru break.
+	if test -e "${FOUND}"
+	then
+		logdebug "Got: [${FOUND}]"
+		echo "${FOUND}"
+	else
+		logdebug "No matching file found. in [$DIR]"
+		echo ""
+	fi
+}
+
 ################################################################################
 #
 choose_autoinstall_script() {
 
     loginfo "Choosing autoinstall script..."
 
-    #
-    # Get the base hostname for the last attempt at choosing an autoinstall
-    # script.  For example, if the hostname is compute99, then try to get 
-    # compute.master. -BEF-
-    #
-    get_base_hostname
-
-    # Get group name (defined in /etc/systemimager/cluster.xml on the image
-    # server). -AR-
-    get_group_name
-
-    # 
     # If SCRIPTNAME is specified as a kernel append, or via local.cfg, then use that script.
     #
     if [ -n "${SCRIPTNAME}" ]; then
@@ -1144,24 +1083,7 @@ choose_autoinstall_script() {
 	# Script name was specified, so it MUST be available. If not, we must fail.
         [ ! -e ${SCRIPTS_DIR}/${SCRIPTNAME} -a ! -e ${SCRIPTS_DIR}/${SCRIPTNAME}.sh -a !-e ${SCRIPTS_DIR}/${SCRIPTNAME}.master ] || shellout "Cant find requested main autoinstall script: ${SCRIPTNAME}{,.sh,.master}"
     else
-        # 
-        # If SCRIPTNAME was not specified, choose one, in order of preference.  First hit wins.
-        # Order of preference is:
-        #   HOSTNAME                (i.e. node001.sh)
-        #   GROUPNAMES              (i.e. Login.sh) - see /etc/systemimager/cluster.xml on the image server
-        #   BASE_HOSTNAME           (i.e. node.sh)
-        #   IMAGENAME               (i.e. ubuntu7_04.sh)
-        #
-        [ ! -z $HOSTNAME ] && \
-            SCRIPTNAMES="${SCRIPTNAMES} ${SCRIPTS_DIR}/${HOSTNAME}.sh ${SCRIPTS_DIR}/${HOSTNAME}.master"
-        for GROUPNAME in $GROUPNAMES; do
-            SCRIPTNAMES="${SCRIPTNAMES} ${SCRIPTS_DIR}/${GROUPNAME}.sh ${SCRIPTS_DIR}/${GROUPNAME}.master"
-        done
-        unset GROUPNAME
-        [ ! -z $BASE_HOSTNAME ] && \
-            SCRIPTNAMES="${SCRIPTNAMES} ${SCRIPTS_DIR}/${BASE_HOSTNAME}.sh ${SCRIPTS_DIR}/${BASE_HOSTNAME}.master"
-        [ ! -z $IMAGENAME ] && \
-            SCRIPTNAMES="${SCRIPTNAMES} ${SCRIPTS_DIR}/${IMAGENAME}.sh ${SCRIPTS_DIR}/${IMAGENAME}.master"
+            SCRIPTNAMES=`choose_filename /scripts/main-install "" ".sh" ".master"`
     fi
 
     #

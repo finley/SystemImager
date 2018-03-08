@@ -83,7 +83,7 @@ install() {
     inst_hook initqueue/online 00 "$moddir/systemimager-load-dhcpopts.sh" # read DHCP SIS special options
     #inst_hook initqueue/online 10 "$moddir/systemimager-ifcfg.sh" # creates /tmp/variables.txt
     inst_hook initqueue/online 20 "$moddir/systemimager-pingtest.sh" # do a ping_test()
-    inst_hook initqueue/online 30 "$moddir/systemimager-load-config.sh" # read $SIS_CONFIG from server
+    inst_hook initqueue/online 30 "$moddir/systemimager-load-scripts-ecosystem.sh" # load /scripts read $SIS_CONFIG
     inst_hook initqueue/online 50 "$moddir/systemimager-monitor-server.sh" # Start the log monitor server
     inst_hook initqueue/online 90 "$moddir/systemimager-deploy-client.sh" # Imaging occures here
 #    inst_hook pre/pivot 50 "$moddir/systemimager-save-inst-logs.sh"

@@ -21,9 +21,20 @@
 # - get image size to download
 # - check it fits in destination (staging dir or system)
 #
+function init_transfer() {
+    shellout "No yet implemented"
+}
+
 ################################################################################
 #
-function init_transfer() {
+# Usage: get_scripts_directory
+#
+function get_scripts_directory() {
+    loginfo "Retrieving ${SCRIPTS_DIR} directory..."
+    mkdir -p ${SCRIPTS_DIR}
+    CMD="rsync -a ${IMAGESERVER}::${SCRIPTS}/ ${SCRIPTS_DIR}/"
+    logdetail "$CMD"
+    $CMD >/dev/null 2>&1 || shellout "Failed to retrieve ${SCRIPTS_DIR} directory..."
 }
 
 ################################################################################

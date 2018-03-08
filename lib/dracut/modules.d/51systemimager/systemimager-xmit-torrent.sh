@@ -20,8 +20,6 @@
 # get image size to download
 # check it fits
 #
-################################################################################
-#
 function init_transfer() {
     loginfo "Initializing image transfer. Using BITTORRENT protocol"
     _get_torrents_directory # Retreive all .torrent files
@@ -34,6 +32,18 @@ function init_transfer() {
     write_variables # keep track of $STAGING_DIR and $IMAGESIZE variable accross dracut scripts logic
     loginfo "Image size: $IMAGESIZE"
     # check it fits in destination (staging dir or system)
+}
+
+################################################################################
+#
+# Usage: get_scripts_directory
+#
+function get_scripts_directory() {
+    loginfo "Retrieving ${SCRIPTS_DIR} directory..."
+    mkdir -p ${SCRIPTS_DIR}
+    CMD="rsync -a ${IMAGESERVER}::${SCRIPTS}/ ${SCRIPTS_DIR}/"
+    logdetail "$CMD"
+    $CMD >/dev/null 2>&1 || shellout "Failed to retrieve ${SCRIPTS_DIR} directory..."
 }
 
 ################################################################################

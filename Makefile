@@ -42,7 +42,9 @@
 #
 # SystemImager file location standards:
 #   o images will be stored in: /var/lib/systemimager/images/
-#   o autoinstall scripts:      /var/lib/systemimager/scripts/
+#   o pre-install scripts:      /var/lib/systemimager/scripts/pre-install/
+#   o autoinstall scripts:      /var/lib/systemimager/scripts/main-install/
+#   o post-install scripts:     /var/lib/systemimager/scripts/post-install/
 #   o tarball files for BT:     /var/lib/systemimager/tarballs/
 #   o torrent files:            /var/lib/systemimager/torrents/
 #   o override directories:     /var/lib/systemimager/overrides/
@@ -190,7 +192,6 @@ WARNING_FILES = $(IMAGESRC)/README $(IMAGESRC)/CUIDADO $(IMAGESRC)/ACHTUNG
 AUTOINSTALL_SCRIPT_DIR = $(DESTDIR)/var/lib/systemimager/scripts
 AUTOINSTALL_TORRENT_DIR = $(DESTDIR)/var/lib/systemimager/torrents
 AUTOINSTALL_TARBALL_DIR = $(DESTDIR)/var/lib/systemimager/tarballs
-AUTOINSTALL_CONFIG_DIR = $(DESTDIR)/var/lib/systemimager/configs
 OVERRIDES_DIR = $(DESTDIR)/var/lib/systemimager/overrides
 OVERRIDES_README = $(TOPDIR)/var/lib/systemimager/overrides/README
 FLAMETHROWER_STATE_DIR = $(DESTDIR)/var/state/systemimager/flamethrower
@@ -255,12 +256,12 @@ install_server:	install_server_man 	\
 	$(SI_INSTALL) -d -m 755 $(LOG_DIR)
 	$(SI_INSTALL) -d -m 755 $(LOCK_DIR)
 	$(SI_INSTALL) -d -m 755 $(BOOT_BIN_DEST)
-	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_SCRIPT_DIR)
-	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_CONFIG_DIR)
-
 	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_TARBALL_DIR)
 	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_TORRENT_DIR)
-
+	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_SCRIPT_DIR)
+	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_SCRIPT_DIR)/configs
+	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_SCRIPT_DIR)/disks-layouts
+	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_SCRIPT_DIR)/main-install
 	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_SCRIPT_DIR)/pre-install
 	$(SI_INSTALL) -m 644 --backup --text \
 		$(TOPDIR)/var/lib/systemimager/scripts/pre-install/99all.harmless_example_script \
@@ -268,7 +269,6 @@ install_server:	install_server_man 	\
 	$(SI_INSTALL) -m 644 --backup --text \
 		$(TOPDIR)/var/lib/systemimager/scripts/pre-install/README \
 		$(AUTOINSTALL_SCRIPT_DIR)/pre-install/
-
 	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_SCRIPT_DIR)/post-install
 	$(SI_INSTALL) -m 644 --backup --text \
 		$(TOPDIR)/var/lib/systemimager/scripts/post-install/99all.harmless_example_script \
@@ -279,10 +279,8 @@ install_server:	install_server_man 	\
 	$(SI_INSTALL) -m 644 --backup --text \
 		$(TOPDIR)/var/lib/systemimager/scripts/post-install/README \
 		$(AUTOINSTALL_SCRIPT_DIR)/post-install/
-
 	$(SI_INSTALL) -d -m 755 $(OVERRIDES_DIR)
 	$(SI_INSTALL) -m 644 $(OVERRIDES_README) $(OVERRIDES_DIR)
-
 	$(SI_INSTALL) -d -m 755 $(PXE_CONF_DEST)
 	$(SI_INSTALL) -m 644 --backup --text $(PXE_CONF_SRC)/message.txt \
 		$(PXE_CONF_DEST)/message.txt
@@ -292,7 +290,6 @@ install_server:	install_server_man 	\
 		$(PXE_CONF_DEST)/syslinux.cfg.localboot
 	$(SI_INSTALL) -m 644 --backup $(PXE_CONF_SRC)/syslinux.cfg.localboot \
 		$(PXE_CONF_DEST)/default
-
 	$(SI_INSTALL) -d -m 755 $(KBOOT_CONF_DEST)
 #	$(SI_INSTALL) -m 644 --backup --text $(KBOOT_CONF_SRC)/message.txt \
 #		$(KBOOT_CONF_DEST)/message.txt
@@ -300,11 +297,9 @@ install_server:	install_server_man 	\
 		$(KBOOT_CONF_DEST)/
 	$(SI_INSTALL) -m 644 --backup $(KBOOT_CONF_SRC)/default \
 		$(KBOOT_CONF_DEST)/
-
 	$(SI_INSTALL) -d -m 755 $(IMAGEDEST)
 	$(SI_INSTALL) -m 644 $(WARNING_FILES) $(IMAGEDEST)
 	cp -a $(IMAGEDEST)/README $(IMAGEDEST)/DO_NOT_TOUCH_THESE_DIRECTORIES
-
 	$(SI_INSTALL) -d -m 755 $(FLAMETHROWER_STATE_DIR)
 
 # install client-only files
@@ -360,8 +355,8 @@ endif
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-deploy-client.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-init.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-lib.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
-	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-load-config.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-load-dhcpopts.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-load-scripts-ecosystem.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-monitor-server.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-pingtest.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-timeout.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager

@@ -21,40 +21,6 @@ type logmessage >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 # TODO: Enhancement: use http://people.redhat.com/msnitzer/docs/io-limits.txt if possible for optimal aligment; fallback to 1MiB aligment only if not supported.
 #
 
-# TODO: we need to download scripts directory before.
-################################################################################
-#
-# get_disk_layout_config_file()
-#		return the full path name for disk layout config file if it exists
-#		if no layout is available, we fail (don't know how to initialize disks)
-# TODO: Enhance filename guess and make it concistant across all things we guess
-#       (IMAGENAME, SCRIPTNAME, SIS_CONFIG, DISK_LAYOUT)
-################################################################################
-get_disk_layout_config_file() {
-	if test -n "${DISKS_LAYOUT}"
-	then
-		[ -r "/scripts/disks-layouts/${DISKS_LAYOUT}" ] && echo "/scripts/disks-layouts/${DISKS_LAYOUT}" && return
-		[ -r "/scripts/disks-layouts/${DISKS_LAYOUT}.xml" ] && echo "/scripts/disks-layouts/${DISKS_LAYOUT}.xml" && return
-		logerror "Can't find /scripts/disks-layouts/${DISKS_LAYOUT} nor /scripts/disks-layouts/${DISKS_LAYOUT}.xml"
-		logerror "Please, check that /var/lib/systemimager/scripts/disks-layouts/${DISKS_LAYOUT} exists on"
-		logerror "image server ${IMAGESERVER}"
-		shellout "Can't initilize disks. No layout found."
-	elif test -n "${HOSTNAME}"
-	then
-		[ -r "/scripts/disks-layouts/${HOSTNAME}" ] && echo "/scripts/disks-layouts/${HOSTNAME}" && return
-		[ -r "/scripts/disks-layouts/${HOSTNAME}.xml" ] && echo "/scripts/disks-layouts/${HOSTNAME}.xml" && return
-	elif test -n "${IMAGENAME}"
-	then
-		[ -r "/scripts/disks-layouts/${IMAGENAME}" ] && echo "/scripts/disks-layouts/${IMAGENAME}" && return
-		[ -r "/scripts/disks-layouts/${IMAGENAME}.xml" ] && echo "/scripts/disks-layouts/${IMAGENAME}.xml" && return
-	fi
-	logerror "Neiter DISKS_LAYOUT, HOSTNAME, IMAGENAME is set"
-	logerror "Can't find a disk layout config file"
-	logerror "Please read autoinstallscript.conf manual and create a disk layout file"
-	logerror "Store it on image sarver in /var/lib/systemimager/scripts/disks-layouts/"
-	shellout "Can't initilize disks. No layout found."
-}
-
 ################################################################################
 #
 # get_disks_from_autoinstall_conf()
@@ -76,8 +42,26 @@ get_disks_from_autoinstall_conf() {
 ################################################################################
 #		
 sis_prepare_disks() {
-	DISKS_LAYOUT_FILE=`get_disk_layout_config_file`
-	loginfo "Got Disk layout file: ${DISKS_LAYOUT_FILE}"
+	if test -z "${DISKS_LAYOUT}"
+	then
+		DISKS_LAYOUT_FILE=`choose_filename /scripts/disks-layouts "" ".xml"`
+	else
+		DISKS_LAYOUT_FILE=/scripts/disks-layouts/${DISKS_LAYOUT}
+		test ! -f "${DISKS_LAYOUT_FILE}" && DISKS_LAYOUT_FILE=/scripts/disks-layouts/${DISKS_LAYOUT}.xml
+	fi
+	if test ! -f "${DISKS_LAYOUT_FILE}"
+	then
+		logerror "Could not get a valid disk layout file"
+		test -n "${DISKS_LAYOUT_FILE}" && logerror "Tryed ${DISKS_LAYOUT_FILE}"
+		logerror "Neiter DISKS_LAYOUT, HOSTNAME, IMAGENAME is set or"
+		logerror "No group, group_override, base_hostname matches a layout file"
+		logerror "Can't find a disk layout config file. Can't initilize disks."
+		logerror "Please read autoinstallscript.conf manual and create a disk layout file"
+		logerror "Store it on image sarver in /var/lib/systemimager/scripts/disks-layouts/"
+		logerror "Use the one of possible names: {\$DISKS_LAYOUT,\$HOSTNAME,\$GROUPNAME,\$BASE_HOSTNAME,\$IMAGENAME,default}{,.xml}"
+		shellout "Can't initilize disks. No layout found."
+	fi
+	loginfo "Using Disk layout file: ${DISKS_LAYOUT_FILE}"
 
 	# Initialisae / check LVM version to use. (defaults to v2).
 	LVM_VERSION=`xmlstarlet sel -t -m "config/lvm" -if "@version" -v "@version" --else -o "2" -b ${DISKS_LAYOUT_FILE}`

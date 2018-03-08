@@ -21,8 +21,6 @@
 # - get image size to download
 # - check it fits in destination (staging dir or system)
 #
-################################################################################
-#
 function init_transfer() {
     loginfo "Initializing image transfer. Using RSYNC protocol"
     [ -z "${STAGING_DIR}" ] && STAGING_DIR=/tmp/tmpfs_staging
@@ -31,13 +29,24 @@ function init_transfer() {
     write_variables # keep track of $STAGING_DIR and $IMAGESIZE variable accross dracut scripts logic
     loginfo "Image size: $IMAGESIZE"
 }
-  
+
+################################################################################
+#
+# Usage: get_scripts_directory
+#
+function get_scripts_directory() {
+    loginfo "Retrieving ${SCRIPTS_DIR} directory..."
+    mkdir -p ${SCRIPTS_DIR}
+    CMD="rsync -a ${IMAGESERVER}::${SCRIPTS}/ ${SCRIPTS_DIR}/"
+    logdetail "$CMD"
+    $CMD >/dev/null 2>&1 || shellout "Failed to retrieve ${SCRIPTS_DIR} directory..."
+}
+
 ################################################################################
 #
 # get_image_size <image_name>
 #    => Returns the image size to be downloaded in MB (power of ten).
 #
-################################################################################
 function get_image_size() {
 	SIZE_BYTES=`LC_ALL=C rsync -av --numeric-ids "${IMAGESERVER}::${IMAGENAME}" | grep "total size" | sed -e "s/,//g" -e "s/total size is \([-0-9]*\).*/\1/"`
         # Report it in MB (power of ten)

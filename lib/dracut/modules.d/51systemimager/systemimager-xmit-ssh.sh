@@ -20,9 +20,17 @@
 # - get image size to download
 # - check it fits in destination (staging dir or system)
 #
+function init_transfer() {
+    shellout "No yet implemented"
+}
+
 ################################################################################
 #
-function init_transfer() {
+# Usage: get_scripts_directory
+#
+function get_scripts_directory() {
+    loginfo "Retrieving ${SCRIPTS_DIR} directory..."
+    shellout "No yet implemented"
 }
 
 ################################################################################

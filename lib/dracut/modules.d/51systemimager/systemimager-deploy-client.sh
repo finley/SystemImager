@@ -61,55 +61,48 @@ if [ "x$SSH" = "xy" ]; then
     start_ssh
 fi
 
-# Download install scripts and disk layouts.
-# TODO: move this function in protocol plugins.
-get_scripts_directory
-
-# HOSTNAME may already be set via cmdline, dhcp or local.cfg
-if [ -z "$HOSTNAME" ]; then
-    get_hostname_by_hosts_file
-fi
-
-if [ -z "$HOSTNAME" ]; then
-    get_hostname_by_dns
-fi
-
-if [ -n "$HOSTNAME" ]; then
-    loginfo "This hostname is: $HOSTNAME"
-fi
-
 # Give pre-install scripts a chance to do stuffs before we lay down the image.
 run_pre_install_scripts
+. /tmp/variables.txt # Read variables that could have been updated in pre-install script like IMAGENAME
 
 # If none of SCRIPTNAME, HOSTNAME, or IMAGENAME is set, then we cannot proceed.
 # (IMAGENAME may have been set by local.cfg).  -BEF-
 if [ -z $SCRIPTNAME ] && [ -z $IMAGENAME ] && [ -z $HOSTNAME ]; then
-    logwarn "FATAL:  None of SCRIPTNAME, IMAGENAME, or HOSTNAME were set, and I"
-    logwarn "can no proceed!  (Scottish accent -- think Groundskeeper Willie)"
-    logwarn ""
-    logwarn "HOSTNAME is what most people use, and I try to determine it automatically"
-    logwarn "from this hosts IP address ($IPADDR) in the following order:"
-    logwarn ""
-    logwarn "  1)  /var/lib/systemimager/scripts/hosts on your imageserver"
-    logwarn "  2)  DNS"
-    logwarn ""
-    logwarn "Finally, you can explicitly set many variables pre-boot, including SCRIPTNAME,"
-    logwarn "IMAGENAME, and HOSTNAME, as kernel append parameters or with a local.cfg file."
+    logerror "FATAL:  None of SCRIPTNAME, IMAGENAME, or HOSTNAME were set, and I"
+    logerror "can no proceed!  (Scottish accent -- think Groundskeeper Willie)"
+    logerror ""
+    logerror "HOSTNAME is what most people use, and I try to determine it automatically"
+    logerror "from this hosts IP address ($IPADDR) in the following order:"
+    logerror ""
+    logerror "  1)  /var/lib/systemimager/scripts/hosts on your imageserver"
+    logerror "  2)  DNS"
+    logerror ""
+    logerror "Finally, you can explicitly set many variables pre-boot, including SCRIPTNAME,"
+    logerror "IMAGENAME, and HOSTNAME, as kernel append parameters or with a local.cfg file."
 
-    shellout
+    shellout "None of SCRIPTNAME, IMAGENAME, or HOSTNAME were set"
 fi
 
-# Prepare disks and mount them as described in disk layour file (autoinstallscript.conf xml file)
+# Prepare disks and mount them as described in disk layout file (autoinstallscript.conf xml file)
 sis_prepare_disks
 
 # Mount os filesystems to /sysroot (will shellout in case of failure)
 mount_os_filesystems_to_sysroot
 
-# Run the autoinstall script (image installation)
-run_autoinstall_script
-. /tmp/variables.txt # Read varaibles that could have been updated in autoinstall script like IMAGENAME
+# Run the autoinstall script (before image installation).
+# the autoinstall script (also called main-install) is optional.
+run_autoinstall_script # Last chance to set IMAGENAME
+. /tmp/variables.txt # Read variables that could have been updated in autoinstall script like IMAGENAME
 
 # Download and install the image
+if test -z "${IMAGENAME}"
+then
+	logerror "FATAL: IMAGENAME not set, I cannot proceed!"
+	logerror "Set it in cmdline parameter, dhcp options, /var/lib/systemimager/scripts/configs/"
+	logerror "or set it in pre install scripts or main-install script"
+	shellout "IMAGENAME not set"
+fi
+
 download_image # Download and extract image if no staging dir is used
 extract_image  # Extract image to /sysroot if staging dir was used, else do noting
 install_overrides # download and install override files
@@ -119,7 +112,7 @@ sis_install_configs
 
 # Leave notice of which image is installed on the client
 mkdir -p /sysroot/etc/systemimager/
-echo $IMAGENAME > /sysroot/etc/systemimager/IMAGE_LAST_SYNCED_TO || shellout "Failed to save IMAGENAME in /etc/systemimager/IMAGE_LAST_SYNCED_TO"
+echo "${IMAGENAME}" > /sysroot/etc/systemimager/IMAGE_LAST_SYNCED_TO || shellout "Failed to save IMAGENAME in /etc/systemimager/IMAGE_LAST_SYNCED_TO"
 
 # Now install bootloader (before post_install scripts to give a chance to scripts to modify this)
 # OL: TODO: We should be smarter here. We should install bootloader only on the disk containing the /boot partition.

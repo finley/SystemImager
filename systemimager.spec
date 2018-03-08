@@ -1113,10 +1113,12 @@ fi
 %dir /var/log/systemimager
 %dir %{_sharedstatedir}/systemimager
 %dir %{_sharedstatedir}/systemimager/images
-%dir %{_sharedstatedir}/systemimager/configs
 %dir %{_sharedstatedir}/systemimager/scripts
 %dir %{_sharedstatedir}/systemimager/scripts/pre-install
+%dir %{_sharedstatedir}/systemimager/scripts/main-install
 %dir %{_sharedstatedir}/systemimager/scripts/post-install
+%dir %{_sharedstatedir}/systemimager/scripts/configs
+%dir %{_sharedstatedir}/systemimager/scripts/disks-layouts
 %dir %{_sharedstatedir}/systemimager/overrides
 %{_sharedstatedir}/systemimager/overrides/README
 %dir %{_datarootdir}/systemimager
@@ -1133,8 +1135,8 @@ fi
 %{_sysconfdir}/init.d/systemimager-server-netboot*
 %{_sysconfdir}/init.d/systemimager-server-monitord
 %{_sharedstatedir}/systemimager/images/*
-%{_sharedstatedir}/systemimager/scripts/post-install/*
 %{_sharedstatedir}/systemimager/scripts/pre-install/*
+%{_sharedstatedir}/systemimager/scripts/post-install/*
 %{_sbindir}/si_addclients
 %{_sbindir}/si_cpimage
 %{_sbindir}/si_getimage
