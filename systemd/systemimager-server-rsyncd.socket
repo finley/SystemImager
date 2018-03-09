@@ -1,0 +1,24 @@
+#   Copyright (C) 2018 Olivier Lahaye
+#
+#   $Id$
+#
+# rsync daemon used by SystemImager to serve up images, 
+# autoinstall scripts, and other data used during the 
+# installation and management of SystemImager client 
+# machines.
+#
+# Do not modify this file. Instead, use systemd override.
+# Set modified entries in /etc/systemd/system/systemimager-server-rsyncd.socket.d/<name>.conf
+#
+# This service is used by systemimager-server-rsyncd@.service
+
+[Unit]
+Description=Rsync Server Socket for SystemImager
+Conflicts=rsyncd.service rsyncd.socket systemimager-server-rsyncd.service
+
+[Socket]
+ListenStream=873
+Accept=yes
+
+[Install]
+WantedBy=sockets.target

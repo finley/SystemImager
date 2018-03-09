@@ -154,6 +154,8 @@ BINARY_SRC = $(TOPDIR)/sbin
 PREFIX = /usr
 ETC  = $(DESTDIR)/etc
 INITD = $(ETC)/init.d
+SYSTEMD_UNITS_DIR = $(USR)/lib/systemd/system
+SYSTEMD_SRC = $(TOPDIR)/systemd
 USR = $(DESTDIR)$(PREFIX)
 DOC  = $(USR)/share/doc/systemimager-doc
 BIN = $(USR)/bin
@@ -447,6 +449,19 @@ install_configs:
 		|| $(SI_INSTALL) -b -m 644 etc/rsync_stubs/99local $(RSYNC_STUB_DIR)
 	$(SI_INSTALL) -b -m 644 etc/rsync_stubs/README $(RSYNC_STUB_DIR)
 
+ifneq ("$(wildcard /usr/lib/systemd/*system)","")
+	[ "$(SYSTEMD_UNITS_DIR)" != "" ] || exit 1
+	mkdir -p $(SYSTEMD_UNITS_DIR)
+	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-bittorrent-seeder.service $(SYSTEMD_UNITS_DIR)
+	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-bittorrent.service $(SYSTEMD_UNITS_DIR)
+	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-bittorrent-tracker.service $(SYSTEMD_UNITS_DIR)
+	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-flamethrowerd.service $(SYSTEMD_UNITS_DIR)
+	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-monitord.service $(SYSTEMD_UNITS_DIR)
+	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-netbootmond.service $(SYSTEMD_UNITS_DIR)
+	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-rsyncd.service $(SYSTEMD_UNITS_DIR)
+	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-rsyncd@.service $(SYSTEMD_UNITS_DIR)
+	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-rsyncd.socket $(SYSTEMD_UNITS_DIR)
+else
 	[ "$(INITD)" != "" ] || exit 1
 	mkdir -p $(INITD)
 	$(SI_INSTALL) -b -m 755 etc/init.d/systemimager-server-rsyncd 			$(INITD)
@@ -454,8 +469,8 @@ install_configs:
 	$(SI_INSTALL) -b -m 755 etc/init.d/systemimager-server-flamethrowerd 	$(INITD)
 	$(SI_INSTALL) -b -m 755 etc/init.d/systemimager-server-bittorrent 	$(INITD)
 	$(SI_INSTALL) -b -m 755 etc/init.d/systemimager-server-monitord		$(INITD)
-
-########## END initrd ##########
+endif
+########## END service files ##########
 
 
 ########## BEGIN man pages ##########

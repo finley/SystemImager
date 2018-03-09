@@ -1,0 +1,26 @@
+#
+#   "SystemImager"
+#
+#   Copyright (C) 2018 Olivier Lahaye
+#
+#   $Id$
+#
+# Daemon for multicast file distribution
+#
+# Do not modify this file. Instead, use systemd override.
+# Set modified entries in /etc/systemd/system/systemimager-server-flamethrowerd.service.d/<name>.conf
+
+[Unit]
+ConditionPathExists=/etc/systemimager/flamethrower.conf
+Description=Daemon for multicast file distribution
+
+[Service]
+# Some default values
+Environment="STATE_DIR=/var/state/systemimager/flamethrower"
+# EnvironmentFile overrides default values
+EnvironmentFile=/etc/systemimager/flamethrower.conf
+PIDFile=/var/run/systemimager-server-flamethrowerd.pid
+ExecStart=/usr/bin/flamethrowerd --config-file /etc/systemimager/flamethrower.conf --pid-file $MAINPID
+
+[Install]
+WantedBy=multi-user.target

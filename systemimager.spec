@@ -61,7 +61,7 @@
 %define python_xml PyXML
 %endif
 
-# Still use the correct lib even on fc-18+ where --target noarch sets %_libdir to /usr/lib even on x86_64 arch.
+# Still use the correct lib even on fc-18+ where --target noarch sets _libdir to /usr/lib even on x86_64 arch.
 %define static_libcrypt_a /usr/lib/libcrypt.a
 %if "%(arch)" == "x86_64"
 %define static_libcrypt_a /usr/lib64/libcrypt.a
@@ -1131,9 +1131,17 @@ fi
 %config(noreplace) %{_sysconfdir}/systemimager/systemimager.conf
 %config(noreplace) %{_sysconfdir}/systemimager/cluster.xml
 %config(noreplace) %{_sysconfdir}/systemimager/getimage.exclude
+%if 0%{?_unitdir:1}
+%{_unitdir}/systemimager-server-monitord.service
+%{_unitdir}/systemimager-server-netbootmond.service
+%{_unitdir}/systemimager-server-rsyncd.service
+%{_unitdir}/systemimager-server-rsyncd@.service
+%{_unitdir}/systemimager-server-rsyncd.socket
+%else
 %{_sysconfdir}/init.d/systemimager-server-rsyncd
 %{_sysconfdir}/init.d/systemimager-server-netboot*
 %{_sysconfdir}/init.d/systemimager-server-monitord
+%endif
 %{_sharedstatedir}/systemimager/images/*
 %{_sharedstatedir}/systemimager/scripts/pre-install/*
 %{_sharedstatedir}/systemimager/scripts/post-install/*
@@ -1179,14 +1187,24 @@ fi
 %doc CHANGE.LOG COPYING CREDITS README VERSION
 %dir /var/state/systemimager/flamethrower
 %config %{_sysconfdir}/systemimager/flamethrower.conf
+%if 0%{?_unitdir:1}
+%{_unitdir}/systemimager-server-flamethrowerd.service
+%else
 %{_sysconfdir}/init.d/systemimager-server-flamethrowerd
+%endif
 
 %files bittorrent
 %defattr(-, root, root)
 %dir %{_sharedstatedir}/systemimager/tarballs
 %dir %{_sharedstatedir}/systemimager/torrents
 %config %{_sysconfdir}/systemimager/bittorrent.conf
+%if 0%{?_unitdir:1}
+%{_unitdir}/systemimager-server-bittorrent.service
+%{_unitdir}/systemimager-server-bittorrent-seeder.service
+%{_unitdir}/systemimager-server-bittorrent-tracker.service
+%else
 %{_sysconfdir}/init.d/systemimager-server-bittorrent
+%endif
 %{_sbindir}/si_installbtimage
 
 %endif
@@ -1199,7 +1217,6 @@ fi
 %{_datarootdir}/systemimager/boot/%{_build_arch}/standard/initrd.img
 %{_datarootdir}/systemimager/boot/%{_build_arch}/standard/kernel
 %{_datarootdir}/systemimager/boot/%{_build_arch}/standard/version.txt
-#prefix/share/systemimager/boot/%{_build_arch}/standard/boel_binaries.tar.gz
 
 %files %{_build_arch}initrd_template
 %defattr(-, root, root)

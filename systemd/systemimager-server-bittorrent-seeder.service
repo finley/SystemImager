@@ -1,0 +1,28 @@
+#
+#   "SystemImager"
+#
+#   Copyright (C) 2018 Olivier Lahaye
+#
+#   $Id$
+#
+# SystemImager's BitTorrent seeder daemon
+# This daemon is needed to image clients using the
+# bittorrent protocol as transport.
+# It is responsible of delivering image.
+#
+# Do not modify this file. Instead, use systemd override.
+# Set modified entries in /etc/systemd/system/systemimager-server-bittorrent-seeder.service.d/<name>.conf
+#
+# TODO: Broken/Unfinished
+
+[Unit]
+ConditionPathExists=/etc/systemimager/bittorrent.conf
+Description=SystemImager's BitTorrent seeder daemon
+
+[Service]
+# EnvironmentFile for bittorrent daemons
+EnvironmentFile=/etc/systemimager/bittorrent.conf
+PIDFile=/var/run/systemimager-server-bittorrent-seeder.pid
+
+[Install]
+WantedBy=multi-user.target
