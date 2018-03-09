@@ -110,6 +110,9 @@ install_overrides # download and install override files
 # Install fstab, mdadm.conf, lvm.conf and update initramfs so it is aware of raid or lvm
 sis_install_configs
 
+# Avoid having mounted filesystems buzy
+cd /tmp
+
 # Leave notice of which image is installed on the client
 mkdir -p /sysroot/etc/systemimager/
 echo "${IMAGENAME}" > /sysroot/etc/systemimager/IMAGE_LAST_SYNCED_TO || shellout "Failed to save IMAGENAME in /etc/systemimager/IMAGE_LAST_SYNCED_TO"
@@ -138,8 +141,22 @@ umount_os_filesystems_from_sysroot
 # Unmount imaged OS filesystems (they are listed in initrd:/etc/fstab)
 # We can't use /sysroot/etc/fstab as it also contain swap and other stuffs
 # like some nfs mountpoints added by postinstall scripts
+
+# 1st, check that NFS rpc_pipefs was not mounted during postinstall scripts. 
+RPC_PIPEFS_MOUNTED=`mount|grep -E '/sysroot/.*/rpc_pipefs'|cut -d' ' -f3`
+if test -n "${RPC_PIPEFS_MOUNTED}"
+then
+	logwarn "NFS rpc_pipefs mounted in image!"
+	logwarn "Check your postinstall scripts for possible NFS related services started"
+	logwarn "Use --no-reload option when enabling services using systemctl"
+	logwarn "For example, use 'systemctl --no-reload enable rdma.service' to"
+	logwarn "enable rdma service"
+	loginfo "Unmounting ${RPC_PIPEFS_MOUNTED} filesystem from image"
+	umount ${RPC_PIPEFS_MOUNTED} || logerror "Failed to umount ${RPC_PIPEFS_MOUNTED}"
+fi
+
 loginfo "Unmounting imaged OS filesystems"
-for mount_point in `cat /etc/fstab|grep sysroot|awk '{print $2}'|sort -r -k2,2`
+cat /etc/fstab|grep sysroot|awk '{print $2}'|sort -r -k2,2| while read mount_point
 do
 	logdebug "Unmounting $mount_point"
 	umount $mount_point || logerror "Failed to umount $mount_point" # don't fail here, image is on disk.

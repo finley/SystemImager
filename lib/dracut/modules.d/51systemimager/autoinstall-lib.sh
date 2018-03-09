@@ -58,8 +58,8 @@ mount_os_filesystems_to_sysroot() {
     find_os_mounts
     # 2nd, then we do the binds.
     loginfo "Binding system filesystems to image"
-    test -s /tmp/system_mounts.txt || shellout
-    for filesystem in $(cat /tmp/system_mounts.txt)
+    test -s /tmp/system_mounts.txt || shellout "/tmp/system_mounts.txt doesn't exists. find_os_mounts() failed???"
+    cat /tmp/system_mounts.txt | while read filesystem
     do
         logdetail "Bind-mount ${filesystem} to /sysroot${filesystem}"
         test -d "/sysroot${filesystem}" || mkdir -p "/sysroot${filesystem}" || shellout
@@ -73,25 +73,27 @@ mount_os_filesystems_to_sysroot() {
 # Umount OS virtual filesystems from /sysroot so umount /sysroot can succeed later
 #
 #
-
 umount_os_filesystems_from_sysroot()
 {
     UMOUNT_ERR=0
     loginfo "Unmounting binded system filesystems from image"
-    test -s /tmp/system_mounts.txt || shellout
+    test -s /tmp/system_mounts.txt || shellout "/tmp/system_mounts.txt doesn't exists or is empty."
     # using tac (reverse cat) to unmount in the correct umount order.
-    for mountpoint in $(tac /tmp/system_mounts.txt)
+    tac /tmp/system_mounts.txt | while read mountpoint
     do
-        if test -d $mountpoint
+        if test -d /sysroot${mountpoint}
         then
             if umount /sysroot${mountpoint}
             then
-                logdetail "unmounted /sysroot${mountpoint}"
+                logdetail "Unmounted /sysroot${mountpoint}"
             else
                 # In case of failure we just report the issue. (imaging is finished in theory)".
-                logwarn " failed to umount /sysroot${mountpoint}"
+                logwarn "failed to umount /sysroot${mountpoint}"
                 UMOUNT_ERR=1
             fi
+        else
+	    logerror "/sysroot${mountpoint} is NOT a directory!!! Can't unmount it"
+	    UMOUNT_ERR=1
         fi
     done
     # If no error, we can remove the list of mount points.

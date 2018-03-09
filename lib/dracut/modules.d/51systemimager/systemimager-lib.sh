@@ -79,37 +79,37 @@ fi
 
 # Log an error.
 logerror() {
-	logmessage "${BG_RED}  ERROR:${BG_BLACK} $@"
+	logmessage err "${BG_RED}  ERROR:${BG_BLACK} $@"
 	plymouth --ping && plymouth update --status="mesg:E:$@" > /dev/null 2>&1
 }
 
 # Log a warning
 logwarn() {
-	logmessage "${FG_RED}warning:${FG_WHITE} $@"
+	logmessage warning "${FG_RED}warning:${FG_WHITE} $@"
 	plymouth --ping && plymouth update --status="mesg:W:$@" > /dev/null 2>&1
 }
 
 # Log a simple information
 loginfo() {
-	logmessage "${FG_GREEN}    info:${FG_WHITE} $@"
+	logmessage info "${FG_GREEN}    info:${FG_WHITE} $@"
 	plymouth --ping && plymouth update --status="mesg:I:$@" > /dev/null 2>&1
 }
 
 # Log a detailed information
 logdetail() {
-	logmessage "${FG_GREEN}    info:${FG_WHITE} $@" > /dev/null 2>&1
+	logmessage info "${FG_GREEN}    info:${FG_WHITE} $@" > /dev/null 2>&1
 }
 
 # Log an action being done to client
 logaction() {
-	logmessage "${FG_AMBER}  action:${FG_WHITE} $@"
+	logmessage notice "${FG_AMBER}  action:${FG_WHITE} $@"
 	plymouth --ping && plymouth update --status="mesg:A:$@" > /dev/null 2>&1
 }
 
 # Log debug / system stuffs
 logdebug() {
 	[ "${DEBUG}" != "y" ] && return # Debug output not enabled => ignore
-	logmessage "${FG_BLUE}   debug:${FG_WHITE} $@"
+	logmessage debug "${FG_BLUE}   debug:${FG_WHITE} $@"
 	if [ "${SIS_SYSMSG_ENABLED}" != "y" ]
 	then
 		sis_enable_system_msg
@@ -122,13 +122,13 @@ logdebug() {
 
 # Log things that dont fit above cathegories
 lognotice() {
-	logmessage "${FG_BLUE}  notice:${FG_WHITE} $@"
+	logmessage notice "${FG_BLUE}  notice:${FG_WHITE} $@"
 	plymouth --ping && plymouth update --status="mesg:N:$@" > /dev/null 2>&1
 }
 
 # Compatibility function with older scripts.
 logmsg() {
-	logmessage "${FG_CYAN} message:${FG_WHITE} $@"
+	logmessage notice "${FG_CYAN} message:${FG_WHITE} $@"
 	# Old messages => No plymouth.
 }
 
@@ -139,14 +139,16 @@ logmsg() {
 logmessage() {
     # log to temporary file (which will go away when we reboot)
     # this is good for envs that have bad consoles
+    LOG_LEVEL=$1
+    shift
     local FILE=/tmp/si_monitor.log
-    echo $@ >> $FILE
-    test -w /dev/console && echo $@ > /dev/console
+    echo "$*" >> $FILE
+    test -w /dev/console && echo "$*" > /dev/console
 
     # if syslog is running, log to it.  In order to avoid hangs we have to 
     # add the "sis: " part in case $@ is ""
     if [ ! -z "$USELOGGER" ] ;
-        then logger -p user.$1 "sis: $@"
+        then logger -p user.${LOG_LEVEL} "sis: $*"
     fi
 }
 
