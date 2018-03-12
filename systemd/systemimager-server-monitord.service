@@ -26,7 +26,7 @@ Environment=MONITOR_PORT=8181
 EnvironmentFile=/etc/systemimager/systemimager.conf
 PIDFile=/var/run/si_monitor.pid
 # Need to fail if perl was not built with "useithreads".
-ExecStartPre=perl -e 'use Config; exit ($Config{useithreads} ne "define");'
+ExecStartPre=/usr/bin/perl -e 'use Config; exit ($Config{useithreads} ne "define");'
 ExecStart=/usr/sbin/si_monitor --log $MONITOR_LOGFILE --log_level $MONITOR_LOGLEVEL --port $MONITOR_PORT
 
 [Install]
