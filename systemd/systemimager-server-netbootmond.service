@@ -20,8 +20,8 @@ Description=SystemImager's daemon for net boot control
 
 [Service]
 Type=forking
-# Some default values
-Environment="NET_BOOT_DEFAULT=local"
+# Default value for NET_BOOT_DEFAULT. Default: "net". Can be "local or net"
+Environment=NET_BOOT_DEFAULT=net
 # EnvironmentFile overrides default values
 EnvironmentFile=/etc/systemimager/systemimager.conf
 PIDFile=/var/run/si_netbootmond.pid

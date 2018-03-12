@@ -17,8 +17,8 @@ ConditionPathExists=/etc/systemimager/systemimager.conf
 Conflicts=rsyncd.service rsyncd.socket systemimager-server-rsyncd.socket
 
 [Service]
-# Some default values
-Environment="RSYNCD_CONF=/etc/systemimager/rsyncd.conf"
+# Our specific rsyncd.conf (can be changed in systemimager.conf)
+Environment=RSYNCD_CONF=/etc/systemimager/rsyncd.conf
 # EnvironmentFile overrides default values
 EnvironmentFile=/etc/systemimager/systemimager.conf
 ExecStart=/usr/bin/rsync --daemon --no-detach --config $RSYNCD_CONF

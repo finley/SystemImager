@@ -15,8 +15,8 @@ ConditionPathExists=/etc/systemimager/flamethrower.conf
 Description=Daemon for multicast file distribution
 
 [Service]
-# Some default values
-Environment="STATE_DIR=/var/state/systemimager/flamethrower"
+# Default STATE_DIR. Can be changed in systemimager.conf
+Environment=STATE_DIR=/var/state/systemimager/flamethrower
 # EnvironmentFile overrides default values
 EnvironmentFile=/etc/systemimager/flamethrower.conf
 PIDFile=/var/run/systemimager-server-flamethrowerd.pid
