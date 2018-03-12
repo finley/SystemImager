@@ -113,8 +113,13 @@ BuildArch: noarch
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
-Requires: rsync >= 2.4.6, systemimager-common = %{version}, dracut-systemimager = %{version}, perl-AppConfig, /sbin/chkconfig, perl, perl(XML::Simple) >= 2.14, python
+Requires: rsync >= 2.4.6, systemimager-common = %{version}, dracut-systemimager = %{version}, perl-AppConfig, perl, perl(XML::Simple) >= 2.14, python
 Requires: mkisofs
+%if 0%{?_unitdir:1} # If systemd
+%systemd_requires
+%else
+Requires: /sbin/chkconfig
+%endif
 #Requires: dosfstools, mkisofs, xfsprogs
 #AutoReqProv: no
 
@@ -147,7 +152,12 @@ BuildArch: noarch
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
-Requires: systemimager-server = %{version}, /sbin/chkconfig, perl, flamethrower >= 0.1.6
+Requires: systemimager-server = %{version}, perl, flamethrower >= 0.1.6
+%if 0%{?_unitdir:1} # If systemd
+%systemd_requires
+%else
+Requires: /sbin/chkconfig
+%endif
 #AutoReqProv: no
 
 %description flamethrower
@@ -339,8 +349,13 @@ BuildArch: noarch
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
-Requires: systemimager-server = %{version}, /sbin/chkconfig, perl, perl(Getopt::Long)
-BuildRequires: cx_Freeze
+Requires: systemimager-server = %{version}, perl, perl(Getopt::Long)
+#BuildRequires: cx_Freeze
+%if 0%{?_unitdir:1} # If systemd
+%systemd_requires
+%else
+Requires: /sbin/chkconfig
+%endif
 #AutoReqProv: no
 
 %description bittorrent
@@ -889,6 +904,9 @@ fi
 # also note the use of DURING_INSTALL, which is used to
 # support using this package in Image building without affecting
 # processes running on the parrent
+%if 0%{?_unitdir:1} # If systemd
+systemctl disable rsyncd.socket
+%else
 if [[ -a %{_sysconfdir}/xinetd.d/rsync ]]; then
     mv %{_sysconfdir}/xinetd.d/rsync %{_sysconfdir}/xinetd.d/rsync.presis~
     `pidof xinetd > /dev/null`
@@ -898,6 +916,7 @@ if [[ -a %{_sysconfdir}/xinetd.d/rsync ]]; then
         fi
     fi
 fi
+%endif
 
 # If we are upgrading from a pre-rsync-stubs release, the preinst script
 # will have left behind a copy of the old rsyncd.conf file.  we need to parse
@@ -944,6 +963,11 @@ fi
 
 /usr/sbin/si_mkrsyncd_conf
 
+%if 0%{?_unitdir:1} # If systemd
+%systemd_post systemimager-server-rsyncd
+%systemd_post systemimager-server-netbootmond
+%systemd_post systemimager-server-monitord
+%else # systemd
 if [[ -a /usr/lib/lsb/install_initd ]]; then
     /usr/lib/lsb/install_initd %{_sysconfdir}/init.d/systemimager-server-rsyncd
     /usr/lib/lsb/install_initd %{_sysconfdir}/init.d/systemimager-server-netbootmond
@@ -955,9 +979,25 @@ if [[ -a /sbin/chkconfig ]]; then
     /sbin/chkconfig --add systemimager-server-netbootmond
     /sbin/chkconfig --add systemimager-server-monitord
 fi
+%endif # systemd
 
 %preun server
+if [ $1 != 0 ]; then
+    echo
+    echo "WARNING: this seems to be an upgrade!"
+    echo
+    echo "Remember that this operation does not touch the following objects:"
+    echo "  - master, pre-install, post-install scripts"
+    echo "  - images"
+    echo "  - overrides"
+    echo
+fi
 
+%if 0%{?_unitdir:1} # If systemd
+%systemd_preun systemimager-server-rsyncd
+%systemd_preun systemimager-server-netbootmond
+%systemd_preun systemimager-server-monitord
+%else # not systemd
 if [ $1 = 0 ]; then
 	%{_sysconfdir}/init.d/systemimager-server-rsyncd stop
 	%{_sysconfdir}/init.d/systemimager-server-netbootmond stop
@@ -983,15 +1023,6 @@ if [ $1 = 0 ]; then
 	    fi
 	fi
 else
-	echo
-	echo "WARNING: this seems to be an upgrade!"
-	echo
-	echo "Remember that this operation does not touch the following objects:"
-	echo "  - master, pre-install, post-install scripts"
-	echo "  - images"
-	echo "  - overrides"
-	echo
-
 	# This is an upgrade: restart the daemons.
 	echo "Restarting services..."
 	(%{_sysconfdir}/init.d/systemimager-server-rsyncd status >/dev/null 2>&1 && \
@@ -1001,8 +1032,12 @@ else
 	(%{_sysconfdir}/init.d/systemimager-server-monitord status >/dev/null 2>&1 && \
 		%{_sysconfdir}/init.d/systemimager-server-monitord restart) || true
 fi
+%endif # systemd/not systemd
 
 %post flamethrower
+%if 0%{?_unitdir:1} # If systemd
+%systemd_post systemimager-server-flamethrowerd
+%else # not systemd
 if [[ -a /usr/lib/lsb/install_initd ]]; then
     /usr/lib/lsb/install_initd %{_sysconfdir}/init.d/systemimager-server-flamethrowerd
 fi
@@ -1011,8 +1046,12 @@ if [[ -a /sbin/chkconfig ]]; then
     /sbin/chkconfig --add systemimager-server-flamethrowerd
     /sbin/chkconfig systemimager-server-flamethrowerd off
 fi
+%endif # systemd/not systemd
 
 %preun flamethrower
+%if 0%{?_unitdir:1} # If systemd
+%systemd_preun systemimager-server-flamethrowerd
+%else # not systemd
 if [ $1 = 0 ]; then
 	%{_sysconfdir}/init.d/systemimager-server-flamethrowerd stop
 
@@ -1028,8 +1067,12 @@ else
 	(%{_sysconfdir}/init.d/systemimager-server-flamethrowerd status >/dev/null 2>&1 && \
 		%{_sysconfdir}/init.d/systemimager-server-flamethrowerd restart) || true
 fi
+%endif # systemd/not systemd
 
 %post bittorrent
+%if 0%{?_unitdir:1} # If systemd
+%systemd_post systemimager-server-bittorrent
+%else # not systemd
 if [[ -a /usr/lib/lsb/install_initd ]]; then
     /usr/lib/lsb/install_initd %{_sysconfdir}/init.d/systemimager-server-bittorrent
 fi
@@ -1038,6 +1081,7 @@ if [[ -a /sbin/chkconfig ]]; then
     /sbin/chkconfig --add systemimager-server-bittorrent
     /sbin/chkconfig systemimager-server-bittorrent off
 fi
+%endif # systemd/not systemd
 
 %pre bittorrent
 echo "checking for a tracker binary..."
@@ -1071,6 +1115,9 @@ else
 fi
 
 %preun bittorrent
+%if 0%{?_unitdir:1} # If systemd
+%systemd_preun systemimager-server-bittorrent
+%else # not systemd
 if [ $1 = 0 ]; then
 	%{_sysconfdir}/init.d/systemimager-server-bittorrent stop
 
@@ -1086,6 +1133,7 @@ else
 	(%{_sysconfdir}/init.d/systemimager-server-bittorrent status >/dev/null 2>&1 && \
 		%{_sysconfdir}/init.d/systemimager-server-bittorrent restart) || true
 fi
+%endif # systemd/not systemd
 
 %files common
 %defattr(-, root, root)
