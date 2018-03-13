@@ -34,9 +34,9 @@
   DONE: (IMAGENAME, SCRIPTNAME, SIS_CONFIG, DISK_LAYOUT)
 
 - disks layouts:
-	- <disk/part> Add missing @raid_dev in man autoinstallscript.conf
+	- DONE: <disk/part> Add missing @raid_dev in man autoinstallscript.conf
 	- <raid> @rounding: what are the acceptable units? K for sure; any other?
-	- <lvm> Add @lv_options to man autoinstallscript.conf
+	- DONE: <lvm> Add @lv_options to man autoinstallscript.conf
 	- <disk> @recreate="no" Add this parameter to not whipe+recreate table if it is already present.
 		=> If present but wrong type: error.
 		=> If present and expected type: use it.
@@ -44,17 +44,17 @@
 	- <boot> new section for boot loader/ boot manager / wanted menus
 - EFI support from scratch (be able to create the EFI partition and setup the EFI boot variables, kernel, and all that is needed to boot).
 
-- CentOS-6 uses dash (not bash) in dracut. dash doesn't support ${VAR/search/replace} or ${VAR:start:end} or $(command) syntaxes.
+- CentOS-6 uses dash (not bash. dash=debian ash, in buzybox since v0.52) in dracut. dash doesn't support ${VAR/search/replace} or ${VAR:start:end} or $(command) syntaxes.
 
-- NOT NEEDED ANYMORE: need to fix mksiimage from systeminstaller that regenerate /etc/systemimager/rsyncd.conf with missing [configs] section.
+- OBSOLETE: need to fix mksiimage from systeminstaller that regenerate /etc/systemimager/rsyncd.conf with missing [configs] section.
 
-- fix si_mkautoinstallscript
+- fix si_mkautoinstallscript => remove si_mkautoinstallscript
 
 - DONE: update /var/lib/systemimager/ hyerarchy. try to move configs in scripts and try to rename script to a more suited name.
 
 - network configuration.
 
-- bittorrent protocol: use rtorrent, opentracker?, mktorrent, ...
+- bittorrent protocol: use rtorrent or ctorrent, opentracker?, mktorrent, ...
 
 - PARTIALY DONE: udpcast support
 
@@ -96,7 +96,7 @@
 
 - need to comment /lib/autoinstall-lib.sh
 - need to review and update all headers with authors and copyrights
-- need to remove/cleanup useless stuffs in the source_tarball (kernel.rul and such).
+- DONE: need to remove/cleanup useless stuffs in the source_tarball (kernel.rul and such).
 - need to update deb packaging
 - need to find a way to provide systemimager-x86_64boot-standard-4.5.0-1.el7.noarch.rpm without installing dracut-systemimager (does a dracut option allows to specify an alternative dracut directory))
 
@@ -129,7 +129,7 @@ perl(SystemConfig::Boot)
 - When it's time to update the bittorrent client/server:
     http://www.rahul.net/dholmes/ctorrent/ 
 
-- Ideas on initrd
+- DONE: Ideas on initrd
     - Use initrd on client system or server system as base
         - Let the distros muck about with the auto-detect details and what not
           -- they do a good job of that now
@@ -196,9 +196,9 @@ Have a single init script.  Start services based on their settings in /etc/defau
 
 Move _all_ source code into si.trunk/src
 
-move _all_ *.rul files into make.d
+OBSOLETE: move _all_ *.rul files into make.d
 
-Verify we have an "*_install" target for all initrd packages
+OBSOLETE: Verify we have an "*_install" target for all initrd packages
 
 Move ./initrd_dir/make.d/*.rul files into ./make.d/
 
