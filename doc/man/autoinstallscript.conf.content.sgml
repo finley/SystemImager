@@ -135,6 +135,12 @@
 
     <listitem>
       <para>
+		raid_dev - The software raid device this partition is part of.
+      </para>
+    </listitem>
+
+    <listitem>
+      <para>
 		lvm_group - The partition is used to be part of the specified volume
 		group name. The attribute "flags" must contain the value 'lvm'. 
       </para>
@@ -284,6 +290,10 @@
           if no suffix is present. The special value "*" can be used to assign
           all the free space available in the volume group.
       </para>
+    </listitem>
+  
+    <listitem>
+      <para>lv_options - Additional options (expressed in lvcreate format)</para>
     </listitem>
   
   </itemizedlist>
