@@ -115,7 +115,8 @@ URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Requires: rsync >= 2.4.6, systemimager-common = %{version}, dracut-systemimager = %{version}, perl-AppConfig, perl, perl(XML::Simple) >= 2.14, python
 Requires: mkisofs
-%if 0%{?_unitdir:1} # If systemd
+# If systemd
+%if 0%{?_unitdir:1}
 %systemd_requires
 %else
 Requires: /sbin/chkconfig
@@ -153,7 +154,8 @@ Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Requires: systemimager-server = %{version}, perl, flamethrower >= 0.1.6
-%if 0%{?_unitdir:1} # If systemd
+# If systemd
+%if 0%{?_unitdir:1}
 %systemd_requires
 %else
 Requires: /sbin/chkconfig
@@ -351,7 +353,8 @@ URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Requires: systemimager-server = %{version}, perl, perl(Getopt::Long)
 #BuildRequires: cx_Freeze
-%if 0%{?_unitdir:1} # If systemd
+# If systemd
+%if 0%{?_unitdir:1}
 %systemd_requires
 %else
 Requires: /sbin/chkconfig
@@ -904,7 +907,8 @@ fi
 # also note the use of DURING_INSTALL, which is used to
 # support using this package in Image building without affecting
 # processes running on the parrent
-%if 0%{?_unitdir:1} # If systemd
+# If systemd
+%if 0%{?_unitdir:1}
 systemctl disable rsyncd.socket
 %else
 if [[ -a %{_sysconfdir}/xinetd.d/rsync ]]; then
@@ -963,11 +967,13 @@ fi
 
 /usr/sbin/si_mkrsyncd_conf
 
-%if 0%{?_unitdir:1} # If systemd
+# If systemd
+%if 0%{?_unitdir:1}
 %systemd_post systemimager-server-rsyncd
 %systemd_post systemimager-server-netbootmond
 %systemd_post systemimager-server-monitord
-%else # systemd
+# else not systemd
+%else
 if [[ -a /usr/lib/lsb/install_initd ]]; then
     /usr/lib/lsb/install_initd %{_sysconfdir}/init.d/systemimager-server-rsyncd
     /usr/lib/lsb/install_initd %{_sysconfdir}/init.d/systemimager-server-netbootmond
@@ -979,7 +985,8 @@ if [[ -a /sbin/chkconfig ]]; then
     /sbin/chkconfig --add systemimager-server-netbootmond
     /sbin/chkconfig --add systemimager-server-monitord
 fi
-%endif # systemd
+# endif systemd
+%endif
 
 %preun server
 if [ $1 != 0 ]; then
@@ -993,11 +1000,13 @@ if [ $1 != 0 ]; then
     echo
 fi
 
-%if 0%{?_unitdir:1} # If systemd
+# if systemd
+%if 0%{?_unitdir:1}
 %systemd_preun systemimager-server-rsyncd
 %systemd_preun systemimager-server-netbootmond
 %systemd_preun systemimager-server-monitord
-%else # not systemd
+# else not systemd
+%else
 if [ $1 = 0 ]; then
 	%{_sysconfdir}/init.d/systemimager-server-rsyncd stop
 	%{_sysconfdir}/init.d/systemimager-server-netbootmond stop
@@ -1032,12 +1041,15 @@ else
 	(%{_sysconfdir}/init.d/systemimager-server-monitord status >/dev/null 2>&1 && \
 		%{_sysconfdir}/init.d/systemimager-server-monitord restart) || true
 fi
-%endif # systemd/not systemd
+# endif systemd/not systemd
+%endif
 
 %post flamethrower
-%if 0%{?_unitdir:1} # If systemd
+# if systemd
+%if 0%{?_unitdir:1}
 %systemd_post systemimager-server-flamethrowerd
-%else # not systemd
+# else not systemd
+%else
 if [[ -a /usr/lib/lsb/install_initd ]]; then
     /usr/lib/lsb/install_initd %{_sysconfdir}/init.d/systemimager-server-flamethrowerd
 fi
@@ -1046,12 +1058,15 @@ if [[ -a /sbin/chkconfig ]]; then
     /sbin/chkconfig --add systemimager-server-flamethrowerd
     /sbin/chkconfig systemimager-server-flamethrowerd off
 fi
-%endif # systemd/not systemd
+# endif systemd/not systemd
+%endif
 
 %preun flamethrower
-%if 0%{?_unitdir:1} # If systemd
+# if systemd
+%if 0%{?_unitdir:1}
 %systemd_preun systemimager-server-flamethrowerd
-%else # not systemd
+# else not systemd
+%else
 if [ $1 = 0 ]; then
 	%{_sysconfdir}/init.d/systemimager-server-flamethrowerd stop
 
@@ -1067,12 +1082,15 @@ else
 	(%{_sysconfdir}/init.d/systemimager-server-flamethrowerd status >/dev/null 2>&1 && \
 		%{_sysconfdir}/init.d/systemimager-server-flamethrowerd restart) || true
 fi
-%endif # systemd/not systemd
+# endif systemd/not systemd
+%endif
 
 %post bittorrent
-%if 0%{?_unitdir:1} # If systemd
+# if systemd
+%if 0%{?_unitdir:1}
 %systemd_post systemimager-server-bittorrent
-%else # not systemd
+# else not systemd
+%else
 if [[ -a /usr/lib/lsb/install_initd ]]; then
     /usr/lib/lsb/install_initd %{_sysconfdir}/init.d/systemimager-server-bittorrent
 fi
@@ -1081,7 +1099,8 @@ if [[ -a /sbin/chkconfig ]]; then
     /sbin/chkconfig --add systemimager-server-bittorrent
     /sbin/chkconfig systemimager-server-bittorrent off
 fi
-%endif # systemd/not systemd
+# endif systemd/not systemd
+%endif
 
 %pre bittorrent
 echo "checking for a tracker binary..."
@@ -1115,9 +1134,11 @@ else
 fi
 
 %preun bittorrent
-%if 0%{?_unitdir:1} # If systemd
+# if systemd
+%if 0%{?_unitdir:1}
 %systemd_preun systemimager-server-bittorrent
-%else # not systemd
+# else not systemd
+%else
 if [ $1 = 0 ]; then
 	%{_sysconfdir}/init.d/systemimager-server-bittorrent stop
 
@@ -1133,7 +1154,8 @@ else
 	(%{_sysconfdir}/init.d/systemimager-server-bittorrent status >/dev/null 2>&1 && \
 		%{_sysconfdir}/init.d/systemimager-server-bittorrent restart) || true
 fi
-%endif # systemd/not systemd
+# endif systemd/not systemd
+%endif
 
 %files common
 %defattr(-, root, root)
