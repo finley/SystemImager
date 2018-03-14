@@ -220,7 +220,7 @@ sub create_uyok_initrd() {
 
 	unless ($dracut_opts) { $dracut_opts = ""; }
 
-	my $dracut_cmd="dracut --force --add systemimager$hostonly_opt $extra_firmwares --include $staging_dir / $modules_to_exclude $modules_to_include $dracut_opts $boot_dir/initrd.img $uname_r";
+	my $dracut_cmd="dracut --force --add systemimager --omit dash$hostonly_opt $extra_firmwares --include $staging_dir / $modules_to_exclude $modules_to_include $dracut_opts $boot_dir/initrd.img $uname_r";
         !system($dracut_cmd) or die("FAILED: $dracut_cmd");
 
         # Print initrd size information.
