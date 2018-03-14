@@ -17,9 +17,9 @@ logdebug "==== systemimager-start ===="
 
 DEVICE=$1
 
-/sbin/systemimager-netstart $DEVICE       # finish network configuration (gateway, hostname, resolv.conf)
-/sbin/systemimager-load-dhcpopts $DEVICE  # read /tmp/dhclient.$DEVICE.dhcpopts and updates /tmp/variables.txt
-/sbin/systemimager-pingtest $DEVICE       # do a ping_test()
-/sbin/systemimager-load-scripts-ecosystem $DEVICE    # read $SIS_CONFIG from image server.
-/sbin/systemimager-monitor-server $DEVICE # Start the log monitor server
-/sbin/systemimager-deploy-client $DEVICE  # Imaging occures here
+source /sbin/systemimager-netstart $DEVICE       # finish network configuration (gateway, hostname, resolv.conf)
+source /sbin/systemimager-load-dhcpopts $DEVICE  # read /tmp/dhclient.$DEVICE.dhcpopts and updates /tmp/variables.txt
+source /sbin/systemimager-pingtest $DEVICE       # do a ping_test()
+source /sbin/systemimager-load-scripts-ecosystem $DEVICE    # read $SIS_CONFIG from image server.
+source /sbin/systemimager-monitor-server $DEVICE # Start the log monitor server
+source /sbin/systemimager-deploy-client $DEVICE  # Imaging occures here
