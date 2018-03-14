@@ -145,8 +145,8 @@ fail_if_run_from_working_machine() {
 # detect_storage_devices => returns a list of attached mass storage devices (disks / flash / ... excluding cdroms)
 #
 detect_storage_devices() {
-    loginfo "Detecting disks..."
-    DISKS=( `lsblk -d -r -o NAME,TYPE|grep -i disk|sed -e 's/^/\/dev\//g' -e 's/!/\//g'|cut -d' ' -f1` )
+    loginfo "Detecting disks..." # (-e 2 => exclude floppies (block disk with device major = 2)
+    DISKS=( `lsblk -d -r -e 2 -o NAME,TYPE|grep -i disk|sed -e 's/^/\/dev\//g' -e 's/!/\//g'|cut -d' ' -f1` )
 
     if test ${#DISKS[@]} -eq 0
     then
