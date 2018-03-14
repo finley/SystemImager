@@ -395,7 +395,7 @@ Requires: dracut, dracut-network
 Requires: plymouth-plugin-script, plymouth-plugin-label, dejavu-serif-fonts, dejavu-sans-fonts
 Requires: psmisc, /usr/bin/ncat, kexec-tools, bind-utils, net-tools, openssh-server
 Requires: xmlstarlet, parted, mdadm, util-linux, lvm2
-Requires: xfsprogs, e2fsprogs, btrfs-progs, ntfsprogs, dosfstools, jfsutils, reiserfs-utils
+Requires: xfsprogs, e2fsprogs, btrfs-progs, ntfsprogs, dosfstools
 Requires: ncurses, /usr/bin/awk, kbd
 Requires: kernel
 Requires: rtorrent
@@ -880,6 +880,10 @@ find %{buildroot} -name \*~ -exec rm -f '{}' \;
 %__rm -rf %{buildroot}
 
 %if %{_build_all}
+
+%pre -n dracut-%{name}
+test -x /usr/sbin/mkfs.jfs || echo "WARNING: /usr/sbin/mkfs.jfs mot present. JFS support not available."
+test -x /usr/sbin/mkfs.reiserfs || echo "WARNING: /usr/sbin/mkfs.reiserfs mot present. ReiserFS support not available."
 
 %pre server
 # /etc/systemimager/rsyncd.conf is now generated from stubs stored
