@@ -100,7 +100,7 @@ install_docker() {
     # Install binaries
     inst_multiple -o docker docker-current
     # Install clients config
-    (cd /etc; tar cpf - docker/seccomp.json)|(cd $initdir/etc; tar xpf -)
+    (cd /etc; test -f docker/seccomp.json && tar cpf - docker/seccomp.json)|(cd $initdir/etc; tar xpf -)
     # Install system docker config.
     [ -f /etc/sysconfig/docker ] && mkdir -p $initdir/etc/sysconfig && cp /etc/sysconfig/docker $initdir/etc/sysconfig
     [ -f /etc/default/docker ] && mkdir -p $initdir/etc/default && c /etc/default/docker $initdir/etc/default
