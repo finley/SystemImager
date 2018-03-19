@@ -11,7 +11,6 @@
 #
 # This file hosts functions realted to disk initialization.
 
-
 # Load API and variables.txt (HOSTNAME, IMAGENAME, ..., including detected disks array: $DISKS)
 type logmessage >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 
@@ -21,17 +20,7 @@ type logmessage >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 # TODO: Enhancement: use http://people.redhat.com/msnitzer/docs/io-limits.txt if possible for optimal aligment; fallback to 1MiB aligment only if not supported.
 #
 
-################################################################################
-#
-# get_disks_from_autoinstall_conf()
-#		Returns all raw disk devices to be configured.
-#		This is usefull to check that at least we detected thoses disks
-#		We can have more available disks. the extraneous disks will be
-#		left untouched, but if miss some, we'll fail.
-################################################################################
-get_disks_from_autoinstall_conf() {
-    xmlstarlet sel -t -m 'config/disk' -m "@dev" -v . -n ${DISKS_LAYOUT_FILE}
-}
+PARTED_DELAY=0.5 # On older kernels, system needs time to update partitions.
 
 ################################################################################
 #
@@ -57,18 +46,22 @@ sis_prepare_disks() {
 		logerror "No group, group_override, base_hostname matches a layout file"
 		logerror "Can't find a disk layout config file. Can't initilize disks."
 		logerror "Please read autoinstallscript.conf manual and create a disk layout file"
-		logerror "Store it on image sarver in /var/lib/systemimager/scripts/disks-layouts/"
+		logerror "Store it on image server in /var/lib/systemimager/scripts/disks-layouts/"
 		logerror "Use the one of possible names: {\$DISKS_LAYOUT,\$HOSTNAME,\$GROUPNAME,\$BASE_HOSTNAME,\$IMAGENAME,default}{,.xml}"
 		shellout "Can't initilize disks. No layout found."
 	fi
 	loginfo "Using Disk layout file: ${DISKS_LAYOUT_FILE}"
 
 	# Initialisae / check LVM version to use. (defaults to v2).
-	LVM_VERSION=`xmlstarlet sel -t -m "config/lvm" -if "@version" -v "@version" --else -o "2" -b ${DISKS_LAYOUT_FILE}`
+	LVM_VERSION=`xmlstarlet sel -t -m "config/lvm" -if "@version" -v "@version" --else -o "2" -b ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d'`
 
-	_stop_software_raid_devices
+	loginfo "Stopping UDEV exec queue to prevent raid restart when creating partitions"
+	stop_software_raid_and_lvm
+	udevadm control --stop-exec-queue
 	_do_partitions
 	_do_raids
+	loginfo "Restarting UDEV exec queue now that disk(s) is (are) set up"
+	udevadm control --start-exec-queue
 	_do_lvms
 	_do_filesystems
 	_do_fstab
@@ -141,11 +134,22 @@ sis_install_configs() {
 
 ################################################################################
 #
-# _stop_software_raid()
-#		stops all software raid volumes so we can initialise disks
-#		some raid can be running (enabled to read local.cfg for instance)
+# stop_software_raid_and_lvm()
+#		stops all volume groups
+#		stops all software raid
+#			=> disks devices should'nt be buzy there after.
 ################################################################################
-_stop_software_raid_devices() {
+stop_software_raid_and_lvm() {
+
+    # 1/ Stop volume groups
+    lvm lvs --noheadings |awk '{print $2}' | sort -u |\
+    while read VOL_GROUP
+    do
+        loginfo "Removing volumegroup [${VOL_GROUP}]"
+        lvm vgchange -a n ${VOL_GROUP}
+    done
+
+    # 2/ Stop software raid
     if [ -f /proc/mdstat ]; then
         RAID_DEVICES=` cat /proc/mdstat | grep ^md | sed 's/ .*$//g' `
 
@@ -156,6 +160,7 @@ _stop_software_raid_devices() {
 	    loginfo "stopping ${DEV} raid device"
             logdebug "mdadm --manage ${DEV} --stop"
             mdadm --manage ${DEV} --stop
+	    sleep $PARTED_DELAY
         done
     fi
 }
@@ -200,7 +205,7 @@ _save_configs_to_image() {
 _do_partitions() {
 	sis_update_step part
 	IFS=';'
-	xmlstarlet sel -t -m 'config/disk' -v "concat(@dev,';',@label_type,';',@unit_of_measurement)" -n ${DISKS_LAYOUT_FILE}|\
+	xmlstarlet sel -t -m 'config/disk' -v "concat(@dev,';',@label_type,';',@unit_of_measurement)" -n ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d' |\
 		while read DISK_DEV LABEL_TYPE T_UNIT;
 	       	do
 			loginfo "Setting up partitions for disk $DISK_DEV"
@@ -208,10 +213,11 @@ _do_partitions() {
 			# Create the partition table
 			logaction "parted -s -- $DISK_DEV mklabel ${LABEL_TYPE}"
 			LC_ALL=C parted -s -- ${DISK_DEV} mklabel "${LABEL_TYPE}" || shellout "Failed to create new partition table for disk $DISK_DEV partition type=$PART_TYPE!"
+			sleep $PARTED_DELAY
 
 			# Create the partitions
 			T_UNIT=`echo $T_UNIT|sed "s/percent.*/%/g"` # Convert all variations of percent{,age{,s}} to "%"
-			xmlstarlet sel -t -m "config/disk[@dev=\"${DISK_DEV}\"]/part" -v "concat(@num,';',@size,';',@p_type,';',@id,';',@p_name,';',@flags,';',@lvm_group,';',@raid_dev)" -n ${DISKS_LAYOUT_FILE}|\
+			xmlstarlet sel -t -m "config/disk[@dev=\"${DISK_DEV}\"]/part" -v "concat(@num,';',@size,';',@p_type,';',@id,';',@p_name,';',@flags,';',@lvm_group,';',@raid_dev)" -n ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d' |\
 				while read P_NUM P_SIZE P_TYPE P_ID P_NAME P_FLAGS P_LVM_GROUP P_RAID_DEV
 				do
 					if test "$P_SIZE" = "*"
@@ -221,12 +227,13 @@ _do_partitions() {
 						P_UNIT="$T_UNIT"
 					fi
 					# Get partition filesystem if it exists (no raid, no lvm) so we can put it in partition filesystem info
-					P_FS=`xmlstarlet sel -t -m "config/fsinfo[@real_dev=\"${DISK_DEV}${P_NUM}\"]" -v "@fs" -n ${DISKS_LAYOUT_FILE}`
+					P_FS=`xmlstarlet sel -t -m "config/fsinfo[@real_dev=\"${DISK_DEV}${P_NUM}\"]" -v "@fs" -n ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d'`
 
 					# 1/ Create the partition
 					CMD="parted -s -- ${DISK_DEV} unit ${P_UNIT} mkpart ${P_TYPE} ${P_FS} `_find_free_space ${DISK_DEV} ${P_UNIT} ${P_TYPE} ${P_SIZE}`"
 					logaction "$CMD"
 					eval "$CMD" || shellout "Failed to create partition ${DISK_DEV}${P_NUM}"
+					sleep $PARTED_DELAY
 
 					# 2/ Set partition number ($partition) using sfdisk
 					# Do nothing; assuming xml file use partition in order just like parted.
@@ -237,6 +244,7 @@ _do_partitions() {
 						CMD="parted -s -- ${DISK_DEV} set ${P_NUM} ${flag} on"
 						logaction "$CMD"
 						eval "$CMD" || shellout "Failed to set flag ${flag}=on for partition ${DISK_DEV}${P_NUM}"
+						sleep $PARTED_DELAY
 					done
 
 					# Testing that lvm flag is set if lvm group is defined.
@@ -298,11 +306,11 @@ _find_free_space() {
 _do_raids() {
 	loginfo "Creating software raid devices if needed."
 	IFS=';'
-	xmlstarlet sel -t -m 'config/raid/raid_disk' -v "concat(@name,';',@raid_level,';',@raid_devices,';',@spare_devices,';',@rounding,';',@layout,';',@chunk_size,';',@lvm_group,';',@devices)" -n ${DISKS_LAYOUT_FILE} |\
+	xmlstarlet sel -t -m 'config/raid/raid_disk' -v "concat(@name,';',@raid_level,';',@raid_devices,';',@spare_devices,';',@rounding,';',@layout,';',@chunk_size,';',@lvm_group,';',@devices)" -n ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d' |\
 		while read R_NAME R_LEVEL R_DEVS_CNT R_SPARES_CNT R_ROUNDING R_LAYOUT R_CHUNK_SIZE R_LVM_GROUP R_DEVICES
 		do
 			# If Raid volume uses partitions, get them
-			P_DEVICES=`xmlstarlet sel -t -m "config/disk/part[@raid_dev=\"$R_NAME\"]"  -v "concat(ancestor::disk/@dev,@num,' ')" ${DISKS_LAYOUT_FILE}`
+			P_DEVICES=`xmlstarlet sel -t -m "config/disk/part[@raid_dev=\"$R_NAME\"]"  -v "concat(ancestor::disk/@dev,@num,' ')" ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d'`
 			loginfo "creating raid volume ${R_NAME} (raid${R_LEVEL})".
 			[ -z "${R_SPARES_CNT}" ] && R_SPARES_CNT=0
 			logdetail "Number of spares: ${R_SPARES_CNT}"
@@ -376,20 +384,22 @@ EOF
 ################################################################################
 _do_lvms() {
 	IFS=";"
-	# Note: in dracut, locking_type is set to 4 (readonly) for lvm (/etc/lvm/lvm.conf) to prevent any lvm modification during early boot.
+	# Note: in dracut, on some distros, locking_type is set to 4 (readonly) for lvm (/etc/lvm/lvm.conf)
+	# to prevent any lvm modification during early boot.
 	# We need to get raound this default config.
 	# See https://bugzilla.redhat.com/show_bug.cgi?id=865015 (not a bug)
 	# LVM_DEFAULT_CONFIG="--config 'global {locking_type=1}'" # At least we need this config.
 	# We chose to replace the inapropriate lvm.conf with a generic one that fits our needs.
+	mkdir -p /etc/lvm # Make sure lvm config path exists (not present on CentOS-6 for example)
 	lvmconfig --type default --withcomments > /etc/lvm/lvm.conf || shellout "Failed to overwrite initramfs:/etc/lvm/lvm.conf with default lvm.conf that permits lvm creation/modification/removal."
 
 	loginfo "Creating volume groups"
 
-	xmlstarlet sel -t -m "config/lvm/lvm_group" -v "concat(@name,';',@max_log_vols,';',@max_phys_vols,';',@phys_extent_size)" -n ${DISKS_LAYOUT_FILE} |\
+	xmlstarlet sel -t -m "config/lvm/lvm_group" -v "concat(@name,';',@max_log_vols,';',@max_phys_vols,';',@phys_extent_size)" -n ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d' |\
 		while read VG_NAME VG_MAX_LOG_VOLS VG_MAX_PHYS_VOLS VG_PHYS_EXTENT_SIZE
 		do
-			VG_PARTS=`xmlstarlet sel -t -m "config/disk/part[@lvm_group=\"${VG_NAME}\"]" -s A:T:U num -v "concat(ancestor::disk/@dev,@num,' ')" ${DISKS_LAYOUT_FILE}`
-			VG_RAIDS=`xmlstarlet sel -t -m "config/raid/raid_disk[@lvm_group=\"${VG_NAME}\"]" -s A:T:U name -v "concat(@name,' ')" ${DISKS_LAYOUT_FILE}`
+			VG_PARTS=`xmlstarlet sel -t -m "config/disk/part[@lvm_group=\"${VG_NAME}\"]" -s A:T:U num -v "concat(ancestor::disk/@dev,@num,' ')" ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d'`
+			VG_RAIDS=`xmlstarlet sel -t -m "config/raid/raid_disk[@lvm_group=\"${VG_NAME}\"]" -s A:T:U name -v "concat(@name,' ')" ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d'`
 			# Doing some checks on volume group devices.
 			[ -n "${VG_PARTS/ /}" ] && [ -n "${VG_RAIDS/ /}" ] && logwarn "volume group ${VG_NAME} has partitions mixed with raid volumes"
 			[ -z "${VG_PARTS/ /}${VG_RAIDS}/ /" ] && logwarn "Volume group [${VG_NAME}] has no devices associated!"
@@ -397,7 +407,7 @@ _do_lvms() {
 			loginfo "Creating physical volume group ${VG_NAME} for device(s) ${VG_PARTS}${VG_RAIDS}."
 
 			# Getting specific params for volume group ${VG_NAME}
-			xmlstarlet sel -t -m "config/lvm/lvm_group[name=\"${VG_NAME}\"]" -v "concat(@max_log_vols,';',@max_phys_vols,';',@phys_extent_size)" -n ${DISKS_LAYOUT_FILE} | read L_MAX_LOG_VOLS L_MAX_PHYS_VOLS L_PHYS_EXTENT_SIZE
+			xmlstarlet sel -t -m "config/lvm/lvm_group[name=\"${VG_NAME}\"]" -v "concat(@max_log_vols,';',@max_phys_vols,';',@phys_extent_size)" -n ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d' | read L_MAX_LOG_VOLS L_MAX_PHYS_VOLS L_PHYS_EXTENT_SIZE
 
 			CMD="pvcreate ${LVM_DEFAULT_CONFIG} -M${LVM_VERSION} -ff -y ${VG_PARTS}${VG_RAIDS}"
 			logaction $CMD
@@ -416,7 +426,7 @@ _do_lvms() {
 			logaction "${CMD}"
 			eval "${CMD}" || shellout "Failed to create volume group [${VG_NAME}]"
 
-			xmlstarlet sel -t -m "config/lvm/lvm_group[@name=\"${VG_NAME}\"]/lv" -v "concat(@name,';',@size,';',@lv_options)" -n ${DISKS_LAYOUT_FILE} |\
+			xmlstarlet sel -t -m "config/lvm/lvm_group[@name=\"${VG_NAME}\"]/lv" -v "concat(@name,';',@size,';',@lv_options)" -n ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d' |\
 				while read LV_NAME LV_SIZE LV_OPTIONS
 				do
 					loginfo "Creating logical volume ${LV_NAME} for volume groupe ${VG_NAME}."
@@ -470,7 +480,7 @@ EOF
 	# Processing filesystem informations sorted by line number
 	IFS='<' # (need to use an XML forbidden char that is not & (used for escaped chars) (we could have used '>')
 	# Comment field can have any chars except &,<,>. forced output as TEXT (-T) so we dont end up with "&lt" instead of "<".
-	xmlstarlet sel -T -t -m "config/fsinfo" -s A:N:- "@line" -v "concat(@line,'<',@comment,'<',@real_dev,'<',@mount_dev,'<',@mp,'<',@fs,'<',@mkfs_opts,'<',@options,'<',@dump,'<',@pass,'<',@format)" -n ${DISKS_LAYOUT_FILE} |\
+	xmlstarlet sel -T -t -m "config/fsinfo" -s A:N:- "@line" -v "concat(@line,'<',@comment,'<',@real_dev,'<',@mount_dev,'<',@mp,'<',@fs,'<',@mkfs_opts,'<',@options,'<',@dump,'<',@pass,'<',@format)" -n ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d' |\
 		while read FS_LINE FS_COMMENT FS_REAL_DEV FS_MOUNT_DEV FS_MP FS_FS FS_MKFS_OPTS FS_OPTIONS FS_DUMP FS_PASS FS_FORMAT
 		do
 			# 1/ Get the label if any.

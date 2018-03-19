@@ -44,3 +44,7 @@ logdebug "==== systemimager-check-kernel ===="
 
 check_kernel
 
+# Make dracut init.sh happy.
+root="none"
+rootok=1
+

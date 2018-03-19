@@ -1438,11 +1438,11 @@ EOF
 #
 
 send_monitor_msg() {
-    if [ -z $MONITOR_SERVER ]; then
-	logdebug "Trying to send monitor msg without MONITOR_SERVER empty variable. Ignoring..."
+    if test -z "${MONITOR_SERVER}"; then
+	logdebug "Trying to send monitor msg with unset MONITOR_SERVER variable. Ignoring..."
         return
     fi
-    if [ -z $MONITOR_PORT ]; then
+    if test -z "${MONITOR_PORT}" ; then
         MONITOR_PORT=8181
     fi
 

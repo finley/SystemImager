@@ -17,6 +17,7 @@ logdebug "==== systemimager-start ===="
 
 DEVICE=$1
 
+source /sbin/parse-local-cfg                     # Parse local cfg and overrides cmdline. udev is started, so /dev/md and lvm are up.
 source /sbin/systemimager-netstart $DEVICE       # finish network configuration (gateway, hostname, resolv.conf)
 source /sbin/systemimager-load-dhcpopts $DEVICE  # read /tmp/dhclient.$DEVICE.dhcpopts and updates /tmp/variables.txt
 source /sbin/systemimager-pingtest $DEVICE       # do a ping_test()

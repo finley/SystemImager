@@ -12,6 +12,10 @@
 #
 # This file reads settings from local.cfg if required and store config in
 # cmdline.d before network is setup by dracut initqueue logic.
+# It must be run after udev is started in order to have access to filesystems
+# that are lying on lvm or software raid devices. (udev will bring to life those
+# lvm and software raid devices).
+# 
 
 type write_variables >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 
@@ -21,8 +25,8 @@ type write_variables >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 logdebug "==== parse-local-cfg ===="
 
 # Make dracut init.sh happy.
-root="none"
-rootok=1
+#root="none"
+#rootok=1
 
 if [ "x$SKIP_LOCAL_CFG" = "xy" ]; then
     loginfo "Skipping local.cfg: option SKIP_LOCAL_CFG=y has been specified"

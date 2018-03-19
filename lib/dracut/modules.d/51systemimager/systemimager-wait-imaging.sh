@@ -18,6 +18,9 @@
 
 type shellout >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 
+# Re-read variables.txt each time we're called.
+. /tmp/variables.txt
+
 logdebug "==== systemimager-wait-imaging ===="
 
 if test -f /tmp/SIS_action

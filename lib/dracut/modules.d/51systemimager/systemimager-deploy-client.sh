@@ -18,6 +18,9 @@ type shellout >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 type save_logs_to_sysroot >/dev/null 2>&1 || . /lib/autoinstall-lib.sh
 type sis_prepare_disks >/dev/null 2>&1 || . /lib/disksmgt-lib.sh
 
+# Load variables.txt
+. /tmp/variables.txt
+
 logdebug "==== systemimager-deploy-client ===="
 
 # 1st, check that we have IMAGENAME. It is used by init_transfer() to compute IMAGESIZE

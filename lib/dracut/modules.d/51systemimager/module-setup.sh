@@ -80,8 +80,8 @@ install() {
     inst_hook initqueue/settled  50 "$moddir/systemimager-init.sh" # Creates /run/systemimager
     inst_hook initqueue/finished 90 "$moddir/systemimager-wait-imaging.sh" # Waits for file /tmp/SIS_action
     inst_hook initqueue/timeout 10 "$moddir/systemimager-timeout.sh" # In case of timeout (DHCP failure, ....)
-    inst_hook initqueue/online 00 "$moddir/systemimager-load-dhcpopts.sh" # read DHCP SIS special options
-    #inst_hook initqueue/online 10 "$moddir/systemimager-ifcfg.sh" # creates /tmp/variables.txt
+    inst_hook initqueue/online 00 "$moddir/parse-local-cfg.sh" # Read local.cfg (takes precedence over cmdline)
+    inst_hook initqueue/online 10 "$moddir/systemimager-load-dhcpopts.sh" # read DHCP SIS special options
     inst_hook initqueue/online 20 "$moddir/systemimager-pingtest.sh" # do a ping_test()
     inst_hook initqueue/online 30 "$moddir/systemimager-load-scripts-ecosystem.sh" # load /scripts read $SIS_CONFIG
     inst_hook initqueue/online 50 "$moddir/systemimager-monitor-server.sh" # Start the log monitor server
