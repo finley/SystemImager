@@ -129,7 +129,7 @@ then
 	fi
 	[ -z "$NETMASK" ] && shellout "Failed to get NETMASK from DHCP."
 	[ -z "$NETWORK" ] && shellout "Failed to get NETWORK from DHCP."
-	[ -z "$BROADCAST" ] && shellout "Failed to get BROADCAST address from DHCP."
+	[ -z "$BROADCAST" ] && logwarn "Failed to get BROADCAST address from DHCP."
 	[ -z "$FLAMETHROWER_DIRECTORY_PORTBASE" ] && [ -n "$OPTION_FLAMETHROWER_DIRECTORY_PORTBASE" ] && FLAMETHROWER_DIRECTORY_PORTBASE="$OPTION_FLAMETHROWER_DIRECTORY_PORTBASE" && loginfo "Got FLAMETHROWER_DIRECTORY_PORTBASE=${OPTION_FLAMETHROWER_DIRECTORY_PORTBASE}"
 	[ -z "$TMPFS_STAGING" ] && [ -n "$OPTION_TMPFS_STAGING" ] && TMPFS_STAGING="$OPTION_TMPFS_STAGING" && loginfo "Got TMPFS_STAGING=${OPTION_TMPFS_STAGING}"
 	[ -z "$GATEWAY" ] && [ -n "$GATEWAYS" ] && GATEWAY="${GATEWAYS%% *}" && loginfo "Got GATEWAY=${GATEWAY} (from GATEWAYS=${GATEWAYS})"
