@@ -79,7 +79,12 @@ BuildArch: noarch
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
-BuildRequires: docbook-utils, docbook-utils-pdf, dos2unix, flex, libtool, readline-devel, /usr/bin/wget, openssl-devel, gcc, gcc-c++, ncurses-devel, bc, rsync >= 2.4.6
+BuildRequires: dos2unix, flex, libtool, readline-devel, /usr/bin/wget, openssl-devel, gcc, gcc-c++, ncurses-devel, bc, rsync >= 2.4.6
+%if %is_suse
+BuildRequires: docbook-utils
+%else
+BuildRequires: docbook-utils, docbook-utils-pdf
+%endif
 BuildRequires: libuuid-devel, device-mapper-devel, gperf, binutils-devel, pam-devel, quilt
 BuildRequires: lzop, glib2-devel >= 2.22.0
 Requires: rsync >= 2.4.6, syslinux >= 1.48, libappconfig-perl, dosfstools, /usr/bin/perl
@@ -260,11 +265,25 @@ Distribution: System Installation Suite
 Obsoletes: systemimager-%{_build_arch}boot
 BuildRequires: python, python-devel, gettext
 BuildRequires: systemconfigurator
-BuildRequires: dracut, dracut-network, kbd
-BuildRequires: plymouth-plugin-script, plymouth-plugin-label, dejavu-serif-fonts, dejavu-sans-fonts
-BuildRequires: parted, psmisc, /usr/bin/ncat, kexec-tools, bind-utils, net-tools 
+BuildRequires: dracut, kbd
+BuildRequires: xmlstarlet, ipcalc
+# SuSE includes dracut-netwok in main package and openssh-server is part of main package
+%if %is_suse
+BuildRequires: openssh
+BuildRequires: dejavu-fonts
+%else
+BuildRequires: dracut-network
 BuildRequires: openssh-server
-BuildRequires: xfsprogs, e2fsprogs, btrfs-progs, ncurses
+BuildRequires: dejavu-serif-fonts, dejavu-sans-fonts
+%endif
+BuildRequires: plymouth-plugin-script, plymouth-plugin-label
+BuildRequires: parted, psmisc, /usr/bin/ncat, kexec-tools, bind-utils, net-tools 
+BuildRequires: xfsprogs, e2fsprogs, ncurses
+%if %is_suse
+BuildRequires: btrfsprogs
+%else
+BuildRequires: btrfs-progs
+%endif
 BuildRequires: rtorrent
 BuildRequires: kernel
 %if %{?fedora}%{!?fedora:0} >= 18
@@ -391,15 +410,31 @@ Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Requires: systemimager-server = %{version}
-Requires: dracut, dracut-network
-Requires: plymouth-plugin-script, plymouth-plugin-label, dejavu-serif-fonts, dejavu-sans-fonts
-Requires: psmisc, /usr/bin/ncat, kexec-tools, bind-utils, net-tools, openssh-server
-Requires: xmlstarlet, parted, mdadm, util-linux, lvm2
-Requires: xfsprogs, e2fsprogs, btrfs-progs, ntfsprogs, dosfstools
+# SuSE includes dracut-netwok in main package
+%if ! %is_suse
+BuildRequires: dracut-network
+%endif
+Requires: dracut
+Requires: plymouth-plugin-script, plymouth-plugin-label
+Requires: psmisc, /usr/bin/ncat, kexec-tools, bind-utils, net-tools
+Requires: xmlstarlet, parted, mdadm, util-linux, lvm2, ipcalc
+Requires: xfsprogs, e2fsprogs, ntfsprogs, dosfstools
+%if %is_suse
+Requires: btrfsprogs
+Requires: dejavu-fonts
+%else
+Requires: btrfs-progs
+Requires: dejavu-serif-fonts, dejavu-sans-fonts
+%endif
 Requires: ncurses, /usr/bin/awk, kbd
 Requires: kernel
 Requires: rtorrent
 Requires: systemimager-%{_build_arch}initrd_template
+%if %is_suse
+Requires: openssh
+%else
+Requires: openssh-server
+%endif
 %if %{?fedora}%{!?fedora:0} >= 18
 Requires:  systemd
 %else
