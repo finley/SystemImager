@@ -4,31 +4,34 @@
   Copyright (C) 2018 Olivier Lahaye
 
   dhcp4.xml: Configuration file for SuSE/Open SuSE wickedd-dhcp4 dhcp client.
+             More info can be found here: http://manpag.es/leap421/5+wicked-config
 -->
-<define>
-	<option>
-		<code>140</code>
-		<name>image_server</name>
-		<type>ipv4-address</type>
-	</option>
-	<option>
-		<code>141</code>
-		<name>log_server_port</name>
-		<type>uint16</type>
-	</option>
-	<option>
-		<code>142</code>
-		<name>ssh_download_url</name>
-		<type>string</type>
-	</option>
-	<option>
-		<code>143</code>
-		<name>flamethrower_directory_portbase</name>
-		<type>uint16</type>
-	</option>
-	<option>
-		<code>144</code>
-		<name>tmpfs_staging</name>
-		<type>string</type>
-	</option>
-</define>
+<config>
+	<define>
+		<option>
+			<code>140</code>
+			<name>image_server</name>
+			<type>ipv4-address</type>
+		</option>
+		<option>
+			<code>141</code>
+			<name>log_server_port</name>
+			<type>uint16</type>
+		</option>
+		<option>
+			<code>142</code>
+			<name>ssh_download_url</name>
+			<type>string</type>
+		</option>
+		<option>
+			<code>143</code>
+			<name>flamethrower_directory_portbase</name>
+			<type>uint16</type>
+		</option>
+		<option>
+			<code>144</code>
+			<name>tmpfs_staging</name>
+			<type>string</type>
+		</option>
+	</define>
+</config>
