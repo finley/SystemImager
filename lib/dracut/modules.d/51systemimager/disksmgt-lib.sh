@@ -163,6 +163,15 @@ stop_software_raid_and_lvm() {
 	    sleep $PARTED_DELAY
         done
     fi
+
+    # 3/ Stop multipath devices.
+    if test -z "`LC_ALL=C dmsetup ls|grep 'No devices found'`"
+    then
+	    logininfo "cleaning up dm devices (multipath, ...)"
+	    logdebug "Devices to clean: `dmsetup ls|cut -d' ' -f1|tr '\n' ' '`"
+	    dmsetup remove_all
+    fi
+
 }
 
 ################################################################################
