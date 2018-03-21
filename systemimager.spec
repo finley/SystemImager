@@ -119,14 +119,17 @@ Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Requires: rsync >= 2.4.6, systemimager-common = %{version}, dracut-systemimager = %{version}, perl-AppConfig, perl, perl(XML::Simple) >= 2.14, python
+%if %is_suse
+Requires: cdrkit-cdrtools-compat
+%else
 Requires: mkisofs
+%endif
 # If systemd
 %if 0%{?_unitdir:1}
 %systemd_requires
 %else
 Requires: /sbin/chkconfig
 %endif
-#Requires: dosfstools, mkisofs, xfsprogs
 #AutoReqProv: no
 
 %description server
@@ -1220,16 +1223,16 @@ fi
 %doc doc/man/autoinstall* doc/examples/local.cfg
 %dir /var/lock/systemimager
 %dir /var/log/systemimager
-%dir %{_sharedstatedir}/systemimager
-%dir %{_sharedstatedir}/systemimager/images
-%dir %{_sharedstatedir}/systemimager/scripts
-%dir %{_sharedstatedir}/systemimager/scripts/pre-install
-%dir %{_sharedstatedir}/systemimager/scripts/main-install
-%dir %{_sharedstatedir}/systemimager/scripts/post-install
-%dir %{_sharedstatedir}/systemimager/scripts/configs
-%dir %{_sharedstatedir}/systemimager/scripts/disks-layouts
-%dir %{_sharedstatedir}/systemimager/overrides
-%{_sharedstatedir}/systemimager/overrides/README
+%dir %{_var}/lib/systemimager
+%dir %{_var}/lib/systemimager/images
+%dir %{_var}/lib/systemimager/scripts
+%dir %{_var}/lib/systemimager/scripts/pre-install
+%dir %{_var}/lib/systemimager/scripts/main-install
+%dir %{_var}/lib/systemimager/scripts/post-install
+%dir %{_var}/lib/systemimager/scripts/configs
+%dir %{_var}/lib/systemimager/scripts/disks-layouts
+%dir %{_var}/lib/systemimager/overrides
+%{_var}/lib/systemimager/overrides/README
 %dir %{_datarootdir}/systemimager
 %dir %{_datarootdir}/systemimager/icons
 %config %{_sysconfdir}/systemimager/pxelinux.cfg/*
@@ -1251,9 +1254,9 @@ fi
 %{_sysconfdir}/init.d/systemimager-server-netboot*
 %{_sysconfdir}/init.d/systemimager-server-monitord
 %endif
-%{_sharedstatedir}/systemimager/images/*
-%{_sharedstatedir}/systemimager/scripts/pre-install/*
-%{_sharedstatedir}/systemimager/scripts/post-install/*
+%{_var}/lib/systemimager/images/*
+%{_var}/lib/systemimager/scripts/pre-install/*
+%{_var}/lib/systemimager/scripts/post-install/*
 %{_sbindir}/si_addclients
 %{_sbindir}/si_cpimage
 %{_sbindir}/si_getimage
@@ -1304,8 +1307,8 @@ fi
 
 %files bittorrent
 %defattr(-, root, root)
-%dir %{_sharedstatedir}/systemimager/tarballs
-%dir %{_sharedstatedir}/systemimager/torrents
+%dir %{_var}/lib/systemimager/tarballs
+%dir %{_var}/lib/systemimager/torrents
 %config %{_sysconfdir}/systemimager/bittorrent.conf
 %if 0%{?_unitdir:1}
 %{_unitdir}/systemimager-server-bittorrent.service
