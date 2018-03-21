@@ -269,7 +269,7 @@ Obsoletes: systemimager-%{_build_arch}boot
 BuildRequires: python, python-devel, gettext
 BuildRequires: systemconfigurator
 BuildRequires: dracut, kbd
-BuildRequires: xmlstarlet, ipcalc
+BuildRequires: xmlstarlet, /usr/bin/ipcalc
 # SuSE includes dracut-netwok in main package and openssh-server is part of main package
 %if %is_suse
 BuildRequires: openssh
@@ -420,7 +420,7 @@ BuildRequires: dracut-network
 Requires: dracut
 Requires: plymouth-plugin-script, plymouth-plugin-label
 Requires: psmisc, /usr/bin/ncat, kexec-tools, bind-utils, net-tools
-Requires: xmlstarlet, parted, mdadm, util-linux, lvm2, ipcalc
+Requires: xmlstarlet, parted, mdadm, util-linux, lvm2, /usr/bin/ipcalc
 Requires: xfsprogs, e2fsprogs, ntfsprogs, dosfstools
 %if %is_suse
 Requires: btrfsprogs
