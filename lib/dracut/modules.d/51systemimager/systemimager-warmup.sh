@@ -22,6 +22,7 @@ logdebug "==== systemimager-warmup ===="
 #do
 #	sleep 1
 #done
+loginfo "Waiting for plymouth GUI to show up."
 sleep 4
 
 # Highlight plymouth init icon.
