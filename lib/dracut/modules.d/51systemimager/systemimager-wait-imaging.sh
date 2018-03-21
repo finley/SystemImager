@@ -44,7 +44,7 @@ then
 			sis_postimaging reboot
 			;;
 		"shutdown"|"poweroff")
-			warn "Installation successfull. shutting down as requested"
+			loginfo "Installation successfull. shutting down as requested"
 			send_monitor_msg "status=105:speed=0" # 105: shutdown/poweroff
 			sleep 10
 			sis_postimaging poweroff

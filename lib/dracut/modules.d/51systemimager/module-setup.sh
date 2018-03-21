@@ -76,8 +76,9 @@ install() {
     inst_hook cmdline 20 "${moddir}/parse-i18n.sh" # rd.vconsole.* parameters are not parsed if dracut uses systemd (upstream BUG)
     inst_hook cmdline 30 "$moddir/systemimager-check-kernel.sh" # Check that kernel & initrd match.
     inst_hook cmdline 50 "$moddir/parse-sis-options.sh" # read cmdline parameters
+    inst_hook cmdline 60 "$moddir/systemimager-init.sh" # Creates /run/systemimager and sets rootok
     inst_hook cmdline 70 "$moddir/parse-local-cfg.sh" # read local.cfg and overrides cmdline
-    inst_hook initqueue/settled  50 "$moddir/systemimager-init.sh" # Creates /run/systemimager
+    inst_hook initqueue/settled 50 "$moddir/systemimager-warmup.sh" # Waits for plymouth
     inst_hook initqueue/finished 90 "$moddir/systemimager-wait-imaging.sh" # Waits for file /tmp/SIS_action
     inst_hook initqueue/timeout 10 "$moddir/systemimager-timeout.sh" # In case of timeout (DHCP failure, ....)
     inst_hook initqueue/online 00 "$moddir/parse-local-cfg.sh" # Read local.cfg (takes precedence over cmdline)

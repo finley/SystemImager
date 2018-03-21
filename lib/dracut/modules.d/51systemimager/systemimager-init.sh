@@ -10,23 +10,10 @@
 #  Code written by Olivier LAHAYE.
 #
 # This file is responsible to initialize the systemimager dracut environment.
-# (waits for plymouth to initialise and creates some important filesystem paths)
-
-# Make sure we're not called multiple time (even if it's harmless)
-[ -e "$job" ] && rm "$job"
+# (creates some important filesystem paths)
 
 . /lib/systemimager-lib.sh
 logdebug "==== systemimager-init ===="
-
-# Wait for plymouth to be ready.
-#while ! plymouth --ping
-#do
-#	sleep 1
-#done
-sleep 4
-
-# Highlight plymouth init icon.
-sis_update_step init
 
 # Init /run/systemimager directory
 test ! -d /run/systemimager && mkdir -p /run/systemimager
