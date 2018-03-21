@@ -436,9 +436,9 @@ sub _choose_kernel_file {
 #       my $uname_r = _get_kernel_release( '/path/to/kernel/file' );
 sub _get_kernel_release($) {
 	my $file = shift;
-	my $cmd = "file $file|grep 'Linux kernel'";
+	my $cmd = "file $file|grep -E 'Linux(/x86){0,1}\\s[Kk]ernel'";
 	my $result = `$cmd`;
-	$result =~ s/.*version (\S*) .*$/$1/g;
+	$result =~ s/^.*bzImage,\s[Vv]ersion\s(\S+)\s.*$/$1/g;
 	chomp($result);
 	if ($result ne "") {
 		return $result;
