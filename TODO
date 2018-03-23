@@ -3,9 +3,14 @@
 #
 
 ============= TODO for the dracut change before release is possible ===========
-- OpenSuSE 42.3: Finish port to wickedd-dhcp4
-                 have a look at http://manpag.es/leap421/5+wicked-config
-		 /etc/wicked/dhcp4.xml ?
+- Fix si_mkbootpackage:
+>>> Creating new initrd addind staging dir:  /tmp/.systemimager.0
+tar: This does not look like a tar archive
+tar: Exiting with failure status due to previous errors
+
+- DONE: OpenSuSE 42.3: Finish port to wickedd-dhcp4
+  DONE:               have a look at http://manpag.es/leap421/5+wicked-config
+  DONE:	              /etc/wicked/dhcp4.xml ?
 
 - Fix build systemimager when it is not yet installed (/etc/systemimager/systemimager.conf missing
   => si_mkbootpackage fails

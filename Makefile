@@ -350,6 +350,7 @@ endif
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/autoinstall-lib.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/disksmgt-lib.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/init-cmdline.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/init-rootok.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/parse-i18n.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/parse-local-cfg.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/si_inspect_client.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
