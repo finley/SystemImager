@@ -87,6 +87,7 @@ install() {
     inst_hook initqueue/online 30 "$moddir/systemimager-load-scripts-ecosystem.sh" # load /scripts read $SIS_CONFIG
     inst_hook initqueue/online 50 "$moddir/systemimager-monitor-server.sh" # Start the log monitor server
     inst_hook initqueue/online 90 "$moddir/systemimager-deploy-client.sh" # Imaging occures here
+    inst_hook cleanup 90 "$moddir/systemimager-cleanup.sh" # Clean any remaining systemimager remaining stuffs
 #    inst_hook pre/pivot 50 "$moddir/systemimager-save-inst-logs.sh"
 
     dracut_need_initqueue

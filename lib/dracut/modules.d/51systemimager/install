@@ -72,6 +72,7 @@ install() {
     inst_hook initqueue-finished 90 "$moddir/systemimager-wait-imaging.sh" # Waits for file /tmp/SIS_action
     inst_hook initqueue-timeout 10 "$moddir/systemimager-timeout.sh" # In case of timeout (DHCP failure, ....)
     inst_hook pre-udev 10 "$moddir/systemimager-genrules.sh" # needed because lack of initqueue-online
+    inst_hook pre-pivot 90 "$moddir/systemimager-cleanup.sh" # Clean any remaining systemimager remaining stuffs (cleanup hook not available in old dracut)
 
     # 4/ Install workaround
     # workaround for bug https://bugs.centos.org/view.php?id=13357
