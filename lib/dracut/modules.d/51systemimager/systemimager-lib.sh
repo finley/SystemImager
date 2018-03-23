@@ -385,17 +385,37 @@ EOF
 rm -f /tmp/variables.txt~
 }
 
-
 ################################################################################
 #
-# get_config_filename(): return the guessed name for a specific config/script
-#			 in order of priority:
-#			 1:varaible 2:hostname 3:imagename 4:scriptname
-# $1: type (IMAGENAME, SCRIPTNAME, DISK_LAYOUT, CMDLINE_CONF, ...)
-# return the chosen name.
-#
-get_config_filename() {
-	echo TODO get_config_filename
+# update_dracut_root_infos(): will save root= in /dracut-state.sh or /tmp/root.info
+# depending on dracut version (systemd based or not)
+update_dracut_root_infos() {
+	if test -f /dracut-state.sh
+	then
+		loginfo "Updating /dracut-state.sh with new root=$root informations"
+		export -p > /dracut-state.sh
+	elif test -f /tmp/root.info
+	then
+		loginfo "Updating /tmp/root.info with new root=$root informations"
+		{
+		    echo "root='$root'"
+		    echo "rflags='$rflags'"
+		    echo "fstype='$fstype'"
+		    echo "netroot='$netroot'"
+		    echo "NEWROOT='$NEWROOT'"
+		} > /tmp/root.info
+	else
+		logwarn "Can't save root= informations."
+		return 1
+	fi
+	# Now that root= is saved at the propper place, we need to remove the
+	# /etc/conf.d/systemimager.conf file that set dummy values.
+	# This file is sourced at the beginning of each dracut hook
+	# Thus it is sourced at the mount stage which we don't want anymore
+	# as we have now correct values stored in /dracut-state.sh (or /tmp/root.info)
+	# and we don't want them to be overridden by dummy values.
+	test -f /etc/conf.d/systemimager.conf && rm -f /etc/conf.d/systemimager.conf && logdebug "Removed dummy root infos file /etc/conf.d/systemimager.conf"
+	test -f /etc/cmdline.d/systemimager.conf && sed -i -e '/root/d' /etc/cmdline.d/systemimager.conf && logdebug "Removed dummy root infos from /etc/cmdline.d/systemimager.conf so getarg root won't return none"
 }
 
 ################################################################################
@@ -458,13 +478,54 @@ sis_postimaging() {
 	ACTION=$1
 
 	# Fix /etc/issue and /etc/motd with background coloring (at this point we have a valid TERM)
-	# this cannot be done in initrd itself as it depends on TERM (which may depend of rd.sis.term)
+	# this cannot be done in initrd itself as it depends on TERM (which may depend of si.term)
 	sed -i -e "1i${BG_BLUE}" -e "\$a${BG_BLACK}" /etc/motd
 	sed -i -e "1i${BG_RED}" -e "\$a${BG_BLACK}" /etc/issue
 
+	# directboot requires few things:
+	# root= must be set to block:/dev/the/correct/root/device
+	# /etc/fstab.empty must exists and /etc/fstab must be removed
+	# rflags must be set to ro
+	# then we return 0 (not exit!!) si dracut mainloop can continue. 
+	if test "${ACTION}" = "directboot"
+	then
+		# Read root= updated values
+		if test -f /dracut-state.sh; then
+			loginfo "Reading root= updated values from /dracut-state.sh"
+			. /dracut-state.sh 2> /dev/null
+		elif test -f /tmp/root.info; then # Old dracut (CentOS-6 / non systemd)
+			loginfo "Reading root= updated values from /tmp/root.info"
+			. /tmp/root.info 2> /dev/null
+		else
+			logwarn "No root= info available (/dracut-state.sh or /tmp/root.info missing)"
+		fi
+		loginfo "Using root=$root"
+
+		# Make sure $root points to a block device at least.
+		test -b "${root#block:}" || shellout "\$root is not a block device! [root=${root}]"
+		# Make sure $root points to correct root in ou temporary /etc/fstab
+		test -n "`grep -E \"^${root#block:}\\s+/sysroot[/]{0,1}\\s+.*$\" /etc/fstab`" || shellout "\$root not used for / in our fstab: [root=${root}]"
+		touch /etc/fstab.emtpy # make sure it exists
+		rm -f /etc/fstab       # cleanup our stuff!
+		# Make sure installed modules match ou kernel version.
+		RUNNING_KERNEL_VER=`uname -r`
+		if test -z "`echo ${IMAGED_MODULES}|grep ${RUNNING_KERNEL_VER}`"
+		then
+			logerror "Can't boot directly."
+			logerror "Running kernel [${RUNNING_KERNEL_VER}] has no modules on imaged system."
+			logerror "Installed modules: ${IMAGED_MODULES}"
+			logwarn  "Rebooting instead."
+			ACTION="reboot"
+		else
+			loginfo "Imaged system has matching modules available."
+			loginfo "Continuing as normal boot using kernel [${RUNNING_KERNEL_VER}]."
+			return 0
+		fi
+	fi
+
 	# If kexec action is chosen, we load the new kernel.
 	# OL: BUG: at this point, /sysroot is unmounted.....
-	if test $ACTION = "kexec"
+	if test "$ACTION" = "kexec"
 	then
 	    # OL: Not tested; need many improvement!
 	    KERNEL=/sysroot/boot/vmlinuz* # Need to get the real kernel: no place for guess here
@@ -1083,7 +1144,7 @@ choose_autoinstall_script() {
         SCRIPTNAMES="${SCRIPTS_DIR}/${SCRIPTNAME} ${SCRIPTS_DIR}/${SCRIPTNAME}.sh ${SCRIPTS_DIR}/${SCRIPTNAME}.master"
 
 	# Script name was specified, so it MUST be available. If not, we must fail.
-        [ ! -e ${SCRIPTS_DIR}/${SCRIPTNAME} -a ! -e ${SCRIPTS_DIR}/${SCRIPTNAME}.sh -a !-e ${SCRIPTS_DIR}/${SCRIPTNAME}.master ] || shellout "Cant find requested main autoinstall script: ${SCRIPTNAME}{,.sh,.master}"
+        [ ! -e ${SCRIPTS_DIR}/${SCRIPTNAME} -a ! -e ${SCRIPTS_DIR}/${SCRIPTNAME}.sh -a !-e ${SCRIPTS_DIR}/${SCRIPTNAME}.master ] || shellout "Can't find requested main autoinstall script: ${SCRIPTNAME}{,.sh,.master}"
     else
             SCRIPTNAMES=`choose_filename /scripts/main-install "" ".sh" ".master"`
     fi
@@ -1598,7 +1659,7 @@ stop_report_task() {
         REPORT_PID=`cat /run/systemimager/report_task.pid`
 	rm -f /run/systemimager/report_task.pid
         # Making sure it is an integer.
-	test -n "`echo ${REPORT_PID}|sed -r 's/[0-9]*//g'`" && shellout "Cant kill report task: /run/systemimager/report_task.pid is not a pid."
+	test -n "`echo ${REPORT_PID}|sed -r 's/[0-9]*//g'`" && shellout "Can't kill report task: /run/systemimager/report_task.pid is not a pid."
         if [ ! -z "$REPORT_PID" ]; then
             kill -9 $REPORT_PID
 	    wait $REPORT_PID # Make sure process is killed before continuing.

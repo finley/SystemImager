@@ -25,6 +25,7 @@ logdebug "==== systemimager-wait-imaging ===="
 
 if test -f /tmp/SIS_action
 then
+	cd / # Make sure we're not in the wrong plce.
 	ACTION=`cat /tmp/SIS_action`
 	case "$ACTION" in
 		"shell")
@@ -48,6 +49,12 @@ then
 			send_monitor_msg "status=105:speed=0" # 105: shutdown/poweroff
 			sleep 10
 			sis_postimaging poweroff
+			;;
+		"directboot")
+			loginfo "Installation successfull. Finishing as normal boot without rebooting"
+			send_monitor_msg "status=104:speed=0" # 104: rebooting
+			sleep 10
+			sis_postimaging directboot
 			;;
 		*)
 			logwarn "Installation successfull. Invalid post action. Rebooting"

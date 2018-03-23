@@ -24,11 +24,7 @@ type write_variables >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 
 logdebug "==== parse-local-cfg ===="
 
-# Make dracut init.sh happy.
-#root="none"
-#rootok=1
-
-if [ "x$SKIP_LOCAL_CFG" = "xy" ]; then
+if [ "${SKIP_LOCAL_CFG}" = "y" ]; then
     loginfo "Skipping local.cfg: option SKIP_LOCAL_CFG=y has been specified"
     return
 fi
@@ -41,8 +37,8 @@ fi
 #
 # BEGIN try hard drive
 #
-if [ ! -z "$LAST_ROOT" ]; then
-    loginfo "Checking for /local.cfg file on hard drive [$LAST_ROOT]..."
+if [ ! -z "${LAST_ROOT}" ]; then
+    loginfo "Checking for /local.cfg file on hard drive [${LAST_ROOT}]..."
     mkdir /last_root
     loginfo "Mounting hard drive [$LAST_ROOT] ..."
     mount $LAST_ROOT /last_root -o ro > /dev/null 2>&1
@@ -53,7 +49,7 @@ if [ ! -z "$LAST_ROOT" ]; then
         logwarn "standard SystemImager kernel is modular, so you will need to compile your own"
         logwarn "kernel.  See the SystemImager documentation for details.  To proceed at this"
         logwarn "point, you will need to unset the LAST_ROOT append parameter by typing"
-        logwarn ""systemimager LAST_ROOT=", or similar, at your boot prompt.  This will not use"
+        logwarn "systemimager LAST_ROOT=, or similar, at your boot prompt.  This will not use"
         logwarn "the local.cfg file on your hard drive, but will still use one on a floppy."
         shellout "Can't access /last_root/local.cfg"
     fi
@@ -61,7 +57,7 @@ if [ ! -z "$LAST_ROOT" ]; then
     if [ -f /last_root/local.cfg ]; then
         loginfo "Found /local.cfg on hard drive."
         loginfo "Copying /local.cfg settings to /tmp/local.cfg."
-        cat /last_root/local.cfg >> /tmp/local.cfg || shellout
+        cat /last_root/local.cfg >> /tmp/local.cfg || shellout "Can't save /last_root/local.cfg as /tmp/local.cfg"
     else
         loginfo "No /local.cfg on hard drive."
     fi

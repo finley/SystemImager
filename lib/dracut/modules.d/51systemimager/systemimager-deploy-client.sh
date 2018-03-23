@@ -138,6 +138,9 @@ save_logs_to_sysroot # Saves /tmp/relevant install infos to /root/SIS_Install/
 # Setup kexec if necessary
 # TODO
 
+# Keep track of available modules versions in imaged system in case "directboot" is set as POST_ACTION
+IMAGED_MODULES=`(cd /sysroot/lib/modules; echo *)` # no need to store it in variables.txt (we are sourced from initqueue hook).
+
 # Unmount system filesystems
 umount_os_filesystems_from_sysroot
 
@@ -164,6 +167,15 @@ do
 	logdebug "Unmounting $mount_point"
 	umount $mount_point || logerror "Failed to umount $mount_point" # don't fail here, image is on disk.
 done
+
+# We need to cleanup /sysroot/proc and such otherwise, dracut won't try to mount realroot if we chose "directboot"
+loginfo "Cleaning up /sysroot remaining garbage dirs"
+find /sysroot -type d -exec rmdir {} \;
+
+if test `ls /sysroot|wc -l` > 0
+	logwarn "/sysroot still not empty!!!"
+	logwarn "Content: `echo /sysroot/*`"
+fi
 
 # Tell the image server we are done
 rsync $IMAGESERVER::scripts/imaging_complete_$IPADDR > /dev/null 2>&1

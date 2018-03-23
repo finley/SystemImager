@@ -579,6 +579,14 @@ EOF
 				FSTAB_LINE="${FS_COMMENT}"
 			fi
 			echo -e "${FSTAB_LINE}" >> /tmp/fstab.temp
+			if test "${FS_MP/ /}" = "/"
+			then # keep track of root for possible directboot
+				loginfo "Saving root=block:${FS_MOUNT_DEV/ /} to allow normal boot after imaging."
+				export root="block:${FS_MOUNT_DEV/ /}"
+				export rflags="ro"
+				export rootok="1"
+				update_dracut_root_infos
+			fi
 		done
 }
 
