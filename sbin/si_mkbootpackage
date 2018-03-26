@@ -119,6 +119,10 @@ Options:
     its modules are available. Otherwise, the hight version in /boot
     will be used.
 
+ --kver VERSION
+    Do not detect the kernel to use with UYOK, but instead use the
+    kernel with the specified version if available in /boot.
+
  --modules-dir DIR
     Get kernel modules to use with UYOK from the DIR repository.
     Use this parameter only with --kernel and only if you use UYOK
@@ -164,6 +168,7 @@ GetOptions(
     "destination=s"        => \my $destination,
     "my-modules"           => \my $my_modules,
     "kernel=s"             => \my $custom_kernel,
+    "kver=s"               => \my $kernel_version,
     "modules-dir=s"        => \my $modules_dir,
     "image=s"              => \my $image,
     "version"              => \my $version,
@@ -210,6 +215,12 @@ if (($destination) and ($flavor)) {
 if (!($custom_kernel) and $modules_dir) {
     print "FATAL:  --modules-dir DIR option must be used in conjunction with --kernel KERNEL!\n";
     print qq(Try "$progname --help" for more info.\n);
+    exit 1;
+}
+
+if ($kernel_version and ! -e "/boot/vmlinuz-$kernel_version") {
+    print "FATAL: --kver=$kernel_version invalid! /boot/vmlinuz-$kernel_version doesn't exists!\n";
+    print "Make sure /boot/vmlinuz-$kernel_version is available!"; # TODO: list available versions.
     exit 1;
 }
 
@@ -304,8 +315,8 @@ sub create_boot_package {
     }
     # Removed: $filesystem system_firmware
     SystemImager::UseYourOwnKernel->create_uyok_initrd(
-        $my_modules, $custom_kernel, $modules_dir,
-        $image, $destination,
+        $my_modules, $custom_kernel, $kernel_version,
+        $modules_dir, $image, $destination,
         $ssh_key, $authorized_keys, $local_cfg,
         $firmware_dir, $dracut_opts, $verbose
     );

@@ -31,8 +31,8 @@ our $is_mounted = 0;
 #
 # Usage: 
 #       SystemImager::UseYourOwnKernel->create_uyok_initrd(
-#           $my_modules, $custom_kernel, $custom_mod_dir,
-#           $image, $destination, $ssh_key,
+#           $my_modules, $custom_kernel, $kernel_version,
+#           $custom_mod_dir, $image, $destination, $ssh_key,
 #           $authorized_keys, $local_cfg,
 #           $firmware_dir, $dracut_opts, $verbose);
 #
@@ -41,6 +41,7 @@ sub create_uyok_initrd() {
 	my $perl_package    = shift;
         my $my_modules      = shift;
         my $custom_kernel   = shift;
+	my $kernel_version  = shift;
         my $custom_mod_dir  = shift;
         my $image           = shift;
         my $destination     = shift;
@@ -62,6 +63,7 @@ sub create_uyok_initrd() {
         # Create temp dir
         #
         my $staging_dir = _mk_tmp_dir();
+	my $staging_dir_option = "";
 
         # Set the cleanup handler.
         $SIG{__DIE__} = sub {
@@ -79,7 +81,9 @@ sub create_uyok_initrd() {
 	my $config_r;
         if ($custom_kernel) {
             $uname_r = _get_kernel_release($custom_kernel);
-        } elsif ($image) {
+        } elsif ($kernel_version) {
+		$uname_r=$kernel_version;
+	}elsif ($image) {
             # Get SystemImager directories.
             my $image_dir = $config->default_image_dir;
 
@@ -148,6 +152,7 @@ sub create_uyok_initrd() {
         # Copy SSH keys.
         #
         if ($ssh_key) {
+            $staging_dir_option = "--include $staging_dir /";
             unless (-d "$staging_dir/root/") {
                 mkdir("$staging_dir/root/", 0700) or
                     die("Couldn't create directory: $staging_dir/root/!\n");
@@ -162,6 +167,7 @@ sub create_uyok_initrd() {
             }
         }
         if ($authorized_keys) {
+            $staging_dir_option = "--include $staging_dir /";
             unless (-d "$staging_dir/root/.ssh/") {
                 mkdir("$staging_dir/root/.ssh/", 0700) or
                     die("Couldn't create directory: $staging_dir/root/.ssh/!\n");
@@ -176,6 +182,7 @@ sub create_uyok_initrd() {
         # Copy local.cfg
         #
         if ($local_cfg) {
+            $staging_dir_option = "--include $staging_dir /";
             print ">>> Including local.cfg into the initrd.img: $local_cfg\n" if ($verbose);
             unless (copy($local_cfg, "$staging_dir/local.cfg")) {
                 die("Couldn't copy $local_cfg to $staging_dir/local.cfg!\n");
@@ -216,11 +223,14 @@ sub create_uyok_initrd() {
         #
         # Create initrd and save copy of kernel
         #
-        print ">>> Creating new initrd addind staging dir:  $staging_dir\n" if( $verbose );
+	if ( $staging_dir_option ) {
+            print ">>> Creating new initrd addind staging dir:  $staging_dir\n" if( $verbose );
+        }
 
 	unless ($dracut_opts) { $dracut_opts = ""; }
 
-	my $dracut_cmd="dracut --force --add systemimager --omit dash$hostonly_opt $extra_firmwares --include $staging_dir / $modules_to_exclude $modules_to_include $dracut_opts $boot_dir/initrd.img $uname_r";
+	my $dracut_cmd="dracut --force --add systemimager --omit dash$hostonly_opt $extra_firmwares $staging_dir_option $modules_to_exclude $modules_to_include $dracut_opts $boot_dir/initrd.img $uname_r";
+	system("echo $dracut_cmd > /tmp/dacut_cmd.sh");
         !system($dracut_cmd) or die("FAILED: $dracut_cmd");
 
         # Print initrd size information.

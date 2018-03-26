@@ -960,7 +960,7 @@ sub create_auto_install_script_conf {
         my $verbose;
         unless($quiet) { $verbose = 1; }
         SystemImager::UseYourOwnKernel->create_uyok_initrd(
-            $my_modules, $custom_kernel, $modules_dir,
+            $my_modules, $custom_kernel, undef, $modules_dir,
             $image, $initrd_destination,
             $ssh_key, $authorized_keys, $local_cfg,
             $firmware_dir, $verbose
