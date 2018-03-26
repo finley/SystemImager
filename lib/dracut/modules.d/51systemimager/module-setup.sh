@@ -74,7 +74,7 @@ install() {
     done
     inst_hook cmdline 01 "$moddir/init-cmdline.sh" # copy /etc/persistent-cmdline.d to /etc/cmdline.d/
     inst_hook cmdline 10 "$moddir/init-rootok.sh" # sets root="UNSET" and rootok="1"
-    inst_hook cmdline 20 "${moddir}/parse-i18n.sh" # rd.vconsole.* parameters are not parsed if dracut uses systemd (upstream BUG)
+    inst_hook cmdline 20 "$moddir/parse-i18n.sh" # rd.vconsole.* parameters are not parsed if dracut uses systemd (upstream BUG)
     inst_hook cmdline 30 "$moddir/systemimager-check-kernel.sh" # Check that kernel & initrd match.
     inst_hook cmdline 50 "$moddir/parse-sis-options.sh" # read cmdline parameters
     inst_hook cmdline 60 "$moddir/systemimager-init.sh" # Creates /run/systemimager and sets rootok
