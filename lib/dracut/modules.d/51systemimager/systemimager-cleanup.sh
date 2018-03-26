@@ -37,7 +37,12 @@ if test -s /run/systemimager/si_monitor.pid; then
     test -n "`echo ${MONITOR_PID}|sed -r 's/[0-9]*//g'`" && shellout "Can't kill monitor task: /run/systemimager/si_monitor.pid is not a pid."
     if [ ! -z "$MONITOR_PID" ]; then
         kill -9 $MONITOR_PID
-        wait $MONITOR_PID # Make sure process is killed before continuing.
+        # wait $MONITOR_PID # Make sure process is killed before continuing.
+        # (We can't use shell wait because process is not a child of this shell)
+        while test -e /proc/${MONITOR_PID}
+        do
+            wleep 0.5
+        done
         info "Remote monitor task stopped"
     fi
 fi
