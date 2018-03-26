@@ -422,7 +422,7 @@ update_dracut_root_infos() {
 	# This scrits uses getarg() for /lib/dracut-lib.sh
 	# We need to put information in cmdline.d/systemimager-rootfs-infos.conf
 	cat > /etc/cmdline.d/systemimager-rootfs-infos.conf <<EOF
-root="$root"
+root=${root#block:}
 EOF
 }
 

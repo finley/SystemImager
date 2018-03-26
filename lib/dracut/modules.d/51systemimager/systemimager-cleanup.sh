@@ -41,9 +41,9 @@ if test -s /run/systemimager/si_monitor.pid; then
         # (We can't use shell wait because process is not a child of this shell)
         while test -e /proc/${MONITOR_PID}
         do
-            wleep 0.5
+            sleep 0.5
         done
-        info "Remote monitor task stopped"
+        info "SystemImager remote monitor task stopped"
     fi
 fi
 

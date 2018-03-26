@@ -173,6 +173,7 @@ loginfo "Cleaning up /sysroot remaining garbage dirs"
 find /sysroot -type d -exec rmdir {} \;
 
 if test `ls /sysroot|wc -l` > 0
+then
 	logwarn "/sysroot still not empty!!!"
 	logwarn "Content: `echo /sysroot/*`"
 fi
