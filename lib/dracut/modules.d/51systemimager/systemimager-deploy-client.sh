@@ -178,6 +178,20 @@ then
 	logwarn "Content: `echo /sysroot/*`"
 fi
 
+# Tells to dracut that root in now known.
+if [ -n "$DRACUT_SYSTEMD" ]; then
+	# Ask systemd to re-reun its generators (dracut-rootfs-generator). See:
+	# https://www.freedesktop.org/software/systemd/man/systemd.generator.html
+	systemctl daemon-reload
+else
+	# Udev uses the inotify mechanism to watch for changes in the rules directory, in
+	# both the library and in the local configuration trees (typically located at
+	# /lib/udev/rules.d and /etc/udev/rules.d). So you don't need to do anything
+	# when you change a rules file.
+	# udevadm control --reload-rules && udevadm trigger
+	echo > /dev/null # do nothing
+fi
+
 # Tell the image server we are done
 rsync $IMAGESERVER::scripts/imaging_complete_$IPADDR > /dev/null 2>&1
 loginfo "Imaging completed"

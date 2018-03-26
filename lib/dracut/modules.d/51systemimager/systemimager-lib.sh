@@ -513,7 +513,7 @@ sis_postimaging() {
 		test -b "${root#block:}" || shellout "\$root is not a block device! [root=${root}]"
 		# Make sure $root points to correct root in ou temporary /etc/fstab
 		test -n "`grep -E \"^${root#block:}\\s+/sysroot[/]{0,1}\\s+.*$\" /etc/fstab`" || shellout "\$root not used for / in our fstab: [root=${root}]"
-		touch /etc/fstab.emtpy # make sure it exists
+		touch /etc/fstab.empty # make sure it exists
 		rm -f /etc/fstab       # cleanup our stuff!
 		# Make sure installed modules match ou kernel version.
 		RUNNING_KERNEL_VER=`uname -r`
