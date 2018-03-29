@@ -25,7 +25,7 @@ logdebug "==== systemimager-cleanup ===="
 if test -f /sysroot/root/SIS_Install_logs/si_monitor.log
 then
     loginfo "Updating /root/SIS_Install_logs/si_monitor.log in image with latests logs"
-    cp -f /tmp/si_monitor.log /root/SIS_Install_logs/si_monitor.log
+    cp -f /tmp/si_monitor.log /sysroot/root/SIS_Install_logs/si_monitor.log
 fi
 
 # Now we can kill the monitor, everything is finished we are just before swap-root and normal boot.
@@ -47,9 +47,12 @@ if test -s /run/systemimager/si_monitor.pid; then
     fi
 fi
 
+# Prevent ourself to reenter wait imaging loop when doing directboot and something goes wrong.
+rm -f /usr/lib/dracut/hooks/initqueue/finished/90-systemimager-wait-imaging.sh
+
 # Now we can clean systemimager specific stuffs
-rm -rf /run/systemimager /tmp/tmpfs_staging
-(cd /tmp; rm -f SIS_action fstab.temp grub_default.cfg mdadm.conf.temp si_monitor.log variables.txt)
+rm -rf /run/systemimager ${STAGING_DIR}/*.*
+(cd /tmp; rm -f SIS_action fstab.image grub_default.cfg mdadm.conf.temp si_monitor.log variables.txt)
 
 unset SIS_SYSMSG_ENABLED
 

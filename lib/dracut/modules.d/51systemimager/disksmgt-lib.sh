@@ -80,7 +80,7 @@ sis_prepare_disks() {
 sis_install_configs() {
 	# 1/ Install fstab
 	loginfo "Installing /etc/fstab"
-	cp /tmp/fstab.temp /sysroot/etc/fstab || shellout "Failed to copy /tmp/fstab.temp as /sysroot/etc/fstab"
+	cp /tmp/fstab.image /sysroot/etc/fstab || shellout "Failed to copy /tmp/fstab.image as /sysroot/etc/fstab"
 
 	# 2/ Install mdadm.conf if needed
 	if [ -f /tmp/mdadm.conf.temp ]
@@ -172,34 +172,6 @@ stop_software_raid_and_lvm() {
 	    dmsetup remove_all
     fi
 
-}
-
-################################################################################
-#
-# _save_configs_to_image
-#		Save configs specific to disk in imaged system
-#		- /etc/fstab
-#		- /etc/mdadm/mdadm.conf
-#		- /etc/lvm/lvm.conf
-#
-################################################################################
-_save_configs_to_image() {
-	loginfo "Installing fstab on imaged system"
-	cp /tmp/fstab.image /sysroot/etc/fstab || shellout "Failed to install /etc/fstab in imaged system."
-	# Make sure /etc/mdadm exists on imaged system.
-	if test -f /tmp/mdadm.conf
-	then
-		mkdir -p /sysroot/etc/mdadm || shellout "Failed to create /sysroot/etc/mdadm"
-		loginfo "Installing software raid config file mdadm.conf"
-		cp /tmp/mdadm.conf /sysroot/etc/mdadm/mdadm.conf || shellout "Failed to install /etc/mdadm/mdadm.conf in imaged system."
-	fi
-	# Make sure /etc/lvm exists on imaged system.
-	if test -f /tmp/lvm.conf
-	then
-		mkdir -p /sysroot/etc/lvm || shellout "Failed to create /sysroot/etc/lvm"
-		loginfo "Installing logical volume manager config file lvm.conf"
-		cp /tmp/lvm.conf /sysroot/etc/lvm/lvm.conf || shellout "Failed to install /etc/lvm/lvm.conf in imaged system."
-	fi
 }
 
 ################################################################################
@@ -474,7 +446,7 @@ _do_filesystems() {
 	loginfo "Creating filesystems mountpoints and fstab."
 
 	# Prepare fstab skeleton.
-	cat > /tmp/fstab.temp <<EOF
+	cat > /tmp/fstab.image <<EOF
 #
 # /etc/fstab
 # Created by System Imager on $(date)
@@ -578,12 +550,12 @@ EOF
 			else # Must be a comment line at this point.
 				FSTAB_LINE="${FS_COMMENT}"
 			fi
-			echo -e "${FSTAB_LINE}" >> /tmp/fstab.temp
+			echo -e "${FSTAB_LINE}" >> /tmp/fstab.image
 			if test "${FS_MP/ /}" = "/"
 			then # keep track of root for possible directboot
 				loginfo "Saving root=block:${FS_MOUNT_DEV/ /} to allow normal boot after imaging."
 				export root="block:${FS_MOUNT_DEV/ /}"
-				export rflags="ro"
+				export rflags="${FS_OPTIONS}"
 				export rootok="1"
 				update_dracut_root_infos
 			fi
@@ -596,18 +568,18 @@ EOF
 #		  If it is a virtual filesystem, a warning is issued.
 #		  Now virtual filesystems are not listed in fstab anymore.
 #		- Mount physical filesystems so they can receive the image
-#		- Save mounted filesystems to initramfs:/etc/fstab
+#		- Save mounted filesystems to initramfs:/etc/fstab.systemimager
 ################################################################################
 _do_fstab() {
 	# Process fstab to create moutpoints
 	# Now process fstab to create mount points and effectively mout filesystems.
 	# We sort it by mount point (we need to create /var before /var/tmp
 	# even if user wants /var/tmp before /var in /etc/fstab for example)
-	# We also populate initramfs:/etc/fstab with mounted filesystems in sorted
+	# We also populate initramfs:/etc/fstab.systemimager with mounted filesystems in sorted
         # order	so it's easier later to umount them.
 	loginfo "Processing fstab: Creating mount points and mounting physical filesystems."
 	unset IFS
-	cat /tmp/fstab.temp |sed -e 's/#.*//' -e '/^$/d' | sort -k2,2 |\
+	cat /tmp/fstab.image |sed -e 's/#.*//' -e '/^$/d' | sort -k2,2 |\
 		while read M_DEV M_MP M_FS M_OPTS M_DUMP M_PASS
 		do
 			# If mountpoint is a PATH, AND filesystem is not virtual, create the path and mount filesystem to sysroot.
@@ -621,9 +593,9 @@ _do_fstab() {
 				CMD="mount -t ${M_FS} ${MOUNT_OPT} ${M_DEV} /sysroot${M_MP}"
 				logdebug "$CMD"
 				eval "$CMD" || shellout "Failed to mount ${M_DEV} to /sysroot${M_MP}"
-				# Add filesystem to initramfs:/etc/fstab (needed when we'll need to unmount them)
+				# Add filesystem to initramfs:/etc/fstab.systemimager (needed when we'll need to unmount them)
 				# Set 0 for dump and 0 for pass (not needed in initramfs).
-				echo -e "${M_DEV}\t/sysroot${M_MP}\t${M_FS}\t${M_OPTS}\t0 0" >> /etc/fstab
+				echo -e "${M_DEV}\t/sysroot${M_MP}\t${M_FS}\t${M_OPTS}\t0 0" >> /etc/fstab.systemimager
 			elif [ "${M_MP:0:4}" != "swap" ] # filesystem is not a disk filesystem.
 			then
 				logwarn "Virtual filesystems are now handled by systemd."

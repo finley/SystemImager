@@ -423,6 +423,7 @@ update_dracut_root_infos() {
 	# We need to put information in cmdline.d/systemimager-rootfs-infos.conf
 	cat > /etc/cmdline.d/systemimager-rootfs-infos.conf <<EOF
 root=${root#block:}
+rootflags=${rflags}
 EOF
 }
 
@@ -492,7 +493,7 @@ sis_postimaging() {
 
 	# directboot requires few things:
 	# root= must be set to block:/dev/the/correct/root/device
-	# /etc/fstab.empty must exists and /etc/fstab must be removed
+	# /etc/fstab.empty must exists.
 	# rflags must be set to ro
 	# then we return 0 (not exit!!) si dracut mainloop can continue. 
 	if test "${ACTION}" = "directboot"
@@ -511,10 +512,10 @@ sis_postimaging() {
 
 		# Make sure $root points to a block device at least.
 		test -b "${root#block:}" || shellout "\$root is not a block device! [root=${root}]"
-		# Make sure $root points to correct root in ou temporary /etc/fstab
-		test -n "`grep -E \"^${root#block:}\\s+/sysroot[/]{0,1}\\s+.*$\" /etc/fstab`" || shellout "\$root not used for / in our fstab: [root=${root}]"
+		# Make sure $root points to correct root in ou temporary /etc/fstab.systemimager
+		test -n "`grep -E \"^${root#block:}\\s+/sysroot[/]{0,1}\\s+.*$\" /etc/fstab.systemimager`" || shellout "\$root not used for / in our fstab: [root=${root}]"
 		touch /etc/fstab.empty # make sure it exists
-		rm -f /etc/fstab       # cleanup our stuff!
+		rm -f /etc/fstab.systemimager       # cleanup our stuff!
 		# Make sure installed modules match ou kernel version.
 		RUNNING_KERNEL_VER=`uname -r`
 		if test -z "`echo ${IMAGED_MODULES}|grep ${RUNNING_KERNEL_VER}`"

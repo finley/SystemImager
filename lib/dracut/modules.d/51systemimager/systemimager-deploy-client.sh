@@ -144,7 +144,7 @@ IMAGED_MODULES=`(cd /sysroot/lib/modules; echo *)` # no need to store it in vari
 # Unmount system filesystems
 umount_os_filesystems_from_sysroot
 
-# Unmount imaged OS filesystems (they are listed in initrd:/etc/fstab)
+# Unmount imaged OS filesystems (they are listed in initramfs:/etc/fstab.systemimager)
 # We can't use /sysroot/etc/fstab as it also contain swap and other stuffs
 # like some nfs mountpoints added by postinstall scripts
 
@@ -162,7 +162,7 @@ then
 fi
 
 loginfo "Unmounting imaged OS filesystems"
-cat /etc/fstab|grep sysroot|awk '{print $2}'|sort -r -k2,2| while read mount_point
+cat /etc/fstab.systemimager|grep sysroot|awk '{print $2}'|sort -r -k2,2| while read mount_point
 do
 	logdebug "Unmounting $mount_point"
 	umount $mount_point || logerror "Failed to umount $mount_point" # don't fail here, image is on disk.
@@ -182,6 +182,7 @@ fi
 if [ -n "$DRACUT_SYSTEMD" ]; then
 	# Ask systemd to re-reun its generators (dracut-rootfs-generator). See:
 	# https://www.freedesktop.org/software/systemd/man/systemd.generator.html
+	# and https://bbs.archlinux.org/viewtopic.php?pid=1501024#p1501024
 	systemctl daemon-reload
 else
 	# Udev uses the inotify mechanism to watch for changes in the rules directory, in

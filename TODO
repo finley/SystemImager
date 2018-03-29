@@ -3,6 +3,10 @@
 #
 
 ============= TODO for the dracut change before release is possible ===========
+
+- Check STAGING_DIR getarg. Seems not read anywhere.
+
+- Update si_prepareclient and si_mkbootpackage doc. (-kver parameter)
 - Fix si_mkbootpackage:
 >>> Creating new initrd addind staging dir:  /tmp/.systemimager.0
 tar: This does not look like a tar archive
@@ -14,7 +18,7 @@ tar: Exiting with failure status due to previous errors
 
 - Fix build systemimager when it is not yet installed (/etc/systemimager/systemimager.conf missing
   => si_mkbootpackage fails
-  SIS_CONFDIR=$RPM_BUILD_DIR/systemimager-4.5.0/etc dracutbasedir=$(pwd) perl -I ../.../../sbin/si_mkbootpackage --dracut-opts="--local" --destination ../..
+  SIS_CONFDIR=$RPM_BUILD_DIR/systemimager-4.5.0/etc dracutbasedir=$(pwd) perl -I ../../../sbin/si_mkbootpackage --dracut-opts="--local" --destination ../..
 FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in /etc/systemimager/systemimager.conf
 
 - Add support for querying password in plymouth theme to support SSH when no key is available.
