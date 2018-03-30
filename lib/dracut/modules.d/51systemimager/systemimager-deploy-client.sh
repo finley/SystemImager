@@ -91,10 +91,6 @@ fi
 getarg 'si.break=prepare-disks' && emergency_shell -n prepare-disks "Break prepare-disks"
 sis_prepare_disks
 
-# Mount os filesystems to /sysroot (will shellout in case of failure)
-getarg 'si.break=mount-client' && emergency_shell -n mount-client "Break mount-client"
-mount_os_filesystems_to_sysroot
-
 # Run the autoinstall script (before image installation).
 # the autoinstall script (also called main-install) is optional.
 getarg 'si.break=main-install' && emergency_shell -n main-install "Break main-install"
@@ -118,6 +114,10 @@ extract_image  # Extract image to /sysroot if staging dir was used, else do noti
 
 getarg 'si.break=install-overrides' && emergency_shell -n install-overrides "Break install-overrides"
 install_overrides # download and install override files
+
+# Mount os filesystems to /sysroot (will shellout in case of failure)
+# We need devices for sis_install_config (chroot /sysroot vgscan at least)
+mount_os_filesystems_to_sysroot
 
 # Install fstab, mdadm.conf, lvm.conf and update initramfs so it is aware of raid or lvm
 getarg 'si.break=install-configs' && emergency_shell -n install-configs "Break install-configs"

@@ -2,7 +2,7 @@
 #
 #  "SystemImager"
 #
-#  Copyright (C) 2012 Olivier Lahaye <olivier.lahaye@cea.fr>
+#  Copyright (C) 2012-2018 Olivier Lahaye <olivier.lahaye@cea.fr>
 #
 # Description: Installs an init script that will report the rebooted status
 #              to the monitor server.
@@ -97,7 +97,14 @@ EOF
     cat <<EOF > /lib/systemd/systemimager-monitor-firstboot
 #!/bin/bash
 # systemd service script for systemimager
-# (c) Olivier Lahaye 2012-2014
+# (c) Olivier Lahaye 2012-2018
+
+# 1st, get last si_monitor.log file from /run/systemimager if it exists
+# It will exists if we did a direct boot.
+if test -r /run/systemimager/si_monitor.log -a -w /root/SIS_Install_logs
+then
+	cp -f /run/systemimager/si_monitor.log /root/SIS_Install_logs/si_monitor.log
+fi
 
 if ($(send_message_cmd))
 then
@@ -136,6 +143,13 @@ set -e
 
 case "\$1" in
   start)
+	# 1st, get last si_monitor.log file from /run/systemimager if it exists
+	# It will exists if we did a direct boot.
+        if test -r /run/systemimager/si_monitor.log -a -w /root/SIS_Install_logs
+        then
+	    cp -f /run/systemimager/si_monitor.log /root/SIS_Install_logs/si_monitor.log
+        fi
+
         if ($(send_message_cmd))
         then
             if [ -x /sbin/chkconfig ]; then
