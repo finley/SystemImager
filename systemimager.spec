@@ -269,7 +269,20 @@ Obsoletes: systemimager-%{_build_arch}boot
 BuildRequires: python, python-devel, gettext
 BuildRequires: systemconfigurator
 BuildRequires: dracut, kbd
-BuildRequires: xmlstarlet, /usr/bin/ipcalc
+BuildRequires: xmlstarlet
+# ipcalc requirement
+%if 0%{?rhel} == 6
+BuildRequires: initscripts
+%endif
+%if 0%{?rhel} == 7
+BuildRequires: initscripts
+%endif
+%if 0%{?fedora} > 26
+BuildRequires: ipcalc
+%endif
+%if %is_suse
+BuildRequires: ipcalc
+%endif
 # SuSE includes dracut-netwok in main package and openssh-server is part of main package
 %if %is_suse
 BuildRequires: openssh
@@ -420,8 +433,21 @@ BuildRequires: dracut-network
 Requires: dracut
 Requires: plymouth-plugin-script, plymouth-plugin-label
 Requires: psmisc, /usr/bin/ncat, kexec-tools, bind-utils, net-tools
-Requires: xmlstarlet, parted, mdadm, util-linux, lvm2, /usr/bin/ipcalc
-Requires: xfsprogs, e2fsprogs, ntfsprogs, dosfstools
+Requires: xmlstarlet, parted, mdadm, util-linux, lvm2
+Requires: xfsprogs, e2fsprogs, ntfsprogs, dosfstool
+# ipcalc requirement
+%if 0%{?rhel} == 6
+Requires: initscripts
+%endif
+%if 0%{?rhel} == 7
+Requires: initscripts
+%endif
+%if 0%{?fedora} > 26
+Requires: ipcalc
+%endif
+%if %is_suse
+Requires: ipcalc
+%endif
 %if %is_suse
 Requires: btrfsprogs
 Requires: dejavu-fonts
@@ -453,6 +479,10 @@ Requires:  udev
 This package is a dracut modules that automates the systeimager initramfs creation.
 
 %changelog
+* Thu Mar 30 2018 Olivier Lahaye <olivier.lahaye@cea.fr> 4.5.0-0.22
+- Port to CentOS-6, OpenSuSE-42.3
+- Added ipcalc dependancy.
+
 * Thu Mar 16 2017 Olivier Lahaye <olivier.lahaye@cea.fr> 4.5.0-0.21
 - added dracut-systemimager package.
 
