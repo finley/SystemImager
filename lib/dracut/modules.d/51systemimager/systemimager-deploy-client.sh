@@ -65,6 +65,7 @@ if [ "x$SSH" = "xy" ]; then
 fi
 
 # Give pre-install scripts a chance to do stuffs before we lay down the image.
+getarg 'si.break=pre-install' && emergency_shell -n pre-install "Break pre-install"
 run_pre_install_scripts
 . /tmp/variables.txt # Read variables that could have been updated in pre-install script like IMAGENAME
 
@@ -87,13 +88,16 @@ if [ -z $SCRIPTNAME ] && [ -z $IMAGENAME ] && [ -z $HOSTNAME ]; then
 fi
 
 # Prepare disks and mount them as described in disk layout file (autoinstallscript.conf xml file)
+getarg 'si.break=prepare-disks' && emergency_shell -n prepare-disks "Break prepare-disks"
 sis_prepare_disks
 
 # Mount os filesystems to /sysroot (will shellout in case of failure)
+getarg 'si.break=mount-client' && emergency_shell -n mount-client "Break mount-client"
 mount_os_filesystems_to_sysroot
 
 # Run the autoinstall script (before image installation).
 # the autoinstall script (also called main-install) is optional.
+getarg 'si.break=main-install' && emergency_shell -n main-install "Break main-install"
 run_autoinstall_script # Last chance to set IMAGENAME
 . /tmp/variables.txt # Read variables that could have been updated in autoinstall script like IMAGENAME
 
@@ -106,11 +110,17 @@ then
 	shellout "IMAGENAME not set"
 fi
 
+getarg 'si.break=download-image' && emergency_shell -n download-image "Break download-image"
 download_image # Download and extract image if no staging dir is used
+
+getarg 'si.break=extract-image' && emergency_shell -n extract-image "Break extract-image"
 extract_image  # Extract image to /sysroot if staging dir was used, else do noting
+
+getarg 'si.break=install-overrides' && emergency_shell -n install-overrides "Break install-overrides"
 install_overrides # download and install override files
 
 # Install fstab, mdadm.conf, lvm.conf and update initramfs so it is aware of raid or lvm
+getarg 'si.break=install-configs' && emergency_shell -n install-configs "Break install-configs"
 sis_install_configs
 
 # Avoid having mounted filesystems buzy
@@ -123,12 +133,15 @@ echo "${IMAGENAME}" > /sysroot/etc/systemimager/IMAGE_LAST_SYNCED_TO || shellout
 # Now install bootloader (before post_install scripts to give a chance to scripts to modify this)
 # OL: TODO: We should be smarter here. We should install bootloader only on the disk containing the /boot partition.
 # OL: TODO: We should handle software raid.
+getarg 'si.break=boot-loader' && emergency_shell -n boot-loader "Break boot-loader"
 install_boot_loader ${DISKS[@]}
 
 # Now run post install scripts.
+getarg 'si.break=post-install' && emergency_shell -n post-install "Break post-install"
 run_post_install_scripts
 
 # SE Linux relabel
+getarg 'si.break=se-linux' && emergency_shell -n se-linux "Break se-linux"
 SEL_FixFiles
 
 # Save virtual console session in the imaged client
@@ -162,6 +175,7 @@ then
 fi
 
 loginfo "Unmounting imaged OS filesystems"
+getarg 'si.break=umount-client' && emergency_shell -n umount-client "Break umount-client"
 cat /etc/fstab.systemimager|grep sysroot|awk '{print $2}'|sort -r -k2,2| while read mount_point
 do
 	logdebug "Unmounting $mount_point"
@@ -172,25 +186,10 @@ done
 loginfo "Cleaning up /sysroot remaining garbage dirs"
 find /sysroot -type d -exec rmdir {} \;
 
-if test `ls /sysroot|wc -l` > 0
+if test `ls /sysroot|wc -l` -gt 0
 then
 	logwarn "/sysroot still not empty!!!"
-	logwarn "Content: `echo /sysroot/*`"
-fi
-
-# Tells to dracut that root in now known.
-if [ -n "$DRACUT_SYSTEMD" ]; then
-	# Ask systemd to re-reun its generators (dracut-rootfs-generator). See:
-	# https://www.freedesktop.org/software/systemd/man/systemd.generator.html
-	# and https://bbs.archlinux.org/viewtopic.php?pid=1501024#p1501024
-	systemctl daemon-reload
-else
-	# Udev uses the inotify mechanism to watch for changes in the rules directory, in
-	# both the library and in the local configuration trees (typically located at
-	# /lib/udev/rules.d and /etc/udev/rules.d). So you don't need to do anything
-	# when you change a rules file.
-	# udevadm control --reload-rules && udevadm trigger
-	echo > /dev/null # do nothing
+	logwarn "Content: "$(echo /sysroot/*)
 fi
 
 # Tell the image server we are done
@@ -218,7 +217,23 @@ if [ -n "$MONITOR_SERVER" ]; then
 fi
 
 # Stops any remaining transfer processes (ssh tunnel, torrent seeder, ...
+getarg 'si.break=terminate-transfer' && emergency_shell -n terminate-transfer "Break terminate-transfer"
 terminate_transfer
+
+# Tells to dracut that root in now known.
+if [ -n "$DRACUT_SYSTEMD" ]; then
+	# Ask systemd to re-reun its generators (dracut-rootfs-generator). See:
+	# https://www.freedesktop.org/software/systemd/man/systemd.generator.html
+	# and https://bbs.archlinux.org/viewtopic.php?pid=1501024#p1501024
+	systemctl daemon-reload
+else
+	# Udev uses the inotify mechanism to watch for changes in the rules directory, in
+	# both the library and in the local configuration trees (typically located at
+	# /lib/udev/rules.d and /etc/udev/rules.d). So you don't need to do anything
+	# when you change a rules file.
+	# udevadm control --reload-rules && udevadm trigger
+	echo > /dev/null # do nothing
+fi
 
 # Announce completion (even for non beep-incessantly --post-install options)
 beep 3
@@ -229,4 +244,6 @@ beep 3
 # default value is "reboot".
 # This action can be overrided in /tmp/SIS_action by imaging script
 test ! -e /tmp/SIS_action && echo "${SIS_POST_ACTION}" > /tmp/SIS_action
+
+getarg 'si.break=finished' && emergency_shell -n finished "Break finished"
 
