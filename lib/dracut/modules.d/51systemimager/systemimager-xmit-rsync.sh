@@ -82,7 +82,9 @@ function download_image() {
 
     # Effectively download the image into ${IMAGE_DEST}
     SYSFS_TO_EXCLUDE="--exclude=/proc/* --exclude=/sys/* --exclude=/dev/* --exclude=/run/* --exclude=/tmp/* --exclude=/var/lib/nfs/rpc_pipefs"
-    loginfo "rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ ${SYSFS_TO_EXCLUDE} --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ ${IMAGE_DEST}/"
+    loginfo "rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ \\"
+    loginfo "      ${SYSFS_TO_EXCLUDE} --numeric-ids \\"
+    loginfo "      ${IMAGESERVER}::${IMAGENAME}/ ${IMAGE_DEST}/"
     if [ $NO_LISTING ]; then
         rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ ${SYSFS_TO_EXCLUDE} --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ ${IMAGE_DEST}/ > /dev/null 2>&1 || shellout "Image download to [${IMAGE_DEST}] failed!"
     else
