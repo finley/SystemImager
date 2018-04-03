@@ -18,5 +18,5 @@
 # We don't know yet the device of the real root (will know that when disks layout will have been processed)
 # For now, we just put some values that will make dracut happy.
 
-export root="UNSET"
+test -z "$root" && export root="UNSET"
 export rootok="1"
