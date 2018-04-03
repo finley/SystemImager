@@ -55,10 +55,42 @@
 %define _build_arch ppc64-ps3
 %endif
 
+# Packages definitions
+%if 0%{?rhel} == 6
+%define pkg_ipcalc initscripts
+%define pkg_sshd openssh-server
+%define pkg_btrfs_progs btrfs-progs
+%define pkg_dejavu_font dejavu-serif-fonts, dejavu-sans-fonts
+%define pkg_docbook_utils docbook-utils, docbook-utils-pdf
+%define pkg_mkisofs mkisofs
+#define pkg_python_xml PyXML
+%endif
+%if 0%{?rhel} == 7
+%define pkg_ipcalc initscripts
+%define pkg_sshd openssh-server
+%define pkg_btrfs_progs btrfs-progs
+%define pkg_dejavu_font dejavu-serif-fonts, dejavu-sans-fonts
+%define pkg_docbook_utils docbook-utils, docbook-utils-pdf
+%define pkg_mkisofs mkisofs
+#define pkg_python_xml PyXML
+%endif
+%if 0%{?fedora} > 26
+%define pkg_ipcalc ipcalc
+%define pkg_sshd openssh-server
+%define pkg_btrfs_progs btrfs-progs
+%define pkg_dejavu_font dejavu-serif-fonts, dejavu-sans-fonts
+%define pkg_docbook_utils docbook-utils, docbook-utils-pdf
+%define pkg_mkisofs mkisofs
+#define pkg_python_xml PyXML
+%endif
 %if %is_suse
-%define python_xml python-xml
-%else
-%define python_xml PyXML
+%define pkg_ipcalc ipcalc
+%define pkg_sshd openssh
+%define pkg_btrfs_progs btrfsprogs
+%define pkg_dejavu_font dejavu-fonts
+%define pkg_docbook_utils docbook-utils
+%define pkg_mkisofs cdrkit-cdrtools-compat
+#define pkg_python_xml python-xml
 %endif
 
 # Still use the correct lib even on fc-18+ where --target noarch sets _libdir to /usr/lib even on x86_64 arch.
@@ -80,11 +112,7 @@ Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 BuildRequires: dos2unix, flex, libtool, readline-devel, /usr/bin/wget, openssl-devel, gcc, gcc-c++, ncurses-devel, bc, rsync >= 2.4.6
-%if %is_suse
-BuildRequires: docbook-utils
-%else
-BuildRequires: docbook-utils, docbook-utils-pdf
-%endif
+BuildRequires: %pkg_docbook_utils
 BuildRequires: libuuid-devel, device-mapper-devel, gperf, binutils-devel, pam-devel, quilt
 BuildRequires: lzop, glib2-devel >= 2.22.0
 Requires: rsync >= 2.4.6, syslinux >= 1.48, libappconfig-perl, dosfstools, /usr/bin/perl
@@ -119,11 +147,7 @@ Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Requires: rsync >= 2.4.6, systemimager-common = %{version}, dracut-systemimager = %{version}, perl-AppConfig, perl, perl(XML::Simple) >= 2.14, python
-%if %is_suse
-Requires: cdrkit-cdrtools-compat
-%else
-Requires: mkisofs
-%endif
+Requires: %pkg_mkisofs
 # If systemd
 %if 0%{?_unitdir:1}
 %systemd_requires
@@ -270,36 +294,17 @@ BuildRequires: python, python-devel, gettext
 BuildRequires: systemconfigurator
 BuildRequires: dracut, kbd
 BuildRequires: xmlstarlet
-# ipcalc requirement
-%if 0%{?rhel} == 6
-BuildRequires: initscripts
-%endif
-%if 0%{?rhel} == 7
-BuildRequires: initscripts
-%endif
-%if 0%{?fedora} > 26
-BuildRequires: ipcalc
-%endif
-%if %is_suse
-BuildRequires: ipcalc
-%endif
-# SuSE includes dracut-netwok in main package and openssh-server is part of main package
-%if %is_suse
-BuildRequires: openssh
-BuildRequires: dejavu-fonts
-%else
+BuildRequires: %pkg_ipcalc
+BuildRequires: %pkg_sshd
+BuildRequires: %pkg_dejavu_font
+# SuSE includes dracut-netwok in main package
+%if ! %is_suse
 BuildRequires: dracut-network
-BuildRequires: openssh-server
-BuildRequires: dejavu-serif-fonts, dejavu-sans-fonts
 %endif
 BuildRequires: plymouth-plugin-script, plymouth-plugin-label
 BuildRequires: parted, psmisc, /usr/bin/ncat, kexec-tools, bind-utils, net-tools 
 BuildRequires: xfsprogs, e2fsprogs, ncurses
-%if %is_suse
-BuildRequires: btrfsprogs
-%else
-BuildRequires: btrfs-progs
-%endif
+BuildRequires: %pkg_btrfs_progs
 BuildRequires: rtorrent
 BuildRequires: kernel
 %if %{?fedora}%{!?fedora:0} >= 18
@@ -434,36 +439,16 @@ Requires: dracut
 Requires: plymouth-plugin-script, plymouth-plugin-label
 Requires: psmisc, /usr/bin/ncat, kexec-tools, bind-utils, net-tools
 Requires: xmlstarlet, parted, mdadm, util-linux, lvm2
-Requires: xfsprogs, e2fsprogs, ntfsprogs, dosfstool
+Requires: xfsprogs, e2fsprogs, ntfsprogs, dosfstools
 # ipcalc requirement
-%if 0%{?rhel} == 6
-Requires: initscripts
-%endif
-%if 0%{?rhel} == 7
-Requires: initscripts
-%endif
-%if 0%{?fedora} > 26
-Requires: ipcalc
-%endif
-%if %is_suse
-Requires: ipcalc
-%endif
-%if %is_suse
-Requires: btrfsprogs
-Requires: dejavu-fonts
-%else
-Requires: btrfs-progs
-Requires: dejavu-serif-fonts, dejavu-sans-fonts
-%endif
+Requires: %pkg_ipcalc
+Requires: %pkg_dejavu_font
+Requires: %pkg_btrfs_progs
 Requires: ncurses, /usr/bin/awk, kbd
 Requires: kernel
 Requires: rtorrent
 Requires: systemimager-%{_build_arch}initrd_template
-%if %is_suse
-Requires: openssh
-%else
-Requires: openssh-server
-%endif
+Requires: %pkg_sshd
 %if %{?fedora}%{!?fedora:0} >= 18
 Requires:  systemd
 %else
