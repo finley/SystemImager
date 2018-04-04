@@ -19,4 +19,5 @@
 # For now, we just put some values that will make dracut happy.
 
 test -z "$root" && export root="UNSET"
+test -z "$netroot" && export netroot="UNSET" # Force network init on non systemd initramfs.
 export rootok="1"
