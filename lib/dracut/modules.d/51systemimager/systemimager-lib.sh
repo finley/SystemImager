@@ -1821,9 +1821,9 @@ SEL_FixFiles() {
 if [ "x$SEL_RELABEL" = "xy" ]
 then
     loginfo "Making sure files have correct selinux label"
-    if [ -x /sysroot/sbin/getenforce -o -x /sysroot/usr/sbin/getenforce ]
+    if [ -x /sysroot/usr/sbin/getenforce ]
     then
-	    SE_POLICY=`/sysroot/sbin/getenforce`
+	    SE_POLICY=`/sysroot/usr/sbin/getenforce`
     fi
     if [ "$SE_POLICY" != "Permissive" ] # Disabled  or Enforcing
     then
@@ -1866,8 +1866,8 @@ install_boot_loader() {
 
 	if test -z "${BOOT_LOADER}"
 	then
-		logwarn "Can't find a supported bootloader technology. Assuming post install"
-		logwarn "scripts will do the job!"
+		logwarn "Can't find a supported bootloader technology. Assuming"
+		logwarn "post-install scripts will do the job!"
 		return
 	else
 		loginfo "Using the following boot loader: ${BOOT_LOADER}"
@@ -1904,7 +1904,7 @@ install_boot_loader() {
 			done
 			;;
 		"grub")
-			ROOT=`mount |grep " / "|cut -d" " -f1`
+			ROOT=`cat /proc/self/mounts |grep " /sysroot "|cut -d" " -f1`
 			OS_NAME=`cat /etc/system-release`
 			# BUG: (hd0,0) is hardcoded: need to fix that.
 			logaction "Creating /boot/grub/menu.lst"
@@ -1913,8 +1913,8 @@ default=0
 timeout=5
 title ${OS_NAME}
 	root (hd0,0)
-	kernel /$(cd /boot; ls -rS vmli*|grep -v debug|tail -1) ro root=$ROOT rhgb quiet
-	initrd /$(cd /boot; ls -rS init*|grep -v debug|tail -1)
+	kernel /$(cd /sysroot/boot; ls -rS vmli*|grep -v debug|tail -1) ro root=$ROOT rhgb quiet
+	initrd /$(cd /sysroot/boot; ls -rS init*|grep -v debug|tail -1)
 EOF
 			# Install bootloader
 			for disk in $@
