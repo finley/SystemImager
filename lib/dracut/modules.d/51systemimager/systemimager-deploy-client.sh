@@ -153,6 +153,7 @@ save_logs_to_sysroot # Saves /tmp/relevant install infos to /root/SIS_Install/
 
 # Keep track of available modules versions in imaged system in case "directboot" is set as POST_ACTION
 IMAGED_MODULES=`(cd /sysroot/lib/modules; echo *)` # no need to store it in variables.txt (we are sourced from initqueue hook).
+write_variables # Need to save that for non systemd dracut (we are run from udev online, not initqueue/online on those old stuffs)
 
 # Unmount system filesystems
 umount_os_filesystems_from_sysroot
@@ -184,7 +185,7 @@ done
 
 # We need to cleanup /sysroot/proc and such otherwise, dracut won't try to mount realroot if we chose "directboot"
 loginfo "Cleaning up /sysroot remaining garbage dirs"
-find /sysroot -type d -exec rmdir {} \;
+find /sysroot -not -iwholename '/sysroot' -type d -prune -exec rmdir {} \;
 
 if test `ls /sysroot|wc -l` -gt 0
 then
