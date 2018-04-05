@@ -334,7 +334,7 @@ install_dracut:
 ifneq (,$(wildcard /usr$(DRACUT_BASEDIR)/modules.d/99base/install))
 	########## Old dracut ('check' and 'install' in charge of module install)
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/check $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
-	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/parse-sis-options-old.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/parse-systemimager-old.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/parse-systemimager.sh
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-genrules.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-start.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-netstart-old.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
