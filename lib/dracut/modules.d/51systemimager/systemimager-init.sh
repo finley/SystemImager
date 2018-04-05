@@ -42,7 +42,6 @@ export rootok="1"
 # Now sets some cmdline.d values that are needed for dracut logic in our situation.
 loginfo "Enabling emergency shell in case of failure."
 loginfo "Enforcing network initialization..."
-test ! -d /etc/cmdline.d && mkdir /etc/cmdline.d/
 if [ -n "$DRACUT_SYSTEMD" ]
 then
 	cat > /etc/cmdline.d/systemimager.conf <<EOF
@@ -51,7 +50,7 @@ rd.neednet=1
 rd.hostonly=0
 EOF
 else # Old distro (CentOS-6)
-	cat > /etc/cmdline.d/systemimager.conf <<EOF
+	cat >> /etc/cmdline <<EOF
 rdshell
 EOF
 test -z "$netroot" && export netroot="UNSET" # Force network init on non systemd initramfs.
