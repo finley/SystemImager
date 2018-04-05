@@ -375,6 +375,7 @@ BITTORRENT_UPLOAD_MIN="$BITTORRENT_UPLOAD_MIN"
 SEL_RELABEL="$SEL_RELABEL"			# rd.sis.selinux-relabel
 
 SIS_POST_ACTION="$SIS_POST_ACTION"		# rd.sis.post-action
+IMAGED_MODULES="${IMAGED_MODULES}"
 
 DEBUG="${DEBUG}"					# rd.sis.debug
 SIS_SYSMSG_ENABLED="$SIS_SYSMSG_ENABLED"
@@ -394,6 +395,15 @@ update_dracut_root_infos() {
 	then
 		loginfo "Updating /dracut-state.sh with new root=$root informations"
 		export -p > /dracut-state.sh
+		# On systemd systems, the root is mounted by systemd.
+		# the sysroot.mount entry is created by /usr/lib/systemd/system-generators/dracut-rootfs-generator
+		# This scrits uses getarg() from /lib/dracut-lib.sh
+		# We need to put information in cmdline.d/systemimager-rootfs-infos.conf
+		test -f /etc/cmdline.d/systemimager.conf && sed -i -e '/^root/d' /etc/cmdline.d/systemimager.conf && logdebug "Removed dummy root infos from /etc/cmdline.d/systemimager.conf so getarg root won't return none"
+		cat > /etc/cmdline.d/systemimager-rootfs-infos.conf <<EOF
+root=${root#block:}
+rootflags=${rflags}
+EOF
 	elif test -f /tmp/root.info
 	then
 		loginfo "Updating /tmp/root.info with new root=$root informations"
@@ -404,27 +414,17 @@ update_dracut_root_infos() {
 		    echo "netroot='$netroot'"
 		    echo "NEWROOT='$NEWROOT'"
 		} > /tmp/root.info
+		test -f /etc/cmdline && sed -i -e '/^root/d' /etc/cmdline.d/systemimager.conf && logdebug "Removed dummy root infos from /etc/cmdline so getarg root won't return none"
+		unset CMDLINE # force getarg to reread /etc/cmdline
+		cat >> /etc/cmdline <<EOF
+root=$root
+rootflags=${rflags}
+EOF
 	else
 		logwarn "Can't save root= informations."
 		return 1
 	fi
-	# Now that root= is saved at the propper place, we need to remove the
-	# /etc/conf.d/systemimager.conf file that set dummy values.
-	# This file is sourced at the beginning of each dracut hook
-	# Thus it is sourced at the mount stage which we don't want anymore
-	# as we have now correct values stored in /dracut-state.sh (or /tmp/root.info)
-	# and we don't want them to be overridden by dummy values.
-	test -f /etc/conf.d/systemimager.conf && rm -f /etc/conf.d/systemimager.conf && logdebug "Removed dummy root infos file /etc/conf.d/systemimager.conf"
-	test -f /etc/cmdline.d/systemimager.conf && sed -i -e '/root/d' /etc/cmdline.d/systemimager.conf && logdebug "Removed dummy root infos from /etc/cmdline.d/systemimager.conf so getarg root won't return none"
 
-	# On systemd systems, the root is mounted by systemd.
-	# the sysroot.mount entry is created by /usr/lib/systemd/system-generators/dracut-rootfs-generator
-	# This scrits uses getarg() for /lib/dracut-lib.sh
-	# We need to put information in cmdline.d/systemimager-rootfs-infos.conf
-	cat > /etc/cmdline.d/systemimager-rootfs-infos.conf <<EOF
-root=${root#block:}
-rootflags=${rflags}
-EOF
 }
 
 ################################################################################
