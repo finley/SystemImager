@@ -661,14 +661,14 @@ interactive_shell() {
 cat /tmp/message.txt
 tput setab 0
 tput setaf 7
-PS1="${FG_GREEN}SIS:\${PWD}#${FG_WHITE} "
+PS1="${FG_GREEN}SystemImager:\${PWD}#${FG_WHITE} "
 alias reboot="reboot -f"
 alias shutdown="shutdown -f"
 EOF
     fi
     if type emergency_shell >/dev/null 2>&1
     then
-        emergency_shell -n "SIS"
+        emergency_shell -n SystemImager "SystemImager interactive shell"
     else
         type plymouth >/dev/null 2>&1 && plymouth --hide-splash
         echo "exec 0<>/dev/console 1<>/dev/console 2<>/dev/console" >> /.profile

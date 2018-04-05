@@ -65,7 +65,7 @@ if [ "x$SSH" = "xy" ]; then
 fi
 
 # Give pre-install scripts a chance to do stuffs before we lay down the image.
-getarg 'si.break=pre-install' && emergency_shell -n pre-install "Break pre-install"
+getarg 'si.break=pre-install' && logwarn "Break pre-install" && interactive_shell
 run_pre_install_scripts
 . /tmp/variables.txt # Read variables that could have been updated in pre-install script like IMAGENAME
 
@@ -88,12 +88,12 @@ if [ -z $SCRIPTNAME ] && [ -z $IMAGENAME ] && [ -z $HOSTNAME ]; then
 fi
 
 # Prepare disks and mount them as described in disk layout file (autoinstallscript.conf xml file)
-getarg 'si.break=prepare-disks' && emergency_shell -n prepare-disks "Break prepare-disks"
+getarg 'si.break=prepare-disks' && logwarn "Break prepare-disks" && interactive_shell
 sis_prepare_disks
 
 # Run the autoinstall script (before image installation).
 # the autoinstall script (also called main-install) is optional.
-getarg 'si.break=main-install' && emergency_shell -n main-install "Break main-install"
+getarg 'si.break=main-install' && logwarn "Break main-install" && interactive_shell
 run_autoinstall_script # Last chance to set IMAGENAME
 . /tmp/variables.txt # Read variables that could have been updated in autoinstall script like IMAGENAME
 
@@ -106,13 +106,13 @@ then
 	shellout "IMAGENAME not set"
 fi
 
-getarg 'si.break=download-image' && emergency_shell -n download-image "Break download-image"
+getarg 'si.break=download-image' && logwarn "Break download-image" && interactive_shell
 download_image # Download and extract image if no staging dir is used
 
-getarg 'si.break=extract-image' && emergency_shell -n extract-image "Break extract-image"
+getarg 'si.break=extract-image' && logwarn "Break extract-image" && interactive_shell
 extract_image  # Extract image to /sysroot if staging dir was used, else do noting
 
-getarg 'si.break=install-overrides' && emergency_shell -n install-overrides "Break install-overrides"
+getarg 'si.break=install-overrides' && logwarn "Break install-overrides" && interactive_shell
 install_overrides # download and install override files
 
 # Mount os filesystems to /sysroot (will shellout in case of failure)
@@ -120,7 +120,7 @@ install_overrides # download and install override files
 mount_os_filesystems_to_sysroot
 
 # Install fstab, mdadm.conf, lvm.conf and update initramfs so it is aware of raid or lvm
-getarg 'si.break=install-configs' && emergency_shell -n install-configs "Break install-configs"
+getarg 'si.break=install-configs' && logwarn "Break install-configs" && interactive_shell
 sis_install_configs
 
 # Avoid having mounted filesystems buzy
@@ -133,15 +133,15 @@ echo "${IMAGENAME}" > /sysroot/etc/systemimager/IMAGE_LAST_SYNCED_TO || shellout
 # Now install bootloader (before post_install scripts to give a chance to scripts to modify this)
 # OL: TODO: We should be smarter here. We should install bootloader only on the disk containing the /boot partition.
 # OL: TODO: We should handle software raid.
-getarg 'si.break=boot-loader' && emergency_shell -n boot-loader "Break boot-loader"
+getarg 'si.break=boot-loader' && logwarn "Break boot-loader" && interactive_shell
 install_boot_loader ${DISKS[@]}
 
 # Now run post install scripts.
-getarg 'si.break=post-install' && emergency_shell -n post-install "Break post-install"
+getarg 'si.break=post-install' && logwarn "Break post-install" && interactive_shell
 run_post_install_scripts
 
 # SE Linux relabel
-getarg 'si.break=se-linux' && emergency_shell -n se-linux "Break se-linux"
+getarg 'si.break=se-linux' && logwarn "Break se-linux" && interactive_shell
 SEL_FixFiles
 
 # Save virtual console session in the imaged client
@@ -175,7 +175,7 @@ then
 fi
 
 loginfo "Unmounting imaged OS filesystems"
-getarg 'si.break=umount-client' && emergency_shell -n umount-client "Break umount-client"
+getarg 'si.break=umount-client' && logwarn "Break umount-client" && interactive_shell
 cat /etc/fstab.systemimager|grep sysroot|awk '{print $2}'|sort -r -k2,2| while read mount_point
 do
 	logdebug "Unmounting $mount_point"
@@ -217,7 +217,7 @@ if [ -n "$MONITOR_SERVER" ]; then
 fi
 
 # Stops any remaining transfer processes (ssh tunnel, torrent seeder, ...
-getarg 'si.break=terminate-transfer' && emergency_shell -n terminate-transfer "Break terminate-transfer"
+getarg 'si.break=terminate-transfer' && logwarn "Break terminate-transfer" && interactive_shell
 terminate_transfer
 
 # Tells to dracut that root in now known.
@@ -245,5 +245,5 @@ beep 3
 # This action can be overrided in /tmp/SIS_action by imaging script
 test ! -e /tmp/SIS_action && echo "${SIS_POST_ACTION}" > /tmp/SIS_action
 
-getarg 'si.break=finished' && emergency_shell -n finished "Break finished"
+getarg 'si.break=finished' && logwarn "Break finished" && interactive_shell
 

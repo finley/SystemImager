@@ -55,13 +55,10 @@ sis_prepare_disks() {
 	# Initialisae / check LVM version to use. (defaults to v2).
 	LVM_VERSION=`xmlstarlet sel -t -m "config/lvm" -if "@version" -v "@version" --else -o "2" -b ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d'`
 
-	loginfo "Stopping UDEV exec queue to prevent raid restart when creating partitions"
+	loginfo "Stopping software raid and LVM that may still be active."
 	stop_software_raid_and_lvm
-	udevadm control --stop-exec-queue
 	_do_partitions
 	_do_raids
-	loginfo "Restarting UDEV exec queue now that disk(s) is (are) set up"
-	udevadm control --start-exec-queue
 	_do_lvms
 	_do_filesystems
 	_do_fstab
@@ -189,6 +186,8 @@ stop_software_raid_and_lvm() {
 ################################################################################
 #
 _do_partitions() {
+	loginfo "Stopping UDEV exec queue to prevent raid restart when creating partitions"
+	udevadm control --stop-exec-queue
 	sis_update_step part
 	IFS=';'
 	xmlstarlet sel -t -m 'config/disk' -v "concat(@dev,';',@label_type,';',@unit_of_measurement)" -n ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d' |\
@@ -327,6 +326,10 @@ _do_raids() {
 
 			logaction "${CMD}"
 			eval "yes | ${CMD}" || shellout "Failed to create raid${R_LEVEL} with ${R_DEVICES}"
+
+			# Raid are created, restard udev so /dev/md* devices are created (needed for mdadm.conf generation)
+			loginfo "Restarting UDEV exec queue now that disk(s) is (are) set up"
+			udevadm control --start-exec-queue
 
 			# Create the grub2 config the force raid assembling in initramfs.
 			# GRUB_CMDLINE_LINUX_DEFAULT is use in normal operation but not in failsafe

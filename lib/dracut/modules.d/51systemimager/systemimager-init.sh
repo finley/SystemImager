@@ -42,6 +42,7 @@ export rootok="1"
 # Now sets some cmdline.d values that are needed for dracut logic in our situation.
 loginfo "Enabling emergency shell in case of failure."
 loginfo "Enforcing network initialization..."
+test ! -d /etc/cmdline.d && mkdir /etc/cmdline.d/
 if [ -n "$DRACUT_SYSTEMD" ]
 then
 	cat > /etc/cmdline.d/systemimager.conf <<EOF
@@ -64,7 +65,7 @@ if test -z "${FONT}${SYSFONT}"
 then
 	loginfo "No font set in cmdline. using t850b."
 	export SYSFONT=t850b
-	setfont t850b
+	setfont -C /dev/console t850b
 else
 	loginfo "Using user defined font from cmdline."
 fi

@@ -331,7 +331,7 @@ install_common:	install_common_man install_common_libs
 .PHONY:	install_dracut
 install_dracut:
 	mkdir -p $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/
-ifneq (,$(wildcard /usr$(DRACUT_BASEDIR)/modules.d/99base/install))
+ifneq (,$(wildcard $(DRACUT_MODULES)/99base/install)) # if "" not equals second argument (not empty, thus found), we're using an old dracut)
 	########## Old dracut ('check' and 'install' in charge of module install)
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/check $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/parse-systemimager-old.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/parse-systemimager.sh

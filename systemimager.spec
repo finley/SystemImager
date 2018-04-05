@@ -1348,7 +1348,6 @@ fi
 %files %{_build_arch}initrd_template
 %defattr(-, root, root)
 %dir %{_datarootdir}/systemimager/boot/%{_build_arch}/standard/initrd_template
-%config(noreplace)  %{_datarootdir}/systemimager/boot/%{_build_arch}/standard/initrd_template/etc/persistent-cmdline.d/*.conf
 %{_datarootdir}/systemimager/boot/%{_build_arch}/standard/initrd_template/*
 
 %files -n dracut-%{name}
