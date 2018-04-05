@@ -464,7 +464,7 @@ Requires:  udev
 This package is a dracut modules that automates the systeimager initramfs creation.
 
 %changelog
-* Thu Mar 30 2018 Olivier Lahaye <olivier.lahaye@cea.fr> 4.5.0-0.22
+* Fri Mar 30 2018 Olivier Lahaye <olivier.lahaye@cea.fr> 4.5.0-0.22
 - Port to CentOS-6, OpenSuSE-42.3
 - Added ipcalc dependancy.
 
@@ -887,19 +887,24 @@ cp -r %_usr%_dracutbase/* $LOCAL_DRACUT_BASEDIR/
 # Remove old systemimager parasit version that we could have copied.
 rm -rf $LOCAL_DRACUT_BASEDIR/modules.d/*systemimager
 # Copy our module locally while doing correct STRINGS replacement.
-mkdir -p $LOCAL_DRACUT_BASEDIR/modules.d/%{dracut_module_index}systemimager
-for FILE in ./lib/dracut/modules.d/%{dracut_module_index}systemimager/{check,install,*.sh}
-do
-    ./tools/si_install  -b -m 755 $FILE $LOCAL_DRACUT_BASEDIR/modules.d/%{dracut_module_index}systemimager/
-done
-cp -r ./lib/dracut/modules.d/%{dracut_module_index}systemimager/plymouth_theme $LOCAL_DRACUT_BASEDIR/modules.d/%{dracut_module_index}systemimager/
+make install_dracut DRACUT_MODULES=$LOCAL_DRACUT_BASEDIR/modules.d
+#mkdir -p $LOCAL_DRACUT_BASEDIR/modules.d/%{dracut_module_index}systemimager
+#for FILE in ./lib/dracut/modules.d/%{dracut_module_index}systemimager/{check,install,*.sh}
+#do
+#    ./tools/si_install  -b -m 755 $FILE $LOCAL_DRACUT_BASEDIR/modules.d/%{dracut_module_index}systemimager/
+#done
+#cp -r ./lib/dracut/modules.d/%{dracut_module_index}systemimager/plymouth_theme $LOCAL_DRACUT_BASEDIR/modules.d/%{dracut_module_index}systemimager/
 test -x /usr/bin/lsinitrd && ln -s /usr/bin/lsinitrd $LOCAL_DRACUT_BASEDIR/lsinitrd.sh # only required in newer dracut versions.
 
 # move to local modules dir so we can use dracut --local
 cd $LOCAL_DRACUT_BASEDIR/
 
 # Fix install and module-setup.sh in fake local dracut install so initrd_template files are correctly found.
-sed -i -e "s|@@SIS_INITRD_TEMPLATE@@|%{buildroot}%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/initrd_template/|g" modules.d/%{dracut_module_index}systemimager/install modules.d/%{dracut_module_index}systemimager/module-setup.sh
+for FILE in modules.d/%{dracut_module_index}systemimager/install modules.d/%{dracut_module_index}systemimager/module-setup.sh
+do
+	test -f $FILE && sed -i -e "s|@@SIS_INITRD_TEMPLATE@@|%{buildroot}%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/initrd_template/|g" $FILE
+done
+#sed -i -e "s|@@SIS_INITRD_TEMPLATE@@|%{buildroot}%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/initrd_template/|g" modules.d/%{dracut_module_index}systemimager/install modules.d/%{dracut_module_index}systemimager/module-setup.sh
 
 SIS_CONFDIR=$RPM_BUILD_DIR/%{name}-%{version}/etc dracutbasedir=$(pwd) perl -I ../../lib ../../sbin/si_mkbootpackage --dracut-opts="--local" --destination ../..
 #dracut --force --local --add systemimager --no-hostonly --no-hostonly-cmdline --no-hostonly-i18n ../../../initrd.img $(uname -r)
