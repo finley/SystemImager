@@ -338,11 +338,13 @@ ifneq (,$(wildcard $(DRACUT_MODULES)/99base/install)) # if "" not equals second 
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-genrules.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-start.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-netstart-old.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-sysroot-helper.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/install $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	sed -i -e "s|@@SIS_INITRD_TEMPLATE@@|$(BOOT_BIN_PATH)/initrd_template/|g" $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/install
 else
        	########## New dracut ('module-setup.sh' in charge of module install)
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/parse-systemimager.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-sysroot.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/module-setup.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	sed -i -e "s|@@SIS_INITRD_TEMPLATE@@|$(BOOT_BIN_PATH)/initrd_template/|g" $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/module-setup.sh
 endif
@@ -360,7 +362,6 @@ endif
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-load-scripts-ecosystem.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-monitor-server.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-pingtest.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
-	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-sysroot.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-timeout.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-wait-imaging.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-warmup.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
