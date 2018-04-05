@@ -71,10 +71,11 @@ sis_prepare_disks() {
 # sis_install_configs()
 #		Must be run after image deployment and overrides install
 #		Installs in /sysroot
-#		- /etc/fstab
-#		- /etc/mdadm/mdadm.conf if needed
-#		- /etc/lvm/lvm.conf if needed
-#		- re-run chrooted dracut so initramfs is aware for raid and lvm
+#		1 - /etc/fstab
+#		2 - /etc/mdadm/mdadm.conf if needed
+#		3 - /etc/lvm/lvm.conf if needed
+#		4 - Makes sure /etc/mtab -> /proc/self/mounts
+#		5 - re-run chrooted dracut so initramfs is aware for raid and lvm
 ################################################################################
 #
 sis_install_configs() {
@@ -123,12 +124,16 @@ sis_install_configs() {
 		chroot /sysroot vgscan
 	fi
 
-	# 4/ Regenerate initramfs for all deployed kernels
+	# 4/ Make sure /etc/mtab -> /proc/self/mounts in /sysroot (so df works)
+	chroot /sysroot ln -sf /proc/self/mounts /etc/mtab
+
+	# 5/ Regenerate initramfs for all deployed kernels
 	for KERNEL in `ls /sysroot/boot|grep vmlinuz`
 	do
+		test -n "$(dracut --help |grep -- --kver)" && KVER_OPT="--kver"
 		loginfo "Generating initramfs for kernel: ${KERNEL}"
-		logaction "dracut --force --kver "${KERNEL#*-}" --hostonly"
-		chroot /sysroot dracut --force --kver "${KERNEL#*-}" --hostonly
+		logaction "dracut --force --hostonly ${KVER_OPT} ${KERNEL#*-}"
+		chroot /sysroot dracut --force --hostonly ${KVER_OPT} "${KERNEL#*-}"
 	done
 }
 
