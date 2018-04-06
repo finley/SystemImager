@@ -4,6 +4,9 @@
 
 ============= TODO for the dracut change before release is possible ===========
 
+- Distros to support: debian, ubuntu
+- DONE: Distros supported: CentOS-6, CentOS-7, Fedora-27, OpenSuSE-42.3
+- DONE: Add directboot feature.
 - Check STAGING_DIR getarg. Seems not read anywhere.
 
 - Update si_prepareclient and si_mkbootpackage doc. (-kver parameter)
@@ -11,6 +14,7 @@
 >>> Creating new initrd addind staging dir:  /tmp/.systemimager.0
 tar: This does not look like a tar archive
 tar: Exiting with failure status due to previous errors
+- Fix si_mkbootpackage: avoid excluding empty driver dirs so dracut don't whine.
 
 - DONE: OpenSuSE 42.3: Finish port to wickedd-dhcp4
   DONE:               have a look at http://manpag.es/leap421/5+wicked-config
@@ -64,7 +68,7 @@ FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in /etc/systemimager/system
 	- <boot> new section for boot loader/ boot manager / wanted menus
 - EFI support from scratch (be able to create the EFI partition and setup the EFI boot variables, kernel, and all that is needed to boot).
 
-- CentOS-6 uses dash (not bash. dash=debian ash, in buzybox since v0.52) in dracut. dash doesn't support ${VAR/search/replace} or ${VAR:start:end} or $(command) syntaxes.
+- DONE (using bash) CentOS-6 uses dash (not bash. dash=debian ash, in buzybox since v0.52) in dracut. dash doesn't support ${VAR/search/replace} or ${VAR:start:end} or $(command) syntaxes.
 
 - OBSOLETE: need to fix mksiimage from systeminstaller that regenerate /etc/systemimager/rsyncd.conf with missing [configs] section.
 
