@@ -430,6 +430,24 @@ EOF
 ################################################################################
 #
 #   Description:
+#   return the name of the distro vendor given the path to root filesystem
+#
+#   Usage: get_distro_vendor /sysroot
+################################################################################
+get_distro_vendor() {
+	ROOT_FS=$1
+	test ! -d ${ROOT_FS}/etc && logerror "get_distro_name(): invalid root_fs [${ROOT_FS}]" && echo "unknown" && return
+	test -r ${ROOT_FS}/etc/os-release && . ${ROOT_FS}/etc/os-release
+	test -n "${ID}" && echo "${ID}" && return
+	test -r ${ROOT_FS}/etc/centos-release && echo "centos" && return
+	test -r ${ROOT_FS}/etc/redhat-release && echo "redhat" && return
+	test -r ${ROOT_FS}/etc/debian_version && echo "debian" && return
+	echo "unknown"
+}
+
+################################################################################
+#
+#   Description:
 #   return the free space in bytes in directory (filesystems) given as argument
 #
 #   Usage: get_free_space /sysroot

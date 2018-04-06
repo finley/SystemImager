@@ -125,13 +125,46 @@ sis_install_configs() {
 	chroot /sysroot ln -sf /proc/self/mounts /etc/mtab
 
 	# 5/ Regenerate initramfs for all deployed kernels
+	loginfo "Generating initramfs for all installed kernels"
 	for KERNEL in `ls /sysroot/boot|grep vmlinuz`
 	do
-		test -n "$(dracut --help |grep -- --kver)" && KVER_OPT="--kver"
-		loginfo "Generating initramfs for kernel: ${KERNEL}"
-		logaction "dracut --force --hostonly ${KVER_OPT} ${KERNEL#*-}"
-		chroot /sysroot dracut --force --hostonly ${KVER_OPT} "${KERNEL#*-}"
+		si_create_initramfs "${KERNEL#*-}"
 	done
+
+}
+
+################################################################################
+# si_create_initramfs <kver>
+################################################################################
+si_create_initramfs() {
+	KERNEL_VERSION=$1
+	loginfo "Generating initramfs for kernel: ${KERNEL_VERSION}"
+	case "$(get_distro_vendor /sysroot)" in
+		redhat|centos|fedora)
+			INITRD_NAME="/boot/initramfs-${KERNEL_VERSION}.img"
+			CMD="dracut --force --hostonly ${INITRD_NAME} ${KERNEL_VERSION}"
+			;;
+		debian|ubuntu)
+			# INITRD_NAME="/boot/initrd.img-${KERNEL_VERSION}"
+			CMD="update-initramfs -u -k ${KERNEL_VERSION}"
+			;;
+		opensuse|suse)
+			INITRD_NAME="/boot/initrd-${KERNEL_VERSION}"
+			CMD="dracut --force --hostonly "${INITRD_NAME} ${KERNEL_VERSION}
+			;;
+		*)
+			logwarn "Don't know how to regenerate initramfs for installed kernels"
+			logwarn "Assuming it'll be done using a post-install script"
+			logwarn "Failing to generate a suited initramfs may result in unbootable system"
+			;;
+	esac
+
+	logaction "chroot /sysroot ${CMD}"
+	if ! chroot /sysroot ${CMD}
+	then
+		logerror "Failed to update initramfs for kernel ${KERNEL_VERSION}"
+		logwarn "Failing to generate a suited initramfs may result in unbootable system"
+	fi
 }
 
 ################################################################################
