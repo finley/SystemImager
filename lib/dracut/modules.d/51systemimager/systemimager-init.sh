@@ -57,14 +57,20 @@ test -z "$netroot" && export netroot="UNSET" # Force network init on non systemd
 fi
 
 loginfo "Setting up text console..."
+# read already configured FONTS if any (i18n is run before us)
 test -r /etc/sysconfig/i18n && . /etc/sysconfig/i18n # Old distro (CentOS-6)
+test -r /etc/default/console-setup && . /etc/default/console-setup
 test -r /etc/vconsole.conf && . /etc/vconsole.conf
 
-if test -z "${FONT}${SYSFONT}"
+# If cmdline did not configure ant font, then use our t850b
+if test -z "${FONT}${SYSFONT}${FONTFACE}"
 then
 	loginfo "No font set in cmdline. using t850b."
 	export SYSFONT=t850b
-	setfont -C /dev/console t850b
+	export FONT=t850b
+	test -d /etc/sysconfig && echo "SYSFONT=t850b" >> /etc/sysconfig/i18n
+	test -d /etc/default && echo "FONTFACE=t850b" >> /etc/default/console-setup # TODO: need testing
+	echo "FONT=t850b" >> /etc/vconsole.conf
 else
 	loginfo "Using user defined font from cmdline."
 fi
