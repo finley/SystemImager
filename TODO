@@ -4,6 +4,7 @@
 
 ============= TODO for the dracut change before release is possible ===========
 
+- FIXED: /root/rpmbuild/BUILD/systemimager-4.5.0/tmp/dracutbase/modules.d/51systemimager/module-setup.sh: line 38: cd: /usr/share/systemimager/boot/x86_64/standard/initrd_template/: No such file or directory => ERROR only occures if package is not installed on system.
 - /run is not a virtual filesystem in old CentOS-6. Thus saving si_monitor.log there is useless. See if it can be achieved (in case of directboot)
 - Add espeak log speak in case of warning or error.
 - Distros to support: debian, ubuntu

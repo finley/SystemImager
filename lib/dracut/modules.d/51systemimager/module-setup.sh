@@ -35,7 +35,7 @@ depends() {
 
 install() {
     # 1/ Copy systemimager template
-    (cd @@SIS_INITRD_TEMPLATE@@; tar cpf - .)|(cd $initdir; tar xpf -)
+    (cd ${SI_INITRD_TEMPLATE:=/usr/share/systemimager/boot/$(uname -m)/standard/initrd_template/}; tar cpf - .)|(cd $initdir; tar xpf -)
 
     # 2/ Install binaries we need.
     # Filesystems we want to be able to handle
