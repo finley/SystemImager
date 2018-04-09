@@ -166,7 +166,7 @@ perl(SystemConfig::Boot)
             - Simply modify existing make scripts
 => DONE.
 
-    - Do build in a Dokker container?  Provide container for anyone who wants to
+    - Do build in a Docker container?  Provide container for anyone who wants to
       use it?
 => DONE.
 
@@ -193,22 +193,22 @@ Add a "Features" section to the website:
         - ppc64-ps3 (Sony PS3)
     - Un-Supported architectures on which is has been reported to run include:
         - s390x
-    - Disk label types supported include:
-        - GPT
-        - msdos
-    - Software RAID support
-    - LVM support
-        - including LVM on top of Software RAID
-    - Filesystems supported include:
-        - msdos, vfat
-        - ext2, ext3, ext4
-        - reiserfs
-        - btrfs
-        - jfs
-        - xfs
-        - swap
+    - DONE: Disk label types supported include:
+        - DONE: GPT
+        - DONE: msdos
+    - DONE: Software RAID support
+    - DONE LVM support
+        - DONE: including LVM on top of Software RAID
+    - DONE: Filesystems supported include:
+        - DONE: msdos, vfat
+        - DONE: ext2, ext3, ext4
+        - DONE: reiserfs
+        - DONE: btrfs
+        - DONE: jfs
+        - DONE: xfs
+        - DONE: swap
     - Transport protocols include:
-        - rsync
+        - DONE: rsync
             - default and simplest
         - bittorrent
             - best choice at scale
@@ -227,9 +227,9 @@ OBSOLETE: move _all_ *.rul files into make.d
 
 OBSOLETE: Verify we have an "*_install" target for all initrd packages
 
-Move ./initrd_dir/make.d/*.rul files into ./make.d/
+OBSOLETE: Move ./initrd_dir/make.d/*.rul files into ./make.d/
 
-Find some way to add color to logmsg, so that function names can be a different color from the output they produce...
+DONE: Find some way to add color to logmsg, so that function names can be a different color from the output they produce...
 => DONE. (in text console AND in new plymouth based GUI.
 
 mklibs.bef -- review output and re-direct -L towards locally built libs
@@ -238,7 +238,7 @@ mknods -- review this and see if we can remove now that we're using udev
 
 Finley's new TODO list for SystemImager
 ---------------------------------------
-(2) Support grub2 (and other improvements)
+DONE: (2) Support grub2 (and other improvements)
 
     * Thanks to Dennis Stam and Bas van der Vlies of SARA for their
       notes (below w/my modifications) to help me along here
@@ -272,7 +272,7 @@ Finley's new TODO list for SystemImager
 (3.5) Make sure built libs are used and included, and not libs from the
 build system.  mklibs.bef invokations.
 => OBSOLETE: handled by dracut
-(4) switch to udhcp
+OBSOLETE: (4) switch to udhcp
 
 ----
 
