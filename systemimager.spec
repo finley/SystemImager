@@ -294,32 +294,29 @@ Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Obsoletes: systemimager-%{_build_arch}boot
-BuildRequires: python, python-devel, gettext
-BuildRequires: systemconfigurator
-BuildRequires: dracut, kbd
-BuildRequires: xmlstarlet
-BuildRequires: %pkg_ipcalc
-BuildRequires: %pkg_sshd
-BuildRequires: %pkg_dejavu_font
-BuildRequires: %pkg_ncat
 # SuSE includes dracut-netwok in main package
 %if ! %is_suse
 BuildRequires: dracut-network
 %endif
+BuildRequires: dracut
 BuildRequires: plymouth-plugin-script, plymouth-plugin-label
-BuildRequires: parted, psmisc, kexec-tools, bind-utils, net-tools 
-BuildRequires: xfsprogs, e2fsprogs, ncurses
+BuildRequires: psmisc, kexec-tools, bind-utils, net-tools 
+BuildRequires: xmlstarlet, parted, mdadm, util-linux, lvm2
+BuildRequires: xfsprogs, e2fsprogs, ntfsprogs, dosfstools
+BuildRequires: %pkg_ipcalc
+BuildRequires: %pkg_dejavu_font
 BuildRequires: %pkg_btrfs_progs
-BuildRequires: rtorrent
+BuildRequires: %pkg_ncat
+BuildRequires: %pkg_sshd
+BuildRequires: ncurses, /usr/bin/awk, kbd
+BuildRequires: python, python-devel, gettext
+BuildRequires: systemconfigurator
 BuildRequires: kernel
-%if %{?fedora}%{!?fedora:0} >= 18
-BuildRequires:  systemd
-%else
-%if %{?rhel}%{!?rhel:0} >= 7
-BuildRequires:  systemd
-%else
+BuildRequires: rtorrent
+%if 0%{?rhel} == 6
 BuildRequires:  udev
-%endif
+%else
+BuildRequires:  systemd
 %endif
 
 %if %is_ps3
@@ -438,31 +435,28 @@ Distribution: System Installation Suite
 Requires: systemimager-server = %{version}
 # SuSE includes dracut-netwok in main package
 %if ! %is_suse
-BuildRequires: dracut-network
+requires: dracut-network
 %endif
 Requires: dracut
 Requires: plymouth-plugin-script, plymouth-plugin-label
 Requires: psmisc, kexec-tools, bind-utils, net-tools
 Requires: xmlstarlet, parted, mdadm, util-linux, lvm2
 Requires: xfsprogs, e2fsprogs, ntfsprogs, dosfstools
-# ipcalc requirement
 Requires: %pkg_ipcalc
 Requires: %pkg_dejavu_font
 Requires: %pkg_btrfs_progs
 Requires: %pkg_ncat
+Requires: %pkg_sshd
 Requires: ncurses, /usr/bin/awk, kbd
+Requires: python, python-devel, gettext
+Requires: systemconfigurator
 Requires: kernel
 Requires: rtorrent
 Requires: systemimager-%{_build_arch}initrd_template
-Requires: %pkg_sshd
-%if %{?fedora}%{!?fedora:0} >= 18
-Requires:  systemd
-%else
-%if %{?rhel}%{!?rhel:0} >= 7
-Requires:  systemd
-%else
+%if 0%{?rhel} == 6
 Requires:  udev
-%endif
+%else
+Requires:  systemd
 %endif
 
 #AutoReqProv: no
