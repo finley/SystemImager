@@ -63,6 +63,7 @@
 %define pkg_dejavu_font dejavu-serif-fonts, dejavu-sans-fonts
 %define pkg_docbook_utils docbook-utils, docbook-utils-pdf
 %define pkg_mkisofs mkisofs
+%define pkg_ncat nmap
 #define pkg_python_xml PyXML
 %endif
 %if 0%{?rhel} == 7
@@ -72,6 +73,7 @@
 %define pkg_dejavu_font dejavu-serif-fonts, dejavu-sans-fonts
 %define pkg_docbook_utils docbook-utils, docbook-utils-pdf
 %define pkg_mkisofs mkisofs
+%define pkg_ncat nmap-ncat
 #define pkg_python_xml PyXML
 %endif
 %if 0%{?fedora} > 26
@@ -81,6 +83,7 @@
 %define pkg_dejavu_font dejavu-serif-fonts, dejavu-sans-fonts
 %define pkg_docbook_utils docbook-utils, docbook-utils-pdf
 %define pkg_mkisofs mkisofs
+%define pkg_ncat nmap-ncat
 #define pkg_python_xml PyXML
 %endif
 %if %is_suse
@@ -90,6 +93,7 @@
 %define pkg_dejavu_font dejavu-fonts
 %define pkg_docbook_utils docbook-utils
 %define pkg_mkisofs cdrkit-cdrtools-compat
+%define pkg_ncat ncat
 #define pkg_python_xml python-xml
 %endif
 
@@ -297,12 +301,13 @@ BuildRequires: xmlstarlet
 BuildRequires: %pkg_ipcalc
 BuildRequires: %pkg_sshd
 BuildRequires: %pkg_dejavu_font
+BuildRequires: %pkg_ncat
 # SuSE includes dracut-netwok in main package
 %if ! %is_suse
 BuildRequires: dracut-network
 %endif
 BuildRequires: plymouth-plugin-script, plymouth-plugin-label
-BuildRequires: parted, psmisc, /usr/bin/ncat, kexec-tools, bind-utils, net-tools 
+BuildRequires: parted, psmisc, kexec-tools, bind-utils, net-tools 
 BuildRequires: xfsprogs, e2fsprogs, ncurses
 BuildRequires: %pkg_btrfs_progs
 BuildRequires: rtorrent
@@ -437,13 +442,14 @@ BuildRequires: dracut-network
 %endif
 Requires: dracut
 Requires: plymouth-plugin-script, plymouth-plugin-label
-Requires: psmisc, /usr/bin/ncat, kexec-tools, bind-utils, net-tools
+Requires: psmisc, kexec-tools, bind-utils, net-tools
 Requires: xmlstarlet, parted, mdadm, util-linux, lvm2
 Requires: xfsprogs, e2fsprogs, ntfsprogs, dosfstools
 # ipcalc requirement
 Requires: %pkg_ipcalc
 Requires: %pkg_dejavu_font
 Requires: %pkg_btrfs_progs
+Requires: %pkg_ncat
 Requires: ncurses, /usr/bin/awk, kbd
 Requires: kernel
 Requires: rtorrent
