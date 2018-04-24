@@ -297,7 +297,7 @@ _find_free_space() {
 		logical)
 			# if partition is logical, get the working range to seach for free space
 			MIN_SIZE_EXT=( `LC_ALL=C parted -s -- $1 unit $2 print|grep "extended"|sed "s/$2//g"|awk '{ print $2 $4 }'` )
-			[ ${MIN_SIZE_EXT[#]} -eq 0 ] && shellout "Can't create logical partition if no extended partition exists"
+			[ ${#MIN_SIZE_EXT[*]} -eq 0 ] && shellout "Can't create logical partition if no extended partition exists"
 			;;
 		*)
 			# if primary or logical, search the whole disk
