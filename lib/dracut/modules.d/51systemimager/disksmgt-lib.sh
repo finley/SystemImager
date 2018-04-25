@@ -246,6 +246,7 @@ _do_partitions() {
 					fi
 					# Get partition filesystem if it exists (no raid, no lvm) so we can put it in partition filesystem info
 					P_FS=`xmlstarlet sel -t -m "config/fsinfo[@real_dev=\"${DISK_DEV}${P_NUM}\"]" -v "@fs" -n ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d'`
+					test "${P_FS}"="swap" && P_FS="linux-swap" # fix swap FS type name for parted.
 
 					# 1/ Create the partition
 					CMD="parted -s -- ${DISK_DEV} unit ${P_UNIT} mkpart ${P_TYPE} ${P_FS} `_find_free_space ${DISK_DEV} ${P_UNIT} ${P_TYPE} ${P_SIZE}`"
