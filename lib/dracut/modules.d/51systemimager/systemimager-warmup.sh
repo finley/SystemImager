@@ -23,7 +23,7 @@ logdebug "==== systemimager-warmup ===="
 #	sleep 1
 #done
 loginfo "Waiting for plymouth GUI to show up."
-sleep 4
+sleep 1
 
 # Highlight plymouth init icon.
 sis_update_step init
