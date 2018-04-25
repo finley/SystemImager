@@ -246,7 +246,7 @@ _do_partitions() {
 					fi
 					# Get partition filesystem if it exists (no raid, no lvm) so we can put it in partition filesystem info
 					P_FS=`xmlstarlet sel -t -m "config/fsinfo[@real_dev=\"${DISK_DEV}${P_NUM}\"]" -v "@fs" -n ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d'`
-					test "${P_FS}"="swap" && P_FS="linux-swap" # fix swap FS type name for parted.
+					test "${P_FS}" = "swap" && P_FS="linux-swap" # fix swap FS type name for parted.
 
 					# 1/ Create the partition
 					CMD="parted -s -- ${DISK_DEV} unit ${P_UNIT} mkpart ${P_TYPE} ${P_FS} `_find_free_space ${DISK_DEV} ${P_UNIT} ${P_TYPE} ${P_SIZE}`"
@@ -262,7 +262,7 @@ _do_partitions() {
 					do
 						CMD="parted -s -- ${DISK_DEV} set ${P_NUM} ${flag} on"
 						logaction "$CMD"
-						eval "$CMD" || shellout "Failed to set flag ${flag}=on for partition ${DISK_DEV}${P_NUM}"
+						eval "$CMD" || logwarn "Failed to set flag ${flag}=on for partition ${DISK_DEV}${P_NUM}"
 						sleep $PARTED_DELAY
 					done
 
@@ -308,10 +308,12 @@ _find_free_space() {
 	# For each free space
 	# if ext_size is non null (we create a logical part) and if checked free space is beyond end of extended, then abort
 	# if free block start is within search space and if free block size is big enough for requested size, we found it! => print and exit
+	# For extended partitions, if the 1st freeblock checked is outside, we exit without checking other ones if any.
+	# => Case cannot occure because logical partition will reach the end of disk. (can't create primary after logical with parted)
 	BEGIN_END=( `LC_ALL=C parted -s -- $1 unit $2 print free | grep "Free Space" | sed "s/$2//g" | sort -g -r -k2 | awk -v min=${MIN_SIZE_EXT[0]} -v ext_size=${MIN_SIZE_EXT[1]} -v required="$4" '
-	(ext_size>0) && ($1<min || $1>min+ext_zise) { exit 1 }
-	($1>=min) && (($1<(min+ext_size)) || ext_size==0) && (required==0) { print $1 " " $2 ; exit 0 }
-	($1>=min) && ($1+required)<=$2 && (required!=0) { print $1 " " $1+required ; exit 0 }
+	(ext_size>0) && ($1<min || $1>min+ext_size) { exit 1 }
+	($1>=min) && (($1<(min+ext_size)) || ext_size==0) && (required==0) { print $1,$2 ; exit 0 }
+	($1>=min) && ($1+required)<=$2 && (required!=0) { print $1,$1+required ; exit 0 }
 ' ` ) || shellout "Failed to find free space for a $3 partition of size $4$2"
 	[ -n "`echo ${BEGIN_END[0]}|grep '^0'`" ] && BEGIN_END[0]="1MiB" # Make sure we start at aligned position and that there is room for grub.
 	echo ${BEGIN_END[@]}
