@@ -2,17 +2,14 @@
   $Id$
    vi:set filetype=xml:
 
-  This file contains partition information about the disks on your golden
-  client.  It is stored here in a generic format that is used by your
-  SystemImager server to create an autoinstall script for cloning this
-  system.
+  This file contains partition information about the disk(s) on your client.
   
   You can change the information in this file to affect how your target
   machines are installed.  See "man autoinstallscript.conf" for details.
 -->
 
 <config>
-  <disk dev="/dev/hda" label_type="msdos" unit_of_measurement="MB">
+  <disk dev="/dev/sda" label_type="msdos" unit_of_measurement="MB">
     <!--
       This disk's output was brought to you by the partition tool "sfdisk",
       and by the numbers 4 and 5 and the letter Q.
@@ -21,7 +18,7 @@
     <part  num="2"  size="512"  p_type="primary"  p_name="-"  flags="raid" raid_dev="/dev/md1" />
     <part  num="3"  size="*"  p_type="primary"  p_name="-"  flags="raid" raid_dev="/dev/md0" />
   </disk>
-  <disk dev="/dev/hdc" label_type="msdos" unit_of_measurement="MB">
+  <disk dev="/dev/sdb" label_type="msdos" unit_of_measurement="MB">
     <!--
       This disk's output was brought to you by the partition tool "sfdisk",
       and by the numbers 4 and 5 and the letter Q.
@@ -46,7 +43,7 @@
 </lvm>
 
   <fsinfo  line="10" real_dev="/dev/systemvg/rootlv" mp="/"  fs="reiserfs" options="acl,user_xattr" dump="1" pass="1" />
-  <fsinfo  line="20" real_dev="/dev/hda1" mp="/boot"  fs="reiserfs" options="acl,user_xattr" dump="1" pass="2" />
+  <fsinfo  line="20" real_dev="/dev/sda1" mp="/boot"  fs="reiserfs" options="acl,user_xattr" dump="1" pass="2" />
   <fsinfo  line="30" real_dev="/dev/systemvg/optlv" mp="/opt"  fs="reiserfs" options="acl,user_xattr" dump="1" pass="2" />
   <fsinfo  line="40" real_dev="/dev/systemvg/tmplv" mp="/tmp"  fs="ext2" options="acl,user_xattr" dump="1" pass="2" />
   <fsinfo  line="50" real_dev="/dev/systemvg/usrlv" mp="/usr"  fs="reiserfs" options="acl,user_xattr" dump="1" pass="2" />
@@ -58,7 +55,5 @@
   <fsinfo  line="110" real_dev="/dev/dvd" mp="/media/dvd"  fs="subfs" options="noauto,fs=cdfss,ro,procuid,nosuid,nodev,exec,iocharset=utf8" dump="0" pass="0"  format="no" />
   <fsinfo  line="120" real_dev="/dev/cdrecorder" mp="/media/cdrecorder"  fs="subfs" options="noauto,fs=cdfss,ro,procuid,nosuid,nodev,exec,iocharset=utf8" dump="0" pass="0"  format="no" />
   <fsinfo  line="130" real_dev="/dev/fd0" mp="/media/floppy"  fs="subfs" options="noauto,fs=floppyfss,procuid,nodev,nosuid,sync" dump="0" pass="0" />
-
-  <boel devstyle="static"/>
 
 </config>
