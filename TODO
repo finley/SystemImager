@@ -3,6 +3,33 @@
 #
 
 ============= TODO for the dracut change before release is possible ===========
+- update sbin/si_mkdhcpserver so it works with systemd (also sur service instead of running init.d script on old distros)
+- fix si_prepareclient si it uses si_mkbootpackage instead of trying to build its own kernel and fail.
+- fix si_getimage so it installs scripts in /var/lib/systemimager/scripts/main-install/
+  fix si_getimage so it installs correctly remote boot package
+  fix si_getimage so it moves <imagedir>/etc/systemimager/autoinstall_script.conf to disks layout.
+- Add imaging a list of packages instead of a directory (protocol:bootstrap)
+- Add network configuration using networkmanager (in a postinstall script at 1st)
+- Add install of monitor_rebooted service in dracut module instead of postinstall script.
+- Do not install grub on disk we did not handle
+
+Server.pm:
+- remove _read_partition_info_and_prepare_parted_commands()
+- remove _read_partition_info_and_prepare_soft_raid_devs()
+- remove _read_partition_info_and_prepare_pvcreate_commands()
+- remove write_lvm_groups_commands()
+- remove write_lvm_volumes_commands()
+- remove _write_out_mkfs_commands()
+- remove append_variables_txt_with_ip_assignment_method()
+- remove _write_out_new_fstab_file()
+- remove write_sc_command_pre()
+- remove write_sc_command_post()
+- remove _write_out_umount_commands()
+- remove show_disk_edits()
+- remove edit_disk_names()
+- remove setup_kexec()
+- remove get_all_disks()
+- remove 
 
 - FIXED: /root/rpmbuild/BUILD/systemimager-4.5.0/tmp/dracutbase/modules.d/51systemimager/module-setup.sh: line 38: cd: /usr/share/systemimager/boot/x86_64/standard/initrd_template/: No such file or directory => ERROR only occures if package is not installed on system.
 - /run is not a virtual filesystem in old CentOS-6. Thus saving si_monitor.log there is useless. See if it can be achieved (in case of directboot)
