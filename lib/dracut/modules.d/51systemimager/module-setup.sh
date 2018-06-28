@@ -58,6 +58,7 @@ install() {
     inst_multiple lvm pvcreate pvdisplay pvremove pvscan lvcreate lvdisplay lvremove lvscan lvmconf lvmconfig lvmdump lvchange vgcreate vgdisplay vgremove vgscan fsadm
     inst_multiple chmod chown cp dd df dmesg echo egrep fdisk fgrep grep halt host hostname ifconfig init insmod kill ln ls lsmod mkdir mknod mkswap modprobe more mv ping poweroff ps reboot shutdown rm rmdir rmmod route sed sh sleep swapoff swapon sync tar touch uname logger
     inst_multiple depmod blkid
+    inst_multiple uuidgen
     # Some helpfull command in case of problem
     inst_multiple -o find strace sysctl vi clear reset lsof fuser
     # bittorent client needed when using bittorrent deployment method.
