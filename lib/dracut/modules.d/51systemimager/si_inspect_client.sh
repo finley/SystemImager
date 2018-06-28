@@ -7,7 +7,7 @@ cat /etc/fstab.systemimager|sort -b -k2 |awk '{print $1}' > $MOUNTS
 cat $MOUNTS | while read MOUNT_POINT
 do
 	echo "mountng $MOUNT_POINT"
-	mount $MOUNT_POINT
+	mount --fstab /etc/fstab.systemimager $MOUNT_POINT
 done
 
 mount_os_filesystems_to_sysroot
