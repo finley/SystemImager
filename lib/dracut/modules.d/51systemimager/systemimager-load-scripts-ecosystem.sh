@@ -22,6 +22,21 @@ test -z "${IMAGESERVER}" && shellout "IMAGESERVER not set; don't know where to d
 # the chosen protocol will implement the get_scripts_directory() function.
 get_scripts_directory
 
+# Make sure HOSTNAME is set (may be used to guess main-install script name or disk layout file name".
+# HOSTNAME may already be set via cmdline, dhcp or local.cfg
+# If not, then try to get it from /scripts/hosts or DNS
+if [ -z "$HOSTNAME" ]; then
+    get_hostname_by_hosts_file # From ${SCRIPTS_DIR}/hosts
+fi
+
+if [ -z "$HOSTNAME" ]; then
+    get_hostname_by_dns
+fi
+
+if [ -n "$HOSTNAME" ]; then
+    loginfo "This hostname is: $HOSTNAME"
+fi
+
 # Now that we have /scripts, look for /scripts/cluster.txt and
 # initialize GROUPNAMES (can contain multiple groups) if cluster.txt exists.
 get_group_name
@@ -46,22 +61,6 @@ then
 else
 	loginfo "No config available, using defaults"
 fi
-
-# Make sure HOSTNAME is set (may be used to guess main-install script name or disk layout file name".
-# HOSTNAME may already be set via cmdline, dhcp or local.cfg
-# If not, then try to get it from /scripts/hosts or DNS
-if [ -z "$HOSTNAME" ]; then
-    get_hostname_by_hosts_file
-fi
-
-if [ -z "$HOSTNAME" ]; then
-    get_hostname_by_dns
-fi
-
-if [ -n "$HOSTNAME" ]; then
-    loginfo "This hostname is: $HOSTNAME"
-fi
-
 
 # Save values
 write_variables
