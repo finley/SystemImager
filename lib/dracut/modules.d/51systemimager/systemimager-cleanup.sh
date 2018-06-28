@@ -56,4 +56,6 @@ then
 fi
 
 unset SIS_SYSMSG_ENABLED
+loginfo "Systemimager giving control back to system..."
+exit 0
 
