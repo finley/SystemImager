@@ -28,6 +28,8 @@ LINE_WIDTH=120;
 margins_width=20;
 // how many lines in a dialog box:
 dlgb_box_max_lines = 6;
+// Hidden passwords bullets:
+bullets = "ooooooooooooooooooooooo";
 
 display_system_messages=0; // Do not display system messages by default.
                            // Can be unable by plymouth update --status="conf:sys:Y"
@@ -140,13 +142,15 @@ dlgb_box.border_image     = box.image;
 dlgb_box.background_image = Image("dialog_bgnd.png");
 dlgb_box.yes_image = Image("yes.png");
 dlgb_box.no_image  = Image("no.png");
+dlgb_box.pwd_image = Image("lock.png");
 dlgb_box.zzz_image = Image("action.png");
 
 dlgb_box.border_sprite     = Sprite(dlgb_box.border_image.Scale(dlgb_box.width+margins_width,dlgb_box.height+margins_width));
 dlgb_box.background_sprite = Sprite(dlgb_box.background_image.Scale(dlgb_box.width,dlgb_box.height));
 dlgb_box.yes_sprite        = Sprite(dlgb_box.yes_image.Scale(step_icon.size,step_icon.size));
 dlgb_box.no_sprite         = Sprite(dlgb_box.no_image.Scale(step_icon.size,step_icon.size));
-dlgb_box.zzz_sprite         = Sprite(dlgb_box.zzz_image.Scale(step_icon.size,step_icon.size));
+dlgb_box.pwd_sprite        = Sprite(dlgb_box.pwd_image.Scale(step_icon.size,step_icon.size));
+dlgb_box.zzz_sprite        = Sprite(dlgb_box.zzz_image.Scale(step_icon.size,step_icon.size));
 
 dlgb_box.border_sprite.SetPosition(dlgb_box.X-margins_width/2,dlgb_box.Y-margins_width/2,200);
 dlgb_box.border_sprite.SetOpacity( 0.0 ); // Hidden by default
@@ -156,7 +160,9 @@ dlgb_box.yes_sprite.SetPosition(dlgb_box.X+margins_width/2,dlgb_box.Y+margins_wi
 dlgb_box.yes_sprite.SetOpacity( 0.0 ); // Hidden by default
 dlgb_box.no_sprite.SetPosition(dlgb_box.X+margins_width/2,dlgb_box.Y+margins_width/2,203);
 dlgb_box.no_sprite.SetOpacity( 0.0 ); // Hidden by default
-dlgb_box.zzz_sprite.SetPosition(dlgb_box.X+margins_width/2,dlgb_box.Y+margins_width/2,203);
+dlgb_box.pwd_sprite.SetPosition(dlgb_box.X+margins_width/2,dlgb_box.Y+margins_width/2,204);
+dlgb_box.pwd_sprite.SetOpacity( 0.0 ); // Hidden by default
+dlgb_box.zzz_sprite.SetPosition(dlgb_box.X+margins_width/2,dlgb_box.Y+margins_width/2,205);
 dlgb_box.zzz_sprite.SetOpacity( 0.0 ); // Hidden by default
 
 // Initialise dialog box text lines text lines.
@@ -284,7 +290,7 @@ fun scroll_message(status_flag, text) {
 //
 // DialogBox(dlgb_type, dlgb_text)
 // Display (or hide) a dialog box.
-// dlgb_type: "yes" or " no" or "zzz" or "off"
+// dlgb_type: "yes" or " no" or "zzz" or "pwd" or "off"
 // dlgb_text: "Messsage to display
 fun DialogBox(dlgb_type, dlgb_text) {
 
@@ -293,6 +299,7 @@ fun DialogBox(dlgb_type, dlgb_text) {
         dlgb_box.background_sprite.SetOpacity( 0.0 );
         dlgb_box.yes_sprite.SetOpacity( 0.0 );
         dlgb_box.no_sprite.SetOpacity( 0.0 );
+        dlgb_box.pwd_sprite.SetOpacity( 0.0 );
         dlgb_box.zzz_sprite.SetOpacity( 0.0 );
         dlgb_box.text_sprite.SetOpacity( 0.0 );
 
@@ -307,15 +314,24 @@ fun DialogBox(dlgb_type, dlgb_text) {
     } else if(dlgb_type == "yes") {
         dlgb_box.yes_sprite.SetOpacity( 1.0 );
         dlgb_box.no_sprite.SetOpacity( 0.0 );
+        dlgb_box.pwd_sprite.SetOpacity( 0.0 );
         dlgb_box.zzz_sprite.SetOpacity( 0.0 );
     } else if(dlgb_type == " no") {
         dlgb_box.no_sprite.SetOpacity( 1.0 );
         dlgb_box.yes_sprite.SetOpacity( 0.0 );
+        dlgb_box.pwd_sprite.SetOpacity( 0.0 );
         dlgb_box.zzz_sprite.SetOpacity( 0.0 );
-    } else if(dlgb_type == "zzz") {
+    } else if(dlgb_type == "pwd") {
+        dlgb_box_text.line = 0;
+        dlgb_box.pwd_sprite.SetOpacity( 1.0 );
         dlgb_box.no_sprite.SetOpacity( 0.0 );
         dlgb_box.yes_sprite.SetOpacity( 0.0 );
+        dlgb_box.zzz_sprite.SetOpacity( 0.0 );
+    } else if(dlgb_type == "zzz") {
         dlgb_box.zzz_sprite.SetOpacity( 1.0 ); // TODO: Make it spin // TODO: Make it spin
+        dlgb_box.no_sprite.SetOpacity( 0.0 );
+        dlgb_box.yes_sprite.SetOpacity( 0.0 );
+        dlgb_box.pwd_sprite.SetOpacity( 0.0 );
     }
     dlgb_box.border_sprite.SetOpacity( 0.9 );
     dlgb_box.background_sprite.SetOpacity( 1.0 );
@@ -509,6 +525,18 @@ fun update_status_callback(text) {
       // unhandled here.
 }
 
+fun display_password_callback (prompt_text, num_bullets)
+{
+    DialogBox("pwd", prompt_text + "\n" + bullets.SubString(0,num_bullets));
+}
+
+fun display_normal_callback ()
+{
+    DialogBox("off", "");
+}
+
 Plymouth.SetMessageFunction(scroll_message_callback); // SetDisplayMessageFunction not available in 0.8.4 (CentOS-6)
 Plymouth.SetUpdateStatusFunction(update_status_callback);
+Plymouth.SetDisplayPasswordFunction(display_password_callback);
+Plymouth.SetDisplayNormalFunction(display_normal_callback);
 

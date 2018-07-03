@@ -43,6 +43,12 @@ do
     sleep 0.5
 done
 plymouth update --status="dlgb:off"
+plymouth update --status="mesg:I:Testing pasword request"
+#plymouth ask-for-password --prompt "Please, enter password:" --command "ssh my-server 'hostname'" --number-of-tries=3 > /tmp/result
+PASS="$(plymouth ask-for-password --prompt 'Please, enter password:')"
+#SSHPASS="$(systemd-ask-password 'SSH password')" sshpass -e ssh oscar-server 'hostname' > /tmp/result
+plymouth update --status="mesg:I:Got password: ${PASS}"
+
 plymouth update --status="mesg:N:This is the last message"
 sleep 5
 
