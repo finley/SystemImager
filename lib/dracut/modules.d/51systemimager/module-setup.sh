@@ -17,7 +17,7 @@ check() {
 }
 
 depends() {
-    echo network shutdown i18n
+    echo network shutdown i18n crypt
     case "$(uname -m)" in
         s390*) echo cms ;;
     esac

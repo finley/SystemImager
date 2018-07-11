@@ -6,7 +6,7 @@
 rm -rf /tmp/plymouth.log
 plymouthd --debug --debug-file=/tmp/plymouth.log
 plymouth show-splash
-sleep 5  # Wait for splash to appear otherwize we miss some refreshes.
+#sleep 5  # Wait for splash to appear otherwize we miss some refreshes (bug workaround).
 
 # Now testing.
 plymouth update --status="mesg:I:SystemImager plymouth theme test suite."
@@ -36,21 +36,30 @@ plymouth update --status="boot:" # Highlight the install bootloader icon
 sleep 0.5
 for i in 00{1..4} # Highlight the post install script icon and simulate 4 executions
 do
-    plymouth update --status="mesg:I:Running script ${i}/4"
+    plymouth update --status="mesg:I:Running script ${i//0/}/4"
     plymouth update --status="post:$i:004"
-    [ $i -eq 2 ] && plymouth update --status="dlgb:yes:Script 1 ran successfully!" && sleep 1
+    [ $i -ne 4 ] && plymouth update --status="dlgb:yes:Script ${i//0/} ran successfully!" && sleep 1
     [ $i -eq 4 ] && plymouth update --status="dlgb: no:Script 4 failed!!!!" && sleep 1
     sleep 0.5
 done
 plymouth update --status="dlgb:off"
 plymouth update --status="mesg:I:Testing pasword request"
+SSHPASS=$(plymouth ask-for-password --prompt "Please, enter password:") # We just test the password dialog in theme, not plymouth ability to retreave the password
+plymouth update --status="mesg:I:Got ret code=$? and Passwd=[${SSHPASS}]"
+
+# Differt way to query ssh password
+# 1: using plymouth --command
 #plymouth ask-for-password --prompt "Please, enter password:" --command "ssh my-server 'hostname'" --number-of-tries=3 > /tmp/result
-PASS="$(plymouth ask-for-password --prompt 'Please, enter password:')"
-#SSHPASS="$(systemd-ask-password 'SSH password')" sshpass -e ssh oscar-server 'hostname' > /tmp/result
-plymouth update --status="mesg:I:Got password: ${PASS}"
+# 2: reading plymouth password return
+#PASS="$(plymouth ask-for-password --prompt 'Please, enter password:')"
+# 3: using sshpass and systemd-ask-password (doesn't work (not supported) on CentOS-6)
+#SSHPASS="$(systemd-ask-password 'SSH password')" sshpass -e ssh my-server 'hostname' > /tmp/result
+# 4: using ask_for_password from 90crypt dracut module lib.
+#. /lib/dracut-crypth-lib.sh
+#ask_for_password --prompt "SSH Password" --cmd "ssh ${IMAGESERVER} 'hostname' > /tmp/result"
 
 plymouth update --status="mesg:N:This is the last message"
-sleep 5
+sleep 3
 
 # Finish.
 plymouth hide-splash

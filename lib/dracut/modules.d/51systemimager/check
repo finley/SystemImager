@@ -13,7 +13,7 @@
 # for systemimager dracut module
 
 # Require network.
-[ "$1" = "-d" ] && echo network shutdown i18n
+[ "$1" = "-d" ] && echo network shutdown i18n crypt
 
 # hostonly check: does not work in host only mode.
 [ "$1" = "-h" ] && exit 1
