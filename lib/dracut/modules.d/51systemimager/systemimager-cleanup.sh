@@ -34,6 +34,7 @@ if test -s /run/systemimager/si_monitor.pid; then
         do
             sleep 0.5
         done
+        # At this point we must not use systemimager log helpers like loginfo, logwarn, logerror, ...
         info "SystemImager remote monitor task stopped"
     fi
 fi
@@ -47,15 +48,14 @@ rm -rf /run/systemimager/* ${STAGING_DIR}/*.*
 
 # We are in directbootmode, thus more message may have raised up.
 # At this point, rootfs is mounted to /sysroot again.
-# Si we can try to save an updated si_monitor.log to imaged system.
+# So we can try to save an updated si_monitor.log to imaged system.
 if test -f /sysroot/root/SIS_Install_logs/si_monitor.log
 then
-    loginfo "Saving ultimate version of /root/SIS_Install_logs/si_monitor.log to /run/initramfs"
+    info "Saving ultimate version of /root/SIS_Install_logs/si_monitor.log to /run/initramfs"
     cp -f /tmp/si_monitor.log /run/systemimager/si_monitor.log
-    # At this point we must not use systemimager log helpers like loginfo, logwarn, logerror, ...
 fi
 
 unset SIS_SYSMSG_ENABLED
-loginfo "Systemimager giving control back to system..."
+info "Systemimager giving control back to system..."
 exit 0
 
