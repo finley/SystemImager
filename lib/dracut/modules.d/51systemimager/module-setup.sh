@@ -147,6 +147,6 @@ install_plymouth_theme() {
 [Daemon]
 Theme=systemimager
 ShowDelay=0
-DeviceTimeout=5
+DeviceTimeout=0.1
 EOF
 }

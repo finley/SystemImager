@@ -6,7 +6,7 @@
 rm -rf /tmp/plymouth.log
 plymouthd --debug --debug-file=/tmp/plymouth.log
 plymouth show-splash
-#sleep 5  # Wait for splash to appear otherwize we miss some refreshes (bug workaround).
+sleep 0.5  # Wait for splash to appear otherwize we miss some refreshes (gfx display init is asynchrone).
 
 # Now testing.
 plymouth update --status="mesg:I:SystemImager plymouth theme test suite."
