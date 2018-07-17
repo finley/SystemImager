@@ -152,6 +152,32 @@ logmessage() {
     fi
 }
 
+################################################################################
+#
+# Helper function for ask_for_password()
+read_password() {
+    SIZE=$(od -An -t d4 -j1 -N4)
+    read -s -r -N $SIZE PASS
+    echo -n "$PASS"
+    killall socat
+}
+
+################################################################################
+#
+# Replacement for plymouth ask-for-password --prompt 'Please, enter password'
+# which is buggy on CentOS-7 (plymouth-0.8.9-0.31.20140113.el7.centos.x86_64)
+#
+ask_for_password() {
+    PROMPT="Please, enter password"
+    if test ! -x /usr/bin/socat
+    then
+    	plymouth ask-for-password --prompt "${PROMPT}"
+    else
+	MSG_SIZE=$(echo "obase=8;$(( ${#PROMPT} + 1 ))"|bc)
+	printf "*\02\0${MSG_SIZE}${PROMPT}\0" | socat ABSTRACT-CONNECT:/org/freedesktop/plymouthd STDIO,ignoreeof | read_password
+    fi
+}
+
 # Read varaibles.txt if present.
 test -f /tmp/variables.txt && logdebug "Reading /tmp/variables.txt" && . /tmp/variables.txt
 

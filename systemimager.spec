@@ -318,6 +318,11 @@ BuildRequires:  udev
 %else
 BuildRequires:  systemd
 %endif
+# CentOS-7 plymouth ask-for-password is buggy
+# https://bugzilla.redhat.com/show_bug.cgi?id=1600990
+%if 0%{?rhel} == 7
+BuildRequires: socat
+%endif
 
 %if %is_ps3
 BuildRequires: dtc
@@ -457,6 +462,11 @@ Requires: systemimager-%{_build_arch}initrd_template
 Requires:  udev
 %else
 Requires:  systemd
+%endif
+# CentOS-7 plymouth ask-for-password is buggy
+# https://bugzilla.redhat.com/show_bug.cgi?id=1600990
+%if 0%{?rhel} == 7
+Requires: socat
 %endif
 
 #AutoReqProv: no

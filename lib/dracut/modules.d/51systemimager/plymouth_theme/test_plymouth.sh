@@ -3,7 +3,25 @@
 # SystemImager plymouth theme test suite.
 #
 
-rm -rf /tmp/plymouth.log
+# Make sure no plymouth daemon is running
+plymouth quit
+
+read_password() {
+    SIZE=$(od -An -t d4 -j1 -N4)
+    read -s -r -N $SIZE PASS
+    echo -n "$PASS"
+    killall socat
+}
+
+ask_for_password() {
+    PROMPT="Please, enter password"
+    MSG_SIZE=$(echo "obase=8;$(( ${#PROMPT} + 1 ))"|bc)
+    printf "*\02\0${MSG_SIZE}${PROMPT}\0" | socat ABSTRACT-CONNECT:/org/freedesktop/plymouthd STDIO,ignoreeof | read_password
+}
+
+# Cleanup previous log
+test -f /tmp/plymouth.log && rm -rf /tmp/plymouth.log
+
 plymouthd --debug --debug-file=/tmp/plymouth.log
 plymouth show-splash
 sleep 0.5  # Wait for splash to appear otherwize we miss some refreshes (gfx display init is asynchrone).
@@ -44,14 +62,15 @@ do
 done
 plymouth update --status="dlgb:off"
 plymouth update --status="mesg:I:Testing pasword request"
-SSHPASS=$(plymouth ask-for-password --prompt "Please, enter password:") # We just test the password dialog in theme, not plymouth ability to retreave the password
+(sleep 40; killall socat)&
+SSHPASS=$(ask_for_password)
 plymouth update --status="mesg:I:Got ret code=$? and Passwd=[${SSHPASS}]"
 
 # Differt way to query ssh password
 # 1: using plymouth --command
 #plymouth ask-for-password --prompt "Please, enter password:" --command "ssh my-server 'hostname'" --number-of-tries=3 > /tmp/result
 # 2: reading plymouth password return
-#PASS="$(plymouth ask-for-password --prompt 'Please, enter password:')"
+#SSHPASS="$(plymouth ask-for-password --prompt 'Please, enter password:')"
 # 3: using sshpass and systemd-ask-password (doesn't work (not supported) on CentOS-6)
 #SSHPASS="$(systemd-ask-password 'SSH password')" sshpass -e ssh my-server 'hostname' > /tmp/result
 # 4: using ask_for_password from 90crypt dracut module lib.
@@ -64,4 +83,5 @@ sleep 3
 # Finish.
 plymouth hide-splash
 plymouth quit
+
 

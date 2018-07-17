@@ -17,13 +17,13 @@
 . /lib/systemimager-lib.sh
 logdebug "==== systemimager-warmup ===="
 
+loginfo "Waiting for plymouth GUI to show up."
 # Wait for plymouth to be ready.
 #while ! plymouth --ping
 #do
 #	sleep 1
 #done
-loginfo "Waiting for plymouth GUI to show up."
-sleep 0.5
+sleep 2
 
 # Highlight plymouth init icon.
 sis_update_step init

@@ -29,6 +29,7 @@ install() {
     inst_multiple -o mkfs.reiserfs mkreiserfs reiserfstune resize_reiserfs tunefs.reiserfs
     inst_multiple -o mkfs.jfs jfs_mkfs jfs_tune
     inst_multiple -o mklost+found # Do we need that?
+    inst_multiple -o socat # plymouth ask-for-password replacement requirement (CentOS-7 at least)
     # Install ssh and its requirements
     install_ssh
     # Install docker and its requirements
@@ -39,7 +40,7 @@ install() {
     # inst_multiple setfont loadkeys kbd_mode stty # i18n module
     inst_multiple bc gzip bzip2 rsync mkfs parted blockdev lsblk partprobe awk ncat tty killall kexec ipcalc findmnt tput stty
     inst_multiple lvm pvcreate pvdisplay pvremove pvscan lvcreate lvdisplay lvremove lvscan lvmconf lvmconfig lvmdump lvchange vgcreate vgdisplay vgremove vgscan fsadm
-    inst_multiple chmod chown cp dd df dmesg echo egrep fdisk fgrep grep halt host hostname ifconfig init insmod kill ln ls lsmod mkdir mknod mkswap modprobe more mv ping poweroff ps reboot shutdown rm rmdir rmmod route sed sh sleep swapoff swapon sync tar touch uname logger
+    inst_multiple chmod chown cp dd df dmesg echo egrep fdisk fgrep grep halt host hostname ifconfig init insmod kill ln ls lsmod mkdir mknod mkswap modprobe more mv ping poweroff ps reboot shutdown rm rmdir rmmod route sed sh sleep swapoff swapon sync tar touch uname logger od socat
     inst_multiple uuidgen
     inst_multiple depmod blkid
     # Some helpfull command in case of problem
