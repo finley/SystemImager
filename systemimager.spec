@@ -313,6 +313,7 @@ BuildRequires: python, python-devel, gettext
 BuildRequires: systemconfigurator
 BuildRequires: kernel
 BuildRequires: rtorrent
+BuildRequires: cryptsetup
 %if 0%{?rhel} == 6
 BuildRequires:  udev
 %else
@@ -458,6 +459,7 @@ Requires: systemconfigurator
 Requires: kernel
 Requires: rtorrent
 Requires: systemimager-%{_build_arch}initrd_template
+Requires: cryptsetup
 %if 0%{?rhel} == 6
 Requires:  udev
 %else
