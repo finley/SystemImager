@@ -30,7 +30,7 @@ then
 	logerror "IMAGENAME not set!"
 	loginfo  "set rd.sis.image-name= cmdline parameter or"
 	loginfo  "set IMAGENAME= in ${IMAGESERVER}:/etc/systemimager/sis-image.conf and"
-	loginfo  "set rd.sis.conf=sis-image.conf"
+	loginfo  "set si.conf=sis-image.conf"
 	shellout "IMAGENAME not set!"
 fi
 
