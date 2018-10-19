@@ -220,6 +220,10 @@ Options:
     /usr/share/doc/systemimager-server-SYSTEMIMAGER_VERSION_STRING/local.cfg
     for a well commented example.
 
+ --dracut-opts "options to add to dracut"
+    this is the way to add somme parameters to the dracut command that will
+    generate the image. e.g. --mdadmconf --strip --xz --uefi
+
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
 
@@ -246,6 +250,7 @@ GetOptions(
     "authorized-keys=s"    => \my $authorized_keys,
     "config=s"             => \my $local_cfg,
     "firmware-dir=s"       => \my $firmware_dir,
+    "dracut-opts=s"        => \my $dracut_opts,
 ) || die "$help_info";
 
 # OL: Need to handle destination (like si_mkbootpackage)
@@ -963,7 +968,7 @@ sub create_auto_install_script_conf {
             $my_modules, $custom_kernel, undef, $modules_dir,
             $image, $initrd_destination,
             $ssh_key, $authorized_keys, $local_cfg,
-            $firmware_dir, $verbose
+            $firmware_dir, $dracut_opts, $verbose
         );
     }
 
