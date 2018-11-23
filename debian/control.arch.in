@@ -12,17 +12,3 @@ Description: SystemImager boot binaries for ${misc:Package-Arch} client nodes
  .
  This package contains the standard flavor of the boot files for installing
  ${misc:Package-Arch} machines.  This package should be installed on the image server.
-
-Package: systemimager-initrd-template-${misc:Package-Arch}
-Architecture: all
-Recommends: systemimager-server | systemimager-client
-Conflicts: systemimager-bin-${misc:Package-Arch}, systemimager-kernel-${misc:Package-Arch}, systemimager-initrd-${misc:Package-Arch}, systemimager-boot-standard-${misc:Package-Arch}, systemimager-ssh-${misc:Package-Arch}, systemimager-server (<< 3.8.0), systemimager-client (<< 3.8.0)
-Description: SystemImager initrd template for ${misc:Package-Arch} client nodes
- SystemImager is a set of utilities for installing GNU/Linux software images to
- client machines over the network.  Images are stored in flat
- files on the server, making updates easy.  The rsync protocol is used for
- transfers, making updates efficient.
- .
- This package contains the root of the initrd to create a custom initrd.img for
- ${misc:Package-Arch} machines, based on the UYOK (UseYourOwnKernel) feature of
- SystemImager.  This package should be installed on the golden client.

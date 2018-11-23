@@ -43,6 +43,31 @@ Description: Utilities and libraries common to both the server and client
  .
  This package contains files common to both the systemimager client and server.
 
+Package: systemimager-initrd-template
+Architecture: all
+Recommends: systemimager-server | systemimager-client
+Conflicts: systemimager-bin-${misc:Package-Arch}, systemimager-kernel-${misc:Package-Arch}, systemimager-initrd-${misc:Package-Arch}, systemimager-boot-standard-${misc:Package-Arch}, systemimager-ssh-${misc:Package-Arch}, systemimager-server (<< 3.8.0), systemimager-client (<< 3.8.0)
+Description: SystemImager initrd template files
+ SystemImager is a set of utilities for installing GNU/Linux software images to
+ client machines over the network.  Images are stored in flat
+ files on the server, making updates easy.  The rsync protocol is used for
+ transfers, making updates efficient.
+ .
+ This package contains the root of the initrd to create a custom initrd.img
+ based on the UYOK (UseYourOwnKernel) feature of SystemImager.
+ This package should be installed on the golden client.
+
+Package: dracut-systemimager
+Architecture: all
+Depends: systemimager-initrd-template, systemimager-common, dracut, dracut-network, multipath-tools, plymouth, xfsprogs
+Description: dracut modules to build a dracut initramfs with systemimager support
+ SystemImager is a set of utilities for installing GNU/Linux software images to
+ client machines over the network.  Images are stored in flat
+ files on the server, making updates easy.  The rsync protocol is used for
+ transfers, making updates efficient.
+ .
+ This package provides a dracut modules that automates the systeimager initramfs creation.
+
 Package: systemimager-doc
 Section: doc
 Architecture: all
