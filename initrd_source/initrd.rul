@@ -53,7 +53,7 @@ $(INITRD_BUILD_DIR).skel:	$(INITRD_DIR)/initrd.rul
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/usr/bin
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/usr/sbin
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/usr/lib
-	test -e /lib64 && mkdir -p -m 0755 $(INITRD_BUILD_DIR)/usr/lib64
+	test -e /usr/lib64 && mkdir -p -m 0755 $(INITRD_BUILD_DIR)/usr/lib64
 	# Create /bin, /sbin, /lib and /lib64 links so nothing we build goest to old /bin, /sbin, /lib and so.
 	cd $(INITRD_BUILD_DIR) && ln -s usr/bin ./bin
 	cd $(INITRD_BUILD_DIR) && ln -s usr/sbin ./sbin
@@ -78,7 +78,7 @@ $(INITRD_BUILD_DIR).build:  $(INITRD_BUILD_DIR).prep
 	
 	# Add a few config files
 	cp -av /etc/inputrc $(INITRD_BUILD_DIR)/etc/inputrc
-	cp -av /etc/printcap $(INITRD_BUILD_DIR)/etc/printcap
+	#cp -av /etc/printcap $(INITRD_BUILD_DIR)/etc/printcap
 	cp -av /etc/localtime $(INITRD_BUILD_DIR)/etc/localtime
 
 	# On non systemd based system, set /init
