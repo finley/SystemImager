@@ -1,23 +1,22 @@
 #!/bin/bash
+# -*- mode: shell-script; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
+# ex: ts=4 sw=4 sts=4 et filetype=sh
+# vi: set filetype=sh et ts=4:
 #
 # "SystemImager"
 #
-#  Copyright (C) 1999-2017 Brian Elliott Finley <brian@thefinleys.com>
-#
-#  $Id$
-#  vi: set filetype=sh et ts=4:
-#
+#  Copyright (C) 1999-2018 Brian Elliott Finley <brian@thefinleys.com>
 #  Code written by Olivier LAHAYE.
 #
 # This file is the main systemimager dracut module setup file.
 
 check() {
-    [[ $hostonly ]] && return 1
-    return 255 # this module is optional
+    [[ $hostonly ]] && return 1 # Module is incompatible with hostonly option.
+    return 255                  # this module is optional
 }
 
 depends() {
-    echo network shutdown i18n crypt
+    echo network shutdown crypt
     case "$(uname -m)" in
         s390*) echo cms ;;
     esac
@@ -30,7 +29,6 @@ depends() {
 #
 # 99shutdown:   umount poweroff reboot halt losetup stat
 # 40network:    ip arping dhclient sed ping ping6 brctl teamd teamdctl teamnl 
-# 10i18n:       setfont loadkeys kbd_mode stty
 ################################################################################
 
 install() {
@@ -47,21 +45,30 @@ install() {
     inst_multiple -o mkfs.jfs jfs_mkfs jfs_tune
     inst_multiple -o mklost+found # Do we need that?
     inst_multiple -o socat # plymouth ask-for-password replacement requirement (CentOS-7 at least)
+
+    # Install console utilities (i18n is missing on Debian, so we can't rely on this module)
+    inst_multiple -o setfont loadkeys kbd_mode stty
+
     # Install ssh and its requirements
     install_ssh
+
     # Install docker and its requirements
     install_docker
+
     # Install plymouth theme and its requirements
     install_plymouth_theme
     inst_multiple cut date echo env sort test false true [ expr head install tail tee tr uniq wc tac mktemp yes xmlstarlet
+
     # inst_multiple setfont loadkeys kbd_mode stty # i18n module
     inst_multiple bc gzip bzip2 rsync mkfs parted blockdev lsblk partprobe awk ncat tty killall kexec ipcalc findmnt tput stty
     inst_multiple lvm pvcreate pvdisplay pvremove pvscan lvcreate lvdisplay lvremove lvscan lvmconf lvmconfig lvmdump lvchange vgcreate vgdisplay vgremove vgscan fsadm
     inst_multiple chmod chown cp dd df dmesg echo egrep fdisk fgrep grep halt host hostname ifconfig init insmod kill ln ls lsmod mkdir mknod mkswap modprobe more mv ping poweroff ps reboot shutdown rm rmdir rmmod route sed sh sleep swapoff swapon sync tar touch uname logger od
     inst_multiple depmod blkid
     inst_multiple uuidgen
+
     # Some helpfull command in case of problem
     inst_multiple -o find strace sysctl vi clear reset lsof fuser
+
     # bittorent client needed when using bittorrent deployment method.
     inst_multiple rtorrent
 
