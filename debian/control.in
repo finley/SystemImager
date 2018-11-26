@@ -59,7 +59,7 @@ Description: SystemImager initrd template files
 
 Package: dracut-systemimager
 Architecture: all
-Depends: systemimager-initrd-template, systemimager-common, dracut, dracut-network, multipath-tools, plymouth, xfsprogs
+Depends: systemimager-initrd-template, systemimager-common, dracut, dracut-network, multipath-tools, plymouth, xfsprogs, xmlstarlet, parted, ipcalc, rtorrent, nmap, kexec-tools, lvm2, net-tools, bind9-host, uuid-runtime, bootchart2, btrfs-tools, cifs-utils, keyutils
 Description: dracut modules to build a dracut initramfs with systemimager support
  SystemImager is a set of utilities for installing GNU/Linux software images to
  client machines over the network.  Images are stored in flat
