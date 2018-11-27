@@ -53,12 +53,12 @@ $(INITRD_BUILD_DIR).skel:	$(INITRD_DIR)/initrd.rul
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/usr/bin
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/usr/sbin
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/usr/lib
-	test -e /usr/lib64 && mkdir -p -m 0755 $(INITRD_BUILD_DIR)/usr/lib64
+	test -e /usr/lib64 && mkdir -p -m 0755 $(INITRD_BUILD_DIR)/usr/lib64 || echo "No /usr/lib64 on this system. Ignored"
 	# Create /bin, /sbin, /lib and /lib64 links so nothing we build goest to old /bin, /sbin, /lib and so.
 	cd $(INITRD_BUILD_DIR) && ln -s usr/bin ./bin
 	cd $(INITRD_BUILD_DIR) && ln -s usr/sbin ./sbin
 	cd $(INITRD_BUILD_DIR) && ln -s usr/lib ./lib
-	test -e /lib64 && cd $(INITRD_BUILD_DIR) && ln -s usr/lib64 ./lib64
+	test -e /lib64 && cd $(INITRD_BUILD_DIR) && ln -s usr/lib64 ./lib64||echo "No /lib64 on this system. Ignored"
 	touch $@
 
 $(INITRD_BUILD_DIR).prep: $(INITRD_BUILD_DIR).skel $(SKEL_FILES)
