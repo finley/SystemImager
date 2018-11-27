@@ -84,7 +84,7 @@ $(INITRD_BOOTFILES_DIR).prep: $(INITRD_BOOTFILES_DIR).skel
 $(INITRD_BOOTFILES_DIR).build: $(INITRD_BOOTFILES_DIR).prep $(LOCAL_DRACUT_BASEDIR).build
 	cd $(LOCAL_DRACUT_BASEDIR); \
 	SIS_CONFDIR=$(INITRD_BUILD_DIR)/etc dracutbasedir=$(pwd) SI_INITRD_TEMPLATE=../skel perl -I ../../lib ../../sbin/si_mkbootpackage -y --dracut-opts="--local" --destination $(INITRD_BOOTFILES_DIR)
-
+	touch $@
 
 PHONY += build_dir 
 build_dir:	$(INITRD_BUILD_DIR).build
@@ -131,9 +131,14 @@ $(INITRD_BUILD_DIR).build:  $(INITRD_BUILD_DIR).prep
 
 PHONY += install_initrd_template
 install_initrd_template:	$(INITRD_BUILD_DIR).build
-	mkdir -p $(BOOT_BIN_DEST)
+	mkdir -p $(BOOT_NOARCH_DEST)/initrd_template/
 	# Specify explicitely etc and usr. do not install links. they'll conflict with dracut skel
-	rsync -a $(INITRD_BUILD_DIR)/etc $(INITRD_BUILD_DIR)/usr $(BOOT_BIN_DEST)/initrd_template/
+	rsync -a $(INITRD_BUILD_DIR)/etc $(INITRD_BUILD_DIR)/usr $(BOOT_NOARCH_DEST)/initrd_template/
+
+PHONY += install_boot_files
+install_boot_files:	$(INITRD_BOOTFILES_DIR).build
+	mkdir -p $(BOOT_BIN_DEST)
+	rsync -a $(INITRD_BOOTFILES_DIR)/* $(BOOT_BIN_DEST)/
 
 PHONY += build_dir_clean
 build_dir_clean:
