@@ -2,7 +2,7 @@ Source: systemimager
 Section: admin
 Priority: optional
 Maintainer: dann frazier <dannf@debian.org>
-Build-Depends: bc, bzip2, cramfsprogs (>= 1.1-4), debhelper (>= 4.0.0), flex, gettext, groff-base, libdevmapper-dev, libpopt-dev, libtool, libreadline-dev, libssl-dev, module-init-tools, python-dev, rsync, texinfo, uuid-dev, wget, zlib1g-dev, tofrodos | sysutils (<= 2.0.0-1), ncurses-dev, dos2unix, binutils-dev, quilt, libpam-dev, pkg-config, libglib2.0-dev, gperf
+Build-Depends: bc, bzip2, cramfsprogs (>= 1.1-4), debhelper (>= 4.0.0), flex, gettext, groff-base, libdevmapper-dev, libpopt-dev, libtool, libreadline-dev, libssl-dev, module-init-tools, python-dev, rsync, texinfo, uuid-dev, wget, zlib1g-dev, tofrodos | sysutils (<= 2.0.0-1), ncurses-dev, dos2unix, binutils-dev, quilt, libpam-dev, pkg-config, libglib2.0-dev, gperf, docbook-utils, bc
 Build-Conflicts: libc-pic
 Build-Depends-Indep: docbook-to-man, docbook-utils
 Standards-Version: 3.7.2
@@ -59,7 +59,7 @@ Description: SystemImager initrd template files
 
 Package: dracut-systemimager
 Architecture: all
-Depends: systemimager-initrd-template, systemimager-common, dracut, dracut-network, multipath-tools, plymouth, xfsprogs, xmlstarlet, parted, ipcalc, rtorrent, nmap, kexec-tools, lvm2, net-tools, bind9-host, uuid-runtime, bootchart2, btrfs-tools, cifs-utils, keyutils
+Depends: systemimager-initrd-template, systemimager-common, dracut, dracut-network, multipath-tools, plymouth, plymouth-themes, xfsprogs, xmlstarlet, parted, ipcalc, rtorrent, nmap, kexec-tools, lvm2, net-tools, bind9-host, uuid-runtime, bootchart2, btrfs-tools, cifs-utils, keyutils, bc, openssh-server, openssh-client
 Description: dracut modules to build a dracut initramfs with systemimager support
  SystemImager is a set of utilities for installing GNU/Linux software images to
  client machines over the network.  Images are stored in flat
