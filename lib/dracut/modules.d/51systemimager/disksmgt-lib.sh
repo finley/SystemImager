@@ -416,7 +416,7 @@ _do_lvms() {
 	# LVM_DEFAULT_CONFIG="--config 'global {locking_type=1}'" # At least we need this config.
 	# We chose to replace the inapropriate lvm.conf with a generic one that fits our needs.
 	mkdir -p /etc/lvm # Make sure lvm config path exists (not present on CentOS-6 for example)
-	lvmconfig --type default --withcomments > /etc/lvm/lvm.conf || shellout "Failed to overwrite initramfs:/etc/lvm/lvm.conf with default lvm.conf that permits lvm creation/modification/removal."
+	lvmconfig --type default --withcomments > /etc/lvm/lvm.conf || shellout "Failed to create/overwrite initramfs:/etc/lvm/lvm.conf with default lvm.conf that permits lvm creation/modification/removal."
 
 	loginfo "Creating volume groups"
 
