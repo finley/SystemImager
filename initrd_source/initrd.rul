@@ -76,12 +76,12 @@ $(INITRD_BUILD_DIR).build:  $(INITRD_BUILD_DIR).prep
 	# binaries tarball. -BEF-
 	cp -a $(INITRD_DIR)/my_modules $(INITRD_BUILD_DIR)
 	
-	# Add a few config files
+	# Add a few config files
 	cp -av /etc/inputrc $(INITRD_BUILD_DIR)/etc/inputrc
 	#cp -av /etc/printcap $(INITRD_BUILD_DIR)/etc/printcap
 	cp -av /etc/localtime $(INITRD_BUILD_DIR)/etc/localtime
 
-	# On non systemd based system, set /init
+	# On non systemd based system, set /init
 	# if test ! -d /usr/lib/systemd; then cd $(INITRD_BUILD_DIR) && ln -sf etc/init.d/rcS init; fi
 	touch $@
 
