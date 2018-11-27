@@ -170,7 +170,8 @@ LOCK_DIR = $(DESTDIR)/var/lock/systemimager
 INITRD_DIR = $(TOPDIR)/initrd_source
 INITRD_BUILD_DIR = $(INITRD_DIR)/build_dir
 DRACUT_BASEDIR = $(shell test -d /usr/lib/dracut && echo "/lib/dracut" || echo "/share/dracut")
-DRACUT_MODULES = $(USR)$(DRACUT_BASEDIR)/modules.d
+DRACUT_SYSDIR = /usr$(DRACUT_BASEDIR)
+DRACUT_MODULES = $(DRACUT_DIR)/modules.d
 
 
 
@@ -184,9 +185,9 @@ KBOOT_CONF_SRC    = etc/kboot.cfg
 KBOOT_CONF_DEST   = $(ETC)/systemimager/kboot.cfg
 
 BINARIES := si_mkautoinstallcd si_mkautoinstalldisk si_psh si_pcp si_pushoverrides si_clusterconfig
-SBINARIES := si_addclients si_cpimage si_getimage si_mkdhcpserver si_mkdhcpstatic si_mkautoinstallscript si_mkbootserver si_mvimage si_pushupdate si_pushinstall si_rmimage si_mkrsyncd_conf si_mkclientnetboot si_netbootmond si_mkbootpackage si_monitor si_monitortk si_installbtimage
+SBINARIES := si_addclients si_cpimage si_getimage si_mkdhcpserver si_mkdhcpstatic si_mkautoinstallscript si_mkbootserver si_mvimage si_pushupdate si_pushinstall si_rmimage si_mkrsyncd_conf si_mkclientnetboot si_netbootmond si_monitor si_monitortk si_installbtimage
 CLIENT_SBINARIES  := si_updateclient si_prepareclient
-COMMON_BINARIES   = si_lsimage
+COMMON_BINARIES   = si_lsimage si_mkbootpackage
 
 IMAGESRC    = $(TOPDIR)/var/lib/systemimager/images
 IMAGEDEST   = $(DESTDIR)/var/lib/systemimager/images
@@ -231,10 +232,10 @@ endif
 #
 ########################################################################
 
-
-binaries: $(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.img
-
 include $(TOPDIR)/initrd_source/initrd.rul
+
+binaries: $(BOEL_BINARIES_TARBALL) $(INITRD_BOOTFILES_DIR).build
+
 
 # a complete server install
 .PHONY:	install_server_all
@@ -681,8 +682,9 @@ show_targets:
 	@echo "install_server_all"
 	@echo "    Install all files needed by a server."
 	@echo "	"
-	@echo "install_initrd"
-	@echo ""
+	@echo "install_dracut"
+	@echo "    Install all files needed by dracut (dracut module)."
+	@echo " "
 	@echo "source_tarball"
 	@echo "    Make a source tarball for distribution."
 	@echo "	"

@@ -39,9 +39,52 @@ STAMP_DIR = $(INITRD_SRC_DIR)
 
 INITRD_BUILD_DIR = $(INITRD_DIR)/build_dir
 
+INITRD_BOOTFILES_DIR = $(INITRD_DIR)/boot_files
+
+#DRACUT_BASEDIR = $(shell test -d /usr/lib/dracut && echo '/lib/dracut' || echo '/share/dracut')
+
+LOCAL_DRACUT_BASEDIR = $(INITRD_DIR)/dracutbase
+
 SKEL_FILES = $(shell find $(INITRD_DIR)/skel \
 						-not -regex '.*/.svn.*' -and \
 						-not -regex '.*/.svn')
+
+PHONY += dracut_basedir:
+dracut_basedir:	$(LOCAL_DRACUT_BASEDIR).build
+
+$(LOCAL_DRACUT_BASEDIR).skel:	$(INITRD_DIR)/initrd.rul
+	rm -rf $(LOCAL_DRACUT_BASEDIR)
+	mkdir -p $(LOCAL_DRACUT_BASEDIR)
+	touch $@
+
+$(LOCAL_DRACUT_BASEDIR).prep:	$(LOCAL_DRACUT_BASEDIR).skel
+	echo "Creating local dracut environment"
+	cp -r $(DRACUT_SYSDIR)/* $(LOCAL_DRACUT_BASEDIR)/
+	# Remove old systemimager parasit version that we could have copied (if older systemimager is installed on build system).
+	rm -rf $(LOCAL_DRACUT_BASEDIR)/modules.d/*systemimager
+	# Copy our module localy while doing correct STRINGS replacement.
+	make install_dracut DRACUT_MODULES=$(LOCAL_DRACUT_BASEDIR)/modules.d
+	test -x /usr/bin/lsinitrd && ln -s /usr/bin/lsinitrd $(LOCAL_DRACUT_BASEDIR)/lsinitrd.sh || echo # only required in newer dracut versions.
+	touch $@
+
+$(LOCAL_DRACUT_BASEDIR).build:	$(LOCAL_DRACUT_BASEDIR).prep
+	touch $@
+	
+PHONY += bootfiles_dir
+bootfiles_dir:	$(INITRD_BOOTFILES_DIR).build
+
+$(INITRD_BOOTFILES_DIR).skel:	$(INITRD_DIR)/initrd.rul
+	rm -rf $(INITRD_BOOTFILES_DIR)
+	mkdir -p $(INITRD_BOOTFILES_DIR)
+	touch $@
+
+$(INITRD_BOOTFILES_DIR).prep: $(INITRD_BOOTFILES_DIR).skel
+	touch $@
+
+$(INITRD_BOOTFILES_DIR).build: $(INITRD_BOOTFILES_DIR).prep $(LOCAL_DRACUT_BASEDIR).build
+	cd $(LOCAL_DRACUT_BASEDIR); \
+	SIS_CONFDIR=$(INITRD_BUILD_DIR)/etc dracutbasedir=$(pwd) SI_INITRD_TEMPLATE=../skel perl -I ../../lib ../../sbin/si_mkbootpackage -y --dracut-opts="--local" --destination $(INITRD_BOOTFILES_DIR)
+
 
 PHONY += build_dir 
 build_dir:	$(INITRD_BUILD_DIR).build
