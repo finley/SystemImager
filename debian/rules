@@ -35,7 +35,7 @@ endif
 endif
 
 BOOTPKG = $(PKG)-boot-$(ARCH)-standard
-INITRD_TEMPLATE_PKG = $(PKG)-initrd-template-$(ARCH)
+INITRD_TEMPLATE_PKG = $(PKG)-initrd-template
 
 # for debhelper; we can't just say -N$(BOOTPKG) because that'd cause us to
 # build empty boot packages for the other archs
@@ -81,7 +81,7 @@ build-arch-stamp:
 	dh_testdir
 	dh_testroot
 
-	$(MAKE) -C $(BUILD_DIR) binaries MKCRAMFS=/usr/sbin/mkcramfs
+	$(MAKE) -C $(BUILD_DIR) binaries
 
 	touch build-arch-stamp
 
