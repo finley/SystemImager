@@ -109,9 +109,9 @@ if [ -f /tmp/local.cfg ]; then
             CMDLINECONF=/etc/cmdline
         fi
         loginfo "Adding following content to ${CMDLINECONF}"
-        loginfo "ip=$IPADDR:$GATEWAY:$NETMASK:$HOSTNAME:$DEVICE:on"
+        loginfo "ip=$IPADDR::$GATEWAY:$NETMASK:$HOSTNAME:$DEVICE:on"
         cat >> $CMDLINECONF <<EOF
-ip=$IPADDR:$GATEWAY:$NETMASK:$HOSTNAME:$DEVICE:on
+ip=$IPADDR::$GATEWAY:$NETMASK:$HOSTNAME:$DEVICE:on
 EOF
     fi
     write_variables # Update infos in /tmp/variables.txt
