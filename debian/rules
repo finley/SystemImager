@@ -117,7 +117,7 @@ clean:
 install-arch:	build-arch
 	dh_testdir
 	dh_testroot
-	dh_clean -k
+	dh_prep # dh_clean -k
 	dh_installdirs
 
 	cd $(CURDIR)/debian && mkdir -p $(BOOTPKG)
@@ -129,7 +129,7 @@ install-arch:	build-arch
 install-indep:	build-indep
 	dh_testdir
 	dh_testroot
-	dh_clean -k
+	dh_prep # dh_clean -k
 	dh_installdirs
 
 	# Create packages install directories
