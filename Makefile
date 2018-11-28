@@ -523,7 +523,7 @@ install:
 	@echo ''
 
 .PHONY:	install_binaries
-install_binaries:	install_initrd_template install_boot_files
+install_binaries:	install_boot_files
 
 .PHONY:	complete_source_tarball
 complete_source_tarball:	$(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source.tar.bz2.sign
@@ -662,7 +662,7 @@ clean:	initrd_clean
 # same as clean, but also removes downloaded source, stamp files, etc.
 .PHONY:	distclean
 distclean:	clean initrd_distclean
-	-rm -rf $(SRC_DIR) $(INITRD_SRC_DIR)
+	-rm -rf $(SRC_DIR)
 
 .PHONY:	help
 help:  show_build_deps

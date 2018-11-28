@@ -41,6 +41,7 @@ INITRD_TEMPLATE_PKG = $(PKG)-initrd-template
 # build empty boot packages for the other archs
 NON_BOOT_PKGS := -p $(PKG)-client \
                  -p $(PKG)-common \
+                 -p $(PKG)-initrd-template \
                  -p $(PKG)-doc \
                  -p $(PKG)-server \
                  -p $(PKG)-server-flamethrowerd \
@@ -106,7 +107,7 @@ clean:
 	#rm -rf $(BUILD_DIR)
 	cd $(CURDIR)/debian && \
 	  rm -rf $(PKG)-client $(PKG)-server $(PKG)-common $(PKG)-doc \
-	  $(BOOTPKG) $(INITRD_TEMPLATE_PKG) \
+	  $(BOOTPKG) $(PKG)-initrd-template \
 	  $(PKG)-boot $(PKG)-server-flamethrowerd $(PKG)-server-bittorrent
 	rm -f debian/$(PKG)-server.init
 	rm -f debian/$(PKG)-server-flamethrowerd.init
@@ -119,32 +120,11 @@ install-arch:	build-arch
 	dh_clean -k
 	dh_installdirs
 
-	cd $(CURDIR)/debian && mkdir -p $(BOOTPKG) $(INITRD_TEMPLATE_PKG)
+	cd $(CURDIR)/debian && mkdir -p $(BOOTPKG)
 
 	# Add here commands to install the packages
 	$(MAKE) -C $(BUILD_DIR) install_binaries \
 	  DESTDIR=$(CURDIR)/debian/$(BOOTPKG)
-
-	# Remove forbidden special files from $(BOOTPKG). This files will be
-	# added using the post-install deb script:
-	#
-	# systemimager-initrd-template-$(ARCH).postinst
-	#
-	cd $(CURDIR)/debian/$(BOOTPKG)/usr/share/systemimager/boot/$(UNAME_ARCH)/standard/initrd_template/dev && \
-		rm -f tty1 && \
-		rm -f tty2 && \
-		rm -f tty3 && \
-		rm -f tty4 && \
-		rm -f tty5 && \
-		rm -f tty6 && \
-		rm -f console && \
-		rm -f null && \
-		rm -f zero 
-
-	# Copy the needed files into the initrd_template package.
-	mkdir -p $(CURDIR)/debian/$(INITRD_TEMPLATE_PKG)/usr/share/systemimager/boot/$(UNAME_ARCH)/standard
-	mv $(CURDIR)/debian/$(BOOTPKG)/usr/share/systemimager/boot/$(UNAME_ARCH)/standard/initrd_template \
-	   $(CURDIR)/debian/$(INITRD_TEMPLATE_PKG)/usr/share/systemimager/boot/$(UNAME_ARCH)/standard
 
 install-indep:	build-indep
 	dh_testdir
@@ -152,8 +132,9 @@ install-indep:	build-indep
 	dh_clean -k
 	dh_installdirs
 
+	# Create packages install directories
 	cd $(CURDIR)/debian && mkdir -p $(PKG)-client \
-	  $(PKG)-server $(PKG)-common $(PKG)-doc
+	  $(PKG)-server $(PKG)-common $(PKG)-doc $(PKG)-initrd-template
 
 	# Add here commands to install the packages
 	$(MAKE) -C $(BUILD_DIR) install_client \
@@ -169,6 +150,9 @@ install-indep:	build-indep
 
 	$(MAKE) -C $(BUILD_DIR) install_docs \
 	  DESTDIR=$(CURDIR)/debian/$(PKG)-doc
+
+	$(MAKE) -C $(BUILD_DIR) install_initrd_template \
+	  DESTDIR=$(CURDIR)/debian/$(PKG)-initrd-template
 
 	mkdir -p $(CURDIR)/debian/$(PKG)-server-flamethrowerd/etc/systemimager
 	mv $(CURDIR)/debian/$(PKG)-server/etc/systemimager/flamethrower.conf \
@@ -190,28 +174,29 @@ install-indep:	build-indep
 
 # Build architecture-dependent files here.
 binary-arch: build-arch install-arch
-	dh_testdir -p$(BOOTPKG) -p$(INITRD_TEMPLATE_PKG)
-	dh_testroot -p$(BOOTPKG) -p$(INITRD_TEMPLATE_PKG)
-	dh_installdocs -p$(BOOTPKG) -p$(INITRD_TEMPLATE_PKG)
-	dh_installchangelogs -p$(BOOTPKG) -p$(INITRD_TEMPLATE_PKG)
-	#dh_link -p$(BOOTPKG) -p$(INITRD_TEMPLATE_PKG)
-	#dh_strip -p$(BOOTPKG) -p$(INITRD_TEMPLATE_PKG)
-	#dh_compress -p$(BOOTPKG) -p$(INITRD_TEMPLATE_PKG)
-	#dh_fixperms -p$(BOOTPKG) -p$(INITRD_TEMPLATE_PKG)
-	dh_installdeb -p$(BOOTPKG) -p$(INITRD_TEMPLATE_PKG)
-	#dh_perl -p$(BOOTPKG) -p$(INITRD_TEMPLATE_PKG)
-	dh_gencontrol -p$(BOOTPKG) -p$(INITRD_TEMPLATE_PKG)
-	dh_md5sums  -p$(BOOTPKG) -p$(INITRD_TEMPLATE_PKG)
-	dh_builddeb -p$(BOOTPKG) -p$(INITRD_TEMPLATE_PKG)
+	dh_testdir -p$(BOOTPKG)
+	dh_testroot -p$(BOOTPKG)
+	dh_installdocs -p$(BOOTPKG)
+	dh_installchangelogs -p$(BOOTPKG)
+	#dh_link -p$(BOOTPKG)
+	#dh_strip -p$(BOOTPKG)
+	#dh_compress -p$(BOOTPKG)
+	#dh_fixperms -p$(BOOTPKG)
+	dh_installdeb -p$(BOOTPKG)
+	#dh_perl -p$(BOOTPKG)
+	dh_gencontrol -p$(BOOTPKG)
+	dh_md5sums  -p$(BOOTPKG)
+	dh_builddeb -p$(BOOTPKG)
 
 # Build architecture-independent files here.
 binary-indep: build-indep install-indep
 	dh_testdir $(NON_BOOT_PKGS)
 	dh_testroot $(NON_BOOT_PKGS)
-#	dh_installdebconf
+	#dh_installdebconf
 	dh_installdocs $(NON_BOOT_PKGS)
 	dh_installexamples -p$(PKG)-server $(BUILD_DIR)/doc/examples/*
 
+	#TODO: handle systemd here.
 	cp $(BUILD_DIR)/etc/init.d/$(PKG)-server-rsyncd \
 	  ./debian/$(PKG)-server.init
 	dh_installinit --no-start -p$(PKG)-server --init-script=$(PKG)-server-rsyncd

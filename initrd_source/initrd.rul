@@ -25,18 +25,6 @@
 #   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-INITRD_SRC_DIR = $(INITRD_DIR)/src
-INITRD_BINARIES = $(shell file \
-							initrd_source/build_dir/bin/* \
-							initrd_source/build_dir/usr/bin/* \
-							initrd_source/build_dir/sbin/* \
-							initrd_source/build_dir/usr/sbin/* \
-							initrd_source/build_dir/lib/udev/* \
-							| egrep ':.*ELF ' \
-							| perl -pi -e 's/:.*//')
-
-STAMP_DIR = $(INITRD_SRC_DIR)
-
 INITRD_BUILD_DIR = $(INITRD_DIR)/build_dir
 
 INITRD_BOOTFILES_DIR = $(INITRD_DIR)/boot_files
@@ -146,13 +134,24 @@ build_dir_clean:
 	rm -f  $(INITRD_BUILD_DIR).build
 	rm -f  $(INITRD_BUILD_DIR).prep
 	rm -f  $(INITRD_BUILD_DIR).skel
-	rm -f  $(INITRD_DIR)/kernel_headers.prep
+
+PHONY += boot_files_clean
+boot_files_clean:
+	rm -rf $(INITRD_BOOTFILES_DIR)
+	rm -f $(INITRD_BOOTFILES_DIR).build
+	rm -f $(INITRD_BOOTFILES_DIR).prep
+	rm -f $(INITRD_BOOTFILES_DIR).skel
+
+PHONY += local_dracutbase_clean
+local_dracutbase_clean:
+	rm -rf $(LOCAL_DRACUT_BASEDIR)
+	rm -f $(LOCAL_DRACUT_BASEDIR).build
+	rm -f $(LOCAL_DRACUT_BASEDIR).prep
+	rm -f $(LOCAL_DRACUT_BASEDIR).skel
 
 PHONY += initrd_clean
-initrd_clean:	build_dir_clean
+initrd_clean:	build_dir_clean boot_files_clean local_dracutbase_clean
 	-find . -name "*~" -exec rm -f {} \;
-	rm -f $(INITRD_DIR)/initrd.img
 
 PHONY += initrd_distclean
 initrd_distclean:	initrd_clean
-	-rm -rf $(INITRD_SRC_DIR)
