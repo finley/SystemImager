@@ -3,8 +3,8 @@
 #
 
 ============= TODO for the dracut change before release is possible ===========
-- update sbin/si_mkdhcpserver so it works with systemd (also sur service instead of running init.d script on old distros)
-- fix si_prepareclient si it uses si_mkbootpackage instead of trying to build its own kernel and fail.
+- update sbin/si_mkdhcpserver so it works with systemd (also use service instead of running init.d script on old distros)
+- fix si_prepareclient so it uses si_mkbootpackage instead of trying to build its own kernel and fail.
 - fix si_getimage so it installs scripts in /var/lib/systemimager/scripts/main-install/
   fix si_getimage so it installs correctly remote boot package
   fix si_getimage so it moves <imagedir>/etc/systemimager/autoinstall_script.conf to disks layout.
