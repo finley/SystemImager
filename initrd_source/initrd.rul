@@ -80,7 +80,7 @@ build_dir:	$(INITRD_BUILD_DIR).build
 $(INITRD_BUILD_DIR).skel:	$(INITRD_DIR)/initrd.rul
 	rm -fr $(INITRD_BUILD_DIR)
 	mkdir -p $(INITRD_BUILD_DIR)
-	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/etc/systemimager
+	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/etc
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/usr/bin
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/usr/sbin
 	mkdir -p -m 0755 $(INITRD_BUILD_DIR)/usr/lib
@@ -104,7 +104,7 @@ $(INITRD_BUILD_DIR).build:  $(INITRD_BUILD_DIR).prep
 	cp -a $(INITRD_DIR)/skel/* $(INITRD_BUILD_DIR)
 
 	# Install a valid systemimager.conf file so initrd.img can be generated using si_mkbootpackage
-	$(SI_INSTALL) -m 644 etc/systemimager.conf $(INITRD_BUILD_DIR)/etc/systemimager/
+	$(SI_INSTALL) -m 644 $(TOPDIR)/etc/systemimager.conf $(INITRD_BUILD_DIR)/etc
 
 	# Copy over modules required prior to retrieving the autoinstall
 	# binaries tarball. -BEF-
