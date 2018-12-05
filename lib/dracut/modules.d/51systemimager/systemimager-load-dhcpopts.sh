@@ -14,7 +14,7 @@
 #   See http://www.iana.org/assignments/bootp-dhcp-parameters for details
 #   on custom options (new_option_NNN) as viewed below. -BEF-
 #   
-#   option-100  ->  IMAGESERVER (depricated -> actually reserved for "printer name")
+#   option-100  ->  IMAGESERVER (deprecated -> actually reserved for "printer name")
 #   option-140  ->  IMAGESERVER
 #   option-141  ->  LOG_SERVER_PORT
 #   option-142  ->  SSH_DOWNLOAD_URL
