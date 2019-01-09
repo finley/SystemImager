@@ -476,7 +476,7 @@ Requires: socat
 This package is a dracut modules that automates the systeimager initramfs creation.
 
 %changelog
-* Wed Jan 9 2018 Olivier Lahaye <olivier.lahaye@cea.fr> 4.5.0-0.23
+* Wed Jan 9 2019 Olivier Lahaye <olivier.lahaye@cea.fr> 4.5.0-0.23
 - renamed %{_build_arch}initrd_template to initrd_template (no arch content).
 
 * Fri Mar 30 2018 Olivier Lahaye <olivier.lahaye@cea.fr> 4.5.0-0.22
