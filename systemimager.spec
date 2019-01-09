@@ -352,7 +352,7 @@ The %{_build_arch}boot package provides specific kernel, ramdisk, and fs utiliti
 to boot and install %{_build_arch} Linux machines during the SystemImager autoinstall
 process.
 
-%package %{_build_arch}initrd_template
+%package initrd_template
 Summary: Software that automates Linux installs, software distribution, and production deployment.
 Version: %ver
 Release: %rel
@@ -365,10 +365,10 @@ URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 BuildRequires: python, python-devel
 Requires: %{name}-%{_build_arch}boot-%{_boot_flavor} = %{version}
-Provides: %{name}-initrd_template = %{version}
+Obsoletes: %{name}-%{_build_arch}initrd_template = %{version}
 AutoReqProv: no
 
-%description %{_build_arch}initrd_template
+%description initrd_template
 SystemImager is software that automates Linux installs, software
 distribution, and production deployment.  SystemImager makes it easy to
 do installs, software distribution, content or data distribution,
@@ -383,9 +383,9 @@ typical environments include: Internet server farms, database server
 farms, high performance clusters, computer labs, and corporate desktop
 environments.
 
-The %{_build_arch}initrd_template package provides initrd template files for creating custom
+The initrd_template package provides initrd template files for creating custom
 ramdisk that works with a specific kernel by using UYOK (Use Your Own Kernel).  The custom
-ramdisk can then be used to boot and install %{_build_arch} Linux machines during the
+ramdisk can then be used to boot and install Linux machines during the
 SystemImager autoinstall process.
 
 %package bittorrent
@@ -458,7 +458,7 @@ Requires: python, python-devel, gettext
 Requires: systemconfigurator
 Requires: kernel
 Requires: rtorrent
-Requires: systemimager-%{_build_arch}initrd_template
+Requires: systemimager-initrd_template
 Requires: cryptsetup
 %if 0%{?rhel} == 6
 Requires:  udev
@@ -476,6 +476,9 @@ Requires: socat
 This package is a dracut modules that automates the systeimager initramfs creation.
 
 %changelog
+* Wed Jan 9 2018 Olivier Lahaye <olivier.lahaye@cea.fr> 4.5.0-0.23
+- renamed %{_build_arch}initrd_template to initrd_template (no arch content).
+
 * Fri Mar 30 2018 Olivier Lahaye <olivier.lahaye@cea.fr> 4.5.0-0.22
 - Port to CentOS-6, OpenSuSE-42.3
 - Added ipcalc dependancy.
@@ -1355,7 +1358,7 @@ fi
 %{_datarootdir}/systemimager/boot/%{_build_arch}/standard/kernel
 %{_datarootdir}/systemimager/boot/%{_build_arch}/standard/version.txt
 
-%files %{_build_arch}initrd_template
+%files initrd_template
 %defattr(-, root, root)
 %dir %{_datarootdir}/systemimager/boot/%{_build_arch}/standard/initrd_template
 %{_datarootdir}/systemimager/boot/%{_build_arch}/standard/initrd_template/*
