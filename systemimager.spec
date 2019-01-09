@@ -1360,8 +1360,8 @@ fi
 
 %files initrd_template
 %defattr(-, root, root)
-%dir %{_datarootdir}/systemimager/boot/%{_build_arch}/standard/initrd_template
-%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/initrd_template/*
+%dir %{_datarootdir}/systemimager/boot/initrd_template
+%{_datarootdir}/systemimager/boot/initrd_template/*
 
 %files -n dracut-%{name}
 %defattr(-, root, root)
