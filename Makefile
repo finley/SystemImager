@@ -171,7 +171,7 @@ INITRD_DIR = $(TOPDIR)/initrd_source
 INITRD_BUILD_DIR = $(INITRD_DIR)/build_dir
 DRACUT_BASEDIR = $(shell test -d /usr/lib/dracut && echo "/lib/dracut" || echo "/share/dracut")
 DRACUT_SYSDIR = /usr$(DRACUT_BASEDIR)
-DRACUT_MODULES = $(DRACUT_DIR)/modules.d
+DRACUT_MODULES = $(USR)$(DRACUT_BASEDIR)/modules.d
 
 
 

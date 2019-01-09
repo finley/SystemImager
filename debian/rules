@@ -45,7 +45,8 @@ NON_BOOT_PKGS := -p $(PKG)-client \
                  -p $(PKG)-doc \
                  -p $(PKG)-server \
                  -p $(PKG)-server-flamethrowerd \
-                 -p $(PKG)-server-bittorrent
+                 -p $(PKG)-server-bittorrent \
+		 -p dracut-$(PKG)
 
 BOOTARCHS = alpha i386 ia64 parisc ppc64-iSeries ppc64-ps3 ppc64 ppc64ydl ppc amd64
 
@@ -134,13 +135,17 @@ install-indep:	build-indep
 
 	# Create packages install directories
 	cd $(CURDIR)/debian && mkdir -p $(PKG)-client \
-	  $(PKG)-server $(PKG)-common $(PKG)-doc $(PKG)-initrd-template
+	  $(PKG)-server $(PKG)-common $(PKG)-doc $(PKG)-initrd-template dracut-$(PKG)
 
 	# Add here commands to install the packages
 	$(MAKE) -C $(BUILD_DIR) install_client \
 	  DESTDIR=$(CURDIR)/debian/$(PKG)-client
+
 	$(MAKE) -C $(BUILD_DIR) install_server \
 	  DESTDIR=$(CURDIR)/debian/$(PKG)-server
+
+	$(MAKE) -C $(BUILD_DIR) install_dracut \
+	  DESTDIR=$(CURDIR)/debian/dracut-$(PKG)
 
 	# these are installed properly by dh_installinit later
 	rm -rf $(CURDIR)/debian/$(PKG)-server/etc/init.d
