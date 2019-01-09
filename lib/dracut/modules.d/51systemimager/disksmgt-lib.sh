@@ -509,10 +509,10 @@ EOF
 		while read FS_LINE FS_COMMENT FS_REAL_DEV FS_MOUNT_DEV FS_MP FS_FS FS_MKFS_OPTS FS_OPTIONS FS_DUMP FS_PASS FS_FORMAT
 		do
 			# 1/ Get the label if any.
-			[ "${FS_MOUNT_DEV%=*}"="LABEL" ] && FS_LABEL="${FS_MOUNT_DEV##*=}"
+			[ "${FS_MOUNT_DEV%=*}" = "LABEL" ] && FS_LABEL="${FS_MOUNT_DEV##*=}"
 
 			# Get the UUID, will be usefull for fstab later.
-			[ "${FS_MOUNT_DEV%=*}"="UUID" ] && FS_UUID="${FS_MOUNT_DEV##*=}"
+			[ "${FS_MOUNT_DEV%=*}" = "UUID" ] && FS_UUID="${FS_MOUNT_DEV##*=}"
 
 			# 2/ Format filesystem
 			MKFS_CMD="mkfs -t ${FS_FS/ /} ${FS_MKFS_OPTS/ /}" # Generic mkfs version
