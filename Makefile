@@ -110,6 +110,8 @@ RELEASE_DOCS = CHANGE.LOG COPYING CREDITS README VERSION
 
 ARCH = $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/)
 
+TAR = $(shell gtar --version >/dev/null >&2 && echo gtar || echo tar)
+
 # Follows is a set of arch manipulations to distinguish between ppc types
 ifeq ($(ARCH),ppc64)
 
@@ -517,7 +519,8 @@ install_docs: docs
 
 # builds the manual from SGML source
 docs:
-	$(MAKE) -C $(MANUAL_DIR) html ps pdf
+	#$(MAKE) -C $(MANUAL_DIR) html ps pdf
+	$(MAKE) -C $(MANUAL_DIR) html
 endif
 
 .PHONY:	install
@@ -542,7 +545,7 @@ $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source.tar.bz2: systemimager.spec
 		svn export . $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source; \
 	else \
 		make distclean && mkdir -p $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source; \
-		(cd $(TOPDIR) && tar --exclude=tmp -cvf - .) | (cd $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source && tar -xvf -); \
+		(cd $(TOPDIR) && $(TAR) --exclude=tmp -cvf - .) | (cd $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source && $(TAR) -xvf -); \
 	fi
 	cd $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source && ./configure
 	$(MAKE) -C $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source get_source
@@ -568,7 +571,7 @@ endif
 		$(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source/systemimager.spec
 	find $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source -type f -exec chmod ug+r  {} \;
 	find $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source -type d -exec chmod ug+rx {} \;
-	cd $(TOPDIR)/tmp && tar -ch systemimager-$(VERSION)-complete_source | bzip2 > systemimager-$(VERSION)-complete_source.tar.bz2
+	cd $(TOPDIR)/tmp && $(TAR) -ch systemimager-$(VERSION)-complete_source | bzip2 > systemimager-$(VERSION)-complete_source.tar.bz2
 	@echo
 	@echo "complete source tarball has been created in $(TOPDIR)/tmp"
 	@echo
@@ -586,7 +589,7 @@ $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2: $(TOPDIR)/systemimager.spec
 		svn export . $(TOPDIR)/tmp/systemimager-$(VERSION); \
 	else \
 		make distclean && mkdir -p $(TOPDIR)/tmp/systemimager-$(VERSION); \
-		(cd $(TOPDIR) && tar --exclude=tmp --exclude=.git -cvf - .) | (cd $(TOPDIR)/tmp/systemimager-$(VERSION) && tar -xvf -); \
+		(cd $(TOPDIR) && $(TAR) --exclude=tmp --exclude=.git -cvf - .) | (cd $(TOPDIR)/tmp/systemimager-$(VERSION) && $(TAR) -xvf -); \
 	fi
 ifeq ($(UNSTABLE), 1)
 	if [ -f README.unstable ]; then \
@@ -605,7 +608,7 @@ endif
 		$(TOPDIR)/tmp/systemimager-$(VERSION)/systemimager.spec
 	find $(TOPDIR)/tmp/systemimager-$(VERSION) -type f -exec chmod ug+r  {} \;
 	find $(TOPDIR)/tmp/systemimager-$(VERSION) -type d -exec chmod ug+rx {} \;
-	cd $(TOPDIR)/tmp && tar -ch systemimager-$(VERSION) | bzip2 > systemimager-$(VERSION).tar.bz2
+	cd $(TOPDIR)/tmp && $(TAR) -ch systemimager-$(VERSION) | bzip2 > systemimager-$(VERSION).tar.bz2
 	@echo
 	@echo "source tarball has been created in $(TOPDIR)/tmp"
 	@echo
@@ -640,7 +643,7 @@ deb: $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
 	else \
 		exit 0; \
 	fi)
-	@cd $(TOPDIR)/tmp && tar xvjf systemimager-$(VERSION).tar.bz2
+	@cd $(TOPDIR)/tmp && $(TAR) xvjf systemimager-$(VERSION).tar.bz2
 	@cd $(TOPDIR)/tmp/systemimager-$(VERSION) && make -f debian/rules debian/control
 	@cd $(TOPDIR)/tmp/systemimager-$(VERSION) && dpkg-buildpackage -rfakeroot -uc -us
 	@echo "=== deb packages for systemimager ==="
