@@ -239,6 +239,10 @@ include $(TOPDIR)/initrd_source/initrd.rul
 binaries: $(BOEL_BINARIES_TARBALL) $(INITRD_BOOTFILES_DIR).build
 
 
+# a full install (usefull for packaging)
+.PHONY: install_all
+install_all:	install_server install_client install_common install_dracut install_initrd_template install_binaries install_docs
+
 # a complete server install
 .PHONY:	install_server_all
 install_server_all:	install_server install_common install_binaries install_dracut

@@ -922,9 +922,8 @@ cd $RPM_BUILD_DIR/%{name}-%{version}/
 
 %if %{_build_all}
 
-make install_server_all DESTDIR=%{buildroot} PREFIX=%_prefix DRACUT_BASEDIR=%_dracutbase
-make install_client_all DESTDIR=%{buildroot} PREFIX=%_prefix DRACUT_BASEDIR=%_dracutbase
-(cd doc/manual_source;%{__make} html)
+make install_all DESTDIR=%{buildroot} PREFIX=%_prefix DRACUT_BASEDIR=%_dracutbase
+#(cd doc/manual_source;%{__make} html)
 
 cp ./initrd.img %{buildroot}/%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/initrd.img
 cp ./kernel     %{buildroot}/%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/kernel
