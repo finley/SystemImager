@@ -879,6 +879,7 @@ export LD_FLAGS=-L$RPM_BUILD_DIR/%{name}-%{version}/initrd_source/build_dir/lib
 %if %{_build_all}
 #%{__make} %{?_smp_mflags} all
 %{__make} -j1 all DESTDIR=%{buildroot} PREFIX=%_prefix DRACUT_BASEDIR=%_dracutbase
+%{__make} -C doc/manual_source html
 
 %else
 %{__make} binaries DESTDIR=%{buildroot} PREFIX=%_prefix DRACUT_BASEDIR=%_dracutbase
@@ -922,8 +923,7 @@ cd $RPM_BUILD_DIR/%{name}-%{version}/
 
 %if %{_build_all}
 
-make install_all DESTDIR=%{buildroot} PREFIX=%_prefix DRACUT_BASEDIR=%_dracutbase
-#(cd doc/manual_source;%{__make} html)
+make install_all DESTDIR=%{buildroot} PREFIX=%_prefix DRACUT_BASEDIR=%_dracutbase # DOC=%{buildroot}%{_pkgdocdir}
 
 cp ./initrd.img %{buildroot}/%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/initrd.img
 cp ./kernel     %{buildroot}/%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/kernel

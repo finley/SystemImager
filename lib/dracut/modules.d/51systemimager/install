@@ -113,16 +113,13 @@ install_docker() {
 # sub routine that installs plymouth theme
 #
 install_plymouth_theme() {
+    # Install minimal plymouth support
     PLUGINDIR=`plymouth --get-splash-plugin-path`
     inst ${PLUGINDIR}/script.so $initdir
     inst ${PLUGINDIR}/label.so $initdir
-    # Cleanup unwanted themes
-    ( cd $initdir/usr/share/plymouth/themes/
-        for THEME in `echo *|sed -r 's/\stext|\sdetails//g'`
-       	do
-            rm -rf $initdir/usr/share/plymouth/themes/$THEME # Remove unwanted themes
-        done
-    )
+    inst /usr/share/plymouth/themes/text/text.plymouth $initdir
+    inst /usr/share/plymouth/themes/details/details.plymouth $initdir
+
     # Install required fonts and coonfig file.
     inst /usr/share/fonts/dejavu/DejaVuSerif.ttf $initdir
     inst /usr/share/fonts/dejavu/DejaVuSans.ttf $initdir
@@ -132,6 +129,7 @@ install_plymouth_theme() {
     mkdir -p $initdir/usr/share/plymouth/themes/systemimager
     cp $moddir/plymouth_theme/{*.png,systemimager.plymouth,systemimager.script} $initdir/usr/share/plymouth/themes/systemimager
     ( cd ${initdir}/usr/share/plymouth/themes; ln -sf systemimager/systemimager.plymouth default.plymouth 2>&1 )
+    mkdir -p ${initdir}/etc/plymouth/
     cat > ${initdir}/etc/plymouth/plymouthd.conf <<EOF
 # SystemImager is the default theme
 [Daemon]
