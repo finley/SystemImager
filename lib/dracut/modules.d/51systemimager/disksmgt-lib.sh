@@ -51,6 +51,7 @@ sis_prepare_disks() {
 		shellout "Can't initilize disks. No layout found."
 	fi
 	loginfo "Using Disk layout file: ${DISKS_LAYOUT_FILE}"
+	write_variables # Save DISKS_LAYOUT_FILE variable for future use.
 
 	# Initialisae / check LVM version to use. (defaults to v2).
 	LVM_VERSION=`xmlstarlet sel -t -m "config/lvm" -if "@version" -v "@version" --else -o "2" -b ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d'`
@@ -209,6 +210,136 @@ stop_software_raid_and_lvm() {
 
 }
 
+#################################################################################
+#
+# Install bootloader according disk layout specifications
+# (Only supports grub2 and grub)
+#
+# USAGE: si_install_bootloader
+#################################################################################
+si_install_bootloader() {
+	sis_update_step boot 0 0
+
+	IFS=" "
+	. /tmp/variables.txt # Read variables to get the DISKS_LAYOUT_FILE
+
+	xmlstarlet sel -t -m 'config/bootloader' -v "concat(@flavor,';',@install_type,';',@default_entry,';',@timeout)" -n ${DISKS_LAYOUT_FILE}  | sed '/^\s*$/d' |\
+		while read BL_FLAVOR BL_TYPE BL_DEFAULT BL_TIMEOUT;
+		do
+			[ "$BL_INSTALLED" = "yes" ] && logerror "Only one bootloader section allowed in disk layout".
+
+			loginfo "Got Bootloader request: $BL_FLAVOR install type=$BL_TYPE"
+
+			# 1st, update config (default menu entry and timeout
+			loginfo "Setting default menu=$BL_DEFAULT and timeout=$BL_TIMEOUT"
+			case "${BL_FLAVOR}" in
+				"grub2")
+					# Check that grub2-install is available on imaged system
+					[ ! -x /sysroot/usr/sbin/grub2-install ] && [ ! -x /sysroot/sbin/grub2-install ] && shellout "grub2-install missing in image. Can't install grub2 bootloader"
+
+					# Make sure /etc/default exists in /sysroot
+					mkdir -p /sysroot/etc/default || shellout "Cannot create /etc/default on imaged system."
+
+					# if a grub2 specific config exists, we need to install it before generating grub.cfg
+					# Typically, this file is used to force raid reassembly in initramfs
+					if test -r /tmp/grub_default.cfg
+					then
+						logdebug "Using /tmp/grub_default.cfg as base for /sysroot/etc/default/grub"
+						cp -f /tmp/grub_default.cfg /sysroot/etc/default/grub || shellout "Cannot install /etc/default/grub"
+					fi
+
+					# Make sure our TIMEOUT and DEFAULT grub variable exists withing the config file
+					touch /sysroot/etc/default/grub
+
+					grep "^GRUB_TIMEOUT=" /sysroot/etc/default/grub || echo "GRUB_TIMEOUT=5" >> /sysroot/etc/default/grub
+					grep "^GRUB_DEFAULT=" /sysroot/etc/default/grub || echo "GRUB_DEFAULT=saved" >> /sysroot/etc/default/grub
+
+					# Update TIMEPOUT and DEFAULT with values from disk layout file if defined.
+					[ -n "$BL_TIMEOUT" ] && sed -i -e "s/GRUB_TIMEOUT=.*/GRUB_TIMEOUT=$BL_TIMEOUT" /sysroot/etc/default/grub && logaction "Setting GRUB_TIMEOUT=$BL_TIMEOUT"
+				        [ -n "$BL_DEFAULT" ] && sed -i -e "s/GRUB_DEFAULT=.*$/GRUB_DEFAULT=$BL_DEFAULT" /sysroot/etc/default/grub && logaction "Setting GRUB_DEFAULT=$BL_DEFAULT"
+
+					# Generate grub2 config file from OS already installed 10_linux cfg.
+					logaction "Creating /boot/grub2/grub.cfg"
+					chroot /sysroot /sbin/grub2-mkconfig --output=/boot/grub2/grub.cfg
+					;;
+				"grub")
+					[ ! -x /sysroot/sbin/grub-install ] && shellout "grub-install missing in image. Can't install grub1 bootloader"
+					logwarn "Setting Default entry and timeout not yet supportedi for grub1"
+					[ -z "${BL_DEFAULT}" ] && BL_DEFAULT=0
+					[ -z "${BL_TIMOUT}" ] && BL_TIMOUT=5
+					ROOT=`cat /proc/self/mounts |grep " /sysroot "|cut -d" " -f1`
+					OS_NAME=`cat /etc/system-release`
+					# BUG: (hd0,0) is hardcoded: need to fix that.
+					logaction "Creating /boot/grub/menu.lst"
+					cat > /sysroot/boot/grub/menu.lst <<EOF
+default=${BL_DEFAULT}
+timeout=${BL_TILEOUT}
+title ${OS_NAME}
+	root (hd0,0)
+	kernel /$(cd /sysroot/boot; ls -rS vmli*|grep -v debug|tail -1) ro root=$ROOT rhgb quiet
+	initrd /$(cd /sysroot/boot; ls -rS init*|grep -v debug|tail -1)
+EOF
+						;;
+				*)
+					logwarn "Unsupported bootloader: [${BL_FLAVOR}]"
+					;;
+			esac
+
+			# 2nd: install bootloader
+			case "$BL_TYPE" in
+				"legacy")
+					xmlstarlet sel -t -m "config/bootloader[@flavor=\"${BL_FLAVOR}\"]/target" -v "@dev" -n ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d' |\
+                		                while read BL_DEV
+						do
+							case "$BL_FLAVOR" in
+								"grub2")
+									[ ! -b "$BL_DEV" ] && shellout "Can't install bootloader: [$BL_DEV] is not a block device!"
+									logaction "chroot /sysroot /sbin/grub2-install --force $BL_DEV"
+									chroot /sysroot /sbin/grub2-install --force $BL_DEV || shellout "Failed to install grub2 bootloader on ${disk}"
+									;;
+								"grub")
+									[ ! -b "$BL_DEV" ] && shellout "Can't install bootloader: [$BL_DEV] is not a block device!"
+									logaction "chroot /sysroot /sbin/grub-install $BL_DEV"
+									chroot /sysroot /sbin/grub-install $BL_DEV || shellout "Failed to install grub1 bootloader on ${BL_DEV}"
+									;;
+								*)
+									logwarn "Unsupported bootloader"
+									;;
+							esac
+						done
+						;;	
+				"efi"|"EFI")
+					# TODO: handle multiple EFI menu entries for raid 1 using efibootmgr.
+					[ -z "`findmnt -o target,fstype --raw|grep -e '/boot/efi\svfat'`" ] && shellout "No EFI filesystem mounted (/sysroot/boot/efi not a vfat partition)."
+					[ ! -d /sysroot/boot/efi/EFI/BOOT ] && shellout "Missing /boot/efi/EFI/BOOT (EFI BOOT directory)."
+					[ -r /tmp/EFI.conf ] && . /tmp/EFI.conf # read requested EFI configuration (boot manager, kernel name, ...)
+					case "$BL_FLAVOR" in
+						"grub2")
+							shellout "Not yet supported. Sorry."
+							;;
+						"grub")
+							shellout "grub v1 doesn't supports EFI. Set your bios in legacy boot mode or use another bootloader."
+							;;
+						*)
+							shellout "Unsupported bootloader [$BL_FLAVOR]."
+							;;
+					esac
+					;;
+				*)
+					logerror "Unknown bootloader type [$BL_TYPE]. Valid values are: legacy and efi."
+					;;
+			esac
+			BL_INSTALLED="yes"
+		done
+
+	if test -z "${BL_FLAVOR}"
+	then
+		logwarn "No bootloader defined in disks layout file"
+		logwarn "Assuming post-install scripts will do the job!"
+	fi
+}
+
+		
 ################################################################################
 #
 # _do_partitions()

@@ -366,6 +366,7 @@ GROUPNAMES="$GROUPNAMES"			# /scripts/cluster.txt
 GROUP_OVERRIDES="$GROUP_OVERRIDES"
 SIS_CONFIG="$SIS_CONFIG"			# rd.sis.config
 DISKS_LAYOUT="$DISKS_LAYOUT"			# rd.sis.disks-layout
+DISKS_LAYOUT_FILE="$DISKS_LAYOUT_FILE"		#  Absolute PATH of layout file in use
 
 DL_PROTOCOL="$DL_PROTOCOL"			# rd.sis.dl-protocol
 
