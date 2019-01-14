@@ -220,7 +220,7 @@ stop_software_raid_and_lvm() {
 si_install_bootloader() {
 	sis_update_step boot 0 0
 
-	IFS=" "
+	IFS=';'
 	. /tmp/variables.txt # Read variables to get the DISKS_LAYOUT_FILE
 
 	xmlstarlet sel -t -m 'config/bootloader' -v "concat(@flavor,';',@install_type,';',@default_entry,';',@timeout)" -n ${DISKS_LAYOUT_FILE}  | sed '/^\s*$/d' |\
@@ -229,6 +229,7 @@ si_install_bootloader() {
 			[ "$BL_INSTALLED" = "yes" ] && logerror "Only one bootloader section allowed in disk layout".
 
 			loginfo "Got Bootloader request: $BL_FLAVOR install type=$BL_TYPE"
+			BL_SECTION_DEFINED="yes"
 
 			# 1st, update config (default menu entry and timeout
 			loginfo "Setting default menu=$BL_DEFAULT and timeout=$BL_TIMEOUT"
@@ -332,7 +333,7 @@ EOF
 			BL_INSTALLED="yes"
 		done
 
-	if test -z "${BL_FLAVOR}"
+	if test -z "${BL_SECTION_DEFINED}"
 	then
 		logwarn "No bootloader defined in disks layout file"
 		logwarn "Assuming post-install scripts will do the job!"
