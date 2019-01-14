@@ -300,6 +300,48 @@
   </refsect1>
   
   <refsect1>
+  <title>BootLoader Section</title>
+  <para>
+    This section is used to specify what booloader to use and where to install it.
+    This section is indicated with the "bootloader" tag.
+  </para>
+  <itemizedlist>
+    <listitem>
+      <para>bootloader - Start of bootloader information.</para>
+    </listitem>
+    <listitem>
+      <para>flavor - kinf od boot loader to use.
+            Possible values: grub2, grub, ...</para>
+    </listitem>
+    <listitem>
+      <para>install_type - Type of installation: legacy (written to disk or partition device)
+            or efi (installed in EFI partition)
+            Possible values: legacy, efi</para>
+    </listitem>
+    <listitem>
+      <para>default_entry - Set the default entry in bootloader menu (integer or "saved" keyword)</para>
+    </listitem>
+
+    <listitem>
+      <para>timeout - Set the bootloader menu timeout in seconds</para>
+    </listitem>
+
+    <listitem>
+      <para>target - start of target description. Multiple target can be created within bootloader section.</para>
+    </listitem>
+
+    <listitem>
+      <para>dev - specify the device where to install the bootloader</para>
+    </listitem>
+
+    <listitem>
+      <para>path - specify the path on EFI system partition to install the bootloader in.</para>
+    </listitem>
+  </itemizedlist>
+
+  </refsect1>
+
+  <refsect1>
   <title>Filesystem Section</title>
   <para>
     This section is used to create filesystems on each of the used partitions,
