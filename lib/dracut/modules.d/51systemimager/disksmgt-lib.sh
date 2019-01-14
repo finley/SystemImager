@@ -223,13 +223,14 @@ si_install_bootloader() {
 	IFS=';'
 	. /tmp/variables.txt # Read variables to get the DISKS_LAYOUT_FILE
 
+	BL_INSTALLED="no"
+
 	xmlstarlet sel -t -m 'config/bootloader' -v "concat(@flavor,';',@install_type,';',@default_entry,';',@timeout)" -n ${DISKS_LAYOUT_FILE}  | sed '/^\s*$/d' |\
 		while read BL_FLAVOR BL_TYPE BL_DEFAULT BL_TIMEOUT;
 		do
-			[ "$BL_INSTALLED" = "yes" ] && logerror "Only one bootloader section allowed in disk layout".
+			[ "$BL_INSTALLED" = "yes" ] && shellout "Only one bootloader section allowed in disk layout".
 
 			loginfo "Got Bootloader request: $BL_FLAVOR install type=$BL_TYPE"
-			BL_SECTION_DEFINED="yes"
 
 			# 1st, update config (default menu entry and timeout
 			loginfo "Setting default menu=$BL_DEFAULT and timeout=$BL_TIMEOUT"
@@ -260,8 +261,9 @@ si_install_bootloader() {
 				        [ -n "$BL_DEFAULT" ] && sed -i -e "s/GRUB_DEFAULT=.*$/GRUB_DEFAULT=$BL_DEFAULT" /sysroot/etc/default/grub && logaction "Setting GRUB_DEFAULT=$BL_DEFAULT"
 
 					# Generate grub2 config file from OS already installed 10_linux cfg.
-					logaction "Creating /boot/grub2/grub.cfg"
-					chroot /sysroot /sbin/grub2-mkconfig --output=/boot/grub2/grub.cfg
+					loginfo "Creating /boot/grub2/grub.cfg"
+					logaction "(chroot) grub2-mkconfig --output=/boot/grub2/grub.cfg"
+					chroot /sysroot /sbin/grub2-mkconfig --output=/boot/grub2/grub.cfg || shellout "Can't create grub2 config"
 					;;
 				"grub")
 					[ ! -x /sysroot/sbin/grub-install ] && shellout "grub-install missing in image. Can't install grub1 bootloader"
@@ -271,7 +273,8 @@ si_install_bootloader() {
 					ROOT=`cat /proc/self/mounts |grep " /sysroot "|cut -d" " -f1`
 					OS_NAME=`cat /etc/system-release`
 					# BUG: (hd0,0) is hardcoded: need to fix that.
-					logaction "Creating /boot/grub/menu.lst"
+					loginfo "Creating /boot/grub/menu.lst"
+					logaction "(chroot) cat > /boot/grub/menu.lst"
 					cat > /sysroot/boot/grub/menu.lst <<EOF
 default=${BL_DEFAULT}
 timeout=${BL_TILEOUT}
@@ -280,15 +283,19 @@ title ${OS_NAME}
 	kernel /$(cd /sysroot/boot; ls -rS vmli*|grep -v debug|tail -1) ro root=$ROOT rhgb quiet
 	initrd /$(cd /sysroot/boot; ls -rS init*|grep -v debug|tail -1)
 EOF
+					test $? -ne 0 && shellout "Failed to create /boot/grub/menu.lst. Error: $?"
+						;;
+				"clover")
+					shellout "Unsupported bootloader"
 						;;
 				*)
-					logwarn "Unsupported bootloader: [${BL_FLAVOR}]"
+					shellout "Unsupported bootloader"
 					;;
 			esac
 
 			# 2nd: install bootloader
 			case "$BL_TYPE" in
-				"legacy")
+				"legacy") # legacy: write in disk or partition device
 					xmlstarlet sel -t -m "config/bootloader[@flavor=\"${BL_FLAVOR}\"]/target" -v "@dev" -n ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d' |\
                 		                while read BL_DEV
 						do
@@ -303,13 +310,17 @@ EOF
 									logaction "chroot /sysroot /sbin/grub-install $BL_DEV"
 									chroot /sysroot /sbin/grub-install $BL_DEV || shellout "Failed to install grub1 bootloader on ${BL_DEV}"
 									;;
+								"clover")
+									shellout "Bootloader [${BL_FLAVOR}] not yet supported."
+									;;
+
 								*)
-									logwarn "Unsupported bootloader"
+									shellout "Bootloader [${BL_FLAVOR}] not supported in legacy mode."
 									;;
 							esac
 						done
 						;;	
-				"efi"|"EFI")
+				"efi"|"EFI") # Install in EFI partition an set boot order in EFI nvram
 					# TODO: handle multiple EFI menu entries for raid 1 using efibootmgr.
 					[ -z "`findmnt -o target,fstype --raw|grep -e '/boot/efi\svfat'`" ] && shellout "No EFI filesystem mounted (/sysroot/boot/efi not a vfat partition)."
 					[ ! -d /sysroot/boot/efi/EFI/BOOT ] && shellout "Missing /boot/efi/EFI/BOOT (EFI BOOT directory)."
@@ -321,21 +332,24 @@ EOF
 						"grub")
 							shellout "grub v1 doesn't supports EFI. Set your bios in legacy boot mode or use another bootloader."
 							;;
+						"clover")
+							shellout "Bootloader [${BL_FLAVOR}] not yet supported."
+							;;
 						*)
 							shellout "Unsupported bootloader [$BL_FLAVOR]."
 							;;
 					esac
 					;;
 				*)
-					logerror "Unknown bootloader type [$BL_TYPE]. Valid values are: legacy and efi."
+					shellout "Unknown bootloader type [$BL_TYPE]. Valid values are: legacy and efi."
 					;;
 			esac
 			BL_INSTALLED="yes"
 		done
 
-	if test -z "${BL_SECTION_DEFINED}"
+	if test "${BL_INSTALLED}" != "yes"
 	then
-		logwarn "No bootloader defined in disks layout file"
+		logwarn "No bootloader installed. (bootloader section missing in disk layout file)."
 		logwarn "Assuming post-install scripts will do the job!"
 	fi
 }
