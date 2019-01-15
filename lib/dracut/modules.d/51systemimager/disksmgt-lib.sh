@@ -322,7 +322,7 @@ EOF
 									;;
 								"rEFInd")
 									shellout "rEFInd doesn't support legacy BIOS. (EFI/UEFI only bootloader)"
-
+									;;
 								*)
 									shellout "Bootloader [${BL_FLAVOR}] not supported in legacy mode."
 									;;
