@@ -257,8 +257,8 @@ si_install_bootloader() {
 					grep "^GRUB_DEFAULT=" /sysroot/etc/default/grub || echo "GRUB_DEFAULT=saved" >> /sysroot/etc/default/grub
 
 					# Update TIMEPOUT and DEFAULT with values from disk layout file if defined.
-					[ -n "$BL_TIMEOUT" ] && sed -i -e "s/GRUB_TIMEOUT=.*/GRUB_TIMEOUT=$BL_TIMEOUT" /sysroot/etc/default/grub && logaction "Setting GRUB_TIMEOUT=$BL_TIMEOUT"
-				        [ -n "$BL_DEFAULT" ] && sed -i -e "s/GRUB_DEFAULT=.*$/GRUB_DEFAULT=$BL_DEFAULT" /sysroot/etc/default/grub && logaction "Setting GRUB_DEFAULT=$BL_DEFAULT"
+					[ -n "$BL_TIMEOUT" ] && sed -i -e "s/GRUB_TIMEOUT=.*/GRUB_TIMEOUT=${BL_TIMEOUT}/g" /sysroot/etc/default/grub && logaction "Setting GRUB_TIMEOUT=$BL_TIMEOUT"
+				        [ -n "$BL_DEFAULT" ] && sed -i -e "s/GRUB_DEFAULT=.*$/GRUB_DEFAULT=${BL_DEFAULT}/g" /sysroot/etc/default/grub && logaction "Setting GRUB_DEFAULT=$BL_DEFAULT"
 
 					# Generate grub2 config file from OS already installed 10_linux cfg.
 					loginfo "Creating /boot/grub2/grub.cfg"
@@ -277,17 +277,20 @@ si_install_bootloader() {
 					logaction "(chroot) cat > /boot/grub/menu.lst"
 					cat > /sysroot/boot/grub/menu.lst <<EOF
 default=${BL_DEFAULT}
-timeout=${BL_TILEOUT}
+timeout=${BL_TIMEOUT}
 title ${OS_NAME}
 	root (hd0,0)
 	kernel /$(cd /sysroot/boot; ls -rS vmli*|grep -v debug|tail -1) ro root=$ROOT rhgb quiet
 	initrd /$(cd /sysroot/boot; ls -rS init*|grep -v debug|tail -1)
 EOF
 					test $? -ne 0 && shellout "Failed to create /boot/grub/menu.lst. Error: $?"
-						;;
+					;;
 				"clover")
-					shellout "Unsupported bootloader"
-						;;
+					shellout "Clover bootloader not yet supported."
+					;;
+				"rEFInd")
+					shellout "rEFInd bootloader not yet supported."
+					;;
 				*)
 					shellout "Unsupported bootloader"
 					;;
@@ -304,15 +307,21 @@ EOF
 									[ ! -b "$BL_DEV" ] && shellout "Can't install bootloader: [$BL_DEV] is not a block device!"
 									logaction "chroot /sysroot /sbin/grub2-install --force $BL_DEV"
 									chroot /sysroot /sbin/grub2-install --force $BL_DEV || shellout "Failed to install grub2 bootloader on ${disk}"
+									loginfo "legacy grub2 installed on dev ${BL_DEV}"
+									touch /tmp/bootloader.installed
 									;;
 								"grub")
 									[ ! -b "$BL_DEV" ] && shellout "Can't install bootloader: [$BL_DEV] is not a block device!"
 									logaction "chroot /sysroot /sbin/grub-install $BL_DEV"
 									chroot /sysroot /sbin/grub-install $BL_DEV || shellout "Failed to install grub1 bootloader on ${BL_DEV}"
+									loginfo "legacy grub1 installed on dev ${BL_DEV}"
+									touch /tmp/bootloader.installed
 									;;
 								"clover")
-									shellout "Bootloader [${BL_FLAVOR}] not yet supported."
+									shellout "Clover bootloader not yet supported."
 									;;
+								"rEFInd")
+									shellout "rEFInd doesn't support legacy BIOS. (EFI/UEFI only bootloader)"
 
 								*)
 									shellout "Bootloader [${BL_FLAVOR}] not supported in legacy mode."
@@ -333,7 +342,10 @@ EOF
 							shellout "grub v1 doesn't supports EFI. Set your bios in legacy boot mode or use another bootloader."
 							;;
 						"clover")
-							shellout "Bootloader [${BL_FLAVOR}] not yet supported."
+							shellout "Clover bootloader not yet supported."
+							;;
+						"rEFInd")
+							shellout "rEFInd bootloader not yet supported."
 							;;
 						*)
 							shellout "Unsupported bootloader [$BL_FLAVOR]."
@@ -347,9 +359,12 @@ EOF
 			BL_INSTALLED="yes"
 		done
 
-	if test "${BL_INSTALLED}" != "yes"
+	if test -r /tmp/bootloader.installed
 	then
-		logwarn "No bootloader installed. (bootloader section missing in disk layout file)."
+		rm -f /tmp/bootloader.installed
+		logdebug "bootloader section treated."
+	else
+		logwarn "No bootloader installed. (bootloader section missing in disk layout file?)"
 		logwarn "Assuming post-install scripts will do the job!"
 	fi
 }
@@ -618,7 +633,7 @@ _do_lvms() {
 					eval "${CMD}" || shellout "lvchange -a y /dev/${VG_NAME}/${LV_NAME} failed!"
 				done
 		done
-		if test -n "$CMD"
+		if test -n "$CMD" # BUG: CMD will always be empty (something|while read.... creates sub process; variable in not updated upstream)
 		then
 			WANT_LVM="y"
 		fi
