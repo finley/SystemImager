@@ -4,8 +4,8 @@
 	Layout directory: /var/lib/systemimager/scripts/disks-layouts/
 -->
 <config>
-        <disk dev="/dev/sda" label_type="gpt" unit_of_measurement="MB">
-                <part num="1" size="300"  p_type="primary" flags="boot" />
+        <disk dev="/dev/sda" label_type="gpt" unit_of_measurement="MiB">
+                <part num="1" size="512"  p_type="primary" flags="esp" />
                 <part num="2" size="2048" p_type="primary" />
                 <part num="3" size="2048" p_type="primary" flags="swap" />
                 <part num="4" size="*"    p_type="primary" />
@@ -18,5 +18,5 @@
         <fsinfo line="100" real_dev="/dev/sda4" mp="/" fs="xfs" options="defaults" dump="1" pass="2" />
         <fsinfo line="101" real_dev="/dev/sda3" mp="swap" fs="swap" options="defaults" dump="0" pass="0" />
         <fsinfo line="102" real_dev="/dev/sda2" mp="/boot" fs="xfs" options="defaults" dump="1" pass="2" />
-	<fsinfo line="103" real_dev="/dev/sda1" mp="/boot/EFI" fs="vfat" options="defaults" dump="0" pass="0" />
+	<fsinfo line="103" real_dev="/dev/sda1" mp="/boot/efi" fs="fat32" options="umask=0077,shortname=winnt" dump="0" pass="0" />
 </config>
