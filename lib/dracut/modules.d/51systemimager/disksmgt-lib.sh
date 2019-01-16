@@ -426,7 +426,20 @@ _do_partitions() {
 					do
 						CMD="parted -s -- ${DISK_DEV} set ${P_NUM} ${flag} on"
 						logaction "$CMD"
-						eval "$CMD" || logwarn "Failed to set flag ${flag}=on for partition ${DISK_DEV}${P_NUM}"
+						if test "${flag}" = "esp" # On some distro, parted is too old to be aware of esp (EFI System Partition) flag
+						then
+							if ! eval "$CMD"
+							then
+								logwarn "parted doesn't seem to support esp flag. Trying boot flag instead"
+								CMD="parted -s -- ${DISK_DEV} set ${P_NUM} boot on"
+								logaction "$CMD"
+								eval "$CMD" || logwarn "Failed to set flag boot=on for partition ${DISK_DEV}${P_NUM}"
+							fi
+						else
+							logaction "$CMD"
+							eval "$CMD" || logwarn "Failed to set flag ${flag}=on for partition ${DISK_DEV}${P_NUM}"
+						fi
+
 						sleep $PARTED_DELAY
 					done
 
