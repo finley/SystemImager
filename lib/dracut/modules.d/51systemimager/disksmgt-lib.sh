@@ -336,7 +336,10 @@ EOF
 					[ -r /tmp/EFI.conf ] && . /tmp/EFI.conf # read requested EFI configuration (boot manager, kernel name, ...)
 					case "$BL_FLAVOR" in
 						"grub2")
-							shellout "Not yet supported. Sorry."
+							logaction "chroot /sysroot /sbin/grub2-install --force --target=$(arch)-efi"
+							chroot /sysroot /sbin/grub2-install --force --target=$(arch)-efi || shellout "Failed to install grub2 EFI bootloader"
+							loginfo "EFI grub2 installed on EFI partition."
+							touch /tmp/bootloader.installed
 							;;
 						"grub")
 							shellout "grub v1 doesn't supports EFI. Set your bios in legacy boot mode or use another bootloader."
