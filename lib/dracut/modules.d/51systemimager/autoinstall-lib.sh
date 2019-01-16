@@ -268,7 +268,7 @@ add_partition() {
 ################################################################################
 #
 # set_partition_flag() <disk_device> <partition_number> <flag>
-#     - flag can bee: boot, root, swap, ...
+#     - flag can bee: boot, esp, root, swap, ...
 # => set the partition flag to "on".
 #
 set_partition_flag() {
@@ -278,8 +278,17 @@ set_partition_flag() {
     fi
 
     loginfo "Setting partition flag $3=on on partition $1$2."
-    logaction "parted -s -- $1 set $2 $3 on"
-    LC_ALL=C parted -s -- $1 set $2 $3 on || shellout "parted failed to set $3=on for $1$2."
+    if test "$3" = "esp"
+    then
+	logaction "parted -s -- $1 set $2 $3 on"
+	if test ! parted -s -- $1 set $2 esp on
+	then
+		logwarn "parted doesn't seem to support esp flag. Trying boot flag instead"
+		LC_ALL=C parted -s -- $1 set $2 boot on || shellout "parted failed to set boot=on for $1$2."
+	fi
+    else
+	 LC_ALL=C parted -s -- $1 set $2 $3 on || shellout "parted failed to set $3=on for $1$2."
+    fi
 }
 
 ################################################################################
