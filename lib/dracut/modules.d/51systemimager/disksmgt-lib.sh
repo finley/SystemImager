@@ -435,6 +435,7 @@ _do_partitions() {
 								logaction "$CMD"
 								eval "$CMD" || logwarn "Failed to set flag boot=on for partition ${DISK_DEV}${P_NUM}"
 							fi
+							# Need to set GUID=C12A7328-F81F-11D2-BA4B-00A0C93EC93B. (see https://en.wikipedia.org/wiki/GUID_Partition_Table)
 						else
 							logaction "$CMD"
 							eval "$CMD" || logwarn "Failed to set flag ${flag}=on for partition ${DISK_DEV}${P_NUM}"
@@ -463,6 +464,7 @@ _do_partitions() {
 #
 # TODO: Need to return aligned partitions. For this, we need to convert to MiB
 #       and aligne to 1MiB so it fits all disks aligments...
+#	Also need to use lsblk -dt /dev/sda to compute aligment
 # TODO: Enhancement: use http://people.redhat.com/msnitzer/docs/io-limits.txt
 #       if possible for optimal aligment; fallback to 1MiB aligment only if not
 #       supported by disk device.
@@ -720,21 +722,27 @@ EOF
 					MKFS_CMD="${MKFS_CMD} -q -f"
 					;;
 				ntfs)
+					[ -n "${FS_UUID/ /}" ] && logwarn "${FS_FS} does not support UUID. Ignoring..."
 					SET_UUID_CMD=""
 					[ -n "${FS_LABEL/ /}" ] && MKFS_CMD="${MKFS_CMD} -L ${FS_LABEL/ /}"
 					MKFS_CMD="${MKFS_CMD} -q"
 					;;
 				vfat|msdos|fat)
+					[ -n "${FS_UUID/ /}" ] && logwarn "${FS_FS} does not support UUID. Ignoring..."
 					SET_UUID_CMD=""
 					[ -n "${FS_LABEL/ /}" ] && MKFS_CMD="${MKFS_CMD} -n ${FS_LABEL/ /}"
 					;;
 				fat16)
+					[ -n "${FS_UUID/ /}" ] && logwarn "${FS_FS} does not support UUID. Ignoring..."
 					SET_UUID_CMD=""
-					[ -n "${FS_LABEL/ /}" ] && MKFS_CMD="mkfs -t msdos -F 16 ${FS_MKFS_OPTS/ /} -n ${FS_LABEL/ /}"
+					MKFS_CMD="mkfs -t msdos -F 16 ${FS_MKFS_OPTS/ /}"
+					[ -n "${FS_LABEL/ /}" ] && MKFS_CMD="${MKFS_CMD} -n ${FS_LABEL/ /}"
 					;;
 				fat32)
+					[ -n "${FS_UUID/ /}" ] && logwarn "${FS_FS} does not support UUID. Ignoring..."
 					SET_UUID_CMD=""
-					[ -n "${FS_LABEL/ /}" ] && MKFS_CMD="mkfs -t msdos -F 32 ${FS_MKFS_OPTS/ /} -n ${FS_LABEL/ /}"
+					MKFS_CMD="mkfs -t msdos -F 32 ${FS_MKFS_OPTS/ /}"
+					[ -n "${FS_LABEL/ /}" ] && MKFS_CMD="${MKFS_CMD} -n ${FS_LABEL/ /}"
 					;;
 				swap)
 					MKFS_CMD="mkswap -v1 ${FS_MKFS_OPTS/ /}"
