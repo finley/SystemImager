@@ -281,7 +281,7 @@ set_partition_flag() {
     if test "$3" = "esp"
     then
 	logaction "parted -s -- $1 set $2 $3 on"
-	if test ! parted -s -- $1 set $2 esp on
+	if ! parted -s -- $1 set $2 esp on
 	then
 		logwarn "parted doesn't seem to support esp flag. Trying boot flag instead"
 		LC_ALL=C parted -s -- $1 set $2 boot on || shellout "parted failed to set boot=on for $1$2."
