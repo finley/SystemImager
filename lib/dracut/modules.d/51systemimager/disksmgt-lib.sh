@@ -413,7 +413,7 @@ _do_partitions() {
 					test "${P_FS}" = "swap" && P_FS="linux-swap" # fix swap FS type name for parted.
 
 					# 1/ Create the partition
-					CMD="parted -s -- ${DISK_DEV} unit ${P_UNIT} mkpart ${P_TYPE} ${P_FS} `_find_free_space ${DISK_DEV} ${P_UNIT} ${P_TYPE} ${P_SIZE}`"
+					CMD="parted -a optimal -s -- ${DISK_DEV} unit ${P_UNIT} mkpart ${P_TYPE} ${P_FS} `_find_free_space ${DISK_DEV} ${P_UNIT} ${P_TYPE} ${P_SIZE}`"
 					logaction "$CMD"
 					eval "$CMD" || shellout "Failed to create partition ${DISK_DEV}${P_NUM}"
 					sleep $PARTED_DELAY
@@ -489,8 +489,8 @@ _find_free_space() {
 	# => Case cannot occure because logical partition will reach the end of disk. (can't create primary after logical with parted)
 	BEGIN_END=( `LC_ALL=C parted -s -- $1 unit $2 print free | grep "Free Space" | sed "s/$2//g" | sort -g -r -k2 | awk -v min=${MIN_SIZE_EXT[0]} -v ext_size=${MIN_SIZE_EXT[1]} -v required="$4" '
 	(ext_size>0) && ($1<min || $1>min+ext_size) { exit 1 }
-	($1>=min) && (($1<(min+ext_size)) || ext_size==0) && (required==0) { print $1,$2 ; exit 0 }
-	($1>=min) && ($1+required)<=$2 && (required!=0) { print $1,$1+required ; exit 0 }
+	($1>=min) && (($1<(min+ext_size)) || ext_size==0) && (required==0) { printf "%d 100%%\n",$1 ; exit 0 }
+	($1>=min) && ($1+required)<=$2 && (required!=0) { printf "%d %d\n",$1,$1+required ; exit 0 }
 ' ` ) || shellout "Failed to find free space for a $3 partition of size $4$2"
 	[ -n "`echo ${BEGIN_END[0]}|grep '^0'`" ] && BEGIN_END[0]="1MiB" # Make sure we start at aligned position and that there is room for grub.
 	echo ${BEGIN_END[@]}
@@ -728,6 +728,14 @@ EOF
 					SET_UUID_CMD=""
 					[ -n "${FS_LABEL/ /}" ] && MKFS_CMD="${MKFS_CMD} -n ${FS_LABEL/ /}"
 					;;
+				fat16)
+					SET_UUID_CMD=""
+					[ -n "${FS_LABEL/ /}" ] && MKFS_CMD="mkfs -t msdos -F 16 ${FS_MKFS_OPTS/ /} -n ${FS_LABEL/ /}"
+					;;
+				fat32)
+					SET_UUID_CMD=""
+					[ -n "${FS_LABEL/ /}" ] && MKFS_CMD="mkfs -t msdos -F 32 ${FS_MKFS_OPTS/ /} -n ${FS_LABEL/ /}"
+					;;
 				swap)
 					MKFS_CMD="mkswap -v1 ${FS_MKFS_OPTS/ /}"
 					[ -n "${FS_UUID/ /}" ] && MKFS_CMD="${MKFS_CMD} -U ${FS_UUID/ /}"
@@ -804,7 +812,7 @@ _do_fstab() {
 		while read M_DEV M_MP M_FS M_OPTS M_DUMP M_PASS
 		do
 			# If mountpoint is a PATH, AND filesystem is not virtual, create the path and mount filesystem to sysroot.
-			if test "${M_MP:0:1}" = "/" -a -n "`echo "ext2|ext3|ext4|xfs|jfs|reiserfs|btrfs|ntfs|msdos|vfat|fat" |grep \"${M_FS}\"`"
+			if test "${M_MP:0:1}" = "/" -a -n "`echo "ext2|ext3|ext4|xfs|jfs|reiserfs|btrfs|ntfs|msdos|vfat|fat|fat32|fat16" |grep \"${M_FS}\"`"
 			then
 				loginfo "Creating mountpoint ${M_MP}"
 				logaction "mkdir -p /sysroot${M_MP}"
