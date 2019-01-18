@@ -336,8 +336,8 @@ EOF
 					[ -r /tmp/EFI.conf ] && . /tmp/EFI.conf # read requested EFI configuration (boot manager, kernel name, ...)
 					case "$BL_FLAVOR" in
 						"grub2")
-							logaction "chroot /sysroot /sbin/grub2-install --force --target=$(arch)-efi"
-							chroot /sysroot /sbin/grub2-install --force --target=$(arch)-efi || shellout "Failed to install grub2 EFI bootloader"
+							logaction "chroot /sysroot /sbin/grub2-install --force --target=$(uname -m)-efi"
+							chroot /sysroot /sbin/grub2-install --force --target=$(uname -m)-efi || shellout "Failed to install grub2 EFI bootloader"
 							loginfo "EFI grub2 installed on EFI partition."
 							touch /tmp/bootloader.installed
 							;;
