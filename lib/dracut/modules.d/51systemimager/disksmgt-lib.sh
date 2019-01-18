@@ -337,7 +337,7 @@ EOF
 					case "$BL_FLAVOR" in
 						"grub2")
 							[ -x /sysroot/usr/sbin/efibootmgr ] || shellout "efibootmgr missing in image! Update your imlage!"
-							[ -d /sysroot/usr/lib/grub/$(uname -m)-efi ] || shellout "/usr/lib/grub/$(uname -m)-efi missing in image! Install grube2-efi-*-modules package""
+							[ -d /sysroot/usr/lib/grub/$(uname -m)-efi ] || shellout "/usr/lib/grub/$(uname -m)-efi missing in image! Install grube2-efi-*-modules package"
 							logaction "chroot /sysroot /sbin/grub2-install --force --target=$(uname -m)-efi"
 							chroot /sysroot /sbin/grub2-install --force --target=$(uname -m)-efi || shellout "Failed to install grub2 EFI bootloader"
 							loginfo "EFI grub2 installed on EFI partition."
