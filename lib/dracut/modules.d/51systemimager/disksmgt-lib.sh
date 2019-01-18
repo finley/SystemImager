@@ -731,18 +731,21 @@ EOF
 					[ -n "${FS_UUID/ /}" ] && logwarn "${FS_FS} does not support UUID. Ignoring..."
 					SET_UUID_CMD=""
 					[ -n "${FS_LABEL/ /}" ] && MKFS_CMD="${MKFS_CMD} -n ${FS_LABEL/ /}"
+					FS_FS="vfat"
 					;;
 				fat16)
 					[ -n "${FS_UUID/ /}" ] && logwarn "${FS_FS} does not support UUID. Ignoring..."
 					SET_UUID_CMD=""
 					MKFS_CMD="mkfs -t msdos -F 16 ${FS_MKFS_OPTS/ /}"
 					[ -n "${FS_LABEL/ /}" ] && MKFS_CMD="${MKFS_CMD} -n ${FS_LABEL/ /}"
+					FS_FS="vfat"
 					;;
 				fat32)
 					[ -n "${FS_UUID/ /}" ] && logwarn "${FS_FS} does not support UUID. Ignoring..."
 					SET_UUID_CMD=""
 					MKFS_CMD="mkfs -t msdos -F 32 ${FS_MKFS_OPTS/ /}"
 					[ -n "${FS_LABEL/ /}" ] && MKFS_CMD="${MKFS_CMD} -n ${FS_LABEL/ /}"
+					FS_FS="vfat"
 					;;
 				swap)
 					MKFS_CMD="mkswap -v1 ${FS_MKFS_OPTS/ /}"
