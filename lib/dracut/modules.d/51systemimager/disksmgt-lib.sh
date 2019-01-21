@@ -289,10 +289,10 @@ EOF
 					shellout "Clover bootloader not yet supported."
 					;;
 				"rEFInd")
-					shellout "rEFInd bootloader not yet supported."
+					logwarn "rEFInd menu entries not configurable yet."
 					;;
 				*)
-					shellout "Unsupported bootloader"
+					shellout "Unsupported bootloader [$BL_FLAVOR]."
 					;;
 			esac
 
@@ -350,7 +350,31 @@ EOF
 							shellout "Clover bootloader not yet supported."
 							;;
 						"rEFInd")
-							shellout "rEFInd bootloader not yet supported."
+							test -x /usr/sbin/refind-install || shellout "refind-install missing in image. Install rEFInd in image!"
+
+							# Remove any existing NVRAM entry for rEFInd, to avoid creating a duplicate.
+							OLD_REFIND_ENTRY=$(efibootmgr | grep "rEFInd Boot Manager" | cut -c 5-8)
+							if test -n "${OLD_REFIND_ENTRY}" ; then
+					   			efibootmgr --bootnum $OLD_REFIND_ENTRY --delete-bootnum &> /dev/null && loginfo "Removed old rEFInd boot entry from NVRAM"
+							fi
+							EFI_PRELOADER=`find /boot -name shim\.efi -o -name shimx64\.efi -o -name PreLoader\.efi 2> /dev/null | head -n 1`
+							test -z "${EFI_PRELOADER}" && logwarn "No EFI preloader in /boot; You should install shim or shim-x64 package in image. Using our own."
+							PRELOADER_OPT="--shim ${EFI_PRELOADER}"
+
+							# Check if system is using secure boot.
+							test -r /sys/firmware/efi/vars/SecureBoot-8be4df61-93ca-11d2-aa0d-00e098032b8c/data && SECURE_BOOT=$(od -An -t u1 /sys/firmware/efi/vars/SecureBoot-8be4df61-93ca-11d2-aa0d-00e098032b8c/data | tr -d '[[:space:]]') || SECURE_BOOT="0"
+					
+							test -x /usr/bin/sbsign -a -x /usr/bin/openssl && KEY_OPTION="--localkeys"
+
+							if test "${SECURE_BOOT}" = "1"
+							then
+								CMD="refind-install $PRELOADER_OPT $KEY_OPTION --yes"
+							else
+								CMD="refind-install $KEY_OPTION --yes"
+							fi
+
+							logaction "$CMD"
+							eval "$CMD" || shellout "Failed to setup rEFInd boot manager".
 							;;
 						*)
 							shellout "Unsupported bootloader [$BL_FLAVOR]."
