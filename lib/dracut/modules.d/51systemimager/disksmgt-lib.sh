@@ -617,7 +617,7 @@ EOF
 #		
 ################################################################################
 _do_lvms() {
-	IFS=";"
+	IFS=';'
 	# Note: in dracut, on some distros, locking_type is set to 4 (readonly) for lvm (/etc/lvm/lvm.conf)
 	# to prevent any lvm modification during early boot.
 	# We need to get raound this default config.
