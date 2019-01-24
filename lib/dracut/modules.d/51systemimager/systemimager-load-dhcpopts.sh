@@ -137,6 +137,16 @@ then
 	[ -z "$SSH_DOWNLOAD_URL" ] && [ -n "$OPTION_SSH_DOWNLOAD_URL" ] && SSH_DOWNLOAD_URL="$OPTION_SSH_DOWNLOAD_URL" && loginfo "Got SSH_DOWNLOAD_URL=${OPTION_SSH_DOWNLOAD_URL}"
 
 	loginfo "Finished reading DHCP lease informations."
+elif test -r /tmp/net.$DEVICE.override
+	. /tmp/net.$DEVICE.override
+	[ ! -r /tmp/net.$DEVICE.did-setup ] && logwarn "Network $DEVICE didn't setup correctly. Trying to continue anyway."
+	# We need at least IP and GW to reach the server (which is hopefully defined in cmdline)
+	[ -n "$ip" ] && IPADDR=$ip && loginfo "Got Fixed IP=$IPADDR" || shellout "Failed to get an IP address from static config."
+	[ -n "$gw" ] && GATEWAY=$gw && loginfo "Got Fixed GW=$GATEWAY" || shellout "Failed to get a GATEWAY address from static config."
+	# We don't need netmask right now. if it is specified, just report it.
+	[ -n "$mask" ] && NETMASK=$mask && loginfo "Got Fixed NM=$NETMASK" || logwarn "No netmask defined in ip= static config."
+	[ -n "$hostname" ] && HOSTNAME=$hostname && loginfo "Got Fixed HOSTNAME=$HOSTNAME" || loginfo "No HOSTNAME defined in ip= cmdline."
+	loginfo "Finished reading static IP informations."
 else
 	logerror "No DHCP_OPTIONS found in /tmp! systemd-networkd which is not yet supported?"
 	shellout "Failed to read DHCP options!"
