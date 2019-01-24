@@ -1195,11 +1195,13 @@ choose_autoinstall_script() {
         #
         # SCRIPTNAME was specified, but let's be flexible.  Try explicit first, then .master, .sh. -BEF-
         #
+	loginfo "SCRIPTNAME defined [$SCRIPTNAME]. Looking for it."
         SCRIPTNAMES="${SCRIPTS_DIR}/main-install/${SCRIPTNAME} ${SCRIPTS_DIR}/main-install/${SCRIPTNAME}.sh ${SCRIPTS_DIR}/main-install/${SCRIPTNAME}.master"
 
 	# Script name was specified, so it MUST be available. If not, we must fail.
         [ ! -e ${SCRIPTS_DIR}/main-install/${SCRIPTNAME} -a ! -e ${SCRIPTS_DIR}/main-install/${SCRIPTNAME}.sh -a ! -e ${SCRIPTS_DIR}/main-install/${SCRIPTNAME}.master ] || shellout "Can't find requested main autoinstall script: ${SCRIPTNAME}{,.sh,.master}"
     else
+	    loginfo "SCRIPTNAME not defined. Looking for possible candidates."
             SCRIPTNAMES=`choose_filename ${SCRIPTS_DIR}/main-install "" ".sh" ".master"`
     fi
 
@@ -1344,13 +1346,13 @@ run_post_install_scripts() {
 	    #$CMD > /dev/null 2>&1 || logwarn "Failed to retrieve ${SCRIPTS_DIR}/post-install directory...(error:$?)"
 	    eval "$CMD" || logwarn "Failed to bind mount ${SCRIPTS_DIR}/post-install directory in image...(error:$?)"
 
-	    POST_SCRIPTS=`unique "$POST_INSTALL_SCRIPTS"`
+	    POST_SCRIPTS=`unique $POST_INSTALL_SCRIPTS`
 	    NUM_SCRIPTS=`echo "$POST_SCRIPTS"|wc -w`
             SCRIPT_INDEX=1
 
-            for POST_INSTALL_SCRIPT in ${POST_SCRIPTS}
+            for POST_INSTALL_SCRIPT in ${POST_SCRIPTS} ""
             do
-                if [ -e "$POST_INSTALL_SCRIPT" ]; then
+                if [ -e "/sysroot/tmp/post-install/$POST_INSTALL_SCRIPT" ]; then
                     sis_update_step post ${SCRIPT_INDEX} ${NUM_SCRIPTS}
                     loginfo "Running script ${SCRIPT_INDEX}/${NUM_SCRIPTS}: $POST_INSTALL_SCRIPT"
 		    send_monitor_msg "status=109:speed=${SCRIPT_INDEX}" # 109=postinstall speed=script_num
@@ -1362,11 +1364,15 @@ run_post_install_scripts() {
 			   shellout "post-install ioncomplete!"
 		    fi
 		    SCRIPT_INDEX=$(( ${SCRIPT_INDEX} + 1))
+	        else
+		    logerror "Script [$POST_INSTALL_SCRIPT] lost in space?"
                 fi
             done
 
+	    logdetail "Unmounting /sysroot/tmp/post-install"
 	    umount /sysroot/tmp/post-install || shellout "Failed to unmount /sysroot/tmp/post-install"
             # Clean up post-install script directory.
+	    logdetail "Cleaning up post-install mount-point from /sysroot/tmp"
             rmdir /sysroot/tmp/post-install/ || shellout "Failed to remove post-install mountpoint from image."
         else
             loginfo "No post-install scripts found."
