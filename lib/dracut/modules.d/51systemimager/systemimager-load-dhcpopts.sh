@@ -146,7 +146,7 @@ then
 	[ -z "$IPADDR" ] && shellout "Failed to get an IP address from static config."
 	[ -n "$gw" ] && GATEWAY=$gw && loginfo "Got Fixed GW=$GATEWAY"
 	[ -z "$GATEWAY" ] && shellout "Failed to get a GATEWAY address from static config."
-	[ -z "$GATEWAY_DEV" ] && [ -n "$DEVICE" ] && GATEWAYDEV="$DEVICE" && loginfo "Got GATEWAYDEV=${DEVICE}"
+	[ -z "$GATEWAYDEV" ] && [ -n "$DEVICE" ] && GATEWAYDEV="$DEVICE" && loginfo "Got GATEWAYDEV=${DEVICE}"
 	# We don't need netmask right now. if it is specified, just report it.
 	[ -n "$mask" ] && NETMASK=$mask && loginfo "Got Fixed NM=$NETMASK"
         [ -z "$NETMASK" ] && logwarn "No netmask defined in ip= static config."
