@@ -131,10 +131,7 @@ mkdir -p /sysroot/etc/systemimager/
 echo "${IMAGENAME}" > /sysroot/etc/systemimager/IMAGE_LAST_SYNCED_TO || shellout "Failed to save IMAGENAME in /etc/systemimager/IMAGE_LAST_SYNCED_TO"
 
 # Now install bootloader (before post_install scripts to give a chance to scripts to modify this)
-# OL: TODO: We should be smarter here. We should install bootloader only on the disk containing the /boot partition.
-# OL: TODO: We should handle software raid.
 getarg 'si.break=boot-loader' && logwarn "Break boot-loader" && interactive_shell
-#install_boot_loader ${DISKS[@]} # BUG: Old procedure: to be removed.
 si_install_bootloader
 
 # Now run post install scripts.
