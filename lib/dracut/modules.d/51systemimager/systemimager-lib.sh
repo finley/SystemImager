@@ -1195,12 +1195,12 @@ choose_autoinstall_script() {
         #
         # SCRIPTNAME was specified, but let's be flexible.  Try explicit first, then .master, .sh. -BEF-
         #
-        SCRIPTNAMES="${SCRIPTS_DIR}/${SCRIPTNAME} ${SCRIPTS_DIR}/${SCRIPTNAME}.sh ${SCRIPTS_DIR}/${SCRIPTNAME}.master"
+        SCRIPTNAMES="${SCRIPTS_DIR}/main-install/${SCRIPTNAME} ${SCRIPTS_DIR}/main-install/${SCRIPTNAME}.sh ${SCRIPTS_DIR}/main-install/${SCRIPTNAME}.master"
 
 	# Script name was specified, so it MUST be available. If not, we must fail.
-        [ ! -e ${SCRIPTS_DIR}/${SCRIPTNAME} -a ! -e ${SCRIPTS_DIR}/${SCRIPTNAME}.sh -a !-e ${SCRIPTS_DIR}/${SCRIPTNAME}.master ] || shellout "Can't find requested main autoinstall script: ${SCRIPTNAME}{,.sh,.master}"
+        [ ! -e ${SCRIPTS_DIR}/main-install/${SCRIPTNAME} -a ! -e ${SCRIPTS_DIR}/main-install/${SCRIPTNAME}.sh -a ! -e ${SCRIPTS_DIR}/main-install/${SCRIPTNAME}.master ] || shellout "Can't find requested main autoinstall script: ${SCRIPTNAME}{,.sh,.master}"
     else
-            SCRIPTNAMES=`choose_filename /scripts/main-install "" ".sh" ".master"`
+            SCRIPTNAMES=`choose_filename ${SCRIPTS_DIR}/main-install "" ".sh" ".master"`
     fi
 
     #
@@ -1338,9 +1338,11 @@ run_post_install_scripts() {
 
             mkdir -p /sysroot/tmp/post-install/ || shellout
 
-            CMD="rsync -a ${SCRIPTS_DIR}/post-install/ /sysroot/tmp/post-install/"
+            #CMD="rsync -a ${SCRIPTS_DIR}/post-install/ /sysroot/tmp/post-install/"
+	    CMD="mount -o bind ${SCRIPTS_DIR}/post-install /sysroot/tmp/post-install"
 	    logdetail "$CMD"
-	    $CMD > /dev/null 2>&1 || logwarn "Failed to retrieve ${SCRIPTS_DIR}/post-install directory..."
+	    #$CMD > /dev/null 2>&1 || logwarn "Failed to retrieve ${SCRIPTS_DIR}/post-install directory...(error:$?)"
+	    eval "$CMD" || logwarn "Failed to bind mount ${SCRIPTS_DIR}/post-install directory in image...(error:$?)"
 
 	    POST_SCRIPTS=`unique "$POST_INSTALL_SCRIPTS"`
 	    NUM_SCRIPTS=`echo "$POST_SCRIPTS"|wc -w`
@@ -1353,16 +1355,23 @@ run_post_install_scripts() {
                     loginfo "Running script ${SCRIPT_INDEX}/${NUM_SCRIPTS}: $POST_INSTALL_SCRIPT"
 		    send_monitor_msg "status=109:speed=${SCRIPT_INDEX}" # 109=postinstall speed=script_num
                     chmod +x /sysroot/tmp/post-install/$POST_INSTALL_SCRIPT || shellout
-                    chroot /sysroot/ /tmp/post-install/$POST_INSTALL_SCRIPT || shellout
+                    if ! chroot /sysroot/ /tmp/post-install/$POST_INSTALL_SCRIPT
+		    then
+			   logerror "Faied to run post-install script $POST_INSTALL_SCRIPT"
+			   umount /sysroot/tmp/post-install || shellout "Failed to unmount /sysroot/tmp/post-install."
+			   shellout "post-install ioncomplete!"
+		    fi
 		    SCRIPT_INDEX=$(( ${SCRIPT_INDEX} + 1))
                 fi
             done
+
+	    umount /sysroot/tmp/post-install || shellout "Failed to unmount /sysroot/tmp/post-install"
+            # Clean up post-install script directory.
+            rmdir /sysroot/tmp/post-install/ || shellout "Failed to remove post-install mountpoint from image."
         else
             loginfo "No post-install scripts found."
         fi
 
-        # Clean up post-install script directory.
-        rm -rf /sysroot/tmp/post-install/ || shellout
     fi
 }
 #
