@@ -220,8 +220,9 @@ stop_software_raid_and_lvm() {
 si_install_bootloader() {
 	sis_update_step boot 0 0
 
-	IFS=';'
 	. /tmp/variables.txt # Read variables to get the DISKS_LAYOUT_FILE
+
+	IFS=';'
 
 	BL_INSTALLED="no"
 
@@ -396,6 +397,7 @@ EOF
 		logwarn "No bootloader installed. (bootloader section missing in disk layout file?)"
 		logwarn "Assuming post-install scripts will do the job!"
 	fi
+	IFS=' '
 }
 
 		
@@ -474,6 +476,7 @@ _do_partitions() {
 					[ -n "${P_LVM_GROUP}" ] && [ -z "`echo $P_FLAGS|grep lvm`" ] && shellout "Missing lvm flag for ${DISK_DEV}${P_NUM}"
 				done
 	       	done
+	IFS=' '
 }
 
 ################################################################################
@@ -498,7 +501,7 @@ _do_partitions() {
 ################################################################################
 #
 _find_free_space() {
-	IFS=" "
+	IFS=' '
 	case "$3" in
 		logical)
 			# if partition is logical, get the working range to seach for free space
@@ -604,6 +607,7 @@ MAILADDR root
 EOF
 		mdadm --detail --scan >> /tmp/mdadm.conf.temp
 	fi
+	IFS=' '
 
 }
 
@@ -681,6 +685,7 @@ _do_lvms() {
 		then
 			WANT_LVM="y"
 		fi
+	IFS=' '
 }
 
 ################################################################################
@@ -826,6 +831,7 @@ EOF
 				update_dracut_root_infos
 			fi
 		done
+	IFS=' '
 }
 
 ################################################################################

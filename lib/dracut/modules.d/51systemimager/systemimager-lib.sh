@@ -1159,6 +1159,7 @@ get_group_name() {
 # example: choose_filename /scripts/main-install "" ".sh" ".master"
 #
 choose_filename() {
+	IFS=" "
 	logdebug "choose_filename $*"
 	get_base_hostname
 	DIR=$1
@@ -1187,6 +1188,7 @@ choose_filename() {
 #
 choose_autoinstall_script() {
 
+    IFS=" "
     loginfo "Choosing autoinstall script..."
 
     # If SCRIPTNAME is specified as a kernel append, or via local.cfg, then use that script.
@@ -1235,6 +1237,7 @@ choose_autoinstall_script() {
 #
 run_pre_install_scripts() {
 
+    IFS=" "
     loginfo "Running pre-install scripts"
 
     sis_update_step prei # Plymouth: Light on PreInstall icon
@@ -1309,6 +1312,8 @@ run_autoinstall_script() {
 #
 run_post_install_scripts() {
 
+    IFS=" "
+
     loginfo "Running post-install scripts"
     sis_update_step post
 
@@ -1361,7 +1366,7 @@ run_post_install_scripts() {
 		    then
 			   logerror "Faied to run post-install script $POST_INSTALL_SCRIPT"
 			   umount /sysroot/tmp/post-install || shellout "Failed to unmount /sysroot/tmp/post-install."
-			   shellout "post-install ioncomplete!"
+			   shellout "post-install incomplete!"
 		    fi
 		    SCRIPT_INDEX=$(( ${SCRIPT_INDEX} + 1))
 	        else
@@ -1568,6 +1573,7 @@ EOF
 #
 
 send_monitor_msg() {
+    IFS=" "
     if test -z "${MONITOR_SERVER}"; then
 	logdebug "Trying to send monitor msg with unset MONITOR_SERVER variable. Ignoring..."
         return
