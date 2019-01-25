@@ -1348,7 +1348,7 @@ run_post_install_scripts() {
 	    NUM_SCRIPTS=`echo "$POST_SCRIPTS"|wc -w`
             SCRIPT_INDEX=1
 
-            for POST_INSTALL_SCRIPT in ${POST_SCRIPTS} ""
+            for POST_INSTALL_SCRIPT "${POST_SCRIPTS}"
             do
                 if [ -e "/sysroot/tmp/post-install/$POST_INSTALL_SCRIPT" ]; then
                     sis_update_step post ${SCRIPT_INDEX} ${NUM_SCRIPTS}
@@ -1358,6 +1358,7 @@ run_post_install_scripts() {
                     if ! chroot /sysroot/ /tmp/post-install/$POST_INSTALL_SCRIPT
 		    then
 			   logerror "Faied to run post-install script $POST_INSTALL_SCRIPT"
+			   logdetail "Unmounting /sysroot/tmp/post-install"
 			   umount /sysroot/tmp/post-install || shellout "Failed to unmount /sysroot/tmp/post-install."
 			   shellout "post-install incomplete!"
 		    fi
@@ -1367,8 +1368,10 @@ run_post_install_scripts() {
                 fi
             done
 
+	    # Disconnecting post-install from imaged client.
 	    logdetail "Unmounting /sysroot/tmp/post-install"
 	    umount /sysroot/tmp/post-install || shellout "Failed to unmount /sysroot/tmp/post-install"
+
             # Clean up post-install script directory.
 	    logdetail "Cleaning up post-install mount-point from /sysroot/tmp"
             rmdir /sysroot/tmp/post-install/ || shellout "Failed to remove post-install mountpoint from image."
