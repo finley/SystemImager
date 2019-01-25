@@ -4,14 +4,16 @@
 
 ============= TODO for the dracut change before release is possible ===========
 - update sbin/si_mkdhcpserver so it works with systemd (also use service instead of running init.d script on old distros)
-- fix si_prepareclient so it uses si_mkbootpackage instead of trying to build its own kernel and fail.
+- DONE: fix si_prepareclient so it uses si_mkbootpackage instead of trying to build its own kernel and fail.
 - fix si_getimage so it installs scripts in /var/lib/systemimager/scripts/main-install/
   fix si_getimage so it installs correctly remote boot package
   fix si_getimage so it moves <imagedir>/etc/systemimager/autoinstall_script.conf to disks layout.
 - Add imaging a list of packages instead of a directory (protocol:bootstrap)
-- Add network configuration using networkmanager (in a postinstall script at 1st)
+- Add network configuration using networkmanageri or systemd-networkd (in a postinstall script at 1st)
 - Add install of monitor_rebooted service in dracut module instead of postinstall script.
-- Do not install grub on disk we did not handle
+- DONE: Do not install grub on disk we did not handle
+- rewrite si_mkbootserver
+- use http://aria2.sourceforge.net/ for torrent / ftp / http / ... protocols.
 
 Server.pm:
 - remove _read_partition_info_and_prepare_parted_commands()
@@ -34,7 +36,7 @@ Server.pm:
 - FIXED: /root/rpmbuild/BUILD/systemimager-4.5.0/tmp/dracutbase/modules.d/51systemimager/module-setup.sh: line 38: cd: /usr/share/systemimager/boot/x86_64/standard/initrd_template/: No such file or directory => ERROR only occures if package is not installed on system.
 - /run is not a virtual filesystem in old CentOS-6. Thus saving si_monitor.log there is useless. See if it can be achieved (in case of directboot)
 - Add espeak log speak in case of warning or error.
-- Distros to support: debian, ubuntu
+- DONE: Distros to support: debian, ubuntu
 - DONE: Distros supported: CentOS-6, CentOS-7, Fedora-27, OpenSuSE-42.3
 - DONE: Add directboot feature.
 - Check STAGING_DIR getarg. Seems not read anywhere.
@@ -96,7 +98,7 @@ FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in /etc/systemimager/system
 		=> If present and expected type: use it.
 	- <part> @keep_existing="yes" If present, dont try to create it; size ignored. (needed to keep EFI partition)
 	- <boot> new section for boot loader/ boot manager / wanted menus
-- EFI support from scratch (be able to create the EFI partition and setup the EFI boot variables, kernel, and all that is needed to boot).
+- DONE: EFI support from scratch (be able to create the EFI partition and setup the EFI boot variables, kernel, and all that is needed to boot).
 
 - DONE (using bash) CentOS-6 uses dash (not bash. dash=debian ash, in buzybox since v0.52) in dracut. dash doesn't support ${VAR/search/replace} or ${VAR:start:end} or $(command) syntaxes.
 
@@ -105,8 +107,6 @@ FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in /etc/systemimager/system
 - fix si_mkautoinstallscript => remove si_mkautoinstallscript
 
 - DONE: update /var/lib/systemimager/ hyerarchy. try to move configs in scripts and try to rename script to a more suited name.
-
-- network configuration.
 
 - bittorrent protocol: use rtorrent or ctorrent, opentracker?, mktorrent, ...
 
@@ -151,7 +151,7 @@ FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in /etc/systemimager/system
 - need to comment /lib/autoinstall-lib.sh
 - need to review and update all headers with authors and copyrights
 - DONE: need to remove/cleanup useless stuffs in the source_tarball (kernel.rul and such).
-- need to update deb packaging
+- DONE: need to update deb packaging
 - need to find a way to provide systemimager-x86_64boot-standard-4.5.0-1.el7.noarch.rpm without installing dracut-systemimager (does a dracut option allows to specify an alternative dracut directory))
 
 # Need to check perl deps to SystemInstaller in si_* commands
