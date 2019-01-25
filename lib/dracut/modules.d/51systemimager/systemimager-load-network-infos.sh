@@ -24,12 +24,12 @@
 #                   disabled by JRT 2006-10-11
 #                   see dhclient.conf for commentary
 
-# systemimager-load-dhcpopts will read /tmp/dhclient.$DEVICE.dhcpopts and update
-# /tmp/variables.txt accordingly. (priority is givent to local.cfg, then cmdline,
-# then DHCP at last)
+# systemimager-load-network-infos will read /tmp/dhclient.$DEVICE.dhcpopts or
+# /tmp/net.$DEVICE.override  and update /tmp/variables.txt accordingly.
+# (priority is givent to local.cfg, then cmdline, then DHCP at last)
 
 . /lib/systemimager-lib.sh # Load /tmp/variables.txt and some macros
-logdebug "==== systemimager-load-dhcpopts ===="
+logdebug "==== systemimager-load-network-infos ===="
 
 DEVICE=$1
 

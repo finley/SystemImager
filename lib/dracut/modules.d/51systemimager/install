@@ -57,7 +57,7 @@ install() {
     do
         inst "$protocol_plugin" "/lib/${protocol_plugin##*/}"
     done
-    inst_script "$moddir/systemimager-load-dhcpopts.sh" "/sbin/systemimager-load-dhcpopts"
+    inst_script "$moddir/systemimager-load-network-infos.sh" "/sbin/systemimager-load-network-infos"
     inst_script "$moddir/systemimager-load-scripts-ecosystem.sh" "/sbin/systemimager-load-scripts-ecosystem"
     inst_script "$moddir/systemimager-netstart-old.sh" "/sbin/systemimager-netstart"
     inst_script "$moddir/systemimager-start.sh" "/sbin/systemimager-start"
