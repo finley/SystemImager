@@ -1348,7 +1348,7 @@ run_post_install_scripts() {
 	    NUM_SCRIPTS=`echo "$POST_SCRIPTS"|wc -w`
             SCRIPT_INDEX=1
 
-            for POST_INSTALL_SCRIPT "${POST_SCRIPTS}"
+            for POST_INSTALL_SCRIPT in "${POST_SCRIPTS}"
             do
                 if [ -e "/sysroot/tmp/post-install/$POST_INSTALL_SCRIPT" ]; then
                     sis_update_step post ${SCRIPT_INDEX} ${NUM_SCRIPTS}
