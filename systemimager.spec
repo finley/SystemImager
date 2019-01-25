@@ -178,6 +178,36 @@ environments.
 The server package contains those files needed to run a SystemImager
 server.
 
+%package doc
+Summary: Systemimager manual and other documentation
+Version: %ver
+Release: %rel
+License: GPL
+Group: Applications/System
+BuildRoot: /tmp/%{name}-%{ver}-root
+BuildArch: noarch
+Packager: %packager
+URL: http://wiki.systemimager.org/
+Distribution: System Installation Suite
+
+%description doc
+SystemImager is software that automates Linux installs, software
+distribution, and production deployment.  SystemImager makes it easy to
+do installs, software distribution, content or data distribution,
+configuration changes, and operating system updates to your network of
+Linux machines. You can even update from one Linux release version to
+another!  It can also be used to ensure safe production deployments.
+By saving your current production image before updating to your new
+production image, you have a highly reliable contingency mechanism.  If
+the new production environment is found to be flawed, simply roll-back
+to the last production image with a simple update command!  Some
+typical environments include: Internet server farms, database server
+farms, high performance clusters, computer labs, and corporate desktop
+environments.
+
+The doc package provides End-User and Administrator guides for setting up
+and use Systemimager. It also includes many configuration examples.
+
 %package flamethrower
 Summary: Software that automates Linux installs, software distribution, and production deployment.
 Version: %ver
@@ -1244,10 +1274,6 @@ fi
 %defattr(-, root, root)
 %doc CHANGE.LOG COPYING CREDITS README TODO VERSION
 %doc README.SystemImager_DHCP_options
-%doc doc/manual_source/html
-# These should move to a files doc section, because they are missing if you don't do doc
-# %doc doc/manual/systemimager* doc/manual/html doc/manual/examples
-%doc doc/man/autoinstall* doc/examples/local.cfg
 %dir /var/lock/systemimager
 %dir /var/log/systemimager
 %dir %{_var}/lib/systemimager
@@ -1309,6 +1335,14 @@ fi
 %{_mandir}/man5/systemimager*
 %{_mandir}/man8/si_*
 %{_datarootdir}/systemimager/icons/*
+
+%files doc
+%defattr(-, root, root)
+%doc doc/manual_source/html
+# These should move to a files doc section, because they are missing if you don't do doc
+# %doc doc/manual/systemimager* doc/manual/html doc/manual/examples
+%doc doc/man/autoinstall*
+%doc doc/examples
 
 %files client
 %defattr(-, root, root)
