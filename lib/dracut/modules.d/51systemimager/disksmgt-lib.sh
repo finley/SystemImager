@@ -222,7 +222,7 @@ si_install_bootloader() {
 
 	. /tmp/variables.txt # Read variables to get the DISKS_LAYOUT_FILE
 
-	IFS=';'
+	local IFS=';'
 
 	BL_INSTALLED="no"
 
@@ -389,8 +389,6 @@ EOF
 			BL_INSTALLED="yes"
 		done
 
-	unset IFS
-
 	if test -r /tmp/bootloader.installed
 	then
 		rm -f /tmp/bootloader.installed
@@ -415,7 +413,7 @@ _do_partitions() {
 	loginfo "Stopping UDEV exec queue to prevent raid restart when creating partitions"
 	udevadm control --stop-exec-queue
 	sis_update_step part
-	IFS=';'
+	local IFS=';'
 	xmlstarlet sel -t -m 'config/disk' -v "concat(@dev,';',@label_type,';',@unit_of_measurement)" -n ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d' |\
 		while read DISK_DEV LABEL_TYPE T_UNIT;
 	       	do
@@ -477,7 +475,6 @@ _do_partitions() {
 					[ -n "${P_LVM_GROUP}" ] && [ -z "`echo $P_FLAGS|grep lvm`" ] && shellout "Missing lvm flag for ${DISK_DEV}${P_NUM}"
 				done
 	       	done
-	unset IFS
 }
 
 ################################################################################
@@ -502,7 +499,7 @@ _do_partitions() {
 ################################################################################
 #
 _find_free_space() {
-	unset IFS
+	unset IFS # Make sure IFS is not set
 	case "$3" in
 		logical)
 			# if partition is logical, get the working range to seach for free space
@@ -535,7 +532,7 @@ _find_free_space() {
 ################################################################################
 _do_raids() {
 	loginfo "Creating software raid devices if needed."
-	IFS=';'
+	local IFS=';'
 	xmlstarlet sel -t -m 'config/raid/raid_disk' -v "concat(@name,';',@raid_level,';',@raid_devices,';',@spare_devices,';',@rounding,';',@layout,';',@chunk_size,';',@lvm_group,';',@devices)" -n ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d' |\
 		while read R_NAME R_LEVEL R_DEVS_CNT R_SPARES_CNT R_ROUNDING R_LAYOUT R_CHUNK_SIZE R_LVM_GROUP R_DEVICES
 		do
@@ -584,7 +581,6 @@ GRUB_CMDLINE_LINUX_DEFAULT="${GRUB_CMDLINE_LINUX_DEFAULT} rd.auto"
 EOF
 		done
 
-	unset IFS # restore IFS.
 	# Now check if we need to create a mdadm.conf
 	if [ -n "${CMD}" ] # We created at least one raid volume.
 	then
@@ -629,7 +625,7 @@ _do_lvms() {
 
 	loginfo "Creating volume groups"
 
-	IFS=';'
+	local IFS=';'
 	xmlstarlet sel -t -m "config/lvm/lvm_group" -v "concat(@name,';',@max_log_vols,';',@max_phys_vols,';',@phys_extent_size)" -n ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d' |\
 		while read VG_NAME VG_MAX_LOG_VOLS VG_MAX_PHYS_VOLS VG_PHYS_EXTENT_SIZE
 		do
@@ -683,8 +679,6 @@ _do_lvms() {
 				done
 			done
 
-	unset IFS
-
 	if test -n "$CMD" # BUG: CMD will always be empty (something|while read.... creates sub process; variable in not updated upstream)
 	then
 		WANT_LVM="y"
@@ -716,7 +710,7 @@ _do_filesystems() {
 EOF
 
 	# Processing filesystem informations sorted by line number
-	IFS='<' # (need to use an XML forbidden char that is not & (used for escaped chars) (we could have used '>')
+	local IFS='<' # (need to use an XML forbidden char that is not & (used for escaped chars) (we could have used '>')
 	# Comment field can have any chars except &,<,>. forced output as TEXT (-T) so we dont end up with "&lt" instead of "<".
 	xmlstarlet sel -T -t -m "config/fsinfo" -s A:N:- "@line" -v "concat(@line,'<',@comment,'<',@real_dev,'<',@mount_dev,'<',@mp,'<',@fs,'<',@mkfs_opts,'<',@options,'<',@dump,'<',@pass,'<',@format)" -n ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d' |\
 		while read FS_LINE FS_COMMENT FS_REAL_DEV FS_MOUNT_DEV FS_MP FS_FS FS_MKFS_OPTS FS_OPTIONS FS_DUMP FS_PASS FS_FORMAT
