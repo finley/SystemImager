@@ -21,9 +21,14 @@ ROOT="$(getarg root=)"
 ROOTFLAGS="$(getarg rootflags=),ro"
 ROOTFLAGS="${ROOTFLAGS#,}"
 
-if test -n "${ROOT}" -a -b ${ROOT}
+# Get the real block device in case we have UUID= or LABEL= mountpoint type.
+ROOT_BLKDEV=$(findfs "${ROOT}") || shellout "Can't find block device for [root=${ROOT}]"
+# Make sure $ROOT points to a block device at least.
+test -b "${ROOT_BLKDEV}" || shellout "\$root is not a block device! [root=${ROOT}]"
+
+if test -n "${ROOT}" -a -b ${ROOT_BLKDEV}
 then
 	mount -o ${ROOTFLAGS} ${ROOT} /sysroot || warn "Can't mount root=${ROOT} on /sysroot (error:$?)"
 else
-	warn "Can't mount root=${ROOT} on /sysroot . [${ROOT}] is not a block device!"
+	warn "Can't mount root=${ROOT} on /sysroot . [${ROOT_BLKDEV}] is not a block device!"
 fi
