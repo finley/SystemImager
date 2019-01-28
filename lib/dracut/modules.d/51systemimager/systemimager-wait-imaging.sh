@@ -63,9 +63,9 @@ then
 			sis_postimaging reboot
 			;;
 	esac
-	return 0
+	exit 0
 else
 	logdebug "Imaging not yet finished.... (main loop: $main_loop/$RDRETRY)"
-	return 1
+	exit 1
 fi
 
