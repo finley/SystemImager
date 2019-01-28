@@ -268,7 +268,7 @@ si_install_bootloader() {
 					;;
 				"grub")
 					[ ! -x /sysroot/sbin/grub-install ] && shellout "grub-install missing in image. Can't install grub1 bootloader"
-					logwarn "Setting Default entry and timeout not yet supportedi for grub1"
+					logwarn "Setting Default entry and timeout not yet supported for grub1"
 					[ -z "${BL_DEFAULT}" ] && BL_DEFAULT=0
 					[ -z "${BL_TIMOUT}" ] && BL_TIMOUT=5
 					ROOT=`cat /proc/self/mounts |grep " /sysroot "|cut -d" " -f1`
@@ -389,6 +389,8 @@ EOF
 			BL_INSTALLED="yes"
 		done
 
+	unset IFS
+
 	if test -r /tmp/bootloader.installed
 	then
 		rm -f /tmp/bootloader.installed
@@ -397,7 +399,6 @@ EOF
 		logwarn "No bootloader installed. (bootloader section missing in disk layout file?)"
 		logwarn "Assuming post-install scripts will do the job!"
 	fi
-	IFS=' '
 }
 
 		
@@ -476,7 +477,7 @@ _do_partitions() {
 					[ -n "${P_LVM_GROUP}" ] && [ -z "`echo $P_FLAGS|grep lvm`" ] && shellout "Missing lvm flag for ${DISK_DEV}${P_NUM}"
 				done
 	       	done
-	IFS=' '
+	unset IFS
 }
 
 ################################################################################
@@ -501,7 +502,7 @@ _do_partitions() {
 ################################################################################
 #
 _find_free_space() {
-	IFS=' '
+	unset IFS
 	case "$3" in
 		logical)
 			# if partition is logical, get the working range to seach for free space
@@ -582,6 +583,8 @@ _do_raids() {
 GRUB_CMDLINE_LINUX_DEFAULT="${GRUB_CMDLINE_LINUX_DEFAULT} rd.auto"
 EOF
 		done
+
+	unset IFS # restore IFS.
 	# Now check if we need to create a mdadm.conf
 	if [ -n "${CMD}" ] # We created at least one raid volume.
 	then
@@ -607,8 +610,6 @@ MAILADDR root
 EOF
 		mdadm --detail --scan >> /tmp/mdadm.conf.temp
 	fi
-	IFS=' '
-
 }
 
 ################################################################################
@@ -617,7 +618,6 @@ EOF
 #		
 ################################################################################
 _do_lvms() {
-	IFS=';'
 	# Note: in dracut, on some distros, locking_type is set to 4 (readonly) for lvm (/etc/lvm/lvm.conf)
 	# to prevent any lvm modification during early boot.
 	# We need to get raound this default config.
@@ -629,6 +629,7 @@ _do_lvms() {
 
 	loginfo "Creating volume groups"
 
+	IFS=';'
 	xmlstarlet sel -t -m "config/lvm/lvm_group" -v "concat(@name,';',@max_log_vols,';',@max_phys_vols,';',@phys_extent_size)" -n ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d' |\
 		while read VG_NAME VG_MAX_LOG_VOLS VG_MAX_PHYS_VOLS VG_PHYS_EXTENT_SIZE
 		do
@@ -680,12 +681,14 @@ _do_lvms() {
 					logaction "${CMD}"
 					eval "${CMD}" || shellout "lvchange -a y /dev/${VG_NAME}/${LV_NAME} failed!"
 				done
-		done
-		if test -n "$CMD" # BUG: CMD will always be empty (something|while read.... creates sub process; variable in not updated upstream)
-		then
-			WANT_LVM="y"
-		fi
-	IFS=' '
+			done
+
+	unset IFS
+
+	if test -n "$CMD" # BUG: CMD will always be empty (something|while read.... creates sub process; variable in not updated upstream)
+	then
+		WANT_LVM="y"
+	fi
 }
 
 ################################################################################
@@ -833,7 +836,7 @@ EOF
 				update_dracut_root_infos
 			fi
 		done
-	IFS=' '
+	unset IFS
 }
 
 ################################################################################
@@ -852,7 +855,7 @@ _do_fstab() {
 	# We also populate initramfs:/etc/fstab.systemimager with mounted filesystems in sorted
         # order	so it's easier later to umount them.
 	loginfo "Processing fstab: Creating mount points and mounting physical filesystems."
-	unset IFS
+	unset IFS # Make sure IFS is the default filed separator.
 	cat /tmp/fstab.image |sed -e 's/#.*//' -e '/^$/d' | sort -k2,2 |\
 		while read M_DEV M_MP M_FS M_OPTS M_DUMP M_PASS
 		do
