@@ -37,6 +37,9 @@ FLAVOR="SYSTEMIMAGER_FLAVOR_STRING"
 #
 ################################################################################
 
+# Make sure IFS is not set.
+unset IFS
+
 type getarg >/dev/null 2>&1 || . /lib/dracut-lib.sh
 
 # On old distros like CentOS-6, the shell interpreter is "dash" (not "bash")
@@ -108,7 +111,7 @@ logaction() {
 
 # Log debug / system stuffs
 logdebug() {
-	[ "${DEBUG}" != "y" ] && return # Debug output not enabled => ignore
+	test -z "$(echo ${DEBUG}|grep -E '^y$|^Y$|^yes$|^YES$')" && return # Debug output not enabled => ignore
 	logmessage debug "${FG_BLUE}   debug:${FG_WHITE} $@"
 	if [ "${SIS_SYSMSG_ENABLED}" != "y" ]
 	then
