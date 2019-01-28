@@ -560,12 +560,18 @@ sis_postimaging() {
 
 		# Get the real block device in case we have UUID= or LABEL= mountpoint type.
 		ROOT_BLKDEV=$(findfs "${root#block:}") || shellout "Can't find filesystem [root=${root}]"
+		logdebug "Found ROOT_BLKDEV=${ROOT_BLKDEV}"
 		# Make sure $root points to a block device at least.
 		test -b "${ROOT_BLKDEV}" || shellout "\$root is not a block device! [root=${root}]"
 
 		# Make sure $root points to correct root in ou temporary /etc/fstab.systemimager
+		logdebug "Checking that [${root#block:}] is the device for /sysroot in fstab.systemimager"
 		test -n "`grep -E \"^${root#block:}\\s+/sysroot[/]{0,1}\\s+.*$\" /etc/fstab.systemimager`" || shellout "\$root not used for / in our fstab: [root=${root}]"
+
+		logdebug "Making sure initramfs:/etc/fstab.empty exists"
 		touch /etc/fstab.empty # make sure it exists
+
+		logdebug "Cleaning up initrd:/etc/fstab.systemimager"
 		rm -f /etc/fstab.systemimager       # cleanup our stuff!
 		# Make sure installed modules match ou kernel version.
 		RUNNING_KERNEL_VER=`uname -r`
