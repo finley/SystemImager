@@ -555,8 +555,11 @@ sis_postimaging() {
 		fi
 		loginfo "Using root=$root"
 
+		# Get the real block device in case we have UUID= or LABEL= mountpoint type.
+		ROOT_BLKDEV=$(findfs "${root#block:}") || shellout "Can't find filesystem [root=${root}]"
 		# Make sure $root points to a block device at least.
-		test -b "${root#block:}" || shellout "\$root is not a block device! [root=${root}]"
+		test -b "${ROOT_BLKDEV}" || shellout "\$root is not a block device! [root=${root}]"
+
 		# Make sure $root points to correct root in ou temporary /etc/fstab.systemimager
 		test -n "`grep -E \"^${root#block:}\\s+/sysroot[/]{0,1}\\s+.*$\" /etc/fstab.systemimager`" || shellout "\$root not used for / in our fstab: [root=${root}]"
 		touch /etc/fstab.empty # make sure it exists
