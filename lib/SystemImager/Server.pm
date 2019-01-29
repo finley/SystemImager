@@ -34,7 +34,6 @@ $VERSION="SYSTEMIMAGER_VERSION_STRING";
 #   _read_partition_info_and_prepare_pvcreate_commands -AR-
 #   _write_lvm_groups_commands -AR-
 #   _write_lvm_volumes_commands -AR-
-#   _write_boel_devstyle_entry
 #   _write_elilo_conf
 #   _write_out_mkfs_commands 
 #   _write_out_new_fstab_file 
@@ -1843,7 +1842,7 @@ sub create_autoinstall_script{
         close(MTAB);
     }
     
-    $file = "$auto_install_script_dir/$script_name.master";
+    $file = "$auto_install_script_dir/main-install/$script_name.master";
     my $template = "/etc/systemimager/autoinstallscript.template";
     open (my $TEMPLATE, "<$template") || die "Can't open $template for reading\n";
     open (my $MASTER_SCRIPT, ">$file") || die "Can't open $file for writing\n";
@@ -1888,104 +1887,19 @@ sub create_autoinstall_script{
 	            last SWITCH;
 	        }
 
-	        if (/^\s*${delim}SET_DISKORDER${delim}\s*$/) {
-                    # Set or unset disk autodetection.
-                    if ($autodetect_disks) {
-                        print $MASTER_SCRIPT qq(DISKORDER=sd,cciss,ida,rd,hd,xvd\n);
-                    } else {
-                        print $MASTER_SCRIPT qq(DISKORDER=\n);
-                    }
-	            last SWITCH;
-	        }
-
-	        if (/^\s*${delim}PARTITION_DISKS${delim}\s*$/) { 
-	            _read_partition_info_and_prepare_parted_commands( $MASTER_SCRIPT,
-	          						$image_dir, 
-	          						$auto_install_script_conf);
-	            last SWITCH;
-	        }
-
-                if (/^\s*${delim}CREATE_SOFT_RAID_DISKS${delim}\s*$/) { 
-                _read_partition_info_and_prepare_soft_raid_devs( $MASTER_SCRIPT,
-                    $image_dir, 
-                    $auto_install_script_conf);
-                    last SWITCH;
-                }
-
-                if (/^\s*${delim}INITIALIZE_LVM_PARTITIONS${delim}\s*$/) {
- 	            _read_partition_info_and_prepare_pvcreate_commands( $MASTER_SCRIPT,
- 	          						$image_dir,
- 	          						$auto_install_script_conf);
-                     last SWITCH;
-                }
-
-                if (/^\s*${delim}CREATE_LVM_GROUPS${delim}\s*$/) {
-                    write_lvm_groups_commands( $MASTER_SCRIPT,
-                                            $image_dir,
-                                            $auto_install_script_conf);
-                     last SWITCH;
-                }
-
-                if (/^\s*${delim}CREATE_LVM_VOLUMES${delim}\s*$/) {
-                     write_lvm_volumes_commands( $MASTER_SCRIPT,
-                                            $image_dir,
-                                            $auto_install_script_conf);
-                     last SWITCH;
-                }
-	        
-                if (/^\s*${delim}CREATE_FILESYSTEMS${delim}\s*$/) {
-	            _write_out_mkfs_commands( $MASTER_SCRIPT, 
-	          			$image_dir, 
-	          			$auto_install_script_conf);
-	            last SWITCH;
-	        }
-
-	        if (/^\s*${delim}GENERATE_FSTAB${delim}\s*$/) {
-                append_variables_txt_with_ip_assignment_method( $MASTER_SCRIPT, $ip_assignment_method );
-	            _write_out_new_fstab_file( $MASTER_SCRIPT, 
-	          			 $image_dir, 
-	          			 $auto_install_script_conf );
-	            last SWITCH;
-	        }
-
 	        if (/^\s*${delim}NO_LISTING${delim}\s*$/) {
 	            unless ($listing) { print $MASTER_SCRIPT "NO_LISTING=yes\n"; }
 	            last SWITCH;
 	        }
             
-            #if (/^\s*${delim}BOEL_DEVSTYLE${delim}\s*$/) {
-            #_write_boel_devstyle_entry($MASTER_SCRIPT, $auto_install_script_conf);
-            #    #    last SWITCH;
-            #}
-
-            #if (/^\s*${delim}SYSTEMCONFIGURATOR_PRE${delim}\s*$/) {
-            #    write_sc_command_pre($MASTER_SCRIPT, $ip_assignment_method);
-            #    last SWITCH;
-            #}
-
-            #if (/^\s*${delim}SYSTEMCONFIGURATOR_POST${delim}\s*$/) {
-            #    write_sc_command_post($MASTER_SCRIPT, $ip_assignment_method);
-            #    last SWITCH;
-            #}
-
-	        if (/^\s*${delim}UMOUNT_FILESYSTEMS${delim}\s*$/) {
-	            _write_out_umount_commands( $MASTER_SCRIPT,
-	          			  $image_dir, 
-	          			  $auto_install_script_conf );
-	            last SWITCH;
-	        }
-
-	        if (/^\s*${delim}MONITOR_POSTINSTALL${delim}\s*/) {
-                    my $post_state = {'beep' => 103, 'reboot' => 104, 'kexec' => 104, 'shutdown' => 105, 'shell' => 106 };
-                    print $MASTER_SCRIPT "    send_monitor_msg \"status=$post_state->{$post_install}:speed=0\"\n";
-                    last SWITCH;
-                }
-
 	        if (/^\s*${delim}POSTINSTALL${delim}\s*/) {
 	            
                 if ($post_install eq "beep") {
                     # beep incessantly stuff
                     print $MASTER_SCRIPT "beep_incessantly";
+		} elsif ($post_install eq "directboot") {
+		    print $MASTER_SCRIPT "# boot without reboot the autoinstall client\n";
+                    print $MASTER_SCRIPT "echo directboot > /tmp/SIS_action\n";
                 } elsif ($post_install eq "reboot") {
                     # reboot stuff
                     print $MASTER_SCRIPT "# reboot the autoinstall client\n";
@@ -2008,29 +1922,11 @@ sub create_autoinstall_script{
                     #print $MASTER_SCRIPT "kexec --force --append=\"\$kexec_append\" --initrd=/tmp/\$kexec_initrd --reset-vga --args-linux /tmp/\$kexec_kernel\n";
                 } elsif ($post_install eq "cmdline") {
                     print $MASTER_SCRIPT "# post imaging action is read from cmdlinei\n";
-                    print $MASTER_SCRIPT "# don't forget to set rd.sis.post-action= parameter in PXE cmdline\n";
+                    print $MASTER_SCRIPT "# don't forget to set si.post-action= parameter in PXE cmdline\n";
                     print $MASTER_SCRIPT "# if missing, default behavior is 'reboot'.\n";
                 }
                 last SWITCH;
 	        }
-
-			if (/^\s*${delim}SHOW_DISK_EDITS${delim}\s*$/) {
-				show_disk_edits( $MASTER_SCRIPT );
-				last SWITCH;
-			}
-			if (/^\s*${delim}EDIT_DISK_NAMES${delim}\s*$/) {
-				edit_disk_names( $MASTER_SCRIPT );
-				last SWITCH;
-			}
-
-			if (/^\s*${delim}SETUP_KEXEC${delim}\s*$/) {
-                if ($post_install eq "kexec") {
-                    setup_kexec( $MASTER_SCRIPT );
-                } else {
-                    print $MASTER_SCRIPT "# Not needed for this post-install action\n";
-                }
-                last SWITCH;
-            }
 
 	        ### END end of autoinstall options ###
 	        print $MASTER_SCRIPT $_;
@@ -2233,46 +2129,5 @@ sub _write_elilo_conf {
         close(ELILO_CONF);
         return 1;
 }
-
-
-#
-# Description:
-#   Decide whether to "mount /dev /sysroot/dev -o bind", and write to master
-#   autoinstall script.  
-#
-#   Clients should have one of the following entries in their 
-#   autoinstallscript.conf file:
-#
-#       <boel devstyle="udev"/>
-#       <boel devstyle="devfs"/>
-#       <boel devstyle="static"/>
-#
-#   
-# Usage:
-#   _write_boel_devstyle_entry($MASTER_SCRIPT, $auto_install_script_conf);
-#
-#XXX no longer needed
-#sub _write_boel_devstyle_entry {
-#
-#    my ($script, $file) = @_;
-#
-#    my $xml_config = XMLin($file, keyattr => { boel => "+devstyle"} );
-#
-#    if( defined($xml_config->{boel}->{devstyle}) 
-#        && (    ("$xml_config->{boel}->{devstyle}" eq "devfs")
-#             or ("$xml_config->{boel}->{devstyle}" eq "udev" ) )
-#      ) {
-#
-#        my $cmd = q(mount /dev /sysroot/dev -o bind || shellout);
-#        print $script qq(logmsg "$cmd"\n);
-#        print $script qq($cmd\n);
-#        
-#    } else {
-#
-#        print $script qq(#not needed for this image\n);
-#        
-#    }
-#}
-
 
 # /* vi: set filetype=perl ai et ts=4 sw=4: */
