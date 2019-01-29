@@ -246,14 +246,27 @@
 	    </listitem>
 	    <listitem>
 	      <para>
+		directboot -- Clients will continue to boot without going thru a reboot
+		after successful completion of an autoinstall.
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		shell -- Clients will drop a shell command after successful completion
+		of an autoinstall. Sysadmin can use si_inspectclient to navigate into
+		imaged client.
+	      </para>
+	    <listitem>
+	      <para>
 		reboot -- Clients will reboot themselves after successful
 		completion of an autoinstall.
 	      </para>
 	    </listitem>
 	    <listitem>
 	      <para>
-		shutdown -- Clients will halt themselves after successful
-		completion of an autoinstall.
+		shutdown or poweroff -- Clients will halt themselves after successful
+		completion of an autoinstall. (if poweroff is used, the power will be
+		shut if possible)
 	      </para>
 	    </listitem>
 	    <listitem>
