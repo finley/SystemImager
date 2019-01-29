@@ -109,7 +109,7 @@ my $ip_assignment_method;
 my $image;
 my $exclude_file;
 my $update_script;
-my $post_install = "beep"; # the default
+my $post_install = "directboot"; # the default
 
 # It is not intended that auto_install_script_conf be passable as an option on
 # the getimage command line.  See si_mkautoinstallscript if you want to specify 
