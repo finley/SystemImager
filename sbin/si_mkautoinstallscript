@@ -122,10 +122,14 @@ The following options affect the autoinstall client after autoinstalling:
                 Clients will beep incessantly after succussful completion of an
                 autoinstall.
 
+		DERECTBOOT
+		----------------------------------------------------------------
+		Clients will continue boot process without going thru a reboot.
+		(default)
                 REBOOT 
                 ----------------------------------------------------------------
                 Clients will reboot themselves after successful completion of 
-                an autoinstall. (default)
+                an autoinstall.
 
                 SHUTDOWN 
                 ----------------------------------------------------------------
@@ -248,10 +252,10 @@ SystemImager::Server->create_autoinstall_script(
 	$imagedir,
 	$ip_assignment_method,
 	$post_install,
-    $listing,
-    $auto_install_script_conf,
-    $autodetect_disks,
-    $cmdline
+	$listing,
+	$auto_install_script_conf,
+	$autodetect_disks,
+	$cmdline
 );
 ### END create a fresh master autoinstall script ###
 
