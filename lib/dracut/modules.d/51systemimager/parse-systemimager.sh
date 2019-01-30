@@ -123,8 +123,8 @@ getargbool 1 si.selinux-relabel && SEL_RELABEL="y" && logdebug "Got SEL_RELABEL=
 
 #########################
 # si.post-action=(shell, reboot, shutdown) => default to reboot
-SIS_POST_ACTION=$(getarg si.post-action) && logdebug "Got SIS_POST_ACTION=${SIS_POST_ACTION}"
-test -z "${SIS_POST_ACTION}" && SIS_POST_ACTION="reboot" && loginfo "SIS_POST_ACTION is empty. Default to 'reboot'"
+SI_POST_ACTION=$(getarg si.post-action) && logdebug "Got SI_POST_ACTION=${SI_POST_ACTION}"
+test -z "${SI_POST_ACTION}" && SI_POST_ACTION="reboot" && loginfo "SI_POST_ACTION is empty. Default to 'reboot'"
 
 # Set a default value for protocol if it's still empty at this time.
 test -z "${DL_PROTOCOL}" && DL_PROTOCOL="rsync" && loginfo "DL_PROTOCOL is empty. Default to 'rsync'"

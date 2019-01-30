@@ -28,9 +28,9 @@ logdebug "==== systemimager-deploy-client ===="
 if test -z "$IMAGENAME"
 then
 	logerror "IMAGENAME not set!"
-	loginfo  "set rd.sis.image-name= cmdline parameter or"
-	loginfo  "set IMAGENAME= in ${IMAGESERVER}:/etc/systemimager/sis-image.conf and"
-	loginfo  "set si.conf=sis-image.conf"
+	loginfo  "set si.image-name= cmdline parameter or"
+	loginfo  "set IMAGENAME= in ${IMAGESERVER}:/var/lib/systemimager/scripts/configs/<configname>.conf and"
+	loginfo  "set si.conf=<vonfigname>.conf"
 	shellout "IMAGENAME not set!"
 fi
 
@@ -42,10 +42,6 @@ detect_storage_devices
 loginfo "Initializing protocol: $DL_PROTOCOL ..."
 init_transfer
 . /tmp/variables.txt # re-read variables.
-
-# Start si_monitor progress and status report.
-#loginfo "Starting monitor progress report task..."
-#start_report_task
 
 if [ "$TMPFS_STAGING" = "yes" ]; then
     tmpfs_watcher
@@ -238,11 +234,11 @@ fi
 beep 3
 
 # Everything is finished. Tell initqueue/finished that we are done.
-# $SIS_POST_ACTION can contain: shell, reboot, shutdown, (emergency is reserved)
-# It is set as PXE cmdline parameter rd.sis.post-action
+# $SI_POST_ACTION can contain: directboot, shell, reboot, shutdown, (emergency is reserved)
+# It is set as PXE cmdline parameter si.post-action
 # default value is "reboot".
-# This action can be overrided in /tmp/SIS_action by imaging script
-test ! -e /tmp/SIS_action && echo "${SIS_POST_ACTION}" > /tmp/SIS_action
+SI_IMAGING_STATUS="finished"
+write_variables
 
 getarg 'si.break=finished' && logwarn "Break finished" && interactive_shell
 

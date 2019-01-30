@@ -142,8 +142,8 @@ test -z "$SEL_RELABEL" && SEL_RELABEL="y" # default to true!
 
 #########################
 # si.post-action=(shell, reboot, shutdown) => default to reboot
-SIS_POST_ACTION=`getarg si.post-action`
-test -z "${SIS_POST_ACTION}" && SIS_POST_ACTION="reboot"
+SI_POST_ACTION=`getarg si.post-action`
+test -z "${SI_POST_ACTION}" && SI_POST_ACTION="reboot"
 
 # Set a default value for protocol if it's still empty at this time.
 test -z "${DL_PROTOCOL}" && DL_PROTOCOL="rsync" && loginfo "DL_PROTOCOL is empty. Default to 'rsync'"

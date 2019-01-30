@@ -1898,24 +1898,30 @@ sub create_autoinstall_script{
                     # beep incessantly stuff
                     print $MASTER_SCRIPT "beep_incessantly";
 		} elsif ($post_install eq "directboot") {
+		    # directboot stuff
 		    print $MASTER_SCRIPT "# boot without reboot the autoinstall client\n";
-                    print $MASTER_SCRIPT "echo directboot > /tmp/SIS_action\n";
+                    print $MASTER_SCRIPT "SI_POST_ACTION="directboot"\n";
+                    print $MASTER_SCRIPT "write_variables\n";
                 } elsif ($post_install eq "reboot") {
                     # reboot stuff
                     print $MASTER_SCRIPT "# reboot the autoinstall client\n";
-                    print $MASTER_SCRIPT "echo reboot > /tmp/SIS_action\n";
+                    print $MASTER_SCRIPT "SI_POST_ACTION="reboot"\n";
+                    print $MASTER_SCRIPT "write_variables\n";
                 } elsif ($post_install eq "shutdown") {
                     # shutdown stuff
                     print $MASTER_SCRIPT "# shutdown the autoinstall client\n";
-                    print $MASTER_SCRIPT "echo shutdown > /tmp/SIS_action\n";
+                    print $MASTER_SCRIPT "SI_POST_ACTION="shutdown"\n";
+                    print $MASTER_SCRIPT "write_variables\n";
                 } elsif ($post_install eq "shell") {
                     # shell stuff
                     print $MASTER_SCRIPT "# Drop to debug shell\n";
-                    print $MASTER_SCRIPT "echo shell > /tmp/SIS_action\n";
+                    print $MASTER_SCRIPT "SI_POST_ACTION="shell"\n";
+                    print $MASTER_SCRIPT "write_variables\n";
                 } elsif ($post_install eq "kexec") {
                     # kexec imaged kernel
                     print $MASTER_SCRIPT "# kexec the autoinstall client\n";
-                    print $MASTER_SCRIPT "echo kexec > /tmp/SIS_action\n";
+                    print $MASTER_SCRIPT "SI_POST_ACTION="kexec"\n";
+                    print $MASTER_SCRIPT "write_variables\n";
                     # BUG: OL: Need full rework. kexec_append was computed using systemconfigurator scconf-bootinfo which is no longer supported
                     #print $MASTER_SCRIPT "# this is executed twice to support relocatable kernels from RHEL5\n";
                     #print $MASTER_SCRIPT "kexec --force --append=\"\$kexec_append\" --initrd=/tmp/\$kexec_initrd --reset-vga /tmp/\$kexec_kernel\n";

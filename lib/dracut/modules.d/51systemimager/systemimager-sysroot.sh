@@ -25,9 +25,11 @@ test -n "${ROOT}" || shellout "\$ROOT is empty!"
 
 # Get the real block device in case we have UUID= or LABEL= mountpoint type.
 ROOT_BLKDEV=$(findfs "${ROOT}") || shellout "Can't find block device for [root=${ROOT}]"
+logdebug "Using root real device: [$ROOT_BLKDEV]"
 
 # Make sure $ROOT points to a block device at least.
 test -b "${ROOT_BLKDEV}" || shellout "\$root is not a block device! [root=${ROOT}] [device=${ROOT_BLKDEV}]"
 
+logdebug "Mounting [${ROOT}] on /sysroot
 mount -o ${ROOTFLAGS} ${ROOT} /sysroot || warn "Can't mount root=${ROOT} on /sysroot (error:$?)"
 

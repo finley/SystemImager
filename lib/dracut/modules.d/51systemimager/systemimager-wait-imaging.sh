@@ -11,7 +11,7 @@
 #
 # This file is run by initqueue/finished hook from dracut-initqueue service
 # It is called every seconds until it returns 0
-# IF a file /tmp/SIS_action is found it acts according to content:
+# Depending on SI_IMAGING_STATUS (finished, failed, inprogress)
 # reboot: imaging is finished and reboot was the default action
 # shutdown: imaging is finished and shutdown was the default action
 # emergency: a problem occured => trigger emergency shell.
@@ -23,49 +23,52 @@ type shellout >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 
 logdebug "==== systemimager-wait-imaging ===="
 
-if test -f /tmp/SIS_action
-then
-	cd / # Make sure we're not in the wrong plce.
-	ACTION=`cat /tmp/SIS_action`
-	case "$ACTION" in
-		"shell")
-			loginfo "Installation successfull. Dropping to interactive shell as requested."
-			send_monitor_msg "status=106:speed=0" # 106=shell
-			sis_postimaging shell
-			;;
-		"emergency")
-			logwarn "Installation Failed!"
-			send_monitor_msg "status=-1:speed=0" # -1: error
-			sis_postimaging emergency
-			;;
-		"reboot"|"kexec")
-			logwarn "Installation successfull. Rebooting as requested"
-			send_monitor_msg "status=104:speed=0" # 104: rebooting
-			sleep 10
-			sis_postimaging reboot
-			;;
-		"shutdown"|"poweroff")
-			loginfo "Installation successfull. shutting down as requested"
-			send_monitor_msg "status=105:speed=0" # 105: shutdown/poweroff
-			sleep 10
-			sis_postimaging poweroff
-			;;
-		"directboot")
-			loginfo "Installation successfull. Finishing as normal boot without rebooting"
-			send_monitor_msg "status=104:speed=0" # 104: rebooting
-			sleep 10
-			sis_postimaging directboot
-			;;
-		*)
-			logwarn "Installation successfull. Invalid post action. Rebooting"
-			send_monitor_msg "status=104:speed=0" # 104: rebooting
-			sleep 10
-			sis_postimaging reboot
-			;;
-	esac
-	exit 0
-else
-	logdebug "Imaging not yet finished.... (main loop: $main_loop/$RDRETRY)"
-	exit 1
-fi
+case "$SI_IMAGING_STATUS" in
+	"finished")
+		logdebug "Imaging finished. Doing post action [$SI_POST_ACTION]"
+		cd / # Make sure we're not in the wrong plce.
+		case "$SI_POST_ACTION" in
+			"shell")
+				loginfo "Installation successfull. Dropping to interactive shell as requested."
+				send_monitor_msg "status=106:speed=0" # 106=shell
+				sis_postimaging shell
+				;;
+			"reboot"|"kexec")
+				logwarn "Installation successfull. Rebooting as requested"
+				send_monitor_msg "status=104:speed=0" # 104: rebooting
+				sleep 10
+				sis_postimaging reboot
+				;;
+			"shutdown"|"poweroff")
+				loginfo "Installation successfull. shutting down as requested"
+				send_monitor_msg "status=105:speed=0" # 105: shutdown/poweroff
+				sleep 10
+				sis_postimaging poweroff
+				;;
+			"directboot")
+				loginfo "Installation successfull. Finishing as normal boot without rebooting"
+				send_monitor_msg "status=104:speed=0" # 104: rebooting
+				sleep 10
+				sis_postimaging directboot
+				;;
+			*)
+				logwarn "Installation successfull. Invalid post action. Rebooting"
+				send_monitor_msg "status=104:speed=0" # 104: rebooting
+				sleep 10
+				sis_postimaging reboot
+				;;
+		esac
+		exit 0
+		;;
+	"failed")
+		logwarn "Installation Failed!"
+		send_monitor_msg "status=-1:speed=0" # -1: error
+		sis_postimaging emergency
+		exit 0
+		;;
+	"inprogress")
+		logdebug "Imaging not yet finished.... (main loop: $main_loop/$RDRETRY)"
+		exit 1
+		;;
+esac
 

@@ -404,11 +404,14 @@ BITTORRENT_UPLOAD_MIN="$BITTORRENT_UPLOAD_MIN"
 
 SEL_RELABEL="$SEL_RELABEL"			# si.selinux-relabel
 
-SIS_POST_ACTION="$SIS_POST_ACTION"		# si.post-action
+SI_POST_ACTION="$SI_POST_ACTION"		# si.post-action (defaults is reboot)
+SI_IMAGING_STATUS="${SI_IMAGING_STATUS:=inprogress}"	# contains "finished" when imaging is finished
+
 IMAGED_MODULES="${IMAGED_MODULES}"
 
 DEBUG="${DEBUG}"				# si.debug
 SIS_SYSMSG_ENABLED="$SIS_SYSMSG_ENABLED"
+
 export TERM="${TERM}"
 
 EOF
@@ -772,12 +775,12 @@ shellout() {
     fi
     logwarn "Killing off any udp-receiver and rsync processes."
     killall -9 udp-receiver rsync  >/dev/null 2>/dev/null
-    write_variables
     if [ ! -z "$USELOGGER" ] ;
         then cat /etc/issue | logger
     fi
    # Need to trigger emergency shell
-    echo emergency > /tmp/SIS_action
+    SI_IMAGING_STATUS="failed"
+    write_variables
     sis_postimaging emergency # Set the correct link for /tmp/message.txt and call interactive_shell
 }
 #

@@ -30,7 +30,7 @@
 # - touch image directory after each getimage
 
 # set system path for system() calls
-$ENV{PATH} = "/usr/local/sbin:/usr/sbin:/sbin:/usr/local/bin:/usr/bin:/bin";
+$ENV{PATH} = "/usr/sbin:/sbin:/usr/bin:/bin";
 
 # version
 $version_number="SYSTEMIMAGER_VERSION_STRING";
@@ -40,7 +40,7 @@ $version_number="SYSTEMIMAGER_VERSION_STRING";
 $nisdomain="";
 
 # use the long options module to allow us to use, well, long options ;)
-use lib "USR_PREFIX/lib/systemimager/perl";
+#use lib "USR_PREFIX/lib/systemimager/perl";
 use Getopt::Long;
 use Socket;
 use SystemImager::Server;
@@ -64,7 +64,7 @@ unless ($autoinstall_script_dir) {
     die "FATAL: parameter AUTOINSTALL_SCRIPT_DIR is not defined in ".$config->systemimager_dir."/systemimager.conf\n";
 }
 my $autoinstall_boot_dir = $config->autoinstall_boot_dir();
-unless ($autoinstall_script_dir) {
+unless ($autoinstall_boot_dir) {
     die "FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in ".$config->systemimager_dir."/systemimager.conf\n";
 }
 my $rsyncd_conf = $config->rsyncd_conf();
@@ -231,7 +231,7 @@ This program will get the \"$image\" system image from \"$source_host\"
 making the assumption that all filesystems considered part of the
 system image are using ext2, ext3, ext4, jfs, FAT, reiserfs, or xfs.
 
-This program will not get /proc, NFS, or other filesystems
+This program will not get /proc, /sys, /dev, NFS, or other filesystems
 not mentioned above.
 
 *********************************** WARNING *********************************** 
@@ -535,6 +535,7 @@ unless($update_script eq "yes") { exit 0; }
 ### END Overwrite $script_name.master? ###
 
 
+#OL: BUG/TODO: where do we need nisdomain?
 ### BEGIN Got NIS? ###
 $file="$imagedir/etc/sysconfig/network";
 if(open (NETWORK, "< $file")) {
@@ -609,9 +610,11 @@ elsif($ip_assignment_method == "3") { $ip_assignment_method = "replicant"; }
 
 ### BEGIN create a fresh master autoinstall script ###
 # If not specified, use default for autoinstallscript.conf. -BEF-
+#OL:BUG: autoinstallscript.conf should go to disks-layout dir.
 unless ($auto_install_script_conf) {
     $auto_install_script_conf = "${imagedir}/etc/systemimager/autoinstallscript.conf";
 }
+
 unless (-f $auto_install_script_conf) {
     die "ERROR: I can't find the autoinstallscript.conf file. See autoinstallscript.conf(8) for details.\n";
 }
@@ -645,7 +648,4 @@ if (!$quiet) {
 
 print  <<"EOF";
 The image \"$image\" has been successfully configured.
-
-Remember to register your cluster(s) at:
-   http://www.systemimager.org/cluster-register
 EOF

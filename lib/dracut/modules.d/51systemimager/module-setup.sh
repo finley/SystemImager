@@ -85,7 +85,7 @@ install() {
     inst_hook cmdline 50 "$moddir/parse-systemimager.sh" # read cmdline parameters
     inst_hook cmdline 70 "$moddir/systemimager-init.sh" # Creates /run/systemimager and sets rootok
     inst_hook initqueue/settled 50 "$moddir/systemimager-warmup.sh" # Waits for plymouth
-    inst_hook initqueue/finished 90 "$moddir/systemimager-wait-imaging.sh" # Waits for file /tmp/SIS_action
+    inst_hook initqueue/finished 90 "$moddir/systemimager-wait-imaging.sh" # Waits for $SI_IMAGING_STATUS = "finished"
     inst_hook initqueue/timeout 10 "$moddir/systemimager-timeout.sh" # In case of timeout (DHCP failure, ....)
     inst_hook initqueue/online 00 "$moddir/parse-local-cfg.sh" # Read local.cfg (takes precedence over cmdline)
     inst_hook initqueue/online 10 "$moddir/systemimager-load-network-infos.sh" # read network informations
