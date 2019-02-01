@@ -22,9 +22,16 @@ type shellout >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 . /tmp/variables.txt
 
 logdebug "==== systemimager-wait-imaging ===="
+logdebug "Called as: $f by $0"
 
 case "$SI_IMAGING_STATUS" in
 	"finished")
+		if test ! -e /etc/fstab.systemimager
+		then
+			logwarn "directboot: finished called twice"
+			exit 0
+		fi
+
 		logdebug "Imaging finished. Doing post action [$SI_POST_ACTION]"
 		cd / # Make sure we're not in the wrong plce.
 		case "$SI_POST_ACTION" in
@@ -50,6 +57,7 @@ case "$SI_IMAGING_STATUS" in
 				send_monitor_msg "status=104:speed=0" # 104: rebooting
 				sleep 10
 				sis_postimaging directboot
+				logdebug "directboot engaged"
 				;;
 			*)
 				logwarn "Installation successfull. Invalid post action. Rebooting"
