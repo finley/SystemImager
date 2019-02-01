@@ -546,7 +546,7 @@ sis_postimaging() {
 	# root= must be set to block:/dev/the/correct/root/device
 	# /etc/fstab.empty must exists.
 	# rflags must be set to ro
-	# then we return 0 (not exit!!) si dracut mainloop can continue. 
+	# then we return 0 (not exit!!) so dracut mainloop can continue. 
 	if test "${ACTION}" = "directboot"
 	then
 		# Read root= updated values
