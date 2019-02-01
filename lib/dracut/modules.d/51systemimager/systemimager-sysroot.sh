@@ -30,6 +30,6 @@ logdebug "Using root real device: [$ROOT_BLKDEV]"
 # Make sure $ROOT points to a block device at least.
 test -b "${ROOT_BLKDEV}" || shellout "\$root is not a block device! [root=${ROOT}] [device=${ROOT_BLKDEV}]"
 
-logdebug "Mounting [${ROOT}] on /sysroot
-mount -o ${ROOTFLAGS} ${ROOT} /sysroot || warn "Can't mount root=${ROOT} on /sysroot (error:$?)"
+logdebug "Mounting [${ROOT}] on /sysroot"
+mount -o ${ROOTFLAGS} ${ROOT} /sysroot || logwarn "Can't mount root=${ROOT} on /sysroot (error:$?)"
 
