@@ -29,7 +29,7 @@ case "$SI_IMAGING_STATUS" in
 		if test ! -e /etc/fstab.systemimager
 		then
 			logwarn "directboot: finished called twice"
-			exit 0
+			return 0
 		fi
 
 		logdebug "Imaging finished. Doing post action [$SI_POST_ACTION]"
@@ -66,17 +66,17 @@ case "$SI_IMAGING_STATUS" in
 				sis_postimaging reboot
 				;;
 		esac
-		exit 0
+		return 0
 		;;
 	"failed")
 		logwarn "Installation Failed!"
 		send_monitor_msg "status=-1:speed=0" # -1: error
 		sis_postimaging emergency
-		exit 0
+		return 0
 		;;
 	"inprogress")
 		logdebug "Imaging not yet finished.... (main loop: $main_loop/$RDRETRY)"
-		exit 1
+		return 1
 		;;
 esac
 
