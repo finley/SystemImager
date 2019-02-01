@@ -155,7 +155,7 @@ install_plymouth_theme() {
 [Daemon]
 Theme=systemimager
 ShowDelay=0
-DeviceTimeout=1
+# DeviceTimeout=5
 EOF
     cp -f ${initdir}/etc/plymouth/plymouthd.conf ${initdir}/usr/share/plymouth/plymouthd.defaults
 }
