@@ -434,7 +434,7 @@ update_dracut_root_infos() {
 		# We need to put information in cmdline.d/systemimager-rootfs-infos.conf
 		test -f /etc/cmdline.d/systemimager.conf && sed -i -e '/^root/d' /etc/cmdline.d/systemimager.conf && logdebug "Removed dummy root infos from /etc/cmdline.d/systemimager.conf so getarg root won't return none"
 		cat > /etc/cmdline.d/systemimager-rootfs-infos.conf <<EOF
-root=${root#block:}
+root=${root}
 rootflags=${rflags}
 EOF
 	elif test -f /tmp/root.info
