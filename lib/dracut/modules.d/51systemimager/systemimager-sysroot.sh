@@ -12,6 +12,10 @@
 #
 # This file is run by mount hook from dracut-mount service
 # It'll mount /sysroot
+# It is required because $root can't be updaterd in dracut-initqueue.sh (or initqueue.sh)
+# dans /dracut-state.sh (or /root.info) is overwrittent with this script variables.
+# updating $root in initqueue/online (diffrent process) or initqueue/finished (sub process)
+# is futile. old fake $root value (set in cmdline hook) will always come back.
 
 type shellout >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 

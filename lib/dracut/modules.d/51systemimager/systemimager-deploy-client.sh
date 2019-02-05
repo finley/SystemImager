@@ -241,4 +241,4 @@ SI_IMAGING_STATUS="finished"
 write_variables
 
 getarg 'si.break=finished' && logwarn "Break finished" && interactive_shell
-
+logdebug "leaving dracut initqueue/online hook."
