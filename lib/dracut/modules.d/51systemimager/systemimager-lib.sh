@@ -475,6 +475,7 @@ get_distro_vendor() {
 	test -r ${ROOT_FS}/etc/centos-release && echo "centos" && return
 	test -r ${ROOT_FS}/etc/redhat-release && echo "redhat" && return
 	test -r ${ROOT_FS}/etc/debian_version && echo "debian" && return
+	test -r ${ROOT_FS}/etc/SuSE-release && echo "suse" && return
 	echo "unknown"
 }
 
