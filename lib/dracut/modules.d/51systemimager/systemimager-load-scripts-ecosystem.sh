@@ -49,6 +49,7 @@ get_group_name
 # 5: imagename (if defined outside config file)
 # 6: default.cfg
 
+OLD_POST_ACTION=$SI_POST_ACTION
 ALT_CONFIG=`choose_filename /scripts/configs .conf`
 if test -n "${SIS_CONFIG}" -a -f "/scripts/configs/${SIS_CONFIG}"
 then
@@ -61,6 +62,6 @@ then
 else
 	loginfo "No config available, using defaults"
 fi
-
+[ "$OLD_POST_ACTION" != "$SI_POST_ACTION" ] && loginfo "new SI_POST_ACTION read from config ${SIS_CONFIG}. New action after imaging: $SI_POST_ACTION."O
 # Save values
 write_variables
