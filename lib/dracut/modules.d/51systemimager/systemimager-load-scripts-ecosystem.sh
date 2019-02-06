@@ -62,6 +62,7 @@ then
 else
 	loginfo "No config available, using defaults"
 fi
-[ "$OLD_POST_ACTION" != "$SI_POST_ACTION" ] && loginfo "new SI_POST_ACTION read from config ${SIS_CONFIG}. New action after imaging: $SI_POST_ACTION."O
+[ "$OLD_POST_ACTION" != "$SI_POST_ACTION" ] && loginfo "New SI_POST_ACTION read from config ${SIS_CONFIG}. New action after imaging: $SI_POST_ACTION."
+
 # Save values
 write_variables
