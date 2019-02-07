@@ -87,6 +87,7 @@ EOF
 write_systemdInitFile() {
 
 # Create the systemd service file
+    logdebug "Creating systemimager-monitor-firstboot service file"
     cat << EOF > /sysroot/lib/systemd/system/systemimager-monitor-firstboot.service
 # systemd service description file for systemimager
 # (c) Olivier Lahaye 2012
@@ -108,6 +109,7 @@ WantedBy=default.target
 EOF
 
 # Create the script that will run
+    logdebug "Creating systemimager-monitor-firstboot script"
     cat <<EOF > /sysroot/lib/systemd/systemimager-monitor-firstboot
 #!/bin/bash
 # systemd service script for systemimager
@@ -130,9 +132,11 @@ else
 fi
 EOF
 
-    chmod +x /lib/systemd/systemimager-monitor-firstboot
+    logdebug "Setting execute permission on systemimager-monitor-firstboot script"
+    chmod +x /sysroot/lib/systemd/systemimager-monitor-firstboot
     # --no-reload avoid systemd to immediately start the service (before reboot).
-    systemctl --no-reload enable systemimager-monitor-firstboot.service
+    logdebug "enabling systemimager-monitor-firstboot service in client"
+    chroot /sysroot systemctl --no-reload enable systemimager-monitor-firstboot.service
 }
 
 #
@@ -140,6 +144,7 @@ EOF
 # $1 name of the init script with full path.
 #
 write_SysVInitFile() {
+    logdebug "Creating systemimager-monitor-firstboot init script"
     cat << EOF > $1
 #!/bin/bash
 ### BEGIN INIT INFO
@@ -187,15 +192,17 @@ exit 0
 EOF
 
     chmod a+x $1
-    if [ -x /sbin/chkconfig ]; then
-        chkconfig --add systemimager-monitor-firstboot
+    if [ -x /sysroot/sbin/chkconfig ]; then
+	logdebug "Enabling systemimager-monitor-firstboot in client using chkconfig"
+        chroot /sysroot chkconfig --add systemimager-monitor-firstboot
     elif [ ! -e /etc/rcS.d/S99systemimager-monitor-firstboot ]; then
-        ln -s $init_file /etc/rcS.d/S99systemimager-monitor-firstboot
+	logdebug "Enabling systemimager-monitor-firstboot in client using old school link"
+	(cd /sysroot; ln -s $1 /etc/rcS.d/S99systemimager-monitor-firstboot)
     fi
 }
 
 # Make sure the rebooted state file is not already present in installed system (present in image)
-rm -f $rebooted_state_file
+rm -f /sysroot/$rebooted_state_file
 
 # Create the init file that will report the rebooted states at first boot.
 create_InitFile
