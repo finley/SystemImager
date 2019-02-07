@@ -149,6 +149,9 @@ save_logs_to_sysroot # Saves /tmp/relevant install infos to /root/SIS_Install/
 IMAGED_MODULES=`(cd /sysroot/lib/modules; echo *)` # no need to store it in variables.txt (we are sourced from initqueue hook).
 write_variables # Need to save that for non systemd dracut (we are run from udev online, not initqueue/online on those old stuffs)
 
+# Install the systemimager-montor-rebooted service before we umount client filesystems.
+/lib/systemimager-install-rebooted-script
+
 # Unmount system filesystems
 umount_os_filesystems_from_sysroot
 

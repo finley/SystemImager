@@ -8,11 +8,20 @@
 #              to the monitor server.
 #
 
+# Load our lib.
+type shellout >/dev/null 2>&1 || . /lib/systemimager-lib.sh
+
+# Load variables.txt
+. /tmp/variables.txt
+
+logdebug "==== systemimager-install-rebooted-script ===="
+
+
 # netcat timeout in seconds
 TIMEOUT=30
 
 # File created after reboot if rebooted state was successuflly reported to the server.
-rebooted_state_file=/etc/systemimager/si_monitor.client.rebooted
+rebooted_state_file=/sysroot/etc/systemimager/si_monitor.client.rebooted
 rebooted_message="status=102:speed=0"
 
 send_message_cmd() {
@@ -45,23 +54,28 @@ send_message_cmd() {
 
 create_InitFile() {
     # Create /etc/systemimager if it doesn't exist.
-    if [ ! -d /etc/systemimager ]; then
-        mkdir -p /etc/systemimager
+    if [ ! -d /sysroot/etc/systemimager ]; then
+        mkdir -p /sysroot/etc/systemimager
     fi
 
     # Redhat like (RHEL / old Fedora / Mandrake / ...)
-    if test -d /etc/rc.d/init.d && test ! -d /lib/systemd/system; then
-        write_SysVInitFile /etc/rc.d/init.d/systemimager-monitor-firstboot
+    if test -d /sysroot/etc/rc.d/init.d && test ! -d /sysroot/lib/systemd/system; then
+	loginfo "Installing systemimager-monitor-firstboot SysV init file"
+        write_SysVInitFile /sysroot/etc/rc.d/init.d/systemimager-monitor-firstboot
     # SuSE or debian like like (SuSE, OpenSuSE, ...)
-    elif test -d /etc/init.d && test ! -d /lib/systemd/system; then
-        write_SysVInitFile /etc/init.d/systemimager-monitor-firstboot
+    elif test -d /sysroot/etc/init.d && test ! -d /sysroot/lib/systemd/system; then
+	loginfo "Installing systemimager-monitor-firstboot SysV init file"
+        write_SysVInitFile /sysroot/etc/init.d/systemimager-monitor-firstboot
     # Modern distro with systemd like Fedora, Mandriva, ...
     # NOTE: debian has this directory even if systemd is not used, thus we need to check for systemd after init scripts...
-    elif test -d /lib/systemd/system; then
+    elif test -d /sysroot/lib/systemd/system; then
+	loginfo "Installing systemimager-monitor-firstboot systemd service"
         write_systemdInitFile
     # Unknown script boot system. default to rc.local.
     else
-        cat <<EOF >> /etc/rc.local
+	logwarn "Unable to identify boot services mechanism system"
+	loginfo "Installing systemimager-monitor-firstboot script in /etc/rc.local"
+        cat <<EOF >> /sysroot/etc/rc.local
 $(send_message_cmd) || sed -i -e /etc/rc.local 's/^(echo ".*$//g'
 EOF
     fi
@@ -73,7 +87,7 @@ EOF
 write_systemdInitFile() {
 
 # Create the systemd service file
-    cat << EOF > /lib/systemd/system/systemimager-monitor-firstboot.service
+    cat << EOF > /sysroot/lib/systemd/system/systemimager-monitor-firstboot.service
 # systemd service description file for systemimager
 # (c) Olivier Lahaye 2012
 
@@ -180,11 +194,10 @@ EOF
     fi
 }
 
-# Load installation variables.
-[ -e /tmp/post-install/variables.txt ] && . /tmp/post-install/variables.txt
-
 # Make sure the rebooted state file is not already present in installed system (present in image)
 rm -f $rebooted_state_file
 
 # Create the init file that will report the rebooted states at first boot.
 create_InitFile
+
+# -- END --
