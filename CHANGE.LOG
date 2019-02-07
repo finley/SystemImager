@@ -10,6 +10,7 @@
 
 5.0.0 [ Not yet released ]
 --------------------------------------------------------------------------------
+- Linux distro supported: CentOS-6, CentOS-7, Fedora-27, Open SuSE-42.3, debian8, debian9
 - Plymouth GUI
 - direct boot feature (no reboot after imaging)
 - Put transfert protocols in plugins API instead of being hardcodded into
@@ -44,7 +45,11 @@
                                disks-layouts
                                install-conf
 - scripts are now optional. Mandatory things are disk-layout file and image name (can be set at last in main-install script).
-- Linux distro supported: CentOS-6, CentOS-7, Fedora-27, Open SuSE-42.3
+- systemimager-monitor-rebooted service installation now handled by dracut module (no more post-install script required).
+- Support for dhcp and static ip configuration within dracut cmdline parameters (ip= cmdline)
+- Support for bootloader installation within dracut module (no more post-install script required).
+- Support EFI booloader (grub2-efi and rEFInd). (clover planed)
+
 
 4.5.0 [ Never released ]
 --------------------------------------------------------------------------------
