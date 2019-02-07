@@ -21,7 +21,7 @@ logdebug "==== systemimager-install-rebooted-script ===="
 TIMEOUT=30
 
 # File created after reboot if rebooted state was successuflly reported to the server.
-rebooted_state_file=/sysroot/etc/systemimager/si_monitor.client.rebooted
+rebooted_state_file=/etc/systemimager/si_monitor.client.rebooted
 rebooted_message="status=102:speed=0"
 
 send_message_cmd() {
@@ -108,7 +108,7 @@ WantedBy=default.target
 EOF
 
 # Create the script that will run
-    cat <<EOF > /lib/systemd/systemimager-monitor-firstboot
+    cat <<EOF > /sysroot/lib/systemd/systemimager-monitor-firstboot
 #!/bin/bash
 # systemd service script for systemimager
 # (c) Olivier Lahaye 2012-2018
@@ -117,7 +117,7 @@ EOF
 # It will exists if we did a direct boot.
 if test -r /run/systemimager/si_monitor.log -a -w /root/SIS_Install_logs
 then
-	cp -f /run/systemimager/si_monitor.log /root/SIS_Install_logs/si_monitor.log
+	cat /run/systemimager/si_monitor.log | sed -E 's/^[\[[0-9]{2}m//g' > /root/SIS_Install_logs/si_monitor.log
 fi
 
 if ($(send_message_cmd))
