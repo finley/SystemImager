@@ -1,0 +1,318 @@
+#!/bin/bash
+
+#
+#   $Id$
+#
+#   Written by Olivier Lahaye <olivier.lahaye@cea.fr>
+#   rewrite of Dann Frazier <daniel_frazier@hp.com> code for systemd
+#   Copyright (C) 2006 Brian Elliott Finley
+#
+
+#########################################################################
+# The intent of this script is to automate the configuration of a
+# linux PXE server, and is written with SystemImager in mind.
+# it uses pxelinux and configures it for a kernel/single ramdisk scenario.
+#
+# it is written as a set of independent tasks so that it can hopefully
+# be expanded for other architectures, and other non-SystemImager purposes
+#
+#########################################################################
+
+CONFIG_FILE=${SIS_CONFDIR:=/etc/systemimager}/systemimager.conf
+INTERACTIVE="yes"
+INTERFACE=""
+LOCAL_DHCP=""
+TFTPDIR=`sed -ne "s/^[[:space:]]*[^#]*[[:space:]]*TFTP_DIR[[:space:]]*=[[:space:]]*\\([^#]*\\).*$/\1/p" $CONFIG_FILE`
+BOOTDIR=`sed -ne "s/^[[:space:]]*[^#]*[[:space:]]*AUTOINSTALL_BOOT_DIR[[:space:]]*=[[:space:]]*\\([^#]*\\).*$/\1/p" $CONFIG_FILE`
+PXELINUX=""
+
+program_name=$(basename $0)
+
+usage() {
+cat 1>&2 <<EOF
+Usage:  $program_name [-f] [--interface=interface] [--localdhcp=y|n]
+        [--pxelinux=path]"
+EOF
+}
+
+PATH=/usr/bin:/usr/sbin:/bin:/sbin
+
+if [ -z "$TFTPDIR" ]; then
+    echo "ERROR: TFTP_DIR not defined in $CONFIG_FILE"
+    exit 1
+fi
+if [ -z "$BOOTDIR" ]; then
+    echo "ERROR: AUTOINSTALL_BOOT_DIR not defined in $CONFIG_FILE"
+    exit 1
+fi
+
+TFTPD_PATH=""
+TFTP_TEST_FILE_TEXT="all your tftp test file are belong to us"
+TFTP_DAEMON=""
+
+CONFIG_DIR="$SIS_CONFDIR"
+
+################################################################################
+# Functions
+################################################################################
+
+################################################################################
+# shellout "Error message"
+# => Displays an error message and exits.
+shellout() {
+	echo 1>&2 $*
+	exit 1
+}
+
+################################################################################
+# backup_file <file>
+# => create a .bak version. If .bak already exists. Halt there.
+backup_file() {
+	test -z "$1" && shellout "BUG: backup_file called without a filename"
+	test ! -f "$1" && shellout "$1 doesn't exists. Can't make a backup."
+	if test -f "$1.bak"
+	then
+		if diff -q $1 $1.bak
+		then
+			echo "$1 already backed up."
+		else
+			shellout "$1.bak already exists. Cant backup $1."
+		fi
+	fi
+	cp -r $1 $1.bak || shellout "Failed to backup $1 [Error: $?]"
+}
+
+################################################################################
+# setup_tftpd /path/to/tftpboot
+# => Configure and enable a tftp server to serve files from /path/to/tftpboot
+
+setup_tftpd() {
+	TFTPDIR=$1
+	test ! -d "$TFTPDIR" && shellout "TFTP directory [$TFTPDIR] does not exists. Please fix that and try again".
+
+	if test -n "$(type -p in.tftpd)"
+	then
+		SERVICE=tftpd
+		SYSTEMD_OVERRIDE="ExecStart=/usr/sbin/in.tftpd -s $TFTPDIR"
+
+	elif test -n "$(type -p atftpd)"
+	then
+		SERVICE=atftpd
+		SYSTEMD_OVERRIDE="EnvironmentFile=-/etc/systemimager/atftpd.systemimager"
+		cat > /etc/systemimager/atftpd.systemimager <<EOF
+USE_INETD=true
+ATFTPD_USER=nobody
+ATFTPD_OPTIONS="--tftpd-timout 300 --retry-timeout 5 --mcast-port 1758 --mcast-addr 239.239.239.0 --mcast-ttl 1 --maxthread 100 --verbose=5"
+ATFTPD_DIRECTORY=$TFTPDIR
+EOF
+	else
+		shellout "No supported tftp server found (searched for in.tftpd and atftpf)"
+	fi
+
+	mkdir -p /etc/systemd/system/$SERVICE.service.d
+	cat > /etc/systemd/system/$SERVICE.service.d/systemimager.tftpdir.conf <<EOF
+[Service]
+$SYSTEMD_OVERRIDE
+EOF
+
+	systemctl daemon-reload
+	systemctl enable $SERVICE.socket
+}
+
+################################################################################
+# test_tftpd
+test_tftpd() {
+    echo -n "Looking for a tftp client... "
+    TFTP_CLIENT=$(type -p tftp)
+
+    ### BEGIN TFTP CLIENT NOT FOUND
+    if [ "$TFTP_CLIENT" == "" ]; then
+        echo "tftp client not found in your PATH."
+        echo ""
+        echo "A tftp client is required to test the functionality of your"
+        echo "tftp server.  Please install an appropriate tftp client package"
+        echo "for your distribution."
+        return 1
+    else
+        echo "found $TFTP_CLIENT ."
+    fi
+    ### END TFTP CLIENT NOT FOUND
+
+    # tftpd socket but be active
+    if ! systemctl -q is-active tftp.socket && ! systemctl -q is-active atftpd.socket
+    then
+	shellout "Your tftp server is not active. Can't test it".
+    fi
+
+    echo -n "Does tftp server work... "
+
+    TMPFILE="$(mktemp ${TFTPDIR}/test.XXXXXX)"
+
+    if test "$TMPFILE" = ""; then
+        shellout "Failed to find a temporary filename"
+    fi
+
+    echo "$TFTP_TEST_FILE_TEXT" > $TMPFILE
+    if [ $? -ne 0 ]; then
+        echo "no."
+        shellout "Unable to write to $TMPFILE"
+    fi
+
+    chmod 644 $TMPFILE
+    if [ $? -ne 0 ]; then
+        rm -f $TMPFILE
+        shellout "Error: chmod failed."
+    fi
+
+    tftp localhost 1> /dev/null 2> /dev/null <<EOF
+get `basename $TMPFILE`
+EOF
+    if [ $? -ne 0 ]; then
+        rm -f $TMPFILE
+        shellout "Error: tftp returned a non-zero status"
+    fi
+
+    diff "./`basename $TMPFILE`" "$TMPFILE" 1> /dev/null 2> /dev/null
+    if [ $? -ne 0 ]; then
+        echo "no."
+        rm -f $TMPFILE
+        shellout "I couldn't tftp a test file from localhost"
+    fi
+
+    echo "yes."
+    rm -f $TMPFILE
+    rm -f `basename $TMPFILE`
+    return 0
+}
+
+################################################################################
+# setup_pxe_files
+# => Installs PXE binaries and menu in $TFTPDIR
+# If package syslinux-tftpboot is installed, and if tftpdir is the system default
+# we only install pxelinux.cfg/ files (all other binaries are already present)
+setup_pxe_files() {
+	# 1/ Make sure we have a pxelinux executable (either from script parameter or by guessing it)
+    if test -z "$PXELINUX"
+    then
+	    test -f /usr/share/syslinux/pxelinux.0 && PXELINUX=/usr/share/syslinux/pxelinux.0
+	    test -f /usr/lib/syslinux/pxelinux.0 && PXELINUX=/usr/lib/syslinux/pxelinux.0
+    fi
+    test -z "$PXELINUX" && shellout "Can't find pxelinux.0. Please re-run this script wit --pxelinux= option"
+    PXELINUX_PATH=${PXELINUX%/*}
+    PXELINUX_BIN=${PXELINUX##*/}
+
+    	# 2/ If a pxe menu exists, we backup it
+    test -e $TFTPDIR/pxelinux.cfg/default && backup_file $TFTPDIR/pxelinux.cfg/default
+
+        # 3/ IF we lack vesamenu.c32, we disable the graphical menu.
+    test ! -f $TFTPDIR/vesamenu.c32 && ! -f $PXELINUX_PATH/vesamenu.c32 && VERSAMENU="n" && echo "vesamenu is not available"
+
+    # 4/ We install the PXE Menu.
+    if test "$VERSAMENU" = "y"
+    then
+	    echo "Installing graphical PXE menu."
+	    test ! -f $TFTPDIR/vesamenu.c32 && cp $PXELINUX_PATH/vesamenu.c32 $TFTPDIR || shellout "Failed to install menu.c21 from $PXELINUX_PATH"
+	    test ! -f $TFTPDIR/systemimager.png && ${CONFIG_DIR}/pxelinux.cfg/systemimager.png || shellout "BUG: /etc/systemimager/pxelinux.cfg/systemimager.png is missing"
+    	cp -f ${CONFIG_DIR}/pxelinux.cfg/syslinux.cfg.gfxboot $TFTPDIR/pxelinux.cfg/default || shellout "Failed to install pxelinux.cfg/default"
+    else
+	    echo "Installing basic PXE menu."
+    	cp -f ${CONFIG_DIR}/pxelinux.cfg/syslinux.cfg $TFTPDIR/pxelinux.cfg/default || shellout "Failed to install pxelinux.cfg/default"
+    	test -e $TFTP_DIR/message.txt && backup_file $TFTP_DIR/message.txt
+    	cp -f ${CONFIG_DIR}/pxelinux.cfg/message.txt $TFTP_DIR/message.txt || shellout "Failed to install message.txt"
+    fi
+	echo "PXE boot menu installed"
+}
+
+### BEGIN MAIN        
+if [ "`whoami`" != "root" ]; then
+    echo "You must be root to run this script, exiting."
+    exit 1
+fi
+
+# Check that we are on systemd based system.
+test -z "$(type -p systemctl)" && shellout "Non systemd based OS. STOP! (BUG: Packaging problem)"
+
+# Parse command line arguments
+while test $# -gt 0
+do
+	case "$1" in
+		-f )		INTERACTIVE="no"; shift ;;
+		--interface=* )	INTERFACE="${1/--*=/}"; shift ;;
+		--localdhcp=* )	LOCAL_DHCP="${1/--*=/}"; shift ;;
+		--pxelinux=* )	PXELINUX=="${1/--*=/}"; shift ;;
+		--vesamenu )    VESAMENU="y"; shift;;
+		* )		usage ; exit 1 ;;
+	esac
+done
+
+echo << EOF
+WARNING: this script may modify the following components:
+	- services configuration
+	- services enabled
+	- xinetd
+This script may also restart inetd, xinetd, tftp services.
+EOF
+
+echo -n "Do you wish to continue (y/[n])? "
+
+if test "$INTERACTIVE" = "no"
+then
+	REPLY="y"
+	echo "Non-interactive mode, answering yes."
+else
+	read REPLY
+fi
+
+
+case ${REPLY:0:1} in
+	y|Y ) echo "Ok, continuing..." ;;
+    * ) echo "Cancelled." && exit 1 ;;
+esac
+
+if [ "$TFTPDIR" == "" ]; then
+    echo -n "Where should tftpd serve files from ([/var/lib/tftpboot]? "
+    if [ "$INTERACTIVE" == "no" ]; then
+        REPLY="/var/lib/tftpboot"
+        echo "Non-interactive mode, taking the default."
+    else
+        read REPLY
+    fi
+    if [ "$REPLY" == "" ]; then
+        TFTPDIR="/var/lib/tftpboot"
+    else
+        TFTPDIR=$REPLY
+    fi
+fi
+
+# STEP 1
+setup_tftpd
+
+# STEP 2
+test_tftpd
+
+# STEP3
+# install_pxe_daemon # Obsolete on systemd based system
+
+# STEP 4
+# configure_pxe_daemon # Obsolete on systemd based system
+
+# STEP5
+setup_pxe_files
+
+echo "Ok, configuration complete."
+echo "Once you're DHCP server is configured, you should be all set."
+if [ "$(type -p si_mkdhcpserver)" != "" ]; then
+    echo -n "Do you want to run si_mkdhcpserver to configure your DHCP server ([y]/n)? "
+    if [ "$INTERACTIVE" == "no" ]; then
+        REPLY="n"
+        echo "Non-interactive mode, answering no."
+    else
+        read REPLY
+    fi
+    case ${REPLY:0:1} in
+        n|N ) exit 0 ;;
+            * ) si_mkdhcpserver ;;
+    esac
+fi
+
+# === END ===

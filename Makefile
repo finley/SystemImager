@@ -189,7 +189,7 @@ KBOOT_CONF_SRC    = etc/kboot.cfg
 KBOOT_CONF_DEST   = $(ETC)/systemimager/kboot.cfg
 
 BINARIES := si_mkautoinstallcd si_mkautoinstalldisk si_psh si_pcp si_pushoverrides si_clusterconfig
-SBINARIES := si_addclients si_cpimage si_getimage si_mkdhcpserver si_mkdhcpstatic si_mkautoinstallscript si_mkbootserver si_mvimage si_pushupdate si_pushinstall si_rmimage si_mkrsyncd_conf si_mkclientnetboot si_netbootmond si_monitor si_monitortk si_installbtimage
+SBINARIES := si_addclients si_cpimage si_getimage si_mkdhcpserver si_mkdhcpstatic si_mkautoinstallscript si_mvimage si_pushupdate si_pushinstall si_rmimage si_mkrsyncd_conf si_mkclientnetboot si_netbootmond si_monitor si_monitortk si_installbtimage
 CLIENT_SBINARIES  := si_updateclient si_prepareclient
 COMMON_BINARIES   = si_lsimage si_mkbootpackage
 
@@ -264,6 +264,11 @@ install_server:	install_server_man 	\
 		$(SI_INSTALL) -m 755 $(BINARY_SRC)/$(binary) $(BIN);)
 	$(foreach binary, $(SBINARIES), \
 		$(SI_INSTALL) -m 755 $(BINARY_SRC)/$(binary) $(SBIN);)
+ifneq ("$(wildcard /usr/lib/systemd/*system)","")
+	$(SI_INSTALL) -m 755 $(BINARY_SRC)/si_mkbootserver.systemd $(SBIN)/si_mkbootserver
+else
+	$(SI_INSTALL) -m 755 $(BINARY_SRC)/si_mkbootserver.sysvinit $(SBIN)/si_mkbootserver
+endif
 	$(SI_INSTALL) -d -m 755 $(LOG_DIR)
 	$(SI_INSTALL) -d -m 755 $(LOCK_DIR)
 	$(SI_INSTALL) -d -m 755 $(BOOT_BIN_DEST)
@@ -296,6 +301,8 @@ install_server:	install_server_man 	\
 		$(PXE_CONF_DEST)/message.txt
 	$(SI_INSTALL) -m 644 --backup $(PXE_CONF_SRC)/syslinux.cfg \
 		$(PXE_CONF_DEST)/syslinux.cfg
+	$(SI_INSTALL) -m 644 --backup $(PXE_CONF_SRC)/syslinux.cfg.gfxboot \
+		$(PXE_CONF_DEST)/syslinux.cfg.gfxboot
 	$(SI_INSTALL) -m 644 --backup $(PXE_CONF_SRC)/syslinux.cfg.localboot \
 		$(PXE_CONF_DEST)/syslinux.cfg.localboot
 	$(SI_INSTALL) -m 644 --backup $(PXE_CONF_SRC)/syslinux.cfg.localboot \

@@ -1,0 +1,65 @@
+UI vesamenu.c32
+
+DEFAULT systemimager
+
+#
+# Uncomment next line to send pxelinux boot prompt over serial port 0.
+# NOTE: Be sure your serial port speed is appropriate (57600, 9600, etc.)
+#
+# SERIAL 0 57600
+
+PROMPT 0
+TIMEOUT 50
+
+MENU TITLE    SystemImager PXE Boot Server
+
+MENU RESOLUTION 1024 768
+MENU BACKGROUND systemimager.png
+MENU AUTOBOOT Will boot the next device as configured in your BIOS in # second{,s}.
+MENU ROWS 34
+MENU TABMSGROW 40
+MENU CMDLINEROW 40
+MENU TIMEOUTROW 42
+MENU HELPMSGROW 44
+MENU HELPMSGENDROW 44
+MENU TABMSG   Press the <tab> key to edit the boot parameters of the highlighted option.
+MENU NOTABMSG Editing of this option is disabled.
+MENU COLOR screen      0  #80ffffff #00000000 std      # background colour not covered by the splash image
+MENU COLOR border      0  #ffffffff #ee000000 std      # The wire-frame border
+MENU COLOR title       0  #ffff3f7f #ee000000 std      # Menu title text
+MENU COLOR sel         0  #ff00dfdf #ee000000 std      # Selected menu option
+MENU COLOR hotsel      0  #ff7f7fff #ee000000 std      # The selected hotkey (set with ^ in MENU LABEL)
+MENU COLOR unsel       0  #ffffffff #ee000000 std      # Unselected menu options
+MENU COLOR hotkey      0  #ff7f7fff #ee000000 std      # Unselected hotkeys (set with ^ in MENU LABEL)
+MENU COLOR tabmsg      0  #c07f7fff #00000000 std      # Tab text
+MENU COLOR timeout_msg 0  #8000dfdf #00000000 std      # Timout text
+MENU COLOR timeout     0  #c0ff3f7f #00000000 std      # Timout counter
+MENU COLOR disabled    0  #807f7f7f #ee000000 std      # Disabled menu options, including SEPARATORs
+MENU COLOR cmdmark     0  #c000ffff #ee000000 std      # Command line marker - The '> ' on the left when editing an option
+MENU COLOR cmdline     0  #c0ffffff #ee000000 std      # Command line - The text being edited
+# Options below haven't been tested, descriptions may be lacking.
+# MENU COLOR scrollbar   0  #40000000 #00000000 std      # Scroll bar
+# MENU COLOR pwdborder   0  #80ffffff #20ffffff std      # Password box wire-frame border
+# MENU COLOR pwdheader   0  #80ff8080 #20ffffff std      # Password box header
+# MENU COLOR pwdentry    0  #80ffffff #20ffffff std      # Password entry field
+# MENU COLOR help        0  #c0ffffff #00000000 std      # Help text, if set via 'TEXT HELP ... ENDTEXT'
+#
+# APPEND line list initrd.img and all cmdline parameter that should be passed to imager.
+# man dracut.cmdline for all OS parameters like ip= rd.vconsole.keymap= ...
+# man TODO for all systemimager parameters like si.image-server...
+# Most common parameters:
+# si.image-server= : hostname or ip of the image server (defaults to dhcp server)
+# si.monitor-server= : hostname or ip of the monitor server (where you run systemimager-server-monitord and see deployment with si_monitortk command
+# si.monitor.console=yes : enables logs sent to monitor server
+# si.post-action= : action taken after successfull image (most common: directboot (default), reboot, shell)
+# si.skip-local-cfg=yes : doesn't try to read local.cfg from a floppy 
+
+LABEL systemimager
+    MENU LABEL ^s - Start a SystemImager imaging.
+    KERNEL kernel
+    APPEND initrd=initrd.img initrd=CO7-sis-initrd.img si.skip-local-cfg=yes si.image-server=10.0.238.84 si.monitor-server=172.16.59.250 si.monitor-console=yes si.post-action=directboot ramdisk_blocksize=1024 ramdisk_size=128000 acpi=no noapic vga=ask splash quiet
+
+LABEL localhost
+    MENU LABEL ^l - Boot from local disk.
+    LOCALBOOT 0
+
