@@ -87,7 +87,6 @@ backup_file() {
 # => Configure and enable a tftp server to serve files from /path/to/tftpboot
 
 setup_tftpd() {
-	TFTPDIR=$1
 	test ! -d "$TFTPDIR" && shellout "TFTP directory [$TFTPDIR] does not exists. Please fix that and try again".
 
 	if test -n "$(type -p in.tftpd)"
@@ -220,8 +219,8 @@ setup_pxe_files() {
     else
 	    echo "Installing basic PXE menu."
     	cp -f ${CONFIG_DIR}/pxelinux.cfg/syslinux.cfg $TFTPDIR/pxelinux.cfg/default || shellout "Failed to install pxelinux.cfg/default"
-    	test -e $TFTP_DIR/message.txt && backup_file $TFTP_DIR/message.txt
-    	cp -f ${CONFIG_DIR}/pxelinux.cfg/message.txt $TFTP_DIR/message.txt || shellout "Failed to install message.txt"
+    	test -e $TFTPDIR/message.txt && backup_file $TFTPDIR/message.txt
+    	cp -f ${CONFIG_DIR}/pxelinux.cfg/message.txt $TFTPDIR/message.txt || shellout "Failed to install message.txt"
     fi
 	echo "PXE boot menu installed"
 }
