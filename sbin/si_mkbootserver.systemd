@@ -93,12 +93,12 @@ setup_tftpd() {
 	if test -n "$(type -p in.tftpd)"
 	then
 		SERVICE=tftpd
-		SYSTEMD_OVERRIDE="ExecStart=/usr/sbin/in.tftpd -s $TFTPDIR"
+		SYSTEMD_OVERRIDE="ExecStart=\nExecStart=/usr/sbin/in.tftpd -s $TFTPDIR"
 
 	elif test -n "$(type -p atftpd)"
 	then
 		SERVICE=atftpd
-		SYSTEMD_OVERRIDE="EnvironmentFile=-/etc/systemimager/atftpd.systemimager"
+		SYSTEMD_OVERRIDE="EnvironmentFile=\nEnvironmentFile=-/etc/systemimager/atftpd.systemimager"
 		cat > /etc/systemimager/atftpd.systemimager <<EOF
 USE_INETD=true
 ATFTPD_USER=nobody
@@ -111,6 +111,9 @@ EOF
 
 	mkdir -p /etc/systemd/system/$SERVICE.service.d
 	cat > /etc/systemd/system/$SERVICE.service.d/systemimager.tftpdir.conf <<EOF
+# Overridden values against original systemd file.
+# Dont remove the duplicate empty parameter. It is here to empty its value
+# and avoid adding second entry (instead of replacing it which is what we want).
 [Service]
 $SYSTEMD_OVERRIDE
 EOF
