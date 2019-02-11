@@ -303,6 +303,8 @@ endif
 		$(PXE_CONF_DEST)/syslinux.cfg
 	$(SI_INSTALL) -m 644 --backup $(PXE_CONF_SRC)/syslinux.cfg.gfxboot \
 		$(PXE_CONF_DEST)/syslinux.cfg.gfxboot
+	$(SI_INSTALL) -m 644 --backup $(PXE_CONF_SRC)/systemimager.png \
+		$(PXE_CONF_DEST)/systemimager.png
 	$(SI_INSTALL) -m 644 --backup $(PXE_CONF_SRC)/syslinux.cfg.localboot \
 		$(PXE_CONF_DEST)/syslinux.cfg.localboot
 	$(SI_INSTALL) -m 644 --backup $(PXE_CONF_SRC)/syslinux.cfg.localboot \
