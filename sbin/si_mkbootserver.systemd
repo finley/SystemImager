@@ -114,7 +114,7 @@ EOF
 # Dont remove the duplicate empty parameter. It is here to empty its value
 # and avoid adding second entry (instead of replacing it which is what we want).
 [Service]
-$SYSTEMD_OVERRIDE
+$(echo -e $SYSTEMD_OVERRIDE)
 EOF
 
 	systemctl daemon-reload
@@ -213,8 +213,8 @@ setup_pxe_files() {
     if test "$VERSAMENU" = "y"
     then
 	    echo "Installing graphical PXE menu."
-	    test ! -f $TFTPDIR/vesamenu.c32 && cp $PXELINUX_PATH/vesamenu.c32 $TFTPDIR || shellout "Failed to install menu.c21 from $PXELINUX_PATH"
-	    test ! -f $TFTPDIR/systemimager.png && ${CONFIG_DIR}/pxelinux.cfg/systemimager.png || shellout "BUG: /etc/systemimager/pxelinux.cfg/systemimager.png is missing"
+	    test ! -f $TFTPDIR/vesamenu.c32 && (cp $PXELINUX_PATH/vesamenu.c32 $TFTPDIR || shellout "Failed to install vesamenu.c32 from $PXELINUX_PATH")
+	    test ! -f $TFTPDIR/systemimager.png && (cp ${CONFIG_DIR}/pxelinux.cfg/systemimager.png || shellout "BUG: /etc/systemimager/pxelinux.cfg/systemimager.png is missing")
     	cp -f ${CONFIG_DIR}/pxelinux.cfg/syslinux.cfg.gfxboot $TFTPDIR/pxelinux.cfg/default || shellout "Failed to install pxelinux.cfg/default"
     else
 	    echo "Installing basic PXE menu."
