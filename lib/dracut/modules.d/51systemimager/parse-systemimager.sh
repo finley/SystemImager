@@ -43,7 +43,7 @@ test -z "$IMAGENAME" && IMAGENAME=$(getarg si.image-name -d IMAGENAME) && logdeb
 test -z "$SCRIPTNAME" && SCRIPTNAME=$(getarg si.script-name -d SCRIPTNAME) && logdebug "Got SCRIPTNAME=${SCRIPTNAME}"
 
 #####################################
-# si.disk-layout="disklayout|disklayout.xml"
+# si.disks-layout="disklayout|disklayout.xml"
 test -z "$DISKS_LAYOUT" && DISKS_LAYOUT=$(getarg si.disks-layout -d DISKS_LAYOUT) && logdebug "Got DISKS_LAYOUT=${DISKS_LAYOUT}"
 
 #####################################
