@@ -41,6 +41,9 @@
     Due to the limited size of cmdline parameters (255 chars), it is recommended to use a configuration file for parameters that are mostly common to all clients. The configuration template file is available in <filename>/etc/systemimager/autoinstallconf.template</filename>. Copy it to <filename><replaceable>&lt;image-server&gt;</replaceable>:/var/lib/systemimager/scripts/configs/<replaceable>&lt;name&gt;.conf</replaceable></filename>
   </para>
   <para>
+    All parameters are converted to there variable equivalent. They are available by sourcing /tmp/variables.txt in pre-install ans main-install scripts and by sourcing /tmp/post-install/variables.txt when running post-install. (chrooted environment).
+  </para>
+  <para>
     Note that parameters defined in the configuration file have priority over parameters defined in the kernel command line.
   </para>
   </refsect1>
