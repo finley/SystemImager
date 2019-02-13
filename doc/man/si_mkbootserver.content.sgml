@@ -33,6 +33,7 @@
       <arg><option>--interface=<replaceable>INTERFACE</replaceable></option></arg>
       <arg><option>--localdhcp=<replaceable>[y|n]</replaceable></option></arg>
       <arg><option>--pxelinux=<replaceable>PATH</replaceable></option></arg>
+      <arg><option>--vesamenu</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
   <refsect1>
@@ -84,6 +85,14 @@
 	  <para>
 	    The full path to the pxelinux bootloader.  This is a part of the
 	    syslinux package.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>--vesamenu</option></term>
+	<listitem>
+	  <para>
+	    Installs a graphical PXE menu instead of minimalistic text menu.
 	  </para>
 	</listitem>
       </varlistentry>
