@@ -27,6 +27,7 @@ SERVER_MAN = si_addclients.8 				\
 			si_rmimage.8					\
 			si_mkbootserver.8				\
 			systemimager.conf.5			\
+			systemimager.cmdline.7			\
 			systemimager-rsyncd.conf.5	\
 			si_mkrsyncd_conf.8				\
 			si_mkclientnetboot.8				\
