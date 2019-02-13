@@ -95,7 +95,7 @@ si_clusterconfig.8: $(TOPDIR)/sbin/si_clusterconfig
 si_pushupdate.8: $(TOPDIR)/sbin/si_pushupdate
 	pod2man --release=$(SYSTEMIMAGER_VERSION) -s 8 -c "SystemImager" $< $@
 
-%.5 %.8:	%.sgml %.content.sgml
+%.5 %.7 %.8:	%.sgml %.content.sgml
 	docbook2man $<
 	mv $(shell echo $@ | tr '[:lower:]' '[:upper:]') $@
 
@@ -124,4 +124,4 @@ install_client_man:	$(foreach file, $(CLIENT_MAN), $(file).gz)
 	    sed 's/.*\(.\)$$/\1/'`/$(manpage).gz ;)
 
 clean:
-	rm -f *~ \#*\# *.8 *.5 *.gz manpage.links manpage.refs
+	rm -f *~ \#*\# *.8 i*.7 *.5 *.gz manpage.links manpage.refs
