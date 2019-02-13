@@ -12,7 +12,7 @@
 - Add network configuration using networkmanageri or systemd-networkd (in a postinstall script at 1st)
 - Add install of monitor_rebooted service in dracut module instead of postinstall script.
 - DONE: Do not install grub on disk we did not handle
-- rewrite si_mkbootserver
+- DONE: rewrite si_mkbootserver
 - use http://aria2.sourceforge.net/ for torrent / ftp / http / ... protocols.
 - migrate autoinstallscript.conf.content.sgml to systemimager.disk-layout.sgml
 - create systemimager.cmdline.sgml
