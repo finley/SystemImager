@@ -1152,6 +1152,8 @@ get_group_name() {
             # Add the global override on top (least important).
             GROUP_OVERRIDES="`sed -ne 's/^# global_override=:\([^:]*\):$/\1/p' ${SCRIPTS_DIR}/cluster.txt` $GROUP_OVERRIDES"
         fi
+    else
+	logwarn "cluster.txt doesn't exists (won't use GROUPNAMES and GROUP_OVERRIDES). You should concider running si_clusterconfig to generate it."
     fi
     write_variables # Save GROUPNAMES and GROUP_OVERRIDES to variables.txt
 }
