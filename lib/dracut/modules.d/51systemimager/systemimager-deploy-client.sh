@@ -30,7 +30,7 @@ then
 	logerror "IMAGENAME not set!"
 	loginfo  "set si.image-name= cmdline parameter or"
 	loginfo  "set IMAGENAME= in ${IMAGESERVER}:/var/lib/systemimager/scripts/configs/<configname>.conf and"
-	loginfo  "set si.conf=<vonfigname>.conf"
+	loginfo  "set si.config=<configname>.conf"
 	shellout "IMAGENAME not set!"
 fi
 
