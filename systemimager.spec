@@ -1333,6 +1333,7 @@ fi
 %{perl_vendorlib}/BootMedia
 %{perl_vendorlib}/BootGen
 %{_mandir}/man5/systemimager*
+%{_mandir}/man7/systemimager*
 %{_mandir}/man8/si_*
 %{_datarootdir}/systemimager/icons/*
 
