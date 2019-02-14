@@ -21,7 +21,7 @@
     <refname>si_mkautoinstallscript</refname>
 
     <refpurpose>
-        create a SystemImager autoinstallscript
+        create a SystemImager autoinstallscript (deprecated)
     </refpurpose>
   </refnamediv>
   <refsynopsisdiv>
@@ -44,11 +44,9 @@
   <refsect1>
     <title>DESCRIPTION</title>
 
-    <para>This manual page documents briefly the
-      <command>si_mkautoinstallscript</command> command.</para>
+    <para>This manual page documents briefly the <command>si_mkautoinstallscript</command> command.</para>
 
-    <para><command>si_mkautoinstallscript</command> creates an autoinstallscript
-      for a SystemImager image.
+    <para><command>si_mkautoinstallscript</command> creates an autoinstallscript for a SystemImager image.
     </para>
 
   </refsect1>
@@ -80,13 +78,7 @@
         <term><option>--listing</option></term>
         <listitem>
           <para>
-          Show each filename as it is copied over during
-          install.  This is useful to increase the verbosity
-          of the installation when you need more informations
-          for debugging.  Do not use this option if your
-          console device is too slow (e.g. serial console),
-          otherwise it could be the bottleneck of your
-          installation.
+          Show each filename as it is copied over during install.  This is useful to increase the verbosity of the installation when you need more informations for debugging.  Do not use this option if your console device is too slow (e.g. serial console), otherwise it could be the bottleneck of your installation.
 	  </para>
         </listitem>
       </varlistentry>
@@ -94,8 +86,7 @@
 	<term><option>--image <replaceable>IMAGENAME</replaceable></option></term>
 	<listitem>
 	  <para>
-	    Where IMAGENAME is the name of the image for which you want to
-	    create a new autoinstall script.
+	    Where IMAGENAME is the name of the image for which you want to create a new autoinstall script.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -103,9 +94,7 @@
         <term><option>--overrides <replaceable>LIST</replaceable></option></term>
         <listitem>
           <para>
-            Where LIST is the comma separated list of the
-            overrides that will be transferred to the clients
-            that use the autoinstall script.
+            Where LIST is the comma separated list of the overrides that will be transferred to the clients that use the autoinstall script.
           </para>
         </listitem>
       </varlistentry>
@@ -113,12 +102,7 @@
 	<term><option>--script <replaceable>SCRIPTNAME</replaceable></option></term>
 	<listitem>
 	  <para>
-            Where SCRIPTNAME is the base name to use for the resultant
-            autoinstall script.  If not specified, SCRIPTNAME defaults to
-            IMAGENAME.  This is most often used when you want to have multiple
-            autoinstallscripts for a single image; i.e. when you have clients
-            with different partitioning and/or filesystem schemes that use
-            the same image (same file set).
+            Where SCRIPTNAME is the base name to use for the resultant autoinstall script.  If not specified, SCRIPTNAME defaults to IMAGENAME.  This is most often used when you want to have multiple autoinstallscripts for a single image; i.e. when you have clients with different partitioning and/or filesystem schemes that use the same image (same file set).
           </para>
 	</listitem>
       </varlistentry>
@@ -126,8 +110,7 @@
 	<term><option>--force <replaceable>[YES|NO]</replaceable></option></term>
 	<listitem>
 	  <para>
-	    Update the $image.master script?  Defaults to NO if -quiet.  If
-	    not specified you will be prompted to confirm an updated.
+	    Update the $image.master script?  Defaults to NO if -quiet.  If not specified you will be prompted to confirm an updated.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -136,9 +119,9 @@
 	<listitem>
 	  <para>
             Use FILE to get autoinstallscript configuration information.
-            Defaults to
-            <filename>./etc/systemimager/autoinstallscript.conf</filename>
-            in the image directory.
+          </para>
+          <para>
+            Defaults to <filename>./etc/systemimager/autoinstallscript.conf</filename> in the image directory.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -155,37 +138,22 @@
 	    <itemizedlist>
 	      <listitem>
 		<para>
-		  static_dhcp -- A DHCP server will assign the same static
-		  address each time to clients installed with this image.  The
-		  DHCP server in this case also assigns the corresponding host
-		  name.  It is possible therefore, when using static dhcp, to
-		  change a machine's hostname and IP address by simply changing
-		  one value in the dhcpd.conf file.  Some may find this
-		  desirable.  Also see the <command>si_mkdhcpstatic</command>
-		  command.
+		  static_dhcp -- A DHCP server will assign the same static address each time to clients installed with this image.  The DHCP server in this case also assigns the corresponding host name.  It is possible therefore, when using static dhcp, to change a machine's hostname and IP address by simply changing one value in the dhcpd.conf file.  Some may find this desirable.  Also see the <command>si_mkdhcpstatic</command> command.
 		</para>
 	      </listitem>
 	      <listitem>
 		<para>
-		  dynamic_dhcp -- A DHCP server will assign IP addresses
-		  dynamically to clients installed with this image.  In dynamic
-		  dhcp, the IP address of a machine may change, but you want it
-		  to retain the same host name.  Therefore the hostname is set
-		  by the machine itself.  They may be assigned a different
-		  address each time.
+		  dynamic_dhcp -- A DHCP server will assign IP addresses dynamically to clients installed with this image.  In dynamic dhcp, the IP address of a machine may change, but you want it to retain the same host name.  Therefore the hostname is set by the machine itself.  They may be assigned a different address each time.
 		</para>
 	      </listitem>
 	      <listitem>
 		<para>
-		  static -- The IP address the client uses during autoinstall
-		  will be permanently assigned to that client.
+		  static -- The IP address the client uses during autoinstall will be permanently assigned to that client.
 		</para>
 	      </listitem>
 	      <listitem>
 		<para>
-		  replicant -- Don't mess with the network settings in this
-		  image.  I'm using it as a backup and quick restore mechanism
-		  for a single machine.
+		  replicant -- Don't mess with the network settings in this image.  I'm using it as a backup and quick restore mechanism for a single machine.
 		</para>
 		</listitem>
 	    </itemizedlist>
@@ -196,46 +164,49 @@
         <term><option>--post-install <replaceable>ACTION</replaceable></option></term>
         <listitem>
           <para>ACTION can be:</para>
-	  <itemizedlist>
-	    <listitem>
-	      <para>
-		beep -- Clients will beep incessantly after successful
-		completion of an autoinstall.
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		reboot -- Clients will reboot themselves after successful
-		completion of an autoinstall.
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		shutdown -- Clients will halt themselves after successful
-		completion of an autoinstall.
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		shell -- Clients will drop to an emergency shell after successful
-		completion of an autoinstall.
-	      </para>
-	    </listitem>
-	    <listitem>
-	      <para>
-		kexec -- Clients will boot the kernels via kexec that were
-		just installed after successful completion of an autoinstall.
-	      </para>
-	    </listitem>
-	  </itemizedlist>
+          <itemizedlist>
+            <listitem>
+              <para>
+                cmdline or none -- post imaging action won't be set in script. si.post-action in cmdline will determine this. This parameter defaults to reboot. More information: <filename>systemimager.cmdline</filename>(7)
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                beep -- Clients will beep incessantly after successful completion of an autoinstall.
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                directboot -- Clients will continue to boot without going thru a reboot after successful completion of an autoinstall.
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                shell -- Clients will drop a shell command after successful completion of an autoinstall. Sysadmin can use si_inspectclient to navigate into imaged client.
+              </para>
+            <listitem>
+              <para>
+                reboot -- Clients will reboot themselves after successful completion of an autoinstall.
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                shutdown or poweroff -- Clients will halt themselves after successful completion of an autoinstall. (if poweroff is used, the power will be shut if possible)
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                kexec -- Clients will boot the kernels via kexec that were just installed after successful completion of an autoinstall.
+              </para>
+            </listitem>
+          </itemizedlist>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-autodetect-disks</option></term>
+        <term><option>--autodetect-disks</option></term>
         <listitem>
           <para>
-            Try to detect available disks on the client instead
-            of using devices from autoinstallscript.conf.
+            Try to detect available disks on the client instead of using devices from autoinstallscript.conf.
           </para>
         </listitem>
       </varlistentry>
@@ -246,7 +217,7 @@
 
     <para>
       <command>si_getimage</command>(8),
-      <command>si_autoinstallscript.conf</command>(5)
+      <command>autoinstallscript.conf</command>(5)
     </para>
 
     <para>More details can be found in the <citetitle>SystemImager

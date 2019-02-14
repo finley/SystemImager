@@ -7,7 +7,7 @@
       &dhsurname;
     </author>
     <copyright>
-      <year>2002-2010</year>
+      <year>2002-2019</year>
       <holder>&dhusername;</holder>
     </copyright>
     &dhdate;
@@ -20,20 +20,17 @@
   <refnamediv>
     <refname>autoinstallscript.conf</refname>
 
-    <refpurpose>specify partition and filesystem options</refpurpose>
+    <refpurpose>specify partition table type, partitions layout, filesystems options and bootloader type and configuration.</refpurpose>
   </refnamediv>
 
   <refsect1>
   <title>DESCRIPTION</title>
   <para>
-    This manual page documents briefly the
-    <filename>autoinstallscript.conf</filename> file.
+    This manual page documents briefly the <filename>autoinstallscript.conf</filename> XML file format.
   </para>
 
   <para>
-    The <filename>autoinstallscript.conf</filename> file contains 
-    information used by SystemImager to create an autoinstall script.  The 
-    resultant autoinstall script is used to clone Linux systems.
+    The <filename>autoinstallscript.conf</filename> file contains information used by SystemImager to create an autoinstall script. The resultant autoinstall script is used to clone Linux systems.
   </para>
 
   </refsect1>
@@ -42,9 +39,7 @@
   <title>Disk Section</title>
 
   <para>
-    This section is used to create a disk label and partitions on each of
-    your autoinstall client's disks.  This section is indicated with the
-    "disk" tag.
+    This section is used to create a disk label and partitions on each of your autoinstall client's disks. This section is indicated with the "disk" tag.
   </para>
 
   <itemizedlist>
@@ -58,15 +53,13 @@
 
     <listitem>
       <para>
-        label_type - The kind of disk label used by this disk.  Currently, this
-        can be either "msdos" or "gpt".
+        label_type - The kind of disk label used by this disk.  Currently, this can be either "msdos" or "gpt".
       </para>
     </listitem>
 
     <listitem>
       <para>
-        unit_of_measurement - The unit of measurement is used with "size" tags 
-        to specify the size of each partition.  This can be set to MB or %.
+        unit_of_measurement - The unit of measurement is used with "size" tags to specify the size of each partition.  This can be set to MB or %.
       </para>
     </listitem>
 
@@ -84,52 +77,35 @@
 
     <listitem>
       <para>
-	    size - The size of the partition.  The unit used here should correspond
-	    to the "unit_of_measurement" setting for the entire disk.
+	    size - The size of the partition.  The unit used here should correspond to the "unit_of_measurement" setting for the entire disk.
       </para>
 
       <para>
-		Size can also hold the special value of "*".  This is used 
-        to indicate that the specified partition should be growable to the end 
-        of the disk.  If the last partition is a primary partition, then only 
-        that partition should have "*" specified.  If the last 
-        partition is a logical partition, then both the logical partition, and 
-        the extended partition that contains it, should have "*" 
-        specified.
+		Size can also hold the special value of "*".  This is used to indicate that the specified partition should be growable to the end of the disk.  If the last partition is a primary partition, then only that partition should have "*" specified.  If the last partition is a logical partition, then both the logical partition, and the extended partition that contains it, should have "*" specified.
       </para>
     </listitem>
 
     <listitem>
       <para>
-		p_type - Partition type.  This can be primary, extended, or logical for
-		msdos labelled disks.  This can only be primary for gpt labelled disks,
-		as gpt disk labels only support primary partitions.
+		p_type - Partition type.  This can be primary, extended, or logical for msdos labelled disks.  This can only be primary for gpt labelled disks, as gpt disk labels only support primary partitions.
       </para>
     </listitem>
 
     <listitem>
       <para>
-		id - Partition id.  This is a hex number used to specify special 
-        information about a partition.  It is usually not needed and is 
-        optional.  In special circumstances where it is needed, 
-        <command>sfdisk</command> is used to change the partition id to the
-        specified type.
+		id - Partition id.  This is a hex number used to specify special information about a partition.  It is usually not needed and is optional.  In special circumstances where it is needed, <command>sfdisk</command> is used to change the partition id to the specified type.
       </para>
     </listitem>
 
     <listitem>
       <para>
-		p_name - This is the name of a partition.  Gpt partition tables	support
-		naming partitions.  If you don't know what this is, you probably don't
-		want to mess with it.  A value of "-" works great (gets ignored)!
+		p_name - This is the name of a partition.  Gpt partition tables	support naming partitions.  If you don't know what this is, you probably don't want to mess with it.  A value of "-" works great (gets ignored)!
       </para>
     </listitem>
 
     <listitem>
       <para>
-		flags - A comma separated list (no spaces) of flags used to specify
-		particulars about a partition.  Possible values are: boot, hidden,
-        raid, lvm, and lba.
+		flags - A comma separated list (no spaces) of flags used to specify particulars about a partition.  Possible values are: boot, hidden, raid, lvm, and lba.
       </para>
     </listitem>
 
@@ -141,8 +117,7 @@
 
     <listitem>
       <para>
-		lvm_group - The partition is used to be part of the specified volume
-		group name. The attribute "flags" must contain the value 'lvm'. 
+		lvm_group - The partition is used to be part of the specified volume group name. The attribute "flags" must contain the value 'lvm'. 
       </para>
     </listitem>
 
@@ -152,8 +127,7 @@
   <refsect1>
   <title>Software-RAID Section</title>
   <para>
-    This section is used to define Linux Software-RAID arrays on each of your
-    autoinstall client's disks. This section is indicated with the "raid" tag.
+    This section is used to define Linux Software-RAID arrays on each of your autoinstall client's disks. This section is indicated with the "raid" tag.
   </para>
 
   <itemizedlist>
@@ -167,65 +141,50 @@
   
     <listitem>
       <para>
-		raid_level - Define the level of RAID to use.
-		Valid options are: linear, raid0, 0, stripe, raid1, 1,
-                mirror, raid4, 4, raid5, 5, raid6, 6.
-                Note that some of these values are synonymous.
+		raid_level - Define the level of RAID to use.  Valid options are: linear, raid0, 0, stripe, raid1, 1, mirror, raid4, 4, raid5, 5, raid6, 6.  Note that some of these values are synonymous.
       </para>
     </listitem>
 
     <listitem>
       <para>
-		raid_devices - The number of disks or partitions used
-		to be part of the Software RAID volume.
+		raid_devices - The number of disks or partitions used to be part of the Software RAID volume.
       </para>
     </listitem>
 
     <listitem>
       <para>
-		spare_devices - The number of disks or partitions used
-		to be part of spare disks in the Software RAID volume.
+		spare_devices - The number of disks or partitions used to be part of spare disks in the Software RAID volume.
       </para>
     </listitem>
 
     <listitem>
       <para>
-		rounding - Specify rounding factor for linear array.
-		This option is valid only when raid_level="raid1".
+		rounding - Specify rounding factor for linear array.  This option is valid only when raid_level="raid1".
       </para>
     </listitem>
 
     <listitem>
       <para>
-		layout - The parity algorithm to use with RAID5. It must be
-		one of left-asymmetric, right-asymmetric, left-symmetric, or
-		right-symmetric. The default is left-symmetric.
-		This option is valid only when raid_level="raid5".
+		layout - The parity algorithm to use with RAID5. It must be one of left-asymmetric, right-asymmetric, left-symmetric, or right-symmetric. The default is left-symmetric.  This option is valid only when raid_level="raid5".
       </para>
     </listitem>
 
     <listitem>
       <para>
-		chunk_size - Set the stripe size in kilobytes. It has to be a power
-		of 2 and has a maximum of 4M. You can tune this parameter to obtain
-		better performance with your particular system.
+		chunk_size - Set the stripe size in kilobytes. It has to be a power of 2 and has a maximum of 4M. You can tune this parameter to obtain better performance with your particular system.
       </para>
     </listitem>
 
 
     <listitem>
       <para>
-		lvm_group - The Soft-RAID disk is used to be part of the specified volume
-		group name.
-		WARNING: LVM over Software-RAID is not yet supported by certain distibutions!
+		lvm_group - The Soft-RAID disk is used to be part of the specified volume group name.  WARNING: LVM over Software-RAID is not yet supported by certain distibutions!
       </para>
     </listitem>
 
     <listitem>
       <para>
-		devices - The space separated list of disks or 
-		partitions used to be part of the Software RAID volume
-		(i.e. "/dev/sda3 /dev/sdb3 /dev/sdc3 /dev/sdd3").
+		devices - The space separated list of disks or partitions used to be part of the Software RAID volume (i.e. "/dev/sda3 /dev/sdb3 /dev/sdc3 /dev/sdd3").
       </para>
     </listitem>
 
@@ -237,8 +196,7 @@
   <refsect1>
   <title>LVM Section</title>
   <para>
-    This section is used to define LVM groups and logical volumes on each of your
-    autoinstall client's disks. This section is indicated with the "lvm" tag.
+    This section is used to define LVM groups and logical volumes on each of your autoinstall client's disks. This section is indicated with the "lvm" tag.
   </para>
 
   <itemizedlist>
@@ -268,10 +226,7 @@
   
     <listitem>
       <para>
-          phys_extent_size - Sets the physical extent size on physical volumes of 
-          this volume group. A size suffix (k for kilobytes up to t for terabytes) 
-          is optional, megabytes is the default  if  no  suffix  is  present.
-          Values  can be from 8 KB to 16 GB in powers of 2.
+          phys_extent_size - Sets the physical extent size on physical volumes of this volume group. A size suffix (k for kilobytes up to t for terabytes) is optional, megabytes is the default  if  no  suffix  is  present.  Values  can be from 8 KB to 16 GB in powers of 2.
       </para>
     </listitem>
   
@@ -285,11 +240,7 @@
   
     <listitem>
       <para>
-          size - The size of the LVM logical volume. A size suffix (k for 
-          kilobytes up to t for terabytes) is optional, megabytes is the default  
-          if no suffix is present. The special value "*" can be used to assign
-          all the free space available in the volume group.
-      </para>
+          size - The size of the LVM logical volume. A size suffix (k for kilobytes up to t for terabytes) is optional, megabytes is the default  if no suffix is present. The special value "*" can be used to assign all the free space available in the volume group.  </para>
     </listitem>
   
     <listitem>
@@ -302,21 +253,17 @@
   <refsect1>
   <title>BootLoader Section</title>
   <para>
-    This section is used to specify what booloader to use and where to install it.
-    This section is indicated with the "bootloader" tag.
+    This section is used to specify what booloader to use and where to install it.  This section is indicated with the "bootloader" tag.
   </para>
   <itemizedlist>
     <listitem>
       <para>bootloader - Start of bootloader information.</para>
     </listitem>
     <listitem>
-      <para>flavor - kinf od boot loader to use.
-            Possible values: grub2, grub, ...</para>
+      <para>flavor - kinf od boot loader to use.  Possible values: grub2, grub, ...</para>
     </listitem>
     <listitem>
-      <para>install_type - Type of installation: legacy (written to disk or partition device)
-            or efi (installed in EFI partition)
-            Possible values: legacy, efi</para>
+      <para>install_type - Type of installation: legacy (written to disk or partition device) or efi (installed in EFI partition) Possible values: legacy, efi</para>
     </listitem>
     <listitem>
       <para>default_entry - Set the default entry in bootloader menu (integer or "saved" keyword)</para>
@@ -344,113 +291,77 @@
   <refsect1>
   <title>Filesystem Section</title>
   <para>
-    This section is used to create filesystems on each of the used partitions,
-    and to create an fstab file on the autoinstall client.  Each line of this
-    section is indicated with the "fsinfo" tag.
+    This section is used to create filesystems on each of the used partitions, and to create an fstab file on the autoinstall client.  Each line of this section is indicated with the "fsinfo" tag.
   </para>
 
   <itemizedlist>
     <listitem>
       <para>
-		fsinfo - Start of a new line of information for the fstab file and/or
-		for filesystem creation information.
+		fsinfo - Start of a new line of information for the fstab file and/or for filesystem creation information.
       </para>
     </listitem>
 
     <listitem>
       <para>
-		line - This is used to indicate the order that lines should be put into
-		the fstab file on the autoinstall client.
+		line - This is used to indicate the order that lines should be put into the fstab file on the autoinstall client.
       </para>
     </listitem>
 
     <listitem>
       <para>
-		comment - Indicates a comment that should be included in the 
-		fstab file, but is not used for any other processing.
+		comment - Indicates a comment that should be included in the fstab file, but is not used for any other processing.
       </para>
     </listitem>
 
     <listitem>
       <para>
-		real_dev - The first field in the fstab file.  This is the device
-		where the filesystem resides.  It is put into the generated fstab file
-		and is the device used to mount filesystems on the finished machine
-		when it reboots.
+		real_dev - The first field in the fstab file.  This is the device where the filesystem resides.  It is put into the generated fstab file and is the device used to mount filesystems on the finished machine when it reboots.
       </para>
     </listitem>
 
     <listitem>
       <para>
-		mount_dev - Usually the first field in the fstab file will be an 
-        actual device file like "/dev/sda1", but may sometimes look like 
-        "LABEL=/boot" or "UUID=c1b9d5a2-f162-11cf-9ece-0020afc76f16".  
-        In the case that it is a LABEL or UUID, instead of a real device, we 
-        use mount_dev to specify the information that will be put in the fstab
-        file to mount the filesystem after the autoinstall client is imaged.
-		LABEL and UUID information is stored as part of the filesystem, not as 
-        part of the partition.  See <filename>fstab(5)</filename> for more 
-        information.  mount_dev will only exist if a LABEL or UUID is used.
+		mount_dev - Usually the first field in the fstab file will be an actual device file like "/dev/sda1", but may sometimes look like 
+        "LABEL=/boot" or "UUID=c1b9d5a2-f162-11cf-9ece-0020afc76f16". In the case that it is a LABEL or UUID, instead of a real device, we use mount_dev to specify the information that will be put in the fstab file to mount the filesystem after the autoinstall client is imaged. LABEL and UUID information is stored as part of the filesystem, not as part of the partition.  See <filename>fstab(5)</filename> for more information.  mount_dev will only exist if a LABEL or UUID is used.
       </para>
     </listitem>
 
     <listitem>
       <para>
-		mp - The second field in the fstab file.  Mount point.  This is the 
-		name of the directory where the filesystem should be mounted.  See 
-		<filename>fstab(5)</filename> for more information.
+		mp - The second field in the fstab file.  Mount point.  This is the name of the directory where the filesystem should be mounted.  See <filename>fstab(5)</filename> for more information.
       </para>
     </listitem>
 
     <listitem>
       <para>
-		fs - The third field in the fstab file.  This is where you specify what
-		filesystem you want created on the partition specified on "mount_dev" 
-		(or "real_dev").  Valid filesystem types supported by SystemImager are:
-        ext2, ext3, ext4, msdos, reiserfs, vfat, jfs, xfs
+		fs - The third field in the fstab file.  This is where you specify what filesystem you want created on the partition specified on "mount_dev" (or "real_dev").  Valid filesystem types supported by SystemImager are: ext2, ext3, ext4, msdos, reiserfs, vfat, jfs, xfs, btrfs
       </para>
 
     </listitem>
 
     <listitem>
       <para>
-		mkfs_opts - Certain filesystems may require additional information to
-		properly create a filesystem.  Currently, this is only used by msdos
-		and vfat filesystems.  Valid values for msdos and vfat filesystems are
-		"-F 12", "-F 16", or "-F 32" to specify the FAT size.  If you don't
-		know what you need, or don't care, you can leave this blank and
-		defaults will be used.
+		mkfs_opts - Certain filesystems may require additional information to properly create a filesystem.  Currently, this is only used by msdos and vfat filesystems.  Valid values for msdos and vfat filesystems are "-F 12", "-F 16", or "-F 32" to specify the FAT size.  If you don't know what you need, or don't care, you can leave this blank and defaults will be used.
       </para>
     </listitem>
     <listitem>
       <para>
-		options - The fourth field in the <filename>fstab</filename> file.
-		Options needed when mounting the filesystem.  If you don't know that
-		you need any special options, just use "default".  See
-		<filename>fstab(5)</filename> for more information.
+		options - The fourth field in the <filename>fstab</filename> file.  Options needed when mounting the filesystem.  If you don't know that you need any special options, just use "default".  See <filename>fstab(5)</filename> for more information.
       </para>
     </listitem>
     <listitem>
       <para>
-		dump - The fifth field in the fstab file.  This should be a number that
-		is used by <command>dump(8)</command>.  If you don't know what to put
-		here, just use "0".  See <filename>fstab(5)</filename> for more
-		information.
+		dump - The fifth field in the fstab file.  This should be a number that is used by <command>dump(8)</command>.  If you don't know what to put here, just use "0".  See <filename>fstab(5)</filename> for more information.
       </para>
     </listitem>
     <listitem>
       <para>
-		pass - The sixth field in the fstab file.  This is used by the fsck
-		program to determine the order in which filesystem checks are done at
-		boot time.  See <filename>fstab(5)</filename> for more information.
+		pass - The sixth field in the fstab file.  This is used by the fsck program to determine the order in which filesystem checks are done at boot time.  See <filename>fstab(5)</filename> for more information.
       </para>
     </listitem>
     <listitem>
       <para>
-		format - Used to tell SystemImager to not create a filesystem on a 
-		partition.  If this is set to "no", the filesystem will not be created.
-		If it is absent, or contains any other value, then a filesystem will 
-		be created.
+		format - Used to tell SystemImager to not create a filesystem on a partition.  If this is set to "no", the filesystem will not be created.  If it is absent, or contains any other value, then a filesystem will be created.
       </para>
     </listitem>
   </itemizedlist>
@@ -460,21 +371,14 @@
   <title>BOEL Section</title>
 
   <para>
-    This section contains miscellaneous settings used by BOEL (Brian's Own
-    Embedded Linux), the embedded linux that performs an install on 
-    autoinstall clients.
+    This section contains miscellaneous settings used by BOEL (Brian's Own Embedded Linux), the embedded linux that performs an install on autoinstall clients.
+    This section is deprecated and ignored (compatibility)
   </para>
 
   <itemizedlist>
     <listitem>
       <para>
-        devstyle - Tells the autoinstallscript to mount the devfs filesystem in
-        the image prior to running System Configurator, which prepares the 
-        client's boot loader.  Many boot loaders need to access the disks at
-        this point, and systems that use devfs won't have any device files in the
-        freshly copied image for the boot loader to use (at this point, BOEL has 
-        done a chroot into the root of the filesystem on the freshly installed 
-        client).
+        devstyle - Tells the autoinstallscript to mount the devfs filesystem in the image prior to running System Configurator, which prepares the client's boot loader.  Many boot loaders need to access the disks at this point, and systems that use devfs won't have any device files in the freshly copied image for the boot loader to use (at this point, BOEL has done a chroot into the root of the filesystem on the freshly installed client).
       </para>
     </listitem>
   </itemizedlist>
@@ -485,12 +389,7 @@
     <title>LIMITATIONS</title>
 
     <para>
-        If you make a change to this file that could affect the boot process, 
-        for example, changing your root device, then you must also modify 
-        your boot loader's configuration file.  This file can be modified either
-        directly in the image, or in an override directory.  For more information
-        on override directories, see the full manual in 
-        /usr/share/doc/systemimager-doc/ or at http://systemimager.org/documentation/.
+        If you make a change to this file that could affect the boot process, for example, changing your root device, then you may also need to modify the bootloader section.
     </para>
 
   </refsect1>
@@ -505,8 +404,7 @@
     </para>
 
     <para>
-      More details can be found in the <citetitle>SystemImager
-      manual.</citetitle>
+      More details can be found in the <citetitle>SystemImager manual.</citetitle>
     </para>
 
   </refsect1>
@@ -515,8 +413,7 @@
   <refsect1>
     <title>AUTHOR</title>
 
-    <para>This manual page was compiled by &dhusername; <&dhemail;> for
-      the &debian; system (but may be used by others).</para>
+    <para>This manual page was compiled by &dhusername; <&dhemail;> for the &debian; system (but may be used by others).</para>
 
     <!-- <para>Permission is granted to copy, distribute and/or modify
       this document under the terms of the <acronym>GNU</acronym> Free
