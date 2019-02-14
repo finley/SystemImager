@@ -203,8 +203,15 @@ sub _imageexists {
 sub validate_post_install_option {
   my $post_install=$_[1];
 
-  unless(($post_install eq "beep") or ($post_install eq "reboot") or ($post_install eq "shutdown") or ($post_install eq "shell") or ($post_install eq "kexec")) { 
-    die qq(\nERROR: -post-install must be beep, reboot, shutdown, shell or kexec.\n\n       Try "--help" for more options.\n);
+  unless(($post_install eq "beep")
+	or ($post_install eq "none")
+	or ($post_install eq "cmdline")
+	or ($post_install eq "directboot")
+	or ($post_install eq "reboot")
+       	or ($post_install eq "shutdown")
+       	or ($post_install eq "shell")
+       	or ($post_install eq "kexec")) { 
+    die qq(\nERROR: -post-install must be none, cmdline, directboot, reboot, kexec, shutdown, beep or shell.\n\n       Try "--help" for more options.\n);
   }
   return 0;
 }
@@ -1926,7 +1933,7 @@ sub create_autoinstall_script{
                     #print $MASTER_SCRIPT "# this is executed twice to support relocatable kernels from RHEL5\n";
                     #print $MASTER_SCRIPT "kexec --force --append=\"\$kexec_append\" --initrd=/tmp/\$kexec_initrd --reset-vga /tmp/\$kexec_kernel\n";
                     #print $MASTER_SCRIPT "kexec --force --append=\"\$kexec_append\" --initrd=/tmp/\$kexec_initrd --reset-vga --args-linux /tmp/\$kexec_kernel\n";
-                } elsif ($post_install eq "cmdline") {
+                } elsif (($post_install eq "cmdline") or ($post_install eq "none")) {
                     print $MASTER_SCRIPT "# post imaging action is read from cmdlinei\n";
                     print $MASTER_SCRIPT "# don't forget to set si.post-action= parameter in PXE cmdline\n";
                     print $MASTER_SCRIPT "# if missing, default behavior is 'reboot'.\n";

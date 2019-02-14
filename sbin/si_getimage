@@ -37,7 +37,7 @@ $version_number="SYSTEMIMAGER_VERSION_STRING";
 
 # miscellaneous variables and what not
 # NIS domain name will be figured out automatically (if it exists)
-$nisdomain="";
+#$nisdomain="";
 
 # use the long options module to allow us to use, well, long options ;)
 #use lib "USR_PREFIX/lib/systemimager/perl";
@@ -138,7 +138,11 @@ GetOptions(
     "quiet"             => \$quiet
 ) || die "$help_info";
 
-$update_script = lc $update_script;
+if(defined $update_script) {
+  $update_script = lc $update_script;
+} else {
+  $update_script = "no";
+}
 
 #if requested, print help information
 if ($help) { 
@@ -156,7 +160,7 @@ if ($version) {
 SystemImager::Common->check_if_root();
 
 if($imageserver){
-  die "\n$program_name: --server is now depricated.  Try the si_cpimage command instead.\n$get_help\n\n";
+  die "\n$program_name: --server is now deprecated.  Try the si_cpimage command instead.\n$get_help\n\n";
 }
 
 # be sure $golden_client name doesn't start with a hyphen
@@ -203,8 +207,14 @@ unless(
     or ($update_script eq "no" )
 ) { die "\n$program_name: --update-script must be yes or no.\n$get_help\n\n"; }
 
-SystemImager::Server->validate_ip_assignment_option($ip_assignment_method);
-SystemImager::Server->validate_post_install_option($post_install);
+if(defined $ip_assignment_method) {
+  die "\n$program_name: --ip-assignment is now deprecated.\n$get_help\n\n";
+  #SystemImager::Server->validate_ip_assignment_option($ip_assignment_method);
+}
+
+if(defined $post_install) {
+  SystemImager::Server->validate_post_install_option($post_install);
+}
 
 # only golden client or server may be set
 if (@excludes and $exclude_file) {
@@ -229,7 +239,7 @@ $imagedir = "$default_image_dir/$image";
 $warning =  <<"EOF";
 This program will get the \"$image\" system image from \"$source_host\"
 making the assumption that all filesystems considered part of the
-system image are using ext2, ext3, ext4, jfs, FAT, reiserfs, or xfs.
+system image are using ext2, ext3, ext4, jfs, btrfs, FAT, reiserfs, or xfs.
 
 This program will not get /proc, /sys, /dev, NFS, or other filesystems
 not mentioned above.
@@ -391,6 +401,7 @@ if($source_host) {
     @mounted_filesystems = grep (!/\s+reiserfs\s+/, @mounted_filesystems);
     @mounted_filesystems = grep (!/\s+jfs\s+/, @mounted_filesystems);
     @mounted_filesystems = grep (!/\s+xfs\s+/, @mounted_filesystems);
+    @mounted_filesystems = grep (!/\s+btrfs\s+/, @mounted_filesystems);
     @mounted_filesystems = grep (!/\s+vfat\s+/, @mounted_filesystems);
     @mounted_filesystems = grep (!/\s+fat\s+/, @mounted_filesystems);
     print FINAL_EXCLUDE_FILE "\n# Automatic exclusions made by SystemImager.\n";
@@ -525,9 +536,9 @@ if( (!$quiet) and (!$update_script) and (-e "$autoinstall_script_dir/$script_nam
 }
 
 # If it just ain't there yet, make it and don't even ask about it.
-elsif(! -e "$autoinstall_script_dir/$script_name.master") {
-    $update_script="yes";
-}
+#elsif(! -e "$autoinstall_script_dir/$script_name.master") {
+#    $update_script="yes";
+#}
 
 # if we don't need to update the master script, then exit -- we're done
 unless($update_script eq "yes") { exit 0; }
@@ -537,75 +548,75 @@ unless($update_script eq "yes") { exit 0; }
 
 #OL: BUG/TODO: where do we need nisdomain?
 ### BEGIN Got NIS? ###
-$file="$imagedir/etc/sysconfig/network";
-if(open (NETWORK, "< $file")) {
-    while (<NETWORK>) {
-        if (/^NISDOMAIN\s*\=\s*(\S+)/) {
-            $nisdomain = $1;
-        }
-    }
-    close (NETWORK);
-}
+#$file="$imagedir/etc/sysconfig/network";
+#if(open (NETWORK, "< $file")) {
+#    while (<NETWORK>) {
+#        if (/^NISDOMAIN\s*\=\s*(\S+)/) {
+#            $nisdomain = $1;
+#        }
+#    }
+#    close (NETWORK);
+#}
 ### END Got NIS? ###
 
 
 ### BEGIN IP Assignment Method ###
-if((!$quiet) and (!$ip_assignment_method))
-{
-    $satisfied="n";
-    $ip_assignment_method="1";
-    until($satisfied eq "y")
-    {
-        system("clear");
-        print << 'EOF';
-IP Address Assignment
----------------------
-
-There are three ways to assign IP addresses to the client systems on an
-ongoing basis:
-
-1) DHCP
-   ----------------------------------------------------------------
-   A DHCP server will assign IP addresses to clients installed with
-   this image.  They may be assigned a different address each time.
-   If you want to use DHCP, but must ensure that your clients
-   receive the same IP address each time, see "man si_mkdhcpstatic".
-
-2) STATIC
-   ----------------------------------------------------------------
-   The IP address the client uses during autoinstall will be
-   permanently assigned to that client.
-
-3) REPLICANT
-   ----------------------------------------------------------------
-   Don't mess with the network settings in this image.  I'm using
-   it as a backup and quick restore mechanism for a single machine.
-
-EOF
-
-        print "Which method do you prefer? [$ip_assignment_method]: ";
-        $ip_assignment_method=SystemImager::Common->get_response($ip_assignment_method);
-        print "You have chosen method $ip_assignment_method for assigning IP addresses.\n";
-        print "\nAre you satisfied? ([y]/n): ";
-        $satisfied=SystemImager::Common->get_response('y');
-	unless(
-	           ($ip_assignment_method == "1")
-                or ($ip_assignment_method == "2")
-                or ($ip_assignment_method == "3")
-	      )
-              {
-                 # reset to default
-                 $ip_assignment_method = "1";
-                 # send 'em back through the wringer
-                 $satisfied="n" ;
-              }
-    }
+#if((!$quiet) and (!$ip_assignment_method))
+#{
+#    $satisfied="n";
+#    $ip_assignment_method="1";
+#    until($satisfied eq "y")
+#    {
+#        system("clear");
+#        print << 'EOF';
+#IP Address Assignment
+#---------------------
+#
+#There are three ways to assign IP addresses to the client systems on an
+#ongoing basis:
+#
+#1) DHCP
+#   ----------------------------------------------------------------
+#   A DHCP server will assign IP addresses to clients installed with
+#   this image.  They may be assigned a different address each time.
+#   If you want to use DHCP, but must ensure that your clients
+#   receive the same IP address each time, see "man si_mkdhcpstatic".
+#
+#2) STATIC
+#   ----------------------------------------------------------------
+#   The IP address the client uses during autoinstall will be
+#   permanently assigned to that client.
+#
+#3) REPLICANT
+#   ----------------------------------------------------------------
+#   Don't mess with the network settings in this image.  I'm using
+#   it as a backup and quick restore mechanism for a single machine.
+#
+#EOF
+#
+#        print "Which method do you prefer? [$ip_assignment_method]: ";
+#        $ip_assignment_method=SystemImager::Common->get_response($ip_assignment_method);
+#        print "You have chosen method $ip_assignment_method for assigning IP addresses.\n";
+#        print "\nAre you satisfied? ([y]/n): ";
+#        $satisfied=SystemImager::Common->get_response('y');
+#	unless(
+#	           ($ip_assignment_method == "1")
+#                or ($ip_assignment_method == "2")
+#                or ($ip_assignment_method == "3")
+#	      )
+#              {
+#                 # reset to default
+#                 $ip_assignment_method = "1";
+#                 # send 'em back through the wringer
+#                 $satisfied="n" ;
+#              }
+#}
 
 # turn number values into useable string values
-if   ($ip_assignment_method == "1") { $ip_assignment_method = "dhcp" ; }
-elsif($ip_assignment_method == "2") { $ip_assignment_method = "static"      ; }
-elsif($ip_assignment_method == "3") { $ip_assignment_method = "replicant"; }
-}
+#if   ($ip_assignment_method == "1") { $ip_assignment_method = "dhcp" ; }
+#elsif($ip_assignment_method == "2") { $ip_assignment_method = "static"      ; }
+#elsif($ip_assignment_method == "3") { $ip_assignment_method = "replicant"; }
+#}
 ### END IP Assignment Method ###
 
 ### BEGIN create a fresh master autoinstall script ###
