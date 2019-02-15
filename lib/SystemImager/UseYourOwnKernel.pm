@@ -27,6 +27,7 @@ use SystemImager::Config qw($config);
 
 our $verbose;
 our $is_mounted = 0;
+our $fs_regexp = "(cramfs|ext2|ext3|reiserfs|xfs|btrfs|jfs|cpio)";
 
 #
 # Usage: 
