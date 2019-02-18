@@ -786,6 +786,7 @@ EOF
 				swap)
 					MKFS_CMD="mkswap -v1 ${FS_MKFS_OPTS/ /}"
 					[ -n "${FS_UUID/ /}" ] && MKFS_CMD="${MKFS_CMD} -U ${FS_UUID/ /}"
+					[ -n "${FS_LABEL/ /}" ] && MKFS_CMD="${MKFS_CMD} -L ${FS_LABEL/ /}"
 					;;
 				*)
 					[ -z "${FS_FS/ /}" -a -z "${FS_COMMENT}" ] && shellout "Missing filesystem type line ${FS_LINE}".
