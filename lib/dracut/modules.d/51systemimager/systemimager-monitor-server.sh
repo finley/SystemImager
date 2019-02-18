@@ -42,7 +42,7 @@ if [ ! -z "$MONITOR_SERVER" ]; then
 
     # Then, Send initialization status.
     send_monitor_msg "status=0:first_timestamp=on:speed=0"
-    loginfo "Monitoring initialized."
+    loginfo "Progress monitoring initialized."
     # Start client log gathering server: for each connection
     # to the local client on port 8181 the full log is sent
     # to the requestor. -AR-
@@ -50,19 +50,23 @@ if [ ! -z "$MONITOR_SERVER" ]; then
         MONITOR_CONSOLE=yes
     fi
     if [ "x$MONITOR_CONSOLE" = "xyes" ]; then
-        if [ -z $MONITOR_PORT ]; then
+        if [ -z "$MONITOR_PORT" ]; then
             MONITOR_PORT=8181
         fi
+	loginfo "Starting Console server (si.monitor-console=yes)..."
         while :
         do
             # OL: BUG: Maybe we need to differentiate MONITOR_PORT on server
-            # and CONSOLE_PORT on client being imager.
-            ncat -p $MONITOR_PORT -l < /tmp/si_monitor.log || exit 1
+            # and CONSOLE_PORT on client being imaged.
+            ncat -p $MONITOR_PORT -l < /tmp/si_monitor.log
+	    logwarn "Console server failed; restarting...."
+	    sleep 1s
         done &
 	MONITOR_PID=$!
 	echo $MONITOR_PID > /run/systemimager/si_monitor.pid
         loginfo "Logs monitor forwarding task started: PID=$MONITOR_PID ."
+    else
+	loginfo "Console server disabled (si.monitor-cosole=no)"
     fi
-    loginfo "si monitor started"
 fi
 
