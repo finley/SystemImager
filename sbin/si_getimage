@@ -189,9 +189,9 @@ unless ($default_image_dir =~ /^\//) {
   die "\n$program_name: --directory must be an absolute path starting with \"/\".\n$get_help\n\n";
 }
 
-if(defined($quiet) and !defined($ip_assignment_method)) {
-    die "\n$program_name: --ip-assignment must be specified when using --quiet.\n$get_help\n\n";
-}
+#if(defined($quiet) and !defined($ip_assignment_method)) {
+#    die "\n$program_name: --ip-assignment must be specified when using --quiet.\n$get_help\n\n";
+#}
 
 # be sure each $exclude is an absolute path starting with /
 foreach my $exclude (@excludes){
