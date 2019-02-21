@@ -145,6 +145,7 @@ sis_install_configs() {
 ################################################################################
 si_create_initramfs() {
 	KERNEL_VERSION=$1
+	CMD=""
 	loginfo "Generating initramfs for kernel: ${KERNEL_VERSION}"
 	case "$(get_distro_vendor /sysroot)" in
 		redhat|centos|fedora)
@@ -160,17 +161,22 @@ si_create_initramfs() {
 			CMD="dracut --force --hostonly "${INITRD_NAME} ${KERNEL_VERSION}
 			;;
 		*)
+			logwarn "Image has no /etc/os-release or similar identification file"
+			logwarn "Can't determine distribution, thus:"
 			logwarn "Don't know how to regenerate initramfs for installed kernels"
 			logwarn "Assuming it'll be done using a post-install script"
 			logwarn "Failing to generate a suited initramfs may result in unbootable system"
 			;;
 	esac
 
-	logaction "chroot /sysroot ${CMD}"
-	if ! chroot /sysroot ${CMD}
+	if test -n "${CMD}"
 	then
-		logerror "Failed to update initramfs for kernel ${KERNEL_VERSION}"
-		logwarn "Failing to generate a suited initramfs may result in unbootable system"
+		logaction "chroot /sysroot ${CMD}"
+		if ! chroot /sysroot ${CMD}
+		then
+			logerror "Failed to update initramfs for kernel ${KERNEL_VERSION}"
+			logwarn "Failing to generate a suited initramfs may result in unbootable system"
+		fi
 	fi
 }
 
@@ -415,6 +421,7 @@ EOF
 #
 ################################################################################
 #
+# OL: Tips: Beginning of disk: 1MiB, End of disk: -2048s (space for GPT table)
 _do_partitions() {
 	sis_update_step part
 	local IFS=';'
@@ -430,13 +437,21 @@ _do_partitions() {
 
 			# Create the partitions
 			T_UNIT=`echo $T_UNIT|sed "s/percent.*/%/g"` # Convert all variations of percent{,age{,s}} to "%"
-			xmlstarlet sel -t -m "config/disk[@dev=\"${DISK_DEV}\"]/part" -v "concat(@num,';',@size,';',@p_type,';',@id,';',@p_name,';',@flags,';',@lvm_group,';',@raid_dev)" -n ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d' |\
+			OLD_PNUM=0
+			unset VAR_PART
+			xmlstarlet sel -t -m "config/disk[@dev=\"${DISK_DEV}\"]/part" -s A:N:- "@num" -v "concat(@num,';',@size,';',@p_type,';',@id,';',@p_name,';',@flags,';',@lvm_group,';',@raid_dev)" -n ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d' |\
 				while read P_NUM P_SIZE P_TYPE P_ID P_NAME P_FLAGS P_LVM_GROUP P_RAID_DEV
 				do
+					test "$P_TYPE" = "extended" -a "$OLD_PNUM" -lt 4 && OLD_PNUM=4 # Extended partition start at 5.
+					test $(( $OLD_PNUM + 1 )) -ne $P_NUM && shellout "Partition numbers should start at 1 and increase in sequence without hole"
+					OLD_PNUM=$P_NUM
 					if test "$P_SIZE" = "*"
 					then
+						test "${VAR_PART}" = "done" && shellout "Only one adaptive size partition allowed"
 						P_SIZE="0" # 0 means 100% for parted
+						VAR_PART="done"
 					else
+						test "${VAR_PART}" = "done" && shellout "Can't create a partition after an adaptive partition (size "*") has been created (no space left)"
 						P_UNIT="$T_UNIT"
 					fi
 					# Get partition filesystem if it exists (no raid, no lvm) so we can put it in partition filesystem info
