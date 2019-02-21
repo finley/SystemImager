@@ -287,6 +287,12 @@
         <para>This parameter can be specified multiple times. Each time a breakpoint is encountered, a shell is dropped. Exitting the shell will continue imaging process.</para>
         <para>Available breakpoints</para>
         <itemizedlist>
+          <listitem><para><filename>parse-localcfg</filename>: Breaks before trying to find and read a local.cfg file.</para></listitem>
+          <listitem><para><filename>network-infos</filename>: Breaks before reading informations about network that was setup by dracut logic.</para></listitem>
+          <listitem><para><filename>ping</filename>: Breaks before doing a ping test.</para></listitem>
+          <listitem><para><filename>download-scripts</filename>: Breaks before trying to retreive /scripts directory.</para></listitem>
+          <listitem><para><filename>monitor</filename>: Breaks before starting console server and sending init timestamp to monitor server.</para></listitem>
+          <listitem><para><filename>deploy</filename>: Breaks before starting client deployment.</para></listitem>
           <listitem><para><filename>pre-install</filename>: Breaks before running pre-install scripts.</para></listitem>
           <listitem><para><filename>prepare-disks</filename>: Breaks before initializing disks (partition/format/mount to /sysroot).</para></listitem>
           <listitem><para><filename>main-install</filename>: Breaks before running main install script.</para></listitem>

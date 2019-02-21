@@ -17,7 +17,8 @@ type send_monitor_msg >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 
 logdebug "==== systemimager-monitor-server ===="
 
-. /tmp/variables.txt
+# Systemimager possible breakpoint
+getarg 'si.break=monitor' && logwarn "Break start monitor" && interactive_shell
 
 if [ ! -z "$MONITOR_SERVER" ]; then
     if test -f /tmp/si_monitor.log

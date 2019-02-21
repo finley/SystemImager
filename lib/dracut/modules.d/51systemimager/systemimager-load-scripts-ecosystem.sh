@@ -16,6 +16,9 @@
 
 logdebug "==== systemimager-get-scripts-ecosystem.sh ===="
 
+# Systemimager possible breakpoint
+getarg 'si.break=download-scripts' && logwarn "Break download-scripts" && interactive_shell
+
 test -z "${IMAGESERVER}" && shellout "IMAGESERVER not set; don't know where to download scripts logic from."
 
 # systemimager-lib.sh will load appropriate download protocol that was setup in systemimager-parse-cmdline.sh

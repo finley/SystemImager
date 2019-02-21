@@ -24,6 +24,9 @@ type write_variables >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 
 logdebug "==== parse-local-cfg ===="
 
+# Systemimager possible breakpoint
+getarg 'si.break=parse-localcfg' && logwarn "Break parse-localcfg" && interactive_shell
+
 if [ "${SKIP_LOCAL_CFG}" = "y" ]; then
     loginfo "Skipping local.cfg: option SKIP_LOCAL_CFG=y has been specified"
     return

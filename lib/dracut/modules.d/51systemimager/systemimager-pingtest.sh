@@ -18,6 +18,9 @@ type shellout >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 logdebug "==== systemimager-pingtest ===="
 loginfo "Checking network connectivity via a ping test..."
 
+# Systemimager possible breakpoint
+getarg 'si.break=ping' && logwarn "Break ping" && interactive_shell
+
 # The reason we don't ping the IMAGESERVER if FLAMETHROWER_DIRECTORY_PORTBASE
 # is set, is that the client may never be given, know, or need to know, the 
 # IP address of the imageserver because the client is receiving _all_ of it's

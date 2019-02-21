@@ -32,6 +32,12 @@
 logdebug "==== systemimager-load-network-infos ===="
 
 DEVICE=$1
+logdebug "Network device used: [$DEVICE]"
+# Save DEVICE to /tmp/variables.txt
+write_variables
+
+# Systemimager possible breakpoint
+getarg 'si.break=network-infos' && logwarn "Break network-infos" && interactive_shell
 
 if test -r /tmp/dhclient.$DEVICE.dhcpopts # ISC Client
 then

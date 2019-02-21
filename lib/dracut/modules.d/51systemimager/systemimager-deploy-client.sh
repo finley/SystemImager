@@ -23,6 +23,9 @@ type sis_prepare_disks >/dev/null 2>&1 || . /lib/disksmgt-lib.sh
 
 logdebug "==== systemimager-deploy-client ===="
 
+# Systemimager possible breakpoint
+getarg 'si.break=deploy' && logwarn "Break deploy client" && interactive_shell
+
 # 1st, check that we have IMAGENAME. It is used by init_transfer() to compute IMAGESIZE
 # That is then later used by start_report_task() to compute transfert progress.
 if test -z "$IMAGENAME"
