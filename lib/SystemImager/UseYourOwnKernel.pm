@@ -563,7 +563,7 @@ sub is_initrd
             # initrd to be used; i.e. if the kernel is statically built (no
             # loadable module support) the version string can't be found into
             # the initrd. -AR-
-            if (((index($file, $kernel_release)) > 0) && ($file =~ /initrd/)) {
+            if (((index($file, $kernel_release)) > 0) && ($file =~ /initrd|initramfs/)) {
                 return 1;
             }
         }
