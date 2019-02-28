@@ -14,6 +14,10 @@
                 <part num="2" size="1024" p_type="primary" flags="swap" />
         </disk>
 	
+        <bootloader flavor="grub2" install_type="legacy" default_entry="0" timeout="2">
+                <target dev="/dev/sda" />
+        </bootloader>
+
         <fsinfo line="100" real_dev="/dev/sda5" mp="/" fs="xfs" options="defaults" dump="1" pass="2" />
         <fsinfo line="101" real_dev="/dev/sda6" mp="/var" fs="xfs" options="defaults" dump="1" pass="2" />
         <fsinfo line="102" real_dev="/dev/sda2" mp="swap" fs="swap" options="defaults" dump="0" pass="0" />
