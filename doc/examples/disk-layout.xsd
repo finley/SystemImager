@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Description of disk layout configuration. -->
+<!-- man autoinstallscript.conf for details. -->
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+  <xsd:element name="config">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element minOccurs="1" maxOccurs="unbounded" ref="disk"/>
+        <xsd:element minOccurs="0" maxOccurs="1" ref="raid"/>
+        <xsd:element minOccurs="0" maxOccurs="1" ref="lvm"/>
+        <xsd:element minOccurs="0" maxOccurs="unbounded" ref="bootloader"/>
+        <xsd:element minOccurs="1" maxOccurs="unbounded" ref="fsinfo"/>
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <!-- Disk section -->
+  <xsd:element name="disk">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element minOccurs="1" maxOccurs="unbounded" ref="part"/>
+      </xsd:sequence>
+      <xsd:attribute name="dev" use="required"/>
+      <xsd:attribute name="label_type" use="required">
+        <xsd:simpleType>
+          <xsd:restriction base="xsd:token">
+            <xsd:enumeration value="msdos"/>
+            <xsd:enumeration value="gpt"/>
+            <xsd:enumeration value="convert"/>
+            <xsd:enumeration value="none"/>
+          </xsd:restriction>
+        </xsd:simpleType>
+      </xsd:attribute>
+      <xsd:attribute name="unit_of_measurement" use="required">
+        <xsd:simpleType>
+          <xsd:restriction base="xsd:token">
+            <xsd:enumeration value="TB"/>
+            <xsd:enumeration value="TiB"/>
+            <xsd:enumeration value="GB"/>
+            <xsd:enumeration value="GiB"/>
+            <xsd:enumeration value="MB"/>
+            <xsd:enumeration value="MiB"/>
+            <xsd:enumeration value="kB"/>
+            <xsd:enumeration value="KiB"/>
+            <xsd:enumeration value="B"/>
+            <xsd:enumeration value="s"/>
+            <xsd:enumeration value="percent"/>
+            <xsd:enumeration value="percentage"/>
+            <xsd:enumeration value="%"/>
+          </xsd:restriction>
+        </xsd:simpleType>
+      </xsd:attribute>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:element name="part">
+    <xsd:complexType>
+      <xsd:attribute name="num" use="required">
+        <xsd:simpleType>
+	  <xsd:restriction base="xsd:int">
+	    <xsd:minExclusive value="0" ></xsd:minExclusive>
+	  </xsd:restriction>
+        </xsd:simpleType>
+      </xsd:attribute>
+      <xsd:attribute name="size" use="required">
+        <xsd:simpleType>
+	  <xsd:restriction base="xsd:string">
+            <xsd:pattern value="[\*1-9][0-9]*"></xsd:pattern>
+	  </xsd:restriction>
+        </xsd:simpleType>
+      </xsd:attribute>
+      <xsd:attribute name="p_type" use="required">
+        <xsd:simpleType>
+          <xsd:restriction base="xsd:token">
+            <xsd:enumeration value="primary"/>
+            <xsd:enumeration value="extended"/>
+            <xsd:enumeration value="logical"/>
+          </xsd:restriction>
+        </xsd:simpleType>
+      </xsd:attribute>
+      <xsd:attribute name="id">
+        <xsd:simpleType>
+	  <xsd:restriction base="xsd:int">
+	    <xsd:minExclusive value="0" ></xsd:minExclusive>
+	  </xsd:restriction>
+        </xsd:simpleType>
+      </xsd:attribute>
+      <xsd:attribute name="p_name">
+        <xsd:simpleType>
+	  <xsd:restriction base="xsd:string">
+            <xsd:whiteSpace value="collapse"></xsd:whiteSpace>
+	  </xsd:restriction>
+        </xsd:simpleType>
+      </xsd:attribute>
+      <xsd:attribute name="flags"/>
+      <xsd:attribute name="raid_dev"/>
+      <xsd:attribute name="lvm_group"/>
+    </xsd:complexType>
+  </xsd:element>
+  <!-- Optionnal raid section -->
+  <xsd:element name="raid">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element maxOccurs="unbounded" ref="raid_disk"/>
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:element name="raid_disk">
+    <xsd:complexType>
+      <xsd:attribute name="name" use="required"/>
+      <xsd:attribute name="raid_level" use="required">
+        <xsd:simpleType>
+          <xsd:restriction base="xsd:token">
+            <xsd:enumeration value="linear"/>
+            <xsd:enumeration value="raid0"/>
+            <xsd:enumeration value="0"/>
+            <xsd:enumeration value="stripe"/>
+            <xsd:enumeration value="raid1"/>
+            <xsd:enumeration value="1"/>
+            <xsd:enumeration value="mirror"/>
+            <xsd:enumeration value="raid4"/>
+            <xsd:enumeration value="4"/>
+            <xsd:enumeration value="raid5"/>
+            <xsd:enumeration value="5"/>
+            <xsd:enumeration value="raid6"/>
+            <xsd:enumeration value="6"/>
+          </xsd:restriction>
+        </xsd:simpleType>
+      </xsd:attribute>
+      <xsd:attribute name="raid_devices"/>
+      <xsd:attribute name="spare_devices"/>
+      <xsd:attribute name="rounding"/>
+      <xsd:attribute name="layout">
+        <xsd:simpleType>
+          <xsd:restriction base="xsd:token">
+            <xsd:enumeration value="left-asymmetric"/>
+            <xsd:enumeration value="right-asymmetric"/>
+            <xsd:enumeration value="left-symmetric"/>
+            <xsd:enumeration value="right-symmetric"/>
+          </xsd:restriction>
+        </xsd:simpleType>
+      </xsd:attribute>
+      <xsd:attribute name="chunk_size"/>
+      <xsd:attribute name="lvm_group"/>
+      <xsd:attribute name="devices"/>
+    </xsd:complexType>
+  </xsd:element>
+  <!-- optionnal lvm section -->
+  <xsd:element name="lvm">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element maxOccurs="unbounded" ref="lvm_group"/>
+      </xsd:sequence>
+      <xsd:attribute name="version"/>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:element name="lvm_group">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element maxOccurs="unbounded" ref="lv"/>
+      </xsd:sequence>
+      <xsd:attribute name="name" use="required"/>
+      <xsd:attribute name="max_log_vols" use="required"/>
+      <xsd:attribute name="max_phys_vols" use="required"/>
+      <xsd:attribute name="phys_extent_size" use="required"/>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:element name="lv">
+    <xsd:complexType>
+      <xsd:attribute name="name" use="required"/>
+      <xsd:attribute name="size" use="required"/>
+      <xsd:attribute name="lv_options"/>
+    </xsd:complexType>
+  </xsd:element>
+  <!-- optionnal (but recommanded) bootloader section -->
+  <xsd:element name="bootloader">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element maxOccurs="unbounded" ref="target"/>
+      </xsd:sequence>
+      <xsd:attribute name="flavor" use="required">
+        <xsd:simpleType>
+          <xsd:restriction base="xsd:token">
+            <xsd:enumeration value="grub"/>
+            <xsd:enumeration value="grub2"/>
+            <xsd:enumeration value="rEFInd"/>
+            <xsd:enumeration value="clover"/>
+          </xsd:restriction>
+        </xsd:simpleType>
+      </xsd:attribute>
+      <xsd:attribute name="install_type" use="required">
+        <xsd:simpleType>
+          <xsd:restriction base="xsd:token">
+            <xsd:enumeration value="legacy"/>
+            <xsd:enumeration value="efi"/>
+          </xsd:restriction>
+        </xsd:simpleType>
+      </xsd:attribute>
+      <xsd:attribute name="default_entry"/>
+      <xsd:attribute name="timeout"/>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:element name="target">
+    <xsd:complexType>
+      <xsd:attribute name="dev" use="required"/>
+      <xsd:attribute name="path"/>
+    </xsd:complexType>
+  </xsd:element>
+  <!-- filesystem informations -->
+  <xsd:element name="fsinfo">
+    <xsd:complexType>
+      <xsd:attribute name="line"/>
+      <xsd:attribute name="comment"/>
+      <xsd:attribute name="real_dev" use="required"/>
+      <xsd:attribute name="mp" use="required"/>
+      <xsd:attribute name="fs" use="required"/>
+      <xsd:attribute name="mkfs_opts"/>
+      <xsd:attribute name="options" default="defaults"/>
+      <xsd:attribute name="dump" use="required"/>
+      <xsd:attribute name="pass" use="required"/>
+      <xsd:attribute name="format"/>
+    </xsd:complexType>
+  </xsd:element>
+  <!-- Deprecated Brian's Own Embedded Linux section -->
+  <!-- This section is ignored and described here so old files wont failed when being verifyed. -->
+  <xsd:element name="boel">
+    <xsd:complexType>
+      <xsd:attribute name="devstyle">
+        <xsd:simpleType>
+          <xsd:restriction base="xsd:token">
+            <xsd:enumeration value="statici"/>
+            <xsd:enumeration value="udev"/>
+            <xsd:enumeration value="devfs"/>
+          </xsd:restriction>
+        </xsd:simpleType>
+      </xsd:attribute>
+    </xsd:complexType>
+  </xsd:element>
+</xsd:schema>
