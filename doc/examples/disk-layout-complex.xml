@@ -1,10 +1,11 @@
 <!--
-        Complex disk-layout file for use on legacy systems
+<!DOCTYPE config SYSTEM "disk-layout.xsd">
+        Example of a complex disk-layout file for use on legacy systems
         by SystemImager when installing a client.
 	Layout directory: /var/lib/systemimager/scripts/disks-layouts/
 -->
 <config>
-        <disk dev="/dev/sda" label_type="msdos" unit_of_measurement="MB">
+        <disk dev="/dev/sda" label_type="msdos" unit_of_measurement="MiB">
                 <part num="1" size="500" p_type="primary" flags="boot" />
 		<part num="3" size="4096" p_type="primary" />
                 <part num="4" size="*" p_type="extended" />
