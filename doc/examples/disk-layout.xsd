@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Description of disk layout configuration. -->
-<!-- man autoinstallscript.conf for details. -->
+<!-- Description of disk layout configuration.
+     man autoinstallscript.conf for details.
+
+     Author: Olivier LAHAYE (c) 2019
+     License: GPLv2
+ -->
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
   <xsd:element name="config">
     <xsd:complexType>
@@ -50,10 +54,14 @@
         </xsd:simpleType>
       </xsd:attribute>
     </xsd:complexType>
+    <xsd:unique name="uniquePartitionId">
+      <xsd:selector xpath="part"/>
+      <xsd:field xpath="@num"/>
+    </xsd:unique>
   </xsd:element>
   <xsd:element name="part">
     <xsd:complexType>
-      <xsd:attribute name="num" use="required">
+      <xsd:attribute name="num" use="required"> <!-- TODO: make it unique -->
         <xsd:simpleType>
 	  <xsd:restriction base="xsd:int">
 	    <xsd:minExclusive value="0" ></xsd:minExclusive>
