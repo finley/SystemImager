@@ -15,6 +15,9 @@
 	- partition flags
 	- lvm group it belongs to
 	- raid device it belongs to
+
+     Author: Olivier LAHAYE (c) 2019
+     License: GPLv2
 -->
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:exslt="http://exslt.org/common" version="1.0" extension-element-prefixes="exslt">
   <xsl:output method="text" omit-xml-declaration="yes" indent="no"/>
