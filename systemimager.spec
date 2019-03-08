@@ -115,7 +115,7 @@ BuildArch: noarch
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
-BuildRequires: dos2unix, flex, libtool, readline-devel, /usr/bin/wget, openssl-devel, gcc, gcc-c++, ncurses-devel, bc, rsync >= 2.4.6
+BuildRequires: dos2unix, flex, libtool, readline-devel, /usr/bin/wget, openssl-devel, gcc, gcc-c++, ncurses-devel, bc, dc, rsync >= 2.4.6
 BuildRequires: %pkg_docbook_utils
 BuildRequires: libuuid-devel, device-mapper-devel, gperf, binutils-devel, pam-devel, quilt
 BuildRequires: lzop, glib2-devel >= 2.22.0
@@ -331,7 +331,7 @@ BuildRequires: dracut-network
 BuildRequires: dracut
 BuildRequires: plymouth-plugin-script, plymouth-plugin-label
 BuildRequires: psmisc, kexec-tools, bind-utils, net-tools 
-BuildRequires: xmlstarlet, parted, mdadm, util-linux, lvm2
+BuildRequires: xmlstarlet, parted, mdadm, util-linux, lvm2, gdisk
 BuildRequires: xfsprogs, e2fsprogs, ntfsprogs, dosfstools
 BuildRequires: %pkg_ipcalc
 BuildRequires: %pkg_dejavu_font
@@ -339,7 +339,7 @@ BuildRequires: %pkg_btrfs_progs
 BuildRequires: %pkg_ncat
 BuildRequires: %pkg_sshd
 BuildRequires: ncurses, /usr/bin/awk, kbd
-BuildRequires: python, python-devel, gettext
+BuildRequires: python, python-devel, gettext, bc
 BuildRequires: systemconfigurator
 BuildRequires: kernel
 BuildRequires: rtorrent
@@ -476,7 +476,7 @@ requires: dracut-network
 Requires: dracut
 Requires: plymouth-plugin-script, plymouth-plugin-label
 Requires: psmisc, kexec-tools, bind-utils, net-tools
-Requires: xmlstarlet, parted, mdadm, util-linux, lvm2
+Requires: xmlstarlet, parted, mdadm, util-linux, lvm2, gdisk
 Requires: xfsprogs, e2fsprogs, ntfsprogs, dosfstools
 Requires: %pkg_ipcalc
 Requires: %pkg_dejavu_font
@@ -484,7 +484,7 @@ Requires: %pkg_btrfs_progs
 Requires: %pkg_ncat
 Requires: %pkg_sshd
 Requires: ncurses, /usr/bin/awk, kbd
-Requires: python, python-devel, gettext
+Requires: python, python-devel, gettext, bc
 Requires: systemconfigurator
 Requires: kernel
 Requires: rtorrent
