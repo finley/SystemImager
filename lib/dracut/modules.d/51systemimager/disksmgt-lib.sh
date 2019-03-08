@@ -425,6 +425,12 @@ EOF
 _do_partitions() {
 	sis_update_step part
 	local IFS=';'
+
+	# 1st, we need to validdate the disk-layout file.
+	loginfo "Validating disk layout: ${DISKS_LAYOUT_FILE}"
+	xmlstarlet val --err --xsd /lib/systemimager/disks-layout.xsd ${DISKS_LAYOUT_FILE} || shellout "Disk layout file is invalid. Check error logs and fix problem."
+	loginfo "Disk layout seems valid; continuing..."
+
 	xmlstarlet sel -t -m 'config/disk' -v "concat(@dev,';',@label_type,';',@unit_of_measurement)" -n ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d' |\
 		while read DISK_DEV LABEL_TYPE T_UNIT;
 	       	do
@@ -436,6 +442,10 @@ _do_partitions() {
 				logaction "parted -s -- $DISK_DEV mklabel ${LABEL_TYPE}"
 				LC_ALL=C parted -s -- ${DISK_DEV} mklabel "${LABEL_TYPE}" || shellout "Failed to create new partition table for disk $DISK_DEV partition type=$PART_TYPE!"
 				sleep $PARTED_DELAY
+			elif test -n "$(echo ${LABEL_TYPE}|grep -iE 'convert')"
+				loginfo "Converting ${DISK_DEV} partition table to GPT..."
+				logaction "sgdisk  --mbrtogpt ${DISK_DEV}"
+				sgdisk  --mbrtogpt ${DISK_DEV} || shellout "Failed to convert ${DISK_DEV} partition table to GPT."
 			fi
 
 			# Create the partitions
