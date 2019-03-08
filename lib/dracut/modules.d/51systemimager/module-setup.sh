@@ -60,9 +60,9 @@ install() {
     inst_multiple cut date echo env sort test false true [ expr head install tail tee tr uniq wc tac mktemp yes xmlstarlet
 
     # inst_multiple setfont loadkeys kbd_mode stty # i18n module
-    inst_multiple bc dc gzip bzip2 rsync mkfs parted blockdev lsblk partprobe awk ncat tty killall kexec ipcalc findmnt findfs tput stty
+    inst_multiple bc dc gzip bzip2 rsync mkfs parted sgdisk fdisk blockdev lsblk partprobe awk ncat tty killall kexec ipcalc findmnt findfs tput stty
     inst_multiple lvm pvcreate pvdisplay pvremove pvscan lvcreate lvdisplay lvremove lvscan lvmconf lvmconfig lvmdump lvchange vgcreate vgdisplay vgremove vgscan fsadm
-    inst_multiple chmod chown cp dd df dmesg echo egrep fdisk fgrep grep halt host hostname ifconfig init insmod kill ln ls lsmod mkdir mknod mkswap modprobe more mv ping poweroff ps reboot shutdown rm rmdir rmmod route sed sh sleep swapoff swapon sync tar touch uname logger od
+    inst_multiple chmod chown cp dd df dmesg echo egrep fgrep grep halt host hostname ifconfig init insmod kill ln ls lsmod mkdir mknod mkswap modprobe more mv ping poweroff ps reboot shutdown rm rmdir rmmod route sed sh sleep swapoff swapon sync tar touch uname logger od
     inst_multiple depmod blkid
     inst_multiple uuidgen
 
@@ -82,6 +82,9 @@ install() {
     do
         inst "$protocol_plugin" "/lib/${protocol_plugin##*/}"
     done
+    mkdir -p $initdir/usr/lib/systemimager/
+    inst "$moddir/do_partitions.xsl" "/lib/systemimager/do_partitions.xsl" # Installs partition xml transformation filter
+    inst "$moddir/disks-layout.xsd" "/lib/systemimager/disks-layout.xsd" # Installs disks layout validation schem.
     inst_hook cmdline 30 "$moddir/systemimager-check-kernel.sh" # Check that kernel & initrd match.
     inst_hook cmdline 50 "$moddir/parse-systemimager.sh" # read cmdline parameters
     inst_hook cmdline 70 "$moddir/systemimager-init.sh" # Creates /run/systemimager and sets rootok
