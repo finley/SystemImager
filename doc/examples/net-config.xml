@@ -2,10 +2,10 @@
   $Id$
    vi:set filetype=xml:
 
-  This file contains partition information about the network interface
+  This file contains network information about the network interface(s)
   for client to be imaged.
   You can change the information in this file to affect how your target
-  machines are installed.  See "man network.conf" for details.
+  machines are installed.  See "man systemimager-network.conf" for details.
 
   TODO: basic config: use config from PXE boot/cmdline during install.
   TODO: config style: network-script / network-manager / systemd
@@ -30,7 +30,7 @@
   <if dev="ib0" type="Infiniband">
 	<primary onboot="yes">
 		<ip bootproto="static" ipaddr="10.0.0.1/24" broadcast="10.0.0.255"/>
-		<ip6 init="yes">
+		<ip6 init="yes"/>
 	</primary>
   </if>
   <bond name="bond0">
