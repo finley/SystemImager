@@ -411,7 +411,7 @@ EOF
 	fi
 }
 
-		
+
 ################################################################################
 #
 # _do_partitions()
@@ -430,10 +430,13 @@ _do_partitions() {
 	       	do
 			loginfo "Setting up partitions for disk $DISK_DEV"
 
-			# Create the partition table
-			logaction "parted -s -- $DISK_DEV mklabel ${LABEL_TYPE}"
-			LC_ALL=C parted -s -- ${DISK_DEV} mklabel "${LABEL_TYPE}" || shellout "Failed to create new partition table for disk $DISK_DEV partition type=$PART_TYPE!"
-			sleep $PARTED_DELAY
+			# Create the partition table: Do not write/create partition table if it is not type msdos or gpt.
+			if test -n "$(echo ${LABEL_TYPE}|grep -iE 'msdos|gpt')"
+			then
+				logaction "parted -s -- $DISK_DEV mklabel ${LABEL_TYPE}"
+				LC_ALL=C parted -s -- ${DISK_DEV} mklabel "${LABEL_TYPE}" || shellout "Failed to create new partition table for disk $DISK_DEV partition type=$PART_TYPE!"
+				sleep $PARTED_DELAY
+			fi
 
 			# Create the partitions
 			T_UNIT=`echo $T_UNIT|sed "s/percent.*/%/g"` # Convert all variations of percent{,age{,s}} to "%"
@@ -442,7 +445,7 @@ _do_partitions() {
 			xmlstarlet sel -t -m "config/disk[@dev=\"${DISK_DEV}\"]/part" -s A:N:- "@num" -v "concat(@num,';',@size,';',@p_type,';',@id,';',@p_name,';',@flags,';',@lvm_group,';',@raid_dev)" -n ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d' |\
 				while read P_NUM P_SIZE P_TYPE P_ID P_NAME P_FLAGS P_LVM_GROUP P_RAID_DEV
 				do
-					test "$P_TYPE" = "extended" -a "$OLD_PNUM" -lt 4 && OLD_PNUM=4 # Extended partition start at 5.
+					test "$P_TYPE" = "logical" -a "$OLD_PNUM" -lt 4 && OLD_PNUM=4 # Extended partition start at 5.
 					test $(( $OLD_PNUM + 1 )) -ne $P_NUM && shellout "Partition numbers should start at 1 and increase in sequence without hole"
 					OLD_PNUM=$P_NUM
 					if test "$P_SIZE" = "*"
@@ -526,7 +529,7 @@ _find_free_space() {
 			[ ${#MIN_SIZE_EXT[*]} -eq 0 ] && shellout "Can't create logical partition if no extended partition exists"
 			;;
 		*)
-			# if primary or logical, search the whole disk
+			# if primary or extended, search the whole disk
 			MIN_SIZE_EXT=( 0 0 )
 			;;
 	esac
@@ -900,3 +903,89 @@ _do_fstab() {
 			fi
 		done
 }
+
+
+################################################################################
+# Convert2Sectors()
+# $1: disk device (e.g. sda)
+# $2: value
+# $3: unit
+# output: number of sectors
+################################################################################
+#
+# DISC_SIZE: /sys/block/<device>/size
+# BLOC_SIZE: /sys/block/<device>/queue/logical_block_size
+#
+#
+convert2sectors() {
+	# local LC_NUMERIC="en_US.UTF-8" # Make sure we use "." for decimal separator.
+
+	test ! -b /dev/$1 && shellout "convert2sectors: device [/dev/$1] does not exists."
+	test -n "${2//[0-9]/}" && "convert2sectors: size [$2] is not a numeric integer."
+	DISK_SIZE=$(cat /sys/block/$1/size) # percentage computation
+	BLOCK_SIZE=$(cat /sys/block/$1/queue/logical_block_size)
+	test -z "${BLOCK_SIZE}" && logwarn "Failed to get $1 block size. Assuming 512 bytes." && BLOCK_SIZE=512
+	test ${BLOCK_SIZE} -eq 0 && logwarn "$1 reports block size of 0. Assuming 512 bytes." && BLOCK_SIZE=512
+
+	case $3 in
+		"TB")
+			dc <<< "$2 1000 * 1000 * 1000 * 1000 * ${BLOCK_SIZE} / p"
+			;;
+		"TiB")
+			dc <<< "$2 1024 * 1024 * 1024 * 1024 * ${BLOCK_SIZE} / p"
+			;;
+		"GB")
+			dc <<< "$2 1000 * 1000 * 1000 * ${BLOCK_SIZE} / p"
+			;;
+		"GiB")
+			dc <<< "$2 1024 * 1024 * 1024 * ${BLOCK_SIZE} / p"
+			;;
+		"MB")
+			dc <<< "$2 1000 * 1000 * ${BLOCK_SIZE} / p"
+			;;
+		"MiB")
+			dc <<< "$2 1024 * 1024 * ${BLOCK_SIZE} / p"
+			;;
+		"kB")
+			dc <<< "$2 1000 * ${BLOCK_SIZE} / p"
+			;;
+		"KiB")
+			dc <<< "$2 1024 * ${BLOCK_SIZE} / p"
+			;;
+		"B")
+			dc <<< "$2 ${BLOCK_SIZE} / p"
+			;;
+		"s")
+			echo $2
+			;;
+		"%")
+			dc <<< "${DISK_SIZE} $2 * 100 / p"
+			;;
+		*)
+			shellout "convert2sectors: unknown unit [$3]. (Valid units: TB, TiB, GB, GiB, MB, MiB, kB, KiB, B, s, %)"
+			;;
+	esac
+}
+
+################################################################################
+#
+# _get_sectors_aligment <device name> (sda, sdb, ...)
+#	This function return the sectors count for optimal aligment.
+#	Each new partitions should start at a multiple of this value.
+#	from: https://rainbow.chard.org/2013/01/30/how-to-align-partitions-for-best-performance-using-parted/
+#	PArt start at (optimal_io_size + aligment_offset)/physical_block_size
+#
+#
+################################################################################
+_get_sectors_aligment() {
+	test ! -d /sys/block/$1 && logwarn "/sys/block/$1 does not exists. Assuming sector aligment: 2048" && echo 2048 && return
+	OPTIM_IO_SIZE=$(cat /sys/block/$1/queue/optimal_io_size)
+	test -z "${OPTIM_IO_SIZE/0/}" && logwarn "/sys/block/$1/queue/optimal_io_size not supported. Assuming sector aligment: 2048" && echo 2048 && return 
+	ALIGMNT_OFFSET=$(cat /sys/block/$1/alignment_offset)
+	test -z "$ALIGMNT_OFFSET" && ALIGMNT_OFFSET=0
+	PHY_BLOCK_SIZE=$(cat /sys/block/$1/queue/physical_block_size)
+	test -z "$PHY_BLOCK_SIZE" && PHY_BLOCK_SIZE=512
+	dc <<< "$OPTIM_IO_SIZE $ALIGMNT_OFFSET + $PHY_BLOCK_SIZE / p"
+}
+
+
