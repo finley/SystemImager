@@ -54,14 +54,14 @@
         </xsd:simpleType>
       </xsd:attribute>
     </xsd:complexType>
-    <xsd:unique name="uniquePartitionId">
+    <xsd:unique name="uniquePartitionId"> <!-- enforces partition @num to be unique within a disk section -->
       <xsd:selector xpath="part"/>
       <xsd:field xpath="@num"/>
     </xsd:unique>
   </xsd:element>
   <xsd:element name="part">
     <xsd:complexType>
-      <xsd:attribute name="num" use="required"> <!-- TODO: make it unique -->
+      <xsd:attribute name="num" use="required">
         <xsd:simpleType>
 	  <xsd:restriction base="xsd:int">
 	    <xsd:minExclusive value="0" ></xsd:minExclusive>
