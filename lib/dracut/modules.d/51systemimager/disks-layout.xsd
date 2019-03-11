@@ -176,7 +176,7 @@
 					<xsd:restriction base="xsd:positiveInteger"/> <!-- must be a positive integer -->
 				</xsd:simpleType>
 			</xsd:attribute>
-			<xsd:attribute name="rounding"/> <!-- Rounding value in kilobytes. TODO: only valid if raid_level=1|raid1 -->
+			<xsd:attribute name="rounding"> <!-- Rounding value in kilobytes. TODO: only valid if raid_level=1|raid1 -->
 				<xsd:simpleType>
 					<xsd:restriction base="xsd:nonNegativeInteger"/> <!-- must be a positive or null integer -->
 				</xsd:simpleType>
@@ -263,6 +263,7 @@
 			<xsd:attribute name="line"/>
 			<xsd:attribute name="comment"/>
 			<xsd:attribute name="real_dev" use="required"/>
+			<xsd:attribute name="mount_dev" use="required"/>
 			<xsd:attribute name="mp" use="required"/>
 			<xsd:attribute name="fs" use="required"/>
 			<xsd:attribute name="mkfs_opts"/>
