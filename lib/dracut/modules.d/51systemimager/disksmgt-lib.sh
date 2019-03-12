@@ -574,16 +574,16 @@ _find_free_space() {
 	case "$2" in
 		end) # Searching from the end.
 			START_SIZE=(`LC_ALL=C parted -s -- $1 unit s print free | tac | grep 'Free Space' | sed 's/s//g' | awk -v ext_start=${START_END_PART_ZONE[0]} -v ext_end=${START_END_PART_ZONE[1]} -v req_size="$4" -v align=$(_get_sectors_aligment ${1##*/}) '
-			($1>=ext_start) && ($2<=ext_end) && (($2-$4)-(($2-$4)%align) >= $1) { printf "%d 0",($2-$4)-(($2-$4)%align); exit 0 } # Align to lower block if possible. Second argument: 0 means 100% \
-			($1>=ext_start) && ($2<=ext_end) && (($2-$4+align)-(($2-$4)%align)>=$1) { printf "%d 0",($2-$4+align)-(($2-$4)%align); exit 0 } # Align to higher block (lower aligment failed) if possible. Second argument: 0 means 100% \
+			($1>=ext_start) && ($2<=ext_end) && (($2-req_size)-(($2-req_size)%align) >= $1) { printf "%d 0",($2-req_size)-(($2-req_size)%align); exit 0 } # Align to lower block if possible. Second argument: 0 means 100% \
+			($1>=ext_start) && ($2<=ext_end) && (($2-req_size+align)-(($2-req_size)%align)>=$1) { printf "%d 0",($2-req_size+align)-(($2-req_size)%align); exit 0 } # Align to higher block (lower aligment failed) if possible. Second argument: 0 means 100% \
 			END { exit 1 } # No big enough space found
 			'` ) || shellout "Failed to find free space for a $3 partition of size ${4}s"
 			;;
 			# TODO(beginning): we could optimise partition size by rounding siez to align avoiding small gap with next partition.
-			# $4 -> ($4+align)-($4%align)
+			# req_size -> (req_size+align)-(req_size%align)
 		beginning) # Searching from beginning
 			START_SIZE=(`LC_ALL=C parted -s -- $1 unit s print free |       grep 'Free Space' | sed 's/s//g' | awk -v ext_start=${START_END_PART_ZONE[0]} -v ext_end=${START_END_PART_ZONE[1]} -v req_size="$4" -v align=$(_get_sectors_aligment ${1##*/}) '
-			((($1+align)-($1%align))>=ext_start) && ($2<=ext_end) && ((($1+align)-($1%align)+$4)<=$2) { printf "%d %d",($1+align)-($1%align),$4; exit 0 } # Enough space: print start block rounded to next alig position and size)\
+			((($1+align)-($1%align))>=ext_start) && ($2<=ext_end) && ((($1+align)-($1%align)+req_size)<=$2) { printf "%d %d",($1+align)-($1%align),req_size; exit 0 } # Enough space: print start block rounded to next alig position and size)\
 			END { exit 1 } # No big enough space found
 			'` ) || shellout "Failed to find free space for a $3 partition of size ${4}s"
 			;;
