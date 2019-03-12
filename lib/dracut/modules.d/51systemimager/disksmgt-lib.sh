@@ -443,13 +443,14 @@ _do_partitions() {
 				LC_ALL=C parted -s -- ${DISK_DEV} mklabel "${LABEL_TYPE}" || shellout "Failed to create new partition table for disk $DISK_DEV partition type=$PART_TYPE!"
 				sleep $PARTED_DELAY
 			elif test -n "$(echo ${LABEL_TYPE}|grep -iE 'convert')"
+			then
 				loginfo "Converting ${DISK_DEV} partition table to GPT..."
 				logaction "sgdisk  --mbrtogpt ${DISK_DEV}"
 				sgdisk  --mbrtogpt ${DISK_DEV} || shellout "Failed to convert ${DISK_DEV} partition table to GPT."
 			fi
 		done
 
-	xmlstarlet tr /lib/systemimager/do_part.xsl ${DISKS_LAYOUT_FILE} |\
+	xmlstarlet tr /lib/systemimager/do_partitions.xsl ${DISKS_LAYOUT_FILE} |\
 		while read DISK_DEV LABEL_TYPE P_RELATIV P_NUM P_SIZE P_UNIT P_TYPE P_ID P_NAME P_FLAGS P_LVM_GROUP P_RAID_DEV
 		do
 			# P_TYPE / P_NUM choherence check
@@ -470,16 +471,16 @@ _do_partitions() {
 					shellout "BUG: P_TYPE invalid [$P_TYPE]; please report."
 					;;
 			esac
-			test ! -d "$DISK_DEV" && shellout "Device [$DISK_DEV] does not exists."
+			test ! -b "$DISK_DEV" && shellout "Device [$DISK_DEV] does not exists."
 
 			# Get partition filesystem if it exists (no raid, no lvm) so we can put it in partition filesystem info
 			#P_FS=`xmlstarlet sel -t -m "config/fsinfo[@real_dev=\"${DISK_DEV}${P_NUM}\"]" -v "@fs" -n ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d'`
 			#test "${P_FS}" = "swap" && P_FS="linux-swap" # fix swap FS type name for parted.
 
 			# Create the partitions
-			P_UNIT=`echo $T_UNIT|sed "s/percent.*/%/g"` # Convert all variations of percent{,age{,s}} to "%"
+			P_UNIT=`echo $P_UNIT|sed "s/percent.*/%/g"` # Convert all variations of percent{,age{,s}} to "%"
 
-			P_SIZE_SECTORS=$(convert2sectors $DISK_DEV $P_SIZE $P_UNIT)
+			P_SIZE_SECTORS=$(convert2sectors ${DISK_DEV##*/} $P_SIZE $P_UNIT)
 			P_START_SIZE=( `_find_free_space $DISK_DEV $P_RELATIV $P_TYPE $P_SIZE_SECTORS` )
 			[ ${#P_START_SIZE[*]} -eq 0 ] && shellout "No sufficient space left on device $DISK_DEV for a partition of size $P_SIZE$P_UNIT"
 			START_BLOCK=${P_START_SIZE[0]}
@@ -572,18 +573,17 @@ _find_free_space() {
 
 	case "$2" in
 		end) # Searching from the end.
-			START_SIZE=(`LC_ALL=C parted -s -- $1 unit s print free | tac | grep 'Free Space | sed 's/s//g' | awk -v ext_start=${START_END_PART_ZONE[0]} -v ext_end=${START_END_PART_ZONE[1]} ' -v req_size="$4" -v align=$(_get_sectors_aligment ${1##*/}) '
-			(($1>=ext_start) && ($2=<ext_end) && (($2-$4)-(($2-$4)%align)>=$1))) { printf "%d 0",($2-$4)-(($2-$4)%align)); exit 0 } # Align to lower block if possible. Second argument: 0 means 100% \
-			(($1>=ext_start) && ($2=<ext_end) && (($2-$4+align)-(($2-$4)%align)>=$1))) { printf "%d 0",($2-$4+align)-(($2-$4)%align)); exit 0 } # Align to higher block (lower aligment failed) if possible. Second argument: 0 means 100% \
+			START_SIZE=(`LC_ALL=C parted -s -- $1 unit s print free | tac | grep 'Free Space' | sed 's/s//g' | awk -v ext_start=${START_END_PART_ZONE[0]} -v ext_end=${START_END_PART_ZONE[1]} -v req_size="$4" -v align=$(_get_sectors_aligment ${1##*/}) '
+			($1>=ext_start) && ($2<=ext_end) && (($2-$4)-(($2-$4)%align) >= $1) { printf "%d 0",($2-$4)-(($2-$4)%align); exit 0 } # Align to lower block if possible. Second argument: 0 means 100% \
+			($1>=ext_start) && ($2<=ext_end) && (($2-$4+align)-(($2-$4)%align)>=$1) { printf "%d 0",($2-$4+align)-(($2-$4)%align); exit 0 } # Align to higher block (lower aligment failed) if possible. Second argument: 0 means 100% \
 			END { exit 1 } # No big enough space found
 			'` ) || shellout "Failed to find free space for a $3 partition of size ${4}s"
-			)
 			;;
 			# TODO(beginning): we could optimise partition size by rounding siez to align avoiding small gap with next partition.
 			# $4 -> ($4+align)-($4%align)
 		beginning) # Searching from beginning
-			START_SIZE=(`LC_ALL=C parted -s -- $1 unit s print free |       grep 'Free Space | sed 's/s//g' | awk -v ext_start=${START_END_PART_ZONE[0]} -v ext_end=${START_END_PART_ZONE[1]} ' -v req_size="$4" -v align=$(_get_sectors_aligment ${1##*/}) '
-			((($1+align)-($1%align))>=ext_start) && ($2=<ext_end) && ((($1+align)-($1%align)+$4)<=$2))) { printf "%d %d",($1+align)-($1%align),$4; exit 0 } # Enough space: print start block rounded to next alig position and size)\
+			START_SIZE=(`LC_ALL=C parted -s -- $1 unit s print free |       grep 'Free Space' | sed 's/s//g' | awk -v ext_start=${START_END_PART_ZONE[0]} -v ext_end=${START_END_PART_ZONE[1]} -v req_size="$4" -v align=$(_get_sectors_aligment ${1##*/}) '
+			((($1+align)-($1%align))>=ext_start) && ($2<=ext_end) && ((($1+align)-($1%align)+$4)<=$2) { printf "%d %d",($1+align)-($1%align),$4; exit 0 } # Enough space: print start block rounded to next alig position and size)\
 			END { exit 1 } # No big enough space found
 			'` ) || shellout "Failed to find free space for a $3 partition of size ${4}s"
 			;;
@@ -963,7 +963,43 @@ _do_fstab() {
 
 
 ################################################################################
-# Convert2Sectors()
+#
+# _get_sectors_aligment <device name> (sda, sdb, ...)
+#	This function return the sectors count for optimal aligment.
+#	Each new partitions should start at a multiple of this value.
+#	from: https://rainbow.chard.org/2013/01/30/how-to-align-partitions-for-best-performance-using-parted/
+#	PArt start at (optimal_io_size + aligment_offset)/physical_block_size
+#
+#
+################################################################################
+_get_sectors_aligment() {
+	if test ! -d /sys/block/$1
+	then
+		logwarn "/sys/block/$1 does not exists. Assuming sector aligment: 2048"
+		echo 2048
+		return
+	fi
+
+	OPTIM_IO_SIZE=$(cat /sys/block/$1/queue/optimal_io_size)
+	if test -z "${OPTIM_IO_SIZE/0/}"
+	then
+		logwarn "/sys/block/$1/queue/optimal_io_size not supported. Assuming sector aligment: 2048"
+		echo 2048
+		return
+	fi
+
+	ALIGMNT_OFFSET=$(cat /sys/block/$1/alignment_offset)
+	test -z "$ALIGMNT_OFFSET" && ALIGMNT_OFFSET=0
+
+	PHY_BLOCK_SIZE=$(cat /sys/block/$1/queue/physical_block_size)
+	test -z "${PHY_BLOCK_SIZE/0/}" && PHY_BLOCK_SIZE=512 # Use 512 is value empty or zero.
+
+	echo "$OPTIM_IO_SIZE $ALIGMNT_OFFSET + $PHY_BLOCK_SIZE / p" | dc
+}
+
+
+################################################################################
+# convert2sectors()
 # $1: disk device (e.g. sda)
 # $2: value
 # $3: unit
@@ -1023,26 +1059,4 @@ convert2sectors() {
 			;;
 	esac
 }
-
-################################################################################
-#
-# _get_sectors_aligment <device name> (sda, sdb, ...)
-#	This function return the sectors count for optimal aligment.
-#	Each new partitions should start at a multiple of this value.
-#	from: https://rainbow.chard.org/2013/01/30/how-to-align-partitions-for-best-performance-using-parted/
-#	PArt start at (optimal_io_size + aligment_offset)/physical_block_size
-#
-#
-################################################################################
-_get_sectors_aligment() {
-	test ! -d /sys/block/$1 && logwarn "/sys/block/$1 does not exists. Assuming sector aligment: 2048" && echo 2048 && return
-	OPTIM_IO_SIZE=$(cat /sys/block/$1/queue/optimal_io_size)
-	test -z "${OPTIM_IO_SIZE/0/}" && logwarn "/sys/block/$1/queue/optimal_io_size not supported. Assuming sector aligment: 2048" && echo 2048 && return 
-	ALIGMNT_OFFSET=$(cat /sys/block/$1/alignment_offset)
-	test -z "$ALIGMNT_OFFSET" && ALIGMNT_OFFSET=0
-	PHY_BLOCK_SIZE=$(cat /sys/block/$1/queue/physical_block_size)
-	test -z "$PHY_BLOCK_SIZE" && PHY_BLOCK_SIZE=512
-	dc <<< "$OPTIM_IO_SIZE $ALIGMNT_OFFSET + $PHY_BLOCK_SIZE / p"
-}
-
 
