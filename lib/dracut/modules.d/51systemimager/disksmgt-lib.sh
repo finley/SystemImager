@@ -447,77 +447,102 @@ _do_partitions() {
 				logaction "sgdisk  --mbrtogpt ${DISK_DEV}"
 				sgdisk  --mbrtogpt ${DISK_DEV} || shellout "Failed to convert ${DISK_DEV} partition table to GPT."
 			fi
+		done
+
+	xmlstarlet tr /lib/systemimager/do_part.xsl ${DISKS_LAYOUT_FILE} |\
+		while read DISK_DEV LABEL_TYPE P_RELATIV P_NUM P_SIZE P_UNIT P_TYPE P_ID P_NAME P_FLAGS P_LVM_GROUP P_RAID_DEV
+		do
+			# P_TYPE / P_NUM choherence check
+			case $P_TYPE in
+				"logical")
+					test "$P_NUM" -lt 5 && shellout "Logical partition $P_NUM ($DISK_DEV) invalid (@num <= 4 is invalid)"
+					test "$LABEL_TYPE" = "gpt" && shellout "Logical patition $P_NUM not allowed on GPT table ($DISK_DEV)"
+					;;
+				"primary")
+					test "$P_NUM" -gt 4 && shellout "Primary partition $P_NUM ($DISK_DEV) invalid (@num > 4 is invalid)"
+					;;
+				"extended")
+					test "$P_NUM" -gt 4 && shellout "Extended partition $P_NUM ($DISK_DEV) invalid (@num > 4 is invalid)"
+					test "$EXTENDED_SEEN" = "$DISK_DEV" && shellout "Only ONE extended partition allowed per disk. ($DISK_DEV)"
+					EXTENDED_SEEN="$DISK_DEV"
+					;;
+				*)
+					shellout "BUG: P_TYPE invalid [$P_TYPE]; please report."
+					;;
+			esac
+			test ! -d "$DISK_DEV" && shellout "Device [$DISK_DEV] does not exists."
+
+			# Get partition filesystem if it exists (no raid, no lvm) so we can put it in partition filesystem info
+			#P_FS=`xmlstarlet sel -t -m "config/fsinfo[@real_dev=\"${DISK_DEV}${P_NUM}\"]" -v "@fs" -n ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d'`
+			#test "${P_FS}" = "swap" && P_FS="linux-swap" # fix swap FS type name for parted.
 
 			# Create the partitions
-			T_UNIT=`echo $T_UNIT|sed "s/percent.*/%/g"` # Convert all variations of percent{,age{,s}} to "%"
-			OLD_PNUM=0
-			unset VAR_PART
-			xmlstarlet sel -t -m "config/disk[@dev=\"${DISK_DEV}\"]/part" -s A:N:- "@num" -v "concat(@num,';',@size,';',@p_type,';',@id,';',@p_name,';',@flags,';',@lvm_group,';',@raid_dev)" -n ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d' |\
-				while read P_NUM P_SIZE P_TYPE P_ID P_NAME P_FLAGS P_LVM_GROUP P_RAID_DEV
-				do
-					test "$P_TYPE" = "logical" -a "$OLD_PNUM" -lt 4 && OLD_PNUM=4 # Extended partition start at 5.
-					test $(( $OLD_PNUM + 1 )) -ne $P_NUM && shellout "Partition numbers should start at 1 and increase in sequence without hole"
-					OLD_PNUM=$P_NUM
-					if test "$P_SIZE" = "*"
-					then
-						test "${VAR_PART}" = "done" && shellout "Only one adaptive size partition allowed"
-						P_SIZE="0" # 0 means 100% for parted
-						VAR_PART="done"
-					else
-						test "${VAR_PART}" = "done" && shellout "Can't create a partition after an adaptive partition (size "*") has been created (no space left)"
-						P_UNIT="$T_UNIT"
-					fi
-					# Get partition filesystem if it exists (no raid, no lvm) so we can put it in partition filesystem info
-					P_FS=`xmlstarlet sel -t -m "config/fsinfo[@real_dev=\"${DISK_DEV}${P_NUM}\"]" -v "@fs" -n ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d'`
-					test "${P_FS}" = "swap" && P_FS="linux-swap" # fix swap FS type name for parted.
+			P_UNIT=`echo $T_UNIT|sed "s/percent.*/%/g"` # Convert all variations of percent{,age{,s}} to "%"
 
-					# 1/ Create the partition
-					CMD="parted -a optimal -s -- ${DISK_DEV} unit ${P_UNIT} mkpart ${P_TYPE} ${P_FS} `_find_free_space ${DISK_DEV} ${P_UNIT} ${P_TYPE} ${P_SIZE}`"
-					logaction "$CMD"
-					eval "$CMD" || shellout "Failed to create partition ${DISK_DEV}${P_NUM}"
+			P_SIZE_SECTORS=$(convert2sectors $DISK_DEV $P_SIZE $P_UNIT)
+			P_START_SIZE=( `_find_free_space $DISK_DEV $P_RELATIV $P_TYPE $P_SIZE_SECTORS` )
+			[ ${#P_START_SIZE[*]} -eq 0 ] && shellout "No sufficient space left on device $DISK_DEV for a partition of size $P_SIZE$P_UNIT"
+			START_BLOCK=${P_START_SIZE[0]}
+			SIZE=${P_START_SIZE[1]}
+			case $LABEL_TYPE in
+				"msdos")
+					test -z "${SIZE/0/}" && END_BLOCK="" || END_BLOCK=$(echo "${START_BLOCK} ${SIZE} + p" | dc)
+					fdisk $DISK_DEV || shellout "Failed to create partition ${P_NUM} on ${DISK_DEV}" <<EOF
+n
+$P_TYPE
+$P_NUM
+$START_BLOCK
+$END_BLOCK
+w
+EOF
 					sleep $PARTED_DELAY
+					;;
+				"gpt")
+					sgdisk -n ${P_NUM}:${START_BLOCK}:+${SIZE} ${DISK_DEV} || shellout "Failed to create partition ${P_NUM} on ${DISK_DEV}"
+					sleep $PARTED_DELAY
+					;;
+				*)
+					;;
+			esac
 
-					# 2/ Set partition number ($partition) using sfdisk
-					# Do nothing; assuming xml file use partition in order just like parted.
-
-					# 3/ Set the partition flags
-					for flag in `echo $P_FLAGS|tr ',' ' '`
-					do
-						CMD="parted -s -- ${DISK_DEV} set ${P_NUM} ${flag} on"
+			# 3/ Set the partition flags
+			for flag in `echo $P_FLAGS|tr ',' ' '`
+			do
+				CMD="parted -s -- ${DISK_DEV} set ${P_NUM} ${flag} on"
+				logaction "$CMD"
+				if test "${flag}" = "esp" # On some distro, parted is too old to be aware of esp (EFI System Partition) flag
+				then
+					if ! eval "$CMD"
+					then
+						logwarn "parted doesn't seem to support esp flag. Trying boot flag instead"
+						CMD="parted -s -- ${DISK_DEV} set ${P_NUM} boot on"
 						logaction "$CMD"
-						if test "${flag}" = "esp" # On some distro, parted is too old to be aware of esp (EFI System Partition) flag
-						then
-							if ! eval "$CMD"
-							then
-								logwarn "parted doesn't seem to support esp flag. Trying boot flag instead"
-								CMD="parted -s -- ${DISK_DEV} set ${P_NUM} boot on"
-								logaction "$CMD"
-								eval "$CMD" || logwarn "Failed to set flag boot=on for partition ${DISK_DEV}${P_NUM}"
-							fi
-							# Need to set GUID=C12A7328-F81F-11D2-BA4B-00A0C93EC93B. (see https://en.wikipedia.org/wiki/GUID_Partition_Table)
-						else
-							logaction "$CMD"
-							eval "$CMD" || logwarn "Failed to set flag ${flag}=on for partition ${DISK_DEV}${P_NUM}"
-						fi
+						eval "$CMD" || logwarn "Failed to set flag boot=on for partition ${DISK_DEV}${P_NUM}"
+					fi
+					# Need to set GUID=C12A7328-F81F-11D2-BA4B-00A0C93EC93B. (see https://en.wikipedia.org/wiki/GUID_Partition_Table)
+				else
+					logaction "$CMD"
+					eval "$CMD" || logwarn "Failed to set flag ${flag}=on for partition ${DISK_DEV}${P_NUM}"
+				fi
 
-						sleep $PARTED_DELAY
-					done
+				sleep $PARTED_DELAY
+			done
 
-					# Testing that lvm flag is set if lvm group is defined.
-					[ -n "${P_LVM_GROUP}" ] && [ -z "`echo $P_FLAGS|grep lvm`" ] && shellout "Missing lvm flag for ${DISK_DEV}${P_NUM}"
-				done
-	       	done
+			# Testing that lvm flag is set if lvm group is defined.
+			[ -n "${P_LVM_GROUP}" ] && [ -z "`echo $P_FLAGS|grep lvm`" ] && shellout "Missing lvm flag for ${DISK_DEV}${P_NUM}"
+
+		done
 }
 
 ################################################################################
 #
 # _find_free_space()
-#		This functions return a "start end" positions withing available
+#		This functions return a "aligned-start-sector size-or-100%" positions withing available
 #		space on disk that matches requirements.
 #		(free space for logical partitions is searched withing extended
 #		partition)
 # 	- $1 disk dev
-#	- $2 unit of mesurement
+#	- $2 search from (end / beginning)
 #	- $3 type (primary extended logical)
 #	- $4 requested size
 #
@@ -535,26 +560,48 @@ _find_free_space() {
 	case "$3" in
 		logical)
 			# if partition is logical, get the working range to seach for free space
-			MIN_SIZE_EXT=( `LC_ALL=C parted -s -- $1 unit $2 print|grep "extended"|sed "s/$2//g"|awk '{ print $2,$4 }'` )
-			[ ${#MIN_SIZE_EXT[*]} -eq 0 ] && shellout "Can't create logical partition if no extended partition exists"
+			START_END_PART_ZONE=( `LC_ALL=C parted -s -- $1 unit s print|grep "extended"|sed "s/s//g"|awk '{ print $2,$3 }'` )
+			[ ${#START_END_PART_ZONE[*]} -eq 0 ] && shellout "Can't create logical partition if no extended partition exists"
 			;;
 		*)
 			# if primary or extended, search the whole disk
-			MIN_SIZE_EXT=( 0 0 )
+			LAST_BLOCK=$(echo "$(blockdev --getsize $1) 1 - p" | dc)
+			START_END_PART_ZONE=( 63 $LAST_BLOCK )
 			;;
 	esac
-	# For each free space
-	# if ext_size is non null (we create a logical part) and if checked free space is beyond end of extended, then abort
-	# if free block start is within search space and if free block size is big enough for requested size, we found it! => print and exit
-	# For extended partitions, if the 1st freeblock checked is outside, we exit without checking other ones if any.
-	# => Case cannot occure because logical partition will reach the end of disk. (can't create primary after logical with parted)
-	BEGIN_END=( `LC_ALL=C parted -s -- $1 unit $2 print free | grep "Free Space" | sed "s/$2//g" | sort -g -r -k2 | awk -v min=${MIN_SIZE_EXT[0]} -v ext_size=${MIN_SIZE_EXT[1]} -v required="$4" '
-	(ext_size>0) && ($1<min || $1>min+ext_size) { exit 1 }
-	($1>=min) && (($1<(min+ext_size)) || ext_size==0) && (required==0) { printf "%d 100%%\n",$1 ; exit 0 }
-	($1>=min) && ($1+required)<=$2 && (required!=0) { printf "%d %d\n",$1,$1+required ; exit 0 }
-' ` ) || shellout "Failed to find free space for a $3 partition of size $4$2"
-	[ -n "`echo ${BEGIN_END[0]}|grep '^0'`" ] && BEGIN_END[0]="1MiB" # Make sure we start at aligned position and that there is room for grub.
-	echo ${BEGIN_END[@]}
+
+	case "$2" in
+		end) # Searching from the end.
+			START_SIZE=(`LC_ALL=C parted -s -- $1 unit s print free | tac | grep 'Free Space | sed 's/s//g' | awk -v ext_start=${START_END_PART_ZONE[0]} -v ext_end=${START_END_PART_ZONE[1]} ' -v req_size="$4" -v align=$(_get_sectors_aligment ${1##*/}) '
+			(($1>=ext_start) && ($2=<ext_end) && (($2-$4)-(($2-$4)%align)>=$1))) { printf "%d 0",($2-$4)-(($2-$4)%align)); exit 0 } # Align to lower block if possible. Second argument: 0 means 100% \
+			(($1>=ext_start) && ($2=<ext_end) && (($2-$4+align)-(($2-$4)%align)>=$1))) { printf "%d 0",($2-$4+align)-(($2-$4)%align)); exit 0 } # Align to higher block (lower aligment failed) if possible. Second argument: 0 means 100% \
+			END { exit 1 } # No big enough space found
+			'` ) || shellout "Failed to find free space for a $3 partition of size ${4}s"
+			)
+			;;
+			# TODO(beginning): we could optimise partition size by rounding siez to align avoiding small gap with next partition.
+			# $4 -> ($4+align)-($4%align)
+		beginning) # Searching from beginning
+			START_SIZE=(`LC_ALL=C parted -s -- $1 unit s print free |       grep 'Free Space | sed 's/s//g' | awk -v ext_start=${START_END_PART_ZONE[0]} -v ext_end=${START_END_PART_ZONE[1]} ' -v req_size="$4" -v align=$(_get_sectors_aligment ${1##*/}) '
+			((($1+align)-($1%align))>=ext_start) && ($2=<ext_end) && ((($1+align)-($1%align)+$4)<=$2))) { printf "%d %d",($1+align)-($1%align),$4; exit 0 } # Enough space: print start block rounded to next alig position and size)\
+			END { exit 1 } # No big enough space found
+			'` ) || shellout "Failed to find free space for a $3 partition of size ${4}s"
+			;;
+	esac
+
+#	test "$2" = "end" && TAC="| tac"
+#	# For each free space
+#	# if ext_size is non null (we create a logical part) and if checked free space is beyond end of extended, then abort
+#	# if free block start is within search space and if free block size is big enough for requested size, we found it! => print and exit
+#	# For extended partitions, if the 1st freeblock checked is outside, we exit without checking other ones if any.
+#	# => Case cannot occure because logical partition will reach the end of disk. (can't create primary after logical with parted)
+#	BEGIN_END=( `LC_ALL=C parted -s -- $1 unit s print free $TAC | grep "Free Space" | sed "s/s//g" awk -v min=${MIN_SIZE_EXT[0]} -v ext_size=${MIN_SIZE_EXT[1]} -v required="$4" '
+#	(ext_size>0) && ($1<min || $1>min+ext_size) { exit 1 }
+#	($1>=min) && (($1<(min+ext_size)) || ext_size==0) && (required==0) { printf "%d 100%%\n",$1 ; exit 0 }
+#	($1>=min) && ($1+required)<=$2 && (required!=0) { printf "%d %d\n",$1,$1+required ; exit 0 }
+#' ` ) || shellout "Failed to find free space for a $3 partition of size ${4}s"
+#	[ -n "`echo ${BEGIN_END[0]}|grep '^0'`" ] && BEGIN_END[0]="1MiB" # Make sure we start at aligned position and that there is room for grub.
+#	echo ${BEGIN_END[@]}
 }
 
 ################################################################################
