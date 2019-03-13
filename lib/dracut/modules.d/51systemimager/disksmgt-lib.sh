@@ -480,14 +480,14 @@ _do_partitions() {
 			# Create the partitions
 			P_UNIT=`echo $P_UNIT|sed "s/percent.*/%/g"` # Convert all variations of percent{,age{,s}} to "%"
 
-			P_SIZE_SECTORS=$(convert2sectors ${DISK_DEV##*/} $P_SIZE $P_UNIT)
+			P_SIZE_SECTORS=$(convert2sectors "${DISK_DEV##*/}" "$P_SIZE" "$P_UNIT")
 			P_START_SIZE=( `_find_free_space $DISK_DEV $P_RELATIV $P_TYPE $P_SIZE_SECTORS` )
-			[ ${#P_START_SIZE[*]} -eq 0 ] && shellout "No sufficient space left on device $DISK_DEV for a partition of size $P_SIZE$P_UNIT"
+			test ${#P_START_SIZE[*]} -eq 0 && shellout "No sufficient space left on device $DISK_DEV for a partition of size $P_SIZE$P_UNIT"
 			START_BLOCK=${P_START_SIZE[0]}
 			SIZE=${P_START_SIZE[1]}
 			case $LABEL_TYPE in
 				"msdos")
-					test -z "${SIZE/0/}" && END_BLOCK="" || END_BLOCK=$(echo "${START_BLOCK} ${SIZE} + p" | dc)
+					test -z "${SIZE/[0\*]/}" && END_BLOCK="" || END_BLOCK=$(echo "${START_BLOCK} ${SIZE} + p" | dc)
 					fdisk $DISK_DEV || shellout "Failed to create partition ${P_NUM} on ${DISK_DEV}" <<EOF
 n
 $P_TYPE
@@ -572,36 +572,30 @@ _find_free_space() {
 	esac
 
 	case "$2" in
+		# We try to find a matching space given the partition size and the aligment value.
+		# Spaces smaller than aligment value are ignored ($3 > align required).
+		# This will avoid returning a useless gap when looking for a zero sized (max size) partition.
 		end) # Searching from the end.
 			START_SIZE=(`LC_ALL=C parted -s -- $1 unit s print free | tac | grep 'Free Space' | sed 's/s//g' | awk -v ext_start=${START_END_PART_ZONE[0]} -v ext_end=${START_END_PART_ZONE[1]} -v req_size="$4" -v align=$(_get_sectors_aligment ${1##*/}) '
-			($1>=ext_start) && ($2<=ext_end) && (($2-req_size)-(($2-req_size)%align) >= $1) { printf "%d 0",($2-req_size)-(($2-req_size)%align); exit 0 } # Align to lower block if possible. Second argument: 0 means 100% \
-			($1>=ext_start) && ($2<=ext_end) && (($2-req_size+align)-(($2-req_size)%align)>=$1) { printf "%d 0",($2-req_size+align)-(($2-req_size)%align); exit 0 } # Align to higher block (lower aligment failed) if possible. Second argument: 0 means 100% \
-			END { exit 1 } # No big enough space found
+			BEGIN { exit_code=1 }
+			($3 > align) && ($1 >= ext_start) && ($2 <= ext_end) && (($2-req_size)-(($2-req_size)%align) >= $1) { printf "%d 0",($2-req_size)-(($2-req_size)%align); exit_code=0; exit } # Align to lower block if possible. Second argument: 0 means 100% \
+			($3 > align) && ($1 >= ext_start) && ($2 <= ext_end) && (($2-req_size+align)-(($2-req_size)%align) >= $1) { printf "%d 0",($2-req_size+align)-(($2-req_size)%align); exit_code=0; exit } # Align to higher block (lower aligment failed) if possible. Second argument: 0 means 100% \
+			END { exit exit_code }
 			'` ) || shellout "Failed to find free space for a $3 partition of size ${4}s"
 			;;
 			# TODO(beginning): we could optimise partition size by rounding siez to align avoiding small gap with next partition.
 			# req_size -> (req_size+align)-(req_size%align)
 		beginning) # Searching from beginning
 			START_SIZE=(`LC_ALL=C parted -s -- $1 unit s print free |       grep 'Free Space' | sed 's/s//g' | awk -v ext_start=${START_END_PART_ZONE[0]} -v ext_end=${START_END_PART_ZONE[1]} -v req_size="$4" -v align=$(_get_sectors_aligment ${1##*/}) '
-			((($1+align)-($1%align))>=ext_start) && ($2<=ext_end) && ((($1+align)-($1%align)+req_size)<=$2) { printf "%d %d",($1+align)-($1%align),req_size; exit 0 } # Enough space: print start block rounded to next alig position and size)\
-			END { exit 1 } # No big enough space found
+			BEGIN { exit_code=1 }
+			($3 > align) && ((($1+align)-($1%align))>=ext_start) && ($2<=ext_end) && ((($1+align)-($1%align)+req_size)<=$2) { printf "%d %d",($1+align)-($1%align),req_size; exit_code=0; exit } # Enough space: print start block rounded to next alig position and size)\
+			END { exit exit_code }
 			'` ) || shellout "Failed to find free space for a $3 partition of size ${4}s"
 			;;
 	esac
 
-#	test "$2" = "end" && TAC="| tac"
-#	# For each free space
-#	# if ext_size is non null (we create a logical part) and if checked free space is beyond end of extended, then abort
-#	# if free block start is within search space and if free block size is big enough for requested size, we found it! => print and exit
-#	# For extended partitions, if the 1st freeblock checked is outside, we exit without checking other ones if any.
-#	# => Case cannot occure because logical partition will reach the end of disk. (can't create primary after logical with parted)
-#	BEGIN_END=( `LC_ALL=C parted -s -- $1 unit s print free $TAC | grep "Free Space" | sed "s/s//g" awk -v min=${MIN_SIZE_EXT[0]} -v ext_size=${MIN_SIZE_EXT[1]} -v required="$4" '
-#	(ext_size>0) && ($1<min || $1>min+ext_size) { exit 1 }
-#	($1>=min) && (($1<(min+ext_size)) || ext_size==0) && (required==0) { printf "%d 100%%\n",$1 ; exit 0 }
-#	($1>=min) && ($1+required)<=$2 && (required!=0) { printf "%d %d\n",$1,$1+required ; exit 0 }
-#' ` ) || shellout "Failed to find free space for a $3 partition of size ${4}s"
-#	[ -n "`echo ${BEGIN_END[0]}|grep '^0'`" ] && BEGIN_END[0]="1MiB" # Make sure we start at aligned position and that there is room for grub.
-#	echo ${BEGIN_END[@]}
+	local IFS=';'
+	echo "${START_SIZE[*]}" 
 }
 
 ################################################################################
@@ -1014,6 +1008,11 @@ convert2sectors() {
 	# local LC_NUMERIC="en_US.UTF-8" # Make sure we use "." for decimal separator.
 
 	test ! -b /dev/$1 && shellout "convert2sectors: device [/dev/$1] does not exists."
+	if test -z "${2/[0\*]}" # 0 means all space available.
+	then
+		echo 0
+		return
+	fi
 	test -n "${2//[0-9]/}" && "convert2sectors: size [$2] is not a numeric integer."
 	DISK_SIZE=$(cat /sys/block/$1/size) # percentage computation
 	BLOCK_SIZE=$(cat /sys/block/$1/queue/logical_block_size)
