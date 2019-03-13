@@ -490,6 +490,7 @@ _do_partitions() {
 			case $LABEL_TYPE in
 				"msdos")
 					test -z "${SIZE/0/}" && OFFSET_SIZE="" || OFFSET_SIZE="+${SIZE}"
+					logaction "fdisk /dev/sda <<< '$P_TYPE\\n$P_NUM\\n$START_BLOCK\\n$OFFSET_SIZE\\nw'"
 					fdisk $DISK_DEV > /dev/null <<EOF
 n
 $P_TYPE
@@ -503,7 +504,8 @@ EOF
 					;;
 				"gpt")
 					test -z "${SIZE/0/}" && OFFSET_SIZE="0" || OFFSET_SIZE="+${SIZE}"
-					sgdisk -n ${P_NUM}:${START_BLOCK}:${SIZE} ${DISK_DEV} || shellout "Failed to create partition ${P_NUM} on ${DISK_DEV}"
+					logaction "sgdisk -n ${P_NUM}:${START_BLOCK}:${OFFSET_SIZE} ${DISK_DEV}"
+					sgdisk -n ${P_NUM}:${START_BLOCK}:${OFFSET_SIZE} ${DISK_DEV} || shellout "Failed to create partition ${P_NUM} on ${DISK_DEV}"
 					sleep $PARTED_DELAY
 					;;
 				*)
