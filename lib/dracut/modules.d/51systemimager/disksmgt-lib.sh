@@ -479,28 +479,31 @@ _do_partitions() {
 
 			# Create the partitions
 			P_UNIT=`echo $P_UNIT|sed "s/percent.*/%/g"` # Convert all variations of percent{,age{,s}} to "%"
+			test -z "${P_SIZE/[0\*]/}" && P_SIZE=0
 
 			P_SIZE_SECTORS=$(convert2sectors "${DISK_DEV##*/}" "$P_SIZE" "$P_UNIT")
 			P_START_SIZE=( `_find_free_space $DISK_DEV $P_RELATIV $P_TYPE $P_SIZE_SECTORS` )
+			# If resulting table is empty, this means we didn't find a large enough space to host this partition.
 			test ${#P_START_SIZE[*]} -eq 0 && shellout "No sufficient space left on device $DISK_DEV for a partition of size $P_SIZE$P_UNIT"
 			START_BLOCK=${P_START_SIZE[0]}
 			SIZE=${P_START_SIZE[1]}
 			case $LABEL_TYPE in
 				"msdos")
-					test -z "${SIZE/[0\*]/}" && END_BLOCK="" || END_BLOCK=$(echo "${START_BLOCK} ${SIZE} + p" | dc)
+					test -z "${SIZE/0/}" && OFFSET_SIZE="" || OFFSET_SIZE="+${SIZE}"
 					fdisk $DISK_DEV > /dev/null <<EOF
 n
 $P_TYPE
 $P_NUM
 $START_BLOCK
-$END_BLOCK
+$OFFSET_SIZE
 w
 EOF
 					test $? -ne 0 && shellout "Failed to create partition ${P_NUM} on ${DISK_DEV}"
 					sleep $PARTED_DELAY
 					;;
 				"gpt")
-					sgdisk -n ${P_NUM}:${START_BLOCK}:+${SIZE} ${DISK_DEV} || shellout "Failed to create partition ${P_NUM} on ${DISK_DEV}"
+					test -z "${SIZE/0/}" && OFFSET_SIZE="0" || OFFSET_SIZE="+${SIZE}"
+					sgdisk -n ${P_NUM}:${START_BLOCK}:${SIZE} ${DISK_DEV} || shellout "Failed to create partition ${P_NUM} on ${DISK_DEV}"
 					sleep $PARTED_DELAY
 					;;
 				*)
@@ -546,7 +549,7 @@ EOF
 # 	- $1 disk dev
 #	- $2 search from (end / beginning)
 #	- $3 type (primary extended logical)
-#	- $4 requested size
+#	- $4 requested size (sectors)
 #
 # TODO: Need to return aligned partitions. For this, we need to convert to MiB
 #       and aligne to 1MiB so it fits all disks aligments...
