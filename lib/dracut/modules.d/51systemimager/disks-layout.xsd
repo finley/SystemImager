@@ -15,6 +15,7 @@
 				<xsd:element minOccurs="0" maxOccurs="1" ref="lvm"/> <!-- Optional section -->
 				<xsd:element minOccurs="0" maxOccurs="unbounded" ref="bootloader"/> <!-- Mandatory section -->
 				<xsd:element minOccurs="1" maxOccurs="unbounded" ref="fsinfo"/> <!-- Mandatory section -->
+				<xsd:element minOccurs="0" maxOccurs="1" ref="boel"/> <!-- Optional section -->
 			</xsd:sequence>
 		</xsd:complexType>
 	</xsd:element>
@@ -280,7 +281,7 @@
 			<xsd:attribute name="devstyle">
 				<xsd:simpleType>
 					<xsd:restriction base="xsd:token">
-						<xsd:enumeration value="statici"/>
+						<xsd:enumeration value="static"/>
 						<xsd:enumeration value="udev"/>
 						<xsd:enumeration value="devfs"/>
 					</xsd:restriction>
