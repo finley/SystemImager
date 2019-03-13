@@ -488,7 +488,7 @@ _do_partitions() {
 			case $LABEL_TYPE in
 				"msdos")
 					test -z "${SIZE/[0\*]/}" && END_BLOCK="" || END_BLOCK=$(echo "${START_BLOCK} ${SIZE} + p" | dc)
-					fdisk $DISK_DEV || shellout "Failed to create partition ${P_NUM} on ${DISK_DEV}" <<EOF
+					fdisk $DISK_DEV > /dev/null <<EOF
 n
 $P_TYPE
 $P_NUM
@@ -496,6 +496,7 @@ $START_BLOCK
 $END_BLOCK
 w
 EOF
+					test $? -ne 0 && shellout "Failed to create partition ${P_NUM} on ${DISK_DEV}"
 					sleep $PARTED_DELAY
 					;;
 				"gpt")
