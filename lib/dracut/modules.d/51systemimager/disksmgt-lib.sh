@@ -512,35 +512,181 @@ EOF
 
 			# Get partition filesystem if it exists (no raid, no lvm) so we can set the correct partition type/id
 			P_FS=`xmlstarlet sel -t -m "config/fsinfo[@real_dev=\"${DISK_DEV}${P_NUM}\"]" -v "@fs" -n ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d'`
-			test "${P_FS}" = "swap" && P_FS="linux-swap" # fix swap FS type name for parted.
+			# Set partition filesystem
+			_set_partition_flag_and_id $LABEL_TYPE $DISK_DEV $P_NUM $P_FS
+
+			# Set partition ID if provided
+			if test -n "$P_ID"
+			then
+				_set_partition_flag_and_id $LABEL_TYPE $DISK_DEV $P_NUM $P_ID
+				# TODO Handle error
+			fi
 
 			# 3/ Set the partition flags
 			for flag in `echo $P_FLAGS|tr ',' ' '`
 			do
-				CMD="parted -s -- ${DISK_DEV} set ${P_NUM} ${flag} on"
-				logaction "$CMD"
-				if test "${flag}" = "esp" # On some distro, parted is too old to be aware of esp (EFI System Partition) flag
-				then
-					if ! eval "$CMD"
-					then
-						logwarn "parted doesn't seem to support esp flag. Trying boot flag instead"
-						CMD="parted -s -- ${DISK_DEV} set ${P_NUM} boot on"
-						logaction "$CMD"
-						eval "$CMD" || logwarn "Failed to set flag boot=on for partition ${DISK_DEV}${P_NUM}"
-					fi
-					# Need to set GUID=C12A7328-F81F-11D2-BA4B-00A0C93EC93B. (see https://en.wikipedia.org/wiki/GUID_Partition_Table)
-				else
-					logaction "$CMD"
-					eval "$CMD" || logwarn "Failed to set flag ${flag}=on for partition ${DISK_DEV}${P_NUM}"
-				fi
-
-				sleep $PARTED_DELAY
+				_set_partition_flag_and_id $LABEL_TYPE $DISK_DEV $P_NUM $flag
 			done
 
 			# Testing that lvm flag is set if lvm group is defined.
 			[ -n "${P_LVM_GROUP}" ] && [ -z "`echo $P_FLAGS|grep lvm`" ] && shellout "Missing lvm flag for ${DISK_DEV}${P_NUM}"
 
 		done
+}
+
+################################################################################
+#
+# _set_partition_flag_and_id()
+#    - $1: partition label type (msdos or gpt)
+#    - $2: device
+#    - $3: partition
+#    - $4: flag or id(2digits) or od(4digits) or filesystem
+#
+# Note: flag/id/filesystem are often similar. for exemple efi flag under parted
+#       is in fact a special partition GUID.
+#
+################################################################################
+_set_partition_flag_and_id() {
+	loginfo "Setting [$4] attribute for partition $3 on device $2"
+	case $4 in
+		ext2|ext3|ext4|xfs|jfs|reiserfs|btrfs)
+			case $1 in
+				msdos)
+					fdisk $2 > /dev/null <<EOF
+t
+$3
+83
+w
+EOF
+					;;
+				gpt)
+					sgdisk $2 -t $3:8300
+					;;
+			esac
+			;;
+		ntfs|msdos|vfat|fat|fat32|fat16)
+			case $1 in
+				msdos)
+					fdisk $2 > /dev/null <<EOF
+t
+$3
+7
+w
+EOF
+					;;
+				gpt)
+					sgdisk $2 -t $3:0700
+					;;
+			esac
+			;;
+		swap)
+			case $1 in
+				msdos)
+					fdisk $2 > /dev/null <<EOF
+t
+$3
+7
+w
+EOF
+					;;
+				gpt)
+					sgdisk $2 -t $3:8200
+					;;
+			esac
+			;;
+		boot)
+			parted -s $2 set $3 boot on
+			;;
+		esp)
+			# 1sgt set boot flag.
+			parted -s $2 set $3 boot on
+
+			# Then set PART-GUID/ef flag
+			case $1 in
+				msdos)
+					logwarn "EFI on msdos partition table is strongly discouraged"
+					logwarn "If you really want to do so you must enable legacy support"
+					logwarn "in your EFI BIOS - AND - Disable secure boot!"
+					fdisk $2 > /dev/null <<EOF
+t
+$3
+ef
+w
+EOF
+					;;
+				gpt)
+					# Set correct Partition GUID
+					# sgdisk $2 -t $3:ef00 # Same as below.
+					sgdisk $2 -t "$3:C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
+					# Set correct partition label (name)
+					sgdisk $2 -c "$3:EFI System Partition"
+					;;
+			esac
+			;;
+		hidden)
+			parted -s $2 set $3 hidden on
+			;;
+		lvm)
+			case $1 in
+				msdos)
+					fdisk $2 > /dev/null <<EOF
+t
+$3
+31
+w
+EOF
+					;;
+				gpt)
+					sgdisk $2 -t $3:8e00
+					;;
+			esac
+			;;
+		raid)
+			parted -s $2 set $3 raid on
+			;;
+		lba)
+			parted -s $2 set $3 lba on
+			;;
+		legacy_boot)
+			case $1 in
+				msdos)
+					loginfo "Enabling 'legacy_boot' for Device $2 Partition $3."
+					fdisk $2 > /dev/null <<EOF
+a
+$3
+c
+w
+EOF
+					;;
+				gpt)
+					logwarn "Device $2 Partition $3: legacy_boot incompatible with GPT partition table"
+					;;
+			esac
+			;;
+		*)
+			# 2digits (msdos)
+			if test -z "$(echo $4|sed -E 's/^[0-9A-Za-z]{1,2}//g')"
+			then
+				test $1='gpt' && shellout "gpt id are 4 digits (see sgdisk -L output for a list)"
+				fdisk $2 > /dev/null <<EOF
+t
+$3
+$4
+w
+EOF
+			# 4digits (gpt)
+			elif test -z "$(echo $4|sed -E 's/^[0-9A-Za-z]{4}//g')"
+			then
+				test $1='msdos' && shellout "gpt ids are 1 or 2 digits (see fdisk manual)"
+				sgdisk $2 -t $3:$4
+			else
+				# else ignore.
+				# we don't support palo, prep, diag, ...
+				logwarn "Device $2 Partition $3 Unknown or unsupported flag/id: [$4]"
+			fi
+			;;
+	esac
+	test $? -ne 0 && logerror "Failed to set [$4] attribute for partition $3 on device $2"
 }
 
 ################################################################################
