@@ -450,6 +450,8 @@ _do_partitions() {
 			fi
 		done
 
+	# We use an xsd translmation file to present partition in an order that
+	# permit to create variable size (*) partition in the middle of 2 others
 	xmlstarlet tr /lib/systemimager/do_partitions.xsl ${DISKS_LAYOUT_FILE} |\
 		while read DISK_DEV LABEL_TYPE P_RELATIV P_NUM P_SIZE P_UNIT P_TYPE P_ID P_NAME P_FLAGS P_LVM_GROUP P_RAID_DEV
 		do
@@ -473,10 +475,6 @@ _do_partitions() {
 			esac
 			test ! -b "$DISK_DEV" && shellout "Device [$DISK_DEV] does not exists."
 
-			# Get partition filesystem if it exists (no raid, no lvm) so we can put it in partition filesystem info
-			#P_FS=`xmlstarlet sel -t -m "config/fsinfo[@real_dev=\"${DISK_DEV}${P_NUM}\"]" -v "@fs" -n ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d'`
-			#test "${P_FS}" = "swap" && P_FS="linux-swap" # fix swap FS type name for parted.
-
 			# Create the partitions
 			P_UNIT=`echo $P_UNIT|sed "s/percent.*/%/g"` # Convert all variations of percent{,age{,s}} to "%"
 			test -z "${P_SIZE/[0\*]/}" && P_SIZE=0
@@ -489,7 +487,7 @@ _do_partitions() {
 			SIZE=${P_START_SIZE[1]}
 			case $LABEL_TYPE in
 				"msdos")
-					test -z "${SIZE/0/}" && OFFSET_SIZE="" || OFFSET_SIZE="+${SIZE}"
+					test -z "${SIZE/0/}" && OFFSET_SIZE="" || OFFSET_SIZE="+$((${SIZE}-1))" # fdisk computes wrong size bigger by one block
 					logaction "fdisk /dev/sda <<< '$P_TYPE\\n$P_NUM\\n$START_BLOCK\\n$OFFSET_SIZE\\nw'"
 					fdisk $DISK_DEV > /dev/null <<EOF
 n
@@ -511,6 +509,10 @@ EOF
 				*)
 					;;
 			esac
+
+			# Get partition filesystem if it exists (no raid, no lvm) so we can set the correct partition type/id
+			P_FS=`xmlstarlet sel -t -m "config/fsinfo[@real_dev=\"${DISK_DEV}${P_NUM}\"]" -v "@fs" -n ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d'`
+			test "${P_FS}" = "swap" && P_FS="linux-swap" # fix swap FS type name for parted.
 
 			# 3/ Set the partition flags
 			for flag in `echo $P_FLAGS|tr ',' ' '`
@@ -573,7 +575,11 @@ _find_free_space() {
 		*)
 			# if primary or extended, search the whole disk
 			LAST_BLOCK=$(echo "$(blockdev --getsize $1) 1 - p" | dc)
-			START_END_PART_ZONE=( 63 $LAST_BLOCK )
+								# We don't search free space starting at zero as there is some reserved space
+								# for partition table, boot sector and such.
+								# we start at 34, the smalest value we can encounter
+								# it will get rounded to next alignment value anyway.
+			START_END_PART_ZONE=( 34 $LAST_BLOCK )  # msdos: start_free=63s / gpt: start_free=34s.
 			;;
 	esac
 
@@ -582,19 +588,25 @@ _find_free_space() {
 		# Spaces smaller than aligment value are ignored ($3 > align required).
 		# This will avoid returning a useless gap when looking for a zero sized (max size) partition.
 		end) # Searching from the end.
+			# We align to the lower rounded aligned partition to make sure we can honnor
+		        # the requested space. We use 0 size (100%), so trailing sectors beween end
+		        # of partition and next aligned partition are included in current partition
 			START_SIZE=(`LC_ALL=C parted -s -- $1 unit s print free | tac | grep 'Free Space' | sed 's/s//g' | awk -v ext_start=${START_END_PART_ZONE[0]} -v ext_end=${START_END_PART_ZONE[1]} -v req_size="$4" -v align=$(_get_sectors_aligment ${1##*/}) '
 			BEGIN { exit_code=1 }
-			($3 > align) && ($1 >= ext_start) && ($2 <= ext_end) && (($2-req_size)-(($2-req_size)%align) >= $1) { printf "%d 0",($2-req_size)-(($2-req_size)%align); exit_code=0; exit } # Align to lower block if possible. Second argument: 0 means 100% \
-			($3 > align) && ($1 >= ext_start) && ($2 <= ext_end) && (($2-req_size+align)-(($2-req_size)%align) >= $1) { printf "%d 0",($2-req_size+align)-(($2-req_size)%align); exit_code=0; exit } # Align to higher block (lower aligment failed) if possible. Second argument: 0 means 100% \
+			($3 > align) && (req_size == 0) { printf "%d 0",($1-1+align)-(($1-1)%align) ; exit_code=0; exit }
+			($3 > align) && ($1 >= ext_start) && ($2 <= ext_end) && (($2-req_size+1)-(($2-req_size+1)%align) >= $1) { printf "%d 0",($2-req_size+1)-(($2-req_size+1)%align); exit_code=0; exit } # Align to lower block. Second argument: 0 means 100% \
 			END { exit exit_code }
 			'` ) || shellout "Failed to find free space for a $3 partition of size ${4}s"
 			;;
-			# TODO(beginning): we could optimise partition size by rounding siez to align avoiding small gap with next partition.
-			# req_size -> (req_size+align)-(req_size%align)
 		beginning) # Searching from beginning
+			# We round the requested size to multiple of aligment in order to avoid
+		        # loosing space between end of artition and next aligned one. We assume
+			# that (empty disk last block + 1) % aligment = 0. If not, creating a
+			# fixed size partition of exact blocks count could fail. (disk layout
+			# replication with no variable size partition for example)
 			START_SIZE=(`LC_ALL=C parted -s -- $1 unit s print free |       grep 'Free Space' | sed 's/s//g' | awk -v ext_start=${START_END_PART_ZONE[0]} -v ext_end=${START_END_PART_ZONE[1]} -v req_size="$4" -v align=$(_get_sectors_aligment ${1##*/}) '
-			BEGIN { exit_code=1 }
-			($3 > align) && ((($1+align)-($1%align))>=ext_start) && ($2<=ext_end) && ((($1+align)-($1%align)+req_size)<=$2) { printf "%d %d",($1+align)-($1%align),req_size; exit_code=0; exit } # Enough space: print start block rounded to next alig position and size)\
+			BEGIN { exit_code=1; opt_size=req_size+req_size%align }
+			($3 > align) && ((($1-1+align)-(($1-1)%align))>=ext_start) && ($2<=ext_end) && ((($1-1+align)-(($1-1)%align)+opt_size)<=$2) { printf "%d %d",($1-1+align)-(($1-1)%align),opt_size; exit_code=0; exit } # Enough space: print start block rounded to next alig position and size)\
 			END { exit exit_code }
 			'` ) || shellout "Failed to find free space for a $3 partition of size ${4}s"
 			;;
