@@ -618,6 +618,7 @@ EOF
 					# Set correct Partition GUID
 					# sgdisk $2 -t $3:ef00 # Same as below.
 					sgdisk $2 -t "$3:C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
+					sleep $PARTED_DELAY
 					# Set correct partition label (name)
 					sgdisk $2 -c "$3:EFI System Partition"
 					;;
@@ -686,6 +687,7 @@ EOF
 			fi
 			;;
 	esac
+	sleep $PARTED_DELAY
 	test $? -ne 0 && logerror "Failed to set [$4] attribute for partition $3 on device $2"
 }
 
