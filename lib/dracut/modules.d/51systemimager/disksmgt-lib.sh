@@ -53,6 +53,11 @@ sis_prepare_disks() {
 	loginfo "Using Disk layout file: ${DISKS_LAYOUT_FILE}"
 	write_variables # Save DISKS_LAYOUT_FILE variable for future use.
 
+	# 1st, we need to validdate the disk-layout file.
+	loginfo "Validating disk layout: ${DISKS_LAYOUT_FILE}"
+	xmlstarlet val --err --xsd /lib/systemimager/disks-layout.xsd ${DISKS_LAYOUT_FILE} || shellout "Disk layout file is invalid. Check error logs and fix problem."
+	loginfo "Disk layout seems valid; continuing..."
+
 	# Initialisae / check LVM version to use. (defaults to v2).
 	LVM_VERSION=`xmlstarlet sel -t -m "config/lvm" -if "@version" -v "@version" --else -o "2" -b ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d'`
 
@@ -425,11 +430,6 @@ EOF
 _do_partitions() {
 	sis_update_step part
 	local IFS=';'
-
-	# 1st, we need to validdate the disk-layout file.
-	loginfo "Validating disk layout: ${DISKS_LAYOUT_FILE}"
-	xmlstarlet val --err --xsd /lib/systemimager/disks-layout.xsd ${DISKS_LAYOUT_FILE} || shellout "Disk layout file is invalid. Check error logs and fix problem."
-	loginfo "Disk layout seems valid; continuing..."
 
 	xmlstarlet sel -t -m 'config/disk' -v "concat(@dev,';',@label_type,';',@unit_of_measurement)" -n ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d' |\
 		while read DISK_DEV LABEL_TYPE T_UNIT;
