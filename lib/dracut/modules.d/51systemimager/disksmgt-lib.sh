@@ -462,9 +462,10 @@ _do_partitions() {
 					test "$LABEL_TYPE" = "gpt" && shellout "Logical patition $P_NUM not allowed on GPT table ($DISK_DEV)"
 					;;
 				"primary")
-					test "$P_NUM" -gt 4 && shellout "Primary partition $P_NUM ($DISK_DEV) invalid (@num > 4 is invalid)"
+					test "$P_NUM" -gt 4 -a "$LABEL_TYPE" = "msdos" && shellout "Primary partition $P_NUM ($DISK_DEV) invalid (@num > 4 is invalid)"
 					;;
 				"extended")
+					test "$LABEL_TYPE" = "gpt" && shellout "Extended partition $P_NUM ($DISK_DEV) incompatible with label type "$LABEL_TYPE"
 					test "$P_NUM" -gt 4 && shellout "Extended partition $P_NUM ($DISK_DEV) invalid (@num > 4 is invalid)"
 					test "$EXTENDED_SEEN" = "$DISK_DEV" && shellout "Only ONE extended partition allowed per disk. ($DISK_DEV)"
 					EXTENDED_SEEN="$DISK_DEV"
