@@ -459,7 +459,7 @@ _do_partitions() {
 					test "$P_NUM" -gt 4 -a "$LABEL_TYPE" = "msdos" && shellout "Primary partition $P_NUM ($DISK_DEV) invalid (@num > 4 is invalid)"
 					;;
 				"extended")
-					test "$LABEL_TYPE" = "gpt" && shellout "Extended partition $P_NUM ($DISK_DEV) incompatible with label type "$LABEL_TYPE"
+					test "$LABEL_TYPE" = "gpt" && shellout "Extended partition $P_NUM ($DISK_DEV) incompatible with label type $LABEL_TYPE"
 					test "$P_NUM" -gt 4 && shellout "Extended partition $P_NUM ($DISK_DEV) invalid (@num > 4 is invalid)"
 					test "$EXTENDED_SEEN" = "$DISK_DEV" && shellout "Only ONE extended partition allowed per disk. ($DISK_DEV)"
 					EXTENDED_SEEN="$DISK_DEV"
@@ -588,6 +588,9 @@ EOF
 					sgdisk $2 -t $3:8200
 					;;
 			esac
+			;;
+		root)
+			parted -s $2 set $3 root on
 			;;
 		boot)
 			parted -s $2 set $3 boot on

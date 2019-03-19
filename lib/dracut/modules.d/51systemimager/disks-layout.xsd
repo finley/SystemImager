@@ -109,7 +109,7 @@
 			<xsd:attribute name="flags"> <!-- The partition flags -->
 				<xsd:simpleType>
 					<xsd:restriction base="xsd:token"> <!-- comma spearated list of the following:boot,hidden,raid,lvm,lba,swap,legacy_boot,esp -->
-						<xsd:pattern value="(boot|hidden|raid|lvm|lba|swap|legacy_boot|esp|-)(,(boot|hidden|raid|lvm|lba|swap|legacy_boot|esp))*"/>
+						<xsd:pattern value="(root|boot|hidden|raid|lvm|lba|swap|legacy_boot|esp|-)(,(root|boot|hidden|raid|lvm|lba|swap|legacy_boot|esp))*"/>
 					</xsd:restriction>
 				</xsd:simpleType>
 			</xsd:attribute>
