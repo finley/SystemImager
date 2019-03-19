@@ -520,7 +520,7 @@ EOF
 			# 3/ Set the partition flags
 			for flag in `echo $P_FLAGS|tr ',' ' '`
 			do
-				_set_partition_flag_and_id $LABEL_TYPE $DISK_DEV $P_NUM $flag
+				test -n ${flag/-/} && _set_partition_flag_and_id $LABEL_TYPE $DISK_DEV $P_NUM $flag
 			done
 
 			# Testing that lvm flag is set if lvm group is defined.
