@@ -259,21 +259,22 @@
 		</xsd:complexType>
 	</xsd:element>
 	<!-- filesystem informations -->
-	<xsd:element name="fsinfo">
-		<xsd:complexType>
-			<xsd:attribute name="line"/>
-			<xsd:attribute name="comment"/>
-			<xsd:attribute name="real_dev" use="required"/>
-			<xsd:attribute name="mount_dev"/>
-			<xsd:attribute name="mp" use="required"/>
-			<xsd:attribute name="fs" use="required"/>
-			<xsd:attribute name="mkfs_opts"/>
-			<xsd:attribute name="options" default="defaults"/>
-			<xsd:attribute name="dump" use="required"/>
-			<xsd:attribute name="pass" use="required"/>
-			<xsd:attribute name="format"/>
-		</xsd:complexType>
-	</xsd:element>
+
+	<xsd:complexType name="fstab_line">
+		<xsd:attribute name="line"/>
+		<xsd:attribute name="real_dev" /> <!-- use="required" -->
+		<xsd:attribute name="mount_dev"/>
+		<xsd:attribute name="mp"/> <!-- use="required" -->
+		<xsd:attribute name="fs"/> <!-- use="required" -->
+		<xsd:attribute name="mkfs_opts"/>
+		<xsd:attribute name="options" default="defaults"/>
+		<xsd:attribute name="dump"/> <!-- use="required" -->
+		<xsd:attribute name="pass"/> <!-- use="required" -->
+		<xsd:attribute name="format"/>
+		<xsd:attribute name="comment"/>
+	</xsd:complexType>
+	<xsd:element name="fsinfo" type="fstab_line"/>
+
 	<!-- Deprecated Brian's Own Embedded Linux section -->
 	<!-- This section is ignored and described here so old files wont fail when being verifyed. -->
 	<xsd:element name="boel">
