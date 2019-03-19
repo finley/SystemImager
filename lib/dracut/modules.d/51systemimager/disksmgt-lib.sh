@@ -14,12 +14,6 @@
 # Load API and variables.txt (HOSTNAME, IMAGENAME, ..., including detected disks array: $DISKS)
 type logmessage >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 
-# Assumptions
-# primary partitions are created at 1st in order 1, 2, 3, 4 ...
-# TODO: partition are aligned to 1MiB so it fits all disks aligments.
-# TODO: Enhancement: use http://people.redhat.com/msnitzer/docs/io-limits.txt if possible for optimal aligment; fallback to 1MiB aligment only if not supported.
-#
-
 PARTED_DELAY=0.5 # On older kernels, system needs time to update partitions.
 
 ################################################################################
@@ -480,7 +474,7 @@ _do_partitions() {
 			P_UNIT=`echo $P_UNIT|sed "s/percent.*/%/g"` # Convert all variations of percent{,age{,s}} to "%"
 			test -z "${P_SIZE/[0\*]/}" && P_SIZE=0
 
-			P_SIZE_SECTORS=$(convert2sectors "${DISK_DEV##*/}" "$P_SIZE" "$P_UNIT")
+			P_SIZE_SECTORS=$(convert2sectors "${DISK_DEV##*/}" "$P_SIZE" "$P_UNIT"|cut -d. -f1)
 			P_START_SIZE=( `_find_free_space $DISK_DEV $P_RELATIV $P_TYPE $P_SIZE_SECTORS` )
 			# If resulting table is empty, this means we didn't find a large enough space to host this partition.
 			test ${#P_START_SIZE[*]} -eq 0 && shellout "No sufficient space left on device $DISK_DEV for a partition of size $P_SIZE$P_UNIT"
@@ -1162,9 +1156,9 @@ _get_sectors_aligment() {
 ################################################################################
 # convert2sectors()
 # $1: disk device (e.g. sda)
-# $2: value
-# $3: unit
-# output: number of sectors
+# $2: partition requested size (float or integer)
+# $3: unit of measurement
+# output: number of sectors (float; will be cut later)
 ################################################################################
 #
 # DISC_SIZE: /sys/block/<device>/size
@@ -1174,13 +1168,13 @@ _get_sectors_aligment() {
 convert2sectors() {
 	# local LC_NUMERIC="en_US.UTF-8" # Make sure we use "." for decimal separator.
 
-	test ! -b /dev/$1 && shellout "convert2sectors: device [/dev/$1] does not exists."
-	if test -z "${2/[0\*]}" # 0 means all space available.
+	test ! -f /sys/block/$1/size && shellout "convert2sectors: device [$1] does not exists."
+	if test -z "${2/0/}" # 0 means all space available. Keep it unchanged.
 	then
 		echo 0
 		return
 	fi
-	test -n "${2//[0-9]/}" && "convert2sectors: size [$2] is not a numeric integer."
+	test -z $(sed -E 's/^[0-9]+(\.[0-9]+)*//g' <<< $2) || shellout "convert2sectors: size [$2] for partition $1 is not numeric."
 	DISK_SIZE=$(cat /sys/block/$1/size) # percentage computation
 	BLOCK_SIZE=$(cat /sys/block/$1/queue/logical_block_size)
 	test -z "${BLOCK_SIZE}" && logwarn "Failed to get $1 block size. Assuming 512 bytes." && BLOCK_SIZE=512
@@ -1188,37 +1182,37 @@ convert2sectors() {
 
 	case $3 in
 		"TB")
-			dc <<< "$2 1000 * 1000 * 1000 * 1000 * ${BLOCK_SIZE} / p"
+			dc <<< "$2 1000 * 1000 * 1000 * 1000 * ${BLOCK_SIZE} / n"
 			;;
 		"TiB")
-			dc <<< "$2 1024 * 1024 * 1024 * 1024 * ${BLOCK_SIZE} / p"
+			dc <<< "$2 1024 * 1024 * 1024 * 1024 * ${BLOCK_SIZE} / n"
 			;;
 		"GB")
-			dc <<< "$2 1000 * 1000 * 1000 * ${BLOCK_SIZE} / p"
+			dc <<< "$2 1000 * 1000 * 1000 * ${BLOCK_SIZE} / n"
 			;;
 		"GiB")
-			dc <<< "$2 1024 * 1024 * 1024 * ${BLOCK_SIZE} / p"
+			dc <<< "$2 1024 * 1024 * 1024 * ${BLOCK_SIZE} / n"
 			;;
 		"MB")
-			dc <<< "$2 1000 * 1000 * ${BLOCK_SIZE} / p"
+			dc <<< "$2 1000 * 1000 * ${BLOCK_SIZE} / n"
 			;;
 		"MiB")
-			dc <<< "$2 1024 * 1024 * ${BLOCK_SIZE} / p"
+			dc <<< "$2 1024 * 1024 * ${BLOCK_SIZE} / n"
 			;;
 		"kB")
-			dc <<< "$2 1000 * ${BLOCK_SIZE} / p"
+			dc <<< "$2 1000 * ${BLOCK_SIZE} / n"
 			;;
 		"KiB")
-			dc <<< "$2 1024 * ${BLOCK_SIZE} / p"
+			dc <<< "$2 1024 * ${BLOCK_SIZE} / n"
 			;;
 		"B")
-			dc <<< "$2 ${BLOCK_SIZE} / p"
+			dc <<< "$2 ${BLOCK_SIZE} / n"
 			;;
 		"s")
 			echo $2
 			;;
 		"%")
-			dc <<< "${DISK_SIZE} $2 * 100 / p"
+			dc <<< "${DISK_SIZE} $2 * 100 / n"
 			;;
 		*)
 			shellout "convert2sectors: unknown unit [$3]. (Valid units: TB, TiB, GB, GiB, MB, MiB, kB, KiB, B, s, %)"
