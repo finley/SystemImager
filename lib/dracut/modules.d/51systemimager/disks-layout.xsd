@@ -78,8 +78,8 @@
 			</xsd:attribute>
 			<xsd:attribute name="size" use="required"> <!-- The partition size. (mandatory) -->
 				<xsd:simpleType>
-					<xsd:restriction base="xsd:string"> <!-- partition size is an integer OR '*' -->
-						<xsd:pattern value="[\*1-9][0-9]*"/>
+					<xsd:restriction base="xsd:string"> <!-- partition size is '*' OR a float -->
+						<xsd:pattern value="\*|([0-9]+(\.[0-9]+)?)"/>
 					</xsd:restriction>
 				</xsd:simpleType>
 			</xsd:attribute>
