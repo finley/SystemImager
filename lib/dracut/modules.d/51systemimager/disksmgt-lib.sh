@@ -590,7 +590,15 @@ EOF
 			esac
 			;;
 		root)
-			parted -s $2 set $3 root on
+			# This flag only exists on MacOS to inform linux of its root partition.
+			case $1 in
+				msdos|gpt)
+					logdebug "Ignoring root flag (only required on MAC partition tables)"
+					;;
+				mac)
+					parted -s $2 set $3 root on
+					;;
+			esac
 			;;
 		boot)
 			parted -s $2 set $3 boot on
