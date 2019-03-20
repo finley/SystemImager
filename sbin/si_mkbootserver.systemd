@@ -25,13 +25,14 @@ LOCAL_DHCP=""
 TFTPDIR=`sed -ne "s/^[[:space:]]*[^#]*[[:space:]]*TFTP_DIR[[:space:]]*=[[:space:]]*\\([^#]*\\).*$/\1/p" $CONFIG_FILE`
 BOOTDIR=`sed -ne "s/^[[:space:]]*[^#]*[[:space:]]*AUTOINSTALL_BOOT_DIR[[:space:]]*=[[:space:]]*\\([^#]*\\).*$/\1/p" $CONFIG_FILE`
 PXELINUX=""
+VESAMENU="y"
 
 program_name=$(basename $0)
 
 usage() {
 cat 1>&2 <<EOF
 Usage:  $program_name [-f] [--interface=interface] [--localdhcp=y|n]
-        [--pxelinux=path]"
+        [--pxelinux=path] --vesamenu=y|n"
 EOF
 }
 
@@ -207,10 +208,10 @@ setup_pxe_files() {
     test -e $TFTPDIR/pxelinux.cfg/default && backup_file $TFTPDIR/pxelinux.cfg/default
 
         # 3/ IF we lack vesamenu.c32, we disable the graphical menu.
-    test ! -f $TFTPDIR/vesamenu.c32 && ! -f $PXELINUX_PATH/vesamenu.c32 && VERSAMENU="n" && echo "vesamenu is not available"
+    test ! -f $TFTPDIR/vesamenu.c32 && ! -f $PXELINUX_PATH/vesamenu.c32 && VESAMENU="n" && echo "vesamenu is not available"
 
     # 4/ We install the PXE Menu.
-    if test "$VERSAMENU" = "y"
+    if test "$VESAMENU" = "y"
     then
 	    echo "Installing graphical PXE menu."
 	    test ! -f $TFTPDIR/vesamenu.c32 && (cp $PXELINUX_PATH/vesamenu.c32 $TFTPDIR || shellout "Failed to install vesamenu.c32 from $PXELINUX_PATH")
