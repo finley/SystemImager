@@ -261,15 +261,46 @@
 	<!-- filesystem informations -->
 
 	<xsd:complexType name="fstab_line">
-		<xsd:attribute name="line"/>
+		<xsd:attribute name="line">
+			<xsd:simpleType>
+				<xsd:restriction base="xsd:positiveInteger"/> <!-- must be a positive integer -->
+			</xsd:simpleType>
+		</xsd:attribute>
 		<xsd:attribute name="real_dev" /> <!-- use="required" -->
 		<xsd:attribute name="mount_dev"/>
 		<xsd:attribute name="mp"/> <!-- use="required" -->
-		<xsd:attribute name="fs"/> <!-- use="required" -->
+		<xsd:attribute name="fs"> <!-- use="required" -->
+			<xsd:simpleType>
+				<xsd:restriction base="xsd:token">
+					<xsd:enumeration value="swap"/>
+					<xsd:enumeration value="ext2"/>
+					<xsd:enumeration value="ext3"/>
+					<xsd:enumeration value="ext4"/>
+					<xsd:enumeration value="jfs"/>
+					<xsd:enumeration value="xfs"/>
+					<xsd:enumeration value="btrfs"/>
+					<xsd:enumeration value="reiserfs"/>
+					<xsd:enumeration value="ntfs"/>
+					<xsd:enumeration value="msdos"/>
+					<xsd:enumeration value="vfat"/>
+					<xsd:enumeration value="fat"/>
+					<xsd:enumeration value="fat16"/>
+					<xsd:enumeration value="fat32"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:attribute>
 		<xsd:attribute name="mkfs_opts"/>
 		<xsd:attribute name="options" default="defaults"/>
-		<xsd:attribute name="dump"/> <!-- use="required" -->
-		<xsd:attribute name="pass"/> <!-- use="required" -->
+		<xsd:attribute name="dump"> <!-- use="required" -->
+			<xsd:simpleType>
+				<xsd:restriction base="xsd:nonNegativeInteger"/> <!-- must be a positive or null integer -->
+			</xsd:simpleType>
+		</xsd:attribute>
+		<xsd:attribute name="pass"> <!-- use="required" -->
+			<xsd:simpleType>
+				<xsd:restriction base="xsd:nonNegativeInteger"/> <!-- must be a positive or null integer -->
+			</xsd:simpleType>
+		</xsd:attribute>
 		<xsd:attribute name="format"/>
 		<xsd:attribute name="comment"/>
 	</xsd:complexType>
