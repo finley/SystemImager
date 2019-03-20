@@ -991,7 +991,7 @@ fi
 
 # so we can use relative pathnames - hopefully dirname is pretty standard.
 cd `dirname $0`
-    
+
 while [ $# -gt 0 ]; do
     case "$1" in
 	-f )               INTERACTIVE="no" ; shift ;;
