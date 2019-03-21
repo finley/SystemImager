@@ -76,6 +76,7 @@ install() {
     inst "$moddir/systemimager-lib.sh" "/lib/systemimager-lib.sh"
     inst "$moddir/autoinstall-lib.sh" "/lib/autoinstall-lib.sh"
     inst "$moddir/disksmgt-lib.sh" "/lib/disksmgt-lib.sh"
+    inst "$moddir/netmgt-lib.sh" "/lib/netmgt-lib.sh"
     inst "$moddir/systemimager-install-rebooted-script.sh" "/lib/systemimager-install-rebooted-script"
     inst "$moddir/si_inspect_client.sh" "/sbin/si_inspect_client"
     for protocol_plugin in $moddir/systemimager-xmit-*.sh

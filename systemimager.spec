@@ -1313,6 +1313,7 @@ fi
 %{_sbindir}/si_addclients
 %{_sbindir}/si_cpimage
 %{_sbindir}/si_getimage
+%{_sbindir}/si_lint
 %{_sbindir}/si_mk*
 %{_sbindir}/si_mvimage
 %{_sbindir}/si_netbootmond

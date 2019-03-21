@@ -189,7 +189,7 @@ KBOOT_CONF_SRC    = etc/kboot.cfg
 KBOOT_CONF_DEST   = $(ETC)/systemimager/kboot.cfg
 
 BINARIES := si_mkautoinstallcd si_mkautoinstalldisk si_psh si_pcp si_pushoverrides si_clusterconfig
-SBINARIES := si_addclients si_cpimage si_getimage si_mkdhcpserver si_mkdhcpstatic si_mkautoinstallscript si_mvimage si_pushupdate si_pushinstall si_rmimage si_mkrsyncd_conf si_mkclientnetboot si_netbootmond si_monitor si_monitortk si_installbtimage
+SBINARIES := si_addclients si_cpimage si_getimage si_lint si_mkdhcpserver si_mkdhcpstatic si_mkautoinstallscript si_mvimage si_pushupdate si_pushinstall si_rmimage si_mkrsyncd_conf si_mkclientnetboot si_netbootmond si_monitor si_monitortk si_installbtimage
 CLIENT_SBINARIES  := si_updateclient si_prepareclient
 COMMON_BINARIES   = si_lsimage si_mkbootpackage
 
@@ -370,6 +370,7 @@ endif
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/disks-layout.xsd $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/disksmgt-lib.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/do_partitions.xsl $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/netmgt-lib.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/parse-local-cfg.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/si_inspect_client.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
 	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-check-kernel.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
