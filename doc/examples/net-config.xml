@@ -14,33 +14,41 @@
 -->
 
 <config>
-  <if dev="eno1" type="ethernet">
-	<primary name="eno1" onboot="yes">
-		<ip bootproto="dhcp" def_route="yes"/>
-		<options hwaddr="00:0C:29:28:FD:4C" />
-	</primary>
-	<alias id="1" onboot="yes"> <!-- realdev=parent if -->
-		<ip bootproto="static" ipaddr="192.168.0.1/24" gateway="192.168.0.254"/> <!-- gatewaydev=parent -->
-		<dns servers="8.8.8.8,8.8.4.4" search="my.company.com"/>
-	</alias>
-	<alias id="2" onboot="yes">
-		<ip bootproto="static" ipaddr="192.168.0.2" netmask="255.255.255.0" gateway="192.168.0.254"/>
-	</alias>
-  </if>
-  <if dev="ib0" type="Infiniband">
-	<primary onboot="yes">
-		<ip bootproto="static" ipaddr="10.0.0.1/24" broadcast="10.0.0.255"/>
-		<ip6 init="yes"/>
-	</primary>
-  </if>
-  <bond name="bond0">
-	  <slave dev="ib1"/>
-	  <slave dev="ib2"/>
-  </bond>
-  <if dev="bond0" type="Bond">
-	  <primary name="bond0" onboot="no">
-		  <ip bootproto="static" ipaddr="10.0.1.1/24"/>
-		  <options bonding_opts="resend_igmp=1 updelay=0 use_carrier=1 miimon=100 downdelay=0 xmit_hash_policy=0 primary_reselect=0 fail_over_mac=0 arp_validate=0 mode=active-backup lacp_rate=0 arp_interval=0 ad_select=0"/>
-	  </primary>
-  </if>
+	<if dev="eno1" type="Ethernet">
+		<primary name="eno1" onboot="yes">
+			<ip bootproto="dhcp" def_route="yes"/>
+			<options hwaddr="00:0C:29:28:FD:4C" />
+		</primary>
+		<alias id="1" onboot="yes"> <!-- realdev=parent if -->
+			<ip bootproto="static" ipaddr="192.168.0.1/24" gateway="192.168.0.254"/> <!-- gatewaydev=parent -->
+			<dns servers="8.8.8.8,8.8.4.4" search="my.company.com"/>
+		</alias>
+		<alias id="2" onboot="yes">
+			<ip bootproto="static" ipaddr="192.168.0.2" netmask="255.255.255.0" gateway="192.168.0.254"/>
+		</alias>
+	</if>
+
+	<if dev="ib0" type="Infiniband">
+		<primary onboot="yes">
+			<ip bootproto="static" ipaddr="10.0.0.1/24" broadcast="10.0.0.255"/>
+			<ip6 init="yes"/>
+		</primary>
+	</if>
+
+	<if dev="ib1" type="Infiniband">
+		<primary onboot="yes"/>
+	</if>
+
+	<if dev="ib0" type="Infiniband">
+		<primary onboot="yes"/>
+	</if>
+
+	<if dev="bond0" type="Bond">
+		<primary name="bond0" onboot="no">
+			<ip bootproto="static" ipaddr="10.0.1.1/24"/>
+			<options bonding_opts="resend_igmp=1 updelay=0 use_carrier=1 miimon=100 downdelay=0 xmit_hash_policy=0 primary_reselect=0 fail_over_mac=0 arp_validate=0 mode=active-backup lacp_rate=0 arp_interval=0 ad_select=0"/>
+		</primary>
+		<slave name="ib1" />
+		<slave name="ib2" />
+	</if>
 </config>
