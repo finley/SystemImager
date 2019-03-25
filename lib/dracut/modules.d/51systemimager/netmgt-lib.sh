@@ -32,7 +32,7 @@ sis_configure_network() {
         if test ! -f "${NETWORK_CONF_FILE}"
         then
                 logwarn "Could not get a valid network configuration file"
-                test -n "${DISKS_LAYOUT_FILE}" && logerror "Tryed ${DISKS_LAYOUT_FILE}"
+                test -n "${NETWORK_CONF_FILE}" && logerror "Tryed ${NETWORK_CONF_FILE}"
                 logerror "Neiter NETWORK_CONFIG, HOSTNAME, IMAGENAME is set or"
                 logerror "No group, group_override, base_hostname matches a network configuration file"
                 logerror "Please read networkconfig.conf manual and create a network configuration file"
@@ -40,6 +40,7 @@ sis_configure_network() {
                 logerror "Use the one of possible names: {\$NETWORK_CONFIG,\$HOSTNAME,\$GROUPNAME,\$BASE_HOSTNAME,\$IMAGENAME,default}{,.xml}"
                 logwarn "Can't configure client network. No network configuration file found."
         fi
+	# BUG/TODO: default.xml is for disk layout and network layout: => conflict
         loginfo "Using network configuration file: ${NETWORK_CONIG_FILE}"
         write_variables # Save NETWORK_CONFIG_FILE variable for future use.
 

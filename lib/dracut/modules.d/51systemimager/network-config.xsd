@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Description of network configuration.
+     man systemimager.netconf for details.
+
+     Author: Olivier LAHAYE (c) 2019
+     License: GPLv2
+ -->
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+	<!-- Main structure of disk-layout configuration -->
+	<xsd:element name="config">
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element minOccurs="1" maxOccurs="unbounded" ref="if"/> <!-- Mandatory section -->
+			</xsd:sequence>
+		</xsd:complexType>
+	</xsd:element>
+	<!-- Disk section -->
+	<xsd:element name="if">
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element minOccurs="1" maxOccurs="unbounded" ref="primary"/> <!-- Need at least one primary -->
+				<xsd:element minOccurs="0" maxOccurs="unbounded" ref="alias"/>
+				<xsd:element minOccurs="0" maxOccurs="unbounded" ref="slave"/>
+			</xsd:sequence>
+			<xsd:attribute name="dev" use="required"> <!-- Network interface name -->
+				<xsd:simpleType>
+					<xsd:restriction base="xsd:string"> <!-- Basic device name checking -->
+						<xsd:pattern value="[a-z]+[0-9]+"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:attribute>
+			<xsd:attribute name="type" use="required"> <!-- Network device type -->
+				<xsd:simpleType>
+					<xsd:restriction base="xsd:token">
+						<xsd:enumeration value="DSL"/> <!-- not supported -->
+						<xsd:enumeration value="Ethernet"/>
+						<xsd:enumeration value="Infiniband"/>
+						<xsd:enumeration value="Wi-Fi"/> <!-- not supported -->
+						<xsd:enumeration value="Bond"/>
+						<xsd:enumeration value="Bridge"/> <!-- not supported -->
+						<xsd:enumeration value="IP tunnel"/> <!-- not supported -->
+						<xsd:enumeration value="Team"/> <!-- not supported -->
+						<xsd:enumeration value="VLAN"/> <!-- not supported -->
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:attribute>
+		</xsd:complexType>
+		<!-- enforces partition @num to be unique within a disk section -->
+		<!-- <xsd:unique name="uniquePartitionId">
+			<xsd:selector xpath="part"/>
+			<xsd:field xpath="@num"/>
+		</xsd:unique> -->
+	</xsd:element>
+	<xsd:element name="primary">
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element minOccurs="0" maxOccurs="1" ref="ip"/>
+				<xsd:element minOccurs="0" maxOccurs="1" ref="ip6"/>
+				<xsd:element minOccurs="0" maxOccurs="1" ref="options"/>
+				<xsd:element minOccurs="0" maxOccurs="1" ref="dns"/>
+			</xsd:sequence>
+			<xsd:attribute name="name"> <!-- The interface name. (defaults to device name) -->
+				<xsd:simpleType>
+					<xsd:restriction base="xsd:string">
+						<xsd:pattern value="[a-z]+[0-9]+"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:attribute>
+			<xsd:attribute name="onboot"> <!-- defaults to yes -->
+				<xsd:simpleType>
+					<xsd:restriction base="xsd:token">
+						<xsd:enumeration value="yes"/>
+						<xsd:enumeration value="no"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:attribute>
+		</xsd:complexType>
+	</xsd:element>
+	<xsd:element name="alias">
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element minOccurs="1" maxOccurs="1" ref="ip"/>
+				<xsd:element minOccurs="0" maxOccurs="1" ref="ip6"/>
+				<xsd:element minOccurs="0" maxOccurs="1" ref="options"/>
+				<xsd:element minOccurs="0" maxOccurs="1" ref="dns"/>
+			</xsd:sequence>
+			<xsd:attribute name="id" use="required"> <!-- The interface alias id. -->
+				<xsd:simpleType>
+					<xsd:restriction base="xsd:nonNegativeInteger"/> <!-- alias id must be a positive or null integer -->
+				</xsd:simpleType>
+			</xsd:attribute>
+			<xsd:attribute name="onboot"> <!-- defaults to yes -->
+				<xsd:simpleType>
+					<xsd:restriction base="xsd:token">
+						<xsd:enumeration value="yes"/>
+						<xsd:enumeration value="no"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:attribute>
+		</xsd:complexType>
+	</xsd:element>
+	<xsd:element name="slave">
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element minOccurs="0" maxOccurs="1" ref="options"/>
+			</xsd:sequence>
+			<xsd:attribute name="name" use="required"> <!-- reference to the interface name -->
+				<xsd:simpleType>
+					<xsd:restriction base="xsd:string"> <!-- Basic device name checking -->
+						<xsd:pattern value="[a-z]+[0-9]+"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:attribute>
+		</xsd:complexType>
+	</xsd:element>
+	<xsd:element name="ip">
+		<xsd:complexType>
+			<xsd:attribute name="bootproto">
+				<xsd:simpleType>
+					<xsd:restriction base="xsd:token">
+						<xsd:enumeration value="static"/>
+						<xsd:enumeration value="dhcp"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:attribute>
+			<xsd:attribute name="def_route">
+				<xsd:simpleType>
+					<xsd:restriction base="xsd:token">
+						<xsd:enumeration value="yes"/>
+						<xsd:enumeration value="no"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:attribute>
+			<xsd:attribute name="ipaddr">
+				<xsd:simpleType>
+					<xsd:restriction base="xsd:string"> <!-- ipv4 strict match with optional /mask(1..32) -->
+						<xsd:pattern value="(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(/(3[0-2]|[1-2][0-9]|0?[1-9]))?"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:attribute>
+			<xsd:attribute name="netmask">
+				<xsd:simpleType>
+					<xsd:restriction base="xsd:string"> <!-- ipv4 strict match with optional -->
+						<xsd:pattern value="(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:attribute>
+			<xsd:attribute name="gateway">
+				<xsd:simpleType>
+					<xsd:restriction base="xsd:string"> <!-- ipv4 strict match with optional -->
+						<xsd:pattern value="(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:attribute>
+			<xsd:attribute name="broadcast">
+				<xsd:simpleType>
+					<xsd:restriction base="xsd:string"> <!-- ipv4 strict match with optional -->
+						<xsd:pattern value="(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:attribute>
+		</xsd:complexType>
+	</xsd:element>
+	<xsd:element name="ip6"> <!-- TODO: Add all configuration parameters -->
+		<xsd:complexType>
+			<xsd:attribute name="init">
+				<xsd:simpleType>
+					<xsd:restriction base="xsd:token">
+						<xsd:enumeration value="yes"/>
+						<xsd:enumeration value="no"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:attribute>
+		</xsd:complexType>
+	</xsd:element>
+	<xsd:element name="options">
+		<xsd:complexType>
+			<xsd:attribute name="hwaddr">
+				<xsd:simpleType>
+					<xsd:restriction base="xsd:string"> <!-- match 6 or 20 bytes MAC addresses -->
+						<xsd:pattern value="([0-9A-Fa-f]{2}:){5}(([0-9A-Fa-f]{2}:){14})?[0-9A-Fa-f]{2}"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:attribute>
+			<xsd:attribute name="bonding_opts">
+				<xsd:simpleType>
+					<xsd:restriction base="xsd:string"> <!-- Basic module space separated param list -->
+						<xsd:pattern value="[A-Za-z][0-9A-Za-z_]*[0-9A-Za-z]=[0-9A-Za-z_-]+(\s[A-Za-z][0-9A-Za-z_]*[0-9A-Za-z]=[0-9A-Za-z_-]+)*"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:attribute>
+		</xsd:complexType>
+	</xsd:element>
+	<xsd:element name="dns">
+		<xsd:complexType>
+			<xsd:attribute name="servers">
+				<xsd:simpleType>
+					<xsd:restriction base="xsd:string"> <!-- Match comma separated list of ipv4 addresses -->
+						<xsd:pattern value="(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(,(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))?"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:attribute>
+			<xsd:attribute name="search">
+				<xsd:simpleType>
+					<xsd:restriction base="xsd:string"> <!-- Match a comma separated list of DNS domains -->
+						<xsd:pattern value="([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}(,([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$)?"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:attribute>
+		</xsd:complexType>
+	</xsd:element>
+</xsd:schema>
