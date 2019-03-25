@@ -86,6 +86,7 @@ install() {
     mkdir -p $initdir/usr/lib/systemimager/
     inst "$moddir/do_partitions.xsl" "/lib/systemimager/do_partitions.xsl" # Installs partition xml transformation filter
     inst "$moddir/disks-layout.xsd" "/lib/systemimager/disks-layout.xsd" # Installs disks layout validation schem.
+    inst "$moddir/network-config.xsd" "/lib/systemimager/network-config.xsd" # Installs network configuration validation schem.
     inst_hook cmdline 30 "$moddir/systemimager-check-kernel.sh" # Check that kernel & initrd match.
     inst_hook cmdline 50 "$moddir/parse-systemimager.sh" # read cmdline parameters
     inst_hook cmdline 70 "$moddir/systemimager-init.sh" # Creates /run/systemimager and sets rootok
