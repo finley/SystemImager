@@ -19,7 +19,7 @@
 			<ip bootproto="dhcp" def_route="yes"/>
 			<options hwaddr="00:0C:29:28:FD:4C" />
 		</primary>
-		<alias id="1" onboot="yes"> <!-- realdev=parent if -->
+		<alias id="1" onboot="yes"> <!-- realdev=parent netmask can be specified in ip using '/mask' in in netmask= parameter -->
 			<ip bootproto="static" ipaddr="192.168.0.1/24" gateway="192.168.0.254"/> <!-- gatewaydev=parent -->
 			<dns servers="8.8.8.8,8.8.4.4" search="my.company.com"/>
 		</alias>
@@ -29,26 +29,26 @@
 	</if>
 
 	<if dev="ib0" type="Infiniband">
-		<primary onboot="yes">
+		<primary name="ib0" onboot="yes">
 			<ip bootproto="static" ipaddr="10.0.0.1/24" broadcast="10.0.0.255"/>
 			<ip6 init="yes"/>
 		</primary>
 	</if>
 
-	<if dev="ib1" type="Infiniband">
+	<if dev="ib1" type="Infiniband"> <!-- an Infiniband slave interface -->
 		<primary onboot="yes"/>
 	</if>
 
-	<if dev="ib0" type="Infiniband">
-		<primary onboot="yes"/>
+	<if dev="ib0" type="Infiniband"> <!-- an Infiniband slave interface -->
+		<primary onboot="yes"/> <!-- name defaults to dev (in this case: name="ib0") -->
 	</if>
 
-	<if dev="bond0" type="Bond">
+	<if dev="bond0" type="Bond"> <!-- a bonding interface with 2 slaves -->
 		<primary name="bond0" onboot="no">
 			<ip bootproto="static" ipaddr="10.0.1.1/24"/>
 			<options bonding_opts="resend_igmp=1 updelay=0 use_carrier=1 miimon=100 downdelay=0 xmit_hash_policy=0 primary_reselect=0 fail_over_mac=0 arp_validate=0 mode=active-backup lacp_rate=0 arp_interval=0 ad_select=0"/>
 		</primary>
-		<slave name="ib1" />
+		<slave name="ib1" /> <!-- refers to the connection name, not the device name -->
 		<slave name="ib2" />
 	</if>
 </config>
