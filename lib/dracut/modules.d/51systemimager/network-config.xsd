@@ -18,7 +18,7 @@
 	<xsd:element name="if">
 		<xsd:complexType>
 			<xsd:sequence>
-				<xsd:element minOccurs="1" maxOccurs="unbounded" ref="primary"/> <!-- Need at least one primary -->
+				<xsd:element minOccurs="1" maxOccurs="1" ref="primary"/> <!-- Need one primary; no less, no more -->
 				<xsd:element minOccurs="0" maxOccurs="unbounded" ref="alias"/>
 				<xsd:element minOccurs="0" maxOccurs="unbounded" ref="slave"/>
 			</xsd:sequence>
