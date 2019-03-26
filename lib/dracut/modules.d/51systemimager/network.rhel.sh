@@ -36,6 +36,7 @@ _write_interface() {
 		NETMASK=""
 	fi
 
+	test -z "${IF_NAME}" && IF_NAME=${IF_DEV}
 	if test -n "${IF_ID}"
 	then
 		IF_FULL_NAME="${IF_NAME}:${IF_ID}"
@@ -71,12 +72,15 @@ IPV6_PEERDNS=yes
 IPV6_PEERROUTES=yes
 EOF
 	# Unset all non mandatory parameters so they won't pollute next configuration.
-	unset IF_HWADDR IF_BONDING_OPTS IF_USERCTL IF_DNS_SERVERS IF_DNS_SEARCH IF_IP6_INIT IF_ID IF_UUID IF_NETMASK IF_PREFIX IF_IPADDR IF_DEF_ROUTE
+	unset IF_NAMER IF_HWADDR IF_BONDING_OPTS IF_USERCTL IF_DNS_SERVERS IF_DNS_SEARCH IF_IP6_INIT IF_ID IF_UUID IF_NETMASK IF_PREFIX IF_IPADDR IF_DEF_ROUTE
 }
 
 _write_slave() {
 	test ! -d /sysroot/etc/sysconfig/network-scripts && shellout "/etc/sysconfig/network-scripts not present in image."
 	test -f /sysroot/etc/sysconfig/network-scripts/${IF_NAME} && logwarn "Overwriting /sysroot/etc/sysconfig/network-scripts/${IF_NAME}"
+
+	# TODO: check that IF_MASTER exists and is of type bond.
+	# TODO: check that all slaves of IF_MASTER have the same type= whatever it is (except Bond)
 
 	test -z "${IF_UUID}" && IF_UUID=$(uuidgen)
 
