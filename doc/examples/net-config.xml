@@ -34,11 +34,11 @@
 	</if>
 
 	<if dev="ib1" type="Infiniband"> <!-- an Infiniband slave interface -->
-		<primary onboot="yes"/>
+		<primary onboot="yes" master="bond0"/>
 	</if>
 
-	<if dev="ib0" type="Infiniband"> <!-- an Infiniband slave interface -->
-		<primary onboot="yes"/> <!-- name defaults to dev (in this case: name="ib0") -->
+	<if dev="ib2" type="Infiniband" master="bond0"> <!-- an Infiniband slave interface -->
+		<primary onboot="yes"/> <!-- name defaults to dev (in this case: name="ib2") -->
 	</if>
 
 	<if dev="bond0" type="Bond"> <!-- a bonding interface with 2 slaves -->
