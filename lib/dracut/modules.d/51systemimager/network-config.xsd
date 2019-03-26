@@ -82,6 +82,12 @@
 					</xsd:restriction>
 				</xsd:simpleType>
 			</xsd:attribute>
+			<xsd:attribute name="master"> <!-- The master interface name. -->
+				<xsd:simpleType>
+					<xsd:restriction base="xsd:string">
+						<xsd:pattern value="[a-z]+[0-9]+"/>
+					</xsd:restriction>
+				</xsd:simpleType>
 		</xsd:complexType>
 	</xsd:element>
 	<xsd:element name="alias">
