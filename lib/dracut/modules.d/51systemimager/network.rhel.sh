@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # 
 # "SystemImager" 
 #
@@ -12,18 +12,17 @@
 # This file hosts functions realted to debian specific network configuration.
 
 
-# "${IF_DEV}" "${IF_TYPE}" "${IF_NAME}" "${IF_ONBOOT}" "${IF_USERCTL}" "${IF_BOOTPROTO}" "${IF_IPADDR}" "${IF_NETMASK}" "${IF_PREFIX}" "${IF_BROADCAST}" "${IF_GATEWAY}" "${IF_IP6_INIT}" "${IF_HWADDR}" "${IF_DNS_SERVERS}" "${IF_DNS_SEARCH}"
 _write_interface() {
 	test ! -d /sysroot/etc/sysconfig/network-scripts && shellout "/etc/sysconfig/network-scripts not present in image."
 
-	# Check IP syntaxt (IP_ADDR, PREFIX, NETMASK)
-	if test "${IF_IPADDR$//[0-9.]/}"="/" -a -n "${IF_PREFIX}"
+	# Check IP syntaxt (IPADDR, PREFIX, NETMASK)
+	if test "${IF_IPADDR//[0-9.]/}"="/" -a -n "${IF_PREFIX}"
 	then
 		logerror "IP prefix specified in both ipaddr= and prefix= parameters for device ${IF_NAME}"
 		logerror "Ignoring PREFIX; using ipaddr= with its prefix"
 		PREFIX=""
 	fi
-	if test "${IF_IPADDR$//[0-9.]/}"="/" -a -n "${IF_NETMASK}"
+	if test "${IF_IPADDR//[0-9.]/}"="/" -a -n "${IF_NETMASK}"
 	then
 		logerror "IP prefix specified in both ipaddr= and netmask= parameters for device ${IF_NAME}"
 		logerror "Ignoring NETMASK; using ipaddr= with its prefix"
@@ -48,9 +47,9 @@ _write_interface() {
 
 	test -z "${IF_UUID}" && IF_UUID=$(uuidgen)
 
-	# Create the config file, removing all lines ending with "=" sign (parameter not set don't need to be set)
-	test -f /sysroot/etc/sysconfig/network-scripts/${IF_FULL_NAME} && logwarn "Overwriting /sysroot/etc/sysconfig/network-scripts/${IF_FULL_NAME}"
-	cat > /sysroot/etc/sysconfig/network-scripts/${IF_FULL_NAME} |sed '/.*=$/d' <<EOF
+	# Create the config file, removing all lines ending with "=" sign or empty value (="") (parameter not set don't need to be set)
+	test -f /sysroot/etc/sysconfig/network-scripts/ifcfg-${IF_FULL_NAME} && logwarn "Overwriting /sysroot/etc/sysconfig/network-scripts/ifcfg-${IF_FULL_NAME}"
+	sed -E '/.*=(|"")$/d' > /sysroot/etc/sysconfig/network-scripts/ifcfg-${IF_FULL_NAME} <<EOF
 DEVICE=${IF_DEV_FULL_NAME}
 HWADDR=${IF_HWADDR}
 TYPE=${IF_TYPE}
@@ -67,17 +66,18 @@ UUID=${IF_UUID}
 ONBOOT=${IF_ONBOOT}
 BONDING_OPTS="${IF_BONDING_OPTS}"
 IPADDR=${IF_IPADDR}
+NETMASK=${IF_NETMASK}
 PREFIX=${IF_PREFIX}
+BROADCAST=${IF_BROADCAST}
+GATEWAY=${IF_GATEWAY}
 IPV6_PEERDNS=yes
 IPV6_PEERROUTES=yes
 EOF
-	# Unset all non mandatory parameters so they won't pollute next configuration.
-	unset IF_NAMER IF_HWADDR IF_BONDING_OPTS IF_USERCTL IF_DNS_SERVERS IF_DNS_SEARCH IF_IP6_INIT IF_ID IF_UUID IF_NETMASK IF_PREFIX IF_IPADDR IF_DEF_ROUTE
 }
 
 _write_slave() {
 	test ! -d /sysroot/etc/sysconfig/network-scripts && shellout "/etc/sysconfig/network-scripts not present in image."
-	test -f /sysroot/etc/sysconfig/network-scripts/${IF_NAME} && logwarn "Overwriting /sysroot/etc/sysconfig/network-scripts/${IF_NAME}"
+	test -f /sysroot/etc/sysconfig/network-scripts/ifcfg-${IF_NAME} && logwarn "Overwriting /sysroot/etc/sysconfig/network-scripts/${IF_NAME}"
 
 	# TODO: check that IF_MASTER exists and is of type bond.
 	# TODO: check that all slaves of IF_MASTER have the same type= whatever it is (except Bond)
@@ -85,7 +85,7 @@ _write_slave() {
 	test -z "${IF_UUID}" && IF_UUID=$(uuidgen)
 
 	test -n "${IF_BOOTPROTO/none/}" && logerror "bootproto must be none for a slave interface [${IF_NAME}]"
-	cat > /sysroot/etc/sysconfig/network-scripts/${IF_NAME} |sed '/.*=$/d' <<EOF
+	sed -E '/.*=(|"")$/d' > /sysroot/etc/sysconfig/network-scripts/ifcfg-${IF_NAME} <<EOF
 CONNECTED_MODE=no
 BOOTPROTO=none
 TYPE=${IF_TYPE}

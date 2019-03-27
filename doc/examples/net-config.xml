@@ -26,19 +26,19 @@
 		</alias>
 	</if>
 
-	<if dev="ib0" type="Infiniband" userctl="no">
-		<primary name="ib0" onboot="yes">
+	<if dev="ib0" type="Infiniband">
+		<primary name="ib0" onboot="yes" userctl="no">
 			<ip bootproto="static" ipaddr="10.0.0.1/24" broadcast="10.0.0.255"/>
 			<ip6 init="yes"/>
 		</primary>
 	</if>
 
 	<if dev="ib1" type="Infiniband"> <!-- an Infiniband slave interface -->
-		<primary onboot="yes" master="bond0"/>
+		<primary master="bond0"/>
 	</if>
 
-	<if dev="ib2" type="Infiniband" master="bond0"> <!-- an Infiniband slave interface -->
-		<primary onboot="yes"/> <!-- name defaults to dev (in this case: name="ib2") -->
+	<if dev="ib2" type="Infiniband"> <!-- an Infiniband slave interface -->
+		<primary master="bond0"/> <!-- name defaults to dev (in this case: name="ib2") -->
 	</if>
 
 	<if dev="bond0" type="Bond"> <!-- a bonding interface with 2 slaves -->
