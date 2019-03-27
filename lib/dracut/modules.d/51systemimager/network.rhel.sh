@@ -15,26 +15,7 @@
 _write_interface() {
 	test ! -d /sysroot/etc/sysconfig/network-scripts && shellout "/etc/sysconfig/network-scripts not present in image."
 
-	# Check IP syntaxt (IPADDR, PREFIX, NETMASK)
-	if test "${IF_IPADDR//[0-9.]/}"="/" -a -n "${IF_PREFIX}"
-	then
-		logerror "IP prefix specified in both ipaddr= and prefix= parameters for device ${IF_NAME}"
-		logerror "Ignoring PREFIX; using ipaddr= with its prefix"
-		PREFIX=""
-	fi
-	if test "${IF_IPADDR//[0-9.]/}"="/" -a -n "${IF_NETMASK}"
-	then
-		logerror "IP prefix specified in both ipaddr= and netmask= parameters for device ${IF_NAME}"
-		logerror "Ignoring NETMASK; using ipaddr= with its prefix"
-		NETMASK=""
-	fi
-	if test -n "${IF_PREFIX}" -a -n "${IF_NETMASK}"
-	then
-		logerror "IP prefix specified in both prefix= and netmask= parameters for device ${IF_NAME}"
-		logerror "Ignoring NETMASK; using ipaddr= with its prefix"
-		NETMASK=""
-	fi
-
+	# Compute full connection name.
 	test -z "${IF_NAME}" && IF_NAME=${IF_DEV}
 	if test -n "${IF_ID}"
 	then
@@ -43,6 +24,26 @@ _write_interface() {
 	else
 		IF_FULL_NAME="${IF_NAME}"
 		IF_DEV_FULL_NAME="${IF_DEV}"
+	fi
+
+	# Check IP syntaxt (IPADDR, PREFIX, NETMASK)
+	if test "${IF_IPADDR//[0-9.]/}"="/" -a -n "${IF_PREFIX}"
+	then
+		logerror "IP prefix specified in both ipaddr= and prefix= parameters for device ${IF_FULL_NAME}"
+		logerror "Ignoring PREFIX; using ipaddr= with its prefix"
+		PREFIX=""
+	fi
+	if test "${IF_IPADDR//[0-9.]/}"="/" -a -n "${IF_NETMASK}"
+	then
+		logerror "IP prefix specified in both ipaddr= and netmask= parameters for device ${IF_FULL_NAME}"
+		logerror "Ignoring NETMASK; using ipaddr= with its prefix"
+		NETMASK=""
+	fi
+	if test -n "${IF_PREFIX}" -a -n "${IF_NETMASK}"
+	then
+		logerror "IP prefix specified in both prefix= and netmask= parameters for device ${IF_FULL_NAME}"
+		logerror "Ignoring NETMASK; using ipaddr= with its prefix"
+		NETMASK=""
 	fi
 
 	test -z "${IF_UUID}" && IF_UUID=$(uuidgen)
