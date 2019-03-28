@@ -35,9 +35,19 @@
 			<xsd:pattern value="(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)"/>
 		</xsd:restriction>
 	</xsd:simpleType>
+	<xsd:simpleType name="ipv6"> <!-- ipv6 strict match (that includes /mask) -->
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*"/> <!-- TODO: create strict ipv6 matching regexp -->
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:simpleType name="macaddr"> <!-- match 6 or 20 bytes MAC addresses -->
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value="([0-9A-Fa-f]{2}:){5}(([0-9A-Fa-f]{2}:){14})?[0-9A-Fa-f]{2}"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="uuid_id">
+		<xsd:restriction base="xsd:string"> <!-- uuid version 4 (1st digit of 3rd group) see RFC4122 -->
+			<xsd:pattern value="[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[4][0-9A-Fa-f]{3}-[89ABab][0-9A-Fa-f]{3}-[0-9A-Fa-f]{12}"/>
 		</xsd:restriction>
 	</xsd:simpleType>
 <!-- Main structure of disk-layout configuration -->
@@ -88,6 +98,7 @@
 				<xsd:element minOccurs="0" maxOccurs="1" ref="dns"/>
 			</xsd:sequence>
 			<xsd:attribute name="name" type="devname"/> <!-- The interface name. (defaults to device name) -->
+			<xsd:attribute name="uuid" type="uuid_id"/>
 			<xsd:attribute name="onboot" type="yesno"/> <!-- defaults to yes -->
 			<xsd:attribute name="bootproto" type="initmethod"/>
 			<xsd:attribute name="userctl" type="yesno"/> <!-- defaults to no -->
@@ -107,6 +118,7 @@
 					<xsd:restriction base="xsd:nonNegativeInteger"/> <!-- alias id must be a positive or null integer -->
 				</xsd:simpleType>
 			</xsd:attribute>
+			<xsd:attribute name="uuid" type="uuid_id"/>
 			<xsd:attribute name="onparent" type="yesno"/> <!-- defaults to yes -->
 			<xsd:attribute name="bootproto" type="initmethod"/>
 			<xsd:attribute name="userctl" type="yesno"/> <!-- defaults to no -->
@@ -118,21 +130,33 @@
 				<xsd:element minOccurs="0" maxOccurs="1" ref="options"/>
 			</xsd:sequence>
 			<xsd:attribute name="name" type="devname" use="required"/> <!-- reference to the interface name -->
+			<xsd:attribute name="uuid" type="uuid_id"/>
 		</xsd:complexType>
 	</xsd:element>
 	<xsd:element name="ip">
 		<xsd:complexType>
-			<xsd:attribute name="def_route" type="yesno"/>
+			<xsd:attribute name="ipv4_failure_fatal" type="yesno"/>
 			<xsd:attribute name="ipaddr" type="ipv4_with_opt_prefix"/>
 			<xsd:attribute name="netmask" type="ipv4"/>
 			<xsd:attribute name="gateway" type="ipv4"/>
 			<xsd:attribute name="broadcast" type="ipv4"/>
+			<xsd:attribute name="def_route" type="yesno"/>
+			<xsd:attribute name="peerdns" type="yesno"/>
+			<xsd:attribute name="mtu" type="xsd:int"/>
+			<xsd:attribute name="ipv4_route_metric" type="xsd:int"/>
 		</xsd:complexType>
 	</xsd:element>
-	<xsd:element name="ip6"> <!-- TODO: Add all configuration parameters -->
+	<xsd:element name="ip6">
 		<xsd:complexType>
-			<xsd:attribute name="init" type="yesno"/>
-
+			<xsd:attribute name="ipv6_failure_fatal" type="yesno"/>
+			<xsd:attribute name="ipv6_init" type="yesno"/>
+			<xsd:attribute name="ipv6_autoconf" type="yesno"/>
+			<xsd:attribute name="ipv6_addr" type="ipv6"/>
+			<xsd:attribute name="ipv6_defaultgw" type="ipv6"/>
+			<xsd:attribute name="ipv6_defroute" type="yesno"/>
+			<xsd:attribute name="ipv6_peerdns" type="yesno"/>
+			<xsd:attribute name="ipv6_mtu" type="xsd:int"/>
+			<xsd:attribute name="ipv6_route_metric" type="xsd:int"/>
 		</xsd:complexType>
 	</xsd:element>
 	<xsd:element name="options">

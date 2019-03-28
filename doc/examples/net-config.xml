@@ -29,7 +29,7 @@
 	<if dev="ib0" type="Infiniband">
 		<primary name="ib0" onboot="yes" userctl="no" bootproto="static">
 			<ip ipaddr="10.0.0.1/24" broadcast="10.0.0.255"/>
-			<ip6 init="yes"/>
+			<ip6 ipv6_init="yes"/>
 		</primary>
 	</if>
 
