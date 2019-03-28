@@ -9,8 +9,11 @@
 #
 #  Code written by Olivier LAHAYE.
 #
-# This file hosts functions realted to debian specific network configuration.
-
+# This file hosts functions realted to rhel specific network configuration.
+# Variable explanation here: /usr/share/doc/initscripts-*/sysconfig.txt
+# TODO: DNS
+# TODO: USERCTRL
+# Vérifier default route variable nalme
 
 _write_interface() {
 	test ! -d /sysroot/etc/sysconfig/network-scripts && shellout "/etc/sysconfig/network-scripts not present in image."
@@ -27,11 +30,14 @@ DEFROUTE=${IF_DEFROUTE}
 IPV4_FAILURE_FATAL=yes
 IPV6INIT=${IF_IP6_INIT}
 IPV6_AUTOCONF=yes
+IPV6ADDR=
+IPV6_DEFAULTGW=
 IPV6_DEFROUTE=yes
 IPV6_FAILURE_FATAL=no
 NAME=${IF_FULL_NAME}
 UUID=${IF_UUID}
 ONBOOT=${IF_ONBOOT}
+ONPARENT=${IF_ONBOOT}
 BONDING_OPTS="${IF_BONDING_OPTS}"
 IPADDR=${IF_IPADDR}
 NETMASK=${IF_NETMASK}

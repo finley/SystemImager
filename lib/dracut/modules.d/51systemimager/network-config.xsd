@@ -18,6 +18,13 @@
 			<xsd:pattern value="[a-z]+[0-9]+"/>
 		</xsd:restriction>
 	</xsd:simpleType>
+	<xsd:simpleType name="initmethod">
+		<xsd:restriction base="xsd:token">
+			<xsd:enumeration value="static"/>
+			<xsd:enumeration value="dhcp"/>
+			<xsd:enumeration value="none"/>
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:simpleType name="ipv4_with_opt_prefix"> <!-- ipv4 strict match with optional /mask(1..32) -->
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value="(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(/(3[0-2]|[1-2][0-9]|0?[1-9]))?"/>
@@ -82,8 +89,9 @@
 			</xsd:sequence>
 			<xsd:attribute name="name" type="devname"/> <!-- The interface name. (defaults to device name) -->
 			<xsd:attribute name="onboot" type="yesno"/> <!-- defaults to yes -->
+			<xsd:attribute name="bootproto" type="initmethod"/>
 			<xsd:attribute name="userctl" type="yesno"/> <!-- defaults to no -->
-			<xsd:attribute name="master" type="devname"/> <!-- The master interface name. -->
+			<xsd:attribute name="master" type="devname"/> <!-- The master interface name if this is a slave on a bond. -->
 		</xsd:complexType>
 	</xsd:element>
 	<xsd:element name="alias">
@@ -100,6 +108,7 @@
 				</xsd:simpleType>
 			</xsd:attribute>
 			<xsd:attribute name="onparent" type="yesno"/> <!-- defaults to yes -->
+			<xsd:attribute name="bootproto" type="initmethod"/>
 			<xsd:attribute name="userctl" type="yesno"/> <!-- defaults to no -->
 		</xsd:complexType>
 	</xsd:element>
@@ -113,15 +122,6 @@
 	</xsd:element>
 	<xsd:element name="ip">
 		<xsd:complexType>
-			<xsd:attribute name="bootproto">
-				<xsd:simpleType>
-					<xsd:restriction base="xsd:token">
-						<xsd:enumeration value="static"/>
-						<xsd:enumeration value="dhcp"/>
-						<xsd:enumeration value="none"/>
-					</xsd:restriction>
-				</xsd:simpleType>
-			</xsd:attribute>
 			<xsd:attribute name="def_route" type="yesno"/>
 			<xsd:attribute name="ipaddr" type="ipv4_with_opt_prefix"/>
 			<xsd:attribute name="netmask" type="ipv4"/>
@@ -132,6 +132,7 @@
 	<xsd:element name="ip6"> <!-- TODO: Add all configuration parameters -->
 		<xsd:complexType>
 			<xsd:attribute name="init" type="yesno"/>
+
 		</xsd:complexType>
 	</xsd:element>
 	<xsd:element name="options">

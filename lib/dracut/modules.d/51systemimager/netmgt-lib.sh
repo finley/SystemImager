@@ -78,7 +78,7 @@ sis_configure_network() {
                 while read IF_DEV IF_TYPE
 		do
 			# 1st, clear all variables from previous <if> processing.
-			unset IF_NAME IF_ID IF_ONBOOT IF_USERCTL IF_MASTER IF_NAME IF_ONBOOT IF_USERCTL IF_MASTER IF_BOOTPROTO IF_IPADDR IF_NETMASK IF_PREFIX IF_BROADCAST IF_GATEWAY IF_DEFROUTE IF_IP6_INIT IF_HWADDR IF_BONDING_OPTS IF_DNS_SERVERS IF_DNS_SEARCH IF_ID IF_ALIAS_NAME IF_UUID
+			unset IF_NAME IF_ID IF_ONBOOT IF_ONPARENT IF_USERCTL IF_MASTER IF_NAME IF_ONBOOT IF_USERCTL IF_MASTER IF_BOOTPROTO IF_IPADDR IF_NETMASK IF_PREFIX IF_BROADCAST IF_GATEWAY IF_DEFROUTE IF_IP6_INIT IF_HWADDR IF_BONDING_OPTS IF_DNS_SERVERS IF_DNS_SEARCH IF_ID IF_ALIAS_NAME IF_UUID
 			
 			# Process primary for this interface (only one primary, so no while loop)
 
@@ -87,9 +87,9 @@ sis_configure_network() {
 		        # except if we export it, which we don't want.
 			# (<<< $() fails while <<< "$var" works)
 
-			CNX=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/primary" -v "concat(@name,';',@onboot,';',@userctl,';',@master)" -n ${NETWORK_CONFIG_FILE} | sed '/^\s*$/d')
+			CNX=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/primary" -v "concat(@name,';',@onboot,';',@bootproto,';',@userctl,';',@master)" -n ${NETWORK_CONFIG_FILE} | sed '/^\s*$/d')
 			# Read ip parameters
-			CNX_IP=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/primary/ip" -v "concat(@bootproto,';',@ipaddr,';',@netmask,';',@prefix,';',@broadcast,';',@gateway,';',@def_route)" -n ${NETWORK_CONFIG_FILE} | sed '/^\s*$/d')
+			CNX_IP=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/primary/ip" -v "concat(@ipaddr,';',@netmask,';',@prefix,';',@broadcast,';',@gateway,';',@def_route)" -n ${NETWORK_CONFIG_FILE} | sed '/^\s*$/d')
 			# read ip6 parameters
 			CNX_IP6=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/primary/ip6" -v "concat(@ip6init)" -n ${NETWORK_CONFIG_FILE} | sed '/^\s*$/d')
 			# read options
@@ -98,8 +98,8 @@ sis_configure_network() {
 			CNX_DNS=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/primary/dns" -v "concat(@servers,';',@search)" -n ${NETWORK_CONFIG_FILE} | sed '/^\s*$/d')
 
 			# We use hereline <<< bash feature to load variables.
-		       	read IF_NAME IF_ONBOOT IF_USERCTL IF_MASTER <<< "$CNX"
-			read IF_BOOTPROTO IF_IPADDR IF_NETMASK IF_PREFIX IF_BROADCAST IF_GATEWAY IF_DEFROUTE <<< "$CNX_IP"
+			read IF_NAME IF_ONBOOT IF_BOOTPROTO IF_USERCTL IF_MASTER <<< "$CNX"
+			read IF_IPADDR IF_NETMASK IF_PREFIX IF_BROADCAST IF_GATEWAY IF_DEFROUTE <<< "$CNX_IP"
 			read IF_IP6_INIT <<< "$CNX_IP6"
 			read IF_HWADDR IF_BONDING_OPTS <<< "$CNX_OPTIONS"
 			read IF_DNS_SERVERS IF_DNS_SEARCH <<< "$CNX_DNS"
@@ -113,14 +113,14 @@ sis_configure_network() {
 				_write_interface
 			fi
 			# Process aliases for this interface
-			xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/alias" -v "concat(@id,';',@onboot,';',@userctl,';',@master)" -n ${NETWORK_CONFIG_FILE}  | sed '/^\s*$/d' |\
-				while read IF_ID IF_ONBOOT IF_USERCTL IF_MASTER
+			xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/alias" -v "concat(@id,';',@onparent,';',@bootproto,';',@userctl,';',@master)" -n ${NETWORK_CONFIG_FILE}  | sed '/^\s*$/d' |\
+				while read IF_ID IF_ONPARENT IF_BOOTPROTO IF_USERCTL IF_MASTER
 				do
 					# 1st, clear all previous variables except those all aliases inherit (IF_NAME)
-					unset IF_BOOTPROTO IF_IPADDR IF_NETMASK IF_PREFIX IF_BROADCAST IF_GATEWAY IF_DEFROUTE IF_IP6_INIT IF_HWADDR IF_BONDING_OPTS IF_DNS_SERVERS IF_DNS_SEARCH IF_ALIAS_NAME IF_UUID
+					unset IF_ONBOOT IF_BOOTPROTO IF_IPADDR IF_NETMASK IF_PREFIX IF_BROADCAST IF_GATEWAY IF_DEFROUTE IF_IP6_INIT IF_HWADDR IF_BONDING_OPTS IF_DNS_SERVERS IF_DNS_SEARCH IF_ALIAS_NAME IF_UUID
 					test -z "${IF_NAME}" && shellout "No primary defined for device [${IF_DEV}]"
 					# Read ip parameters
-					ALIAS_IP=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/alias[@id=\"${IF_ID}\"]/ip" -v "concat(@bootproto,';',@ipaddr,';',@netmask,';',@prefix,';',@broadcast,';',@gateway,';',@def_route)" -n ${NETWORK_CONFIG_FILE} | sed '/^\s*$/d')
+					ALIAS_IP=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/alias[@id=\"${IF_ID}\"]/ip" -v "concat(@ipaddr,';',@netmask,';',@prefix,';',@broadcast,';',@gateway,';',@def_route)" -n ${NETWORK_CONFIG_FILE} | sed '/^\s*$/d')
 					# read ip6 parameters
 					ALIAS_IP6=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/alias[@id=\"${IF_ID}\"]/ip6" -v "concat(@ip6init)" -n ${NETWORK_CONFIG_FILE} | sed '/^\s*$/d')
 					# read options
@@ -128,7 +128,7 @@ sis_configure_network() {
 					# read dns infos
 					ALIAS_DNS=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/alias[@id=\"${IF_ID}\"]/dns" -v "concat(@servers,';',@search)" -n ${NETWORK_CONFIG_FILE} | sed '/^\s*$/d')
 
-					read IF_BOOTPROTO IF_IPADDR IF_NETMASK IF_PREFIX IF_BROADCAST IF_GATEWAY IF_DEFROUTE <<< "$ALIAS_IP"
+					read IF_IPADDR IF_NETMASK IF_PREFIX IF_BROADCAST IF_GATEWAY IF_DEFROUTE <<< "$ALIAS_IP"
 					read IF_IP6_INIT <<< "$ALIAS_IP6"
 					read IF_HWADDR IF_BONDING_OPTS <<< "$ALIAS_OPTIONS"
 					read IF_DNS_SERVERS IF_DNS_SEARCH <<< "$ALIAS_DNS"
@@ -194,7 +194,7 @@ _fix_if_parameters() {
 		NETMASK=""
 	fi
 
-	test -z "${IF_UUID}" && IF_UUID=$(uuidgen) && logdebug "No UUID; generating one: $IF_UUID""
+	test -z "${IF_UUID}" && IF_UUID=$(uuidgen) && logdebug "No UUID; generating one: $IF_UUID"
 	
 }
 
