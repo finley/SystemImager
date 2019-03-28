@@ -80,11 +80,13 @@ sis_configure_network() {
 			# 1st, clear all variables from previous <if> processing.
 			unset IF_NAME IF_ID IF_ONBOOT IF_USERCTL IF_MASTER IF_NAME IF_ONBOOT IF_USERCTL IF_MASTER IF_BOOTPROTO IF_IPADDR IF_NETMASK IF_PREFIX IF_BROADCAST IF_GATEWAY IF_DEFROUTE IF_IP6_INIT IF_HWADDR IF_BONDING_OPTS IF_DNS_SERVERS IF_DNS_SEARCH IF_ID IF_ALIAS_NAME IF_UUID
 			
-			# 2 steps: 1st we parse the XML, then we load the result in shell variables.
-			# We need 2 steps because the here line fails to honor IFS if right argument is
-		        # not a string (<<< $() fails while <<< "$var" works)
-
 			# Process primary for this interface (only one primary, so no while loop)
+
+			# 2 steps: 1st we parse the XML, then we load the result in shell variables.
+			# We need 2 steps because the here line will not honor IFS in right argument (sub process)
+		        # except if we export it, which we don't want.
+			# (<<< $() fails while <<< "$var" works)
+
 			CNX=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/primary" -v "concat(@name,';',@onboot,';',@userctl,';',@master)" -n ${NETWORK_CONFIG_FILE} | sed '/^\s*$/d')
 			# Read ip parameters
 			CNX_IP=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/primary/ip" -v "concat(@bootproto,';',@ipaddr,';',@netmask,';',@prefix,';',@broadcast,';',@gateway,';',@def_route)" -n ${NETWORK_CONFIG_FILE} | sed '/^\s*$/d')
@@ -101,6 +103,8 @@ sis_configure_network() {
 			read IF_IP6_INIT <<< "$CNX_IP6"
 			read IF_HWADDR IF_BONDING_OPTS <<< "$CNX_OPTIONS"
 			read IF_DNS_SERVERS IF_DNS_SEARCH <<< "$CNX_DNS"
+
+			_fix_if_parameters # Compute IF_FULL_NAME, IF_DEV_FULL_NAME, UUID, Simplify IPADDR/PREFIX/NETMASK
 
 			if test -n "${IF_MASTER}"
 			then
@@ -129,6 +133,8 @@ sis_configure_network() {
 					read IF_HWADDR IF_BONDING_OPTS <<< "$ALIAS_OPTIONS"
 					read IF_DNS_SERVERS IF_DNS_SEARCH <<< "$ALIAS_DNS"
 
+					_fix_if_parameters # Compute IF_FULL_NAME, IF_DEV_FULL_NAME, UUID, Simplify IPADDR/PREFIX/NETMASK
+
 					if test -n "${IF_MASTER}"
 					then
 						_write_slave
@@ -141,13 +147,54 @@ sis_configure_network() {
 				while read IF_SLAVE_NAME
 				do
 					test "${IF_TYPE}" != "Bond" && shellout "Slave interface, but parent is not of type 'Bond'!"
+
+					_fix_if_parameters # Compute IF_FULL_NAME, IF_DEV_FULL_NAME, UUID, Simplify IPADDR/PREFIX/NETMASK
+					
 					# check that if exists (using xmlstarlet)
 					MY_MASTER=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_SLAVE_NAME}\"]/primary" -v "@master" -n ${NETWORK_CONFIG_FILE})
-					test "${MY_MASTER}" != "${IF_NAME}" && logerror "Specified slave doesn't list me as master"
-					# TODO: above test fails with aliases... need to be smarter.
-					# TODO: above test fails if IF_NAME not set (defaults to IF_DEV in that case)
+					test "${MY_MASTER}" != "${IF_FULL_NAME}" && logerror "Slave [$IF_SLAVE_NAME] doesn't list me [$IF_FULL_NAME]  as master."
 				done
-			# Write main interface
-
 		done
 }
+
+_fix_if_parameters() {
+
+	# TODO: check that IF_MASTER exists and is of type bond.
+	# TODO: check that all slaves of IF_MASTER have the same type= whatever it is (except Bond)
+
+	# Compute full connection name.
+	test -z "${IF_NAME}" && IF_NAME=${IF_DEV} && logdebug "Using device name ($IF_DEV) as connection name"
+	if test -n "${IF_ID}"
+	then
+		IF_FULL_NAME="${IF_NAME}:${IF_ID}"
+		IF_DEV_FULL_NAME="${IF_DEV}:${IF_ID}"
+		logdebug "Interface alias: using ($IF_DEV_FULL_NAME) as connection name"
+	else
+		IF_FULL_NAME="${IF_NAME}"
+		IF_DEV_FULL_NAME="${IF_DEV}"
+	fi
+
+	# Check IP syntaxt (IPADDR, PREFIX, NETMASK)
+	if test "${IF_IPADDR//[0-9\.]/}" = "/" -a -n "${IF_PREFIX}"
+	then
+		logerror "IP prefix specified in both ipaddr= and prefix= parameters for device ${IF_FULL_NAME}"
+		logerror "Ignoring PREFIX; using ipaddr= with its prefix"
+		PREFIX=""
+	fi
+	if test "${IF_IPADDR//[0-9\.]/}" = "/" -a -n "${IF_NETMASK}"
+	then
+		logerror "IP prefix specified in both ipaddr= and netmask= parameters for device ${IF_FULL_NAME}"
+		logerror "Ignoring NETMASK; using ipaddr= with its prefix"
+		NETMASK=""
+	fi
+	if test -n "${IF_PREFIX}" -a -n "${IF_NETMASK}"
+	then
+		logerror "IP prefix specified in both prefix= and netmask= parameters for device ${IF_FULL_NAME}"
+		logerror "Ignoring NETMASK; using ipaddr= with its prefix"
+		NETMASK=""
+	fi
+
+	test -z "${IF_UUID}" && IF_UUID=$(uuidgen) && logdebug "No UUID; generating one: $IF_UUID""
+	
+}
+

@@ -15,39 +15,6 @@
 _write_interface() {
 	test ! -d /sysroot/etc/sysconfig/network-scripts && shellout "/etc/sysconfig/network-scripts not present in image."
 
-	# Compute full connection name.
-	test -z "${IF_NAME}" && IF_NAME=${IF_DEV}
-	if test -n "${IF_ID}"
-	then
-		IF_FULL_NAME="${IF_NAME}:${IF_ID}"
-		IF_DEV_FULL_NAME="${IF_DEV}:${IF_ID}"
-	else
-		IF_FULL_NAME="${IF_NAME}"
-		IF_DEV_FULL_NAME="${IF_DEV}"
-	fi
-
-	# Check IP syntaxt (IPADDR, PREFIX, NETMASK)
-	if test "${IF_IPADDR//[0-9.]/}"="/" -a -n "${IF_PREFIX}"
-	then
-		logerror "IP prefix specified in both ipaddr= and prefix= parameters for device ${IF_FULL_NAME}"
-		logerror "Ignoring PREFIX; using ipaddr= with its prefix"
-		PREFIX=""
-	fi
-	if test "${IF_IPADDR//[0-9.]/}"="/" -a -n "${IF_NETMASK}"
-	then
-		logerror "IP prefix specified in both ipaddr= and netmask= parameters for device ${IF_FULL_NAME}"
-		logerror "Ignoring NETMASK; using ipaddr= with its prefix"
-		NETMASK=""
-	fi
-	if test -n "${IF_PREFIX}" -a -n "${IF_NETMASK}"
-	then
-		logerror "IP prefix specified in both prefix= and netmask= parameters for device ${IF_FULL_NAME}"
-		logerror "Ignoring NETMASK; using ipaddr= with its prefix"
-		NETMASK=""
-	fi
-
-	test -z "${IF_UUID}" && IF_UUID=$(uuidgen)
-
 	# Create the config file, removing all lines ending with "=" sign or empty value (="") (parameter not set don't need to be set)
 	test -f /sysroot/etc/sysconfig/network-scripts/ifcfg-${IF_FULL_NAME} && logwarn "Overwriting /sysroot/etc/sysconfig/network-scripts/ifcfg-${IF_FULL_NAME}"
 	sed -E '/.*=(|"")$/d' > /sysroot/etc/sysconfig/network-scripts/ifcfg-${IF_FULL_NAME} <<EOF
@@ -78,12 +45,7 @@ EOF
 
 _write_slave() {
 	test ! -d /sysroot/etc/sysconfig/network-scripts && shellout "/etc/sysconfig/network-scripts not present in image."
-	test -f /sysroot/etc/sysconfig/network-scripts/ifcfg-${IF_NAME} && logwarn "Overwriting /sysroot/etc/sysconfig/network-scripts/${IF_NAME}"
-
-	# TODO: check that IF_MASTER exists and is of type bond.
-	# TODO: check that all slaves of IF_MASTER have the same type= whatever it is (except Bond)
-
-	test -z "${IF_UUID}" && IF_UUID=$(uuidgen)
+	test -f /sysroot/etc/sysconfig/network-scripts/ifcfg-${IF_NAME} && logwarn "Overwriting /sysroot/etc/sysconfig/network-scripts/ifcfg-${IF_NAME}"
 
 	test -n "${IF_BOOTPROTO/none/}" && logerror "bootproto must be none for a slave interface [${IF_NAME}]"
 	sed -E '/.*=(|"")$/d' > /sysroot/etc/sysconfig/network-scripts/ifcfg-${IF_NAME} <<EOF
