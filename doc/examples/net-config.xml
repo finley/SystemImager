@@ -26,10 +26,22 @@
 		</alias>
 	</if>
 
+	<if dev="eno2" type="Ethernet">
+		<primary name="eth0" uuid="EA6396C2-0885-4F6C-8EEA-1F23CDD85497" onboot="yes" bootproto="static">
+			<ip6 ipv6_failure_fatal="yes" ipv6_init="yes" ipv6_addr="fe80:0000:0000:0000:0204:61ff:fe9d:f156" ipv6_defroute="yes"/>
+		</primary>
+	</if>
+
+	<if dev="eno3" type="Ethernet">
+		<primary name="eth1" uuid="478c559e-7b30-4218-b950-9f372a950200" onboot="yes" bootproto="static">
+			<ip6 ipv6_failure_fatal="yes" ipv6_init="yes" ipv6_addr="fe80::204:61ff:fe9d:f157"/>
+		</primary>
+	</if>
+
 	<if dev="ib0" type="Infiniband">
 		<primary name="ib0" onboot="yes" userctl="no" bootproto="static">
 			<ip ipaddr="10.0.0.1/24" broadcast="10.0.0.255"/>
-			<ip6 ipv6_init="yes"/>
+			<ip6 ipv6_init="yes" ipv6_autoconf="yes"/>
 		</primary>
 	</if>
 
