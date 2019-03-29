@@ -51,6 +51,11 @@ test -z "$DISKS_LAYOUT" && DISKS_LAYOUT=`getarg DISKS_LAYOUT`
 test -z "$DISKS_LAYOUT" && DISKS_LAYOUT=`getarg si.disks-layout`
 
 #####################################
+# si.network-config="netconfig|netconfig.xml"
+test -z "$NETWORK_CONFIG" && NETWORK_CONFIG=`getarg NETWORK_CONFIG`
+test -z "$NETWORK_CONFIG" && NETWORK_CONFIG=`getarg si.network-config`
+
+#####################################
 # si.dl-protocol="torrent|rsync|ssh|..."
 test -z "$DL_PROTOCOL" && DL_PROTOCOL=`getarg si.dl-protocol`
 

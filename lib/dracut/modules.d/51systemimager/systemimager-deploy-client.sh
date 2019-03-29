@@ -17,6 +17,7 @@ type getarg >/dev/null 2>&1 || . /lib/dracut-lib.sh
 type shellout >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 type save_logs_to_sysroot >/dev/null 2>&1 || . /lib/autoinstall-lib.sh
 type sis_prepare_disks >/dev/null 2>&1 || . /lib/disksmgt-lib.sh
+type sis_configure_network >/dev/null 2>&1 || . /lib/netmgt-lib.sh
 
 # Load variables.txt
 . /tmp/variables.txt
@@ -128,6 +129,10 @@ cd /tmp
 # Leave notice of which image is installed on the client
 mkdir -p /sysroot/etc/systemimager/
 echo "${IMAGENAME}" > /sysroot/etc/systemimager/IMAGE_LAST_SYNCED_TO || shellout "Failed to save IMAGENAME in /etc/systemimager/IMAGE_LAST_SYNCED_TO"
+
+# Now configure the network
+getarg 'si.break=configure-network' && logwarn "Break configure-network" && interactive_shell
+sis_configure_network
 
 # Now install bootloader (before post_install scripts to give a chance to scripts to modify this)
 getarg 'si.break=boot-loader' && logwarn "Break boot-loader" && interactive_shell

@@ -369,7 +369,9 @@ GROUPNAMES="$GROUPNAMES"			# /scripts/cluster.txt
 GROUP_OVERRIDES="$GROUP_OVERRIDES"
 SIS_CONFIG="$SIS_CONFIG"			# si.config
 DISKS_LAYOUT="$DISKS_LAYOUT"			# si.disks-layout
-DISKS_LAYOUT_FILE="$DISKS_LAYOUT_FILE"		#  Absolute PATH of layout file in use
+DISKS_LAYOUT_FILE="$DISKS_LAYOUT_FILE"		#  Absolute PATH of layout file in use.
+NETWORK_CONFIG="$NETWORK_CONFIG"		# si.network-config
+NETWORK_CONFIG_FILE="$NETWORK_CONFIG_FILE"	#  Absolute PATH of network-config in use.
 
 DL_PROTOCOL="$DL_PROTOCOL"			# si.dl-protocol
 

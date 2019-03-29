@@ -47,6 +47,10 @@ test -z "$SCRIPTNAME" && SCRIPTNAME=$(getarg si.script-name -d SCRIPTNAME) && lo
 test -z "$DISKS_LAYOUT" && DISKS_LAYOUT=$(getarg si.disks-layout -d DISKS_LAYOUT) && logdebug "Got DISKS_LAYOUT=${DISKS_LAYOUT}"
 
 #####################################
+# si.network-config="netconfig|netconfig.xml"
+test -z "$NETWORK_CONFIG" && NETWORK_CONFIG=$(getarg si.network-config -d NETWORK_CONFIG) && logdebug "Got NETWORK_CONFIG=${NETWORK_CONFIG}"
+
+#####################################
 # si.dl-protocol="torrent|rsync|ssh|..."
 test -z "$DL_PROTOCOL" && DL_PROTOCOL=$(getarg si.dl-protocol) && logdebug "Got DL_PROTOCOL=${DL_PROTOCOL}"
 
