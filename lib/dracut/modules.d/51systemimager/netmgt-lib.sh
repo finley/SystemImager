@@ -89,10 +89,10 @@ sis_configure_network() {
 			CNX=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/primary" -v "concat(@name,';',@uuid,';',@onboot,';',@bootproto,';',@userctl,';',@master)" -n ${NETWORK_CONFIG_FILE} | sed '/^\s*$/d')
 			read IF_NAME IF_UUID IF_ONBOOT IF_BOOTPROTO IF_USERCTL IF_MASTER <<< "$CNX"
 
-			_read_ipv4	# read ipv4 parameters
-			_read_ipv6	# read ipv6 parameters
-			_read_options	# read options
-			_read_dns	# read dns infos
+			_read_ipv4 primary	# read ipv4 parameters
+			_read_ipv6 primary	# read ipv6 parameters
+			_read_options primary	# read options
+			_read_dns primary	# read dns infos
 
 			_fix_if_parameters # Compute IF_FULL_NAME, IF_DEV_FULL_NAME, UUID, Simplify IPADDR/PREFIX/NETMASK
 
@@ -110,10 +110,10 @@ sis_configure_network() {
 					unset IF_ONBOOT IF_BOOTPROTO IF_IPADDR IF_NETMASK IF_PREFIX IF_BROADCAST IF_GATEWAY IF_DEFROUTE IF_IP6_INIT IF_HWADDR IF_BONDING_OPTS IF_DNS_SERVERS IF_DNS_SEARCH IF_ALIAS_NAME IF_UUID
 					test -z "${IF_NAME}" && shellout "No primary defined for device [${IF_DEV}]"
 
-					_read_ipv4	# read ipv4 parameters
-					_read_ipv6	# read ipv6 parameters
-					_read_options	# read options
-					_read_dns	# read dns infos
+					_read_ipv4 "alias[@id=\"$IF_ID\"]"	# read ipv4 parameters
+					_read_ipv6 "alias[@id=\"$IF_ID\"]"	# read ipv6 parameters
+					_read_options "alias[@id=\"$IF_ID\"]"	# read options
+					_read_dns "alias[@id=\"$IF_ID\"]"	# read dns infos
 
 					_fix_if_parameters # Compute IF_FULL_NAME, IF_DEV_FULL_NAME, UUID, Simplify IPADDR/PREFIX/NETMASK
 
@@ -142,30 +142,29 @@ sis_configure_network() {
 _read_ipv4() {
 	local IFS=';'
 	# Read ip tag
-	CNX_IP=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/primary/ip" -v "concat(@ipv4_failure_fatal,';',@ipaddr,';',@prefix,';',@netmask,';',@broadcast,';',@gateway,';',@def_route,';',@peerdns,';',@mtu,';',@ipv4_route_metric)" -n ${NETWORK_CONFIG_FILE} | sed '/^\s*$/d')
+	CNX_IP=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/$1/ip" -v "concat(@ipv4_failure_fatal,';',@ipaddr,';',@prefix,';',@netmask,';',@broadcast,';',@gateway,';',@def_route,';',@peerdns,';',@mtu,';',@ipv4_route_metric)" -n ${NETWORK_CONFIG_FILE} | sed '/^\s*$/d')
 	read IPV4_FAILURE_FATAL IF_IPADDR IF_PREFIX IF_NETMASK IF_BROADCAST IF_GATEWAY IF_DEFROUTE IF_PEERDNS IF_MTU IF_IPV4_ROUTE_METRIC <<< "$CNX_IP"
 }
 
 _read_ipv6() {
 	local IFS=';'
 	# Read ip6 tag
-	CNX_IP6=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/primary/ip6" -v "concat(@ipv6_failure_fatal,';',@ipv6_init,';',@ipv6_autoconf,';',@ipv6_addr,';',@ipv6_defaultgw,';',@ipv6_defroute,';',@ipv6_peerdns,';',@ipv6_mtu,';',@ipv6_route_metric)" -n ${NETWORK_CONFIG_FILE} | sed '/^\s*$/d')
+	CNX_IP6=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/$1/ip6" -v "concat(@ipv6_failure_fatal,';',@ipv6_init,';',@ipv6_autoconf,';',@ipv6_addr,';',@ipv6_defaultgw,';',@ipv6_defroute,';',@ipv6_peerdns,';',@ipv6_mtu,';',@ipv6_route_metric)" -n ${NETWORK_CONFIG_FILE} | sed '/^\s*$/d')
 	read IF_IPV6_FAILURE_FATAL IF_IPV6_INIT IF_IPV6_AUTOCONF IF_IPV6_ADDR IF_IPV6_DEFAULTGW IF_IPV6_DEFROUTE IF_IPV6_PEERDNS IF_IPV6_ROUTE_METRIC <<< "$CNX_IP6"
 }
 
 _read_options() {
 	local IFS=';'
 	# Read options tag
-	CNX_OPTIONS=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/primary/options" -v "concat(@hwaddr,';',@bonding_opts)" -n ${NETWORK_CONFIG_FILE} | sed '/^\s*$/d')
+	CNX_OPTIONS=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/$1/options" -v "concat(@hwaddr,';',@bonding_opts)" -n ${NETWORK_CONFIG_FILE} | sed '/^\s*$/d')
 	read IF_HWADDR IF_BONDING_OPTS <<< "$CNX_OPTIONS"
 }
 
 _read_dns() {
 	local IFS=';'
 	# Read the dns tag
-	CNX_DNS=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/primary/dns" -v "concat(@servers,';',@search)" -n ${NETWORK_CONFIG_FILE} | sed '/^\s*$/d')
+	CNX_DNS=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/$1/dns" -v "concat(@servers,';',@search)" -n ${NETWORK_CONFIG_FILE} | sed '/^\s*$/d')
 	read IF_DNS_SERVERS IF_DNS_SEARCH <<< "$CNX_DNS"
-	# TODO: Create DNS1 DNS2 DNS3 variables. Update SEARCH (replace',' with " ")
 	IFS=','
 	read IF_DNS1 IF_DNS2 IF_DNS3 <<< "$IF_DNS_SERVERS"
 	IF_DOMAIN=${IF_DNS_SEARCH//,/ } # The search list is a space separated list.
