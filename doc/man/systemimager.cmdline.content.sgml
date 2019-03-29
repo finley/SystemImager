@@ -99,6 +99,17 @@
     </varlistentry>
     <varlistentry>
       <term>
+        <option>si.network-config=<replaceable>&lt;network configuration file&gt;</replaceable></option> (Variable: <option>NETWORK_CONFIG</option>)
+      </term>
+      <listitem>
+        <para>Specify how the network interfaces must be initialized. This parameter is optional, but the file it designate is strictly mandatory.</para>
+        <para>If defined, the file is searched with or without the .xml extension. It is stored on the image server in the <filename>/var/lib/systemimager/scripts/network-configs/</filename> directory.</para>
+        <para>If not defined, imager will look in network-configs dir for possible candidates using "host name", "group name" (see <filename>si_clusterconfig</filename>(8), "base hostname" (node01 -> node), "image name" and "default", all of them with optional <filename>.xml</filename> extension.</para>
+        <para></para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term>
         <option>si.dl-protocol=<replaceable>image transfer protocol</replaceable></option> (Variable: <option>DL_PROTOCOL</option>)
       </term>
       <listitem>
