@@ -22,6 +22,7 @@
 		<xsd:restriction base="xsd:token">
 			<xsd:enumeration value="static"/>
 			<xsd:enumeration value="dhcp"/>
+			<xsd:enumeration value="bootp"/>
 			<xsd:enumeration value="none"/>
 		</xsd:restriction>
 	</xsd:simpleType>
@@ -35,9 +36,14 @@
 			<xsd:pattern value="(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)"/>
 		</xsd:restriction>
 	</xsd:simpleType>
+	<xsd:simpleType name="ipv4_prefix"> <!-- ipv4 prefix (1..32) -->
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="3[0-2]|[1-2][0-9]|0?[1-9]"/>
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:simpleType name="ipv6"> <!-- ipv6 strict match (that includes /mask) -->
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*"/> <!-- TODO: create strict ipv6 matching regexp -->
+			<xsd:pattern value="((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?"/> <!-- Strict ipv6 matching regexp (RFC4291 section 2.2) -->
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="macaddr"> <!-- match 6 or 20 bytes MAC addresses -->
@@ -137,9 +143,10 @@
 		<xsd:complexType>
 			<xsd:attribute name="ipv4_failure_fatal" type="yesno"/>
 			<xsd:attribute name="ipaddr" type="ipv4_with_opt_prefix"/>
+			<xsd:attribute name="prefix" type="ipv4_prefix"/>
 			<xsd:attribute name="netmask" type="ipv4"/>
-			<xsd:attribute name="gateway" type="ipv4"/>
 			<xsd:attribute name="broadcast" type="ipv4"/>
+			<xsd:attribute name="gateway" type="ipv4"/>
 			<xsd:attribute name="def_route" type="yesno"/>
 			<xsd:attribute name="peerdns" type="yesno"/>
 			<xsd:attribute name="mtu" type="xsd:int"/>
@@ -174,9 +181,9 @@
 	<xsd:element name="dns">
 		<xsd:complexType>
 			<xsd:attribute name="servers">
-				<xsd:simpleType>
+				<xsd:simpleType> <!-- TODO: Allow IPV6 DNS -->
 					<xsd:restriction base="xsd:string"> <!-- Match comma separated list of ipv4 addresses -->
-						<xsd:pattern value="(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(,(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))?"/>
+						<xsd:pattern value="(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(,(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){0,2}"/>
 					</xsd:restriction>
 				</xsd:simpleType>
 			</xsd:attribute>
