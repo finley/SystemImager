@@ -1284,6 +1284,7 @@ fi
 %dir %{_var}/lib/systemimager/scripts/post-install
 %dir %{_var}/lib/systemimager/scripts/configs
 %dir %{_var}/lib/systemimager/scripts/disks-layouts
+%dir %{_var}/lib/systemimager/scripts/network-configs
 %dir %{_var}/lib/systemimager/overrides
 %{_var}/lib/systemimager/overrides/README
 %dir %{_datarootdir}/systemimager
