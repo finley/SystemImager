@@ -63,13 +63,13 @@ _write_slave() {
 
 	test -n "${IF_BOOTPROTO/none/}" && logerror "bootproto must be none for a slave interface [${IF_NAME}]"
 	sed -E '/.*=(|"")$/d' > /sysroot/etc/sysconfig/network-scripts/ifcfg-${IF_NAME} <<EOF
+DEVICE=${IF_DEV}
+TYPE=${IF_TYPE}
+ONBOOT=yes
 CONNECTED_MODE=no
 BOOTPROTO=none
-TYPE=${IF_TYPE}
 NAME=${IF_NAME}
 UUID=${IF_UUID}
-DEVICE=${IF_DEV}
-ONBOOT=yes
 MASTER=${IF_MASTER}
 SLAVE=yes
 EOF
