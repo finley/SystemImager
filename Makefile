@@ -277,6 +277,7 @@ endif
 	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_SCRIPT_DIR)
 	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_SCRIPT_DIR)/configs
 	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_SCRIPT_DIR)/disks-layouts
+	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_SCRIPT_DIR)/network-configs
 	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_SCRIPT_DIR)/main-install
 	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_SCRIPT_DIR)/pre-install
 	$(SI_INSTALL) -m 644 --backup --text \
