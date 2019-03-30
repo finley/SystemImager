@@ -90,6 +90,7 @@ then
 	#
 	[ -z "$SSH_DOWNLOAD_URL" ] && [ -n "$new_option_142" ] && SSH_DOWNLOAD_URL="$new_option_142" && loginfo "Got SSH_DOWNLOAD_URL=${new_option_142}"
 
+	BOOTPROTO=dhcp # Remember we got network infos from DHCP
 	loginfo "Finished reading DHCP lease informations."
 
 elif test -r /tmp/leaseinfo.$DEVICE.dhcp.ipv4
@@ -142,6 +143,7 @@ then
 	[ -z "$GATEWAY_DEV" ] && [ -n "$DEVICE" ] && GATEWAYDEV="$DEVICE" && loginfo "Got GATEWAYDEV=${DEVICE}"
 	[ -z "$SSH_DOWNLOAD_URL" ] && [ -n "$OPTION_SSH_DOWNLOAD_URL" ] && SSH_DOWNLOAD_URL="$OPTION_SSH_DOWNLOAD_URL" && loginfo "Got SSH_DOWNLOAD_URL=${OPTION_SSH_DOWNLOAD_URL}"
 
+	BOOTPROTO=dhcp # Remember we got network infos from DHCP
 	loginfo "Finished reading DHCP lease informations."
 elif test -r /tmp/net.$DEVICE.override
 then
@@ -158,6 +160,8 @@ then
         [ -z "$NETMASK" ] && logwarn "No netmask defined in ip= static config."
 	[ -n "$hostname" ] && HOSTNAME=$hostname && loginfo "Got Fixed HOSTNAME=$HOSTNAME"
         [ -z "$HOSTNAME" ] && loginfo "No HOSTNAME defined in ip= cmdline."
+
+	BOOTPROTO=static
 	loginfo "Finished reading static IP informations."
 else
 	logerror "No DHCP_OPTIONS found in /tmp! systemd-networkd which is not yet supported?"
