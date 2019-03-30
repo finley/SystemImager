@@ -350,18 +350,34 @@ write_variables() {
     mv -f /tmp/variables.txt /tmp/variables.txt~
 
 cat > /tmp/variables.txt <<EOF || shellout "Failed to write /tmp/variables.txt"
+##
+## SystemImager imager variables.
+##
+
+##############################
+#
+# This hostname and DNS domainname
+#
 HOSTNAME="$HOSTNAME"
 DOMAINNAME="$DOMAINNAME"
 
+##############################
+#
+# Network device informations
+#
 DEVICE="$DEVICE"
+BOOTPROTO="$BOOTPROTO"
 IPADDR="$IPADDR"
 NETMASK="$NETMASK"
 NETWORK="$NETWORK"
 BROADCAST="$BROADCAST"
-
 GATEWAY="$GATEWAY"
 GATEWAYDEV="$GATEWAYDEV"
 
+##############################
+#
+# Deployment informations and configurations
+#
 IMAGESERVER="$IMAGESERVER"			# si.image-server
 IMAGENAME="$IMAGENAME"
 SCRIPTNAME="$SCRIPTNAME"
@@ -372,50 +388,64 @@ DISKS_LAYOUT="$DISKS_LAYOUT"			# si.disks-layout
 DISKS_LAYOUT_FILE="$DISKS_LAYOUT_FILE"		#  Absolute PATH of layout file in use.
 NETWORK_CONFIG="$NETWORK_CONFIG"		# si.network-config
 NETWORK_CONFIG_FILE="$NETWORK_CONFIG_FILE"	#  Absolute PATH of network-config in use.
-
 DL_PROTOCOL="$DL_PROTOCOL"			# si.dl-protocol
+SEL_RELABEL="$SEL_RELABEL"			# si.selinux-relabel
+SI_POST_ACTION="$SI_POST_ACTION"		# si.post-action (defaults is reboot)
 
+##############################
+#
+# Imager configuration and parameters
+#
 LOG_SERVER="$LOG_SERVER"
 LOG_SERVER_PORT="$LOG_SERVER_PORT"		# si.log-server-port
 USELOGGER="$USELOGGER"
-
-IP_ASSIGNMENT_METHOD="$IP_ASSIGNMENT_METHOD"
+MONITOR_SERVER="$MONITOR_SERVER"		# si.monitor-server
+MONITOR_PORT="$MONITOR_PORT"			# si.monitor-port
+MONITOR_CONSOLE="$MONITOR_CONSOLE"		# si.monitor-console
+SKIP_LOCAL_CFG="$SKIP_LOCAL_CFG"		# si.skip-local-cfg
+IP_ASSIGNMENT_METHOD="$IP_ASSIGNMENT_METHOD"	# ?
 TMPFS_STAGING="$TMPFS_STAGING"			# si.tmpfs-staging
 STAGING_DIR="$STAGING_DIR"		
+DEBUG="${DEBUG}"				# si.debug
+SIS_SYSMSG_ENABLED="$SIS_SYSMSG_ENABLED"
+export TERM="${TERM}"
+
+##############################
+#
+# Runtime variables
+#
+ARCH="$ARCH"
 IMAGESIZE="$IMAGESIZE"
 DISKS=( ${DISKS[@]} )
+IMAGED_MODULES="${IMAGED_MODULES}"
+SI_IMAGING_STATUS="${SI_IMAGING_STATUS:=inprogress}"	# contains "finished" when imaging is finished
 
-ARCH="$ARCH"
+##############################
+#
+# SSH protocol parameter
+#
 SSH="$SSH"
 SSHD="$SSHD"
 SSH_USER="$SSH_USER"
 SSH_DOWNLOAD_URL="$SSH_DOWNLOAD_URL"		# si.ssh-download-url"
 
+##############################
+#
+# Flamethrower protocol parameter
+#
 FLAMETHROWER_DIRECTORY_PORTBASE="$FLAMETHROWER_DIRECTORY_PORTBASE" # si.flamethrower-directory-portbase
 
-MONITOR_SERVER="$MONITOR_SERVER"		# si.monitor-server
-MONITOR_PORT="$MONITOR_PORT"			# si.monitor-port
-MONITOR_CONSOLE="$MONITOR_CONSOLE"		# si.monitor-console
-SKIP_LOCAL_CFG="$SKIP_LOCAL_CFG"		# si.skip-local-cfg
-
+##############################
+#
+# Bittorent protocol parameters
+#
 BITTORRENT="$BITTORRENT"
 BITTORRENT_STAGING="$BITTORRENT_STAGING"
 BITTORRENT_POLLING_TIME="$BITTORRENT_POLLING_TIME"
 BITTORRENT_SEED_WAIT="$BITTORRENT_SEED_WAIT"
 BITTORRENT_UPLOAD_MIN="$BITTORRENT_UPLOAD_MIN"
 
-SEL_RELABEL="$SEL_RELABEL"			# si.selinux-relabel
-
-SI_POST_ACTION="$SI_POST_ACTION"		# si.post-action (defaults is reboot)
-SI_IMAGING_STATUS="${SI_IMAGING_STATUS:=inprogress}"	# contains "finished" when imaging is finished
-
-IMAGED_MODULES="${IMAGED_MODULES}"
-
-DEBUG="${DEBUG}"				# si.debug
-SIS_SYSMSG_ENABLED="$SIS_SYSMSG_ENABLED"
-
-export TERM="${TERM}"
-
+# END OF FILE
 EOF
 
 rm -f /tmp/variables.txt~
