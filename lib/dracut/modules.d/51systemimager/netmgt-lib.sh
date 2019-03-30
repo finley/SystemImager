@@ -55,13 +55,40 @@ sis_configure_network() {
         if test ! -f "${NETWORK_CONFIG_FILE}"
         then
                 logwarn "Could not get a valid network configuration file"
-                test -n "${NETWORK_CONFIG_FILE}" && logerror "Tryed ${NETWORK_CONFIG_FILE}"
-                logerror "Neiter NETWORK_CONFIG, HOSTNAME, IMAGENAME is set or"
-                logerror "No group, group_override, base_hostname matches a network configuration file"
-                logerror "Please read networkconfig.conf manual and create a network configuration file"
-                logerror "Store it on image server in /var/lib/systemimager/scripts/network-conigs/"
-                logerror "Use the one of possible names: {\$NETWORK_CONFIG,\$HOSTNAME,\$GROUPNAME,\$BASE_HOSTNAME,\$IMAGENAME,default}{,.xml}"
-                logwarn "Can't configure client network. No network configuration file found."
+                test -n "${NETWORK_CONFIG_FILE}" && logwarn "Tryed ${NETWORK_CONFIG_FILE}"
+                logwarn "Neiter NETWORK_CONFIG, HOSTNAME, IMAGENAME is set or"
+                logwarn "No group, group_override, base_hostname matches a network configuration file"
+                logwarn "Please read networkconfig.conf manual and create a network configuration file"
+                logwarn "Store it on image server in /var/lib/systemimager/scripts/network-conigs/"
+                logwarn "Use the one of possible names: {\$NETWORK_CONFIG,\$HOSTNAME,\$GROUPNAME,\$BASE_HOSTNAME,\$IMAGENAME,default}{,.xml}"
+                logwarn "Using PXE network infos as fallback."
+		if test "$BOOTPROTO" = "dhcp"
+		then
+			IF_FULL_NAME=$DEVICE
+			IF_DEV_FULL_NAME=$DEVICE
+			IF_BOOTPROTO=$BOOTPROTO
+			IF_TYPE=Ethernet # check with /sys/class/net/eth0/type
+			IF_ONBOOT=yes
+			IF_IPV4_FAILURE_FATAL=yes # TODO: be smarter. (maybe we booted thru ipv6)
+			IF_PEERDNS=yes
+			IF_UUID=$(uuidgen)
+			_write_interface
+		else
+			IF_FULL_NAME=$DEVICE
+			IF_DEV_FULL_NAME=$DEVICE
+			IF_BOOTPROTO=$BOOTPROTO
+			IF_TYPE=Ethernet # check with /sys/class/net/eth0/type
+			IF_ONBOOT=yes
+			IF_IPV4_FAILURE_FATAL=yes # TODO: be smarter. (maybe we booted thru ipv6)
+			IF_PEERDNS=yes
+			IF_UUID=$(uuidgen)
+			IF_IPADDR=$IPADDR
+			IF_NETMASK=$NETMASK
+			IF_BROADCAST=$BROADCAST
+			IF_GATEWAY=$GATEWAY
+			_write_interface
+			
+		fi
         fi
 	# BUG/TODO: default.xml is for disk layout and network layout: => conflict
         loginfo "Using network configuration file: ${NETWORK_CONIG_FILE}"
