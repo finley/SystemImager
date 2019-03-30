@@ -45,17 +45,17 @@ esac
 ################################################################################
 #               
 sis_configure_network() {
-        if test -z "${NETWORK_CONF}"
+        if test -z "${NETWORK_CONFIG}"
         then
-                NETWORK_CONF_FILE=`choose_filename /scripts/network-configs "" ".xml"`
+                NETWORK_CONFIG_FILE=`choose_filename /scripts/network-configs "" ".xml"`
         else
-                NETWORK_CONF_FILE=/scripts/network-configs/${NETWORK_CONF}
-                test ! -f "${NETWORK_CONF_FILE}" && NETWORK_CONF_FILE=/scripts/network-configs/${NETWORK_CONF}.xml
+                NETWORK_CONFIG_FILE=/scripts/network-configs/${NETWORK_CONFIG}
+                test ! -f "${NETWORK_CONFIG_FILE}" && NETWORK_CONFIG_FILE=/scripts/network-configs/${NETWORK_CONFIG}.xml
         fi
-        if test ! -f "${NETWORK_CONF_FILE}"
+        if test ! -f "${NETWORK_CONFIG_FILE}"
         then
                 logwarn "Could not get a valid network configuration file"
-                test -n "${NETWORK_CONF_FILE}" && logerror "Tryed ${NETWORK_CONF_FILE}"
+                test -n "${NETWORK_CONFIG_FILE}" && logerror "Tryed ${NETWORK_CONFIG_FILE}"
                 logerror "Neiter NETWORK_CONFIG, HOSTNAME, IMAGENAME is set or"
                 logerror "No group, group_override, base_hostname matches a network configuration file"
                 logerror "Please read networkconfig.conf manual and create a network configuration file"
