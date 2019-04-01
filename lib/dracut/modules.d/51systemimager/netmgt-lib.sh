@@ -64,10 +64,11 @@ sis_configure_network() {
                 logwarn "Using PXE network infos as fallback."
 		if test "$BOOTPROTO" = "dhcp"
 		then
+			IF_DEV=$DEVICE
 			IF_FULL_NAME=$DEVICE
 			IF_DEV_FULL_NAME=$DEVICE
 			IF_BOOTPROTO=$BOOTPROTO
-			IF_TYPE=Ethernet # check with /sys/class/net/eth0/type
+			IF_TYPE=Ethernet # TODO: check with /sys/class/net/eth0/type
 			IF_ONBOOT=yes
 			IF_IPV4_FAILURE_FATAL=yes # TODO: be smarter. (maybe we booted thru ipv6)
 			IF_PEERDNS=yes
@@ -75,6 +76,7 @@ sis_configure_network() {
 			_write_interface
 			return
 		else
+			IF_DEV=$DEVICE
 			IF_FULL_NAME=$DEVICE
 			IF_DEV_FULL_NAME=$DEVICE
 			IF_BOOTPROTO=$BOOTPROTO
@@ -265,6 +267,7 @@ _check_interface_type() {
 				;;
 			24)
 				DETECTED_TYPE=Ethernet
+				;;
 			32)
 				DETECTED_TYPE=Infiniband
 				;;
@@ -274,13 +277,24 @@ _check_interface_type() {
 				;;
 		esac
 	else
-		logdebug "Virtual interface ${IF_DEV} not yet seen by kernel: not checking type."
+		case "${IF_TYPE}" in
+			Ethernet|Infiniband)
+				logwarn "Network configuration list ${IF_DEV} of type ${IF_TYPE} to be configured,"
+				logwarn "but it is not seen by kernel. Make sure it is the correct device name."
+				logwarn "Assuming post install scripts will bring this device to life."
+				;;
+			*)
+				logdebug "Virtual interface ${IF_DEV} not yet seen by kernel: not checking type."
+				;;
+		esac
 		return
 	fi
 	if test "${DETECTED_TYPE}" != "${IF_TYPE}"
 	then
 		logwarn "Warning: Interface ${IF_DEV} is seen as ${DETECTED_TYPE}, but your want"
 		logwarn "to configure it as ${IF_TYPE}. This may result in unexpected results."
+	else
+		logdebug "Device ${IF_DEV} is seen by kernel and of expected type: ${DETECTED_TYPE}."
 	fi
 }
 

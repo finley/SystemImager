@@ -20,7 +20,7 @@ _write_interface() {
 
 	# Create the config file, removing all lines ending with "=" sign or empty value (="") (parameter not set don't need to be set)
 	test -f /sysroot/etc/sysconfig/network-scripts/ifcfg-${IF_FULL_NAME} && logwarn "Overwriting /sysroot/etc/sysconfig/network-scripts/ifcfg-${IF_FULL_NAME}"
-	_check_interface_type ${IF_DEV} ${IF_TYPE}
+	_check_interface_type
 	loginfo "Writing ${IF_FULL_NAME} connection configuration file (device: ${IF_DEV_FULL_NAME})"
 	sed -E '/.*=(|"")$/d' > /sysroot/etc/sysconfig/network-scripts/ifcfg-${IF_FULL_NAME} <<EOF
 DEVICE=${IF_DEV_FULL_NAME}
