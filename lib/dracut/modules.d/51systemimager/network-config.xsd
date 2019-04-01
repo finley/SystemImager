@@ -13,9 +13,23 @@
 			<xsd:enumeration value="no"/>
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:simpleType name="devname"> <!-- linux device name -->
+	<xsd:simpleType name="devname"> <!-- linux device name based on https://github.com/systemd/systemd/blob/master/src/udev/udev-builtin-net_id.c -->
+		<!--
+		((eth|ib|bond)[0-9]+)|(						Classic naming (ethX ibX bondX)
+		(en|ib|sl|wl|ww)(						interface type
+		(b\d+)|								BCMA bus core number
+		(c[a-f0-9]+)|							bus id of a grouped CCW or CCW device
+		(o\d+(n\d+|d\d+)?)|						on-board device index number
+		(s\d+(f\d+)?(n\d+|d\d+)?)|					hotplug slot index number
+		(x([0-9A-Fa-f]{2}:){5}(([0-9A-Fa-f]{2}:){14})?[0-9A-Fa-f]{2})|	MAC address
+		((P\d+)?p\d+s\d+(f\d+)?(n\d+|d\d+)?)|				PCI geographical location
+		((P\d+)?p\d+s\d+(f\d+)?(u\d+)*(c\d+)?(i\d+)?)|			USB port number chain
+		(v\d+)|								VIO slot number (IBM PowerVM)
+		(a\d+i\d+)							Platform bus ACPI instance id
+))
+-->
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[a-z]+[0-9]+"/>
+			<xsd:pattern value="((eth|ib|bond)[0-9]+)|((en|ib|sl|wl|ww)((b\d+)|(c[a-f0-9]+)|(o\d+(n\d+|d\d+)?)|(s\d+(f\d+)?(n\d+|d\d+)?)|(x([0-9A-Fa-f]{2}:){5}(([0-9A-Fa-f]{2}:){14})?[0-9A-Fa-f]{2})|((P\d+)?p\d+s\d+(f\d+)?(n\d+|d\d+)?)|((P\d+)?p\d+s\d+(f\d+)?(u\d+)*(c\d+)?(i\d+)?)|(v\d+)|(a\d+i\d+)))"/>
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="initmethod">
