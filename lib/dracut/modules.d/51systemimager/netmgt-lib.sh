@@ -91,7 +91,7 @@ sis_configure_network() {
 		fi
         fi
 	# BUG/TODO: default.xml is for disk layout and network layout: => conflict
-        loginfo "Using network configuration file: ${NETWORK_CONIG_FILE}"
+        loginfo "Using network configuration file: ${NETWORK_CONFIG_FILE}"
         write_variables # Save NETWORK_CONFIG_FILE variable for future use.
 
         # 1st, we need to validdate the network configuration file.
