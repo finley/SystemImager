@@ -182,7 +182,8 @@
 	</xsd:element>
 	<xsd:element name="options">
 		<xsd:complexType>
-			<xsd:attribute name="hwaddr" type="macaddr"/>
+			<xsd:attribute name="hwaddr" type="macaddr"/> <!-- make sure device is the correct one -->
+			<xsd:attribute name="macaddr" type="macaddr"/> <!-- set a new MAC addr to device -->
 			<xsd:attribute name="bonding_opts">
 				<xsd:simpleType>
 					<xsd:restriction base="xsd:string"> <!-- Basic module space separated param list -->

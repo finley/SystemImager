@@ -25,6 +25,7 @@ _write_interface() {
 	sed -E '/.*=(|"")$/d' > /sysroot/etc/sysconfig/network-scripts/ifcfg-${IF_FULL_NAME} <<EOF
 DEVICE=${IF_DEV_FULL_NAME}
 HWADDR=${IF_HWADDR}
+MACADDR=${IF_MACADDR}
 TYPE=${IF_TYPE}
 ONBOOT=${IF_ONBOOT}
 ONPARENT=${IF_ONPARENT}

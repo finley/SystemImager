@@ -186,8 +186,8 @@ _read_ipv6() {
 _read_options() {
 	local IFS=';'
 	# Read options tag
-	CNX_OPTIONS=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/$1/options" -v "concat(@hwaddr,';',@bonding_opts)" -n ${NETWORK_CONFIG_FILE} | sed '/^\s*$/d')
-	read IF_HWADDR IF_BONDING_OPTS <<< "$CNX_OPTIONS"
+	CNX_OPTIONS=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/$1/options" -v "concat(@hwaddr,';',@macaddr,';',@bonding_opts)" -n ${NETWORK_CONFIG_FILE} | sed '/^\s*$/d')
+	read IF_HWADDR IF_MACADDR IF_BONDING_OPTS <<< "$CNX_OPTIONS"
 }
 
 _read_dns() {
@@ -237,8 +237,31 @@ _fix_if_parameters() {
 		NETMASK=""
 	fi
 
+	# Add an uuid is none is provided.
 	test -z "${IF_UUID}" && IF_UUID=$(uuidgen) && logdebug "No UUID; generating one: $IF_UUID"
 	
+	# Check that HWADDR match kernel point of view if provided
+	if test -n "$IF_HWADDR"
+	then
+		if test -e /sys/class/net/$IF_DEV/address -o -n "$IF_MACADDR"
+		then
+			if test -n "$IF_MACADDR"
+			then
+				REAL_MAC="$IF_MACADDR"					# Compare withe the one we setup
+			else
+				REAL_MAC="$(cat /sys/class/net/$IF_DEV/address)"	# Compare with kernel info
+			fi
+			if test "$(cat $IF_HWADDR | tr '[:upper:]' '[:lower:]')" != "$REAL_MAC"
+			then
+				logerror "Device $IF_DEV kernel MAC is $REAL_MAC. Config differs: hwaddr=$IF_HWADDR."
+				logerror "Please fix or your network won't setup at next boot."
+			else
+				logdebug "hwaddr=$IF_HWADDR Match device $IF_DEV"
+			fi
+		else
+			logdebug "/sys/class/net/$IF_DEV/address doesn't exists. Can't check that hwaddr=$IF_HWADDR matches."
+		fi
+	fi
 }
 
 ################################################################################
