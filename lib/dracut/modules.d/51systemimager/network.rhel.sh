@@ -20,6 +20,7 @@ _write_interface() {
 
 	# Create the config file, removing all lines ending with "=" sign or empty value (="") (parameter not set don't need to be set)
 	test -f /sysroot/etc/sysconfig/network-scripts/ifcfg-${IF_FULL_NAME} && logwarn "Overwriting /sysroot/etc/sysconfig/network-scripts/ifcfg-${IF_FULL_NAME}"
+	_check_interface_type ${IF_DEV} ${IF_TYPE}
 	loginfo "Writing ${IF_FULL_NAME} connection configuration file (device: ${IF_DEV_FULL_NAME})"
 	sed -E '/.*=(|"")$/d' > /sysroot/etc/sysconfig/network-scripts/ifcfg-${IF_FULL_NAME} <<EOF
 DEVICE=${IF_DEV_FULL_NAME}
@@ -63,6 +64,7 @@ _write_slave() {
 	test -f /sysroot/etc/sysconfig/network-scripts/ifcfg-${IF_NAME} && logwarn "Overwriting /sysroot/etc/sysconfig/network-scripts/ifcfg-${IF_NAME}"
 
 	test -n "${IF_BOOTPROTO/none/}" && logerror "bootproto must be none for a slave interface [${IF_NAME}]"
+	_check_interface_type
 	loginfo "Writing ${IF_NAME} connection configuration file (device: ${IF_DEV})"
 	sed -E '/.*=(|"")$/d' > /sysroot/etc/sysconfig/network-scripts/ifcfg-${IF_NAME} <<EOF
 DEVICE=${IF_DEV}

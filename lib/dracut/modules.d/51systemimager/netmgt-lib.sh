@@ -239,3 +239,48 @@ _fix_if_parameters() {
 	
 }
 
+################################################################################
+#
+# _check_interface_type (uses ${IF_DEV} ${IF_TYPE})
+#
+#  => If interface is not virtual: check that requested type matches what kernel
+#     sees (/sys/class/net/<$IF_DEV>/type)
+#     Ethernet:		type=1 (Physical and WiFi)
+#     Infiniband:	type=32
+#     Firewire:		type=24
+# More infos here: https://stackoverflow.com/questions/4475420/detect-network-connection-type-in-linux/4476014
+#
+_check_interface_type() {
+	if test -r /sys/class/net/${IF_DEV}/type
+	then
+		local NET_CLASS_TYPE="$(cat /sys/class/net/${IF_DEV}/type)"
+		case "${NET_CLASS_TYPE}" in
+			1)
+				if test -d /sys/class/net/${IF_DEV}/wireless -o -L /sys/class/net/${IF_DEV}/phy80211
+				then
+					DETECTED_TYPE=Wi-Fi
+				else
+					DETECTED_TYPE=Ethernet
+				fi
+				;;
+			24)
+				DETECTED_TYPE=Ethernet
+			32)
+				DETECTED_TYPE=Infiniband
+				;;
+			*)
+				logwarn "Unknown device type ${NET_CLASS_TYPE} for device ${IF_DEV}"
+				return
+				;;
+		esac
+	else
+		logdebug "Virtual interface ${IF_DEV} not yet seen by kernel: not checking type."
+		return
+	fi
+	if test "${DETECTED_TYPE}" != "${IF_TYPE}"
+	then
+		logwarn "Warning: Interface ${IF_DEV} is seen as ${DETECTED_TYPE}, but your want"
+		logwarn "to configure it as ${IF_TYPE}. This may result in unexpected results."
+	fi
+}
+
