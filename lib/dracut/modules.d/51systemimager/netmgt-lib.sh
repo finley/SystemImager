@@ -251,7 +251,7 @@ _fix_if_parameters() {
 			else
 				REAL_MAC="$(cat /sys/class/net/$IF_DEV/address)"	# Compare with kernel info
 			fi
-			if test "$(cat $IF_HWADDR | tr '[:upper:]' '[:lower:]')" != "$REAL_MAC"
+			if test "$(echo $IF_HWADDR | tr '[:upper:]' '[:lower:]')" != "$REAL_MAC"
 			then
 				logerror "Device $IF_DEV kernel MAC is $REAL_MAC. Config differs: hwaddr=$IF_HWADDR."
 				logerror "Please fix or your network won't setup at next boot."
