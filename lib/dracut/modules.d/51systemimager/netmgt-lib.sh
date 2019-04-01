@@ -60,7 +60,7 @@ sis_configure_network() {
                 logwarn "No group, group_override, base_hostname matches a network configuration file"
                 logwarn "Please read networkconfig.conf manual and create a network configuration file"
                 logwarn "Store it on image server in /var/lib/systemimager/scripts/network-configs/"
-                logwarn "Use one of possible names: {$NETWORK_CONFIG${HOSTNAME:+,}$HOSTNAME${GROUPNAME:+,}$GROUPNAME${HOSTNAME:+,}${HOSTNAME//[0-9]/}${IMAGENAME:+,}$IMAGENAME,default}{,.xml}"
+                logwarn "Use one of possible names: {$NETWORK_CONFIG${NETWORK_CONFIG:+,}$HOSTNAME${HOSTNAME:+,}$GROUPNAME${GROUPNAME:+,}${HOSTNAME//[0-9]/}${HOSTNAME:+,}$IMAGENAME${IMAGENAME:+,}default}{,.xml}"
 		loginfo "Using current imager network informations (ifrom device: $DEVICE) as fallback."
 		if test "$BOOTPROTO" = "dhcp"
 		then
