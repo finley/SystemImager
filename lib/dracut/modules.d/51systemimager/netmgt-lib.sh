@@ -47,6 +47,7 @@ esac
 sis_configure_network() {
         if test -z "${NETWORK_CONFIG}"
         then
+		loginfo "si.network-conf not provided. Trying to find a matching network configuration"
                 NETWORK_CONFIG_FILE=`choose_filename /scripts/network-configs "" ".xml"`
         else
                 NETWORK_CONFIG_FILE=/scripts/network-configs/${NETWORK_CONFIG}
@@ -56,10 +57,9 @@ sis_configure_network() {
         then
                 logwarn "Could not get a valid network configuration file"
                 test -n "${NETWORK_CONFIG_FILE}" && logwarn "Tryed ${NETWORK_CONFIG_FILE}"
-                logwarn "Neiter NETWORK_CONFIG, HOSTNAME, IMAGENAME is set or"
                 logwarn "No group, group_override, base_hostname matches a network configuration file"
                 logwarn "Please read networkconfig.conf manual and create a network configuration file"
-                logwarn "Store it on image server in /var/lib/systemimager/scripts/network-conigs/"
+                logwarn "Store it on image server in /var/lib/systemimager/scripts/network-configs/"
                 logwarn "Use the one of possible names: {\$NETWORK_CONFIG,\$HOSTNAME,\$GROUPNAME,\$BASE_HOSTNAME,\$IMAGENAME,default}{,.xml}"
                 logwarn "Using PXE network infos as fallback."
 		if test "$BOOTPROTO" = "dhcp"
@@ -73,6 +73,7 @@ sis_configure_network() {
 			IF_PEERDNS=yes
 			IF_UUID=$(uuidgen)
 			_write_interface
+			return
 		else
 			IF_FULL_NAME=$DEVICE
 			IF_DEV_FULL_NAME=$DEVICE
@@ -87,7 +88,7 @@ sis_configure_network() {
 			IF_BROADCAST=$BROADCAST
 			IF_GATEWAY=$GATEWAY
 			_write_interface
-			
+			return
 		fi
         fi
 	# BUG/TODO: default.xml is for disk layout and network layout: => conflict
