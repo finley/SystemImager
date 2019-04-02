@@ -87,6 +87,16 @@
 				<xsd:element minOccurs="0" maxOccurs="unbounded" ref="slave"/>
 			</xsd:sequence>
 			<xsd:attribute name="dev" type="devname" use="required"/> <!-- Network interface name -->
+			<xsd:attribute name="control" use="required"> <!-- Network device type -->
+				<xsd:simpleType>
+					<xsd:restriction base="xsd:token">
+						<xsd:enumeration value="legacy"/> <!-- old network configuration -->
+						<xsd:enumeration value="nm"/> <!-- network manager (shortcut name) -->
+						<xsd:enumeration value="NetworkManager"/> <!-- network manager (full name) -->
+						<xsd:enumeration value="systemd"/> <!-- new systemd-networkd -->
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:attribute>
 			<xsd:attribute name="type" use="required"> <!-- Network device type -->
 				<xsd:simpleType>
 					<xsd:restriction base="xsd:token">
@@ -130,18 +140,13 @@
 			<xsd:sequence>
 				<xsd:element minOccurs="1" maxOccurs="1" ref="ip"/>
 				<xsd:element minOccurs="0" maxOccurs="1" ref="ip6"/>
-				<xsd:element minOccurs="0" maxOccurs="1" ref="options"/>
-				<xsd:element minOccurs="0" maxOccurs="1" ref="dns"/>
 			</xsd:sequence>
 			<xsd:attribute name="id" use="required"> <!-- The interface alias id. -->
 				<xsd:simpleType>
 					<xsd:restriction base="xsd:nonNegativeInteger"/> <!-- alias id must be a positive or null integer -->
 				</xsd:simpleType>
 			</xsd:attribute>
-			<xsd:attribute name="uuid" type="uuid_id"/>
 			<xsd:attribute name="onparent" type="yesno"/> <!-- defaults to yes -->
-			<xsd:attribute name="bootproto" type="initmethod"/>
-			<xsd:attribute name="userctl" type="yesno"/> <!-- defaults to no -->
 		</xsd:complexType>
 	</xsd:element>
 	<xsd:element name="slave">
@@ -184,6 +189,7 @@
 		<xsd:complexType>
 			<xsd:attribute name="hwaddr" type="macaddr"/> <!-- make sure device is the correct one -->
 			<xsd:attribute name="macaddr" type="macaddr"/> <!-- set a new MAC addr to device -->
+			<xsd:attribute name="peerdns" type="yesno"/> <!-- yes means that /etc/resolv.conf is updated -->
 			<xsd:attribute name="bonding_opts">
 				<xsd:simpleType>
 					<xsd:restriction base="xsd:string"> <!-- Basic module space separated param list -->

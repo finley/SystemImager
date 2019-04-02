@@ -45,6 +45,10 @@ esac
 ################################################################################
 #               
 sis_configure_network() {
+
+	# Check that client network setup filesystem hierarchy is in place
+	_check_network_config # from network.<distro>.sh
+
         if test -z "${NETWORK_CONFIG}"
         then
 		loginfo "si.network-conf not provided. Trying to find a matching network configuration"
@@ -62,23 +66,33 @@ sis_configure_network() {
                 logwarn "Store it on image server in /var/lib/systemimager/scripts/network-configs/"
                 logwarn "Use one of possible names: {$NETWORK_CONFIG${NETWORK_CONFIG:+,}$HOSTNAME${HOSTNAME:+,}$GROUPNAME${GROUPNAME:+,}${HOSTNAME//[0-9]/}${HOSTNAME:+,}$IMAGENAME${IMAGENAME:+,}default}{,.xml}"
 		loginfo "Using current imager network informations (ifrom device: $DEVICE) as fallback."
+		# 1st: check if NetworkManager is present in image.
+		if test -x /sysroot/usr/sbin/NetworkManager -o -x /sysroot/sbin/NetworkManager
+		then
+			logdebug "NetworkManager detected in imaged client. Enabling it for $DEVICE"
+			IF_NM_CONTROLLED="yes"
+		else
+			logdebug "NetworkManager not found in imaged client. Using legacy config for $DEVICE"
+			IF_NM_CONTROLLED="no"
+		fi
 		if test "$BOOTPROTO" = "dhcp"
 		then
 			IF_DEV=$DEVICE
-			IF_FULL_NAME=$DEVICE
-			IF_DEV_FULL_NAME=$DEVICE
+			IF_NAME=$DEVICE
+			IF_DEV=$DEVICE
 			IF_BOOTPROTO=$BOOTPROTO
 			IF_TYPE=Ethernet # TODO: check with /sys/class/net/eth0/type
 			IF_ONBOOT=yes
 			IF_IPV4_FAILURE_FATAL=yes # TODO: be smarter. (maybe we booted thru ipv6)
 			IF_PEERDNS=yes
 			IF_UUID=$(uuidgen)
-			_write_interface
+			_write_interface # from network.<distro>.sh
+
 			return
 		else
 			IF_DEV=$DEVICE
-			IF_FULL_NAME=$DEVICE
-			IF_DEV_FULL_NAME=$DEVICE
+			IF_NAME=$DEVICE
+			IF_DEV=$DEVICE
 			IF_BOOTPROTO=$BOOTPROTO
 			IF_TYPE=Ethernet # check with /sys/class/net/eth0/type
 			IF_ONBOOT=yes
@@ -89,7 +103,7 @@ sis_configure_network() {
 			IF_NETMASK=$NETMASK
 			IF_BROADCAST=$BROADCAST
 			IF_GATEWAY=$GATEWAY
-			_write_interface
+			_write_interface # from network.<distro>.sh
 			return
 		fi
         fi
@@ -104,12 +118,15 @@ sis_configure_network() {
 
 	# Process network devices one by one
 	local IFS=';'
-	xmlstarlet sel -t -m 'config/if' -v "concat(@dev,';',@type)" -n ${NETWORK_CONFIG_FILE}  | sed '/^\s*$/d' |\
-                while read IF_DEV IF_TYPE
+	xmlstarlet sel -t -m 'config/if' -v "concat(@dev,';',@type,';',@control)" -n ${NETWORK_CONFIG_FILE}  | sed '/^\s*$/d' |\
+                while read IF_DEV IF_TYPE IF_CONTROL
 		do
 			# 1st, clear all variables from previous <if> processing.
 			unset IF_NAME IF_ID IF_ONBOOT IF_ONPARENT IF_USERCTL IF_MASTER IF_NAME IF_ONBOOT IF_USERCTL IF_MASTER IF_BOOTPROTO IF_IPADDR IF_NETMASK IF_PREFIX IF_BROADCAST IF_GATEWAY IF_DEFROUTE IF_IP6_INIT IF_HWADDR IF_BONDING_OPTS IF_DNS_SERVERS IF_DNS_SEARCH IF_ID IF_ALIAS_NAME IF_UUID
 			
+			# IF controle is empty, defaults to network manager
+			test -z "${IF_CONTROL}" && IF_CONTROL="NetworkManager"
+
 			# Process primary for this interface (only one primary, so no while loop)
 
 			# 2 steps: 1st we parse the XML, then we load the result in shell variables.
@@ -124,13 +141,13 @@ sis_configure_network() {
 			_read_options primary	# read options
 			_read_dns primary	# read dns infos
 
-			_fix_if_parameters # Compute IF_FULL_NAME, IF_DEV_FULL_NAME, UUID, Simplify IPADDR/PREFIX/NETMASK
+			_fix_if_parameters # Generate UUID, Simplify IPADDR/PREFIX/NETMASK
 
 			if test -n "${IF_MASTER}"
 			then
-				_write_slave
+				_write_slave # from network.<distro>.sh
 			else
-				_write_interface
+				_write_primary # from network.<distro>.sh
 			fi
 			# Process aliases for this interface
 			xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/alias" -v "concat(@id,';',@uuid,';',@onparent,';',@bootproto,';',@userctl,';',@master)" -n ${NETWORK_CONFIG_FILE}  | sed '/^\s*$/d' |\
@@ -142,16 +159,16 @@ sis_configure_network() {
 
 					_read_ipv4 "alias[@id=\"$IF_ID\"]"	# read ipv4 parameters
 					_read_ipv6 "alias[@id=\"$IF_ID\"]"	# read ipv6 parameters
-					_read_options "alias[@id=\"$IF_ID\"]"	# read options
-					_read_dns "alias[@id=\"$IF_ID\"]"	# read dns infos
+					#_read_options "alias[@id=\"$IF_ID\"]"	# read options
+					#_read_dns "alias[@id=\"$IF_ID\"]"	# read dns infos
 
 					_fix_if_parameters # Compute IF_FULL_NAME, IF_DEV_FULL_NAME, UUID, Simplify IPADDR/PREFIX/NETMASK
 
 					if test -n "${IF_MASTER}"
 					then
-						_write_slave
+						_write_slave # from network.<distro>.sh
 					else
-						_write_interface
+						_write_alias # from network.<distro>.sh
 					fi
 				done
 			# Process slaves for this interface
@@ -207,15 +224,6 @@ _fix_if_parameters() {
 
 	# Compute full connection name.
 	test -z "${IF_NAME}" && IF_NAME=${IF_DEV} && logdebug "Using device name ($IF_DEV) as connection name"
-	if test -n "${IF_ID}"
-	then
-		IF_FULL_NAME="${IF_NAME}:${IF_ID}"
-		IF_DEV_FULL_NAME="${IF_DEV}:${IF_ID}"
-		logdebug "Interface alias: using ($IF_DEV_FULL_NAME) as connection name"
-	else
-		IF_FULL_NAME="${IF_NAME}"
-		IF_DEV_FULL_NAME="${IF_DEV}"
-	fi
 
 	# Check IP syntaxt (IPADDR, PREFIX, NETMASK)
 	if test "${IF_IPADDR//[0-9\.]/}" = "/" -a -n "${IF_PREFIX}"
@@ -237,8 +245,8 @@ _fix_if_parameters() {
 		NETMASK=""
 	fi
 
-	# Add an uuid is none is provided.
-	test -z "${IF_UUID}" && IF_UUID=$(uuidgen) && logdebug "No UUID; generating one: $IF_UUID"
+	# Add an uuid is none is provided (only for legacy config).
+	test -z "${IF_UUID}" -a "${IF_CONTROL}" = "legacy" && IF_UUID=$(uuidgen) && logdebug "No UUID; generating one: $IF_UUID"
 	
 	# Check that HWADDR match kernel point of view if provided
 	if test -n "$IF_HWADDR"
