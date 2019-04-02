@@ -73,10 +73,10 @@ lint_disk_layout() {
 lint_network_conf() {
 	while [ $# -gt 0 ]
 	do
-		test -r /usr/lib/dracut/modules.d/51systemimager/network-conf.xsd || error "/usr/lib/dracut/modules.d/51systemimager/network-conf.xsd is not installed! Please install systemimage-dracut module"
+		test -r /usr/lib/dracut/modules.d/51systemimager/network-config.xsd || error "/usr/lib/dracut/modules.d/51systemimager/network-config.xsd is not installed! Please install systemimage-dracut module"
 		test -f $1 || error "File $1 not found!"
 		echo  "===> Validating $1"
-		xmlstarlet val --err --xsd /usr/lib/dracut/modules.d/51systemimager/network-conf.xsd $1 || ERRORS_COUNT=$(( $ERRORS_COUNT + 1 ))
+		xmlstarlet val --err --xsd /usr/lib/dracut/modules.d/51systemimager/network-config.xsd $1 || ERRORS_COUNT=$(( $ERRORS_COUNT + 1 ))
 		echo
 		shift
 	done
