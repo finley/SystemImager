@@ -70,6 +70,7 @@ sis_configure_network() {
 			IF_NM_CONTROLLED="yes"
 			IF_CONTROL="NetworkManager"
 		elif test -x /sysroot/usr/bin/networkctl
+		then
 			logdebug "networkctl detected in imaged client. Enabling it for $DEVICE"
 			IF_NM_CONTROLLED="no"
 			IF_CONTROL="systemd"
