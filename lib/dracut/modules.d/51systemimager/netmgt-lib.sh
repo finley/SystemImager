@@ -46,9 +46,6 @@ esac
 #               
 sis_configure_network() {
 
-	# Check that client network setup filesystem hierarchy is in place
-	_check_network_config # from network.<distro>.sh
-
         if test -z "${NETWORK_CONFIG}"
         then
 		loginfo "si.network-conf not provided. Trying to find a matching network configuration"
@@ -71,10 +68,17 @@ sis_configure_network() {
 		then
 			logdebug "NetworkManager detected in imaged client. Enabling it for $DEVICE"
 			IF_NM_CONTROLLED="yes"
-		else
-			logdebug "NetworkManager not found in imaged client. Using legacy config for $DEVICE"
+			IF_CONTROL="NetworkManager"
+		elif test -x /sysroot/usr/bin/networkctl
+			logdebug "networkctl detected in imaged client. Enabling it for $DEVICE"
 			IF_NM_CONTROLLED="no"
+			IF_CONTROL="systemd"
+		else
+			logdebug "NetworkManager, nor sytemd-networkd were found in imaged client. Using legacy config for $DEVICE"
+			IF_NM_CONTROLLED="no"
+			IF_CONTROL="legacy"
 		fi
+
 		if test "$BOOTPROTO" = "dhcp"
 		then
 			IF_DEV=$DEVICE
@@ -86,7 +90,7 @@ sis_configure_network() {
 			IF_IPV4_FAILURE_FATAL=yes # TODO: be smarter. (maybe we booted thru ipv6)
 			IF_PEERDNS=yes
 			IF_UUID=$(uuidgen)
-			_write_interface # from network.<distro>.sh
+			_write_primary # from network.<distro>.sh
 
 			return
 		else
@@ -103,7 +107,7 @@ sis_configure_network() {
 			IF_NETMASK=$NETMASK
 			IF_BROADCAST=$BROADCAST
 			IF_GATEWAY=$GATEWAY
-			_write_interface # from network.<distro>.sh
+			_write_primary # from network.<distro>.sh
 			return
 		fi
         fi
@@ -124,9 +128,6 @@ sis_configure_network() {
 			# 1st, clear all variables from previous <if> processing.
 			unset IF_NAME IF_ID IF_ONBOOT IF_ONPARENT IF_USERCTL IF_MASTER IF_NAME IF_ONBOOT IF_USERCTL IF_MASTER IF_BOOTPROTO IF_IPADDR IF_NETMASK IF_PREFIX IF_BROADCAST IF_GATEWAY IF_DEFROUTE IF_IP6_INIT IF_HWADDR IF_BONDING_OPTS IF_DNS_SERVERS IF_DNS_SEARCH IF_ID IF_ALIAS_NAME IF_UUID
 			
-			# IF controle is empty, defaults to network manager
-			test -z "${IF_CONTROL}" && IF_CONTROL="NetworkManager"
-
 			# Process primary for this interface (only one primary, so no while loop)
 
 			# 2 steps: 1st we parse the XML, then we load the result in shell variables.
@@ -140,8 +141,6 @@ sis_configure_network() {
 			_read_ipv6 primary	# read ipv6 parameters
 			_read_options primary	# read options
 			_read_dns primary	# read dns infos
-
-			_fix_if_parameters # Generate UUID, Simplify IPADDR/PREFIX/NETMASK
 
 			if test -n "${IF_MASTER}"
 			then
@@ -161,8 +160,6 @@ sis_configure_network() {
 					_read_ipv6 "alias[@id=\"$IF_ID\"]"	# read ipv6 parameters
 					#_read_options "alias[@id=\"$IF_ID\"]"	# read options
 					#_read_dns "alias[@id=\"$IF_ID\"]"	# read dns infos
-
-					_fix_if_parameters # Compute IF_FULL_NAME, IF_DEV_FULL_NAME, UUID, Simplify IPADDR/PREFIX/NETMASK
 
 					if test -n "${IF_MASTER}"
 					then
@@ -218,6 +215,12 @@ _read_dns() {
 }
 
 _fix_if_parameters() {
+
+	# IF controle is empty, defaults to network manager
+	test -z "${IF_CONTROL}" && IF_CONTROL="NetworkManager"
+
+	# Check that client network setup filesystem hierarchy is in place
+	_check_network_config # from network.<distro>.sh
 
 	# TODO: check that IF_MASTER exists and is of type bond.
 	# TODO: check that all slaves of IF_MASTER have the same type= whatever it is (except Bond)
@@ -329,3 +332,7 @@ _check_interface_type() {
 	fi
 }
 
+_check_interface() {
+	_fix_if_parameters # Compute IF_FULL_NAME, IF_DEV_FULL_NAME, UUID, Simplify IPADDR/PREFIX/NETMASK
+	_check_interface_type
+}	

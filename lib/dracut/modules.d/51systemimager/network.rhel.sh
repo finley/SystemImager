@@ -35,7 +35,7 @@ _check_network_config() {
 }
 
 _write_primary() {
-	_check_interface_type # Check that device type match type field.
+	_check_interface
 	case "${IF_CONTROL}" in
 		legacy|NetworkManager)
 			# Create the config file, removing all lines ending with "=" sign or empty value (="") (parameter not set don't need to be set)
@@ -138,7 +138,7 @@ EOF
 }
 
 _write_alias() {
-	_check_interface_type # Check that device type match type field.
+	_check_interface
 	case "${IF_CONTROL}" in
 		legacy) # Create specifi alias config file (ifcfg-<device>:<id>)
 			test -f /sysroot/etc/sysconfig/network-scripts/ifcfg-${IF_NAME}:${IF_ID} && logwarn "Overwriting /sysroot/etc/sysconfig/network-scripts/ifcfg-${IF_NAME}:${IF_ID}"
@@ -217,7 +217,7 @@ EOF
 }
 
 _write_slave() {
-	_check_interface_type
+	_check_interface
 	case "${IF_CONTROL}" in
 		legacy|NetworkManager)
 			# Create the config file, removing all lines ending with "=" sign or empty value (="") (parameter not set don't need to be set)
