@@ -128,6 +128,8 @@ sis_configure_network() {
 		do
 			# 1st, clear all variables from previous <if> processing.
 			unset IF_NAME IF_ID IF_ONBOOT IF_ONPARENT IF_USERCTL IF_MASTER IF_NAME IF_ONBOOT IF_USERCTL IF_MASTER IF_BOOTPROTO IF_IPADDR IF_NETMASK IF_PREFIX IF_BROADCAST IF_GATEWAY IF_DEFROUTE IF_IP6_INIT IF_HWADDR IF_BONDING_OPTS IF_DNS_SERVERS IF_DNS_SEARCH IF_ID IF_ALIAS_NAME IF_UUID
+
+			loginfo "Configuring $IF_DEV network device (type=$IF_TYPE)"
 			
 			# Process primary for this interface (only one primary, so no while loop)
 
@@ -153,6 +155,7 @@ sis_configure_network() {
 			xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/alias" -v "concat(@id,';',@uuid,';',@onparent,';',@bootproto,';',@userctl,';',@master)" -n ${NETWORK_CONFIG_FILE}  | sed '/^\s*$/d' |\
 				while read IF_ID IF_UUID IF_ONPARENT IF_BOOTPROTO IF_USERCTL IF_MASTER
 				do
+					loginfo "Configuring $IF_DEV alias #$IF_ID network device (type=$IF_TYPE)"
 					# 1st, clear all previous variables except those all aliases inherit (IF_NAME)
 					unset IF_ONBOOT IF_BOOTPROTO IF_IPADDR IF_NETMASK IF_PREFIX IF_BROADCAST IF_GATEWAY IF_DEFROUTE IF_IP6_INIT IF_HWADDR IF_BONDING_OPTS IF_DNS_SERVERS IF_DNS_SEARCH IF_ALIAS_NAME IF_UUID
 					test -z "${IF_NAME}" && shellout "No primary defined for device [${IF_DEV}]"
@@ -179,6 +182,7 @@ sis_configure_network() {
 					
 					# check that if exists (using xmlstarlet)
 					MY_MASTER=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_SLAVE_NAME}\"]/primary" -v "@master" -n ${NETWORK_CONFIG_FILE})
+					loginfo "Configuring $IF_DEV slave network device for (master=$IF_MASTER))"
 					test "${MY_MASTER}" != "${IF_FULL_NAME}" && logerror "Slave [$IF_SLAVE_NAME] doesn't list me [$IF_FULL_NAME]  as master."
 				done
 		done
