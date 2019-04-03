@@ -14,28 +14,28 @@
 # Load API and variables.txt (HOSTNAME, IMAGENAME, ..., including detected disks array: $DISKS)
 type logmessage >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 
-# Now load the distro specific lib that is aware on how to write
-# The desired network configuration.
-logdebug "Loading distro specific network configuration generator"
-case "$(get_distro_vendor /sysroot)" in
-	redhat|centos|fedora)
-		logdebug "Using rhel generator."
-		. /lib/network.rhel.sh
-		;;
-	debian|ubuntu)
-		logdebug "Using debian generator."
-		. /lib/network.debian.sh
-		;;
-	opensuse|suse)
-		logdebug "Using suse generator."
-		. /lib/network.suse.sh
-		;;
-	*)
-		logwarn "Image has no /etc/os-release or similar identification file"
-		logwarn "Can't determine distribution, thus:"
-		logwarn "Don't know how to configure network for distro"
-		;;
-esac
+_load_distro_network_config_generator() {
+	logdebug "Loading distro specific network configuration generator"
+	case "$(get_distro_vendor /sysroot)" in
+		redhat|centos|fedora)
+			logdebug "Using rhel generator."
+			. /lib/network.rhel.sh
+			;;
+		debian|ubuntu)
+			logdebug "Using debian generator."
+			. /lib/network.debian.sh
+			;;
+		opensuse|suse)
+			logdebug "Using suse generator."
+			. /lib/network.suse.sh
+			;;
+		*)
+			logwarn "Image has no /etc/os-release or similar identification file"
+			logwarn "Can't determine distribution, thus:"
+			logwarn "Don't know how to configure network for distro"
+			;;
+	esac
+}
 
 ################################################################################
 #
@@ -46,6 +46,9 @@ esac
 #               
 sis_configure_network() {
 
+	# Now load the distro specific lib that is aware on how to write
+	# The desired network configuration.
+	_load_distro_network_config_generator
         if test -z "${NETWORK_CONFIG}"
         then
 		loginfo "si.network-conf not provided. Trying to find a matching network configuration"
