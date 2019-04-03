@@ -264,6 +264,7 @@ _fix_if_parameters() {
 				let IF_PREFIX+=$((x%2)) 'x>>=1'
 			done
 		elif test -z "${IF_NETMASK}" -a -z "${IF_PREFIX}"
+		then
 			logwarn "No prefix or netmask set for device ${IF_DEV} systemd will chose default one which may not be what you want."
 		fi
 		test -n "${IF_PREFIX}" && IF_IPADDR=${IF_IPADDR}/${IF_PREFIX} # CIDR notation
