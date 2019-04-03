@@ -93,7 +93,7 @@ sis_configure_network() {
 			IF_ONBOOT=yes
 			IF_IPV4_FAILURE_FATAL=yes # TODO: be smarter. (maybe we booted thru ipv6)
 			IF_PEERDNS=yes
-			IF_UUID=$(uuidgen)
+			IF_UUID=$(cat /proc/sys/kernel/random/uuid)
 			_write_primary # from network.<distro>.sh
 
 			return
@@ -106,7 +106,7 @@ sis_configure_network() {
 			IF_ONBOOT=yes
 			IF_IPV4_FAILURE_FATAL=yes # TODO: be smarter. (maybe we booted thru ipv6)
 			IF_PEERDNS=yes
-			IF_UUID=$(uuidgen)
+			IF_UUID=$(cat /proc/sys/kernel/random/uuid)
 			IF_IPADDR=$IPADDR
 			IF_NETMASK=$NETMASK
 			IF_BROADCAST=$BROADCAST
@@ -269,8 +269,8 @@ _fix_if_parameters() {
 		fi
 		test -n "${IF_PREFIX}" && IF_IPADDR=${IF_IPADDR}/${IF_PREFIX} # CIDR notation
 	fi
-	# Add an uuid is none is provided (only for legacy config).
-	test -z "${IF_UUID}" -a "${IF_CONTROL}" = "legacy" && IF_UUID=$(uuidgen) && logdebug "No UUID; generating one: $IF_UUID"
+	# Add an uuid if none is provided (only for legacy config).
+	test -z "${IF_UUID}" && IF_UUID=$(cat /proc/sys/kernel/random/uuid) && logdebug "No UUID; generating one: $IF_UUID"
 	
 	# Check that HWADDR match kernel point of view if provided
 	if test -n "$IF_HWADDR"
