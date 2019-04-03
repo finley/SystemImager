@@ -50,6 +50,8 @@ NM_CONTROLLED=$(test "${IF_CONTROL}" = "legacy" && echo no || echo yes)
 HWADDR=${IF_HWADDR}
 MACADDR=${IF_MACADDR}
 TYPE=${IF_TYPE}
+PROXY_METHOD=none
+BROWSER_ONLY=no
 ONBOOT=${IF_ONBOOT}
 BOOTPROTO=${IF_BOOTPROTO}
 BONDING_MASTER=$(test "${IF_TYPE}" = "Bond" && echo "yes")
