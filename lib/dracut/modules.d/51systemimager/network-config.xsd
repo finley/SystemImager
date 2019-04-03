@@ -146,6 +146,7 @@
 					<xsd:restriction base="xsd:nonNegativeInteger"/> <!-- alias id must be a positive or null integer -->
 				</xsd:simpleType>
 			</xsd:attribute>
+			<xsd:attribute name="uuid" type="uuid_id"/>
 			<xsd:attribute name="onparent" type="yesno"/> <!-- defaults to yes -->
 		</xsd:complexType>
 	</xsd:element>

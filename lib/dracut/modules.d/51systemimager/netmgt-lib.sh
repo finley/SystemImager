@@ -112,7 +112,7 @@ sis_configure_network() {
 			return
 		fi
         fi
-	# BUG/TODO: default.xml is for disk layout and network layout: => conflict
+
         loginfo "Using network configuration file: ${NETWORK_CONFIG_FILE}"
         write_variables # Save NETWORK_CONFIG_FILE variable for future use.
 
@@ -152,8 +152,8 @@ sis_configure_network() {
 				_write_primary # from network.<distro>.sh
 			fi
 			# Process aliases for this interface
-			xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/alias" -v "concat(@id,';',@uuid,';',@onparent,';',@bootproto,';',@userctl,';',@master)" -n ${NETWORK_CONFIG_FILE}  | sed '/^\s*$/d' |\
-				while read IF_ID IF_UUID IF_ONPARENT IF_BOOTPROTO IF_USERCTL IF_MASTER
+			xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/alias" -v "concat(@id,';',@uuid,';',@onparent)" -n ${NETWORK_CONFIG_FILE}  | sed '/^\s*$/d' |\
+				while read IF_ID IF_UUID IF_ONPARENT
 				do
 					loginfo "Configuring $IF_DEV alias #$IF_ID network device (type=$IF_TYPE)"
 					# 1st, clear all previous variables except those all aliases inherit (IF_NAME)
@@ -162,15 +162,9 @@ sis_configure_network() {
 
 					_read_ipv4 "alias[@id=\"$IF_ID\"]"	# read ipv4 parameters
 					_read_ipv6 "alias[@id=\"$IF_ID\"]"	# read ipv6 parameters
-					#_read_options "alias[@id=\"$IF_ID\"]"	# read options
-					#_read_dns "alias[@id=\"$IF_ID\"]"	# read dns infos
 
-					if test -n "${IF_MASTER}"
-					then
-						_write_slave # from network.<distro>.sh
-					else
-						_write_alias # from network.<distro>.sh
-					fi
+					# No slave to write (slave can't be an alias interface)
+					_write_alias # from network.<distro>.sh
 				done
 			# Process slaves for this interface
 			xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/slave" -v "@name" -n ${NETWORK_CONFIG_FILE}  | sed '/^\s*$/d' |\
@@ -193,6 +187,7 @@ _read_ipv4() {
 	# Read ip tag
 	CNX_IP=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/$1/ip" -v "concat(@ipv4_failure_fatal,';',@ipaddr,';',@prefix,';',@netmask,';',@broadcast,';',@gateway,';',@def_route,';',@peerdns,';',@mtu,';',@ipv4_route_metric)" -n ${NETWORK_CONFIG_FILE} | sed '/^\s*$/d')
 	read IPV4_FAILURE_FATAL IF_IPADDR IF_PREFIX IF_NETMASK IF_BROADCAST IF_GATEWAY IF_DEFROUTE IF_PEERDNS IF_MTU IF_IPV4_ROUTE_METRIC <<< "$CNX_IP"
+	logdebug "Read ipv4($IF_DEV): failure_fatal=$IPV4_FAILURE_FATAL ipv4=$IF_IPADDR prefix=$IF_PREFIX netmaks=$IF_NETMASK broadcast=$IF_BROADCAST gateway=$IF_GATEWAY def_route=$IF_DEFROUTE peerdns=$IF_PEERDNS mtu=$IF_MTU metric=$IF_IPV4_ROUTE_METRIC"
 }
 
 _read_ipv6() {
@@ -200,6 +195,7 @@ _read_ipv6() {
 	# Read ip6 tag
 	CNX_IP6=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/$1/ip6" -v "concat(@ipv6_failure_fatal,';',@ipv6_init,';',@ipv6_autoconf,';',@ipv6_addr,';',@ipv6_defaultgw,';',@ipv6_defroute,';',@ipv6_peerdns,';',@ipv6_mtu,';',@ipv6_route_metric)" -n ${NETWORK_CONFIG_FILE} | sed '/^\s*$/d')
 	read IF_IPV6_FAILURE_FATAL IF_IPV6_INIT IF_IPV6_AUTOCONF IF_IPV6_ADDR IF_IPV6_DEFAULTGW IF_IPV6_DEFROUTE IF_IPV6_PEERDNS IF_IPV6_ROUTE_METRIC <<< "$CNX_IP6"
+	logdebug "Read ipv6($IF_DEV): failure_fatal=$IF_IPV6_FAILURE_FATAL init=$IF_IPV6_INIT autoconf=$IF_IPV6_AUTOCONF ipv6=$IF_IPV6_ADDR def_gateway=$IF_IPV6_DEFAULTGW def_route=$IF_IPV6_DEFROUTE peerdns=$IF_IPV6_PEERDNS metric=$IF_IPV6_ROUTE_METRIC"
 }
 
 _read_options() {
@@ -207,6 +203,7 @@ _read_options() {
 	# Read options tag
 	CNX_OPTIONS=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/$1/options" -v "concat(@hwaddr,';',@macaddr,';',@bonding_opts)" -n ${NETWORK_CONFIG_FILE} | sed '/^\s*$/d')
 	read IF_HWADDR IF_MACADDR IF_BONDING_OPTS <<< "$CNX_OPTIONS"
+	logdebug "Read options($IF_DEV): hwaddr=$IF_HWADDR macaddr=$IF_MACADDR bond_opts=$IF_BONDING_OPTS"
 }
 
 _read_dns() {
@@ -217,6 +214,7 @@ _read_dns() {
 	IFS=','
 	read IF_DNS1 IF_DNS2 IF_DNS3 <<< "$IF_DNS_SERVERS"
 	IF_DOMAIN=${IF_DNS_SEARCH//,/ } # The search list is a space separated list.
+	logdebug "Read dns($IF_DEV): DNS1=$IF_DNS1 DNS2=$IF_DNS2 DNS3=$IF_DNS3 SEARCH=$IF_DNS_SEARCH"
 }
 
 _fix_if_parameters() {
@@ -238,21 +236,35 @@ _fix_if_parameters() {
 	then
 		logerror "IP prefix specified in both ipaddr= and prefix= parameters for device ${IF_FULL_NAME}"
 		logerror "Ignoring PREFIX; using ipaddr= with its prefix"
-		PREFIX=""
+		IF_PREFIX=""
 	fi
 	if test "${IF_IPADDR//[0-9\.]/}" = "/" -a -n "${IF_NETMASK}"
 	then
 		logerror "IP prefix specified in both ipaddr= and netmask= parameters for device ${IF_FULL_NAME}"
 		logerror "Ignoring NETMASK; using ipaddr= with its prefix"
-		NETMASK=""
+		IF_NETMASK=""
 	fi
 	if test -n "${IF_PREFIX}" -a -n "${IF_NETMASK}"
 	then
 		logerror "IP prefix specified in both prefix= and netmask= parameters for device ${IF_FULL_NAME}"
 		logerror "Ignoring NETMASK; using ipaddr= with its prefix"
-		NETMASK=""
+		IF_NETMASK=""
 	fi
 
+	# If using systemd, ipaddr must be noted as CIDR
+	if test "${IF_CONTROL}" = "systemd" -a "${IF_IPADDR//[0-9\.]/}" != "/" # systemd, but IPV4 addr has no /mask: need to fix it
+	then
+		if test -n "${IF_NETMASK}" -a -z "${IF_PREFIX}"
+		then # code inspired from https://stackoverflow.com/questions/50413579/bash-convert-netmask-in-cidr-notation
+			IF_PREFIX=0 x=0$( printf '%o' ${IF_NETMASK//./ } )
+			while [ $x -gt 0 ]; do
+				let IF_PREFIX+=$((x%2)) 'x>>=1'
+			done
+		elif test -z "${IF_NETMASK}" -a -z "${IF_PREFIX}"
+			logwarn "No prefix or netmask set for device ${IF_DEV} systemd will chose default one which may not be what you want."
+		fi
+		test -n "${IF_PREFIX}" && IF_IPADDR=${IF_IPADDR}/${IF_PREFIX} # CIDR notation
+	fi
 	# Add an uuid is none is provided (only for legacy config).
 	test -z "${IF_UUID}" -a "${IF_CONTROL}" = "legacy" && IF_UUID=$(uuidgen) && logdebug "No UUID; generating one: $IF_UUID"
 	
@@ -339,5 +351,5 @@ _check_interface_type() {
 
 _check_interface() {
 	_fix_if_parameters # Compute IF_FULL_NAME, IF_DEV_FULL_NAME, UUID, Simplify IPADDR/PREFIX/NETMASK
-	_check_interface_type
+	_check_interface_type # Make sure that type from config file match what kernel sees.
 }	
