@@ -213,7 +213,7 @@ _read_dns() {
 	local IFS=';'
 	# Read the dns tag
 	CNX_DNS=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/$1/dns" -v "concat(@servers,';',@search,';',@peerdns,';',@ipv6_peerdns)" -n ${NETWORK_CONFIG_FILE} | sed '/^\s*$/d')
-	read IF_DNS_SERVERS IF_DNS_SEARCH IF_PEERDNS IF_IPV6_PEERDNS<<< "$CNX_DNS"
+	read IF_DNS_SERVERS IF_DNS_SEARCH IF_PEERDNS IF_IPV6_PEERDNS <<< "$CNX_DNS"
 	IFS=','
 	read IF_DNS1 IF_DNS2 IF_DNS3 <<< "$IF_DNS_SERVERS"
 	IF_DOMAIN=${IF_DNS_SEARCH//,/ } # The search list is a space separated list.
