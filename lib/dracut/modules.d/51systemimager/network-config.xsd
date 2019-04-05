@@ -168,7 +168,6 @@
 			<xsd:attribute name="broadcast" type="ipv4"/>
 			<xsd:attribute name="gateway" type="ipv4"/>
 			<xsd:attribute name="def_route" type="yesno"/>
-			<xsd:attribute name="peerdns" type="yesno"/>
 			<xsd:attribute name="mtu" type="xsd:int"/>
 			<xsd:attribute name="ipv4_route_metric" type="xsd:int"/>
 		</xsd:complexType>
@@ -181,7 +180,6 @@
 			<xsd:attribute name="ipv6_addr" type="ipv6"/>
 			<xsd:attribute name="ipv6_defaultgw" type="ipv6"/>
 			<xsd:attribute name="ipv6_defroute" type="yesno"/>
-			<xsd:attribute name="ipv6_peerdns" type="yesno"/>
 			<xsd:attribute name="ipv6_mtu" type="xsd:int"/>
 			<xsd:attribute name="ipv6_route_metric" type="xsd:int"/>
 		</xsd:complexType>
@@ -190,7 +188,6 @@
 		<xsd:complexType>
 			<xsd:attribute name="hwaddr" type="macaddr"/> <!-- make sure device is the correct one -->
 			<xsd:attribute name="macaddr" type="macaddr"/> <!-- set a new MAC addr to device -->
-			<xsd:attribute name="peerdns" type="yesno"/> <!-- yes means that /etc/resolv.conf is updated -->
 			<xsd:attribute name="bonding_opts">
 				<xsd:simpleType>
 					<xsd:restriction base="xsd:string"> <!-- Basic module space separated param list -->
@@ -216,6 +213,8 @@
 					</xsd:restriction>
 				</xsd:simpleType>
 			</xsd:attribute>
+			<xsd:attribute name="peerdns" type="yesno"/>
+			<xsd:attribute name="ipv6_peerdns" type="yesno"/>
 		</xsd:complexType>
 	</xsd:element>
 </xsd:schema>

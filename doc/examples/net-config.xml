@@ -12,7 +12,7 @@
 	<if dev="eno1" type="Ethernet" control="NetworkManager">
 		<primary name="eno1" onboot="yes" bootproto="dhcp">
 			<ip def_route="yes"/>
-			<dns servers="8.8.8.8,8.8.4.4" search="my.company.com"/>
+			<dns servers="8.8.8.8,8.8.4.4" search="my.company.com" peerdns="yes"/>
 			<options macaddr="00:0C:29:28:FD:4C" />
 		</primary>
 		<alias id="1" onparent="yes"> <!-- realdev=parent netmask can be specified in ip using '/mask' in in netmask= parameter -->

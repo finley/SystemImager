@@ -188,17 +188,17 @@ sis_configure_network() {
 _read_ipv4() {
 	local IFS=';'
 	# Read ip tag
-	CNX_IP=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/$1/ip" -v "concat(@ipv4_failure_fatal,';',@ipaddr,';',@prefix,';',@netmask,';',@broadcast,';',@gateway,';',@def_route,';',@peerdns,';',@mtu,';',@ipv4_route_metric)" -n ${NETWORK_CONFIG_FILE} | sed '/^\s*$/d')
-	read IPV4_FAILURE_FATAL IF_IPADDR IF_PREFIX IF_NETMASK IF_BROADCAST IF_GATEWAY IF_DEFROUTE IF_PEERDNS IF_MTU IF_IPV4_ROUTE_METRIC <<< "$CNX_IP"
-	logdebug "Read ipv4($IF_DEV): failure_fatal=$IPV4_FAILURE_FATAL ipv4=$IF_IPADDR prefix=$IF_PREFIX netmaks=$IF_NETMASK broadcast=$IF_BROADCAST gateway=$IF_GATEWAY def_route=$IF_DEFROUTE peerdns=$IF_PEERDNS mtu=$IF_MTU metric=$IF_IPV4_ROUTE_METRIC"
+	CNX_IP=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/$1/ip" -v "concat(@ipv4_failure_fatal,';',@ipaddr,';',@prefix,';',@netmask,';',@broadcast,';',@gateway,';',@def_route,';',@mtu,';',@ipv4_route_metric)" -n ${NETWORK_CONFIG_FILE} | sed '/^\s*$/d')
+	read IPV4_FAILURE_FATAL IF_IPADDR IF_PREFIX IF_NETMASK IF_BROADCAST IF_GATEWAY IF_DEFROUTE IF_MTU IF_IPV4_ROUTE_METRIC <<< "$CNX_IP"
+	logdebug "Read ipv4($IF_DEV): failure_fatal=$IPV4_FAILURE_FATAL ipv4=$IF_IPADDR prefix=$IF_PREFIX netmaks=$IF_NETMASK broadcast=$IF_BROADCAST gateway=$IF_GATEWAY def_route=$IF_DEFROUTE mtu=$IF_MTU metric=$IF_IPV4_ROUTE_METRIC"
 }
 
 _read_ipv6() {
 	local IFS=';'
 	# Read ip6 tag
-	CNX_IP6=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/$1/ip6" -v "concat(@ipv6_failure_fatal,';',@ipv6_init,';',@ipv6_autoconf,';',@ipv6_addr,';',@ipv6_defaultgw,';',@ipv6_defroute,';',@ipv6_peerdns,';',@ipv6_mtu,';',@ipv6_route_metric)" -n ${NETWORK_CONFIG_FILE} | sed '/^\s*$/d')
-	read IF_IPV6_FAILURE_FATAL IF_IPV6_INIT IF_IPV6_AUTOCONF IF_IPV6_ADDR IF_IPV6_DEFAULTGW IF_IPV6_DEFROUTE IF_IPV6_PEERDNS IF_IPV6_ROUTE_METRIC <<< "$CNX_IP6"
-	logdebug "Read ipv6($IF_DEV): failure_fatal=$IF_IPV6_FAILURE_FATAL init=$IF_IPV6_INIT autoconf=$IF_IPV6_AUTOCONF ipv6=$IF_IPV6_ADDR def_gateway=$IF_IPV6_DEFAULTGW def_route=$IF_IPV6_DEFROUTE peerdns=$IF_IPV6_PEERDNS metric=$IF_IPV6_ROUTE_METRIC"
+	CNX_IP6=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/$1/ip6" -v "concat(@ipv6_failure_fatal,';',@ipv6_init,';',@ipv6_autoconf,';',@ipv6_addr,';',@ipv6_defaultgw,';',@ipv6_defroute,';',@ipv6_mtu,';',@ipv6_route_metric)" -n ${NETWORK_CONFIG_FILE} | sed '/^\s*$/d')
+	read IF_IPV6_FAILURE_FATAL IF_IPV6_INIT IF_IPV6_AUTOCONF IF_IPV6_ADDR IF_IPV6_DEFAULTGW IF_IPV6_DEFROUTE IF_IPV6_ROUTE_METRIC <<< "$CNX_IP6"
+	logdebug "Read ipv6($IF_DEV): failure_fatal=$IF_IPV6_FAILURE_FATAL init=$IF_IPV6_INIT autoconf=$IF_IPV6_AUTOCONF ipv6=$IF_IPV6_ADDR def_gateway=$IF_IPV6_DEFAULTGW def_route=$IF_IPV6_DEFROUTE metric=$IF_IPV6_ROUTE_METRIC"
 }
 
 _read_options() {
@@ -212,12 +212,12 @@ _read_options() {
 _read_dns() {
 	local IFS=';'
 	# Read the dns tag
-	CNX_DNS=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/$1/dns" -v "concat(@servers,';',@search)" -n ${NETWORK_CONFIG_FILE} | sed '/^\s*$/d')
-	read IF_DNS_SERVERS IF_DNS_SEARCH <<< "$CNX_DNS"
+	CNX_DNS=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/$1/dns" -v "concat(@servers,';',@search,';',@peerdns,';',@ipv6_peerdns)" -n ${NETWORK_CONFIG_FILE} | sed '/^\s*$/d')
+	read IF_DNS_SERVERS IF_DNS_SEARCH IF_PEERDNS IF_IPV6_PEERDNS<<< "$CNX_DNS"
 	IFS=','
 	read IF_DNS1 IF_DNS2 IF_DNS3 <<< "$IF_DNS_SERVERS"
 	IF_DOMAIN=${IF_DNS_SEARCH//,/ } # The search list is a space separated list.
-	logdebug "Read dns($IF_DEV): DNS1=$IF_DNS1 DNS2=$IF_DNS2 DNS3=$IF_DNS3 SEARCH=$IF_DNS_SEARCH"
+	logdebug "Read dns($IF_DEV): DNS1=$IF_DNS1 DNS2=$IF_DNS2 DNS3=$IF_DNS3 SEARCH=$IF_DNS_SEARCH PEERDNS=$IF_PEERDNS IPV6_PEERDNS=$IF_IPV6_PEERDNS"
 }
 
 _fix_if_parameters() {
