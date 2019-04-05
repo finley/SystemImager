@@ -3,16 +3,14 @@
 #
 # "SystemImager" 
 #
-#  Copyright (C) 1999-2001 Brian Elliott Finley 
-#                          <brian@thefinleys.com>
-#  Copyright (C) 2002-2003 Bald Guy Software 
-#                          <brian@thefinleys.com>
+#  Copyright (C) 1999-2019 Brian Elliott Finley <brian@thefinleys.com>
+#  Copyright (C) 2002-2003 Bald Guy Software
 #
 #  Others who have contributed to this code (in alphabetical order):
 #   John Goebel <jgoebel@valinux.com>
 #   Curtis Zinzilieta <czinzilieta@valinux.com>
 #   Olivier Lahaye <olivier.lahaye@cea.fr>
-##
+#
 #   See http://www.iana.org/assignments/bootp-dhcp-parameters for info on
 #   custom option numbers.
 #
@@ -31,7 +29,7 @@ my $get_help = "  Try \"$program_name -help\" for more options.";
 my $version_info = <<"EOF";
 $program_name (part of SystemImager) version $VERSION
 
-Copyright (C) 2013 Brian Elliott Finley <brian\@thefinleys.com>
+Copyright (C) 2019 Brian Elliott Finley <brian\@thefinleys.com>
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 EOF
@@ -54,10 +52,8 @@ my $header = <<'EOF';
 #
 # "SystemImager" 
 #
-#  Copyright (C) 1999-2001 Brian Elliott Finley 
-#                          <brian@thefinleys.com>
-#  Copyright (C) 2002 Bald Guy Software 
-#                     <brian@thefinleys.com>
+#  Copyright (C) 1999-2019 Brian Elliott Finley <brian@thefinleys.com>
+#  Copyright (C) 2002 Bald Guy Software
 #
 #  This file was created with "si_mkdhcpserver", which is part of SystemImager.
 #  See http://systemimager.org/ for more information.
@@ -368,7 +364,7 @@ if ($dhcpd_version eq "2") {
     print DHCPDCONF qq(  option routers $router; \n);
 
     print DHCPDCONF qq(  # option-140 specifies the IP address of your SystemImager image server\n);
-    print DHCPDCONF qq(  option option-140 "$imageserver"; \n);
+    print DHCPDCONF qq(  option option-140 ) . $imageserver . qq(; \n);
   
     print DHCPDCONF qq(  # option-142 specifies the URL address of your ssh download\n);
     print DHCPDCONF qq(  # This should be in the format of "http://$imageserver/systemimager/boot/".\n);
@@ -436,7 +432,7 @@ if ($dhcpd_version eq "2") {
     print DHCPDCONF qq(\n);
 
     print DHCPDCONF qq(# option-140 is the IP address of your SystemImager image server\n);
-    print DHCPDCONF qq(option option-140 "$imageserver";\n);
+    print DHCPDCONF qq(option option-140 ) . $imageserver . qq(;\n);
     print DHCPDCONF qq(\n);
 
     print DHCPDCONF qq(# option-142 specifies the URL address of your ssh download\n);
