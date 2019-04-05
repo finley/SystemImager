@@ -209,7 +209,7 @@
 			<xsd:attribute name="search">
 				<xsd:simpleType>
 					<xsd:restriction base="xsd:string"> <!-- Match a comma (or space) separated list of DNS domains -->
-						<xsd:pattern value="([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}([ ,]([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,})?"/>
+						<xsd:pattern value="([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}([ ,]([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,})*"/>
 					</xsd:restriction>
 				</xsd:simpleType>
 			</xsd:attribute>
