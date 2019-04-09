@@ -228,7 +228,7 @@ terminate_transfer
 
 # Tells to dracut that root in now known.
 if [ -n "$DRACUT_SYSTEMD" ]; then
-	# Ask systemd to re-reun its generators (dracut-rootfs-generator). See:
+	# Ask systemd to re-run its generators (dracut-rootfs-generator). See:
 	# https://www.freedesktop.org/software/systemd/man/systemd.generator.html
 	# and https://bbs.archlinux.org/viewtopic.php?pid=1501024#p1501024
 	systemctl daemon-reload

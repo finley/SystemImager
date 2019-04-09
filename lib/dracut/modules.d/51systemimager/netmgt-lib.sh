@@ -235,18 +235,32 @@ _fix_if_parameters() {
 	test -z "${IF_NAME}" && IF_NAME=${IF_DEV} && logdebug "Using device name ($IF_DEV) as connection name"
 
 	# Check IP syntaxt (IPADDR, PREFIX, NETMASK)
+
+	# 1/ Check prefix both in ipaddr and prefix parameters.
 	if test "${IF_IPADDR//[0-9\.]/}" = "/" -a -n "${IF_PREFIX}"
 	then
 		logerror "IP prefix specified in both ipaddr= and prefix= parameters for device ${IF_FULL_NAME}"
-		logerror "Ignoring PREFIX; using ipaddr= with its prefix"
-		IF_PREFIX=""
+		logerror "Ignoring /PREFIX in ipaddr; using ipaddr= without its prefix"
+		IF_IPADDR="${IF_IPADDR%/*}"
 	fi
+
+	# 2/ Check prefix in addr and netmask parameter is set (conflict: keep netmask)
 	if test "${IF_IPADDR//[0-9\.]/}" = "/" -a -n "${IF_NETMASK}"
 	then
 		logerror "IP prefix specified in both ipaddr= and netmask= parameters for device ${IF_FULL_NAME}"
-		logerror "Ignoring NETMASK; using ipaddr= with its prefix"
-		IF_NETMASK=""
+		logerror "Ignoring prefix from ipaddr; using ipaddr= without its prefix"
+		IF_IPADDR="${IF_IPADDR%/*}"
 	fi
+
+	# 3/ Check prefix in ipaddr parameter: NetworkManager doesn't support that. move prefix from ipaddr to prefix variable
+	if test "${IF_IPADDR//[0-9\.]/}" = "/" -a -z "${IF_NETMASK}" -a -z "${IF_PREFIX}"
+	then
+		loginfo "Converting ipaddr/prefix to iaddr= and prefix=" # Network manager doesn't support prefixed notation
+		IF_IPADDR="${IF_IPADDR%/*}"
+		IF_PREFIX="${IF_IPADDR#*/}"
+	fi
+
+	# 4/ Check both prefix and netmask varaible set. drop netmask variable (conflict)
 	if test -n "${IF_PREFIX}" -a -n "${IF_NETMASK}"
 	then
 		logerror "IP prefix specified in both prefix= and netmask= parameters for device ${IF_FULL_NAME}"
