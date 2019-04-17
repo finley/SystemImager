@@ -255,9 +255,9 @@ _fix_if_parameters() {
 	# 3/ Check prefix in ipaddr parameter: NetworkManager doesn't support that. move prefix from ipaddr to prefix variable
 	if test "${IF_IPADDR//[0-9\.]/}" = "/" -a -z "${IF_NETMASK}" -a -z "${IF_PREFIX}"
 	then
-		loginfo "Converting ipaddr/prefix to iaddr= and prefix=" # Network manager doesn't support prefixed notation
-		IF_IPADDR="${IF_IPADDR%/*}"
+		logdebug "Converting ipaddr/prefix to ipaddr= and prefix=" # Network manager doesn't support prefixed notation
 		IF_PREFIX="${IF_IPADDR#*/}"
+		IF_IPADDR="${IF_IPADDR%/*}"
 	fi
 
 	# 4/ Check both prefix and netmask varaible set. drop netmask variable (conflict)
