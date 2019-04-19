@@ -57,7 +57,7 @@ sis_configure_network() {
                 NETWORK_CONFIG_FILE=/scripts/network-configs/${NETWORK_CONFIG}
                 test ! -f "${NETWORK_CONFIG_FILE}" && NETWORK_CONFIG_FILE=/scripts/network-configs/${NETWORK_CONFIG}.xml
         fi
-        if test ! -f "${NETWORK_CONFIG_FILE}"
+        if test ! -f "${NETWORK_CONFIG_FILE}" # Ìf no network config file is provided, we take the network from which we booted from
         then
                 logwarn "Could not get a valid network configuration file"
                 test -n "${NETWORK_CONFIG_FILE}" && logwarn "Tryed ${NETWORK_CONFIG_FILE}"
@@ -65,7 +65,102 @@ sis_configure_network() {
                 logwarn "Please read networkconfig.conf manual and create a network configuration file"
                 logwarn "Store it on image server in /var/lib/systemimager/scripts/network-configs/"
                 logwarn "Use one of possible names: {$NETWORK_CONFIG${NETWORK_CONFIG:+,}$HOSTNAME${HOSTNAME:+,}$GROUPNAME${GROUPNAME:+,}${HOSTNAME//[0-9]/}${HOSTNAME:+,}$IMAGENAME${IMAGENAME:+,}default}{,.xml}"
-		loginfo "Using current imager network informations (ifrom device: $DEVICE) as fallback."
+		loginfo "Using current imager network informations (from device: $DEVICE) as fallback."
+		_write_pxe_booted_interface_config
+		return
+       fi
+
+        loginfo "Using network configuration file: ${NETWORK_CONFIG_FILE}"
+        write_variables # Save NETWORK_CONFIG_FILE variable for future use.
+
+        # 1st, we need to validdate the network configuration file.
+        loginfo "Validating network configuration: ${NETWORK_CONFIG_FILE}"
+        xmlstarlet val --err --xsd /lib/systemimager/network-config.xsd ${NETWORK_CONFIG_FILE} || shellout "Network config file is invalid. Check error logs and fix problem."
+        loginfo "Network configuration seems valid; continuing..."
+
+	# Process network devices one by one
+	local IFS=';'
+	xmlstarlet sel -t -m 'config/if' -v "concat(@dev,';',@type,';',@control)" -n ${NETWORK_CONFIG_FILE}  | sed '/^\s*$/d' |\
+                while read IF_DEV IF_TYPE IF_CONTROL
+		do
+			# 1st, clear all variables from previous <if> processing.
+			unset IF_NAME IF_ID IF_ONBOOT IF_ONPARENT IF_USERCTL IF_MASTER IF_NAME IF_ONBOOT IF_USERCTL IF_MASTER IF_BOOTPROTO IF_IPADDR IF_NETMASK IF_PREFIX IF_BROADCAST IF_GATEWAY IF_DEFROUTE IF_IP6_INIT IF_HWADDR IF_BONDING_OPTS IF_DNS_SERVERS IF_DNS_SEARCH IF_ID IF_ALIAS_NAME IF_UUID
+
+			loginfo "Configuring $IF_DEV network device (type=$IF_TYPE)"
+			
+			# Process primary for this interface (only one primary, so no while loop)
+
+			# 2 steps: 1st we parse the XML, then we load the result in shell variables.
+			# We need 2 steps because the here line will not honor IFS in right argument (sub process)
+			# except if we export it, which we don't want.
+			# (<<< $() fails while <<< "$var" works)
+			CNX=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/primary" -v "concat(@name,';',@uuid,';',@onboot,';',@bootproto,';',@userctl,';',@master)" -n ${NETWORK_CONFIG_FILE} | sed '/^\s*$/d')
+			read IF_NAME IF_UUID IF_ONBOOT IF_BOOTPROTO IF_USERCTL IF_MASTER <<< "$CNX"
+
+			test "${IF_NAME}" = "${DEVICE}" && PXE_BOOTED_IF="${IF_NAME}" # keep track that we configured the PXE booted interface.
+
+			_read_ipv4 primary	# read ipv4 parameters
+			_read_ipv6 primary	# read ipv6 parameters
+			_read_options primary	# read options
+			_read_dns primary	# read dns infos
+
+			if test -n "${IF_MASTER}"
+			then
+				_write_slave # from network.<distro>.sh
+			else
+				test -n "${IF_DEFROUTE}" && NETWORK_DEFROUTE_DEV="${IF_DEV}" # Keep track of defroute device.
+				_write_primary # from network.<distro>.sh
+			fi
+			# Make sure /etc/resolv.conf exists in imaged system.
+			touch /sysroot/etc/resolv.conf
+
+			# Process aliases for this interface
+			xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/alias" -v "concat(@id,';',@uuid,';',@onparent)" -n ${NETWORK_CONFIG_FILE}  | sed '/^\s*$/d' |\
+				while read IF_ID IF_UUID IF_ONPARENT
+				do
+					loginfo "Configuring $IF_DEV alias #$IF_ID network device (type=$IF_TYPE)"
+					# 1st, clear all previous variables except those all aliases inherit (IF_NAME)
+					unset IF_ONBOOT IF_BOOTPROTO IF_IPADDR IF_NETMASK IF_PREFIX IF_BROADCAST IF_GATEWAY IF_DEFROUTE IF_IP6_INIT IF_HWADDR IF_BONDING_OPTS IF_DNS_SERVERS IF_DNS_SEARCH IF_ALIAS_NAME IF_UUID
+					test -z "${IF_NAME}" && shellout "No primary defined for device [${IF_DEV}]"
+
+					_read_ipv4 "alias[@id=\"$IF_ID\"]"	# read ipv4 parameters
+					_read_ipv6 "alias[@id=\"$IF_ID\"]"	# read ipv6 parameters
+
+					# No slave to write (slave can't be an alias interface)
+					_write_alias # from network.<distro>.sh
+				done
+			# Process slaves for this interface
+			xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/slave" -v "@name" -n ${NETWORK_CONFIG_FILE}  | sed '/^\s*$/d' |\
+				while read IF_SLAVE_NAME
+				do
+					test "${IF_TYPE}" != "Bond" && shellout "Slave interface, but parent is not of type 'Bond'!"
+
+					_fix_if_parameters # Compute IF_FULL_NAME, IF_DEV_FULL_NAME, UUID, Simplify IPADDR/PREFIX/NETMASK
+					
+					# check that if exists (using xmlstarlet)
+					MY_MASTER=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_SLAVE_NAME}\"]/primary" -v "@master" -n ${NETWORK_CONFIG_FILE})
+					loginfo "Configuring $IF_DEV slave network device for (master=$IF_MASTER))"
+					test "${MY_MASTER}" != "${IF_FULL_NAME}" && logerror "Slave [$IF_SLAVE_NAME] doesn't list me [$IF_FULL_NAME]  as master."
+				done
+		# Now, make sure the interface we booted from has a configuration
+		test -z "${PXE_BOOTED_IF}" && _write_pxe_booted_interface_config
+		# Now, make sure DEFROUTE=yes is set
+		# If NETWORK_DEFROUTE_DEV is empty, this means no default route is configured.
+		# Use the interface we booted from as a fallback
+		if test -z "${NETWORK_DEFROUTE_DEV}"
+		then
+			logwarn "No default route has been defined in network configuration file"
+			logwarn "Using $DEVICE as default route interface."
+			_add_defroute $DEVICE
+		fi
+
+		done
+}
+
+# This function will create a network configuration file for the interface we
+# booted from if it is not decribed in any network configuration file.
+#
+_write_pxe_booted_interface_config() {
 		# 1st: check if NetworkManager is present in image.
 		if test -x /sysroot/usr/sbin/NetworkManager -o -x /sysroot/sbin/NetworkManager
 		then
@@ -95,8 +190,6 @@ sis_configure_network() {
 			IF_PEERDNS=yes
 			IF_UUID=$(cat /proc/sys/kernel/random/uuid)
 			_write_primary # from network.<distro>.sh
-
-			return
 		else
 			IF_DEV=$DEVICE
 			IF_NAME=$DEVICE
@@ -112,77 +205,7 @@ sis_configure_network() {
 			IF_BROADCAST=$BROADCAST
 			IF_GATEWAY=$GATEWAY
 			_write_primary # from network.<distro>.sh
-			return
 		fi
-        fi
-
-        loginfo "Using network configuration file: ${NETWORK_CONFIG_FILE}"
-        write_variables # Save NETWORK_CONFIG_FILE variable for future use.
-
-        # 1st, we need to validdate the network configuration file.
-        loginfo "Validating network configuration: ${NETWORK_CONFIG_FILE}"
-        xmlstarlet val --err --xsd /lib/systemimager/network-config.xsd ${NETWORK_CONFIG_FILE} || shellout "Network config file is invalid. Check error logs and fix problem."
-        loginfo "Network configuration seems valid; continuing..."
-
-	# Process network devices one by one
-	local IFS=';'
-	xmlstarlet sel -t -m 'config/if' -v "concat(@dev,';',@type,';',@control)" -n ${NETWORK_CONFIG_FILE}  | sed '/^\s*$/d' |\
-                while read IF_DEV IF_TYPE IF_CONTROL
-		do
-			# 1st, clear all variables from previous <if> processing.
-			unset IF_NAME IF_ID IF_ONBOOT IF_ONPARENT IF_USERCTL IF_MASTER IF_NAME IF_ONBOOT IF_USERCTL IF_MASTER IF_BOOTPROTO IF_IPADDR IF_NETMASK IF_PREFIX IF_BROADCAST IF_GATEWAY IF_DEFROUTE IF_IP6_INIT IF_HWADDR IF_BONDING_OPTS IF_DNS_SERVERS IF_DNS_SEARCH IF_ID IF_ALIAS_NAME IF_UUID
-
-			loginfo "Configuring $IF_DEV network device (type=$IF_TYPE)"
-			
-			# Process primary for this interface (only one primary, so no while loop)
-
-			# 2 steps: 1st we parse the XML, then we load the result in shell variables.
-			# We need 2 steps because the here line will not honor IFS in right argument (sub process)
-			# except if we export it, which we don't want.
-			# (<<< $() fails while <<< "$var" works)
-			CNX=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/primary" -v "concat(@name,';',@uuid,';',@onboot,';',@bootproto,';',@userctl,';',@master)" -n ${NETWORK_CONFIG_FILE} | sed '/^\s*$/d')
-			read IF_NAME IF_UUID IF_ONBOOT IF_BOOTPROTO IF_USERCTL IF_MASTER <<< "$CNX"
-
-			_read_ipv4 primary	# read ipv4 parameters
-			_read_ipv6 primary	# read ipv6 parameters
-			_read_options primary	# read options
-			_read_dns primary	# read dns infos
-
-			if test -n "${IF_MASTER}"
-			then
-				_write_slave # from network.<distro>.sh
-			else
-				_write_primary # from network.<distro>.sh
-			fi
-			# Process aliases for this interface
-			xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/alias" -v "concat(@id,';',@uuid,';',@onparent)" -n ${NETWORK_CONFIG_FILE}  | sed '/^\s*$/d' |\
-				while read IF_ID IF_UUID IF_ONPARENT
-				do
-					loginfo "Configuring $IF_DEV alias #$IF_ID network device (type=$IF_TYPE)"
-					# 1st, clear all previous variables except those all aliases inherit (IF_NAME)
-					unset IF_ONBOOT IF_BOOTPROTO IF_IPADDR IF_NETMASK IF_PREFIX IF_BROADCAST IF_GATEWAY IF_DEFROUTE IF_IP6_INIT IF_HWADDR IF_BONDING_OPTS IF_DNS_SERVERS IF_DNS_SEARCH IF_ALIAS_NAME IF_UUID
-					test -z "${IF_NAME}" && shellout "No primary defined for device [${IF_DEV}]"
-
-					_read_ipv4 "alias[@id=\"$IF_ID\"]"	# read ipv4 parameters
-					_read_ipv6 "alias[@id=\"$IF_ID\"]"	# read ipv6 parameters
-
-					# No slave to write (slave can't be an alias interface)
-					_write_alias # from network.<distro>.sh
-				done
-			# Process slaves for this interface
-			xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/slave" -v "@name" -n ${NETWORK_CONFIG_FILE}  | sed '/^\s*$/d' |\
-				while read IF_SLAVE_NAME
-				do
-					test "${IF_TYPE}" != "Bond" && shellout "Slave interface, but parent is not of type 'Bond'!"
-
-					_fix_if_parameters # Compute IF_FULL_NAME, IF_DEV_FULL_NAME, UUID, Simplify IPADDR/PREFIX/NETMASK
-					
-					# check that if exists (using xmlstarlet)
-					MY_MASTER=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_SLAVE_NAME}\"]/primary" -v "@master" -n ${NETWORK_CONFIG_FILE})
-					loginfo "Configuring $IF_DEV slave network device for (master=$IF_MASTER))"
-					test "${MY_MASTER}" != "${IF_FULL_NAME}" && logerror "Slave [$IF_SLAVE_NAME] doesn't list me [$IF_FULL_NAME]  as master."
-				done
-		done
 }
 
 _read_ipv4() {
@@ -191,6 +214,7 @@ _read_ipv4() {
 	CNX_IP=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/$1/ip" -v "concat(@ipv4_failure_fatal,';',@ipaddr,';',@prefix,';',@netmask,';',@broadcast,';',@gateway,';',@def_route,';',@mtu,';',@ipv4_route_metric)" -n ${NETWORK_CONFIG_FILE} | sed '/^\s*$/d')
 	read IPV4_FAILURE_FATAL IF_IPADDR IF_PREFIX IF_NETMASK IF_BROADCAST IF_GATEWAY IF_DEFROUTE IF_MTU IF_IPV4_ROUTE_METRIC <<< "$CNX_IP"
 	logdebug "Read ipv4($IF_DEV): failure_fatal=$IPV4_FAILURE_FATAL ipv4=$IF_IPADDR prefix=$IF_PREFIX netmaks=$IF_NETMASK broadcast=$IF_BROADCAST gateway=$IF_GATEWAY def_route=$IF_DEFROUTE mtu=$IF_MTU metric=$IF_IPV4_ROUTE_METRIC"
+	test -z "${IPV4_FAILURE_FATAL}" && IPV4_FAILURE_FATAL="no" # Defaults to no (inspired from nmtui)
 }
 
 _read_ipv6() {
@@ -199,6 +223,8 @@ _read_ipv6() {
 	CNX_IP6=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/$1/ip6" -v "concat(@ipv6_failure_fatal,';',@ipv6_init,';',@ipv6_autoconf,';',@ipv6_addr,';',@ipv6_defaultgw,';',@ipv6_defroute,';',@ipv6_mtu,';',@ipv6_route_metric)" -n ${NETWORK_CONFIG_FILE} | sed '/^\s*$/d')
 	read IF_IPV6_FAILURE_FATAL IF_IPV6_INIT IF_IPV6_AUTOCONF IF_IPV6_ADDR IF_IPV6_DEFAULTGW IF_IPV6_DEFROUTE IF_IPV6_ROUTE_METRIC <<< "$CNX_IP6"
 	logdebug "Read ipv6($IF_DEV): failure_fatal=$IF_IPV6_FAILURE_FATAL init=$IF_IPV6_INIT autoconf=$IF_IPV6_AUTOCONF ipv6=$IF_IPV6_ADDR def_gateway=$IF_IPV6_DEFAULTGW def_route=$IF_IPV6_DEFROUTE metric=$IF_IPV6_ROUTE_METRIC"
+	# If no IPV6 configuration is present, then don't init IPV6 with something the user may not be aware of.
+	test -z "${IF_IPV6_FAILURE_FATA}${IF_IPV6_INIT}${IF_IPV6_AUTOCONF}${IF_IPV6_ADDR}${IF_IPV6_DEFAULTGW}${IF_IPV6_DEFROUTE}${IF_IPV6_ROUTE_METRIC}" && IF_IPV6_INIT="no"
 }
 
 _read_options() {
@@ -370,4 +396,4 @@ _check_interface_type() {
 _check_interface() {
 	_fix_if_parameters # Compute IF_FULL_NAME, IF_DEV_FULL_NAME, UUID, Simplify IPADDR/PREFIX/NETMASK
 	_check_interface_type # Make sure that type from config file match what kernel sees.
-}	
+}
