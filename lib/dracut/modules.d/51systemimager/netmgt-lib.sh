@@ -213,7 +213,7 @@ _read_ipv4() {
 	# Read ip tag
 	CNX_IP=$(xmlstarlet sel -t -m "config/if[@dev=\"${IF_DEV}\"]/$1/ip" -v "concat(@ipv4_failure_fatal,';',@ipaddr,';',@prefix,';',@netmask,';',@broadcast,';',@gateway,';',@def_route,';',@mtu,';',@ipv4_route_metric)" -n ${NETWORK_CONFIG_FILE} | sed '/^\s*$/d')
 	read IF_IPV4_FAILURE_FATAL IF_IPADDR IF_PREFIX IF_NETMASK IF_BROADCAST IF_GATEWAY IF_DEFROUTE IF_MTU IF_IPV4_ROUTE_METRIC <<< "$CNX_IP"
-	logdebug "Read ipv4($IF_DEV): failure_fatal=$IPV4_FAILURE_FATAL ipv4=$IF_IPADDR prefix=$IF_PREFIX netmaks=$IF_NETMASK broadcast=$IF_BROADCAST gateway=$IF_GATEWAY def_route=$IF_DEFROUTE mtu=$IF_MTU metric=$IF_IPV4_ROUTE_METRIC"
+	logdebug "Read ipv4($IF_DEV): failure_fatal=$IF_IPV4_FAILURE_FATAL ipv4=$IF_IPADDR prefix=$IF_PREFIX netmaks=$IF_NETMASK broadcast=$IF_BROADCAST gateway=$IF_GATEWAY def_route=$IF_DEFROUTE mtu=$IF_MTU metric=$IF_IPV4_ROUTE_METRIC"
 	test -z "${IF_IPV4_FAILURE_FATAL}" && IF_IPV4_FAILURE_FATAL="no" # Defaults to no (inspired from nmtui)
 }
 
