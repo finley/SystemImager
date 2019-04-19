@@ -271,3 +271,14 @@ EOF
 			;;
 	esac
 }
+
+_add_defroute() {
+	test -z "$1" && shellout "You've hit a bug. _add_defroute must be called with ifname as argument."
+	test ! -f /sysroot/etc/sysconfig/network-scripts/ifcfg-${1} && shellout "You've hit a bug. Configuration file for $1 does not exists!"
+	if test -z "$(grep '^DEFROUTE=' /sysroot/etc/sysconfig/network-scripts/ifcfg-$1)"
+	then
+		echo "DEFROUTE=yes" >> /sysroot/etc/sysconfig/network-scripts/ifcfg-${1}
+	else
+		sed -i -e 's/^DEFROUTE=.*$/DEFROUTE=yes' /sysroot/etc/sysconfig/network-scripts/ifcfg-${1}
+	fi
+}
