@@ -3,14 +3,17 @@
 #
 
 ============= TODO for the dracut change before release is possible ===========
+- shutdown network before directboot otherwise the interface is not restarted. Thus, if HWADDR is spoofed (in config),
+  this doesn't take effect. Network Manager doesn't restart the whole interface. started means do nothing for NetworkManager.
+  => Need investigations.
 - update sbin/si_mkdhcpserver so it works with systemd (also use service instead of running init.d script on old distros)
 - DONE: fix si_prepareclient so it uses si_mkbootpackage instead of trying to build its own kernel and fail.
 - fix si_getimage so it installs scripts in /var/lib/systemimager/scripts/main-install/
   fix si_getimage so it installs correctly remote boot package
   fix si_getimage so it moves <imagedir>/etc/systemimager/autoinstall_script.conf to disks layout.
 - Add imaging a list of packages instead of a directory (protocol:bootstrap)
-- Add network configuration using networkmanageri or systemd-networkd (in a postinstall script at 1st)
-- Add install of monitor_rebooted service in dracut module instead of postinstall script.
+- DONE: Add network configuration using networkmanageri or systemd-networkd (in a postinstall script at 1st)
+- DONE: Add install of monitor_rebooted service in dracut module instead of postinstall script.
 - DONE: Do not install grub on disk we did not handle
 - DONE: rewrite si_mkbootserver
 - use http://aria2.sourceforge.net/ for torrent / ftp / http / ... protocols.
