@@ -330,7 +330,7 @@ BuildRequires: dracut-network
 %endif
 BuildRequires: dracut
 BuildRequires: plymouth-plugin-script, plymouth-plugin-label
-BuildRequires: psmisc, kexec-tools, bind-utils, net-tools 
+BuildRequires: psmisc, kexec-tools, bind-utils, net-tools, ethtool, lsscsi, usbutils
 BuildRequires: xmlstarlet, parted, mdadm, util-linux, lvm2, gdisk
 BuildRequires: xfsprogs, e2fsprogs, ntfsprogs, dosfstools
 BuildRequires: %pkg_ipcalc
@@ -475,7 +475,7 @@ requires: dracut-network
 %endif
 Requires: dracut
 Requires: plymouth-plugin-script, plymouth-plugin-label
-Requires: psmisc, kexec-tools, bind-utils, net-tools
+Requires: psmisc, kexec-tools, bind-utils, net-tools, ethtool, lsscsi, usbutils
 Requires: xmlstarlet, parted, mdadm, util-linux, lvm2, gdisk
 Requires: xfsprogs, e2fsprogs, ntfsprogs, dosfstools
 Requires: %pkg_ipcalc
@@ -506,6 +506,9 @@ Requires: socat
 This package is a dracut modules that automates the systeimager initramfs creation.
 
 %changelog
+* Wed Jan 9 2019 Olivier Lahaye <olivier.lahaye@cea.fr> 4.5.0-0.23
+- Added ethtool and lsscsi dependancy so lsscsi command and ethtool are available in imager.
+
 * Wed Jan 9 2019 Olivier Lahaye <olivier.lahaye@cea.fr> 4.5.0-0.23
 - renamed %{_build_arch}initrd_template to initrd_template (no arch content).
 

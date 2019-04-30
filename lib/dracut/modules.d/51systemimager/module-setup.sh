@@ -60,6 +60,7 @@ install() {
     inst_multiple cut date echo env sort test false true [ expr head install tail tee tr uniq wc tac mktemp yes xmlstarlet
 
     # inst_multiple setfont loadkeys kbd_mode stty # i18n module
+    inst_multiple -o lsscsi lspci ethtool mii-tool mii-diag
     inst_multiple bc dc gzip bzip2 rsync mkfs parted sgdisk fdisk blockdev lsblk partprobe awk ncat tty killall kexec ipcalc findmnt findfs tput stty
     inst_multiple lvm pvcreate pvdisplay pvremove pvscan lvcreate lvdisplay lvremove lvscan lvmconf lvmconfig lvmdump lvchange vgcreate vgdisplay vgremove vgscan fsadm
     inst_multiple chmod chown cp dd df dmesg echo egrep fgrep grep halt host hostname ifconfig init insmod kill ln ls lsmod mkdir mknod mkswap modprobe more mv ping poweroff ps reboot shutdown rm rmdir rmmod route sed sh sleep swapoff swapon sync tar touch uname logger od
@@ -71,6 +72,11 @@ install() {
 
     # bittorent client needed when using bittorrent deployment method.
     inst_multiple rtorrent
+
+    # Install lsusb
+    inst_multiple -o lsusb
+    mkdir -p "$moddir/usr/share/hwdata"
+    test -f /usr/share/hwdata/usb.ids && cp /usr/share/hwdata/usb.ids $moddir/usr/share/hwdata/
 
     # 3/ Install dracut logic
     inst "$moddir/systemimager-lib.sh" "/lib/systemimager-lib.sh"
