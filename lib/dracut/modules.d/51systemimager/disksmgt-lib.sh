@@ -483,13 +483,13 @@ _do_partitions() {
 			case $LABEL_TYPE in
 				"msdos")
 					test -z "${SIZE/0/}" && OFFSET_SIZE="" || OFFSET_SIZE="+$((${SIZE}-1))" # fdisk computes wrong size bigger by one block
-					logaction "fdisk /dev/sda <<< '$P_TYPE\\n$P_NUM\\n$START_BLOCK\\n$OFFSET_SIZE\\nw'"
+					logaction "fdisk /dev/sda <<< 'n\\n$P_TYPE\\n$P_NUM\\n$START_BLOCK\\n$OFFSET_SIZE\\nw'"
 					fdisk $DISK_DEV > /dev/null <<EOF
 n
-$P_TYPE
-$P_NUM
-$START_BLOCK
-$OFFSET_SIZE
+${P_TYPE}
+${P_NUM}
+${START_BLOCK}
+${OFFSET_SIZE}
 w
 EOF
 					test $? -ne 0 && shellout "Failed to create partition ${P_NUM} on ${DISK_DEV}"
