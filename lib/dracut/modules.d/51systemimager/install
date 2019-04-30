@@ -51,8 +51,8 @@ install() {
 
     # Install lsusb
     inst_multiple -o lsusb
-    mkdir -p "$moddir/usr/share/hwdata"
-    test -f /usr/share/hwdata/usb.ids && cp /usr/share/hwdata/usb.ids $moddir/usr/share/hwdata/
+    mkdir -p "$initdir/usr/share/hwdata"
+    test -f /usr/share/hwdata/usb.ids && inst /usr/share/hwdata/usb.ids $initdir
 
     # 3/ Install dracut logic
     inst "$moddir/systemimager-lib.sh" "/lib/systemimager-lib.sh"
