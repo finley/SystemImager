@@ -99,6 +99,7 @@ install() {
     inst_hook cmdline 30 "$moddir/systemimager-check-kernel.sh" # Check that kernel & initrd match.
     inst_hook cmdline 50 "$moddir/parse-systemimager.sh" # read cmdline parameters
     inst_hook cmdline 70 "$moddir/systemimager-init.sh" # Creates /run/systemimager and sets rootok
+    inst_hook initqueue/settled 40 "$moddir/systemimager-check-ifaces.sh" # Check network interfaces concistence with cmdline ip=
     inst_hook initqueue/settled 50 "$moddir/systemimager-warmup.sh" # Waits for plymouth
     inst_hook initqueue/finished 90 "$moddir/systemimager-wait-imaging.sh" # Waits for $SI_IMAGING_STATUS = "finished"
     inst_hook initqueue/timeout 10 "$moddir/systemimager-timeout.sh" # In case of timeout (DHCP failure, ....)
