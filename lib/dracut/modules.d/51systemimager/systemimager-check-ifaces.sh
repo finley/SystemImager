@@ -36,15 +36,15 @@ check_ifaces() {
 			if test -n "$(grep :${iface}: <<< \"$IP\")" # IF wrong iface present in ip= parameter
 			then
 				logerror "Interface [${iface}] unknow to kernel while specified in ip=$IP cmdline"
-				UNKNOWN_IFACES="${UNKNOWN_IFACE} ${iface}"
+				UNKNOWN_IFACES="${UNKNOWN_IFACES} ${iface}"
 			fi
 		done
 	else
 		logdebug "${iface} seen by kernel."
 	fi
-	if test -n "${UNKNOWN_IFACE}" # If there are ifaces specified in ip= parameters (thus present in /tmp/net.ifaces)
+	if test -n "${UNKNOWN_IFACES}" # If there are ifaces specified in ip= parameters (thus present in /tmp/net.ifaces)
 	then
-		logerror "Requested network interface(s):${UNKNOWN_IFACE}"
+		logerror "Requested network interface(s):${UNKNOWN_IFACES}"
 		logerror "are not seen by kernel."
 		logerror "Available network interface(s) are: $(cd /sys/class/net/; echo *|sed 's/ *lo//')"
 		shellout "Check your cmdline parameters and/or add missing driver to imager using si_mkbootpackage(8)"
