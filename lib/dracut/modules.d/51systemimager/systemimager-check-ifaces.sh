@@ -48,7 +48,7 @@ check_ifaces() {
 		logerror "Available network interface(s) unknown by kernel: $(cd /sys/class/net/; echo *|sed 's/ *lo//')"
 		shellout "Check your cmdline parameters and/or add missing driver to imager using si_mkbootpackage(8)"
 	else
-		logdebug "All used network interfaces are known by kernel. Ok."
+		loginfo "All used network interfaces are known by kernel. Ok."
 		exit 0
 	fi
     done	
