@@ -1134,7 +1134,7 @@ _do_fstab() {
 #	This function return the sectors count for optimal aligment.
 #	Each new partitions should start at a multiple of this value.
 #	from: https://rainbow.chard.org/2013/01/30/how-to-align-partitions-for-best-performance-using-parted/
-#	PArt start at (optimal_io_size + aligment_offset)/physical_block_size
+#	Part start at (optimal_io_size + aligment_offset)/physical_block_size
 #
 #
 ################################################################################

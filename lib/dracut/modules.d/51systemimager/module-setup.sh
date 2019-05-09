@@ -49,6 +49,9 @@ install() {
     # Install console utilities (i18n is missing on Debian, so we can't rely on this module)
     inst_multiple -o setfont loadkeys kbd_mode stty
 
+    # Install usefull debugging commands
+    inst_multiple -o script
+
     # Install ssh and its requirements
     install_ssh
 

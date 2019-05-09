@@ -30,10 +30,16 @@ install() {
     inst_multiple -o mkfs.jfs jfs_mkfs jfs_tune
     inst_multiple -o mklost+found # Do we need that?
     inst_multiple -o socat # plymouth ask-for-password replacement requirement (CentOS-7 at least)
+
+    # Install usefull debugging commands
+    inst_multiple -o script
+
     # Install ssh and its requirements
     install_ssh
+
     # Install docker and its requirements
     install_docker
+
     # Install plymouth theme and its requirements
     install_plymouth_theme
     inst_multiple cut date echo env sort test false true [ expr head install tail tee tr uniq wc tac mktemp yes xmlstarlet
