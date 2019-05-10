@@ -1136,12 +1136,14 @@ _do_fstab() {
 #	from: https://rainbow.chard.org/2013/01/30/how-to-align-partitions-for-best-performance-using-parted/
 #	Part start at (optimal_io_size + aligment_offset)/physical_block_size
 #
+#	A conservative mesure is to start at 2048s (1MiB) multiples:
+#	https://askubuntu.com/questions/201164/proper-alignment-of-partitions-on-an-advanced-format-hdd-using-parted
 #
 ################################################################################
 _get_sectors_aligment() {
 	if test ! -d /sys/block/$1
 	then
-		logwarn "/sys/block/$1 does not exists. Assuming sector aligment: 2048"
+		logwarn "/sys/block/$1 does not exists. Assuming sector aligment: 2048s"
 		echo 2048
 		return
 	fi
@@ -1149,7 +1151,7 @@ _get_sectors_aligment() {
 	OPTIM_IO_SIZE=$(cat /sys/block/$1/queue/optimal_io_size)
 	if test -z "${OPTIM_IO_SIZE/0/}"
 	then
-		logwarn "/sys/block/$1/queue/optimal_io_size not supported. Assuming sector aligment: 2048"
+		logwarn "/sys/block/$1/queue/optimal_io_size not supported. Assuming sector aligment: 2048s"
 		echo 2048
 		return
 	fi
@@ -1160,7 +1162,15 @@ _get_sectors_aligment() {
 	PHY_BLOCK_SIZE=$(cat /sys/block/$1/queue/physical_block_size)
 	test -z "${PHY_BLOCK_SIZE/0/}" && PHY_BLOCK_SIZE=512 # Use 512 is value empty or zero.
 
-	echo "$OPTIM_IO_SIZE $ALIGMNT_OFFSET + $PHY_BLOCK_SIZE / p" | dc
+	ALIGMNT=$("$OPTIM_IO_SIZE $ALIGMNT_OFFSET + $PHY_BLOCK_SIZE / p" | dc)
+
+	if test "${ALIGMNT}" -lt 2048
+	then
+		logwarn "Aligment [$ALIGMNT] is lower than 2048s".
+		logwarn "Taking conservative mesure by using 2048s boundaries aligments".
+		ALIGMNT=2048
+	fi
+	echo ${ALIGMNT}
 }
 
 
