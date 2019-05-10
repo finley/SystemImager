@@ -420,7 +420,7 @@ EOF
 #
 ################################################################################
 #
-# OL: Tips: Beginning of disk: 1MiB, End of disk: -2048s (space for GPT table)
+# OL: Tips: Beginning of disk: 2048s (1MiB), End of disk: -2048s (space for GPT table)
 _do_partitions() {
 	sis_update_step part
 	local IFS=';'
@@ -759,7 +759,8 @@ _find_free_space() {
 			# fixed size partition of exact blocks count could fail. (disk layout
 			# replication with no variable size partition for example)
 			START_SIZE=(`LC_ALL=C parted -s -- $1 unit s print free |       grep 'Free Space' | sed 's/s//g' | awk -v ext_start=${START_END_PART_ZONE[0]} -v ext_end=${START_END_PART_ZONE[1]} -v req_size="$4" -v align=$(_get_sectors_aligment ${1##*/}) '
-			BEGIN { exit_code=1; opt_size=req_size+req_size%align }
+			BEGIN { exit_code=1; opt_size=(req_size-1+align)-(req_size-1)%align }
+			($3 > align) && (req_size == 0) { printf "%d 0",($1-1+align)-(($1-1)%align) ; exit_code=0; exit }
 			($3 > align) && ((($1-1+align)-(($1-1)%align))>=ext_start) && ($2<=ext_end) && ((($1-1+align)-(($1-1)%align)+opt_size)<=$2) { printf "%d %d",($1-1+align)-(($1-1)%align),opt_size; exit_code=0; exit } # Enough space: print start block rounded to next alig position and size)\
 			END { exit exit_code }
 			'` ) || shellout "Failed to find free space for a $3 partition of size ${4}s"
