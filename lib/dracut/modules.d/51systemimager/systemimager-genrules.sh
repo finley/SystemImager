@@ -13,7 +13,7 @@
 # online hook). It creates the systemimager udev rules to be triggered when
 # network interface becomes online.
 
-. /lib/dracut-lib.sh
+. /lib/systemimager-lib.sh
 
 logdebug "==== systemimager-genrules ===="
 
