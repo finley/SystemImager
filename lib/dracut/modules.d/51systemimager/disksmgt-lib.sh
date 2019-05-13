@@ -483,8 +483,8 @@ _do_partitions() {
 			case $LABEL_TYPE in
 				"msdos")
 					test -z "${SIZE/0/}" && OFFSET_SIZE="" || OFFSET_SIZE="+$((${SIZE}-1))" # fdisk computes wrong size bigger by one block
-					logaction "fdisk -c /dev/sda <<< 'n\\n$P_TYPE\\n$P_NUM\\n$START_BLOCK\\n$OFFSET_SIZE\\nw'"
-					fdisk -c $DISK_DEV > /dev/null <<EOF
+					logaction "fdisk -u -c /dev/sda <<< 'n\\n$P_TYPE\\n$P_NUM\\n$START_BLOCK\\n$OFFSET_SIZE\\nw'"
+					fdisk -u -c $DISK_DEV > /dev/null <<EOF
 n
 ${P_TYPE}
 ${P_NUM}
@@ -547,7 +547,7 @@ _set_partition_flag_and_id() {
 		ext2|ext3|ext4|xfs|jfs|reiserfs|btrfs)
 			case $1 in
 				msdos)
-					fdisk -c $2 > /dev/null <<EOF
+					fdisk -u -c $2 > /dev/null <<EOF
 t
 $3
 83
@@ -562,7 +562,7 @@ EOF
 		ntfs|msdos|vfat|fat|fat32|fat16)
 			case $1 in
 				msdos)
-					fdisk -c $2 > /dev/null <<EOF
+					fdisk -u -c $2 > /dev/null <<EOF
 t
 $3
 7
@@ -577,7 +577,7 @@ EOF
 		swap)
 			case $1 in
 				msdos)
-					fdisk -c $2 > /dev/null <<EOF
+					fdisk -u -c $2 > /dev/null <<EOF
 t
 $3
 7
@@ -613,7 +613,7 @@ EOF
 					logwarn "EFI on msdos partition table is strongly discouraged"
 					logwarn "If you really want to do so you must enable legacy support"
 					logwarn "in your EFI BIOS - AND - Disable secure boot!"
-					fdisk -c $2 > /dev/null <<EOF
+					fdisk -u -c $2 > /dev/null <<EOF
 t
 $3
 ef
@@ -636,7 +636,7 @@ EOF
 		lvm)
 			case $1 in
 				msdos)
-					fdisk -c $2 > /dev/null <<EOF
+					fdisk -u -c $2 > /dev/null <<EOF
 t
 $3
 31
@@ -658,7 +658,7 @@ EOF
 			case $1 in
 				msdos)
 					loginfo "Enabling 'legacy_boot' for Device $2 Partition $3."
-					fdisk -c $2 > /dev/null <<EOF
+					fdisk -u -c $2 > /dev/null <<EOF
 a
 $3
 c
@@ -675,7 +675,7 @@ EOF
 			if test -z "$(echo $4|sed -E 's/^[0-9A-Za-z]{1,2}//g')"
 			then
 				test $1='gpt' && shellout "gpt id are 4 digits (see sgdisk -L output for a list)"
-				fdisk -c $2 > /dev/null <<EOF
+				fdisk -u -c $2 > /dev/null <<EOF
 t
 $3
 $4

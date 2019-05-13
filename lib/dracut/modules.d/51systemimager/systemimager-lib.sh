@@ -1389,7 +1389,7 @@ run_post_install_scripts() {
             mkdir -p /sysroot/tmp/post-install/ || shellout
 
             #CMD="rsync -a ${SCRIPTS_DIR}/post-install/ /sysroot/tmp/post-install/"
-	    CMD="mount -o bind ${SCRIPTS_DIR}/post-install /sysroot/tmp/post-install"
+	    CMD="mount --bind ${SCRIPTS_DIR}/post-install /sysroot/tmp/post-install"
 	    logdetail "$CMD"
 	    #$CMD > /dev/null 2>&1 || logwarn "Failed to retrieve ${SCRIPTS_DIR}/post-install directory...(error:$?)"
 	    eval "$CMD" || logwarn "Failed to bind mount ${SCRIPTS_DIR}/post-install directory in image...(error:$?)"
