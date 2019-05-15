@@ -26,6 +26,9 @@ test -z "${IMAGESERVER}" && shellout "IMAGESERVER not set; don't know where to d
 # Bonus: we can umount /scripts when imaging is done, thus freeing some memory (initrd is not freed as it is used for shutdown)
 # We use ramfs instead of tmpfs as it grows when needed. This avoid requiring a /script size computation before downloading its content.
 
+logdebug "Creating ${SCRIPTS_DIR} mountpoint."
+mkdir -p ${SCRIPTS_DIR} || shellout "Failed to create ${SCRIPTS_DIR}"
+
 logdebug "Creating ${SCRIPTS_DIR} ramfs filesystem."
 mount -t ramfs ramfs ${SCRIPTS_DIR} || shellout "Failed to create ramfs filesystem for ${SCRIPTS_DIR}"
 

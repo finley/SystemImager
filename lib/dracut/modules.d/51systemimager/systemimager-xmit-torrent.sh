@@ -40,7 +40,6 @@ function init_transfer() {
 #
 function get_scripts_directory() {
     loginfo "Retrieving ${SCRIPTS_DIR} directory..."
-    mkdir -p ${SCRIPTS_DIR}
     CMD="rsync -a ${IMAGESERVER}::${SCRIPTS}/ ${SCRIPTS_DIR}/"
     logdetail "$CMD"
     $CMD >/dev/null 2>&1 || shellout "Failed to retrieve ${SCRIPTS_DIR} directory..."
