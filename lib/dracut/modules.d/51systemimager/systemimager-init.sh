@@ -23,6 +23,17 @@ logdebug "==== systemimager-init ===="
 # Init /run/systemimager directory
 test ! -d /run/systemimager && mkdir -p /run/systemimager && logdebug "Created /run/systemimager"
 
+# Create a ramfs filesystem for /scripts so we can bind mount it later in order to expose it to a chrooted environment in /sysroot
+# (On CentOS-6, bind-mounting subtrees of the initrd.img fails)
+# Bonus: we can umount /scripts when imaging is done, thus freeing some memory (initrd is not freed as it is used for shutdown)
+# We use ramfs instead of tmpfs as it grows when needed. This avoid requiring a /script size computation before downloading its content.
+
+logdebug "Creating ${SCRIPTS_DIR} mountpoint."
+mkdir -p ${SCRIPTS_DIR} || shellout "Failed to create ${SCRIPTS_DIR}"
+
+logdebug "Creating ${SCRIPTS_DIR} ramfs filesystem."
+mount -t ramfs ramfs ${SCRIPTS_DIR} || shellout "Failed to create ramfs filesystem for ${SCRIPTS_DIR}"
+
 # make /sbin/netroot happy when called by /lib/dracut/hooks/initqueue/setup_net_<iface>.sh
 # If /sysroot/proc is present, it quits with exit status "ok" (sort of rootok)
 test ! -d /sysroot/proc && mkdir -p /sysroot/proc && logdebug "Created /sysroot/proc to make setup_net_<iface>.sh happy"

@@ -46,6 +46,10 @@ rm -f /usr/lib/dracut/hooks/initqueue/finished/90-systemimager-wait-imaging.sh
 rm -rf /run/systemimager/* ${STAGING_DIR}/*.*
 (cd /tmp; rm -f SIS_action fstab.image grub_default.cfg mdadm.conf.temp variables.txt)
 
+# Umount /scripts ramfs filesystem
+logdebug "Unmounting ${SCRIPTS_DIR} ramfs filesystem"
+umount ${SCRIPTS_DIR} || logerror "Failed to umount ${SCRIPTS_DIR}"
+
 # We are in directbootmode, thus more message may have raised up.
 # At this point, rootfs is mounted to /sysroot again.
 # So we can try to save an updated si_monitor.log to imaged system.

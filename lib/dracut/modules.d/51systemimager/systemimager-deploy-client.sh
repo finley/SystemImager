@@ -198,10 +198,6 @@ then
 	logwarn "Content: "$(echo /sysroot/*)
 fi
 
-# Umount /scripts ramfs filesystem
-logdebug "Unmounting ${SCRIPTS_DIR} ramfs filesystem"
-umount ${SCRIPTS_DIR} || logerror "Failed to umount ${SCRIPTS_DIR}"
-
 # Tell the image server we are done
 rsync $IMAGESERVER::scripts/imaging_complete_$IPADDR > /dev/null 2>&1
 loginfo "Imaging completed"
