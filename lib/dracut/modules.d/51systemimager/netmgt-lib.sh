@@ -52,10 +52,10 @@ sis_configure_network() {
         if test -z "${NETWORK_CONFIG}"
         then
 		loginfo "si.network-conf not provided. Trying to find a matching network configuration"
-                NETWORK_CONFIG_FILE=`choose_filename /scripts/network-configs "" ".xml"`
+                NETWORK_CONFIG_FILE=`choose_filename ${SCRIPTS_DIR}/network-configs "" ".xml"`
         else
-                NETWORK_CONFIG_FILE=/scripts/network-configs/${NETWORK_CONFIG}
-                test ! -f "${NETWORK_CONFIG_FILE}" && NETWORK_CONFIG_FILE=/scripts/network-configs/${NETWORK_CONFIG}.xml
+                NETWORK_CONFIG_FILE=${SCRIPTS_DIR}/network-configs/${NETWORK_CONFIG}
+                test ! -f "${NETWORK_CONFIG_FILE}" && NETWORK_CONFIG_FILE=${SCRIPTS_DIR}/network-configs/${NETWORK_CONFIG}.xml
         fi
         if test ! -f "${NETWORK_CONFIG_FILE}" # Ìf no network config file is provided, we take the network from which we booted from
         then

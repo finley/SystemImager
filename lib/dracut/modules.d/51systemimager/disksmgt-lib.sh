@@ -27,10 +27,10 @@ PARTED_DELAY=0.5 # On older kernels, system needs time to update partitions.
 sis_prepare_disks() {
 	if test -z "${DISKS_LAYOUT}"
 	then
-		DISKS_LAYOUT_FILE=`choose_filename /scripts/disks-layouts "" ".xml"`
+		DISKS_LAYOUT_FILE=`choose_filename ${SCRIPTS_DIR}/disks-layouts "" ".xml"`
 	else
-		DISKS_LAYOUT_FILE=/scripts/disks-layouts/${DISKS_LAYOUT}
-		test ! -f "${DISKS_LAYOUT_FILE}" && DISKS_LAYOUT_FILE=/scripts/disks-layouts/${DISKS_LAYOUT}.xml
+		DISKS_LAYOUT_FILE=${SCRIPTS_DIR}/disks-layouts/${DISKS_LAYOUT}
+		test ! -f "${DISKS_LAYOUT_FILE}" && DISKS_LAYOUT_FILE=${SCRIPTS_DIR}/disks-layouts/${DISKS_LAYOUT}.xml
 	fi
 	if test ! -f "${DISKS_LAYOUT_FILE}"
 	then
