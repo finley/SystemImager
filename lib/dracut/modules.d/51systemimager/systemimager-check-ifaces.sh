@@ -50,7 +50,7 @@ check_ifaces() {
 		shellout "Make sure you only use known interfaces in ip= parameter."
 	else
 		loginfo "All used network interfaces are known by kernel. Ok."
-		exit 0
+		return 0
 	fi
     done	
 }
@@ -62,5 +62,6 @@ then
 	check_ifaces
 else
 	logdebug "/tmp/net.ifaces not yet present"
-	exit 1 # need to re-run.
+	return 1 # need to re-run.
 fi
+
