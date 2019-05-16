@@ -50,6 +50,13 @@ check_ifaces() {
 		shellout "Make sure you only use known interfaces in ip= parameter."
 	else
 		loginfo "All used network interfaces are known by kernel. Ok."
+		if test -e "$job"
+		then
+			logdebug "Preventing ourself to be run later (useless)."
+			logdebug "rm -f $job"
+			# Make sure we're not called multiple time (even if it's harmless)
+			[ -e "$job" ] && rm -f "$job"
+		fi
 		return 0
 	fi
     done	
