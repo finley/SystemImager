@@ -1396,6 +1396,7 @@ fi
 %{_datarootdir}/systemimager/boot/%{_build_arch}/standard/initrd.img
 %{_datarootdir}/systemimager/boot/%{_build_arch}/standard/kernel
 %{_datarootdir}/systemimager/boot/%{_build_arch}/standard/version.txt
+%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/ARCH
 
 %files initrd_template
 %defattr(-, root, root)
