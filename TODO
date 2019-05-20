@@ -3,8 +3,7 @@
 #
 
 ============= TODO for the dracut change before release is possible ===========
-- attention: Fichier(s) installé(s) (mais non empaquetés):
-   /usr/share/systemimager/boot/x86_64/standard/ARCH
+- DONE: Unpackaged file /usr/share/systemimager/boot/x86_64/standard/ARCH
 - shutdown network before directboot otherwise the interface is not restarted. Thus, if HWADDR is spoofed (in config),
   this doesn't take effect. Network Manager doesn't restart the whole interface. started means do nothing for NetworkManager.
   => Need investigations.
