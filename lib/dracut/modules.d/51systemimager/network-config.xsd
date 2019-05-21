@@ -130,7 +130,7 @@
 			<xsd:attribute name="name" type="devname"/> <!-- The interface name. (defaults to device name) -->
 			<xsd:attribute name="uuid" type="uuid_id"/>
 			<xsd:attribute name="onboot" type="yesno"/> <!-- defaults to yes -->
-			<xsd:attribute name="bootproto" type="initmethod"/>
+			<xsd:attribute name="bootproto" type="initmethod" use="required"/>
 			<xsd:attribute name="userctl" type="yesno"/> <!-- defaults to no -->
 			<xsd:attribute name="master" type="devname"/> <!-- The master interface name if this is a slave on a bond. -->
 		</xsd:complexType>
@@ -199,7 +199,7 @@
 	</xsd:element>
 	<xsd:element name="dns">
 		<xsd:complexType>
-			<xsd:attribute name="servers">
+			<xsd:attribute name="servers" use="required">
 				<xsd:simpleType> <!-- TODO: Allow IPV6 DNS -->
 					<xsd:restriction base="xsd:string"> <!-- Match comma separated list of ipv4 addresses -->
 						<xsd:pattern value="(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(,(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){0,2}"/>
