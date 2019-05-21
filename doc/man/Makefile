@@ -3,6 +3,7 @@
 #
 #  Copyright (C) 2002 Hewlett-Packard Company <dannf@fc.hp.com>
 #  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
+#  Copyright (C) 2019 Olivier Lahaye <olivier.lahaye@cea.fr>
 #
 #    $Id$
 #
@@ -28,6 +29,7 @@ SERVER_MAN = si_addclients.8 				\
 			si_mkbootserver.8				\
 			systemimager.conf.5			\
 			systemimager.cmdline.7			\
+			systemimager.disks-layout.7	\
 			systemimager-rsyncd.conf.5	\
 			si_mkrsyncd_conf.8				\
 			si_mkclientnetboot.8				\
@@ -49,7 +51,7 @@ CLIENT_MAN = si_prepareclient.8 si_updateclient.8
 
 COMMON_MAN = autoinstallscript.conf.5 si_lsimage.8
 
-.SUFFIXES: .5 .8 .8.gz .5.gz .pod .sgml
+.SUFFIXES: .5 .7 .8 .8.gz .5.gz .pod .sgml
 
 all:	compress
 
