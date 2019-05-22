@@ -79,7 +79,7 @@
     </listitem>
   
     <listitem>
-      <para>master - primary parameter (optional): Specify the masgter interface in case ob bonding or bridge. In this case, bootproto should be set to "none"</para>
+      <para>master - primary parameter (optional): Specify the master interface in case ob bonding or bridge. In this case, bootproto should be set to "none"</para>
     </listitem>
   
     <listitem>
@@ -230,7 +230,11 @@
     <title>LIMITATIONS</title>
 
     <para>
-        If you use aliases in client configuration for the booted interface, the aliases may not initialise. A simple network restart or reboot will correct this. If your iumager is not of the same OS version/flavor, the interfaces/devices names seen in imager may differ from the one used in client after reboot. In that case, you should use to client OS naming scheem in the network configuration file. This will raise harmless warning during install process. Notre that using an imager that is not of the same OS major version/flavor is not recommanded.
+        After a direct boot, if you have configured some interface aliases in client configuration for the booted interface, the aliases may not be brought up. A simple network restart or reboot will correct this.
+    </para>
+
+    <para>
+        If your imager is not of the same OS version/flavor, the interfaces/devices names seen in imager may differ from the one used in client after reboot. In that case, you should use the client OS naming scheem in the network configuration file. This will raise harmless warning during install process. Note that using an imager that is not of the same OS major version/flavor is not recommanded.
     </para>
 
   </refsect1>
@@ -241,7 +245,7 @@
     <title>SEE ALSO</title>
 
     <para>
-      <command>si_lint</command>(5)
+      <command>si_lint</command>(5) <filename>/usr/share/doc/systemimager-doc*/examples/net-config.xml</filename>
     </para>
 
     <para>
@@ -254,7 +258,7 @@
   <refsect1>
     <title>AUTHOR</title>
 
-    <para>This manual page was compiled by &dhusername; <&dhemail;> for the &debian; system (but may be used by others).</para>
+    <para>This manual page was compiled by &dhusername; <&dhemail;> for the &distro; system (but may be used by others).</para>
 
     <!-- <para>Permission is granted to copy, distribute and/or modify
       this document under the terms of the <acronym>GNU</acronym> Free

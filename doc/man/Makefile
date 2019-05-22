@@ -50,7 +50,7 @@ SERVER_MAN = si_addclients.8 				\
 
 CLIENT_MAN = si_prepareclient.8 si_updateclient.8
 
-COMMON_MAN = autoinstallscript.conf.5 si_lsimage.8
+COMMON_MAN = autoinstallscript.conf.7 si_lsimage.8
 
 .SUFFIXES: .5 .7 .8 .8.gz .5.gz .pod .sgml
 

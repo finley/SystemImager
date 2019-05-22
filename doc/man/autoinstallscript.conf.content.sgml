@@ -39,7 +39,28 @@
   <title>MIGRATION TO NEW DISKS-LAYOUT</title>
 
   <para>
-    Simply move the /var/lib/systemimager/images/&lt;imagename&gt;/etc/systemimager/autoinstallscript.conf to /var/lib/systemimager/scripts/disks-layouts/&lt;imagename&lt;.xml (or any suitable name ending with xml extension) and add a mandatory bootloader section. More infos in <filename>systemimager.disks-layout(7)</filename> manual.
+    Simply move the /var/lib/systemimager/images/&lt;imagename&gt;/etc/systemimager/autoinstallscript.conf to /var/lib/systemimager/scripts/disks-layouts/&lt;imagename&gt;.xml (or any suitable name ending with xml extension) and add a mandatory bootloader section. More informations may be found in <filename>systemimager.disks-layout(7)</filename> manual.
+  </para>
+
+  </refsect1>
+
+  <refsect1>
+    <title>EXAMPLES</title>
+
+  <para>
+     A simple disk layout for a single disk with an mdos (legacy) partition table: <filename>/usr/share/doc/systemimager-doc*/examples/disk-layout-simple.xml</filename>
+  </para>
+
+  <para>
+     A more complex disk layout with extended and logicals partitions using msdos (legacy) partition table: <filename>/usr/share/doc/systemimager-doc*/examples/disk-layout-complex.xml</filename>
+  </para>
+
+  <para>
+     An even more complex setup using two disks that forms a soft raid one on wich we configure lvm and then partions: <filename>/usr/share/doc/systemimager-doc*/examples/disk-layout-lvm_over_raid.xml</filename>
+  </para>
+
+  <para>
+     A layout designed for an EFI system. Note: when choosing EFI, the image deployed must already include the linux EFI packages otherwise the imager will stop at bootloader install (on RHEL-7, it's the grub2-efi-x64 package that must be present in image): <filename>/usr/share/doc/systemimager-doc*/examples/disk-layout-EFI.xml</filename>
   </para>
 
   </refsect1>
@@ -49,7 +70,7 @@
     <title>SEE ALSO</title>
 
     <para>
-      <filename>systemimager.disks-layout</filename>(7)
+      <filename>systemimager.disks-layout</filename>(7) manual <filename>autoinstallscript.conf(7) manual
     </para>
 
     <para>
@@ -62,7 +83,7 @@
   <refsect1>
     <title>AUTHOR</title>
 
-    <para>This manual page was compiled by &dhusername; <&dhemail;> for the &debian; system (but may be used by others).</para>
+    <para>This manual page was compiled by &dhusername; <&dhemail;> for the &distro; system (but may be used by others).</para>
 
     <!-- <para>Permission is granted to copy, distribute and/or modify
       this document under the terms of the <acronym>GNU</acronym> Free
