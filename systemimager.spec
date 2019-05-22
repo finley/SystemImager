@@ -1263,7 +1263,7 @@ fi
 %defattr(-, root, root)
 %{_bindir}/si_lsimage
 %{_mandir}/man8/si_lsimage*
-%{_mandir}/man5/autoinstall*
+%{_mandir}/man7/autoinstall*
 %dir %{perl_vendorlib}/SystemImager
 %{perl_vendorlib}/SystemImager/Common.pm
 %{perl_vendorlib}/SystemImager/Config.pm
