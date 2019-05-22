@@ -64,7 +64,7 @@
   
     <listitem>
       <para>uuid - primary parameter (optional): uuid for this interface.</para>
-    <listitem>
+    </listitem>
 
     <listitem>
       <para>onboot - primary parameter (optional): Specify if the interface must be brought up at boot. Possible values: yes, no. Defaults to "yes".</para>
@@ -226,145 +226,11 @@
   </refsect1>
   
   <refsect1>
-  <title>BootLoader Section</title>
-  <para>
-    This section is used to specify what booloader to use and where to install it.  This section is indicated with the "bootloader" tag.
-  </para>
-  <itemizedlist>
-    <listitem>
-      <para>bootloader - Start of bootloader information.</para>
-    </listitem>
-    <listitem>
-      <para>flavor - kinf od boot loader to use.  Possible values: grub2, grub, ...</para>
-    </listitem>
-    <listitem>
-      <para>install_type - Type of installation: legacy (written to disk or partition device) or efi (installed in EFI partition) Possible values: legacy, efi</para>
-    </listitem>
-    <listitem>
-      <para>default_entry - Set the default entry in bootloader menu (integer or "saved" keyword)</para>
-    </listitem>
-
-    <listitem>
-      <para>timeout - Set the bootloader menu timeout in seconds</para>
-    </listitem>
-
-    <listitem>
-      <para>target - start of target description. Multiple target can be created within bootloader section.</para>
-    </listitem>
-
-    <listitem>
-      <para>dev - specify the device where to install the bootloader</para>
-    </listitem>
-
-    <listitem>
-      <para>path - specify the path on EFI system partition to install the bootloader in.</para>
-    </listitem>
-  </itemizedlist>
-
-  </refsect1>
-
-  <refsect1>
-  <title>Filesystem Section</title>
-  <para>
-    This section is used to create filesystems on each of the used partitions, and to create an fstab file on the autoinstall client.  Each line of this section is indicated with the "fsinfo" tag.
-  </para>
-
-  <itemizedlist>
-    <listitem>
-      <para>
-		fsinfo - Start of a new line of information for the fstab file and/or for filesystem creation information.
-      </para>
-    </listitem>
-
-    <listitem>
-      <para>
-		line - This is used to indicate the order that lines should be put into the fstab file on the autoinstall client.
-      </para>
-    </listitem>
-
-    <listitem>
-      <para>
-		comment - Indicates a comment that should be included in the fstab file, but is not used for any other processing.
-      </para>
-    </listitem>
-
-    <listitem>
-      <para>
-		real_dev - The first field in the fstab file.  This is the device where the filesystem resides.  It is put into the generated fstab file and is the device used to mount filesystems on the finished machine when it reboots.
-      </para>
-    </listitem>
-
-    <listitem>
-      <para>
-		mount_dev - Usually the first field in the fstab file will be an actual device file like "/dev/sda1", but may sometimes look like 
-        "LABEL=/boot" or "UUID=c1b9d5a2-f162-11cf-9ece-0020afc76f16". In the case that it is a LABEL or UUID, instead of a real device, we use mount_dev to specify the information that will be put in the fstab file to mount the filesystem after the autoinstall client is imaged. LABEL and UUID information is stored as part of the filesystem, not as part of the partition.  See <filename>fstab(5)</filename> for more information.  mount_dev will only exist if a LABEL or UUID is used.
-      </para>
-    </listitem>
-
-    <listitem>
-      <para>
-		mp - The second field in the fstab file.  Mount point.  This is the name of the directory where the filesystem should be mounted.  See <filename>fstab(5)</filename> for more information.
-      </para>
-    </listitem>
-
-    <listitem>
-      <para>
-		fs - The third field in the fstab file.  This is where you specify what filesystem you want created on the partition specified on "mount_dev" (or "real_dev").  Valid filesystem types supported by SystemImager are: ext2, ext3, ext4, msdos, reiserfs, vfat, jfs, xfs, btrfs
-      </para>
-
-    </listitem>
-
-    <listitem>
-      <para>
-		mkfs_opts - Certain filesystems may require additional information to properly create a filesystem.  Currently, this is only used by msdos and vfat filesystems.  Valid values for msdos and vfat filesystems are "-F 12", "-F 16", or "-F 32" to specify the FAT size.  If you don't know what you need, or don't care, you can leave this blank and defaults will be used.
-      </para>
-    </listitem>
-    <listitem>
-      <para>
-		options - The fourth field in the <filename>fstab</filename> file.  Options needed when mounting the filesystem.  If you don't know that you need any special options, just use "default".  See <filename>fstab(5)</filename> for more information.
-      </para>
-    </listitem>
-    <listitem>
-      <para>
-		dump - The fifth field in the fstab file.  This should be a number that is used by <command>dump(8)</command>.  If you don't know what to put here, just use "0".  See <filename>fstab(5)</filename> for more information.
-      </para>
-    </listitem>
-    <listitem>
-      <para>
-		pass - The sixth field in the fstab file.  This is used by the fsck program to determine the order in which filesystem checks are done at boot time.  See <filename>fstab(5)</filename> for more information.
-      </para>
-    </listitem>
-    <listitem>
-      <para>
-		format - Used to tell SystemImager to not create a filesystem on a partition.  If this is set to "no", the filesystem will not be created.  If it is absent, or contains any other value, then a filesystem will be created.
-      </para>
-    </listitem>
-  </itemizedlist>
-  </refsect1>
-
-  <refsect1>
-  <title>BOEL Section</title>
-
-  <para>
-    This section contains miscellaneous settings used by BOEL (Brian's Own Embedded Linux), the embedded linux that performs an install on autoinstall clients.
-    This section is deprecated and ignored (compatibility)
-  </para>
-
-  <itemizedlist>
-    <listitem>
-      <para>
-        devstyle - Tells the autoinstallscript to mount the devfs filesystem in the image prior to running System Configurator, which prepares the client's boot loader.  Many boot loaders need to access the disks at this point, and systems that use devfs won't have any device files in the freshly copied image for the boot loader to use (at this point, BOEL has done a chroot into the root of the filesystem on the freshly installed client).
-      </para>
-    </listitem>
-  </itemizedlist>
-  </refsect1>
-
-  <refsect1>
 
     <title>LIMITATIONS</title>
 
     <para>
-        If you make a change to this file that could affect the boot process, for example, changing your root device, then you may also need to modify the bootloader section.
+        If you use aliases in client configuration for the booted interface, the aliases may not initialise. A simple network restart or reboot will correct this. If your iumager is not of the same OS version/flavor, the interfaces/devices names seen in imager may differ from the one used in client after reboot. In that case, you should use to client OS naming scheem in the network configuration file. This will raise harmless warning during install process. Notre that using an imager that is not of the same OS major version/flavor is not recommanded.
     </para>
 
   </refsect1>
@@ -375,7 +241,7 @@
     <title>SEE ALSO</title>
 
     <para>
-      <command>si_mkautoinstallscript</command>(8), <filename>fstab(5)</filename>
+      <command>si_lint</command>(5)
     </para>
 
     <para>
