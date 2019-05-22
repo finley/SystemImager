@@ -30,7 +30,7 @@
   </para>
 
   <para>
-    The <filename>autoinstallscript.conf</filename> is now stored in /var/lib/systemimager/scripts/disks-layouts/ on the image server and has a new bootloader section. It is directly parsed and used by the imager. Man <filename>systemimager.disks-layout(7)</filename> for more informations.
+    The <filename>autoinstallscript.conf</filename> is now stored in /var/lib/systemimager/scripts/disks-layouts/ on the image server with a name related to image/client and has a new bootloader section. It is dynamicaly  parsed and used by the imager. See <filename>systemimager.disks-layout(7)</filename> man page for more informations.
   </para>
 
   </refsect1>
@@ -39,7 +39,7 @@
   <title>MIGRATION TO NEW DISKS-LAYOUT</title>
 
   <para>
-    Simply move the /var/lib/systemimager/images/&lt;imagename&gt;/etc/systemimager/autoinstallscript.conf to /var/lib/systemimager/scripts/disks-layouts/&lt;imagename&gt;.xml (or any suitable name ending with xml extension) and add a mandatory bootloader section. More informations may be found in <filename>systemimager.disks-layout(7)</filename> manual.
+    Simply move the /var/lib/systemimager/images/&lt;imagename&gt;/etc/systemimager/autoinstallscript.conf to /var/lib/systemimager/scripts/disks-layouts/&lt;imagename&gt;.xml (or any suitable name ending with xml extension) and add a mandatory bootloader section. More informations may be found in the <filename>systemimager.disks-layout(7)</filename> manual.
   </para>
 
   </refsect1>
@@ -70,7 +70,7 @@
     <title>SEE ALSO</title>
 
     <para>
-      <filename>systemimager.disks-layout</filename>(7) manual <filename>autoinstallscript.conf(7) manual
+      <filename>systemimager.disks-layout</filename>(7) manual <filename>autoinstallscript.conf(7) manual</filename> <command>si_lint</command>(5) manual
     </para>
 
     <para>
