@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # "SystemImager" 
 #
@@ -1163,7 +1163,7 @@ _get_sectors_aligment() {
 	PHY_BLOCK_SIZE=$(cat /sys/block/$1/queue/physical_block_size)
 	test -z "${PHY_BLOCK_SIZE/0/}" && PHY_BLOCK_SIZE=512 # Use 512 is value empty or zero.
 
-	ALIGMNT=$("$OPTIM_IO_SIZE $ALIGMNT_OFFSET + $PHY_BLOCK_SIZE / p" | dc)
+	ALIGMNT=$(dc <<< "$OPTIM_IO_SIZE $ALIGMNT_OFFSET + $PHY_BLOCK_SIZE / p")
 
 	if test "${ALIGMNT}" -lt 2048
 	then
