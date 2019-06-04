@@ -55,19 +55,20 @@ if [ ! -z "$MONITOR_SERVER" ]; then
             MONITOR_PORT=8181
         fi
 	loginfo "Starting Console server (si.monitor-console=yes)..."
+	logdebug "Listenning on port [$MONITOR_PORT]."
         while :
         do
             # OL: BUG: Maybe we need to differentiate MONITOR_PORT on server
             # and CONSOLE_PORT on client being imaged.
             ncat -p $MONITOR_PORT -l < /tmp/si_monitor.log
-	    logwarn "Console server failed; restarting...."
+	    logwarn "Console server failed (err=$?); restarting...."
 	    sleep 1s
         done &
 	MONITOR_PID=$!
 	echo $MONITOR_PID > /run/systemimager/si_monitor.pid
         loginfo "Logs monitor forwarding task started: PID=$MONITOR_PID ."
     else
-	loginfo "Console server disabled (si.monitor-cosole=no)"
+	loginfo "Console server disabled (si.monitor-console=no)"
     fi
 fi
 
