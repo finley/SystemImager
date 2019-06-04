@@ -27,6 +27,7 @@ SERVER_MAN = si_addclients.8 				\
 			si_mvimage.8					\
 			si_rmimage.8					\
 			si_mkbootserver.8				\
+			si_lint.8			\
 			systemimager.conf.5			\
 			systemimager.cmdline.7			\
 			systemimager.disks-layout.7	\
