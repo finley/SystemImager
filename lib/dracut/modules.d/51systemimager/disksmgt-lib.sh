@@ -547,13 +547,8 @@ _set_partition_flag_and_id() {
 		ext2|ext3|ext4|xfs|jfs|reiserfs|btrfs)
 			case $1 in
 				msdos)
-					logdebug "fdisk -u -c $2 <<< 't\\n$3\\n83\\nw'"
-					fdisk -u -c $2 > /dev/null <<EOF
-t
-$3
-83
-w
-EOF
+					logdebug "sfdisk --change-id $2 $3 83"
+					sfdisk --change-id $2 $3 83
 					;;
 				gpt)
 					logdebug "sgdisk $2 -t $3:8300"
@@ -564,13 +559,8 @@ EOF
 		ntfs|msdos|vfat|fat|fat32|fat16)
 			case $1 in
 				msdos)
-					logdebug "fdisk -u -c $2 <<< 't\\n$3\\n7\\nw'"
-					fdisk -u -c $2 > /dev/null <<EOF
-t
-$3
-7
-w
-EOF
+					logdebug "sfdisk --change-id $2 $3 7"
+					sfdisk --change-id $2 $3 7
 					;;
 				gpt)
 					logdebug "sgdisk $2 -t $3:0700"
@@ -581,13 +571,8 @@ EOF
 		swap)
 			case $1 in
 				msdos)
-					logdebug "fdisk -u -c $2 <<< 't\\n$3\\n82\\nw'"
-					fdisk -u -c $2 > /dev/null <<EOF
-t
-$3
-82
-w
-EOF
+					logdebug "sfdisk --change-id $2 $3 82"
+					sfdisk --change-id $2 $3 82
 					;;
 				gpt)
 					logdebug "sgdisk $2 -t $3:8200"
@@ -622,13 +607,8 @@ EOF
 					logwarn "EFI on msdos partition table is strongly discouraged"
 					logwarn "If you really want to do so you must enable legacy support"
 					logwarn "in your EFI BIOS - AND - Disable secure boot!"
-					logdebug "fdisk -u -c $2 <<< 't\\n$3\\nef\\nw'"
-					fdisk -u -c $2 > /dev/null <<EOF
-t
-$3
-ef
-w
-EOF
+					logdebug "sfdisk --change-id $2 $3 ef"
+					sfdisk --change-id $2 $3 ef
 					;;
 				gpt)
 					# Set correct Partition GUID
@@ -649,13 +629,8 @@ EOF
 		lvm)
 			case $1 in
 				msdos)
-					logdebug "fdisk -u -c $2 <<< 't\\n$3\\n31\\nw'"
-					fdisk -u -c $2 > /dev/null <<EOF
-t
-$3
-31
-w
-EOF
+					logdebug "sfdisk --change-id $2 $3 31"
+					sfdisk --change-id $2 $3 31
 					;;
 				gpt)
 					logdebug "sgdisk $2 -t $3:8e00"
@@ -676,6 +651,7 @@ EOF
 				msdos)
 					loginfo "Enabling 'legacy_boot' for Device $2 Partition $3."
 					logdebug "fdisk -u -c $2 <<< 'a\\n$3\\nc\\nw'"
+					# BUG: Will fail if only one partition: need to use sfdisk instead
 					fdisk -u -c $2 > /dev/null <<EOF
 a
 $3
@@ -693,13 +669,8 @@ EOF
 			if test -z "$(echo $4|sed -E 's/^[0-9A-Za-z]{1,2}//g')"
 			then
 				test $1='gpt' && shellout "gpt id are 4 digits (see sgdisk -L output for a list)"
-				logdebug "fdisk -u -c $2 <<< 't\\n$3\\n$4\\nw'"
-				fdisk -u -c $2 > /dev/null <<EOF
-t
-$3
-$4
-w
-EOF
+				logdebug "sfdisk --change-id $2 $3 $4"
+				sfdisk --change-id $2 $3 $4
 			# 4digits (gpt)
 			elif test -z "$(echo $4|sed -E 's/^[0-9A-Za-z]{4}//g')"
 			then
