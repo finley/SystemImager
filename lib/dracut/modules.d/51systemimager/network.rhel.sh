@@ -26,7 +26,12 @@ _check_network_config() {
 			mkdir -p  /sysroot/etc/sysconfig/network-scripts # Make sure this path exists.
 			;;
 		NetworkManager)
-			test ! -x /sysroot/usr/sbin/NetworkManager && shellout "/usr/sbin/NetworkManager unavailable in client. Network may not start!"
+			if test ! -x /sysroot/usr/sbin/NetworkManager
+			then
+				logwarn "/usr/sbin/NetworkManager unavailable in client."
+				logwarn "Falling back to legacy config."
+				IF_CONTROL="legacy"
+			fi
 			test ! -d /sysroot/etc/sysconfig/network-scripts && logwarn "/etc/sysconfig/network-scripts not present in image."
 			mkdir -p  /sysroot/etc/sysconfig/network-scripts # Make sure this path exists.
 			;;
