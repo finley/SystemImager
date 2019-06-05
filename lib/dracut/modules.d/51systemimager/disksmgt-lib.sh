@@ -580,7 +580,7 @@ EOF
 					fdisk -u -c $2 > /dev/null <<EOF
 t
 $3
-7
+82
 w
 EOF
 					;;
@@ -596,16 +596,16 @@ EOF
 					logdebug "Ignoring root flag (only required on MAC partition tables)"
 					;;
 				mac)
-					parted -s $2 set $3 root on
+					parted -s $2 -- set $3 root on
 					;;
 			esac
 			;;
 		boot)
-			parted -s $2 set $3 boot on
+			parted -s $2 -- set $3 boot on
 			;;
 		esp)
 			# 1sgt set boot flag.
-			parted -s $2 set $3 boot on
+			parted -s $2 -- set $3 boot on
 
 			# Then set PART-GUID/ef flag
 			case $1 in
@@ -631,7 +631,7 @@ EOF
 			esac
 			;;
 		hidden)
-			parted -s $2 set $3 hidden on
+			parted -s $2 -- set $3 hidden on
 			;;
 		lvm)
 			case $1 in
@@ -649,10 +649,10 @@ EOF
 			esac
 			;;
 		raid)
-			parted -s $2 set $3 raid on
+			parted -s $2 -- set $3 raid on
 			;;
 		lba)
-			parted -s $2 set $3 lba on
+			parted -s $2 -- set $3 lba on
 			;;
 		legacy_boot)
 			case $1 in
@@ -693,8 +693,8 @@ EOF
 			fi
 			;;
 	esac
-	sleep $PARTED_DELAY
 	test $? -ne 0 && logerror "Failed to set [$4] attribute for partition $3 on device $2"
+	sleep $PARTED_DELAY
 }
 
 ################################################################################
