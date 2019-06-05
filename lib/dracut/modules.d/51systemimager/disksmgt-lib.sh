@@ -547,6 +547,7 @@ _set_partition_flag_and_id() {
 		ext2|ext3|ext4|xfs|jfs|reiserfs|btrfs)
 			case $1 in
 				msdos)
+					logdebug "fdisk -u -c $2 <<< 't\\n$3\\n83\\nw'"
 					fdisk -u -c $2 > /dev/null <<EOF
 t
 $3
@@ -555,6 +556,7 @@ w
 EOF
 					;;
 				gpt)
+					logdebug "sgdisk $2 -t $3:8300"
 					sgdisk $2 -t $3:8300
 					;;
 			esac
@@ -562,6 +564,7 @@ EOF
 		ntfs|msdos|vfat|fat|fat32|fat16)
 			case $1 in
 				msdos)
+					logdebug "fdisk -u -c $2 <<< 't\\n$3\\n7\\nw'"
 					fdisk -u -c $2 > /dev/null <<EOF
 t
 $3
@@ -570,6 +573,7 @@ w
 EOF
 					;;
 				gpt)
+					logdebug "sgdisk $2 -t $3:0700"
 					sgdisk $2 -t $3:0700
 					;;
 			esac
@@ -577,6 +581,7 @@ EOF
 		swap)
 			case $1 in
 				msdos)
+					logdebug "fdisk -u -c $2 <<< 't\\n$3\\n82\\nw'"
 					fdisk -u -c $2 > /dev/null <<EOF
 t
 $3
@@ -585,6 +590,7 @@ w
 EOF
 					;;
 				gpt)
+					logdebug "sgdisk $2 -t $3:8200"
 					sgdisk $2 -t $3:8200
 					;;
 			esac
@@ -596,15 +602,18 @@ EOF
 					logdebug "Ignoring root flag (only required on MAC partition tables)"
 					;;
 				mac)
+					logdebug "parted -s $2 -- set $3 root on"
 					parted -s $2 -- set $3 root on
 					;;
 			esac
 			;;
 		boot)
+			logdebug "parted -s $2 -- set $3 boot on"
 			parted -s $2 -- set $3 boot on
 			;;
 		esp)
 			# 1sgt set boot flag.
+			logdebug "parted -s $2 -- set $3 boot on"
 			parted -s $2 -- set $3 boot on
 
 			# Then set PART-GUID/ef flag
@@ -613,6 +622,7 @@ EOF
 					logwarn "EFI on msdos partition table is strongly discouraged"
 					logwarn "If you really want to do so you must enable legacy support"
 					logwarn "in your EFI BIOS - AND - Disable secure boot!"
+					logdebug "fdisk -u -c $2 <<< 't\\n$3\\nef\\nw'"
 					fdisk -u -c $2 > /dev/null <<EOF
 t
 $3
@@ -623,19 +633,23 @@ EOF
 				gpt)
 					# Set correct Partition GUID
 					# sgdisk $2 -t $3:ef00 # Same as below.
+					logdebug "sgdisk $2 -t \"$3:C12A7328-F81F-11D2-BA4B-00A0C93EC93B\""
 					sgdisk $2 -t "$3:C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
 					sleep $PARTED_DELAY
 					# Set correct partition label (name)
+					logdebug "sgdisk $2 -c \"$3:EFI System Partition\""
 					sgdisk $2 -c "$3:EFI System Partition"
 					;;
 			esac
 			;;
 		hidden)
+			logdebug "parted -s $2 -- set $3 hidden on"
 			parted -s $2 -- set $3 hidden on
 			;;
 		lvm)
 			case $1 in
 				msdos)
+					logdebug "fdisk -u -c $2 <<< 't\\n$3\\n31\\nw'"
 					fdisk -u -c $2 > /dev/null <<EOF
 t
 $3
@@ -644,20 +658,24 @@ w
 EOF
 					;;
 				gpt)
+					logdebug "sgdisk $2 -t $3:8e00"
 					sgdisk $2 -t $3:8e00
 					;;
 			esac
 			;;
 		raid)
+			logdebug "parted -s $2 -- set $3 raid on"
 			parted -s $2 -- set $3 raid on
 			;;
 		lba)
+			logdebug "parted -s $2 -- set $3 lba on"
 			parted -s $2 -- set $3 lba on
 			;;
 		legacy_boot)
 			case $1 in
 				msdos)
 					loginfo "Enabling 'legacy_boot' for Device $2 Partition $3."
+					logdebug "fdisk -u -c $2 <<< 'a\\n$3\\nc\\nw'"
 					fdisk -u -c $2 > /dev/null <<EOF
 a
 $3
@@ -675,6 +693,7 @@ EOF
 			if test -z "$(echo $4|sed -E 's/^[0-9A-Za-z]{1,2}//g')"
 			then
 				test $1='gpt' && shellout "gpt id are 4 digits (see sgdisk -L output for a list)"
+				logdebug "fdisk -u -c $2 <<< 't\\n$3\\n$4\\nw'"
 				fdisk -u -c $2 > /dev/null <<EOF
 t
 $3
@@ -685,6 +704,7 @@ EOF
 			elif test -z "$(echo $4|sed -E 's/^[0-9A-Za-z]{4}//g')"
 			then
 				test $1='msdos' && shellout "gpt ids are 1 or 2 digits (see fdisk manual)"
+				logdebug "sgdisk $2 -t $3:$4"
 				sgdisk $2 -t $3:$4
 			else
 				# else ignore.
