@@ -60,7 +60,7 @@ if [ ! -z "$MONITOR_SERVER" ]; then
         do
             # OL: BUG: Maybe we need to differentiate MONITOR_PORT on server
             # and CONSOLE_PORT on client being imaged.
-            ncat -p $MONITOR_PORT -l < /tmp/si_monitor.log
+            ncat -p $MONITOR_PORT -l -k < /tmp/si_monitor.log
 	    logwarn "Console server failed (err=$?); restarting...."
 	    sleep 1s
         done &
