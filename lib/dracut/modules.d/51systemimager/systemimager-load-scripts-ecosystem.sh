@@ -14,12 +14,18 @@
 . /lib/systemimager-lib.sh
 
 
-logdebug "==== systemimager-get-scripts-ecosystem.sh ===="
+logdebug "==== systemimager-load-scripts-ecosystem.sh ===="
 
 # Systemimager possible breakpoint
 getarg 'si.break=download-scripts' && logwarn "Break download-scripts" && interactive_shell
 
-test -z "${IMAGESERVER}" && shellout "IMAGESERVER not set; don't know where to download scripts logic from."
+if test -z "${IMAGESERVER}"
+then
+    logerror "Dont't know where to download scripts logic from."
+    logerror "Either set IMAGESERVER in in cmdline (man systemimager.cmdline)"
+    logerror "Or use DHCP option-140"
+    shellout "IMAGESERVER not set"
+fi
 
 # systemimager-lib.sh will load appropriate download protocol that was setup in systemimager-parse-cmdline.sh
 # the chosen protocol will implement the get_scripts_directory() function.
@@ -28,6 +34,9 @@ get_scripts_directory
 # Make sure HOSTNAME is set (may be used to guess main-install script name or disk layout file name".
 # HOSTNAME may already be set via cmdline, dhcp or local.cfg
 # If not, then try to get it from /scripts/hosts or DNS
+if [ "$HOSTNAME" = '(none)' ]; then
+    HOSTNAME=""
+fi
 if [ -z "$HOSTNAME" ]; then
     get_hostname_by_hosts_file # From ${SCRIPTS_DIR}/hosts
 fi
@@ -36,9 +45,11 @@ if [ -z "$HOSTNAME" ]; then
     get_hostname_by_dns
 fi
 
-if [ -n "$HOSTNAME" ]; then
-    loginfo "This hostname is: $HOSTNAME"
+if [ -z "$HOSTNAME" ]; then
+    logwarn "Unable to guess HOSTNAME (looked for ip= cmdline parameter, DHCP, /scripts/hosts file, DNS)".
+    HOSTNAME="localhost"
 fi
+loginfo "This hostname is: $HOSTNAME"
 
 # Now that we have /scripts, look for /scripts/cluster.txt and
 # initialize GROUPNAMES (can contain multiple groups) if cluster.txt exists.

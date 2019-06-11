@@ -154,8 +154,5 @@ test -z "${SI_POST_ACTION}" && SI_POST_ACTION="reboot"
 test -z "${DL_PROTOCOL}" && DL_PROTOCOL="rsync" && loginfo "DL_PROTOCOL is empty. Default to 'rsync'"
 # OL: Nothing about bittorrent?!?!
 
-# Early stage: Make sure HOSTNAME is coherent.
-test "$HOSTNAME" = "(none)" && HOSTNAME="localhost" # Make sure we have coherent hostname.
-
 # Register what we read.
 write_variables
