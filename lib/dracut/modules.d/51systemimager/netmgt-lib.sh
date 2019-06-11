@@ -317,20 +317,28 @@ _fix_if_parameters() {
 	# Check that HWADDR match kernel point of view if provided
 	if test -n "$IF_HWADDR"
 	then
-		if test -e /sys/class/net/$IF_DEV/address -o -n "$IF_MACADDR"
+		if test -e /sys/class/net/$IF_DEV/address
 		then
-			if test -n "$IF_MACADDR"
+			HARDWARE_MAC="$(cat /sys/class/net/$IF_DEV/address)"	# Compare with kernel info
+			if test "$(echo $IF_HWADDR | tr '[:upper:]' '[:lower:]')" != "$HARDWARE_MAC"
 			then
-				REAL_MAC="$IF_MACADDR"					# Compare withe the one we setup
-			else
-				REAL_MAC="$(cat /sys/class/net/$IF_DEV/address)"	# Compare with kernel info
-			fi
-			if test "$(echo $IF_HWADDR | tr '[:upper:]' '[:lower:]')" != "$REAL_MAC"
-			then
-				logerror "Device $IF_DEV kernel MAC is $REAL_MAC. Config differs: hwaddr=$IF_HWADDR."
+				logerror "Device $IF_DEV internal MAC is $HARDWARE_MAC. Config differs: hwaddr=$IF_HWADDR."
 				logerror "Please fix or your network won't setup at next boot."
 			else
 				logdebug "hwaddr=$IF_HWADDR Match device $IF_DEV"
+			fi
+
+			# if MAC spoofing is configured for interface we booted from (only if used DHCP), then issue a warning
+			# abouth DHCP configuration. this is safe to have an install MAC and a spoofed production MAC, but
+			# as it is an uncommon setup, issue a warning to ease debug in case of problem.
+			if test -n "$IF_MACADDR" \
+				-a "$IF_DEV" = "$DEVICE" \
+				-a "$BOOTPROTO" = "dhcp" \
+			        -a "$IF_BOOTPROTO" = "dhcp"
+			then
+				logwarn "We booted from DHCP($HARDWARE_MAC), but MAC spoofing is requested for this interface"
+				logwarn "Check that your DHCP also knowns $IF_MACADDR or you may fail to initialise network at next boot"
+
 			fi
 		else
 			logdebug "/sys/class/net/$IF_DEV/address doesn't exists. Can't check that hwaddr=$IF_HWADDR matches."
