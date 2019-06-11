@@ -134,5 +134,8 @@ test -z "${SI_POST_ACTION}" && SI_POST_ACTION="reboot" && loginfo "SI_POST_ACTIO
 test -z "${DL_PROTOCOL}" && DL_PROTOCOL="rsync" && loginfo "DL_PROTOCOL is empty. Default to 'rsync'"
 # OL: Nothing about bittorrent?!?!
 
+# Early stage: Make sure HOSTNAME is coherent. (mainly occures in CentOS-6, but may be present elswhere).
+test "$HOSTNAME" = "(none)" && HOSTNAME="localhost" # Make sure we have coherent hostname.
+
 # Register what we read.
 write_variables

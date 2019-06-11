@@ -52,19 +52,21 @@ sis_configure_network() {
         if test -z "${NETWORK_CONFIG}"
         then
 		loginfo "si.network-conf not provided. Trying to find a matching network configuration"
-                NETWORK_CONFIG_FILE=`choose_filename ${SCRIPTS_DIR}/network-configs "" ".xml"`
+                NETWORK_CONFIG_FILE=`choose_filename ${SCRIPTS_DIR}/network-configs ".xml"`
         else
                 NETWORK_CONFIG_FILE=${SCRIPTS_DIR}/network-configs/${NETWORK_CONFIG}
                 test ! -f "${NETWORK_CONFIG_FILE}" && NETWORK_CONFIG_FILE=${SCRIPTS_DIR}/network-configs/${NETWORK_CONFIG}.xml
         fi
         if test ! -f "${NETWORK_CONFIG_FILE}" # Ìf no network config file is provided, we take the network from which we booted from
         then
+		local HNAME="$HOSTNAME"
+		test "$HNAME" = "localhost" && HNAME=""
                 logwarn "Could not get a valid network configuration file"
                 test -n "${NETWORK_CONFIG_FILE}" && logwarn "Tryed ${NETWORK_CONFIG_FILE}"
                 logwarn "No group, group_override, base_hostname matches a network configuration file"
-                logwarn "Please read networkconfig.conf manual and create a network configuration file"
+		logwarn "Please read systemimager.network-config(7) manual and create a network configuration file"
                 logwarn "Store it on image server in /var/lib/systemimager/scripts/network-configs/"
-                logwarn "Use one of possible names: {$NETWORK_CONFIG${NETWORK_CONFIG:+,}$HOSTNAME${HOSTNAME:+,}$GROUPNAME${GROUPNAME:+,}${HOSTNAME//[0-9]/}${HOSTNAME:+,}$IMAGENAME${IMAGENAME:+,}default}{,.xml}"
+                logwarn "Use one of possible names: {$NETWORK_CONFIG${NETWORK_CONFIG:+,}$HNAME${HNAME:+,}$GROUPNAME${GROUPNAME:+,}${HNAME//[0-9]/}${HNAME:+,}$IMAGENAME${IMAGENAME:+,}default}{,.xml}"
 		loginfo "Using current imager network informations (from device: $DEVICE) as fallback."
 		_write_pxe_booted_interface_config
 		return

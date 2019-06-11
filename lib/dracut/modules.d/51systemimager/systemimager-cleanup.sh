@@ -10,7 +10,7 @@
 #  $Id$
 #
 #
-# This file will cleanup all remaining systemimager stuffs i(processes, files, env, ...) from initrd
+# This file will cleanup all remaining systemimager stuffs (processes, files, env, ...) from initrd
 
 type getarg >/dev/null 2>&1 || . /lib/dracut-lib.sh
 type send_monitor_msg >/dev/null 2>&1 || . /lib/systemimager-lib.sh
@@ -40,7 +40,12 @@ if test -s /run/systemimager/si_monitor.pid; then
 fi
 
 # Prevent ourself to reenter wait imaging loop when doing directboot and something goes wrong.
-rm -f /usr/lib/dracut/hooks/initqueue/finished/90-systemimager-wait-imaging.sh
+# New dracut (CentOS-7 and newer)
+test -f /usr/lib/dracut/hooks/initqueue/finished/90-systemimager-wait-imaging.sh && \
+    rm -f /usr/lib/dracut/hooks/initqueue/finished/90-systemimager-wait-imaging.sh
+# Old dracut (CentOS-6)
+test -f /initqueue-finished/90-systemimager-wait-imaging.sh && \
+    rm -f /initqueue-finished/90-systemimager-wait-imaging.sh
 
 # Now we can clean systemimager garbages.
 rm -rf /run/systemimager/* ${STAGING_DIR}/*.*

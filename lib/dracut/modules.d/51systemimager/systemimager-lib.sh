@@ -1147,8 +1147,15 @@ get_hostname_by_hosts_file() {
             sed 's/ .*//' | \
             sed 's/\..*$//g'
         `
+	if test -n "$HOSTNAME"
+	then
+		write_variables
+		loginfo "Got HOSTNAME: [$HOSTNAME] from host file."
+	else
+		logwarn "Can't find this host name from host file."
+	fi
     else
-        loginfo "No hosts file."
+        loginfo "No hosts file in scipts directory."
     fi
 }
 #
@@ -1162,13 +1169,26 @@ get_hostname_by_dns() {
     HOSTNAME=`LC_ALL=C host $IPADDR|sed -E -ne 's/.*pointer[[:space:]]+(([a-z][a-z0-9]+\.)+)$/\1/p'`
     # We need non FQDN name ( We need ${HOSTNAME%%.*} but dash is poor in variable substitution
     HOSTNAME=`echo $HOSTNAME|cut -d'.' -f1`
+    if test -n "$HOSTNAME"
+    then
+	    write_variables
+	    loginfo "Got HOSTNAME: [$HOSTNAME] from DNS."
+    else
+	    logwarn "Can't find this host name from DNS."
+    fi
     loginfo "Got hostname: [$HOSTNAME]"
 }
 #
 ################################################################################
 #
 get_base_hostname() {
-    BASE_HOSTNAME=`echo $HOSTNAME | sed "s/[.0-9].*$//"` 
+    if test -n "$HOSTNAME"
+    then
+        BASE_HOSTNAME=`echo $HOSTNAME | sed "s/[.0-9].*$//"` 
+        loginfo "Got BASE_HOSTNAME: [$BASE_HOSTNAME]"
+    else
+	logerror "HOSTNAME is emtpy; can't get BASE_HOSTNAME"
+    fi
 }
 #
 ################################################################################
@@ -1184,10 +1204,10 @@ get_group_name() {
             # Add the global override on top (least important).
             GROUP_OVERRIDES="`sed -ne 's/^# global_override=:\([^:]*\):$/\1/p' ${SCRIPTS_DIR}/cluster.txt` $GROUP_OVERRIDES"
         fi
+        write_variables # Save GROUPNAMES and GROUP_OVERRIDES to variables.txt
     else
 	logwarn "cluster.txt doesn't exists (won't use GROUPNAMES and GROUP_OVERRIDES). You should concider running si_clusterconfig to generate it."
     fi
-    write_variables # Save GROUPNAMES and GROUP_OVERRIDES to variables.txt
 }
 
 ################################################################################
@@ -1206,7 +1226,7 @@ get_group_name() {
 #
 # return: full path of 1st occurence found.
 #
-# example: choose_filename /scripts/main-install "" ".sh" ".master"
+# example: choose_filename /scripts/main-install ".sh" ".master"
 #
 choose_filename() {
 	logdebug "choose_filename $*"
@@ -1215,7 +1235,8 @@ choose_filename() {
 	shift
 	for FILE in ${HOSTNAME} ${GROUPNAMES} ${BASE_HOSTNAME} ${IMAGENAME} default
 	do
-		for EXT in $*
+		test -z "$FILE" && continue
+		for EXT in $* "" # We search for file without extention as well.
 		do
 			FOUND=${DIR}/${FILE}${EXT}
 			logdebug "Trying ${FOUND}"
@@ -1251,7 +1272,7 @@ choose_autoinstall_script() {
         [ ! -e ${SCRIPTS_DIR}/main-install/${SCRIPTNAME} -a ! -e ${SCRIPTS_DIR}/main-install/${SCRIPTNAME}.sh -a ! -e ${SCRIPTS_DIR}/main-install/${SCRIPTNAME}.master ] || shellout "Can't find requested main autoinstall script: ${SCRIPTNAME}{,.sh,.master}"
     else
 	    loginfo "SCRIPTNAME not defined. Looking for possible candidates."
-            SCRIPTNAMES=`choose_filename ${SCRIPTS_DIR}/main-install "" ".sh" ".master"`
+            SCRIPTNAMES=`choose_filename ${SCRIPTS_DIR}/main-install ".sh" ".master"`
     fi
 
     #
