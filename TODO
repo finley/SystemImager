@@ -12,6 +12,7 @@
 - fix si_getimage so it installs scripts in /var/lib/systemimager/scripts/main-install/
   fix si_getimage so it installs correctly remote boot package
   fix si_getimage so it moves <imagedir>/etc/systemimager/autoinstall_script.conf to disks layout.
+  fix si_getimage so it retreive/create the network configuration file.
 - Add imaging a list of packages instead of a directory (protocol:bootstrap)
 - DONE: Add network configuration using networkmanager or systemd-networkd (in a postinstall script at 1st)
 - DONE: Add install of monitor_rebooted service in dracut module instead of postinstall script.
@@ -44,7 +45,7 @@ Server.pm:
 - remove 
 
 - FIXED: /root/rpmbuild/BUILD/systemimager-4.5.0/tmp/dracutbase/modules.d/51systemimager/module-setup.sh: line 38: cd: /usr/share/systemimager/boot/x86_64/standard/initrd_template/: No such file or directory => ERROR only occures if package is not installed on system.
-- /run is not a virtual filesystem in old CentOS-6. Thus saving si_monitor.log there is useless. See if it can be achieved (in case of directboot)
+- /run is not a virtual filesystem in old CentOS-6. Thus saving si_monitor.log there is useless. See if it can be achieved (in case of directboot) => It is stored in /dev/.initramfs (check dir name).
 - Add espeak log speak in case of warning or error.
 - DONE: Distros to support: debian, ubuntu
 - DONE: Distros supported: CentOS-6, CentOS-7, Fedora-27, OpenSuSE-42.3
@@ -123,6 +124,8 @@ FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in /etc/systemimager/system
 - PARTIALY DONE: udpcast support
 
 - EARLY STEPS DONE: deploy a docker image on a physical node
+- Use Singularity as docker alternative to store and/or deploy an image (https://www.sylabs.io/singularity/)
+- Have a look at https://github.com/moby/moby/blob/master/contrib/download-frozen-image-v2.sh to download manually docker images.
 
 - EARLY STEPS DONE: NFS deployment method
 
@@ -166,6 +169,7 @@ FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in /etc/systemimager/system
 
 # Need to check perl deps to SystemInstaller in si_* commands
 perl(SystemConfig::Util::Cmd)
+perl(SystemConfig::Util::Log)
 perl(SystemConfig::Boot)
 
 ============= TODO before use of dracut. Needs reviewing ======================
