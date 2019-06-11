@@ -67,5 +67,3 @@ fi
 unset SIS_SYSMSG_ENABLED
 info "Disconnecting life support!"
 info "Control given back to system..."
-exit 0
-
