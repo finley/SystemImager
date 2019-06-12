@@ -60,8 +60,15 @@ umount ${SCRIPTS_DIR} || logerror "Failed to umount ${SCRIPTS_DIR}"
 # So we can try to save an updated si_monitor.log to imaged system.
 if test -f /sysroot/root/SIS_Install_logs/si_monitor.log
 then
-    info "Saving ultimate version of /root/SIS_Install_logs/si_monitor.log to /run/initramfs"
-    cp -f /tmp/si_monitor.log /run/systemimager/si_monitor.log
+    if test -d /dev/.initramfs/ # old distros
+    then
+        info "Saving ultimate version of /root/SIS_Install_logs/si_monitor.log to /dev/.initramfs"
+	mkdir -p /dev/.initramfs/systemimager
+	cp -f /tmp/si_monitor.log /dev/.initramfs/systemimager/si_monitor.log
+    elif test -f /run/initramfs/ # new distros
+        info "Saving ultimate version of /root/SIS_Install_logs/si_monitor.log to /run/initramfs"
+	mkdir -p /run/initramfs/systemimager/
+        cp -f /tmp/si_monitor.log /run/initramfs/systemimager/si_monitor.log
 fi
 
 unset SIS_SYSMSG_ENABLED

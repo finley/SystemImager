@@ -117,9 +117,12 @@ EOF
 
 # 1st, get last si_monitor.log file from /run/systemimager if it exists
 # It will exists if we did a direct boot.
-if test -r /run/systemimager/si_monitor.log -a -w /root/SIS_Install_logs
+if test -r /run/initramfs/systemimager/si_monitor.log -a -w /root/SIS_Install_logs/
 then
-	cat /run/systemimager/si_monitor.log | sed -E 's/^[\[[0-9]{2}m//g' > /root/SIS_Install_logs/si_monitor.log
+	cat /run/initramfs/systemimager/si_monitor.log | sed -E 's/^[\[[0-9]{2}m//g' > /root/SIS_Install_logs/si_monitor.log
+elif test -r /dev/.initramfs/systemimager/si_monitor.log -a -w /root/SIS_Install_logs/
+then
+	cat /dev/.initramfs/systemimager/si_monitor.log | sed -E 's/^[\[[0-9]{2}m//g' > /root/SIS_Install_logs/si_monitor.log
 fi
 
 if ($(send_message_cmd))
@@ -164,9 +167,12 @@ case "\$1" in
   start)
 	# 1st, get last si_monitor.log file from /run/systemimager if it exists
 	# It will exists if we did a direct boot.
-        if test -r /run/systemimager/si_monitor.log -a -w /root/SIS_Install_logs
+        if test -r /run/initramfs/systemimager/si_monitor.log -a -w /root/SIS_Install_logs
         then
-	    cp -f /run/systemimager/si_monitor.log /root/SIS_Install_logs/si_monitor.log
+	    cp -f /run/initramfs/systemimager/si_monitor.log /root/SIS_Install_logs/si_monitor.log
+	elif test -r /dev/.initramfs/systemimager/si_monitor.log -a -w /root/SIS_Install_logs/
+	then
+	    cp -f /dev/.initramfs/systemimager/si_monitor.log /root/SIS_Install_logs/si_monitor.log
         fi
 
         if ($(send_message_cmd))
