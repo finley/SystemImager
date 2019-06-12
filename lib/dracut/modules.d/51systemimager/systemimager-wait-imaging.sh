@@ -33,6 +33,9 @@ case "$SI_IMAGING_STATUS" in
 		fi
 
 		logdebug "Imaging finished. Doing post action [$SI_POST_ACTION]"
+		SI_IMAGING_STATUS="finished"
+		write_variables
+
 		cd / # Make sure we're not in the wrong plce.
 		case "$SI_POST_ACTION" in
 			"shell")
