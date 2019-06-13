@@ -1235,7 +1235,7 @@ choose_filename() {
 	shift
 	for FILE in ${HOSTNAME} ${GROUPNAMES} ${BASE_HOSTNAME} ${IMAGENAME} default
 	do
-		test -z "$FILE" && continue
+		test -z "$FILE" -o "$FILE" = "localhost" && continue # Ignode unset hostname (empty or localhost)
 		for EXT in $* "" # We search for file without extention as well.
 		do
 			FOUND=${DIR}/${FILE}${EXT}
