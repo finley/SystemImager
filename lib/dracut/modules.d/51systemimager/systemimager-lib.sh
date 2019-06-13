@@ -1174,9 +1174,8 @@ get_hostname_by_dns() {
 	    write_variables
 	    loginfo "Got HOSTNAME: [$HOSTNAME] from DNS."
     else
-	    logwarn "Can't find this host name from DNS."
+	    logwarn "Can't find this host name [$IPADDR] from DNS."
     fi
-    loginfo "Got hostname: [$HOSTNAME]"
 }
 #
 ################################################################################
@@ -1206,7 +1205,7 @@ get_group_name() {
         fi
         write_variables # Save GROUPNAMES and GROUP_OVERRIDES to variables.txt
     else
-	logwarn "cluster.txt doesn't exists (won't use GROUPNAMES and GROUP_OVERRIDES). You should concider running si_clusterconfig to generate it."
+	    logwarn "cluster.txt doesn't exists (won't use GROUPNAMES and GROUP_OVERRIDES). You should concider running si_clusterconfig(7) to generate it."
     fi
 }
 
