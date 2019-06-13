@@ -150,12 +150,18 @@ write_SysVInitFile() {
     logdebug "Creating systemimager-monitor-firstboot init script"
     cat << EOF > $1
 #!/bin/bash
+#
+# systemimager-monitor-firstboot	starts systemimager-monitor-firstboot
+#
+# chkconfig: 2345 08 99
+# description: Inform systemimager monitord that reboot is done.
+#
 ### BEGIN INIT INFO
 # Provides: systemimager-monitor-firstboot
 # Required-Start: $network $local_fs $syslog
 # Required-Stop:
-# Default-Start:  3 5
-# Default-Stop:
+# Default-Start:  2 3 4 5
+# Default-Stop: 0 1 6
 # Short-Description: Report the REBOOTED state to the image server
 # Description: Send the informations to the si_monitor daemon on the image
 #              to set the REBOOTED state for this correctly installed client.
@@ -200,10 +206,10 @@ EOF
     chmod a+x $1
     if [ -x /sysroot/sbin/chkconfig ]; then
 	logdebug "Enabling systemimager-monitor-firstboot in client using chkconfig"
-        chroot /sysroot chkconfig --add systemimager-monitor-firstboot
+        chroot /sysroot chkconfig --add systemimager-monitor-firstboot || logerror "Failed to enable systemimager-monitor-firstboot service using chkconfig"
     elif [ ! -e /etc/rcS.d/S99systemimager-monitor-firstboot ]; then
 	logdebug "Enabling systemimager-monitor-firstboot in client using old school link"
-	(cd /sysroot; ln -s $1 /etc/rcS.d/S99systemimager-monitor-firstboot)
+	(cd /sysroot; ln -s $1 /etc/rcS.d/S99systemimager-monitor-firstboot || logerror "Failed to enable systemimager-monitor-firstboot service using link method")
     fi
 }
 
