@@ -508,7 +508,15 @@ EOF
 			# Get partition filesystem if it exists (no raid, no lvm) so we can set the correct partition type/id
 			P_FS=`xmlstarlet sel -t -m "config/fsinfo[@real_dev=\"${DISK_DEV}${P_NUM}\"]" -v "@fs" -n ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d'`
 			# Set partition filesystem
-			_set_partition_flag_and_id $LABEL_TYPE $DISK_DEV $P_NUM $P_FS
+			if test -n "$P_FS"
+			then
+				_set_partition_flag_and_id "$LABEL_TYPE" "$DISK_DEV" "$P_NUM" "$P_FS"
+			else
+				logwarn "$DISK_DEV$P_NUM has no filesystem defined in disk-layout"
+				logwarn "Update ${DISKS_LAYOUT_FILE##*/} in /var/lib/systemimager/scripts/disks-layouts/"
+				logwarn "by adding appropriate fsinfo section on your image server."
+				logwanr "See systemimager.disks-layout(7) manual for more informations."
+			fi
 
 			# Set partition ID if provided
 			if test -n "$P_ID"
@@ -520,7 +528,7 @@ EOF
 			# 3/ Set the partition flags
 			for flag in `echo $P_FLAGS|tr ',' ' '`
 			do
-				test -n ${flag/-/} && _set_partition_flag_and_id $LABEL_TYPE $DISK_DEV $P_NUM $flag
+				test -n "${flag/-/}" && _set_partition_flag_and_id "$LABEL_TYPE" "$DISK_DEV" "$P_NUM" "$flag"
 			done
 
 			# Testing that lvm flag is set if lvm group is defined.
