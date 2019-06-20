@@ -153,7 +153,7 @@ write_SysVInitFile() {
 #
 # systemimager-monitor-firstboot	starts systemimager-monitor-firstboot
 #
-# chkconfig: 2345 08 99
+# chkconfig: 2345 11 99
 # description: Inform systemimager monitord that reboot is done.
 #
 ### BEGIN INIT INFO
