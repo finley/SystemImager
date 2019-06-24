@@ -1141,25 +1141,25 @@ _do_fstab() {
 #
 ################################################################################
 _get_sectors_aligment() {
-	if test ! -d /sys/block/$1
+	if test ! -d /sys/block/*$1
 	then
-		logwarn "/sys/block/$1 does not exists. Assuming sector aligment: 2048s"
+		logwarn "/sys/block/*$1 does not exists. Assuming sector aligment: 2048s"
 		echo 2048
 		return
 	fi
 
-	OPTIM_IO_SIZE=$(cat /sys/block/$1/queue/optimal_io_size)
+	OPTIM_IO_SIZE=$(cat /sys/block/*$1/queue/optimal_io_size)
 	if test -z "${OPTIM_IO_SIZE/0/}"
 	then
-		logwarn "/sys/block/$1/queue/optimal_io_size not supported. Assuming sector aligment: 2048s"
+		logwarn "/sys/block/*$1/queue/optimal_io_size not supported. Assuming sector aligment: 2048s"
 		echo 2048
 		return
 	fi
 
-	ALIGMNT_OFFSET=$(cat /sys/block/$1/alignment_offset)
+	ALIGMNT_OFFSET=$(cat /sys/block/*$1/alignment_offset)
 	test -z "$ALIGMNT_OFFSET" && ALIGMNT_OFFSET=0
 
-	PHY_BLOCK_SIZE=$(cat /sys/block/$1/queue/physical_block_size)
+	PHY_BLOCK_SIZE=$(cat /sys/block/*$1/queue/physical_block_size)
 	test -z "${PHY_BLOCK_SIZE/0/}" && PHY_BLOCK_SIZE=512 # Use 512 is value empty or zero.
 
 	ALIGMNT=$(dc <<< "$OPTIM_IO_SIZE $ALIGMNT_OFFSET + $PHY_BLOCK_SIZE / p")
@@ -1189,15 +1189,15 @@ _get_sectors_aligment() {
 convert2sectors() {
 	# local LC_NUMERIC="en_US.UTF-8" # Make sure we use "." for decimal separator.
 
-	test ! -f /sys/block/$1/size && shellout "convert2sectors: device [$1] does not exists."
+	test ! -f /sys/block/*$1/size && shellout "convert2sectors: device [$1] does not exists."
 	if test -z "${2/0/}" # 0 means all space available. Keep it unchanged.
 	then
 		echo 0
 		return
 	fi
 	test -z $(sed -E 's/^[0-9]+(\.[0-9]+)*//g' <<< $2) || shellout "convert2sectors: size [$2] for partition $1 is not numeric."
-	DISK_SIZE=$(cat /sys/block/$1/size) # percentage computation
-	BLOCK_SIZE=$(cat /sys/block/$1/queue/logical_block_size)
+	DISK_SIZE=$(cat /sys/block/*$1/size) # percentage computation
+	BLOCK_SIZE=$(cat /sys/block/*$1/queue/logical_block_size)
 	test -z "${BLOCK_SIZE}" && logwarn "Failed to get $1 block size. Assuming 512 bytes." && BLOCK_SIZE=512
 	test ${BLOCK_SIZE} -eq 0 && logwarn "$1 reports block size of 0. Assuming 512 bytes." && BLOCK_SIZE=512
 
