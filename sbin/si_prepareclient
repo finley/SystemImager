@@ -578,8 +578,14 @@ temporarily_disable_rsync_in_xinetd();
 # Collect all the disk information
 my $disks = collect_disks();
 
-# Create /etc/systemimager/autoinstallscript.conf
+# Create /etc/systemimager/disks-layout.xml
 create_auto_install_script_conf($disks);
+
+# Collect all the network interfaces
+#my $ifaces = collect_net_ifaces();
+
+# Create /etc/systemimager/network-conf.xml
+#create_network_conf($ifaces);
 
 # Create /etc/systemimage/byid_real_map.conf
 create_byid_real_map_conf();
