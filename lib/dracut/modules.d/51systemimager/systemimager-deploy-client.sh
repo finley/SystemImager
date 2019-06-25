@@ -204,6 +204,7 @@ loginfo "Imaging completed"
 
 if [ -n "$MONITOR_SERVER" ]; then
     # Report the 'imaged' state to the monitor server.
+    logdebug "Reporting imaged status to monitor ($MONITOR_SERVER:$MONITOR_PORT)"
     send_monitor_msg "status=100:speed=0"
     if [ "x$MONITOR_CONSOLE" = "xy" ]; then
         MONITOR_CONSOLE=yes
@@ -219,6 +220,7 @@ if [ -n "$MONITOR_SERVER" ]; then
         sleep 10
     fi
     # Report the post-install action.
+    logdebug "Reporting doing post-install to monitor ($MONITOR_SERVER:$MONITOR_PORT)"
     send_monitor_msg "status=106:speed=0"
 fi
 

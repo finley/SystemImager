@@ -1184,7 +1184,12 @@ get_base_hostname() {
     if test -n "$HOSTNAME"
     then
         BASE_HOSTNAME=`echo $HOSTNAME | sed "s/[.0-9].*$//"` 
-        logdebug "Got BASE_HOSTNAME: [$BASE_HOSTNAME]"
+	if test -z "$BASE_HOSTNAME"
+	then
+		logdebug "NO BASE_HOSTNAME! (hostname only a number?)"
+	else
+        	logdebug "Got BASE_HOSTNAME: [$BASE_HOSTNAME]"
+	fi
     else
 	logerror "HOSTNAME is emtpy; can't get BASE_HOSTNAME"
     fi
@@ -1317,7 +1322,10 @@ run_pre_install_scripts() {
 
         PRE_INSTALL_SCRIPTS="$PRE_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]all\..*"`"
         PRE_INSTALL_SCRIPTS="$PRE_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]${IMAGENAME}\..*"`"
-        PRE_INSTALL_SCRIPTS="$PRE_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]${BASE_HOSTNAME}\..*"`"
+	if test -n "${BASE_HOSTNAME}"
+	then
+        	PRE_INSTALL_SCRIPTS="$PRE_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]${BASE_HOSTNAME}\..*"`"
+	fi
         for GROUPNAME in ${GROUPNAMES}; do
             PRE_INSTALL_SCRIPTS="$PRE_INSTALL_SCRIPTS `ls | grep "^[0-9][0-9]${GROUPNAME}\..*"`"
         done
