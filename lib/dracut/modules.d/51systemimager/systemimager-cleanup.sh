@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # -*- mode: shell-script; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
 # ex: ts=8 sw=4 sts=4 et filetype=sh
 #
@@ -21,12 +21,12 @@ logdebug "==== systemimager-cleanup ===="
 
 # Now we can kill the monitor, everything is finished we are just before swap-root and normal boot.
 if test -s /run/systemimager/si_monitor.pid; then
-    loginfo "Stopping remote monitor task. (last monitor message)"
     MONITOR_PID=`cat /run/systemimager/si_monitor.pid`
+    loginfo "Stopping remote monitor task: PID=$MONITOR_PID. (last monitor message)"
     rm -f /run/systemimager/si_monitor.pid
     # Making sure it is an integer.
-    test -n "`echo ${MONITOR_PID}|sed -r 's/[0-9]*//g'`" && shellout "Can't kill monitor task: /run/systemimager/si_monitor.pid is not a pid."
-    if [ ! -z "$MONITOR_PID" ]; then
+    test -n "${MONITOR_PID//[0-9]/}" && shellout "Can't kill monitor task: /run/systemimager/si_monitor.pid is not a pid."
+    if [ -n "$MONITOR_PID" ]; then
         kill -9 $MONITOR_PID
         # wait $MONITOR_PID # Make sure process is killed before continuing.
         # (We can't use shell wait because process is not a child of this shell)
@@ -34,8 +34,8 @@ if test -s /run/systemimager/si_monitor.pid; then
         do
             sleep 0.5
         done
-        # At this point we must not use systemimager log helpers like loginfo, logwarn, logerror, ...
-        info "SystemImager remote monitor task stopped"
+        # At this point systemimager log helpers like loginfo, logwarn, logerror, ... may not be saved and seen remotely.
+        loginfo "SystemImager remote monitor task stopped"
     fi
 fi
 
@@ -48,8 +48,16 @@ test -f /initqueue-finished/90-systemimager-wait-imaging.sh && \
     rm -f /initqueue-finished/90-systemimager-wait-imaging.sh
 
 # Now we can clean systemimager garbages.
-rm -rf /run/systemimager/* ${STAGING_DIR}/*.*
+logdebug "Cleaning systemimager garbage (/run/systemimager/* SIS_action fstab.image grub_default.cfg mdadm.conf.temp variables.txt)"
+rm -rf /run/systemimager/*
 (cd /tmp; rm -f SIS_action fstab.image grub_default.cfg mdadm.conf.temp variables.txt)
+
+if test -d "${STAGING_DIR}"
+then
+	logdebug "Cleaning staging dir: ${STAGING_DIR}/*.*"
+	rm -rf ${STAGING_DIR}/*.*
+fi
+
 
 # Umount /scripts ramfs filesystem
 logdebug "Unmounting ${SCRIPTS_DIR} ramfs filesystem"
@@ -62,17 +70,17 @@ if test -f /sysroot/root/SIS_Install_logs/si_monitor.log
 then
     if test -d /dev/.initramfs/ # old distros
     then
-        info "Saving ultimate version of /root/SIS_Install_logs/si_monitor.log to /dev/.initramfs"
+        loginfo "Saving ultimate version of /root/SIS_Install_logs/si_monitor.log to /dev/.initramfs"
 	mkdir -p /dev/.initramfs/systemimager
 	cp -f /tmp/si_monitor.log /dev/.initramfs/systemimager/si_monitor.log
     elif test -f /run/initramfs/ # new distros
     then
-        info "Saving ultimate version of /root/SIS_Install_logs/si_monitor.log to /run/initramfs"
+        loginfo "Saving ultimate version of /root/SIS_Install_logs/si_monitor.log to /run/initramfs"
 	mkdir -p /run/initramfs/systemimager/
         cp -f /tmp/si_monitor.log /run/initramfs/systemimager/si_monitor.log
     fi
 fi
 
 unset SIS_SYSMSG_ENABLED
-info "Disconnecting life support!"
-info "Control given back to system..."
+loginfo "Disconnecting life support!"
+loginfo "Control given back to system..."
