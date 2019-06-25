@@ -1184,7 +1184,7 @@ get_base_hostname() {
     if test -n "$HOSTNAME"
     then
         BASE_HOSTNAME=`echo $HOSTNAME | sed "s/[.0-9].*$//"` 
-        loginfo "Got BASE_HOSTNAME: [$BASE_HOSTNAME]"
+        logdebug "Got BASE_HOSTNAME: [$BASE_HOSTNAME]"
     else
 	logerror "HOSTNAME is emtpy; can't get BASE_HOSTNAME"
     fi
@@ -1238,17 +1238,17 @@ choose_filename() {
 		for EXT in $* "" # We search for file without extention as well.
 		do
 			FOUND=${DIR}/${FILE}${EXT}
-			logdebug "Trying ${FOUND}"
+			loginfo "Trying ${FOUND}"
 			test -e ${FOUND} && break 2
 		done
 	done
 	# Check we went out thru break.
 	if test -e "${FOUND}"
 	then
-		logdebug "Got: [${FOUND}]"
+		loginfo "Got: [${FOUND}]"
 		echo "${FOUND}"
 	else
-		logdebug "No matching file found. in [$DIR]"
+		loginfo "No matching file found. in [$DIR]"
 		echo ""
 	fi
 }
@@ -1284,8 +1284,7 @@ choose_autoinstall_script() {
 
     # Did we really find one, or just exit the loop without a 'break'
     if [ ! -e "${SCRIPTNAME}" ]; then
-        logwarn "No main autoinstall script defined. Looked for:"
-        logwarn "${SCRIPTNAMES}"
+        logwarn "No main autoinstall script found, but that may be OK."
         logwarn "If you need a main install script, check that one of the above scipts"
         logwarn "exists in the autoinstall scripts directory on your image server."
         logwarn "See also: si_mkautoinstallscript(8)."

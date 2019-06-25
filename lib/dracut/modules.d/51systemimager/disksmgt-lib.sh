@@ -584,7 +584,7 @@ EOF
 #
 ################################################################################
 _set_partition_flag_and_id() {
-	loginfo "Setting [$4] attribute for partition $3 on device $2"
+	loginfo "Setting [$4] attribute for partition $(_get_part_dev_from_disk_dev $2 $3)"
 	case $4 in
 		ext2|ext3|ext4|xfs|jfs|reiserfs|btrfs)
 			case $1 in
