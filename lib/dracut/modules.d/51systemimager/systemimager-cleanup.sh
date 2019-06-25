@@ -69,6 +69,7 @@ then
         info "Saving ultimate version of /root/SIS_Install_logs/si_monitor.log to /run/initramfs"
 	mkdir -p /run/initramfs/systemimager/
         cp -f /tmp/si_monitor.log /run/initramfs/systemimager/si_monitor.log
+    fi
 fi
 
 unset SIS_SYSMSG_ENABLED
