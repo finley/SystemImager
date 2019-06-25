@@ -60,11 +60,11 @@ function get_image_size() {
 ################################################################################
 #
 function download_image() {
-    loginfo "Downloading image"
     # Start si_monitor progress and status report.
     loginfo "Starting monitor progress report task..."
     start_report_task
 
+    loginfo "Downloading image"
     if [ "${TMPFS_STAGING}" = "yes" ]; then
 	[ -n "${NO_LISTING}" ] && loginfo "Quietly downloading image in staging dir: ${STAGING_DIR}"
         # Deposit image into tmpfs

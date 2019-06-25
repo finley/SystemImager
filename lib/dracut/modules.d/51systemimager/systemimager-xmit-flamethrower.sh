@@ -66,11 +66,11 @@ function get_image_size() {
 ################################################################################
 #
 function download_image() {
-    loginfo "Downloading image"
     # Start si_monitor progress and status report.
     loginfo "Starting monitor progress report task..."
     start_report_task
 
+    loginfo "Downloading image"
     # TODO
 
     stop_report_task 101 # 101: status=finalizing...
