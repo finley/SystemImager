@@ -1797,10 +1797,6 @@ start_report_task() {
 #
 
 stop_report_task() {
-    # Try to report the error to the monitor server.
-    if [ ! -z "$MONITOR_SERVER" ]; then
-        send_monitor_msg "status=$1:speed=0"
-    fi
 
     if test -s /run/systemimager/report_task.pid; then
 	[ "$1" -eq 101 ] && ProgressBar 100 # Fake 100% if status = "Finalizing"
@@ -1809,13 +1805,19 @@ stop_report_task() {
         REPORT_PID=`cat /run/systemimager/report_task.pid`
 	rm -f /run/systemimager/report_task.pid
         # Making sure it is an integer.
-	test -n "`echo ${REPORT_PID}|sed -r 's/[0-9]*//g'`" && shellout "Can't kill report task: /run/systemimager/report_task.pid is not a pid."
-        if [ ! -z "$REPORT_PID" ]; then
+	test -n "${REPORT_PID//[0-9]/}" && shellout "Can't kill report task: /run/systemimager/report_task.pid ($REPORT_PID) is not a pid."
+        if test -n "$REPORT_PID" ; then
             kill -9 $REPORT_PID
 	    wait $REPORT_PID # Make sure process is killed before continuing.
 	    #test -w /dev/console && echo "${BG_BLACK}" > /dev/console
-            loginfo "Progress report task stopped"
+	    loginfo "Progress report task (PID=$REPORT_PID) stopped."
         fi
+    fi
+
+    # Try to report the error to the monitor server.
+    if [ -n "$MONITOR_SERVER" ]; then
+	logdebug "Setting speed to 0 and status to $1 (101:finalizing or -1 failure)"
+        send_monitor_msg "status=$1:speed=0"
     fi
 }
 
