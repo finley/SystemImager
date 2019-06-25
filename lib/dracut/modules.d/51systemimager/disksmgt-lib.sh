@@ -410,6 +410,39 @@ EOF
 	fi
 }
 
+################################################################################
+#
+# _get_part_dev_from_disk_dev()
+# $1: Path to disk device
+# $2: PArtition number
+# return: Partition full device PATH
+#
+# Note: Patition Path is NOT equal to concat of disk device and partition number
+#       => /dev/cciss/c0d0 part 1 is NOT /dev/cciss/c0d01. (/dev/cciss/c0d0p1)
+################################################################################
+
+_get_part_dev_from_disk_dev() {
+	if test -b "$1"
+	then
+		DEV_MAJOR=$(printf "%d" "0x$(stat -c '%t' $1)")
+	else
+		shellout "[$1] is no a block device"
+	fi
+
+	test -n "${2//[0-9]/}" && shellout "[$2] is not a partition number"
+	
+	if test ! -r /sys/dev/block/$DEV_MAJOR:$2/uevent
+	then
+		logerror "Can't read /sys/dev/block/$DEV_MAJOR:$2/uevent"
+		shellout "Can't gather $1 partition $2 informations"
+	fi
+
+	. /sys/dev/block/$DEV_MAJOR:$2/uevent
+	test "$DEVTYPE" != "partition" && shellout "/sys/dev/block/$DEV_MAJOR:$2 TYPE=$DEVTYPE is not a partition."
+
+	# echo $(udevadm info --query=name --path=/sys/dev/block/$DEV_MAJOR:$2)
+	echo "/dev/$DEVNAME"
+}
 
 ################################################################################
 #
@@ -506,13 +539,14 @@ EOF
 			esac
 
 			# Get partition filesystem if it exists (no raid, no lvm) so we can set the correct partition type/id
-			P_FS=`xmlstarlet sel -t -m "config/fsinfo[@real_dev=\"${DISK_DEV}${P_NUM}\"]" -v "@fs" -n ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d'`
+			P_DEV=$(_get_part_dev_from_disk_dev ${DISK_DEV} ${P_NUM}) # Find correct partition device path.
+			P_FS=`xmlstarlet sel -t -m "config/fsinfo[@real_dev=\"${P_DEV}\"]" -v "@fs" -n ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d'`
 			# Set partition filesystem
 			if test -n "$P_FS"
 			then
 				_set_partition_flag_and_id "$LABEL_TYPE" "$DISK_DEV" "$P_NUM" "$P_FS"
 			else
-				logwarn "$DISK_DEV$P_NUM has no filesystem defined in disk-layout"
+				logwarn "$P_DEV has no filesystem defined in disk-layout"
 				logwarn "Update ${DISKS_LAYOUT_FILE##*/} in /var/lib/systemimager/scripts/disks-layouts/"
 				logwarn "by adding appropriate fsinfo section on your image server."
 				logwanr "See systemimager.disks-layout(7) manual for more informations."
@@ -532,7 +566,7 @@ EOF
 			done
 
 			# Testing that lvm flag is set if lvm group is defined.
-			[ -n "${P_LVM_GROUP}" ] && [ -z "`echo $P_FLAGS|grep lvm`" ] && shellout "Missing lvm flag for ${DISK_DEV}${P_NUM}"
+			[ -n "${P_LVM_GROUP}" ] && [ -z "`echo $P_FLAGS|grep lvm`" ] && shellout "Missing lvm flag for ${P_DEV}"
 
 		done
 }

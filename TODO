@@ -3,6 +3,7 @@
 #
 
 ============= TODO for the dracut change before release is possible ===========
+- Add multipathd support.
 - DONE: Unpackaged file /usr/share/systemimager/boot/x86_64/standard/ARCH
 - shutdown network before directboot otherwise the interface is not restarted. Thus, if HWADDR is spoofed (in config),
   this doesn't take effect. Network Manager doesn't restart the whole interface. started means do nothing for NetworkManager.
@@ -19,9 +20,9 @@
 - DONE: Do not install grub on disk we did not handle
 - DONE: rewrite si_mkbootserver
 - use http://aria2.sourceforge.net/ for torrent / ftp / http / ... protocols.
-- migrate autoinstallscript.conf.content.sgml to systemimager.disk-layout.sgml
+- DONE: migrate autoinstallscript.conf.content.sgml to systemimager.disk-layout.sgml
 - DONE: create systemimager.cmdline.sgml
-- DONE and FIXED: check si_getimage: installs a main-install script with beep incesantly at the end.
+- DONE: and FIXED: check si_getimage: installs a main-install script with beep incesantly at the end.
 - DONE: imager configures client network
 - allow ipv6 DNS in network-configs.xsd
 - DONE: Display a relevant error message if ip= mention and invalid network interface.
