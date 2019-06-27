@@ -18,7 +18,7 @@
 # at last some cmdline.d values are also set.
 
 . /lib/systemimager-lib.sh
-logdebug "==== systemimager-init ===="
+logstep "systemimager-init"
 
 # Init /run/systemimager directory
 test ! -d /run/systemimager && mkdir -p /run/systemimager && logdebug "Created /run/systemimager"

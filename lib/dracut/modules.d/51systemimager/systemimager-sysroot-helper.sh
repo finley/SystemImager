@@ -15,7 +15,7 @@
 
 type shellout >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 
-logdebug "==== systemimager-sysroot-helper ===="
+logstep "systemimager-sysroot-helper"
 
 test -r /tmp/root.info && . /tmp/root.info
 test -z "$NEWROOT" && NEWROOT=/sysroot

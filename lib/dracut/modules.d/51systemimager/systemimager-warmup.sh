@@ -15,7 +15,7 @@
 [ -e "$job" ] && rm "$job"
 
 . /lib/systemimager-lib.sh
-logdebug "==== systemimager-warmup ===="
+logstep "systemimager-warmup"
 
 loginfo "Waiting for plymouth GUI to show up."
 # Wait for plymouth to be ready.

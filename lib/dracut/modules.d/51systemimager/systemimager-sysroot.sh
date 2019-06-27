@@ -19,7 +19,7 @@
 
 type shellout >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 
-logdebug "==== systemimager-sysroot ===="
+logstep "systemimager-sysroot"
 
 ROOT="$(getarg root=)"
 ROOT="${ROOT#block:}" # Cleaup $ROOT from prepending block: keyword

@@ -80,15 +80,20 @@ fi
 #    output is done as text ONLY.
 #
 
+# Log a dracut hook step
+logstep() {
+	logmessage info "${BG_BLUE}    STEP:${BG_BLACK} ==== $@ ===="
+}
+
 # Log an error.
 logerror() {
-	logmessage err "${BG_RED}  ERROR:${BG_BLACK} $@"
+	logmessage err "${BG_RED}   ERROR:${BG_BLACK} $@"
 	plymouth --ping && plymouth update --status="mesg:E:$@" > /dev/null 2>&1
 }
 
 # Log a warning
 logwarn() {
-	logmessage warning "${FG_RED}warning:${FG_WHITE} $@"
+	logmessage warning "${FG_RED} warning:${FG_WHITE} $@"
 	plymouth --ping && plymouth update --status="mesg:W:$@" > /dev/null 2>&1
 }
 

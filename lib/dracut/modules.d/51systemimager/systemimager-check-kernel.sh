@@ -40,7 +40,7 @@ check_kernel() {
     fi
 }
 
-logdebug "==== systemimager-check-kernel ===="
+logstep "systemimager-check-kernel"
 
 check_kernel
 

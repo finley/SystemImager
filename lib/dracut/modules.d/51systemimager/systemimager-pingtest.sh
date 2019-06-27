@@ -15,7 +15,7 @@
 
 type shellout >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 
-logdebug "==== systemimager-pingtest ===="
+logstep "systemimager-pingtest"
 loginfo "Checking network connectivity via a ping test..."
 
 # Systemimager possible breakpoint

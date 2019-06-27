@@ -22,7 +22,7 @@ type sis_configure_network >/dev/null 2>&1 || . /lib/netmgt-lib.sh
 # Load variables.txt
 . /tmp/variables.txt
 
-logdebug "==== systemimager-deploy-client ===="
+logstep "systemimager-deploy-client"
 
 # Systemimager possible breakpoint
 getarg 'si.break=deploy' && logwarn "Break deploy client" && interactive_shell

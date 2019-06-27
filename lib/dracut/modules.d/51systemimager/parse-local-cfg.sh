@@ -22,7 +22,7 @@ type write_variables >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 # Look for local.cfg file
 #   This code inspired by Ian McLeod <ian@valinux.com>
 
-logdebug "==== parse-local-cfg ===="
+logstep "parse-local-cfg"
 
 # Systemimager possible breakpoint
 getarg 'si.break=parse-localcfg' && logwarn "Break parse-localcfg" && interactive_shell

@@ -15,7 +15,7 @@
 
 type shellout >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 
-logdebug "==== systemimager-timeout ===="
+logstep "systemimager-timeout"
 
 # 1st: check if we got an IP address.
 

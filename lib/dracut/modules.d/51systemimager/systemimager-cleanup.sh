@@ -15,7 +15,7 @@
 type getarg >/dev/null 2>&1 || . /lib/dracut-lib.sh
 type send_monitor_msg >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 
-logdebug "==== systemimager-cleanup ===="
+logstep "systemimager-cleanup"
 
 . /tmp/variables.txt
 

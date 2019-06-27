@@ -27,7 +27,7 @@ test -z "$DEBUG" && DEBUG=`getarg si.debug`
 DEBUG=`echo $DEBUG | head -c 1| tr 'YN10' 'ynyn'` # Cleann up to end with one letter y/n
 test -z "$DEBUG" && DEBUG="n" # Defaults to no.
 
-logdebug "==== parse-sis-options-old ===="
+logstep "parse-sis-options-old"
 loginfo "Reading SIS relevants parameters from cmdline"
 
 #####################################

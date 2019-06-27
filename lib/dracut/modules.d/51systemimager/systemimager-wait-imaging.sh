@@ -21,7 +21,7 @@ type shellout >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 # Re-read variables.txt each time we're called.
 . /tmp/variables.txt
 
-logdebug "==== systemimager-wait-imaging ===="
+logstep "systemimager-wait-imaging"
 logdebug "Called as: $f by $0"
 
 case "$SI_IMAGING_STATUS" in

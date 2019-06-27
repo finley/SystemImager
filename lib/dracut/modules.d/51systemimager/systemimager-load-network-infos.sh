@@ -29,7 +29,7 @@
 # (priority is givent to local.cfg, then cmdline, then DHCP at last)
 
 . /lib/systemimager-lib.sh # Load /tmp/variables.txt and some macros
-logdebug "==== systemimager-load-network-infos ===="
+logstep "systemimager-load-network-infos"
 
 DEVICE=$1
 logdebug "Network device used: [$DEVICE]"

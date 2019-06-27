@@ -13,7 +13,7 @@
 
 . /lib/systemimager-lib.sh
 
-logdebug "==== systemimager-start ===="
+logstep "systemimager-start"
 
 DEVICE=$1
 

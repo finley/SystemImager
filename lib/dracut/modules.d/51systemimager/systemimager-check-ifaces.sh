@@ -62,7 +62,7 @@ check_ifaces() {
     done	
 }
 
-logdebug "==== systemimager-check-ifaces ===="
+logstep "systemimager-check-ifaces"
 
 if test -f /tmp/net.ifaces
 then

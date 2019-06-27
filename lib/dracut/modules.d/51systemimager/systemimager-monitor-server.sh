@@ -15,7 +15,7 @@
 type getarg >/dev/null 2>&1 || . /lib/dracut-lib.sh
 type send_monitor_msg >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 
-logdebug "==== systemimager-monitor-server ===="
+logstep "systemimager-monitor-server"
 
 # Systemimager possible breakpoint
 getarg 'si.break=monitor' && logwarn "Break start monitor" && interactive_shell
@@ -60,9 +60,9 @@ if [ ! -z "$MONITOR_SERVER" ]; then
         do
             # OL: BUG: Maybe we need to differentiate MONITOR_PORT on server
             # and CONSOLE_PORT on client being imaged.
-            ncat -p $MONITOR_PORT -l -k < /tmp/si_monitor.log
-	    logwarn "Console server failed (err=$?); restarting...."
-	    sleep 1s
+            tail -F -n +0 /tmp/si_monitor.log | ncat -p $MONITOR_PORT -l
+	    logdebug "Monitor restart: exit=$?"
+	    sleep 0.5s
         done &
 	MONITOR_PID=$!
 	echo $MONITOR_PID > /run/systemimager/si_monitor.pid

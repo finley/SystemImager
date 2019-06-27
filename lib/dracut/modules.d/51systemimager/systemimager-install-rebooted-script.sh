@@ -14,7 +14,7 @@ type shellout >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 # Load variables.txt
 . /tmp/variables.txt
 
-logdebug "==== systemimager-install-rebooted-script ===="
+logstep "systemimager-install-rebooted-script"
 
 
 # netcat timeout in seconds
