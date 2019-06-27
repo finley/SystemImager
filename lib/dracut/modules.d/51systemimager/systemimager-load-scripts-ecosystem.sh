@@ -14,7 +14,7 @@
 . /lib/systemimager-lib.sh
 
 
-logdebug "==== systemimager-load-scripts-ecosystem.sh ===="
+logstep "systemimager-load-scripts-ecosystem.sh"
 
 # Systemimager possible breakpoint
 getarg 'si.break=download-scripts' && logwarn "Break download-scripts" && interactive_shell
@@ -64,18 +64,33 @@ get_group_name
 # 6: default.cfg
 
 OLD_POST_ACTION=$SI_POST_ACTION
-ALT_CONFIG=`choose_filename ${SCRIPTS_DIR}/configs .conf`
+
+SI_CONFIG_TO_LOAD=""
+
+loginfo "Looking for imager configuration."
 if test -n "${SIS_CONFIG}" -a -f "${SCRIPTS_DIR}/configs/${SIS_CONFIG}"
 then
-	loginfo "Loading ${SCRIPTS_DIR}/configs/${SIS_CONFIG}"
-	. ${SCRIPTS_DIR}/configs/${SIS_CONFIG}
-elif test -n "${ALT_CONFIG}"
+	loginfo "Using ${SCRIPTS_DIR}/configs/${SIS_CONFIG} as stated by si.config="
+	SI_CONFIG_TO_LOAD="${SCRIPTS_DIR}/configs/${SIS_CONFIG}"
+else
+	loginfo "si.config= is not defined (see systemimager.cmdline(7) manual"
+	loginfo "Trying to find a matching configuration."
+	ALT_CONFIG=`choose_filename ${SCRIPTS_DIR}/configs .conf`
+	if test -n "${ALT_CONFIG}"
+	then
+		loginfo "Found ${ALT_CONFIG}"
+		SI_CONFIG_TO_LOAD="${ALT_CONFIG}"
+	fi
+fi
+
+if test -n "$SI_CONFIG_TO_LOAD"
 then
-	loginfo "Loading ${ALT_CONFIG}"
-	. ${ALT_CONFIG}
+	loginfo "Loading $SI_CONFIG_TO_LOAD"
+	. $SI_CONFIG_TO_LOAD
 else
 	loginfo "No config available, using defaults"
 fi
+
 [ "$OLD_POST_ACTION" != "$SI_POST_ACTION" ] && loginfo "New SI_POST_ACTION read from config ${SIS_CONFIG}. New action after imaging: $SI_POST_ACTION."
 
 # Save values
