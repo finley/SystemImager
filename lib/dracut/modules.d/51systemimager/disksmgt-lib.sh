@@ -1113,6 +1113,7 @@ EOF
 			fi
 		done
 	unset IFS
+	logdebug "Filesystems initialized."
 }
 
 ################################################################################
