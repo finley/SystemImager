@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # "SystemImager" 
 # funtions related to imaging script only.
@@ -43,9 +43,12 @@ save_logs_to_sysroot() {
 #
 find_os_mounts() {
     loginfo "Looking for system specific mounted filesystems..."
-    findmnt -o target --raw|grep -v /sysroot |grep -v '^/$'|tail -n +2 > /tmp/system_mounts.txt
+    findmnt -o target --raw|grep -v /sysroot | grep -v "${SCRIPTS_DIR}" | grep -v '^/$'|tail -n +2 > /tmp/system_mounts.txt
     logdetail "Found:"
-    logdetail "$(cat /tmp/system_mounts.txt)"
+    for MP in "$(cat /tmp/system_mounts.txt)"
+    do
+    	logdetail "  - $MP"
+    done
     test -s "/tmp/system_mounts.txt" || shellout "No OS specific special filesystems found"
 }
 
@@ -62,8 +65,9 @@ mount_os_filesystems_to_sysroot() {
     test -s /tmp/system_mounts.txt || shellout "/tmp/system_mounts.txt doesn't exists. find_os_mounts() failed???"
     cat /tmp/system_mounts.txt | while read filesystem
     do
+	# test "$filesystem" = "${SCRIPTS_DIR}" && continue
         logdetail "Bind-mount ${filesystem} to /sysroot${filesystem}"
-        test -d "/sysroot${filesystem}" || mkdir -p "/sysroot${filesystem}" || shellout
+        test -d "/sysroot${filesystem}" || mkdir -p "/sysroot${filesystem}" || shellout "Failed to mkdir -p /sysroot${filesystem}"
         # In case of failure, we die as next steps will fail.
         mount -o bind "${filesystem}" "/sysroot${filesystem}" || shellout "Failed to bind-mount ${filesystem} to /sysroot${filesystem} ."
     done
