@@ -354,7 +354,6 @@ write_variables() {
     touch /tmp/variables.txt
     mv -f /tmp/variables.txt /tmp/variables.txt~
 
-    logdebug "SI_IMAGING_STATUS=$SI_IMAGING_STATUS"
 cat > /tmp/variables.txt <<EOF || shellout "Failed to write /tmp/variables.txt"
 ##
 ## SystemImager imager variables.
@@ -453,7 +452,6 @@ BITTORRENT_UPLOAD_MIN="$BITTORRENT_UPLOAD_MIN"
 
 # END OF FILE
 EOF
-    logdebug "SI_IMAGING_STATUS=$SI_IMAGING_STATUS"
 
 rm -f /tmp/variables.txt~
 }
