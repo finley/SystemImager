@@ -113,17 +113,17 @@ EOF
     cat > /sysroot/lib/systemd/systemimager-monitor-firstboot <<EOF
 #!/bin/bash
 # systemd service script for systemimager
-# (c) Olivier Lahaye 2012-2018
+# (c) Olivier Lahaye 2012-2019
 
-# 1st, get last si_monitor.log file from /run/systemimager if it exists
+# 1st, get last si_monitor.log and variables.txt files from /run/systemimager or /dev/.initramfs if it exists
 # It will exists if we did a direct boot.
-if test -r /run/initramfs/systemimager/si_monitor.log -a -w /root/SIS_Install_logs/
-then
-	cat /run/initramfs/systemimager/si_monitor.log | sed -E 's/^[\[[0-9]{2}m//g' > /root/SIS_Install_logs/si_monitor.log
-elif test -r /dev/.initramfs/systemimager/si_monitor.log -a -w /root/SIS_Install_logs/
-then
-	cat /dev/.initramfs/systemimager/si_monitor.log | sed -E 's/^[\[[0-9]{2}m//g' > /root/SIS_Install_logs/si_monitor.log
-fi
+for file in {/run/initramfs,/dev/.initramfs}/systemimager/{si_monitor.log,variables.txt}
+do
+	if test -r $file -a -w /root/SIS_Install_logs/
+	then
+		cat ${file} | sed -E 's/^[\[[0-9]{2}m//g' > /root/SIS_Install_logs/${file##*/}
+	fi
+done
 
 if ($(send_message_cmd))
 then
@@ -171,15 +171,15 @@ set -e
 
 case "\$1" in
   start)
-	# 1st, get last si_monitor.log file from /run/systemimager if it exists
+	# 1st, get last si_monitor.log and variables.txt files from /run/systemimager or /dev/.initramfs if it exists
 	# It will exists if we did a direct boot.
-        if test -r /run/initramfs/systemimager/si_monitor.log -a -w /root/SIS_Install_logs
-        then
-	    cp -f /run/initramfs/systemimager/si_monitor.log /root/SIS_Install_logs/si_monitor.log
-	elif test -r /dev/.initramfs/systemimager/si_monitor.log -a -w /root/SIS_Install_logs/
-	then
-	    cp -f /dev/.initramfs/systemimager/si_monitor.log /root/SIS_Install_logs/si_monitor.log
-        fi
+	for file in {/run/initramfs,/dev/.initramfs}/systemimager/{si_monitor.log,variables.txt}
+	do
+		if test -r $file -a -w /root/SIS_Install_logs/
+		then
+			cat ${file} | sed -E 's/^[\[[0-9]{2}m//g' > /root/SIS_Install_logs/${file##*/}
+		fi
+	done
 
         if ($(send_message_cmd))
         then
