@@ -25,7 +25,7 @@ type write_variables >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 DEBUG="n"
 getargbool 0 si.debug && DEBUG="y" && logdebug "Got DEBUG=y"
 
-logstep "parse-sis-options"
+logstep "parse-sis-options: parse cmdline parameters."
 loginfo "Reading SIS relevants parameters from cmdline and store them in /tmp/variables.txt"
 
 #####################################

@@ -29,7 +29,7 @@
 # (priority is givent to local.cfg, then cmdline, then DHCP at last)
 
 . /lib/systemimager-lib.sh # Load /tmp/variables.txt and some macros
-logstep "systemimager-load-network-infos"
+logstep "systemimager-load-network-infos: Load DHCP options"
 
 DEVICE=$1
 logdebug "Network device used: [$DEVICE]"
@@ -164,6 +164,8 @@ then
 	BOOTPROTO=static
 	loginfo "Finished reading static IP informations."
 else
+	# BUG: IF imager started from USB key instead of PXE, we end up here.
+	# Is it relevant to handle this situation?
 	logerror "No DHCP_OPTIONS found in /tmp! systemd-networkd which is not yet supported?"
 	shellout "Failed to read DHCP options!"
 fi

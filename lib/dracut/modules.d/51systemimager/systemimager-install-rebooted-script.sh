@@ -39,8 +39,8 @@ send_message_cmd() {
     kernel=$(ls /boot/vmlinuz-*|head -1|sed 's|/boot/vmlinuz-||g')
     message="mac=$mac:ip=$IPADDR:host=$HOSTNAME:kernel=$kernel:$rebooted_message"
 
-    # Find netcat binary
-    netcat=$((type -p netcat || type -p nc) 2>/dev/null)
+    # Find a netcat binary
+    netcat=$(type -P netcat nc ncat)
 
     if test -z "$netcat"
     then # try to use /dev/tcp
@@ -75,7 +75,7 @@ create_InitFile() {
     else
 	logwarn "Unable to identify boot services mechanism system"
 	loginfo "Installing systemimager-monitor-firstboot script in /etc/rc.local"
-        cat <<EOF >> /sysroot/etc/rc.local
+        cat >> /sysroot/etc/rc.local <<EOF
 $(send_message_cmd) || sed -i -e /etc/rc.local 's/^(echo ".*$//g'
 EOF
     fi
@@ -88,7 +88,7 @@ write_systemdInitFile() {
 
 # Create the systemd service file
     logdebug "Creating systemimager-monitor-firstboot service file"
-    cat << EOF > /sysroot/lib/systemd/system/systemimager-monitor-firstboot.service
+    cat > /sysroot/lib/systemd/system/systemimager-monitor-firstboot.service <<EOF
 # systemd service description file for systemimager
 # (c) Olivier Lahaye 2012
 
@@ -110,7 +110,7 @@ EOF
 
 # Create the script that will run
     logdebug "Creating systemimager-monitor-firstboot script"
-    cat <<EOF > /sysroot/lib/systemd/systemimager-monitor-firstboot
+    cat > /sysroot/lib/systemd/systemimager-monitor-firstboot <<EOF
 #!/bin/bash
 # systemd service script for systemimager
 # (c) Olivier Lahaye 2012-2018
@@ -148,7 +148,7 @@ EOF
 #
 write_SysVInitFile() {
     logdebug "Creating systemimager-monitor-firstboot init script"
-    cat << EOF > $1
+    cat > $1 <<EOF
 #!/bin/bash
 #
 # systemimager-monitor-firstboot	starts systemimager-monitor-firstboot

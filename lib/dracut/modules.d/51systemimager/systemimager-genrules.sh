@@ -15,10 +15,10 @@
 
 . /lib/systemimager-lib.sh
 
-logstep "systemimager-genrules"
-
+logstep "systemimager-genrules: initqueue/online hook creation."
+logdebug "Adding udev rule for missing initqueue/online hook."
 if [ -e "/sbin/systemimager-start" ]; then
         printf 'ACTION=="online", SUBSYSTEM=="net", RUN+="/sbin/initqueue --onetime /sbin/systemimager-start $env{INTERFACE}"\n' > /etc/udev/rules.d/70-systemimager.rules
 else
-        warn "systemimager-genrules: Could not find script to start systemimager. systemimager will not be started."
+        shellout "systemimager-genrules: Could not find script to start systemimager. systemimager will not be started."
 fi

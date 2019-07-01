@@ -15,7 +15,7 @@
 
 type shellout >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 
-logstep "systemimager-pingtest"
+logstep "systemimager-pingtest: check image server visibility."
 loginfo "Checking network connectivity via a ping test..."
 
 # Systemimager possible breakpoint

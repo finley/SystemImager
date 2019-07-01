@@ -18,7 +18,7 @@
 # at last some cmdline.d values are also set.
 
 . /lib/systemimager-lib.sh
-logstep "systemimager-init"
+logstep "systemimager-init: imager environment initialisation."
 
 # Init /run/systemimager directory
 test ! -d /run/systemimager && mkdir -p /run/systemimager && logdebug "Created /run/systemimager"

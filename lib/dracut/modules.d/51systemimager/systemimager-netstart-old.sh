@@ -18,9 +18,10 @@
 # Code inspired from /sbin/netroot
 
 . /lib/systemimager-lib.sh
-logstep "systemimager-netstart"
+logstep "systemimager-netstart: load booted network informations."
 
 netif=$1
+loginfo "Loading network informations from [$netif] interface."
 
 # Check that the interface is up.
 [ -e "/tmp/net.$netif.up" ] || shellout "Net interface $netif not up."

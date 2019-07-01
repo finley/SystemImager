@@ -40,7 +40,7 @@ check_kernel() {
     fi
 }
 
-logstep "systemimager-check-kernel"
+logstep "systemimager-check-kernel: Check for initrd and kernel concistency."
 
 check_kernel
 

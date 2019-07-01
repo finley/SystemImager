@@ -13,7 +13,7 @@
 
 . /lib/systemimager-lib.sh
 
-logstep "systemimager-start"
+logstep "systemimager-start: online-hook"
 
 DEVICE=$1
 

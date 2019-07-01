@@ -22,7 +22,7 @@ type sis_configure_network >/dev/null 2>&1 || . /lib/netmgt-lib.sh
 # Load variables.txt
 . /tmp/variables.txt
 
-logstep "systemimager-deploy-client"
+logstep "systemimager-deploy-client: Deploy image on client."
 
 # Systemimager possible breakpoint
 getarg 'si.break=deploy' && logwarn "Break deploy client" && interactive_shell
@@ -199,7 +199,9 @@ then
 fi
 
 # Tell the image server we are done
+loginfo "Telling image server [$IMAGESERVER] we are done."
 rsync $IMAGESERVER::scripts/imaging_complete_$IPADDR > /dev/null 2>&1
+
 loginfo "Imaging completed"
 
 if [ -n "$MONITOR_SERVER" ]; then

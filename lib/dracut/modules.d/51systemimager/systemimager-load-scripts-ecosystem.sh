@@ -14,7 +14,7 @@
 . /lib/systemimager-lib.sh
 
 
-logstep "systemimager-load-scripts-ecosystem.sh"
+logstep "systemimager-load-scripts-ecosystem: setup and download ${SCRIPTS_DIR}"
 
 # Systemimager possible breakpoint
 getarg 'si.break=download-scripts' && logwarn "Break download-scripts" && interactive_shell
