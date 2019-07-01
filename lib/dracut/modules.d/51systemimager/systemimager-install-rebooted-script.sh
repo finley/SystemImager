@@ -121,7 +121,7 @@ for file in {/run/initramfs,/dev/.initramfs}/systemimager/{si_monitor.log,variab
 do
 	if test -r \$file -a -w /root/SIS_Install_logs/
 	then
-		cat \$file | sed -E 's/^[\\[[0-9]{2}m//g' > /root/SIS_Install_logs/\${file##*/}
+		cat \$file | sed -E 's/\\[[0-9]{2}m//g' > /root/SIS_Install_logs/\${file##*/}
 	fi
 done
 
@@ -177,7 +177,7 @@ case "\$1" in
 	do
 		if test -r \$file -a -w /root/SIS_Install_logs/
 		then
-			cat \$file | sed -E 's/^[\\[[0-9]{2}m//g' > /root/SIS_Install_logs/\${file##*/}
+			cat \$file | sed -E 's/\\[[0-9]{2}m//g' > /root/SIS_Install_logs/\${file##*/}
 		fi
 	done
 
