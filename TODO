@@ -3,7 +3,15 @@
 #
 
 ============= TODO for the dracut change before release is possible ===========
-- Add multipathd support.
+BUG: CentOS-6: pre-pivot/10kill-dhclient.sh: line 6: kill: (785) - No such process
+BUG: Creating systemimager-monitor-firstboot init script
+     ls: cannot access /boot/vmlinuz-*: No such file or directory
+BUG: /scripts is seen as os filesystem and is bindmounted
+BUG: remote console hangs after filesystems init.
+BUG: si_monitortk is not refreshed after finalizing step (booting, ...)
+BUG: variables.txt is not updated with SI_IMAGING_STATUS that stays at "inprogress" step.
+- Add multipathd support if possible (need to reverse engineer the dracut module).
+- Add drdb pre-config support if possible
 - DONE: Unpackaged file /usr/share/systemimager/boot/x86_64/standard/ARCH
 - shutdown network before directboot otherwise the interface is not restarted. Thus, if HWADDR is spoofed (in config),
   this doesn't take effect. Network Manager doesn't restart the whole interface. started means do nothing for NetworkManager.
