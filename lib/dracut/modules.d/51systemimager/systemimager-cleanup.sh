@@ -40,6 +40,9 @@ if test -s /run/systemimager/si_monitor.pid; then
 fi
 
 # Prevent ourself to reenter wait imaging loop when doing directboot and something goes wrong.
+logdebug "JOB=$job"
+logdebug "f=$f" # OL: BUG: Need fix : Correct path?
+
 # New dracut (CentOS-7 and newer)
 test -f /usr/lib/dracut/hooks/initqueue/finished/90-systemimager-wait-imaging.sh && \
     rm -f /usr/lib/dracut/hooks/initqueue/finished/90-systemimager-wait-imaging.sh
@@ -48,11 +51,10 @@ test -f /initqueue-finished/90-systemimager-wait-imaging.sh && \
     rm -f /initqueue-finished/90-systemimager-wait-imaging.sh
 
 # Now we can clean systemimager garbages.
-logdebug "Cleaning systemimager garbage (/run/systemimager/* SIS_action fstab.image grub_default.cfg mdadm.conf.temp variables.txt)"
-rm -rf /run/systemimager/*
-(cd /tmp; rm -f SIS_action fstab.image grub_default.cfg mdadm.conf.temp variables.txt)
+logdebug "Cleaning systemimager garbage (SIS_action fstab.image grub_default.cfg mdadm.conf.temp)"
+(cd /tmp; rm -f SIS_action fstab.image grub_default.cfg mdadm.conf.temp)
 
-if test -d "${STAGING_DIR}"
+if test -d "${STAGING_DIR}" -a "${STAGING_DIR}" != "/"
 then
 	logdebug "Cleaning staging dir: ${STAGING_DIR}/*.*"
 	rm -rf ${STAGING_DIR}/*.*
@@ -70,14 +72,14 @@ if test -f /sysroot/root/SIS_Install_logs/si_monitor.log
 then
     if test -d /dev/.initramfs/ # old distros
     then
-        loginfo "Saving ultimate version of /root/SIS_Install_logs/si_monitor.log to /dev/.initramfs"
+        loginfo "Saving ultimate version of si_monitor.log and variables.txt to /dev/.initramfs/systemimager/"
 	mkdir -p /dev/.initramfs/systemimager
-	cp -f /tmp/si_monitor.log /dev/.initramfs/systemimager/si_monitor.log
+	cp -f /tmp/{si_monitor.log,variables.txt} /dev/.initramfs/systemimager/
     elif test -f /run/initramfs/ # new distros
     then
-        loginfo "Saving ultimate version of /root/SIS_Install_logs/si_monitor.log to /run/initramfs"
+        loginfo "Saving ultimate version of si_monitor.log and variables.txt to /run/initramfs/systemimager/"
 	mkdir -p /run/initramfs/systemimager/
-        cp -f /tmp/si_monitor.log /run/initramfs/systemimager/si_monitor.log
+        cp -f /tmp/{si_monitor.log,variables.txt} /run/initramfs/systemimager/
     fi
 fi
 
