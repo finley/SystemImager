@@ -45,9 +45,9 @@ find_os_mounts() {
     loginfo "Looking for system specific mounted filesystems..."
     findmnt -o target --raw|grep -v /sysroot | grep -v "${SCRIPTS_DIR}" | grep -v '^/$'|tail -n +2 > /tmp/system_mounts.txt
     logdetail "Found:"
-    for MP in "$(cat /tmp/system_mounts.txt)"
+    cat /tmp/system_mounts.txt | while read filesystem
     do
-    	logdetail "  - $MP"
+        logdetail "  - $filesystem"
     done
     test -s "/tmp/system_mounts.txt" || shellout "No OS specific special filesystems found"
 }
