@@ -40,15 +40,14 @@ if test -s /run/systemimager/si_monitor.pid; then
 fi
 
 # Prevent ourself to reenter wait imaging loop when doing directboot and something goes wrong.
-logdebug "JOB=$job"
-logdebug "f=$f" # OL: BUG: Need fix : Correct path?
+test -f "$f" && rm -f $f
 
 # New dracut (CentOS-7 and newer)
-test -f /usr/lib/dracut/hooks/initqueue/finished/90-systemimager-wait-imaging.sh && \
-    rm -f /usr/lib/dracut/hooks/initqueue/finished/90-systemimager-wait-imaging.sh
+#test -f /usr/lib/dracut/hooks/initqueue/finished/90-systemimager-wait-imaging.sh && \
+#    rm -f /usr/lib/dracut/hooks/initqueue/finished/90-systemimager-wait-imaging.sh
 # Old dracut (CentOS-6)
-test -f /initqueue-finished/90-systemimager-wait-imaging.sh && \
-    rm -f /initqueue-finished/90-systemimager-wait-imaging.sh
+#test -f /initqueue-finished/90-systemimager-wait-imaging.sh && \
+#    rm -f /initqueue-finished/90-systemimager-wait-imaging.sh
 
 # Now we can clean systemimager garbages.
 logdebug "Cleaning systemimager garbage (SIS_action fstab.image grub_default.cfg mdadm.conf.temp)"
@@ -68,20 +67,18 @@ umount ${SCRIPTS_DIR} || logerror "Failed to umount ${SCRIPTS_DIR}"
 # We are in directbootmode, thus more message may have raised up.
 # At this point, rootfs is mounted to /sysroot again.
 # So we can try to save an updated si_monitor.log to imaged system.
-if test -f /sysroot/root/SIS_Install_logs/si_monitor.log
-then
-    if test -d /dev/.initramfs/ # old distros
-    then
-        loginfo "Saving ultimate version of si_monitor.log and variables.txt to /dev/.initramfs/systemimager/"
-	mkdir -p /dev/.initramfs/systemimager
-	cp -f /tmp/{si_monitor.log,variables.txt} /dev/.initramfs/systemimager/
-    elif test -f /run/initramfs/ # new distros
-    then
-        loginfo "Saving ultimate version of si_monitor.log and variables.txt to /run/initramfs/systemimager/"
-	mkdir -p /run/initramfs/systemimager/
-        cp -f /tmp/{si_monitor.log,variables.txt} /run/initramfs/systemimager/
-    fi
-fi
+# the initramfs swaproot persistent dir is:
+# - /dev/.initramfs on old distros/dracut
+# - /run/initramfs on modern distro/dracut
+for initramfs_persistent_dir in {/dev/.,/run/}initramfs
+do
+	if test -d ${initramfs_persistent_dir}
+	then
+		mkdir -p ${initramfs_persistent_dir}/systemimager
+		loginfo "Saving ultimate version of si_monitor.log and variables.txt to ${initramfs_persistent_dir}/systemimager/"
+		cp -f /tmp/{si_monitor.log,variables.txt} ${initramfs_persistent_dir}/systemimager/
+	fi
+done
 
 unset SIS_SYSMSG_ENABLED
 loginfo "Disconnecting life support!"
