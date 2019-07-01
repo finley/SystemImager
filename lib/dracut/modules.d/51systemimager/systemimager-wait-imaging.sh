@@ -21,7 +21,26 @@ type shellout >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 # Re-read variables.txt each time we're called.
 . /tmp/variables.txt
 
-logstep "systemimager-wait-imaging"
+# If /tmp/.mainloop doesn't exists yet, this is the 1st time we're called.
+# Time for checking that plymouth GUI is brought up.
+if test ! -f /tmp/.mainloop
+then
+	loginfo "Waiting for plymouth GUI to show up."
+	# Wait for plymouth to be ready.
+	#while ! plymouth --ping
+	#do
+	#       sleep 1
+	#done
+	sleep 2
+
+	# Highlight plymouth init icon.
+	sis_update_step init
+fi
+
+# Report only once that we entered mainloop.
+test ! -f /tmp/.mainloop && logstep "systemimager-wait-imaging: Imager main event loop."
+touch /tmp/.mainloop
+
 logdebug "Called as: $f by $0"
 
 case "$SI_IMAGING_STATUS" in
@@ -33,8 +52,6 @@ case "$SI_IMAGING_STATUS" in
 		fi
 
 		logdebug "Imaging finished. Doing post action [$SI_POST_ACTION]"
-		SI_IMAGING_STATUS="finished"
-		write_variables
 
 		cd / # Make sure we're not in the wrong plce.
 		case "$SI_POST_ACTION" in
