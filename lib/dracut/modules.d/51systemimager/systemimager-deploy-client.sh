@@ -221,9 +221,6 @@ if [ -n "$MONITOR_SERVER" ]; then
         logmsg ""
         sleep 10
     fi
-    # Report the post-install action.
-    logdebug "Reporting doing post-install to monitor ($MONITOR_SERVER:$MONITOR_PORT)"
-    send_monitor_msg "status=106:speed=0"
 fi
 
 # Stops any remaining transfer processes (ssh tunnel, torrent seeder, ...
