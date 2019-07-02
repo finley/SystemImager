@@ -44,12 +44,12 @@ save_logs_to_sysroot() {
 find_os_mounts() {
     loginfo "Looking for system specific mounted filesystems..."
     findmnt -o target --raw|grep -v /sysroot | grep -v "${SCRIPTS_DIR}" | grep -v '^/$'|tail -n +2 > /tmp/system_mounts.txt
-    logdetail "Found:"
+    logdebug "Found:"
     cat /tmp/system_mounts.txt | while read filesystem
     do
-        logdetail "  - $filesystem"
+        logdebug "  - $filesystem"
     done
-    test -s "/tmp/system_mounts.txt" || shellout "No OS specific special filesystems found"
+    test -s "/tmp/system_mounts.txt" || logerror "No OS specific special filesystems found! Unexpected situation. Trying to continue."
 }
 
 ################################################################################
