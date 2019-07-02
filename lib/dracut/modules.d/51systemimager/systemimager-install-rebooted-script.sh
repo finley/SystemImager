@@ -40,13 +40,13 @@ send_message_cmd() {
     message="mac=$mac:ip=$IPADDR:host=$HOSTNAME:kernel=$kernel:$rebooted_message"
 
     # Find a netcat binary
-    netcat=$(type -P netcat nc ncat)
+    PATH=/sysroot/usr/bin:/sysroot/usr/bin:/sysroot/bin:/sysroot/sbin netcat=$(type -P netcat nc ncat)
 
     if test -z "$netcat"
     then # try to use /dev/tcp
         echo "TMOUT=$TIMEOUT exec 3<>/dev/tcp/$MONITOR_SERVER/$MONITOR_PORT; echo \"$message\" >&3"
     else # use netcat
-        echo "echo \"$message\" | $netcat -w $TIMEOUT $MONITOR_SERVER $MONITOR_PORT"
+        echo "echo \"$message\" | ${netcat//\/sysroot/} -w $TIMEOUT $MONITOR_SERVER $MONITOR_PORT"
     fi
  }
 
