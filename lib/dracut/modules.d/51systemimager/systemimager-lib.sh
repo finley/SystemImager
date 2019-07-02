@@ -1650,9 +1650,21 @@ EOF
 #   Description:
 #   Redirect a message to the monitor server.
 #
-#   Usage: send_monitor_msg "var=$msg"
+#   Usage: send_monitor_msg "status=87:speed=11.7"
+#   Status:
+#   < 0  => Error
+#   1-99 => percentage completion
+#   100  => imaged
+#   101  => finalizing...
+#   102  => REBOOTED
+#   103  => beeping
+#   104  => rebooting
+#   105  => shutdown
+#   106  => shell
+#   107  => extracting
+#   108  => preinstall
+#   109  => postinstall
 #
-
 send_monitor_msg() {
     if test -z "${MONITOR_SERVER}"; then
 	logdebug "Trying to send monitor msg with unset MONITOR_SERVER variable. Ignoring..."
@@ -1704,7 +1716,8 @@ send_monitor_msg() {
     send_msg=`echo "mac=$mac:ip=$IPADDR:host=$HOSTNAME:cpu=$cpu:ncpus=$ncpus:kernel=$kernel_name:mem=$mem:os=$IMAGENAME:tmpfs=$tmpfs:time=$time:$msg"`
 
     # Send data to monitor server.
-    echo "$send_msg" | ncat $MONITOR_SERVER $MONITOR_PORT
+    #echo "$send_msg" | ncat $MONITOR_SERVER $MONITOR_PORT
+    echo "$send_msg" > /dev/tcp/$MONITOR_SERVER/$MONITOR_PORT || logerror "Failed to send message [$msg] to $MONITOR_SERVER port $MONITOR_PORT"
 }
 #
 ################################################################################
