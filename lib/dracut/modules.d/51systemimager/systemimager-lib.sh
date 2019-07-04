@@ -1350,7 +1350,7 @@ run_pre_install_scripts() {
             do
                 sis_update_step prei ${SCRIPT_INDEX} ${NUM_SCRIPTS}
                 loginfo "Running script ${SCRIPT_INDEX}/${NUM_SCRIPTS}: $PRE_INSTALL_SCRIPT"
-		send_monitor_msg "status=108:speed=${SCRIPT_INDEX}" # 108=preinstall speed=script_num
+		send_monitor_msg "status=108:speed=0" # 108=preinstall
                 chmod +x $PRE_INSTALL_SCRIPT || shellout
                 ./$PRE_INSTALL_SCRIPT || shellout
 		SCRIPT_INDEX=$((${SCRIPT_INDEX} + 1))
@@ -1435,7 +1435,7 @@ run_post_install_scripts() {
                 if [ -e "/sysroot/tmp/post-install/$POST_INSTALL_SCRIPT" ]; then
                     sis_update_step post ${SCRIPT_INDEX} ${NUM_SCRIPTS}
                     loginfo "Running script ${SCRIPT_INDEX}/${NUM_SCRIPTS}: $POST_INSTALL_SCRIPT"
-		    send_monitor_msg "status=109:speed=${SCRIPT_INDEX}" # 109=postinstall speed=script_num
+		    send_monitor_msg "status=109:speed=0" # 109=postinstall
                     chmod +x /sysroot/tmp/post-install/$POST_INSTALL_SCRIPT || shellout
                     if ! chroot /sysroot/ /tmp/post-install/$POST_INSTALL_SCRIPT
 		    then
