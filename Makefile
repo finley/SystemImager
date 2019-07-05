@@ -579,13 +579,16 @@ ifeq ($(UNSTABLE), 1)
 		cd $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source && rm README.tmp; \
 	fi
 	PKG_REL=`test -d .git && git show --pretty='format:%ci'|head -1|sed -e 's/ .*//g' -e 's/-//g' -e 's/$$/git/' -e 's/^/0./'|| echo 1`; \
-		cd $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source && sed -i -e "s/##PKG_REL##/$${PKG_REL}/g" systemimager.spec
+		cd $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source && sed -i -e "s/##PKG_REL##/$${PKG_REL}/g" systemimager.spec lib/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/module-setup.sh lib/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/install
 else
-	cd $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source && sed -i -e "s/##PKG_REL##/1/g" systemimager.spec
+	cd $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source && sed -i -e "s/##PKG_REL##/1/g" systemimager.spec lib/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/module-setup.sh lib/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/install
 endif
 	rm -f $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source/README.unstable
 	perl -pi -e "s/^%define\s+ver\s+\d+\.\d+\.\d+.*/%define ver $(VERSION)/" \
 		$(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source/systemimager.spec
+	sed -i -e "s/##VERSION##/$(VERSION)/g" \
+		 $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source/lib/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/module-setup.sh \
+		 $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source/lib/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/install
 	find $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source -type f -exec chmod ug+r  {} \;
 	find $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source -type d -exec chmod ug+rx {} \;
 	cd $(TOPDIR)/tmp && $(TAR) -ch systemimager-$(VERSION)-complete_source | bzip2 > systemimager-$(VERSION)-complete_source.tar.bz2

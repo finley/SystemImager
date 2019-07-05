@@ -32,10 +32,24 @@ depends() {
 ################################################################################
 
 install() {
-    # 1/ Copy systemimager template
+    # Copy systemimager template
     (cd ${SI_INITRD_TEMPLATE:=/usr/share/systemimager/boot/$(uname -m)/standard/initrd_template/}; tar cpf - .)|(cd $initdir; tar xpf -)
 
-    # 2/ Install binaries we need.
+    # Generate /etc/systemimager-release
+    mkdir -p $initdir/etc/ # Make sure etc already exists.
+    cat > $initdir/etc/systemimager-release <<EOF
+NAME="SystemImager"
+VERSION="##VERSION##-##PKG_REL##"
+ID="systemimager"
+ID_LIKE="systemimager"
+VERSION_ID="##VERSION##"
+PRETTY_NAME="$(ComputePrettyName)"
+ANSI_COLOR="0;31"
+CPE_NAME="cpe:/o:systemimager:linux:5:imager"
+HOME_URL="http://www.systemimager.org/"
+BUG_REPORT_URL="https://github.com/finley/SystemImager/issues"
+EOF
+    # Install binaries we need.
     # Filesystems we want to be able to handle
     inst_multiple -o mkfs.xfs xfs_admin xfs_repair
     inst_multiple -o mkfs.ext4 mkfs.ext3 mkfs.ext2 mke2fs tune2fs resize2fs tune2fs
@@ -177,3 +191,26 @@ ShowDelay=0
 EOF
     cp -f ${initdir}/etc/plymouth/plymouthd.conf ${initdir}/usr/share/plymouth/plymouthd.defaults
 }
+
+ComputePrettyName() {
+	if test -r /etc/os-release
+	then
+		. /etc/os-release
+		echo "SystemImager - $PRETTY_NAME - imager"
+	elif test -r /etc/centos-release
+	then
+		echo "SystemImager - $(cat /etc/centos-release) - imager"
+	elif test -r /etc/redhat-release
+	then
+		echo "SystemImager - $(cat /etc/redhat-release) - imager"
+	elif test -r /etc/debian_version
+	then
+		echo "SystemImager - Debian GNU/Linux $(cat /etc/debian_version) - imager"
+	elif test -r /etc/SuSE-release
+	then
+		echo "SystemImager - $(cat /etc/SuSE-release |head -1) - imager"
+	else
+		echo "SystemImager - Unknown Distro - imager"
+	fi
+}
+

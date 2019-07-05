@@ -40,7 +40,18 @@ check_kernel() {
     fi
 }
 
-logstep "systemimager-check-kernel: Check for initrd and kernel concistency."
+imager_welcome() {
+    . /etc/systemimager-release
+    loginfo "######################################################################"
+    loginfo "# Systemimager starting..."
+    loginfo "#     - Imager version: $VERSION"
+    loginfo "#     - Kernel version: $(cat /proc/version)"
+    loginfo "#     - Details       : $PRETTY_NAME"
+    loginfo "######################################################################"
+}
 
+imager_welcome
+
+logstep "systemimager-check-kernel: Check for initrd and kernel concistency."
 check_kernel
 
