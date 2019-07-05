@@ -10,6 +10,8 @@ BUG: /scripts is seen as os filesystem and is bindmounted
 BUG: remote console hangs after filesystems init.
 BUG: si_monitortk is not refreshed after finalizing step (booting, ...)
 BUG: variables.txt is not updated with SI_IMAGING_STATUS that stays at "inprogress" step.
+- Add imager version to beginning of LOG.
+- Display imager version in plymouth interface.
 - Add multipathd support if possible (need to reverse engineer the dracut module).
 - Add drdb pre-config support if possible
 - DONE: Unpackaged file /usr/share/systemimager/boot/x86_64/standard/ARCH
@@ -34,6 +36,27 @@ BUG: variables.txt is not updated with SI_IMAGING_STATUS that stays at "inprogre
 - DONE: imager configures client network
 - allow ipv6 DNS in network-configs.xsd
 - DONE: Display a relevant error message if ip= mention and invalid network interface.
+
+=== WEB INTERFACE ON IMAGER as alternative to si_monitortk ===
+For now, the remote console has the following problems:
+- Can’t see the console log of a NATed client being imaged
+- Can’t see the console log if the client imaging is finished
+- Can’t see multiple consoles at a time
+- Can’t filter logs (select only errors or only warnings for example)
+- Logs stays on client and needs to be transferred by hand if one want to share it
+- Based on perl/Tk with depedancy to TkTermANSIColor that is not packaged in distros
+- Has problems with some ncat versions (nc, ncat multiple versions, netcat) (sockets timeout, hangs if input timeout (filesystem init too long, …)
+- Requires an X display to start si_monitortk
+- Requires to connect to image server to start si_monitortk
+
+IMHO, a really cool feature would be to add a web interface to image server with the following features:
+- Hosts statuses (si_monitortk main window replacement)
+- Console log (with page auto-refresh for update)
+- Info page with general setup
+- HTML Online Doc
+- PXE config
+=> Use XSL for displaying clients and consoles
+=> Use RSS news when an imaging has ended.
 
 Server.pm:
 - remove _read_partition_info_and_prepare_parted_commands()
