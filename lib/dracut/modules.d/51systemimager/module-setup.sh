@@ -33,7 +33,7 @@ depends() {
 
 install() {
     # Copy systemimager template
-    (cd ${SI_INITRD_TEMPLATE:=/usr/share/systemimager/boot/$(uname -m)/standard/initrd_template/}; tar cpf - .)|(cd $initdir; tar xpf -)
+    (cd ${SI_INITRD_TEMPLATE:=/usr/share/systemimager/boot/standard/initrd_template/}; tar cpf - .)|(cd $initdir; tar xpf -)
 
     # Generate /etc/systemimager-release
     mkdir -p $initdir/etc/ # Make sure etc already exists.
@@ -153,7 +153,7 @@ install_docker() {
     # Install binaries
     inst_multiple -o docker docker-current
     # Install clients config
-    (cd /etc; test -f docker/seccomp.json && tar cpf - docker/seccomp.json)|(cd $initdir/etc; tar xpf -)
+    test -f /etc/docker/seccomp.json && (cd /etc; tar cpf - docker/seccomp.json)|(cd $initdir/etc; tar xpf -)
     # Install system docker config.
     [ -f /etc/sysconfig/docker ] && mkdir -p $initdir/etc/sysconfig && cp /etc/sysconfig/docker $initdir/etc/sysconfig
     [ -f /etc/default/docker ] && mkdir -p $initdir/etc/default && c /etc/default/docker $initdir/etc/default
