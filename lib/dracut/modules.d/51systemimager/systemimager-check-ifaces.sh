@@ -62,7 +62,7 @@ check_ifaces() {
     done	
 }
 
-logstep "systemimager-check-ifaces: Chep ip= cmdline network interfaces"
+logstep "systemimager-check-ifaces: Check ip= cmdline network interfaces"
 loginfo "Checking that interfaces sets in ip= cmdline parameter are seen by kernel"
 
 if test -f /tmp/net.ifaces
