@@ -506,7 +506,7 @@ EOF
 ################################################################################
 get_distro_vendor() {
 	ROOT_FS=$1
-	test ! -d ${ROOT_FS}/etc && logerror "get_distro_name(): invalid root_fs [${ROOT_FS}]" && echo "unknown" && return
+	test ! -d ${ROOT_FS}/etc && logerror "get_distro_vendor(): invalid root_fs [${ROOT_FS}]" && echo "unknown" && return
 	test -r ${ROOT_FS}/etc/os-release && . ${ROOT_FS}/etc/os-release
 	test -n "${ID}" && echo "${ID}" && return
 	test -r ${ROOT_FS}/etc/centos-release && echo "centos" && return
