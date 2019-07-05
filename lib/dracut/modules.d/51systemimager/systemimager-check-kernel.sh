@@ -45,7 +45,7 @@ imager_welcome() {
     loginfo "######################################################################"
     loginfo "# Systemimager starting..."
     loginfo "#     - Imager version: $VERSION"
-    loginfo "#     - Kernel version: $(cat /proc/version)"
+    loginfo "#     - Kernel version: $(uname -r)"
     loginfo "#     - Details       : $PRETTY_NAME"
     loginfo "######################################################################"
 }
