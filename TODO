@@ -51,12 +51,21 @@ For now, the remote console has the following problems:
 
 IMHO, a really cool feature would be to add a web interface to image server with the following features:
 - Hosts statuses (si_monitortk main window replacement)
-- Console log (with page auto-refresh for update)
+- List all known clients
+- Clicking on a client will show Console log (with page auto-refresh for update)
+- Add HELP tips for warning and errors (you click the message and an help page tries to give advise and solutions
+- List know clusters.
 - Info page with general setup
 - HTML Online Doc
 - PXE config
 => Use XSL for displaying clients and consoles
 => Use RSS news when an imaging has ended.
+- Room to add an admin interface to configure systemimager, but that requires lots of work (security and a PHP/CGI interface) so It’ll be released far later.
+	- Systemimager configuration
+	- Image creation
+	- PXE configuration (install kernels and initrd, create menu entries)
+	- Services configuration (start/stop/build services: rsync, …)
+	- do si_clusterconfig
 
 Server.pm:
 - remove _read_partition_info_and_prepare_parted_commands()
