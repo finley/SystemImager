@@ -33,8 +33,17 @@ logstep "systemimager-load-network-infos: Load DHCP options"
 
 DEVICE=$1
 logdebug "Network device used: [$DEVICE]"
+
+# Compute some constants (used to send messages to monitord)
+CLIENT_MAC=$(ip -o link show $DEVICE 2>/dev/null | grep -o -E '([[:xdigit:]]{2}:){5}[[:xdigit:]]{2}' -m 1|grep -vi 'FF:FF:FF:FF:FF:FF' | sed -e 's/:/./g' -e 's/\(.*\)/\U\1/')
+CLIENT_CPU=$(echo `cat /proc/cpuinfo | grep "cpu\|clock\|model name\|cpu MHz" | grep -v "cpu family" | sed -ne '1,2p' | sed "s/.*: //" | sed "s/^\([0-9\.]*\)MHz$/(\1 MHz)/" | sed "s/^\([0-9\.]*\)$/(\1 MHz)/"` | sed "s/\(MHz)\)/\1 |/g" | sed "s/ |$//")
+CLIENT_NCPUS=$((`cat /proc/cpuinfo | grep "^processor" | sed -n '$p' | sed "s/.*: \([0-9]\)*$/\1/"` + 1))
+CLIENT_MEM=$(cat /proc/meminfo | sed -ne "s/MemTotal: *//p" | sed "s/ kB//")
+IMAGER_KERNEL=$(uname -r)
+
+
 # Save DEVICE to /tmp/variables.txt
-write_variables
+#write_variables
 
 # Systemimager possible breakpoint
 getarg 'si.break=network-infos' && logwarn "Break network-infos" && interactive_shell
