@@ -220,7 +220,7 @@ logmessage() {
     ESCAPED_MSG=$(sed "s/\&/\&amp;/g;s/>/\&gt;/g;s/</\&lt;/g;s/'/\&apos;/g" <<< "$*")
     if test "${MONITOR_CONSOLE}" = "y"
     then
-        echo "  <message type="${LOG_TYPE}">${ESCAPED_MSG}</message>" >> /tmp/si_monitor.xml
+        echo "  <message type=\"${LOG_TYPE}\">${ESCAPED_MSG}</message>" >> /tmp/si_monitor.xml
     fi
 }
 
