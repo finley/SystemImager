@@ -66,7 +66,7 @@ function download_image() {
     start_report_task
 
     loginfo "Downloading image"
-    if [ "${TMPFS_STAGING}" = "yes" ]; then
+    if [ "${TMPFS_STAGING}" = "y" ]; then
 	[ -n "${NO_LISTING}" ] && loginfo "Quietly downloading image in staging dir: ${STAGING_DIR}"
         # Deposit image into tmpfs
         IMAGE_DEST=${STAGING_DIR}
@@ -100,7 +100,7 @@ function download_image() {
 function extract_image() {
 	loginfo "Extracting image to /sysroot"
 	send_monitor_msg "status=107:speed=0" # 107=extracting
-	if [ "${TMPFS_STAGING}" = "yes" ]; then
+	if [ "${TMPFS_STAGING}" = "y" ]; then
 		cd /sysroot
 		logaction "tar xpf ${STAGING_DIR}/${IMAGENAME}.tar"
 		tar xpf ${STAGING_DIR}/${IMAGENAME}.tar || shellout "Failed to extract image to /sysroot"

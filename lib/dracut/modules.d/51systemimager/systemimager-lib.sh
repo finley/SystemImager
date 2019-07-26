@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # "SystemImager" 
 #
@@ -82,42 +82,37 @@ fi
 
 # Log a dracut hook step
 logstep() {
-	logmessage info "${BG_BLUE}====STEP:${BG_BLACK} $@"
+	logmessage step "$@"
 }
 
 # Log an error.
 logerror() {
-	logmessage err "${BG_RED}   ERROR:${BG_BLACK} $@"
-	plymouth --ping && plymouth update --status="mesg:E:$@" > /dev/null 2>&1
+	logmessage error "$@"
 }
 
 # Log a warning
 logwarn() {
-	logmessage warning "${FG_RED} warning:${FG_WHITE} $@"
-	plymouth --ping && plymouth update --status="mesg:W:$@" > /dev/null 2>&1
+	logmessage warning "$@"
 }
 
 # Log a simple information
 loginfo() {
-	logmessage info "${FG_GREEN}    info:${FG_WHITE} $@"
-	plymouth --ping && plymouth update --status="mesg:I:$@" > /dev/null 2>&1
+	logmessage info "$@"
 }
 
 # Log a detailed information
 logdetail() {
-	logmessage info "${FG_GREEN}    info:${FG_WHITE} $@" > /dev/null 2>&1
+	logmessage detail "$@"
 }
 
 # Log an action being done to client
 logaction() {
-	logmessage notice "${FG_AMBER}  action:${FG_WHITE} $@"
-	plymouth --ping && plymouth update --status="mesg:A:$@" > /dev/null 2>&1
+	logmessage action "$@"
 }
 
 # Log debug / system stuffs
 logdebug() {
 	test -z "$(echo ${DEBUG}|grep -E '^y$|^Y$|^yes$|^YES$')" && return # Debug output not enabled => ignore
-	logmessage debug "${FG_BLUE}   debug:${FG_WHITE} $@"
 	if [ "${SIS_SYSMSG_ENABLED}" != "y" ]
 	then
 		sis_enable_system_msg
@@ -125,18 +120,17 @@ logdebug() {
 		write_variables
 		logdebug "System messages displayed in plymouth enabled."
 	fi
-	plymouth --ping && plymouth update --status="mesg:D:$@" > /dev/null 2>&1
+	logmessage debug "$@"
 }
 
 # Log things that dont fit above cathegories
 lognotice() {
-	logmessage notice "${FG_BLUE}  notice:${FG_WHITE} $@"
-	plymouth --ping && plymouth update --status="mesg:N:$@" > /dev/null 2>&1
+	logmessage notice "$@"
 }
 
 # Compatibility function with older scripts.
 logmsg() {
-	logmessage notice "${FG_CYAN} message:${FG_WHITE} $@"
+	logmessage notice "$@"
 	# Old messages => No plymouth.
 }
 
@@ -147,16 +141,86 @@ logmsg() {
 logmessage() {
     # log to temporary file (which will go away when we reboot)
     # this is good for envs that have bad consoles
-    LOG_LEVEL=$1
+    LOG_TYPE=$1
     shift
-    local FILE=/tmp/si_monitor.log
-    echo "$*" >> $FILE
-    test -w /dev/console && echo "$*" > /dev/console
+    case "$LOG_TYPE" in
+	    step)
+		    LOGFILE_HEADER="====STEP:"
+		    CONSOLE_HEADER="${BG_BLUE}${LOGFILE_HEADER}${BG_BLACK}"
+		    PLYMOUTH_MSG_TYPE="" # Dont display steps on plymouth; it's a kind of internal debug
+		    SYSLOG_LEVEL="info"
+		    ;;
+	    info)
+		    LOGFILE_HEADER="    info:"
+		    CONSOLE_HEADER="${FG_GREEN}${LOGFILE_HEADER}${FG_WHITE}"
+		    PLYMOUTH_MSG_TYPE="I"
+		    SYSLOG_LEVEL="info"
+		    ;;
+	    warning)
+		    LOGFILE_HEADER=" warning:"
+		    CONSOLE_HEADER="${FG_RED}${LOGFILE_HEADER}${FG_WHITE}"
+		    PLYMOUTH_MSG_TYPE="W"
+		    SYSLOG_LEVEL="warning"
+		    ;;
+	    error)
+		    LOGFILE_HEADER="   ERROR:"
+		    CONSOLE_HEADER="${BG_RED}${LOGFILE_HEADER}${BG_BLACK}"
+		    PLYMOUTH_MSG_TYPE="E"
+		    SYSLOG_LEVEL="err"
+		    ;;
+	    detail)
+		    LOGFILE_HEADER="    info:"
+		    CONSOLE_HEADER="${FG_GREEN}${LOGFILE_HEADER}${FG_WHITE}"
+		    PLYMOUTH_MSG_TYPE="" # Don't display details in plymouth (too much verbose)
+		    SYSLOG_LEVEL="info"
+		    ;;
+	    action)
+		    LOGFILE_HEADER="  action:"
+		    CONSOLE_HEADER="${FG_AMBER}${LOGFILE_HEADER}${FG_WHITE}"
+		    PLYMOUTH_MSG_TYPE="A"
+		    SYSLOG_LEVEL="notice"
+		    ;;
+	    debug)
+		    LOGFILE_HEADER="   debug:"
+		    CONSOLE_HEADER="${FG_BLUE}${LOGFILE_HEADER}${FG_WHITE}"
+		    PLYMOUTH_MSG_TYPE="D"
+		    SYSLOG_LEVEL="debug"
+		    ;;
+	    notice)
+		    LOGFILE_HEADER="  notice:"
+		    CONSOLE_HEADER="${FG_BLUE}${LOGFILE_HEADER}${FG_WHITE}"
+		    PLYMOUTH_MSG_TYPE="N"
+		    SYSLOG_LEVEL="notice"
+		    ;;
+	    *)
+		    LOGFILE_HEADER="  System:"
+		    CONSOLE_HEADER="${FG_BLUE}${LOGFILE_HEADER}${FG_WHITE}"
+		    PLYMOUTH_MSG_TYPE="S" # System
+		    SYSLOG_LEVEL="info"
+		    ;;
+    esac
+
+    # Save message in local log file
+    echo "${LOGFILE_HEADER} $*" >> /tmp/si_monitor.log
+
+    # Write message to text console
+    test -w /dev/console && echo "${CONSOLE_HEADER} $*" > /dev/console
+
+    # Write message on console GUI
+    test -n "$PLYMOUTH_MSG_TYPE" && plymouth --ping && plymouth update --status="mesg:${PLYMOUTH_MSG_TYPE}:$*" > /dev/null 2>&1
 
     # if syslog is running, log to it.  In order to avoid hangs we have to 
-    # add the "sis: " part in case $@ is ""
-    if [ ! -z "$USELOGGER" ] ;
-        then logger -p user.${LOG_LEVEL} "sis: $*"
+    # add the "SystemImager: " part in case $@ is ""
+    if test -n "$USELOGGER"
+    then
+	logger -p user.${SYSLOG_LEVEL} "SystemImager: $*"
+    fi
+
+    # Send message to image server console logger in xml format.
+    ESCAPED_MSG=$(sed "s/\&/\&amp;/g;s/>/\&gt;/g;s/</\&lt;/g;s/'/\&apos;/g" <<< "$*")
+    if test "${MONITOR_CONSOLE}" = "y"
+    then
+        echo "  <message type="${LOG_TYPE}">${ESCAPED_MSG}</message>" >> /tmp/si_monitor.xml
     fi
 }
 
@@ -167,7 +231,7 @@ read_password() {
     SIZE=$(od -An -t d4 -j1 -N4)
     read -s -r -N $SIZE PASS
     echo -n "$PASS"
-    killall socat
+    killall socat ## BUG!
 }
 
 ################################################################################
@@ -354,6 +418,14 @@ write_variables() {
     touch /tmp/variables.txt
     mv -f /tmp/variables.txt /tmp/variables.txt~
 
+# 1st, make sure boulean variables only contain "y" or "n"
+for VAR in USELOGGER MONITOR_CONSOLE SKIP_LOCAL_CFG DEBUG SIS_SYSMSG_ENABLED SSH BITTORRENT SEL_RELABEL TMPFS_STAGING
+do
+	eval "$VAR=\${$VAR:0:1}; $VAR=\${$VAR,,}" # 1st letter, then: to-lower
+	VALUE="$(eval \$VAR)"
+	test -n "${VALUE/[yn]/}" && logwarn "$VAR variable should contain 'y' or 'n'. Value:[$VALUE]"
+done
+
 cat > /tmp/variables.txt <<EOF || shellout "Failed to write /tmp/variables.txt"
 ##
 ## SystemImager imager variables.
@@ -378,6 +450,16 @@ NETWORK="$NETWORK"
 BROADCAST="$BROADCAST"
 GATEWAY="$GATEWAY"
 GATEWAYDEV="$GATEWAYDEV"
+
+##############################
+#
+# Client constants
+#
+CLIENT_MAC="$CLIENT_MAC"
+CLIENT_CPU="$CLIENT_CPU"
+CLIENT_NCPUS="$CLIENT_NCPUS"
+CLIENT_MEM="$CLIENT_MEM"
+IMAGER_KERNEL="$IMAGER_KERNEL"
 
 ##############################
 #
@@ -1645,6 +1727,39 @@ EOF
 #
 ################################################################################
 #
+#  send_message
+#
+#   Description:
+#   Redirect a message to the monitor server.
+#
+#   Usage: send_message "status=87:speed=11.7"
+#   Status:
+#   < 0  => Error
+#   1-99 => percentage completion
+#   100  => imaged
+#   101  => finalizing...
+#   102  => REBOOTED
+#   103  => beeping
+#   104  => rebooting
+#   105  => shutdown
+#   106  => shell
+#   107  => extracting
+#   108  => preinstall
+#   109  => postinstall
+#
+send_message() {
+    if test -z "${MONITOR_SERVER}"; then
+	logdebug "Trying to send monitor msg with unset MONITOR_SERVER variable. Ignoring..."
+        return
+    fi
+    if test -z "${MONITOR_PORT}" ; then
+        MONITOR_PORT=8181
+    fi
+###WIP###
+}
+#
+################################################################################
+#
 #  send_monitor_msg
 #
 #   Description:
@@ -1677,33 +1792,8 @@ send_monitor_msg() {
     # Message to send.
     msg=`echo "$@"`
 
-    # Get the client mac address.
-    if [ -z "$mac" ]; then
-        #mac=`ifconfig $DEVICE 2>/dev/null | sed -ne "s/.*HWaddr //p" | sed "s/ //g" | sed s/:/./g`
-        mac=`ip -o link show $DEVICE 2>/dev/null | grep -o -E '([[:xdigit:]]{2}:){5}[[:xdigit:]]{2}' -m 1|grep -vi 'FF:FF:FF:FF:FF:FF' | sed -e 's/:/./g' -e 's/\(.*\)/\U\1/'`
-    fi
-
     # Collect some special info only after proc file system is mounted.
     if [ `mount 2>/dev/null | grep proc > /dev/null; echo $?` -eq 0 ]; then
-        # Collect the CPU info.
-        if [ -z "$cpu" ]; then
-            cpu=$(echo `cat /proc/cpuinfo | grep "cpu\|clock\|model name\|cpu MHz" | grep -v "cpu family" | sed -ne '1,2p' | sed "s/.*: //" | sed "s/^\([0-9\.]*\)MHz$/(\1 MHz)/" | sed "s/^\([0-9\.]*\)$/(\1 MHz)/"` | sed "s/\(MHz)\)/\1 |/g" | sed "s/ |$//")
-        fi
-
-        # Collect the number of CPUs.     
-        if [ -z "$ncpus" ]; then
-            ncpus=$((`cat /proc/cpuinfo | grep "^processor" | sed -n '$p' | sed "s/.*: \([0-9]\)*$/\1/"` + 1))
-        fi
-
-        # Collect the kernel information.
-        if [ -z "$kernel_name" ]; then
-            kernel_name=`uname -r`
-        fi
-
-        # Collect the amount of phyisical memory.
-        if [ -z "$mem" ]; then
-            mem=`cat /proc/meminfo | sed -ne "s/MemTotal: *//p" | sed "s/ kB//"`
-        fi
 
         # Evaluate the amount of available RAM.
         tmpfs=`df | grep tmpfs | grep "/$" | sed "s/.* \([0-9]*%\) .*/\1/"`
@@ -1713,7 +1803,7 @@ send_monitor_msg() {
     fi
 
     # Report the message to the monitor server.
-    send_msg=`echo "mac=$mac:ip=$IPADDR:host=$HOSTNAME:cpu=$cpu:ncpus=$ncpus:kernel=$kernel_name:mem=$mem:os=$IMAGENAME:tmpfs=$tmpfs:time=$time:$msg"`
+    send_msg=`echo "mac=$CLIENT_MAC:ip=$IPADDR:host=$HOSTNAME:cpu=$CLIENT_CPU:ncpus=$CLIENT_NCPUS:kernel=$IMAGER_KERNEL:mem=$mem:os=$IMAGENAME:tmpfs=$tmpfs:time=$time:$msg"`
 
     # Send data to monitor server.
     #echo "$send_msg" | ncat $MONITOR_SERVER $MONITOR_PORT
@@ -1736,9 +1826,6 @@ send_monitor_stdout() {
         echo "$l"
         # Send the message to the monitor daemon.
         if [ "x$MONITOR_CONSOLE" = "xy" ]; then
-            MONITOR_CONSOLE=yes
-        fi
-        if [ "x$MONITOR_CONSOLE" = "xyes" ]; then
             # Log message into the global monitor log.
             echo "$l" >> /tmp/si_monitor.log
         fi

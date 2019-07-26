@@ -47,7 +47,7 @@ loginfo "Initializing protocol: $DL_PROTOCOL ..."
 init_transfer
 . /tmp/variables.txt # re-read variables.
 
-if [ "$TMPFS_STAGING" = "yes" ]; then
+if [ "$TMPFS_STAGING" = "y" ]; then
     tmpfs_watcher
 fi
 
@@ -209,9 +209,6 @@ if [ -n "$MONITOR_SERVER" ]; then
     logdebug "Reporting imaged status to monitor ($MONITOR_SERVER:$MONITOR_PORT)"
     send_monitor_msg "status=100:speed=0"
     if [ "x$MONITOR_CONSOLE" = "xy" ]; then
-        MONITOR_CONSOLE=yes
-    fi
-    if [ "x$MONITOR_CONSOLE" = "xyes" ]; then
         # Print some empty lines and sleep some seconds to give time to
         # the virtual console to get last messages.
         # XXX: this is a dirty solution, we should find a better way to

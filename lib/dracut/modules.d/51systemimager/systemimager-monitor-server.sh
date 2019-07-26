@@ -21,6 +21,34 @@ logstep "systemimager-monitor-server: network console for simonitor_tk"
 getarg 'si.break=monitor' && logwarn "Break start monitor" && interactive_shell
 
 if [ ! -z "$MONITOR_SERVER" ]; then
+    # Start socat local socket server. Aim it to have a unique persistent connection with server.
+    if socat /dev/null TCP:$MONITOR_SERVER:8182 2>/dev/null
+    then
+	# Prepend dmesg messages to xml log
+	test -f /tmp/si_monitor.xml && mv -f /tmp/si_monitor.xml /tmp/si_monitor_pre.xml
+	# echo "<log>" > /tmp/si_monitor.xml
+	echo "$CLIENT_MAC" > /tmp/si_monitor.xml # 1st line is not xml but will be suppressed by server once used.
+	dmesg | while read DMESG_LINE
+	do
+		cat >> /tmp/si_monitor.xml <<EOF
+<message type="system">$(sed "s/\&/\&amp;/g;s/>/\&gt;/g;s/</\&lt;/g;s/'/\&apos;/g" <<< "$DMESG_LINE")</message>
+EOF
+	done
+	test -f /tmp/si_monitor_pre.xml && cat /tmp/si_monitor_pre.xml >> /tmp/si_monitor.xml
+	rm -f /tmp/si_monitor_pre.xml
+
+	# start the socat server
+	#socat UNIX-LISTEN:/tmp/logger.socket,ignoreeof TCP-CONNECT:10.0.238.84:8182&
+	socat -u FILE:/tmp/si_monitor.xml,ignoreeof TCP-CONNECT:10.0.238.84:8182&
+	echo $! > /tmp/socat.pid
+
+	loginfo "Local console forwarder started and log forwarded to image server."
+    else
+	MONITOR_CONSOLE="n"
+	logerror "Can' connect to server console logging. Console log disabled!"
+    fi
+
+    # Prepend dmesg messages to monitor log
     if test -f /tmp/si_monitor.log
     then
         mv -f /tmp/si_monitor.log /tmp/si_monitor_pre.log
@@ -48,9 +76,6 @@ if [ ! -z "$MONITOR_SERVER" ]; then
     # to the local client on port 8181 the full log is sent
     # to the requestor. -AR-
     if [ "x$MONITOR_CONSOLE" = "xy" ]; then
-        MONITOR_CONSOLE=yes
-    fi
-    if [ "x$MONITOR_CONSOLE" = "xyes" ]; then
         if [ -z "$MONITOR_PORT" ]; then
             MONITOR_PORT=8181
         fi
