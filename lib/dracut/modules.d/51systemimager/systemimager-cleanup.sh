@@ -83,3 +83,7 @@ done
 unset SIS_SYSMSG_ENABLED
 loginfo "Disconnecting life support!"
 loginfo "Control given back to system..."
+# TODO: Kill log forwarding task (socat)
+# Ugly hack for now using killall
+killall socat
+

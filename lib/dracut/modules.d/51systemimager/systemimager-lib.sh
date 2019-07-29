@@ -709,6 +709,8 @@ sis_postimaging() {
 			loginfo "Imaged system has matching modules available."
 			loginfo "Continuing as normal boot using kernel [${RUNNING_KERNEL_VER}]."
 			return 0
+			# Note: socat process is killed later in systemimager-cleanup
+			# so we can catch more log (directboot messages).
 		fi
 	fi
 
@@ -736,6 +738,7 @@ sis_postimaging() {
 		    sis_dialog_box yes " "
 		    sis_dialog_box yes "Now going to ${ACTION}"
 		    sleep 5
+		    killall socat # Terminate log forwarding TODO: ugly: need a less blindly kill.
 	            systemctl --no-block --force $ACTION
 	            logwarn "$ACTION failed!"
 	            ;;
@@ -774,6 +777,7 @@ sis_postimaging() {
 		    sis_dialog_box yes " "
 		    sis_dialog_box yes "Now going to ${ACTION}"
 		    sleep 5
+		    killall socat # Terminate log forwarding TODO: ugly: need a less blindly kill.
 	            $ACTION -f -d -n
 	            logwarn "$ACTION failed!"
 	            ;;
