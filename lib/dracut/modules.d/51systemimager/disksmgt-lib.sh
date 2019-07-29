@@ -343,6 +343,7 @@ EOF
 						;;	
 				"efi"|"EFI") # Install in EFI partition an set boot order in EFI nvram
 					# TODO: handle multiple EFI menu entries for raid 1 using efibootmgr.
+					[ ! -d /sys/firmware/efi ] && shellout "BIOS is not EFI. Switch your BIOS to EFI, or use legacy for bootloader type in disks-layout."
 					[ -z "`findmnt -o target,fstype --raw|grep -e '/boot/efi\svfat'`" ] && shellout "No EFI filesystem mounted (/sysroot/boot/efi not a vfat partition)."
 					[ ! -d /sysroot/boot/efi/EFI/BOOT ] && shellout "Missing /boot/efi/EFI/BOOT (EFI BOOT directory). Check/Update your image."
 					[ -r /tmp/EFI.conf ] && . /tmp/EFI.conf # read requested EFI configuration (boot manager, kernel name, ...)
