@@ -422,7 +422,7 @@ write_variables() {
 for VAR in USELOGGER MONITOR_CONSOLE SKIP_LOCAL_CFG DEBUG SIS_SYSMSG_ENABLED SSH BITTORRENT SEL_RELABEL TMPFS_STAGING
 do
 	eval "$VAR=\${$VAR:0:1}; $VAR=\${$VAR,,}" # 1st letter, then: to-lower
-	VALUE="$(eval \$VAR)"
+	VALUE="$(eval echo \$VAR)"
 	test -n "${VALUE/[yn]/}" && logwarn "$VAR variable should contain 'y' or 'n'. Value:[$VALUE]"
 done
 
