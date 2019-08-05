@@ -33,7 +33,7 @@ depends() {
 
 install() {
     # Copy systemimager template
-    (cd ${SI_INITRD_TEMPLATE:=/usr/share/systemimager/boot/standard/initrd_template/}; tar cpf - .)|(cd $initdir; tar xpf -)
+    (cd ${SI_INITRD_TEMPLATE:=/usr/share/systemimager/boot/initrd_template/}; tar cpf - .)|(cd $initdir; tar xpf -)
 
     # Generate /etc/systemimager-release
     mkdir -p $initdir/etc/ # Make sure etc already exists.
