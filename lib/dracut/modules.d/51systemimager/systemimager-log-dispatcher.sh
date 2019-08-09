@@ -30,8 +30,8 @@ getarg 'si.break=log-dispatcher' && logmessage local0.warning systemimager "Brea
 SEVERITY=( emerg alert crit err warning notice info debug )
 FACILITY=( kern user mail daemon auth syslog lpr news uucp cron authpriv ftp ntp security console cron local0 local1 local2 local3 local4 local5 local6 local7 )
 
-journalctl --follow -o json | jq -r '"\(.PRIORITY) \(.SYSLOG_FACILITY) \(.SYSLOG_IDENTIFIER) \(.MESSAGE)"' |
-while read LOG_SEVERITY LOG_FACILITY LOG_TAG LOG_MESSAGE
+journalctl --follow -o json | jq -r '"\(.SYSLOG_FACILITY) \(.PRIORITY) \(.SYSLOG_IDENTIFIER) \(.MESSAGE)"' |
+while read LOG_FACILITY LOG_SEVERITY LOG_TAG LOG_MESSAGE
 do
 	logmessage ${FACILITY[$LOG_FACILITY]}.${SEVERITY[$LOG_SEVERITY]} "$LOG_TAG" "$LOG_MESSAGE"
 done&
