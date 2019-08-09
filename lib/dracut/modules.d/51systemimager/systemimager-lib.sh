@@ -18,6 +18,16 @@
 # this file hosts functions related to dracut-initqueue logic.
 # It is also used by imaging script.
 
+# Tells bash we need bashisms (I/O redirection to subshell) by disabling stric
+# posix mode. if we are sourced as /bin/sh from a symlink to /bin/bash (like
+# /init does on CentOS-6), bash starts in strict posix mode which we don't want.
+set +o posix
+
+# Redirect I/O to logger
+exec 6>&1 7>&2      # Save file descriptors 1 and 2.
+exec 2> >( while read LINE; do logger -p local2.err -t systemimager "$0: $LINE"; done )
+exec > >( while read LINE; do logger -p local2.info -t systemimager "$0: $LINE"; done )
+
 ################################################################################
 #
 #   Variables
@@ -54,12 +64,14 @@ test -z "${TERM}" -o "${TERM}" = "dumb" && TERM=linux
 COLORS=`tput -T${TERM} colors`
 if test "0${COLORS}" -gt 1
 then
-	FG_GREEN=`tput -T${TERM} setaf 2`
 	FG_RED=`tput -T${TERM} setaf 1`
-	FG_WHITE=`tput -T${TERM} setaf 7`
+	FG_GREEN=`tput -T${TERM} setaf 2`
 	FG_AMBER=`tput -T${TERM} setaf 3`
 	FG_BLUE=`tput -T${TERM} setaf 4`
+	FG_MAGENTA=`tput -T${TERM} setaf 5`
 	FG_CYAN=`tput -T${TERM} setaf 6`
+	FG_WHITE=`tput -T${TERM} setaf 7`
+
 	BG_BLACK=`tput -T${TERM} setab 0`
 	BG_RED=`tput -T${TERM} setab 1`
 	BG_BLUE=`tput -T${TERM} setab 4`
@@ -82,32 +94,32 @@ fi
 
 # Log a dracut hook step
 logstep() {
-	logmessage step "$@"
+	logger -t systemimager -p local1.debug "$@"
 }
 
 # Log an error.
 logerror() {
-	logmessage error "$@"
+	logger -t systemimager -p local0.err "$@"
 }
 
 # Log a warning
 logwarn() {
-	logmessage warning "$@"
+	logger -t systemimager -p local0.warn "$@"
 }
 
 # Log a simple information
 loginfo() {
-	logmessage info "$@"
+	logger -t systemimager -p local0.info "$@"
 }
 
 # Log a detailed information
 logdetail() {
-	logmessage detail "$@"
+	logger -t systemimager -p local1.info "$@"
 }
 
 # Log an action being done to client
 logaction() {
-	logmessage action "$@"
+	logger -t systemimager -p local0.notice "$@"
 }
 
 # Log debug / system stuffs
@@ -120,17 +132,17 @@ logdebug() {
 		write_variables
 		logdebug "System messages displayed in plymouth enabled."
 	fi
-	logmessage debug "$@"
+	logger -t systemimager -p local0.debug "$@"
 }
 
 # Log things that dont fit above cathegories
 lognotice() {
-	logmessage notice "$@"
+	logger -t systemimager -p local0.notice "$@"
 }
 
 # Compatibility function with older scripts.
 logmsg() {
-	logmessage notice "$@"
+	lognotice "$@"
 	# Old messages => No plymouth.
 }
 
@@ -141,62 +153,78 @@ logmsg() {
 logmessage() {
     # log to temporary file (which will go away when we reboot)
     # this is good for envs that have bad consoles
-    LOG_TYPE=$1
+    LOG_PRIORITY=$1
     shift
-    case "$LOG_TYPE" in
-	    step)
+
+    LOG_TAG=$1
+    shift
+
+    # Note: local1 facility wont be displayed on plymouth while local0 is.
+    case "$LOG_PRIORITY" in
+	    local2.info) # stdout
+		    LOGFILE_HEADER="  stdout:"
+		    CONSOLE_HEADER="${FG_WHITE}${LOGFILE_HEADER}${FG_WHITE}"
+		    PLYMOUTH_MSG_TYPE="N"
+		    ;;
+	    local2.err) # stderr
+		    LOGFILE_HEADER="  stderr:"
+		    CONSOLE_HEADER="${FG_RED}${LOGFILE_HEADER}${FG_WHITE}"
+		    PLYMOUTH_MSG_TYPE="E"
+		    ;;
+	    local2.notice) # kernel (/dev/kmsg)
+		    LOGFILE_HEADER="  kernel:"
+		    CONSOLE_HEADER="${FG_WHITE}${LOGFILE_HEADER}${FG_WHITE}"
+		    PLYMOUTH_MSG_TYPE="S"
+		    ;;
+	    local1.debug) # Log Step
 		    LOGFILE_HEADER="====STEP:"
 		    CONSOLE_HEADER="${BG_BLUE}${LOGFILE_HEADER}${BG_BLACK}"
 		    PLYMOUTH_MSG_TYPE="" # Dont display steps on plymouth; it's a kind of internal debug
-		    SYSLOG_LEVEL="info"
 		    ;;
-	    info)
-		    LOGFILE_HEADER="    info:"
-		    CONSOLE_HEADER="${FG_GREEN}${LOGFILE_HEADER}${FG_WHITE}"
-		    PLYMOUTH_MSG_TYPE="I"
-		    SYSLOG_LEVEL="info"
-		    ;;
-	    warning)
-		    LOGFILE_HEADER=" warning:"
-		    CONSOLE_HEADER="${FG_RED}${LOGFILE_HEADER}${FG_WHITE}"
-		    PLYMOUTH_MSG_TYPE="W"
-		    SYSLOG_LEVEL="warning"
-		    ;;
-	    error)
-		    LOGFILE_HEADER="   ERROR:"
-		    CONSOLE_HEADER="${BG_RED}${LOGFILE_HEADER}${BG_BLACK}"
-		    PLYMOUTH_MSG_TYPE="E"
-		    SYSLOG_LEVEL="err"
-		    ;;
-	    detail)
+	    local1.info) # Log detail (no plymouth)
 		    LOGFILE_HEADER="    info:"
 		    CONSOLE_HEADER="${FG_GREEN}${LOGFILE_HEADER}${FG_WHITE}"
 		    PLYMOUTH_MSG_TYPE="" # Don't display details in plymouth (too much verbose)
-		    SYSLOG_LEVEL="info"
 		    ;;
-	    action)
-		    LOGFILE_HEADER="  action:"
-		    CONSOLE_HEADER="${FG_AMBER}${LOGFILE_HEADER}${FG_WHITE}"
-		    PLYMOUTH_MSG_TYPE="A"
-		    SYSLOG_LEVEL="notice"
-		    ;;
-	    debug)
-		    LOGFILE_HEADER="   debug:"
-		    CONSOLE_HEADER="${FG_BLUE}${LOGFILE_HEADER}${FG_WHITE}"
-		    PLYMOUTH_MSG_TYPE="D"
-		    SYSLOG_LEVEL="debug"
-		    ;;
-	    notice)
+	    local1.notice)
 		    LOGFILE_HEADER="  notice:"
 		    CONSOLE_HEADER="${FG_BLUE}${LOGFILE_HEADER}${FG_WHITE}"
 		    PLYMOUTH_MSG_TYPE="N"
-		    SYSLOG_LEVEL="notice"
+		    ;;
+	    local0.info)
+		    LOGFILE_HEADER="    info:"
+		    CONSOLE_HEADER="${FG_GREEN}${LOGFILE_HEADER}${FG_WHITE}"
+		    PLYMOUTH_MSG_TYPE="I"
+		    ;;
+	    local0.warning)
+		    LOGFILE_HEADER=" warning:"
+		    CONSOLE_HEADER="${FG_RED}${LOGFILE_HEADER}${FG_WHITE}"
+		    PLYMOUTH_MSG_TYPE="W"
+		    ;;
+	    local0.err)
+		    LOGFILE_HEADER="   ERROR:"
+		    CONSOLE_HEADER="${BG_RED}${LOGFILE_HEADER}${BG_BLACK}"
+		    PLYMOUTH_MSG_TYPE="E"
+		    ;;
+	    local0.notice) # action
+		    LOGFILE_HEADER="  action:"
+		    CONSOLE_HEADER="${FG_AMBER}${LOGFILE_HEADER}${FG_WHITE}"
+		    PLYMOUTH_MSG_TYPE="A"
+		    ;;
+	    local0.debug)
+		    LOGFILE_HEADER="   debug:"
+		    CONSOLE_HEADER="${FG_BLUE}${LOGFILE_HEADER}${FG_WHITE}"
+		    PLYMOUTH_MSG_TYPE="D"
+		    ;;
+	    local0.emerg)
+		    LOGFILE_HEADER="   panic:"
+		    CONSOLE_HEADER="${FG_RED}${LOGFILE_HEADER}${FG_WHITE}"
+		    PLYMOUTH_MSG_TYPE="E"
 		    ;;
 	    *)
 		    LOGFILE_HEADER="  System:"
-		    CONSOLE_HEADER="${FG_BLUE}${LOGFILE_HEADER}${FG_WHITE}"
+		    CONSOLE_HEADER="${FG_MAGENTA}${LOGFILE_HEADER}${FG_WHITE}"
 		    PLYMOUTH_MSG_TYPE="S" # System
-		    SYSLOG_LEVEL="info"
 		    ;;
     esac
 
@@ -209,19 +237,18 @@ logmessage() {
     # Write message on console GUI
     test -n "$PLYMOUTH_MSG_TYPE" && plymouth --ping && plymouth update --status="mesg:${PLYMOUTH_MSG_TYPE}:$*" > /dev/null 2>&1
 
-    # if syslog is running, log to it.  In order to avoid hangs we have to 
-    # add the "SystemImager: " part in case $@ is ""
-    if test -n "$USELOGGER"
+    # if remote log is required, forward to it.
+    if test -n "$USELOGGER" -a -n "$LOGSERVER"
     then
-	logger -p user.${SYSLOG_LEVEL} "SystemImager: $*"
+	logger -t "${LOG_TAG}" -p ${LOG_PRIORITY} -n ${LOG_SERVER} -P ${LOG_SERVER_PORT:=514} "$*"
     fi
 
     # Send message to image server console logger in xml format.
-    ESCAPED_MSG=$(sed "s/\&/\&amp;/g;s/>/\&gt;/g;s/</\&lt;/g;s/'/\&apos;/g" <<< "$*")
-    if test "${MONITOR_CONSOLE}" = "y"
-    then
-        echo "  <message type=\"${LOG_TYPE}\">${ESCAPED_MSG}</message>" >> /tmp/si_monitor.xml
-    fi
+    ESCAPED_MSG="$(sed "s/\&/\&amp;/g;s/>/\&gt;/g;s/</\&lt;/g;s/'/\&apos;/g" <<< "$*")"
+    #if test "${MONITOR_CONSOLE}" != "n" # (can be unset or 'y': doing so will allow to catch message before MONITOR_CONSOLE is parsed)
+    #then
+        echo "<message type=\"${LOG_TYPE}\">${ESCAPED_MSG}</message>" >> /tmp/si_monitor.xml
+    #fi
 }
 
 ################################################################################
@@ -738,9 +765,10 @@ sis_postimaging() {
 		    sis_dialog_box yes " "
 		    sis_dialog_box yes "Now going to ${ACTION}"
 		    sleep 5
-		    killall socat # Terminate log forwarding TODO: ugly: need a less blindly kill.
+		    killall -HUP socat # Terminate log forwarding TODO: ugly: need a less blindly kill.
+		    stop_log_dispatcher
 	            systemctl --no-block --force $ACTION
-	            logwarn "$ACTION failed!"
+	            logmessage local0.warning systemimager "$ACTION failed!"
 	            ;;
 	        shell)
 		    sis_dialog_box yes "Installation successfull."
@@ -748,7 +776,7 @@ sis_postimaging() {
 		    sis_dialog_box yes "Press any key to get a debug shell."
 		    sis_plymouth_wait_keypress
 		    ln -sf /etc/motd /tmp/message.txt
-		    ;;    
+		    ;;
 	        emergency)
 		    sis_dialog_box no "INSTALLATION FAILED!"
 		    sis_dialog_box no " "
@@ -757,6 +785,7 @@ sis_postimaging() {
 		    sis_dialog_box no " "
 		    sis_dialog_box no "Press any key to get a debug shell."
 		    sis_plymouth_wait_keypress
+		    stop_log_dispatcher
 		    ln -sf /etc/issue /tmp/message.txt
 		    ;;
 	        *)
@@ -765,7 +794,9 @@ sis_postimaging() {
 		    sis_dialog_box yes " "
 	            logwarn "sis_postimaging called with invalid argument '$ACTION'. Rebooting!"
 		    sleep 10 # leave time to read.
+		    stop_log_dispatcher
 	            systemctl --no-block --force reboot
+	            logmessage local0.warning systemimager "reboot failed!"
 	            ;;
 	    esac
 	    interactive_shell
@@ -777,7 +808,8 @@ sis_postimaging() {
 		    sis_dialog_box yes " "
 		    sis_dialog_box yes "Now going to ${ACTION}"
 		    sleep 5
-		    killall socat # Terminate log forwarding TODO: ugly: need a less blindly kill.
+		    killall -HUP socat # Terminate log forwarding TODO: ugly: need a less blindly kill.
+		    stop_log_dispatcher
 	            $ACTION -f -d -n
 	            logwarn "$ACTION failed!"
 	            ;;
@@ -786,9 +818,11 @@ sis_postimaging() {
 		    sis_dialog_box yes " "
 		    sis_dialog_box yes "Now going to ${ACTION}"
 		    sleep 5
+		    stop_log_dispatcher
 	            kexec -e # Will load kernel+initrd.img specified by above kexec -l ...
-	            logwarn "$ACTION failed!"
+	            logmessage local0.warning systemimager "$ACTION failed!"
 	            reboot -f -d -n # If kexec fails, reboot using bios as failover.
+	            logmessage local0.warning systemimager "reboot failed!"
 	            ;;
 	        shell)
 		    sis_dialog_box yes "Installation successfull."
@@ -812,7 +846,9 @@ sis_postimaging() {
 		    sis_dialog_box yes "argument '$ACTION'. Rebooting!"
 		    sis_dialog_box yes " "
 	            logwarn "sis_postimaging called with invalid argument '$ACTION'. Rebooting!"
+		    stop_log_dispatcher
 	            reboot -f -d -n
+	            logmessage local0.warning systemimager "reboot failed!"
 	            ;;
 	    esac
 	    interactive_shell
@@ -842,7 +878,7 @@ interactive_shell() {
     then
 	    sed -i -e "s/##HOSTNAME##/${HOSTNAME}/g" /etc/motd /etc/issue
 	    cat >> /.profile <<EOF
-cat /tmp/message.txt
+cat /tmp/message.txt > /dev/console
 tput setab 0
 tput setaf 7
 PS1="${FG_GREEN}SystemImager:\${PWD}#${FG_WHITE} "
@@ -850,6 +886,9 @@ alias reboot="reboot -f"
 alias shutdown="shutdown -f"
 EOF
     fi
+
+    stop_log_dispatcher
+
     if type emergency_shell >/dev/null 2>&1
     then
         emergency_shell -n SystemImager "SystemImager interactive shell"
@@ -860,6 +899,60 @@ EOF
     fi
 }
 #
+
+################################################################################
+#
+#   Description: stop the si_monitor task
+stop_monitor_task() {
+if test -s /run/systemimager/si_monitor.pid; then
+    MONITOR_PID=`cat /run/systemimager/si_monitor.pid`
+    loginfo "Stopping remote monitor task: PID=$MONITOR_PID. (last monitor message)"
+    rm -f /run/systemimager/si_monitor.pid
+    # Making sure it is an integer.
+    test -n "${MONITOR_PID//[0-9]/}" && shellout "Can't kill monitor task: /run/systemimager/si_monitor.pid is not a pid."
+    if [ -n "$MONITOR_PID" ]; then
+        kill -9 $MONITOR_PID
+        # wait $MONITOR_PID # Make sure process is killed before continuing.
+        # (We can't use shell wait because process is not a child of this shell)
+        while test -e /proc/${MONITOR_PID}
+        do
+            sleep 0.5
+        done
+        # At this point systemimager log helpers like loginfo, logwarn, logerror, ... may not be saved and seen remotely.
+        loginfo "SystemImager remote monitor task stopped"
+    fi
+fi
+
+}
+
+################################################################################
+#
+#   Description: stop the tmpfs_watcher task
+stop_tmpfs_watcher() {
+	if test -s /run/systemimager/tmpfs_watcher.pid; then
+		$TMPFS_WATCHER_PID=`cat /run/systemimager/tmpfs_watcher.pid`
+		# BUG: make sure it's a PID
+		if [ -n "$TMPFS_WATCHER_PID" ]; then
+			logwarn "Killing off tmpfs watcher [pid:$TMPFS_WATCHER_PID]."
+			kill -9 $TMPFS_WATCHER_PID  >/dev/null 2>/dev/null
+			rm -f /run/systemimager/tmpfs_watcher.pid
+		fi
+	fi
+}
+
+################################################################################
+#
+#   Description: Stops the log dispatcher process.
+stop_log_dispatcher() {
+	loginfo "Stopping log dispatcher"
+	sleep 1.1s # give time to socat for fetching above message and display it.
+	kill -TERM $(cat /tmp/log-dispatcher.pids)
+	logmessage local0.info systemimager "log dispatcher stopped"
+	rm -f /tmp/log-dispatcher.pids
+	# restore stdout and stderr
+	exec 1>&6 6>&- 2>&7 7>&-
+}
+
 ################################################################################
 #
 #   Description:
@@ -888,15 +981,8 @@ shellout() {
         stop_report_task -1
     fi
 
-    if test -s /run/systemimager/tmpfs_watcher.pid; then
-	$TMPFS_WATCHER_PID=`cat /run/systemimager/tmpfs_watcher.pid`
-        # BUG: make sure it's a PID
-        if [ -n "$TMPFS_WATCHER_PID" ]; then
-            logwarn "Killing off tmpfs watcher [pid:$TMPFS_WATCHER_PID]."
-            kill -9 $TMPFS_WATCHER_PID  >/dev/null 2>/dev/null
-            rm -f /run/systemimager/tmpfs_watcher.pid
-        fi
-    fi
+    stop_tmpfs_watcher
+
     logwarn "Killing off any udp-receiver and rsync processes."
     killall -9 udp-receiver rsync  >/dev/null 2>/dev/null
     if [ ! -z "$USELOGGER" ] ;

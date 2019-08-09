@@ -102,6 +102,7 @@ EOF
     inst_script "$moddir/systemimager-deploy-client.sh" "/sbin/systemimager-deploy-client"
     inst_script "$moddir/parse-local-cfg.sh" "/sbin/parse-local-cfg"
     inst_script "$moddir/systemimager-check-ifaces.sh" "/sbin/systemimager-check-ifaces" # Check network interfaces concistence with cmdline ip=
+    inst_hook cmdline 10 "$moddir/systemimager-log-dispatcher-old.sh" # Mini syslog with log dispatcher
     inst_hook cmdline 30 "$moddir/systemimager-check-kernel.sh" # Check that kernel & initrd match.
     inst_hook cmdline 50 "$moddir/parse-systemimager.sh" # read cmdline parameters
     inst_hook cmdline 70 "$moddir/systemimager-init.sh" # Creates /run/systemimager and sets rootok

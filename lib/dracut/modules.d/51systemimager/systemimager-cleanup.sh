@@ -20,24 +20,7 @@ logstep "systemimager-cleanup"
 . /tmp/variables.txt
 
 # Now we can kill the monitor, everything is finished we are just before swap-root and normal boot.
-if test -s /run/systemimager/si_monitor.pid; then
-    MONITOR_PID=`cat /run/systemimager/si_monitor.pid`
-    loginfo "Stopping remote monitor task: PID=$MONITOR_PID. (last monitor message)"
-    rm -f /run/systemimager/si_monitor.pid
-    # Making sure it is an integer.
-    test -n "${MONITOR_PID//[0-9]/}" && shellout "Can't kill monitor task: /run/systemimager/si_monitor.pid is not a pid."
-    if [ -n "$MONITOR_PID" ]; then
-        kill -9 $MONITOR_PID
-        # wait $MONITOR_PID # Make sure process is killed before continuing.
-        # (We can't use shell wait because process is not a child of this shell)
-        while test -e /proc/${MONITOR_PID}
-        do
-            sleep 0.5
-        done
-        # At this point systemimager log helpers like loginfo, logwarn, logerror, ... may not be saved and seen remotely.
-        loginfo "SystemImager remote monitor task stopped"
-    fi
-fi
+stop_monitor_task
 
 # Prevent ourself to reenter wait imaging loop when doing directboot and something goes wrong.
 test -f "$f" && rm -f $f
@@ -81,9 +64,15 @@ do
 done
 
 unset SIS_SYSMSG_ENABLED
-loginfo "Disconnecting life support!"
-loginfo "Control given back to system..."
+
+# Stop the log dispatcher task.
+stop_log_dispatcher
+
+logmessage local0.info systemimager "Disconnecting life support!"
+logmessage local0.info systemimager "Control given back to system..."
+
 # TODO: Kill log forwarding task (socat)
 # Ugly hack for now using killall
-killall socat
+sleep 1.1s # Wait for socat to flush its buffers.(every 1s)
+killall -HUP socat
 

@@ -347,7 +347,7 @@ BuildRequires: cryptsetup
 %if 0%{?rhel} == 6
 BuildRequires:  udev
 %else
-BuildRequires:  systemd
+BuildRequires:  systemd jq
 %endif
 # CentOS-7 plymouth ask-for-password is buggy
 # https://bugzilla.redhat.com/show_bug.cgi?id=1600990
@@ -493,7 +493,7 @@ Requires: cryptsetup
 %if 0%{?rhel} == 6
 Requires:  udev
 %else
-Requires:  systemd
+Requires:  systemd jq
 %endif
 # CentOS-7 plymouth ask-for-password is buggy
 # https://bugzilla.redhat.com/show_bug.cgi?id=1600990

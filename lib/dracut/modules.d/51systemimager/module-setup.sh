@@ -74,7 +74,7 @@ EOF
 
     # Install plymouth theme and its requirements
     install_plymouth_theme
-    inst_multiple cut date echo env sort test false true [ expr head install tail tee tr uniq wc tac mktemp yes xmlstarlet
+    inst_multiple cut date echo env sort test false true [ expr head install tail tee tr uniq wc tac mktemp yes xmlstarlet jq
 
     # inst_multiple setfont loadkeys kbd_mode stty # i18n module
     inst_multiple -o lsscsi lspci ethtool mii-tool mii-diag
@@ -113,6 +113,7 @@ EOF
     inst "$moddir/do_partitions.xsl" "/lib/systemimager/do_partitions.xsl" # Installs partition xml transformation filter
     inst "$moddir/disks-layout.xsd" "/lib/systemimager/disks-layout.xsd" # Installs disks layout validation schem.
     inst "$moddir/network-config.xsd" "/lib/systemimager/network-config.xsd" # Installs network configuration validation schem.
+    inst_hook cmdline 10 "$moddir/systemimager-log-dispatcher.sh" # journald event dispatcher 
     inst_hook cmdline 30 "$moddir/systemimager-check-kernel.sh" # Check that kernel & initrd match.
     inst_hook cmdline 50 "$moddir/parse-systemimager.sh" # read cmdline parameters
     inst_hook cmdline 70 "$moddir/systemimager-init.sh" # Creates /run/systemimager and sets rootok
