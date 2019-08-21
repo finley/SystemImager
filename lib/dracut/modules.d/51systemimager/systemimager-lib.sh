@@ -147,8 +147,8 @@ logmsg() {
 }
 
 #
-# logmessage <message>
-# Usage: log a message to console ( + syslog $USELOGGER is set )
+# logmessage <logpriority> <logtag> <message>
+# Usage: write a log message to console+files+xml logs ( + syslog $USELOGGER is set )
 
 logmessage() {
     # log to temporary file (which will go away when we reboot)
@@ -237,7 +237,7 @@ logmessage() {
     # Write message on console GUI
     test -n "$PLYMOUTH_MSG_TYPE" && plymouth --ping && plymouth update --status="mesg:${PLYMOUTH_MSG_TYPE}:$*" > /dev/null 2>&1
 
-    # if remote log is required, forward to it.
+    # if remote log is required, forward to the server.
     if test -n "$USELOGGER" -a -n "$LOGSERVER"
     then
 	logger -t "${LOG_TAG}" -p ${LOG_PRIORITY} -n ${LOG_SERVER} -P ${LOG_SERVER_PORT:=514} "$*"
@@ -785,8 +785,18 @@ sis_postimaging() {
 		    sis_dialog_box no " "
 		    sis_dialog_box no "Press any key to get a debug shell."
 		    sis_plymouth_wait_keypress
-		    stop_log_dispatcher
 		    ln -sf /etc/issue /tmp/message.txt
+
+		    stop_tmpfs_watcher
+
+		    logwarn "Killing off any udp-receiver and rsync processes."
+		    killall -9 udp-receiver rsync  >/dev/null 2>/dev/null
+		    if [ ! -z "$USELOGGER" ] ;
+		        then cat /etc/issue | logger
+		    fi
+
+		    stop_log_dispatcher
+
 		    ;;
 	        *)
 		    sis_dialog_box yes "sis_postimaging called with invalid"
@@ -840,6 +850,17 @@ sis_postimaging() {
 		    sis_dialog_box no "Press any key to get a debug shell."
 		    sis_plymouth_wait_keypress
 		    ln -sf /etc/issue /tmp/message.txt
+
+		    stop_tmpfs_watcher
+
+		    logwarn "Killing off any udp-receiver and rsync processes."
+		    killall -9 udp-receiver rsync  >/dev/null 2>/dev/null
+		    if [ ! -z "$USELOGGER" ] ;
+		        then cat /etc/issue | logger
+		    fi
+
+		    stop_log_dispatcher
+
 		    ;;
 	        *)
 		    sis_dialog_box yes "sis_postimaging called with invalid"
@@ -886,8 +907,6 @@ alias reboot="reboot -f"
 alias shutdown="shutdown -f"
 EOF
     fi
-
-    stop_log_dispatcher
 
     if type emergency_shell >/dev/null 2>&1
     then
@@ -946,9 +965,9 @@ stop_tmpfs_watcher() {
 stop_log_dispatcher() {
 	loginfo "Stopping log dispatcher"
 	sleep 1.1s # give time to socat for fetching above message and display it.
-	kill -TERM $(cat /tmp/log-dispatcher.pids)
+	kill -TERM $(cat /run/systemimager/log-dispatcher.pid)
 	logmessage local0.info systemimager "log dispatcher stopped"
-	rm -f /tmp/log-dispatcher.pids
+	rm -f /run/systemimager/log-dispatcher.pid
 	# restore stdout and stderr
 	exec 1>&6 6>&- 2>&7 7>&-
 }
@@ -965,7 +984,7 @@ shellout() {
     # Display error code if relevant.
     LAST_ERR=$?
 
-    test -s /run/systemimager/report_task.pid && echo > /dev/console # if report task is running, go to next line.
+    test -s /run/systemimager/report_task.pid && echo > /dev/console # if report task is running, move cursor to beginning of next line.
     # Print error message if any.
     test -n "$1" && logerror "$@"
 
@@ -975,19 +994,12 @@ shellout() {
     logerror "Can not proceed!  (Scottish accent -- think Groundskeeper Willie)"
 
     # Kill the text progress bar ASAP to avoid it to reappear below itself
-    # In therory, race condition may exists between the "go to next line" above and now.
+    # In therory, race condition may exists between the "move to next line" above and now.
     if [ ! -z "$MONITOR_SERVER" ]; then
     	logerror "Installation failed!! Stopping report task."
         stop_report_task -1
     fi
 
-    stop_tmpfs_watcher
-
-    logwarn "Killing off any udp-receiver and rsync processes."
-    killall -9 udp-receiver rsync  >/dev/null 2>/dev/null
-    if [ ! -z "$USELOGGER" ] ;
-        then cat /etc/issue | logger
-    fi
    # Need to trigger emergency shell
     SI_IMAGING_STATUS="failed"
     write_variables

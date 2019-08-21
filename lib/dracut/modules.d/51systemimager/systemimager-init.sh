@@ -21,7 +21,7 @@
 logstep "systemimager-init: imager environment initialisation."
 
 # Init /run/systemimager directory
-test ! -d /run/systemimager && mkdir -p /run/systemimager && logdebug "Created /run/systemimager"
+#test ! -d /run/systemimager && mkdir -p /run/systemimager && logdebug "Created /run/systemimager"
 
 # Create a ramfs filesystem for /scripts so we can bind mount it later in order to expose it to a chrooted environment in /sysroot
 # (On CentOS-6, bind-mounting subtrees of the initrd.img fails)

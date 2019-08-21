@@ -27,15 +27,24 @@ logmessage local1.debug systemimager "systemimager-log-dispatcher: event log dis
 # Systemimager possible breakpoint
 getarg 'si.break=log-dispatcher' && logmessage local0.warning systemimager "Break event log dispatcher" && interactive_shell
 
-SEVERITY=( emerg alert crit err warning notice info debug )
-FACILITY=( kern user mail daemon auth syslog lpr news uucp cron authpriv ftp ntp security console cron local0 local1 local2 local3 local4 local5 local6 local7 )
+{
+	SEVERITY=( emerg alert crit err warning notice info debug )
+	FACILITY=( kern user mail daemon auth syslog lpr news uucp cron authpriv ftp ntp security console cron local0 local1 local2 local3 local4 local5 local6 local7 )
+	while read LOG_FACILITY LOG_SEVERITY LOG_TAG LOG_MESSAGE
+	do
+		logmessage ${FACILITY[$LOG_FACILITY]}.${SEVERITY[$LOG_SEVERITY]} "$LOG_TAG" "$LOG_MESSAGE"
+	done < <( journalctl --follow -o json --no-pager --no-tail | jq -r '"\(.SYSLOG_FACILITY) \(.PRIORITY) \(.SYSLOG_IDENTIFIER) \(.MESSAGE)"' )
+}&
 
-journalctl --follow -o json | jq -r '"\(.SYSLOG_FACILITY) \(.PRIORITY) \(.SYSLOG_IDENTIFIER) \(.MESSAGE)"' |
-while read LOG_FACILITY LOG_SEVERITY LOG_TAG LOG_MESSAGE
-do
-	logmessage ${FACILITY[$LOG_FACILITY]}.${SEVERITY[$LOG_SEVERITY]} "$LOG_TAG" "$LOG_MESSAGE"
-done&
-echo "$!" $(jobs -p) > /tmp/log-dispatcher.pids
+LOG_DISPATCHER_PID=$!
+
+disown # Remove this task from shell job list so no debug output will be written when killed.
+
+test ! -d /run/systemimager && mkdir -p /run/systemimager
+echo $LOG_DISPATCHER_PID > /run/systemimager/log-dispatcher.pid
+logdetail "log dispatcher PID: $LOG_DISPATCHER_PID"
 
 loginfo "Log event dispatcher started...."
+
+exec 1>&6 6>&- 2>&7 7>&-
 
