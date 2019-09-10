@@ -13,6 +13,15 @@
 # deploying the image on the client (it downloads, choses and run the
 # deployment scripts).
 
+# Tells bash we need bashisms (I/O redirection to subshell) by disabling stric
+# posix mode.
+set +o posix
+
+# Redirect stdout and stderr to system log (that is later processed by log dispatcher)
+exec 6>&1 7>&2      # Save file descriptors 1 and 2.
+exec 2> >( while read LINE; do logger -p local2.err -t systemimager "$LINE"; done )
+exec > >( while read LINE; do logger -p local2.info -t systemimager "$LINE"; done )
+
 type getarg >/dev/null 2>&1 || . /lib/dracut-lib.sh
 type shellout >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 type save_logs_to_sysroot >/dev/null 2>&1 || . /lib/autoinstall-lib.sh
@@ -251,3 +260,6 @@ write_variables
 
 getarg 'si.break=finished' && logwarn "Break finished" && interactive_shell
 logdebug "leaving dracut initqueue/online hook."
+
+# restore file descriptors so log subprocesses are stopped (read returns fail)
+exec 1>&6 6>&- 2>&7 7>&-

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # "SystemImager"
 #
@@ -16,6 +16,15 @@
 # dracut-cmdline hook expect root= and rootok= to be set after all scripts are run.
 # it also expects netroot to be set on old versions otherwise network is not initialized.
 # at last some cmdline.d values are also set.
+
+# Tells bash we need bashisms (I/O redirection to subshell) by disabling stric
+# posix mode.
+set +o posix
+
+# Redirect stdout and stderr to system log (that is later processed by log dispatcher)
+exec 6>&1 7>&2      # Save file descriptors 1 and 2.
+exec 2> >( while read LINE; do logger -p local2.err -t systemimager "$LINE"; done )
+exec > >( while read LINE; do logger -p local2.info -t systemimager "$LINE"; done )
 
 . /lib/systemimager-lib.sh
 logstep "systemimager-init: imager environment initialisation."
@@ -86,3 +95,7 @@ else
 	loginfo "Using user defined font from cmdline."
 fi
 
+# restore file descriptors so log subprocesses are stopped (read returns fail)
+exec 1>&6 6>&- 2>&7 7>&-
+
+# -- END --
