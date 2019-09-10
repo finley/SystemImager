@@ -124,10 +124,14 @@ sis_install_configs() {
 
 		# Also create /etc/lvm/{archive,backup}
 		loginfo "Creating lvm archive and backup dirs with lvm config"
+		logaction "chroot /sysroot vgscan"
 		chroot /sysroot vgscan 6>&- 7>&-
+		loginfo "lvm configuration done"
 	fi
 
 	# 4/ Make sure /etc/mtab -> /proc/self/mounts in /sysroot (so df works)
+	loginfo "Creating /etc/mtab"
+	logaction "chroot /sysroot ln -sf /proc/self/mounts /etc/mtab"
 	chroot /sysroot ln -sf /proc/self/mounts /etc/mtab
 
 	# 5/ Regenerate initramfs for all deployed kernels
