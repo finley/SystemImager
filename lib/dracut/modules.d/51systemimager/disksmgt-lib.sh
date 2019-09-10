@@ -110,7 +110,7 @@ sis_install_configs() {
 		then
 			loginfo "Installing /etc/lvm/lvm.conf"
 			mkdir -p /sysroot/etc/lvm || shellout "Failed to create /sysroot/etc/lvm/"
-			lvm config --type default --withcomments > /sysroot/etc/lvm/lvm.conf
+			lvm config --type default --withcomments > /sysroot/etc/lvm/lvm.conf 6>&- 7>&-
 
 		else
 			loginfo "Using /etc/lvm/lvm.conf from image"
@@ -124,7 +124,7 @@ sis_install_configs() {
 
 		# Also create /etc/lvm/{archive,backup}
 		loginfo "Creating lvm archive and backup dirs with lvm config"
-		chroot /sysroot vgscan
+		chroot /sysroot vgscan 6>&- 7>&-
 	fi
 
 	# 4/ Make sure /etc/mtab -> /proc/self/mounts in /sysroot (so df works)
@@ -189,11 +189,11 @@ si_create_initramfs() {
 stop_software_raid_and_lvm() {
 
     # 1/ Stop volume groups
-    lvm lvs --noheadings |awk '{print $2}' | sort -u |\
+    lvm lvs --noheadings 6>&- 7>&- |awk '{print $2}' | sort -u |\
     while read VOL_GROUP
     do
         loginfo "Removing volumegroup [${VOL_GROUP}]"
-        lvm vgchange -a n ${VOL_GROUP}
+        lvm vgchange -a n ${VOL_GROUP} 6>&- 7>&-
     done
 
     # 2/ Stop software raid
@@ -903,7 +903,7 @@ _do_lvms() {
 	# LVM_DEFAULT_CONFIG="--config 'global {locking_type=1}'" # At least we need this config.
 	# We chose to replace the inapropriate lvm.conf with a generic one that fits our needs.
 	mkdir -p /etc/lvm # Make sure lvm config path exists (not present on CentOS-6 for example)
-	lvmconfig --type default --withcomments > /etc/lvm/lvm.conf || shellout "Failed to create/overwrite initramfs:/etc/lvm/lvm.conf with default lvm.conf that permits lvm creation/modification/removal."
+	lvmconfig --type default --withcomments > /etc/lvm/lvm.conf 6>&- 7>&- || shellout "Failed to create/overwrite initramfs:/etc/lvm/lvm.conf with default lvm.conf that permits lvm creation/modification/removal."
 
 	loginfo "Creating volume groups"
 
