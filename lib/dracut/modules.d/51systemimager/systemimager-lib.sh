@@ -156,6 +156,13 @@ logmessage() {
 
     LOG_MESSAGE="$*"
 
+    # Treat dracut debug log aside as it is too much verbose and is rarely usefull.
+    if test "$LOG_TAG" = "dracut"
+    then
+	echo "${LOG_PRIORITY##*.}: ${LOG_MESSAGE}" >> /tmp/si_dracut.log
+	test "$LOG_PRIORITY" = "daemon.debug" && return # Don't log dracut.debug aside si_dracut.log
+    fi
+
     # Note: local1 facility wont be displayed on plymouth while local0 is.
     case "$LOG_PRIORITY" in
 	    local2.info) # stdout
