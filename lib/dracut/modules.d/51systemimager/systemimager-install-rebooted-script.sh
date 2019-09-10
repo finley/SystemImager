@@ -8,6 +8,15 @@
 #              to the monitor server.
 #
 
+# Tells bash we need bashisms (I/O redirection to subshell) by disabling stric
+# posix mode.
+set +o posix
+
+# Redirect stdout and stderr to system log (that is later processed by log dispatcher)
+exec 6>&1 7>&2      # Save file descriptors 1 and 2.
+exec 2> >( while read LINE; do logger -p local2.err -t systemimager "$LINE"; done )
+exec > >( while read LINE; do logger -p local2.info -t systemimager "$LINE"; done )
+
 # Load our lib.
 type shellout >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 
@@ -36,7 +45,7 @@ send_message_cmd() {
 
     #mac=$(LC_ALL=C ifconfig $DEVICE 2>/dev/null | sed -ne "s/.*HWaddr //p" | sed "s/ //g" | sed s/:/./g)
     mac=$(LC_ALL=C ip addr show dev $DEVICE 2>/dev/null |grep ether | sed -E -e 's/ *[a-z/]* *([:0-9a-z]+).*$/\U\1/g' -e  's/:/./g')
-    kernel=$(ls /boot/vmlinuz-*|head -1|sed 's|/boot/vmlinuz-||g')
+    kernel=$(ls /sysroot/boot/vmlinuz-*|head -1|sed 's|/sysroot/boot/vmlinuz-||g')
     message="mac=$mac:ip=$IPADDR:host=$HOSTNAME:kernel=$kernel:$rebooted_message"
 
     # Find a netcat binary
@@ -218,5 +227,8 @@ rm -f /sysroot/$rebooted_state_file
 
 # Create the init file that will report the rebooted states at first boot.
 create_InitFile
+
+# Restore file descriptors so redirection subprocess receive EOF and quit.
+exec 1>&6 6>&- 2>&7 7>&-
 
 # -- END --
