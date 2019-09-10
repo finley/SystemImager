@@ -23,11 +23,6 @@
 # /init does on CentOS-6), bash starts in strict posix mode which we don't want.
 set +o posix
 
-# Redirect I/O to logger
-exec 6>&1 7>&2      # Save file descriptors 1 and 2.
-exec 2> >( while read LINE; do logger -p local2.err -t systemimager "$0: $LINE"; done )
-exec > >( while read LINE; do logger -p local2.info -t systemimager "$0: $LINE"; done )
-
 ################################################################################
 #
 #   Variables
@@ -159,6 +154,8 @@ logmessage() {
     LOG_TAG=$1
     shift
 
+    LOG_MESSAGE="$*"
+
     # Note: local1 facility wont be displayed on plymouth while local0 is.
     case "$LOG_PRIORITY" in
 	    local2.info) # stdout
@@ -229,22 +226,22 @@ logmessage() {
     esac
 
     # Save message in local log file
-    echo "${LOGFILE_HEADER} $*" >> /tmp/si_monitor.log
+    echo "${LOGFILE_HEADER} ${LOG_MESSAGE}" >> /tmp/si_monitor.log
 
     # Write message to text console
-    test -w /dev/console && echo "${CONSOLE_HEADER} $*" > /dev/console
+    test -w /dev/console && echo "${CONSOLE_HEADER} ${LOG_MESSAGE}" > /dev/console
 
-    # Write message on console GUI
-    test -n "$PLYMOUTH_MSG_TYPE" && plymouth --ping && plymouth update --status="mesg:${PLYMOUTH_MSG_TYPE}:$*" > /dev/null 2>&1
+    # Write message on console GUI (limit to 80 chars)
+    test -n "$PLYMOUTH_MSG_TYPE" && plymouth --ping && plymouth update --status="mesg:${PLYMOUTH_MSG_TYPE}:${LOG_MESSAGE:0:80}" > /dev/null 2>&1
 
     # if remote log is required, forward to the server.
     if test -n "$USELOGGER" -a -n "$LOGSERVER"
     then
-	logger -t "${LOG_TAG}" -p ${LOG_PRIORITY} -n ${LOG_SERVER} -P ${LOG_SERVER_PORT:=514} "$*"
+	logger -t "${LOG_TAG}" -p ${LOG_PRIORITY} -n ${LOG_SERVER} -P ${LOG_SERVER_PORT:=514} "${LOG_MESSAGE}"
     fi
 
     # Send message to image server console logger in xml format.
-    ESCAPED_MSG="$(sed "s/\&/\&amp;/g;s/>/\&gt;/g;s/</\&lt;/g;s/'/\&apos;/g" <<< "$*")"
+    ESCAPED_MSG="$(sed "s/\&/\&amp;/g;s/>/\&gt;/g;s/</\&lt;/g;s/'/\&apos;/g" <<< "${LOG_MESSAGE}")"
     #if test "${MONITOR_CONSOLE}" != "n" # (can be unset or 'y': doing so will allow to catch message before MONITOR_CONSOLE is parsed)
     #then
         echo "<message type=\"${LOG_TYPE}\">${ESCAPED_MSG}</message>" >> /tmp/si_monitor.xml
@@ -968,8 +965,6 @@ stop_log_dispatcher() {
 	kill -TERM $(cat /run/systemimager/log-dispatcher.pid)
 	logmessage local0.info systemimager "log dispatcher stopped"
 	rm -f /run/systemimager/log-dispatcher.pid
-	# restore stdout and stderr
-	exec 1>&6 6>&- 2>&7 7>&-
 }
 
 ################################################################################
