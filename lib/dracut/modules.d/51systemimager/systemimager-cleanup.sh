@@ -59,7 +59,7 @@ do
 	then
 		mkdir -p ${initramfs_persistent_dir}/systemimager
 		loginfo "Saving ultimate version of si_monitor.log and variables.txt to ${initramfs_persistent_dir}/systemimager/"
-		cp -f /tmp/{si_monitor.log,variables.txt} ${initramfs_persistent_dir}/systemimager/
+		cp -f /tmp/{si_monitor.log,si_dracut.log,variables.txt} ${initramfs_persistent_dir}/systemimager/
 	fi
 done
 

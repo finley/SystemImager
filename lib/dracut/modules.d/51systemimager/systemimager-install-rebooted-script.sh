@@ -117,11 +117,11 @@ EOF
 
 # 1st, get last si_monitor.log and variables.txt files from /run/systemimager or /dev/.initramfs if it exists
 # It will exists if we did a direct boot.
-for file in {/run/initramfs,/dev/.initramfs}/systemimager/{si_monitor.log,variables.txt}
+for file in {/run/initramfs,/dev/.initramfs}/systemimager/{si_monitor.log,si_dracut.log,variables.txt}
 do
-	if test -r \$file -a -w /root/SIS_Install_logs/
+	if test -r \$file -a -w /root/SystemImager_logs/
 	then
-		cat \$file | sed -E 's/\\[[0-9]{2}m//g' > /root/SIS_Install_logs/\${file##*/}
+		cat \$file | sed -E 's/\\[[0-9]{2}m//g' > /root/SystemImager_logs/\${file##*/}
 	fi
 done
 
@@ -173,11 +173,11 @@ case "\$1" in
   start)
 	# 1st, get last si_monitor.log and variables.txt files from /run/systemimager or /dev/.initramfs if it exists
 	# It will exists if we did a direct boot.
-	for file in {/run/initramfs,/dev/.initramfs}/systemimager/{si_monitor.log,variables.txt}
+	for file in {/run/initramfs,/dev/.initramfs}/systemimager/{si_monitor.log,si_dracut.log,variables.txt}
 	do
-		if test -r \$file -a -w /root/SIS_Install_logs/
+		if test -r \$file -a -w /root/SystemImager_logs/
 		then
-			cat \$file | sed -E 's/\\[[0-9]{2}m//g' > /root/SIS_Install_logs/\${file##*/}
+			cat \$file | sed -E 's/\\[[0-9]{2}m//g' > /root/SystemImager_logs/\${file##*/}
 		fi
 	done
 

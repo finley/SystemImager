@@ -14,7 +14,7 @@ PARTED_UNIT=MB
 
 ################################################################################
 #
-#   Save the SIS imaging relevant logs to /root/SIS_Install_logs/ on the imaged
+#   Save the SIS imaging relevant logs to /root/SystemImager_logs/ on the imaged
 #   computer.
 #
 #
@@ -23,13 +23,13 @@ save_logs_to_sysroot() {
     loginfo "Saving logs to /sysroot/root..."
     if test -d /sysroot/root
     then
-        mkdir -p /sysroot/root/SIS_Install_logs/
-        cp /tmp/variables.txt       /sysroot/root/SIS_Install_logs/
-	test -r /tmp/dhclient.${DEVICE}.dhcpopts && cp /tmp/dhclient.${DEVICE}.dhcpopts /sysroot/root/SIS_Install_logs/
-	test -r /tmp/net.${DEVICE}.override && cp /tmp/net.${DEVICE}.override /sysroot/root/SIS_Install_logs/
-        cat /tmp/si_monitor.log | sed -E 's/\[[0-9]{2}m//g' > /sysroot/root/SIS_Install_logs/si_monitor.log
-        echo "${IMAGENAME}" >         /sysroot/root/SIS_Install_logs/image.txt
-        test -f /run/initramfs/rdsosreport.txt && cp /run/initramfs/rdsosreport.txt /sysroot/root/SIS_Install_logs/
+        mkdir -p /sysroot/root/SystemImager_logs/
+        cp /tmp/{variables.txt,si_monitor.log,si_dracut.log}       /sysroot/root/SystemImager_logs/
+        #cat /tmp/si_monitor.log | sed -E 's/\[[0-9]{2}m//g' > /sysroot/root/SystemImager_logs/si_monitor.log
+	test -r /tmp/dhclient.${DEVICE}.dhcpopts && cp /tmp/dhclient.${DEVICE}.dhcpopts /sysroot/root/SystemImager_logs/
+	test -r /tmp/net.${DEVICE}.override && cp /tmp/net.${DEVICE}.override /sysroot/root/SystemImager_logs/
+        echo "${IMAGENAME}" >         /sysroot/root/SystemImager_logs/image.txt
+        test -f /run/initramfs/rdsosreport.txt && cp /run/initramfs/rdsosreport.txt /sysroot/root/SystemImager_logs/
     else
         shellout "/sysroot/root does not exists"
     fi
