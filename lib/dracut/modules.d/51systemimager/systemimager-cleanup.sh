@@ -65,6 +65,16 @@ done
 
 unset SIS_SYSMSG_ENABLED
 
+logdebug "Checking that plymouthd is available in installed client"
+
+if test -x /sysroot/sbin/plymouthd -o -x /sysroot/usr/sbin/plymouthd
+then
+        logdebug "plymouthd available in installed client. Keeping splash"
+else
+        logwarn "plymouthd not available in installed client. Closing splash"
+        plymouth --quit
+fi
+
 # Stop the log dispatcher task.
 stop_log_dispatcher
 
@@ -74,5 +84,5 @@ logmessage local0.info systemimager "Control given back to system..."
 # TODO: Kill log forwarding task (socat)
 # Ugly hack for now using killall
 sleep 1.1s # Wait for socat to flush its buffers.(every 1s)
-killall -HUP socat
+killall -q -HUP socat
 
