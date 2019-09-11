@@ -33,7 +33,7 @@ getarg 'si.break=log-dispatcher' && logmessage local0.warning systemimager "Brea
 	while read LOG_FACILITY LOG_SEVERITY LOG_TAG LOG_MESSAGE
 	do
 		logmessage ${FACILITY[$LOG_FACILITY]}.${SEVERITY[$LOG_SEVERITY]} "$LOG_TAG" "$LOG_MESSAGE"
-	done < <( journalctl --follow -o json --no-pager --no-tail | jq --unbuffered -r '"\(.SYSLOG_FACILITY // 3) \(.PRIORITY // 6 ) \(.SYSLOG_IDENTIFIER // "journald") \(.MESSAGE | sub("\\n";" ";"g") // "no message")"' )
+	done < <( journalctl --follow -o json --no-pager --no-tail | jq --unbuffered -r '"\(.SYSLOG_FACILITY // 3) \(.PRIORITY // 6 ) \(.SYSLOG_IDENTIFIER // "journald") \(.MESSAGE | sub("\\n";" ";"g")  | sub("\\\\";"\\\\";"g") // "no message")"' )
 }&
 
 LOG_DISPATCHER_PID=$!
