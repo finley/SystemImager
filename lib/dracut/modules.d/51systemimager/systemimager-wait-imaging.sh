@@ -31,7 +31,7 @@ then
 	#do
 	#       sleep 1
 	#done
-	#sleep 2
+	sleep 2
 
 	# Highlight plymouth init icon.
 	sis_update_step init
