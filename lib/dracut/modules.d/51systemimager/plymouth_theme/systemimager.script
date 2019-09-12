@@ -271,12 +271,21 @@ fun scroll_message(status_flag, text) {
    } else if (status_flag == "N") {  // NOTICE
       R=0.0; G=1.0; B=1.0;
       status_text = "Notice";
+   } else if (status_flag == "O") {  // std Out
+      R=1; G=1; B=0.7;
+      status_text = "StdOut";
+   } else if (status_flag == "R") {  // std Err
+      R=1; G=0.5; B=0.5;
+      status_text = "StdErr";
    } else if (status_flag == "S") {  // SYSTEM (internal use)
       R=0.5; G=0.5; B=0.5;
       status_text = "System";
    } else if (status_flag == "D") { // DEBUG (internal use)
       R=0.5; G=0.5; B=1.0;
       status_text = "Debug";
+   } else if (status_flag == "F") {  // FATAL
+      status_text = "FATAL";
+      R=1.0; G=0.3; B=0.3;
    }
    status[i] = Image.Text(status_text, R, G, B, "Fixed");
  

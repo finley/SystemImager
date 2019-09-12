@@ -97,6 +97,11 @@ logerror() {
 	logger -t systemimager -p local0.err "$@"
 }
 
+# Log an error.
+logfatal() {
+	logger -t systemimager -p local0.emerg "$@"
+}
+
 # Log a warning
 logwarn() {
 	logger -t systemimager -p local0.warn "$@"
@@ -168,12 +173,12 @@ logmessage() {
 	    local2.info) # stdout
 		    LOGFILE_HEADER="  stdout:"
 		    CONSOLE_HEADER="${FG_WHITE}${LOGFILE_HEADER}${FG_WHITE}"
-		    PLYMOUTH_MSG_TYPE="N"
+		    PLYMOUTH_MSG_TYPE="O"
 		    ;;
 	    local2.err) # stderr
 		    LOGFILE_HEADER="  stderr:"
 		    CONSOLE_HEADER="${FG_RED}${LOGFILE_HEADER}${FG_WHITE}"
-		    PLYMOUTH_MSG_TYPE="E"
+		    PLYMOUTH_MSG_TYPE="R"
 		    ;;
 	    local2.notice) # kernel (/dev/kmsg)
 		    LOGFILE_HEADER="  kernel:"
@@ -221,9 +226,9 @@ logmessage() {
 		    PLYMOUTH_MSG_TYPE="D"
 		    ;;
 	    local0.emerg)
-		    LOGFILE_HEADER="   panic:"
+		    LOGFILE_HEADER="   FATAL:"
 		    CONSOLE_HEADER="${FG_RED}${LOGFILE_HEADER}${FG_WHITE}"
-		    PLYMOUTH_MSG_TYPE="E"
+		    PLYMOUTH_MSG_TYPE="F"
 		    ;;
 	    *)
 		    LOGFILE_HEADER="  System:"
@@ -239,7 +244,7 @@ logmessage() {
     test -w /dev/console && echo "${CONSOLE_HEADER} ${LOG_MESSAGE}" > /dev/console
 
     # Write message on console GUI (limit to 80 chars)
-    test -n "$PLYMOUTH_MSG_TYPE" && plymouth --ping && plymouth update --status="mesg:${PLYMOUTH_MSG_TYPE}:${LOG_MESSAGE:0:100}" > /dev/null 2>&1
+    test -n "$PLYMOUTH_MSG_TYPE" && plymouth --ping && plymouth update --status="mesg:${PLYMOUTH_MSG_TYPE}:${LOG_MESSAGE:0:120}" > /dev/null 2>&1
 
     # if remote log is required, forward to the server.
     if test -n "$USELOGGER" -a -n "$LOGSERVER"
