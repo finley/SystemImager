@@ -252,11 +252,13 @@ logmessage() {
 	logger -t "${LOG_TAG}" -p ${LOG_PRIORITY} -n ${LOG_SERVER} -P ${LOG_SERVER_PORT:=514} "${LOG_MESSAGE}"
     fi
 
-    # Send message to image server console logger in xml format.
-    ESCAPED_MSG="$(sed "s/\&/\&amp;/g;s/>/\&gt;/g;s/</\&lt;/g;s/'/\&apos;/g" <<< "${LOG_MESSAGE}")"
+    # Send message to image server console logger in json format.
+    # XML_ESCAPED_MSG="$(sed "s/\&/\&amp;/g;s/>/\&gt;/g;s/</\&lt;/g;s/'/\&apos;/g" <<< "${LOG_MESSAGE}")"
+    ESCAPED_MSG="$(sed 's/\\/\\\\/g;s/"/\\"/g;s/\t/\\t/g' <<< "${LOG_MESSAGE}")"
     #if test "${MONITOR_CONSOLE}" != "n" # (can be unset or 'y': doing so will allow to catch message before MONITOR_CONSOLE is parsed)
     #then
-        echo "<message type=\"${LOG_TYPE}\">${ESCAPED_MSG}</message>" >> /tmp/si_monitor.xml
+        #echo "<message type=\"${LOG_TYPE}\">${ESCAPED_MSG}</message>" >> /tmp/si_monitor.json
+        echo "{ \"TAG\" : \"${LOG_TAG}\" , \"PRIORITY\" : \"${LOG_PRIORITY}\" , \"MESSAGE\" : \"$ESCAPED_MSG\" }" >> /tmp/si_monitor.json
     #fi
 }
 
