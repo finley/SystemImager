@@ -257,8 +257,8 @@ logmessage() {
     ESCAPED_MSG="$(sed 's/\\/\\\\/g;s/"/\\"/g;s/\t/\\t/g' <<< "${LOG_MESSAGE}")"
     #if test "${MONITOR_CONSOLE}" != "n" # (can be unset or 'y': doing so will allow to catch message before MONITOR_CONSOLE is parsed)
     #then
-        #echo "<message type=\"${LOG_TYPE}\">${ESCAPED_MSG}</message>" >> /tmp/si_monitor.json
-        echo "{ \"TAG\" : \"${LOG_TAG}\" , \"PRIORITY\" : \"${LOG_PRIORITY}\" , \"MESSAGE\" : \"$ESCAPED_MSG\" }" >> /tmp/si_monitor.json
+        #echo "<message type=\"${LOG_TYPE}\">${ESCAPED_MSG}</message>" >> /tmp/si_report.stream
+        echo "LOG:{ \"TAG\" : \"${LOG_TAG}\" , \"PRIORITY\" : \"${LOG_PRIORITY}\" , \"MESSAGE\" : \"$ESCAPED_MSG\" }" >> /tmp/si_report.stream
     #fi
 }
 
@@ -952,7 +952,7 @@ if test -s /run/systemimager/si_monitor.pid; then
         loginfo "SystemImager remote monitor task stopped"
     fi
 fi
-
+# kill $(cat /run/systemimager/reporting_socat.pid)
 }
 
 ################################################################################
@@ -1544,6 +1544,7 @@ run_pre_install_scripts() {
                 sis_update_step prei ${SCRIPT_INDEX} ${NUM_SCRIPTS}
                 loginfo "Running script ${SCRIPT_INDEX}/${NUM_SCRIPTS}: $PRE_INSTALL_SCRIPT"
 		send_monitor_msg "status=108:speed=0" # 108=preinstall
+		update_client_status 108 0
                 chmod +x $PRE_INSTALL_SCRIPT || shellout
                 ./$PRE_INSTALL_SCRIPT || shellout
 		SCRIPT_INDEX=$((${SCRIPT_INDEX} + 1))
@@ -1629,6 +1630,7 @@ run_post_install_scripts() {
                     sis_update_step post ${SCRIPT_INDEX} ${NUM_SCRIPTS}
                     loginfo "Running script ${SCRIPT_INDEX}/${NUM_SCRIPTS}: $POST_INSTALL_SCRIPT"
 		    send_monitor_msg "status=109:speed=0" # 109=postinstall
+		    update_client_status 109 0
                     chmod +x /sysroot/tmp/post-install/$POST_INSTALL_SCRIPT || shellout
                     if ! chroot /sysroot/ /tmp/post-install/$POST_INSTALL_SCRIPT
 		    then
@@ -1919,7 +1921,52 @@ send_monitor_msg() {
     # Send data to monitor server.
     #echo "$send_msg" | ncat $MONITOR_SERVER $MONITOR_PORT
     echo "$send_msg" > /dev/tcp/$MONITOR_SERVER/$MONITOR_PORT || logerror "Failed to send message [$msg] to $MONITOR_SERVER port $MONITOR_PORT"
+
 }
+
+################################################################################
+#
+#  update_client_status
+#
+#   Description:
+#   Add updated client information and status in /tmp/si_report.stream
+#
+#   Usage:
+#   update_client_status status speed
+#   Status:
+#   < 0  => Error
+#   1-99 => percentage completion
+#   100  => imaged
+#   101  => finalizing...
+#   102  => REBOOTED
+#   103  => beeping
+#   104  => rebooting
+#   105  => shutdown
+#   106  => shell
+#   107  => extracting
+#   108  => preinstall
+#   109  => postinstall
+#
+
+update_client_status() {
+   # Evaluate the uptime of the client.
+   time=`cat /proc/uptime | sed "s/\..*//"`
+
+    echo "UPD:\
+{\"name\" : \"$CLIENT_MAC\" ,\
+ \"cpu\" : \"$CLIENT_CPU\" ,\
+ \"host\" : \"$HOSTNAME\" ,\
+ \"ip\" : \"$IPADDR\" ,\
+ \"kernel\" : \"$IMAGER_KERNEL\" ,\
+ \"mem\" : \"$CLIENT_MEM\" ,\
+ \"ncpus\" : \"$CLIENT_NCPUS\" ,\
+ \"os\" : \"$IMAGENAME\" ,\
+ \"speed\" : \"${2:-0}\" ,\
+ \"status\" : \"${1:0}\" ,\
+ \"time\" : \"$time\" \
+}" >> /tmp/si_report.stream
+}
+
 #
 ################################################################################
 #
@@ -1994,6 +2041,7 @@ start_report_task() {
             # Send status and bandwidth to the monitor server.
             send_monitor_msg "status=$status:speed=$speed"
 	fi
+	update_client_status "$status" "$speed"
         
         # Wait $REPORT_INTERVAL sec between each report.
         sleep ${REPORT_INTERVAL}s
@@ -2035,6 +2083,7 @@ stop_report_task() {
 	logdebug "Setting speed to 0 and status to $1 (101:finalizing or -1 failure)"
         send_monitor_msg "status=$1:speed=0"
     fi
+    update_client_status "$1" 0
 }
 
 ################################################################################
@@ -2043,6 +2092,7 @@ stop_report_task() {
 #
 beep_incessantly() {
     send_monitor_msg "status=103:speed=0" # 103: beeping
+    update_client_status 103 0
     modprobe pcspkr # Make sure pcspkr module is loaded
     local SECONDS=1
     local MINUTES

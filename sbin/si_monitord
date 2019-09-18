@@ -1,0 +1,93 @@
+#!/bin/bash
+#
+#   "SystemImager"
+# 
+#   Copyright (C) 2019 Olivier Lahaye
+#
+#    vi:set filetype=perl: 
+#
+#   2019.09.18 Olivier Lahaye
+#   - Initial release
+#
+#   si_monitord is the replacement of old_simonitor
+#
+#   Function:
+#     - si_monitord will run on image server.
+#     - it is responsible for:
+#       - registering new clients
+#       - recording clients logs
+# 
+#   Files:
+#     - /var/log/systemimager/si_monitord.log               : this server log
+#     - /var/lib/systemimager/clients/<client MAC>_log.json : The logs for client with this MAC addr.
+#     - /var/lib/systemimager/clients/<client MAC>_def.json : The definitions and status for client with this MAC addr.
+#
+#   Protocol:
+#     - MAC:<Client MAC addr>;<client uptime>
+#       => Use when log monitor starts on client. It is the 1st message received.
+#          The uptime will be substracted from server timestamp in order to compute
+#          the 1st timestamp (when client imager kernel went alive).
+#     - UPD:{json client informations update (status, ...)}
+#       => These are the same informations as displayed in old si_monitortk
+#     - LOG:{ json basic syslog values (tag, priority and message)}
+#       => A new log line
+
+function SystemImagerMonitor() {
+	while IFS=':' read TYPE MSG
+	do
+		case "$TYPE" in
+			LOG)
+				# BUG: if $LOG_FILE is undefined: try to read MAC (though it's not normal situation)
+				if test -e "$DEF_FILE"
+				then
+					echo "$MSG" >> $LOG_FILE
+				else
+					echo "BUG: Client definition file [$DEF_FILE] does not exists." >> /var/log/systemimager/server.log
+				fi
+				;;
+			UPD)
+				if test -e "$DEF_FILE"
+				then
+					# take old def file that has 1st timestamp, add MSG update and update timestamp.
+					# Done in 2 step: 1: read old file
+					# create it using redirection. (if done in one shot, redirection kills the file before car reads it)
+					OLD=$(cat ${DEF_FILE}) 
+					echo $OLD $MSG '{ "timestamp" : "'$(date +%s)'" }'| jq -s add > $DEF_FILE
+				else
+					echo "BUG: Client definition file [$DEF_FILE] does not exists." >> /var/log/systemimager/server.log
+				fi
+				;;
+			MAC)
+				IFS=';' read MAC UPTIME <<< "${MSG}"
+				if test -n "$MAC"
+				then
+					LOG_FILE=/var/lib/systemimager/clients/${MAC}_log.json
+					DEF_FILE=/var/lib/systemimager/clients/${MAC}_def.json
+					TIMESTAMP=$(date +%s)
+					FIRST_TIMESTAMP=$(( ${TIMESTAMP} - ${UPTIME} ))
+					echo "Log retreiving started for $MAC." >> /var/log/systemimager/server.log
+					rm -f $LOG_FILE 2> /dev/null # remove old log
+					jq . > ${DEF_FILE} <<-EOF
+						{
+							  "name" : "$MAC",
+							  "timestamp" : "$TIMESTAMP",
+							  "first_timestamp" : "$FIRST_TIMESTAMP"
+						}
+					EOF
+				else
+					echo "Empty MAC addr received on $(date)" >> /var/log/systemimager/server.log
+					exit 0
+				fi
+				;;
+			*)
+				echo "ERROR: Invalid or empty message [$TYPE] on $(date)" >> /var/log/systemimager/server.log
+				;;
+		esac
+	done
+	# echo "{ \"END\" : \"1\" }" >> $LOG_FILE
+}
+
+export -f SystemImagerMonitor
+
+socat -vv -u TCP-LISTEN:8182,crlf,reuseaddr,fork SYSTEM:"/bin/bash -c 'SystemImagerMonitor'"
+

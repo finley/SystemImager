@@ -58,6 +58,7 @@ case "$SI_IMAGING_STATUS" in
 			"shell")
 				loginfo "Installation successfull. Dropping to interactive shell as requested."
 				send_monitor_msg "status=106:speed=0" # 106=shell
+				update_client_status 106 0
 				sis_postimaging shell
 				;;
 			"reboot"|"kexec")

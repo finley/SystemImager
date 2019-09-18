@@ -131,6 +131,7 @@ download_image() {
 function extract_image() {
 	loginfo "Extracting image to /sysroot"
 	send_monitor_msg "status=107:speed=0" # 107=extracting
+	update_client_status 107 0
 }
 
 ################################################################################

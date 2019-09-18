@@ -30,11 +30,11 @@ getarg 'si.break=log-dispatcher' && logmessage local0.warning systemimager "Brea
 {
 	SEVERITY=( emerg alert crit err warning notice info debug )
 	FACILITY=( kern user mail daemon auth syslog lpr news uucp cron authpriv ftp ntp security console cron local0 local1 local2 local3 local4 local5 local6 local7 )
-	local IFS=';'
-	while read LOG_FACILITY LOG_SEVERITY LOG_TAG LOG_MESSAGE
+	while IFS=';' read LOG_FACILITY LOG_SEVERITY LOG_TAG LOG_MESSAGE
 	do
 		logmessage ${FACILITY[$LOG_FACILITY]}.${SEVERITY[$LOG_SEVERITY]} "$LOG_TAG" "$LOG_MESSAGE"
-	done < <( journalctl --follow -o json --no-pager --no-tail | jq --unbuffered -r '"\(.SYSLOG_FACILITY // 3);\(.PRIORITY // 6 );\(.SYSLOG_IDENTIFIER // "journald");\(.MESSAGE | sub("\\n";" ";"g")  | sub("\\\\";"\\\\";"g") // "no message")"' )
+	done < <( journalctl --follow -o json --no-pager --no-tail | jq --unbuffered -r '"\(.SYSLOG_FACILITY // 3);\(.PRIORITY // 6 );\(.SYSLOG_IDENTIFIER // "journald");\(.MESSAGE | tojson | @sh // "no message")"' )
+	#done < <( journalctl --follow -o json --no-pager --no-tail | jq --unbuffered -r '"\(.SYSLOG_FACILITY // 3);\(.PRIORITY // 6 );\(.SYSLOG_IDENTIFIER // "journald");\(.MESSAGE | sub("\\n";" ";"g")  | sub("\\";"\\\\";"g") | sub("\\\"";"\\\"";"g") // "no message")"' )
 }&
 
 LOG_DISPATCHER_PID=$!

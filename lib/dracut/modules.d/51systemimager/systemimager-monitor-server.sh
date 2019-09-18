@@ -27,16 +27,19 @@ if [ ! -z "$MONITOR_SERVER" ]; then
 	# freeze log dispatcher so we can add 1st line to log (avoid race condition)
 	LOG_DISPATCHER_PID=$(cat /run/systemimager/log_dispatcher.pid) # TODO: add error checking
 	kill -STOP $LOG_DISPATCHER_PID
-	mv /tmp/si_monitor.json /etc/si_monitor.json.tmp
-	echo "{ \"MAC\" : \"$CLIENT_MAC\" }" > /tmp/si_monitor.json # 1st line will be suppressed by server once used.
-	cat /etc/si_monitor.json.tmp >> /tmp/si_monitor.json
+	mv /tmp/si_report.stream /etc/si_report.stream.tmp
+	UPTIME=$(cat /proc/uptime)
+	# 1st line will List MAC and uptime. server will substract client uptime to server timestamp to
+	# get the effective first_timestamp.
+	echo "MAC:$CLIENT_MAC;${UPTIME%%.*}" > /tmp/si_report.stream
+	cat /etc/si_report.stream.tmp >> /tmp/si_report.stream
 	kill -CONT $LOG_DISPATCHER_PID
-	rm -f /etc/si_monitor.json.tmp
+	rm -f /etc/si_report.stream.tmp
 
 	# start the socat server
 	#socat UNIX-LISTEN:/tmp/logger.socket,ignoreeof TCP-CONNECT:10.0.238.84:8182&
-	socat -u FILE:/tmp/si_monitor.json,ignoreeof TCP-CONNECT:$MONITOR_SERVER:8182&
-	echo $! > /run/systemimager/monitor_socat.pid
+	socat -u FILE:/tmp/si_report.stream,ignoreeof TCP-CONNECT:$MONITOR_SERVER:8182&
+	echo $! > /run/systemimager/reporting_socat.pid
 
 	loginfo "Local console forwarder started and log forwarded to image server."
     else
@@ -46,6 +49,7 @@ if [ ! -z "$MONITOR_SERVER" ]; then
 
     # Send initialization status.
     send_monitor_msg "status=0:first_timestamp=on:speed=0"
+    update_client_status 0 0
     loginfo "Progress monitoring initialized."
     # Start client log gathering server: for each connection
     # to the local client on port 8181 the full log is sent

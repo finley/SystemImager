@@ -217,6 +217,7 @@ if [ -n "$MONITOR_SERVER" ]; then
     # Report the 'imaged' state to the monitor server.
     logdebug "Reporting imaged status to monitor ($MONITOR_SERVER:$MONITOR_PORT)"
     send_monitor_msg "status=100:speed=0"
+    update_client_status 100 0
     if [ "x$MONITOR_CONSOLE" = "xy" ]; then
         # Print some empty lines and sleep some seconds to give time to
         # the virtual console to get last messages.
