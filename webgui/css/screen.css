@@ -1,0 +1,135 @@
+body {
+  background-color: lightgrey;
+  background-image: url('Background.png');
+  background-position: center;
+  color: #f5f5f5;
+  font-size: medium ; 
+  font-family: Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;
+  display: inline;
+}
+
+h1 {
+  color: navy;
+  margin-left: 20px;
+}
+
+
+table {
+  border-collapse: collapse;
+}
+
+table {
+//  border: 3px solid black;
+  border: 0px;
+}
+
+td {
+  vertical-align: top;
+}
+
+th, td {
+  text-align: left;
+  padding-left: 1em;
+  border-top: 0px;
+  border-left: 0px;
+  border-right: 0px;
+  border-bottom: 0px;
+  // border-bottom: 2px solid #555;
+}
+
+#headerTable {
+  border: 0px;
+  width: 100vw; // vw = viewport width.
+}
+
+#logTable tr:hover {
+  background-color: #f5f5f5;
+  color: black;
+}
+/*
+tr:nth-child(even) {background-color: #f2f2f2;}
+tr:nth-child(odd) {background-color: #f9f9f9;}
+*/
+
+#logTable {
+  width: 100%;
+}
+
+#logTable thead {
+  display: block;
+}
+
+/*
+Scrollable table with static header adapted from here:
+https://forum.alsacreations.com/topic-4-62439-1-TABLE--Scrollable-TBODY-and-fixed-THEAD-reloaded.html
+*/
+
+#logTable tbody {
+  display: block;
+  overflow-y: scroll;
+  height: 80vh; // vh = viewport height.
+  width: 100%;
+}
+
+#logTable thead tr th:nth-child(1) { /* header col 1 */
+  width: 8em;
+}
+#logTable thead tr th:nth-child(2) { /* header col 2 */
+  width: 10em;
+}
+#logTable tbody tr td:nth-child(1) { /* content col 1 */
+  width: 8em;
+}
+#logTable tbody tr td:nth-child(2) { /* content col 2 */
+  width: 10em;
+}
+
+.status0 { /* Error */
+  background: red;
+  color: darkred;
+  text-shadow: 1px 1px 3px red;
+}
+
+.status100 { /* Imaged */
+  background: blue;
+}
+
+.status101 { /* finalizing... */
+  background: lightblue;
+}
+
+.status102 { /* Rebooted */
+  background: lightgreen;
+  color: darkgreen;
+  text-shadow: 1px 1px 3px green;
+}
+
+.status103 { /* beeping... */
+  background: lightgrey;
+}
+
+.status104 { /* rebooting */
+  background: lightyellow;
+}
+
+.status105 { /* shutdown */
+  background: grey;
+}
+
+.status106 { /* shell */
+  background: lightgrey;
+}
+
+.status107 { /* extracting... */
+  background: blue;
+}
+
+.status108 { /* preinstall */
+  background: yellow;
+}
+
+.status109 { /* postinstall */
+  background: yellow;
+}
+
+
