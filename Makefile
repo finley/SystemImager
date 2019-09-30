@@ -773,7 +773,7 @@ show_build_deps:
 	@echo "     apt-get install build-essential flex $(UBUNTU_DAPPER_BUILD_DEPS)"
 	@echo
 	@echo "   RHEL6, CentOS6, and friends:"
-	@echo "     yum install rpm-build patch wget flex bc docbook-utils dos2unix device-mapper-devel gperf pam-devel quilt lzop glib2-devel PyXML glibc-static $(RHEL6_BUILD_DEPS)"
+	@echo "     yum install rpm-build wget flex bc docbook-utils dos2unix lzop PyXML $(RHEL6_BUILD_DEPS)"
 	@echo
 	@echo "   Debian Stable:"
 	@echo "     apt-get install build-essential flex $(DEBIAN_STABLE_BUILD_DEPS)"

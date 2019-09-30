@@ -125,10 +125,8 @@ BuildArch: noarch
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
-BuildRequires: dos2unix, flex, libtool, readline-devel, /usr/bin/wget, openssl-devel, gcc, gcc-c++, ncurses-devel, bc, rsync >= 2.4.6, coreutils
+BuildRequires: bc, rsync >= 2.4.6, coreutils, dracut
 BuildRequires: %pkg_docbook_utils
-BuildRequires: libuuid-devel, device-mapper-devel, gperf, binutils-devel, pam-devel, quilt
-BuildRequires: lzop, glib2-devel >= 2.22.0
 Requires: rsync >= 2.4.6, syslinux >= 1.48, libappconfig-perl, dosfstools, /usr/bin/perl
 #AutoReqProv: no
 
@@ -516,7 +514,10 @@ Requires: socat
 This package is a dracut modules that automates the systeimager initramfs creation.
 
 %changelog
-* Wed Jan 9 2019 Olivier Lahaye <olivier.lahaye@cea.fr> 4.5.0-0.23
+* Mon Sep 30 2019 Olivier Lahaye <olivier.lahaye@cea.fr> 4.5.0-0.25
+- Removed most old build dependancy as we don't build any binaries
+  since dracut is used.
+* Wed Jan 9 2019 Olivier Lahaye <olivier.lahaye@cea.fr> 4.5.0-0.24
 - Added ethtool and lsscsi dependancy so lsscsi command and ethtool are available in imager.
 
 * Wed Jan 9 2019 Olivier Lahaye <olivier.lahaye@cea.fr> 4.5.0-0.23
