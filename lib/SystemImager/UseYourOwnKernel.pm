@@ -23,6 +23,7 @@ package SystemImager::UseYourOwnKernel;
 
 use strict;
 use File::Basename;
+use File::Glob;
 use SystemImager::Config qw($config);
 
 our $verbose;
@@ -84,7 +85,7 @@ sub create_uyok_initrd() {
             $uname_r = _get_kernel_release($custom_kernel);
         } elsif ($kernel_version) {
 		$uname_r=$kernel_version;
-	}elsif ($image) {
+	} elsif ($image) {
             # Get SystemImager directories.
             my $image_dir = $config->default_image_dir;
 
@@ -236,14 +237,14 @@ sub create_uyok_initrd() {
 
         # Print initrd size information.
 	# OL: BUG: this code is obsolete and not compatible with what dracut produces.
-        print ">> Evaluating initrd size to be added in the kernel boot options\n" .
-              ">> (e.g. ".$config->systemimager_dir."/pxelinux.cfg/syslinux.cfg):\n";
-        if (-f "$boot_dir/initrd.img") {
-            my $ramdisk_size = (`zcat $boot_dir/initrd.img | wc -c` + 10485760) / 1024;
-            print " >>\tsuggested value -> ramdisk_size=$ramdisk_size\n\n";
-        } else {
-            print qq(WARNING: cannot find the new boot initrd!\n);
-        }
+	# print ">> Evaluating initrd size to be added in the kernel boot options\n" .
+	#      ">> (e.g. ".$config->systemimager_dir."/pxelinux.cfg/syslinux.cfg):\n";
+	#if (-f "$boot_dir/initrd.img") {
+	#    my $ramdisk_size = (`zcat $boot_dir/initrd.img | wc -c` + 10485760) / 1024;
+	#    print " >>\tsuggested value -> ramdisk_size=$ramdisk_size\n\n";
+	#} else {
+	#    print qq(WARNING: cannot find the new boot initrd!\n);
+	#}
 
         _get_copy_of_kernel( $uname_r, $boot_dir, $custom_kernel );
         _record_arch( $boot_dir );
@@ -415,26 +416,24 @@ sub _choose_kernel_file {
         my $uname_r = shift;
         my $image_dir = shift;
         $image_dir = '' if !($image_dir);
-        my @dirs = ("$image_dir/boot", "$image_dir/");
-        my @kernels;
 
-        foreach my $dir (@dirs) {
+	# searching for those type of kernel in $image_dir (or /)
+	# $image_dir/boot/vmlinu{x,z}-$uname_r  => Suitable for most distro shipped kernels
+	# $image_dir/lib/modules/$uname_r/vmlinu{x,z} => For fedora-30+ or rhel/centos-8 in docker container
+	# $image_dir/boot/{,vm}linu{x,z}* => custom kernel with name starting with (vmlinux, vmlinuz, linux, linuz)
+	# $image_dir/boot/kernel*" => custom kernel with name stating with kernel
+	my @kernels = glob("$image_dir/boot/vmlinu{x,z}-$uname_r $image_dir/lib/modules/$uname_r/vmlinu{x,z} $image_dir/boot/{,vm}linu{x,z}* $image_dir/boot/kernel*");
+
+        foreach my $kernel (@kernels) {
                 
                 # 
-                # Check each binary to see if it is a kernel file.  Preference given to the file with
+                # Check each binary to verify that it's a kernel file. Preference given to the file with
                 # the running kernel version, otherwise, the first available good kernel file is used.
                 #
-                opendir(DIR, $dir) || die("Can't opendir $dir: $!");
-                        my @files = readdir(DIR);
-                closedir DIR;
 
-                foreach (@files) {
-                        my $kernel = $_;
-                        my $file = "$dir/$kernel";
-                        my $kernel_release = _get_kernel_release($file);
-                        if ( defined($kernel_release) and ($kernel_release eq $uname_r) ) {
-                                return $file;
-                        }
+                my $kernel_release = _get_kernel_release($kernel);
+                if ( defined($kernel_release) and ($kernel_release eq $uname_r) and (-f "$image_dir/lib/modules/$uname_r/modules.dep")) {
+                        return $kernel;
                 }
         }
         # If cannot find kernel with name matching running version, return undef.
@@ -628,6 +627,8 @@ sub _mk_tmp_dir() {
 # Then we look in /lib/modules available version higher release 1st until we
 # find a matching kernel in /boot or in /lib/modules/<kver>/vmlinuz
 # In case of failure (no kernel with matching modules), we return 0 as version.
+#
+# optional argument: image_dir (perform search in image dir instead of /)
 ################################################################################
 sub get_uname_r {
 
@@ -639,19 +640,26 @@ sub get_uname_r {
         #    identify kernel file
         #    extract uname-r info
         #
+	my $image_dir = shift;
+	$image_dir = '' if !($image_dir);
+
         my $kernel_version = `uname -r`;
         chomp $kernel_version;
-        return $kernel_version if (-f "/lib/modules/$kernel_version/modules.dep");
+        return $kernel_version if (-f "$image_dir/lib/modules/$kernel_version/modules.dep");
 
 	# Uname -r kernel version has no matching modules, we need to find another kernel.
-	opendir(DIR, "/lib/modules"); # List available kernel versions in /lib/modules
+	unless(opendir(DIR, "$image_dir/lib/modules")) { # List available kernel versions in /lib/modules
+            print "Error: $image_dir/lib/modules does not exists!";
+	    return 0; # Return void kernel version.
+        }
+
+	# Sort kernel, highest version 1st. BUG: cmp is not working. Need to implement our own kernel version comparison
 	my @mod_dirs = sort { $b cmp $a } grep(/^\d+\.\d+\.\d+/,readdir(DIR)); # read available module dirs in /lib/modules.
 	closedir(DIR);
-#	@mod_dirs = sort { $b <=> $a } @mod_dirs; # Revers sort (highest version is the 1st)
 	foreach my $kernel_version (@mod_dirs) {
-            next if (! -f "/lib/modules/$kernel_version/modules.dep");
-	    return $kernel_version if (glob("/boot/vmlinu{x,z}-$kernel_version")); # Standard redhat kernel location and name
-	    return $kernel_version if (glob("/lib/modules/$kernel_version/vmlinu{x,z}")); # rhel8 / fedora 30 in docker container
+            next if (! -f "$image_dir/lib/modules/$kernel_version/modules.dep");
+	    return $kernel_version if (glob("$image_dir/boot/vmlinu{x,z}-$kernel_version")); # Standard redhat kernel location and name
+	    return $kernel_version if (glob("$image_dir/lib/modules/$kernel_version/vmlinu{x,z}")); # rhel8 / fedora 30 in docker container
         }
 
 	return "0"; # We did not find any suitable kernel. return a dummy version.
