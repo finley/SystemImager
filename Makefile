@@ -206,7 +206,6 @@ FLAMETHROWER_STATE_DIR = $(DESTDIR)/var/state/systemimager/flamethrower
 RSYNC_STUB_DIR = $(ETC)/systemimager/rsync_stubs
 
 SI_INSTALL = $(TOPDIR)/tools/si_install --si-prefix=$(PREFIX)
-GETSOURCE = $(TOPDIR)/tools/getsource
 
 # Some root tools are probably needed to build SystemImager packages, so
 # explicitly add the right paths here. -AR-
@@ -551,53 +550,6 @@ install:
 .PHONY:	install_binaries
 install_binaries:	install_boot_files
 
-.PHONY:	complete_source_tarball
-complete_source_tarball:	$(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source.tar.bz2.sign
-$(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source.tar.bz2.sign:	$(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source.tar.bz2
-	cd $(TOPDIR)/tmp && gpg --detach-sign -a --output systemimager-$(VERSION)-complete_source.tar.bz2.sign systemimager-$(VERSION)-complete_source.tar.bz2
-	cd $(TOPDIR)/tmp && gpg --verify systemimager-$(VERSION)-complete_source.tar.bz2.sign 
-
-$(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source.tar.bz2: systemimager.spec
-	rm -fr $(TOPDIR)/tmp
-	if [ -d $(TOPDIR)/.svn ]; then \
-		mkdir -p $(TOPDIR)/tmp; \
-		svn export . $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source; \
-	else \
-		make distclean && mkdir -p $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source; \
-		(cd $(TOPDIR) && $(TAR) --exclude=tmp -cvf - .) | (cd $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source && $(TAR) -xvf -); \
-	fi
-	cd $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source && ./configure
-	$(MAKE) -C $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source get_source
-	#
-	# Make sure we've got all kernel source.  NOTE:  The egrep -v '-' bit is so that we don't include customized kernels (Ie: -ydl).
-	$(foreach linux_version, $(shell grep 'LINUX_VERSION =' make.d/kernel.rul | egrep -v '(^#|-)' | sort -u | perl -pi -e 's#.*= ##'), \
-		$(GETSOURCE) $(shell dirname $(LINUX_URL))/linux-$(linux_version).tar.bz2 $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source/src;)
-	$(MAKE) -C $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source clean
-ifeq ($(UNSTABLE), 1)
-	if [ -f README.unstable ]; then \
-		cd $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source && cp README README.tmp; \
-		cd $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source && cp README.unstable README; \
-		cd $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source && cat README.tmp >> README; \
-		cd $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source && rm README.tmp; \
-	fi
-	PKG_REL=`test -d .git && git show --pretty='format:%ci'|head -1|sed -e 's/ .*//g' -e 's/-//g' -e 's/$$/git/' -e 's/^/0./'|| echo 1`; \
-		cd $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source && sed -i -e "s/##PKG_REL##/$${PKG_REL}/g" systemimager.spec lib/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/module-setup.sh lib/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/install
-else
-	cd $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source && sed -i -e "s/##PKG_REL##/1/g" systemimager.spec lib/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/module-setup.sh lib/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/install
-endif
-	rm -f $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source/README.unstable
-	perl -pi -e "s/^%define\s+ver\s+\d+\.\d+\.\d+.*/%define ver $(VERSION)/" \
-		$(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source/systemimager.spec
-	sed -i -e "s/##VERSION##/$(VERSION)/g" \
-		 $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source/lib/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/module-setup.sh \
-		 $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source/lib/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/install
-	find $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source -type f -exec chmod ug+r  {} \;
-	find $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source -type d -exec chmod ug+rx {} \;
-	cd $(TOPDIR)/tmp && $(TAR) -ch systemimager-$(VERSION)-complete_source | bzip2 > systemimager-$(VERSION)-complete_source.tar.bz2
-	@echo
-	@echo "complete source tarball has been created in $(TOPDIR)/tmp"
-	@echo
-
 .PHONY:	source_tarball
 source_tarball:	$(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2.sign
 $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2.sign:	$(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
@@ -733,12 +685,6 @@ show_targets:
 	@echo "    Includes SystemImager source only.  Source for all"
 	@echo "    the tools SystemImager depends on will be found in /usr/src "
 	@echo "    or will be automatically downloaded at build time."
-	@echo "	"
-	@echo "complete_source_tarball"
-	@echo "    Make a source tarball for distribution."
-	@echo "    "
-	@echo "    Includes all necessary source for building SystemImager and"
-	@echo "    all of it's supporting tools."
 	@echo "	"
 	@echo "rpm"
 	@echo "    Build all of the RPMs that can be build on your platform."
