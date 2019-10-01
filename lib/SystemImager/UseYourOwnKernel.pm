@@ -625,7 +625,8 @@ sub _mk_tmp_dir() {
 # 1st, we try uname -r version and check that modules are available. (in docker
 # context, uname -r returns the host kernel version which often has no matching
 # modules in guest environment).
-# Then we look in /boot trying higher release 1st until we find matching modules.
+# Then we look in /lib/modules available version higher release 1st until we
+# find a matching kernel in /boot or in /lib/modules/<kver>/vmlinuz
 # In case of failure (no kernel with matching modules), we return 0 as version.
 ################################################################################
 sub get_uname_r {
@@ -642,16 +643,17 @@ sub get_uname_r {
         chomp $kernel_version;
         return $kernel_version if (-f "/lib/modules/$kernel_version/modules.dep");
 
-	# Uname -r kernel version has no matching modules, we need to find another kernel in /boot
-	opendir(DIR, "/boot");
-	my @files = sort { $b cmp $a } grep(/^vmlinuz/,readdir(DIR)); # read available kernel files in /boot.
+	# Uname -r kernel version has no matching modules, we need to find another kernel.
+	opendir(DIR, "/lib/modules"); # List available kernel versions in /lib/modules
+	my @mod_dirs = sort { $b cmp $a } grep(/^\d+\.\d+\.\d+/,readdir(DIR)); # read available module dirs in /lib/modules.
 	closedir(DIR);
-#	@files = sort { $b <=> $a } @files; # Revers sort (highest version is the 1st)
-	my $k; # Dummy variable.
-	foreach my $file (@files) {
-            ($k,$kernel_version) = split(/-/,$file,2);
-            return $kernel_version if (-f "/lib/modules/$kernel_version/modules.dep");
+#	@mod_dirs = sort { $b <=> $a } @mod_dirs; # Revers sort (highest version is the 1st)
+	foreach my $kernel_version (@mod_dirs) {
+            next if (! -f "/lib/modules/$kernel_version/modules.dep");
+	    return $kernel_version if (glob("/boot/vmlinu{x,z}-$kernel_version")); # Standard redhat kernel location and name
+	    return $kernel_version if (glob("/lib/modules/$kernel_version/vmlinu{x,z}")); # rhel8 / fedora 30 in docker container
         }
+
 	return "0"; # We did not find any suitable kernel. return a dummy version.
 }
 

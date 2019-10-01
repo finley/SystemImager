@@ -218,9 +218,9 @@ if (!($custom_kernel) and $modules_dir) {
     exit 1;
 }
 
-if ($kernel_version and ! -e "/boot/vmlinuz-$kernel_version") {
-    print "FATAL: --kver=$kernel_version invalid! /boot/vmlinuz-$kernel_version doesn't exists!\n";
-    print "Make sure /boot/vmlinuz-$kernel_version is available!"; # TODO: list available versions.
+if ($kernel_version and ! glob("/boot/vmlinu{x,z}-$kernel_version /lib/modules/$kernel_version/vmlinu{x,z}")) {
+    print "FATAL: --kver=$kernel_version invalid! /boot/vmlinu{x,z}-$kernel_version or /lib/modules/$kernel_version/vmlinu{x,z} doesn't exists!\n";
+    print "Make sure /boot/vmlinuz-$kernel_version or /lib/modules/$kernel_version/vmlinu{x,z} is available!"; # TODO: list available versions.
     exit 1;
 }
 
