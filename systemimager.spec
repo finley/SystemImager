@@ -60,51 +60,51 @@
 %define pkg_ipcalc initscripts
 %define pkg_sshd openssh-server
 %define pkg_btrfs_progs btrfs-progs
+%define pkg_ntfsprogs ntfsprogs
 %define pkg_dejavu_font dejavu-serif-fonts, dejavu-sans-fonts
 %define pkg_docbook_utils docbook-utils, docbook-utils-pdf
 %define pkg_mkisofs mkisofs
 %define pkg_ncat nmap
-#define pkg_python_xml PyXML
 %endif
 %if 0%{?rhel} == 7
 %define pkg_ipcalc initscripts
 %define pkg_sshd openssh-server
 %define pkg_btrfs_progs btrfs-progs
+%define pkg_ntfsprogs ntfsprogs
 %define pkg_dejavu_font dejavu-serif-fonts, dejavu-sans-fonts
 %define pkg_docbook_utils docbook-utils, docbook-utils-pdf
 %define pkg_mkisofs mkisofs
 %define pkg_ncat nmap-ncat
-#define pkg_python_xml PyXML
 %endif
 %%if 0%{?rhel} == 8
 %define pkg_ipcalc ipcalc
 %define pkg_sshd openssh-server
-%define pkg_btrfs_progs btrfs-progs
+#define pkg_btrfs_progs
+#define pkg_ntfsprogs
 %define pkg_dejavu_font dejavu-serif-fonts, dejavu-sans-fonts
 %define pkg_docbook_utils docbook-utils, docbook-utils-pdf
 %define pkg_mkisofs genisoimage
 %define pkg_ncat nmap-ncat
-#define pkg_python_xml PyXML
 %endif
 %if 0%{?fedora} > 26
 %define pkg_ipcalc ipcalc
 %define pkg_sshd openssh-server
 %define pkg_btrfs_progs btrfs-progs
+%define pkg_ntfsprogs ntfsprogs
 %define pkg_dejavu_font dejavu-serif-fonts, dejavu-sans-fonts
 %define pkg_docbook_utils docbook-utils, docbook-utils-pdf
 %define pkg_mkisofs mkisofs
 %define pkg_ncat nmap-ncat
-#define pkg_python_xml PyXML
 %endif
 %if %is_suse
 %define pkg_ipcalc ipcalc
 %define pkg_sshd openssh
 %define pkg_btrfs_progs btrfsprogs
+%define pkg_ntfsprogs ntfsprogs
 %define pkg_dejavu_font dejavu-fonts
 %define pkg_docbook_utils docbook-utils
 %define pkg_mkisofs cdrkit-cdrtools-compat
 %define pkg_ncat ncat
-#define pkg_python_xml python-xml
 %endif
 
 # Still use the correct lib even on fc-18+ where --target noarch sets _libdir to /usr/lib even on x86_64 arch.
@@ -158,7 +158,7 @@ BuildArch: noarch
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
-Requires: rsync >= 2.4.6, systemimager-common = %{version}, dracut-systemimager = %{version}, perl-AppConfig, perl, perl(XML::Simple) >= 2.14, python
+Requires: rsync >= 2.4.6, systemimager-common = %{version}, dracut-systemimager = %{version}, perl-AppConfig, perl, perl(XML::Simple) >= 2.14
 Requires: %pkg_mkisofs
 # If systemd
 %if 0%{?_unitdir:1}
@@ -340,14 +340,19 @@ BuildRequires: dracut
 BuildRequires: plymouth-plugin-script, plymouth-plugin-label
 BuildRequires: psmisc, kexec-tools, bind-utils, net-tools, ethtool, lsscsi, usbutils
 BuildRequires: xmlstarlet, parted, mdadm, util-linux, lvm2, gdisk
-BuildRequires: xfsprogs, e2fsprogs, ntfsprogs, dosfstools
+BuildRequires: xfsprogs, e2fsprogs, dosfstools
+%if 0%{?pkg_btrfs_progs:1}
+BuildRequires: %pkg_btrfs_progs
+%endif
+%if 0%{?pkg_ntfsprogs:1}
+BuildRequires: %pkg_ntfsprogs
+%endif
 BuildRequires: %pkg_ipcalc
 BuildRequires: %pkg_dejavu_font
-BuildRequires: %pkg_btrfs_progs
 BuildRequires: %pkg_ncat
 BuildRequires: %pkg_sshd
 BuildRequires: ncurses, /usr/bin/awk, kbd
-BuildRequires: python, python-devel, gettext, bc
+BuildRequires: gettext, bc
 BuildRequires: systemconfigurator
 BuildRequires: kernel, coreutils
 BuildRequires: rtorrent
@@ -401,7 +406,6 @@ BuildArch: noarch
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
-BuildRequires: python, python-devel
 Requires: %{name}-%{_build_arch}boot-%{_boot_flavor} = %{version}
 Obsoletes: %{name}-%{_build_arch}initrd_template = %{version}
 AutoReqProv: no
@@ -485,14 +489,19 @@ Requires: dracut
 Requires: plymouth-plugin-script, plymouth-plugin-label
 Requires: psmisc, kexec-tools, bind-utils, net-tools, ethtool, lsscsi, usbutils
 Requires: xmlstarlet, parted, mdadm, util-linux, lvm2, gdisk
-Requires: xfsprogs, e2fsprogs, ntfsprogs, dosfstools
+Requires: xfsprogs, e2fsprogs, dosfstools
+%if 0%{?pkg_btrfs_progs:1}
+Requires: %pkg_btrfs_progs
+%endif
+%if 0%{?pkg_ntfsprogs:1}
+Requires: %pkg_ntfsprogs
+%endif
 Requires: %pkg_ipcalc
 Requires: %pkg_dejavu_font
-Requires: %pkg_btrfs_progs
 Requires: %pkg_ncat
 Requires: %pkg_sshd
 Requires: ncurses, /usr/bin/awk, kbd
-Requires: python, python-devel, gettext, bc
+Requires: gettext, bc
 Requires: systemconfigurator
 Requires: kernel, coreutils
 Requires: rtorrent
