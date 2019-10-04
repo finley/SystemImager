@@ -89,37 +89,37 @@ fi
 
 # Log a dracut hook step
 logstep() {
-	logger -t systemimager -p local1.debug "$@"
+	logger -t systemimager -p local1.debug -- "$@"
 }
 
 # Log an error.
 logerror() {
-	logger -t systemimager -p local0.err "$@"
+	logger -t systemimager -p local0.err -- "$@"
 }
 
 # Log an error.
 logfatal() {
-	logger -t systemimager -p local0.emerg "$@"
+	logger -t systemimager -p local0.emerg -- "$@"
 }
 
 # Log a warning
 logwarn() {
-	logger -t systemimager -p local0.warn "$@"
+	logger -t systemimager -p local0.warn -- "$@"
 }
 
 # Log a simple information
 loginfo() {
-	logger -t systemimager -p local0.info "$@"
+	logger -t systemimager -p local0.info -- "$@"
 }
 
 # Log a detailed information
 logdetail() {
-	logger -t systemimager -p local1.info "$@"
+	logger -t systemimager -p local1.info -- "$@"
 }
 
 # Log an action being done to client
 logaction() {
-	logger -t systemimager -p local0.notice "$@"
+	logger -t systemimager -p local0.notice -- "$@"
 }
 
 # Log debug / system stuffs
@@ -132,12 +132,12 @@ logdebug() {
 		write_variables
 		logdebug "System messages displayed in plymouth enabled."
 	fi
-	logger -t systemimager -p local0.debug "$@"
+	logger -t systemimager -p local0.debug -- "$@"
 }
 
 # Log things that dont fit above cathegories
 lognotice() {
-	logger -t systemimager -p local0.notice "$@"
+	logger -t systemimager -p local0.notice -- "$@"
 }
 
 # Compatibility function with older scripts.
@@ -249,7 +249,7 @@ logmessage() {
     # if remote log is required, forward to the server.
     if test -n "$USELOGGER" -a -n "$LOGSERVER"
     then
-	logger -t "${LOG_TAG}" -p ${LOG_PRIORITY} -n ${LOG_SERVER} -P ${LOG_SERVER_PORT:=514} "${LOG_MESSAGE}"
+	logger -t "${LOG_TAG}" -p ${LOG_PRIORITY} -n ${LOG_SERVER} -P ${LOG_SERVER_PORT:=514} -- "${LOG_MESSAGE}"
     fi
 
     # Send message to image server console logger in json format.
