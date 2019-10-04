@@ -54,7 +54,25 @@ check_ifaces() {
 			logerror "Available network interface(s) known by kernel: $KERNEL_IFACES_LIST"
 		fi
 		logerror "Check your cmdline parameters and/or add missing driver to imager using si_mkbootpackage(8)"
-		shellout "Make sure you only use known interfaces in ip= parameter."
+		# Try to find network interfaces present on system
+		loginfo "Available hardware network interfaces: (if any)"
+		LC_ALL=C lshw -xml -class network|\
+		xmlstarlet sel -t -m "/list/node" -v $'concat(product,";",serial,";",configuration/setting[@id="driver"]/@value,";",logicalname,"\n")'|\
+		while IFS=';' read MODEL MAC DRIVER NAME
+		do
+			if test -n "$DRIVER"
+			then
+				HW_DRIVER="$DRIVER (not loaded)"
+				if test -n "$(lsmod|grep ^$DRIVER)"
+				then
+					HW_DRIVER="$DRIVER (loaded)"
+				fi
+			else
+				HW_DRIVER="unknown"
+			fi
+			test -n "$MODEL" && loginfo "- $MODEL / Driver:$HW_DRIVER / Name:${NAME:-?} / MAC:(${MAC:-?})"
+		done
+		shellout "Make sure you only use known interfaces (field Name: above) in ip= parameter."
 	else
 		loginfo "All used network interfaces are known by kernel. Ok."
 		if test -e "$job"
