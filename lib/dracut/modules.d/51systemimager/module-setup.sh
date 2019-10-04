@@ -77,7 +77,7 @@ EOF
     inst_multiple cut date echo env sort test false true [ expr head install tail tee tr uniq wc tac mktemp yes xmlstarlet jq
 
     # inst_multiple setfont loadkeys kbd_mode stty # i18n module
-    inst_multiple -o lsscsi lspci ethtool mii-tool mii-diag
+    inst_multiple -o ethtool mii-tool mii-diag
     inst_multiple bc dc gzip bzip2 rsync mkfs parted sgdisk fdisk sfdisk blockdev lsblk partprobe awk ncat tty killall kexec ipcalc findmnt findfs tput stty
     inst_multiple lvm pvcreate pvdisplay pvremove pvscan lvcreate lvdisplay lvremove lvscan lvmconfig lvmdump lvchange vgcreate vgdisplay vgremove vgscan fsadm stat
     inst_multiple chmod chown cp dd df dmesg echo egrep fgrep grep halt host hostname ifconfig init insmod kill ln ls lsmod mkdir mknod mkswap modprobe more mv ping poweroff ps reboot shutdown rm rmdir rmmod route sed sh sleep swapoff swapon sync tar touch uname logger od
@@ -90,10 +90,11 @@ EOF
     # bittorent client needed when using bittorrent deployment method.
     inst_multiple rtorrent
 
-    # Install lsusb
-    inst_multiple -o lsusb
+    # Install lsusb lsscsi lspci
+    inst_multiple -o lsusb lsscsi lspci
     mkdir -p "$initdir/usr/share/hwdata"
     test -f /usr/share/hwdata/usb.ids && inst /usr/share/hwdata/usb.ids $initdir
+    test -f /usr/share/hwdata/pci.ids && inst /usr/share/hwdata/pci.ids $initdir
 
     # 3/ Install dracut logic
     inst "$moddir/systemimager-lib.sh" "/lib/systemimager-lib.sh"
