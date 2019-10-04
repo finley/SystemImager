@@ -324,9 +324,14 @@ sub _get_copy_of_kernel($) {
 	# Now try to add the matching config file if possible.
 	my $kernel_release = _get_kernel_release($kernel_file);
 	my $kernel_path = dirname($kernel_file);
-	if(-f "$kernel_path/config-$uname_r") {
+	if(-f "$kernel_path/config-$uname_r") { # We are in /boot
 		copy("$kernel_path/config-$uname_r","$boot_dir/config");
 		run_cmd("ls -l $boot_dir/config", $verbose, 1) if($verbose);
+	} elsif(-f "$kernel_path/config") { # We are in /lib/modules/<kver>/
+		copy("$kernel_path/config","$boot_dir/config");
+		run_cmd("ls -l $boot_dir/config", $verbose, 1) if($verbose);
+	} else {
+		print "WARNING: Unable to find config file for kernel $kernel_file";
 	}
 
 	# Now write the version.txt file
