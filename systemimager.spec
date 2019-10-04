@@ -48,11 +48,11 @@
 %define is_ps3 %([ `grep PS3 /proc/cpuinfo >& /dev/null; echo $?` -eq 0 ] && echo 1 || echo 0) 
 
 %if %is_ppc64
-%define _build_arch ppc64
+%define _arch ppc64
 %endif
 
 %if %is_ps3
-%define _build_arch ppc64-ps3
+%define _arch ppc64-ps3
 %endif
 
 # Packages definitions
@@ -320,7 +320,7 @@ be imaged by a SystemImager server.
 
 %endif
 
-%package %{_build_arch}boot-%{_boot_flavor}
+%package %{_arch}boot-%{_boot_flavor}
 Summary: Software that automates Linux installs, software distribution, and production deployment.
 Version: %ver
 Release: %rel
@@ -331,14 +331,14 @@ BuildArch: noarch
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
-Obsoletes: systemimager-%{_build_arch}boot
+Obsoletes: systemimager-%{_arch}boot
 # SuSE includes dracut-netwok in main package
 %if ! %is_suse
 BuildRequires: dracut-network
 %endif
 BuildRequires: dracut
 BuildRequires: plymouth-plugin-script, plymouth-plugin-label
-BuildRequires: psmisc, kexec-tools, bind-utils, net-tools, ethtool, lsscsi, usbutils
+BuildRequires: psmisc, kexec-tools, bind-utils, net-tools, ethtool, lsscsi, usbutils, pciutils
 BuildRequires: xmlstarlet, parted, mdadm, util-linux, lvm2, gdisk
 BuildRequires: xfsprogs, e2fsprogs, dosfstools
 %if 0%{?pkg_btrfs_progs:1}
@@ -376,7 +376,7 @@ Requires: %{name}-initrd_template = %{version}
 Provides: %{name}-boot-%{_boot_flavor} = %{version}
 AutoReqProv: no
 
-%description %{_build_arch}boot-%{_boot_flavor}
+%description %{_arch}boot-%{_boot_flavor}
 SystemImager is software that automates Linux installs, software 
 distribution, and production deployment.  SystemImager makes it easy to
 do installs, software distribution, content or data distribution, 
@@ -391,8 +391,8 @@ typical environments include: Internet server farms, database server
 farms, high performance clusters, computer labs, and corporate desktop
 environments.
 
-The %{_build_arch}boot package provides specific kernel, ramdisk, and fs utilities
-to boot and install %{_build_arch} Linux machines during the SystemImager autoinstall
+The %{_arch}boot package provides specific kernel, ramdisk, and fs utilities
+to boot and install %{_arch} Linux machines during the SystemImager autoinstall
 process.
 
 %package initrd_template
@@ -406,8 +406,8 @@ BuildArch: noarch
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
-Requires: %{name}-%{_build_arch}boot-%{_boot_flavor} = %{version}
-Obsoletes: %{name}-%{_build_arch}initrd_template = %{version}
+Requires: %{name}-%{_arch}boot-%{_boot_flavor} = %{version}
+Obsoletes: %{name}-%{_arch}initrd_template = %{version}
 AutoReqProv: no
 
 %description initrd_template
@@ -487,7 +487,7 @@ requires: dracut-network
 %endif
 Requires: dracut
 Requires: plymouth-plugin-script, plymouth-plugin-label
-Requires: psmisc, kexec-tools, bind-utils, net-tools, ethtool, lsscsi, usbutils
+Requires: psmisc, kexec-tools, bind-utils, net-tools, ethtool, lsscsi, usbutils, pciutils
 Requires: xmlstarlet, parted, mdadm, util-linux, lvm2, gdisk
 Requires: xfsprogs, e2fsprogs, dosfstools
 %if 0%{?pkg_btrfs_progs:1}
@@ -978,10 +978,10 @@ cd $RPM_BUILD_DIR/%{name}-%{version}/
 
 make install_all DESTDIR=%{buildroot} PREFIX=%_prefix DRACUT_BASEDIR=%_dracutbase # DOC=%{buildroot}%{_pkgdocdir}
 
-cp ./initrd.img %{buildroot}/%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/initrd.img
-cp ./kernel     %{buildroot}/%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/kernel
-test -f ./config && cp ./config     %{buildroot}/%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/config
-cp version.txt %{buildroot}/%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/version.txt
+cp ./initrd.img %{buildroot}/%{_datarootdir}/systemimager/boot/%{_arch}/standard/initrd.img
+cp ./kernel     %{buildroot}/%{_datarootdir}/systemimager/boot/%{_arch}/standard/kernel
+test -f ./config && cp ./config     %{buildroot}/%{_datarootdir}/systemimager/boot/%{_arch}/standard/config
+cp version.txt %{buildroot}/%{_datarootdir}/systemimager/boot/%{_arch}/standard/version.txt
 
 %else
 
@@ -1408,15 +1408,15 @@ fi
 
 %endif
 
-%files %{_build_arch}boot-%{_boot_flavor}
+%files %{_arch}boot-%{_boot_flavor}
 %defattr(0744, root, root, 0755)
-%dir %{_datarootdir}/systemimager/boot/%{_build_arch}
-%dir %{_datarootdir}/systemimager/boot/%{_build_arch}/standard
-%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/config*
-%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/initrd.img
-%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/kernel
-%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/version.txt
-%{_datarootdir}/systemimager/boot/%{_build_arch}/standard/ARCH
+%dir %{_datarootdir}/systemimager/boot/%{_arch}
+%dir %{_datarootdir}/systemimager/boot/%{_arch}/standard
+%{_datarootdir}/systemimager/boot/%{_arch}/standard/config*
+%{_datarootdir}/systemimager/boot/%{_arch}/standard/initrd.img
+%{_datarootdir}/systemimager/boot/%{_arch}/standard/kernel
+%{_datarootdir}/systemimager/boot/%{_arch}/standard/version.txt
+%{_datarootdir}/systemimager/boot/%{_arch}/standard/ARCH
 
 %files initrd_template
 %defattr(-, root, root)
