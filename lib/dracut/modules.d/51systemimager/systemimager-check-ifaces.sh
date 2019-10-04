@@ -45,7 +45,14 @@ check_ifaces() {
 	if test -n "${UNKNOWN_IFACES}" # If there are ifaces specified in ip= parameters (thus present in /tmp/net.ifaces)
 	then
 		logerror "Requested network interface(s) unknown by kernel:${UNKNOWN_IFACES}"
-		logerror "Available network interface(s) known by kernel: $(cd /sys/class/net/; echo *|sed 's/ *lo//')"
+		KERNEL_IFACES_LIST="$(cd /sys/class/net/; echo *|sed 's/ *lo//')"
+		if test -z "$KERNEL_IFACES_LIST"
+		then
+			logerror "There is no network interface available! Missing or not loaded driver?"
+		else
+
+			logerror "Available network interface(s) known by kernel: $KERNEL_IFACES_LIST"
+		fi
 		logerror "Check your cmdline parameters and/or add missing driver to imager using si_mkbootpackage(8)"
 		shellout "Make sure you only use known interfaces in ip= parameter."
 	else
