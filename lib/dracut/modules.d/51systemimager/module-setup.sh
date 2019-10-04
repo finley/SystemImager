@@ -91,10 +91,11 @@ EOF
     inst_multiple rtorrent
 
     # Install lsusb lsscsi lspci
-    inst_multiple -o lsusb lsscsi lspci
+    inst_multiple -o lsusb lsscsi lspci lshw
     mkdir -p "$initdir/usr/share/hwdata"
     test -f /usr/share/hwdata/usb.ids && inst /usr/share/hwdata/usb.ids $initdir
     test -f /usr/share/hwdata/pci.ids && inst /usr/share/hwdata/pci.ids $initdir
+    test -f /usr/share/hwdata/pnp.ids && inst /usr/share/hwdata/pnp.ids $initdir
 
     # 3/ Install dracut logic
     inst "$moddir/systemimager-lib.sh" "/lib/systemimager-lib.sh"

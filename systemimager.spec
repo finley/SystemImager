@@ -338,7 +338,7 @@ BuildRequires: dracut-network
 %endif
 BuildRequires: dracut
 BuildRequires: plymouth-plugin-script, plymouth-plugin-label
-BuildRequires: psmisc, kexec-tools, bind-utils, net-tools, ethtool, lsscsi, usbutils, pciutils, hwdata
+BuildRequires: psmisc, kexec-tools, bind-utils, net-tools, ethtool, lsscsi, usbutils, pciutils, lshw, hwdata
 BuildRequires: xmlstarlet, parted, mdadm, util-linux, lvm2, gdisk
 BuildRequires: xfsprogs, e2fsprogs, dosfstools
 %if 0%{?pkg_btrfs_progs:1}
@@ -487,7 +487,7 @@ requires: dracut-network
 %endif
 Requires: dracut
 Requires: plymouth-plugin-script, plymouth-plugin-label
-Requires: psmisc, kexec-tools, bind-utils, net-tools, ethtool, lsscsi, usbutils, pciutils, hwdata
+Requires: psmisc, kexec-tools, bind-utils, net-tools, ethtool, lsscsi, usbutils, pciutils, lshw, hwdata
 Requires: xmlstarlet, parted, mdadm, util-linux, lvm2, gdisk
 Requires: xfsprogs, e2fsprogs, dosfstools
 %if 0%{?pkg_btrfs_progs:1}
