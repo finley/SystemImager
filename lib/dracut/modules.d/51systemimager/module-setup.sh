@@ -58,7 +58,8 @@ EOF
     inst_multiple -o mkfs.reiserfs mkreiserfs reiserfstune resize_reiserfs tunefs.reiserfs
     inst_multiple -o mkfs.jfs jfs_mkfs jfs_tune
     inst_multiple -o mklost+found # Do we need that?
-    inst_multiple -o socat # plymouth ask-for-password replacement requirement (CentOS-7 at least)
+
+    inst_multiple socat # also used for plymouth ask-for-password replacement (CentOS-7 at least)
 
     # Install console utilities (i18n is missing on Debian, so we can't rely on this module)
     inst_multiple -o setfont loadkeys kbd_mode stty
