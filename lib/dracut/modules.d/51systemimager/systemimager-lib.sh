@@ -159,7 +159,7 @@ logmessage() {
     LOG_TAG=$1
     shift
 
-    LOG_MESSAGE="$*"
+    LOG_MESSAGE="$@"
 
     # Treat dracut debug log aside as it is too much verbose and is rarely usefull.
     if test "$LOG_TAG" = "dracut"
@@ -237,28 +237,38 @@ logmessage() {
 		    ;;
     esac
 
+    NO_QUOTE_MSG="${LOG_MESSAGE%\"}"
+    NO_QUOTE_MSG="${NO_QUOTE_MSG#\"}"
+
     # Save message in local log file
-    echo "${LOGFILE_HEADER} ${LOG_MESSAGE}" >> /tmp/si_monitor.log
+    echo "${LOGFILE_HEADER} ${NO_QUOTE_MSG}" >> /tmp/si_monitor.log
 
     # Write message to text console
-    test -w /dev/console && echo "${CONSOLE_HEADER} ${LOG_MESSAGE}" > /dev/console
+    test -w /dev/console && echo "${CONSOLE_HEADER} ${NO_QUOTE_MSG}" > /dev/console
 
     # Write message on console GUI (limit to 80 chars)
-    test -n "$PLYMOUTH_MSG_TYPE" && plymouth --ping && plymouth update --status="mesg:${PLYMOUTH_MSG_TYPE}:${LOG_MESSAGE:0:120}" > /dev/null 2>&1
+    test -n "$PLYMOUTH_MSG_TYPE" && plymouth --ping && plymouth update --status="mesg:${PLYMOUTH_MSG_TYPE}:${NO_QUOTE_MSG:0:120}" > /dev/null 2>&1
 
     # if remote log is required, forward to the server.
     if test -n "$USELOGGER" -a -n "$LOGSERVER"
     then
-	logger -t "${LOG_TAG}" -p ${LOG_PRIORITY} -n ${LOG_SERVER} -P ${LOG_SERVER_PORT:=514} -- "${LOG_MESSAGE}"
+	logger -t "${LOG_TAG}" -p ${LOG_PRIORITY} -n ${LOG_SERVER} -P ${LOG_SERVER_PORT:=514} -- "${NO_QUOTE_MSG}"
     fi
 
     # Send message to image server console logger in json format.
     # XML_ESCAPED_MSG="$(sed "s/\&/\&amp;/g;s/>/\&gt;/g;s/</\&lt;/g;s/'/\&apos;/g" <<< "${LOG_MESSAGE}")"
-    ESCAPED_MSG="$(sed 's/\\/\\\\/g;s/"/\\"/g;s/\t/\\t/g' <<< "${LOG_MESSAGE}")"
+    #ESCAPED_MSG="$(sed 's/\\/\\\\/g;s/"/\\"/g;s/\t/\\t/g' <<< "${LOG_MESSAGE}")"
     #if test "${MONITOR_CONSOLE}" != "n" # (can be unset or 'y': doing so will allow to catch message before MONITOR_CONSOLE is parsed)
     #then
         #echo "<message type=\"${LOG_TYPE}\">${ESCAPED_MSG}</message>" >> /tmp/si_report.stream
-        echo "LOG:{ \"TAG\" : \"${LOG_TAG}\" , \"PRIORITY\" : \"${LOG_PRIORITY}\" , \"MESSAGE\" : \"$ESCAPED_MSG\" }" >> /tmp/si_report.stream
+    # echo "LOG:{ \"TAG\" : \"${LOG_TAG}\" , \"PRIORITY\" : \"${LOG_PRIORITY}\" , \"MESSAGE\" : \"$ESCAPED_MSG\" }" >> /tmp/si_report.stream
+    #ESCAPED_MSG="$(sed 's/"/\\"/g;s/\t/\\t/g;s/\\/\\\\/g' <<< "${LOG_MESSAGE}")"
+    #ESCAPED_MSG="$(sed 's/\\/\\\\/g' <<< "${LOG_MESSAGE}")"
+    #HTML_ESCAPED_MSG="$(sed "s/\\n/<br>/g;s/\\t/&nbsp;&nbsp;&nbsp;&nbsp;/g;s/\&/\&amp;/g;s/>/\&gt;/g;s/</\&lt;/g;s/'/\&apos;/g" <<< "${LOG_MESSAGE}")"
+    HTML_ESCAPED_MSG="$(sed -E 's/\\n/<br>/g;s/\\t/\&nbsp;\&nbsp;/g;s/\&/\&amp;/g;s/>/\&gt;/g;s/</\&lt;/g;s/'\''/\&apos;/g;s/(ht|f)tp(s)?:\/\/[a-zA-Z0-9\.\/-]*[^.\"]/<A HREF=\\"&\\">&<\/A>/g' <<< "${LOG_MESSAGE}")"
+    cat >> /tmp/si_report.stream <<-EOF
+LOG:{ "TAG" : "${LOG_TAG}" , "PRIORITY" : "${LOG_PRIORITY}" , "MESSAGE" : ${HTML_ESCAPED_MSG} }
+EOF
     #fi
 }
 
@@ -976,9 +986,9 @@ stop_tmpfs_watcher() {
 stop_log_dispatcher() {
 	loginfo "Stopping log dispatcher"
 	sleep 1.1s # give time to socat for fetching above message and display it.
-	kill -TERM $(cat /run/systemimager/log-dispatcher.pid)
+	kill -TERM $(cat /run/systemimager/log_dispatcher.pid)
 	logmessage local0.info systemimager "log dispatcher stopped"
-	rm -f /run/systemimager/log-dispatcher.pid
+	rm -f /run/systemimager/log_dispatcher.pid
 }
 
 ################################################################################
