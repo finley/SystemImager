@@ -237,22 +237,23 @@ logmessage() {
 		    ;;
     esac
 
-    NO_QUOTE_MSG="${LOG_MESSAGE%\"}"
-    NO_QUOTE_MSG="${NO_QUOTE_MSG#\"}"
+    # Remove sides double-quotes if any (comes from journalctl -o json in log dismatcher (systemd version only)
+    test ${LOG_MESSAGE:0:1} == '"' && LOG_MESSAGE="${LOG_MESSAGE#\"}"
+    test "${LOG_MESSAGE: -1}" == '"' && LOG_MESSAGE="${LOG_MESSAGE%\"}" # ! Keep space between : and -1
 
     # Save message in local log file
-    echo "${LOGFILE_HEADER} ${NO_QUOTE_MSG}" >> /tmp/si_monitor.log
+    echo "${LOGFILE_HEADER} ${LOG_MESSAGE}" >> /tmp/si_monitor.log
 
     # Write message to text console
-    test -w /dev/console && echo "${CONSOLE_HEADER} ${NO_QUOTE_MSG}" > /dev/console
+    test -w /dev/console && echo "${CONSOLE_HEADER} ${LOG_MESSAGE}" > /dev/console
 
     # Write message on console GUI (limit to 80 chars)
-    test -n "$PLYMOUTH_MSG_TYPE" && plymouth --ping && plymouth update --status="mesg:${PLYMOUTH_MSG_TYPE}:${NO_QUOTE_MSG:0:120}" > /dev/null 2>&1
+    test -n "$PLYMOUTH_MSG_TYPE" && plymouth --ping && plymouth update --status="mesg:${PLYMOUTH_MSG_TYPE}:${LOG_MESSAGE:0:120}" > /dev/null 2>&1
 
     # if remote log is required, forward to the server.
     if test -n "$USELOGGER" -a -n "$LOGSERVER"
     then
-	logger -t "${LOG_TAG}" -p ${LOG_PRIORITY} -n ${LOG_SERVER} -P ${LOG_SERVER_PORT:=514} -- "${NO_QUOTE_MSG}"
+	logger -t "${LOG_TAG}" -p ${LOG_PRIORITY} -n ${LOG_SERVER} -P ${LOG_SERVER_PORT:=514} -- "${LOG_MESSAGE}"
     fi
 
     # Send message to image server console logger in json format.
@@ -267,7 +268,7 @@ logmessage() {
     #HTML_ESCAPED_MSG="$(sed "s/\\n/<br>/g;s/\\t/&nbsp;&nbsp;&nbsp;&nbsp;/g;s/\&/\&amp;/g;s/>/\&gt;/g;s/</\&lt;/g;s/'/\&apos;/g" <<< "${LOG_MESSAGE}")"
     HTML_ESCAPED_MSG="$(sed -E 's/\\n/<br>/g;s/\\t/\&nbsp;\&nbsp;/g;s/\&/\&amp;/g;s/>/\&gt;/g;s/</\&lt;/g;s/'\''/\&apos;/g;s/(ht|f)tp(s)?:\/\/[a-zA-Z0-9\.\/-]*[^.\"]/<A HREF=\\"&\\">&<\/A>/g' <<< "${LOG_MESSAGE}")"
     cat >> /tmp/si_report.stream <<-EOF
-LOG:{ "TAG" : "${LOG_TAG}" , "PRIORITY" : "${LOG_PRIORITY}" , "MESSAGE" : ${HTML_ESCAPED_MSG} }
+LOG:{ "TAG" : "${LOG_TAG}" , "PRIORITY" : "${LOG_PRIORITY}" , "MESSAGE" : "${HTML_ESCAPED_MSG}" }
 EOF
     #fi
 }
