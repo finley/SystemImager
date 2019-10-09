@@ -48,6 +48,7 @@ if (!!window.EventSource) {
   document.getElementById("serverData").innerHTML="Whoops! Your browser doesn't receive server-sent events.<br>You'll be redirected to static log report page.";
   sleep(5);
   // Fallback: redirect to static page with refresh.
+  // do an eSource.close(); when client has disconnected.
 }
 
 // Clean log if requested (in case of reimage for example)
@@ -66,6 +67,8 @@ function UpdateLogHandler(event) {
     // console.error("JSON: ", event.data);
     logText = "<tr><td>webgui</td><td>"+PriorityToText('local0.err')+"</td><td>" + event.data + "</td></tr>"; // BUG: invalid chars may appear and is subject to injection.
   }
+// Stack overflow question:
+// https://stackoverflow.com/questions/58014912/how-can-scroll-down-a-tbody-table-when-innerhtml-is-updated-with-new-lines
   // console.log("log: " . logInfo.type . ": " . logInfo.message);
   // var logText = "log: " + logInfo.TAG + " - " + logInfo.PRIORITY + ": " + logInfo.MESSAGE + "<br>";
   document.getElementById("serverData").innerHTML += logText;
@@ -119,7 +122,8 @@ function StatusToText(value) {
     if (value < 0) {
       return "Status: <span class='status0'>FAILED</span>";
     } else if (value < 100) {
-      return "Progress: " + value + "%";
+      return '<div><div class="progress_bar" style="width:' + value + '%">' + value + '%</div></div>';
+      // return "Progress: " + value + "%";
     } else {
       var index = value - 100;
       var my_statuses = ['Imaged','Finalizing...','REBOOTED','Beeping','Rebooting...','Shutdown','Shell','Extracting...','Pre-Install','Post-Install'];

@@ -33,14 +33,14 @@
 #       => A new log line
 
 function SystemImagerMonitor() {
-	while IFS=':' read TYPE MSG
+	while IFS=':' read -r TYPE MSG
 	do
 		case "$TYPE" in
 			LOG)
 				# BUG: if $LOG_FILE is undefined: try to read MAC (though it's not normal situation)
 				if test -e "$DEF_FILE"
 				then
-					echo "$MSG" >> $LOG_FILE
+					echo -E "$MSG" >> $LOG_FILE
 				else
 					echo "BUG: Client definition file [$DEF_FILE] does not exists." >> /var/log/systemimager/server.log
 				fi

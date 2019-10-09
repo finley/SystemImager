@@ -37,6 +37,35 @@ th, td {
   // border-bottom: 2px solid #555;
 }
 
+a {
+  outline: none;
+  text-decoration: none;
+  padding: 2px 1px 0;
+}
+
+a:link {
+  color: #9999FF;
+}
+
+a:visited {
+  color: #8888FF;
+}
+
+a:focus {
+  border-bottom: 1px solid;
+  background: #AAAAFF;
+}
+
+a:hover {
+  border-bottom: 1px solid;     
+  background: #DDDDFF;
+}
+
+a:active {
+  background: #BBBBFF;
+  color: #9999FF;
+}
+
 #headerTable {
   border: 0px;
   width: 100vw; // vw = viewport width.
@@ -72,16 +101,21 @@ https://forum.alsacreations.com/topic-4-62439-1-TABLE--Scrollable-TBODY-and-fixe
 }
 
 #logTable thead tr th:nth-child(1) { /* header col 1 */
-  width: 8em;
+  width: 10em;
 }
 #logTable thead tr th:nth-child(2) { /* header col 2 */
-  width: 10em;
+  width: 6em;
 }
 #logTable tbody tr td:nth-child(1) { /* content col 1 */
-  width: 8em;
+  width: 10em;
 }
 #logTable tbody tr td:nth-child(2) { /* content col 2 */
-  width: 10em;
+  width: 6em;
+}
+
+.progress_bar {
+  background: blue;
+  color: white;
 }
 
 .status0 { /* Error */
@@ -92,10 +126,12 @@ https://forum.alsacreations.com/topic-4-62439-1-TABLE--Scrollable-TBODY-and-fixe
 
 .status100 { /* Imaged */
   background: blue;
+  color: white;
 }
 
 .status101 { /* finalizing... */
   background: lightblue;
+  color: white;
 }
 
 .status102 { /* Rebooted */
@@ -106,30 +142,37 @@ https://forum.alsacreations.com/topic-4-62439-1-TABLE--Scrollable-TBODY-and-fixe
 
 .status103 { /* beeping... */
   background: lightgrey;
+  color: black;
 }
 
 .status104 { /* rebooting */
   background: lightyellow;
+  color: black;
 }
 
 .status105 { /* shutdown */
   background: grey;
+  color: black;
 }
 
 .status106 { /* shell */
   background: lightgrey;
+  color: black;
 }
 
 .status107 { /* extracting... */
   background: blue;
+  color: white;
 }
 
 .status108 { /* preinstall */
   background: yellow;
+  color: black;
 }
 
 .status109 { /* postinstall */
   background: yellow;
+  color: black;
 }
 
 .pri_error {
