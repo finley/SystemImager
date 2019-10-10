@@ -4,6 +4,7 @@
 <head>
 <title>SystemImager client install logs.</title>
   <style type='text/css' media='screen'>@import url('css/screen.css');</style>
+  <style type='text/css' media='screen'>@import url('css/sliders.css');</style>
   <!-- <style type='text/css' media='screen'>@import url('css/print.css');</style> -->
 </head>
 <body>
@@ -25,8 +26,57 @@ if (isset($_GET["client"])) {
     </tr>
   </tbody>
 </table>
-
 <p>
+<hr>
+<table id="filtersTable">
+  <tbody>
+    <tr>
+      <td>Filters:</td>
+      <td>
+        <span class='pri_debug'>Debug</span>
+        <label class="switch">
+          <input type="checkbox" onclick="doFilter(this,'debug')" checked>
+          <span class="slider round"></span>
+        </label>
+      </td>
+      <td>
+        <span class='pri_system'>System</span>
+        <label class="switch">
+          <input type="checkbox" onclick="doFilter(this,'system')" checked>
+          <span class="slider round"></span>
+        </label>
+      </td>
+      <td>
+        <span class='pri_notice'>Notice</span>
+        <label class="switch">
+          <input type="checkbox" onclick="doFilter(this,'notice')" checked>
+          <span class="slider round"></span>
+        </label>
+      </td>
+      <td>
+        <span class='pri_detail'>Detail</span>
+        <label class="switch">
+          <input type="checkbox" onclick="doFilter(this,'detail')" checked>
+          <span class="slider round"></span>
+        </label>
+      </td>
+      <td>
+        <span class='pri_stdout'>StdOut</span>
+        <label class="switch">
+          <input type="checkbox" onclick="doFilter(this,'stdout')" checked>
+          <span class="slider round"></span>
+        </label>
+      </td>
+      <td>
+        <span class='pri_stderr'>StdErr</span>
+        <label class="switch">
+          <input type="checkbox" onclick="doFilter(this,'stderr')" checked>
+          <span class="slider round"></span>
+        </label>
+      </td>
+    </tr>
+  </tbody>
+</table>
 <hr>
 <p>
 
@@ -61,59 +111,59 @@ function UpdateLogHandler(event) {
   var logText;
   try { 
     var logInfo = JSON.parse(event.data);
-    logText = "<tr><td>" + logInfo.TAG + "</td><td>" +  PriorityToText(logInfo.PRIORITY) + "</td><td>" + logInfo.MESSAGE + "</td></tr>";
+    logLine = LogToHTML(logInfo.TAG,logInfo.PRIORITY,logInfo.MESSAGE);
   } catch (e) {
     console.error("JSON client_log parsing error: ", e);
     // console.error("JSON: ", event.data);
-    logText = "<tr><td>webgui</td><td>"+PriorityToText('local0.err')+"</td><td>" + event.data + "</td></tr>"; // BUG: invalid chars may appear and is subject to injection.
+    logLine = LogToHTML('webgui','local0.err',event.data); // BUG: invalid chars may appear and is subject to injection.
   }
 // Stack overflow question:
 // https://stackoverflow.com/questions/58014912/how-can-scroll-down-a-tbody-table-when-innerhtml-is-updated-with-new-lines
   // console.log("log: " . logInfo.type . ": " . logInfo.message);
   // var logText = "log: " + logInfo.TAG + " - " + logInfo.PRIORITY + ": " + logInfo.MESSAGE + "<br>";
-  document.getElementById("serverData").innerHTML += logText;
+  document.getElementById("serverData").innerHTML += logLine;
 }
 
-function PriorityToText(value) { // Original values from systemimager-lib.sh:logmessage()
+function LogToHTML(tag,value,message) { // Original values from systemimager-lib.sh:logmessage()
     switch(value) {
         case 'local2.info': // stdout
-            return "<span class='pri_stdout'>StdOut</span>";
+            return "<tr class='filter_stdout'><td>"+tag+"</td><td><span class='pri_stdout'>StdOut</span></td><td>"+message+"</td></tr>";
             break;
         case 'local2.err': // stderr
-            return "<span class='pri_stderr'>StdErr</span>";
+            return "<tr class='filter_stderr'><td>"+tag+"</td><td><span class='pri_stderr'>StdErr</span></td><td>"+message+"</td></tr>";
             break;
         case 'local2.notice': // kernel info
-            return "<span class='pri_system'>Kernel</span>";
+            return "<tr class='filter_system'><td>"+tag+"</td><td><span class='pri_system'>Kernel</span></td><td>"+message+"</td></tr>";
             break;
         case 'local1.debug': // log STEP
-            return "<span class='pri_debug'>===STEP</span>";
+            return "<tr class='filter_debug'><td>"+tag+"</td><td><span class='pri_debug'>===STEP</span></td><td>"+message+"</td></tr>";
             break;
         case 'local1.info': // detail
-            return "<span class='pri_notice'>Detail</span>";
+            return "<tr class='filter_detail'><td>"+tag+"</td><td><span class='pri_detail'>Detail</span></td><td>"+message+"</td></tr>";
             break;
         case 'local1.notice': // notice
-            return "<span class='pri_notice'>Notice</span>";
+            return "<tr class='filter_notice'><td>"+tag+"</td><td><span class='pri_notice'>Notice</span></td><td>"+message+"</td></tr>";
             break;
         case 'local0.info': // info
-            return "<span class='pri_info'>Info</span>";
+            return "<tr><td>"+tag+"</td><td><span class='pri_info'>Info</span></td><td>"+message+"</td></tr>";
             break;
         case 'local0.warning': // warning
-            return "<span class='pri_warning'>Warning</span>";
+            return "<tr><td>"+tag+"</td><td><span class='pri_warning'>Warning</span></td><td>"+message+"</td></tr>";
             break;
         case 'local0.err': // ERROR
-            return "<span class='pri_error'>ERROR</span>";
+            return "<tr><td>"+tag+"</td><td><span class='pri_error'>ERROR</span></td><td>"+message+"</td></tr>";
             break;
         case 'local0.notice': // action
-            return "<span class='pri_action'>Action</span>";
+            return "<tr><td>"+tag+"</td><td><span class='pri_action'>Action</span></td><td>"+message+"</td></tr>";
             break;
         case 'local0.debug': // debug
-            return "<span class='pri_debug'>Debug</span>";
+            return "<tr class='filter_debug'><td>"+tag+"</td><td><span class='pri_debug'>Debug</span></td><td>"+message+"</td></tr>";
             break;
         case 'local0.emerg': // FATAL
-            return "<span class='pri_fatal'>FATAL</span>";
+            return "<tr><td>"+tag+"</td><td><span class='pri_fatal'>FATAL</span></td><td>"+message+"</td></tr>";
             break;
         default: // All other messages are system messages (not systemimager)
-            return "<span class='pri_system'>System</span>";
+            return "<tr class='filter_system'><td>"+tag+"</td><td><span class='pri_system'>System</span></td><td>"+message+"</td></tr>";
             break;
     } 
 }
@@ -190,6 +240,23 @@ eSource.addEventListener('error', function(e) {
 eSource.addEventListener('resetlog', ResetLogHandler, false); // resetlog: when log has changed (reinstall)
 eSource.addEventListener('updatelog', UpdateLogHandler, false); // New lines in log
 eSource.addEventListener('updateclient', UpdateClientHandler , false); // client updated stgatus or progress.
+
+function doFilter(checkBox, msg_type) {
+    var display;
+    if (checkBox.checked == true) {
+        display = "block";
+    } else {
+        display = "none";
+    }
+
+    var myClasses = document.querySelectorAll('.filter_'+msg_type),
+    i = 0,
+    l = myClasses.length;
+
+    for (i; i < l; i++) {
+        myClasses[i].style.display = display;
+    }
+}
 
 </script>
 
