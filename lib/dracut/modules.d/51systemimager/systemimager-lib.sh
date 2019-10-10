@@ -241,6 +241,15 @@ logmessage() {
     test ${LOG_MESSAGE:0:1} == '"' && LOG_MESSAGE="${LOG_MESSAGE#\"}"
     test "${LOG_MESSAGE: -1}" == '"' && LOG_MESSAGE="${LOG_MESSAGE%\"}" # ! Keep space between : and -1
 
+    # Save Message in json HTML stream.
+    HTML_ESCAPED_MSG="$(sed -E 's/\\n/<br>/g;s/\\t/\&nbsp;\&nbsp;/g;s/\&/\&amp;/g;s/>/\&gt;/g;s/</\&lt;/g;s/'\''/\&apos;/g;s/(ht|f)tp(s)?:\/\/[a-zA-Z0-9\.\/-]*[^.\"]/<A HREF=\\"&\\">&<\/A>/g' <<< "${LOG_MESSAGE}")"
+    cat >> /tmp/si_report.stream <<-EOF
+LOG:{ "TAG" : "${LOG_TAG}" , "PRIORITY" : "${LOG_PRIORITY}" , "MESSAGE" : "${HTML_ESCAPED_MSG}" }
+EOF
+
+    # Replace \\, \", \t (don't replace \n)
+    LOG_MESSAGE="$(sed -E 's/\\(["\\])/\1/g;s/\\t/	/g' <<< "${LOG_MESSAGE}")"
+
     # Save message in local log file
     echo "${LOGFILE_HEADER} ${LOG_MESSAGE}" >> /tmp/si_monitor.log
 
@@ -255,22 +264,6 @@ logmessage() {
     then
 	logger -t "${LOG_TAG}" -p ${LOG_PRIORITY} -n ${LOG_SERVER} -P ${LOG_SERVER_PORT:=514} -- "${LOG_MESSAGE}"
     fi
-
-    # Send message to image server console logger in json format.
-    # XML_ESCAPED_MSG="$(sed "s/\&/\&amp;/g;s/>/\&gt;/g;s/</\&lt;/g;s/'/\&apos;/g" <<< "${LOG_MESSAGE}")"
-    #ESCAPED_MSG="$(sed 's/\\/\\\\/g;s/"/\\"/g;s/\t/\\t/g' <<< "${LOG_MESSAGE}")"
-    #if test "${MONITOR_CONSOLE}" != "n" # (can be unset or 'y': doing so will allow to catch message before MONITOR_CONSOLE is parsed)
-    #then
-        #echo "<message type=\"${LOG_TYPE}\">${ESCAPED_MSG}</message>" >> /tmp/si_report.stream
-    # echo "LOG:{ \"TAG\" : \"${LOG_TAG}\" , \"PRIORITY\" : \"${LOG_PRIORITY}\" , \"MESSAGE\" : \"$ESCAPED_MSG\" }" >> /tmp/si_report.stream
-    #ESCAPED_MSG="$(sed 's/"/\\"/g;s/\t/\\t/g;s/\\/\\\\/g' <<< "${LOG_MESSAGE}")"
-    #ESCAPED_MSG="$(sed 's/\\/\\\\/g' <<< "${LOG_MESSAGE}")"
-    #HTML_ESCAPED_MSG="$(sed "s/\\n/<br>/g;s/\\t/&nbsp;&nbsp;&nbsp;&nbsp;/g;s/\&/\&amp;/g;s/>/\&gt;/g;s/</\&lt;/g;s/'/\&apos;/g" <<< "${LOG_MESSAGE}")"
-    HTML_ESCAPED_MSG="$(sed -E 's/\\n/<br>/g;s/\\t/\&nbsp;\&nbsp;/g;s/\&/\&amp;/g;s/>/\&gt;/g;s/</\&lt;/g;s/'\''/\&apos;/g;s/(ht|f)tp(s)?:\/\/[a-zA-Z0-9\.\/-]*[^.\"]/<A HREF=\\"&\\">&<\/A>/g' <<< "${LOG_MESSAGE}")"
-    cat >> /tmp/si_report.stream <<-EOF
-LOG:{ "TAG" : "${LOG_TAG}" , "PRIORITY" : "${LOG_PRIORITY}" , "MESSAGE" : "${HTML_ESCAPED_MSG}" }
-EOF
-    #fi
 }
 
 ################################################################################
@@ -1556,9 +1549,10 @@ run_pre_install_scripts() {
                 loginfo "Running script ${SCRIPT_INDEX}/${NUM_SCRIPTS}: $PRE_INSTALL_SCRIPT"
 		send_monitor_msg "status=108:speed=0" # 108=preinstall
 		update_client_status 108 0
-                chmod +x $PRE_INSTALL_SCRIPT || shellout
-                ./$PRE_INSTALL_SCRIPT || shellout
+                chmod +x $PRE_INSTALL_SCRIPT || shellout "Failed to set execute bit for script $PRE_INSTALL_SCRIPT !"
+                ./$PRE_INSTALL_SCRIPT || shellout "script ${SCRIPT_INDEX}/${NUM_SCRIPTS}: $PRE_INSTALL_SCRIPT Failed!"
 		SCRIPT_INDEX=$((${SCRIPT_INDEX} + 1))
+		sleep 0.5 # Ugly hack to reduce StdOut/StdErr logging race condition. # BUG TO FIX
             done
         else
             loginfo "No pre-install scripts found."
@@ -1651,6 +1645,7 @@ run_post_install_scripts() {
 			   shellout "post-install incomplete!"
 		    fi
 		    SCRIPT_INDEX=$(( ${SCRIPT_INDEX} + 1))
+		    sleep 0.5 # Ugly hack to reduce StdOut/StdErr logging race condition. # BUG TO FIX
 	        else
 		    logerror "Script [$POST_INSTALL_SCRIPT] lost in space?"
 		    logdetail "Unmounting /sysroot/tmp/post-install"
