@@ -30,7 +30,7 @@ if (isset($_GET["client"])) {
 <hr>
 <table id="filtersTable">
   <tbody>
-    <tr>
+    <tr id="filtersRow">
       <td>Filters:</td>
       <td>
         <span class='pri_debug'>Debug</span>
@@ -95,7 +95,8 @@ var eSource; // Global variable.
 if (!!window.EventSource) {
   eSource= new EventSource('push_client_logs.php?client=<?php echo $client; ?>');  //instantiate the Event source
 } else {
-  document.getElementById("serverData").innerHTML="Whoops! Your browser doesn't receive server-sent events.<br>You'll be redirected to static log report page.";
+  document.getElementById("filtersRaw").innerHTML="<td>Whoops! Your browser doesn't receive server-sent events.<br>You'll be redirected to static log report page.</td>";
+  document.getElementById("logTable").style.display="none";
   sleep(5);
   // Fallback: redirect to static page with refresh.
   // do an eSource.close(); when client has disconnected.
