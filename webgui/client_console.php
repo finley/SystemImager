@@ -6,6 +6,7 @@
   <style type='text/css' media='screen'>@import url('css/screen.css');</style>
   <style type='text/css' media='screen'>@import url('css/sliders.css');</style>
   <!-- <style type='text/css' media='screen'>@import url('css/print.css');</style> -->
+  <script src="functions.js"></script>
 </head>
 <body>
 
@@ -28,51 +29,48 @@ if (isset($_GET["client"])) {
 </table>
 <p>
 <hr>
-<table id="filtersTable">
+<table id="filtersTable" width="99%">
   <tbody>
     <tr id="filtersRow">
-      <td>Filters:</td>
-      <td>
+      <td>Filters:
         <span class='pri_debug'>Debug</span>
         <label class="switch">
           <input type="checkbox" onclick="doFilter(this,'debug')" checked>
           <span class="slider round"></span>
         </label>
-      </td>
-      <td>
         <span class='pri_system'>System</span>
         <label class="switch">
           <input type="checkbox" onclick="doFilter(this,'system')" checked>
           <span class="slider round"></span>
         </label>
-      </td>
-      <td>
         <span class='pri_notice'>Notice</span>
         <label class="switch">
           <input type="checkbox" onclick="doFilter(this,'notice')" checked>
           <span class="slider round"></span>
         </label>
-      </td>
-      <td>
         <span class='pri_detail'>Detail</span>
         <label class="switch">
           <input type="checkbox" onclick="doFilter(this,'detail')" checked>
           <span class="slider round"></span>
         </label>
-      </td>
-      <td>
         <span class='pri_stdout'>StdOut</span>
         <label class="switch">
           <input type="checkbox" onclick="doFilter(this,'stdout')" checked>
           <span class="slider round"></span>
         </label>
-      </td>
-      <td>
         <span class='pri_stderr'>StdErr</span>
         <label class="switch">
           <input type="checkbox" onclick="doFilter(this,'stderr')" checked>
           <span class="slider round"></span>
         </label>
+      </td>
+      <td style="text-align:right">
+        <span>Refresh:</span>
+        <label class="switch">
+          <input type="checkbox" id="refresh_checkbox" onclick="doRefresh(this)" checked>
+          <span class="slider round"></span>
+        </label>
+        <span id="refresh_text">No</span>
       </td>
     </tr>
   </tbody>
@@ -93,13 +91,56 @@ var eSource; // Global variable.
 
 //check for browser support
 if (!!window.EventSource) {
-  eSource= new EventSource('push_client_logs.php?client=<?php echo $client; ?>');  //instantiate the Event source
+  EnableRefresh();
 } else {
-  document.getElementById("filtersRow").innerHTML="<td>Whoops! Your browser doesn't receive server-sent events.<br>You'll be redirected to static log report page.</td>";
+  document.getElementById("filtersRow").innerHTML="<td>Whoops! Your browser doesn't receive server-sent events.<br>Please use a web browser that supports EventSource interface <A href='https://caniuse.com/#feat=eventsource'>https://caniuse.com/#feat=eventsource</A></td>";
   document.getElementById("logTable").style.display="none";
-  sleep(5);
+  // sleep(5); // BUG: sleep does not exists.
   // Fallback: redirect to static page with refresh.
   // do an eSource.close(); when client has disconnected.
+}
+
+// Log connection established
+eSource.addEventListener('open', function(e) {
+  console.log("Connection was opened.")
+}, false);
+
+// Log connection closed
+eSource.addEventListener('error', function(e) {
+  if (e.readyState == EventSource.CLOSED) { 
+    console.log("Connection was closed. ");
+  }
+}, false);
+
+
+function EnableRefresh() {
+  eSource=new EventSource('push_client_logs.php?client=<?php echo $client; ?>');  //instantiate the Event source
+  // eSource.addEventListener('message', UpdateLogHandler, false);
+  eSource.addEventListener('resetlog', ResetLogHandler, false); // resetlog: when log has changed (reinstall)
+  eSource.addEventListener('updatelog', UpdateLogHandler, false); // New lines in log
+  eSource.addEventListener('updateclient', UpdateClientHandler , false); // client updated status or progress.
+  document.getElementById("refresh_text").innerHTML="Active";
+  refresh_span=document.getElementById("refresh_text");
+  refresh_span.innerHTML="Yes";
+  refresh_span.setAttribute("class","pri_info");
+}
+
+function DisableRefresh() {
+  eSource.removeEventListener('updateclient', UpdateClientHandler , false);
+  eSource.removeEventListener('updatelog', UpdateLogHandler, false);
+  eSource.removeEventListener('resetlog', ResetLogHandler, false);
+  eSource.close();
+  refresh_span=document.getElementById("refresh_text");
+  refresh_span.innerHTML="No";
+  refresh_span.setAttribute("class","pri_stderr");
+}
+
+function doRefresh(checkBox) {
+    if (checkBox.checked == true) {
+        EnableRefresh();
+    } else {
+        DisableRefresh();
+    }
 }
 
 // Clean log if requested (in case of reimage for example)
@@ -169,37 +210,6 @@ function LogToHTML(tag,value,message) { // Original values from systemimager-lib
     } 
 }
 
-function StatusToText(value) {
-    if (value < 0) {
-      return "Status: <span class='status0'>FAILED</span>";
-    } else if (value < 100) {
-      return '<div><div class="progress_bar" style="width:' + value + '%">' + value + '%</div></div>';
-      // return "Progress: " + value + "%";
-    } else {
-      var index = value - 100;
-      var my_statuses = ['Imaged','Finalizing...','REBOOTED','Beeping','Rebooting...','Shutdown','Shell','Extracting...','Pre-Install','Post-Install'];
-      if ( index <= my_statuses.length+1 ) {
-        return "Status: <span class='status" + value + "'>" + my_statuses[index] + "</span>";
-      } else {
-        return "Status: Unknown (<span class='status0'>" + (value) + ")</span>";
-      }
-    }
-}
-
-function UnixDate(unix_timestamp) {
-    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    var start_date = new Date(unix_timestamp * 1000);
-    var hours = start_date.getHours();
-    var minutes = "0" + start_date.getMinutes();
-    var seconds = "0" + start_date.getSeconds();
-    var my_time = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
-    var day = start_date.getDay();
-    var month = months[start_date.getMonth()];
-    var year = start_date.getFullYear();
-    var my_date = day + ' ' + month + ' ' + year;
-    return(my_time + " - " + my_date);
-}
-
 // Called when event updateclient is received
 function UpdateClientHandler(event) {
   try {
@@ -208,7 +218,7 @@ function UpdateClientHandler(event) {
                       "<br>MAC: " + clientInfo.name +
                       "<br>IP: " + clientInfo.ip +
                       "<br>Image: " + clientInfo.os +
-                      "<br>" + StatusToText(clientInfo.status);
+                      "<br>Status: " + StatusToText(clientInfo.status);
 //                      "<br>" + get_status(clientInfo.status);
 
     var clientText2 = "CPU(s): " + clientInfo.ncpus + " x " + clientInfo.cpu +
@@ -223,24 +233,6 @@ function UpdateClientHandler(event) {
     // console.error("JSON: ", event.data);
   }
 }
-
-// Log connection established
-eSource.addEventListener('open', function(e) {
-  console.log("Connection was opened.")
-}, false);
-
-// Log connection closed
-eSource.addEventListener('error', function(e) {
-  if (e.readyState == EventSource.CLOSED) { 
-    console.log("Connection was closed. ");
-  }
-}, false);
-
-
-// eSource.addEventListener('message', UpdateLogHandler, false);
-eSource.addEventListener('resetlog', ResetLogHandler, false); // resetlog: when log has changed (reinstall)
-eSource.addEventListener('updatelog', UpdateLogHandler, false); // New lines in log
-eSource.addEventListener('updateclient', UpdateClientHandler , false); // client updated stgatus or progress.
 
 function doFilter(checkBox, msg_type) {
     var display;
