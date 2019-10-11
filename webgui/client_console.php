@@ -123,6 +123,7 @@ function EnableRefresh() {
   refresh_span=document.getElementById("refresh_text");
   refresh_span.innerHTML="Yes";
   refresh_span.setAttribute("class","pri_info");
+  document.getElementById("refresh_checkbox").checked="true";
 }
 
 function DisableRefresh() {
@@ -133,6 +134,7 @@ function DisableRefresh() {
   refresh_span=document.getElementById("refresh_text");
   refresh_span.innerHTML="No";
   refresh_span.setAttribute("class","pri_stderr");
+  document.getElementById("refresh_checkbox").checked="false";
 }
 
 function doRefresh(checkBox) {

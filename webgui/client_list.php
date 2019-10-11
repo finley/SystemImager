@@ -37,7 +37,7 @@ if (isset($_GET["client"])) {
       <td>SystemImager clients:</td>
       <td style="text-align:right">
         <span>Refresh:</span>
-        <label class="switch">
+        <label class="switch"><!-- BUG: if refresh is disabled, quitting page and going back will display unchecked refresh while text says yes -->
           <input type="checkbox" id="refresh_checkbox" onclick="doRefresh(this)" checked>
           <span class="slider round"></span>
         </label>
@@ -105,6 +105,7 @@ function EnableRefresh() {
   refresh_span=document.getElementById("refresh_text");
   refresh_span.innerHTML="Yes";
   refresh_span.setAttribute("class","pri_info");
+  document.getElementById("refresh_checkbox").checked="true";
 }
 
 function DisableRefresh() {
@@ -114,6 +115,7 @@ function DisableRefresh() {
   refresh_span=document.getElementById("refresh_text");
   refresh_span.innerHTML="No";
   refresh_span.setAttribute("class","pri_stderr");
+  document.getElementById("refresh_checkbox").checked="false";
 }
 
 function doRefresh(checkBox) {
