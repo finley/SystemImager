@@ -1,3 +1,13 @@
+<!--
+#
+# "SystemImager" 
+# Server sent events: log push to console emulation.
+#
+#  Copyright (C) 2019 Olivier LAHAYE <olivier.lahaye1@free.fr>
+#
+#  vi: set filetype=javascript et ts=4:
+#
+-->
 <?php
 
 include 'functions.php';

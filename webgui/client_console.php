@@ -1,5 +1,15 @@
-
 <!DOCTYPE html>
+<!--
+#
+# "SystemImager" 
+# Client console emulation. (replacement for si_monitortk console)
+#
+#  Copyright (C) 2019 Olivier LAHAYE <olivier.lahaye1@free.fr>
+#
+#  vi: set filetype=html et ts=4:
+#
+-->
+
 <html>
 <head>
 <title>SystemImager client install logs.</title>
@@ -88,6 +98,9 @@ if (isset($_GET["client"])) {
 
 <script type="text/javascript">
 var eSource; // Global variable.
+var serverData_elm=document.getElementById("serverData");
+var logTable_elm=document.getElementById("logTable");
+var needToScrollDown = new Boolean("false");
 
 //check for browser support
 if (!!window.EventSource) {
@@ -95,8 +108,7 @@ if (!!window.EventSource) {
 } else {
   document.getElementById("filtersRow").innerHTML="<td>Whoops! Your browser doesn't receive server-sent events.<br>Please use a web browser that supports EventSource interface <A href='https://caniuse.com/#feat=eventsource'>https://caniuse.com/#feat=eventsource</A></td>";
   document.getElementById("logTable").style.display="none";
-  // sleep(5); // BUG: sleep does not exists.
-  // Fallback: redirect to static page with refresh.
+  // Fallback: TODO: should redirect to static page with refresh.
   // do an eSource.close(); when client has disconnected.
 }
 
@@ -112,10 +124,9 @@ eSource.addEventListener('error', function(e) {
   }
 }, false);
 
-
+// Enable server sent event
 function EnableRefresh() {
   eSource=new EventSource('push_client_logs.php?client=<?php echo $client; ?>');  //instantiate the Event source
-  // eSource.addEventListener('message', UpdateLogHandler, false);
   eSource.addEventListener('resetlog', ResetLogHandler, false); // resetlog: when log has changed (reinstall)
   eSource.addEventListener('updatelog', UpdateLogHandler, false); // New lines in log
   eSource.addEventListener('updateclient', UpdateClientHandler , false); // client updated status or progress.
@@ -126,6 +137,7 @@ function EnableRefresh() {
   document.getElementById("refresh_checkbox").checked="true";
 }
 
+// Disable Server sent event
 function DisableRefresh() {
   eSource.removeEventListener('updateclient', UpdateClientHandler , false);
   eSource.removeEventListener('updatelog', UpdateLogHandler, false);
@@ -137,6 +149,7 @@ function DisableRefresh() {
   document.getElementById("refresh_checkbox").checked="false";
 }
 
+// Enable or disable page live refresh according to checkbox state.
 function doRefresh(checkBox) {
     if (checkBox.checked == true) {
         EnableRefresh();
@@ -147,7 +160,7 @@ function doRefresh(checkBox) {
 
 // Clean log if requested (in case of reimage for example)
 function ResetLogHandler(event) {
-  document.getElementById("serverData").innerHTML=""; // Remove all table lines.
+  serverData_elm.innerHTML=""; // Remove all table lines.
 }
 
 // Called when event updatelog is received
@@ -163,9 +176,31 @@ function UpdateLogHandler(event) {
   }
 // Stack overflow question:
 // https://stackoverflow.com/questions/58014912/how-can-scroll-down-a-tbody-table-when-innerhtml-is-updated-with-new-lines
-  // console.log("log: " . logInfo.type . ": " . logInfo.message);
-  // var logText = "log: " + logInfo.TAG + " - " + logInfo.PRIORITY + ": " + logInfo.MESSAGE + "<br>";
-  document.getElementById("serverData").innerHTML += logLine;
+
+//  lastRow=logTable_elm.rows[ logTable_elm.rows.length - 1];
+
+   bodyBounding = serverData_elm.getBoundingClientRect(); // Get the table visible lines area
+   logLinesCount = serverData_elm.rows.length ;  // Get the number of rows in logTable
+   if(logLinesCount == 0) {
+     needToScrollDown = Boolean("false");
+   } else {
+     lastRow=serverData_elm.rows[serverData_elm.rows.length - 1];
+     lineBounding = lastRow.getBoundingClientRect(); // get the last line area.
+     min=Number(bodyBounding.top);    // tbody minimum visible Y
+     max=Number(bodyBounding.bottom); // tbody maximum visible Y
+     val=Number(lineBounding.top);    // Lat line top Y
+     if ( (val >= min) && (val <= max) ) {
+       needToScrollDown = true;  // If last line top pixel between table visible area top and bottom: scroll
+     } else {
+       needToScrollDown = false; // Last line not visible: don't try to scroll.
+     }
+   }
+
+  serverData_elm.innerHTML += logLine;
+
+  if ( needToScrollDown ) {
+    serverData_elm.scrollTop = serverData_elm.scrollHeight - bodyBounding.height;
+  }
 }
 
 function LogToHTML(tag,value,message) { // Original values from systemimager-lib.sh:logmessage()

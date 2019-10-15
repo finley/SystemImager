@@ -1,5 +1,14 @@
-
 <!DOCTYPE html>
+<!--
+#
+# "SystemImager" 
+# Client list (replacement for sio_monitortk main windows)
+#
+#  Copyright (C) 2019 Olivier LAHAYE <olivier.lahaye1@free.fr>
+#
+#  vi: set filetype=html et ts=4:
+#
+-->
 <html>
 <head>
 <title>SystemImager clients list.</title>
@@ -37,7 +46,7 @@ if (isset($_GET["client"])) {
       <td>SystemImager clients:</td>
       <td style="text-align:right">
         <span>Refresh:</span>
-        <label class="switch"><!-- BUG: if refresh is disabled, quitting page and going back will display unchecked refresh while text says yes -->
+        <label class="switch">
           <input type="checkbox" id="refresh_checkbox" onclick="doRefresh(this)" checked>
           <span class="slider round"></span>
         </label>
