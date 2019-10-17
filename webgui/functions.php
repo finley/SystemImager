@@ -49,4 +49,26 @@ function si_WriteConfig($si_config) {
 	return(file_put_contents("/etc/systemimager/systemimager.json",$json_config));
 }
 
+/**
+ * Checks if a folder exist and return canonicalized absolute pathname (long version)
+ * @param string $folder the path being checked.
+ * @return mixed returns the canonicalized absolute pathname on success otherwise FALSE is returned
+ * Code from https://stackoverflow.com/questions/5425891/how-do-i-check-if-a-directory-exists-is-dir-file-exists-or-both
+ */
+function folder_exist($folder)
+{
+    // Get canonicalized absolute pathname
+    $path = realpath($folder);
+
+    // If it exist, check if it's a directory
+    if($path !== false AND is_dir($path))
+    {
+        // Return canonicalized absolute pathname
+        return $path;
+    }
+
+    // Path/folder does not exist
+    return false;
+}
+
 ?>

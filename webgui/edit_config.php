@@ -66,27 +66,88 @@ if($config->error !== "") {
   echo "<span class='pri_error'>".$config->pri_error."</span>\n";
 }
 ?>
+<br><br>
+
   <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>">
-<table>
-<tbody>
-<tr><td>images_dir</td><td><input type="text" name="images_dir" size="50" value="<?php echo $config->images_dir;?>"></td></tr>
-<tr><td>overrides_dir</td><td><input type="text" name="overrides_dir" size="50" value="<?php echo $config->overrides_dir;?>"></td></tr>
-<tr><td>scripts_dir</td><td><input type="text" name="scripts_dir" size="50" value="<?php echo $config->scripts_dir;?>"></td></tr>
-<tr><td>clients_db_dir</td><td><input type="text" name="clients_db_dir" size="50" value="<?php echo $config->clients_db_dir;?>"></td></tr>
-<tr><td>tarballs_dir</td><td><input type="text" name="tarballs_dir" size="50" value="<?php echo $config->tarballs_dir;?>"></td></tr>
-<tr><td>torrents_dir</td><td><input type="text" name="torrents_dir" size="50" value="<?php echo $config->torrents_dir;?>"></td></tr>
-<tr><td>pxe_boot_files</td><td><input type="text" name="pxe_boot_files" size="50" value="<?php echo $config->pxe_boot_files;?>"></td></tr>
-<tr><td>rsyncd_conf</td><td><input type="text" name="rsyncd_conf" size="50" value="<?php echo $config->rsyncd_conf;?>"></td></tr>
-<tr><td>rsync_stub_dir</td><td><input type="text" name="rsync_stub_dir" size="50" value="<?php echo $config->rsync_stub_dir;?>"></td></tr>
-<tr><td>tftp_dir</td><td><input type="text" name="tftp_dir" size="50" value="<?php echo $config->tftp_dir;?>"></td></tr>
+<div id="parameters" style="overflow-y: scroll; height:60vh;">
+<fieldset><legend>Imager data paths</legend>
+<table><tbody>
+<tr><td>images_dir</td><td><input type="text" name="images_dir" size="50" value="<?php echo $config->images_dir;?>"></td><td>Place where images are stored.</td></tr>
+<tr><td>overrides_dir</td><td><input type="text" name="overrides_dir" size="50" value="<?php echo $config->overrides_dir;?>"></td><td>Place where override files are stored. They are copied to client filesystem overwriting existing files.</td></tr>
+<tr><td>scripts_dir</td><td><input type="text" name="scripts_dir" size="50" value="<?php echo $config->scripts_dir;?>"></td><td></td></tr>
+<tr><td>tarballs_dir</td><td><input type="text" name="tarballs_dir" size="50" value="<?php echo $config->tarballs_dir;?>"></td><td></td></tr>
+<tr><td>torrents_dir</td><td><input type="text" name="torrents_dir" size="50" value="<?php echo $config->torrents_dir;?>"></td><td></td></tr>
+<tr><td>clients_db_dir</td><td><input type="text" name="clients_db_dir" size="50" value="<?php echo $config->clients_db_dir;?>"></td><td></td></tr>
+</tbody></table>
+</fieldset>
+<br/>
+
+<fieldset><legend>Imager binaries</legend>
+<table><tbody>
+<tr><td>pxe_boot_files</td><td><input type="text" name="pxe_boot_files" size="50" value="<?php echo $config->pxe_boot_files;?>"></td><td></td></tr>
+</tbody></table>
+</fieldset>
+<br/>
+
+<fieldset><legend>PXE configuration</legend>
+<table><tbody>
+<tr><td>tftp_dir</td><td><input type="text" name="tftp_dir" size="50" value="<?php echo $config->tftp_dir;?>"></td><td></td></tr>
 <tr><td>pxe_boot_mode</td><td><select name="pxe_boot_mode">
 <option value="net" <?php if($config->pxe_boot_mode === "net") echo "selected"; ?>>Network boot</options>
 <option value="local" <?php if($config->pxe_boot_mode === "local") echo "selected"; ?>>Local boot</options>
-</select></td></tr>
+</select></td><td></td></tr>
+</tbody></table>
+</fieldset>
+<br/>
 
-<tr><td><input type="submit" name="submit" value="Save"></td><td>Reset</td></tr>
-</tbody>
-</table>
+<fieldset><legend>RSYNC protocol configuration</legend>
+<table><tbody>
+<tr><td>rsyncd_conf</td><td><input type="text" name="rsyncd_conf" size="50" value="<?php echo $config->rsyncd_conf;?>"></td><td></td></tr>
+<tr><td>rsync_stub_dir</td><td><input type="text" name="rsync_stub_dir" size="50" value="<?php echo $config->rsync_stub_dir;?>"></td><td></td></tr>
+</tbody></table>
+</fieldset>
+<br/>
+
+<fieldset><legend>SSH protocol configuration</legend>
+<table><tbody>
+<tr><td></td><td></td><td></td></tr>
+</tbody></table>
+</fieldset>
+<br/>
+
+<fieldset><legend>flamethrower protocol configuration</legend>
+<table><tbody>
+<tr><td></td><td></td><td></td></tr>
+</tbody></table>
+</fieldset>
+<br/>
+
+<fieldset><legend>NFS protocol configuration</legend>
+<table><tbody>
+<tr><td></td><td></td><td></td></tr>
+</tbody></table>
+</fieldset>
+<br/>
+
+<fieldset><legend>Docker protocol configuration</legend>
+<table><tbody>
+<tr><td></td><td></td><td></td></tr>
+</tbody></table>
+</fieldset>
+<br/>
+
+<fieldset><legend>Bootstrap list protocol configuration</legend>
+<table><tbody>
+<tr><td></td><td></td><td></td></tr>
+</tbody></table>
+</fieldset>
+</div>
+<br/>
+
+<fieldset>
+<table style="width: 95%"><tbody>
+<tr><td><input type="submit" name="submit" value="Save"/></td><td>Edit</td><td><input type="reset" value="Reset"/></td></tr>
+</tbody></table>
   </form>
 </div>
 
