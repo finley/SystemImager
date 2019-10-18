@@ -71,6 +71,11 @@ a:active {
   width: 100vw; // vw = viewport width.
 }
 
+#footerTable {
+  border: 0px;
+  width: 100vw;
+}
+
 #logTable tr:hover {
   background-color: #f5f5f5;
   color: black;
@@ -244,4 +249,27 @@ select:focus, input:focus {
     box-shadow: 0 0 10px #999999;
 }
 
+.flex_column {
+  display: flex;
+  flex-flow: column;
+  height: 100%;
+}
+
+.flex_header {
+    flex: 0 0 auto;
+    /* The above is shorthand for:
+    flex-grow: 0,
+    flex-shrink: 0,
+    flex-basis: auto
+    */
+}
+
+.flex_content {
+  flex: 1 1 auto;
+  overflow-y: scroll;
+}
+
+.flex_footer {
+  flex: 0 0 auto;
+}
 

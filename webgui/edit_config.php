@@ -46,9 +46,11 @@ $config=si_ReadConfig();
   <!-- <style type='text/css' media='screen'>@import url('css/print.css');</style> -->
   <script src="functions.js"></script>
 </head>
-<body>
+<body style="height: 100%">
+<div class="flex_column">
 
 <!-- SystemImager header -->
+<div class="flex_header">
 <table id="headerTable">
   <tbody>
     <tr>
@@ -60,42 +62,53 @@ $config=si_ReadConfig();
 </table>
 <p>
 <hr>
-<div id="config_div">
   <?php
 if($config->error !== "") {
   echo "<span class='pri_error'>".$config->pri_error."</span>\n";
 }
 ?>
 <br><br>
+</div> <!-- end flex_header -->
 
   <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>">
-<div id="parameters" style="overflow-y: scroll; height:60vh;">
+<!-- SystemImager content -->
+<div id="parameters" class="flex_content">
 <fieldset><legend>Imager data paths</legend>
 <table><tbody>
 <tr><td>images_dir</td><td><input type="text" name="images_dir" size="50" value="<?php echo $config->images_dir;?>"></td><td>Place where images are stored.</td></tr>
 <tr><td>overrides_dir</td><td><input type="text" name="overrides_dir" size="50" value="<?php echo $config->overrides_dir;?>"></td><td>Place where override files are stored. They are copied to client filesystem overwriting existing files.</td></tr>
-<tr><td>scripts_dir</td><td><input type="text" name="scripts_dir" size="50" value="<?php echo $config->scripts_dir;?>"></td><td></td></tr>
-<tr><td>tarballs_dir</td><td><input type="text" name="tarballs_dir" size="50" value="<?php echo $config->tarballs_dir;?>"></td><td></td></tr>
-<tr><td>torrents_dir</td><td><input type="text" name="torrents_dir" size="50" value="<?php echo $config->torrents_dir;?>"></td><td></td></tr>
-<tr><td>clients_db_dir</td><td><input type="text" name="clients_db_dir" size="50" value="<?php echo $config->clients_db_dir;?>"></td><td></td></tr>
+<tr><td>scripts_dir</td><td><input type="text" name="scripts_dir" size="50" value="<?php echo $config->scripts_dir;?>"></td><td>Place holding imaging scripts and various client configurations:<br>
+<ul>
+<li>pre-install/ all optional pre-install scripts</li>
+<li>main-install/ The optional main install script</li>
+<li>post-install/ all optional post-install scripts</li>
+<li>configs/ clients configuration files</li>
+<li>disks-layouts/ clients disks layout files</li>
+<li>network-configs/ clients optional network configuration files</li>
+<li>cluster.txt The cluster/client groups definition file (see si_clusterconfig)</li>
+</ul>
+</td></tr>
+<tr><td>tarballs_dir</td><td><input type="text" name="tarballs_dir" size="50" value="<?php echo $config->tarballs_dir;?>"></td><td>All images saved as tarball (mainly torrent content)</td></tr>
+<tr><td>torrents_dir</td><td><input type="text" name="torrents_dir" size="50" value="<?php echo $config->torrents_dir;?>"></td><td>Place for .torrent files</td></tr>
+<tr><td>clients_db_dir</td><td><input type="text" name="clients_db_dir" size="50" value="<?php echo $config->clients_db_dir;?>"></td><td>Where to save imaged clients informations and installation logs.</td></tr>
 </tbody></table>
 </fieldset>
 <br/>
 
 <fieldset><legend>Imager binaries</legend>
 <table><tbody>
-<tr><td>pxe_boot_files</td><td><input type="text" name="pxe_boot_files" size="50" value="<?php echo $config->pxe_boot_files;?>"></td><td></td></tr>
+<tr><td>pxe_boot_files</td><td><input type="text" name="pxe_boot_files" size="50" value="<?php echo $config->pxe_boot_files;?>"></td><td>Where to find initrd.img and kernel files (the imager itself)</td></tr>
 </tbody></table>
 </fieldset>
 <br/>
 
 <fieldset><legend>PXE configuration</legend>
 <table><tbody>
-<tr><td>tftp_dir</td><td><input type="text" name="tftp_dir" size="50" value="<?php echo $config->tftp_dir;?>"></td><td></td></tr>
+<tr><td>tftp_dir</td><td><input type="text" name="tftp_dir" size="50" value="<?php echo $config->tftp_dir;?>"></td><td>The tftp root directory</td></tr>
 <tr><td>pxe_boot_mode</td><td><select name="pxe_boot_mode">
 <option value="net" <?php if($config->pxe_boot_mode === "net") echo "selected"; ?>>Network boot</options>
 <option value="local" <?php if($config->pxe_boot_mode === "local") echo "selected"; ?>>Local boot</options>
-</select></td><td></td></tr>
+</select></td><td>PXE boot mode is a setting that affects systemimager-server-netbootmond. If set to LOCAL, then after successful completion of an install, a client's net boot configuration is modified to ensure future boots will happen from the client's local disk. NET_BOOT_DEFAULT can be set to local or net.  Be sure to restart systemimager-server-netbootmond after changing this setting (/etc/init.d/systemimager-server-netbootmond restart).</td></tr>
 </tbody></table>
 </fieldset>
 <br/>
@@ -141,19 +154,20 @@ if($config->error !== "") {
 <tr><td></td><td></td><td></td></tr>
 </tbody></table>
 </fieldset>
-</div>
+</div> <!-- end flex content -->
+
+<div class="flex_footer">
 <br/>
 
 <fieldset>
-<table style="width: 95%"><tbody>
+<table  id="footerTable" style="width: 95%"><tbody>
 <tr><td><input type="submit" name="submit" value="Save"/></td><td>Edit</td><td><input type="reset" value="Reset"/></td></tr>
 </tbody></table>
+</fieldset>
+</div> <!-- end flex_footer -->
   </form>
+
 </div>
-
-<script type="text/javascript">
-</script>
-
 </body>
 </html>
 
