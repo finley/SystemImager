@@ -252,7 +252,7 @@ select:focus, input:focus {
 .flex_column {
   display: flex;
   flex-flow: column;
-  height: 100%;
+  height: 96vh; /* UGLY. Should be 100vh and parent object border and padding set to 0 */
 }
 
 .flex_header {

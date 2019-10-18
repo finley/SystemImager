@@ -46,12 +46,13 @@ $config=si_ReadConfig();
   <!-- <style type='text/css' media='screen'>@import url('css/print.css');</style> -->
   <script src="functions.js"></script>
 </head>
-<body style="height: 100%">
-<div class="flex_column">
+<body>
+<form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>">
+<div class="flex_column"> <!-- start of flex column -->
 
-<!-- SystemImager header -->
+
 <div class="flex_header">
-<table id="headerTable">
+<table id="headerTable"> <!-- SystemImager header -->
   <tbody>
     <tr>
       <td><img src="css/SystemImagerBanner.png" alt="SystemImagezr"></td>
@@ -70,7 +71,6 @@ if($config->error !== "") {
 <br><br>
 </div> <!-- end flex_header -->
 
-  <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>">
 <!-- SystemImager content -->
 <div id="parameters" class="flex_content">
 <fieldset><legend>Imager data paths</legend>
@@ -165,9 +165,9 @@ if($config->error !== "") {
 </tbody></table>
 </fieldset>
 </div> <!-- end flex_footer -->
-  </form>
 
-</div>
+</div> <!-- end flex column -->
+</form>
 </body>
 </html>
 
