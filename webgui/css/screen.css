@@ -6,6 +6,8 @@ body {
   font-size: medium ; 
   font-family: Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;
   display: inline;
+  margin: 0px;
+  padding: 0px;
 }
 
 h1 {
@@ -228,7 +230,7 @@ https://forum.alsacreations.com/topic-4-62439-1-TABLE--Scrollable-TBODY-and-fixe
   text-shadow: 1px 1px 3px red;
 }
 
-select, input {
+select, input, button {
   color: #f5f5f5;
   font-size: medium ; 
   font-family: Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;
@@ -244,7 +246,7 @@ input[type="text"] {
   border-bottom-color: #CCCCCC;
 }
 
-select:focus, input:focus { 
+select:focus, input:focus, button:focus { 
     outline: none !important;
     box-shadow: 0 0 10px #999999;
 }
@@ -252,24 +254,27 @@ select:focus, input:focus {
 .flex_column {
   display: flex;
   flex-flow: column;
-  height: 96vh; /* UGLY. Should be 100vh and parent object border and padding set to 0 */
+  height: 100vh; /* UGLY. Should be 100vh and parent object border and padding set to 0 */
 }
 
 .flex_header {
-    flex: 0 0 auto;
-    /* The above is shorthand for:
-    flex-grow: 0,
-    flex-shrink: 0,
-    flex-basis: auto
-    */
+  flex: 0 0 auto;
+  /* The above is shorthand for:
+  flex-grow: 0,
+  flex-shrink: 0,
+  flex-basis: auto
+  */
+  padding: 1em 0em 1em 0em; /* top right bottom left */
 }
 
 .flex_content {
   flex: 1 1 auto;
   overflow-y: scroll;
+  padding: 0px 5px 0px 5px; /* top right bottom left */
 }
 
 .flex_footer {
   flex: 0 0 auto;
+  padding: 1em 0em 1em 0em; /* top right bottom left */
 }
 

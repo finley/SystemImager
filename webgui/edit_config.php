@@ -8,6 +8,8 @@
 #
 #  vi: set filetype=html et ts=4:
 #
+# Icon set: Flatwoken Icons by alecive
+#           http://www.iconarchive.com/show/flatwoken-icons-by-alecive.html
 -->
 <?php
 include 'functions.php';
@@ -18,7 +20,7 @@ include 'functions.php';
 if ($_SERVER["REQUEST_METHOD"] == "POST") { // we're called as post
   // Read and validate fields.
   $config->error="";
-  $config->images_dir=$_POST["images_dir"];
+  $config->images_dir=$_POST["images_dir"]; // TODO: Check directory existance.
   $config->overrides_dir=$_POST["overrides_dir"];
   $config->scripts_dir=$_POST["scripts_dir"];
   $config->clients_db_dir=$_POST["clients_db_dir"];
@@ -29,11 +31,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") { // we're called as post
   $config->rsync_stub_dir=$_POST["rsync_stub_dir"];
   $config->tftp_dir=$_POST["tftp_dir"];
   $config->pxe_boot_mode=$_POST["pxe_boot_mode"];
-  // si_WriteConfig($config);
+  if(!si_WriteConfig($config)) {
+    $error=error_get_last();
+    $config->error="ERROR (".$error['type']."):".$error['message'];
+  }
 
 } else { // we're called as "view"
-$config=si_ReadConfig();
-
+  $config=si_ReadConfig();
 }
 
 ?>
@@ -45,9 +49,10 @@ $config=si_ReadConfig();
   <style type='text/css' media='screen'>@import url('css/sliders.css');</style>
   <!-- <style type='text/css' media='screen'>@import url('css/print.css');</style> -->
   <script src="functions.js"></script>
+  <?php si_DefaultConfigToJava(); ?>
 </head>
 <body>
-<form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>">
+<form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" id="si_prefs">
 <div class="flex_column"> <!-- start of flex column -->
 
 
@@ -65,10 +70,9 @@ $config=si_ReadConfig();
 <hr>
   <?php
 if($config->error !== "") {
-  echo "<span class='pri_error'>".$config->pri_error."</span>\n";
+  echo "<span class='pri_error' style='display: block; text-align: center; width: 100%'>".$config->error."</span>\n";
 }
 ?>
-<br><br>
 </div> <!-- end flex_header -->
 
 <!-- SystemImager content -->
@@ -157,13 +161,55 @@ if($config->error !== "") {
 </div> <!-- end flex content -->
 
 <div class="flex_footer">
-<br/>
+<hr/>
 
-<fieldset>
-<table  id="footerTable" style="width: 95%"><tbody>
-<tr><td><input type="submit" name="submit" value="Save"/></td><td>Edit</td><td><input type="reset" value="Reset"/></td></tr>
+<script type="text/javascript">
+function setEditMode(flag) {
+  if (flag) {
+    document.getElementById("save").style.visibility="visible";
+    document.getElementById("defaults").style.visibility="visible";
+    document.getElementById("edit").style.visibility="hidden";
+    document.getElementById("reset").style.visibility="visible";
+    document.getElementById("cancel").style.visibility="visible";
+  } else {
+    document.getElementById("save").style.visibility="hidden";
+    document.getElementById("defaults").style.visibility="hidden";
+    document.getElementById("edit").style.visibility="visible";
+    document.getElementById("reset").style.visibility="hidden";
+    document.getElementById("cancel").style.visibility="hidden";
+  }
+}
+</script>
+
+<table id="footerTable-edit" style="width: 95%"><tbody>
+<tr>
+  <td style="text-align: center">
+    <button id="save" name="Save" type="submit" form="si_prefs" style="visibility: hidden">
+      <img src="images/Alecive-Flatwoken-Apps-Dialog-Apply.svg" height="64" alt="Save"/>
+    </button>
+  </td>
+  <td style="text-align: center">
+    <button id="defaults" name="Defaults" type="button" style="visibility: hidden">
+      <img src="images/Alecive-Flatwoken-Apps-Dialog-Logout.svg" height="64" alt="Defaults"/>
+    </button>
+  </td>
+  <td style="text-align: center">
+    <button id="edit" name="Edit" type="button">
+      <img src="images/Alecive-Flatwoken-Apps-Settings.svg" height="64" alt="Edit" onclick="setEditMode(true)"/>
+    </button>
+  </td>
+  <td style="text-align: center">
+    <button id="reset" name="Reset" type="reset" form="si_prefs" style="visibility: hidden">
+      <img src="images/Alecive-Flatwoken-Apps-Dialog-Refresh.svg" height="64" alt="Reset"/>
+    </button>
+  </td>
+  <td style="text-align: center">
+    <button id="cancel" name="Cancel" type="button" style="visibility: hidden">
+      <img src="images/Alecive-Flatwoken-Apps-Dialog-Close.svg" height="64" alt="Cancel" onclick="setEditMode(false)"/>
+    </button>
+  </td>
+  </tr>
 </tbody></table>
-</fieldset>
 </div> <!-- end flex_footer -->
 
 </div> <!-- end flex column -->
