@@ -179,6 +179,16 @@ function setEditMode(flag) {
     document.getElementById("cancel").style.visibility="hidden";
   }
 }
+function setDefaultSettings() {
+  for (const key of Object.keys(default_config)) {
+    console.log("Setting '" + key + "' to default value: " + default_config[key]);
+    input_field=document.getElementsByName(key);
+    if(input_field[0]) {
+      input_field[0].value=default_config[key];
+    }
+  }
+}
+
 </script>
 
 <table id="footerTable-edit" style="width: 95%"><tbody>
@@ -190,7 +200,7 @@ function setEditMode(flag) {
   </td>
   <td style="text-align: center">
     <button id="defaults" name="Defaults" type="button" style="visibility: hidden">
-      <img src="images/Alecive-Flatwoken-Apps-Dialog-Logout.svg" height="64" alt="Defaults"/>
+      <img src="images/Alecive-Flatwoken-Apps-Dialog-Logout.svg" height="64" alt="Defaults" onclick="setDefaultSettings()"/>
     </button>
   </td>
   <td style="text-align: center">
