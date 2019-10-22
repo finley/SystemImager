@@ -19,7 +19,8 @@ include 'functions.php';
 // Edit mode: fields are read write and Save (post) (cancel) button appear (edit button is hidden)
 if ($_SERVER["REQUEST_METHOD"] == "POST") { // we're called as post
   // Read and validate fields.
-  $config->error="";
+  $config = new stdClass();
+  $config->cfg_error="";
   $config->images_dir=$_POST["images_dir"]; // TODO: Check directory existance.
   $config->overrides_dir=$_POST["overrides_dir"];
   $config->scripts_dir=$_POST["scripts_dir"];
@@ -33,7 +34,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") { // we're called as post
   $config->pxe_boot_mode=$_POST["pxe_boot_mode"];
   if(!si_WriteConfig($config)) {
     $error=error_get_last();
-    $config->error="ERROR (".$error['type']."):".$error['message'];
+    $config->cfg_error="ERROR (".$error['type']."):".$error['message'];
   }
 
 } else { // we're called as "view"
@@ -69,8 +70,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") { // we're called as post
 <p>
 <hr>
   <?php
-if($config->error !== "") {
-  echo "<span class='pri_error' style='display: block; text-align: center; width: 100%'>".$config->error."</span>\n";
+if($config->cfg_error !== "") {
+  echo "<span class='pri_error' style='display: block; text-align: center; width: 100%'>".$config->cfg_error."</span>\n";
 }
 ?>
 </div> <!-- end flex_header -->

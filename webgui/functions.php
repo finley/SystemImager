@@ -21,7 +21,8 @@ function si_SendEvent($event,$retry,$id,$data) {
 }
 
 function si_GetDefautConfig() {
-	$si_config->error="";
+	$si_config = new stdClass();
+	$si_config->cfg_error="";
 	$si_config->images_dir="/var/lib/systemimager/images";
 	$si_config->overrides_dir="/var/lib/systemimager/overrides";
 	$si_config->scripts_dir="/var/lib/systemimager/scripts";
@@ -52,17 +53,17 @@ function si_ReadConfig() {
 	$json_config = file_get_contents("/etc/systemimager/systemimager.json");
         if ($json_config !== false) {
 		$si_config=json_decode($json_config);
-		$si_config->error=""; // Create internal use filed.
+		$si_config->cfg_error=""; // Create internal use filed.
 		if ($si_config === null  && json_last_error() !== JSON_ERROR_NONE) {
 			$si_config=si_GetDefautConfig();
-			$si_config->error="Invalid configuration file. Error:".json_last_error().". Using defaults.";
+			$si_config->cfg_error="Invalid configuration file. Error:".json_last_error().". Using defaults.";
 		}
 	}
 	return($si_config);
 }
 
 function si_WriteConfig($si_config) {
-	unset($si_config->error); // Remove internal use field
+	unset($si_config->cfg_error); // Remove internal use field
 	$json_config=json_encode($si_config,JSON_PRETTY_PRINT);
 	return(file_put_contents("/etc/systemimager/systemimager.json",$json_config));
 }
