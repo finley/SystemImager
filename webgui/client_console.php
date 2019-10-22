@@ -78,7 +78,7 @@ if (isset($_GET["client"])) {
         <span id=autoscroll class='pri_info'>(Auto Scroll)</span>&nbsp;&nbsp;
         <span>Refresh:</span>
         <label class="switch">
-          <input type="checkbox" onclick="doRefresh(this)" checked>
+          <input type="checkbox" id="refresh_checkbox" onclick="doRefresh(this)" checked>
           <span class="slider round"></span>
         </label>
         <span id="refresh_text" class='pri_stderr'>No</span>
@@ -98,10 +98,11 @@ if (isset($_GET["client"])) {
 </table>
 
 <script type="text/javascript">
-var eSource; // Global variable.
+var eSource; // Event source Global variable.
 var serverData_elm=document.getElementById("serverData");
 var logTable_elm=document.getElementById("logTable");
 var needToScrollDown = new Boolean("false");
+var scroll_span = document.getElementById("autoscroll");
 
 //check for browser support
 if (!!window.EventSource) {
@@ -113,27 +114,29 @@ if (!!window.EventSource) {
   // do an eSource.close(); when client has disconnected.
 }
 
-// Log connection established
-eSource.addEventListener('open', function(e) {
-  console.log("Connection was opened.")
-}, false);
-
-// Log connection closed
-eSource.addEventListener('error', function(e) {
-  if (e.readyState == EventSource.CLOSED) { 
-    console.log("Connection was closed. ");
-  }
-}, false);
-
 // Enable server sent event
 function EnableRefresh() {
   eSource=new EventSource('push_client_logs.php?client=<?php echo $client; ?>');  //instantiate the Event source
   eSource.addEventListener('resetlog', ResetLogHandler, false); // resetlog: when log has changed (reinstall)
   eSource.addEventListener('updatelog', UpdateLogHandler, false); // New lines in log
   eSource.addEventListener('updateclient', UpdateClientHandler , false); // client updated status or progress.
+  eSource.addEventListener('stop', DisableRefresh, false); // Stop refresh.
   refresh_span=document.getElementById("refresh_text");
   refresh_span.innerHTML="Yes";
   refresh_span.setAttribute("class","pri_info");
+  ComputeAutoScrollRequirements(); // Enable autoscroll if needed.
+  // Log connection established
+  // eSource.addEventListener('open', function(e) {
+  //  console.log("Connection was opened.")
+  //}, false);
+
+  // Log connection closed
+  //eSource.addEventListener('error', function(e) {
+  //  if (e.readyState == EventSource.CLOSED) { 
+  //    console.log("Connection was killed. ");
+  //  }
+  //}, false);
+
 }
 
 // Disable Server sent event
@@ -141,10 +144,15 @@ function DisableRefresh() {
   eSource.removeEventListener('updateclient', UpdateClientHandler , false);
   eSource.removeEventListener('updatelog', UpdateLogHandler, false);
   eSource.removeEventListener('resetlog', ResetLogHandler, false);
+  eSource.removeEventListener('stop', DisableRefresh, false); // Stop refresh.
+  // Should I remove the open and error listenners?
   eSource.close();
   refresh_span=document.getElementById("refresh_text");
   refresh_span.innerHTML="No";
   refresh_span.setAttribute("class","pri_stderr");
+  needToScrollDown = false; // Disable AutoScroll.
+  scroll_span.setAttribute("class","pri_system");
+  document.getElementById("refresh_checkbox").checked = false; // Needed when called by Event 'stop'.
 }
 
 // Enable or disable page live refresh according to checkbox state.
@@ -159,6 +167,27 @@ function doRefresh(checkbox) {
 // Clean log if requested (in case of reimage for example)
 function ResetLogHandler(event) {
   serverData_elm.innerHTML=""; // Remove all table lines.
+}
+
+function ComputeAutoScrollRequirements() {
+  bodyBounding = serverData_elm.getBoundingClientRect(); // Get the table visible lines area
+  logLinesCount = serverData_elm.rows.length ;  // Get the number of rows in logTable
+  if(logLinesCount == 0) {
+    needToScrollDown = Boolean("false");
+  } else {
+    lastRow=serverData_elm.rows[serverData_elm.rows.length - 1];
+    lineBounding = lastRow.getBoundingClientRect(); // get the last line area.
+    min=Number(bodyBounding.top);    // tbody minimum visible Y
+    max=Number(bodyBounding.bottom); // tbody maximum visible Y
+    val=Number(lineBounding.top);    // Lat line top Y
+    if ( (val >= min) && (val <= max) ) {
+      needToScrollDown = true;  // If last line top pixel between table visible area top and bottom: scroll
+      scroll_span.setAttribute("class","pri_info");
+    } else {
+      needToScrollDown = false; // Last line not visible: don't try to scroll.
+      scroll_span.setAttribute("class","pri_system");
+    }
+  }
 }
 
 // Called when event updatelog is received
@@ -176,23 +205,8 @@ function UpdateLogHandler(event) {
 // https://stackoverflow.com/questions/58014912/how-can-scroll-down-a-tbody-table-when-innerhtml-is-updated-with-new-lines
 
 //  lastRow=logTable_elm.rows[ logTable_elm.rows.length - 1];
+   ComputeAutoScrollRequirements();
 
-   bodyBounding = serverData_elm.getBoundingClientRect(); // Get the table visible lines area
-   logLinesCount = serverData_elm.rows.length ;  // Get the number of rows in logTable
-   if(logLinesCount == 0) {
-     needToScrollDown = Boolean("false");
-   } else {
-     lastRow=serverData_elm.rows[serverData_elm.rows.length - 1];
-     lineBounding = lastRow.getBoundingClientRect(); // get the last line area.
-     min=Number(bodyBounding.top);    // tbody minimum visible Y
-     max=Number(bodyBounding.bottom); // tbody maximum visible Y
-     val=Number(lineBounding.top);    // Lat line top Y
-     if ( (val >= min) && (val <= max) ) {
-       needToScrollDown = true;  // If last line top pixel between table visible area top and bottom: scroll
-     } else {
-       needToScrollDown = false; // Last line not visible: don't try to scroll.
-     }
-   }
 
   serverData_elm.innerHTML += logLine;
 

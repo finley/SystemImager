@@ -70,7 +70,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") { // we're called as post
 <p>
 <hr>
   <?php
-if($config->cfg_error !== "") {
+if( isset($config->cfg_error) && $config->cfg_error !== "") {
   echo "<span class='pri_error' style='display: block; text-align: center; width: 100%'>".$config->cfg_error."</span>\n";
 }
 ?>

@@ -16,11 +16,17 @@ include 'functions.php';
 header('Content-Type: text/event-stream');
 header('Cache-Control: no-cache');
 
+$log_line = 0;
+$client = "";
+$client_id = 0;
+$fh = false; // File handler
+
 if (isset($_GET["client"])) {
     $client=$_GET["client"];
 } else {
     $json_error='{ "TAG" : "webgui" , "PRIORITY" : "local0.crit" , "MESSAGE" : "client= missing parameter in URL." }';
     si_SendEvent('updatelog',5000,1,$json_error);
+    si_SendEvent('stop',5000,++$client_id,""); /* Tell client to close ServerEvent */
     // Fallback behaviour goes here
 }
 
@@ -41,16 +47,60 @@ if (isset($_GET["client"])) {
 //  response.write('id\n\n');
 //}
 
-$fh = fopen("/var/lib/systemimager/clients/${client}_log.json", 'r');
-if ($fh == false) {
-  $json_error='{ "TAG" : "webgui" , "PRIORITY" : "local0.error" , "MESSAGE" : "Can\'t read /var/lib/systemimager/clients/'.$client.'_log.json" }';
-  si_SendEvent('updatelog',5000,1,$json_error);
-  exit ;
+function SendClientDef() {
+    global $client, $client_id;
+    $client_infos = file_get_contents('/var/lib/systemimager/clients/'.$client.'_def.json');
+    if ($client_infos !== false) {
+        $client_infos = str_replace(array("\n", "\r"), '', $client_infos);
+        si_SendEvent('updateclient',5000,++$client_id,$client_infos);
+    } // If error; not an issue.
 }
-$json_message='{ "TAG" : "webgui" , "PRIORITY" : "local0.info" , "MESSAGE" : "Reading /var/lib/systemimager/clients/'.$client.'_log.json" }';
-si_SendEvent('updatelog',5000,1,$json_message);
-$log_line = 0;
-$client_id = 0;
+
+function SendMsg($Pri,$Msg) {
+  global $client_id;
+  $json_message='{ "TAG" : "webgui" , "PRIORITY" : "'.$Pri.'" , "MESSAGE" : "'.$Msg.'" }';
+  si_SendEvent('updatelog',5000,++$client_id,$json_message);
+}
+
+function OpenLogFile() {
+  global $fh, $client, $client_id;
+  $fh = fopen("/var/lib/systemimager/clients/${client}_log.json", 'r');
+  if ($fh == false) {
+    SendMsg('local0.emerg', 'Can\'t read /var/lib/systemimager/clients/'.$client.'_log.json');
+    SendMsg('local0.emerg', 'Please check PATH and permissions. Giving up!');
+    si_SendEvent('stop',5000,++$client_id,""); /* Tell client to close ServerEvent */
+  }
+  SendMsg('local0.info','Reading /var/lib/systemimager/clients/'.$client.'_log.json');
+}
+// MAIN PROGRAMM STARTS HERE.
+
+SendClientDef(); /* 1st, try to send client infos before we try to read the log */
+
+if ( ! file_exists("/var/lib/systemimager/clients/${client}_log.json")) {
+  SendMsg('local0.warning', '/var/lib/systemimager/clients/'.$client.'_log.json not yet available.');
+  SendMsg('local0.info', 'Wating a few minutes for log to appear..');
+  $count=0;
+  do {
+    if (file_exists("/var/lib/systemimager/clients/${client}_log.json")) {
+      break;
+    }
+    usleep(0.5 * 1000000); // Sleep for 0.5s
+    if($count++ > 600) { // 600 = 5min * 60s * 2 (2 counts for a single second)
+      SendMsg('local0.emerg', 'Log not available after 5 minutes. Giving up!');
+      si_SendEvent('stop',5000,++$client_id,""); /* Tell client to close ServerEvent */
+      exit;
+    }
+  } while(true);
+}
+
+// At this point, file is seen, but it may not be readable.
+OpenLogFile();
+//$json_message='{ "TAG" : "webgui" , "PRIORITY" : "local0.info" , "MESSAGE" : "Reading /var/lib/systemimager/clients/'.$client.'_log.json" }';
+//si_SendEvent('updatelog',5000,1,$json_message);
+
+// TODO: if curdate - filedate > 1H, send stop refresh after last line is processed and exit
+// TODO: catch file reset (if previous filesize > current filesize => resetlog)
+
 while (true) {
     $json_log_line = fgets($fh);
     if ($json_log_line !== false) {
@@ -59,11 +109,7 @@ while (true) {
     } else {
         // sleep for 0.5 seconds (or more?)
         usleep(0.5 * 1000000);
-	$client_infos = file_get_contents('/var/lib/systemimager/clients/'.$client.'_def.json');
-	if ($client_infos !== false) {
-          $client_infos = str_replace(array("\n", "\r"), '', $client_infos);
-          si_SendEvent('updateclient',5000,++$client_id,$client_infos);
-        }
+	SendClientDef();
 	$position=ftell($fh);
         if ($position !== false) {
           fseek($fh, ftell($fh));
