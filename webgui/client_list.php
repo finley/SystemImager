@@ -114,7 +114,6 @@ function EnableRefresh() {
   refresh_span=document.getElementById("refresh_text");
   refresh_span.innerHTML="Yes";
   refresh_span.setAttribute("class","pri_info");
-  document.getElementById("refresh_checkbox").checked="true";
 }
 
 function DisableRefresh() {
@@ -124,14 +123,13 @@ function DisableRefresh() {
   refresh_span=document.getElementById("refresh_text");
   refresh_span.innerHTML="No";
   refresh_span.setAttribute("class","pri_stderr");
-  document.getElementById("refresh_checkbox").checked="false";
 }
 
-function doRefresh(checkBox) {
-    if (checkBox.checked == true) {
-        EnableRefresh();
+function doRefresh(checkbox) {
+    if (checkbox.checked == true) {
+        EnableRefresh(checkbox);
     } else {
-        DisableRefresh();
+        DisableRefresh(checkbox);
     }
 }
 
@@ -187,9 +185,9 @@ function UpdateClientsHandler(event) {
 //  }
 //}
 
-function doFilter(checkBox, msg_type) {
+function doFilter(checkbox, msg_type) {
     var display;
-    if (checkBox.checked == true) {
+    if (checkbox.checked == true) {
         display = "block";
     } else {
         display = "none";

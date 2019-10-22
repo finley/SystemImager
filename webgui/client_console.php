@@ -75,12 +75,13 @@ if (isset($_GET["client"])) {
         </label>
       </td>
       <td style="text-align:right">
+        <span id=autoscroll class='pri_info'>(Auto Scroll)</span>&nbsp;&nbsp;
         <span>Refresh:</span>
         <label class="switch">
-          <input type="checkbox" id="refresh_checkbox" onclick="doRefresh(this)" checked>
+          <input type="checkbox" onclick="doRefresh(this)" checked>
           <span class="slider round"></span>
         </label>
-        <span id="refresh_text">No</span>
+        <span id="refresh_text" class='pri_stderr'>No</span>
       </td>
     </tr>
   </tbody>
@@ -130,11 +131,9 @@ function EnableRefresh() {
   eSource.addEventListener('resetlog', ResetLogHandler, false); // resetlog: when log has changed (reinstall)
   eSource.addEventListener('updatelog', UpdateLogHandler, false); // New lines in log
   eSource.addEventListener('updateclient', UpdateClientHandler , false); // client updated status or progress.
-  document.getElementById("refresh_text").innerHTML="Active";
   refresh_span=document.getElementById("refresh_text");
   refresh_span.innerHTML="Yes";
   refresh_span.setAttribute("class","pri_info");
-  document.getElementById("refresh_checkbox").checked="true";
 }
 
 // Disable Server sent event
@@ -146,12 +145,11 @@ function DisableRefresh() {
   refresh_span=document.getElementById("refresh_text");
   refresh_span.innerHTML="No";
   refresh_span.setAttribute("class","pri_stderr");
-  document.getElementById("refresh_checkbox").checked="false";
 }
 
 // Enable or disable page live refresh according to checkbox state.
-function doRefresh(checkBox) {
-    if (checkBox.checked == true) {
+function doRefresh(checkbox) {
+    if (checkbox.checked == true) {
         EnableRefresh();
     } else {
         DisableRefresh();
@@ -271,9 +269,9 @@ function UpdateClientHandler(event) {
   }
 }
 
-function doFilter(checkBox, msg_type) {
+function doFilter(checkbox, msg_type) {
     var display;
-    if (checkBox.checked == true) {
+    if (checkbox.checked == true) {
         display = "block";
     } else {
         display = "none";
