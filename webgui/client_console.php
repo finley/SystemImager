@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <!--
+# vi: set ts=4 sw=4 et:
 #
 # "SystemImager" 
 # Client console emulation. (replacement for si_monitortk console)
 #
 #  Copyright (C) 2019 Olivier LAHAYE <olivier.lahaye1@free.fr>
 #
-#  vi: set filetype=html et ts=4:
 #
 -->
 
@@ -15,6 +15,7 @@
 <title>SystemImager client install logs.</title>
   <style type='text/css' media='screen'>@import url('css/screen.css');</style>
   <style type='text/css' media='screen'>@import url('css/sliders.css');</style>
+  <style type='text/css' media='screen'>@import url('css/flex_table.css');</style>
   <!-- <style type='text/css' media='screen'>@import url('css/print.css');</style> -->
   <script src="functions.js"></script>
 </head>
@@ -28,6 +29,7 @@ if (isset($_GET["client"])) {
 }
 ?>
 <!-- SystemImager header -->
+<section class="flex"> <!-- flex_column -->
 <table id="headerTable">
   <tbody>
     <tr>
@@ -37,8 +39,7 @@ if (isset($_GET["client"])) {
     </tr>
   </tbody>
 </table>
-<p>
-<hr>
+    <hr style="width: 100%"/>
 <table id="filtersTable" width="99%">
   <tbody>
     <tr id="filtersRow">
@@ -86,21 +87,26 @@ if (isset($_GET["client"])) {
     </tr>
   </tbody>
 </table>
-<hr>
-<p>
-
-<table id="logTable">
-  <thead>
-    <tr><th>Tag</th><th>Priority</th><th>Message</th></tr>
-  </thead>
-  <tbody id="serverData">
-  </tbody>
-</table>
+    <hr style="width: 100%"/>
+    <header>
+        <div>Tag</div>
+        <div>Priority</div>
+        <div>Messages (All messages including kernel messages and sttout+stderr).</div>
+    </header>
+    <article id="serverData">
+    </article>
+    <!-- <footer>
+        <div>Col 1</div>
+        <div>Col 2</div>
+        <div>Col 3</div>
+    </footer> -->
+    <hr style="width: 100%"/>
+    <span>SystemImager v5.0 - Client console</span>
 
 <script type="text/javascript">
 var eSource; // Event source Global variable.
 var serverData_elm=document.getElementById("serverData");
-var logTable_elm=document.getElementById("logTable");
+//var logTable_elm=document.getElementById("logTable");
 var needToScrollDown = new Boolean("false");
 var scroll_span = document.getElementById("autoscroll");
 
@@ -108,7 +114,7 @@ var scroll_span = document.getElementById("autoscroll");
 if (!!window.EventSource) {
   EnableRefresh();
 } else {
-  document.getElementById("filtersRow").innerHTML="<td>Whoops! Your browser doesn't receive server-sent events.<br>Please use a web browser that supports EventSource interface <A href='https://caniuse.com/#feat=eventsource'>https://caniuse.com/#feat=eventsource</A></td>";
+  document.getElementById("filtersRow").innerHTML="<div>Whoops! Your browser doesn't receive server-sent events.<br>Please use a web browser that supports EventSource interface <A href='https://caniuse.com/#feat=eventsource'>https://caniuse.com/#feat=eventsource</A></div>";
   document.getElementById("logTable").style.display="none";
   // Fallback: TODO: should redirect to static page with refresh.
   // do an eSource.close(); when client has disconnected.
@@ -171,11 +177,11 @@ function ResetLogHandler(event) {
 
 function ComputeAutoScrollRequirements() {
   bodyBounding = serverData_elm.getBoundingClientRect(); // Get the table visible lines area
-  logLinesCount = serverData_elm.rows.length ;  // Get the number of rows in logTable
+  logLinesCount = serverData_elm.childElementCount ;  // Get the number of rows in logTable
   if(logLinesCount == 0) {
     needToScrollDown = Boolean("false");
   } else {
-    lastRow=serverData_elm.rows[serverData_elm.rows.length - 1];
+    lastRow=serverData_elm.lastChild;
     lineBounding = lastRow.getBoundingClientRect(); // get the last line area.
     min=Number(bodyBounding.top);    // tbody minimum visible Y
     max=Number(bodyBounding.bottom); // tbody maximum visible Y
@@ -218,43 +224,43 @@ function UpdateLogHandler(event) {
 function LogToHTML(tag,value,message) { // Original values from systemimager-lib.sh:logmessage()
     switch(value) {
         case 'local2.info': // stdout
-            return "<tr class='filter_stdout'><td>"+tag+"</td><td><span class='pri_stdout'>StdOut</span></td><td>"+message+"</td></tr>";
+            return "<div class='row filter_stdout'><div>"+tag+"</div><div><span class='pri_stdout'>StdOut</span></div><div>"+message+"</div></div>";
             break;
         case 'local2.err': // stderr
-            return "<tr class='filter_stderr'><td>"+tag+"</td><td><span class='pri_stderr'>StdErr</span></td><td>"+message+"</td></tr>";
+            return "<div class='row filter_stderr'><div>"+tag+"</div><div><span class='pri_stderr'>StdErr</span></div><div>"+message+"</div></div>";
             break;
         case 'local2.notice': // kernel info
-            return "<tr class='filter_system'><td>"+tag+"</td><td><span class='pri_system'>Kernel</span></td><td>"+message+"</td></tr>";
+            return "<div class='row filter_system'><div>"+tag+"</div><div><span class='pri_system'>Kernel</span></div><div>"+message+"</div></div>";
             break;
         case 'local1.debug': // log STEP
-            return "<tr class='filter_debug'><td>"+tag+"</td><td><span class='pri_debug'>===STEP</span></td><td>"+message+"</td></tr>";
+            return "<div class='row filter_debug'><div>"+tag+"</div><div><span class='pri_debug'>===STEP</span></div><div>"+message+"</div></div>";
             break;
         case 'local1.info': // detail
-            return "<tr class='filter_detail'><td>"+tag+"</td><td><span class='pri_detail'>Detail</span></td><td>"+message+"</td></tr>";
+            return "<div class='row filter_detail'><div>"+tag+"</div><div><span class='pri_detail'>Detail</span></div><div>"+message+"</div></div>";
             break;
         case 'local1.notice': // notice
-            return "<tr class='filter_notice'><td>"+tag+"</td><td><span class='pri_notice'>Notice</span></td><td>"+message+"</td></tr>";
+            return "<div class='row filter_notice'><div>"+tag+"</div><div><span class='pri_notice'>Notice</span></div><div>"+message+"</div></div>";
             break;
         case 'local0.info': // info
-            return "<tr><td>"+tag+"</td><td><span class='pri_info'>Info</span></td><td>"+message+"</td></tr>";
+            return "<div class='row'><div>"+tag+"</div><div><span class='pri_info'>Info</span></div><div>"+message+"</div></div>";
             break;
         case 'local0.warning': // warning
-            return "<tr><td>"+tag+"</td><td><span class='pri_warning'>Warning</span></td><td>"+message+"</td></tr>";
+            return "<div class='row'><div>"+tag+"</div><div><span class='pri_warning'>Warning</span></div><div>"+message+"</div></div>";
             break;
         case 'local0.err': // ERROR
-            return "<tr><td>"+tag+"</td><td><span class='pri_error'>ERROR</span></td><td>"+message+"</td></tr>";
+            return "<div class='row'><div>"+tag+"</div><div><span class='pri_error'>ERROR</span></div><div>"+message+"</div></div>";
             break;
         case 'local0.notice': // action
-            return "<tr><td>"+tag+"</td><td><span class='pri_action'>Action</span></td><td>"+message+"</td></tr>";
+            return "<div class='row'><div>"+tag+"</div><div><span class='pri_action'>Action</span></div><div>"+message+"</div></div>";
             break;
         case 'local0.debug': // debug
-            return "<tr class='filter_debug'><td>"+tag+"</td><td><span class='pri_debug'>Debug</span></td><td>"+message+"</td></tr>";
+            return "<div class='row filter_debug'><div>"+tag+"</div><div><span class='pri_debug'>Debug</span></div><div>"+message+"</div></div>";
             break;
         case 'local0.emerg': // FATAL
-            return "<tr><td>"+tag+"</td><td><span class='pri_fatal'>FATAL</span></td><td>"+message+"</td></tr>";
+            return "<div class='row'><div>"+tag+"</div><div><span class='pri_fatal'>FATAL</span></div><div>"+message+"</div></div>";
             break;
         default: // All other messages are system messages (not systemimager)
-            return "<tr class='filter_system'><td>"+tag+"</td><td><span class='pri_system'>System</span></td><td>"+message+"</td></tr>";
+            return "<div class='row filter_system'><div>"+tag+"</div><div><span class='pri_system'>System</span></div><div>"+message+"</div></div>";
             break;
     } 
 }
@@ -301,7 +307,7 @@ function doFilter(checkbox, msg_type) {
 }
 
 </script>
-
+</section> <!-- flex_column -->
 </body>
 </html>
 
