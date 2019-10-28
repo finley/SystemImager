@@ -14,21 +14,14 @@
 <title>SystemImager clients list.</title>
   <style type='text/css' media='screen'>@import url('css/screen.css');</style>
   <style type='text/css' media='screen'>@import url('css/sliders.css');</style>
+  <style type='text/css' media='screen'>@import url('css/flex_table.css');</style>
   <!-- <style type='text/css' media='screen'>@import url('css/print.css');</style> -->
   <script src="functions.js"></script>
 </head>
 <body>
 
-<!--
-<x?php
-if (isset($_GET["client"])) {
-    $client=$_GET["client"];
-} else {
-    $client="error.json";
-}
-?>
--->
 <!-- SystemImager header -->
+<section class="flex"> <!-- start of flex column -->
 <table id="headerTable">
   <tbody>
     <tr>
@@ -38,8 +31,7 @@ if (isset($_GET["client"])) {
     </tr>
   </tbody>
 </table>
-<p>
-<hr>
+<hr style="width: 100%"/>
 <table id="filtersTable" width="99%">
   <tbody>
     <tr id="filtersRow">
@@ -55,31 +47,31 @@ if (isset($_GET["client"])) {
     </tr>
   </tbody>
 </table>
-<hr>
-<p>
-
-<table id="clientsTable">
-  <thead>
-    <tr>
-      <th>Hostname</th>
-      <th>Status</th>
-      <th>Image</th>
-      <th>Speed</th>
-      <th>IP Addr</th>
-      <th>MAC Addr</th>
-      <th>ncpus</th>
-      <th>CPU</th>
-      <th>kernel</th>
-      <th>mem</th>
-      <th>time</th>
-      <th>start time</th>
-      <th>End time</th>
-    </tr>
-  </thead>
-  <tbody id="clientsData">
-  </tbody>
-</table>
-
+<hr style="width: 100%"/>
+    <header id="clients_header">
+      <div>Hostname</div>
+      <div>Status</div>
+      <div>Image</div>
+      <div>Speed</div>
+      <div>IP Addr</div>
+      <div>MAC Addr</div>
+      <div>ncpus</div>
+      <div>CPU</div>
+      <div>kernel</div>
+      <div>mem</div>
+      <div>time</div>
+      <div>start time</div>
+      <div>End time</div>
+    </header>
+    <article id="clientsData">
+    </article>
+    <!-- <footer id="clients_footer">
+        <div>Col 1</div>
+        <div>Col 2</div>
+        <div>Col 3</div>
+    </footer> -->
+    <hr style="width: 100%"/>
+    <span>SystemImager v5.0 - Clients list</span>
 <script type="text/javascript">
 var eSource; // Global variable.
 
@@ -87,8 +79,8 @@ var eSource; // Global variable.
 if (!!window.EventSource) {
   EnableRefresh(); // TODO: DisableRefresh() if no event since 5 minutes.
 } else {
-  document.getElementById("filtersRow").innerHTML="<td>Whoops! Your browser doesn't receive server-sent events.<br>Please use a web browser that supports EventSource interface <A href='https://caniuse.com/#feat=eventsource'>https://caniuse.com/#feat=eventsource</A></td>";
-  document.getElementById("logTable").style.display="none";
+  document.getElementById("filtersRow").innerHTML="<div>Whoops! Your browser doesn't receive server-sent events.<br>Please use a web browser that supports EventSource interface <A href='https://caniuse.com/#feat=eventsource'>https://caniuse.com/#feat=eventsource</A></div>";
+  document.getElementById("clients_header").style.display="none";
   // sleep(5); // BUG: sleep does not exists.
   // Fallback: redirect to static page with refresh.
   // do an eSource.close(); when client has disconnected.
@@ -142,23 +134,23 @@ function ResetClientsHandler(event) {
 function UpdateClientsHandler(event) {
   try { 
     var clientInfos = JSON.parse(event.data);
-    clientLine = "<tr><td>"   + "<a href='client_console.php?client=" + clientInfos.name + "'>" + clientInfos.host + "</a>"
-		+ "</td><td>" + StatusToText(clientInfos.status)
-		+ "</td><td>" + clientInfos.os
-		+ "</td><td>" + clientInfos.speed
-		+ "</td><td>" + clientInfos.ip
-		+ "</td><td>" + clientInfos.name
-		+ "</td><td>" + clientInfos.ncpus
-		+ "</td><td>" + clientInfos.cpu
-		+ "</td><td>" + clientInfos.kernel
-		+ "</td><td>" + clientInfos.mem
-		+ "</td><td>" + clientInfos.time + "s"
-		+ "</td><td>" + UnixDate(clientInfos.first_timestamp)
-		+ "</td><td>" + UnixDate(clientInfos.timestamp)
-		+ "</td><td>";
+    clientLine = "<div class='clients_row'><div>"   + "<a href='client_console.php?client=" + clientInfos.name + "'>" + clientInfos.host + "</a>"
+		+ "</div><div>" + StatusToText(clientInfos.status)
+		+ "</div><div>" + clientInfos.os
+		+ "</div><div>" + clientInfos.speed
+		+ "</div><div>" + clientInfos.ip
+		+ "</div><div>" + clientInfos.name
+		+ "</div><div>" + clientInfos.ncpus
+		+ "</div><div>" + clientInfos.cpu
+		+ "</div><div>" + clientInfos.kernel
+		+ "</div><div>" + clientInfos.mem
+		+ "</div><div>" + clientInfos.time + "s"
+		+ "</div><div>" + UnixDate(clientInfos.first_timestamp)
+		+ "</div><div>" + UnixDate(clientInfos.timestamp)
+		+ "</div></div>";
   } catch (e) {
     console.error("JSON client_log parsing error: ", e);
-    clientLine = "<tr><td colspan=13>JSON parse error: "+event.data+"</td></tr>";
+    clientLine = "<div class='clients_row'><div style='width: 100%;'>JSON parse error: "+event.data+"</div></div>"; // BUG: need to emulate colspan
   }
   document.getElementById("clientsData").innerHTML += clientLine;
 }
@@ -202,7 +194,7 @@ function doFilter(checkbox, msg_type) {
     }
 }
 </script>
-
+</section> <!-- end flex_column -->
 </body>
 </html>
 

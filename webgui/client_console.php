@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-# vi: set ts=4 sw=4 et:
+# vi: set filetype=php ts=4 sw=4 et :
 #
 # "SystemImager" 
 # Client console emulation. (replacement for si_monitortk console)
@@ -88,14 +88,14 @@ if (isset($_GET["client"])) {
   </tbody>
 </table>
     <hr style="width: 100%"/>
-    <header>
+    <header id="log_header">
         <div>Tag</div>
         <div>Priority</div>
         <div>Messages (All messages including kernel messages and sttout+stderr).</div>
     </header>
     <article id="serverData">
     </article>
-    <!-- <footer>
+    <!-- <footer id=log_footer>
         <div>Col 1</div>
         <div>Col 2</div>
         <div>Col 3</div>
@@ -106,7 +106,6 @@ if (isset($_GET["client"])) {
 <script type="text/javascript">
 var eSource; // Event source Global variable.
 var serverData_elm=document.getElementById("serverData");
-//var logTable_elm=document.getElementById("logTable");
 var needToScrollDown = new Boolean("false");
 var scroll_span = document.getElementById("autoscroll");
 
@@ -115,7 +114,7 @@ if (!!window.EventSource) {
   EnableRefresh();
 } else {
   document.getElementById("filtersRow").innerHTML="<div>Whoops! Your browser doesn't receive server-sent events.<br>Please use a web browser that supports EventSource interface <A href='https://caniuse.com/#feat=eventsource'>https://caniuse.com/#feat=eventsource</A></div>";
-  document.getElementById("logTable").style.display="none";
+  document.getElementById("log_header").style.display="none";
   // Fallback: TODO: should redirect to static page with refresh.
   // do an eSource.close(); when client has disconnected.
 }
@@ -177,7 +176,7 @@ function ResetLogHandler(event) {
 
 function ComputeAutoScrollRequirements() {
   bodyBounding = serverData_elm.getBoundingClientRect(); // Get the table visible lines area
-  logLinesCount = serverData_elm.childElementCount ;  // Get the number of rows in logTable
+  logLinesCount = serverData_elm.childElementCount ;  // Get the number of rows in log_header
   if(logLinesCount == 0) {
     needToScrollDown = Boolean("false");
   } else {
@@ -209,8 +208,8 @@ function UpdateLogHandler(event) {
   }
 // Stack overflow question:
 // https://stackoverflow.com/questions/58014912/how-can-scroll-down-a-tbody-table-when-innerhtml-is-updated-with-new-lines
-
 //  lastRow=logTable_elm.rows[ logTable_elm.rows.length - 1];
+
    ComputeAutoScrollRequirements();
 
 
@@ -224,43 +223,43 @@ function UpdateLogHandler(event) {
 function LogToHTML(tag,value,message) { // Original values from systemimager-lib.sh:logmessage()
     switch(value) {
         case 'local2.info': // stdout
-            return "<div class='row filter_stdout'><div>"+tag+"</div><div><span class='pri_stdout'>StdOut</span></div><div>"+message+"</div></div>";
+            return "<div class='log_row filter_stdout'><div>"+tag+"</div><div><span class='pri_stdout'>StdOut</span></div><div>"+message+"</div></div>";
             break;
         case 'local2.err': // stderr
-            return "<div class='row filter_stderr'><div>"+tag+"</div><div><span class='pri_stderr'>StdErr</span></div><div>"+message+"</div></div>";
+            return "<div class='log_row filter_stderr'><div>"+tag+"</div><div><span class='pri_stderr'>StdErr</span></div><div>"+message+"</div></div>";
             break;
         case 'local2.notice': // kernel info
-            return "<div class='row filter_system'><div>"+tag+"</div><div><span class='pri_system'>Kernel</span></div><div>"+message+"</div></div>";
+            return "<div class='log_row filter_system'><div>"+tag+"</div><div><span class='pri_system'>Kernel</span></div><div>"+message+"</div></div>";
             break;
         case 'local1.debug': // log STEP
-            return "<div class='row filter_debug'><div>"+tag+"</div><div><span class='pri_debug'>===STEP</span></div><div>"+message+"</div></div>";
+            return "<div class='log_row filter_debug'><div>"+tag+"</div><div><span class='pri_debug'>===STEP</span></div><div>"+message+"</div></div>";
             break;
         case 'local1.info': // detail
-            return "<div class='row filter_detail'><div>"+tag+"</div><div><span class='pri_detail'>Detail</span></div><div>"+message+"</div></div>";
+            return "<div class='log_row filter_detail'><div>"+tag+"</div><div><span class='pri_detail'>Detail</span></div><div>"+message+"</div></div>";
             break;
         case 'local1.notice': // notice
-            return "<div class='row filter_notice'><div>"+tag+"</div><div><span class='pri_notice'>Notice</span></div><div>"+message+"</div></div>";
+            return "<div class='log_row filter_notice'><div>"+tag+"</div><div><span class='pri_notice'>Notice</span></div><div>"+message+"</div></div>";
             break;
         case 'local0.info': // info
-            return "<div class='row'><div>"+tag+"</div><div><span class='pri_info'>Info</span></div><div>"+message+"</div></div>";
+            return "<div class='log_row'><div>"+tag+"</div><div><span class='pri_info'>Info</span></div><div>"+message+"</div></div>";
             break;
         case 'local0.warning': // warning
-            return "<div class='row'><div>"+tag+"</div><div><span class='pri_warning'>Warning</span></div><div>"+message+"</div></div>";
+            return "<div class='log_row'><div>"+tag+"</div><div><span class='pri_warning'>Warning</span></div><div>"+message+"</div></div>";
             break;
         case 'local0.err': // ERROR
-            return "<div class='row'><div>"+tag+"</div><div><span class='pri_error'>ERROR</span></div><div>"+message+"</div></div>";
+            return "<div class='log_row'><div>"+tag+"</div><div><span class='pri_error'>ERROR</span></div><div>"+message+"</div></div>";
             break;
         case 'local0.notice': // action
-            return "<div class='row'><div>"+tag+"</div><div><span class='pri_action'>Action</span></div><div>"+message+"</div></div>";
+            return "<div class='log_row'><div>"+tag+"</div><div><span class='pri_action'>Action</span></div><div>"+message+"</div></div>";
             break;
         case 'local0.debug': // debug
-            return "<div class='row filter_debug'><div>"+tag+"</div><div><span class='pri_debug'>Debug</span></div><div>"+message+"</div></div>";
+            return "<div class='log_row filter_debug'><div>"+tag+"</div><div><span class='pri_debug'>Debug</span></div><div>"+message+"</div></div>";
             break;
         case 'local0.emerg': // FATAL
-            return "<div class='row'><div>"+tag+"</div><div><span class='pri_fatal'>FATAL</span></div><div>"+message+"</div></div>";
+            return "<div class='log_row'><div>"+tag+"</div><div><span class='pri_fatal'>FATAL</span></div><div>"+message+"</div></div>";
             break;
         default: // All other messages are system messages (not systemimager)
-            return "<div class='row filter_system'><div>"+tag+"</div><div><span class='pri_system'>System</span></div><div>"+message+"</div></div>";
+            return "<div class='log_row filter_system'><div>"+tag+"</div><div><span class='pri_system'>System</span></div><div>"+message+"</div></div>";
             break;
     } 
 }
