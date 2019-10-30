@@ -36,12 +36,12 @@ footer {
     color: white;
 }
 
-.clients_row:hover, .log_row:hover {
+.log_row:hover {
   background-color: #f5f5f5;
   color: black;
 }
 
-.clients_row, .log_row {
+.log_row {
     display: flex;
     flex-direction: row;
 }
@@ -55,92 +55,71 @@ header > div, article > div, footer > div {
 }
 
 /* client_console log columns settings */
-.log_header > :not(:last-child), .log_row > :not(:last-child), .log_footer > :not(:last-child) {
+header > :not(:last-child), .log_row > :not(:last-child), footer > :not(:last-child) {
     flex: 0 0 auto;
     width: 8em;
     text-align: center;
 }
 
-.log_header > :last-child, .log_row > :last-child, .log_footer > :last-child {
+header > :last-child, .log_row > :last-child, footer > :last-child {
     flex: 1 1 auto;
     /* width:50%; */
     padding-left: 1em;
 }
 
-/* clients_list columns settings */
-.clients_header > :first-child, .clients_row > :first-child, .clients_footer > :first-child {
-    flex: 0 0 auto;
-    width: 8em; /* Hostname */
+.clients_grid {
+    flex: 0 1 auto;
+    display: grid;
+    grid-template-columns: auto auto auto auto auto auto auto auto auto auto auto auto auto;
+    grid-gap: 0px;
+    max-height: 100%;
+    overflow: auto;
+    padding: 0em 0.5em;
 }
 
-.clients_header > :nth-child(2), .clients_row > :nth-child(2), .clients_footer > :nth-child(2) {
-    flex: 0 0 auto;
-    width: 7em; /* Status */
+.clients_grid > div {
+    color: white;
+    padding: 0.2em 0.5em;
+    font-size: medium;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+    border-left: 1px solid rgba(255,255,255,0.2);
+    &:nth-child(13n) {
+        border-left: none;
+    }
+    &:nth-child(13n+4) {
+        color: blue;
+    }
+    &:nth-child(13n+7) {
+        text-align: center;
+    }
+    &:nth-child(13n+3) {
+        border-top: 3px solid red;
+	color: red;
+    }
+}
+
+.clients_grid div:nth-child(13n+1) {
+    border-left: none;
+}
+
+.clients_grid div:nth-child(13n+4),
+.clients_grid div:nth-child(13n+7) {
     text-align: center;
 }
 
-.clients_header > :nth-child(3), .clients_row > :nth-child(3), .clients_footer > :nth-child(3) {
-    flex: 0 0 auto;
-    width: 8em; /* Image name */
+.clients_grid div:nth-child(13n+10),
+.clients_grid div:nth-child(13n+11) {
+    text-align: right;
 }
 
-.clients_header > :nth-child(4), .clients_row > :nth-child(4), .clients_footer > :nth-child(4) {
-    flex: 0 0 auto;
-    width: 4em; /* Speed */
-    text-align: center;
-}
 
-.clients_header > :nth-child(5), .clients_row > :nth-child(5), .clients_footer > :nth-child(5) {
-    flex: 0 0 auto;
-    width: 10em; /* IP Addr */
-    text-align: center;
+.head, .foot {
+    position:sticky;
+    top:0;
+    font-weight: bold;
 }
-
-.clients_header > :nth-child(6), .clients_row > :nth-child(6), .clients_footer > :nth-child(6) {
-    flex: 0 0 auto;
-    width: 10em; /* MAC Addr */
-    text-align: center;
-}
-
-.clients_header > :nth-child(7), .clients_row > :nth-child(7), .clients_footer > :nth-child(7) {
-    flex: 0 0 auto;
-    width: 4em; /* ncpus */
-    text-align: center;
-}
-
-.clients_header > :nth-child(8), .clients_row > :nth-child(8), .clients_footer > :nth-child(8) {
-    flex: 0 0 auto;
-    width: 20em; /* CPU name */
-    text-align: center;
-}
-
-.clients_header > :nth-child(9), .clients_row > :nth-child(9), .clients_footer > :nth-child(9) {
-    flex: 0 0 auto;
-    width: 20em; /* kernel */
-    text-align: center;
-}
-
-.clients_header > :nth-child(10), .clients_row > :nth-child(10), .clients_footer > :nth-child(10) {
-    flex: 0 0 auto;
-    width: 8em; /* mem */
-    text-align: center;
-}
-
-.clients_header > :nth-child(11, .clients_row > :nth-child(11), .clients_footer > :nth-child(11) {
-    flex: 0 0 auto;
-    width: 8em; /* time start */
-    text-align: center;
-}
-
-.clients_header > :nth-child(12), .clients_row > :nth-child(12), .clients_footer > :nth-child(12) {
-    flex: 0 0 auto;
-    width: 8em; /* time end */
-    text-align: center;
-}
-
-.clients_header > :last-child, .clients_row > :last-child, .clients_footer > :last-child {
-    flex: 1 1 auto;
-		 /* Time last */
-    padding-left: 1em;
+.foot {
+    top:auto;
+    bottom:0;
 }
 

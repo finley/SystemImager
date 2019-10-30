@@ -95,7 +95,7 @@ if (isset($_GET["client"])) {
     </header>
     <article id="serverData">
     </article>
-    <!-- <footer id=log_footer>
+    <!-- <footer>
         <div>Col 1</div>
         <div>Col 2</div>
         <div>Col 3</div>
@@ -114,7 +114,7 @@ if (!!window.EventSource) {
   EnableRefresh();
 } else {
   document.getElementById("filtersRow").innerHTML="<div>Whoops! Your browser doesn't receive server-sent events.<br>Please use a web browser that supports EventSource interface <A href='https://caniuse.com/#feat=eventsource'>https://caniuse.com/#feat=eventsource</A></div>";
-  document.getElementById("log_header").style.display="none";
+  document.getElementById("log_header").setAttribute('style','display: none;');
   // Fallback: TODO: should redirect to static page with refresh.
   // do an eSource.close(); when client has disconnected.
 }
@@ -176,7 +176,7 @@ function ResetLogHandler(event) {
 
 function ComputeAutoScrollRequirements() {
   bodyBounding = serverData_elm.getBoundingClientRect(); // Get the table visible lines area
-  logLinesCount = serverData_elm.childElementCount ;  // Get the number of rows in log_header
+  logLinesCount = serverData_elm.childElementCount ;  // Get the number of rows in serverData.
   if(logLinesCount == 0) {
     needToScrollDown = Boolean("false");
   } else {

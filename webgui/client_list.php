@@ -48,55 +48,38 @@
   </tbody>
 </table>
 <hr style="width: 100%"/>
-    <header id="clients_header">
-      <div>Hostname</div>
-      <div>Status</div>
-      <div>Image</div>
-      <div>Speed</div>
-      <div>IP Addr</div>
-      <div>MAC Addr</div>
-      <div>ncpus</div>
-      <div>CPU</div>
-      <div>kernel</div>
-      <div>mem</div>
-      <div>time</div>
-      <div>start time</div>
-      <div>End time</div>
-    </header>
-    <article id="clientsData">
-    </article>
-    <!-- <footer id="clients_footer">
-        <div>Col 1</div>
-        <div>Col 2</div>
-        <div>Col 3</div>
-    </footer> -->
+    <div class="clients_grid" id="clientsData"></div> <!-- clients listing -->
+    <div style="flex: 1 1 auto"></div> <!-- spacer -->
     <hr style="width: 100%"/>
     <span>SystemImager v5.0 - Clients list</span>
 <script type="text/javascript">
 var eSource; // Global variable.
 
-//check for browser support
-if (!!window.EventSource) {
+var tableHeader= ['<div class="head">Hostname</div>',
+      '<div class="head">Status</div>',
+      '<div class="head">Image</div>',
+      '<div class="head">Speed</div>',
+      '<div class="head">IP Addr</div>',
+      '<div class="head">MAC Addr</div>',
+      '<div class="head">ncpus</div>',
+      '<div class="head">CPU</div>',
+      '<div class="head">kernel</div>',
+      '<div class="head">mem</div>',
+      '<div class="head">time</div>',
+      '<div class="head">start time</div>',
+      '<div class="head">End time</div>'].join("\n"); // IE does not support backtick for heredoc strings.
+var clientsData=document.getElementById("clientsData"); // Note: the header is installed in clientsData grid by the reset function.
+
+
+if (!!window.EventSource) { //check for browser support
   EnableRefresh(); // TODO: DisableRefresh() if no event since 5 minutes.
-} else {
+} else { // Bad web browser.
   document.getElementById("filtersRow").innerHTML="<div>Whoops! Your browser doesn't receive server-sent events.<br>Please use a web browser that supports EventSource interface <A href='https://caniuse.com/#feat=eventsource'>https://caniuse.com/#feat=eventsource</A></div>";
-  document.getElementById("clients_header").style.display="none";
+  clientsData.setAttribute('style','display: none;');
   // sleep(5); // BUG: sleep does not exists.
   // Fallback: redirect to static page with refresh.
   // do an eSource.close(); when client has disconnected.
 }
-
-// Log connection established
-eSource.addEventListener('open', function(e) {
-  console.log("Connection was opened.")
-}, false);
-
-// Log connection closed
-eSource.addEventListener('error', function(e) {
-  if (e.readyState == EventSource.CLOSED) { 
-    console.log("Connection was closed.");
-  }
-}, false);
 
 function EnableRefresh() {
   eSource=new EventSource('push_client_defs.php');  //instantiate the Event source
@@ -106,6 +89,18 @@ function EnableRefresh() {
   refresh_span=document.getElementById("refresh_text");
   refresh_span.innerHTML="Yes";
   refresh_span.setAttribute("class","pri_info");
+
+  // Log connection established
+  //eSource.addEventListener('open', function(e) {
+  //  console.log("Connection was opened.")
+  // }, false);
+
+  // Log connection closed
+  //eSource.addEventListener('error', function(e) {
+  //  if (e.readyState == EventSource.CLOSED) { 
+  //    console.log("Connection was closed.");
+  //  }
+  //}, false);
 }
 
 function DisableRefresh() {
@@ -127,14 +122,14 @@ function doRefresh(checkbox) {
 
 // Clean log if requested (in case of reimage for example)
 function ResetClientsHandler(event) {
-  document.getElementById("clientsData").innerHTML=""; // Remove all table lines.
+  clientsData.innerHTML=tableHeader; // Remove all table lines.BUG: Also removes header.
 }
 
 // Called when event updateclient is received
 function UpdateClientsHandler(event) {
   try { 
     var clientInfos = JSON.parse(event.data);
-    clientLine = "<div class='clients_row'><div>"   + "<a href='client_console.php?client=" + clientInfos.name + "'>" + clientInfos.host + "</a>"
+    clientLine = "<div><a href='client_console.php?client=" + clientInfos.name + "'>" + clientInfos.host + "</a>"
 		+ "</div><div>" + StatusToText(clientInfos.status)
 		+ "</div><div>" + clientInfos.os
 		+ "</div><div>" + clientInfos.speed
@@ -147,10 +142,10 @@ function UpdateClientsHandler(event) {
 		+ "</div><div>" + clientInfos.time + "s"
 		+ "</div><div>" + UnixDate(clientInfos.first_timestamp)
 		+ "</div><div>" + UnixDate(clientInfos.timestamp)
-		+ "</div></div>";
+		+ "</div>";
   } catch (e) {
     console.error("JSON client_log parsing error: ", e);
-    clientLine = "<div class='clients_row'><div style='width: 100%;'>JSON parse error: "+event.data+"</div></div>"; // BUG: need to emulate colspan
+    clientLine = "<div style='grid-column: 1 / span 13;'>JSON parse error: "+event.data+"</div>"; // BUG: need to emulate colspan
   }
   document.getElementById("clientsData").innerHTML += clientLine;
 }
