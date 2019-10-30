@@ -89,6 +89,12 @@ header > :last-child, .log_row > :last-child, footer > :last-child {
     & > div:nth-child(13n+1) {
         border-left: none;
     }
+    & > div:nth-child(13n+8),
+    & > div:nth-child(13n+9),
+    & > div:nth-child(13n+12),
+    & > div:nth-child(13n+13) {
+        white-space: nowrap;
+    }
     & > div:nth-child(13n+4),
     & > div:nth-child(13n+7) {
         text-align: center;
@@ -102,6 +108,13 @@ header > :last-child, .log_row > :last-child, footer > :last-child {
 
 .clients_grid > div:nth-child(13n+1) {
     border-left: none;
+}
+
+.clients_grid > div:nth-child(13n+8),
+.clients_grid > div:nth-child(13n+9),
+.clients_grid > div:nth-child(13n+12),
+.clients_grid > div:nth-child(13n+13) {
+    white-space: nowrap;
 }
 
 .clients_grid > div:nth-child(13n+4),
