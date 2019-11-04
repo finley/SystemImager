@@ -291,7 +291,7 @@ function UpdateClientHandler(event) {
 function doFilter(checkbox, msg_type) {
     var display;
     if (checkbox.checked == true) {
-        display = "block";
+        display = "flex";
     } else {
         display = "none";
     }
@@ -301,7 +301,8 @@ function doFilter(checkbox, msg_type) {
     l = myClasses.length;
 
     for (i; i < l; i++) {
-        myClasses[i].style.display = display;
+        // myClasses[i].style.display = display;
+        myClasses[i].setAttribute('style','display: ' + display + ';');
     }
 }
 
