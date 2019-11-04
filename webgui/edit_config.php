@@ -111,8 +111,8 @@ if( isset($config->cfg_error) && $config->cfg_error !== "") {
 <table><tbody>
 <tr><td>tftp_dir</td><td><input type="text" name="tftp_dir" size="50" value="<?php echo $config->tftp_dir;?>"></td><td>The tftp root directory</td></tr>
 <tr><td>pxe_boot_mode</td><td><select name="pxe_boot_mode">
-<option value="net" <?php if($config->pxe_boot_mode === "net") echo "selected"; ?>>Network boot</options>
-<option value="local" <?php if($config->pxe_boot_mode === "local") echo "selected"; ?>>Local boot</options>
+<option value="net" <?php if($config->pxe_boot_mode === "net") echo "selected"; ?>>Network boot</option>
+<option value="local" <?php if($config->pxe_boot_mode === "local") echo "selected"; ?>>Local boot</option>
 </select></td><td>PXE boot mode is a setting that affects systemimager-server-netbootmond. If set to LOCAL, then after successful completion of an install, a client's net boot configuration is modified to ensure future boots will happen from the client's local disk. NET_BOOT_DEFAULT can be set to local or net.  Be sure to restart systemimager-server-netbootmond after changing this setting (/etc/init.d/systemimager-server-netbootmond restart).</td></tr>
 </tbody></table>
 </fieldset>
