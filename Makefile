@@ -175,7 +175,11 @@ DRACUT_BASEDIR = $(shell test -d /usr/lib/dracut && echo "/lib/dracut" || echo "
 DRACUT_SYSDIR = /usr$(DRACUT_BASEDIR)
 DRACUT_MODULES = $(USR)$(DRACUT_BASEDIR)/modules.d
 
+WEB_CONF_SRC      = $(TOPDIR)/etc/
+WEB_CONF_DEST     = $(ETC)/httpd/conf.d/
 
+WEB_GUI_SRC       = $(TOPDIR)/webgui
+WEB_GUI_DEST      = $(USR)/share/systemimager/webgui
 
 BOOT_BIN_DEST     = $(USR)/share/systemimager/boot/$(ARCH)/$(FLAVOR)
 BOOT_BIN_PATH     = $(PREFIX)/share/systemimager/boot/$(ARCH)/$(FLAVOR)
@@ -191,7 +195,8 @@ KBOOT_CONF_DEST   = $(ETC)/systemimager/kboot.cfg
 BINARIES := si_mkautoinstallcd si_mkautoinstalldisk si_psh si_pcp si_pushoverrides si_clusterconfig
 SBINARIES := si_addclients si_cpimage si_getimage si_lint si_mkdhcpserver si_mkdhcpstatic si_mkautoinstallscript si_mvimage si_pushupdate si_pushinstall si_rmimage si_mkrsyncd_conf si_mkclientnetboot si_netbootmond si_monitor si_monitortk si_installbtimage
 CLIENT_SBINARIES  := si_updateclient si_prepareclient
-COMMON_BINARIES   = si_lsimage si_mkbootpackage
+COMMON_BINARIES   := si_lsimage si_mkbootpackage
+WEB_SRC           := client_console.php client_list.php config.php edit_config.php functions.js functions.php push_client_defs.php push_client_logs.php css/Background.png css/SystemImagerBanner.png css/flex_table.css css/screen.css css/sliders.css images/Alecive-Flatwoken-Apps-Dialog-Apply.svg images/Alecive-Flatwoken-Apps-Dialog-Close.svg images/Alecive-Flatwoken-Apps-Dialog-Logout.svg images/Alecive-Flatwoken-Apps-Dialog-Refresh.svg images/Alecive-Flatwoken-Apps-Settings.svg
 
 IMAGESRC    = $(TOPDIR)/var/lib/systemimager/images
 IMAGEDEST   = $(DESTDIR)/var/lib/systemimager/images
@@ -242,11 +247,11 @@ binaries: $(BOEL_BINARIES_TARBALL) $(INITRD_BOOTFILES_DIR).build
 
 # a full install (usefull for packaging)
 .PHONY: install_all
-install_all:	install_server install_client install_common install_dracut install_initrd_template install_binaries
+install_all:	install_server install_client install_common install_dracut install_initrd_template install_binaries install_webgui
 
 # a complete server install
 .PHONY:	install_server_all
-install_server_all:	install_server install_common install_binaries install_dracut
+install_server_all:	install_server install_common install_binaries install_dracut install_webgui
 
 # a complete client install
 .PHONY:	install_client_all
@@ -320,6 +325,14 @@ endif
 	$(SI_INSTALL) -m 644 $(WARNING_FILES) $(IMAGEDEST)
 	cp -a $(IMAGEDEST)/README $(IMAGEDEST)/DO_NOT_TOUCH_THESE_DIRECTORIES
 	$(SI_INSTALL) -d -m 755 $(FLAMETHROWER_STATE_DIR)
+
+.PHONY: install_webgui
+install_webgui:
+	mkdir -p $(WEB_CONF_DEST)
+	$(SI_INSTALL) -b -m 644 $(WEB_CONF_SRC)/httpd.conf $(WEB_CONF_DEST)/systemimager.conf
+	mkdir -p $(WEB_GUI_DEST) $(WEB_GUI_DEST)/css $(WEB_GUI_DEST)/images
+	$(foreach file, $(WEB_SRC), \
+		$(SI_INSTALL) -m 755 $(WEB_GUI_SRC)/$(file) $(WEB_GUI_DEST)/$(file);)
 
 # install client-only files
 .PHONY:	install_client

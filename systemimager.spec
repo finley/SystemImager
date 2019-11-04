@@ -518,24 +518,37 @@ Requires: socat
 %description -n dracut-%{name}
 This package is a dracut modules that automates the systeimager initramfs creation.
 
+%package webgui
+Summary: SystemImager admin web interface.
+Version: %ver
+Release: %rel
+License: GPL
+Group: Applications/System
+BuildRoot: /tmp/%{name}-%{ver}-root
+BuildArch: noarch
+Packager: %packager
+URL: http://wiki.systemimager.org/
+Distribution: System Installation Suite
+Requires: systemimager-server = %{version}
+Requires: httpd
+
+%description webgui
+SystemImager admin web interface.
+
 %changelog
+* Mon Nov 4 2019 Olivier Lahaye <olivier.lahaye@cea.fr> 4.9.0-0.1
+- Port to CentOS-8
+- New web GUI.
+- New log system that can catch stderr, stdout and system/kernel messages.
+
 * Mon Sep 30 2019 Olivier Lahaye <olivier.lahaye@cea.fr> 4.5.0-0.25
 - Removed most old build dependancy as we don't build any binaries
   since dracut is used.
-* Wed Jan 9 2019 Olivier Lahaye <olivier.lahaye@cea.fr> 4.5.0-0.24
 - Added ethtool and lsscsi dependancy so lsscsi command and ethtool are available in imager.
-
-* Wed Jan 9 2019 Olivier Lahaye <olivier.lahaye@cea.fr> 4.5.0-0.23
 - renamed %{_build_arch}initrd_template to initrd_template (no arch content).
-
-* Fri Mar 30 2018 Olivier Lahaye <olivier.lahaye@cea.fr> 4.5.0-0.22
 - Port to CentOS-6, OpenSuSE-42.3
 - Added ipcalc dependancy.
-
-* Thu Mar 16 2017 Olivier Lahaye <olivier.lahaye@cea.fr> 4.5.0-0.21
 - added dracut-systemimager package.
-
-* Wed Jul 30 2014 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.20
 - Fixed script that reports rebooted status.
 
 * Fri Jul 18 2014 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.19
@@ -1423,3 +1436,27 @@ fi
 %defattr(-, root, root)
 %dir %{_prefix}%{_dracutbase}/modules.d/%{dracut_module_index}systemimager
 %{_prefix}%{_dracutbase}/modules.d/%{dracut_module_index}systemimager/*
+
+%files webgui
+%defattr(-, root, root)
+%config(noreplace) %{_sysconfdir}/httpd/conf.d/systemimager.conf
+%dir %{_datarootdir}/systemimager/webgui
+%dir %{_datarootdir}/systemimager/webgui/css
+%{_datarootdir}/systemimager/webgui/edit_config.php
+%{_datarootdir}/systemimager/webgui/client_list.php
+%{_datarootdir}/systemimager/webgui/push_client_defs.php
+%{_datarootdir}/systemimager/webgui/client_console.php
+%{_datarootdir}/systemimager/webgui/push_client_logs.php
+%{_datarootdir}/systemimager/webgui/functions.php
+%{_datarootdir}/systemimager/webgui/functions.js
+%{_datarootdir}/systemimager/webgui/css/SystemImagerBanner.png
+%{_datarootdir}/systemimager/webgui/css/Background.png
+%{_datarootdir}/systemimager/webgui/css/flex_table.css
+%{_datarootdir}/systemimager/webgui/css/screen.css
+%{_datarootdir}/systemimager/webgui/css/sliders.css
+%{_datarootdir}/systemimager/webgui/images/Alecive-Flatwoken-Apps-Dialog-Apply.svg
+%{_datarootdir}/systemimager/webgui/images/Alecive-Flatwoken-Apps-Dialog-Close.svg
+%{_datarootdir}/systemimager/webgui/images/Alecive-Flatwoken-Apps-Dialog-Logout.svg
+%{_datarootdir}/systemimager/webgui/images/Alecive-Flatwoken-Apps-Dialog-Refresh.svg
+%{_datarootdir}/systemimager/webgui/images/Alecive-Flatwoken-Apps-Settings.svg
+
