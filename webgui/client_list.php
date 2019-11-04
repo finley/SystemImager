@@ -172,22 +172,6 @@ function UpdateClientsHandler(event) {
 //  }
 //}
 
-function doFilter(checkbox, msg_type) {
-    var display;
-    if (checkbox.checked == true) {
-        display = "block";
-    } else {
-        display = "none";
-    }
-
-    var myClasses = document.querySelectorAll('.filter_'+msg_type),
-    i = 0,
-    l = myClasses.length;
-
-    for (i; i < l; i++) {
-        myClasses[i].style.display = display;
-    }
-}
 </script>
 </section> <!-- end flex_column -->
 </body>
