@@ -45,7 +45,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") { // we're called as post
 
 <html>
 <head>
-<title>SystemImager clients list.</title>
+<title>SystemImager configuration editor.</title>
   <style type='text/css' media='screen'>@import url('css/screen.css');</style>
   <style type='text/css' media='screen'>@import url('css/sliders.css');</style>
   <!-- <style type='text/css' media='screen'>@import url('css/print.css');</style> -->
