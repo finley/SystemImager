@@ -57,32 +57,36 @@ case "$SI_IMAGING_STATUS" in
 		case "$SI_POST_ACTION" in
 			"shell")
 				loginfo "Installation successfull. Dropping to interactive shell as requested."
-				send_monitor_msg "status=106:speed=0" # 106=shell
-				update_client_status 106 0
+				# send_monitor_msg "status=106:speed=0" # 106=shell
+				update_client_status 106 0 # 106=shell
 				sis_postimaging shell
 				;;
 			"reboot"|"kexec")
 				logwarn "Installation successfull. Rebooting as requested"
-				send_monitor_msg "status=104:speed=0" # 104: rebooting
+				#send_monitor_msg "status=104:speed=0" # 104: rebooting
+				update_client_status 104 0 # 104=rebooting
 				sleep 10
 				sis_postimaging reboot
 				;;
 			"shutdown"|"poweroff")
 				loginfo "Installation successfull. shutting down as requested"
-				send_monitor_msg "status=105:speed=0" # 105: shutdown/poweroff
+				#send_monitor_msg "status=105:speed=0" # 105: shutdown/poweroff
+				update_client_status 105 0 # 105=shutdown/poweroff
 				sleep 10
 				sis_postimaging poweroff
 				;;
 			"directboot")
 				loginfo "Installation successfull. Finishing as normal boot without rebooting"
-				send_monitor_msg "status=104:speed=0" # 104: rebooting
+				#send_monitor_msg "status=104:speed=0" # 104: rebooting
+				update_client_status 104 0 # 104=rebooting
 				sleep 10
 				sis_postimaging directboot
 				logdebug "directboot engaged"
 				;;
 			*)
 				logwarn "Installation successfull. Invalid post action. Rebooting"
-				send_monitor_msg "status=104:speed=0" # 104: rebooting
+				#send_monitor_msg "status=104:speed=0" # 104: rebooting
+				update_client_status 104 0 # 104=rebooting
 				sleep 10
 				sis_postimaging reboot
 				;;
@@ -91,7 +95,8 @@ case "$SI_IMAGING_STATUS" in
 		;;
 	"failed")
 		logwarn "Installation Failed!"
-		send_monitor_msg "status=-1:speed=0" # -1: error
+		# send_monitor_msg "status=-1:speed=0" # -1: error
+		update_client_status -1 0 # -1: error
 		sis_postimaging emergency
 		return 0
 		;;

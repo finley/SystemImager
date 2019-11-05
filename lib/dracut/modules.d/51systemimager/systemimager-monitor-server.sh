@@ -13,16 +13,16 @@
 # remotely gather the imaging text console.
 
 type getarg >/dev/null 2>&1 || . /lib/dracut-lib.sh
-type send_monitor_msg >/dev/null 2>&1 || . /lib/systemimager-lib.sh
+type update_client_status >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 
-logstep "systemimager-monitor-server: network console for simonitor_tk"
+logstep "systemimager-monitor-server: console and progress report task."
 
 # Systemimager possible breakpoint
 getarg 'si.break=monitor' && logwarn "Break start monitor" && interactive_shell
 
 if [ ! -z "$MONITOR_SERVER" ]; then
     # Start socat local socket server. Aim it to have a unique persistent connection with server.
-    if socat /dev/null TCP:$MONITOR_SERVER:8182 2>/dev/null
+    if socat /dev/null TCP:$MONITOR_SERVER:$MONITOR_PORT 2>/dev/null
     then
 	# freeze log dispatcher so we can add 1st line to log (avoid race condition)
 	LOG_DISPATCHER_PID=$(cat /run/systemimager/log_dispatcher.pid) # TODO: add error checking
@@ -37,8 +37,7 @@ if [ ! -z "$MONITOR_SERVER" ]; then
 	rm -f /etc/si_report.stream.tmp
 
 	# start the socat server
-	#socat UNIX-LISTEN:/tmp/logger.socket,ignoreeof TCP-CONNECT:10.0.238.84:8182&
-	socat -u FILE:/tmp/si_report.stream,ignoreeof TCP-CONNECT:$MONITOR_SERVER:8182&
+	socat -u FILE:/tmp/si_report.stream,ignoreeof TCP-CONNECT:$MONITOR_SERVER:$MONITOR_PORT&
 	echo $! > /run/systemimager/reporting_socat.pid
 
 	loginfo "Local console forwarder started and log forwarded to image server."
@@ -48,7 +47,7 @@ if [ ! -z "$MONITOR_SERVER" ]; then
     fi
 
     # Send initialization status.
-    send_monitor_msg "status=0:first_timestamp=on:speed=0"
+    #send_monitor_msg "status=0:first_timestamp=on:speed=0"
     update_client_status 0 0
     loginfo "Progress monitoring initialized."
     # Start client log gathering server: for each connection

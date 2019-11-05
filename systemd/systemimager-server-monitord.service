@@ -14,20 +14,12 @@
 # Set modified entries in /etc/systemd/system/systemimager-server-monitord.service.d/<name>.conf
 
 [Unit]
-ConditionPathExists=/etc/systemimager/systemimager.conf
+ConditionPathExists=/etc/systemimager/systemimager.json
 Description=SystemImager's daemon for real-time monitoring of client installations
 
 [Service]
-# Some default values
-Environment=MONITOR_LOGFILE=/var/log/systemimager/si_monitor.log
-Environment=MONITOR_LOGLEVEL=2
-Environment=MONITOR_PORT=8181
-# EnvironmentFile overrides default values
-EnvironmentFile=/etc/systemimager/systemimager.conf
-PIDFile=/var/run/si_monitor.pid
-# Need to fail if perl was not built with "useithreads".
-ExecStartPre=/usr/bin/perl -e 'use Config; exit ($Config{useithreads} ne "define");'
-ExecStart=/usr/sbin/si_monitor --log $MONITOR_LOGFILE --log_level $MONITOR_LOGLEVEL --port $MONITOR_PORT
+PIDFile=/var/run/si_monitord.pid
+ExecStart=/usr/sbin/si_monitord
 
 [Install]
 WantedBy=multi-user.target

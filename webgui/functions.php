@@ -30,6 +30,9 @@ function si_GetDefautConfig() {
 	$si_config->tarballs_dir="/var/lib/systemimager/tarballs";
 	$si_config->torrents_dir="/var/lib/systemimager/torrents";
 	$si_config->pxe_boot_files="/usr/share/systemimager/boot";
+	$si_config->monitor_logfile="/var/log/systemimager/si_monitord.log";
+	$si_config->monitor_port="8181";
+	$si_config->monitor_loglevel="1";
 	$si_config->rsyncd_conf="/etc/systemimager/rsyncd.conf";
 	$si_config->rsync_stub_dir="/etc/systemimager/rsync_stubs";
 	$si_config->tftp_dir="/var/lib/tftpboot";

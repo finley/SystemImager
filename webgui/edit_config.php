@@ -28,6 +28,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") { // we're called as post
   $config->tarballs_dir=$_POST["tarballs_dir"];
   $config->torrents_dir=$_POST["torrents_dir"];
   $config->pxe_boot_files=$_POST["pxe_boot_files"];
+  $config->monitor_logfile=$_POST["monitor_logfile"];
+  $config->monitor_port=$_POST["monitor_port"];
+  $config->monitor_loglevel=$_POST["monitor_loglevel"];
   $config->rsyncd_conf=$_POST["rsyncd_conf"];
   $config->rsync_stub_dir=$_POST["rsync_stub_dir"];
   $config->tftp_dir=$_POST["tftp_dir"];
@@ -118,10 +121,19 @@ if( isset($config->cfg_error) && $config->cfg_error !== "") {
 </fieldset>
 <br/>
 
+<fieldset><legend>MONITOR configuration</legend>
+<table><tbody>
+<tr><td>monitor_logfile</td><td><input type="text" name="monitor_logfile" size="50" value="<?php echo $config->monitor_logfile;?>"></td><td>Monitor logfile absolute path.<br>Defaults to /var/log/systemimager/si_monitord.log</td></tr>
+<tr><td>monitor_port</td><td><input type="text" name="monitor_port" size="50" value="<?php echo $config->monitor_port;?>"></td><td>Monitor port.<br>Defaults to 8181</td></tr>
+<tr><td>monitor_loglevel</td><td><input type="text" name="monitor_loglevel" size="50" value="<?php echo $config->monitor_loglevel;?>"></td><td>Monitor loglevel. Range from 0 (no log) to 5 (full debug: extremely verbose).<br>Defaults to 1</td></tr>
+</tbody></table>
+</fieldset>
+<br/>
+
 <fieldset><legend>RSYNC protocol configuration</legend>
 <table><tbody>
-<tr><td>rsyncd_conf</td><td><input type="text" name="rsyncd_conf" size="50" value="<?php echo $config->rsyncd_conf;?>"></td><td></td></tr>
-<tr><td>rsync_stub_dir</td><td><input type="text" name="rsync_stub_dir" size="50" value="<?php echo $config->rsync_stub_dir;?>"></td><td></td></tr>
+<tr><td>rsyncd_conf</td><td><input type="text" name="rsyncd_conf" size="50" value="<?php echo $config->rsyncd_conf;?>"></td><td>SystemImager's own rsyncd.conf file.</td></tr>
+<tr><td>rsync_stub_dir</td><td><input type="text" name="rsync_stub_dir" size="50" value="<?php echo $config->rsync_stub_dir;?>"></td><td>The path to the directory where SystemImager rsync stub files are stored.</td></tr>
 </tbody></table>
 </fieldset>
 <br/>

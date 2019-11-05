@@ -1547,8 +1547,8 @@ run_pre_install_scripts() {
             do
                 sis_update_step prei ${SCRIPT_INDEX} ${NUM_SCRIPTS}
                 loginfo "Running script ${SCRIPT_INDEX}/${NUM_SCRIPTS}: $PRE_INSTALL_SCRIPT"
-		send_monitor_msg "status=108:speed=0" # 108=preinstall
-		update_client_status 108 0
+		# send_monitor_msg "status=108:speed=0" # 108=preinstall
+		update_client_status 108 0 # 108=preinstall
                 chmod +x $PRE_INSTALL_SCRIPT || shellout "Failed to set execute bit for script $PRE_INSTALL_SCRIPT !"
                 ./$PRE_INSTALL_SCRIPT || shellout "script ${SCRIPT_INDEX}/${NUM_SCRIPTS}: $PRE_INSTALL_SCRIPT Failed!"
 		SCRIPT_INDEX=$((${SCRIPT_INDEX} + 1))
@@ -1634,8 +1634,8 @@ run_post_install_scripts() {
                 if [ -e "/sysroot/tmp/post-install/$POST_INSTALL_SCRIPT" ]; then
                     sis_update_step post ${SCRIPT_INDEX} ${NUM_SCRIPTS}
                     loginfo "Running script ${SCRIPT_INDEX}/${NUM_SCRIPTS}: $POST_INSTALL_SCRIPT"
-		    send_monitor_msg "status=109:speed=0" # 109=postinstall
-		    update_client_status 109 0
+		    #send_monitor_msg "status=109:speed=0" # 109=postinstall
+		    update_client_status 109 0 # 109=postinstall
                     chmod +x /sysroot/tmp/post-install/$POST_INSTALL_SCRIPT || shellout
                     if ! chroot /sysroot/ /tmp/post-install/$POST_INSTALL_SCRIPT
 		    then
@@ -1900,6 +1900,9 @@ send_message() {
 #   109  => postinstall
 #
 send_monitor_msg() {
+    logerror "send_monitor_msg: deprecated"
+    return
+
     if test -z "${MONITOR_SERVER}"; then
 	logdebug "Trying to send monitor msg with unset MONITOR_SERVER variable. Ignoring..."
         return
@@ -2043,10 +2046,10 @@ start_report_task() {
 	# Update Plymouth progress bar.
 	sis_update_step imag ${status} 100
 
-	if [ ! -z "$MONITOR_SERVER" ]; then
-            # Send status and bandwidth to the monitor server.
-            send_monitor_msg "status=$status:speed=$speed"
-	fi
+	#if [ ! -z "$MONITOR_SERVER" ]; then
+        #    # Send status and bandwidth to the monitor server.
+        #    send_monitor_msg "status=$status:speed=$speed"
+	#fi
 	update_client_status "$status" "$speed"
         
         # Wait $REPORT_INTERVAL sec between each report.
@@ -2085,10 +2088,10 @@ stop_report_task() {
     fi
 
     # Try to report the error to the monitor server.
-    if [ -n "$MONITOR_SERVER" ]; then
-	logdebug "Setting speed to 0 and status to $1 (101:finalizing or -1 failure)"
-        send_monitor_msg "status=$1:speed=0"
-    fi
+    #if [ -n "$MONITOR_SERVER" ]; then
+    #   logdebug "Setting speed to 0 and status to $1 (101:finalizing or -1 failure)"
+    #   send_monitor_msg "status=$1:speed=0"
+    #fi
     update_client_status "$1" 0
 }
 
@@ -2097,8 +2100,8 @@ stop_report_task() {
 #   Beep incessantly
 #
 beep_incessantly() {
-    send_monitor_msg "status=103:speed=0" # 103: beeping
-    update_client_status 103 0
+    #send_monitor_msg "status=103:speed=0" # 103: beeping
+    update_client_status 103 0 # 103: beeping
     modprobe pcspkr # Make sure pcspkr module is loaded
     local SECONDS=1
     local MINUTES

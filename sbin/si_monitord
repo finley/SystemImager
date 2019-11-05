@@ -2,9 +2,9 @@
 #
 #   "SystemImager"
 # 
-#   Copyright (C) 2019 Olivier Lahaye
+#   vi:set filetype=bash: 
 #
-#    vi:set filetype=perl: 
+#   Copyright (C) 2019 Olivier Lahaye
 #
 #   2019.09.18 Olivier Lahaye
 #   - Initial release
@@ -21,6 +21,11 @@
 #     - /var/log/systemimager/si_monitord.log               : this server log
 #     - /var/lib/systemimager/clients/<client MAC>_log.json : The logs for client with this MAC addr.
 #     - /var/lib/systemimager/clients/<client MAC>_def.json : The definitions and status for client with this MAC addr.
+#
+#    Variables (default value):
+#     - MONITOR_LOGFILE (/var/log/systemimager/si_monitord.log)
+#     - MONITOR_PORT (8181)
+#     - MONITOR_LOGLEVEL (O-5; defaults to 1)
 #
 #   Protocol:
 #     - MAC:<Client MAC addr>;<client uptime>
@@ -42,7 +47,7 @@ function SystemImagerMonitor() {
 				then
 					echo -E "$MSG" >> $LOG_FILE
 				else
-					echo "BUG: Client definition file [$DEF_FILE] does not exists." >> /var/log/systemimager/server.log
+					echo "BUG: Client definition file [$DEF_FILE] does not exists." >> ${MONITOR_LOGFILE}
 				fi
 				;;
 			UPD)
@@ -54,7 +59,7 @@ function SystemImagerMonitor() {
 					OLD=$(cat ${DEF_FILE}) 
 					echo $OLD $MSG '{ "timestamp" : "'$(date +%s)'" }'| jq -s add > $DEF_FILE
 				else
-					echo "BUG: Client definition file [$DEF_FILE] does not exists." >> /var/log/systemimager/server.log
+					echo "BUG: Client definition file [$DEF_FILE] does not exists." >> ${MONITOR_LOGFILE}
 				fi
 				;;
 			MAC)
@@ -65,7 +70,7 @@ function SystemImagerMonitor() {
 					DEF_FILE=/var/lib/systemimager/clients/${MAC}_def.json
 					TIMESTAMP=$(date +%s)
 					FIRST_TIMESTAMP=$(( ${TIMESTAMP} - ${UPTIME} ))
-					echo "Log retreiving started for $MAC." >> /var/log/systemimager/server.log
+					echo "INFO: Log retreiving started for $MAC." >> ${MONITOR_LOGFILE}
 					rm -f $LOG_FILE 2> /dev/null # remove old log
 					jq . > ${DEF_FILE} <<-EOF
 						{
@@ -75,19 +80,45 @@ function SystemImagerMonitor() {
 						}
 					EOF
 				else
-					echo "Empty MAC addr received on $(date)" >> /var/log/systemimager/server.log
+					echo "ERROR: Empty MAC addr received on $(date)" >> ${MONITOR_LOGFILE}
 					exit 0
 				fi
 				;;
 			*)
-				echo "ERROR: Invalid or empty message [$TYPE] on $(date)" >> /var/log/systemimager/server.log
+				echo "ERROR: Invalid or empty message [$TYPE] on $(date)" >> ${MONITOR_LOGFILE}
 				;;
 		esac
 	done
 	# echo "{ \"END\" : \"1\" }" >> $LOG_FILE
 }
 
+# Read config from general config file.
+MONITOR_LOGFILE="$(cat /etc/systemimager/systemimager.json |jq -j '.monitor_logfile')"
+if test ! -d "${MONITOR_LOGFILE%/*}"
+then
+	unset MONITOR_LOGFILE
+	logger -t systemimager -p local0.err "monitor_logfile: wrong path: ${MONITOR_LOGFILE%/*}. Defaulting to /var/log/systemimager/si_monitord.log"
+fi
+
+MONITOR_PORT="$(cat /etc/systemimager/systemimager.json |jq -j '.monitor_port')"
+if test -z "${MONITOR_PORT##*[!0-9]*}" # Ok is only integers. (TODO: Add valid port range checking)
+then
+	unset MONITOR_PORT
+	logger -t systemimager -p local0.err "monitor_port: must be an integer: $MONITOR_PORT. Defaulting to 8181."
+fi
+
+MONITOR_LOGLEVEL="$(cat /etc/systemimager/systemimager.json |jq -j '.monitor_loglevel')"
+if ! test -z "${MONITOR_LOGLEVEL#[0-5]}" # Ok if empty of nulmber between 0 and 5.
+then
+	unset MONITOR_LOGLEVEL
+	logger -t systemimager -p local0.err "monitor_loglevel: ($MONITOR_LOGLEVEL) must be an integer between 0 and 5. Defaulting to 0 (zero)."
+fi
+
+VERBOSITY="-d -v -d -d -d" # LOGLEVEL (1 to 5) tels how much -d or -v options we use.
+LOG_OPTIONS="${VERBOSITY:0:3*${MONITOR_LOGLEVEL:=0}} -lf ${MONITOR_LOGFILE:=/var/log/systemimager/si_monitord.log}"
+
+export MONITOR_LOGFILE 
 export -f SystemImagerMonitor
 
-socat -vv -u TCP-LISTEN:8182,crlf,reuseaddr,fork SYSTEM:"/bin/bash -c 'SystemImagerMonitor'"
+socat $LOG_OPTIONS -u TCP-LISTEN:${MONITOR_PORT:=8181},crlf,reuseaddr,fork SYSTEM:"/bin/bash -c 'SystemImagerMonitor'"
 
