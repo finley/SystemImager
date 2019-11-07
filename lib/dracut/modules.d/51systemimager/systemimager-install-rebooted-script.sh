@@ -46,7 +46,8 @@ send_message_cmd() {
     #mac=$(LC_ALL=C ifconfig $DEVICE 2>/dev/null | sed -ne "s/.*HWaddr //p" | sed "s/ //g" | sed s/:/./g)
     mac=$(LC_ALL=C ip addr show dev $DEVICE 2>/dev/null |grep ether | sed -E -e 's/ *[a-z/]* *([:0-9a-z]+).*$/\U\1/g' -e  's/:/./g')
     kernel=$(ls /sysroot/boot/vmlinuz-*|head -1|sed 's|/sysroot/boot/vmlinuz-||g')
-    message="mac=$mac:ip=$IPADDR:host=$HOSTNAME:kernel=$kernel:$rebooted_message"
+    #message="mac=$mac:ip=$IPADDR:host=$HOSTNAME:kernel=$kernel:$rebooted_message"
+    message="UPD:{ \"name\" : \"$mac\", \"status\" : \"102\", \"speed\" : \"0\" }"
 
     # Find a netcat binary
     PATH=/sysroot/usr/bin:/sysroot/usr/bin:/sysroot/bin:/sysroot/sbin netcat=$(type -P netcat nc ncat)
