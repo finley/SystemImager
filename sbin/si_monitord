@@ -51,6 +51,22 @@ function SystemImagerMonitor() {
 				fi
 				;;
 			UPD)
+				if test -z "$DEF_FILE" # Upon reboot, we recieve upda for rebooted status as 1st CMD.
+				then                   # In this case, the def file must be already existing.
+					MAC=$(echo -E "$MSG" |jq -j ".name")
+					if test -z "$MAC"
+					then
+						echo "BUG: received update with no MAC addr while it is a new connection."
+						echo "BUG: Message was: [$MSG]"
+					else
+						DEF_FILE=${CLIENTS_DB_DIR}/${MAC}_def.json
+						if test ! -e "$DEF_FILE"
+						then
+							echo "BUG: Updagte received for non-existing $DEF_FILE file."
+						fi
+					fi
+				fi
+
 				if test -e "$DEF_FILE"
 				then
 					# take old def file that has 1st timestamp, add MSG update and update timestamp.
@@ -66,8 +82,8 @@ function SystemImagerMonitor() {
 				IFS=';' read MAC UPTIME <<< "${MSG}"
 				if test -n "$MAC"
 				then
-					LOG_FILE=/var/lib/systemimager/clients/${MAC}_log.json
-					DEF_FILE=/var/lib/systemimager/clients/${MAC}_def.json
+					LOG_FILE=${CLIENTS_DB_DIR}/${MAC}_log.json
+					DEF_FILE=${CLIENTS_DB_DIR}/${MAC}_def.json
 					TIMESTAMP=$(date +%s)
 					FIRST_TIMESTAMP=$(( ${TIMESTAMP} - ${UPTIME} ))
 					echo "INFO: Log retreiving started for $MAC." >> ${MONITOR_LOGFILE}
@@ -114,10 +130,19 @@ then
 	logger -t systemimager -p local0.err "monitor_loglevel: ($MONITOR_LOGLEVEL) must be an integer between 0 and 5. Defaulting to 0 (zero)."
 fi
 
+CLIENTS_DB_DIR="$(cat /etc/systemimager/systemimager.json |jq -j '.clients_db_dir')"
+if test ! -d "${CLIENTS_DB_DIR}"
+then
+        CLIENTS_DB_DIR=/var/lib/systemimager/clients
+        logger -t systemimager -p local0.err "clients_db_dir: wrong path: ${CLIENTS_DB_DIR}. Defaulting to /var/lib/systemimager/clients"
+fi
+
+
 VERBOSITY="-d -v -d -d -d" # LOGLEVEL (1 to 5) tels how much -d or -v options we use.
 LOG_OPTIONS="${VERBOSITY:0:3*${MONITOR_LOGLEVEL:=0}} -lf ${MONITOR_LOGFILE:=/var/log/systemimager/si_monitord.log}"
 
 export MONITOR_LOGFILE 
+export CLIENTS_DB_DIR
 export -f SystemImagerMonitor
 
 socat $LOG_OPTIONS -u TCP-LISTEN:${MONITOR_PORT:=8181},crlf,reuseaddr,fork SYSTEM:"/bin/bash -c 'SystemImagerMonitor'"
