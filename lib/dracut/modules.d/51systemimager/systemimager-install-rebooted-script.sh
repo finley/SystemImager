@@ -31,37 +31,8 @@ TIMEOUT=30
 
 # File created after reboot if rebooted state was successuflly reported to the server.
 rebooted_state_file=/etc/systemimager/si_monitor.client.rebooted
-rebooted_message="status=102:speed=0"
-
-send_message_cmd() {
-    if [ -z $MONITOR_SERVER ]; then
-        # OL: Need to do something here...(log error)
-	echo "false"
-        return
-    fi
-    if [ -z $MONITOR_PORT ]; then
-        MONITOR_PORT=8181
-    fi
-
-    #mac=$(LC_ALL=C ifconfig $DEVICE 2>/dev/null | sed -ne "s/.*HWaddr //p" | sed "s/ //g" | sed s/:/./g)
-    mac=$(LC_ALL=C ip addr show dev $DEVICE 2>/dev/null |grep ether | sed -E -e 's/ *[a-z/]* *([:0-9a-z]+).*$/\U\1/g' -e  's/:/./g')
-    kernel=$(ls /sysroot/boot/vmlinuz-*|head -1|sed 's|/sysroot/boot/vmlinuz-||g')
-    #message="mac=$mac:ip=$IPADDR:host=$HOSTNAME:kernel=$kernel:$rebooted_message"
-    message="UPD:{ \"name\" : \"$mac\", \"status\" : \"102\", \"speed\" : \"0\" }"
-
-    # Find a netcat binary
-    PATH=/sysroot/usr/bin:/sysroot/usr/bin:/sysroot/bin:/sysroot/sbin netcat=$(type -P netcat nc ncat)
-
-    if test -z "$netcat"
-    then # try to use /dev/tcp
-        echo "TMOUT=$TIMEOUT exec 3<>/dev/tcp/$MONITOR_SERVER/$MONITOR_PORT; echo \"$message\" >&3"
-    else # use netcat
-        echo "echo \"$message\" | ${netcat//\/sysroot/} -w $TIMEOUT $MONITOR_SERVER $MONITOR_PORT"
-    fi
- }
 
 # Detect the system init technology and create init files accordingly.
-
 create_InitFile() {
     # Create /etc/systemimager if it doesn't exist.
     if [ ! -d /sysroot/etc/systemimager ]; then
@@ -85,9 +56,11 @@ create_InitFile() {
     else
 	logwarn "Unable to identify boot services mechanism system"
 	loginfo "Installing systemimager-monitor-firstboot script in /etc/rc.local"
-        cat >> /sysroot/etc/rc.local <<EOF
-$(send_message_cmd) || sed -i -e /etc/rc.local 's/^(echo ".*$//g'
-EOF
+	write_SysVInitFile /sysroot/etc/rc.systemimager-monitor-firstboot
+	cat >> /sysroot/etc/rc.local <<-EOF
+	# Systemimager 1st boot.
+	/etc/rc.systemimager-monitor-firstboot start
+	EOF
     fi
 
 }
@@ -135,12 +108,13 @@ do
 	fi
 done
 
-if ($(send_message_cmd))
+if (TMOUT=$TIMEOUT exec 3<>/dev/tcp/$MONITOR_SERVER/$MONITOR_PORT; echo 'UPD:{ "name" : "$CLIENT_MAC", "status" : "102", "speed" : "0" }' >&3)
 then
     touch $rebooted_state_file
 else
     echo "Error, cannot report rebooted status to server $MONITOR_SERVER"
-    echo "Check that systemimager-monitord is running on the server"
+    echo "Check that si_monitord is running on the server"
+    echo "If it is not running, enable and start systemimager-server-monitord service"
     exit 1
 fi
 EOF
@@ -191,7 +165,7 @@ case "\$1" in
 		fi
 	done
 
-        if ($(send_message_cmd))
+        if (TMOUT=$TIMEOUT exec 3<>/dev/tcp/$MONITOR_SERVER/$MONITOR_PORT; echo 'UPD:{ "name" : "$CLIENT_MAC", "status" : "102", "speed" : "0" }' >&3)
         then
             if [ -x /sbin/chkconfig ]; then
                 /sbin/chkconfig --del systemimager-monitor-firstboot
@@ -201,7 +175,9 @@ case "\$1" in
             touch $rebooted_state_file
         else
             echo "Error, cannot report rebooted status to server $MONITOR_SERVER"
-            echo "Check that systemimager-monitord is running on the server"
+            echo "Check that si_monitord is running on the server"
+            echo "If it is not running, enable and start systemimager-server-monitord service"
+            exit 1
         fi
         ;;
   stop|reload|restart|force-reload)
