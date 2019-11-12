@@ -10,10 +10,9 @@
 #    vi:set filetype=perl:
 #
 
-use lib "USR_PREFIX/lib/systemimager/perl";
 use strict;
 use Getopt::Long;
-use SystemImager::Config;
+use SystemImager::JConfig;
 use SystemImager::HostRange;
 use vars qw($config $VERSION);
 
@@ -161,9 +160,9 @@ unless ($all_parameters_set) {
 }
 
 
-my $autoinstall_script_dir = $config->autoinstall_script_dir();
+my $autoinstall_script_dir = $config->get('scripts_dir');
 unless ($autoinstall_script_dir) {
-    die "FATAL: parameter AUTOINSTALL_SCRIPT_DIR is not defined in ".$config->systemimager_dir."/systemimager.conf\n";
+    die "FATAL: parameter AUTOINSTALL_SCRIPT_DIR is not defined in ".$config->fileName()\n";
 }
 
 if($interactive eq "yes") {
@@ -279,7 +278,7 @@ EOF
             # gather a list of available images
             my (@files, $newest_script);
             # ------------------------------------> sort by timestamp -- oldest to newest
-            my $cmd = "cd $autoinstall_script_dir && ls -1tr *.master 2>&1";
+            my $cmd = "cd $autoinstall_script_dir/main-install && ls -1tr *.master 2>&1";
             open(LS, "$cmd |");
             while (<LS>) {
                 chomp;
@@ -304,9 +303,9 @@ EOF
             print "Which script would you like these hosts to be installed with?\n";
             print "[$script]: ";
             $script=get_response($script);
-            if ( -f "$autoinstall_script_dir/$script.master" ) {
+            if ( -f "$autoinstall_script_dir/main-install/$script.master" ) {
 
-                create_links($hosts, $script, $autoinstall_script_dir);
+                create_links($hosts, $script, $autoinstall_script_dir/main-install);
 
                 print "\nYour soft links have been created.\n";
                 print "\nPress <Enter> to continue...";
