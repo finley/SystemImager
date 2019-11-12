@@ -7,11 +7,10 @@
 #   - fix POD error
 #
 
-use lib "USR_PREFIX//lib/systemimager/perl";
 use strict;
 use Getopt::Long;
 use XML::Simple;
-use SystemImager::Config;
+use SystemImager::JConfig;
 use SystemImager::HostRange;
 use vars qw($config);
 
@@ -151,9 +150,9 @@ sub edit
 		die("FATAL: $program_name requires root privileges to run in edit-mode.\n");
 	}
 
-	my $script_dir = $config->autoinstall_script_dir();
-	unless ($script_dir) {
-		die "FATAL: parameter AUTOINSTALL_SCRIPT_DIR is not defined in ".$config->systemimager_dir."/systemimager.conf\n";
+	my $scripts_dir = $config->get('scripts_dir');
+	unless ($scripts_dir) {
+		die "FATAL: parameter AUTOINSTALL_scripts_dir is not defined in ".$config->fileName()."\n";
 	}
 
 	# Get a valid system editor (only if in interactive mode).
@@ -205,7 +204,7 @@ sub edit
 
 	# Cache XML info into a plain text file. This is needed to easily parse this
 	# file in the busybox environment when the clients are imaging.
-	$output_file = $script_dir . '/cluster.txt';
+	$output_file = $scripts_dir . '/cluster.txt';
 	if (($update) || ($mtime != (stat($database))[9])) {
 		print "Caching XML configuration... ";
 		if (!XML_info_to_plain_file($output_file)) {
@@ -216,7 +215,7 @@ sub edit
 	}
 
 	# Synchronize /etc/hosts to the hosts file read by the imaging clients.
-	$output_file = $script_dir . '/hosts';
+	$output_file = $scripts_dir . '/hosts';
 	if (($update) || !(-e $output_file) ||
 	    ((stat('/etc/hosts'))[9] != (stat($output_file))[9])) {
 		print "Synchronizing /etc/hosts to $output_file ... ";
