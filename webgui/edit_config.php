@@ -14,27 +14,37 @@
 <?php
 include 'functions.php';
 
+// 1st, read the cofiguration scheme. this loads all parameters names, default values and descriptions.
+$config_scheme = si_ReadConfigScheme();
+
 // By default: view mode (no save/cancel buttons (hidden). instead a edit button)
-// View mode: all fields are read only
+// View mode: all fields are read only (TODO: need to set readonly by default)
 // Edit mode: fields are read write and Save (post) (cancel) button appear (edit button is hidden)
 if ($_SERVER["REQUEST_METHOD"] == "POST") { // we're called as post
   // Read and validate fields.
   $config = new stdClass();
+
+// We scan the configuration scheme and collect any POSTED field that match.
+// All fields have a value (at least default value) as it is assigned when input field is created.
+// Thus we don't have to check for default value.
+
   $config->cfg_error="";
-  $config->images_dir=$_POST["images_dir"]; // TODO: Check directory existance.
-  $config->overrides_dir=$_POST["overrides_dir"];
-  $config->scripts_dir=$_POST["scripts_dir"];
-  $config->clients_db_dir=$_POST["clients_db_dir"];
-  $config->tarballs_dir=$_POST["tarballs_dir"];
-  $config->torrents_dir=$_POST["torrents_dir"];
-  $config->pxe_boot_files=$_POST["pxe_boot_files"];
-  $config->monitor_logfile=$_POST["monitor_logfile"];
-  $config->monitor_port=$_POST["monitor_port"];
-  $config->monitor_loglevel=$_POST["monitor_loglevel"];
-  $config->rsyncd_conf=$_POST["rsyncd_conf"];
-  $config->rsync_stub_dir=$_POST["rsync_stub_dir"];
-  $config->tftp_dir=$_POST["tftp_dir"];
-  $config->pxe_boot_mode=$_POST["pxe_boot_mode"];
+
+  // Start collecting.
+  foreach($config_scheme as $fieldset => $json) {
+	$fieldset_tolower = strtolower($fieldset);
+	// Create fieldset in config
+	$config->{$fieldset_tolower} = new stdClass();;
+	foreach($json as $param => $table_row) {
+		$input_name=$fieldset."_".$param;
+		$param_tolower = strtolower($param);
+		if (array_key_exists($input_name, $_POST)) { // If parameter is found in POST
+			$config->{$fieldset_tolower}->{$param_tolower} = $_POST[$input_name];
+		} else { // Load default value (shouldn't occure)
+			$config->{$fieldset_tolower}->{$param_tolower} = $table_row[0]; // Load defaults
+		}
+	}
+  }
   if(!si_WriteConfig($config)) {
     $error=error_get_last();
     $config->cfg_error="ERROR (".$error['type']."):".$error['message'];
@@ -44,6 +54,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") { // we're called as post
   $config=si_ReadConfig();
 }
 
+// At this point, $config contains all fields with parameters and associated value.
 ?>
 
 <html>
@@ -81,96 +92,24 @@ if( isset($config->cfg_error) && $config->cfg_error !== "") {
 
 <!-- SystemImager content -->
 <div id="parameters" class="flex_content">
-<fieldset><legend>Imager data paths</legend>
-<table><tbody>
-<tr><td>images_dir</td><td><input type="text" name="images_dir" size="50" value="<?php echo $config->images_dir;?>"></td><td>Place where images are stored.</td></tr>
-<tr><td>overrides_dir</td><td><input type="text" name="overrides_dir" size="50" value="<?php echo $config->overrides_dir;?>"></td><td>Place where override files are stored. They are copied to client filesystem overwriting existing files.</td></tr>
-<tr><td>scripts_dir</td><td><input type="text" name="scripts_dir" size="50" value="<?php echo $config->scripts_dir;?>"></td><td>Place holding imaging scripts and various client configurations:<br>
-<ul>
-<li>pre-install/ all optional pre-install scripts</li>
-<li>main-install/ The optional main install script</li>
-<li>post-install/ all optional post-install scripts</li>
-<li>configs/ clients configuration files</li>
-<li>disks-layouts/ clients disks layout files</li>
-<li>network-configs/ clients optional network configuration files</li>
-<li>cluster.txt The cluster/client groups definition file (see si_clusterconfig)</li>
-</ul>
-</td></tr>
-<tr><td>tarballs_dir</td><td><input type="text" name="tarballs_dir" size="50" value="<?php echo $config->tarballs_dir;?>"></td><td>All images saved as tarball (mainly torrent content)</td></tr>
-<tr><td>torrents_dir</td><td><input type="text" name="torrents_dir" size="50" value="<?php echo $config->torrents_dir;?>"></td><td>Place for .torrent files</td></tr>
-<tr><td>clients_db_dir</td><td><input type="text" name="clients_db_dir" size="50" value="<?php echo $config->clients_db_dir;?>"></td><td>Where to save imaged clients informations and installation logs.</td></tr>
-</tbody></table>
-</fieldset>
-<br/>
 
-<fieldset><legend>Imager binaries</legend>
-<table><tbody>
-<tr><td>pxe_boot_files</td><td><input type="text" name="pxe_boot_files" size="50" value="<?php echo $config->pxe_boot_files;?>"></td><td>Where to find initrd.img and kernel files (the imager itself)</td></tr>
-</tbody></table>
-</fieldset>
-<br/>
+<?php
 
-<fieldset><legend>PXE configuration</legend>
-<table><tbody>
-<tr><td>tftp_dir</td><td><input type="text" name="tftp_dir" size="50" value="<?php echo $config->tftp_dir;?>"></td><td>The tftp root directory</td></tr>
-<tr><td>pxe_boot_mode</td><td><select name="pxe_boot_mode">
-<option value="net" <?php if($config->pxe_boot_mode === "net") echo "selected"; ?>>Network boot</option>
-<option value="local" <?php if($config->pxe_boot_mode === "local") echo "selected"; ?>>Local boot</option>
-</select></td><td>PXE boot mode is a setting that affects systemimager-server-netbootmond. If set to LOCAL, then after successful completion of an install, a client's net boot configuration is modified to ensure future boots will happen from the client's local disk. NET_BOOT_DEFAULT can be set to local or net.  Be sure to restart systemimager-server-netbootmond after changing this setting (/etc/init.d/systemimager-server-netbootmond restart).</td></tr>
-</tbody></table>
-</fieldset>
-<br/>
+foreach($config_scheme as $fieldset => $json) {
+	echo "<fieldset><legend>&nbsp;".$fieldset."&nbsp;</legend>\n<table><tbody>";
+	$fieldset_tolower = strtolower($fieldset);
+	foreach($json as $param => $table_row) {
+		$param_tolower = strtolower($param);
+		if (! array_key_exists($param_tolower, $config->{$fieldset_tolower})) { // Use default value if not defined
+			$config->{$fieldset_tolower}->{$param_tolower} = $table_row[0]; //Mainly used when new config_scheme.json isuse (upgrade)
+		}
+		// echo "<tr><td>".$param."</td><td><input type=\"text\" name=\"".$fieldset."_".$param."\" size=\"50\" value=\"".$config->{$fieldset_tolower}->{$param_tolower}."\"></td><td>".$table_row[1]."</td></tr>";
+		echo "<tr><td>".$param."</td><td>".renderParamImput($table_row,$fieldset."_".$param,$config->{$fieldset_tolower}->{$param_tolower})."</td><td>".$table_row[2]."</td></tr>";
+	}
+	echo "</tbody></table></fieldset><br/>\n";
+}
 
-<fieldset><legend>MONITOR configuration</legend>
-<table><tbody>
-<tr><td>monitor_logfile</td><td><input type="text" name="monitor_logfile" size="50" value="<?php echo $config->monitor_logfile;?>"></td><td>Monitor logfile absolute path.<br>Defaults to /var/log/systemimager/si_monitord.log</td></tr>
-<tr><td>monitor_port</td><td><input type="text" name="monitor_port" size="50" value="<?php echo $config->monitor_port;?>"></td><td>Monitor port.<br>Defaults to 8181</td></tr>
-<tr><td>monitor_loglevel</td><td><input type="text" name="monitor_loglevel" size="50" value="<?php echo $config->monitor_loglevel;?>"></td><td>Monitor loglevel. Range from 0 (no log) to 5 (full debug: extremely verbose).<br>Defaults to 1</td></tr>
-</tbody></table>
-</fieldset>
-<br/>
-
-<fieldset><legend>RSYNC protocol configuration</legend>
-<table><tbody>
-<tr><td>rsyncd_conf</td><td><input type="text" name="rsyncd_conf" size="50" value="<?php echo $config->rsyncd_conf;?>"></td><td>SystemImager's own rsyncd.conf file.</td></tr>
-<tr><td>rsync_stub_dir</td><td><input type="text" name="rsync_stub_dir" size="50" value="<?php echo $config->rsync_stub_dir;?>"></td><td>The path to the directory where SystemImager rsync stub files are stored.</td></tr>
-</tbody></table>
-</fieldset>
-<br/>
-
-<fieldset><legend>SSH protocol configuration</legend>
-<table><tbody>
-<tr><td></td><td></td><td></td></tr>
-</tbody></table>
-</fieldset>
-<br/>
-
-<fieldset><legend>flamethrower protocol configuration</legend>
-<table><tbody>
-<tr><td></td><td></td><td></td></tr>
-</tbody></table>
-</fieldset>
-<br/>
-
-<fieldset><legend>NFS protocol configuration</legend>
-<table><tbody>
-<tr><td></td><td></td><td></td></tr>
-</tbody></table>
-</fieldset>
-<br/>
-
-<fieldset><legend>Docker protocol configuration</legend>
-<table><tbody>
-<tr><td></td><td></td><td></td></tr>
-</tbody></table>
-</fieldset>
-<br/>
-
-<fieldset><legend>Bootstrap list protocol configuration</legend>
-<table><tbody>
-<tr><td></td><td></td><td></td></tr>
-</tbody></table>
-</fieldset>
+?>
 </div> <!-- end flex content -->
 
 <div class="flex_footer">
@@ -192,12 +131,14 @@ function setEditMode(flag) {
     document.getElementById("cancel").style.visibility="hidden";
   }
 }
+// Reset all form fields with default settings.
 function setDefaultSettings() {
-  for (const key of Object.keys(default_config)) {
-    console.log("Setting '" + key + "' to default value: " + default_config[key]);
-    input_field=document.getElementsByName(key);
-    if(input_field[0]) {
-      input_field[0].value=default_config[key];
+  for (const field of Object.keys(default_config)) {
+    for (const key of Object.keys(default_config[field])) {
+      input_field=document.getElementsByName(field+"_"+key);
+      if(input_field[0]) {
+        input_field[0].value=default_config[field][key];
+      }
     }
   }
 }

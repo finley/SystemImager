@@ -21,35 +21,95 @@ function si_SendEvent($event,$retry,$id,$data) {
 }
 
 function si_GetDefautConfig() {
+	global $config_scheme; // Use a global variable to avoid loading it multiple times.
 	$si_config = new stdClass();
 	$si_config->cfg_error="";
-	$si_config->images_dir="/var/lib/systemimager/images";
-	$si_config->overrides_dir="/var/lib/systemimager/overrides";
-	$si_config->scripts_dir="/var/lib/systemimager/scripts";
-	$si_config->clients_db_dir="/var/lib/systemimager/clients";
-	$si_config->tarballs_dir="/var/lib/systemimager/tarballs";
-	$si_config->torrents_dir="/var/lib/systemimager/torrents";
-	$si_config->pxe_boot_files="/usr/share/systemimager/boot";
-	$si_config->monitor_logfile="/var/log/systemimager/si_monitord.log";
-	$si_config->monitor_port="8181";
-	$si_config->monitor_loglevel="1";
-	$si_config->rsyncd_conf="/etc/systemimager/rsyncd.conf";
-	$si_config->rsync_stub_dir="/etc/systemimager/rsync_stubs";
-	$si_config->tftp_dir="/var/lib/tftpboot";
-	$si_config->pxe_boot_mode="net";
+
+	foreach($config_scheme as $fieldset => $json) {
+		// Create fieldset in config
+		$si_config->{$fieldset} = new stdClass();
+		foreach($json as $param => $table_row) {
+			$si_config->{$fieldset}->{$param} = getDefaultValue($table_row); // Load defaults
+		}
+	}
 	return($si_config);
+}
+
+function getDefaultValue($param_scheme) {
+	switch($param_scheme[0]) {
+		case "path":
+			return $param_scheme[1];
+		break;
+		case "file":
+			return $param_scheme[1];
+		break;
+		case "port":
+			return $param_scheme[1];
+		break;
+		case "select":
+			return $param_scheme[1][0]; // element #0 is the default value
+		break;
+		case "text":
+			return $param_scheme[1];
+		break;
+		default:
+			return "???";
+	}
+}
+
+function renderParamImput($param_scheme, $name, $value) {
+	switch($param_scheme[0]) {
+		case "path":
+			return "<input type=\"text\" name=\"".$name."\" size=\"50\" value=\"".$value."\">";
+		break;
+		case "file":
+			return "<input type=\"text\" name=\"".$name."\" size=\"50\" value=\"".$value."\">";
+		break;
+		case "port":
+			return "<input type=\"text\" name=\"".$name."\" size=\"50\" value=\"".$value."\">";
+		break;
+		case "select":
+			$object = "<select name=\"".$name."\">\n";
+			$default_val = array_shift($param_scheme[1]); // Unused here. We just remove default value.
+			while($option = array_shift($param_scheme[1])) {
+				$selected = "";
+				if ( $option == $value ) {
+					$selected = " selected";
+				}
+				$object .= "<option value=\"".$option."\"".$selected.">".$option."</option>\n";
+			}
+			$object .= "</select>\n";
+			return "$object";
+		break;
+		case "text":
+			return "<input type=\"text\" name=\"".$name."\" size=\"50\" value=\"".$value."\">";
+		break;
+		default: // Render a span (not editable). Usefull for not yet supported stuffs for example.
+			return "";
+	}
 }
 
 function si_DefaultConfigToJava() {
 	$si_config=si_GetDefautConfig();
+        unset($si_config->cfg_error);
 	$json_one_line=json_encode($si_config);
 	echo <<<EOF
 <script>
   var json_default_config_string='$json_one_line';
   var default_config=JSON.parse(json_default_config_string);
-  console.log(default_config);
 </script>
 EOF;
+}
+
+function si_ReadConfigScheme() {
+	$json_config = file_get_contents("config_scheme.json");
+        if ($json_config !== false) {
+		$si_config_scheme=json_decode($json_config);
+		if ($si_config_scheme === null  && json_last_error() !== JSON_ERROR_NONE) {
+			$si_config_scheme->cfg_error = array("STOP","Invalid configuration scheme file. Error:".json_last_error().".");
+		}
+	}
+	return($si_config_scheme);
 }
 
 function si_ReadConfig() {
@@ -67,7 +127,7 @@ function si_ReadConfig() {
 
 function si_WriteConfig($si_config) {
 	unset($si_config->cfg_error); // Remove internal use field
-	$json_config=json_encode($si_config,JSON_PRETTY_PRINT);
+	$json_config=json_encode($si_config,JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 	return(file_put_contents("/etc/systemimager/systemimager.json",$json_config));
 }
 
