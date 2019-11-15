@@ -96,15 +96,14 @@ if( isset($config->cfg_error) && $config->cfg_error !== "") {
 <?php
 
 foreach($config_scheme as $fieldset => $json) {
-	echo "<fieldset><legend>&nbsp;".$fieldset."&nbsp;</legend>\n<table><tbody>";
+	echo "<fieldset><legend>&nbsp;".$fieldset."&nbsp;</legend>\n<table><tbody>\n";
 	$fieldset_tolower = strtolower($fieldset);
 	foreach($json as $param => $table_row) {
 		$param_tolower = strtolower($param);
 		if (! array_key_exists($param_tolower, $config->{$fieldset_tolower})) { // Use default value if not defined
-			$config->{$fieldset_tolower}->{$param_tolower} = $table_row[0]; //Mainly used when new config_scheme.json isuse (upgrade)
+			$config->{$fieldset_tolower}->{$param_tolower} = getDefaultValue($table_row); //Mainly used when new config_scheme.json isuse (upgrade)
 		}
-		// echo "<tr><td>".$param."</td><td><input type=\"text\" name=\"".$fieldset."_".$param."\" size=\"50\" value=\"".$config->{$fieldset_tolower}->{$param_tolower}."\"></td><td>".$table_row[1]."</td></tr>";
-		echo "<tr><td>".$param."</td><td>".renderParamImput($table_row,$fieldset."_".$param,$config->{$fieldset_tolower}->{$param_tolower})."</td><td>".$table_row[2]."</td></tr>";
+		echo "<tr><td>".$param."</td><td>".renderParamImput($table_row,$fieldset."_".$param,$config->{$fieldset_tolower}->{$param_tolower})."</td><td>".$table_row[2]."</td></tr>\n";
 	}
 	echo "</tbody></table></fieldset><br/>\n";
 }

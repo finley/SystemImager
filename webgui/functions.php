@@ -85,7 +85,7 @@ function renderParamImput($param_scheme, $name, $value) {
 			return "<input type=\"text\" name=\"".$name."\" size=\"50\" value=\"".$value."\">";
 		break;
 		default: // Render a span (not editable). Usefull for not yet supported stuffs for example.
-			return "";
+			return "<span name=\"".$name."\">".$value."</span>";
 	}
 }
 
