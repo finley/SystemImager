@@ -15,14 +15,13 @@ my $program_name="si_mkclientnetboot";
 my $get_help = "  Try \"$program_name --help\" for more options.";
 
 # declare modules
-use lib "USR_PREFIX/lib/systemimager/perl";
 use strict;
 use Socket;
 use File::Copy;
 use File::Path;
 use Net::hostent;
 use Getopt::Long;
-use SystemImager::Config;
+use SystemImager::JConfig;
 use SystemImager::Common;
 use SystemImager::Server;
 use SystemImager::Options;
@@ -33,18 +32,18 @@ use vars qw($config $VERSION);
 
 ### BEGIN parse the config file ###
 
-my $tftp_dir = $config->tftp_dir();
+my $tftp_dir = $config->get('pxe','tftp_dir');
 if (!$tftp_dir) {
-    die "FATAL: parameter TFTP_DIR is not defined in ".$config->systemimager_dir."/systemimager.conf\n";
+    die "FATAL: parameter pxe.tftp_dir is not defined in ".$config->fileName()."\n";
 }
 
-my $boot_dir = $config->autoinstall_boot_dir();
+my $boot_dir = $config->get('pxe','boot_files');
 if (!$boot_dir) {
-    die "FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in ".$config->systemimager_dir."/systemimager.conf\n";
+    die "FATAL: parameter pxe.boot_files is not defined in ".$config->fileName()."\n";
 }
 
-my $localboot_file = $config->systemimager_dir."/pxelinux.cfg/syslinux.cfg.localboot";
-my $netboot_file = $config->systemimager_dir."/pxelinux.cfg/syslinux.cfg";
+my $localboot_file = "/etc/systemimager"."/pxelinux.cfg/syslinux.cfg.localboot";
+my $netboot_file = "/etc/systemimager"."/pxelinux.cfg/syslinux.cfg";
 
 #
 ### END parse the config file ###
