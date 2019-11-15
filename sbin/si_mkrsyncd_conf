@@ -25,7 +25,7 @@
 
 use SystemImager::Server;
 use SystemImager::Common;
-use SystemImager::Config;
+use SystemImager::JConfig;
 
 my $rsync_stub_dir = $config->get('xmit_rsync','stubs_dir');
 unless ($rsync_stub_dir) {
