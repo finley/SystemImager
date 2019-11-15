@@ -150,7 +150,7 @@ sub edit
 		die("FATAL: $program_name requires root privileges to run in edit-mode.\n");
 	}
 
-	my $scripts_dir = $config->get('scripts_dir');
+	my $scripts_dir = $config->get('imager','scripts_dir');
 	unless ($scripts_dir) {
 		die "FATAL: parameter AUTOINSTALL_scripts_dir is not defined in ".$config->fileName()."\n";
 	}
