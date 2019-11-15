@@ -43,9 +43,9 @@ use 5.010;
 BEGIN {
     use Exporter();
 
-    @SystemImager::Config::ISA       = qw(Exporter);
-    @SystemImager::Config::EXPORT    = qw();
-    @SystemImager::Config::EXPORT_OK = qw($config);
+    @SystemImager::JConfig::ISA       = qw(Exporter);
+    @SystemImager::JConfig::EXPORT    = qw();
+    @SystemImager::JConfig::EXPORT_OK = qw($config);
 
 }
 
@@ -69,6 +69,17 @@ sub new {
 			$self->{_config_file} = "$env_sis_confdir/systemimager.json";
 		}
 	}
+	# If SIS_WEBGUIDIR is defined use this instead of default /usr/share/systemimager/webgui
+	# This is usefull when run from build environment where /usr/share/systemimager/webgui doesn't
+	# exists yet.
+	if( defined($ENV{'SIS_WEBGUIDIR'}) ) {
+		my $env_webgui_dir="$ENV{'SIS_WEBGUIDIR'}";
+		$env_webgui_dir =~ s/\/+$//; # Remove useless trailing slashes
+
+		if ( -d "$env_webgui_dir" ) {
+			$self->{_config_scheme} = "$env_webgui_dir/config_scheme.json";
+		}
+	}
 	# At this point, $self->{_config_file} is defined.
 	if ( -e $self->{_config_file} ) {
 		loadConfig($self);
@@ -84,7 +95,7 @@ sub loadDefaults {
 	# 1/ Read the scheme.
 	my $scheme_raw_text = do {
 		open(my $json_fh, "<:encoding(UTF-8)", $self->{_config_scheme})
-                        or die("Can't open \$filename\": $!\n");
+                        or die("Can't open $self->{_config_scheme}: $!\n");
                 local $/;
                 <$json_fh>
 	};

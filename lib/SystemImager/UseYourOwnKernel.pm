@@ -24,7 +24,7 @@ package SystemImager::UseYourOwnKernel;
 use strict;
 use File::Basename;
 use File::Glob;
-use SystemImager::Config qw($config);
+use SystemImager::JConfig qw($config);
 
 our $verbose;
 our $is_mounted = 0;
@@ -87,7 +87,7 @@ sub create_uyok_initrd() {
 		$uname_r=$kernel_version;
 	} elsif ($image) {
             # Get SystemImager directories.
-            my $image_dir = $config->default_image_dir;
+            my $image_dir = $config->get('imager','images_dir');
 
             unless (-d "$image_dir/$image") {
                 print STDERR "error: $image is not a valid image! use si_lsimage to see the list of available images.\n";
@@ -127,7 +127,7 @@ sub create_uyok_initrd() {
         # module that someone needs. -BEF-
         #
         my $modules_to_exclude = '';
-        $file = $config->systemimager_dir."/UYOK.modules_to_exclude";
+        $file = "/etc/systemimager"."/UYOK.modules_to_exclude";
         if(-e $file) {
             #
             # Get list of exclusions from "/etc/systemimager/UYOK.modules_to_exclude"
@@ -672,7 +672,7 @@ sub get_uname_r {
 
 # Create --add-drivers dracut command line option to add mandatory modules listed in /etc/systemimager/UYOK.modules_to_include.
 sub get_mandatory_modules() {
-	my $mandatory_modules_file = $config->systemimager_dir."/UYOK.modules_to_include";
+	my $mandatory_modules_file = "/etc/systemimager"."/UYOK.modules_to_include";
 	my $mandatory_modules_option="";
 	if (-e $mandatory_modules_file) {
             #
@@ -705,7 +705,7 @@ sub get_mandatory_modules() {
 sub get_load_ordered_list_of_running_modules() {
 
         my $file = "/proc/modules";
-        my $mandatory_modules_file = $config->systemimager_dir."/UYOK.modules_to_include";
+        my $mandatory_modules_file = "/etc/systemimager"."/UYOK.modules_to_include";
         my @modules = ();
         my @mandatory_modules = ();
 

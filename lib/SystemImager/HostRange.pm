@@ -24,7 +24,7 @@ package SystemImager::HostRange;
 use strict;
 use Socket;
 use XML::Simple;
-use SystemImager::Config qw($config);
+use SystemImager::JConfig qw($config);
 
 # Maximum number of concurrent sessions (public).
 our $concurrents = 32;
@@ -267,9 +267,9 @@ sub add_hosts_entries {
 
     $domain_name = lc $domain_name;
 
-    my $autoinstall_script_dir = $config->autoinstall_script_dir();
+    my $autoinstall_script_dir = $config->get('imager','scripts_dir');
     unless ($autoinstall_script_dir) {
-        die "FATAL: parameter AUTOINSTALL_SCRIPT_DIR is not defined in /etc/systemimager/systemimager.conf\n";
+        die "FATAL: parameter imager.scripts_dir is not defined in ".$config->fileName()."\n";
     }
 
     my @all_ips = expand_range_list($ip_range);
