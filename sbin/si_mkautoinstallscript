@@ -15,7 +15,7 @@ use lib "USR_PREFIX/lib/systemimager/perl";
 use Getopt::Long;
 use SystemImager::Server;
 use SystemImager::Common;
-use SystemImager::Config;
+use SystemImager::JConfig;
 use vars qw($config $VERSION);
 
 # Save how we were called so it can be reported as comment in the header of the generated script
