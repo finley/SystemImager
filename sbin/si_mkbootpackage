@@ -21,7 +21,6 @@
 #   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-use lib "USR_PREFIX/lib/systemimager/perl";
 use strict;
 use Carp;
 use POSIX;
@@ -31,7 +30,7 @@ use File::Basename;
 use File::Glob;
 use Getopt::Long;
 use vars qw($VERSION);
-use SystemImager::Config qw($config);
+use SystemImager::JConfig qw($config);
 use SystemImager::Common;
 use SystemImager::UseYourOwnKernel;
 
@@ -45,7 +44,7 @@ my $backup_extension = ".before_systemimager-$VERSION";
 my $rsyncd_conf_file = "/tmp/rsyncd.conf.$$";
 
 # set path
-$ENV{PATH} = "/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin";
+$ENV{PATH} = "/bin:/usr/bin:/sbin:/usr/sbin";
 
 # we rely on english text when parsing command output
 $ENV{"LANG"} = "C";
@@ -53,9 +52,9 @@ $ENV{"LANG"} = "C";
 my $progname = basename $0;
 
 my $arch = SystemImager::UseYourOwnKernel::_get_arch();
-my $autoinstall_boot_dir = $config->autoinstall_boot_dir;
+my $autoinstall_boot_dir = $config->get('pxe','boot_files');
 unless ($autoinstall_boot_dir) {
-    die "FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in ".$config->systemimager_dir."/systemimager.conf\n";
+    die "FATAL: parameter pxe.boot_files is not defined in ".$config->fileName()."\n";
 }
 
 my $version_info = <<"EOF";
