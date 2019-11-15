@@ -9,14 +9,36 @@
 # use SystemImager::JConfig;
 # use vars qw($config);
 #
-# my $port = $config->getParam('monitor_port');
-# $config->setParam('monitor_port',"8181");
+# read parameter value:
+#	my $port = $config->getParam('monitor','port');
+#	 => returns value upon success. undef otherwise.
+#
+# set parameter value:
+#	 $config->setParam('monitor','port',"8181");
+#	 => returns value upon success. undef otherwise.
+#
+# get/set configuration filename:
+#	my $file_name = $config->fileName()
+#	my $file_name = $config->fileName('/path/to/new/fileName')
+#	=> returns fileName.
+#
+# read default values for all parameters:
+# 	$config->loadDefaults()
+#	=> returns nothing. (dies if fails to load defaults).
+#
+# read parameters from config file:
+# 	my $config_structure = $config->loadConfig()
+#	=> returns undef upon failure.
+#	=> Note: using this module defines $config by default.
+#	   Thus this method is only needed internally.
+#
 
 package SystemImager::JConfig;
 
 use JSON;
 use strict;
 use warnings;
+use 5.010;
 
 BEGIN {
     use Exporter();
@@ -33,6 +55,7 @@ sub new {
 	my $class = shift;
 	my $self = {
 		_config_file => "/etc/systemimager/systemimager.json",
+		_config_scheme => "/usr/share/systemimager/webgui/config_scheme.json",
 		_config => undef,
 	};
 	# If SIS_CONFDIR is defined use this instead of default /etc/systemimager.
@@ -58,39 +81,47 @@ sub new {
 
 sub loadDefaults {
 	my ( $self ) = @_;
-	$self->{_config} = {
-		'images_dir' => '/var/lib/systemimager/images',
-		'overrides_dir' => '/var/lib/systemimager/overrides',
-		'scripts_dir' => '/var/lib/systemimager/scripts',
-		'clients_db_dir' => '/var/lib/systemimager/clients',
-		'tarballs_dir' => '/var/lib/systemimager/tarballs',
-		'torrents_dir' => '/var/lib/systemimager/torrents',
-		'pxe_boot_files' => '/usr/share/systemimager/boot',
-		'monitor_logfile' => '/var/log/systemimager/si_monitord.log',
-		'monitor_port' => '8181',
-		'monitor_loglevel' => '1',
-		'rsyncd_conf' => '/etc/systemimager/rsyncd.conf',
-		'rsync_stub_dir' => '/etc/systemimager/rsync_stubs',
-		'tftp_dir' => '/var/lib/tftpboot',
-		'pxe_boot_mode' => 'net',
+	# 1/ Read the scheme.
+	my $scheme_raw_text = do {
+		open(my $json_fh, "<:encoding(UTF-8)", $self->{_config_scheme})
+                        or die("Can't open \$filename\": $!\n");
+                local $/;
+                <$json_fh>
 	};
+	# 2/ Load defaults values.
+	my $scheme_hash = undef;
+	if (defined ($scheme_raw_text) ) {
+		my $json = JSON->new;
+		$scheme_hash = $json->decode($scheme_raw_text);
+		if (!defined ($scheme_hash)) {
+			die "Failed to parse $self->{_config_scheme}.";
+		}
+	} else {
+		die "Failed to read $self->{_config_scheme}.";
+	}
+	# 3/ Load defaults from scheme.
+	foreach my $field ( keys $scheme_hash) {
+		foreach my $param (keys $scheme_hash->{$field}) {
+			my $field_tolower = lc($field);
+			my $param_tolower = lc($param);
+			my @param_scheme = @{ $scheme_hash->{$field}->{$param} };
+			if ($param_scheme[0] eq "path") {
+				$self->{_config}->{$field_tolower}->{$param_tolower} = $param_scheme[1];
+		       	} elsif ($param_scheme[0] eq "file") {
+				$self->{_config}->{$field_tolower}->{$param_tolower} = $param_scheme[1];
+			} elsif ($param_scheme[0] eq "port") {
+				$self->{_config}->{$field_tolower}->{$param_tolower} = $param_scheme[1];
+			} elsif ($param_scheme[0] eq "select") {
+				$self->{_config}->{$field_tolower}->{$param_tolower} = $param_scheme[1][0]; # Def val is elmt #0 of possible values.
+			} elsif ($param_scheme[0] eq "text") {
+				$self->{_config}->{$field_tolower}->{$param_tolower} = $param_scheme[1];
+			} else {
+				die "Unknown field type in config_scheme: ".$param_scheme[0];
+			}
+		}
+	}
 	return;
 };
-
-#    'default_image_dir'         => { ARGCOUNT => 1 },
-#    'default_override_dir'      => { ARGCOUNT => 1 },
-#    'autoinstall_script_dir'    => { ARGCOUNT => 1 },
-#    'autoinstall_config_dir'    => { ARGCOUNT => 1 },
-#    'autoinstall_boot_dir'      => { ARGCOUNT => 1 },
-#    'rsyncd_conf'               => { ARGCOUNT => 1 },
-#    'rsync_stub_dir'            => { ARGCOUNT => 1 },
-#    'tftp_dir'                  => { ARGCOUNT => 1 },
-#    'net_boot_default'          => { ARGCOUNT => 1 },
-#    'autoinstall_tarball_dir'   => { ARGCOUNT => 1 },
-#    'autoinstall_torrent_dir'   => { ARGCOUNT => 1 },
-#    'systemimager_dir'          => { ARGCOUNT => 1,
-#				     ARGS => "=s",
-#				     DEFAULT => "/etc/systemimager" },
 
 sub loadConfig {
 	my ($self) = @_;
@@ -121,6 +152,7 @@ sub loadConfig {
 
 sub saveConfig {
 	my ($self) = @_;
+	die "saveConfig is not yet implemented."
 	# Not implemented. Needed?
 }
 
@@ -133,20 +165,20 @@ sub fileName {
 }
 
 sub get {
-	my ($self, $var_name) = @_;
-	if (exists($self->{_config}->{$var_name})) {
-		return($self->{_config}->{$var_name});
+	my ($self, $field, $var_name) = @_;
+	if (exists($self->{_config}->{$field}->{$var_name})) {
+		return($self->{_config}->{$field}->{$var_name});
 	} else {
-		warn "$var_name is not a systemimager configuration parameter";
+		warn "$field.$var_name is not a systemimager configuration parameter";
 		return undef;
 	}
 }
 
 sub set {
-	my ($self, $var_name, $value) = @_;
-	if (exists($self->{_config}->{$var_name})) {
-		$self->{_config}->{$var_name} = $value;
-		return $self->{_config}->{$var_name};
+	my ($self, $field, $var_name, $value) = @_;
+	if (exists($self->{_config}->{$field}->{$var_name})) {
+		$self->{_config}->{$field}->{$var_name} = $value;
+		return $self->{_config}->{$field}->{$var_name};
 	} else {
 		warn "$var_name is not a systemimager configuration parameter";
 		return undef;
