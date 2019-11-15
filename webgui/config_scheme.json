@@ -18,9 +18,11 @@
     },
     "xmit_rsync": {
     	"config_file": [ "file", "/etc/systemimager/rsyncd.conf", "SystemImager's own rsyncd.conf file" ],
-    	"stubs_dir": [ "path", "/etc/systemimager/rsync_stubs", "The path to the directory where SystemImager rsync stub files are stored" ]
+    	"stubs_dir": [ "path", "/etc/systemimager/rsync_stubs", "The path to the directory where SystemImager rsync stub files are stored" ],
+        "log_file": [ "file", "/var/log/systemimager/rsyncd", "The log file specific to SystemImager rsync daemon" ]
     },
     "xmit_torrent": {
+        "config_file": [ "file", "/etc/systemimager/bittorrent.conf", "Bittorrent main configuration file" ],
     	"tarballs_dir": [ "path", "/var/lib/systemimager/tarballs", "All images saved as tarball" ],
     	"torrents_dir": [ "path", "/var/lib/systemimager/torrents", "Place for .torrent files" ]
     },
