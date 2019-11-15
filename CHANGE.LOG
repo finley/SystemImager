@@ -10,8 +10,10 @@
 
 5.0.0 [ Not yet released ]
 --------------------------------------------------------------------------------
-- Linux distro supported: CentOS-6, CentOS-7, Fedora-27, Open SuSE-42.3, debian8, debian9
-- Plymouth GUI
+- Linux distro supported: CentOS-6, CentOS-7, CentOS-8, Fedora-29, Open SuSE-42.3, debian8, debian9
+- Imager GUI based on Plymouth (text also available)
+- Web GUI for setup and replacement of si_monitortk (console and clients list) and netmootmgr
+- New SystemImager configuration file based on json. More parameters and common API for bash/perl/php/ECMA script.
 - PXE Menu GUI (si_mkbootserver)
 - direct boot feature (no reboot after imaging)
 - Put transfert protocols in plugins API instead of being hardcodded into

@@ -4,11 +4,11 @@
 
 ============= TODO for the dracut change before release is possible ===========
 BUG: CentOS-6: pre-pivot/10kill-dhclient.sh: line 6: kill: (785) - No such process
-BUG: Creating systemimager-monitor-firstboot init script
+DONE: Creating systemimager-monitor-firstboot init script
      ls: cannot access /boot/vmlinuz-*: No such file or directory
 BUG: /scripts is seen as os filesystem and is bindmounted
-BUG: remote console hangs after filesystems init.
-BUG: si_monitortk is not refreshed after finalizing step (booting, ...)
+DONE: remote console hangs after filesystems init.
+REMOVED: si_monitortk is not refreshed after finalizing step (booting, ...)
 BUG: variables.txt is not updated with SI_IMAGING_STATUS that stays at "inprogress" step.
 - Add imager version to beginning of LOG.
 - Display imager version in plymouth interface.
@@ -37,31 +37,31 @@ BUG: variables.txt is not updated with SI_IMAGING_STATUS that stays at "inprogre
 - allow ipv6 DNS in network-configs.xsd
 - DONE: Display a relevant error message if ip= mention and invalid network interface.
 
-=== WEB INTERFACE ON IMAGER as alternative to si_monitortk ===
+DONE: === WEB INTERFACE ON IMAGER as alternative to si_monitortk ===
 For now, the remote console has the following problems:
-- Can’t see the console log of a NATed client being imaged
-- Can’t see the console log if the client imaging is finished
-- Can’t see multiple consoles at a time
-- Can’t filter logs (select only errors or only warnings for example)
-- Logs stays on client and needs to be transferred by hand if one want to share it
-- Based on perl/Tk with depedancy to TkTermANSIColor that is not packaged in distros
-- Has problems with some ncat versions (nc, ncat multiple versions, netcat) (sockets timeout, hangs if input timeout (filesystem init too long, …)
-- Requires an X display to start si_monitortk
-- Requires to connect to image server to start si_monitortk
+DONE: Can’t see the console log of a NATed client being imaged
+DONE: Can’t see the console log if the client imaging is finished
+DONE: Can’t see multiple consoles at a time
+DONE: Can’t filter logs (select only errors or only warnings for example)
+DONE: Logs stays on client and needs to be transferred by hand if one want to share it
+DONE: Based on perl/Tk with depedancy to TkTermANSIColor that is not packaged in distros
+DONE: Has problems with some ncat versions (nc, ncat multiple versions, netcat) (sockets timeout, hangs if input timeout (filesystem init too long, …)
+DONE: Requires an X display to start si_monitortk
+DONE: Requires to connect to image server to start si_monitortk
 
-IMHO, a really cool feature would be to add a web interface to image server with the following features:
-- Hosts statuses (si_monitortk main window replacement)
-- List all known clients
-- Clicking on a client will show Console log (with page auto-refresh for update)
+DONE:IMHO, a really cool feature would be to add a web interface to image server with the following features:
+DONE:- Hosts statuses (si_monitortk main window replacement)
+DONE:- List all known clients
+DONE:- Clicking on a client will show Console log (with page auto-refresh for update)
 - Add HELP tips for warning and errors (you click the message and an help page tries to give advise and solutions
 - List know clusters.
-- Info page with general setup
+DONE:- Info page with general setup
 - HTML Online Doc
 - PXE config
 => Use XSL for displaying clients and consoles
 => Use RSS news when an imaging has ended.
 - Room to add an admin interface to configure systemimager, but that requires lots of work (security and a PHP/CGI interface) so It’ll be released far later.
-	- Systemimager configuration
+DONE:	- Systemimager configuration
 	- Image creation
 	- PXE configuration (install kernels and initrd, create menu entries)
 	- Services configuration (start/stop/build services: rsync, …)
