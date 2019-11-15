@@ -27,13 +27,13 @@ use SystemImager::Server;
 use SystemImager::Common;
 use SystemImager::Config;
 
-my $rsync_stub_dir = $config->rsync_stub_dir();
+my $rsync_stub_dir = $config->get('xmit_rsync','stubs_dir');
 unless ($rsync_stub_dir) {
-    die "FATAL: parameter RSYNC_STUB_DIR is not defined in ".$config->systemimager_dir."/systemimager.conf\n";
+    die "FATAL: parameter xmit_rsync.stubs_dir is not defined in ".$config->fileName()."\n";
 }
-my $rsyncd_conf = $config->rsyncd_conf();
+my $rsyncd_conf = $config->get('xmit_rsync',''config_file);
 unless ($rsyncd_conf) {
-    die "FATAL: parameter RSYNCD_CONF is not defined in ".$config->systemimager_dir."/systemimager.conf\n";
+    die "FATAL: parameter xmit_rsync.config_file is not defined in ".$config->fileName()."\n";
 }
 
 SystemImager::Common->check_if_root();
