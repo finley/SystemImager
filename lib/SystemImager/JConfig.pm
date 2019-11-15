@@ -66,7 +66,7 @@ sub new {
 		$env_sis_confdir =~ s/\/+$//; # Remove useless trailing slashes
 
 		if ( -d "$env_sis_confdir" ) {
-			$self->{_config_file} = "$env_sis_confdir/systemimager.conf";
+			$self->{_config_file} = "$env_sis_confdir/systemimager.json";
 		}
 	}
 	# At this point, $self->{_config_file} is defined.
@@ -129,7 +129,7 @@ sub loadConfig {
 	# 1st: load config file content.
 	my $config_raw_text = do {
         	open(my $json_fh, "<:encoding(UTF-8)", $self->{_config_file})
-        	        or die("Can't open \$filename\": $!\n");
+                       or die("Can't open $self->{_config_file}: $!\n");
         	local $/;
         	<$json_fh>
 	};
