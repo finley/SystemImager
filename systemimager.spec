@@ -1298,6 +1298,7 @@ fi
 %dir %{perl_vendorlib}/SystemImager
 %{perl_vendorlib}/SystemImager/Common.pm
 %{perl_vendorlib}/SystemImager/Config.pm
+%{perl_vendorlib}/SystemImager/JConfig.pm
 %{perl_vendorlib}/SystemImager/Options.pm
 %{perl_vendorlib}/SystemImager/UseYourOwnKernel.pm
 %dir %{_sysconfdir}/systemimager
@@ -1361,7 +1362,6 @@ fi
 %{_bindir}/si_pcp
 %{_bindir}/si_pushoverrides
 %{perl_vendorlib}/SystemImager/Server.pm
-%{perl_vendorlib}/SystemImager/Config.pm
 %{perl_vendorlib}/SystemImager/HostRange.pm
 %{_prefix}/lib/systemimager/confedit
 %{perl_vendorlib}/BootMedia
