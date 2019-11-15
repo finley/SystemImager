@@ -9,40 +9,40 @@
 #    - apply umask patch for Daniel Widyono
 #
 
-use lib "USR_PREFIX/lib/systemimager/perl";
 use strict;
 use File::Copy;
 use POSIX qw(setsid);
-use SystemImager::Config;
+use SystemImager::JConfig;
 use SystemImager::HostRange;
 use SystemImager::Server;
 use vars qw($config $VERSION);
 
 $0 = "si_netbootmond";
 
-my $net_boot_default = lc $config->net_boot_default();
+my $sis_conf=$config->fileName();
+
+my $net_boot_default = lc $config->get('pxe','boot_mode');
 if("$net_boot_default" eq "net") {
-    my $sis_dir=$config->systemimager_dir;
-    print STDERR qq(\nNET_BOOT_DEFAULT set to "$net_boot_default" in $sis_dir/systemimager.conf.\n);
+    print STDERR qq(\npxe.boot_mode is set to "$net_boot_default" in $sis_conf.\n);
     print STDERR qq(No need for me here, so I'm exiting. See si_netbootmond\(8\) for details.\n);
     exit 0;
 }
 
-my $tftp_dir = $config->tftp_dir();
+my $tftp_dir = $config->get('pxe','tftp_dir');
 my $pxe_conf_dir;
 my $kboot_conf_dir;
 
 unless($tftp_dir) {
-    die "FATAL: parameter TFTP_DIR is not defined in ".$config->systemimager_dir."/systemimager.conf\n";
+    die "FATAL: parameter pxe.tftp_dir is not defined in ".$sis_conf."\n";
 } else {
     $pxe_conf_dir = "$tftp_dir" . "/pxelinux.cfg";
     $kboot_conf_dir = "$tftp_dir" . "/kboot.cfg";
 }
 
-my $syslinux_cfg_localboot = $config->systemimager_dir."/pxelinux.cfg/syslinux.cfg.localboot";
-my $kboot_cfg_localboot = $config->systemimager_dir."/kboot.cfg/localboot";
+my $syslinux_cfg_localboot = "/etc/systemimager/pxelinux.cfg/syslinux.cfg.localboot";
+my $kboot_cfg_localboot = "/etc/systemimager/kboot.cfg/localboot";
 my $pid_file = "/var/run/si_netbootmond.pid";
-my $log_file = "/var/log/systemimager/rsyncd";
+my $log_file = $config->get('xmit_rsync','log_file');
 
 
 ################################################################################
