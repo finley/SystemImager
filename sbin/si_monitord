@@ -112,29 +112,29 @@ function SystemImagerMonitor() {
 MONITOR_LOGFILE="$(cat /etc/systemimager/systemimager.json |jq -j '.monitor.log_file')"
 if test ! -d "${MONITOR_LOGFILE%/*}"
 then
-	unset MONITOR_LOGFILE
 	logger -t systemimager -p local0.err "monitor_logfile: wrong path: ${MONITOR_LOGFILE%/*}. Defaulting to /var/log/systemimager/si_monitord.log"
+	unset MONITOR_LOGFILE
 fi
 
 MONITOR_PORT="$(cat /etc/systemimager/systemimager.json |jq -j '.monitor.port')"
 if test -z "${MONITOR_PORT##*[!0-9]*}" # Ok is only integers. (TODO: Add valid port range checking)
 then
-	unset MONITOR_PORT
 	logger -t systemimager -p local0.err "monitor_port: must be an integer: $MONITOR_PORT. Defaulting to 8181."
+	unset MONITOR_PORT
 fi
 
 MONITOR_LOGLEVEL="$(cat /etc/systemimager/systemimager.json |jq -j '.monitor.log_level')"
 if ! test -z "${MONITOR_LOGLEVEL#[0-5]}" # Ok if empty of nulmber between 0 and 5.
 then
-	unset MONITOR_LOGLEVEL
 	logger -t systemimager -p local0.err "monitor_loglevel: ($MONITOR_LOGLEVEL) must be an integer between 0 and 5. Defaulting to 0 (zero)."
+	unset MONITOR_LOGLEVEL
 fi
 
 CLIENTS_DB_DIR="$(cat /etc/systemimager/systemimager.json |jq -j '.monitor.clients_db_dir')"
 if test ! -d "${CLIENTS_DB_DIR}"
 then
-        CLIENTS_DB_DIR=/var/lib/systemimager/clients
         logger -t systemimager -p local0.err "clients_db_dir: wrong path: ${CLIENTS_DB_DIR}. Defaulting to /var/lib/systemimager/clients"
+        CLIENTS_DB_DIR=/var/lib/systemimager/clients
 fi
 
 
