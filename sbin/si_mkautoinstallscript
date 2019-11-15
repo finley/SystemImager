@@ -22,17 +22,17 @@ use vars qw($config $VERSION);
 my $cmdline = $0." ".join(" ",@ARGV);
 
 ### BEGIN parse the config file ###
-my $rsync_stub_dir = $config->rsync_stub_dir();
+my $rsync_stub_dir = $config->get('xmit_rsync','stubs_dir');
 unless ($rsync_stub_dir) {
-    die "FATAL: parameter RSYNC_STUB_DIR is not defined in ".$config->systemimager_dir."/systemimager.conf\n";
+    die "FATAL: parameter xmit_rsync.stubs_diris not defined in ".$config->fileName()."\n";
 }
-my $autoinstall_script_dir = $config->autoinstall_script_dir();
+my $autoinstall_script_dir = $config->get('imager','scripts_dir');
 unless ($autoinstall_script_dir) {
-    die "FATAL: parameter AUTOINSTALL_SCRIPT_DIR is not defined in ".$config->systemimager_dir."/systemimager.conf\n";
+    die "FATAL: parameter imager.scripts_dir is not defined in ".$config->fileName()."\n";
 }
-my $rsyncd_conf = $config->rsyncd_conf();
+my $rsyncd_conf = $config->get('xmit_rsync','config_file');
 unless ($rsyncd_conf) {
-    die "FATAL: parameter RSYNCD_CONF is not defined in ".$config->systemimager_dir."/systemimager.conf\n";
+    die "FATAL: parameter xmit_rsync.config_file is not defined in ".$config->fileName()."\n";
 }
 ### END parse the config file ###
 
@@ -225,6 +225,7 @@ if ($auto_install_script_conf) {
     }
 } else {
     # If an autoinstallscript was not specified, use default for autoinstallscript.conf. -BEF-
+    # OL: BUG: Deprecated stuffs. now using disks layout file.
     $auto_install_script_conf = "${imagedir}/etc/systemimager/autoinstallscript.conf";
     unless (-f $auto_install_script_conf) {
         die "ERROR: I can't find the autoinstallscript.conf file. See autoinstallscript.conf(8) for details.\n";
@@ -246,7 +247,7 @@ SystemImager::Server->validate_auto_install_script_conf( $auto_install_script_co
 SystemImager::Server->create_autoinstall_script(
 	$script_name,
 	$autoinstall_script_dir,
-	$config->systemimager_dir,
+	'/etc/systemimager',
 	$image,
 	$overrides,
 	$imagedir,
