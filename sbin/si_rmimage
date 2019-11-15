@@ -33,29 +33,29 @@ use File::Path;
 use Getopt::Long;
 use SystemImager::Server;
 use SystemImager::Common;
-use SystemImager::Config;
+use SystemImager::JConfig;
 use vars qw($config);
 
 ### BEGIN parse the config file ###
-my $autoinstall_script_dir = $config->autoinstall_script_dir();
+my $autoinstall_script_dir = $config->get('imager','scripts_dir');
 unless ($autoinstall_script_dir) {
-    die "FATAL: parameter AUTOINSTALL_SCRIPT_DIR is not defined in ".$config->systemimager_dir."/systemimager.conf\n";
+    die "FATAL: parameter imager.scripts_dir is not defined in ".$config->fileName()."\n";
 }
-my $autoinstall_boot_dir = $config->autoinstall_boot_dir();
+my $autoinstall_boot_dir = $config->get('pxe','boot_files');
 unless ($autoinstall_boot_dir) {
-    die "FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in ".$config->systemimager_dir."/systemimager.conf\n";
+    die "FATAL: parameter pxe.boot_files is not defined in ".$config->fileName()."\n";
 }
-my $rsyncd_conf = $config->rsyncd_conf();
+my $rsyncd_conf = $config->get('xmit_rsync','config_file');
 unless ($rsyncd_conf) {
-    die "FATAL: parameter RSYNCD_CONF is not defined in ".$config->systemimager_dir."/systemimager.conf\n";
+    die "FATAL: parameter xmit_rsync.config_file is not defined in ".$config->fileName()."\n";
 }
-my $rsync_stub_dir = $config->rsync_stub_dir();
+my $rsync_stub_dir = $config->get('xmit_rsync','stubs_dir');
 unless ($rsync_stub_dir) {
-    die "FATAL: parameter RSYNC_STUB_DIR is not defined in ".$config->systemimager_dir."/systemimager.conf\n";
+    die "FATAL: parameter xmit_rsync.stubs_dir is not defined in ".$config->fileName()."\n";
 }
-my $default_override_dir = $config->default_override_dir();
+my $default_override_dir = $config->get('imager','overrides_dir');
 unless ($default_override_dir) {
-    die "FATAL: parameter DEFAULT_OVERRIDE_DIR is not defined in ".$config->systemimager_dir."/systemimager.conf\n";
+    die "FATAL: parameter imager.overrides_dir is not defined in ".$config->fileName()."\n";
 }
 ### END parse the config file ###
 
@@ -148,8 +148,9 @@ unless(($imagedir) or ($force)) {
 }
 
 # get architecture of the image (for removing UYOK boot files later on)
+# BUG: OL: /etc/systemimager/boot/ARCH not in images: broken?
 my $arch;
-$file=$imagedir . $config->systemimager_dir . "/boot/ARCH";
+$file=$imagedir . "/etc/systemimager" . "/boot/ARCH"; # was $config->systemimager_dir
 if( -e $file ) {
     open(FILE,"<$file") or die("Couldn't open $file for reading $!");
       $arch = (<FILE>)[0];
@@ -210,7 +211,7 @@ SystemImager::Server->gen_rsyncd_conf($rsync_stub_dir, $rsyncd_conf);
 
 # remove image from flamethrower.conf file
 my $entry_name = $image;
-my $flamethrower_conf = $config->systemimager_dir . "/flamethrower.conf";
+my $flamethrower_conf = $config->get('xmit_flamethrower','config_file');
 if(-e $flamethrower_conf) {
     SystemImager::Common->add_or_delete_conf_file_entry($flamethrower_conf, $entry_name) or
         die "$program_name: Cannot remove entry from $flamethrower_conf";
