@@ -160,9 +160,9 @@ unless ($all_parameters_set) {
 }
 
 
-my $autoinstall_script_dir = $config->get('scripts_dir');
+my $autoinstall_script_dir = $config->get('imager','scripts_dir');
 unless ($autoinstall_script_dir) {
-    die "FATAL: parameter AUTOINSTALL_SCRIPT_DIR is not defined in ".$config->fileName()."\n";
+    die "FATAL: parameter imager.scripts_dir is not defined in ".$config->fileName()."\n";
 }
 
 if($interactive eq "yes") {
