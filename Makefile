@@ -193,10 +193,10 @@ KBOOT_CONF_SRC    = etc/kboot.cfg
 KBOOT_CONF_DEST   = $(ETC)/systemimager/kboot.cfg
 
 BINARIES := si_mkautoinstallcd si_mkautoinstalldisk si_psh si_pcp si_pushoverrides si_clusterconfig
-SBINARIES := si_addclients si_cpimage si_getimage si_lint si_mkdhcpserver si_mkdhcpstatic si_mkautoinstallscript si_mvimage si_pushupdate si_pushinstall si_rmimage si_mkrsyncd_conf si_mkclientnetboot si_netbootmond si_monitor si_monitortk si_installbtimage
+SBINARIES := si_addclients si_cpimage si_getimage si_lint si_mkdhcpserver si_mkdhcpstatic si_mkautoinstallscript si_mvimage si_pushupdate si_pushinstall si_rmimage si_mkrsyncd_conf si_mkclientnetboot si_netbootmond si_installbtimage
 CLIENT_SBINARIES  := si_updateclient si_prepareclient
 COMMON_BINARIES   := si_lsimage si_mkbootpackage
-WEB_SRC           := client_console.php client_list.php config.php edit_config.php functions.js functions.php push_client_defs.php push_client_logs.php css/Background.png css/SystemImagerBanner.png css/flex_table.css css/screen.css css/sliders.css images/Alecive-Flatwoken-Apps-Dialog-Apply.svg images/Alecive-Flatwoken-Apps-Dialog-Close.svg images/Alecive-Flatwoken-Apps-Dialog-Logout.svg images/Alecive-Flatwoken-Apps-Dialog-Refresh.svg images/Alecive-Flatwoken-Apps-Settings.svg
+WEB_SRC           := client_console.php client_list.php config.php edit_config.php config_scheme.json functions.js functions.php push_client_defs.php push_client_logs.php css/Background.png css/SystemImagerBanner.png css/flex_table.css css/screen.css css/sliders.css images/Alecive-Flatwoken-Apps-Dialog-Apply.svg images/Alecive-Flatwoken-Apps-Dialog-Close.svg images/Alecive-Flatwoken-Apps-Dialog-Logout.svg images/Alecive-Flatwoken-Apps-Dialog-Refresh.svg images/Alecive-Flatwoken-Apps-Settings.svg
 
 IMAGESRC    = $(TOPDIR)/var/lib/systemimager/images
 IMAGEDEST   = $(DESTDIR)/var/lib/systemimager/images

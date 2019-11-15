@@ -38,8 +38,6 @@ SERVER_MAN = si_addclients.8 				\
 			si_mkbootpackage.8		\
 			\
 			si_installbtimage.8		\
-			si_monitor.8			\
-			si_monitortk.8			\
 			si_pcp.8			\
 			si_psh.8			\
 			si_pushinstall.8		\
@@ -67,12 +65,6 @@ systemimager-rsyncd.conf.5:	systemimager-rsyncd.conf.pod
 	pod2man --release=$(SYSTEMIMAGER_VERSION) -s 5 -c "SystemImager" $< $@
 
 si_installbtimage.8: $(TOPDIR)/sbin/si_installbtimage
-	pod2man --release=$(SYSTEMIMAGER_VERSION) -s 8 -c "SystemImager" $< $@
-
-si_monitor.8: $(TOPDIR)/sbin/si_monitor
-	pod2man --release=$(SYSTEMIMAGER_VERSION) -s 8 -c "SystemImager" $< $@
-
-si_monitortk.8: $(TOPDIR)/sbin/si_monitortk
 	pod2man --release=$(SYSTEMIMAGER_VERSION) -s 8 -c "SystemImager" $< $@
 
 si_pcp.8: $(TOPDIR)/sbin/si_pcp

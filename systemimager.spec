@@ -265,7 +265,7 @@ BuildArch: noarch
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
-Requires: perl, systemconfigurator >= 2.2.11
+Requires: perl, perl-JSON, systemconfigurator >= 2.2.11
 #AutoReqProv: no
 
 %description common
@@ -336,6 +336,7 @@ Obsoletes: systemimager-%{_arch}boot
 %if ! %is_suse
 BuildRequires: dracut-network
 %endif
+BuildRequires: perl-JSON
 BuildRequires: dracut
 BuildRequires: plymouth-plugin-script, plymouth-plugin-label
 BuildRequires: psmisc, kexec-tools, bind-utils, net-tools, ethtool, lsscsi, usbutils, pciutils, lshw, hwdata
@@ -538,7 +539,8 @@ SystemImager admin web interface.
 %changelog
 * Mon Nov 4 2019 Olivier Lahaye <olivier.lahaye@cea.fr> 4.9.0-0.1
 - Port to CentOS-8
-- New web GUI.
+- New web GUI (deprecated si_monitor and si_monitortk).
+- New configuration based on json. Api for perl/php/javascript/bash.
 - New log system that can catch stderr, stdout and system/kernel messages.
 
 * Mon Sep 30 2019 Olivier Lahaye <olivier.lahaye@cea.fr> 4.5.0-0.25
@@ -1353,8 +1355,6 @@ fi
 %{_sbindir}/si_pushupdate
 %{_sbindir}/si_pushinstall
 %{_sbindir}/si_rmimage
-%{_sbindir}/si_monitor
-%{_sbindir}/si_monitortk
 %{_bindir}/si_clusterconfig
 %{_bindir}/si_mk*
 %{_bindir}/si_psh
@@ -1443,6 +1443,7 @@ fi
 %dir %{_datarootdir}/systemimager/webgui
 %dir %{_datarootdir}/systemimager/webgui/css
 %{_datarootdir}/systemimager/webgui/edit_config.php
+%{_datarootdir}/systemimager/webgui/config_scheme.json
 %{_datarootdir}/systemimager/webgui/client_list.php
 %{_datarootdir}/systemimager/webgui/push_client_defs.php
 %{_datarootdir}/systemimager/webgui/client_console.php
