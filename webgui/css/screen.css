@@ -1,3 +1,20 @@
+/* Light mode */
+@media (prefers-color-scheme: light) {
+  body {
+    background-color: lightgrey;
+    color: black;
+  }
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: darkgrey;
+    background-image: url('Background.png');
+    color: #f5f5f5;
+  }
+}
+
 html, body {
   margin: 0px;
   padding: 0px;
@@ -6,11 +23,8 @@ html, body {
 }
 
 body {
-  background-color: lightgrey;
-  background-image: url('Background.png');
   background-position: center;
   background-size: 100%;
-  color: #f5f5f5;
   font-size: medium ; 
   font-family: Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New, monospace;
   display: inline;
