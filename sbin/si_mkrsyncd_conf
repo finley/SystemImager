@@ -31,7 +31,7 @@ my $rsync_stub_dir = $config->get('xmit_rsync','stubs_dir');
 unless ($rsync_stub_dir) {
     die "FATAL: parameter xmit_rsync.stubs_dir is not defined in ".$config->fileName()."\n";
 }
-my $rsyncd_conf = $config->get('xmit_rsync',''config_file);
+my $rsyncd_conf = $config->get('xmit_rsync','config_file');
 unless ($rsyncd_conf) {
     die "FATAL: parameter xmit_rsync.config_file is not defined in ".$config->fileName()."\n";
 }
