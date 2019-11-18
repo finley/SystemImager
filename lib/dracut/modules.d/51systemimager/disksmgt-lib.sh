@@ -1144,7 +1144,7 @@ _do_fstab() {
 			# If mountpoint is a PATH, AND filesystem is not virtual, create the path and mount filesystem to sysroot.
 			if test "${M_MP:0:1}" = "/" -a -n "`echo "ext2|ext3|ext4|xfs|jfs|reiserfs|btrfs|ntfs|msdos|vfat|fat|fat32|fat16" |grep \"${M_FS}\"`"
 			then
-				loginfo "Creating mountpoint ${M_MP}"
+				loginfo "Creating mountpoint for ${M_MP}"
 				logaction "mkdir -p /sysroot${M_MP}"
 				mkdir -p /sysroot${M_MP} || shellout "Failed to create ${M_MP}"
 				loginfo "Mounting ${M_DEV} to /sysroot${M_MP}"
