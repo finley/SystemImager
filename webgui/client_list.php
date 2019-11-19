@@ -25,7 +25,7 @@
 <table id="headerTable">
   <tbody>
     <tr>
-      <td><img src="css/SystemImagerBanner.png" alt="SystemImagezr"></td>
+      <td><img src="css/SystemImagerBanner.png" alt="SystemImager"></td>
       <td id="clientData1">&nbsp;</td>
       <td id="clientData2">&nbsp;</td>
     </tr>
