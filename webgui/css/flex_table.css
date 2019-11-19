@@ -1,3 +1,26 @@
+/* Light mode */
+@media (prefers-color-scheme: light) {
+    .clients_grid > div {
+        color: #333333;
+        border-bottom: 1px solid rgba(0,0,0,0.2);
+        border-left: 1px solid rgba(0,0,0,0.2);
+    }
+    .head, .foot {
+        background: lightgrey;
+    }
+ }
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+    .clients_grid > div {
+        color: #DDDDDD;
+        border-bottom: 1px solid rgba(255,255,255,0.2);
+        border-left: 1px solid rgba(255,255,255,0.2);
+    }
+    .head, .foot {
+        background: #333333;
+    }
+} 
+
 html, body {
     margin: 0;
     padding: 0;
@@ -23,6 +46,7 @@ header {
     color: white; 
     font-weight: bold;
 }
+
 article { 
     flex: 1 1 auto;
     overflow-x: hidden; /* scroll to debug */
@@ -78,11 +102,8 @@ header > :last-child, .log_row > :last-child, footer > :last-child {
 }
 
 .clients_grid > div {
-    color: white;
     padding: 0.2em 0.5em;
     font-size: medium;
-    border-bottom: 1px solid rgba(255,255,255,0.2);
-    border-left: 1px solid rgba(255,255,255,0.2);
 
 /* SCSS version of next styles */
 /*
@@ -133,6 +154,7 @@ header > :last-child, .log_row > :last-child, footer > :last-child {
     top:0;
     font-weight: bold;
 }
+
 .foot {
     top:auto;
     bottom:0;
