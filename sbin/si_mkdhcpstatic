@@ -50,6 +50,7 @@ my %host_by_ip = get_host_by_ip(%ip_by_mac);
 
 # Oh where oh where could my dhcpd.conf file be?
 my @dhcpd_conf_file_locations_du_jour = ( 
+    "/etc/dhcp/dhcpd.conf",
     "/etc/dhcp3/dhcpd.conf",
     "/etc/dhcpd.conf"
 );
