@@ -33,7 +33,7 @@
     color: #9999FF;
   }
 
-  .menu_button {
+  .menu_button, .flex_content > fieldset {
     background: rgba(0,0,0,0.1);
   }
 
@@ -83,7 +83,7 @@
     color: #9999FF;
   }
 
-  .menu_button {
+  .menu_button, .flex_content > fieldset {
     background: rgba(255,255,255,0.1);
   }
 
@@ -345,8 +345,9 @@ select:focus, input:focus, button:focus {
   display: grid;
 /*  border: 2px dashed rgba(114, 186, 94, 0.35);
   background: rgba(114, 186, 94, 0.05); */
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   grid-template-rows: auto;
+  grid-gap: 2em;
   justify-items: center; /* Align horizontally */
   align-items: center;   /* Align vertically */
 }
@@ -356,6 +357,11 @@ select:focus, input:focus, button:focus {
   margin-left: auto;
   margin-right: auto;
   width: 40%;
+}
+
+.menu_button p {
+  text-align: center;
+  width: 20em;
 }
 
 /* .menu_button {

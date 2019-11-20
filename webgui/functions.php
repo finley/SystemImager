@@ -152,4 +152,29 @@ function folder_exist($folder)
     return false;
 }
 
+/*
+ * netMatch function. Source: https://www.php.net/manual/en/function.ip2long.php#82397
+ * Usage:
+ * cidr_match("192.168.0.1","192.168.0.0/24") => returns true
+ */
+function cidr_match($ip, $cidr)
+{
+    list($subnet, $mask) = explode('/', $cidr);
+
+    if ((ip2long($ip) & ~((1 << (32 - $mask)) - 1) ) == ip2long($subnet))
+    { 
+        return true;
+    }
+
+    return false;
+}
+
+/*
+ * return IPv4 netmask given the cidr mask.
+ * Source: https://stackoverflow.com/questions/5710860/php-cidr-prefix-to-netmask
+ */
+function cidr2mask($int) {
+    return long2ip(-1 << (32 - (int)$int));
+}
+
 ?>

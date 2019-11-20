@@ -25,7 +25,7 @@
 <table id="headerTable">
   <tbody>
     <tr>
-      <td><img src="css/SystemImagerBanner.png" alt="SystemImager"></td>
+      <td><a href="index.php"><img src="css/SystemImagerBanner.png" alt="SystemImager"></a></td>
       <td id="clientData1">&nbsp;</td>
       <td id="clientData2">&nbsp;</td>
     </tr>
@@ -129,7 +129,7 @@ function ResetClientsHandler(event) {
 function UpdateClientsHandler(event) {
   try { 
     var clientInfos = JSON.parse(event.data);
-    clientLine = "<div><a href='client_console.php?client=" + clientInfos.name + "'>" + clientInfos.host + "</a>"
+    clientLine = "<div><a href='client_console.php?client=" + clientInfos.name + "' class=\"lnk\">" + clientInfos.host + "</a>"
 		+ "</div><div>" + StatusToText(clientInfos.status)
 		+ "</div><div>" + clientInfos.os
 		+ "</div><div>" + clientInfos.speed

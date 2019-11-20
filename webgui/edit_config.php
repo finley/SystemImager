@@ -75,7 +75,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") { // we're called as post
 <table id="headerTable"> <!-- SystemImager header -->
   <tbody>
     <tr>
-      <td><img src="css/SystemImagerBanner.png" alt="SystemImager"></td>
+      <td><a href="index.php"><img src="css/SystemImagerBanner.png" alt="SystemImager"></a></td>
       <td id="clientData1">&nbsp;</td>
       <td id="clientData2">&nbsp;</td>
     </tr>
