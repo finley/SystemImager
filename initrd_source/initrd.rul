@@ -72,7 +72,7 @@ $(INITRD_BOOTFILES_DIR).prep: $(INITRD_BOOTFILES_DIR).skel
 
 $(INITRD_BOOTFILES_DIR).build: $(INITRD_BOOTFILES_DIR).prep $(LOCAL_DRACUT_BASEDIR).build $(INITRD_BUILD_DIR).build
 	cd $(LOCAL_DRACUT_BASEDIR); \
-	SIS_CONFDIR=$(INITRD_BUILD_DIR)/etc dracutbasedir=$(LOCAL_DRACUT_BASEDIR) SI_INITRD_TEMPLATE=$(INITRD_DIR)/skel perl -I $(TOPDIR)/lib $(TOPDIR)/sbin/si_mkbootpackage -y --dracut-opts="--local" --destination $(INITRD_BOOTFILES_DIR)
+	SIS_WEBGUIDIR=$RPM_BUILD_DIR/%{name}-%{version}/webgui SIS_CONFDIR=$(INITRD_BUILD_DIR)/etc dracutbasedir=$(LOCAL_DRACUT_BASEDIR) SI_INITRD_TEMPLATE=$(INITRD_DIR)/skel perl -I $(TOPDIR)/lib $(TOPDIR)/sbin/si_mkbootpackage -y --dracut-opts="--local" --destination $(INITRD_BOOTFILES_DIR)
 	touch $@
 
 PHONY += build_dir 
