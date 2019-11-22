@@ -1442,12 +1442,17 @@ fi
 %config(noreplace) %{_sysconfdir}/httpd/conf.d/systemimager.conf
 %dir %{_datarootdir}/systemimager/webgui
 %dir %{_datarootdir}/systemimager/webgui/css
+%{_datarootdir}/systemimager/webgui/index.php
 %{_datarootdir}/systemimager/webgui/edit_config.php
-%{_datarootdir}/systemimager/webgui/config_scheme.json
+%{_datarootdir}/systemimager/webgui/manage_netboot.php
+%{_datarootdir}/systemimager/webgui/edit_clusters.php
+%{_datarootdir}/systemimager/webgui/edit_dhcp.php
+%{_datarootdir}/systemimager/webgui/health_console.php
 %{_datarootdir}/systemimager/webgui/client_list.php
-%{_datarootdir}/systemimager/webgui/push_client_defs.php
 %{_datarootdir}/systemimager/webgui/client_console.php
+%{_datarootdir}/systemimager/webgui/push_client_defs.php
 %{_datarootdir}/systemimager/webgui/push_client_logs.php
+%{_datarootdir}/systemimager/webgui/config_scheme.json
 %{_datarootdir}/systemimager/webgui/functions.php
 %{_datarootdir}/systemimager/webgui/functions.js
 %{_datarootdir}/systemimager/webgui/css/SystemImagerBanner.png
@@ -1460,4 +1465,10 @@ fi
 %{_datarootdir}/systemimager/webgui/images/Alecive-Flatwoken-Apps-Dialog-Logout.svg
 %{_datarootdir}/systemimager/webgui/images/Alecive-Flatwoken-Apps-Dialog-Refresh.svg
 %{_datarootdir}/systemimager/webgui/images/Alecive-Flatwoken-Apps-Settings.svg
+%{_datarootdir}/systemimager/webgui/images/health_console.png
+%{_datarootdir}/systemimager/webgui/images/edit_clusters.png
+%{_datarootdir}/systemimager/webgui/images/client_list.png
+%{_datarootdir}/systemimager/webgui/images/edit_config.png
+%{_datarootdir}/systemimager/webgui/images/manage_netboot.png
+%{_datarootdir}/systemimager/webgui/images/edit_dhcp.png
 

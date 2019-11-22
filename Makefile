@@ -196,7 +196,7 @@ BINARIES := si_mkautoinstallcd si_mkautoinstalldisk si_psh si_pcp si_pushoverrid
 SBINARIES := si_addclients si_cpimage si_getimage si_lint si_mkdhcpserver si_mkdhcpstatic si_mkautoinstallscript si_mvimage si_pushupdate si_pushinstall si_rmimage si_mkrsyncd_conf si_mkclientnetboot si_netbootmond si_installbtimage
 CLIENT_SBINARIES  := si_updateclient si_prepareclient
 COMMON_BINARIES   := si_lsimage si_mkbootpackage
-WEB_SRC           := client_console.php client_list.php config.php edit_config.php config_scheme.json functions.js functions.php push_client_defs.php push_client_logs.php css/Background.png css/SystemImagerBanner.png css/flex_table.css css/screen.css css/sliders.css images/Alecive-Flatwoken-Apps-Dialog-Apply.svg images/Alecive-Flatwoken-Apps-Dialog-Close.svg images/Alecive-Flatwoken-Apps-Dialog-Logout.svg images/Alecive-Flatwoken-Apps-Dialog-Refresh.svg images/Alecive-Flatwoken-Apps-Settings.svg
+WEB_SRC           := index.php edit_clusters.php manage_netboot.php edit_dhcp.php health_console.php client_console.php client_list.php edit_config.php config_scheme.json functions.js functions.php push_client_defs.php push_client_logs.php css/Background.png css/SystemImagerBanner.png css/flex_table.css css/screen.css css/sliders.css images/Alecive-Flatwoken-Apps-Dialog-Apply.svg images/Alecive-Flatwoken-Apps-Dialog-Close.svg images/Alecive-Flatwoken-Apps-Dialog-Logout.svg images/Alecive-Flatwoken-Apps-Dialog-Refresh.svg images/Alecive-Flatwoken-Apps-Settings.svg images/client_list.png images/edit_clusters.png images/edit_config.png images/edit_dhcp.png images/health_console.png images/manage_netboot.png
 
 IMAGESRC    = $(TOPDIR)/var/lib/systemimager/images
 IMAGEDEST   = $(DESTDIR)/var/lib/systemimager/images

@@ -116,11 +116,15 @@ function si_ReadConfig() {
 	$json_config = file_get_contents("/etc/systemimager/systemimager.json");
         if ($json_config !== false) {
 		$si_config=json_decode($json_config);
-		$si_config->cfg_error=""; // Create internal use filed.
 		if ($si_config === null  && json_last_error() !== JSON_ERROR_NONE) {
 			$si_config=si_GetDefautConfig();
 			$si_config->cfg_error="Invalid configuration file. Error:".json_last_error().". Using defaults.";
+		} else {
+			$si_config->cfg_error=""; // Create internal use filed.
 		}
+	} else {
+			$si_config=si_GetDefautConfig();
+			$si_config->cfg_error="Can't read /etc/systemimager/systemimager.json. Using defaults.";
 	}
 	return($si_config);
 }
@@ -150,6 +154,16 @@ function folder_exist($folder)
 
     // Path/folder does not exist
     return false;
+}
+
+/*
+ * Check if were are on a systemd based system.
+ * return true is systemctl command is available in path.
+ */
+function systemd_is_available()
+{
+	$return=shell_exec("which systemctl");
+	return !empty($return);
 }
 
 /*
