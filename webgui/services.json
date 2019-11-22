@@ -1,0 +1,9 @@
+{
+  "systemimager monitor daemon": [ "systemimager-server-monitord", "optional" ],
+  "systemimager netboot monitor": [ "systemimager-server-netbootmond", "optional" ],
+  "systemimager rsync server": [ "systemimager-server-rsyncd", "mandatory" ],
+  "tftp server": [ "tftp", "mandatory" ],
+  "nfs server": [ "nfs-server", "optional"],
+  "bittorrent server": [ "torrent", "optional" ],
+  "bittorrent seeder": [ "cwseeder", "optional" ]
+}
