@@ -1453,6 +1453,8 @@ fi
 %{_datarootdir}/systemimager/webgui/push_client_defs.php
 %{_datarootdir}/systemimager/webgui/push_client_logs.php
 %{_datarootdir}/systemimager/webgui/config_scheme.json
+%{_datarootdir}/systemimager/webgui/services.json
+%{_datarootdir}/systemimager/webgui/statuses.json
 %{_datarootdir}/systemimager/webgui/functions.php
 %{_datarootdir}/systemimager/webgui/functions.js
 %{_datarootdir}/systemimager/webgui/css/SystemImagerBanner.png
@@ -1465,10 +1467,14 @@ fi
 %{_datarootdir}/systemimager/webgui/images/Alecive-Flatwoken-Apps-Dialog-Logout.svg
 %{_datarootdir}/systemimager/webgui/images/Alecive-Flatwoken-Apps-Dialog-Refresh.svg
 %{_datarootdir}/systemimager/webgui/images/Alecive-Flatwoken-Apps-Settings.svg
+%{_datarootdir}/systemimager/webgui/images/yes.svg
+%{_datarootdir}/systemimager/webgui/images/no.svg
 %{_datarootdir}/systemimager/webgui/images/health_console.png
 %{_datarootdir}/systemimager/webgui/images/edit_clusters.png
 %{_datarootdir}/systemimager/webgui/images/client_list.png
 %{_datarootdir}/systemimager/webgui/images/edit_config.png
 %{_datarootdir}/systemimager/webgui/images/manage_netboot.png
 %{_datarootdir}/systemimager/webgui/images/edit_dhcp.png
+%{_prefix}/lib/systemimager/web_helpers/get_networks.sh
+%{_prefix}/lib/systemimager/web_helpers/Clients_Statuses_Stats.sh
 
