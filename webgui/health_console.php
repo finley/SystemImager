@@ -160,7 +160,9 @@ if($json_clients_stats === NULL) {
 	} else {
 		echo "<table>\n";
 		echo "<thead><tr><th>Clients count</th><th>Status</th></tr></thead>\n<tbody>";
+		$client_count=0;
 		foreach($clients_stats as $stat_row) {
+			$client_count+=intval($stat_row->{'Count'});
 			$status_val = $stat_row->{'Status'};
 			if(isset($statuses_defs->{$stat_row->{'Status'}})) {
 				$status_text=$statuses_defs->{$stat_row->{'Status'}};
@@ -174,10 +176,12 @@ if($json_clients_stats === NULL) {
 					$status_text="ERROR.";
 				}
 			}
-			echo "<tr><td>".$stat_row->{'Count'}."</td><td><span class='status".$status_val."'>".$status_text."</span></td></tr>\n";
+			echo "<tr><td style='float:right'>".$stat_row->{'Count'}."</td><td><span class='status".$status_val."'>".$status_text."</span></td></tr>\n";
 			// TODO: Status to Text.
 		}
-		echo "</tbody></table>\n";
+		echo "</tbody><tfoot>\n";
+		echo "<tr><td style='float:right'>Total: $client_count</td><td></td></tr>";
+		echo "</tfoot></table>\n";
 	}
 }
 ?>
