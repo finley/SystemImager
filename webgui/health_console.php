@@ -140,6 +140,16 @@ if ($json_services !== false) {
 
 <fieldset><legend>&nbsp;Deployment status&nbsp;</legend>
 <?php
+$json_status_defs = file_get_contents("statuses.json");
+if ($json_status_defs !== false) {
+	$statuses_defs=json_decode($json_status_defs);
+        if($statuses_defs === null && json_last_error() !== JSON_ERROR_NONE) {
+		echo "<span class='pri_error'> ERROR! Can't decode ./statuses.json</span>";
+	}
+} else {
+	echo "<span class='pri_error'> ERROR! Can't read  ./statuses.json</span>";
+}
+
 $json_clients_stats=shell_exec("/usr/lib/systemimager/web_helpers/Clients_Statuses_Stats.sh");
 if($json_clients_stats === NULL) {
 	echo "<span class='pri_error'> ERROR! Can't generate clients statistics!</span>\n";
@@ -151,7 +161,20 @@ if($json_clients_stats === NULL) {
 		echo "<table>\n";
 		echo "<thead><tr><th>Clients count</th><th>Status</th></tr></thead>\n<tbody>";
 		foreach($clients_stats as $stat_row) {
-			echo "<tr><td>".$stat_row->{'Count'}."</td><td>".$stat_row->{'Status'}."</td></tr>\n";
+			$status_val = $stat_row->{'Status'};
+			if(isset($statuses_defs->{$stat_row->{'Status'}})) {
+				$status_text=$statuses_defs->{$stat_row->{'Status'}};
+			} else {
+				$float_val = floatval($status_val);
+				if($float_val > 0 && $float_val < 100) {
+					$status_val="";
+					$status_text="Imaging..."; /* BUG need to regroop all imaging lines : look if we cvan do that in filter*/
+				} else {
+					$status_val="0";
+					$status_text="ERROR.";
+				}
+			}
+			echo "<tr><td>".$stat_row->{'Count'}."</td><td><span class='status".$status_val."'>".$status_text."</span></td></tr>\n";
 			// TODO: Status to Text.
 		}
 		echo "</tbody></table>\n";
