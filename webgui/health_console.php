@@ -79,7 +79,7 @@ function displayServiceStatus($need,$enabled, $is_up) {
 			$alt='no';
 		}
 	}
-	$output="<td><img src='".$image."' alt='".$alt."' style='width:1.5em;height:1.5em;'>&nbsp;<span class='".$class."'>".$enabled."</span></td>\n";
+	$output="<td><img src='".$image."' alt='".$alt."' style='width:1em;height:1em;'>&nbsp;<span class='".$class."'>".$enabled."</span></td>\n";
 
 	$class='pri_info';
 	$image='images/yes.svg';
@@ -102,7 +102,7 @@ function displayServiceStatus($need,$enabled, $is_up) {
 			$alt='no';
 		}
 	}
-	$output.="<td><img src='".$image."' alt='".$alt."' style='width:1.5em;height:1.5em;'>&nbsp;<span class='".$class."'>".$is_up."</span></td>\n";
+	$output.="<td><img src='".$image."' alt='".$alt."' style='width:1em;height:1em;'>&nbsp;<span class='".$class."'>".$is_up."</span></td>\n";
 	
 	return($output);
 }
@@ -119,7 +119,7 @@ if ($json_services !== false) {
 			echo "<span class='pri_warn'>WARNING! Non-systemd service management: can't check service statuses.</span>";
 		}
 		echo "<table><thead>\n";
-		echo "<tr><th>Service</th><th>need</th><th>enabled</th><th>running/listenning</th><tr></thead>\n<tbody>";
+		echo "<tr><th>Service</th><th>need</th><th>enabled</th><th>running/listenning</th></tr></thead>\n<tbody>";
 		foreach($si_services as $service => $service_specs) {
 			echo "<tr><td>$service</td>";
 			unset($is_enabled_output,$is_active_output,$service_state);
@@ -163,8 +163,46 @@ if($json_clients_stats === NULL) {
 <br/>
 
 <fieldset><legend>&nbsp;Images&nbsp;</legend>
+<?php
+echo <<<EOT
+<table>
+  <theader>
+    <tr>
+      <th>Image name</th>
+      <th>Creation date</th>
+      <th>Golden Client</th>
+      <th>Path</th>
+    </tr>
+  </theader>
+  <tbody>
+EOT;
+$jsons_images=shell_exec("si_lsimage --json");
+if($jsons_images === NULL) {
+	echo "<span class='pri_error'> ERROR! Can't get images informations!</span>\n";
+} else {
+	$jsons_texts = explode("\n",$jsons_images);
+	foreach($jsons_texts as $image_json_text) {
+		$image_infos = json_decode($image_json_text);
+		if ($image_infos === null  && json_last_error() !== JSON_ERROR_NONE) {
+                	echo "<span class='pri_error'> ERROR! Can't decode clients stats.</span>\n";
+		} elseif($image_infos->{'image_name'} != "") {
+			$image_path = $config->{'imager'}->{'images_dir'}."/".$image_infos->{'image_name'};
+			if(is_dir($image_path)) {
+				$image_infos->{'image_path'} = $image_path;
+			} else {
+				$image_infos->{'image_path'} = "<span class='pri_error'>Missing</span>";
+			}
+			echo "<tr><td>".$image_infos->{'image_name'}."</td><td>".$image_infos->{'image_timestamp'}."</td><td>".$image_infos->{'image_goldenclient'}."</td><td>".$image_infos->{'image_path'}."</td></tr>\n";
+		}
+	}
+}
+echo <<<EOT
+  </tbody>
+</table>
+EOT;
+
+?>
 <!-- si_lsimage + correlation with paths. Add size info in last column.-->
-Available images:
 </fieldset>
 <br/>
 </div>
