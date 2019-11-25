@@ -13,6 +13,7 @@
 use POSIX;
 use Fcntl ':flock';
 use Getopt::Long;
+use JSON;
 
 # set some variables
 $version_number="SYSTEMIMAGER_VERSION_STRING";
@@ -62,6 +63,9 @@ Options: (options can be presented in any order)
     Username for ssh connection to the client.  Only needed if an encrypted
     connection is required.
 
+ --json
+    Outputs result using json object.
+
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
 EOF
@@ -80,7 +84,8 @@ GetOptions(
   "version"     => \$version,
   "verbose|v"   => \$verbose,
   "ssh-user=s"  => \$ssh_user,
-  "server=s"    => \$imageserver
+  "server=s"    => \$imageserver,
+  "json"	=> \$json
 ) or die qq($help_info);
 
 # if requested, print help information
@@ -165,10 +170,13 @@ my $stdout_lockfile = tmpnam();
 open(LOCK, '>', $stdout_lockfile) or
 	die("ERROR: couldn't open: $stdout_lockfile\n");
 
-print "--------------------------------------------------------------------------------\n";
-print "Available image(s):\n";
-print "--------------------------------------------------------------------------------\n";
+if(!$json) {
+    print "--------------------------------------------------------------------------------\n";
+    print "Available image(s):\n";
+    print "--------------------------------------------------------------------------------\n";
+}
 
+my $i=0;
 $command = "rsync rsync://${imageserver}:$port/";
 open(FILE, "$command|");
 while (<FILE>) {
@@ -186,14 +194,14 @@ while (<FILE>) {
     } elsif (!(defined $pid)) {
         die("WARNING: couldn't fork!\n");
     }
-
     select(STDOUT);
     $| = 1;
     my $line;
-
-    if ($verbose) {
-
-        $line = "  Image: $_";
+    my ($image_name,$image_timestamp,$image_goldenclient);
+    if ($verbose||$json) {
+	
+        $image_name = $_;
+        $line = "  Image: $image_name";
 
         my $file = tmpnam();
 
@@ -204,9 +212,10 @@ while (<FILE>) {
 
             open(IMAGE_RETRIEVAL_TIME,"<$file") or
                 die("ERROR: couldn't open $file! $!\n");
-            my $time = <IMAGE_RETRIEVAL_TIME>;
-            chomp($time);
-            $line .= "\tTime: $time";
+            $image_timestamp = <IMAGE_RETRIEVAL_TIME>;
+            chomp($image_timestamp);
+            $line .= "\tTime: $image_timestamp";
+
             close(IMAGE_RETRIEVAL_TIME);
 
         } elsif (!system($cmd2)) {
@@ -214,33 +223,40 @@ while (<FILE>) {
             my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime($mtime);
             $mon++;
             $year += 1900;
-            $line .= sprintf("\tTime: %04d.%02d.%02d %02d:%02d", $year,$mon,$mday,$hour,$min);
+	    $image_timestamp = sprintf("%04d.%02d.%02d %02d:%02d", $year,$mon,$mday,$hour,$min);
+            $line .= "\tTime: $image_timestamp";
         } else {
             $line .= "\tTime: N/A";
+	    $image_timestamp = "N/A";
         }
 
         # display golden client
         my $cmd = "rsync -a rsync://${imageserver}:$port/$_/etc/systemimager/IMAGE_RETRIEVED_FROM $file 1>/dev/null 2>/dev/null";
-        my $golden_client;
         if (!system($cmd)) {
             open(IMAGE_RETRIEVED_FROM,"<$file") or
                 die("ERROR: couldn't open $file! $!\n");
-            $golden_client = <IMAGE_RETRIEVED_FROM>;
-            chomp($golden_client);
+            $image_goldenclient = <IMAGE_RETRIEVED_FROM>;
+            chomp($image_goldenclient);
             close(IMAGE_RETRIEVED_FROM);
         } else {
-            $golden_client = "N/A";
+            $image_goldenclient = "N/A";
         }
         unlink($file);
 
-        $line .= "\tGolden Client: $golden_client";
+        $line .= "\tGolden Client: $image_goldenclient";
 
     } else {
-
 	    $line = "  $_";
     }
     flock(LOCK, LOCK_EX);
-    print "$line\n";
+    # create hash new entry
+    if($json) {
+        my %image_hash = ('image_name' => $image_name, 'image_timestamp' => $image_timestamp, 'image_goldenclient' => $image_goldenclient);
+        my $json_text = encode_json(\%image_hash);
+        print $json_text."\n";
+    } else {
+        print "$line\n";
+    }
     flock(LOCK, LOCK_UN);
     exit(0);
 }
@@ -253,7 +269,9 @@ while ($workers) {
 
 close(LOCK);
 unlink($stdout_lockfile);
-print "\n";
+if(!$json) {
+    print "\n";
+}
 
 if ($images_regexp) {
     foreach (@images_list) {
