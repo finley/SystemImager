@@ -266,7 +266,8 @@ Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Requires: perl, perl-JSON, systemconfigurator >= 2.2.11
-#AutoReqProv: no
+Requires: systemimager-webgui
+# systemimager-webgui is requred by JConfig.pm for the config_scheme.json file.
 
 %description common
 SystemImager is software that automates Linux installs, software 
