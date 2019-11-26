@@ -5,6 +5,10 @@
 #
 #    $Id$
 #
+#  SystemImager JSON based configuration module.
+#  This modules requires that the configuration scheem exists as:
+#  	- /usr/share/systemimager/webgui/config_scheme.json
+#
 # Usage:
 # use SystemImager::JConfig;
 # use vars qw($config);
@@ -23,15 +27,18 @@
 #	=> returns fileName.
 #
 # read default values for all parameters:
-# 	$config->loadDefaults()
+#	$config->loadDefaults()
 #	=> returns nothing. (dies if fails to load defaults).
 #
 # read parameters from config file:
-# 	my $config_structure = $config->loadConfig()
+#	my $config_structure = $config->load()
 #	=> returns undef upon failure.
 #	=> Note: using this module defines $config by default.
 #	   Thus this method is only needed internally.
 #
+# save parameters to config file:
+# 	$config->save()
+# 	=> dies on failure.
 
 package SystemImager::JConfig;
 
@@ -82,9 +89,16 @@ sub new {
 	}
 	# At this point, $self->{_config_file} is defined.
 	if ( -e $self->{_config_file} ) {
-		loadConfig($self);
+		load($self);
 	} else {
-		loadDefaults($self);
+		loadDefaults($self);	# File doesn't exists: load defaults values from scheme.
+		eval {			# Then save the values in config file.
+			save($self);
+			1;
+		} or do {
+			my $err = $@;
+			warn "Failed to save default config to $self->{_config_file}: $err.";
+		}
 	}
 	bless $self, $class;
 	return $self;
@@ -95,9 +109,9 @@ sub loadDefaults {
 	# 1/ Read the scheme.
 	my $scheme_raw_text = do {
 		open(my $json_fh, "<:encoding(UTF-8)", $self->{_config_scheme})
-                        or die("Can't open $self->{_config_scheme}: $!\n");
-                local $/;
-                <$json_fh>
+			or die("Can't open $self->{_config_scheme}: $!\n");
+		local $/;
+		<$json_fh>
 	};
 	# 2/ Load defaults values.
 	my $scheme_hash = undef;
@@ -118,7 +132,7 @@ sub loadDefaults {
 			my @param_scheme = @{ $scheme_hash->{$field}->{$param} };
 			if ($param_scheme[0] eq "path") {
 				$self->{_config}->{$field_tolower}->{$param_tolower} = $param_scheme[1];
-		       	} elsif ($param_scheme[0] eq "file") {
+			} elsif ($param_scheme[0] eq "file") {
 				$self->{_config}->{$field_tolower}->{$param_tolower} = $param_scheme[1];
 			} elsif ($param_scheme[0] eq "port") {
 				$self->{_config}->{$field_tolower}->{$param_tolower} = $param_scheme[1];
@@ -134,15 +148,15 @@ sub loadDefaults {
 	return;
 };
 
-sub loadConfig {
-	my ($self) = @_;
+sub load {
+	my ( $self ) = @_;
 
 	# 1st: load config file content.
 	my $config_raw_text = do {
-        	open(my $json_fh, "<:encoding(UTF-8)", $self->{_config_file})
-                       or die("Can't open $self->{_config_file}: $!\n");
-        	local $/;
-        	<$json_fh>
+		open(my $json_fh, '<:encoding(UTF-8)', $self->{_config_file})
+			or die("Can't open $self->{_config_file}: $!\n");
+		local $/;
+		<$json_fh>
 	};
 
 	# 2nd: Upon success, try to parse it
@@ -161,16 +175,20 @@ sub loadConfig {
 	return $self->{_config};
 }
 
-sub saveConfig {
+sub save {
 	my ($self) = @_;
-	die "saveConfig is not yet implemented."
-	# Not implemented. Needed?
+	my $json = JSON->new;
+	my $json_raw_text = $json->pretty->encode($self->{_config});
+	open(my $json_fh, '>:encoding(UTF-8)', $self->{_config_file})
+		or die("Can't open $self->{_config_file}: $!\n");
+	print $json_fh $json_raw_text;
+	close $json_fh;
 }
 
 # If parameter given: set filename.
 # return: configuration filename.
 sub fileName {
-        my ($self,$config_file) = @_;
+	my ($self,$config_file) = @_;
 	$self->{_config_file} = $config_file if defined($config_file);
 	return $self->{_config_file};
 }
