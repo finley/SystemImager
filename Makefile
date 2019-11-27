@@ -163,7 +163,7 @@ DOC  = $(USR)/share/doc/systemimager-doc
 BIN = $(USR)/bin
 SBIN = $(USR)/sbin
 MAN8 = $(USR)/share/man/man8
-LIBEXEC_DEST = $(USR)/lib/systemimager
+LIBEXEC_DEST = $(USR)/libexec/systemimager
 LIB_DEST = $(DESTDIR)$(shell perl -V:vendorlib | sed s/vendorlib=\'// | sed s/\'\;//)
 #LIB_DEST = $(USR)/lib/systemimager/perl
 LOG_DIR = $(DESTDIR)/var/log/systemimager
@@ -333,10 +333,9 @@ install_webgui:
 	mkdir -p $(WEB_GUI_DEST) $(WEB_GUI_DEST)/css $(WEB_GUI_DEST)/images
 	$(foreach file, $(WEB_SRC), \
 		$(SI_INSTALL) -m 755 $(WEB_GUI_SRC)/$(file) $(WEB_GUI_DEST)/$(file);)
-	mkdir -p $(LIBEXEC_DEST)/web_helpers
 	$(SI_INSTALL) -m 755 $(LIB_SRC)/confedit $(LIBEXEC_DEST)
-	$(SI_INSTALL) -m 755 $(LIB_SRC)/web_helpers/get_networks.sh	$(LIBEXEC_DEST)/web_helpers
-	$(SI_INSTALL) -m 755 $(LIB_SRC)/web_helpers/Clients_Statuses_Stats.sh	$(LIBEXEC_DEST)/web_helpers
+	$(SI_INSTALL) -m 755 $(LIB_SRC)/web_helpers/get-networks-helper	$(LIBEXEC_DEST)
+	$(SI_INSTALL) -m 755 $(LIB_SRC)/web_helpers/clients-statuses-helper	$(LIBEXEC_DEST)
 
 
 

@@ -150,7 +150,7 @@ if ($json_status_defs !== false) {
 	echo "<span class='pri_error'> ERROR! Can't read  ./statuses.json</span>";
 }
 
-$json_clients_stats=shell_exec("/usr/lib/systemimager/web_helpers/Clients_Statuses_Stats.sh");
+$json_clients_stats=shell_exec("/usr/libexec/systemimager/clients-statuses-helper");
 if($json_clients_stats === NULL) {
 	echo "<span class='pri_error'> ERROR! Can't generate clients statistics!</span>\n";
 } else {

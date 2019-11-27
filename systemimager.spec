@@ -159,6 +159,7 @@ Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Requires: rsync >= 2.4.6, systemimager-common = %{version}, dracut-systemimager = %{version}, perl-AppConfig, perl, perl(XML::Simple) >= 2.14
+Requires(post): systemimager-common = %{version}
 Requires: %pkg_mkisofs
 # If systemd
 %if 0%{?_unitdir:1}
@@ -1476,6 +1477,6 @@ fi
 %{_datarootdir}/systemimager/webgui/images/edit_config.png
 %{_datarootdir}/systemimager/webgui/images/manage_netboot.png
 %{_datarootdir}/systemimager/webgui/images/edit_dhcp.png
-%{_prefix}/lib/systemimager/web_helpers/get_networks.sh
-%{_prefix}/lib/systemimager/web_helpers/Clients_Statuses_Stats.sh
+%{_libexecdir}/systemimager/get-networks-helper
+%{_libexecdir}/systemimager/clients-statuses-helper
 
