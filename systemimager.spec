@@ -1365,7 +1365,7 @@ fi
 %{perl_vendorlib}/SystemImager/JConfig.pm
 %{perl_vendorlib}/SystemImager/Server.pm
 %{perl_vendorlib}/SystemImager/HostRange.pm
-%{_prefix}/lib/systemimager/confedit
+%{_libexecdir}/systemimager/confedit
 %{perl_vendorlib}/BootMedia
 %{perl_vendorlib}/BootGen
 %{_mandir}/man5/systemimager*
