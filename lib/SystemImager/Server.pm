@@ -66,7 +66,6 @@ sub copy_boot_files_from_image_to_shared_dir {
     shift;
     my $image                   = shift;
     my $image_dir               = shift;
-    my $rsync_stub_dir          = shift;
     my $autoinstall_boot_dir    = shift;
 
     my $kernel = $image_dir . "/etc/systemimager/boot/kernel";
