@@ -981,7 +981,7 @@ test -x /usr/bin/lsinitrd && ln -s /usr/bin/lsinitrd $LOCAL_DRACUT_BASEDIR/lsini
 # move to local modules dir so we can use dracut --local
 cd $LOCAL_DRACUT_BASEDIR/
 
-SIS_WEBGUIDIR=$RPM_BUILD_DIR/%{name}-%{version}/webgui SIS_CONFDIR=$RPM_BUILD_DIR/%{name}-%{version}/etc dracutbasedir=$(pwd) SI_INITRD_TEMPLATE=../../initrd_source/skel perl -I ../../lib ../../sbin/si_mkbootpackage --dracut-opts="--local" --destination ../..
+SIS_DATAROOTDIR=$RPM_BUILD_DIR/%{name}-%{version}/conf SIS_CONFDIR=$RPM_BUILD_DIR/%{name}-%{version}/etc dracutbasedir=$(pwd) SI_INITRD_TEMPLATE=../../initrd_source/skel perl -I ../../lib ../../sbin/si_mkbootpackage --dracut-opts="--local" --destination ../..
 #dracut --force --local --add systemimager --no-hostonly --no-hostonly-cmdline --no-hostonly-i18n ../../../initrd.img $(uname -r)
 
 %install

@@ -76,15 +76,15 @@ sub new {
 			$self->{_config_file} = "$env_sis_confdir/systemimager.json";
 		}
 	}
-	# If SIS_WEBGUIDIR is defined use this instead of default /usr/share/systemimager/webgui
-	# This is usefull when run from build environment where /usr/share/systemimager/webgui doesn't
+	# If SIS_DATAROOTDIR is defined use this instead of default /usr/share/systemimager/conf
+	# This is usefull when run from build environment where /usr/share/systemimager/conf doesn't
 	# exists yet.
-	if( defined($ENV{'SIS_WEBGUIDIR'}) ) {
-		my $env_webgui_dir="$ENV{'SIS_WEBGUIDIR'}";
-		$env_webgui_dir =~ s/\/+$//; # Remove useless trailing slashes
+	if( defined($ENV{'SIS_DATAROOTDIR'}) ) {
+		my $env_datarootdir="$ENV{'SIS_DATAROOTDIR'}";
+		$env_datarootdir =~ s/\/+$//; # Remove useless trailing slashes
 
-		if ( -d "$env_webgui_dir" ) {
-			$self->{_config_scheme} = "$env_webgui_dir/config_scheme.json";
+		if ( -d "$env_datarootdir" ) {
+			$self->{_config_scheme} = "$env_datarootdir/config_scheme.json";
 		}
 	}
 	# At this point, $self->{_config_file} is defined.
