@@ -62,7 +62,7 @@ sub new {
 	my $class = shift;
 	my $self = {
 		_config_file => "/etc/systemimager/systemimager.json",
-		_config_scheme => "/usr/share/systemimager/webgui/config_scheme.json",
+		_config_scheme => "/usr/share/systemimager/conf/config_scheme.json",
 		_config => undef,
 	};
 	# If SIS_CONFDIR is defined use this instead of default /etc/systemimager.

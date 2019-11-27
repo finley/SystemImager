@@ -101,7 +101,7 @@ foreach($config_scheme as $fieldset => $json) {
 	foreach($json as $param => $table_row) {
 		$param_tolower = strtolower($param);
 		if (! array_key_exists($param_tolower, $config->{$fieldset_tolower})) { // Use default value if not defined
-			$config->{$fieldset_tolower}->{$param_tolower} = getDefaultValue($table_row); //Mainly used when new config_scheme.json isuse (upgrade)
+			$config->{$fieldset_tolower}->{$param_tolower} = getDefaultValue($table_row); //Mainly used when new config_scheme.json is used (upgrade)
 		}
 		echo "<tr><td>".$param."</td><td>".renderParamImput($table_row,$fieldset."_".$param,$config->{$fieldset_tolower}->{$param_tolower})."</td><td>".$table_row[2]."</td></tr>\n";
 	}

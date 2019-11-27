@@ -1299,8 +1299,6 @@ fi
 %{_mandir}/man7/autoinstall*
 %dir %{perl_vendorlib}/SystemImager
 %{perl_vendorlib}/SystemImager/Common.pm
-%{perl_vendorlib}/SystemImager/Config.pm
-%{perl_vendorlib}/SystemImager/JConfig.pm
 %{perl_vendorlib}/SystemImager/Options.pm
 %{perl_vendorlib}/SystemImager/UseYourOwnKernel.pm
 %dir %{_sysconfdir}/systemimager
@@ -1326,6 +1324,7 @@ fi
 %{_var}/lib/systemimager/overrides/README
 %dir %{_datarootdir}/systemimager
 %dir %{_datarootdir}/systemimager/icons
+%dir %{_datarootdir}/systemimager/conf
 %config %{_sysconfdir}/systemimager/pxelinux.cfg/*
 %config %{_sysconfdir}/systemimager/kboot.cfg/*
 %config %{_sysconfdir}/systemimager/autoinstallscript.template
@@ -1363,6 +1362,7 @@ fi
 %{_bindir}/si_psh
 %{_bindir}/si_pcp
 %{_bindir}/si_pushoverrides
+%{perl_vendorlib}/SystemImager/JConfig.pm
 %{perl_vendorlib}/SystemImager/Server.pm
 %{perl_vendorlib}/SystemImager/HostRange.pm
 %{_prefix}/lib/systemimager/confedit
@@ -1372,6 +1372,7 @@ fi
 %{_mandir}/man7/systemimager*
 %{_mandir}/man8/si_*
 %{_datarootdir}/systemimager/icons/*
+%{_datarootdir}/systemimager/conf/config_scheme.json
 
 %files doc
 %defattr(-, root, root)
@@ -1454,7 +1455,6 @@ fi
 %{_datarootdir}/systemimager/webgui/client_console.php
 %{_datarootdir}/systemimager/webgui/push_client_defs.php
 %{_datarootdir}/systemimager/webgui/push_client_logs.php
-%{_datarootdir}/systemimager/webgui/config_scheme.json
 %{_datarootdir}/systemimager/webgui/services.json
 %{_datarootdir}/systemimager/webgui/statuses.json
 %{_datarootdir}/systemimager/webgui/functions.php

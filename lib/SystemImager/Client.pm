@@ -5,6 +5,7 @@ package SystemImager::Client;
 #
 #  Copyright (C) 2001-2014 Brian E. Finley <brian@thefinleys.com>
 #  Copyright (C) 2001-2002 Sean Dague <sean@dague.net>
+#  Copyright (C) 2015-2019 Olivier Lahaye <olivier.lahaye@cea.fr>
 #
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by

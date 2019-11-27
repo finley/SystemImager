@@ -102,7 +102,7 @@ EOF;
 }
 
 function si_ReadConfigScheme() {
-	$json_config = file_get_contents("config_scheme.json");
+	$json_config = file_get_contents("/usr/share/systemimager/conf/config_scheme.json");
         if ($json_config !== false) {
 		$si_config_scheme=json_decode($json_config);
 		if ($si_config_scheme === null  && json_last_error() !== JSON_ERROR_NONE) {

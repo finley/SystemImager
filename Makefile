@@ -175,6 +175,9 @@ DRACUT_BASEDIR = $(shell test -d /usr/lib/dracut && echo "/lib/dracut" || echo "
 DRACUT_SYSDIR = /usr$(DRACUT_BASEDIR)
 DRACUT_MODULES = $(USR)$(DRACUT_BASEDIR)/modules.d
 
+CONF_SRC          = $(TOPDIR)/conf/
+CONF_DEST         = $(USR)/share/systemimager/conf/
+
 WEB_CONF_SRC      = $(TOPDIR)/etc/
 WEB_CONF_DEST     = $(ETC)/httpd/conf.d/
 
@@ -196,7 +199,7 @@ BINARIES := si_mkautoinstallcd si_mkautoinstalldisk si_psh si_pcp si_pushoverrid
 SBINARIES := si_addclients si_cpimage si_getimage si_lint si_mkdhcpserver si_mkdhcpstatic si_mkautoinstallscript si_mvimage si_pushupdate si_pushinstall si_rmimage si_mkrsyncd_conf si_mkclientnetboot si_netbootmond si_installbtimage
 CLIENT_SBINARIES  := si_updateclient si_prepareclient
 COMMON_BINARIES   := si_lsimage si_mkbootpackage
-WEB_SRC           := index.php edit_clusters.php manage_netboot.php edit_dhcp.php health_console.php client_console.php client_list.php edit_config.php config_scheme.json services.json statuses.json functions.js functions.php push_client_defs.php push_client_logs.php css/Background.png css/SystemImagerBanner.png css/flex_table.css css/screen.css css/sliders.css images/Alecive-Flatwoken-Apps-Dialog-Apply.svg images/Alecive-Flatwoken-Apps-Dialog-Close.svg images/Alecive-Flatwoken-Apps-Dialog-Logout.svg images/Alecive-Flatwoken-Apps-Dialog-Refresh.svg images/Alecive-Flatwoken-Apps-Settings.svg images/yes.svg images/no.svg images/client_list.png images/edit_clusters.png images/edit_config.png images/edit_dhcp.png images/health_console.png images/manage_netboot.png
+WEB_SRC           := index.php edit_clusters.php manage_netboot.php edit_dhcp.php health_console.php client_console.php client_list.php edit_config.php services.json statuses.json functions.js functions.php push_client_defs.php push_client_logs.php css/Background.png css/SystemImagerBanner.png css/flex_table.css css/screen.css css/sliders.css images/Alecive-Flatwoken-Apps-Dialog-Apply.svg images/Alecive-Flatwoken-Apps-Dialog-Close.svg images/Alecive-Flatwoken-Apps-Dialog-Logout.svg images/Alecive-Flatwoken-Apps-Dialog-Refresh.svg images/Alecive-Flatwoken-Apps-Settings.svg images/yes.svg images/no.svg images/client_list.png images/edit_clusters.png images/edit_config.png images/edit_dhcp.png images/health_console.png images/manage_netboot.png
 
 IMAGESRC    = $(TOPDIR)/var/lib/systemimager/images
 IMAGEDEST   = $(DESTDIR)/var/lib/systemimager/images
@@ -333,7 +336,7 @@ install_webgui:
 	mkdir -p $(WEB_GUI_DEST) $(WEB_GUI_DEST)/css $(WEB_GUI_DEST)/images
 	$(foreach file, $(WEB_SRC), \
 		$(SI_INSTALL) -m 755 $(WEB_GUI_SRC)/$(file) $(WEB_GUI_DEST)/$(file);)
-	$(SI_INSTALL) -m 755 $(LIB_SRC)/confedit $(LIBEXEC_DEST)
+	mkdir -p $(LIBEXEC_DEST)
 	$(SI_INSTALL) -m 755 $(LIB_SRC)/web_helpers/get-networks-helper	$(LIBEXEC_DEST)
 	$(SI_INSTALL) -m 755 $(LIB_SRC)/web_helpers/clients-statuses-helper	$(LIBEXEC_DEST)
 
@@ -446,6 +449,7 @@ install_server_libs:
 	mkdir -p $(LIB_DEST)/BootMedia
 	mkdir -p $(LIB_DEST)/BootGen/Dev
 	mkdir -p $(LIB_DEST)/BootGen/InitrdFS
+	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/JConfig.pm $(LIB_DEST)/SystemImager
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/Server.pm  $(LIB_DEST)/SystemImager
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/HostRange.pm  $(LIB_DEST)/SystemImager
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/BootMedia/BootMedia.pm 	$(LIB_DEST)/BootMedia
@@ -476,8 +480,6 @@ install_common_libs:
 	mkdir -p $(LIB_DEST)/SystemImager
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/Common.pm $(LIB_DEST)/SystemImager
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/Options.pm $(LIB_DEST)/SystemImager
-	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/Config.pm $(LIB_DEST)/SystemImager
-	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/JConfig.pm $(LIB_DEST)/SystemImager
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/UseYourOwnKernel.pm $(LIB_DEST)/SystemImager
 	mkdir -p $(LIBEXEC_DEST)
 	$(SI_INSTALL) -m 755 $(LIB_SRC)/confedit $(LIBEXEC_DEST)

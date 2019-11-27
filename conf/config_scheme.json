@@ -36,5 +36,9 @@
     "xmit_docker": { },
     "xmit_bootstrap": {
         "packages_list": [ "file", "/var/lib/systemimager/bootstraped", "List of packages to install." ]
+    },
+    "Web_GUI": {
+        "auth_type": [ "select", [ "none", "htaccess", "ldap" ], "WebGUI access control." ],
+	"theme": [ "select", [ "dark", "OS", "light", "dark" ], "Graphical theme:<ul><li>OS: Chose light/dark theme according to OS settings</li><li>A light theme</li><li>A dark theme (default)</li></ul>" ]
     }
 }
