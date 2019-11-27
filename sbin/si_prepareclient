@@ -5,6 +5,7 @@
 #   Copyright (C) 1999-2006 Brian Elliott Finley
 #   Copyright (C) 2002 Internation Business Machines
 #                      Sean Dague <sean@dague.net>
+#   Copyright (C) 2015-2019 Olivier Lahaye
 #
 #   $Id$
 #    vi:set filetype=perl: 
@@ -72,7 +73,6 @@
 #     both new and old, which I have stored up for you, my lover. 
 #
 
-use lib "USR_PREFIX/lib/systemimager/perl";
 use strict;
 use Carp;
 use Cwd 'abs_path';
@@ -84,7 +84,6 @@ use Getopt::Long;
 use vars qw($VERSION);
 use SystemImager::Common;
 use SystemImager::UseYourOwnKernel;
-use SystemImager::Config qw($config);
 
 # set version
 $VERSION = "SYSTEMIMAGER_VERSION_STRING";
@@ -257,10 +256,10 @@ GetOptions(
 # OL: Need to handle destination (like si_mkbootpackage)
 my $arch = SystemImager::UseYourOwnKernel::_get_arch();
 my $flavor = "default";
-my $initrd_destination = $config->autoinstall_boot_dir."/".$arch."/".$flavor;
-unless ($config->autoinstall_boot_dir) {
-            die "FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in ".$config->systemimager_dir."/systemimager.conf\n";
-    }
+
+# OL: BUG: Need to store informations about prepared clients in one unique place that does not depend on JConfig.
+# OL: initrd+kernel+netconk-config.xml+disks-layout.xml should be stored in /var/systemimager/<some client relevant place that is not exluded by si_getimage on server>
+my $initrd_destination = "/usr/share/systemimager/boot/".$arch."/".$flavor;
 
 # Force --my-modules option when on PS3 because there is no point to include other modules
 if ( $arch eq "ppc64-ps3" ) {
@@ -900,10 +899,10 @@ sub create_auto_install_script_conf {
     }
 
     # Remove old-style partitionschemes directory if it exists. -BEF-
-    rmtree($config->systemimager_dir."/partitionschemes");
+    rmtree("/etc/systemimager/partitionschemes");
 
-    # Where the configuration information be stored. -BEF-
-    my $file = $config->systemimager_dir."/autoinstallscript.conf";
+    # Where the configuration information be stored in client/image. -BEF-
+    my $file = "/etc/systemimager/autoinstallscript.conf";
 
     # Determine which partition tool is available.  Preference is sfdisk -- 
     # it provides more information. -BEF-
@@ -999,7 +998,7 @@ sub create_auto_install_script_conf {
 sub create_byid_real_map_conf {
     my %used_real_hash;
     my $real_dev;
-    my $map_file = $config->systemimager_dir."/byid_real_map.conf";
+    my $map_file = "/etc/systemimager/byid_real_map.conf";
     if ( -e $map_file ) {
         unlink $map_file;
     }
