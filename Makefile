@@ -467,6 +467,8 @@ install_server_libs:
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/icons/serverinst.gif 	$(USR)/share/systemimager/icons
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/icons/serverok.gif 	$(USR)/share/systemimager/icons
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/icons/servererror.gif 	$(USR)/share/systemimager/icons
+	mkdir -p $(USR)/share/systemimager/conf
+	$(SI_INSTALL) -m 644 $(CONF_SRC)/config_scheme.json $(CONF_DEST)
 
 # install client-only libraries
 .PHONY:	install_client_libs
