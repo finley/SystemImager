@@ -39,7 +39,7 @@ use File::Basename;
 use POSIX qw(uname);
 use SystemImager::Common;
 use SystemImager::Server;
-use SystemImager::Config;
+use SystemImager::JConfig;
 use vars qw($config $VERSION $quiet);
 
 $SIG{__DIE__} = \&bailing_umount;
@@ -49,9 +49,9 @@ $VERSION = "SYSTEMIMAGER_VERSION_STRING";
 # set path for system calls
 $ENV{PATH} = "/usr/local/sbin:/usr/sbin:/sbin:/usr/local/bin:/usr/bin:/bin";
 
-my $autoinstall_boot_dir = $config->autoinstall_boot_dir;
+my $autoinstall_boot_dir = $config->get('pxe','boot_files');
 unless ($autoinstall_boot_dir) {
-    die "FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in ".$config->systemimager_dir."/systemimager.conf\n";
+    die "FATAL: parameter (pxe,boot_files) is not defined in ".$config->{_config_file}."\n";
 }
 
 my ($kernel, $initrd, $flavor, $arch, $append_string, $bin_dir);

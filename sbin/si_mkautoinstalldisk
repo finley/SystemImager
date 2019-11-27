@@ -8,7 +8,7 @@ use lib "USR_PREFIX/lib/systemimager/perl";
 use strict;
 use Getopt::Long;
 use POSIX qw(uname);
-use SystemImager::Config;
+use SystemImager::JConfig;
 use SystemImager::Common;
 use SystemImager::Server;
 use vars qw($config $VERSION);
@@ -85,9 +85,9 @@ unless ($arch) {
 # Set the shell PATH for system() calls.
 $ENV{PATH} = '/sbin:/usr/sbin:/usr/local/sbin:' . $ENV{PATH};
 
-my $autoinstall_boot_dir = $config->autoinstall_boot_dir();
+my $autoinstall_boot_dir = $config->get('pxe','boot_files');
 unless ($autoinstall_boot_dir) {
-    die "FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in ".$config->systemimager_dir."/systemimager.conf\n";
+    die "FATAL: parameter (pxe:boot_files) is not defined in ".$config->{_config_file}."\n";
 }
 
 ### BEGIN evaluate commad line options ###
