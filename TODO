@@ -3,14 +3,18 @@
 #
 
 ============= TODO for the dracut change before release is possible ===========
+STD: /usr/share/ is to be considered as read-only and is for architecture independant files
+     http://refspecs.linuxfoundation.org/FHS_3.0/fhs-3.0.html#usrshareArchitectureindependentData
+     - Need to move /usr/share/systemimager/boot to var
+     - Need to update si_getimage, si_prepareclient and other SystemImager components
 BUG: CentOS-6: pre-pivot/10kill-dhclient.sh: line 6: kill: (785) - No such process
 DONE: Creating systemimager-monitor-firstboot init script
      ls: cannot access /boot/vmlinuz-*: No such file or directory
-BUG: /scripts is seen as os filesystem and is bindmounted
+BUG: initrd:/scripts is seen as os filesystem and is bindmounted
 DONE: remote console hangs after filesystems init.
 REMOVED: si_monitortk is not refreshed after finalizing step (booting, ...)
 BUG: variables.txt is not updated with SI_IMAGING_STATUS that stays at "inprogress" step.
-- Add imager version to beginning of LOG.
+- DONE: Add imager version to beginning of LOG.
 - Display imager version in plymouth interface.
 - Add multipathd support if possible (need to reverse engineer the dracut module).
 - Add drdb pre-config support if possible
