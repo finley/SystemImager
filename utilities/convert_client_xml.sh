@@ -1,13 +1,31 @@
 #!/bin/bash
 #
-# SystemImager clients.xml migration tool.
+#    vi:set filetype=bash et ts=4:
 #
-# (c) Olivier LAHAYE <olivier.lahaye@cea.fr>
+#    This file is part of SystemImager.
 #
-# Converts:
-# /var/lib/systemimager/clients.xml
-# to
-# /var/lib/systemimager/clients/<MAC>_def.json
+#    SystemImager is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    SystemImager is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with SystemImager. If not, see <https://www.gnu.org/licenses/>.
+#
+#    Copyright (C) 2019 Olivier LAHAYE <olivier.lahaye1@free.fr>
+#
+#    Purpose:
+#      SystemImager clients.xml migration tool.
+#
+#    Converts:
+#      /var/lib/systemimager/clients.xml
+#    to a bunch of
+#      /var/lib/systemimager/clients/<MAC>_def.json
 #
 
 CONCAT="concat('{ ',"

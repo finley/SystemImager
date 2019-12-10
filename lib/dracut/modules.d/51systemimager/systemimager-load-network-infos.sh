@@ -1,32 +1,42 @@
 #!/bin/bash
 #
-# "SystemImager"
+#    vi:set filetype=bash et ts=4:
 #
-#  Copyright (C) 2000 Brian Elliott Finley 
-#                     <brian@bgsw.net>
-#  Copyright (C) 2002-2003 Bald Guy Software
-#                          <brian@bgsw.net>
+#    This file is part of SystemImager.
 #
-#  Copyright (C) 2017-2018 Olivier Lahaye
-#                     <olivier.lahaye@cea.fr>
-#   $Id$
+#    SystemImager is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 2 of the License, or
+#    (at your option) any later version.
 #
-#   See http://www.iana.org/assignments/bootp-dhcp-parameters for details
-#   on custom options (new_option_NNN) as viewed below. -BEF-
+#    SystemImager is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with SystemImager. If not, see <https://www.gnu.org/licenses/>.
+#
+#    Copyright (C) 2017-2019 Olivier LAHAYE <olivier.lahaye1@free.fr>
+#
+#    Purpose:
+#      systemimager-load-network-infos will read /tmp/dhclient.$DEVICE.dhcpopts or
+#      /tmp/net.$DEVICE.override  and update /tmp/variables.txt accordingly.
+#      (priority is givent to local.cfg, then cmdline, then DHCP at last)
+#
+#      See http://www.iana.org/assignments/bootp-dhcp-parameters for details
+#      on custom options (new_option_NNN) as viewed below. -BEF-
 #   
-#   option-100  ->  IMAGESERVER (deprecated -> actually reserved for "printer name")
-#   option-140  ->  IMAGESERVER
-#   option-141  ->  LOG_SERVER_PORT
-#   option-142  ->  SSH_DOWNLOAD_URL
-#   option-143  ->  FLAMETHROWER_DIRECTORY_PORTBASE
-#   option-144  ->  TMPFS_STAGING
-#   option-208  ->  SSH_DOWNLOAD_URL (deprecated)
-#                   disabled by JRT 2006-10-11
-#                   see dhclient.conf for commentary
-
-# systemimager-load-network-infos will read /tmp/dhclient.$DEVICE.dhcpopts or
-# /tmp/net.$DEVICE.override  and update /tmp/variables.txt accordingly.
-# (priority is givent to local.cfg, then cmdline, then DHCP at last)
+#      option-100  ->  IMAGESERVER (deprecated -> actually reserved for "printer name")
+#      option-140  ->  IMAGESERVER
+#      option-141  ->  LOG_SERVER_PORT
+#      option-142  ->  SSH_DOWNLOAD_URL
+#      option-143  ->  FLAMETHROWER_DIRECTORY_PORTBASE
+#      option-144  ->  TMPFS_STAGING
+#      option-208  ->  SSH_DOWNLOAD_URL (deprecated)
+#                      disabled by JRT 2006-10-11
+#                      see dhclient.conf for commentary
+#
 
 # Tells bash we need bashisms (I/O redirection to subshell) by disabling stric
 # posix mode.

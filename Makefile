@@ -1,7 +1,8 @@
 #
 #	"SystemImager"  
 #
-#   Copyright (C) 1999-2012 Brian Elliott Finley
+#   Copyright (C) 2015-2019 Olivier Lahaye
+#   Copyright (C) 1999-2015 Brian Elliott Finley
 #   Copyright (C) 2001-2004 Hewlett-Packard Company <dannf@hp.com>
 #   
 #   Others who have contributed to this code:

@@ -1,8 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Call me with:
-     xmlstarlet tr do_part.xsl disk-layout.xml
+<!--
+     vi:set filetype=xml et ts=8:
 
-     Output: List of partitions to create in order.
+     This file is part of SystemImager.
+
+     SystemImager is free software: you can redistribute it and/or modify
+     it under the terms of the GNU General Public License as published by
+     the Free Software Foundation, either version 2 of the License, or
+     (at your option) any later version.
+
+     SystemImager is distributed in the hope that it will be useful,
+     but WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+     GNU General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with SystemImager. If not, see <https://www.gnu.org/licenses/>.
+
+     Copyright (C) 2017-2019 Olivier LAHAYE <olivier.lahaye1@free.fr>
+
+     Purpose:
+        XSL disks-layout processor: Used against a disks-layout.xml file, this
+        filter will output partitions to created in smart order so the variable
+        size partition is outputed after all others.
+.
 	Each line list the following values separated by semicolons:
 	- disk device
 	- partition type (gpt/msdos/convert/none)
@@ -17,8 +38,8 @@
 	- lvm group it belongs to
 	- raid device it belongs to
 
-     Author: Olivier LAHAYE (c) 2019
-     License: GPLv2
+     Usage:
+        xmlstarlet tr do_part.xsl disk-layout.xml
 -->
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:exslt="http://exslt.org/common" version="1.0" extension-element-prefixes="exslt">
 	<xsl:output method="text" omit-xml-declaration="yes" indent="no"/>

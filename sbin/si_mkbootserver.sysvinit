@@ -1,19 +1,29 @@
 #!/bin/bash
-
+# 
+#    This file is part of SystemImager.
 #
-#   $Id$
+#    SystemImager is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 2 of the License, or
+#    (at your option) any later version.
 #
-#   Written by Dann Frazier <daniel_frazier@hp.com>
-#   Copyright (C) 2006 Brian Elliott Finley
+#    SystemImager is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
 #
-
-#########################################################################
-# The intent of this script is to automate the configuration of a
-# linux PXE server, and is written with SystemImager in mind.
-# it uses pxelinux and configures it for a kernel/single ramdisk scenario.
+#    You should have received a copy of the GNU General Public License
+#    along with SystemImager. If not, see <https://www.gnu.org/licenses/>.
 #
-# it is written as a set of independent tasks so that it can hopefully
-# be expanded for other architectures, and other non-SystemImager purposes
+#    Copyright (C) 2006 Dann Frazier <daniel_frazier@hp.com>
+#
+# Purpose of this file:
+#    The intent of this script is to automate the configuration of a
+#    linux PXE server, and is written with SystemImager in mind.
+#    it uses pxelinux and configures it for a kernel/single ramdisk scenario.
+#
+#    it is written as a set of independent tasks so that it can hopefully
+#    be expanded for other architectures, and other non-SystemImager purposes
 #
 #########################################################################
 

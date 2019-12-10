@@ -1,15 +1,27 @@
 #!/bin/bash
 # 
-# "SystemImager" 
+#    vi:set filetype=bash et ts=4:
 #
-#  Copyright (C) 1999-2017 Brian Elliott Finley <brian@thefinleys.com>
+#    This file is part of SystemImager.
 #
-#  $Id$
-#  vi: set filetype=sh et ts=4:
+#    SystemImager is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 2 of the License, or
+#    (at your option) any later version.
 #
-#  Code written by Olivier LAHAYE.
+#    SystemImager is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
 #
-# This file hosts functions realted to suse specific network configuration.
+#    You should have received a copy of the GNU General Public License
+#    along with SystemImager. If not, see <https://www.gnu.org/licenses/>.
+#
+#    Copyright (C) 2017-2019 Olivier LAHAYE <olivier.lahaye1@free.fr>
+#
+#    Purpose:
+#      This file hosts functions realted to suse specific network configuration.
+#
 
 _check_network_config() {
 	mkdir -p /tmp/ifcfg	# Make sure this directory exists before writing to it.

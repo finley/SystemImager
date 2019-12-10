@@ -1,20 +1,32 @@
 #!/bin/bash
-#  vi: set filetype=sh et ts=4:
 #
-# "SystemImager"
+#    vi:set filetype=bash et ts=4:
 #
-#  Copyright (C) 1999-2017 Brian Elliott Finley <brian@thefinleys.com>
+#    This file is part of SystemImager.
 #
+#    SystemImager is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 2 of the License, or
+#    (at your option) any later version.
 #
-#  Code written by Olivier LAHAYE.
+#    SystemImager is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
 #
-# This file is run by cmdline hook from dracut-cmdline service
-# This file is responsible to initialize the systemimager dracut environment.
-# It sets up systemimager work environment and also sets some values to 
-# make dracut-cmdline happy when it has finisshed processing cmdline hooks
-# dracut-cmdline hook expect root= and rootok= to be set after all scripts are run.
-# it also expects netroot to be set on old versions otherwise network is not initialized.
-# at last some cmdline.d values are also set.
+#    You should have received a copy of the GNU General Public License
+#    along with SystemImager. If not, see <https://www.gnu.org/licenses/>.
+#
+#    Copyright (C) 2017-2019 Olivier LAHAYE <olivier.lahaye1@free.fr>
+#
+#    Purpose:
+#      This file is run by cmdline hook from dracut-cmdline service
+#      This file is responsible to initialize the systemimager dracut environment.
+#      It sets up systemimager work environment and also sets some values to 
+#      make dracut-cmdline happy when it has finisshed processing cmdline hooks
+#      dracut-cmdline hook expect root= and rootok= to be set after all scripts are run.
+#      it also expects netroot to be set on old versions otherwise network is not initialized.
+#      at last some cmdline.d values are also set.
 
 # Tells bash we need bashisms (I/O redirection to subshell) by disabling stric
 # posix mode.

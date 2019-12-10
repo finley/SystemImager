@@ -1,22 +1,37 @@
 #!/bin/bash
 #
-# "SystemImager" 
+#    vi:set filetype=bash et ts=4:
 #
-#  Copyright (C) 1999-2017 Brian Elliott Finley <brian@thefinleys.com>
+#    This file is part of SystemImager.
 #
-#  $Id$
-#  vi: set filetype=sh et ts=4:
+#    SystemImager is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 2 of the License, or
+#    (at your option) any later version.
 #
-#  Code mainly reworked or written by Olivier LAHAYE.
+#    SystemImager is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
 #
-#  Others who have contributed to this code:
-#   Charles C. Bennett, Jr. <ccb@acm.org>
-#   Sean Dague <japh@us.ibm.com>
-#   Dann Frazier <dannf@dannf.org>
-#   Curtis Zinzilieta <czinzilieta@valinux.com>
+#    You should have received a copy of the GNU General Public License
+#    along with SystemImager. If not, see <https://www.gnu.org/licenses/>.
 #
-# this file hosts functions related to dracut-initqueue logic.
-# It is also used by imaging script.
+#    Copyright (C) 2017-2019 Olivier LAHAYE <olivier.lahaye1@free.fr>
+#    Copyright (C) 1999-2017 Brian Elliott Finley <brian@thefinleys.com>
+#
+#    Others who have contributed to this code:
+#      Charles C. Bennett, Jr. <ccb@acm.org>
+#      Sean Dague <japh@us.ibm.com>
+#      Dann Frazier <dannf@dannf.org>
+#      Curtis Zinzilieta <czinzilieta@valinux.com>
+#
+#    Purpose:
+#      this file hosts functions related to dracut-initqueue logic.
+#      It is also used by imaging script.
+#
+#    Origin: This lib is based on the original generated autoinstall script.
+#
 
 # Tells bash we need bashisms (I/O redirection to subshell) by disabling stric
 # posix mode. if we are sourced as /bin/sh from a symlink to /bin/bash (like

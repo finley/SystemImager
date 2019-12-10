@@ -1,24 +1,35 @@
 #!/usr/bin/perl -w
-
 #
-#   "SystemImager" 
+#    vi:set filetype=perl:
 #
-#   Copyright (C) 1999-2011 Brian Elliott Finley
-#   
-#   $Id$
+#    This file is part of SystemImager.
 #
+#    SystemImager is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 2 of the License, or
+#    (at your option) any later version.
 #
-#   2004.09.27  Brian Elliott Finley
-#   - allow -v as unique option for --verbose
-#   - tweak --help formatting
+#    SystemImager is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
 #
-#   2011.07.18  Brian Elliott Finley
-#   - patch provided by Thomas Zeiser:
+#    You should have received a copy of the GNU General Public License
+#    along with SystemImager. If not, see <https://www.gnu.org/licenses/>.
 #
-#       si_rmimage currently does not remove the UYOK boot files from
-#       (usually) /usr/share/systemimager/boot/ARCH/IMAGE. The patch
-#       will try to remove them, too. Path and architecutre are
-#       determined as in other systemimager tools/libs.
+#    Copyright (C) 1999-2011 Brian Elliott Finley
+#
+#    2004.09.27  Brian Elliott Finley
+#    - allow -v as unique option for --verbose
+#    - tweak --help formatting
+#
+#    2011.07.18  Brian Elliott Finley
+#    - patch provided by Thomas Zeiser:
+#
+#        si_rmimage currently does not remove the UYOK boot files from
+#        (usually) /usr/share/systemimager/boot/ARCH/IMAGE. The patch
+#        will try to remove them, too. Path and architecutre are
+#        determined as in other systemimager tools/libs.
 #
 
 # set some variables

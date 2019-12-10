@@ -1,11 +1,27 @@
 #!/bin/bash
 #
-#  "SystemImager"
+#    vi:set filetype=bash et ts=4:
 #
-#  Copyright (C) 2012-2018 Olivier Lahaye <olivier.lahaye@cea.fr>
+#    This file is part of SystemImager.
 #
-# Description: Installs an init script that will report the rebooted status
-#              to the monitor server.
+#    SystemImager is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    SystemImager is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with SystemImager. If not, see <https://www.gnu.org/licenses/>.
+#
+#    Copyright (C) 2017-2019 Olivier LAHAYE <olivier.lahaye1@free.fr>
+#
+#    Purpose:
+#      Installs an init script that will report the rebooted status
+#      to the monitor server.
 #
 
 # Tells bash we need bashisms (I/O redirection to subshell) by disabling stric

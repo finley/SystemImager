@@ -1,16 +1,28 @@
 #!/bin/bash
-# -*- mode: shell-script; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
-# ex: ts=8 sw=4 sts=4 et filetype=sh
 #
-# "SystemImager"
+#    vi:set filetype=bash et ts=4:
 #
-#  Copyright (C) 1999-2018 Brian Elliott Finley <brian@thefinleys.com>
-#  Code written by Olivier LAHAYE.
+#    This file is part of SystemImager.
 #
-#  $Id$
+#    SystemImager is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 2 of the License, or
+#    (at your option) any later version.
 #
+#    SystemImager is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
 #
-# This file will cleanup all remaining systemimager stuffs (processes, files, env, ...) from initrd
+#    You should have received a copy of the GNU General Public License
+#    along with SystemImager. If not, see <https://www.gnu.org/licenses/>.
+#
+#    Copyright (C) 2017-2019 Olivier LAHAYE <olivier.lahaye1@free.fr>
+#
+#    Purpose:
+#      This file will cleanup all remaining systemimager stuffs (processes, files,
+#      env, ...) from initrd
+#
 
 type getarg >/dev/null 2>&1 || . /lib/dracut-lib.sh
 type update_client_status >/dev/null 2>&1 || . /lib/systemimager-lib.sh

@@ -1,20 +1,32 @@
 #!/usr/bin/perl -w
-
 #
-# "SystemImager" 
+#    vi:set filetype=perl:
 #
-#  Copyright (C) 1999-2010 Brian Elliott Finley 
+#    This file is part of SystemImager.
 #
-#  $Id$
+#    SystemImager is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 2 of the License, or
+#    (at your option) any later version.
 #
-#  Others who have contributed to this code (in alphabetical order):
-#    Phil Champon <pchampon@valueweb.net>
-#    Sean Dague <sean@dague.net>
-#    Ian McLeod <ian@valinux.com>
-#    James Oakley <joakley@solutioninc.com>
-#    Laurence Sherzer <lsherzer@gate.net>
-#    Wesley Smith <wessmith@engr.sgi.com>
-#    Curtis Zinzilieta <czinzilieta@valinux.com>
+#    SystemImager is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with SystemImager. If not, see <https://www.gnu.org/licenses/>.
+#
+#    Copyright (C) 1999-2010 Brian Elliott Finley 
+#
+#    Others who have contributed to this code (in alphabetical order):
+#      Phil Champon <pchampon@valueweb.net>
+#      Sean Dague <sean@dague.net>
+#      Ian McLeod <ian@valinux.com>
+#      James Oakley <joakley@solutioninc.com>
+#      Laurence Sherzer <lsherzer@gate.net>
+#      Wesley Smith <wessmith@engr.sgi.com>
+#      Curtis Zinzilieta <czinzilieta@valinux.com>
 #
 #   2004.06.01 Brian Elliott Finley
 #   - call record_image_retrieval_time function

@@ -11,7 +11,7 @@
 -->
 <html>
 <head>
-<title>SystemImager DHCP Editor.</title>
+<title>SystemImager Clusters Editor.</title>
   <style type='text/css' media='screen'>@import url('css/screen.css');</style>
   <style type='text/css' media='screen'>@import url('css/sliders.css');</style>
   <style type='text/css' media='screen'>@import url('css/flex_table.css');</style>

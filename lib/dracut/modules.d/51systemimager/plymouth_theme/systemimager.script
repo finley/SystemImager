@@ -1,25 +1,38 @@
 // vi: set filetype=cpp et ts=4:
 //
-// Systemimager
-// Copyright (C) 2017 Olivier Lahaye <olivier(dot)lahaye1(at)free(dot)fr>
+//    This file is part of SystemImager.
 //
-// Thanks to Charlie Brej <brejc8(at)gmail(dot)com> for his help undestanding
-// script module behaviors and tricks.
+//    SystemImager is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation, either version 2 of the License, or
+//    (at your option) any later version.
 //
-// $Id$
+//    SystemImager is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU General Public License for more details.
 //
-// This file is the logic for SystemImager plymouth frontend.
-// It reacts to 2 plymouth commands:
+//    You should have received a copy of the GNU General Public License
+//    along with SystemImager. If not, see <https://www.gnu.org/licenses/>.
 //
-// 1/ Display some log information on screen
-// plymouth message --text="X:Some text message"
-//     where X letter = (E)rror | (W)arning | (I)nfo | (A)ction | (N)otice
+//    Copyright (C) 2017-2019 Olivier LAHAYE <olivier.lahaye1@free.fr>
 //
-// 2/ Light step icon and draw a progress bar for the current step if needed
-// plymout update --status="STEP:VAL:MAX"
-//     where STEP = init|part|frmt|prei|imag|boot|post
-//     where VAL is a 3 digit number (0 is noted 000)
-//     where MAX is the maximum value (000 means do not display progress bar; only icon)
+//    Thanks to Charlie Brej <brejc8(at)gmail(dot)com> for his help undestanding
+//    script module behaviors and tricks.
+//
+//   Purpose:
+//     This file is the logic for SystemImager plymouth frontend.
+//     It reacts to 2 plymouth commands:
+//
+//     1/ Display some log information on screen
+//        plymouth message --text="X:Some text message"
+//        where X letter = (E)rror | (W)arning | (I)nfo | (A)ction | (N)otice
+//
+//     2/ Light step icon and draw a progress bar for the current step if needed
+//        plymout update --status="STEP:VAL:MAX"
+//        where STEP = init|part|frmt|prei|imag|boot|post
+//        where VAL is a 3 digit number (0 is noted 000)
+//        where MAX is the maximum value (000 means do not display progress bar; only icon)
 //
 
 // Max chars in a log line (TODO: need to compute that according to font and swreen width)

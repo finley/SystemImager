@@ -1,21 +1,32 @@
 #!/bin/bash
 #
-# "SystemImager" 
+#    vi:set filetype=bash et ts=4:
 #
-#  Copyright (C) 1999-2018 Brian Elliott Finley <brian@thefinleys.com>
-#  Copyright (C) 2018-2018 Olivier Lahaye <olivier.lahaye@cea.fr>
+#    This file is part of SystemImager.
 #
-#  $Id$
-#  vi: set filetype=sh et ts=4:
+#    SystemImager is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 2 of the License, or
+#    (at your option) any later version.
 #
-#  Code written by Olivier LAHAYE.
+#    SystemImager is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
 #
-# This file is run by mount hook from dracut-mount service
-# It'll mount /sysroot
-# It is required because $root can't be updaterd in dracut-initqueue.sh (or initqueue.sh)
-# dans /dracut-state.sh (or /root.info) is overwrittent with this script variables.
-# updating $root in initqueue/online (diffrent process) or initqueue/finished (sub process)
-# is futile. old fake $root value (set in cmdline hook) will always come back.
+#    You should have received a copy of the GNU General Public License
+#    along with SystemImager. If not, see <https://www.gnu.org/licenses/>.
+#
+#    Copyright (C) 2017-2019 Olivier LAHAYE <olivier.lahaye1@free.fr>
+#
+#    Purpose:
+#      This file is run by mount hook from dracut-mount service
+#      It'll mount /sysroot
+#      It is required because $root can't be updated in parent dracut-initqueue.sh (or initqueue.sh)
+#      /dracut-state.sh (or /root.info) is overwrittent with this script variables.
+#      updating $root in initqueue/online (diffrent process) or initqueue/finished (sub process)
+#      is futile. old fake $root value (set in cmdline hook) will always come back.
+#
 
 type shellout >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 

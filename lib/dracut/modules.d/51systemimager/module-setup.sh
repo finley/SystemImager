@@ -1,14 +1,27 @@
 #!/bin/bash
-# -*- mode: shell-script; indent-tabs-mode: nil; sh-basic-offset: 4; -*-
-# ex: ts=4 sw=4 sts=4 et filetype=sh
-# vi: set filetype=sh et ts=4:
 #
-# "SystemImager"
+#    vi:set filetype=bash et ts=4:
 #
-#  Copyright (C) 1999-2018 Brian Elliott Finley <brian@thefinleys.com>
-#  Code written by Olivier LAHAYE.
+#    This file is part of SystemImager.
 #
-# This file is the main systemimager dracut module setup file.
+#    SystemImager is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    SystemImager is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with SystemImager. If not, see <https://www.gnu.org/licenses/>.
+#
+#    Copyright (C) 2017-2019 Olivier LAHAYE <olivier.lahaye1@free.fr>
+#
+#    Purpose:
+#      This file is the main systemimager dracut module setup file.
+#
 
 check() {
     [[ $hostonly ]] && return 1 # Module is incompatible with hostonly option.

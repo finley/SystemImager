@@ -1,76 +1,73 @@
 #!/usr/bin/perl -w
 #
-#   "SystemImager"
+#    vi:set filetype=perl:
+#
+#    This file is part of SystemImager.
+#
+#    SystemImager is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    SystemImager is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with SystemImager. If not, see <https://www.gnu.org/licenses/>.
+#
+#    Copyright (C) 1999-2006 Brian Elliott Finley
+#    Copyright (C) 2002 Internation Business Machines
+#                       Sean Dague <sean@dague.net>
+#    Copyright (C) 2015-2019 Olivier Lahaye
+#
+#    2004.02.02 Brian Elliott Finley
+#    - add '--server' option
+#    2004.06.01 Brian Elliott Finley
+#    - set rsyncd.conf's host_allow to _not_ include localhost
+#    2004.10.12  Brian Elliott Finley
+#    - prefer parted over sfdisk, unless i386.  was failing on ppc.
+#    2005.01.12  Brian Elliott Finley
+#    - add --exclude DISK option
+#    2005.01.29  Andrea Righi <a.righi@cineca.it>
+#    - add lvm information saving
+#
+#
+#    Function: si_prepareclient is used to, well, prepare a client to have 
+#    its image retrieved by an imageserver
 # 
-#   Copyright (C) 1999-2006 Brian Elliott Finley
-#   Copyright (C) 2002 Internation Business Machines
-#                      Sean Dague <sean@dague.net>
-#   Copyright (C) 2015-2019 Olivier Lahaye
-#
-#   $Id$
-#    vi:set filetype=perl: 
-#
-#   2004.02.02 Brian Elliott Finley
-#   - add '--server' option
-#   2004.06.01 Brian Elliott Finley
-#   - set rsyncd.conf's host_allow to _not_ include localhost
-#   2004.10.12  Brian Elliott Finley
-#   - prefer parted over sfdisk, unless i386.  was failing on ppc.
-#   2005.01.12  Brian Elliott Finley
-#   - add --exclude DISK option
-#   2005.01.29  Andrea Righi <a.righi@cineca.it>
-#   - add lvm information saving
-#
-#
-#   Function: si_prepareclient is used to, well, prepare a client to have 
-#   its image retrieved by an imageserver
+#    This is a port to Perl of the original bash script written by 
+#    Brian Elliott Finley.  Some of the bash code was contributed by 
+#    Jose AP Celestino <japc@sl.pt>.
 # 
-#   This is a port to Perl of the original bash script written by 
-#   Brian Elliott Finley.  Some of the bash code was contributed by 
-#   Jose AP Celestino <japc@sl.pt>.
-# 
-#   This program is free software; you can redistribute it and/or modify
-#   it under the terms of the GNU General Public License as published by
-#   the Free Software Foundation; either version 2 of the License, or
-#   (at your option) any later version.
-# 
-#   This program is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#   GNU General Public License for more details.
-# 
-#   You should have received a copy of the GNU General Public License
-#   along with this program; if not, write to the Free Software
-#   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#    Brian's thoughts:
 #
+#    My wedding ring has Hebrew writing around it's circumference.  When people
+#    ask me what it says, I usually say "Live to ride.  Ride to live."  But it
+#    actually says: "I am my beloved's and she is mine" which is adapted from the
+#    Song of Solomon.  http://www.bible.org/netbible/sos7.htm
 #
-#   Brian's thoughts:
+#    The Beloved:
 #
-#   My wedding ring has Hebrew writing around it's circumference.  When people
-#   ask me what it says, I usually say "Live to ride.  Ride to live."  But it
-#   actually says: "I am my beloved's and she is mine" which is adapted from the
-#   Song of Solomon.  http://www.bible.org/netbible/sos7.htm
-#
-#   The Beloved:
-#
-#     7:10 I am my beloved's,
-#     and he desires me!
+#      7:10 I am my beloved's,
+#      and he desires me!
 #    
 #
-#   The Beloved to Solomon:
+#    The Beloved to Solomon:
 #    
-#     7:11 Come, my beloved, let us go to the countryside;
-#     let us spend the night in the villages.
+#      7:11 Come, my beloved, let us go to the countryside;
+#      let us spend the night in the villages.
 #    
-#     7:12 Let us rise early to go to the vineyards,
-#     to see if the vines have budded,
-#     to see if their blossoms have opened,
-#     if the pomegranates are in bloom?
-#     there I will give you my love.
+#      7:12 Let us rise early to go to the vineyards,
+#      to see if the vines have budded,
+#      to see if their blossoms have opened,
+#      if the pomegranates are in bloom?
+#      there I will give you my love.
 #    
-#     7:13 The mandrakes send out their fragrance;
-#     over our door is every delicacy,
-#     both new and old, which I have stored up for you, my lover. 
+#      7:13 The mandrakes send out their fragrance;
+#      over our door is every delicacy,
+#      both new and old, which I have stored up for you, my lover. 
 #
 
 use strict;

@@ -1,20 +1,30 @@
 #!/bin/bash
-# vi: set filetype=sh et ts=4:
 #
-# "SystemImager"
+#    vi:set filetype=bash et ts=4:
 #
-#  Copyright (C) 1999-2017 Brian Elliott Finley <brian@thefinleys.com>
+#    This file is part of SystemImager.
 #
-#  $Id$
-#  vi: set filetype=sh et ts=4:
+#    SystemImager is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 2 of the License, or
+#    (at your option) any later version.
 #
-#  Code written by Olivier LAHAYE.
+#    SystemImager is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
 #
-# This file reads settings from local.cfg if required and store config in
-# cmdline.d before network is setup by dracut initqueue logic.
-# It must be run after udev is started in order to have access to filesystems
-# that are lying on lvm or software raid devices. (udev will bring to life those
-# lvm and software raid devices).
+#    You should have received a copy of the GNU General Public License
+#    along with SystemImager. If not, see <https://www.gnu.org/licenses/>.
+#
+#    Copyright (C) 2017-2019 Olivier LAHAYE <olivier.lahaye1@free.fr>
+#
+#    Purpose:
+#      This file reads settings from local.cfg if required and store config in
+#      cmdline.d before network is setup by dracut initqueue logic.
+#      It must be run after udev is started in order to have access to filesystems
+#      that are lying on lvm or software raid devices. (udev will bring to life those
+#      lvm and software raid devices).
 # 
 
 # Tells bash we need bashisms (I/O redirection to subshell) by disabling stric
