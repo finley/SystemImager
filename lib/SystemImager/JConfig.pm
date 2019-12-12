@@ -229,6 +229,6 @@ sub set {
 }
 
 my $jconfig = new SystemImager::JConfig();
-$::main::config = $jconfig;
+$::main::jconfig = $jconfig;
 
 1;
