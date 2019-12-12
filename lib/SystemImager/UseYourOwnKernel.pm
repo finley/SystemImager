@@ -24,7 +24,7 @@ package SystemImager::UseYourOwnKernel;
 use strict;
 use File::Basename;
 use File::Glob;
-use SystemImager::JConfig qw($config);
+use SystemImager::JConfig qw($jconfig);
 
 our $verbose;
 our $is_mounted = 0;
@@ -87,7 +87,7 @@ sub create_uyok_initrd() {
 		$uname_r=$kernel_version;
 	} elsif ($image) {
             # Get SystemImager directories.
-            my $image_dir = $config->get('imager','images_dir');
+            my $image_dir = $jconfig->get('imager','images_dir');
 
             unless (-d "$image_dir/$image") {
                 print STDERR "error: $image is not a valid image! use si_lsimage to see the list of available images.\n";

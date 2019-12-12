@@ -27,7 +27,7 @@ use POSIX qw(uname);
 use SystemImager::JConfig;
 use SystemImager::Common;
 use SystemImager::Server;
-use vars qw($config $VERSION);
+use vars qw($jconfig $VERSION);
 
 my $VERSION = "SYSTEMIMAGER_VERSION_STRING";
 
@@ -101,9 +101,9 @@ unless ($arch) {
 # Set the shell PATH for system() calls.
 $ENV{PATH} = '/sbin:/usr/sbin:/usr/local/sbin:' . $ENV{PATH};
 
-my $autoinstall_boot_dir = $config->get('pxe','boot_files');
+my $autoinstall_boot_dir = $jconfig->get('pxe','boot_files');
 unless ($autoinstall_boot_dir) {
-    die "FATAL: parameter (pxe:boot_files) is not defined in ".$config->{_config_file}."\n";
+    die "FATAL: parameter (pxe:boot_files) is not defined in ".$jconfig->fileName()."\n";
 }
 
 ### BEGIN evaluate commad line options ###

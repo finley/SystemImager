@@ -25,33 +25,33 @@
 #
 # Usage:
 # use SystemImager::JConfig;
-# use vars qw($config);
+# use vars qw($jconfig);
 #
 # read parameter value:
-#	my $port = $config->getParam('monitor','port');
+#	my $port = $jconfig->getParam('monitor','port');
 #	 => returns value upon success. undef otherwise.
 #
 # set parameter value:
-#	 $config->setParam('monitor','port',"8181");
+#	 $jconfig->setParam('monitor','port',"8181");
 #	 => returns value upon success. undef otherwise.
 #
 # get/set configuration filename:
-#	my $file_name = $config->fileName()
-#	my $file_name = $config->fileName('/path/to/new/fileName')
+#	my $file_name = $jconfig->fileName()
+#	my $file_name = $jconfig->fileName('/path/to/new/fileName')
 #	=> returns fileName.
 #
 # read default values for all parameters:
-#	$config->loadDefaults()
+#	$jconfig->loadDefaults()
 #	=> returns nothing. (dies if fails to load defaults).
 #
 # read parameters from config file:
-#	my $config_structure = $config->load()
+#	my $jconfig_structure = $jconfig->load()
 #	=> returns undef upon failure.
-#	=> Note: using this module defines $config by default.
+#	=> Note: using this module defines $jconfig by default.
 #	   Thus this method is only needed internally.
 #
 # save parameters to config file:
-# 	$config->save()
+# 	$jconfig->save()
 # 	=> dies on failure.
 
 package SystemImager::JConfig;
@@ -66,11 +66,11 @@ BEGIN {
 
     @SystemImager::JConfig::ISA       = qw(Exporter);
     @SystemImager::JConfig::EXPORT    = qw();
-    @SystemImager::JConfig::EXPORT_OK = qw($config);
+    @SystemImager::JConfig::EXPORT_OK = qw($jconfig);
 
 }
 
-use vars qw($config);
+use vars qw($jconfig);
 
 sub new {
 	my $class = shift;
@@ -139,8 +139,8 @@ sub loadDefaults {
 		die "Failed to read $self->{_config_scheme}.";
 	}
 	# 3/ Load defaults from scheme.
-	foreach my $field ( keys $scheme_hash) {
-		foreach my $param (keys $scheme_hash->{$field}) {
+	foreach my $field ( keys %{ $scheme_hash }) {
+		foreach my $param (keys %{ $scheme_hash->{$field} }) {
 			my $field_tolower = lc($field);
 			my $param_tolower = lc($param);
 			my @param_scheme = @{ $scheme_hash->{$field}->{$param} };
@@ -228,7 +228,7 @@ sub set {
 	}
 }
 
-my $config = new SystemImager::JConfig();
-$::main::config = $config;
+my $jconfig = new SystemImager::JConfig();
+$::main::config = $jconfig;
 
 1;

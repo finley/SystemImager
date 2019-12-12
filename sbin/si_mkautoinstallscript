@@ -23,28 +23,27 @@
 #    - Allow --update-script=yes  in addition to --force.
 #
 
-use lib "USR_PREFIX/lib/systemimager/perl";
 use Getopt::Long;
 use SystemImager::Server;
 use SystemImager::Common;
 use SystemImager::JConfig;
-use vars qw($config $VERSION);
+use vars qw($jconfig $VERSION);
 
 # Save how we were called so it can be reported as comment in the header of the generated script
 my $cmdline = $0." ".join(" ",@ARGV);
 
 ### BEGIN parse the config file ###
-my $rsync_stub_dir = $config->get('xmit_rsync','stubs_dir');
+my $rsync_stub_dir = $jconfig->get('xmit_rsync','stubs_dir');
 unless ($rsync_stub_dir) {
-    die "FATAL: parameter xmit_rsync.stubs_diris not defined in ".$config->fileName()."\n";
+    die "FATAL: parameter xmit_rsync.stubs_diris not defined in ".$jconfig->fileName()."\n";
 }
-my $autoinstall_script_dir = $config->get('imager','scripts_dir');
+my $autoinstall_script_dir = $jconfig->get('imager','scripts_dir');
 unless ($autoinstall_script_dir) {
-    die "FATAL: parameter imager.scripts_dir is not defined in ".$config->fileName()."\n";
+    die "FATAL: parameter imager.scripts_dir is not defined in ".$jconfig->fileName()."\n";
 }
-my $rsyncd_conf = $config->get('xmit_rsync','config_file');
+my $rsyncd_conf = $jconfig->get('xmit_rsync','config_file');
 unless ($rsyncd_conf) {
-    die "FATAL: parameter xmit_rsync.config_file is not defined in ".$config->fileName()."\n";
+    die "FATAL: parameter xmit_rsync.config_file is not defined in ".$jconfig->fileName()."\n";
 }
 ### END parse the config file ###
 

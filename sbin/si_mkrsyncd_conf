@@ -19,19 +19,21 @@
 #
 #    Copyright (C) 1999-2001 Brian Elliott Finley <brian.finley@baldguysoftware.com>
 #    Copyright (C) 2002 Hewlett-Packard Company <dannf@fc.hp.com>
+#    Copyright (C) 2019 Olivier Lahaye <olivier.lahaye@cea.fr>
 #
 
 use SystemImager::Server;
 use SystemImager::Common;
 use SystemImager::JConfig;
+use vars qw($jconfig);
 
-my $rsync_stub_dir = $config->get('xmit_rsync','stubs_dir');
+my $rsync_stub_dir = $jconfig->get('xmit_rsync','stubs_dir');
 unless ($rsync_stub_dir) {
-    die "FATAL: parameter xmit_rsync.stubs_dir is not defined in ".$config->fileName()."\n";
+    die "FATAL: parameter xmit_rsync.stubs_dir is not defined in ".$jconfig->fileName()."\n";
 }
-my $rsyncd_conf = $config->get('xmit_rsync','config_file');
+my $rsyncd_conf = $jconfig->get('xmit_rsync','config_file');
 unless ($rsyncd_conf) {
-    die "FATAL: parameter xmit_rsync.config_file is not defined in ".$config->fileName()."\n";
+    die "FATAL: parameter xmit_rsync.config_file is not defined in ".$jconfig->fileName()."\n";
 }
 
 SystemImager::Common->check_if_root();

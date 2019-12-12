@@ -30,7 +30,7 @@ use strict;
 use File::Copy;
 use File::Path;
 use XML::Simple;
-use SystemImager::JConfig qw($config);
+use SystemImager::JConfig qw($jconfig);
 use vars qw($VERSION @mount_points %device_by_mount_point %filesystem_type_by_mount_point $disk_no %dev2disk $bootdev $rootdev);
 
 $VERSION="SYSTEMIMAGER_VERSION_STRING";
@@ -1964,7 +1964,7 @@ sub create_autoinstall_script{
     ### BEGIN overrides stuff ###
     # Create default overrides directory. -BEF-
     #
-    my $override_dir = $config->get('imager','overrides_dir');
+    my $override_dir = $jconfig->get('imager','overrides_dir');
     my $dir = "$override_dir/$script_name";
     if (! -d "$dir")  {
       mkdir("$dir", 0755) or die "FATAL: Can't make directory $dir\n";

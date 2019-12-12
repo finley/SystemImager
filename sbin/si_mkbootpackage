@@ -32,7 +32,7 @@ use Getopt::Long;
 use SystemImager::JConfig;
 use SystemImager::Common;
 use SystemImager::UseYourOwnKernel;
-use vars qw($config $VERSION);
+use vars qw($jconfig $VERSION);
 
 # set version
 $VERSION = "SYSTEMIMAGER_VERSION_STRING";
@@ -52,9 +52,9 @@ $ENV{"LANG"} = "C";
 my $progname = basename $0;
 
 my $arch = SystemImager::UseYourOwnKernel::_get_arch();
-my $autoinstall_boot_dir = $config->get('pxe','boot_files');
+my $autoinstall_boot_dir = $jconfig->get('pxe','boot_files');
 unless ($autoinstall_boot_dir) {
-    die "FATAL: parameter pxe.boot_files is not defined in ".$config->fileName()."\n";
+    die "FATAL: parameter pxe.boot_files is not defined in ".$jconfig->fileName()."\n";
 }
 
 my $version_info = <<"EOF";

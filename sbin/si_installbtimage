@@ -26,7 +26,7 @@ use File::Basename;
 use Getopt::Long;
 use SystemImager::JConfig;
 use Socket qw/PF_INET SOCK_DGRAM inet_ntoa sockaddr_in/;
-use vars qw($config $VERSION);
+use vars qw($jconfig $VERSION);
 
 my $VERSION = "SYSTEMIMAGER_VERSION_STRING";
 my $program_name = "si_installbtimage";
@@ -91,30 +91,30 @@ if ($version) {
 }
 
 # Get SystemImager directories.
-my $IMAGE_DIR = $config->get('imager','images_dir');
+my $IMAGE_DIR = $jconfig->get('imager','images_dir');
 unless ($IMAGE_DIR) {
-    die "FATAL: parameter imager.images_dir is not defined in ".$config->fileName()."\n";
+    die "FATAL: parameter imager.images_dir is not defined in ".$jconfig->fileName()."\n";
 }
-my $OVERRIDE_DIR = $config->get('imager','overrides_dir');
+my $OVERRIDE_DIR = $jconfig->get('imager','overrides_dir');
 unless ($OVERRIDE_DIR) {
-    die "FATAL: parameter imager.overrides_dir is not defined in ".$config->fileName()."\n";
+    die "FATAL: parameter imager.overrides_dir is not defined in ".$jconfig->fileName()."\n";
 }
-my $TARBALL_DIR = $config->get('xmit_torrent','tarballs_dir');
+my $TARBALL_DIR = $jconfig->get('xmit_torrent','tarballs_dir');
 unless ($TARBALL_DIR) {
-    die "FATAL: parameter xmit_torrent.tarballs_dir is not defined in ".$config->fileName()."\n";
+    die "FATAL: parameter xmit_torrent.tarballs_dir is not defined in ".$jconfig->fileName()."\n";
 }
-my $TORRENT_DIR = $config->get('xmit_torrent','torrents_dir');
+my $TORRENT_DIR = $jconfig->get('xmit_torrent','torrents_dir');
 unless ($TORRENT_DIR) {
-    die "FATAL: parameter xmit_torrent.torrents_dir is not defined in ".$config->fileName()."\n";
+    die "FATAL: parameter xmit_torrent.torrents_dir is not defined in ".$jconfig->fileName()."\n";
 }
-my $autoinstall_boot_dir = $config->get('pxe','boot_files');
+my $autoinstall_boot_dir = $jconfig->get('pxe','boot_files');
 unless ($autoinstall_boot_dir) {
-    die "FATAL: parameter pxe.boot_files is not defined in ".$config->fileName()."\n";
+    die "FATAL: parameter pxe.boot_files is not defined in ".$jconfig->fileName()."\n";
 }
 
 # Get tracker port and interface from the configuration file.
 my ($tracker_port, $image_server);
-my $config_file = $config->get('xmit_torrent','config_file');
+my $config_file = $jconfig->get('xmit_torrent','config_file');
 open(IN, '<', $config_file) or
     die "ERROR: cannot open configuration file $config_file!\n";
 while(<IN>) {

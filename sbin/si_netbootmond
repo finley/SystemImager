@@ -30,20 +30,20 @@ use POSIX qw(setsid);
 use SystemImager::JConfig;
 use SystemImager::HostRange;
 use SystemImager::Server;
-use vars qw($config $VERSION);
+use vars qw($jconfig $VERSION);
 
 $0 = "si_netbootmond";
 
-my $sis_conf=$config->fileName();
+my $sis_conf=$jconfig->fileName();
 
-my $net_boot_default = lc $config->get('pxe','boot_mode');
+my $net_boot_default = lc $jconfig->get('pxe','boot_mode');
 if("$net_boot_default" eq "net") {
     print STDERR qq(\npxe.boot_mode is set to "$net_boot_default" in $sis_conf.\n);
     print STDERR qq(No need for me here, so I'm exiting. See si_netbootmond\(8\) for details.\n);
     exit 0;
 }
 
-my $tftp_dir = $config->get('pxe','tftp_dir');
+my $tftp_dir = $jconfig->get('pxe','tftp_dir');
 my $pxe_conf_dir;
 my $kboot_conf_dir;
 
@@ -57,7 +57,7 @@ unless($tftp_dir) {
 my $syslinux_cfg_localboot = "/etc/systemimager/pxelinux.cfg/syslinux.cfg.localboot";
 my $kboot_cfg_localboot = "/etc/systemimager/kboot.cfg/localboot";
 my $pid_file = "/var/run/si_netbootmond.pid";
-my $log_file = $config->get('xmit_rsync','log_file');
+my $log_file = $jconfig->get('xmit_rsync','log_file');
 
 
 ################################################################################

@@ -26,7 +26,7 @@ use File::Basename;
 use XML::Simple;
 use SystemImager::JConfig;
 use SystemImager::HostRange;
-use vars qw($config $VERSION);
+use vars qw($jconfig $VERSION);
 
 my $program_name = basename($0);
 
@@ -136,9 +136,9 @@ select(STDOUT);
 $| = 1;
 
 my $database =  $SystemImager::HostRange::database;
-my $overrides = $config->get('imager','overrides_dir');
+my $overrides = $jconfig->get('imager','overrides_dir');
 unless ($overrides) {
-	die "FATAL: parameter imager.overrides_dir is not defined in ".$config->fileName()."\n";
+	die "FATAL: parameter imager.overrides_dir is not defined in ".$jconfig->fileName()."\n";
 }
 
 # Parse XML database.

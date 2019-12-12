@@ -25,7 +25,7 @@ use strict;
 use Getopt::Long;
 use SystemImager::JConfig;
 use SystemImager::HostRange;
-use vars qw($config $VERSION);
+use vars qw($jconfig $VERSION);
 
 ### BEGIN Program ###
 # set version information
@@ -171,9 +171,9 @@ unless ($all_parameters_set) {
 }
 
 
-my $autoinstall_script_dir = $config->get('imager','scripts_dir');
+my $autoinstall_script_dir = $jconfig->get('imager','scripts_dir');
 unless ($autoinstall_script_dir) {
-    die "FATAL: parameter imager.scripts_dir is not defined in ".$config->fileName()."\n";
+    die "FATAL: parameter imager.scripts_dir is not defined in ".$jconfig->fileName()."\n";
 }
 
 if($interactive eq "yes") {

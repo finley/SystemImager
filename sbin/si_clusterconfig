@@ -26,7 +26,7 @@ use Getopt::Long;
 use XML::Simple;
 use SystemImager::JConfig;
 use SystemImager::HostRange;
-use vars qw($config);
+use vars qw($jconfig);
 
 my $VERSION = "SYSTEMIMAGER_VERSION_STRING";
 
@@ -164,9 +164,9 @@ sub edit
 		die("FATAL: $program_name requires root privileges to run in edit-mode.\n");
 	}
 
-	my $scripts_dir = $config->get('imager','scripts_dir');
+	my $scripts_dir = $jconfig->get('imager','scripts_dir');
 	unless ($scripts_dir) {
-		die "FATAL: parameter AUTOINSTALL_scripts_dir is not defined in ".$config->fileName()."\n";
+		die "FATAL: parameter AUTOINSTALL_scripts_dir is not defined in ".$jconfig->fileName()."\n";
 	}
 
 	# Get a valid system editor (only if in interactive mode).

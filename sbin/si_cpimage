@@ -35,28 +35,28 @@ use Getopt::Long;
 use SystemImager::Server;
 use SystemImager::Common;
 use SystemImager::JConfig;
-use vars qw($config $VERSION);
+use vars qw($jconfig $VERSION);
 
 ### BEGIN parse the config file ###
-my $rsync_stub_dir = $config->get('xmit_rsync','stubs_dir');
+my $rsync_stub_dir = $jconfig->get('xmit_rsync','stubs_dir');
 unless ($rsync_stub_dir) {
-    die "FATAL: parameter xmit_rsync.stubs_dir is not defined in ".$config->fileName()."\n";
+    die "FATAL: parameter xmit_rsync.stubs_dir is not defined in ".$jconfig->fileName()."\n";
 }
-my $autoinstall_script_dir = $config->get('imager','scripts_dir');
+my $autoinstall_script_dir = $jconfig->get('imager','scripts_dir');
 unless ($autoinstall_script_dir) {
-    die "FATAL: parameter imager.scripts_dir is not defined in ".$config->fileName()."\n";
+    die "FATAL: parameter imager.scripts_dir is not defined in ".$jconfig->fileName()."\n";
 }
-my $rsyncd_conf = $config->get('xmit_rsync','config_file');
+my $rsyncd_conf = $jconfig->get('xmit_rsync','config_file');
 unless ($rsyncd_conf) {
-    die "FATAL: parameter xmit_rsync.config_file is not defined in ".$config->fileName()."\n";
+    die "FATAL: parameter xmit_rsync.config_file is not defined in ".$jconfig->fileName()."\n";
 }
-my $default_image_dir = $config->get('imager','images_dir');
+my $default_image_dir = $jconfig->get('imager','images_dir');
 unless ($default_image_dir) {
-    die "FATAL: parameter imager.images_dir is not defined in ".$config->fileName()."\n";
+    die "FATAL: parameter imager.images_dir is not defined in ".$jconfig->fileName()."\n";
 }
-my $default_override_dir = $config->get('imager','overrides_dir');
+my $default_override_dir = $jconfig->get('imager','overrides_dir');
 unless ($default_override_dir) {
-    die "FATAL: parameter imager.overrides_dir is not defined in ".$config->fileName()."\n";
+    die "FATAL: parameter imager.overrides_dir is not defined in ".$jconfig->fileName()."\n";
 }
 
 ### END parse the config file ###
@@ -300,7 +300,7 @@ SystemImager::Server->gen_rsyncd_conf($rsync_stub_dir, $rsyncd_conf)
 # Add image entry to flamethrower.conf file
 my $entry_name = $destination_image;
 my $new_entry_data = "[$destination_image]\nDIR = $destination\n";
-my $flamethrower_conf = $config->get('xmit_flamethrower','config_file');
+my $flamethrower_conf = $jconfig->get('xmit_flamethrower','config_file');
 if(-e $flamethrower_conf ) {
     SystemImager::Common->add_or_delete_conf_file_entry($flamethrower_conf, $entry_name, $new_entry_data) or 
         die "$program_name: Cannot create entry in $flamethrower_conf";

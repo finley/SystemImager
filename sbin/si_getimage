@@ -59,7 +59,7 @@ use SystemImager::Server;
 use SystemImager::Common;
 use SystemImager::JConfig;
 use SystemImager::Options;
-use vars qw($config $VERSION);
+use vars qw($jconfig $VERSION);
 
 # Save how we were called so it can be reported as comment in the header of the generated script
 my $cmdline = $0." ".join(" ",@ARGV);
@@ -67,29 +67,29 @@ my $cmdline = $0." ".join(" ",@ARGV);
 #
 ### BEGIN load configuration ###
 #
-my $rsync_stub_dir = $config->get('xmit_rsync','stubs_dir');
+my $rsync_stub_dir = $jconfig->get('xmit_rsync','stubs_dir');
 unless ($rsync_stub_dir) {
-    die "FATAL: parameter xmit_rsync.stubs_dir is not defined in ".$config->fileName()."\n";
+    die "FATAL: parameter xmit_rsync.stubs_dir is not defined in ".$jconfig->fileName()."\n";
 }
-my $autoinstall_script_dir = $config->get('imager','scripts_dir');
+my $autoinstall_script_dir = $jconfig->get('imager','scripts_dir');
 unless ($autoinstall_script_dir) {
-    die "FATAL: parameter imager.scripts_dir is not defined in ".$config->fileName()."\n";
+    die "FATAL: parameter imager.scripts_dir is not defined in ".$jconfig->fileName()."\n";
 }
-my $autoinstall_boot_dir = $config->get('pxe','boot_files');
+my $autoinstall_boot_dir = $jconfig->get('pxe','boot_files');
 unless ($autoinstall_boot_dir) {
-    die "FATAL: parameter pxe.boot_files is not defined in ".$config->fileName()."\n";
+    die "FATAL: parameter pxe.boot_files is not defined in ".$jconfig->fileName()."\n";
 }
-my $rsyncd_conf = $config->get('xmit_rsync','config_file');
+my $rsyncd_conf = $jconfig->get('xmit_rsync','config_file');
 unless ($rsyncd_conf) {
-    die "FATAL: parameter xmit_rsync.config_file is not defined in ".$config->fileName()."\n";
+    die "FATAL: parameter xmit_rsync.config_file is not defined in ".$jconfig->fileName()."\n";
 }
-my $default_image_dir = $config->get('imager','images_dir');
+my $default_image_dir = $jconfig->get('imager','images_dir');
 unless ($default_image_dir) {
-    die "FATAL: parameter imager.images_dir is not defined in ".$config->fileName()."\n";
+    die "FATAL: parameter imager.images_dir is not defined in ".$jconfig->fileName()."\n";
 }
-my $default_override_dir = $config->get('imager','overrides_dir');
+my $default_override_dir = $jconfig->get('imager','overrides_dir');
 unless ($default_override_dir) {
-    die "FATAL: parameter imager.overrides_dir is not defined in ".$config->fileName()."\n";
+    die "FATAL: parameter imager.overrides_dir is not defined in ".$jconfig->fileName()."\n";
 }
 ### END load configuration ###
 
@@ -424,13 +424,13 @@ if($source_host) {
       print FINAL_EXCLUDE_FILE "$mount_point/*\n";
     }
     # Add common patterns that should be always excluded.
-    if (open(COMMON_EXCLUDE_FILE, "<".$config->get('imager','getimage_excludes'))) {
+    if (open(COMMON_EXCLUDE_FILE, "<".$jconfig->get('imager','getimage_excludes'))) {
         while (<COMMON_EXCLUDE_FILE>) {
             print FINAL_EXCLUDE_FILE "$_";
         }
         close(COMMON_EXCLUDE_FILE);
     } else {
-        print STDERR "WARNING: couldn't open ".$config->get('imager','getimage_excludes').", skipping common exclusions...\n";
+        print STDERR "WARNING: couldn't open ".$jconfig->get('imager','getimage_excludes').", skipping common exclusions...\n";
     }
     if(@excludes) { 
      print FINAL_EXCLUDE_FILE "\n# Exclusions from --exclude on the command line.\n";
@@ -513,7 +513,7 @@ if (
 ### END generic image retrieval stuff ###
 
 # Add image entry to flamethrower.conf file
-my $flamethrower_conf = $config->get('xmit_flamethrower','config_file');
+my $flamethrower_conf = $jconfig->get('xmit_flamethrower','config_file');
 my $entry_name = $image;
 my $new_entry_data = "[$image]\nDIR = $imagedir\n";
 if(-e $flamethrower_conf) {
@@ -647,7 +647,7 @@ SystemImager::Server->validate_auto_install_script_conf( $auto_install_script_co
 SystemImager::Server->create_autoinstall_script(
     $script_name,
     $autoinstall_script_dir,
-    $config->fileName(),
+    $jconfig->fileName(),
     $image,
     $overrides,
     $imagedir,

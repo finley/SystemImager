@@ -38,35 +38,34 @@ $program_name="si_rmimage";
 $get_help = "         Try \"$program_name -help\" for more options.";
 
 # declare modules
-use lib "USR_PREFIX/lib/systemimager/perl";
 use File::Copy;
 use File::Path;
 use Getopt::Long;
 use SystemImager::Server;
 use SystemImager::Common;
 use SystemImager::JConfig;
-use vars qw($config);
+use vars qw($jconfig);
 
 ### BEGIN parse the config file ###
-my $autoinstall_script_dir = $config->get('imager','scripts_dir');
+my $autoinstall_script_dir = $jconfig->get('imager','scripts_dir');
 unless ($autoinstall_script_dir) {
-    die "FATAL: parameter imager.scripts_dir is not defined in ".$config->fileName()."\n";
+    die "FATAL: parameter imager.scripts_dir is not defined in ".$jconfig->fileName()."\n";
 }
-my $autoinstall_boot_dir = $config->get('pxe','boot_files');
+my $autoinstall_boot_dir = $jconfig->get('pxe','boot_files');
 unless ($autoinstall_boot_dir) {
-    die "FATAL: parameter pxe.boot_files is not defined in ".$config->fileName()."\n";
+    die "FATAL: parameter pxe.boot_files is not defined in ".$jconfig->fileName()."\n";
 }
-my $rsyncd_conf = $config->get('xmit_rsync','config_file');
+my $rsyncd_conf = $jconfig->get('xmit_rsync','config_file');
 unless ($rsyncd_conf) {
-    die "FATAL: parameter xmit_rsync.config_file is not defined in ".$config->fileName()."\n";
+    die "FATAL: parameter xmit_rsync.config_file is not defined in ".$jconfig->fileName()."\n";
 }
-my $rsync_stub_dir = $config->get('xmit_rsync','stubs_dir');
+my $rsync_stub_dir = $jconfig->get('xmit_rsync','stubs_dir');
 unless ($rsync_stub_dir) {
-    die "FATAL: parameter xmit_rsync.stubs_dir is not defined in ".$config->fileName()."\n";
+    die "FATAL: parameter xmit_rsync.stubs_dir is not defined in ".$jconfig->fileName()."\n";
 }
-my $default_override_dir = $config->get('imager','overrides_dir');
+my $default_override_dir = $jconfig->get('imager','overrides_dir');
 unless ($default_override_dir) {
-    die "FATAL: parameter imager.overrides_dir is not defined in ".$config->fileName()."\n";
+    die "FATAL: parameter imager.overrides_dir is not defined in ".$jconfig->fileName()."\n";
 }
 ### END parse the config file ###
 
@@ -161,7 +160,7 @@ unless(($imagedir) or ($force)) {
 # get architecture of the image (for removing UYOK boot files later on)
 # BUG: OL: /etc/systemimager/boot/ARCH not in images: broken?
 my $arch;
-$file=$imagedir . "/etc/systemimager" . "/boot/ARCH"; # was $config->systemimager_dir
+$file=$imagedir . "/etc/systemimager" . "/boot/ARCH"; # was $jconfig->systemimager_dir
 if( -e $file ) {
     open(FILE,"<$file") or die("Couldn't open $file for reading $!");
       $arch = (<FILE>)[0];
@@ -189,13 +188,13 @@ if($force) {
 
 # remove BitTorrent files
 if($verbose) {print "  Removing BitTorrent files for $image.\n";}
-$file = $config->autoinstall_tarball_dir() . "/image-" . $image . ".tar.gz";
+$file = $jconfig->get('xmit_torrent','tarball_dir') . "/image-" . $image . ".tar.gz";
 unlink($file) if (-f $file);
-$file = $config->autoinstall_tarball_dir() . "/image-" . $image . ".tar";
+$file = $jconfig->get('xmit_torrent','tarball_dir') . "/image-" . $image . ".tar";
 unlink($file) if (-f $file);
-$file = $config->autoinstall_torrent_dir() . "/image-" . $image . ".tar.gz.torrent";
+$file = $jconfig->get('xmit_torrent','torrents_dir') . "/image-" . $image . ".tar.gz.torrent";
 unlink($file) if (-f $file);
-$file = $config->autoinstall_torrent_dir() . "/image-" . $image . ".tar.torrent";
+$file = $jconfig-> get('xmit_torrent','torrents_dir'). "/image-" . $image . ".tar.torrent";
 unlink($file) if (-f $file);
 
 # remove master autoinstall script
@@ -222,7 +221,7 @@ SystemImager::Server->gen_rsyncd_conf($rsync_stub_dir, $rsyncd_conf);
 
 # remove image from flamethrower.conf file
 my $entry_name = $image;
-my $flamethrower_conf = $config->get('xmit_flamethrower','config_file');
+my $flamethrower_conf = $jconfig->get('xmit_flamethrower','config_file');
 if(-e $flamethrower_conf) {
     SystemImager::Common->add_or_delete_conf_file_entry($flamethrower_conf, $entry_name) or
         die "$program_name: Cannot remove entry from $flamethrower_conf";

@@ -40,18 +40,18 @@ use SystemImager::Options;
 use SystemImager::HostRange;
 use SystemImager::UseYourOwnKernel;
 
-use vars qw($config $VERSION);
+use vars qw($jconfig $VERSION);
 
 ### BEGIN parse the config file ###
 
-my $tftp_dir = $config->get('pxe','tftp_dir');
+my $tftp_dir = $jconfig->get('pxe','tftp_dir');
 if (!$tftp_dir) {
-    die "FATAL: parameter pxe.tftp_dir is not defined in ".$config->fileName()."\n";
+    die "FATAL: parameter pxe.tftp_dir is not defined in ".$jconfig->fileName()."\n";
 }
 
-my $boot_dir = $config->get('pxe','boot_files');
+my $boot_dir = $jconfig->get('pxe','boot_files');
 if (!$boot_dir) {
-    die "FATAL: parameter pxe.boot_files is not defined in ".$config->fileName()."\n";
+    die "FATAL: parameter pxe.boot_files is not defined in ".$jconfig->fileName()."\n";
 }
 
 my $localboot_file = "/etc/systemimager"."/pxelinux.cfg/syslinux.cfg.localboot";
