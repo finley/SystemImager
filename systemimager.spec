@@ -1076,6 +1076,11 @@ if [[ -a %{_sysconfdir}/xinetd.d/rsync ]]; then
 fi
 %endif
 
+# Then we make sure that a config file exists and is accessible by webgui.
+touch /etc/systemimager/systemimager.json
+chmod 644 /etc/systemimager/systemimager.json
+chown apache /etc/systemimager/systemimager.json
+
 # If we are upgrading from a pre-rsync-stubs release, the preinst script
 # will have left behind a copy of the old rsyncd.conf file.  we need to parse
 # it and make stubs files for each image.
