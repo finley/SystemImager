@@ -1460,7 +1460,7 @@ fi
 %{_prefix}%{_dracutbase}/modules.d/%{dracut_module_index}systemimager/*
 
 %files webgui
-%defattr(-, root, root)
+%defattr(0644, root, root, 0755)
 %config(noreplace) %{_sysconfdir}/httpd/conf.d/systemimager.conf
 %dir %{_datarootdir}/systemimager/webgui
 %dir %{_datarootdir}/systemimager/webgui/css
