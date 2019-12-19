@@ -48,7 +48,7 @@
 <table id="filtersTable" width="99%">
   <tbody>
     <tr id="filtersRow">
-      <td>SystemImager DHCP:</td>
+      <td>SystemImager cluster editor:</td>
       <td style="text-align:right">
         <span>&nbsp;</span>
       </td>
