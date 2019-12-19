@@ -1468,6 +1468,7 @@ fi
 %config(noreplace) %{_sysconfdir}/httpd/conf.d/systemimager.conf
 %dir %{_datarootdir}/systemimager/webgui
 %dir %{_datarootdir}/systemimager/webgui/css
+%dir %{_exec_prefix}/lib/systemimager
 %{_datarootdir}/systemimager/webgui/index.php
 %{_datarootdir}/systemimager/webgui/edit_config.php
 %{_datarootdir}/systemimager/webgui/manage_netboot.php
@@ -1500,6 +1501,6 @@ fi
 %{_datarootdir}/systemimager/webgui/images/edit_config.png
 %{_datarootdir}/systemimager/webgui/images/manage_netboot.png
 %{_datarootdir}/systemimager/webgui/images/edit_dhcp.png
-%{_libexecdir}/systemimager/get-networks-helper
-%{_libexecdir}/systemimager/clients-statuses-helper
+%{_exec_prefix}/lib/systemimager/get-networks-helper
+%{_exec_prefix}/lib/systemimager/clients-statuses-helper
 
