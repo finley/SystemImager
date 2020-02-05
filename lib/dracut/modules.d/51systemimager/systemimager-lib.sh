@@ -275,7 +275,7 @@ EOF
     test -n "$PLYMOUTH_MSG_TYPE" && plymouth --ping && plymouth update --status="mesg:${PLYMOUTH_MSG_TYPE}:${LOG_MESSAGE:0:120}" > /dev/null 2>&1
 
     # if remote log is required, forward to the server.
-    if test -n "$USELOGGER" -a -n "$LOGSERVER"
+    if test -n "$USELOGGER" -a -n "$LOG_SERVER"
     then
 	logger -t "${LOG_TAG}" -p ${LOG_PRIORITY} -n ${LOG_SERVER} -P ${LOG_SERVER_PORT:=514} -- "${LOG_MESSAGE}"
     fi
