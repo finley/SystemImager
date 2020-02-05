@@ -32,7 +32,7 @@ logstep "systemimager-monitor-server: console and progress report task."
 getarg 'si.break=monitor' && logwarn "Break start monitor" && interactive_shell
 
 if [ ! -z "$MONITOR_SERVER" ]; then
-    # Start socat local socket server. Aim it to have a unique persistent connection with server.
+    # Start socat local socket server. Aim is to have a unique persistent connection with server.
     if socat /dev/null TCP:$MONITOR_SERVER:$MONITOR_PORT 2>/dev/null
     then
 	# freeze log dispatcher so we can add 1st line to log (avoid race condition)
@@ -51,7 +51,7 @@ if [ ! -z "$MONITOR_SERVER" ]; then
 	socat -u FILE:/tmp/si_report.stream,ignoreeof TCP-CONNECT:$MONITOR_SERVER:$MONITOR_PORT&
 	echo $! > /run/systemimager/reporting_socat.pid
 
-	loginfo "Local console forwarder started and log forwarded to image server."
+	loginfo "Local console forwarder started and log forwarded to monitor server: ${MONITOR_SERVER}."
     else
 	MONITOR_CONSOLE="n"
 	logerror "Can' connect to server console logging. Console log disabled!"
