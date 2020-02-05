@@ -48,10 +48,36 @@ exec 2> >( while read LINE; do logger -p local2.err -t systemimager "$LINE"; don
 exec > >( while read LINE; do logger -p local2.info -t systemimager "$LINE"; done )
 
 . /lib/systemimager-lib.sh # Load /tmp/variables.txt and some macros
-logstep "systemimager-load-network-infos: Load DHCP options"
+#
+# At this step, /tmp/variables.txt is read.
+# Case 1: If INSALL_IFACE is set and not the correct one, then return.
+# Case 2: Else (if INSTALL_IFACE is not set), if DEVICE is set and not the same one, give up (we already loaded another interface)
+
+if test -n "$INSTALL_IFACE" -a "$INSTALL_IFACE" != "$1" # Case 1
+then
+	loginfo "Install interface set to [$INSTALL_IFACE]. Ignoring interface [$1] for imaging."
+	# restore file descriptors so log subprocesses are stopped (read returns fail)
+	exec 1>&6 6>&- 2>&7 7>&-
+	return
+fi
+
+# At this point, either INSTALL_IFACE is set and equal to $1 (and DEVICE is empty and need to bi filled), OR it is not set at all and DEVICE may be already set.
+
+if test -n "$DEVICE"
+then
+	loginfo "Install interface already chosen: [$DEVICE]. Ignoring interface [$1] for imaging."
+	# restore file descriptors so log subprocesses are stopped (read returns fail)
+	exec 1>&6 6>&- 2>&7 7>&-
+	return
+fi
+
+
+# If we reach this point, this means that iether INSTALL_IFACE is the correct one if it is set or (if it is not set), DEVICE is still empty and we need to load something.
+
+logstep "systemimager-load-network-infos: Load DHCP/STATIC network informations [$1]"
 
 DEVICE=$1
-logdebug "Network device used: [$DEVICE]"
+logdebug "Trying to load network informations for device: [$DEVICE]"
 
 # Compute some constants (used to send messages to monitord)
 CLIENT_MAC=$(ip -o link show $DEVICE 2>/dev/null | grep -o -E '([[:xdigit:]]{2}:){5}[[:xdigit:]]{2}' -m 1|grep -vi 'FF:FF:FF:FF:FF:FF' | sed -e 's/:/./g' -e 's/\(.*\)/\U\1/')
@@ -192,10 +218,13 @@ then
 	BOOTPROTO=static
 	loginfo "Finished reading static IP informations."
 else
+	# This device (from $1) has not been configured (either from DHCP or static infos. (BUT there may be nanother one (e.g. eno1 not configured and eno2 ok))
+
+	logwarn "No DHCP or STATIC network information found in /tmp for [$DEVICE]. Set INSTALL_IFACE to avoid this warning."
+	logwarn "Not using [$DEVICE] for installtion. Trying next one if any."
+	DEVICE="" # clearing this device
 	# BUG: IF imager started from USB key instead of PXE, we end up here.
 	# Is it relevant to handle this situation?
-	logerror "No DHCP_OPTIONS found in /tmp! systemd-networkd which is not yet supported?"
-	shellout "Failed to read DHCP options!"
 fi
 
 # Save variables to /tmp/variables.txt

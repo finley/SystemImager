@@ -110,6 +110,16 @@
     </varlistentry>
     <varlistentry>
       <term>
+        <option>si.install-iface=<replaceable>network interface name</replaceable></option> (Variable: <option>INSTALL_IFACE</option>)
+      </term>
+      <listitem>
+        <para>Specify the network interface name wich will be used for imaging.</para>
+        <para>If it is not set, SystemImager will use the 1st interface that gets configured (either dhcp or static).</para>
+        <para>It is usefull for example when eno1 is configured for some reasons and you want to use eno2 to image the computer.</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term>
         <option>si.dl-protocol=<replaceable>image transfer protocol</replaceable></option> (Variable: <option>DL_PROTOCOL</option>)
       </term>
       <listitem>

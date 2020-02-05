@@ -75,6 +75,11 @@ test -z "$DISKS_LAYOUT" && DISKS_LAYOUT=`getarg DISKS_LAYOUT`
 test -z "$DISKS_LAYOUT" && DISKS_LAYOUT=`getarg si.disks-layout`
 
 #####################################
+# si.install-iface="eno2"
+test -z "$INSTALL_IFACE" && INSTALL_IFACE=`getarg INSTALL_IFACE`
+test -z "$INSTALL_IFACE" && INSTALL_IFACE=`getarg si.install-iface`
+
+#####################################
 # si.network-config="netconfig|netconfig.xml"
 test -z "$NETWORK_CONFIG" && NETWORK_CONFIG=`getarg NETWORK_CONFIG`
 test -z "$NETWORK_CONFIG" && NETWORK_CONFIG=`getarg si.network-config`

@@ -70,6 +70,10 @@ test -z "$DISKS_LAYOUT" && DISKS_LAYOUT=$(getarg si.disks-layout -d DISKS_LAYOUT
 test -z "$NETWORK_CONFIG" && NETWORK_CONFIG=$(getarg si.network-config -d NETWORK_CONFIG) && logdebug "Got NETWORK_CONFIG=${NETWORK_CONFIG}"
 
 #####################################
+# si.install-iface="eno2"
+test -z "$INSTALL_IFACE" && INSTALL_IFACE=$(getarg si.install-iface -d INSTALL_IFACE) && logdebug "Got INSTALL_IFACE=${INSTALL_IFACE}"
+
+#####################################
 # si.dl-protocol="torrent|rsync|ssh|..."
 test -z "$DL_PROTOCOL" && DL_PROTOCOL=$(getarg si.dl-protocol) && logdebug "Got DL_PROTOCOL=${DL_PROTOCOL}"
 

@@ -522,6 +522,7 @@ IMAGER_KERNEL="$IMAGER_KERNEL"
 #
 # Deployment informations and configurations
 #
+INSTALL_IFACE="$INSTALL_IFACE"			# si.install-iface
 IMAGESERVER="$IMAGESERVER"			# si.image-server
 IMAGENAME="$IMAGENAME"
 SCRIPTNAME="$SCRIPTNAME"
