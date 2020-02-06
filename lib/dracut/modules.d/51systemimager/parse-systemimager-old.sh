@@ -32,10 +32,10 @@ set +o posix
 exec 6>&1 7>&2      # Save file descriptors 1 and 2.
 
 # Redirect stderr to logger local2.err channel
-exec 2> >( while read LINE; do logger -p local2.err -t systemimager "$LINE"; done )
+exec 2> >( while read LINE; do logger -p local2.err -t systemimager -- "$LINE"; done )
 
 # Redirect stdout to logger local2.info channel
-exec > >( while read LINE; do logger -p local2.info -t systemimager "$LINE"; done )
+exec > >( while read LINE; do logger -p local2.info -t systemimager -- "$LINE"; done )
 
 type getarg >/dev/null 2>&1 || . /lib/dracut-lib.sh
 type write_variables >/dev/null 2>&1 || . /lib/systemimager-lib.sh
