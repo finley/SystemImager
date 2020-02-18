@@ -110,7 +110,7 @@ EOF
     inst_script "$moddir/systemimager-load-network-infos.sh" "/sbin/systemimager-load-network-infos"
     inst_script "$moddir/systemimager-load-scripts-ecosystem.sh" "/sbin/systemimager-load-scripts-ecosystem"
     inst_script "$moddir/systemimager-netstart-old.sh" "/sbin/systemimager-netstart"
-    inst_script "$moddir/systemimager-start.sh" "/sbin/systemimager-start"
+    inst_script "$moddir/systemimager-start-old.sh" "/sbin/systemimager-start"
     inst_script "$moddir/systemimager-pingtest.sh" "/sbin/systemimager-pingtest"
     inst_script "$moddir/systemimager-monitor-server.sh" "/sbin/systemimager-monitor-server"
     inst_script "$moddir/systemimager-deploy-client.sh" "/sbin/systemimager-deploy-client"
