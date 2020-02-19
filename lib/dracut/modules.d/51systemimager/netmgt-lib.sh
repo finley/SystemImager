@@ -396,7 +396,7 @@ _check_interface_type() {
 	else
 		case "${IF_TYPE}" in
 			Ethernet|Infiniband)
-				logwarn "Network configuration list ${IF_DEV} of type ${IF_TYPE} to be configured,"
+				logwarn "Network configuration lists ${IF_DEV} of type ${IF_TYPE} to be configured,"
 				logwarn "but it is not seen by kernel. Make sure it is the correct device name."
 				logwarn "Assuming post install scripts will bring this device to life."
 				;;
