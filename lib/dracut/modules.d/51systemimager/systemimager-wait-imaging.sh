@@ -59,7 +59,8 @@ case "$SI_IMAGING_STATUS" in
 	"finished")
 		if test ! -e /etc/fstab.systemimager
 		then
-			logwarn "directboot: finished called twice"
+			# Already run. We are called for each network interface that has been set-up.
+			logdebug "Iamging: finished already treated"
 			return 0
 		fi
 
