@@ -27,14 +27,8 @@
 #      lvm and software raid devices).
 # 
 
-# Tells bash we need bashisms (I/O redirection to subshell) by disabling stric
-# posix mode.
-set +o posix
-
-# Redirect stdout and stderr to system log (that is later processed by log dispatcher)
-exec 6>&1 7>&2      # Save file descriptors 1 and 2.
-exec 2> >( while read LINE; do logger -p local2.err -t systemimager -- "$LINE"; done )
-exec > >( while read LINE; do logger -p local2.info -t systemimager -- "$LINE"; done )
+# 1st check iif we have aloready done this task.
+test -f /tmp/local.cfg && return # Avoid being run multiple times (onine hook runs for each interface that is set-up)
 
 type write_variables >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 
@@ -137,9 +131,8 @@ ip=$IPADDR::$GATEWAY:$NETMASK:$HOSTNAME:$DEVICE:on
 EOF
     fi
     write_variables # Update infos in /tmp/variables.txt
+else
+	echo '# local.cfg' > /tmp/local.cfg # Make sure /tmp/local.cfg exists
 fi
-
-# restore file descriptors so log subprocesses are stopped (read returns fail)
-exec 1>&6 6>&- 2>&7 7>&-
 
 # -- END --

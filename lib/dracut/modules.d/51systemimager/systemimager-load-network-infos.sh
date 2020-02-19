@@ -38,41 +38,7 @@
 #                      see dhclient.conf for commentary
 #
 
-# Tells bash we need bashisms (I/O redirection to subshell) by disabling stric
-# posix mode.
-set +o posix
-
-# Redirect stdout and stderr to system log (that is later processed by log dispatcher)
-exec 6>&1 7>&2      # Save file descriptors 1 and 2.
-exec 2> >( while read LINE; do logger -p local2.err -t systemimager -- "$LINE"; done )
-exec > >( while read LINE; do logger -p local2.info -t systemimager -- "$LINE"; done )
-
-. /lib/systemimager-lib.sh # Load /tmp/variables.txt and some macros
-#
-# At this step, /tmp/variables.txt is read.
-# Case 1: If INSALL_IFACE is set and not the correct one, then return.
-# Case 2: Else (if INSTALL_IFACE is not set), if DEVICE is set and not the same one, give up (we already loaded another interface)
-
-if test -n "$INSTALL_IFACE" -a "$INSTALL_IFACE" != "$1" # Case 1
-then
-	loginfo "Install interface set to [$INSTALL_IFACE]. Ignoring interface [$1] for imaging."
-	# restore file descriptors so log subprocesses are stopped (read returns fail)
-	exec 1>&6 6>&- 2>&7 7>&-
-	return
-fi
-
-# At this point, either INSTALL_IFACE is set and equal to $1 (and DEVICE is empty and need to bi filled), OR it is not set at all and DEVICE may be already set.
-
-if test -n "$DEVICE"
-then
-	loginfo "Install interface already chosen: [$DEVICE]. Ignoring interface [$1] for imaging."
-	# restore file descriptors so log subprocesses are stopped (read returns fail)
-	exec 1>&6 6>&- 2>&7 7>&-
-	return
-fi
-
-
-# If we reach this point, this means that iether INSTALL_IFACE is the correct one if it is set or (if it is not set), DEVICE is still empty and we need to load something.
+type write_variables >/dev/null 2>&1 || . /lib/systemimager-lib.sh # Load /tmp/variables.txt and some macros
 
 logstep "systemimager-load-network-infos: Load DHCP/STATIC network informations [$1]"
 
@@ -229,8 +195,5 @@ fi
 
 # Save variables to /tmp/variables.txt
 write_variables
-
-# restore file descriptors so log subprocesses are stopped (read returns fail)
-exec 1>&6 6>&- 2>&7 7>&-
 
 ### END SystemImager loading network config ###
