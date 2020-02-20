@@ -97,6 +97,7 @@ if [ $? = 0 ]; then
         # We use cat instead of copy, so that floppy settings can
         # override hard disk settings. -BEF-
         cat /run/media/floppy/local.cfg >> /tmp/local.cfg || shellout
+	umount /run/media/floppy
     else
         loginfo "No /local.cfg on floppy diskette."
     fi
@@ -106,7 +107,46 @@ fi
 ### END try floppy ###
 
 ### BEGIN try USB Key ###
-# OL: BUG: Need to implement that for modernity. Who still use floppies?
+loginfo "Checking for removable medias."
+REMOVABLE_DEVICES=$(lsblk -r -o NAME,FSTYPE,RM,SIZE,TYPE,MOUNTPOINT|grep 'part\s*$'|awk '($3 == 1) && ($2 != "swap") { print $1 }'|tr '\n' ' ')
+REMOVABLE_DEVICES="$(trim $REMOVABLE_DEVICES)"
+if test -n "$REMOVABLE_DEVICES"
+then
+	loginfo "Found some removable devices: [$REMOVABLE_DEVICES]"
+	mkdir -p /run/media/removable
+	for REM_DEV in $REMOVABLE_DEVICES
+	do
+		loginfo "looking for local.cfg on /dev/$REM_DEV"
+		if test -b /dev/$REM_DEV
+		then
+			mount /dev/$REM_DEV /run/media/removable -o ro > /dev/null
+			if [ $? = 0 ]
+			then
+				logdebug "Mounted /dev/$REM_DEV on /run/media/removable"
+				if test -r /run/media/removable/local.cfg
+				then
+					loginfo "Found /local.cfg on /dev/$REM_DEV ."
+					loginfo "Copying /local.cfg settings to /tmp/local.cfg."
+					loginfo "NOTE: local.cfg settings from a removable media will override settings"
+					loginfo "      from a local.cfg file on your hard drive and DHCP."
+					# We use cat instead of copy, so that removable media settings can
+					# override hard disk settings. -BEF-
+					cat /run/media/removable/local.cfg >> /tmp/local.cfg || shellout
+					logdebug "Unmounting media /dev/$REM_DEV ."
+					umount /run/media/removable > /dev/null
+				else
+					loginfo "No /local.cfg on /dev/$REM_DEV ."
+				fi
+			else
+				logwarn "Failed to mount /dev/$REM_DEV . Can't look for /local.cfg on this media."
+			fi
+		else
+			logwarn "/dev/$REM_DEV missing or not of type block. Can't mount $REM_DEV ."
+		fi
+	done
+else
+	loginfo "No removable media found."
+fi
 ### END try USB Key ###
 
 # /tmp/local.cfg may be created from a local.cfg file on the hard drive, or a
