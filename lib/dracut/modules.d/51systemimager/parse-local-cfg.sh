@@ -42,6 +42,7 @@ getarg 'si.break=parse-localcfg' && logwarn "Break parse-localcfg" && interactiv
 
 if [ "${SKIP_LOCAL_CFG}" = "y" ]; then
     loginfo "Skipping local.cfg: option SKIP_LOCAL_CFG=y has been specified"
+    touch /tmp/local.cfg # Avoid being run multiple times.
     return
 fi
 
@@ -156,7 +157,7 @@ fi
 if [ -f /tmp/local.cfg ]; then
     loginfo "Reading configuration from /tmp/local.cfg"
     . /tmp/local.cfg || shellout "Failed to read /tmp/local.cfg"
-    if test -n "$IPADDR$GATEWAY$NETMASK$HOSTNAME$DEVICE"
+    if test -n "$IPADDR$GATEWAY$NETMASK${HOSTNAME/localhost/}$DEVICE"
     then # We have some IP settings to inject for 40network dracut module
         # Comvert /tmp/local.cfg to /etc/cmdline.d/00-network.conf
         CMDLINECONF=/etc/cmdline.d/00-network.conf
