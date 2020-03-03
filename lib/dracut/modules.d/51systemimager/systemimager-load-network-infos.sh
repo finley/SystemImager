@@ -62,7 +62,7 @@ getarg 'si.break=network-infos' && logwarn "Break network-infos" && interactive_
 if test -r /tmp/dhclient.$DEVICE.dhcpopts # ISC Client
 then
 	loginfo "ISC dhcp client detected"
-	loginfo "Reading values that are not already set (cmdline, ...)"
+	loginfo "Reading values that are not already set by other means (cmdline, local.cfg, ...)"
 	source /tmp/dhclient.$DEVICE.dhcpopts
 
 	[ -z "$HOSTNAME" ] || [ "$HOSTNAME" == "localhost" ] || [ "$HOSTNAME" == "(none)" ] && [ -n "$new_host_name" ] && HOSTNAME="$new_host_name" && loginfo "Got HOSTNAME=$new_host_name"
