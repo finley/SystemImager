@@ -63,6 +63,11 @@ HOME_URL="http://www.systemimager.org/"
 BUG_REPORT_URL="https://github.com/finley/SystemImager/issues"
 EOF
     # Install binaries we need.
+
+    # Network commands that we need (since RHEL-8.1, 40network doesn't include that by default)
+    inst_multiple ip dhclient ping
+    inst_multiple -o arping ping6 # For future needs
+
     # Filesystems we want to be able to handle
     inst_multiple -o mkfs.xfs xfs_admin xfs_repair
     inst_multiple -o mkfs.ext4 mkfs.ext3 mkfs.ext2 mke2fs tune2fs resize2fs tune2fs
@@ -94,7 +99,7 @@ EOF
     inst_multiple -o ethtool mii-tool mii-diag
     inst_multiple bc dc gzip bzip2 rsync mkfs parted sgdisk fdisk sfdisk blockdev lsblk partprobe awk ncat tty killall kexec ipcalc findmnt findfs tput stty
     inst_multiple lvm pvcreate pvdisplay pvremove pvscan lvcreate lvdisplay lvremove lvscan lvmconfig lvmdump lvchange vgcreate vgdisplay vgremove vgscan fsadm stat
-    inst_multiple chmod chown cp dd df dmesg echo egrep fgrep grep halt host hostname ifconfig init insmod kill ln ls lsmod mkdir mknod mkswap modprobe more mv ping poweroff ps reboot shutdown rm rmdir rmmod route sed sh sleep swapoff swapon sync tar touch uname logger od
+    inst_multiple chmod chown cp dd df dmesg echo egrep fgrep grep halt host hostname ifconfig init insmod kill ln ls lsmod mkdir mknod mkswap modprobe more mv poweroff ps reboot shutdown rm rmdir rmmod route sed sh sleep swapoff swapon sync tar touch uname logger od
     inst_multiple depmod blkid
     inst_multiple uuidgen
 
