@@ -145,7 +145,6 @@ Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 BuildRequires: bc, rsync >= 2.4.6, coreutils, dracut
-BuildRequires: %pkg_docbook_utils
 Requires: rsync >= 2.4.6, syslinux >= 1.48, libappconfig-perl, dosfstools, /usr/bin/perl
 #AutoReqProv: no
 
@@ -216,6 +215,8 @@ BuildRoot: /tmp/%{name}-%{ver}-root
 BuildArch: noarch
 Packager: %packager
 URL: http://wiki.systemimager.org/
+BuildRequires: dos2unix
+BuildRequires: %pkg_docbook_utils
 Distribution: System Installation Suite
 
 %description doc
@@ -1501,6 +1502,6 @@ fi
 %{_datarootdir}/systemimager/webgui/images/edit_config.png
 %{_datarootdir}/systemimager/webgui/images/manage_netboot.png
 %{_datarootdir}/systemimager/webgui/images/edit_dhcp.png
-%{_exec_prefix}/lib/systemimager/get-networks-helper
-%{_exec_prefix}/lib/systemimager/clients-statuses-helper
+%attr(0755, root, root) %{_exec_prefix}/lib/systemimager/get-networks-helper
+%attr(0755, root, root) %{_exec_prefix}/lib/systemimager/clients-statuses-helper
 
