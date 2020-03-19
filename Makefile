@@ -341,6 +341,7 @@ install_webgui:
 	mkdir -p $(LIBEXEC_DEST)
 	$(SI_INSTALL) -m 755 $(LIB_SRC)/web_helpers/get-networks-helper $(LIBEXEC_DEST)
 	$(SI_INSTALL) -m 755 $(LIB_SRC)/web_helpers/clients-statuses-helper $(LIBEXEC_DEST)
+	$(SI_INSTALL) -m 644 $(LIB_SRC)/web_helpers/init_systemimager_config.php $(LIBEXEC_DEST)
 
 
 

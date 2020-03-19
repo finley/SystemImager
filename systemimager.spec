@@ -1245,6 +1245,10 @@ fi
 # endif systemd/not systemd
 %endif
 
+%post webgui
+# Make sure systemcimager configuration file is initalized.
+php %{_exec_prefix}/lib/systemimager/init_systemimager_config.php > /dev/null
+
 %post bittorrent
 # if systemd
 %if 0%{?_unitdir:1}
@@ -1502,6 +1506,7 @@ fi
 %{_datarootdir}/systemimager/webgui/images/edit_config.png
 %{_datarootdir}/systemimager/webgui/images/manage_netboot.png
 %{_datarootdir}/systemimager/webgui/images/edit_dhcp.png
+%{_exec_prefix}/lib/systemimager/init_systemimager_config.php
 %attr(0755, root, root) %{_exec_prefix}/lib/systemimager/get-networks-helper
 %attr(0755, root, root) %{_exec_prefix}/lib/systemimager/clients-statuses-helper
 
