@@ -553,7 +553,7 @@ Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Requires: systemimager-server = %{version}
-Requires: httpd php
+Requires: httpd php php-json
 
 %description webgui
 SystemImager admin web interface.
