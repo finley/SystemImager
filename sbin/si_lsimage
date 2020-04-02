@@ -25,6 +25,7 @@
 # declare modules
 use POSIX;
 use Fcntl ':flock';
+use File::Temp qw(tempfile);
 use Getopt::Long;
 use JSON;
 
@@ -179,9 +180,8 @@ my %images = ();
 
 # get listing
 my $workers = 0;
-my $stdout_lockfile = tmpnam();
-open(LOCK, '>', $stdout_lockfile) or
-	die("ERROR: couldn't open: $stdout_lockfile\n");
+my ($lock_fh, $lock_file) = tempfile() or
+	die("ERROR: couldn't create temporary file\n");
 
 if(!$json) {
     print "--------------------------------------------------------------------------------\n";
@@ -261,7 +261,7 @@ while (<FILE>) {
     } else {
 	    $line = "  $_";
     }
-    flock(LOCK, LOCK_EX);
+    flock($lock_fh, LOCK_EX);
     # create hash new entry
     if($json) {
         my %image_hash = ('image_name' => $image_name, 'image_timestamp' => $image_timestamp, 'image_goldenclient' => $image_goldenclient);
@@ -270,7 +270,7 @@ while (<FILE>) {
     } else {
         print "$line\n";
     }
-    flock(LOCK, LOCK_UN);
+    flock($lock_fh, LOCK_UN);
     exit(0);
 }
 close(FILE);
@@ -280,8 +280,8 @@ while ($workers) {
 	$workers--;
 }
 
-close(LOCK);
-unlink($stdout_lockfile);
+close($lock_fh);
+unlink($lock_file);
 if(!$json) {
     print "\n";
 }
