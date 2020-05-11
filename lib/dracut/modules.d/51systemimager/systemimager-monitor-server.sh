@@ -31,25 +31,31 @@ logstep "systemimager-monitor-server: console and progress report task."
 # Systemimager possible breakpoint
 getarg 'si.break=monitor' && logwarn "Break start monitor" && interactive_shell
 
-if [ ! -z "$MONITOR_SERVER" ]; then
+if [ -n "$MONITOR_SERVER" ]; then
     # Start socat local socket server. Aim is to have a unique persistent connection with server.
     if socat /dev/null TCP:$MONITOR_SERVER:$MONITOR_PORT 2>/dev/null
     then
 	# freeze log dispatcher so we can add 1st line to log (avoid race condition)
 	LOG_DISPATCHER_PID=$(cat /run/systemimager/log_dispatcher.pid) # TODO: add error checking
+	logdebug "Log dispatcher PID: $LOG_DISPATCHER_PID"
+	test -n "${LOG_DISPATCHER_PID//[0-9]/}" -o -z "$LOG_DISPATCHER_PID" && shellout "/run/systemimager/log_dispatcher.pid does not contain log dispatcher PID."
 	kill -STOP $LOG_DISPATCHER_PID
+	logdebug "Freezing log dispatcher."
 	mv /tmp/si_report.stream /etc/si_report.stream.tmp
 	UPTIME=$(cat /proc/uptime)
 	# 1st line will List MAC and uptime. server will substract client uptime to server timestamp to
 	# get the effective first_timestamp.
 	echo "MAC:$CLIENT_MAC;${UPTIME%%.*}" > /tmp/si_report.stream
 	cat /etc/si_report.stream.tmp >> /tmp/si_report.stream
+	logdebug "Adding init line to report stream: MAC:$CLIENT_MAC;${UPTIME%%.*}"
 	kill -CONT $LOG_DISPATCHER_PID
-	rm -f /etc/si_report.stream.tmp
-
+	#rm -f /etc/si_report.stream.tmp
+	logdebug "Unfreezing log dispatcher PID: $LOG_DISPATCHER_PID"
 	# start the socat server
 	socat -u FILE:/tmp/si_report.stream,ignoreeof TCP-CONNECT:$MONITOR_SERVER:$MONITOR_PORT&
-	echo $! > /run/systemimager/reporting_socat.pid
+	REPORTING_PID=$!
+	echo $REPORTING_PID > /run/systemimager/reporting_socat.pid
+	logdebug "Log reporting process id: $REPORTING_PID"
 
 	loginfo "Local console forwarder started and log forwarded to monitor server: ${MONITOR_SERVER}."
     else
@@ -61,28 +67,33 @@ if [ ! -z "$MONITOR_SERVER" ]; then
     #send_monitor_msg "status=0:first_timestamp=on:speed=0"
     update_client_status 0 0
     loginfo "Progress monitoring initialized."
+
+
+    # DEPRECATED (si_monitortk related)
     # Start client log gathering server: for each connection
     # to the local client on port 8181 the full log is sent
     # to the requestor. -AR-
-    if [ "x$MONITOR_CONSOLE" = "xy" ]; then
-        if [ -z "$MONITOR_PORT" ]; then
-            MONITOR_PORT=8181
-        fi
-	loginfo "Starting Console server (si.monitor-console=yes)..."
-	logdebug "Listenning on port [$MONITOR_PORT]."
-        while :
-        do
+#    if [ "x$MONITOR_CONSOLE" = "xy" ]; then
+#        if [ -z "$MONITOR_PORT" ]; then
+#            MONITOR_PORT=8181
+#        fi
+#	loginfo "Starting Console server (si.monitor-console=yes)..."
+#	logdebug "Listenning on port [$MONITOR_PORT]."
+#        while :
+#        do
             # OL: BUG: Maybe we need to differentiate MONITOR_PORT on server
             # and CONSOLE_PORT on client being imaged.
-            tail -F -n +0 /tmp/si_monitor.log | ncat -p $MONITOR_PORT -l -k
-	    logdebug "Monitor restart: exit=$?"
-	    sleep 0.5s
-        done &
-	MONITOR_PID=$!
-	echo $MONITOR_PID > /run/systemimager/si_monitor.pid
-        loginfo "Logs monitor forwarding task started: PID=$MONITOR_PID ."
-    else
-	loginfo "Console server disabled (si.monitor-console=no)"
-    fi
+#            tail -F -n +0 /tmp/si_monitor.log | ncat -p $MONITOR_PORT -l -k
+#	    logdebug "Monitor restart: exit=$?"
+#	    sleep 0.5s
+#        done &
+#	MONITOR_PID=$!
+#	echo $MONITOR_PID > /run/systemimager/si_monitor.pid
+#        loginfo "Logs monitor forwarding task started: PID=$MONITOR_PID ."
+#    else
+#	loginfo "Console server disabled (si.monitor-console=no)"
+#    fi
+else
+	loginfo "MONITOR_SERVER not defined. Logs won't be forwarded to server."
 fi
 
