@@ -388,6 +388,9 @@ BuildRequires:  systemd jq
 # CentOS-7 plymouth ask-for-password is buggy
 # https://bugzilla.redhat.com/show_bug.cgi?id=1600990
 BuildRequires: socat
+# Debug tools (for scripts)
+BuildRequires: strace, lsof
+BuildRequires: /sbin/pidof
 
 %if %is_ps3
 BuildRequires: dtc
@@ -536,6 +539,9 @@ Requires:  systemd jq
 # CentOS-7 plymouth ask-for-password is buggy
 # https://bugzilla.redhat.com/show_bug.cgi?id=1600990
 Requires: socat
+# Debug tools (for scripts)
+Requires: strace, lsof
+Requires: /sbin/pidof
 
 #AutoReqProv: no
 %description -n dracut-%{name}
