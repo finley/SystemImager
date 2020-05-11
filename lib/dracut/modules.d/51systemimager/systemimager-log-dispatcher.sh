@@ -30,6 +30,13 @@
 #
 #      NOTE: This version is specific to systemd journald based distros.
 
+
+# Wait for systemctl-journald to start
+while test -n "$(journalctl -n 1 --no-pager|& grep 'No journal files were found.')"
+do
+	sleep 1
+done
+
 type write_variables >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 
 # logstep cant be used as log dispatcher is not yet started.
