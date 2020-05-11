@@ -1293,19 +1293,19 @@ get_boel_binaries_tarball() {
 #
 ################################################################################
 #
-monitor_save_dmesg() {
+#monitor_save_dmesg() {
 #    if [ -z $MONITOR_SERVER ]; then
 #        return
 #    fi
 # OL: Note: this function ins called in the initqueue mainloop at each loop.
 #     We just need to do that once.
 # OL: In fact this is deprecated on systemd systems as journalctl can dump everything.
-if test ! -f /tmp/si_monitor.log
-then
-    loginfo "Saving dmesg to /tmp/si_monitor.log"
-    dmesg -s 16392 > /tmp/si_monitor.log
-fi
-}
+#if test ! -f /tmp/si_monitor.log
+#then
+#    loginfo "Saving dmesg to /tmp/si_monitor.log"
+#    dmesg -s 16392 > /tmp/si_monitor.log
+#fi
+#}
 #
 ################################################################################
 #
