@@ -83,7 +83,7 @@ EOF
     inst_multiple uuidgen
     inst_multiple depmod blkid
     # Some helpfull command in case of problem
-    inst_multiple -o find strace sysctl vi clear reset lsof fuser
+    inst_multiple -o find strace sysctl vi clear reset lsof fuser pidof
     # bittorent client needed when using bittorrent deployment method.
     inst_multiple rtorrent
 

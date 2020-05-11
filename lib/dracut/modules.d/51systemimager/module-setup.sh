@@ -104,7 +104,7 @@ EOF
     inst_multiple uuidgen
 
     # Some helpfull command in case of problem
-    inst_multiple -o find strace sysctl vi clear reset lsof fuser
+    inst_multiple -o find strace sysctl vi clear reset lsof fuser pidof
 
     # bittorent client needed when using bittorrent deployment method.
     inst_multiple rtorrent
@@ -134,6 +134,7 @@ EOF
     inst "$moddir/systemimager-load-scripts-ecosystem.sh" "/sbin/systemimager-load-scripts-ecosystem" # load /scripts read $SIS_CONFIG
     inst "$moddir/systemimager-monitor-server.sh" "/sbin/systemimager-monitor-server" # Start the log monitor server
     inst "$moddir/systemimager-deploy-client.sh" "/sbin/systemimager-deploy-client" # Imaging occures here
+    inst "$moddir/systemimager-check-ifaces.sh" "/sbin/systemimager-check-ifaces" # Check network interfaces concistence with cmdline ip=
 
     for protocol_plugin in $moddir/systemimager-xmit-*.sh
     do
@@ -147,15 +148,8 @@ EOF
     inst_hook cmdline 30 "$moddir/systemimager-check-kernel.sh" # Check that kernel & initrd match.
     inst_hook cmdline 50 "$moddir/parse-systemimager.sh" # read cmdline parameters
     inst_hook cmdline 70 "$moddir/systemimager-init.sh" # Creates /run/systemimager and sets rootok
-    inst_hook initqueue/settled 40 "$moddir/systemimager-check-ifaces.sh" # Check network interfaces concistence with cmdline ip=
     inst_hook initqueue/finished 90 "$moddir/systemimager-wait-imaging.sh" # Waits for $SI_IMAGING_STATUS = "finished"
     inst_hook initqueue/timeout 10 "$moddir/systemimager-timeout.sh" # In case of timeout (DHCP failure, ....)
-#    inst_hook initqueue/online 00 "$moddir/parse-local-cfg.sh" # Read local.cfg (takes precedence over cmdline)
-#    inst_hook initqueue/online 10 "$moddir/systemimager-load-network-infos.sh" # read network informations
-#    inst_hook initqueue/online 20 "$moddir/systemimager-pingtest.sh" # do a ping_test()
-#    inst_hook initqueue/online 30 "$moddir/systemimager-load-scripts-ecosystem.sh" # load /scripts read $SIS_CONFIG
-#    inst_hook initqueue/online 50 "$moddir/systemimager-monitor-server.sh" # Start the log monitor server
-#    inst_hook initqueue/online 90 "$moddir/systemimager-deploy-client.sh" # Imaging occures here
     inst_hook initqueue/online 90 "$moddir/systemimager-start.sh" 
     inst_hook pre-mount 10 "$moddir/systemimager-sysroot.sh" # Mount root in case we do "directboot"
     inst_hook cleanup 90 "$moddir/systemimager-cleanup.sh" # Clean any remaining systemimager remaining stuffs
