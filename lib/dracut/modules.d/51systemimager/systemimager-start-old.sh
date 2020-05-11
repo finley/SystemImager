@@ -34,5 +34,5 @@ source /sbin/systemimager-netstart $DEVICE       # finish network configuration 
 source /sbin/systemimager-load-network-infos $DEVICE  # read /tmp/dhclient.$DEVICE.dhcpopts or /tmp/net.$DEVICE.override and updates /tmp/variables.txt
 source /sbin/systemimager-pingtest $DEVICE       # do a ping_test()
 source /sbin/systemimager-load-scripts-ecosystem $DEVICE    # read $SIS_CONFIG from image server.
-source /sbin/systemimager-monitor-server $DEVICE # Start the log monitor server
+source /sbin/systemimager-monitor-server $DEVICE # Start the log monitor server (after reading config retrieved above)
 source /sbin/systemimager-deploy-client $DEVICE  # Imaging occures here

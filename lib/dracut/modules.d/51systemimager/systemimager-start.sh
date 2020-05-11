@@ -21,7 +21,7 @@
 #
 #    Purpose:
 #      This file is used in new dracut versions.
-#      initqueue/onlmine is called for all ifaces that are setup.
+#      initqueue/online is called for all ifaces that are setup.
 #      we want to be callec only once. (1st co figured interface wins)
 
 
@@ -29,14 +29,15 @@
 # posix mode.
 set +o posix
 
+. /lib/systemimager-lib.sh # Load /tmp/variables.txt and some macros
+#
+# At this step, /tmp/variables.txt is read.
+
+
 # Redirect stdout and stderr to system log (that is later processed by log dispatcher)
 exec 6>&1 7>&2      # Save file descriptors 1 and 2.
 exec 2> >( while read LINE; do logger -p local2.err -t systemimager -- "$LINE"; done )
 exec > >( while read LINE; do logger -p local2.info -t systemimager -- "$LINE"; done )
-
-. /lib/systemimager-lib.sh # Load /tmp/variables.txt and some macros
-#
-# At this step, /tmp/variables.txt is read.
 
 # 1st: read local.cfg (This needs to be here in case it includes INSTALL_IFACE=
 # It will be called for each iface to setup, but it'll run only once (protected)
@@ -71,10 +72,11 @@ logstep "systemimager-start: online-hook"
 DEVICE=$1
 write_variables # Save this network device as the chosen one.
 
+source /sbin/systemimager-check-ifaces           # Check network interfaces concistency with cmdline ip=
 source /sbin/systemimager-load-network-infos $DEVICE  # read /tmp/dhclient.$DEVICE.dhcpopts or /tmp/net.$DEVICE.override and updates /tmp/variables.txt
 source /sbin/systemimager-pingtest $DEVICE       # do a ping_test()
 source /sbin/systemimager-load-scripts-ecosystem $DEVICE    # read $SIS_CONFIG from image server.
-source /sbin/systemimager-monitor-server $DEVICE # Start the log monitor server
+source /sbin/systemimager-monitor-server $DEVICE # Start the log monitor server (after reading config retrieved above)
 source /sbin/systemimager-deploy-client $DEVICE  # Imaging occures here
 
 # restore file descriptors so log subprocesses are stopped (read returns fail)
