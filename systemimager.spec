@@ -390,7 +390,7 @@ BuildRequires:  systemd jq
 BuildRequires: socat
 # Debug tools (for scripts)
 BuildRequires: strace, lsof
-BuildRequires: /sbin/pidof
+BuildRequires: /usr/sbin/pidof
 
 %if %is_ps3
 BuildRequires: dtc
@@ -541,7 +541,7 @@ Requires:  systemd jq
 Requires: socat
 # Debug tools (for scripts)
 Requires: strace, lsof
-Requires: /sbin/pidof
+Requires: /usr/sbin/pidof
 
 #AutoReqProv: no
 %description -n dracut-%{name}
