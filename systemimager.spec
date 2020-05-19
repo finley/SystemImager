@@ -84,6 +84,7 @@
 %define pkg_docbook_utils docbook-utils, docbook-utils-pdf
 %define pkg_mkisofs mkisofs
 %define pkg_ncat nmap
+%define pkg_pidof sysvinit-tools
 %endif
 %if 0%{?rhel} == 7
 %define pkg_ipcalc initscripts
@@ -94,6 +95,7 @@
 %define pkg_docbook_utils docbook-utils, docbook-utils-pdf
 %define pkg_mkisofs mkisofs
 %define pkg_ncat nmap-ncat
+%define pkg_pidof sysvinit-tools
 %endif
 %%if 0%{?rhel} == 8
 %define pkg_ipcalc ipcalc
@@ -104,6 +106,7 @@
 %define pkg_docbook_utils docbook-utils, docbook-utils-pdf
 %define pkg_mkisofs genisoimage
 %define pkg_ncat nmap-ncat
+%define pkg_pidof procps-ng
 %endif
 %if 0%{?fedora} > 26
 %define pkg_ipcalc ipcalc
@@ -114,6 +117,7 @@
 %define pkg_docbook_utils docbook-utils, docbook-utils-pdf
 %define pkg_mkisofs mkisofs
 %define pkg_ncat nmap-ncat
+%define pkg_pidof procps-ng
 %endif
 %if %is_suse
 %define pkg_ipcalc ipcalc
@@ -124,6 +128,7 @@
 %define pkg_docbook_utils docbook-utils
 %define pkg_mkisofs cdrkit-cdrtools-compat
 %define pkg_ncat ncat
+%define pkg_pidof procps-ng
 %endif
 
 # Still use the correct lib even on fc-18+ where --target noarch sets _libdir to /usr/lib even on x86_64 arch.
@@ -390,7 +395,7 @@ BuildRequires:  systemd jq
 BuildRequires: socat
 # Debug tools (for scripts)
 BuildRequires: strace, lsof
-BuildRequires: /usr/sbin/pidof
+BuildRequires: %{pkg_pidof}
 
 %if %is_ps3
 BuildRequires: dtc
@@ -541,7 +546,7 @@ Requires:  systemd jq
 Requires: socat
 # Debug tools (for scripts)
 Requires: strace, lsof
-Requires: /usr/sbin/pidof
+Requires: %{pkg_pidof}
 
 #AutoReqProv: no
 %description -n dracut-%{name}
