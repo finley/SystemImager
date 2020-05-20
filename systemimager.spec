@@ -119,7 +119,7 @@
 %define pkg_ncat nmap-ncat
 %define pkg_pidof procps-ng
 %endif
-%if 0%{?is_suse}%{?is_opensuse}
+%if %is_suse%{?is_opensuse}
 %define pkg_ipcalc ipcalc
 %define pkg_sshd openssh
 %define pkg_btrfs_progs btrfsprogs
@@ -360,7 +360,7 @@ URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Obsoletes: systemimager-%{_arch}boot
 # SuSE includes dracut-netwok in main package
-%if ! %is_suse
+%if ! %is_suse%{?is_opensuse}
 BuildRequires: dracut-network
 %endif
 BuildRequires: perl-JSON
@@ -511,7 +511,7 @@ URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Requires: systemimager-server = %{version}
 # SuSE includes dracut-netwok in main package
-%if ! %is_suse
+%if ! %is_suse%{?is_opensuse}
 requires: dracut-network
 %endif
 Requires: dracut
