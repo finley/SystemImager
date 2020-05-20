@@ -25,7 +25,7 @@
 #
 
 # Require network.
-[ "$1" = "-d" ] && echo network shutdown i18n crypt
+[ "$1" = "-d" ] && echo network shutdown i18n crypt plymouth
 
 # hostonly check: does not work in host only mode.
 [ "$1" = "-h" ] && exit 1

@@ -29,7 +29,7 @@ check() {
 }
 
 depends() {
-    echo network shutdown crypt
+    echo network shutdown crypt plymouth
     case "$(uname -m)" in
         s390*) echo cms ;;
     esac
