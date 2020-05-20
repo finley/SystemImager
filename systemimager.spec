@@ -119,7 +119,7 @@
 %define pkg_ncat nmap-ncat
 %define pkg_pidof procps-ng
 %endif
-%if %is_suse
+%if 0%{?is_suse}%{?is_opensuse}
 %define pkg_ipcalc ipcalc
 %define pkg_sshd openssh
 %define pkg_btrfs_progs btrfsprogs
