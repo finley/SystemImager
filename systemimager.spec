@@ -126,7 +126,7 @@
 %define pkg_ntfsprogs ntfsprogs
 %define pkg_dejavu_font dejavu-fonts
 %define pkg_docbook_utils docbook-utils
-%define pkg_mkisofs cdrkit-cdrtools-compat
+%define pkg_mkisofs cdrtools
 %define pkg_ncat ncat
 %define pkg_pidof procps-ng
 %endif
@@ -366,7 +366,7 @@ BuildRequires: dracut-network
 BuildRequires: perl-JSON
 BuildRequires: dracut
 BuildRequires: plymouth-plugin-script, plymouth-plugin-label
-BuildRequires: psmisc, kexec-tools, bind-utils, net-tools, ethtool, lsscsi, usbutils, pciutils, lshw, hwdata
+BuildRequires: psmisc, kexec-tools, bind-utils, net-tools, ethtool, lsscsi, usbutils, pciutils, lshw, hwdata, iputils
 BuildRequires: xmlstarlet, parted, mdadm, util-linux, lvm2, gdisk
 BuildRequires: xfsprogs, e2fsprogs, dosfstools
 %if 0%{?pkg_btrfs_progs:1}
@@ -516,7 +516,7 @@ requires: dracut-network
 %endif
 Requires: dracut
 Requires: plymouth-plugin-script, plymouth-plugin-label
-Requires: psmisc, kexec-tools, bind-utils, net-tools, ethtool, lsscsi, usbutils, pciutils, lshw, hwdata
+Requires: psmisc, kexec-tools, bind-utils, net-tools, ethtool, lsscsi, usbutils, pciutils, lshw, hwdata, iputils
 Requires: xmlstarlet, parted, mdadm, util-linux, lvm2, gdisk
 Requires: xfsprogs, e2fsprogs, dosfstools
 %if 0%{?pkg_btrfs_progs:1}
@@ -1485,6 +1485,7 @@ fi
 %dir %{_datarootdir}/systemimager/webgui
 %dir %{_datarootdir}/systemimager/webgui/css
 %dir %{_exec_prefix}/lib/systemimager
+%{_datarootdir}/systemimager/webgui/COPYRIGHTS
 %{_datarootdir}/systemimager/webgui/index.php
 %{_datarootdir}/systemimager/webgui/edit_config.php
 %{_datarootdir}/systemimager/webgui/manage_netboot.php
