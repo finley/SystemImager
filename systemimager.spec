@@ -128,7 +128,7 @@
 %define pkg_docbook_utils docbook-utils
 %define pkg_mkisofs cdrtools
 %define pkg_ncat ncat
-%define pkg_pidof procps-ng
+%define pkg_pidof sysvinit-tools
 %endif
 
 # Still use the correct lib even on fc-18+ where --target noarch sets _libdir to /usr/lib even on x86_64 arch.
@@ -361,7 +361,7 @@ Distribution: System Installation Suite
 Obsoletes: systemimager-%{_arch}boot
 # SuSE includes dracut-netwok in main package
 %if ! %is_suse%{?is_opensuse}
-BuildRequires: dracut-network
+BuildRequires: dracut-network, plymouth-dracut
 %endif
 BuildRequires: perl-JSON
 BuildRequires: dracut
@@ -512,7 +512,7 @@ Distribution: System Installation Suite
 Requires: systemimager-server = %{version}
 # SuSE includes dracut-netwok in main package
 %if ! %is_suse%{?is_opensuse}
-requires: dracut-network
+requires: dracut-network, plymouth-dracut
 %endif
 Requires: dracut
 Requires: plymouth-plugin-script, plymouth-plugin-label
