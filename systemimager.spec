@@ -361,7 +361,11 @@ Distribution: System Installation Suite
 Obsoletes: systemimager-%{_arch}boot
 # SuSE includes dracut-netwok in main package
 %if ! %is_suse%{?is_opensuse}
-BuildRequires: dracut-network, plymouth-dracut
+BuildRequires: dracut-network
+%endif
+# SuSE has separate package for plymouth in dracut
+%if ! %is_suse%{?is_opensuse}
+BuildRequires: plymouth-dracut
 %endif
 BuildRequires: perl-JSON
 BuildRequires: dracut
@@ -512,7 +516,11 @@ Distribution: System Installation Suite
 Requires: systemimager-server = %{version}
 # SuSE includes dracut-netwok in main package
 %if ! %is_suse%{?is_opensuse}
-requires: dracut-network, plymouth-dracut
+requires: dracut-network
+%endif
+# SuSE has separate package for plymouth in dracut
+%if ! %is_suse%{?is_opensuse}
+Requires: plymouth-dracut
 %endif
 Requires: dracut
 Requires: plymouth-plugin-script, plymouth-plugin-label
