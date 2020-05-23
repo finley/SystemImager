@@ -212,8 +212,8 @@ install_plymouth_theme() {
 # SystemImager is the default theme
 [Daemon]
 Theme=systemimager
-ShowDelay=0
-# DeviceTimeout=5
+ShowDelay=0.0
+DeviceTimeout=2.0
 EOF
     cp -f ${initdir}/etc/plymouth/plymouthd.conf ${initdir}/usr/share/plymouth/plymouthd.defaults
 }
