@@ -364,7 +364,7 @@ Obsoletes: systemimager-%{_arch}boot
 BuildRequires: dracut-network
 %endif
 # SuSE has separate package for plymouth in dracut
-%if ! %is_suse%{?is_opensuse}
+%if %is_suse%{?is_opensuse}
 BuildRequires: plymouth-dracut
 %endif
 BuildRequires: perl-JSON
@@ -519,7 +519,7 @@ Requires: systemimager-server = %{version}
 requires: dracut-network
 %endif
 # SuSE has separate package for plymouth in dracut
-%if ! %is_suse%{?is_opensuse}
+%if %is_suse%{?is_opensuse}
 Requires: plymouth-dracut
 %endif
 Requires: dracut
