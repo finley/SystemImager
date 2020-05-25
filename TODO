@@ -5,6 +5,34 @@
 #   Copyright (C) 2012-2019 Olivier Lahaye
 
 ============= TODO for the dracut change before release is possible ===========
+2nd I need to check a yume fix and check that yum-utils is required in packman
+3rd, I need to check systemimager imager
+There after I’ll document and post on maiing list
+
+systemimager-server postinstall error in opensuse:
+chown: invalid user: 'apache'
+
+dracut: dracut module 'modsign' will not be installed, because command 'keyctl' could not be found!
+dracut: dracut module 'url-lib' will not be installed, because command 'curl' could not be found!
+dracut: dracut module 'dmraid' will not be installed, because command 'dmraid' could not be found!
+dracut: dracut module 'dmsquash-live-ntfs' will not be installed, because command 'ntfs-3g' could not be found!
+dracut: dracut module 'multipath' will not be installed, because command 'multipath' could not be found!
+dracut: dracut module 'cifs' will not be installed, because command 'mount.cifs' could not be found!
+dracut: dracut module 'fcoe' will not be installed, because command 'dcbtool' could not be found!
+dracut: dracut module 'fcoe' will not be installed, because command 'fipvlan' could not be found!
+dracut: dracut module 'fcoe' will not be installed, because command 'lldpad' could not be found!
+dracut: dracut module 'fcoe' will not be installed, because command 'fcoemon' could not be found!
+dracut: dracut module 'fcoe' will not be installed, because command 'fcoeadm' could not be found!
+dracut: dracut module 'fcoe-uefi' will not be installed, because command 'dcbtool' could not be found!
+dracut: dracut module 'fcoe-uefi' will not be installed, because command 'fipvlan' could not be found!
+dracut: dracut module 'fcoe-uefi' will not be installed, because command 'lldpad' could not be found!
+dracut: dracut module 'iscsi' will not be installed, because command 'iscsi-iname' could not be found!
+dracut: dracut module 'iscsi' will not be installed, because command 'iscsiadm' could not be found!
+dracut: dracut module 'iscsi' will not be installed, because command 'iscsid' could not be found!
+dracut: dracut module 'nbd' will not be installed, because command 'nbd-client' could not be found!
+dracut: 95nfs: Could not find any command of 'rpcbind portmap'!
+dracut: dracut module 'biosdevname' will not be installed, because command 'biosdevname' could not be found!
+
 STD: /usr/share/ is to be considered as read-only and is for architecture independant files
      http://refspecs.linuxfoundation.org/FHS_3.0/fhs-3.0.html#usrshareArchitectureindependentData
      - Need to move /usr/share/systemimager/boot to var
