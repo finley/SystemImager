@@ -171,6 +171,37 @@ if( -e $file ) {
 # remove image
 if($verbose) {print "  Removing image $image.\n";}
 $file=$imagedir;
+
+# Make sure we don't work in "/" or with empty path.
+if(($file eq "/") || ($file eq "")) {
+    die("Unexpected image path: '$file'");
+}
+
+# We need to check if filesystems are mounted beneath the image root and
+# abort before calling rmtree() in order to avoid host special filesystems
+# like /dev to be damaged
+
+# Check if there are some mounted filesystems before trying to rmtree()
+my @mounts = ();
+open(MOUNTS, "< /proc/mounts") or die "cannot open /proc/mounts: $!";
+while (my $line = <MOUNTS>) {
+    chomp($line);
+    if ($line =~ /^.*\s+(\Q$file\E\/\S+)\s+.*$/) {
+        push(@mounts, $1); # Cannot unount hear otherwize /proc/mounts changes and we loose lines
+    }
+}
+close MOUNTS;
+# If @mounts is not empty, we need to stop here.
+if(@mounts) {
+  print "FATAL: Can't remove image $image from disk!\n";
+  print "       Some file systerms are still mounted in image:\n";
+  for my $mount (@mounts) {
+    print "       - $mount\n";
+  }
+  print "       Nothing has been done.\n";
+  exit 1;
+}
+
 if($force) {
   if($file) { rmtree($file, 0, 0); }
 } else {
