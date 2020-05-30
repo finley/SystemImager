@@ -62,6 +62,8 @@ use warnings;
 use 5.010;
 
 BEGIN {
+    # Uncomment line below to stop debugger here:
+    # $DB::single = 1;
     use Exporter();
 
     @SystemImager::JConfig::ISA       = qw(Exporter);
