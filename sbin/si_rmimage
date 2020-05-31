@@ -202,10 +202,24 @@ if(@mounts) {
   exit 1;
 }
 
+# Cleaning image path:
+my $err=0;
 if($force) {
-  if($file) { rmtree($file, 0, 0); }
+  rmtree($file, { safe => 0, error => \$err });
 } else {
-  rmtree($file, 0, 0) or die "FATAL: Can't remove $file!\n";
+  rmtree($file, { safe => 1, error => \$err });
+}
+
+if ($err && @$err) {
+  for my $diag (@$err) {
+    my ($f, $msg) = %$diag;
+    if ($f eq '') {
+      print "general error: $msg\n";
+    } else {
+      print "problem unlinking $f: $msg\n";
+    }
+  }
+  die "FATAL: Can't remove image path $file!\n"
 }
 
 # remove override
