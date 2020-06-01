@@ -243,14 +243,25 @@ if($force) {
 
 # remove BitTorrent files
 if($verbose) {print "  Removing BitTorrent files for $image.\n";}
-$file = $jconfig->get('xmit_torrent','tarball_dir') . "/image-" . $image . ".tar.gz";
-unlink($file) if (-f $file);
-$file = $jconfig->get('xmit_torrent','tarball_dir') . "/image-" . $image . ".tar";
-unlink($file) if (-f $file);
-$file = $jconfig->get('xmit_torrent','torrents_dir') . "/image-" . $image . ".tar.gz.torrent";
-unlink($file) if (-f $file);
-$file = $jconfig-> get('xmit_torrent','torrents_dir'). "/image-" . $image . ".tar.torrent";
-unlink($file) if (-f $file);
+$torrent_tarballs_dir = $jconfig->get('xmit_torrent','tarballs_dir');
+if (length($torrent_tarballs_dir)) {
+  $file = $torrent_tarballs_dir . "/image-" . $image . ".tar.gz";
+  unlink($file) if (-f $file);
+  $file = $torrent_tarballs_dir . "/image-" . $image . ".tar";
+  unlink($file) if (-f $file);
+} else {
+  print "WARNING: xmit_torrent/tarballs_dir is not configured; Check configuration!";
+}
+
+$torrent_torrents_dir = $jconfig->get('xmit_torrent','torrents_dir');
+if(length($torrent_torrents_dir) {
+  $file = $torrent_torrents_dir . "/image-" . $image . ".tar.gz.torrent";
+  unlink($file) if (-f $file);
+  $file = $torrent_torrents_dir . "/image-" . $image . ".tar.torrent";
+  unlink($file) if (-f $file);
+} else {
+  print "WARNING: xmit_torrent/torrents_dir is not configured; Check configuration!";
+}
 
 # remove master autoinstall script
 if($verbose) {print "  Removing master autoinstall script $image.master.\n";}
@@ -258,7 +269,7 @@ $file="$autoinstall_script_dir/$image.master";
 if($force) {
   if($file) { unlink($file); }
 } else {
-  unlink($file) or die "FATAL: Can't remove $file!\n";
+  unlink($file) or print "INFO: No master script has been deleted (lokked at: $file).\n";
 }
 
 # remove soft links
@@ -285,7 +296,8 @@ if(-e $flamethrower_conf) {
     $entry_name = "override_" . $image;
     SystemImager::Common->add_or_delete_conf_file_entry($flamethrower_conf, $entry_name) or
         die "$program_name: Cannot remove entry from $flamethrower_conf";
-}
+} else {
+    print "WARN: xmit_flamethrower/config_file is unset or incorrect. Please, check configuration!\n";
 
 # remove UYOK boot files
 if(defined $arch) {
