@@ -81,6 +81,27 @@ sub trim {
 sub check_if_root{
     unless($< == 0) { die "$program_name: Must be run as root!\n"; }
 }
+#
+# DeleteTree(absolute path to delete, safe mode)
+#
+sub DeleteTree($$) {
+  my ($path_to_delete, $safe_mode) = @_;
+  my $err=0;
+  rmtree($path_to_delete, { safe => $safe_mode, error => \$err });
+  if ($err && @$err) {
+    for my $diag (@$err) {
+      my ($f, $msg) = %$diag;
+      if ($f eq '') {
+        print "general error: $msg\n";
+      } else {
+        print "problem unlinking $f: $msg\n";
+      }
+    }
+    return 1; # Problem
+  }
+  return 0; # Ok
+}
+
 ### END functions ###
 
 # set version information
@@ -195,40 +216,29 @@ close MOUNTS;
 if(@mounts) {
   print "FATAL: Can't remove image $image from disk!\n";
   print "       Some file systerms are still mounted in image:\n";
-  for my $mount (@mounts) {
-    print "       - $mount\n";
+  if($verbose) {
+    for my $mount (@mounts) {
+      print "       - $mount\n";
+    }
   }
   print "       Nothing has been done.\n";
   exit 1;
 }
 
 # Cleaning image path:
-my $err=0;
 if($force) {
-  rmtree($file, { safe => 0, error => \$err });
+  if($file) { DeleteTree($file, 0); }
 } else {
-  rmtree($file, { safe => 1, error => \$err });
-}
-
-if ($err && @$err) {
-  for my $diag (@$err) {
-    my ($f, $msg) = %$diag;
-    if ($f eq '') {
-      print "general error: $msg\n";
-    } else {
-      print "problem unlinking $f: $msg\n";
-    }
-  }
-  die "FATAL: Can't remove image path $file!\n"
+  DeleteTree($file, 1) and die "FATAL: Can't remove image path $file!\n";
 }
 
 # remove override
 if($verbose) {print "  Removing override $image.\n";}
 $file="$default_override_dir/$image";
 if($force) {
-  if($file) { rmtree($file, 0, 0); }
+  if($file) { DeleteTree($file, 0); }
 } else {
-  rmtree($file, 0, 0) or die "FATAL: Can't remove $file!\n";
+  DeleteTree($file, 1) and die "FATAL: Can't remove override path: $file!\n";
 }
 
 # remove BitTorrent files
@@ -282,9 +292,9 @@ if(defined $arch) {
     if($verbose) {print "  Removing UYOK files associated with $image.\n";}
     $file="$autoinstall_boot_dir/$arch/$image";
     if($force) {
-      if($file) { rmtree($file, 0, 0); }
+      if($file) { DeleteTree($file, 0); }
     } else {
-      rmtree($file, 0, 0) or print "WARNING: failed to remove UYOK boot files in $file\n   (ignore this warning if you are not using UYOK).\n";
+      DeleteTree($file, 1) and print "WARNING: failed to remove UYOK boot files in $file\n   (ignore this warning if you are not using UYOK).\n";
     }
 } else {
     if($verbose) {print "  Architecture not defined, so NOT removing UYOK files associated with $image.\n";}
