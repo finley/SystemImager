@@ -254,7 +254,7 @@ if (length($torrent_tarballs_dir)) {
 }
 
 $torrent_torrents_dir = $jconfig->get('xmit_torrent','torrents_dir');
-if(length($torrent_torrents_dir) {
+if(length($torrent_torrents_dir)) {
   $file = $torrent_torrents_dir . "/image-" . $image . ".tar.gz.torrent";
   unlink($file) if (-f $file);
   $file = $torrent_torrents_dir . "/image-" . $image . ".tar.torrent";
