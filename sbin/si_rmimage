@@ -67,6 +67,18 @@ my $default_override_dir = $jconfig->get('imager','overrides_dir');
 unless ($default_override_dir) {
     die "FATAL: parameter imager.overrides_dir is not defined in ".$jconfig->fileName()."\n";
 }
+my $torrent_tarballs_dir = $jconfig->get('xmit_torrent','tarballs_dir');
+unless ($torrent_tarballs_dir) {
+    die "FATAL: parameter xmit_torrent.tarballs_dir is not defined in ".$jconfig->fileName()."\n";
+}
+my $torrent_torrents_dir = $jconfig->get('xmit_torrent','torrents_dir');
+unless ($torrent_torrents_dir) {
+    die "FATAL: parameter xmit_torrent.torrents_dir is not defined in ".$jconfig->fileName()."\n";
+}
+my $flamethrower_conf = $jconfig->get('xmit_flamethrower','config_file');
+unless ($flamethrower_conf) {
+    die "FATAL: parameter xmit_flamethrower.config_file is not defined in ".$jconfig->fileName()."\n";
+}
 ### END parse the config file ###
 
 ### BEGIN functions ###
@@ -244,25 +256,15 @@ if($force) {
 # remove BitTorrent files
 if($verbose) {print "  Removing BitTorrent files for $image.\n";}
 
-my $torrent_tarballs_dir = $jconfig->get('xmit_torrent','tarballs_dir');
-if (length($torrent_tarballs_dir)) {
-  $file = $torrent_tarballs_dir . "/image-" . $image . ".tar.gz";
-  unlink($file) if (-f $file);
-  $file = $torrent_tarballs_dir . "/image-" . $image . ".tar";
-  unlink($file) if (-f $file);
-} else {
-  print "WARNING: xmit_torrent/tarballs_dir is not configured; Check configuration!";
-}
+$file = $torrent_tarballs_dir . "/image-" . $image . ".tar.gz";
+unlink($file) if (-f $file);
+$file = $torrent_tarballs_dir . "/image-" . $image . ".tar";
+unlink($file) if (-f $file);
 
-my $torrent_torrents_dir = $jconfig->get('xmit_torrent','torrents_dir');
-if(length($torrent_torrents_dir)) {
-  $file = $torrent_torrents_dir . "/image-" . $image . ".tar.gz.torrent";
-  unlink($file) if (-f $file);
-  $file = $torrent_torrents_dir . "/image-" . $image . ".tar.torrent";
-  unlink($file) if (-f $file);
-} else {
-  print "WARNING: xmit_torrent/torrents_dir is not configured; Check configuration!";
-}
+$file = $torrent_torrents_dir . "/image-" . $image . ".tar.gz.torrent";
+unlink($file) if (-f $file);
+$file = $torrent_torrents_dir . "/image-" . $image . ".tar.torrent";
+unlink($file) if (-f $file);
 
 # remove master autoinstall script
 if($verbose) {print "  Removing master autoinstall script $image.master.\n";}
@@ -288,7 +290,6 @@ SystemImager::Server->gen_rsyncd_conf($rsync_stub_dir, $rsyncd_conf);
 
 # remove image from flamethrower.conf file
 my $entry_name = $image;
-my $flamethrower_conf = $jconfig->get('xmit_flamethrower','config_file');
 if(-e $flamethrower_conf) {
     SystemImager::Common->add_or_delete_conf_file_entry($flamethrower_conf, $entry_name) or
         die "$program_name: Cannot remove entry from $flamethrower_conf";
