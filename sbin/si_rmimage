@@ -243,7 +243,8 @@ if($force) {
 
 # remove BitTorrent files
 if($verbose) {print "  Removing BitTorrent files for $image.\n";}
-$torrent_tarballs_dir = $jconfig->get('xmit_torrent','tarballs_dir');
+
+my $torrent_tarballs_dir = $jconfig->get('xmit_torrent','tarballs_dir');
 if (length($torrent_tarballs_dir)) {
   $file = $torrent_tarballs_dir . "/image-" . $image . ".tar.gz";
   unlink($file) if (-f $file);
@@ -253,7 +254,7 @@ if (length($torrent_tarballs_dir)) {
   print "WARNING: xmit_torrent/tarballs_dir is not configured; Check configuration!";
 }
 
-$torrent_torrents_dir = $jconfig->get('xmit_torrent','torrents_dir');
+my $torrent_torrents_dir = $jconfig->get('xmit_torrent','torrents_dir');
 if(length($torrent_torrents_dir)) {
   $file = $torrent_torrents_dir . "/image-" . $image . ".tar.gz.torrent";
   unlink($file) if (-f $file);
@@ -265,7 +266,7 @@ if(length($torrent_torrents_dir)) {
 
 # remove master autoinstall script
 if($verbose) {print "  Removing master autoinstall script $image.master.\n";}
-$file="$autoinstall_script_dir/$image.master";
+$file="$autoinstall_script_dir/main-install/$image.master";
 if($force) {
   if($file) { unlink($file); }
 } else {
@@ -274,7 +275,7 @@ if($force) {
 
 # remove soft links
 if($verbose) {print "  Removing softlinks that point to $image.master.\n";}
-$cmd="cd $autoinstall_script_dir; find . -lname $image.master -exec rm -f \\{\\} \\;";
+$cmd="cd $autoinstall_script_dir/main-install; find . -lname $image.master -exec rm -f \\{\\} \\;";
 system($cmd);
 if($? != 0) { die "FATAL: couldn't remove softlinks that point to $image.master!"; }
 
@@ -298,6 +299,7 @@ if(-e $flamethrower_conf) {
         die "$program_name: Cannot remove entry from $flamethrower_conf";
 } else {
     print "WARN: xmit_flamethrower/config_file is unset or incorrect. Please, check configuration!\n";
+}
 
 # remove UYOK boot files
 if(defined $arch) {
