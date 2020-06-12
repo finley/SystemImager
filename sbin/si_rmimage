@@ -272,7 +272,7 @@ $file="$autoinstall_script_dir/main-install/$image.master";
 if($force) {
   if($file) { unlink($file); }
 } else {
-  unlink($file) or print "INFO: No master script has been deleted (lokked at: $file).\n";
+  unlink($file) or print "INFO: No master script has been deleted (looked at: $file).\n";
 }
 
 # remove soft links
