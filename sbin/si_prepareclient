@@ -575,8 +575,22 @@ temporarily_disable_rsync_in_xinetd();
 # Collect all the disk information
 my $disks = collect_disks();
 
-# Create /etc/systemimager/disks-layout.xml
-create_auto_install_script_conf($disks);
+if (! defined $disks) {
+    print <<EOF;
+
+WARNING: Couldn't find any physical disk. Running in a container?
+	/etc/systemimager/disks_layout.xml won't be generated.
+	see autoinstallscript.conf unix manual to create one on the server
+	in /var/lib/systemimager/scripts/disks-layouts/
+
+	Some examples can be found in /usr/share/doc/systemimager-doc-4.9.0/examples/
+	if you have installed the systemimager-doc package.
+
+EOF
+} else {
+    # Create /etc/systemimager/disks-layout.xml
+    create_auto_install_script_conf($disks);
+}
 
 # Collect all the network interfaces
 #my $ifaces = collect_net_ifaces();
@@ -584,7 +598,7 @@ create_auto_install_script_conf($disks);
 # Create /etc/systemimager/network-conf.xml
 #create_network_conf($ifaces);
 
-# Create /etc/systemimage/byid_real_map.conf
+# Create /etc/systemimager/byid_real_map.conf
 create_byid_real_map_conf();
 
 # Run the rsync daemon for getimage?
@@ -900,7 +914,7 @@ sub create_auto_install_script_conf {
     rmtree("/etc/systemimager/partitionschemes");
 
     # Where the configuration information be stored in client/image. -BEF-
-    my $file = "/etc/systemimager/autoinstallscript.conf";
+    my $file = "/etc/systemimager/disks_layout.xml";
 
     # Determine which partition tool is available.  Preference is sfdisk -- 
     # it provides more information. -BEF-
@@ -951,6 +965,8 @@ sub create_auto_install_script_conf {
 
     SystemImager::Common::save_lvm_information($file);
         
+    #SystemImager::Common::save_bootloader_information($file);
+
     SystemImager::Common->save_filesystem_information("/etc/fstab", $file);
 
     ############################################################################
