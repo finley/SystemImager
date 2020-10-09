@@ -78,11 +78,12 @@ sub get_active_swaps_by_dev {
     # and should be formatted and activated during autoinstall. -BEF-
     #
     my %active_swaps_by_dev;
-    my $cmd = "swapon -s";
+    my $cmd = "LC_ALL=C swapon -s";
     open (FH, "$cmd|") or croak("Couldn't execute $cmd to read the output.");
         while (<FH>) {
             my ($dev, $type, $size, $used, $priority) = split;
             next if ($dev eq 'Filename');
+	    next if (! -b $dev); # Ignore fake swap like /swap in a container
             $active_swaps_by_dev{$dev} = 1;
             # If swap is over LVM add also the standard device name. -AR-
             if ($dev =~ /^\/dev\/mapper\/([^-]+)-(.*)$/) {
@@ -113,6 +114,8 @@ sub get_swap_devs_by_label {
     for my $line (@swaps) {
         chomp $line;
         my($dev) = (split(/\s+/, $line))[0];
+
+	next if (! -b $dev); # Ignore fake swap like /swap in a container
 
         open(SWAPDEV, '<', $dev) or die "Could not open $dev for read: $!\n";
         my $bytes_read = sysread(SWAPDEV, $buf, $swap_struct_size, 0);
@@ -148,6 +151,8 @@ sub get_swap_devs_by_uuid {
     for my $line (@swaps) {
         chomp $line;
         my($dev) = (split(/\s+/, $line))[0];
+
+	next if (! -b $dev); # Ignore fake swap like /swap in a container
 
         open(SWAPDEV, '<', $dev) or die "Could not open $dev for read: $!\n";
         my $bytes_read = sysread(SWAPDEV, $buf, $swap_struct_size, 0);
@@ -378,7 +383,7 @@ sub write_auto_install_script_conf_header {
     open (DISK_FILE, ">$file") or die ("FATAL: Couldn't open $file for writing!"); 
         print DISK_FILE qq(<!--\n);
         print DISK_FILE qq(  \n);
-        print DISK_FILE qq(  autoinstallscript.conf\n);
+        print DISK_FILE qq(  disks_layout.xml\n);
         print DISK_FILE qq(  vi:set filetype=xml:\n);
         print DISK_FILE qq(  \n);
         print DISK_FILE qq(  This file contains partition information about the disks on your golden\n);
