@@ -74,7 +74,7 @@ use strict;
 use Carp;
 use Cwd 'abs_path';
 use POSIX;
-use File::Temp qw/ tempfile tempdir /;
+use File::Temp qw/ mktemp /;
 use File::Copy;
 use File::Path;
 use File::Basename;
@@ -596,6 +596,8 @@ EOF
 #my $ifaces = collect_net_ifaces();
 
 # Create /etc/systemimager/network-conf.xml
+# => output of ip -o -br show link up
+# test that result is not empty. take care of aliases like eth0@if9: in container
 #create_network_conf($ifaces);
 
 # Create /etc/systemimager/byid_real_map.conf
