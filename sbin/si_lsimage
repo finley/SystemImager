@@ -27,6 +27,7 @@ use POSIX;
 use Fcntl ':flock';
 use Getopt::Long;
 use JSON;
+use File::Temp qw/ mktemp /;
 
 # set some variables
 $version_number="SYSTEMIMAGER_VERSION_STRING";
@@ -179,7 +180,7 @@ my %images = ();
 
 # get listing
 my $workers = 0;
-my $stdout_lockfile = tmpnam();
+my $stdout_lockfile = mktemp("/tmp/si_lsimage_lock.XXXX");
 open(LOCK, '>', $stdout_lockfile) or
 	die("ERROR: couldn't open: $stdout_lockfile\n");
 
