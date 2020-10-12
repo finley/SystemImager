@@ -4,10 +4,15 @@
 #   Copyright (C) 1999-2015 Brian Elliott Finley
 #   Copyright (C) 2012-2019 Olivier Lahaye
 
+mksiimage:223 use jconfig instead of harcoded path.
+
 ============= TODO for the dracut change before release is possible ===========
 2nd I need to check a yume fix and check that yum-utils is required in packman
 3rd, I need to check systemimager imager
 There after I’ll document and post on maiing list
+
+BUG: fix si_prepareclient disks-layout.xml generation: lvm group names shouldn't have a dash. If hostname has a dash, remove it before using it in naming.
+BUG: si_prepareclient: check selinux and firewalld => disable if needed. Add option --finish to stop rsyncd and re-enable selinux and firewalld.
 
 systemimager-server postinstall error in opensuse:
 chown: invalid user: 'apache'
