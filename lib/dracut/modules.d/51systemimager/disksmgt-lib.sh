@@ -566,7 +566,7 @@ EOF
 				logwarn "$P_DEV has no filesystem defined in disk-layout"
 				logwarn "Update ${DISKS_LAYOUT_FILE##*/} in /var/lib/systemimager/scripts/disks-layouts/"
 				logwarn "by adding appropriate fsinfo section on your image server."
-				logwanr "See systemimager.disks-layout(7) manual for more informations."
+				logwarn "See systemimager.disks-layout(7) manual for more informations."
 			fi
 
 			# Set partition ID if provided
