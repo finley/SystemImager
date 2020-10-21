@@ -577,392 +577,6 @@ Requires: httpd php php-json
 %description webgui
 SystemImager admin web interface.
 
-%changelog
-* Mon Nov 4 2019 Olivier Lahaye <olivier.lahaye@cea.fr> 4.9.0-0.1
-- Port to CentOS-8
-- New web GUI (deprecated si_monitor and si_monitortk).
-- New configuration based on json. Api for perl/php/javascript/bash.
-- New log system that can catch stderr, stdout and system/kernel messages.
-
-* Mon Sep 30 2019 Olivier Lahaye <olivier.lahaye@cea.fr> 4.5.0-0.25
-- Removed most old build dependancy as we don't build any binaries
-  since dracut is used.
-- Added ethtool and lsscsi dependancy so lsscsi command and ethtool are available in imager.
-- renamed %{_build_arch}initrd_template to initrd_template (no arch content).
-- Port to CentOS-6, OpenSuSE-42.3
-- Added ipcalc dependancy.
-- added dracut-systemimager package.
-- Fixed script that reports rebooted status.
-
-* Fri Jul 18 2014 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.19
-- Reverted si_netbootmond wrong fix and fixed the man instead.
-
-* Thu Jul 17 2014 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.18
-- Fix si_netbootmond that refused to do its job.
-- SystemConfigurator disabled (currently broken)
-
-* Wed Jul 02 2014 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.17
-- Fix /etc/dhclient.conf options descriptions in initrd.img.
-  option option-140 code 140 = ip-address;          # Image server.
-  option option-141 code 141 = unsigned integer 16; # Log server port.
-  option option-142 code 142 = string;              # SSH download URL.
-  option option-143 code 143 = unsigned integer 16; # Flamethrower port base.
-
-* Thu Jan 23 2014 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.16
-- New beta version. (fix si_monitortk thread warning)
-
-* Sat Dec 14 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.15
-- New beta version.
-
-* Fri Dec 13 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.14
-- New beta version.
-
-* Thu Jun 27 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.13
-- New beta version. (Update release to match debian side)
-
-* Thu Jun 27 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.12
-- New beta version. (Fix option parsing + update manuals)
-
-* Wed Jun 12 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.11
-- New beta version. (Add options to include system installed firmwares
-  into intird.img)
-
-* Fri Apr 19 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.10
-- Fix libcrypt dependancies even on fc-18 when --target noarch is used.
-  Replace BuildArchitecture: (obsolete syntax) with BuildArch:
-
-* Mon Apr 08 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.9
-- New beta version: updated gzip to 1.5 and tar to 1.26 (gets undefined)
-
-* Mon Apr 08 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.8
-- New beta version:
-  - Fix for parted version detection
-  - Fix for "Unable to auto-detect kernel file (rhel-6.4)
-
-* Thu Mar 14 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.7
-- New beta version which revet dhclient to v3.1.3 as all V4 are affected by
-  bug ISC#32935 which prevent unitialized interface to be set up.
-
-* Thu Mar 14 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.6
-- New beta version that includes new kernel, latest udev and fixed build system
-
-* Thu Mar  7 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.5
-- Added glib2-devel >= 2.22.0 BuildRequires (needed by udev-182) 
-- removed --libdir=/lib in util-linux (so links are wrongly generated)
-- removed .la in util-linux and udev install as they are not usable at
-  this location
-- Fixed udev build by using our own libblkid and libkmod
-- Fixed initrd.rul (more initrd cleanup (*.a *.la ...)
-  Fixed so links in initrd (nss libs and a few other libs
-
-* Tue Feb 26 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.4
-- Added lzop BuildRequires (needed in kernel build process).
-
-* Mon Jan 14 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.3
-- Added binutils-devel required to build mdadm (ansidecl.h)
-- Added pam-devel required to build util-linux
-
-* Mon Jan  7 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.2
-- Commited all generic patches into Git.
-- Use specific rpm/ directory to store patch used only when building on
-  rpm distro. The rpm can be built with "rpm -tb" command.
-
-* Tue Dec 18 2012 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.1
-- Removed all spec patches
-- New devel branch 4.3.0
-- Add optional %dist tag to the release
-
-* Fri Nov 23 2012 Olivier Lahaye <olivier.lahaye@cea.fr> 4.2.0-0.91svn4568
-- Enabled ext4 module in kernel
-- Updated systemimager_server_pm.patch (use $(()) for arithmetics)
-
-* Fri Nov 23 2012 Olivier Lahaye <olivier.lahaye@cea.fr> 4.2.0-0.9svn4568
-- Fix for new parted in Server.pm (avoid grepping "Disk Flags").
-
-* Thu Nov  8 2012 Olivier Lahaye <olivier.lahaye@cea.fr> 4.2.0-0.8svn4568
-- Full rewrite of 95all.monitord_rebooted to have correct rebooted status
-  on RHEL like distros. Try to comply with SysVInitScripts and systemd.
-
-* Wed Nov  7 2012 Olivier Lahaye <olivier.lahaye@cea.fr> 4.2.0-0.7svn4568
-- Upgrade parted to v3.1
-
-* Tue Jul 24 2012 Olivier Lahaye <olivier.lahaye@cea.fr> 4.2.0-0.6svn4568
-- Fixed mklib.bef so newer already installed libs aren't overwriten
-
-* Wed Jul  4 2012 Olivier Lahaye <olivier.lahaye@cea.fr> 4.2.0-0.5svn4568
-- Fixed initrd_source/make.d/{udev,coreutils,util-linux}.rul
-  using make install-exec so libtool is used to install binaries
-  and thus avoiding copying the libtool wrapper instead of the
-  real binaries.
-- Added "BuildRequires: gperf" for udev build
-
-* Tue Apr 24 2012 Olivier Lahaye <olivier.lahaye@cea.fr>
-- New svn snapshot 4568
-- device-mapper-devel is needed
-- quilt is needed for building sysvinit-2.87dsf
-- Patch to sysvinit-2.87dsf to avoid debian specific stuffs
-- Patch for new kernel config
-
-* Mon Feb 13 2012 Olivier Lahaye <olivier.lahaye@cea.fr>
-- New svn snapshot 4555_bli
-
-* Thu Apr 07 2011 Bernard Li <bernard@vanhpc.org>
-- Added bc to BuildRequires as Makefile needs it
-- Added rsync >= 2.4.6 to BuildRequires
-
-* Thu Mar 24 2011 Bernard Li <bernard@vanhpc.org>
-- libuuid.so is provided by libuuid-devel in RHEL6 instead of e2fsprogs-devel
-- libcrypt.a is provided by glibc-static in RHEL6 instead of glibc-devel
-- gettext is needed for building xfsprogs included in boel_binaries
-- Use %{buildroot} for DESTDIR
-- Cleanup some commented commands
-
-* Tue Nov 10 2009 Bernard Li <bernard@vanhpc.org>
-- Added ncurses-devel to BuildRequires
-
-* Sun Dec 02 2007 Bernard Li <bernard@vanhpc.org>
-- Added dtc to BuildRequires for building ps3-ppc64boot-standard package
-  (new PS3 kernel requires it)
-
-* Wed Nov 21 2007 Andrea Righi <a.righi@cineca.it>
-- added systemconfigurator >= 2.2.11 dependency
-
-* Thu Oct 04 2007 Andrea Righi <a.righi@cineca.it>
-- Removed systemimager-client dependency from systemimager-initrd-template
-
-* Sun Sep 02 2007 Bernard Li <bernard@vanhpc.org>
-- Make function is_ps3 work with different formats of /proc/cpuinfo on the PS3
-
-* Sat Aug 04 2007 Andrea Righi <a.righi@cineca.it>
-- Removed unmaintained package imagemanip
-
-* Fri Aug 03 2007 Andrea Righi <a.righi@cineca.it>
-- Include missing manpages in the server package
-
-* Wed Aug 01 2007 Bernard Li <bernard@vanhpc.org>
-- Add support for ppc64-ps3/kboot
-- Include dir /etc/systemimager/kboot.cfg
-
-* Tue May 22 2007 Bernard Li <bernard@vanhpc.org>
-- Fixed typo: systemimager-server-rsyncd -> systemimager-server-monitord for upgrade service restart
-
-* Tue Apr 17 2007 Andrea Righi <a.righi@cineca.it>
-- added systemconfigurator >= 2.2.9 dependency
-
-* Tue Apr 03 2007 Andrea Righi <a.righi@cineca.it>
-- added pattern exclusions for si_getimage in /etc/systemimager/getimage.exclude
-
-* Thu Mar 08 2007 Andrea Righi <a.righi@cineca.it>
-- Added si_pushoverrides command.
-
-* Wed Feb 28 2007 Bernard Li <bernard@vanhpc.org>
-- Change perl(XML::Simple) dependency to >= 2.14 since starting with that version
-  it correctly has the dependency for perl(XML::Parser) (Noted by Andrew M. Lyons)
-
-* Wed Feb 21 2007 Andrea Righi <a.righi@cineca.it>
-- Removed deprecated file README.ssh_support
-
-* Sun Jan 28 2007 Bernard Li <bernard@vanhpc.org>
-- Added missing directories to filelist for systemimager-server
-
-* Sun Jan 28 2007 Andrea Righi <a.righi@cineca.it>
-- Differentiate between upgrade and uninstall operations in all the
-  %preun sections.
-
-* Sat Jan 27 2007 Andrea Righi <a.righi@cineca.it>
-- Added a warning about what will remain untouched during the update of
-  the server package
-- Re-added "Obsoletes" attribute for the boot-standard package.
-
-* Wed Jan 17 2007 Andrea Righi <a.righi@cineca.it>
-- Removed "Obsoletes" attribute from boot and initrd_template.
-
-* Sun Nov 19 2006 Andrea Righi <a.righi@cineca.it>
-- Moved the BitTorrent dependency for systemimager-bittorrent in %pre
-  section. In this way we have a package compatible both for SuSE and RH
-  distributions.
-
-* Sun Nov 12 2006 Andrea Righi <a.righi@cineca.it>
-- Removed python-xml dependency from systemimager-server package (this
-  package is needed only by BitTorrent).
-- Added python-xml and BitTorrent dependencies for initrd_template
-  package.
-- Removed python-xml dependency from systemimager-bittorrent (this
-  package is a dependency only for BitTorrent, that is already present
-  in the list of the required packages).
-
-* Wed Aug 02 2006 Andrea Righi <a.righi@cineca.it>
-- Updated URLs to http://wiki.systemimager.org 
-
-* Wed Aug 02 2006 Bernard Li <bli@bcgsc.ca>
-- Officially taking over as packager of SystemImager RPMs
-
-* Wed Jul 26 2006 Bernard Li <bli@bcgsc.ca>
-- Prevent RPM from stripping binaries (eg. bittorrent)
-
-* Tue Jul 11 2006 Bernard Li <bli@bcgsc.ca>
-- Added code to cleanup buildroot etc.
-
-* Sun Jul 02 2006 Bernard Li <bli@bcgsc.ca>
-- After a init service is added, turn it off, because we don't want the
-  service to be turned on after installation (the user should do that)
-
-* Sat Jun 17 2006 Bernard Li <bli@bcgsc.ca>
-- Added %doc README.SystemImager_DHCP_options, README.ssh_support and
-  TODO to systemimager-server package
-
-* Sun Jun 11 2006 Bernard Li <bli@bcgsc.ca>
-- New package: systemimager-imagemanip
-
-* Fri Jun 09 2006 Bernard Li <bli@bcgsc.ca>
-- Added file /etc/systemimager/UYOK.modules_to_include
-
-* Fri Apr 21 2006 Bernard Li <bli@bcgsc.ca>
-- New package: systemimager-bittorrent
-- Requires bittorrent RPM
-
-* Sun Apr 16 2006 Bernard Li <bli@bcgsc.ca>
-- Added %post and %preun sections for flamethrower
-
-* Sat Apr 15 2006 Bernard Li <bli@bcgsc.ca>
-- Added bits to add/remove init scripts for systemimager-server-{netbootmond
-  monitord,bittorrent}
-- Added /usr/share/systemimager/icons/* to %files
-
-* Sun Mar 26 2006 Bernard Li <bli@bcgsc.ca>
-- Added new function %is_suse to test if we're building on SuSE Linux
-- Changed python-xml requires such that it is only required on SuSE Linux, otherwise,
-  require PyXML (Red Hat, Fedora, Mandriva)
-
-* Thu Dec 08 2005 Bernard Li <bli@bcgsc.ca>
-- New package - %{_build_arch}initrd_template
-
-* Thu Dec 01 2005 Bernard Li <bli@bcgsc.ca>
-- Added general description text for systemimager package as this is used by SRPM
-
-* Thu Nov 17 2005 Bernard Li <bli@bcgsc.ca>
-- Added ./configure SI_BUILD_DOCS=1 to ensure building of docs
-- Added docbook-utils to BuildRequires
-
-* Mon Aug 08 2005 Bernard Li <bli@bcgsc.ca>
-- Changed requirement of perl-XML-Simple to perl(XML::Simple)
-- Changed requirement of perl-TermReadKey to perl(Term::ReadKey)
-
-* Mon Jul 25 2005 Bernard Li <bli@bcgsc.ca>
-- Added directory /var/lock/systemimager
-
-* Sat Jul 23 2005 Bernard Li <bli@bcgsc.ca>
-- Updated Copyright -> License (deprecated)
-- Added requirement for perl-TermReadKey
-- Updated requirement for perl-XML-Simple to >= 2.08
-
-* Sun Dec 19 2004 Josh Aas <josha@sgi.com>
-- Here is another patch for RPM building. With this patch, you should be
-  able to make an srpm, install it, build from the spec file ("rpmbuild
-  -ba systemimager.spec") and get a full set of RPMs. I assume you want
-  BootMedia stuff in the server RPM.
-
-* Wed Jun 02 2004 sis devel <sisuite-devel@lists.sourceforge.net> 3.3.1-1
-- include pre-install and post-install directories
-
-* Fri Mar 12 2004 sis devel <sisuite-devel@lists.sourceforge.net> 3.2.0-3
-- html documentation returned to systemimager-server package
-
-* Wed Mar 10 2004 sis devel <sisuite-devel@lists.sourceforge.net> 3.2.0-2
-- remove more files created by multiple calls to install phases
-
-* Wed Mar 03 2004 sis devel <sisuite-devel@lists.sourceforge.net> 3.2.0-1
-
-* Wed Nov 12 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.1.6-1
-- new upstream release
-- add version dependency for systemimager-flamethrower package
-
-* Tue Aug 19 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.1.5-1
-- new upstream release
-
-* Mon Jul 14 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.1.4-1
-- new upstream release
-
-* Wed Jul 09 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.1.3-1
-- new upstream release
-
-* Tue Jul 08 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.1.2-5
-- add missing Client.pm, pushupdate manpage & overrides readme
-
-* Sun Jul 06 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.1.2-4
-- add missing conf file & state dir to systemimager-server-flamethrower
-
-* Sat Jul 05 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.1.2-3
-- install missing autoinstallscript.template
-
-* Tue Jul 01 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.1.2-2
-- make systemimager-flamethrower depend on flamethrower
-- patch the x86 config to support sk98lin, so it does not go interactive
-
-* Tue Jul 01 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.1.2-1
-- new upstream development release
-
-* Wed Apr 02 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.0.1-4
-- fix mkautoinstallcd on ia64 - 751740
-
-* Wed Apr 02 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.0.1-3
-- added a patch from bef that no longer sorts module names - 755463
-
-* Wed Apr 02 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.0.1-2
-- remove eepro100 (but keep e100) so boel will fit on a floppy again
-
-* Sun Mar 30 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.0.1-1
-- new upstream bug-fix release
-
-* Wed Jan 08 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.0.0-2
-- various ia64 fixes
-- stop attempting to build ps manual
-
-* Sun Dec 08 2002 sis devel <sisuite-devel@lists.sourceforge.net> 3.0.0-1
-- new upstream release
-
-* Mon Nov 18 2002 dann frazier <dannf@dannf.org> 2.9.5-1
-- new upstream release
-
-* Sun Oct 27 2002 dann frazier <dannf@dannf.org> 2.9.4-1
-- new upstream release
-
-* Sun Oct 13 2002 dann frazier <dannf@dannf.org> 2.9.3-2
-- added code to migrate users to rsync stubs
-
-* Wed Oct 02 2002 dann frazier <dannf@dannf.org> 2.9.3-1
-- new upstream release
-
-* Thu Sep 19 2002 Sean Dague <sean@dague.net> 2.9.1-1
-- Added \%if \%{_build_all} stanzas to make building easier.
-
-* Tue Feb  5 2002 Sean Dague <sean@dague.net> 2.1.1-1
-- Added section 5 manpages
-- removed syslinux requirement, as it isn't need for ia64
-
-* Mon Jan 14 2002 Sean Dague <sean@dague.net> 2.1.0-1
-- Set Macro to build $ARCHboot packages propperly
-- Targetted rpms for noarch target (dannf@dannf.org)
-- Synced up file listing
-
-* Wed Dec  5 2001 Sean Dague <sean@dague.net> 2.0.1-1
-- Update SystemImager version
-- Changed prefix to /usr
-- Made seperate i386boot package
-
-* Mon Nov  5 2001 Sean Dague <sean@dague.net> 2.0.0-4
-- Added build section for true SRPM ability
-
-* Sun Oct 28 2001 Sean Dague <sean@dague.net> 2.0.0-3
-- Added common package
-
-* Sat Oct 20 2001  Sean Dague <sean@dague.net> 2.0.0-2
-- Recombined client and server into one spec file
-
-* Thu Oct 18 2001 Sean Dague <sean@dague.net> 2.0.0-1
-- Initial build
-- Based on work by Ken Segura <ksegura@5o7.org>
-
 %prep
 
 # Prepare source tree
@@ -1531,4 +1145,391 @@ fi
 %{_exec_prefix}/lib/systemimager/init_systemimager_config.php
 %attr(0755, root, root) %{_exec_prefix}/lib/systemimager/get-networks-helper
 %attr(0755, root, root) %{_exec_prefix}/lib/systemimager/clients-statuses-helper
+
+%changelog
+* Mon Nov 4 2019 Olivier Lahaye <olivier.lahaye@cea.fr> 4.9.0-0.1
+- Port to CentOS-8
+- New web GUI (deprecated si_monitor and si_monitortk).
+- New configuration based on json. Api for perl/php/javascript/bash.
+- New log system that can catch stderr, stdout and system/kernel messages.
+
+* Mon Sep 30 2019 Olivier Lahaye <olivier.lahaye@cea.fr> 4.5.0-0.25
+- Removed most old build dependancy as we don't build any binaries
+  since dracut is used.
+- Added ethtool and lsscsi dependancy so lsscsi command and ethtool are available in imager.
+- renamed %{_build_arch}initrd_template to initrd_template (no arch content).
+- Port to CentOS-6, OpenSuSE-42.3
+- Added ipcalc dependancy.
+- added dracut-systemimager package.
+- Fixed script that reports rebooted status.
+
+* Fri Jul 18 2014 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.19
+- Reverted si_netbootmond wrong fix and fixed the man instead.
+
+* Thu Jul 17 2014 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.18
+- Fix si_netbootmond that refused to do its job.
+- SystemConfigurator disabled (currently broken)
+
+* Wed Jul 02 2014 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.17
+- Fix /etc/dhclient.conf options descriptions in initrd.img.
+  option option-140 code 140 = ip-address;          # Image server.
+  option option-141 code 141 = unsigned integer 16; # Log server port.
+  option option-142 code 142 = string;              # SSH download URL.
+  option option-143 code 143 = unsigned integer 16; # Flamethrower port base.
+
+* Thu Jan 23 2014 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.16
+- New beta version. (fix si_monitortk thread warning)
+
+* Sat Dec 14 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.15
+- New beta version.
+
+* Fri Dec 13 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.14
+- New beta version.
+
+* Thu Jun 27 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.13
+- New beta version. (Update release to match debian side)
+
+* Thu Jun 27 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.12
+- New beta version. (Fix option parsing + update manuals)
+
+* Wed Jun 12 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.11
+- New beta version. (Add options to include system installed firmwares
+  into intird.img)
+
+* Fri Apr 19 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.10
+- Fix libcrypt dependancies even on fc-18 when --target noarch is used.
+  Replace BuildArchitecture: (obsolete syntax) with BuildArch:
+
+* Mon Apr 08 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.9
+- New beta version: updated gzip to 1.5 and tar to 1.26 (gets undefined)
+
+* Mon Apr 08 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.8
+- New beta version:
+  - Fix for parted version detection
+  - Fix for "Unable to auto-detect kernel file (rhel-6.4)
+
+* Thu Mar 14 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.7
+- New beta version which revet dhclient to v3.1.3 as all V4 are affected by
+  bug ISC#32935 which prevent unitialized interface to be set up.
+
+* Thu Mar 14 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.6
+- New beta version that includes new kernel, latest udev and fixed build system
+
+* Thu Mar  7 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.5
+- Added glib2-devel >= 2.22.0 BuildRequires (needed by udev-182) 
+- removed --libdir=/lib in util-linux (so links are wrongly generated)
+- removed .la in util-linux and udev install as they are not usable at
+  this location
+- Fixed udev build by using our own libblkid and libkmod
+- Fixed initrd.rul (more initrd cleanup (*.a *.la ...)
+  Fixed so links in initrd (nss libs and a few other libs
+
+* Tue Feb 26 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.4
+- Added lzop BuildRequires (needed in kernel build process).
+
+* Mon Jan 14 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.3
+- Added binutils-devel required to build mdadm (ansidecl.h)
+- Added pam-devel required to build util-linux
+
+* Mon Jan  7 2013 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.2
+- Commited all generic patches into Git.
+- Use specific rpm/ directory to store patch used only when building on
+  rpm distro. The rpm can be built with "rpm -tb" command.
+
+* Tue Dec 18 2012 Olivier Lahaye <olivier.lahaye@cea.fr> 4.3.0-0.1
+- Removed all spec patches
+- New devel branch 4.3.0
+- Add optional %dist tag to the release
+
+* Fri Nov 23 2012 Olivier Lahaye <olivier.lahaye@cea.fr> 4.2.0-0.91svn4568
+- Enabled ext4 module in kernel
+- Updated systemimager_server_pm.patch (use $(()) for arithmetics)
+
+* Fri Nov 23 2012 Olivier Lahaye <olivier.lahaye@cea.fr> 4.2.0-0.9svn4568
+- Fix for new parted in Server.pm (avoid grepping "Disk Flags").
+
+* Thu Nov  8 2012 Olivier Lahaye <olivier.lahaye@cea.fr> 4.2.0-0.8svn4568
+- Full rewrite of 95all.monitord_rebooted to have correct rebooted status
+  on RHEL like distros. Try to comply with SysVInitScripts and systemd.
+
+* Wed Nov  7 2012 Olivier Lahaye <olivier.lahaye@cea.fr> 4.2.0-0.7svn4568
+- Upgrade parted to v3.1
+
+* Tue Jul 24 2012 Olivier Lahaye <olivier.lahaye@cea.fr> 4.2.0-0.6svn4568
+- Fixed mklib.bef so newer already installed libs aren't overwriten
+
+* Wed Jul  4 2012 Olivier Lahaye <olivier.lahaye@cea.fr> 4.2.0-0.5svn4568
+- Fixed initrd_source/make.d/{udev,coreutils,util-linux}.rul
+  using make install-exec so libtool is used to install binaries
+  and thus avoiding copying the libtool wrapper instead of the
+  real binaries.
+- Added "BuildRequires: gperf" for udev build
+
+* Tue Apr 24 2012 Olivier Lahaye <olivier.lahaye@cea.fr>
+- New svn snapshot 4568
+- device-mapper-devel is needed
+- quilt is needed for building sysvinit-2.87dsf
+- Patch to sysvinit-2.87dsf to avoid debian specific stuffs
+- Patch for new kernel config
+
+* Mon Feb 13 2012 Olivier Lahaye <olivier.lahaye@cea.fr>
+- New svn snapshot 4555_bli
+
+* Thu Apr 07 2011 Bernard Li <bernard@vanhpc.org>
+- Added bc to BuildRequires as Makefile needs it
+- Added rsync >= 2.4.6 to BuildRequires
+
+* Thu Mar 24 2011 Bernard Li <bernard@vanhpc.org>
+- libuuid.so is provided by libuuid-devel in RHEL6 instead of e2fsprogs-devel
+- libcrypt.a is provided by glibc-static in RHEL6 instead of glibc-devel
+- gettext is needed for building xfsprogs included in boel_binaries
+- Use %{buildroot} for DESTDIR
+- Cleanup some commented commands
+
+* Tue Nov 10 2009 Bernard Li <bernard@vanhpc.org>
+- Added ncurses-devel to BuildRequires
+
+* Sun Dec 02 2007 Bernard Li <bernard@vanhpc.org>
+- Added dtc to BuildRequires for building ps3-ppc64boot-standard package
+  (new PS3 kernel requires it)
+
+* Wed Nov 21 2007 Andrea Righi <a.righi@cineca.it>
+- added systemconfigurator >= 2.2.11 dependency
+
+* Thu Oct 04 2007 Andrea Righi <a.righi@cineca.it>
+- Removed systemimager-client dependency from systemimager-initrd-template
+
+* Sun Sep 02 2007 Bernard Li <bernard@vanhpc.org>
+- Make function is_ps3 work with different formats of /proc/cpuinfo on the PS3
+
+* Sat Aug 04 2007 Andrea Righi <a.righi@cineca.it>
+- Removed unmaintained package imagemanip
+
+* Fri Aug 03 2007 Andrea Righi <a.righi@cineca.it>
+- Include missing manpages in the server package
+
+* Wed Aug 01 2007 Bernard Li <bernard@vanhpc.org>
+- Add support for ppc64-ps3/kboot
+- Include dir /etc/systemimager/kboot.cfg
+
+* Tue May 22 2007 Bernard Li <bernard@vanhpc.org>
+- Fixed typo: systemimager-server-rsyncd -> systemimager-server-monitord for upgrade service restart
+
+* Tue Apr 17 2007 Andrea Righi <a.righi@cineca.it>
+- added systemconfigurator >= 2.2.9 dependency
+
+* Tue Apr 03 2007 Andrea Righi <a.righi@cineca.it>
+- added pattern exclusions for si_getimage in /etc/systemimager/getimage.exclude
+
+* Thu Mar 08 2007 Andrea Righi <a.righi@cineca.it>
+- Added si_pushoverrides command.
+
+* Wed Feb 28 2007 Bernard Li <bernard@vanhpc.org>
+- Change perl(XML::Simple) dependency to >= 2.14 since starting with that version
+  it correctly has the dependency for perl(XML::Parser) (Noted by Andrew M. Lyons)
+
+* Wed Feb 21 2007 Andrea Righi <a.righi@cineca.it>
+- Removed deprecated file README.ssh_support
+
+* Sun Jan 28 2007 Bernard Li <bernard@vanhpc.org>
+- Added missing directories to filelist for systemimager-server
+
+* Sun Jan 28 2007 Andrea Righi <a.righi@cineca.it>
+- Differentiate between upgrade and uninstall operations in all the
+  %preun sections.
+
+* Sat Jan 27 2007 Andrea Righi <a.righi@cineca.it>
+- Added a warning about what will remain untouched during the update of
+  the server package
+- Re-added "Obsoletes" attribute for the boot-standard package.
+
+* Wed Jan 17 2007 Andrea Righi <a.righi@cineca.it>
+- Removed "Obsoletes" attribute from boot and initrd_template.
+
+* Sun Nov 19 2006 Andrea Righi <a.righi@cineca.it>
+- Moved the BitTorrent dependency for systemimager-bittorrent in %pre
+  section. In this way we have a package compatible both for SuSE and RH
+  distributions.
+
+* Sun Nov 12 2006 Andrea Righi <a.righi@cineca.it>
+- Removed python-xml dependency from systemimager-server package (this
+  package is needed only by BitTorrent).
+- Added python-xml and BitTorrent dependencies for initrd_template
+  package.
+- Removed python-xml dependency from systemimager-bittorrent (this
+  package is a dependency only for BitTorrent, that is already present
+  in the list of the required packages).
+
+* Wed Aug 02 2006 Andrea Righi <a.righi@cineca.it>
+- Updated URLs to http://wiki.systemimager.org 
+
+* Wed Aug 02 2006 Bernard Li <bli@bcgsc.ca>
+- Officially taking over as packager of SystemImager RPMs
+
+* Wed Jul 26 2006 Bernard Li <bli@bcgsc.ca>
+- Prevent RPM from stripping binaries (eg. bittorrent)
+
+* Tue Jul 11 2006 Bernard Li <bli@bcgsc.ca>
+- Added code to cleanup buildroot etc.
+
+* Sun Jul 02 2006 Bernard Li <bli@bcgsc.ca>
+- After a init service is added, turn it off, because we don't want the
+  service to be turned on after installation (the user should do that)
+
+* Sat Jun 17 2006 Bernard Li <bli@bcgsc.ca>
+- Added %doc README.SystemImager_DHCP_options, README.ssh_support and
+  TODO to systemimager-server package
+
+* Sun Jun 11 2006 Bernard Li <bli@bcgsc.ca>
+- New package: systemimager-imagemanip
+
+* Fri Jun 09 2006 Bernard Li <bli@bcgsc.ca>
+- Added file /etc/systemimager/UYOK.modules_to_include
+
+* Fri Apr 21 2006 Bernard Li <bli@bcgsc.ca>
+- New package: systemimager-bittorrent
+- Requires bittorrent RPM
+
+* Sun Apr 16 2006 Bernard Li <bli@bcgsc.ca>
+- Added %post and %preun sections for flamethrower
+
+* Sat Apr 15 2006 Bernard Li <bli@bcgsc.ca>
+- Added bits to add/remove init scripts for systemimager-server-{netbootmond
+  monitord,bittorrent}
+- Added /usr/share/systemimager/icons/* to %files
+
+* Sun Mar 26 2006 Bernard Li <bli@bcgsc.ca>
+- Added new function %is_suse to test if we're building on SuSE Linux
+- Changed python-xml requires such that it is only required on SuSE Linux, otherwise,
+  require PyXML (Red Hat, Fedora, Mandriva)
+
+* Thu Dec 08 2005 Bernard Li <bli@bcgsc.ca>
+- New package - %{_build_arch}initrd_template
+
+* Thu Dec 01 2005 Bernard Li <bli@bcgsc.ca>
+- Added general description text for systemimager package as this is used by SRPM
+
+* Thu Nov 17 2005 Bernard Li <bli@bcgsc.ca>
+- Added ./configure SI_BUILD_DOCS=1 to ensure building of docs
+- Added docbook-utils to BuildRequires
+
+* Mon Aug 08 2005 Bernard Li <bli@bcgsc.ca>
+- Changed requirement of perl-XML-Simple to perl(XML::Simple)
+- Changed requirement of perl-TermReadKey to perl(Term::ReadKey)
+
+* Mon Jul 25 2005 Bernard Li <bli@bcgsc.ca>
+- Added directory /var/lock/systemimager
+
+* Sat Jul 23 2005 Bernard Li <bli@bcgsc.ca>
+- Updated Copyright -> License (deprecated)
+- Added requirement for perl-TermReadKey
+- Updated requirement for perl-XML-Simple to >= 2.08
+
+* Sun Dec 19 2004 Josh Aas <josha@sgi.com>
+- Here is another patch for RPM building. With this patch, you should be
+  able to make an srpm, install it, build from the spec file ("rpmbuild
+  -ba systemimager.spec") and get a full set of RPMs. I assume you want
+  BootMedia stuff in the server RPM.
+
+* Wed Jun 02 2004 sis devel <sisuite-devel@lists.sourceforge.net> 3.3.1-1
+- include pre-install and post-install directories
+
+* Fri Mar 12 2004 sis devel <sisuite-devel@lists.sourceforge.net> 3.2.0-3
+- html documentation returned to systemimager-server package
+
+* Wed Mar 10 2004 sis devel <sisuite-devel@lists.sourceforge.net> 3.2.0-2
+- remove more files created by multiple calls to install phases
+
+* Wed Mar 03 2004 sis devel <sisuite-devel@lists.sourceforge.net> 3.2.0-1
+
+* Wed Nov 12 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.1.6-1
+- new upstream release
+- add version dependency for systemimager-flamethrower package
+
+* Tue Aug 19 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.1.5-1
+- new upstream release
+
+* Mon Jul 14 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.1.4-1
+- new upstream release
+
+* Wed Jul 09 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.1.3-1
+- new upstream release
+
+* Tue Jul 08 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.1.2-5
+- add missing Client.pm, pushupdate manpage & overrides readme
+
+* Sun Jul 06 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.1.2-4
+- add missing conf file & state dir to systemimager-server-flamethrower
+
+* Sat Jul 05 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.1.2-3
+- install missing autoinstallscript.template
+
+* Tue Jul 01 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.1.2-2
+- make systemimager-flamethrower depend on flamethrower
+- patch the x86 config to support sk98lin, so it does not go interactive
+
+* Tue Jul 01 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.1.2-1
+- new upstream development release
+
+* Wed Apr 02 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.0.1-4
+- fix mkautoinstallcd on ia64 - 751740
+
+* Wed Apr 02 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.0.1-3
+- added a patch from bef that no longer sorts module names - 755463
+
+* Wed Apr 02 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.0.1-2
+- remove eepro100 (but keep e100) so boel will fit on a floppy again
+
+* Sun Mar 30 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.0.1-1
+- new upstream bug-fix release
+
+* Wed Jan 08 2003 sis devel <sisuite-devel@lists.sourceforge.net> 3.0.0-2
+- various ia64 fixes
+- stop attempting to build ps manual
+
+* Sun Dec 08 2002 sis devel <sisuite-devel@lists.sourceforge.net> 3.0.0-1
+- new upstream release
+
+* Mon Nov 18 2002 dann frazier <dannf@dannf.org> 2.9.5-1
+- new upstream release
+
+* Sun Oct 27 2002 dann frazier <dannf@dannf.org> 2.9.4-1
+- new upstream release
+
+* Sun Oct 13 2002 dann frazier <dannf@dannf.org> 2.9.3-2
+- added code to migrate users to rsync stubs
+
+* Wed Oct 02 2002 dann frazier <dannf@dannf.org> 2.9.3-1
+- new upstream release
+
+* Thu Sep 19 2002 Sean Dague <sean@dague.net> 2.9.1-1
+- Added \%if \%{_build_all} stanzas to make building easier.
+
+* Tue Feb  5 2002 Sean Dague <sean@dague.net> 2.1.1-1
+- Added section 5 manpages
+- removed syslinux requirement, as it isn't need for ia64
+
+* Mon Jan 14 2002 Sean Dague <sean@dague.net> 2.1.0-1
+- Set Macro to build $ARCHboot packages propperly
+- Targetted rpms for noarch target (dannf@dannf.org)
+- Synced up file listing
+
+* Wed Dec  5 2001 Sean Dague <sean@dague.net> 2.0.1-1
+- Update SystemImager version
+- Changed prefix to /usr
+- Made seperate i386boot package
+
+* Mon Nov  5 2001 Sean Dague <sean@dague.net> 2.0.0-4
+- Added build section for true SRPM ability
+
+* Sun Oct 28 2001 Sean Dague <sean@dague.net> 2.0.0-3
+- Added common package
+
+* Sat Oct 20 2001  Sean Dague <sean@dague.net> 2.0.0-2
+- Recombined client and server into one spec file
+
+* Thu Oct 18 2001 Sean Dague <sean@dague.net> 2.0.0-1
+- Initial build
+- Based on work by Ken Segura <ksegura@5o7.org>
+
 
