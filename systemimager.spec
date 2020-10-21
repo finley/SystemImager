@@ -1097,7 +1097,9 @@ fi
 %endif
 
 # Then we make sure that a config file exists and is accessible by webgui.
-touch /etc/systemimager/systemimager.json
+perl - << EOF                           
+use SystemImager::JConfig;
+EOF
 chmod 644 /etc/systemimager/systemimager.json
 chown apache /etc/systemimager/systemimager.json
 
@@ -1349,6 +1351,7 @@ fi
 %{perl_vendorlib}/SystemImager/Common.pm
 %{perl_vendorlib}/SystemImager/Options.pm
 %{perl_vendorlib}/SystemImager/UseYourOwnKernel.pm
+%{perl_vendorlib}/SystemImager/JConfig.pm
 %dir %{_sysconfdir}/systemimager
 %config %{_sysconfdir}/systemimager/UYOK.modules_to_exclude
 %config %{_sysconfdir}/systemimager/UYOK.modules_to_include
@@ -1410,7 +1413,6 @@ fi
 %{_bindir}/si_psh
 %{_bindir}/si_pcp
 %{_bindir}/si_pushoverrides
-%{perl_vendorlib}/SystemImager/JConfig.pm
 %{perl_vendorlib}/SystemImager/Server.pm
 %{perl_vendorlib}/SystemImager/HostRange.pm
 %{perl_vendorlib}/BootMedia
