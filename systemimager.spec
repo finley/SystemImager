@@ -966,6 +966,9 @@ fi
 %{perl_vendorlib}/SystemImager/Options.pm
 %{perl_vendorlib}/SystemImager/UseYourOwnKernel.pm
 %{perl_vendorlib}/SystemImager/JConfig.pm
+%dir %{_datarootdir}/systemimager
+%dir %{_datarootdir}/systemimager/conf
+%{_datarootdir}/systemimager/conf/config_scheme.json
 %dir %{_sysconfdir}/systemimager
 %config %{_sysconfdir}/systemimager/UYOK.modules_to_exclude
 %config %{_sysconfdir}/systemimager/UYOK.modules_to_include
@@ -987,9 +990,7 @@ fi
 %dir %{_var}/lib/systemimager/scripts/network-configs
 %dir %{_var}/lib/systemimager/overrides
 %{_var}/lib/systemimager/overrides/README
-%dir %{_datarootdir}/systemimager
 %dir %{_datarootdir}/systemimager/icons
-%dir %{_datarootdir}/systemimager/conf
 %config %{_sysconfdir}/systemimager/pxelinux.cfg/*
 %config %{_sysconfdir}/systemimager/kboot.cfg/*
 %config %{_sysconfdir}/systemimager/autoinstallscript.template
@@ -1035,7 +1036,6 @@ fi
 %{_mandir}/man7/systemimager*
 %{_mandir}/man8/si_*
 %{_datarootdir}/systemimager/icons/*
-%{_datarootdir}/systemimager/conf/config_scheme.json
 
 %files doc
 %defattr(-, root, root)
