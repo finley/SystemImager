@@ -316,7 +316,7 @@ EOF
             $script=get_response($script);
             if ( -f "$autoinstall_script_dir/main-install/$script.master" ) {
 
-                create_links($hosts, $script, $autoinstall_script_dir/main-install);
+                create_links($hosts, $script, "$autoinstall_script_dir/main-install");
 
                 print "\nYour soft links have been created.\n";
                 print "\nPress <Enter> to continue...";
