@@ -20,8 +20,8 @@ You can have as much as fieldname you need.
 All options in a field name are grouped in the web GUI.
 
 In perl API SystemImager:JConfig,
-$config is a global variable containing the parsed content of /etc/systemimager/systemimager.json
+$jconfig is a global variable containing the parsed content of /etc/systemimager/systemimager.json
 Missing field/variables/... are replaced with default values from config_scheme.json
 To read a variable:
-$config->get("field_name","param_name");
+$jconfig->get("field_name","param_name");
 
