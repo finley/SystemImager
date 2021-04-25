@@ -62,7 +62,8 @@
 # define _dracutbase
 %define _dracutbase %(test -d /usr/lib/dracut && echo '/lib/dracut' || echo '/share/dracut')
 
-%define is_suse %(test -f /etc/SuSE-release && echo 1 || echo 0)
+%define is_suse %(grep -E "(suse)" /etc/os-release > /dev/null 2>&1 && echo 1 || echo 0)
+#define is_suse %(test -f /etc/SuSE-release && echo 1 || echo 0)
 %define is_ppc64 %([ "`uname -m`" = "ppc64" ] && echo 1 || echo 0)
 %define is_ps3 %([ `grep PS3 /proc/cpuinfo >& /dev/null; echo $?` -eq 0 ] && echo 1 || echo 0) 
 
