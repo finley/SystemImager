@@ -714,28 +714,31 @@ sub save_partition_information {
                             }
                         }
 
-                        #
-                        # Get rid of parted's fs info.  We don't use it.  But we do need 
-                        # 'name' and 'flags', and it's a pain in the but to parse this
-                        # output with no token in unused fields.  -BEF-
-                        #
-                        $leftovers =~ s/^$fs_regex//go;
+                        $flags = ''; # Make sure flags is defined
 
-                        # Get rid of empty elements in the flags output. -AR-
-                        $leftovers = join(',', grep /\S/, (split(/,/, $leftovers)));
+			# If extended partition, no flags and no filesystem type => $leftovers is undefined
+			if (defined($leftovers)) {
+                            #
+                            # Get rid of parted's fs info.  We don't use it.  But we do need 
+                            # 'name' and 'flags', and it's a pain in the but to parse this
+                            # output with no token in unused fields.  -BEF-
+                            #
+                            $leftovers =~ s/^$fs_regex//go;
 
-                        #
-                        # Extract any flags, and remove them from the leftovers. -BEF-
-                        #
-                        if( $leftovers =~ s/\s*(($flag_regex)(, *$flag_regex)*)\s*$//go ) {
-                            $flags = $1;
-                        } else {
-                            $flags = '';
-                        }
-                        # Strip unwanted spaces and commas.
-                        $flags =~ s/ //g;
-                        $flags =~ s/^,+//;
-                        $flags =~ s/,+$//;
+                            # Get rid of empty elements in the flags output. -AR-
+                            $leftovers = join(',', grep /\S/, (split(/,/, $leftovers)));
+
+                            #
+                            # Extract any flags, and remove them from the leftovers. -BEF-
+                            #
+                            if( $leftovers =~ s/\s*(($flag_regex)(, *$flag_regex)*)\s*$//go ) {
+                                $flags = $1;
+                                # Strip unwanted spaces and commas.
+                                $flags =~ s/ //g;
+                                $flags =~ s/^,+//;
+                                $flags =~ s/,+$//;
+                            }
+			}
                     }
                     
                     my $size = $endMB - $startMB;
