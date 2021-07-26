@@ -912,6 +912,43 @@ sis_postimaging() {
 ################################################################################
 #
 #   Description:
+#   Check current hostname and update variable and /tmp/variables.txt if needed
+#
+#   Usage: check_hostname
+#
+check_hostname() {
+	CURR_HOSTNAME=`hostname` # read system hostname
+	if test -z "$CURR_HOSTNAME" -o "$CURR_HOSTNAME" == "localhost" -o "$CURR_HOSTNAME" == "(none)"
+	then
+		loginfo "System HOSTNAME not yet set, no need to update varaibles.txté."
+		return # System hostname not yet set.
+	fi
+
+	# At this point, system hostname is set and is not a default value.
+	loginfo "Checking if HOSTNAME from system matches value from variables.txt"
+
+	source /tmp/variables.txt # read HOSTNAME from variables.txt
+
+	# 1/ Check base hostname
+	if test "${CURR_HOSTNAME%%.*}" != "$HOSTNAME"
+	then
+		export HOSTNAME="${CURR_HOSTNAME%%.*}"
+		loginfo "Updated HOSTNAME=$HOSTNAME"
+	fi
+
+	# 2/ Check if a domainname is set as well (FQDN hostname) and if it's not the variable.txt one.
+	if test "${CURR_HOSTNAME%%.*}" != "${CURR_HOSTNAME}" -a "${CURR_HOSTNAME#*.}" != "$DOMAINNAME"
+	then
+		export DOMAINNAME="${CURR_HOSTNAME#*.}"
+		loginfo "Updated DOMAINNAME=$DOMAINNAME"
+	fi
+	write_variables
+}
+
+#
+################################################################################
+#
+#   Description:
 #   Exit with the message stored in /etc/issue.
 #
 #   Usage: $COMMAND
