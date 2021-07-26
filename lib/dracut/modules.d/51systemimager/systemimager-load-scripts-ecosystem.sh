@@ -45,9 +45,9 @@ get_scripts_directory
 # Make sure HOSTNAME is set (may be used to guess main-install script name or disk layout file name".
 # HOSTNAME may already be set via cmdline, dhcp or local.cfg
 # If not, then try to get it from /scripts/hosts or DNS
-if [ "$HOSTNAME" = '(none)' ]; then
-    HOSTNAME=""
-fi
+
+check_hostname # make sure variables.txt has correct values from system
+
 if [ -z "$HOSTNAME" ]; then
     get_hostname_by_hosts_file # From ${SCRIPTS_DIR}/hosts
 fi

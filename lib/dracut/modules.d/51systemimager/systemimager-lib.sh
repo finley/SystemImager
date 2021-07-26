@@ -917,8 +917,8 @@ sis_postimaging() {
 #   Usage: check_hostname
 #
 check_hostname() {
-	CURR_HOSTNAME=`hostname` # read system hostname
-	if test -z "$CURR_HOSTNAME" -o "$CURR_HOSTNAME" == "localhost" -o "$CURR_HOSTNAME" == "(none)"
+	SYS_HOSTNAME=`hostname` # read system hostname
+	if test -z "$SYS_HOSTNAME" -o "$SYS_HOSTNAME" == "localhost" -o "$SYS_HOSTNAME" == "(none)"
 	then
 		loginfo "System HOSTNAME not yet set, no need to update varaibles.txté."
 		return # System hostname not yet set.
@@ -930,16 +930,16 @@ check_hostname() {
 	source /tmp/variables.txt # read HOSTNAME from variables.txt
 
 	# 1/ Check base hostname
-	if test "${CURR_HOSTNAME%%.*}" != "$HOSTNAME"
+	if test "${SYS_HOSTNAME%%.*}" != "$HOSTNAME"
 	then
-		export HOSTNAME="${CURR_HOSTNAME%%.*}"
+		export HOSTNAME="${SYS_HOSTNAME%%.*}"
 		loginfo "Updated HOSTNAME=$HOSTNAME"
 	fi
 
 	# 2/ Check if a domainname is set as well (FQDN hostname) and if it's not the variable.txt one.
-	if test "${CURR_HOSTNAME%%.*}" != "${CURR_HOSTNAME}" -a "${CURR_HOSTNAME#*.}" != "$DOMAINNAME"
+	if test "${SYS_HOSTNAME%%.*}" != "${SYS_HOSTNAME}" -a "${SYS_HOSTNAME#*.}" != "$DOMAINNAME"
 	then
-		export DOMAINNAME="${CURR_HOSTNAME#*.}"
+		export DOMAINNAME="${SYS_HOSTNAME#*.}"
 		loginfo "Updated DOMAINNAME=$DOMAINNAME"
 	fi
 	write_variables
@@ -959,7 +959,7 @@ interactive_shell() {
     # e.g.: systemimager-wait-imaging.sh loads systemimager-lib.sh early which
     # in turns has loaded /tmp/variables.txt and this was done before HOSTNAME=
     # was set in network init.
-    [ -z "${HOSTNAME}" ] && HOSTNAME=`hostname`
+    check_hostname
 
     # Then, if the /tmp/message.txt exists (it should always be the case)
     # Update /.profile so the message is displayed when shell is run.
