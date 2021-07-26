@@ -196,4 +196,7 @@ fi
 # Save variables to /tmp/variables.txt
 write_variables
 
+# Check that our variables.txt is up to date with system (NetworkManager may have set HOSTNAME and DOMAINAME without us kn owing it)
+check_hostname
+
 ### END SystemImager loading network config ###
