@@ -29,7 +29,7 @@ type logmessage >/dev/null 2>&1 || . /lib/systemimager-lib.sh
 _load_distro_network_config_generator() {
 	logdebug "Loading distro specific network configuration generator"
 	case "$(get_distro_vendor /sysroot)" in
-		redhat|centos|fedora)
+		redhat|centos|almalinux|rocky|fedora)
 			logdebug "Using rhel generator."
 			. /lib/network.rhel.sh
 			;;
