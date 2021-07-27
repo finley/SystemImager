@@ -1498,14 +1498,14 @@ choose_filename() {
 		for EXT in $* "" # We search for file without extention as well.
 		do
 			FOUND=${DIR}/${FILE}${EXT}
-			loginfo "Trying ${FOUND}"
+			loginfo "Looking for ${FOUND}"
 			test -e ${FOUND} && break 2
 		done
 	done
 	# Check we went out thru break.
 	if test -e "${FOUND}"
 	then
-		loginfo "Got: [${FOUND}]"
+		loginfo "Found: ${FOUND}"
 		echo "${FOUND}"
 	else
 		loginfo "No matching file found. in [$DIR]"
