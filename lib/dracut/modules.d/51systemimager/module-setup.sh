@@ -76,6 +76,7 @@ EOF
     inst_multiple -o mkfs.reiserfs mkreiserfs reiserfstune resize_reiserfs tunefs.reiserfs
     inst_multiple -o mkfs.jfs jfs_mkfs jfs_tune
     inst_multiple -o mklost+found # Do we need that?
+    test -f /etc/mke2fs.conf && inst /etc/mke2fs.conf $initdir
 
     inst_multiple socat # also used for plymouth ask-for-password replacement (CentOS-7 at least)
 
