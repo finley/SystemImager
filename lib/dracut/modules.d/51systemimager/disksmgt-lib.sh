@@ -163,7 +163,7 @@ si_create_initramfs() {
 	CMD=""
 	loginfo "Generating initramfs for kernel: ${KERNEL_VERSION}"
 	case "$(get_distro_vendor /sysroot)" in
-		redhat|centos|fedora)
+		redhat|centos|almalinux|rocky|fedora)
 			INITRD_NAME="/boot/initramfs-${KERNEL_VERSION}.img"
 			CMD="dracut --force --hostonly ${INITRD_NAME} ${KERNEL_VERSION}"
 			;;
