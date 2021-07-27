@@ -875,7 +875,7 @@ _do_mdadm_conf() {
 		# Create the grub2 config the force raid assembling in initramfs.
 		# GRUB_CMDLINE_LINUX_DEFAULT is use in normal operation but not in failsafe
 		# GRUB_CMDLINE_LINUX is use in al circumstances. We do not want to try to assemble raid in failsafe.
-		loginfo "Adding rd.auto to grub cmdline to fice raid assembling in initramfs"
+		loginfo "Adding rd.auto to grub cmdline to force raid assembling in initramfs"
 		cat > /tmp/grub_default.cfg <<EOF
 GRUB_CMDLINE_LINUX_DEFAULT="${GRUB_CMDLINE_LINUX_DEFAULT} rd.auto"
 EOF
