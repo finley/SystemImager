@@ -64,9 +64,9 @@ if test -d /run/NetworkManager
 then # NetworkManager was used to configure network
 	logwarn "NetworkManager was used to setup network."
 	logwarn "DHCP options specific to systemimager are neot supported."
-	IPADDR=$(ip -j -o -4 addr show $DEVICE|jq -r '.[].addr_info[].local')
-	test -n "$IPADDR" && loginfo "Got IPADD=$IPADDRR"
-	PREFIX_LEN=$(ip -j -o -4 addr show $DEVICE|jq -r '.[].addr_info[].prefixlen')
+	IPADDR="$(ip -j -o -4 addr show $DEVICE|jq -r '.[].addr_info[].local')"
+	test -n "$IPADDR" && loginfo "Got IPADD=$IPADDR"
+	PREFIX_LEN="$(ip -j -o -4 addr show $DEVICE|jq -r '.[].addr_info[].prefixlen')"
 	# From https://gist.github.com/kwilczynski/5d37e1cced7e76c7c9ccfdf875ba6c5b
 	if test -n "$PREFIX_LEN"
 	then
@@ -74,16 +74,16 @@ then # NetworkManager was used to configure network
 		NETMASK="$(( (value >> 24) & 0xff )).$(( (value >> 16) & 0xff )).$(( (value >> 8) & 0xff )).$(( value & 0xff ))"
 		loginfo "Got NETMASK=$NETMASK"
 	fi
-	BROADCAST=$(ip -j -o -4 addr show $DEVICE|jq -r '.[].addr_info[].broadcast')
+	BROADCAST="$(ip -j -o -4 addr show $DEVICE|jq -r '.[].addr_info[].broadcast')"
 	test -n "$BROADCAST" && loginfo "Got BROADCAST=$BROADCAST"
 	if test "$DEVICE" == $(ip -j -4 route show default|jq -r '.[].dev')
 	then
-		BOOTPROTO=$(ip -j -4 route show default|jq -r '.[].protocol')
+		BOOTPROTO="$(ip -j -4 route show default|jq -r '.[].protocol')"
 		test -n "$BOOTPROTO" && loginfo "Got BOOTPROTO=$BOOTPROTO"
 	fi
-	GATEWAY=$(ip -j -4 route show default|jq -r '.[].gateway')
+	GATEWAY="$(ip -j -4 route show default|jq -r '.[].gateway')"
 	test -n "$GATEWAY" && loginfo "Got GATEWAY=$GATEWAY"
-	GATEWAYDEV=$(ip -j -4 route show default|jq -r '.[].dev')
+	GATEWAYDEV="$(ip -j -4 route show default|jq -r '.[].dev')"
 	test -n "$GATEWAYDEV" && loginfo "Got GATEWAYDEV=$GATEWAYDEV"
 fi
 
