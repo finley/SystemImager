@@ -73,6 +73,13 @@ then # NetworkManager was used to configure network
 		value=$(( 0xffffffff ^ ((1 << (32 - $PREFIX_LEN)) - 1) ))
 		NETMASK="$(( (value >> 24) & 0xff )).$(( (value >> 16) & 0xff )).$(( (value >> 8) & 0xff )).$(( value & 0xff ))"
 		loginfo "Got NETMASK=$NETMASK"
+		if test -n "$IPADDR" # if we don't have IP, it doesn't make sense to compute NETWORK address.
+		then
+			IFS=. read -r i1 i2 i3 i4 <<< "$IPADDR"
+			IFS=. read -r m1 m2 m3 m4 <<< "$NETMASK"
+			NETWORK=$(printf "%d.%d.%d.%d" "$((i1 & m1))" "$((i2 & m2))" "$((i3 & m3))" "$((i4 & m4))")
+			loginfo "Got NETWORK=$NETWORK"
+		fi
 	fi
 	BROADCAST="$(ip -j -o -4 addr show $DEVICE|jq -r '.[].addr_info[].broadcast')"
 	test -n "$BROADCAST" && loginfo "Got BROADCAST=$BROADCAST"
