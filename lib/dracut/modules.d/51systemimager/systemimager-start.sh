@@ -36,8 +36,10 @@ set +o posix
 
 # Redirect stdout and stderr to system log (that is later processed by log dispatcher)
 exec 6>&1 7>&2      # Save file descriptors 1 and 2.
-exec 2> >( while read LINE; do logger -p local2.err -t systemimager -- "$LINE"; done )
-exec > >( while read LINE; do logger -p local2.info -t systemimager -- "$LINE"; done )
+exec 2> >(logger -p local2.err -t systemimager)
+exec > >(logger -p local2.info -t systemimager)
+#exec 2> >( while read LINE; do logger -p local2.err -t systemimager -- "$LINE"; done )
+#exec > >( while read LINE; do logger -p local2.info -t systemimager -- "$LINE"; done )
 
 # 1st: read local.cfg (This needs to be here in case it includes INSTALL_IFACE=
 # It will be called for each iface to setup, but it'll run only once (protected)
