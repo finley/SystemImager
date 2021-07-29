@@ -441,24 +441,43 @@ EOF
 _get_part_dev_from_disk_dev() {
 	if test -b "$1"
 	then
-		DEV_MAJOR=$(printf "%d" "0x$(stat -c '%t' $1)")
+		PART_SYMLINK_PATH=$(udevadm info -q symlink $1|cut -d' ' -f1)-part$2
+		if test -l /dev/$PART_SYMLINK_PATH
+		then
+			PART_DEVICE=$(readlink -f /dev/$PART_SYMLINK_PATH)
+			if test -d $PART_DEVICE
+			then
+				echo $PART_DEVICE
+			else
+				shellout "No such device: [$PART_DEVICE]"
+			fi
+		else
+			shellout "$1 has not partition #$2".
+		fi
 	else
 		shellout "[$1] is no a block device"
 	fi
 
-	test -n "${2//[0-9]/}" && shellout "[$2] is not a partition number"
-	
-	if test ! -r /sys/dev/block/$DEV_MAJOR:$2/uevent
-	then
-		logerror "Can't read /sys/dev/block/$DEV_MAJOR:$2/uevent"
-		shellout "Can't gather $1 partition $2 informations"
-	fi
+	#if test -b "$1"
+	#then
+	#	DEV_MAJOR=$(printf "%d" "0x$(stat -c '%t' $1)")
+	#else
+	#	shellout "[$1] is no a block device"
+	#fi
 
-	. /sys/dev/block/$DEV_MAJOR:$2/uevent
-	test "$DEVTYPE" != "partition" && shellout "/sys/dev/block/$DEV_MAJOR:$2 TYPE=$DEVTYPE is not a partition."
+	#test -n "${2//[0-9]/}" && shellout "[$2] is not a partition number"
+	
+	#if test ! -r /sys/dev/block/$DEV_MAJOR:$2/uevent
+	#then
+	#	logerror "Can't read /sys/dev/block/$DEV_MAJOR:$2/uevent"
+	#	shellout "Can't gather $1 partition $2 informations"
+	#fi
+
+	#. /sys/dev/block/$DEV_MAJOR:$2/uevent
+	#test "$DEVTYPE" != "partition" && shellout "/sys/dev/block/$DEV_MAJOR:$2 TYPE=$DEVTYPE is not a partition."
 
 	# echo $(udevadm info --query=name --path=/sys/dev/block/$DEV_MAJOR:$2)
-	echo "/dev/$DEVNAME"
+	#echo "/dev/$DEVNAME"
 }
 
 ################################################################################
