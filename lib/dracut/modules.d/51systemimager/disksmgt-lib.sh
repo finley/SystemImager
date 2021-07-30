@@ -439,24 +439,38 @@ EOF
 ################################################################################
 
 _get_part_dev_from_disk_dev() {
+	test ! -b "$1" && shellout "[$1] is not a block device."
+	test -z "$2" && shellout "Missing partition number."
+	test -n "${2//[0-9]/}" && shellout "[$2] is not a partition number"
 	if test -b "$1"
 	then
-		PART_SYMLINK_PATH=$(udevadm info -q symlink $1|cut -d' ' -f1)-part$2
-		if test -l /dev/$PART_SYMLINK_PATH
-		then
-			PART_DEVICE=$(readlink -f /dev/$PART_SYMLINK_PATH)
-			if test -d $PART_DEVICE
-			then
-				echo $PART_DEVICE
-			else
-				shellout "No such device: [$PART_DEVICE]"
-			fi
-		else
-			shellout "$1 has not partition #$2".
-		fi
-	else
-		shellout "[$1] is no a block device"
+		PART_NAME=$1
+		# If block device ends with a number we need to add a "p"
+		LAST_DEVNAME_CHAR=${1: -1} # Get the last char
+		test -z ${LAST_DEVNAME_CHAR/[0-9]/} && PART_NAME="${PART_NAME}p" # add a "p" if it's a number
+		PART_NAME="${PART_NAME}$2"
+		test ! -b $PART_NAME && shellout "Device [$PART_NAME] for partition $2 of block device $1 is not a block device or doesn't exists."
+		echo $PART_NAME
 	fi
+	#Doess't work when udev is frozen
+	#if test -b "$1"
+	#then
+	#	PART_SYMLINK_PATH=$(udevadm info -q symlink $1|cut -d' ' -f1)-part$2
+	#	if test -l /dev/$PART_SYMLINK_PATH
+	#	then
+	#		PART_DEVICE=$(readlink -f /dev/$PART_SYMLINK_PATH)
+	#		if test -d $PART_DEVICE
+	#		then
+	#			echo $PART_DEVICE
+	#		else
+	#			shellout "No such device: [$PART_DEVICE]"
+	#		fi
+	#	else
+	#		shellout "$1 has not partition #$2".
+	#	fi
+	#else
+	#	shellout "[$1] is no a block device"
+	#fi
 
 	#if test -b "$1"
 	#then
