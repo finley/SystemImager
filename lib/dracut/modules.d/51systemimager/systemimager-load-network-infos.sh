@@ -63,7 +63,7 @@ getarg 'si.break=network-infos' && logwarn "Break network-infos" && interactive_
 if test -d /run/NetworkManager
 then # NetworkManager was used to configure network
 	logwarn "NetworkManager was used to setup network."
-	logwarn "DHCP options specific to systemimager are neot supported."
+	logwarn "DHCP options specific to systemimager are not supported."
 	IPADDR="$(ip -j -o -4 addr show $DEVICE|jq -r '.[].addr_info[].local')"
 	test -n "$IPADDR" && loginfo "Got IPADD=$IPADDR"
 	PREFIX_LEN="$(ip -j -o -4 addr show $DEVICE|jq -r '.[].addr_info[].prefixlen')"
