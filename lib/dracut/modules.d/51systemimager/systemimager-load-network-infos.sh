@@ -65,7 +65,7 @@ then # NetworkManager was used to configure network
 	logwarn "NetworkManager was used to setup network."
 	logwarn "DHCP options specific to systemimager are not supported."
 	IPADDR="$(ip -j -o -4 addr show $DEVICE|jq -r '.[].addr_info[].local')"
-	test -n "$IPADDR" && loginfo "Got IPADD=$IPADDR"
+	test -n "$IPADDR" && loginfo "Got IPADDR=$IPADDR"
 	PREFIX_LEN="$(ip -j -o -4 addr show $DEVICE|jq -r '.[].addr_info[].prefixlen')"
 	# From https://gist.github.com/kwilczynski/5d37e1cced7e76c7c9ccfdf875ba6c5b
 	if test -n "$PREFIX_LEN"
