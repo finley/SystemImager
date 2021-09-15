@@ -382,7 +382,7 @@ EOF
 								mv -f /sysroot/boot/loader/entries /sysroot/boot/efi/loader/entries
 							fi
 							logininfo "copying kernel and intrd to EFI system partition"
-							cp -v /sysroot/boot/(*linu*,*kernel*,*init*,config*,*.map*) /sysroot/boot/efi/
+							cp -v /sysroot/boot/{*linu*,*kernel*,*init*,config*,*.map*} /sysroot/boot/efi/
 							# BUG: review this process
 							# Need to set default entry and timeout in /sysroot/boot/efi/loader/loader.conf
 
