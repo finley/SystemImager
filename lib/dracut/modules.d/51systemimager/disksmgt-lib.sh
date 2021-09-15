@@ -263,6 +263,9 @@ si_install_bootloader() {
 			# 1st, update config (default menu entry and timeout
 			loginfo "Setting default menu=$BL_DEFAULT and timeout=$BL_TIMEOUT"
 			case "${BL_FLAVOR}" in
+				"systemd")
+					# nothing to do here.
+					;;
 				"grub2")
 					# Check that grub2-install is available on imaged system
 					[ ! -x /sysroot/usr/sbin/grub2-install ] && [ ! -x /sysroot/sbin/grub2-install ] && shellout "grub2-install missing in image. Can't install grub2 bootloader"
@@ -331,6 +334,9 @@ EOF
                 		                while read BL_DEV
 						do
 							case "$BL_FLAVOR" in
+								"systemd")
+									shellout "systemd-boot doesn't support legacy BIOS. (EFI/UEFI only bootloader)";
+									;;
 								"grub2")
 									[ ! -b "$BL_DEV" ] && shellout "Can't install bootloader: [$BL_DEV] is not a block device!"
 									logaction "chroot /sysroot /sbin/grub2-install --force $BL_DEV"
@@ -364,13 +370,42 @@ EOF
 					[ ! -d /sysroot/boot/efi/EFI/BOOT ] && shellout "Missing /boot/efi/EFI/BOOT (EFI BOOT directory). Check/Update your image."
 					[ -r /tmp/EFI.conf ] && . /tmp/EFI.conf # read requested EFI configuration (boot manager, kernel name, ...)
 					case "$BL_FLAVOR" in
+						"systemd")
+							[ -x /sysroot/usr/bin/bootctl ] || shellout "bootctl (systemd-boot) missing in image! Update your imlage!"
+							logaction "/usr/bin/bootctl --path=/boot/efi install"
+							chroot /sysroot /usr/bin/bootctl --path=/boot/efi install
+							loginfo "systemd-boot installed on EFI partition."
+							# install is incomplete, we need to move entries, kernels and initrds into ESP.
+							if test $(find /sysroot/boot/efi/loader/entries/ -type f|wc -l) -eq 0
+							then
+								loginfo "systemd-boot entries not in EFI partition, moving them to correct location"
+								mv -f /sysroot/boot/loader/entries /sysroot/boot/efi/loader/entries
+							fi
+							logininfo "copying kernel and intrd to EFI system partition"
+							cp -v /sysroot/boot/(*linu*,*kernel*,*init*,config*,*.map*) /sysroot/boot/efi/
+							# BUG: review this process
+							# Need to set default entry and timeout in /sysroot/boot/efi/loader/loader.conf
+
+							touch /tmp/bootloader.installed
+							;;
 						"grub2")
 							[ -x /sysroot/usr/sbin/efibootmgr ] || shellout "efibootmgr missing in image! Update your imlage!"
 							[ -d /sysroot/usr/lib/grub/$(uname -m)-efi ] || shellout "/usr/lib/grub/$(uname -m)-efi missing in image! Install grube2-efi-*-modules package"
-							logaction "chroot /sysroot /sbin/grub2-install --force --target=$(uname -m)-efi"
-							chroot /sysroot /sbin/grub2-install --force --target=$(uname -m)-efi || shellout "Failed to install grub2 EFI bootloader"
-							loginfo "EFI grub2 installed on EFI partition."
-							touch /tmp/bootloader.installed
+
+							# grub2-install doesn't support EFI starting from RHEL 8.3
+							#logaction "chroot /sysroot /sbin/grub2-install --force --target=$(uname -m)-efi"
+							# chroot /sysroot /sbin/grub2-install --force --target=$(uname -m)-efi || shellout "Failed to install grub2 EFI bootloader"
+
+							# Loop on all EFI partitions (more than one if soft raid 1)
+							IFS='\n'
+							for EFI_PART in $(xmlstarlet sel -t -m 'config/disk/part[@flags="esp"]' -v "concat('-d ',ancestor::disk/@dev,' -p ',@num)" -n ${DISKS_LAYOUT_FILE})
+							do
+								logaction "/usr/sbin/efibootmgr -c -D $EFI_PART -L '"$IMAGENAME"' -l '\EFI\shimx64.efi'"
+								chroot /sysroot /usr/sbin/efibootmgr -c -D $EFI_PART -L "$IMAGENAME" -l '\EFI\shimx64.efi'
+								loginfo "EFI grub2 installed on EFI partition."
+								touch /tmp/bootloader.installed
+							done
+							unset IFS
 							;;
 						"grub")
 							shellout "grub v1 doesn't supports EFI. Set your bios in legacy boot mode or use another bootloader."
@@ -896,7 +931,7 @@ _do_raids() {
 			[ -n "${R_DEVICES}" ] && CMD="${CMD} ${R_DEVICES}" # Add disk devices if any are defines for this raid volume.
 
 			logaction "${CMD}"
-			eval "yes | ${CMD}" || shellout "Failed to create raid${R_LEVEL} with ${R_DEVICES}"
+			eval "yes 2> /dev/null | ${CMD}" || shellout "Failed to create raid${R_LEVEL} with ${R_DEVICES}"
 
 		done
 }
@@ -951,6 +986,9 @@ _do_lvms() {
 	# See https://bugzilla.redhat.com/show_bug.cgi?id=865015 (not a bug)
 	# LVM_DEFAULT_CONFIG="--config 'global {locking_type=1}'" # At least we need this config.
 	# We chose to replace the inapropriate lvm.conf with a generic one that fits our needs.
+	# Note, closing fd 6 and 7 in order to avoir lvm leaked file descriptor warnings.
+	#       LVM expect only FD 1, 2 and 3 and will close all other file descriptors.
+
 	mkdir -p /etc/lvm # Make sure lvm config path exists (not present on CentOS-6 for example)
 	lvmconfig --type default --withcomments > /etc/lvm/lvm.conf 6>&- 7>&- || shellout "Failed to create/overwrite initramfs:/etc/lvm/lvm.conf with default lvm.conf that permits lvm creation/modification/removal."
 
@@ -973,11 +1011,11 @@ _do_lvms() {
 
 			CMD="pvcreate ${LVM_DEFAULT_CONFIG} -M${LVM_VERSION} -ff -y ${VG_PARTS}${VG_RAIDS}"
 			logaction $CMD
-			eval "$CMD" || shellout "Failed to prepare devices for being part of a LVM"
+			eval "$CMD 6>&- 7>&-" || shellout "Failed to prepare devices for being part of a LVM"
 
 			# Now we cleanup any previous volume groups.
 			loginfo "Cleaning up any previous volume groups named [${VG_NAME}]"
-			lvremove ${LVM_DEFAULT_CONFIG} -f /dev/${VG_NAME} >/dev/null 2>&1 && vgremove ${VG_NAME} >/dev/null 2>&1
+			lvremove ${LVM_DEFAULT_CONFIG} -f /dev/${VG_NAME} >/dev/null 2>&1  6>&- 7>&- && vgremove ${VG_NAME} >/dev/null 2>&1  6>&- 7>&-
 
 			# Now we create the volume group.
 			CMD="vgcreate ${LVM_DEFAULT_CONFIG} -M${LVM_VERSION}"
@@ -986,7 +1024,7 @@ _do_lvms() {
 			[ -n "${VG_PHYS_EXTENT_SIZE/ /}" ] && CMD="${CMD} -s ${VG_PHYS_EXTENT_SIZE/ /}"
 			CMD="${CMD} ${VG_NAME} ${VG_PARTS}${VG_RAIDS}"
 			logaction "${CMD}"
-			eval "${CMD}" || shellout "Failed to create volume group [${VG_NAME}]"
+			eval "${CMD} 6>&- 7>&-" || shellout "Failed to create volume group [${VG_NAME}]"
 
 			xmlstarlet sel -t -m "config/lvm/lvm_group[@name=\"${VG_NAME}\"]/lv" -v "concat(@name,';',@size,';',@lv_options)" -n ${DISKS_LAYOUT_FILE} | sed '/^\s*$/d' |\
 				while read LV_NAME LV_SIZE LV_OPTIONS
@@ -1001,12 +1039,12 @@ _do_lvms() {
 					fi
 					CMD="${CMD} -n ${LV_NAME} ${VG_NAME}"
 					logaction "${CMD}"
-					eval "${CMD}" || shellout "Failed to create logical volume ${LV_NAME}"
+					eval "${CMD} 6>&- 7>&-" || shellout "Failed to create logical volume ${LV_NAME}"
 
 					loginfo "Enabling logical volume ${LV_NAME}"
-					CMD="lvscan > /dev/null; lvchange -a y /dev/${VG_NAME}/${LV_NAME}"
+					CMD="(lvscan > /dev/null; lvchange -a y /dev/${VG_NAME}/${LV_NAME})"
 					logaction "${CMD}"
-					eval "${CMD}" || shellout "lvchange -a y /dev/${VG_NAME}/${LV_NAME} failed!"
+					eval "${CMD} 6>&- 7>&-" || shellout "lvchange -a y /dev/${VG_NAME}/${LV_NAME} failed!"
 				done
 			done
 

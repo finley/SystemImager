@@ -251,6 +251,7 @@
 			<xsd:attribute name="flavor" use="required">
 				<xsd:simpleType>
 					<xsd:restriction base="xsd:token">
+						<xsd:enumeration value="systemd"/>
 						<xsd:enumeration value="grub"/>
 						<xsd:enumeration value="grub2"/>
 						<xsd:enumeration value="rEFInd"/>

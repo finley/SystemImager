@@ -109,32 +109,32 @@ logstep() {
 
 # Log an error.
 logerror() {
-	logger -t systemimager -p local0.err -- "$@"
+	echo -e "$@" | logger -t systemimager -p local0.err
 }
 
 # Log an error.
 logfatal() {
-	logger -t systemimager -p local0.emerg -- "$@"
+	echo -e "$@" | logger -t systemimager -p local0.emerg
 }
 
 # Log a warning
 logwarn() {
-	logger -t systemimager -p local0.warn -- "$@"
+	echo -e "$@" | logger -t systemimager -p local0.warn
 }
 
 # Log a simple information
 loginfo() {
-	logger -t systemimager -p local0.info -- "$@"
+	echo -e "$@" | logger -t systemimager -p local0.info
 }
 
 # Log a detailed information
 logdetail() {
-	logger -t systemimager -p local1.info -- "$@"
+	echo -e "$@" | logger -t systemimager -p local1.info
 }
 
 # Log an action being done to client
 logaction() {
-	logger -t systemimager -p local0.notice -- "$@"
+	echo -e "$@" | logger -t systemimager -p local0.notice
 }
 
 # Log debug / system stuffs
@@ -147,12 +147,12 @@ logdebug() {
 		write_variables
 		logdebug "System messages displayed in plymouth enabled."
 	fi
-	logger -t systemimager -p local0.debug -- "$@"
+	echo -e "$@" | logger -t systemimager -p local0.debug -- "$@"
 }
 
 # Log things that dont fit above cathegories
 lognotice() {
-	logger -t systemimager -p local0.notice -- "$@"
+	echo -e "$@" | logger -t systemimager -p local0.notice -- "$@"
 }
 
 # Compatibility function with older scripts.
