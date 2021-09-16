@@ -52,34 +52,31 @@ if test -n "$INSTALL_IFACE" -a "$INSTALL_IFACE" != "$1" # Case 1
 then
 	loginfo "Install interface set to [$INSTALL_IFACE]. Ignoring interface [$1] for imaging."
 	# restore file descriptors so log subprocesses are stopped (read returns fail)
-	exec 1>&6 6>&- 2>&7 7>&-
-	return
-fi
 
-# At this point, either INSTALL_IFACE is set and equal to $1 (and DEVICE is empty and need to be filled), OR it is not set at all and DEVICE may be already set.
+	# At this point, either INSTALL_IFACE is set and equal to $1 (and DEVICE is empty and need to be filled), OR it is not set at all and DEVICE may be already set.
 
-if test -n "$DEVICE"
+elif test -n "$DEVICE"
 then
 	loginfo "Install interface already chosen: [$DEVICE]. Ignoring interface [$1] for imaging."
 	# restore file descriptors so log subprocesses are stopped (read returns fail)
-	exec 1>&6 6>&- 2>&7 7>&-
-	return
+else
+
+	# If we reach this point, this means that either INSTALL_IFACE is the correct one if it is set or (if it is not set), DEVICE is still empty and we need to load something.
+
+
+	logstep "systemimager-start: online-hook"
+
+	DEVICE=$1
+	write_variables # Save this network device as the chosen one.
+
+	source /sbin/systemimager-check-ifaces           # Check network interfaces concistency with cmdline ip=
+	source /sbin/systemimager-load-network-infos $DEVICE  # read /tmp/dhclient.$DEVICE.dhcpopts or /tmp/net.$DEVICE.override and updates /tmp/variables.txt
+	source /sbin/systemimager-pingtest $DEVICE       # do a ping_test()
+	source /sbin/systemimager-load-scripts-ecosystem $DEVICE    # read $SIS_CONFIG from image server.
+	source /sbin/systemimager-monitor-server $DEVICE # Start the log monitor server (after reading config retrieved above)
+	source /sbin/systemimager-deploy-client $DEVICE  # Imaging occures here
+
 fi
-
-# If we reach this point, this means that either INSTALL_IFACE is the correct one if it is set or (if it is not set), DEVICE is still empty and we need to load something.
-
-
-logstep "systemimager-start: online-hook"
-
-DEVICE=$1
-write_variables # Save this network device as the chosen one.
-
-source /sbin/systemimager-check-ifaces           # Check network interfaces concistency with cmdline ip=
-source /sbin/systemimager-load-network-infos $DEVICE  # read /tmp/dhclient.$DEVICE.dhcpopts or /tmp/net.$DEVICE.override and updates /tmp/variables.txt
-source /sbin/systemimager-pingtest $DEVICE       # do a ping_test()
-source /sbin/systemimager-load-scripts-ecosystem $DEVICE    # read $SIS_CONFIG from image server.
-source /sbin/systemimager-monitor-server $DEVICE # Start the log monitor server (after reading config retrieved above)
-source /sbin/systemimager-deploy-client $DEVICE  # Imaging occures here
 
 # restore file descriptors so log subprocesses are stopped (read returns fail)
 exec 1>&6 6>&- 2>&7 7>&-
