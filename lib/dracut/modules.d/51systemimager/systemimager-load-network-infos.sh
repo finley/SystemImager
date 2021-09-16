@@ -70,7 +70,7 @@ then # NetworkManager was used to configure network
 	# From https://gist.github.com/kwilczynski/5d37e1cced7e76c7c9ccfdf875ba6c5b
 	if test -n "$PREFIX_LEN"
 	then
-		value=$(( 0xffffffff ^ ((1 << (32 - $PREFIX_LEN)) - 1) ))
+		value=$(( 0xffffffff ^ ( ( 1 << ( 32 - $PREFIX_LEN ) ) - 1 ) ))
 		NETMASK="$(( (value >> 24) & 0xff )).$(( (value >> 16) & 0xff )).$(( (value >> 8) & 0xff )).$(( value & 0xff ))"
 		loginfo "Got NETMASK=$NETMASK"
 		if test -n "$IPADDR" # if we don't have IP, it doesn't make sense to compute NETWORK address.
