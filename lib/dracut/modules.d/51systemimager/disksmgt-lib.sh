@@ -399,7 +399,7 @@ EOF
 							# chroot /sysroot /sbin/grub2-install --force --target=$(uname -m)-efi || shellout "Failed to install grub2 EFI bootloader"
 
 							# Copy grub.cfg to /sysroot/boot/efi/$DISTRO_ID/grub.cfg
-							ìf test -f /sysroot/etc/os-release
+							if test -f /sysroot/etc/os-release
 							then
 								. /sysroot/etc/os-release
 								loginfo "Copying grub.cfg to EFI partition"
