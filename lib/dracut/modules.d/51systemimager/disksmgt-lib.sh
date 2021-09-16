@@ -366,6 +366,8 @@ EOF
 				"efi"|"EFI") # Install in EFI partition an set boot order in EFI nvram
 					# TODO: handle multiple EFI menu entries for raid 1 using efibootmgr.
 					[ ! -d /sys/firmware/efi ] && shellout "BIOS is not EFI. Switch your BIOS to EFI, or use legacy for bootloader type in disks-layout."
+					# BUG: find more reliable way to find ESP (EFI System Partition). On some distro it can be mounted as /boot instead of /boot/efi
+					# We should seach for partition with "esp" flag et find where it is mounted.
 					[ -z "`findmnt -o target,fstype --raw|grep -e '/boot/efi\svfat'`" ] && shellout "No EFI filesystem mounted (/sysroot/boot/efi not a vfat partition)."
 					[ ! -d /sysroot/boot/efi/EFI/BOOT ] && shellout "Missing /boot/efi/EFI/BOOT (EFI BOOT directory). Check/Update your image."
 					[ -r /tmp/EFI.conf ] && . /tmp/EFI.conf # read requested EFI configuration (boot manager, kernel name, ...)
@@ -396,16 +398,34 @@ EOF
 							#logaction "chroot /sysroot /sbin/grub2-install --force --target=$(uname -m)-efi"
 							# chroot /sysroot /sbin/grub2-install --force --target=$(uname -m)-efi || shellout "Failed to install grub2 EFI bootloader"
 
+							# Copy grub.cfg to /sysroot/boot/efi/$DISTRO_ID/grub.cfg
+							ìf test -f /sysroot/etc/os-release
+							then
+								. /sysroot/etc/os-release
+								loginfo "Copying grub.cfg to EFI partition"
+								cp /sysroot/boot/grub2/grub.cfg /sysroot/boot/efi/$ID/grub.cfg
+							else
+								logwarn "No /etc/os-release in image; cant guess distro ID."
+								logwarn "Can't guess distro ESP path for grub.cfg: no copied"
+								logwarn "system may not boot"
+							fi
+
 							# Loop on all EFI partitions (more than one if soft raid 1)
-							IFS='\n'
-							for EFI_PART in $(xmlstarlet sel -t -m 'config/disk/part[@flags="esp"]' -v "concat('-d ',ancestor::disk/@dev,' -p ',@num)" -n ${DISKS_LAYOUT_FILE})
+							for EFI_PART in $(xmlstarlet sel -t -m 'config/disk/part[@flags="esp"]' -v "concat('ancestor::disk/@dev,';',@num)" -n ${DISKS_LAYOUT_FILE})
 							do
-								logaction "/usr/sbin/efibootmgr -c -D $EFI_PART -L '"$IMAGENAME"' -l '\EFI\shimx64.efi'"
-								chroot /sysroot /usr/sbin/efibootmgr -c -D $EFI_PART -L "$IMAGENAME" -l '\EFI\shimx64.efi'
-								loginfo "EFI grub2 installed on EFI partition."
-								touch /tmp/bootloader.installed
+								EFI_DISK=${EFI_PART%%;*}
+								EFI_PART_NUM=${EFI_PART##*;}
+								logaction "/usr/sbin/efibootmgr -c -D -d $EFI_DISK -p $EFI_PART_NUM -L '"$IMAGENAME"' -l '\\\\EFI\\\\shimx64.efi'"
+								chroot /sysroot /usr/sbin/efibootmgr -c -D -d $EFI_DISK -p $EFI_PART_NUM -L "$IMAGENAME" -l '\EFI\shimx64.efi'
+								RET_CODE=$?
+								if test $RET_CODE -eq 0
+								then
+									loginfo "EFI grub2 installed on EFI partition."
+									touch /tmp/bootloader.installed
+								else
+									logerror "efibootmgr failed with error code: $RET_CODE"
+								fi
 							done
-							unset IFS
 							;;
 						"grub")
 							shellout "grub v1 doesn't supports EFI. Set your bios in legacy boot mode or use another bootloader."
