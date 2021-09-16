@@ -402,7 +402,7 @@ EOF
 							if test -f /sysroot/etc/os-release
 							then
 								. /sysroot/etc/os-release
-								loginfo "Copying grub.cfg to EFI partition"
+								loginfo "Copying grub.cfg to EFI partition [/boot/efi/$ID/grub.cfg]"
 								cp /sysroot/boot/grub2/grub.cfg /sysroot/boot/efi/$ID/grub.cfg
 							else
 								logwarn "No /etc/os-release in image; cant guess distro ID."
@@ -411,7 +411,7 @@ EOF
 							fi
 
 							# Loop on all EFI partitions (more than one if soft raid 1)
-							for EFI_PART in $(xmlstarlet sel -t -m 'config/disk/part[@flags="esp"]' -v "concat('ancestor::disk/@dev,';',@num)" -n ${DISKS_LAYOUT_FILE})
+							for EFI_PART in $(xmlstarlet sel -t -m 'config/disk/part[@flags="esp"]' -v "concat(ancestor::disk/@dev,';',@num)" -n ${DISKS_LAYOUT_FILE})
 							do
 								EFI_DISK=${EFI_PART%%;*}
 								EFI_PART_NUM=${EFI_PART##*;}
