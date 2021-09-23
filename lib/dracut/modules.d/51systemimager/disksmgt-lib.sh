@@ -239,6 +239,42 @@ stop_software_raid_and_lvm() {
 
 #################################################################################
 #
+# Returns the distro ID from installed distro in /sysroot
+# (or nothing if os-release file is missing)
+#
+# USAGE: si_get_sysroot_distro_id
+#################################################################################
+si_get_sysroot_distro_id() {
+	if test -f /sysroot/etc/os-release
+	then
+		. /sysroot/etc/os-release
+		echo "$ID"
+	else
+		logwarn "No /etc/os-release in image; cant guess distro ID."
+	fi
+
+}
+
+#################################################################################
+#
+# Returns the EFI distro PATH in /sysroot installed distro
+# (or nothing if os-release file is missing)
+#
+# USAGE: si_get_sysroot_efi_distro_path
+#################################################################################
+si_get_sysroot_efi_distro_path() {
+	DISTRO_ID=$(si_get_sysroot_distro_id)
+	if test -n "$DISTRO_ID"
+	then
+		echo "/sysroot/boot/efi/EFI/$DISTRO_ID"
+	else
+		logwarn "Can't guess distro ESP path (no distro ID)!"
+		logwarn "system may not boot."
+	fi
+}
+
+#################################################################################
+#
 # Install bootloader according disk layout specifications
 # (Only supports grub2 and grub)
 #
@@ -370,7 +406,22 @@ EOF
 					# We should seach for partition with "esp" flag et find where it is mounted.
 					[ -z "`findmnt -o target,fstype --raw|grep -e '/boot/efi\svfat'`" ] && shellout "No EFI filesystem mounted (/sysroot/boot/efi not a vfat partition)."
 					[ ! -d /sysroot/boot/efi/EFI/BOOT ] && shellout "Missing /boot/efi/EFI/BOOT (EFI BOOT directory). Check/Update your image."
-					[ -r /tmp/EFI.conf ] && . /tmp/EFI.conf # read requested EFI configuration (boot manager, kernel name, ...)
+					[ -r /tmp/EFI.conf ] && . /tmp/EFI.conf # read requested EFI configuration (boot manager, kernel name, ...)-
+
+					# 1st, cleanup efi boot entries: Removing all entries pointing to a EFI path relative to distroid
+					[ -x /sysroot/usr/sbin/efibootmgr ] || shellout "efibootmgr missing in image! Update your imlage!"
+					DISTRO_ID=$(si_get_sysroot_distro_id)
+					if test -n "$DISTRO_ID"
+					then
+						for BOOT_ENTRY in $(efibootmgr -v |grep "EFI.$DISTRO_ID"|cut -d" " -f1)
+						do
+							loginfo "Removing entry ${BOOT_ENTRY//[!0-9]/} $DISTRO_ID"
+							chroot /sysroot /usr/sbin/efibootmgr -B -b $BOOT_ENTRY
+						done
+					else
+						logwarn "Can't guess distro ID, won't clean entries from EFI boot menu!"
+					fi
+
 					case "$BL_FLAVOR" in
 						"systemd")
 							[ -x /sysroot/usr/bin/bootctl ] || shellout "bootctl (systemd-boot) missing in image! Update your imlage!"
@@ -391,7 +442,6 @@ EOF
 							touch /tmp/bootloader.installed
 							;;
 						"grub2")
-							[ -x /sysroot/usr/sbin/efibootmgr ] || shellout "efibootmgr missing in image! Update your imlage!"
 							[ -d /sysroot/usr/lib/grub/$(uname -m)-efi ] || shellout "/usr/lib/grub/$(uname -m)-efi missing in image! Install grube2-efi-*-modules package"
 
 							# grub2-install doesn't support EFI starting from RHEL 8.3
@@ -399,13 +449,12 @@ EOF
 							# chroot /sysroot /sbin/grub2-install --force --target=$(uname -m)-efi || shellout "Failed to install grub2 EFI bootloader"
 
 							# Copy grub.cfg to /sysroot/boot/efi/$DISTRO_ID/grub.cfg
-							if test -f /sysroot/etc/os-release
+							EFI_PATH=$(si_get_sysroot_efi_distro_path)
+							if test -n "$EFI_PATH"
 							then
-								. /sysroot/etc/os-release
-								loginfo "Copying grub.cfg to EFI partition [/boot/efi/$ID/grub.cfg]"
-								cp /sysroot/boot/grub2/grub.cfg /sysroot/boot/efi/EFI/$ID/grub.cfg
+								loginfo "Copying grub.cfg to EFI partition [$EFI_PATH/grub.cfg]"
+								cp /sysroot/boot/grub2/grub.cfg ${EFI_PATH}/grub.cfg
 							else
-								logwarn "No /etc/os-release in image; cant guess distro ID."
 								logwarn "Can't guess distro ESP path for grub.cfg: no copied"
 								logwarn "system may not boot"
 							fi
