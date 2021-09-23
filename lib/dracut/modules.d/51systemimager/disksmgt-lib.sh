@@ -413,7 +413,7 @@ EOF
 					DISTRO_ID=$(si_get_sysroot_distro_id)
 					if test -n "$DISTRO_ID"
 					then
-						for BOOT_ENTRY in $(efibootmgr -v |grep "EFI.$DISTRO_ID"|cut -d" " -f1)
+						for BOOT_ENTRY in $(efibootmgr -v |grep "EFI.${DISTRO_ID}.shim.*efi"|cut -d" " -f1)
 						do
 							loginfo "Removing entry ${BOOT_ENTRY//[!0-9]/} $DISTRO_ID"
 							chroot /sysroot /usr/sbin/efibootmgr -B -b $BOOT_ENTRY
