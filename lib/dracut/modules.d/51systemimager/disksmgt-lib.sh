@@ -422,6 +422,7 @@ EOF
 
 					# 1st, cleanup efi boot entries: Removing all entries pointing to a EFI path relative to distroid
 					[ -x /sysroot/usr/sbin/efibootmgr ] || shellout "efibootmgr missing in image! Update your imlage!"
+					loginfo "Checking for possible existing [${IMAGENAME}] menu entries"
 					for BOOT_ENTRY in $(chroot /sysroot efibootmgr -v |grep "${IMAGENAME}.*EFI.${DISTRO_ID}.shim.*efi"|cut -d" " -f1)
 					do
 						loginfo "Removing entry ${BOOT_ENTRY//[!0-9]/} $IMAGENAME"
