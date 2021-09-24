@@ -94,6 +94,17 @@ sis_prepare_disks() {
 ################################################################################
 #
 sis_install_configs() {
+	# 0/ Configure /etc/machine-id (make sure we don't use machine-id from image)
+	test -f /sysroot/etc/machine-id && /bin/rm -f /sysroot/etc/machine-id
+	if test -x /usr/bin/systemd-firstboot -o -x /bin/systemd-firstboot
+	then
+		logaction "systemd-firstboot --root=. --setup-machine-id"
+		chroot /sysroot systemd-firstboot --root=. --setup-machine-id
+	else
+		logwarn "systemd-firstboot not present, trying to generate machine-id by hand"
+		od -vAn -N16 -tx8 </dev/urandom|sed 's/ //g' > /sysroot/etc/machine-id
+	fi
+
 	# 1/ Install fstab
 	loginfo "Installing /etc/fstab"
 	cp /tmp/fstab.image /sysroot/etc/fstab || shellout "Failed to copy /tmp/fstab.image as /sysroot/etc/fstab"
@@ -410,18 +421,13 @@ EOF
 
 					# 1st, cleanup efi boot entries: Removing all entries pointing to a EFI path relative to distroid
 					[ -x /sysroot/usr/sbin/efibootmgr ] || shellout "efibootmgr missing in image! Update your imlage!"
-					DISTRO_ID=$(si_get_sysroot_distro_id)
-					if test -n "$DISTRO_ID"
-					then
-						for BOOT_ENTRY in $(efibootmgr -v |grep "EFI.${DISTRO_ID}.shim.*efi"|cut -d" " -f1)
-						do
-							loginfo "Removing entry ${BOOT_ENTRY//[!0-9]/} $DISTRO_ID"
-							chroot /sysroot /usr/sbin/efibootmgr -B -b $BOOT_ENTRY
-						done
-					else
-						logwarn "Can't guess distro ID, won't clean entries from EFI boot menu!"
-					fi
+					for BOOT_ENTRY in $(efibootmgr -v |grep "EFI.${IMAGENAME}.shim.*efi"|cut -d" " -f1)
+					do
+						loginfo "Removing entry ${BOOT_ENTRY//[!0-9]/} $IMAGENAME"
+						chroot /sysroot /usr/sbin/efibootmgr -B -b $BOOT_ENTRY
+					done
 
+					DISTRO_ID=$"(si_get_sysroot_distro_id)"
 					case "$BL_FLAVOR" in
 						"systemd")
 							[ -x /sysroot/usr/bin/bootctl ] || shellout "bootctl (systemd-boot) missing in image! Update your imlage!"
@@ -464,8 +470,8 @@ EOF
 							do
 								EFI_DISK=${EFI_PART%%:*}
 								EFI_PART_NUM=${EFI_PART##*:}
-								logaction "/usr/sbin/efibootmgr -c -D -d $EFI_DISK -p $EFI_PART_NUM -L '"$IMAGENAME"' -l '\\\\EFI\\\\shimx64.efi'"
-								chroot /sysroot /usr/sbin/efibootmgr -c -D -d $EFI_DISK -p $EFI_PART_NUM -L "$IMAGENAME" -l '\EFI\shimx64.efi'
+								logaction "/usr/sbin/efibootmgr -c -D -d $EFI_DISK -p $EFI_PART_NUM -L '"$IMAGENAME"' -l '\\\\EFI\\\\${DISTRO_ID}\\\\shimx64.efi'"
+								chroot /sysroot /usr/sbin/efibootmgr -c -D -d $EFI_DISK -p $EFI_PART_NUM -L "$IMAGENAME" -l '\EFI\'${DISTRO_ID}'\shimx64.efi'
 								RET_CODE=$?
 								if test $RET_CODE -eq 0
 								then
