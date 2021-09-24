@@ -421,13 +421,13 @@ EOF
 
 					# 1st, cleanup efi boot entries: Removing all entries pointing to a EFI path relative to distroid
 					[ -x /sysroot/usr/sbin/efibootmgr ] || shellout "efibootmgr missing in image! Update your imlage!"
-					for BOOT_ENTRY in $(efibootmgr -v |grep "EFI.${IMAGENAME}.shim.*efi"|cut -d" " -f1)
+					for BOOT_ENTRY in $(chroot /sysroot efibootmgr -v |grep "EFI.${IMAGENAME}.shim.*efi"|cut -d" " -f1)
 					do
 						loginfo "Removing entry ${BOOT_ENTRY//[!0-9]/} $IMAGENAME"
-						chroot /sysroot /usr/sbin/efibootmgr -B -b $BOOT_ENTRY
+						chroot /sysroot efibootmgr -B -b $BOOT_ENTRY
 					done
 
-					DISTRO_ID=$"(si_get_sysroot_distro_id)"
+					DISTRO_ID=$"$(si_get_sysroot_distro_id)"
 					case "$BL_FLAVOR" in
 						"systemd")
 							[ -x /sysroot/usr/bin/bootctl ] || shellout "bootctl (systemd-boot) missing in image! Update your imlage!"
