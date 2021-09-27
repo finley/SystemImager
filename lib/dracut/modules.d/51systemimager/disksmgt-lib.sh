@@ -449,8 +449,8 @@ EOF
 					loginfo "Checking for possible existing [${IMAGENAME}] menu entries"
 					for BOOT_ENTRY in $(chroot /sysroot efibootmgr -v |grep "${IMAGENAME}.*EFI.${DISTRO_ID}.shim.*efi"|cut -d" " -f1)
 					do
-						loginfo "Removing entry ${BOOT_ENTRY//[!0-9]/} $IMAGENAME"
-						chroot /sysroot efibootmgr -B -b $BOOT_ENTRY
+						loginfo "Removing entry ${BOOT_ENTRY:4:4} $IMAGENAME"
+						chroot /sysroot efibootmgr -B -b ${BOOT_ENTRY:4:4}
 					done
 
 					case "$BL_FLAVOR" in
