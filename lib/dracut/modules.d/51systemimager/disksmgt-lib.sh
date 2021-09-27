@@ -307,8 +307,8 @@ si_install_bootloader() {
 			then
 				# regenerate initramfs
 				# create bootloader entry
-				loginfo "Reinstalling kernel /boot/$kernel"
-				chroot /sysroot /usr/bin/kernel-install add ${kernel#*-} /boot/$kernel
+				loginfo "Reinstalling kernel /boot/${kerne##*/}"
+				chroot /sysroot /usr/bin/kernel-install add ${kernel#*-} /boot/${kernel##*/}
 			fi
 		done
 	else
