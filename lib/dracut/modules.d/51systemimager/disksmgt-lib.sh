@@ -157,13 +157,6 @@ sis_install_configs() {
 	logaction "chroot /sysroot ln -sf /proc/self/mounts /etc/mtab"
 	chroot /sysroot ln -sf /proc/self/mounts /etc/mtab
 
-	# 5/ Regenerate initramfs for all deployed kernels
-	loginfo "Generating initramfs for all installed kernels"
-	for KERNEL in `ls /sysroot/boot|grep vmlinuz`
-	do
-		si_create_initramfs "${KERNEL#*-}"
-	done
-
 }
 
 ################################################################################
@@ -299,6 +292,37 @@ si_install_bootloader() {
 	local IFS=';'
 
 	BL_INSTALLED="no"
+
+	# Cleanup wrong bootloader entries that came from image.
+	loginfo "Cleaning up /boot/loader/entries"
+	test -d /sysroot/boot/loader/entries && /bin/rm -rf /sysroot/boot/loader/entries/*
+	test -d /sysroot/boot/efi/loader/entries && /bin/rm -rf /sysroot/boot/efi/loader/entries/*
+
+	# Make sure all available kernels are correctly installed and initrd is up to date
+	if test -x /sysroot/usr/bin/kernel-install
+	then
+		for kernel in /sysroot/boot/vmlinuz-{3..9}*
+		do
+			if test -f $kernel
+			then
+				# regenerate initramfs
+				# create bootloader entry
+				loginfo "Reinstalling kernel /boot/$kernel"
+				chroot /sysroot /usr/bin/kernel-install add ${kernel#*-} /boot/$kernel
+			fi
+		done
+	else
+		# Not a systemd system
+		for kernel in `ls /sysroot/boot|grep vmlinuz`
+		do
+			loginfo "Generating initramfs for kernel /boot/$kernel"
+			si_create_initramfs "${kernel#*-}"
+		done
+	fi
+
+	# At this point:
+	# - initramfs should be in sync with hardware (include external drivers, lvm, ...)
+	# - loader entries (on systemd based systems) should be correctly populated
 
 	xmlstarlet sel -t -m 'config/bootloader' -v "concat(@flavor,';',@install_type,';',@default_entry,';',@timeout)" -n ${DISKS_LAYOUT_FILE}  | sed '/^\s*$/d' |\
 		while read BL_FLAVOR BL_TYPE BL_DEFAULT BL_TIMEOUT;
@@ -438,8 +462,8 @@ EOF
 							# install is incomplete, we need to move entries, kernels and initrds into ESP.
 							if test $(find /sysroot/boot/efi/loader/entries/ -type f|wc -l) -eq 0
 							then
-								loginfo "systemd-boot entries not in EFI partition, moving them to correct location"
-								mv -f /sysroot/boot/loader/entries /sysroot/boot/efi/loader/entries
+								loginfo "systemd-boot entries not in EFI partition, copying them to correct location"
+								cp -r /sysroot/boot/loader/entries/* /sysroot/boot/efi/loader/entries/*
 							fi
 							logininfo "copying kernel and intrd to EFI system partition"
 							cp -v /sysroot/boot/{*linu*,*kernel*,*init*,config*,*.map*} /sysroot/boot/efi/
