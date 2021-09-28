@@ -83,7 +83,7 @@ then # NetworkManager was used to configure network
 	fi
 	BROADCAST="$(ip -j -o -4 addr show $DEVICE|jq -r '.[].addr_info[].broadcast')"
 	test -n "$BROADCAST" && loginfo "Got BROADCAST=$BROADCAST"
-	if test "$DEVICE" == $(ip -j -4 route show default|jq -r '.[].dev')
+	if test "$DEVICE" == "$(ip -j -4 route show default|jq -r '.[].dev')"
 	then
 		BOOTPROTO="$(ip -j -4 route show default|jq -r '.[].protocol')"
 		test -n "$BOOTPROTO" && loginfo "Got BOOTPROTO=$BOOTPROTO"
