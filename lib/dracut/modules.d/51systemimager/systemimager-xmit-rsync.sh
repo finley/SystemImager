@@ -90,14 +90,14 @@ function download_image() {
     [ $IMAGESIZE -lt $DEST_SPACE ] || logwarn "Not enought space on ${IMAGE_DEST} ($IMAGESIZE > $DEST_SPACE)"
 
     # Effectively download the image into ${IMAGE_DEST}
-    SYSFS_TO_EXCLUDE="--exclude=/proc/* --exclude=/sys/* --exclude=/dev/* --exclude=/run/* --exclude=/tmp/* --exclude=/var/lib/nfs/rpc_pipefs"
-    loginfo "rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ \\"
-    loginfo "      ${SYSFS_TO_EXCLUDE} --numeric-ids \\"
-    loginfo "      ${IMAGESERVER}::${IMAGENAME}/ ${IMAGE_DEST}/"
+    loginfo "Downloading image for ${IMAGE_DEST}"
+    logdetail "excluding the following directories or files:"
+    logdetail "$(cat /lib/systemimager/files-to-exclude-from-image.txt)"
+    logaction "rsync -aHS${VERBOSE_OPT} --exclude-from=/lib/systemimager/files-to-exclude-from-image.txt --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ ${IMAGE_DEST}/"
     if [ $NO_LISTING ]; then
-        rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ ${SYSFS_TO_EXCLUDE} --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ ${IMAGE_DEST}/ > /dev/null 2>&1 || shellout "Image download to [${IMAGE_DEST}] failed!"
+        rsync -aHS${VERBOSE_OPT} --exclude-from=/lib/systemimager/files-to-exclude-from-image.txt --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ ${IMAGE_DEST}/ > /dev/null 2>&1 || shellout "Image download to [${IMAGE_DEST}] failed!"
     else
-        rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ ${SYSFS_TO_EXCLUDE} --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ ${IMAGE_DEST}/ || shellout "Image download to [${IMAGE_DEST}] failed!"
+        rsync -aHS${VERBOSE_OPT} --exclude-from=/lib/systemimager/files-to-exclude-from-image.txt --numeric-ids ${IMAGESERVER}::${IMAGENAME}/ ${IMAGE_DEST}/ || shellout "Image download to [${IMAGE_DEST}] failed!"
     fi
     stop_report_task 101 # 101: status=finalizing...
 }
@@ -123,8 +123,8 @@ function extract_image() {
 	[ $IMAGESIZE -gt $DEST_SPACE ] || logwarn "Not enought space on /sysroot ($IMAGESIZE > $DEST_SPACE)"
 
 	# Continue anyway (we cannot know truly if we will fail. df / will ommit /usr if filesystems are different)
-	logaction "rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${STAGING_DIR}/ /sysroot/"
-	rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${STAGING_DIR}/ /sysroot/ > /dev/null 2>&1 || shellout "Move from staging dir to disk failed"
+	logaction "rsync -aHS${VERBOSE_OPT} --exclude-from=/lib/systemimager/files-to-exclude-from-image.txt --numeric-ids ${STAGING_DIR}/ /sysroot/"
+	rsync -aHS${VERBOSE_OPT} --exclude-from=/lib/systemimager/files-to-exclude-from-image.txt --numeric-ids ${STAGING_DIR}/ /sysroot/ > /dev/null 2>&1 || shellout "Move from staging dir to disk failed"
     fi
     # Nothing to do if rsync was not using staging dir.
 }

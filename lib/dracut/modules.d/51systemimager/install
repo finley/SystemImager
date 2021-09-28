@@ -113,6 +113,7 @@ EOF
     inst "$moddir/do_partitions.xsl" "/lib/systemimager/do_partitions.xsl" # Installs partition xml transformation filter
     inst "$moddir/disks-layout.xsd" "/lib/systemimager/disks-layout.xsd" # Installs disks layout validation schem.
     inst "$moddir/network-config.xsd" "/lib/systemimager/network-config.xsd" # Installs network configuration validation schem.
+    inst "$moddir/files-to-exclude-from-image.txt" "/lib/systemimager/files-to-exclude-from-image.txt" # Installs files to exclude from image list.
     inst_script "$moddir/systemimager-load-network-infos.sh" "/sbin/systemimager-load-network-infos"
     inst_script "$moddir/systemimager-load-scripts-ecosystem.sh" "/sbin/systemimager-load-scripts-ecosystem"
     inst_script "$moddir/systemimager-netstart-old.sh" "/sbin/systemimager-netstart"
