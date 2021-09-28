@@ -61,7 +61,7 @@ getarg 'si.break=network-infos' && logwarn "Break network-infos" && interactive_
 
 # 1st, checking if NetworkManager was used to setup Network
 if test -d /run/NetworkManager
-then # NetworkManager was used to configure network
+then # NetworkManager was used to configure network (we can use json output from /bin/ip as this is a recent distro)
 	logwarn "NetworkManager was used to setup network."
 	logwarn "DHCP options specific to systemimager are not supported."
 	IPADDR="$(ip -j -o -4 addr show $DEVICE|jq -r '.[].addr_info[].local')"
@@ -88,9 +88,12 @@ then # NetworkManager was used to configure network
 		BOOTPROTO="$(ip -j -4 route show default|jq -r '.[].protocol')"
 		test -n "$BOOTPROTO" && loginfo "Got BOOTPROTO=$BOOTPROTO"
 	fi
-	GATEWAY="$(ip -j -4 route show default|jq -r '.[].gateway')"
+
+	# Trying to get gateway IP for $DEVICE
+	GATEWAY="$(ip -j -4 route show default|jq -r '.[] | select(.dev=="'$DEVICE'") | .gateway')"
 	test -n "$GATEWAY" && loginfo "Got GATEWAY=$GATEWAY"
-	GATEWAYDEV="$(ip -j -4 route show default|jq -r '.[].dev')"
+	# If GATEWAY is known for default route filtering on $DEVICE, then GATEWAYDEV is $DEVICE
+	test -n "$GATEWAYDEV" && GATEWAYDEV=$DEVICE
 	test -n "$GATEWAYDEV" && loginfo "Got GATEWAYDEV=$GATEWAYDEV"
 fi
 
