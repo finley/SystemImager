@@ -96,7 +96,7 @@ sis_prepare_disks() {
 sis_install_configs() {
 	# 0/ Configure /etc/machine-id (make sure we don't use machine-id from image)
 	test -f /sysroot/etc/machine-id && /bin/rm -f /sysroot/etc/machine-id
-	if test -x /usr/bin/systemd-firstboot -o -x /bin/systemd-firstboot
+	if test -x /sysroot/usr/bin/systemd-firstboot -o -x /sysroot/bin/systemd-firstboot
 	then
 		logaction "systemd-firstboot --root=. --setup-machine-id"
 		chroot /sysroot systemd-firstboot --root=. --setup-machine-id
@@ -104,6 +104,7 @@ sis_install_configs() {
 		logwarn "systemd-firstboot not present, trying to generate machine-id by hand"
 		od -vAn -N16 -tx8 </dev/urandom|sed 's/ //g' > /sysroot/etc/machine-id
 	fi
+	logdetail "machine-id: $(cat /sysroot/etc/machine-id)"
 
 	# 1/ Install fstab
 	loginfo "Installing /etc/fstab"
@@ -555,7 +556,7 @@ EOF
 	if test -r /tmp/bootloader.installed
 	then
 		rm -f /tmp/bootloader.installed
-		logdebug "bootloader section treated."
+		logdebug "bootloader section processed successfully."
 	else
 		logwarn "No bootloader installed. (bootloader section missing in disk layout file?)"
 		logwarn "Assuming post-install scripts will do the job!"
