@@ -299,6 +299,11 @@ si_install_bootloader() {
 	test -d /sysroot/boot/loader/entries && /bin/rm -rf /sysroot/boot/loader/entries/*
 	test -d /sysroot/boot/efi/loader/entries && /bin/rm -rf /sysroot/boot/efi/loader/entries/*
 
+	# Make sure wrong cmdline parameters comming from image are removed from grub defaults
+	# Add crash kernel and resume options.
+	SWAP_DEV="$(grep swap /sysroot/etc/fstab|grep -o '^\S*')"
+	sed -i -e 's/GRUB_CMDLINE_LINUX=.*$/GRUB_CMDLINE_LINUX="crashkernel=auto resume=$SWAP_DEV rhgb quiet"/g' /sysroot/etc/default/grub
+
 	# Make sure all available kernels are correctly installed and initrd is up to date
 	if test -x /sysroot/usr/bin/kernel-install
 	then
@@ -730,8 +735,10 @@ EOF
 			# Set partition filesystem
 			if test -n "$P_FS"
 			then
+				# BUG: should error if partition is part of an LVM
 				_set_partition_flag_and_id "$LABEL_TYPE" "$DISK_DEV" "$P_NUM" "$P_FS"
 			else
+				# BUG: should not warn if partition is part of an LVM
 				logwarn "$P_DEV has no filesystem defined in disk-layout"
 				logwarn "Update ${DISKS_LAYOUT_FILE##*/} in /var/lib/systemimager/scripts/disks-layouts/"
 				logwarn "by adding appropriate fsinfo section on your image server."
