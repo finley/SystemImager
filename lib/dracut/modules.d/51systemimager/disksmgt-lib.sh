@@ -735,14 +735,24 @@ EOF
 			# Set partition filesystem
 			if test -n "$P_FS"
 			then
-				# BUG: should error if partition is part of an LVM
-				_set_partition_flag_and_id "$LABEL_TYPE" "$DISK_DEV" "$P_NUM" "$P_FS"
+				if test -n "$P_LVM_GROUP"
+				then
+					logerror "Partitioin has a file system while it is already part of a LVM!"
+				elif test -n "$P_RAID_DEV"
+				then
+					logerror "Partitioin has a file system while it is already part of a raid volume!"
+				else
+					_set_partition_flag_and_id "$LABEL_TYPE" "$DISK_DEV" "$P_NUM" "$P_FS"
+				fi
 			else
-				# BUG: should not warn if partition is part of an LVM
-				logwarn "$P_DEV has no filesystem defined in disk-layout"
-				logwarn "Update ${DISKS_LAYOUT_FILE##*/} in /var/lib/systemimager/scripts/disks-layouts/"
-				logwarn "by adding appropriate fsinfo section on your image server."
-				logwarn "See systemimager.disks-layout(7) manual for more informations."
+				if test -z "$P_LVM_GROUP$P_LVM_GROUP" # No FS, no LVM, no RAID => probem: something is missing about this partition.
+				then
+					logwarn "$P_DEV has no filesystem defined or is not part of a logical volume or raid volume"
+					logwarn "in disk-layout."
+					logwarn "Update ${DISKS_LAYOUT_FILE##*/} in /var/lib/systemimager/scripts/disks-layouts/"
+					logwarn "by adding appropriate fsinfo or lvm or raid section on your image server."
+					logwarn "See systemimager.disks-layout(7) manual for more informations."
+				fi
 			fi
 
 			# Set partition ID if provided
