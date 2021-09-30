@@ -302,7 +302,7 @@ si_install_bootloader() {
 	# Make sure wrong cmdline parameters comming from image are removed from grub defaults
 	# Add crash kernel and resume options.
 	SWAP_DEV="$(grep swap /sysroot/etc/fstab|grep -o '^\S*')"
-	sed -i -e 's/GRUB_CMDLINE_LINUX=.*$/GRUB_CMDLINE_LINUX="crashkernel=auto resume=$SWAP_DEV rhgb quiet"/g' /sysroot/etc/default/grub
+	sed -i -e 's/GRUB_CMDLINE_LINUX=.*$/GRUB_CMDLINE_LINUX="crashkernel=auto resume='${SWAP_DEV}' rhgb quiet"/g' /sysroot/etc/default/grub
 
 	# Make sure all available kernels are correctly installed and initrd is up to date
 	if test -x /sysroot/usr/bin/kernel-install
