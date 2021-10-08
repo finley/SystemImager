@@ -1,0 +1,44 @@
+{
+    "PXE": {
+    	"tftp_dir": [ "path", "/var/lib/tftpboot", "The tftp root directory" ],
+    	"boot_files": [ "path", "/usr/share/systemimager/boot", "Where to find imager.img and its kernel file" ],
+    	"boot_mode": [ "select", [ "net", "local", "net" ], "PXE boot mode is a setting that affects systemimager-server-netbootmond. If set to LOCAL, then after successful completion of an install, a client's net boot configuration is modified to ensure future boots will happen from the client's local disk. NET_BOOT_DEFAULT can be set to local or net. Be sure to restart systemimager-server-netbootmond after changing this setting (/etc/init.d/systemimager-server-netbootmond restart)." ]
+    },
+    "Monitor": {
+    	"clients_db_dir": [ "path", "/var/lib/systemimager/clients", "Where to save imaged clients informations and installation logs." ],
+    	"log_file": [ "file", "/var/log/systemimager/si_monitord.log", "Monitor logfile absolute path. Defaults to /var/log/systemimager/si_monitord.log" ],
+    	"port": [ "port", "8181", "Monitor port. Defaults to 8181" ],
+    	"log_level": [ "select", [ "1", "1", "2", "3", "4", "5" ] , "Monitor loglevel. Range from 0 (no log) to 5 (full debug: extremely verbose). Defaults to 1" ]
+    },
+    "Imager": {
+        "images_dir": [ "path", "/var/lib/systemimager/images", "Place where images are stored." ],
+        "overrides_dir": [ "path", "/var/lib/systemimager/overrides", "Place where override files are stored. They are copied to client filesystem overwriting existing files." ],
+        "scripts_dir": [ "path", "/var/lib/systemimager/scripts", "Place holding imaging scripts and various client configurations:<ul> <li>pre-install/ all optional pre-install scripts</li> <li>main-install/ The optional main install script</li> <li>post-install/ all optional post-install scripts</li> <li>configs/ clients configuration files</li> <li>disks-layouts/ clients disks layout files</li> <li>network-configs/ clients optional network configuration files</li> <li>cluster.txt The cluster/client groups definition file (see si_clusterconfig)</li></ul>" ],
+        "getimage_excludes": [ "file", "/etc/systemimager/getimage.exclude", "List of paths and files to ignore when retreiving an image from a golden client" ]
+    },
+    "xmit_rsync": {
+    	"config_file": [ "file", "/etc/systemimager/rsyncd.conf", "SystemImager's own rsyncd.conf file" ],
+    	"stubs_dir": [ "path", "/etc/systemimager/rsync_stubs", "The path to the directory where SystemImager rsync stub files are stored" ],
+        "log_file": [ "file", "/var/log/systemimager/rsyncd", "The log file specific to SystemImager rsync daemon" ]
+    },
+    "xmit_torrent": {
+        "config_file": [ "file", "/etc/systemimager/bittorrent.conf", "Bittorrent main configuration file" ],
+    	"tarballs_dir": [ "path", "/var/lib/systemimager/tarballs", "All images saved as tarball" ],
+    	"torrents_dir": [ "path", "/var/lib/systemimager/torrents", "Place for .torrent files" ]
+    },
+    "xmit_flamethrower": {
+	"config_file": [ "file", "/etc/systemimager/flamethrower.conf", "SystemImager's own flamethrower.conf file" ],
+    	"directory_port_base": [ "port", "9000", "SystemImager's flamethrower port base. Defaults is 9000" ],
+    	"net_iface": [ "text", "eth0", "SystemImager's flamethrower network interface name. Defaults to eth0" ]
+    },
+    "xmit_ssh": { },
+    "xmit_nfs": { },
+    "xmit_docker": { },
+    "xmit_bootstrap": {
+        "packages_list": [ "file", "/var/lib/systemimager/bootstraped", "List of packages to install." ]
+    },
+    "Web_GUI": {
+        "auth_type": [ "select", [ "none", "htaccess", "ldap" ], "WebGUI access control." ],
+	"theme": [ "select", [ "dark", "OS", "light", "dark" ], "Graphical theme:<ul><li>OS: Chose light/dark theme according to OS settings</li><li>Light: A light theme</li><li>Dark: A dark theme (default)</li></ul>" ]
+    }
+}

@@ -1,25 +1,16 @@
 #
 #   $Id:$
 #
+#   Copyright (C) 1999-2015 Brian Elliott Finley
+#   Copyright (C) 2012-2019 Olivier Lahaye
 
 Package Maintainers:
 
-The standard SystemImager build process pulls source from our download
-server. If you don't want it to do this when you do your builds, you
-have two options:
+The standard SystemImager build process doesn't depend of external sources anymore.
 
-    1) Do a "make get_source" ahead of time, and copy the contents of
-       ./src/* and ./initrd_source/src/* to either /usr/src or 
-       $HOME/src, and the build system will get the packages from 
-       there instead of downloading them at build time.
 
-    2) Do a "make complete_source_tarball".  This will download all the
-       necessary source, and will create a single source tarball
-       that you can use for your build process.  
+    Do a "make source_tarball".  This will create a single source tarball
+    that you can use for your build process. This tarball is ready for packaging 
        
-       NOTE:  This tarball will be quite large, as it will contain 
-              source for the kernel version defined for each 
-              architecture.  At some point we hope to use the same
-              kernel version for all architectures, but for now, many 
-              architectures are using different versions.
-
+    e.g.: to build the rpm, do:
+          rpmbuild -tb systemimager-<version>.tar.bz2

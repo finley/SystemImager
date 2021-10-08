@@ -2,7 +2,7 @@ Source: systemimager
 Section: admin
 Priority: optional
 Maintainer: dann frazier <dannf@debian.org>
-Build-Depends: bc, bzip2, cramfsprogs (>= 1.1-4), debhelper (>= 4.0.0), flex, gettext, groff-base, libdevmapper-dev, libpopt-dev, libtool, libreadline-dev, libssl-dev, module-init-tools, python-dev, rsync, texinfo, uuid-dev, wget, zlib1g-dev, tofrodos | sysutils (<= 2.0.0-1), ncurses-dev, dos2unix, binutils-dev, quilt, libpam-dev, pkg-config, libglib2.0-dev, gperf
+Build-Depends: bc, dos2unix, rsync, dracut, dracut-network, plymouth, plymouth-themes, xfsprogs, xmlstarlet, parted, ipcalc, rtorrent, nmap, kexec-tools, lvm2, net-tools, bind9-host, uuid-runtime, bootchart2, btrfs-tools, cifs-utils, keyutils, bc, openssh-server, openssh-client, systemconfigurator, linux-image-amd64
 Build-Conflicts: libc-pic
 Build-Depends-Indep: docbook-to-man, docbook-utils
 Standards-Version: 3.7.2
@@ -22,7 +22,7 @@ Description: Automate GNU/Linux installs and upgrades over a network
 
 Package: systemimager-client
 Architecture: all
-Depends: ${perl:Depends}, file, rsync, netcat, systemimager-initrd-template-alpha | systemimager-initrd-template-i386 | systemimager-initrd-template-ia64 | systemimager-initrd-template-parisc | systemimager-initrd-template-ppc64-iSeries | systemimager-initrd-template-ppc64-ps3 | systemimager-initrd-template-ppc64 | systemimager-initrd-template-ppc64ydl | systemimager-initrd-template-ppc | systemimager-initrd-template-amd64, systemimager-common (= ${source:Version}), systemconfigurator (>= 2.2.11)
+Depends: ${perl:Depends}, file, rsync, netcat, systemimager-initrd-template, systemimager-common (= ${source:Version}), systemconfigurator (>= 2.2.11)
 Description: Utilities for creating an image and upgrading client machines
  SystemImager is a set of utilities for installing GNU/Linux software images to
  clients machines over the network.  Images are stored in flat files on the
@@ -42,6 +42,31 @@ Description: Utilities and libraries common to both the server and client
  updates efficient.
  .
  This package contains files common to both the systemimager client and server.
+
+Package: systemimager-initrd-template
+Architecture: all
+Recommends: systemimager-server | systemimager-client
+Conflicts: systemimager-bin-${misc:Package-Arch}, systemimager-kernel-${misc:Package-Arch}, systemimager-initrd-${misc:Package-Arch}, systemimager-boot-standard-${misc:Package-Arch}, systemimager-ssh-${misc:Package-Arch}, systemimager-server (<< 3.8.0), systemimager-client (<< 3.8.0)
+Description: SystemImager initrd template files
+ SystemImager is a set of utilities for installing GNU/Linux software images to
+ client machines over the network.  Images are stored in flat
+ files on the server, making updates easy.  The rsync protocol is used for
+ transfers, making updates efficient.
+ .
+ This package contains the root of the initrd to create a custom initrd.img
+ based on the UYOK (UseYourOwnKernel) feature of SystemImager.
+ This package should be installed on the golden client.
+
+Package: dracut-systemimager
+Architecture: all
+Depends: systemimager-initrd-template, systemimager-common, dracut, dracut-network, multipath-tools, plymouth, plymouth-themes, xfsprogs, xmlstarlet, parted, ipcalc, rtorrent, nmap, kexec-tools, lvm2, net-tools, bind9-host, uuid-runtime, bootchart2, btrfs-tools, cifs-utils, keyutils, bc, openssh-server, openssh-client
+Description: dracut modules to build a dracut initramfs with systemimager support
+ SystemImager is a set of utilities for installing GNU/Linux software images to
+ client machines over the network.  Images are stored in flat
+ files on the server, making updates easy.  The rsync protocol is used for
+ transfers, making updates efficient.
+ .
+ This package provides a dracut modules that automates the systeimager initramfs creation.
 
 Package: systemimager-doc
 Section: doc

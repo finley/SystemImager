@@ -27,8 +27,8 @@
       <command>si_getimage</command>
 
     <arg rep=repeat><option>OPTION</option></arg>
-    <arg choice=req><option>-golden-client</option> <replaceable>HOSTNAME</replaceable></arg> 
-    <arg choice=req><option>-image <replaceable>IMAGENAME</replaceable></option></arg>
+    <arg choice=req><option>--golden-client</option> <replaceable>HOSTNAME</replaceable></arg> 
+    <arg choice=req><option>--image <replaceable>IMAGENAME</replaceable></option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
   <refsect1>
@@ -38,9 +38,7 @@
       <command>si_getimage</command> command.</para>
 
     <para>
-      <command>si_getimage</command> is a program that pulls an image
-      to the image server.  The source for this image can be either a
-      golden client or an image stored on another image server
+      <command>si_getimage</command> is a program that pulls an image to the image server.  The source for this image can be either a golden client or an image stored on another image server
     </para>
 
   </refsect1>
@@ -51,135 +49,110 @@
 
     <variablelist>
       <varlistentry>
-        <term><option>-help</option></term>
+        <term><option>--help</option></term>
         <listitem>
           <para>Show summary of options</para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-version</option></term>
+        <term><option>--version</option></term>
         <listitem>
           <para>Display version and copyright information</para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-golden-client <replaceable>HOSTNAME</replaceable></option></term>
+        <term><option>--golden-client <replaceable>HOSTNAME</replaceable></option></term>
         <listitem>
           <para>Hostname or IP address of the "golden" client</para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-image <replaceable>IMAGENAME</replaceable></option></term>
+        <term><option>--image <replaceable>IMAGENAME</replaceable></option></term>
         <listitem>
           <para>
-	    Where IMAGENAME is the name to assign to the image you are
-	    retrieving.  This can be either the name of a new image if you want
-	    to create a new image, or the name of an existing image if you want
-	    to update an image.  If you are using the <option>-server</option>
-	    option, the same imagename is used for both the source and
-	    destination.
+	    Where IMAGENAME is the name to assign to the image you are retrieving.  This can be either the name of a new image if you want to create a new image, or the name of an existing image if you want to update an image.  If you are using the <option>-server</option> option, the same imagename is used for both the source and destination.
 	  </para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-overrides <replaceable>LIST</replaceable></option></term>
+        <term><option>--overrides <replaceable>LIST</replaceable></option></term>
         <listitem>
           <para>
-	    Where LIST is the comma separated list of the
-	    overrides that will be transferred to the clients
-	    that use the autoinstall script.
+	    Where LIST is the comma separated list of the overrides that will be transferred to the clients that use the autoinstall script.
 	  </para>
         </listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-ssh-user <replaceable>USERNAME</replaceable></option></term>
+	<term><option>--ssh-user <replaceable>USERNAME</replaceable></option></term>
 	<listitem>
 	  <para>
-	    Username for ssh connection to the client.  Only needed if a secure
-	    connection is required.
+	    Username for ssh connection to the client.  Only needed if a secure connection is required.
 	  </para>
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-log <replaceable>STRING</replaceable></option></term>
+	<term><option>--log <replaceable>STRING</replaceable></option></term>
 	<listitem>
 	  <para>
-	    Quoted string for log file format.  See the
-	    <filename>rsyncd.conf</filename>(5) man page for options.
+	    Quoted string for log file format.  See the <filename>rsyncd.conf</filename>(5) man page for options.
 	  </para>
 	</listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-quiet</option></term>
+        <term><option>--quiet</option></term>
         <listitem>
           <para>
-	    Don't ask any questions or print any output (other than errors).
-	    In this mode, no warning will be given if the image already exists
-	    on the server.
+	    Don't ask any questions or print any output (other than errors).  In this mode, no warning will be given if the image already exists on the server.
 	  </para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-directory <replaceable>PATH</replaceable></option></term>
+        <term><option>--directory <replaceable>PATH</replaceable></option></term>
         <listitem>
           <para>
-	    The full path and directory name where you want this image to be
-	    stored.  The directory bearing the image name itself will be placed
-	    inside the directory specified here.
+	    The full path and directory name where you want this image to be stored.  The directory bearing the image name itself will be placed inside the directory specified here.
 	  </para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-exclude <replaceable>PATH</replaceable></option></term>
+        <term><option>--exclude <replaceable>PATH</replaceable></option></term>
         <listitem>
 	  <para>
-	    Don't pull the contents of <replaceable>PATH</replaceable> from
-	    the golden client.  <replaceable>PATH</replaceable> must be
-	    absolute (starting with a "/").
+	    Don't pull the contents of <replaceable>PATH</replaceable> from the golden client.  <replaceable>PATH</replaceable> must be absolute (starting with a "/").
 	  </para>
 	  <para>To exclude a single file use:</para>
 	  <para>
-	    -exclude <replaceable>/DIRECTORYNAME/FILENAME</replaceable>
+	    --exclude <replaceable>/DIRECTORYNAME/FILENAME</replaceable>
 	  </para>
 	  <para>To exclude a directory and it's contents use:</para>
-	  <para>-exclude <replaceable>/DIRECTORYNAME/</replaceable></para>
+	  <para>--exclude <replaceable>/DIRECTORYNAME/</replaceable></para>
 	  <para>
-	    To exclude the contents of a directory, but pull the directory
-	    itself use:
+	    To exclude the contents of a directory, but pull the directory itself use:
 	  </para>
-	  <para>-exclude "<replaceable>/DIRECTORYNAME/*</replaceable>"</para>
+	  <para>--exclude "<replaceable>/DIRECTORYNAME/*</replaceable>"</para>
 	</listitem>
       </varlistentry>
     <varlistentry>
-      <term><option>-exclude-file <replaceable>FILE</replaceable></option></term>
+      <term><option>--exclude-file <replaceable>FILE</replaceable></option></term>
       <listitem>
 	<para>
-	  Don't pull the <replaceable>PATH</replaceable>s specified in
-	  <replaceable>FILE</replaceable> from the golden client.  See the
-	  rsync(1) for details on creating this file.
+	  Don't pull the <replaceable>PATH</replaceable>s specified in <replaceable>FILE</replaceable> from the golden client.  See the rsync(1) for details on creating this file.
 	</para>
       </listitem>
     </varlistentry>
       <varlistentry>
-        <term><option>-update-script <replaceable>YES|NO</replaceable></option></term>
+        <term><option>--update-script <replaceable>YES|NO</replaceable></option></term>
 	<listitem>
 	  <para>
-	    Update the $image.master script? Defaults to NO if -quiet.  If
-	    not specified you will be prompted to confirm an update.
+	    Update the $image.master script? Defaults to NO if -quiet. If not specified you will be prompted to confirm an update.
 	  </para>
 	</listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-listing</option></term>
+        <term><option>--listing</option></term>
         <listitem>
           <para>
-          Show each filename as it is copied over during
-          install.  This is useful to increase the verbosity
-          of the installation when you need more informations
-          for debugging.  Do not use this option if your
-          console device is too slow (e.g. serial console),
-          otherwise it could be the bottleneck of your
-          installation.
+          Show each filename as it is copied over during install.  This is useful to increase the verbosity of the installation when you need more informations for debugging.  Do not use this option if your console device is too slow (e.g. serial console), otherwise it could be the bottleneck of your installation.
 	  </para>
         </listitem>
       </varlistentry>
@@ -189,44 +162,29 @@
     </para>
     <variablelist>
       <varlistentry>
-        <term><option>-ip-assignment <replaceable>METHOD</replaceable></option></term>
+        <term><option>--ip-assignment <replaceable>METHOD</replaceable></option></term>
         <listitem>
           <para>
 	    Where METHOD can be:
 	    <itemizedlist>
 	      <listitem>
 		<para>
-		  static_dhcp -- A DHCP server will assign the same static
-		  address each time to clients installed with this image.  The
-		  DHCP server in this case also assigns the corresponding host
-		  name.  It is possible therefore, when using static dhcp, to
-		  change a machine's hostname and IP address by simply changing
-		  one value in the dhcpd.conf file.  Some may find this
-		  desirable.  Also see the <command>si_mkdhcpstatic</command>
-		  command.
+		  static_dhcp -- A DHCP server will assign the same static address each time to clients installed with this image.  The DHCP server in this case also assigns the corresponding host name.  It is possible therefore, when using static dhcp, to change a machine's hostname and IP address by simply changing one value in the dhcpd.conf file.  Some may find this desirable.  Also see the <command>si_mkdhcpstatic</command> command.
 		</para>
 	      </listitem>
 	      <listitem>
 		<para>
-		  dynamic_dhcp -- A DHCP server will assign IP addresses
-		  dynamically to clients installed with this image.  In dynamic
-		  dhcp, the IP address of a machine may change, but you want it
-		  to retain the same host name.  Therefore the hostname is set
-		  by the machine itself.  They may be assigned a different
-		  address each time.
+		  dynamic_dhcp -- A DHCP server will assign IP addresses dynamically to clients installed with this image.  In dynamic dhcp, the IP address of a machine may change, but you want it to retain the same host name.  Therefore the hostname is set by the machine itself.  They may be assigned a different address each time.
 		</para>
 	      </listitem>
 	      <listitem>
 		<para>
-		  static -- The IP address the client uses during autoinstall
-		  will be permanently assigned to that client.
+		  static -- The IP address the client uses during autoinstall will be permanently assigned to that client.
 		</para>
 	      </listitem>
 	      <listitem>
 		<para>
-		  replicant -- Don't mess with the network settings in this
-		  image.  I'm using it as a backup and quick restore mechanism
-		  for a single machine.
+		  replicant -- Don't mess with the network settings in this image.  I'm using it as a backup and quick restore mechanism for a single machine.
 		</para>
 		</listitem>
 	    </itemizedlist>
@@ -234,43 +192,52 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-post-install <replaceable>ACTION</replaceable></option></term>
+        <term><option>--post-install <replaceable>ACTION</replaceable></option></term>
         <listitem>
           <para>ACTION can be:</para>
 	  <itemizedlist>
 	    <listitem>
 	      <para>
-		beep -- Clients will beep incessantly after successful
-		completion of an autoinstall.
+		cmdline or none -- post imaging action won't be set in script. si.post-action in cmdline will determine this. This parameter defaults to reboot. More information: <filename>systemimager.cmdline</filename>(7)
 	      </para>
 	    </listitem>
 	    <listitem>
 	      <para>
-		reboot -- Clients will reboot themselves after successful
-		completion of an autoinstall.
+		beep -- Clients will beep incessantly after successful completion of an autoinstall.
 	      </para>
 	    </listitem>
 	    <listitem>
 	      <para>
-		shutdown -- Clients will halt themselves after successful
-		completion of an autoinstall.
+		directboot -- Clients will continue to boot without going thru a reboot after successful completion of an autoinstall.
 	      </para>
 	    </listitem>
 	    <listitem>
 	      <para>
-		kexec -- Clients will boot the kernels via kexec that were
-		just installed after successful completion of an autoinstall.
+		shell -- Clients will drop a shell command after successful completion of an autoinstall. Sysadmin can use si_inspectclient to navigate into imaged client.
+	      </para>
+	    <listitem>
+	      <para>
+		reboot -- Clients will reboot themselves after successful completion of an autoinstall.
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		shutdown or poweroff -- Clients will halt themselves after successful completion of an autoinstall. (if poweroff is used, the power will be shut if possible)
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		kexec -- Clients will boot the kernels via kexec that were just installed after successful completion of an autoinstall.
 	      </para>
 	    </listitem>
 	  </itemizedlist>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><option>-autodetect-disks</option></term>
+        <term><option>--autodetect-disks</option></term>
         <listitem>
           <para>
-            Try to detect available disks on the client instead
-            of using devices from autoinstallscript.conf.
+            Try to detect available disks on the client instead of using devices from autoinstallscript.conf.
           </para>
         </listitem>
       </varlistentry>
@@ -293,8 +260,7 @@
   <refsect1>
     <title>AUTHOR</title>
 
-    <para>This manual page was compiled by &dhusername; <&dhemail;> for
-      the &debian; system (but may be used by others).</para>
+    <para>This manual page was compiled by &dhusername; <&dhemail;> for the &debian; system (but may be used by others).</para>
 
     <!-- <para>Permission is granted to copy, distribute and/or modify
       this document under the terms of the <acronym>GNU</acronym> Free

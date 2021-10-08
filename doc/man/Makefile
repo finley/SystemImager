@@ -3,6 +3,7 @@
 #
 #  Copyright (C) 2002 Hewlett-Packard Company <dannf@fc.hp.com>
 #  Copyright (C) 2002 Bald Guy Software <brian.finley@baldguysoftware.com>
+#  Copyright (C) 2019 Olivier Lahaye <olivier.lahaye@cea.fr>
 #
 #    $Id$
 #
@@ -26,15 +27,17 @@ SERVER_MAN = si_addclients.8 				\
 			si_mvimage.8					\
 			si_rmimage.8					\
 			si_mkbootserver.8				\
+			si_lint.8			\
 			systemimager.conf.5			\
+			systemimager.cmdline.7			\
+			systemimager.disks-layout.7	\
+			systemimager.network-config.7	\
 			systemimager-rsyncd.conf.5	\
 			si_mkrsyncd_conf.8				\
 			si_mkclientnetboot.8				\
 			si_mkbootpackage.8		\
 			\
 			si_installbtimage.8		\
-			si_monitor.8			\
-			si_monitortk.8			\
 			si_pcp.8			\
 			si_psh.8			\
 			si_pushinstall.8		\
@@ -46,9 +49,9 @@ SERVER_MAN = si_addclients.8 				\
 
 CLIENT_MAN = si_prepareclient.8 si_updateclient.8
 
-COMMON_MAN = autoinstallscript.conf.5 si_lsimage.8
+COMMON_MAN = autoinstallscript.conf.7 si_lsimage.8
 
-.SUFFIXES: .5 .8 .8.gz .5.gz .pod .sgml
+.SUFFIXES: .5 .7 .8 .8.gz .5.gz .pod .sgml
 
 all:	compress
 
@@ -62,12 +65,6 @@ systemimager-rsyncd.conf.5:	systemimager-rsyncd.conf.pod
 	pod2man --release=$(SYSTEMIMAGER_VERSION) -s 5 -c "SystemImager" $< $@
 
 si_installbtimage.8: $(TOPDIR)/sbin/si_installbtimage
-	pod2man --release=$(SYSTEMIMAGER_VERSION) -s 8 -c "SystemImager" $< $@
-
-si_monitor.8: $(TOPDIR)/sbin/si_monitor
-	pod2man --release=$(SYSTEMIMAGER_VERSION) -s 8 -c "SystemImager" $< $@
-
-si_monitortk.8: $(TOPDIR)/sbin/si_monitortk
 	pod2man --release=$(SYSTEMIMAGER_VERSION) -s 8 -c "SystemImager" $< $@
 
 si_pcp.8: $(TOPDIR)/sbin/si_pcp
@@ -94,7 +91,7 @@ si_clusterconfig.8: $(TOPDIR)/sbin/si_clusterconfig
 si_pushupdate.8: $(TOPDIR)/sbin/si_pushupdate
 	pod2man --release=$(SYSTEMIMAGER_VERSION) -s 8 -c "SystemImager" $< $@
 
-%.5 %.8:	%.sgml %.content.sgml
+%.5 %.7 %.8:	%.sgml %.content.sgml
 	docbook2man $<
 	mv $(shell echo $@ | tr '[:lower:]' '[:upper:]') $@
 
@@ -123,4 +120,4 @@ install_client_man:	$(foreach file, $(CLIENT_MAN), $(file).gz)
 	    sed 's/.*\(.\)$$/\1/'`/$(manpage).gz ;)
 
 clean:
-	rm -f *~ \#*\# *.8 *.5 *.gz manpage.links manpage.refs
+	rm -f *~ \#*\# *.8 *.7 *.5 *.gz manpage.links manpage.refs

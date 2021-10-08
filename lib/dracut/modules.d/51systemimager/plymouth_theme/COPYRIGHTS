@@ -1,0 +1,110 @@
+This directoy is the plymouth them used by SystemImager initramfs
+to simulate a GUI and see a nice looking console.
+
+SystemImager is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+SystemImager is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with SystemImager. If not, see <https://www.gnu.org/licenses/>.
+
+Copyright (C) 2017-2019 Olivier LAHAYE <olivier.lahaye1@free.fr>
+
+Other Contributions (images, code snipset, ...)
+
+1/ ======= Pixel Art =======
+- icon_bootloader.png
+  Artist: Umut Pulat
+  License: GNU Lesser General Public License
+  Downloaded from: http://www.iconarchive.com/show/tulliana-2-icons-by-umut-pulat/k-menu-edit-icon.html
+
+- icon_format.png
+  Artists: Oxygen Team & Everaldo / Yellowicon
+  License: GNU Lesser General Public License
+  Merged by: Olivier LAHAYE
+  Downloaded from: http://www.iconarchive.com/show/oxygen-icons-by-oxygen-icons.org/Devices-drive-harddisk-icon.html
+  Downloaded from: http://www.iconarchive.com/show/crystal-clear-icons-by-everaldo/App-service-manager-icon.html
+
+- icon_init.png
+  Artist: Oxygen Team
+  License: GNU Lesser General Public License
+  Downloaded from: http://www.iconarchive.com/show/oxygen-icons-by-oxygen-icons.org/Actions-system-run-icon.html
+
+- icon_partition.png:
+  Artist: Oxygen Team
+  License: GNU Lesser General Public License
+  Downloaded from: http://www.iconarchive.com/show/oxygen-icons-by-oxygen-icons.org/Apps-partitionmanager-icon.html
+
+- icon_postinstall.png & icon_preinstall.png
+  Artist: Oxygen Team
+  License: GNU Lesser General Public License
+  Modification: Addeed Pre and Post text
+  Downloaded from: http://www.iconarchive.com/show/oxygen-icons-by-oxygen-icons.org/Mimetypes-text-x-script-icon.html
+
+- icon_writeimage.png
+  Artists: Oxygen Team & Everaldo / Yellowicon
+  License: GNU Lesser General Public License
+  Merged by: Olivier LAHAYE
+  Downloaded from: http://www.iconarchive.com/show/oxygen-icons-by-oxygen-icons.org/Devices-drive-harddisk-icon.html
+  Downloaded from: http://www.iconarchive.com/show/nuoveXT-icons-by-saki/Actions-arrow-down-bottom-icon.html
+
+- action.png:
+  Artist: Everaldo / Yellowicon
+  License: GNU Lesser General Public License
+  Downloaded from: http://www.iconarchive.com/show/crystal-clear-icons-by-everaldo/App-shutdown-icon.html
+
+- yes.png:
+  Artist: Everaldo / Yellowicon
+  License: GNU Lesser General Public License
+  Downloaded from: http://www.iconarchive.com/show/crystal-clear-icons-by-everaldo/App-clean-icon.html
+
+- no.png:
+  Artist: Everaldo / Yellowicon
+  License: GNU Lesser General Public License
+  Downloaded from: http://www.iconarchive.com/show/crystal-clear-icons-by-everaldo/Action-cancel-icon.html
+
+- lock.png:
+  Artist: Everaldo / Yellowicon
+  License: GNU Lesser General Public License
+  Downloaded from: http://www.iconarchive.com/show/crystal-clear-icons-by-everaldo/Action-encrypted-icon.html
+
+- SystemImagerBanner.png
+  Artist: Brian Eliott Finley
+  Licence: ?
+  Downloaded from: https://github.com/finley/SystemImager/wiki
+
+- dialog_bgnd.png:
+  Artist: Olivier LAHAYE
+  License: CC Attribution 4.0
+
+- box.png:
+  Artist: Olivier LAHAYE
+  License: CC Attribution 4.0
+
+- progress_gauge.png:
+  Artist: Olivier LAHAYE
+  License: CC Attribution 4.0
+
+- hide_box.png:
+  Artist: Olivier LAHAYE
+  License: CC Attribution 4.0
+
+- Backgroud.png
+  Artist: ????
+  License: ???
+  Downloaded from: https://newevolutiondesigns.com/75-super-hd-texture-wallpapers
+  Source: https://newevolutiondesigns.com/images/freebies/texture-wallpaper-58.jpg
+
+2/ ======= Code Snipset =======
+- fun StringLength(string):
+  Source: https://joekuan.wordpress.com/2010/08/05/plymouth-create-your-own-splash-screen-with-scrolling-boot-messages/
+
+- fun scroll_message_callback(text)
+  Mostly inspired from https://joekuan.wordpress.com/2010/08/05/plymouth-create-your-own-splash-screen-with-scrolling-boot-messages/
+

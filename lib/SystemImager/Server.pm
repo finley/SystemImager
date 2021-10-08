@@ -1,19 +1,36 @@
 #
-#   "SystemImager" 
+#    vi:set filetype=perl et ts=4:
 #
-#   Copyright (C) 1999-2014 Brian Elliott Finley
+#    This file is part of SystemImager.
+#
+#    SystemImager is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    SystemImager is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with SystemImager. If not, see <https://www.gnu.org/licenses/>.
+#
+#    Copyright (C) 1999-2015 Brian Elliott Finley
 #
 #
 
 package SystemImager::Server;
 
-#use lib "USR_PREFIX/lib/systemimager/perl";
 use Carp;
+use v5.10; # given/when (use feature "switch")
+# Avoid smartmatch warnings when using given
+no if $] >= 5.017011, warnings => 'experimental::smartmatch';
 use strict;
 use File::Copy;
 use File::Path;
 use XML::Simple;
-use SystemImager::Config qw($config);
+use SystemImager::JConfig qw($jconfig);
 use vars qw($VERSION @mount_points %device_by_mount_point %filesystem_type_by_mount_point $disk_no %dev2disk $bootdev $rootdev);
 
 $VERSION="SYSTEMIMAGER_VERSION_STRING";
@@ -31,7 +48,6 @@ $VERSION="SYSTEMIMAGER_VERSION_STRING";
 #   _read_partition_info_and_prepare_pvcreate_commands -AR-
 #   _write_lvm_groups_commands -AR-
 #   _write_lvm_volumes_commands -AR-
-#   _write_boel_devstyle_entry
 #   _write_elilo_conf
 #   _write_out_mkfs_commands 
 #   _write_out_new_fstab_file 
@@ -64,7 +80,6 @@ sub copy_boot_files_from_image_to_shared_dir {
     shift;
     my $image                   = shift;
     my $image_dir               = shift;
-    my $rsync_stub_dir          = shift;
     my $autoinstall_boot_dir    = shift;
 
     my $kernel = $image_dir . "/etc/systemimager/boot/kernel";
@@ -201,8 +216,15 @@ sub _imageexists {
 sub validate_post_install_option {
   my $post_install=$_[1];
 
-  unless(($post_install eq "beep") or ($post_install eq "reboot") or ($post_install eq "shutdown") or ($post_install eq "kexec")) { 
-    die qq(\nERROR: -post-install must be beep, reboot, shutdown, or kexec.\n\n       Try "-help" for more options.\n);
+  unless(($post_install eq "beep")
+	or ($post_install eq "none")
+	or ($post_install eq "cmdline")
+	or ($post_install eq "directboot")
+	or ($post_install eq "reboot")
+       	or ($post_install eq "shutdown")
+       	or ($post_install eq "shell")
+       	or ($post_install eq "kexec")) { 
+    die qq(\nERROR: -post-install must be none, cmdline, directboot, reboot, kexec, shutdown, beep or shell.\n\n       Try "--help" for more options.\n);
   }
   return 0;
 }
@@ -386,41 +408,15 @@ sub _read_partition_info_and_prepare_parted_commands {
         print $out "if [ -z \$DISKORDER ] ; then\n";
         print $out "  $dev2disk{$devfs_dev}=$devfs_dev\n";
         print $out "elif [ -z \$$dev2disk{$devfs_dev} ] ; then\n";
-        print $out qq(  echo "Undefined: $dev2disk{$devfs_dev}"\n);
-        print $out "  shellout\n";
+        print $out qq(  shellout "Undefined: $dev2disk{$devfs_dev}"\n);
         print $out "fi\n";
         $devfs_dev = '$'.$dev2disk{$devfs_dev};
 
-        print $out "### BEGIN partition $devfs_dev ###\n";
-        print $out qq(logmsg "Partitioning $devfs_dev..."\n);
-        print $out qq(logmsg "Old partition table for $devfs_dev:"\n);
-        print $out "LC_ALL=C parted -s -- $devfs_dev print\n\n";
-
-        print $out "# Wipe the MBR (Master Boot Record) clean.\n";
-        $cmd = "dd if=/dev/zero of=$devfs_dev bs=512 count=1 || shellout";
-        print $out qq(logmsg "$cmd"\n);
-        print $out "$cmd\n\n";
-
-        print $out "# Re-read the disk label.\n";
-        $cmd = "blockdev --rereadpt $devfs_dev";
-        print $out qq(logmsg "$cmd"\n);
-        print $out "$cmd\n\n";
-
         print $out "# Create disk label.  This ensures that all remnants of the old label, whatever\n";
         print $out "# type it was, are removed and that we're starting with a clean label.\n";
-        $cmd = "parted -s -- $devfs_dev mklabel $label_type || shellout";
-        print $out qq(logmsg "$cmd"\n);
-        print $out "LC_ALL=C $cmd\n\n";
-
-        print $out "# Get the size of the destination disk so that we can make the partitions fit properly.\n";
-        print $out q(DISK_SIZE=`LC_ALL=C parted -s ) . $devfs_dev . q( unit MB print | egrep ") . $devfs_dev . q(" | awk '{print $NF}' | sed 's/MB//' `) . qq(\n);
-        print $out q([ -z $DISK_SIZE ] && shellout) . qq(\n);
-
-        print $out q(if [ "$ARCH" = "alpha" ]; then) . qq(\n);	
-        print $out q(    END_OF_LAST_PRIMARY=1) . qq(\n);
-        print $out q(else) . qq(\n);
-        print $out q(    END_OF_LAST_PRIMARY=1 # 1: room for grub2) . qq(\n);
-        print $out q(fi) . qq(\n\n);
+        $cmd = "wipe_out_partition_table $devfs_dev $label_type";
+        print $out qq(logaction "$cmd"\n);
+        print $out qq($cmd\n);
 
         ### BEGIN Populate the simple hashes. -BEF- ###
         my (
@@ -674,7 +670,7 @@ sub _read_partition_info_and_prepare_parted_commands {
             $part =~ /^(.*?)(p?\d+)$/;
             $part = "\${".$dev2disk{$1}."}".$2;
             $cmd = "Creating partition $part.";
-            print $out qq(logmsg "$cmd"\n);
+            print $out qq(loginfo "$cmd"\n);
             
             print $out qq(START_MB=$startMB{$m}\n);
             print $out qq(END_MB=$endMB{$m}\n);
@@ -688,7 +684,7 @@ sub _read_partition_info_and_prepare_parted_commands {
 
             if($p_type{$m} eq "extended") {
 
-                $cmd = qq(parted -s -- $devfs_dev mkpart $p_type{$m} $swap) . q($START_MB $END_MB) . qq( || shellout);
+                $cmd = qq(parted -s -- $devfs_dev mkpart $p_type{$m} $swap) . q($START_MB $END_MB);
 
             } else {
 
@@ -697,11 +693,12 @@ sub _read_partition_info_and_prepare_parted_commands {
                 # specify a filesystem type, even though it does nothing with it 
                 # with the "mkpart" command. -BEF-
                 #
-                $cmd = qq(parted -s -- $devfs_dev mkpart $p_type{$m} $swap) . q($START_MB $END_MB) . qq( || shellout);
+                $cmd = qq(parted -s -- $devfs_dev mkpart $p_type{$m} $swap) . q($START_MB $END_MB);
 
             }
-            print $out qq(logmsg "$cmd"\n);
-            print $out "$cmd\n";
+            print $out qq(logaction "$cmd"\n);
+            print $out qq($cmd || shellout "parted failed!"\n);
+            print $out "# Avoid disk driver being buzy later\nsleep 0.5s\n\n";
             
             # Leave info behind for the next partition. -BEF-
             if ("$p_type{$m}" eq "primary") {
@@ -742,9 +739,10 @@ sub _read_partition_info_and_prepare_parted_commands {
                   and ($p_name{$m} ne "-")
               ) {  # We're kinda assuming no one names their partitions "-". -BEF-
             
-              $cmd = "parted -s -- $devfs_dev name $m $p_name{$m} || shellout\n";
-              print $out qq(logmsg "$cmd");
-              print $out "$cmd";
+              $cmd = "parted -s -- $devfs_dev name $m $p_name{$m}";
+              print $out qq(logaction "$cmd"\n);
+              print $out qq($cmd || shellout "parted failed!"\n);
+              print $out "# Avoid disk driver being buzy later\nsleep 0.5s\n\n";
             }
             
             ### Deal with flags for each partition. -BEF-
@@ -758,9 +756,10 @@ sub _read_partition_info_and_prepare_parted_commands {
                     if (($flag eq "lba") and ($label_type eq "gpt")) { next; }
                     # Ignore custom flag 'swap'. -AR-
                     if ($flag eq "swap") { next; }
-                    $cmd = "parted -s -- $devfs_dev set $m $flag on || shellout\n";
-                    print $out qq(logmsg "$cmd");
-                    print $out "$cmd";
+                    $cmd = "parted -s -- $devfs_dev set $m $flag on";
+                    print $out qq(logaction "$cmd"\n);
+                    print $out qq($cmd || shellout "parted failed!"\n);
+                    print $out "# Avoid disk driver being buzy later\nsleep 0.5s\n\n";
                 }
             }
         }
@@ -768,18 +767,19 @@ sub _read_partition_info_and_prepare_parted_commands {
         # Kick the minors out.  (remove temporary partitions) -BEF-
         foreach $m (keys %minors_to_remove) {
           print $out "\n# Gotta lose this one (${dev}${m}) to make the disk look right.\n";
-          $cmd = "parted -s -- $devfs_dev rm $m  || shellout";
-          print $out qq(logmsg "$cmd"\n);
-          print $out "$cmd\n";
+          $cmd = "parted -s -- $devfs_dev rm $m";
+          print $out qq(logaction "$cmd"\n);
+          print $out qq($cmd || shellout "parted failed!"\n);
+          print $out "# Avoid disk driver being buzy later\nsleep 0.5s\n\n";
         }
 
         print $out "\n";
-        print $out qq(logmsg "New partition table for $devfs_dev:"\n);
+        print $out qq(logdetail "New partition table for $devfs_dev:"\n);
         $cmd = "parted -s -- $devfs_dev print";
-        print $out qq(logmsg "$cmd"\n);
-        print $out "$cmd\n";
+        print $out qq(logdetail "$cmd"\n);
+        print $out qq($cmd || shellout "Failed to read partition table!"\n);
+        print $out "# Avoid disk driver being buzy later\nsleep 0.5s\n\n";
         print $out "### END partition $devfs_dev ###\n";
-        print $out "\n";
         print $out "\n";
     }
 }
@@ -793,7 +793,7 @@ sub _read_partition_info_and_prepare_soft_raid_devs {
     my ($out, $image_dir, $file) = @_;
 
     # Load RAID modules.
-    print $out qq(logmsg "Load software RAID modules."\n);
+    print $out qq(loginfo "Load software RAID modules."\n);
     print $out qq(modprobe linear\n);
     print $out qq(modprobe raid0\n);
     print $out qq(modprobe raid1\n);
@@ -861,7 +861,7 @@ sub _read_partition_info_and_prepare_soft_raid_devs {
         }
         $cmd   .= qq(  $devices\n);
 
-        print $out "\nlogmsg \"$cmd\"";
+        print $out "\nlogaction \"$cmd\"";
         print $out "\n$cmd\n";
     }
     #XXX Do we want to 
@@ -953,11 +953,11 @@ sub _read_partition_info_and_prepare_pvcreate_commands {
                             foreach my $lvm_group_name (@{$lvm->{lvm_group}}) {
                                 if ($lvm_group_name->{name} eq $vg_name) {
                                     $cmd = "Initializing partition $part for use by LVM.";
-                                    print $out qq(logmsg "$cmd"\n);
+                                    print $out qq(loginfo "$cmd"\n);
 
-                                    $cmd = "pvcreate -M${version} -ff -y $part || shellout";
-                                    print $out qq(logmsg "$cmd"\n);
-                                    print $out "$cmd\n";
+                                    $cmd = "pvcreate -M${version} -ff -y $part";
+                                    print $out qq(logaction "$cmd"\n);
+                                    print $out qq($cmd || shellout "pvcreate failed!"\n);
                                     goto part_done;
                                 }
                             }
@@ -986,9 +986,9 @@ part_done:
             }
             foreach my $lvm_group_name (@{$lvm->{lvm_group}}) {
                 if ($lvm_group_name->{name} eq $vg_name) {
-                    $cmd = "pvcreate -M${version} -ff -y $md || shellout";
-                    print $out qq(logmsg "$cmd"\n);
-                    print $out "$cmd\n";
+                    $cmd = "pvcreate -M${version} -ff -y $md";
+                    print $out qq(logaction "$cmd"\n);
+                    print $out qq($cmd || shellout "pvcreate falied!"\n);
                 }
             }
         }
@@ -1085,12 +1085,12 @@ sub write_lvm_groups_commands {
                 }
                 # Remove previous volume groups with $group_name if already present.
                 $cmd = "lvremove -f /dev/${group_name} >/dev/null 2>&1 && vgremove $group_name >/dev/null 2>&1";
-                print $out qq(logmsg "$cmd"\n);
+                print $out qq(logaction "$cmd"\n);
                 print $out "$cmd\n";
                 # Write the command to create the volume group -AR-
-                $cmd = "vgcreate -M${version} ${vg_max_log_vols}${vg_max_phys_vols}${vg_phys_extent_size}${group_name}${part_list} || shellout";
-                print $out qq(logmsg "$cmd"\n);
-                print $out "$cmd\n";
+                $cmd = "vgcreate -M${version} ${vg_max_log_vols}${vg_max_phys_vols}${vg_phys_extent_size}${group_name}${part_list}";
+                print $out qq(logaction "$cmd"\n);
+                print $out qq($cmd || shellout "vgcreate failed!"\n);
             } else {
                 print "WARNING: LVM group \"$group_name\" doesn't have partitions!\n";
             }
@@ -1140,14 +1140,14 @@ sub write_lvm_volumes_commands {
             }
 
             # Create the logical volume -AR-
-            $cmd = "lvcreate $lv_options $lv_size -n $lv_name $group_name || shellout";
-            print $out qq(logmsg "$cmd"\n);
-            print $out "$cmd\n";
+            $cmd = "lvcreate $lv_options $lv_size -n $lv_name $group_name";
+            print $out qq(logaction "$cmd"\n);
+            print $out qq($cmd || shellout "lvcreate failed!"\n);
             
             # Enable the logical volume -AR-
-            $cmd = "lvscan > /dev/null; lvchange -a y /dev/$group_name/$lv_name || shellout";
-            print $out qq(logmsg "$cmd"\n);
-            print $out "$cmd\n";
+            $cmd = "lvscan > /dev/null; lvchange -a y /dev/$group_name/$lv_name";
+            print $out qq(logaction "$cmd"\n);
+            print $out qq($cmd || shellout "lvchange failed!"\n);
         }
     }
 }
@@ -1272,6 +1272,8 @@ sub _write_out_mkfs_commands {
     # The $part_type here is used to find and create all the swap partitions
     # before the other filesystems. This reduces the probability to have a OOM
     # condition during the filesystem creation.
+    # part_type == 0 => We only treat swap partitions
+    # part_type == 1 => we treat all non swap partitions
     foreach my $part_type (0, 1) {
         foreach my $line (sort numerically (keys (%{$xml_config->{fsinfo}}))) {
 
@@ -1290,6 +1292,9 @@ sub _write_out_mkfs_commands {
             my $mount_dev = $xml_config->{fsinfo}->{$line}->{mount_dev};
 
             my $real_dev = $devfs_map{$xml_config->{fsinfo}->{$line}->{real_dev}};
+            # If mount_dev is undefined, the use real_dev
+            $mount_dev = $real_dev if (! defined($mount_dev));
+
             my $mp = $xml_config->{fsinfo}->{$line}->{mp};
             my $fs = $xml_config->{fsinfo}->{$line}->{fs};
             my $options = $xml_config->{fsinfo}->{$line}->{options};
@@ -1323,20 +1328,18 @@ sub _write_out_mkfs_commands {
                     $cmd = "mkswap -v1 $real_dev";
 
                     # add swap label if necessary
-                    if ($mount_dev) {
-                        if( $mount_dev =~ /^LABEL=(.*)/ ){
-                            $cmd .= " -L $1";
-                        }
+                    if( $mount_dev =~ /^LABEL=(.*)/ ){
+                        $cmd .= " -L $1";
                     }
-                    $cmd .= " || shellout";
 
-                    print $out qq(logmsg "$cmd"\n);
-                    print $out "$cmd\n";
+                    print $out qq(logaction "$cmd"\n);
+                    print $out qq($cmd || shellout "mkswap failed!"\n);
 
                     # swapon
-                    $cmd = "swapon $real_dev || shellout";
-                    print $out qq(logmsg "$cmd"\n);
-                    print $out "$cmd\n";
+                    $cmd = "swapon $real_dev";
+                    print $out qq(loginfo "Enabling swap space."\n);
+                    print $out qq(logaction "$cmd"\n);
+                    print $out qq($cmd || shellout "swapon failed!"\n);
 
                     print $out "\n";
                 }
@@ -1345,199 +1348,84 @@ sub _write_out_mkfs_commands {
 
             # OK, now that swap partitions commands have been written to the
             # autoinstall script, proceed with the other filesystems.
-
-            # msdos or vfat
-            if (($xml_config->{fsinfo}->{$line}->{fs} eq "vfat") or
-                    ($xml_config->{fsinfo}->{$line}->{fs} eq "msdos")) {
-
-                # create fs
-                $cmd = "mkdosfs $mkfs_opts -v $real_dev || shellout";
-                print $out qq(logmsg "$cmd"\n);
-                print $out "$cmd\n";
-
-                # mkdir
-                $cmd = "mkdir -p /a$mp || shellout";
-                print $out qq(logmsg "$cmd"\n);
-                print $out "$cmd\n";
-
-                # mount
-                $cmd = "mount $real_dev /a$mp -t $fs -o $options || shellout";
-                print $out qq(logmsg "$cmd"\n);
-                print $out "$cmd\n";
-
-                print $out "\n";
-
-            # ext2,ext3,ext4
-            } elsif (
-                       ( $xml_config->{fsinfo}->{$line}->{fs} eq "ext2" ) 
-                    or ( $xml_config->{fsinfo}->{$line}->{fs} eq "ext3" )
-                    or ( $xml_config->{fsinfo}->{$line}->{fs} eq "ext4" )
-                    ) {
-                # create fs
-                $cmd = "mke2fs -q -t $xml_config->{fsinfo}->{$line}->{fs} $real_dev || shellout";
-                print $out qq(logmsg "$cmd"\n);
-                print $out "$cmd\n";
-
-                if ($mount_dev) {
-                    # add LABEL if necessary
-                    if ($mount_dev =~ /LABEL=/) {
-                        my $label = $mount_dev;
-                        $label =~ s/LABEL=//;
-
-                        $cmd = "tune2fs -L $label $real_dev";
-                        print $out qq(logmsg "$cmd"\n);
-                        print $out "$cmd\n";
-                    }
-
-                    # add UUID if necessary
-                    if ($mount_dev =~ /UUID=/) {
-                        my $uuid = $mount_dev;
-                        $uuid =~ s/UUID=//;
-
-                        $cmd = "tune2fs -U $uuid $real_dev";
-                        print $out qq(logmsg "$cmd"\n);
-                        print $out "$cmd\n";
-                    }
+## BEGIN NEW CODE
+            my $label_switch = "";
+            my $set_UUID_cmd = "";
+            given ($fs) {
+                when ( /^xfs$/ ) {
+                    $label_switch = "-L";
+                    $set_UUID_cmd = "xfs_admin -U ";
+                    $mkfs_opts .= " -q -f";
+                }
+                when ( /^(?:ext2|ext3|ext4)$/ ) {
+                    $label_switch = "-L";
+                    $set_UUID_cmd = "tune2fs -U ";
+                    $mkfs_opts .= " -q";
+                }
+                when ( /^btrfs$/ ) {
+                    $label_switch = "-L";
+                    $set_UUID_cmd = "btrfstune -U ";
+                    $mkfs_opts .= " -q -f";
+                }
+                when ( /^jfs$/ ) {
+                    $label_switch = "-L";
+                    $set_UUID_cmd = "jfs_tune -U ";
+                    $mkfs_opts .= " -q";
+                }
+                 when ( /^reiserfs$/ ) {
+                    $label_switch = "-l";
+                    $set_UUID_cmd = "reiserfstune -u ";
+                    $mkfs_opts .= " -q";
+                }
+                when ( /^(?:vfat|msdos|fat|ntfs)$/ ) {
+                    $label_switch = "-n";
+                    $set_UUID_cmd = "";
+                }
+                default {
+                    # Skipp NFS, SWAP, auto, unknown filesystems.
+                    next;
                 }
 
-                # mkdir
-                $cmd = "mkdir -p /a$mp || shellout";
-                print $out qq(logmsg "$cmd"\n);
-                print $out "$cmd\n";
-
-                # mount
-                $cmd = "mount $real_dev /a$mp -t $fs -o $options || shellout";
-                print $out qq(logmsg "$cmd"\n);
-                print $out "$cmd\n";
-
-                print $out "\n";
-
-            # reiserfs
-            } elsif ( $xml_config->{fsinfo}->{$line}->{fs} eq "reiserfs" ) {
-
-                # create fs
-                $cmd = "mkreiserfs -q $real_dev || shellout";
-                print $out qq(logmsg "$cmd"\n);
-                print $out "$cmd\n";
-
-                if ($mount_dev) {
-                    # add LABEL if necessary
-                    if ($mount_dev =~ /LABEL=/) {
-                        my $label = $mount_dev;
-                        $label =~ s/LABEL=//;
-
-                        $cmd = "reiserfstune -l $label $real_dev";
-                        print $out qq(logmsg "$cmd"\n);
-                        print $out "$cmd\n";
-                    }
-
-                    # add UUID if necessary
-                    if ($mount_dev =~ /UUID=/) {
-                        my $uuid = $mount_dev;
-                        $uuid =~ s/UUID=//;
-
-                        $cmd = "reiserfstune -u $uuid $real_dev";
-                        print $out qq(logmsg "$cmd"\n);
-                        print $out "$cmd\n";
-                    }
-                }
-
-                # mkdir
-                $cmd = "mkdir -p /a$mp || shellout";
-                print $out qq(logmsg "$cmd"\n);
-                print $out "$cmd\n";
-
-                # mount
-                $cmd = "mount $real_dev /a$mp -t $fs -o $options || shellout";
-                print $out qq(logmsg "$cmd"\n);
-                print $out "$cmd\n";
-
-                print $out "\n";
-
-            # jfs
-            } elsif ( $xml_config->{fsinfo}->{$line}->{fs} eq "jfs" ) {
-
-                # create fs
-                $cmd = "jfs_mkfs -q $real_dev || shellout";
-                print $out qq(logmsg "$cmd"\n);
-                print $out "$cmd\n";
-
-                if ($mount_dev) {
-                    # add LABEL if necessary
-                    if ($mount_dev =~ /LABEL=/) {
-                        my $label = $mount_dev;
-                        $label =~ s/LABEL=//;
-
-                        $cmd = "jfs_tune -L $label $real_dev";
-                        print $out qq(logmsg "$cmd"\n);
-                        print $out "$cmd\n";
-                    }
-
-                    # add UUID if necessary
-                    if ($mount_dev =~ /UUID=/) {
-                        my $uuid = $mount_dev;
-                        $uuid =~ s/UUID=//;
-
-                        $cmd = "jfs_tune -U $uuid $real_dev";
-                        print $out qq(logmsg "$cmd"\n);
-                        print $out "$cmd\n";
-                    }
-                }
-
-                # mkdir
-                $cmd = "mkdir -p /a$mp || shellout";
-                print $out qq(logmsg "$cmd"\n);
-                print $out "$cmd\n";
-
-                # mount
-                $cmd = "mount $real_dev /a$mp -t $fs -o $options || shellout";
-                print $out qq(logmsg "$cmd"\n);
-                print $out "$cmd\n";
-
-                print $out "\n";
-	    
-            # xfs
-            } elsif ( $xml_config->{fsinfo}->{$line}->{fs} eq "xfs" ) {
-
-                # create fs
-                $cmd = "mkfs.xfs -f -q $real_dev || shellout";
-                print $out qq(logmsg "$cmd"\n);
-                print $out "$cmd\n";
-
-                if ($mount_dev) {
-                    # add LABEL if necessary
-                    if ($mount_dev =~ /LABEL=/) {
-                        my $label = $mount_dev;
-                        $label =~ s/LABEL=//;
-
-                        $cmd = "xfs_db -x -p xfs_admin -c 'label $label' $real_dev";
-                        print $out qq(logmsg "$cmd"\n);
-                        print $out "$cmd\n";
-                    }
-
-                    # add UUID if necessary
-                    if ($mount_dev =~ /UUID=/) {
-                        my $uuid = $mount_dev;
-                        $uuid =~ s/UUID=//;
-
-                        $cmd = "xfs_db -x -p xfs_admin -c 'uuid $uuid' $real_dev";
-                        print $out qq(logmsg "$cmd"\n);
-                        print $out "$cmd\n";
-                    }
-                }
-
-                # mkdir
-                $cmd = "mkdir -p /a$mp || shellout";
-                print $out qq(logmsg "$cmd"\n);
-                print $out "$cmd\n";
-
-                # mount
-                $cmd = "mount $real_dev /a$mp -t $fs -o $options || shellout";
-                print $out qq(logmsg "$cmd"\n);
-                print $out "$cmd\n";
-
-                print $out "\n";
             }
+            my $label_option = "";
+            if ($mount_dev =~ /LABEL=/) {
+                my $label = $mount_dev;
+                $label =~ s/LABEL=//;
+                $label_option = "$label_switch $label";
+            }
+
+            $cmd = "mkfs." . $xml_config->{fsinfo}->{$line}->{fs} . " $mkfs_opts $label_option $real_dev";
+            # Now write out code in script
+
+            # 1/ mkfs command (with label)
+            print $out qq(logaction "$cmd"\n);
+            print $out qq($cmd || shellout "$cmd"\n);
+
+            # 2/ set UUID if needed
+            if ($mount_dev =~ /UUID=/) {
+                my $uuid = $mount_dev;
+                $uuid =~ s/UUID=//;
+                $set_UUID_cmd .= " $uuid $real_dev";
+                print $out qq(logaction "$set_UUID_cmd"\n);
+                print $out qq($set_UUID_cmd || shellout "$cmd"\n);
+            }
+
+            # 3/ create mountpoint
+            $cmd = "mkdir -p /sysroot$mp";
+            print $out qq(logaction "$cmd"\n);
+            print $out qq($cmd || shellout "mkdir failed!"\n);
+
+            # 4/ create inird:/etc/fstab entry
+            print $out qq(loginfo "Adding $mp to /etc/fstab"\n);
+            my $fstab_options = $options;
+            $fstab_options =~ s/^\s+|\s+$//g; # trim
+            $fstab_options =~ s/\s+/,/g;
+            print $out qq(echo "$mount_dev\t/sysroot$mp\t$fs\t$fstab_options\t0 0" >> /etc/fstab\n);
+
+            # 5/ Mount filesystem
+            print $out qq(loginfo "Mounting $mount_dev to /sysroot$mp"\n);
+            print $out qq(mount /sysroot$mp\n); # Mount using local fstab
+            print $out qq(\n);
         }
     }
 }
@@ -1592,7 +1480,7 @@ sub _write_out_new_fstab_file {
 
     my $xml_config = XMLin($file, keyattr => { fsinfo => "+line" }, forcearray => 1 );
 
-    print $out qq(cat <<'EOF' > /a/etc/fstab\n);
+    print $out qq(cat <<'EOF' > /sysroot/etc/fstab\n);
 
     foreach my $line (sort numerically (keys ( %{$xml_config->{fsinfo}} ))) {
         my $comment   = $xml_config->{fsinfo}->{$line}->{comment};
@@ -1706,11 +1594,12 @@ sub _write_out_umount_commands {
                       ($fs eq "ext2") 
                    or ($fs eq "ext3") 
                    or ($fs eq "ext4") 
+                   or ($fs eq "xfs")
+                   or ($fs eq "jfs")
+                   or ($fs eq "btrfs")
                    or ($fs eq "reiserfs")
                    or ($fs eq "msdos")
                    or ($fs eq "vfat")
-                   or ($fs eq "jfs")
-                   or ($fs eq "xfs")
                    or ($fs eq "proc")
                    or ($fs eq "sysfs")
             ) { next; }
@@ -1727,19 +1616,19 @@ sub _write_out_umount_commands {
     # Add this so that /proc gets umounted -- even if there is no proc entry in
     # the <fsinfo> section of the autoinstallscript.conf file.
     #
-    $fs_by_mp{'/proc'} = "proc";
-    $fs_by_mp{'/sys'} = "sysfs";
+    #$fs_by_mp{'/proc'} = "proc";
+    #$fs_by_mp{'/sys'} = "sysfs";
 
     #
     # If client uses devfs or udev, then unmount the bound /dev filesystem.
     #
-    $xml_config = XMLin($file, keyattr => { boel => "+devstyle"} );
-    if( defined($xml_config->{boel}->{devstyle}) 
-        && (    ("$xml_config->{boel}->{devstyle}" eq "udev" )
-             or ("$xml_config->{boel}->{devstyle}" eq "devfs") )
-      ) {
-        $fs_by_mp{'/dev'} = "/dev";
-    }
+    #$xml_config = XMLin($file, keyattr => { boel => "+devstyle"} );
+    #if( defined($xml_config->{boel}->{devstyle}) 
+    #    && (    ("$xml_config->{boel}->{devstyle}" eq "udev" )
+    #         or ("$xml_config->{boel}->{devstyle}" eq "devfs") )
+    #  ) {
+    #    $fs_by_mp{'/dev'} = "/dev";
+    #}
 
     #
     # Cycle through the mount points in reverse and umount those filesystems.
@@ -1750,10 +1639,10 @@ sub _write_out_umount_commands {
         my $fs = $fs_by_mp{$mp};
 
         # umount
-        my $cmd = "umount /a$mp || mount -no remount,ro /a/$mp || shellout";
+        my $cmd = "umount /sysroot$mp || mount -no remount,ro /sysroot/$mp";
         print $out qq(if [ ! \$kernel = "2.4" ]; then\n) if ($mp eq "/sys");
-        print $out qq(logmsg "$cmd"\n);
-        print $out "$cmd\n";
+        print $out qq(loginfo "$cmd"\n);
+        print $out qq($cmd || shellout "umount failed!"\n);
         print $out "fi\n" if ($mp eq "/sys");
         print $out "\n";
     }
@@ -1768,19 +1657,19 @@ sub show_disk_edits{
 sub edit_disk_names{
     my ($out) = shift;
     foreach (reverse sort keys %dev2disk) {
-        print $out qq(    sed -i s:$_:\$$dev2disk{$_}:g /a/\$file\n);
+        print $out qq(    sed -i s:$_:\$$dev2disk{$_}:g /sysroot/\$file\n);
     }
 }
 
 # Prep the client for kexec
 sub setup_kexec {
     my ($out) = shift;
-    print $out "cmd=`chroot /a scconf-bootinfo`\n";
+    print $out "cmd=`chroot /sysroot scconf-bootinfo`\n";
     print $out "kexec_kernel=`echo \$cmd | cut -d' ' -f1`\n";
     print $out "kexec_initrd=`echo \$cmd | cut -d' ' -f3`\n";
     print $out "kexec_append=`echo \$cmd | cut -d' ' -f4-`\n";
-    print $out "cp /a/\$kexec_kernel /tmp\n";
-    print $out "cp /a/\$kexec_initrd /tmp\n";
+    print $out "cp /sysroot/\$kexec_kernel /tmp\n";
+    print $out "cp /sysroot/\$kexec_initrd /tmp\n";
     print $out "kexec_kernel=`basename \$kexec_kernel`\n";
     print $out "kexec_initrd=`basename \$kexec_initrd`\n";
 }
@@ -1790,7 +1679,7 @@ sub setup_kexec {
 #    my ( $out, $ip_assignment_method ) = @_;
 #
 #    # Fix device names in systemconfigurator config.
-#    my $sc_conf_file = '/a/etc/systemconfig/systemconfig.conf';
+#    my $sc_conf_file = '/sysroot/etc/systemconfig/systemconfig.conf';
 #    print $out "\n# Fix device names in boot-loader configuration.\n";
 #    print $out "if [ -e $sc_conf_file ]; then\n";
 #    unless ($bootdev) {
@@ -1823,7 +1712,7 @@ sub setup_kexec {
 #    print $out "[ -z \$DEVICE ] && DEVICE=eth0\n";
 #
 #    my $sc_excludes_to = "/etc/systemimager/systemconfig.local.exclude";
-#    my $sc_cmd = "chroot /a/ systemconfigurator --verbose --excludesto=$sc_excludes_to";
+#    my $sc_cmd = "chroot /sysroot/ systemconfigurator --verbose --excludesto=$sc_excludes_to";
 #    my $sc_options = '';
 #    my $sc_ps3_options = '';
 #    if ($ip_assignment_method eq "replicant") {
@@ -1880,7 +1769,8 @@ sub append_variables_txt_with_ip_assignment_method {
     #   static
     #   dhcp
     #
-    print $out "echo IP_ASSIGNMENT_METHOD=$ip_assignment_method >> /tmp/variables.txt\n\n";
+    #print $out "echo IP_ASSIGNMENT_METHOD=$ip_assignment_method >> /tmp/variables.txt\n\n";
+    print $out "set_ip_assignment_method $ip_assignment_method\n\n";
 }
 
 #    my ( $out, $ip_assignment_method ) = @_;
@@ -1890,7 +1780,7 @@ sub append_variables_txt_with_ip_assignment_method {
 #    print $out "[ -z \$DEVICE ] && DEVICE=eth0\n";
 #
 #    my $sc_excludes_to = "/etc/systemimager/systemconfig.local.exclude";
-#    my $sc_cmd = "chroot /a/ systemconfigurator --verbose --excludesto=$sc_excludes_to";
+#    my $sc_cmd = "chroot /sysroot/ systemconfigurator --verbose --excludesto=$sc_excludes_to";
 #    my $sc_options = '';
 #    my $sc_ps3_options = '';
 #    if ($ip_assignment_method eq "replicant") {
@@ -1952,7 +1842,8 @@ sub create_autoinstall_script{
         $post_install,
         $listing,
         $auto_install_script_conf,
-        $autodetect_disks
+        $autodetect_disks,
+        $cmdline
     ) = @_;
 
     my $cmd;
@@ -1972,7 +1863,7 @@ sub create_autoinstall_script{
         close(MTAB);
     }
     
-    $file = "$auto_install_script_dir/$script_name.master";
+    $file = "$auto_install_script_dir/main-install/$script_name.master";
     my $template = "/etc/systemimager/autoinstallscript.template";
     open (my $TEMPLATE, "<$template") || die "Can't open $template for reading\n";
     open (my $MASTER_SCRIPT, ">$file") || die "Can't open $file for writing\n";
@@ -1983,6 +1874,10 @@ sub create_autoinstall_script{
     my $delim = '##';
     while (<$TEMPLATE>) {
         SWITCH: {
+            if (/^\s*${delim}SI_CREATE_AUTOINSTALL_SCRIPT_CMD${delim}\s*$/) {
+                print $MASTER_SCRIPT "# $cmdline\n";
+                last SWITCH;
+            }
 	        if (/^\s*${delim}VERSION_INFO${delim}\s*$/) {
 	            print $MASTER_SCRIPT "# This master autoinstall script was created with SystemImager v${VERSION}\n";
 	            last SWITCH;
@@ -2013,140 +1908,52 @@ sub create_autoinstall_script{
 	            last SWITCH;
 	        }
 
-	        if (/^\s*${delim}SET_DISKORDER${delim}\s*$/) {
-                    # Set or unset disk autodetection.
-                    if ($autodetect_disks) {
-                        print $MASTER_SCRIPT qq(DISKORDER=sd,cciss,ida,rd,hd,xvd\n);
-                    } else {
-                        print $MASTER_SCRIPT qq(DISKORDER=\n);
-                    }
-	            last SWITCH;
-	        }
-
-	        if (/^\s*${delim}PARTITION_DISKS${delim}\s*$/) { 
-	            _read_partition_info_and_prepare_parted_commands( $MASTER_SCRIPT,
-	          						$image_dir, 
-	          						$auto_install_script_conf);
-	            last SWITCH;
-	        }
-
-                if (/^\s*${delim}CREATE_SOFT_RAID_DISKS${delim}\s*$/) { 
-                _read_partition_info_and_prepare_soft_raid_devs( $MASTER_SCRIPT,
-                    $image_dir, 
-                    $auto_install_script_conf);
-                    last SWITCH;
-                }
-
-                if (/^\s*${delim}INITIALIZE_LVM_PARTITIONS${delim}\s*$/) {
- 	            _read_partition_info_and_prepare_pvcreate_commands( $MASTER_SCRIPT,
- 	          						$image_dir,
- 	          						$auto_install_script_conf);
-                     last SWITCH;
-                }
-
-                if (/^\s*${delim}CREATE_LVM_GROUPS${delim}\s*$/) {
-                    write_lvm_groups_commands( $MASTER_SCRIPT,
-                                            $image_dir,
-                                            $auto_install_script_conf);
-                     last SWITCH;
-                }
-
-                if (/^\s*${delim}CREATE_LVM_VOLUMES${delim}\s*$/) {
-                     write_lvm_volumes_commands( $MASTER_SCRIPT,
-                                            $image_dir,
-                                            $auto_install_script_conf);
-                     last SWITCH;
-                }
-	        
-                if (/^\s*${delim}CREATE_FILESYSTEMS${delim}\s*$/) {
-	            _write_out_mkfs_commands( $MASTER_SCRIPT, 
-	          			$image_dir, 
-	          			$auto_install_script_conf);
-	            last SWITCH;
-	        }
-
-	        if (/^\s*${delim}GENERATE_FSTAB${delim}\s*$/) {
-                append_variables_txt_with_ip_assignment_method( $MASTER_SCRIPT, $ip_assignment_method );
-	            _write_out_new_fstab_file( $MASTER_SCRIPT, 
-	          			 $image_dir, 
-	          			 $auto_install_script_conf );
-	            last SWITCH;
-	        }
-
 	        if (/^\s*${delim}NO_LISTING${delim}\s*$/) {
 	            unless ($listing) { print $MASTER_SCRIPT "NO_LISTING=yes\n"; }
 	            last SWITCH;
 	        }
             
-            #if (/^\s*${delim}BOEL_DEVSTYLE${delim}\s*$/) {
-            #_write_boel_devstyle_entry($MASTER_SCRIPT, $auto_install_script_conf);
-            #    #    last SWITCH;
-            #}
-
-            #if (/^\s*${delim}SYSTEMCONFIGURATOR_PRE${delim}\s*$/) {
-            #    write_sc_command_pre($MASTER_SCRIPT, $ip_assignment_method);
-            #    last SWITCH;
-            #}
-
-            #if (/^\s*${delim}SYSTEMCONFIGURATOR_POST${delim}\s*$/) {
-            #    write_sc_command_post($MASTER_SCRIPT, $ip_assignment_method);
-            #    last SWITCH;
-            #}
-
-	        if (/^\s*${delim}UMOUNT_FILESYSTEMS${delim}\s*$/) {
-	            _write_out_umount_commands( $MASTER_SCRIPT,
-	          			  $image_dir, 
-	          			  $auto_install_script_conf );
-	            last SWITCH;
-	        }
-
-	        if (/^\s*${delim}MONITOR_POSTINSTALL${delim}\s*/) {
-                    my $post_state = {'beep' => 103, 'reboot' => 104, 'kexec' => 104, 'shutdown' => 105};
-                    print $MASTER_SCRIPT "    send_monitor_msg \"status=$post_state->{$post_install}:speed=0\"\n";
-                    last SWITCH;
-                }
-
 	        if (/^\s*${delim}POSTINSTALL${delim}\s*/) {
 	            
                 if ($post_install eq "beep") {
                     # beep incessantly stuff
                     print $MASTER_SCRIPT "beep_incessantly";
+		} elsif ($post_install eq "directboot") {
+		    # directboot stuff
+		    print $MASTER_SCRIPT "# boot without reboot the autoinstall client\n";
+                    print $MASTER_SCRIPT "SI_POST_ACTION=\"directboot\"\n";
+                    print $MASTER_SCRIPT "write_variables\n";
                 } elsif ($post_install eq "reboot") {
                     # reboot stuff
                     print $MASTER_SCRIPT "# reboot the autoinstall client\n";
-                    print $MASTER_SCRIPT "shutdown -r now\n";
+                    print $MASTER_SCRIPT "SI_POST_ACTION=\"reboot\"\n";
+                    print $MASTER_SCRIPT "write_variables\n";
                 } elsif ($post_install eq "shutdown") {
                     # shutdown stuff
                     print $MASTER_SCRIPT "# shutdown the autoinstall client\n";
-                    print $MASTER_SCRIPT "shutdown\n";
-                    print $MASTER_SCRIPT "\n";
+                    print $MASTER_SCRIPT "SI_POST_ACTION=\"shutdown\"\n";
+                    print $MASTER_SCRIPT "write_variables\n";
+                } elsif ($post_install eq "shell") {
+                    # shell stuff
+                    print $MASTER_SCRIPT "# Drop to debug shell\n";
+                    print $MASTER_SCRIPT "SI_POST_ACTION=\"shell\"\n";
+                    print $MASTER_SCRIPT "write_variables\n";
                 } elsif ($post_install eq "kexec") {
                     # kexec imaged kernel
                     print $MASTER_SCRIPT "# kexec the autoinstall client\n";
-                    print $MASTER_SCRIPT "# this is executed twice to support relocatable kernels from RHEL5\n";
-                    print $MASTER_SCRIPT "kexec --force --append=\"\$kexec_append\" --initrd=/tmp/\$kexec_initrd --reset-vga /tmp/\$kexec_kernel\n";
-                    print $MASTER_SCRIPT "kexec --force --append=\"\$kexec_append\" --initrd=/tmp/\$kexec_initrd --reset-vga --args-linux /tmp/\$kexec_kernel\n";
+                    print $MASTER_SCRIPT "SI_POST_ACTION=\"kexec\"\n";
+                    print $MASTER_SCRIPT "write_variables\n";
+                    # BUG: OL: Need full rework. kexec_append was computed using systemconfigurator scconf-bootinfo which is no longer supported
+                    #print $MASTER_SCRIPT "# this is executed twice to support relocatable kernels from RHEL5\n";
+                    #print $MASTER_SCRIPT "kexec --force --append=\"\$kexec_append\" --initrd=/tmp/\$kexec_initrd --reset-vga /tmp/\$kexec_kernel\n";
+                    #print $MASTER_SCRIPT "kexec --force --append=\"\$kexec_append\" --initrd=/tmp/\$kexec_initrd --reset-vga --args-linux /tmp/\$kexec_kernel\n";
+                } elsif (($post_install eq "cmdline") or ($post_install eq "none")) {
+                    print $MASTER_SCRIPT "# post imaging action is read from cmdlinei\n";
+                    print $MASTER_SCRIPT "# don't forget to set si.post-action= parameter in PXE cmdline\n";
+                    print $MASTER_SCRIPT "# if missing, default behavior is 'reboot'.\n";
                 }
                 last SWITCH;
 	        }
-
-			if (/^\s*${delim}SHOW_DISK_EDITS${delim}\s*$/) {
-				show_disk_edits( $MASTER_SCRIPT );
-				last SWITCH;
-			}
-			if (/^\s*${delim}EDIT_DISK_NAMES${delim}\s*$/) {
-				edit_disk_names( $MASTER_SCRIPT );
-				last SWITCH;
-			}
-
-			if (/^\s*${delim}SETUP_KEXEC${delim}\s*$/) {
-                if ($post_install eq "kexec") {
-                    setup_kexec( $MASTER_SCRIPT );
-                } else {
-                    print $MASTER_SCRIPT "# Not needed for this post-install action\n";
-                }
-                last SWITCH;
-            }
 
 	        ### END end of autoinstall options ###
 	        print $MASTER_SCRIPT $_;
@@ -2157,7 +1964,7 @@ sub create_autoinstall_script{
     ### BEGIN overrides stuff ###
     # Create default overrides directory. -BEF-
     #
-    my $override_dir = $config->default_override_dir;
+    my $override_dir = $jconfig->get('imager','overrides_dir');
     my $dir = "$override_dir/$script_name";
     if (! -d "$dir")  {
       mkdir("$dir", 0755) or die "FATAL: Can't make directory $dir\n";
@@ -2349,46 +2156,5 @@ sub _write_elilo_conf {
         close(ELILO_CONF);
         return 1;
 }
-
-
-#
-# Description:
-#   Decide whether to "mount /dev /a/dev -o bind", and write to master
-#   autoinstall script.  
-#
-#   Clients should have one of the following entries in their 
-#   autoinstallscript.conf file:
-#
-#       <boel devstyle="udev"/>
-#       <boel devstyle="devfs"/>
-#       <boel devstyle="static"/>
-#
-#   
-# Usage:
-#   _write_boel_devstyle_entry($MASTER_SCRIPT, $auto_install_script_conf);
-#
-#XXX no longer needed
-#sub _write_boel_devstyle_entry {
-#
-#    my ($script, $file) = @_;
-#
-#    my $xml_config = XMLin($file, keyattr => { boel => "+devstyle"} );
-#
-#    if( defined($xml_config->{boel}->{devstyle}) 
-#        && (    ("$xml_config->{boel}->{devstyle}" eq "devfs")
-#             or ("$xml_config->{boel}->{devstyle}" eq "udev" ) )
-#      ) {
-#
-#        my $cmd = q(mount /dev /a/dev -o bind || shellout);
-#        print $script qq(logmsg "$cmd"\n);
-#        print $script qq($cmd\n);
-#        
-#    } else {
-#
-#        print $script qq(#not needed for this image\n);
-#        
-#    }
-#}
-
 
 # /* vi: set filetype=perl ai et ts=4 sw=4: */

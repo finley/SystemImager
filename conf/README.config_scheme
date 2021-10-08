@@ -1,0 +1,27 @@
+WARNING
+config_scheme.json is the description of SystemImager parameters.
+Changing content content may break SystemImager login.
+
+File MUST be valid JSON. (for example: last element of a list has no trailing comma)
+
+Structure:
+{
+    "Field_Name_1": {
+        "param_is_a_path": [ "path", "/default/path/to/content", "Description..." ],
+        "param_is_a_file": [ "path", "/default/path/to/file", "Description..." ],
+        "param_is_a_select": [ "select", [ "default_val", "val1", "val2" ], "Description.... default_val must be either val1 or val2 in this example" ],
+        "param_is_a_network_port": [ "default_port_num", "Description..." ],
+	"param_is_text": [ "default text", "Description..." ]
+    },
+    "Field_Name_2": { }
+}
+
+You can have as much as fieldname you need.
+All options in a field name are grouped in the web GUI.
+
+In perl API SystemImager:JConfig,
+$jconfig is a global variable containing the parsed content of /etc/systemimager/systemimager.json
+Missing field/variables/... are replaced with default values from config_scheme.json
+To read a variable:
+$jconfig->get("field_name","param_name");
+

@@ -1,7 +1,8 @@
 #
 #	"SystemImager"  
 #
-#   Copyright (C) 1999-2012 Brian Elliott Finley
+#   Copyright (C) 2015-2019 Olivier Lahaye
+#   Copyright (C) 1999-2015 Brian Elliott Finley
 #   Copyright (C) 2001-2004 Hewlett-Packard Company <dannf@hp.com>
 #   
 #   Others who have contributed to this code:
@@ -42,10 +43,13 @@
 #
 # SystemImager file location standards:
 #   o images will be stored in: /var/lib/systemimager/images/
-#   o autoinstall scripts:      /var/lib/systemimager/scripts/
+#   o pre-install scripts:      /var/lib/systemimager/scripts/pre-install/
+#   o autoinstall scripts:      /var/lib/systemimager/scripts/main-install/
+#   o post-install scripts:     /var/lib/systemimager/scripts/post-install/
 #   o tarball files for BT:     /var/lib/systemimager/tarballs/
 #   o torrent files:            /var/lib/systemimager/torrents/
 #   o override directories:     /var/lib/systemimager/overrides/
+#   o images config files       /var/lib/systemimager/configs/
 #
 #   o web gui pages:            /usr/share/systemimager/web-gui/
 #
@@ -88,6 +92,7 @@
 
 DESTDIR :=
 VERSION := $(shell cat VERSION)
+DRACUT_MODULE_INDEX = 51
 
 ## is this an unstable release?
 MINOR = $(shell echo $(VERSION) | cut -d "." -f 2)
@@ -105,6 +110,8 @@ TOPDIR  := $(CURDIR)
 RELEASE_DOCS = CHANGE.LOG COPYING CREDITS README VERSION
 
 ARCH = $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/)
+
+TAR = $(shell gtar --version >/dev/null >&2 && echo gtar || echo tar)
 
 # Follows is a set of arch manipulations to distinguish between ppc types
 ifeq ($(ARCH),ppc64)
@@ -142,7 +149,6 @@ NCPUS := $(shell egrep -c '^processor' /proc/cpuinfo )
 
 MANUAL_DIR = $(TOPDIR)/doc/manual_source
 MANPAGE_DIR = $(TOPDIR)/doc/man
-PATCH_DIR = $(TOPDIR)/patches
 LIB_SRC = $(TOPDIR)/lib
 SRC_DIR = $(TOPDIR)/src
 BINARY_SRC = $(TOPDIR)/sbin
@@ -151,11 +157,14 @@ BINARY_SRC = $(TOPDIR)/sbin
 PREFIX = /usr
 ETC  = $(DESTDIR)/etc
 INITD = $(ETC)/init.d
+SYSTEMD_UNITS_DIR = $(USR)/lib/systemd/system
+SYSTEMD_SRC = $(TOPDIR)/systemd
 USR = $(DESTDIR)$(PREFIX)
 DOC  = $(USR)/share/doc/systemimager-doc
 BIN = $(USR)/bin
 SBIN = $(USR)/sbin
 MAN8 = $(USR)/share/man/man8
+#LIBEXEC_DEST = $(USR)/libexec/systemimager
 LIBEXEC_DEST = $(USR)/lib/systemimager
 LIB_DEST = $(DESTDIR)$(shell perl -V:vendorlib | sed s/vendorlib=\'// | sed s/\'\;//)
 #LIB_DEST = $(USR)/lib/systemimager/perl
@@ -164,8 +173,23 @@ LOCK_DIR = $(DESTDIR)/var/lock/systemimager
 
 INITRD_DIR = $(TOPDIR)/initrd_source
 INITRD_BUILD_DIR = $(INITRD_DIR)/build_dir
+DRACUT_BASEDIR = $(shell test -d /usr/lib/dracut && echo "/lib/dracut" || echo "/share/dracut")
+DRACUT_SYSDIR = /usr$(DRACUT_BASEDIR)
+DRACUT_MODULES = $(USR)$(DRACUT_BASEDIR)/modules.d
+
+CONF_SRC          = $(TOPDIR)/conf/
+CONF_DEST         = $(USR)/share/systemimager/conf/
+
+WEB_CONF_SRC      = $(TOPDIR)/etc/
+WEB_CONF_DEST     = $(ETC)/httpd/conf.d/
+
+WEB_GUI_SRC       = $(TOPDIR)/webgui
+WEB_GUI_DEST      = $(USR)/share/systemimager/webgui
 
 BOOT_BIN_DEST     = $(USR)/share/systemimager/boot/$(ARCH)/$(FLAVOR)
+BOOT_BIN_PATH     = $(PREFIX)/share/systemimager/boot/$(ARCH)/$(FLAVOR)
+BOOT_NOARCH_DEST  = $(USR)/share/systemimager/boot
+BOOT_NOARCH_PATH  = $(PREFIX)/share/systemimager/boot
 
 PXE_CONF_SRC      = etc/pxelinux.cfg
 PXE_CONF_DEST     = $(ETC)/systemimager/pxelinux.cfg
@@ -174,9 +198,10 @@ KBOOT_CONF_SRC    = etc/kboot.cfg
 KBOOT_CONF_DEST   = $(ETC)/systemimager/kboot.cfg
 
 BINARIES := si_mkautoinstallcd si_mkautoinstalldisk si_psh si_pcp si_pushoverrides si_clusterconfig
-SBINARIES := si_addclients si_cpimage si_getimage si_mkdhcpserver si_mkdhcpstatic si_mkautoinstallscript si_mkbootserver si_mvimage si_pushupdate si_pushinstall si_rmimage si_mkrsyncd_conf si_mkclientnetboot si_netbootmond si_mkbootpackage si_monitor si_monitortk si_installbtimage
+SBINARIES := si_addclients si_cpimage si_getimage si_lint si_mkdhcpserver si_mkdhcpstatic si_mkautoinstallscript si_mvimage si_pushupdate si_pushinstall si_rmimage si_mkrsyncd_conf si_mkclientnetboot si_netbootmond si_installbtimage
 CLIENT_SBINARIES  := si_updateclient si_prepareclient
-COMMON_BINARIES   = si_lsimage
+COMMON_BINARIES   := si_lsimage si_mkbootpackage
+WEB_SRC           := index.php edit_clusters.php manage_netboot.php edit_dhcp.php health_console.php client_console.php client_list.php edit_config.php services.json statuses.json functions.js functions.php push_client_defs.php push_client_logs.php css/Background.png css/SystemImagerBanner.png css/flex_table.css css/screen.css css/sliders.css images/Alecive-Flatwoken-Apps-Dialog-Apply.svg images/Alecive-Flatwoken-Apps-Dialog-Close.svg images/Alecive-Flatwoken-Apps-Dialog-Logout.svg images/Alecive-Flatwoken-Apps-Dialog-Refresh.svg images/Alecive-Flatwoken-Apps-Settings.svg images/yes.svg images/no.svg images/client_list.png images/edit_clusters.png images/edit_config.png images/edit_dhcp.png images/health_console.png images/manage_netboot.png COPYRIGHTS
 
 IMAGESRC    = $(TOPDIR)/var/lib/systemimager/images
 IMAGEDEST   = $(DESTDIR)/var/lib/systemimager/images
@@ -190,10 +215,7 @@ FLAMETHROWER_STATE_DIR = $(DESTDIR)/var/state/systemimager/flamethrower
 
 RSYNC_STUB_DIR = $(ETC)/systemimager/rsync_stubs
 
-CHECK_FLOPPY_SIZE = expr \`du -b $(INITRD_DIR)/initrd.img | cut -f 1\` + \`du -b $(LINUX_IMAGE) | cut -f 1\`
-
 SI_INSTALL = $(TOPDIR)/tools/si_install --si-prefix=$(PREFIX)
-GETSOURCE = $(TOPDIR)/tools/getsource
 
 # Some root tools are probably needed to build SystemImager packages, so
 # explicitly add the right paths here. -AR-
@@ -214,7 +236,7 @@ else
 	include config.inc
 # build everything, install nothing
 .PHONY:	all
-all:	kernel $(INITRD_DIR)/initrd.img manpages
+all:	install_initrd_template manpages
 
 
 endif
@@ -223,28 +245,18 @@ endif
 #
 ########################################################################
 
-
-binaries: $(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.img
-
-# All has been modified as docs don't build on non debian platforms
-#
-#all:	$(BOEL_BINARIES_TARBALL) kernel $(INITRD_DIR)/initrd.img docs manpages
-
-#
-# Now include the other targets.  Some of these may have order dependencies.
-# Order as appropriate. -BEF-
-#
-# Why does ordered dependencies matter? Make will read all these
-# snippets before it evaluates the rule. If there are dependencies caused
-# by setting a variable in one and using it in another, then that should be
-# abstracted out. Its much more robust to include *.rul... -dannf
-#
-include $(TOPDIR)/make.d/kernel.rul
 include $(TOPDIR)/initrd_source/initrd.rul
+
+binaries: $(BOEL_BINARIES_TARBALL) $(INITRD_BOOTFILES_DIR).build
+
+
+# a full install (usefull for packaging)
+.PHONY: install_all
+install_all:	install_server install_client install_common install_dracut install_initrd_template install_binaries install_webgui
 
 # a complete server install
 .PHONY:	install_server_all
-install_server_all:	install_server install_common install_binaries
+install_server_all:	install_server install_common install_binaries install_dracut install_webgui
 
 # a complete client install
 .PHONY:	install_client_all
@@ -254,22 +266,28 @@ install_client_all:	install_client install_common install_initrd_template
 .PHONY:	install_server
 install_server:	install_server_man 	\
 				install_configs 	\
-				install_server_libs \
-				$(BITTORRENT_DIR).build
+				install_server_libs
 	$(SI_INSTALL) -d $(BIN)
 	$(SI_INSTALL) -d $(SBIN)
 	$(foreach binary, $(BINARIES), \
 		$(SI_INSTALL) -m 755 $(BINARY_SRC)/$(binary) $(BIN);)
 	$(foreach binary, $(SBINARIES), \
 		$(SI_INSTALL) -m 755 $(BINARY_SRC)/$(binary) $(SBIN);)
+ifneq ("$(wildcard /usr/lib/systemd/*system)","")
+	$(SI_INSTALL) -m 755 $(BINARY_SRC)/si_mkbootserver.systemd $(SBIN)/si_mkbootserver
+else
+	$(SI_INSTALL) -m 755 $(BINARY_SRC)/si_mkbootserver.sysvinit $(SBIN)/si_mkbootserver
+endif
 	$(SI_INSTALL) -d -m 755 $(LOG_DIR)
 	$(SI_INSTALL) -d -m 755 $(LOCK_DIR)
 	$(SI_INSTALL) -d -m 755 $(BOOT_BIN_DEST)
-	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_SCRIPT_DIR)
-
 	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_TARBALL_DIR)
 	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_TORRENT_DIR)
-
+	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_SCRIPT_DIR)
+	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_SCRIPT_DIR)/configs
+	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_SCRIPT_DIR)/disks-layouts
+	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_SCRIPT_DIR)/network-configs
+	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_SCRIPT_DIR)/main-install
 	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_SCRIPT_DIR)/pre-install
 	$(SI_INSTALL) -m 644 --backup --text \
 		$(TOPDIR)/var/lib/systemimager/scripts/pre-install/99all.harmless_example_script \
@@ -277,31 +295,30 @@ install_server:	install_server_man 	\
 	$(SI_INSTALL) -m 644 --backup --text \
 		$(TOPDIR)/var/lib/systemimager/scripts/pre-install/README \
 		$(AUTOINSTALL_SCRIPT_DIR)/pre-install/
-
 	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_SCRIPT_DIR)/post-install
 	$(SI_INSTALL) -m 644 --backup --text \
 		$(TOPDIR)/var/lib/systemimager/scripts/post-install/99all.harmless_example_script \
-		$(TOPDIR)/var/lib/systemimager/scripts/post-install/95all.monitord_rebooted \
 		$(TOPDIR)/var/lib/systemimager/scripts/post-install/10all.fix_swap_uuids\
                 $(TOPDIR)/var/lib/systemimager/scripts/post-install/11all.replace_byid_device\
 		$(AUTOINSTALL_SCRIPT_DIR)/post-install/
 	$(SI_INSTALL) -m 644 --backup --text \
 		$(TOPDIR)/var/lib/systemimager/scripts/post-install/README \
 		$(AUTOINSTALL_SCRIPT_DIR)/post-install/
-
 	$(SI_INSTALL) -d -m 755 $(OVERRIDES_DIR)
 	$(SI_INSTALL) -m 644 $(OVERRIDES_README) $(OVERRIDES_DIR)
-
 	$(SI_INSTALL) -d -m 755 $(PXE_CONF_DEST)
 	$(SI_INSTALL) -m 644 --backup --text $(PXE_CONF_SRC)/message.txt \
 		$(PXE_CONF_DEST)/message.txt
 	$(SI_INSTALL) -m 644 --backup $(PXE_CONF_SRC)/syslinux.cfg \
 		$(PXE_CONF_DEST)/syslinux.cfg
+	$(SI_INSTALL) -m 644 --backup $(PXE_CONF_SRC)/syslinux.cfg.gfxboot \
+		$(PXE_CONF_DEST)/syslinux.cfg.gfxboot
+	$(SI_INSTALL) -m 644 --backup $(PXE_CONF_SRC)/systemimager.png \
+		$(PXE_CONF_DEST)/systemimager.png
 	$(SI_INSTALL) -m 644 --backup $(PXE_CONF_SRC)/syslinux.cfg.localboot \
 		$(PXE_CONF_DEST)/syslinux.cfg.localboot
 	$(SI_INSTALL) -m 644 --backup $(PXE_CONF_SRC)/syslinux.cfg.localboot \
 		$(PXE_CONF_DEST)/default
-
 	$(SI_INSTALL) -d -m 755 $(KBOOT_CONF_DEST)
 #	$(SI_INSTALL) -m 644 --backup --text $(KBOOT_CONF_SRC)/message.txt \
 #		$(KBOOT_CONF_DEST)/message.txt
@@ -309,12 +326,24 @@ install_server:	install_server_man 	\
 		$(KBOOT_CONF_DEST)/
 	$(SI_INSTALL) -m 644 --backup $(KBOOT_CONF_SRC)/default \
 		$(KBOOT_CONF_DEST)/
-
 	$(SI_INSTALL) -d -m 755 $(IMAGEDEST)
 	$(SI_INSTALL) -m 644 $(WARNING_FILES) $(IMAGEDEST)
 	cp -a $(IMAGEDEST)/README $(IMAGEDEST)/DO_NOT_TOUCH_THESE_DIRECTORIES
-
 	$(SI_INSTALL) -d -m 755 $(FLAMETHROWER_STATE_DIR)
+
+.PHONY: install_webgui
+install_webgui:
+	mkdir -p $(WEB_CONF_DEST)
+	$(SI_INSTALL) -b -m 644 $(WEB_CONF_SRC)/httpd.conf $(WEB_CONF_DEST)/systemimager.conf
+	mkdir -p $(WEB_GUI_DEST) $(WEB_GUI_DEST)/css $(WEB_GUI_DEST)/images
+	$(foreach file, $(WEB_SRC), \
+		$(SI_INSTALL) -m 755 $(WEB_GUI_SRC)/$(file) $(WEB_GUI_DEST)/$(file);)
+	mkdir -p $(LIBEXEC_DEST)
+	$(SI_INSTALL) -m 755 $(LIB_SRC)/web_helpers/get-networks-helper $(LIBEXEC_DEST)
+	$(SI_INSTALL) -m 755 $(LIB_SRC)/web_helpers/clients-statuses-helper $(LIBEXEC_DEST)
+	$(SI_INSTALL) -m 644 $(LIB_SRC)/web_helpers/init_systemimager_config.php $(LIBEXEC_DEST)
+
+
 
 # install client-only files
 .PHONY:	install_client
@@ -339,6 +368,87 @@ install_common:	install_common_man install_common_libs
 	$(foreach binary, $(COMMON_BINARIES), \
 		$(SI_INSTALL) -m 755 $(BINARY_SRC)/$(binary) $(BIN);)
 
+# install files for dracut-systemimager module.
+.PHONY:	install_dracut
+install_dracut:
+	mkdir -p $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/
+ifneq (,$(wildcard /usr/*/dracut/modules.d/99base/install)) # if "" not equals second argument (not empty, thus found), we're using an old dracut)
+	########## Old dracut ('check' and 'install' in charge of module install)
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/check $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/parse-systemimager-old.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/parse-systemimager.sh
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-genrules.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-start-old.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-netstart-old.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-sysroot-helper.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/install $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	sed -i -e "s|@@SIS_INITRD_TEMPLATE@@|$(BOOT_NOARCH_PATH)/initrd_template/|g" $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/install
+else
+       	########## New dracut ('module-setup.sh' in charge of module install)
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-start.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/parse-systemimager.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-sysroot.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/module-setup.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	sed -i -e "s|@@SIS_INITRD_TEMPLATE@@|$(BOOT_NOARCH_PATH)/initrd_template/|g" $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/module-setup.sh
+endif
+	########## Files common to all dracut versions
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/autoinstall-lib.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/disks-layout.xsd $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/disksmgt-lib.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/files-to-exclude-from-image.txt $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/do_partitions.xsl $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/netmgt-lib.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/network.debian.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/network.rhel.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/network.suse.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/network-config.xsd $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/parse-local-cfg.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/si_inspect_client.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-check-ifaces.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-check-kernel.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-cleanup.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-deploy-client.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-log-dispatcher.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-log-dispatcher-old.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-init.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-install-rebooted-script.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-lib.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-load-network-infos.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-load-scripts-ecosystem.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-monitor-server.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-pingtest.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-timeout.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-wait-imaging.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-xmit-docker.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-xmit-flamethrower.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-xmit-nfs.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-xmit-rsync.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-xmit-ssh.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-xmit-template.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/systemimager-xmit-torrent.sh $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/README $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager
+	mkdir -p $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/Background.png $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/COPYRIGHTS $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/README $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/hide_box.png $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/icon_bootloader.png $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/icon_format.png $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/icon_init.png $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/icon_partition.png $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/icon_postinstall.png $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/icon_preinstall.png $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/icon_writeimage.png $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/no.png $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/action.png $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/dialog_bgnd.png $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/box.png $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/progress_gauge.png $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/README $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/SystemImagerBanner.png $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/systemimager.plymouth $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/systemimager.script $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
+	$(SI_INSTALL) -b -m 755 $(LIB_SRC)/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme/yes.png $(DRACUT_MODULES)/$(DRACUT_MODULE_INDEX)systemimager/plymouth_theme
+
 # install server-only libraries
 .PHONY:	install_server_libs
 install_server_libs:
@@ -346,6 +456,7 @@ install_server_libs:
 	mkdir -p $(LIB_DEST)/BootMedia
 	mkdir -p $(LIB_DEST)/BootGen/Dev
 	mkdir -p $(LIB_DEST)/BootGen/InitrdFS
+	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/JConfig.pm $(LIB_DEST)/SystemImager
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/Server.pm  $(LIB_DEST)/SystemImager
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/HostRange.pm  $(LIB_DEST)/SystemImager
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/BootMedia/BootMedia.pm 	$(LIB_DEST)/BootMedia
@@ -363,6 +474,8 @@ install_server_libs:
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/icons/serverinst.gif 	$(USR)/share/systemimager/icons
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/icons/serverok.gif 	$(USR)/share/systemimager/icons
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/icons/servererror.gif 	$(USR)/share/systemimager/icons
+	mkdir -p $(USR)/share/systemimager/conf
+	$(SI_INSTALL) -m 644 $(CONF_SRC)/config_scheme.json $(CONF_DEST)
 
 # install client-only libraries
 .PHONY:	install_client_libs
@@ -376,29 +489,9 @@ install_common_libs:
 	mkdir -p $(LIB_DEST)/SystemImager
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/Common.pm $(LIB_DEST)/SystemImager
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/Options.pm $(LIB_DEST)/SystemImager
-	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/Config.pm $(LIB_DEST)/SystemImager
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/UseYourOwnKernel.pm $(LIB_DEST)/SystemImager
 	mkdir -p $(LIBEXEC_DEST)
-	$(SI_INSTALL) -m 755 $(LIB_SRC)/confedit $(LIBEXEC_DEST)
-
-# checks the sized of the i386 kernel and initrd to make sure they'll fit 
-# on an autoinstall diskette
-.PHONY:	check_floppy_size
-check_floppy_size:	$(LINUX_IMAGE) $(INITRD_DIR)/initrd.img
-ifeq ($(ARCH), i386)
-	@### see if the kernel and ramdisk are larger than the size of a 1.44MB
-	@### floppy image, minus about 10k for syslinux stuff
-	@echo -n "Ramdisk + Kernel == "
-	@echo "`$(CHECK_FLOPPY_SIZE)`"
-	@echo "                    1454080 is the max that will fit."
-	@[ `$(CHECK_FLOPPY_SIZE)` -lt 1454081 ] || \
-	     (echo "" && \
-	      echo "************************************************" && \
-	      echo "Dammit.  The kernel and ramdisk are too large.  " && \
-	      echo "************************************************" && \
-	      exit 1)
-	@echo " - ok, that should fit on a floppy"
-endif
+	#$(SI_INSTALL) -m 755 $(LIB_SRC)/confedit $(LIBEXEC_DEST)
 
 # install the initscript & config files for the server
 .PHONY:	install_configs
@@ -409,6 +502,7 @@ install_configs:
 	$(SI_INSTALL) -m 644 --backup etc/bittorrent.conf $(ETC)/systemimager/
 	$(SI_INSTALL) -m 644 --backup etc/cluster.xml $(ETC)/systemimager/
 	$(SI_INSTALL) -m 644 etc/autoinstallscript.template $(ETC)/systemimager/
+	$(SI_INSTALL) -m 644 etc/autoinstallconf.template $(ETC)/systemimager/
 	$(SI_INSTALL) -m 644 etc/getimage.exclude $(ETC)/systemimager/
 
 	mkdir -p $(RSYNC_STUB_DIR)
@@ -418,6 +512,19 @@ install_configs:
 		|| $(SI_INSTALL) -b -m 644 etc/rsync_stubs/99local $(RSYNC_STUB_DIR)
 	$(SI_INSTALL) -b -m 644 etc/rsync_stubs/README $(RSYNC_STUB_DIR)
 
+ifneq ("$(wildcard /usr/lib/systemd/*system)","")
+	[ "$(SYSTEMD_UNITS_DIR)" != "" ] || exit 1
+	mkdir -p $(SYSTEMD_UNITS_DIR)
+	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-bittorrent-seeder.service $(SYSTEMD_UNITS_DIR)
+	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-bittorrent.service $(SYSTEMD_UNITS_DIR)
+	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-bittorrent-tracker.service $(SYSTEMD_UNITS_DIR)
+	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-flamethrowerd.service $(SYSTEMD_UNITS_DIR)
+	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-monitord.service $(SYSTEMD_UNITS_DIR)
+	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-netbootmond.service $(SYSTEMD_UNITS_DIR)
+	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-rsyncd.service $(SYSTEMD_UNITS_DIR)
+	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-rsyncd@.service $(SYSTEMD_UNITS_DIR)
+	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-rsyncd.socket $(SYSTEMD_UNITS_DIR)
+else
 	[ "$(INITD)" != "" ] || exit 1
 	mkdir -p $(INITD)
 	$(SI_INSTALL) -b -m 755 etc/init.d/systemimager-server-rsyncd 			$(INITD)
@@ -425,13 +532,8 @@ install_configs:
 	$(SI_INSTALL) -b -m 755 etc/init.d/systemimager-server-flamethrowerd 	$(INITD)
 	$(SI_INSTALL) -b -m 755 etc/init.d/systemimager-server-bittorrent 	$(INITD)
 	$(SI_INSTALL) -b -m 755 etc/init.d/systemimager-server-monitord		$(INITD)
-
-########## END initrd ##########
-
-
-########## BEGIN dev_tarball ##########
-# XXX deprecated -- no longer needed with udev. -BEF- 2011.02.15
-########## END dev_tarball ##########
+endif
+########## END service files ##########
 
 
 ########## BEGIN man pages ##########
@@ -459,22 +561,15 @@ install_common_man: manpages
 install_docs: docs
 	mkdir -p $(DOC)
 	cp -a $(MANUAL_DIR)/html $(DOC)
-	cp $(MANUAL_DIR)/*.ps $(MANUAL_DIR)/*.pdf $(DOC)
+	#cp $(MANUAL_DIR)/*.ps $(MANUAL_DIR)/*.pdf $(DOC)
 	rsync -av --exclude 'CVS/' --exclude '.svn/' doc/examples/ $(DOC)/examples/
 	#XXX $(SI_INSTALL) -m 644 doc/media-api.txt $(DOC)/
 
 # builds the manual from SGML source
 docs:
-	$(MAKE) -C $(MANUAL_DIR) html ps pdf
+	#$(MAKE) -C $(MANUAL_DIR) html ps pdf
+	$(MAKE) -C $(MANUAL_DIR) html
 endif
-
-# pre-download the source to other packages that are needed by 
-# the build system
-.PHONY:	pre_download_source
-pre_download_source:	$(ALL_SOURCE)
-
-.PHONY:	get_source
-get_source:	$(ALL_SOURCE)
 
 .PHONY:	install
 install:
@@ -483,49 +578,7 @@ install:
 	@echo ''
 
 .PHONY:	install_binaries
-install_binaries:	install_kernel \
-			install_initrd \
-			install_initrd_template
-
-.PHONY:	complete_source_tarball
-complete_source_tarball:	$(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source.tar.bz2.sign
-$(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source.tar.bz2.sign:	$(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source.tar.bz2
-	cd $(TOPDIR)/tmp && gpg --detach-sign -a --output systemimager-$(VERSION)-complete_source.tar.bz2.sign systemimager-$(VERSION)-complete_source.tar.bz2
-	cd $(TOPDIR)/tmp && gpg --verify systemimager-$(VERSION)-complete_source.tar.bz2.sign 
-
-$(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source.tar.bz2: systemimager.spec
-	rm -fr $(TOPDIR)/tmp
-	if [ -d $(TOPDIR)/.svn ]; then \
-		mkdir -p $(TOPDIR)/tmp; \
-		svn export . $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source; \
-	else \
-		make distclean && mkdir -p $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source; \
-		(cd $(TOPDIR) && tar --exclude=tmp -cvf - .) | (cd $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source && tar -xvf -); \
-	fi
-	cd $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source && ./configure
-	$(MAKE) -C $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source get_source
-	#
-	# Make sure we've got all kernel source.  NOTE:  The egrep -v '-' bit is so that we don't include customized kernels (Ie: -ydl).
-	$(foreach linux_version, $(shell grep 'LINUX_VERSION =' make.d/kernel.rul | egrep -v '(^#|-)' | sort -u | perl -pi -e 's#.*= ##'), \
-		$(GETSOURCE) $(shell dirname $(LINUX_URL))/linux-$(linux_version).tar.bz2 $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source/src;)
-	$(MAKE) -C $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source clean
-ifeq ($(UNSTABLE), 1)
-	if [ -f README.unstable ]; then \
-		cd $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source && cp README README.tmp; \
-		cd $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source && cp README.unstable README; \
-		cd $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source && cat README.tmp >> README; \
-		cd $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source && rm README.tmp; \
-	fi
-endif
-	rm -f $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source/README.unstable
-	perl -pi -e "s/^%define\s+ver\s+\d+\.\d+\.\d+.*/%define ver $(VERSION)/" \
-		$(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source/systemimager.spec
-	find $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source -type f -exec chmod ug+r  {} \;
-	find $(TOPDIR)/tmp/systemimager-$(VERSION)-complete_source -type d -exec chmod ug+rx {} \;
-	cd $(TOPDIR)/tmp && tar -ch systemimager-$(VERSION)-complete_source | bzip2 > systemimager-$(VERSION)-complete_source.tar.bz2
-	@echo
-	@echo "complete source tarball has been created in $(TOPDIR)/tmp"
-	@echo
+install_binaries:	install_boot_files
 
 .PHONY:	source_tarball
 source_tarball:	$(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2.sign
@@ -540,7 +593,7 @@ $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2: $(TOPDIR)/systemimager.spec
 		svn export . $(TOPDIR)/tmp/systemimager-$(VERSION); \
 	else \
 		make distclean && mkdir -p $(TOPDIR)/tmp/systemimager-$(VERSION); \
-		(cd $(TOPDIR) && tar --exclude=tmp --exclude=.git -cvf - .) | (cd $(TOPDIR)/tmp/systemimager-$(VERSION) && tar -xvf -); \
+		(cd $(TOPDIR) && $(TAR) --exclude=tmp --exclude=.git -cvf - .) | (cd $(TOPDIR)/tmp/systemimager-$(VERSION) && $(TAR) -xvf -); \
 	fi
 ifeq ($(UNSTABLE), 1)
 	if [ -f README.unstable ]; then \
@@ -549,13 +602,28 @@ ifeq ($(UNSTABLE), 1)
 		cd $(TOPDIR)/tmp/systemimager-$(VERSION) && cat README.tmp >> README; \
 		cd $(TOPDIR)/tmp/systemimager-$(VERSION) && rm README.tmp; \
 	fi
+	PKG_REL=`test -d .git && git show --pretty='format:%ci'|head -1|sed -e 's/ .*//g' -e 's/-//g' -e 's/$$/git/' -e 's/^/0./' || echo 1`; \
+		cd $(TOPDIR)/tmp/systemimager-$(VERSION) && \
+			sed -i -e "s/##PKG_REL##/$${PKG_REL}/g" \
+				systemimager.spec \
+				lib/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/module-setup.sh \
+				lib/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/install
+else
+	cd $(TOPDIR)/tmp/systemimager-$(VERSION) && \
+		sed -i -e "s/##PKG_REL##/1/g" \
+			systemimager.spec \
+			lib/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/module-setup.sh \
+			lib/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/install
 endif
 	rm -f $(TOPDIR)/tmp/systemimager-$(VERSION)/README.unstable
 	perl -pi -e "s/^%define\s+ver\s+\d+\.\d+\.\d+.*/%define ver $(VERSION)/" \
 		$(TOPDIR)/tmp/systemimager-$(VERSION)/systemimager.spec
+	sed -i -e "s/##VERSION##/$(VERSION)/g" \
+		$(TOPDIR)/tmp/systemimager-$(VERSION)/lib/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/module-setup.sh \
+		$(TOPDIR)/tmp/systemimager-$(VERSION)/lib/dracut/modules.d/$(DRACUT_MODULE_INDEX)systemimager/install
 	find $(TOPDIR)/tmp/systemimager-$(VERSION) -type f -exec chmod ug+r  {} \;
 	find $(TOPDIR)/tmp/systemimager-$(VERSION) -type d -exec chmod ug+rx {} \;
-	cd $(TOPDIR)/tmp && tar -ch systemimager-$(VERSION) | bzip2 > systemimager-$(VERSION).tar.bz2
+	cd $(TOPDIR)/tmp && $(TAR) -ch systemimager-$(VERSION) | bzip2 > systemimager-$(VERSION).tar.bz2
 	@echo
 	@echo "source tarball has been created in $(TOPDIR)/tmp"
 	@echo
@@ -590,7 +658,7 @@ deb: $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
 	else \
 		exit 0; \
 	fi)
-	@cd $(TOPDIR)/tmp && tar xvjf systemimager-$(VERSION).tar.bz2
+	@cd $(TOPDIR)/tmp && $(TAR) xvjf systemimager-$(VERSION).tar.bz2
 	@cd $(TOPDIR)/tmp/systemimager-$(VERSION) && make -f debian/rules debian/control
 	@cd $(TOPDIR)/tmp/systemimager-$(VERSION) && dpkg-buildpackage -rfakeroot -uc -us
 	@echo "=== deb packages for systemimager ==="
@@ -599,7 +667,7 @@ deb: $(TOPDIR)/tmp/systemimager-$(VERSION).tar.bz2
 
 # removes object files, docs, editor backup files, etc.
 .PHONY:	clean
-clean:	$(subst .rul,_clean,$(shell cd $(TOPDIR)/make.d && ls *.rul)) initrd_clean
+clean:	initrd_clean
 	-$(MAKE) -C $(MANPAGE_DIR) clean
 	-$(MAKE) -C $(MANUAL_DIR) clean
 
@@ -616,7 +684,7 @@ clean:	$(subst .rul,_clean,$(shell cd $(TOPDIR)/make.d && ls *.rul)) initrd_clea
 # same as clean, but also removes downloaded source, stamp files, etc.
 .PHONY:	distclean
 distclean:	clean initrd_distclean
-	-rm -rf $(SRC_DIR) $(INITRD_SRC_DIR)
+	-rm -rf $(SRC_DIR)
 
 .PHONY:	help
 help:  show_build_deps
@@ -638,24 +706,15 @@ show_targets:
 	@echo "install_server_all"
 	@echo "    Install all files needed by a server."
 	@echo "	"
-	@echo "install_initrd"
-	@echo ""
-	@echo "pre_download_source"
-	@echo "    Download source tarballs, but don't build anything."
-	@echo "    Useful to prep for offline builds."
-	@echo ""
+	@echo "install_dracut"
+	@echo "    Install all files needed by dracut (dracut module)."
+	@echo " "
 	@echo "source_tarball"
 	@echo "    Make a source tarball for distribution."
 	@echo "	"
 	@echo "    Includes SystemImager source only.  Source for all"
 	@echo "    the tools SystemImager depends on will be found in /usr/src "
 	@echo "    or will be automatically downloaded at build time."
-	@echo "	"
-	@echo "complete_source_tarball"
-	@echo "    Make a source tarball for distribution."
-	@echo "    "
-	@echo "    Includes all necessary source for building SystemImager and"
-	@echo "    all of it's supporting tools."
 	@echo "	"
 	@echo "rpm"
 	@echo "    Build all of the RPMs that can be build on your platform."
@@ -690,7 +749,7 @@ show_build_deps:
 	@echo "     apt-get install build-essential flex $(UBUNTU_DAPPER_BUILD_DEPS)"
 	@echo
 	@echo "   RHEL6, CentOS6, and friends:"
-	@echo "     yum install rpm-build patch wget flex bc docbook-utils dos2unix device-mapper-devel gperf pam-devel quilt lzop glib2-devel PyXML glibc-static $(RHEL6_BUILD_DEPS)"
+	@echo "     yum install rpm-build wget flex bc docbook-utils dos2unix lzop PyXML $(RHEL6_BUILD_DEPS)"
 	@echo
 	@echo "   Debian Stable:"
 	@echo "     apt-get install build-essential flex $(DEBIAN_STABLE_BUILD_DEPS)"

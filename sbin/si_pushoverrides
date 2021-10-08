@@ -1,16 +1,32 @@
 #!/usr/bin/perl -w
 #
-#  Copyright (C) 2005 Andrea Righi <a.righi@cineca.it>
+#    vi:set filetype=perl:
+#
+#    This file is part of SystemImager.
+#
+#    SystemImager is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    SystemImager is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with SystemImager. If not, see <https://www.gnu.org/licenses/>.
+#
+#    Copyright (C) 2005 Andrea Righi <a.righi@cineca.it>
 #
 
-use lib "USR_PREFIX/lib/systemimager/perl";
 use strict;
 use Getopt::Long;
 use File::Basename;
 use XML::Simple;
-use SystemImager::Config;
+use SystemImager::JConfig;
 use SystemImager::HostRange;
-use vars qw($config $VERSION);
+use vars qw($jconfig $VERSION);
 
 my $program_name = basename($0);
 
@@ -120,9 +136,9 @@ select(STDOUT);
 $| = 1;
 
 my $database =  $SystemImager::HostRange::database;
-my $overrides = $config->default_override_dir();
+my $overrides = $jconfig->get('imager','overrides_dir');
 unless ($overrides) {
-	die "FATAL: parameter DEFAULT_OVERRIDE_DIR is not defined in /etc/systemimager/systemimager.conf\n";
+	die "FATAL: parameter imager.overrides_dir is not defined in ".$jconfig->fileName()."\n";
 }
 
 # Parse XML database.
@@ -315,6 +331,8 @@ Set the maximum number of concurrent sessions to NUM (default=32).
 =item B<--timeout, -t NUM>
 
 Set the timeout of the sessions (default=15s).
+
+=back
 
 =head1 NOTES
 

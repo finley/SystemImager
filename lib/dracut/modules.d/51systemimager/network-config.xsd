@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+     vi:set filetype=xml et ts=4:
+
+     This file is part of SystemImager.
+
+     SystemImager is free software: you can redistribute it and/or modify
+     it under the terms of the GNU General Public License as published by
+     the Free Software Foundation, either version 2 of the License, or
+     (at your option) any later version.
+
+     SystemImager is distributed in the hope that it will be useful,
+     but WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+     GNU General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with SystemImager. If not, see <https://www.gnu.org/licenses/>.
+
+     Copyright (C) 2017-2019 Olivier LAHAYE <olivier.lahaye1@free.fr>
+
+     Purpose:
+       XSD validation file for network-conf files.
+       man systemimager.netconf for details.
+ -->
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+	<!-- Types definition -->
+	<xsd:simpleType name="yesno"> <!-- matches yes or no -->
+		<xsd:restriction base="xsd:token">
+			<xsd:enumeration value="yes"/>
+			<xsd:enumeration value="no"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="devname"> <!-- linux device name based on https://github.com/systemd/systemd/blob/master/src/udev/udev-builtin-net_id.c -->
+		<!--
+		((eth|ib|bond)[0-9]+)|(						Classic naming (ethX ibX bondX)
+		(en|ib|sl|wl|ww)(						interface type
+		(b\d+)|								BCMA bus core number
+		(c[a-f0-9]+)|							bus id of a grouped CCW or CCW device
+		(o\d+(n\d+|d\d+)?)|						on-board device index number
+		(s\d+(f\d+)?(n\d+|d\d+)?)|					hotplug slot index number
+		(x([0-9A-Fa-f]{2}:){5}(([0-9A-Fa-f]{2}:){14})?[0-9A-Fa-f]{2})|	MAC address
+		((P\d+)?p\d+s\d+(f\d+)?(n\d+|d\d+)?)|				PCI geographical location
+		((P\d+)?p\d+s\d+(f\d+)?(u\d+)*(c\d+)?(i\d+)?)|			USB port number chain
+		(v\d+)|								VIO slot number (IBM PowerVM)
+		(a\d+i\d+)							Platform bus ACPI instance id
+))
+-->
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="((eth|ib|bond)[0-9]+)|((en|ib|sl|wl|ww)((b\d+)|(c[a-f0-9]+)|(o\d+(n\d+|d\d+)?)|(s\d+(f\d+)?(n\d+|d\d+)?)|(x([0-9A-Fa-f]{2}:){5}(([0-9A-Fa-f]{2}:){14})?[0-9A-Fa-f]{2})|((P\d+)?p\d+s\d+(f\d+)?(n\d+|d\d+)?)|((P\d+)?p\d+s\d+(f\d+)?(u\d+)*(c\d+)?(i\d+)?)|(v\d+)|(a\d+i\d+)))"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="initmethod">
+		<xsd:restriction base="xsd:token">
+			<xsd:enumeration value="static"/>
+			<xsd:enumeration value="dhcp"/>
+			<xsd:enumeration value="bootp"/>
+			<xsd:enumeration value="none"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="ipv4_with_opt_prefix"> <!-- ipv4 strict match with optional /mask(1..32) -->
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(/(3[0-2]|[1-2][0-9]|0?[1-9]))?"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="ipv4"> <!-- ipv4 strict match -->
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="ipv4_prefix"> <!-- ipv4 prefix (1..32) -->
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="3[0-2]|[1-2][0-9]|0?[1-9]"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="ipv6"> <!-- ipv6 strict match (that includes /mask) -->
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?"/> <!-- Strict ipv6 matching regexp (RFC4291 section 2.2) -->
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="macaddr"> <!-- match 6 or 20 bytes MAC addresses -->
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="([0-9A-Fa-f]{2}:){5}(([0-9A-Fa-f]{2}:){14})?[0-9A-Fa-f]{2}"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="uuid_id">
+		<xsd:restriction base="xsd:string"> <!-- uuid version 4 (1st digit of 3rd group) see RFC4122 -->
+			<xsd:pattern value="[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[4][0-9A-Fa-f]{3}-[89ABab][0-9A-Fa-f]{3}-[0-9A-Fa-f]{12}"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+<!-- Main structure of disk-layout configuration -->
+	<xsd:element name="config">
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element minOccurs="1" maxOccurs="unbounded" ref="if"/> <!-- Mandatory section -->
+			</xsd:sequence>
+		</xsd:complexType>
+	</xsd:element>
+	<!-- Disk section -->
+	<xsd:element name="if">
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element minOccurs="1" maxOccurs="1" ref="primary"/> <!-- Need one primary; no less, no more -->
+				<xsd:element minOccurs="0" maxOccurs="unbounded" ref="alias"/>
+				<xsd:element minOccurs="0" maxOccurs="unbounded" ref="slave"/>
+			</xsd:sequence>
+			<xsd:attribute name="dev" type="devname" use="required"/> <!-- Network interface name -->
+			<xsd:attribute name="control" use="required"> <!-- Network device type -->
+				<xsd:simpleType>
+					<xsd:restriction base="xsd:token">
+						<xsd:enumeration value="legacy"/> <!-- old network configuration -->
+						<xsd:enumeration value="nm"/> <!-- network manager (shortcut name) -->
+						<xsd:enumeration value="NetworkManager"/> <!-- network manager (full name) -->
+						<xsd:enumeration value="systemd"/> <!-- new systemd-networkd -->
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:attribute>
+			<xsd:attribute name="type" use="required"> <!-- Network device type -->
+				<xsd:simpleType>
+					<xsd:restriction base="xsd:token">
+						<xsd:enumeration value="DSL"/> <!-- not supported -->
+						<xsd:enumeration value="Ethernet"/>
+						<xsd:enumeration value="Infiniband"/>
+						<xsd:enumeration value="Wi-Fi"/> <!-- not supported -->
+						<xsd:enumeration value="Bond"/>
+						<xsd:enumeration value="Bridge"/> <!-- not supported -->
+						<xsd:enumeration value="IP tunnel"/> <!-- not supported -->
+						<xsd:enumeration value="Team"/> <!-- not supported -->
+						<xsd:enumeration value="VLAN"/> <!-- not supported -->
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:attribute>
+		</xsd:complexType>
+		<!-- enforces partition @num to be unique within a disk section -->
+		<!-- <xsd:unique name="uniquePartitionId">
+			<xsd:selector xpath="part"/>
+			<xsd:field xpath="@num"/>
+		</xsd:unique> -->
+	</xsd:element>
+	<xsd:element name="primary">
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element minOccurs="0" maxOccurs="1" ref="ip"/>
+				<xsd:element minOccurs="0" maxOccurs="1" ref="ip6"/>
+				<xsd:element minOccurs="0" maxOccurs="1" ref="options"/>
+				<xsd:element minOccurs="0" maxOccurs="1" ref="dns"/>
+			</xsd:sequence>
+			<xsd:attribute name="name" type="devname"/> <!-- The interface name. (defaults to device name) -->
+			<xsd:attribute name="uuid" type="uuid_id"/>
+			<xsd:attribute name="onboot" type="yesno"/> <!-- defaults to yes -->
+			<xsd:attribute name="bootproto" type="initmethod" use="required"/>
+			<xsd:attribute name="userctl" type="yesno"/> <!-- defaults to no -->
+			<xsd:attribute name="master" type="devname"/> <!-- The master interface name if this is a slave on a bond. -->
+		</xsd:complexType>
+	</xsd:element>
+	<xsd:element name="alias">
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element minOccurs="1" maxOccurs="1" ref="ip"/>
+				<xsd:element minOccurs="0" maxOccurs="1" ref="ip6"/>
+			</xsd:sequence>
+			<xsd:attribute name="id" use="required"> <!-- The interface alias id. -->
+				<xsd:simpleType>
+					<xsd:restriction base="xsd:nonNegativeInteger"/> <!-- alias id must be a positive or null integer -->
+				</xsd:simpleType>
+			</xsd:attribute>
+			<xsd:attribute name="uuid" type="uuid_id"/>
+			<xsd:attribute name="onparent" type="yesno"/> <!-- defaults to yes -->
+		</xsd:complexType>
+	</xsd:element>
+	<xsd:element name="slave">
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element minOccurs="0" maxOccurs="1" ref="options"/>
+			</xsd:sequence>
+			<xsd:attribute name="name" type="devname" use="required"/> <!-- reference to the interface name -->
+			<xsd:attribute name="uuid" type="uuid_id"/>
+		</xsd:complexType>
+	</xsd:element>
+	<xsd:element name="ip">
+		<xsd:complexType>
+			<xsd:attribute name="ipv4_failure_fatal" type="yesno"/>
+			<xsd:attribute name="ipaddr" type="ipv4_with_opt_prefix"/>
+			<xsd:attribute name="prefix" type="ipv4_prefix"/>
+			<xsd:attribute name="netmask" type="ipv4"/>
+			<xsd:attribute name="broadcast" type="ipv4"/>
+			<xsd:attribute name="gateway" type="ipv4"/>
+			<xsd:attribute name="def_route" type="yesno"/>
+			<xsd:attribute name="mtu" type="xsd:int"/>
+			<xsd:attribute name="ipv4_route_metric" type="xsd:int"/>
+		</xsd:complexType>
+	</xsd:element>
+	<xsd:element name="ip6">
+		<xsd:complexType>
+			<xsd:attribute name="ipv6_failure_fatal" type="yesno"/>
+			<xsd:attribute name="ipv6_init" type="yesno"/>
+			<xsd:attribute name="ipv6_autoconf" type="yesno"/>
+			<xsd:attribute name="ipv6_addr" type="ipv6"/>
+			<xsd:attribute name="ipv6_defaultgw" type="ipv6"/>
+			<xsd:attribute name="ipv6_defroute" type="yesno"/>
+			<xsd:attribute name="ipv6_mtu" type="xsd:int"/>
+			<xsd:attribute name="ipv6_route_metric" type="xsd:int"/>
+		</xsd:complexType>
+	</xsd:element>
+	<xsd:element name="options">
+		<xsd:complexType>
+			<xsd:attribute name="hwaddr" type="macaddr"/> <!-- make sure device is the correct one -->
+			<xsd:attribute name="macaddr" type="macaddr"/> <!-- set a new MAC addr to device -->
+			<xsd:attribute name="bonding_opts">
+				<xsd:simpleType>
+					<xsd:restriction base="xsd:string"> <!-- Basic module space separated param list -->
+						<xsd:pattern value="[A-Za-z][0-9A-Za-z_]*[0-9A-Za-z]=[0-9A-Za-z_-]+(\s[A-Za-z][0-9A-Za-z_]*[0-9A-Za-z]=[0-9A-Za-z_-]+)*"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:attribute>
+		</xsd:complexType>
+	</xsd:element>
+	<xsd:element name="dns">
+		<xsd:complexType>
+			<xsd:attribute name="servers" use="required">
+				<xsd:simpleType> <!-- TODO: Allow IPV6 DNS -->
+					<xsd:restriction base="xsd:string"> <!-- Match comma separated list of ipv4 addresses -->
+						<xsd:pattern value="(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(,(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){0,2}"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:attribute>
+			<xsd:attribute name="search">
+				<xsd:simpleType>
+					<xsd:restriction base="xsd:string"> <!-- Match a comma (or space) separated list of DNS domains -->
+						<xsd:pattern value="([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}([ ,]([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,})*"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:attribute>
+			<xsd:attribute name="peerdns" type="yesno"/>
+			<xsd:attribute name="ipv6_peerdns" type="yesno"/>
+		</xsd:complexType>
+	</xsd:element>
+</xsd:schema>

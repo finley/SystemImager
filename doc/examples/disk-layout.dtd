@@ -1,0 +1,67 @@
+<!-- Description of disk layout configuration. -->
+<!-- man autoinstallscript.conf for details. -->
+<!ELEMENT config (disk+, raid*, lvm*, bootloader*, fsinfo+)>
+<!-- Disk section -->
+<!ELEMENT disk (part+)>
+		<!ATTLIST disk dev CDATA #REQUIRED>
+		<!ATTLIST disk label_type (msdos|gpt|convert|none) #REQUIRED>
+		<!ATTLIST disk unit_of_measurement (TB|TiB|GB|GiB|MB|MiB|kB|KiB|B|s|percent|percentage) #REQUIRED>
+<!ELEMENT part EMPTY>
+		<!ATTLIST part num CDATA #REQUIRED>
+		<!ATTLIST part size CDATA #REQUIRED>
+		<!ATTLIST part p_type (primary|extended|logical) #REQUIRED>
+		<!ATTLIST part id CDATA #IMPLIED>
+		<!ATTLIST part p_name CDATA #IMPLIED>
+		<!ATTLIST part flags CDATA #IMPLIED>
+		<!ATTLIST part raid_dev CDATA #IMPLIED>
+		<!ATTLIST part lvm_group CDATA #IMPLIED>
+<!-- Optionnal raid section -->
+<!ELEMENT raid (raid_disk+)>
+<!ELEMENT raid_disk EMPTY>
+		<!ATTLIST raid_disk name CDATA #REQUIRED>
+		<!ATTLIST raid_disk raid_level (linear|raid0|0|stripe|raid1|1|mirror|raid4|4|raid5|5|raid6|6) #REQUIRED>
+		<!ATTLIST raid_disk raid_devices CDATA #IMPLIED>
+		<!ATTLIST raid_disk spare_devices CDATA #IMPLIED>
+		<!ATTLIST raid_disk rounding CDATA #IMPLIED>
+		<!ATTLIST raid_disk layout (left-asymmetric|right-asymmetric|left-symmetric|right-symmetric) #IMPLIED>
+		<!ATTLIST raid_disk chunk_size CDATA #IMPLIED>
+		<!ATTLIST raid_disk lvm_group CDATA #IMPLIED>
+		<!ATTLIST raid_disk devices CDATA #IMPLIED>
+<!-- optionnal lvm section -->
+<!ELEMENT lvm (lvm_group+)>
+		<!ATTLIST lvm version CDATA #IMPLIED>
+<!ELEMENT lvm_group (lv+)>
+		<!ATTLIST lvm_group name CDATA #REQUIRED>
+		<!ATTLIST lvm_group max_log_vols CDATA #REQUIRED>
+		<!ATTLIST lvm_group max_phys_vols CDATA #REQUIRED>
+		<!ATTLIST lvm_group phys_extent_size CDATA #REQUIRED>
+<!ELEMENT lv EMPTY>
+		<!ATTLIST lv name CDATA #REQUIRED>
+		<!ATTLIST lv size CDATA #REQUIRED>
+		<!ATTLIST lv lv_options CDATA #IMPLIED>
+<!-- optionnal (but recommanded) bootloader section -->
+<!ELEMENT bootloader (target+)>
+		<!ATTLIST bootloader flavor (grub|grub2|rEFInd|clover) #REQUIRED>
+		<!ATTLIST bootloader install_type (legacy|efi) #REQUIRED>
+		<!ATTLIST bootloader default_entry CDATA #IMPLIED>
+		<!ATTLIST bootloader timeout CDATA #IMPLIED>
+<!ELEMENT target EMPTY>
+		<!ATTLIST target dev CDATA #REQUIRED>
+		<!ATTLIST target path CDATA #IMPLIED>
+<!-- filesystem informations -->
+<!ELEMENT fsinfo EMPTY>
+		<!ATTLIST fsinfo line CDATA #IMPLIED>
+		<!ATTLIST fsinfo comment CDATA #IMPLIED>
+		<!ATTLIST fsinfo real_dev CDATA #REQUIRED>
+		<!ATTLIST fsinfo mp CDATA #REQUIRED>
+		<!ATTLIST fsinfo fs CDATA #REQUIRED>
+		<!ATTLIST fsinfo mkfs_opts CDATA #IMPLIED>
+		<!ATTLIST fsinfo options CDATA "defaults">
+		<!ATTLIST fsinfo dump CDATA #REQUIRED>
+		<!ATTLIST fsinfo pass CDATA #REQUIRED>
+		<!ATTLIST fsinfo format CDATA #IMPLIED>
+<!-- Deprecated Brian's Own Embedded Linux section -->
+<!-- This section is ignored and described here so old files wont failed when being verifyed. -->
+<!ELEMENT boel EMPTY>
+		<!ATTLIST boel devstyle (statici|udev|devfs) #IMPLIED>
+

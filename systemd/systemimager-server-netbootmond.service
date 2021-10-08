@@ -1,0 +1,31 @@
+#
+#   "SystemImager"
+#
+#   Copyright (C) 2018 Olivier Lahaye
+#
+#   $Id$
+#
+# SystemImager's daemon for controlling netboot clients.
+# If clients are configured to always boot from the network, 
+# si_netbootmond can be configured to tell them to boot off their
+# local disks each time they boot after having completed a 
+# successful autoinstall.
+#
+# Do not modify this file. Instead, use systemd override.
+# Set modified entries in /etc/systemd/system/systemimager-server-netbootmond.service.d/<name>.conf
+
+[Unit]
+ConditionPathExists=/etc/systemimager/systemimager.conf
+Description=SystemImager's daemon for net boot control
+
+[Service]
+Type=forking
+# Default value for NET_BOOT_DEFAULT. Default: "net". Can be "local or net"
+Environment=NET_BOOT_DEFAULT=net
+# EnvironmentFile overrides default values
+EnvironmentFile=/etc/systemimager/systemimager.conf
+PIDFile=/var/run/si_netbootmond.pid
+ExecStart=/usr/sbin/si_netbootmond
+
+[Install]
+WantedBy=multi-user.target

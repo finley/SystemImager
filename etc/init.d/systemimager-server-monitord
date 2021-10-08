@@ -23,43 +23,19 @@
 ### END INIT INFO
 
 PNAME=si_monitor
-PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin:
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
 PIDFILE=/var/run/si_monitor.pid
-
-# Comment these lines if you want to disable logging
-# for this service.
-LOGFILE=/var/log/systemimager/si_monitor.log
-
-# Can be 1 (error), 2 (warning) or 3 (debug).
-# default: warning.
-LOGLEVEL=2
 
 case "$1" in
   start)
-    echo -n "Starting SystemImager's installation monitoring: si_monitor... "
+    echo -n "Starting SystemImager's installation monitoring: si_monitord... "
     if [ -e $PIDFILE ]; then
         echo -e "failed.\nPID file $PIDFILE exists.  Must be already running."
         exit 1
     fi
-    # Check if ithreads are supported.
-    if perl -e 'use Config; exit ($Config{useithreads} ne "define");'; then
-        SI_MONITOR=`which si_monitor 2>/dev/null`
-    else
-        SI_MONITOR="`which perl 2>/dev/null` -Mforks -Mforks::shared `which si_monitor`"
-        cat << EOF
-
-WARNING: your version of perl doesn't support ithreads!
-
-It's strongly suggested to use a threaded perl (built with 'useithreads').
-
-Falling back to thread emulation via perl-forks...
-EOF
-    fi
-    if [ ! -z $LOGFILE ]; then
-        $SI_MONITOR --log $LOGFILE --log_level $LOGLEVEL 0>/dev/null >&0 2>&0 &
-    else
-        $SI_MONITOR 0>/dev/null >&0 2>&0 &
-    fi
+    SI_MONITOR=`type -p si_monitord`
+    test -z "$SI_MONITOR" && echo "ERROR: si_monitord not found" && exit 1
+    $SI_MONITOR 0>/dev/null >&0 2>&0 &
     if ps -p $! >/dev/null 2>&1; then
         echo "ok."
     else

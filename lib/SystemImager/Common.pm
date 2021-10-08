@@ -1,10 +1,23 @@
 #
-#   "SystemImager"
+#    vi:set filetype=bash et ts=4:
 #
-#   Copyright (C) 2001-2006 Brian Elliott Finley
-#   Copyright (C) 2002 Dann Frazier <dannf@dannf.org>
+#    This file is part of SystemImager.
 #
-#   $Id$
+#    SystemImager is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    SystemImager is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with SystemImager. If not, see <https://www.gnu.org/licenses/>.
+#
+#    Copyright (C) 2001-2006 Brian Elliott Finley
+#    Copyright (C) 2002 Dann Frazier <dannf@dannf.org>
 #
 
 package SystemImager::Common;
@@ -65,11 +78,12 @@ sub get_active_swaps_by_dev {
     # and should be formatted and activated during autoinstall. -BEF-
     #
     my %active_swaps_by_dev;
-    my $cmd = "swapon -s";
+    my $cmd = "LC_ALL=C swapon -s";
     open (FH, "$cmd|") or croak("Couldn't execute $cmd to read the output.");
         while (<FH>) {
             my ($dev, $type, $size, $used, $priority) = split;
             next if ($dev eq 'Filename');
+	    next if (! -b $dev); # Ignore fake swap like /swap in a container
             $active_swaps_by_dev{$dev} = 1;
             # If swap is over LVM add also the standard device name. -AR-
             if ($dev =~ /^\/dev\/mapper\/([^-]+)-(.*)$/) {
@@ -100,6 +114,8 @@ sub get_swap_devs_by_label {
     for my $line (@swaps) {
         chomp $line;
         my($dev) = (split(/\s+/, $line))[0];
+
+	next if (! -b $dev); # Ignore fake swap like /swap in a container
 
         open(SWAPDEV, '<', $dev) or die "Could not open $dev for read: $!\n";
         my $bytes_read = sysread(SWAPDEV, $buf, $swap_struct_size, 0);
@@ -135,6 +151,8 @@ sub get_swap_devs_by_uuid {
     for my $line (@swaps) {
         chomp $line;
         my($dev) = (split(/\s+/, $line))[0];
+
+	next if (! -b $dev); # Ignore fake swap like /swap in a container
 
         open(SWAPDEV, '<', $dev) or die "Could not open $dev for read: $!\n";
         my $bytes_read = sysread(SWAPDEV, $buf, $swap_struct_size, 0);
@@ -365,7 +383,7 @@ sub write_auto_install_script_conf_header {
     open (DISK_FILE, ">$file") or die ("FATAL: Couldn't open $file for writing!"); 
         print DISK_FILE qq(<!--\n);
         print DISK_FILE qq(  \n);
-        print DISK_FILE qq(  autoinstallscript.conf\n);
+        print DISK_FILE qq(  disks_layout.xml\n);
         print DISK_FILE qq(  vi:set filetype=xml:\n);
         print DISK_FILE qq(  \n);
         print DISK_FILE qq(  This file contains partition information about the disks on your golden\n);
@@ -469,7 +487,7 @@ sub save_partition_information {
             #
             #   "help mkfs"
             #
-            my $fs_regex = '(ext4|ext3|ext2|fat32|fat16|hfs|jfs|linux-swap\(.*\)|linux-swap|ntfs|reiserfs|hp-ufs|sun-ufs|xfs)\s*';
+            my $fs_regex = '(ext4|ext3|ext2|fat32|fat16|hfs|jfs|linux-swap\(.*\)|linux-swap|ntfs|reiserfs|hp-ufs|sun-ufs|xfs|btrfs)\s*';
 
             #
             # flag_regex arguments taken from parted on RHEL4.  For more info on 
@@ -696,28 +714,31 @@ sub save_partition_information {
                             }
                         }
 
-                        #
-                        # Get rid of parted's fs info.  We don't use it.  But we do need 
-                        # 'name' and 'flags', and it's a pain in the but to parse this
-                        # output with no token in unused fields.  -BEF-
-                        #
-                        $leftovers =~ s/^$fs_regex//go;
+                        $flags = ''; # Make sure flags is defined
 
-                        # Get rid of empty elements in the flags output. -AR-
-                        $leftovers = join(',', grep /\S/, (split(/,/, $leftovers)));
+			# If extended partition, no flags and no filesystem type => $leftovers is undefined
+			if (defined($leftovers)) {
+                            #
+                            # Get rid of parted's fs info.  We don't use it.  But we do need 
+                            # 'name' and 'flags', and it's a pain in the but to parse this
+                            # output with no token in unused fields.  -BEF-
+                            #
+                            $leftovers =~ s/^$fs_regex//go;
 
-                        #
-                        # Extract any flags, and remove them from the leftovers. -BEF-
-                        #
-                        if( $leftovers =~ s/\s*(($flag_regex)(, *$flag_regex)*)\s*$//go ) {
-                            $flags = $1;
-                        } else {
-                            $flags = '';
-                        }
-                        # Strip unwanted spaces and commas.
-                        $flags =~ s/ //g;
-                        $flags =~ s/^,+//;
-                        $flags =~ s/,+$//;
+                            # Get rid of empty elements in the flags output. -AR-
+                            $leftovers = join(',', grep /\S/, (split(/,/, $leftovers)));
+
+                            #
+                            # Extract any flags, and remove them from the leftovers. -BEF-
+                            #
+                            if( $leftovers =~ s/\s*(($flag_regex)(, *$flag_regex)*)\s*$//go ) {
+                                $flags = $1;
+                                # Strip unwanted spaces and commas.
+                                $flags =~ s/ //g;
+                                $flags =~ s/^,+//;
+                                $flags =~ s/,+$//;
+                            }
+			}
                     }
                     
                     my $size = $endMB - $startMB;
@@ -888,7 +909,7 @@ sub _turn_sfdisk_output_into_generic_partitionschemes_file {
      
         # Figure out what the fstype is based on sfdisk's Id tag.  As far as parted (the tool 
         # will be used to re-create this info) is concerned, the following fstypes are valid:
-        # ext3, ext2, fat32, fat16, hfs, jfs, linux-swap, ntfs, reiserfs, hp-ufs, sun-ufs, xfs
+        # ext3, ext2, fat32, fat16, hfs, jfs, linux-swap, ntfs, reiserfs, hp-ufs, sun-ufs, xfs, btrfs
         #
         # Also figure out what the partition type is (primary, extended, or logical), and any
         # other flags that may be set.  Valid flags from parted's perspective are:

@@ -1,24 +1,35 @@
 #!/usr/bin/perl -w
-
 #
-#   "SystemImager" 
+#    vi:set filetype=perl:
 #
-#   Copyright (C) 1999-2011 Brian Elliott Finley
-#   
-#   $Id$
+#    This file is part of SystemImager.
 #
+#    SystemImager is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 2 of the License, or
+#    (at your option) any later version.
 #
-#   2004.09.27  Brian Elliott Finley
-#   - allow -v as unique option for --verbose
-#   - tweak --help formatting
+#    SystemImager is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
 #
-#   2011.07.18  Brian Elliott Finley
-#   - patch provided by Thomas Zeiser:
+#    You should have received a copy of the GNU General Public License
+#    along with SystemImager. If not, see <https://www.gnu.org/licenses/>.
 #
-#       si_rmimage currently does not remove the UYOK boot files from
-#       (usually) /usr/share/systemimager/boot/ARCH/IMAGE. The patch
-#       will try to remove them, too. Path and architecutre are
-#       determined as in other systemimager tools/libs.
+#    Copyright (C) 1999-2011 Brian Elliott Finley
+#
+#    2004.09.27  Brian Elliott Finley
+#    - allow -v as unique option for --verbose
+#    - tweak --help formatting
+#
+#    2011.07.18  Brian Elliott Finley
+#    - patch provided by Thomas Zeiser:
+#
+#        si_rmimage currently does not remove the UYOK boot files from
+#        (usually) /usr/share/systemimager/boot/ARCH/IMAGE. The patch
+#        will try to remove them, too. Path and architecutre are
+#        determined as in other systemimager tools/libs.
 #
 
 # set some variables
@@ -27,34 +38,46 @@ $program_name="si_rmimage";
 $get_help = "         Try \"$program_name -help\" for more options.";
 
 # declare modules
-use lib "USR_PREFIX/lib/systemimager/perl";
 use File::Copy;
 use File::Path;
 use Getopt::Long;
 use SystemImager::Server;
 use SystemImager::Common;
-use SystemImager::Config;
+use SystemImager::JConfig;
+use vars qw($jconfig);
 
 ### BEGIN parse the config file ###
-my $autoinstall_script_dir = $config->autoinstall_script_dir();
+my $autoinstall_script_dir = $jconfig->get('imager','scripts_dir');
 unless ($autoinstall_script_dir) {
-    die "FATAL: parameter AUTOINSTALL_SCRIPT_DIR is not defined in /etc/systemimager/systemimager.conf\n";
+    die "FATAL: parameter imager.scripts_dir is not defined in ".$jconfig->fileName()."\n";
 }
-my $autoinstall_boot_dir = $config->autoinstall_boot_dir();
+my $autoinstall_boot_dir = $jconfig->get('pxe','boot_files');
 unless ($autoinstall_boot_dir) {
-    die "FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in /etc/systemimager/systemimager.conf\n";
+    die "FATAL: parameter pxe.boot_files is not defined in ".$jconfig->fileName()."\n";
 }
-my $rsyncd_conf = $config->rsyncd_conf();
+my $rsyncd_conf = $jconfig->get('xmit_rsync','config_file');
 unless ($rsyncd_conf) {
-    die "FATAL: parameter RSYNCD_CONF is not defined in /etc/systemimager/systemimager.conf\n";
+    die "FATAL: parameter xmit_rsync.config_file is not defined in ".$jconfig->fileName()."\n";
 }
-my $rsync_stub_dir = $config->rsync_stub_dir();
+my $rsync_stub_dir = $jconfig->get('xmit_rsync','stubs_dir');
 unless ($rsync_stub_dir) {
-    die "FATAL: parameter RSYNC_STUB_DIR is not defined in /etc/systemimager/systemimager.conf\n";
+    die "FATAL: parameter xmit_rsync.stubs_dir is not defined in ".$jconfig->fileName()."\n";
 }
-my $default_override_dir = $config->default_override_dir();
+my $default_override_dir = $jconfig->get('imager','overrides_dir');
 unless ($default_override_dir) {
-    die "FATAL: parameter DEFAULT_OVERRIDE_DIR is not defined in /etc/systemimager/systemimager.conf\n";
+    die "FATAL: parameter imager.overrides_dir is not defined in ".$jconfig->fileName()."\n";
+}
+my $torrent_tarballs_dir = $jconfig->get('xmit_torrent','tarballs_dir');
+unless ($torrent_tarballs_dir) {
+    die "FATAL: parameter xmit_torrent.tarballs_dir is not defined in ".$jconfig->fileName()."\n";
+}
+my $torrent_torrents_dir = $jconfig->get('xmit_torrent','torrents_dir');
+unless ($torrent_torrents_dir) {
+    die "FATAL: parameter xmit_torrent.torrents_dir is not defined in ".$jconfig->fileName()."\n";
+}
+my $flamethrower_conf = $jconfig->get('xmit_flamethrower','config_file');
+unless ($flamethrower_conf) {
+    die "FATAL: parameter xmit_flamethrower.config_file is not defined in ".$jconfig->fileName()."\n";
 }
 ### END parse the config file ###
 
@@ -70,6 +93,27 @@ sub trim {
 sub check_if_root{
     unless($< == 0) { die "$program_name: Must be run as root!\n"; }
 }
+#
+# DeleteTree(absolute path to delete, safe mode)
+#
+sub DeleteTree($$) {
+  my ($path_to_delete, $safe_mode) = @_;
+  my $err=0;
+  rmtree($path_to_delete, { safe => $safe_mode, error => \$err });
+  if ($err && @$err) {
+    for my $diag (@$err) {
+      my ($f, $msg) = %$diag;
+      if ($f eq '') {
+        print "general error: $msg\n";
+      } else {
+        print "problem unlinking $f: $msg\n";
+      }
+    }
+    return 1; # Problem
+  }
+  return 0; # Ok
+}
+
 ### END functions ###
 
 # set version information
@@ -147,8 +191,9 @@ unless(($imagedir) or ($force)) {
 }
 
 # get architecture of the image (for removing UYOK boot files later on)
+# BUG: OL: /etc/systemimager/boot/ARCH not in images: broken?
 my $arch;
-$file=$imagedir . "/etc/systemimager/boot/ARCH";
+$file=$imagedir . "/etc/systemimager" . "/boot/ARCH"; # was $jconfig->systemimager_dir
 if( -e $file ) {
     open(FILE,"<$file") or die("Couldn't open $file for reading $!");
       $arch = (<FILE>)[0];
@@ -159,44 +204,80 @@ if( -e $file ) {
 # remove image
 if($verbose) {print "  Removing image $image.\n";}
 $file=$imagedir;
+
+# Make sure we don't work in "/" or with empty path.
+if(($file eq "/") || ($file eq "")) {
+    die("Unexpected image path: '$file'");
+}
+
+# We need to check if filesystems are mounted beneath the image root and
+# abort before calling rmtree() in order to avoid host special filesystems
+# like /dev to be damaged
+
+# Check if there are some mounted filesystems before trying to rmtree()
+my @mounts = ();
+open(MOUNTS, "< /proc/mounts") or die "cannot open /proc/mounts: $!";
+while (my $line = <MOUNTS>) {
+    chomp($line);
+    if ($line =~ /^.*\s+(\Q$file\E\/\S+)\s+.*$/) {
+        push(@mounts, $1); # Cannot unount hear otherwize /proc/mounts changes and we loose lines
+    }
+}
+close MOUNTS;
+# If @mounts is not empty, we need to stop here.
+if(@mounts) {
+  print "FATAL: Can't remove image $image from disk!\n";
+  print "       Some file systerms are still mounted in image:\n";
+  if($verbose) {
+    for my $mount (@mounts) {
+      print "       - $mount\n";
+    }
+  }
+  print "       Nothing has been done.\n";
+  exit 1;
+}
+
+# Cleaning image path:
 if($force) {
-  if($file) { rmtree($file, 0, 0); }
+  if($file) { DeleteTree($file, 0); }
 } else {
-  rmtree($file, 0, 0) or die "FATAL: Can't remove $file!\n";
+  DeleteTree($file, 1) and die "FATAL: Can't remove image path $file!\n";
 }
 
 # remove override
 if($verbose) {print "  Removing override $image.\n";}
 $file="$default_override_dir/$image";
 if($force) {
-  if($file) { rmtree($file, 0, 0); }
+  if($file) { DeleteTree($file, 0); }
 } else {
-  rmtree($file, 0, 0) or die "FATAL: Can't remove $file!\n";
+  DeleteTree($file, 1) and die "FATAL: Can't remove override path: $file!\n";
 }
 
 # remove BitTorrent files
 if($verbose) {print "  Removing BitTorrent files for $image.\n";}
-$file = $config->autoinstall_tarball_dir() . "/image-" . $image . ".tar.gz";
+
+$file = $torrent_tarballs_dir . "/image-" . $image . ".tar.gz";
 unlink($file) if (-f $file);
-$file = $config->autoinstall_tarball_dir() . "/image-" . $image . ".tar";
+$file = $torrent_tarballs_dir . "/image-" . $image . ".tar";
 unlink($file) if (-f $file);
-$file = $config->autoinstall_torrent_dir() . "/image-" . $image . ".tar.gz.torrent";
+
+$file = $torrent_torrents_dir . "/image-" . $image . ".tar.gz.torrent";
 unlink($file) if (-f $file);
-$file = $config->autoinstall_torrent_dir() . "/image-" . $image . ".tar.torrent";
+$file = $torrent_torrents_dir . "/image-" . $image . ".tar.torrent";
 unlink($file) if (-f $file);
 
 # remove master autoinstall script
 if($verbose) {print "  Removing master autoinstall script $image.master.\n";}
-$file="$autoinstall_script_dir/$image.master";
+$file="$autoinstall_script_dir/main-install/$image.master";
 if($force) {
   if($file) { unlink($file); }
 } else {
-  unlink($file) or die "FATAL: Can't remove $file!\n";
+  unlink($file) or print "INFO: No master script has been deleted (looked at: $file).\n";
 }
 
 # remove soft links
 if($verbose) {print "  Removing softlinks that point to $image.master.\n";}
-$cmd="cd $autoinstall_script_dir; find . -lname $image.master -exec rm -f \\{\\} \\;";
+$cmd="cd $autoinstall_script_dir/main-install; find . -lname $image.master -exec rm -f \\{\\} \\;";
 system($cmd);
 if($? != 0) { die "FATAL: couldn't remove softlinks that point to $image.master!"; }
 
@@ -209,7 +290,6 @@ SystemImager::Server->gen_rsyncd_conf($rsync_stub_dir, $rsyncd_conf);
 
 # remove image from flamethrower.conf file
 my $entry_name = $image;
-my $flamethrower_conf = "/etc/systemimager/flamethrower.conf";
 if(-e $flamethrower_conf) {
     SystemImager::Common->add_or_delete_conf_file_entry($flamethrower_conf, $entry_name) or
         die "$program_name: Cannot remove entry from $flamethrower_conf";
@@ -218,6 +298,8 @@ if(-e $flamethrower_conf) {
     $entry_name = "override_" . $image;
     SystemImager::Common->add_or_delete_conf_file_entry($flamethrower_conf, $entry_name) or
         die "$program_name: Cannot remove entry from $flamethrower_conf";
+} else {
+    print "WARN: xmit_flamethrower/config_file is unset or incorrect. Please, check configuration!\n";
 }
 
 # remove UYOK boot files
@@ -225,9 +307,9 @@ if(defined $arch) {
     if($verbose) {print "  Removing UYOK files associated with $image.\n";}
     $file="$autoinstall_boot_dir/$arch/$image";
     if($force) {
-      if($file) { rmtree($file, 0, 0); }
+      if($file) { DeleteTree($file, 0); }
     } else {
-      rmtree($file, 0, 0) or print "WARNING: failed to remove UYOK boot files in $file\n   (ignore this warning if you are not using UYOK).\n";
+      DeleteTree($file, 1) and print "WARNING: failed to remove UYOK boot files in $file\n   (ignore this warning if you are not using UYOK).\n";
     }
 } else {
     if($verbose) {print "  Architecture not defined, so NOT removing UYOK files associated with $image.\n";}

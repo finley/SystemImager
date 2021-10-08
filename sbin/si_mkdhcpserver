@@ -1,22 +1,34 @@
 #!/usr/bin/perl -w
-
 #
-# "SystemImager" 
+#    vi:set filetype=perl:
 #
-#  Copyright (C) 1999-2001 Brian Elliott Finley 
-#                          <brian@thefinleys.com>
-#  Copyright (C) 2002-2003 Bald Guy Software 
-#                          <brian@thefinleys.com>
+#    This file is part of SystemImager.
 #
-#  Others who have contributed to this code (in alphabetical order):
-#   John Goebel <jgoebel@valinux.com>
-#   Curtis Zinzilieta <czinzilieta@valinux.com>
+#    SystemImager is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 2 of the License, or
+#    (at your option) any later version.
 #
-#   See http://www.iana.org/assignments/bootp-dhcp-parameters for info on
-#   custom option numbers.
+#    SystemImager is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with SystemImager. If not, see <https://www.gnu.org/licenses/>.
+#
+#    Copyright (C) 1999-2019 Brian Elliott Finley <brian@thefinleys.com>
+#    Copyright (C) 2002-2003 Bald Guy Software
+#
+#    Others who have contributed to this code (in alphabetical order):
+#     John Goebel <jgoebel@valinux.com>
+#     Curtis Zinzilieta <czinzilieta@valinux.com>
+#     Olivier Lahaye <olivier.lahaye@cea.fr>
+#
+#    See http://www.iana.org/assignments/bootp-dhcp-parameters for info on
+#    custom option numbers.
 #
  
-use lib "USR_PREFIX/lib/systemimager/perl";
 use strict;
 use SystemImager::Common;
 use SystemImager::HostRange;
@@ -31,7 +43,7 @@ my $get_help = "  Try \"$program_name -help\" for more options.";
 my $version_info = <<"EOF";
 $program_name (part of SystemImager) version $VERSION
 
-Copyright (C) 2013 Brian Elliott Finley <brian\@thefinleys.com>
+Copyright (C) 2019 Brian Elliott Finley <brian\@thefinleys.com>
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 EOF
@@ -54,10 +66,8 @@ my $header = <<'EOF';
 #
 # "SystemImager" 
 #
-#  Copyright (C) 1999-2001 Brian Elliott Finley 
-#                          <brian@thefinleys.com>
-#  Copyright (C) 2002 Bald Guy Software 
-#                     <brian@thefinleys.com>
+#  Copyright (C) 1999-2019 Brian Elliott Finley <brian@thefinleys.com>
+#  Copyright (C) 2002 Bald Guy Software
 #
 #  This file was created with "si_mkdhcpserver", which is part of SystemImager.
 #  See http://systemimager.org/ for more information.
@@ -130,8 +140,8 @@ chomp $continue;
 
 
 # set some default values
-my $dhcpd_conf = "/etc/dhcpd.conf";
-my $dhcpd_version = "3";
+my $dhcpd_conf = "/etc/dhcp/dhcpd.conf";
+my $dhcpd_version = "0";
 print "Trying to probe your DNS domain. Please wait...";
 my $dnsdomainname = `dnsdomainname`;
 chomp $dnsdomainname;
@@ -155,6 +165,7 @@ my $swallow = "";
 
 # Oh where oh where could my dhcpd.conf file be?
 my @dhcpd_conf_file_locations_du_jour = ( 
+    "/etc/dhcp/dhcpd.conf",
     "/etc/dhcp3/dhcpd.conf",
     "/etc/dhcpd.conf"
 );
@@ -164,6 +175,15 @@ foreach my $file (@dhcpd_conf_file_locations_du_jour) {
         $dhcpd_conf = $file;
         last;
     }
+}
+#
+# Find dhcpd version
+if( -x '/usr/sbin/dhcpd' ) {
+    my $dhcpd_version=`/usr/sbin/dhcpd --version 2>&1`;
+    my @dhcp_major= $dhcpd_version =~ /(\d+)/ ;
+    $dhcpd_version = $dhcp_major[0];
+} else {
+    print "Can't run '/usr/sbin/dhcpd -v' to check dhcp server version. Assuming v3."
 }
 
 ### Begin questionnaire ###
@@ -177,8 +197,12 @@ have a response, such as no first or second DNS server, just hit
 
 EOF
 
-    print "What is your DHCP daemon major version number (2 or 3)? [$dhcpd_version]: ";
-    $dhcpd_version = get_response($dhcpd_version);
+    # Query for dhcpd version only if we were unable to determine installed version.
+    if ( "$dhcpd_version" eq "0" ) {
+        $dhcpd_version = 3; # defaults to 3
+        print "What is your DHCP daemon major version number (2 or 3)? [$dhcpd_version]: ";
+        $dhcpd_version = get_response($dhcpd_version);
+    }
 
     print "What is the name of your DHCP daemon config file? [$dhcpd_conf]: ";
     $dhcpd_conf = get_response($dhcpd_conf);
@@ -354,7 +378,7 @@ if ($dhcpd_version eq "2") {
     print DHCPDCONF qq(  option routers $router; \n);
 
     print DHCPDCONF qq(  # option-140 specifies the IP address of your SystemImager image server\n);
-    print DHCPDCONF qq(  option option-140 "$imageserver"; \n);
+    print DHCPDCONF qq(  option option-140 ) . $imageserver . qq(; \n);
   
     print DHCPDCONF qq(  # option-142 specifies the URL address of your ssh download\n);
     print DHCPDCONF qq(  # This should be in the format of "http://$imageserver/systemimager/boot/".\n);
@@ -422,7 +446,7 @@ if ($dhcpd_version eq "2") {
     print DHCPDCONF qq(\n);
 
     print DHCPDCONF qq(# option-140 is the IP address of your SystemImager image server\n);
-    print DHCPDCONF qq(option option-140 "$imageserver";\n);
+    print DHCPDCONF qq(option option-140 ) . $imageserver . qq(;\n);
     print DHCPDCONF qq(\n);
 
     print DHCPDCONF qq(# option-142 specifies the URL address of your ssh download\n);
@@ -491,6 +515,7 @@ system("chmod 660 $dhcpd_conf");
 
 # Oh where oh where could my leases file directory be?
 my @lease_file_directories_du_jour = ( 
+  "/var/lib/dhcpd",
   "/var/dhcp",
   "/var/state/dhcp",
   "/etc"

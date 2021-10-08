@@ -1,0 +1,142 @@
+#!/bin/bash
+#
+#    This file is part of SystemImager.
+#
+#    SystemImager is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    SystemImager is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with SystemImager. If not, see <https://www.gnu.org/licenses/>.
+#
+#    Copyright (C) 2019 Olivier Lahaye <olivier.lahaye@cea.fr>
+#
+# Purpose of this file:
+#    This command will check that some client configuration files are correct.
+
+SI_CONFIG_FILE=${SIS_CONFDIR:=/etc/systemimager}/systemimager.conf
+if test ! -f ${SI_CONFIG_FILE}
+then
+	echo "ERROR: File [$SI_CONFIG_DIR] missing."
+	exit 1
+fi
+
+AUTOINSTALL_SCRIPT_DIR=`sed -ne "s/^[[:space:]]*[^#]*[[:space:]]*AUTOINSTALL_SCRIPT_DIR[[:space:]]*=[[:space:]]*\\([^#]*\\).*$/\1/p" $SI_CONFIG_FILE`
+ERRORS_COUNT=0
+
+program_name=$(basename $0)
+
+usage() {
+cat 1>&2 <<EOF
+Usage:  $program_name option value"
+Options:
+	--client=<client name>
+	--config=<client config file>
+	--disks-layout=<disks layout file name>
+	--network-config=<network file name>
+	--cluster
+	--help
+EOF
+}
+
+test $# -eq 0 && usage
+
+error() {
+	local IFS='\n'
+	echo "ERROR: $1" >&2
+	shift
+	while [ $# -gt 0 ]
+	do
+		echo "       $1" >&2
+		shift
+	done
+	exit 1
+}
+
+lint_client() {
+	test -f $1 || error "File $1 not found!"
+}
+
+lint_config() {
+	test -f $1 || error "File $1 not found!"
+}
+
+lint_disk_layout() {
+	test -r /usr/lib/dracut/modules.d/51systemimager/disks-layout.xsd || error "/usr/lib/dracut/modules.d/51systemimager/disks-layout.xsd is not istalled! Please install systemimage-dracut module"
+	while [ $# -gt 0 ]
+	do
+		test -f $1 || error "File $1 not found!"
+		echo "===> Validating $1"
+		xmlstarlet val --err --xsd /usr/lib/dracut/modules.d/51systemimager/disks-layout.xsd $1 || ERRORS_COUNT=$(( $ERRORS_COUNT + 1 ))
+		echo
+		shift
+	done
+}
+
+lint_network_conf() {
+	while [ $# -gt 0 ]
+	do
+		test -r /usr/lib/dracut/modules.d/51systemimager/network-config.xsd || error "/usr/lib/dracut/modules.d/51systemimager/network-config.xsd is not installed! Please install systemimage-dracut module"
+		test -f $1 || error "File $1 not found!"
+		echo  "===> Validating $1"
+		xmlstarlet val --err --xsd /usr/lib/dracut/modules.d/51systemimager/network-config.xsd $1 || ERRORS_COUNT=$(( $ERRORS_COUNT + 1 ))
+		echo
+		shift
+	done
+}
+
+lint_cluster() {
+	test -f $1 || error "File $1 not found!"
+}
+
+PATH=/usr/bin:/usr/sbin:/bin:/sbin
+
+if [ -z "$AUTOINSTALL_SCRIPT_DIR" ]; then
+    echo "ERROR: AUTOINSTALL_SCRIPT_DIR not defined in $CONFIG_FILE"
+    exit 1
+fi
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --client=* )
+ 		CLIENT=${1#*=}
+		lint_client $CLIENT
+		shift ;;
+        --config=* )
+	    	CONFIG_FILE=${1#*=}
+		lint_config $AUTOINSTALL_SCRIPT_DIR/configs/$CONFIG_FILE
+		shift ;;	
+        --disks-layout=* )
+		DISKS_LAYOUT_FILE=${1#*=}
+		lint_disk_layout $AUTOINSTALL_SCRIPT_DIR/disks-layouts/$DISKS_LAYOUT_FILE
+		shift ;;
+        --network-config=* )
+		NETWORK_CONFIG_FILE=${1#*=}
+		lint_network_conf $NETWORK_CONFIG_FILE
+		shift ;;
+	--cluster )
+		CLUSTER_FILE=cluster.txt
+		lint_cluster $AUTOINSTALL_SCRIPT_DIR/$CLUSTER_FILE
+		shift ;;
+	--help )
+		usage
+		shift ;;
+        * )
+	       	usage
+		exit 1 ;;
+    esac
+done
+
+if test $ERRORS_COUNT -ne 0
+then
+	error "$ERRORS_COUNT validation(s) failed!"
+else
+	echo "All validation(s) succeeded."
+fi
+

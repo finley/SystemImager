@@ -1,37 +1,49 @@
 #!/usr/bin/perl -w
+#
+#    vi:set filetype=perl:
+#
+#    This file is part of SystemImager.
+#
+#    SystemImager is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    SystemImager is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with SystemImager. If not, see <https://www.gnu.org/licenses/>.
+#
+#    Copyright (C) 1999-2004 Brian Elliott Finley
+#
+#    2004.05.05 Brian Elliott Finley
+#    - Allow --update-script=yes  in addition to --force.
+#
 
-#
-#  "SystemImager" 
-#
-#  Copyright (C) 1999-2004 Brian Elliott Finley
-#
-#  $Id$
-#
-#  2004.05.05 Brian Elliott Finley
-#  - Allow --update-script=yes  in addition to --force.
-#
-
-use lib "USR_PREFIX/lib/systemimager/perl";
 use Getopt::Long;
 use SystemImager::Server;
 use SystemImager::Common;
-use SystemImager::Config;
-use vars qw($config $VERSION);
+use SystemImager::JConfig;
+use vars qw($jconfig $VERSION);
 
-my $config_dir = "/etc/systemimager";
+# Save how we were called so it can be reported as comment in the header of the generated script
+my $cmdline = $0." ".join(" ",@ARGV);
 
 ### BEGIN parse the config file ###
-my $rsync_stub_dir = $config->rsync_stub_dir();
+my $rsync_stub_dir = $jconfig->get('xmit_rsync','stubs_dir');
 unless ($rsync_stub_dir) {
-    die "FATAL: parameter RSYNC_STUB_DIR is not defined in /etc/systemimager/systemimager.conf\n";
+    die "FATAL: parameter xmit_rsync.stubs_diris not defined in ".$jconfig->fileName()."\n";
 }
-my $autoinstall_script_dir = $config->autoinstall_script_dir();
+my $autoinstall_script_dir = $jconfig->get('imager','scripts_dir');
 unless ($autoinstall_script_dir) {
-    die "FATAL: parameter AUTOINSTALL_SCRIPT_DIR is not defined in /etc/systemimager/systemimager.conf\n";
+    die "FATAL: parameter imager.scripts_dir is not defined in ".$jconfig->fileName()."\n";
 }
-my $rsyncd_conf = $config->rsyncd_conf();
+my $rsyncd_conf = $jconfig->get('xmit_rsync','config_file');
 unless ($rsyncd_conf) {
-    die "FATAL: parameter RSYNCD_CONF is not defined in /etc/systemimager/systemimager.conf\n";
+    die "FATAL: parameter xmit_rsync.config_file is not defined in ".$jconfig->fileName()."\n";
 }
 ### END parse the config file ###
 
@@ -114,13 +126,17 @@ The following options affect the autoinstall client after autoinstalling:
                 it as a backup and quick restore mechanism for a single machine.
 
 
- --post-install ACTION     Where ACTION can be BEEP, REBOOT, SHUTDOWN, or KEXEC.
+ --post-install ACTION     Where ACTION can be BEEP, REBOOT, SHUTDOWN, KEXEC or CMDLINE
 
                 BEEP 
                 ----------------------------------------------------------------
                 Clients will beep incessantly after succussful completion of an
-                autoinstall.  (default)
+                autoinstall.
 
+		DERECTBOOT
+		----------------------------------------------------------------
+		Clients will continue boot process without going thru a reboot.
+		(default)
                 REBOOT 
                 ----------------------------------------------------------------
                 Clients will reboot themselves after successful completion of 
@@ -136,13 +152,24 @@ The following options affect the autoinstall client after autoinstalling:
                 Clients will boot the kernels via kexec that were just installed
                 after successful completion of an autoinstall.
 
+                SHELL
+                ----------------------------------------------------------------
+                Clients will drop to an interactive shell after successful
+                completion of an autoinstall.
+
+		CMDLINE
+                ----------------------------------------------------------------
+		Client will read action from rd.sis.post-action= cmdline parameter
+		that was set in PXE config. Default is to reboot if parametter is
+		not set
+
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
 EOF
 
 # Set some defaults. -BEF-
 my $ip_assignment_method = "dhcp";
-my $post_install = "beep";
+my $post_install = "directboot";
 my $auto_install_script_conf;
 my $script_name;
 
@@ -209,6 +236,7 @@ if ($auto_install_script_conf) {
     }
 } else {
     # If an autoinstallscript was not specified, use default for autoinstallscript.conf. -BEF-
+    # OL: BUG: Deprecated stuffs. now using disks layout file.
     $auto_install_script_conf = "${imagedir}/etc/systemimager/autoinstallscript.conf";
     unless (-f $auto_install_script_conf) {
         die "ERROR: I can't find the autoinstallscript.conf file. See autoinstallscript.conf(8) for details.\n";
@@ -230,15 +258,16 @@ SystemImager::Server->validate_auto_install_script_conf( $auto_install_script_co
 SystemImager::Server->create_autoinstall_script(
 	$script_name,
 	$autoinstall_script_dir,
-	$config_dir,
+	'/etc/systemimager',
 	$image,
 	$overrides,
 	$imagedir,
 	$ip_assignment_method,
 	$post_install,
-    $listing,
-    $auto_install_script_conf,
-    $autodetect_disks,
+	$listing,
+	$auto_install_script_conf,
+	$autodetect_disks,
+	$cmdline
 );
 ### END create a fresh master autoinstall script ###
 

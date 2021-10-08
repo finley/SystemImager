@@ -1,38 +1,38 @@
 #!/usr/bin/perl -w
 #
-#  Copyright (C) 2003-2006 Brian Elliott Finley
-#  Copyright (C) 2006 Andrea Righi
+#    vi:set filetype=perl:
 #
-#  $Id$
-#   vi:set filetype=perl:
-# 
-#   This program is free software; you can redistribute it and/or modify
-#   it under the terms of the GNU General Public License as published by
-#   the Free Software Foundation; either version 2 of the License, or
-#   (at your option) any later version.
-# 
-#   This program is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#   GNU General Public License for more details.
-# 
-#   You should have received a copy of the GNU General Public License
-#   along with this program; if not, write to the Free Software
-#   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#    This file is part of SystemImager.
+#
+#    SystemImager is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    SystemImager is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with SystemImager. If not, see <https://www.gnu.org/licenses/>.
+#
+#    Copyright (C) 2003-2006 Brian Elliott Finley
+#    Copyright (C) 2006 Andrea Righi
 #
 
-use lib "USR_PREFIX/lib/systemimager/perl";
 use strict;
 use Carp;
 use POSIX;
 use File::Copy;
 use File::Path;
 use File::Basename;
+use File::Glob;
 use Getopt::Long;
-use vars qw($VERSION);
-use SystemImager::Config qw($config);
+use SystemImager::JConfig;
 use SystemImager::Common;
 use SystemImager::UseYourOwnKernel;
+use vars qw($jconfig $VERSION);
 
 # set version
 $VERSION = "SYSTEMIMAGER_VERSION_STRING";
@@ -40,24 +40,21 @@ $VERSION = "SYSTEMIMAGER_VERSION_STRING";
 # set extension to use when backing up config files
 my $backup_extension = ".before_systemimager-$VERSION";
 
-# configuration directory
-my $systemimagerdir = "/etc/systemimager";
-
 # location of temporary rsyncd.conf file
 my $rsyncd_conf_file = "/tmp/rsyncd.conf.$$";
 
 # set path
-$ENV{PATH} = "/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin";
+$ENV{PATH} = "/bin:/usr/bin:/sbin:/usr/sbin";
 
 # we rely on english text when parsing command output
 $ENV{"LANG"} = "C";
 
 my $progname = basename $0;
 
-my $ARCH = SystemImager::UseYourOwnKernel::_get_arch();
-my $autoinstall_boot_dir = $config->autoinstall_boot_dir;
+my $arch = SystemImager::UseYourOwnKernel::_get_arch();
+my $autoinstall_boot_dir = $jconfig->get('pxe','boot_files');
 unless ($autoinstall_boot_dir) {
-    die "FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in /etc/systemimager/systemimager.conf\n";
+    die "FATAL: parameter pxe.boot_files is not defined in ".$jconfig->fileName()."\n";
 }
 
 my $version_info = <<"EOF";
@@ -87,10 +84,6 @@ Options:
  -h, --help                
     Display this output.
 
- --arch ARCH
-    The CPU architecture of the resulting initrd boot image (if not specified
-    it is used the same architecture of the image server: $ARCH).
-
  --flavor FLAVOR
     The destination flavor to put the new boot package (kernel and
     initrd.img). This will create or overwrite a new boot flavor in 
@@ -119,18 +112,16 @@ Options:
     used with a greater variety of client hardware, but can make the
     resultant initrd.img much larger. 
 
- --include-system-firmwar
-    Include the firmwares that are currently installed on this machine
-    when creating the initrd.img.
-
-    Including all installed firmwares allors you initrd.img to be used
-    with a greater variety of client hardware, but can make the resultant
-    initrd.img larger.
-
  --kernel KERNEL
     Do not detect the kernel to use with UYOK, but instead use the
     file specified by the argument KERNEL.
-    If --kernel is not specified, the running kernel will be used.
+    If --kernel is not specified, the running kernel will be used if
+    its modules are available. Otherwise, the hight version in /boot
+    will be used.
+
+ --kver VERSION
+    Do not detect the kernel to use with UYOK, but instead use the
+    kernel with the specified version if available in /boot.
 
  --modules-dir DIR
     Get kernel modules to use with UYOK from the DIR repository.
@@ -138,19 +129,12 @@ Options:
     feature.
 
  --firmware-dir DIR
-    Get the firmwares to use from the DIR repository.
-    Use this parameter only with --with-system-firmware.
+    Add the firmwares to use from the DIR repository.
 
  --image IMAGENAME
     Get kernel and kernel modules automatically from the image specified
     by IMAGENAME to use with UYOK (if executed on image server).
     Use this parameter only if you use UYOK feature.
-
- --filesystem FILESYSTEM
-    Force the use of FILESYSTEM to create the initial ramdisk. Use the
-    filesystem name as specified in /proc/filesystems.
-    Important: the filesystem must be statically compiled in the kernel
-    used to install the clients.
 
  --ssh-key FILE
     Where FILE is the SSH2 id_dsa or id_rsa private key of the user account
@@ -164,10 +148,13 @@ Options:
     FILE can contain all the installation parameters necessary for the client
     (i.e. hostname, network configuration, image server address, log server,
     etc.).  This file is copied to /local.cfg into the initrd.img.  See
-    /usr/share/doc/systemimager-server-SYSTEMIMAGER_VERSION_STRING/local.cfg
-    (or /usr/share/doc/systemimager-server/examples/local.cfg in Debian-like
-    distributions) for a well commented example.  In general any installation
-    parameter passed via DHCP can be defined in local.cfg as well.
+    SYSTEMIMAGER_DOC_DIR/local.cfg for a well commented example.
+    In general any installation parameter passed via DHCP can be defined
+    in local.cfg as well.
+
+ --dracut-opts "options to add to dracut"
+    this is the way to add somme parameters to the dracut command that will
+    generate the image. e.g. --mdadmconf --strip --xz --uefi
 
 Download, report bugs, and make suggestions at:
 http://systemimager.org/
@@ -176,22 +163,21 @@ EOF
 
 GetOptions(
     "help|h"                 => \my $help,
-    "arch=s"               => \my $img_arch,
     "flavor=s"             => \my $flavor,
     "quiet"                => \my $quiet,
     "destination=s"        => \my $destination,
     "my-modules"           => \my $my_modules,
     "kernel=s"             => \my $custom_kernel,
+    "kver=s"               => \my $kernel_version,
     "modules-dir=s"        => \my $modules_dir,
     "image=s"              => \my $image,
-    "filesystem=s"         => \my $filesystem,
     "version"              => \my $version,
     "yes"                  => \my $yes,
     "ssh-key=s"            => \my $ssh_key,
     "authorized-keys=s"    => \my $authorized_keys,
     "config=s"             => \my $local_cfg,
-    "include-system-firmware" => \my $system_firmware,
     "firmware-dir=s"       => \my $firmware_dir,
+    "dracut-opts=s"        => \my $dracut_opts,
 ) || die "$help_info";
 
 
@@ -232,6 +218,12 @@ if (!($custom_kernel) and $modules_dir) {
     exit 1;
 }
 
+if ($kernel_version and ! glob("/boot/vmlinu{x,z}-$kernel_version /lib/modules/$kernel_version/vmlinu{x,z}")) {
+    print "FATAL: --kver=$kernel_version invalid! /boot/vmlinu{x,z}-$kernel_version or /lib/modules/$kernel_version/vmlinu{x,z} doesn't exists!\n";
+    print "Make sure /boot/vmlinuz-$kernel_version or /lib/modules/$kernel_version/vmlinu{x,z} is available!"; # TODO: list available versions.
+    exit 1;
+}
+
 if ($custom_kernel and !($modules_dir)) {
     print "WARNING: --kernel KERNEL used without --modules-dir DIR option!\n";
     print qq(You can use this option only if KERNEL is a monolithic kernel,\n) .
@@ -265,21 +257,10 @@ if ($my_modules and $image) {
     exit 1;
 }
 
-if (($filesystem) &&
-    ($filesystem !~ m/$SystemImager::UseYourOwnKernel::fs_regexp/)) {
-    print "FATAL:  unsupported filesystem: $filesystem!\n";
-    exit 1;
-}
-
 if($firmware_dir) {
-    # If firmware_dir is defined: --firmware-dir option is used.
-    # 1: Check that --firmware-dir is not used without --include-system-firmware (no sens)
-    if(!($system_firmware)) {
-        print "FATAL:  --firmware-dir option used without --include-system-firmware !\n";
-        print qq(Try "$progname --help" for more info.\n);
-        exit 1;
-    }
-    # 2: Check that firmware_dir value points to a directory.
+    # System firmwares are loaded by default by dracut.
+    # This options adds additionnal firmwares if needed.
+    # Check that firmware_dir value points to a directory.
     if( ! -d $firmware_dir) {
         print "FATAL:  firmware dir $firmware_dir not found!\n";
         exit 1;
@@ -312,7 +293,6 @@ exit(0);
 # Usage:
 # create_boot_package();
 sub create_boot_package {
-    my $arch = $img_arch ? $img_arch : $ARCH;
     my $verbose = 1 unless($quiet);
 
     unless ($destination) {
@@ -333,12 +313,12 @@ sub create_boot_package {
             }
         }
     }
-
+    # Removed: $filesystem system_firmware
     SystemImager::UseYourOwnKernel->create_uyok_initrd(
-        $arch, $my_modules, $custom_kernel, $modules_dir,
-        $image, $filesystem, $destination,
+        $my_modules, $custom_kernel, $kernel_version,
+        $modules_dir, $image, $destination,
         $ssh_key, $authorized_keys, $local_cfg,
-        $system_firmware, $firmware_dir, $verbose
+        $firmware_dir, $dracut_opts, $verbose
     );
 
     return 1;

@@ -1,17 +1,32 @@
 #!/usr/bin/perl -w
 #
-#  "SystemImager"
+#    vi:set filetype=perl:
 #
-#  Copyright (C) 2005 Andrea Righi <a.righi@cineca.it>
+#    This file is part of SystemImager.
+#
+#    SystemImager is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    SystemImager is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with SystemImager. If not, see <https://www.gnu.org/licenses/>.
+#
+#    Copyright (C) 2005 Andrea Righi <a.righi@cineca.it>
+#
 
-use lib "USR_PREFIX/lib/systemimager/perl";
 use strict;
 use Getopt::Long;
 use POSIX qw(uname);
-use SystemImager::Config;
+use SystemImager::JConfig;
 use SystemImager::Common;
 use SystemImager::Server;
-use vars qw($config $VERSION);
+use vars qw($jconfig $VERSION);
 
 my $VERSION = "SYSTEMIMAGER_VERSION_STRING";
 
@@ -85,9 +100,9 @@ unless ($arch) {
 # Set the shell PATH for system() calls.
 $ENV{PATH} = '/sbin:/usr/sbin:/usr/local/sbin:' . $ENV{PATH};
 
-my $autoinstall_boot_dir = $config->autoinstall_boot_dir();
+my $autoinstall_boot_dir = $jconfig->get('pxe','boot_files');
 unless ($autoinstall_boot_dir) {
-    die "FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in /etc/systemimager/systemimager.conf\n";
+    die "FATAL: parameter (pxe:boot_files) is not defined in ".$jconfig->fileName()."\n";
 }
 
 ### BEGIN evaluate commad line options ###
@@ -308,6 +323,8 @@ Specify an alternate autoinstall initrd.img. Default is
 A string of options appended to the autoinstall kernel boot options. For a list
 of all the valid installation parameters see:
 http://wiki.systemimager.org/index.php/Installation_Parameters.
+
+=back
 
 =head1 SEE ALSO
 

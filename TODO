@@ -1,12 +1,266 @@
 #
 #  vi:set filetype=conf tw=80:
 #
+#   Copyright (C) 1999-2015 Brian Elliott Finley
+#   Copyright (C) 2012-2019 Olivier Lahaye
 
-- Handle this error:
+mksiimage:223 use jconfig instead of harcoded path.
 
-  ERROR: unsupported kernel 3.13.0-32-generic!
-  root@redmine:~/.ssh# 
+Enhancement: disks-layout: make sur no duplicate label exists
+Enhancement: disks-layout: make sur DOS/FAT* labels are uppercase.
 
+============= TODO for the dracut change before release is possible ===========
+2nd I need to check a yume fix and check that yum-utils is required in packman
+3rd, I need to check systemimager imager
+There after I’ll document and post on maiing list
+
+BUG: fix si_prepareclient disks-layout.xml generation: lvm group names shouldn't have a dash. If hostname has a dash, remove it before using it in naming.
+BUG: si_prepareclient: check selinux and firewalld => disable if needed. Add option --finish to stop rsyncd and re-enable selinux and firewalld.
+
+systemimager-server postinstall error in opensuse:
+chown: invalid user: 'apache'
+
+dracut: dracut module 'modsign' will not be installed, because command 'keyctl' could not be found!
+dracut: dracut module 'url-lib' will not be installed, because command 'curl' could not be found!
+dracut: dracut module 'dmraid' will not be installed, because command 'dmraid' could not be found!
+dracut: dracut module 'dmsquash-live-ntfs' will not be installed, because command 'ntfs-3g' could not be found!
+dracut: dracut module 'multipath' will not be installed, because command 'multipath' could not be found!
+dracut: dracut module 'cifs' will not be installed, because command 'mount.cifs' could not be found!
+dracut: dracut module 'fcoe' will not be installed, because command 'dcbtool' could not be found!
+dracut: dracut module 'fcoe' will not be installed, because command 'fipvlan' could not be found!
+dracut: dracut module 'fcoe' will not be installed, because command 'lldpad' could not be found!
+dracut: dracut module 'fcoe' will not be installed, because command 'fcoemon' could not be found!
+dracut: dracut module 'fcoe' will not be installed, because command 'fcoeadm' could not be found!
+dracut: dracut module 'fcoe-uefi' will not be installed, because command 'dcbtool' could not be found!
+dracut: dracut module 'fcoe-uefi' will not be installed, because command 'fipvlan' could not be found!
+dracut: dracut module 'fcoe-uefi' will not be installed, because command 'lldpad' could not be found!
+dracut: dracut module 'iscsi' will not be installed, because command 'iscsi-iname' could not be found!
+dracut: dracut module 'iscsi' will not be installed, because command 'iscsiadm' could not be found!
+dracut: dracut module 'iscsi' will not be installed, because command 'iscsid' could not be found!
+dracut: dracut module 'nbd' will not be installed, because command 'nbd-client' could not be found!
+dracut: 95nfs: Could not find any command of 'rpcbind portmap'!
+dracut: dracut module 'biosdevname' will not be installed, because command 'biosdevname' could not be found!
+
+STD: /usr/share/ is to be considered as read-only and is for architecture independant files
+     http://refspecs.linuxfoundation.org/FHS_3.0/fhs-3.0.html#usrshareArchitectureindependentData
+     - Need to move /usr/share/systemimager/boot to var
+     - Need to update si_getimage, si_prepareclient and other SystemImager components
+BUG: CentOS-6: pre-pivot/10kill-dhclient.sh: line 6: kill: (785) - No such process
+DONE: Creating systemimager-monitor-firstboot init script
+     ls: cannot access /boot/vmlinuz-*: No such file or directory
+BUG: initrd:/scripts is seen as os filesystem and is bindmounted
+DONE: remote console hangs after filesystems init.
+REMOVED: si_monitortk is not refreshed after finalizing step (booting, ...)
+BUG: variables.txt is not updated with SI_IMAGING_STATUS that stays at "inprogress" step.
+- DONE: Add imager version to beginning of LOG.
+- Display imager version in plymouth interface.
+- Add multipathd support if possible (need to reverse engineer the dracut module).
+- Add drdb pre-config support if possible
+- DONE: Unpackaged file /usr/share/systemimager/boot/x86_64/standard/ARCH
+- shutdown network before directboot otherwise the interface is not restarted. Thus, if HWADDR is spoofed (in config),
+  this doesn't take effect. Network Manager doesn't restart the whole interface. started means do nothing for NetworkManager.
+  => Need investigations.
+- update sbin/si_mkdhcpserver so it works with systemd (also use service instead of running init.d script on old distros)
+- DONE: fix si_prepareclient so it uses si_mkbootpackage instead of trying to build its own kernel and fail.
+- fix si_getimage so it installs scripts in /var/lib/systemimager/scripts/main-install/
+  fix si_getimage so it installs correctly remote boot package
+  fix si_getimage so it moves <imagedir>/etc/systemimager/autoinstall_script.conf to disks layout.
+  fix si_getimage so it retreive/create the network configuration file.
+- Add imaging a list of packages instead of a directory (protocol:bootstrap)
+- DONE: Add network configuration using networkmanager or systemd-networkd (in a postinstall script at 1st)
+- DONE: Add install of monitor_rebooted service in dracut module instead of postinstall script.
+- DONE: Do not install grub on disk we did not handle
+- DONE: rewrite si_mkbootserver
+- use http://aria2.sourceforge.net/ for torrent / ftp / http / ... protocols.
+- DONE: migrate autoinstallscript.conf.content.sgml to systemimager.disk-layout.sgml
+- DONE: create systemimager.cmdline.sgml
+- DONE: and FIXED: check si_getimage: installs a main-install script with beep incesantly at the end.
+- DONE: imager configures client network
+- allow ipv6 DNS in network-configs.xsd
+- DONE: Display a relevant error message if ip= mention and invalid network interface.
+
+DONE: === WEB INTERFACE ON IMAGER as alternative to si_monitortk ===
+For now, the remote console has the following problems:
+DONE: Can’t see the console log of a NATed client being imaged
+DONE: Can’t see the console log if the client imaging is finished
+DONE: Can’t see multiple consoles at a time
+DONE: Can’t filter logs (select only errors or only warnings for example)
+DONE: Logs stays on client and needs to be transferred by hand if one want to share it
+DONE: Based on perl/Tk with depedancy to TkTermANSIColor that is not packaged in distros
+DONE: Has problems with some ncat versions (nc, ncat multiple versions, netcat) (sockets timeout, hangs if input timeout (filesystem init too long, …)
+DONE: Requires an X display to start si_monitortk
+DONE: Requires to connect to image server to start si_monitortk
+
+DONE:IMHO, a really cool feature would be to add a web interface to image server with the following features:
+DONE:- Hosts statuses (si_monitortk main window replacement)
+DONE:- List all known clients
+DONE:- Clicking on a client will show Console log (with page auto-refresh for update)
+- Add HELP tips for warning and errors (you click the message and an help page tries to give advise and solutions
+- List know clusters.
+DONE:- Info page with general setup
+- HTML Online Doc
+- PXE config
+=> Use XSL for displaying clients and consoles
+=> Use RSS news when an imaging has ended.
+- Room to add an admin interface to configure systemimager, but that requires lots of work (security and a PHP/CGI interface) so It’ll be released far later.
+DONE:	- Systemimager configuration
+	- Image creation
+	- PXE configuration (install kernels and initrd, create menu entries)
+	- Services configuration (start/stop/build services: rsync, …)
+	- do si_clusterconfig
+
+Server.pm:
+- remove _read_partition_info_and_prepare_parted_commands()
+- remove _read_partition_info_and_prepare_soft_raid_devs()
+- remove _read_partition_info_and_prepare_pvcreate_commands()
+- remove write_lvm_groups_commands()
+- remove write_lvm_volumes_commands()
+- remove _write_out_mkfs_commands()
+- remove append_variables_txt_with_ip_assignment_method()
+- remove _write_out_new_fstab_file()
+- remove write_sc_command_pre()
+- remove write_sc_command_post()
+- remove _write_out_umount_commands()
+- remove show_disk_edits()
+- remove edit_disk_names()
+- remove setup_kexec()
+- remove get_all_disks()
+- remove 
+
+- FIXED: /root/rpmbuild/BUILD/systemimager-4.5.0/tmp/dracutbase/modules.d/51systemimager/module-setup.sh: line 38: cd: /usr/share/systemimager/boot/x86_64/standard/initrd_template/: No such file or directory => ERROR only occures if package is not installed on system.
+- /run is not a virtual filesystem in old CentOS-6. Thus saving si_monitor.log there is useless. See if it can be achieved (in case of directboot) => It is stored in /dev/.initramfs (check dir name).
+- Add espeak log speak in case of warning or error.
+- DONE: Distros to support: debian, ubuntu
+- DONE: Distros supported: CentOS-6, CentOS-7, Fedora-27, OpenSuSE-42.3
+- DONE: Add directboot feature.
+- Check STAGING_DIR getarg. Seems not read anywhere.
+
+- Update si_prepareclient and si_mkbootpackage doc. (-kver parameter)
+- Fix si_mkbootpackage:
+>>> Creating new initrd addind staging dir:  /tmp/.systemimager.0
+tar: This does not look like a tar archive
+tar: Exiting with failure status due to previous errors
+- Fix si_mkbootpackage: avoid excluding empty driver dirs so dracut don't whine.
+
+- DONE: OpenSuSE 42.3: Finish port to wickedd-dhcp4
+  DONE:               have a look at http://manpag.es/leap421/5+wicked-config
+  DONE:	              /etc/wicked/dhcp4.xml ?
+
+- DONE: Fix build systemimager when it is not yet installed (/etc/systemimager/systemimager.conf missing
+  => si_mkbootpackage fails
+  SIS_CONFDIR=$RPM_BUILD_DIR/systemimager-4.5.0/etc dracutbasedir=$(pwd) perl -I ../../../sbin/si_mkbootpackage --dracut-opts="--local" --destination ../..
+FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in /etc/systemimager/systemimager.conf
+
+- Add support for querying password in plymouth theme to support SSH when no key is available.
+
+- DONE: Add systemd unit files
+
+- DONE: create /var/lib/systeimager/images-infos/
+  move /var/lib/systeimager/configs into /var/lib/systeimager/images-infos/
+  create /var/lib/systeimager/images-infos/scripts/{pre-install,main-install,post-install}
+  move /var/lib/systeimager/scripts/*{sh,master} /var/lib/systeimager/images-infos/scripts/main-install
+  move /var/lib/systeimager/images-infos/scripts/{pre,post}-install /var/lib/systeimager/images-infos/scripts/
+  move /var/lib/systeimager/scripts/disks-layouts /var/lib/systeimager/images-infos/
+  Result for find /var/lib/systeimager/:
+  /var/lib/systemimager/clients.xml
+  /var/lib/systemimager/images/
+  /var/lib/systemimager/images-infos/configs/
+  /var/lib/systemimager/images-infos/disks-layouts/
+  /var/lib/systemimager/images-infos/scripts/pre-install/
+  /var/lib/systemimager/images-infos/scripts/main-install/
+  /var/lib/systemimager/images-infos/scripts/post-install/
+  /var/lib/systemimager/overrides/
+  /var/lib/systemimager/tarballs/
+  /var/lib/systemimager/torrents/
+  /var/lib/systemimager/dokers/ # To be brainstormed
+  => dowload image-server:/var/lib/systemimager/images-infos/ to initramfs:/tmp/images-infos/ at early dracut stage (just when network is ok, in place of downloading configs)
+  => DONE
+
+- DONE: Partition are aligned to 1MiB so it fits all disks aligments.
+  DONE: Enhancement: use http://people.redhat.com/msnitzer/docs/io-limits.txt if possible for optimal aligment.
+               fallback to 1MiB aligment only if not supported/reported by disk.
+
+- DONE: Enhance filename guess and make it concistant across all things we guess
+  DONE: (IMAGENAME, SCRIPTNAME, SIS_CONFIG, DISK_LAYOUT)
+
+- disks layouts:
+	- DONE: <disk/part> Add missing @raid_dev in man autoinstallscript.conf
+	- <raid> @rounding: what are the acceptable units? K for sure; any other?
+	- DONE: <lvm> Add @lv_options to man autoinstallscript.conf
+	- <disk> @recreate="no" Add this parameter to not whipe+recreate table if it is already present.
+		=> If present but wrong type: error.
+		=> If present and expected type: use it.
+	- <part> @keep_existing="yes" If present, dont try to create it; size ignored. (needed to keep EFI partition)
+	- <boot> new section for boot loader/ boot manager / wanted menus
+- DONE: EFI support from scratch (be able to create the EFI partition and setup the EFI boot variables, kernel, and all that is needed to boot).
+
+- DONE (using bash) CentOS-6 uses dash (not bash. dash=debian ash, in buzybox since v0.52) in dracut. dash doesn't support ${VAR/search/replace} or ${VAR:start:end} or $(command) syntaxes.
+
+- OBSOLETE: need to fix mksiimage from systeminstaller that regenerate /etc/systemimager/rsyncd.conf with missing [configs] section.
+
+- fix si_mkautoinstallscript => remove si_mkautoinstallscript
+
+- DONE: update /var/lib/systemimager/ hyerarchy. try to move configs in scripts and try to rename script to a more suited name.
+
+- bittorrent protocol: use rria or torrent or ctorrent, opentracker?, mktorrent, ...
+
+- PARTIALY DONE: udpcast support
+
+- EARLY STEPS DONE: deploy a docker image on a physical node
+- Use Singularity as docker alternative to store and/or deploy an image (https://www.sylabs.io/singularity/)
+- Have a look at https://github.com/moby/moby/blob/master/contrib/download-frozen-image-v2.sh to download manually docker images.
+
+- EARLY STEPS DONE: NFS deployment method
+
+- DONE: create systemimager-xmit-docker.sh install a docker image from a docker server if possible. 
+   (cleaner to store image in docker container on a docker server than in an image server directory no?)
+
+- update mksiimage ( add "--docker" switch )
+
+
+#- rewrite si_mkbootpackage so it uses dracut.
+#  Right now in order to build an initramfs package you need to issue the following command:
+#  sudo dracut --force --add systemimager -no-hostonly --no-hostonly-cmdline --no-hostonly-i18n /path_to_image/image_name.img $(uname -r)
+#
+#  Example: to generate the systemimager-x86_64boot-standard-4.5.0-1.el7.noarch.rpm package content, you just have to issue the 2 commands:
+#  sudo dracut --force \
+#              --add systemimager \
+#              --no-hostonly --no-hostonly-cmdline --no-hostonly-i18n \
+#              /usr/share/systemimager/boot/x86_64/standard/initrd.img $(uname -r)
+#  sudo cp /boot/vmlinuz-$(uname -r) /usr/share/systemimager/boot/x86_64/standard/kernel
+#
+#  Note: if you're using qemu to test, you need to add the 2 following options to dracut command:
+#  --add qemu --add qemu-net
+=> DONE. Fully working
+
+- review all sbin/si_* commands.
+  => For now, only si_mkautoinstallscript is working but needs major cleaning (including System.pm)
+  => make sure that the $IMAGE_ROOT/etc/systemimager/etc/systemimager/autoinstallscript.conf doesn't contain any reference to system filesystems like (/proc, /dev, /dev/shm or so). Only filesystems that are not handled by systemd or udev like real filesystems, nfs mountpoints, ...
+
+#- si_monitortk should work and handle the new status "shell". At the end of the imaging, aside reboot halt, shutdown, you can add shell so the system drops an emergency shell. Usefulle for debugging.
+#  => Need to test the retrieving of logs from the nodes being imaged (can't test for now on a NAT VM)
+=> DONE: Fully working
+
+#- need to cleanup the loginfo, logwarn, logmsg functions in /lib/systemimager-lib.sh
+=> DONE: Fully working
+
+- need to comment /lib/autoinstall-lib.sh
+- need to review and update all headers with authors and copyrights
+- DONE: need to remove/cleanup useless stuffs in the source_tarball (kernel.rul and such).
+- DONE: need to update deb packaging
+- need to find a way to provide systemimager-x86_64boot-standard-4.5.0-1.el7.noarch.rpm without installing dracut-systemimager (does a dracut option allows to specify an alternative dracut directory))
+
+# Need to check perl deps to SystemInstaller in si_* commands
+perl(SystemConfig::Util::Cmd)
+perl(SystemConfig::Util::Log)
+perl(SystemConfig::Boot)
+
+============= TODO before use of dracut. Needs reviewing ======================
+#- Handle this error:
+#
+#  ERROR: unsupported kernel 3.13.0-32-generic!
+#  root@redmine:~/.ssh# 
+=> OBSOLETE.
 
 - create sbin/si_lsclient
 
@@ -16,17 +270,17 @@
 - find all systemconfigurator bits and update to postscript or other
 
 
-- When trying to complete the imaging, the SI master script needs to stop klogd
-  so that /a/proc and /a/ will umount cleanly (right now they get the device
-  busy msg)
-
-  - add entry to end of master script
-
+#- When trying to complete the imaging, the SI master script needs to stop klogd
+#  so that /sysroot/proc and /sysroot/ will umount cleanly (right now they get the device
+#  busy msg)
+#
+#  - add entry to end of master script
+=> OBSOLETE
 
 - When it's time to update the bittorrent client/server:
     http://www.rahul.net/dholmes/ctorrent/ 
 
-- Ideas on initrd
+- DONE: Ideas on initrd
     - Use initrd on client system or server system as base
         - Let the distros muck about with the auto-detect details and what not
           -- they do a good job of that now
@@ -34,16 +288,17 @@
         - Capture binaries from well known distros and package
             - Start with Ubuntu (what I'm running)
             - Simply modify existing make scripts
+=> DONE.
 
-    - Do build in a Dokker container?  Provide container for anyone who wants to
+    - Do build in a Docker container?  Provide container for anyone who wants to
       use it?
+=> DONE.
 
     - Dracut or mkinitramfs or (rhel5 tool)
         - target as alternate location
-
     - Dracut has an option to include an overlay directory in the initrd:
         http://people.redhat.com/harald/dracut-rhel6.html
-
+=> OBSOLETE. dracut was chosen for all dristros
 
 Add a "Features" section to the website:
 
@@ -62,21 +317,22 @@ Add a "Features" section to the website:
         - ppc64-ps3 (Sony PS3)
     - Un-Supported architectures on which is has been reported to run include:
         - s390x
-    - Disk label types supported include:
-        - GPT
-        - msdos
-    - Software RAID support
-    - LVM support
-        - including LVM on top of Software RAID
-    - Filesystems supported include:
-        - msdos, vfat
-        - ext2, ext3, ext4
-        - reiserfs
-        - jfs
-        - xfs
-        - swap
+    - DONE: Disk label types supported include:
+        - DONE: GPT
+        - DONE: msdos
+    - DONE: Software RAID support
+    - DONE LVM support
+        - DONE: including LVM on top of Software RAID
+    - DONE: Filesystems supported include:
+        - DONE: msdos, vfat
+        - DONE: ext2, ext3, ext4
+        - DONE: reiserfs
+        - DONE: btrfs
+        - DONE: jfs
+        - DONE: xfs
+        - DONE: swap
     - Transport protocols include:
-        - rsync
+        - DONE: rsync
             - default and simplest
         - bittorrent
             - best choice at scale
@@ -91,21 +347,22 @@ Have a single init script.  Start services based on their settings in /etc/defau
 
 Move _all_ source code into si.trunk/src
 
-move _all_ *.rul files into make.d
+OBSOLETE: move _all_ *.rul files into make.d
 
-Verify we have an "*_install" target for all initrd packages
+OBSOLETE: Verify we have an "*_install" target for all initrd packages
 
-Move ./initrd_dir/make.d/*.rul files into ./make.d/
+OBSOLETE: Move ./initrd_dir/make.d/*.rul files into ./make.d/
 
-Find some way to add color to logmsg, so that function names can be a different color from the output they produce...
+DONE: Find some way to add color to logmsg, so that function names can be a different color from the output they produce...
+=> DONE. (in text console AND in new plymouth based GUI.
 
 mklibs.bef -- review output and re-direct -L towards locally built libs
 mknods -- review this and see if we can remove now that we're using udev
-
+=> OBSOLETE
 
 Finley's new TODO list for SystemImager
 ---------------------------------------
-(2) Support grub2 (and other improvements)
+DONE: (2) Support grub2 (and other improvements)
 
     * Thanks to Dennis Stam and Bas van der Vlies of SARA for their
       notes (below w/my modifications) to help me along here
@@ -134,12 +391,12 @@ Finley's new TODO list for SystemImager
         - /etc/init.d/functions. A lot is removed or has been rewritten.
         - the grub2 installations is handled in our post install script
           for now
-
+=> OBSOLETE: handled by dracut
 
 (3.5) Make sure built libs are used and included, and not libs from the
 build system.  mklibs.bef invokations.
-
-(4) switch to udhcp
+=> OBSOLETE: handled by dracut
+OBSOLETE: (4) switch to udhcp
 
 ----
 
@@ -194,12 +451,13 @@ The prior TODO list for SystemImager
     - tabbed view for virtual console
 
 (4) Implement a GUI to perform all the common systemimager operations
+    - Suggests http GUI. (OL)
 
 (4) Implement pre/post-update scripts (to be ran with si_updateclient)
 
 (2) Add a kernel-devel tree package, like those that ship with RedHat, 
     Ubuntu, etc. There's just enough data to build boot-kernel modules 
     against, but nothing else. 
-
     Ie: kernel-headers. (Jeremy Siadal suggestion)
+=> OBSOLETE: we now use dracut.
 

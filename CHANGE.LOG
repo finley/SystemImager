@@ -3,14 +3,80 @@
 #
 #   Copyright (C) 1999-2005 Brian Elliott Finley
 #   Copyright (C) 2007-2008 Andrea Righi
-##  Copyright (C) 2012      Olivier Lahaye
+#   Copyright (C) 2012-2019 Olivier Lahaye
 #
 #   $Id$
 #
 
-4.3.0 [ Not yet released ]
-- Disabled SystemConfigurator in client script (systemconfigurator doesn't support
-  new technologies like systemd, NetworkManager or grub/grub2)
+5.0.0 [ Not yet released ]
+--------------------------------------------------------------------------------
+- Linux distro supported: CentOS-6, CentOS-7, CentOS-8, Fedora-29, Open SuSE-42.3, debian8, debian9
+- Imager GUI based on Plymouth (text also available)
+- Web GUI for setup and replacement of si_monitortk (console and clients list) and netmootmgr
+- New SystemImager configuration file based on json. More parameters and common API for bash/perl/php/ECMA script.
+- PXE Menu GUI (si_mkbootserver)
+- direct boot feature (no reboot after imaging)
+- Put transfert protocols in plugins API instead of being hardcodded into
+  imaging script. This includes (but not limited to):
+  - rsync: works perfectly
+  - scp: not working (lack password query in plymouth theme)
+  - NFS: not working (mount nfs, then rsync from mount point to /sysroot)
+  - dockeri/singularity: not working (download docker image and deploy it physically.
+    => docker container is used on server in place of imagedir and allows image versionning)
+  - bittorrent: not working (old client not supported, using new binaries instead
+    of python stuffs that are hard to include in an initramfs)
+  - flamethrower: not working (broken since protocols turned into modules)
+  - rpm-list: not done
+  - deb-list: not done
+- Created an API for scripts (pre, main, post install) for:
+  - Disk editting (partition, raid, lvm, mount points)
+  - GUI messages
+  - transfert
+  - other
+- removed old bittorrent client and replaced it with distro supported components
+  - rtorrent for transfert
+  - opentracker for the tracker
+  - mktorrent to create torrent files
+  - scripts for torrent info
+- Added many cmdline parameters including possibility to add breakpoints (si.break=<specific step>)
+  A dedicated man has been added (systemimager.cmdline(7))
+- Added sis_config_dir in systemimager.conf (stores imagename.conf)
+  This file is downloaded by dracut logic and read just like local.cfg
+  It hosts similar things as local.cfg so kernel cmdline is lighter. See systemimager.cmdline(7) for all parameters
+- scripts dir reorganized
+  /var/lib/systemimager/scripts/
+                               pre-install
+                               main-install
+                               post-install
+                               disks-layouts
+                               network-configs
+                               install-conf
+- scripts are now optional. Mandatory things are disk-layout file and image name (can be set at last in main-install script).
+- systemimager-monitor-rebooted service installation now handled by dracut module (no more post-install script required).
+- Support for dhcp and static ip imager configuration within dracut cmdline parameters (ip= cmdline)
+- Support for bootloader installation within dracut module (no more post-install script required).
+- Support EFI booloader (grub2-efi and rEFInd). (clover planed)
+- si_prepareclient now defaults to --no-uyok (except if --kernel, --image, --my-modules, --modules-dir is used)
+- si_mkbootserver has now a systemd version.
+- optimized partitionning code (aligned partitions, no hole between partitions, ability to create variable size partition beween 2 fixed size partitions thanks to xsl processing)
+- disks-layout xml file is strictly validated using xsd
+- network is now configured by imager in client. using a validated xml configuration file. it supports ipv6, ipv4, bonding, infiniband, aliases...
+
+4.5.0 [ Never released ]
+--------------------------------------------------------------------------------
+- Major rework of how initrd and kernel are provided.
+  Now, all the initramfs creation process is handled by dracut.
+  No more kernel build or initrd binaries build (except a few ones)
+  Now kernel is taken from running distro
+  Now initrd is built using dracut and a systemimager dracut module
+- pod doc fixes (missing =back)
+- rpm spec file dates fixes
+- rpm spec file major rework and add for dracut-systemimager (dracut module)
+
+4.3.0 [ Never released ]
+--------------------------------------------------------------------------------
+- Disabled SystemConfigurator in client script (systemconfigurator doesn't
+  support new technologies like systemd, NetworkManager or grub/grub2)
 - fixed si_netbootmond refusing to start when NET_BOOT_DEFAULT was set to "net".
 - Fixed thread not finished warning when exitting si_monitortk
 - Add option --include-system-firmware and --firmware-dir to si_prepareclient
@@ -23,7 +89,8 @@
 - dhcp: reverted to V3.1.3 becasue V4+ have bug that makes dhclient ignore
   unconfigured interfaces that are down if not specified on the command line
   Bug tracked and reported upstream as: ICS#32935
-- Enabled all network drivers, firmware, disck controlers, filesystems as modules.
+- Enabled all network drivers, firmware, disck controlers, filesystems
+  as modules.
 - Replaced modules-init-tools (obsolete) with kmod-13
 - build: Updated the build system by enforcing dependancies.
 - build use make install instead of make install-exec in order

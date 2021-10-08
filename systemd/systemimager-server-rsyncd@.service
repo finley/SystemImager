@@ -1,0 +1,25 @@
+#   Copyright (C) 2018 Olivier Lahaye
+#
+#   $Id$
+#
+# rsync daemon used by SystemImager to serve up images, 
+# autoinstall scripts, and other data used during the 
+# installation and management of SystemImager client 
+# machines.
+#
+# Do not modify this file. Instead, use systemd override.
+# Set modified entries in /etc/systemd/system/systemimager-server-rsyncd.service.d/<name>.conf
+#
+# This service is used by systemimager-server-rsyncd.socket
+
+[Unit]
+Description=fast remote file copy program daemon for SystemImager
+ConditionPathExists=/etc/systemimager/systemimager.conf
+
+[Service]
+# Our specific rsyncd.conf (can be changed in systemimager.conf)
+Environment=RSYNCD_CONF=/etc/systemimager/rsyncd.conf
+# EnvironmentFile overrides default values
+EnvironmentFile=/etc/systemimager/systemimager.conf
+ExecStart=/usr/bin/rsync --daemon --no-detach --config $RSYNCD_CONF
+StandardInput=socket

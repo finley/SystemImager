@@ -1,21 +1,31 @@
 #!/usr/bin/perl -w
-
 #
-#   "SystemImager"
-#
-#   Copyright (C) 1999-2006  Brian Elliott Finley
-#   Copyright (C) 2007 Andrea Righi <a.righi@cineca.it>
-#
-#   $Id$
 #    vi:set filetype=perl:
 #
+#    This file is part of SystemImager.
+#
+#    SystemImager is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    SystemImager is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with SystemImager. If not, see <https://www.gnu.org/licenses/>.
+#
+#    Copyright (C) 1999-2006  Brian Elliott Finley
+#    Copyright (C) 2007 Andrea Righi <a.righi@cineca.it>
+#
 
-use lib "USR_PREFIX/lib/systemimager/perl";
 use strict;
 use Getopt::Long;
-use SystemImager::Config;
+use SystemImager::JConfig;
 use SystemImager::HostRange;
-use vars qw($config $VERSION);
+use vars qw($jconfig $VERSION);
 
 ### BEGIN Program ###
 # set version information
@@ -161,9 +171,9 @@ unless ($all_parameters_set) {
 }
 
 
-my $autoinstall_script_dir = $config->autoinstall_script_dir();
+my $autoinstall_script_dir = $jconfig->get('imager','scripts_dir');
 unless ($autoinstall_script_dir) {
-    die "FATAL: parameter AUTOINSTALL_SCRIPT_DIR is not defined in /etc/systemimager/systemimager.conf\n";
+    die "FATAL: parameter imager.scripts_dir is not defined in ".$jconfig->fileName()."\n";
 }
 
 if($interactive eq "yes") {
@@ -279,7 +289,7 @@ EOF
             # gather a list of available images
             my (@files, $newest_script);
             # ------------------------------------> sort by timestamp -- oldest to newest
-            my $cmd = "cd $autoinstall_script_dir && ls -1tr *.master 2>&1";
+            my $cmd = "cd $autoinstall_script_dir/main-install && ls -1tr *.master 2>&1";
             open(LS, "$cmd |");
             while (<LS>) {
                 chomp;
@@ -304,9 +314,9 @@ EOF
             print "Which script would you like these hosts to be installed with?\n";
             print "[$script]: ";
             $script=get_response($script);
-            if ( -f "$autoinstall_script_dir/$script.master" ) {
+            if ( -f "$autoinstall_script_dir/main-install/$script.master" ) {
 
-                create_links($hosts, $script, $autoinstall_script_dir);
+                create_links($hosts, $script, "$autoinstall_script_dir/main-install");
 
                 print "\nYour soft links have been created.\n";
                 print "\nPress <Enter> to continue...";

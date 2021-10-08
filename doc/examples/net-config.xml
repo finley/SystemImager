@@ -1,0 +1,61 @@
+<!--
+  $Id$
+   vi:set filetype=xml:
+
+  This file contains network information about the network interface(s)
+  for client to be imaged.
+  You can change the information in this file to affect how your target
+  machines are installed.  See "man systemimager-network.conf" for details.
+-->
+
+<config>
+	<if dev="eno1" type="Ethernet" control="NetworkManager">
+		<primary name="eno1" onboot="yes" bootproto="dhcp">
+			<ip def_route="yes"/>
+			<dns servers="8.8.8.8,8.8.4.4" search="my.company.com company.com" peerdns="yes"/>
+			<options macaddr="00:0C:29:28:FD:4C" />
+		</primary>
+		<alias id="1" onparent="yes"> <!-- realdev=parent netmask can be specified in ip using '/mask' in in netmask= parameter -->
+			<ip ipaddr="192.168.0.1/24" gateway="192.168.0.254"/> <!-- gatewaydev=parent -->
+		</alias>
+		<alias id="2" onparent="yes">
+			<ip ipaddr="192.168.0.2" netmask="255.255.255.0" gateway="192.168.0.254"/>
+		</alias>
+	</if>
+
+	<if dev="eno2" type="Ethernet">
+		<primary name="eth0" uuid="EA6396C2-0885-4F6C-8EEA-1F23CDD85497" onboot="yes" bootproto="static">
+			<ip6 ipv6_failure_fatal="yes" ipv6_init="yes" ipv6_addr="fe80:0000:0000:0000:0204:61ff:fe9d:f156" ipv6_defroute="yes"/>
+		</primary>
+	</if>
+
+	<if dev="eno3" type="Ethernet">
+		<primary name="eth1" uuid="478c559e-7b30-4218-b950-9f372a950200" onboot="yes" bootproto="static">
+			<ip6 ipv6_failure_fatal="yes" ipv6_init="yes" ipv6_addr="fe80::204:61ff:fe9d:f157"/>
+		</primary>
+	</if>
+
+	<if dev="ib0" type="Infiniband">
+		<primary name="ib0" onboot="yes" userctl="no" bootproto="static">
+			<ip ipaddr="10.0.0.1/24" broadcast="10.0.0.255"/>
+			<ip6 ipv6_init="yes" ipv6_autoconf="yes"/>
+		</primary>
+	</if>
+
+	<if dev="ib1" type="Infiniband"> <!-- an Infiniband slave interface -->
+		<primary master="bond0"/>
+	</if>
+
+	<if dev="ib2" type="Infiniband"> <!-- an Infiniband slave interface -->
+		<primary master="bond0"/> <!-- name defaults to dev (in this case: name="ib2") -->
+	</if>
+
+	<if dev="bond0" type="Bond"> <!-- a bonding interface with 2 slaves -->
+		<primary name="bond0" onboot="no" bootproto="static">
+			<ip ipaddr="10.0.1.1/24"/>
+			<options bonding_opts="resend_igmp=1 updelay=0 use_carrier=1 miimon=100 downdelay=0 xmit_hash_policy=0 primary_reselect=0 fail_over_mac=0 arp_validate=0 mode=active-backup lacp_rate=0 arp_interval=0 ad_select=0"/>
+		</primary>
+		<slave name="ib1" /> <!-- refers to the connection name, not the device name -->
+		<slave name="ib2" />
+	</if>
+</config>

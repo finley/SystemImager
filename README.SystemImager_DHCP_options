@@ -2,7 +2,11 @@
 # "SystemImager"
 #
 #  Copyright (C) 2002-2015 Brian E. Finley <brian@thefinleys.com>
+#                2016-2019 Olivier Lahaye <olivier.lahaye@cea.fr>
 #
+
+NOTE: While those options are still valid, it is recommanded to use
+new kernel cmdline parameters (si.config= ...)
 
 See http://www.iana.org/assignments/bootp-dhcp-parameters for details on DHCP
 options.  The following are special DHCP options used by SystemImager.
@@ -18,6 +22,7 @@ include:
 
     sbin/si_mkdhcpserver
     initrd_source/skel/etc/dhclient.conf
+    initrd_source/skel/etc/wicked/dhcp4.xml
     initrd_source/skel/etc/dhclient-script.si-prefix
     initrd_source/skel/etc/init.d/functions (the write_variables function)
     doc/examples/local.cfg

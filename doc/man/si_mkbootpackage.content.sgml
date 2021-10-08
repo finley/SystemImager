@@ -34,12 +34,14 @@
       <arg><option>--my-modules</option></arg>
       <arg><option>--include-system-firmware</option><option>--firmware-dir <replaceable>DIR</replaceable></option></arg>
       <arg><option>--kernel <replaceable>FILE</replaceable></option><option> --modules-dir <replaceable>DIR</replaceable></option></arg>
+      <arg><option>--kver <replaceable>KERNEL VERSION</replaceable></option></arg>
       <arg><option>--image <replaceable>IMAGENAME</replaceable></option></arg>
       <arg><option>--arch <replaceable>ARCH</replaceable></option></arg>
       <arg><option>--filesystem <replaceable>FILESYSTEM</replaceable></option></arg>
       <arg><option>--ssh-key <replaceable>FILE</replaceable></option></arg>
       <arg><option>--authorized-keys <replaceable>FILE</replaceable></option></arg>
       <arg><option>--config <replaceable>FILE</replaceable></option></arg>
+      <arg><option>--dracut-opts <replaceable>OPTIONS FOR DRACUT</replaceable></option></arg>
 
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -134,6 +136,15 @@
         </listitem>
       </varlistentry>
       <varlistentry>
+        <term><option>--kver <replaceable>KERNEL VERSION</replaceable></option></term>
+        <listitem>
+          <para>
+            Do not detect the kernel to use with UYOK, but instead use the
+            kernel with the specified version if available in /boot.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
         <term><option>--modules-dir <replaceable>DIR</replaceable></option></term>
         <listitem>
           <para>
@@ -216,7 +227,7 @@
           </para>
         </listitem>
       </varlistentry>
-     <varlistentry>
+      <varlistentry>
         <term><option>--config <replaceable>FILE</replaceable></option></term>
         <listitem>
           <para>
@@ -234,6 +245,16 @@
 	    In general any installation parameter passed via DHCP can be
 	    defined in <filename>local.cfg</filename> as well.
 	  </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>--dracut-opts <replaceable>options to pass to dracut</replaceable></option></term>
+        <listitem>
+          <para>
+            this is the way to add somme parameters to the dracut command that will
+            generate the image. e.g. --mdadmconf --strip --xz --uefi
+            The options must be put into double quotes.
+          </para>
         </listitem>
       </varlistentry>
     </variablelist>

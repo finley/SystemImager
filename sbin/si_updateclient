@@ -1,45 +1,43 @@
 #!/usr/bin/perl -w
-
 #
-#   "SystemImager"
+#    vi:set filetype=perl:
 #
-#   Copyright (C) 1999-2006 Brian Elliott Finley
-#   Copyright (C) 2002 International Business Machines
-#                      Sean Dague <sean@dague.net>
+#    This file is part of SystemImager.
 #
-#   $Id$
+#    SystemImager is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 2 of the License, or
+#    (at your option) any later version.
 #
-#   This program is free software; you can redistribute it and/or modify
-#   it under the terms of the GNU General Public License as published by
-#   the Free Software Foundation; either version 2 of the License, or
-#   (at your option) any later version.
+#    SystemImager is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
 #
-#   This program is distributed in the hope that it will be useful,
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#   GNU General Public License for more details.
+#    You should have received a copy of the GNU General Public License
+#    along with SystemImager. If not, see <https://www.gnu.org/licenses/>.
 #
-#   You should have received a copy of the GNU General Public License
-#   along with this program; if not, write to the Free Software
-#   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
-#   Others who have contributed to this code (in alphabetical order):
-#     Adam L. Lambert <alambert@epicrealm.com> 
-#     - (credit for the -autoinstall option goes to Adam)
+#    Copyright (C) 1999-2006 Brian Elliott Finley
+#    Copyright (C) 2002 International Business Machines
+#                       Sean Dague <sean@dague.net>
 #
-#   2004.09.21  Brian Elliott Finley
-#   - Fix, I hope, logic in detecting transfer failures
+#    Others who have contributed to this code (in alphabetical order):
+#      Adam L. Lambert <alambert@epicrealm.com> 
+#      - (credit for the -autoinstall option goes to Adam)
 #
-
+#    2004.09.21  Brian Elliott Finley
+#    - Fix, I hope, logic in detecting transfer failures
+#
 
 # declare modules
-use lib "USR_PREFIX/lib/systemimager/perl";
 use Carp;
 use POSIX;
 use strict;
 use Socket;
 use AppConfig;
 use File::Copy;
+use File::Temp qw(tempfile);
 use Getopt::Long;
 use Sys::Hostname;
 use SystemImager::Common;
@@ -93,8 +91,8 @@ my $config = new AppConfig(
 );
 
 # Read in settings from SystemImager client configuration file
-if(-e "/etc/systemimager/client.conf") {
-    $config->file("/etc/systemimager/client.conf");
+if(-e $config->systemimager_dir."/client.conf") {
+    $config->file($config->systemimager_dir."/client.conf");
 }
 
 # Pull some settings from the variables pulled from the config file
@@ -213,9 +211,9 @@ unless($< == 0) {
 
 #
 # Patch provided by Timm. (2006.05.10 -BEF-)
-if (-e "/etc/systemimager/overrides") {
-    print "WARNING: taking overrides from /etc/systemimager/overrides!\n";
-    open (FH, "/etc/systemimager/overrides");
+if (-e $config->systemimager_dir."/overrides") {
+    print "WARNING: taking overrides from ".$config->systemimager_dir."/overrides!\n";
+    open (FH, $config->systemimager_dir."/overrides");
     while (<FH>) {
         chomp;
         push (@overrides, $_);
@@ -463,7 +461,7 @@ SC_EOF
         exit(1);
     }
     unless ($image) {
-        my $tmpfile = tmpnam();
+        my (undef, $tmpfile) = tempfile(OPEN => 0);
         my $cmd = "rsync rsync://${server}:${port}/scripts/cluster.txt $tmpfile";
         unless (!system($cmd)) {
             print STDERR "error: couldn't retrieve rsync://${server}:${port}/scripts/cluster.txt from the image server!\n";
@@ -620,7 +618,7 @@ SC_EOF
 ### BEGIN graffiti ###
 if(defined $image) {
     unless( defined($dry_run) ) {
-        my $file = "/etc/systemimager/IMAGE_LAST_SYNCED_TO";
+        my $file = $config->systemimager_dir."/IMAGE_LAST_SYNCED_TO";
         open (FILE, ">$file") or croak("Couldn't open $file for writing!");
             print FILE $image, "\n";
         close (FILE);

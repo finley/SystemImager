@@ -1,12 +1,24 @@
 #!/usr/bin/perl -w
-
+# 
+#    vi:set filetype=perl:
 #
-# "SystemImager" 
+#    This file is part of SystemImager.
 #
-#  Copyright (C) 2002 Bald Guy Software 
+#    SystemImager is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    SystemImager is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with SystemImager. If not, see <https://www.gnu.org/licenses/>.
+#
+#    Copyright (C) 2002 Bald Guy Software 
 #                     <brian.finley@baldguysoftware.com>
-#
-#  $Id$
 #
 
 # set some variables
@@ -15,36 +27,35 @@ my $program_name="si_mkclientnetboot";
 my $get_help = "  Try \"$program_name --help\" for more options.";
 
 # declare modules
-use lib "USR_PREFIX/lib/systemimager/perl";
 use strict;
 use Socket;
 use File::Copy;
 use File::Path;
 use Net::hostent;
 use Getopt::Long;
-use SystemImager::Config;
+use SystemImager::JConfig;
 use SystemImager::Common;
 use SystemImager::Server;
 use SystemImager::Options;
 use SystemImager::HostRange;
 use SystemImager::UseYourOwnKernel;
 
-use vars qw($config $VERSION);
+use vars qw($jconfig $VERSION);
 
 ### BEGIN parse the config file ###
 
-my $tftp_dir = $config->tftp_dir();
+my $tftp_dir = $jconfig->get('pxe','tftp_dir');
 if (!$tftp_dir) {
-    die "FATAL: parameter TFTP_DIR is not defined in /etc/systemimager/systemimager.conf\n";
+    die "FATAL: parameter pxe.tftp_dir is not defined in ".$jconfig->fileName()."\n";
 }
 
-my $boot_dir = $config->autoinstall_boot_dir();
+my $boot_dir = $jconfig->get('pxe','boot_files');
 if (!$boot_dir) {
-    die "FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in /etc/systemimager/systemimager.conf\n";
+    die "FATAL: parameter pxe.boot_files is not defined in ".$jconfig->fileName()."\n";
 }
 
-my $localboot_file = "/etc/systemimager/pxelinux.cfg/syslinux.cfg.localboot";
-my $netboot_file = "/etc/systemimager/pxelinux.cfg/syslinux.cfg";
+my $localboot_file = "/etc/systemimager"."/pxelinux.cfg/syslinux.cfg.localboot";
+my $netboot_file = "/etc/systemimager"."/pxelinux.cfg/syslinux.cfg";
 
 #
 ### END parse the config file ###

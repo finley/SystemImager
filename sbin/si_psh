@@ -4,7 +4,6 @@
 #
 #  Copyright (C) 2005 Andrea Righi <a.righi@cineca.it>
 
-use lib "USR_PREFIX/lib/systemimager/perl";
 use strict;
 use Getopt::Long;
 use SystemImager::HostRange;
@@ -207,6 +206,8 @@ Run the command on imaging clients (that have a ssh deamon enabled - add SSHD=y
 in the installation boot parameters and include a valid authorized_keys into
 the initrd.img). See si_mkbootpackage(8) or si_prepareclient(8) for more
 details.
+
+=back
 
 =head1 SEE ALSO
 

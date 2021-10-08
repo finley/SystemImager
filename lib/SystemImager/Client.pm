@@ -5,6 +5,7 @@ package SystemImager::Client;
 #
 #  Copyright (C) 2001-2014 Brian E. Finley <brian@thefinleys.com>
 #  Copyright (C) 2001-2002 Sean Dague <sean@dague.net>
+#  Copyright (C) 2015-2019 Olivier Lahaye <olivier.lahaye@cea.fr>
 #
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -25,16 +26,14 @@ use strict;
 use File::Basename;
 use File::Copy;
 use Carp;
-use SystemImager::Config;
+use SystemImager::JConfig;
 use base qw(Exporter);
-use vars qw(@EXPORT @EXPORT_OK %EXPORT_TAGS $VERSION);
+use vars qw($jconfig @EXPORT @EXPORT_OK %EXPORT_TAGS $VERSION);
 
 $VERSION = "SYSTEMIMAGER_VERSION_STRING";
 
 @EXPORT_OK = qw(client_exists client_info addclient removeclient);
 %EXPORT_TAGS = ('all' => [@EXPORT_OK]);
-
-our $config = $SystemImager::Config::config;
 
 ########################################
 #
@@ -59,10 +58,10 @@ sub client_info {
 sub listclients {
     my ($image) = @_;
     my @clients;
-    my $scriptdir = $config->autoinstall_script_dir;
+    my $scriptdir = $jconfig->get('imager','scripts_dir')."/main-install";
     opendir(IN,$scriptdir) or (carp($!), return undef);
     while(my $file = <IN>) {
-        if($image and (-d $config->default_image_dir . "/$image")) {
+        if($image and (-d $jconfig->get('imager','images_dir') . "/$image")) {
             if(readlink("$scriptdir/$file") eq "$image.master") {
                 my $clientname = $file;
                 $clientname =~ s/\.sh//g;
@@ -139,13 +138,13 @@ sub _client_exists_link {
 sub _client_image {
     my ($name) = @_;
     my $image = "";
-    my $link = $config->autoinstall_script_dir . "/$name.sh";
+    my $link = $jconfig->get('imager','scripts_dir') . "/main-install/$name.sh";
     if(-l $link) {
         my $linkcontents = readlink $link or (carp($!), return undef);
         my $filename = basename($linkcontents);
         $filename =~ s/\.master$//;
         $image = $filename;
-    } elsif (-f ($config->autoinstall_script_dir . "/$name.master")) {
+    } elsif (-f ($jconfig->get('imager','scripts_dir') . "/main-install/$name.master")) {
         $image = $name;
     }
     return $image;
@@ -186,7 +185,7 @@ sub _addclient_link {
     my $currentimage = _client_image($name);
     return 1 if ($image eq $currentimage);
 
-    my $clientlink = $config->autoinstall_script_dir . "/$name.sh";
+    my $clientlink = $jconfig->get('imager','scripts_dir') . "/main-install/$name.sh";
     return symlink "$image.master", $clientlink;
 }
 
@@ -222,7 +221,7 @@ sub _removeclient_hosts {
 
 sub _removeclient_link {
     my ($name) = @_;
-    my $clientlink = $config->autoinstall_script_dir . "/$name.sh";
+    my $clientlink = $jconfig->get('imager','scripts_dir') . "/main-install/$name.sh";
     
     if(-l $clientlink) {
         return unlink $clientlink;
@@ -237,7 +236,7 @@ sub _removeclient_link {
 ############################################################
 
 sub _sync_hosts {
-    my $rsynchosts = $config->autoinstall_script_dir . "/hosts";
+    my $rsynchosts = $jconfig->get('imager','scripts_dir') . "/hosts";
     copy("/etc/hosts",$rsynchosts) or (carp($!), return undef);
     return 1;
 }

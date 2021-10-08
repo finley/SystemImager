@@ -1,0 +1,28 @@
+<!--
+<!DOCTYPE config SYSTEM "disk-layout.xsd">
+        Example of a complex disk-layout file for use on legacy systems
+        by SystemImager when installing a client.
+	Layout directory: /var/lib/systemimager/scripts/disks-layouts/
+-->
+<config>
+        <disk dev="/dev/sda" label_type="msdos" unit_of_measurement="MiB">
+                <part num="1" size="500" p_type="primary" flags="boot" />
+		<part num="3" size="4096" p_type="primary" />
+                <part num="4" size="*" p_type="extended" />
+		<part num="7" size="4096" p_type="logical" />
+                <part num="5" size="*" p_type="logical" />
+                <part num="6" size="2048" p_type="logical" />
+                <part num="2" size="1024" p_type="primary" flags="swap" />
+        </disk>
+	
+        <bootloader flavor="grub2" install_type="legacy" default_entry="0" timeout="2">
+                <target dev="/dev/sda" />
+        </bootloader>
+
+        <fsinfo line="100" real_dev="/dev/sda5" mp="/" fs="xfs" options="defaults" dump="1" pass="2" />
+        <fsinfo line="101" real_dev="/dev/sda6" mp="/var" fs="xfs" options="defaults" dump="1" pass="2" />
+        <fsinfo line="102" real_dev="/dev/sda2" mp="swap" fs="swap" options="defaults" dump="0" pass="0" />
+        <fsinfo line="103" real_dev="/dev/sda1" mp="/boot" fs="ext4" options="defaults" dump="1" pass="2" />
+        <fsinfo line="104" real_dev="/dev/sda3" mp="/home" fs="ext4" options="defaults" dump="1" pass="2" />
+        <fsinfo line="105" real_dev="/dev/sda7" mp="/backup" fs="ext4" options="defaults" dump="1" pass="2" />
+</config>

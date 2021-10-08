@@ -1,0 +1,30 @@
+#!/bin/bash
+#
+#    This file is part of SystemImager.
+#
+#    SystemImager is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    SystemImager is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with SystemImager. If not, see <https://www.gnu.org/licenses/>.
+#
+#    Copyright (C) 2019 Olivier Lahaye
+#
+# Purpose of this file:
+#    WebGUI helper to report clients statuses
+
+CLIENTS_PATH=$(cat /etc/systemimager/systemimager.json|jq -r .monitor.clients_db_dir)
+
+if test -d "$CLIENTS_PATH"
+then
+	cat $CLIENTS_PATH/*_def.json|jq -s 'map({"Status": .status})|group_by(.Status)|map({Status: .[0].Status, Count: length})|.' # Add [] to remove master table.
+else
+	echo "{}"
+fi

@@ -1,0 +1,43 @@
+This plymouth theme only works within systemimager PXE environment. Do not use
+it elswhere as it'll be useless and will not display anything usefull.
+
+Thanks to Charlie Brej <brejc8(at)gmail(dot)com> for his help undestanding
+script module behaviors and tricks.
+
+This file is the logic for SystemImager plymouth frontend.
+It reacts to plymouth update status command:
+1/ Display some log information on screen (can be used in post install scripts
+via logxxx() helper. See below)
+plymouth update --status="mesg:X:Some text message"
+where X letter = (E)rror | (W)arning | (I)nfo | (A)ction | (N)otice
+
+2/ Light step icon and draw a progress bar for the current step if needed
+plymout update --status="STEP:VAL:MAX"
+where STEP = init|part|frmt|prei|imag|boot|post|conf
+where VAL is a 3 digit number (0 is noted 000)
+where MAX is the maximum value (000 means do not display progress bar; only icon)
+
+Within systemimager PXE environment, shell helpers are avalable in /lib/systemimager-lib.sh
+Just add:
+. /lib/systemimager-lib.sh
+to your post install script to use the following helpers:
+	- logininfo <message>
+	- logerror <message>
+	- logwarn <message>
+	- logaction <message>
+	- lognotice <message>
+
+This helper is not of any use in post install scripts (only usefull for dracut logic)
+- sis_update_step STEP VAL MAX
+	where STEP is one of:
+	- init (small letters) (VAL and MAX ignored)
+	- part (small letters) (VAL and MAX ignored)
+	- frmt (small letters) (VAL and MAX ignored)
+	- prei (small letters) (VAL=script being run; MAX=number of scripts to run)
+	- imag (small letters) (VAL=percent progress; MAX=100)
+	- boot (small letters) (VAL and MAX ignored)
+	- post (small letters) (VAL=script being run; MAX=number of scripts to run)
+
+This helper enable system messages and systemimager dracut logic debug messages to be displayed.
+- sis_enable_system_msg
+	(will call plymout update --status="conf:sys:Y")

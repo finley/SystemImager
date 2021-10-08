@@ -27,10 +27,10 @@ How post-install scripts are processed
 
 - Each script is executed individually inside a chroot of the new root 
   filesystem on the client.  The newly installed client filesystem is 
-  mounted on /a/, so the actual script execution looks something like:
+  mounted on /sysroot/, so the actual script execution looks something like:
   
-    "chmod +x /a/tmp/post-install/$POST_INSTALL_SCRIPT"
-    "chroot /a/ /tmp/post-install/$POST_INSTALL_SCRIPT"
+    "chmod +x /sysroot/tmp/post-install/$POST_INSTALL_SCRIPT"
+    "chroot /sysroot/ /tmp/post-install/$POST_INSTALL_SCRIPT"
 
   This means that you can write your scripts as if they were executing on a
   normally operating machine (with few exceptions).
