@@ -1597,7 +1597,7 @@ send_monitor_msg() {
 
     # Get the client mac address.
     if [ -z "$mac" ]; then
-        mac=`ifconfig $DEVICE 2>/dev/null | sed -ne "s/.*HWaddr //p" | sed "s/ //g" | sed s/:/./g`
+	mac=`ifconfig $DEVICE 2>/dev/null | sed -ne "s/.*\(HWaddr\|ether\) //p" | sed "s/ .*//g" | sed s/:/./g`
     fi
 
     # Collect some special info only after proc file system is mounted.
@@ -1693,7 +1693,7 @@ start_report_task() {
     # Evaluate image size.
     logmsg "Evaluating image size..."
     if [ ! "x$BITTORRENT" = "xy" ]; then
-        IMAGESIZE=`rsync -av --numeric-ids $IMAGESERVER::$IMAGENAME | grep "total size" | sed -e "s/total size is \([0-9]*\).*/\1/"`
+	IMAGESIZE=`rsync -av --numeric-ids $IMAGESERVER::$IMAGENAME | grep "total size" | sed -e "s/total size is \([0-9,]*\).*/\1/; s/,//g;"`
     else
         if [ -f "${TORRENTS_DIR}/image-${IMAGENAME}.tar.torrent" ]; then
             torrent_file="${TORRENTS_DIR}/image-${IMAGENAME}.tar.torrent"
