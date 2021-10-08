@@ -37,6 +37,7 @@ use strict;
 use Socket;
 use AppConfig;
 use File::Copy;
+use File::Temp qw(tempfile);
 use Getopt::Long;
 use Sys::Hostname;
 use SystemImager::Common;
@@ -460,7 +461,7 @@ SC_EOF
         exit(1);
     }
     unless ($image) {
-        my $tmpfile = tmpnam();
+        my (undef, $tmpfile) = tempfile(OPEN => 0);
         my $cmd = "rsync rsync://${server}:${port}/scripts/cluster.txt $tmpfile";
         unless (!system($cmd)) {
             print STDERR "error: couldn't retrieve rsync://${server}:${port}/scripts/cluster.txt from the image server!\n";

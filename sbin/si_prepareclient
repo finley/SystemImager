@@ -78,6 +78,7 @@ use File::Temp qw/ mktemp /;
 use File::Copy;
 use File::Path;
 use File::Basename;
+use File::Temp qw(tempfile);
 use Getopt::Long;
 use vars qw($VERSION);
 use SystemImager::Common;
@@ -90,10 +91,10 @@ $VERSION = "SYSTEMIMAGER_VERSION_STRING";
 my $backup_extension = ".before_systemimager-$VERSION";
 
 # location of temporary rsyncd.conf file
-my $rsyncd_conf_file = mktemp("/tmp/si_rsyncd.confXXXX");
+my (undef, $rsyncd_conf_file) = tempfile("si_rsyncd_XXXX", SUFFIX => ".conf", OPEN => 0);
 
 # location of temporary log file
-my $rsyncd_log_file = mktemp("/tmp/si_rsyncd.logXXXX");
+my (undef, $rsyncd_log_file) = tempfile("si_rsyncd_XXXX", SUFFIX => ".log", OPEN => 0);
 
 # set path
 $ENV{PATH} = "/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin";
