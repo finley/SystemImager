@@ -155,11 +155,16 @@ BINARY_SRC = $(TOPDIR)/sbin
 
 # destination directories
 PREFIX = /usr
+USR = $(DESTDIR)$(PREFIX)
 ETC  = $(DESTDIR)/etc
 INITD = $(ETC)/init.d
-SYSTEMD_UNITS_DIR = $(USR)/lib/systemd/system
+SYSTEMD_OS_UNIT_DIR = $(shell ls -d {/usr,}/lib/systemd/system 2> /dev/null )
+ifneq ("$(SYSTEMD_OS_UNIT_DIR)","")
+SYSTEMD_UNIT_DIR = $(DESTDIR)$(SYSTEMD_OS_UNIT_DIR)
+else
+SYSTEMD_UNIT_DIR = "$(USR)/lib/systemd/system"
+endif
 SYSTEMD_SRC = $(TOPDIR)/systemd
-USR = $(DESTDIR)$(PREFIX)
 DOC  = $(USR)/share/doc/systemimager-doc
 BIN = $(USR)/bin
 SBIN = $(USR)/sbin
@@ -512,18 +517,17 @@ install_configs:
 		|| $(SI_INSTALL) -b -m 644 etc/rsync_stubs/99local $(RSYNC_STUB_DIR)
 	$(SI_INSTALL) -b -m 644 etc/rsync_stubs/README $(RSYNC_STUB_DIR)
 
-ifneq ("$(wildcard /usr/lib/systemd/*system)","")
-	[ "$(SYSTEMD_UNITS_DIR)" != "" ] || exit 1
-	mkdir -p $(SYSTEMD_UNITS_DIR)
-	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-bittorrent-seeder.service $(SYSTEMD_UNITS_DIR)
-	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-bittorrent.service $(SYSTEMD_UNITS_DIR)
-	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-bittorrent-tracker.service $(SYSTEMD_UNITS_DIR)
-	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-flamethrowerd.service $(SYSTEMD_UNITS_DIR)
-	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-monitord.service $(SYSTEMD_UNITS_DIR)
-	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-netbootmond.service $(SYSTEMD_UNITS_DIR)
-	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-rsyncd.service $(SYSTEMD_UNITS_DIR)
-	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-rsyncd@.service $(SYSTEMD_UNITS_DIR)
-	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-rsyncd.socket $(SYSTEMD_UNITS_DIR)
+ifneq ("$(SYSTEMD_OS_UNIT_DIR)","")
+	mkdir -p $(SYSTEMD_UNIT_DIR)
+	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-bittorrent-seeder.service $(SYSTEMD_UNIT_DIR)
+	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-bittorrent.service $(SYSTEMD_UNIT_DIR)
+	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-bittorrent-tracker.service $(SYSTEMD_UNIT_DIR)
+	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-flamethrowerd.service $(SYSTEMD_UNIT_DIR)
+	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-monitord.service $(SYSTEMD_UNIT_DIR)
+	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-netbootmond.service $(SYSTEMD_UNIT_DIR)
+	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-rsyncd.service $(SYSTEMD_UNIT_DIR)
+	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-rsyncd@.service $(SYSTEMD_UNIT_DIR)
+	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-rsyncd.socket $(SYSTEMD_UNIT_DIR)
 else
 	[ "$(INITD)" != "" ] || exit 1
 	mkdir -p $(INITD)
