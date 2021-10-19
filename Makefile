@@ -456,7 +456,6 @@ install_server_libs:
 	mkdir -p $(LIB_DEST)/BootMedia
 	mkdir -p $(LIB_DEST)/BootGen/Dev
 	mkdir -p $(LIB_DEST)/BootGen/InitrdFS
-	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/JConfig.pm $(LIB_DEST)/SystemImager
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/Server.pm  $(LIB_DEST)/SystemImager
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/HostRange.pm  $(LIB_DEST)/SystemImager
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/BootMedia/BootMedia.pm 	$(LIB_DEST)/BootMedia
@@ -487,6 +486,7 @@ install_client_libs:
 .PHONY:	install_common_libs
 install_common_libs:
 	mkdir -p $(LIB_DEST)/SystemImager
+	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/JConfig.pm $(LIB_DEST)/SystemImager
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/Common.pm $(LIB_DEST)/SystemImager
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/Options.pm $(LIB_DEST)/SystemImager
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/UseYourOwnKernel.pm $(LIB_DEST)/SystemImager
