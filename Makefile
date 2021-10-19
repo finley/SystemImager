@@ -164,7 +164,7 @@ SYSTEMD_UNIT_DIR = $(DESTDIR)$(SYSTEMD_OS_UNIT_DIR)
 else
 SYSTEMD_UNIT_DIR = "$(USR)/lib/systemd/system"
 endif
-SYSTEMD_SRC = $(TOPDIR)/systemd
+SYSTEMD_SRC = $(TOPDIR)/etc/systemd/system
 DOC  = $(USR)/share/doc/systemimager-doc
 BIN = $(USR)/bin
 SBIN = $(USR)/sbin
