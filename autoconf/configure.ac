@@ -26,7 +26,7 @@ fi
 
 AC_PATH_PROG(DRACUT, dracut)
 if test -z "$DRACUT"; then
-    SI_CHECK_FAIL(mkcramfs,,,
+    SI_CHECK_FAIL(dracut,,,
         [*** 'dracut' not found, please install dracut tools or fix your PATH ***])
 fi
 
@@ -40,6 +40,12 @@ AC_PATH_PROG(BASH, bash)
 if test -z "$BASH"; then
     SI_CHECK_FAIL(bash,,,
         [*** 'bash' not found, please install bash shell or fix your PATH ***])
+fi
+
+AC_PATH_PROG(SED, sed)
+if test -z "$SED"; then
+    SI_CHECK_FAIL(sed,,,
+        [*** 'sed' not found, please install sed command or fix your PATH ***])
 fi
 
 
