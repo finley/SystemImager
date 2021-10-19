@@ -158,7 +158,7 @@ PREFIX = /usr
 USR = $(DESTDIR)$(PREFIX)
 ETC  = $(DESTDIR)/etc
 INITD = $(ETC)/init.d
-SYSTEMD_OS_UNIT_DIR = $(shell ls -d {/usr,}/lib/systemd/system 2> /dev/null )
+SYSTEMD_OS_UNIT_DIR = $(shell ls -d /usr/lib/systemd/system /lib/systemd/system 2> /dev/null )
 ifneq ("$(SYSTEMD_OS_UNIT_DIR)","")
 SYSTEMD_UNIT_DIR = $(DESTDIR)$(SYSTEMD_OS_UNIT_DIR)
 else
