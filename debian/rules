@@ -13,7 +13,7 @@ PKG = systemimager
 VERSION = $(shell dpkg-parsechangelog | grep ^Version: | \
                   cut -d " " -f 2)
 BUILD_DIR = .
-UPSTREAM_TARBALL = $(PKG)_$(VERSION).tar.gz
+UPSTREAM_TARBALL = $(PKG)_$(VERSION).tar.bz2
 
 ARCH = $(shell dpkg --print-architecture)
 UNAME_ARCH = $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/)
@@ -28,8 +28,8 @@ ifeq ($(IS_PS3),1)
 else
         IS_PPC64 := 1
         ifneq ($(shell ls /proc/iSeries 2>/dev/null),)
-                ARCH = ppc64-iSeries
-		UNAME_ARCH = ppc64-iSeries
+		ARCH = ppc64-iseries
+		UNAME_ARCH = ppc64-iseries
         endif
 endif
 endif
@@ -48,7 +48,7 @@ NON_BOOT_PKGS := -p $(PKG)-client \
                  -p $(PKG)-server-bittorrent \
 		 -p dracut-$(PKG)
 
-BOOTARCHS = alpha i386 ia64 parisc ppc64-iSeries ppc64-ps3 ppc64 ppc64ydl ppc amd64
+BOOTARCHS = alpha i386 ia64 parisc ppc64-iseries ppc64-ps3 ppc64 ppc64ydl ppc amd64
 
 PATCHES=$(sort $(shell find $(CURDIR)/debian/patches -name "*.patch"))
 

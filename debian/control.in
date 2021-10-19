@@ -2,14 +2,12 @@ Source: systemimager
 Section: admin
 Priority: optional
 Maintainer: dann frazier <dannf@debian.org>
-Build-Depends: bc, dos2unix, rsync, dracut, dracut-network, plymouth, plymouth-themes, xfsprogs, xmlstarlet, parted, ipcalc, rtorrent, nmap, kexec-tools, lvm2, net-tools, bind9-host, uuid-runtime, bootchart2, btrfs-tools, cifs-utils, keyutils, bc, openssh-server, openssh-client, systemconfigurator, linux-image-amd64
-Build-Conflicts: libc-pic
-Build-Depends-Indep: docbook-to-man, docbook-utils
+Build-Depends-Indep: bc, dos2unix, rsync, coreutils, dracut, dracut-network, plymouth, plymouth-themes, xfsprogs, xmlstarlet, parted, ipcalc, rtorrent, nmap, kexec-tools, lvm2, net-tools, bind9-host, uuid-runtime, bootchart2, btrfs-progs, cifs-utils, keyutils, bc, openssh-server, openssh-client, systemconfigurator, linux-image-amd64, ncat, docbook-to-man, docbook-utils
 Standards-Version: 3.7.2
 
 Package: systemimager-server
 Architecture: all
-Depends: ${perl:Depends}, binutils, debianutils (>= 1.7), dosfstools, libappconfig-perl, libxml-parser-perl, libxml-simple-perl, genisoimage | mkisofs, mtools, rsync, systemconfigurator (>= 2.2.11), systemimager-boot-alpha-standard | systemimager-boot-i386-standard | systemimager-boot-ia64-standard | systemimager-boot-parisc-standard | systemimager-boot-ppc64-iSeries-standard | systemimager-boot-ppc64-ps3-standard | systemimager-boot-ppc64-standard | systemimager-boot-ppc64ydl-standard | systemimager-boot-ppc-standard | systemimager-boot-amd64-standard, systemimager-common (= ${source:Version})
+Depends: ${perl:Depends}, binutils, debianutils (>= 1.7), dosfstools, libappconfig-perl, libxml-parser-perl, libxml-simple-perl, genisoimage | mkisofs, mtools, rsync, systemconfigurator (>= 2.2.11), systemimager-boot-alpha-standard | systemimager-boot-i386-standard | systemimager-boot-ia64-standard | systemimager-boot-parisc-standard | systemimager-boot-ppc64-iseries-standard | systemimager-boot-ppc64-ps3-standard | systemimager-boot-ppc64-standard | systemimager-boot-ppc64ydl-standard | systemimager-boot-ppc-standard | systemimager-boot-amd64-standard, systemimager-common (= ${source:Version}), dracut-systemimager (= ${source:Version})
 Recommends: isc-dhcp-server | dhcp3-server | dhcp, syslinux, tftp-hpa | atftp, tftpd-hpa | atftpd, openbsd-inetd | xinetd, update-inetd
 Description: Automate GNU/Linux installs and upgrades over a network
  SystemImager is a set of utilities for installing GNU/Linux software images to
@@ -22,7 +20,7 @@ Description: Automate GNU/Linux installs and upgrades over a network
 
 Package: systemimager-client
 Architecture: all
-Depends: ${perl:Depends}, file, rsync, netcat, systemimager-initrd-template, systemimager-common (= ${source:Version}), systemconfigurator (>= 2.2.11)
+Depends: ${perl:Depends}, file, rsync, netcat, systemimager-initrd-template, systemimager-common (= ${source:Version}), systemconfigurator (>= 2.2.11), libjson-perl, libappconfig-perl
 Description: Utilities for creating an image and upgrading client machines
  SystemImager is a set of utilities for installing GNU/Linux software images to
  clients machines over the network.  Images are stored in flat files on the
@@ -34,7 +32,7 @@ Description: Utilities for creating an image and upgrading client machines
 
 Package: systemimager-common
 Architecture: all
-Depends: ${perl:Depends}, rsync
+Depends: ${perl:Depends}, rsync, libjson-perl, libappconfig-perl
 Description: Utilities and libraries common to both the server and client
  SystemImager is a set of utilities for installing GNU/Linux software images to
  clients machines over the network.  Images are stored in flat files on the
@@ -46,7 +44,7 @@ Description: Utilities and libraries common to both the server and client
 Package: systemimager-initrd-template
 Architecture: all
 Recommends: systemimager-server | systemimager-client
-Conflicts: systemimager-bin-${misc:Package-Arch}, systemimager-kernel-${misc:Package-Arch}, systemimager-initrd-${misc:Package-Arch}, systemimager-boot-standard-${misc:Package-Arch}, systemimager-ssh-${misc:Package-Arch}, systemimager-server (<< 3.8.0), systemimager-client (<< 3.8.0)
+Depends: systemimager-${misc:Package-Arch}boot-standard
 Description: SystemImager initrd template files
  SystemImager is a set of utilities for installing GNU/Linux software images to
  client machines over the network.  Images are stored in flat
@@ -59,7 +57,7 @@ Description: SystemImager initrd template files
 
 Package: dracut-systemimager
 Architecture: all
-Depends: systemimager-initrd-template, systemimager-common, dracut, dracut-network, multipath-tools, plymouth, plymouth-themes, xfsprogs, xmlstarlet, parted, ipcalc, rtorrent, nmap, kexec-tools, lvm2, net-tools, bind9-host, uuid-runtime, bootchart2, btrfs-tools, cifs-utils, keyutils, bc, openssh-server, openssh-client
+Depends: systemimager-initrd-template, systemimager-common, dracut, dracut-network, multipath-tools, plymouth, plymouth-themes, xfsprogs, xmlstarlet, parted, gdisk, ipcalc, rtorrent, nmap, kexec-tools, lvm2, net-tools, bind9-host, ethtool, lsscsi, usbutils, pciutils, lshw, hwdata, iputils-ping, uuid-runtime, btrfs-progs, cifs-utils, e2fsprogs, dosfstools, util-linux, keyutils, bc, dc, ncat, openssh-server, openssh-client, ncurses-base, gawk, fonts-dejavu, kbd, gettext, linux-image, coreutils, cryptsetup, systemd, socat, strace, lsof, sysvinit-utils
 Description: dracut modules to build a dracut initramfs with systemimager support
  SystemImager is a set of utilities for installing GNU/Linux software images to
  client machines over the network.  Images are stored in flat
@@ -80,9 +78,9 @@ Description: Manual and other documentation
  .
  This package contains documentation for SystemImager.
 
-Package: systemimager-server-flamethrowerd
+Package: systemimager-server-flamethrower
 Architecture: all
-Depends: systemimager-server (>=3.6.3), flamethrower
+Depends: systemimager-server (>=4.9.0), flamethrower
 Description: SystemImager boot binaries for ${misc:Package-Arch} client nodes
  SystemImager is a set of utilities for installing GNU/Linux software images to
  client machines over the network.  Images are stored in flat files on the
@@ -98,7 +96,19 @@ Description: SystemImager boot binaries for ${misc:Package-Arch} client nodes
 
 Package: systemimager-server-bittorrent
 Architecture: all
-Depends: systemimager-server (>=3.8.0-1)
+Depends: systemimager-server (>=4.9.0-1), libgetopt-simple-perl
+Description: BitTorrent transport to distribute SystemImager images
+ SystemImager is a set of utilities for installing GNU/Linux software images to
+ clients machines over the network.  Images are stored in flat files on the
+ server, making updates easy.  The rsync protocol is used for transfers, making
+ updates efficient.
+ .
+ The bittorrent package allows you to use the BitTorrent protocol to perform
+ installations.
+
+Package: systemimager-webgui
+Architecture: all
+Depends: systemimager-server (>=4.9.0-1), apache2, php, php-json
 Description: BitTorrent transport to distribute SystemImager images
  SystemImager is a set of utilities for installing GNU/Linux software images to
  clients machines over the network.  Images are stored in flat files on the
