@@ -3,7 +3,7 @@ Section: admin
 Priority: optional
 Maintainer: olivier lahaye <olivier.lahaye@free.fr>
 Build-Depends-Indep: dos2unix, rsync, coreutils, dracut, dracut-network, plymouth, plymouth-themes, xfsprogs, xmlstarlet, parted, ipcalc, rtorrent, nmap, kexec-tools, lvm2, net-tools, bind9-host, uuid-runtime, btrfs-progs, cifs-utils, keyutils, bc, openssh-server, openssh-client, linux-image-${misc:Package-Arch}, ncat, docbook-to-man, docbook-utils, gdisk, ethtool, lsscsi, usbutils, pciutils, lshw, hwdata, iputils-ping, e2fsprogs, dosfstools, util-linux, keyutils, bc, dc, ncat, ncurses-base, gawk, fonts-dejavu, kbd, gettext, coreutils, cryptsetup, systemd, socat, strace, lsof, sysvinit-utils
-Standards-Version: 3.7.2
+Standards-Version: 4.3.0.3
 
 Package: systemimager-server
 Architecture: all
@@ -96,7 +96,7 @@ Description: SystemImager boot binaries for ${misc:Package-Arch} client nodes
 
 Package: systemimager-server-bittorrent
 Architecture: all
-Depends: systemimager-server (>=4.9.0-1), libgetopt-simple-perl
+Depends: systemimager-server (>=4.9.0), libgetopt-simple-perl
 Description: BitTorrent transport to distribute SystemImager images
  SystemImager is a set of utilities for installing GNU/Linux software images to
  clients machines over the network.  Images are stored in flat files on the
@@ -108,7 +108,7 @@ Description: BitTorrent transport to distribute SystemImager images
 
 Package: systemimager-webgui
 Architecture: all
-Depends: systemimager-server (>=4.9.0-1), apache2, php, php-json
+Depends: systemimager-server (>=4.9.0), apache2, php, php-json
 Description: BitTorrent transport to distribute SystemImager images
  SystemImager is a set of utilities for installing GNU/Linux software images to
  clients machines over the network.  Images are stored in flat files on the
