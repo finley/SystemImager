@@ -165,6 +165,7 @@ else
 SYSTEMD_UNIT_DIR = "$(USR)/lib/systemd/system"
 endif
 SYSTEMD_SRC = $(TOPDIR)/etc/systemd/system
+INITD_SRC = $(TOPDIR)/etc/init.d
 DOC  = $(USR)/share/doc/systemimager-doc
 BIN = $(USR)/bin
 SBIN = $(USR)/sbin

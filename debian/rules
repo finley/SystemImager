@@ -35,6 +35,17 @@ endif
 endif
 
 BOOTPKG = $(PKG)-boot-$(ARCH)-standard
+ALL_PKGS = $(PKG)-client \
+	$(PKG)-common \
+	$(PKG)-initrd-template \
+	$(PKG)-doc \
+	$(PKG)-webgui \
+	$(PKG)-server \
+	$(PKG)-server-flamethrower \
+	$(PKG)-server-bittorrent \
+	dracut-$(PKG) \
+	$(BOOTPKG)
+
 INITRD_TEMPLATE_PKG = $(PKG)-initrd-template
 
 # for debhelper; we can't just say -N$(BOOTPKG) because that'd cause us to
@@ -108,13 +119,10 @@ clean:
 	# Add here commands to clean up after the build process.
 	#rm -rf $(BUILD_DIR)
 	cd $(CURDIR)/debian && \
-	  rm -rf $(PKG)-client $(PKG)-server $(PKG)-common $(PKG)-doc \
-	  $(BOOTPKG) $(PKG)-initrd-template \
-	  $(PKG)-boot $(PKG)-server-flamethrower $(PKG)-server-bittorrent
-	rm -f debian/$(PKG)-server.init
-	rm -f debian/$(PKG)-server-flamethrowerd.init
-	rm -f debian/$(PKG)-server-bittorrent.init
-	rm -f debian/$(PKG)-server*{service,socket}
+	  rm -rf $(ALL_PKGS)
+	rm -f debian/$(PKG)-server*.init
+	rm -f debian/$(PKG)-server*.service
+	rm -f debian/$(PKG)-server*.socket
 	dh_clean
 
 install-arch:	build-arch
@@ -136,8 +144,7 @@ install-indep:	build-indep
 	dh_installdirs
 
 	# Create packages install directories
-	cd $(CURDIR)/debian && mkdir -p $(PKG)-client \
-	  $(PKG)-server $(PKG)-common $(PKG)-doc $(PKG)-initrd-template dracut-$(PKG) $(PKG)-webgui
+	cd $(CURDIR)/debian && mkdir -p $(ALL_PKGS)
 
 	# Add here commands to install the packages
 	$(MAKE) -C $(BUILD_DIR) install_client \
@@ -152,11 +159,6 @@ install-indep:	build-indep
 	$(MAKE) -C $(BUILD_DIR) install_webgui \
 	  DESTDIR=$(CURDIR)/debian/$(PKG)-webgui
 
-	# these are installed properly by dh_installinit later
-	rm -rf $(CURDIR)/debian/$(PKG)-server/etc/init.d
-	# these are installed properly by dh_installsystemd later
-	rm -rf $(CURDIR)/debian/$(PKG)-server/lib/systemd
-
 	$(MAKE) -C $(BUILD_DIR) install_common \
 	  DESTDIR=$(CURDIR)/debian/$(PKG)-common
 
@@ -165,6 +167,11 @@ install-indep:	build-indep
 
 	$(MAKE) -C $(BUILD_DIR) install_initrd_template \
 	  DESTDIR=$(CURDIR)/debian/$(PKG)-initrd-template
+
+	# these are installed properly by dh_installinit later
+	rm -rf $(CURDIR)/debian/$(PKG)-server/etc/init.d
+	# these are installed properly by dh_installsystemd later
+	rm -rf $(CURDIR)/debian/$(PKG)-server/lib/systemd
 
 	mkdir -p $(CURDIR)/debian/$(PKG)-server-flamethrower/etc/systemimager
 	mv $(CURDIR)/debian/$(PKG)-server/etc/systemimager/flamethrower.conf \
@@ -209,34 +216,30 @@ binary-indep: build-indep install-indep
 	dh_installexamples -p$(PKG)-server $(BUILD_DIR)/doc/examples/*
 
 	if test -d /lib/systemd/system; then \
-		cp $(BUILD_DIR)/etc/systemd/system/$(PKG)-server-*.{service,socket} ./debian/ ;\
-		dh_installsystemd --no-start -p$(PKG)-server $(PKG)-server-rsyncd*.{socket,service} ;\
-		dh_installsystemd --no-start -p$(PKG)-server $(PKG)-server-netbootmond.service ;\
-		dh_installsystemd --no-start -p$(PKG)-server $(PKG)-server-monitord.service ;\
-		dh_installsystemd --no-start -p$(PKG)-server-flamethrower \
-			$(PKG)-server-flamethrowerd.service ;\
-		dh_installsystemd --no-start -p$(PKG)-server-bittorrent \
-			$(PKG)-server-bittorrent*.service ;\
+		cp ./etc/systemd/system/$(PKG)-server-rsyncd.service ./debian/$(PKG)-server.$(PKG)-server-rsyncd.service ;\
+		cp ./etc/systemd/system/$(PKG)-server-rsyncd@.service ./debian/$(PKG)-server.$(PKG)-server-rsyncd@.service ;\
+		cp ./etc/systemd/system/$(PKG)-server-rsyncd.socket ./debian/$(PKG)-server.$(PKG)-server-rsyncd.socket ;\
+		cp ./etc/systemd/system/$(PKG)-server-monitord.service ./debian/$(PKG)-server.$(PKG)-server-monitord.service ;\
+		cp ./etc/systemd/system/$(PKG)-server-netbootmond.service ./debian/$(PKG)-server.$(PKG)-server-netbootmond.service ;\
+		cp ./etc/systemd/system/$(PKG)-server-flamethrowerd.service ./debian/$(PKG)-server-flamethrower.$(PKG)-server-flamethrowerd.service ;\
+		cp ./etc/systemd/system/$(PKG)-server-bittorrent.service ./debian/$(PKG)-server-bittorrent.$(PKG)-server-bittorrent.service ;\
+		cp ./etc/systemd/system/$(PKG)-server-bittorrent.service ./debian/$(PKG)-server-bittorrent.$(PKG)-server-bittorrent-seeder.service ;\
+		cp ./etc/systemd/system/$(PKG)-server-bittorrent.service ./debian/$(PKG)-server-bittorrent.$(PKG)-server-bittorrent-tracker.service ;\
+		dh_installsystemd --no-start -p$(PKG)-server --name=$(PKG)-server-rsyncd@ ;\
+		dh_installsystemd --no-start -p$(PKG)-server --name=$(PKG)-server-rsyncd ;\
+		dh_installsystemd --no-start -p$(PKG)-server --name=$(PKG)-server-netbootmond ;\
+		dh_installsystemd --no-start -p$(PKG)-server --name=$(PKG)-server-monitord ;\
+		dh_installsystemd --no-start -p$(PKG)-server-flamethrower --name=$(PKG)-server-flamethrowerd ;\
+		dh_installsystemd --no-start -p$(PKG)-server-bittorrent --name=$(PKG)-server-bittorrent ;\
+		dh_installsystemd --no-start -p$(PKG)-server-bittorrent --name=$(PKG)-server-bittorrent-seeder ;\
+		dh_installsystemd --no-start -p$(PKG)-server-bittorrent --name=$(PKG)-server-bittorrent-tracker ;\
 	else \
-		cp $(BUILD_DIR)/etc/init.d/$(PKG)-server-rsyncd \
-		  ./debian/$(PKG)-server-rsyncd.init ;\
+		ls ./etc/init.d/* |sed -E 'p;s|.*/(.*)|./debian/\1.init|' |xargs -n2 cp ;\
 		dh_installinit --no-start -p$(PKG)-server --init-script=$(PKG)-server-rsyncd ;\
-		\
-		cp $(BUILD_DIR)/etc/init.d/$(PKG)-server-netbootmond \
-		  ./debian/$(PKG)-server-netbootmond.init ;\
 		dh_installinit --no-start -p$(PKG)-server --init-script=$(PKG)-server-netbootmond ;\
-		\
-		cp $(BUILD_DIR)/etc/init.d/$(PKG)-server-monitord \
-		  ./debian/$(PKG)-server-monitord.init ;\
 		dh_installinit --no-start -p$(PKG)-server --init-script=$(PKG)-server-monitord ;\
-		\
-		cp $(BUILD_DIR)/etc/init.d/$(PKG)-server-flamethrower \
-		  ./debian/$(PKG)-server-flamethrowerd.init ;\
 		dh_installinit --no-start -p$(PKG)-server-flamethrower \
 		  --init-script=$(PKG)-server-flamethrowerd ;\
-		\
-		cp $(BUILD_DIR)/etc/init.d/$(PKG)-server-bittorrent \
-			./debian/$(PKG)-server-bittorrent.init ;\
 		dh_installinit --no-start -p$(PKG)-server-bittorrent \
 			--init-script=$(PKG)-server-bittorrent ;\
 	fi
