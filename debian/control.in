@@ -44,7 +44,7 @@ Description: Utilities and libraries common to both the server and client
 Package: systemimager-initrd-template
 Architecture: all
 Recommends: systemimager-server | systemimager-client
-Depends: systemimager-${misc:Package-Arch}-boot-standard
+Depends: systemimager-boot-${misc:Package-Arch}-standard
 Description: SystemImager initrd template files
  SystemImager is a set of utilities for installing GNU/Linux software images to
  client machines over the network.  Images are stored in flat
