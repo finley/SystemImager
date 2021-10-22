@@ -150,6 +150,7 @@ NCPUS := $(shell egrep -c '^processor' /proc/cpuinfo )
 else
 NCPUS := 1
 endif
+$(info Using $(NCPUS) CPU(s) for this task)
 
 MANUAL_DIR = $(TOPDIR)/doc/manual_source
 MANPAGE_DIR = $(TOPDIR)/doc/man
@@ -192,9 +193,11 @@ CONF_DEST         = $(USR)/share/systemimager/conf/
 
 WEB_CONF_SRC      = $(TOPDIR)/etc/
 ifneq ($(shell ls -d /etc/apache2/sites-available 2>/dev/null),)
-WEB_CONF_DEST     = $(ETC)/apache2/sites-available/ # debian web conf
+WEB_CONF_DEST     = $(ETC)/apache2/sites-available
+WEB_CONF_DIR      = /etc/apache2/sites-available
 else ifneq ($(shell ls -d /etc/httpd/conf.d/ 2>/dev/null),)
-WEB_CONF_DEST     = $(ETC)/httpd/conf.d/ # redhat like web conf
+WEB_CONF_DEST     = $(ETC)/httpd/conf.d
+WEB_CONF_DIR      = /etc/httpd/conf.d
 else ifeq ($(WEB_CONF_DIR),)
 WEB_CONF_DEST     = ""
 else ifeq ($(shell ls -d $(WEB_CONF_DIR)),)
@@ -353,9 +356,10 @@ endif
 
 .PHONY: install_webgui
 install_webgui:
-	ifeq ($(WEB_CONF_DEST),)
-		$(error "Can't guess apache web sites configuration dir. Please set WEB_CONF_DIR")
-	endif
+ifeq ($(WEB_CONF_DEST),)
+	$(error "Can't guess apache web sites configuration dir. Please set WEB_CONF_DIR")
+endif
+	$(info Using distro WEB_CONF_DIR = $(WEB_CONF_DIR))
 	mkdir -p $(WEB_CONF_DEST)
 	$(SI_INSTALL) -b -m 644 $(WEB_CONF_SRC)/httpd.conf $(WEB_CONF_DEST)/systemimager.conf
 	mkdir -p $(WEB_GUI_DEST) $(WEB_GUI_DEST)/css $(WEB_GUI_DEST)/images
