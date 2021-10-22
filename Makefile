@@ -145,7 +145,11 @@ endif
 
 #
 # To be used by "make" for rules that can take it!
+ifneq ($(shell ls -d /proc/cpuinfo 2>/dev/null),)
 NCPUS := $(shell egrep -c '^processor' /proc/cpuinfo )
+else
+NCPUS := 1
+endif
 
 MANUAL_DIR = $(TOPDIR)/doc/manual_source
 MANPAGE_DIR = $(TOPDIR)/doc/man
@@ -187,7 +191,17 @@ CONF_SRC          = $(TOPDIR)/conf/
 CONF_DEST         = $(USR)/share/systemimager/conf/
 
 WEB_CONF_SRC      = $(TOPDIR)/etc/
-WEB_CONF_DEST     = $(ETC)/httpd/conf.d/
+ifneq ($(shell ls -d /etc/apache2/sites-available 2>/dev/null),)
+WEB_CONF_DEST     = $(ETC)/apache2/sites-available/ # debian web conf
+else ifneq ($(shell ls -d /etc/httpd/conf.d/ 2>/dev/null),)
+WEB_CONF_DEST     = $(ETC)/httpd/conf.d/ # redhat like web conf
+else ifeq ($(WEB_CONF_DIR),)
+WEB_CONF_DEST     = ""
+else ifeq ($(shell ls -d $(WEB_CONF_DIR)),)
+$(error "WEB_CONF_DIR=$(WEB_CONF_DIR) directory does not exists.")
+else
+WEB_CONF_DEST     = $(ETC)/$(WEB_CONF_DIR)
+endif
 
 WEB_GUI_SRC       = $(TOPDIR)/webgui
 WEB_GUI_DEST      = $(USR)/share/systemimager/webgui
@@ -339,6 +353,9 @@ endif
 
 .PHONY: install_webgui
 install_webgui:
+	ifeq ($(WEB_CONF_DEST),)
+		$(error "Can't guess apache web sites configuration dir. Please set WEB_CONF_DIR")
+	endif
 	mkdir -p $(WEB_CONF_DEST)
 	$(SI_INSTALL) -b -m 644 $(WEB_CONF_SRC)/httpd.conf $(WEB_CONF_DEST)/systemimager.conf
 	mkdir -p $(WEB_GUI_DEST) $(WEB_GUI_DEST)/css $(WEB_GUI_DEST)/images
