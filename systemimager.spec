@@ -371,8 +371,9 @@ BuildRequires: plymouth-dracut
 BuildRequires: perl-JSON
 BuildRequires: dracut
 BuildRequires: plymouth-plugin-script, plymouth-plugin-label
-BuildRequires: psmisc, kexec-tools, bind-utils, net-tools, ethtool, lsscsi, usbutils, pciutils, lshw, hwdata, iputils
-BuildRequires: xmlstarlet, parted, mdadm, util-linux, lvm2, gdisk
+BuildRequires: psmisc, kexec-tools, bind-utils, net-tools, ethtool, lsscsi, usbutils, pciutils, lshw, hwdata, iputils, dmidecode
+BuildRequires: xmlstarlet, jq
+BuildRequires: parted, mdadm, util-linux, lvm2, gdisk
 BuildRequires: xfsprogs, e2fsprogs, dosfstools
 %if 0%{?pkg_btrfs_progs:1}
 BuildRequires: %pkg_btrfs_progs
@@ -393,7 +394,7 @@ BuildRequires: cryptsetup
 %if 0%{?rhel} == 6
 BuildRequires:  udev
 %else
-BuildRequires:  systemd jq
+BuildRequires:  systemd
 %endif
 # CentOS-7 plymouth ask-for-password is buggy
 # https://bugzilla.redhat.com/show_bug.cgi?id=1600990
@@ -525,8 +526,9 @@ Requires: plymouth-dracut
 %endif
 Requires: dracut
 Requires: plymouth-plugin-script, plymouth-plugin-label
-Requires: psmisc, kexec-tools, bind-utils, net-tools, ethtool, lsscsi, usbutils, pciutils, lshw, hwdata, iputils
-Requires: xmlstarlet, parted, mdadm, util-linux, lvm2, gdisk
+Requires: psmisc, kexec-tools, bind-utils, net-tools, ethtool, lsscsi, usbutils, pciutils, lshw, hwdata, iputils, dmidecode
+Requires: xmlstarlet, jq
+Requires: parted, mdadm, util-linux, lvm2, gdisk
 Requires: xfsprogs, e2fsprogs, dosfstools
 %if 0%{?pkg_btrfs_progs:1}
 Requires: %pkg_btrfs_progs
@@ -548,7 +550,7 @@ Requires: cryptsetup
 %if 0%{?rhel} == 6
 Requires:  udev
 %else
-Requires:  systemd jq
+Requires:  systemd
 %endif
 # CentOS-7 plymouth ask-for-password is buggy
 # https://bugzilla.redhat.com/show_bug.cgi?id=1600990

@@ -2,7 +2,7 @@ Source: systemimager
 Section: admin
 Priority: optional
 Maintainer: olivier lahaye <olivier.lahaye@free.fr>
-Build-Depends-Indep: dos2unix, rsync, coreutils, dracut, dracut-network, plymouth, plymouth-themes, xfsprogs, xmlstarlet, parted, ipcalc, rtorrent, nmap, kexec-tools, lvm2, net-tools, bind9-host, uuid-runtime, btrfs-progs, cifs-utils, keyutils, bc, openssh-server, openssh-client, linux-image-${misc:Package-Arch}, ncat, docbook-to-man, docbook-utils, gdisk, ethtool, lsscsi, usbutils, pciutils, lshw, hwdata, iputils-ping, e2fsprogs, dosfstools, util-linux, keyutils, bc, dc, ncat, ncurses-base, gawk, fonts-dejavu, kbd, gettext, coreutils, cryptsetup, systemd, socat, strace, lsof, sysvinit-utils, libjson-perl, dmraid
+Build-Depends-Indep: dos2unix, rsync, coreutils, dracut, dracut-network, plymouth, plymouth-themes, xfsprogs, xmlstarlet, jq, parted, ipcalc, rtorrent, nmap, kexec-tools, lvm2, net-tools, bind9-host, uuid-runtime, btrfs-progs, cifs-utils, keyutils, bc, openssh-server, openssh-client, linux-image-${misc:Package-Arch}, ncat, docbook-to-man, docbook-utils, gdisk, ethtool, lsscsi, usbutils, pciutils, lshw, hwdata, iputils-ping, e2fsprogs, dosfstools, util-linux, keyutils, bc, dc, ncat, ncurses-base, gawk, fonts-dejavu, kbd, gettext, coreutils, cryptsetup, systemd, socat, strace, lsof, sysvinit-utils, libjson-perl, dmraid, dmidecode
 Standards-Version: 4.3.0.3
 
 Package: systemimager-server
@@ -57,7 +57,7 @@ Description: SystemImager initrd template files
 
 Package: dracut-systemimager
 Architecture: all
-Depends: systemimager-initrd-template, systemimager-common, dracut, dracut-network, plymouth, plymouth-themes, xfsprogs, xmlstarlet, parted, gdisk, ipcalc, rtorrent, nmap, kexec-tools, lvm2, net-tools, bind9-host, ethtool, lsscsi, usbutils, pciutils, lshw, hwdata, iputils-ping, uuid-runtime, btrfs-progs, cifs-utils, e2fsprogs, dosfstools, util-linux, keyutils, bc, dc, ncat, openssh-server, openssh-client, ncurses-base, gawk, fonts-dejavu, kbd, gettext, linux-image-${misc:Package-Arch}, coreutils, cryptsetup, systemd, socat, strace, lsof, sysvinit-utils, libjson-perl, dmraid
+Depends: systemimager-initrd-template, systemimager-common, dracut, dracut-network, plymouth, plymouth-themes, xfsprogs, xmlstarlet, jq, parted, gdisk, ipcalc, rtorrent, nmap, kexec-tools, lvm2, net-tools, bind9-host, ethtool, lsscsi, usbutils, pciutils, lshw, hwdata, iputils-ping, uuid-runtime, btrfs-progs, cifs-utils, e2fsprogs, dosfstools, util-linux, keyutils, bc, dc, ncat, openssh-server, openssh-client, ncurses-base, gawk, fonts-dejavu, kbd, gettext, linux-image-${misc:Package-Arch}, coreutils, cryptsetup, systemd, socat, strace, lsof, sysvinit-utils, libjson-perl, dmraid, dmidecode
 Description: dracut modules to build a dracut initramfs with systemimager support
  SystemImager is a set of utilities for installing GNU/Linux software images to
  client machines over the network.  Images are stored in flat
