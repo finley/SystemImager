@@ -44,6 +44,8 @@ set +o posix
 #
 PATH=/sbin:/bin:/usr/sbin:/usr/bin:/tmp
 export PATH
+LANG=C
+export LANG # Make sure LANG is C (C.UTF-8 will produce errors on debian as data is missing in initrd)
 LD_LIBRARY_PATH=/lib
 SCRIPTS=scripts
 SCRIPTS_DIR=/scripts

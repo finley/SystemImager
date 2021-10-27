@@ -98,6 +98,10 @@ EOF
 
     # inst_multiple setfont loadkeys kbd_mode stty # i18n module
     inst_multiple -o ethtool mii-tool mii-diag
+
+    # some command needed on debian
+    inst_multiple dmidecode biosdecode vpddecode ownership
+
     inst_multiple bc dc gzip bzip2 rsync mkfs parted sgdisk fdisk sfdisk blockdev lsblk partprobe awk ncat tty killall kexec ipcalc findmnt findfs tput stty
     inst_multiple lvm pvcreate pvdisplay pvremove pvscan lvcreate lvdisplay lvremove lvscan lvmconfig lvmdump lvchange vgcreate vgdisplay vgremove vgscan fsadm stat
     inst_multiple chmod chown cp dd df dmesg echo egrep fgrep grep halt host hostname ifconfig init insmod kill ln ls lsmod mkdir mknod mkswap modprobe more mv poweroff ps reboot shutdown rm rmdir rmmod route sed sh sleep swapoff swapon sync tar touch uname logger od readlink
@@ -187,14 +191,57 @@ install_docker() {
     [ -f /etc/default/docker ] && mkdir -p $initdir/etc/default && c /etc/default/docker $initdir/etc/default
 }
 
+my_dracut_install() {
+    for FILE in $*
+    do
+        if test ! -f $FILE
+        then
+            echo "ERROR: $FILE not found"
+            return -1
+        else
+            test ! -d $initdir${FILE%/*} && mkdir -p $initdir${FILE%/*}
+            test ! -f ${initdir}${FILE} && cp $FILE ${initdir}${FILE} && echo "$FILE installed."
+        fi
+        ldd $FILE|while read -r -a LIB_DEP
+        do
+            if test -n "${LIB_DEP[2]}"
+            then
+                test ! -d $initdir${LIB_DEP[2]%/*} && mkdir -p $initdir${LIB_DEP[2]%/*}
+                if test ! -e $initdir${LIB_DEP[2]}
+                then
+                    if test -L ${LIB_DEP[2]}
+                    then
+                        REAL_FILE_NAME=$(readlink ${LIB_DEP[2]})
+                        test ! -e $initdir${LIB_DEP[2]%/*}/${REAL_FILE_NAME} && \
+                            cp ${LIB_DEP[2]%/*}/${REAL_FILE_NAME} $initdir${LIB_DEP[2]%/*}/${REAL_FILE_NAME}
+                        test ! -e $initdir${LIB_DEP[2]} && \
+                            ln -sr $initdir${LIB_DEP[2]%/*}/${REAL_FILE_NAME} $initdir${LIB_DEP[2]}
+                    else
+                        cp ${LIB_DEP[2]} $initdir${LIB_DEP[2]}
+                    fi
+                    my_dracut_install ${LIB_DEP[2]} # Recursive call to handle sub dependancies
+                    echo "${LIB_DEP[2]} installed."
+                fi
+            fi
+        done
+    done
+}
+
 ################################################################################
 # sub routine that installs plymouth theme
 #
 install_plymouth_theme() {
     # Install minimal plymouth support
     PLUGINDIR=`plymouth --get-splash-plugin-path`
-    inst $PLUGINDIR/script.so $initdir
-    inst $PLUGINDIR/label.so $initdir
+    #inst $PLUGINDIR/script.so $initdir
+    #inst $PLUGINDIR/label.so $initdir
+    inst_libdir_file "plymouth/script.so" "plymouth/label.so"
+
+    # Avoid DEBIAN Bug#997827 inst_libdir_file is buggy and forget to copy deps.
+    # Friendly add missing files if any.
+    my_dracut_install $PLUGINDIR/{script,label}.so
+    # End DEBIAN specific stuff
+
     inst /usr/share/plymouth/themes/text/text.plymouth $initdir
     inst /usr/share/plymouth/themes/details/details.plymouth $initdir
 
