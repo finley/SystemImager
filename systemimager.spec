@@ -1150,7 +1150,12 @@ fi
 %attr(0755, root, root) %{_exec_prefix}/lib/systemimager/clients-statuses-helper
 
 %changelog
+* Wed Oct 27 2021 Olivier Lahaye <olivier.lahaye@cea.fr> 4.9.1-0.1
+- Bugfix release
+- Port to Debian 10 and 11.
+
 * Mon Nov 4 2019 Olivier Lahaye <olivier.lahaye@cea.fr> 4.9.0-0.1
+- Port to AlmaLinux-8.4 (initrd NetworkManager based)
 - Port to CentOS-8
 - New web GUI (deprecated si_monitor and si_monitortk).
 - New configuration based on json. Api for perl/php/javascript/bash.
