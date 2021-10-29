@@ -70,12 +70,12 @@ sis_prepare_disks() {
 	loginfo "Stopping software raid and LVM that may still be active."
 	stop_software_raid_and_lvm
 	loginfo "Stopping UDEV exec queue to prevent raid restart when creating partitions"
-	udevadm control --stop-exec-queue
+	# udevadm control --stop-exec-queue
 	_do_partitions
 	_do_raids
 	# Raid are created, restard udev so /dev/md* devices are created (needed for mdadm.conf generation)
 	loginfo "Restarting UDEV exec queue now that disk(s) is (are) set up"
-	udevadm control --start-exec-queue
+	# udevadm control --start-exec-queue
 	_do_mdadm_conf
 	_do_lvms
 	_do_filesystems
@@ -717,17 +717,22 @@ ${OFFSET_SIZE}
 w
 EOF
 					test $? -ne 0 && shellout "Failed to create partition ${P_NUM} on ${DISK_DEV}"
-					sleep $PARTED_DELAY
 					;;
 				"gpt")
 					test -z "${SIZE/0/}" && OFFSET_SIZE="0" || OFFSET_SIZE="+${SIZE}"
 					logaction "sgdisk -n ${P_NUM}:${START_BLOCK}:${OFFSET_SIZE} ${DISK_DEV}"
 					sgdisk -n ${P_NUM}:${START_BLOCK}:${OFFSET_SIZE} ${DISK_DEV} || shellout "Failed to create partition ${P_NUM} on ${DISK_DEV}"
-					sleep $PARTED_DELAY
 					;;
 				*)
+					shellout "Unsupported partition table type: $LABEL_TYPE"
 					;;
 			esac
+
+			logdebug "Waiting for udev to process new device."
+			udevadm settle # wait for new partition events to be processed
+			loginfo "Tell kernel to re-read partition table."
+			partprobe
+			sleep $PARTED_DELAY # for old systems with bugs.
 
 			# Get partition filesystem if it exists (no raid, no lvm) so we can set the correct partition type/id
 			P_DEV=$(_get_part_dev_from_disk_dev ${DISK_DEV} ${P_NUM}) # Find correct partition device path.
@@ -745,7 +750,7 @@ EOF
 					_set_partition_flag_and_id "$LABEL_TYPE" "$DISK_DEV" "$P_NUM" "$P_FS"
 				fi
 			else
-				if test -z "$P_LVM_GROUP$P_LVM_GROUP" # No FS, no LVM, no RAID => probem: something is missing about this partition.
+				if test -z "$P_LVM_GROUP$P_RAID_DEV" # No FS, no LVM, no RAID => probem: something is missing about this partition.
 				then
 					logwarn "$P_DEV has no filesystem defined or is not part of a logical volume or raid volume"
 					logwarn "in disk-layout."
