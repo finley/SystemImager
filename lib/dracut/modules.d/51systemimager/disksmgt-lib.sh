@@ -716,7 +716,19 @@ ${START_BLOCK}
 ${OFFSET_SIZE}
 w
 EOF
-					test $? -ne 0 && shellout "Failed to create partition ${P_NUM} on ${DISK_DEV}"
+					ERRNO=$?
+					if test $ERRNO -eq 1
+					then
+						logwarn "fdisk failed to re-read partition table after creating the partition."
+						logwarn "trying to reread partition table using partprobe."
+						logaction "partprobe"
+						partprobe
+						ERRNO=$?
+						test $ERRNO -ne 0 && shellout "Failed to re-read partition table."
+					elif test $ERRNO -ne 0
+					then
+						shellout "Failed to create partition ${P_NUM} on ${DISK_DEV} (error=$ERRNO)"
+					fi
 					;;
 				"gpt")
 					test -z "${SIZE/0/}" && OFFSET_SIZE="0" || OFFSET_SIZE="+${SIZE}"
@@ -728,10 +740,9 @@ EOF
 					;;
 			esac
 
+			loginfo "Partition ${P_NUM} on disk ${DISK_DEV} created."
 			logdebug "Waiting for udev to process new device."
 			udevadm settle # wait for new partition events to be processed
-			loginfo "Tell kernel to re-read partition table."
-			partprobe
 			sleep $PARTED_DELAY # for old systems with bugs.
 
 			# Get partition filesystem if it exists (no raid, no lvm) so we can set the correct partition type/id
