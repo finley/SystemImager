@@ -371,7 +371,7 @@ si_install_bootloader() {
 					# Generate grub2 config file from OS already installed 10_linux cfg.
 					loginfo "Creating /boot/grub2/grub.cfg"
 					logaction "(chroot) grub2-mkconfig --output=/boot/grub2/grub.cfg"
-					chroot /sysroot /sbin/grub2-mkconfig --output=/boot/grub2/grub.cfg || shellout "Can't create grub2 config"
+					chroot /sysroot /sbin/grub2-mkconfig --output=/boot/grub2/grub.cfg 6>&- 7>&- || shellout "Can't create grub2 config"
 					;;
 				"grub")
 					[ ! -x /sysroot/sbin/grub-install ] && shellout "grub-install missing in image. Can't install grub1 bootloader"
