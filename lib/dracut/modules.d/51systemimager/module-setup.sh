@@ -65,7 +65,8 @@ EOF
     # Install binaries we need.
 
     # Network commands that we need (since RHEL-8.1, 40network doesn't include that by default)
-    inst_multiple ip dhclient ping
+    inst_multiple ip ping
+    inst_multiple -o dhclient # dhclient is not available on NetworkManager based distros (E.g. RHEL >= 8.4)
     inst_multiple -o arping ping6 # For future needs
 
     # Filesystems we want to be able to handle
