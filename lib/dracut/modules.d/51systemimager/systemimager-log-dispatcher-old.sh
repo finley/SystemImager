@@ -64,7 +64,7 @@ LOG_DISPATCHER_PID=$!
 
 disown # Remove this task from shell job list so no debug output will be written when killed.
 test ! -d /run/systemimager && mkdir -p /run/systemimager
-echo "$LOG_DISPATCHEZR_PID" > /run/systemimager/log_dispatcher.pid
+echo "$LOG_DISPATCHER_PID" > /run/systemimager/log_dispatcher.pid
 logdetail "log dispatcher PID: $LOG_DISPATCHER_PID"
 
 loginfo "Log event dispatcher started...."
