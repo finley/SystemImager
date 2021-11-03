@@ -255,7 +255,7 @@ logmessage() {
     esac
 
     # Remove sides double-quotes if any (comes from journalctl -o json in log dismatcher (systemd version only)
-    test ${LOG_MESSAGE:0:1} == '"' && LOG_MESSAGE="${LOG_MESSAGE#\"}"
+    test "${LOG_MESSAGE:0:1}" == '"' && LOG_MESSAGE="${LOG_MESSAGE#\"}"
     test "${LOG_MESSAGE: -1}" == '"' && LOG_MESSAGE="${LOG_MESSAGE%\"}" # ! Keep space between : and -1
 
     # Save Message in json HTML stream.
