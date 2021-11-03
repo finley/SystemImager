@@ -438,6 +438,7 @@ sub _choose_kernel_file {
                 #
 
                 my $kernel_release = _get_kernel_release($kernel);
+                chomp($kernel_release) if ( defined($kernel_release) );
                 if ( defined($kernel_release) and ($kernel_release eq $uname_r) and (-f "$image_dir/lib/modules/$uname_r/modules.dep")) {
                         return $kernel;
                 }
@@ -454,7 +455,9 @@ sub _get_kernel_release($) {
 	my $file = shift;
 	my $cmd = "file $file|grep -E 'Linux(/x86){0,1}\\s[Kk]ernel'";
 	my $result = `$cmd`;
+	my $arch = `arch`;
 	$result =~ s/^.*bzImage,\s[Vv]ersion\s(\S+)\s.*$/$1/g;
+	$result =~ s/,$/.$arch/g; # Old kernels idon't have arch (RHEL6, kernel 2.6)
 	chomp($result);
 	if ($result ne "") {
 		return $result;
