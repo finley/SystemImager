@@ -547,7 +547,8 @@ install_configs:
 		|| $(SI_INSTALL) -b -m 644 etc/rsync_stubs/99local $(RSYNC_STUB_DIR)
 	$(SI_INSTALL) -b -m 644 etc/rsync_stubs/README $(RSYNC_STUB_DIR)
 
-ifneq ("$(SYSTEMD_OS_UNIT_DIR)","")
+ifneq ($(wildcard $(SYSTEMD_OS_UNIT_DIR)),)
+	@echo "Installing service files for systemd."
 	mkdir -p $(SYSTEMD_UNIT_DIR)
 	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-bittorrent-seeder.service $(SYSTEMD_UNIT_DIR)
 	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-bittorrent.service $(SYSTEMD_UNIT_DIR)
@@ -560,12 +561,13 @@ ifneq ("$(SYSTEMD_OS_UNIT_DIR)","")
 	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-rsyncd.socket $(SYSTEMD_UNIT_DIR)
 else
 	[ "$(INITD)" != "" ] || exit 1
+	@echo "Installing service files for initscripts."
 	mkdir -p $(INITD)
-	$(SI_INSTALL) -b -m 755 etc/init.d/systemimager-server-rsyncd 			$(INITD)
-	$(SI_INSTALL) -b -m 755 etc/init.d/systemimager-server-netbootmond 		$(INITD)
-	$(SI_INSTALL) -b -m 755 etc/init.d/systemimager-server-flamethrowerd 	$(INITD)
-	$(SI_INSTALL) -b -m 755 etc/init.d/systemimager-server-bittorrent 	$(INITD)
-	$(SI_INSTALL) -b -m 755 etc/init.d/systemimager-server-monitord		$(INITD)
+	$(SI_INSTALL) -b -m 755 $(INITD_SRC)/systemimager-server-rsyncd $(INITD)
+	$(SI_INSTALL) -b -m 755 $(INITD_SRC)/systemimager-server-netbootmond $(INITD)
+	$(SI_INSTALL) -b -m 755 $(INITD_SRC)/systemimager-server-flamethrowerd $(INITD)
+	$(SI_INSTALL) -b -m 755 $(INITD_SRC)/systemimager-server-bittorrent $(INITD)
+	$(SI_INSTALL) -b -m 755 $(INITD_SRC)/systemimager-server-monitord $(INITD)
 endif
 ########## END service files ##########
 
