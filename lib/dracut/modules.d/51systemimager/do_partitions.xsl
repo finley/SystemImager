@@ -21,7 +21,7 @@
 
      Purpose:
         XSL disks-layout processor: Used against a disks-layout.xml file, this
-        filter will output partitions to created in smart order so the variable
+        filter will output partitions to be created in smart order so the variable
         size partition is outputed after all others.
 .
 	Each line list the following values separated by semicolons:
