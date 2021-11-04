@@ -200,6 +200,46 @@ si_create_initramfs() {
 	fi
 }
 
+
+################################################################################
+#
+# clean_lv_and_vg_from_device()
+#		remove all logical volumes from given device
+#		remove all affected volume groups if empty.
+################################################################################
+clean_lv_and_vg_from_device() {
+    DEV=$1
+    loginfo "Checking that ${DEV} is not used by a volume group."
+    IMPACTED_LVM=$(dmsetup deps -o devname|grep "(${DEV##*/})"|cut -d':' -f1|tr '-' '/')
+    if test -n "$IMPACTED_LVM"
+    then
+        for LVM_TO_REMOVE in $IMPACTED_LVM
+        do
+            loginfo "Removing $LVM_TO_REMOVE logical volume as it is using $DEV."
+            LV=/dev/${LVM_TO_REMOVE} # TODO: Make sure this is reliable to find full dev path
+            VG=${LVM_TO_REMOVE%/*}
+            logaction "lvm lvchange -an ${LVM_TO_REMOVE}"
+            lvm lvchange -an ${LVM_TO_REMOVE} 6>&- 7>&-
+            logaction "lvm lvremove ${LVM_TO_REMOVE}"
+            lvm lvremove ${LVM_TO_REMOVE} 6>&- 7>&-
+            # If volume groupe is empty, we need to wipe it as well.
+            if $(test lvm lvs $VG 6>&- 7>&- |wc -l) -eq 0
+            then
+                sleep $PARTED_DELAY # Give time for kernel to update.
+                loginfo "Volume group $VG is empty. Removing it."
+                logaction "lvm vgchange -an $VG"
+                lvm vgchange -an $VG 6>&- 7>&-
+                logaction "lvm vgremove $VG"
+                lvm vgremove $VG 6>&- 7>&-
+                loginfo "Removing volume grous header from $MD."
+                logaction "lvm pvremove $MD"
+                lvm pvremove ${DEV} 6>&- 7>&-
+            fi
+        done
+        loginfo "$DEV Cleaned from any logical volumes."
+    fi
+}
+
 ################################################################################
 #
 # stop_software_raid_and_lvm()
@@ -217,20 +257,65 @@ stop_software_raid_and_lvm() {
         lvm vgchange -a n ${VOL_GROUP} 6>&- 7>&-
     done
 
-    # 2/ Stop software raid
-    if [ -f /proc/mdstat ]; then
-        RAID_DEVICES=` cat /proc/mdstat | grep ^md | sed 's/ .*$//g' `
+    # 2/ For all partitions that we want to create
+    #    If device already exists, check that it is not part of an activie md device
+    #    If yes, stop and destroy this md device and clean partition header from any
+    #    raid information
 
-        # Turn dem pesky raid devices off!
-        for RAID_DEVICE in ${RAID_DEVICES}
-        do
-            DEV="/dev/${RAID_DEVICE}"
-	    loginfo "stopping ${DEV} raid device"
-            logdebug "mdadm --manage ${DEV} --stop"
-            mdadm --manage ${DEV} --stop
-	    sleep $PARTED_DELAY
-        done
-    fi
+    loginfo "Checking for existing partitions conflicts with what we want to create."
+    for PART_TO_CREATE in $(xmlstarlet tr /lib/systemimager/do_partitions.xsl ${DISKS_LAYOUT_FILE}|awk -F';' '{print $1$4}')
+    do
+        # check that it is not in /proc/mdstat
+	if test -f /proc/mdstat
+	then
+		MD="$(grep ${PART_TO_CREATE##*/} /proc/mdstat |cut -d' ' -f1)"
+		if test -n "$MD"
+		then
+			loginfo "${MD} is using ${PART_TO_CREATE}. We need to remove it"
+			loginfo "Cleaning lvm from /dev/$MD if needed before we can remove it."
+                        # No need to text existence of /dev/$MD for that task (some wired early boot cases)
+			clean_lv_and_vg_from_device /dev/$MD
+			if test -e /dev/$MD # now we need the device.
+			then
+				loginfo "Removing that meta device ${MD}"
+				logaction "mdadm --stop /dev/$MD"
+				mdadm --stop /dev/$MD
+				logaction "mdadm --remove /dev/$MD"
+				mdadm --remove /dev/$MD
+	                        sleep $PARTED_DELAY # Give time for kernel to update.
+			else
+				logerror "Missing device /dev/$MD while listed in /proc/mdstat"
+				logerror "Can't stop /dev/$MD".
+				logerror "Trying to continue anyway."
+			fi
+		fi
+	fi
+	if test -e ${PART_TO_CREATE}
+	then
+            loginfo "Cleaning lvm from this partition if any."
+	    clean_lv_and_vg_from_device ${PART_TO_CREATE}
+	    loginfo "Cleaning ${PART_TO_CREATE} header from any software raid infop"
+	    logaction "mdadm --zero-superblock ${PART_TO_CREATE}"
+	    mdadm --zero-superblock ${PART_TO_CREATE}
+        else
+	    loginfo "${PART_TO_CREATE} does not exists yet. Nothing to clean."
+	fi
+    done
+
+    # 2/ Stop software raid
+    #if [ -f /proc/mdstat ]; then
+    #    RAID_DEVICES=` cat /proc/mdstat | grep ^md | sed 's/ .*$//g' `
+
+    #    # Turn dem pesky raid devices off!
+    #    for RAID_DEVICE in ${RAID_DEVICES}
+    #    do
+    #        DEV="/dev/${RAID_DEVICE}"
+    #        loginfo "stopping ${DEV} raid device"
+    #        logdebug "mdadm --manage ${DEV} --stop"
+    #        mdadm --manage ${DEV} --stop
+    #    sleep $PARTED_DELAY
+    #    done
+    #fi
 
     # 3/ Stop multipath devices.
     if test -z "`LC_ALL=C dmsetup ls|grep 'No devices found'`"
@@ -668,7 +753,7 @@ _do_partitions() {
 			fi
 		done
 
-	# We use an xsd translmation file to present partition in an order that
+	# We use an xsd translation file to present partition in an order that
 	# permit to create variable size (*) partition in the middle of 2 others
 	xmlstarlet tr /lib/systemimager/do_partitions.xsl ${DISKS_LAYOUT_FILE} |\
 		while read DISK_DEV LABEL_TYPE P_RELATIV P_NUM P_SIZE P_UNIT P_TYPE P_ID P_NAME P_FLAGS P_LVM_GROUP P_RAID_DEV
@@ -900,8 +985,9 @@ _set_partition_flag_and_id() {
 			esac
 			;;
 		raid)
-			logdebug "parted -s $2 -- set $3 raid on"
-			parted -s $2 -- set $3 raid on
+			loginfo "raid flag will be set later when creating raid volume"
+			#logdebug "parted -s $2 -- set $3 raid on"
+			#parted -s $2 -- set $3 raid on
 			;;
 		lba)
 			logdebug "parted -s $2 -- set $3 lba on"
