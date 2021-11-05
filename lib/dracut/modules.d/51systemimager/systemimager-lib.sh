@@ -259,7 +259,10 @@ logmessage() {
     test "${LOG_MESSAGE: -1}" == '"' && LOG_MESSAGE="${LOG_MESSAGE%\"}" # ! Keep space between : and -1
 
     # Save Message in json HTML stream.
-    HTML_ESCAPED_MSG="$(sed -E 's/\\n/<br>/g;s/\\t/\&nbsp;\&nbsp;/g;s/\&/\&amp;/g;s/>/\&gt;/g;s/</\&lt;/g;s/'\''/\&apos;/g;s/"/\\"/g;s/(ht|f)tp(s)?:\/\/[a-zA-Z0-9\.\/-]*[^.\"]/<A HREF=\\"&\\">&<\/A>/g' <<< "${LOG_MESSAGE}")"
+    # s/\\\"/\"/g;s/\"/\\\"/g will ensure that all double quotes are excaped.
+    # Message comming from journald are escaped, but messages comming from other
+    # log facility are not. this sed sequence makes thing consitent across distros.
+    HTML_ESCAPED_MSG="$(sed -E 's/\\\"/\"/g;s/\"/\\\"/g;s/\\n/<br>/g;s/\\t/\&nbsp;\&nbsp;/g;s/\&/\&amp;/g;s/>/\&gt;/g;s/</\&lt;/g;s/'\''/\&apos;/g;s/(ht|f)tp(s)?:\/\/[a-zA-Z0-9\.\/-]*[^.\"]/<A HREF=\\"&\\">&<\/A>/g' <<< "${LOG_MESSAGE}")"
     cat >> /tmp/si_report.stream <<-EOF
 LOG:{ "TAG" : "${LOG_TAG}" , "PRIORITY" : "${LOG_PRIORITY}" , "MESSAGE" : "${HTML_ESCAPED_MSG}" }
 EOF
