@@ -69,12 +69,12 @@ sis_prepare_disks() {
 
 	loginfo "Stopping software raid and LVM that may still be active."
 	stop_software_raid_and_lvm
-	loginfo "Stopping UDEV exec queue to prevent raid restart when creating partitions"
+	#loginfo "Stopping UDEV exec queue to prevent raid restart when creating partitions"
 	# udevadm control --stop-exec-queue
 	_do_partitions
 	_do_raids
 	# Raid are created, restard udev so /dev/md* devices are created (needed for mdadm.conf generation)
-	loginfo "Restarting UDEV exec queue now that disk(s) is (are) set up"
+	#loginfo "Restarting UDEV exec queue now that disk(s) is (are) set up"
 	# udevadm control --start-exec-queue
 	_do_mdadm_conf
 	_do_lvms
@@ -215,8 +215,8 @@ clean_lv_and_vg_from_device() {
     then
         for LVM_TO_REMOVE in $IMPACTED_LVM
         do
-            loginfo "Removing $LVM_TO_REMOVE logical volume as it is using $DEV."
-            LV=/dev/${LVM_TO_REMOVE} # TODO: Make sure this is reliable to find full dev path
+            loginfo "Removing ${LVM_TO_REMOVE/\//-} logical volume as it is using $DEV."
+            #LV=/dev/${LVM_TO_REMOVE} # TODO: Make sure this is reliable to find full dev path
             VG=${LVM_TO_REMOVE%/*}
             logaction "lvm lvchange -an ${LVM_TO_REMOVE}"
             lvm lvchange -an ${LVM_TO_REMOVE} 6>&- 7>&-
@@ -243,26 +243,17 @@ clean_lv_and_vg_from_device() {
 ################################################################################
 #
 # stop_software_raid_and_lvm()
-#		stops all volume groups
-#		stops all software raid
+#		stop and remove volume groups that conflict with our disks-layout
+#		stop and remove software raids that conflict with our disks-layout
 #			=> disks devices should'nt be buzy there after.
 ################################################################################
 stop_software_raid_and_lvm() {
 
-    # 1/ Stop volume groups
-    lvm lvs --noheadings 6>&- 7>&- |awk '{print $2}' | sort -u |\
-    while read VOL_GROUP
-    do
-        loginfo "Removing volumegroup [${VOL_GROUP}]"
-        lvm vgchange -a n ${VOL_GROUP} 6>&- 7>&-
-    done
-
-    # 2/ For all partitions that we want to create
     #    If device already exists, check that it is not part of an activie md device
     #    If yes, stop and destroy this md device and clean partition header from any
     #    raid information
 
-    loginfo "Checking for existing partitions conflicts with what we want to create."
+    loginfo "Checking for existing disks layout conflicts with what we want to create."
     for PART_TO_CREATE in $(xmlstarlet tr /lib/systemimager/do_partitions.xsl ${DISKS_LAYOUT_FILE}|awk -F';' '{print $1$4}')
     do
         # check that it is not in /proc/mdstat
@@ -294,36 +285,14 @@ stop_software_raid_and_lvm() {
 	then
             loginfo "Cleaning lvm from this partition if any."
 	    clean_lv_and_vg_from_device ${PART_TO_CREATE}
-	    loginfo "Cleaning ${PART_TO_CREATE} header from any software raid infop"
+	    loginfo "Cleaning ${PART_TO_CREATE} header from any software raid info"
 	    logaction "mdadm --zero-superblock ${PART_TO_CREATE}"
 	    mdadm --zero-superblock ${PART_TO_CREATE}
         else
 	    loginfo "${PART_TO_CREATE} does not exists yet. Nothing to clean."
 	fi
     done
-
-    # 2/ Stop software raid
-    #if [ -f /proc/mdstat ]; then
-    #    RAID_DEVICES=` cat /proc/mdstat | grep ^md | sed 's/ .*$//g' `
-
-    #    # Turn dem pesky raid devices off!
-    #    for RAID_DEVICE in ${RAID_DEVICES}
-    #    do
-    #        DEV="/dev/${RAID_DEVICE}"
-    #        loginfo "stopping ${DEV} raid device"
-    #        logdebug "mdadm --manage ${DEV} --stop"
-    #        mdadm --manage ${DEV} --stop
-    #    sleep $PARTED_DELAY
-    #    done
-    #fi
-
-    # 3/ Stop multipath devices.
-    if test -z "`LC_ALL=C dmsetup ls|grep 'No devices found'`"
-    then
-	    logininfo "cleaning up dm devices (multipath, ...)"
-	    logdebug "Devices to clean: `dmsetup ls|cut -d' ' -f1|tr '\n' ' '`"
-	    dmsetup remove_all
-    fi
+    logdebug "All conflicting raid, volume groups or logical volumes have been cleaned."
 
 }
 
