@@ -88,7 +88,8 @@ loginfo "Checking for floppy diskette."
 loginfo 'YOU MAY SEE SOME "wrong magic" ERRORS HERE, AND THAT IS NORMAL.'
 mkdir -p /run/media/floppy
 mount /dev/fd0 /run/media/floppy -o ro > /dev/null 2>&1
-if [ $? = 0 ]; then
+if test $? -eq 0
+then
     loginfo "Found floppy diskette."
     if [ -f /run/media/floppy/local.cfg ]; then
         loginfo "Found /local.cfg on floppy."
