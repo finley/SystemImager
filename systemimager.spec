@@ -576,6 +576,7 @@ URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Requires: systemimager-server = %{version}
 Requires: httpd php php-json
+BuildRequires: httpd
 
 %description webgui
 SystemImager admin web interface.
