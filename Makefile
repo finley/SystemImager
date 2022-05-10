@@ -203,6 +203,9 @@ WEB_CONF_SRC      = $(TOPDIR)/etc/
 ifneq ($(shell ls -d /etc/apache2/sites-available 2>/dev/null),)
 WEB_CONF_DEST     = $(ETC)/apache2/sites-available
 WEB_CONF_DIR      = /etc/apache2/sites-available
+else ifneq ($(shell ls -d /etc/apache2/vhosts.d 2>/dev/null),)
+WEB_CONF_DEST     = $(ETC)/apache2/vhosts.d
+WEB_CONF_DIR      = /etc/apache2/vhosts.d
 else ifneq ($(shell ls -d /etc/httpd/conf.d/ 2>/dev/null),)
 WEB_CONF_DEST     = $(ETC)/httpd/conf.d
 WEB_CONF_DIR      = /etc/httpd/conf.d
