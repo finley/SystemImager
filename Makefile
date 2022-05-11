@@ -210,9 +210,9 @@ else ifneq ($(shell ls -d /etc/httpd/conf.d/ 2>/dev/null),)
 WEB_CONF_DEST     = $(ETC)/httpd/conf.d
 WEB_CONF_DIR      = /etc/httpd/conf.d
 else ifeq ($(WEB_CONF_DIR),)
-WEB_CONF_DEST     = ""
+WEB_CONF_DEST     =
 else ifeq ($(shell ls -d $(WEB_CONF_DIR)),)
-$(error "WEB_CONF_DIR=$(WEB_CONF_DIR) directory does not exists.")
+$(error WEB_CONF_DIR=$(WEB_CONF_DIR) directory does not exists)
 else
 WEB_CONF_DEST     = $(ETC)/$(WEB_CONF_DIR)
 endif
@@ -368,7 +368,7 @@ endif
 .PHONY: install_webgui
 install_webgui:
 ifeq ($(WEB_CONF_DEST),)
-	$(error "Can't guess apache web sites configuration dir. Please set WEB_CONF_DIR")
+	$(error Can't guess apache web sites configuration dir. Please set WEB_CONF_DIR)
 endif
 	$(info Using distro WEB_CONF_DIR = $(WEB_CONF_DIR))
 	mkdir -p $(WEB_CONF_DEST)
