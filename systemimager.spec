@@ -86,6 +86,7 @@
 %define pkg_mkisofs mkisofs
 %define pkg_ncat nmap
 %define pkg_pidof sysvinit-tools
+%define web_vhosts_dir %{_sysconfdir}/httpd/conf.d
 %endif
 %if 0%{?rhel} == 7
 %define pkg_ipcalc initscripts
@@ -97,6 +98,7 @@
 %define pkg_mkisofs mkisofs
 %define pkg_ncat nmap-ncat
 %define pkg_pidof sysvinit-tools
+%define web_vhosts_dir %{_sysconfdir}/httpd/conf.d
 %endif
 %%if 0%{?rhel} == 8
 %define pkg_ipcalc ipcalc
@@ -108,6 +110,7 @@
 %define pkg_mkisofs genisoimage
 %define pkg_ncat nmap-ncat
 %define pkg_pidof procps-ng
+%define web_vhosts_dir %{_sysconfdir}/httpd/conf.d
 %endif
 %if 0%{?fedora} > 26
 %define pkg_ipcalc ipcalc
@@ -119,6 +122,7 @@
 %define pkg_mkisofs mkisofs
 %define pkg_ncat nmap-ncat
 %define pkg_pidof procps-ng
+%define web_vhosts_dir %{_sysconfdir}/httpd/conf.d
 %endif
 %if %is_suse%{?is_opensuse}
 %define pkg_ipcalc ipcalc
@@ -130,6 +134,7 @@
 %define pkg_mkisofs cdrtools
 %define pkg_ncat ncat
 %define pkg_pidof sysvinit-tools
+%define web_vhosts_dir %{_sysconfdir}/apache2/vhosts.d
 %endif
 
 # Still use the correct lib even on fc-18+ where --target noarch sets _libdir to /usr/lib even on x86_64 arch.
@@ -1109,7 +1114,7 @@ fi
 
 %files webgui
 %defattr(0644, root, root, 0755)
-%config(noreplace) %{_sysconfdir}/httpd/conf.d/systemimager.conf
+%config(noreplace) %{web_vhosts_dir}/systemimager.conf
 %dir %{_datarootdir}/systemimager/webgui
 %dir %{_datarootdir}/systemimager/webgui/css
 %dir %{_exec_prefix}/lib/systemimager
