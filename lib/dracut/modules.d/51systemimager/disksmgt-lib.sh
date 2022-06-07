@@ -412,7 +412,7 @@ si_install_bootloader() {
 					# Make sure /etc/default exists in /sysroot
 					mkdir -p /sysroot/etc/default || shellout "Cannot create /etc/default on imaged system."
 
-					# if a grub2 specific config exists, we need to install it before generating grub.cfg
+					# if a grub v2 specific config exists, we need to install it before generating grub.cfg
 					# Typically, this file is used to force raid reassembly in initramfs
 					if test -r /tmp/grub_default.cfg
 					then
