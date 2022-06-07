@@ -335,7 +335,7 @@ si_get_sysroot_efi_distro_path() {
 #################################################################################
 #
 # Install bootloader according disk layout specifications
-# (Only supports grub2 and grub)
+# (Only supports grub2, grub and rEFInd)
 #
 # USAGE: si_install_bootloader
 #################################################################################
@@ -393,13 +393,21 @@ si_install_bootloader() {
 
 			# 1st, update config (default menu entry and timeout
 			loginfo "Setting default menu=$BL_DEFAULT and timeout=$BL_TIMEOUT"
+
+			# We need this later at multiple places. Get this once for all.
+			GRUB_INSTALL_BIN=$(ls /sysroot/usr/sbin/grub*-install /sysroot/sbin/grub*-install 2>/dev/null|head -1)
 			case "${BL_FLAVOR}" in
 				"systemd")
 					# nothing to do here.
 					;;
 				"grub2")
-					# Check that grub2-install is available on imaged system
-					[ ! -x /sysroot/usr/sbin/grub2-install ] && [ ! -x /sysroot/sbin/grub2-install ] && shellout "grub2-install missing in image. Can't install grub2 bootloader"
+					# 1st, check we have a grub-install available in image)
+					[ -z "$GRUB_INSTALL_BIN" ] && shellout "grub-install (v2) or grub2-install missing in image. Can't install grub2 bootloader"
+					# 2nd, check that it is executable
+					[ ! -x "$GRUB_INSTALL_BIN" ] && shellout "${GRUB_INSTALL_BIN#/sysroot} is not executable. Please check your image!"
+					GRUB_MAJOR_VERSION="$(chroot /sysroot ${GRUB_INSTALL_BIN#/sysroot} --version |grep -oE '[0-9]\.[0-9]{2}' | cut -d. -f1)"
+					# 3rd, check that it is a v2+ version
+					[ $GRUB_MAJOR_VERSION -lt 2 ] && shellout "Grub version is lower than 2, please choose grub instead of grub2 in your disk layout file."
 
 					# Make sure /etc/default exists in /sysroot
 					mkdir -p /sysroot/etc/default || shellout "Cannot create /etc/default on imaged system."
@@ -422,13 +430,25 @@ si_install_bootloader() {
 					[ -n "$BL_TIMEOUT" ] && sed -i -e "s/GRUB_TIMEOUT=.*/GRUB_TIMEOUT=${BL_TIMEOUT}/g" /sysroot/etc/default/grub && logaction "Setting GRUB_TIMEOUT=$BL_TIMEOUT"
 				        [ -n "$BL_DEFAULT" ] && sed -i -e "s/GRUB_DEFAULT=.*$/GRUB_DEFAULT=${BL_DEFAULT}/g" /sysroot/etc/default/grub && logaction "Setting GRUB_DEFAULT=$BL_DEFAULT"
 
+					GRUB_MKCONFIG_BIN=$(ls /sysroot/usr/sbin/grub*-mkconfig /sysroot/sbin/grub*-mkconfig 2>/dev/null|head -1)
+					GRUB_CONFIG_FILE=/boot/grub2/grub.cfg
+					[ ! -d /sysroot/boot/grub2 ] && GRUB_CONFIG_FILE=/boot/grub/grub.cfg
+
 					# Generate grub2 config file from OS already installed 10_linux cfg.
-					loginfo "Creating /boot/grub2/grub.cfg"
-					logaction "(chroot) grub2-mkconfig --output=/boot/grub2/grub.cfg"
-					chroot /sysroot /sbin/grub2-mkconfig --output=/boot/grub2/grub.cfg 6>&- 7>&- || shellout "Can't create grub2 config"
+					loginfo "Creating ${GRUB_CONFIG_FILE}"
+					logaction "(chroot) ${GRUB_MKCONFIG_BIN#/sysroot} --output=${GRUB_CONFIG_FILE}"
+					chroot /sysroot ${GRUB_MKCONFIG_BIN#/sysroot} --output=${GRUB_CONFIG_FILE} 6>&- 7>&- || shellout "Can't create grub2 config"
 					;;
 				"grub")
-					[ ! -x /sysroot/sbin/grub-install ] && shellout "grub-install missing in image. Can't install grub1 bootloader"
+					# 1st, check we have a grub-install available in image)
+					[ -z "$GRUB_INSTALL_BIN" ] && shellout "grub-install missing in image. Can't install grub2 bootloader"
+					# 2nd, check that it is executable
+					[ ! -x "$GRUB_INSTALL_BIN" ] && shellout "${GRUB_INSTALL_BIN#/sysroot} is not executable. Please check your image!"
+					GRUB_MAJOR_VERSION="$(chroot /sysroot ${GRUB_INSTALL_BIN#/sysroot} --version |grep -oE '[0-9]\.[0-9]{2}' | cut -d. -f1)"
+					# 3rd, check that it is a v1 version
+					[ $GRUB_MAJOR_VERSION -gt 1 ] && shellout "Grub version is higher than 1, please choose grub2 instead of grub in your disk layout file."
+
+					[ ! -x ${GRUB_INSTALL_BIN} ] && shellout "grub-install missing in image. Can't install grub1 bootloader"
 					logwarn "Setting Default entry and timeout not yet supported for grub1"
 					[ -z "${BL_DEFAULT}" ] && BL_DEFAULT=0
 					[ -z "${BL_TIMOUT}" ] && BL_TIMOUT=5
@@ -470,15 +490,15 @@ EOF
 									;;
 								"grub2")
 									[ ! -b "$BL_DEV" ] && shellout "Can't install bootloader: [$BL_DEV] is not a block device!"
-									logaction "chroot /sysroot /sbin/grub2-install --force $BL_DEV"
-									chroot /sysroot /sbin/grub2-install --force $BL_DEV || shellout "Failed to install grub2 bootloader on ${disk}"
+									logaction "chroot /sysroot ${GRUB_INSTALL_BIN} --force $BL_DEV"
+									chroot /sysroot ${GRUB_INSTALL_BIN} --force $BL_DEV || shellout "Failed to install grub2 bootloader on ${disk}"
 									loginfo "legacy grub2 installed on dev ${BL_DEV}"
 									touch /tmp/bootloader.installed
 									;;
 								"grub")
 									[ ! -b "$BL_DEV" ] && shellout "Can't install bootloader: [$BL_DEV] is not a block device!"
-									logaction "chroot /sysroot /sbin/grub-install $BL_DEV"
-									chroot /sysroot /sbin/grub-install $BL_DEV || shellout "Failed to install grub1 bootloader on ${BL_DEV}"
+									logaction "chroot /sysroot ${GRUB_INSTALL_BIN}  $BL_DEV"
+									chroot /sysroot ${GRUB_INSTALL_BIN} $BL_DEV || shellout "Failed to install grub1 bootloader on ${BL_DEV}"
 									loginfo "legacy grub1 installed on dev ${BL_DEV}"
 									touch /tmp/bootloader.installed
 									;;
@@ -543,8 +563,10 @@ EOF
 							EFI_PATH=$(si_get_sysroot_efi_distro_path)
 							if test -n "$EFI_PATH"
 							then
+								GRUB_CONFIG_FILE=/sysroot/boot/grub2/grub.cfg
+								[ ! -d /sysroot/boot/grub2 ] && GRUB_CONFIG_FILE=/sysroot/boot/grub/grub.cfg
 								loginfo "Copying grub.cfg to EFI partition [$EFI_PATH/grub.cfg]"
-								cp /sysroot/boot/grub2/grub.cfg ${EFI_PATH}/grub.cfg
+								cp ${GRUB_CONFIG_FILE} ${EFI_PATH}/grub.cfg
 							else
 								logwarn "Can't guess distro ESP path for grub.cfg: no copied"
 								logwarn "system may not boot"
@@ -574,21 +596,21 @@ EOF
 							shellout "Clover bootloader not yet supported."
 							;;
 						"rEFInd")
-							test -x /usr/sbin/refind-install || shellout "refind-install missing in image. Install rEFInd in image!"
+							test -x /sysroot/usr/sbin/refind-install || shellout "refind-install missing in image. Install rEFInd in image!"
 
 							# Remove any existing NVRAM entry for rEFInd, to avoid creating a duplicate.
-							OLD_REFIND_ENTRY=$(efibootmgr | grep "rEFInd Boot Manager" | cut -c 5-8)
+							OLD_REFIND_ENTRY=$(chroot/sysroot /usr/sbin/efibootmgr | grep "rEFInd Boot Manager" | cut -c 5-8)
 							if test -n "${OLD_REFIND_ENTRY}" ; then
-					   			efibootmgr --bootnum $OLD_REFIND_ENTRY --delete-bootnum &> /dev/null && loginfo "Removed old rEFInd boot entry from NVRAM"
+							chroot /sysroot /usr/sbin/efibootmgr --bootnum $OLD_REFIND_ENTRY --delete-bootnum &> /dev/null && loginfo "Removed old rEFInd boot entry from NVRAM"
 							fi
-							EFI_PRELOADER=`find /boot -name shim\.efi -o -name shimx64\.efi -o -name PreLoader\.efi 2> /dev/null | head -n 1`
+							EFI_PRELOADER=`find /sysroot/boot -name shim\.efi -o -name shimx64\.efi -o -name PreLoader\.efi 2> /dev/null | head -n 1`
 							test -z "${EFI_PRELOADER}" && logwarn "No EFI preloader in /boot; You should install shim or shim-x64 package in image. Using our own."
-							PRELOADER_OPT="--shim ${EFI_PRELOADER}"
+							PRELOADER_OPT="--shim ${EFI_PRELOADER#/sysroot}"
 
 							# Check if system is using secure boot.
 							test -r /sys/firmware/efi/vars/SecureBoot-8be4df61-93ca-11d2-aa0d-00e098032b8c/data && SECURE_BOOT=$(od -An -t u1 /sys/firmware/efi/vars/SecureBoot-8be4df61-93ca-11d2-aa0d-00e098032b8c/data | tr -d '[[:space:]]') || SECURE_BOOT="0"
 					
-							test -x /usr/bin/sbsign -a -x /usr/bin/openssl && KEY_OPTION="--localkeys"
+							test -x /sysroot/usr/bin/sbsign -a -x /sysroot/usr/bin/openssl && KEY_OPTION="--localkeys"
 
 							if test "${SECURE_BOOT}" = "1"
 							then
@@ -597,8 +619,8 @@ EOF
 								CMD="refind-install $KEY_OPTION --yes"
 							fi
 
-							logaction "$CMD"
-							eval "$CMD" || shellout "Failed to setup rEFInd boot manager".
+							logaction "chroot /sysroot ${CMD}"
+							chroot /sysroot ${CMD} || shellout "Failed to setup rEFInd boot manager".
 							;;
 						*)
 							shellout "Unsupported bootloader [$BL_FLAVOR]."
@@ -1129,9 +1151,9 @@ _do_mdadm_conf() {
 	# Now check if we need to create a mdadm.conf
 	if test $(xmlstarlet sel -t -m 'config/raid/raid_disk' -v '@name' -n ${DISKS_LAYOUT_FILE} |wc -l) -gt 0 # We created at least one raid volume.
 	then
-		# Create the grub2 config the force raid assembling in initramfs.
+		# Create the grub config to force raid assembling in initramfs.
 		# GRUB_CMDLINE_LINUX_DEFAULT is use in normal operation but not in failsafe
-		# GRUB_CMDLINE_LINUX is use in al circumstances. We do not want to try to assemble raid in failsafe.
+		# GRUB_CMDLINE_LINUX is use in all circumstances. We do not want to try to assemble raid in failsafe.
 		loginfo "Adding rd.auto to grub cmdline to force raid assembling in initramfs"
 		cat > /tmp/grub_default.cfg <<EOF
 GRUB_CMDLINE_LINUX_DEFAULT="${GRUB_CMDLINE_LINUX_DEFAULT} rd.auto"
