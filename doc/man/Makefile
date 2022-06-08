@@ -15,7 +15,7 @@ USR = $(DESTDIR)$(PREFIX)
 
 SYSTEMIMAGER_VERSION = $(shell cat ../../VERSION)
 
-MANPAGES = $(SERVER_MAN) $(SERVER_POD_MAN) $(CLIENT_MAN) $(COMMON_MAN)
+MANPAGES = $(SERVER_MAN) $(SERVER_POD_MAN) $(CLIENT_MAN) $(COMMON_MAN) $(BT_MAN)
 
 SERVER_MAN = si_addclients.8 				\
 			si_getimage.8					\
@@ -36,8 +36,6 @@ SERVER_MAN = si_addclients.8 				\
 			si_mkrsyncd_conf.8				\
 			si_mkclientnetboot.8				\
 			si_mkbootpackage.8		\
-			\
-			si_installbtimage.8		\
 			si_pcp.8			\
 			si_psh.8			\
 			si_pushinstall.8		\
@@ -50,6 +48,8 @@ SERVER_MAN = si_addclients.8 				\
 CLIENT_MAN = si_prepareclient.8 si_updateclient.8
 
 COMMON_MAN = autoinstallscript.conf.7 si_lsimage.8
+
+BT_MAN = si_installbtimage.8
 
 .SUFFIXES: .5 .7 .8 .8.gz .5.gz .pod .sgml
 
@@ -109,6 +109,12 @@ install_common_man:	$(foreach file, $(COMMON_MAN), $(file).gz)
 
 install_server_man:	$(foreach file, $(SERVER_MAN), $(file).gz)
 	$(foreach manpage, $(SERVER_MAN), \
+	  install -D -m 644 $(manpage).gz \
+	    $(USR)/share/man/man`echo $(manpage) | \
+	    sed 's/.*\(.\)$$/\1/'`/$(manpage).gz ;)
+
+install_bittorrent_man:	$(foreach file, $(BT_MAN), $(file).gz)
+	$(foreach manpage, $(BT_MAN), \
 	  install -D -m 644 $(manpage).gz \
 	    $(USR)/share/man/man`echo $(manpage) | \
 	    sed 's/.*\(.\)$$/\1/'`/$(manpage).gz ;)

@@ -232,7 +232,8 @@ KBOOT_CONF_SRC    = etc/kboot.cfg
 KBOOT_CONF_DEST   = $(ETC)/systemimager/kboot.cfg
 
 BINARIES := si_mkautoinstallcd si_mkautoinstalldisk si_psh si_pcp si_pushoverrides si_clusterconfig
-SBINARIES := si_addclients si_cpimage si_getimage si_lint si_mkdhcpserver si_mkdhcpstatic si_mkautoinstallscript si_mvimage si_pushupdate si_pushinstall si_rmimage si_mkrsyncd_conf si_mkclientnetboot si_netbootmond si_installbtimage
+SBINARIES := si_addclients si_cpimage si_getimage si_lint si_mkdhcpserver si_mkdhcpstatic si_mkautoinstallscript si_mvimage si_pushupdate si_pushinstall si_rmimage si_mkrsyncd_conf si_mkclientnetboot si_netbootmond
+BT_SBINARIES := si_installbtimage
 CLIENT_SBINARIES  := si_updateclient si_prepareclient
 COMMON_BINARIES   := si_lsimage si_mkbootpackage
 WEB_SRC           := index.php edit_clusters.php manage_netboot.php edit_dhcp.php health_console.php client_console.php client_list.php edit_config.php services.json statuses.json functions.js functions.php push_client_defs.php push_client_logs.php css/Background.png css/SystemImagerBanner.png css/flex_table.css css/screen.css css/sliders.css images/Alecive-Flatwoken-Apps-Dialog-Apply.svg images/Alecive-Flatwoken-Apps-Dialog-Close.svg images/Alecive-Flatwoken-Apps-Dialog-Logout.svg images/Alecive-Flatwoken-Apps-Dialog-Refresh.svg images/Alecive-Flatwoken-Apps-Settings.svg images/yes.svg images/no.svg images/client_list.png images/edit_clusters.png images/edit_config.png images/edit_dhcp.png images/health_console.png images/manage_netboot.png COPYRIGHTS
@@ -290,7 +291,7 @@ install_all:	install_server install_client install_common install_dracut install
 
 # a complete server install
 .PHONY:	install_server_all
-install_server_all:	install_server install_common install_binaries install_dracut install_webgui
+install_server_all:	install_server install_server_bittorrent install_server_flamethrower install_common install_binaries install_dracut install_webgui
 
 # a complete client install
 .PHONY:	install_client_all
@@ -307,7 +308,7 @@ install_server:	install_server_man 	\
 		$(SI_INSTALL) -m 755 $(BINARY_SRC)/$(binary) $(BIN);)
 	$(foreach binary, $(SBINARIES), \
 		$(SI_INSTALL) -m 755 $(BINARY_SRC)/$(binary) $(SBIN);)
-ifneq ("$(wildcard /usr/lib/systemd/*system)","")
+ifneq ("$(SYSTEMD_OS_UNIT_DIR)","")
 	$(SI_INSTALL) -m 755 $(BINARY_SRC)/si_mkbootserver.systemd $(SBIN)/si_mkbootserver
 else
 	$(SI_INSTALL) -m 755 $(BINARY_SRC)/si_mkbootserver.sysvinit $(SBIN)/si_mkbootserver
@@ -315,8 +316,6 @@ endif
 	$(SI_INSTALL) -d -m 755 $(LOG_DIR)
 	$(SI_INSTALL) -d -m 755 $(LOCK_DIR)
 	$(SI_INSTALL) -d -m 755 $(BOOT_BIN_DEST)
-	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_TARBALL_DIR)
-	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_TORRENT_DIR)
 	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_SCRIPT_DIR)
 	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_SCRIPT_DIR)/configs
 	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_SCRIPT_DIR)/disks-layouts
@@ -363,7 +362,63 @@ endif
 	$(SI_INSTALL) -d -m 755 $(IMAGEDEST)
 	$(SI_INSTALL) -m 644 $(WARNING_FILES) $(IMAGEDEST)
 	cp -a $(IMAGEDEST)/README $(IMAGEDEST)/DO_NOT_TOUCH_THESE_DIRECTORIES
+# Install server service files
+ifneq ($(wildcard $(SYSTEMD_OS_UNIT_DIR)),)
+	@echo "Installing systemd service files for systemimager."
+	mkdir -p $(SYSTEMD_UNIT_DIR)
+	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-monitord.service $(SYSTEMD_UNIT_DIR)
+	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-netbootmond.service $(SYSTEMD_UNIT_DIR)
+	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-rsyncd.service $(SYSTEMD_UNIT_DIR)
+	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-rsyncd@.service $(SYSTEMD_UNIT_DIR)
+	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-rsyncd.socket $(SYSTEMD_UNIT_DIR)
+else
+	[ "$(INITD)" != "" ] || exit 1
+	@echo "Installing init.d service files for systemimager."
+	mkdir -p $(INITD)
+	$(SI_INSTALL) -b -m 755 $(INITD_SRC)/systemimager-server-rsyncd $(INITD)
+	$(SI_INSTALL) -b -m 755 $(INITD_SRC)/systemimager-server-netbootmond $(INITD)
+	$(SI_INSTALL) -b -m 755 $(INITD_SRC)/systemimager-server-monitord $(INITD)
+endif
+
+.PHONY: install_server_bittorrent
+install_server_bittorrent: install_bittorrent_man
+	$(SI_INSTALL) -d $(SBIN)
+	$(SI_INSTALL) -d $(ETC)/systemimager
+	$(SI_INSTALL) -m 644 --backup etc/bittorrent.conf $(ETC)/systemimager/
+	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_TARBALL_DIR)
+	$(SI_INSTALL) -d -m 755 $(AUTOINSTALL_TORRENT_DIR)
+	$(foreach binary, $(BT_SBINARIES), \
+		$(SI_INSTALL) -m 755 $(BINARY_SRC)/$(binary) $(SBIN);)
+ifneq ($(wildcard $(SYSTEMD_OS_UNIT_DIR)),)
+	@echo "Installing systemd service files for bittorrent."
+	mkdir -p $(SYSTEMD_UNIT_DIR)
+	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-bittorrent-seeder.service $(SYSTEMD_UNIT_DIR)
+	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-bittorrent.service $(SYSTEMD_UNIT_DIR)
+	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-bittorrent-tracker.service $(SYSTEMD_UNIT_DIR)
+else
+	[ "$(INITD)" != "" ] || exit 1
+	@echo "Installing init.d service files for bittorrent."
+	mkdir -p $(INITD)
+	$(SI_INSTALL) -b -m 755 $(INITD_SRC)/systemimager-server-bittorrent $(INITD)
+endif
+
+
+.PHONY: install_server_flamethrower
+install_server_flamethrower:
+	$(SI_INSTALL) -d $(ETC)/systemimager
+	$(SI_INSTALL) -m 644 etc/flamethrower.conf $(ETC)/systemimager/
 	$(SI_INSTALL) -d -m 755 $(FLAMETHROWER_STATE_DIR)
+ifneq ($(wildcard $(SYSTEMD_OS_UNIT_DIR)),)
+	@echo "Installing systemd service files for flamethrower."
+	mkdir -p $(SYSTEMD_UNIT_DIR)
+	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-flamethrowerd.service $(SYSTEMD_UNIT_DIR)
+else
+	[ "$(INITD)" != "" ] || exit 1
+	@echo "Installing init.d service files for flamethrower."
+	mkdir -p $(INITD)
+	$(SI_INSTALL) -b -m 755 $(INITD_SRC)/systemimager-server-flamethrowerd $(INITD)
+endif
+
 
 .PHONY: install_webgui
 install_webgui:
@@ -536,8 +591,6 @@ install_common_libs:
 install_configs:
 	$(SI_INSTALL) -d $(ETC)/systemimager
 	$(SI_INSTALL) -m 644 etc/systemimager.conf $(ETC)/systemimager/
-	$(SI_INSTALL) -m 644 etc/flamethrower.conf $(ETC)/systemimager/
-	$(SI_INSTALL) -m 644 --backup etc/bittorrent.conf $(ETC)/systemimager/
 	$(SI_INSTALL) -m 644 --backup etc/cluster.xml $(ETC)/systemimager/
 	$(SI_INSTALL) -m 644 etc/autoinstallscript.template $(ETC)/systemimager/
 	$(SI_INSTALL) -m 644 etc/autoinstallconf.template $(ETC)/systemimager/
@@ -549,35 +602,12 @@ install_configs:
 		&& $(SI_INSTALL) -b -m 644 etc/rsync_stubs/99local $(RSYNC_STUB_DIR)/99local.dist~ \
 		|| $(SI_INSTALL) -b -m 644 etc/rsync_stubs/99local $(RSYNC_STUB_DIR)
 	$(SI_INSTALL) -b -m 644 etc/rsync_stubs/README $(RSYNC_STUB_DIR)
-
-ifneq ($(wildcard $(SYSTEMD_OS_UNIT_DIR)),)
-	@echo "Installing service files for systemd."
-	mkdir -p $(SYSTEMD_UNIT_DIR)
-	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-bittorrent-seeder.service $(SYSTEMD_UNIT_DIR)
-	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-bittorrent.service $(SYSTEMD_UNIT_DIR)
-	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-bittorrent-tracker.service $(SYSTEMD_UNIT_DIR)
-	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-flamethrowerd.service $(SYSTEMD_UNIT_DIR)
-	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-monitord.service $(SYSTEMD_UNIT_DIR)
-	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-netbootmond.service $(SYSTEMD_UNIT_DIR)
-	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-rsyncd.service $(SYSTEMD_UNIT_DIR)
-	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-rsyncd@.service $(SYSTEMD_UNIT_DIR)
-	$(SI_INSTALL) -b -m 644 $(SYSTEMD_SRC)/systemimager-server-rsyncd.socket $(SYSTEMD_UNIT_DIR)
-else
-	[ "$(INITD)" != "" ] || exit 1
-	@echo "Installing service files for initscripts."
-	mkdir -p $(INITD)
-	$(SI_INSTALL) -b -m 755 $(INITD_SRC)/systemimager-server-rsyncd $(INITD)
-	$(SI_INSTALL) -b -m 755 $(INITD_SRC)/systemimager-server-netbootmond $(INITD)
-	$(SI_INSTALL) -b -m 755 $(INITD_SRC)/systemimager-server-flamethrowerd $(INITD)
-	$(SI_INSTALL) -b -m 755 $(INITD_SRC)/systemimager-server-bittorrent $(INITD)
-	$(SI_INSTALL) -b -m 755 $(INITD_SRC)/systemimager-server-monitord $(INITD)
-endif
 ########## END service files ##########
 
 
 ########## BEGIN man pages ##########
 # build all of the manpages
-.PHONY:	manpages install_server_man install_client_man install_common_man install_docs docs
+.PHONY:	manpages install_server_man install_client_man install_common_man install_bittorrent_man install_docs docs
 ifeq ($(SI_BUILD_DOCS),1)
 manpages:
 	$(MAKE) -C $(MANPAGE_DIR) TOPDIR=$(TOPDIR)
@@ -593,6 +623,9 @@ install_client_man: manpages
 # install manpages common to the server and client
 install_common_man: manpages
 	cd $(MANPAGE_DIR) && $(MAKE) install_common_man TOPDIR=$(TOPDIR) PREFIX=$(PREFIX) $@
+
+install_bittorrent_man: manpages
+	cd $(MANPAGE_DIR) && $(MAKE) install_bittorrent_man TOPDIR=$(TOPDIR) PREFIX=$(PREFIX) $@
 
 ########## END man pages ##########
 

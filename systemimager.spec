@@ -248,7 +248,7 @@ environments.
 The doc package provides End-User and Administrator guides for setting up
 and use Systemimager. It also includes many configuration examples.
 
-%package flamethrower
+%package server-flamethrower
 Summary: Software that automates Linux installs, software distribution, and production deployment.
 Version: %ver
 Release: %rel
@@ -259,6 +259,7 @@ BuildArch: noarch
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
+Obsoletes: systemimager-flamethrower
 Requires: systemimager-server = %{version}, perl, flamethrower >= 0.1.6
 # If systemd
 %if 0%{?_unitdir:1}
@@ -268,7 +269,7 @@ Requires: /sbin/chkconfig
 %endif
 #AutoReqProv: no
 
-%description flamethrower
+%description server-flamethrower
 SystemImager is software that automates Linux installs, software 
 distribution, and production deployment.  SystemImager makes it easy to
 do installs, software distribution, content or data distribution, 
@@ -470,12 +471,13 @@ ramdisk that works with a specific kernel by using UYOK (Use Your Own Kernel).  
 ramdisk can then be used to boot and install Linux machines during the
 SystemImager autoinstall process.
 
-%package bittorrent
+%package server-bittorrent
 Summary: Software that automates Linux installs, software distribution, and production deployment.
 Version: %ver
 Release: %rel
 License: GPL
 Group: Applications/System
+Obsoletes: systemimager-bittorrent
 BuildRoot: /tmp/%{name}-%{ver}-root
 BuildArch: noarch
 Packager: %packager
@@ -491,7 +493,7 @@ Requires: /sbin/chkconfig
 %endif
 #AutoReqProv: no
 
-%description bittorrent
+%description server-bittorrent
 SystemImager is software that automates Linux installs, software
 distribution, and production deployment.  SystemImager makes it easy to
 do installs, software distribution, content or data distribution,
@@ -848,7 +850,7 @@ fi
 # endif systemd/not systemd
 %endif
 
-%post flamethrower
+%post server-flamethrower
 # if systemd
 %if 0%{?_unitdir:1}
 %systemd_post systemimager-server-flamethrowerd
@@ -865,7 +867,7 @@ fi
 # endif systemd/not systemd
 %endif
 
-%preun flamethrower
+%preun server-flamethrower
 # if systemd
 %if 0%{?_unitdir:1}
 %systemd_preun systemimager-server-flamethrowerd
@@ -893,7 +895,7 @@ fi
 # Make sure systemcimager configuration file is initalized.
 php %{_exec_prefix}/lib/systemimager/init_systemimager_config.php > /dev/null
 
-%post bittorrent
+%post server-bittorrent
 # if systemd
 %if 0%{?_unitdir:1}
 %systemd_post systemimager-server-bittorrent
@@ -910,7 +912,7 @@ fi
 # endif systemd/not systemd
 %endif
 
-%pre bittorrent
+%pre server-bittorrent
 echo "checking for a tracker binary..."
 BT_TRACKER_BIN=`(which bittorrent-tracker || which bttrack) 2>/dev/null`
 if [ -z $BT_TRACKER_BIN ]; then
@@ -941,7 +943,7 @@ else
 	echo done
 fi
 
-%preun bittorrent
+%preun server-bittorrent
 # if systemd
 %if 0%{?_unitdir:1}
 %systemd_preun systemimager-server-bittorrent
@@ -1065,7 +1067,7 @@ fi
 %{_mandir}/man8/si_prepareclient*
 %{perl_vendorlib}/SystemImager/Client.pm
 
-%files flamethrower
+%files server-flamethrower
 %defattr(-, root, root)
 %doc CHANGE.LOG COPYING CREDITS README VERSION
 %dir /var/state/systemimager/flamethrower
@@ -1076,7 +1078,7 @@ fi
 %{_sysconfdir}/init.d/systemimager-server-flamethrowerd
 %endif
 
-%files bittorrent
+%files server-bittorrent
 %defattr(-, root, root)
 %dir %{_var}/lib/systemimager/tarballs
 %dir %{_var}/lib/systemimager/torrents
@@ -1156,6 +1158,11 @@ fi
 %attr(0755, root, root) %{_exec_prefix}/lib/systemimager/clients-statuses-helper
 
 %changelog
+* Wed Jun 08 2022 Olivier Lahaye <olivier.lahaye@cea.fr> 4.9.1-0.2
+- Packaging reworked to match debian package names that are more relevant.
+- Renamed systemimager-flamethrower to systemimager-server-flamethrower
+- Renamed systemimager-bittorrent to systemimager-server-bittorrent
+
 * Wed Oct 27 2021 Olivier Lahaye <olivier.lahaye@cea.fr> 4.9.1-0.1
 - Bugfix release
 - Port to Debian 10 and 11.

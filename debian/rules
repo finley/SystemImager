@@ -153,6 +153,12 @@ install-indep:	build-indep
 	$(MAKE) -C $(BUILD_DIR) install_server \
 	  DESTDIR=$(CURDIR)/debian/$(PKG)-server
 
+	$(MAKE) -C $(BUILD_DIR) install_server_flamethrower \
+	  DESTDIR=$(CURDIR)/debian/$(PKG)-server-flamethrower
+
+	$(MAKE) -C $(BUILD_DIR) install_server_bittorrent \
+	  DESTDIR=$(CURDIR)/debian/$(PKG)-server-bittorrent
+
 	$(MAKE) -C $(BUILD_DIR) install_dracut \
 	  DESTDIR=$(CURDIR)/debian/dracut-$(PKG)
 
@@ -172,24 +178,6 @@ install-indep:	build-indep
 	rm -rf $(CURDIR)/debian/$(PKG)-server/etc/init.d
 	# these are installed properly by dh_installsystemd later
 	rm -rf $(CURDIR)/debian/$(PKG)-server/lib/systemd
-
-	mkdir -p $(CURDIR)/debian/$(PKG)-server-flamethrower/etc/systemimager
-	mv $(CURDIR)/debian/$(PKG)-server/etc/systemimager/flamethrower.conf \
-	  $(CURDIR)/debian/$(PKG)-server-flamethrower/etc/systemimager/
-	
-	# prepare the bittorrent package
-	mkdir -p $(CURDIR)/debian/$(PKG)-server-bittorrent/etc/init.d
-	mkdir -p $(CURDIR)/debian/$(PKG)-server-bittorrent/etc/systemimager
-	mkdir -p $(CURDIR)/debian/$(PKG)-server-bittorrent/usr/sbin
-	mkdir -p $(CURDIR)/debian/$(PKG)-server-bittorrent/var/lib/systemimager/tarballs
-	mkdir -p $(CURDIR)/debian/$(PKG)-server-bittorrent/var/lib/systemimager/torrents
-	mkdir -p $(CURDIR)/debian/$(PKG)-server-bittorrent/usr/share/man/man8
-	mv $(CURDIR)/debian/$(PKG)-server/etc/systemimager/bittorrent.conf \
-		$(CURDIR)/debian/$(PKG)-server-bittorrent/etc/systemimager
-	mv $(CURDIR)/debian/$(PKG)-server/usr/sbin/si_installbtimage \
-		$(CURDIR)/debian/$(PKG)-server-bittorrent/usr/sbin
-	mv $(CURDIR)/debian/$(PKG)-server/usr/share/man/man8/si_installbtimage.8.gz \
-		$(CURDIR)/debian/$(PKG)-server-bittorrent/usr/share/man/man8
 
 # Build architecture-dependent files here.
 binary-arch: build-arch install-arch
