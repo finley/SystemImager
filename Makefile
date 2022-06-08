@@ -164,9 +164,9 @@ USR = $(DESTDIR)$(PREFIX)
 ETC  = $(DESTDIR)/etc
 INITD = $(ETC)/init.d
 
-ifneq ($(wildcard /usr/lib/systemd/system),)
+ifneq ($(wildcard /usr/lib/systemd/system/systemd-halt.service),)
 SYSTEMD_OS_UNIT_DIR = /usr/lib/systemd/system
-else ifneq ($(wildcard /lib/systemd/system),)
+else ifneq ($(wildcard /lib/systemd/system/systemd-halt.service),)
 SYSTEMD_OS_UNIT_DIR = /lib/systemd/system
 else
 SYSTEMD_OS_UNIT_DIR = ""
