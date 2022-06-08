@@ -246,7 +246,7 @@ AUTOINSTALL_TORRENT_DIR = $(DESTDIR)/var/lib/systemimager/torrents
 AUTOINSTALL_TARBALL_DIR = $(DESTDIR)/var/lib/systemimager/tarballs
 OVERRIDES_DIR = $(DESTDIR)/var/lib/systemimager/overrides
 OVERRIDES_README = $(TOPDIR)/var/lib/systemimager/overrides/README
-FLAMETHROWER_STATE_DIR = $(DESTDIR)/var/state/systemimager/flamethrower
+FLAMETHROWER_STATE_DIR = $(DESTDIR)/var/run/systemimager/flamethrower
 
 RSYNC_STUB_DIR = $(ETC)/systemimager/rsync_stubs
 

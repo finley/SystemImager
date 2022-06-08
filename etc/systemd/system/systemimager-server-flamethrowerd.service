@@ -16,10 +16,10 @@ Description=Daemon for multicast file distribution
 
 [Service]
 # Default STATE_DIR. Can be changed in systemimager.conf
-Environment=STATE_DIR=/var/state/systemimager/flamethrower
+Environment=STATE_DIR=/var/run/systemimager/flamethrower
 # EnvironmentFile overrides default values
 EnvironmentFile=/etc/systemimager/flamethrower.conf
-PIDFile=/var/run/systemimager-server-flamethrowerd.pid
+PIDFile=/var/run/systemimager/flamethrower/flamethrowerd.pid
 ExecStart=/usr/bin/flamethrowerd --config-file /etc/systemimager/flamethrower.conf --pid-file $MAINPID
 
 [Install]

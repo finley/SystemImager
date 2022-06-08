@@ -41,10 +41,11 @@ kill_em_all() {
 }
 
 PATH=/bin:/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/usr/local/sbin:
-PPID_FILE=/var/run/systemimager-server-flamethrowerd.pid
+PPID_FILE=/var/run/systemimager/flamethrower/flamethrowerd.pid
 
 # STATE_DIR must match the setting in the flamethrower.conf file.
-STATE_DIR=/var/state/systemimager/flamethrower
+STATE_DIR=/var/run/systemimager/flamethrower
+mkdir -p ${STATE_DIR}
 
 case "$1" in
   start)

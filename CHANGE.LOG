@@ -61,6 +61,7 @@
 - optimized partitionning code (aligned partitions, no hole between partitions, ability to create variable size partition beween 2 fixed size partitions thanks to xsl processing)
 - disks-layout xml file is strictly validated using xsd
 - network is now configured by imager in client. using a validated xml configuration file. it supports ipv6, ipv4, bonding, infiniband, aliases...
+- flamethrower state dir is now /var/run/systemimager/flamethrower
 
 4.5.0 [ Never released ]
 --------------------------------------------------------------------------------

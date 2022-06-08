@@ -1070,7 +1070,6 @@ fi
 %files server-flamethrower
 %defattr(-, root, root)
 %doc CHANGE.LOG COPYING CREDITS README VERSION
-%dir /var/state/systemimager/flamethrower
 %config %{_sysconfdir}/systemimager/flamethrower.conf
 %if 0%{?_unitdir:1}
 %{_unitdir}/systemimager-server-flamethrowerd.service
