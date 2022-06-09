@@ -115,6 +115,9 @@ EOF
     # bittorent client needed when using bittorrent deployment method.
     inst_multiple rtorrent
 
+    # udpcast client require for flamethrower deployment method
+    inst_multiple udp-receiver
+
     # Install lsusb lsscsi lspci
     inst_multiple -o lsusb lsscsi lspci lshw
     mkdir -p "$initdir/usr/share/hwdata"

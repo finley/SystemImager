@@ -83,10 +83,15 @@ EOF
     inst_multiple chmod chown cp dd df dmesg echo egrep fgrep grep halt host hostname ifconfig init insmod kill ln ls lsmod mkdir mknod mkswap modprobe more mv poweroff ps reboot shutdown rm rmdir rmmod route sed sh sleep swapoff swapon sync tar touch uname logger od socat readlink
     inst_multiple uuidgen
     inst_multiple depmod blkid
+
     # Some helpfull command in case of problem
     inst_multiple -o find strace sysctl vi clear reset lsof fuser pidof
+
     # bittorent client needed when using bittorrent deployment method.
     inst_multiple rtorrent
+
+    # udpcast client require for flamethrower deployment method
+    inst_multiple udp-receiver
 
     # Install lsusb lsscsi lspci
     inst_multiple -o lsusb lsscsi lspci lshw

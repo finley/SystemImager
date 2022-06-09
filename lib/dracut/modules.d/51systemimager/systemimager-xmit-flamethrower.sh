@@ -55,6 +55,7 @@ function get_scripts_directory() {
     MODULE_NAME="autoinstall_scripts"
     DIR="${SCRIPTS_DIR}"
     RETRY=7
+    loginfo "flamethrower client started for scripts download to ${SCRIPTS_DIR}"
     flamethrower_client
 } 
 
@@ -62,11 +63,13 @@ function get_scripts_directory() {
 #
 # get_image_size <image_name>
 #    => Returns the image size to be downloaded in MB (power of ten).
-#  TODO
 function get_image_size() {
 	SIZE_BYTES=`LC_ALL=C rsync -av --numeric-ids "${IMAGESERVER}::${IMAGENAME}" | grep "total size" | sed -e "s/,//g" -e "s/total size is \([-0-9]*\).*/\1/"`
         # Report it in MB (power of ten)
 	echo $((SIZE_BYTES / 1000))
+	# BUG: 1000 or 1024?
+	# BUG/TODO: flamethrower requires rsync to get image size?
+	# => Can't we get an ${IMAGENAME}.size using udp-reciever? (would avoid the need to start rsyncd on server)
 }
 
 ################################################################################
@@ -81,8 +84,19 @@ function download_image() {
     loginfo "Starting monitor progress report task..."
     start_report_task
 
+    MODULE_NAME="${IMAGENAME}"
+    RETRY=7
     loginfo "Downloading image"
-    # TODO
+    if [ "${TMPFS_STAGING}" = "y" ]; then
+        DIR="${STAGING_DIR}"
+	FLAMETHROWER_TARPIPE=""
+        loginfo "flamethrower client started for image ${IMAGENAME} download and extract to /sysroot"
+    else
+	DIR="/sysroot"
+        FLAMETHROWER_TARPIPE="y"
+        loginfo "flamethrower client started for image ${IMAGENAME} download to staging dir ${STAGING_DIR}"
+    fi
+    flamethrower_client
 
     stop_report_task 101 # 101: status=finalizing...
 }
@@ -100,16 +114,17 @@ function extract_image() {
     update_client_status 107 0 # 107=extracting
     if [ "${TMPFS_STAGING}" = "y" ]; then
         # Need to move the image into /sysroot from staging dir.
-	loginfo "Moving image from ${STAGING_DIR} to /sysroot"
+	loginfo "Extracting image from ${STAGING_DIR}/multicast.tar to /sysroot"
 
 	# Check that there is enought space on destination.
-	IMAGESIZE=`du -sk ${STAGING_DIR}`
+	IMAGESIZE=`du -sk ${STAGING_DIR}/multicast.tar`
 	DEST_SPACE=`get_free_space /sysroot`
 	[ $IMAGESIZE -gt $DEST_SPACE ] || logwarn "Not enought space on /sysroot ($IMAGESIZE > $DEST_SPACE)"
 
+	[ -z "${NO_LISTING}" ] && VERBOSE_OPT=v
 	# Continue anyway (we cannot know truly if we will fail. df / will ommit /usr if filesystems are different)
-	logaction "rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${STAGING_DIR}/ /sysroot/"
-	rsync -aHS${VERBOSE_OPT} --exclude=lost+found/ --numeric-ids ${STAGING_DIR}/ /sysroot/ > /dev/null 2>&1 || shellout "Move from staging dir to disk failed"
+	logaction "tar x${VERBOSE_OPT}f ${STAGING_DIR}/multicast.tar -C /sysroot"
+	tar x${VERBOSE_OPT}f ${STAGING_DIR}/multicast.tar -C /sysroot || shellout "Image extraction failed failed"
     fi
     # Nothing to do if flamethrower was not using staging dir.
 }
@@ -122,7 +137,14 @@ function extract_image() {
 #
 function install_overrides() {
     loginfo "Installing overrides"
-    # TODO
+
+    MODULE_NAME="override_${OVERRIDE}"
+    DIR="/sysroot"
+    RETRY=7
+    FLAMETHROWER_TARPIPE=y
+    loginfo "Downloading override $OVERRIDE/ to /sysroot"
+    flamethrower_client || logwarn "Override directory $OVERRIDE doesn't seem to exist, but that may be OK."
+    # TODO: move OVERRIDE to /sysroot
 }
 
 ################################################################################
@@ -133,6 +155,7 @@ function install_overrides() {
 ################################################################################
 function terminate_transfer() {
 	loginfo "Terminating transfer processes."
+	# Nothing to do. flamethrower_client will terminate once download is done.
 }
 
 ################################################################################
