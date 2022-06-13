@@ -287,7 +287,7 @@ binaries: $(BOEL_BINARIES_TARBALL) $(INITRD_BOOTFILES_DIR).build
 
 # a full install (usefull for packaging)
 .PHONY: install_all
-install_all:	install_server install_client install_common install_dracut install_initrd_template install_binaries install_webgui
+install_all:	install_server_all install_client install_initrd_template
 
 # a complete server install
 .PHONY:	install_server_all
@@ -300,8 +300,8 @@ install_client_all:	install_client install_common install_initrd_template
 # install server-only architecture independent files
 .PHONY:	install_server
 install_server:	install_server_man 	\
-				install_configs 	\
-				install_server_libs
+		install_configs 	\
+		install_server_libs
 	$(SI_INSTALL) -d $(BIN)
 	$(SI_INSTALL) -d $(SBIN)
 	$(foreach binary, $(BINARIES), \
