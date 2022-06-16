@@ -191,7 +191,7 @@ sub _addclient_link {
 
 sub removeclient {
     my ($name) = @_;
-    return _removeclient_link($name) and _removeclient_hosts($name);
+    return (_removeclient_link($name) and _removeclient_hosts($name));
 }
 
 #########################################
