@@ -397,6 +397,7 @@ BuildRequires: systemconfigurator
 BuildRequires: kernel, coreutils
 BuildRequires: rtorrent
 BuildRequires: cryptsetup
+BuildRequires: udpcast, flamethrower
 %if 0%{?rhel} == 6
 BuildRequires:  udev
 %else
@@ -554,6 +555,7 @@ Requires: kernel, coreutils
 Requires: rtorrent
 Requires: systemimager-initrd_template
 Requires: cryptsetup
+Requires: udpcast, flamethrower
 %if 0%{?rhel} == 6
 Requires:  udev
 %else
