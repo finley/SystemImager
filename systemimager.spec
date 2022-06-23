@@ -100,13 +100,13 @@
 %define pkg_pidof sysvinit-tools
 %define web_vhosts_dir %{_sysconfdir}/httpd/conf.d
 %endif
-%%if 0%{?rhel} == 8
+%%if 0%{?rhel} >= 8
 %define pkg_ipcalc ipcalc
 %define pkg_sshd openssh-server
 #define pkg_btrfs_progs
 #define pkg_ntfsprogs
 %define pkg_dejavu_font dejavu-serif-fonts, dejavu-sans-fonts
-%define pkg_docbook_utils docbook-utils, docbook-utils-pdf
+%define pkg_docbook_utils docbook-utils
 %define pkg_mkisofs genisoimage
 %define pkg_ncat nmap-ncat
 %define pkg_pidof procps-ng
