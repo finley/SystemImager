@@ -583,6 +583,8 @@ URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Requires: systemimager-server = %{version}
 Requires: httpd php php-json
+# Need common package to be installed so config_scheme.json is avalable for %post
+Requires(post): systermimager-common = %{version}
 BuildRequires: httpd
 
 %description webgui
