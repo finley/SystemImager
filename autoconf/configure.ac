@@ -54,21 +54,21 @@ AC_PATH_PROG(python_exec,python3)
 AC_SUBST(PYTHON_PATH,$python_exec)
 
 # do we have docbook, if not say know
-AC_CHECK_PROG(found_docbook2man,[docbook2man],[yes])
+AC_CHECK_PROG(found_jw,[jw],[yes])
 
 AC_ARG_ENABLE([docs],
-    [  --enable-docs           build sgml docs [default=yes if docbook2man is installed]],
+    [  --enable-docs           build sgml docs [default=yes if jw is installed]],
     [if test "x$enableval" = "xyes"; then
-        if test "x$found_docbook2man" = "xyes"; then
+        if test "x$found_jw" = "xyes"; then
             AC_SUBST(BUILD_DOCS,1)
         else
-                SI_CHECK_FAIL(docbook2man,docbook-utils,http://net-snmp.sourceforge.net/,
+                SI_CHECK_FAIL(jw,docbook-utils,http://net-snmp.sourceforge.net/,
                 You can't build SystemImager documentation without docbook.  
                 You can build without docs by passing the --disable-docs flag)
         fi
     fi
     ],
-    [if test "x$found_docbook2man" = "xyes"; then
+    [if test "x$found_jw" = "xyes"; then
             AC_SUBST(BUILD_DOCS,1)
      fi])
 

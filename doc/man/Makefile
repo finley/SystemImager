@@ -92,7 +92,7 @@ si_pushupdate.8: $(TOPDIR)/sbin/si_pushupdate
 	pod2man --release=$(SYSTEMIMAGER_VERSION) -s 8 -c "SystemImager" $< $@
 
 %.5 %.7 %.8:	%.sgml %.content.sgml
-	docbook2man $<
+	jw -f docbook -b man $<
 	mv $(shell echo $@ | tr '[:lower:]' '[:upper:]') $@
 
 install_all:	install_common_man install_server_man install_client_man

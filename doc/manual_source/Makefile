@@ -35,12 +35,12 @@ rtf:	$(NAME).rtf
 txt: 	$(NAME).txt
 
 html:	$(MANUAL_DEPS)
-	docbook2html -o $(HTMLDIR) $(BOOK)
+	jw -f docbook -b html -o $(HTMLDIR) $(BOOK)
 	[ -d $(HTMLDIR)/images ] || mkdir $(HTMLDIR)/images
 	cp -a images/* $(HTMLDIR)/images
 
 $(NAME).dvi:	$(MANUAL_DEPS)
-	docbook2dvi $(BOOK)
+	jw -f docbook -b dvi $(BOOK)
 
 $(NAME).pdf:	$(MANUAL_DEPS)
 	# sgmltools makes better pdfs (e.g., page numbers, less cruft on
@@ -54,17 +54,17 @@ ifeq ($(USE_SGMLTOOLS),1)
 	  /usr/share/sgml/docbook/stylesheet/dsssl/modular/images/warning.pdf .
 	sgmltools -b pdf $(BOOK)
 else
-	docbook2pdf $(BOOK)
+	jw -f docbook -b pdf $(BOOK)
 endif
 
 $(NAME).ps:	$(MANUAL_DEPS)
-	docbook2ps $(BOOK)
+	jw -f docbook -b ps $(BOOK)
 
 $(NAME).rtf:	$(MANUAL_DEPS)
-	docbook2rtf $(BOOK)
+	jw -f docbook -b rtf $(BOOK)
 
 $(NAME).txt:	$(MANUAL_DEPS)
-	docbook2txt $(BOOK)
+	jw -f docbook -b txt $(BOOK)
 
 clean:
 	find . -name "*~" -exec rm -f {} \;
