@@ -86,6 +86,7 @@
 %define pkg_mkisofs mkisofs
 %define pkg_ncat nmap
 %define pkg_pidof sysvinit-tools
+%define pkg_dhcpd dhcp
 %define web_vhosts_dir %{_sysconfdir}/httpd/conf.d
 %endif
 %if 0%{?rhel} == 7
@@ -98,6 +99,7 @@
 %define pkg_mkisofs mkisofs
 %define pkg_ncat nmap-ncat
 %define pkg_pidof sysvinit-tools
+%define pkg_dhcpd dhcp
 %define web_vhosts_dir %{_sysconfdir}/httpd/conf.d
 %endif
 %%if 0%{?rhel} >= 8
@@ -110,6 +112,7 @@
 %define pkg_mkisofs genisoimage
 %define pkg_ncat nmap-ncat
 %define pkg_pidof procps-ng
+%define pkg_dhcpd dhcp-server
 %define web_vhosts_dir %{_sysconfdir}/httpd/conf.d
 %endif
 %if 0%{?fedora} > 26
@@ -122,6 +125,7 @@
 %define pkg_mkisofs mkisofs
 %define pkg_ncat nmap-ncat
 %define pkg_pidof procps-ng
+%define pkg_dhcpd dhcp-server
 %define web_vhosts_dir %{_sysconfdir}/httpd/conf.d
 %endif
 %if %is_suse%{?is_opensuse}
@@ -134,6 +138,7 @@
 %define pkg_mkisofs cdrtools
 %define pkg_ncat ncat
 %define pkg_pidof sysvinit-tools
+%define pkg_dhcpd dhcp-server
 %define web_vhosts_dir %{_sysconfdir}/apache2/vhosts.d
 %endif
 
@@ -188,6 +193,7 @@ Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
 Requires: rsync >= 2.4.6, systemimager-common = %{version}, dracut-systemimager = %{version}, perl-AppConfig, perl, perl(XML::Simple) >= 2.14
+Requires: %pkg_dhcpd
 Requires(post): systemimager-common = %{version}
 Requires: %pkg_mkisofs
 # If systemd
