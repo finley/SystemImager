@@ -453,7 +453,7 @@ sub _choose_kernel_file {
 #       my $uname_r = _get_kernel_release( '/path/to/kernel/file' );
 sub _get_kernel_release($) {
 	my $file = shift;
-	my $cmd = "file $file|grep -E 'Linux(/x86){0,1}\\s[Kk]ernel'";
+	my $cmd = "LC_ALL=C file $file|grep -E 'Linux(/x86){0,1}\\s[Kk]ernel'";
 	my $result = `$cmd`;
 	my $arch = `arch`;
 	$result =~ s/^.*bzImage,\s[Vv]ersion\s(\S+)\s.*$/$1/g;
@@ -550,7 +550,7 @@ sub is_initrd
         if( $file =~ /\.bak$/ )   { return undef; }
 
         # Get output from "file" for elimination by identification tests
-        my $cmd = "file -zb $file";
+        my $cmd = "LC_ALL=C file -zb $file";
         open(INPUT,"$cmd|") or die("Couldn't run $cmd to get INPUT");
                 my ($input) = (<INPUT>);
                 # eliminate vmlinux files

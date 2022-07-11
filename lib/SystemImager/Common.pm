@@ -502,11 +502,11 @@ sub save_partition_information {
             if (version_cmp($parted_version, '1.6.23') >= 0) {
                 #
                 # Specify that output should be in MB. -BEF-
-                $cmd = "parted -s -- /dev/$disk unit MB print";
+                $cmd = "LC_ALL=C parted -s -- /dev/$disk unit MB print";
             } else {
                 #
                 # Output here is in MB by default. -BEF-
-                $cmd = "parted -s -- /dev/$disk print";
+                $cmd = "LC_ALL=C parted -s -- /dev/$disk print";
             }
             
             #
@@ -776,7 +776,7 @@ sub save_partition_information {
         
         } elsif ($partition_tool eq "sfdisk") {
         
-            my $cmd = "sfdisk -l -uM /dev/$disk";
+            my $cmd = "LC_ALL=C sfdisk -l -uM /dev/$disk";
             
             local *PARTITION_TOOL_OUTPUT;
             open (PARTITION_TOOL_OUTPUT, "$cmd|"); 
@@ -1083,7 +1083,7 @@ sub _print_to_auto_install_conf_file {
             $part = $disk . $minor;
         }
         # Get physical volume information -AR-
-        my $cmd = "pvdisplay -c /dev/$part 2>/dev/null";
+        my $cmd = "LC_ALL=C pvdisplay -c /dev/$part 2>/dev/null";
         open (PV_INFO, "$cmd|");
         unless (eof(PV_INFO)) {
             my @pv_data = split(/:/, <PV_INFO>);
@@ -1132,7 +1132,7 @@ sub save_soft_raid_information {
 
     # Get physical volume information (LVM over software-RAID).
     foreach my $md (keys %{$raid}) {
-        my $cmd = "pvdisplay -c $md 2>/dev/null";
+        my $cmd = "LC_ALL=C pvdisplay -c $md 2>/dev/null";
         open (PV_INFO, "$cmd|");
         unless (eof(PV_INFO)) {
             my @pv_data = split(/:/, <PV_INFO>);
@@ -1163,7 +1163,7 @@ sub save_lvm_information {
         return;
     }
      
-    my $cmd = 'vgdisplay -c 2>/dev/null | sed /^$/d';
+    my $cmd = 'LC_ALL=C vgdisplay -c 2>/dev/null | sed /^$/d';
     open(VG, "$cmd|") || return undef;
     unless (eof(VG)) {
         open(OUT, ">>$file") or die ("FATAL: Couldn't open $file for appending!");
@@ -1192,9 +1192,9 @@ sub save_lvm_information {
 
             # Print logical volumes informations for this group -AR-
             if ($lvm_version == 1) {
-                $cmd = 'vgdisplay -v 2>/dev/null | grep "^LV Name" | sed "s/  */ /g" | cut -d" " -f3 | xargs lvdisplay -c 2>/dev/null | sed /^$/d';
+                $cmd = 'LC_ALL=C vgdisplay -v 2>/dev/null | grep "^LV Name" | sed "s/  */ /g" | cut -d" " -f3 | xargs lvdisplay -c 2>/dev/null | sed /^$/d';
             } elsif ($lvm_version == 2) {
-                $cmd = "lvdisplay -c 2>/dev/null";
+                $cmd = "LC_ALL=C lvdisplay -c 2>/dev/null";
             }
 
             open(LV, "$cmd|");
@@ -1240,7 +1240,7 @@ sub get_disk_label_type {
     # the "Disk label type: <type>" line of output.
     # 
     if ($partition_tool eq "parted") {
-      my $cmd = "parted -s -- /dev/$disk print";
+      my $cmd = "LC_ALL=C parted -s -- /dev/$disk print";
       open (TMP, "$cmd|"); 
         while (<TMP>) {
 	  if (/Disk label type:/) {
@@ -1258,7 +1258,7 @@ sub get_disk_label_type {
     #  "/dev/sdb1 : start=        1, size=35566479, Id=ee"
     #
     } elsif ($partition_tool eq "sfdisk") {
-      my $cmd = "sfdisk -d /dev/$disk";
+      my $cmd = "LC_ALL=C sfdisk -d /dev/$disk";
       open (TMP, "$cmd|"); 
         while (<TMP>) {
 	  if (/Id=ee/) { $label_type = "gpt"; }
@@ -1302,7 +1302,7 @@ sub _get_device_size {
     # line of output. -BEF-
     # 
     if ($partition_tool eq "parted") {
-      my $cmd = "parted -s -- /dev/$device print";
+      my $cmd = "LC_ALL=C parted -s -- /dev/$device print";
       open (TMP, "$cmd|"); 
         while (<TMP>) {
 	  if (/Disk geometry for/) {
@@ -1316,7 +1316,7 @@ sub _get_device_size {
     # and we're done. -BEF-
     #
     } elsif ($partition_tool eq "sfdisk") {
-      my $cmd = "sfdisk -s /dev/$device";
+      my $cmd = "LC_ALL=C sfdisk -s /dev/$device";
       open (TMP, "$cmd|"); 
         while (<TMP>) {
           chomp;
@@ -1772,7 +1772,7 @@ sub _get_software_raid_info {
     close(FILE);
 
     foreach my $md (@array) {
-        my $cmd = "mdadm -D $md";
+        my $cmd = "LC_ALL=C mdadm -D $md";
         open(INPUT,"$cmd|") or die "Couldn't run $cmd. $!";
         while(<INPUT>) {
         
