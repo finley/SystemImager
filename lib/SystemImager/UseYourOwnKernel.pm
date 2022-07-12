@@ -199,7 +199,7 @@ sub create_uyok_initrd() {
             $boot_dir = $destination;
         } else {
 	    # Should not end here....
-            $boot_dir = "/usr/share/systemimager/boot/".get_arch()."/standard";
+            $boot_dir = "/usr/share/systemimager/boot/"._get_arch()."/standard";
         }
         eval { mkpath($boot_dir, 0, 0755) };
         if ($@) {
