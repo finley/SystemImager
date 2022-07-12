@@ -804,7 +804,7 @@ sub save_partition_information {
 # Usage:
 # save_bootloader_information($disk, $file);
 sub save_bootloader_information {
-    my ($disk, $file) = @_;
+    my ($module, $disk, $file) = @_;
     my $bl_flavor; # lilo, grub, grub2, 
     my $install_type; # legacy or efi
     my $boot_target;
@@ -835,7 +835,7 @@ sub save_bootloader_information {
 	my $efi_path = `mount |grep /boot/efi`;
         $boot_target = +(split / /, $efi_path)[0];
 	# We are in EFI environment. Check that THIS dis is the boot disk.
-	if (index($efi_path, $disk)) {
+	if (index($efi_path, $disk) == 0) {
             # Detect the EFI boot loader
             my @all_bootloaders = glob("/boot/efi/EFI/*/grubx64.efi /boot/efi/EFI/*/rEFInd.efi /boot/efi/EFI/*/clover.efi");
 	    my $bootloader = lc(basename($all_bootloaders[0])); # Looking for 1st on only.
@@ -866,8 +866,8 @@ sub save_bootloader_information {
     open (DISK_FILE, ">>$file") or die ("FATAL: Couldn't open $file for appending!"); 
     
     print DISK_FILE qq(\n);
-    print DISK_FILE qq(  <bootloader flavor=\"$bl_flavor\" install_type=\"$install_type\" default_entry=\"0\" timeout=\"2\"\">\n);
-    print DISK_FILE qq(    <target dev=\"$boot_target\">\n);
+    print DISK_FILE qq(  <bootloader flavor=\"$bl_flavor\" install_type=\"$install_type\" default_entry=\"0\" timeout=\"2\">\n);
+    print DISK_FILE qq(    <target dev=\"$boot_target\" />\n);
     print DISK_FILE "  </bootloader>\n";
     
     close (DISK_FILE);
