@@ -25,6 +25,7 @@ package SystemImager::Common;
 use strict;
 use POSIX qw/ceil/;
 use vars qw($version_number $VERSION);
+use File::Basename;
 
 $version_number="SYSTEMIMAGER_VERSION_STRING";
 $VERSION = $version_number;
@@ -51,6 +52,7 @@ our $rsync_magic_string = "'__cloning_completed__'";
 #   get_lvm_version -AR-
 #   save_lvm_information
 #   save_partition_information
+#   save_bootloader_information
 #   save_soft_raid_information
 #   valid_ip_quad
 #   where_is_my_efi_dir
@@ -799,6 +801,77 @@ sub save_partition_information {
     close (DISK_FILE);
 }
 
+# Usage:
+# save_bootloader_information($disk, $file);
+sub save_bootloader_information {
+    my ($disk, $file) = @_;
+    my $bl_flavor; # lilo, grub, grub2, 
+    my $install_type; # legacy or efi
+    my $boot_target;
+
+    # Scan disk for legacy bootloaders then for EFI ones.
+    if (length(`dd if=$disk bs=512 count=1 2>&1 | grep -a GRUB`)) {
+	    $install_type = "legacy";
+            $boot_target = $disk;
+	    # Differentiate grub1 and grub2
+	    my $grub_install_output = `grub2-install --version`;
+	    if (length($grub_install_output)) {
+                $bl_flavor = "grub2";
+            } else {
+                # New grub2-install is named grub-install. Need smarter check
+		$grub_install_output = `grub-install --version`;
+		if($grub_install_output =~ m/(\d+\.\d+)/g && $1 lt 2) {
+		       $bl_flavor = "grub";
+	        } else {
+		       $bl_flavor = "grub2"; # Assume grub2 if version >=2 or if detection fails.
+		}
+            }
+    } elsif (length(`dd if=$disk bs=512 count=1 2>&1 | grep -a LILO`)) {
+	    $bl_flavor = "lilo";
+	    $install_type = "legacy";
+            $boot_target = $disk;
+    } elsif (-d "/sys/firmware/efi") {
+        # Check if this disk has the EFI boot partition.
+	my $efi_path = `mount |grep /boot/efi`;
+        $boot_target = +(split / /, $efi_path)[0];
+	# We are in EFI environment. Check that THIS dis is the boot disk.
+	if (index($efi_path, $disk)) {
+            # Detect the EFI boot loader
+            my @all_bootloaders = glob("/boot/efi/EFI/*/grubx64.efi /boot/efi/EFI/*/rEFInd.efi /boot/efi/EFI/*/clover.efi");
+	    my $bootloader = lc(basename($all_bootloaders[0])); # Looking for 1st on only.
+	    # We assume EFI is only x64 arch for now. TODO: fix detection (broken)
+            if ($bootloader eq "grubx64.efi") {
+                $bl_flavor = "grub2";
+            } elsif ($bootloader eq "systemd-boot.efi") {
+                $bl_flavor = "rEFInd";
+            } elsif ($bootloader eq "refind.efi") {
+                $bl_flavor = "rEFInd";
+            } elsif ($bootloader eq "clover.efi") {
+                $bl_flavor = "clover";
+            } else {
+		warn("Unknown EFI bootloader for partition $boot_target");
+		return; # Don't write boot infos
+            }
+	    $install_type = "efi";
+        } else {
+            # Not the boot disk: ignore
+            return;
+        }
+    } else {
+	    # Not a boot disk. do nothing.
+        return;
+    }
+    
+    # Open up the file that we'll be putting our generic partition info in. -BEF-
+    open (DISK_FILE, ">>$file") or die ("FATAL: Couldn't open $file for appending!"); 
+    
+    print DISK_FILE qq(\n);
+    print DISK_FILE qq(  <bootloader flavor=\"$bl_flavor\" install_type=\"$install_type\" default_entry=\"0\" timeout=\"2\"\">\n);
+    print DISK_FILE qq(    <target dev=\"$boot_target\">\n);
+    print DISK_FILE "  </bootloader>\n";
+    
+    close (DISK_FILE);
+ }
 
 # Usage:
 # _turn_sfdisk_output_into_generic_partitionschemes_file($disk, $unit_of_measurement, \*PARTITION_TOOL_OUTPUT);
