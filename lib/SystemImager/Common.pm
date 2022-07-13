@@ -58,8 +58,8 @@ our $rsync_magic_string = "'__cloning_completed__'";
 #   where_is_my_efi_dir
 #   which
 #   which_dev_style
-#   write_auto_install_script_conf_footer
-#   write_auto_install_script_conf_header
+#   write_disks_layout_footer
+#   write_disks_layout_header
 #   _add_raid_config_to_autoinstallscript_conf
 #   _get_device_size
 #   _get_parted_version
@@ -376,8 +376,8 @@ sub get_lvm_version
 
 
 # Usage:
-# write_auto_install_script_conf_header($file);
-sub write_auto_install_script_conf_header {
+# write_disks_layout_header($file);
+sub write_disks_layout_header {
 
     my ($module, $file) = @_;
 
@@ -390,11 +390,11 @@ sub write_auto_install_script_conf_header {
         print DISK_FILE qq(  \n);
         print DISK_FILE qq(  This file contains partition information about the disks on your golden\n);
         print DISK_FILE qq(  client.  It is stored here in a generic format that is used by your\n);
-        print DISK_FILE qq(  SystemImager server to create an autoinstall script for cloning this\n);
-        print DISK_FILE qq(  system.\n);
+        print DISK_FILE qq(  SystemImager imager to create filesystem structure before laying down\n);
+        print DISK_FILE qq(  the image.\n);
         print DISK_FILE qq(  \n);
         print DISK_FILE qq(  You can change the information in this file to affect how your target\n);
-        print DISK_FILE qq(  machines are installed.  See "man autoinstallscript.conf" for details.\n);
+        print DISK_FILE qq(  machines are installed.  See "man systemimager.disks-layout" for details.\n);
         print DISK_FILE qq(  \n);
         print DISK_FILE qq(-->\n);
         print DISK_FILE qq(\n);
@@ -404,8 +404,8 @@ sub write_auto_install_script_conf_header {
 }
 
 # Usage:
-# write_auto_install_script_conf_footer($file);
-sub write_auto_install_script_conf_footer {
+# write_disks_layout_footer($file);
+sub write_disks_layout_footer {
 
     my ($module, $file) = @_;
 
@@ -551,7 +551,7 @@ sub save_partition_information {
             
             
             #
-            # Add partition info to autoinstallscript.conf file. -BEF-
+            # Add partition info to disks-layout.xml file. -BEF-
             #
             foreach (@partition_tool_output) {
                 $_ =~ s/^ +//;
@@ -1192,12 +1192,12 @@ sub save_soft_raid_information {
     my $raid = _get_software_raid_info();
 
 #XXX  -BEF-
-# x1) get mdadm to store all necessary info in autoinstallscript.conf
+# x1) get mdadm to store all necessary info in disks-layout.xml
 # x2) put mdadm code in boel
 # 3) modify code to use that info to create proper commands in the
 #    auto-install script.
 # 4) include code to create new /etc/mdadm/mdadm.conf to match the 
-#    config, as user may have modified it in the autoinstallscript.conf
+#    config, as user may have modified it in the disks-layout.xml
 #    file.
 # 5) modify code that uses "raidtools" to use mdadm instead.
 # 6) if system had /etc/raidtab, then re-create /etc/raidtab _and_ 
@@ -1430,11 +1430,11 @@ sub detect_bootloader {
 #
 # Usage:
 # save_filesystem_information("/etc/fstab",$output_file);
-# save_filesystem_information("/etc/fstab","/etc/systemimager/autoinstallscript.conf");
+# save_filesystem_information("/etc/fstab","/etc/systemimager/disks-layout.xml");
 #
 sub save_filesystem_information {
 
-    my ($module, $file, $auto_install_script) = @_;
+    my ($module, $file, $disks_layout_file) = @_;
 
     my %mounted_devs_by_mount_point = get_mounted_devs_by_mount_point_array();
     my %active_swaps_by_dev = get_active_swaps_by_dev();
@@ -1443,7 +1443,7 @@ sub save_filesystem_information {
 
     # Read in fstab file and output fstab stanza. -BEF-
     #
-    open(FH_OUT,">>$auto_install_script") or croak("Couldn't open $auto_install_script for appending.");
+    open(FH_OUT,">>$disks_layout_file") or croak("Couldn't open $disks_layout_file for appending.");
 
         print FH_OUT "\n";
 
@@ -1527,7 +1527,7 @@ WARNING: unable to identify the device with "$mount_dev" defined in
          $file!
 
          Manually set the "real_dev" and "format" attributes in
-         "$auto_install_script" to properly create this device
+         "$disks_layout_file" to properly create this device
          during the autoinstall process. 
 
 EOF
@@ -1565,13 +1565,13 @@ EOF
 WARNING: $real_dev is a FAT filesystem on this machine, 
          but the \"minfo\" tool is not installed.  I will be unable to
          determine what FAT size to specify in your
-         \"/etc/systemimager/autoinstallscript.conf\" file.
+         \"/etc/systemimager/disks-layout.xml\" file.
    
          Please install \"minfo\" (part of the \"mtools\" package) and
          run this command again.
    
          Or you can specify the FAT size you want.  One of 12, 16, or
-         32.  Anything else may break your auto-install script.
+         32.  Anything else may break your deployment.
 
 EOF
 

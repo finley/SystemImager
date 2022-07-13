@@ -581,7 +581,7 @@ if (! defined $disks) {
 
 WARNING: Couldn't find any physical disk. Running in a container?
 	/etc/systemimager/disks_layout.xml won't be generated.
-	see autoinstallscript.conf unix manual to create one on the server
+	see systemimager.disks-layout unix manual to create one on the server
 	in /var/lib/systemimager/scripts/disks-layouts/
 
 	Some examples can be found in /usr/share/doc/systemimager-doc*/examples/
@@ -924,7 +924,7 @@ sub create_disks_layout_xml {
     #
     my $partition_tool = which_partition_tool();
 
-    SystemImager::Common->write_auto_install_script_conf_header($file);
+    SystemImager::Common->write_disks_layout_header($file);
 
     my @possible_boot_disks = ();
     # First we do Hardware RAID devices
@@ -990,7 +990,7 @@ sub create_disks_layout_xml {
         );
     }
 
-    SystemImager::Common->write_auto_install_script_conf_footer($file);
+    SystemImager::Common->write_disks_layout_footer($file);
 
     #
     # END partition_tool friendly output
