@@ -43,15 +43,15 @@ $VERSION="SYSTEMIMAGER_VERSION_STRING";
 #   _get_array_of_disks 
 #   _imageexists 
 #   _in_script_add_standard_header_stuff 
-#   _read_partition_info_and_prepare_parted_commands 
-#   _read_partition_info_and_prepare_soft_raid_devs -AR- 
-#   _read_partition_info_and_prepare_pvcreate_commands -AR-
-#   _write_lvm_groups_commands -AR-
-#   _write_lvm_volumes_commands -AR-
+#   deprecated: _read_partition_info_and_prepare_parted_commands 
+#   deprecated: _read_partition_info_and_prepare_soft_raid_devs -AR- 
+#   deprecated: _read_partition_info_and_prepare_pvcreate_commands -AR-
+#   deprecated: _write_lvm_groups_commands -AR-
+#   deprecated: _write_lvm_volumes_commands -AR-
 #   _write_elilo_conf
-#   _write_out_mkfs_commands 
-#   _write_out_new_fstab_file 
-#   _write_out_umount_commands 
+#   deprecated: _write_out_mkfs_commands 
+#   deprecated: _write_out_new_fstab_file 
+#   deprecated: _write_out_umount_commands 
 #   add2rsyncd 
 #   copy_boot_files_from_image_to_shared_dir
 #   copy_boot_files_to_boot_media
@@ -64,7 +64,7 @@ $VERSION="SYSTEMIMAGER_VERSION_STRING";
 #   record_image_retrieved_from
 #   remove_boot_file
 #   remove_image_stub 
-#   upgrade_partition_schemes_to_generic_style 
+#   deprecated: upgrade_partition_schemes_to_generic_style 
 #   validate_disks_layout 
 #   validate_ip_assignment_option 
 #   validate_post_install_option 
@@ -370,869 +370,869 @@ sub dev_to_devfs {
 
 # Usage:  
 # _read_partition_info_and_prepare_parted_commands( $out, $image_dir, $auto_install_script_conf );
-sub _read_partition_info_and_prepare_parted_commands {
-
-    my ($out, $image_dir, $file) = @_;
-
-    my $xml_config = XMLin($file, keyattr => { disk => "+dev", part => "+num" }, forcearray => 1 );  
-
-    my @all_devices = get_all_devices($file);
-    my %devfs_map = dev_to_devfs(@all_devices) or return undef;
-
-    #
-    # Diagnostic output. -BEF-
-    #
-    #foreach my $dev (sort (keys ( %{$xml_config->{disk}} ))) {
-	#    print "Found disk: $dev.\n";
-    #}
-
-    #
-    # Ok.  Now that we've read all of the partition scheme info into hashes, let's do stuff with it. -BEF-
-    #
-    foreach my $dev (sort (keys ( %{$xml_config->{disk}} ))) {
-
-        my $label_type = $xml_config->{disk}->{$dev}->{label_type};
-        my (
-            $highest_part_num, 
-            $highest_p_or_e_part_num, 
-            $m, 
-            $cmd, 
-            $part, 
-            $empty_partition_count, 
-            $remaining_empty_partitions, 
-            $MB_from_end_of_disk
-        );
-
-        my $devfs_dev = $devfs_map{$dev};
-        $dev2disk{$devfs_dev} = "DISK".$disk_no++;
-        print $out "if [ -z \$DISKORDER ] ; then\n";
-        print $out "  $dev2disk{$devfs_dev}=$devfs_dev\n";
-        print $out "elif [ -z \$$dev2disk{$devfs_dev} ] ; then\n";
-        print $out qq(  shellout "Undefined: $dev2disk{$devfs_dev}"\n);
-        print $out "fi\n";
-        $devfs_dev = '$'.$dev2disk{$devfs_dev};
-
-        print $out "# Create disk label.  This ensures that all remnants of the old label, whatever\n";
-        print $out "# type it was, are removed and that we're starting with a clean label.\n";
-        $cmd = "wipe_out_partition_table $devfs_dev $label_type";
-        print $out qq(logaction "$cmd"\n);
-        print $out qq($cmd\n);
-
-        ### BEGIN Populate the simple hashes. -BEF- ###
-        my (
-            %end_of_disk,
-            %flags,
-            %id, 
-            %p_type, 
-            %p_name, 
-            %size, 
-            %startMB,
-            %endMB
-        );
-
-        my $unit_of_measurement = lc $xml_config->{disk}->{$dev}->{unit_of_measurement};
-
-        ########################################################################
-        #
-        # Make sure the user specified 100% or less of the disk (if used). -BEF-
-        # (may want to functionize these at some point)
-        #
-        ########################################################################
-        if (("$unit_of_measurement" eq "%")
-            or ("$unit_of_measurement" eq "percent") 
-            or ("$unit_of_measurement" eq "percentage") 
-            or ("$unit_of_measurement" eq "percentages")) {
-
-            #
-            # Primary partitions. -BEF-
-            #
-            my $p_sum = 0;
-            foreach my $m (sort (keys ( %{$xml_config->{disk}->{$dev}->{part}} ))) {
-
-                #
-                # Skip over logical partitions. -BEF-
-                # 
-                $_ = $xml_config->{disk}->{$dev}->{part}{$m}->{p_type};
-                if ( $_ ne "primary" ) { next; }
-
-                #
-                # Skip over if size is end_of_disk (*) -- we can't measure that without the disk. -BEF-
-                #
-                $_ = $xml_config->{disk}->{$dev}->{part}{$m}->{size};
-                if ( $_ eq "*" ) { next; }
-
-                if (/[[:alpha:]]/) {
-                    print qq(FATAL:  disks-layout.xml cannot contain "$_" as a percentage.\n);
-                    print qq(        Disk: $dev, partition: $m\n);
-                    exit 1;
-                }
-
-                $p_sum += $_;
-
-            }
-
-            #
-            # Extended partition. -BEF-
-            #
-            my $e_sum = 0;
-            foreach my $m (sort (keys ( %{$xml_config->{disk}->{$dev}->{part}} ))) {
-
-                $_ = $xml_config->{disk}->{$dev}->{part}{$m}->{p_type};
-                if ( $_ ne "extended" ) { next; }
-
-                #
-                # Skip over if size is end_of_disk (we can't measure that without the disk.) -BEF-
-                #
-                $_ = $xml_config->{disk}->{$dev}->{part}{$m}->{size};
-                if ( $_ eq "*" ) { next; }
-
-                if (/[[:alpha:]]/) {
-                    print qq(FATAL:  disks-layout.xml cannot contain "$_" as a percentage.\n);
-                    print qq(        Disk: $dev, partition: $m\n);
-                    exit 1;
-                }
-
-                $e_sum += $_;
-
-            }
-
-            #
-            # Logical partitions must not exceed percentage size of the extended partition.  But
-            # we only need to process this loop if an extended partition exists. -BEF-
-            #
-            my $l_sum = 0;
-            if ($e_sum > 0) {
-                foreach my $m (sort (keys ( %{$xml_config->{disk}->{$dev}->{part}} ))) {
- 
-                    #
-                    # Skip over primary and extended partitions. -BEF-
-                    # 
-                    $_ = $xml_config->{disk}->{$dev}->{part}{$m}->{p_type};
-                    unless ( $_ eq "logical" ) { next; }
- 
-                    #
-                    # Skip over if size is end_of_disk (we can't measure that without the disk.) -BEF-
-                    #
-                    $_ = $xml_config->{disk}->{$dev}->{part}{$m}->{size};
-                    if ( $_ eq "*" ) { next; }
- 
-                    if (/[[:alpha:]]/) {
-                        print qq(FATAL:  disks-layout.xml cannot contain "$_" as a percentage.\n);
-                        print qq(        Disk: $dev, partition: $m\n);
-                        exit 1;
-                    }
- 
-                    $l_sum += $_;
- 
-                }
-            }
-
-            #
-            # Produce error message if necessary. -BEF-
-            #
-            my $p_e_sum = $p_sum + $e_sum;
-            if ($p_e_sum > 100) {
-                print qq(FATAL:  Your disks-layout.xml file specifies that "${p_e_sum}%" of your disk\n);
-                print   "        should be partitioned.  Ummm, I don't think you have that much disk. ;-)\n";
-                exit 1;
-            } elsif ($l_sum > 100) {
-                print qq(FATAL:  Your disks-layout.xml file specifies that "${l_sum}%" of your disk\n);
-                print   "        should be partitioned.  Ummm, I don't think you have that much disk. ;-)\n";
-                exit 1;
-            } elsif ($l_sum > $e_sum) {
-                print qq(FATAL:  Your disks-layout.xml file specifies that the sum of your logical\n);
-                print qq(partitions should take up "${l_sum}%" of your disk but the extended partition,\n);
-                print qq(in which the logical partitions must fit, is specified as only "${e_sum}%" of\n);
-                print qq(your disk.  Please modify and try again.\n);
-                exit 1;
-            }
-        } 
-
-
-        ########################################################################
-        #
-        # Continue processing. -BEF-
-        #
-        ########################################################################
-
-        my $end_of_last_primary = 0;
-        my $end_of_last_logical;
-
-        foreach my $m (sort (keys ( %{$xml_config->{disk}->{$dev}->{part}} ))) {
-            $flags{$m}       = $xml_config->{disk}->{$dev}->{part}{$m}->{flags};
-            $id{$m}          = $xml_config->{disk}->{$dev}->{part}{$m}->{id};
-            $p_name{$m}      = $xml_config->{disk}->{$dev}->{part}{$m}->{p_name};
-            $p_type{$m}      = $xml_config->{disk}->{$dev}->{part}{$m}->{p_type};
-            $size{$m}        = $xml_config->{disk}->{$dev}->{part}{$m}->{size};
-
-            # Calculate $startMB and $endMB. -BEF-
-            if ("$p_type{$m}" eq "primary") {
-                $startMB{$m} = q($END_OF_LAST_PRIMARY);
-            
-            } elsif ("$p_type{$m}" eq "extended") {
-                $startMB{$m} = q($END_OF_LAST_PRIMARY);
-            
-            } elsif ("$p_type{$m}" eq "logical") {
-                # $startMB{$m} = q($END_OF_LAST_LOGICAL);
-                # Fix parted extended partition table kernel reload error: -OL-
-                # "Warning: The kernel was unable to re-read the partition table..."
-                # Maybe related to bug https://bugzilla.redhat.com/show_bug.cgi?id=441244
-                # => TEMPORARY FIX until parted get fixed.
-                $startMB{$m} = q#$(( $END_OF_LAST_LOGICAL + 1 ))#;
-            }
-
-            if (("$unit_of_measurement" eq "mb") 
-                or ("$unit_of_measurement" eq "megabytes")) {
-
-                $endMB{$m} = q#$(echo "scale=3; ($START_MB + # . qq#$size{$m})" | bc)#;
-
-            } elsif (("$unit_of_measurement" eq "%")
-                or ("$unit_of_measurement" eq "percent") 
-                or ("$unit_of_measurement" eq "percentage") 
-                or ("$unit_of_measurement" eq "percentages")) {
-
-                $endMB{$m} = q#$(echo "scale=3; (# . qq#$startMB{$m}# . q# + ($DISK_SIZE * # . qq#$size{$m} / 100))" | bc)#;
-            }
-
-        }
-        ### END Populate the simple hashes. -BEF- ###
-
-        # Figure out what the highest partition number is. -BEF-
-        foreach (sort { $a <=> $b } (keys ( %{$xml_config->{disk}->{$dev}->{part}} ))) {
-            $highest_part_num = $_;
-        }
-
-
-        # Find out what the highest primary or extended partition number is. 
-        # This will help us prevent from creating unnecessary bogus partitions.
-        # -BEF-
-        #
-        foreach my $m (sort (keys ( %{$xml_config->{disk}->{$dev}->{part}} ))) {
-            unless (($p_type{$m} eq "primary") or ($p_type{$m} eq "extended")) { next; }
-            $highest_p_or_e_part_num = $m;
-        }
-
-
-        ### BEGIN For empty partitions, change $endMB appropriately. -BEF- ###
-        #
-        $m = $highest_p_or_e_part_num;
-        $empty_partition_count = 0;
-        $MB_from_end_of_disk = 0;
-        my %minors_to_remove;
-        until ($m == 0) {
-          unless ($endMB{$m}) {
-            $empty_partition_count++;
-
-            $endMB{$m} = '$(( $DISK_SIZE - ' . "$MB_from_end_of_disk" . ' ))';
-            $MB_from_end_of_disk++;
-
-            $startMB{$m} = '$(( $DISK_SIZE - ' . "$MB_from_end_of_disk" . ' ))';
-            $MB_from_end_of_disk++;
-
-            $p_type{$m} = "primary";
-            $p_name{$m} = "-";
-            $flags{$m}  = "-";
-
-            $minors_to_remove{$m} = 1;  # This could be any value.  -BEF-
-          }
-
-          $m--;
-        }
-
-        # For partitions that go to the end of the disk, tell $endMB to grow to end of disk. -BEF-
-        foreach $m (keys %endMB) {
-            if (($size{$m}) and ( $size{$m} eq "*" )) {
-                $endMB{$m} = '$(( $DISK_SIZE - ' . "$MB_from_end_of_disk" . ' ))';
-            }
-        }
-        ### END For empty partitions, change $endMB appropriately. -BEF- ###
-
-
-        # Start out with a minor of 1.  We iterate through all minors from one 
-        # to $highest_part_num, and fool parted by creating bogus partitions
-        # where there are gaps in the partition numbers, then later removing them. -BEF-
-        #
-        $m = "0";
-        until ($m > $highest_part_num) {
-
-            $m++;
-            
-            # Skip over partitions we don't have data for.  This is most likely to
-            # occur in the case of an msdos disk label, with empty partitions
-            # after an extended partition, but before logical partitions. -BEF-
-            #
-            unless ($endMB{$m}) { next; }
-            
-            ### Print partitioning commands. -BEF-
-            print $out "\n";
-	    
-            $part = &get_part_name($dev, $m);
-            $part =~ /^(.*?)(p?\d+)$/;
-            $part = "\${".$dev2disk{$1}."}".$2;
-            $cmd = "Creating partition $part.";
-            print $out qq(loginfo "$cmd"\n);
-            
-            print $out qq(START_MB=$startMB{$m}\n);
-            print $out qq(END_MB=$endMB{$m}\n);
-
-            my $swap = '';
-            if ($flags{$m}) {
-                if ($flags{$m} =~ /swap/) {
-                    $swap = 'linux-swap ';
-                }
-            }
-
-            if($p_type{$m} eq "extended") {
-
-                $cmd = qq(parted -s -- $devfs_dev mkpart $p_type{$m} $swap) . q($START_MB $END_MB);
-
-            } else {
-
-                #
-                # parted *always* (except for extended partitions) requires that you 
-                # specify a filesystem type, even though it does nothing with it 
-                # with the "mkpart" command. -BEF-
-                #
-                $cmd = qq(parted -s -- $devfs_dev mkpart $p_type{$m} $swap) . q($START_MB $END_MB);
-
-            }
-            print $out qq(logaction "$cmd"\n);
-            print $out qq($cmd || shellout "parted failed!"\n);
-            print $out "# Avoid disk driver being buzy later\nsleep 0.5s\n\n";
-            
-            # Leave info behind for the next partition. -BEF-
-            if ("$p_type{$m}" eq "primary") {
-                print $out q(END_OF_LAST_PRIMARY=$END_MB) . qq(\n);
-                print $out q(sleep 1) . qq(\n);
-            
-            } elsif ("$p_type{$m}" eq "extended") {
-                print $out q(END_OF_LAST_PRIMARY=$END_MB) . qq(\n);
-                print $out q(END_OF_LAST_LOGICAL=$START_MB) . qq(\n);
-            
-            } elsif ("$p_type{$m}" eq "logical") {
-                print $out q(END_OF_LAST_LOGICAL=$END_MB) . qq(\n);
-            }
-            
-            #
-            # If $id is set for a partition, we invoke sfdisk to tag the partition
-            # id appropriately.  parted is lame (in the true sense of the word) in 
-            # this regard and is incapable of # adding an arbitrary id to a 
-            # partition. -BEF-
-            #
-            if ($id{$m}) {
-                print $out qq(# Use sfdisk to change the partition id.  parted is\n);
-                print $out qq(# incapable of this particular operation.\n);
-                print $out qq(sfdisk --change-id $devfs_dev $m $id{$m} \n);
-            }
-            
-            # Name any partitions that need that kinda treatment.
-            #
-            # XXX Currently, we are assuming that no one is using a rediculously long name.  
-            # parted's output doesn't make it easy for us, and it is currently possible for
-            # a long name to get truncated, and the rest would be considered flags.   
-            # Consider submitting a patch to parted that would print easily parsable output 
-            # with n/a values "-" and no spaces in the flags. -BEF-
-            #
-            if (
-                  ($label_type eq "gpt") 
-                  and ($p_name{$m}) 
-                  and ($p_name{$m} ne "-")
-              ) {  # We're kinda assuming no one names their partitions "-". -BEF-
-            
-              $cmd = "parted -s -- $devfs_dev name $m $p_name{$m}";
-              print $out qq(logaction "$cmd"\n);
-              print $out qq($cmd || shellout "parted failed!"\n);
-              print $out "# Avoid disk driver being buzy later\nsleep 0.5s\n\n";
-            }
-            
-            ### Deal with flags for each partition. -BEF-
-            if(($flags{$m}) and ($flags{$m} ne "-")) {
-            
-                # $flags{$m} will look something like "boot,lba,raid" or "boot" at this point.
-                my @flags = split (/,/, $flags{$m});
-                
-                foreach my $flag (@flags) {
-                    # Parted 1.6.0 doesn't seem to want to tag gpt partitions with lba.  Hmmm. -BEF-
-                    if (($flag eq "lba") and ($label_type eq "gpt")) { next; }
-                    # Ignore custom flag 'swap'. -AR-
-                    if ($flag eq "swap") { next; }
-                    $cmd = "parted -s -- $devfs_dev set $m $flag on";
-                    print $out qq(logaction "$cmd"\n);
-                    print $out qq($cmd || shellout "parted failed!"\n);
-                    print $out "# Avoid disk driver being buzy later\nsleep 0.5s\n\n";
-                }
-            }
-        }
-
-        # Kick the minors out.  (remove temporary partitions) -BEF-
-        foreach $m (keys %minors_to_remove) {
-          print $out "\n# Gotta lose this one (${dev}${m}) to make the disk look right.\n";
-          $cmd = "parted -s -- $devfs_dev rm $m";
-          print $out qq(logaction "$cmd"\n);
-          print $out qq($cmd || shellout "parted failed!"\n);
-          print $out "# Avoid disk driver being buzy later\nsleep 0.5s\n\n";
-        }
-
-        print $out "\n";
-        print $out qq(logdetail "New partition table for $devfs_dev:"\n);
-        $cmd = "parted -s -- $devfs_dev print";
-        print $out qq(logdetail "$cmd"\n);
-        print $out qq($cmd || shellout "Failed to read partition table!"\n);
-        print $out "# Avoid disk driver being buzy later\nsleep 0.5s\n\n";
-        print $out "### END partition $devfs_dev ###\n";
-        print $out "\n";
-    }
-}
+#sub _read_partition_info_and_prepare_parted_commands {
+#
+#    my ($out, $image_dir, $file) = @_;
+#
+#    my $xml_config = XMLin($file, keyattr => { disk => "+dev", part => "+num" }, forcearray => 1 );  
+#
+#    my @all_devices = get_all_devices($file);
+#    my %devfs_map = dev_to_devfs(@all_devices) or return undef;
+#
+#    #
+#    # Diagnostic output. -BEF-
+#    #
+#    #foreach my $dev (sort (keys ( %{$xml_config->{disk}} ))) {
+#	#    print "Found disk: $dev.\n";
+#    #}
+#
+#    #
+#    # Ok.  Now that we've read all of the partition scheme info into hashes, let's do stuff with it. -BEF-
+#    #
+#    foreach my $dev (sort (keys ( %{$xml_config->{disk}} ))) {
+#
+#        my $label_type = $xml_config->{disk}->{$dev}->{label_type};
+#        my (
+#            $highest_part_num, 
+#            $highest_p_or_e_part_num, 
+#            $m, 
+#            $cmd, 
+#            $part, 
+#            $empty_partition_count, 
+#            $remaining_empty_partitions, 
+#            $MB_from_end_of_disk
+#        );
+#
+#        my $devfs_dev = $devfs_map{$dev};
+#        $dev2disk{$devfs_dev} = "DISK".$disk_no++;
+#        print $out "if [ -z \$DISKORDER ] ; then\n";
+#        print $out "  $dev2disk{$devfs_dev}=$devfs_dev\n";
+#        print $out "elif [ -z \$$dev2disk{$devfs_dev} ] ; then\n";
+#        print $out qq(  shellout "Undefined: $dev2disk{$devfs_dev}"\n);
+#        print $out "fi\n";
+#        $devfs_dev = '$'.$dev2disk{$devfs_dev};
+#
+#        print $out "# Create disk label.  This ensures that all remnants of the old label, whatever\n";
+#        print $out "# type it was, are removed and that we're starting with a clean label.\n";
+#        $cmd = "wipe_out_partition_table $devfs_dev $label_type";
+#        print $out qq(logaction "$cmd"\n);
+#        print $out qq($cmd\n);
+#
+#        ### BEGIN Populate the simple hashes. -BEF- ###
+#        my (
+#            %end_of_disk,
+#            %flags,
+#            %id, 
+#            %p_type, 
+#            %p_name, 
+#            %size, 
+#            %startMB,
+#            %endMB
+#        );
+#
+#        my $unit_of_measurement = lc $xml_config->{disk}->{$dev}->{unit_of_measurement};
+#
+#        ########################################################################
+#        #
+#        # Make sure the user specified 100% or less of the disk (if used). -BEF-
+#        # (may want to functionize these at some point)
+#        #
+#        ########################################################################
+#        if (("$unit_of_measurement" eq "%")
+#            or ("$unit_of_measurement" eq "percent") 
+#            or ("$unit_of_measurement" eq "percentage") 
+#            or ("$unit_of_measurement" eq "percentages")) {
+#
+#            #
+#            # Primary partitions. -BEF-
+#            #
+#            my $p_sum = 0;
+#            foreach my $m (sort (keys ( %{$xml_config->{disk}->{$dev}->{part}} ))) {
+#
+#                #
+#                # Skip over logical partitions. -BEF-
+#                # 
+#                $_ = $xml_config->{disk}->{$dev}->{part}{$m}->{p_type};
+#                if ( $_ ne "primary" ) { next; }
+#
+#                #
+#                # Skip over if size is end_of_disk (*) -- we can't measure that without the disk. -BEF-
+#                #
+#                $_ = $xml_config->{disk}->{$dev}->{part}{$m}->{size};
+#                if ( $_ eq "*" ) { next; }
+#
+#                if (/[[:alpha:]]/) {
+#                    print qq(FATAL:  disks-layout.xml cannot contain "$_" as a percentage.\n);
+#                    print qq(        Disk: $dev, partition: $m\n);
+#                    exit 1;
+#                }
+#
+#                $p_sum += $_;
+#
+#            }
+#
+#            #
+#            # Extended partition. -BEF-
+#            #
+#            my $e_sum = 0;
+#            foreach my $m (sort (keys ( %{$xml_config->{disk}->{$dev}->{part}} ))) {
+#
+#                $_ = $xml_config->{disk}->{$dev}->{part}{$m}->{p_type};
+#                if ( $_ ne "extended" ) { next; }
+#
+#                #
+#                # Skip over if size is end_of_disk (we can't measure that without the disk.) -BEF-
+#                #
+#                $_ = $xml_config->{disk}->{$dev}->{part}{$m}->{size};
+#                if ( $_ eq "*" ) { next; }
+#
+#                if (/[[:alpha:]]/) {
+#                    print qq(FATAL:  disks-layout.xml cannot contain "$_" as a percentage.\n);
+#                    print qq(        Disk: $dev, partition: $m\n);
+#                    exit 1;
+#                }
+#
+#                $e_sum += $_;
+#
+#            }
+#
+#            #
+#            # Logical partitions must not exceed percentage size of the extended partition.  But
+#            # we only need to process this loop if an extended partition exists. -BEF-
+#            #
+#            my $l_sum = 0;
+#            if ($e_sum > 0) {
+#                foreach my $m (sort (keys ( %{$xml_config->{disk}->{$dev}->{part}} ))) {
+# 
+#                    #
+#                    # Skip over primary and extended partitions. -BEF-
+#                    # 
+#                    $_ = $xml_config->{disk}->{$dev}->{part}{$m}->{p_type};
+#                    unless ( $_ eq "logical" ) { next; }
+# 
+#                    #
+#                    # Skip over if size is end_of_disk (we can't measure that without the disk.) -BEF-
+#                    #
+#                    $_ = $xml_config->{disk}->{$dev}->{part}{$m}->{size};
+#                    if ( $_ eq "*" ) { next; }
+# 
+#                    if (/[[:alpha:]]/) {
+#                        print qq(FATAL:  disks-layout.xml cannot contain "$_" as a percentage.\n);
+#                        print qq(        Disk: $dev, partition: $m\n);
+#                        exit 1;
+#                    }
+# 
+#                    $l_sum += $_;
+# 
+#                }
+#            }
+#
+#            #
+#            # Produce error message if necessary. -BEF-
+#            #
+#            my $p_e_sum = $p_sum + $e_sum;
+#            if ($p_e_sum > 100) {
+#                print qq(FATAL:  Your disks-layout.xml file specifies that "${p_e_sum}%" of your disk\n);
+#                print   "        should be partitioned.  Ummm, I don't think you have that much disk. ;-)\n";
+#                exit 1;
+#            } elsif ($l_sum > 100) {
+#                print qq(FATAL:  Your disks-layout.xml file specifies that "${l_sum}%" of your disk\n);
+#                print   "        should be partitioned.  Ummm, I don't think you have that much disk. ;-)\n";
+#                exit 1;
+#            } elsif ($l_sum > $e_sum) {
+#                print qq(FATAL:  Your disks-layout.xml file specifies that the sum of your logical\n);
+#                print qq(partitions should take up "${l_sum}%" of your disk but the extended partition,\n);
+#                print qq(in which the logical partitions must fit, is specified as only "${e_sum}%" of\n);
+#                print qq(your disk.  Please modify and try again.\n);
+#                exit 1;
+#            }
+#        } 
+#
+#
+#        ########################################################################
+#        #
+#        # Continue processing. -BEF-
+#        #
+#        ########################################################################
+#
+#        my $end_of_last_primary = 0;
+#        my $end_of_last_logical;
+#
+#        foreach my $m (sort (keys ( %{$xml_config->{disk}->{$dev}->{part}} ))) {
+#            $flags{$m}       = $xml_config->{disk}->{$dev}->{part}{$m}->{flags};
+#            $id{$m}          = $xml_config->{disk}->{$dev}->{part}{$m}->{id};
+#            $p_name{$m}      = $xml_config->{disk}->{$dev}->{part}{$m}->{p_name};
+#            $p_type{$m}      = $xml_config->{disk}->{$dev}->{part}{$m}->{p_type};
+#            $size{$m}        = $xml_config->{disk}->{$dev}->{part}{$m}->{size};
+#
+#            # Calculate $startMB and $endMB. -BEF-
+#            if ("$p_type{$m}" eq "primary") {
+#                $startMB{$m} = q($END_OF_LAST_PRIMARY);
+#            
+#            } elsif ("$p_type{$m}" eq "extended") {
+#                $startMB{$m} = q($END_OF_LAST_PRIMARY);
+#            
+#            } elsif ("$p_type{$m}" eq "logical") {
+#                # $startMB{$m} = q($END_OF_LAST_LOGICAL);
+#                # Fix parted extended partition table kernel reload error: -OL-
+#                # "Warning: The kernel was unable to re-read the partition table..."
+#                # Maybe related to bug https://bugzilla.redhat.com/show_bug.cgi?id=441244
+#                # => TEMPORARY FIX until parted get fixed.
+#                $startMB{$m} = q#$(( $END_OF_LAST_LOGICAL + 1 ))#;
+#            }
+#
+#            if (("$unit_of_measurement" eq "mb") 
+#                or ("$unit_of_measurement" eq "megabytes")) {
+#
+#                $endMB{$m} = q#$(echo "scale=3; ($START_MB + # . qq#$size{$m})" | bc)#;
+#
+#            } elsif (("$unit_of_measurement" eq "%")
+#                or ("$unit_of_measurement" eq "percent") 
+#                or ("$unit_of_measurement" eq "percentage") 
+#                or ("$unit_of_measurement" eq "percentages")) {
+#
+#                $endMB{$m} = q#$(echo "scale=3; (# . qq#$startMB{$m}# . q# + ($DISK_SIZE * # . qq#$size{$m} / 100))" | bc)#;
+#            }
+#
+#        }
+#        ### END Populate the simple hashes. -BEF- ###
+#
+#        # Figure out what the highest partition number is. -BEF-
+#        foreach (sort { $a <=> $b } (keys ( %{$xml_config->{disk}->{$dev}->{part}} ))) {
+#            $highest_part_num = $_;
+#        }
+#
+#
+#        # Find out what the highest primary or extended partition number is. 
+#        # This will help us prevent from creating unnecessary bogus partitions.
+#        # -BEF-
+#        #
+#        foreach my $m (sort (keys ( %{$xml_config->{disk}->{$dev}->{part}} ))) {
+#            unless (($p_type{$m} eq "primary") or ($p_type{$m} eq "extended")) { next; }
+#            $highest_p_or_e_part_num = $m;
+#        }
+#
+#
+#        ### BEGIN For empty partitions, change $endMB appropriately. -BEF- ###
+#        #
+#        $m = $highest_p_or_e_part_num;
+#        $empty_partition_count = 0;
+#        $MB_from_end_of_disk = 0;
+#        my %minors_to_remove;
+#        until ($m == 0) {
+#          unless ($endMB{$m}) {
+#            $empty_partition_count++;
+#
+#            $endMB{$m} = '$(( $DISK_SIZE - ' . "$MB_from_end_of_disk" . ' ))';
+#            $MB_from_end_of_disk++;
+#
+#            $startMB{$m} = '$(( $DISK_SIZE - ' . "$MB_from_end_of_disk" . ' ))';
+#            $MB_from_end_of_disk++;
+#
+#            $p_type{$m} = "primary";
+#            $p_name{$m} = "-";
+#            $flags{$m}  = "-";
+#
+#            $minors_to_remove{$m} = 1;  # This could be any value.  -BEF-
+#          }
+#
+#          $m--;
+#        }
+#
+#        # For partitions that go to the end of the disk, tell $endMB to grow to end of disk. -BEF-
+#        foreach $m (keys %endMB) {
+#            if (($size{$m}) and ( $size{$m} eq "*" )) {
+#                $endMB{$m} = '$(( $DISK_SIZE - ' . "$MB_from_end_of_disk" . ' ))';
+#            }
+#        }
+#        ### END For empty partitions, change $endMB appropriately. -BEF- ###
+#
+#
+#        # Start out with a minor of 1.  We iterate through all minors from one 
+#        # to $highest_part_num, and fool parted by creating bogus partitions
+#        # where there are gaps in the partition numbers, then later removing them. -BEF-
+#        #
+#        $m = "0";
+#        until ($m > $highest_part_num) {
+#
+#            $m++;
+#            
+#            # Skip over partitions we don't have data for.  This is most likely to
+#            # occur in the case of an msdos disk label, with empty partitions
+#            # after an extended partition, but before logical partitions. -BEF-
+#            #
+#            unless ($endMB{$m}) { next; }
+#            
+#            ### Print partitioning commands. -BEF-
+#            print $out "\n";
+#	    
+#            $part = &get_part_name($dev, $m);
+#            $part =~ /^(.*?)(p?\d+)$/;
+#            $part = "\${".$dev2disk{$1}."}".$2;
+#            $cmd = "Creating partition $part.";
+#            print $out qq(loginfo "$cmd"\n);
+#            
+#            print $out qq(START_MB=$startMB{$m}\n);
+#            print $out qq(END_MB=$endMB{$m}\n);
+#
+#            my $swap = '';
+#            if ($flags{$m}) {
+#                if ($flags{$m} =~ /swap/) {
+#                    $swap = 'linux-swap ';
+#                }
+#            }
+#
+#            if($p_type{$m} eq "extended") {
+#
+#                $cmd = qq(parted -s -- $devfs_dev mkpart $p_type{$m} $swap) . q($START_MB $END_MB);
+#
+#            } else {
+#
+#                #
+#                # parted *always* (except for extended partitions) requires that you 
+#                # specify a filesystem type, even though it does nothing with it 
+#                # with the "mkpart" command. -BEF-
+#                #
+#                $cmd = qq(parted -s -- $devfs_dev mkpart $p_type{$m} $swap) . q($START_MB $END_MB);
+#
+#            }
+#            print $out qq(logaction "$cmd"\n);
+#            print $out qq($cmd || shellout "parted failed!"\n);
+#            print $out "# Avoid disk driver being buzy later\nsleep 0.5s\n\n";
+#            
+#            # Leave info behind for the next partition. -BEF-
+#            if ("$p_type{$m}" eq "primary") {
+#                print $out q(END_OF_LAST_PRIMARY=$END_MB) . qq(\n);
+#                print $out q(sleep 1) . qq(\n);
+#            
+#            } elsif ("$p_type{$m}" eq "extended") {
+#                print $out q(END_OF_LAST_PRIMARY=$END_MB) . qq(\n);
+#                print $out q(END_OF_LAST_LOGICAL=$START_MB) . qq(\n);
+#            
+#            } elsif ("$p_type{$m}" eq "logical") {
+#                print $out q(END_OF_LAST_LOGICAL=$END_MB) . qq(\n);
+#            }
+#            
+#            #
+#            # If $id is set for a partition, we invoke sfdisk to tag the partition
+#            # id appropriately.  parted is lame (in the true sense of the word) in 
+#            # this regard and is incapable of # adding an arbitrary id to a 
+#            # partition. -BEF-
+#            #
+#            if ($id{$m}) {
+#                print $out qq(# Use sfdisk to change the partition id.  parted is\n);
+#                print $out qq(# incapable of this particular operation.\n);
+#                print $out qq(sfdisk --change-id $devfs_dev $m $id{$m} \n);
+#            }
+#            
+#            # Name any partitions that need that kinda treatment.
+#            #
+#            # XXX Currently, we are assuming that no one is using a rediculously long name.  
+#            # parted's output doesn't make it easy for us, and it is currently possible for
+#            # a long name to get truncated, and the rest would be considered flags.   
+#            # Consider submitting a patch to parted that would print easily parsable output 
+#            # with n/a values "-" and no spaces in the flags. -BEF-
+#            #
+#            if (
+#                  ($label_type eq "gpt") 
+#                  and ($p_name{$m}) 
+#                  and ($p_name{$m} ne "-")
+#              ) {  # We're kinda assuming no one names their partitions "-". -BEF-
+#            
+#              $cmd = "parted -s -- $devfs_dev name $m $p_name{$m}";
+#              print $out qq(logaction "$cmd"\n);
+#              print $out qq($cmd || shellout "parted failed!"\n);
+#              print $out "# Avoid disk driver being buzy later\nsleep 0.5s\n\n";
+#            }
+#            
+#            ### Deal with flags for each partition. -BEF-
+#            if(($flags{$m}) and ($flags{$m} ne "-")) {
+#            
+#                # $flags{$m} will look something like "boot,lba,raid" or "boot" at this point.
+#                my @flags = split (/,/, $flags{$m});
+#                
+#                foreach my $flag (@flags) {
+#                    # Parted 1.6.0 doesn't seem to want to tag gpt partitions with lba.  Hmmm. -BEF-
+#                    if (($flag eq "lba") and ($label_type eq "gpt")) { next; }
+#                    # Ignore custom flag 'swap'. -AR-
+#                    if ($flag eq "swap") { next; }
+#                    $cmd = "parted -s -- $devfs_dev set $m $flag on";
+#                    print $out qq(logaction "$cmd"\n);
+#                    print $out qq($cmd || shellout "parted failed!"\n);
+#                    print $out "# Avoid disk driver being buzy later\nsleep 0.5s\n\n";
+#                }
+#            }
+#        }
+#
+#        # Kick the minors out.  (remove temporary partitions) -BEF-
+#        foreach $m (keys %minors_to_remove) {
+#          print $out "\n# Gotta lose this one (${dev}${m}) to make the disk look right.\n";
+#          $cmd = "parted -s -- $devfs_dev rm $m";
+#          print $out qq(logaction "$cmd"\n);
+#          print $out qq($cmd || shellout "parted failed!"\n);
+#          print $out "# Avoid disk driver being buzy later\nsleep 0.5s\n\n";
+#        }
+#
+#        print $out "\n";
+#        print $out qq(logdetail "New partition table for $devfs_dev:"\n);
+#        $cmd = "parted -s -- $devfs_dev print";
+#        print $out qq(logdetail "$cmd"\n);
+#        print $out qq($cmd || shellout "Failed to read partition table!"\n);
+#        print $out "# Avoid disk driver being buzy later\nsleep 0.5s\n\n";
+#        print $out "### END partition $devfs_dev ###\n";
+#        print $out "\n";
+#    }
+#}
 
 # Usage:
 #
 #   _read_partition_info_and_prepare_soft_raid_devs( $out, $image_dir, $auto_install_script_conf );
 # 
-sub _read_partition_info_and_prepare_soft_raid_devs {
-
-    my ($out, $image_dir, $file) = @_;
-
-    # Load RAID modules.
-    print $out qq(loginfo "Load software RAID modules."\n);
-    print $out qq(modprobe linear\n);
-    print $out qq(modprobe raid0\n);
-    print $out qq(modprobe raid1\n);
-    print $out qq(modprobe raid5\n);
-    print $out qq(modprobe raid6\n);
-    print $out qq(modprobe raid10\n);
-    print $out qq(modprobe raid456\n);
-
-    my $xml = XMLin($file, keyattr => { raid => "+name" }, forcearray => 1 );
-    my @all_disks = reverse(get_all_disks($file));
-
-    #
-    # Create a lookup hash.  Contents are like:
-    #   /dev/sda => DISK0
-    #
-    my %DISK_by_disk;
-    my $i = 0;
-    foreach my $disk (sort @all_disks) {
-        $DISK_by_disk{$disk} = "DISK$i";
-        $i++;
-    }
-
-    foreach my $md ( sort (keys %{$xml->{raid}}) ) {
-
-        my @md_devices = split(/ /, $xml->{raid}->{$md}->{devices});
-        my $devices;
-
-        # Translate partitions in disk variables (disk autodetection compliant).
-        foreach (@md_devices) {
-            # m/^(.*)(p?\d+)$/;
-            # 
-            # New regex from patch provided by Thomas Zeiser <thomas.zeiser@rrze.uni-erlangen.de>
-            #   Hi,
-            #   
-            #   here is a small bug fix to get HP's cciss/cXdYpZ correctly
-            #   detected in
-            #   Server.pm (relativ to 4.1.99.svn4556_bli-1):
-            #
-            m/^(.*[^p])(p?\d+)$/;
-            my $disk = $1;
-            my $part_no = $2;
-            $devices .= '${' . $DISK_by_disk{$disk} . '}' . $part_no . ' ';
-        }
-
-        # yes | mdadm --create $name \
-        #     --chunk $chunk_size \
-        #     --level $raid_level \
-        #     --raid-devices $raid_devices \
-        #     --spare-devices ($total_devices - $raid_devices) \
-        #     $devices
-
-        my $cmd = qq(yes | mdadm --create $md \\\n);
-        $cmd   .= qq(  --auto yes \\\n);
-        $cmd   .= qq(  --level $xml->{raid}->{$md}->{raid_level} \\\n) if($xml->{raid}->{$md}->{raid_level});
-        $cmd   .= qq(  --raid-devices $xml->{raid}->{$md}->{raid_devices} \\\n) if($xml->{raid}->{$md}->{raid_devices});
-        $cmd   .= qq(  --spare-devices $xml->{raid}->{$md}->{spare_devices} \\\n) if($xml->{raid}->{$md}->{spare_devices});
-        if($xml->{raid}->{$md}->{rounding}) {
-            $xml->{raid}->{$md}->{rounding} =~ s/K$//;
-            $cmd   .= qq(  --rounding $xml->{raid}->{$md}->{rounding} \\\n);
-        }
-        $cmd   .= qq(  --layout $xml->{raid}->{$md}->{layout} \\\n) if($xml->{raid}->{$md}->{layout});
-        if($xml->{raid}->{$md}->{chunk_size}) {
-            $xml->{raid}->{$md}->{chunk_size} =~ s/K$//;
-            $cmd   .= qq(  --chunk $xml->{raid}->{$md}->{chunk_size} \\\n);
-        }
-        $cmd   .= qq(  $devices\n);
-
-        print $out "\nlogaction \"$cmd\"";
-        print $out "\n$cmd\n";
-    }
-    #XXX Do we want to 
-    #   - re-create UUIDs?
-    #   - store partition vs. 
-
-    #
-    # This is where we should create the /etc/mdadm/mdadm.conf file.
-    #
-    #XXX
-    #   - for DEVICE, we can literally list every device involved.  Ie:
-    #       DEVICE /dev/sda1 /dev/sdb1 /dev/sdc1 etc...
-
-    return 1;
-
-}
+#sub _read_partition_info_and_prepare_soft_raid_devs {
+#
+#    my ($out, $image_dir, $file) = @_;
+#
+#    # Load RAID modules.
+#    print $out qq(loginfo "Load software RAID modules."\n);
+#    print $out qq(modprobe linear\n);
+#    print $out qq(modprobe raid0\n);
+#    print $out qq(modprobe raid1\n);
+#    print $out qq(modprobe raid5\n);
+#    print $out qq(modprobe raid6\n);
+#    print $out qq(modprobe raid10\n);
+#    print $out qq(modprobe raid456\n);
+#
+#    my $xml = XMLin($file, keyattr => { raid => "+name" }, forcearray => 1 );
+#    my @all_disks = reverse(get_all_disks($file));
+#
+#    #
+#    # Create a lookup hash.  Contents are like:
+#    #   /dev/sda => DISK0
+#    #
+#    my %DISK_by_disk;
+#    my $i = 0;
+#    foreach my $disk (sort @all_disks) {
+#        $DISK_by_disk{$disk} = "DISK$i";
+#        $i++;
+#    }
+#
+#    foreach my $md ( sort (keys %{$xml->{raid}}) ) {
+#
+#        my @md_devices = split(/ /, $xml->{raid}->{$md}->{devices});
+#        my $devices;
+#
+#        # Translate partitions in disk variables (disk autodetection compliant).
+#        foreach (@md_devices) {
+#            # m/^(.*)(p?\d+)$/;
+#            # 
+#            # New regex from patch provided by Thomas Zeiser <thomas.zeiser@rrze.uni-erlangen.de>
+#            #   Hi,
+#            #   
+#            #   here is a small bug fix to get HP's cciss/cXdYpZ correctly
+#            #   detected in
+#            #   Server.pm (relativ to 4.1.99.svn4556_bli-1):
+#            #
+#            m/^(.*[^p])(p?\d+)$/;
+#            my $disk = $1;
+#            my $part_no = $2;
+#            $devices .= '${' . $DISK_by_disk{$disk} . '}' . $part_no . ' ';
+#        }
+#
+#        # yes | mdadm --create $name \
+#        #     --chunk $chunk_size \
+#        #     --level $raid_level \
+#        #     --raid-devices $raid_devices \
+#        #     --spare-devices ($total_devices - $raid_devices) \
+#        #     $devices
+#
+#        my $cmd = qq(yes | mdadm --create $md \\\n);
+#        $cmd   .= qq(  --auto yes \\\n);
+#        $cmd   .= qq(  --level $xml->{raid}->{$md}->{raid_level} \\\n) if($xml->{raid}->{$md}->{raid_level});
+#        $cmd   .= qq(  --raid-devices $xml->{raid}->{$md}->{raid_devices} \\\n) if($xml->{raid}->{$md}->{raid_devices});
+#        $cmd   .= qq(  --spare-devices $xml->{raid}->{$md}->{spare_devices} \\\n) if($xml->{raid}->{$md}->{spare_devices});
+#        if($xml->{raid}->{$md}->{rounding}) {
+#            $xml->{raid}->{$md}->{rounding} =~ s/K$//;
+#            $cmd   .= qq(  --rounding $xml->{raid}->{$md}->{rounding} \\\n);
+#        }
+#        $cmd   .= qq(  --layout $xml->{raid}->{$md}->{layout} \\\n) if($xml->{raid}->{$md}->{layout});
+#        if($xml->{raid}->{$md}->{chunk_size}) {
+#            $xml->{raid}->{$md}->{chunk_size} =~ s/K$//;
+#            $cmd   .= qq(  --chunk $xml->{raid}->{$md}->{chunk_size} \\\n);
+#        }
+#        $cmd   .= qq(  $devices\n);
+#
+#        print $out "\nlogaction \"$cmd\"";
+#        print $out "\n$cmd\n";
+#    }
+#    #XXX Do we want to 
+#    #   - re-create UUIDs?
+#    #   - store partition vs. 
+#
+#    #
+#    # This is where we should create the /etc/mdadm/mdadm.conf file.
+#    #
+#    #XXX
+#    #   - for DEVICE, we can literally list every device involved.  Ie:
+#    #       DEVICE /dev/sda1 /dev/sdb1 /dev/sdc1 etc...
+#
+#    return 1;
+#
+#}
 
 
 # Usage:
 # _read_partition_info_and_prepare_pvcreate_commands( $out, $image_dir, $auto_install_script_conf );
-sub _read_partition_info_and_prepare_pvcreate_commands {
-    my ($out, $image_dir, $file) = @_;
-
-    my $xml_config = XMLin($file, keyattr => { disk => "+dev", part => "+num" }, forcearray => 1 );
-
-    my @all_devices = get_all_devices($file);
-    my %devfs_map = dev_to_devfs(@all_devices) or return undef;
-    my $cmd;
-
-    foreach my $dev (sort (keys ( %{$xml_config->{disk}} ))) {
-
-        my (
-            $highest_part_num,
-            $m,
-            $part,
-        );
-
-        my $devfs_dev = '$' . $dev2disk{$devfs_map{$dev}};
-
-        ### BEGIN Populate the simple hashes. -BEF- ###
-        my (
-            %flags,
-            %p_type,
-            %p_name,
-        );
-
-        foreach my $m (sort (keys ( %{$xml_config->{disk}->{$dev}->{part}} ))) {
-            $flags{$m}       = $xml_config->{disk}->{$dev}->{part}{$m}->{flags};
-            $p_name{$m}      = $xml_config->{disk}->{$dev}->{part}{$m}->{p_name};
-            $p_type{$m}      = $xml_config->{disk}->{$dev}->{part}{$m}->{p_type};
-        }
-
-        # Figure out what the highest partition number is. -BEF-
-        foreach (sort { $a <=> $b } (keys ( %{$xml_config->{disk}->{$dev}->{part}} ))) {
-            $highest_part_num = $_;
-        }
-
-        $m = "0";
-        until ($m >= $highest_part_num) {
-
-            $m++;
-            unless (defined($p_type{$m})) { next; }
-
-            $part = &get_part_name($dev, $m);
-            $part =~ /^(.*?)(p?\d+)$/;
-            $part = "\${".$dev2disk{$1}."}".$2;
-
-            # Extended partitions can't be used by LVM. -AR-
-            if ("$p_type{$m}" eq "extended") { next; }
-
-            ### Deal with LVM flag for each partition. -AR-
-            if (($flags{$m}) and ($flags{$m} ne "-")) {
-                my @flags = split (/,/, $flags{$m});
-                foreach my $flag (@flags) {
-                    if ("$flag" eq "lvm") {
-                        # Get volume group for this patition -AR-
-                        my $vg_name = $xml_config->{disk}->{$dev}->{part}->{$m}->{lvm_group};
-                        unless (defined($vg_name)) {
-                            print "WARNING: LVM partition \"${dev}${m}\" is not assigned to any group!\n";
-                            next;
-                        }
-                        # Get the version of the LVM metadata to use -AR-
-                        foreach my $lvm (@{$xml_config->{lvm}}) {
-                            my $version = $lvm->{version};
-                            unless (defined($version)) {
-                                # Default => get LVM2 metadata type.
-                                $version = 2;
-                            }
-                            foreach my $lvm_group_name (@{$lvm->{lvm_group}}) {
-                                if ($lvm_group_name->{name} eq $vg_name) {
-                                    $cmd = "Initializing partition $part for use by LVM.";
-                                    print $out qq(loginfo "$cmd"\n);
-
-                                    $cmd = "pvcreate -M${version} -ff -y $part";
-                                    print $out qq(logaction "$cmd"\n);
-                                    print $out qq($cmd || shellout "pvcreate failed!"\n);
-                                    goto part_done;
-                                }
-                            }
-                        }
-                    }
-                }
-part_done:
-            }
-        }
-    }
-
-   # Initialize software RAID volumes used for LVM (if present).
-    my $xml = XMLin($file, keyattr => { raid => "+name" }, forcearray => 1 );
-    foreach my $md ( sort (keys %{$xml->{raid}}) ) {
-        my $vg_name = $xml->{raid}->{$md}->{lvm_group};
-        unless ($vg_name) {
-            next;
-        }
-
-        # Get the version of the LVM metadata to use.
-        foreach my $lvm (@{$xml_config->{lvm}}) {
-            my $version = $lvm->{version};
-            unless (defined($version)) {
-                # Default => get LVM2 metadata type.
-                $version = 2;
-            }
-            foreach my $lvm_group_name (@{$lvm->{lvm_group}}) {
-                if ($lvm_group_name->{name} eq $vg_name) {
-                    $cmd = "pvcreate -M${version} -ff -y $md";
-                    print $out qq(logaction "$cmd"\n);
-                    print $out qq($cmd || shellout "pvcreate falied!"\n);
-                }
-            }
-        }
-    }
-}
+#sub _read_partition_info_and_prepare_pvcreate_commands {
+#    my ($out, $image_dir, $file) = @_;
+#
+#    my $xml_config = XMLin($file, keyattr => { disk => "+dev", part => "+num" }, forcearray => 1 );
+#
+#    my @all_devices = get_all_devices($file);
+#    my %devfs_map = dev_to_devfs(@all_devices) or return undef;
+#    my $cmd;
+#
+#    foreach my $dev (sort (keys ( %{$xml_config->{disk}} ))) {
+#
+#        my (
+#            $highest_part_num,
+#            $m,
+#            $part,
+#        );
+#
+#        my $devfs_dev = '$' . $dev2disk{$devfs_map{$dev}};
+#
+#        ### BEGIN Populate the simple hashes. -BEF- ###
+#        my (
+#            %flags,
+#            %p_type,
+#            %p_name,
+#        );
+#
+#        foreach my $m (sort (keys ( %{$xml_config->{disk}->{$dev}->{part}} ))) {
+#            $flags{$m}       = $xml_config->{disk}->{$dev}->{part}{$m}->{flags};
+#            $p_name{$m}      = $xml_config->{disk}->{$dev}->{part}{$m}->{p_name};
+#            $p_type{$m}      = $xml_config->{disk}->{$dev}->{part}{$m}->{p_type};
+#        }
+#
+#        # Figure out what the highest partition number is. -BEF-
+#        foreach (sort { $a <=> $b } (keys ( %{$xml_config->{disk}->{$dev}->{part}} ))) {
+#            $highest_part_num = $_;
+#        }
+#
+#        $m = "0";
+#        until ($m >= $highest_part_num) {
+#
+#            $m++;
+#            unless (defined($p_type{$m})) { next; }
+#
+#            $part = &get_part_name($dev, $m);
+#            $part =~ /^(.*?)(p?\d+)$/;
+#            $part = "\${".$dev2disk{$1}."}".$2;
+#
+#            # Extended partitions can't be used by LVM. -AR-
+#            if ("$p_type{$m}" eq "extended") { next; }
+#
+#            ### Deal with LVM flag for each partition. -AR-
+#            if (($flags{$m}) and ($flags{$m} ne "-")) {
+#                my @flags = split (/,/, $flags{$m});
+#                foreach my $flag (@flags) {
+#                    if ("$flag" eq "lvm") {
+#                        # Get volume group for this patition -AR-
+#                        my $vg_name = $xml_config->{disk}->{$dev}->{part}->{$m}->{lvm_group};
+#                        unless (defined($vg_name)) {
+#                            print "WARNING: LVM partition \"${dev}${m}\" is not assigned to any group!\n";
+#                            next;
+#                        }
+#                        # Get the version of the LVM metadata to use -AR-
+#                        foreach my $lvm (@{$xml_config->{lvm}}) {
+#                            my $version = $lvm->{version};
+#                            unless (defined($version)) {
+#                                # Default => get LVM2 metadata type.
+#                                $version = 2;
+#                            }
+#                            foreach my $lvm_group_name (@{$lvm->{lvm_group}}) {
+#                                if ($lvm_group_name->{name} eq $vg_name) {
+#                                    $cmd = "Initializing partition $part for use by LVM.";
+#                                    print $out qq(loginfo "$cmd"\n);
+#
+#                                    $cmd = "pvcreate -M${version} -ff -y $part";
+#                                    print $out qq(logaction "$cmd"\n);
+#                                    print $out qq($cmd || shellout "pvcreate failed!"\n);
+#                                    goto part_done;
+#                                }
+#                            }
+#                        }
+#                    }
+#                }
+#part_done:
+#            }
+#        }
+#    }
+#
+#   # Initialize software RAID volumes used for LVM (if present).
+#    my $xml = XMLin($file, keyattr => { raid => "+name" }, forcearray => 1 );
+#    foreach my $md ( sort (keys %{$xml->{raid}}) ) {
+#        my $vg_name = $xml->{raid}->{$md}->{lvm_group};
+#        unless ($vg_name) {
+#            next;
+#        }
+#
+#        # Get the version of the LVM metadata to use.
+#        foreach my $lvm (@{$xml_config->{lvm}}) {
+#            my $version = $lvm->{version};
+#            unless (defined($version)) {
+#                # Default => get LVM2 metadata type.
+#                $version = 2;
+#            }
+#            foreach my $lvm_group_name (@{$lvm->{lvm_group}}) {
+#                if ($lvm_group_name->{name} eq $vg_name) {
+#                    $cmd = "pvcreate -M${version} -ff -y $md";
+#                    print $out qq(logaction "$cmd"\n);
+#                    print $out qq($cmd || shellout "pvcreate falied!"\n);
+#                }
+#            }
+#        }
+#    }
+#}
 
 # Usage:  
 # write_lvm_groups_commands( $out, $image_dir, $auto_install_script_conf );
-sub write_lvm_groups_commands {
-    
-    my ($out, $image_dir, $file) = @_;
-
-    my $xml_config = XMLin($file, keyattr => { lvm_group => "+name" }, forcearray => 1 );
-    
-    my $cmd;
-    
-    # Get all LVM blocks.
-    foreach my $lvm (@{$xml_config->{lvm}}) {
-        my @all_devices = get_all_devices($file);
-        my %devfs_map = dev_to_devfs(@all_devices) or return undef;
-        
-        my $version = $lvm->{version};
-        unless (defined($version)) {
-            # Default => get LVM2 metadata type.
-            $version = 2;
-        }
-
-        # Find the partitions assigned to each LVM group. -AR-    
-        foreach my $group_name (sort (keys ( %{$lvm->{lvm_group}} ))) {
-            my $part_list = "";
-
-            foreach my $disk (@{$xml_config->{disk}}) {
-                my $dev = $disk->{dev};
-            
-                # Figure out what the highest partition number is. -AR-
-                my $highest_part_num = 0;
-                foreach my $part ( @{$disk->{part}} ) {
-                    my $num = $part->{num};
-                    if ($num > $highest_part_num) {
-                        $highest_part_num = $num;
-                    }
-                }
-            
-                # Evaluate the partition list for the current LVM group -AR-
-                my $m = "0";
-                foreach my $part (@{$disk->{part}}) {
-                    $m++;
-                    unless (defined($part->{lvm_group})) { next; }
-                    if ($part->{lvm_group} eq $group_name) {
-                        if (defined($part->{num})) {
-                            $m = $part->{num};
-                        }
-                        my $part_name = &get_part_name($dev, $m);
-                        if ($part_name =~ /^(.*?)(p?\d+)$/) {
-                            $part_name = "\${".$dev2disk{$1}."}".$2;
-                        }
-                        $part_list .= " $part_name";
-                    }
-                }
-            }
-
-           # Find RAID disks assigned to the volume group.
-            my $xml = XMLin($file, keyattr => { raid => "+name" }, forcearray => 1 );
-            foreach my $md ( sort (keys %{$xml->{raid}}) ) {
-                my $vg_name = $xml->{raid}->{$md}->{lvm_group};
-                unless ($vg_name) {
-                    next;
-                }
-                unless ($vg_name eq $group_name) {
-                    next;
-                }
-                $part_list .= " $md";
-            }
-
-            if ($part_list ne "") {
-                # Evaluate the volume group options -AR-
-                my $vg_max_log_vols = $lvm->{lvm_group}->{$group_name}->{max_log_vols};
-                if (defined($vg_max_log_vols)) { 
-                    $vg_max_log_vols = "-l $vg_max_log_vols ";
-                } else {
-                    $vg_max_log_vols = ""; 
-                }
-                my $vg_max_phys_vols = $lvm->{lvm_group}->{$group_name}->{max_phys_vols};
-                if (defined($vg_max_phys_vols)) { 
-                    $vg_max_phys_vols = "-p $vg_max_phys_vols ";
-                } else {
-                    $vg_max_phys_vols = "";
-                }
-                my $vg_phys_extent_size = $lvm->{lvm_group}->{$group_name}->{phys_extent_size};
-                if (defined($vg_phys_extent_size)) { 
-                    $vg_phys_extent_size = "-s $vg_phys_extent_size ";
-                } else {
-                    $vg_phys_extent_size = ""; 
-                }
-                # Remove previous volume groups with $group_name if already present.
-                $cmd = "lvremove -f /dev/${group_name} >/dev/null 2>&1 && vgremove $group_name >/dev/null 2>&1";
-                print $out qq(logaction "$cmd"\n);
-                print $out "$cmd\n";
-                # Write the command to create the volume group -AR-
-                $cmd = "vgcreate -M${version} ${vg_max_log_vols}${vg_max_phys_vols}${vg_phys_extent_size}${group_name}${part_list}";
-                print $out qq(logaction "$cmd"\n);
-                print $out qq($cmd || shellout "vgcreate failed!"\n);
-            } else {
-                print "WARNING: LVM group \"$group_name\" doesn't have partitions!\n";
-            }
-        }
-    }
-}
+#sub write_lvm_groups_commands {
+#    
+#    my ($out, $image_dir, $file) = @_;
+#
+#    my $xml_config = XMLin($file, keyattr => { lvm_group => "+name" }, forcearray => 1 );
+#    
+#    my $cmd;
+#    
+#    # Get all LVM blocks.
+#    foreach my $lvm (@{$xml_config->{lvm}}) {
+#        my @all_devices = get_all_devices($file);
+#        my %devfs_map = dev_to_devfs(@all_devices) or return undef;
+#        
+#        my $version = $lvm->{version};
+#        unless (defined($version)) {
+#            # Default => get LVM2 metadata type.
+#            $version = 2;
+#        }
+#
+#        # Find the partitions assigned to each LVM group. -AR-    
+#        foreach my $group_name (sort (keys ( %{$lvm->{lvm_group}} ))) {
+#            my $part_list = "";
+#
+#            foreach my $disk (@{$xml_config->{disk}}) {
+#                my $dev = $disk->{dev};
+#            
+#                # Figure out what the highest partition number is. -AR-
+#                my $highest_part_num = 0;
+#                foreach my $part ( @{$disk->{part}} ) {
+#                    my $num = $part->{num};
+#                    if ($num > $highest_part_num) {
+#                        $highest_part_num = $num;
+#                    }
+#                }
+#            
+#                # Evaluate the partition list for the current LVM group -AR-
+#                my $m = "0";
+#                foreach my $part (@{$disk->{part}}) {
+#                    $m++;
+#                    unless (defined($part->{lvm_group})) { next; }
+#                    if ($part->{lvm_group} eq $group_name) {
+#                        if (defined($part->{num})) {
+#                            $m = $part->{num};
+#                        }
+#                        my $part_name = &get_part_name($dev, $m);
+#                        if ($part_name =~ /^(.*?)(p?\d+)$/) {
+#                            $part_name = "\${".$dev2disk{$1}."}".$2;
+#                        }
+#                        $part_list .= " $part_name";
+#                    }
+#                }
+#            }
+#
+#           # Find RAID disks assigned to the volume group.
+#            my $xml = XMLin($file, keyattr => { raid => "+name" }, forcearray => 1 );
+#            foreach my $md ( sort (keys %{$xml->{raid}}) ) {
+#                my $vg_name = $xml->{raid}->{$md}->{lvm_group};
+#                unless ($vg_name) {
+#                    next;
+#                }
+#                unless ($vg_name eq $group_name) {
+#                    next;
+#                }
+#                $part_list .= " $md";
+#            }
+#
+#            if ($part_list ne "") {
+#                # Evaluate the volume group options -AR-
+#                my $vg_max_log_vols = $lvm->{lvm_group}->{$group_name}->{max_log_vols};
+#                if (defined($vg_max_log_vols)) { 
+#                    $vg_max_log_vols = "-l $vg_max_log_vols ";
+#                } else {
+#                    $vg_max_log_vols = ""; 
+#                }
+#                my $vg_max_phys_vols = $lvm->{lvm_group}->{$group_name}->{max_phys_vols};
+#                if (defined($vg_max_phys_vols)) { 
+#                    $vg_max_phys_vols = "-p $vg_max_phys_vols ";
+#                } else {
+#                    $vg_max_phys_vols = "";
+#                }
+#                my $vg_phys_extent_size = $lvm->{lvm_group}->{$group_name}->{phys_extent_size};
+#                if (defined($vg_phys_extent_size)) { 
+#                    $vg_phys_extent_size = "-s $vg_phys_extent_size ";
+#                } else {
+#                    $vg_phys_extent_size = ""; 
+#                }
+#                # Remove previous volume groups with $group_name if already present.
+#                $cmd = "lvremove -f /dev/${group_name} >/dev/null 2>&1 && vgremove $group_name >/dev/null 2>&1";
+#                print $out qq(logaction "$cmd"\n);
+#                print $out "$cmd\n";
+#                # Write the command to create the volume group -AR-
+#                $cmd = "vgcreate -M${version} ${vg_max_log_vols}${vg_max_phys_vols}${vg_phys_extent_size}${group_name}${part_list}";
+#                print $out qq(logaction "$cmd"\n);
+#                print $out qq($cmd || shellout "vgcreate failed!"\n);
+#            } else {
+#                print "WARNING: LVM group \"$group_name\" doesn't have partitions!\n";
+#            }
+#        }
+#    }
+#}
 
 # Usage:  
 # write_lvm_volumes_commands( $out, $image_dir, $auto_install_script_conf );
-sub write_lvm_volumes_commands {
-    my ($out, $image_dir, $file) = @_;
-
-    my $xml_config = XMLin($file, keyattr => { lvm_group => "+name" }, forcearray => 1 );
-    
-    my $lvm = @{$xml_config->{lvm}}[0];
-    unless (defined($lvm)) {
-        return;
-    }
-    
-    foreach my $group_name (sort (keys ( %{$lvm->{lvm_group}} ))) {
-        
-        foreach my $lv (@{$lvm->{lvm_group}->{$group_name}->{lv}}) {
-        
-            my $cmd;    
-        
-            # Get logical volume name -AR-
-            my $lv_name = $lv->{name};
-            unless (defined($lv_name)) {
-                print "WARNING: undefined logical volume name! skipping volume creation.\n";
-                next;
-            }
-            # Get logical volume size -AR-
-            my $lv_size = $lv->{size};
-            unless (defined($lv_size)) {
-                print "WARNING: undefined logical volume size! skipping volume creation.\n";
-                next;
-            }
-            if ($lv_size eq '*') {
-                $lv_size = '-l100%FREE';
-            } else {
-                $lv_size = '-L' . $lv_size;
-            }
-            # Get additional options (expressed in lvcreate format) -AR-
-            my $lv_options = $lv->{lv_options};
-            unless (defined($lv_options)) {
-                $lv_options = "";
-            }
-
-            # Create the logical volume -AR-
-            $cmd = "lvcreate $lv_options $lv_size -n $lv_name $group_name";
-            print $out qq(logaction "$cmd"\n);
-            print $out qq($cmd || shellout "lvcreate failed!"\n);
-            
-            # Enable the logical volume -AR-
-            $cmd = "lvscan > /dev/null; lvchange -a y /dev/$group_name/$lv_name";
-            print $out qq(logaction "$cmd"\n);
-            print $out qq($cmd || shellout "lvchange failed!"\n);
-        }
-    }
-}
+#sub write_lvm_volumes_commands {
+#    my ($out, $image_dir, $file) = @_;
+#
+#    my $xml_config = XMLin($file, keyattr => { lvm_group => "+name" }, forcearray => 1 );
+#    
+#    my $lvm = @{$xml_config->{lvm}}[0];
+#    unless (defined($lvm)) {
+#        return;
+#    }
+#    
+#    foreach my $group_name (sort (keys ( %{$lvm->{lvm_group}} ))) {
+#        
+#        foreach my $lv (@{$lvm->{lvm_group}->{$group_name}->{lv}}) {
+#        
+#            my $cmd;    
+#        
+#            # Get logical volume name -AR-
+#            my $lv_name = $lv->{name};
+#            unless (defined($lv_name)) {
+#                print "WARNING: undefined logical volume name! skipping volume creation.\n";
+#                next;
+#            }
+#            # Get logical volume size -AR-
+#            my $lv_size = $lv->{size};
+#            unless (defined($lv_size)) {
+#                print "WARNING: undefined logical volume size! skipping volume creation.\n";
+#                next;
+#            }
+#            if ($lv_size eq '*') {
+#                $lv_size = '-l100%FREE';
+#            } else {
+#                $lv_size = '-L' . $lv_size;
+#            }
+#            # Get additional options (expressed in lvcreate format) -AR-
+#            my $lv_options = $lv->{lv_options};
+#            unless (defined($lv_options)) {
+#                $lv_options = "";
+#            }
+#
+#            # Create the logical volume -AR-
+#            $cmd = "lvcreate $lv_options $lv_size -n $lv_name $group_name";
+#            print $out qq(logaction "$cmd"\n);
+#            print $out qq($cmd || shellout "lvcreate failed!"\n);
+#            
+#            # Enable the logical volume -AR-
+#            $cmd = "lvscan > /dev/null; lvchange -a y /dev/$group_name/$lv_name";
+#            print $out qq(logaction "$cmd"\n);
+#            print $out qq($cmd || shellout "lvchange failed!"\n);
+#        }
+#    }
+#}
 
 # Usage:  
 # upgrade_partition_schemes_to_generic_style($image_dir, $config_dir);
-sub upgrade_partition_schemes_to_generic_style {
-
-    my ($module, $image_dir, $config_dir) = @_;
-    
-    my $partition_dir = "$config_dir/partitionschemes";
-    
-    # Disk types ide and scsi are pretty self explanatory.  Here are 
-    # some others: -BEF-
-    # o rd is a dac960 device (mylex extremeraid is an example)
-    # o ida is a compaq smartscsi device
-    # o cciss is a compaq smartscsi device
-    #
-    my @disk_types = qw( . rd ida cciss );  # The . is for ide and scsi disks. -BEF-
-    
-    foreach my $type (@disk_types) {
-        my $dir;
-        if ($type eq ".") {
-            $dir = $image_dir . "/" . $partition_dir;
-        } else {
-            $dir = $image_dir . "/" . $partition_dir . "/" . $type;
-        }
-
-        if(-d $dir) {
-            opendir(DIR, $dir) || die "Can't read the $dir directory.";
-                while(my $device = readdir(DIR)) {
-                
-                    # Skip over any "dot" files. -BEF-
-                    #
-                    if ($device =~ /^\./) { next; }
-                    
-                    my $file = "$dir/$device";
-                    
-                    if (-f $file) {
-                        my $autoinstall_script_conf_file = $image_dir . "/" . $config_dir . "/disks-layout.xml";
-                        SystemImager::Common->save_partition_information($file, "old_sfdisk_file", $autoinstall_script_conf_file);
-                    }
-                }
-            close(DIR);
-        }
-    }
-}
-
-
-sub _get_array_of_disks {
-
-  my ($image_dir, $config_dir) = @_;
-  my @disks;
-
-  # Disk types ide and scsi are pretty self explanatory.  Here are 
-  # some others: -BEF-
-  # o rd is a dac960 device (mylex extremeraid is an example)
-  # o ida is a compaq smartscsi device
-  # o cciss is a compaq smartscsi device
-  #
-  my @disk_types = qw(ide scsi rd ida cciss);
-
-  my $partition_dir = "$config_dir/partitionschemes";
-  foreach my $type (@disk_types) {
-    my $dir = $image_dir . $partition_dir . "/" . $type;
-    if(-d $dir) {
-      opendir(DIR, $dir) || die "Can't read the $dir directory.";
-        while(my $device = readdir(DIR)) {
-
-          # Skip over any "dot" files. -BEF-
-          if ($device =~ /^\./) { next; }
-
-          # Only process regular files.
-          if (-f "$dir/$device") {
-
-            # Keep the device name and directory.
-            push @disks, "$type/$device";
-          }
-        
-        }
-      close(DIR);
-    }
-  }
-  return @disks;
-}
+#sub upgrade_partition_schemes_to_generic_style {
+#
+#    my ($module, $image_dir, $config_dir) = @_;
+#    
+#    my $partition_dir = "$config_dir/partitionschemes";
+#    
+#    # Disk types ide and scsi are pretty self explanatory.  Here are 
+#    # some others: -BEF-
+#    # o rd is a dac960 device (mylex extremeraid is an example)
+#    # o ida is a compaq smartscsi device
+#    # o cciss is a compaq smartscsi device
+#    #
+#    my @disk_types = qw( . rd ida cciss );  # The . is for ide and scsi disks. -BEF-
+#    
+#    foreach my $type (@disk_types) {
+#        my $dir;
+#        if ($type eq ".") {
+#            $dir = $image_dir . "/" . $partition_dir;
+#        } else {
+#            $dir = $image_dir . "/" . $partition_dir . "/" . $type;
+#        }
+#
+#        if(-d $dir) {
+#            opendir(DIR, $dir) || die "Can't read the $dir directory.";
+#                while(my $device = readdir(DIR)) {
+#                
+#                    # Skip over any "dot" files. -BEF-
+#                    #
+#                    if ($device =~ /^\./) { next; }
+#                    
+#                    my $file = "$dir/$device";
+#                    
+#                    if (-f $file) {
+#                        my $autoinstall_script_conf_file = $image_dir . "/" . $config_dir . "/disks-layout.xml";
+#                        SystemImager::Common->save_partition_information($file, "old_sfdisk_file", $autoinstall_script_conf_file);
+#                    }
+#                }
+#            close(DIR);
+#        }
+#    }
+#}
+#
+#
+#sub _get_array_of_disks {
+#
+#  my ($image_dir, $config_dir) = @_;
+#  my @disks;
+#
+#  # Disk types ide and scsi are pretty self explanatory.  Here are 
+#  # some others: -BEF-
+#  # o rd is a dac960 device (mylex extremeraid is an example)
+#  # o ida is a compaq smartscsi device
+#  # o cciss is a compaq smartscsi device
+#  #
+#  my @disk_types = qw(ide scsi rd ida cciss);
+#
+#  my $partition_dir = "$config_dir/partitionschemes";
+#  foreach my $type (@disk_types) {
+#    my $dir = $image_dir . $partition_dir . "/" . $type;
+#    if(-d $dir) {
+#      opendir(DIR, $dir) || die "Can't read the $dir directory.";
+#        while(my $device = readdir(DIR)) {
+#
+#          # Skip over any "dot" files. -BEF-
+#          if ($device =~ /^\./) { next; }
+#
+#          # Only process regular files.
+#          if (-f "$dir/$device") {
+#
+#            # Keep the device name and directory.
+#            push @disks, "$type/$device";
+#          }
+#        
+#        }
+#      close(DIR);
+#    }
+#  }
+#  return @disks;
+#}
 
 # Description:
 # Read configuration information from /etc/systemimager/disks-layout.xml
@@ -1242,193 +1242,193 @@ sub _get_array_of_disks {
 # _write_out_mkfs_commands( $out, $image_dir, 
 #                           $auto_install_script_conf, $raid);
 #
-sub _write_out_mkfs_commands {
-    my ($out, $image_dir, $file) = @_;
-
-    my $xml_config = XMLin($file, keyattr => { fsinfo => "+line" }, forcearray => 1 );
-
-    my @all_devices = get_all_devices($file);
-    my %devfs_map = dev_to_devfs(@all_devices) or return undef;
-    my @d2dkeys = reverse sort keys %dev2disk;
-
-
-    # Figure out if software RAID is in use. -BEF-
-    #
-    my $software_raid;
-    foreach my $line (sort numerically (keys ( %{$xml_config->{fsinfo}} ))) {
-
-        # If this line is a comment, skip over. -BEF-
-        if ( $xml_config->{fsinfo}->{$line}->{comment} ) { next; }
-
-        # If real_dev isn't set, move on. -BEF-
-        unless ($xml_config->{fsinfo}->{$line}->{real_dev}) { next; }
-
-        my $real_dev = $xml_config->{fsinfo}->{$line}->{real_dev};
-        if ($real_dev =~ /\/dev\/md/) {
-            $software_raid = "true";
-        }
-    }
-
-    # The $part_type here is used to find and create all the swap partitions
-    # before the other filesystems. This reduces the probability to have a OOM
-    # condition during the filesystem creation.
-    # part_type == 0 => We only treat swap partitions
-    # part_type == 1 => we treat all non swap partitions
-    foreach my $part_type (0, 1) {
-        foreach my $line (sort numerically (keys (%{$xml_config->{fsinfo}}))) {
-
-            my $cmd = "";
-            # If this line is a comment, skip over. -BEF-
-            if ( $xml_config->{fsinfo}->{$line}->{comment} ) { next; }
-
-            # If real_dev isn't set, move on. -BEF-
-            unless ($xml_config->{fsinfo}->{$line}->{real_dev}) { next; }
-
-            # If format="no" is set, then skip over this one. -BEF-
-            my $format = $xml_config->{fsinfo}->{$line}->{format};
-            if (($format) and ( "$format" eq "no")) { next; }
-
-            # mount_dev should contain fs LABEL or UUID information. -BEF-
-            my $mount_dev = $xml_config->{fsinfo}->{$line}->{mount_dev};
-
-            my $real_dev = $devfs_map{$xml_config->{fsinfo}->{$line}->{real_dev}};
-            # If mount_dev is undefined, the use real_dev
-            $mount_dev = $real_dev if (! defined($mount_dev));
-
-            my $mp = $xml_config->{fsinfo}->{$line}->{mp};
-            my $fs = $xml_config->{fsinfo}->{$line}->{fs};
-            my $options = $xml_config->{fsinfo}->{$line}->{options};
-            my $mkfs_opts = $xml_config->{fsinfo}->{$line}->{mkfs_opts};
-            unless ($mkfs_opts) { $mkfs_opts = ""; }
-
-            # Remove options that may cause problems and are unnecessary during
-            # the install.
-            $options = _remove_mount_option($options, "errors=remount-ro");
-
-            # Deal with filesystems to be mounted read only (ro) after install.
-            # We still need to write to them to install them. ;)
-            $options =~ s/\bro\b/rw/g;
-            $options =~ s/\bnoauto\b/defaults/g;
-
-            # software RAID devices (/dev/md*)
-            if ($real_dev =~ /\/dev\/md/) {
-                print $out qq(mkraid --really-force $real_dev || shellout\n)
-                    unless (defined($xml_config->{raid}));
-            } elsif( $real_dev =~ /^(.*?)(p?\d+)$/ ) {
-                if ($dev2disk{$1}) {
-                    $real_dev = "\${".$dev2disk{$1}."}".$2;
-                }
-            }
-
-            # First of all look for swap partitions only.
-            if ($part_type == 0) {
-                # swap
-                if ( $xml_config->{fsinfo}->{$line}->{fs} eq "swap" ) {
-                    # create swap
-                    $cmd = "mkswap -v1 $real_dev";
-
-                    # add swap label if necessary
-                    if( $mount_dev =~ /^LABEL=(.*)/ ){
-                        $cmd .= " -L $1";
-                    }
-
-                    print $out qq(logaction "$cmd"\n);
-                    print $out qq($cmd || shellout "mkswap failed!"\n);
-
-                    # swapon
-                    $cmd = "swapon $real_dev";
-                    print $out qq(loginfo "Enabling swap space."\n);
-                    print $out qq(logaction "$cmd"\n);
-                    print $out qq($cmd || shellout "swapon failed!"\n);
-
-                    print $out "\n";
-                }
-                next;
-            }
-
-            # OK, now that swap partitions commands have been written to the
-            # autoinstall script, proceed with the other filesystems.
-## BEGIN NEW CODE
-            my $label_switch = "";
-            my $set_UUID_cmd = "";
-            given ($fs) {
-                when ( /^xfs$/ ) {
-                    $label_switch = "-L";
-                    $set_UUID_cmd = "xfs_admin -U ";
-                    $mkfs_opts .= " -q -f";
-                }
-                when ( /^(?:ext2|ext3|ext4)$/ ) {
-                    $label_switch = "-L";
-                    $set_UUID_cmd = "tune2fs -U ";
-                    $mkfs_opts .= " -q";
-                }
-                when ( /^btrfs$/ ) {
-                    $label_switch = "-L";
-                    $set_UUID_cmd = "btrfstune -U ";
-                    $mkfs_opts .= " -q -f";
-                }
-                when ( /^jfs$/ ) {
-                    $label_switch = "-L";
-                    $set_UUID_cmd = "jfs_tune -U ";
-                    $mkfs_opts .= " -q";
-                }
-                 when ( /^reiserfs$/ ) {
-                    $label_switch = "-l";
-                    $set_UUID_cmd = "reiserfstune -u ";
-                    $mkfs_opts .= " -q";
-                }
-                when ( /^(?:vfat|msdos|fat|ntfs)$/ ) {
-                    $label_switch = "-n";
-                    $set_UUID_cmd = "";
-                }
-                default {
-                    # Skipp NFS, SWAP, auto, unknown filesystems.
-                    next;
-                }
-
-            }
-            my $label_option = "";
-            if ($mount_dev =~ /LABEL=/) {
-                my $label = $mount_dev;
-                $label =~ s/LABEL=//;
-                $label_option = "$label_switch $label";
-            }
-
-            $cmd = "mkfs." . $xml_config->{fsinfo}->{$line}->{fs} . " $mkfs_opts $label_option $real_dev";
-            # Now write out code in script
-
-            # 1/ mkfs command (with label)
-            print $out qq(logaction "$cmd"\n);
-            print $out qq($cmd || shellout "$cmd"\n);
-
-            # 2/ set UUID if needed
-            if ($mount_dev =~ /UUID=/) {
-                my $uuid = $mount_dev;
-                $uuid =~ s/UUID=//;
-                $set_UUID_cmd .= " $uuid $real_dev";
-                print $out qq(logaction "$set_UUID_cmd"\n);
-                print $out qq($set_UUID_cmd || shellout "$cmd"\n);
-            }
-
-            # 3/ create mountpoint
-            $cmd = "mkdir -p /sysroot$mp";
-            print $out qq(logaction "$cmd"\n);
-            print $out qq($cmd || shellout "mkdir failed!"\n);
-
-            # 4/ create inird:/etc/fstab entry
-            print $out qq(loginfo "Adding $mp to /etc/fstab"\n);
-            my $fstab_options = $options;
-            $fstab_options =~ s/^\s+|\s+$//g; # trim
-            $fstab_options =~ s/\s+/,/g;
-            print $out qq(echo "$mount_dev\t/sysroot$mp\t$fs\t$fstab_options\t0 0" >> /etc/fstab\n);
-
-            # 5/ Mount filesystem
-            print $out qq(loginfo "Mounting $mount_dev to /sysroot$mp"\n);
-            print $out qq(mount /sysroot$mp\n); # Mount using local fstab
-            print $out qq(\n);
-        }
-    }
-}
+#sub _write_out_mkfs_commands {
+#    my ($out, $image_dir, $file) = @_;
+#
+#    my $xml_config = XMLin($file, keyattr => { fsinfo => "+line" }, forcearray => 1 );
+#
+#    my @all_devices = get_all_devices($file);
+#    my %devfs_map = dev_to_devfs(@all_devices) or return undef;
+#    my @d2dkeys = reverse sort keys %dev2disk;
+#
+#
+#    # Figure out if software RAID is in use. -BEF-
+#    #
+#    my $software_raid;
+#    foreach my $line (sort numerically (keys ( %{$xml_config->{fsinfo}} ))) {
+#
+#        # If this line is a comment, skip over. -BEF-
+#        if ( $xml_config->{fsinfo}->{$line}->{comment} ) { next; }
+#
+#        # If real_dev isn't set, move on. -BEF-
+#        unless ($xml_config->{fsinfo}->{$line}->{real_dev}) { next; }
+#
+#        my $real_dev = $xml_config->{fsinfo}->{$line}->{real_dev};
+#        if ($real_dev =~ /\/dev\/md/) {
+#            $software_raid = "true";
+#        }
+#    }
+#
+#    # The $part_type here is used to find and create all the swap partitions
+#    # before the other filesystems. This reduces the probability to have a OOM
+#    # condition during the filesystem creation.
+#    # part_type == 0 => We only treat swap partitions
+#    # part_type == 1 => we treat all non swap partitions
+#    foreach my $part_type (0, 1) {
+#        foreach my $line (sort numerically (keys (%{$xml_config->{fsinfo}}))) {
+#
+#            my $cmd = "";
+#            # If this line is a comment, skip over. -BEF-
+#            if ( $xml_config->{fsinfo}->{$line}->{comment} ) { next; }
+#
+#            # If real_dev isn't set, move on. -BEF-
+#            unless ($xml_config->{fsinfo}->{$line}->{real_dev}) { next; }
+#
+#            # If format="no" is set, then skip over this one. -BEF-
+#            my $format = $xml_config->{fsinfo}->{$line}->{format};
+#            if (($format) and ( "$format" eq "no")) { next; }
+#
+#            # mount_dev should contain fs LABEL or UUID information. -BEF-
+#            my $mount_dev = $xml_config->{fsinfo}->{$line}->{mount_dev};
+#
+#            my $real_dev = $devfs_map{$xml_config->{fsinfo}->{$line}->{real_dev}};
+#            # If mount_dev is undefined, the use real_dev
+#            $mount_dev = $real_dev if (! defined($mount_dev));
+#
+#            my $mp = $xml_config->{fsinfo}->{$line}->{mp};
+#            my $fs = $xml_config->{fsinfo}->{$line}->{fs};
+#            my $options = $xml_config->{fsinfo}->{$line}->{options};
+#            my $mkfs_opts = $xml_config->{fsinfo}->{$line}->{mkfs_opts};
+#            unless ($mkfs_opts) { $mkfs_opts = ""; }
+#
+#            # Remove options that may cause problems and are unnecessary during
+#            # the install.
+#            $options = _remove_mount_option($options, "errors=remount-ro");
+#
+#            # Deal with filesystems to be mounted read only (ro) after install.
+#            # We still need to write to them to install them. ;)
+#            $options =~ s/\bro\b/rw/g;
+#            $options =~ s/\bnoauto\b/defaults/g;
+#
+#            # software RAID devices (/dev/md*)
+#            if ($real_dev =~ /\/dev\/md/) {
+#                print $out qq(mkraid --really-force $real_dev || shellout\n)
+#                    unless (defined($xml_config->{raid}));
+#            } elsif( $real_dev =~ /^(.*?)(p?\d+)$/ ) {
+#                if ($dev2disk{$1}) {
+#                    $real_dev = "\${".$dev2disk{$1}."}".$2;
+#                }
+#            }
+#
+#            # First of all look for swap partitions only.
+#            if ($part_type == 0) {
+#                # swap
+#                if ( $xml_config->{fsinfo}->{$line}->{fs} eq "swap" ) {
+#                    # create swap
+#                    $cmd = "mkswap -v1 $real_dev";
+#
+#                    # add swap label if necessary
+#                    if( $mount_dev =~ /^LABEL=(.*)/ ){
+#                        $cmd .= " -L $1";
+#                    }
+#
+#                    print $out qq(logaction "$cmd"\n);
+#                    print $out qq($cmd || shellout "mkswap failed!"\n);
+#
+#                    # swapon
+#                    $cmd = "swapon $real_dev";
+#                    print $out qq(loginfo "Enabling swap space."\n);
+#                    print $out qq(logaction "$cmd"\n);
+#                    print $out qq($cmd || shellout "swapon failed!"\n);
+#
+#                    print $out "\n";
+#                }
+#                next;
+#            }
+#
+#            # OK, now that swap partitions commands have been written to the
+#            # autoinstall script, proceed with the other filesystems.
+### BEGIN NEW CODE
+#            my $label_switch = "";
+#            my $set_UUID_cmd = "";
+#            given ($fs) {
+#                when ( /^xfs$/ ) {
+#                    $label_switch = "-L";
+#                    $set_UUID_cmd = "xfs_admin -U ";
+#                    $mkfs_opts .= " -q -f";
+#                }
+#                when ( /^(?:ext2|ext3|ext4)$/ ) {
+#                    $label_switch = "-L";
+#                    $set_UUID_cmd = "tune2fs -U ";
+#                    $mkfs_opts .= " -q";
+#                }
+#                when ( /^btrfs$/ ) {
+#                    $label_switch = "-L";
+#                    $set_UUID_cmd = "btrfstune -U ";
+#                    $mkfs_opts .= " -q -f";
+#                }
+#                when ( /^jfs$/ ) {
+#                    $label_switch = "-L";
+#                    $set_UUID_cmd = "jfs_tune -U ";
+#                    $mkfs_opts .= " -q";
+#                }
+#                 when ( /^reiserfs$/ ) {
+#                    $label_switch = "-l";
+#                    $set_UUID_cmd = "reiserfstune -u ";
+#                    $mkfs_opts .= " -q";
+#                }
+#                when ( /^(?:vfat|msdos|fat|ntfs)$/ ) {
+#                    $label_switch = "-n";
+#                    $set_UUID_cmd = "";
+#                }
+#                default {
+#                    # Skipp NFS, SWAP, auto, unknown filesystems.
+#                    next;
+#                }
+#
+#            }
+#            my $label_option = "";
+#            if ($mount_dev =~ /LABEL=/) {
+#                my $label = $mount_dev;
+#                $label =~ s/LABEL=//;
+#                $label_option = "$label_switch $label";
+#            }
+#
+#            $cmd = "mkfs." . $xml_config->{fsinfo}->{$line}->{fs} . " $mkfs_opts $label_option $real_dev";
+#            # Now write out code in script
+#
+#            # 1/ mkfs command (with label)
+#            print $out qq(logaction "$cmd"\n);
+#            print $out qq($cmd || shellout "$cmd"\n);
+#
+#            # 2/ set UUID if needed
+#            if ($mount_dev =~ /UUID=/) {
+#                my $uuid = $mount_dev;
+#                $uuid =~ s/UUID=//;
+#                $set_UUID_cmd .= " $uuid $real_dev";
+#                print $out qq(logaction "$set_UUID_cmd"\n);
+#                print $out qq($set_UUID_cmd || shellout "$cmd"\n);
+#            }
+#
+#            # 3/ create mountpoint
+#            $cmd = "mkdir -p /sysroot$mp";
+#            print $out qq(logaction "$cmd"\n);
+#            print $out qq($cmd || shellout "mkdir failed!"\n);
+#
+#            # 4/ create inird:/etc/fstab entry
+#            print $out qq(loginfo "Adding $mp to /etc/fstab"\n);
+#            my $fstab_options = $options;
+#            $fstab_options =~ s/^\s+|\s+$//g; # trim
+#            $fstab_options =~ s/\s+/,/g;
+#            print $out qq(echo "$mount_dev\t/sysroot$mp\t$fs\t$fstab_options\t0 0" >> /etc/fstab\n);
+#
+#            # 5/ Mount filesystem
+#            print $out qq(loginfo "Mounting $mount_dev to /sysroot$mp"\n);
+#            print $out qq(mount /sysroot$mp\n); # Mount using local fstab
+#            print $out qq(\n);
+#        }
+#    }
+#}
 
 
 # Description:
@@ -1444,24 +1444,34 @@ sub validate_disks_layout {
 
     my $file = $_[1];
 
+    my $cmd = 'xmlstarlet val --err --xsd /usr/lib/dracut/modules.d/51systemimager/disks-layout.xsd ';
+    $cmd .= $file;
+    my $output = `$cmd`;
+
+    if (! m/ - valid/) {
+         print qq(Doh!  There's a problem in "$file"!\n);
+	 print qq(Output of validation:\n);
+	 print $output;
+         exit 1;
+    }
     ############################################################################
     #
     # Don't allow duplicate line numbers in the fsinfo section. -BEF-
     #
     ############################################################################
-    my %nodups;
-    my $xml_config = XMLin($file, forcearray => 1 );
-    foreach my $hash ( @{$xml_config->{fsinfo}} ) {
+    #    my %nodups;
+    #    my $xml_config = XMLin($file, forcearray => 1 );
+    #    foreach my $hash ( @{$xml_config->{fsinfo}} ) {
 
-        $_ = ${$hash}{'line'};
+    #        $_ = ${$hash}{'line'};
 
-        if ($nodups{$_}) {
-            print qq(Doh!  There's more than one line numbered "$_" in "$file"!\n);
-            print qq(We can't have that...  Please give each line a unique number.\n);
-            exit 1;
-        }
-        $nodups{$_} = 1;
-    }
+    #        if ($nodups{$_}) {
+    #            print qq(Doh!  There's more than one line numbered "$_" in "$file"!\n);
+    #            print qq(We can't have that...  Please give each line a unique number.\n);
+    #            exit 1;
+    #        }
+    #        $nodups{$_} = 1;
+    #    }
 
 }        
 
@@ -1474,70 +1484,70 @@ sub validate_disks_layout {
 # Usage:
 # _write_out_new_fstab_file ( $image_dir, $auto_install_script_conf );
 #
-sub _write_out_new_fstab_file {
-
-    my ($out, $image_dir, $file) = @_;
-
-    my $xml_config = XMLin($file, keyattr => { fsinfo => "+line" }, forcearray => 1 );
-
-    print $out qq(cat <<'EOF' > /sysroot/etc/fstab\n);
-
-    foreach my $line (sort numerically (keys ( %{$xml_config->{fsinfo}} ))) {
-        my $comment   = $xml_config->{fsinfo}->{$line}->{comment};
-        if (defined($comment)) {
-            print $out qq($comment\n);
-            next;
-        }
-        my $mount_dev = $xml_config->{fsinfo}->{$line}->{mount_dev};
-        my $real_dev = $xml_config->{fsinfo}->{$line}->{real_dev};
-        unless ($mount_dev) {
-            $mount_dev = $real_dev;
-        }
-        my $mp        = $xml_config->{fsinfo}->{$line}->{mp};
-        my $options   = $xml_config->{fsinfo}->{$line}->{options};
-        my $fs        = $xml_config->{fsinfo}->{$line}->{fs};
-        my $dump      = $xml_config->{fsinfo}->{$line}->{dump};
-        my $pass      = $xml_config->{fsinfo}->{$line}->{pass};
-
-
-        # Update the root device. This will be used by systemconfigurator
-        # (see below).
-        if ($mp eq '/') {
-            $rootdev = $mount_dev;
-        } elsif ($mp eq '/boot') {
-            $bootdev = $mount_dev;
-        }
-
-        print $out qq($mount_dev\t$mp\t$fs);
-        if ($options)
-            { print $out qq(\t$options); }
-
-        if (defined $dump) { 
-            print $out qq(\t$dump);
-
-            # 
-            # If dump don't exist, we certainly don't want to print pass
-            # (it would be treated as if it were dump due to it's 
-            # position), therefore we only print pass if dump is also 
-            # defined.
-            #
-            if (defined $pass)  
-                { print $out qq(\t$pass); }
-        }
-
-        # Store the real device as a comment.
-        if ($real_dev) {
-            if ($real_dev ne $mount_dev) {
-                print $out qq(\t# $real_dev);
-            }
-        } else {
-            print STDERR "WARNING: real_dev is not defined for $mount_dev!\n";
-        }
-
-        print $out qq(\n);
-    }
-    print $out qq(EOF\n);
-}
+#sub _write_out_new_fstab_file {
+#
+#    my ($out, $image_dir, $file) = @_;
+#
+#    my $xml_config = XMLin($file, keyattr => { fsinfo => "+line" }, forcearray => 1 );
+#
+#    print $out qq(cat <<'EOF' > /sysroot/etc/fstab\n);
+#
+#    foreach my $line (sort numerically (keys ( %{$xml_config->{fsinfo}} ))) {
+#        my $comment   = $xml_config->{fsinfo}->{$line}->{comment};
+#        if (defined($comment)) {
+#            print $out qq($comment\n);
+#            next;
+#        }
+#        my $mount_dev = $xml_config->{fsinfo}->{$line}->{mount_dev};
+#        my $real_dev = $xml_config->{fsinfo}->{$line}->{real_dev};
+#        unless ($mount_dev) {
+#            $mount_dev = $real_dev;
+#        }
+#        my $mp        = $xml_config->{fsinfo}->{$line}->{mp};
+#        my $options   = $xml_config->{fsinfo}->{$line}->{options};
+#        my $fs        = $xml_config->{fsinfo}->{$line}->{fs};
+#        my $dump      = $xml_config->{fsinfo}->{$line}->{dump};
+#        my $pass      = $xml_config->{fsinfo}->{$line}->{pass};
+#
+#
+#        # Update the root device. This will be used by systemconfigurator
+#        # (see below).
+#        if ($mp eq '/') {
+#            $rootdev = $mount_dev;
+#        } elsif ($mp eq '/boot') {
+#            $bootdev = $mount_dev;
+#        }
+#
+#        print $out qq($mount_dev\t$mp\t$fs);
+#        if ($options)
+#            { print $out qq(\t$options); }
+#
+#        if (defined $dump) { 
+#            print $out qq(\t$dump);
+#
+#            # 
+#            # If dump don't exist, we certainly don't want to print pass
+#            # (it would be treated as if it were dump due to it's 
+#            # position), therefore we only print pass if dump is also 
+#            # defined.
+#            #
+#            if (defined $pass)  
+#                { print $out qq(\t$pass); }
+#        }
+#
+#        # Store the real device as a comment.
+#        if ($real_dev) {
+#            if ($real_dev ne $mount_dev) {
+#                print $out qq(\t# $real_dev);
+#            }
+#        } else {
+#            print STDERR "WARNING: real_dev is not defined for $mount_dev!\n";
+#        }
+#
+#        print $out qq(\n);
+#    }
+#    print $out qq(EOF\n);
+#}
 
 
 # Description:
@@ -1760,8 +1770,8 @@ sub setup_kexec {
 #}
 
 
-sub append_variables_txt_with_ip_assignment_method {
-    my ( $out, $ip_assignment_method ) = @_;
+#sub append_variables_txt_with_ip_assignment_method {
+#    my ( $out, $ip_assignment_method ) = @_;
 
     # 
     # Potential values include:
@@ -1770,8 +1780,8 @@ sub append_variables_txt_with_ip_assignment_method {
     #   dhcp
     #
     #print $out "echo IP_ASSIGNMENT_METHOD=$ip_assignment_method >> /tmp/variables.txt\n\n";
-    print $out "set_ip_assignment_method $ip_assignment_method\n\n";
-}
+    #    print $out "set_ip_assignment_method $ip_assignment_method\n\n";
+    #}
 
 #    my ( $out, $ip_assignment_method ) = @_;
 #
