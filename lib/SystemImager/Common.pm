@@ -60,7 +60,7 @@ our $rsync_magic_string = "'__cloning_completed__'";
 #   which_dev_style
 #   write_disks_layout_footer
 #   write_disks_layout_header
-#   _add_raid_config_to_autoinstallscript_conf
+#   _add_raid_config_to_disks_layout
 #   _get_device_size
 #   _get_parted_version
 #   _get_software_raid_info
@@ -181,7 +181,7 @@ sub get_swap_devs_by_uuid {
 sub get_mounted_devs_by_mount_point_array {
 
     # Create an array that we can use to put appropriate LABEL and UUID info 
-    # into the fstab stanza of the autoinstallscript.conf file. -BEF-
+    # into the fstab stanza of the disks-layout.xml file. -BEF-
     #
     my %mounted_devs_by_mount_point;
     my $cmd = "mount";
@@ -1216,7 +1216,7 @@ sub save_soft_raid_information {
         close(PV_INFO);
     }
 
-    _add_raid_config_to_autoinstallscript_conf($file, $raid);
+    _add_raid_config_to_disks_layout($file, $raid);
 
     return 1;
 }
@@ -1797,9 +1797,9 @@ sub _get_parted_version {
 #
 # Usage:
 #
-#   _add_raid_config_to_autoinstallscript_conf($file, $raid);
+#   _add_raid_config_to_disks_layout($file, $raid);
 #
-sub _add_raid_config_to_autoinstallscript_conf {
+sub _add_raid_config_to_disks_layout {
 
     my ($file, $raid) = @_;
 

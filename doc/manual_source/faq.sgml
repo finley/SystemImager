@@ -842,11 +842,11 @@ image=ia64/standard/kernel
      <orderedlist>
       <listitem>
        <para>
-        Open your autoinstallscript.conf file in your favourite text editor.
+        Open your disks-layout.xml file in your favourite text editor.
        </para>
 	      <note>
 		<para>
-		  The default autoinstallscript.conf file created by
+		  The default disks-layout.xml file created by
 		  <command>si_prepareclient</command> lives in the 
 		  <filename>/etc/systemimager</filename> directory in your 
 		  image.
@@ -875,7 +875,7 @@ image=ia64/standard/kernel
        <para>
         NOTE: Each <command>&lt;disk&gt;</command> section can use either MB
         (megabytes) or % (percentages) to specify partition sizes.  See  
-        <command>man autoinstallscript.conf</command> for more information.
+        <command>man systemimager.disks-layout</command> (7) for more information.
        </para>
       </listitem>
       <listitem>
@@ -885,9 +885,9 @@ image=ia64/standard/kernel
        </para>
        <para>
         NOTE: By default, <command>si_mkautoinstallscript</command> uses the
-        autoinstallscript.conf file located in your image's ./etc/systemimager directory.  
+        disks-layout.xml file located in your image's ./etc/systemimager directory.  
         See <command>man si_mkautoinstallscript</command> and 
-        <command>man autoinstallscript.conf</command> for more information.
+        <command>man systemimager.disks-layout</command> (7) for more information.
        </para>
       </listitem>
      </orderedlist>
@@ -912,10 +912,10 @@ image=ia64/standard/kernel
       </listitem>
       <listitem>
        <para>
-        Open your autoinstallscript.conf file in your favorite text editor.
+        Open your disks-layout.xml file in your favorite text editor.
        </para>
        <para>
-        NOTE: The default autoinstallscript.conf file created by
+        NOTE: The default disks-layout.xml file created by
         <command>si_prepareclient</command> lives in the ./etc/systemimager
         directory in your image.
        </para>
@@ -930,7 +930,7 @@ image=ia64/standard/kernel
       <listitem>
        <para>
         Change <command>fs</command> to the filesystem you want to use.
-        See <command>man autoinstallscript.conf</command> for a list of
+        See <command>man systemimager.disks-layout</command> (7) for a list of
         supported filesystems.
        </para>
        <para>
@@ -953,10 +953,10 @@ image=ia64/standard/kernel
        <para>
         Run <command>si_mkautoinstallscript</command> to create a new 
         autoinstall script using the new parameters. By default, 
-	  <command>si_mkautoinstallscript</command> uses the autoinstallscript.conf 
+	  <command>si_mkautoinstallscript</command> uses the disks-layout.xml
 	  file located in the ./etc/systemimager directory in
         your image.  See <command>man si_mkautoinstallscript</command> and 
-        <command>man autoinstallscript.conf</command> for more information.
+        <command>man systemimager.disks-layout</command> (7) for more information.
        </para>
       </listitem>
      </orderedlist>
@@ -988,7 +988,7 @@ image=ia64/standard/kernel
       </listitem>
       <listitem>
        <para>
-        An alternative method is to manually modify autoinstallscript.conf and
+        An alternative method is to manually modify disks-layout.xml and
         re-run <command>si_mkautoinstallscript</command>.
        </para>
       </listitem>
@@ -1009,7 +1009,7 @@ image=ia64/standard/kernel
      Yes. Be sure to use <command>--autodetect-disks</command> with
      <command>si_getimage</command> or <command>si_mkautoinstallscript</command>
      if you have different disk types in your clients and create a different
-     <filename>autoinstallscript.conf</filename> and master script for each partitioning schema you
+     <filename>disks-layout.xml</filename> and master script for each partitioning schema you
      want to use.
     </para>
    </answer>

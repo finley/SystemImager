@@ -7,13 +7,13 @@
 #
 
 Q)  What's this override directory for?
-A)  If you have used a modified autoinstallscript.conf file with the
+A)  If you have used a modified disks-layout.xml file with the
     mkautoinstallscript command, then you may need to also modify your boot
     loader configuration file and/or your /etc/raidtab file (if you are using
     software RAID).  
 
     If you changed anything in the fsinfo section of the 
-    autoinstallscript.conf, then you will most certainly want to copy the
+    disks-layout.xml, then you will most certainly want to copy the
     ./etc/systemimager/updateclient.local.exclude file from your image and add
     an entry to exclude the fstab file.
     

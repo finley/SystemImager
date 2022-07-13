@@ -98,7 +98,7 @@ if [ -z $SCRIPTNAME ] && [ -z $IMAGENAME ] && [ -z $HOSTNAME ]; then
     shellout "None of SCRIPTNAME, IMAGENAME, or HOSTNAME were set"
 fi
 
-# Prepare disks and mount them as described in disk layout file (autoinstallscript.conf xml file)
+# Prepare disks and mount them as described in the xml disk layout file
 getarg 'si.break=prepare-disks' && logwarn "Break prepare-disks" && interactive_shell
 sis_prepare_disks
 

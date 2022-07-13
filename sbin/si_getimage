@@ -53,6 +53,7 @@ $version_number="SYSTEMIMAGER_VERSION_STRING";
 
 # use the long options module to allow us to use, well, long options ;)
 use Getopt::Long;
+use File::Copy;
 use Socket;
 use SystemImager::Server;
 use SystemImager::Common;
@@ -120,13 +121,14 @@ my $ip_assignment_method;
 my $image;
 my $exclude_file;
 my $update_script;
+my $update_disks_layout;
 my $post_install = "none"; # the default
 
 # It is not intended that auto_install_script_conf be passable as an option on
 # the getimage command line.  See si_mkautoinstallscript if you want to specify 
 # an alternate config file. -BEF-
 #
-my $auto_install_script_conf;   
+my $disks_layout_conf;   
 
 ### BEGIN evaluate options ###
 GetOptions( 
@@ -139,6 +141,7 @@ GetOptions(
     "exclude=s"         => \my @excludes,
     "exclude-file|exclude-from=s"    => \$exclude_file,
     "update-script=s"   => \$update_script,
+    "update-disks-layout=s"   => \$update_disks_layout,
     "post-install=s"    => \$post_install,
     "listing"           => \$listing,
     "autodetect-disks"  => \$autodetect_disks,
@@ -153,6 +156,12 @@ if(defined $update_script) {
   $update_script = lc $update_script;
 } else {
   $update_script = "no";
+}
+
+if(defined $update_disks_layout) {
+  $update_disks_layout = lc $update_disks_layout;
+} else {
+  $update_disks_layout = "no";
 }
 
 #if requested, print help information
@@ -217,6 +226,13 @@ unless(
     or ($update_script eq "yes")
     or ($update_script eq "no" )
 ) { die "\n$program_name: --update-script must be yes or no.\n$get_help\n\n"; }
+
+# be sure $update_disks_layout was passed a proper option
+unless(
+       ($update_disks_layout eq ""   )
+    or ($update_disks_layout eq "yes")
+    or ($update_disks_layout eq "no" )
+) { die "\n$program_name: --update-disks-layout must be yes or no.\n$get_help\n\n"; }
 
 if(defined $ip_assignment_method) {
   die "\n$program_name: --ip-assignment is now deprecated.\n$get_help\n\n";
@@ -546,13 +562,30 @@ if( (!$quiet) and (!$update_script) and (-e "$autoinstall_script_dir/main-instal
     if($update_script eq "y") { $update_script = "yes"; }
 }
 
+### BEGIN Overwrite $imagename.xml in disks-layouts dir? ###
+if( (!$quiet) and (!$update_disks_layout) and (-e "$autoinstall_script_dir/disks_layouts/$script_name.xml") ) {
+    system("clear");
+    print "Update Disks-layout configurationt?\n";
+    print "--------------------------\n\n";
+    print "A disks-layout configuration for this image already exists.  It is recommended\n";
+    print "that you update this disks layout configuration, unless you have customized it.\n";
+    print "(You will know if you have customized it.)\n\n";
+    print "Would you like to update the disks layout configuration for this image? ([y]/n): ";
+
+    $update_disks_layout = SystemImager::Common->get_response('yes');
+    $update_disks_layout = lc $update_disks_layout;
+
+    # if user actually hits "y", deal with it
+    if($update_disks_layout eq "y") { $update_disks_layout = "yes"; }
+}
+
 # If it just ain't there yet, make it and don't even ask about it.
 #elsif(! -e "$autoinstall_script_dir/$script_name.master") {
 #    $update_script="yes";
 #}
 
 # if we don't need to update the master script, then exit -- we're done
-unless($update_script eq "yes") { exit 0; }
+unless($update_disks_layout eq "yes") { exit 0; }
 
 ### END Overwrite $script_name.master? ###
 
@@ -630,18 +663,15 @@ unless($update_script eq "yes") { exit 0; }
 #}
 ### END IP Assignment Method ###
 
+$disks_layout_conf = "${imagedir}/etc/systemimager/disks-layout.xml";
+# 1st, handle the disks-layout
+if ($update_disks_layout eq "yes") {
+    SystemImager::Server->validate_disks_layout( $disks_layout_conf );
+    copy($disks_layout_conf, $autoinstall_script_dir."/disks-layouts/".$image.".xml" or warn "Failed to update disks-layout $image.xml. Error: $!";
+}
+
 ### BEGIN create a fresh master autoinstall script ###
-# If not specified, use default for autoinstallscript.conf. -BEF-
-#OL:BUG: autoinstallscript.conf should go to disks-layout dir.
-unless ($auto_install_script_conf) {
-    $auto_install_script_conf = "${imagedir}/etc/systemimager/autoinstallscript.conf";
-}
-
-unless (-f $auto_install_script_conf) {
-    die "ERROR: I can't find the autoinstallscript.conf file. See autoinstallscript.conf(8) for details.\n";
-}
-
-SystemImager::Server->validate_auto_install_script_conf( $auto_install_script_conf );
+# If not specified, use disks-layout.xml from image. -BEF-
 
 SystemImager::Server->create_autoinstall_script(
     $script_name,
@@ -653,7 +683,7 @@ SystemImager::Server->create_autoinstall_script(
     $ip_assignment_method,
     $post_install,
     $listing,
-    $auto_install_script_conf,
+    $disks_layout_conf,
     $autodetect_disks,
     $cmdline
 );

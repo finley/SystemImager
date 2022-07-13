@@ -65,7 +65,7 @@ $VERSION="SYSTEMIMAGER_VERSION_STRING";
 #   remove_boot_file
 #   remove_image_stub 
 #   upgrade_partition_schemes_to_generic_style 
-#   validate_auto_install_script_conf 
+#   validate_disks_layout 
 #   validate_ip_assignment_option 
 #   validate_post_install_option 
 #
@@ -291,7 +291,7 @@ sub get_part_name {
 
 # Description:
 #  Returns a list of all devices (disks & partitions) from a given
-#  autoinstallscript.conf file.
+#  disks-layout.xml file.
 #
 # Usage:
 #  get_all_devices($file)
@@ -321,7 +321,7 @@ sub get_all_devices($) {
 }
 
 # Description:
-#  Returns a list of all disks from a given autoinstallscript.conf
+#  Returns a list of all disks from a given disks-layout.xml
 #  file.
 #
 # Usage:
@@ -462,7 +462,7 @@ sub _read_partition_info_and_prepare_parted_commands {
                 if ( $_ eq "*" ) { next; }
 
                 if (/[[:alpha:]]/) {
-                    print qq(FATAL:  autoinstallscript.conf cannot contain "$_" as a percentage.\n);
+                    print qq(FATAL:  disks-layout.xml cannot contain "$_" as a percentage.\n);
                     print qq(        Disk: $dev, partition: $m\n);
                     exit 1;
                 }
@@ -487,7 +487,7 @@ sub _read_partition_info_and_prepare_parted_commands {
                 if ( $_ eq "*" ) { next; }
 
                 if (/[[:alpha:]]/) {
-                    print qq(FATAL:  autoinstallscript.conf cannot contain "$_" as a percentage.\n);
+                    print qq(FATAL:  disks-layout.xml cannot contain "$_" as a percentage.\n);
                     print qq(        Disk: $dev, partition: $m\n);
                     exit 1;
                 }
@@ -517,7 +517,7 @@ sub _read_partition_info_and_prepare_parted_commands {
                     if ( $_ eq "*" ) { next; }
  
                     if (/[[:alpha:]]/) {
-                        print qq(FATAL:  autoinstallscript.conf cannot contain "$_" as a percentage.\n);
+                        print qq(FATAL:  disks-layout.xml cannot contain "$_" as a percentage.\n);
                         print qq(        Disk: $dev, partition: $m\n);
                         exit 1;
                     }
@@ -532,15 +532,15 @@ sub _read_partition_info_and_prepare_parted_commands {
             #
             my $p_e_sum = $p_sum + $e_sum;
             if ($p_e_sum > 100) {
-                print qq(FATAL:  Your autoinstallscript.conf file specifies that "${p_e_sum}%" of your disk\n);
+                print qq(FATAL:  Your disks-layout.xml file specifies that "${p_e_sum}%" of your disk\n);
                 print   "        should be partitioned.  Ummm, I don't think you have that much disk. ;-)\n";
                 exit 1;
             } elsif ($l_sum > 100) {
-                print qq(FATAL:  Your autoinstallscript.conf file specifies that "${l_sum}%" of your disk\n);
+                print qq(FATAL:  Your disks-layout.xml file specifies that "${l_sum}%" of your disk\n);
                 print   "        should be partitioned.  Ummm, I don't think you have that much disk. ;-)\n";
                 exit 1;
             } elsif ($l_sum > $e_sum) {
-                print qq(FATAL:  Your autoinstallscript.conf file specifies that the sum of your logical\n);
+                print qq(FATAL:  Your disks-layout.xml file specifies that the sum of your logical\n);
                 print qq(partitions should take up "${l_sum}%" of your disk but the extended partition,\n);
                 print qq(in which the logical partitions must fit, is specified as only "${e_sum}%" of\n);
                 print qq(your disk.  Please modify and try again.\n);
@@ -1187,7 +1187,7 @@ sub upgrade_partition_schemes_to_generic_style {
                     my $file = "$dir/$device";
                     
                     if (-f $file) {
-                        my $autoinstall_script_conf_file = $image_dir . "/" . $config_dir . "/autoinstallscript.conf";
+                        my $autoinstall_script_conf_file = $image_dir . "/" . $config_dir . "/disks-layout.xml";
                         SystemImager::Common->save_partition_information($file, "old_sfdisk_file", $autoinstall_script_conf_file);
                     }
                 }
@@ -1235,7 +1235,7 @@ sub _get_array_of_disks {
 }
 
 # Description:
-# Read configuration information from /etc/systemimager/autoinstallscript.conf
+# Read configuration information from /etc/systemimager/disks-layout.xml
 # and write filesystem creation commands to the autoinstall script. -BEF-
 #
 # Usage:
@@ -1438,9 +1438,9 @@ sub _write_out_mkfs_commands {
 #  expanded to do any necessary validation of this file.)
 #
 # Usage:
-# validate_auto_install_script_conf( $auto_install_script_conf );
+# validate_disks_layout( $auto_install_script_conf );
 #
-sub validate_auto_install_script_conf {
+sub validate_disks_layout {
 
     my $file = $_[1];
 
@@ -1467,7 +1467,7 @@ sub validate_auto_install_script_conf {
 
 
 # Description:
-# Read configuration information from /etc/systemimager/autoinstallscript.conf
+# Read configuration information from /etc/systemimager/disks-layout.xml
 # and generate commands to create an fstab file on the autoinstall client
 # immediately after pulling down the image. -BEF-
 #
@@ -1554,7 +1554,7 @@ sub numerically {
 
 
 # Description:
-# Read configuration information from /etc/systemimager/autoinstallscript.conf
+# Read configuration information from /etc/systemimager/disks-layout.xml
 # and generate commands to create an fstab file on the autoinstall client
 # immediately after pulling down the image. -BEF-
 #
@@ -1614,7 +1614,7 @@ sub _write_out_umount_commands {
 
     #
     # Add this so that /proc gets umounted -- even if there is no proc entry in
-    # the <fsinfo> section of the autoinstallscript.conf file.
+    # the <fsinfo> section of the disks-layout.conf file.
     #
     #$fs_by_mp{'/proc'} = "proc";
     #$fs_by_mp{'/sys'} = "sysfs";

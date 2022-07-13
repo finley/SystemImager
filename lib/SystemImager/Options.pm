@@ -375,7 +375,7 @@ return << "EOF";
 
  --autodetect-disks
     Try to detect available disks on the client when installing instead of
-    using devices specified in autoinstallscript.conf.
+    using devices specified in disks-layout.xml.
 
 The following options affect the autoinstall client after autoinstalling:
 

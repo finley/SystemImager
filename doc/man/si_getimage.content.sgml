@@ -141,6 +141,14 @@
       </listitem>
     </varlistentry>
       <varlistentry>
+        <term><option>--update-disks-layout <replaceable>YES|NO</replaceable></option></term>
+	<listitem>
+	  <para>
+	    Update the $image.xml disks-layout config? Defaults to NO if -quiet. If not specified you will be prompted to confirm an update.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
         <term><option>--update-script <replaceable>YES|NO</replaceable></option></term>
 	<listitem>
 	  <para>
@@ -237,7 +245,7 @@
         <term><option>--autodetect-disks</option></term>
         <listitem>
           <para>
-            Try to detect available disks on the client instead of using devices from autoinstallscript.conf.
+            Try to detect available disks on the client instead of using devices from disks-layout.xml.
           </para>
         </listitem>
       </varlistentry>

@@ -89,7 +89,7 @@ Options: (options can be presented in any order and may be abbreviated)
 
  --config-file FILE     Use FILE to get autoinstall script configuration
                         information.  Defaults to the 
-                        ./etc/systemimager/autoinstallscript.conf file
+                        ./etc/systemimager/disks-layout.xml file
                         in the image.
 
  --listing              Show each filename as it is copied over during
@@ -102,7 +102,7 @@ Options: (options can be presented in any order and may be abbreviated)
                         console device (e.g. serial console).
 
  --autodetect-disks     Try to detect available disks on the client instead
-                        of using devices from autoinstallscript.conf.
+                        of using devices from disks-layout.xml.
 
 The following options affect the autoinstall client after autoinstalling:
 
@@ -170,7 +170,7 @@ EOF
 # Set some defaults. -BEF-
 my $ip_assignment_method = "dhcp";
 my $post_install = "directboot";
-my $auto_install_script_conf;
+my $disks_layout_file;
 my $script_name;
 
 GetOptions( 
@@ -180,7 +180,7 @@ GetOptions(
     "image=s"           => \$image,
     "overrides=s"       => \$overrides,
     "script=s"          => \$script_name,
-    "config-file=s"     => \$auto_install_script_conf,
+    "config-file=s"     => \$disks_layout_file,
     "ip-assignment=s"   => \$ip_assignment_method,
     "force"             => \my $force,
     "update-script=s"   => \my $update_script,
@@ -228,18 +228,17 @@ unless ($imagedir) {
     exit 1;
 }
 
-# If an autoinstallscript was specified, make sure it exists.
-if ($auto_install_script_conf) {
-    unless (-f $auto_install_script_conf) {
+# If a disks layout file  was specified, make sure it exists.
+if ($disks_layout_file) {
+    unless (-f $disks_layout_file) {
         print "\n$program_name: I can't find\n";
-        die   "$auto_install_script_conf.\n$get_help\n\n";
+        die   "$disks_layout_file.\n$get_help\n\n";
     }
 } else {
-    # If an autoinstallscript was not specified, use default for autoinstallscript.conf. -BEF-
-    # OL: BUG: Deprecated stuffs. now using disks layout file.
-    $auto_install_script_conf = "${imagedir}/etc/systemimager/autoinstallscript.conf";
-    unless (-f $auto_install_script_conf) {
-        die "ERROR: I can't find the autoinstallscript.conf file. See autoinstallscript.conf(8) for details.\n";
+    # If a disks-layout was not specified, use default for disks-layout.xml from image.
+    $disks_layout_file = "${imagedir}/etc/systemimager/disks-layout.xml";
+    unless (-f $disks_layout_file) {
+        die "ERROR: I can't find the disks-layout.xml file. See systemimager.disks-layout(7) for details.\n";
     }
 }
 
@@ -252,7 +251,7 @@ if (( -e "$file" ) && ( ! $force )) {
 
 SystemImager::Server->validate_ip_assignment_option( $ip_assignment_method );
 SystemImager::Server->validate_post_install_option( $post_install );
-SystemImager::Server->validate_auto_install_script_conf( $auto_install_script_conf );
+SystemImager::Server->validate_disks_layout( $disks_layout_file );
 
 ### BEGIN create a fresh master autoinstall script ###
 SystemImager::Server->create_autoinstall_script(
@@ -265,7 +264,7 @@ SystemImager::Server->create_autoinstall_script(
 	$ip_assignment_method,
 	$post_install,
 	$listing,
-	$auto_install_script_conf,
+	$disks_layout_file,
 	$autodetect_disks,
 	$cmdline
 );

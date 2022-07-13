@@ -118,10 +118,10 @@
 	<term><option>--config-file <replaceable>FILE</replaceable></option></term>
 	<listitem>
 	  <para>
-            Use FILE to get autoinstallscript configuration information.
+            Use FILE to get disks layout configuration information.
           </para>
           <para>
-            Defaults to <filename>./etc/systemimager/autoinstallscript.conf</filename> in the image directory.
+            Defaults to <filename>./etc/systemimager/disks-layout.xml</filename> in the image directory.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -206,7 +206,7 @@
         <term><option>--autodetect-disks</option></term>
         <listitem>
           <para>
-            Try to detect available disks on the client instead of using devices from autoinstallscript.conf.
+            Try to detect available disks on the client instead of using devices from disks-layout.xml.
           </para>
         </listitem>
       </varlistentry>
@@ -217,7 +217,7 @@
 
     <para>
       <command>si_getimage</command>(8),
-      <command>autoinstallscript.conf</command>(5)
+      <command>systemimager.disks-layout</command>(7)
     </para>
 
     <para>More details can be found in the <citetitle>SystemImager

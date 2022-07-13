@@ -31,7 +31,7 @@ PARTED_DELAY=0.5 # On older kernels, system needs time to update partitions.
 ################################################################################
 #
 # sis_prepare_disks()
-#		Main function. Processes autoinstallscript.conf xml file to
+#		Main function. Processes disks-layout.xml file to
 #		Prepare disks for imaging (partitions, raids, lvms, filesystems,
 #		fstab and mount them so image can be deployed.
 ################################################################################
@@ -51,7 +51,7 @@ sis_prepare_disks() {
 		logerror "Neiter DISKS_LAYOUT, HOSTNAME, IMAGENAME is set or"
 		logerror "No group, group_override, base_hostname matches a layout file"
 		logerror "Can't find a disk layout config file. Can't initilize disks."
-		logerror "Please read autoinstallscript.conf manual and create a disk layout file"
+		logerror "Please read systemimager.disks-layout(7) manual and create a disk layout file"
 		logerror "Store it on image server in /var/lib/systemimager/scripts/disks-layouts/"
 		logerror "Use the one of possible names: {\$DISKS_LAYOUT,\$HOSTNAME,\$GROUPNAME,\$BASE_HOSTNAME,\$IMAGENAME,default}{,.xml}"
 		shellout "Can't initilize disks. No layout found."
