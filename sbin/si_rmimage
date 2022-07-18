@@ -298,8 +298,6 @@ if(-e $flamethrower_conf) {
     $entry_name = "override_" . $image;
     SystemImager::Common->add_or_delete_conf_file_entry($flamethrower_conf, $entry_name) or
         die "$program_name: Cannot remove entry from $flamethrower_conf";
-} else {
-    print "WARN: xmit_flamethrower/config_file is unset or incorrect. Please, check configuration!\n";
 }
 
 # remove UYOK boot files
