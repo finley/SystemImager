@@ -419,6 +419,7 @@ sub write_disks_layout_footer {
 # Usage:
 # save_partition_information($old_sfdisk_file, $partition_tool, $destination_file, $label_type, $unit_of_measurement);
 # save_partition_information($disk, $partition_tool, $file, $label_type, $unit_of_measurement);
+# writes disks-layout.xml <disk> and <part> sections.
 sub save_partition_information {
     my ($module, $disk, $partition_tool, $file, $label_type, $unit_of_measurement) = @_;
     my ($dev);
@@ -1114,6 +1115,7 @@ sub _turn_sfdisk_output_into_generic_partitionschemes_file {
 # Usage:
 # _print_to_auto_install_conf_file($disk, $minor, $startMB, $endMB, $partition_type, $id, $name, $flags, 
 #                                  $end_of_last_partition_on_disk, $unit_of_measurement);
+# => _print_to_disks_layout.xml_file
 sub _print_to_auto_install_conf_file {
 
     my ($disk, $minor, $size, $partition_type, $id, $name, $flags,
