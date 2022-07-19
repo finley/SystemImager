@@ -1444,15 +1444,27 @@ sub validate_disks_layout {
 
     my $file = $_[1];
 
+    if ( ! defined $file ) {
+        print qq(Doh!  There's a problem (validate_disks_layout)!\n);
+        print qq(file parameter undefined!\n);
+        exit 2;
+    }
+
+    if ( ! -f "$file" ) {
+        print qq(Doh!  There's a problem (validate_disks_layout)!\n);
+        print qq(File ["$file"] does not exists!\n);
+        exit 3;
+    }
+
     my $cmd = 'xmlstarlet val --err --xsd /usr/lib/dracut/modules.d/51systemimager/disks-layout.xsd ';
     $cmd .= $file;
     my $output = `$cmd`;
 
     if (! m/ - valid/) {
-         print qq(Doh!  There's a problem in "$file"!\n);
-	 print qq(Output of validation:\n);
-	 print $output;
-         exit 1;
+        print qq(Doh!  There's a problem in "$file"!\n);
+        print qq(Output of validation:\n);
+        print $output;
+        exit 1;
     }
     ############################################################################
     #
