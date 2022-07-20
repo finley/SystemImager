@@ -241,9 +241,14 @@ if ($disks_layout_file) {
     } elsif ( -f "${imagedir}/etc/systemimager/disks-layout.xml" ) {
         $disks_layout_file = "${imagedir}/etc/systemimager/disks-layout.xml";
     } else {
-        die "ERROR: I can't find the disks-layout.xml file. See systemimager.disks-layout(7) for details.\n";
+        die "ERROR: I can't find the disks-layout.xml file.\nSee systemimager.disks-layout(7) for details.\n";
     }
 }
+
+SystemImager::Server->validate_ip_assignment_option( $ip_assignment_method );
+SystemImager::Server->validate_post_install_option( $post_install );
+die "ERROR: $disks_layout_file is not valid.\nSee systemimager.disks-layout(7) for details."
+    if (SystemImager::Server->validate_disks_layout( $disks_layout_file ) != 0);
 
 unless ($script_name) { $script_name = "$image"; }
 
@@ -251,10 +256,6 @@ my $file = "$autoinstall_script_dir/main-install/$script_name.master";
 if (( -e "$file" ) && ( ! $force )) {
     die qq(\nWARNING: "$file" already exists.\n         Use "--force" to overwrite.\n$get_help\n\n);
 }
-
-SystemImager::Server->validate_ip_assignment_option( $ip_assignment_method );
-SystemImager::Server->validate_post_install_option( $post_install );
-SystemImager::Server->validate_disks_layout( $disks_layout_file );
 
 ### BEGIN create a fresh master autoinstall script ###
 SystemImager::Server->create_autoinstall_script(

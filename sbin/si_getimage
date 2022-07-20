@@ -666,8 +666,11 @@ unless($update_disks_layout eq "yes") { exit 0; }
 $disks_layout_conf = "${imagedir}/etc/systemimager/disks-layout.xml";
 # 1st, handle the disks-layout
 if ($update_disks_layout eq "yes") {
-    SystemImager::Server->validate_disks_layout( $disks_layout_conf );
-    copy($disks_layout_conf, $autoinstall_script_dir."/disks-layouts/".$image.".xml" or warn "Failed to update disks-layout $image.xml. Error: $!";
+    if (SystemImager::Server->validate_disks_layout( $disks_layout_conf ) == 0) {
+        copy($disks_layout_conf, $autoinstall_script_dir."/disks-layouts/".$image.".xml" or warn "Failed to update disks-layout $image.xml. Error: $!";
+    } else {
+        warn "File ${imagedir}/etc/systemimager/disks-layout.xml not found.";
+    }
 }
 
 ### BEGIN create a fresh master autoinstall script ###
