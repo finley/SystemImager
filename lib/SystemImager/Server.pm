@@ -1439,6 +1439,7 @@ sub dev_to_devfs {
 #
 # Usage:
 # validate_disks_layout( $auto_install_script_conf );
+# restun: 0:Valid(Success) 1:Invalid(Failure) 2:missing argument 3: File doe not exists
 #
 sub validate_disks_layout {
 
@@ -1447,13 +1448,13 @@ sub validate_disks_layout {
     if ( ! defined $file ) {
         print qq(Doh!  There's a problem (validate_disks_layout)!\n);
         print qq(file parameter undefined!\n);
-        exit 2;
+        return 2;
     }
 
     if ( ! -f "$file" ) {
         print qq(Doh!  There's a problem (validate_disks_layout)!\n);
         print qq(File ["$file"] does not exists!\n);
-        exit 3;
+        return 3;
     }
 
     my $cmd = 'xmlstarlet val --err --xsd /usr/lib/dracut/modules.d/51systemimager/disks-layout.xsd ';
@@ -1464,7 +1465,7 @@ sub validate_disks_layout {
         print qq(Doh!  There's a problem in "$file"!\n);
         print qq(Output of validation:\n);
         print $output;
-        exit 1;
+        return 1;
     }
     ############################################################################
     #
@@ -1484,7 +1485,7 @@ sub validate_disks_layout {
     #        }
     #        $nodups{$_} = 1;
     #    }
-
+    return 0;
 }        
 
 
