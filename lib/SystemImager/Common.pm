@@ -839,7 +839,7 @@ sub save_bootloader_information {
 	if (index($efi_path, $disk) == 0) {
             # Detect the EFI boot loader
             my @all_bootloaders = glob("/boot/efi/EFI/*/grubx64.efi /boot/efi/EFI/*/rEFInd.efi /boot/efi/EFI/*/clover.efi");
-	    my $bootloader = lc(basename($all_bootloaders[0])); # Looking for 1st on only.
+	    my $bootloader = lc(basename($all_bootloaders[0])); # Looking for 1st one only.
 	    # We assume EFI is only x64 arch for now. TODO: fix detection (broken)
             if ($bootloader eq "grubx64.efi") {
                 $bl_flavor = "grub2";

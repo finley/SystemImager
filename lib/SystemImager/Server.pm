@@ -1461,7 +1461,7 @@ sub validate_disks_layout {
     $cmd .= $file;
     my $output = `$cmd`;
 
-    if (! m/ - valid/) {
+    if ($output !~ m/ - valid/) {
         print qq(Doh!  There's a problem in "$file"!\n);
         print qq(Output of validation:\n);
         print $output;
