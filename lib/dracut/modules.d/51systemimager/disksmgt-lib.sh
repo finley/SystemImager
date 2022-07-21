@@ -1104,6 +1104,8 @@ _find_free_space() {
 # _do_raids()
 #		Create software raid devices if any are defined.
 #
+# TODO: handle persistance and use create or build mode accordingly.
+#
 ################################################################################
 _do_raids() {
 	loginfo "Creating software raid devices if needed."
