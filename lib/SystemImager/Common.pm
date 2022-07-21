@@ -1808,21 +1808,24 @@ sub _add_raid_config_to_disks_layout {
     open(FILE,">>$file") or die "Couldn't open $file for appending. $!";
 
         print FILE qq(\n);
+        print FILE qq(  <raid>\n);
 
         foreach my $md (keys %{$raid}) {
 
-            print FILE qq(  <raid name="$md"\n);
-            print FILE qq(    raid_level="$raid->{$md}->{raid_level}"\n);
-            print FILE qq(    raid_devices="$raid->{$md}->{raid_devices}"\n);
-            print FILE qq(    spare_devices="$raid->{$md}->{spare_devices}"\n);
-            print FILE qq(    persistence="$raid->{$md}->{persistence}"\n);
-            print FILE qq(    rounding="$raid->{$md}->{rounding}"\n)       if($raid->{$md}->{rounding});
-            print FILE qq(    layout="$raid->{$md}->{layout}"\n)           if($raid->{$md}->{layout});
-            print FILE qq(    chunk_size="$raid->{$md}->{chunk_size}"\n)   if($raid->{$md}->{chunk_size});
-            print FILE qq(    lvm_group="$raid->{$md}->{lvm_group}"\n)     if($raid->{$md}->{lvm_group});
-            print FILE qq(    devices="$raid->{$md}->{devices}"\n);
-            print FILE qq(  />\n);
+            print FILE qq(    <raid_disk name="$md"\n);
+            print FILE qq(      raid_level="$raid->{$md}->{raid_level}"\n);
+            print FILE qq(      raid_devices="$raid->{$md}->{raid_devices}"\n);
+            print FILE qq(      spare_devices="$raid->{$md}->{spare_devices}"\n);
+            print FILE qq(      persistence="$raid->{$md}->{persistence}"\n);
+            print FILE qq(      rounding="$raid->{$md}->{rounding}"\n)       if($raid->{$md}->{rounding});
+            print FILE qq(      layout="$raid->{$md}->{layout}"\n)           if($raid->{$md}->{layout});
+            print FILE qq(      chunk_size="$raid->{$md}->{chunk_size}"\n)   if($raid->{$md}->{chunk_size});
+            print FILE qq(      lvm_group="$raid->{$md}->{lvm_group}"\n)     if($raid->{$md}->{lvm_group});
+            print FILE qq(      devices="$raid->{$md}->{devices}"\n);
+            print FILE qq(    />\n);
         }
+
+        print FILE qq(  </raid>\n);
 
     close(FILE);
 
