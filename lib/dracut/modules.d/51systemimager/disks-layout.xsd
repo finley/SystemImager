@@ -192,7 +192,15 @@
 			</xsd:attribute>
 			<xsd:attribute name="spare_devices"> <!-- The number of disks or partitions used to be part of spare disks in the Software RAID volume. -->
 				<xsd:simpleType>
-					<xsd:restriction base="xsd:positiveInteger"/> <!-- must be a positive integer -->
+					<xsd:restriction base="xsd:nonNegativeInteger"/> <!-- must be a positive or null integer -->
+				</xsd:simpleType>
+			</xsd:attribute>
+			<xsd:attribute name="persistence"> <!-- yes => create / no => build -->
+				<xsd:simpleType>
+					<xsd:restriction base="xsd:token">
+						<xsd:enumeration value="yes"/>
+						<xsd:enumeration value="no"/>
+					</xsd:restriction>
 				</xsd:simpleType>
 			</xsd:attribute>
 			<xsd:attribute name="rounding"> <!-- Rounding value in kilobytes. TODO: only valid if raid_level=1|raid1 -->
