@@ -46,7 +46,8 @@
 			<xsd:attribute name="dev" use="required"> <!-- Disk device full path -->
 				<xsd:simpleType>
 					<xsd:restriction base="xsd:string"> <!-- Basic device path checking -->
-						<xsd:pattern value="/dev/([a-z][a-z0-9]*/)?[a-z][a-z0-9]*"/>
+						<xsd:pattern value="/dev/([a-z][a-z0-9]*/)?[a-z][a-z0-9]*"/> <!-- Basic device path checking -->
+						<xsd:pattern value="[a-zA-Z0-9.]+:/[a-zA-Z0-9.]+.*"/> <!-- Basic nfs mount path checking -->
 					</xsd:restriction>
 				</xsd:simpleType>
 			</xsd:attribute>
@@ -313,6 +314,7 @@
 					<xsd:enumeration value="fat"/>
 					<xsd:enumeration value="fat16"/>
 					<xsd:enumeration value="fat32"/>
+					<xsd:enumeration value="nfs"/>
 				</xsd:restriction>
 			</xsd:simpleType>
 		</xsd:attribute>
