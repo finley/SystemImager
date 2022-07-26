@@ -60,19 +60,9 @@ use JSON;
 use strict;
 use warnings;
 use 5.010;
-
-BEGIN {
-    # Uncomment line below to stop debugger here:
-    # $DB::single = 1;
-    use Exporter();
-
-    @SystemImager::JConfig::ISA       = qw(Exporter);
-    @SystemImager::JConfig::EXPORT    = qw();
-    @SystemImager::JConfig::EXPORT_OK = qw($jconfig);
-
-}
-
-use vars qw($jconfig);
+use parent 'Exporter'; # imports and subclasses Exporter
+our $jconfig = new SystemImager::JConfig();;
+our @EXPORT = qw($jconfig);
 
 sub new {
 	my $class = shift;
@@ -229,8 +219,5 @@ sub set {
 		return undef;
 	}
 }
-
-my $jconfig = new SystemImager::JConfig();
-$::main::jconfig = $jconfig;
 
 1;

@@ -30,7 +30,8 @@ use strict;
 use File::Copy;
 use File::Path;
 use XML::Simple;
-use SystemImager::JConfig qw($jconfig);
+use SystemImager::JConfig;
+our $jconfig;
 use vars qw($VERSION @mount_points %device_by_mount_point %filesystem_type_by_mount_point $disk_no %dev2disk $bootdev $rootdev);
 
 $VERSION="SYSTEMIMAGER_VERSION_STRING";
