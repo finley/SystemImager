@@ -217,7 +217,7 @@ while (<FILE>) {
         $image_name = $_;
         $line = "  Image: $image_name";
 
-        my $file = tmpnam();
+        my $file = mktemp( "si_lsimage-tempXXXX" );
 
         # display time stamp
         my $cmd1 = "rsync -a rsync://${imageserver}:$port/$_/etc/systemimager/IMAGE_RETRIEVAL_TIME $file 1>/dev/null 2>/dev/null";
