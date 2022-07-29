@@ -213,7 +213,9 @@ echo <<<EOT
   </theader>
   <tbody>
 EOT;
-$jsons_images=shell_exec("si_lsimage --json");
+
+$jsons_images = shell_exec('si_lsimage --json');
+
 if($jsons_images === NULL) {
 	echo "<span class='pri_error'> ERROR! Can't get images informations!</span>\n";
 } else {
