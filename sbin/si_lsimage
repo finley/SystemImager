@@ -25,10 +25,9 @@
 # declare modules
 use POSIX;
 use Fcntl ':flock';
-use File::Temp qw(tempfile);
+use File::Temp qw(tempfile mktemp);
 use Getopt::Long;
 use JSON;
-use File::Temp qw/ mktemp /;
 
 # set some variables
 $version_number="SYSTEMIMAGER_VERSION_STRING";
@@ -181,7 +180,7 @@ my %images = ();
 
 # get listing
 my $workers = 0;
-my ($lock_fh, $lock_file) = tempfile("si_lsimage_lock.XXXX") or
+my ($lock_fh, $lock_file) = tempfile("/tmp/si_lsimage_lock.XXXX") or
 	die("ERROR: couldn't create temporary file\n");
 
 if(!$json) {
@@ -217,7 +216,7 @@ while (<FILE>) {
         $image_name = $_;
         $line = "  Image: $image_name";
 
-        my $file = mktemp( "si_lsimage-tempXXXX" );
+        my $file = mktemp( "/tmp/si_lsimage-tempXXXX" );
 
         # display time stamp
         my $cmd1 = "rsync -a rsync://${imageserver}:$port/$_/etc/systemimager/IMAGE_RETRIEVAL_TIME $file 1>/dev/null 2>/dev/null";
