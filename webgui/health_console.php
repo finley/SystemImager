@@ -135,6 +135,13 @@ if ($json_services !== false) {
 			unset($is_enabled_output,$is_active_output,$service_state);
 			$is_enabled=exec("systemctl is-enabled ".$service_specs[0],$is_enabled_output,$service_state);
 			$is_active=exec("systemctl is-active ".$service_specs[0],$is_active_output,$active_state);
+			# Handle optional services like bittorrent or flamethrower.
+			if(empty($is_enabled_output[0]) {
+				$is_enabled_output[0] = "not installed";
+			}
+			if(empty($is_active_output[0])) {
+				$is_active_output[0] = "N/A";
+			}
 			$need=displayNeed($service_specs[1], $is_enabled_output[0], $is_active_output[0]);
 			$status=displayServiceStatus($service_specs[1],$is_enabled_output[0],$is_active_output[0]);
 			echo $need.$status."</tr>\n";
