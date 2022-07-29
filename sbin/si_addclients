@@ -416,7 +416,7 @@ EOF
             ### get IP information ###
 
             if (!SystemImager::HostRange::add_hosts_entries($ip_range, $domain_name, @all_hosts)) {
-                my $cmd = "cp -f /etc/hosts $autoinstall_script_dir";
+                my $cmd = "cp -f /etc/hosts $autoinstall_script_dir"; # Imager rely on this locationfor hosts file. don't change
                 !system($cmd) or die "Couldn't $cmd!";
                 last;
             } else {
@@ -457,8 +457,8 @@ EOF
         $done = 1;
     }
     if (defined($script)) {
-        create_links($hosts, $script, $autoinstall_script_dir);
-        print "$program_name: created links in $autoinstall_script_dir\n";
+        create_links($hosts, $script, $autoinstall_script_dir."/main-install");
+        print "$program_name: created links in $autoinstall_script_dir/main-install\n";
         $done = 1;
     }
     if (!$done) {
