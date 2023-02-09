@@ -144,7 +144,7 @@
 
 # Still use the correct lib even on fc-18+ where --target noarch sets _libdir to /usr/lib even on x86_64 arch.
 %define static_libcrypt_a /usr/lib/libcrypt.a
-%if "%(arch)" == "x86_64"
+%if "%(arch)" == "x86_64" || "%(arch)" == "aarch64"
 %define static_libcrypt_a /usr/lib64/libcrypt.a
 %endif
 

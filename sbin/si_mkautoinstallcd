@@ -93,7 +93,7 @@ unless ($arch) {
 }
 
 # Do we have a supported architecture? -BEF-
-if($arch !~ /^(i386|x86_64|ia64)$/) {
+if($arch !~ /^(i386|x86_64|aarch64|ia64)$/) {
     message("\nI'm terribly sorry, but I don't yet know how to make an\nauto-install CD for the \"$arch\" architecture.\n");
     exit 1;
 }
