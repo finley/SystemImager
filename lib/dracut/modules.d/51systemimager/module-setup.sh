@@ -101,7 +101,8 @@ EOF
     inst_multiple -o ethtool mii-tool mii-diag
 
     # some command needed on debian
-    inst_multiple dmidecode biosdecode vpddecode ownership
+    inst_multiple dmidecode
+    inst_multiple -o biosdecode vpddecode ownership # Not available on aarch64, thus optional
 
     inst_multiple bc dc gzip bzip2 rsync mkfs parted sgdisk fdisk sfdisk blockdev lsblk partprobe awk ncat tty killall kexec ipcalc findmnt findfs tput stty
     inst_multiple lvm pvcreate pvdisplay pvremove pvscan lvcreate lvdisplay lvremove lvscan lvmconfig lvmdump lvchange vgcreate vgdisplay vgremove vgscan fsadm stat
