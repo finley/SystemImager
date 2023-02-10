@@ -723,9 +723,11 @@ sis_postimaging() {
 
 	# Fix /etc/issue and /etc/motd with background coloring (at this point we have a valid TERM)
 	# this cannot be done in initrd itself as it depends on TERM (which may depend of si.term)
-	sed -i -e "1i${BG_BLUE}" -e "\$a${BG_BLACK}" /etc/motd
-	sed -i -e "1i${BG_RED}" -e "\$a${BG_BLACK}" /etc/issue
-
+	if test "${COLORS}" -gt 8 # Only do that on color capable terms.
+	then
+		sed -i -e "1i${BG_BLUE}" -e "\$a${BG_BLACK}" /etc/motd
+		sed -i -e "1i${BG_RED}" -e "\$a${BG_BLACK}" /etc/issue
+	fi
 	# directboot requires few things:
 	# root= must be set to block:/dev/the/correct/root/device
 	# /etc/fstab.empty must exists.
