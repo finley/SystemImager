@@ -47,7 +47,12 @@ logdebug "Trying to load network informations for device: [$DEVICE]"
 
 # Compute some constants (used to send messages to monitord)
 CLIENT_MAC=$(ip -o link show $DEVICE 2>/dev/null | grep -o -E '([[:xdigit:]]{2}:){5}[[:xdigit:]]{2}' -m 1|grep -vi 'FF:FF:FF:FF:FF:FF' | sed -e 's/:/./g' -e 's/\(.*\)/\U\1/')
-CLIENT_CPU=$(echo `cat /proc/cpuinfo | grep "cpu\|clock\|model name\|cpu MHz" | grep -v "cpu family" | sed -ne '1,2p' | sed "s/.*: //" | sed "s/^\([0-9\.]*\)MHz$/(\1 MHz)/" | sed "s/^\([0-9\.]*\)$/(\1 MHz)/"` | sed "s/\(MHz)\)/\1 |/g" | sed "s/ |$//")
+if test -n "$(grep 'model name' /proc/cpuinfo)"
+then
+	CLIENT_CPU=$(echo `cat /proc/cpuinfo | grep "cpu\|clock\|model name\|cpu MHz" | grep -v "cpu family" | sed -ne '1,2p' | sed "s/.*: //" | sed "s/^\([0-9\.]*\)MHz$/(\1 MHz)/" | sed "s/^\([0-9\.]*\)$/(\1 MHz)/"` | sed "s/\(MHz)\)/\1 |/g" | sed "s/ |$//")
+else
+	CLIENT_CPU="Unknown ($(uname -m))"
+fi
 CLIENT_NCPUS=$((`cat /proc/cpuinfo | grep "^processor" | sed -n '$p' | sed "s/.*: \([0-9]\)*$/\1/"` + 1))
 CLIENT_MEM=$(cat /proc/meminfo | sed -ne "s/MemTotal: *//p" | sed "s/ kB//")
 IMAGER_KERNEL=$(uname -r)
