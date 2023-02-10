@@ -453,12 +453,20 @@ sub _choose_kernel_file {
 #       my $uname_r = _get_kernel_release( '/path/to/kernel/file' );
 sub _get_kernel_release($) {
 	my $file = shift;
-	my $cmd = "LC_ALL=C file $file|grep -E 'Linux(/x86){0,1}\\s[Kk]ernel'";
-	my $result = `$cmd`;
 	my $arch = `arch`;
-	$result =~ s/^.*bzImage,\s[Vv]ersion\s(\S+)\s.*$/$1/g;
-	$result =~ s/,$/.$arch/g; # Old kernels idon't have arch (RHEL6, kernel 2.6)
-	chomp($result);
+	my $result = "";
+	if ( $arch =~ m/x86_64/ || $arch =~m/i.86/ ) {
+		my $cmd = "LC_ALL=C file $file|grep -E 'Linux(/x86){0,1}\\s[Kk]ernel'";
+		$result = `$cmd`;
+		$result =~ s/^.*bzImage,\s[Vv]ersion\s(\S+)\s.*$/$1/g;
+		$result =~ s/,$/.$arch/g; # Old kernels idon't have arch (RHEL6, kernel 2.6)
+		chomp($result);
+	} elsif ( $arch =~ m/aarch64/ ) {
+		my $cmd = "LC_ALL=C zcat $file | strings | grep '^Linux version'";
+		$result = `$cmd`;
+		$result =~ s/Linux\sversion\s(\S+)\s.*$/$1/g;
+		chomp($result);
+	}
 	if ($result ne "") {
 		return $result;
 	} else {
