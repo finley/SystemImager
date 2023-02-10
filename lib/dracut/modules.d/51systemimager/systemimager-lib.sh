@@ -74,7 +74,8 @@ test -z "${TERM}" -o "${TERM}" = "dumb" && TERM=linux
 
 # Some usefull values
 COLORS=`tput -T${TERM} colors`
-if test "0${COLORS}" -gt 1
+test -z "${COLORS}" && COLORS=2
+if test "${COLORS}" -gt 8
 then
 	FG_RED=`tput -T${TERM} setaf 1`
 	FG_GREEN=`tput -T${TERM} setaf 2`
