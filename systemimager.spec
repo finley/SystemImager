@@ -304,7 +304,7 @@ BuildArch: noarch
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
-Requires: perl, perl-JSON, systemconfigurator >= 2.2.11
+Requires: perl, perl-JSON
 Requires: systemimager-webgui
 # systemimager-webgui is requred by JConfig.pm for the config_scheme.json file.
 
@@ -337,7 +337,7 @@ BuildArch: noarch
 Packager: %packager
 URL: http://wiki.systemimager.org/
 Distribution: System Installation Suite
-Requires: systemimager-common = %{version}, systemconfigurator >= 2.2.11, perl-AppConfig, rsync >= 2.4.6, perl
+Requires: systemimager-common = %{version}, perl-AppConfig, rsync >= 2.4.6, perl
 #AutoReqProv: no
 
 %description client
@@ -399,7 +399,6 @@ BuildRequires: %pkg_ncat
 BuildRequires: %pkg_sshd
 BuildRequires: ncurses, /usr/bin/awk, kbd
 BuildRequires: gettext, bc
-BuildRequires: systemconfigurator
 BuildRequires: kernel, coreutils
 BuildRequires: rtorrent
 BuildRequires: cryptsetup
@@ -556,7 +555,6 @@ Requires: %pkg_ncat
 Requires: %pkg_sshd
 Requires: ncurses, /usr/bin/awk, kbd
 Requires: gettext, bc
-Requires: systemconfigurator
 Requires: kernel, coreutils
 Requires: rtorrent
 Requires: systemimager-initrd_template
@@ -1167,6 +1165,10 @@ fi
 %attr(0755, root, root) %{_exec_prefix}/lib/systemimager/clients-statuses-helper
 
 %changelog
+* wed Feb 15 2022 Olivier Lahaye <olivier.lahaye@cea.fr> 4.9.1-0.3
+- Add support for aarch64
+- Removed systemconfigurator dependancy
+
 * Wed Jun 08 2022 Olivier Lahaye <olivier.lahaye@cea.fr> 4.9.1-0.2
 - Packaging reworked to match debian package names that are more relevant.
 - Renamed systemimager-flamethrower to systemimager-server-flamethrower
