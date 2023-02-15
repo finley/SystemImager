@@ -1165,7 +1165,7 @@ fi
 %attr(0755, root, root) %{_exec_prefix}/lib/systemimager/clients-statuses-helper
 
 %changelog
-* Wed Feb 15 2022 Olivier Lahaye <olivier.lahaye@cea.fr> 4.9.1-0.3
+* Wed Feb 15 2023 Olivier Lahaye <olivier.lahaye@cea.fr> 4.9.1-0.3
 - Add support for aarch64
 - Removed systemconfigurator dependancy
 
