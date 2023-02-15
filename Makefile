@@ -546,21 +546,8 @@ endif
 .PHONY:	install_server_libs
 install_server_libs:
 	mkdir -p $(LIB_DEST)/SystemImager
-	mkdir -p $(LIB_DEST)/BootMedia
-	mkdir -p $(LIB_DEST)/BootGen/Dev
-	mkdir -p $(LIB_DEST)/BootGen/InitrdFS
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/Server.pm  $(LIB_DEST)/SystemImager
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/SystemImager/HostRange.pm  $(LIB_DEST)/SystemImager
-	$(SI_INSTALL) -m 644 $(LIB_SRC)/BootMedia/BootMedia.pm 	$(LIB_DEST)/BootMedia
-	$(SI_INSTALL) -m 644 $(LIB_SRC)/BootMedia/MediaLib.pm 	$(LIB_DEST)/BootMedia
-	$(SI_INSTALL) -m 644 $(LIB_SRC)/BootMedia/alpha.pm 	$(LIB_DEST)/BootMedia
-	$(SI_INSTALL) -m 644 $(LIB_SRC)/BootMedia/i386.pm 	$(LIB_DEST)/BootMedia
-	$(SI_INSTALL) -m 644 $(LIB_SRC)/BootGen/Dev.pm 		$(LIB_DEST)/BootGen/
-	$(SI_INSTALL) -m 644 $(LIB_SRC)/BootGen/Dev/Devfs.pm 	$(LIB_DEST)/BootGen/Dev/
-	$(SI_INSTALL) -m 644 $(LIB_SRC)/BootGen/Dev/Static.pm 	$(LIB_DEST)/BootGen/Dev/
-	$(SI_INSTALL) -m 644 $(LIB_SRC)/BootGen/InitrdFS.pm 	$(LIB_DEST)/BootGen/
-	$(SI_INSTALL) -m 644 $(LIB_SRC)/BootGen/InitrdFS/Cramfs.pm 	$(LIB_DEST)/BootGen/InitrdFS/
-	$(SI_INSTALL) -m 644 $(LIB_SRC)/BootGen/InitrdFS/Ext2.pm 	$(LIB_DEST)/BootGen/InitrdFS/
 	mkdir -p $(USR)/share/systemimager/icons
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/icons/serverinit.gif	$(USR)/share/systemimager/icons
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/icons/serverinst.gif 	$(USR)/share/systemimager/icons
@@ -568,6 +555,19 @@ install_server_libs:
 	$(SI_INSTALL) -m 644 $(LIB_SRC)/icons/servererror.gif 	$(USR)/share/systemimager/icons
 	mkdir -p $(USR)/share/systemimager/conf
 	$(SI_INSTALL) -m 644 $(CONF_SRC)/config_scheme.json $(CONF_DEST)
+#	mkdir -p $(LIB_DEST)/BootMedia
+#	mkdir -p $(LIB_DEST)/BootGen/Dev
+#	mkdir -p $(LIB_DEST)/BootGen/InitrdFS
+#	$(SI_INSTALL) -m 644 $(LIB_SRC)/BootMedia/BootMedia.pm 	$(LIB_DEST)/BootMedia
+#	$(SI_INSTALL) -m 644 $(LIB_SRC)/BootMedia/MediaLib.pm 	$(LIB_DEST)/BootMedia
+#	$(SI_INSTALL) -m 644 $(LIB_SRC)/BootMedia/alpha.pm 	$(LIB_DEST)/BootMedia
+#	$(SI_INSTALL) -m 644 $(LIB_SRC)/BootMedia/i386.pm 	$(LIB_DEST)/BootMedia
+#	$(SI_INSTALL) -m 644 $(LIB_SRC)/BootGen/Dev.pm 		$(LIB_DEST)/BootGen/
+#	$(SI_INSTALL) -m 644 $(LIB_SRC)/BootGen/Dev/Devfs.pm 	$(LIB_DEST)/BootGen/Dev/
+#	$(SI_INSTALL) -m 644 $(LIB_SRC)/BootGen/Dev/Static.pm 	$(LIB_DEST)/BootGen/Dev/
+#	$(SI_INSTALL) -m 644 $(LIB_SRC)/BootGen/InitrdFS.pm 	$(LIB_DEST)/BootGen/
+#	$(SI_INSTALL) -m 644 $(LIB_SRC)/BootGen/InitrdFS/Cramfs.pm 	$(LIB_DEST)/BootGen/InitrdFS/
+#	$(SI_INSTALL) -m 644 $(LIB_SRC)/BootGen/InitrdFS/Ext2.pm 	$(LIB_DEST)/BootGen/InitrdFS/
 
 # install client-only libraries
 .PHONY:	install_client_libs

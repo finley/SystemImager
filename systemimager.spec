@@ -1051,12 +1051,12 @@ fi
 %{_bindir}/si_pushoverrides
 %{perl_vendorlib}/SystemImager/Server.pm
 %{perl_vendorlib}/SystemImager/HostRange.pm
-%{perl_vendorlib}/BootMedia
-%{perl_vendorlib}/BootGen
 %{_mandir}/man5/systemimager*
 %{_mandir}/man7/systemimager*
 %{_mandir}/man8/si_*
 %{_datarootdir}/systemimager/icons/*
+#{perl_vendorlib}/BootMedia
+#{perl_vendorlib}/BootGen
 
 %files doc
 %defattr(-, root, root)

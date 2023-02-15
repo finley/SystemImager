@@ -1407,23 +1407,23 @@ sub _get_device_size {
 # Usage:
 # my $boot_loader = SystemImager::Common->detect_bootloader();
 # by -dannf-
-sub detect_bootloader {
-    # use lib "/usr/lib/systemconfig";
-    use SystemConfig::Boot;
-    use vars qw(@boottypes);
-
-    foreach my $boottype (@Boot::boottypes) {
-        my $boot = $boottype->new();
-        if($boot->footprint_loader() && $boot->footprint_config()) {
-            if ($boottype =~ /^Boot::(.*)$/) {
-                return $1;
-            }
-        }
-    }
-    return ""; #XXX can we simply do return? or return 0; ?
-               #
-               # Dann.  Do you want to do a 'return undef;' here?  To indicate failure to find a boot loader? -BEF-
-}
+#sub detect_bootloader {
+#    # use lib "/usr/lib/systemconfig";
+#    use SystemConfig::Boot;
+#    use vars qw(@boottypes);
+#
+#    foreach my $boottype (@Boot::boottypes) {
+#        my $boot = $boottype->new();
+#        if($boot->footprint_loader() && $boot->footprint_config()) {
+#            if ($boottype =~ /^Boot::(.*)$/) {
+#                return $1;
+#            }
+#        }
+#    }
+#    return ""; #XXX can we simply do return? or return 0; ?
+#               #
+#               # Dann.  Do you want to do a 'return undef;' here?  To indicate failure to find a boot loader? -BEF-
+#}
 
 
 # Description:

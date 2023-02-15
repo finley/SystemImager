@@ -251,9 +251,9 @@ FATAL: parameter AUTOINSTALL_BOOT_DIR is not defined in /etc/systemimager/system
 - need to find a way to provide systemimager-x86_64boot-standard-4.5.0-1.el7.noarch.rpm without installing dracut-systemimager (does a dracut option allows to specify an alternative dracut directory))
 
 # Need to check perl deps to SystemInstaller in si_* commands
-perl(SystemConfig::Util::Cmd)
-perl(SystemConfig::Util::Log)
-perl(SystemConfig::Boot)
+- DONE: perl(SystemConfig::Util::Cmd) => Removed BootMedia and BootGen modules (unused) 
+- DONE: perl(SystemConfig::Util::Log) => Removed BootMedia and BootGen modules (unused)
+- DONE: perl(SystemConfig::Boot) => removed detect_bootloader from Common.pm (unused)
 
 ============= TODO before use of dracut. Needs reviewing ======================
 #- Handle this error:
