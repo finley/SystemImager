@@ -838,10 +838,12 @@ sub save_bootloader_information {
 	# We are in EFI environment. Check that THIS dis is the boot disk.
 	if (index($efi_path, $disk) == 0) {
             # Detect the EFI boot loader
-            my @all_bootloaders = glob("/boot/efi/EFI/*/grubx64.efi /boot/efi/EFI/*/rEFInd.efi /boot/efi/EFI/*/clover.efi");
+            my @all_bootloaders = glob("/boot/efi/EFI/*/grub*.efi /boot/efi/EFI/*/rEFInd.efi /boot/efi/EFI/*/clover.efi");
 	    my $bootloader = lc(basename($all_bootloaders[0])); # Looking for 1st one only.
 	    # We assume EFI is only x64 arch for now. TODO: fix detection (broken)
             if ($bootloader eq "grubx64.efi") {
+                $bl_flavor = "grub2";
+            } elsif ($bootloader eq "grubaa64.efi") {
                 $bl_flavor = "grub2";
             } elsif ($bootloader eq "systemd-boot.efi") {
                 $bl_flavor = "rEFInd";
