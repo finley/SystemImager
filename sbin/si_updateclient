@@ -461,7 +461,7 @@ SC_EOF
         exit(1);
     }
     unless ($image) {
-        my (undef, $tmpfile) = tempfile(OPEN => 0);
+        my (undef, $tmpfile) = tempfile("cluster_XXXX", TMPDIR => 1, SUFFIX => ".txt", OPEN => 0);
         my $cmd = "rsync rsync://${server}:${port}/scripts/cluster.txt $tmpfile";
         unless (!system($cmd)) {
             print STDERR "error: couldn't retrieve rsync://${server}:${port}/scripts/cluster.txt from the image server!\n";

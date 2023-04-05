@@ -180,7 +180,7 @@ my %images = ();
 
 # get listing
 my $workers = 0;
-my ($lock_fh, $lock_file) = tempfile("/tmp/si_lsimage_lock.XXXX") or
+my ($lock_fh, $lock_file) = tempfile("/tmp/si_lsimage_XXXX", TMPDIR => 1, SUFFIX => ".lock") or
 	die("ERROR: couldn't create temporary file\n");
 
 if(!$json) {
