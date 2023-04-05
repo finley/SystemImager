@@ -374,7 +374,7 @@ if(! $my_modules and ! $modules_dir and ! $image and ! $custom_kernel) {
 
 # Make sure we have certain tools that we need.
 which('rsync') or croak("'rsync' is required for $progname to function properly.  Please see http://systemimager.org for more details.");
-which('systemconfigurator') or croak("'systemconfigurator' is required for $progname to function properly.  Please see http://systemimager.org for more details.");
+#which('systemconfigurator') or croak("'systemconfigurator' is required for $progname to function properly.  Please see http://systemimager.org for more details.");
 
 my $hosts_allow;
 if($server) {
