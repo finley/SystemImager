@@ -24,7 +24,6 @@ package SystemImager::HostRange;
 use strict;
 use Socket;
 use XML::Simple;
-use SystemImager::JConfig qw($jconfig);
 
 # Maximum number of concurrent sessions (public).
 our $concurrents = 32;
@@ -266,11 +265,6 @@ sub add_hosts_entries {
     my ($ip_range, $domain_name, @all_hosts) = @_;
 
     $domain_name = lc $domain_name;
-
-    my $autoinstall_script_dir = $jconfig->get('imager','scripts_dir');
-    unless ($autoinstall_script_dir) {
-        die "FATAL: parameter imager.scripts_dir is not defined in ".$jconfig->fileName()."\n";
-    }
 
     my @all_ips = expand_range_list($ip_range);
     unless ($#all_ips == $#all_hosts) {
