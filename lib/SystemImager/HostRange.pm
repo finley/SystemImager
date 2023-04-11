@@ -294,7 +294,7 @@ sub add_hosts_entries {
         my @fields = split;
         my $ip_quad = $fields[0];
         my $line = $_;
-        if ($ip_quad) {
+        if ($ip_quad && ($ip_quad !~ /^#/)) {
             $etc_hosts_lines_by_ip{$ip_quad} = $line;
         }
         $etc_hosts_lines_by_number{$line_number} = $line;
@@ -338,7 +338,7 @@ sub add_hosts_entries {
         $_ = $etc_hosts_lines_by_number{$line_number};
         my @words = split;
         my $ip_quad = $words[0];
-        if ($ip_quad) {
+        if ($ip_quad && ($ip_quad !~ /^#/)) {
             $etc_hosts_lines_by_number{$line_number} = $etc_hosts_lines_by_ip{$ip_quad};
             delete $etc_hosts_lines_by_ip{$ip_quad};
         }
