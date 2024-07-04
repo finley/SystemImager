@@ -135,13 +135,6 @@ if ($json_services !== false) {
 			unset($is_enabled_output,$is_active_output,$service_state);
 			$is_enabled=exec("systemctl is-enabled ".$service_specs[0],$is_enabled_output,$service_state);
 			$is_active=exec("systemctl is-active ".$service_specs[0],$is_active_output,$active_state);
-			# Handle optional services like bittorrent or flamethrower.
-			if(empty($is_enabled_output[0]) {
-				$is_enabled_output[0] = "not installed";
-			}
-			if(empty($is_active_output[0])) {
-				$is_active_output[0] = "N/A";
-			}
 			$need=displayNeed($service_specs[1], $is_enabled_output[0], $is_active_output[0]);
 			$status=displayServiceStatus($service_specs[1],$is_enabled_output[0],$is_active_output[0]);
 			echo $need.$status."</tr>\n";
@@ -220,14 +213,13 @@ echo <<<EOT
   </theader>
   <tbody>
 EOT;
-
-$jsons_images = shell_exec('si_lsimage --json');
-
+$jsons_images=shell_exec("/usr/bin/si_lsimage --json");
 if($jsons_images === NULL) {
 	echo "<span class='pri_error'> ERROR! Can't get images informations!</span>\n";
 } else {
-	foreach(preg_split("/((\r?\n)|(\r\n?))/", $json_images) as $json_single_image) {
-		$image_infos = json_decode($json_single_image);
+	$jsons_texts = explode("\n",$jsons_images);
+	foreach($jsons_texts as $image_json_text) {
+		$image_infos = json_decode($image_json_text);
 		if ($image_infos === null  && json_last_error() !== JSON_ERROR_NONE) {
                 	echo "<span class='pri_error'> ERROR! Can't decode clients stats.</span>\n";
 		} elseif($image_infos->{'image_name'} != "") {
