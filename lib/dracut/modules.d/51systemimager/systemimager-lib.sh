@@ -528,20 +528,21 @@ IMAGER_KERNEL="$IMAGER_KERNEL"
 #
 # Deployment informations and configurations
 #
-INSTALL_IFACE="$INSTALL_IFACE"			# si.install-iface
+INSTALL_IFACE="$INSTALL_IFACE"		# si.install-iface
 IMAGESERVER="$IMAGESERVER"			# si.image-server
 IMAGENAME="$IMAGENAME"
+IMAGEVERSION="$IMAGEVERSION"		# si.image-version
 SCRIPTNAME="$SCRIPTNAME"
 GROUPNAMES="$GROUPNAMES"			# /scripts/cluster.txt
 GROUP_OVERRIDES="$GROUP_OVERRIDES"
 SIS_CONFIG="$SIS_CONFIG"			# si.config
-DISKS_LAYOUT="$DISKS_LAYOUT"			# si.disks-layout
+DISKS_LAYOUT="$DISKS_LAYOUT"		# si.disks-layout
 DISKS_LAYOUT_FILE="$DISKS_LAYOUT_FILE"		#  Absolute PATH of layout file in use.
-NETWORK_CONFIG="$NETWORK_CONFIG"		# si.network-config
+NETWORK_CONFIG="$NETWORK_CONFIG"	# si.network-config
 NETWORK_CONFIG_FILE="$NETWORK_CONFIG_FILE"	#  Absolute PATH of network-config in use.
 DL_PROTOCOL="$DL_PROTOCOL"			# si.dl-protocol
 SEL_RELABEL="$SEL_RELABEL"			# si.selinux-relabel
-SI_POST_ACTION="$SI_POST_ACTION"		# si.post-action (defaults is reboot)
+SI_POST_ACTION="$SI_POST_ACTION"	# si.post-action (defaults is reboot)
 
 ##############################
 #
@@ -595,6 +596,13 @@ BITTORRENT_STAGING="$BITTORRENT_STAGING"
 BITTORRENT_POLLING_TIME="$BITTORRENT_POLLING_TIME"
 BITTORRENT_SEED_WAIT="$BITTORRENT_SEED_WAIT"
 BITTORRENT_UPLOAD_MIN="$BITTORRENT_UPLOAD_MIN"
+
+##############################
+#
+# OCI Protocol parameters
+#
+OCI_REGISTRY_USER="$OCI_REGISTRY_USER"
+OCI_REGISTRY_PASS="$OCI_REGISTRY_PASS"
 
 # END OF FILE
 EOF
