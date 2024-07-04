@@ -148,6 +148,25 @@ function si_WriteConfig($si_config) {
 	return(file_put_contents("/etc/systemimager/systemimager.json",$json_config));
 }
 
+function si_GetAvailableImages() {
+	$available_images=array(); // Start with empty list of images
+	$json_images=shell_exec('si_lsimage --json');
+	if($json_images === NULL) {
+		return(NULL); // Unable to collect images
+	} else {
+		foreach(preg_split("/((\r?\n)|(\r\n?))/", $json_images) as $json_line){
+			$image_infos=json_decode($json_line);
+			if(!empty($image_infos)) {
+				$image_name=$image_infos->{'image_name'};
+				if(is_string($image_name) && !empty($image_name)) {
+					array_push($available_images,$image_name);
+				}
+			}
+		}
+		return($available_images);
+	}
+}
+
 /**
  * Checks if a folder exist and return canonicalized absolute pathname (long version)
  * @param string $folder the path being checked.
