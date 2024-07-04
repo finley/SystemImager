@@ -57,7 +57,13 @@ test -z "$SIS_CONFIG" && SIS_CONFIG=$(getarg si.config) && logdebug "Got SIS_CON
 # si.image-name="imagename|imagename.sh|imagename.master"
 test -z "$IMAGENAME" && IMAGENAME=$(getarg si.image-name -d IMAGENAME) && logdebug "Got IMAGENAME=${IMAGENAME}"
 
-#####################################
+######################################
+# Version of image.
+# si.image-version="latest|8.1|8"
+# defaults to "latest"
+test -z "$IMAGEVERSION" && IMAGEVERSION=$(getarg si.image-version) && logdebug "Got IMAGEVERSION=${IMAGEVERSION:=latest}"
+
+####################################
 # si.script-name="scriptname|scriptname.sh|scriptname.master"
 test -z "$SCRIPTNAME" && SCRIPTNAME=$(getarg si.script-name -d SCRIPTNAME) && logdebug "Got SCRIPTNAME=${SCRIPTNAME}"
 
@@ -156,6 +162,12 @@ test -z "${SI_POST_ACTION}" && SI_POST_ACTION="reboot" && loginfo "SI_POST_ACTIO
 # Set a default value for protocol if it's still empty at this time.
 test -z "${DL_PROTOCOL}" && DL_PROTOCOL="rsync" && loginfo "DL_PROTOCOL is empty. Default to 'rsync'"
 # OL: Nothing about bittorrent?!?!
+
+#########################
+# si.oci-login=""
+# si.oci-passwd=""
+test -z "$OCI_REGISTRY_USER" && OCI_REGISTRY_USER=$(getarg si.oci-login) && logdebug "Got OCI_REGISTRY_USER=${OCI_REGISTRY_USER}"
+test -z "$OCI_REGISTRY_PASS" && OCI_REGISTRY_PASS=$(getarg si.oci-passwd) && logdebug "Got OCI_REGISTRY_PASS=${OCI_REGISTRY_PASS}"
 
 # Register what we read.
 write_variables
