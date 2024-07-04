@@ -56,7 +56,7 @@
   </tbody>
 </table>
 <hr style="width: 100%"/>
-    <div class="clients_grid" id="dhcpConfig"></div> <!-- clients listing -->
+    <div class="clients_grid" id="clusterConfig"></div> <!-- clients listing -->
 <?php
 include 'functions.php';
 
@@ -71,13 +71,58 @@ include 'functions.php';
 # 5/ GUI: Display useable interfaces (pre-select thoses matching a client).
 # 6/ GUI: for each subnet/interface: list clients
 # 7/ GUI: List clients with no IP (to be assigned)
-# 8/ Load hdcp.conf static parts (header, ...)
+# 8/ Load dhcp.conf static parts (header, ...)
 
+$available_images=si_GetAvailableImages();
+print_r($available_images);
+
+if (file_exists('/etc/systemimager/cluster.xml')) {
+    $cluster = simplexml_load_file('/etc/systemimager/cluster.xml');
+
+    print_r($cluster);
+} else {
+    exit('Failed to open cluster.xml.');
+}
+
+echo '<h2>Cluster Definition</h2>';
+echo '<h3>Master: '.$cluster->master.'</h3>';
+echo '<h3>Global name: '.$cluster->name.'</h3>';
+if(count($cluster->override) == 1)
+	echo '<h3>Global Overrides: '.$cluster->override.'</h3>';
+elseif(count($cluster->override)>1) {
+	echo '<h3>Global Overrides:<br>';
+	foreach($cluster->override as $override)
+		echo '- '.$override.'<br>';
+	}
+else
+	echo '<h3>Global Overrides: all</h3>';
+echo '<h3>Groups:</h3>';
+foreach($cluster->group as $group) {
+	echo 'name: '.$group->name."<br>\n";
+	if($group->priority) echo '-- priority: '.$group->priority."<br>\n";
+	if(is_string($group->image) && !empty($group->image) && in_array($group->image,$available_images)) {
+		echo '-- image name: '.$group->image;
+	} else {
+		echo '-- image (undefined): '.$group->image;
+	}
+	echo "<br>\n";
+	echo '-- image overrides: '.$group->override."<br>\n";
+	echo '-- node list: '.$group->nodes."<br>\n";
+	if(!empty($group->{'ip-range'}))
+		echo '-- ip-range: '.$group->{'ip-range'}."<br>\n";
+	if(!empty($group->domain))
+		echo '-- dns domain: '.$group->domain."<br>\n";
+	echo "-- comments:<br>\n";
+	foreach($group->comment as $comment) {
+		echo $comment."<br>\n";
+	}
+	echo "<br>\n";
+}
 
 ?>
 <div style="flex: 1 1 auto"></div> <!-- spacer -->
 <hr style="width: 100%"/>
-<span>SystemImager v5.0 - DHCP Configuration.</span>
+<span>SystemImager v5.0 - Cluster Configuration.</span>
 </section> <!-- end flex_column -->
 </body>
 </html>
