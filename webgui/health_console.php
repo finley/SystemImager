@@ -226,9 +226,8 @@ $jsons_images = shell_exec('si_lsimage --json');
 if($jsons_images === NULL) {
 	echo "<span class='pri_error'> ERROR! Can't get images informations!</span>\n";
 } else {
-	$jsons_texts = explode("\n",$jsons_images);
-	foreach($jsons_texts as $image_json_text) {
-		$image_infos = json_decode($image_json_text);
+	foreach(preg_split("/((\r?\n)|(\r\n?))/", $json_images) as $json_single_image) {
+		$image_infos = json_decode($json_single_image);
 		if ($image_infos === null  && json_last_error() !== JSON_ERROR_NONE) {
                 	echo "<span class='pri_error'> ERROR! Can't decode clients stats.</span>\n";
 		} elseif($image_infos->{'image_name'} != "") {
