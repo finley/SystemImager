@@ -74,17 +74,13 @@ include 'functions.php';
 # 8/ Load dhcp.conf static parts (header, ...)
 
 $available_images=si_GetAvailableImages();
-print_r($available_images);
 
 if (file_exists('/etc/systemimager/cluster.xml')) {
     $cluster = simplexml_load_file('/etc/systemimager/cluster.xml');
-
-    print_r($cluster);
 } else {
     exit('Failed to open cluster.xml.');
 }
 
-echo '<h2>Cluster Definition</h2>';
 echo '<h3>Master: '.$cluster->master.'</h3>';
 echo '<h3>Global name: '.$cluster->name.'</h3>';
 if(count($cluster->override) == 1)
