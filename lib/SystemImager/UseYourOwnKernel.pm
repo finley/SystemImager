@@ -438,7 +438,7 @@ sub _choose_kernel_file {
                 # Check that file exists. We assume it's a kernel file as it has a kernel version in name or path
                 #
 
-                if ( -f "$image_dir/lib/modules/$uname_r/modules.dep" ) {
+                if ( (-f $kernel) and (-f "$image_dir/lib/modules/$uname_r/modules.dep") ) {
                         return $kernel;
                 }
         }
