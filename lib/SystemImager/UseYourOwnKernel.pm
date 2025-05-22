@@ -428,7 +428,23 @@ sub _choose_kernel_file {
 	# $image_dir/lib/modules/$uname_r/vmlinu{x,z} => For fedora-30+ or rhel/centos-8 in docker container
 	# $image_dir/boot/{,vm}linu{x,z}* => custom kernel with name starting with (vmlinux, vmlinuz, linux, linuz)
 	# $image_dir/boot/kernel*" => custom kernel with name stating with kernel
-	my @kernels = glob("$image_dir/boot/vmlinu{x,z}-$uname_r $image_dir/lib/modules/$uname_r/vmlinu{x,z} $image_dir/boot/{,vm}linu{x,z}* $image_dir/boot/kernel*");
+
+	# 1st, try kernels with uname_r in path or filename
+	    my @kernels = glob("$image_dir/boot/vmlinu{x,z}-$uname_r $image_dir/lib/modules/$uname_r/vmlinu{x,z}");
+
+        foreach my $kernel (@kernels) {
+
+                #
+                # Check that file exists. We assume it's a kernel file as it has a kernel version in name or path
+                #
+
+                if ( -f "$image_dir/lib/modules/$uname_r/modules.dep" ) {
+                        return $kernel;
+                }
+        }
+
+	# 2nd, try custom kernels.
+	    my @kernels = glob("$image_dir/boot/{,vm}linu{x,z}* $image_dir/boot/kernel*");
 
         foreach my $kernel (@kernels) {
                 
@@ -451,6 +467,7 @@ sub _choose_kernel_file {
 #
 # Usage:
 #       my $uname_r = _get_kernel_release( '/path/to/kernel/file' );
+#       BUG: doesn't support PE32+ executable (EFI application)
 sub _get_kernel_release($) {
 	my $file = shift;
 	my $arch = `arch`;
