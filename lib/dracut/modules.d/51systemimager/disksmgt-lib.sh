@@ -490,15 +490,15 @@ EOF
 									;;
 								"grub2")
 									[ ! -b "$BL_DEV" ] && shellout "Can't install bootloader: [$BL_DEV] is not a block device!"
-									logaction "chroot /sysroot ${GRUB_INSTALL_BIN} --force $BL_DEV"
-									chroot /sysroot ${GRUB_INSTALL_BIN} --force $BL_DEV || shellout "Failed to install grub2 bootloader on ${disk}"
+									logaction "chroot /sysroot ${GRUB_INSTALL_BIN#/sysroot} --force $BL_DEV"
+									chroot /sysroot ${GRUB_INSTALL_BIN#/sysroot} --force $BL_DEV || shellout "Failed to install grub2 bootloader on ${disk}"
 									loginfo "legacy grub2 installed on dev ${BL_DEV}"
 									touch /tmp/bootloader.installed
 									;;
 								"grub")
 									[ ! -b "$BL_DEV" ] && shellout "Can't install bootloader: [$BL_DEV] is not a block device!"
-									logaction "chroot /sysroot ${GRUB_INSTALL_BIN}  $BL_DEV"
-									chroot /sysroot ${GRUB_INSTALL_BIN} $BL_DEV || shellout "Failed to install grub1 bootloader on ${BL_DEV}"
+									logaction "chroot /sysroot ${GRUB_INSTALL_BIN#/sysroot}  $BL_DEV"
+									chroot /sysroot ${GRUB_INSTALL_BIN#/sysroot} $BL_DEV || shellout "Failed to install grub1 bootloader on ${BL_DEV}"
 									loginfo "legacy grub1 installed on dev ${BL_DEV}"
 									touch /tmp/bootloader.installed
 									;;
